@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.15 2005/06/03 11:14:53 rjs Exp $	*/
+/*	$NetBSD: macrom.h,v 1.16 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham

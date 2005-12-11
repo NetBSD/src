@@ -1,4 +1,4 @@
-/* $NetBSD: zutil.h,v 1.11 2004/06/30 15:44:55 christos Exp $ */
+/* $NetBSD: zutil.h,v 1.12 2005/12/11 12:24:46 christos Exp $ */
 
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -10,7 +10,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zutil.h,v 1.11 2004/06/30 15:44:55 christos Exp $ */
+/* @(#) $Id: zutil.h,v 1.12 2005/12/11 12:24:46 christos Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H

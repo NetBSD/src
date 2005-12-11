@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.31 2005/08/26 13:19:36 drochner Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.32 2005/12/11 12:17:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.31 2005/08/26 13:19:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.32 2005/12/11 12:17:36 christos Exp $");
 
 #include "debug_hpcsh.h"
 

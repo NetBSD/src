@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_output.c,v 1.19 2003/08/07 16:33:04 agc Exp $	*/
+/*	$NetBSD: pk_output.c,v 1.20 2005/12/11 12:24:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_output.c,v 1.19 2003/08/07 16:33:04 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_output.c,v 1.20 2005/12/11 12:24:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

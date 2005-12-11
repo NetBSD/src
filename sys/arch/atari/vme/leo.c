@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.9 2003/07/15 01:19:56 lukem Exp $	*/
+/*	$NetBSD: leo.c,v 1.10 2005/12/11 12:17:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.9 2003/07/15 01:19:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.10 2005/12/11 12:17:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

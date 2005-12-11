@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.8 2004/05/01 06:35:10 kochi Exp $	*/
+/*	$NetBSD: piix.c,v 1.9 2005/12/11 12:17:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.8 2004/05/01 06:35:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.9 2005/12/11 12:17:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

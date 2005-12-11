@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.10 2005/08/26 10:13:05 drochner Exp $ */
+/* $NetBSD: sableio.c,v 1.11 2005/12/11 12:16:20 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.10 2005/08/26 10:13:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.11 2005/12/11 12:16:20 christos Exp $");
 
 #include "isadma.h"
 

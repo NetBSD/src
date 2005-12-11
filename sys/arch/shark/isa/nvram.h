@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.h,v 1.2 2003/08/07 16:29:33 agc Exp $	*/
+/*	$NetBSD: nvram.h,v 1.3 2005/12/11 12:19:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993

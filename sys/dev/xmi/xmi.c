@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi.c,v 1.6 2005/02/27 00:27:54 perry Exp $	*/
+/*	$NetBSD: xmi.c,v 1.7 2005/12/11 12:24:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.6 2005/02/27 00:27:54 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.7 2005/12/11 12:24:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

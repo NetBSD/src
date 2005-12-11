@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_mainbus.c,v 1.4 2003/10/08 14:55:04 scw Exp $ */
+/*	$NetBSD: ixdp425_mainbus.c,v 1.5 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.4 2003/10/08 14:55:04 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.5 2005/12/11 12:17:09 christos Exp $");
 
 /*
  * front-end for the ixp425 NetworkProcessor.

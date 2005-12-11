@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.h,v 1.21 2003/12/04 13:57:30 keihan Exp $ */
+/* $NetBSD: isp_target.h,v 1.22 2005/12/11 12:21:27 christos Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *

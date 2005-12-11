@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.5 2005/06/27 11:26:02 junyoung Exp $ */
+/*	$NetBSD: tmscp.c,v 1.6 2005/12/11 12:19:30 christos Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.

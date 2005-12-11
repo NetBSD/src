@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.7 2003/12/31 14:41:15 bjh21 Exp $	*/
+/*	$NetBSD: vidc.h,v 1.8 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.

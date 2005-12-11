@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.h,v 1.6 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_hfsc.h,v 1.7 2005/12/11 12:16:03 christos Exp $	*/
 /*	$KAME: altq_hfsc.h,v 1.6 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*

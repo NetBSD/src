@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.8 2003/11/02 11:07:45 wiz Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.9 2005/12/11 12:21:27 christos Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>

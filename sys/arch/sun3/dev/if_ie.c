@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.43 2005/06/03 15:11:14 tsutsui Exp $ */
+/*	$NetBSD: if_ie.c,v 1.44 2005/12/11 12:19:20 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.43 2005/06/03 15:11:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.44 2005/12/11 12:19:20 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

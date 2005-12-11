@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.3 2004/05/11 10:13:35 he Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.4 2005/12/11 12:17:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphyreg.h,v 1.2 2003/11/02 11:10:36 wiz Exp $	*/
+/*	$NetBSD: qsphyreg.h,v 1.3 2005/12/11 12:22:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

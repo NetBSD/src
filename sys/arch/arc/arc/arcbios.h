@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.7 2005/06/09 16:02:19 he Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.8 2005/12/11 12:16:37 christos Exp $	*/
 /*	$OpenBSD: arcbios.h,v 1.1 1998/01/29 15:06:22 pefo Exp $	*/
 
 /*-

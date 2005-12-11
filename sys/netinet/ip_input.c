@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.221 2005/11/01 21:21:09 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.222 2005/12/11 12:24:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.221 2005/11/01 21:21:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.222 2005/12/11 12:24:57 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.8 2005/02/04 02:10:47 perry Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.9 2005/12/11 12:23:44 christos Exp $	*/
 /* magmareg.h
  *
  *  Copyright (c) 1998 Iain Hibbert

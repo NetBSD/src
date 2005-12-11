@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.36 2005/05/29 21:31:05 christos Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.37 2005/12/11 12:20:53 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.36 2005/05/29 21:31:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.37 2005/12/11 12:20:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.c,v 1.7 2003/08/31 22:40:14 fvdl Exp $	*/
+/*	$NetBSD: 3c509.c,v 1.8 2005/12/11 12:17:48 christos Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 

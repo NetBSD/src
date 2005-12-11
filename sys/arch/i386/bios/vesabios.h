@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.h,v 1.4 2005/06/01 16:49:14 drochner Exp $ */
+/* $NetBSD: vesabios.h,v 1.5 2005/12/11 12:17:40 christos Exp $ */
 
 int vbeprobe(void);
 

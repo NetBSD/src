@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpcivar.h,v 1.8 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: cmpcivar.h,v 1.9 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.

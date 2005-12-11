@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.30 2005/11/24 13:08:33 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.31 2005/12/11 12:17:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.30 2005/11/24 13:08:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31 2005/12/11 12:17:24 christos Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -991,10 +991,10 @@ mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio,
 	iov = uio->uio_iov;
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
+		p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
-			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
+			panic("_bus_dmamap_load_uio: USERSPACE but no lwp");
 #endif
 	}
 

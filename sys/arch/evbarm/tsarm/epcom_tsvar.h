@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom_tsvar.h,v 1.1 2004/12/23 04:27:56 joff Exp $ */
+/*	$NetBSD: epcom_tsvar.h,v 1.2 2005/12/11 12:17:11 christos Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.

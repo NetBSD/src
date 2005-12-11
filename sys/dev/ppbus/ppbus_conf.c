@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.8 2005/08/26 12:42:11 drochner Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.9 2005/12/11 12:23:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.8 2005/08/26 12:42:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.9 2005/12/11 12:23:28 christos Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"

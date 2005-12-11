@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.13 2005/09/24 17:28:39 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.14 2005/12/11 12:25:21 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

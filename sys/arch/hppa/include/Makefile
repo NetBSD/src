@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/05/08 21:51:48 kleink Exp $
+#	$NetBSD: Makefile,v 1.6 2005/12/11 12:17:37 christos Exp $
 
 INCSDIR= /usr/include/hppa
 

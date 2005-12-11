@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.19 2003/12/04 13:05:15 keihan Exp $ */
+/* $NetBSD: cia_dma.c,v 1.20 2005/12/11 12:16:17 christos Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.19 2003/12/04 13:05:15 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.20 2005/12/11 12:16:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

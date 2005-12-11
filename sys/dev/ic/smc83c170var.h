@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.9 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.10 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

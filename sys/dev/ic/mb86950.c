@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.2 2005/04/03 11:37:19 jdolecek Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.3 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.2 2005/04/03 11:37:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.3 2005/12/11 12:21:27 christos Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.

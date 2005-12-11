@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.16 2005/05/02 14:54:46 kochi Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.17 2005/12/11 12:17:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16 2005/05/02 14:54:46 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.17 2005/12/11 12:17:40 christos Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>

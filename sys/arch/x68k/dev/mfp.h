@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.h,v 1.4 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: mfp.h,v 1.5 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
  *

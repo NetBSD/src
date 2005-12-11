@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.57 2005/09/24 15:51:03 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.58 2005/12/11 12:20:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.57 2005/09/24 15:51:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.58 2005/12/11 12:20:19 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -116,8 +116,8 @@ int linux_to_bsd_so_sockopt __P((int));
 int linux_to_bsd_ip_sockopt __P((int));
 int linux_to_bsd_tcp_sockopt __P((int));
 int linux_to_bsd_udp_sockopt __P((int));
-int linux_getifhwaddr __P((struct proc *, register_t *, u_int, void *));
-static int linux_sa_get __P((struct proc *, int, caddr_t *, struct sockaddr **,
+int linux_getifhwaddr __P((struct lwp *, register_t *, u_int, void *));
+static int linux_sa_get __P((struct lwp *, int, caddr_t *, struct sockaddr **,
 		const struct osockaddr *, int *));
 static int linux_sa_put __P((struct osockaddr *osa));
 static int linux_to_bsd_msg_flags __P((int));
@@ -331,7 +331,7 @@ linux_sys_socket(l, v, retval)
 			(void) sosetopt((struct socket *)fp->f_data,
 				IPPROTO_IPV6, IPV6_V6ONLY, m);
 
-			FILE_UNUSE(fp, p);
+			FILE_UNUSE(fp, l);
 		}
 	}
 #endif
@@ -391,7 +391,7 @@ linux_sys_sendto(l, v, retval)
 		int error;
 		caddr_t sg = stackgap_init(p, 0);
 
-		error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 		    SCARG(uap, to), &tolen);
 		if (error)
 			return (error);
@@ -447,7 +447,7 @@ linux_sys_sendmsg(l, v, retval)
 		struct sockaddr *sa;
 		sg = stackgap_init(p, 0);
 
-		error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 		    (struct osockaddr *) msg.msg_name, &msg.msg_namelen);
 		if (error)
 			goto done;
@@ -614,7 +614,7 @@ linux_sys_sendmsg(l, v, retval)
 		control = NULL;
 	}
 
-	error = sendit(p, SCARG(uap, s), &msg, bflags, retval);
+	error = sendit(l, SCARG(uap, s), &msg, bflags, retval);
 
 done:
 	if (control)
@@ -1073,8 +1073,8 @@ linux_sys_getsockopt(l, v, retval)
 #define IF_NAME_LEN 16
 
 int
-linux_getifhwaddr(p, retval, fd, data)
-	struct proc *p;
+linux_getifhwaddr(l, retval, fd, data)
+	struct lwp *l;
 	register_t *retval;
 	u_int fd;
 	void *data;
@@ -1084,6 +1084,7 @@ linux_getifhwaddr(p, retval, fd, data)
 		char if_name[IF_NAME_LEN];
 		struct osockaddr hwaddr;
 	} lreq;
+	struct proc *p = l->l_proc;
 	struct filedesc *fdp;
 	struct file *fp;
 	struct ifaddr *ifa;
@@ -1198,14 +1199,14 @@ linux_getifhwaddr(p, retval, fd, data)
 	}
 
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 #undef IF_NAME_LEN
 
 int
-linux_ioctl_socket(p, uap, retval)
-	struct proc *p;
+linux_ioctl_socket(l, uap, retval)
+	struct lwp *l;
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
@@ -1213,13 +1214,14 @@ linux_ioctl_socket(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	u_long com;
 	int error = 0, isdev = 0, dosys = 1;
 	struct sys_ioctl_args ia;
 	struct file *fp;
 	struct filedesc *fdp;
 	struct vnode *vp;
-	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
+	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
 	struct ioctl_pt pt;
 
         fdp = p->p_fd;
@@ -1245,7 +1247,7 @@ linux_ioctl_socket(p, uap, retval)
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
-		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
+		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, l);
 		/*
 		 * XXX hack: if the function returns EJUSTRETURN,
 		 * it has stuffed a sysctl return value in pt.data.
@@ -1289,7 +1291,7 @@ linux_ioctl_socket(p, uap, retval)
 		SCARG(&ia, com) = SIOCDELMULTI;
 		break;
 	case LINUX_SIOCGIFHWADDR:
-	        error = linux_getifhwaddr(p, retval, SCARG(uap, fd),
+	        error = linux_getifhwaddr(l, retval, SCARG(uap, fd),
 					 SCARG(uap, data));
 		dosys = 0;
 		break;
@@ -1298,7 +1300,7 @@ linux_ioctl_socket(p, uap, retval)
 	}
 
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 
 	if (error ==0 && dosys) {
 		SCARG(&ia, fd) = SCARG(uap, fd);
@@ -1329,7 +1331,7 @@ linux_sys_connect(l, v, retval)
 	int namlen;
 
 	namlen = SCARG(uap, namelen);
-	error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+	error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 	    SCARG(uap, name), &namlen);
 	if (error)
 		return (error);
@@ -1354,7 +1356,7 @@ linux_sys_connect(l, v, retval)
 		state = so->so_state;
 		prflags = so->so_proto->pr_flags;
 		splx(s);
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 		/*
 		 * We should only let this call succeed once per
 		 * non-blocking connect; however we don't have
@@ -1389,7 +1391,7 @@ linux_sys_bind(l, v, retval)
 		struct sockaddr *sa;
 		caddr_t sg = stackgap_init(p, 0);
 
-		error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 		    SCARG(uap, name), &namlen);
 		if (error)
 			return (error);
@@ -1452,8 +1454,8 @@ linux_sys_getpeername(l, v, retval)
  * the converted structure there, address on stackgap returned in sap.
  */
 static int
-linux_sa_get(p, s, sgp, sap, osa, osalen)
-	struct proc *p;
+linux_sa_get(l, s, sgp, sap, osa, osalen)
+	struct lwp *l;
 	int s;
 	caddr_t *sgp;
 	struct sockaddr **sap;
@@ -1463,6 +1465,7 @@ linux_sa_get(p, s, sgp, sap, osa, osalen)
 	int error=0, bdom;
 	struct sockaddr *sa, *usa;
 	struct osockaddr *kosa = (struct osockaddr *) &sa;
+	struct proc *p = l->l_proc;
 	int alloclen;
 #ifdef INET6
 	int oldv6size;
@@ -1550,7 +1553,7 @@ linux_sa_get(p, s, sgp, sap, osa, osalen)
 		so = (struct socket *)fp->f_data;
 		bdom = so->so_proto->pr_domain->dom_family;
 
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 
 		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
 	}

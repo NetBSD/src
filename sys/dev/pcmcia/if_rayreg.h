@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rayreg.h,v 1.8 2005/02/27 00:27:43 perry Exp $	*/
+/*	$NetBSD: if_rayreg.h,v 1.9 2005/12/11 12:23:23 christos Exp $	*/
 /*
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tweio.h,v 1.4 2003/09/25 18:05:40 thorpej Exp $	*/
+/*	$NetBSD: tweio.h,v 1.5 2005/12/11 12:22:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith

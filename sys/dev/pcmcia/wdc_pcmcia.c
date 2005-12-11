@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.100 2005/06/19 18:19:19 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.101 2005/12/11 12:23:23 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.100 2005/06/19 18:19:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.101 2005/12/11 12:23:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

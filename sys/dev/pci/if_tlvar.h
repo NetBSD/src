@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.11 2005/01/23 10:53:19 dan Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.12 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.

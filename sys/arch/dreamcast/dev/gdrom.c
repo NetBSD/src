@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.17 2005/02/19 15:37:34 tsutsui Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.18 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.17 2005/02/19 15:37:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.18 2005/12/11 12:17:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ gdromattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-gdromopen(dev_t dev, int flags, int devtype, struct proc *p)
+gdromopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct gdrom_softc *sc;
 	int s, error, unit, cnt;
@@ -451,7 +451,7 @@ gdromopen(dev_t dev, int flags, int devtype, struct proc *p)
 }
 
 int
-gdromclose(dev_t dev, int flags, int devtype, struct proc *p)
+gdromclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct gdrom_softc *sc;
 	int unit;
@@ -509,7 +509,7 @@ gdromstrategy(struct buf *bp)
 }
 
 int
-gdromioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+gdromioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct gdrom_softc *sc;
 	int unit, error;

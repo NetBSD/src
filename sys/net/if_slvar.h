@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.29 2005/12/10 23:21:38 elad Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.30 2005/12/11 12:24:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -88,7 +88,7 @@ int	slopen __P((dev_t, struct tty *));
 int	sloutput __P((struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *));
 int	slstart __P((struct tty *));
-int	sltioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
+int	sltioctl __P((struct tty *, u_long, caddr_t, int, struct lwp *));
 #endif /* _KERNEL */
 
 #endif /* !_NET_IF_SLVAR_H_ */

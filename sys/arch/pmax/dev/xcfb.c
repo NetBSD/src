@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.40 2003/08/07 16:29:11 agc Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.41 2005/12/11 12:18:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.40 2003/08/07 16:29:11 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.41 2005/12/11 12:18:36 christos Exp $");
 
 #include "dtop.h"
 #if NDTOP == 0

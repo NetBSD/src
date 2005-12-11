@@ -1,4 +1,4 @@
-/*	$NetBSD: gtvar.h,v 1.8 2005/02/01 20:37:09 matt Exp $	*/
+/*	$NetBSD: gtvar.h,v 1.9 2005/12/11 12:22:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.

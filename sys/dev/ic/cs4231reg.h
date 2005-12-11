@@ -1,4 +1,4 @@
-/* $NetBSD: cs4231reg.h,v 1.9 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: cs4231reg.h,v 1.10 2005/12/11 12:21:26 christos Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

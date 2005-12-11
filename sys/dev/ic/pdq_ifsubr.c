@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.42 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.43 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.42 2005/05/30 04:43:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.43 2005/12/11 12:21:28 christos Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"

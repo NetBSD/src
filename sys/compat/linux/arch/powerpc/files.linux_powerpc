@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_powerpc,v 1.5 2004/07/25 23:26:44 chs Exp $
+#	$NetBSD: files.linux_powerpc,v 1.6 2005/12/11 12:20:16 christos Exp $
 #
 # Config file description for powerpc-dependent Linux compat code.
 

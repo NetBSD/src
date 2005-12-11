@@ -1,4 +1,4 @@
-/*	$NetBSD: iociic.c,v 1.1 2003/10/06 16:08:42 thorpej Exp $	*/
+/*	$NetBSD: iociic.c,v 1.2 2005/12/11 12:16:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

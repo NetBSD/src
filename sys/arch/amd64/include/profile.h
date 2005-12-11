@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.4 2005/09/22 15:47:03 chs Exp $	*/
+/*	$NetBSD: profile.h,v 1.5 2005/12/11 12:16:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

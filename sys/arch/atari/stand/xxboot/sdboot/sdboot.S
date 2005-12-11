@@ -1,4 +1,4 @@
-/*	$NetBSD: sdboot.S,v 1.1 2003/10/28 11:35:00 he Exp $	*/
+/*	$NetBSD: sdboot.S,v 1.2 2005/12/11 12:17:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens

@@ -1,4 +1,4 @@
-/*	$NetBSD: crimereg.h,v 1.9 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: crimereg.h,v 1.10 2005/12/11 12:18:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang

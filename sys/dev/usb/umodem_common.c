@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.5 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.6 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.5 2005/05/30 04:21:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.6 2005/12/11 12:24:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

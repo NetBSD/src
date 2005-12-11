@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.5 2005/08/26 12:42:11 drochner Exp $	*/
+/*	$NetBSD: gpib.c,v 1.6 2005/12/11 12:21:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.5 2005/08/26 12:42:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.6 2005/12/11 12:21:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

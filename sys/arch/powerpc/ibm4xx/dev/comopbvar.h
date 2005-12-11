@@ -1,4 +1,4 @@
-/*	$NetBSD: comopbvar.h,v 1.1 2004/12/24 14:55:50 shige Exp $	*/
+/*	$NetBSD: comopbvar.h,v 1.2 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.

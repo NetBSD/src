@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.27 2003/08/07 16:29:15 agc Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.28 2005/12/11 12:18:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/10/26 07:25:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2005/12/11 12:17:34 christos Exp $
 .include <bsd.own.mk>
 
 ROMICE?=	no

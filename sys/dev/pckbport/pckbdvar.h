@@ -1,4 +1,4 @@
-/* $NetBSD: pckbdvar.h,v 1.2 2004/03/18 21:05:19 bjh21 Exp $ */
+/* $NetBSD: pckbdvar.h,v 1.3 2005/12/11 12:23:22 christos Exp $ */
 
 #include <dev/pckbport/pckbportvar.h>
 

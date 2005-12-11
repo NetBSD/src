@@ -38,14 +38,14 @@
  *		EXPERIMENTAL !!!
  *		================
  *
- *	$Id: isic_isapnp_tel_s0P.c,v 1.7 2005/07/09 02:05:09 christos Exp $
+ *	$Id: isic_isapnp_tel_s0P.c,v 1.8 2005/12/11 12:22:16 christos Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.7 2005/07/09 02:05:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.8 2005/12/11 12:22:16 christos Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_TEL_S0_16_3_P

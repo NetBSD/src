@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.9 2005/02/04 02:10:48 perry Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.10 2005/12/11 12:24:00 christos Exp $	*/
 
 
 /*

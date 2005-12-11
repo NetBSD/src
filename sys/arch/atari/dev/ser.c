@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.26 2005/09/06 21:40:37 kleink Exp $	*/
+/*	$NetBSD: ser.c,v 1.27 2005/12/11 12:16:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.26 2005/09/06 21:40:37 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.27 2005/12/11 12:16:54 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -372,10 +372,10 @@ serstatus(sc, str)
 #endif /* SER_DEBUG */
 
 int
-seropen(dev, flag, mode, p)
+seropen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = SERUNIT(dev);
 	struct ser_softc *sc;
@@ -397,7 +397,7 @@ seropen(dev, flag, mode, p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(p->p_ucred, &p->p_acflag) != 0)
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -498,10 +498,10 @@ bad:
 }
  
 int
-serclose(dev, flag, mode, p)
+serclose(dev, flag, mode, l)
 	dev_t		dev;
 	int		flag, mode;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	int unit = SERUNIT(dev);
 	struct ser_softc *sc = ser_cd.cd_devs[unit];
@@ -551,15 +551,15 @@ serwrite(dev, uio, flag)
 }
 
 int
-serpoll(dev, events, p)
+serpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -573,23 +573,23 @@ sertty(dev)
 }
 
 int
-serioctl(dev, cmd, data, flag, p)
+serioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = SERUNIT(dev);
 	struct ser_softc *sc = ser_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -615,7 +615,7 @@ serioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
 		if (error)
 			return (error); 
 		sc->sc_swflags = *(int *)data;

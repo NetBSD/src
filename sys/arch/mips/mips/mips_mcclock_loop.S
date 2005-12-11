@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock_loop.S,v 1.1 2005/01/01 09:48:39 simonb Exp $ */
+/* $NetBSD: mips_mcclock_loop.S,v 1.2 2005/12/11 12:18:09 christos Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signo.c,v 1.4 2005/05/19 21:16:29 manu Exp $	*/
+/*	$NetBSD: linux_signo.c,v 1.5 2005/12/11 12:20:19 christos Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signo.c,v 1.4 2005/05/19 21:16:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signo.c,v 1.5 2005/12/11 12:20:19 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>

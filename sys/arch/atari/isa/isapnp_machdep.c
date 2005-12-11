@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.5 2003/07/15 01:19:54 lukem Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.6 2005/12/11 12:16:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.5 2003/07/15 01:19:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.6 2005/12/11 12:16:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

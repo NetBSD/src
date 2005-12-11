@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.74 2005/05/31 00:50:28 christos Exp $	*/
+/*	$NetBSD: psycho.c,v 1.75 2005/12/11 12:19:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.74 2005/05/31 00:50:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.75 2005/12/11 12:19:09 christos Exp $");
 
 #include "opt_ddb.h"
 

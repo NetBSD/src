@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.4 2005/03/09 19:04:44 matt Exp $ */
+/* $NetBSD: bus_dma.h,v 1.5 2005/12/11 12:18:09 christos Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.

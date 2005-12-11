@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.16 2003/08/07 16:33:24 agc Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.17 2005/12/11 12:25:02 christos Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.16 2003/08/07 16:33:24 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.17 2005/12/11 12:25:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

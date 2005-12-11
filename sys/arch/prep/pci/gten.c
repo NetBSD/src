@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.11 2004/04/23 21:13:06 itojun Exp $	*/
+/*	$NetBSD: gten.c,v 1.12 2005/12/11 12:18:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.11 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.12 2005/12/11 12:18:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

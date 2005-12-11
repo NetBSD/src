@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.41 2005/03/26 05:12:35 fvdl Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.42 2005/12/11 12:20:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.41 2005/03/26 05:12:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.42 2005/12/11 12:20:12 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"

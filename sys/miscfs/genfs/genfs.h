@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.19 2005/11/02 12:38:59 yamt Exp $	*/
+/*	$NetBSD: genfs.h,v 1.20 2005/12/11 12:24:50 christos Exp $	*/
 
 int	genfs_badop(void *);
 int	genfs_nullop(void *);

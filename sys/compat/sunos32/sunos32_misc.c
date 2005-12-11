@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.32 2005/07/13 12:49:32 cube Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.33 2005/12/11 12:20:23 christos Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.32 2005/07/13 12:49:32 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.33 2005/12/11 12:20:23 christos Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -237,7 +237,7 @@ sunos32_sys_creat(l, v, retval)
 	SCARG(&ua, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	SUNOS32TO64_UAP(mode);
 
-	SUNOS32_CHECK_ALT_CREAT(p, &sg, SCARG(&ua, path));
+	SUNOS32_CHECK_ALT_CREAT(l, &sg, SCARG(&ua, path));
 
 	return (sys_open(l, &ua, retval));
 }
@@ -258,7 +258,7 @@ sunos32_sys_access(l, v, retval)
 
 	SUNOS32TOP_UAP(path, const char);
 	SUNOS32TO64_UAP(flags);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	SUNOS32_CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	return (sys_access(l, &ua, retval));
 }
@@ -314,12 +314,12 @@ sunos32_sys_stat(l, v, retval)
 
 	path = (char *)(u_long)SCARG(uap, path);
 	sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, path);
+	SUNOS32_CHECK_ALT_EXIST(l, &sg, path);
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -350,11 +350,11 @@ sunos32_sys_lstat(l, v, retval)
 
 	path = (char *)(u_long)SCARG(uap, path);
 	sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, path);
+	SUNOS32_CHECK_ALT_EXIST(l, &sg, path);
 
 	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT;
 again:
-	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, path, p);
+	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd))) {
 		if (error == EISDIR && (ndflags & LOCKPARENT) != 0) {
 			/*
@@ -379,18 +379,18 @@ again:
 			else
 				vput(dvp);
 		}
-		error = vn_stat(vp, &sb, p);
+		error = vn_stat(vp, &sb, l);
 		vput(vp);
 		if (error)
 			return (error);
 	} else {
-		error = vn_stat(dvp, &sb, p);
+		error = vn_stat(dvp, &sb, l);
 		vput(dvp);
 		if (error) {
 			vput(vp);
 			return (error);
 		}
-		error = vn_stat(vp, &sb1, p);
+		error = vn_stat(vp, &sb1, l);
 		vput(vp);
 		if (error)
 			return (error);
@@ -434,7 +434,7 @@ sunos32_sys_execv(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, path);
+	SUNOS32_CHECK_ALT_EXIST(l, &sg, path);
 
 	return execve1(l, path, (char **)(u_long)(u_int)SCARG(uap, argp), NULL,
 	    sunos32_execve_fetch_element);
@@ -456,7 +456,7 @@ sunos32_sys_execve(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, path);
+	SUNOS32_CHECK_ALT_EXIST(l, &sg, path);
 
 	return execve1(l, path, (char **)(u_long)(u_int)SCARG(uap, argp),
 	    (char **)(u_long)(u_int)SCARG(uap, envp),
@@ -753,7 +753,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -830,7 +830,7 @@ out:
 	free(cookiebuf, M_TEMP);
 	free(sbuf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -975,7 +975,7 @@ sunos32_sys_setsockopt(l, v, retval)
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -999,7 +999,7 @@ sunos32_sys_socket_common(l, retval, type)
 		if (type == SOCK_DGRAM)
 			so->so_options |= SO_BROADCAST;
 	}
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -1136,9 +1136,9 @@ sunos32_sys_open(l, v, retval)
 	SUNOS32TO64_UAP(mode);
 
 	if (r & O_CREAT)
-		SUNOS32_CHECK_ALT_CREAT(p, &sg, SCARG(&ua, path));
+		SUNOS32_CHECK_ALT_CREAT(l, &sg, SCARG(&ua, path));
 	else
-		SUNOS32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+		SUNOS32_CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	ret = sys_open(l, &ua, retval);
 
@@ -1150,7 +1150,7 @@ sunos32_sys_open(l, v, retval)
 
 		/* ignore any error, just give it a try */
 		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, p);
+			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, l);
 	}
 	return ret;
 }
@@ -1289,15 +1289,15 @@ sunos32_sys_statfs(l, v, retval)
 
 	sg = stackgap_init(p, 0);
 	SUNOS32TOP_UAP(path, const char);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	SUNOS32_CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(&ua, path), p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(&ua, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return sunstatfs(sp, (caddr_t)(u_long)SCARG(uap, buf));
@@ -1324,12 +1324,12 @@ sunos32_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = sunstatfs(sp, (caddr_t)(u_long)SCARG(uap, buf));
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -1365,7 +1365,7 @@ sunos32_sys_mknod(l, v, retval)
 	SUNOS32TOP_UAP(path, const char);
 	SUNOS32TO64_UAP(mode);
 	SUNOS32TO64_UAP(dev);
-	SUNOS32_CHECK_ALT_CREAT(p, &sg, SCARG(&ua, path));
+	SUNOS32_CHECK_ALT_CREAT(l, &sg, SCARG(&ua, path));
 
 	/* netbsd32_mkfifo/mknod to not do alt checking */
 	if (S_ISFIFO(SCARG(uap, mode)))

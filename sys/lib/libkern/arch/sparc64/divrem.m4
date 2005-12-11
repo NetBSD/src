@@ -1,4 +1,4 @@
-/*	$NetBSD: divrem.m4,v 1.4 2003/08/07 16:32:22 agc Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.5 2005/12/11 12:24:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  */
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: divrem.m4,v 1.4 2003/08/07 16:32:22 agc Exp $")
+	RCSID("$NetBSD: divrem.m4,v 1.5 2005/12/11 12:24:45 christos Exp $")
 #endif
 
 /*

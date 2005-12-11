@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181reg.h,v 1.3 2004/01/04 16:19:44 wiz Exp $	*/
+/*	$NetBSD: ite8181reg.h,v 1.4 2005/12/11 12:17:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi

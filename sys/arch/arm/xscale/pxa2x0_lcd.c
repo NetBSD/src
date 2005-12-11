@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.10 2005/07/04 00:42:37 bsh Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.11 2005/12/11 12:16:52 christos Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.10 2005/07/04 00:42:37 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.11 2005/12/11 12:16:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,7 +610,7 @@ pxa2x0_lcd_free_screen(void *v, void *cookie)
 }
 
 int
-pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct pxa2x0_lcd_softc *sc = v;
 	struct wsdisplay_fbinfo *wsdisp_info;

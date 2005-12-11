@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.29 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.30 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.29 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.30 2005/12/11 12:21:26 christos Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"

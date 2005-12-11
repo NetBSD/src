@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.9 2004/11/26 22:29:36 uwe Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.10 2005/12/11 12:21:27 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov

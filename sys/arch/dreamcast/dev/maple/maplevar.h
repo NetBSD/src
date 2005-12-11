@@ -1,4 +1,4 @@
-/*	$NetBSD: maplevar.h,v 1.8 2005/02/19 15:37:35 tsutsui Exp $	*/
+/*	$NetBSD: maplevar.h,v 1.9 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

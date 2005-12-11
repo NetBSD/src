@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.h,v 1.5 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.h,v 1.6 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

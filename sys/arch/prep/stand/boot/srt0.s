@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.2 2004/01/05 15:31:03 nonaka Exp $	*/
+/*	$NetBSD: srt0.s,v 1.3 2005/12/11 12:18:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1996-1999 Cort Dougan (cort@fsmlasb.com).

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.25 2005/01/30 19:13:08 thorpej Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.26 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.25 2005/01/30 19:13:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.26 2005/12/11 12:18:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

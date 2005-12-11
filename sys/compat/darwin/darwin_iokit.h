@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iokit.h,v 1.8 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: darwin_iokit.h,v 1.9 2005/12/11 12:19:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

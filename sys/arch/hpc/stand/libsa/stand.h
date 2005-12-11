@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.2 2004/08/06 18:33:10 uch Exp $	*/
+/*	$NetBSD: stand.h,v 1.3 2005/12/11 12:17:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.

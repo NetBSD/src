@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.12 2004/09/12 08:41:47 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.13 2005/12/11 12:17:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 

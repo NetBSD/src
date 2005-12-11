@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.h,v 1.1 2005/08/07 12:19:06 blymn Exp $	*/
+/*	$NetBSD: tape.h,v 1.2 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.

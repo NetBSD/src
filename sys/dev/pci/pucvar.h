@@ -1,4 +1,4 @@
-/*	$NetBSD: pucvar.h,v 1.7 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: pucvar.h,v 1.8 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.

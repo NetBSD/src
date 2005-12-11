@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.3 2005/05/15 21:37:46 fvdl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.4 2005/12/11 12:16:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

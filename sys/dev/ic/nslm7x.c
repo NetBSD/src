@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.23 2005/10/15 00:41:48 xtraeme Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.24 2005/12/11 12:21:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.23 2005/10/15 00:41:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.24 2005/12/11 12:21:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

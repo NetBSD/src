@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcicvar.h,v 1.5 2005/08/16 11:32:26 nonaka Exp $	*/
+/*	$NetBSD: shpcicvar.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro

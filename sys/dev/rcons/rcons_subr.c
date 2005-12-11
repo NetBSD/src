@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.14 2005/06/01 17:05:16 drochner Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.15 2005/12/11 12:23:44 christos Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.14 2005/06/01 17:05:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.15 2005/12/11 12:23:44 christos Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL

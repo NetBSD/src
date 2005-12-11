@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.h,v 1.4 2005/01/01 09:48:39 simonb Exp $ */
+/* $NetBSD: mips_mcclock.h,v 1.5 2005/12/11 12:18:09 christos Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)

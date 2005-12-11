@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.12 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.13 2005/12/11 12:22:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.12 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.13 2005/12/11 12:22:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

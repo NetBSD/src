@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_ms_ttyvar.h,v 1.3 2005/05/30 22:17:11 christos Exp $	*/
+/*	$NetBSD: kbd_ms_ttyvar.h,v 1.4 2005/12/11 12:23:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

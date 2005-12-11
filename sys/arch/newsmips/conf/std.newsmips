@@ -1,4 +1,4 @@
-#	$NetBSD: std.newsmips,v 1.16 2005/09/17 09:44:07 yamt Exp $
+#	$NetBSD: std.newsmips,v 1.17 2005/12/11 12:18:24 christos Exp $
 
 machine newsmips mips
 include		"conf/std"	# MI standard options

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.46 2005/10/15 17:29:10 yamt Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.47 2005/12/11 12:16:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.46 2005/10/15 17:29:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.47 2005/12/11 12:16:54 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -828,11 +828,11 @@ out_fdc(x)
 }
 
 int
-fdopen(dev, flags, mode, p)
+fdopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
  	int unit;
 	struct fd_softc *fd;
@@ -861,11 +861,11 @@ fdopen(dev, flags, mode, p)
 }
 
 int
-fdclose(dev, flags, mode, p)
+fdclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fd_softc *fd = hdfd_cd.cd_devs[FDUNIT(dev)];
 
@@ -1333,12 +1333,12 @@ fdcretry(fdc)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
+fdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fd_softc		*fd;
 	struct disklabel	buffer;
@@ -1502,7 +1502,7 @@ fdioctl(dev, cmd, addr, flag, p)
 			fd_formb->fd_formb_secsize(i) = fd->sc_type->secsize;
 		}
 		
-		error = fdformat(dev, fd_formb, p);
+		error = fdformat(dev, fd_formb, l->l_proc);
 		free(fd_formb, M_TEMP);
 		return error;
 

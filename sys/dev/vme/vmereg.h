@@ -1,4 +1,4 @@
-/* $NetBSD: vmereg.h,v 1.2 2003/10/28 18:21:49 matt Exp $ */
+/* $NetBSD: vmereg.h,v 1.3 2005/12/11 12:24:07 christos Exp $ */
 
 /* constants for address modifiers */
 

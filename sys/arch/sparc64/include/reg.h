@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.12 2004/03/27 16:21:53 eeh Exp $ */
+/*	$NetBSD: reg.h,v 1.13 2005/12/11 12:19:10 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

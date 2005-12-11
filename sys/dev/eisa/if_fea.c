@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.29 2005/05/30 04:36:52 christos Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.30 2005/12/11 12:21:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.29 2005/05/30 04:36:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.30 2005/12/11 12:21:20 christos Exp $");
 
 #include "opt_inet.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.8 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.9 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.8 2005/08/30 20:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.9 2005/12/11 12:24:51 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"

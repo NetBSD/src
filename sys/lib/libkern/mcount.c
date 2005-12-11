@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.14 2005/10/02 15:34:17 chs Exp $	*/
+/*	$NetBSD: mcount.c,v 1.15 2005/12/11 12:24:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.14 2005/10/02 15:34:17 chs Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.15 2005/12/11 12:24:37 christos Exp $");
 #endif
 #endif
 

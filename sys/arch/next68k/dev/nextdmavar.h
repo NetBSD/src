@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmavar.h,v 1.13 2005/06/05 11:35:09 he Exp $	*/
+/*	$NetBSD: nextdmavar.h,v 1.14 2005/12/11 12:18:25 christos Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.

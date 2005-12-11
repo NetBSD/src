@@ -1,4 +1,4 @@
-/* $NetBSD: mcbusvar.h,v 1.5 2004/09/13 14:57:31 drochner Exp $ */
+/* $NetBSD: mcbusvar.h,v 1.6 2005/12/11 12:16:17 christos Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob

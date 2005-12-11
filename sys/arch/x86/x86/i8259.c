@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.5 2004/04/10 14:49:55 kochi Exp $	*/
+/*	$NetBSD: i8259.c,v 1.6 2005/12/11 12:19:47 christos Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.5 2004/04/10 14:49:55 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.6 2005/12/11 12:19:47 christos Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>

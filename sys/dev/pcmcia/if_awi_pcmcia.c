@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.34 2005/06/22 06:16:02 dyoung Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.35 2005/12/11 12:23:23 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.34 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.35 2005/12/11 12:23:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

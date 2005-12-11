@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172reg.h,v 1.4 2004/01/04 16:19:44 wiz Exp $	*/
+/*	$NetBSD: vrc4172reg.h,v 1.5 2005/12/11 12:17:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.11 2005/02/27 18:35:08 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.12 2005/12/11 12:17:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.

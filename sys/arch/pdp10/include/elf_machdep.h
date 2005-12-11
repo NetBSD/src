@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.1 2003/08/19 10:53:05 ragge Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.2 2005/12/11 12:18:34 christos Exp $	*/
 
 #define	ELF36_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF36_MACHDEP_ID_CASES						\

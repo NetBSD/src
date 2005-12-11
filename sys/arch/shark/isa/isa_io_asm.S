@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io_asm.S,v 1.2 2005/01/09 15:26:19 tsutsui Exp $	*/
+/*	$NetBSD: isa_io_asm.S,v 1.3 2005/12/11 12:19:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

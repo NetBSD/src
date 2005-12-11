@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecreg.h,v 1.1 2003/08/01 00:08:55 jonathan Exp $	*/
+/*	$NetBSD: ubsecreg.h,v 1.2 2005/12/11 12:22:51 christos Exp $	*/
 /*	$OpenBSD: ubsecreg.h,v 1.28 2003/06/04 16:02:41 jason Exp $	*/
 
 /*

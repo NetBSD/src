@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4.h,v 1.3 2003/08/26 20:12:22 thorpej Exp $	*/
+/*	$NetBSD: arc4.h,v 1.4 2005/12/11 12:20:48 christos Exp $	*/
 
 /*
  * ARC4 implementation

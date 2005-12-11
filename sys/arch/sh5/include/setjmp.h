@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.6 2004/05/13 19:54:25 he Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.7 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

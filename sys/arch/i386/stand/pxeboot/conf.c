@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2005/06/28 21:00:41 junyoung Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2005/12/11 12:17:49 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xxreg.h,v 1.2 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: cd18xxreg.h,v 1.3 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green

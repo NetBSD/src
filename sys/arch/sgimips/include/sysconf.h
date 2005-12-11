@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.5 2004/01/18 00:53:49 sekiya Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.6 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.

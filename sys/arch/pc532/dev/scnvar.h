@@ -1,4 +1,4 @@
-/*	$NetBSD: scnvar.h,v 1.4 2005/02/22 14:46:47 chs Exp $	*/
+/*	$NetBSD: scnvar.h,v 1.5 2005/12/11 12:18:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.

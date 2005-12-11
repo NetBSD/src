@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.19 2005/06/03 13:44:50 tsutsui Exp $	*/
+/*	$NetBSD: apbus.c,v 1.20 2005/12/11 12:18:24 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.19 2005/06/03 13:44:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.20 2005/12/11 12:18:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

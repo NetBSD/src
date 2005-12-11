@@ -28,7 +28,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: strncasecmp.c,v 1.6 2005/02/26 22:58:56 perry Exp $";
+static char *rcsid = "$NetBSD: strncasecmp.c,v 1.7 2005/12/11 12:24:37 christos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_KERNEL) || defined(_STANDALONE)

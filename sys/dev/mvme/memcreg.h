@@ -1,4 +1,4 @@
-/*	$NetBSD: memcreg.h,v 1.2 2004/02/13 11:36:22 wiz Exp $	*/
+/*	$NetBSD: memcreg.h,v 1.3 2005/12/11 12:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.

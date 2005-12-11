@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.4 2005/09/06 21:40:37 kleink Exp $ */
+/*	$NetBSD: epcom.c,v 1.5 2005/12/11 12:16:45 christos Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.4 2005/09/06 21:40:37 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.5 2005/12/11 12:16:45 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

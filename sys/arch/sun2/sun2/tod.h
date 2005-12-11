@@ -1,4 +1,4 @@
-/*	$NetBSD: tod.h,v 1.3 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: tod.h,v 1.4 2005/12/11 12:19:16 christos Exp $	*/
 
 /*
  * Structures and macros des accessing the National Semiconductor

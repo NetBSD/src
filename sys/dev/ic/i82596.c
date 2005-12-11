@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.10 2005/06/07 06:27:17 skrll Exp $ */
+/* $NetBSD: i82596.c,v 1.11 2005/12/11 12:21:26 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.10 2005/06/07 06:27:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.11 2005/12/11 12:21:26 christos Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>

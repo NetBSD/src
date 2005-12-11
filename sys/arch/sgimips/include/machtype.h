@@ -1,4 +1,4 @@
-/*	$NetBSD: machtype.h,v 1.4 2004/01/13 12:30:23 sekiya Exp $	*/
+/*	$NetBSD: machtype.h,v 1.5 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni

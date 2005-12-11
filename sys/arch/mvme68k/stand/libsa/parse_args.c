@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_args.c,v 1.10 2005/06/28 21:03:02 junyoung Exp $	*/
+/*	$NetBSD: parse_args.c,v 1.11 2005/12/11 12:18:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Theo de Raadt

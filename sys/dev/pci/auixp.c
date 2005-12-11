@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
+/* $NetBSD: auixp.c,v 1.10 2005/12/11 12:22:48 christos Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.10 2005/12/11 12:22:48 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>

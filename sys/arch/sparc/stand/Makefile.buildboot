@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.22 2004/06/21 18:20:09 jmc Exp $
+#	$NetBSD: Makefile.buildboot,v 1.23 2005/12/11 12:19:08 christos Exp $
 #
 # This file is for the sparc `boot' and `bootxx' only; it does not
 # currently play well on a 64-bit system.

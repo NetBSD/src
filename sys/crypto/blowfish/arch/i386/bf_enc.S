@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_enc.S,v 1.2 2003/11/28 08:56:48 keihan Exp $	*/
+/*	$NetBSD: bf_enc.S,v 1.3 2005/12/11 12:20:52 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@zembu.com> and Thor Lancelot Simon

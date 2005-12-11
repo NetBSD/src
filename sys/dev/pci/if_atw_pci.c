@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.10 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.10 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

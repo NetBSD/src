@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.11 2005/08/13 05:38:45 he Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.12 2005/12/11 12:17:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross

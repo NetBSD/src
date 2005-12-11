@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 2005/06/28 21:00:41 junyoung Exp $	*/
+/*	$NetBSD: devopen.c,v 1.7 2005/12/11 12:17:49 christos Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2003/07/16 07:25:51 he Exp $
+#	$NetBSD: Makefile,v 1.11 2005/12/11 12:19:45 christos Exp $
 # Makefile for loadkmap
 
 PROG=		loadkmap

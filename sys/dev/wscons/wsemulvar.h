@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.11 2005/05/29 21:56:35 christos Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.12 2005/12/11 12:24:12 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.

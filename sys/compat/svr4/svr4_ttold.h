@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.h,v 1.4 2005/02/26 23:10:21 perry Exp $	 */
+/*	$NetBSD: svr4_ttold.h,v 1.5 2005/12/11 12:20:26 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.

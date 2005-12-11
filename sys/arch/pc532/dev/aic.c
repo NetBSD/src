@@ -1,4 +1,4 @@
-/*	$NetBSD: aic.c,v 1.10 2003/07/15 02:54:31 lukem Exp $	*/
+/*	$NetBSD: aic.c,v 1.11 2005/12/11 12:18:31 christos Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic.c,v 1.10 2003/07/15 02:54:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic.c,v 1.11 2005/12/11 12:18:31 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

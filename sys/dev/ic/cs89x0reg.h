@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0reg.h,v 1.2 2004/02/04 15:43:14 augustss Exp $	*/
+/*	$NetBSD: cs89x0reg.h,v 1.3 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright 1997

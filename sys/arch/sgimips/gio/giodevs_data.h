@@ -1,4 +1,4 @@
-/*	$NetBSD: giodevs_data.h,v 1.3 2005/06/03 19:04:10 martin Exp $	*/
+/*	$NetBSD: giodevs_data.h,v 1.4 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

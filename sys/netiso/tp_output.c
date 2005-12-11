@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.26 2004/04/20 02:13:26 matt Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.27 2005/12/11 12:25:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.26 2004/04/20 02:13:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.27 2005/12/11 12:25:12 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"

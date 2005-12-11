@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.5 2005/10/06 08:19:46 dyoung Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.6 2005/12/11 12:17:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.

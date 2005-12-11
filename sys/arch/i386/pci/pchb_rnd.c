@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.13 2003/07/06 07:24:31 tron Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.14 2005/12/11 12:17:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.13 2003/07/06 07:24:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.14 2005/12/11 12:17:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

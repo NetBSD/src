@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.155 2005/11/25 20:01:38 thorpej Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.156 2005/12/11 12:25:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.155 2005/11/25 20:01:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.156 2005/12/11 12:25:16 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -835,7 +835,7 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 			if (uiop->uio_segflg == UIO_SYSSPACE)
 				memcpy(uiocp, mbufcp, xfer);
 			else
-				if ((error = copyout_proc(uiop->uio_procp,
+				if ((error = copyout_proc(uiop->uio_lwp->l_proc,
 				    mbufcp, uiocp, xfer)) != 0)
 					return error;
 			left -= xfer;
@@ -924,7 +924,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 				(void)memcpy(cp, uiocp, xfer);
 			else
 				/*XXX: Check error */
-				(void)copyin_proc(uiop->uio_procp, uiocp,
+				(void)copyin_proc(uiop->uio_lwp->l_proc, uiocp,
 				    cp, xfer);
 			mp->m_len += xfer;
 			left -= xfer;
@@ -2026,10 +2026,10 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
  */
 
 void
-nfs_cookieheuristic(vp, flagp, p, cred)
+nfs_cookieheuristic(vp, flagp, l, cred)
 	struct vnode *vp;
 	int *flagp;
-	struct proc *p;
+	struct lwp *l;
 	struct ucred *cred;
 {
 	struct uio auio;
@@ -2047,7 +2047,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = NFS_DIRFRAGSIZ;
 	auio.uio_offset = 0;
 
@@ -2072,7 +2072,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 			if ((*cop >> 32) != 0 && (*cop & 0xffffffffLL) == 0) {
 				*flagp |= NFSMNT_SWAPCOOKIE;
 				nfs_invaldircache(vp, 0);
-				nfs_vinvalbuf(vp, 0, cred, p, 1);
+				nfs_vinvalbuf(vp, 0, cred, l, 1);
 			}
 			break;
 		}
@@ -2096,7 +2096,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
  * it is not.
  */
 int
-nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
+nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	struct nameidata *ndp;
 	fhandle_t *fhp;
 	uint32_t len;
@@ -2105,7 +2105,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 	struct mbuf **mdp;
 	caddr_t *dposp;
 	struct vnode **retdirp;
-	struct proc *p;
+	struct lwp *l;
 	int kerbflag, pubflag;
 {
 	int i, rem;
@@ -2241,7 +2241,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 		cnp->cn_flags |= NOCROSSMOUNT;
 	}
 
-	cnp->cn_proc = p;
+	cnp->cn_lwp = l;
 	VREF(dp);
 
     for (;;) {
@@ -2278,7 +2278,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 		}
 		if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
 			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred,
-			    cnp->cn_proc);
+			    cnp->cn_lwp);
 			if (error != 0)
 				break;
 		}
@@ -2293,7 +2293,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
 		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_procp = NULL;
+		auio.uio_lwp = NULL;
 		auio.uio_resid = MAXPATHLEN;
 		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
 		if (error) {

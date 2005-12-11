@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.S,v 1.3 2005/07/04 02:03:27 bsh Exp $	*/
+/*	$NetBSD: bus_space_notimpl.S,v 1.4 2005/12/11 12:16:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

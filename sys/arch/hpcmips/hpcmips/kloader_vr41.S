@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_vr41.S,v 1.2 2004/07/09 16:12:50 uch Exp $	*/
+/*	$NetBSD: kloader_vr41.S,v 1.3 2005/12/11 12:17:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.

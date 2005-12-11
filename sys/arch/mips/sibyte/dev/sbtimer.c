@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.9 2003/07/15 02:43:41 lukem Exp $ */
+/* $NetBSD: sbtimer.c,v 1.10 2005/12/11 12:18:13 christos Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.9 2003/07/15 02:43:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.10 2005/12/11 12:18:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: satavar.h,v 1.1 2004/05/28 23:26:27 thorpej Exp $	*/
+/*	$NetBSD: satavar.h,v 1.2 2005/12/11 12:21:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

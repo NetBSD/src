@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_glue.S,v 1.3 2004/05/16 15:44:10 wiz Exp $	*/
+/*	$NetBSD: armfpe_glue.S,v 1.4 2005/12/11 12:16:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.3 2004/03/24 16:39:53 ws Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.4 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster

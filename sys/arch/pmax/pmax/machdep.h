@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.10 2005/06/01 18:32:08 drochner Exp $ */
+/* $NetBSD: machdep.h,v 1.11 2005/12/11 12:18:39 christos Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.

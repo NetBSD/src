@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4237reg.h,v 1.3 2003/12/04 13:57:30 keihan Exp $ */
+/*	$NetBSD: cs4237reg.h,v 1.4 2005/12/11 12:21:26 christos Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

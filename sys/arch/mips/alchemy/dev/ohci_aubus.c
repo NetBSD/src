@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.5 2003/10/23 04:58:32 simonb Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.6 2005/12/11 12:18:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.5 2003/10/23 04:58:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.6 2005/12/11 12:18:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

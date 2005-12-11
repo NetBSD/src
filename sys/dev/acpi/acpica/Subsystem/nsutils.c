@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.13 2005/05/29 20:56:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.14 2005/12/11 12:21:03 christos Exp $");
 
 #define __NSUTILS_C__
 

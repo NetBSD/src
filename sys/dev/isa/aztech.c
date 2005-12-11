@@ -1,4 +1,4 @@
-/* $NetBSD: aztech.c,v 1.9 2004/10/29 12:57:17 yamt Exp $ */
+/* $NetBSD: aztech.c,v 1.10 2005/12/11 12:22:02 christos Exp $ */
 /* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.9 2004/10/29 12:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.10 2005/12/11 12:22:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

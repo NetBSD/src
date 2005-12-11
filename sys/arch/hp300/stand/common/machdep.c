@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2005/12/11 12:17:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

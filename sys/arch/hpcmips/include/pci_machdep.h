@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.5 2004/09/17 23:32:09 enami Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.6 2005/12/11 12:17:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.

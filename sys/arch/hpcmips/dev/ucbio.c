@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbio.c,v 1.8 2003/07/15 02:29:30 lukem Exp $	*/
+/*	$NetBSD: ucbio.c,v 1.9 2005/12/11 12:17:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbio.c,v 1.8 2003/07/15 02:29:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbio.c,v 1.9 2005/12/11 12:17:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

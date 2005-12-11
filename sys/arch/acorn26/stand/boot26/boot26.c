@@ -1,4 +1,4 @@
-/*	$NetBSD: boot26.c,v 1.3 2003/09/21 06:28:39 matt Exp $	*/
+/*	$NetBSD: boot26.c,v 1.4 2005/12/11 12:16:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 Ben Harris

@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.12 2005/08/26 13:19:34 drochner Exp $ */
+/* $NetBSD: mainbus.c,v 1.13 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2005/08/26 13:19:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2005/12/11 12:16:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

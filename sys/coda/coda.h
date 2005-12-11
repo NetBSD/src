@@ -1,4 +1,4 @@
-/* $NetBSD: coda.h,v 1.10 2005/08/28 08:57:45 christos Exp $ */
+/* $NetBSD: coda.h,v 1.11 2005/12/11 12:19:50 christos Exp $ */
 
 /*
 

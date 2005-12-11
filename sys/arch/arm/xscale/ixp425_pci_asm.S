@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_asm.S,v 1.1 2003/09/25 14:11:18 ichiro Exp $	*/
+/*	$NetBSD: ixp425_pci_asm.S,v 1.2 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

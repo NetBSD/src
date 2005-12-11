@@ -1,4 +1,4 @@
-/*	$NetBSD: pfour_subr.c,v 1.4 2003/10/28 16:25:29 chs Exp $ */
+/*	$NetBSD: pfour_subr.c,v 1.5 2005/12/11 12:23:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfour_subr.c,v 1.4 2003/10/28 16:25:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfour_subr.c,v 1.5 2005/12/11 12:23:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

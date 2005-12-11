@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.17 2003/07/15 02:15:07 lukem Exp $ */
+/*	$NetBSD: lkc.c,v 1.18 2005/12/11 12:19:37 christos Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkc.c,v 1.17 2003/07/15 02:15:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkc.c,v 1.18 2005/12/11 12:19:37 christos Exp $");
 
 #include "opt_ddb.h"
 

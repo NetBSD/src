@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.23 2003/08/31 22:40:48 fvdl Exp $	*/
+/*	$NetBSD: exec.c,v 1.24 2005/12/11 12:24:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993

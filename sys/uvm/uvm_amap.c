@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.66 2005/11/06 15:57:32 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.67 2005/12/11 12:25:28 christos Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.66 2005/11/06 15:57:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.67 2005/12/11 12:25:28 christos Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 

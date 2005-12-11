@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.18 2005/02/03 03:49:01 perry Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.19 2005/12/11 12:24:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.18 2005/02/03 03:49:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.19 2005/12/11 12:24:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

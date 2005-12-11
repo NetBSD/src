@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.6 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: debug.h,v 1.7 2005/12/11 12:25:15 christos Exp $	*/
 
 #define OUT stdout
 

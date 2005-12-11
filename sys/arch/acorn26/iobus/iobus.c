@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.12 2005/08/26 13:19:34 drochner Exp $ */
+/* $NetBSD: iobus.c,v 1.13 2005/12/11 12:16:04 christos Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.12 2005/08/26 13:19:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.13 2005/12/11 12:16:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.29 2005/05/30 04:12:41 christos Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.30 2005/12/11 12:17:41 christos Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.29 2005/05/30 04:12:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.30 2005/12/11 12:17:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

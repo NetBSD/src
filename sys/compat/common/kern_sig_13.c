@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.10 2005/09/13 01:42:32 christos Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.11 2005/12/11 12:19:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.10 2005/09/13 01:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.11 2005/12/11 12:19:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

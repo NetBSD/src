@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.50 2005/08/25 22:33:18 drochner Exp $	*/
+/*	$NetBSD: iop.c,v 1.51 2005/12/11 12:21:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.50 2005/08/25 22:33:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.51 2005/12/11 12:21:23 christos Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -2481,7 +2481,7 @@ int iop_util_eventreg(struct iop_softc *sc, struct iop_initiator *ii, int mask)
 }
 
 int
-iopopen(dev_t dev, int flag, int mode, struct proc *p)
+iopopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct iop_softc *sc;
 
@@ -2497,7 +2497,7 @@ iopopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-iopclose(dev_t dev, int flag, int mode, struct proc *p)
+iopclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct iop_softc *sc;
 
@@ -2508,7 +2508,7 @@ iopclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct iop_softc *sc;
 	struct iovec *iov;
@@ -2521,7 +2521,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case IOPIOCPT:
-		return (iop_passthrough(sc, (struct ioppt *)data, p));
+		return (iop_passthrough(sc, (struct ioppt *)data, l->l_proc));
 
 	case IOPIOCGSTATUS:
 		iov = (struct iovec *)data;

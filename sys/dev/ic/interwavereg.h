@@ -1,7 +1,7 @@
 #ifndef INTERWAVEREG_H
 #define INTERWAVEREG_H
 
-/*	$NetBSD: interwavereg.h,v 1.7 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: interwavereg.h,v 1.8 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2003/08/19 10:55:00 ragge Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2005/12/11 12:18:34 christos Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

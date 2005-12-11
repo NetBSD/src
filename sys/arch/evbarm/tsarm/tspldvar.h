@@ -1,4 +1,4 @@
-/*	$NetBSD: tspldvar.h,v 1.1 2004/12/23 04:30:19 joff Exp $	*/
+/*	$NetBSD: tspldvar.h,v 1.2 2005/12/11 12:17:11 christos Exp $	*/
 
 #ifndef _TSPLDVAR_H_
 #define _TSPLDVAR_H_

@@ -1,3 +1,3 @@
-/*	$NetBSD: cdefs.h,v 1.1 2004/10/13 23:28:35 gavan Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.2 2005/12/11 12:17:51 christos Exp $	*/
 
 #include <arm/cdefs.h>

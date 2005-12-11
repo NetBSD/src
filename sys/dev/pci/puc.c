@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.26 2005/08/26 11:20:33 drochner Exp $	*/
+/*	$NetBSD: puc.c,v 1.27 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.26 2005/08/26 11:20:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.27 2005/12/11 12:22:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

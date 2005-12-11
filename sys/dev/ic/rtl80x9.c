@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.10 2003/10/28 22:22:28 mycroft Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.11 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.10 2003/10/28 22:22:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.11 2005/12/11 12:21:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

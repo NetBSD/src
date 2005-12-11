@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.6 2005/07/01 12:37:35 peter Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.7 2005/12/11 12:24:25 christos Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.62 2004/12/07 18:02:04 mcbride Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.5 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: trap.h,v 1.6 2005/12/11 12:16:39 christos Exp $	*/
 /*      $OpenBSD: trap.h,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $	*/
 
 #include <mips/trap.h>

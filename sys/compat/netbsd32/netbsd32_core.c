@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.12 2005/06/10 05:10:13 matt Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.13 2005/12/11 12:20:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.12 2005/06/10 05:10:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.13 2005/12/11 12:20:22 christos Exp $");
 
 #define	CORENAME(x)	__CONCAT(x,32)
 #define	COREINC		<compat/netbsd32/netbsd32.h>

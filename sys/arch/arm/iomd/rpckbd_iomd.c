@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd_iomd.c,v 1.9 2004/02/08 13:41:53 bjh21 Exp $	*/
+/*	$NetBSD: rpckbd_iomd.c,v 1.10 2005/12/11 12:16:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpckbd_iomd.c,v 1.9 2004/02/08 13:41:53 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpckbd_iomd.c,v 1.10 2005/12/11 12:16:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

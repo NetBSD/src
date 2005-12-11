@@ -1,4 +1,4 @@
-/* $NetBSD: plbvar.h,v 1.3 2003/07/25 10:12:44 scw Exp $ */
+/* $NetBSD: plbvar.h,v 1.4 2005/12/11 12:18:42 christos Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.4 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.5 2005/12/11 12:24:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.4 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.5 2005/12/11 12:24:30 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.4 2005/05/29 22:24:15 christos Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/proc.h>
+#include <sys/lwp.h>
 #include <sys/tty.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.4 2005/05/29 22:24:15 christos Exp 
 #define TTY_NEW_SUFFIX  "ghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static int pty_makename(struct ptm_pty *, char *, size_t, dev_t, char);
-static int pty_allocvp(struct ptm_pty *, struct proc *, struct vnode **,
+static int pty_allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
     dev_t, char);
 static void pty_getvattr(struct ptm_pty *, struct proc *, struct vattr *);
 
@@ -116,7 +116,7 @@ pty_makename(struct ptm_pty *ptm, char *bf, size_t bufsiz, dev_t dev, char c)
 
 static int
 /*ARGSUSED*/
-pty_allocvp(struct ptm_pty *ptm, struct proc *p, struct vnode **vp, dev_t dev,
+pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
     char ms)
 {
 	int error;
@@ -127,7 +127,7 @@ pty_allocvp(struct ptm_pty *ptm, struct proc *p, struct vnode **vp, dev_t dev,
 	if (error)
 		return error;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, name, p);
+	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, name, l);
 	if ((error = namei(&nd)) != 0)
 		return error;
 	*vp = nd.ni_vp;

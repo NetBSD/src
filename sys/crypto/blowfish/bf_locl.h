@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_locl.h,v 1.3 2005/06/03 11:31:57 martin Exp $	*/
+/*	$NetBSD: bf_locl.h,v 1.4 2005/12/11 12:20:48 christos Exp $	*/
 /*	$KAME: bf_locl.h,v 1.5 2000/08/31 06:03:48 itojun Exp $	*/
 
 /* crypto/bf/bf_local.h */

@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.4 2005/01/22 15:36:11 chs Exp $	*/
+/*	$NetBSD: libsa.h,v 1.5 2005/12/11 12:19:29 christos Exp $	*/
 
 /*
  * This file defines the API for libsa.a

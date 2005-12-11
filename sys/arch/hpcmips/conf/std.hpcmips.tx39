@@ -1,5 +1,5 @@
 #
-#	$NetBSD: std.hpcmips.tx39,v 1.2 2005/05/04 07:54:39 hamajima Exp $
+#	$NetBSD: std.hpcmips.tx39,v 1.3 2005/12/11 12:17:33 christos Exp $
 #	TX39XX common configuration.
 #
 

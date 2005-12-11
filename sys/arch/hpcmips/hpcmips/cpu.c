@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 2003/07/15 02:29:31 lukem Exp $	*/
+/*	$NetBSD: cpu.c,v 1.14 2005/12/11 12:17:33 christos Exp $	*/
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
  * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2003/07/15 02:29:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2005/12/11 12:17:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

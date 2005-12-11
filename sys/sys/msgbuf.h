@@ -1,4 +1,4 @@
-/*	$NetBSD: msgbuf.h,v 1.13 2005/05/29 21:17:37 christos Exp $	*/
+/*	$NetBSD: msgbuf.h,v 1.14 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1984, 1993

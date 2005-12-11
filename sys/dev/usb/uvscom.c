@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.15 2005/05/11 10:02:29 augustss Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.16 2005/12/11 12:24:01 christos Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.15 2005/05/11 10:02:29 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.16 2005/12/11 12:24:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

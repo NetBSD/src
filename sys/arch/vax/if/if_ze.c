@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze.c,v 1.11 2003/11/10 08:51:52 wiz Exp $ */
+/*      $NetBSD: if_ze.c,v 1.12 2005/12/11 12:19:34 christos Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.11 2003/11/10 08:51:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.12 2005/12/11 12:19:34 christos Exp $");
 
 #include "opt_cputype.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.16 2005/08/30 22:24:11 xtraeme Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.17 2005/12/11 12:19:50 christos Exp $	*/
 
 /*
  *
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.16 2005/08/30 22:24:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.17 2005/12/11 12:19:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.10 2005/02/01 00:19:34 reinoud Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.11 2005/12/11 12:23:50 christos Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)

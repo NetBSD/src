@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.6 2005/02/26 22:45:13 perry Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.7 2005/12/11 12:25:05 christos Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.6 2005/02/26 22:45:13 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.7 2005/12/11 12:25:05 christos Exp $");
 
 /*
  * IPsec-specific mbuf routines.

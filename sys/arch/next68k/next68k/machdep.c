@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2005/10/30 15:49:39 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2005/12/11 12:18:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2005/10/30 15:49:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2005/12/11 12:18:29 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -952,7 +952,7 @@ nmihand(void *frame)
  * understand and, if so, set up the vmcmds for it.
  */
 int
-cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	return ENOEXEC;
 }

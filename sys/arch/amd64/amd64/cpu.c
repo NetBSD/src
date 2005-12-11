@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.8 2005/04/01 11:59:22 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.9 2005/12/11 12:16:21 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2005/04/01 11:59:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2005/12/11 12:16:21 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"

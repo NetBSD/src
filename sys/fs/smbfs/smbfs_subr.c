@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.9 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.10 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.9 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.10 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

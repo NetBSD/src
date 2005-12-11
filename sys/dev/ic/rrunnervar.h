@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnervar.h,v 1.10 2005/10/15 17:29:12 yamt Exp $	*/
+/*	$NetBSD: rrunnervar.h,v 1.11 2005/12/11 12:21:28 christos Exp $	*/
 
 /* Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.

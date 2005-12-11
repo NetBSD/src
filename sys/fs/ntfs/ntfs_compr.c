@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_compr.c,v 1.2 2005/05/29 21:00:29 christos Exp $	*/
+/*	$NetBSD: ntfs_compr.c,v 1.3 2005/12/11 12:24:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.2 2005/05/29 21:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.3 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

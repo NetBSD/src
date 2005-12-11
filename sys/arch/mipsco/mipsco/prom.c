@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.4 2003/07/15 02:43:43 lukem Exp $	*/
+/*	$NetBSD: prom.c,v 1.5 2005/12/11 12:18:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.4 2003/07/15 02:43:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.5 2005/12/11 12:18:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

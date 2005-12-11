@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbiosvar.h,v 1.8 2005/06/01 16:49:14 drochner Exp $ */
+/* $NetBSD: pnpbiosvar.h,v 1.9 2005/12/11 12:17:47 christos Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.34 2005/05/29 21:33:37 christos Exp $	*/
+/*	$NetBSD: gdt.c,v 1.35 2005/12/11 12:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.34 2005/05/29 21:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.35 2005/12/11 12:17:41 christos Exp $");
 
 #include "opt_multiprocessor.h"
 

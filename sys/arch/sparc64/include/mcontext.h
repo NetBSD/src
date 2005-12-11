@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.5 2005/07/10 15:44:23 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.6 2005/12/11 12:19:10 christos Exp $	*/
 
 #ifndef _SPARC64_MCONTEXT_H_
 #define _SPARC64_MCONTEXT_H_

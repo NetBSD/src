@@ -1,4 +1,4 @@
-/*	$NetBSD: uhavar.h,v 1.13 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: uhavar.h,v 1.14 2005/12/11 12:21:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

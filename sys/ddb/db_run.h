@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.h,v 1.8 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_run.h,v 1.9 2005/12/11 12:20:53 christos Exp $	*/
 
 /*
  * Mach Operating System

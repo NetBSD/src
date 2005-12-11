@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.24 2005/07/13 11:55:19 cube Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.25 2005/12/11 12:20:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.24 2005/07/13 11:55:19 cube Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ktrace.h"
+#endif
+
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.25 2005/12/11 12:20:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +78,7 @@ netbsd32_execve(struct lwp *l, void *v, register_t *retval)
 	const char *path = NETBSD32PTR64(SCARG(uap, path));
 
 	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l->l_proc, &sg, path);
+	CHECK_ALT_EXIST(l, &sg, path);
 
 	return execve1(l, path, NETBSD32PTR64(SCARG(uap, argp)),
 	    NETBSD32PTR64(SCARG(uap, envp)), netbsd32_execve_fetch_element);

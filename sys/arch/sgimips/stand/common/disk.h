@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.3 2005/04/21 13:59:15 tsutsui Exp $	*/
+/*	$NetBSD: disk.h,v 1.4 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)

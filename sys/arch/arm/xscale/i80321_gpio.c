@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_gpio.c,v 1.1 2003/10/06 16:06:05 thorpej Exp $	*/
+/*	$NetBSD: i80321_gpio.c,v 1.2 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.

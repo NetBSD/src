@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.45 2005/05/22 15:54:46 christos Exp $	*/
+/*	$NetBSD: cfb.c,v 1.46 2005/12/11 12:18:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.45 2005/05/22 15:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.46 2005/12/11 12:18:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

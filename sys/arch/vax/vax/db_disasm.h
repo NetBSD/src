@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.h,v 1.3 2005/06/27 11:03:25 ragge Exp $ */
+/*	$NetBSD: db_disasm.h,v 1.4 2005/12/11 12:19:36 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

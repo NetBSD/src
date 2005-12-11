@@ -1,4 +1,4 @@
-$NetBSD: diodevs,v 1.7 2003/11/23 01:57:35 tsutsui Exp $
+$NetBSD: diodevs,v 1.8 2005/12/11 12:17:13 christos Exp $
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

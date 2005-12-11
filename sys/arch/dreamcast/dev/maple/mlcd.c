@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.4 2005/02/19 15:40:16 tsutsui Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.4 2005/02/19 15:40:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.5 2005/12/11 12:17:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -463,7 +463,7 @@ mlcd_printerror(const char *head, uint32_t code)
 
 /* ARGSUSED */
 int
-mlcdopen(dev_t dev, int flags, int devtype, struct proc *p)
+mlcdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	int unit, part;
 	struct mlcd_softc *sc;
@@ -487,7 +487,7 @@ mlcdopen(dev_t dev, int flags, int devtype, struct proc *p)
 
 /* ARGSUSED */
 int
-mlcdclose(dev_t dev, int flags, int devtype, struct proc *p)
+mlcdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	int unit, part;
 	struct mlcd_softc *sc;
@@ -724,7 +724,7 @@ mlcdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-mlcdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mlcdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit, part;
 	struct mlcd_softc *sc;
@@ -740,7 +740,7 @@ mlcdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	default:
 		/* generic maple ioctl */
 		return maple_unit_ioctl(sc->sc_parent, sc->sc_unit, cmd, data,
-		    flag, p);
+		    flag, l);
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sir.h,v 1.3 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: sir.h,v 1.4 2005/12/11 12:22:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.h,v 1.3 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_bootstrap.h,v 1.4 2005/12/11 12:20:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

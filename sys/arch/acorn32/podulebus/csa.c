@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.7 2003/07/14 22:48:26 lukem Exp $	*/
+/*	$NetBSD: csa.c,v 1.8 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: csa.c,v 1.7 2003/07/14 22:48:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: csa.c,v 1.8 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

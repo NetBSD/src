@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.1 2004/10/13 23:28:36 gavan Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.2 2005/12/11 12:17:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.1 2004/10/13 23:28:36 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.2 2005/12/11 12:17:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

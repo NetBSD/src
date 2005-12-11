@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.3 2005/02/03 19:20:01 perry Exp $      */
+/*      $NetBSD: bswap.h,v 1.4 2005/12/11 12:25:20 christos Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 

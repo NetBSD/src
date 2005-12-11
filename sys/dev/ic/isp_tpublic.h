@@ -1,4 +1,4 @@
-/* $NetBSD: isp_tpublic.h,v 1.13 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: isp_tpublic.h,v 1.14 2005/12/11 12:21:27 christos Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *

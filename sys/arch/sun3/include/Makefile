@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2004/05/08 21:51:51 kleink Exp $
+#	$NetBSD: Makefile,v 1.22 2005/12/11 12:19:21 christos Exp $
 
 INCSDIR= /usr/include/sun3
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.40 2005/11/16 00:49:03 uwe Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.41 2005/12/11 12:19:05 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -78,7 +78,7 @@
 #undef CG14_CG8
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfourteen.c,v 1.40 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgfourteen.c,v 1.41 2005/12/11 12:19:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,7 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 static int cg14_opens = 0;
 
 int
-cgfourteenopen(dev_t dev, int flags, int mode, struct proc *p)
+cgfourteenopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	int unit = minor(dev);
@@ -335,7 +335,7 @@ cgfourteenopen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-cgfourteenclose(dev_t dev, int flags, int mode, struct proc *p)
+cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	int s, opens;
@@ -356,7 +356,7 @@ cgfourteenclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-cgfourteenioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+cgfourteenioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	struct fbgattr *fba;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.7 2004/09/16 16:08:27 drochner Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.8 2005/12/11 12:16:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.7 2004/09/16 16:08:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.8 2005/12/11 12:16:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

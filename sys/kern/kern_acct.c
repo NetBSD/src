@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.61 2005/06/23 23:15:12 thorpej Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.62 2005/12/11 12:24:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.61 2005/06/23 23:15:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.62 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 		struct vattr va;
 		size_t pad;
 		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path),
-		    p);
+		    l);
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
 		if (nd.ni_vp->v_type != VREG) {
@@ -316,7 +316,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 			error = EACCES;
 			goto bad;
 		}
-		if ((error = VOP_GETATTR(nd.ni_vp, &va, p->p_ucred, p)) != 0) {
+		if ((error = VOP_GETATTR(nd.ni_vp, &va, p->p_ucred, l)) != 0) {
 			VOP_UNLOCK(nd.ni_vp, 0);
 			goto bad;
 		}
@@ -330,7 +330,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 #endif
 			VATTR_NULL(&va);
 			va.va_size = size;
-			error = VOP_SETATTR(nd.ni_vp, &va, p->p_ucred, p);
+			error = VOP_SETATTR(nd.ni_vp, &va, p->p_ucred, l);
 			if (error != 0) {
 				VOP_UNLOCK(nd.ni_vp, 0);
 				goto bad;
@@ -376,7 +376,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	ACCT_UNLOCK();
 	return (error);
  bad:
-	vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
+	vn_close(nd.ni_vp, FWRITE, p->p_ucred, l);
 	return error;
 }
 
@@ -387,13 +387,14 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
  * "acct.h" header file.)
  */
 int
-acct_process(struct proc *p)
+acct_process(struct lwp *l)
 {
 	struct acct acct;
 	struct rusage *r;
 	struct timeval ut, st, tmp;
 	int s, t, error = 0;
 	struct plimit *oplim = NULL;
+	struct proc *p = l->l_proc;
 
 	ACCT_LOCK();
 
@@ -460,7 +461,7 @@ acct_process(struct proc *p)
 	/*
 	 * Now, just write the accounting information to the file.
 	 */
-	VOP_LEASE(acct_vp, p, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(acct_vp, l, p->p_ucred, LEASE_WRITE);
 	error = vn_rdwr(UIO_WRITE, acct_vp, (caddr_t)&acct,
 	    sizeof(acct), (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT,
 	    acct_ucred, NULL, NULL);

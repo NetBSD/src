@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.8 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.9 2005/12/11 12:25:16 christos Exp $	*/
 
 /*
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.8 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.9 2005/12/11 12:25:16 christos Exp $");
 
 #include "opt_ddb.h"
 

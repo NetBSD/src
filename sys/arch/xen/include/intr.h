@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2005/11/03 13:06:07 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2005/12/11 12:19:48 christos Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -36,7 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 #ifndef _XEN_INTR_H_
 #define	_XEN_INTR_H_

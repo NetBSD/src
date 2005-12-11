@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cobalt,v 1.16 2005/09/17 14:38:38 yamt Exp $
+#	$NetBSD: majors.cobalt,v 1.17 2005/12/11 12:17:06 christos Exp $
 #
 # Device majors for cobalt
 #

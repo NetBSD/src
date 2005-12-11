@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.42 2004/08/30 15:05:16 drochner Exp $ */
+/* $NetBSD: lca.c,v 1.43 2005/12/11 12:16:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.42 2004/08/30 15:05:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.43 2005/12/11 12:16:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

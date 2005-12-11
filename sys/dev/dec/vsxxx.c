@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxx.c,v 1.5 2005/02/04 02:10:36 perry Exp $ */
+/* $NetBSD: vsxxx.c,v 1.6 2005/12/11 12:21:20 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.5 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.6 2005/12/11 12:21:20 christos Exp $");
 
 /*
  * Common machinary for VSXXX mice and tablet

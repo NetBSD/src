@@ -1,4 +1,4 @@
-/*	$NetBSD: suword.c,v 1.4 2003/09/27 04:44:42 matt Exp $	*/
+/*	$NetBSD: suword.c,v 1.5 2005/12/11 12:18:46 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: suword.c,v 1.4 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: suword.c,v 1.5 2005/12/11 12:18:46 christos Exp $");
 
 #include <sys/systm.h>
 

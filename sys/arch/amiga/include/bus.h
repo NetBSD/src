@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 2004/08/16 10:23:43 aymeric Exp $	*/
+/*	$NetBSD: bus.h,v 1.20 2005/12/11 12:16:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.

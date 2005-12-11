@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_dma.c,v 1.2 2003/10/08 14:55:04 scw Exp $ */
+/*	$NetBSD: ixp425_pci_dma.c,v 1.3 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_dma.c,v 1.2 2003/10/08 14:55:04 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_dma.c,v 1.3 2005/12/11 12:16:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

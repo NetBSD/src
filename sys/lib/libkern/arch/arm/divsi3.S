@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.5 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.6 2005/12/11 12:24:42 christos Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND

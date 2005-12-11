@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86601reg.h,v 1.4 2004/01/04 16:19:44 wiz Exp $	*/
+/*	$NetBSD: mb86601reg.h,v 1.5 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

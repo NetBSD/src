@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_acard_reg.h,v 1.5 2005/05/08 11:26:17 tsutsui Exp $	*/
+/*	$NetBSD: pciide_acard_reg.h,v 1.6 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.

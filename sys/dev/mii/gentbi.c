@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.13 2004/08/23 06:16:06 thorpej Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.14 2005/12/11 12:22:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.13 2004/08/23 06:16:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.14 2005/12/11 12:22:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

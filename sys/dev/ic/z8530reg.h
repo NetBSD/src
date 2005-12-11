@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530reg.h,v 1.11 2003/11/02 11:07:46 wiz Exp $ */
+/*	$NetBSD: z8530reg.h,v 1.12 2005/12/11 12:21:29 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_mbr.c,v 1.2 2005/01/01 19:29:59 thorpej Exp $	*/
+/*	$NetBSD: dkwedge_mbr.c,v 1.3 2005/12/11 12:21:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.2 2005/01/01 19:29:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.3 2005/12/11 12:21:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

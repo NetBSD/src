@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.76 2005/11/02 12:39:00 yamt Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.77 2005/12/11 12:25:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.76 2005/11/02 12:39:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.77 2005/12/11 12:25:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ ffs_fsync(void *v)
 		int a_flags;
 		off_t a_offlo;
 		off_t a_offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct buf *bp;
 	int s, num, error, i;
@@ -322,7 +322,7 @@ ffs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-			ap->a_p->p_ucred, ap->a_p);
+			ap->a_l->l_proc->p_ucred, ap->a_l);
 	}
 
 	return error;
@@ -341,7 +341,7 @@ ffs_full_fsync(void *v)
 		int a_flags;
 		off_t a_offlo;
 		off_t a_offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
@@ -461,7 +461,7 @@ loop:
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int i = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
-			ap->a_p->p_ucred, ap->a_p);
+			ap->a_l->l_proc->p_ucred, ap->a_l);
 	}
 
 	return error;
@@ -475,14 +475,14 @@ ffs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct ufsmount *ump = ip->i_ump;
 	int error;
 
-	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
+	if ((error = ufs_reclaim(vp, ap->a_l)) != 0)
 		return (error);
 	if (ip->i_din.ffs1_din != NULL) {
 		if (ump->um_fstype == UFS1)

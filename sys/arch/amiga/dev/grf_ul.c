@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.37 2004/02/13 11:36:10 wiz Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.38 2005/12/11 12:16:28 christos Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.37 2004/02/13 11:36:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.38 2005/12/11 12:16:28 christos Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0

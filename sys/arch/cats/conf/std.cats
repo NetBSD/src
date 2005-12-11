@@ -1,4 +1,4 @@
-#	$NetBSD: std.cats,v 1.6 2005/09/17 09:44:06 yamt Exp $
+#	$NetBSD: std.cats,v 1.7 2005/12/11 12:17:04 christos Exp $
 #
 # standard NetBSD/cats options
 

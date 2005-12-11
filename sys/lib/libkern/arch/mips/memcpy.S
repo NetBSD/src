@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.9 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.10 2005/12/11 12:24:42 christos Exp $	*/
 /* XXXX We need to define this in a way which supports multiple architectures */
 
 #include <machine/cdefs.h>	/* Get SZREG correct */

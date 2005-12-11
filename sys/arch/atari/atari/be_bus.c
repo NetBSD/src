@@ -1,4 +1,4 @@
-/*	$NetBSD: be_bus.c,v 1.6 2004/02/13 11:36:11 wiz Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.7 2005/12/11 12:16:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.6 2004/02/13 11:36:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.7 2005/12/11 12:16:54 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

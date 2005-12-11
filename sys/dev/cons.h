@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.23 2005/02/04 02:10:35 perry Exp $	*/
+/*	$NetBSD: cons.h,v 1.24 2005/12/11 12:20:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

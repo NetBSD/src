@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.9 2005/10/15 17:29:12 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.10 2005/12/11 12:21:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.9 2005/10/15 17:29:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.10 2005/12/11 12:21:20 christos Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -510,7 +510,7 @@ dkwedge_del(struct dkwedge_info *dkw)
 		if (sc->sc_parent->dk_rawopens-- == 1) {
 			KASSERT(sc->sc_parent->dk_rawvp != NULL);
 			(void) vn_close(sc->sc_parent->dk_rawvp, FREAD | FWRITE,
-					NOCRED, curproc);
+					NOCRED, curlwp);
 			sc->sc_parent->dk_rawvp = NULL;
 		}
 		sc->sc_dk.dk_openmask = 0;
@@ -582,7 +582,7 @@ dkwedge_delall(struct disk *pdk)
  *	in user space of the specified process.
  */
 int
-dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct proc *p)
+dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 {
 	struct uio uio;
 	struct iovec iov;
@@ -597,9 +597,9 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct proc *p)
 	uio.uio_iovcnt = 1;
 	uio.uio_offset = 0;
 	uio.uio_resid = dkwl->dkwl_bufsize;
-	uio.uio_segflg = p != NULL ? UIO_USERSPACE : UIO_SYSSPACE;
+	uio.uio_segflg = l != NULL ? UIO_USERSPACE : UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
-	uio.uio_procp = p;
+	uio.uio_lwp = l;
 
 	dkwl->dkwl_ncopied = 0;
 
@@ -810,7 +810,7 @@ dkwedge_discover(struct disk *pdk)
 		}
 	}
 
-	error = vn_close(vp, FREAD | FWRITE, NOCRED, curproc);
+	error = vn_close(vp, FREAD | FWRITE, NOCRED, curlwp);
 	if (error) {
 		aprint_error("%s: unable to close device, error = %d\n",
 		    pdk->dk_name, error);
@@ -870,7 +870,7 @@ dkwedge_lookup(dev_t dev)
  *	Open a wedge.
  */
 static int
-dkopen(dev_t dev, int flags, int fmt, struct proc *p)
+dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	struct vnode *vp;
@@ -934,7 +934,7 @@ dkopen(dev_t dev, int flags, int fmt, struct proc *p)
  *	Close a wedge.
  */
 static int
-dkclose(dev_t dev, int flags, int fmt, struct proc *p)
+dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	int error = 0;
@@ -955,7 +955,7 @@ dkclose(dev_t dev, int flags, int fmt, struct proc *p)
 		if (sc->sc_parent->dk_rawopens-- == 1) {
 			KASSERT(sc->sc_parent->dk_rawvp != NULL);
 			error = vn_close(sc->sc_parent->dk_rawvp,
-					 FREAD | FWRITE, NOCRED, p);
+					 FREAD | FWRITE, NOCRED, l);
 			sc->sc_parent->dk_rawvp = NULL;
 		}
 	}
@@ -1158,7 +1158,7 @@ dkwrite(dev_t dev, struct uio *uio, int flags)
  *	Perform an ioctl request on a wedge.
  */
 static int
-dkioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+dkioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	int error = 0;
@@ -1177,7 +1177,7 @@ dkioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		else
 			error = VOP_IOCTL(sc->sc_parent->dk_rawvp,
 					  cmd, data, flag,
-					  p != NULL ? p->p_ucred : NOCRED, p);
+					  l != NULL ? l->l_proc->p_ucred : NOCRED, l);
 		break;
 	case DIOCGWEDGEINFO:
 	    {

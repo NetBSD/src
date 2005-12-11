@@ -1,4 +1,4 @@
-/*	$NetBSD: qfont.c,v 1.7 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: qfont.c,v 1.8 2005/12/11 12:23:29 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1986
  *	The Regents of the University of California.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qfont.c,v 1.7 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qfont.c,v 1.8 2005/12/11 12:23:29 christos Exp $");
 
 unsigned short q_key[]={
 	 0x00  ,0x00  ,0x00  ,0x00  ,0x00  ,0x00  ,0x00  ,0x00  /*   0 */

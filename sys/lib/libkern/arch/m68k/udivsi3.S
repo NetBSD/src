@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.2 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.3 2005/12/11 12:24:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: udivsi3.S,v 1.2 2005/02/26 22:58:56 perry Exp $");
+	RCSID("$NetBSD: udivsi3.S,v 1.3 2005/12/11 12:24:42 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(__udivsi3)

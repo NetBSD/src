@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.23 2005/07/09 02:05:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.24 2005/12/11 12:22:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>

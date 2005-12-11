@@ -1,4 +1,4 @@
-/*	$NetBSD: dkcksum.c,v 1.4 2004/06/30 13:59:22 christos Exp $	*/
+/*	$NetBSD: dkcksum.c,v 1.5 2005/12/11 12:24:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.12 2005/02/26 22:58:57 perry Exp $	*/
+/*	$NetBSD: read.c,v 1.13 2005/12/11 12:24:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

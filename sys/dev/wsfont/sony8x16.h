@@ -1,4 +1,4 @@
-/*	$NetBSD: sony8x16.h,v 1.7 2005/04/22 14:46:01 yamt Exp $	*/
+/*	$NetBSD: sony8x16.h,v 1.8 2005/12/11 12:24:12 christos Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

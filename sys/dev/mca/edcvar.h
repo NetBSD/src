@@ -1,4 +1,4 @@
-/*	$NetBSD: edcvar.h,v 1.6 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: edcvar.h,v 1.7 2005/12/11 12:22:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

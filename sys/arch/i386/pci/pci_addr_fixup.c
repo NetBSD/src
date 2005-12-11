@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.15 2005/06/22 00:58:48 sekiya Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.16 2005/12/11 12:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.15 2005/06/22 00:58:48 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.16 2005/12/11 12:17:43 christos Exp $");
 
 #include "opt_pcibios.h"
 

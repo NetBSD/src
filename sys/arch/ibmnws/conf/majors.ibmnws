@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ibmnws,v 1.8 2005/09/17 14:38:39 yamt Exp $
+#	$NetBSD: majors.ibmnws,v 1.9 2005/12/11 12:17:50 christos Exp $
 #
 # Device majors for ibmnws
 #

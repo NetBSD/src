@@ -1,4 +1,4 @@
-/*	$NetBSD: gpioreg.h,v 1.2 2005/01/23 19:22:22 shige Exp $	*/
+/*	$NetBSD: gpioreg.h,v 1.3 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

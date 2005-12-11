@@ -1,4 +1,4 @@
-/*	$NetBSD: mbavar.h,v 1.10 2005/10/15 17:29:11 yamt Exp $ */
+/*	$NetBSD: mbavar.h,v 1.11 2005/12/11 12:19:35 christos Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.

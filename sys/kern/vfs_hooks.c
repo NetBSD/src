@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_hooks.c,v 1.1 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: vfs_hooks.c,v 1.2 2005/12/11 12:24:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.1 2005/09/23 12:10:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.2 2005/12/11 12:24:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>

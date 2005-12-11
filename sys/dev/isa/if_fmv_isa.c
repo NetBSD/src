@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isa.c,v 1.4 2005/01/09 16:59:41 tsutsui Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.5 2005/12/11 12:22:02 christos Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.4 2005/01/09 16:59:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.5 2005/12/11 12:22:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

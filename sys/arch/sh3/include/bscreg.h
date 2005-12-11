@@ -1,4 +1,4 @@
-/*	$NetBSD: bscreg.h,v 1.5 2005/06/29 16:25:58 christos Exp $	*/
+/*	$NetBSD: bscreg.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.

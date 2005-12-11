@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.52 2005/10/23 15:14:39 peter Exp $
+#	$NetBSD: files.hpcarm,v 1.53 2005/12/11 12:17:30 christos Exp $
 #
 # First try for arm-specific configuration info
 #

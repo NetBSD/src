@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 2003/08/07 16:27:48 agc Exp $	*/
+/*	$NetBSD: clock.c,v 1.18 2005/12/11 12:17:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2003/08/07 16:27:48 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2005/12/11 12:17:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

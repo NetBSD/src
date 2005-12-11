@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.6 2005/05/31 13:53:15 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.7 2005/12/11 12:19:48 christos Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.6 2005/05/31 13:53:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7 2005/12/11 12:19:48 christos Exp $");
 
 #include "opt_cputype.h"
 

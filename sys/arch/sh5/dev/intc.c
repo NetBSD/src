@@ -1,4 +1,4 @@
-/*	$NetBSD: intc.c,v 1.9 2003/07/15 03:35:58 lukem Exp $	*/
+/*	$NetBSD: intc.c,v 1.10 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intc.c,v 1.9 2003/07/15 03:35:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intc.c,v 1.10 2005/12/11 12:19:00 christos Exp $");
 
 #include "opt_sh5_intc.h"
 

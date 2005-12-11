@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.65 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.66 2005/12/11 12:22:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.65 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.66 2005/12/11 12:22:02 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

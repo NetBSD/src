@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarmreg.h,v 1.4 2005/08/14 03:05:00 joff Exp $	*/
+/*	$NetBSD: tsarmreg.h,v 1.5 2005/12/11 12:17:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off

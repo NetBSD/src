@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.3 2005/10/17 03:08:24 simonb Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.4 2005/12/11 12:23:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.3 2005/10/17 03:08:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.4 2005/12/11 12:23:56 christos Exp $");
 
 /*
  *

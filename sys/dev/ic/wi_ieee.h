@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.23 2005/02/27 00:27:03 perry Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.24 2005/12/11 12:21:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999

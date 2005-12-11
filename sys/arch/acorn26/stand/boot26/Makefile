@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/10/26 07:25:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2005/12/11 12:16:05 christos Exp $
 
 PROG=		boot26
 PROGSOURCE=	rmheader.S rmvers.c srt0.S boot26.c start.S

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.h,v 1.5 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_priq.h,v 1.6 2005/12/11 12:16:03 christos Exp $	*/
 /*	$KAME: altq_priq.h,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000

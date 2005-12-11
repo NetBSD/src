@@ -1,4 +1,4 @@
-#       $NetBSD: files.ixp12x0,v 1.5 2003/07/13 02:48:41 igy Exp $
+#       $NetBSD: files.ixp12x0,v 1.6 2005/12/11 12:16:50 christos Exp $
 #
 # Configuration info for Intel IXP12x0 CPU support
 #

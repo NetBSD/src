@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2004/05/08 21:51:48 kleink Exp $
+#	$NetBSD: Makefile,v 1.21 2005/12/11 12:17:19 christos Exp $
 
 INCSDIR= /usr/include/hp300
 

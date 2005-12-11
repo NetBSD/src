@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.5 2003/10/25 16:33:00 chs Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.6 2005/12/11 12:18:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

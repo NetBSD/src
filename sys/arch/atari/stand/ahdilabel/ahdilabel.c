@@ -1,4 +1,4 @@
-/* $NetBSD: ahdilabel.c,v 1.5 2004/11/12 09:52:15 he Exp $ */
+/* $NetBSD: ahdilabel.c,v 1.6 2005/12/11 12:17:00 christos Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.14 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.15 2005/12/11 12:24:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

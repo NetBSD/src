@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 2005/12/11 12:17:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass

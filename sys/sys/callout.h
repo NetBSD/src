@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.21 2005/03/04 05:51:41 mycroft Exp $	*/
+/*	$NetBSD: callout.h,v 1.22 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.

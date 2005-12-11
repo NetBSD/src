@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.46 2005/11/05 16:01:52 bouyer Exp $	*/
+/*	$NetBSD: be.c,v 1.47 2005/12/11 12:23:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.46 2005/11/05 16:01:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.47 2005/12/11 12:23:44 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"

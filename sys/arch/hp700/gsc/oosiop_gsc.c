@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop_gsc.c,v 1.3 2003/11/20 03:58:47 chs Exp $	*/
+/*	$NetBSD: oosiop_gsc.c,v 1.4 2005/12/11 12:17:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop_gsc.c,v 1.3 2003/11/20 03:58:47 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop_gsc.c,v 1.4 2005/12/11 12:17:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

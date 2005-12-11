@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.11 2005/06/04 20:33:57 he Exp $	*/
+/*	$NetBSD: extintr.c,v 1.12 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.11 2005/06/04 20:33:57 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.12 2005/12/11 12:18:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

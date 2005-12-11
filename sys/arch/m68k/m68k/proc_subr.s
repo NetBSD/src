@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_subr.s,v 1.6 2003/08/07 16:28:18 agc Exp $	*/
+/*	$NetBSD: proc_subr.s,v 1.7 2005/12/11 12:17:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993

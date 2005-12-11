@@ -1,4 +1,4 @@
-/*	$NetBSD: xebec.bnf,v 1.6 2005/02/11 06:21:21 simonb Exp $	*/
+/*	$NetBSD: xebec.bnf,v 1.7 2005/12/11 12:25:16 christos Exp $	*/
 
 #include "main.h"
 #include "sets.h"

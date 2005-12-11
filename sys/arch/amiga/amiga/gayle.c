@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle.c,v 1.5 2005/06/13 20:44:24 jmc Exp $	*/
+/*	$NetBSD: gayle.c,v 1.6 2005/12/11 12:16:26 christos Exp $	*/
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle.c,v 1.5 2005/06/13 20:44:24 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle.c,v 1.6 2005/12/11 12:16:26 christos Exp $");
 
 /*
  * Gayle management routines

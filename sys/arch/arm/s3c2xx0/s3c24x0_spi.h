@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_spi.h,v 1.1 2004/02/14 07:19:51 bsh Exp $ */
+/* $NetBSD: s3c24x0_spi.h,v 1.2 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec corporation.  All rights reserved.

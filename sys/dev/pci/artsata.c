@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.7 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: artsata.c,v 1.8 2005/12/11 12:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

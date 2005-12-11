@@ -1,4 +1,4 @@
-/*	$NetBSD: timerreg.h,v 1.3 2004/02/24 15:12:51 wiz Exp $	*/
+/*	$NetBSD: timerreg.h,v 1.4 2005/12/11 12:18:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

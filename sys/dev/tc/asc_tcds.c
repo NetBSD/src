@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.13 2005/05/22 15:54:46 christos Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.14 2005/12/11 12:24:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.13 2005/05/22 15:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.14 2005/12/11 12:24:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

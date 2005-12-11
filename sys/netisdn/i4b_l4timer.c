@@ -27,7 +27,7 @@
  *	i4b_l4timer.c - timer and timeout handling for layer 4
  *	--------------------------------------------------------
  *
- *	$Id: i4b_l4timer.c,v 1.5 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_l4timer.c,v 1.6 2005/12/11 12:25:06 christos Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4timer.c,v 1.5 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4timer.c,v 1.6 2005/12/11 12:25:06 christos Exp $");
 
 #include "isdn.h"
 

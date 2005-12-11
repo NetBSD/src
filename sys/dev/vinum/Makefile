@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/10/10 03:07:27 grog Exp $
+#	$NetBSD: Makefile,v 1.2 2005/12/11 12:24:07 christos Exp $
 
 INCSDIR= /usr/include/dev/vinum
 

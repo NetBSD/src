@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.h,v 1.11 2005/04/12 13:11:45 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.h,v 1.12 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.12 2005/05/31 00:45:02 chs Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.13 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.

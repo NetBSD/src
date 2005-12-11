@@ -1,4 +1,4 @@
-/*	$NetBSD: wevar.h,v 1.3 2005/04/03 10:56:59 jdolecek Exp $	*/
+/*	$NetBSD: wevar.h,v 1.4 2005/12/11 12:21:29 christos Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.

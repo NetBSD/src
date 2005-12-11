@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.13 2004/08/23 20:55:03 nathanw Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.14 2005/12/11 12:18:46 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.13 2004/08/23 20:55:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.14 2005/12/11 12:18:46 christos Exp $");
 
 #include "opt_ddb.h"
 

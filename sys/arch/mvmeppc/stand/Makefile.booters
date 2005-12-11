@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.5 2004/06/14 22:25:38 he Exp $
+#	$NetBSD: Makefile.booters,v 1.6 2005/12/11 12:18:20 christos Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec

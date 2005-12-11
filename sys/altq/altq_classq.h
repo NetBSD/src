@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_classq.h,v 1.4 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_classq.h,v 1.5 2005/12/11 12:16:03 christos Exp $	*/
 /*	$KAME: altq_classq.h,v 1.3 2000/07/25 10:12:29 kjc Exp $	*/
 
 /*

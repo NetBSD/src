@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2005/07/23 16:11:18 drochner Exp $
+#	$NetBSD: Makefile,v 1.4 2005/12/11 12:24:47 christos Exp $
 
 SUBDIR=		vnd
 

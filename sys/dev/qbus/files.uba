@@ -1,4 +1,4 @@
-#	$NetBSD: files.uba,v 1.15 2003/08/29 13:50:45 ragge Exp $
+#	$NetBSD: files.uba,v 1.16 2005/12/11 12:23:29 christos Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. Unibus and Q22 bus.

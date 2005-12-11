@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2005/06/28 20:55:55 junyoung Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 2005/12/11 12:18:20 christos Exp $	*/
 
 #include <sys/param.h>
 #include <lib/libsa/stand.h>

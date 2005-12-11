@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_enc_586.S,v 1.3 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: bf_enc_586.S,v 1.4 2005/12/11 12:20:52 christos Exp $	*/
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.

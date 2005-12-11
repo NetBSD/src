@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.17 2005/01/13 15:14:03 kent Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.18 2005/12/11 12:22:16 christos Exp $ */
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.17 2005/01/13 15:14:03 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.18 2005/12/11 12:22:16 christos Exp $");
 
 #include "mpu_ym.h"
 

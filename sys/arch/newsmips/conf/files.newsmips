@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.24 2003/10/25 04:07:28 tsutsui Exp $
+#	$NetBSD: files.newsmips,v 1.25 2005/12/11 12:18:24 christos Exp $
 
 # NEWSMIPS-specific configuration info
 

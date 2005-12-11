@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.28 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.29 2005/12/11 12:25:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.28 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.29 2005/12/11 12:25:12 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"

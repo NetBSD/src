@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.24 2005/08/26 13:19:38 drochner Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.25 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.24 2005/08/26 13:19:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.25 2005/12/11 12:19:37 christos Exp $");
 
 #include "locators.h"
 

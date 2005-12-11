@@ -1,4 +1,4 @@
-/*	$NetBSD: apcireg.h,v 1.1 2003/11/08 11:19:30 tsutsui Exp $	*/
+/*	$NetBSD: apcireg.h,v 1.2 2005/12/11 12:17:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Smith.  All rights reserved.

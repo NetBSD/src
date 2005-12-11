@@ -1,4 +1,4 @@
-/*	$NetBSD: raster.h,v 1.6 2003/08/07 16:31:20 agc Exp $ */
+/*	$NetBSD: raster.h,v 1.7 2005/12/11 12:23:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993

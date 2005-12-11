@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.5 2003/08/07 16:26:53 agc Exp $	*/
+/*	$NetBSD: limits.h,v 1.6 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.

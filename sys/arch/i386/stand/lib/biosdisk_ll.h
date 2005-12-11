@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.13 2005/06/29 18:50:38 junyoung Exp $	 */
+/*	$NetBSD: biosdisk_ll.h,v 1.14 2005/12/11 12:17:48 christos Exp $	 */
 
 /*
  * Copyright (c) 1996

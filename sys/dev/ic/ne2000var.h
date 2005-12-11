@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.16 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.17 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.

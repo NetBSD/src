@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.55 2005/06/28 04:06:52 thorpej Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.56 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.55 2005/06/28 04:06:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.56 2005/12/11 12:25:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

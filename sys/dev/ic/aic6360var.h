@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360var.h,v 1.11 2004/12/07 22:23:45 thorpej Exp $	*/
+/*	$NetBSD: aic6360var.h,v 1.12 2005/12/11 12:21:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.

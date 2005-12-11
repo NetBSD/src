@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.9 2003/09/01 12:28:03 dsl Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.10 2005/12/11 12:24:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

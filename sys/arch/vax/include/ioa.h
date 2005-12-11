@@ -1,4 +1,4 @@
-/*	$NetBSD: ioa.h,v 1.10 2003/08/07 16:30:09 agc Exp $	*/
+/*	$NetBSD: ioa.h,v 1.11 2005/12/11 12:19:34 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.

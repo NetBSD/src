@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.27 2005/06/28 20:55:21 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.28 2005/12/11 12:23:56 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.27 2005/06/28 20:55:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.28 2005/12/11 12:23:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -741,7 +741,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 
 
 int
-cgsixopen(dev_t dev, int flags, int mode, struct proc *p)
+cgsixopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -751,7 +751,7 @@ cgsixopen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-cgsixclose(dev_t dev, int flags, int mode, struct proc *p)
+cgsixclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 
@@ -770,7 +770,7 @@ cgsixclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-cgsixioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+cgsixioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 	union cursor_cmap tcm;

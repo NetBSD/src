@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.18 2005/10/23 19:40:20 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.19 2005/12/11 12:24:25 christos Exp $	*/
 /*	$OpenBSD: pf.c,v 1.483 2005/03/15 17:38:43 dhartmei Exp $ */
 
 /*

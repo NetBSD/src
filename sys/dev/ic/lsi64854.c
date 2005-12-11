@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.26 2005/05/31 00:46:05 christos Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.27 2005/12/11 12:21:27 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.26 2005/05/31 00:46:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.27 2005/12/11 12:21:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

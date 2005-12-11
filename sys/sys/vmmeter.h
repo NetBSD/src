@@ -1,4 +1,4 @@
-/*	$NetBSD: vmmeter.h,v 1.17 2003/08/07 16:34:22 agc Exp $	*/
+/*	$NetBSD: vmmeter.h,v 1.18 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993

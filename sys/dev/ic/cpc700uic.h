@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700uic.h,v 1.2 2003/07/08 10:06:30 itojun Exp $	*/
+/*	$NetBSD: cpc700uic.h,v 1.3 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

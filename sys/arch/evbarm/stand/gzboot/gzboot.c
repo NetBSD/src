@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.8 2004/03/24 17:06:58 drochner Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.9 2005/12/11 12:17:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.

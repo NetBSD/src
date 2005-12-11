@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.24 2005/01/26 20:51:47 kleink Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.25 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.24 2005/01/26 20:51:47 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.25 2005/12/11 12:18:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

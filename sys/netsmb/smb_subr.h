@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.13 2005/12/11 00:06:21 elad Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.14 2005/12/11 12:25:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -94,7 +94,7 @@ typedef	smb_unichar	*smb_uniptr;
  */
 struct smb_cred {
 	/* struct thread *	scr_td; */
-	struct proc *	scr_p;
+	struct lwp *	scr_l;
 	struct ucred *	scr_cred;
 };
 
@@ -104,8 +104,8 @@ struct mbchain;
 struct smb_vc;
 struct smb_rq;
 
-void smb_makescred(struct smb_cred *scred, struct proc *p, struct ucred *cred);
-int  smb_proc_intr(struct proc *);
+void smb_makescred(struct smb_cred *scred, struct lwp *l, struct ucred *cred);
+int  smb_proc_intr(struct lwp *);
 char *smb_strdup(const char *s);
 char *smb_strdupin(char *s, int maxlen);
 void *smb_memdupin(void *umem, int len);

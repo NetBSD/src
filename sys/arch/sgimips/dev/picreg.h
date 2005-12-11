@@ -1,4 +1,4 @@
-/*	$NetBSD: picreg.h,v 1.3 2005/10/18 11:31:12 tsutsui Exp $	*/
+/*	$NetBSD: picreg.h,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Steve Rumble

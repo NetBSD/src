@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.2 2004/10/14 01:45:54 snj Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.3 2005/12/11 12:17:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.2 2004/10/14 01:45:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.3 2005/12/11 12:17:51 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

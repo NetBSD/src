@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.50 2005/09/04 10:41:36 isaki Exp $
+# $NetBSD: DISKLESS,v 1.51 2005/12/11 12:19:20 christos Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)

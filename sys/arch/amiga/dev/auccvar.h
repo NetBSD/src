@@ -1,4 +1,4 @@
-/*	$NetBSD: auccvar.h,v 1.5 2005/01/15 15:19:51 kent Exp $	*/
+/*	$NetBSD: auccvar.h,v 1.6 2005/12/11 12:16:28 christos Exp $	*/
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.

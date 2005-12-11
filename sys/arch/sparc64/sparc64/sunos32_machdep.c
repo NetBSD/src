@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.17 2005/10/27 20:43:30 martin Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.18 2005/12/11 12:19:15 christos Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.17 2005/10/27 20:43:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.18 2005/12/11 12:19:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"

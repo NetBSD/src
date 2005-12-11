@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.31 2005/06/03 18:55:12 martin Exp $	*/
+/*	$NetBSD: console.c,v 1.32 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.31 2005/06/03 18:55:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.32 2005/12/11 12:18:58 christos Exp $");
 
 #include "opt_kgdb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.10 2005/02/28 06:44:55 sekiya Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.11 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

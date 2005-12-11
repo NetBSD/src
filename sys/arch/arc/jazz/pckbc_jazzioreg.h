@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_jazzioreg.h,v 1.3 2003/08/07 16:26:51 agc Exp $	*/
+/*	$NetBSD: pckbc_jazzioreg.h,v 1.4 2005/12/11 12:16:39 christos Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 
 /*-

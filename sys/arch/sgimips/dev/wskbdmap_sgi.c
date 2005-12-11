@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sgi.c,v 1.3 2005/10/18 11:31:12 tsutsui Exp $	*/
+/*	$NetBSD: wskbdmap_sgi.c,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sgi.c,v 1.3 2005/10/18 11:31:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sgi.c,v 1.4 2005/12/11 12:18:52 christos Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

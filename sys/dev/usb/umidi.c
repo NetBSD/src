@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.23 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: umidi.c,v 1.24 2005/12/11 12:24:01 christos Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.23 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.24 2005/12/11 12:24:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.21 2005/06/07 12:02:46 he Exp $	*/
+/*	$NetBSD: rtc.c,v 1.22 2005/12/11 12:17:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.21 2005/06/07 12:02:46 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.22 2005/12/11 12:17:34 christos Exp $");
 
 #include "opt_vr41xx.h"
 

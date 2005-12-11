@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.19 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.20 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

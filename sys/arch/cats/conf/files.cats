@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.31 2004/07/08 22:07:48 drochner Exp $
+#	$NetBSD: files.cats,v 1.32 2005/12/11 12:17:04 christos Exp $
 #
 # CATS-specific configuration info
 #

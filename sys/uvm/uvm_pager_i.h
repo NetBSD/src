@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager_i.h,v 1.14 2005/06/28 05:25:42 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager_i.h,v 1.15 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  *

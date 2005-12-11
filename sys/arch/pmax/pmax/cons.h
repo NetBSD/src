@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.7 2003/12/13 23:04:38 ad Exp $	*/
+/*	$NetBSD: cons.h,v 1.8 2005/12/11 12:18:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

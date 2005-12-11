@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.19 2005/08/26 13:19:36 drochner Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.20 2005/12/11 12:17:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.19 2005/08/26 13:19:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.20 2005/12/11 12:17:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

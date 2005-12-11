@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.3 2005/01/24 02:38:15 joff Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.4 2005/12/11 12:17:11 christos Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.3 2005/01/24 02:38:15 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.4 2005/12/11 12:17:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

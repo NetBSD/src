@@ -1,4 +1,4 @@
-/*	$NetBSD: intcreg.h,v 1.9 2005/08/16 11:32:26 nonaka Exp $	*/
+/*	$NetBSD: intcreg.h,v 1.10 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: segments.h,v 1.2 2005/12/11 12:19:48 christos Exp $	*/
 /*	NetBSD: segments.h,v 1.41 2004/03/05 11:33:27 junyoung Exp 	*/
 
 /*-

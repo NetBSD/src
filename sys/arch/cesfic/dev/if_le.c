@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 2003/09/28 22:00:26 cl Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6 2005/12/11 12:17:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.5 2003/09/28 22:00:26 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.6 2005/12/11 12:17:05 christos Exp $");
 
 #include "opt_inet.h"
 

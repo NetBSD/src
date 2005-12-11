@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6var.h,v 1.8 2005/06/22 06:15:51 dyoung Exp $	*/
+/*	$NetBSD: smc93cx6var.h,v 1.9 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Interface to the 93C46 serial EEPROM that is used to store BIOS

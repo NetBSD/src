@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.4 2004/03/13 17:52:02 bjh21 Exp $ */
+/*	$NetBSD: consinit.c,v 1.5 2005/12/11 12:16:50 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4 2004/03/13 17:52:02 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5 2005/12/11 12:16:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

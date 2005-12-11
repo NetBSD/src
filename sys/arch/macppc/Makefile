@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2005/03/02 04:49:59 dyoung Exp $
+#	$NetBSD: Makefile,v 1.6 2005/12/11 12:18:03 christos Exp $
 
 # Makefile for macppc tags file
 

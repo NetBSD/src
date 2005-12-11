@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.6 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.7 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Mach Operating System

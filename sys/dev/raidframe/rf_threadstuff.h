@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.20 2003/12/29 06:30:42 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.21 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

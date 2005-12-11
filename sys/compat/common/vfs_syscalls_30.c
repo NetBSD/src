@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.5 2005/09/13 01:42:32 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.6 2005/12/11 12:19:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.5 2005/09/13 01:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.6 2005/12/11 12:19:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,17 +98,16 @@ compat_30_sys___stat13(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(struct stat13 *) ub;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct stat13 osb;
 	int error;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return error;
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return error;
@@ -129,17 +128,16 @@ compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(struct stat13 *) ub;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct stat13 osb;
 	int error;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return error;
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return error;
@@ -171,8 +169,8 @@ compat_30_sys___fstat13(struct lwp *l, void *v, register_t *retval)
 		return EBADF;
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &sb, p);
-	FILE_UNUSE(fp, p);
+	error = (*fp->f_ops->fo_stat)(fp, &sb, l);
+	FILE_UNUSE(fp, l);
 
 	if (error)
 		return error;
@@ -234,7 +232,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -308,6 +306,6 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }

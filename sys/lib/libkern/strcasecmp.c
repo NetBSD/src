@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.2 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.3 2005/12/11 12:24:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: strcasecmp.c,v 1.2 2005/02/26 22:58:56 perry Exp $";
+static char *rcsid = "$NetBSD: strcasecmp.c,v 1.3 2005/12/11 12:24:37 christos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_KERNEL) || defined(_STANDALONE)

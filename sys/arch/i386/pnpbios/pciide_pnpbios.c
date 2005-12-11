@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.19 2004/08/20 06:39:38 thorpej Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.20 2005/12/11 12:17:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.19 2004/08/20 06:39:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.20 2005/12/11 12:17:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

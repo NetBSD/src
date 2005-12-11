@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.22 2005/07/10 22:27:20 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.23 2005/12/11 12:19:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.22 2005/07/10 22:27:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.23 2005/12/11 12:19:00 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -491,7 +491,7 @@ child_return(void *arg)
 	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 #endif
 }
 

@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsmemory.c,v 1.11 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsmemory.c,v 1.12 2005/12/11 12:21:03 christos Exp $");
 
 #define __RSMEMORY_C__
 

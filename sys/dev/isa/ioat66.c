@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.11 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.12 2005/12/11 12:22:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.11 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.12 2005/12/11 12:22:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

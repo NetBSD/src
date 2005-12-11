@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100var.h,v 1.10 2005/05/29 21:56:35 christos Exp $ */
+/* $NetBSD: wsemul_vt100var.h,v 1.11 2005/12/11 12:24:12 christos Exp $ */
 
 /*
  * Copyright (c) 1998

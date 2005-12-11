@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.5 2003/08/04 12:28:49 bsh Exp $ */
+/* $NetBSD: sscom_var.h,v 1.6 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited

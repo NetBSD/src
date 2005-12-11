@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.8 2004/12/30 23:18:09 rumble Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.9 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni

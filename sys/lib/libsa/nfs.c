@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.37 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: nfs.c,v 1.38 2005/12/11 12:24:46 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.4 2005/08/26 13:19:37 drochner Exp $	*/
+/*	$NetBSD: ebus.c,v 1.5 2005/12/11 12:18:34 christos Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

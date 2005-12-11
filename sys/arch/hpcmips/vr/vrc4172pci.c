@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.12 2004/08/30 15:05:17 drochner Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.13 2005/12/11 12:17:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.12 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.13 2005/12/11 12:17:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

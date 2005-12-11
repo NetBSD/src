@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.16 2005/10/15 00:41:48 xtraeme Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.17 2005/12/11 12:21:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

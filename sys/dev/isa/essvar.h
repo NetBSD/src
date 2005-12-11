@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.23 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: essvar.h,v 1.24 2005/12/11 12:22:02 christos Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.23 $ (SHARK) $Date: 2005/02/27 00:27:17 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.24 $ (SHARK) $Date: 2005/12/11 12:22:02 $
 **
 **++
 **

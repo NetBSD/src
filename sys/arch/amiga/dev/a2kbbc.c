@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.16 2005/06/13 21:34:16 jmc Exp $ */
+/*	$NetBSD: a2kbbc.c,v 1.17 2005/12/11 12:16:27 christos Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.16 2005/06/13 21:34:16 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.17 2005/12/11 12:16:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

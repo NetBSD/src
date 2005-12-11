@@ -1,4 +1,4 @@
-#	$NetBSD: majors.luna68k,v 1.15 2005/09/17 14:38:39 yamt Exp $
+#	$NetBSD: majors.luna68k,v 1.16 2005/12/11 12:17:52 christos Exp $
 #
 # Device majors for luna68k
 #

@@ -1,4 +1,4 @@
-#	$NetBSD: files.bluetooth,v 1.4 2004/06/22 10:37:00 soren Exp $
+#	$NetBSD: files.bluetooth,v 1.5 2005/12/11 12:21:15 christos Exp $
 
 define	btbus { }
 

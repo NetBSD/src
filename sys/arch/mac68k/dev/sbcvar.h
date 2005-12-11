@@ -1,4 +1,4 @@
-/*	$NetBSD: sbcvar.h,v 1.11 2005/03/05 17:34:06 chs Exp $	*/
+/*	$NetBSD: sbcvar.h,v 1.12 2005/12/11 12:18:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.

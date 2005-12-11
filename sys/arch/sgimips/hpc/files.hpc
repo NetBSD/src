@@ -1,4 +1,4 @@
-# $NetBSD: files.hpc,v 1.8 2003/11/22 03:58:52 sekiya Exp $
+# $NetBSD: files.hpc,v 1.9 2005/12/11 12:18:53 christos Exp $
 
 device	sq: arp, ether, ifnet
 attach	sq at hpc

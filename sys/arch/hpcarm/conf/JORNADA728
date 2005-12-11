@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA728,v 1.6 2004/03/04 19:57:59 jdc Exp $
+#	$NetBSD: JORNADA728,v 1.7 2005/12/11 12:17:30 christos Exp $
 #
 #	JORNADA -- Windows-CE based jornada 728
 #		   this is the same as the jornada 720 config,

@@ -1,4 +1,4 @@
-/* $NetBSD: oosiop_jazzio.c,v 1.3 2005/01/22 07:35:34 tsutsui Exp $ */
+/* $NetBSD: oosiop_jazzio.c,v 1.4 2005/12/11 12:16:39 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.3 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.4 2005/12/11 12:16:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

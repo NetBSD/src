@@ -1,4 +1,4 @@
-/* $NetBSD: wdtreg.h,v 1.5 2005/07/03 22:18:32 uwe Exp $ */
+/* $NetBSD: wdtreg.h,v 1.6 2005/12/11 12:18:59 christos Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.

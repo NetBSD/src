@@ -1,4 +1,4 @@
-# $NetBSD: msgbuf,v 1.3 2005/02/26 22:58:55 perry Exp $
+# $NetBSD: msgbuf,v 1.4 2005/12/11 12:24:29 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.

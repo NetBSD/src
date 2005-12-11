@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.10 2005/06/01 18:32:08 drochner Exp $	*/
+/*	$NetBSD: promcall.c,v 1.11 2005/12/11 12:18:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.10 2005/06/01 18:32:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.11 2005/12/11 12:18:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

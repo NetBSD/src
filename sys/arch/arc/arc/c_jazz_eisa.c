@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.11 2005/06/03 12:08:50 tsutsui Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.12 2005/12/11 12:16:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.11 2005/06/03 12:08:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.12 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

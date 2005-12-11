@@ -1,4 +1,4 @@
-/*	$NetBSD: cprc.c,v 1.8 2005/06/01 10:55:07 scw Exp $	*/
+/*	$NetBSD: cprc.c,v 1.9 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprc.c,v 1.8 2005/06/01 10:55:07 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprc.c,v 1.9 2005/12/11 12:19:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

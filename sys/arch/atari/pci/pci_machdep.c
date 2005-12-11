@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.42 2004/08/30 15:05:16 drochner Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.43 2005/12/11 12:16:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.42 2004/08/30 15:05:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.43 2005/12/11 12:16:59 christos Exp $");
 
 #include "opt_mbtype.h"
 

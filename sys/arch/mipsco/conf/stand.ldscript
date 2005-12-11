@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.ldscript,v 1.3 2005/01/20 09:14:36 he Exp $	*/
+/*	$NetBSD: stand.ldscript,v 1.4 2005/12/11 12:18:13 christos Exp $	*/
 
 /*  ldscript for NetBSD/mipsco standalone bootstraps */
 OUTPUT_FORMAT("elf32-tradbigmips", "elf32-tradbigmips", "elf32-tradlittlemips")

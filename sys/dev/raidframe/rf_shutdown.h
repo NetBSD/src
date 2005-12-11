@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.h,v 1.6 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_shutdown.h,v 1.7 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * rf_shutdown.h
  */

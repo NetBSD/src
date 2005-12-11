@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.5 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: memc.c,v 1.6 2005/12/11 12:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.5 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.6 2005/12/11 12:22:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

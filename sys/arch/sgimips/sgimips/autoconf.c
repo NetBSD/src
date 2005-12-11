@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2005/06/03 19:02:33 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2005/06/03 19:02:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2005/12/11 12:18:58 christos Exp $");
 
 #include "opt_ddb.h"
 

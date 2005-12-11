@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2005/09/24 18:34:59 elad Exp $
+# $NetBSD: Makefile,v 1.3 2005/12/11 12:20:47 christos Exp $
 
 SUBDIR=	sha2 ripemd160
 

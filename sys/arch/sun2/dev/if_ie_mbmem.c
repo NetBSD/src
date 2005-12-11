@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mbmem.c,v 1.8 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: if_ie_mbmem.c,v 1.9 2005/12/11 12:19:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mbmem.c,v 1.8 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mbmem.c,v 1.9 2005/12/11 12:19:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

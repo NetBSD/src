@@ -1,4 +1,4 @@
-/*	$NetBSD: ntohs.S,v 1.5 2003/08/07 16:32:16 agc Exp $	*/
+/*	$NetBSD: ntohs.S,v 1.6 2005/12/11 12:24:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)ntohs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ntohs.S,v 1.5 2003/08/07 16:32:16 agc Exp $")
+	RCSID("$NetBSD: ntohs.S,v 1.6 2005/12/11 12:24:42 christos Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.10 2003/08/07 16:34:01 agc Exp $	*/
+/*	$NetBSD: dir.h,v 1.11 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993

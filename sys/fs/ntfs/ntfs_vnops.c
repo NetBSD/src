@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.26 2005/11/02 12:38:58 yamt Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.27 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.26 2005/11/02 12:38:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.27 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ ntfs_getattr(ap)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
@@ -451,7 +451,7 @@ ntfs_access(ap)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
@@ -530,7 +530,7 @@ ntfs_open(ap)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap;
 {
 #ifdef NTFS_DEBUG
@@ -559,7 +559,7 @@ ntfs_close(ap)
 		struct vnode *a_vp;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap;
 {
 #ifdef NTFS_DEBUG
@@ -748,7 +748,7 @@ ntfs_lookup(ap)
 	    (int)cnp->cn_namelen, cnp->cn_nameptr, cnp->cn_namelen,
 	    (unsigned long long)dip->i_number, lockparent, wantparent));
 
-	error = VOP_ACCESS(dvp, VEXEC, cred, cnp->cn_proc);
+	error = VOP_ACCESS(dvp, VEXEC, cred, cnp->cn_lwp);
 	if(error)
 		return (error);
 
@@ -845,7 +845,7 @@ ntfs_fsync(ap)
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap;
 {
 

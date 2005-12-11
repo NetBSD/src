@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.2 2005/03/14 21:50:59 fvdl Exp $	*/
+/*	$NetBSD: copy.S,v 1.3 2005/12/11 12:16:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.

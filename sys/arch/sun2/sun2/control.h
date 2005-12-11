@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.4 2004/04/23 02:58:28 simonb Exp $	*/
+/*	$NetBSD: control.h,v 1.5 2005/12/11 12:19:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

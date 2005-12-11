@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacreg.h,v 1.4 2005/02/27 00:27:01 perry Exp $ */
+/*      $NetBSD: lemacreg.h,v 1.5 2005/12/11 12:21:27 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>

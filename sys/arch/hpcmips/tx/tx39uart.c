@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.12 2005/08/26 13:19:36 drochner Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.13 2005/12/11 12:17:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.12 2005/08/26 13:19:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.13 2005/12/11 12:17:34 christos Exp $");
 
 #include "opt_tx39uart_debug.h"
 

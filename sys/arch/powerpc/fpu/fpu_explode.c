@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.5 2003/10/28 15:28:24 chs Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.6 2005/12/11 12:18:42 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.5 2003/10/28 15:28:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.6 2005/12/11 12:18:42 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

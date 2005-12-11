@@ -1,4 +1,4 @@
-/*	$NetBSD: ppiioctl.h,v 1.5 2003/08/07 16:27:34 agc Exp $	*/
+/*	$NetBSD: ppiioctl.h,v 1.6 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

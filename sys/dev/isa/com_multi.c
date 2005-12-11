@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.20 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.21 2005/12/11 12:22:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.20 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.21 2005/12/11 12:22:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

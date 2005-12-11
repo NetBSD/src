@@ -1,4 +1,4 @@
-/*	$NetBSD: machfbreg.h,v 1.2 2005/10/03 10:26:24 macallan Exp $	*/
+/*	$NetBSD: machfbreg.h,v 1.3 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.

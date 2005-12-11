@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.4 2005/08/26 11:20:33 drochner Exp $	*/
+/*	$NetBSD: firewire.c,v 1.5 2005/12/11 12:22:02 christos Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -1471,7 +1471,7 @@ static void
 fw_kthread_create0(void *arg)
 {
 	struct firewire_comm *fc = (struct firewire_comm *)arg;
-	fw_proc *p;
+	fw_thread *p;
 
 	config_pending_incr();
 

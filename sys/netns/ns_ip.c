@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.39 2004/04/21 18:40:41 itojun Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.40 2005/12/11 12:25:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.39 2004/04/21 18:40:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.40 2005/12/11 12:25:16 christos Exp $");
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 

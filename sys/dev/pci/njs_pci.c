@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_pci.c,v 1.2 2004/08/26 18:38:19 thorpej Exp $	*/
+/*	$NetBSD: njs_pci.c,v 1.3 2005/12/11 12:22:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.2 2004/08/26 18:38:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.3 2005/12/11 12:22:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

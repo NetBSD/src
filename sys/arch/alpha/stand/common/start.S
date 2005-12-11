@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.13 2003/08/29 12:58:39 dsl Exp $ */
+/* $NetBSD: start.S,v 1.14 2005/12/11 12:16:20 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

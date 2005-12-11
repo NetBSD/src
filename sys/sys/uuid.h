@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid.h,v 1.2 2004/08/30 02:56:03 thorpej Exp $	*/
+/*	$NetBSD: uuid.h,v 1.3 2005/12/11 12:25:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar

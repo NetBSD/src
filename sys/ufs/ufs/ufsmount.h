@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.24 2005/11/02 12:39:14 yamt Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.25 2005/12/11 12:25:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -112,7 +112,7 @@ struct ufs_ops {
 	int (*uo_update)(struct vnode *, const struct timespec *,
 	    const struct timespec *, int);
 	int (*uo_truncate)(struct vnode *, off_t, int, struct ucred *,
-	    struct proc *);
+	    struct lwp *);
 	int (*uo_valloc)(struct vnode *, int, struct ucred *, struct vnode **);
 	int (*uo_vfree)(struct vnode *, ino_t, int);
 	int (*uo_balloc)(struct vnode *, off_t, int, struct ucred *, int,

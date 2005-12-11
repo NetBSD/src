@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.9 2003/12/26 13:43:29 aymeric Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.10 2005/12/11 12:18:06 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.

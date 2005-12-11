@@ -1,4 +1,4 @@
-/*	$NetBSD: jazziovar.h,v 1.4 2005/06/03 12:30:53 tsutsui Exp $	*/
+/*	$NetBSD: jazziovar.h,v 1.5 2005/12/11 12:16:39 christos Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.

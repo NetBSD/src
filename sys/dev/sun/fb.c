@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.22 2005/10/08 00:46:44 macallan Exp $ */
+/*	$NetBSD: fb.c,v 1.23 2005/12/11 12:23:56 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.22 2005/10/08 00:46:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.23 2005/12/11 12:23:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,10 +207,10 @@ fb_attach(fb, isconsole)
 }
 
 int
-fbopen(dev, flags, mode, p)
+fbopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -223,14 +223,14 @@ fbopen(dev, flags, mode, p)
 		
 	nunit = fbl->fb_dev->fb_device->dv_unit;
 	return (fbl->fb_dev->fb_driver->fbd_open)(makedev(0, nunit), flags,
-	    mode, p);
+	    mode, l);
 }
 
 int
-fbclose(dev, flags, mode, p)
+fbclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -243,16 +243,16 @@ fbclose(dev, flags, mode, p)
 
 	nunit = fbl->fb_dev->fb_device->dv_unit;
 	return (fbl->fb_dev->fb_driver->fbd_close)(makedev(0, nunit), flags,
-	    mode, p);
+	    mode, l);
 }
 
 int
-fbioctl(dev, cmd, data, flags, p)
+fbioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -265,14 +265,14 @@ fbioctl(dev, cmd, data, flags, p)
 
 	nunit = fbl->fb_dev->fb_device->dv_unit;
 	return (fbl->fb_dev->fb_driver->fbd_ioctl)(makedev(0, nunit), cmd, 
-	    data, flags, p);
+	    data, flags, l);
 }
 
 int
-fbpoll(dev, events, p)
+fbpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -285,7 +285,7 @@ fbpoll(dev, events, p)
 
 	nunit = fbl->fb_dev->fb_device->dv_unit;
 	return (fbl->fb_dev->fb_driver->fbd_poll)(makedev(0, nunit), events,
-	    p);
+	    l);
 }
 
 int

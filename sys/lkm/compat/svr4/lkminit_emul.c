@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.9 2005/02/26 22:58:57 perry Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.10 2005/12/11 12:24:47 christos Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.9 2005/02/26 22:58:57 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.10 2005/12/11 12:24:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

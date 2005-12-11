@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobellvar.h,v 1.3 2005/02/27 00:26:58 perry Exp $	*/
+/*	$NetBSD: audiobellvar.h,v 1.4 2005/12/11 12:20:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 Ben Harris

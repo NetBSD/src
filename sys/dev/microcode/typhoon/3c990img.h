@@ -1,4 +1,4 @@
-/* $NetBSD: 3c990img.h,v 1.2 2005/02/27 00:27:29 perry Exp $ */
+/* $NetBSD: 3c990img.h,v 1.3 2005/12/11 12:22:36 christos Exp $ */
 
 /*
  * Copyright 1999-2002 3Com Corporation.  All Rights Reserved.

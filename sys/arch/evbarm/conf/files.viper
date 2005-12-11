@@ -1,4 +1,4 @@
-#	$NetBSD: files.viper,v 1.1 2005/06/06 20:24:10 pooka Exp $
+#	$NetBSD: files.viper,v 1.2 2005/12/11 12:17:07 christos Exp $
 #
 # Arcom Viper
 #

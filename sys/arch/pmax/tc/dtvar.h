@@ -1,4 +1,4 @@
-/*	$NetBSD: dtvar.h,v 1.3 2003/12/23 09:39:46 ad Exp $	*/
+/*	$NetBSD: dtvar.h,v 1.4 2005/12/11 12:18:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.

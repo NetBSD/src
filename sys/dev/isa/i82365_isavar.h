@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isavar.h,v 1.5 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: i82365_isavar.h,v 1.6 2005/12/11 12:22:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.

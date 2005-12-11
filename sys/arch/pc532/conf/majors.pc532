@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pc532,v 1.16 2005/09/17 14:38:39 yamt Exp $
+#	$NetBSD: majors.pc532,v 1.17 2005/12/11 12:18:31 christos Exp $
 #
 # Device majors for pc532
 #

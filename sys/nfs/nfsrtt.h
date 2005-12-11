@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrtt.h,v 1.7 2003/08/07 16:33:57 agc Exp $	*/
+/*	$NetBSD: nfsrtt.h,v 1.8 2005/12/11 12:25:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/* $NetBSD: al2210reg.h,v 1.2 2005/02/27 00:27:00 perry Exp $ */
+/* $NetBSD: al2210reg.h,v 1.3 2005/12/11 12:21:25 christos Exp $ */
 
 /*
  * Copyright (c) 2004 David Young.  All rights reserved.

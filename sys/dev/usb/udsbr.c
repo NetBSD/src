@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.10 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.11 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.10 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.11 2005/12/11 12:24:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

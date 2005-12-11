@@ -1,4 +1,4 @@
-/* $NetBSD: if_eireg.h,v 1.3 2004/04/23 02:58:29 simonb Exp $ */
+/* $NetBSD: if_eireg.h,v 1.4 2005/12/11 12:23:28 christos Exp $ */
 
 /*
  * 2000 Ben Harris

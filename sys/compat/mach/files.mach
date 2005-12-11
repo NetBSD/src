@@ -1,4 +1,4 @@
-#	$NetBSD: files.mach,v 1.15 2004/07/27 22:01:56 manu Exp $
+#	$NetBSD: files.mach,v 1.16 2005/12/11 12:20:20 christos Exp $
 #
 # Config file description for machine-independent Mach compat code.
 # Included by ports that need it.

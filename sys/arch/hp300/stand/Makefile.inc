@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2003/07/20 02:38:43 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2005/12/11 12:17:19 christos Exp $
 
 BINDIR=			/usr/mdec
 

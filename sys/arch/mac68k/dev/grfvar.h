@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.27 2005/06/03 23:04:16 rjs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.28 2005/12/11 12:18:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.8 2005/06/02 15:55:49 tsutsui Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.9 2005/12/11 12:17:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.

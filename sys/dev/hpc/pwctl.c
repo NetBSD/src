@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.12 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.13 2005/12/11 12:21:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.12 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.13 2005/12/11 12:21:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

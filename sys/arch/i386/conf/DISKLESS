@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.109 2005/09/10 19:20:49 jmmv Exp $
+#	$NetBSD: DISKLESS,v 1.110 2005/12/11 12:17:40 christos Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)

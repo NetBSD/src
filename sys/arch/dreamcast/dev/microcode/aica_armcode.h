@@ -1,4 +1,4 @@
-/* $NetBSD: aica_armcode.h,v 1.2 2005/02/19 15:37:35 tsutsui Exp $ */
+/* $NetBSD: aica_armcode.h,v 1.3 2005/12/11 12:17:06 christos Exp $ */
 static uint32_t aica_armcode[] = {
  /* 0000 */	0xea000006, 
  /* 0004 */	0xea000010, 

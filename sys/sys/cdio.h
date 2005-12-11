@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.21 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: cdio.h,v 1.22 2005/12/11 12:25:20 christos Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_

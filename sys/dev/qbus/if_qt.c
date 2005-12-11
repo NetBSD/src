@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.6 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.7 2005/12/11 12:23:29 christos Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.7 2005/12/11 12:23:29 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

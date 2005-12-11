@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.12 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: extent.h,v 1.13 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.

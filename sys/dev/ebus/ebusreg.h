@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusreg.h,v 1.6 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: ebusreg.h,v 1.7 2005/12/11 12:21:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green

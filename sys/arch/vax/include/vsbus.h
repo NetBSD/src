@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.14 2004/02/13 11:36:20 wiz Exp $ */
+/*	$NetBSD: vsbus.h,v 1.15 2005/12/11 12:19:35 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

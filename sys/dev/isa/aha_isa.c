@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isa.c,v 1.19 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.20 2005/12/11 12:22:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.19 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.20 2005/12/11 12:22:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

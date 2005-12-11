@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.h,v 1.1 2005/11/04 16:54:11 manu Exp $ */
+/*	$NetBSD: linux_futex.h,v 1.2 2005/12/11 12:20:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.

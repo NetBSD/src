@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioctl.c,v 1.4 2005/09/13 01:42:32 christos Exp $ */
+/*	$NetBSD: darwin_ioctl.c,v 1.5 2005/12/11 12:19:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.4 2005/09/13 01:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.5 2005/12/11 12:19:56 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,7 +91,7 @@ darwin_sys_ioctl(l, v, retval)
 
 		vp = fp->f_data;
 		type = vtype_to_dtype(vp->v_type);
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 
 		error = copyout(&type, data, sizeof(*data));
 

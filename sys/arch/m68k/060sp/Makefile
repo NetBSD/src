@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2003/10/26 07:25:36 lukem Exp $
+# $NetBSD: Makefile,v 1.8 2005/12/11 12:17:52 christos Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 

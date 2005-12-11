@@ -1,4 +1,4 @@
-/*	$NetBSD: geode.c,v 1.2 2005/09/22 19:34:58 dyoung Exp $	*/
+/*	$NetBSD: geode.c,v 1.3 2005/12/11 12:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.2 2005/09/22 19:34:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.3 2005/12/11 12:17:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

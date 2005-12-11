@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.31 2005/05/30 04:25:32 christos Exp $ */
+/*	$NetBSD: ses.c,v 1.32 2005/12/11 12:23:51 christos Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.31 2005/05/30 04:25:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.32 2005/12/11 12:23:51 christos Exp $");
 
 #include "opt_scsi.h"
 
@@ -289,7 +289,7 @@ ses_device_type(struct scsipibus_attach_args *sa)
 }
 
 static int
-sesopen(dev_t dev, int flags, int fmt, struct proc *p)
+sesopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ses_softc *softc;
 	int error, unit;
@@ -333,7 +333,7 @@ out:
 }
 
 static int
-sesclose(dev_t dev, int flags, int fmt, struct proc *p)
+sesclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ses_softc *softc;
 	int unit;
@@ -352,7 +352,7 @@ sesclose(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 static int
-sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct proc *p)
+sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct lwp *l)
 {
 	ses_encstat tmp;
 	ses_objstat objs;
@@ -470,7 +470,7 @@ sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct proc *p)
 
 	default:
 		error = scsipi_do_ioctl(ssc->sc_periph,
-			    dev, cmd, arg_addr, flag, p);
+			    dev, cmd, arg_addr, flag, l);
 		break;
 	}
 	return (error);

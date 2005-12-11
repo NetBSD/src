@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_smdk24x0.c,v 1.1 2003/08/29 13:54:03 bsh Exp $ */
+/*	$NetBSD: if_cs_smdk24x0.c,v 1.2 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_smdk24x0.c,v 1.1 2003/08/29 13:54:03 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_smdk24x0.c,v 1.2 2005/12/11 12:17:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

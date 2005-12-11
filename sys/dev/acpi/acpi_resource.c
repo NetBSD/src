@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.17 2005/05/29 20:56:02 christos Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.18 2005/12/11 12:21:02 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.17 2005/05/29 20:56:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.18 2005/12/11 12:21:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

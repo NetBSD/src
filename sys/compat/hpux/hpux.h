@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.h,v 1.19 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: hpux.h,v 1.20 2005/12/11 12:20:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

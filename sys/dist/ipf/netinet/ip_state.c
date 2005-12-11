@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.7 2005/04/03 15:05:30 martti Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.8 2005/12/11 12:24:21 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -110,7 +110,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.7 2005/04/03 15:05:30 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.8 2005/12/11 12:24:21 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.29 2005/03/28 10:47:54 darrenr Exp";

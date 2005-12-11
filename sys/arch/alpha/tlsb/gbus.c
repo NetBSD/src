@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.17 2005/08/26 10:13:05 drochner Exp $ */
+/* $NetBSD: gbus.c,v 1.18 2005/12/11 12:16:21 christos Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.17 2005/08/26 10:13:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.18 2005/12/11 12:16:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

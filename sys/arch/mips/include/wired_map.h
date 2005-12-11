@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.h,v 1.1 2005/11/05 09:46:07 tsutsui Exp $	*/
+/*	$NetBSD: wired_map.h,v 1.2 2005/12/11 12:18:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tadpole Computer Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.h,v 1.10 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_device.h,v 1.11 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  *

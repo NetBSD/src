@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.2 2005/06/09 08:05:31 he Exp $ */
+/* $NetBSD: db_machdep.h,v 1.3 2005/12/11 12:16:04 christos Exp $ */
 
 #include <arm/db_machdep.h>
 

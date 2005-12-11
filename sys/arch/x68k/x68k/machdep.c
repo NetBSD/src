@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.129 2005/10/30 15:49:39 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130 2005/12/11 12:19:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2005/10/30 15:49:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2005/12/11 12:19:45 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1003,7 +1003,7 @@ nmihand(struct frame frame)
  *	done on little-endian machines...  -- cgd
  */
 int
-cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 #if defined(COMPAT_NOMID) || defined(COMPAT_44)
 	u_long midmag, magic;
@@ -1020,12 +1020,12 @@ cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 	switch (midmag) {
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
 		break;
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
 		break;
 #endif
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.h,v 1.6 2004/03/04 02:55:58 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.h,v 1.7 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

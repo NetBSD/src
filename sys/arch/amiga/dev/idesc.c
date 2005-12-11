@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.58 2005/02/21 00:29:06 thorpej Exp $ */
+/*	$NetBSD: idesc.c,v 1.59 2005/12/11 12:16:28 christos Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.58 2005/02/21 00:29:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.59 2005/12/11 12:16:28 christos Exp $");
 
 /*
  * A4000 IDE interface, emulating a SCSI controller

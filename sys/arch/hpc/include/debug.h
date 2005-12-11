@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.6 2005/06/07 12:02:05 he Exp $	*/
+/*	$NetBSD: debug.h,v 1.7 2005/12/11 12:17:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.

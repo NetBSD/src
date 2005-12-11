@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.c,v 1.13 2003/09/06 11:12:53 rearnsha Exp $	*/
+/*	$NetBSD: int_bus_dma.c,v 1.14 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int_bus_dma.c,v 1.13 2003/09/06 11:12:53 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int_bus_dma.c,v 1.14 2005/12/11 12:17:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

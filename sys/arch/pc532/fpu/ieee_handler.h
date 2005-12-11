@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.h,v 1.7 2005/10/02 15:07:41 chs Exp $	*/
+/*	$NetBSD: ieee_handler.h,v 1.8 2005/12/11 12:18:31 christos Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.

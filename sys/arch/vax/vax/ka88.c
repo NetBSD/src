@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.7 2005/07/20 17:48:17 he Exp $	*/
+/*	$NetBSD: ka88.c,v 1.8 2005/12/11 12:19:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.7 2005/07/20 17:48:17 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.8 2005/12/11 12:19:36 christos Exp $");
 
 #include "opt_multiprocessor.h"
 

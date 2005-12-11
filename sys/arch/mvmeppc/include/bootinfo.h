@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 2003/07/28 09:22:56 scw Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3 2005/12/11 12:18:19 christos Exp $	*/
 
 #ifndef _MVMEPPC_BOOTINFO
 #define _MVMEPPC_BOOTINFO

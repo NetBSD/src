@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_j96a.c,v 1.5 2003/07/15 00:04:43 lukem Exp $	*/
+/*	$NetBSD: p_nec_j96a.c,v 1.6 2005/12/11 12:16:37 christos Exp $	*/
 
 /*-
  * Copyright (C) 2002 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_nec_j96a.c,v 1.5 2003/07/15 00:04:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_nec_j96a.c,v 1.6 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 

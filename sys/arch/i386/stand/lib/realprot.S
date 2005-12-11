@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.5 2005/06/21 14:48:47 junyoung Exp $	*/
+/*	$NetBSD: realprot.S,v 1.6 2005/12/11 12:17:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

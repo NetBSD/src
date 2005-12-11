@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.26 2004/04/26 10:33:38 kleink Exp $	*/
+/*	$NetBSD: resource.h,v 1.27 2005/12/11 12:25:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.68 2005/05/22 15:54:46 christos Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.69 2005/12/11 12:22:02 christos Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.68 2005/05/22 15:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.69 2005/12/11 12:22:02 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

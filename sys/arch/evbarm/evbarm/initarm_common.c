@@ -1,4 +1,4 @@
-/*	$NetBSD: initarm_common.c,v 1.4 2004/12/12 21:03:06 abs Exp $	*/
+/*	$NetBSD: initarm_common.c,v 1.5 2005/12/11 12:17:08 christos Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.4 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.5 2005/12/11 12:17:08 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>

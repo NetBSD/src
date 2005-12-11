@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96 2005/07/01 18:01:45 christos Exp $     */
+/*	$NetBSD: trap.c,v 1.97 2005/12/11 12:19:36 christos Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2005/07/01 18:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2005/12/11 12:19:36 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -489,7 +489,7 @@ child_return(void *arg)
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(l);
-		ktrsysret(l->l_proc, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif

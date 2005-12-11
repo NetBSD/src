@@ -1,4 +1,4 @@
-/*	$NetBSD: p_acer_pica_61.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: p_acer_pica_61.c,v 1.9 2005/12/11 12:16:37 christos Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_acer_pica_61.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_acer_pica_61.c,v 1.9 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>

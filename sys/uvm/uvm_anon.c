@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.37 2005/09/13 22:00:05 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.38 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.37 2005/09/13 22:00:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.38 2005/12/11 12:25:29 christos Exp $");
 
 #include "opt_uvmhist.h"
 

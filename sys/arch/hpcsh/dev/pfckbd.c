@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.15 2005/05/23 17:49:48 kiyohara Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.16 2005/12/11 12:17:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.15 2005/05/23 17:49:48 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.16 2005/12/11 12:17:36 christos Exp $");
 
 #include "debug_hpcsh.h"
 

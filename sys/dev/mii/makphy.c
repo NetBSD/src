@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.16 2005/06/23 19:21:26 briggs Exp $	*/
+/*	$NetBSD: makphy.c,v 1.17 2005/12/11 12:22:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.16 2005/06/23 19:21:26 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.17 2005/12/11 12:22:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

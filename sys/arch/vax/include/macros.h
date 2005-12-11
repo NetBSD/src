@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.32 2005/01/26 15:53:52 he Exp $	*/
+/*	$NetBSD: macros.h,v 1.33 2005/12/11 12:19:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.

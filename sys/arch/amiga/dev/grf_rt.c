@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.49 2005/06/13 21:33:15 jmc Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.50 2005/12/11 12:16:28 christos Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.49 2005/06/13 21:33:15 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.50 2005/12/11 12:16:28 christos Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0

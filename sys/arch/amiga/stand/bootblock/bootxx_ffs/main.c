@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.4 2005/06/28 21:03:01 junyoung Exp $
+ * $NetBSD: main.c,v 1.5 2005/12/11 12:16:36 christos Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis

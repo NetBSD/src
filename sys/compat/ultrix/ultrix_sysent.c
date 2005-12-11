@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_sysent.c,v 1.50 2005/02/26 23:58:20 perry Exp $ */
+/* $NetBSD: ultrix_sysent.c,v 1.51 2005/12/11 12:20:30 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_sysent.c,v 1.50 2005/02/26 23:58:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_sysent.c,v 1.51 2005/12/11 12:20:30 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"

@@ -1,9 +1,9 @@
-/*	$NetBSD: jis_kmap.c,v 1.4 2004/05/12 14:25:08 minoura Exp $	*/
+/*	$NetBSD: jis_kmap.c,v 1.5 2005/12/11 12:19:45 christos Exp $	*/
 /* from: arch/amiga/dev/kbdmap.c */
 /* modified for X680x0 by Masaru Oki */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: jis_kmap.c,v 1.4 2004/05/12 14:25:08 minoura Exp $");
+__RCSID("$NetBSD: jis_kmap.c,v 1.5 2005/12/11 12:19:45 christos Exp $");
 
 #include <machine/kbdmap.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.150 2005/06/01 13:01:36 scw Exp $	 */
+/* $NetBSD: machdep.c,v 1.151 2005/12/11 12:19:36 christos Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2005/06/01 13:01:36 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 2005/12/11 12:19:36 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"

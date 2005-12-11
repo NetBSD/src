@@ -1,4 +1,4 @@
-/*	$NetBSD: fixcoff.c,v 1.8 2003/12/11 00:27:42 matt Exp $ */
+/*	$NetBSD: fixcoff.c,v 1.9 2005/12/11 12:18:06 christos Exp $ */
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration

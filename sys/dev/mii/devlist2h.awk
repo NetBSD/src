@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.5 2005/02/27 14:29:18 perry Exp $
+#	$NetBSD: devlist2h.awk,v 1.6 2005/12/11 12:22:42 christos Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.

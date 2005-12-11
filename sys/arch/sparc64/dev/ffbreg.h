@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbreg.h,v 1.4 2004/07/19 01:00:48 heas Exp $	*/
+/*	$NetBSD: ffbreg.h,v 1.5 2005/12/11 12:19:09 christos Exp $	*/
 /*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_com.c,v 1.14 2003/10/08 14:55:04 scw Exp $	*/
+/*	$NetBSD: ixp425_com.c,v 1.15 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.14 2003/10/08 14:55:04 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.15 2005/12/11 12:16:51 christos Exp $");
 
 #include "opt_com.h"
 #ifndef COM_PXA2X0

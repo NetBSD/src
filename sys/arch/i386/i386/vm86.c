@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.38 2003/12/04 13:05:16 keihan Exp $	*/
+/*	$NetBSD: vm86.c,v 1.39 2005/12/11 12:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.38 2003/12/04 13:05:16 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.39 2005/12/11 12:17:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

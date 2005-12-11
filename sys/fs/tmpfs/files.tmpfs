@@ -1,4 +1,4 @@
-#	$NetBSD: files.tmpfs,v 1.1 2005/09/10 19:20:51 jmmv Exp $
+#	$NetBSD: files.tmpfs,v 1.2 2005/12/11 12:24:29 christos Exp $
 
 deffs	fs_tmpfs.h			TMPFS
 

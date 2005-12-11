@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.29 2005/08/19 02:03:57 christos Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.30 2005/12/11 12:20:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.29 2005/08/19 02:03:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.30 2005/12/11 12:20:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ linux_do_stat64(l, v, retval, dolstat)
 
 	sg = stackgap_init(p, 0);
 	st = stackgap_alloc(p, &sg, sizeof (struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
@@ -236,7 +236,7 @@ linux_sys_truncate64(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	/* Linux doesn't have the 'pad' pseudo-parameter */
 	SCARG(&ta, path) = SCARG(uap, path);
@@ -436,7 +436,7 @@ linux_sys_getdents64(l, v, retval)
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
+	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)))
 		goto out1;
 
 	nbytes = SCARG(uap, count);
@@ -454,7 +454,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -527,6 +527,6 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }

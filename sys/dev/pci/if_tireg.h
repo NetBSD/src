@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.16 2005/05/30 04:35:22 christos Exp $ */
+/* $NetBSD: if_tireg.h,v 1.17 2005/12/11 12:22:49 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.17 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.18 2005/12/11 12:24:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.17 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.18 2005/12/11 12:24:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>

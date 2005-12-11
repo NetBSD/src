@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.3 2003/11/02 10:31:06 wiz Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.4 2005/12/11 12:21:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

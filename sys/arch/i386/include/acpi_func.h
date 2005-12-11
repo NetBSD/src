@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_func.h,v 1.4 2003/08/13 12:40:31 yamt Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.5 2005/12/11 12:17:43 christos Exp $	*/
 
 #include <machine/cpufunc.h>
 

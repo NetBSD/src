@@ -1,3 +1,3 @@
-/* $NetBSD: pio.h,v 1.1 2004/12/23 04:36:18 joff Exp $ */
+/* $NetBSD: pio.h,v 1.2 2005/12/11 12:17:09 christos Exp $ */
 
 #include <arm/pio.h>

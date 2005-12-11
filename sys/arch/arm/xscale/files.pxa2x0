@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.8 2005/07/04 00:42:37 bsh Exp $
+#	$NetBSD: files.pxa2x0,v 1.9 2005/12/11 12:16:51 christos Exp $
 #
 # Configuration info for Intel PXA2[751]0 CPU support
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.313 2005/11/01 20:44:04 martin Exp $ */
+/*	$NetBSD: wd.c,v 1.314 2005/12/11 12:21:14 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.313 2005/11/01 20:44:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.314 2005/12/11 12:21:14 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -874,7 +874,7 @@ wdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-wdopen(dev_t dev, int flag, int fmt, struct proc *p)
+wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct wd_softc *wd;
 	int part, error;
@@ -962,7 +962,7 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 int
-wdclose(dev_t dev, int flag, int fmt, struct proc *p)
+wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int part = WDPART(dev);
@@ -1134,7 +1134,7 @@ wdperror(const struct wd_softc *wd)
 }
 
 int
-wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
+wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int error = 0, s;
@@ -1344,7 +1344,7 @@ bad:
 		auio.uio_segflg = 0;
 		auio.uio_offset =
 			fop->df_startblk * wd->sc_dk.dk_label->d_secsize;
-		auio.uio_procp = p;
+		auio.uio_lwp = l;
 		error = physio(wdformat, NULL, dev, B_WRITE, minphys,
 		    &auio);
 		fop->df_count -= auio.uio_resid;
@@ -1389,7 +1389,7 @@ bad:
 			wi->wi_uio.uio_segflg = UIO_USERSPACE;
 			wi->wi_uio.uio_rw =
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
-			wi->wi_uio.uio_procp = p;
+			wi->wi_uio.uio_lwp = l;
 			error1 = physio(wdioctlstrategy, &wi->wi_bp, dev,
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
 			    minphys, &wi->wi_uio);
@@ -1400,7 +1400,7 @@ bad:
 			wi->wi_bp.b_data = 0;
 			wi->wi_bp.b_bcount = 0;
 			wi->wi_bp.b_dev = 0;
-			wi->wi_bp.b_proc = p;
+			wi->wi_bp.b_proc = l->l_proc;
 			wdioctlstrategy(&wi->wi_bp);
 			error1 = wi->wi_bp.b_error;
 		}
@@ -1437,7 +1437,7 @@ bad:
 	    {
 	    	struct dkwedge_list *dkwl = (void *) addr;
 
-		return (dkwedge_list(&wd->sc_dk, dkwl, p));
+		return (dkwedge_list(&wd->sc_dk, dkwl, l));
 	    }
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.31 2005/10/15 17:29:25 yamt Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.32 2005/12/11 12:23:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.31 2005/10/15 17:29:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.32 2005/12/11 12:23:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

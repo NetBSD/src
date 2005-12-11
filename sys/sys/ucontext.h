@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.7 2005/09/13 03:22:32 christos Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.8 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.

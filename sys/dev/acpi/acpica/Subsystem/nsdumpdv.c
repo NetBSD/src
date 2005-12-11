@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsdumpdv.c,v 1.6 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsdumpdv.c,v 1.7 2005/12/11 12:21:03 christos Exp $");
 
 #define __NSDUMPDV_C__
 

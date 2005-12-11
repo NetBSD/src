@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2003/08/22 21:00:26 dsl Exp $
+#	$NetBSD: Makefile,v 1.26 2005/12/11 12:18:19 christos Exp $
 
 LIB=sa
 

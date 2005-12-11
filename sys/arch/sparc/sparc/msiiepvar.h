@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepvar.h,v 1.6 2005/09/24 00:51:21 uwe Exp $ */
+/*	$NetBSD: msiiepvar.h,v 1.7 2005/12/11 12:19:08 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov

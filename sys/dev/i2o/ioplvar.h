@@ -1,4 +1,4 @@
-/*	$NetBSD: ioplvar.h,v 1.4 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: ioplvar.h,v 1.5 2005/12/11 12:21:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

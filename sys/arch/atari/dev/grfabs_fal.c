@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.17 2003/07/15 01:19:49 lukem Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.18 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.17 2003/07/15 01:19:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.18 2005/12/11 12:16:54 christos Exp $");
 
 #ifdef FALCON_VIDEO
 /*

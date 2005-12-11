@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2005/11/08 22:57:30 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.5 2005/12/11 12:19:48 christos Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #

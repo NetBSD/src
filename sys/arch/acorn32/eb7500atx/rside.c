@@ -1,4 +1,4 @@
-/*	$NetBSD: rside.c,v 1.6 2005/03/11 06:50:33 matt Exp $	*/
+/*	$NetBSD: rside.c,v 1.7 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.6 2005/03/11 06:50:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.7 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

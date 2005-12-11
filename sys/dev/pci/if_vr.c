@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.74 2005/01/30 17:36:49 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.75 2005/12/11 12:22:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.74 2005/01/30 17:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.75 2005/12/11 12:22:50 christos Exp $");
 
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.17 2005/07/10 00:45:52 christos Exp $ */
+/* $NetBSD: syscall.c,v 1.18 2005/12/11 12:16:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.17 2005/07/10 00:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2005/12/11 12:16:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,7 @@ child_return(void *arg)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(l);
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif

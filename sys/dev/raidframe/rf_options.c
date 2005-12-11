@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_options.c,v 1.6 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_options.c,v 1.7 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * rf_options.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_options.c,v 1.6 2005/02/27 00:27:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_options.c,v 1.7 2005/12/11 12:23:37 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

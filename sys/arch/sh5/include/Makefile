@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2004/05/08 21:51:51 kleink Exp $
+#	$NetBSD: Makefile,v 1.14 2005/12/11 12:19:00 christos Exp $
 
 INCSDIR= /usr/include/sh5
 

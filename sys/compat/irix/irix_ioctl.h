@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.h,v 1.4 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: irix_ioctl.h,v 1.5 2005/12/11 12:20:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

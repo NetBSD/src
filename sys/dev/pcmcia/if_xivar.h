@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xivar.h,v 1.3 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: if_xivar.h,v 1.4 2005/12/11 12:23:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.

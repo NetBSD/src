@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.37 2005/11/02 12:38:59 yamt Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.38 2005/12/11 12:24:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.37 2005/11/02 12:38:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.38 2005/12/11 12:24:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ dead_ioctl(v)
 		void *a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	if (!chkvnlock(ap->a_vp))
@@ -243,7 +243,7 @@ dead_poll(v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	/*

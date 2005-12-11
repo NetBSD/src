@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.9 2004/08/21 12:03:16 rearnsha Exp $	*/
+/*	$NetBSD: undefined.h,v 1.10 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.

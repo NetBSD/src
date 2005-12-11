@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.17 2005/09/27 02:41:10 jmcneill Exp $
+# $NetBSD: majors,v 1.18 2005/12/11 12:20:30 christos Exp $
 #
 # Device majors for Machine-Independent drivers.
 #

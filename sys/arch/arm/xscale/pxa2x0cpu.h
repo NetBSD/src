@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0cpu.h,v 1.1 2005/07/04 00:42:37 bsh Exp $ */
+/*	$NetBSD: pxa2x0cpu.h,v 1.2 2005/12/11 12:16:52 christos Exp $ */
 
 /*
  * Copyright (c) 2005  Genetec Corporation.  All rights reserved.

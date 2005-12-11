@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.37 2005/09/06 21:40:37 kleink Exp $ */
+/*	$NetBSD: mfc.c,v 1.38 2005/12/11 12:16:28 christos Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.37 2005/09/06 21:40:37 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.38 2005/12/11 12:16:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,7 +477,7 @@ mfcprint(void *auxp, const char *pnp)
 }
 
 int
-mfcsopen(dev_t dev, int flag, int mode, struct proc *p)
+mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp;
 	struct mfcs_softc *sc;
@@ -535,7 +535,7 @@ mfcsopen(dev_t dev, int flag, int mode, struct proc *p)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else if (tp->t_state & TS_XCLUDE &&
-		   suser(p->p_ucred, &p->p_acflag) != 0) {
+		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
 		splx(s);
 		return(EBUSY);
 	}
@@ -577,7 +577,7 @@ done:
 
 /*ARGSUSED*/
 int
-mfcsclose(dev_t dev, int flag, int mode, struct proc *p)
+mfcsclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp;
 	int unit;
@@ -639,14 +639,14 @@ mfcswrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-mfcspoll(dev_t dev, int events, struct proc *p)
+mfcspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 	struct tty *tp = sc->sc_tty;
 
 	if (tp == NULL)
 		return(ENXIO);
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -658,7 +658,7 @@ mfcstty(dev_t dev)
 }
 
 int
-mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	register struct tty *tp;
 	register int error;
@@ -668,11 +668,11 @@ mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (!tp)
 		return ENXIO;
 
-	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
+	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return(error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return(error);
 
@@ -712,7 +712,7 @@ mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		*(int *)data = SWFLAGS(dev);
 		break;
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if (error != 0)
 			return(EPERM);
 

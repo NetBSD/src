@@ -1,4 +1,4 @@
-/*	$NetBSD: ymvar.h,v 1.9 2005/01/14 03:41:45 kent Exp $	*/
+/*	$NetBSD: ymvar.h,v 1.10 2005/12/11 12:22:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2002 The NetBSD Foundation, Inc.

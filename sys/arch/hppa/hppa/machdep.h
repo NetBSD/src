@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.8 2004/07/24 18:59:05 chs Exp $	*/
+/*	$NetBSD: machdep.h,v 1.9 2005/12/11 12:17:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

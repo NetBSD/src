@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.tail,v 1.1 2004/09/13 09:39:40 chs Exp $	*/
+/*	$NetBSD: kern.ldscript.tail,v 1.2 2005/12/11 12:16:45 christos Exp $	*/
 
   } =0
   PROVIDE (__etext = .);

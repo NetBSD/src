@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.7 2005/02/21 00:29:07 thorpej Exp $        */
+/*      $NetBSD: sd.c,v 1.8 2005/12/11 12:18:29 christos Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.

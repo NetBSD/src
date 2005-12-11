@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcarm,v 1.16 2005/05/31 04:03:10 christos Exp $
+#	$NetBSD: Makefile.hpcarm,v 1.17 2005/12/11 12:17:30 christos Exp $
 
 # Makefile for NetBSD
 #

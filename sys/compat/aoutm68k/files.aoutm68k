@@ -1,4 +1,4 @@
-#	$NetBSD: files.aoutm68k,v 1.4 2004/09/14 17:39:18 jdolecek Exp $
+#	$NetBSD: files.aoutm68k,v 1.5 2005/12/11 12:19:56 christos Exp $
 #
 # Config file description for m68k a.out compat code.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4215reg.h,v 1.1 2005/07/16 18:58:49 macallan Exp $	*/
+/*	$NetBSD: cs4215reg.h,v 1.2 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>

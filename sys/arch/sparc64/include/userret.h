@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.1 2005/07/10 01:58:57 christos Exp $ */
+/*	$NetBSD: userret.h,v 1.2 2005/12/11 12:19:10 christos Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.2 2005/05/20 12:48:27 fvdl Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.3 2005/12/11 12:20:14 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.2 2005/05/20 12:48:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.3 2005/12/11 12:20:14 christos Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64

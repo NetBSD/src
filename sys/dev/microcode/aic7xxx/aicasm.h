@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm.h,v 1.3 2005/02/27 00:27:23 perry Exp $	*/
+/*	$NetBSD: aicasm.h,v 1.4 2005/12/11 12:22:18 christos Exp $	*/
 
 /*
  * Assembler for the sequencer program downloaded to Aic7xxx SCSI host adapters

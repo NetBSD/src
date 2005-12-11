@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2005/06/28 14:43:26 junyoung Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2005/12/11 12:19:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto

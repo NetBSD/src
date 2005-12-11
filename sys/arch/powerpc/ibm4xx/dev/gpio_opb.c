@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_opb.c,v 1.3 2005/10/16 16:35:44 he Exp $	*/
+/*	$NetBSD: gpio_opb.c,v 1.4 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.

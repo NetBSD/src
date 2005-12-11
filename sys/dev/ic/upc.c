@@ -1,4 +1,4 @@
-/* $NetBSD: upc.c,v 1.11 2005/08/25 22:33:19 drochner Exp $ */
+/* $NetBSD: upc.c,v 1.12 2005/12/11 12:21:29 christos Exp $ */
 /*-
  * Copyright (c) 2000, 2003 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.11 2005/08/25 22:33:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.12 2005/12/11 12:21:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

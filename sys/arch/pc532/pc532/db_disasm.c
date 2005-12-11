@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.9 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.10 2005/12/11 12:18:31 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9 2004/01/23 04:12:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.10 2005/12/11 12:18:31 christos Exp $");
 
 #define STATIC static
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.181 2005/10/23 00:09:14 cube Exp $	*/
+/*	$NetBSD: systm.h,v 1.182 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -178,7 +178,7 @@ enum hashtype {
 struct malloc_type;
 void	*hashinit(u_int, enum hashtype, struct malloc_type *, int, u_long *);
 void	hashdone(void *, struct malloc_type *);
-int	seltrue(dev_t, int, struct proc *);
+int	seltrue(dev_t, int, struct lwp *);
 int	sys_nosys(struct lwp *, void *, register_t *);
 
 

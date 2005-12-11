@@ -1,4 +1,4 @@
-/* $NetBSD: grtworeg.h,v 1.1 2004/03/18 08:39:17 sekiya Exp $	 */
+/* $NetBSD: grtworeg.h,v 1.2 2005/12/11 12:18:53 christos Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.19 2004/04/04 18:21:49 pk Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.20 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993

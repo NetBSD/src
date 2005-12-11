@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.230 2005/12/11 00:01:54 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.231 2005/12/11 12:23:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.230 2005/12/11 00:01:54 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.231 2005/12/11 12:23:50 christos Exp $");
 
 #include "rnd.h"
 
@@ -348,7 +348,7 @@ cddetach(struct device *self, int flags)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 static int
-cdopen(dev_t dev, int flag, int fmt, struct proc *p)
+cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct cd_softc *cd;
 	struct scsipi_periph *periph;
@@ -510,7 +510,7 @@ bad4:
  * occurence of an open device
  */
 static int
-cdclose(dev_t dev, int flag, int fmt, struct proc *p)
+cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	struct scsipi_periph *periph = cd->sc_periph;
@@ -1153,7 +1153,7 @@ cdcachesync(struct scsipi_periph *periph, int flags) {
  * Knows about the internals of this device
  */
 static int
-cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	struct scsipi_periph *periph = cd->sc_periph;
@@ -1515,7 +1515,7 @@ bad:
 	default:
 		if (part != RAW_PART)
 			return (ENOTTY);
-		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, p));
+		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, l));
 	}
 
 #ifdef DIAGNOSTIC

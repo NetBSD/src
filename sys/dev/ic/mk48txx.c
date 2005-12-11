@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.17 2005/06/04 20:14:25 he Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.18 2005/12/11 12:21:27 christos Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.17 2005/06/04 20:14:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.18 2005/12/11 12:21:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

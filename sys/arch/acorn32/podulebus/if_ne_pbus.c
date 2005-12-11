@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.12 2003/12/06 20:00:12 bjh21 Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.13 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.12 2003/12/06 20:00:12 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.13 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

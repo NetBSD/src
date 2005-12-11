@@ -1,4 +1,4 @@
-/*	$NetBSD: kn03.h,v 1.11 2003/08/07 16:29:14 agc Exp $	*/
+/*	$NetBSD: kn03.h,v 1.12 2005/12/11 12:18:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

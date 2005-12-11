@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.h,v 1.4 2003/12/30 00:15:46 manu Exp $ */
+/*	$NetBSD: mach_semaphore.h,v 1.5 2005/12/11 12:20:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.

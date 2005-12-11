@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.13 2005/05/31 00:53:02 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.14 2005/12/11 12:19:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.13 2005/05/31 00:53:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.14 2005/12/11 12:19:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

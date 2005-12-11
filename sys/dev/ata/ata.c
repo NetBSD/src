@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.71 2005/07/07 17:51:31 drochner Exp $      */
+/*      $NetBSD: ata.c,v 1.72 2005/12/11 12:21:14 christos Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.71 2005/07/07 17:51:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.72 2005/12/11 12:21:14 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1318,7 +1318,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 
 /* management of the /dev/atabus* devices */
 int
-atabusopen(dev_t dev, int flag, int fmt, struct proc *p)
+atabusopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
         struct atabus_softc *sc;
         int error, unit = minor(dev);
@@ -1340,7 +1340,7 @@ atabusopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 
 int
-atabusclose(dev_t dev, int flag, int fmt, struct proc *p)
+atabusclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
         struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 
@@ -1352,7 +1352,7 @@ atabusclose(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 int
-atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
         struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 	struct ata_channel *chp = sc->sc_chan;

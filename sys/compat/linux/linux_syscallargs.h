@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscallargs.h,v 1.39 2005/05/15 21:44:42 fvdl Exp $	*/
+/*	$NetBSD: linux_syscallargs.h,v 1.40 2005/12/11 12:20:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

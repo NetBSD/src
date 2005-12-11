@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg_mace.h,v 1.1 2004/01/18 04:06:43 sekiya Exp $	*/
+/*	$NetBSD: pcireg_mace.h,v 1.2 2005/12/11 12:18:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.8 2003/07/15 02:43:37 lukem Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.9 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.8 2003/07/15 02:43:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.9 2005/12/11 12:18:09 christos Exp $");
 
 #include <sys/param.h>
 

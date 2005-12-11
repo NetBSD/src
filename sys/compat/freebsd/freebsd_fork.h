@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_fork.h,v 1.3 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: freebsd_fork.h,v 1.4 2005/12/11 12:20:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

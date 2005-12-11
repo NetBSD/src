@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.16 2005/03/25 23:09:00 cube Exp $ */
+/* $NetBSD: pcppi.c,v 1.17 2005/12/11 12:22:03 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.16 2005/03/25 23:09:00 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.17 2005/12/11 12:22:03 christos Exp $");
 
 #include "attimer.h"
 

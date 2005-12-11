@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.5 2005/04/21 13:59:15 tsutsui Exp $	 */
+/*	$NetBSD: putchar.c,v 1.6 2005/12/11 12:18:58 christos Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

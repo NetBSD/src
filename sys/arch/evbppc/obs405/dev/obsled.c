@@ -1,4 +1,4 @@
-/*	$NetBSD: obsled.c,v 1.3 2005/09/04 12:20:15 shige Exp $	*/
+/*	$NetBSD: obsled.c,v 1.4 2005/12/11 12:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.3 2005/09/04 12:20:15 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.4 2005/12/11 12:17:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

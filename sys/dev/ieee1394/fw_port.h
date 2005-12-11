@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.5 2005/12/04 19:15:21 christos Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.6 2005/12/11 12:22:02 christos Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -51,12 +51,15 @@
 
 #ifdef __DragonFly__
 typedef d_thread_t fw_proc;
+typedef d_thread_t fw_thread;
 #include <sys/select.h>
 #define M_DONTWAIT MB_DONTWAIT
 #elif __FreeBSD_version >= 500000
 typedef struct thread fw_proc;
+typedef struct thread fw_thread;
 #include <sys/selinfo.h>
 #else
+typedef struct proc fw_thread;
 typedef struct proc fw_proc;
 #include <sys/select.h>
 #endif
@@ -556,7 +559,8 @@ typedef struct device *	device_t;
 #define dev2unit	minor
 #define unit2minor(x)	(((x) & 0xff) | (((x) << 12) & ~0xfffff)) /* XXX */
 
-typedef struct proc fw_proc;
+typedef struct lwp fw_proc;
+typedef struct proc fw_thread;
 #include <sys/select.h>
 
 #define CALLOUT_INIT(x) callout_init(x)

@@ -1,4 +1,4 @@
-/* $NetBSD: des_enc.S,v 1.3 2005/02/26 23:04:17 perry Exp $ */
+/* $NetBSD: des_enc.S,v 1.4 2005/12/11 12:20:52 christos Exp $ */
 
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.

@@ -1,4 +1,4 @@
-/* $NetBSD: putulong.c,v 1.2 2005/05/17 04:14:57 christos Exp $ */
+/* $NetBSD: putulong.c,v 1.3 2005/12/11 12:16:20 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

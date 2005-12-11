@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.1 2004/12/22 19:11:49 joff Exp $ */
+/*	$NetBSD: epohci.c,v 1.2 2005/12/11 12:16:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.1 2004/12/22 19:11:49 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.2 2005/12/11 12:16:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

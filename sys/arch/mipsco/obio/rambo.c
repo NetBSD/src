@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.c,v 1.6 2003/07/15 02:43:44 lukem Exp $	*/
+/*	$NetBSD: rambo.c,v 1.7 2005/12/11 12:18:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.6 2003/07/15 02:43:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.7 2005/12/11 12:18:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

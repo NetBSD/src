@@ -1,3 +1,3 @@
-/*	$NetBSD: sunos_machdep.h,v 1.1 2005/07/11 13:13:56 christos Exp $	*/
+/*	$NetBSD: sunos_machdep.h,v 1.2 2005/12/11 12:17:05 christos Exp $	*/
 
 #include <m68k/sunos_machdep.h>

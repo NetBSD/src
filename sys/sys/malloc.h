@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.93 2005/09/26 00:12:23 dyoung Exp $	*/
+/*	$NetBSD: malloc.h,v 1.94 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993

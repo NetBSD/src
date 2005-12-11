@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.17 2005/07/20 17:48:17 he Exp $	*/
+/*	$NetBSD: lock.h,v 1.18 2005/12/11 12:19:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.

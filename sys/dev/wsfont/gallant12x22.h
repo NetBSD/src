@@ -1,4 +1,4 @@
-/* 	$NetBSD: gallant12x22.h,v 1.10 2005/09/19 19:27:31 martin Exp $ */
+/* 	$NetBSD: gallant12x22.h,v 1.11 2005/12/11 12:24:12 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.59 2004/11/14 19:04:44 christos Exp $
+#	$NetBSD: files.mvme68k,v 1.60 2005/12/11 12:18:17 christos Exp $
 
 # config file for mvme68k
 

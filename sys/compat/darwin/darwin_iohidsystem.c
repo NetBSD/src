@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.29 2005/05/29 22:08:16 christos Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.30 2005/12/11 12:19:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.29 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.30 2005/12/11 12:19:56 christos Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -88,7 +88,7 @@ static void mach_notify_iohidsystem(struct lwp *, struct mach_right *);
 
 struct darwin_iohidsystem_thread_args {
 	vaddr_t dita_shmem;
-	struct proc *dita_p;
+	struct lwp *dita_l;
 	int dita_done;
 	int *dita_hidsystem_finished;
 };
@@ -193,6 +193,8 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 
 		/* If it has not been used yet, initialize it */
 		if (darwin_iohidsystem_shmem == NULL) {
+			struct proc *dita_p;
+
 			darwin_iohidsystem_shmem = uao_create(memsize, 0);
 
 			error = uvm_map(kernel_map, &kvaddr, memsize,
@@ -223,7 +225,9 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 			dita->dita_done = 0;
 
 			kthread_create1(darwin_iohidsystem_thread,
-			    (void *)dita, &dita->dita_p, "iohidsystem");
+			    (void *)dita, &dita_p, "iohidsystem");
+
+			dita->dita_l = LIST_FIRST(&dita_p->p_lwps);
 
 			/*
 			 * Make sure the thread got the informations
@@ -306,7 +310,7 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 	mach_io_connect_method_structi_structo_request_t *req = args->smsg;
 	mach_io_connect_method_structi_structo_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->l->l_proc;
+	struct lwp *l = args->l;
 	int maxoutcount;
 	int error;
 
@@ -340,13 +344,13 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_X;
 		wsevt.value = pt->x;
 		if ((error = (wsmux->d_ioctl)(dev,
-		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  p)) != 0)
+		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  l)) != 0)
 			return mach_msg_error(args, error);
 
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_Y;
 		wsevt.value = pt->y;
 		if ((error = (wsmux->d_ioctl)(dev,
-		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0, p)) != 0)
+		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0, l)) != 0)
 			return mach_msg_error(args, error);
 
 		rep->rep_outcount = 0;
@@ -427,7 +431,6 @@ darwin_iohidsystem_thread(args)
 	struct uio auio;
 	struct iovec aiov;
 	struct wscons_event wsevt;
-	struct proc *p;
 	int error = 0;
 	struct mach_right *mr;
 	struct lwp *l;
@@ -438,8 +441,7 @@ darwin_iohidsystem_thread(args)
 #endif
 	dita = (struct darwin_iohidsystem_thread_args *)args;
 	shmem = (struct darwin_iohidsystem_shmem *)dita->dita_shmem;
-	p = dita->dita_p;
-	l = proc_representative_lwp(p);
+	l = dita->dita_l;
 	dita->dita_hidsystem_finished = &finished;
 
 	/*
@@ -465,7 +467,7 @@ darwin_iohidsystem_thread(args)
 		goto out2;
 	}
 
-	if ((error = (wsmux->d_open)(dev, FREAD|FWRITE, 0, p)) != 0)
+	if ((error = (wsmux->d_open)(dev, FREAD|FWRITE, 0, l)) != 0)
 		goto out2;
 
 	while(!finished) {
@@ -477,7 +479,7 @@ darwin_iohidsystem_thread(args)
 		auio.uio_offset = 0;
 		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
-		auio.uio_procp = NULL;
+		auio.uio_lwp = NULL;
 
 		if ((error = (wsmux->d_read)(dev, &auio, 0)) != 0) {
 #ifdef DEBUG_DARWIN
@@ -530,7 +532,7 @@ darwin_iohidsystem_thread(args)
 	}
 
 out1:
-	(wsmux->d_close)(dev, FREAD|FWRITE, 0, p);
+	(wsmux->d_close)(dev, FREAD|FWRITE, 0, l);
 
 out2:
 	while (!finished)
@@ -721,7 +723,7 @@ mach_notify_iohidsystem(l, mr)
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_USER))
-		ktruser(l->l_proc, "notify_iohidsystem", NULL, 0, 0);
+		ktruser(l, "notify_iohidsystem", NULL, 0, 0);
 #endif
 
 	mr->mr_refcount++;
@@ -743,8 +745,8 @@ mach_notify_iohidsystem(l, mr)
 }
 
 void
-darwin_iohidsystem_postfake(p)
-	struct proc *p;
+darwin_iohidsystem_postfake(l)
+	struct lwp *l;
 {
 	const struct cdevsw *wsmux;
 	dev_t dev;
@@ -762,7 +764,7 @@ darwin_iohidsystem_postfake(p)
 
 	wsevt.type = 0;
 	wsevt.value = 0;
-	(wsmux->d_ioctl)(dev, WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  p);
+	(wsmux->d_ioctl)(dev, WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  l);
 
 	return;
 }

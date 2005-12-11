@@ -1,4 +1,4 @@
-/* $NetBSD: lm700x.c,v 1.2 2003/07/14 15:47:11 lukem Exp $ */
+/* $NetBSD: lm700x.c,v 1.3 2005/12/11 12:21:27 christos Exp $ */
 /*	$OpenBSD: lm700x.c,v 1.2 2001/12/06 16:28:18 mickey Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm700x.c,v 1.2 2003/07/14 15:47:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm700x.c,v 1.3 2005/12/11 12:21:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/radioio.h>

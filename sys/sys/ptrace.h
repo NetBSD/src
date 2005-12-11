@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.34 2005/06/01 13:01:35 scw Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.35 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -86,14 +86,14 @@ struct reg;
 struct fpreg;
 #endif
 
-int	process_doregs(struct proc *, struct lwp *, struct uio *);
-int	process_validregs(struct proc *);
+int	process_doregs(struct lwp *, struct lwp *, struct uio *);
+int	process_validregs(struct lwp *);
 
-int	process_dofpregs(struct proc *, struct lwp *, struct uio *);
-int	process_validfpregs(struct proc *);
+int	process_dofpregs(struct lwp *, struct lwp *, struct uio *);
+int	process_validfpregs(struct lwp *);
 
-int	process_domem(struct proc *, struct proc *, struct uio *);
-int	process_checkioperm(struct proc *, struct proc *);
+int	process_domem(struct lwp *, struct lwp *, struct uio *);
+int	process_checkioperm(struct lwp *, struct proc *);
 
 void	proc_reparent(struct proc *, struct proc *);
 #ifdef PT_GETFPREGS
@@ -112,7 +112,7 @@ int	process_write_regs(struct lwp *, const struct reg *);
 #endif
 
 #ifdef __HAVE_PROCFS_MACHDEP
-int	ptrace_machdep_dorequest(struct proc *, struct lwp *, int,
+int	ptrace_machdep_dorequest(struct lwp *, struct lwp *, int,
 	    caddr_t, int);
 #endif
 

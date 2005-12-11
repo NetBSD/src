@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.3 2005/02/19 21:30:25 martti Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.4 2005/12/11 12:24:21 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.

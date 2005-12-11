@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.23 2005/02/27 00:27:49 perry Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.24 2005/12/11 12:24:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.23 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.24 2005/12/11 12:24:00 christos Exp $");
 
 #include "opt_inet.h"
 

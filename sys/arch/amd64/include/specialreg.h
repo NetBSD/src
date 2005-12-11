@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.2 2004/02/19 17:18:38 drochner Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.3 2005/12/11 12:16:25 christos Exp $	*/
 
 #include <x86/specialreg.h>
 

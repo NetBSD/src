@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.24 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: open.c,v 1.25 2005/12/11 12:24:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

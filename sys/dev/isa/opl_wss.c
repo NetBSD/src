@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_wss.c,v 1.6 2005/02/04 02:10:41 perry Exp $	*/
+/*	$NetBSD: opl_wss.c,v 1.7 2005/12/11 12:22:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_wss.c,v 1.6 2005/02/04 02:10:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_wss.c,v 1.7 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

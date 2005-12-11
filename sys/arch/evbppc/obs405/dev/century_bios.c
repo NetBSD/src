@@ -1,4 +1,4 @@
-/*	$NetBSD: century_bios.c,v 1.1 2005/03/18 15:31:58 shige Exp $	*/
+/*	$NetBSD: century_bios.c,v 1.2 2005/12/11 12:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: century_bios.c,v 1.1 2005/03/18 15:31:58 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: century_bios.c,v 1.2 2005/12/11 12:17:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

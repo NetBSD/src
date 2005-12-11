@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: aicasm_macro_scan.l,v 1.2 2005/02/27 00:27:23 perry Exp $	*/
+/*	$NetBSD: aicasm_macro_scan.l,v 1.3 2005/12/11 12:22:18 christos Exp $	*/
 
 /*
  * Sub-Lexical Analyzer for macro invokation in

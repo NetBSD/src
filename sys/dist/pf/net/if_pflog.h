@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.h,v 1.3 2004/11/14 11:12:16 yamt Exp $	*/
+/*	$NetBSD: if_pflog.h,v 1.4 2005/12/11 12:24:25 christos Exp $	*/
 /* $OpenBSD: if_pflog.h,v 1.11 2004/05/19 17:50:51 dhartmei Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>

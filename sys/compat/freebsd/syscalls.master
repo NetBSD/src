@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.49 2005/09/13 01:42:32 christos Exp $
+	$NetBSD: syscalls.master,v 1.50 2005/12/11 12:20:02 christos Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 

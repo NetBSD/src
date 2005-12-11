@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.17 2005/03/25 15:01:57 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.18 2005/12/11 12:17:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17 2005/03/25 15:01:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.18 2005/12/11 12:17:06 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

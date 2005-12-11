@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.2 2005/06/04 20:14:25 he Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.3 2005/12/11 12:21:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-#	$NetBSD: std.bebox,v 1.13 2005/09/17 09:44:06 yamt Exp $
+#	$NetBSD: std.bebox,v 1.14 2005/12/11 12:17:03 christos Exp $
 #
 # standard, required NetBSD/bebox 'options'
 

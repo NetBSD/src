@@ -1,4 +1,4 @@
-/*	$NetBSD: alloca.S,v 1.1 2003/08/19 10:59:26 ragge Exp $	*/
+/*	$NetBSD: alloca.S,v 1.2 2005/12/11 12:24:44 christos Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

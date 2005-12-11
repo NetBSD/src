@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_machdep.h,v 1.1 2004/05/07 15:51:04 cl Exp $	*/
+/*	$NetBSD: kernfs_machdep.h,v 1.2 2005/12/11 12:19:48 christos Exp $	*/
 
 /*
  *

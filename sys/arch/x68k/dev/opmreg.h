@@ -1,4 +1,4 @@
-/*	$NetBSD: opmreg.h,v 1.4 2004/05/08 08:38:36 minoura Exp $	*/
+/*	$NetBSD: opmreg.h,v 1.5 2005/12/11 12:19:37 christos Exp $	*/
 
 /* compatibility header: should be removed */
 

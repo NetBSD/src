@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.33 2005/07/20 14:38:11 nonaka Exp $	*/
+/*	$NetBSD: armreg.h,v 1.34 2005/12/11 12:16:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris

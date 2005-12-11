@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211 2005/06/01 18:34:12 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.212 2005/12/11 12:18:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2005/06/01 18:34:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2005/12/11 12:18:39 christos Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"

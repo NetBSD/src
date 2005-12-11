@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_iu.h,v 1.4 2005/02/01 00:19:34 reinoud Exp $	*/
+/*	$NetBSD: scsi_iu.h,v 1.5 2005/12/11 12:23:50 christos Exp $	*/
 
 /*
  * This file is in the public domain.

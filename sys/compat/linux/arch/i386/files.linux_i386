@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_i386,v 1.6 2004/11/13 06:01:34 christos Exp $
+#	$NetBSD: files.linux_i386,v 1.7 2005/12/11 12:20:14 christos Exp $
 #
 # Config file description for i386-dependent Linux compat code.
 

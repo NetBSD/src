@@ -1,3 +1,3 @@
-/*	$NetBSD: ieee.h,v 1.2 2003/10/23 13:02:52 kleink Exp $	*/
+/*	$NetBSD: ieee.h,v 1.3 2005/12/11 12:17:06 christos Exp $	*/
 
 #include <sh3/ieee.h>

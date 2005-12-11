@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.36 2005/06/26 02:09:59 fair Exp $	*/
+/*	$NetBSD: pcib.c,v 1.37 2005/12/11 12:17:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.36 2005/06/26 02:09:59 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.37 2005/12/11 12:17:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

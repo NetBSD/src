@@ -1,4 +1,4 @@
-/*	$NetBSD: sony12x24.h,v 1.8 2005/06/28 00:44:22 thorpej Exp $	*/
+/*	$NetBSD: sony12x24.h,v 1.9 2005/12/11 12:24:12 christos Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

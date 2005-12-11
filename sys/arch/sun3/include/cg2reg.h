@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2reg.h,v 1.5 2003/09/28 23:14:42 cl Exp $ */
+/*	$NetBSD: cg2reg.h,v 1.6 2005/12/11 12:19:21 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Dennis Ferguson

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmureg.h,v 1.9 2005/07/03 12:38:38 nonaka Exp $	*/
+/*	$NetBSD: tmureg.h,v 1.10 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.

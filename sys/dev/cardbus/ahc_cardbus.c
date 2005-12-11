@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.17 2005/05/12 06:21:01 augustss Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.18 2005/12/11 12:21:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.17 2005/05/12 06:21:01 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.18 2005/12/11 12:21:15 christos Exp $");
 
 #include "opt_ahc_cardbus.h"
 

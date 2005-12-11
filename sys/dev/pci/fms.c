@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.24 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: fms.c,v 1.25 2005/12/11 12:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.24 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.25 2005/12/11 12:22:49 christos Exp $");
 
 #include "mpu.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ramdac.h,v 1.6 2005/06/01 18:18:52 drochner Exp $ */
+/* $NetBSD: ramdac.h,v 1.7 2005/12/11 12:21:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

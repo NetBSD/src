@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.28 2005/12/10 02:10:00 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.29 2005/12/11 12:20:53 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.28 2005/12/10 02:10:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.29 2005/12/11 12:20:53 christos Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.28 2005/12/10 02:10:00 elad Exp $\n$NetBSD: verified_exec.c,v 1.28 2005/12/10 02:10:00 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.29 2005/12/11 12:20:53 christos Exp $\n$NetBSD: verified_exec.c,v 1.29 2005/12/11 12:20:53 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -103,10 +103,10 @@ const struct cdevsw veriexec_cdevsw = {
 /* Autoconfiguration glue */
 void    veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self,
 			void *aux);
-int     veriexecopen(dev_t dev, int flags, int fmt, struct proc *p);
-int     veriexecclose(dev_t dev, int flags, int fmt, struct proc *p);
+int     veriexecopen(dev_t dev, int flags, int fmt, struct lwp *l);
+int     veriexecclose(dev_t dev, int flags, int fmt, struct lwp *l);
 int     veriexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
-		       struct proc *p);
+		       struct lwp *l);
 
 void
 veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self,
@@ -121,15 +121,15 @@ veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self,
 
 int
 veriexecopen(dev_t dev __unused, int flags __unused,
-		 int fmt __unused, struct proc *p __unused)
+		 int fmt __unused, struct lwp *l __unused)
 {
 	if (veriexec_verbose >= 2) {
 		printf("Veriexec: veriexecopen: Veriexec load device "
 		       "open attempt by uid=%u, pid=%u. (dev=%u)\n",
-		       p->p_ucred->cr_uid, p->p_pid, dev);
+		       l->l_proc->p_ucred->cr_uid, l->l_proc->p_pid, dev);
 	}
 
-	if (suser(p->p_ucred, &p->p_acflag) != 0)
+	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EPERM);
 
 	if (veriexec_dev_usage > 0) {
@@ -154,7 +154,7 @@ veriexecclose(dev_t dev __unused, int flags __unused,
 
 int
 veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
-		  int flags __unused, struct proc *p)
+		  int flags __unused, struct lwp *l)
 {
 	int error = 0;
 

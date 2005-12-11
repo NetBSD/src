@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_mod.c,v 1.8 2003/09/06 13:34:56 jdolecek Exp $	*/
+/*	$NetBSD: iwm_mod.c,v 1.9 2005/12/11 12:24:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.8 2003/09/06 13:34:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.9 2005/12/11 12:24:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

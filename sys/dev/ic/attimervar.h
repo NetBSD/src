@@ -1,4 +1,4 @@
-/*	$NetBSD: attimervar.h,v 1.1 2005/03/25 23:06:19 cube Exp $	*/
+/*	$NetBSD: attimervar.h,v 1.2 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.

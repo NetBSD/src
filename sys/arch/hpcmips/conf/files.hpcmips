@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.98 2005/07/30 22:40:33 nakayama Exp $
+#	$NetBSD: files.hpcmips,v 1.99 2005/12/11 12:17:33 christos Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.22 2004/12/21 19:49:56 fvdl Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.23 2005/12/11 12:24:01 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*

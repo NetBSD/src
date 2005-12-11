@@ -1,7 +1,7 @@
-/*	$NetBSD: tvctrl.c,v 1.7 2003/07/15 01:44:55 lukem Exp $	*/
+/*	$NetBSD: tvctrl.c,v 1.8 2005/12/11 12:19:45 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tvctrl.c,v 1.7 2003/07/15 01:44:55 lukem Exp $");
+__RCSID("$NetBSD: tvctrl.c,v 1.8 2005/12/11 12:19:45 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>

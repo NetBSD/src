@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.9 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.10 2005/12/11 12:21:25 christos Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,

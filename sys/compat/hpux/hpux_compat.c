@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.72 2005/06/03 23:03:59 tsutsui Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.73 2005/12/11 12:20:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.72 2005/06/03 23:03:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.73 2005/12/11 12:20:02 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -850,14 +850,14 @@ hpux_sys_ioctl(l, v, retval)
 		if ((*ofp & (HPUX_UF_NONBLOCK_ON|HPUX_UF_FNDELAY_ON)) == 0) {
 			tmp = *ofp & HPUX_UF_FIONBIO_ON;
 			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO,
-						       (caddr_t)&tmp, p);
+						       (caddr_t)&tmp, l);
 		}
 		break;
 	}
 
 	case HPUXTIOCCONS:
 		*(int *)dt = 1;
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCCONS, dt, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCCONS, dt, l);
 		break;
 
 	/* BSD-style job control ioctls */
@@ -878,7 +878,7 @@ hpux_sys_ioctl(l, v, retval)
 	case HPUXTIOCGWINSZ:
 	case HPUXTIOCSWINSZ:
 		error = (*fp->f_ops->fo_ioctl)
-			(fp, hpuxtobsdioctl(com), dt, p);
+			(fp, hpuxtobsdioctl(com), dt, l);
 		if (error == 0 && com == HPUXTIOCLGET) {
 			*(int *)dt &= LTOSTOP;
 			if (*(int *)dt & LTOSTOP)
@@ -899,7 +899,7 @@ hpux_sys_ioctl(l, v, retval)
 		break;
 
 	default:
-		error = (*fp->f_ops->fo_ioctl)(fp, com, dt, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, com, dt, l);
 		break;
 	}
 	/*
@@ -909,7 +909,7 @@ hpux_sys_ioctl(l, v, retval)
 	if (error == 0 && (com&IOC_OUT) && size)
 		error = copyout(dt, SCARG(uap, data), (u_int)size);
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	if (memp)
 		free(memp, M_IOCTLOPS);
 	return (error);
@@ -1118,7 +1118,7 @@ hpux_sys_getaccess(l, v, retval)
 	 */
 	if (error == 0) {
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-			SCARG(uap, path), p);
+			SCARG(uap, path), l);
 		error = namei(&nd);
 	}
 	if (error) {
@@ -1130,11 +1130,11 @@ hpux_sys_getaccess(l, v, retval)
 	 */
 	vp = nd.ni_vp;
 	*retval = 0;
-	if (VOP_ACCESS(vp, VREAD, cred, p) == 0)
+	if (VOP_ACCESS(vp, VREAD, cred, l) == 0)
 		*retval |= R_OK;
-	if (vn_writechk(vp) == 0 && VOP_ACCESS(vp, VWRITE, cred, p) == 0)
+	if (vn_writechk(vp) == 0 && VOP_ACCESS(vp, VWRITE, cred, l) == 0)
 		*retval |= W_OK;
-	if (VOP_ACCESS(vp, VEXEC, cred, p) == 0)
+	if (VOP_ACCESS(vp, VEXEC, cred, l) == 0)
 		*retval |= X_OK;
 	vput(vp);
 	crfree(cred);
@@ -1399,7 +1399,6 @@ hpux_sys_utime_6x(l, v, retval)
 		syscallarg(char *) fname;
 		syscallarg(time_t *) tptr;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct vattr vattr;
 	time_t tv[2];
@@ -1419,14 +1418,14 @@ hpux_sys_utime_6x(l, v, retval)
 	vattr.va_mtime.tv_sec = tv[1];
 	vattr.va_mtime.tv_nsec = 0;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, fname), p);
+	    SCARG(uap, fname), l);
 	if ((error = namei(&nd)))
 		return (error);
 	vp = nd.ni_vp;
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else
-		error = VOP_SETATTR(vp, &vattr, nd.ni_cnd.cn_cred, p);
+		error = VOP_SETATTR(vp, &vattr, nd.ni_cnd.cn_cred, l);
 	vput(vp);
 	return (error);
 }

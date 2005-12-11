@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.8 2005/07/04 00:47:49 bsh Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.9 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.8 2005/07/04 00:47:49 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.9 2005/12/11 12:17:09 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

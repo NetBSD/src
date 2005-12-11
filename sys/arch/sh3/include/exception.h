@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.h,v 1.6 2005/06/29 16:51:20 christos Exp $	*/
+/*	$NetBSD: exception.h,v 1.7 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

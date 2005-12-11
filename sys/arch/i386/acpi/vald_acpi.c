@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.20 2004/05/01 12:05:01 kochi Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.21 2005/12/11 12:17:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.20 2004/05/01 12:05:01 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.21 2005/12/11 12:17:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

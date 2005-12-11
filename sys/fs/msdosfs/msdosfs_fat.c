@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.5 2005/08/29 23:57:35 xtraeme Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.6 2005/12/11 12:24:25 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.5 2005/08/29 23:57:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.6 2005/12/11 12:24:25 christos Exp $");
 
 /*
  * kernel include files.

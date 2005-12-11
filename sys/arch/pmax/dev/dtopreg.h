@@ -1,4 +1,4 @@
-/*	$NetBSD: dtopreg.h,v 1.10 2003/08/07 16:29:09 agc Exp $	*/
+/*	$NetBSD: dtopreg.h,v 1.11 2005/12/11 12:18:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.29 2005/10/15 17:29:25 yamt Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.30 2005/12/11 12:22:47 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.29 2005/10/15 17:29:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.30 2005/12/11 12:22:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

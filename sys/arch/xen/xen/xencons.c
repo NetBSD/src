@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.9 2005/09/06 21:40:39 kleink Exp $	*/
+/*	$NetBSD: xencons.c,v 1.10 2005/12/11 12:19:50 christos Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.9 2005/09/06 21:40:39 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.10 2005/12/11 12:19:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -175,7 +175,7 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-xencons_open(dev_t dev, int flag, int mode, struct proc *p)
+xencons_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct xencons_softc *sc;
 	int unit = XENCONS_UNIT(dev);
@@ -198,7 +198,7 @@ xencons_open(dev_t dev, int flag, int mode, struct proc *p)
 		xencons_param(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE &&
-		   suser(p->p_ucred, &p->p_acflag) != 0)
+		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 
@@ -206,7 +206,7 @@ xencons_open(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-xencons_close(dev_t dev, int flag, int mode, struct proc *p)
+xencons_close(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct xencons_softc *sc = device_lookup(&xencons_cd,
 	    XENCONS_UNIT(dev));
@@ -243,13 +243,13 @@ xencons_write(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-xencons_poll(dev_t dev, int events, struct proc *p)
+xencons_poll(dev_t dev, int events, struct lwp *l)
 {
 	struct xencons_softc *sc = device_lookup(&xencons_cd,
 	    XENCONS_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -263,18 +263,18 @@ xencons_tty(dev_t dev)
 }
 
 int
-xencons_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+xencons_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct xencons_softc *sc = device_lookup(&xencons_cd,
 	    XENCONS_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 

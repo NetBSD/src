@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.36 2003/09/22 14:18:33 cl Exp $
+#	$NetBSD: files.m68k,v 1.37 2005/12/11 12:17:52 christos Exp $
 #
 
 defflag	opt_fpsp.h		FPSP

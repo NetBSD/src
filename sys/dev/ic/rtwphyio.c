@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.7 2005/06/22 06:15:51 dyoung Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.8 2005/12/11 12:21:28 christos Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.7 2005/06/22 06:15:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.8 2005/12/11 12:21:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

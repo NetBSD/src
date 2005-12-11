@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.7 2005/08/14 02:56:06 joff Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.8 2005/12/11 12:21:26 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.7 2005/08/14 02:56:06 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.8 2005/12/11 12:21:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ const struct wsdisplay_emulops hlcd_emulops = {
 	hlcd_allocattr
 };
 
-static int	hlcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	hlcd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	hlcd_mmap(void *, off_t, int);
 static int	hlcd_alloc_screen(void *, const struct wsscreen_descr *,
 		    void **, int *, int *, long *);
@@ -228,12 +228,12 @@ hlcd_allocattr(id, fg, bg, flags, attrp)
 }
 
 static int
-hlcd_ioctl(v, cmd, data, flag, p)
+hlcd_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	switch (cmd) {

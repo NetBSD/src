@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.103 2005/09/16 17:09:52 christos Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.104 2005/12/11 12:20:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.103 2005/09/16 17:09:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.104 2005/12/11 12:20:30 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -400,7 +400,7 @@ ultrix_sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 

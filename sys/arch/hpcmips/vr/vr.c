@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.45 2005/01/16 03:21:21 hamajima Exp $	*/
+/*	$NetBSD: vr.c,v 1.46 2005/12/11 12:17:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.45 2005/01/16 03:21:21 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.46 2005/12/11 12:17:34 christos Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"

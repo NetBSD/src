@@ -1,4 +1,4 @@
-/* $NetBSD: eeprom.c,v 1.2 2003/07/15 01:29:19 lukem Exp $ */
+/* $NetBSD: eeprom.c,v 1.3 2005/12/11 12:17:04 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.2 2003/07/15 01:29:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.3 2005/12/11 12:17:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

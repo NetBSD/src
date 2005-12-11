@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.33 2005/09/24 21:44:15 jmmv Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.34 2005/12/11 12:20:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.33 2005/09/24 21:44:15 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.34 2005/12/11 12:20:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,6 @@ int
 ultrix_sys_getmnt(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_getmnt_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp, *nmp;
 	struct statvfs *sp;
 	struct ultrix_fs_data *sfsp;
@@ -271,7 +270,7 @@ ultrix_sys_getmnt(struct lwp *l, void *v, register_t *retval)
 			 * If requested, refresh the fsstat cache.
 			 */
 			if (mntflags != MNT_WAIT &&
-			    (error = VFS_STATVFS(mp, sp, p)) != 0)
+			    (error = VFS_STATVFS(mp, sp, l)) != 0)
 				continue;
 
 			/*

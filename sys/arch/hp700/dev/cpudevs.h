@@ -1,4 +1,4 @@
-/*	$NetBSD: cpudevs.h,v 1.3 2005/05/01 19:03:39 chs Exp $	*/
+/*	$NetBSD: cpudevs.h,v 1.4 2005/12/11 12:17:24 christos Exp $	*/
 
 /* THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT. */
 

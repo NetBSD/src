@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.12 2005/05/03 16:26:28 manu Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.13 2005/12/11 12:20:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

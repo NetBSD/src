@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gv.c,v 1.10 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: grf_gv.c,v 1.11 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gv.c,v 1.10 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_gv.c,v 1.11 2005/12/11 12:19:37 christos Exp $");
 
 #include "opt_compat_hpux.h"
 

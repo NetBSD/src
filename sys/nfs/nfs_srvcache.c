@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.31 2004/05/21 13:53:40 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.32 2005/12/11 12:25:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.31 2004/05/21 13:53:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.32 2005/12/11 12:25:16 christos Exp $");
 
 #include "opt_iso.h"
 

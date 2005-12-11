@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.11 2005/09/06 21:40:39 kleink Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.12 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.11 2005/09/06 21:40:39 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.12 2005/12/11 12:21:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

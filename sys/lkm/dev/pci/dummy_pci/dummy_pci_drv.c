@@ -1,4 +1,4 @@
-/* $NetBSD: dummy_pci_drv.c,v 1.1 2004/08/18 14:06:13 drochner Exp $ */
+/* $NetBSD: dummy_pci_drv.c,v 1.2 2005/12/11 12:24:47 christos Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

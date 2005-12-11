@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.44 2004/08/30 15:05:15 drochner Exp $ */
+/* $NetBSD: apecs.c,v 1.45 2005/12/11 12:16:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.44 2004/08/30 15:05:15 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.45 2005/12/11 12:16:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.16 2005/04/01 11:59:22 yamt Exp $	*/
+/*	$NetBSD: esc.c,v 1.17 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.16 2005/04/01 11:59:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.17 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

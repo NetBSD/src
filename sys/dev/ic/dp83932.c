@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.12 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.13 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.12 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.13 2005/12/11 12:21:26 christos Exp $");
 
 #include "bpfilter.h"
 

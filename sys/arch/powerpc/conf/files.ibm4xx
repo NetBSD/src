@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibm4xx,v 1.8 2005/10/13 21:38:11 jmc Exp $
+#	$NetBSD: files.ibm4xx,v 1.9 2005/12/11 12:18:42 christos Exp $
 #
 # IBM 4xx specific configuration info
 

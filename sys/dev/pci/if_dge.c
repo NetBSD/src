@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.11 2005/05/02 15:34:32 yamt Exp $ */
+/*	$NetBSD: if_dge.c,v 1.12 2005/12/11 12:22:49 christos Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.11 2005/05/02 15:34:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.12 2005/12/11 12:22:49 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

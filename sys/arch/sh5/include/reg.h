@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.5 2005/06/01 13:01:36 scw Exp $	*/
+/*	$NetBSD: reg.h,v 1.6 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.h,v 1.6 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: overlay.h,v 1.7 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration

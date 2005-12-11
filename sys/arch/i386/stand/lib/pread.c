@@ -1,4 +1,4 @@
-/*	$NetBSD: pread.c,v 1.5 2004/03/24 16:46:28 drochner Exp $	 */
+/*	$NetBSD: pread.c,v 1.6 2005/12/11 12:17:48 christos Exp $	 */
 
 /*
  * Copyright (c) 1996

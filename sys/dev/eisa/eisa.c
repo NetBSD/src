@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.38 2005/08/25 22:33:18 drochner Exp $	*/
+/*	$NetBSD: eisa.c,v 1.39 2005/12/11 12:21:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.38 2005/08/25 22:33:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.39 2005/12/11 12:21:20 christos Exp $");
 
 #include "opt_eisaverbose.h"
 

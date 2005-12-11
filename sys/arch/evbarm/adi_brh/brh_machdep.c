@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.21 2004/12/12 21:03:06 abs Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.22 2005/12/11 12:17:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.21 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.22 2005/12/11 12:17:06 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

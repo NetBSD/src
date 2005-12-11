@@ -1,4 +1,4 @@
-/*	$NetBSD: acpireg.h,v 1.4 2005/01/29 18:06:18 jmcneill Exp $	*/
+/*	$NetBSD: acpireg.h,v 1.5 2005/12/11 12:21:02 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

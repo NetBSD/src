@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.17 2005/10/24 14:25:06 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.18 2005/12/11 12:20:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.17 2005/10/24 14:25:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.18 2005/12/11 12:20:53 christos Exp $");
 
 #include "fss.h"
 
@@ -128,10 +128,10 @@ dev_type_size(fss_size);
 static int fss_copy_on_write(void *, struct buf *);
 static inline void fss_error(struct fss_softc *, const char *, ...);
 static int fss_create_files(struct fss_softc *, struct fss_set *,
-    off_t *, struct proc *);
+    off_t *, struct lwp *);
 static int fss_create_snapshot(struct fss_softc *, struct fss_set *,
-    struct proc *);
-static int fss_delete_snapshot(struct fss_softc *, struct proc *);
+    struct lwp *);
+static int fss_delete_snapshot(struct fss_softc *, struct lwp *);
 static int fss_softc_alloc(struct fss_softc *);
 static void fss_softc_free(struct fss_softc *);
 static void fss_cluster_iodone(struct buf *);
@@ -167,7 +167,7 @@ fssattach(int num)
 }
 
 int
-fss_open(dev_t dev, int flags, int mode, struct proc *p)
+fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int s, mflag;
 	struct fss_softc *sc;
@@ -187,7 +187,7 @@ fss_open(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-fss_close(dev_t dev, int flags, int mode, struct proc *p)
+fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int s, mflag, error;
 	struct fss_softc *sc;
@@ -203,7 +203,7 @@ fss_close(dev_t dev, int flags, int mode, struct proc *p)
 		if ((sc->sc_uflags & FSS_UNCONFIG_ON_CLOSE) != 0 &&
 		    (sc->sc_flags & FSS_ACTIVE) != 0) {
 			FSS_UNLOCK(sc, s);
-			error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, p);
+			error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, l);
 			if (error)
 				return error;
 			FSS_LOCK(sc, s);
@@ -260,7 +260,7 @@ fss_write(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int s, error;
 	struct fss_softc *sc;
@@ -288,7 +288,7 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		else if ((sc->sc_flags & FSS_ACTIVE) != 0)
 			error = EBUSY;
 		else
-			error = fss_create_snapshot(sc, fss, p);
+			error = fss_create_snapshot(sc, fss, l);
 		break;
 
 	case FSSIOCCLR:
@@ -297,7 +297,7 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		else if ((sc->sc_flags & FSS_ACTIVE) == 0)
 			error = ENXIO;
 		else
-			error = fss_delete_snapshot(sc, p);
+			error = fss_delete_snapshot(sc, l);
 		break;
 
 	case FSSIOCGET:
@@ -536,7 +536,7 @@ fss_copy_on_write(void *v, struct buf *bp)
  */
 static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
-    off_t *bsize, struct proc *p)
+    off_t *bsize, struct lwp *l)
 {
 	int error, bits, fsbsize;
 	struct timespec ts;
@@ -548,7 +548,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the mounted file system.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_mount, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_mount, l);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -566,7 +566,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Check for file system internal snapshot.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -574,7 +574,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		vrele(nd.ni_vp);
 		sc->sc_flags |= FSS_PERSISTENT;
 
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, p);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
 		if ((error = vn_open(&nd, FREAD, 0)) != 0)
 			return error;
 		sc->sc_bs_vp = nd.ni_vp;
@@ -607,7 +607,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 */
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
-	    sc->sc_mount->mnt_stat.f_mntfromname, p);
+	    sc->sc_mount->mnt_stat.f_mntfromname, l);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -616,7 +616,8 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 	}
 
-	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD, p->p_ucred, p);
+	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD,
+	    l->l_proc->p_ucred, l);
 	if (error) {
 		vrele(nd.ni_vp);
 		return error;
@@ -631,7 +632,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the backing store
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return error;
 	VOP_UNLOCK(nd.ni_vp, 0);
@@ -642,7 +643,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 
 	if (sc->sc_bs_vp->v_type == VREG) {
-		error = VOP_GETATTR(sc->sc_bs_vp, &va, p->p_ucred, p);
+		error = VOP_GETATTR(sc->sc_bs_vp, &va, l->l_proc->p_ucred, l);
 		if (error != 0)
 			return error;
 		sc->sc_bs_size = va.va_size;
@@ -666,7 +667,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * VOP_STRATEGY() clean the buffer cache to prevent
 	 * cache incoherencies.
 	 */
-	if ((error = vinvalbuf(sc->sc_bs_vp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
+	if ((error = vinvalbuf(sc->sc_bs_vp, V_SAVE, l->l_proc->p_ucred, l, 0, 0)) != 0)
 		return error;
 
 	return 0;
@@ -676,7 +677,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
  * Create a snapshot.
  */
 static int
-fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct proc *p)
+fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 {
 	int len, error;
 	u_int32_t csize;
@@ -685,7 +686,7 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct proc *p)
 	/*
 	 * Open needed files.
 	 */
-	if ((error = fss_create_files(sc, fss, &bsize, p)) != 0)
+	if ((error = fss_create_files(sc, fss, &bsize, l)) != 0)
 		goto bad;
 
 	if (sc->sc_flags & FSS_PERSISTENT) {
@@ -775,9 +776,9 @@ bad:
 	fss_softc_free(sc);
 	if (sc->sc_bs_vp != NULL) {
 		if (sc->sc_flags & FSS_PERSISTENT)
-			vn_close(sc->sc_bs_vp, FREAD, p->p_ucred, p);
+			vn_close(sc->sc_bs_vp, FREAD, l->l_proc->p_ucred, l);
 		else
-			vn_close(sc->sc_bs_vp, FREAD|FWRITE, p->p_ucred, p);
+			vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_proc->p_ucred, l);
 	}
 	sc->sc_bs_vp = NULL;
 
@@ -788,7 +789,7 @@ bad:
  * Delete a snapshot.
  */
 static int
-fss_delete_snapshot(struct fss_softc *sc, struct proc *p)
+fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 {
 	int s;
 
@@ -803,9 +804,9 @@ fss_delete_snapshot(struct fss_softc *sc, struct proc *p)
 
 	fss_softc_free(sc);
 	if (sc->sc_flags & FSS_PERSISTENT)
-		vn_close(sc->sc_bs_vp, FREAD, p->p_ucred, p);
+		vn_close(sc->sc_bs_vp, FREAD, l->l_proc->p_ucred, l);
 	else
-		vn_close(sc->sc_bs_vp, FREAD|FWRITE, p->p_ucred, p);
+		vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_proc->p_ucred, l);
 	sc->sc_bs_vp = NULL;
 	sc->sc_flags &= ~FSS_PERSISTENT;
 
@@ -966,7 +967,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 
 	error = vn_rdwr((rw == FSS_READ ? UIO_READ : UIO_WRITE), sc->sc_bs_vp,
 	    data, len, off, UIO_SYSSPACE, IO_UNIT|IO_NODELOCKED,
-	    sc->sc_bs_proc->p_ucred, NULL, sc->sc_bs_proc);
+	    sc->sc_bs_proc->p_ucred, NULL, NULL);
 	if (error == 0) {
 		simple_lock(&sc->sc_bs_vp->v_interlock);
 		error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(off),

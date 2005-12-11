@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.20 2004/08/28 17:37:01 thorpej Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.21 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

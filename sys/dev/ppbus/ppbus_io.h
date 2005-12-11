@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_io.h,v 1.5 2005/02/27 00:27:44 perry Exp $ */
+/* $NetBSD: ppbus_io.h,v 1.6 2005/12/11 12:23:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 Nicolas Souchu

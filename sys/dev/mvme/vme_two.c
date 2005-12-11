@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.4 2004/04/02 14:14:18 scw Exp $	*/
+/*	$NetBSD: vme_two.c,v 1.5 2005/12/11 12:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.4 2004/04/02 14:14:18 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.5 2005/12/11 12:22:48 christos Exp $");
 
 #include "vmetwo.h"
 

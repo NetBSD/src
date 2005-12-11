@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.21 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.22 2005/12/11 12:21:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

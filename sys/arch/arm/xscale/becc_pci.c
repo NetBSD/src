@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.6 2003/10/31 01:12:06 thorpej Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.7 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.6 2003/10/31 01:12:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.7 2005/12/11 12:16:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

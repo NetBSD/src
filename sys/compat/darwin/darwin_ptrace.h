@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.h,v 1.1 2003/11/20 07:12:34 manu Exp $ */
+/*	$NetBSD: darwin_ptrace.h,v 1.2 2005/12/11 12:19:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

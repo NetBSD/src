@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.39 2005/03/26 05:12:35 fvdl Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.40 2005/12/11 12:20:23 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.39 2005/03/26 05:12:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.40 2005/12/11 12:20:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.24 2005/10/18 00:14:43 yamt Exp $ */
+/* $NetBSD: xbd.c,v 1.25 2005/12/11 12:19:50 christos Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.24 2005/10/18 00:14:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.25 2005/12/11 12:19:50 christos Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -1082,7 +1082,7 @@ xbd_detach(struct device *dv, int flags)
 }
 
 int
-xbdopen(dev_t dev, int flags, int fmt, struct proc *p)
+xbdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct	xbd_softc *xs;
 
@@ -1097,11 +1097,11 @@ xbdopen(dev_t dev, int flags, int fmt, struct proc *p)
 	default:
 		return ENXIO;
 	}
-	return dk_open(xs->sc_di, &xs->sc_dksc, dev, flags, fmt, p);
+	return dk_open(xs->sc_di, &xs->sc_dksc, dev, flags, fmt, l);
 }
 
 int
-xbdclose(dev_t dev, int flags, int fmt, struct proc *p)
+xbdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct	xbd_softc *xs;
 
@@ -1116,7 +1116,7 @@ xbdclose(dev_t dev, int flags, int fmt, struct proc *p)
 	default:
 		return ENXIO;
 	}
-	return dk_close(xs->sc_di, &xs->sc_dksc, dev, flags, fmt, p);
+	return dk_close(xs->sc_di, &xs->sc_dksc, dev, flags, fmt, l);
 }
 
 void
@@ -1518,7 +1518,7 @@ xbdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct	xbd_softc *xs;
 	struct	dk_softc *dksc;
@@ -1533,7 +1533,7 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	default:
-		ret = dk_ioctl(xs->sc_di, dksc, dev, cmd, data, flag, p);
+		ret = dk_ioctl(xs->sc_di, dksc, dev, cmd, data, flag, l);
 		break;
 	}
 
@@ -1541,14 +1541,14 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-xbdioctl_cdev(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+xbdioctl_cdev(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	dev_t bdev;
 
 	bdev = devsw_chr2blk(dev);
 	if (bdev == NODEV)
 		return ENXIO;
-	return xbdioctl(bdev, cmd, data, flag, p);
+	return xbdioctl(bdev, cmd, data, flag, l);
 }
 
 int

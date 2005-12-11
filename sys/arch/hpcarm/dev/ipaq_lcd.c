@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.12 2004/12/12 21:03:06 abs Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.13 2005/12/11 12:17:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.12 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.13 2005/12/11 12:17:32 christos Exp $");
 
 #define IPAQ_LCD_DEBUG
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.28 2005/01/10 22:01:37 kent Exp $
+#	$NetBSD: files.tc,v 1.29 2005/12/11 12:24:00 christos Exp $
 #
 # Config file and device description for machine-independent
 # TURBOchannel code.  Included by ports that need it.

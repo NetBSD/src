@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.59 2003/08/07 16:27:55 agc Exp $	*/
+/*	$NetBSD: mem.c,v 1.60 2005/12/11 12:17:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.59 2003/08/07 16:27:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.60 2005/12/11 12:17:41 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -112,10 +112,10 @@ const struct cdevsw mem_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
+mmopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	switch (minor(dev)) {

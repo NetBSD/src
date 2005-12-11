@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2005/10/30 07:50:31 sekiya Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2005/12/11 12:19:08 christos Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
 __INCLUDED_STAND_MAKEFILE_INC=

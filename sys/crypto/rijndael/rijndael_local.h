@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael_local.h,v 1.5 2005/02/26 23:04:17 perry Exp $	*/
+/*	$NetBSD: rijndael_local.h,v 1.6 2005/12/11 12:20:52 christos Exp $	*/
 /*	$KAME: rijndael_local.h,v 1.4 2003/07/15 10:47:16 itojun Exp $	*/
 
 /* the file should not be used from outside */

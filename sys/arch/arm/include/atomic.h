@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.2 2003/11/26 12:17:18 bsh Exp $ */
+/* $NetBSD: atomic.h,v 1.3 2005/12/11 12:16:46 christos Exp $ */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe

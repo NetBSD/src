@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.88 2005/06/12 04:39:37 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.89 2005/12/11 12:19:36 christos Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2005/06/12 04:39:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.89 2005/12/11 12:19:36 christos Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -209,8 +209,8 @@ cpu_setfunc(l, func, arg)
 }
 
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	return ENOEXEC;

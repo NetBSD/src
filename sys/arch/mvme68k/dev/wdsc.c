@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.28 2004/03/28 15:35:33 scw Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.29 2005/12/11 12:18:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.28 2004/03/28 15:35:33 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.29 2005/12/11 12:18:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

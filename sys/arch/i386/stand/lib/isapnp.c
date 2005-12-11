@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.3 2004/03/24 16:46:27 drochner Exp $	 */
+/*	$NetBSD: isapnp.c,v 1.4 2005/12/11 12:17:48 christos Exp $	 */
 
 /*
  * Copyright (c) 1997

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.h,v 1.4 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: mpt.h,v 1.5 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley

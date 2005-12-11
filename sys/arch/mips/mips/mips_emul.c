@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.11 2004/04/26 22:29:07 simonb Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.12 2005/12/11 12:18:09 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.11 2004/04/26 22:29:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.12 2005/12/11 12:18:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

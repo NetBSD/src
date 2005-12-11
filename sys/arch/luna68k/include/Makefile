@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2004/05/08 21:51:49 kleink Exp $
+#	$NetBSD: Makefile,v 1.14 2005/12/11 12:17:52 christos Exp $
 
 INCSDIR= /usr/include/luna68k
 

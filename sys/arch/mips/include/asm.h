@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.35 2003/08/07 16:28:27 agc Exp $	*/
+/*	$NetBSD: asm.h,v 1.36 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

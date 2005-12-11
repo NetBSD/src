@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/05/09 01:31:27 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 2005/12/11 12:18:51 christos Exp $
 
 PROG=	mkbootimage
 SRCS=	mkbootimage.c byteorder.c

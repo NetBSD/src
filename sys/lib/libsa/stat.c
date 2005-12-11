@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.5 2003/08/07 16:32:30 agc Exp $	*/
+/*	$NetBSD: stat.c,v 1.6 2005/12/11 12:24:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

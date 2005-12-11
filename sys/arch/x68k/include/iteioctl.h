@@ -33,7 +33,7 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$NetBSD: iteioctl.h,v 1.6 2004/05/12 14:25:08 minoura Exp $
+ *	$NetBSD: iteioctl.h,v 1.7 2005/12/11 12:19:44 christos Exp $
  */
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,7 +73,7 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$NetBSD: iteioctl.h,v 1.6 2004/05/12 14:25:08 minoura Exp $
+ *	$NetBSD: iteioctl.h,v 1.7 2005/12/11 12:19:44 christos Exp $
  */
 
 #ifndef _X68K_ITEIOCTL_H_

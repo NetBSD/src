@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.5 2005/06/03 15:21:35 chs Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.6 2005/12/11 12:17:37 christos Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.5 2005/06/03 15:21:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.6 2005/12/11 12:17:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

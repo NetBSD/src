@@ -1,4 +1,4 @@
-/*	$NetBSD: twiddle.c,v 1.3 2005/06/28 21:03:01 junyoung Exp $	*/
+/*	$NetBSD: twiddle.c,v 1.4 2005/12/11 12:16:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,7 +31,7 @@
  *	@(#)printf.c	8.1 (Berkeley) 6/11/93
  */
 
-/*	From: $NetBSD: twiddle.c,v 1.3 2005/06/28 21:03:01 junyoung Exp $	*/
+/*	From: $NetBSD: twiddle.c,v 1.4 2005/12/11 12:16:36 christos Exp $	*/
 
 #include <lib/libsa/stand.h>
 

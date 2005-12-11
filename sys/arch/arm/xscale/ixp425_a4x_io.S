@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_a4x_io.S,v 1.1 2003/10/08 14:55:04 scw Exp $	*/
+/*	$NetBSD: ixp425_a4x_io.S,v 1.2 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.

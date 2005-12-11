@@ -1,4 +1,4 @@
-/*	$NetBSD: xyreg.h,v 1.4 2004/04/19 12:44:10 wiz Exp $	*/
+/*	$NetBSD: xyreg.h,v 1.5 2005/12/11 12:24:07 christos Exp $	*/
 
 /*
  *

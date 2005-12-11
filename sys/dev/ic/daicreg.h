@@ -1,4 +1,4 @@
-/* $NetBSD: daicreg.h,v 1.4 2003/12/04 13:57:30 keihan Exp $ */
+/* $NetBSD: daicreg.h,v 1.5 2005/12/11 12:21:26 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

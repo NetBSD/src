@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dma.c,v 1.3 2003/08/07 16:58:35 bsh Exp $ */
+/*	$NetBSD: pxa2x0_dma.c,v 1.4 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_dma.c,v 1.3 2003/08/07 16:58:35 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_dma.c,v 1.4 2005/12/11 12:16:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

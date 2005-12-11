@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.21 2005/07/11 21:42:58 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.22 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003

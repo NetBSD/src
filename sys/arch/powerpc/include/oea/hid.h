@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.6 2005/01/21 00:45:48 matt Exp $	*/
+/*	$NetBSD: hid.h,v 1.7 2005/12/11 12:18:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.

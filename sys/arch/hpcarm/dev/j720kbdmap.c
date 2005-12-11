@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbdmap.c,v 1.10 2004/03/13 17:23:32 bjh21 Exp $	*/
+/*	$NetBSD: j720kbdmap.c,v 1.11 2005/12/11 12:17:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720kbdmap.c,v 1.10 2004/03/13 17:23:32 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720kbdmap.c,v 1.11 2005/12/11 12:17:32 christos Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

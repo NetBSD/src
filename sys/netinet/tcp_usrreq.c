@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.112 2005/11/15 18:39:46 dsl Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.113 2005/12/11 12:24:58 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.112 2005/11/15 18:39:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113 2005/12/11 12:24:58 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -167,13 +167,14 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.112 2005/11/15 18:39:46 dsl Exp $")
 /*ARGSUSED*/
 int
 tcp_usrreq(struct socket *so, int req,
-    struct mbuf *m, struct mbuf *nam, struct mbuf *control, struct proc *p)
+    struct mbuf *m, struct mbuf *nam, struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp;
 #ifdef INET6
 	struct in6pcb *in6p;
 #endif
 	struct tcpcb *tp = NULL;
+	struct proc *p;
 	int s;
 	int error = 0;
 #ifdef TCP_DEBUG
@@ -181,6 +182,7 @@ tcp_usrreq(struct socket *so, int req,
 #endif
 	int family;	/* family of the socket */
 
+	p = l ? l->l_proc : NULL;
 	family = so->so_proto->pr_domain->dom_family;
 
 	if (req == PRU_CONTROL) {
@@ -1167,6 +1169,7 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 	    default:
 		return (EPROTONOSUPPORT);
 	}
+	*oldlenp = sizeof(uid);
 
 	uid = sockp->so_uidinfo->ui_uid;
 	if (oldp) {

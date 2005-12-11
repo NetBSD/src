@@ -1,4 +1,4 @@
-/*	$NetBSD: if_egreg.h,v 1.4 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: if_egreg.h,v 1.5 2005/12/11 12:22:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley (dean@fsa.ca)

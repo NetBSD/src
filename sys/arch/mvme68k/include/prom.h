@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.14 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: prom.h,v 1.15 2005/12/11 12:18:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt

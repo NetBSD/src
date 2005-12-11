@@ -1,4 +1,4 @@
-#	$NetBSD: std.viper,v 1.2 2005/09/17 09:44:06 yamt Exp $
+#	$NetBSD: std.viper,v 1.3 2005/12/11 12:17:07 christos Exp $
 #
 # Arcom Viper standard kernel options
 #

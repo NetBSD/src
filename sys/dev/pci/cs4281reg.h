@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281reg.h,v 1.5 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: cs4281reg.h,v 1.6 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.

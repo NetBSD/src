@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.208 2005/11/26 05:27:08 simonb Exp $	*/
+/*	$NetBSD: proc.h,v 1.209 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -476,7 +476,7 @@ void	syscall_intern(struct proc *);
 
 void	child_return(void *);
 
-int	proc_isunder(struct proc *, struct proc *);
+int	proc_isunder(struct proc *, struct lwp *);
 void	proc_stop(struct proc *, int);
 
 void	proclist_lock_read(void);

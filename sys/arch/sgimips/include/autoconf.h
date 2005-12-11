@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.7 2005/02/28 07:24:51 sekiya Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.8 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang

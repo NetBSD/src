@@ -1,4 +1,4 @@
-/*	$NetBSD: gpiicreg.h,v 1.1 2003/10/06 16:15:46 scw Exp $	*/
+/*	$NetBSD: gpiicreg.h,v 1.2 2005/12/11 12:18:42 christos Exp $	*/
 /*	Original Tag: iicreg.h,v 1.3 2003/09/23 14:56:08 shige Exp 	*/
 
 /*

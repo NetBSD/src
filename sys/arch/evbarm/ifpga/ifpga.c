@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.20 2005/08/26 13:19:35 drochner Exp $ */
+/*	$NetBSD: ifpga.c,v 1.21 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.20 2005/08/26 13:19:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.21 2005/12/11 12:17:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiicvar.h,v 1.1 2003/10/06 16:11:19 thorpej Exp $	*/
+/*	$NetBSD: iomdiicvar.h,v 1.2 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

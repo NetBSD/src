@@ -1,4 +1,4 @@
-/* $NetBSD: gusreg.h,v 1.7 2005/02/27 00:27:17 perry Exp $ */
+/* $NetBSD: gusreg.h,v 1.8 2005/12/11 12:22:02 christos Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

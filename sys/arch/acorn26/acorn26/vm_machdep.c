@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.8 2005/04/01 11:59:21 yamt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.9 2005/12/11 12:16:03 christos Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8 2005/04/01 11:59:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.9 2005/12/11 12:16:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_vnd.c,v 1.3 2005/02/26 22:58:58 perry Exp $	*/
+/*	$NetBSD: lkminit_vnd.c,v 1.4 2005/12/11 12:24:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.3 2005/02/26 22:58:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.4 2005/12/11 12:24:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

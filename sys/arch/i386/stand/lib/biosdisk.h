@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.h,v 1.5 2005/06/22 06:06:34 junyoung Exp $	*/
+/*	$NetBSD: biosdisk.h,v 1.6 2005/12/11 12:17:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1996

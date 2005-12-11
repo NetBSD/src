@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.11 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.12 2005/12/11 12:24:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -108,13 +108,13 @@ struct filecore_mnt {
 extern struct pool filecore_node_pool;
 
 int filecore_mount __P((struct mount *,
-	    const char *, void *, struct nameidata *, struct proc *));
-int filecore_start __P((struct mount *, int, struct proc *));
-int filecore_unmount __P((struct mount *, int, struct proc *));
+	    const char *, void *, struct nameidata *, struct lwp *));
+int filecore_start __P((struct mount *, int, struct lwp *));
+int filecore_unmount __P((struct mount *, int, struct lwp *));
 int filecore_root __P((struct mount *, struct vnode **));
-int filecore_quotactl __P((struct mount *, int, uid_t, void *, struct proc *));
-int filecore_statvfs __P((struct mount *, struct statvfs *, struct proc *));
-int filecore_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int filecore_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
+int filecore_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
+int filecore_sync __P((struct mount *, int, struct ucred *, struct lwp *));
 int filecore_vget __P((struct mount *, ino_t, struct vnode **));
 int filecore_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int filecore_checkexp __P((struct mount *, struct mbuf *, int *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.4 2005/06/03 15:18:38 he Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.5 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.4 2005/06/03 15:18:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.5 2005/12/11 12:19:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

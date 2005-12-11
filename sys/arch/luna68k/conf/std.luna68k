@@ -1,4 +1,4 @@
-#	$NetBSD: std.luna68k,v 1.6 2005/09/17 09:44:07 yamt Exp $
+#	$NetBSD: std.luna68k,v 1.7 2005/12/11 12:17:52 christos Exp $
 
 machine luna68k m68k
 include		"conf/std"	# MI standard options

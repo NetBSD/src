@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2005/01/11 00:57:56 joff Exp $
+#	$NetBSD: Makefile,v 1.24 2005/12/11 12:21:25 christos Exp $
 
 INCSDIR= /usr/include/dev/ic
 

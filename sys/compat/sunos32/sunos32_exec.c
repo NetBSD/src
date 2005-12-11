@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.23 2005/07/11 13:14:49 christos Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.24 2005/12/11 12:20:23 christos Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.23 2005/07/11 13:14:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.24 2005/12/11 12:20:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"

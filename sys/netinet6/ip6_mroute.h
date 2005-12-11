@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.h,v 1.9 2003/07/08 10:20:45 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.h,v 1.10 2005/12/11 12:25:02 christos Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*

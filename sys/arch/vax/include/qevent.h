@@ -1,4 +1,4 @@
-/*	$NetBSD: qevent.h,v 1.2 2003/08/07 16:30:12 agc Exp $	*/
+/*	$NetBSD: qevent.h,v 1.3 2005/12/11 12:19:34 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.

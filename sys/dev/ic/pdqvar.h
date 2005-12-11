@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.35 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.36 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>

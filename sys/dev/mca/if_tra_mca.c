@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.2 2005/04/03 11:36:32 jdolecek Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.3 2005/12/11 12:22:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.2 2005/04/03 11:36:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.3 2005/12/11 12:22:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

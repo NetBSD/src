@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_debug.c,v 1.3 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: mpt_debug.c,v 1.4 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.3 2005/05/30 04:43:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.4 2005/12/11 12:21:28 christos Exp $");
 
 #include <dev/ic/mpt.h>
 

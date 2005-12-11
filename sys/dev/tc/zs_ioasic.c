@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.28 2005/08/26 12:42:11 drochner Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.29 2005/12/11 12:24:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.28 2005/08/26 12:42:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.29 2005/12/11 12:24:00 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

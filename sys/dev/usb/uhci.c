@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.190 2005/07/18 11:08:00 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.191 2005/12/11 12:24:01 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.190 2005/07/18 11:08:00 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.191 2005/12/11 12:24:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

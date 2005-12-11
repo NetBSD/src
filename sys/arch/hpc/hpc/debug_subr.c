@@ -1,4 +1,4 @@
-/*	$NetBSD: debug_subr.c,v 1.6 2005/06/07 12:02:04 he Exp $	*/
+/*	$NetBSD: debug_subr.c,v 1.7 2005/12/11 12:17:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: debug_subr.c,v 1.6 2005/06/07 12:02:04 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: debug_subr.c,v 1.7 2005/12/11 12:17:25 christos Exp $");
 
 #include "debug_hpc.h"
 

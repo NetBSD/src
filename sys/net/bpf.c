@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.111 2005/09/05 18:32:24 rpaulo Exp $	*/
+/*	$NetBSD: bpf.c,v 1.112 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.111 2005/09/05 18:32:24 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.112 2005/12/11 12:24:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,9 +145,9 @@ static int	bpf_read(struct file *, off_t *, struct uio *, struct ucred *,
     int);
 static int	bpf_write(struct file *, off_t *, struct uio *, struct ucred *,
     int);
-static int	bpf_ioctl(struct file *, u_long, void *, struct proc *);
-static int	bpf_poll(struct file *, int, struct proc *);
-static int	bpf_close(struct file *, struct proc *);
+static int	bpf_ioctl(struct file *, u_long, void *, struct lwp *);
+static int	bpf_poll(struct file *, int, struct lwp *);
+static int	bpf_close(struct file *, struct lwp *);
 static int	bpf_kqfilter(struct file *, struct knote *);
 
 static const struct fileops bpf_fileops = {
@@ -382,28 +382,28 @@ bpfilterattach(int n)
  */
 /* ARGSUSED */
 int
-bpfopen(dev_t dev, int flag, int mode, struct proc *p)
+bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct bpf_d *d;
 	struct file *fp;
 	int error, fd;
 
 	/* falloc() will use the descriptor for us. */
-	if ((error = falloc(p, &fp, &fd)) != 0)
+	if ((error = falloc(l->l_proc, &fp, &fd)) != 0)
 		return error;
 
 	d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK);
 	(void)memset(d, 0, sizeof(*d));
 	d->bd_bufsize = bpf_bufsize;
 	d->bd_seesent = 1;
-	d->bd_pid = p->p_pid;
+	d->bd_pid = l->l_proc->p_pid;
 	callout_init(&d->bd_callout);
 
 	simple_lock(&bpf_slock);
 	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
 	simple_unlock(&bpf_slock);
 
-	return fdclone(p, fp, fd, flag, &bpf_fileops, d);
+	return fdclone(l, fp, fd, flag, &bpf_fileops, d);
 }
 
 /*
@@ -412,7 +412,7 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
  */
 /* ARGSUSED */
 static int
-bpf_close(struct file *fp, struct proc *p)
+bpf_close(struct file *fp, struct lwp *l)
 {
 	struct bpf_d *d = fp->f_data;
 	int s;
@@ -420,7 +420,7 @@ bpf_close(struct file *fp, struct proc *p)
 	/*
 	 * Refresh the PID associated with this bpf file.
 	 */
-	d->bd_pid = p->p_pid;
+	d->bd_pid = l->l_proc->p_pid;
 
 	s = splnet();
 	if (d->bd_state == BPF_WAITING)
@@ -665,7 +665,7 @@ extern struct bpf_insn *bpf_udp_filter;
  */
 /* ARGSUSED */
 static int
-bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct proc *p)
+bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 {
 	struct bpf_d *d = fp->f_data;
 	int s, error = 0;
@@ -676,7 +676,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct proc *p)
 	/*
 	 * Refresh the PID associated with this bpf file.
 	 */
-	d->bd_pid = p->p_pid;
+	d->bd_pid = l->l_proc->p_pid;
 	
 	s = splnet();
 	if (d->bd_state == BPF_WAITING)
@@ -944,12 +944,12 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct proc *p)
 
 	case TIOCSPGRP:		/* Process or group to send signals to */
 	case FIOSETOWN:
-		error = fsetown(p, &d->bd_pgid, cmd, addr);
+		error = fsetown(l->l_proc, &d->bd_pgid, cmd, addr);
 		break;
 
 	case TIOCGPGRP:
 	case FIOGETOWN:
-		error = fgetown(p, d->bd_pgid, cmd, addr);
+		error = fgetown(l->l_proc, d->bd_pgid, cmd, addr);
 		break;
 	}
 	return (error);
@@ -1093,7 +1093,7 @@ bpf_ifname(struct ifnet *ifp, struct ifreq *ifr)
  * Otherwise, return false but make a note that a selwakeup() must be done.
  */
 static int
-bpf_poll(struct file *fp, int events, struct proc *p)
+bpf_poll(struct file *fp, int events, struct lwp *l)
 {
 	struct bpf_d *d = fp->f_data;
 	int s = splnet();
@@ -1102,7 +1102,7 @@ bpf_poll(struct file *fp, int events, struct proc *p)
 	/*
 	 * Refresh the PID associated with this bpf file.
 	 */
-	d->bd_pid = p->p_pid;
+	d->bd_pid = l->l_proc->p_pid;
 	
 	revents = events & (POLLOUT | POLLWRNORM);
 	if (events & (POLLIN | POLLRDNORM)) {
@@ -1118,7 +1118,7 @@ bpf_poll(struct file *fp, int events, struct proc *p)
 			else
 				revents |= events & POLLIN;
 		} else {
-			selrecord(p, &d->bd_sel);
+			selrecord(l, &d->bd_sel);
 			/* Start the read timeout if necessary */
 			if (d->bd_rtout > 0 && d->bd_state == BPF_IDLE) {
 				callout_reset(&d->bd_callout, d->bd_rtout,

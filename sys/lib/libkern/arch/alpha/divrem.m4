@@ -1,4 +1,4 @@
-/*	$NetBSD: divrem.m4,v 1.7 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.8 2005/12/11 12:24:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

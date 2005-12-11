@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2005/01/19 01:58:21 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2005/12/11 12:18:29 christos Exp $	*/
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1994 Rolf Grossmann

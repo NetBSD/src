@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2005/04/17 17:18:16 christos Exp $	*/
+/*	$NetBSD: devopen.c,v 1.5 2005/12/11 12:18:29 christos Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.

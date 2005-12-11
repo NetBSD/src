@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.9 2005/06/28 18:30:00 drochner Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.10 2005/12/11 12:18:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.9 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.10 2005/12/11 12:18:16 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

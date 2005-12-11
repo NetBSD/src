@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.33 2005/10/06 20:54:31 jdc Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.34 2005/12/11 12:23:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.33 2005/10/06 20:54:31 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.34 2005/12/11 12:23:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

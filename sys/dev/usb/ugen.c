@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.77 2005/11/28 13:14:48 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.78 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.77 2005/11/28 13:14:48 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.78 2005/12/11 12:24:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ Static void ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 Static int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_ioctl(struct ugen_softc *, int, u_long,
-			 caddr_t, int, usb_proc_ptr);
+			 caddr_t, int, struct lwp *);
 Static int ugen_set_config(struct ugen_softc *sc, int configno);
 Static usb_config_descriptor_t *ugen_get_cdesc(struct ugen_softc *sc,
 					       int index, int *lenp);
@@ -310,7 +310,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 }
 
 int
-ugenopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ugen_softc *sc;
 	int unit = UGENUNIT(dev);
@@ -451,7 +451,7 @@ ugenopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 }
 
 int
-ugenclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_softc *sc;
@@ -1044,7 +1044,7 @@ ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx)
 
 Static int
 ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
-	      caddr_t addr, int flag, usb_proc_ptr p)
+	      caddr_t addr, int flag, struct lwp *l)
 {
 	struct ugen_endpoint *sce;
 	usbd_status err;
@@ -1227,7 +1227,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		uio.uio_offset = 0;
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_rw = UIO_READ;
-		uio.uio_procp = p;
+		uio.uio_lwp = l;
 		error = uiomove((void *)cdesc, len, &uio);
 		free(cdesc, M_TEMP);
 		return (error);
@@ -1275,7 +1275,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			uio.uio_rw =
 				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
-			uio.uio_procp = p;
+			uio.uio_lwp = l;
 			ptr = malloc(len, M_TEMP, M_WAITOK);
 			if (uio.uio_rw == UIO_WRITE) {
 				error = uiomove(ptr, len, &uio);
@@ -1313,7 +1313,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 }
 
 int
-ugenioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
+ugenioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_softc *sc;
@@ -1322,14 +1322,14 @@ ugenioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 
 	sc->sc_refcnt++;
-	error = ugen_do_ioctl(sc, endpt, cmd, addr, flag, p);
+	error = ugen_do_ioctl(sc, endpt, cmd, addr, flag, l);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
 
 int
-ugenpoll(dev_t dev, int events, usb_proc_ptr p)
+ugenpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ugen_softc *sc;
 	struct ugen_endpoint *sce;
@@ -1362,7 +1362,7 @@ ugenpoll(dev_t dev, int events, usb_proc_ptr p)
 			if (sce->q.c_cc > 0)
 				revents |= events & (POLLIN | POLLRDNORM);
 			else
-				selrecord(p, &sce->rsel);
+				selrecord(l, &sce->rsel);
 		}
 		break;
 	case UE_ISOCHRONOUS:
@@ -1370,7 +1370,7 @@ ugenpoll(dev_t dev, int events, usb_proc_ptr p)
 			if (sce->cur != sce->fill)
 				revents |= events & (POLLIN | POLLRDNORM);
 			else
-				selrecord(p, &sce->rsel);
+				selrecord(l, &sce->rsel);
 		}
 		break;
 	case UE_BULK:

@@ -1,4 +1,4 @@
-#	$NetBSD: std.sgimips,v 1.16 2005/09/17 09:44:08 yamt Exp $
+#	$NetBSD: std.sgimips,v 1.17 2005/12/11 12:18:52 christos Exp $
 
 machine sgimips mips
 include		"conf/std"	# MI standard options

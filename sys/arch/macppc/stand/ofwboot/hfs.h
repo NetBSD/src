@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.h,v 1.2 2003/08/22 08:06:19 he Exp $	*/
+/*	$NetBSD: hfs.h,v 1.3 2005/12/11 12:18:06 christos Exp $	*/
 
 int hfs_open(const char *, struct open_file *);
 int hfs_close(struct open_file *);

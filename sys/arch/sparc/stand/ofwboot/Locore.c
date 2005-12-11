@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.5 2005/06/01 03:51:58 martin Exp $	*/
+/*	$NetBSD: Locore.c,v 1.6 2005/12/11 12:19:08 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

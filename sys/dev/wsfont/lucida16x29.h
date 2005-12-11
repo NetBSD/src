@@ -1,4 +1,4 @@
-/*	 $NetBSD: lucida16x29.h,v 1.9 2005/06/28 00:44:22 thorpej Exp $ */
+/*	 $NetBSD: lucida16x29.h,v 1.10 2005/12/11 12:24:12 christos Exp $ */
 
 /*
 

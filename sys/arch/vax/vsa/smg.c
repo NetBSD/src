@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.39 2005/07/20 17:38:13 he Exp $ */
+/*	$NetBSD: smg.c,v 1.40 2005/12/11 12:19:37 christos Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.39 2005/07/20 17:38:13 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.40 2005/12/11 12:19:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -164,7 +164,7 @@ static  u_char *qf;
 	sm_addr[col + (row * SM_CHEIGHT * SM_COLS) + line * SM_COLS]
 
 
-static int	smg_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	smg_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	smg_mmap(void *, off_t, int);
 static int	smg_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
@@ -465,7 +465,7 @@ setcursor(struct wsdisplay_cursor *v)
 }
 
 int
-smg_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+smg_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct wsdisplay_fbinfo *fb = (void *)data;
 	static short curc;

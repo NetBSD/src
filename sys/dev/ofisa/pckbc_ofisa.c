@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.9 2005/02/27 00:27:32 perry Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.10 2005/12/11 12:22:48 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.9 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.10 2005/12/11 12:22:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

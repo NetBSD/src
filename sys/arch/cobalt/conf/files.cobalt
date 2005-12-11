@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.22 2005/07/11 15:37:04 kiyohara Exp $
+#	$NetBSD: files.cobalt,v 1.23 2005/12/11 12:17:06 christos Exp $
 
 maxpartitions 16
 

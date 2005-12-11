@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352var.h,v 1.9 2004/12/07 22:23:45 thorpej Exp $	*/
+/*	$NetBSD: mb89352var.h,v 1.10 2005/12/11 12:21:27 christos Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
 /*-

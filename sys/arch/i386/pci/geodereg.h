@@ -1,4 +1,4 @@
-/*	$NetBSD: geodereg.h,v 1.2 2005/09/22 18:57:39 dyoung Exp $	*/
+/*	$NetBSD: geodereg.h,v 1.3 2005/12/11 12:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.

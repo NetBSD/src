@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3 2005/04/01 11:59:36 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4 2005/12/11 12:19:48 christos Exp $	*/
 /*	NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3 2005/04/01 11:59:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4 2005/12/11 12:19:48 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"

@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.3 2005/10/23 15:19:58 peter Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.4 2005/12/11 12:17:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.3 2005/10/23 15:19:58 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.4 2005/12/11 12:17:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

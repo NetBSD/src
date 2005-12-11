@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.7 2005/06/01 15:34:15 drochner Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.8 2005/12/11 12:20:23 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.7 2005/06/01 15:34:15 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.8 2005/12/11 12:20:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

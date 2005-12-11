@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.15 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: isic_l1.c,v 1.16 2005/12/11 12:21:27 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.15 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.16 2005/12/11 12:21:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.17 2005/07/16 17:53:36 christos Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.18 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.

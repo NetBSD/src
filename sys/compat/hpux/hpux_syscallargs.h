@@ -1,4 +1,4 @@
-/* $NetBSD: hpux_syscallargs.h,v 1.33 2005/02/26 23:58:19 perry Exp $ */
+/* $NetBSD: hpux_syscallargs.h,v 1.34 2005/12/11 12:20:02 christos Exp $ */
 
 /*
  * System call argument lists.

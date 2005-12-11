@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.46 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.47 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

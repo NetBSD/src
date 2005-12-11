@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2004/07/02 13:26:40 cube Exp $
+# $NetBSD: Makefile,v 1.2 2005/12/11 12:24:47 christos Exp $
 
 KMOD=	pcilkm
 SRCS=	pcilkm_lkm.c

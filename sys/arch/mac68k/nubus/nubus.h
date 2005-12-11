@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.60 2005/06/03 23:56:55 rjs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.61 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.

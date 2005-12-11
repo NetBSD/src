@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pdp10,v 1.4 2005/05/31 04:03:10 christos Exp $
+#	$NetBSD: Makefile.pdp10,v 1.5 2005/12/11 12:18:34 christos Exp $
 
 # Makefile for NetBSD
 #

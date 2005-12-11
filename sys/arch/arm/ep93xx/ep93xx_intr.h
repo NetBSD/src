@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xx_intr.h,v 1.1 2004/12/22 19:07:14 joff Exp $	*/
+/*	$NetBSD: ep93xx_intr.h,v 1.2 2005/12/11 12:16:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off

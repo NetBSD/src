@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.3 2003/08/07 16:28:47 agc Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.4 2005/12/11 12:18:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.3 2003/08/07 16:28:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.4 2005/12/11 12:18:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

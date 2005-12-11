@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.68 2005/10/02 15:07:41 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.69 2005/12/11 12:18:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68 2005/10/02 15:07:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2005/12/11 12:18:31 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -660,7 +660,7 @@ child_return(arg)
 	userret(l, l->l_md.md_regs->r_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l->l_proc, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmpreg.h,v 1.1 2004/08/21 02:25:26 thorpej Exp $	*/
+/*	$NetBSD: satapmpreg.h,v 1.2 2005/12/11 12:21:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

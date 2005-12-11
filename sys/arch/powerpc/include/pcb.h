@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.19 2005/02/22 02:59:46 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.20 2005/12/11 12:18:43 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

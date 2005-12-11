@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_subs.h,v 1.14 2003/08/07 16:33:58 agc Exp $	*/
+/*	$NetBSD: xdr_subs.h,v 1.15 2005/12/11 12:25:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

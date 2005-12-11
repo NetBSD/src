@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.80 2005/09/10 10:39:39 itohy Exp $ */
+/* $NetBSD: device.h,v 1.81 2005/12/11 12:25:20 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou

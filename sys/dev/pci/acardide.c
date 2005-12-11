@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.17 2005/05/24 18:43:29 tsutsui Exp $	*/
+/*	$NetBSD: acardide.c,v 1.18 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.17 2005/05/24 18:43:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.18 2005/12/11 12:22:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

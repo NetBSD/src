@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.h,v 1.3 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: mpt_netbsd.h,v 1.4 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

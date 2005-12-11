@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.14 2003/12/04 19:38:22 atatat Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.15 2005/12/11 12:19:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.14 2003/12/04 19:38:22 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.15 2005/12/11 12:19:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

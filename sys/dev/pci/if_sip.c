@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.102 2005/05/02 15:34:32 yamt Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.103 2005/12/11 12:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.102 2005/05/02 15:34:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.103 2005/12/11 12:22:49 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

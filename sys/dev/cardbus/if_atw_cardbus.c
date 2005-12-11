@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.12 2005/06/22 06:15:37 dyoung Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.13 2005/12/11 12:21:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.12 2005/06/22 06:15:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.13 2005/12/11 12:21:15 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

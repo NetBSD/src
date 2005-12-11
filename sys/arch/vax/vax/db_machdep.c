@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.40 2005/07/20 17:48:17 he Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.41 2005/12/11 12:19:36 christos Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.40 2005/07/20 17:48:17 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.41 2005/12/11 12:19:36 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"

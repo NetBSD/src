@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.10 2004/02/27 18:55:19 scw Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.11 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.10 2004/02/27 18:55:19 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.11 2005/12/11 12:16:51 christos Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE

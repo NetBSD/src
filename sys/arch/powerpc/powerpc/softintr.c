@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2 2004/03/25 18:46:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.3 2005/12/11 12:18:46 christos Exp $");
 
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>

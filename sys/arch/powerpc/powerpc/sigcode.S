@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.5 2003/09/25 18:42:18 matt Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.6 2005/12/11 12:18:46 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

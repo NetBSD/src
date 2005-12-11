@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.153 2005/11/01 09:07:53 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.154 2005/12/11 12:24:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.153 2005/11/01 09:07:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.154 2005/12/11 12:24:29 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -454,7 +454,7 @@ ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p, 1, 0);
+		ktrcsw(l, 1, 0);
 #endif
 
 	/*
@@ -566,7 +566,7 @@ ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
 		if (sig == 0) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_CSW))
-				ktrcsw(p, 0, 0);
+				ktrcsw(l, 0, 0);
 #endif
 			if (relock && interlock != NULL)
 				simple_lock(interlock);
@@ -581,7 +581,7 @@ ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
 		if (sig != 0 || (sig = CURSIG(l)) != 0 || cancelled) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_CSW))
-				ktrcsw(p, 0, 0);
+				ktrcsw(l, 0, 0);
 #endif
 			if (relock && interlock != NULL)
 				simple_lock(interlock);
@@ -598,7 +598,7 @@ ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p, 0, 0);
+		ktrcsw(l, 0, 0);
 #endif
 	if (relock && interlock != NULL)
 		simple_lock(interlock);

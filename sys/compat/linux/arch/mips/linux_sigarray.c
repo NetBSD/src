@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigarray.c,v 1.6 2005/02/26 23:10:19 perry Exp $ */
+/*	$NetBSD: linux_sigarray.c,v 1.7 2005/12/11 12:20:16 christos Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: linux_sigarray.c,v 1.6 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_sigarray.c,v 1.7 2005/12/11 12:20:16 christos Exp $");
 
 /*
  * From Linux's include/asm-mips/signal.h

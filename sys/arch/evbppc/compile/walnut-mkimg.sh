@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: walnut-mkimg.sh,v 1.2 2004/03/27 01:47:46 simonb Exp $
+# $NetBSD: walnut-mkimg.sh,v 1.3 2005/12/11 12:17:11 christos Exp $
 
 # Convert a kernel to an tftp image loadable by the IBM PowerPC OpenBIOS.
 

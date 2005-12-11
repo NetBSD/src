@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.9 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.10 2005/12/11 12:21:28 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.9 2004/03/24 17:26:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.10 2005/12/11 12:21:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

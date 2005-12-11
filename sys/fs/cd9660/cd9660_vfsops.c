@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.29 2005/11/02 12:38:58 yamt Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.30 2005/12/11 12:24:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.29 2005/11/02 12:38:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.30 2005/12/11 12:24:25 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -119,13 +119,13 @@ static const struct genfs_ops cd9660_genfsops = {
 
 static int iso_makemp(struct iso_mnt *isomp, struct buf *bp, int *ea_len);
 static int iso_mountfs(struct vnode *devvp, struct mount *mp,
-		struct proc *p, struct iso_args *argp);
+		struct lwp *l, struct iso_args *argp);
 
 int
 cd9660_mountroot()
 {
 	struct mount *mp;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	int error;
 	struct iso_args args;
 
@@ -139,7 +139,7 @@ cd9660_mountroot()
 	}
 
 	args.flags = ISOFSMNT_ROOT;
-	if ((error = iso_mountfs(rootvp, mp, p, &args)) != 0) {
+	if ((error = iso_mountfs(rootvp, mp, l, &args)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
@@ -148,7 +148,7 @@ cd9660_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	(void)cd9660_statvfs(mp, &mp->mnt_stat, p);
+	(void)cd9660_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -159,18 +159,20 @@ cd9660_mountroot()
  * mount system call
  */
 int
-cd9660_mount(mp, path, data, ndp, p)
+cd9660_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vnode *devvp;
 	struct iso_args args;
+	struct proc *p;
 	int error;
 	struct iso_mnt *imp = VFSTOISOFS(mp);
 
+	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		if (imp == NULL)
 			return EIO;
@@ -192,7 +194,7 @@ cd9660_mount(mp, path, data, ndp, p)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 	devvp = ndp->ni_vp;
@@ -211,7 +213,7 @@ cd9660_mount(mp, path, data, ndp, p)
 	 */
 	if (p->p_ucred->cr_uid != 0) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
+		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -232,13 +234,13 @@ cd9660_mount(mp, path, data, ndp, p)
 			error = EBUSY;
 			goto fail;
 		}
-		error = VOP_OPEN(devvp, FREAD, FSCRED, p);
+		error = VOP_OPEN(devvp, FREAD, FSCRED, l);
 		if (error)
 			goto fail;
-		error = iso_mountfs(devvp, mp, p, &args);
+		error = iso_mountfs(devvp, mp, l, &args);
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void)VOP_CLOSE(devvp, FREAD, NOCRED, p);
+			(void)VOP_CLOSE(devvp, FREAD, NOCRED, l);
 			VOP_UNLOCK(devvp, 0);
 			goto fail;
 		}
@@ -248,7 +250,7 @@ cd9660_mount(mp, path, data, ndp, p)
 			return (EINVAL);	/* needs translation */
 	}
 	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
-	    mp, p);
+	    mp, l);
 
 fail:
 	vrele(devvp);
@@ -300,10 +302,10 @@ iso_makemp(isomp, bp, ea_len)
  * Common code for mount and mountroot
  */
 static int
-iso_mountfs(devvp, mp, p, argp)
+iso_mountfs(devvp, mp, l, argp)
 	struct vnode *devvp;
 	struct mount *mp;
-	struct proc *p;
+	struct lwp *l;
 	struct iso_args *argp;
 {
 	struct iso_mnt *isomp = (struct iso_mnt *)0;
@@ -324,7 +326,7 @@ iso_mountfs(devvp, mp, p, argp)
 		return EROFS;
 
 	/* Flush out any old buffers remaining from a previous use. */
-	if ((error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0)) != 0)
 		return (error);
 
 	/* This is the "logical sector size".  The standard says this
@@ -333,14 +335,14 @@ iso_mountfs(devvp, mp, p, argp)
 	 */
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 
-	error = VOP_IOCTL(devvp, DIOCGDINFO, &label, FREAD, FSCRED, p);
+	error = VOP_IOCTL(devvp, DIOCGDINFO, &label, FREAD, FSCRED, l);
 	if (!error &&
 	    label.d_partitions[DISKPART(dev)].p_fstype == FS_ISO9660) {
 		/* XXX more sanity checks? */
 		sess = label.d_partitions[DISKPART(dev)].p_cdsession;
 	} else {
 		/* fallback to old method */
-		error = VOP_IOCTL(devvp, CDIOREADMSADDR, &sess, 0, FSCRED, p);
+		error = VOP_IOCTL(devvp, CDIOREADMSADDR, &sess, 0, FSCRED, l);
 		if (error)
 			sess = 0;	/* never mind */
 	}
@@ -511,10 +513,10 @@ out:
  */
 /* ARGSUSED */
 int
-cd9660_start(mp, flags, p)
+cd9660_start(mp, flags, l)
 	struct mount *mp;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	return 0;
 }
@@ -523,10 +525,10 @@ cd9660_start(mp, flags, p)
  * unmount system call
  */
 int
-cd9660_unmount(mp, mntflags, p)
+cd9660_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct iso_mnt *isomp;
 	int error, flags = 0;
@@ -552,7 +554,7 @@ cd9660_unmount(mp, mntflags, p)
 		isomp->im_devvp->v_specmountpoint = NULL;
 
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
+	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, l);
 	vput(isomp->im_devvp);
 	free(isomp, M_ISOFSMNT);
 	mp->mnt_data = NULL;
@@ -586,12 +588,12 @@ cd9660_root(mp, vpp)
  */
 /* ARGSUSED */
 int
-cd9660_quotactl(mp, cmd, uid, arg, p)
+cd9660_quotactl(mp, cmd, uid, arg, l)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	void *arg;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
@@ -601,10 +603,10 @@ cd9660_quotactl(mp, cmd, uid, arg, p)
  * Get file system statistics.
  */
 int
-cd9660_statvfs(mp, sbp, p)
+cd9660_statvfs(mp, sbp, l)
 	struct mount *mp;
 	struct statvfs *sbp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct iso_mnt *isomp;
 
@@ -629,11 +631,11 @@ cd9660_statvfs(mp, sbp, p)
 
 /* ARGSUSED */
 int
-cd9660_sync(mp, waitfor, cred, p)
+cd9660_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	return (0);
 }

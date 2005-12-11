@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.23 2005/04/12 11:45:40 drochner Exp $	*/
+/*	$NetBSD: atareg.h,v 1.24 2005/12/11 12:21:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.

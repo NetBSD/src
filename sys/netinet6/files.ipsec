@@ -1,4 +1,4 @@
-#	$NetBSD: files.ipsec,v 1.3 2005/07/07 16:00:56 tron Exp $
+#	$NetBSD: files.ipsec,v 1.4 2005/12/11 12:25:02 christos Exp $
 
 defflag opt_ipsec.h		IPSEC: rijndael, sha2, ripemd160
 defflag opt_ipsec.h		IPSEC_ESP: des, blowfish, cast128, rijndael

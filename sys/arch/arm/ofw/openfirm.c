@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.4 2005/06/03 13:01:29 scw Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.5 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
  * Copyright 1997
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.4 2005/06/03 13:01:29 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.5 2005/12/11 12:16:51 christos Exp $");
 
 #include <sys/param.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.10 2004/04/23 21:13:05 itojun Exp $	*/
+/*	$NetBSD: pcib.c,v 1.11 2005/12/11 12:17:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.10 2004/04/23 21:13:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11 2005/12/11 12:17:06 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

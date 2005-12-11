@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.9 2003/10/23 23:16:50 kleink Exp $	*/
+/*	$NetBSD: float.h,v 1.10 2005/12/11 12:19:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.

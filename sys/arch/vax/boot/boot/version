@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.5 2004/02/13 10:11:56 wiz Exp $
+$NetBSD: version,v 1.6 2005/12/11 12:19:30 christos Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item

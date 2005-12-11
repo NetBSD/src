@@ -1,4 +1,4 @@
-/* $NetBSD: 3c90xb.c,v 1.9 2003/08/31 22:40:14 fvdl Exp $ */
+/* $NetBSD: 3c90xb.c,v 1.10 2005/12/11 12:17:48 christos Exp $ */
 
 /*
  * Copyright (c) 1999

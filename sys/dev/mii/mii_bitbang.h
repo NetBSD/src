@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.h,v 1.2 2004/08/23 06:05:30 thorpej Exp $	*/
+/*	$NetBSD: mii_bitbang.h,v 1.3 2005/12/11 12:22:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

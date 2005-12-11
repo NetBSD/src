@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.17 2005/07/09 02:05:09 christos Exp $
+ *	$Id: ifpci.c,v 1.18 2005/12/11 12:22:50 christos Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.17 2005/07/09 02:05:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.18 2005/12/11 12:22:50 christos Exp $");
 
 
 #include <sys/param.h>

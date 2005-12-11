@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.41 2005/02/22 14:42:17 chs Exp $	*/
+/*	$NetBSD: lpt.c,v 1.42 2005/12/11 12:18:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.41 2005/02/22 14:42:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.42 2005/12/11 12:18:31 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -294,11 +294,11 @@ lptattach(parent, self, aux)
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag, mode, p)
+lptopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct lpt_softc *sc;
 	volatile struct i8255 *i8255;
@@ -396,11 +396,11 @@ lptout(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lptclose(dev, flag, mode, p)
+lptclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct lpt_softc *sc = LPTSOFTC(LPTUNIT(dev));
 
@@ -509,12 +509,12 @@ lptintr(arg)
 }
 
 int
-lptioctl(dev, cmd, data, flag, p)
+lptioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
 
@@ -565,7 +565,7 @@ plipioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct proc *p = curproc;
+	struct proc *p = curproc;	/* XXX ktrace-lwp */
 	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct ifaddr *ifa = (struct ifaddr *)data;

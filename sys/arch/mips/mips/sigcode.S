@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.2 2003/10/29 23:39:45 christos Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.3 2005/12/11 12:18:09 christos Exp $	*/
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"

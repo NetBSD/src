@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.1 2004/03/04 20:17:01 drochner Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.2 2005/12/11 12:18:09 christos Exp $ */
 
 /*
  * Copyright (c) 2004

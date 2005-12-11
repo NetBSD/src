@@ -1,4 +1,4 @@
-/*	$NetBSD: fwphyreg.h,v 1.1 2005/07/11 15:29:05 kiyohara Exp $	*/
+/*	$NetBSD: fwphyreg.h,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
 /*-
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.

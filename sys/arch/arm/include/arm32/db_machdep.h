@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.2 2005/06/02 19:33:04 uwe Exp $ */
+/* $NetBSD: db_machdep.h,v 1.3 2005/12/11 12:16:47 christos Exp $ */
 
 #ifndef _ARM32_DB_MACHDEP_H_
 #define _ARM32_DB_MACHDEP_H_

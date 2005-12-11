@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.26 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: syslog.h,v 1.27 2005/12/11 12:25:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993

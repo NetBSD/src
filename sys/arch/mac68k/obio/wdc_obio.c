@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.18 2005/01/15 16:01:00 chs Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.19 2005/12/11 12:18:03 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.18 2005/01/15 16:01:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.19 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

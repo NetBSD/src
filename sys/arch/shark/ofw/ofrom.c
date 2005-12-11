@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.12 2005/01/05 10:25:43 tsutsui Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.13 2005/12/11 12:19:05 christos Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.12 2005/01/05 10:25:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.13 2005/12/11 12:19:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,10 +114,10 @@ ofromattach(parent, self, aux)
 }
 
 int
-ofromopen(dev, oflags, devtype, p)
+ofromopen(dev, oflags, devtype, l)
 	dev_t dev;
 	int oflags, devtype;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ofrom_softc *sc;
 	int unit = minor(dev);

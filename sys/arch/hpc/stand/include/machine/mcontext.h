@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1 2003/12/17 06:17:03 uwe Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.2 2005/12/11 12:17:29 christos Exp $	*/
 
 typedef struct {
 	int	dummy;

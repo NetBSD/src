@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_fcfs.c,v 1.5 2005/10/29 12:26:37 yamt Exp $	*/
+/*	$NetBSD: bufq_fcfs.c,v 1.6 2005/12/11 12:24:29 christos Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.5 2005/10/29 12:26:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.6 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

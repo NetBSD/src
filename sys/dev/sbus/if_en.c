@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.20 2005/02/27 00:27:48 perry Exp $	*/
+/*	$NetBSD: if_en.c,v 1.21 2005/12/11 12:23:44 christos Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.20 2005/02/27 00:27:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.21 2005/12/11 12:23:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

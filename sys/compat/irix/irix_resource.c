@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_resource.c,v 1.5 2005/06/03 18:53:50 martin Exp $ */
+/*	$NetBSD: irix_resource.c,v 1.6 2005/12/11 12:20:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.5 2005/06/03 18:53:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.6 2005/12/11 12:20:12 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>

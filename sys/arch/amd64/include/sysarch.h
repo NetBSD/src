@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.3 2005/05/15 21:39:56 fvdl Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.4 2005/12/11 12:16:25 christos Exp $	*/
 
 #ifndef _AMD64_SYSARCH_H_
 #define _AMD64_SYSARCH_H_

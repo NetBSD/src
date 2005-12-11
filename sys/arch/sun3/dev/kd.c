@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.43 2005/09/06 21:40:39 kleink Exp $	*/
+/*	$NetBSD: kd.c,v 1.44 2005/12/11 12:19:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.43 2005/09/06 21:40:39 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.44 2005/12/11 12:19:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -135,7 +135,7 @@ kdtty(dev_t dev)
 }
 
 int 
-kdopen(dev_t dev, int flag, int mode, struct proc *p)
+kdopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct kd_softc *kd;
 	int error, s, unit;
@@ -155,7 +155,7 @@ static	int firstopen = 1;
 	/* It's simpler to do this up here. */
 	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
 	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (suser(p->p_ucred, &p->p_acflag) != 0) )
+	    && (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) )
 	{
 		return (EBUSY);
 	}
@@ -191,7 +191,7 @@ static	int firstopen = 1;
 }
 
 int 
-kdclose(dev_t dev, int flag, int mode, struct proc *p)
+kdclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -236,7 +236,7 @@ kdwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int 
-kdpoll(dev_t dev, int events, struct proc *p)
+kdpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -244,11 +244,11 @@ kdpoll(dev_t dev, int events, struct proc *p)
 	kd = &kd_softc; 	/* XXX */
 	tp = kd->kd_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int 
-kdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+kdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -257,11 +257,11 @@ kdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	kd = &kd_softc; 	/* XXX */
 	tp = kd->kd_tty;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 

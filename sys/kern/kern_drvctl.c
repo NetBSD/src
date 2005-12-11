@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.2 2005/08/25 15:06:28 drochner Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.3 2005/12/11 12:24:29 christos Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.2 2005/08/25 15:06:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.3 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

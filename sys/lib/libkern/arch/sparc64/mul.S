@@ -1,4 +1,4 @@
-/*	$NetBSD: mul.S,v 1.6 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: mul.S,v 1.7 2005/12/11 12:24:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 #ifdef notdef
 	.asciz "@(#)mul.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: mul.S,v 1.6 2005/02/26 22:58:56 perry Exp $"
+	.asciz "$NetBSD: mul.S,v 1.7 2005/12/11 12:24:45 christos Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*

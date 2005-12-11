@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_geode_reg.h,v 1.3 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: pciide_geode_reg.h,v 1.4 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.h,v 1.11 2004/03/20 04:22:05 oster Exp $	*/
+/*	$NetBSD: rf_map.h,v 1.12 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpower.c,v 1.10 2003/07/15 02:29:30 lukem Exp $ */
+/*	$NetBSD: plumpower.c,v 1.11 2005/12/11 12:17:33 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpower.c,v 1.10 2003/07/15 02:29:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpower.c,v 1.11 2005/12/11 12:17:33 christos Exp $");
 
 #undef PLUMPOWERDEBUG
 

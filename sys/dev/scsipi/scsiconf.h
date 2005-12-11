@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.53 2004/09/17 23:30:22 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.54 2005/12/11 12:23:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ihavar.h,v 1.9 2005/01/02 12:22:19 tsutsui Exp $ */
+/*	$NetBSD: ihavar.h,v 1.10 2005/12/11 12:21:27 christos Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.

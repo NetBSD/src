@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.13 2005/01/24 16:57:21 is Exp $   */
+/*      $NetBSD: locore.S,v 1.14 2005/12/11 12:16:36 christos Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

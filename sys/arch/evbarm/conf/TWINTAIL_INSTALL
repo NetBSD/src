@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL_INSTALL,v 1.1 2005/02/26 10:49:53 bsh Exp $
+#	$NetBSD: TWINTAIL_INSTALL,v 1.2 2005/12/11 12:17:06 christos Exp $
 #
 #	TWINTAIL_INSTALL -- TWINTAIL kernel with installation-sized
 #	ramdisk

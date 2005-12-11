@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.10 2005/05/29 21:37:03 christos Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.11 2005/12/11 12:19:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10 2005/05/29 21:37:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.11 2005/12/11 12:19:47 christos Exp $");
 
 #include "opt_ddb.h"
 

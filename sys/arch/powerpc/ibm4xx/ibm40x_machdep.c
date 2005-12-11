@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm40x_machdep.c,v 1.4 2005/01/18 17:11:25 shige Exp $	*/
+/*	$NetBSD: ibm40x_machdep.c,v 1.5 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm40x_machdep.c,v 1.4 2005/01/18 17:11:25 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm40x_machdep.c,v 1.5 2005/12/11 12:18:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/exec.h>

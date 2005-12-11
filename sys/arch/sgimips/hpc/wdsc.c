@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.14 2004/01/10 02:55:54 sekiya Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.15 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.14 2004/01/10 02:55:54 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.15 2005/12/11 12:18:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

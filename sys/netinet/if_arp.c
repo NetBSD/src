@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.106 2005/06/20 02:49:18 atatat Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.107 2005/12/11 12:24:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.106 2005/06/20 02:49:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.107 2005/12/11 12:24:57 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"

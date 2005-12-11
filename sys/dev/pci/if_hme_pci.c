@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.19 2005/04/26 13:02:06 atatat Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.20 2005/12/11 12:22:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.19 2005/04/26 13:02:06 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.20 2005/12/11 12:22:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

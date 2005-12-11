@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.11 2005/10/14 19:21:07 riz Exp $	*/
+/*	$NetBSD: elan520.c,v 1.12 2005/12/11 12:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.11 2005/10/14 19:21:07 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.12 2005/12/11 12:17:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

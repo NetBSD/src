@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.17 2005/10/30 16:25:50 chs Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.18 2005/12/11 12:20:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

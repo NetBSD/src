@@ -1,4 +1,4 @@
-/*	$NetBSD: piixvar.h,v 1.2 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: piixvar.h,v 1.3 2005/12/11 12:17:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

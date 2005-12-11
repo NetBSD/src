@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.4 2003/10/13 19:59:24 scw Exp $	*/
+/*	$NetBSD: memset.S,v 1.5 2005/12/11 12:24:42 christos Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.

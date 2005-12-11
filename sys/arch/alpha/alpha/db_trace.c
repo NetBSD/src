@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.15 2005/05/31 00:40:17 chs Exp $ */
+/* $NetBSD: db_trace.c,v 1.16 2005/12/11 12:16:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15 2005/05/31 00:40:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2005/12/11 12:16:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

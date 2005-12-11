@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.39 2005/11/29 22:52:03 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.40 2005/12/11 12:25:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.39 2005/11/29 22:52:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.40 2005/12/11 12:25:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ ext2fs_write(void *v)
 	 * Maybe this should be above the vnode op call, but so long as
 	 * file servers have no limits, I don't think it matters.
 	 */
-	p = uio->uio_procp;
+	p = uio->uio_lwp->l_proc;
 	if (vp->v_type == VREG && p &&
 	    uio->uio_offset + uio->uio_resid >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
@@ -399,7 +399,7 @@ out:
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		(void) ext2fs_truncate(vp, osize, ioflag & IO_SYNC, ap->a_cred,
-		    uio->uio_procp);
+		    uio->uio_lwp == NULL ? NULL : uio->uio_lwp->l_proc);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)

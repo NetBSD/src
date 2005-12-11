@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sigcode.S,v 1.2 2003/08/07 16:29:19 agc Exp $ */
+/*	$NetBSD: mach_sigcode.S,v 1.3 2005/12/11 12:18:46 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

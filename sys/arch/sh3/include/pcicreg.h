@@ -1,4 +1,4 @@
-/*	$NetBSD: pcicreg.h,v 1.1 2005/08/16 11:32:26 nonaka Exp $	*/
+/*	$NetBSD: pcicreg.h,v 1.2 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro

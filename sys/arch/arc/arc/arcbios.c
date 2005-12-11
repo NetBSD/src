@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.14 2005/06/03 12:29:00 tsutsui Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.15 2005/12/11 12:16:37 christos Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.14 2005/06/03 12:29:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.15 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

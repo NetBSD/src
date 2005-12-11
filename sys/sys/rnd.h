@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.17 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: rnd.h,v 1.18 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

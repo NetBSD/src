@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.11 2005/07/14 02:36:49 christos Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.12 2005/12/11 12:24:46 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

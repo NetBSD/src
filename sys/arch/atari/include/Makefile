@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2004/05/08 21:51:47 kleink Exp $
+#	$NetBSD: Makefile,v 1.22 2005/12/11 12:16:57 christos Exp $
 
 INCSDIR= /usr/include/atari
 

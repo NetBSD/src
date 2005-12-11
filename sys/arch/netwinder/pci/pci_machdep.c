@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2005/08/15 18:51:33 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 2005/12/11 12:18:20 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2005/08/15 18:51:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6 2005/12/11 12:18:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

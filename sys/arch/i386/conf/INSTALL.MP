@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL.MP,v 1.3 2003/11/21 09:29:11 abs Exp $
+#	$NetBSD: INSTALL.MP,v 1.4 2005/12/11 12:17:40 christos Exp $
 #
 #	INSTALL.MP -- Install, plus enable Multiprocessor support.
 #	Mostly to let people test-boot MP systems.

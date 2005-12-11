@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_hppa.c,v 1.4 2003/11/28 19:02:25 chs Exp $	*/
+/*	$NetBSD: kgdb_hppa.c,v 1.5 2005/12/11 12:17:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.4 2003/11/28 19:02:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.5 2005/12/11 12:17:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>

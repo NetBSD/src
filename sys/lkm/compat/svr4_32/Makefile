@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/10/16 15:59:01 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2005/12/11 12:24:47 christos Exp $
 
 .include "../Makefile.inc"
 USE_32=_32

@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800.c,v 1.3 2003/10/05 06:57:20 bsh Exp $ */
+/*	$NetBSD: smdk2800.c,v 1.4 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited

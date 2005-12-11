@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.59 2005/06/22 00:58:48 sekiya Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.60 2005/12/11 12:17:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.59 2005/06/22 00:58:48 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.60 2005/12/11 12:17:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

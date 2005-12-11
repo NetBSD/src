@@ -1,4 +1,4 @@
-/*	$NetBSD: xattr.h,v 1.1 2005/07/10 22:04:50 thorpej Exp $	*/
+/*	$NetBSD: xattr.h,v 1.2 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.

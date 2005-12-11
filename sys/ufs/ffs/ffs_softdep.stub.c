@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.16 2005/11/02 22:10:41 gdt Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.17 2005/12/11 12:25:25 christos Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.16 2005/11/02 22:10:41 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.17 2005/12/11 12:25:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -45,14 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.16 2005/11/02 22:10:41 gdt Ex
 #include <ufs/ufs/ufs_extern.h>
 
 int
-softdep_flushworklist(struct mount *oldmnt, int *countp, struct proc *p)
+softdep_flushworklist(struct mount *oldmnt, int *countp, struct lwp *l)
 {
 
 	panic("softdep_flushworklist called");
 }
 
 int
-softdep_flushfiles(struct mount *oldmnt, int flags, struct proc *p)
+softdep_flushfiles(struct mount *oldmnt, int flags, struct lwp *l)
 {
 
 	panic("softdep_flushfiles called");

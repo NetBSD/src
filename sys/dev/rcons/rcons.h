@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.15 2005/06/01 17:05:16 drochner Exp $ */
+/*	$NetBSD: rcons.h,v 1.16 2005/12/11 12:23:44 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

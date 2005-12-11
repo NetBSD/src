@@ -1,4 +1,4 @@
-/* $NetBSD: atppcvar.h,v 1.6 2005/02/27 00:27:00 perry Exp $ */
+/* $NetBSD: atppcvar.h,v 1.7 2005/12/11 12:21:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu

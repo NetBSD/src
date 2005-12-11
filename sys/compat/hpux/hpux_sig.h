@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.h,v 1.3 2003/08/07 16:30:43 agc Exp $	*/
+/*	$NetBSD: hpux_sig.h,v 1.4 2005/12/11 12:20:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

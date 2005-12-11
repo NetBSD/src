@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.18 2005/02/21 00:29:06 thorpej Exp $	*/
+/*	$NetBSD: btl.c,v 1.19 2005/12/11 12:16:39 christos Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.18 2005/02/21 00:29:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.19 2005/12/11 12:16:39 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

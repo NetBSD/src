@@ -1,4 +1,4 @@
-/*	$NetBSD: pasreg.h,v 1.3 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: pasreg.h,v 1.4 2005/12/11 12:22:03 christos Exp $	*/
 
 /* Port addresses and bit fields for the Media Vision Pro AudioSpectrum
  * second generation sound cards.

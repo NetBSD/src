@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.17 2005/02/02 21:41:01 perry Exp $       */
+/*      $NetBSD: if_atm.c,v 1.18 2005/12/11 12:24:57 christos Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.17 2005/02/02 21:41:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.18 2005/12/11 12:24:57 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"

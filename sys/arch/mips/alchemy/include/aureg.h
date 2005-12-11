@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.5 2004/11/11 10:11:40 soren Exp $ */
+/* $NetBSD: aureg.h,v 1.6 2005/12/11 12:18:06 christos Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.4 2004/08/06 18:33:09 uch Exp $	*/
+/*	$NetBSD: types.h,v 1.5 2005/12/11 12:17:29 christos Exp $	*/
 
 /* Windows CE architecture */
 

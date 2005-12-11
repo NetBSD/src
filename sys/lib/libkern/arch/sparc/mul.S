@@ -1,4 +1,4 @@
-/*	$NetBSD: mul.S,v 1.7 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: mul.S,v 1.8 2005/12/11 12:24:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)mul.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: mul.S,v 1.7 2005/02/26 22:58:56 perry Exp $")
+	RCSID("$NetBSD: mul.S,v 1.8 2005/12/11 12:24:44 christos Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 

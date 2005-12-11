@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.12 2005/05/31 21:08:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.13 2005/12/11 12:21:02 christos Exp $");
 
 #define __EXDUMP_C__
 

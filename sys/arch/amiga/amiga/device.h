@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.9 2005/06/12 16:31:42 jandberg Exp $	*/
+/*	$NetBSD: device.h,v 1.10 2005/12/11 12:16:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

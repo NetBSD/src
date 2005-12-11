@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.h,v 1.7 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: ka820.h,v 1.8 2005/12/11 12:19:34 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.

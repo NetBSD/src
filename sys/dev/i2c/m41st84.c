@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.4 2005/06/04 20:14:25 he Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.5 2005/12/11 12:21:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

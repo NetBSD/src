@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.16 2005/06/02 17:45:59 he Exp $	*/
+/*	$NetBSD: disassem.c,v 1.17 2005/12/11 12:16:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.16 2005/06/02 17:45:59 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.17 2005/12/11 12:16:41 christos Exp $");
 
 #include <sys/systm.h>
 #include <arch/arm/arm/disassem.h>

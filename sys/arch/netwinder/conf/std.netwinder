@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwinder,v 1.13 2005/09/17 09:44:07 yamt Exp $
+#	$NetBSD: std.netwinder,v 1.14 2005/12/11 12:18:20 christos Exp $
 #
 # standard NetBSD/netwinder options
 

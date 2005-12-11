@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.6 2003/10/10 07:04:14 simonb Exp $	*/
+/*	$NetBSD: consinit.c,v 1.7 2005/12/11 12:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6 2003/10/10 07:04:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.7 2005/12/11 12:17:13 christos Exp $");
 
 #include "opt_kgdb.h"
 

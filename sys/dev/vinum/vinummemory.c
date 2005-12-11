@@ -33,7 +33,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinummemory.c,v 1.2 2005/05/22 15:54:47 christos Exp $
+ * $Id: vinummemory.c,v 1.3 2005/12/11 12:24:07 christos Exp $
  * $FreeBSD$
  */
 

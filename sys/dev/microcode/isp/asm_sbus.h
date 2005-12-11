@@ -1,4 +1,4 @@
-/* $NetBSD: asm_sbus.h,v 1.19 2005/05/31 00:49:12 christos Exp $ */
+/* $NetBSD: asm_sbus.h,v 1.20 2005/12/11 12:22:28 christos Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999 Qlogic, Inc.
  * All rights reserved.

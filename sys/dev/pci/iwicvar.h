@@ -1,4 +1,4 @@
-/*	$NetBSD: iwicvar.h,v 1.3 2005/07/09 02:05:09 christos Exp $	*/
+/*	$NetBSD: iwicvar.h,v 1.4 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.

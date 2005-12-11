@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.29 2005/06/01 18:07:04 drochner Exp $
+ *	$Id: i4b_l4.c,v 1.30 2005/12/11 12:25:06 christos Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.29 2005/06/01 18:07:04 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.30 2005/12/11 12:25:06 christos Exp $");
 
 #include "isdn.h"
 #include "irip.h"

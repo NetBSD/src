@@ -1,5 +1,5 @@
 #
-# $NetBSD: BOOTX,v 1.61 2005/11/03 16:49:09 chs Exp $
+# $NetBSD: BOOTX,v 1.62 2005/12/11 12:16:54 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.

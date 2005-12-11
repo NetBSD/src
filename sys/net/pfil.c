@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.23 2004/07/27 12:22:59 yamt Exp $	*/
+/*	$NetBSD: pfil.c,v 1.24 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.23 2004/07/27 12:22:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.24 2005/12/11 12:24:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>

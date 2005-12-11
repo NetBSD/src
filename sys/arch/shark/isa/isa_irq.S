@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.3 2003/11/05 12:03:58 scw Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.4 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 1997

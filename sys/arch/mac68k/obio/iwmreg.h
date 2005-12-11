@@ -1,4 +1,4 @@
-/*	$NetBSD: iwmreg.h,v 1.6 2005/02/05 23:48:49 chs Exp $	*/
+/*	$NetBSD: iwmreg.h,v 1.7 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1996-99 Hauke Fath.  All rights reserved.

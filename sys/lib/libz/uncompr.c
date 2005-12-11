@@ -1,11 +1,11 @@
-/* $NetBSD: uncompr.c,v 1.4 2005/02/26 22:58:57 perry Exp $ */
+/* $NetBSD: uncompr.c,v 1.5 2005/12/11 12:24:46 christos Exp $ */
 
 /* uncompr.c -- decompress a memory buffer
  * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: uncompr.c,v 1.4 2005/02/26 22:58:57 perry Exp $ */
+/* @(#) $Id: uncompr.c,v 1.5 2005/12/11 12:24:46 christos Exp $ */
 
 #include "zlib.h"
 

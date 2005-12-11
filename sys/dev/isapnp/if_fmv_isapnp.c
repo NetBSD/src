@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isapnp.c,v 1.4 2005/01/09 16:59:41 tsutsui Exp $	*/
+/*	$NetBSD: if_fmv_isapnp.c,v 1.5 2005/12/11 12:22:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.4 2005/01/09 16:59:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.5 2005/12/11 12:22:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

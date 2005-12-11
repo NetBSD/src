@@ -1,4 +1,4 @@
-/* $NetBSD: if_txpreg.h,v 1.2 2003/07/07 15:18:24 drochner Exp $ */
+/* $NetBSD: if_txpreg.h,v 1.3 2005/12/11 12:22:50 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.

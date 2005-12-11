@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.5 2004/09/29 04:06:52 sekiya Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.6 2005/12/11 12:18:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.5 2004/09/29 04:06:52 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.6 2005/12/11 12:18:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

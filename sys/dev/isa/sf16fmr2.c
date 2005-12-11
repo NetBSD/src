@@ -1,4 +1,4 @@
-/* $NetBSD: sf16fmr2.c,v 1.10 2004/10/29 12:57:17 yamt Exp $ */
+/* $NetBSD: sf16fmr2.c,v 1.11 2005/12/11 12:22:03 christos Exp $ */
 /* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sf16fmr2.c,v 1.10 2004/10/29 12:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sf16fmr2.c,v 1.11 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

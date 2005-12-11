@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_keys.c,v 1.8 2005/05/29 21:56:35 christos Exp $ */
+/* $NetBSD: wsemul_vt100_keys.c,v 1.9 2005/12/11 12:24:12 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_keys.c,v 1.8 2005/05/29 21:56:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_keys.c,v 1.9 2005/12/11 12:24:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

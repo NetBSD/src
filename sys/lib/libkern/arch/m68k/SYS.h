@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.6 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: SYS.h,v 1.7 2005/12/11 12:24:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

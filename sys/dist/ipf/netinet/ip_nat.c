@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.7 2005/04/03 15:05:30 martti Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.8 2005/12/11 12:24:21 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.

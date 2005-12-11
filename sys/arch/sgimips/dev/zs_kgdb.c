@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.9 2004/09/29 04:06:51 sekiya Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.10 2005/12/11 12:18:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.9 2004/09/29 04:06:51 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.10 2005/12/11 12:18:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

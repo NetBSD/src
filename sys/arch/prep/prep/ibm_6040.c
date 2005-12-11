@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_6040.c,v 1.4 2005/01/13 23:57:04 kleink Exp $	*/
+/*	$NetBSD: ibm_6040.c,v 1.5 2005/12/11 12:18:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm_6040.c,v 1.4 2005/01/13 23:57:04 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm_6040.c,v 1.5 2005/12/11 12:18:48 christos Exp $");
 
 #include <sys/param.h>
 

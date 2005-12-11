@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.4 2004/09/20 16:57:27 drochner Exp $	*/
+/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.5 2005/12/11 12:19:04 christos Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.4 2004/09/20 16:57:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.5 2005/12/11 12:19:04 christos Exp $");
 
 #include "opt_compat_old_ofw.h"
 

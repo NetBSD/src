@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.7 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.8 2005/12/11 12:21:20 christos Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

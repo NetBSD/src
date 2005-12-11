@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.h,v 1.5 2003/11/10 08:51:52 wiz Exp $ */
+/*	$NetBSD: hdc9224.h,v 1.6 2005/12/11 12:19:37 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

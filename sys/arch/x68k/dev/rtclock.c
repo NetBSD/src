@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.17 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.18 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.17 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.18 2005/12/11 12:19:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.1 2005/03/18 14:12:34 shige Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.2 2005/12/11 12:17:12 christos Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.1 2005/03/18 14:12:34 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.2 2005/12/11 12:17:12 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"

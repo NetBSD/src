@@ -1,5 +1,5 @@
 /*
- * $NetBSD: xd.c,v 1.7 2005/06/28 21:03:01 junyoung Exp $
+ * $NetBSD: xd.c,v 1.8 2005/12/11 12:16:36 christos Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis.
  * Copyright (c) 1995 Waldi Ravens.

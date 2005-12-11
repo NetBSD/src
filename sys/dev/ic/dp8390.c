@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.55 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.56 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.55 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.56 2005/12/11 12:21:26 christos Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"

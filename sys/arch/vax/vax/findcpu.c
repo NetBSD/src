@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.14 2004/03/28 19:52:01 ragge Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.15 2005/12/11 12:19:36 christos Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.14 2004/03/28 19:52:01 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.15 2005/12/11 12:19:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

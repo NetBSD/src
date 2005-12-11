@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.18 2005/11/29 22:52:02 yamt Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.19 2005/12/11 12:24:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.18 2005/11/29 22:52:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.19 2005/12/11 12:24:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ cd9660_access(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
@@ -186,7 +186,7 @@ cd9660_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
@@ -219,7 +219,7 @@ cd9660_getattr(v)
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
 		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_procp = NULL;
+		auio.uio_lwp = NULL;
 		auio.uio_resid = MAXPATHLEN;
 		rdlnk.a_uio = &auio;
 		rdlnk.a_vp = ap->a_vp;

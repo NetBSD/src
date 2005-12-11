@@ -1,4 +1,4 @@
-/* $NetBSD: xyvar.h,v 1.8 2005/10/15 17:29:11 yamt Exp $ */
+/* $NetBSD: xyvar.h,v 1.9 2005/12/11 12:19:21 christos Exp $ */
 
 /*
  *

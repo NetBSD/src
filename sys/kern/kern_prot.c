@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.87 2005/09/02 20:51:53 rillig Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.88 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.87 2005/09/02 20:51:53 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88 2005/12/11 12:24:29 christos Exp $");
 
 #include "opt_compat_43.h"
 

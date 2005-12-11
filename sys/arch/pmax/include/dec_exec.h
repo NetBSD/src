@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_exec.h,v 1.7 2003/08/07 16:29:11 agc Exp $	*/
+/*	$NetBSD: dec_exec.h,v 1.8 2005/12/11 12:18:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.27 2005/09/10 01:23:19 uwe Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.28 2005/12/11 12:19:05 christos Exp $ */
 
 /*
  * Copyright (c) 1996

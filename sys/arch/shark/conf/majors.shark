@@ -1,4 +1,4 @@
-#	$NetBSD: majors.shark,v 1.19 2005/09/17 14:38:40 yamt Exp $
+#	$NetBSD: majors.shark,v 1.20 2005/12/11 12:19:02 christos Exp $
 #
 # Device majors for shark
 #

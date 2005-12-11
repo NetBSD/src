@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.13 2005/06/03 11:52:50 tsutsui Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.14 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_subr.c,v 1.13 2005/06/03 11:52:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_subr.c,v 1.14 2005/12/11 12:17:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

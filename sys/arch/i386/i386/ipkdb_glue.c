@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.6 2003/10/27 14:11:46 junyoung Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.7 2005/12/11 12:17:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2000 Wolfgang Solfrank.
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.6 2003/10/27 14:11:46 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.7 2005/12/11 12:17:41 christos Exp $");
 
 #include "opt_ipkdb.h"
 

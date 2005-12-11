@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3 2004/07/29 16:55:25 drochner Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.4 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Modified for arm32 by Mark Brinicombe

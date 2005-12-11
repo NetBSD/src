@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.20 2004/07/14 19:58:51 manu Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.21 2005/12/11 12:18:46 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.20 2004/07/14 19:58:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.21 2005/12/11 12:18:46 christos Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>

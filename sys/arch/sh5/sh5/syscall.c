@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.14 2005/07/10 00:45:52 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.15 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2005/07/10 00:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2005/12/11 12:19:02 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -427,6 +427,6 @@ child_return(void *arg)
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l->l_proc, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 #endif
 }

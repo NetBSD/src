@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.h,v 1.15 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: rf_driver.h,v 1.16 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * rf_driver.h
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.16 2005/08/26 13:19:36 drochner Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.17 2005/12/11 12:17:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.16 2005/08/26 13:19:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.17 2005/12/11 12:17:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

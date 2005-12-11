@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.h,v 1.5 2004/01/28 17:11:48 jdolecek Exp $ */
+/* $NetBSD: ppbus_1284.h,v 1.6 2005/12/11 12:23:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu

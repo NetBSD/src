@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.2 2005/02/04 02:10:44 perry Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.3 2005/12/11 12:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.

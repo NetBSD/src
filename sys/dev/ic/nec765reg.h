@@ -1,4 +1,4 @@
-/*	$NetBSD: nec765reg.h,v 1.6 2003/08/07 16:31:02 agc Exp $	*/
+/*	$NetBSD: nec765reg.h,v 1.7 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

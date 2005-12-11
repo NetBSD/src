@@ -1,4 +1,4 @@
-/*	$NetBSD: screg_1185.h,v 1.5 2003/08/07 16:28:52 agc Exp $	*/
+/*	$NetBSD: screg_1185.h,v 1.6 2005/12/11 12:18:24 christos Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

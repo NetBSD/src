@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_jazzio.c,v 1.7 2005/08/20 17:58:49 tsutsui Exp $	*/
+/*	$NetBSD: timer_jazzio.c,v 1.8 2005/12/11 12:16:39 christos Exp $	*/
 /*	$OpenBSD: clock.c,v 1.6 1998/10/15 21:30:15 imp Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_jazzio.c,v 1.7 2005/08/20 17:58:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_jazzio.c,v 1.8 2005/12/11 12:16:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

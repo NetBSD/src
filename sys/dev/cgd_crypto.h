@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.h,v 1.2 2004/08/23 04:51:22 thorpej Exp $ */
+/* $NetBSD: cgd_crypto.h,v 1.3 2005/12/11 12:20:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

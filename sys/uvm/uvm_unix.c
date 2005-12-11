@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.31 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.32 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.31 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.32 2005/12/11 12:25:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_ite_reg.h,v 1.1 2004/12/01 22:27:45 grant Exp $	*/
+/*	$NetBSD: pciide_ite_reg.h,v 1.2 2005/12/11 12:22:50 christos Exp $	*/
 /*	OpenBSD: pciide_ite_reg.h,v 1.1 2003/12/20 08:03:55 grange Exp 	*/
 /*
  * Copyright (c) 2003 Alexander Yurchenko <grange@openbsd.org>

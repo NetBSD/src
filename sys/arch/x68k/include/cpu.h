@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2005/06/13 00:34:08 he Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 2005/12/11 12:19:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

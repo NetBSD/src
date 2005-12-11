@@ -1,4 +1,4 @@
-/*	$NetBSD: strtok.cpp,v 1.1 2004/08/06 17:23:14 uch Exp $	*/
+/*	$NetBSD: strtok.cpp,v 1.2 2005/12/11 12:17:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993

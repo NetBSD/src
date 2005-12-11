@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.58 2005/09/08 18:41:50 christos Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.59 2005/12/11 12:23:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.58 2005/09/08 18:41:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.59 2005/12/11 12:23:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

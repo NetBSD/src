@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.25 2003/09/22 14:18:34 cl Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.26 2005/12/11 12:17:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.25 2003/09/22 14:18:34 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.26 2005/12/11 12:17:52 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>

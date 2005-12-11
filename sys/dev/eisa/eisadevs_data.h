@@ -1,4 +1,4 @@
-/*	$NetBSD: eisadevs_data.h,v 1.30 2005/02/27 05:29:24 perry Exp $	*/
+/*	$NetBSD: eisadevs_data.h,v 1.31 2005/12/11 12:21:20 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

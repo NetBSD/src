@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.62 2005/10/15 17:29:25 yamt Exp $	*/
+/*	$NetBSD: ss.c,v 1.63 2005/12/11 12:23:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.62 2005/10/15 17:29:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.63 2005/12/11 12:23:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ ssactivate(struct device *self, enum devact act)
  * open the device.
  */
 static int
-ssopen(dev_t dev, int flag, int mode, struct proc *p)
+ssopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit;
 	u_int ssmode;
@@ -310,7 +310,7 @@ bad:
  * occurence of an open device
  */
 static int
-ssclose(dev_t dev, int flag, int mode, struct proc *p)
+ssclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	struct scsipi_periph *periph = ss->sc_periph;
@@ -536,7 +536,7 @@ ssdone(struct scsipi_xfer *xs, int error)
  * knows about the internals of this device
  */
 int
-ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error = 0;
@@ -588,7 +588,7 @@ ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #endif
 	default:
 		return (scsipi_do_ioctl(ss->sc_periph, dev, cmd, addr,
-		    flag, p));
+		    flag, l));
 	}
 	return (error);
 }

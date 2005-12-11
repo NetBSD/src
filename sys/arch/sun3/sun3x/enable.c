@@ -1,4 +1,4 @@
-/*	$NetBSD: enable.c,v 1.5 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: enable.c,v 1.6 2005/12/11 12:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.5 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.6 2005/12/11 12:19:27 christos Exp $");
 
 #include <sys/param.h>
 #include <dev/sun/fbio.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/04/03 18:18:21 groo Exp $
+#	$NetBSD: Makefile,v 1.6 2005/12/11 12:17:49 christos Exp $
 
 MISC_FILES=	rawrite.c
 UUDECODE_FILES=	pfdisk.doc pfdisk.exe pfdisktc.zip \

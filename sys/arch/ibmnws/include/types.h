@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1 2003/10/19 03:33:50 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.2 2005/12/11 12:17:51 christos Exp $	*/
 
 #define	__HAVE_NWSCONS
 

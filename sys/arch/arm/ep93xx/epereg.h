@@ -1,4 +1,4 @@
-/*	$NetBSD: epereg.h,v 1.2 2005/01/17 02:32:29 joff Exp $ */
+/*	$NetBSD: epereg.h,v 1.3 2005/12/11 12:16:45 christos Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off

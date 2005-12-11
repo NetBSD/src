@@ -1,4 +1,4 @@
-/*	$NetBSD: gemreg.h,v 1.7 2005/02/18 01:39:18 heas Exp $ */
+/*	$NetBSD: gemreg.h,v 1.8 2005/12/11 12:21:26 christos Exp $ */
 
 /*
  *

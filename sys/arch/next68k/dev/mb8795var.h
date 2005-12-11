@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.8 2005/01/19 01:58:21 chs Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.9 2005/12/11 12:18:25 christos Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.

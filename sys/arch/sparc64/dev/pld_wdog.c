@@ -1,4 +1,4 @@
-/*	$NetBSD: pld_wdog.c,v 1.3 2003/07/30 07:00:32 petrov Exp $	*/
+/*	$NetBSD: pld_wdog.c,v 1.4 2005/12/11 12:19:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

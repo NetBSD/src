@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900reg.h,v 1.7 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: am79900reg.h,v 1.8 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

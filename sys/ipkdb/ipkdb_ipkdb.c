@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.13 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.14 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.13 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.14 2005/12/11 12:24:29 christos Exp $");
 
 #include "opt_ipkdb.h"
 

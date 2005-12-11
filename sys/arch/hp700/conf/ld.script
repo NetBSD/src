@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.script,v 1.7 2005/05/01 19:01:48 chs Exp $	*/
+/*	$NetBSD: ld.script,v 1.8 2005/12/11 12:17:24 christos Exp $	*/
 
 /* 	$OpenBSD: ld.script,v 1.7 1999/12/17 07:02:38 mickey Exp $	*/
 

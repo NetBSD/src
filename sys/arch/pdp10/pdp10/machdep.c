@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2005/06/01 13:01:36 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2005/12/11 12:18:34 christos Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

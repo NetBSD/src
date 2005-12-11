@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.16 2005/05/31 00:40:17 chs Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.17 2005/12/11 12:19:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2005/05/31 00:40:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.17 2005/12/11 12:19:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

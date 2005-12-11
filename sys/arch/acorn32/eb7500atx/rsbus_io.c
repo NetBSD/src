@@ -1,4 +1,4 @@
-/*	$NetBSD: rsbus_io.c,v 1.1 2004/01/03 14:31:28 chris Exp $	*/
+/*	$NetBSD: rsbus_io.c,v 1.2 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsbus_io.c,v 1.1 2004/01/03 14:31:28 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsbus_io.c,v 1.2 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

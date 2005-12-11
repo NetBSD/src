@@ -1,4 +1,4 @@
-# $NetBSD: std.sun3,v 1.31 2005/09/17 09:44:08 yamt Exp $
+# $NetBSD: std.sun3,v 1.32 2005/12/11 12:19:20 christos Exp $
 
 # Standard information for Sun3 machines.
 machine	sun3 m68k

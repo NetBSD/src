@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.22 2005/05/30 04:25:32 christos Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.23 2005/12/11 12:23:51 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.22 2005/05/30 04:25:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.23 2005/12/11 12:23:51 christos Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: avalon_a12.c,v 1.10 2004/06/28 03:53:40 mycroft Exp $ */
+/* $NetBSD: avalon_a12.c,v 1.11 2005/12/11 12:16:10 christos Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.10 2004/06/28 03:53:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.11 2005/12/11 12:16:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

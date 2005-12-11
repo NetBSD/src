@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.35 2005/07/26 21:26:48 christos Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.36 2005/12/11 12:24:57 christos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.35 2005/07/26 21:26:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.36 2005/12/11 12:24:57 christos Exp $");
 
 #include "gre.h"
 #if NGRE > 0

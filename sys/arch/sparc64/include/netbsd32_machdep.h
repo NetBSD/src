@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.18 2005/09/27 15:06:43 chs Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.19 2005/12/11 12:19:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -74,7 +74,7 @@ struct netbsd32_sigcontext13 {
  * Need to plug into get sparc specific ioctl's.
  */
 #define	NETBSD32_MD_IOCTL	/* enable netbsd32_md_ioctl() */
-int netbsd32_md_ioctl(struct file *, netbsd32_u_long, void *, struct proc *);
+int netbsd32_md_ioctl(struct file *, netbsd32_u_long, void *, struct lwp *);
 
 #define NETBSD32_MID_MACHINE MID_SPARC
 

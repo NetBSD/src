@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.26 2005/01/05 12:18:18 simonb Exp $
+# $NetBSD: Makefile.bootprogs,v 1.27 2005/12/11 12:16:20 christos Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 

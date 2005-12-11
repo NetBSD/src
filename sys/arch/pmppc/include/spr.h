@@ -1,3 +1,3 @@
-/*	$NetBSD: spr.h,v 1.3 2005/02/17 02:24:47 briggs Exp $	*/
+/*	$NetBSD: spr.h,v 1.4 2005/12/11 12:18:42 christos Exp $	*/
 
 #include <powerpc/spr.h>

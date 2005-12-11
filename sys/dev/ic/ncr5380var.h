@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.28 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.29 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2003/08/31 01:26:38 chs Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
 
 /*	$OpenBSD: md.h,v 1.4 2001/03/29 03:58:18 mickey Exp $	*/
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.4 2003/11/10 08:51:51 wiz Exp $ */
+/* $NetBSD: sfasvar.h,v 1.5 2005/12/11 12:16:05 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk

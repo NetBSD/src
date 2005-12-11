@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnwreg.h,v 1.4 2005/02/27 00:27:43 perry Exp $	*/
+/*	$NetBSD: if_cnwreg.h,v 1.5 2005/12/11 12:23:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

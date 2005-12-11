@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 2005/12/11 12:19:48 christos Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2005/03/09 22:39:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2005/12/11 12:19:48 christos Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"

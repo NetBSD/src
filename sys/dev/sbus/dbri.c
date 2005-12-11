@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.2 2005/07/28 21:36:48 macallan Exp $	*/
+/*	$NetBSD: dbri.c,v 1.3 2005/12/11 12:23:44 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.2 2005/07/28 21:36:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.3 2005/12/11 12:23:44 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0

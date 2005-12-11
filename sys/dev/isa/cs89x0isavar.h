@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isavar.h,v 1.3 2005/02/04 02:10:40 perry Exp $ */
+/* $NetBSD: cs89x0isavar.h,v 1.4 2005/12/11 12:22:02 christos Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,

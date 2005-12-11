@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.91 2005/10/15 17:29:12 yamt Exp $	*/
+/*	$NetBSD: mcd.c,v 1.92 2005/12/11 12:22:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.91 2005/10/15 17:29:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.92 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,10 +290,10 @@ mcdattach(parent, self, aux)
 }
 
 int
-mcdopen(dev, flag, fmt, p)
+mcdopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error, part;
 	struct mcd_softc *sc;
@@ -392,10 +392,10 @@ bad3:
 }
 
 int
-mcdclose(dev, flag, fmt, p)
+mcdclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
@@ -566,12 +566,12 @@ mcdwrite(dev, uio, flags)
 }
 
 int
-mcdioctl(dev, cmd, addr, flag, p)
+mcdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int error;

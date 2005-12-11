@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.3 2005/10/11 16:01:03 drochner Exp $ */
+/* $NetBSD: gpio.c,v 1.4 2005/12/11 12:21:22 christos Exp $ */
 /*	$OpenBSD: gpio.c,v 1.4 2004/11/23 21:18:37 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.3 2005/10/11 16:01:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.4 2005/12/11 12:21:22 christos Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -170,7 +170,7 @@ gpiobus_print(void *aux, const char *pnp)
 }
 
 int
-gpioopen(dev_t dev, int flag, int mode, struct proc *p)
+gpioopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct gpio_softc *sc;
 
@@ -186,7 +186,7 @@ gpioopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-gpioclose(dev_t dev, int flag, int mode, struct proc *p)
+gpioclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct gpio_softc *sc;
 
@@ -197,7 +197,7 @@ gpioclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct gpio_softc *sc;
 	gpio_chipset_tag_t gc;

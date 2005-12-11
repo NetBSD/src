@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.h,v 1.2 2004/03/25 18:46:27 matt Exp $	*/
+/*	$NetBSD: softintr.h,v 1.3 2005/12/11 12:18:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

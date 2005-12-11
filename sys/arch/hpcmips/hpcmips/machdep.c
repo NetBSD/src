@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 2005/04/25 15:02:05 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88 2005/12/11 12:17:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2005/04/25 15:02:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2005/12/11 12:17:33 christos Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.28 2004/08/30 15:05:16 drochner Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.29 2005/12/11 12:16:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.28 2004/08/30 15:05:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.29 2005/12/11 12:16:59 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.13 2004/04/16 23:58:08 matt Exp $	*/
+/*	$NetBSD: fpu.h,v 1.14 2005/12/11 12:18:43 christos Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.

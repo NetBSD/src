@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasic.c,v 1.9 2005/02/19 15:42:33 tsutsui Exp $	*/
+/*	$NetBSD: sysasic.c,v 1.10 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.9 2005/02/19 15:42:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.10 2005/12/11 12:17:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

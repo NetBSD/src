@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.6 2005/04/24 00:49:54 uwe Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.7 2005/12/11 12:17:36 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.6 2005/04/24 00:49:54 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.7 2005/12/11 12:17:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

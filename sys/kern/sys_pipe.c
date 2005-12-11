@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.68 2005/12/07 06:05:20 thorpej Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.69 2005/12/11 12:24:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.68 2005/12/07 06:05:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.69 2005/12/11 12:24:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,12 +133,12 @@ static int pipe_read(struct file *fp, off_t *offset, struct uio *uio,
 		struct ucred *cred, int flags);
 static int pipe_write(struct file *fp, off_t *offset, struct uio *uio,
 		struct ucred *cred, int flags);
-static int pipe_close(struct file *fp, struct proc *p);
-static int pipe_poll(struct file *fp, int events, struct proc *p);
+static int pipe_close(struct file *fp, struct lwp *l);
+static int pipe_poll(struct file *fp, int events, struct lwp *l);
 static int pipe_kqfilter(struct file *fp, struct knote *kn);
-static int pipe_stat(struct file *fp, struct stat *sb, struct proc *p);
+static int pipe_stat(struct file *fp, struct stat *sb, struct lwp *l);
 static int pipe_ioctl(struct file *fp, u_long cmd, void *data,
-		struct proc *p);
+		struct lwp *l);
 
 static const struct fileops pipeops = {
 	pipe_read, pipe_write, pipe_ioctl, fnullop_fcntl, pipe_poll,
@@ -254,11 +254,11 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 
 	FILE_SET_MATURE(rf);
 	FILE_SET_MATURE(wf);
-	FILE_UNUSE(rf, p);
-	FILE_UNUSE(wf, p);
+	FILE_UNUSE(rf, l);
+	FILE_UNUSE(wf, l);
 	return (0);
 free3:
-	FILE_UNUSE(rf, p);
+	FILE_UNUSE(rf, l);
 	ffree(rf);
 	fdremove(p->p_fd, retval[0]);
 free2:
@@ -688,7 +688,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 
 	/* Loan the write buffer memory from writer process */
 	pgs = wpipe->pipe_map.pgs;
-	error = uvm_loan(&uio->uio_procp->p_vmspace->vm_map, base, blen,
+	error = uvm_loan(&uio->uio_lwp->l_proc->p_vmspace->vm_map, base, blen,
 			 pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		pipe_loan_free(wpipe);
@@ -1066,9 +1066,10 @@ retry:
  * we implement a very minimal set of ioctls for compatibility with sockets.
  */
 int
-pipe_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
+pipe_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
+	struct proc *p = l->l_proc;
 
 	switch (cmd) {
 
@@ -1141,7 +1142,7 @@ pipe_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
 }
 
 int
-pipe_poll(struct file *fp, int events, struct proc *td)
+pipe_poll(struct file *fp, int events, struct lwp *l)
 {
 	struct pipe *rpipe = (struct pipe *)fp->f_data;
 	struct pipe *wpipe;
@@ -1188,17 +1189,17 @@ retry:
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM))
-			selrecord(td, &rpipe->pipe_sel);
+			selrecord(l, &rpipe->pipe_sel);
 
 		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(td, &wpipe->pipe_sel);
+			selrecord(l, &wpipe->pipe_sel);
 	}
 
 	return (revents);
 }
 
 static int
-pipe_stat(struct file *fp, struct stat *ub, struct proc *td)
+pipe_stat(struct file *fp, struct stat *ub, struct lwp *l)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
@@ -1223,7 +1224,7 @@ pipe_stat(struct file *fp, struct stat *ub, struct proc *td)
 
 /* ARGSUSED */
 static int
-pipe_close(struct file *fp, struct proc *td)
+pipe_close(struct file *fp, struct lwp *l)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 

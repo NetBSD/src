@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.94 2005/09/13 04:13:25 christos Exp $	*/
+/*	$NetBSD: lfs.h,v 1.95 2005/12/11 12:25:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.

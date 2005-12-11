@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.17 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.18 2005/12/11 12:20:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.17 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.18 2005/12/11 12:20:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"

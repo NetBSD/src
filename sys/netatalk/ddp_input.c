@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.10 2005/05/17 04:14:58 christos Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.11 2005/12/11 12:24:54 christos Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.10 2005/05/17 04:14:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.11 2005/12/11 12:24:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

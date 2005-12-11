@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_autoconf.c,v 1.1 2005/03/18 14:12:34 shige Exp $	*/
+/*	$NetBSD: obs266_autoconf.c,v 1.2 2005/12/11 12:17:12 christos Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.1 2005/03/18 14:12:34 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.2 2005/12/11 12:17:12 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>

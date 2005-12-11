@@ -1,4 +1,4 @@
-#	$NetBSD: files.ptyfs,v 1.1 2004/11/11 18:56:25 jdolecek Exp $
+#	$NetBSD: files.ptyfs,v 1.2 2005/12/11 12:24:29 christos Exp $
 
 deffs	fs_ptyfs.h			PTYFS		# XXX
 

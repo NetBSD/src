@@ -1,4 +1,4 @@
-/* $NetBSD: xbdvar.h,v 1.7 2005/03/09 22:39:20 bouyer Exp $ */
+/* $NetBSD: xbdvar.h,v 1.8 2005/12/11 12:19:48 christos Exp $ */
 
 /*
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2 2003/09/03 19:35:26 ragge Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3 2005/12/11 12:18:34 christos Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

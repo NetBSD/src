@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4 2003/09/26 22:46:00 nathanw Exp $	*/
+/*	$NetBSD: lock.h,v 1.5 2005/12/11 12:16:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.

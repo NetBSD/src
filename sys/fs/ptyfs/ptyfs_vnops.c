@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.11 2005/11/02 12:38:58 yamt Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.12 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.11 2005/11/02 12:38:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ ptyfs_getattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct ptyfsnode *ptyfs = VTOPTYFS(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
@@ -354,13 +354,14 @@ ptyfs_setattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 	struct vattr *vap = ap->a_vap;
 	struct ucred *cred = ap->a_cred;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
+	struct proc *p = l->l_proc;
 	int error;
 
 	if (vap->va_size != VNOVAL) {
@@ -428,7 +429,7 @@ ptyfs_setattr(void *v)
 		if (cred->cr_uid != ptyfs->ptyfs_uid &&
 		    (error = suser(cred, &p->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-		    (error = VOP_ACCESS(vp, VWRITE, cred, p)) != 0))
+		    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0))
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
@@ -525,12 +526,12 @@ ptyfs_access(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
 	int error;
 
-	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_p)) != 0)
+	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_l)) != 0)
 		return error;
 
 	return vaccess(va.va_type, va.va_mode,
@@ -600,7 +601,7 @@ ptyfs_lookup(void *v)
 			break;
 
 		error = ptyfs_allocvp(dvp->v_mount, vpp, PTYFSpts, pty,
-		    curproc);
+		    curlwp);
 		if (error == 0 && wantpunlock) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
@@ -738,7 +739,7 @@ ptyfs_open(void *v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
@@ -762,7 +763,7 @@ ptyfs_close(void *v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
@@ -866,7 +867,7 @@ ptyfs_ioctl(void *v)
 		void *a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
@@ -874,10 +875,10 @@ ptyfs_ioctl(void *v)
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
 		return (*pts_cdevsw.d_ioctl)(vp->v_rdev, ap->a_command,
-		    ap->a_data, ap->a_fflag, ap->a_p);
+		    ap->a_data, ap->a_fflag, ap->a_l);
 	case PTYFSptc:
 		return (*ptc_cdevsw.d_ioctl)(vp->v_rdev, ap->a_command,
-		    ap->a_data, ap->a_fflag, ap->a_p);
+		    ap->a_data, ap->a_fflag, ap->a_l);
 	default:
 		return EOPNOTSUPP;
 	}
@@ -889,16 +890,16 @@ ptyfs_poll(void *v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
-		return (*pts_cdevsw.d_poll)(vp->v_rdev, ap->a_events, ap->a_p);
+		return (*pts_cdevsw.d_poll)(vp->v_rdev, ap->a_events, ap->a_l);
 	case PTYFSptc:
-		return (*ptc_cdevsw.d_poll)(vp->v_rdev, ap->a_events, ap->a_p);
+		return (*ptc_cdevsw.d_poll)(vp->v_rdev, ap->a_events, ap->a_l);
 	default:
 		return genfs_poll(v);
 	}

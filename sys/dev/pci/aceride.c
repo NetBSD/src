@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.18 2005/08/07 10:12:39 bouyer Exp $	*/
+/*	$NetBSD: aceride.c,v 1.19 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.18 2005/08/07 10:12:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.19 2005/12/11 12:22:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

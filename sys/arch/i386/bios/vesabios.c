@@ -1,7 +1,7 @@
-/* $NetBSD: vesabios.c,v 1.11 2004/08/30 15:05:17 drochner Exp $ */
+/* $NetBSD: vesabios.c,v 1.12 2005/12/11 12:17:40 christos Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.11 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.12 2005/12/11 12:17:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.20 2005/06/09 17:46:19 jmc Exp $ */
+/* $NetBSD: sbmac.c,v 1.21 2005/12/11 12:18:12 christos Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.20 2005/06/09 17:46:19 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.21 2005/12/11 12:18:12 christos Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"

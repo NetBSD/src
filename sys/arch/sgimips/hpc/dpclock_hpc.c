@@ -1,4 +1,4 @@
-/*	$NetBSD: dpclock_hpc.c,v 1.1 2003/11/22 03:58:52 sekiya Exp $	*/
+/*	$NetBSD: dpclock_hpc.c,v 1.2 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Erik Reid

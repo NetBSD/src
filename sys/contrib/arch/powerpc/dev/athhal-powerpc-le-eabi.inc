@@ -33,7 +33,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGES.
 #
-# $Id: athhal-powerpc-le-eabi.inc,v 1.2 2005/06/22 06:15:37 dyoung Exp $
+# $Id: athhal-powerpc-le-eabi.inc,v 1.3 2005/12/11 12:20:47 christos Exp $
 #
 
 #

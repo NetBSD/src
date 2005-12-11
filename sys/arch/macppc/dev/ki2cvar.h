@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2cvar.h,v 1.1 2005/08/10 14:29:08 macallan Exp $	*/
+/*	$NetBSD: ki2cvar.h,v 1.2 2005/12/11 12:18:03 christos Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-

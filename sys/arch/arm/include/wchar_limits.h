@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar_limits.h,v 1.1 2004/05/08 21:51:47 kleink Exp $	*/
+/*	$NetBSD: wchar_limits.h,v 1.2 2005/12/11 12:16:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

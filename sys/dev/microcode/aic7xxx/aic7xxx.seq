@@ -40,7 +40,7 @@
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.seq,v 1.123 2003/01/20 20:44:55 gibbs Exp $
  */
 
-VERSION = "$NetBSD: aic7xxx.seq,v 1.16 2005/02/27 00:27:23 perry Exp $"
+VERSION = "$NetBSD: aic7xxx.seq,v 1.17 2005/12/11 12:22:18 christos Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 PREFIX = "ahc_"
 

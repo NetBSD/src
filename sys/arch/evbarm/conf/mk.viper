@@ -1,4 +1,4 @@
-#	$NetBSD: mk.viper,v 1.1 2005/06/06 20:24:10 pooka Exp $
+#	$NetBSD: mk.viper,v 1.2 2005/12/11 12:17:07 christos Exp $
 
 SYSTEM_FIRST_OBJ=	viper_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/viper/viper_start.S

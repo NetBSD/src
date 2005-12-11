@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.10 2004/04/16 08:52:41 hannken Exp $	*/
+/*	$NetBSD: userret.h,v 1.11 2005/12/11 12:18:43 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

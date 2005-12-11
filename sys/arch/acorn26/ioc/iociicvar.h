@@ -1,4 +1,4 @@
-/*	$NetBSD: iociicvar.h,v 1.1 2003/09/30 00:35:30 thorpej Exp $	*/
+/*	$NetBSD: iociicvar.h,v 1.2 2005/12/11 12:16:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

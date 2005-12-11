@@ -1,4 +1,4 @@
-/* $NetBSD: infutil.c,v 1.9 2005/02/26 22:58:57 perry Exp $ */
+/* $NetBSD: infutil.c,v 1.10 2005/12/11 12:24:46 christos Exp $ */
 
 /* inflate_util.c -- data and routines common to blocks and codes
  * Copyright (C) 1995-2002 Mark Adler

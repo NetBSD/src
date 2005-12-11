@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.8 2005/05/11 10:02:29 augustss Exp $	*/
+/*	$NetBSD: uyap.c,v 1.9 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.8 2005/05/11 10:02:29 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.9 2005/12/11 12:24:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

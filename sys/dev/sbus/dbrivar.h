@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.2 2005/07/28 21:36:48 macallan Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.3 2005/12/11 12:23:44 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbmips,v 1.4 2003/07/27 01:19:27 thorpej Exp $
+#	$NetBSD: files.evbmips,v 1.5 2005/12/11 12:17:11 christos Exp $
 
 # maxpartitions must be the first item in files.${ARCH}
 maxpartitions 16

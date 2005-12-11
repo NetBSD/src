@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.6 2005/08/25 22:33:19 drochner Exp $ */
+/* $NetBSD: pckbport.c,v 1.7 2005/12/11 12:23:22 christos Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.6 2005/08/25 22:33:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.7 2005/12/11 12:23:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

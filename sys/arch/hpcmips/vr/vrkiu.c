@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.36 2004/03/13 17:23:32 bjh21 Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.37 2005/12/11 12:17:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.36 2004/03/13 17:23:32 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.37 2005/12/11 12:17:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/tty.h>

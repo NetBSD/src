@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1743.c,v 1.5 2003/10/06 16:04:15 scw Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.6 2005/12/11 12:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.5 2003/10/06 16:04:15 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.6 2005/12/11 12:17:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

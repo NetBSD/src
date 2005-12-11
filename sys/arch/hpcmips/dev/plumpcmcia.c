@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.18 2005/06/28 18:30:00 drochner Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.19 2005/12/11 12:17:33 christos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.18 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.19 2005/12/11 12:17:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

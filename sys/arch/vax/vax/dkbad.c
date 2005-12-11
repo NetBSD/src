@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.2 2003/08/07 16:30:18 agc Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.3 2005/12/11 12:19:36 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -30,7 +30,7 @@
  *	@(#)dkbad.c	7.3 (Berkeley) 5/9/91
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkbad.c,v 1.2 2003/08/07 16:30:18 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkbad.c,v 1.3 2005/12/11 12:19:36 christos Exp $");
 
 #ifndef NOBADSECT
 #include <sys/param.h>

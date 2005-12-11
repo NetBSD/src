@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.10 2005/12/10 23:29:05 elad Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.11 2005/12/11 12:24:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -54,7 +54,7 @@ void	at_purgeif	__P((struct ifnet *));
 u_int16_t
 	at_cksum	__P((struct mbuf *, int));
 int	ddp_usrreq	__P((struct socket *, int, struct mbuf *, struct mbuf *,
-    struct mbuf *, struct proc *));
+    struct mbuf *, struct lwp *));
 void	ddp_init	__P((void ));
 struct ifaddr *
 	at_ifawithnet	__P((const struct sockaddr_at *, struct ifnet *));

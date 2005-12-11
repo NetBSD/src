@@ -1,4 +1,4 @@
-/*	$NetBSD: iq31244reg.h,v 1.1 2005/02/19 16:56:04 rearnsha Exp $ */
+/*	$NetBSD: iq31244reg.h,v 1.2 2005/12/11 12:17:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.

@@ -34,7 +34,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumdaemon.c,v 1.3 2004/09/19 12:22:22 yamt Exp $
+ * $Id: vinumdaemon.c,v 1.4 2005/12/11 12:24:07 christos Exp $
  * $FreeBSD$
  */
 

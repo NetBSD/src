@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2bb.c,v 1.11 2005/01/27 11:00:46 is Exp $	*/
+/*	$NetBSD: aout2bb.c,v 1.12 2005/12/11 12:16:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

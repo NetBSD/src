@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.14 2005/04/19 19:00:25 christos Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.15 2005/12/11 12:20:12 christos Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.14 2005/04/19 19:00:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.15 2005/12/11 12:20:12 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -124,7 +124,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -197,7 +197,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	if (SCARG(uap, eof) != NULL)
 		error = copyout(&eofflag, SCARG(uap, eof), sizeof(int));
 	return error;
@@ -284,7 +284,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -356,7 +356,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	if (SCARG(uap, eof) != NULL)
 		error = copyout(&eofflag, SCARG(uap, eof), sizeof(int));
 	return error;

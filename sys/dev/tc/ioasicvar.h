@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.18 2005/06/01 16:17:40 drochner Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.19 2005/12/11 12:24:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.

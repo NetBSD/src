@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.h,v 1.8 2004/03/04 03:02:01 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.h,v 1.9 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

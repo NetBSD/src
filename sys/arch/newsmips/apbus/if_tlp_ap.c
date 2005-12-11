@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_ap.c,v 1.8 2005/07/17 18:11:36 he Exp $	*/
+/*	$NetBSD: if_tlp_ap.c,v 1.9 2005/12/11 12:18:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.8 2005/07/17 18:11:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.9 2005/12/11 12:18:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

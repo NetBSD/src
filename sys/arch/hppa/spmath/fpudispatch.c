@@ -1,4 +1,4 @@
-/*	$NetBSD: fpudispatch.c,v 1.2 2003/07/15 02:29:42 lukem Exp $	 */
+/*	$NetBSD: fpudispatch.c,v 1.3 2005/12/11 12:17:40 christos Exp $	 */
 
 /*
  *  (c) Copyright 1991 HEWLETT-PACKARD COMPANY
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpudispatch.c,v 1.2 2003/07/15 02:29:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpudispatch.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2003/10/08 01:42:37 simonb Exp $
+#	$NetBSD: Makefile,v 1.12 2005/12/11 12:19:45 christos Exp $
 
 BOOT=		mboot
 VERSION=	0.1

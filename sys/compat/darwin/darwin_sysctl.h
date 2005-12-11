@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.h,v 1.9 2003/12/26 16:00:53 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.h,v 1.10 2005/12/11 12:19:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.12 2005/06/18 16:10:44 chs Exp $ */
+/* $NetBSD: if_txp.c,v 1.13 2005/12/11 12:22:50 christos Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.12 2005/06/18 16:10:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.13 2005/12/11 12:22:50 christos Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"

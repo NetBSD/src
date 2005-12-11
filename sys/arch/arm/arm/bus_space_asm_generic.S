@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_asm_generic.S,v 1.4 2005/06/03 15:55:55 rearnsha Exp $	*/
+/*	$NetBSD: bus_space_asm_generic.S,v 1.5 2005/12/11 12:16:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.

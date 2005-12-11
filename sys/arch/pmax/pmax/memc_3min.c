@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3min.c,v 1.9 2003/10/27 09:58:42 simonb Exp $	*/
+/*	$NetBSD: memc_3min.c,v 1.10 2005/12/11 12:18:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.9 2003/10/27 09:58:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.10 2005/12/11 12:18:39 christos Exp $");
 
 /*
  * Motherboard memory error contoller used in both

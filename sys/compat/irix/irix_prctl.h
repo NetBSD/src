@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.h,v 1.9 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: irix_prctl.h,v 1.10 2005/12/11 12:20:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.

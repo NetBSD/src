@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.21 2003/07/15 02:54:39 lukem Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.22 2005/12/11 12:18:36 christos Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.21 2003/07/15 02:54:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.22 2005/12/11 12:18:36 christos Exp $");
 
 #include "sii.h"
 

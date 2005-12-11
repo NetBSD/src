@@ -1,4 +1,4 @@
-/* $NetBSD: lcgreg.h,v 1.3 2004/12/12 21:03:06 abs Exp $ */
+/* $NetBSD: lcgreg.h,v 1.4 2005/12/11 12:19:34 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

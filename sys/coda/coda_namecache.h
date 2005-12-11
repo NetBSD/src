@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.h,v 1.8 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: coda_namecache.h,v 1.9 2005/12/11 12:19:50 christos Exp $	*/
 
 /*
  *

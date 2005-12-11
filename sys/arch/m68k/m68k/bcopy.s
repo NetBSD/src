@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.s,v 1.5 2003/08/07 16:28:16 agc Exp $	*/
+/*	$NetBSD: bcopy.s,v 1.6 2005/12/11 12:17:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

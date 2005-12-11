@@ -1,4 +1,4 @@
-#	$NetBSD: std.mac68k,v 1.28 2005/09/17 09:44:07 yamt Exp $
+#	$NetBSD: std.mac68k,v 1.29 2005/12/11 12:18:02 christos Exp $
 #
 # "options" common to all mac68k kernel configs
 

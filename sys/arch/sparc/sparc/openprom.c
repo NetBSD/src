@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.23 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: openprom.c,v 1.24 2005/12/11 12:19:08 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.23 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.24 2005/12/11 12:19:08 christos Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -73,7 +73,7 @@ static int openpromcheckid(int, int);
 static int openpromgetstr(int, char *, char **);
 
 int
-openpromopen(dev_t dev, int flags, int mode, struct proc *p)
+openpromopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
 #if defined(SUN4)
@@ -116,7 +116,7 @@ openpromgetstr(int len, char *user, char **cpp)
 }
 
 int
-openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct opiocdesc *op;
 	int node, optionsnode, len, ok, error, s;

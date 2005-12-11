@@ -1,4 +1,4 @@
-/*	$NetBSD: rcvbundl.h,v 1.2 2005/02/27 00:27:23 perry Exp $	*/
+/*	$NetBSD: rcvbundl.h,v 1.3 2005/12/11 12:22:27 christos Exp $	*/
 
 /*
 Copyright (c) 1999-2001, Intel Corporation

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.13 2005/06/08 07:49:45 he Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.14 2005/12/11 12:21:22 christos Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.13 2005/06/08 07:49:45 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.14 2005/12/11 12:21:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ CFATTACH_DECL(hpckbd, sizeof(struct hpckbd_softc),
 /* wskbd accessopts */
 int	hpckbd_enable(void *, int);
 void	hpckbd_set_leds(void *, int);
-int	hpckbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	hpckbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 /* consopts */
 struct	hpckbd_core hpckbd_consdata;
@@ -465,7 +465,7 @@ hpckbd_set_leds(void *arg, int leds)
 }
 
 int
-hpckbd_ioctl(void *arg, u_long cmd, caddr_t data, int flag, struct proc *p)
+hpckbd_ioctl(void *arg, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct hpckbd_core *hc = arg;

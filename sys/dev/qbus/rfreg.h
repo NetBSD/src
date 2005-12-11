@@ -1,4 +1,4 @@
-/*	$NetBSD: rfreg.h,v 1.3 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: rfreg.h,v 1.4 2005/12/11 12:23:29 christos Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.

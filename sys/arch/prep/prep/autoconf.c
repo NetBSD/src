@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2004/10/23 17:12:22 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2005/12/11 12:18:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2004/10/23 17:12:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2005/12/11 12:18:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

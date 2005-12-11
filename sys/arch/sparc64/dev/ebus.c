@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.47 2005/05/31 00:50:28 christos Exp $	*/
+/*	$NetBSD: ebus.c,v 1.48 2005/12/11 12:19:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.47 2005/05/31 00:50:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.48 2005/12/11 12:19:09 christos Exp $");
 
 #include "opt_ddb.h"
 

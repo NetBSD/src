@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.18 2005/06/03 21:20:51 tsutsui Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.19 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.18 2005/06/03 21:20:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.19 2005/12/11 12:21:28 christos Exp $");
 
 #include "opt_ddb.h"
 

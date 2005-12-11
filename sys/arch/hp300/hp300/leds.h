@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.h,v 1.2 2003/08/07 16:27:37 agc Exp $	*/
+/*	$NetBSD: leds.h,v 1.3 2005/12/11 12:17:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

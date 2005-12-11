@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.7 2004/03/22 12:19:49 nakayama Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.8 2005/12/11 12:19:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.7 2004/03/22 12:19:49 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.8 2005/12/11 12:19:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

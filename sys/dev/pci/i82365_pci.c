@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.20 2005/05/30 04:35:22 christos Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.21 2005/12/11 12:22:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.20 2005/05/30 04:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.21 2005/12/11 12:22:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

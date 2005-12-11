@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.8 2005/08/16 11:32:26 nonaka Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.9 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.8 2005/08/16 11:32:26 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.9 2005/12/11 12:18:58 christos Exp $");
 
 #include "opt_pci.h"
 

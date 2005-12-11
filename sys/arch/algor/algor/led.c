@@ -1,4 +1,4 @@
-/*	$NetBSD: led.c,v 1.4 2003/07/14 22:57:47 lukem Exp $	*/
+/*	$NetBSD: led.c,v 1.5 2005/12/11 12:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: led.c,v 1.4 2003/07/14 22:57:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: led.c,v 1.5 2005/12/11 12:16:08 christos Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 

@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.6 2003/07/15 01:37:32 lukem Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.7 2005/12/11 12:17:11 christos Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.6 2003/07/15 01:37:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.7 2005/12/11 12:17:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

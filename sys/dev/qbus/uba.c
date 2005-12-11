@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.72 2005/08/26 12:42:11 drochner Exp $	   */
+/*	$NetBSD: uba.c,v 1.73 2005/12/11 12:23:29 christos Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.72 2005/08/26 12:42:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.73 2005/12/11 12:23:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>

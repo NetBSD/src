@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.8 2005/02/27 00:27:44 perry Exp $ */
+/* $NetBSD: if_eb.c,v 1.9 2005/12/11 12:23:28 christos Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.8 2005/02/27 00:27:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.9 2005/12/11 12:23:28 christos Exp $");
 
 #include <sys/param.h>
 

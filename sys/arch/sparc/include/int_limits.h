@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.3 2004/05/08 21:51:51 kleink Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

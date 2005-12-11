@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_intio.c,v 1.6 2005/06/13 00:34:08 he Exp $	*/
+/*	$NetBSD: slhci_intio.c,v 1.7 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.6 2005/06/13 00:34:08 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.7 2005/12/11 12:19:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

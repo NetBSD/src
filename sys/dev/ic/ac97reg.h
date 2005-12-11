@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97reg.h,v 1.12 2005/04/08 15:27:19 jmcneill Exp $	*/
+/*	$NetBSD: ac97reg.h,v 1.13 2005/12/11 12:21:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis

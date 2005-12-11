@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.19 2005/08/25 22:33:19 drochner Exp $	*/
+/*	$NetBSD: mca.c,v 1.20 2005/12/11 12:22:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.19 2005/08/25 22:33:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.20 2005/12/11 12:22:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacvar.h,v 1.6 2005/06/12 23:42:54 he Exp $	*/
+/*	$NetBSD: dmacvar.h,v 1.7 2005/12/11 12:19:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.

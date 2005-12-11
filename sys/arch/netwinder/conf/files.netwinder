@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.33 2004/07/08 22:07:48 drochner Exp $
+#	$NetBSD: files.netwinder,v 1.34 2005/12/11 12:18:20 christos Exp $
 #
 # First try for arm-specific configuration info
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.11 2004/01/29 16:43:42 reinoud Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.12 2005/12/11 12:16:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.11 2004/01/29 16:43:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.12 2005/12/11 12:16:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.11 2004/01/29 16:43:42 reinoud Exp $");
 /* Declaration of datatypes and their associated function pointers */
 int	rpckbd_enable(void *, int);
 void	rpckbd_set_leds(void *, int);
-int	rpckbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	rpckbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 
 const struct wskbd_accessops rpckbd_accessops = {
@@ -173,7 +173,7 @@ struct rpckbd_softc console_kbd;
 
 /* modelled after the origional pckbd device code */
 int
-rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct rpckbd_softc *sc = (struct rpckbd_softc *)v;
 	int res, new_ledstate;

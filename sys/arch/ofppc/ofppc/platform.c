@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.5 2005/10/15 02:17:48 tsutsui Exp $	*/
+/*	$NetBSD: platform.c,v 1.6 2005/12/11 12:18:29 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.5 2005/10/15 02:17:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.6 2005/12/11 12:18:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

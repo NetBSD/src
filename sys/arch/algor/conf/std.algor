@@ -1,4 +1,4 @@
-#	$NetBSD: std.algor,v 1.7 2005/09/17 09:44:05 yamt Exp $
+#	$NetBSD: std.algor,v 1.8 2005/12/11 12:16:08 christos Exp $
 
 machine algor mips
 include		"conf/std"	# MI standard options

@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.7 2004/08/06 18:33:09 uch Exp $	*/
+/*	$NetBSD: load.cpp,v 1.8 2005/12/11 12:17:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

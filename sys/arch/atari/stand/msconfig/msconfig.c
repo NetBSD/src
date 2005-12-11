@@ -1,4 +1,4 @@
-/*	$NetBSD: msconfig.c,v 1.4 2003/10/28 11:46:39 he Exp $	*/
+/*	$NetBSD: msconfig.c,v 1.5 2005/12/11 12:17:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Thomas Gerner.

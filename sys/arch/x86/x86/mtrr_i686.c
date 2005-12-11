@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.3 2003/11/01 17:00:50 jdolecek Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.4 2005/12/11 12:19:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.3 2003/11/01 17:00:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.4 2005/12/11 12:19:47 christos Exp $");
 
 #include "opt_multiprocessor.h"
 

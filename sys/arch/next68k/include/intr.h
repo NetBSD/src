@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2005/09/07 19:35:37 drochner Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2005/12/11 12:18:25 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds

@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbgetall.c,v 1.7 2005/05/29 20:56:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbgetall.c,v 1.8 2005/12/11 12:21:03 christos Exp $");
 
 #define __TBGETALL_C__
 

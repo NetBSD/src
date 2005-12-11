@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.14 2003/07/15 01:19:50 lukem Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.15 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.14 2003/07/15 01:19:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.15 2005/12/11 12:16:54 christos Exp $");
 
 #ifdef TT_VIDEO
 /*

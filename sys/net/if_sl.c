@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.93 2005/11/27 05:35:52 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.94 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.93 2005/11/27 05:35:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.94 2005/12/11 12:24:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -418,12 +418,12 @@ slclose(tp, flag)
  */
 /* ARGSUSED */
 int
-sltioctl(tp, cmd, data, flag, p)
+sltioctl(tp, cmd, data, flag, l)
 	struct tty *tp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
 

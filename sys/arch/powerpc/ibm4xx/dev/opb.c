@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.20 2005/08/26 13:19:37 drochner Exp $ */
+/* $NetBSD: opb.c,v 1.21 2005/12/11 12:18:42 christos Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.20 2005/08/26 13:19:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.21 2005/12/11 12:18:42 christos Exp $");
 
 #include "locators.h"
 

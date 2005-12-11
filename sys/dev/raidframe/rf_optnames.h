@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_optnames.h,v 1.10 2004/01/09 23:26:17 oster Exp $	*/
+/*	$NetBSD: rf_optnames.h,v 1.11 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * rf_optnames.h
  */

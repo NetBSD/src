@@ -1,4 +1,4 @@
-/*      $NetBSD: adv.h,v 1.12 2005/02/27 00:27:00 perry Exp $        */
+/*      $NetBSD: adv.h,v 1.13 2005/12/11 12:21:25 christos Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced

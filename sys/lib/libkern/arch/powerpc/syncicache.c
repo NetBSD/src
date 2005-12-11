@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.10 2005/07/27 12:42:51 simonb Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.11 2005/12/11 12:24:44 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.

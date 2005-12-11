@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.26 2005/08/26 13:19:38 drochner Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.27 2005/12/11 12:19:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.26 2005/08/26 13:19:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.27 2005/12/11 12:19:47 christos Exp $");
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.4 2004/09/29 04:06:52 sekiya Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.5 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.4 2004/09/29 04:06:52 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.5 2005/12/11 12:18:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

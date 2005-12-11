@@ -1,4 +1,4 @@
-/* $NetBSD: lcdkp_subr.c,v 1.3 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: lcdkp_subr.c,v 1.4 2005/12/11 12:21:27 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcdkp_subr.c,v 1.3 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcdkp_subr.c,v 1.4 2005/12/11 12:21:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

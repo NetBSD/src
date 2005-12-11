@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.51 2005/02/27 00:27:03 perry Exp $	*/
+/*	$NetBSD: wireg.h,v 1.52 2005/12/11 12:21:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999

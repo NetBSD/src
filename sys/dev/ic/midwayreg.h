@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayreg.h,v 1.12 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: midwayreg.h,v 1.13 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * m i d w a y r e g . h

@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.74 2005/03/05 17:34:06 chs Exp $	*/
+/*	$NetBSD: via.c,v 1.75 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via.c,v 1.74 2005/03/05 17:34:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via.c,v 1.75 2005/12/11 12:18:03 christos Exp $");
 
 #include "opt_mac68k.h"
 

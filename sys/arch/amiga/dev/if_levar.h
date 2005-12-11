@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.6 2003/08/07 16:26:41 agc Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.7 2005/12/11 12:16:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.

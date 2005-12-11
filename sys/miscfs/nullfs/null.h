@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.16 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: null.h,v 1.17 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration

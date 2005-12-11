@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.21 2005/09/14 17:22:50 he Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.22 2005/12/11 12:19:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.21 2005/09/14 17:22:50 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.22 2005/12/11 12:19:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"

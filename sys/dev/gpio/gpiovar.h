@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.2 2005/10/11 16:01:03 drochner Exp $ */
+/* $NetBSD: gpiovar.h,v 1.3 2005/12/11 12:21:22 christos Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.1 2004/06/03 18:08:00 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>

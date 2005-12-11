@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.15 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.16 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

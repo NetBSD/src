@@ -1,4 +1,4 @@
-/*	$NetBSD: board_prop.c,v 1.1 2005/01/17 16:23:27 shige Exp $	*/
+/*	$NetBSD: board_prop.c,v 1.2 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: board_prop.c,v 1.1 2005/01/17 16:23:27 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: board_prop.c,v 1.2 2005/12/11 12:18:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/properties.h>

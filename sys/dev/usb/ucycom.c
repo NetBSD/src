@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.5 2005/09/06 21:40:45 kleink Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.6 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.5 2005/09/06 21:40:45 kleink Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.6 2005/12/11 12:24:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ ucycom_shutdown(struct ucycom_softc *sc)
 #endif
 
 int
-ucycomopen(dev_t dev, int flag, int mode, struct proc *p)
+ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = UCYCOMUNIT(dev);
 	struct ucycom_softc *sc;
@@ -338,7 +338,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(p->p_ucred, &p->p_acflag) != 0)
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -429,7 +429,7 @@ bad:
 
 
 int
-ucycomclose(dev_t dev, int flag, int mode, struct proc *p)
+ucycomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ucycom_softc *sc = ucycom_cd.cd_devs[UCYCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -727,7 +727,7 @@ ucycomtty(dev_t dev)
 }
 
 int
-ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ucycom_softc *sc = ucycom_cd.cd_devs[UCYCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -739,11 +739,11 @@ ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	DPRINTF(("ucycomioctl: sc=%p, tp=%p, data=%p\n", sc, tp, data));
 
-	err = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	err = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (err != EPASSTHROUGH)
 		return (err);
 
-	err = ttioctl(tp, cmd, data, flag, p);
+	err = ttioctl(tp, cmd, data, flag, l);
 	if (err != EPASSTHROUGH)
 		return (err);
 
@@ -774,7 +774,7 @@ ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		err = suser(p->p_ucred, &p->p_acflag);
+		err = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if (err)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -801,18 +801,18 @@ ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-ucycompoll(dev_t dev, int events, struct proc *p)
+ucycompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ucycom_softc *sc = ucycom_cd.cd_devs[UCYCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int err;
 	
-	DPRINTF(("ucycompoll: sc=%p, tp=%p, events=%d, proc=%p\n", sc, tp, events, p));
+	DPRINTF(("ucycompoll: sc=%p, tp=%p, events=%d, lwp=%p\n", sc, tp, events, l));
 
 	if (sc->sc_dying)
 		return (EIO);
 
-	err = ((*tp->t_linesw->l_poll)(tp, events, p));
+	err = ((*tp->t_linesw->l_poll)(tp, events, l));
 	return (err);
 }
 

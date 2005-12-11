@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.26 2005/03/25 14:51:39 tsutsui Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.27 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.26 2005/03/25 14:51:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.27 2005/12/11 12:22:50 christos Exp $");
 
 #include "opt_pci.h"
 

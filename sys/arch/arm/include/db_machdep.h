@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.8 2003/07/09 20:14:15 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.9 2005/12/11 12:16:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens

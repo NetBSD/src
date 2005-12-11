@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.5 2005/11/07 11:42:34 yamt Exp $	*/
+/*	$NetBSD: linux_sigcode.S,v 1.6 2005/12/11 12:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

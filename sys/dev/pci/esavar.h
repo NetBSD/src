@@ -1,4 +1,4 @@
-/* $NetBSD: esavar.h,v 1.6 2005/03/24 22:35:12 jmcneill Exp $ */
+/* $NetBSD: esavar.h,v 1.7 2005/12/11 12:22:49 christos Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>

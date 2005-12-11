@@ -1,4 +1,4 @@
-/*	$NetBSD: satareg.h,v 1.3 2004/05/23 23:07:59 wiz Exp $	*/
+/*	$NetBSD: satareg.h,v 1.4 2005/12/11 12:21:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

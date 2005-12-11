@@ -1,4 +1,4 @@
-/*	$NetBSD: bsdstart.S,v 1.1 2003/10/28 11:34:59 he Exp $	*/
+/*	$NetBSD: bsdstart.S,v 1.2 2005/12/11 12:17:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman

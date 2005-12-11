@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.19 2005/08/23 08:05:13 christos Exp $	*/
+/*	$NetBSD: dir.h,v 1.20 2005/12/11 12:25:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993

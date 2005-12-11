@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.4 2005/10/27 01:25:09 uwe Exp $	*/
+/*	$NetBSD: pmc.h,v 1.5 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.

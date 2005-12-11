@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.25 2005/05/30 04:32:38 christos Exp $	*/
+/*	$NetBSD: ym.c,v 1.26 2005/12/11 12:22:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.25 2005/05/30 04:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.26 2005/12/11 12:22:03 christos Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"

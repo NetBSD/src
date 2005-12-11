@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.33 2005/06/09 22:01:06 rjs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.34 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.33 2005/06/09 22:01:06 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.34 2005/12/11 12:18:03 christos Exp $");
 
 #include "opt_fpu_emulate.h"
 

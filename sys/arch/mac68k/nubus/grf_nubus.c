@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.68 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.69 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.68 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.69 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 

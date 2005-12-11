@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_fixup.h,v 1.3 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: pci_bus_fixup.h,v 1.4 2005/12/11 12:17:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

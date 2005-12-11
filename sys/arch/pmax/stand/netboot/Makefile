@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2003/12/14 22:57:54 he Exp $
+# $NetBSD: Makefile,v 1.3 2005/12/11 12:18:41 christos Exp $
 
 SECONDARY_PROG=	netboot
 STRIPFLAG=

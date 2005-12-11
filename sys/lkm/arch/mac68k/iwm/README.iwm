@@ -1,4 +1,4 @@
-#	$NetBSD: README.iwm,v 1.3 2005/02/26 22:58:57 perry Exp $
+#	$NetBSD: README.iwm,v 1.4 2005/12/11 12:24:46 christos Exp $
 
 From: Hauke Fath <hauke@Espresso.Rhein-Neckar.DE>
 Subject: NetBSD/mac68k IWM floppy driver

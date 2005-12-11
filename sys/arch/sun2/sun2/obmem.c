@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.14 2005/06/30 17:03:54 drochner Exp $	*/
+/*	$NetBSD: obmem.c,v 1.15 2005/12/11 12:19:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.14 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.15 2005/12/11 12:19:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

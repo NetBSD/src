@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.h,v 1.17 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_fault.h,v 1.18 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  *

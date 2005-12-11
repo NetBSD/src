@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugprint.h,v 1.5 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: rf_debugprint.h,v 1.6 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * rf_debugprint.h
  */

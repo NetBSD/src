@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.16 2005/09/09 13:48:10 drochner Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.17 2005/12/11 12:21:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.16 2005/09/09 13:48:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.17 2005/12/11 12:21:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

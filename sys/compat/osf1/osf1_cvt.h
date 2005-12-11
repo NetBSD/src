@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.h,v 1.9 2004/04/21 01:05:37 christos Exp $ */
+/* $NetBSD: osf1_cvt.h,v 1.10 2005/12/11 12:20:23 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

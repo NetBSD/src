@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_chksum.c,v 1.20 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.21 2005/12/11 12:25:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.20 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.21 2005/12/11 12:25:12 christos Exp $");
 
 #include "opt_iso.h"
 

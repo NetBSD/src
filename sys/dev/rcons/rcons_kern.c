@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.16 2005/02/27 00:27:47 perry Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.17 2005/12/11 12:23:44 christos Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.16 2005/02/27 00:27:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.17 2005/12/11 12:23:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

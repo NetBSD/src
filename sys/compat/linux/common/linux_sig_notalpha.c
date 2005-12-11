@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.29 2005/05/03 16:26:29 manu Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.30 2005/12/11 12:20:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.29 2005/05/03 16:26:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.30 2005/12/11 12:20:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

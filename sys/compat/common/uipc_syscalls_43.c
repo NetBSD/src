@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.24 2005/09/24 15:51:03 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.25 2005/12/11 12:19:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.24 2005/09/24 15:51:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.25 2005/12/11 12:19:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 		msg.msg_controllen = 0;
 	}
 
-	error = recvit(p, SCARG(uap, s), &msg,
+	error = recvit(l, SCARG(uap, s), &msg,
 	    (caddr_t)&SCARG(uap, msg)->msg_namelen, retval);
 
 	/*
@@ -416,7 +416,7 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 		msg.msg_controllen = 0;
 	}
 
-	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	error = sendit(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
 	if (iov != aiov)
 		FREE(iov, M_IOV);
@@ -453,7 +453,7 @@ compat_43_sa_put(from)
 }
 
 int
-compat_ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
+compat_ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 {
 	int error, ocmd = cmd;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -496,7 +496,7 @@ compat_ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	}
 
 	error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)ifp, p);
+	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)ifp, l);
 
 	switch (ocmd) {
 	case OSIOCGIFADDR:

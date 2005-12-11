@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.30 2003/11/06 00:33:36 he Exp $ */
+/*	$NetBSD: sbi.c,v 1.31 2005/12/11 12:19:36 christos Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.30 2003/11/06 00:33:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.31 2005/12/11 12:19:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.38 2005/01/11 07:45:34 imp Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.39 2005/12/11 12:24:01 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*

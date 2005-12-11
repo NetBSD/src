@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.14 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: pcb.h,v 1.15 2005/12/11 12:18:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.5 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: memset.S,v 1.6 2005/12/11 12:24:42 christos Exp $	*/
 #include <machine/cdefs.h>
 #include <mips/asm.h>
 #include <machine/endian.h>

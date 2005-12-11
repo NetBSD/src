@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.34 2005/08/30 20:08:02 xtraeme Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.35 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.34 2005/08/30 20:08:02 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.35 2005/12/11 12:24:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,7 +444,7 @@ umap_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	uid_t uid;
 	gid_t gid;

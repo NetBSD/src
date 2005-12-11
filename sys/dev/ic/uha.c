@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.35 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.36 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.35 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.36 2005/12/11 12:21:28 christos Exp $");
 
 #undef UHADEBUG
 #ifdef DDB

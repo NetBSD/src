@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.4 2003/07/15 03:35:51 lukem Exp $ */
+/* $NetBSD: console.c,v 1.5 2005/12/11 12:18:51 christos Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.4 2003/07/15 03:35:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.5 2005/12/11 12:18:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

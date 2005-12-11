@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.16 2005/07/01 18:01:44 christos Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.17 2005/12/11 12:16:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.16 2005/07/01 18:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.17 2005/12/11 12:16:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

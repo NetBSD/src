@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.21 2004/08/20 06:39:37 thorpej Exp $	*/
+/*	$NetBSD: simide.c,v 1.22 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.21 2004/08/20 06:39:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.22 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.5 2005/10/15 10:58:06 itohy Exp $	*/
+/*	$NetBSD: pdc.c,v 1.6 2005/12/11 12:17:25 christos Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 

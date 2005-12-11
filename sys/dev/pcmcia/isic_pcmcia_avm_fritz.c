@@ -33,7 +33,7 @@
  *	Fritz!Card pcmcia specific routines for isic driver
  *	---------------------------------------------------
  *
- *	$Id: isic_pcmcia_avm_fritz.c,v 1.9 2005/07/01 15:05:07 martin Exp $
+ *	$Id: isic_pcmcia_avm_fritz.c,v 1.10 2005/12/11 12:23:23 christos Exp $
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.9 2005/07/01 15:05:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.10 2005/12/11 12:23:23 christos Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_AVM_A1

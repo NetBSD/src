@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_cardbus.h,v 1.2 2005/09/09 14:50:58 drochner Exp $	*/
+/*	$NetBSD: usb_cardbus.h,v 1.3 2005/12/11 12:21:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

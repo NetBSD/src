@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbusvar.h,v 1.3 2005/06/07 12:19:46 he Exp $ */
+/*	$NetBSD: txcsbusvar.h,v 1.4 2005/12/11 12:17:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

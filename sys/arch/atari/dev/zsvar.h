@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.8 2004/03/25 10:17:19 leo Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.9 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

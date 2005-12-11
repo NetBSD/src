@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.18 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.19 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.1 2003/10/19 03:33:50 matt Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.2 2005/12/11 12:17:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

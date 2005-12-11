@@ -1,3 +1,3 @@
-/*	$NetBSD: wchar_limits.h,v 1.1 2004/05/08 21:51:47 kleink Exp $	*/
+/*	$NetBSD: wchar_limits.h,v 1.2 2005/12/11 12:16:59 christos Exp $	*/
 
 #include <m68k/wchar_limits.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.30 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.31 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.30 2005/05/30 04:21:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.31 2005/12/11 12:24:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

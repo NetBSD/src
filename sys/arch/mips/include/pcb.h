@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.18 2003/11/26 08:36:49 he Exp $	*/
+/*	$NetBSD: pcb.h,v 1.19 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

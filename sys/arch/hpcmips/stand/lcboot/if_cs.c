@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs.c,v 1.2 2003/09/20 10:11:27 igy Exp $ */
+/* $NetBSD: if_cs.c,v 1.3 2005/12/11 12:17:34 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -26,7 +26,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.2 2003/09/20 10:11:27 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.3 2005/12/11 12:17:34 christos Exp $");
 
 #include <sys/param.h>
 #include <netinet/in.h>

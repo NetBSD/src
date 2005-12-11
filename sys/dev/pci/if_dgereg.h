@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dgereg.h,v 1.1 2004/03/12 13:46:52 ragge Exp $	*/
+/*	$NetBSD: if_dgereg.h,v 1.2 2005/12/11 12:22:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.

@@ -1,4 +1,4 @@
-# $NetBSD: std.pb1000,v 1.2 2005/09/17 09:44:06 yamt Exp $
+# $NetBSD: std.pb1000,v 1.3 2005/12/11 12:17:11 christos Exp $
 
 machine evbmips mips
 include		"conf/std"	# MI standard options

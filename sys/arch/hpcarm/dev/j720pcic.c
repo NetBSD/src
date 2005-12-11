@@ -1,4 +1,4 @@
-/*      $NetBSD: j720pcic.c,v 1.1 2003/08/08 12:29:22 bsh Exp $        */
+/*      $NetBSD: j720pcic.c,v 1.2 2005/12/11 12:17:32 christos Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.1 2003/08/08 12:29:22 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.2 2005/12/11 12:17:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

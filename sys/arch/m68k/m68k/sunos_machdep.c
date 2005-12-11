@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.29 2005/09/14 19:30:45 he Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.30 2005/12/11 12:17:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.29 2005/09/14 19:30:45 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.30 2005/12/11 12:17:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

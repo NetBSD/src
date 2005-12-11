@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020reg.h,v 1.2 2003/12/23 13:46:18 martin Exp $ */
+/*	$NetBSD: stp4020reg.h,v 1.3 2005/12/11 12:23:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

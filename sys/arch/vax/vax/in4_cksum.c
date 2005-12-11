@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.8 2003/09/29 22:54:28 matt Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.9 2005/12/11 12:19:36 christos Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.8 2003/09/29 22:54:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.9 2005/12/11 12:19:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_low.c,v 1.4 2003/12/06 14:02:40 simonb Exp $	*/
+/*	$NetBSD: scsi_low.c,v 1.5 2005/12/11 12:18:34 christos Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI low-level driver

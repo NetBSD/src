@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.26 2005/06/01 13:01:35 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.27 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26 2005/06/01 13:01:35 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.27 2005/12/11 12:18:09 christos Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.

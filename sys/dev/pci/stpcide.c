@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.13 2005/05/24 05:25:15 lukem Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.14 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.13 2005/05/24 05:25:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.14 2005/12/11 12:22:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

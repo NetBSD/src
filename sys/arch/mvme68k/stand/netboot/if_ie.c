@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.9 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.10 2005/12/11 12:18:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt

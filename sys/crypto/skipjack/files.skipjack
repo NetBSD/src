@@ -1,4 +1,4 @@
-#	$NetBSD: files.skipjack,v 1.1 2003/11/16 12:07:50 tls Exp $
+#	$NetBSD: files.skipjack,v 1.2 2005/12/11 12:20:53 christos Exp $
 
 define	skipjack
 

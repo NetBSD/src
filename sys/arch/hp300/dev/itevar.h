@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.21 2005/06/03 11:52:50 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.22 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: saveregs.S,v 1.6 2003/08/07 16:32:21 agc Exp $	*/
+/*	$NetBSD: saveregs.S,v 1.7 2005/12/11 12:24:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: saveregs.S,v 1.6 2003/08/07 16:32:21 agc Exp $")
+	RCSID("$NetBSD: saveregs.S,v 1.7 2005/12/11 12:24:44 christos Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*

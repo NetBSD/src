@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.5 2005/05/15 21:37:46 fvdl Exp $	*/
+/*	$NetBSD: segments.h,v 1.6 2005/12/11 12:16:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

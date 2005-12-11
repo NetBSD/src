@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.4 2003/10/08 22:43:01 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.5 2005/12/11 12:17:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.1 2004/05/12 14:25:08 minoura Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.2 2005/12/11 12:19:44 christos Exp $	*/
 
 #ifndef _X68K_KBDMAP_H_
 #define _X68K_KBDMAP_H_

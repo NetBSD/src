@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_r94.c,v 1.6 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: p_nec_r94.c,v 1.7 2005/12/11 12:16:37 christos Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_nec_r94.c,v 1.6 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_nec_r94.c,v 1.7 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 

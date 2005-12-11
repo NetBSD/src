@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.3 2005/07/30 22:51:42 nakayama Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.4 2005/12/11 12:21:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.3 2005/07/30 22:51:42 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.4 2005/12/11 12:21:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

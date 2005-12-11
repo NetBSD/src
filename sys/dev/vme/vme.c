@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.16 2005/08/26 12:42:11 drochner Exp $ */
+/* $NetBSD: vme.c,v 1.17 2005/12/11 12:24:07 christos Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.16 2005/08/26 12:42:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.17 2005/12/11 12:24:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

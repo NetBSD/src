@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.25 2005/09/06 21:36:54 kleink Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.26 2005/12/11 12:21:26 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.25 2005/09/06 21:36:54 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.26 2005/12/11 12:21:26 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -507,10 +507,10 @@ clmpcc_shutdown(ch)
 }
 
 int
-clmpccopen(dev, flag, mode, p)
+clmpccopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct clmpcc_softc *sc;
 	struct clmpcc_chan *ch;
@@ -528,7 +528,7 @@ clmpccopen(dev, flag, mode, p)
 
 	if ( ISSET(tp->t_state, TS_ISOPEN) &&
 	     ISSET(tp->t_state, TS_XCLUDE) &&
-	     suser(p->p_ucred, &p->p_acflag) != 0 )
+	     suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0 )
 		return EBUSY;
 
 	/*
@@ -613,10 +613,10 @@ bad:
 }
 
 int
-clmpccclose(dev, flag, mode, p)
+clmpccclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct clmpcc_softc	*sc =
 		device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
@@ -672,15 +672,15 @@ clmpccwrite(dev, uio, flag)
 }
 
 int
-clmpccpoll(dev, events, p)
+clmpccpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -693,23 +693,23 @@ clmpcctty(dev)
 }
 
 int
-clmpccioctl(dev, cmd, data, flag, p)
+clmpccioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
@@ -755,7 +755,7 @@ clmpccioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if ( error )
 			break;
 		ch->ch_openflags = *((int *)data) &

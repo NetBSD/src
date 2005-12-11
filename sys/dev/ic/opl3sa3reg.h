@@ -1,4 +1,4 @@
-/*	$NetBSD: opl3sa3reg.h,v 1.3 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: opl3sa3reg.h,v 1.4 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

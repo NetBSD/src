@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.22 2005/01/30 19:03:23 thorpej Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.23 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.22 2005/01/30 19:03:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.23 2005/12/11 12:18:42 christos Exp $");
 
 #include "bpfilter.h"
 

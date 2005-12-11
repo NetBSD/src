@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.2 2004/07/31 17:28:36 mrg Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.3 2005/12/11 12:21:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.34 2005/01/02 12:41:03 tsutsui Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.35 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995

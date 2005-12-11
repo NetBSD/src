@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/09/29 04:57:31 sekiya Exp $
+#	$NetBSD: Makefile,v 1.5 2005/12/11 12:18:58 christos Exp $
 
 SUBDIR=	boot boot64 sgivol
 

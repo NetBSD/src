@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.43 2005/10/28 20:56:13 christos Exp $ */
+/*	$NetBSD: gem.c,v 1.44 2005/12/11 12:21:26 christos Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.43 2005/10/28 20:56:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.44 2005/12/11 12:21:26 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

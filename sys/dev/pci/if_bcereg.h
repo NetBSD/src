@@ -1,4 +1,4 @@
-/* $NetBSD: if_bcereg.h,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
+/* $NetBSD: if_bcereg.h,v 1.4 2005/12/11 12:22:49 christos Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.

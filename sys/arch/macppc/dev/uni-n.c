@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.1 2005/08/10 14:30:15 macallan Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.2 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.1 2005/08/10 14:30:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.2 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

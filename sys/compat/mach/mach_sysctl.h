@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sysctl.h,v 1.1 2004/07/27 22:01:56 manu Exp $ */
+/*	$NetBSD: mach_sysctl.h,v 1.2 2005/12/11 12:20:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

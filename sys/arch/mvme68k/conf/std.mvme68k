@@ -1,4 +1,4 @@
-#	$NetBSD: std.mvme68k,v 1.12 2005/09/17 09:44:07 yamt Exp $
+#	$NetBSD: std.mvme68k,v 1.13 2005/12/11 12:18:17 christos Exp $
 #
 # Options/devices that all mvme68ks should have
 #

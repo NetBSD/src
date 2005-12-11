@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.8 2005/08/19 04:24:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.9 2005/12/11 12:20:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.8 2005/08/19 04:24:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.9 2005/12/11 12:20:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

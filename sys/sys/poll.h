@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.10 2005/03/10 00:29:37 kleink Exp $	*/
+/*	$NetBSD: poll.h,v 1.11 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

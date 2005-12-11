@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.S,v 1.2 2004/09/29 04:45:26 sekiya Exp $	*/
+/*	$NetBSD: strlen.S,v 1.3 2005/12/11 12:24:42 christos Exp $	*/
 #include <machine/cdefs.h>
 #include <mips/asm.h>
 

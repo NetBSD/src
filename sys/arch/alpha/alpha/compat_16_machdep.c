@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.8 2005/09/14 21:48:14 he Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.9 2005/12/11 12:16:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8 2005/09/14 21:48:14 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.9 2005/12/11 12:16:10 christos Exp $");
 
 
 #ifdef DEBUG

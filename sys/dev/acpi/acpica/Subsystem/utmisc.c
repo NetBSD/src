@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utmisc.c,v 1.13 2005/05/31 21:08:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utmisc.c,v 1.14 2005/12/11 12:21:03 christos Exp $");
 
 #define __UTMISC_C__
 

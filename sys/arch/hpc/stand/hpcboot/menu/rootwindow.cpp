@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.20 2004/08/13 15:49:37 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.21 2005/12/11 12:17:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.

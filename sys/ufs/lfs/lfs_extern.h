@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.72 2005/11/02 12:39:14 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.73 2005/12/11 12:25:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ extern int lfs_debug_log_subsys[];
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
-int lfs_rf_valloc(struct lfs *, ino_t, int, struct proc *, struct vnode **);
+int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
 int lfs_valloc(struct vnode *, int, struct ucred *, struct vnode **);
 int lfs_vfree(struct vnode *, ino_t, int);
@@ -176,7 +176,7 @@ void lfs_debug_log(int, const char *, ...);
 /* lfs_inode.c */
 int lfs_update(struct vnode *, const struct timespec *, const struct timespec *,
     int);
-int lfs_truncate(struct vnode *, off_t, int, struct ucred *, struct proc *);
+int lfs_truncate(struct vnode *, off_t, int, struct ucred *, struct lwp *);
 struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 
 /* lfs_segment.c */
@@ -230,10 +230,10 @@ void lfs_init(void);
 void lfs_reinit(void);
 void lfs_done(void);
 int lfs_mountroot(void);
-int lfs_mount(struct mount *, const char *, void *, struct nameidata *, struct proc *);
-int lfs_unmount(struct mount *, int, struct proc *);
-int lfs_statvfs(struct mount *, struct statvfs *, struct proc *);
-int lfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int lfs_mount(struct mount *, const char *, void *, struct nameidata *, struct lwp *);
+int lfs_unmount(struct mount *, int, struct lwp *);
+int lfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
+int lfs_sync(struct mount *, int, struct ucred *, struct lwp *);
 int lfs_vget(struct mount *, ino_t, struct vnode **);
 int lfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int lfs_vptofh(struct vnode *, struct fid *);

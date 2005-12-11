@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.28 2005/04/05 16:06:49 jmcneill Exp $	*/
+/*	$NetBSD: audioio.h,v 1.29 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321var.h,v 1.8 2003/10/06 16:06:06 thorpej Exp $	*/
+/*	$NetBSD: i80321var.h,v 1.9 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.

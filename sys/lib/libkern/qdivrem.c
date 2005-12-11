@@ -1,4 +1,4 @@
-/*	$NetBSD: qdivrem.c,v 1.11 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: qdivrem.c,v 1.12 2005/12/11 12:24:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qdivrem.c,v 1.11 2005/02/26 22:58:56 perry Exp $");
+__RCSID("$NetBSD: qdivrem.c,v 1.12 2005/12/11 12:24:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

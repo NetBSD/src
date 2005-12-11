@@ -1,4 +1,4 @@
-/*	$NetBSD: iplsum.c,v 1.1 2004/06/15 03:10:30 itohy Exp $	*/
+/*	$NetBSD: iplsum.c,v 1.2 2005/12/11 12:17:25 christos Exp $	*/
 
 /*
  * Calculate 32bit checksum of IPL and store in a certain location

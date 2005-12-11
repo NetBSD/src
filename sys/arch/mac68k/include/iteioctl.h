@@ -1,4 +1,4 @@
-/*	$NetBSD: iteioctl.h,v 1.3 2004/04/29 04:18:27 fredb Exp $	*/
+/*	$NetBSD: iteioctl.h,v 1.4 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994	Allen K. Briggs, Chris P. Caputo,

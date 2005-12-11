@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.h,v 1.3 2003/08/07 16:30:17 agc Exp $	*/
+/*	$NetBSD: crx.h,v 1.4 2005/12/11 12:19:36 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.

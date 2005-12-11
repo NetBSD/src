@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2003/10/20 00:12:10 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2005/12/11 12:17:50 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

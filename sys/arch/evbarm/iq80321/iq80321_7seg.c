@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_7seg.c,v 1.4 2003/07/15 00:25:04 lukem Exp $	*/
+/*	$NetBSD: iq80321_7seg.c,v 1.5 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_7seg.c,v 1.4 2003/07/15 00:25:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_7seg.c,v 1.5 2005/12/11 12:17:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

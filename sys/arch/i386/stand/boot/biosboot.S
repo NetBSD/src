@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.S,v 1.4 2004/08/19 10:34:36 junyoung Exp $	*/
+/*	$NetBSD: biosboot.S,v 1.5 2005/12/11 12:17:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

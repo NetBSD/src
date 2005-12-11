@@ -1,4 +1,4 @@
-/*	$NetBSD: iteide.c,v 1.3 2005/05/24 05:25:15 lukem Exp $	*/
+/*	$NetBSD: iteide.c,v 1.4 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.3 2005/05/24 05:25:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.4 2005/12/11 12:22:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

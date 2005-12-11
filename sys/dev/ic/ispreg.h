@@ -1,4 +1,4 @@
-/* $NetBSD: ispreg.h,v 1.29 2003/12/04 13:57:30 keihan Exp $ */
+/* $NetBSD: ispreg.h,v 1.30 2005/12/11 12:21:27 christos Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *

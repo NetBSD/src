@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0reg.h,v 1.5 2003/11/10 08:51:51 wiz Exp $ */
+/*	$NetBSD: ixp12x0reg.h,v 1.6 2005/12/11 12:16:50 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003

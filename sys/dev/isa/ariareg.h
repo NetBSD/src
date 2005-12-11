@@ -1,4 +1,4 @@
-/*	$NetBSD: ariareg.h,v 1.4 2005/01/13 15:01:27 kent Exp $	*/
+/*	$NetBSD: ariareg.h,v 1.5 2005/12/11 12:22:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.

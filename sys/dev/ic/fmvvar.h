@@ -1,4 +1,4 @@
-/*	$NetBSD: fmvvar.h,v 1.3 2005/01/02 12:22:19 tsutsui Exp $	*/
+/*	$NetBSD: fmvvar.h,v 1.4 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995

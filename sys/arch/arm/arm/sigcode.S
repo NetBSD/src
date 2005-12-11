@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.7 2004/03/26 19:05:33 drochner Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.8 2005/12/11 12:16:41 christos Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: sigcode.S,v 1.7 2004/03/26 19:05:33 drochner Exp $")
+RCSID("$NetBSD: sigcode.S,v 1.8 2005/12/11 12:16:41 christos Exp $")
 
 #include "assym.h"
 #include "opt_compat_netbsd.h"

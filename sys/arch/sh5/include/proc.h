@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4 2004/03/24 15:38:42 wiz Exp $	*/
+/*	$NetBSD: proc.h,v 1.5 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.

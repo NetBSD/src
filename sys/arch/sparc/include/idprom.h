@@ -1,3 +1,3 @@
-/*	$NetBSD: idprom.h,v 1.8 2005/06/19 20:00:28 thorpej Exp $	*/
+/*	$NetBSD: idprom.h,v 1.9 2005/12/11 12:19:05 christos Exp $	*/
 
 #include <dev/sun/idprom.h>

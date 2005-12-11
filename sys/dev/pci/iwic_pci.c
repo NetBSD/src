@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.7 2003/10/03 16:38:44 pooka Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.8 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.7 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.8 2005/12/11 12:22:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

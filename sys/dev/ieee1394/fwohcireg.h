@@ -1,4 +1,5 @@
-/*	$NetBSD: fwohcireg.h,v 1.14 2005/07/11 15:37:00 kiyohara Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.15 2005/12/11 12:22:02 christos Exp $	*/
+
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa

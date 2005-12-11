@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.9 2003/10/31 14:06:29 drochner Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10 2005/12/11 12:18:09 christos Exp $	*/
 
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\

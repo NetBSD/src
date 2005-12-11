@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.6 2004/07/24 18:59:06 chs Exp $	*/
+/*	$NetBSD: float.h,v 1.7 2005/12/11 12:17:37 christos Exp $	*/
 
 #ifndef _HPPA_FLOAT_H_
 #define _HPPA_FLOAT_H_

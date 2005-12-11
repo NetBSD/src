@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.46 2004/08/02 14:50:36 joda Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.47 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000

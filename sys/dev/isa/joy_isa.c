@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isa.c,v 1.7 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.8 2005/12/11 12:22:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.7 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.8 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

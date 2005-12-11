@@ -1,4 +1,4 @@
-/*	$NetBSD: dmovervar.h,v 1.8 2003/11/07 22:04:59 briggs Exp $	*/
+/*	$NetBSD: dmovervar.h,v 1.9 2005/12/11 12:21:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.

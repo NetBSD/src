@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.18 2005/10/21 14:44:08 dbj Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.19 2005/12/11 12:21:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.18 2005/10/21 14:44:08 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.19 2005/12/11 12:21:29 christos Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 

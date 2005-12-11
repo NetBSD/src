@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.38 2005/06/05 11:35:09 he Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.39 2005/12/11 12:18:25 christos Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.38 2005/06/05 11:35:09 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.39 2005/12/11 12:18:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

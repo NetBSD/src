@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.44 2005/05/30 04:56:13 christos Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.45 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.44 2005/05/30 04:56:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.45 2005/12/11 12:24:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

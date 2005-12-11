@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.14 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: cnode.h,v 1.15 2005/12/11 12:19:50 christos Exp $	*/
 
 /*
  *

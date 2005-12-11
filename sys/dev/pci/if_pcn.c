@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.27 2005/12/11 12:22:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.27 2005/12/11 12:22:49 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

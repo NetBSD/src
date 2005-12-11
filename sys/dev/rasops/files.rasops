@@ -1,4 +1,4 @@
-# 	$NetBSD: files.rasops,v 1.10 2005/02/27 00:27:47 perry Exp $
+# 	$NetBSD: files.rasops,v 1.11 2005/12/11 12:23:43 christos Exp $
 
 # Note: `rasops_glue' is only here to force the header file's name
 #       hence it must be mentioned first  (shudder...)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.19 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.20 2005/12/11 12:22:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.19 2005/02/04 02:10:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.20 2005/12/11 12:22:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

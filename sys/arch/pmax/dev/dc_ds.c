@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.19 2003/07/15 02:54:38 lukem Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.20 2005/12/11 12:18:36 christos Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dc_ds.c,v 1.19 2003/07/15 02:54:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc_ds.c,v 1.20 2005/12/11 12:18:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

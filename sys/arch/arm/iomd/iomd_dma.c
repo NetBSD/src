@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.8 2003/07/15 00:24:45 lukem Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.9 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_dma.c,v 1.8 2003/07/15 00:24:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_dma.c,v 1.9 2005/12/11 12:16:47 christos Exp $");
 
 #define DMA_DEBUG
 #include <sys/param.h>

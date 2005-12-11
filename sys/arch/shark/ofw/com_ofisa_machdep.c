@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa_machdep.c,v 1.3 2003/07/15 03:36:02 lukem Exp $	*/
+/*	$NetBSD: com_ofisa_machdep.c,v 1.4 2005/12/11 12:19:03 christos Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ofisa_machdep.c,v 1.3 2003/07/15 03:36:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ofisa_machdep.c,v 1.4 2005/12/11 12:19:03 christos Exp $");
 
 #include "opt_compat_old_ofw.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fdvar.h,v 1.10 2005/10/15 17:29:11 yamt Exp $	*/
+/*	$NetBSD: iwm_fdvar.h,v 1.11 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.

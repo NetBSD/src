@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.h,v 1.41 2005/05/15 21:44:42 fvdl Exp $	*/
+/*	$NetBSD: linux_syscall.h,v 1.42 2005/12/11 12:20:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

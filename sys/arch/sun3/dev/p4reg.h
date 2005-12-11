@@ -1,4 +1,4 @@
-/*	$NetBSD: p4reg.h,v 1.4 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: p4reg.h,v 1.5 2005/12/11 12:19:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

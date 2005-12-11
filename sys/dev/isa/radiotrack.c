@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.11 2005/02/27 00:27:17 perry Exp $ */
+/* $NetBSD: radiotrack.c,v 1.12 2005/12/11 12:22:03 christos Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.11 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.12 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

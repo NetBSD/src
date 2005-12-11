@@ -37,7 +37,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumrevive.c,v 1.3 2004/11/08 21:30:05 explorer Exp $
+ * $Id: vinumrevive.c,v 1.4 2005/12/11 12:24:07 christos Exp $
  * $FreeBSD$
  */
 

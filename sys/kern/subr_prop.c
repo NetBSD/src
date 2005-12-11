@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.14 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.15 2005/12/11 12:24:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.14 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.15 2005/12/11 12:24:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

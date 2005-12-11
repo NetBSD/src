@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.16 2005/10/23 01:33:32 cube Exp $	*/
+/*	$NetBSD: event.h,v 1.17 2005/12/11 12:25:20 christos Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -200,13 +200,13 @@ struct knote {
 
 #include <sys/systm.h> /* for copyin_t */
 
-struct proc;
+struct lwp;
 struct timespec;
 
 void	knote(struct klist *, long);
-void	knote_remove(struct proc *, struct klist *);
-void	knote_fdclose(struct proc *, int);
-int 	kqueue_register(struct kqueue *, struct kevent *, struct proc *);
+void	knote_remove(struct lwp *, struct klist *);
+void	knote_fdclose(struct lwp *, int);
+int 	kqueue_register(struct kqueue *, struct kevent *, struct lwp *);
 
 typedef	int (*kevent_fetch_changes_t)(void *, const struct kevent *,
     struct kevent *, size_t, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.10 2005/06/03 13:48:38 tsutsui Exp $	*/
+/*	$NetBSD: xafb.c,v 1.11 2005/12/11 12:18:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,7 +29,7 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.10 2005/06/03 13:48:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.11 2005/12/11 12:18:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -82,7 +82,7 @@ void xafb_attach(struct device *, struct device *, void *);
 int xafb_common_init(struct xafb_devconfig *);
 int xafb_is_console(void);
 
-int xafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int xafb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 paddr_t xafb_mmap(void *, off_t, int);
 int xafb_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
     int *, long *);
@@ -241,7 +241,7 @@ xafb_is_console(void)
 }
 
 int
-xafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+xafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct xafb_softc *sc = v;
 	struct xafb_devconfig *dc = sc->sc_dc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtf_comms.c,v 1.4 2003/07/15 03:38:02 lukem Exp $	*/
+/*	$NetBSD: dtf_comms.c,v 1.5 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtf_comms.c,v 1.4 2003/07/15 03:38:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtf_comms.c,v 1.5 2005/12/11 12:19:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

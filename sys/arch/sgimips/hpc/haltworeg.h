@@ -1,4 +1,4 @@
-/* $NetBSD: haltworeg.h,v 1.1 2003/09/25 16:35:50 lonewolf Exp $ */
+/* $NetBSD: haltworeg.h,v 1.2 2005/12/11 12:18:53 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen

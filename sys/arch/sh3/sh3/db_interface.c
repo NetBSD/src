@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.29 2005/06/04 22:38:24 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30 2005/12/11 12:19:00 christos Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2005/06/04 22:38:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30 2005/12/11 12:19:00 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

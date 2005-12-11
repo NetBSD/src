@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_start.S,v 1.4 2003/08/29 12:41:12 bsh Exp $ */
+/*	$NetBSD: smdk2410_start.S,v 1.5 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited

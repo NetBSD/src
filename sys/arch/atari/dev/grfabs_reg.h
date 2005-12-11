@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.12 2005/06/04 14:42:36 he Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.13 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman

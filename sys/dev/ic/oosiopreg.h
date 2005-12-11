@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiopreg.h,v 1.3 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: oosiopreg.h,v 1.4 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

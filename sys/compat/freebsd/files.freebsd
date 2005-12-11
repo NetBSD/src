@@ -1,4 +1,4 @@
-#	$NetBSD: files.freebsd,v 1.9 2005/02/22 16:14:50 heas Exp $
+#	$NetBSD: files.freebsd,v 1.10 2005/12/11 12:20:02 christos Exp $
 #
 # Config file description for machine-independent FreeBSD compat code.
 # Included by ports that need it.

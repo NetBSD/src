@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.16 2005/06/22 06:15:51 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.17 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.

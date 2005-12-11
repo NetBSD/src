@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201.c,v 1.22 2005/06/01 18:21:43 drochner Exp $	*/
+/*	$NetBSD: lk201.c,v 1.23 2005/12/11 12:18:36 christos Exp $	*/
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lk201.c,v 1.22 2005/06/01 18:21:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lk201.c,v 1.23 2005/12/11 12:18:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

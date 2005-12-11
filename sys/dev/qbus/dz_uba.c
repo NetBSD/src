@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.22 2005/02/26 12:45:06 simonb Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.23 2005/12/11 12:23:29 christos Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.22 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.23 2005/12/11 12:23:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

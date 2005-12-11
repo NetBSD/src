@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.s,v 1.9 2003/09/22 14:18:43 cl Exp $	*/
+/*	$NetBSD: sigreturn.s,v 1.10 2005/12/11 12:17:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993

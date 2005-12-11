@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.34 2005/06/03 11:40:25 scw Exp $ */
+/*	$NetBSD: db_interface.c,v 1.35 2005/12/11 12:18:46 christos Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.34 2005/06/03 11:40:25 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.35 2005/12/11 12:18:46 christos Exp $");
 
 #define USERACC
 

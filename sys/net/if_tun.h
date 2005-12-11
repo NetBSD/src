@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.12 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.13 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>

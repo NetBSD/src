@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2005/08/26 13:19:37 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2005/08/26 13:19:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2005/12/11 12:18:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

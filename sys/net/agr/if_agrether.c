@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether.c,v 1.2 2005/08/12 10:02:31 yamt Exp $	*/
+/*	$NetBSD: if_agrether.c,v 1.3 2005/12/11 12:24:54 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.2 2005/08/12 10:02:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.3 2005/12/11 12:24:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>

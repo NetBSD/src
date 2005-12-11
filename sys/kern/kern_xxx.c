@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.55 2005/06/23 23:15:12 thorpej Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.56 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.55 2005/06/23 23:15:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.56 2005/12/11 12:24:29 christos Exp $");
 
 #include "opt_syscall_debug.h"
 

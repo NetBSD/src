@@ -1,3 +1,3 @@
-/*	$NetBSD: bus.h,v 1.5 2003/07/25 11:44:20 scw Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 2005/12/11 12:17:12 christos Exp $	*/
 
 #include <powerpc/bus.h>

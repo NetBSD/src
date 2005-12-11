@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.8 2004/02/04 15:44:18 augustss Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.9 2005/12/11 12:18:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.8 2004/02/04 15:44:18 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.9 2005/12/11 12:18:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

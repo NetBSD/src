@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.10 2005/05/20 15:09:45 chs Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.11 2005/12/11 12:17:24 christos Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.10 2005/05/20 15:09:45 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.11 2005/12/11 12:17:24 christos Exp $");
 
 #define MONGOOSE_DEBUG 9
 

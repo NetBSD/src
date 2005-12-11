@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.13 2004/10/14 17:58:06 bouyer Exp $	*/
+/*	$NetBSD: auxio.c,v 1.14 2005/12/11 12:19:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.13 2004/10/14 17:58:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.14 2005/12/11 12:19:09 christos Exp $");
 
 #include "opt_auxio.h"
 

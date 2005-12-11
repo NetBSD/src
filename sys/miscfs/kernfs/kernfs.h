@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.25 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.26 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

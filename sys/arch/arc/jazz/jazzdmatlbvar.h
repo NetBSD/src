@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlbvar.h,v 1.2 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: jazzdmatlbvar.h,v 1.3 2005/12/11 12:16:39 christos Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.

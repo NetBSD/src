@@ -1,4 +1,4 @@
-/* $NetBSD: aucomvar.h,v 1.2 2004/05/01 19:04:00 thorpej Exp $ */
+/* $NetBSD: aucomvar.h,v 1.3 2005/12/11 12:18:06 christos Exp $ */
 
 /* copyright */
 

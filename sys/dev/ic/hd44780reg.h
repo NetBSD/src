@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780reg.h,v 1.2 2005/01/08 20:19:08 joff Exp $ */
+/* $NetBSD: hd44780reg.h,v 1.3 2005/12/11 12:21:26 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov

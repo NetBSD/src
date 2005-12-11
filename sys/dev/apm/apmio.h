@@ -1,4 +1,4 @@
-/*	$NetBSD: apmio.h,v 1.2 2005/02/27 00:26:58 perry Exp $	*/
+/*	$NetBSD: apmio.h,v 1.3 2005/12/11 12:21:14 christos Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.

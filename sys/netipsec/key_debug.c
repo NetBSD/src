@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.4 2005/05/08 18:44:40 christos Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.5 2005/12/11 12:25:06 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.4 2005/05/08 18:44:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.5 2005/12/11 12:25:06 christos Exp $");
 #endif
 
 #include "opt_inet.h"

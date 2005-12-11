@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.23 2005/11/02 12:38:59 yamt Exp $	*/
+/*	$NetBSD: fifo.h,v 1.24 2005/12/11 12:24:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993

@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.3 2005/03/07 18:25:22 uwe Exp $
+# 	$NetBSD: DEBUG,v 1.4 2005/12/11 12:17:36 christos Exp $
 #
 
 include 	"arch/hpcsh/conf/GENERIC"

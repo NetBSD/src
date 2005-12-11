@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.8 2003/07/15 03:36:00 lukem Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.9 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2003/07/15 03:36:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2005/12/11 12:19:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>

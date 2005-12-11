@@ -1,4 +1,4 @@
-/*	$NetBSD: diovar.h,v 1.11 2005/01/02 12:03:12 tsutsui Exp $	*/
+/*	$NetBSD: diovar.h,v 1.12 2005/12/11 12:17:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

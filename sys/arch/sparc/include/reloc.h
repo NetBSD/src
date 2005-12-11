@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.h,v 1.6 2005/01/05 09:12:38 skrll Exp $ */
+/*	$NetBSD: reloc.h,v 1.7 2005/12/11 12:19:06 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

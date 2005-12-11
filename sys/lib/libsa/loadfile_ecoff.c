@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_ecoff.c,v 1.5 2005/02/26 22:58:56 perry Exp $ */
+/* $NetBSD: loadfile_ecoff.c,v 1.6 2005/12/11 12:24:46 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

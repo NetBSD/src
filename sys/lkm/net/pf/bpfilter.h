@@ -1,3 +1,3 @@
-/*	$NetBSD: bpfilter.h,v 1.2 2004/06/29 04:42:54 itojun Exp $	*/
+/*	$NetBSD: bpfilter.h,v 1.3 2005/12/11 12:24:49 christos Exp $	*/
 
 #define NBPFILTER	8

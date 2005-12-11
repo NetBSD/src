@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $	*/
+/*	$NetBSD: pcib.c,v 1.3 2005/12/11 12:19:50 christos Exp $	*/
 /*	NetBSD pcib.c,v 1.35 2005/02/03 21:35:44 perry Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3 2005/12/11 12:19:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

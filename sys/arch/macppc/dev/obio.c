@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.22 2005/06/05 20:02:01 nathanw Exp $	*/
+/*	$NetBSD: obio.c,v 1.23 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.22 2005/06/05 20:02:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.23 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

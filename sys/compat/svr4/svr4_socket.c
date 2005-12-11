@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.c,v 1.11 2005/08/19 02:03:58 christos Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.12 2005/12/11 12:20:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.11 2005/08/19 02:03:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.12 2005/12/11 12:20:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

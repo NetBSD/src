@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.20 2005/08/26 13:19:37 drochner Exp $	*/
+/*	$NetBSD: gio.c,v 1.21 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.20 2005/08/26 13:19:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.21 2005/12/11 12:18:53 christos Exp $");
 
 #include "opt_ddb.h"
 

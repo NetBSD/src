@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.12 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.13 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

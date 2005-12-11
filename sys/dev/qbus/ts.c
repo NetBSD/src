@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.14 2005/10/15 17:29:25 yamt Exp $ */
+/*	$NetBSD: ts.c,v 1.15 2005/12/11 12:23:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.14 2005/10/15 17:29:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.15 2005/12/11 12:23:29 christos Exp $");
 
 #undef	TSDEBUG
 

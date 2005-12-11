@@ -1,4 +1,4 @@
-/*	$NetBSD: md4.h,v 1.5 2005/04/19 14:04:38 blymn Exp $	*/
+/*	$NetBSD: md4.h,v 1.6 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest

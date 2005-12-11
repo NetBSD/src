@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.9 2003/08/11 05:13:21 chs Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.10 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

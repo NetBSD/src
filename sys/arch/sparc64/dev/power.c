@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.6 2003/07/15 03:36:06 lukem Exp $ */
+/*	$NetBSD: power.c,v 1.7 2005/12/11 12:19:09 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.6 2003/07/15 03:36:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.7 2005/12/11 12:19:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

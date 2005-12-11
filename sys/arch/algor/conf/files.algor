@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.18 2004/03/13 17:31:33 bjh21 Exp $
+#	$NetBSD: files.algor,v 1.19 2005/12/11 12:16:08 christos Exp $
 
 # Algorithmics evaluation board specific configuration info.
 

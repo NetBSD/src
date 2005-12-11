@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.10 2004/08/30 15:05:17 drochner Exp $	*/
+/*	$NetBSD: pcib.c,v 1.11 2005/12/11 12:17:11 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.10 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11 2005/12/11 12:17:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

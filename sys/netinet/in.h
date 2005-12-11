@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.71 2005/08/05 09:21:25 elad Exp $	*/
+/*	$NetBSD: in.h,v 1.72 2005/12/11 12:24:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 2005/06/04 14:42:36 he Exp $	*/
+/*	$NetBSD: trap.c,v 1.79 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2005/06/04 14:42:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 2005/12/11 12:16:54 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"

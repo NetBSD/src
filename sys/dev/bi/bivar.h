@@ -1,4 +1,4 @@
-/*	$NetBSD: bivar.h,v 1.11 2005/06/27 11:05:24 ragge Exp $ */
+/*	$NetBSD: bivar.h,v 1.12 2005/12/11 12:21:15 christos Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.

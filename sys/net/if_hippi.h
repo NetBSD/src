@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippi.h,v 1.7 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_hippi.h,v 1.8 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.

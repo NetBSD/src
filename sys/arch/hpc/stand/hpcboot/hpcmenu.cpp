@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.15 2005/02/27 18:25:02 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.16 2005/12/11 12:17:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.

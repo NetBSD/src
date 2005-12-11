@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.26 2004/12/06 02:59:23 christos Exp $   */
+/*	$NetBSD: slcompress.c,v 1.27 2005/12/11 12:24:52 christos Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.26 2004/12/06 02:59:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.27 2005/12/11 12:24:52 christos Exp $");
 
 #include "opt_inet.h"
 #ifdef INET

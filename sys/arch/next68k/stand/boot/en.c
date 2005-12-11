@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.13 2005/06/28 20:44:49 junyoung Exp $        */
+/*      $NetBSD: en.c,v 1.14 2005/12/11 12:18:29 christos Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.

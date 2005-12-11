@@ -1,4 +1,4 @@
-/*	$NetBSD: oldmon.h,v 1.14 2005/05/31 00:54:05 christos Exp $ */
+/*	$NetBSD: oldmon.h,v 1.15 2005/12/11 12:19:05 christos Exp $ */
 
 /*
  * Copyright (C) 1985 Regents of the University of California

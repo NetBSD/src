@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.4 2005/01/15 15:19:51 kent Exp $	*/
+/*	$NetBSD: harmony.c,v 1.5 2005/12/11 12:17:24 christos Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2o.h,v 1.12 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: i2o.h,v 1.13 2005/12/11 12:21:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.

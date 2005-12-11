@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbusvar.h,v 1.1 2005/01/09 15:29:27 tsutsui Exp $ */
+/* $NetBSD: vga_ofbusvar.h,v 1.2 2005/12/11 12:19:05 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

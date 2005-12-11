@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: platform.cpp,v 1.4 2005/07/12 23:21:54 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: platform.cpp,v 1.5 2005/12/11 12:17:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

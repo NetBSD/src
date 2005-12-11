@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2005/05/16 07:48:07 dogcow Exp $
+#	$NetBSD: Makefile,v 1.27 2005/12/11 12:24:47 christos Exp $
 
 COMPAT_UTIL_OVERRIDE=	linux
 .include "../Makefile.inc"

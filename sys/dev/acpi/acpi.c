@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.76 2005/06/30 22:28:03 sekiya Exp $	*/
+/*	$NetBSD: acpi.c,v 1.77 2005/12/11 12:21:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.76 2005/06/30 22:28:03 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.77 2005/12/11 12:21:01 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"

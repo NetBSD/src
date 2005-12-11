@@ -1,4 +1,4 @@
-/*	$NetBSD: ahareg.h,v 1.11 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: ahareg.h,v 1.12 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-99 The NetBSD Foundation, Inc.

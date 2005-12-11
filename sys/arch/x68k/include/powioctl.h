@@ -1,4 +1,4 @@
-/*	$NetBSD: powioctl.h,v 1.2 2004/05/08 08:40:08 minoura Exp $	*/
+/*	$NetBSD: powioctl.h,v 1.3 2005/12/11 12:19:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.

@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.8 2005/12/11 12:16:39 christos Exp $ */
 /* NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp  */
 
 /*-
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.8 2005/12/11 12:16:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

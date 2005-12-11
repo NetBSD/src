@@ -1,4 +1,4 @@
-/*	$NetBSD: frodovar.h,v 1.6 2004/08/28 17:37:00 thorpej Exp $	*/
+/*	$NetBSD: frodovar.h,v 1.7 2005/12/11 12:17:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

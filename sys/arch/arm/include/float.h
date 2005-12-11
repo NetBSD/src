@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.5 2003/10/25 18:24:28 kleink Exp $	*/
+/*	$NetBSD: float.h,v 1.6 2005/12/11 12:16:47 christos Exp $	*/
 
 #ifndef _ARM_FLOAT_H_
 #define _ARM_FLOAT_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200.h,v 1.1 2005/03/18 15:31:58 shige Exp $	*/
+/*	$NetBSD: obs200.h,v 1.2 2005/12/11 12:17:12 christos Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.

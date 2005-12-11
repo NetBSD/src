@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2004/05/08 21:51:47 kleink Exp $
+#	$NetBSD: Makefile,v 1.30 2005/12/11 12:16:46 christos Exp $
 
 INCSDIR= /usr/include/arm
 

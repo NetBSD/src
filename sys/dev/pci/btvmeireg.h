@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeireg.h,v 1.4 2004/02/24 15:16:05 wiz Exp $ */
+/* $NetBSD: btvmeireg.h,v 1.5 2005/12/11 12:22:48 christos Exp $ */
 
 #ifndef _bit3reg_h_
 #define _bit3reg_h_

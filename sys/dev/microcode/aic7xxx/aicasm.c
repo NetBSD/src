@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm.c,v 1.5 2003/07/14 15:42:39 lukem Exp $	*/
+/*	$NetBSD: aicasm.c,v 1.6 2005/12/11 12:22:18 christos Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aicasm.c,v 1.5 2003/07/14 15:42:39 lukem Exp $");
+__RCSID("$NetBSD: aicasm.c,v 1.6 2005/12/11 12:22:18 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.3 2005/06/28 18:30:00 drochner Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.4 2005/12/11 12:17:36 christos Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.

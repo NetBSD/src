@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.51 2005/10/15 17:29:10 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.52 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.51 2005/10/15 17:29:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.52 2005/12/11 12:16:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,12 +412,12 @@ void		*auxp;
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
+fdioctl(dev, cmd, addr, flag, l)
 dev_t		dev;
 u_long		cmd;
 int		flag;
 caddr_t		addr;
-struct proc	*p;
+struct lwp	*l;
 {
 	struct fd_softc *sc;
 
@@ -463,10 +463,10 @@ struct proc	*p;
  *	partition 1: 780Kb
  */
 int
-fdopen(dev, flags, devtype, proc)
+fdopen(dev, flags, devtype, l)
 dev_t		dev;
 int		flags, devtype;
-struct proc	*proc;
+struct lwp	*l;
 {
 	struct fd_softc	*sc;
 	int		sps;
@@ -565,10 +565,10 @@ struct proc	*proc;
 }
 
 int
-fdclose(dev, flags, devtype, proc)
+fdclose(dev, flags, devtype, l)
 dev_t		dev;
 int		flags, devtype;
-struct proc	*proc;
+struct lwp	*l;
 {
 	struct fd_softc	*sc;
 

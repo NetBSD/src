@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.12 2005/08/11 20:32:55 cube Exp $	*/
+/*	$NetBSD: frame.h,v 1.13 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.

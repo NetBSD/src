@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.120 2005/11/16 00:49:03 uwe Exp $	*/
+/*	$NetBSD: fd.c,v 1.121 2005/12/11 12:19:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.120 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.121 2005/12/11 12:19:05 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1086,7 +1086,7 @@ fdc_diskchange(struct fdc_softc *fdc)
 }
 
 int
-fdopen(dev_t dev, int flags, int fmt, struct proc *p)
+fdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
  	int unit, pmask;
 	struct fd_softc *fd;
@@ -1134,7 +1134,7 @@ fdopen(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 int
-fdclose(dev_t dev, int flags, int fmt, struct proc *p)
+fdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	int pmask = (1 << DISKPART(dev));
@@ -1906,7 +1906,7 @@ fdcretry(struct fdc_softc *fdc)
 }
 
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd;
 	struct fdc_softc *fdc;
@@ -2089,7 +2089,7 @@ fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			fd_formb->fd_formb_secsize(i) = fd->sc_type->secsize;
 		}
 
-		error = fdformat(dev, fd_formb, p);
+		error = fdformat(dev, fd_formb, l->l_proc);
 		free(fd_formb, M_TEMP);
 		return error;
 

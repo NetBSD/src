@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.51 2005/09/25 21:57:40 jmmv Exp $	*/
+/*	$NetBSD: nfs.h,v 1.52 2005/12/11 12:25:16 christos Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -325,7 +325,7 @@ struct nfsreq {
 	int		r_timer;	/* tick counter on reply */
 	u_int32_t	r_procnum;	/* NFS procedure number */
 	int		r_rtt;		/* RTT for rpc */
-	struct proc	*r_procp;	/* Proc that did I/O system call */
+	struct lwp	*r_lwp;		/* LWP that did I/O system call */
 };
 
 /*

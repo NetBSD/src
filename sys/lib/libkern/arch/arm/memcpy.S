@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.6 2003/10/13 19:59:24 scw Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.7 2005/12/11 12:24:42 christos Exp $	*/
 
 #if !defined(__XSCALE__) || defined(_STANDALONE)
 #include "memcpy_arm.S"

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.7 2004/05/10 21:51:49 drochner Exp $	*/
+/*	$NetBSD: signal.h,v 1.8 2005/12/11 12:16:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.

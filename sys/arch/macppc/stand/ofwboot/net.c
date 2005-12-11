@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.5 2003/12/26 13:43:29 aymeric Exp $	*/
+/*	$NetBSD: net.c,v 1.6 2005/12/11 12:18:06 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 2005/06/12 19:46:15 dyoung Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 2005/12/11 12:17:13 christos Exp $	*/
 #ifndef _EVBSH3_DISKLABEL_H_
 #define _EVBSH3_DISKLABEL_H_
 

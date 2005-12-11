@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.20 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.21 2005/12/11 12:22:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.

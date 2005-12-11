@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.h,v 1.1 2005/07/11 13:07:30 christos Exp $	*/
+/*	$NetBSD: sunos_machdep.h,v 1.2 2005/12/11 12:17:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

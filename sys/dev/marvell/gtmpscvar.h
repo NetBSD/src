@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpscvar.h,v 1.5 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: gtmpscvar.h,v 1.6 2005/12/11 12:22:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbvar.h,v 1.7 2005/09/23 17:51:37 macallan Exp $	*/
+/*	$NetBSD: ofbvar.h,v 1.8 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

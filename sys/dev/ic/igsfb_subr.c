@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.4 2004/11/26 22:29:36 uwe Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.5 2005/12/11 12:21:27 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.4 2004/11/26 22:29:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.5 2005/12/11 12:21:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

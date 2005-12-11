@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.15 2005/04/25 15:02:02 lukem Exp $ */
+/* $NetBSD: machdep.c,v 1.16 2005/12/11 12:16:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2005/04/25 15:02:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2005/12/11 12:16:03 christos Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>

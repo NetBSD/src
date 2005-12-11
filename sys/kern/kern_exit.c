@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.153 2005/10/01 21:07:38 jdolecek Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.154 2005/12/11 12:24:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.153 2005/10/01 21:07:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.154 2005/12/11 12:24:29 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -262,7 +262,7 @@ exit1(struct lwp *l, int rv)
 	 * Close open files and release open-file table.
 	 * This may block!
 	 */
-	fdfree(p);
+	fdfree(l);
 	cwdfree(p->p_cwdi);
 	p->p_cwdi = 0;
 
@@ -314,7 +314,7 @@ exit1(struct lwp *l, int rv)
 		sp->s_leader = NULL;
 	}
 	fixjobc(p, p->p_pgrp, 0);
-	(void)acct_process(p);
+	(void)acct_process(l);
 #ifdef KTRACE
 	/*
 	 * release trace file

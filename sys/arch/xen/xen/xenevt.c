@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.5 2005/04/19 22:14:30 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.6 2005/12/11 12:19:50 christos Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.

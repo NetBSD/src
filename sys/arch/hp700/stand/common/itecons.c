@@ -1,4 +1,4 @@
-/*	$NetBSD: itecons.c,v 1.4 2003/10/21 13:10:42 itohy Exp $	*/
+/*	$NetBSD: itecons.c,v 1.5 2005/12/11 12:17:25 christos Exp $	*/
 
 /*	$OpenBSD: itecons.c,v 1.6 1999/04/20 20:01:02 mickey Exp $	*/
 

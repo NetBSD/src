@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.5 2005/01/05 10:25:43 tsutsui Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.6 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.5 2005/01/05 10:25:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.6 2005/12/11 12:19:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930var.h,v 1.10 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: am7930var.h,v 1.11 2005/12/11 12:21:25 christos Exp $	*/
 
 struct am7930_softc;
 

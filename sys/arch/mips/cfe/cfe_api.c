@@ -1,4 +1,4 @@
-/* $NetBSD: cfe_api.c,v 1.4 2003/07/15 02:43:36 lukem Exp $ */
+/* $NetBSD: cfe_api.c,v 1.5 2005/12/11 12:18:07 christos Exp $ */
 /* from: SiByte Id: cfe_api.c,v 1.16 2002/07/09 23:29:11 cgd Exp $ */
 
 /*
@@ -48,7 +48,7 @@
     ********************************************************************* */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfe_api.c,v 1.4 2003/07/15 02:43:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfe_api.c,v 1.5 2005/12/11 12:18:07 christos Exp $");
 
 #include "cfe_api.h"
 #include "cfe_api_int.h"

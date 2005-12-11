@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2800_ram_init.S,v 1.1 2003/07/30 18:54:22 bsh Exp $	*/
+/* $NetBSD: smdk2800_ram_init.S,v 1.2 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited

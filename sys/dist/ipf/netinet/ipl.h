@@ -1,4 +1,4 @@
-/*	$NetBSD: ipl.h,v 1.4 2005/04/03 15:05:30 martti Exp $	*/
+/*	$NetBSD: ipl.h,v 1.5 2005/12/11 12:24:21 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.

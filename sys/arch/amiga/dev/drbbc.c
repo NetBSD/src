@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.12 2005/06/13 21:33:15 jmc Exp $ */
+/*	$NetBSD: drbbc.c,v 1.13 2005/12/11 12:16:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.12 2005/06/13 21:33:15 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.13 2005/12/11 12:16:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

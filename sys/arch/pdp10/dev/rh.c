@@ -1,4 +1,4 @@
-/*	$NetBSD: rh.c,v 1.2 2005/10/15 17:29:11 yamt Exp $ */
+/*	$NetBSD: rh.c,v 1.3 2005/12/11 12:18:34 christos Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

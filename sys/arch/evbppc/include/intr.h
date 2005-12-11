@@ -1,3 +1,3 @@
-/*	$NetBSD: intr.h,v 1.3 2004/09/02 12:23:09 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2005/12/11 12:17:12 christos Exp $	*/
 
 #include PPC_INTR_IMPL

@@ -1,4 +1,4 @@
-/*	$NetBSD: scireg.h,v 1.5 2003/08/07 16:26:44 agc Exp $	*/
+/*	$NetBSD: scireg.h,v 1.6 2005/12/11 12:16:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

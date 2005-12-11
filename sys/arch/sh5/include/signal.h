@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.12 2004/03/26 21:39:57 drochner Exp $	*/
+/*	$NetBSD: signal.h,v 1.13 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.18 2003/10/26 10:08:02 kleink Exp $	*/
+/*	$NetBSD: float.h,v 1.19 2005/12/11 12:17:53 christos Exp $	*/
 
 #ifndef _M68K_FLOAT_H_
 #define _M68K_FLOAT_H_

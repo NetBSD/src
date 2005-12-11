@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.30 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.31 2005/12/11 12:24:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -101,7 +101,7 @@ void	 udp_input(struct mbuf *, ...);
 int	 udp_output(struct mbuf *, ...);
 int	 udp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 udp_usrreq(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 
 int	 udp_input_checksum(int af, struct mbuf *, const struct udphdr *, int,
 	    int);

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2003/08/27 16:03:18 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.4 2005/12/11 12:18:09 christos Exp $
 
 # Standard kernel compile flags
 CFLAGS += -G 0 -mno-abicalls

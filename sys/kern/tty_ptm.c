@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.6 2005/12/09 01:06:15 he Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.7 2005/12/11 12:24:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.6 2005/12/09 01:06:15 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7 2005/12/11 12:24:30 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -76,8 +76,8 @@ static struct ptm_pty *ptm;
 int pts_major, ptc_major;
 
 static dev_t pty_getfree(void);
-static int pty_alloc_master(struct proc *, int *, dev_t *);
-static int pty_alloc_slave(struct proc *, int *, dev_t);
+static int pty_alloc_master(struct lwp *, int *, dev_t *);
+static int pty_alloc_slave(struct lwp *, int *, dev_t);
 
 void ptmattach(int);
 
@@ -110,7 +110,7 @@ pty_getfree(void)
  * We need it because we have to fake up root credentials to open the pty.
  */
 int
-pty_vn_open(struct vnode *vp, struct proc *p)
+pty_vn_open(struct vnode *vp, struct lwp *l)
 {
 	struct ucred *cred;
 	int error;
@@ -124,7 +124,7 @@ pty_vn_open(struct vnode *vp, struct proc *p)
 	 * Get us a fresh cred with root privileges.
 	 */
 	cred = crget();
-	error = VOP_OPEN(vp, FREAD|FWRITE, cred, p);
+	error = VOP_OPEN(vp, FREAD|FWRITE, cred, l);
 	crfree(cred);
 
 	if (error) {
@@ -138,11 +138,12 @@ pty_vn_open(struct vnode *vp, struct proc *p)
 }
 
 static int
-pty_alloc_master(struct proc *p, int *fd, dev_t *dev)
+pty_alloc_master(struct lwp *l, int *fd, dev_t *dev)
 {
 	int error;
 	struct file *fp;
 	struct vnode *vp;
+	struct proc *p = l->l_proc;
 	int md;
 
 	if ((error = falloc(p, &fp, fd)) != 0) {
@@ -161,10 +162,10 @@ retry:
 		error = EOPNOTSUPP;
 		goto bad;
 	}
-	if ((error = (*ptm->allocvp)(ptm, p, &vp, *dev, 'p')) != 0)
+	if ((error = (*ptm->allocvp)(ptm, l, &vp, *dev, 'p')) != 0)
 		goto bad;
 
-	if ((error = pty_vn_open(vp, p)) != 0) {
+	if ((error = pty_vn_open(vp, l)) != 0) {
 		/*
 		 * Check if the master open failed because we lost
 		 * the race to grab it.
@@ -183,17 +184,17 @@ retry:
 	fp->f_data = vp;
 	VOP_UNLOCK(vp, 0);
 	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return 0;
 bad:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	fdremove(p->p_fd, *fd);
 	ffree(fp);
 	return error;
 }
 
 int
-pty_grant_slave(struct proc *p, dev_t dev)
+pty_grant_slave(struct lwp *l, dev_t dev)
 {
 	int error;
 	struct vnode *vp;
@@ -210,16 +211,16 @@ pty_grant_slave(struct proc *p, dev_t dev)
 	if (ptm == NULL)
 		return EOPNOTSUPP;
 
-	if ((error = (*ptm->allocvp)(ptm, p, &vp, dev, 't')) != 0)
+	if ((error = (*ptm->allocvp)(ptm, l, &vp, dev, 't')) != 0)
 		return error;
 
 	if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		struct vattr vattr;
 		struct ucred *cred;
-		(*ptm->getvattr)(ptm, p, &vattr);
+		(*ptm->getvattr)(ptm, l->l_proc, &vattr);
 		/* Get a fake cred to pretend we're root. */
 		cred = crget();
-		error = VOP_SETATTR(vp, &vattr, cred, p);
+		error = VOP_SETATTR(vp, &vattr, cred, l);
 		crfree(cred);
 		if (error) {
 			DPRINTF(("setattr %d\n", error));
@@ -241,11 +242,12 @@ pty_grant_slave(struct proc *p, dev_t dev)
 }
 
 static int
-pty_alloc_slave(struct proc *p, int *fd, dev_t dev)
+pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 {
 	int error;
 	struct file *fp;
 	struct vnode *vp;
+	struct proc *p = l->l_proc;
 
 	/* Grab a filedescriptor for the slave */
 	if ((error = falloc(p, &fp, fd)) != 0) {
@@ -258,9 +260,9 @@ pty_alloc_slave(struct proc *p, int *fd, dev_t dev)
 		goto bad;
 	}
 
-	if ((error = (*ptm->allocvp)(ptm, p, &vp, dev, 't')) != 0)
+	if ((error = (*ptm->allocvp)(ptm, l, &vp, dev, 't')) != 0)
 		goto bad;
-	if ((error = pty_vn_open(vp, p)) != 0)
+	if ((error = pty_vn_open(vp, l)) != 0)
 		goto bad;
 
 	fp->f_flag = FREAD|FWRITE;
@@ -269,10 +271,10 @@ pty_alloc_slave(struct proc *p, int *fd, dev_t dev)
 	fp->f_data = vp;
 	VOP_UNLOCK(vp, 0);
 	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return 0;
 bad:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	fdremove(p->p_fd, *fd);
 	ffree(fp);
 	return error;
@@ -322,14 +324,14 @@ ptmattach(int n)
 
 static int
 /*ARGSUSED*/
-ptmopen(dev_t dev, int flag, int mode, struct proc *p)
+ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int error;
 	int fd;
 
 	switch(minor(dev)) {
 	case 0:		/* /dev/ptmx */
-		if ((error = pty_alloc_master(p, &fd, &dev)) != 0)
+		if ((error = pty_alloc_master(l, &fd, &dev)) != 0)
 			return error;
 		curlwp->l_dupfd = fd;
 		return EMOVEFD;
@@ -342,30 +344,31 @@ ptmopen(dev_t dev, int flag, int mode, struct proc *p)
 
 static int
 /*ARGSUSED*/
-ptmclose(dev_t dev, int flag, int mode, struct proc *p)
+ptmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	return (0);
 }
 
 static int
 /*ARGSUSED*/
-ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int error;
 	dev_t newdev;
 	int cfd, sfd;
 	struct file *fp;
+	struct proc *p = l->l_proc;
 
 	error = 0;
 	switch (cmd) {
 	case TIOCPTMGET:
-		if ((error = pty_alloc_master(p, &cfd, &newdev)) != 0)
+		if ((error = pty_alloc_master(l, &cfd, &newdev)) != 0)
 			return error;
 
-		if ((error = pty_grant_slave(p, newdev)) != 0)
+		if ((error = pty_grant_slave(l, newdev)) != 0)
 			goto bad;
 
-		if ((error = pty_alloc_slave(p, &sfd, newdev)) != 0)
+		if ((error = pty_alloc_slave(l, &sfd, newdev)) != 0)
 			goto bad;
 
 		/* now, put the indices and names into struct ptmget */

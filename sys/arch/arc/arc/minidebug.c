@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.16 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.17 2005/12/11 12:16:37 christos Exp $	*/
 /*	$OpenBSD: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: minidebug.c,v 1.16 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: minidebug.c,v 1.17 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

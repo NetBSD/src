@@ -1,4 +1,4 @@
-#	$NetBSD: genlintstub.awk,v 1.8 2005/02/26 21:34:55 perry Exp $
+#	$NetBSD: genlintstub.awk,v 1.9 2005/12/11 12:24:29 christos Exp $
 #
 # Copyright 2001 Wasabi Systems, Inc.
 # All rights reserved.

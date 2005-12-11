@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.6 2005/06/02 17:45:59 he Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.7 2005/12/11 12:16:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.6 2005/06/02 17:45:59 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.7 2005/12/11 12:16:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

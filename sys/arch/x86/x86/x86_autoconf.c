@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.4 2005/05/29 21:36:40 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.5 2005/12/11 12:19:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

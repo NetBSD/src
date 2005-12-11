@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.43 2005/10/31 14:21:35 thorpej Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.44 2005/12/11 12:25:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

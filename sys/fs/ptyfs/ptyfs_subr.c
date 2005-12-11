@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.4 2005/09/12 16:43:38 christos Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.5 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.4 2005/09/12 16:43:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.5 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,13 +98,13 @@ static LIST_HEAD(ptyfs_hashhead, ptyfsnode) *ptyfs_used_tbl, *ptyfs_free_tbl;
 static u_long ptyfs_used_mask, ptyfs_free_mask; /* size of hash table - 1 */
 static struct simplelock ptyfs_used_slock, ptyfs_free_slock;
 
-static void ptyfs_getinfo(struct ptyfsnode *, struct proc *);
+static void ptyfs_getinfo(struct ptyfsnode *, struct lwp *);
 
 static void ptyfs_hashins(struct ptyfsnode *);
 static void ptyfs_hashrem(struct ptyfsnode *);
 
 static struct vnode *ptyfs_used_get(ptyfstype, int, struct mount *);
-static struct ptyfsnode *ptyfs_free_get(ptyfstype, int, struct proc *);
+static struct ptyfsnode *ptyfs_free_get(ptyfstype, int, struct lwp *);
 
 static void ptyfs_rehash(struct simplelock *, struct ptyfs_hashhead **,
     u_long *);
@@ -113,7 +113,7 @@ static void ptyfs_rehash(struct simplelock *, struct ptyfs_hashhead **,
 
 
 static void
-ptyfs_getinfo(struct ptyfsnode *ptyfs, struct proc *p)
+ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 {
 	extern struct ptm_pty *ptyfs_save_ptm, ptm_ptyfspty;
 
@@ -141,11 +141,11 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct proc *p)
 			: 'p')) != 0)
 				goto out;
 		NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, ttyname,
-		     p);
+		     l);
 		if ((error = namei(&nd)) != 0)
 			goto out;
 		cred = crget();
-		error = VOP_GETATTR(nd.ni_vp, &va, cred, p);
+		error = VOP_GETATTR(nd.ni_vp, &va, cred, l);
 		crfree(cred);
 		VOP_UNLOCK(nd.ni_vp, 0);
 		vrele(nd.ni_vp);
@@ -199,7 +199,7 @@ out:
  */
 int
 ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
-    struct proc *p)
+    struct lwp *l)
 {
 	struct ptyfsnode *ptyfs;
 	struct vnode *vp, *nvp;
@@ -216,7 +216,7 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
 		return error;
 	}
 
-	vp->v_data = ptyfs = ptyfs_free_get(type, pty, p);
+	vp->v_data = ptyfs = ptyfs_free_get(type, pty, l);
 	ptyfs->ptyfs_vnode = vp;
 
 	switch (type) {
@@ -335,7 +335,7 @@ ptyfs_hashdone(void)
  * Removes the node from the free table.
  */
 struct ptyfsnode *
-ptyfs_free_get(ptyfstype type, int pty, struct proc *p)
+ptyfs_free_get(ptyfstype type, int pty, struct lwp *l)
 {
 	struct ptyfs_hashhead *ppp;
 	struct ptyfsnode *pp;
@@ -355,7 +355,7 @@ ptyfs_free_get(ptyfstype type, int pty, struct proc *p)
 	pp->ptyfs_pty = pty;
 	pp->ptyfs_type = type;
 	pp->ptyfs_fileno = PTYFS_FILENO(pty, type);
-	ptyfs_getinfo(pp, p);
+	ptyfs_getinfo(pp, l);
 	return pp;
 }
 

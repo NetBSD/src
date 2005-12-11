@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcpy.S,v 1.9 2003/12/04 13:57:31 keihan Exp $")
+	RCSID("$NetBSD: strcpy.S,v 1.10 2005/12/11 12:24:42 christos Exp $")
 #endif
 
 /*

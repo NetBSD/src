@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.68 2005/06/22 06:15:51 dyoung Exp $	*/
+/*	$NetBSD: awi.c,v 1.69 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.68 2005/06/22 06:15:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.69 2005/12/11 12:21:26 christos Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");

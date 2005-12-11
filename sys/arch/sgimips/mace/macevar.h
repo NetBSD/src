@@ -1,4 +1,4 @@
-/*	$NetBSD: macevar.h,v 1.2 2004/09/06 07:24:06 sekiya Exp $	*/
+/*	$NetBSD: macevar.h,v 1.3 2005/12/11 12:18:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang

@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.h,v 1.3 2005/01/02 04:23:03 dyoung Exp $ */
+/* $NetBSD: rtwphy.h,v 1.4 2005/12/11 12:21:28 christos Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *

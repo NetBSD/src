@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.12 2004/08/30 15:05:15 drochner Exp $ */
+/* $NetBSD: if_xb.c,v 1.13 2005/12/11 12:16:10 christos Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.12 2004/08/30 15:05:15 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.13 2005/12/11 12:16:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,7 +232,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %d\n", "$Revision: 1.12 $", xbi.if_mtu);
+	printf(": driver %s mtu %d\n", "$Revision: 1.13 $", xbi.if_mtu);
 }
 
 static void

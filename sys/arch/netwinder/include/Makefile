@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2004/05/08 21:51:50 kleink Exp $
+#	$NetBSD: Makefile,v 1.18 2005/12/11 12:18:20 christos Exp $
 
 INCSDIR= /usr/include/netwinder
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.17 2003/07/15 02:29:36 lukem Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.18 2005/12/11 12:17:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpmu.c,v 1.17 2003/07/15 02:29:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpmu.c,v 1.18 2005/12/11 12:17:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

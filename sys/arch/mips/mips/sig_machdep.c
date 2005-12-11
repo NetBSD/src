@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.10 2004/07/02 12:32:16 simonb Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.11 2005/12/11 12:18:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.10 2004/07/02 12:32:16 simonb Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.11 2005/12/11 12:18:09 christos Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"

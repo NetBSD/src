@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.15 2005/11/24 13:08:33 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.16 2005/12/11 12:18:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15 2005/11/24 13:08:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 2005/12/11 12:18:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	iov = uio->uio_iov;
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
+		p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
 			panic("_bus_dmamap_load_uio: USERSPACE but no proc");

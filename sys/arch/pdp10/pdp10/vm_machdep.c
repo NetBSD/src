@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 2005/06/10 05:10:12 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 2005/12/11 12:18:34 christos Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

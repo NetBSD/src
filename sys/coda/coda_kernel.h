@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_kernel.h,v 1.5 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: coda_kernel.h,v 1.6 2005/12/11 12:19:50 christos Exp $	*/
 
 /*
  *

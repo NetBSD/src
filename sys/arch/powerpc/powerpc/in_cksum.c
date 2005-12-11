@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.7 2003/07/15 02:54:48 lukem Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.8 2005/12/11 12:18:46 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.7 2003/07/15 02:54:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.8 2005/12/11 12:18:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

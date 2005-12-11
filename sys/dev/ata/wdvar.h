@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.31 2005/10/15 17:29:12 yamt Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.32 2005/12/11 12:21:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.

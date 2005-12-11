@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.16 2005/01/19 01:58:21 chs Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.17 2005/12/11 12:18:25 christos Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.16 2005/01/19 01:58:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.17 2005/12/11 12:18:25 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.51 2004/12/13 02:14:13 chs Exp $	*/
+/*	$NetBSD: ncr.c,v 1.52 2005/12/11 12:18:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.51 2004/12/13 02:14:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.52 2005/12/11 12:18:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

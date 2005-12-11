@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.9 2005/06/02 14:11:19 he Exp $	*/
+/*	$NetBSD: extintr.c,v 1.10 2005/12/11 12:18:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.9 2005/06/02 14:11:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.10 2005/12/11 12:18:51 christos Exp $");
 
 #include "opt_openpic.h"
 

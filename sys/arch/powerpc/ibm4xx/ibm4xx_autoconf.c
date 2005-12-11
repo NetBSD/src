@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.2 2005/01/17 17:19:36 shige Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.3 2005/12/11 12:18:42 christos Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.2 2005/01/17 17:19:36 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.3 2005/12/11 12:18:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

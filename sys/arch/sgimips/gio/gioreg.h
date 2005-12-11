@@ -1,4 +1,4 @@
-/*	$NetBSD: gioreg.h,v 1.2 2003/12/15 05:26:56 lonewolf Exp $	*/
+/*	$NetBSD: gioreg.h,v 1.3 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen

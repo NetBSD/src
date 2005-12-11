@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.seq,v 1.9 2005/02/27 00:27:23 perry Exp $	*/
+/*	$NetBSD: aic79xx.seq,v 1.10 2005/12/11 12:22:18 christos Exp $	*/
 
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.

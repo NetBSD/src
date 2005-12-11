@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.10 2004/12/13 08:39:21 sekiya Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.11 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.10 2004/12/13 08:39:21 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.11 2005/12/11 12:18:09 christos Exp $");
 
 #include <sys/param.h>
 

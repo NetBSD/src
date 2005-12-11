@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralreg.h,v 1.1 2005/07/01 20:06:56 drochner Exp $ */
+/*	$NetBSD: if_uralreg.h,v 1.2 2005/12/11 12:24:01 christos Exp $ */
 /*	$OpenBSD: if_ralreg.h,v 1.5 2005/04/01 13:13:43 damien Exp $  */
 
 /*-

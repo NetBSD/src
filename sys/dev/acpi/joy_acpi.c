@@ -1,4 +1,4 @@
-/* $NetBSD: joy_acpi.c,v 1.1 2004/12/02 14:33:31 xtraeme Exp $ */
+/* $NetBSD: joy_acpi.c,v 1.2 2005/12/11 12:21:02 christos Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.1 2004/12/02 14:33:31 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.2 2005/12/11 12:21:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

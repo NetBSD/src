@@ -1,4 +1,4 @@
-/*	$NetBSD: auich_lkm.c,v 1.2 2005/02/26 22:58:58 perry Exp $	*/
+/*	$NetBSD: auich_lkm.c,v 1.3 2005/12/11 12:24:48 christos Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -38,7 +38,7 @@
 
 #include <dev/pci/auich.c>
 
-__KERNEL_RCSID(0, "$NetBSD: auich_lkm.c,v 1.2 2005/02/26 22:58:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich_lkm.c,v 1.3 2005/12/11 12:24:48 christos Exp $");
 
 #include <sys/lkm.h>
 #include <lkm/dev/pcilkm/pcilkm.h>

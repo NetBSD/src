@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.10 2004/08/28 19:44:29 thorpej Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.11 2005/12/11 12:17:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

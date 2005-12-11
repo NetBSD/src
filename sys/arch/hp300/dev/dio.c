@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.30 2005/08/26 13:19:35 drochner Exp $	*/
+/*	$NetBSD: dio.c,v 1.31 2005/12/11 12:17:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.30 2005/08/26 13:19:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.31 2005/12/11 12:17:13 christos Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 

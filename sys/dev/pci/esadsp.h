@@ -1,4 +1,4 @@
-/* $NetBSD: esadsp.h,v 1.5 2005/01/15 15:19:52 kent Exp $ */
+/* $NetBSD: esadsp.h,v 1.6 2005/12/11 12:22:49 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Lennart Augustsson

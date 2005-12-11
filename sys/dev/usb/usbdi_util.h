@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.34 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.35 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.115 2005/12/03 17:23:25 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.116 2005/12/11 12:24:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.115 2005/12/03 17:23:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.116 2005/12/11 12:24:50 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -78,7 +78,7 @@ genfs_poll(void *v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
@@ -122,7 +122,7 @@ genfs_fcntl(void *v)
 		caddr_t a_data;
 		int a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	if (ap->a_command == F_SETFL)
@@ -233,7 +233,7 @@ genfs_revoke(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp, *vq;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 
 #ifdef DIAGNOSTIC
 	if ((ap->a_flags & REVOKEALL) == 0)
@@ -281,7 +281,7 @@ genfs_revoke(void *v)
 		simple_lock(&vp->v_interlock);
 		vp->v_flag &= ~VXLOCK;
 	}
-	vgonel(vp, p);
+	vgonel(vp, l);
 	return (0);
 }
 
@@ -339,7 +339,7 @@ genfs_nolock(void *v)
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
 		int a_flags;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	/*
@@ -376,7 +376,7 @@ genfs_lease_check(void *v)
 #ifdef NFSSERVER
 	struct vop_lease_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 		struct ucred *a_cred;
 		int a_flag;
 	} */ *ap = v;
@@ -385,7 +385,7 @@ genfs_lease_check(void *v)
 	u_quad_t frev;
 
 	(void) nqsrv_getlease(ap->a_vp, &duration, ND_CHECK | ap->a_flag,
-	    NQLOCALSLP, ap->a_p, (struct mbuf *)0, &cache, &frev, ap->a_cred);
+	    NQLOCALSLP, ap->a_l, (struct mbuf *)0, &cache, &frev, ap->a_cred);
 	return (0);
 #else
 	return (0);
@@ -1668,7 +1668,7 @@ genfs_compat_getpages(void *v)
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_resid = PAGE_SIZE;
-		uio.uio_procp = NULL;
+		uio.uio_lwp = NULL;
 		/* XXX vn_lock */
 		error = VOP_READ(vp, &uio, 0, cred);
 		if (error) {
@@ -1722,7 +1722,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_resid = npages << PAGE_SHIFT;
-	uio.uio_procp = NULL;
+	uio.uio_lwp = NULL;
 	/* XXX vn_lock */
 	error = VOP_WRITE(vp, &uio, 0, cred);
 

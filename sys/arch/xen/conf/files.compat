@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.8 2005/06/28 12:01:11 yamt Exp $
+#	$NetBSD: files.compat,v 1.9 2005/12/11 12:19:47 christos Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec

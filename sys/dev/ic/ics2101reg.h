@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101reg.h,v 1.5 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: ics2101reg.h,v 1.6 2005/12/11 12:21:27 christos Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

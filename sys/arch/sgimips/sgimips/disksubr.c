@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 2005/10/04 14:47:50 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2005/10/04 14:47:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2005/12/11 12:18:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

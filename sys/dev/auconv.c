@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.12 2005/01/10 22:01:36 kent Exp $	*/
+/*	$NetBSD: auconv.c,v 1.13 2005/12/11 12:20:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.12 2005/01/10 22:01:36 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.13 2005/12/11 12:20:53 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>

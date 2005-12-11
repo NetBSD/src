@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.11 2005/08/14 19:38:21 uwe Exp $ */
+/*	$NetBSD: prompatch.c,v 1.12 2005/12/11 12:19:08 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh3_dev.cpp,v 1.3 2004/08/06 18:33:09 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh3_dev.cpp,v 1.4 2005/12/11 12:17:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.

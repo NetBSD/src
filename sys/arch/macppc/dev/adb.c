@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.18 2005/02/01 03:08:16 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.19 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.18 2005/02/01 03:08:16 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.19 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

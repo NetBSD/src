@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: installboot.sh,v 1.2 2005/06/14 17:29:09 dsl Exp $
+#	$NetBSD: installboot.sh,v 1.3 2005/12/11 12:17:23 christos Exp $
 
 # compatibility with old installboot program
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.3 2004/05/12 14:25:08 minoura Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.4 2005/12/11 12:19:37 christos Exp $	*/
 
 #include <machine/kbdmap.h>
 

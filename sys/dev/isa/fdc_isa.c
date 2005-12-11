@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.11 2004/09/14 20:20:47 drochner Exp $	*/
+/*	$NetBSD: fdc_isa.c,v 1.12 2005/12/11 12:22:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.11 2004/09/14 20:20:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.12 2005/12/11 12:22:02 christos Exp $");
 
 #include "rnd.h"
 

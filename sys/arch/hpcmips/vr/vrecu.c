@@ -1,4 +1,4 @@
-/* $NetBSD: vrecu.c,v 1.5 2004/09/20 17:00:39 drochner Exp $ */
+/* $NetBSD: vrecu.c,v 1.6 2005/12/11 12:17:34 christos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.5 2004/09/20 17:00:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.6 2005/12/11 12:17:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

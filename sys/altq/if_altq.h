@@ -1,4 +1,4 @@
-/*	$NetBSD: if_altq.h,v 1.9 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.10 2005/12/11 12:16:03 christos Exp $	*/
 /*	$KAME: if_altq.h,v 1.7 2002/02/19 06:37:39 kjc Exp $	*/
 
 /*

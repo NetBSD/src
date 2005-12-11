@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.24 2005/08/26 11:20:34 drochner Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.25 2005/12/11 12:23:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.24 2005/08/26 11:20:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.25 2005/12/11 12:23:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

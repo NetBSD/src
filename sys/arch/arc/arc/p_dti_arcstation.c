@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.7 2005/06/03 12:30:53 tsutsui Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.8 2005/12/11 12:16:37 christos Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.7 2005/06/03 12:30:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.8 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

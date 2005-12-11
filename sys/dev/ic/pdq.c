@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.38 2005/05/17 04:14:57 christos Exp $	*/
+/*	$NetBSD: pdq.c,v 1.39 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.38 2005/05/17 04:14:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.39 2005/12/11 12:21:28 christos Exp $");
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 

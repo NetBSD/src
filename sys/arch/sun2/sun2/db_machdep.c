@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.6 2005/06/03 22:03:51 tsutsui Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.7 2005/12/11 12:19:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.6 2005/06/03 22:03:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.7 2005/12/11 12:19:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181_vrip.c,v 1.8 2003/07/15 02:29:34 lukem Exp $	*/
+/*	$NetBSD: ite8181_vrip.c,v 1.9 2005/12/11 12:17:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181_vrip.c,v 1.8 2003/07/15 02:29:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181_vrip.c,v 1.9 2005/12/11 12:17:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

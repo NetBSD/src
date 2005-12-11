@@ -1,4 +1,4 @@
-/*	$NetBSD: am9513reg.h,v 1.2 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: am9513reg.h,v 1.3 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

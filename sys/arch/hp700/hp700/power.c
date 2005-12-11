@@ -1,4 +1,4 @@
-/* $NetBSD: power.c,v 1.4 2005/10/15 16:16:38 itohy Exp $ */
+/* $NetBSD: power.c,v 1.5 2005/12/11 12:17:24 christos Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.4 2005/10/15 16:16:38 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.5 2005/12/11 12:17:24 christos Exp $");
 
 
 /*

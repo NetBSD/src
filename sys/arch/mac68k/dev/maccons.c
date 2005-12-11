@@ -1,4 +1,4 @@
-/*	$NetBSD: maccons.c,v 1.5 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: maccons.c,v 1.6 2005/12/11 12:18:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.5 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.6 2005/12/11 12:18:02 christos Exp $");
 
 #include "wsdisplay.h"
 #include "wskbd.h"

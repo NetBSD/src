@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.71 2005/10/15 17:29:26 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.72 2005/12/11 12:24:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.71 2005/10/15 17:29:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.72 2005/12/11 12:24:30 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 

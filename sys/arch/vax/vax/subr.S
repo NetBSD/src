@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.12 2005/07/20 17:48:17 he Exp $	   */
+/*	$NetBSD: subr.S,v 1.13 2005/12/11 12:19:36 christos Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.

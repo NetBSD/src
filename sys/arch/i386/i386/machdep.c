@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.565 2005/09/22 07:13:27 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.566 2005/12/11 12:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.565 2005/09/22 07:13:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.566 2005/12/11 12:17:41 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -219,7 +219,7 @@ struct mtrr_funcs *mtrr_funcs;
 #endif
 
 #ifdef COMPAT_NOMID
-static int exec_nomid(struct proc *, struct exec_package *);
+static int exec_nomid(struct lwp *, struct exec_package *);
 #endif
 
 int	physmem;
@@ -1935,7 +1935,7 @@ init386(paddr_t first_avail)
 
 #ifdef COMPAT_NOMID
 static int
-exec_nomid(struct proc *p, struct exec_package *epp)
+exec_nomid(struct lwp *l, struct exec_package *epp)
 {
 	int error;
 	u_long midmag, magic;
@@ -1960,7 +1960,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		/*
 		 * 386BSD's ZMAGIC format:
 		 */
-		error = exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(l, epp);
 		break;
 
 	case (MID_ZERO << 16) | QMAGIC:
@@ -1968,7 +1968,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		 * BSDI's QMAGIC format:
 		 * same as new ZMAGIC format, but with different magic number
 		 */
-		error = exec_aout_prep_zmagic(p, epp);
+		error = exec_aout_prep_zmagic(l, epp);
 		break;
 
 	case (MID_ZERO << 16) | NMAGIC:
@@ -1977,7 +1977,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		 * same as NMAGIC format, but with different magic number
 		 * and with text starting at 0.
 		 */
-		error = exec_aout_prep_oldnmagic(p, epp);
+		error = exec_aout_prep_oldnmagic(l, epp);
 		break;
 
 	case (MID_ZERO << 16) | OMAGIC:
@@ -1986,7 +1986,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		 * same as OMAGIC format, but with different magic number
 		 * and with text starting at 0.
 		 */
-		error = exec_aout_prep_oldomagic(p, epp);
+		error = exec_aout_prep_oldomagic(l, epp);
 		break;
 
 	default:
@@ -2008,12 +2008,12 @@ exec_nomid(struct proc *p, struct exec_package *epp)
  * if COMPAT_NOMID is given as a kernel option.
  */
 int
-cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 
 #ifdef COMPAT_NOMID
-	if ((error = exec_nomid(p, epp)) == 0)
+	if ((error = exec_nomid(l, epp)) == 0)
 		return error;
 #endif /* ! COMPAT_NOMID */
 

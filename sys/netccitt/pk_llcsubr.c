@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_llcsubr.c,v 1.17 2005/02/26 22:45:10 perry Exp $	*/
+/*	$NetBSD: pk_llcsubr.c,v 1.18 2005/12/11 12:24:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_llcsubr.c,v 1.17 2005/02/26 22:45:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_llcsubr.c,v 1.18 2005/12/11 12:24:54 christos Exp $");
 
 #include "opt_llc.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.13 2005/03/17 20:39:17 kleink Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.14 2005/12/11 12:18:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995

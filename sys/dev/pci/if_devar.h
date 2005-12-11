@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.40 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.41 2005/12/11 12:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)

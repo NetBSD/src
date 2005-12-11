@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_locore.S,v 1.1 2005/03/18 15:31:58 shige Exp $	*/
+/*	$NetBSD: obs200_locore.S,v 1.2 2005/12/11 12:17:12 christos Exp $	*/
 /*	Original Tag: locore.S,v 1.1 2003/09/23 15:21:58 shige Exp	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 

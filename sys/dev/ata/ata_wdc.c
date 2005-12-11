@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.82 2005/07/06 01:46:52 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.83 2005/12/11 12:21:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.82 2005/07/06 01:46:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.83 2005/12/11 12:21:14 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG

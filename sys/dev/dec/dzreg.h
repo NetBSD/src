@@ -1,4 +1,4 @@
-/*	$NetBSD: dzreg.h,v 1.3 2003/12/13 23:02:33 ad Exp $ */
+/*	$NetBSD: dzreg.h,v 1.4 2005/12/11 12:21:20 christos Exp $ */
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *

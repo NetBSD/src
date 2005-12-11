@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.4 2005/06/02 13:17:45 drochner Exp $ */
+/* $NetBSD: tsvar.h,v 1.5 2005/12/11 12:16:17 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.

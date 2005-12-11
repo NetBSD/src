@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap.h,v 1.4 2003/10/20 00:12:10 matt Exp $	*/
+/*	$NetBSD: bswap.h,v 1.5 2005/12/11 12:18:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.

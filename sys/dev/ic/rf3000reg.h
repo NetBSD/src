@@ -1,4 +1,4 @@
-/* $NetBSD: rf3000reg.h,v 1.3 2004/07/21 04:25:22 dyoung Exp $ */
+/* $NetBSD: rf3000reg.h,v 1.4 2005/12/11 12:21:28 christos Exp $ */
 
 /*
  * Copyright (c) 2005 David Young.  All rights reserved.

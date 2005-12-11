@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.8 2003/12/10 02:55:48 briggs Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.9 2005/12/11 12:22:50 christos Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *

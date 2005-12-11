@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.h,v 1.7 2004/03/21 14:10:08 pk Exp $	*/
+/*	$NetBSD: sparc64.h,v 1.8 2005/12/11 12:19:10 christos Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.

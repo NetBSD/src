@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.10 2004/08/06 18:33:09 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.11 2005/12/11 12:17:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.

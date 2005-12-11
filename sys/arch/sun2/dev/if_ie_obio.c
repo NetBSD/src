@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.9 2005/06/03 22:05:25 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.10 2005/12/11 12:19:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.9 2005/06/03 22:05:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.10 2005/12/11 12:19:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
