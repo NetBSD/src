@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.712 2005/12/10 11:32:14 elad Exp $
+# $NetBSD: GENERIC,v 1.713 2005/12/11 02:11:50 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.712 $"
+#ident 		"GENERIC-$Revision: 1.713 $"
 
 maxusers	32		# estimated number of users
 
@@ -345,6 +345,9 @@ cpu* at mainbus?
 # Sony Vaio jog dial
 #spic* 		at acpi?		# Sony Programmable I/O Controller
 #wsmouse* 	at spic?
+
+# Sony LCD brightness etc.
+#sony* 		at acpi?		# Sony Miscellaneous Controller
 
 # Toshiba Libretto devices
 #vald* at acpi?
