@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.229 2005/12/10 21:17:21 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.230 2005/12/11 00:01:54 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.229 2005/12/10 21:17:21 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.230 2005/12/11 00:01:54 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1713,15 +1713,15 @@ cd_play_tracks(struct cd_softc *cd, int strack, int sindex, int etrack,
     int eindex)
 {
 	struct cd_formatted_toc toc;
-	int flags, error;
+	int error;
 
 	if (!etrack)
 		return (EIO);
 	if (strack > etrack)
 		return (EINVAL);
 
-	flags = XS_CTL_DATA_ONSTACK;
-	if ((error = cd_load_toc(cd, CD_TOC_FORM, &toc, flags)) != 0)
+	error = cd_load_toc(cd, CD_TOC_FORM, &toc, XS_CTL_DATA_ONSTACK);
+	if (error)
 		return (error);
 
 	if (++etrack > (toc.header.ending_track+1))
