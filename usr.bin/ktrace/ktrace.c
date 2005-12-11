@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.37 2004/07/16 23:52:01 enami Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.38 2005/12/11 11:29:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.37 2004/07/16 23:52:01 enami Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.38 2005/12/11 11:29:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: ktrace.c,v 1.37 2004/07/16 23:52:01 enami Exp $");
 int	main(int, char *[]);
 static int rpid(char *);
 static void usage(void);
-static int do_ktrace(const char *, int, int, int, int);
+static int do_ktrace(const char *, int, int, int, int, int);
 static void no_ktrace(int);
 static void fset(int fd, int flag);
 static void fclear(int fd, int flag);
@@ -83,6 +83,7 @@ main(int argc, char *argv[])
 {
 	enum { NOTSET, CLEAR, CLEARALL } clear;
 	int block, append, ch, fd, trset, ops, pid, pidset, synclog, trpoints;
+	int vers;
 	const char *outfile;
 #ifdef KTRUSS
 	const char *infile;
@@ -93,13 +94,14 @@ main(int argc, char *argv[])
 	append = ops = pidset = trset = synclog = 0;
 	trpoints = 0;
 	block = 1;
+	vers = 1;
 	pid = 0;	/* Appease GCC */
 
 #ifdef KTRUSS
-# define OPTIONS "aCce:df:g:ilm:no:p:RTt:"
+# define OPTIONS "aCce:df:g:ilm:no:p:RTt:v:"
 	outfile = infile = NULL;
 #else
-# define OPTIONS "aCcdf:g:ip:st:"
+# define OPTIONS "aCcdf:g:ip:st:v:"
 	outfile = DEF_TRACEFILE;
 #endif
 
@@ -178,6 +180,9 @@ main(int argc, char *argv[])
 				usage();
 			}
 			break;
+		case 'v':
+			vers = atoi(optarg);
+			break;
 		default:
 			usage();
 		}
@@ -221,7 +226,7 @@ main(int argc, char *argv[])
 		} else
 			ops |= pid ? KTROP_CLEAR : KTROP_CLEARFILE;
 
-		(void)do_ktrace(outfile, ops, trpoints, pid, block);
+		(void)do_ktrace(outfile, vers, ops, trpoints, pid, block);
 		exit(0);
 	}
 
@@ -235,17 +240,17 @@ main(int argc, char *argv[])
 
 	if (*argv) {
 #ifdef KTRUSS
-		if (do_ktrace(outfile, ops, trpoints, getpid(), block) == 1) {
+		if (do_ktrace(outfile, vers, ops, trpoints, getpid(), block) == 1) {
 			execvp(argv[0], &argv[0]);
 			err(EXIT_FAILURE, "exec of '%s' failed", argv[0]);
 		}
 #else
-		(void)do_ktrace(outfile, ops, trpoints, getpid(), block);
+		(void)do_ktrace(outfile, vers, ops, trpoints, getpid(), block);
 		execvp(argv[0], &argv[0]);
 		err(EXIT_FAILURE, "exec of '%s' failed", argv[0]);
 #endif
 	} else
-		(void)do_ktrace(outfile, ops, trpoints, pid, block);
+		(void)do_ktrace(outfile, vers, ops, trpoints, pid, block);
 	return 0;
 }
 
@@ -326,9 +331,11 @@ no_ktrace(int sig)
 }
 
 static int
-do_ktrace(const char *tracefile, int ops, int trpoints, int pid, int block)
+do_ktrace(const char *tracefile, int vers, int ops, int trpoints, int pid,
+    int block)
 {
 	int ret;
+	ops |= vers << KTRFAC_VER_SHIFT;
 
 	if (KTROP(ops) == KTROP_SET &&
 	    (!tracefile || strcmp(tracefile, "-") == 0)) {
