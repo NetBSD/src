@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.33 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.34 2005/12/11 23:05:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.33 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.34 2005/12/11 23:05:25 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -195,9 +195,9 @@ extern struct ifqueue pkintrq;
 #define RCF_ALLROUTES (2 << 8) | TOKEN_RCF_FRAME2 | TOKEN_RCF_BROADCAST_ALL
 #define RCF_SINGLEROUTE (2 << 8) | TOKEN_RCF_FRAME2 | TOKEN_RCF_BROADCAST_SINGLE
 
-static	int token_output __P((struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *));
-static	void token_input __P((struct ifnet *, struct mbuf *));
+static int	token_output(struct ifnet *, struct mbuf *,
+			     struct sockaddr *, struct rtentry *);
+static void	token_input(struct ifnet *, struct mbuf *);
 
 /*
  * Token Ring output routine.
@@ -206,11 +206,8 @@ static	void token_input __P((struct ifnet *, struct mbuf *));
  * XXX route info has to go into the same mbuf as the header
  */
 static int
-token_output(ifp, m0, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m0;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
+token_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+    struct rtentry *rt0)
 {
 	u_int16_t etype;
 	int error = 0;
@@ -529,9 +526,7 @@ bad:
  * the token ring header.
  */
 static void
-token_input(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+token_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	struct llc *l;
@@ -730,9 +725,7 @@ token_input(ifp, m)
  * Perform common duties while attaching to interface list
  */
 void
-token_ifattach(ifp, lla)
-	struct ifnet *ifp;
-	caddr_t	lla;
+token_ifattach(struct ifnet *ifp, caddr_t lla)
 {
 
 	ifp->if_type = IFT_ISO88025;
@@ -756,8 +749,7 @@ token_ifattach(ifp, lla)
 }
 
 void
-token_ifdetach(ifp)
-        struct ifnet *ifp;
+token_ifdetach(struct ifnet *ifp)
 {
 
 #if NBPFILTER > 0

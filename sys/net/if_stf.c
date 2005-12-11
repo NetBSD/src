@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.49 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.50 2005/12/11 23:05:25 thorpej Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.49 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.50 2005/12/11 23:05:25 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -142,10 +142,10 @@ struct stf_softc {
 	LIST_ENTRY(stf_softc) sc_list;
 };
 
-LIST_HEAD(, stf_softc) stf_softc_list;
+static LIST_HEAD(, stf_softc) stf_softc_list;
 
-int	stf_clone_create __P((struct if_clone *, int));
-int	stf_clone_destroy __P((struct ifnet *));
+static int	stf_clone_create(struct if_clone *, int);
+static int	stf_clone_destroy(struct ifnet *);
 
 struct if_clone stf_cloner =
     IF_CLONE_INITIALIZER("stf", stf_clone_create, stf_clone_destroy);
@@ -157,40 +157,38 @@ static int ip_gif_ttl = 40;	/*XXX*/
 #endif
 
 extern struct domain inetdomain;
-const struct protosw in_stf_protosw =
+static const struct protosw in_stf_protosw =
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
   in_stf_input, rip_output,	0,		rip_ctloutput,
   rip_usrreq,
   0,            0,              0,              0
 };
 
-void stfattach __P((int));
-static int stf_encapcheck __P((struct mbuf *, int, int, void *));
-static struct in6_ifaddr *stf_getsrcifa6 __P((struct ifnet *));
-static int stf_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-	struct rtentry *));
-static int isrfc1918addr __P((struct in_addr *));
-static int stf_checkaddr4 __P((struct stf_softc *, struct in_addr *,
-	struct ifnet *));
-static int stf_checkaddr6 __P((struct stf_softc *, struct in6_addr *,
-	struct ifnet *));
-static void stf_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
-static int stf_ioctl __P((struct ifnet *, u_long, caddr_t));
+void	stfattach(int);
+
+static int stf_encapcheck(struct mbuf *, int, int, void *);
+static struct in6_ifaddr *stf_getsrcifa6(struct ifnet *);
+static int stf_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+	struct rtentry *);
+static int isrfc1918addr(struct in_addr *);
+static int stf_checkaddr4(struct stf_softc *, struct in_addr *,
+	struct ifnet *);
+static int stf_checkaddr6(struct stf_softc *, struct in6_addr *,
+	struct ifnet *);
+static void stf_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+static int stf_ioctl(struct ifnet *, u_long, caddr_t);
 
 /* ARGSUSED */
 void
-stfattach(count)
-	int count;
+stfattach(int count)
 {
 
 	LIST_INIT(&stf_softc_list);
 	if_clone_attach(&stf_cloner);
 }
 
-int
-stf_clone_create(ifc, unit)
-	struct if_clone *ifc;
-	int unit;
+static int
+stf_clone_create(struct if_clone *ifc, int unit)
 {
 	struct stf_softc *sc;
 
@@ -228,9 +226,8 @@ stf_clone_create(ifc, unit)
 	return (0);
 }
 
-int
-stf_clone_destroy(ifp)
-	struct ifnet *ifp;
+static int
+stf_clone_destroy(struct ifnet *ifp)
 {
 	struct stf_softc *sc = (void *) ifp;
 
@@ -246,11 +243,7 @@ stf_clone_destroy(ifp)
 }
 
 static int
-stf_encapcheck(m, off, proto, arg)
-	struct mbuf *m;
-	int off;
-	int proto;
-	void *arg;
+stf_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 {
 	struct ip ip;
 	struct in6_ifaddr *ia6;
@@ -308,8 +301,7 @@ stf_encapcheck(m, off, proto, arg)
 }
 
 static struct in6_ifaddr *
-stf_getsrcifa6(ifp)
-	struct ifnet *ifp;
+stf_getsrcifa6(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct in_ifaddr *ia4;
@@ -338,11 +330,8 @@ stf_getsrcifa6(ifp)
 }
 
 static int
-stf_output(ifp, m, dst, rt)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rt;
+stf_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
 {
 	struct stf_softc *sc;
 	struct sockaddr_in6 *dst6;
@@ -453,8 +442,7 @@ stf_output(ifp, m, dst, rt)
 }
 
 static int
-isrfc1918addr(in)
-	struct in_addr *in;
+isrfc1918addr(struct in_addr *in)
 {
 	/*
 	 * returns 1 if private address range:
@@ -469,10 +457,8 @@ isrfc1918addr(in)
 }
 
 static int
-stf_checkaddr4(sc, in, inifp)
-	struct stf_softc *sc;
-	struct in_addr *in;
-	struct ifnet *inifp;	/* incoming interface */
+stf_checkaddr4(struct stf_softc *sc, struct in_addr *in,
+    struct ifnet *inifp /*incoming interface*/)
 {
 	struct in_ifaddr *ia4;
 
@@ -542,10 +528,8 @@ stf_checkaddr4(sc, in, inifp)
 }
 
 static int
-stf_checkaddr6(sc, in6, inifp)
-	struct stf_softc *sc;
-	struct in6_addr *in6;
-	struct ifnet *inifp;	/* incoming interface */
+stf_checkaddr6(struct stf_softc *sc, struct in6_addr *in6,
+    struct ifnet *inifp /*incoming interface*/)
 {
 
 	/*
@@ -684,10 +668,7 @@ in_stf_input(struct mbuf *m, ...)
 
 /* ARGSUSED */
 static void
-stf_rtrequest(cmd, rt, info)
-	int cmd;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
+stf_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	if (rt != NULL) {
 		struct stf_softc *sc;
@@ -698,10 +679,7 @@ stf_rtrequest(cmd, rt, info)
 }
 
 static int
-stf_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+stf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc 		*p = curproc;	/* XXX */
 	struct ifaddr		*ifa;

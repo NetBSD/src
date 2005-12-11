@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.16 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.17 2005/12/11 23:05:25 thorpej Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
 #define _NET_IF_STRIPVAR_H_
@@ -56,15 +56,7 @@ struct strip_softc {
 #define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
 
 #ifdef _KERNEL
-void	stripattach __P((void));
-int	stripclose __P((struct tty *, int));
-int	stripinput __P((int, struct tty *));
-int	stripioctl __P((struct ifnet *, u_long, caddr_t));
-int	stripopen __P((dev_t, struct tty *));
-int	stripoutput __P((struct ifnet *,
-	    struct mbuf *, struct sockaddr *, struct rtentry *));
-int	stripstart __P((struct tty *));
-int	striptioctl __P((struct tty *, u_long, caddr_t, int, struct lwp *));
+void	stripattach(void);
 #endif /* _KERNEL */
 
 #endif /* !_NET_IF_STRIPVAR_H_ */

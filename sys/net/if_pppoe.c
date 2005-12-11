@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.62 2005/12/11 12:24:51 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.63 2005/12/11 23:05:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.62 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.63 2005/12/11 23:05:25 thorpej Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -202,18 +202,17 @@ static struct mbuf *pppoe_get_mbuf(size_t len);
 static int pppoe_ifattach_hook(void *, struct mbuf **, struct ifnet *, int);
 #endif
 
-LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
+static LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
 
-int	pppoe_clone_create __P((struct if_clone *, int));
-int	pppoe_clone_destroy __P((struct ifnet *));
+static int	pppoe_clone_create(struct if_clone *, int);
+static int	pppoe_clone_destroy(struct ifnet *);
 
-struct if_clone pppoe_cloner =
+static struct if_clone pppoe_cloner =
     IF_CLONE_INITIALIZER("pppoe", pppoe_clone_create, pppoe_clone_destroy);
 
 /* ARGSUSED */
 void
-pppoeattach(count)
-	int count;
+pppoeattach(int count)
 {
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
@@ -226,10 +225,8 @@ pppoeattach(count)
 #endif
 }
 
-int
-pppoe_clone_create(ifc, unit)
-	struct if_clone *ifc;
-	int unit;
+static int
+pppoe_clone_create(struct if_clone *ifc, int unit)
 {
 	struct pppoe_softc *sc;
 
@@ -275,9 +272,8 @@ pppoe_clone_create(ifc, unit)
 	return 0;
 }
 
-int
-pppoe_clone_destroy(ifp)
-	struct ifnet *ifp;
+static int
+pppoe_clone_destroy(struct ifnet *ifp)
 {
 	struct pppoe_softc * sc = ifp->if_softc;
 
@@ -369,13 +365,15 @@ pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
 }
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-static void pppoe_softintr_handler(void *dummy)
+static void
+pppoe_softintr_handler(void *dummy)
 {
 	/* called at splsoftnet() */
 	pppoe_input();
 }
 #else
-void pppoe_softintr_handler(void *dummy)
+void
+pppoe_softintr_handler(void *dummy)
 {
 	int s = splnet();
 	pppoe_input();
@@ -385,7 +383,7 @@ void pppoe_softintr_handler(void *dummy)
 
 /* called at appropriate protection level */
 static void
-pppoe_input()
+pppoe_input(void)
 {
 	struct mbuf *m;
 	int s, disc_done, data_done;
@@ -414,7 +412,8 @@ pppoe_input()
 }
 
 /* analyze and handle a single received packet while not in session state */
-static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
+static void
+pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 {
 	u_int16_t tag, len;
 	u_int16_t session, plen;

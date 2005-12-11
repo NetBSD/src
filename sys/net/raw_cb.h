@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.18 2005/12/11 12:24:52 christos Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.19 2005/12/11 23:05:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,16 +58,16 @@ struct rawcb {
 LIST_HEAD(rawcbhead, rawcb);
 extern	struct	rawcbhead rawcb;		/* head of list */
 
-int	raw_attach __P((struct socket *, int));
-void	*raw_ctlinput __P((int, struct sockaddr *, void *));
-void	raw_detach __P((struct rawcb *));
-void	raw_disconnect __P((struct rawcb *));
-void	raw_init __P((void));
-void	raw_input __P((struct mbuf *, ...));
-int	raw_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *));
-void	raw_setsockaddr __P((struct rawcb *, struct mbuf *));
-void	raw_setpeeraddr __P((struct rawcb *, struct mbuf *));
+int	raw_attach(struct socket *, int);
+void	*raw_ctlinput(int, struct sockaddr *, void *);
+void	raw_detach(struct rawcb *);
+void	raw_disconnect(struct rawcb *);
+void	raw_init(void);
+void	raw_input(struct mbuf *, ...);
+int	raw_usrreq(struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
+void	raw_setsockaddr(struct rawcb *, struct mbuf *);
+void	raw_setpeeraddr(struct rawcb *, struct mbuf *);
 
 #endif /* _KERNEL */
 

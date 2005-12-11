@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.24 2005/12/11 12:24:52 christos Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.25 2005/12/11 23:05:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.24 2005/12/11 12:24:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.25 2005/12/11 23:05:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.24 2005/12/11 12:24:52 christos Exp
  * Initialize raw connection block q.
  */
 void
-raw_init()
+raw_init(void)
 {
 
 	LIST_INIT(&rawcb);
@@ -136,10 +136,7 @@ raw_input(struct mbuf *m0, ...)
 
 /*ARGSUSED*/
 void *
-raw_ctlinput(cmd, arg, d)
-	int cmd;
-	struct sockaddr *arg;
-	void *d;
+raw_ctlinput(int cmd, struct sockaddr *arg, void *d)
 {
 
 	if ((unsigned)cmd >= PRC_NCMDS)
@@ -149,9 +146,7 @@ raw_ctlinput(cmd, arg, d)
 }
 
 void
-raw_setsockaddr(rp, nam)
-	struct rawcb *rp;
-	struct mbuf *nam;
+raw_setsockaddr(struct rawcb *rp, struct mbuf *nam)
 {
 
 	nam->m_len = rp->rcb_laddr->sa_len;
@@ -159,9 +154,7 @@ raw_setsockaddr(rp, nam)
 }
 
 void
-raw_setpeeraddr(rp, nam)
-	struct rawcb *rp;
-	struct mbuf *nam;
+raw_setpeeraddr(struct rawcb *rp, struct mbuf *nam)
 {
 
 	nam->m_len = rp->rcb_faddr->sa_len;
@@ -170,11 +163,8 @@ raw_setpeeraddr(rp, nam)
 
 /*ARGSUSED*/
 int
-raw_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
 {
 	struct rawcb *rp;
 	struct proc *p;

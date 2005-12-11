@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.h,v 1.2 2005/12/10 23:21:38 elad Exp $	*/
+/*	$NetBSD: if_faith.h,v 1.3 2005/12/11 23:05:25 thorpej Exp $	*/
 /*	$KAME: if_faith.h,v 1.1 2000/07/26 05:49:21 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 struct in6_addr;
-int faithprefix __P((struct in6_addr *));
+int	faithprefix(struct in6_addr *);
 #endif
 
 #endif /* !_NET_IF_FAITH_H_ */
