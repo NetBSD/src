@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.18 2005/11/16 20:44:19 dsl Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.19 2005/12/11 00:01:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -372,4 +372,4 @@ extern struct tp_pcb *tp_ftimeolist;
 #define tpcbtoso(tp)	((struct socket *)((tp)->tp_sock))
 #define tpcbtoref(tp)	((struct tp_ref *)((tp)->tp_ref))
 
-#endif /* _NETISO_TP_PCB_H_ */
+#endif /* !_NETISO_TP_PCB_H_ */

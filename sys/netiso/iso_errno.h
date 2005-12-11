@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_errno.h,v 1.8 2003/08/07 16:33:36 agc Exp $	*/
+/*	$NetBSD: iso_errno.h,v 1.9 2005/12/11 00:01:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -285,4 +285,4 @@ SOFTWARE.
 
 #define CONL_ERROR_MAX 0x1c3
 
-#endif				/* _NETISO_ISO_ERRNO_H_ */
+#endif /* !_NETISO_ISO_ERRNO_H_ */
