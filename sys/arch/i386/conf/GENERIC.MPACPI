@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.52 2005/12/07 09:10:14 tsutsui Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.53 2005/12/11 02:11:50 christos Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.52 $"
+#ident 		"GENERIC-$Revision: 1.53 $"
 
 maxusers	32		# estimated number of users
 
@@ -320,6 +320,9 @@ wss* 		at acpi?		# NeoMagic 256AV in wss mode
 # Sony Vaio jog dial
 #spic* 		at acpi?		# Sony Programmable I/O Controller
 #wsmouse* 	at spic?
+
+# Sony LCD brightness etc.
+#sony* 		at acpi?		# Sony Miscellaneous Controller
 
 # Toshiba Libretto devices
 #vald* at acpi?
