@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.747 2005/12/10 19:05:46 jonathan Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.748 2005/12/11 20:01:48 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.745 2005/12/10 19:03:22 jonathan Exp
+ *	NetBSD: pcidevs,v 1.747 2005/12/11 19:59:06 jonathan Exp
  */
 
 /*
@@ -1676,6 +1676,9 @@
 #define	PCI_PRODUCT_INTEL_80321	0x0319		/* 80321 I/O Processor */
 #define	PCI_PRODUCT_INTEL_6700PXH_PCIE0	0x0329		/* 6700PXH PCI Express-to-PCI Bridge #0 */
 #define	PCI_PRODUCT_INTEL_6700PXH_PCIE1	0x032a		/* 6700PXH PCI Express-to-PCI Bridge #1 */
+#define	PCI_PRODUCT_INTEL_SRCZCRX	0x0407		/* RAID controller */
+#define	PCI_PRODUCT_INTEL_SRCU42E	0x0408		/* SCSI RAID controller */
+#define	PCI_PRODUCT_INTEL_SRCS28X	0x0409		/* SATA RAID controller */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM controller */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378ZB System I/O */
@@ -2229,6 +2232,9 @@
 #define	PCI_PRODUCT_SYMBIOS_FC929X	0x0626		/* FC929X */
 #define	PCI_PRODUCT_SYMBIOS_FC919X	0x0628		/* FC919X */
 #define	PCI_PRODUCT_SYMBIOS_PERC_4SC	0x1960		/* PERC 4/SC */
+#define	PCI_PRODUCT_SYMBIOS_MEGARAID_320X	0x0407		/* LSI Megaraid SCSI 320-X */
+#define	PCI_PRODUCT_SYMBIOS_MEGARAID_320E	0x0408		/* LSI Megaraid SCSI 320-E */
+#define	PCI_PRODUCT_SYMBIOS_MEGARAID_300X	0x0409		/* LSI Megaraid SATA (300-6X/300-8X) */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC Ethernet */
