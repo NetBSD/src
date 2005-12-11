@@ -1,4 +1,4 @@
-/* $NetBSD: if_le.c,v 1.3 2003/08/07 16:28:04 agc Exp $ */
+/* $NetBSD: if_le.c,v 1.4 2005/12/11 12:17:52 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.3 2003/08/07 16:28:04 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.4 2005/12/11 12:17:52 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

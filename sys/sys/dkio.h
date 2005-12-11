@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.10 2004/09/25 03:30:44 thorpej Exp $	*/
+/*	$NetBSD: dkio.h,v 1.11 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993

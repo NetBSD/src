@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.17 2005/05/31 04:03:10 christos Exp $
+#	$NetBSD: Makefile.luna68k,v 1.18 2005/12/11 12:17:51 christos Exp $
 
 # Makefile for NetBSD
 #

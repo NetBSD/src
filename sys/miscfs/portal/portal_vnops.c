@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.61 2005/11/02 12:38:59 yamt Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.62 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.61 2005/11/02 12:38:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.62 2005/12/11 12:24:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,11 +294,11 @@ portal_open(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct socket *so = 0;
 	struct portalnode *pt;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
 	int s;
 	struct uio auio;
@@ -335,7 +335,7 @@ portal_open(v)
 	/*
 	 * Create a new socket.
 	 */
-	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0, p);
+	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0, l);
 	if (error)
 		goto bad;
 
@@ -405,12 +405,12 @@ portal_open(v)
 	auio.uio_iovcnt = 2;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
+	auio.uio_lwp = l;
 	auio.uio_offset = 0;
 	auio.uio_resid = aiov[0].iov_len + aiov[1].iov_len;
 
 	error = (*so->so_send)(so, (struct mbuf *) 0, &auio,
-			(struct mbuf *) 0, (struct mbuf *) 0, 0, p);
+			(struct mbuf *) 0, (struct mbuf *) 0, 0, l);
 	if (error)
 		goto bad;
 
@@ -482,7 +482,7 @@ portal_open(v)
 		int i;
 		printf("portal_open: %d extra fds\n", newfds - 1);
 		for (i = 1; i < newfds; i++) {
-			portal_closefd(curlwp, *ip); /* XXXNJWLWP */
+			portal_closefd(l, *ip); /* XXXNJWLWP */
 			ip++;
 		}
 	}
@@ -491,9 +491,9 @@ portal_open(v)
 	 * Check that the mode the file is being opened for is a subset
 	 * of the mode of the existing descriptor.
 	 */
- 	fp = p->p_fd->fd_ofiles[fd];
+ 	fp = l->l_proc->p_fd->fd_ofiles[fd];
 	if (((ap->a_mode & (FREAD|FWRITE)) | fp->f_flag) != fp->f_flag) {
-		portal_closefd(curlwp, fd); /* XXXNJWLWP */
+		portal_closefd(l, fd); /* XXXNJWLWP */
 		error = EACCES;
 		goto bad;
 	}
@@ -529,7 +529,7 @@ portal_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
@@ -581,7 +581,7 @@ portal_setattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	/*
@@ -613,7 +613,7 @@ portal_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0);

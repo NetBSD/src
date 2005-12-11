@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.24 2005/07/07 13:20:53 tron Exp $ */
+/* $NetBSD: cpu.c,v 1.25 2005/12/11 12:17:41 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2005/07/07 13:20:53 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2005/12/11 12:17:41 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"

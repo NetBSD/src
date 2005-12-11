@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.h,v 1.11 2003/12/29 03:33:47 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.h,v 1.12 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

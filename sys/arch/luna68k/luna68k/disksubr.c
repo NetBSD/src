@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.18 2005/06/05 09:08:48 he Exp $ */
+/* $NetBSD: disksubr.c,v 1.19 2005/12/11 12:17:52 christos Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2005/06/05 09:08:48 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2005/12/11 12:17:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

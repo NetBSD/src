@@ -1,4 +1,4 @@
-/* $NetBSD: ciphyreg.h,v 1.2 2005/02/27 00:27:31 perry Exp $ */
+/* $NetBSD: ciphyreg.h,v 1.3 2005/12/11 12:22:42 christos Exp $ */
 
 /*-
  * Copyright (c) 2004

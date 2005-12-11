@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_68k.c,v 1.4 2003/07/15 02:43:46 lukem Exp $	*/
+/*	$NetBSD: memc_68k.c,v 1.5 2005/12/11 12:18:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc_68k.c,v 1.4 2003/07/15 02:43:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_68k.c,v 1.5 2005/12/11 12:18:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

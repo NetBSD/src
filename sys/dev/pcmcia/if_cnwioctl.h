@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnwioctl.h,v 1.3 2005/02/27 00:27:43 perry Exp $	*/
+/*	$NetBSD: if_cnwioctl.h,v 1.4 2005/12/11 12:23:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc.

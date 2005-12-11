@@ -1,4 +1,4 @@
-;	$NetBSD: siop2_script.ss,v 1.5 2005/07/25 19:27:42 is Exp $
+;	$NetBSD: siop2_script.ss,v 1.6 2005/12/11 12:16:28 christos Exp $
 
 ;
 ; Copyright (c) 1998 Michael L. Hitch

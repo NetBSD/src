@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.10 2003/10/05 09:57:47 scw Exp $	*/
+/*	$NetBSD: trap.h,v 1.11 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

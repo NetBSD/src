@@ -1,4 +1,4 @@
-/*      $NetBSD: ibm_machdep.c,v 1.9 2004/06/26 21:51:04 kleink Exp $        */
+/*      $NetBSD: ibm_machdep.c,v 1.10 2005/12/11 12:18:48 christos Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm_machdep.c,v 1.9 2004/06/26 21:51:04 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm_machdep.c,v 1.10 2005/12/11 12:18:48 christos Exp $");
 
 #include "opt_platform.h"
 

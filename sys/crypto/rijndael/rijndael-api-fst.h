@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.h,v 1.6 2003/08/18 02:36:17 elric Exp $	*/
+/*	$NetBSD: rijndael-api-fst.h,v 1.7 2005/12/11 12:20:52 christos Exp $	*/
 
 /**
  * rijndael-api-fst.h

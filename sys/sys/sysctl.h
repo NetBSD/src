@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.141 2005/09/07 16:26:16 elad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.142 2005/12/11 12:25:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

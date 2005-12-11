@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.43 2005/02/27 00:27:02 perry Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.44 2005/12/11 12:21:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.43 2005/02/27 00:27:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.44 2005/12/11 12:21:28 christos Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/

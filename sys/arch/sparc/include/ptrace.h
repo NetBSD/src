@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.5 2003/08/07 16:29:41 agc Exp $ */
+/*	$NetBSD: ptrace.h,v 1.6 2005/12/11 12:19:06 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

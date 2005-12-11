@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.10 2004/08/30 15:05:18 drochner Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.11 2005/12/11 12:18:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.10 2004/08/30 15:05:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.11 2005/12/11 12:18:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.35 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.36 2005/12/11 12:21:15 christos Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.35 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.36 2005/12/11 12:21:15 christos Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 

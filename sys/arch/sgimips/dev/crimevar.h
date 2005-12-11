@@ -1,4 +1,4 @@
-/*	$NetBSD: crimevar.h,v 1.4 2004/09/06 07:24:06 sekiya Exp $	*/
+/*	$NetBSD: crimevar.h,v 1.5 2005/12/11 12:18:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA

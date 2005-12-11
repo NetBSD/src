@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.12 2005/07/26 22:52:48 dyoung Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.13 2005/12/11 12:24:54 christos Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.12 2005/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.13 2005/12/11 12:24:54 christos Exp $");
 #endif
 
 #include <sys/param.h>

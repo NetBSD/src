@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.122 2005/10/27 20:43:30 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.123 2005/12/11 12:19:15 christos Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2005/10/27 20:43:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2005/12/11 12:19:15 christos Exp $");
 
 #define NEW_FPSTATE
 

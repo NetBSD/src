@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.11 2005/03/21 18:27:32 xtraeme Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.12 2005/12/11 12:22:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.11 2005/03/21 18:27:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.12 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.30 2003/11/09 16:41:52 martin Exp $ */
+/*	$NetBSD: mem.c,v 1.31 2005/12/11 12:19:15 christos Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30 2003/11/09 16:41:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.31 2005/12/11 12:19:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -179,7 +179,7 @@ mmrw(dev, uio, flags)
 			/* However, we do need to partially re-implement uiomove() */
 			if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
 				panic("mmrw: uio mode");
-			if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curlwp)
+			if (uio->uio_segflg == UIO_USERSPACE && uio->uio_lwp != curlwp)
 				panic("mmrw: uio proc");
 			while (c > 0 && uio->uio_resid) {
 				struct iovec *iov;

@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.2 2005/06/04 22:37:51 he Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.3 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.2 2005/06/04 22:37:51 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.3 2005/12/11 12:16:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -617,7 +617,7 @@ s3c24x0_lcd_free_screen(void *v, void *cookie)
 }
 
 int
-s3c24x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+s3c24x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct s3c24x0_lcd_softc *sc = v;
 	struct wsdisplay_fbinfo *wsdisp_info;

@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.13 2005/05/08 04:46:20 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.14 2005/12/11 12:24:58 christos Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.13 2005/05/08 04:46:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.14 2005/12/11 12:24:58 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

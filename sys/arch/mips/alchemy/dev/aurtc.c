@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.6 2003/07/15 02:43:35 lukem Exp $ */
+/* $NetBSD: aurtc.c,v 1.7 2005/12/11 12:18:06 christos Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.6 2003/07/15 02:43:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.7 2005/12/11 12:18:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.16 2004/04/18 23:33:58 matt Exp $	*/
+/*	$NetBSD: keydb.c,v 1.17 2005/12/11 12:25:16 christos Exp $	*/
 /*	$KAME: keydb.c,v 1.81 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.16 2004/04/18 23:33:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.17 2005/12/11 12:25:16 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

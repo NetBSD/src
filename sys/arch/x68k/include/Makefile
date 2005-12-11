@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2004/05/12 14:25:08 minoura Exp $
+#	$NetBSD: Makefile,v 1.29 2005/12/11 12:19:44 christos Exp $
 
 INCSDIR= /usr/include/x68k
 

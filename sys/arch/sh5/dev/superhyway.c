@@ -1,4 +1,4 @@
-/*	$NetBSD: superhyway.c,v 1.8 2003/07/15 03:35:59 lukem Exp $	*/
+/*	$NetBSD: superhyway.c,v 1.9 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: superhyway.c,v 1.8 2003/07/15 03:35:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: superhyway.c,v 1.9 2005/12/11 12:19:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

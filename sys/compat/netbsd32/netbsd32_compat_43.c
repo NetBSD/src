@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.33 2005/09/24 21:34:35 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.34 2005/12/11 12:20:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.33 2005/09/24 21:34:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.34 2005/12/11 12:20:22 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -110,7 +110,7 @@ compat_43_netbsd32_ocreat(l, v, retval)
 	NETBSD32TO64_UAP(mode);
 	SCARG(&ua, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	return (sys_open(l, &ua, retval));
 }
@@ -158,7 +158,7 @@ compat_43_netbsd32_stat43(l, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 	rv = compat_43_sys_stat(l, &ua, retval);
 
 	error = copyin(sgsbp, &sb43, sizeof(sb43));
@@ -192,7 +192,7 @@ compat_43_netbsd32_lstat43(l, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 	rv = compat_43_sys_stat(l, &ua, retval);
 
 	error = copyin(sgsbp, &sb43, sizeof(sb43));

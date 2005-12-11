@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.7 2003/07/15 00:24:48 lukem Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.8 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.7 2003/07/15 00:24:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.8 2005/12/11 12:16:51 christos Exp $");
 
 #include "opt_ddb.h"
 

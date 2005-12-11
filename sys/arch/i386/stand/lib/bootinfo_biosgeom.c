@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.18 2005/06/29 18:50:38 junyoung Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.19 2005/12/11 12:17:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1997

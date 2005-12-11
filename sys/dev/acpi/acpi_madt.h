@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.h,v 1.5 2004/03/24 12:49:45 kochi Exp $	*/
+/*	$NetBSD: acpi_madt.h,v 1.6 2005/12/11 12:21:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

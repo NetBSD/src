@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_jazziovar.h,v 1.4 2005/08/20 17:58:49 tsutsui Exp $	*/
+/*	$NetBSD: timer_jazziovar.h,v 1.5 2005/12/11 12:16:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.17 2005/12/10 23:21:39 elad Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.18 2005/12/11 12:24:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -65,7 +65,7 @@ void	raw_disconnect __P((struct rawcb *));
 void	raw_init __P((void));
 void	raw_input __P((struct mbuf *, ...));
 int	raw_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *));
 void	raw_setsockaddr __P((struct rawcb *, struct mbuf *));
 void	raw_setpeeraddr __P((struct rawcb *, struct mbuf *));
 

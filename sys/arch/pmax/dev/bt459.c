@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.24 2005/06/01 18:21:43 drochner Exp $	*/
+/*	$NetBSD: bt459.c,v 1.25 2005/12/11 12:18:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.24 2005/06/01 18:21:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.25 2005/12/11 12:18:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

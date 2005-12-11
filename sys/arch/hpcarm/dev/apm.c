@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.7 2005/10/23 15:18:54 peter Exp $	*/
+/*	$NetBSD: apm.c,v 1.8 2005/12/11 12:17:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "apm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.7 2005/10/23 15:18:54 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.8 2005/12/11 12:17:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

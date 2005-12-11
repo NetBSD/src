@@ -1,4 +1,4 @@
-/* $NetBSD: linux_errno.h,v 1.5 2005/02/26 23:10:19 perry Exp $ */
+/* $NetBSD: linux_errno.h,v 1.6 2005/12/11 12:20:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

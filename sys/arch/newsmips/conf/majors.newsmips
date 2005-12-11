@@ -1,4 +1,4 @@
-#	$NetBSD: majors.newsmips,v 1.16 2005/09/17 14:38:39 yamt Exp $
+#	$NetBSD: majors.newsmips,v 1.17 2005/12/11 12:18:24 christos Exp $
 #
 # Device majors for newsmips
 #

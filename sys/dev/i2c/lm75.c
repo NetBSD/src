@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.2 2004/08/03 13:40:20 scw Exp $	*/
+/*	$NetBSD: lm75.c,v 1.3 2005/12/11 12:21:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

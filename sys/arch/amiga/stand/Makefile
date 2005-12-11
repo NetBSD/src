@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2004/06/16 02:04:11 mhitch Exp $
+# $NetBSD: Makefile,v 1.7 2005/12/11 12:16:36 christos Exp $
 
 SUBDIR=binpatch loadkmap bootblock
 

@@ -1,4 +1,4 @@
-/* $NetBSD: iomdkbc.c,v 1.1 2004/03/13 17:52:02 bjh21 Exp $ */
+/* $NetBSD: iomdkbc.c,v 1.2 2005/12/11 12:16:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.1 2004/03/13 17:52:02 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.2 2005/12/11 12:16:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.5 2005/01/19 01:58:21 chs Exp $ */
+/*	$NetBSD: isr.h,v 1.6 2005/12/11 12:18:29 christos Exp $ */
 
 /*
  * This file was taken from from mvme68k/mvme68k/isr.h

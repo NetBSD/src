@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xxgpx_autoconf.c,v 1.3 2005/01/13 17:14:36 shige Exp $	*/
+/*	$NetBSD: ibm4xxgpx_autoconf.c,v 1.4 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xxgpx_autoconf.c,v 1.3 2005/01/13 17:14:36 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xxgpx_autoconf.c,v 1.4 2005/12/11 12:18:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

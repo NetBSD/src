@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.11 2005/06/23 23:15:12 thorpej Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.12 2005/12/11 12:24:29 christos Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,7 +37,7 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.11 2005/06/23 23:15:12 thorpej Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.12 2005/12/11 12:24:29 christos Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>

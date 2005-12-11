@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm9.S,v 1.3 2004/01/26 15:54:16 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm9.S,v 1.4 2005/12/11 12:16:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 ARM Limited

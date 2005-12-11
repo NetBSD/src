@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.6 2005/05/29 22:24:14 christos Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.7 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.6 2005/05/29 22:24:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.7 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

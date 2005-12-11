@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.10 2004/05/31 03:22:45 schmonz Exp $
+$NetBSD: version,v 1.11 2005/12/11 12:18:06 christos Exp $
 
 1.1:		Initial revision from NetBSD/powerpc.
 1.2:		Use MI loadfile().

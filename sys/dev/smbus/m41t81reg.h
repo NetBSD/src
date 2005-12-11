@@ -1,4 +1,4 @@
-/* $NetBSD: m41t81reg.h,v 1.3 2003/10/25 15:00:38 simonb Exp $ */
+/* $NetBSD: m41t81reg.h,v 1.4 2005/12/11 12:23:56 christos Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.5 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: dca.c,v 1.6 2005/12/11 12:17:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

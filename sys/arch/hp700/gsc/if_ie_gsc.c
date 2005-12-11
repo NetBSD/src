@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.10 2003/11/20 03:58:47 chs Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.11 2005/12/11 12:17:24 christos Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.10 2003/11/20 03:58:47 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.11 2005/12/11 12:17:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

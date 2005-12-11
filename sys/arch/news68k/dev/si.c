@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.16 2004/09/04 13:43:11 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.17 2005/12/11 12:18:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.16 2004/09/04 13:43:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.17 2005/12/11 12:18:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

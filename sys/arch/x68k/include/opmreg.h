@@ -1,4 +1,4 @@
-/*	$NetBSD: opmreg.h,v 1.1 2004/05/08 08:38:36 minoura Exp $	*/
+/*	$NetBSD: opmreg.h,v 1.2 2005/12/11 12:19:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.

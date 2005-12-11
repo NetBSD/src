@@ -1,4 +1,4 @@
-#	$NetBSD: files.tsarm,v 1.8 2005/08/14 04:33:49 joff Exp $
+#	$NetBSD: files.tsarm,v 1.9 2005/12/11 12:17:07 christos Exp $
 #
 # First try for arm-specific configuration info
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: via82c586.c,v 1.6 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: via82c586.c,v 1.7 2005/12/11 12:17:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.6 2004/04/11 06:00:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.7 2005/12/11 12:17:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

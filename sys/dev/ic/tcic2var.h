@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2var.h,v 1.5 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: tcic2var.h,v 1.6 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.

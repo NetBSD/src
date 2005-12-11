@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.8 2003/07/14 22:48:20 lukem Exp $ */
+/* $NetBSD: conf.c,v 1.9 2005/12/11 12:16:03 christos Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.8 2003/07/14 22:48:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.9 2005/12/11 12:16:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

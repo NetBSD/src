@@ -1,4 +1,4 @@
-/* $NetBSD: pcppivar.h,v 1.6 2005/03/25 23:09:00 cube Exp $ */
+/* $NetBSD: pcppivar.h,v 1.7 2005/12/11 12:22:03 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

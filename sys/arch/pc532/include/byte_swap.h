@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.4 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.5 2005/12/11 12:18:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.

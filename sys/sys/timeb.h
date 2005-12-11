@@ -1,4 +1,4 @@
-/*	$NetBSD: timeb.h,v 1.13 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: timeb.h,v 1.14 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

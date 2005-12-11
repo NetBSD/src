@@ -1,4 +1,4 @@
-/*	$NetBSD: ugraphire_rdesc.h,v 1.3 2004/01/04 08:35:52 jdolecek Exp $	*/
+/*	$NetBSD: ugraphire_rdesc.h,v 1.4 2005/12/11 12:24:01 christos Exp $	*/
 /*
  * Copyright (c) 2000 Nick Hibma <n_hibma@freebsd.org>
  * All rights reserved.

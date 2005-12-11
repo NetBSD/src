@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.32 2005/08/25 22:33:18 drochner Exp $	*/
+/*	$NetBSD: cac.c,v 1.33 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.32 2005/08/25 22:33:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.33 2005/12/11 12:21:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

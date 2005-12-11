@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.22 2005/06/04 20:14:24 he Exp $	*/
+/*      $NetBSD: clock.c,v 1.23 2005/12/11 12:18:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 2005/06/04 20:14:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 2005/12/11 12:18:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

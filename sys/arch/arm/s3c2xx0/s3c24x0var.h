@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0var.h,v 1.2 2005/03/16 05:02:12 bsh Exp $ */
+/* $NetBSD: s3c24x0var.h,v 1.3 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.

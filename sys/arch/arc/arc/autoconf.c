@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2005/06/09 16:02:19 he Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 2005/12/11 12:16:37 christos Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2005/06/09 16:02:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

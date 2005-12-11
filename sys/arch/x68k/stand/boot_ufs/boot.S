@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         Yasha(itohy@NetBSD.org)
 |
-| $NetBSD: boot.S,v 1.6 2003/12/04 13:05:17 keihan Exp $
+| $NetBSD: boot.S,v 1.7 2005/12/11 12:19:44 christos Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.22 2005/11/02 12:39:00 yamt Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.23 2005/12/11 12:25:25 christos Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.22 2005/11/02 12:39:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.23 2005/12/11 12:25:25 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -152,7 +152,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	caddr_t sbbuf = NULL;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *copy_fs = NULL, *fs = ump->um_fs;
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
 	struct inode *ip, *xp;
 	struct buf *bp, *ibp, *nbp;
 	struct vattr vat;
@@ -179,12 +179,12 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 		return EXDEV;
 	if (vp->v_usecount != 1 || vp->v_writecount != 0)
 		return EBUSY;
-	if (suser(p->p_ucred, &p->p_acflag) != 0 &&
-	    VTOI(vp)->i_uid != p->p_ucred->cr_uid)
+	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0 &&
+	    VTOI(vp)->i_uid != l->l_proc->p_ucred->cr_uid)
 		return EACCES;
 
 	if (vp->v_size != 0) {
-		error = ffs_truncate(vp, 0, 0, NOCRED, p);
+		error = ffs_truncate(vp, 0, 0, NOCRED, l);
 		if (error)
 			return error;
 	}
@@ -207,7 +207,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	blkno = ufs_rw64(blkno, ns);
 	error = vn_rdwr(UIO_WRITE, vp,
 	    (caddr_t)&blkno, sizeof(blkno), lblktosize(fs, (off_t)numblks),
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, NULL);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, l->l_proc->p_ucred, NULL, NULL);
 	if (error)
 		goto out;
 	/*
@@ -223,7 +223,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 */
 	for (blkno = NDADDR; blkno < numblks; blkno += NINDIR(fs)) {
 		error = ffs_balloc(vp, lblktosize(fs, (off_t)blkno),
-		    fs->fs_bsize, p->p_ucred, B_METAONLY, &ibp);
+		    fs->fs_bsize, l->l_proc->p_ucred, B_METAONLY, &ibp);
 		if (error)
 			goto out;
 		bawrite(ibp);
@@ -275,7 +275,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 * Since we have marked it as a snapshot it is safe to
 	 * unlock it as no process will be allowed to write to it.
 	 */
-	if ((error = VOP_FSYNC(vp, KERNCRED, FSYNC_WAIT, 0, 0, p)) != 0)
+	if ((error = VOP_FSYNC(vp, KERNCRED, FSYNC_WAIT, 0, 0, l)) != 0)
 		goto out;
 	VOP_UNLOCK(vp, 0);
 	/*
@@ -385,7 +385,7 @@ loop:
 		if (snapdebug)
 			vprint("ffs_snapshot: busy vnode", xvp);
 #endif
-		if (VOP_GETATTR(xvp, &vat, p->p_ucred, p) == 0 &&
+		if (VOP_GETATTR(xvp, &vat, l->l_proc->p_ucred, l) == 0 &&
 		    vat.va_nlink > 0) {
 			VOP_UNLOCK(xvp, 0);
 			MNT_ILOCK(mp);
@@ -578,7 +578,7 @@ out1:
 		snapblklist[i] = ufs_rw64(snapblklist[i], ns);
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)snapblklist,
 	    snaplistsize*sizeof(ufs2_daddr_t), lblktosize(fs, (off_t)numblks),
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, NULL);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, l->l_proc->p_ucred, NULL, NULL);
 	for (i = 0; i < snaplistsize; i++)
 		snapblklist[i] = ufs_rw64(snapblklist[i], ns);
 	if (error) {
@@ -678,7 +678,7 @@ out:
 	}
 	mp->mnt_flag = flag;
 	if (error)
-		(void) ffs_truncate(vp, (off_t)0, 0, NOCRED, p);
+		(void) ffs_truncate(vp, (off_t)0, 0, NOCRED, l);
 	else
 		vref(vp);
 	return (error);

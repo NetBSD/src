@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3lcd.c,v 1.1 2005/09/05 18:54:10 kiyohara Exp $	*/
+/*	$NetBSD: psh3lcd.c,v 1.2 2005/12/11 12:17:36 christos Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.

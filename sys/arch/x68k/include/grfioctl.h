@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.3 2004/01/25 13:17:00 minoura Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.4 2005/12/11 12:19:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

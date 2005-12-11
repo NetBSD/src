@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990reg.h,v 1.10 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: am7990reg.h,v 1.11 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.14 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.15 2005/12/11 12:23:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.14 2005/02/27 00:27:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.15 2005/12/11 12:23:28 christos Exp $");
 
 #include <sys/param.h>
 

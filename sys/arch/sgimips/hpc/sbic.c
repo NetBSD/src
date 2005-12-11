@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.18 2005/06/03 18:55:12 martin Exp $	*/
+/*	$NetBSD: sbic.c,v 1.19 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.18 2005/06/03 18:55:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.19 2005/12/11 12:18:53 christos Exp $");
 
 #include "opt_ddb.h"
 

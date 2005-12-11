@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.13 2005/09/17 14:51:50 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.14 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green

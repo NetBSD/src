@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffervar.h,v 1.3 2004/07/19 13:33:35 pk Exp $ */
+/*	$NetBSD: lebuffervar.h,v 1.4 2005/12/11 12:23:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

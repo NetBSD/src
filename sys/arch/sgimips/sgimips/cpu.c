@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.18 2004/01/19 03:26:14 sekiya Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2004/01/19 03:26:14 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2005/12/11 12:18:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

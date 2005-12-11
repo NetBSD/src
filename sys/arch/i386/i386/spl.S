@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.12 2005/11/07 11:42:34 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.13 2005/12/11 12:17:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

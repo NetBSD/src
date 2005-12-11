@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.h,v 1.9 2005/05/03 16:26:28 manu Exp $	*/
+/*	$NetBSD: linux_ipccall.h,v 1.10 2005/12/11 12:20:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.

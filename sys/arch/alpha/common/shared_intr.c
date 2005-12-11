@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.17 2005/03/29 04:06:20 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.18 2005/12/11 12:16:16 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.17 2005/03/29 04:06:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.18 2005/12/11 12:16:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

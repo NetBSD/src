@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.24 2005/10/18 11:31:12 tsutsui Exp $	*/
+/*	$NetBSD: imc.c,v 1.25 2005/12/11 12:18:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.24 2005/10/18 11:31:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.25 2005/12/11 12:18:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

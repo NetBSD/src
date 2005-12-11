@@ -1,4 +1,4 @@
-/*      $NetBSD: profile.h,v 1.9 2003/08/07 16:30:11 agc Exp $ */
+/*      $NetBSD: profile.h,v 1.10 2005/12/11 12:19:34 christos Exp $ */
 /*
  * Copyright (c) 1992 The Regents of the University of California.
  * All rights reserved.

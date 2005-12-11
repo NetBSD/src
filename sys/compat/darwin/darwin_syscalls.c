@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscalls.c,v 1.48 2005/09/13 01:42:32 christos Exp $ */
+/* $NetBSD: darwin_syscalls.c,v 1.49 2005/12/11 12:19:56 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.48 2005/09/13 01:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.49 2005/12/11 12:19:56 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"

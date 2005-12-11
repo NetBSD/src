@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.9 2004/06/24 05:59:33 he Exp $
+#	$NetBSD: files.pmppc,v 1.10 2005/12/11 12:18:41 christos Exp $
 #
 #
 maxpartitions 16

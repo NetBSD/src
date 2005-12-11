@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6var.h,v 1.7 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: smc90cx6var.h,v 1.8 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.

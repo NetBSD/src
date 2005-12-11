@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcv2.h,v 1.10 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: rpcv2.h,v 1.11 2005/12/11 12:25:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.10 2003/07/28 13:21:29 nathanw Exp $	*/
+/*	$NetBSD: abtn.c,v 1.11 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.10 2003/07/28 13:21:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.11 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

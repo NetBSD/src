@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atureg.h,v 1.3 2005/06/22 06:16:02 dyoung Exp $ */
+/*	$NetBSD: if_atureg.h,v 1.4 2005/12/11 12:24:00 christos Exp $ */
 /*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003

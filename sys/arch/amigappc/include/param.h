@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2003/09/27 21:32:12 is Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2005/12/11 12:16:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.

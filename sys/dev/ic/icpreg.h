@@ -1,4 +1,4 @@
-/*	$NetBSD: icpreg.h,v 1.4 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: icpreg.h,v 1.5 2005/12/11 12:21:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

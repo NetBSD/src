@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsreg.h,v 1.7 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: wdsreg.h,v 1.8 2005/12/11 12:22:03 christos Exp $	*/
 
 typedef u_char physaddr[3];
 typedef u_char physlen[3];

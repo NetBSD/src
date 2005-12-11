@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.16 2004/10/30 18:08:34 thorpej Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.17 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.16 2004/10/30 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.17 2005/12/11 12:18:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"

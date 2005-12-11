@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmem.S,v 1.7 2005/07/06 19:27:50 junyoung Exp $	*/
+/*	$NetBSD: biosmem.S,v 1.8 2005/12/11 12:17:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1996

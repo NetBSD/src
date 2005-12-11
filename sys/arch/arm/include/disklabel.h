@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.6 2005/06/12 19:46:15 dyoung Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7 2005/12/11 12:16:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.

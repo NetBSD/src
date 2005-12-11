@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.20 2005/05/29 21:31:05 christos Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.21 2005/12/11 12:20:53 christos Exp $	*/
 
 /*
  * Mach Operating System

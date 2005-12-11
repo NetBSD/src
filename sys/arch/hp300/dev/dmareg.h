@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.14 2005/06/03 11:51:16 tsutsui Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.15 2005/12/11 12:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

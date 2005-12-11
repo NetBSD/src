@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/07/11 15:37:00 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.5 2005/12/11 12:22:02 christos Exp $
 
 INCSDIR= /usr/include/dev/ieee1394
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ralvar.h,v 1.2 2005/07/04 17:50:10 drochner Exp $ */
+/*	$NetBSD: ralvar.h,v 1.3 2005/12/11 12:21:28 christos Exp $ */
 /*	$OpenBSD: ralvar.h,v 1.7 2005/03/11 19:39:35 damien Exp $  */
 
 /*-

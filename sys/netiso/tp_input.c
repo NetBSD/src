@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.22 2005/05/29 21:27:45 christos Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.23 2005/12/11 12:25:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.22 2005/05/29 21:27:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.23 2005/12/11 12:25:12 christos Exp $");
 
 #include "opt_iso.h"
 

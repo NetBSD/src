@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.h,v 1.2 2003/08/07 16:30:49 agc Exp $	*/
+/*	$NetBSD: db_aout.h,v 1.3 2005/12/11 12:20:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: emulate.S,v 1.4 2003/11/30 10:02:21 ragge Exp $ */
+/*	$NetBSD: emulate.S,v 1.5 2005/12/11 12:19:36 christos Exp $ */
 /*
  * Copyright (c) 1986, 1987 The Regents of the University of California.
  * All rights reserved.

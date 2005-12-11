@@ -1,4 +1,4 @@
-/*	$NetBSD: podules.h,v 1.15 2005/02/27 15:32:15 perry Exp $	*/
+/*	$NetBSD: podules.h,v 1.16 2005/12/11 12:23:28 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

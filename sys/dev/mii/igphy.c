@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.5 2004/10/05 20:20:00 thorpej Exp $	*/
+/*	$NetBSD: igphy.c,v 1.6 2005/12/11 12:22:42 christos Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.5 2004/10/05 20:20:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.6 2005/12/11 12:22:42 christos Exp $");
 
 #include "opt_mii.h"
 

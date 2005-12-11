@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.9 2005/09/23 23:29:29 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.10 2005/12/11 12:17:36 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.9 2005/09/23 23:29:29 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.10 2005/12/11 12:17:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -137,14 +137,14 @@ static void	j6x0tp_attach(struct device *, struct device *, void *);
 /* wsmouse accessops */
 static int	j6x0tp_wsmouse_enable(void *);
 static int	j6x0tp_wsmouse_ioctl(void *, u_long, caddr_t, int,
-				     struct proc *);
+				     struct lwp *);
 static void	j6x0tp_wsmouse_disable(void *);
 
 /* wskbd accessops */
 static int	j6x0tp_wskbd_enable(void *, int);
 static void	j6x0tp_wskbd_set_leds(void *, int);
 static int	j6x0tp_wskbd_ioctl(void *, u_long, caddr_t, int,
-				   struct proc *);
+				   struct lwp *);
 
 /* internal driver routines */
 static void	j6x0tp_enable(struct j6x0tp_softc *);
@@ -663,17 +663,17 @@ j6x0tp_get_hard_icon(int rawx, int rawy)
 
 static int
 j6x0tp_wsmouse_ioctl(void *self, u_long cmd, caddr_t data, int flag,
-		     struct proc *p)
+		     struct lwp *l)
 {
 	struct j6x0tp_softc *sc = (struct j6x0tp_softc *)self;
 
-	return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
+	return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, l);
 }
 
 
 static int
 j6x0tp_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
-		     struct proc *p)
+		     struct lwp *l)
 {
 	/* struct j6x0tp_softc *sc = (struct j6x0tp_softc *)self; */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.4 2003/09/22 14:27:16 cl Exp $	*/
+/*	$NetBSD: vector.c,v 1.5 2005/12/11 12:19:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.4 2003/09/22 14:27:16 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.5 2005/12/11 12:19:29 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"

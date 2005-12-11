@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_meas.c,v 1.11 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: tp_meas.c,v 1.12 2005/12/11 12:25:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_meas.c,v 1.11 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_meas.c,v 1.12 2005/12/11 12:25:12 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>

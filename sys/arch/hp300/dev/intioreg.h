@@ -1,4 +1,4 @@
-/*	$NetBSD: intioreg.h,v 1.2 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: intioreg.h,v 1.3 2005/12/11 12:17:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

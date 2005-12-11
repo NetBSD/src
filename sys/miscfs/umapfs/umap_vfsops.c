@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.55 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.56 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.55 2005/09/23 12:10:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.56 2005/12/11 12:24:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,27 +56,29 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.55 2005/09/23 12:10:33 jmmv Exp $"
 #include <miscfs/genfs/layer_extern.h>
 
 int	umapfs_mount(struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *);
-int	umapfs_unmount(struct mount *, int, struct proc *);
+			  struct nameidata *, struct lwp *);
+int	umapfs_unmount(struct mount *, int, struct lwp *);
 
 /*
  * Mount umap layer
  */
 int
-umapfs_mount(mp, path, data, ndp, p)
+umapfs_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct umap_args args;
 	struct vnode *lowerrootvp, *vp;
 	struct umap_mount *amp;
+	struct proc *p = l->l_proc;
 	int error;
 #ifdef UMAPFS_DIAGNOSTIC
 	int i;
 #endif
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		amp = MOUNTTOUMAPMOUNT(mp);
 		if (amp == NULL)
@@ -112,7 +114,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	 * Find lower node
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args.umap_target, p);
+		UIO_USERSPACE, args.umap_target, l);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 
@@ -222,7 +224,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	amp->umapm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args.umap_target,
-	    UIO_USERSPACE, mp, p);
+	    UIO_USERSPACE, mp, l);
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
@@ -234,10 +236,10 @@ umapfs_mount(mp, path, data, ndp, p)
  * Free reference to umap layer
  */
 int
-umapfs_unmount(mp, mntflags, p)
+umapfs_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vnode *rtvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	int error;

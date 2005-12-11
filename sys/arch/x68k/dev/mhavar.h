@@ -1,4 +1,4 @@
-/*	$NetBSD: mhavar.h,v 1.6 2004/12/07 22:23:45 thorpej Exp $	*/
+/*	$NetBSD: mhavar.h,v 1.7 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.

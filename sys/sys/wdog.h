@@ -1,4 +1,4 @@
-/*	$NetBSD: wdog.h,v 1.2 2005/01/09 22:55:35 smb Exp $	*/
+/*	$NetBSD: wdog.h,v 1.3 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.

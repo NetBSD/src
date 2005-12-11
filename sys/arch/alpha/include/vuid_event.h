@@ -1,4 +1,4 @@
-/* $NetBSD: vuid_event.h,v 1.4 2004/04/25 23:17:59 fair Exp $ */
+/* $NetBSD: vuid_event.h,v 1.5 2005/12/11 12:16:16 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

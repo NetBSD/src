@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.26 2005/06/07 12:19:46 he Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.27 2005/12/11 12:17:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.26 2005/06/07 12:19:46 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.27 2005/12/11 12:17:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

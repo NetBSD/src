@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2004/07/07 18:03:52 drochner Exp $
+#	$NetBSD: Makefile,v 1.26 2005/12/11 12:16:16 christos Exp $
 
 INCSDIR= /usr/include/alpha
 

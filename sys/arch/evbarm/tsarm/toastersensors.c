@@ -1,4 +1,4 @@
-/* $NetBSD: toastersensors.c,v 1.1 2005/08/14 04:18:30 joff Exp $ */
+/* $NetBSD: toastersensors.c,v 1.2 2005/12/11 12:17:11 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.1 2005/08/14 04:18:30 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.2 2005/12/11 12:17:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>

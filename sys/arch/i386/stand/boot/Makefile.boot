@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.24 2005/09/17 16:49:25 chs Exp $
+# $NetBSD: Makefile.boot,v 1.25 2005/12/11 12:17:47 christos Exp $
 
 S=	${.CURDIR}/../../../../../
 

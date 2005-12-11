@@ -1,4 +1,4 @@
-#	$NetBSD: mk.g42xxeb,v 1.1 2005/02/26 10:49:53 bsh Exp $
+#	$NetBSD: mk.g42xxeb,v 1.2 2005/12/11 12:17:07 christos Exp $
 
 SYSTEM_FIRST_OBJ=	g42xxeb_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/g42xxeb/g42xxeb_start.S

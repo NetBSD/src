@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.26 2005/06/08 22:38:16 he Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.27 2005/12/11 12:16:20 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.26 2005/06/08 22:38:16 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.27 2005/12/11 12:16:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

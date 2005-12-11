@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.14 2005/03/10 23:39:27 christos Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.15 2005/12/11 12:20:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.34 2005/12/08 03:09:04 thorpej Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.35 2005/12/11 12:24:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.34 2005/12/08 03:09:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.35 2005/12/11 12:24:30 christos Exp $");
 
 #include "tb.h"
 
@@ -112,7 +112,7 @@ int	tbopen(dev_t, struct tty *);
 int	tbclose(struct tty *, int);
 int	tbread(struct tty *, struct uio *, int);
 int	tbinput(int, struct tty *);
-int	tbtioctl(struct tty *, u_long, caddr_t, int, struct proc *);
+int	tbtioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
 void	tbattach(int);
 
 static struct linesw tablet_disc = {
@@ -162,7 +162,7 @@ tbclose(struct tty *tp, int flag)
 {
 	int modebits = TBPOINT|TBSTOP;
 
-	return (tbtioctl(tp, BIOSMODE, (caddr_t) &modebits, 0, curproc));
+	return (tbtioctl(tp, BIOSMODE, (caddr_t) &modebits, 0, curlwp));
 }
 
 /*
@@ -322,7 +322,7 @@ poldecode(const struct tbconf *tc, char *cp, union tbpos *u)
 
 /*ARGSUSED*/
 int
-tbtioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
+tbtioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct tb *tbp = (struct tb *)tp->t_sc;
 

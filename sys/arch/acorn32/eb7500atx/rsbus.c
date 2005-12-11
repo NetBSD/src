@@ -1,4 +1,4 @@
-/* $NetBSD: rsbus.c,v 1.3 2005/08/26 13:19:34 drochner Exp $ */
+/* $NetBSD: rsbus.c,v 1.4 2005/12/11 12:16:05 christos Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.3 2005/08/26 13:19:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.4 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

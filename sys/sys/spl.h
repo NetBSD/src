@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.h,v 1.1 2005/11/03 12:31:32 yamt Exp $	*/
+/*	$NetBSD: spl.h,v 1.2 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,

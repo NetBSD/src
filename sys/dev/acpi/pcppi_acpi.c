@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi_acpi.c,v 1.1 2005/03/21 14:06:46 xtraeme Exp $ */
+/* $NetBSD: pcppi_acpi.c,v 1.2 2005/12/11 12:21:02 christos Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi_acpi.c,v 1.1 2005/03/21 14:06:46 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi_acpi.c,v 1.2 2005/12/11 12:21:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

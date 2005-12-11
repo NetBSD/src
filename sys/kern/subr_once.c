@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_once.c,v 1.1 2005/10/29 11:13:21 yamt Exp $	*/
+/*	$NetBSD: subr_once.c,v 1.2 2005/12/11 12:24:30 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.1 2005/10/29 11:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.2 2005/12/11 12:24:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.22 2005/02/08 05:16:17 briggs Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.23 2005/12/11 12:22:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.22 2005/02/08 05:16:17 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.23 2005/12/11 12:22:50 christos Exp $");
 
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.12 2003/08/07 16:27:43 agc Exp $	*/
+/*	$NetBSD: srt0.S,v 1.13 2005/12/11 12:17:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

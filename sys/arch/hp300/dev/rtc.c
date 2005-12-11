@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.14 2005/06/05 09:32:32 he Exp $	*/
+/*	$NetBSD: rtc.c,v 1.15 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.14 2005/06/05 09:32:32 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.15 2005/12/11 12:17:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

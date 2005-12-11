@@ -1,4 +1,4 @@
-/* $NetBSD: timer.c,v 1.5 2005/10/30 05:27:14 tsutsui Exp $ */
+/* $NetBSD: timer.c,v 1.6 2005/12/11 12:16:37 christos Exp $ */
 /* NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp  */
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.5 2005/10/30 05:27:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.6 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

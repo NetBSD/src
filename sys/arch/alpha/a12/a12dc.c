@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.13 2005/09/06 20:24:01 kleink Exp $ */
+/* $NetBSD: a12dc.c,v 1.14 2005/12/11 12:16:10 christos Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.13 2005/09/06 20:24:01 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.14 2005/12/11 12:16:10 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -163,7 +163,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.13 $");
+	printf(": driver %s\n", "$Revision: 1.14 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;

@@ -1,4 +1,4 @@
-/* $NetBSD: apic.c,v 1.3 2005/05/29 21:37:03 christos Exp $ */
+/* $NetBSD: apic.c,v 1.4 2005/12/11 12:19:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.3 2005/05/29 21:37:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.4 2005/12/11 12:19:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

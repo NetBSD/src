@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdelay.S,v 1.3 2005/07/06 19:24:08 junyoung Exp $	*/
+/*	$NetBSD: biosdelay.S,v 1.4 2005/12/11 12:17:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997

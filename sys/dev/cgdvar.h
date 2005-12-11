@@ -1,4 +1,4 @@
-/* $NetBSD: cgdvar.h,v 1.4 2005/06/27 03:00:03 christos Exp $ */
+/* $NetBSD: cgdvar.h,v 1.5 2005/12/11 12:20:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

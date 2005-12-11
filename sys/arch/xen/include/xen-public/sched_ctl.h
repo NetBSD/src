@@ -1,4 +1,4 @@
-/* $NetBSD: sched_ctl.h,v 1.2 2005/03/09 22:39:20 bouyer Exp $ */
+/* $NetBSD: sched_ctl.h,v 1.3 2005/12/11 12:19:49 christos Exp $ */
 
 /*
  * Mark Williamson, (C) 2004 Intel Research Cambridge

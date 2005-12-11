@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5 2005/07/10 00:45:52 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.6 2005/12/11 12:18:43 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

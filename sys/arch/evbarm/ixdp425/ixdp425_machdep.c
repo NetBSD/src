@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.13 2004/12/12 20:42:53 abs Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.14 2005/12/11 12:17:09 christos Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.13 2004/12/12 20:42:53 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.14 2005/12/11 12:17:09 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

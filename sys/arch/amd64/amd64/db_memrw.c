@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.2 2005/06/01 19:30:11 drochner Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3 2005/12/11 12:16:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.2 2005/06/01 19:30:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.3 2005/12/11 12:16:21 christos Exp $");
 
 #include "opt_largepages.h"
 

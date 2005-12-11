@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.14 2003/07/14 23:25:39 lukem Exp $ */
+/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.15 2005/12/11 12:16:17 christos Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_bwx_bus_io_chipdep.c,v 1.14 2003/07/14 23:25:39 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_bwx_bus_io_chipdep.c,v 1.15 2005/12/11 12:16:17 christos Exp $");
 
 #include <sys/extent.h>
 

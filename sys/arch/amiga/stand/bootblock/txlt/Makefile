@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/11/28 07:00:53 jmc Exp $
+#	$NetBSD: Makefile,v 1.8 2005/12/11 12:16:36 christos Exp $
 #
 PROG=txlt
 NOMAN=	# defined

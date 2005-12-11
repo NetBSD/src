@@ -1,4 +1,4 @@
-/*	$NetBSD: vadvise.h,v 1.9 2005/10/07 19:33:19 christos Exp $	*/
+/*	$NetBSD: vadvise.h,v 1.10 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993

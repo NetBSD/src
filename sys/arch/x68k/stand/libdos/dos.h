@@ -6,7 +6,7 @@
  *	(based on PD libc 1.1.32 by PROJECT C Library)
  *	public domain
  *
- *	$NetBSD: dos.h,v 1.3 2003/10/30 09:25:00 itohy Exp $
+ *	$NetBSD: dos.h,v 1.4 2005/12/11 12:19:45 christos Exp $
  */
 /*
  * PROJECT C Library, X68000 PROGRAMMING INTERFACE DEFINITION

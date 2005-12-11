@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.9 2005/06/02 19:33:04 uwe Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.10 2005/12/11 12:16:41 christos Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.9 2005/06/02 19:33:04 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.10 2005/12/11 12:16:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

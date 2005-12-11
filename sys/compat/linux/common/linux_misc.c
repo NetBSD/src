@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.146 2005/11/30 11:36:22 rpaulo Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.147 2005/12/11 12:20:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.146 2005/11/30 11:36:22 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.147 2005/12/11 12:20:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,7 +379,7 @@ linux_sys_statfs(l, v, retval)
 	sg = stackgap_init(p, 0);
 	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&bsa, path) = SCARG(uap, path);
 	SCARG(&bsa, buf) = bsp;
@@ -838,7 +838,7 @@ linux_sys_getdents(l, v, retval)
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
+	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)))
 		goto out1;
 
 	nbytes = SCARG(uap, count);
@@ -863,7 +863,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -953,7 +953,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 

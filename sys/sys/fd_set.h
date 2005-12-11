@@ -1,4 +1,4 @@
-/*	$NetBSD: fd_set.h,v 1.1 2005/05/22 12:44:24 kleink Exp $	*/
+/*	$NetBSD: fd_set.h,v 1.2 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_ofisa.c,v 1.2 2005/02/27 00:27:32 perry Exp $ */
+/* $NetBSD: atppc_ofisa.c,v 1.3 2005/12/11 12:22:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.2 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.3 2005/12/11 12:22:48 christos Exp $");
 
 #include "opt_atppc.h"
 

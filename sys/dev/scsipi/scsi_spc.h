@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_spc.h,v 1.2 2005/02/27 00:27:48 perry Exp $	*/
+/*	$NetBSD: scsi_spc.h,v 1.3 2005/12/11 12:23:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.

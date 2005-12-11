@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2004/05/08 21:51:47 kleink Exp $
+#	$NetBSD: Makefile,v 1.21 2005/12/11 12:16:05 christos Exp $
 
 INCSDIR= /usr/include/acorn32
 

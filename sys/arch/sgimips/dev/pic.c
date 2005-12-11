@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.9 2004/11/12 23:01:01 sekiya Exp $	 */
+/*	$NetBSD: pic.c,v 1.10 2005/12/11 12:18:52 christos Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.9 2004/11/12 23:01:01 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.10 2005/12/11 12:18:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

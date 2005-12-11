@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.16 2005/06/03 22:06:25 tsutsui Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.17 2005/12/11 12:23:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.16 2005/06/03 22:06:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.17 2005/12/11 12:23:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

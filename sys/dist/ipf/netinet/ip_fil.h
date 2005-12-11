@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.4 2005/05/29 21:57:49 christos Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.5 2005/12/11 12:24:21 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1188,10 +1188,10 @@ extern	int	iplioctl __P((struct cdev*, u_long, caddr_t, int, struct thread *));
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct thread *));
 #      endif /* __FreeBSD_version >= 502116 */
 #     else
-extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct lwp *));
 #     endif /* __FreeBSD_version >= 500024 */
 #    else
-extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
+extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct lwp *));
 #    endif
 #    if (__FreeBSD_version >= 500024)
 #      if (__FreeBSD_version >= 502116)
@@ -1202,8 +1202,8 @@ extern	int	iplopen __P((dev_t, int, int, struct thread *));
 extern	int	iplclose __P((dev_t, int, int, struct thread *));
 #      endif /* __FreeBSD_version >= 502116 */
 #    else
-extern	int	iplopen __P((dev_t, int, int, struct proc *));
-extern	int	iplclose __P((dev_t, int, int, struct proc *));
+extern	int	iplopen __P((dev_t, int, int, struct lwp *));
+extern	int	iplclose __P((dev_t, int, int, struct lwp *));
 #    endif /* __FreeBSD_version >= 500024 */
 #   else
 #    ifdef linux

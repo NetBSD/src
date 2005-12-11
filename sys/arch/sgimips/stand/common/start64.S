@@ -1,4 +1,4 @@
-/*	$NetBSD: start64.S,v 1.1 2004/08/11 11:41:19 sekiya Exp $	*/
+/*	$NetBSD: start64.S,v 1.2 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

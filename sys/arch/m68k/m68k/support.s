@@ -1,4 +1,4 @@
-/*	$NetBSD: support.s,v 1.4 2003/08/07 16:28:19 agc Exp $	*/
+/*	$NetBSD: support.s,v 1.5 2005/12/11 12:17:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993

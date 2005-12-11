@@ -1,4 +1,4 @@
-/*	$NetBSD: btlreg.h,v 1.7 2005/02/21 00:29:06 thorpej Exp $	*/
+/*	$NetBSD: btlreg.h,v 1.8 2005/12/11 12:16:39 christos Exp $	*/
 
 typedef uint8_t physaddr[4];
 typedef uint8_t physlen[4];

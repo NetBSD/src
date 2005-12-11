@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io_asm.S,v 1.2 2005/10/23 15:04:43 peter Exp $	*/
+/*	$NetBSD: sa11x0_io_asm.S,v 1.3 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

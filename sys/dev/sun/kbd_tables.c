@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_tables.c,v 1.8 2005/02/27 00:27:49 perry Exp $	*/
+/*	$NetBSD: kbd_tables.c,v 1.9 2005/12/11 12:23:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_tables.c,v 1.8 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_tables.c,v 1.9 2005/12/11 12:23:56 christos Exp $");
 
 #include <sys/types.h>
 

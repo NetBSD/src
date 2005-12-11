@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.6 2005/04/01 11:59:21 yamt Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.7 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.6 2005/04/01 11:59:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.7 2005/12/11 12:16:05 christos Exp $");
 
 #include "opt_md.h"
 

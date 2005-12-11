@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.7 2003/09/27 04:44:42 matt Exp $ */
+/*	$NetBSD: mach_syscall.c,v 1.8 2005/12/11 12:18:46 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_mach.h"
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.7 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.8 2005/12/11 12:18:46 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

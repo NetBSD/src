@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap_firmware.h,v 1.4 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: uyap_firmware.h,v 1.5 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

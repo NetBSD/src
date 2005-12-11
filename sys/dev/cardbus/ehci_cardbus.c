@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.12 2005/09/09 14:50:58 drochner Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.13 2005/12/11 12:21:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.12 2005/09/09 14:50:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.13 2005/12/11 12:21:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2005/03/11 20:39:39 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2005/12/11 12:19:48 christos Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2005/03/11 20:39:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2005/12/11 12:19:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

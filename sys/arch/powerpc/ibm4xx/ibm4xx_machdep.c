@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.3 2005/04/25 15:02:06 lukem Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.4 2005/12/11 12:18:42 christos Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.3 2005/04/25 15:02:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.4 2005/12/11 12:18:42 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"

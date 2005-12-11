@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 2005/03/09 19:04:45 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

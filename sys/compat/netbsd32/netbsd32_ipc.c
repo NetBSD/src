@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.6 2005/08/19 04:24:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.7 2005/12/11 12:20:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.6 2005/08/19 04:24:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.7 2005/12/11 12:20:22 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"

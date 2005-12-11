@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.9 2003/07/15 02:43:29 lukem Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.10 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.9 2003/07/15 02:43:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.10 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

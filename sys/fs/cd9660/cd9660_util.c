@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.5 2004/12/28 01:12:26 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.6 2005/12/11 12:24:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.5 2004/12/28 01:12:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.6 2005/12/11 12:24:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

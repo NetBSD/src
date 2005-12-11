@@ -1,4 +1,4 @@
-# $NetBSD: std.mmeye,v 1.9 2005/09/17 09:44:07 yamt Exp $
+# $NetBSD: std.mmeye,v 1.10 2005/12/11 12:18:16 christos Exp $
 #
 # standard, required NetBSD/mmeye 'options'
 

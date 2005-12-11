@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.5 2004/02/13 11:36:17 wiz Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.6 2005/12/11 12:18:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.

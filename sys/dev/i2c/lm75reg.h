@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75reg.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
+/*	$NetBSD: lm75reg.h,v 1.2 2005/12/11 12:21:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

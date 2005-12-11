@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.13 2005/10/22 15:13:38 nonaka Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.14 2005/12/11 12:19:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.13 2005/10/22 15:13:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.14 2005/12/11 12:19:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: necpbvar.h,v 1.5 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: necpbvar.h,v 1.6 2005/12/11 12:16:41 christos Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.

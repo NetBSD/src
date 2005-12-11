@@ -1,4 +1,4 @@
-/* $NetBSD: dummy_pci_lkm.c,v 1.2 2005/08/25 15:08:06 drochner Exp $ */
+/* $NetBSD: dummy_pci_lkm.c,v 1.3 2005/12/11 12:24:47 christos Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

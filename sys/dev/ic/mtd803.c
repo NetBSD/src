@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.8 2005/02/27 00:27:02 perry Exp $ */
+/* $NetBSD: mtd803.c,v 1.9 2005/12/11 12:21:28 christos Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.8 2005/02/27 00:27:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.9 2005/12/11 12:21:28 christos Exp $");
 
 #include "bpfilter.h"
 

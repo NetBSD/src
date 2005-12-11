@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.17 2005/09/20 20:33:53 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.18 2005/12/11 12:19:50 christos Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.17 2005/09/20 20:33:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.18 2005/12/11 12:19:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

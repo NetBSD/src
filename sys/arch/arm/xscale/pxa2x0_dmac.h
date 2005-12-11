@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.h,v 1.1 2005/04/13 07:42:28 scw Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.h,v 1.2 2005/12/11 12:16:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.

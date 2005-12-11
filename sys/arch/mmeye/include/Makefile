@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2004/05/08 21:51:49 kleink Exp $
+#	$NetBSD: Makefile,v 1.21 2005/12/11 12:18:16 christos Exp $
 
 INCSDIR= /usr/include/mmeye
 

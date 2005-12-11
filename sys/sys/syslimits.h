@@ -1,4 +1,4 @@
-/*	$NetBSD: syslimits.h,v 1.22 2003/08/07 16:34:16 agc Exp $	*/
+/*	$NetBSD: syslimits.h,v 1.23 2005/12/11 12:25:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgavar.h,v 1.3 2003/09/06 11:31:22 rearnsha Exp $ */
+/*	$NetBSD: ifpgavar.h,v 1.4 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd

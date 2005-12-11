@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.h,v 1.7 2003/08/07 16:34:04 agc Exp $	*/
+/*	$NetBSD: gmon.h,v 1.8 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1992, 1993

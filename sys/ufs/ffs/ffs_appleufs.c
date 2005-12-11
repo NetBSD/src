@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_appleufs.c,v 1.7 2005/07/15 05:01:16 thorpej Exp $	*/
+/*	$NetBSD: ffs_appleufs.c,v 1.8 2005/12/11 12:25:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Darrin B. Jewell
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.7 2005/07/15 05:01:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.8 2005/12/11 12:25:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>

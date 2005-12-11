@@ -1,4 +1,4 @@
-/*	$NetBSD: strstr.c,v 1.4 2004/07/01 19:04:14 christos Exp $	*/
+/*	$NetBSD: strstr.c,v 1.5 2005/12/11 12:24:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)strstr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strstr.c,v 1.4 2004/07/01 19:04:14 christos Exp $");
+__RCSID("$NetBSD: strstr.c,v 1.5 2005/12/11 12:24:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

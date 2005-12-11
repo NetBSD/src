@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.2 2005/02/26 22:45:13 perry Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.3 2005/12/11 12:25:06 christos Exp $ */
 /*	$FreeBSD: sys/netipsec/xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*

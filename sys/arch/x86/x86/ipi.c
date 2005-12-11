@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.6 2005/01/13 00:08:22 fvdl Exp $	*/
+/*	$NetBSD: ipi.c,v 1.7 2005/12/11 12:19:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.6 2005/01/13 00:08:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.7 2005/12/11 12:19:47 christos Exp $");
 
 #include <sys/param.h> 
 #include <sys/device.h>

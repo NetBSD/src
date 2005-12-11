@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_var.h,v 1.15 2005/12/11 00:03:32 elad Exp $	*/
+/*	$NetBSD: spp_var.h,v 1.16 2005/12/11 12:25:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -212,9 +212,9 @@ int spp_output (struct mbuf *, ...);
 void spp_setpersist (struct sppcb *);
 int spp_ctloutput (int, struct socket *, int, int, struct mbuf **);
 int spp_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
-		    struct mbuf *, struct proc *);
+		    struct mbuf *, struct lwp *);
 int spp_usrreq_sp (struct socket *, int, struct mbuf *, struct mbuf *,
-		       struct mbuf *, struct proc *);
+		       struct mbuf *, struct lwp *);
 void spp_template (struct sppcb *);
 struct sppcb *spp_close (struct sppcb *);
 struct sppcb *spp_usrclosed (struct sppcb *);

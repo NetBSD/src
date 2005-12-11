@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.16 2005/10/15 17:29:26 yamt Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.17 2005/12/11 12:23:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.

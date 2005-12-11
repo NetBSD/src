@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800reg.h,v 1.5 2005/03/16 05:02:12 bsh Exp $ */
+/* $NetBSD: s3c2800reg.h,v 1.6 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited

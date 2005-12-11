@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.6 2005/06/01 19:40:58 drochner Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.7 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6 2005/06/01 19:40:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.7 2005/12/11 12:21:28 christos Exp $");
 
 #include "opt_slhci.h"
 

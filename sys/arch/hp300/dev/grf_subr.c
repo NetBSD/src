@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.11 2004/08/28 17:37:01 thorpej Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.12 2005/12/11 12:17:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.11 2004/08/28 17:37:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.12 2005/12/11 12:17:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

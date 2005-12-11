@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.53 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: isadma.c,v 1.54 2005/12/11 12:22:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.53 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.54 2005/12/11 12:22:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

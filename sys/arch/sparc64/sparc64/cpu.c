@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.41 2005/06/16 04:17:50 briggs Exp $ */
+/*	$NetBSD: cpu.c,v 1.42 2005/12/11 12:19:14 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41 2005/06/16 04:17:50 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2005/12/11 12:19:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

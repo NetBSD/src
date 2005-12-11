@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.33 2004/03/28 18:59:39 mhitch Exp $ */
+/*	$NetBSD: wesc.c,v 1.34 2005/12/11 12:16:28 christos Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.33 2004/03/28 18:59:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.34 2005/12/11 12:16:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

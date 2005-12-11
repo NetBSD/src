@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134 2004/03/19 20:17:51 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.135 2005/12/11 12:19:36 christos Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134 2004/03/19 20:17:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2005/12/11 12:19:36 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"

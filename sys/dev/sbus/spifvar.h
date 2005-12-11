@@ -1,4 +1,4 @@
-/*	$NetBSD: spifvar.h,v 1.1 2004/07/24 12:37:20 mrg Exp $	*/
+/*	$NetBSD: spifvar.h,v 1.2 2005/12/11 12:23:44 christos Exp $	*/
 /*	$OpenBSD: spifvar.h,v 1.3 2003/06/02 18:32:41 jason Exp $	*/
 
 /*

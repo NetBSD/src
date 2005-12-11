@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_input.c,v 1.20 2003/08/07 16:33:00 agc Exp $	*/
+/*	$NetBSD: hd_input.c,v 1.21 2005/12/11 12:24:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd_input.c,v 1.20 2003/08/07 16:33:00 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd_input.c,v 1.21 2005/12/11 12:24:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

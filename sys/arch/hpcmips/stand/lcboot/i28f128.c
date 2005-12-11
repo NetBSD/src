@@ -1,4 +1,4 @@
-/* $NetBSD: i28f128.c,v 1.3 2003/08/09 08:01:47 igy Exp $ */
+/* $NetBSD: i28f128.c,v 1.4 2005/12/11 12:17:34 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -30,7 +30,7 @@
  * Flash Memory Writer
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i28f128.c,v 1.3 2003/08/09 08:01:47 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i28f128.c,v 1.4 2005/12/11 12:17:34 christos Exp $");
 
 #include <lib/libsa/stand.h>
 

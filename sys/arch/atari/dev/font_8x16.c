@@ -1,4 +1,4 @@
-/*	$NetBSD: font_8x16.c,v 1.3 2003/07/15 01:19:48 lukem Exp $	*/
+/*	$NetBSD: font_8x16.c,v 1.4 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  *  Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: font_8x16.c,v 1.3 2003/07/15 01:19:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: font_8x16.c,v 1.4 2005/12/11 12:16:54 christos Exp $");
 
 #include <atari/dev/font.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.57 2005/06/16 22:45:46 jmc Exp $	*/
+/*	$NetBSD: macrom.c,v 1.58 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.57 2005/06/16 22:45:46 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.58 2005/12/11 12:18:03 christos Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"

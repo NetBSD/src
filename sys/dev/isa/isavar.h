@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.47 2005/05/29 22:12:37 christos Exp $	*/
+/*	$NetBSD: isavar.h,v 1.48 2005/12/11 12:22:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.

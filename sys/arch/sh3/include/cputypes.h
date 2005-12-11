@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.8 2005/06/29 16:51:20 christos Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.9 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

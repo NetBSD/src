@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazziovar.h,v 1.3 2005/01/22 07:35:34 tsutsui Exp $ */
+/* $NetBSD: vga_jazziovar.h,v 1.4 2005/12/11 12:16:39 christos Exp $ */
 /* NetBSD: vga_isavar.h,v 1.1 1998/03/22 15:14:36 drochner Exp  */
 
 /*

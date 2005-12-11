@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.16 2005/06/01 12:27:15 drochner Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.17 2005/12/11 12:24:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.16 2005/06/01 12:27:15 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17 2005/12/11 12:24:29 christos Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,

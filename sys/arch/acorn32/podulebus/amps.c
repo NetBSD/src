@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.10 2004/09/13 15:14:12 drochner Exp $	*/
+/*	$NetBSD: amps.c,v 1.11 2005/12/11 12:16:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.10 2004/09/13 15:14:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.11 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.78 2005/06/03 11:14:20 rjs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.79 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.

@@ -1,6 +1,6 @@
 #! /usr/bin/awk -f
 #
-#	$NetBSD: devlist2h.awk,v 1.6 2003/12/15 07:32:20 jmc Exp $
+#	$NetBSD: devlist2h.awk,v 1.7 2005/12/11 12:17:13 christos Exp $
 #
 # Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
 # Copyright (c) 1995, 1996 Christopher G. Demetriou

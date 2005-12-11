@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.46 2005/09/23 12:10:34 jmmv Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.47 2005/12/11 12:25:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -46,7 +46,7 @@ struct inode;
 struct mbuf;
 struct mount;
 struct nameidata;
-struct proc;
+struct lwp;
 struct ucred;
 struct ufs_args;
 struct ufsmount;
@@ -116,7 +116,7 @@ void	ufs_ihashins(struct inode *);
 void	ufs_ihashrem(struct inode *);
 
 /* ufs_inode.c */
-int	ufs_reclaim(struct vnode *, struct proc *);
+int	ufs_reclaim(struct vnode *, struct lwp *);
 int	ufs_balloc_range(struct vnode *, off_t, off_t, struct ucred *, int);
 
 /* ufs_lookup.c */
@@ -138,8 +138,8 @@ int	chkdqchg(struct inode *, int64_t, struct ucred *, int);
 int	chkiq(struct inode *, int32_t, struct ucred *, int);
 int	chkiqchg(struct inode *, int32_t, struct ucred *, int);
 void	chkdquot(struct inode *);
-int	quotaon(struct proc *, struct mount *, int, caddr_t);
-int	quotaoff(struct proc *, struct mount *, int);
+int	quotaon(struct lwp *, struct mount *, int, caddr_t);
+int	quotaoff(struct lwp *, struct mount *, int);
 int	getquota(struct mount *, u_long, int, caddr_t);
 int	setquota(struct mount *, u_long, int, caddr_t);
 int	setuse(struct mount *, u_long, int, caddr_t);
@@ -154,9 +154,9 @@ void	dqflush(struct vnode *);
 void	ufs_init(void);
 void	ufs_reinit(void);
 void	ufs_done(void);
-int	ufs_start(struct mount *, int, struct proc *);
+int	ufs_start(struct mount *, int, struct lwp *);
 int	ufs_root(struct mount *, struct vnode **);
-int	ufs_quotactl(struct mount *, int, uid_t, void *, struct proc *);
+int	ufs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
 int	ufs_fhtovp(struct mount *, struct ufid *, struct vnode **);
 
 /* ufs_vnops.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.30 2005/02/19 16:31:49 tsutsui Exp $	*/
+/*	$NetBSD: ppi.c,v 1.31 2005/12/11 12:17:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.30 2005/02/19 16:31:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.31 2005/12/11 12:17:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ ppinoop(void *arg)
 }
 
 int
-ppiopen(dev_t dev, int flags, int fmt, struct proc *p)
+ppiopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc;
@@ -225,7 +225,7 @@ ppiopen(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 static int
-ppiclose(dev_t dev, int flags, int fmt, struct proc *p)
+ppiclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
@@ -446,7 +446,7 @@ again:
 }
 
 static int
-ppiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ppiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ppi_softc *sc = ppi_cd.cd_devs[UNIT(dev)];
 	struct ppiparam *pp, *upp;

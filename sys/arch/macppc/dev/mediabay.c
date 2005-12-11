@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.10 2005/01/08 04:24:05 briggs Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.11 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.10 2005/01/08 04:24:05 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.11 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

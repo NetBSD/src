@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.10 2005/06/01 12:05:28 yamt Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.11 2005/12/11 12:19:50 christos Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.10 2005/06/01 12:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.11 2005/12/11 12:19:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.32 2005/06/05 09:08:48 he Exp $ */
+/* $NetBSD: trap.c,v 1.33 2005/12/11 12:17:52 christos Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32 2005/06/05 09:08:48 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.33 2005/12/11 12:17:52 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

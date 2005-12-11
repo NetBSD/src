@@ -1,4 +1,4 @@
-/*	$NetBSD: criov.c,v 1.3 2005/02/26 22:39:52 perry Exp $ */
+/*	$NetBSD: criov.c,v 1.4 2005/12/11 12:25:20 christos Exp $ */
 /*      $OpenBSD: criov.c,v 1.11 2002/06/10 19:36:43 espie Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.3 2005/02/26 22:39:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.4 2005/12/11 12:25:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

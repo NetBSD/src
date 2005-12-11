@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.19 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.20 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998

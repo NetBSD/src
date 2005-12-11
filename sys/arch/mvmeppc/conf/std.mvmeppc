@@ -1,4 +1,4 @@
-#	$NetBSD: std.mvmeppc,v 1.8 2005/09/17 09:44:07 yamt Exp $
+#	$NetBSD: std.mvmeppc,v 1.9 2005/12/11 12:18:19 christos Exp $
 #
 # standard, required NetBSD/mvmeppc 'options'
 

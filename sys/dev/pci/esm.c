@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.30 2005/01/15 15:19:52 kent Exp $      */
+/*      $NetBSD: esm.c,v 1.31 2005/12/11 12:22:49 christos Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.30 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.31 2005/12/11 12:22:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

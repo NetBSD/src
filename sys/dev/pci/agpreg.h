@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.8 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.9 2005/12/11 12:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson

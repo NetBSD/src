@@ -1,4 +1,4 @@
-#	$NetBSD: lkmwrap.awk,v 1.2 2004/01/16 00:35:48 matt Exp $
+#	$NetBSD: lkmwrap.awk,v 1.3 2005/12/11 12:24:47 christos Exp $
 #
 /^SYMBOL TABLE:/ {
 	doing_symbols = 1;

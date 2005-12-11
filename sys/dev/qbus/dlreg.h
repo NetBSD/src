@@ -1,4 +1,4 @@
-/*	$NetBSD: dlreg.h,v 1.5 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: dlreg.h,v 1.6 2005/12/11 12:23:29 christos Exp $	*/
 /*
  * Ben Harris, 1997
  *

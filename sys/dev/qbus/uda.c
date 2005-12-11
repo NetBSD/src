@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.52 2005/06/27 11:05:24 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.53 2005/12/11 12:23:29 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.52 2005/06/27 11:05:24 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.53 2005/12/11 12:23:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

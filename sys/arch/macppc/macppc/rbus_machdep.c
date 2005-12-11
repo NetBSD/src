@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.12 2003/10/20 00:12:10 matt Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.13 2005/12/11 12:18:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.12 2003/10/20 00:12:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.13 2005/12/11 12:18:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

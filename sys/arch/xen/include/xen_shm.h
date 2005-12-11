@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm.h,v 1.4 2005/07/17 08:23:43 tls Exp $      */
+/*      $NetBSD: xen_shm.h,v 1.5 2005/12/11 12:19:48 christos Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.

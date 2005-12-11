@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.9 2003/07/15 02:54:40 lukem Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.10 2005/12/11 12:18:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.9 2003/07/15 02:54:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.10 2005/12/11 12:18:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

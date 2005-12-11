@@ -1,4 +1,4 @@
-/*	$NetBSD: teliosioreg.h,v 1.1 2005/07/30 22:40:33 nakayama Exp $	*/
+/*	$NetBSD: teliosioreg.h,v 1.2 2005/12/11 12:17:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Takeshi Nakayama.

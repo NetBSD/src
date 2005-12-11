@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.32 2005/05/31 00:43:17 christos Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.33 2005/12/11 12:20:26 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.32 2005/05/31 00:43:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.33 2005/12/11 12:20:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ svr4_32_sys_execve(p, v, retval)
 	sg = stackgap_init(p, 0);
 
 	SCARG(&ap, path) = (const char *)(u_long)SCARG(uap, path);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&ap, path));
 	SCARG(&ap, argp) = (char **)(u_long)SCARG(uap, argp);
 	SCARG(&ap, envp) = (char **)(u_long)SCARG(uap, envp);
 
@@ -304,7 +304,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -376,7 +376,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(sbuf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -430,7 +430,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -503,7 +503,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(sbuf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -610,7 +610,7 @@ svr4_32_mknod(l, retval, path, mode, dev)
 {
 	caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_CREAT(l->l_proc, &sg, path);
+	CHECK_ALT_CREAT(l, &sg, path);
 
 	if (S_ISFIFO(mode)) {
 		struct sys_mkfifo_args ap;
@@ -1316,7 +1316,7 @@ svr4_32_sys_statvfs(l, v, retval)
 	int error;
 
 	SCARG(&fs_args, path) = (caddr_t)(u_long)SCARG(uap, path);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&fs_args, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&fs_args, path));
 	SCARG(&fs_args, buf) = fs;
 	SCARG(&fs_args, flags) = ST_WAIT;
 
@@ -1379,7 +1379,7 @@ svr4_32_sys_statvfs64(l, v, retval)
 	int error;
 
 	SCARG(&fs_args, path) = (caddr_t)(u_long)SCARG(uap, path);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&fs_args, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&fs_args, path));
 	SCARG(&fs_args, buf) = fs;
 	SCARG(&fs_args, flags) = ST_WAIT;
 
@@ -1608,13 +1608,12 @@ svr4_32_sys_resolvepath(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_resolvepath_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct nameidata nd;
 	int error;
 	size_t len;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | SAVENAME, UIO_USERSPACE,
-	    (const char *)(u_long)SCARG(uap, path), p);
+	    (const char *)(u_long)SCARG(uap, path), l);
 
 	if ((error = namei(&nd)) != 0)
 		return error;

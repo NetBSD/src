@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818var.h,v 1.3 2003/11/24 06:20:40 tsutsui Exp $	*/
+/*	$NetBSD: mc146818var.h,v 1.4 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.

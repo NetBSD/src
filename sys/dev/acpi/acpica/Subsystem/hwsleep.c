@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.14 2005/10/23 16:39:29 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.15 2005/12/11 12:21:02 christos Exp $");
 
 #include "acpi.h"
 

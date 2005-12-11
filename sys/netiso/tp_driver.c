@@ -1,7 +1,7 @@
-/*	$NetBSD: tp_driver.c,v 1.18 2004/04/20 02:13:26 matt Exp $	*/
+/*	$NetBSD: tp_driver.c,v 1.19 2005/12/11 12:25:12 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.18 2004/04/20 02:13:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.19 2005/12/11 12:25:12 christos Exp $");
 
 #include "tp_states.h"
 

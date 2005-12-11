@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1 2003/08/19 10:55:00 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 2005/12/11 12:18:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.1 2003/08/19 10:55:00 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.2 2005/12/11 12:18:34 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 

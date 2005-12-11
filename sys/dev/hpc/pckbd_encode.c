@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd_encode.c,v 1.3 2004/03/13 17:31:34 bjh21 Exp $	*/
+/*	$NetBSD: pckbd_encode.c,v 1.4 2005/12/11 12:21:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 TAKEMRUA, Shin All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd_encode.c,v 1.3 2004/03/13 17:31:34 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd_encode.c,v 1.4 2005/12/11 12:21:22 christos Exp $");
 
 #include "opt_wsdisplay_compat.h"
 

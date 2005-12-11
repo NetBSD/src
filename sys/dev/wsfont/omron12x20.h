@@ -1,4 +1,4 @@
-/*	$NetBSD: omron12x20.h,v 1.6 2005/06/28 00:44:22 thorpej Exp $	*/
+/*	$NetBSD: omron12x20.h,v 1.7 2005/12/11 12:24:12 christos Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

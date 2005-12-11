@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.c,v 1.9 2005/08/09 19:26:24 chris Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.10 2005/12/11 12:22:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.9 2005/08/09 19:26:24 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.10 2005/12/11 12:22:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

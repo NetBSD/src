@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.h,v 1.10 2005/06/01 15:57:23 drochner Exp $	*/
+/*	$NetBSD: db_access.h,v 1.11 2005/12/11 12:20:53 christos Exp $	*/
 
 /*
  * Mach Operating System

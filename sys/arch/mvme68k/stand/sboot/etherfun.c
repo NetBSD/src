@@ -1,4 +1,4 @@
-/*	$NetBSD: etherfun.c,v 1.6 2005/05/17 04:14:57 christos Exp $	*/
+/*	$NetBSD: etherfun.c,v 1.7 2005/12/11 12:18:19 christos Exp $	*/
 
 /*
  *

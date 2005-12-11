@@ -34,7 +34,7 @@
 /*** needs to be completed MK-990306 ***/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.15 2005/06/27 11:03:25 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.16 2005/12/11 12:19:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

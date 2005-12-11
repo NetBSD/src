@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rtreg.h,v 1.12 2003/11/10 08:51:51 wiz Exp $	*/
+/*	$NetBSD: grf_rtreg.h,v 1.13 2005/12/11 12:16:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild

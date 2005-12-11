@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.12 2004/11/05 19:08:29 kent Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.13 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

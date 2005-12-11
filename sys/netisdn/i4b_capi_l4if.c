@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_l4if.c,v 1.4 2003/10/03 16:47:57 pooka Exp $	*/
+/*	$NetBSD: i4b_capi_l4if.c,v 1.5 2005/12/11 12:25:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_capi_l4if.c,v 1.4 2003/10/03 16:47:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_l4if.c,v 1.5 2005/12/11 12:25:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

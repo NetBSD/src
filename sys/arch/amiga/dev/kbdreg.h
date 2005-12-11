@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdreg.h,v 1.6 2003/08/07 16:26:42 agc Exp $	*/
+/*	$NetBSD: kbdreg.h,v 1.7 2005/12/11 12:16:28 christos Exp $	*/
 
 /*
  * losely based on:

@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_jc94.c,v 1.6 2005/10/30 04:35:49 tsutsui Exp $	*/
+/*	$NetBSD: p_nec_jc94.c,v 1.7 2005/12/11 12:16:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_nec_jc94.c,v 1.6 2005/10/30 04:35:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_nec_jc94.c,v 1.7 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 

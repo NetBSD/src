@@ -1,4 +1,4 @@
-/*	$NetBSD: todclockvar.h,v 1.1 2003/09/23 15:01:50 shige Exp $	*/
+/*	$NetBSD: todclockvar.h,v 1.2 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

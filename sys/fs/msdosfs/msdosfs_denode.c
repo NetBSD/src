@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.11 2005/11/02 12:38:58 yamt Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.12 2005/12/11 12:24:25 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.11 2005/11/02 12:38:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.12 2005/12/11 12:24:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,12 +385,12 @@ deupdat(dep, waitfor)
  * Truncate the file described by dep to the length specified by length.
  */
 int
-detrunc(dep, length, flags, cred, p)
+detrunc(dep, length, flags, cred, l)
 	struct denode *dep;
 	u_long length;
 	int flags;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error;
 	int allerror;
@@ -637,9 +637,9 @@ msdosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	int error = 0;
@@ -685,7 +685,7 @@ out:
 		vp->v_usecount, dep->de_Name[0]);
 #endif
 	if (dep->de_Name[0] == SLOT_DELETED)
-		vrecycle(vp, (struct simplelock *)0, p);
+		vrecycle(vp, (struct simplelock *)0, l);
 	return (error);
 }
 

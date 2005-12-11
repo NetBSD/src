@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0var.h,v 1.6 2003/07/13 08:56:16 igy Exp $ */
+/*	$NetBSD: ixp12x0var.h,v 1.7 2005/12/11 12:16:50 christos Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.

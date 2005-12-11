@@ -1,4 +1,4 @@
-#	$NetBSD: files.smdk2410,v 1.4 2004/02/14 07:32:31 bsh Exp $
+#	$NetBSD: files.smdk2410,v 1.5 2005/12/11 12:17:07 christos Exp $
 #
 # Samsung SMDK2410 evaluation board configuration info
 #

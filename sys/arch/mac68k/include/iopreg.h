@@ -1,4 +1,4 @@
-/*	$NetBSD: iopreg.h,v 1.6 2005/06/08 22:16:44 rjs Exp $	*/
+/*	$NetBSD: iopreg.h,v 1.7 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.

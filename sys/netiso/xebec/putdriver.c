@@ -1,4 +1,4 @@
-/*	$NetBSD: putdriver.c,v 1.7 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: putdriver.c,v 1.8 2005/12/11 12:25:16 christos Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putdriver.c,v 1.7 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putdriver.c,v 1.8 2005/12/11 12:25:16 christos Exp $");
 
 #include <stdio.h>
 #include "main.h"

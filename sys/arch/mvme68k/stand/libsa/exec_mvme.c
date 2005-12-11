@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.13 2005/06/28 21:03:02 junyoung Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.14 2005/12/11 12:18:19 christos Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2004/07/28 01:05:35 simonb Exp $
+#	$NetBSD: Makefile,v 1.16 2005/12/11 12:19:08 christos Exp $
 
 PROG=		bootxx
 PROGSOURCE=	bootxx.c

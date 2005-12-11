@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.19 2005/06/01 18:32:07 drochner Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.20 2005/12/11 12:18:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,5 +1,5 @@
 #define	DEBUG
-/*	$NetBSD: boot.c,v 1.3 2004/06/30 15:43:57 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

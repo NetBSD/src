@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.27 2005/05/29 22:00:50 christos Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.28 2005/12/11 12:23:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.27 2005/05/29 22:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.28 2005/12/11 12:23:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>

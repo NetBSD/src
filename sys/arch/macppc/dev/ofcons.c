@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.14 2003/11/04 19:18:05 aymeric Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.15 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.14 2003/11/04 19:18:05 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.15 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

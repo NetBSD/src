@@ -1,4 +1,4 @@
-/*	$NetBSD: mcavar.h,v 1.8 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: mcavar.h,v 1.9 2005/12/11 12:22:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

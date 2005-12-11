@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.9 2004/03/13 17:31:33 bjh21 Exp $
+#	$NetBSD: files.malta,v 1.10 2005/12/11 12:17:11 christos Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c

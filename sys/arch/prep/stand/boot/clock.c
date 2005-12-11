@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2004/06/29 16:26:05 kleink Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2005/12/11 12:18:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

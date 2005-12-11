@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_cmi.c,v 1.12 2003/08/07 16:30:14 agc Exp $	   */
+/*	$NetBSD: uba_cmi.c,v 1.13 2005/12/11 12:19:36 christos Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_cmi.c,v 1.12 2003/08/07 16:30:14 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_cmi.c,v 1.13 2005/12/11 12:19:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.10 2005/06/02 15:24:04 tsutsui Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.11 2005/12/11 12:18:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.10 2005/06/02 15:24:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.11 2005/12/11 12:18:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

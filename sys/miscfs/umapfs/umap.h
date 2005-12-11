@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.13 2005/08/30 20:08:02 xtraeme Exp $	*/
+/*	$NetBSD: umap.h,v 1.14 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

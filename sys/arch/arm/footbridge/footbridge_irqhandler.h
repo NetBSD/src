@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.h,v 1.4 2005/06/02 17:45:59 he Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.h,v 1.5 2005/12/11 12:16:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_jazziovar.h,v 1.2 2003/10/29 18:17:50 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_jazziovar.h,v 1.3 2005/12/11 12:16:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

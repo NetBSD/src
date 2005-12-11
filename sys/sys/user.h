@@ -1,4 +1,4 @@
-/*	$NetBSD: user.h,v 1.15 2003/08/07 16:34:22 agc Exp $	*/
+/*	$NetBSD: user.h,v 1.16 2005/12/11 12:25:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993

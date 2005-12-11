@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.6 2005/06/03 15:01:44 tsutsui Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.7 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.6 2005/06/03 15:01:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.7 2005/12/11 12:19:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

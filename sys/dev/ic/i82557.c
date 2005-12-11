@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.94 2005/10/15 19:32:36 jdolecek Exp $	*/
+/*	$NetBSD: i82557.c,v 1.95 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.94 2005/10/15 19:32:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.95 2005/12/11 12:21:26 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

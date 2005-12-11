@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.36 2005/09/13 01:42:51 christos Exp $	*/
+/*	$NetBSD: mman.h,v 1.37 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993

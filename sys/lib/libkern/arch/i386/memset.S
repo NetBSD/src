@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.6 2004/04/15 09:20:29 yamt Exp $	*/
+/*	$NetBSD: memset.S,v 1.7 2005/12/11 12:24:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.6 2004/04/15 09:20:29 yamt Exp $")
+	RCSID("$NetBSD: memset.S,v 1.7 2005/12/11 12:24:42 christos Exp $")
 #endif
 
 #ifdef BZERO

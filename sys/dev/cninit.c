@@ -1,4 +1,4 @@
-/*	$NetBSD: cninit.c,v 1.7 2005/02/27 00:26:58 perry Exp $	*/
+/*	$NetBSD: cninit.c,v 1.8 2005/12/11 12:20:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.7 2005/02/27 00:26:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.8 2005/12/11 12:20:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

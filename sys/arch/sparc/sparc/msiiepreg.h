@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepreg.h,v 1.7 2005/09/25 22:50:57 uwe Exp $ */
+/*	$NetBSD: msiiepreg.h,v 1.8 2005/12/11 12:19:08 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov

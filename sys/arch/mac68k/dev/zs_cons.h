@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_cons.h,v 1.3 2005/01/16 00:32:59 chs Exp $	*/
+/*	$NetBSD: zs_cons.h,v 1.4 2005/12/11 12:18:03 christos Exp $	*/
 
 extern int	zsinited;
 extern void	*zs_conschan;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.48 2005/10/15 17:29:25 yamt Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.49 2005/12/11 12:22:47 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.48 2005/10/15 17:29:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.49 2005/12/11 12:22:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -226,10 +226,10 @@ ra_putonline(ra)
  */
 /*ARGSUSED*/
 int
-raopen(dev, flag, fmt, p)
+raopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct	proc *p;
+	struct	lwp *l;
 {
 	struct ra_softc *ra;
 	int error, part, unit, mask;
@@ -311,10 +311,10 @@ raopen(dev, flag, fmt, p)
 
 /* ARGSUSED */
 int
-raclose(dev, flags, fmt, p)
+raclose(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct	proc *p;
+	struct	lwp *l;
 {
 	int unit = DISKUNIT(dev);
 	struct ra_softc *ra = ra_cd.cd_devs[unit];
@@ -436,12 +436,12 @@ rawrite(dev, uio, flags)
  * I/O controls.
  */
 int
-raioctl(dev, cmd, data, flag, p)
+raioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = DISKUNIT(dev);
 	struct disklabel *lp, *tp;
@@ -571,7 +571,7 @@ raioctl(dev, cmd, data, flag, p)
 	    {
 	    	struct dkwedge_list *dkwl = (void *) data;
 
-		return (dkwedge_list(&ra->ra_disk, dkwl, p));
+		return (dkwedge_list(&ra->ra_disk, dkwl, l));
 	    }
 
 	default:
@@ -766,10 +766,10 @@ rx_putonline(rx)
  */
 /*ARGSUSED*/
 int
-rxopen(dev, flag, fmt, p)
+rxopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct	proc *p;
+	struct	lwp *l;
 {
 	struct rx_softc *rx;
 	int unit;
@@ -872,12 +872,12 @@ rxwrite(dev, uio, flag)
  * I/O controls.
  */
 int
-rxioctl(dev, cmd, data, flag, p)
+rxioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = DISKUNIT(dev);
 	struct disklabel *lp;

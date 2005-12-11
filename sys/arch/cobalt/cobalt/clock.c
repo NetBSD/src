@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2004/08/28 12:32:48 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2005/12/11 12:17:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2004/08/28 12:32:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/12/11 12:17:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

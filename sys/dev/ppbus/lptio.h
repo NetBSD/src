@@ -1,4 +1,4 @@
-/* $NetBSD: lptio.h,v 1.6 2004/02/03 21:15:03 jdolecek Exp $ */
+/* $NetBSD: lptio.h,v 1.7 2005/12/11 12:23:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

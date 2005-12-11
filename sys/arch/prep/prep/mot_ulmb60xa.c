@@ -1,4 +1,4 @@
-/*	$NetBSD: mot_ulmb60xa.c,v 1.8 2005/01/13 23:57:04 kleink Exp $	*/
+/*	$NetBSD: mot_ulmb60xa.c,v 1.9 2005/12/11 12:18:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mot_ulmb60xa.c,v 1.8 2005/01/13 23:57:04 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mot_ulmb60xa.c,v 1.9 2005/12/11 12:18:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

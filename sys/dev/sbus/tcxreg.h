@@ -1,4 +1,4 @@
-/*	$NetBSD: tcxreg.h,v 1.2 2005/02/27 00:27:48 perry Exp $ */
+/*	$NetBSD: tcxreg.h,v 1.3 2005/12/11 12:23:44 christos Exp $ */
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
  *  All rights reserved.

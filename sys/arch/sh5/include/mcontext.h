@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.7 2004/03/17 20:23:28 scw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

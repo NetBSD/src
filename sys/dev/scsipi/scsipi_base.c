@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.131 2005/05/31 02:56:54 xtraeme Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.132 2005/12/11 12:23:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.131 2005/05/31 02:56:54 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.132 2005/12/11 12:23:50 christos Exp $");
 
 #include "opt_scsi.h"
 

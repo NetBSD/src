@@ -1,4 +1,4 @@
-/*	$NetBSD: stdint.h,v 1.4 2005/07/05 08:15:34 kleink Exp $	*/
+/*	$NetBSD: stdint.h,v 1.5 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.

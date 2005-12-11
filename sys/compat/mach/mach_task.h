@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.h,v 1.14 2005/02/26 23:10:20 perry Exp $ */
+/*	$NetBSD: mach_task.h,v 1.15 2005/12/11 12:20:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.

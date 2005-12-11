@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.15 2005/08/26 11:49:13 drochner Exp $ */
+/* $NetBSD: aubus.c,v 1.16 2005/12/11 12:18:06 christos Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.15 2005/08/26 11:49:13 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.16 2005/12/11 12:18:06 christos Exp $");
 
 #include "locators.h"
 

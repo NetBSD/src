@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.h,v 1.9 2005/03/25 14:51:39 tsutsui Exp $	*/
+/*	$NetBSD: pciconf.h,v 1.10 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.14 2005/01/23 08:39:51 yamt Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.15 2005/12/11 12:24:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.14 2005/01/23 08:39:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.15 2005/12/11 12:24:29 christos Exp $");
 
 #include "opt_multiprocessor.h"
 

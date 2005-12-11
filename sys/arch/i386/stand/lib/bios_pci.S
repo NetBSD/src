@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_pci.S,v 1.5 2004/03/24 16:34:29 drochner Exp $	*/
+/*	$NetBSD: bios_pci.S,v 1.6 2005/12/11 12:17:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1996

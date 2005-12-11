@@ -1,4 +1,4 @@
-/* $NetBSD: auixpreg.h,v 1.2 2005/01/12 00:28:03 reinoud Exp $ */
+/* $NetBSD: auixpreg.h,v 1.3 2005/12/11 12:22:48 christos Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>

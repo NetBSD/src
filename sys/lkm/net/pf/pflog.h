@@ -1,3 +1,3 @@
-/*	$NetBSD: pflog.h,v 1.1 2004/06/22 14:18:58 itojun Exp $	*/
+/*	$NetBSD: pflog.h,v 1.2 2005/12/11 12:24:49 christos Exp $	*/
 
 #define NPFLOG	1

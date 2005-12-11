@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.20 2005/11/05 11:57:25 tsutsui Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.21 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

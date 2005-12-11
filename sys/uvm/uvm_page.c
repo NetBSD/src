@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.106 2005/06/28 05:25:42 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.107 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.106 2005/06/28 05:25:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.107 2005/12/11 12:25:29 christos Exp $");
 
 #include "opt_uvmhist.h"
 

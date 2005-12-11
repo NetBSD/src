@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.5 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.6 2005/12/11 12:24:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.5 2005/02/26 22:58:56 perry Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.6 2005/12/11 12:24:42 christos Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 

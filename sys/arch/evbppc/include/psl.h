@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.2 2004/05/12 14:38:17 hannken Exp $	*/
+/*	$NetBSD: psl.h,v 1.3 2005/12/11 12:17:12 christos Exp $	*/
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"

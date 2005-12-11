@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.5 2005/11/22 04:44:29 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.6 2005/12/11 12:25:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.5 2005/11/22 04:44:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.6 2005/12/11 12:25:16 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -210,7 +210,7 @@ nfs_export_unmount(struct mount *mp)
  * command).
  */
 int
-mountd_set_exports_list(const struct mountd_exports_list *mel, struct proc *p)
+mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 {
 	int error;
 #ifdef notyet
@@ -222,11 +222,11 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct proc *p)
 	struct nameidata nd;
 	struct vnode *vp;
 
-	if (suser(p->p_ucred, &p->p_acflag) != 0)
+	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return EPERM;
 
 	/* Lookup the file system path. */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, mel->mel_path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, mel->mel_path, l);
 	error = namei(&nd);
 	if (error != 0)
 		return error;
@@ -388,7 +388,7 @@ netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
  */
 int
 nfs_update_exports_30(struct mount *mp, const char *path, void *data,
-    struct proc *p)
+    struct lwp *l)
 {
 	int error;
 	struct {
@@ -421,7 +421,7 @@ nfs_update_exports_30(struct mount *mp, const char *path, void *data,
 		mel.mel_exports = &eargs;
 	}
 
-	return mountd_set_exports_list(&mel, p);
+	return mountd_set_exports_list(&mel, l);
 }
 #endif
 

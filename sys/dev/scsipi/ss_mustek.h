@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.h,v 1.8 2005/02/27 00:27:48 perry Exp $	*/
+/*	$NetBSD: ss_mustek.h,v 1.9 2005/12/11 12:23:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.

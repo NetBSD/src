@@ -1,4 +1,4 @@
-/*	$NetBSD: hpciovar.h,v 1.5 2005/06/07 11:43:01 he Exp $	*/
+/*	$NetBSD: hpciovar.h,v 1.6 2005/12/11 12:21:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.61 2004/06/27 08:50:44 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.62 2005/12/11 12:24:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.61 2004/06/27 08:50:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.62 2005/12/11 12:24:30 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.35 2005/06/28 05:25:42 thorpej Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.36 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.

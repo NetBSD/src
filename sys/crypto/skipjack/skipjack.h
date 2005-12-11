@@ -1,4 +1,4 @@
-/*	$NetBSD: skipjack.h,v 1.2 2005/02/26 23:04:17 perry Exp $ */
+/*	$NetBSD: skipjack.h,v 1.3 2005/12/11 12:20:53 christos Exp $ */
 /*	$OpenBSD: skipjack.h,v 1.3 2002/03/14 01:26:51 millert Exp $	*/
 
 /*

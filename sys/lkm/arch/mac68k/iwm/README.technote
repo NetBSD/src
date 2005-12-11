@@ -1,4 +1,4 @@
-#	$NetBSD: README.technote,v 1.3 2005/02/26 22:58:57 perry Exp $
+#	$NetBSD: README.technote,v 1.4 2005/12/11 12:24:46 christos Exp $
 
 
 The IWM chip (the Mac floppy controller) is a descendant of the Apple

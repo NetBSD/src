@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.h,v 1.1 2005/11/05 09:50:51 tsutsui Exp $	*/
+/*	$NetBSD: wired_map.h,v 1.2 2005/12/11 12:16:39 christos Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.

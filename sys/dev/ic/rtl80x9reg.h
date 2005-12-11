@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9reg.h,v 1.5 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: rtl80x9reg.h,v 1.6 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

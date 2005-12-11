@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.19 2005/09/28 06:40:15 he Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.20 2005/12/11 12:20:23 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.19 2005/09/28 06:40:15 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.20 2005/12/11 12:20:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

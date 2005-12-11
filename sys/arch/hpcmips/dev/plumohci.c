@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.9 2003/09/26 16:03:50 simonb Exp $ */
+/*	$NetBSD: plumohci.c,v 1.10 2005/12/11 12:17:33 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.9 2003/09/26 16:03:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.10 2005/12/11 12:17:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

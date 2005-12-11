@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.5 2004/09/01 15:54:39 tsutsui Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.6 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

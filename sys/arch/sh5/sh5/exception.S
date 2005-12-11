@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.25 2004/02/24 15:22:01 wiz Exp $	*/
+/*	$NetBSD: exception.S,v 1.26 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

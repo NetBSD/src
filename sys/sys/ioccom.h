@@ -1,4 +1,4 @@
-/*	$NetBSD: ioccom.h,v 1.7 2004/02/24 15:22:01 wiz Exp $	*/
+/*	$NetBSD: ioccom.h,v 1.8 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994

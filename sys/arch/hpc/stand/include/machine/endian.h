@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.2 2005/05/11 16:44:45 uwe Exp $	*/
+/*	$NetBSD: endian.h,v 1.3 2005/12/11 12:17:29 christos Exp $	*/
 
 /* Windows CE architecture */
 

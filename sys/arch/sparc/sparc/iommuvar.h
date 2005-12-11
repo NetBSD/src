@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.8 2005/06/04 04:40:57 tsutsui Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.9 2005/12/11 12:19:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

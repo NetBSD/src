@@ -1,4 +1,4 @@
-/*	$NetBSD: setfault.S,v 1.4 2003/08/03 21:27:49 matt Exp $	*/
+/*	$NetBSD: setfault.S,v 1.5 2005/12/11 12:18:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.

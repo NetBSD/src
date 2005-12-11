@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.28 2005/06/22 19:17:35 sekiya Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.29 2005/12/11 12:17:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.28 2005/06/22 19:17:35 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.29 2005/12/11 12:17:44 christos Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"

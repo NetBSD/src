@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_nubus.c,v 1.7 2005/06/03 23:07:20 rjs Exp $	*/
+/*	$NetBSD: if_sm_nubus.c,v 1.8 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_nubus.c,v 1.7 2005/06/03 23:07:20 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_nubus.c,v 1.8 2005/12/11 12:18:03 christos Exp $");
 
 #include "opt_inet.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.15 2005/04/01 11:59:37 yamt Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.16 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.15 2005/04/01 11:59:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.16 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

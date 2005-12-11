@@ -1,4 +1,4 @@
-/*	$NetBSD: com_cpcbus.c,v 1.5 2003/07/14 15:47:10 lukem Exp $	*/
+/*	$NetBSD: com_cpcbus.c,v 1.6 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cpcbus.c,v 1.5 2003/07/14 15:47:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cpcbus.c,v 1.6 2005/12/11 12:21:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

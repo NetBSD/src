@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 2005/06/03 18:19:11 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44 2005/12/11 12:18:06 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43 2005/06/03 18:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44 2005/12/11 12:18:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

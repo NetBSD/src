@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_iomd.c,v 1.8 2004/02/08 13:43:52 bjh21 Exp $	*/
+/*	$NetBSD: kbd_iomd.c,v 1.9 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_iomd.c,v 1.8 2004/02/08 13:43:52 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_iomd.c,v 1.9 2005/12/11 12:16:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

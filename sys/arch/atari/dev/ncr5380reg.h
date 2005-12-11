@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.18 2005/06/04 14:42:36 he Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.19 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.35 2005/03/31 15:48:13 christos Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.36 2005/12/11 12:24:51 christos Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.35 2005/03/31 15:48:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.36 2005/12/11 12:24:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.11 2003/07/14 22:57:46 lukem Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.12 2005/12/11 12:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.11 2003/07/14 22:57:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.12 2005/12/11 12:16:08 christos Exp $");
 
 #include "opt_ddb.h"
 

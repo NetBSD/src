@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.43 2005/06/13 21:34:16 jmc Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.44 2005/12/11 12:16:28 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.43 2005/06/13 21:34:16 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.44 2005/12/11 12:16:28 christos Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0

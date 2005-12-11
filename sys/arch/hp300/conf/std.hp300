@@ -1,4 +1,4 @@
-#	$NetBSD: std.hp300,v 1.9 2005/09/17 09:44:06 yamt Exp $
+#	$NetBSD: std.hp300,v 1.10 2005/12/11 12:17:13 christos Exp $
 #
 # Options/devices that all hp300s should have
 #

@@ -1,4 +1,4 @@
-/* $NetBSD: vga_common.c,v 1.5 2005/02/27 00:27:03 perry Exp $ */
+/* $NetBSD: vga_common.c,v 1.6 2005/12/11 12:21:29 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_common.c,v 1.5 2005/02/27 00:27:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_common.c,v 1.6 2005/12/11 12:21:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kerndebug.h,v 1.2 2004/05/16 15:44:10 wiz Exp $	*/
+/*	$NetBSD: kerndebug.h,v 1.3 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 1997

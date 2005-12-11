@@ -1,4 +1,4 @@
-/* $NetBSD: isacsx.h,v 1.2 2005/02/27 00:27:01 perry Exp $	*/
+/* $NetBSD: isacsx.h,v 1.3 2005/12/11 12:21:27 christos Exp $	*/
 /*
  *   Copyright (c) 2001 Gary Jennejohn. All rights reserved.
  *

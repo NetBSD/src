@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs.c,v 1.3 2004/07/04 13:12:58 chris Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.4 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.3 2004/07/04 13:12:58 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.4 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

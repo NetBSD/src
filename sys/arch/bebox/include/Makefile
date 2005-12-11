@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2003/10/24 18:21:52 matt Exp $
+#	$NetBSD: Makefile,v 1.22 2005/12/11 12:17:03 christos Exp $
 
 INCSDIR= /usr/include/bebox
 

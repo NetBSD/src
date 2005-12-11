@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpreg.h,v 1.6 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: mscpreg.h,v 1.7 2005/12/11 12:22:47 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.

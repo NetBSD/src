@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pbus.c,v 1.2 2003/07/15 01:37:38 lukem Exp $	*/
+/*	$NetBSD: pckbc_pbus.c,v 1.3 2005/12/11 12:17:13 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pbus.c,v 1.2 2003/07/15 01:37:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pbus.c,v 1.3 2005/12/11 12:17:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

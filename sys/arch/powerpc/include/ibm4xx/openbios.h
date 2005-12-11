@@ -1,4 +1,4 @@
-/*	$NetBSD: openbios.h,v 1.1 2005/01/17 16:23:27 shige Exp $	*/
+/*	$NetBSD: openbios.h,v 1.2 2005/12/11 12:18:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.

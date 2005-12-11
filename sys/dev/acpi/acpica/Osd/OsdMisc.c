@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.11 2005/05/29 20:56:02 christos Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.12 2005/12/11 12:21:02 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.11 2005/05/29 20:56:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
 
 #include "opt_ddb.h"
 

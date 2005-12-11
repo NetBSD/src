@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.96 2005/08/26 11:01:43 drochner Exp $	*/
+/*	$NetBSD: pci.c,v 1.97 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.96 2005/08/26 11:01:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.97 2005/12/11 12:22:50 christos Exp $");
 
 #include "opt_pci.h"
 

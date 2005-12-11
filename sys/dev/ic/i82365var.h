@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.23 2005/05/30 04:43:46 christos Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.24 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.71 2003/10/27 07:07:35 chs Exp $ */
+/* $NetBSD: cpu.c,v 1.72 2005/12/11 12:16:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71 2003/10/27 07:07:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72 2005/12/11 12:16:10 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"

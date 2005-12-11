@@ -1,4 +1,4 @@
-/*	$NetBSD: pmreg.h,v 1.2 2003/12/13 23:04:38 ad Exp $	*/
+/*	$NetBSD: pmreg.h,v 1.3 2005/12/11 12:18:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

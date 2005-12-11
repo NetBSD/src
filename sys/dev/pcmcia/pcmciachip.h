@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciachip.h,v 1.12 2005/05/30 04:28:49 christos Exp $	*/
+/*	$NetBSD: pcmciachip.h,v 1.13 2005/12/11 12:23:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.

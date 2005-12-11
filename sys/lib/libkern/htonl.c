@@ -1,4 +1,4 @@
-/*	$NetBSD: htonl.c,v 1.12 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: htonl.c,v 1.13 2005/12/11 12:24:37 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: htonl.c,v 1.12 2005/02/26 22:58:56 perry Exp $");
+__RCSID("$NetBSD: htonl.c,v 1.13 2005/12/11 12:24:37 christos Exp $");
 #endif
 
 #include <sys/types.h>

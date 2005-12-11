@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.c,v 1.7 2005/05/29 21:37:03 christos Exp $	*/
+/*	$NetBSD: cacheinfo.c,v 1.8 2005/12/11 12:19:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.7 2005/05/29 21:37:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.8 2005/12/11 12:19:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

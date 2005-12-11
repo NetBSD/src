@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.19 2005/06/13 20:32:58 jmc Exp $ */
+/* $NetBSD: isic_l1.h,v 1.20 2005/12/11 12:21:27 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.

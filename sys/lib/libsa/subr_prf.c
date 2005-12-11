@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.12 2005/05/23 19:05:00 jmc Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.13 2005/12/11 12:24:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

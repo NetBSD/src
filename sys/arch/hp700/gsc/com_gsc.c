@@ -1,4 +1,4 @@
-/*	$NetBSD: com_gsc.c,v 1.9 2003/12/07 02:17:22 chs Exp $	*/
+/*	$NetBSD: com_gsc.c,v 1.10 2005/12/11 12:17:24 christos Exp $	*/
 
 /*	$OpenBSD: com_gsc.c,v 1.8 2000/03/13 14:39:59 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.9 2003/12/07 02:17:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.10 2005/12/11 12:17:24 christos Exp $");
 
 #include "opt_kgdb.h"
 

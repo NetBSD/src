@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.84 2004/09/18 00:08:16 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.85 2005/12/11 12:23:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.84 2004/09/18 00:08:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.85 2005/12/11 12:23:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

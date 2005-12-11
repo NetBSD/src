@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.22 2003/10/02 12:14:00 christos Exp $	*/
+/*	$NetBSD: kernel.h,v 1.23 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993

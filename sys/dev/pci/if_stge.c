@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.31 2005/07/28 16:04:24 christos Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.32 2005/12/11 12:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.31 2005/07/28 16:04:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.32 2005/12/11 12:22:49 christos Exp $");
 
 #include "bpfilter.h"
 

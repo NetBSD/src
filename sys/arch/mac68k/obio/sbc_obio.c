@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.20 2005/03/05 17:40:56 chs Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.21 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.20 2005/03/05 17:40:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.21 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.8 2005/01/15 02:50:22 briggs Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.9 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>

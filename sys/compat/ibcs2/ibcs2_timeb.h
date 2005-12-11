@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_timeb.h,v 1.3 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: ibcs2_timeb.h,v 1.4 2005/12/11 12:20:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram

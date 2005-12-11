@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_mman.h,v 1.2 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: freebsd_mman.h,v 1.3 2005/12/11 12:20:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

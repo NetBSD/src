@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_sysent.c,v 1.62 2005/09/13 01:42:32 christos Exp $ */
+/* $NetBSD: freebsd_sysent.c,v 1.63 2005/12/11 12:20:02 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.62 2005/09/13 01:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.63 2005/12/11 12:20:02 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"

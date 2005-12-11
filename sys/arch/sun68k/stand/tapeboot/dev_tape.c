@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.2 2005/01/22 15:36:12 chs Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.3 2005/12/11 12:19:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

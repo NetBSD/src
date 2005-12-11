@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.66 2005/10/01 03:17:37 atatat Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.67 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.66 2005/10/01 03:17:37 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.67 2005/12/11 12:24:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,10 +218,10 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 				break;
 			default:
 				error = EOPNOTSUPP;
-				FILE_UNUSE(fp, pown);
+				FILE_UNUSE(fp, proc_representative_lwp(pown));
 				goto bad;
 			}
-			FILE_UNUSE(fp, pown);
+			FILE_UNUSE(fp, proc_representative_lwp(pown));
 		}
 		break;
 
@@ -297,9 +297,9 @@ procfs_rw(v)
 	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	struct proc *curp = uio->uio_procp;
-	struct pfsnode *pfs = VTOPFS(vp);
+	struct lwp *curl;
 	struct lwp *l;
+	struct pfsnode *pfs = VTOPFS(vp);
 	struct proc *p;
 
 	if (uio->uio_offset < 0)
@@ -314,6 +314,8 @@ procfs_rw(v)
 	if (uio->uio_rw == UIO_WRITE && p == initproc && securelevel > -1)
 		return EPERM;
 
+	curl = uio->uio_lwp;
+
 	/* XXX NJWLWP
 	 * The entire procfs interface needs work to be useful to
 	 * a process with multiple LWPs. For the moment, we'll
@@ -324,53 +326,53 @@ procfs_rw(v)
 	switch (pfs->pfs_type) {
 	case PFSnote:
 	case PFSnotepg:
-		return (procfs_donote(curp, p, pfs, uio));
+		return (procfs_donote(curl, p, pfs, uio));
 
 	case PFSregs:
-		return (procfs_doregs(curp, l, pfs, uio));
+		return (procfs_doregs(curl, l, pfs, uio));
 
 	case PFSfpregs:
-		return (procfs_dofpregs(curp, l, pfs, uio));
+		return (procfs_dofpregs(curl, l, pfs, uio));
 
 	case PFSctl:
-		return (procfs_doctl(curp, l, pfs, uio));
+		return (procfs_doctl(curl, l, pfs, uio));
 
 	case PFSstatus:
-		return (procfs_dostatus(curp, l, pfs, uio));
+		return (procfs_dostatus(curl, l, pfs, uio));
 
 	case PFSstat:
-		return (procfs_do_pid_stat(curp, l, pfs, uio));
+		return (procfs_do_pid_stat(curl, l, pfs, uio));
 
 	case PFSmap:
-		return (procfs_domap(curp, p, pfs, uio, 0));
+		return (procfs_domap(curl, p, pfs, uio, 0));
 
 	case PFSmaps:
-		return (procfs_domap(curp, p, pfs, uio, 1));
+		return (procfs_domap(curl, p, pfs, uio, 1));
 
 	case PFSmem:
-		return (procfs_domem(curp, p, pfs, uio));
+		return (procfs_domem(curl, l, pfs, uio));
 
 	case PFScmdline:
-		return (procfs_docmdline(curp, p, pfs, uio));
+		return (procfs_docmdline(curl, p, pfs, uio));
 
 	case PFSmeminfo:
-		return (procfs_domeminfo(curp, p, pfs, uio));
+		return (procfs_domeminfo(curl, p, pfs, uio));
 
 	case PFScpuinfo:
-		return (procfs_docpuinfo(curp, p, pfs, uio));
+		return (procfs_docpuinfo(curl, p, pfs, uio));
 
 	case PFSfd:
-		return (procfs_dofd(curp, p, pfs, uio));
+		return (procfs_dofd(curl, p, pfs, uio));
 
 	case PFSuptime:
-		return (procfs_douptime(curp, p, pfs, uio));
+		return (procfs_douptime(curl, p, pfs, uio));
 
 	case PFSmounts:
-		return (procfs_domounts(curp, p, pfs, uio));
+		return (procfs_domounts(curl, p, pfs, uio));
 
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
-		return (procfs_machdep_rw(curp, l, pfs, uio));
+		return (procfs_machdep_rw(curl, l, pfs, uio));
 #endif
 
 	default:

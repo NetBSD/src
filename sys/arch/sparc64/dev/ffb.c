@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.19 2005/07/04 22:18:37 jdc Exp $	*/
+/*	$NetBSD: ffb.c,v 1.20 2005/12/11 12:19:09 christos Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.19 2005/07/04 22:18:37 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.20 2005/12/11 12:19:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.12 2005/08/26 13:19:34 drochner Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.13 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.12 2005/08/26 13:19:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.13 2005/12/11 12:16:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.12 2004/01/21 07:16:07 petrov Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.13 2005/12/11 12:19:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green

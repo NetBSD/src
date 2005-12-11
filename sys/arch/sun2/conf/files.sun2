@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.15 2005/05/30 15:16:51 tsutsui Exp $
+#	$NetBSD: files.sun2,v 1.16 2005/12/11 12:19:16 christos Exp $
 
 #
 # sun2-specific configuration info

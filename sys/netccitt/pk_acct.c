@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.20 2005/10/06 16:32:14 kleink Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.21 2005/12/11 12:24:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.20 2005/10/06 16:32:14 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.21 2005/12/11 12:24:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,12 +106,13 @@ pk_accton(path)
 	struct vnode *vp = NULL;
 	struct nameidata nd;
 	struct vnode *oacctp = pkacctp;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
+	struct proc *p;
 	int error;
 
 	if (path == 0)
 		goto close;
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
 	if ((error = vn_open (&nd, FWRITE, 0644)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -123,7 +124,8 @@ pk_accton(path)
 	pkacctp = vp;
 	if (oacctp) {
 	close:
-		error = vn_close (oacctp, FWRITE, p -> p_ucred, p);
+		p = l->l_proc;
+		error = vn_close (oacctp, FWRITE, p->p_ucred, l);
 	}
 	return (error);
 }

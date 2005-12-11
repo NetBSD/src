@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.23 2005/10/24 12:58:34 christos Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.24 2005/12/11 12:20:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.23 2005/10/24 12:58:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.24 2005/12/11 12:20:19 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -466,8 +466,8 @@ bsd_termios_to_linux_termios(bts, lts)
 }
 
 int
-linux_ioctl_termios(p, uap, retval)
-	struct proc *p;
+linux_ioctl_termios(l, uap, retval)
+	struct lwp *l;
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
@@ -485,9 +485,9 @@ linux_ioctl_termios(p, uap, retval)
 	struct sys_ioctl_args ia;
 	int error;
 	char tioclinux;
-	int (*bsdioctl)(struct file *, u_long, void *, struct proc *);
+	int (*bsdioctl)(struct file *, u_long, void *, struct lwp *);
 
-	fdp = p->p_fd;
+	fdp = l->l_proc->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
@@ -504,7 +504,7 @@ linux_ioctl_termios(p, uap, retval)
 
 	switch (com & 0xffff) {
 	case LINUX_TCGETS:
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
+		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
 		if (error)
 			goto out;
 		bsd_termios_to_linux_termios(&tmpbts, &tmplts);
@@ -517,7 +517,7 @@ linux_ioctl_termios(p, uap, retval)
 		 * First fill in all fields, so that we keep the current
 		 * values for fields that Linux doesn't know about.
 		 */
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
+		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
 		if (error)
 			goto out;
 		error = copyin(SCARG(uap, data), &tmplts, sizeof tmplts);
@@ -535,10 +535,10 @@ linux_ioctl_termios(p, uap, retval)
 			com = TIOCSETAF;
 			break;
 		}
-		error = (*bsdioctl)(fp, com, (caddr_t)&tmpbts, p);
+		error = (*bsdioctl)(fp, com, (caddr_t)&tmpbts, l);
 		goto out;
 	case LINUX_TCGETA:
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
+		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
 		if (error)
 			goto out;
 		bsd_termios_to_linux_termio(&tmpbts, &tmplt);
@@ -551,7 +551,7 @@ linux_ioctl_termios(p, uap, retval)
 		 * First fill in all fields, so that we keep the current
 		 * values for fields that Linux doesn't know about.
 		 */
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
+		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
 		if (error)
 			goto out;
 		error = copyin(SCARG(uap, data), &tmplt, sizeof tmplt);
@@ -569,7 +569,7 @@ linux_ioctl_termios(p, uap, retval)
 			com = TIOCSETAF;
 			break;
 		}
-		error = (*bsdioctl)(fp, com, (caddr_t)&tmpbts, p);
+		error = (*bsdioctl)(fp, com, (caddr_t)&tmpbts, l);
 		goto out;
 	case LINUX_TCFLSH:
 		switch((u_long)SCARG(uap, data)) {
@@ -586,10 +586,10 @@ linux_ioctl_termios(p, uap, retval)
 			error = EINVAL;
 			goto out;
 		}
-		error = (*bsdioctl)(fp, TIOCFLUSH, (caddr_t)&idat, p);
+		error = (*bsdioctl)(fp, TIOCFLUSH, (caddr_t)&idat, l);
 		goto out;
 	case LINUX_TIOCGETD:
-		error = (*bsdioctl)(fp, TIOCGETD, (caddr_t)&idat, p);
+		error = (*bsdioctl)(fp, TIOCGETD, (caddr_t)&idat, l);
 		if (error)
 			goto out;
 		switch (idat) {
@@ -643,7 +643,7 @@ linux_ioctl_termios(p, uap, retval)
 			error = EINVAL;
 			goto out;
 		}
-		error = (*bsdioctl)(fp, TIOCSETD, (caddr_t)&idat, p);
+		error = (*bsdioctl)(fp, TIOCSETD, (caddr_t)&idat, l);
 		goto out;
 	case LINUX_TIOCLINUX:
 		error = copyin(SCARG(uap, data), &tioclinux, sizeof tioclinux);
@@ -722,8 +722,8 @@ linux_ioctl_termios(p, uap, retval)
 	case LINUX_TIOCGPTN:
 #ifndef NO_DEV_PTM
 		{
-			caddr_t sg = stackgap_init(p, 0);
-			struct ptmget ptm, *ptmp = stackgap_alloc(p, &sg,
+			caddr_t sg = stackgap_init(l->l_proc, 0);
+			struct ptmget ptm, *ptmp = stackgap_alloc(l->l_proc, &sg,
 				sizeof(*ptmp));
 
 			SCARG(&ia, fd) = SCARG(uap, fd);
@@ -752,6 +752,6 @@ linux_ioctl_termios(p, uap, retval)
 	/* XXX NJWLWP */
 	error = sys_ioctl(curlwp, &ia, retval);
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }

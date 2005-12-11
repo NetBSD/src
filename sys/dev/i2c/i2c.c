@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.4 2005/08/26 12:42:11 drochner Exp $	*/
+/*	$NetBSD: i2c.c,v 1.5 2005/12/11 12:21:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

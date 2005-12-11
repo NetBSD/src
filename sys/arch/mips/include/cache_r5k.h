@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.h,v 1.2 2004/12/13 08:39:50 sekiya Exp $	*/
+/*	$NetBSD: cache_r5k.h,v 1.3 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

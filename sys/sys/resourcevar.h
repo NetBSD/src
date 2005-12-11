@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.29 2005/05/09 23:43:04 christos Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.30 2005/12/11 12:25:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993

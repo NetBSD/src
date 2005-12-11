@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410_io_init.c,v 1.1 2003/09/03 03:18:31 mycroft Exp $ */
+/* $NetBSD: smdk2410_io_init.c,v 1.2 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.

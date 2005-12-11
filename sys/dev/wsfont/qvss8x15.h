@@ -1,4 +1,4 @@
-/* 	$NetBSD: qvss8x15.h,v 1.10 2005/06/28 00:44:22 thorpej Exp $ */
+/* 	$NetBSD: qvss8x15.h,v 1.11 2005/12/11 12:24:12 christos Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986

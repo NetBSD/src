@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.5 2003/10/25 19:05:39 matt Exp $	*/
+/*	$NetBSD: reg.h,v 1.6 2005/12/11 12:19:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.

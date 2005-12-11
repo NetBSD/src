@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.7 2005/06/05 13:53:23 he Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.8 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.7 2005/06/05 13:53:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.8 2005/12/11 12:16:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: remote-sl.h,v 1.2 2003/08/07 16:30:27 agc Exp $ */
+/*	$NetBSD: remote-sl.h,v 1.3 2005/12/11 12:19:44 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

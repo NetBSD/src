@@ -1,4 +1,4 @@
-/*	$NetBSD: psc.c,v 1.9 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: psc.c,v 1.10 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psc.c,v 1.9 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psc.c,v 1.10 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

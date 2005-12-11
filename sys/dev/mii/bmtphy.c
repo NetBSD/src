@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.17 2005/01/17 13:17:45 scw Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.18 2005/12/11 12:22:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.17 2005/01/17 13:17:45 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.18 2005/12/11 12:22:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

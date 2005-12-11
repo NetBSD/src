@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.17 2005/12/03 22:16:16 christos Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.18 2005/12/11 12:24:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -99,13 +99,13 @@ extern struct pool cd9660_node_pool;
 extern int cd9660_utf8_joliet;
 
 int cd9660_mount(struct mount *,
-	    const char *, void *, struct nameidata *, struct proc *);
-int cd9660_start(struct mount *, int, struct proc *);
-int cd9660_unmount(struct mount *, int, struct proc *);
+	    const char *, void *, struct nameidata *, struct lwp *);
+int cd9660_start(struct mount *, int, struct lwp *);
+int cd9660_unmount(struct mount *, int, struct lwp *);
 int cd9660_root(struct mount *, struct vnode **);
-int cd9660_quotactl(struct mount *, int, uid_t, void *, struct proc *);
-int cd9660_statvfs(struct mount *, struct statvfs *, struct proc *);
-int cd9660_sync(struct mount *, int, struct ucred *, struct proc *);
+int cd9660_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
+int cd9660_statvfs(struct mount *, struct statvfs *, struct lwp *);
+int cd9660_sync(struct mount *, int, struct ucred *, struct lwp *);
 int cd9660_vget(struct mount *, ino_t, struct vnode **);
 int cd9660_fhtovp(struct mount *, struct fid *, struct vnode **);
 int cd9660_vptofh(struct vnode *, struct fid *);

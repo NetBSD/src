@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950reg.h,v 1.2 2005/04/03 11:37:19 jdolecek Exp $	*/
+/*	$NetBSD: mb86950reg.h,v 1.3 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen

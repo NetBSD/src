@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2004/07/07 18:03:51 drochner Exp $
+#	$NetBSD: Makefile,v 1.22 2005/12/11 12:19:10 christos Exp $
 
 INCSDIR= /usr/include/sparc64
 

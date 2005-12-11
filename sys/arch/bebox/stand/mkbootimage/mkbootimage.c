@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.4 2004/11/25 08:09:15 jmc Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.5 2005/12/11 12:17:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_disk.h,v 1.2 2005/01/22 15:36:11 chs Exp $	*/
+/*	$NetBSD: dev_disk.h,v 1.3 2005/12/11 12:19:29 christos Exp $	*/
 
 
 int	disk_open(struct open_file *, ...);

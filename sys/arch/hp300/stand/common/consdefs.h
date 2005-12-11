@@ -1,4 +1,4 @@
-/*	$NetBSD: consdefs.h,v 1.4 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: consdefs.h,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

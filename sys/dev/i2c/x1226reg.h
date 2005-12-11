@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226reg.h,v 1.2 2004/02/04 12:03:07 shige Exp $	*/
+/*	$NetBSD: x1226reg.h,v 1.3 2005/12/11 12:21:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.

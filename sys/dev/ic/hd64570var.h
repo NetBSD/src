@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570var.h,v 1.6 2003/07/08 10:06:31 itojun Exp $	*/
+/*	$NetBSD: hd64570var.h,v 1.7 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps

@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.12 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.13 2005/12/11 12:21:03 christos Exp $");
 
 #include "acpi.h"
 #include "acparser.h"

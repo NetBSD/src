@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.44 2005/12/07 06:05:20 thorpej Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.45 2005/12/11 12:24:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.44 2005/12/07 06:05:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.45 2005/12/11 12:24:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,13 +71,14 @@ soo_write(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
 {
 	struct socket *so = (struct socket *) fp->f_data;
 	return ((*so->so_send)(so, (struct mbuf *)0,
-		uio, (struct mbuf *)0, (struct mbuf *)0, 0, uio->uio_procp));
+		uio, (struct mbuf *)0, (struct mbuf *)0, 0, uio->uio_lwp));
 }
 
 int
-soo_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
+soo_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	struct socket *so = (struct socket *)fp->f_data;
+	struct proc *p = l->l_proc;
 
 	switch (cmd) {
 
@@ -142,15 +143,15 @@ soo_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
 	 * different entry since a socket's unnecessary
 	 */
 	if (IOCGROUP(cmd) == 'i')
-		return (ifioctl(so, cmd, data, p));
+		return (ifioctl(so, cmd, data, l));
 	if (IOCGROUP(cmd) == 'r')
-		return (rtioctl(cmd, data, p));
+		return (rtioctl(cmd, data, l));
 	return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)0, p));
+	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)0, l));
 }
 
 int
-soo_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
+soo_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 {
 	if (cmd == F_SETFL)
 		return (0);
@@ -159,7 +160,7 @@ soo_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
 }
 
 int
-soo_poll(struct file *fp, int events, struct proc *p)
+soo_poll(struct file *fp, int events, struct lwp *l)
 {
 	struct socket *so = (struct socket *)fp->f_data;
 	int revents = 0;
@@ -179,12 +180,12 @@ soo_poll(struct file *fp, int events, struct proc *p)
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
-			selrecord(p, &so->so_rcv.sb_sel);
+			selrecord(l, &so->so_rcv.sb_sel);
 			so->so_rcv.sb_flags |= SB_SEL;
 		}
 
 		if (events & (POLLOUT | POLLWRNORM)) {
-			selrecord(p, &so->so_snd.sb_sel);
+			selrecord(l, &so->so_snd.sb_sel);
 			so->so_snd.sb_flags |= SB_SEL;
 		}
 	}
@@ -194,19 +195,19 @@ soo_poll(struct file *fp, int events, struct proc *p)
 }
 
 int
-soo_stat(struct file *fp, struct stat *ub, struct proc *p)
+soo_stat(struct file *fp, struct stat *ub, struct lwp *l)
 {
 	struct socket *so = (struct socket *)fp->f_data;
 
 	memset((caddr_t)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFSOCK;
 	return ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
-	    (struct mbuf *)ub, (struct mbuf *)0, (struct mbuf *)0, p));
+	    (struct mbuf *)ub, (struct mbuf *)0, (struct mbuf *)0, l));
 }
 
 /* ARGSUSED */
 int
-soo_close(struct file *fp, struct proc *p)
+soo_close(struct file *fp, struct lwp *l)
 {
 	int error = 0;
 

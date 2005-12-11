@@ -1,4 +1,4 @@
-/*	$NetBSD: pmon.c,v 1.3 2003/07/14 22:57:47 lukem Exp $	*/
+/*	$NetBSD: pmon.c,v 1.4 2005/12/11 12:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmon.c,v 1.3 2003/07/14 22:57:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmon.c,v 1.4 2005/12/11 12:16:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

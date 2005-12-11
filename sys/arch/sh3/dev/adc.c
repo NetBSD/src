@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.5 2005/08/26 13:19:37 drochner Exp $ */
+/*	$NetBSD: adc.c,v 1.6 2005/12/11 12:18:58 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.5 2005/08/26 13:19:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.6 2005/12/11 12:18:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

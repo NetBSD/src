@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthreevar.h,v 1.3 2005/06/04 04:37:21 tsutsui Exp $ */
+/*	$NetBSD: cgthreevar.h,v 1.4 2005/12/11 12:23:56 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

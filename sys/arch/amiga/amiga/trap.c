@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103 2005/06/13 19:31:54 jandberg Exp $	*/
+/*	$NetBSD: trap.c,v 1.104 2005/12/11 12:16:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2005/06/13 19:31:54 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 2005/12/11 12:16:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

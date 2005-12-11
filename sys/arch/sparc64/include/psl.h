@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.28 2005/06/19 23:36:47 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.29 2005/12/11 12:19:10 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

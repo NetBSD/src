@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.6 2005/03/29 04:06:20 thorpej Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.7 2005/12/11 12:16:17 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.6 2005/03/29 04:06:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.7 2005/12/11 12:16:17 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

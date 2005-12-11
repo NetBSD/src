@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_conv.c,v 1.6 2005/10/23 04:28:53 christos Exp $	*/
+/*	$NetBSD: ntfs_conv.c,v 1.7 2005/12/11 12:24:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.6 2005/10/23 04:28:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.7 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.2 2004/04/23 21:13:06 itojun Exp $	*/
+/*	$NetBSD: pchb.c,v 1.3 2005/12/11 12:17:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

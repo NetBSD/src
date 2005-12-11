@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.13 2005/10/28 14:36:15 christos Exp $ */
+/*	$NetBSD: gemvar.h,v 1.14 2005/12/11 12:21:26 christos Exp $ */
 
 /*
  *

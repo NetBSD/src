@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410.c,v 1.2 2003/10/05 06:57:20 bsh Exp $ */
+/* $NetBSD: smdk2410.c,v 1.3 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.

@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.8 2005/05/29 21:57:49 christos Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.9 2005/12/11 12:24:21 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.8 2005/05/29 21:57:49 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.9 2005/12/11 12:24:21 christos Exp $");
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed

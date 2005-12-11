@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.14 2005/01/10 22:01:36 kent Exp $
+#	$NetBSD: files.iomd,v 1.15 2005/12/11 12:16:47 christos Exp $
 #
 # IOMD-specific configuration data
 #

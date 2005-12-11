@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.20 2005/09/21 14:32:46 christos Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.21 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.20 2005/09/21 14:32:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.21 2005/12/11 12:22:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

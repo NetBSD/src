@@ -1,4 +1,4 @@
-/*	$NetBSD: disklbl.h,v 1.2 2003/08/07 16:27:07 agc Exp $	*/
+/*	$NetBSD: disklbl.h,v 1.3 2005/12/11 12:17:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993

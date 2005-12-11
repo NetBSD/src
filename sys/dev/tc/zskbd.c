@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.11 2005/02/27 00:27:50 perry Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.12 2005/12/11 12:24:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.11 2005/02/27 00:27:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.12 2005/12/11 12:24:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ CFATTACH_DECL(zskbd, sizeof(struct zskbd_softc),
 
 static int	zskbd_enable(void *, int);
 static void	zskbd_set_leds(void *, int);
-static int	zskbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	zskbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 const struct wskbd_accessops zskbd_accessops = {
 	zskbd_enable,
@@ -316,12 +316,12 @@ zskbd_set_leds(v, leds)
 }
 
 static int
-zskbd_ioctl(v, cmd, data, flag, p)
+zskbd_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct zskbd_softc *sc = (struct zskbd_softc *)v;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.40 2004/06/25 13:47:04 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.41 2005/12/11 12:21:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.40 2004/06/25 13:47:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.41 2005/12/11 12:21:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

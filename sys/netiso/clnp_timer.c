@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_timer.c,v 1.12 2004/04/19 05:16:45 matt Exp $	*/
+/*	$NetBSD: clnp_timer.c,v 1.13 2005/12/11 12:25:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_timer.c,v 1.12 2004/04/19 05:16:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_timer.c,v 1.13 2005/12/11 12:25:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: boot_flag.h,v 1.4 2003/11/03 16:39:07 thorpej Exp $ */
+/* $NetBSD: boot_flag.h,v 1.5 2005/12/11 12:25:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

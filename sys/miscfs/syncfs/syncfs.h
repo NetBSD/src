@@ -1,4 +1,4 @@
-/*	$NetBSD: syncfs.h,v 1.8 2005/08/30 20:08:02 xtraeme Exp $	*/
+/*	$NetBSD: syncfs.h,v 1.9 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.

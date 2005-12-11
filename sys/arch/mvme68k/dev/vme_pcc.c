@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.19 2004/02/13 11:36:15 wiz Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.20 2005/12/11 12:18:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.19 2004/02/13 11:36:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.20 2005/12/11 12:18:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

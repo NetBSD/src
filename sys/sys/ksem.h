@@ -1,4 +1,4 @@
-/*	$NetBSD: ksem.h,v 1.4 2003/09/30 20:37:36 christos Exp $	*/
+/*	$NetBSD: ksem.h,v 1.5 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>

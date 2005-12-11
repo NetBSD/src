@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.57 2005/05/20 16:23:05 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.58 2005/12/11 12:24:51 christos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.57 2005/05/20 16:23:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.58 2005/12/11 12:24:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

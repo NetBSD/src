@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.7 2004/12/11 03:32:27 tsutsui Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.8 2005/12/11 12:18:24 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.

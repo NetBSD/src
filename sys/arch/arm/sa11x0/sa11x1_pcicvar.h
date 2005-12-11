@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x1_pcicvar.h,v 1.1 2003/08/08 12:29:23 bsh Exp $ */
+/*	$NetBSD: sa11x1_pcicvar.h,v 1.2 2005/12/11 12:16:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

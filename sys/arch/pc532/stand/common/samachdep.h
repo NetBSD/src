@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.3 2003/12/06 13:09:01 simonb Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.4 2005/12/11 12:18:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

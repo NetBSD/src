@@ -1,4 +1,4 @@
-/* $NetBSD: toasterlcd.c,v 1.1 2005/08/14 04:15:18 joff Exp $ */
+/* $NetBSD: toasterlcd.c,v 1.2 2005/12/11 12:22:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.1 2005/08/14 04:15:18 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.2 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2004/05/08 21:51:51 kleink Exp $
+#	$NetBSD: Makefile,v 1.24 2005/12/11 12:19:34 christos Exp $
 
 INCSDIR= /usr/include/vax
 

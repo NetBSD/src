@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.11 2005/01/15 11:01:46 dyoung Exp $	*/
+/*	$NetBSD: anreg.h,v 1.12 2005/12/11 12:21:25 christos Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.

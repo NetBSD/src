@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.72 2004/12/07 04:33:24 chs Exp $
+#	$NetBSD: files.sun3,v 1.73 2005/12/11 12:19:20 christos Exp $
 
 #
 # sun3-specific configuration info

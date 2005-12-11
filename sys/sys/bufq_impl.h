@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_impl.h,v 1.2 2005/10/16 02:02:23 yamt Exp $	*/
+/*	$NetBSD: bufq_impl.h,v 1.3 2005/12/11 12:25:20 christos Exp $	*/
 /*	NetBSD: bufq.h,v 1.3 2005/03/31 11:28:53 yamt Exp	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 

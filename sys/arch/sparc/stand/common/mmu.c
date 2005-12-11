@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.6 2005/06/19 20:00:28 thorpej Exp $	*/
+/*	$NetBSD: mmu.c,v 1.7 2005/12/11 12:19:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

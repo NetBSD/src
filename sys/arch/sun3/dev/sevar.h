@@ -1,4 +1,4 @@
-/*	$NetBSD: sevar.h,v 1.2 2005/06/03 15:04:21 tsutsui Exp $	*/
+/*	$NetBSD: sevar.h,v 1.3 2005/12/11 12:19:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

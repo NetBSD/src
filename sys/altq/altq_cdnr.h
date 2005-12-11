@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.h,v 1.3 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_cdnr.h,v 1.4 2005/12/11 12:16:03 christos Exp $	*/
 /*	$KAME: altq_cdnr.h,v 1.6 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*

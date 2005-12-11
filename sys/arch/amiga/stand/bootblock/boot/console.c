@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.6 2005/06/28 21:03:01 junyoung Exp $ */
+/* $NetBSD: console.c,v 1.7 2005/12/11 12:16:36 christos Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

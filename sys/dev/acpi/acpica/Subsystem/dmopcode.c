@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.7 2005/05/31 21:08:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.8 2005/12/11 12:21:02 christos Exp $");
 
 #include "acpi.h"
 #include "acparser.h"

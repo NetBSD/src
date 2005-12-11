@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/12/14 17:14:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 2005/12/11 12:21:14 christos Exp $
 
 INCSDIR= /usr/include/dev/ata
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/04/18 16:39:44 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2005/12/11 12:16:41 christos Exp $
 
 SUBDIR=	boot
 

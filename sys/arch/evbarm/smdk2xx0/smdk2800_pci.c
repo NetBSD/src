@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_pci.c,v 1.3 2003/07/30 18:17:16 bsh Exp $ */
+/*	$NetBSD: smdk2800_pci.c,v 1.4 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_pci.c,v 1.3 2003/07/30 18:17:16 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_pci.c,v 1.4 2005/12/11 12:17:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

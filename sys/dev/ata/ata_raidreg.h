@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidreg.h,v 1.2 2005/06/20 02:11:57 briggs Exp $	*/
+/*	$NetBSD: ata_raidreg.h,v 1.3 2005/12/11 12:21:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>

@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.41 2005/02/03 03:49:01 perry Exp $	*/
+/*	$NetBSD: igmp.c,v 1.42 2005/12/11 12:24:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.41 2005/02/03 03:49:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.42 2005/12/11 12:24:57 christos Exp $");
 
 #include "opt_mrouting.h"
 

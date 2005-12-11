@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.12 2003/10/17 17:42:35 tsutsui Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.13 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998

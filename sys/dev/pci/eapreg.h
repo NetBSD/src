@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.10 2005/02/13 23:58:38 fredb Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.11 2005/12/11 12:22:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
