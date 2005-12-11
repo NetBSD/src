@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.82 2005/10/18 01:49:18 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.83 2005/12/11 11:31:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.82 2005/10/18 01:49:18 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.83 2005/12/11 11:31:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: kdump.c,v 1.82 2005/10/18 01:49:18 christos Exp $");
 #include <sys/ktrace.h>
 #include <sys/ioctl.h>
 #include <sys/ptrace.h>
+#include <sys/sa.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -115,6 +116,7 @@ static void	ktrcsw(struct ktr_csw *);
 static void	ktruser(struct ktr_user *, int);
 static void	ktrmmsg(struct ktr_mmsg *, int);
 static void	ktrmool(struct ktr_mool *, int);
+static void	ktrsaupcall(const struct ktr_saupcall *, int);
 static void	usage(void) __attribute__((__noreturn__));
 static void	eprint(int);
 static void	rprint(register_t);
@@ -274,6 +276,9 @@ main(int argc, char **argv)
 		case KTR_EXEC_ENV:
 			visdump_buf(m, ktrlen, col);
 			break;
+		case KTR_SAUPCALL:
+			ktrsaupcall(m, ktrlen);
+			break;
 		default:
 			putchar('\n');
 			hexdump_buf(m, ktrlen, word_size ? word_size : 1);
@@ -301,8 +306,12 @@ dumpheader(struct ktr_header *kth)
 {
 	char unknown[64];
 	const char *type;
-	static struct timeval prevtime;
-	struct timeval temp;
+	union holdtime {
+		struct timeval tv;
+		struct timespec ts;
+	};
+	static union holdtime prevtime;
+	union holdtime temp;
 	int col;
 
 	switch (kth->ktr_type) {
@@ -342,24 +351,48 @@ dumpheader(struct ktr_header *kth)
 	case KTR_EXEC_ARG:
 		type = "ARG";
 		break;
+	case KTR_SAUPCALL:
+		type = "SAU";
+		break;
 	default:
 		(void)snprintf(unknown, sizeof(unknown), "UNKNOWN(%d)",
 		    kth->ktr_type);
 		type = unknown;
 	}
 
-	col = printf("%6d %-8.*s ", kth->ktr_pid, MAXCOMLEN, kth->ktr_comm);
+	col = printf("%6d ", kth->ktr_pid);
+	if (kth->ktr_version > KTRFACv0)
+		col += printf("%6d ", kth->ktr_lid);
+	col += printf("%-8.*s ", MAXCOMLEN, kth->ktr_comm);
 	if (timestamp) {
 		if (timestamp == 2) {
-			if (prevtime.tv_sec == 0)
-				temp.tv_sec = temp.tv_usec = 0;
+			if (kth->ktr_version == KTRFACv0) {
+				if (prevtime.tv.tv_sec == 0)
+					temp.tv.tv_sec = temp.tv.tv_usec = 0;
+				else
+					timersub(&kth->ktr_tv,
+					    &prevtime.tv, &temp.tv);
+				prevtime.tv = kth->ktr_tv;
+			} else {
+				if (prevtime.ts.tv_sec == 0)
+					temp.ts.tv_sec = temp.ts.tv_nsec = 0;
+				else
+					timespecsub(&kth->ktr_time,
+					    &prevtime.ts, &temp.ts);
+				prevtime.ts = kth->ktr_time;
+			}
+		} else {
+			if (kth->ktr_version == KTRFACv0)
+				temp.tv = kth->ktr_tv;
 			else
-				timersub(&kth->ktr_time, &prevtime, &temp);
-			prevtime = kth->ktr_time;
-		} else
-			temp = kth->ktr_time;
-		col += printf("%ld.%06ld ",
-		    (long int)temp.tv_sec, (long int)temp.tv_usec);
+				temp.ts = kth->ktr_time;
+		}
+		if (kth->ktr_version == KTRFACv0)
+			col += printf("%ld.%06ld ",
+			    (long)temp.tv.tv_sec, (long)temp.tv.tv_usec);
+		else
+			col += printf("%ld.%09ld ",
+			    (long)temp.ts.tv_sec, (long)temp.ts.tv_nsec);
 	}
 	col += printf("%-4s  ", type);
 	return col;
@@ -929,6 +962,45 @@ ktrmmsg(struct ktr_mmsg *mmsg, int len)
 		printf("unknown service%s [%d]\n", reply, mmsg->ktr_id);
 
 	hexdump_buf(mmsg, len, word_size ? word_size : 4);
+}
+
+static void
+ktr_saprint(const struct ktr_saupcall *sau, int off, int len)
+{
+	const struct sa_t * sa = (const struct sa_t *)(const void *)&sau[1];
+	int i;
+	for (i = off; i < off + len; i++) {
+		printf("<ctx=%p, id=%d, cpu=%d>%s",
+		    sa[i].sa_context, sa[i].sa_id, sa[i].sa_cpu,
+		    i == off + len - 1 ? "" : ", ");
+	}
+}
+
+static void
+ktrsaupcall(const struct ktr_saupcall *sau, int len)
+{
+	char tbuf[64];
+	const char *type;
+	static const char *const sastrings[] = { SA_UPCALL_STRINGS };
+
+	if (sau->ktr_type >= 0 && sau->ktr_type < SA_UPCALL_NUPCALLS)
+		type = sastrings[sau->ktr_type];
+	else {
+		(void)snprintf(tbuf, sizeof(tbuf), "*%d*", sau->ktr_type);
+		type = tbuf;
+	}
+	printf("%s", type);
+	if (sau->ktr_nevent) {
+		printf(", event=[");
+		ktr_saprint(sau, 0, sau->ktr_nevent);
+		printf("]");
+	}
+	if (sau->ktr_nint) {
+		printf(", intr=[");
+		ktr_saprint(sau, sau->ktr_nevent, sau->ktr_nint);
+		printf("]");
+	}
+	printf("\n");
 }
 
 static void
