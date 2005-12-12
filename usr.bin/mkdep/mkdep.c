@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.25 2005/12/12 22:05:28 dsl Exp $ */
+/* $NetBSD: mkdep.c,v 1.26 2005/12/12 22:49:37 wiz Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.25 2005/12/12 22:05:28 dsl Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.26 2005/12/12 22:49:37 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -98,7 +98,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-adDopq] [-f file] [-s suffixes] -- [flags] file ...\n",
+	    "usage: %s [-aDdopq] [-f file] [-s suffixes] -- [flags] file ...\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -217,7 +217,7 @@ main(int argc, char **argv)
 	opterr = 0;	/* stop getopt() bleating about errors. */
 	for (;;) {
 		ok_ind = optind;
-		ch = getopt(argc, argv, "adDf:opqs:");
+		ch = getopt(argc, argv, "aDdf:opqs:");
 		switch (ch) {
 		case -1:
 			ok_ind = optind;
