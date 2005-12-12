@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkdep.1,v 1.13 2005/12/12 22:05:28 dsl Exp $
+.\"	$NetBSD: mkdep.1,v 1.14 2005/12/12 22:49:37 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd construct Makefile dependency list
 .Sh SYNOPSIS
 .Nm
-.Op Fl adDopq
+.Op Fl aDdopq
 .Op Fl f Ar file
 .Op Fl s Ar suffixes
 .Li --
@@ -67,13 +67,14 @@ Append to the output file,
 so that multiple
 .Nm Ns 's
 may be run from a single Makefile.
-.It Fl d
-Post process and merge previously created (for example by 'cc -MD x.c') depend
-files into a single file.
 .It Fl D
 Post process (as
 .Fl d )
 but read the list of filenames from stdin.
+.It Fl d
+Post process and merge previously created (for example by
+.Dq cc -MD x.c )
+depend files into a single file.
 .It Fl f
 Write the include file dependencies to
 .Ar file ,
