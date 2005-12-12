@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkdep.1,v 1.12 2005/10/19 18:19:41 ross Exp $
+.\"	$NetBSD: mkdep.1,v 1.13 2005/12/12 22:05:28 dsl Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mkdep.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 9, 2003
+.Dd December 12, 2005
 .Dt MKDEP 1
 .Os
 .Sh NAME
@@ -37,9 +37,10 @@
 .Nd construct Makefile dependency list
 .Sh SYNOPSIS
 .Nm
-.Op Fl adopq
+.Op Fl adDopq
 .Op Fl f Ar file
 .Op Fl s Ar suffixes
+.Li --
 .Op Ar flags
 .Ar file ...
 .Sh DESCRIPTION
@@ -53,7 +54,7 @@ CFLAGS= -O -I../include
 SRCS= file1.c file2.c
 
 depend:
-	mkdep ${CFLAGS} ${SRCS}
+	mkdep -- ${CFLAGS} ${SRCS}
 .Ed
 .Pp
 where the macro SRCS is the list of C source files and the macro
@@ -69,6 +70,10 @@ may be run from a single Makefile.
 .It Fl d
 Post process and merge previously created (for example by 'cc -MD x.c') depend
 files into a single file.
+.It Fl D
+Post process (as
+.Fl d )
+but read the list of filenames from stdin.
 .It Fl f
 Write the include file dependencies to
 .Ar file ,
