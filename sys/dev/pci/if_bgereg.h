@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.30 2005/12/07 04:43:05 jonathan Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.31 2005/12/12 00:40:44 jonathan Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -271,6 +271,8 @@
 #define BGE_ASICREV_BCM5750             0x04
 #define BGE_ASICREV_BCM5714             0x05
 #define BGE_ASICREV_BCM5752             0x06
+/* ASIC revision 0x07 is the original bcm5700 */
+#define BGE_ASICREV_BCM5780             0x08
 #define BGE_ASICREV_BCM5715             0x09	/* XXX ??? */
 
 /* chip revisions */
