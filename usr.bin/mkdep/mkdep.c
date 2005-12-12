@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.24 2005/06/07 09:33:37 he Exp $ */
+/* $NetBSD: mkdep.c,v 1.25 2005/12/12 22:05:28 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.24 2005/06/07 09:33:37 he Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.25 2005/12/12 22:05:28 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -98,7 +98,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-adopq] [-f file] [-s suffixes] [flags] file ...\n",
+	    "usage: %s [-adDopq] [-f file] [-s suffixes] -- [flags] file ...\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -160,6 +160,33 @@ run_cc(int argc, char **argv, const char **fname)
 	return tmpfd;
 }
 
+static const char *
+read_fname(void)
+{
+	static char *fbuf;
+	static int fbuflen;
+	int len, ch;
+
+	for (len = 0; (ch = getchar()) != EOF; len++) {
+		if (isspace(ch)) {
+			if (len != 0)
+				break;
+			len--;
+			continue;
+		}
+		if (len >= fbuflen - 1) {
+			fbuf = realloc(fbuf, fbuflen += 32);
+			if (fbuf == NULL)
+				err(EXIT_FAILURE, "no memory");
+		}
+		fbuf[len] = ch;
+	}
+	if (len == 0)
+		return NULL;
+	fbuf[len] = 0;
+	return fbuf;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -190,13 +217,17 @@ main(int argc, char **argv)
 	opterr = 0;	/* stop getopt() bleating about errors. */
 	for (;;) {
 		ok_ind = optind;
-		ch = getopt(argc, argv, "adf:opqs:");
+		ch = getopt(argc, argv, "adDf:opqs:");
 		switch (ch) {
 		case -1:
 			ok_ind = optind;
 			break;
 		case 'a':	/* Append to output file */
 			aflag &= ~O_TRUNC;
+			continue;
+		case 'D':	/* Process *.d files (don't run cc -M) */
+			dflag = 2;	/* Read names from stdin */
+			opterr = 1;
 			continue;
 		case 'd':	/* Process *.d files (don't run cc -M) */
 			dflag = 1;
@@ -228,7 +259,7 @@ main(int argc, char **argv)
 
 	argc -= ok_ind;
 	argv += ok_ind;
-	if (argc == 0 && !dflag)
+	if ((argc == 0 && !dflag) || (argc != 0 && dflag == 2))
 		usage();
 
 	if (suffixes != NULL) {
@@ -255,9 +286,14 @@ main(int argc, char **argv)
 		err(EXIT_FAILURE, "unable to %s to file %s\n",
 		    aflag & O_TRUNC ? "write" : "append", filename);
 
-	for (; *argv != NULL; argv++) {
+	while (dflag == 2 || *argv != NULL) {
 		if (dflag) {
-			fname = *argv;
+			if (dflag == 2) {
+				fname = read_fname();
+				if (fname == NULL)
+					break;
+			} else
+				fname = *argv++;
 			fd = open(fname, O_RDONLY, 0);
 			if (fd == -1) {
 				if (!qflag)
@@ -267,7 +303,7 @@ main(int argc, char **argv)
 		} else {
 			fd = run_cc(argc, argv, &fname);
 			/* consume all args... */
-			argv += argc - 1;
+			argv += argc;
 		}
 
 		sz = lseek(fd, 0, SEEK_END);
@@ -279,7 +315,7 @@ main(int argc, char **argv)
 		close(fd);
 
 		if (buf == MAP_FAILED)
-			err(EXIT_FAILURE, "unable to mmap file %s", *argv);
+			err(EXIT_FAILURE, "unable to mmap file %s", fname);
 		lim = buf + sz - 1;
 
 		/* Remove leading "./" from filenames */
