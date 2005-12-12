@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.19 2005/12/11 12:21:29 christos Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.20 2005/12/12 01:14:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.19 2005/12/11 12:21:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.20 2005/12/12 01:14:22 christos Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -301,7 +301,7 @@ const struct wsscreen_list vga_screenlist = {
 	_vga_scrlist_mono
 };
 
-static int	vga_raster_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	vga_raster_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	vga_raster_mmap(void *, off_t, int);
 static int	vga_raster_alloc_screen(void *, const struct wsscreen_descr *,
 		    void **, int *, int *, long *);
@@ -595,7 +595,7 @@ vga_set_video(struct vga_config *vc, int state)
 }
 
 int
-vga_raster_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+vga_raster_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct vga_config *vc = v;
 	const struct vga_funcs *vf = vc->vc_funcs;
@@ -639,7 +639,7 @@ vga_raster_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (vf->vf_ioctl == NULL)
 		return (EPASSTHROUGH);
 
-	return ((*vf->vf_ioctl)(v, cmd, data, flag, p));
+	return ((*vf->vf_ioctl)(v, cmd, data, flag, l));
 }
 
 static paddr_t
