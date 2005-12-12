@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.6 2005/12/11 12:19:50 christos Exp $      */
+/*      $NetBSD: xenevt.c,v 1.7 2005/12/12 22:56:50 jld Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,9 +63,9 @@ static int	xenevt_read(struct file *, off_t *, struct uio *,
     struct ucred *, int);
 static int	xenevt_write(struct file *, off_t *, struct uio *,
     struct ucred *, int);
-static int	xenevt_ioctl(struct file *, u_long, void *, struct proc *);
-static int	xenevt_poll(struct file *, int, struct proc *);
-static int	xenevt_close(struct file *, struct proc *);
+static int	xenevt_ioctl(struct file *, u_long, void *, struct lwp *);
+static int	xenevt_poll(struct file *, int, struct lwp *);
+static int	xenevt_close(struct file *, struct lwp *);
 /* static int	xenevt_kqfilter(struct file *, struct knote *); */
 
 static const struct fileops xenevt_fileops = {
@@ -213,24 +213,24 @@ xenevt_record(struct xenevt_d *d, int port)
 
 /* open the xenevt device; this is where we clone */
 int
-xenevtopen(dev_t dev, int flags, int mode, struct proc *p)
+xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct xenevt_d *d;
 	struct file *fp;
 	int fd, error;
 
 	/* falloc() will use the descriptor for us. */
-	if ((error = falloc(p, &fp, &fd)) != 0)
+	if ((error = falloc(l->l_proc, &fp, &fd)) != 0)
 		return error;
 
 	d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_ZERO);
 	simple_lock_init(&d->lock);
 
-	return fdclone(p, fp, fd, flags, &xenevt_fileops, d);
+	return fdclone(l, fp, fd, flags, &xenevt_fileops, d);
 }
 
 static int
-xenevt_close(struct file *fp, struct proc *p)
+xenevt_close(struct file *fp, struct lwp *l)
 {
 	struct xenevt_d *d = fp->f_data;
 	int i;
@@ -348,7 +348,7 @@ xenevt_write(struct file *fp, off_t *offp, struct uio *uio,
 }
 
 static int
-xenevt_ioctl(struct file *fp, u_long cmd, void *addr, struct proc *p)
+xenevt_ioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 {
 	struct xenevt_d *d = fp->f_data;
 	u_int *arg = addr;
@@ -389,7 +389,7 @@ xenevt_ioctl(struct file *fp, u_long cmd, void *addr, struct proc *p)
  */      
 
 static int
-xenevt_poll(struct file *fp, int events, struct proc *p)
+xenevt_poll(struct file *fp, int events, struct lwp *l)
 {
 	struct xenevt_d *d = fp->f_data;
 	int revents = events & (POLLOUT | POLLWRNORM); /* we can always write */
@@ -399,7 +399,7 @@ xenevt_poll(struct file *fp, int events, struct proc *p)
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			/* Record that someone is waiting */
-			selrecord(p, &d->sel);
+			selrecord(l, &d->sel);
 		}
 	}
 	return (revents);
