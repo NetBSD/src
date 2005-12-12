@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.26 2005/12/12 15:00:51 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.27 2005/12/12 16:26:34 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -79,9 +79,9 @@ struct veriexec_delete_params {
 
 #ifdef _KERNEL
 void	veriexecattach(struct device *, struct device *, void *);
-int     veriexecopen(dev_t, int, int, struct proc *);
-int     veriexecclose(dev_t, int, int, struct proc *);
-int     veriexecioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int     veriexecopen(dev_t, int, int, struct lwp *);
+int     veriexecclose(dev_t, int, int, struct lwp *);
+int     veriexecioctl(dev_t, u_long, caddr_t, int, struct lwp *);
 
 /* defined in kern_verifiedexec.c */
 extern char *veriexec_fp_names;
@@ -184,23 +184,24 @@ LIST_HEAD(, veriexec_hashtbl) veriexec_tables;
 int veriexec_add_fp_ops(struct veriexec_fp_ops *);
 void veriexec_init_fp_ops(void);
 struct veriexec_fp_ops *veriexec_find_ops(u_char *name);
-int veriexec_fp_calc(struct proc *, struct vnode *,
+int veriexec_fp_calc(struct lwp *, struct vnode *,
 		     struct veriexec_hash_entry *, uint64_t, u_char *);
 int veriexec_fp_cmp(struct veriexec_fp_ops *, u_char *, u_char *);
 struct veriexec_hashtbl *veriexec_tblfind(dev_t);
 struct veriexec_hash_entry *veriexec_lookup(dev_t, ino_t);
 int veriexec_hashadd(struct veriexec_hashtbl *, struct veriexec_hash_entry *);
-int veriexec_verify(struct proc *, struct vnode *, struct vattr *,
+int veriexec_verify(struct lwp *, struct vnode *, struct vattr *,
 		    const u_char *, int, struct veriexec_hash_entry **);
 int veriexec_page_verify(struct veriexec_hash_entry *, struct vattr *,
-			 struct vm_page *, size_t);
-int veriexec_removechk(struct proc *, struct vnode *, const char *);
-int veriexec_renamechk(struct vnode *, const char *, const char *);
+			 struct vm_page *, size_t, struct lwp *);
+int veriexec_removechk(struct lwp *, struct vnode *, const char *);
+int veriexec_renamechk(struct vnode *, const char *, const char *,
+		       struct lwp *);
 void veriexec_init_fp_ops(void);
 void veriexec_report(const u_char *, const u_char *, struct vattr *,
-		     struct proc *, int, int, int);
+		     struct lwp *, int, int, int);
 int veriexec_newtable(struct veriexec_sizing_params *);
-int veriexec_load(struct veriexec_params *, struct proc *);
+int veriexec_load(struct veriexec_params *, struct lwp *);
 int veriexec_delete(struct veriexec_delete_params *);
 
 #endif /* _KERNEL */
