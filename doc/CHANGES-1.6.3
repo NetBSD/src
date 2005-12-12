@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.169 2005/12/06 16:45:10 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.170 2005/12/12 11:21:27 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2089,4 +2089,9 @@ sys/kern/kern_time.c				patch
 
 	Avoid time wrap when setting the system time.
 	[christos, ticket #5966]
+
+build.sh					patch
+
+	Clean up environment to avoid side effects on builds.
+	[jmc, ticket #5972]
 
