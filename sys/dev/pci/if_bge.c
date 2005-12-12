@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.99 2005/12/12 00:40:44 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.100 2005/12/12 19:58:11 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.99 2005/12/12 00:40:44 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.100 2005/12/12 19:58:11 jonathan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2816,7 +2816,7 @@ bge_reset(sc)
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
 		uint32_t marbmode = 0;
 		if (BGE_IS_5714_FAMILY(sc)) {
-			marbmode = CSR_READ_4(sc, BGE_MARBMODE_ENABLE);
+			marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
 		}
  		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
 	}
@@ -2882,7 +2882,7 @@ bge_reset(sc)
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
 		uint32_t marbmode = 0;
 		if (BGE_IS_5714_FAMILY(sc)) {
-			marbmode = CSR_READ_4(sc, BGE_MARBMODE_ENABLE);
+			marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
 		}
  		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
 	}
