@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.98 2005/12/07 04:43:05 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.99 2005/12/12 00:40:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.98 2005/12/07 04:43:05 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.99 2005/12/12 00:40:44 jonathan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -297,8 +297,15 @@ int	bge_tso_debug = 0;
  * how we map ASIC revision to "quirks" needs more thought.
  * (defined here until the thought is done).
  */
+#define BGE_IS_5714_FAMILY(sc) \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 ||	\
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780 ||	\
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5715 )
+
 #define BGE_IS_5750_OR_BEYOND(sc)  \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750)
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 || \
+	 BGE_IS_5714_FAMILY(sc) )
 
 #define BGE_IS_5705_OR_BEYOND(sc)  \
 	( ((sc)->bge_quirks & BGE_QUIRK_5705_CORE) || \
@@ -1384,6 +1391,16 @@ bge_chipinit(sc)
 		else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703) {
 			dma_rw_ctl &=  0xfffffff0;
 			dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE;
+		}
+		else if (BGE_IS_5714_FAMILY(sc)) {
+			dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD;
+			dma_rw_ctl &= ~BGE_PCIDMARWCTL_ONEDMA_ATONCE; /* XXX */
+			/* XXX magic values, Broadcom-supplied Linux driver */
+			if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780)
+				dma_rw_ctl |= (1 << 20) | (1 << 18) |
+				  BGE_PCIDMARWCTL_ONEDMA_ATONCE;
+			else
+				dma_rw_ctl |= (1<<20) | (1<<18) | (1 << 15);
 		}
 	}
 
@@ -2797,7 +2814,11 @@ bge_reset(sc)
 
 	/* Enable memory arbiter. */
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
-		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+		uint32_t marbmode = 0;
+		if (BGE_IS_5714_FAMILY(sc)) {
+			marbmode = CSR_READ_4(sc, BGE_MARBMODE_ENABLE);
+		}
+ 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
 	}
 
 	/*
@@ -2859,7 +2880,11 @@ bge_reset(sc)
 
 	/* Enable memory arbiter. */
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
-		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+		uint32_t marbmode = 0;
+		if (BGE_IS_5714_FAMILY(sc)) {
+			marbmode = CSR_READ_4(sc, BGE_MARBMODE_ENABLE);
+		}
+ 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
 	}
 
 	/* Fix up byte swapping */
