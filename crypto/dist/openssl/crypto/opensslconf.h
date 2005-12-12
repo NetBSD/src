@@ -112,9 +112,19 @@
 /* The prime number generation stuff may not work when
  * EIGHT_BIT but I don't care since I've only used this mode
  * for debuging the bignum libraries */
+#ifdef _LP64
+/*
+ * See the use of this defines in bn.h to see why SIXTY_FOUR_BIT is not
+ * defined here.
+ */
+#define SIXTY_FOUR_BIT_LONG
+#undef SIXTY_FOUR_BIT
+#undef THIRTY_TWO_BIT
+#else
 #undef SIXTY_FOUR_BIT_LONG
 #undef SIXTY_FOUR_BIT
 #define THIRTY_TWO_BIT
+#endif
 #undef SIXTEEN_BIT
 #undef EIGHT_BIT
 #endif
