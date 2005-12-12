@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.24 2005/12/11 12:21:02 christos Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.25 2005/12/12 15:04:50 cube Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -258,6 +258,7 @@ extern int acpi_active;
 extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
 int		acpi_probe(void);
+ACPI_STATUS	acpi_OsGetRootPointer(UINT32, ACPI_POINTER *);
 int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
 void		acpi_set_wake_gpe(ACPI_HANDLE);
 
