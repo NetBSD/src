@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.1 2002/04/22 12:42:11 augustss Exp $	*/
+/*	$NetBSD: spic.c,v 1.2 2005/12/12 01:18:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.1 2002/04/22 12:42:11 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.2 2005/12/12 01:18:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ int spicdebug = 0;
 
 static int	spic_enable(void *);
 static void	spic_disable(void *);
-static int	spic_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	spic_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 static const struct wsmouse_accessops spic_accessops = {
 	spic_enable,
@@ -264,7 +264,7 @@ spic_disable(void *v)
 }
 
 static int
-spic_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+spic_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
