@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.77 2005/12/11 12:21:01 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.78 2005/12/12 15:04:50 cube Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.77 2005/12/11 12:21:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.78 2005/12/12 15:04:50 cube Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.77 2005/12/11 12:21:01 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
@@ -147,6 +148,8 @@ struct acpi_softc *acpi_softc;
  */
 static struct simplelock acpi_slock;
 static int acpi_locked;
+
+static uint64_t acpi_root_pointer;
 
 /*
  * Prototypes.
@@ -218,6 +221,29 @@ acpi_probe(void)
 	 */
 
 	return 1;
+}
+
+ACPI_STATUS
+acpi_OsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
+{
+	ACPI_STATUS rv;
+
+	/*
+	 * IA-32: Use AcpiFindRootPointer() to locate the RSDP.
+	 *
+	 * IA-64: Use the EFI.
+	 *
+	 * We let MD code handle this since there are multiple
+	 * ways to do it.
+	 */
+
+	rv = acpi_md_OsGetRootPointer(Flags, PhysicalAddress);
+
+	if (acpi_root_pointer == 0 && ACPI_SUCCESS(rv))
+		acpi_root_pointer =
+		    (uint64_t)PhysicalAddress->Pointer.Physical;
+
+	return rv;
 }
 
 /*
@@ -335,6 +361,13 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	acpi_md_callback((struct device *)sc);
 	acpi_build_tree(sc);
+
+	if (acpi_root_pointer != 0)
+		(void)sysctl_createv(NULL, 0, NULL, NULL,
+		    CTLFLAG_IMMEDIATE,
+		    CTLTYPE_QUAD, "acpi_root", NULL, NULL,
+		    acpi_root_pointer, NULL, 0,
+		    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
 	/*
 	 * Register a shutdown hook that disables certain ACPI
