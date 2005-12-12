@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.h,v 1.4 2005/05/20 20:06:34 elad Exp $	*/
+/*	$NetBSD: veriexecctl.h,v 1.5 2005/12/12 21:47:58 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -32,6 +32,14 @@
 
 #ifndef _VERIEXECCTL_H_
 #define _VERIEXECCTL_H_
+
+#define	STATUS_STRING(status)	((status) == FINGERPRINT_NOTEVAL ?	\
+					     "not evaluated" :		\
+				 (status) == FINGERPRINT_VALID ?	\
+					     "valid" :			\
+				 (status) == FINGERPRINT_NOMATCH ?	\
+					     "mismatch" :		\
+					     "<unknown>")
 
 CIRCLEQ_HEAD(veriexec_ups, veriexec_up) params_list;
 struct veriexec_up {

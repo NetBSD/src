@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.30 2005/12/12 16:26:33 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.30 2005/12/12 16:26:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.30 2005/12/12 16:26:33 elad Exp $\n$NetBSD: verified_exec.c,v 1.30 2005/12/12 16:26:33 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $\n$NetBSD: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -177,6 +177,10 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 
 	case VERIEXEC_DELETE:
 		error = veriexec_delete((struct veriexec_delete_params *)data);
+		break;
+
+	case VERIEXEC_QUERY:
+		error = veriexec_query((struct veriexec_query_params *)data);
 		break;
 
 	default:
@@ -396,4 +400,32 @@ veriexec_delete(struct veriexec_delete_params *params)
 	}
 
 	return (0);
+}
+
+int
+veriexec_query(struct veriexec_query_params *params)
+{
+	struct veriexec_hash_entry *vhe;
+	int error;
+
+	vhe = veriexec_lookup(params->dev, params->ino);
+	if (vhe == NULL)
+		return (ENOENT);
+
+	params->type = vhe->type;
+	params->status = vhe->status;
+	params->hash_len = vhe->ops->hash_len;
+	strlcpy(params->fp_type, vhe->ops->type, sizeof(params->fp_type));
+	memcpy(params->fp_type, vhe->ops->type, sizeof(params->fp_type));
+	error = copyout(params, params->uaddr, sizeof(*params));
+	if (error)
+		return (error);
+	if (params->fp_bufsize >= vhe->ops->hash_len) {
+		error = copyout(vhe->fp, params->fp, vhe->ops->hash_len);
+		if (error)
+			return (error);
+	} else
+		error = ENOMEM;
+
+	return (error);
 }
