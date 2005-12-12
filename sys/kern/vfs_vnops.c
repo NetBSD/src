@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.101 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.102 2005/12/12 16:26:33 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.101 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.102 2005/12/12 16:26:33 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -228,7 +228,7 @@ restart:
 #ifdef VERIFIED_EXEC
 			if (vhe != NULL) {
 				veriexec_report("Write access request.",
-						pathbuf, &va, p,
+						pathbuf, &va, l,
 						REPORT_NOVERBOSE,
 						REPORT_ALARM,
 						REPORT_NOPANIC);
