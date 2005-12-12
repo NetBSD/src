@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdEnvironment.c,v 1.5 2005/12/11 12:21:02 christos Exp $	*/
+/*	$NetBSD: OsdEnvironment.c,v 1.6 2005/12/12 15:04:50 cube Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,11 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.5 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.6 2005/12/12 15:04:50 cube Exp $");
 
 #include <sys/types.h>
 
 #include <dev/acpi/acpica.h>
+#include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_osd.h>
 
 #include <machine/acpi_machdep.h>
@@ -102,15 +103,5 @@ AcpiOsTerminate(void)
 ACPI_STATUS
 AcpiOsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
 {
-
-	/*
-	 * IA-32: Use AcpiFindRootPointer() to locate the RSDP.
-	 *
-	 * IA-64: Use the EFI.
-	 *
-	 * We let MD code handle this since there are multiple
-	 * ways to do it.
-	 */
-
-	return acpi_md_OsGetRootPointer(Flags, PhysicalAddress);
+	return acpi_OsGetRootPointer(Flags, PhysicalAddress);
 }
