@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.72 2005/12/01 06:01:18 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.73 2005/12/12 22:44:04 dsl Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -291,7 +291,7 @@ kernelnames:
 
 .if !target(__CLEANDEPEND)
 __CLEANDEPEND: .USE
-	rm -f .depend ${DEPS}
+	echo .depend ${DEPS} | xargs rm -f --
 .endif
 
 # do not !target these, the kern and compat Makefiles augment them
@@ -303,16 +303,6 @@ dependall: depend all
 .if !target(.depend)
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
-.SUFFIXES: .d .c .s .S
-.c.d:
-	${_MKTARGET_CREATE}
-	@${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
-	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
-.s.d .S.d:
-	${_MKTARGET_CREATE}
-	@${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
-	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
-
 SSRCS=${MD_SFILES} ${SFILES}
 CSRCS=${MD_CFILES} ${MI_CFILES} ${CFILES}
 SRCS=${SSRCS} ${CSRCS}
@@ -320,36 +310,28 @@ DEPS=	${SRCS:T:R:S/$/.d/g}
 
 .for _s in ${SSRCS}
 ${_s:T:R}.d: ${_s} assym.h config_time.h
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
+	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
 .endfor
 .for _s in ${CSRCS}
 ${_s:T:R}.d: ${_s} config_time.h
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
+	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
 .endfor
 
-# We have to assume that we'll eventually run out of command line.
-# We already hit that on non-NetBSD hosts.
-.if ${MAKEVERBOSE} == 2
-_T=-t
-.else
-_T=
-.endif
-_XargsMKDEP=${MKDEP:M*=*} xargs ${_T} ${MKDEP:N*=*}
-_SubMake=${.MAKE} -f ${MAKEFILE} -DnoBEGIN
-
-# This dance is necessary to avoid long command lines.
-${DEPS:S,^,list-,}:
-	@echo ${.TARGET:S,^list-,,}
-
-_depfiles: ${DEPS:S,^,list-,}
-
-.depend: ${DEPS}
+assym.d: assym.h config_time.h
 	${_MKTARGET_CREATE}
-	@> $@
-	@${_SubMake} _depfiles | ${_XargsMKDEP} -a -d --
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
 	    ${CFLAGS} ${CPPFLAGS}
-	@sed -e 's/^.*\.o:.*\.c /assym.h: /' < assym.dep >> .depend
-	@rm -f assym.dep
+	sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
+	rm -f assym.dep
+
+.depend: ${DEPS} assym.d
+	${_MKTARGET_CREATE}
+	echo "${.ALLSRC}" | ${MKDEP} -D
 .endif
 
 .if !target(lint)
