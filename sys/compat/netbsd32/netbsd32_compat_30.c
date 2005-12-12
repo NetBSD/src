@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.3 2005/12/11 12:20:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.4 2005/12/12 02:51:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.3 2005/12/11 12:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.4 2005/12/12 02:51:07 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -85,14 +85,14 @@ netbsd32_getdents(l, v, retval)
 	}
 	buf = malloc(SCARG(uap, count), M_TEMP, M_WAITOK);
 	error = vn_readdir(fp, buf,
-	    UIO_SYSSPACE, SCARG(uap, count), &done, p, 0, 0);
+	    UIO_SYSSPACE, SCARG(uap, count), &done, l, 0, 0);
 	if (error == 0) {
 		*retval = netbsd32_to_dirent12(buf, done);
 		error = copyout(buf, NETBSD32PTR64(SCARG(uap, buf)), *retval);
 	}
 	free(buf, M_TEMP);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -116,12 +116,12 @@ netbsd32___stat13(l, v, retval)
 
 	path = (char *)NETBSD32PTR64(SCARG(uap, path));
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, path);
+	CHECK_ALT_EXIST(l, &sg, path);
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -153,8 +153,8 @@ netbsd32___fstat13(l, v, retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
-	FILE_UNUSE(fp, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
+	FILE_UNUSE(fp, l);
 
 	if (error == 0) {
 		netbsd32_from___stat13(&ub, &sb32);
@@ -184,12 +184,12 @@ netbsd32___lstat13(l, v, retval)
 
 	path = (char *)NETBSD32PTR64(SCARG(uap, path));
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, path);
+	CHECK_ALT_EXIST(l, &sg, path);
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
