@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.16 2003/09/07 16:22:28 wiz Exp $
+.\"	$NetBSD: ip.4,v 1.17 2005/12/12 07:20:38 dyoung Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -205,7 +205,18 @@ be obtained via the
 and
 .Dv SIOCGIFFLAGS
 ioctls.
-Normal applications should not need to use this option.
+An application may also specify an alternative to the default network interface
+by index:
+.Bd -literal
+struct uint32_t idx = htonl(ifindex);
+setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, \*[Am]idx, sizeof(idx));
+.Ed
+.Pp
+where "ifindex" is an interface index as returned by
+.Xr if_nametoindex 4 .
+.Pp
+Normal applications should not need to use
+.Dv IP_MULTICAST_IF .
 .Pp
 If a multicast datagram is sent to a group to which the sending host itself
 belongs (on the outgoing interface), a copy of the datagram is, by default,
