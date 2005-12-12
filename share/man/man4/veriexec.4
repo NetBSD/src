@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.9 2005/12/10 02:10:00 elad Exp $
+.\" $NetBSD: veriexec.4,v 1.10 2005/12/12 21:47:58 elad Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -26,9 +26,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexec.4,v 1.9 2005/12/10 02:10:00 elad Exp $
+.\"	$Id: veriexec.4,v 1.10 2005/12/12 21:47:58 elad Exp $
 .\"
-.Dd December 10, 2005
+.Dd December 12, 2005
 .Dt VERIEXEC 4
 .Sh NAME
 .Nm veriexec
@@ -105,6 +105,9 @@ Removes either an entry or an entire table from Veriexec.
 To remove a single entry, both device id and inode number must be provided.
 If only a device id is provided and inode is zero, the entire table for
 the specified device will be removed.
+.It Dv VERIEXEC_QUERY Fa struct veriexec_query_params
+Queries a Veriexec table entry and returns the fingerprint and the
+algorithm used to calculate it, evaluation status, and entry type.
 .El
 .Pp
 Note that the requests
