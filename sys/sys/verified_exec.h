@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.27 2005/12/12 16:26:34 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.28 2005/12/12 21:47:58 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -60,6 +60,18 @@ struct veriexec_delete_params {
 	ino_t ino;
 };
 
+struct veriexec_query_params {
+	unsigned char fp_type[VERIEXEC_TYPE_MAXLEN];
+	dev_t dev;
+	ino_t ino;
+	unsigned char type;
+	unsigned char status;
+	unsigned char *fp;
+	size_t fp_bufsize;
+	size_t hash_len;
+	void *uaddr;
+};
+
 /* Flags for a Veriexec entry. These can be OR'd together. */
 #define VERIEXEC_DIRECT		0x01 /* Direct execution (exec) */
 #define VERIEXEC_INDIRECT	0x02 /* Indirect execution (#!) */
@@ -70,12 +82,23 @@ struct veriexec_delete_params {
 #define VERIEXEC_LOAD		_IOW('S', 0x1, struct veriexec_params)
 #define VERIEXEC_TABLESIZE	_IOW('S', 0x2, struct veriexec_sizing_params)
 #define VERIEXEC_DELETE		_IOW('S', 0x3, struct veriexec_delete_params)
+#define VERIEXEC_QUERY		_IOW('S', 0x4, struct veriexec_query_params)
 
 /* Verified exec sysctl objects. */
 #define	VERIEXEC_VERBOSE	1 /* Verbosity level. */
 #define	VERIEXEC_STRICT		2 /* Strict mode level. */
 #define	VERIEXEC_ALGORITHMS	3 /* Supported hashing algorithms. */
 #define	VERIEXEC_COUNT		4 /* # of fingerprinted files on device. */
+
+/* Valid status field values. */
+#define FINGERPRINT_NOTEVAL  0  /* fingerprint has not been evaluated */
+#define FINGERPRINT_VALID    1  /* fingerprint evaluated and matches list */
+#define FINGERPRINT_NOMATCH  2  /* fingerprint evaluated but does not match */
+
+/* Per-page fingerprint status. */
+#define	PAGE_FP_NONE	0	/* no per-page fingerprints. */
+#define	PAGE_FP_READY	1	/* per-page fingerprints ready for use. */
+#define	PAGE_FP_FAIL	2	/* mismatch in per-page fingerprints. */
 
 #ifdef _KERNEL
 void	veriexecattach(struct device *, struct device *, void *);
@@ -124,16 +147,6 @@ struct veriexec_hash_entry {
 	struct veriexec_fp_ops *ops;		    /* Fingerprint ops vector*/
 	LIST_ENTRY(veriexec_hash_entry) entries;    /* List pointer. */
 };
-
-/* Valid status field values. */
-#define FINGERPRINT_NOTEVAL  0  /* fingerprint has not been evaluated */
-#define FINGERPRINT_VALID    1  /* fingerprint evaluated and matches list */
-#define FINGERPRINT_NOMATCH  2  /* fingerprint evaluated but does not match */
-
-/* Per-page fingerprint status. */
-#define	PAGE_FP_NONE	0	/* no per-page fingerprints. */
-#define	PAGE_FP_READY	1	/* per-page fingerprints ready for use. */
-#define	PAGE_FP_FAIL	2	/* mismatch in per-page fingerprints. */
 
 LIST_HEAD(veriexec_hashhead, veriexec_hash_entry);
 
@@ -203,6 +216,7 @@ void veriexec_report(const u_char *, const u_char *, struct vattr *,
 int veriexec_newtable(struct veriexec_sizing_params *);
 int veriexec_load(struct veriexec_params *, struct lwp *);
 int veriexec_delete(struct veriexec_delete_params *);
+int veriexec_query(struct veriexec_query_params *);
 
 #endif /* _KERNEL */
 
