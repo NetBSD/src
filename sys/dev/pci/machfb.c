@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.36 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: machfb.c,v 1.37 2005/12/12 02:44:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.36 2005/12/11 12:22:50 christos Exp $");
+	"$NetBSD: machfb.c,v 1.37 2005/12/12 02:44:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1625,7 +1625,7 @@ mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		case PCI_IOC_CFGREAD:
 		case PCI_IOC_CFGWRITE:
 			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-			    cmd, data, flag, p));
+			    cmd, data, flag, l));
 			    
 		case WSDISPLAYIO_SMODE:
 			{
