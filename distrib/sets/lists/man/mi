@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.840 2005/12/06 03:20:27 christos Exp $
+# $NetBSD: mi,v 1.841 2005/12/12 22:27:05 wiz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1545,6 +1545,7 @@
 ./usr/share/man/cat5/networks.0			man-net-catman		.cat
 ./usr/share/man/cat5/newsyslog.conf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat5/nisplus_table.0		man-postfix-catman	postfix,.cat
+./usr/share/man/cat5/nologin.0			man-sysutil-catman	.cat
 ./usr/share/man/cat5/nsswitch.conf.0		man-net-catman		.cat
 ./usr/share/man/cat5/openssl.cnf.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat5/pam.conf.0			man-sys-catman		.cat
@@ -3836,6 +3837,7 @@
 ./usr/share/man/man5/networks.5			man-net-man		.man
 ./usr/share/man/man5/newsyslog.conf.5		man-sysutil-man		.man
 ./usr/share/man/man5/nisplus_table.5		man-postfix-man		postfix,.man
+./usr/share/man/man5/nologin.5			man-sysutil-man		.man
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man		.man
 ./usr/share/man/man5/openssl.cnf.5		man-crypto-man		crypto,.man
 ./usr/share/man/man5/pam.conf.5			man-sys-man		.man
