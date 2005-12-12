@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.28 2005/12/11 12:23:56 christos Exp $ */
+/*	$NetBSD: cgsix.c,v 1.29 2005/12/12 02:44:09 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.28 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.29 2005/12/12 02:44:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ struct wsscreen_descr cgsix_defaultscreen = {
 	WSSCREEN_WSCOLORS	/* capabilities */
 };
 
-static int 	cgsix_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int 	cgsix_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	cgsix_mmap(void *, off_t, int);
 void		cgsix_init_screen(struct cgsix_softc *, struct cg6_screen *, 
 			int, long *);
@@ -939,7 +939,7 @@ cgsixioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 	default:
 #ifdef DEBUG
 		log(LOG_NOTICE, "cgsixioctl(0x%lx) (%s[%d])\n", cmd,
-		    p->p_comm, p->p_pid);
+		    l->l_proc->p_comm, l->l_proc->p_pid);
 #endif
 		return ENOTTY;
 	}
@@ -1182,7 +1182,7 @@ cg6_setup_palette(struct cgsix_softc *sc)
 }
 
 int
-cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	/* we'll probably need to add more stuff here */
 	struct cgsix_softc *sc = v;
