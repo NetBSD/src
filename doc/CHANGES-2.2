@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.20 2005/12/06 16:57:04 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.21 2005/12/12 11:26:35 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -340,4 +340,9 @@ sys/dev/usb/usb_subr.c				1.130
 	If (also buggy) devices resurface that need this when they are
 	attached, they can be addressed, ideally in each device's driver.
 	[riz, ticket #10181]
+
+build.sh					patch
+
+	Clean up environment to avoid side effects on builds.
+	[jmc, ticket #10194]
 
