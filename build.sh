@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.127.2.1 2004/08/22 13:35:06 tron Exp $
+#	$NetBSD: build.sh,v 1.127.2.2 2005/12/12 11:24:44 tron Exp $
 #
 # Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -643,8 +643,11 @@ parseoptions()
 	[ -n "${MACHINE_ARCH}" ] || getarch
 	validatearch
 
-	# Set up default make(1) environment.
+	# Set various environment variables to known defaults,
+        # to minimize (cross-)build problems observed "in the field".
 	#
+	unsetmakeenv INFODIR
+	unsetmakeenv LESSCHARSET
 	setmakeenv LC_ALL C
 	makeenv="${makeenv} TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS"
 	[ -z "${BUILDID}" ] || makeenv="${makeenv} BUILDID"
@@ -847,7 +850,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.127.2.1 2004/08/22 13:35:06 tron Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.127.2.2 2005/12/12 11:24:44 tron Exp $
 #
 
 EOF
