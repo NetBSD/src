@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.58.2.8 2004/06/14 18:27:30 tron Exp $
+#  $NetBSD: build.sh,v 1.58.2.9 2005/12/12 11:20:33 tron Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -388,9 +388,11 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.58.2.8 2004/06/14 18:27:30 tron Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.58.2.9 2005/12/12 11:20:33 tron Exp $
 #
-
+unset INFODIR
+unset LESSCHARSET
+LC_ALL='C' ; export LC_ALL
 EOF
 for f in $makeenv; do
 	eval echo "$f=\'\$`echo $f`\'\;\ export\ $f" $makewrapout
