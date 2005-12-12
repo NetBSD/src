@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.29 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.30 2005/12/12 16:26:33 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.29 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.30 2005/12/12 16:26:33 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.29 2005/12/11 12:20:53 christos Exp $\n$NetBSD: verified_exec.c,v 1.29 2005/12/11 12:20:53 christos Exp $");
+__RCSID("$Id: verified_exec.c,v 1.30 2005/12/12 16:26:33 elad Exp $\n$NetBSD: verified_exec.c,v 1.30 2005/12/12 16:26:33 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -145,7 +145,7 @@ veriexecopen(dev_t dev __unused, int flags __unused,
 
 int
 veriexecclose(dev_t dev __unused, int flags __unused,
-		  int fmt __unused, struct proc *p __unused)
+		  int fmt __unused, struct lwp *l __unused)
 {
 	if (veriexec_dev_usage > 0)
 		veriexec_dev_usage--;
@@ -172,7 +172,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		break;
 
 	case VERIEXEC_LOAD:
-		error = veriexec_load((struct veriexec_params *)data, p);
+		error = veriexec_load((struct veriexec_params *)data, l);
 		break;
 
 	case VERIEXEC_DELETE:
@@ -233,7 +233,7 @@ veriexec_newtable(struct veriexec_sizing_params *params)
 }
 
 int
-veriexec_load(struct veriexec_params *params, struct proc *p)
+veriexec_load(struct veriexec_params *params, struct lwp *l)
 {
 	struct veriexec_hashtbl *tbl;
 	struct veriexec_hash_entry *hh;
@@ -242,7 +242,7 @@ veriexec_load(struct veriexec_params *params, struct proc *p)
 	struct vattr va;
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, params->file, p);
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, params->file, l);
 	error = namei(&nid);
 	if (error)
 		return (error);
@@ -256,7 +256,7 @@ veriexec_load(struct veriexec_params *params, struct proc *p)
 	}
 
 	/* Get attributes for device and inode. */
-	error = VOP_GETATTR(nid.ni_vp, &va, p->p_ucred, p);
+	error = VOP_GETATTR(nid.ni_vp, &va, l->l_proc->p_ucred, l);
 	if (error)
 		return (error);
 
