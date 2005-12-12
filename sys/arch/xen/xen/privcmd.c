@@ -1,7 +1,6 @@
-/* $NetBSD: privcmd.c,v 1.7 2005/12/11 12:19:50 christos Exp $ */
+/* $NetBSD: privcmd.c,v 1.8 2005/12/12 20:06:22 christos Exp $ */
 
-/*
- *
+/*-
  * Copyright (c) 2004 Christian Limpach.
  * All rights reserved.
  *
@@ -33,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.7 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.8 2005/12/12 20:06:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +104,10 @@ privcmd_ioctl(void *v)
 		vaddr_t va;
 		u_long ma;
 		vm_prot_t prot;
+		struct vm_map *vmm = &ap->a_l->l_proc->p_vmspace->vm_map;
 		//printf("IOCTL_PRIVCMD_MMAP: %d entries\n", mcmd->num);
 
-		pmap_t pmap = vm_map_pmap(&ap->a_p->p_vmspace->vm_map);
+		pmap_t pmap = vm_map_pmap(vmm);
 		for (i = 0; i < mcmd->num; i++) {
 			error = copyin(mcmd->entry, &mentry, sizeof(mentry));
 			if (error)
@@ -122,23 +122,23 @@ privcmd_ioctl(void *v)
 #endif
 			va = mentry.va & ~PAGE_MASK;
 			ma = mentry.mfn <<  PGSHIFT; /* XXX ??? */
-			vm_map_lock_read(&ap->a_p->p_vmspace->vm_map);
-			if (uvm_map_checkprot(&ap->a_p->p_vmspace->vm_map,
-			    va, va + (mentry.npages << PGSHIFT) - 1,
+			vm_map_lock_read(vmm);
+			if (uvm_map_checkprot(vmm, va,
+			    va + (mentry.npages << PGSHIFT) - 1,
 			    VM_PROT_WRITE))
 				prot = VM_PROT_READ | VM_PROT_WRITE;
-			else if (uvm_map_checkprot(&ap->a_p->p_vmspace->vm_map,
-			    va, va + (mentry.npages << PGSHIFT) - 1,
+			else if (uvm_map_checkprot(vmm, va,
+			    va + (mentry.npages << PGSHIFT) - 1,
 			    VM_PROT_READ))
 				prot = VM_PROT_READ;
 			else {
 				printf("uvm_map_checkprot 0x%lx -> 0x%lx "
 				    "failed\n",
 				    va, va + (mentry.npages << PGSHIFT) - 1);
-				vm_map_unlock_read(&ap->a_p->p_vmspace->vm_map);
+				vm_map_unlock_read(vmm);
 				return EINVAL;
 			}
-			vm_map_unlock_read(&ap->a_p->p_vmspace->vm_map);
+			vm_map_unlock_read(vmm);
 
 			for (j = 0; j < mentry.npages; j++) {
 				//printf("remap va 0x%lx to 0x%lx\n", va, ma);
@@ -162,7 +162,7 @@ privcmd_ioctl(void *v)
 		vm_prot_t prot;
 		pmap_t pmap;
 
-		vmm = &ap->a_p->p_vmspace->vm_map;
+		vmm = &ap->a_l->l_proc->p_vmspace->vm_map;
 		pmap = vm_map_pmap(vmm);
 		va0 = pmb->addr & ~PAGE_MASK;
 
