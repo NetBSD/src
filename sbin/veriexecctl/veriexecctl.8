@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.20 2005/12/10 02:10:00 elad Exp $
+.\" $NetBSD: veriexecctl.8,v 1.21 2005/12/12 21:47:58 elad Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.20 2005/12/10 02:10:00 elad Exp $
+.\"	$Id: veriexecctl.8,v 1.21 2005/12/12 21:47:58 elad Exp $
 .\"
-.Dd December 10, 2005
+.Dd December 12, 2005
 .Dt VERIEXECCTL 8
 .Os
 .Sh NAME
@@ -42,6 +42,8 @@
 .Cm load Ar signatures
 .Nm
 .Cm delete Op file | mount_point
+.Nm
+.Cm query Ar file
 .Sh DESCRIPTION
 The
 .Nm
@@ -63,6 +65,11 @@ Delete the specified file from the Veriexec table it is stored in.
 If the argument is a mount_point (or a directory), the device id for
 it is fetched and the entire Veriexec table that refers to it is
 removed.
+.It Cm query Ar file
+Query Veriexec about information associated with
+.Ar file :
+Device, inode, fingerprint, fingerprint algorithm, evaluation status,
+and entry type.
 .El
 .Sh SIGNATURES
 The
