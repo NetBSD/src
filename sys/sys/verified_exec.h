@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.25 2005/12/10 12:37:30 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.26 2005/12/12 15:00:51 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -58,16 +58,6 @@ struct veriexec_sizing_params {
 struct veriexec_delete_params {
 	dev_t dev;
 	ino_t ino;
-};
-
-/* augmented storage for copying to userspace */
-struct veriexec_uinfo {
-	unsigned char fp_type[VERIEXEC_TYPE_MAXLEN];
-	unsigned char type;
-	unsigned char status;
-	unsigned char *fp;
-	size_t fp_buflen;
-	size_t fp_len;
 };
 
 /* Flags for a Veriexec entry. These can be OR'd together. */
