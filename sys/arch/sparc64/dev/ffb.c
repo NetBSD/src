@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.20 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: ffb.c,v 1.21 2005/12/12 02:44:31 christos Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.20 2005/12/11 12:19:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.21 2005/12/12 02:44:31 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,7 +86,7 @@ struct wsscreen_list ffb_screenlist = {
 
 static struct ffb_screen ffb_console_screen;
 
-int	ffb_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	ffb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static int ffb_blank(struct ffb_softc *, u_long, u_int *);
 paddr_t ffb_mmap(void *, off_t, int);
 void	ffb_ras_fifo_wait(struct ffb_softc *, int);
@@ -238,7 +238,7 @@ ffb_attach(struct ffb_softc *sc)
 }
 
 int
-ffb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
+ffb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct ffb_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -650,7 +650,7 @@ ffbfb_unblank(struct device *dev)
 }
 
 int
-ffbfb_open(dev_t dev, int flags, int mode, struct proc *p)
+ffbfb_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -661,17 +661,17 @@ ffbfb_open(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-ffbfb_close(dev_t dev, int flags, int mode, struct proc *p)
+ffbfb_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	return 0;
 }
 
 int
-ffbfb_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+ffbfb_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
 
-	return ffb_ioctl(sc, cmd, data, flags, p);
+	return ffb_ioctl(sc, cmd, data, flags, l);
 }
 
 paddr_t
