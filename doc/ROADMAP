@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.3 2005/11/11 06:09:57 briggs Exp $
+#	$NetBSD: ROADMAP,v 1.4 2005/12/13 15:30:18 briggs Exp $
 
 A high-level roadmap for NetBSD
 
@@ -158,10 +158,7 @@ aw. Run-time changable limits to SysV IPC
 2. Platform independent userland
 ================================
 aa. Keep up with the X world
-    If we are moving to an X.org base, we need to move forward with that
-    and keep up to date.  This will require some platform-specific work,
-    but is largely platform-independent, and involves making X.org cross-
-    buildable.
+    Track X.org progress.  Maintain existing XFree86.
 
 ab. Reentrant libraries
     Make sure that all libraries are re-entrant and usable for threaded
