@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.42 2005/11/25 17:33:56 thorpej Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.43 2005/12/13 09:28:31 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.42 2005/11/25 17:33:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.43 2005/12/13 09:28:31 dyoung Exp $");
 #endif
 
 /*
@@ -1046,10 +1046,10 @@ ieee80211_media2rate(int mword)
 		0,		/* IFM_NONE */
 		2,		/* IFM_IEEE80211_FH1 */
 		4,		/* IFM_IEEE80211_FH2 */
-		2,		/* IFM_IEEE80211_DS1 */
 		4,		/* IFM_IEEE80211_DS2 */
 		11,		/* IFM_IEEE80211_DS5 */
 		22,		/* IFM_IEEE80211_DS11 */
+		2,		/* IFM_IEEE80211_DS1 */
 		44,		/* IFM_IEEE80211_DS22 */
 		12,		/* IFM_IEEE80211_OFDM6 */
 		18,		/* IFM_IEEE80211_OFDM9 */
