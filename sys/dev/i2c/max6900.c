@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900.c,v 1.3 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: max6900.c,v 1.4 2005/12/13 20:55:46 abs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -118,7 +118,7 @@ maxrtc_attach(struct device *parent, struct device *self, void *aux)
 
 /*ARGSUSED*/
 int
-maxrtc_open(dev_t dev, int flag, int fmt, struct proc *p)
+maxrtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct maxrtc_softc *sc;
 
@@ -136,7 +136,7 @@ maxrtc_open(dev_t dev, int flag, int fmt, struct proc *p)
 
 /*ARGSUSED*/
 int
-maxrtc_close(dev_t dev, int flag, int fmt, struct proc *p)
+maxrtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct maxrtc_softc *sc;
 
