@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.30 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.31 2005/12/13 16:25:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -74,6 +74,7 @@ struct inode;
 struct mount;
 struct nameidata;
 struct lwp;
+struct proc;
 struct statvfs;
 struct timeval;
 struct ucred;
