@@ -1,4 +1,4 @@
-.\"	$NetBSD: wscons.conf.5,v 1.13 2004/08/21 17:04:54 hubertf Exp $
+.\"	$NetBSD: wscons.conf.5,v 1.14 2005/12/13 21:46:47 peter Exp $
 .\"
 .\" Copyright 2000, 2001 Hubert Feyrer <hubertf@NetBSD.org>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 26, 2002
+.Dd December 13, 2005
 .Dt WSCONS.CONF 5
 .Os
 .Sh NAME
@@ -127,13 +127,22 @@ See
 .Xr wsconscfg 8
 for more information.
 .
-.It Sy setvar Ar var Ns = Ns Ar val
-Set wscons variable
-.Ar var
-to
-.Ar val ,
-using
-.Dq Li "wsconsctl -w var=val" .
+.It Sy setvar Ar part Ar var Ns = Ns Ar val
+Set wscons system driver variables by using
+.Xr wsconsctl 8 .
+The
+.Ar part
+argument is optional and can be used to indicate which portion of
+the device should be selected, this can be either
+.Sq keyboard ,
+.Sq display
+or
+.Sq mouse .
+If the argument is not specified then it defaults to
+.Sq keyboard
+to be backwards compatible with previous
+.Nx
+versions.
 See
 .Xr wsconsctl 8
 for more information.
