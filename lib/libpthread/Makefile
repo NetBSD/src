@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2005/09/13 02:45:38 christos Exp $
+#	$NetBSD: Makefile,v 1.35 2005/12/13 22:07:20 christos Exp $
 #
 
 WARNS=	2
@@ -17,8 +17,6 @@ ARCHSUBDIR=	${MACHINE_CPU}
 	@echo "WARNING: no ARCHSUBDIR for ${MACHINE_ARCH}/${MACHINE_CPU}; skipping..."
 .endif
 
-# XXX: This crappy poke at libc's internals needs to be fixed.
-CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${.CURDIR}/../libc
 INCS=	pthread.h pthread_types.h pthread_queue.h
 INCSDIR=/usr/include
 
@@ -29,6 +27,11 @@ ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 
 CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC
 CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__ -DPTHREAD_MLOCK_KLUDGE
+
+# XXX: This crappy poke at libc's internals needs to be fixed.
+# We need to put this *after our own includes, so that our "assym.h"
+# gets picked, instead of the libc one
+CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${.CURDIR}/../libc
 
 DPSRCS+=	assym.h
 CLEANFILES+=	assym.h
