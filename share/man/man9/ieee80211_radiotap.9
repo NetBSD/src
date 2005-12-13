@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_radiotap.9,v 1.7 2005/07/12 21:26:33 dyoung Exp $
+.\" $NetBSD: ieee80211_radiotap.9,v 1.8 2005/12/13 16:15:10 explorer Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>,
@@ -120,10 +120,10 @@ It is necessary for the driver to create this attachment after calling
 by calling
 .Fn bpfattach2
 with the data-link type set to
-.Dv DLT_IEEE_80211_RADIO .
+.Dv DLT_IEEE802_11_RADIO .
 .Pp
 .\"
-When the the information is available,
+When the information is available,
 usually immediately before a link-layer transmission or after a receive,
 the driver copies it to the bpf layer using the
 .Fn bpf_mtap2
