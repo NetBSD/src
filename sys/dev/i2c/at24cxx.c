@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.3 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.4 2005/12/13 20:55:46 abs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -165,7 +165,7 @@ seeprom_attach(struct device *parent, struct device *self, void *aux)
 
 /*ARGSUSED*/
 int
-seeprom_open(dev_t dev, int flag, int fmt, struct proc *p)
+seeprom_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct seeprom_softc *sc;
 
@@ -183,7 +183,7 @@ seeprom_open(dev_t dev, int flag, int fmt, struct proc *p)
 
 /*ARGSUSED*/
 int
-seeprom_close(dev_t dev, int flag, int fmt, struct proc *p)
+seeprom_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct seeprom_softc *sc;
 
