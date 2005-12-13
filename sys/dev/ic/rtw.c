@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.59 2005/12/13 05:07:14 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.60 2005/12/13 05:10:55 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.59 2005/12/13 05:07:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.60 2005/12/13 05:10:55 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2034,7 +2034,7 @@ rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 	struct rtw_regs *regs = &sc->sc_regs;
 
 	if ((isr & RTW_INTR_TXFOVW) != 0) {
-		printf("%s: tx fifo overflow\n", sc->sc_dev.dv_xname);
+		printf("%s: tx fifo underflow\n", sc->sc_dev.dv_xname);
 		rcvr = xmtr = 1;
 		cr |= RTW_CR_TE | RTW_CR_RE;
 	}
