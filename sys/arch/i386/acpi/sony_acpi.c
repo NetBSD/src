@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.1 2005/12/11 02:40:25 christos Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.2 2005/12/13 16:54:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.1 2005/12/11 02:40:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.2 2005/12/13 16:54:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 	node.sysctl_data = &val;
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL || val == old_val)
+	if (error || newp == NULL)
 		return error;
 
 	(void)snprintf(buf, sizeof(buf), "S%s", rnode->sysctl_name);
