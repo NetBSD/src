@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.26 2005/12/05 22:38:40 rpaulo Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.27 2005/12/13 23:53:49 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,23 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.26 2005/12/05 22:38:40 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.27 2005/12/13 23:53:49 rpaulo Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
 static const char rcsid[] =
     "@(#) Header: bpf_filter.c,v 1.33 97/04/26 13:37:18 leres Exp  (LBL)";
 #endif
-#endif
-
-#if defined(_KERNEL_OPT)
-#include "bpfilter.h"  
-#endif
-
-#if NBPFILTER > 0
-extern int bpf_maxbufsize;
-#else
-#define bpf_maxbufsize BPF_MAXBUFSIZE
 #endif
 
 #include <sys/param.h>
@@ -507,16 +497,6 @@ bpf_validate(struct bpf_insn *f, int len)
 		case BPF_LD:
 		case BPF_LDX:
 			switch (BPF_MODE(p->code)) {
-			case BPF_ABS:
-			case BPF_IND:
-			case BPF_MSH:
-				/*
-				 * More strict check with actual packet length  
-				 * is done runtime.
-				 */
-				if (p->k >= bpf_maxbufsize)
-					return 0;
-				break;
 			case BPF_MEM:
 				if (p->k >= BPF_MEMWORDS)
 					return 0;
