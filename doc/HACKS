@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.51 2005/10/07 08:42:24 simonb Exp $
+# $NetBSD: HACKS,v 1.52 2005/12/13 05:56:23 jmc Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -113,6 +113,14 @@ kcah
 
 port	vax
 
+	hack	gcc 2.95/vax doesn't like abort being used as function pointer
+	cdate	Tue Dec 13 05:54:50 GMT 2005
+	who	jmc
+	file	lib/libc/rpc/svc_vc.c 1.15
+	descr
+		Provide a local definition for abort which doesn't include
+		the noreturn attribute which trips up gcc 2.95 on vax.
+	
 	hack	gcc 2.95/vax doesn't have stdbool.h and gettext needs it
 	cdate	Mon May  9 12:16:22 CDT 2005
 	who	jmc
