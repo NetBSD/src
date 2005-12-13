@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.14 2005/12/10 04:01:58 christos Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.15 2005/12/13 05:54:50 jmc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.14 2005/12/10 04:01:58 christos Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.15 2005/12/13 05:54:50 jmc Exp $");
 #endif
 #endif
 
@@ -761,6 +761,10 @@ svc_vc_rendezvous_ops(xprt)
 	static struct xp_ops2 ops2;
 #ifdef _REENTRANT
 	extern mutex_t ops_lock;
+#endif
+/* XXXGCC vax compiler unhappy otherwise */
+#ifdef __vax__     
+extern void abort(void);
 #endif
 
 	mutex_lock(&ops_lock);
