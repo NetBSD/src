@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.3 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.4 2005/12/13 20:55:46 abs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -116,7 +116,7 @@ dsrtc_attach(struct device *parent, struct device *self, void *arg)
 
 /*ARGSUSED*/
 int
-dsrtc_open(dev_t dev, int flag, int fmt, struct proc *p)
+dsrtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct dsrtc_softc *sc;
 
@@ -134,7 +134,7 @@ dsrtc_open(dev_t dev, int flag, int fmt, struct proc *p)
 
 /*ARGSUSED*/
 int
-dsrtc_close(dev_t dev, int flag, int fmt, struct proc *p)
+dsrtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct dsrtc_softc *sc;
 

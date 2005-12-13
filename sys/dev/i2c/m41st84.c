@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.5 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.6 2005/12/13 20:55:46 abs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -116,7 +116,7 @@ strtc_attach(struct device *parent, struct device *self, void *arg)
 
 /*ARGSUSED*/
 int
-strtc_open(dev_t dev, int flag, int fmt, struct proc *p)
+strtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct strtc_softc *sc;
 
@@ -134,7 +134,7 @@ strtc_open(dev_t dev, int flag, int fmt, struct proc *p)
 
 /*ARGSUSED*/
 int
-strtc_close(dev_t dev, int flag, int fmt, struct proc *p)
+strtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct strtc_softc *sc;
 
