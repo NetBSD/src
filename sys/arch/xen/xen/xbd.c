@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.25 2005/12/11 12:19:50 christos Exp $ */
+/* $NetBSD: xbd.c,v 1.26 2005/12/13 08:24:30 yamt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.25 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.26 2005/12/13 08:24:30 yamt Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -1526,7 +1526,7 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct	disk *dk;
 
 	DPRINTF_FOLLOW(("xbdioctl(%d, %08lx, %p, %d, %p)\n",
-	    dev, cmd, data, flag, p));
+	    dev, cmd, data, flag, l));
 	GETXBD_SOFTC(xs, dev);
 	dksc = &xs->sc_dksc;
 	dk = &dksc->sc_dkdev;
