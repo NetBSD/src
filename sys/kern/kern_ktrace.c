@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.98 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.99 2005/12/13 13:12:18 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.98 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.99 2005/12/13 13:12:18 reinoud Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -1127,7 +1127,7 @@ next:
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_resid = 0;
 	auio.uio_iovcnt = 0;
-	auio.uio_lwp = NULL;
+	auio.uio_lwp = curlwp;
 	do {
 		kth = &kte->kte_kth;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.139 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.140 2005/12/13 13:12:18 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.139 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.140 2005/12/13 13:12:18 reinoud Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -499,7 +499,6 @@ nfs_write(v)
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	struct lwp *l = uio->uio_lwp;
-	struct proc *p = l->l_proc;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct ucred *cred = ap->a_cred;
@@ -552,9 +551,9 @@ nfs_write(v)
 	 * Maybe this should be above the vnode op call, but so long as
 	 * file servers have no limits, i don't think it matters
 	 */
-	if (p && uio->uio_offset + uio->uio_resid >
-	      p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		psignal(p, SIGXFSZ);
+	if (l && l->l_proc && uio->uio_offset + uio->uio_resid >
+	      l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+		psignal(l->l_proc, SIGXFSZ);
 		return (EFBIG);
 	}
 
