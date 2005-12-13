@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.38 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.39 2005/12/13 15:41:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -167,14 +167,21 @@
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define	VM_PHYSSEG_NOADD	/* can add RAM after vm_mem_init */
 
-#define	__HAVE_PMAP_PHYSSEG
+#define	__HAVE_VM_PAGE_MD
 
 /*
- * pmap-specific data stored in the vm_physmem[] array.
+ * pmap-specific data stored in the vm_page structure.
  */
-struct pmap_physseg {
-	struct pv_entry *pvent;		/* pv table for this seg */
-	char *attrs;			/* page attributes for this seg */
+struct vm_page_md {
+	struct pv_entry *pvh_list;	/* pv_entry list */
+	struct simplelock pvh_slock;	/* lock on this head */
+	u_int pvh_attrs;		/* page attributes */
 };
+
+#define VM_MDPAGE_INIT(pg)						\
+do {									\
+	(pg)->mdpage.pvh_list = NULL;					\
+	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
+} while (/* CONSTCOND */ 0)
 
 #endif /* ! _MIPS_VMPARAM_H_ */

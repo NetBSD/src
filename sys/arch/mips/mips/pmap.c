@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.162 2005/12/09 20:50:25 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.163 2005/12/13 15:41:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.162 2005/12/09 20:50:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.163 2005/12/13 15:41:50 tsutsui Exp $");
 
 /*
  *	Manages physical address maps.
@@ -221,26 +221,10 @@ boolean_t	pmap_initialized = FALSE;
 	((pm) == pmap_kernel() || 					\
 	 (pm) == curlwp->l_proc->p_vmspace->vm_map.pmap)
 
-#define	pa_to_pvh(pa)							\
-({									\
-	int bank_, pg_;							\
-									\
-	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
-	&vm_physmem[bank_].pmseg.pvent[pg_];				\
-})
-
-#define	pa_to_attribute(pa)						\
-({									\
-	int bank_, pg_;							\
-									\
-	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
-	&vm_physmem[bank_].pmseg.pvent[pg_].pv_flags; 			\
-})
-
 /* Forward function declarations */
-void pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa);
+void pmap_remove_pv(pmap_t, vaddr_t, struct vm_page *);
 void pmap_asid_alloc(pmap_t pmap);
-void pmap_enter_pv(pmap_t, vaddr_t, paddr_t, u_int *);
+void pmap_enter_pv(pmap_t, vaddr_t, struct vm_page *, u_int *);
 pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 
 /*
@@ -270,7 +254,20 @@ static void mips_flushcache_allpvh(paddr_t);
 static void
 mips_flushcache_allpvh(paddr_t pa)
 {
-	struct pv_entry *pv = pa_to_pvh(pa);
+	struct vm_page *pg;
+	struct pv_entry *pv;
+
+	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg == NULL) {
+		/* page is unmanaged */
+#ifdef DIAGNOSTIC
+		printf("mips_flushcache_allpvh(): unmanged pa = %08lx\n",
+		    (u_long)pa);
+#endif
+		return;
+	}
+
+	pv = pg->mdpage.pvh_list;
 
 #if defined(MIPS3_NO_PV_UNCACHED)
 	/* No current mapping.  Cache was flushed by pmap_remove_pv() */
@@ -492,7 +489,7 @@ void
 pmap_init(void)
 {
 	vsize_t		s;
-	int		bank;
+	int		bank, i;
 	pv_entry_t	pv;
 
 #ifdef DEBUG
@@ -508,8 +505,8 @@ pmap_init(void)
 	pv = pv_table;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
 		s = vm_physmem[bank].end - vm_physmem[bank].start;
-		vm_physmem[bank].pmseg.pvent = pv;
-		pv += s;
+		for (i = 0; i < s; i++)
+			vm_physmem[bank].pgs[i].mdpage.pvh_list = pv++;
 	}
 
 	/*
@@ -715,6 +712,7 @@ pmap_remove(pmap, sva, eva)
 	pmap_t pmap;
 	vaddr_t sva, eva;
 {
+	struct vm_page *pg;
 	vaddr_t nssva;
 	pt_entry_t *pte;
 	unsigned entry;
@@ -739,7 +737,8 @@ pmap_remove(pmap, sva, eva)
 			if (mips_pg_wired(entry))
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			pmap_remove_pv(pmap, sva, mips_tlbpfn_to_paddr(entry));
+			pg = PHYS_TO_VM_PAGE(mips_tlbpfn_to_paddr(entry));
+			pmap_remove_pv(pmap, sva, pg);
 			if (MIPS_HAS_R4K_MMU)
 				/* See above about G bit */
 				pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
@@ -797,7 +796,8 @@ pmap_remove(pmap, sva, eva)
 			if (mips_pg_wired(entry))
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			pmap_remove_pv(pmap, sva, mips_tlbpfn_to_paddr(entry));
+			pg = PHYS_TO_VM_PAGE(mips_tlbpfn_to_paddr(entry));
+			pmap_remove_pv(pmap, sva, pg);
 			pte->pt_entry = mips_pg_nv_bit();
 			/*
 			 * Flush the TLB for the given address.
@@ -822,14 +822,14 @@ pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t prot;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t pv;
 	vaddr_t va;
 
 #ifdef DEBUG
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
 	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
-		printf("pmap_page_protect(%lx, %x)\n", (u_long)pa, prot);
+		printf("pmap_page_protect(%lx, %x)\n",
+		    (u_long)VM_PAGE_TO_PHYS(pg), prot);
 #endif
 	switch (prot) {
 	case VM_PROT_READ|VM_PROT_WRITE:
@@ -839,7 +839,7 @@ pmap_page_protect(pg, prot)
 	/* copy_on_write */
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
-		pv = pa_to_pvh(pa);
+		pv = pg->mdpage.pvh_list;
 		/*
 		 * Loop over all current mappings setting/clearing as appropos.
 		 */
@@ -855,7 +855,7 @@ pmap_page_protect(pg, prot)
 
 	/* remove_all */
 	default:
-		pv = pa_to_pvh(pa);
+		pv = pg->mdpage.pvh_list;
 		while (pv->pv_pmap != NULL) {
 			pmap_remove(pv->pv_pmap, pv->pv_va,
 				    pv->pv_va + PAGE_SIZE);
@@ -1044,7 +1044,7 @@ pmap_is_page_ro(pmap, va, entry)
  *	Change all mappings of a managed page to cached/uncached.
  */
 static void
-pmap_page_cache(paddr_t pa, int mode)
+pmap_page_cache(struct vm_page *pg, int mode)
 {
 	pv_entry_t pv;
 	pt_entry_t *pte;
@@ -1054,10 +1054,10 @@ pmap_page_cache(paddr_t pa, int mode)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_page_uncache(%lx)\n", (u_long)pa);
+		printf("pmap_page_uncache(%lx)\n", (u_long)VM_PAGE_TO_PHYS(pa));
 #endif
 	newmode = mode & PV_UNCACHED ? MIPS3_PG_UNCACHED : MIPS3_PG_CACHED;
-	pv = pa_to_pvh(pa);
+	pv = pg->mdpage.pvh_list;
 	asid = pv->pv_pmap->pm_asid;
 	needupdate = (pv->pv_pmap->pm_asidgen == pmap_asid_generation);
 
@@ -1114,10 +1114,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 	vm_prot_t prot;
 	int flags;
 {
-	int need_enter_pv;
 	pt_entry_t *pte;
 	u_int npte;
-	struct vm_page *mem;
+	struct vm_page *pg, *mem;
 	unsigned asid;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
@@ -1149,9 +1148,10 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (!(prot & VM_PROT_READ))
 		panic("pmap_enter: prot");
 #endif
+	pg = PHYS_TO_VM_PAGE(pa);
 
-	if (PAGE_IS_MANAGED(pa)) {
-		int *attrs = pa_to_attribute(pa);
+	if (pg) {
+		int *attrs = &pg->mdpage.pvh_attrs;
 
 		/* Set page referenced/modified status based on flags */
 		if (flags & VM_PROT_WRITE)
@@ -1177,7 +1177,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 #ifdef DEBUG
 		enter_stats.managed++;
 #endif
-		need_enter_pv = 1;
 	} else {
 		/*
 		 * Assumption: if it is not part of our managed memory
@@ -1198,8 +1197,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 			    (MIPS1_PG_D | MIPS1_PG_N) :
 			    (MIPS1_PG_RO | MIPS1_PG_N);
 		}
-
-		need_enter_pv = 0;
 	}
 
 	/*
@@ -1217,8 +1214,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 #endif
 
 	if (pmap == pmap_kernel()) {
-		if (need_enter_pv)
-			pmap_enter_pv(pmap, va, pa, &npte);
+		if (pg)
+			pmap_enter_pv(pmap, va, pg, &npte);
 
 		/* enter entries into kernel pmap */
 		pte = kvtopte(va);
@@ -1274,8 +1271,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	}
 
 	/* Done after case that may sleep/return. */
-	if (need_enter_pv)
-		pmap_enter_pv(pmap, va, pa, &npte);
+	if (pg)
+		pmap_enter_pv(pmap, va, pg, &npte);
 
 	pte += (va >> PGSHIFT) & (NPTEPG - 1);
 
@@ -1579,6 +1576,7 @@ pmap_zero_page(phys)
 {
 	vaddr_t va;
 #if defined(MIPS3_PLUS)
+	struct vm_page *pg;
 	pv_entry_t pv;
 #endif
 
@@ -1593,8 +1591,9 @@ pmap_zero_page(phys)
 	va = MIPS_PHYS_TO_KSEG0(phys);
 
 #if defined(MIPS3_PLUS)	/* XXX mmu XXX */
+	pg = PHYS_TO_VM_PAGE(phys);
 	if (mips_cache_virtual_alias) {
-		pv = pa_to_pvh(phys);
+		pv = pg->mdpage.pvh_list;
 		if ((pv->pv_flags & PV_UNCACHED) == 0 &&
 		    mips_cache_indexof(pv->pv_va) != mips_cache_indexof(va))
 			mips_dcache_wbinv_range_index(pv->pv_va, PAGE_SIZE);
@@ -1690,15 +1689,15 @@ boolean_t
 pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int *attrp;
 	boolean_t rv;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_reference(%lx)\n", (u_long)pa);
+		printf("pmap_clear_reference(%lx)\n",
+		    (u_long)VM_PAGE_TO_PHYS(pg));
 #endif
-	attrp = pa_to_attribute(pa);
+	attrp = &pg->mdpage.pvh_attrs;
 	rv = *attrp & PV_REFERENCED;
 	*attrp &= ~PV_REFERENCED;
 	return rv;
@@ -1714,9 +1713,8 @@ boolean_t
 pmap_is_referenced(pg)
 	struct vm_page *pg;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
-	return (*pa_to_attribute(pa) & PV_REFERENCED);
+	return (pg->mdpage.pvh_attrs & PV_REFERENCED);
 }
 
 /*
@@ -1726,7 +1724,6 @@ boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct pmap *pmap;
 	struct pv_entry *pv;
 	pt_entry_t *pte;
@@ -1739,13 +1736,13 @@ pmap_clear_modify(pg)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_modify(%lx)\n", (u_long)pa);
 #endif
-	attrp = pa_to_attribute(pa);
+	attrp = &pg->mdpage.pvh_attrs;
 	rv = *attrp & PV_MODIFIED;
 	*attrp &= ~PV_MODIFIED;
 	if (!rv) {
 		return rv;
 	}
-	pv = pa_to_pvh(pa);
+	pv = pg->mdpage.pvh_list;
 	if (pv->pv_pmap == NULL) {
 		return TRUE;
 	}
@@ -1796,9 +1793,8 @@ boolean_t
 pmap_is_modified(pg)
 	struct vm_page *pg;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
-	return (*pa_to_attribute(pa) & PV_MODIFIED);
+	return (pg->mdpage.pvh_attrs & PV_MODIFIED);
 }
 
 /*
@@ -1810,7 +1806,10 @@ void
 pmap_set_modified(pa)
 	paddr_t pa;
 {
-	*pa_to_attribute(pa) |= PV_MODIFIED | PV_REFERENCED;
+	struct vm_page *pg;
+
+	pg = PHYS_TO_VM_PAGE(pa);
+	pg->mdpage.pvh_attrs |= PV_MODIFIED | PV_REFERENCED;
 }
 
 paddr_t
@@ -1870,15 +1869,11 @@ pmap_asid_alloc(pmap)
  * physical to virtual map table.
  */
 void
-pmap_enter_pv(pmap, va, pa, npte)
-	pmap_t pmap;
-	vaddr_t va;
-	paddr_t pa;
-	u_int *npte;
+pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 {
 	pv_entry_t pv, npv;
 
-	pv = pa_to_pvh(pa);
+	pv = pg->mdpage.pvh_list;
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter: pv %p: was %lx/%p/%p\n",
@@ -1942,7 +1937,7 @@ again:
 					 */
 					if (mips_cache_indexof(npv->pv_va) !=
 					    mips_cache_indexof(va)) {
-						pmap_page_cache(pa,PV_UNCACHED);
+						pmap_page_cache(pg,PV_UNCACHED);
 						mips_dcache_wbinv_range_index(
 						    pv->pv_va, PAGE_SIZE);
 						*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
@@ -1985,10 +1980,12 @@ again:
 						entry = 0;
 				}
 				if (!mips_pg_v(entry) ||
-				    mips_tlbpfn_to_paddr(entry) != pa)
+				    mips_tlbpfn_to_paddr(entry) !=
+				    VM_PAGE_TO_PHYS(pg))
 					printf(
 		"pmap_enter: found va %lx pa %lx in pv_table but != %x\n",
-						va, (u_long)pa, entry);
+					    va, (u_long)VM_PAGE_TO_PHYS(pg),
+					    entry);
 #endif
 				return;
 			}
@@ -2021,28 +2018,18 @@ again:
  * at this point).
  */
 void
-pmap_remove_pv(pmap, va, pa)
-	pmap_t pmap;
-	vaddr_t va;
-	paddr_t pa;
+pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg)
 {
 	pv_entry_t pv, npv;
 	int last;
-	int bank, off;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PVENTRY))
-		printf("pmap_remove_pv(%p, %lx, %lx)\n", pmap, va, (u_long)pa);
+		printf("pmap_remove_pv(%p, %lx, %lx)\n", pmap, va,
+		    (u_long)VM_PAGE_TO_PHYS(pg));
 #endif
-	/*
-	 * Remove page from the PV table.
-	 * Return immediately if the page is actually not managed.
-	 */
 
-	bank = vm_physseg_find(atop(pa), &off);
-	if (bank == -1)
-		return;
-	pv = &vm_physmem[bank].pmseg.pvent[off];
+	pv = pg->mdpage.pvh_list;
 
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -2094,13 +2081,13 @@ pmap_remove_pv(pmap, va, pa)
 		 * removed.  If it was, then reenable caching.
 		 */
 
-		pv = pa_to_pvh(pa);
+		pv = pg->mdpage.pvh_list;
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
 			if (mips_cache_indexof(pv->pv_va ^ npv->pv_va))
 				break;
 		}
 		if (npv == NULL)
-			pmap_page_cache(pa, 0);
+			pmap_page_cache(pg, 0);
 	}
 #endif
 	if (MIPS_HAS_R4K_MMU && last != 0)
@@ -2131,7 +2118,8 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 	va = MIPS_PHYS_TO_KSEG0(phys);
 #if defined(MIPS3_PLUS)
 	if (mips_cache_virtual_alias) {
-		pv = pa_to_pvh(phys);
+		pg = PHYS_TO_VM_PAGE(phys);
+		pv = pg->mdpage.pvh_list;
 		if ((pv->pv_flags & PV_UNCACHED) == 0 &&
 		    mips_cache_indexof(pv->pv_va) != mips_cache_indexof(va))
 			mips_dcache_wbinv_range_index(pv->pv_va, PAGE_SIZE);
@@ -2201,13 +2189,15 @@ mips_pmap_map_poolpage(paddr_t pa)
 {
 	vaddr_t va;
 #if defined(MIPS3_PLUS)
+	struct vm_page *pg;
 	pv_entry_t pv;
 #endif
 
 	va = MIPS_PHYS_TO_KSEG0(pa);
 #if defined(MIPS3_PLUS)
 	if (mips_cache_virtual_alias) {
-		pv = pa_to_pvh(pa);
+		pg = PHYS_TO_VM_PAGE(pa);
+		pv = pg->mdpage.pvh_list;
 		if ((pv->pv_flags & PV_UNCACHED) == 0 &&
 		    mips_cache_indexof(pv->pv_va) != mips_cache_indexof(va))
 			mips_dcache_wbinv_range_index(pv->pv_va, PAGE_SIZE);
