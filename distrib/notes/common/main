@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.297 2005/11/27 19:12:11 kardel Exp $
+.\"	$NetBSD: main,v 1.298 2005/12/13 10:41:25 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1256,6 +1256,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta HAMAJIMA Katsuomi Ta Mt hamajima@NetBSD.org
 .It Ta HAYAKAWA Koichi Ta Mt haya@NetBSD.org
 .It Ta John Heasley Ta Mt heas@NetBSD.org
+.It Ta Geert Hendrickx Ta Mt ghen@NetBSD.org
 .It Ta Ren\('e Hexel Ta Mt rh@NetBSD.org
 .It Ta Kouichirou Hiratsuka Ta Mt hira@NetBSD.org
 .It Ta Michael L. Hitch Ta Mt mhitch@NetBSD.org
