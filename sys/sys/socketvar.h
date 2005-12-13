@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.83 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.84 2005/12/13 16:47:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -265,6 +265,7 @@ extern struct pool	socket_pool;
 
 struct mbuf;
 struct sockaddr;
+struct lwp;
 struct proc;
 struct msghdr;
 struct stat;
