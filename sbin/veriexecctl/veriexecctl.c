@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.19 2005/12/12 21:47:58 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.20 2005/12/13 10:56:16 dsl Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -254,7 +254,7 @@ print_query(struct veriexec_query_params *qp, char *file)
 	int i;
 
 	printf("Filename: %s\n", file);
-	printf("Device: %d, inode: %lu\n", qp->dev, qp->ino);
+	printf("Device: %d, inode: %" PRIu64 "\n", qp->dev, qp->ino);
 	printf("Entry flags: ");
 	print_flags(qp->type);
 	printf("Entry status: %s\n", STATUS_STRING(qp->status));
