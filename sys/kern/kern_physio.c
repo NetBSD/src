@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.67 2005/12/04 23:34:00 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.68 2005/12/13 12:29:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.67 2005/12/04 23:34:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.68 2005/12/13 12:29:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,6 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	int i, s;
 	int error = 0;
 	int error2;
-	size_t todo;
 	struct buf *bp = NULL;
 	struct buf *mbp;
 	int concurrency = PHYSIO_CONCURRENCY - 1;
@@ -295,14 +294,19 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	PHOLD(l);
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
+		boolean_t sync = TRUE;
+
 		iovp = &uio->uio_iov[i];
 		while (iovp->iov_len > 0) {
+			size_t todo;
+
 			simple_lock(&mbp->b_interlock);
 			if ((mbp->b_flags & B_ERROR) != 0) {
 				error = mbp->b_error;
 				goto done_locked;
 			}
-			error = physio_wait(mbp, concurrency, "physio1");
+			error = physio_wait(mbp, sync ? 0 : concurrency,
+			    "physio1");
 			if (error) {
 				goto done_locked;
 			}
@@ -347,12 +351,36 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			 * for later comparison.
 			 */
 			(*min_phys)(bp);
-			todo = bp->b_bufsize = bp->b_bcount;
 #if defined(DIAGNOSTIC)
-			if (todo > MAXPHYS)
+			if (bp->b_bcount > MAXPHYS)
 				panic("todo(%zu) > MAXPHYS; minphys broken",
-				    todo);
+				    bp->b_bcount);
 #endif /* defined(DIAGNOSTIC) */
+
+			sync = FALSE;
+			if (bp->b_bcount != iovp->iov_len) {
+				vaddr_t endp =
+				    (vaddr_t)bp->b_data + bp->b_bcount;
+				vaddr_t alignedendp = trunc_page(endp);
+
+				if (alignedendp != endp) {
+					if (alignedendp > (vaddr_t)bp->b_data) {
+						bp->b_bcount = alignedendp -
+						    (vaddr_t)bp->b_data;
+					} else {
+						simple_lock(&mbp->b_interlock);
+						error = physio_wait(mbp, 0,
+						    "physio3");
+						if (error) {
+							goto done_locked;
+						}
+						simple_unlock(
+						    &mbp->b_interlock);
+						sync = TRUE;
+					}
+				}
+			}
+			todo = bp->b_bufsize = bp->b_bcount;
 
 			/*
 			 * [lock the part of the user address space involved
