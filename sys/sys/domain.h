@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.21 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: domain.h,v 1.22 2005/12/13 21:33:21 oster Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,7 +42,7 @@
 /*
  * Forward structure declarations for function prototypes [sic].
  */
-struct	proc;
+struct	lwp;
 struct	mbuf;
 struct	ifnet;
 
