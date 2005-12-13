@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.18 2005/05/07 19:52:17 dsl Exp $	*/
+/*	$NetBSD: options.h,v 1.19 2005/12/13 17:44:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,7 +48,7 @@ struct optent {
 	const char *name;		/* for set -o <name> */
 	const char letter;		/* set [+/-]<letter> and $- */
 	const char opt_set;		/* mutually exclusive option set */
-	char val;			/* value of <letter>flag */
+	unsigned char val;		/* value of <letter>flag */
 };
 
 /* Those marked [U] are required by posix, but have no effect! */
