@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.84 2005/12/13 16:47:18 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.85 2005/12/13 19:27:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -40,7 +40,7 @@
 
 #if !defined(_KERNEL) || defined(LKM)
 struct uio;
-struct proc;
+struct lwp;
 struct uidinfo;
 #endif
 
@@ -266,7 +266,6 @@ extern struct pool	socket_pool;
 struct mbuf;
 struct sockaddr;
 struct lwp;
-struct proc;
 struct msghdr;
 struct stat;
 struct knote;
