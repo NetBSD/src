@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.71 2005/06/01 15:41:19 lukem Exp $	*/
+/*	$NetBSD: expand.c,v 1.72 2005/12/13 17:44:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.71 2005/06/01 15:41:19 lukem Exp $");
+__RCSID("$NetBSD: expand.c,v 1.72 2005/12/13 17:44:18 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -866,7 +866,7 @@ numvar:
 		break;
 	case '-':
 		for (i = 0; optlist[i].name; i++) {
-			if (optlist[i].val)
+			if (optlist[i].val && optlist[i].letter)
 				STPUTC(optlist[i].letter, expdest);
 		}
 		break;
