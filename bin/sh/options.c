@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.39 2005/07/15 17:46:54 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.40 2005/12/13 17:44:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.39 2005/07/15 17:46:54 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.40 2005/12/13 17:44:18 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,10 +221,20 @@ minus_o(char *name, int val)
 	int i;
 
 	if (name == NULL) {
-		out1str("Current option settings\n");
-		for (i = 0; i < NOPTS; i++)
-			out1fmt("%-16s%s\n", optlist[i].name,
-				optlist[i].val ? "on" : "off");
+		if (val) {
+			out1str("Current option settings\n");
+			for (i = 0; i < NOPTS; i++) {
+				out1fmt("%-16s%s\n", optlist[i].name,
+					optlist[i].val ? "on" : "off");
+			}
+		} else {
+			out1str("set");
+			for (i = 0; i < NOPTS; i++) {
+				out1fmt(" %co %s",
+					"+-"[optlist[i].val], optlist[i].name);
+			}
+			out1str("\n");
+		}
 	} else {
 		for (i = 0; i < NOPTS; i++)
 			if (equal(name, optlist[i].name)) {
