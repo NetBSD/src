@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.78 2005/12/12 15:04:50 cube Exp $	*/
+/*	$NetBSD: acpi.c,v 1.79 2005/12/13 23:27:31 cube Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.78 2005/12/12 15:04:50 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.79 2005/12/13 23:27:31 cube Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -149,7 +149,12 @@ struct acpi_softc *acpi_softc;
 static struct simplelock acpi_slock;
 static int acpi_locked;
 
-static uint64_t acpi_root_pointer;
+/*
+ * sysctl-related information
+ */
+
+static int acpi_node = CTL_EOL;
+static uint64_t acpi_root_pointer;	/* found as hw.acpi.root */
 
 /*
  * Prototypes.
@@ -362,12 +367,12 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	acpi_md_callback((struct device *)sc);
 	acpi_build_tree(sc);
 
-	if (acpi_root_pointer != 0)
+	if (acpi_root_pointer != 0 && acpi_node != CTL_EOL)
 		(void)sysctl_createv(NULL, 0, NULL, NULL,
 		    CTLFLAG_IMMEDIATE,
-		    CTLTYPE_QUAD, "acpi_root", NULL, NULL,
+		    CTLTYPE_QUAD, "root", NULL, NULL,
 		    acpi_root_pointer, NULL, 0,
-		    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+		    CTL_HW, acpi_node, CTL_CREATE, CTL_EOL);
 
 	/*
 	 * Register a shutdown hook that disables certain ACPI
@@ -1374,3 +1379,24 @@ out:
 	return rv;
 }
 #endif /* PCI_INTR_FIXUP || ACPI_ACTIVATE_DEV */
+
+SYSCTL_SETUP(sysctl_acpi_setup, "sysctl hw.acpi subtree setup")
+{
+	const struct sysctlnode *node;
+
+	if (sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_EOL) != 0)
+		return;
+
+	if (sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "acpi", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL) != 0)
+		return;
+
+	acpi_node = node->sysctl_num;
+}
