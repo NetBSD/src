@@ -1,4 +1,4 @@
-/*	$NetBSD: ornd_keys.c,v 1.1 2003/07/24 15:14:20 itojun Exp $	*/
+/*	$NetBSD: ornd_keys.c,v 1.2 2005/12/13 12:59:48 martin Exp $	*/
 
 #include "des_locl.h"
 #include <sys/time.h>
@@ -72,7 +72,7 @@ des_init_random_number_generator(des_cblock *seed)
 
 	SHA1Init(&sha);
 
-	gethostname(hname, sizeof(hname - 1));
+	gethostname(hname, sizeof(hname) - 1);
 	gettimeofday(&when, NULL);
 
 	memcpy(&seed_q, seed, sizeof(seed_q));
