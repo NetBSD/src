@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.25 2005/12/11 12:23:44 christos Exp $ */
+/*	$NetBSD: p9100.c,v 1.26 2005/12/14 00:35:31 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.25 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.26 2005/12/14 00:35:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ void	p9100_scroll(void *, void *, int);
 
 int	p9100_putcmap(struct p9100_softc *, struct wsdisplay_cmap *);
 int 	p9100_getcmap(struct p9100_softc *, struct wsdisplay_cmap *);
-int	p9100_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	p9100_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 paddr_t	p9100_mmap(void *, off_t, int);
 int	p9100_alloc_screen(void *, const struct wsscreen_descr *, void **, 
 	    int *, int *, long *);
@@ -1265,7 +1265,7 @@ p9100_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
  */
 
 int
-p9100_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+p9100_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct p9100_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
