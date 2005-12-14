@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.112 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.113 2005/12/14 22:46:52 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.112 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.113 2005/12/14 22:46:52 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -660,8 +660,8 @@ extern struct bpf_insn *bpf_udp_filter;
  *  BIOCGSTATS		Get packet stats.
  *  BIOCIMMEDIATE	Set immediate mode.
  *  BIOCVERSION		Get filter language version.
- *  BIOGHDRCMPLT	Get "header already complete" flag.
- *  BIOSHDRCMPLT	Set "header already complete" flag.
+ *  BIOCGHDRCMPLT	Get "header already complete" flag.
+ *  BIOCSHDRCMPLT	Set "header already complete" flag.
  */
 /* ARGSUSED */
 static int
