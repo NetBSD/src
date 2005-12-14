@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.23.4.1 2005/10/28 03:43:13 jmc Exp $	*/
+/*	$NetBSD: statd.c,v 1.23.4.2 2005/12/14 03:52:38 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.23.4.1 2005/10/28 03:43:13 jmc Exp $");
+__RCSID("$NetBSD: statd.c,v 1.23.4.2 2005/12/14 03:52:38 jmc Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -241,12 +241,17 @@ bad:
  *
  */
 void
-change_host(hostname, hp)
-	char *hostname;
+change_host(hostnamep, hp)
+	char *hostnamep;
 	HostInfo *hp;
 {
 	DBT key, data;
 	char *ptr;
+	char hostname[MAXHOSTNAMELEN + 1];
+	HostInfo h;
+
+	strncpy(hostname, hostnamep, MAXHOSTNAMELEN + 1);
+	h = *hp;
 
 	for (ptr = hostname; *ptr; ptr++)
 		if (isupper((unsigned char) *ptr))
@@ -254,8 +259,8 @@ change_host(hostname, hp)
 
 	key.data = hostname;
 	key.size = ptr - hostname + 1;
-	data.data = hp;
-	data.size = sizeof(*hp);
+	data.data = &h;
+	data.size = sizeof(h);
 
 	switch ((*db->put)(db, &key, &data, 0)) {
 	case -1:
@@ -458,7 +463,6 @@ notify_one(key, hi, ptr)
 {
 	time_t now = *(time_t *) ptr;
 	char *name = key->data;
-	DBT data;
 	int error;
 
 	if (hi->notifyReqd == 0 || hi->notifyReqd > now)
@@ -495,17 +499,8 @@ notify_one(key, hi, ptr)
 		else
 			hi->notifyReqd += 60 * 60;
 	}
-	data.data = hi;
-	data.size = sizeof(*hi);
-	switch ((*db->put)(db, key, &data, 0)) {
-	case -1:
-		syslog(LOG_ERR, "Error storing %s (%m)", name);
-	case 0:
-		return error;
-
-	default:
-		abort();
-	}
+	change_host(name, hi);
+	return error;
 }
 
 /* init_file -------------------------------------------------------------- */
