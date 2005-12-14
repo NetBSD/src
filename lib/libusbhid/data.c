@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.4 2005/12/05 02:09:17 christos Exp $	*/
+/*	$NetBSD: data.c,v 1.5 2005/12/14 17:35:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: data.c,v 1.4 2005/12/05 02:09:17 christos Exp $");
+__RCSID("$NetBSD: data.c,v 1.5 2005/12/14 17:35:40 wiz Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -58,10 +58,9 @@ hid_get_data(const void *p, const hid_item_t *h)
 		data |= buf[offs + i] << (i*8);
 	data >>= hpos % 8;
 	data &= (1 << hsize) - 1;
-	if (h->logical_minimum < 0) {
+	if (h->logical_minimum < 0 && (data & (1<<(hsize-1)))) {
 		/* Need to sign extend */
-		hsize = sizeof data * 8 - hsize;
-		data = (data << hsize) >> hsize;
+		data |= 0xffffffff & ~((1<<hsize)-1);
 	}
 	return (int)(data);
 }
