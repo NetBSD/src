@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.49.2.1 2004/07/02 17:22:28 he Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.49.2.1.2.1 2005/12/14 04:10:47 jmc Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.49.2.1 2004/07/02 17:22:28 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.49.2.1.2.1 2005/12/14 04:10:47 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,8 @@ Static const struct usbd_quirk_entry {
  	0x001, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_EICON, USB_PRODUCT_EICON_DIVA852,
         0x100, { UQ_ASSUME_CM_OVER_DATA }},
+ { USB_VENDOR_SIEMENS2, USB_PRODUCT_SIEMENS2_MC75,
+        0x000, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_TI, USB_PRODUCT_TI_UTUSB41,	    0x110, { UQ_POWER_CLAIM }},
  { USB_VENDOR_TELEX, USB_PRODUCT_TELEX_MIC1,	    0x009, { UQ_AU_NO_FRAC }},
  { USB_VENDOR_SILICONPORTALS, USB_PRODUCT_SILICONPORTALS_YAPPHONE,
