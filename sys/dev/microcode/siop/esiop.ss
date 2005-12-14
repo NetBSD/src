@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.13.4.3 2005/03/17 17:49:33 tron Exp $
+;	$NetBSD: esiop.ss,v 1.13.4.4 2005/12/14 03:20:35 jmc Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -113,6 +113,7 @@ ENTRY script_sched;
 ENTRY load_targtable;
 
 EXTERN tlq_offset;
+EXTERN saved_offset_offset;
 EXTERN abs_msgin2;
 
 EXTERN abs_sem; a 32bits word used a semaphore between script and driver
@@ -209,7 +210,11 @@ waitphase:
 
 handle_cmpl:
 	CALL REL(disconnect);
-	STORE NOFLUSH SCRATCHA0, 4, from tlq_offset; save current offset
+; update offset if we did some data transfer
+	MOVE SCRATCHA1 TO SFBR;
+	JUMP REL(handle_cmpl_noxfer), if 0x00;
+	STORE NOFLUSH SCRATCHA0, 4, FROM saved_offset_offset;
+handle_cmpl_noxfer:
 	MOVE SCRATCHE1 to SFBR;
 	INT int_done, IF NOT 0x00; if status is not "done", let host handle it
 	MOVE SCRATCHF0 to SFBR; load pointer in done ring
@@ -345,9 +350,12 @@ handle_msgin:
 	CALL REL(disconnect)		; disconnect message
 ; if we didn't get sdp, no need to interrupt
 	MOVE SCRATCHC0 & f_c_sdp TO SFBR;
+	INT int_disc, IF not 0x00;
+; update offset if we did some data transfer
+	MOVE SCRATCHA1 TO SFBR;
 	JUMP REL(script_sched), if 0x00;
-; Ok, we need to save data pointers
-	INT int_disc;
+	STORE NOFLUSH SCRATCHA0, 4, FROM saved_offset_offset;
+	JUMP REL(script_sched);
 
 cmdout:
         MOVE FROM t_cmd, WHEN CMD; 
