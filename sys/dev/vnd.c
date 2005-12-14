@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.124 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.125 2005/12/14 19:49:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.124 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.125 2005/12/14 19:49:16 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -833,7 +833,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct nameidata nd;
 	int error, part, pmask;
 	size_t geomsize;
-	struct proc *p = l->l_proc;
+	struct proc *p =  (l != NULL) ? l->l_proc : NULL;
 	int fflags;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
