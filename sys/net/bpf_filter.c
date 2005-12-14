@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.27 2005/12/13 23:53:49 rpaulo Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.28 2005/12/14 20:33:46 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.27 2005/12/13 23:53:49 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.28 2005/12/14 20:33:46 rpaulo Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -501,6 +501,9 @@ bpf_validate(struct bpf_insn *f, int len)
 				if (p->k >= BPF_MEMWORDS)
 					return 0;
 				break;
+			case BPF_ABS:
+			case BPF_IND:
+			case BPF_MSH:
 			case BPF_IMM:
 			case BPF_LEN:
 				break;
