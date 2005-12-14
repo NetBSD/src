@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.68 2005/12/13 12:29:32 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.69 2005/12/14 01:58:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.68 2005/12/13 12:29:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.69 2005/12/14 01:58:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,6 +299,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 		iovp = &uio->uio_iov[i];
 		while (iovp->iov_len > 0) {
 			size_t todo;
+			vaddr_t endp;
 
 			simple_lock(&mbp->b_interlock);
 			if ((mbp->b_flags & B_ERROR) != 0) {
@@ -351,36 +352,22 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			 * for later comparison.
 			 */
 			(*min_phys)(bp);
+			todo = bp->b_bufsize = bp->b_bcount;
 #if defined(DIAGNOSTIC)
-			if (bp->b_bcount > MAXPHYS)
+			if (todo > MAXPHYS)
 				panic("todo(%zu) > MAXPHYS; minphys broken",
-				    bp->b_bcount);
+				    todo);
 #endif /* defined(DIAGNOSTIC) */
 
 			sync = FALSE;
-			if (bp->b_bcount != iovp->iov_len) {
-				vaddr_t endp =
-				    (vaddr_t)bp->b_data + bp->b_bcount;
-				vaddr_t alignedendp = trunc_page(endp);
-
-				if (alignedendp != endp) {
-					if (alignedendp > (vaddr_t)bp->b_data) {
-						bp->b_bcount = alignedendp -
-						    (vaddr_t)bp->b_data;
-					} else {
-						simple_lock(&mbp->b_interlock);
-						error = physio_wait(mbp, 0,
-						    "physio3");
-						if (error) {
-							goto done_locked;
-						}
-						simple_unlock(
-						    &mbp->b_interlock);
-						sync = TRUE;
-					}
-				}
+			endp = (vaddr_t)bp->b_data + todo;
+			if (trunc_page(endp) != endp) {
+				/*
+				 * following requests can overlap.
+				 * note that uvm_vslock does round_page.
+				 */
+				sync = TRUE;
 			}
-			todo = bp->b_bufsize = bp->b_bcount;
 
 			/*
 			 * [lock the part of the user address space involved
