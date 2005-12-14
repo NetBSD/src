@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.11 2001/05/08 02:15:39 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.12 2005/12/14 23:56:45 rpaulo Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= kern fs uvm
+SUBDIR= kern fs uvm net
 .if exists(arch/${MACHINE}/Makefile)
 SUBDIR+= arch/${MACHINE}
 .endif
