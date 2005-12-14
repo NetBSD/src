@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.94 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.95 2005/12/14 22:02:01 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -347,6 +347,7 @@ x(JFS2,    21, "jfs",        NULL,    NULL)   /* IBM JFS2 */ \
 x(APPLEUFS,22, "Apple UFS", "ffs",   "ffs")   /* Apple UFS */ \
 /* XXX this is not the same as FreeBSD.  How to solve? */ \
 x(VINUM,   23, "vinum",      NULL,    NULL)   /* Vinum */ \
+x(UDF,     24, "UDF",        NULL,   "udf")  /* UDF */ \
 
 #ifndef OMIT_FSTYPENUMS
 #define	FS_TYPENUMS(tag, number, name, fsck, mount) __CONCAT(FS_,tag=number),
