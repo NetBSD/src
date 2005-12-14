@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.371.2.3.2.1 2005/05/31 20:59:29 riz Exp $
+$NetBSD: usbdevs,v 1.371.2.3.2.2 2005/12/14 04:10:43 jmc Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -231,6 +231,7 @@ vendor ACARD		0x0678	ACARD Technology
 vendor PROLIFIC		0x067b	Prolific Technology
 vendor SIEMENS		0x067c	Siemens
 vendor AVANCELOGIC	0x0680	Avance Logic
+vendor SIEMENS2		0x0681	Siemens
 vendor MINOLTA		0x0686	Minolta
 vendor CHPRODUCTS	0x068e	CH Products
 vendor HAGIWARA		0x0693	Hagiwara Sys-Com
@@ -1620,6 +1621,9 @@ product SHUTTLE SCM		0x1010	SCM Micro
 /* Siemens products */
 product SIEMENS SPEEDSTREAM	0x1001	SpeedStream USB
 product SIEMENS SPEEDSTREAM22	0x1022	SpeedStream USB 1022
+
+/* Siemens Info products */
+product SIEMENS2 MC75		0x0034	Wireless Modules MC75
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
