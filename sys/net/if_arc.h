@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.18 2005/12/11 23:05:24 thorpej Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.19 2005/12/14 00:28:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -121,7 +121,7 @@ extern int arc_ipmtu;	/* XXX new ip only, no RFC 1051! */
 void	arc_ifattach(struct ifnet *, u_int8_t);
 void	arc_storelladdr(struct ifnet *, u_int8_t);
 char	*arc_sprintf(u_int8_t *);
-int	arc_isphds(int);
+int	arc_isphds(uint8_t);
 #endif
 
 #endif /* !_NET_IF_ARC_H_ */
