@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.20.2.3 2004/04/06 09:41:54 grant Exp $	*/
+/*	$NetBSD: statd.c,v 1.20.2.4 2005/12/14 03:37:24 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.20.2.3 2004/04/06 09:41:54 grant Exp $");
+__RCSID("$NetBSD: statd.c,v 1.20.2.4 2005/12/14 03:37:24 jmc Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -459,54 +459,52 @@ notify_one(key, hi, ptr)
 	time_t now = *(time_t *) ptr;
 	char *name = key->data;
 	DBT data;
+	int error;
 
 	if (hi->notifyReqd == 0 || hi->notifyReqd > now)
 		return 0;
 
-	if (notify_one_host(name)) {
-give_up:
+	/*
+	 * If one of the initial attempts fails, we wait
+	 * for a while and have another go.  This is necessary
+	 * because when we have crashed, (eg. a power outage)
+	 * it is quite possible that we won't be able to
+	 * contact all monitored hosts immediately on restart,
+	 * either because they crashed too and take longer
+	 * to come up (in which case the notification isn't
+	 * really required), or more importantly if some
+	 * router etc. needed to reach the monitored host
+	 * has not come back up yet.  In this case, we will
+	 * be a bit late in re-establishing locks (after the
+	 * grace period) but that is the best we can do.  We
+	 * try 10 times at 5 sec intervals, 10 more times at
+	 * 1 minute intervals, then 24 more times at hourly
+	 * intervals, finally giving up altogether if the
+	 * host hasn't come back to life after 24 hours.
+	 */
+	if (notify_one_host(name) || hi->attempts++ >= 44) {
+		error = 0;
 		hi->notifyReqd = 0;
 		hi->attempts = 0;
-		data.data = hi;
-		data.size = sizeof(*hi);
-		switch ((*db->put)(db, key, &data, 0)) {
-		case -1:
-			syslog(LOG_ERR, "Error storing %s (%m)", name);
-		case 0:
-			return 0;
-
-		default:
-			abort();
-		}
-	}
-	else {
-		/*
-		 * If one of the initial attempts fails, we wait
-		 * for a while and have another go.  This is necessary
-		 * because when we have crashed, (eg. a power outage)
-		 * it is quite possible that we won't be able to
-		 * contact all monitored hosts immediately on restart,
-		 * either because they crashed too and take longer
-		 * to come up (in which case the notification isn't
-		 * really required), or more importantly if some
-		 * router etc. needed to reach the monitored host
-		 * has not come back up yet.  In this case, we will
-		 * be a bit late in re-establishing locks (after the
-		 * grace period) but that is the best we can do.  We
-		 * try 10 times at 5 sec intervals, 10 more times at
-		 * 1 minute intervals, then 24 more times at hourly
-		 * intervals, finally giving up altogether if the
-		 * host hasn't come back to life after 24 hours.
-		 */
-		if (hi->attempts++ >= 44)
-			goto give_up;
-		else if (hi->attempts < 10)
+	} else {
+		error = -1;
+		if (hi->attempts < 10)
 			hi->notifyReqd += 5;
 		else if (hi->attempts < 20)
 			hi->notifyReqd += 60;
 		else
 			hi->notifyReqd += 60 * 60;
-		return -1;
+	}
+	data.data = hi;
+	data.size = sizeof(*hi);
+	switch ((*db->put)(db, key, &data, 0)) {
+	case -1:
+		syslog(LOG_ERR, "Error storing %s (%m)", name);
+	case 0:
+		return error;
+
+	default:
+		abort();
 	}
 }
 
