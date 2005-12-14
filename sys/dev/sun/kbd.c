@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.54 2005/12/12 02:44:09 christos Exp $	*/
+/*	$NetBSD: kbd.c,v 1.55 2005/12/14 00:41:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.54 2005/12/12 02:44:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.55 2005/12/14 00:41:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1047,8 +1047,8 @@ kbd_enable(struct device *dev)
 void
 kbd_wskbd_attach(struct kbd_softc *k, int isconsole)
 {
-	k->k_isconsole=isconsole;
+	k->k_isconsole = isconsole;
 	
-	config_interrupts(&k->k_dev,kbd_enable);
+	config_interrupts(&k->k_dev, kbd_enable);
 }
 #endif
