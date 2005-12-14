@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.22 2005/12/14 04:08:07 jmc Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.23 2005/12/14 04:12:09 jmc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -368,3 +368,11 @@ usr.bin/gzip/zuncompress.c			1.6
 	  Don't warn about >4GB files not having their size correctly stored. 
 	PR#32105 PR#32070
 	[mrg, ticket #10172]
+
+sys/dev/usb/usbdevs				1.419
+sys/dev/usb/usb_quirks.c			1.53
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Add Siemens AG Wireless Modules MC75 support. PR#32180
+	[augustss, ticket #10179]
