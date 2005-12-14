@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.15.4.1 2005/03/17 17:49:33 tron Exp $
+;	$NetBSD: siop.ss,v 1.15.4.2 2005/12/14 03:20:35 jmc Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -47,6 +47,7 @@ ABSOLUTE int_msgin	= 0xff01;
 ABSOLUTE int_extmsgin	= 0xff02;
 ABSOLUTE int_extmsgdata	= 0xff03;
 ABSOLUTE int_disc	= 0xff04;
+ABSOLUTE int_saveoffset	= 0xff05;
 ; interrupts that don't have a valid DSA
 ABSOLUTE int_reseltarg	= 0xff80;
 ABSOLUTE int_resellun	= 0xff81;
@@ -262,9 +263,12 @@ handle_msgin:
 	CALL REL(disconnect)                  ; disconnect message;
 ; if we didn't get sdp, no need to interrupt
 	MOVE SCRATCHA0 & flag_sdp TO SFBR;
+	INT int_disc, IF not 0x00;
+; update offset if we did some data transfer
+	MOVE SCRATCHA1 TO SFBR;
 	JUMP REL(script_sched), if 0x00; 
-; Ok, we need to save data pointers
-	INT int_disc;
+	INT int_saveoffset;
+
 msgin_ack:
 selected:
 	CLEAR ACK;

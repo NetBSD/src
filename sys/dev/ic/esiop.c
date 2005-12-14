@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.16.2.6 2005/05/01 09:59:59 tron Exp $	*/
+/*	$NetBSD: esiop.c,v 1.16.2.7 2005/12/14 03:20:35 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.16.2.6 2005/05/01 09:59:59 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.16.2.7 2005/12/14 03:20:35 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,6 +254,14 @@ esiop_reset(sc)
 			    sizeof(struct siop_common_xfer));
 		}
 		for (j = 0; j <
+		    (sizeof(E_saved_offset_offset_Used) /
+		     sizeof(E_saved_offset_offset_Used[0]));
+		    j++) {
+			bus_space_write_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
+			    E_saved_offset_offset_Used[j] * 4,
+			    sizeof(struct siop_common_xfer) + 4);
+		}
+		for (j = 0; j <
 		    (sizeof(E_abs_msgin2_Used) / sizeof(E_abs_msgin2_Used[0]));
 		    j++) {
 			bus_space_write_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
@@ -290,6 +298,13 @@ esiop_reset(sc)
 		    j++) {
 			sc->sc_c.sc_script[E_tlq_offset_Used[j]] =
 			    htole32(sizeof(struct siop_common_xfer));
+		}
+		for (j = 0; j <
+		    (sizeof(E_saved_offset_offset_Used) /
+		     sizeof(E_saved_offset_offset_Used[0]));
+		    j++) {
+			sc->sc_c.sc_script[E_saved_offset_offset_Used[j]] =
+			    htole32(sizeof(struct siop_common_xfer) + 4);
 		}
 		for (j = 0; j <
 		    (sizeof(E_abs_msgin2_Used) / sizeof(E_abs_msgin2_Used[0]));
@@ -1073,6 +1088,9 @@ scintr:
 			printf("disconnect offset %d\n", offset);
 #endif
 			siop_sdp(&esiop_cmd->cmd_c, offset);
+			/* we start again with no offset */
+			ESIOP_XFER(esiop_cmd, saved_offset) =
+			    htole32(SIOP_NOOFFSET);
 			esiop_table_sync(esiop_cmd,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			CALL_SCRIPT(Ent_script_sched);
@@ -1127,6 +1145,17 @@ end:
 		esiop_lun->active = NULL;
 	offset = bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 	    SIOP_SCRATCHA + 1);
+	/*
+	 * if we got a disconnect between the last data phase
+	 * and the status phase, offset will be 0. In this
+	 * case, cmd_tables->saved_offset will have the proper value 
+	 * if it got updated by the controller
+	 */
+	if (offset == 0 &&
+	    ESIOP_XFER(esiop_cmd, saved_offset) != htole32(SIOP_NOOFFSET))
+		offset =
+		    (le32toh(ESIOP_XFER(esiop_cmd, saved_offset)) >> 8) & 0xff;
+
 	esiop_scsicmd_end(esiop_cmd, offset);
 	if (freetarget && esiop_target->target_c.status == TARST_PROBING)
 		esiop_del_dev(sc, target, lun);
@@ -1215,7 +1244,7 @@ esiop_checkdone(sc)
 	u_int32_t slot;
 	int needsync = 0;
 	int status;
-	u_int32_t sem;
+	u_int32_t sem, offset;
 
 	esiop_script_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	sem = esiop_script_read(sc, sc->sc_semoffset);
@@ -1296,10 +1325,15 @@ next:
 		esiop_lun->tactive[tag] = NULL;
 	else
 		esiop_lun->active = NULL;
-	/* scratcha was saved in tlq by script. fetch offset from it */
-	esiop_scsicmd_end(esiop_cmd,
-	    (le32toh(((struct esiop_xfer *)esiop_cmd->cmd_tables)->tlq) >> 8)
-	    & 0xff);
+	/*
+	 * scratcha was eventually saved in saved_offset by script.
+	 * fetch offset from it
+	 */
+	offset = 0;
+	if (ESIOP_XFER(esiop_cmd, saved_offset) != htole32(SIOP_NOOFFSET))
+		offset =
+		    (le32toh(ESIOP_XFER(esiop_cmd, saved_offset)) >> 8) & 0xff;
+	esiop_scsicmd_end(esiop_cmd, offset);
 	goto next;
 }
 
@@ -1605,14 +1639,13 @@ esiop_scsipi_request(chan, req, arg)
 		else
 			esiop_cmd->cmd_c.tag = -1;
 		siop_setuptables(&esiop_cmd->cmd_c);
-		((struct esiop_xfer *)esiop_cmd->cmd_tables)->tlq =
-		    htole32(A_f_c_target | A_f_c_lun);
-		((struct esiop_xfer *)esiop_cmd->cmd_tables)->tlq |=
+		ESIOP_XFER(esiop_cmd, saved_offset) = htole32(SIOP_NOOFFSET);
+		ESIOP_XFER(esiop_cmd, tlq) = htole32(A_f_c_target | A_f_c_lun);
+		ESIOP_XFER(esiop_cmd, tlq) |=
 		    htole32((target << 8) | (lun << 16));
 		if (esiop_cmd->cmd_c.flags & CMDFL_TAG) {
-			((struct esiop_xfer *)esiop_cmd->cmd_tables)->tlq |=
-			    htole32(A_f_c_tag);
-			((struct esiop_xfer *)esiop_cmd->cmd_tables)->tlq |=
+			ESIOP_XFER(esiop_cmd, tlq) |= htole32(A_f_c_tag);
+			ESIOP_XFER(esiop_cmd, tlq) |=
 			    htole32(esiop_cmd->cmd_c.tag << 24);
 		}
 
@@ -1958,10 +1991,12 @@ esiop_morecbd(sc)
 		TAILQ_INSERT_TAIL(&sc->free_list, &newcbd->cmds[i], next);
 		splx(s);
 #ifdef SIOP_DEBUG
-		printf("tables[%d]: in=0x%x out=0x%x status=0x%x\n", i,
+		printf("tables[%d]: in=0x%x out=0x%x status=0x%x "
+		    "offset=0x%x\n", i,
 		    le32toh(newcbd->cmds[i].cmd_tables->t_msgin.addr),
 		    le32toh(newcbd->cmds[i].cmd_tables->t_msgout.addr),
-		    le32toh(newcbd->cmds[i].cmd_tables->t_status.addr));
+		    le32toh(newcbd->cmds[i].cmd_tables->t_status.addr,
+		    le32toh(newcbd->cmds[i].cmd_tables->t_offset.addr));
 #endif
 	}
 	s = splbio();
