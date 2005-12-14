@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.170 2005/12/12 11:21:27 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.171 2005/12/14 03:29:50 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2095,3 +2095,20 @@ build.sh					patch
 	Clean up environment to avoid side effects on builds.
 	[jmc, ticket #5972]
 
+sys/dev/ic/esiop.c				patch
+sys/dev/ic/esiopvar.h				patch
+sys/dev/ic/siop.c				patch
+sys/dev/ic/siopvar.h				patch
+sys/dev/ic/siopvar_common.h			patch
+sys/dev/microcode/siop/esiop.ss			patch
+sys/dev/microcode/siop/siop.ss			patch
+sys/dev/microcode/siop/esiop.out		regen
+sys/dev/microcode/siop/siop.out			regen
+
+	Some drives disconnect after the last data phase without a save data 
+	pointer message. In such case we would not update resid with the 
+	proper value (eventually resid would not be updated at all if there 
+	was only one data phase). To fix this, have the script save the offset 
+	in the data tables at disconnect time if there was a transfer, and 
+	use this to compute the resid if the current offset is 0. PR#31990" 
+	[bouyer, ticket #5957]
