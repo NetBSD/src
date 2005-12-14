@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.171 2005/12/14 03:29:50 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.172 2005/12/14 03:41:51 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2112,3 +2112,18 @@ sys/dev/microcode/siop/siop.out			regen
 	in the data tables at disconnect time if there was a transfer, and 
 	use this to compute the resid if the current offset is 0. PR#31990" 
 	[bouyer, ticket #5957]
+
+usr.sbin/rpc.statd/statd.c			1.24
+
+	rpc.statd doesn't save failed notifies in the database. PR#31502
+	[bouyer, ticket #5959]
+
+usr.sbin/rpc.statd/statd.c			1.25
+
+	We can't call db->put() with key or data pointing back to db(3)'s memory
+	space, or the database will be corrupted (noticed when the database is
+	updated in reset_host()). Change change_host() to copy hostname and 
+	HostInfo to local storage before calling db->put().
+	Change notify_one() to use change_host() instead of calling db->put()
+	directly.
+	[bouyer, ticket #5970]
