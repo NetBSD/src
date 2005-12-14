@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.9 2005/12/14 15:23:00 cube Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.10 2005/12/14 15:27:59 cube Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.9 2005/12/14 15:23:00 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.10 2005/12/14 15:27:59 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ readdisklabel(dev, strat, lp, osdep)
 	if (rval == SCAN_CONTINUE)
 		return "No disklabel found";
 	if (rval == SCAN_ERROR)
-		return a.msg;		/* XXX returning stack string */
+		return a.msg;
 	return NULL;
 }
 
