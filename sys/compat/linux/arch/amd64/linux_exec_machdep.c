@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.3 2005/12/11 12:20:14 christos Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.4 2005/12/14 18:33:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.3 2005/12/11 12:20:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.4 2005/12/14 18:33:32 christos Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -67,9 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.3 2005/12/11 12:20:14 chris
 #include <compat/linux/common/linux_errno.h>
 
 int
-linux_exec_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 {
 	u_long max_stack_size;
 	u_long access_linear_min, access_size;
@@ -94,7 +92,7 @@ linux_exec_setup_stack(p, epp)
 
 	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
