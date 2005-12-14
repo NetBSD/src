@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.21 2005/12/12 11:26:35 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.22 2005/12/14 04:08:07 jmc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -346,3 +346,25 @@ build.sh					patch
 	Clean up environment to avoid side effects on builds.
 	[jmc, ticket #10194]
 
+usr.sbin/rpc.statd/statd.c			1.25
+
+        We can't call db->put() with key or data pointing back to db(3)'s memory
+	space, or the database will be corrupted (noticed when the database is
+	updated in reset_host()). Change change_host() to copy hostname and 
+	HostInfo to local storage before calling db->put().
+	Change notify_one() to use change_host() instead of calling db->put()
+	directly. 
+        [bouyer, ticket #10171]
+
+usr.bin/gzip/gzip.c				1.78-180
+usr.bin/gzip/unbzip2.c				1.9
+usr.bin/gzip/zuncompress.c			1.6
+
+	Fix a few issues:
+	  gzip -vt just prints the contents of a .Z file
+	  gzip -vt will print OK even if the .gz file is corrupt
+	  gzip -vt prints nothing with a .bz2 file
+	  gzip can loop endlessly with a corrupt .bz2 file
+	  Don't warn about >4GB files not having their size correctly stored. 
+	PR#32105 PR#32070
+	[mrg, ticket #10172]
