@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.45 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: IQ80321,v 1.46 2005/12/14 16:21:55 briggs Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -140,7 +140,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=250000
+options 	SYMTAB_SPACE=280000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
