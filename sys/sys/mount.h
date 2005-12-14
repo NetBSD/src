@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.134 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.135 2005/12/14 21:58:39 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -81,6 +81,7 @@
 #define	MOUNT_SMBFS	"smbfs"		/* CIFS (SMB) */
 #define	MOUNT_PTYFS	"ptyfs"		/* Pseudo tty filesystem */
 #define	MOUNT_TMPFS	"tmpfs"		/* Efficient memory file-system */
+#define MOUNT_UDF	"udf"		/* UDF CD/DVD filesystem */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
