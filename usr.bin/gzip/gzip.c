@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.29.2.4 2005/09/06 16:00:22 riz Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.29.2.5 2005/12/14 04:06:55 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.29.2.4 2005/09/06 16:00:22 riz Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.29.2.5 2005/12/14 04:06:55 jmc Exp $");
 #endif /* not lint */
 
 /*
@@ -637,8 +637,10 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 		 (int)(in_tot >> 24) & 0xff);
 	if (i != 8)
 		maybe_err("snprintf");
+#if 0
 	if (in_tot > 0xffffffff)
 		maybe_warn("input file size >= 4GB cannot be saved");
+#endif
 	if (write(out, outbufp, i) != i) {
 		maybe_warn("write");
 		in_tot = -1;
@@ -727,10 +729,6 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 			    BUFLEN - z.avail_in);
 
 			if (in_size == -1) {
-#ifndef SMALL
-				if (tflag && vflag)
-					print_test(filename, 0);
-#endif
 				maybe_warn("failed to read stdin");
 				goto stop_and_fail;
 			} else if (in_size == 0) {
@@ -982,17 +980,12 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		}
 		continue;
 stop_and_fail:
-		out_tot = 1;
+		out_tot = -1;
 stop:
 		break;
 	}
 	if (state > GZSTATE_INIT)
 		inflateEnd(&z);
-
-#ifndef SMALL
-	if (tflag && vflag)
-		print_test(filename, out_tot != -1);
-#endif
 
 	free(inbufp);
 out1:
@@ -1595,6 +1588,8 @@ handle_stdin(void)
 #ifndef SMALL
         if (vflag && !tflag && usize != -1 && gsize != -1)
 		print_verbage(NULL, NULL, usize, gsize);
+	if (vflag && tflag)
+		print_test("(stdin)", usize != -1);
 #endif 
 
 }
@@ -1710,6 +1705,10 @@ handle_file(char *file, struct stat *sbp)
 	infile = file;
 	if (dflag) {
 		usize = file_uncompress(file, outfile, sizeof(outfile));
+#ifndef SMALL
+		if (vflag && tflag)
+			print_test(file, usize != -1);
+#endif
 		if (usize == -1)
 			return;
 		gsize = sbp->st_size;
