@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.4 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.5 2005/12/14 00:08:34 christos Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -106,7 +106,7 @@ static void psh3tp_attach(struct device *, struct device *, void *);
 
 /* wsmouse accessops */
 static int psh3tp_wsmouse_enable(void *);
-static int psh3tp_wsmouse_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int psh3tp_wsmouse_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static void psh3tp_wsmouse_disable(void *);
 
 /* internal driver routines */
@@ -479,9 +479,9 @@ psh3tp_get_raw_xy(int *rawxp, int *rawyp)
 
 static int
 psh3tp_wsmouse_ioctl(
-    void *self, u_long cmd, caddr_t data, int flag, struct proc *p)
+    void *self, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
 
-	return (hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, p));
+	return (hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, l));
 }
