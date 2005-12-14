@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.172 2005/12/14 03:41:51 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.173 2005/12/14 03:48:10 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2127,3 +2127,10 @@ usr.sbin/rpc.statd/statd.c			1.25
 	Change notify_one() to use change_host() instead of calling db->put()
 	directly.
 	[bouyer, ticket #5970]
+
+share/zoneinfo/asia				patch
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			patch
+
+	Update to tzdata2005o
+	[kleink, ticket #5965]
