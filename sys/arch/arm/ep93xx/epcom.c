@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.5 2005/12/11 12:16:45 christos Exp $ */
+/*	$NetBSD: epcom.c,v 1.6 2005/12/14 00:32:29 christos Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.5 2005/12/11 12:16:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.6 2005/12/14 00:32:29 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -195,8 +195,7 @@ struct consdev epcomcons = {
 #define ISSET(t, f)	((t) & (f))
 
 void
-epcom_attach_subr(sc)
-	struct epcom_softc *sc;
+epcom_attach_subr(struct epcom_softc *sc)
 {
 	struct tty *tp;
 
@@ -265,9 +264,7 @@ epcom_attach_subr(sc)
 }
 
 static int
-epcomparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+epcomparam(struct tty *tp, struct termios *t)
 {
 	struct epcom_softc *sc
 		= device_lookup(&epcom_cd, COMUNIT(tp->t_dev));
@@ -334,9 +331,7 @@ epcomparam(tp, t)
 }
 
 static int
-epcomhwiflow(tp, block)
-	struct tty *tp;
-	int block;
+epcomhwiflow(struct tty *tp, int block)
 {
 	return (0);
 }
@@ -361,8 +356,7 @@ epcom_filltx(struct epcom_softc *sc)
 }
 
 static void
-epcomstart(tp)
-	struct tty *tp;
+epcomstart(struct tty *tp)
 {
 	struct epcom_softc *sc
 		= device_lookup(&epcom_cd, COMUNIT(tp->t_dev));
@@ -453,10 +447,7 @@ epcom_shutdown(struct epcom_softc *sc)
 }
 
 int
-epcomopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+epcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct epcom_softc *sc;
 	struct tty *tp;
@@ -483,7 +474,7 @@ epcomopen(dev, flag, mode, p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(p->p_ucred, &p->p_acflag) != 0)
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -596,10 +587,7 @@ bad:
 }
 
 int
-epcomclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+epcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -627,10 +615,7 @@ epcomclose(dev, flag, mode, p)
 }
 
 int
-epcomread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+epcomread(dev_t dev, struct uio *uio, int flag)
 {
 	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -642,10 +627,7 @@ epcomread(dev, uio, flag)
 }
 
 int
-epcomwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+epcomwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -657,10 +639,7 @@ epcomwrite(dev, uio, flag)
 }
 
 int
-epcompoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+epcompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -668,12 +647,11 @@ epcompoll(dev, events, p)
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
-epcomtty(dev)
-	dev_t dev;
+epcomtty(dev_t dev)
 {
 	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -682,7 +660,7 @@ epcomtty(dev)
 }
 
 int
-epcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+epcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -692,11 +670,11 @@ epcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -718,7 +696,7 @@ epcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -738,9 +716,7 @@ epcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
  * Stop output on a line.
  */
 void
-epcomstop(tp, flag)
-	struct tty *tp;
-	int flag;
+epcomstop(struct tty *tp, int flag)
 {
 	struct epcom_softc *sc
 		= device_lookup(&epcom_cd, COMUNIT(tp->t_dev));
@@ -757,8 +733,7 @@ epcomstop(tp, flag)
 }
 
 static u_int
-cflag2lcrhi(cflag)
-	tcflag_t cflag;
+cflag2lcrhi(tcflag_t cflag)
 {
 	u_int lcrhi;
 
@@ -783,8 +758,7 @@ cflag2lcrhi(cflag)
 }
 
 static void
-epcom_iflush(sc)
-	struct epcom_softc *sc;
+epcom_iflush(struct epcom_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -827,12 +801,8 @@ epcom_set(struct epcom_softc *sc)
 }
 
 int
-epcomcnattach(iot, iobase, ioh, ospeed, cflag)
-	bus_space_tag_t iot;
-	bus_addr_t iobase;
-	bus_space_handle_t ioh;
-	int ospeed;
-	tcflag_t cflag;
+epcomcnattach(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t ioh,
+    int ospeed, tcflag_t cflag)
 {
 	u_int lcrlo, lcrmid, lcrhi, ctrl, pwrcnt;
 	bus_space_handle_t syscon_ioh;
@@ -868,23 +838,18 @@ epcomcnattach(iot, iobase, ioh, ospeed, cflag)
 }
 
 void
-epcomcnprobe(cp)
-	struct consdev *cp;
+epcomcnprobe(struct consdev *cp)
 {
 	cp->cn_pri = CN_REMOTE;
 }
 
 void
-epcomcnpollc(dev, on)
-	dev_t dev;
-	int on;
+epcomcnpollc(dev_t dev, int on)
 {
 }
 
 void
-epcomcnputc(dev, c)
-	dev_t dev;
-	int c;
+epcomcnputc(dev_t dev, int c)
 {
 	int			s;
 	bus_space_tag_t		iot = epcomcn_sc.sc_iot;
@@ -908,8 +873,7 @@ epcomcnputc(dev, c)
 }
 
 int
-epcomcngetc(dev)
-        dev_t dev;
+epcomcngetc(dev_t dev)
 {
 	int			c, sts;
 	int			s;
@@ -940,9 +904,7 @@ epcomcngetc(dev)
 }
 
 inline static void
-epcom_txsoft(sc, tp)
-	struct epcom_softc *sc;
-	struct tty *tp;
+epcom_txsoft(struct epcom_softc *sc, struct tty *tp)
 {
 	CLR(tp->t_state, TS_BUSY);
 	if (ISSET(tp->t_state, TS_FLUSH))
@@ -953,9 +915,7 @@ epcom_txsoft(sc, tp)
 }
 
 inline static void
-epcom_rxsoft(sc, tp)
-	struct epcom_softc *sc;
-	struct tty *tp;
+epcom_rxsoft(struct epcom_softc *sc, struct tty *tp)
 {
 	int (*rint) __P((int, struct tty *)) = tp->t_linesw->l_rint;
 	u_char *get, *end;
