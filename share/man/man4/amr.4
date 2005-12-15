@@ -1,4 +1,4 @@
-.\" $NetBSD: amr.4,v 1.10 2005/02/14 22:53:23 he Exp $
+.\" $NetBSD: amr.4,v 1.10.2.1 2005/12/15 20:08:01 tron Exp $
 .\"
 .\" Copyright (c) 2000 Jeroen Ruigrok van der Werven
 .\" All rights reserved.
@@ -36,9 +36,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for American Megatrends MegaRAID Express,
-Elite and Enterprise family SCSI RAID controllers,
-including models relabeled and sold by Hewlett-Packard and Dell.
+driver provides support for LSI (formerly American Megatrends) MegaRAID
+Express, Elite and Enterprise family  RAID controllers for SCSI and SATA,
+including models relabeled and sold by Dell, Hewlett-Packard, and Intel.
 Supported controllers include:
 .Pp
 .Bl -bullet -compact
@@ -69,7 +69,11 @@ MegaRAID Express 200 (Series 466)
 .It
 MegaRAID Express 300 (Series 490)
 .It
-MegaRAID Express 500 (Series 475)
+LSI MegaRAID SCSI 320-0X, 320-2X, 320-4X
+.It
+LSI MegaRAID SCSI 320-1E, 320-2E
+.It
+LSI MegaRAID SATA 300-6x, 300-8x
 .It
 Dell PERC
 .It
@@ -88,6 +92,14 @@ HP NetRAID-1/Si
 HP NetRAID-3/Si
 .It
 HP Embedded NetRAID
+.It
+Intel SRCU42X
+.It
+Intel SRCU42E
+.It 
+Intel SRMOBU42E
+.It
+Intel SRCS28X
 .El
 .Sh DIAGNOSTICS
 .Ss Driver initialisation/shutdown phase
