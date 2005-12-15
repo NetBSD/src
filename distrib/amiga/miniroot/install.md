@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.23 2004/01/17 05:30:01 lukem Exp $
+#	$NetBSD: install.md,v 1.23.6.1 2005/12/15 20:01:09 tron Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #
 
 # Machine-dependent install sets
-MDSETS="kern-GENERIC xbase xcomp xfont xserver"
+MDSETS="kern-GENERIC xbase xcomp xetc xfont xserver"
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
