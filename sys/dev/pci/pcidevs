@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.701.2.16 2005/11/24 22:14:20 tron Exp $
+$NetBSD: pcidevs,v 1.701.2.17 2005/12/15 20:08:01 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1624,6 +1624,9 @@ product IMS TT128M	0x9128	TwinTurbo 128M
 /* Intel products */
 product INTEL 80312		0x030d	80312 I/O Companion Chip
 product INTEL 80321		0x0319	80321 I/O Processor
+product INTEL SRCZCRX		0x0407	RAID controller
+product INTEL SRCU42E		0x0408	SCSI RAID controller
+product INTEL SRCS28X		0x0409	SATA RAID controller
 product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge
 product INTEL CDC		0x0483	82424ZX Cache and DRAM controller
 product INTEL SIO		0x0484	82378ZB System I/O
@@ -2155,6 +2158,9 @@ product SYMBIOS FC919_1		0x0625	FC919
 product SYMBIOS FC929X		0x0626	FC929X
 product SYMBIOS FC919X		0x0628	FC919X
 product SYMBIOS PERC_4SC	0x1960	PERC 4/SC
+product SYMBIOS MEGARAID_320X	0x0407	LSI Megaraid SCSI 320-X
+product SYMBIOS MEGARAID_320E	0x0408	LSI Megaraid SCSI 320-E
+product SYMBIOS MEGARAID_300X	0x0409	LSI Megaraid SATA (300-6X/300-8X) 
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
