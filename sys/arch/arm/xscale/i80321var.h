@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321var.h,v 1.9 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: i80321var.h,v 1.10 2005/12/15 01:44:00 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -117,10 +117,21 @@ struct i80321_softc {
 	} sc_owin[2];
 
 	/*
-	 * This is the PCI address that the Outbound I/O
-	 * window maps to.
+	 * This is the PCI address that the Outbound I/O window maps to.
+         * The offset is to keep the actual used I/O address away from 0,
+	 * which can be bad if, say, an i8254x gig-e chip gets mapped there.
+	 * The 0 value apparently looks like "unconfigured" to the controller
+	 * and it ignores writes to that region (it doesn't cause a bus fault,
+	 * it just ignores them--leading to a non-functional controller).  The
+	 * wm(4) driver usually uses memory-mapped regions, but does use the
+	 * I/O-mapped region for reset operations in order to work around a
+	 * bug in the chip.
+	 * Iyonix, while using sc_ioout_xlate 0 needs an offset of 0, too, in
+	 * order to function properly.  These values are both set in the
+	 * port-specific i80321_mainbus_attach() routine.
 	 */
 	uint32_t sc_ioout_xlate;
+	uint32_t sc_ioout_xlate_offset;
 
 	/* Bus space, DMA, and PCI tags for the PCI bus (private devices). */
 	struct bus_space sc_pci_iot;
