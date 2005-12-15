@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.38 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.39 2005/12/15 13:45:32 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.38 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.39 2005/12/15 13:45:32 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -1027,7 +1027,7 @@ xennet_softstart(void *arg)
 				MCLGET(new_m, M_DONTWAIT);
 				if (__predict_false(
 				    (new_m->m_flags & M_EXT) == 0)) {
-					printf("xennet: no mbuf cluster\n");
+					DPRINTF(("xennet: no mbuf cluster\n"));
 					m_freem(new_m);
 					break;
 				}
