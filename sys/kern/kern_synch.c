@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.154 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.155 2005/12/15 13:43:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.154 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.155 2005/12/15 13:43:49 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -359,9 +359,11 @@ schedcpu(void *arg)
 
 /*
  * Recalculate the priority of a process after it has slept for a while.
- * For all load averages >= 1 and max p_estcpu of 255, sleeping for at
- * least six times the loadfactor will decay p_estcpu to less than
- * (1 << ESTCPU_SHIFT).
+ * For all load averages >= 1 and max p_estcpu of (255 << ESTCPU_SHIFT),
+ * sleeping for at least eight times the loadfactor will decay p_estcpu to
+ * less than (1 << ESTCPU_SHIFT).
+ *
+ * note that our ESTCPU_MAX is actually much smaller than (255 << ESTCPU_SHIFT).
  */
 void
 updatepri(struct lwp *l)
@@ -375,7 +377,7 @@ updatepri(struct lwp *l)
 	newcpu = p->p_estcpu;
 	loadfac = loadfactor(averunnable.ldavg[0]);
 
-	if (l->l_slptime > 5 * loadfac)
+	if ((l->l_slptime << FSHIFT) >= 8 * loadfac)
 		p->p_estcpu = 0; /* XXX NJWLWP */
 	else {
 		l->l_slptime--;	/* the first time was done in schedcpu */
