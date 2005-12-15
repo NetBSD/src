@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.31 2005/01/13 15:13:10 ragge Exp $
+.\"	$NetBSD: queue.3,v 1.32 2005/12/15 11:41:58 pooka Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1045,18 +1045,20 @@ returns the first element of the circular queue
 .Fa head .
 .Pp
 The macro
-.Nm CICRLEQ_FOREACH
+.Nm CIRCLEQ_FOREACH
 traverses the circle queue referenced by
 .Fa head
 in the forward direction, assigning each element in turn to
 .Fa var .
+Each element is assigned exactly once.
 .Pp
 The macro
-.Nm CICRLEQ_FOREACH_REVERSE
+.Nm CIRCLEQ_FOREACH_REVERSE
 traverses the circle queue referenced by
 .Fa head
 in the reverse direction, assigning each element in turn to
 .Fa var .
+Each element is assigned exactly once.
 .Pp
 The macro
 .Nm CIRCLEQ_LAST
