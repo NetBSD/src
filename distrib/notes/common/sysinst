@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.73 2004/11/14 04:54:25 mbw Exp $
+.\"	$NetBSD: sysinst,v 1.73.2.1 2005/12/15 20:33:36 tron Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -605,7 +605,7 @@ After language selection, the main menu will be displayed.
 . cs \n(.f 22
 .\" )   - appease vi showmatch
   .***********************************************.
-  * NetBSD-2.0 Install System                     *
+  * NetBSD-\*V Install System                     *
   *                                               *
   *\*>a: Install NetBSD to hard disk                *
   * b: Upgrade NetBSD on a hard disk              *
