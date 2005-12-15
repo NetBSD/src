@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2005/03/04 20:41:09 he Exp $
+#	$NetBSD: Makefile,v 1.43 2005/12/15 14:03:34 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -6,6 +6,8 @@
 PROG=	su
 BINOWN=	root
 BINMODE=4555
+
+CPPFLAGS+=-DLOGIN_CAP
 
 .if ${USE_PAM} != "no"
 
@@ -18,8 +20,6 @@ SRCS=su_pam.c
 .else
 
 SRCS=su.c
-
-CPPFLAGS+=-DLOGIN_CAP
 
 DPADD+=	${LIBCRYPT} ${LIBUTIL}
 LDADD+=	-lcrypt -lutil
