@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.46 2005/02/27 00:26:58 perry Exp $	*/
+/*	$NetBSD: rnd.c,v 1.46.2.1 2005/12/15 20:03:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.46 2005/02/27 00:26:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.46.2.1 2005/12/15 20:03:00 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -226,9 +226,6 @@ rnd_wakeup_readers(void)
 			printf("rnd: have initial entropy (%u)\n",
 			       rndpool_get_entropy_count(&rnd_pool));
 #endif
-		/*
-		 * Allow open of /dev/random now, too.
-		 */
 		rnd_have_entropy = 1;
 	}
 }
@@ -349,20 +346,8 @@ rndopen(dev_t dev, int flags, int ifmt, struct proc *p)
 	if (rnd_ready == 0)
 		return (ENXIO);
 
-	if (minor(dev) == RND_DEV_URANDOM)
+	if (minor(dev) == RND_DEV_URANDOM || minor(dev) == RND_DEV_RANDOM)
 		return (0);
-
-	/*
-	 * If this is the strong random device and we have never collected
-	 * entropy (or have not yet) don't allow it to be opened.  This will
-	 * prevent waiting forever for something that just will not appear.
-	 */
-	if (minor(dev) == RND_DEV_RANDOM) {
-		if (rnd_have_entropy == 0)
-			return (ENXIO);
-		else
-			return (0);
-	}
 
 	return (ENXIO);
 }
