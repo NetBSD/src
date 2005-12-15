@@ -1,7 +1,7 @@
-/*	$NetBSD: cd.c,v 1.231 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.232 2005/12/15 17:56:32 reinoud Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.231 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.232 2005/12/15 17:56:32 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1605,16 +1605,16 @@ cdgetdisklabel(struct cd_softc *cd)
 	 */
 	errstring = readdisklabel(MAKECDDEV(0, cd->sc_dev.dv_unit, RAW_PART),
 	    cdstrategy, lp, cd->sc_dk.dk_cpulabel);
-	if (errstring) {
-		printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);
-		goto error;
-	}
-	return;
 
-error:
-	/* Reset to default label -- should print a warning */
+	/* if all went OK, we are passed a NULL error string */
+	if (errstring == NULL)
+		return;
+
+	/* Reset to default label -- after printing error and the warning */
+	printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);
+
+	printf("%s: resetting to default label\n", cd->sc_dev.dv_xname);
 	memset(cd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
-
 	cdgetdefaultlabel(cd, lp);
 }
 
