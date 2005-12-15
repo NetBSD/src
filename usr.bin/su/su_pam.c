@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.10 2005/07/05 20:15:13 kleink Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.11 2005/12/15 14:01:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.10 2005/07/05 20:15:13 kleink Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.11 2005/12/15 14:01:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -449,7 +449,8 @@ out:
 				free(pamenv);
 			}
 
-			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH))
+			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH|
+			    LOGIN_SETENV|LOGIN_SETUMASK))
 				err(EXIT_FAILURE, "setting user context");
 			if (p)
 				(void)setenv("TERM", p, 1);
