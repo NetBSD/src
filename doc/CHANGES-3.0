@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.336 2005/12/08 08:14:43 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.337 2005/12/15 20:36:21 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14753,4 +14753,74 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD 3.0_RC6.
+
+xfree/xc/programs/Xserver/hw/netbsd/amiga/amigaKbd.c 1.2
+xfree/xc/programs/Xserver/hw/netbsd/amiga/amigaMouse.c 1.2
+
+	Fix screen blank timeout handling in NetBSD-amiga X11 server.
+	[mhitch, ticket #1042]
+
+distrib/amiga/miniroot/install.md		1.24
+
+	Extract "xset" set during installation.
+	[mhitch, ticket #1043]
+
+sys/dev/rnd.c					1.47
+
+	Don't ENXIO on open("/dev/random") if there is not enough
+	entropy collected. It's undocumented, noone else does it and
+	it leads to "named" errors during boot for me.
+	[chs, ticket #1046]
+
+share/man/man4/amr.4				1.11
+sys/dev/pci/amr.c				1.31
+sys/dev/pci/pcidevs				1.746 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for LSI MegaRAID RAID controllers and similar Intel RAID
+	controllers to amr(4).
+	[jonathan, ticket #1047]
+
+build.sh					1.140
+
+	Nuke LESSCHARSET as well since it affects the output character set
+	of groff.
+	[jmc, ticket #1048]
+
+distrib/sets/makesums				1.9
+
+	Correct comments to line up with SHA512 generation now.
+	[jmc, ticket #1049]
+
+distrib/sets/Makefile				1.47
+
+	Add SHA512 into sums lists.
+	[jmc, ticket #1050]
+
+distrib/notes/common/main			1.296-1.298
+
+	Add three new developers: jnemeth, kardel and ghen.
+	[ghen, ticket #1054]
+
+sys/nfs/nfs_socket.c				1.115 via patch
+
+	Avoid kernel panic in NFS code. Fixes PR kern/32260.
+	[christos, ticket #1055]
+
+usr.bin/vndcompress/vndcompress.1		1.3
+
+	Fix old name in .Dt tag (CLCONFIG -> VNDCOMPRESS).
+	[hubertf, ticket #1057]
+
+distrib/notes/mac68k/prep			1.14
+
+	Add text for workaround of sysinst not running newfs etc. as described
+	in PR mac68k/29049.
+	[hubertf, ticket #1058]
+
+distrib/notes/common/sysinst			1.74
+
+	Don't hardcode release numbers, use \*V.
+	[hubertf, ticket #1059]
 
