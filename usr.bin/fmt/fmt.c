@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.19 2005/12/15 21:32:00 christos Exp $	*/
+/*	$NetBSD: fmt.c,v 1.20 2005/12/15 22:37:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.19 2005/12/15 21:32:00 christos Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.20 2005/12/15 22:37:37 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -347,11 +347,9 @@ split(const char line[], int add_space)
 /*
  * Output section.
  * Build up line images from the words passed in.  Prefix
- * each line with correct number of blanks.  The buffer "outbuf"
- * contains the current partial line image, including prefixed blanks.
- * "outp" points to the next available space therein.  When outp is NOSTR,
- * there ain't nothing in there yet.  At the bottom of this whole mess,
- * leading tabs are reinserted.
+ * each line with correct number of blanks.
+ *
+ * At the bottom of this whole mess, leading tabs are reinserted.
  */
 
 /*
@@ -403,8 +401,7 @@ pack(const char *word, size_t wlen)
 
 /*
  * If there is anything on the current output line, send it on
- * its way.  Set outp to NOSTR to indicate the absence of the current
- * line prefix.
+ * its way.  Reset outbuf.
  */
 static void
 oflush(void)
@@ -440,8 +437,8 @@ tabulate(struct buffer *buf)
 	for (cp = buf->bptr; *cp == ' '; cp++)
 		continue;
 	b = cp - buf->bptr;
-	t = b >> 3;
-	b &= 07;
+	t = b / 8;
+	b = b % 8;
 	if (t > 0)
 		do
 			putc('\t', stdout);
