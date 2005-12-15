@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.18 2004/10/30 17:23:40 dsl Exp $	*/
+/*	$NetBSD: fmt.c,v 1.19 2005/12/15 21:32:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.18 2004/10/30 17:23:40 dsl Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.19 2005/12/15 21:32:00 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: fmt.c,v 1.18 2004/10/30 17:23:40 dsl Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "buffer.h"
 
 /*
  * fmt -- format the concatenation of input files or standard input
@@ -57,35 +58,30 @@ __RCSID("$NetBSD: fmt.c,v 1.18 2004/10/30 17:23:40 dsl Exp $");
  *          Liz Allen (UMCP) 2/24/83 [Addition of goal length concept].
  */
 
-/* LIZ@UOM 6/18/85 -- Don't need LENGTH any more.
- * #define	LENGTH	72		Max line length in output
- */
-#define	NOSTR	((char *) 0)	/* Null string pointer for lint */
-
 /* LIZ@UOM 6/18/85 --New variables goal_length and max_length */
 #define GOAL_LENGTH 65
 #define MAX_LENGTH 75
-int	goal_length;		/* Target or goal line length in output */
-int	max_length;		/* Max line length in output */
-int	pfx;			/* Current leading blank count */
-int	lineno;			/* Current input line */
-int	mark;			/* Last place we saw a head line */
-int	center;
+static size_t	goal_length;	/* Target or goal line length in output */
+static size_t	max_length;	/* Max line length in output */
+static size_t	pfx;		/* Current leading blank count */
+static size_t	lineno;		/* Current input line */
+static size_t	mark;		/* Last place we saw a head line */
+static int	center;
+static struct buffer outbuf;
 
-char	*headnames[] = {"To", "Subject", "Cc", 0};
+static const char	*headnames[] = {"To", "Subject", "Cc", 0};
 
 static void	fmt(FILE *);
 static int	ispref(const char *, const char *);
 static void	leadin(void);
 static void	oflush(void);
-static void	pack(const char *, int);
-static void	prefix(const char *, int);
-static void	setout(void);
+static void	pack(const char *, size_t);
+static void	prefix(const struct buffer *, int);
 static void	split(const char *, int);
-static void	tabulate(char *);
+static void	tabulate(struct buffer *);
 
-int	ishead(const char *);
-int	main(int, char **);
+
+int		ishead(const char *);
 
 /*
  * Drive the whole formatter by managing input files.  Also,
@@ -102,10 +98,11 @@ main(int argc, char **argv)
 
 	goal_length = GOAL_LENGTH;
 	max_length = MAX_LENGTH;
-	setout();
+	buf_init(&outbuf);
 	lineno = 1;
-	mark = -10;
+	mark = ~0U;
 
+	setprogname(*argv);
 	setlocale(LC_ALL, "");
 
 	/*
@@ -127,18 +124,17 @@ main(int argc, char **argv)
 		}
 	}
 	if (max_length <= goal_length) {
-		fprintf(stderr, "Max length must be greater than %s\n",
-			"goal length");
-		exit(1);
+		errx(1, "Max length (%zu) must be greater than goal "
+		    "length (%zu)", max_length, goal_length);
 	}
 	if (argc < 2) {
 		fmt(stdin);
 		oflush();
-		exit(0);
+		return 0;
 	}
 	while (--argc) {
 		if ((fi = fopen(*++argv, "r")) == NULL) {
-			perror(*argv);
+			warn("Cannot open `%s'", *argv);
 			errs++;
 			continue;
 		}
@@ -146,7 +142,8 @@ main(int argc, char **argv)
 		fclose(fi);
 	}
 	oflush();
-	exit(errs);
+	buf_end(&outbuf);
+	return errs;
 }
 
 /*
@@ -157,41 +154,46 @@ main(int argc, char **argv)
 static void
 fmt(FILE *fi)
 {
-	char linebuf[BUFSIZ], canonb[BUFSIZ];
+	struct buffer lbuf, cbuf;
 	char *cp, *cp2;
-	int c, col, add_space;
+	int c, add_space;
+	size_t len, col;
 
 	if (center) {
-		while (1) {
-			cp = fgets(linebuf, BUFSIZ, fi);
+		for (;;) {
+			cp = fgetln(fi, &len);
 			if (!cp)
 				return;
-			while (*cp && isspace((unsigned char)*cp))
+			cp2 = cp + len - 1;
+			while (len-- && isspace((unsigned char)*cp))
 				cp++;
-			cp2 = cp + strlen(cp) - 1;
 			while (cp2 > cp && isspace((unsigned char)*cp2))
 				cp2--;
 			if (cp == cp2)
-				putchar('\n');
+				fputc('\n', stdout);
 			col = cp2 - cp;
-			for (c = 0; c < (goal_length-col)/2; c++)
-				putchar(' ');
+			if (goal_length > col)
+				for (c = 0; c < (goal_length - col) / 2; c++)
+					fputc(' ', stdout);
 			while (cp <= cp2)
-				putchar(*cp++);
+				fputc(*cp++, stdout);
 			putchar('\n');
 		}
 	}
+
+	buf_init(&lbuf);
+	buf_init(&cbuf);
 	c = getc(fi);
+
 	while (c != EOF) {
 		/*
 		 * Collect a line, doing ^H processing.
 		 * Leave tabs for now.
 		 */
-		cp = linebuf;
-		while (c != '\n' && c != EOF && cp-linebuf < BUFSIZ-1) {
+		buf_reset(&lbuf);
+		while (c != '\n' && c != EOF) {
 			if (c == '\b') {
-				if (cp > linebuf)
-					cp--;
+				buf_unputc(&lbuf);
 				c = getc(fi);
 				continue;
 			}
@@ -199,70 +201,27 @@ fmt(FILE *fi)
 				c = getc(fi);
 				continue;
 			}
-			*cp++ = c;
+			buf_putc(&lbuf, c);
 			c = getc(fi);
 		}
-		*cp = '\0';
+		buf_putc(&lbuf, '\0');
+		buf_unputc(&lbuf);
+		add_space = c != EOF;
 
 		/*
-		 * By default, add space after the end of current input
-		 * (normally end of line)
-		 */
-		add_space = 1;
-
-		/*
-		 * If the input line is longer than linebuf buffer can hold,
-		 * process the data read so far as if it was a separate line -
-		 * if there is any whitespace character in the read data,
-		 * process all the data up to it, otherwise process all.
-		 */
-		if (c != '\n' && c != EOF && !isspace(c)) {
-			/*
-			 * Find out if any whitespace character has been read.
-			 */
-			for(cp2 = cp; cp2 >= linebuf
-				&& !isspace((unsigned char)*cp2); cp2--);
-
-			if (cp2 < linebuf) {
-				/*
-				 * ungetc() last read character so that it
-				 * won't get lost.
-				 */
-				ungetc(c, fi);
-				/*
-				 * Don't append space on the end in split().
-				 */
-				add_space = 0;
-			} else {
-				/*
-				 * To avoid splitting a word in a middle,
-				 * ungetc() all characters after last
-				 * whitespace char.
-				 */
-				while (!isspace(c) && (cp >= linebuf)) {
-					ungetc(c, fi);
-					c = *--cp;
-				}
-				*cp = '\0';
-			}
-		}
-		
-		/*
-		 * Expand tabs on the way to canonb.
+		 * Expand tabs on the way.
 		 */
 		col = 0;
-		cp = linebuf;
-		cp2 = canonb;
-		while ((c = *cp++) != 0) {
+		cp = lbuf.bptr;
+		buf_reset(&cbuf);
+		while ((c = *cp++) != '\0') {
 			if (c != '\t') {
 				col++;
-				if (cp2-canonb < BUFSIZ-1)
-					*cp2++ = c;
+				buf_putc(&cbuf, c);
 				continue;
 			}
 			do {
-				if (cp2-canonb < BUFSIZ-1)
-					*cp2++ = ' ';
+				buf_putc(&cbuf, ' ');
 				col++;
 			} while ((col & 07) != 0);
 		}
@@ -270,13 +229,17 @@ fmt(FILE *fi)
 		/*
 		 * Swipe trailing blanks from the line.
 		 */
-		for (cp2--; cp2 >= canonb && *cp2 == ' '; cp2--)
-			;
-		*++cp2 = '\0';
-		prefix(canonb, add_space);
+		for (cp2 = cbuf.ptr - 1; cp2 >= cbuf.bptr && *cp2 == ' '; cp2--)
+			continue;
+		cbuf.ptr = cp2 + 1;
+		buf_putc(&cbuf, '\0');
+		buf_unputc(&cbuf);
+		prefix(&cbuf, add_space);
 		if (c != EOF)
 			c = getc(fi);
 	}
+	buf_end(&cbuf);
+	buf_end(&lbuf);
 }
 
 /*
@@ -287,31 +250,34 @@ fmt(FILE *fi)
  * it on a line by itself.
  */
 static void
-prefix(const char line[], int add_space)
+prefix(const struct buffer *buf, int add_space)
 {
 	const char *cp;
-	char **hp;
-	int np, h;
+	const char **hp;
+	size_t np;
+	int h;
 
-	if (strlen(line) == 0) {
+	if (buf->ptr == buf->bptr) {
 		oflush();
 		putchar('\n');
 		return;
 	}
-	for (cp = line; *cp == ' '; cp++)
-		;
-	np = cp - line;
+	for (cp = buf->bptr; *cp == ' '; cp++)
+		continue;
+	np = cp - buf->bptr;
 
 	/*
 	 * The following horrible expression attempts to avoid linebreaks
 	 * when the indent changes due to a paragraph.
 	 */
-	if (np != pfx && (np > pfx || abs(pfx-np) > 8))
+	if (np != pfx && (np > pfx || abs((int)(pfx - np)) > 8))
 		oflush();
-	if ((h = ishead(cp)) != 0)
-		oflush(), mark = lineno;
-	if (lineno - mark < 3 && lineno - mark > 0)
-		for (hp = &headnames[0]; *hp != (char *) 0; hp++)
+	if ((h = ishead(cp)) != 0) {
+		oflush();
+		mark = lineno;
+	}
+	if (mark == ~0U || (lineno - mark < 3 && lineno - mark > 0))
+		for (hp = &headnames[0]; *hp != NULL; hp++)
 			if (ispref(*hp, cp)) {
 				h = 1;
 				oflush();
@@ -321,7 +287,7 @@ prefix(const char line[], int add_space)
 		oflush();
 	pfx = np;
 	if (h) {
-		pack(cp, strlen(cp));
+		pack(cp, (size_t)(buf->ptr - cp));
 		oflush();
 	} else
 		split(cp, add_space);
@@ -338,14 +304,14 @@ static void
 split(const char line[], int add_space)
 {
 	const char *cp;
-	char *cp2;
-	char word[BUFSIZ];
-	int wordl;		/* LIZ@UOM 6/18/85 */
+	struct buffer word;
+	size_t wlen;
 
+	buf_init(&word);
 	cp = line;
 	while (*cp) {
-		cp2 = word;
-		wordl = 0;	/* LIZ@UOM 6/18/85 */
+		buf_reset(&word);
+		wlen = 0;
 
 		/*
 		 * Collect a 'word,' allowing it to contain escaped white
@@ -353,9 +319,9 @@ split(const char line[], int add_space)
 		 */
 		while (*cp && *cp != ' ') {
 			if (*cp == '\\' && isspace((unsigned char)cp[1]))
-				*cp2++ = *cp++;
-			*cp2++ = *cp++;
-			wordl++;/* LIZ@UOM 6/18/85 */
+				buf_putc(&word, *cp++);
+			buf_putc(&word, *cp++);
+			wlen++;
 		}
 
 		/*
@@ -363,18 +329,19 @@ split(const char line[], int add_space)
 		 * sentence punctuation. 
 		 */
 		if (*cp == '\0' && add_space) {
-			*cp2++ = ' ';
+			buf_putc(&word, ' ');
 			if (strchr(".:!", cp[-1]))
-				*cp2++ = ' ';
+				buf_putc(&word, ' ');
 		}
 		while (*cp == ' ')
-			*cp2++ = *cp++;
-		*cp2 = '\0';
-		/*
-		 * LIZ@UOM 6/18/85 pack(word); 
-		 */
-		pack(word, wordl);
+			buf_putc(&word, *cp++);
+
+		buf_putc(&word, '\0');
+		buf_unputc(&word);
+
+		pack(word.bptr, wlen);
 	}
+	buf_end(&word);
 }
 
 /*
@@ -386,17 +353,6 @@ split(const char line[], int add_space)
  * there ain't nothing in there yet.  At the bottom of this whole mess,
  * leading tabs are reinserted.
  */
-char	outbuf[BUFSIZ];			/* Sandbagged output line image */
-char	*outp;				/* Pointer in above */
-
-/*
- * Initialize the output section.
- */
-static void
-setout(void)
-{
-	outp = NOSTR;
-}
 
 /*
  * Pack a word onto the output line.  If this is the beginning of
@@ -413,41 +369,36 @@ setout(void)
  *	the next line accordingly.
  */
 
-/*
- * LIZ@UOM 6/18/85 -- pass in the length of the word as well
- * pack(word)
- *	char word[];
- */
 static void
-pack(const char word[], int wl)
+pack(const char *word, size_t wlen)
 {
 	const char *cp;
-	int s, t;
+	size_t s, t;
 
-	if (outp == NOSTR)
+	if (outbuf.bptr == outbuf.ptr)
 		leadin();
 	/*
 	 * LIZ@UOM 6/18/85 -- change condition to check goal_length; s is the
 	 * length of the line before the word is added; t is now the length
 	 * of the line after the word is added
-	 *	t = strlen(word);
-	 *	if (t+s <= LENGTH) 
 	 */
-	s = outp - outbuf;
-	t = wl + s;
+	s = outbuf.ptr - outbuf.bptr;
+	t = wlen + s;
 	if ((t <= goal_length) ||
 	    ((t <= max_length) && (t - goal_length <= goal_length - s))) {
 		/*
 		 * In like flint! 
 		 */
-		for (cp = word; *cp; *outp++ = *cp++);
+		for (cp = word; *cp;)
+			buf_putc(&outbuf, *cp++);
 		return;
 	}
 	if (s > pfx) {
 		oflush();
 		leadin();
 	}
-	for (cp = word; *cp; *outp++ = *cp++);
+	for (cp = word; *cp;)
+		buf_putc(&outbuf, *cp++);
 }
 
 /*
@@ -458,11 +409,12 @@ pack(const char word[], int wl)
 static void
 oflush(void)
 {
-	if (outp == NOSTR)
+	if (outbuf.bptr == outbuf.ptr)
 		return;
-	*outp = '\0';
-	tabulate(outbuf);
-	outp = NOSTR;
+	buf_putc(&outbuf, '\0');
+	buf_unputc(&outbuf);
+	tabulate(&outbuf);
+	buf_reset(&outbuf);
 }
 
 /*
@@ -470,25 +422,24 @@ oflush(void)
  * output on standard output (finally).
  */
 static void
-tabulate(char line[])
+tabulate(struct buffer *buf)
 {
 	char *cp;
-	int b, t;
+	size_t b, t;
 
 	/*
 	 * Toss trailing blanks in the output line.
 	 */
-	cp = line + strlen(line) - 1;
-	while (cp >= line && *cp == ' ')
-		cp--;
-	*++cp = '\0';
+	for (cp = buf->ptr; cp >= buf->bptr && *cp == ' '; cp--)
+		continue;
+	*cp = '\0';
 	
 	/*
 	 * Count the leading blank space and tabulate.
 	 */
-	for (cp = line; *cp == ' '; cp++)
-		;
-	b = cp-line;
+	for (cp = buf->bptr; *cp == ' '; cp++)
+		continue;
+	b = cp - buf->bptr;
 	t = b >> 3;
 	b &= 07;
 	if (t > 0)
@@ -511,12 +462,12 @@ tabulate(char line[])
 static void
 leadin(void)
 {
-	int b;
-	char *cp;
+	size_t b;
 
-	for (b = 0, cp = outbuf; b < pfx; b++)
-		*cp++ = ' ';
-	outp = cp;
+	buf_reset(&outbuf);
+
+	for (b = 0; b < pfx; b++)
+		buf_putc(&outbuf, ' ');
 }
 
 /*
@@ -527,6 +478,6 @@ ispref(const char *s1, const char *s2)
 {
 
 	while (*s1++ == *s2)
-		;
-	return (*s1 == '\0');
+		continue;
+	return *s1 == '\0';
 }
