@@ -1,12 +1,12 @@
-# $NetBSD: Makefile,v 1.7 2005/06/27 01:00:06 christos Exp $
+# $NetBSD: Makefile,v 1.8 2005/12/15 14:27:21 jmc Exp $
+
+WARNS=  0       # Will be fixed later
 
 .include <bsd.own.mk>
 
 PROG=	setkey
-SRCS=	setkey.c parse.y token.l
+SRCS=	setkey.c parse.c token.c
 MAN=	setkey.8
-
-YHEADER=parse.h
 
 DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
 
@@ -25,3 +25,7 @@ CPPFLAGS+=-DINET6
 .PATH: ${DIST}/src/setkey 
 
 .include <bsd.prog.mk>
+
+# Don't auto-frob .y or .l files.
+.l.c .y.c .y.h:
+	@true
