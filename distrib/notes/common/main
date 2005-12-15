@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.20 2005/12/15 20:15:16 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.21 2005/12/15 20:16:58 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1626,6 +1626,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Takahiro Kambe Ta Mt taca@NetBSD.org
 .It Ta Antti Kantee Ta Mt pooka@NetBSD.org
 .It Ta Masanori Kanaoka Ta Mt kanaoka@NetBSD.org
+.It Ta Frank Kardel Ta Mt kardel@NetBSD.org
 .It Ta Mattias Karlsson Ta Mt keihan@NetBSD.org
 .It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@NetBSD.org
 .It Ta Mario Kemper Ta Mt magick@NetBSD.org
