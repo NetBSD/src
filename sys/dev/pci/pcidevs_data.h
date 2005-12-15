@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.16 2005/11/24 22:16:48 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.17 2005/12/15 20:08:52 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.16 2005/11/24 22:14:20 tron Exp
+ *	NetBSD: pcidevs,v 1.701.2.17 2005/12/15 20:08:01 tron Exp
  */
 
 /*
@@ -5428,6 +5428,18 @@ const struct pci_product pci_products[] = {
 	    "80321 I/O Processor",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SRCZCRX,
+	    "RAID controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SRCU42E,
+	    "SCSI RAID controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SRCS28X,
+	    "SATA RAID controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
 	    "82375EB/SB PCI-EISA Bridge",
 	},
@@ -7278,6 +7290,18 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PERC_4SC,
 	    "PERC 4/SC",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_320X,
+	    "LSI Megaraid SCSI 320-X",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_320E,
+	    "LSI Megaraid SCSI 320-E",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_300X,
+	    "LSI Megaraid SATA (300-6X/300-8X)",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
@@ -10296,4 +10320,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1995;
+const int pci_nproducts = 2001;
