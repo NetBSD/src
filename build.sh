@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.134.2.1 2005/07/07 22:08:49 tron Exp $
+#	$NetBSD: build.sh,v 1.134.2.2 2005/12/15 20:11:48 tron Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -144,6 +144,7 @@ initdefaults()
 	# to minimize (cross-)build problems observed "in the field".
 	#
 	unsetmakeenv INFODIR
+	unsetmakeenv LESSCHARSET
 	setmakeenv LC_ALL C
 }
 
@@ -866,7 +867,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.134.2.1 2005/07/07 22:08:49 tron Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.134.2.2 2005/12/15 20:11:48 tron Exp $
 # with these arguments: ${_args}
 #
 EOF
