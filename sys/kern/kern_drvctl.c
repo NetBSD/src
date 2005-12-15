@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.3 2005/12/11 12:24:29 christos Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.4 2005/12/15 22:01:17 cube Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.3 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.4 2005/12/15 22:01:17 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ rescanbus(const char *busname, const char *ifattr,
 }
 
 int
-drvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+drvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *p)
 {
 	int res;
 	char *ifattr;
