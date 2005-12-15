@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.6 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.7 2005/12/15 21:46:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.6 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.7 2005/12/15 21:46:31 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -772,7 +772,9 @@ netcred_lookup(struct netexport *ne, struct mbuf *nam)
 	struct radix_node_head *rnh;
 	struct sockaddr *saddr;
 
-	KASSERT((ne->ne_mount->mnt_flag & MNT_EXPORTED) != 0);
+	if ((ne->ne_mount->mnt_flag & MNT_EXPORTED) == 0) {
+		return NULL;
+	}
 
 	/*
 	 * Lookup in the export list first.
