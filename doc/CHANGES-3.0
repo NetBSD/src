@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.337 2005/12/15 20:36:21 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.338 2005/12/16 11:42:34 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14804,6 +14804,7 @@ distrib/notes/common/main			1.296-1.298
 	[ghen, ticket #1054]
 
 sys/nfs/nfs_socket.c				1.115 via patch
+sys/nfs/nfsproto.h				1.11
 
 	Avoid kernel panic in NFS code. Fixes PR kern/32260.
 	[christos, ticket #1055]
