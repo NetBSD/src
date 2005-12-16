@@ -1389,7 +1389,7 @@ void			 ahd_set_unit(struct ahd_softc *, int);
 void			 ahd_set_name(struct ahd_softc *, char *);
 struct scb		*ahd_get_scb(struct ahd_softc *, u_int);
 void			 ahd_free_scb(struct ahd_softc *, struct scb *);
-void			 ahd_alloc_scbs(struct ahd_softc *);
+int			 ahd_alloc_scbs(struct ahd_softc *);
 void			 ahd_free(struct ahd_softc *);
 int			 ahd_reset(struct ahd_softc *, int);
 void			 ahd_shutdown(void *);
