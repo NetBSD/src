@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.7 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.7.4.1 2005/12/16 20:11:31 jmc Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.7 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.7.4.1 2005/12/16 20:11:31 jmc Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic7xxx_cam.h>
@@ -81,8 +81,8 @@ ahd_attach(struct ahd_softc *ahd)
 
 	ahd->sc_adapter.adapt_dev = &ahd->sc_dev;
 	ahd->sc_adapter.adapt_nchannels = 1;
-	
-	ahd->sc_adapter.adapt_openings = AHD_MAX_QUEUE;
+
+	ahd->sc_adapter.adapt_openings = ahd->scb_data.numscbs - 1;
 	ahd->sc_adapter.adapt_max_periph = 32;
 
 	ahd->sc_adapter.adapt_ioctl = ahd_ioctl;
@@ -95,6 +95,7 @@ ahd_attach(struct ahd_softc *ahd)
         ahd->sc_channel.chan_ntargets = AHD_NUM_TARGETS;
         ahd->sc_channel.chan_nluns = 8 /*AHD_NUM_LUNS*/;
         ahd->sc_channel.chan_id = ahd->our_id;
+        ahd->sc_channel.chan_flags |= SCSIPI_CHAN_CANGROW;
 
 	ahd->sc_child = config_found((void *)ahd, &ahd->sc_channel, scsiprint);
 
@@ -348,7 +349,12 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	  }
 
 	case ADAPTER_REQ_GROW_RESOURCES:
+#ifdef AHC_DEBUG
 		printf("%s: ADAPTER_REQ_GROW_RESOURCES\n", ahd_name(ahd));
+#endif
+		chan->chan_adapter->adapt_openings += ahd_alloc_scbs(ahd);
+		if (ahd->scb_data.numscbs >= AHD_SCB_MAX_ALLOC)
+			chan->chan_flags &= ~SCSIPI_CHAN_CANGROW;
 		break;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
