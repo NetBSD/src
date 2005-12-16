@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.7 2004/01/07 12:43:43 cdi Exp $	*/
+/*	$NetBSD: console.c,v 1.7.4.1 2005/12/16 18:12:59 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,18 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.7 2004/01/07 12:43:43 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.7.4.1 2005/12/16 18:12:59 jmc Exp $");
 
 #include <sys/param.h>
-#include <sys/user.h>
-#include <sys/uio.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/proc.h>
-#include <sys/tty.h>
-#include <sys/termios.h>
 
 #include <machine/bus.h>
 #include <machine/nvram.h>
@@ -45,71 +39,33 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.7 2004/01/07 12:43:43 cdi Exp $");
 
 #include <dev/cons.h>
 
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
+#include <cobalt/dev/com_mainbusvar.h>
 
-#include "com.h"
+#include "com_mainbus.h"
 #include "nullcons.h"
-
-dev_type_cnprobe(comcnprobe);
-dev_type_cninit(comcninit);
 
 int	console_present = 0;	/* Do we have a console? */
 
 struct	consdev	constab[] = {
-#if NCOM > 0
-	{ comcnprobe, comcninit, },
+#if NCOM_MAINBUS > 0
+	{ com_mainbus_cnprobe, com_mainbus_cninit,
+	    NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD },
 #endif
 #if NNULLCONS > 0
-	{ nullcnprobe, nullcninit },
+	{ nullcnprobe, nullcninit,
+	    NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD },
 #endif
-	{ 0 }
+	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD }
 };
-
-#if NCOM > 0
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-
-void
-comcnprobe(cn)
-	struct consdev *cn;
-{
-	struct btinfo_flags *bi_flags;
-
-	/*
-	 * Linux code has a comment that serial console must be probed
-	 * early, otherwise the value which allows to detect serial port
-	 * could be overwritten. Okay, probe here and record the result
-	 * for the future use.
-	 *
-	 * Note that if the kernel was booted with a boot loader,
-	 * the latter *has* to provide a flag indicating whether console
-	 * is present or not due to the reasons outlined above.
-	 */
-	if ( (bi_flags = lookup_bootinfo(BTINFO_FLAGS)) == NULL) {
-		/* No boot information, probe console now */
-		console_present = *(volatile u_int32_t *)
-					MIPS_PHYS_TO_KSEG1(0x0020001c);
-	} else {
-		/* Get the value determined by the boot loader. */
-		console_present = bi_flags->bi_flags & BI_SERIAL_CONSOLE;
-	}
-
-	cn->cn_pri = (console_present != 0) ? CN_NORMAL : CN_DEAD;
-}
-
-void
-comcninit(cn)
-	struct consdev *cn;
-{
-
-	comcnattach(0, 0x1c800000, 115200, COM_FREQ * 10, COM_TYPE_NORMAL,
-	    CONMODE);
-}
-#endif
 
 void
 consinit()
 {
+	static int initted;
+
+	if (initted)
+		return;
+	initted = 1;
 
 	cninit();
 }
