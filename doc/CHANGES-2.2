@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.27 2005/12/16 18:33:58 jmc Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.28 2005/12/16 18:47:47 jmc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -411,3 +411,8 @@ xsrc/xfree/xc/programs/xdm/config/Imakefile	1.6
 
 	[tron, ticket #10185]
 
+
+usr.bin/gzip/gzip.c				1.81
+
+	Remove unhandled H option from getopt() argument. Describe -l in usage.
+	[wiz, ticket #10197]
