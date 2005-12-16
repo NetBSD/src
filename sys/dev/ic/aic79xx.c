@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.27 2004/02/13 11:36:21 wiz Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.27.6.1 2005/12/16 20:10:05 jmc Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.27 2004/02/13 11:36:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.27.6.1 2005/12/16 20:10:05 jmc Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -5654,23 +5654,14 @@ struct scb *
 ahd_get_scb(struct ahd_softc *ahd, u_int col_idx)
 {
 	struct scb *scb;
-	int tries;
-
-	tries = 0;
-look_again:
 	TAILQ_FOREACH(scb, &ahd->scb_data.free_scbs, links.tqe) {
 		if (AHD_GET_SCB_COL_IDX(ahd, scb) != col_idx) {
 			ahd_rem_col_list(ahd, scb);
 			goto found;
 		}
 	}
-	if ((scb = LIST_FIRST(&ahd->scb_data.any_dev_free_scb_list)) == NULL) {
-
-		if (tries++ != 0)
-			return (NULL);
-		ahd_alloc_scbs(ahd);
-		goto look_again;
-	}
+	if ((scb = LIST_FIRST(&ahd->scb_data.any_dev_free_scb_list)) == NULL)
+		return (NULL);
 	LIST_REMOVE(scb, links.le);
 	if (col_idx != AHD_NEVER_COL_IDX
 	 && (scb->col_scb != NULL)
@@ -5739,7 +5730,7 @@ ahd_free_scb(struct ahd_softc *ahd, struct scb *scb)
 	ahd_platform_scb_free(ahd, scb);
 }
 
-void
+int
 ahd_alloc_scbs(struct ahd_softc *ahd)
 {
 	struct scb_data *scb_data;
@@ -5759,7 +5750,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 	scb_data = &ahd->scb_data;
 	if (scb_data->numscbs >= AHD_SCB_MAX_ALLOC)
 		/* Can't allocate any more */
-		return;
+		return (0);
 
 	KASSERT(scb_data->scbs_left >= 0);
 	if (scb_data->scbs_left != 0) {
@@ -5770,10 +5761,10 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		hscb = &((struct hardware_scb *)hscb_map->vaddr)[offset];
 		hscb_busaddr = hscb_map->physaddr + (offset * sizeof(*hscb));
 	} else {
-		hscb_map = malloc(sizeof(*hscb_map), M_DEVBUF, M_NOWAIT);
+		hscb_map = malloc(sizeof(*hscb_map), M_DEVBUF, M_WAITOK);
 
 		if (hscb_map == NULL)
-			return;
+			return (0);
 
 		memset(hscb_map, 0, sizeof(*hscb_map));
 
@@ -5784,7 +5775,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 				     &hscb_map->nseg, ahd_name(ahd), 
 				     "hardware SCB structures") < 0) {
 			free(hscb_map, M_DEVBUF);
-			return;
+			return (0);
 		}
 
 		SLIST_INSERT_HEAD(&scb_data->hscb_maps, hscb_map, links);
@@ -5805,10 +5796,10 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		segs = sg_map->vaddr + offset;
 		sg_busaddr = sg_map->physaddr + offset;
 	} else {
-		sg_map = malloc(sizeof(*sg_map), M_DEVBUF, M_NOWAIT);
+		sg_map = malloc(sizeof(*sg_map), M_DEVBUF, M_WAITOK);
 
 		if (sg_map == NULL)
-			return;
+			return (0);
 
 		bzero(sg_map, sizeof(*sg_map));
 
@@ -5819,7 +5810,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 				     &sg_map->nseg, ahd_name(ahd), 
 				     "SG data structures") < 0) {
 			free(sg_map, M_DEVBUF);
-			return;
+			return (0);
 		}
 
 		SLIST_INSERT_HEAD(&scb_data->sg_maps, sg_map, links);
@@ -5845,10 +5836,10 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		sense_data = sense_map->vaddr + offset;
 		sense_busaddr = sense_map->physaddr + offset;
 	} else {
-		sense_map = malloc(sizeof(*sense_map), M_DEVBUF, M_NOWAIT);
+		sense_map = malloc(sizeof(*sense_map), M_DEVBUF, M_WAITOK);
 
 		if (sense_map == NULL)
-			return;
+			return (0);
 
 		bzero(sense_map, sizeof(*sense_map));
 
@@ -5859,7 +5850,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 				     &sense_map->nseg, ahd_name(ahd), 
 				     "Sense Data structures") < 0) {
 			free(sense_map, M_DEVBUF);
-			return;
+			return (0);
 		}
 
 		SLIST_INSERT_HEAD(&scb_data->sense_maps, sense_map, links);
@@ -5890,12 +5881,12 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		int error;
 #endif
 		next_scb = (struct scb *)malloc(sizeof(*next_scb),
-						M_DEVBUF, M_NOWAIT);
+						M_DEVBUF, M_WAITOK);
 		if (next_scb == NULL)
 			break;
 
 		pdata = (struct scb_platform_data *)malloc(sizeof(*pdata),
-							   M_DEVBUF, M_NOWAIT);
+							   M_DEVBUF, M_WAITOK);
 		if (pdata == NULL) {
 			free(next_scb, M_DEVBUF);
 			break;
@@ -5928,7 +5919,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 
 		error = bus_dmamap_create(ahd->parent_dmat,
 					  AHD_MAXTRANSFER_SIZE, AHD_NSEG, MAXBSIZE, 0,
-					  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW|ahd->sc_dmaflags,
+					  BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW|ahd->sc_dmaflags,
 					  &next_scb->dmamap);
 		if (error != 0) {
 			free(next_scb, M_DEVBUF);
@@ -5949,6 +5940,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		sense_busaddr += AHD_SENSE_BUFSIZE;
 		scb_data->numscbs++;
 	}
+	return (i);
 }
 
 void
@@ -9732,7 +9724,7 @@ ahd_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	int error, level = 0;
 
 	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0,
-				      seg, 1, nseg, BUS_DMA_NOWAIT)) != 0) {
+				      seg, 1, nseg, BUS_DMA_WAITOK)) != 0) {
 		printf("%s: failed to allocate DMA mem for %s, error = %d\n",
 			myname, what, error);
 		goto out;
@@ -9740,7 +9732,7 @@ ahd_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	level++;
 
 	if ((error = bus_dmamem_map(tag, seg, *nseg, size, vaddr,
-				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+				    BUS_DMA_WAITOK|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: failed to map DMA mem for %s, error = %d\n",
 			myname, what, error);
 		goto out;
@@ -9748,7 +9740,7 @@ ahd_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	level++;
 
 	if ((error = bus_dmamap_create(tag, size, 1, size, 0,
-				       BUS_DMA_NOWAIT | flags, mapp)) != 0) {
+				       BUS_DMA_WAITOK | flags, mapp)) != 0) {
                 printf("%s: failed to create DMA map for %s, error = %d\n",
 			myname, what, error);
 		goto out;
@@ -9757,7 +9749,7 @@ ahd_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 
 
 	if ((error = bus_dmamap_load(tag, *mapp, *vaddr, size, NULL,
-				     BUS_DMA_NOWAIT)) != 0) {
+				     BUS_DMA_WAITOK)) != 0) {
                 printf("%s: failed to load DMA map for %s, error = %d\n",
 			myname, what, error);
 		goto out;
