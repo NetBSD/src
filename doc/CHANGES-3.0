@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.338 2005/12/16 11:42:34 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.339 2005/12/16 12:01:26 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14824,4 +14824,11 @@ distrib/notes/common/sysinst			1.74
 
 	Don't hardcode release numbers, use \*V.
 	[hubertf, ticket #1059]
+
+usr.bin/su/su_pam.c				1.11
+usr.bin/su/Makefile				1.43
+
+	PR bin/32307: su fails to set umask correctly when using pam
+	and simulating a full login (-, -d, -l)
+	[hubertf, ticket #1061]
 
