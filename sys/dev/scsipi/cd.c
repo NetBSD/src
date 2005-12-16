@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.232 2005/12/15 17:56:32 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.233 2005/12/16 17:54:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.232 2005/12/15 17:56:32 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.233 2005/12/16 17:54:36 christos Exp $");
 
 #include "rnd.h"
 
@@ -1612,8 +1612,6 @@ cdgetdisklabel(struct cd_softc *cd)
 
 	/* Reset to default label -- after printing error and the warning */
 	printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);
-
-	printf("%s: resetting to default label\n", cd->sc_dev.dv_xname);
 	memset(cd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 	cdgetdefaultlabel(cd, lp);
 }
