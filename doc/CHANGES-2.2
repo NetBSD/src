@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.26 2005/12/16 18:17:12 jmc Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.27 2005/12/16 18:33:58 jmc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -403,3 +403,11 @@ etc/etc.cobalt/Makefile.inc			1.2
 	so we should also have a smaller kernel binary for bootstrap install.  
 
 	[tsutsui, ticket #10176]
+
+xsrc/xfree/xc/programs/xdm/config/Imakefile	1.6
+
+	Fix the old native XFree86 release build broken by the pullup 978. 
+	PR#32214
+
+	[tron, ticket #10185]
+
