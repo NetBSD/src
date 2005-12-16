@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.29.2.5 2005/12/14 04:06:55 jmc Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.29.2.6 2005/12/16 18:47:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.29.2.5 2005/12/14 04:06:55 jmc Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.29.2.6 2005/12/16 18:47:39 jmc Exp $");
 #endif /* not lint */
 
 /*
@@ -279,13 +279,18 @@ main(int argc, char **argv)
 		dflag = cflag = 1;
 
 #ifdef SMALL
-#define OPT_LIST "cdhHltV123456789"
+#define OPT_LIST "123456789cdhltV"
 #else
-#define OPT_LIST "cdfhHlnNqrS:tvV123456789"
+#define OPT_LIST "123456789cdfhlNnqrS:tVv"
 #endif
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
 		switch (ch) {
+		case '1': case '2': case '3':
+		case '4': case '5': case '6':
+		case '7': case '8': case '9':
+			numflag = ch - '0';
+			break;
 		case 'c':
 			cflag = 1;
 			break;
@@ -299,22 +304,17 @@ main(int argc, char **argv)
 		case 'V':
 			display_version();
 			/* NOTREACHED */
-		case '1': case '2': case '3':
-		case '4': case '5': case '6':
-		case '7': case '8': case '9':
-			numflag = ch - '0';
-			break;
 #ifndef SMALL
 		case 'f':
 			fflag = 1;
 			break;
-		case 'n':
-			nflag = 1;
-			Nflag = 0;
-			break;
 		case 'N':
 			nflag = 0;
 			Nflag = 1;
+			break;
+		case 'n':
+			nflag = 1;
+			Nflag = 0;
 			break;
 		case 'q':
 			qflag = 1;
@@ -1907,24 +1907,25 @@ usage(void)
 	fprintf(stderr,
     "usage: %s [-" OPT_LIST "] [<file> [<file> ...]]\n"
 #ifndef SMALL
+    " -1 --fast            fastest (worst) compression\n"
+    " -2 .. -8             set compression level\n"
+    " -9 --best            best (slowest) compression\n"
     " -c --stdout          write to stdout, keep original files\n"
     "    --to-stdout\n"
     " -d --decompress      uncompress files\n"
     "    --uncompress\n"
     " -f --force           force overwriting & compress links\n"
     " -h --help            display this help\n"
-    " -n --no-name         don't save original file name or time stamp\n"
+    " -l --list            list compressed file contents\n"
     " -N --name            save or restore original file name and time stamp\n"
+    " -n --no-name         don't save original file name or time stamp\n"
     " -q --quiet           output no warnings\n"
     " -r --recursive       recursively compress files in directories\n"
     " -S .suf              use suffix .suf instead of .gz\n"
     "    --suffix .suf\n"
     " -t --test            test compressed file\n"
-    " -v --verbose         print extra statistics\n"
     " -V --version         display program version\n"
-    " -1 --fast            fastest (worst) compression\n"
-    " -2 .. -8             set compression level\n"
-    " -9 --best            best (slowest) compression\n",
+    " -v --verbose         print extra statistics\n",
 #else
     ,
 #endif
