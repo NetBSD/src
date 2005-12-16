@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.15 2005/12/12 11:25:51 tron Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.16 2005/12/16 18:35:04 jmc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -173,3 +173,9 @@ build.sh					patch
 	Clean up environment to avoid side effects on builds.
 	[jmc, ticket #10194]
 
+xsrc/xfree/xc/programs/xdm/config/Imakefile	1.6
+
+	Fix the old native XFree86 release build broken by the pullup 978.
+	PR#32214
+
+        [tron, ticket #10185]
