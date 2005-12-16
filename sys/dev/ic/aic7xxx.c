@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.109.4.1 2005/08/22 21:29:14 riz Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.109.4.1.2.1 2005/12/16 20:10:15 jmc Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.109.4.1 2005/08/22 21:29:14 riz Exp $
+ * $Id: aic7xxx.c,v 1.109.4.1.2.1 2005/12/16 20:10:15 jmc Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.109.4.1 2005/08/22 21:29:14 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.109.4.1.2.1 2005/12/16 20:10:15 jmc Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -4309,7 +4309,7 @@ ahc_fini_scbdata(struct ahc_softc *ahc)
 		free(scb_data->scbarray, M_DEVBUF);
 }
 
-void
+int
 ahc_alloc_scbs(struct ahc_softc *ahc)
 {
 	struct scb_data *scb_data;
@@ -4323,14 +4323,14 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 	scb_data = ahc->scb_data;
 	if (scb_data->numscbs >= AHC_SCB_MAX_ALLOC)
 		/* Can't allocate any more */
-		return;
+		return (0);
 
 	next_scb = &scb_data->scbarray[scb_data->numscbs];
 
-	sg_map = malloc(sizeof(*sg_map), M_DEVBUF, M_NOWAIT);
+	sg_map = malloc(sizeof(*sg_map), M_DEVBUF, M_WAITOK);
 
 	if (sg_map == NULL)
-		return;
+		return (0);
 
 	/* Allocate S/G space for the next batch of SCBS */
 	if (ahc_createdmamem(ahc->parent_dmat, PAGE_SIZE, ahc->sc_dmaflags,
@@ -4339,7 +4339,7 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 			     &sg_map->sg_dmasegs, &sg_map->sg_nseg, ahc_name(ahc),
 			     "SG space") < 0) {
 		free(sg_map, M_DEVBUF);
-		return;
+		return (0);
 	}
 
 	SLIST_INSERT_HEAD(&scb_data->sg_maps, sg_map, links);
@@ -4354,7 +4354,7 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 		int error;
 
 		pdata = (struct scb_platform_data *)malloc(sizeof(*pdata),
-							   M_DEVBUF, M_NOWAIT);
+							   M_DEVBUF, M_WAITOK);
 		if (pdata == NULL)
 			break;
 		next_scb->platform_data = pdata;
@@ -4370,7 +4370,7 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 
 		error = bus_dmamap_create(ahc->parent_dmat, 
 			  AHC_MAXTRANSFER_SIZE, AHC_NSEG, MAXPHYS, 0,
-			  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW|ahc->sc_dmaflags,
+			  BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW|ahc->sc_dmaflags,
 			  &next_scb->dmamap);
 		if (error != 0)
 			break;
@@ -4384,6 +4384,7 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 		next_scb++;
 		ahc->scb_data->numscbs++;
 	}
+	return (newcount);
 }
 
 void
@@ -7378,7 +7379,7 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	int error, level = 0;
 
 	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0,
-				      seg, 1, nseg, BUS_DMA_NOWAIT)) != 0) {
+				      seg, 1, nseg, BUS_DMA_WAITOK)) != 0) {
 		printf("%s: failed to allocate DMA mem for %s, error = %d\n",
 			myname, what, error);
 		goto out;
@@ -7386,7 +7387,7 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	level++;
 
 	if ((error = bus_dmamem_map(tag, seg, *nseg, size, vaddr,
-				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+				    BUS_DMA_WAITOK|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: failed to map DMA mem for %s, error = %d\n",
 			myname, what, error);
 		goto out;
@@ -7394,7 +7395,7 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	level++;
 
 	if ((error = bus_dmamap_create(tag, size, 1, size, 0,
-				       BUS_DMA_NOWAIT | flags, mapp)) != 0) {
+				       BUS_DMA_WAITOK | flags, mapp)) != 0) {
                 printf("%s: failed to create DMA map for %s, error = %d\n",
 			myname, what, error);
 		goto out;
@@ -7403,7 +7404,7 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 
 
 	if ((error = bus_dmamap_load(tag, *mapp, *vaddr, size, NULL,
-				     BUS_DMA_NOWAIT)) != 0) {
+				     BUS_DMA_WAITOK)) != 0) {
                 printf("%s: failed to load DMA map for %s, error = %d\n",
 			myname, what, error);
 		goto out;
