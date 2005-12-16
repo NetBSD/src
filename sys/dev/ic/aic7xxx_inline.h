@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_inline.h,v 1.4 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.4.6.1 2005/12/16 20:11:52 jmc Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -367,12 +367,8 @@ ahc_get_scb(struct ahc_softc *ahc)
 {
 	struct scb *scb;
 
-	if ((scb = SLIST_FIRST(&ahc->scb_data->free_scbs)) == NULL) {
-		ahc_alloc_scbs(ahc);
-		scb = SLIST_FIRST(&ahc->scb_data->free_scbs);
-		if (scb == NULL)
-			return (NULL);
-	}
+	if ((scb = SLIST_FIRST(&ahc->scb_data->free_scbs)) == NULL)
+		return (NULL);
 	SLIST_REMOVE_HEAD(&ahc->scb_data->free_scbs, links.sle);
 	return (scb);
 }
