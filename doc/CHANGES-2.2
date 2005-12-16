@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.24 2005/12/14 04:14:25 jmc Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.25 2005/12/16 18:14:19 jmc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -383,3 +383,15 @@ share/zoneinfo/southamerica			patch
 
 	Update to tzdata2005o
 	[kleink, ticket #10183]
+
+sys/arch/cobalt/cobalt/console.c		1.8
+sys/arch/cobalt/conf/files.cobalt		1.20
+sys/arch/cobalt/dev/com_mainbus.c		1.9
+sys/arch/cobalt/dev/com_mainbusvar.h		1.1
+
+	Cobalt kernel hangs in the second
+	consinit() call if it is loaded by the native bootloader,
+	so there is no bootstrap way to install other than to use
+	an older kernel.
+
+	[tsutsui, ticket #10175]
