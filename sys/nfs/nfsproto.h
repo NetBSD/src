@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.10 2003/08/07 16:33:57 agc Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.10.14.1 2005/12/16 11:40:50 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -80,6 +80,7 @@
 #define	NFSERR_NOSPC		28
 #define	NFSERR_ROFS		30
 #define	NFSERR_MLINK		31	/* Version 3 only */
+#define	NFSERR_TIMEDOUT		60	/* XXX */
 #define	NFSERR_NAMETOL		63
 #define	NFSERR_NOTEMPTY		66
 #define	NFSERR_DQUOT		69
@@ -94,7 +95,7 @@
 #define	NFSERR_SERVERFAULT	10006
 #define	NFSERR_BADTYPE		10007
 #define	NFSERR_JUKEBOX		10008
-#define NFSERR_TRYLATER		NFSERR_JUKEBOX
+#define	NFSERR_TRYLATER		NFSERR_JUKEBOX
 #define	NFSERR_STALEWRITEVERF	30001	/* Fake return for nfs_commit() */
 
 #define NFSERR_RETVOID		0x20000000 /* Return void, not error */
