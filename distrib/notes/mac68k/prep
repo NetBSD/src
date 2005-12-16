@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.13 2002/07/19 07:17:52 scottr Exp $
+.\"	$NetBSD: prep,v 1.13.2.1 2005/12/16 18:49:27 jmc Exp $
 .
 No matter which installation method you use, there is some planning
 and preparation that is required beforehand.  First and foremost,
@@ -38,6 +38,81 @@ disk partitions you should skip forward to the section labeled
 .Sx Installing\ the\ NetBSD\ System\ (Sysinst\ Method)
 in this document.
 .Pp
+.
+.Ss NetBSD/mac68k sysinst Bug Alert
+.
+Because of a problem that could not be fixed in time for this release, the
+.Nx*M
+.Ic sysinst
+installer neither creates file-systems on the configured partitions,
+nor mounts them on the configured mountpoints, though it claims to.
+Instead,
+.Ic sysinst
+attempts to install on the ramdisk and fails.
+.Pp
+Until this is fixed, you can either fall back to the Traditional Method
+of installation described below, or you can use the following workaround:
+.Pp
+While editing the partition table in
+.Ic sysinst ,
+note on a sheet of paper the partitions with the related mount points
+and disk devices. Since you have to do some manual work here, you probably
+want to keep the partition structure simple. Continue with the installation,
+and in the
+.Pp
+.
+.Dl "Ok, we are now ready to install NetBSD on your hard disk (sd0)."
+.Dl "Nothing has been written yet.  This is your last chance to"
+.Dl "quit this process before anything gets changed."
+.Dl ""
+.Dl "Shall we continue?"
+.
+.Pp
+dialog, send
+.Ic sysinst
+to the background by pressing ctrl-Z. In the following, adjust "sd" (SCSI) or
+"wd" (IDE) drive type, drive number (0, 1, ...) and partition letters 
+("a" for the root filesystem, "d", "e", etc.) as appropriate for
+your setup. A concatenation of this with "/dev/r" will give you
+the device name for the partition, e.g. 
+.Pa /dev/rsd0a
+for the root partition of your first SCSI disk.
+.Pp
+At the shell prompt, manually create filesystems in the desired
+partitions like
+.Pp
+.Dl # newfs /dev/rsd0a
+.Pp
+etc. for all the partitions you noted down.
+Mount the root partition to
+.Pa /targetroot ,
+e.g.
+.Pp
+.Dl # mount /dev/sd0a /targetroot
+.Pp
+Then, if you have set up other partitions, create directories below
+.Pa /targetroot
+as mount points
+and mount the partitions there according to your notes like e.g.
+.Pp
+.Dl # mount /dev/sd0e /targetroot/var
+.Pp
+You can list the mounted partitions with
+.Xr df 1
+and 
+.Xr mount 8
+commands, unmounting a wrongly mounted filesystem can be done e.g. with
+.Dq umount /targetroot/var .
+.Pp
+When all the partitions that you want to install to have been properly
+set up, you can return to
+.Ic sysinst
+with the 'fg' command and proceed with the installation.
+.
+.Pp
+.
+.Ss Preparation for the Traditional Method
+.
 If you are using the Traditional method of installation you must use a
 disk partitioning utility to designate the different partitions you
 will want in your final
