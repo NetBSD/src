@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.12 2005/12/11 12:20:14 christos Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.13 2005/12/16 14:16:14 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.12 2005/12/11 12:20:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.13 2005/12/16 14:16:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -342,8 +342,8 @@ linux_fakedev(dev, raw)
 }
 
 int  
-linux_machdepioctl(p, v, retval)
-        struct proc *p;
+linux_machdepioctl(l, v, retval)
+        struct lwp *l;
         void *v;
         register_t *retval;
 {  

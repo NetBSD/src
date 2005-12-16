@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.4 2005/12/14 18:33:32 christos Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.5 2005/12/16 14:16:14 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.4 2005/12/14 18:33:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.5 2005/12/16 14:16:14 christos Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -119,8 +119,8 @@ linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 }
 
 int
-ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -128,7 +128,8 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 {
 	struct linux_extra_stack_data64 *esdp, esd;
 	struct elf_args *ap;
-	struct vattr *vap; 
+	struct vattr *vap;
+	struct proc *p = l->l_proc;
 	Elf_Ehdr *eh;
 	Elf_Phdr *ph;
 	u_long phsize;
@@ -136,7 +137,7 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	int error;
 	int i;
 
-	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
+	if ((error = copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	/*
@@ -155,7 +156,7 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	if (ap == NULL) {
 		phsize = eh->e_phnum * sizeof(Elf_Phdr);
 		ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-		error = exec_read_from(p, pack->ep_vp, eh->e_phoff, ph, phsize);
+		error = exec_read_from(l, pack->ep_vp, eh->e_phoff, ph, phsize);
 		if (error != 0) {
 			for (i = 0; i < eh->e_phnum; i++) {
 				if (ph[i].p_type == PT_PHDR) {
