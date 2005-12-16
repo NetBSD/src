@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.20 2005/12/15 22:37:37 christos Exp $	*/
+/*	$NetBSD: fmt.c,v 1.21 2005/12/16 04:20:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.20 2005/12/15 22:37:37 christos Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.21 2005/12/16 04:20:09 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -170,13 +170,13 @@ fmt(FILE *fi)
 			while (cp2 > cp && isspace((unsigned char)*cp2))
 				cp2--;
 			if (cp == cp2)
-				fputc('\n', stdout);
+				putchar('\n');
 			col = cp2 - cp;
 			if (goal_length > col)
 				for (c = 0; c < (goal_length - col) / 2; c++)
-					fputc(' ', stdout);
+					putchar(' ');
 			while (cp <= cp2)
-				fputc(*cp++, stdout);
+				putchar(*cp++);
 			putchar('\n');
 		}
 	}
@@ -441,15 +441,15 @@ tabulate(struct buffer *buf)
 	b = b % 8;
 	if (t > 0)
 		do
-			putc('\t', stdout);
+			putchar('\t');
 		while (--t);
 	if (b > 0)
 		do
-			putc(' ', stdout);
+			putchar(' ');
 		while (--b);
 	while (*cp)
-		putc(*cp++, stdout);
-	putc('\n', stdout);
+		putchar(*cp++);
+	putchar('\n');
 }
 
 /*
