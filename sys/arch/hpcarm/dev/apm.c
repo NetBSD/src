@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.8 2005/12/11 12:17:31 christos Exp $	*/
+/*	$NetBSD: apm.c,v 1.9 2005/12/16 04:02:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "apm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.8 2005/12/11 12:17:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.9 2005/12/16 04:02:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,21 +96,21 @@ apmattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-apmopen(dev_t dev, int flag, int mode, struct proc *p)
+apmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	return 0;
 }
 
 static int
-apmclose(dev_t dev, int flag, int mode, struct proc *p)
+apmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	return 0;
 }
 
 static int
-apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct apm_softc *sc;
 
