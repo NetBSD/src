@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.28 2005/12/16 18:47:47 jmc Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.29 2005/12/16 20:12:24 jmc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -416,3 +416,21 @@ usr.bin/gzip/gzip.c				1.81
 
 	Remove unhandled H option from getopt() argument. Describe -l in usage.
 	[wiz, ticket #10197]
+
+distrib/notes/mac68k/prep				1.14
+
+	Add text for workaround of sysinst not running newfs etc. PR#29049
+	[hubertf, ticket #10198]
+
+sys/dev/ic/aic79xx_osm.c			1.13-1.14
+sys/dev/ic/aic7xxx_osm.c			1.19-1.20
+sys/dev/ic/aic79xx.c				1.32
+sys/dev/ic/aic79xxvar.h				1.20
+sys/dev/ic/aic7xxx.c				1.117
+sys/dev/ic/aic7xxx_inline.h			1.7
+sys/dev/ic/aic7xxxvar.h				1.50
+
+	Don't call alloc_scb() (which can call bus_dmamem_alloc/map) from
+	ADAPTER_REQ_RUN_XFER context (which can be interrupt context), defer 
+	this to the ADAPTER_REQ_GROW_RESOURCES callback. Fixes a panic in uvm.
+	[bouyer, ticket #10177]
