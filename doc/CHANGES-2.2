@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.25 2005/12/16 18:14:19 jmc Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.26 2005/12/16 18:17:12 jmc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -395,3 +395,11 @@ sys/arch/cobalt/dev/com_mainbusvar.h		1.1
 	an older kernel.
 
 	[tsutsui, ticket #10175]
+
+sys/arch/cobalt/conf/INSTALL			patch
+etc/etc.cobalt/Makefile.inc			1.2
+
+	The cobalt firmware has a size restriction on loading kernel.
+	so we should also have a smaller kernel binary for bootstrap install.  
+
+	[tsutsui, ticket #10176]
