@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.11 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.12 2005/12/17 10:26:59 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.11 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.12 2005/12/17 10:26:59 he Exp $");
 
 #include "debug_playstation2.h"
 
@@ -208,7 +208,7 @@ STATIC void _gsfb_eraserows(void *, int, int, long);
 STATIC int _gsfb_allocattr(void *, int, int, int, long *);
 
 /* access ops */
-STATIC int _gsfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
+STATIC int _gsfb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 STATIC paddr_t _gsfb_mmap(void *, off_t, int);
 STATIC int _gsfb_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -527,7 +527,7 @@ _gsfb_allocattr(void *cookie, int fg, int bg, int flags, long *attr)
 }
 
 int
-_gsfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+_gsfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 
 	return (EPASSTHROUGH); /* Inappropriate ioctl for device */
