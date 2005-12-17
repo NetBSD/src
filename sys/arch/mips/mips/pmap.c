@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164 2005/12/13 16:32:33 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.165 2005/12/17 05:44:11 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2005/12/13 16:32:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.165 2005/12/17 05:44:11 jmc Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1038,7 +1038,7 @@ pmap_page_cache(struct vm_page *pg, int mode)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_page_uncache(%lx)\n", (u_long)VM_PAGE_TO_PHYS(pa));
+		printf("pmap_page_uncache(%lx)\n", (u_long)VM_PAGE_TO_PHYS(pg));
 #endif
 	newmode = mode & PV_UNCACHED ? MIPS3_PG_UNCACHED : MIPS3_PG_CACHED;
 	pv = pg->mdpage.pvh_list;
@@ -1693,7 +1693,7 @@ pmap_clear_modify(struct vm_page *pg)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_modify(%lx)\n", (u_long)pa);
+		printf("pmap_clear_modify(%lx)\n", (u_long)VM_PAGE_TO_PHYS(pg));
 #endif
 	attrp = &pg->mdpage.pvh_attrs;
 	rv = *attrp & PV_MODIFIED;
