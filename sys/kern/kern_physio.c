@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.69 2005/12/14 01:58:01 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.70 2005/12/17 05:26:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.69 2005/12/14 01:58:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.70 2005/12/17 05:26:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,13 @@ struct workqueue *physio_workqueue;
  * NetBSD doesn't use "swap buffers" -- we have our own memory pool for
  * buffer descriptors.
  */
+
+/* #define	PHYSIO_DEBUG */
+#if defined(PHYSIO_DEBUG)
+#define	DPRINTF(a)	printf a
+#else /* defined(PHYSIO_DEBUG) */
+#define	DPRINTF(a)	/* nothing */
+#endif /* defined(PHYSIO_DEBUG) */
 
 /* abuse these members/flags of struct buf */
 #define	b_running	b_freelistindex
@@ -161,25 +168,44 @@ physio_done(struct work *wk, void *dummy)
 	if (__predict_false(done != todo)) {
 		off_t endoffset = dbtob(bp->b_blkno) + done;
 
+		/*
+		 * we got an error or hit EOM.
+		 *
+		 * we only care about the first one.
+		 * ie. the one at the lowest offset.
+		 */
+
+		KASSERT(mbp->b_endoffset != endoffset);
+		DPRINTF(("%s: error=%d at %" PRIu64 " - %" PRIu64
+		    ", blkno=%" PRIu64 ", bcount=%d, flags=0x%x\n",
+		    __func__, bp->b_error, dbtob(bp->b_blkno), endoffset,
+		    bp->b_blkno, bp->b_bcount, bp->b_flags));
+
 		if (mbp->b_endoffset == -1 || endoffset < mbp->b_endoffset) {
+			int error;
+
+			if ((bp->b_flags & B_ERROR) != 0) {
+				if (bp->b_error == 0) {
+					error = EIO; /* XXX */
+				} else {
+					error = bp->b_error;
+				}
+			} else {
+				error = 0; /* EOM */
+			}
+
+			DPRINTF(("%s: mbp=%p, error %d -> %d, endoff %" PRIu64
+			    " -> %" PRIu64 "\n",
+			    __func__, mbp,
+			    mbp->b_error, error,
+			    mbp->b_endoffset, endoffset));
+
 			mbp->b_endoffset = endoffset;
+			mbp->b_error = error;
 		}
 		mbp->b_flags |= B_ERROR;
-	}
-
-	/*
-	 * EINVAL is not very important as it happens for i/o past the end
-	 * of the partition.
-	 */
-
-	if (__predict_false((bp->b_flags & B_ERROR) != 0 &&
-	    (mbp->b_error == 0 || mbp->b_error == EINVAL))) {
-		if (bp->b_error == 0) {
-			mbp->b_error = EIO; /* XXX */
-		} else {
-			mbp->b_error = bp->b_error;
-		}
-		mbp->b_flags |= B_ERROR;
+	} else {
+		KASSERT((bp->b_flags & B_ERROR) == 0);
 	}
 
 	mbp->b_running--;
@@ -261,6 +287,9 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 	RUN_ONCE(&physio_initialized, physio_init);
 
+	DPRINTF(("%s: called: off=%" PRIu64 ", resid=%zu\n",
+	    __func__, uio->uio_offset, uio->uio_resid));
+
 	flags &= B_READ | B_WRITE;
 
 	/* Make sure we have a buffer, creating one if necessary. */
@@ -303,7 +332,6 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 			simple_lock(&mbp->b_interlock);
 			if ((mbp->b_flags & B_ERROR) != 0) {
-				error = mbp->b_error;
 				goto done_locked;
 			}
 			error = physio_wait(mbp, sync ? 0 : concurrency,
@@ -410,7 +438,12 @@ done_locked:
 	simple_unlock(&mbp->b_interlock);
 
 	if ((mbp->b_flags & B_ERROR) != 0) {
-		uio->uio_resid = uio->uio_offset - mbp->b_endoffset;
+		off_t delta;
+
+		delta = uio->uio_offset - mbp->b_endoffset;
+		KASSERT(delta > 0);
+		uio->uio_resid += delta;
+		/* uio->uio_offset = mbp->b_endoffset; */
 	} else {
 		KASSERT(mbp->b_endoffset == -1);
 	}
@@ -447,6 +480,9 @@ done_locked:
 		splx(s);
 	}
 	PRELE(l);
+
+	DPRINTF(("%s: done: off=%" PRIu64 ", resid=%zu\n",
+	    __func__, uio->uio_offset, uio->uio_resid));
 
 	return error;
 }
