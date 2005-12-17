@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.17 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: bthci.c,v 1.18 2005/12/17 13:18:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.17 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.18 2005/12/17 13:18:28 xtraeme Exp $");
 
 #include "bthcidrv.h"
 
@@ -219,9 +219,10 @@ bthci_detach(struct device *self, int flags)
 }
 
 int
-bthciopen(dev_t dev, int flag, int mode, struct proc *p)
+bthciopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct bthci_softc *sc;
+	struct proc *p = l->l_proc;
 	int error;
 
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
@@ -258,9 +259,10 @@ bthciopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-bthciclose(dev_t dev, int flag, int mode, struct proc *p)
+bthciclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct bthci_softc *sc;
+	struct proc *p = l->l_proc;
 	int error;
 
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
@@ -462,7 +464,7 @@ bthciioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #endif
 
 int
-bthcipoll(dev_t dev, int events, struct proc *p)
+bthcipoll(dev_t dev, int events, struct lwp *l)
 {
 	struct bthci_softc *sc;
 	int revents;
@@ -486,7 +488,7 @@ bthcipoll(dev_t dev, int events, struct proc *p)
 		} else {
 			DPRINTFN(2,("%s: recording read select\n",
 				    __func__));
-			selrecord(p, &sc->sc_rd_sel);
+			selrecord(l, &sc->sc_rd_sel);
 		}
 		splx(s);
 	}

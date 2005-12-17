@@ -1,4 +1,4 @@
-/*	$NetBSD: bthcivar.h,v 1.3 2003/01/05 05:12:38 dsainty Exp $	*/
+/*	$NetBSD: bthcivar.h,v 1.4 2005/12/17 13:18:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  */
 
 struct bthci_methods {
-	int (*bt_open)(void *h, int flag, int mode, struct proc *p);
-	int (*bt_close)(void *h, int flag, int mode, struct proc *p);
+	int (*bt_open)(void *h, int flag, int mode, struct lwp *l);
+	int (*bt_close)(void *h, int flag, int mode, struct lwp *l);
 	int (*bt_read)(void *h, struct uio *uio, int flag);
 	int (*bt_write)(void *h, struct uio *uio, int flag);
-	int (*bt_poll)(void *h, int events, struct proc *p);
+	int (*bt_poll)(void *h, int events, struct lwp *l);
 	int (*bt_kqfilter)(void *h, struct knote *kn);
 };
 
