@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.16 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_rbch.c,v 1.17 2005/12/17 05:37:17 jmc Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.16 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.17 2005/12/17 05:37:17 jmc Exp $");
 
 #include "isdnbchan.h"
 
@@ -687,14 +687,14 @@ isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct lwp *l
 
 		case I4B_RBCH_DIALOUT:
                 {
-			size_t l;
+			size_t x;
 
-			for (l = 0; l < TELNO_MAX && ((char *)data)[l]; l++)
+			for (x = 0; x < TELNO_MAX && ((char *)data)[x]; x++)
 				;
-			if (l)
+			if (x)
 			{
 				NDBGL4(L4_RBCHDBG, "%d, attempting dialout to %s", unit, (char *)data);
-				i4b_l4_dialoutnumber(rbch_driver_id, unit, l, (char *)data);
+				i4b_l4_dialoutnumber(rbch_driver_id, unit, x, (char *)data);
 				break;
 			}
 			/* fall through to SDTR */
