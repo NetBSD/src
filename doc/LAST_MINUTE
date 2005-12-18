@@ -1,4 +1,50 @@
-#	$NetBSD: LAST_MINUTE,v 1.2.4.1 2005/03/17 00:24:30 jmc Exp $
+#	$NetBSD: LAST_MINUTE,v 1.2.4.2 2005/12/18 14:00:30 tron Exp $
 
 This file contains important information on the NetBSD 3.0 release that
 did not make it into the main documentation.
+
+[i386]
+
+	Machines configured with more than 2 GB of physical memory may
+	experience hangs due to running out of kernel virtual space,
+	which is needed for kernel datastructures such as file system
+	metadata buffers.  Various kernel subsystems (including the
+	file system metadata cache) automatically adjust their memory
+	usage based on the amount of physical memory in the system,
+	but this method over-allocates the available kernel virtual
+	space (1 GB) when the amount of physical memory greatly
+	exceeds the amount of kernel virtual space.
+
+	The only reliable workaround currently known for this problem
+	is to increase the amount of virtual space available to the
+	kernel by adding these lines to the kernel config file:
+
+	options KERNBASE_LOCORE="0x80000000"
+	makeoptions TEXTADDR="0x80100000"
+
+	This will increase the kernel virtual space to 2 GB, but this
+	has the drawback that the application virtual space is
+	decreased from 3 GB to 2 GB (since the 32-bit address space
+	supported by the hardware must be shared between the kernel
+	and application on this architecture).
+
+	If any application that is to run on the system needs more
+	than 2 GB of application virtual space, then this work-around
+	cannot be used.  A possible alternative work-around is to
+	reduce the amount of physical memory used for file system
+	buffers by using sysctl to change the value of the tunable
+	"vm.bufmem_hiwater" to a lower value, perhaps 200000000
+	(200 MB).
+
+[all platforms]
+
+	The NetBSD implementation of the POSIX thread library
+	(libpthread) has an option (enabled by setting the environment
+	variable "PTHREAD_CONCURRENCY" to a number greater than 1)
+	which tells the library to run threads of a single process on
+	more than one CPU simultaneously.  This feature has various
+	known problems and will often result in the pthread library
+	aborting due to internal assertion failures, and sometimes
+	it will even result in the entire systems crashing.  Use of
+	this feature is not recommended for anyone other than those
+	working to fix the problems with it.
