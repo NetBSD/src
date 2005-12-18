@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmciavar.h,v 1.1 2002/03/03 14:34:01 uch Exp $	*/
+/*	$NetBSD: hd64461pcmciavar.h,v 1.2 2005/12/18 21:47:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _HPCSH_DEV_HD64461PCMCIAVAR_H_
+#define _HPCSH_DEV_HD64461PCMCIAVAR_H_
+
 enum pcmcia_voltage {
 	V_3_3,	/* 3.3 V */
 	V_5,	/* 5 V */
@@ -43,4 +47,6 @@ enum pcmcia_voltage {
 };
 
 /* Platform dependent hook (not HD64461 specification)  */
-void hd64461pcmcia_power(int, enum pcmcia_voltage, int);
+extern void hd64461pcmcia_power(int, enum pcmcia_voltage, int);
+
+#endif /* !_HPCSH_DEV_HD64461PCMCIAVAR_H_ */
