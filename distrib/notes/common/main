@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.26 2005/12/18 17:57:39 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.27 2005/12/18 18:32:21 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -608,7 +608,8 @@ now supports SMC2531W-B EliteConnect Wireless Adapter.
 .It
 .Xr fxp 4
 now supports Intel 82801FB (ICH6) 10/100 Ethernet.
-.It tlp 4
+.It
+.Xr tlp 4
 now supports LinkSys PCMPC200 Cardbus Ethernet and
 ASIX AX88140A/AX88141 chipsets.
 .It
