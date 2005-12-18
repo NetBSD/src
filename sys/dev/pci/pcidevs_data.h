@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.746 2005/12/11 20:01:49 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.747 2005/12/18 11:05:25 sekiya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2200,6 +2200,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "S2io Technologies",
 	},
 	{
+	    PCI_VENDOR_LINKSYS2,
+	    "Linksys",
+	},
+	{
 	    PCI_VENDOR_RALINK,
 	    "Ralink Technologies",
 	},
@@ -2328,7 +2332,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 572;
+const int pci_nvendors = 573;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -7040,6 +7044,10 @@ static const struct pci_product pci_products[] = {
 	    "PCMPC200",
 	},
 	{
+	    PCI_VENDOR_LINKSYS2, PCI_PRODUCT_LINKSYS2_IPN2220,
+	    "IPN 2220 Wireless LAN Adapter (rev 01)",
+	},
+	{
 	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C168,
 	    "82C168/82C169 (PNIC) 10/100 Ethernet",
 	},
@@ -10664,4 +10672,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2083;
+const int pci_nproducts = 2084;
