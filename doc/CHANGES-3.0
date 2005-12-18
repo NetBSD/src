@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.340 2005/12/18 14:02:54 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.341 2005/12/18 14:11:21 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14850,4 +14850,9 @@ doc/LAST_MINUTE					patch
 	Documentent i386 issues on system with more than 2GB and problems
 	with "PTHREAD_CONCURRENCY" on all platforms.
 	[chs, #ticket 1065]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 3.0 release.
 
