@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.23 2005/12/18 17:14:55 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.24 2005/12/18 17:20:17 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -463,7 +463,7 @@ which is also known as
 The sgimips port now supports IP12 (Personal Iris 4D/30, 4D/35,
 and Indigo R3K) machines.
 .It
-The PowerPC 601 support is added, and the prep port now supports
+The PowerPC 601 support has been added, and the prep port now supports
 IBM RS/6000 60P 7020-011.
 .bullet)
 .
@@ -722,9 +722,9 @@ filter solution.
 .It
 IP Filter has been upgraded to version 4.1.8.
 .It
-The KAME IPsec stack now support ESP over NAT connections (RFC 3948).
+The KAME IPsec stack now supports ESP over NAT connections (RFC 3948).
 .It
-IPv4 Protocol Independent Multicast (PIM) routing support is added.
+IPv4 Protocol Independent Multicast (PIM) routing support has been added.
 .It
 ipsec-tools 0.6.3 provide IKE support for ESP over NAT connections (RFC 3947),
 user authentication via XAuth and automatic network configurations of VPN
@@ -748,13 +748,13 @@ now supports tunneling of the IPv6 Protocol.
 .Ss2 File system
 .
 .(bullet
-UFS_DIRHASH support is added from
+UFS_DIRHASH support has been added from
 .Fx ,
 which increase lookup performance
 by maintaining in-core hash tables for large directories on UFS.
 .It
 .Xr fss 4 ,
-file system snapshot support is added.
+file system snapshot support has been added.
 .It
 Added ptyfs, pseudo-terminal file system.
 .It
