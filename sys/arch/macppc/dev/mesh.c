@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.21 2004/12/09 04:37:30 briggs Exp $	*/
+/*	$NetBSD: mesh.c,v 1.21.8.1 2005/12/18 13:49:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.21 2004/12/09 04:37:30 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.21.8.1 2005/12/18 13:49:32 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1133,7 +1133,7 @@ mesh_done(sc, scb)
 		printf("Target busy\n");
 	}
 
-	xs->xs_status = scb->status;
+	xs->status = scb->status;
 	xs->resid = scb->resid;
 	if (scb->status == SCSI_CHECK) {
 		xs->error = XS_BUSY;
