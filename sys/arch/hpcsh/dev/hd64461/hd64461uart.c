@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.17 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.18 2005/12/18 22:19:56 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.17 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.18 2005/12/18 22:19:56 uwe Exp $");
 
 #include "opt_kgdb.h"
 
@@ -88,9 +88,9 @@ CFATTACH_DECL(hd64461uart, sizeof(struct hd64461uart_softc),
     hd64461uart_match, hd64461uart_attach, NULL, NULL);
 
 STATIC void hd64461uart_init(void);
-STATIC u_int8_t hd64461uart_read_1(void *, bus_space_handle_t, bus_size_t);
+STATIC uint8_t hd64461uart_read_1(void *, bus_space_handle_t, bus_size_t);
 STATIC void hd64461uart_write_1(void *, bus_space_handle_t, bus_size_t,
-    u_int8_t);
+    uint8_t);
 
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #ifndef COMCN_SPEED
@@ -118,14 +118,14 @@ hd64461uartcninit(struct consdev *cp)
 	hd64461uart_init();
 
 	comcnattach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED, COM_FREQ,
-	    COM_TYPE_NORMAL, CONMODE);	
+	    COM_TYPE_NORMAL, CONMODE);
 
 	hd64461uart_chip.console = 1;
 }
 
 #ifdef KGDB
 int
-hd64461uart_kgdb_init()
+hd64461uart_kgdb_init(void)
 {
 
 	if (strcmp(kgdb_devname, "hd64461uart") != 0)
@@ -146,7 +146,7 @@ hd64461uart_kgdb_init()
 }
 #endif /* KGDB */
 
-int
+STATIC int
 hd64461uart_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -154,13 +154,13 @@ hd64461uart_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (ha->ha_module_id == HD64461_MODULE_UART);
 }
 
-void
+STATIC void
 hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
 	struct hd64461uart_softc *sc = (struct hd64461uart_softc *)self;
 	struct com_softc *csc = &sc->sc_com;
-	u_int16_t r16;
+	uint16_t r16;
 
 	sc->sc_chip = &hd64461uart_chip;
 
@@ -179,7 +179,7 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 	/* supply clock */
 	r16 = hd64461_reg_read_2(HD64461_SYSSTBCR_REG16);
 	r16 &= ~HD64461_SYSSTBCR_SURTSD;
-	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);	
+	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
 
 	/* sanity check */
 	if (!comprobe1(csc->sc_iot, csc->sc_ioh)) {
@@ -197,8 +197,8 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 	    comintr, self);
 }
 
-void
-hd64461uart_init()
+STATIC void
+hd64461uart_init(void)
 {
 
 	if (hd64461uart_chip.io_tag)
@@ -213,17 +213,17 @@ hd64461uart_init()
 	hd64461uart_chip.io_tag->hbs_w_1 = hd64461uart_write_1;
 }
 
-u_int8_t
+STATIC uint8_t
 hd64461uart_read_1(void *t, bus_space_handle_t h, bus_size_t ofs)
 {
 
-	return *(__volatile__ u_int8_t *)(h + (ofs << 1));
+	return *(volatile uint8_t *)(h + (ofs << 1));
 }
 
-void
+STATIC void
 hd64461uart_write_1(void *t, bus_space_handle_t h, bus_size_t ofs,
-    u_int8_t val)
+    uint8_t val)
 {
 
-	*(__volatile__ u_int8_t *)(h + (ofs << 1)) = val;	
+	*(volatile uint8_t *)(h + (ofs << 1)) = val;
 }
