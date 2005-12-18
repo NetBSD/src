@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.8 2005/12/11 12:17:36 christos Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.9 2005/12/18 18:59:48 uwe Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.8 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.9 2005/12/18 18:59:48 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -324,11 +324,7 @@ j6x0lcd_contrast_set(struct j6x0lcd_softc *sc, int contrast)
 
 
 static int
-j6x0lcd_param(ctx, type, id, msg)
-	void *ctx;
-	int type;
-	long id;
-	void *msg;
+j6x0lcd_param(void *ctx, int type, long id, void *msg)
 {
 	struct j6x0lcd_softc *sc = ctx;
 	int value;
@@ -384,11 +380,7 @@ j6x0lcd_param(ctx, type, id, msg)
 
 
 static int
-j6x0lcd_power(ctx, type, id, msg)
-	void *ctx;
-	int type;
-	long id;
-	void *msg;
+j6x0lcd_power(void *ctx, int type, long id, void *msg)
 {
 	int on;
 	uint16_t r;
