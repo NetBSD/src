@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461_machdep.c,v 1.3 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: hd64461_machdep.c,v 1.4 2005/12/18 23:40:03 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461_machdep.c,v 1.3 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461_machdep.c,v 1.4 2005/12/18 23:40:03 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ do {									\
 	hd64461_reg_write_1(scr, r);					\
 } while (/*CONSTCOND*/0)
 	bus_addr_t isr, gcr, scr;
-	u_int8_t r;
+	uint8_t r;
 	
 	isr = HD64461_PCCISR(ch);
 	gcr = HD64461_PCCGCR(ch);
