@@ -1,4 +1,4 @@
-/*	$NetBSD: hd6446xintcreg.h,v 1.1 2002/03/28 15:27:04 uch Exp $	*/
+/*	$NetBSD: hd6446xintcreg.h,v 1.2 2005/12/18 19:31:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,5 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _HPCSH_DEV_HD6446XINTCREG_H_
+#define _HPCSH_DEV_HD6446XINTCREG_H_
+
 #define HD6446X_NIMR			0xb0005002
 #define HD6446X_NIRR			0xb0005000
+
+#endif /* !_HPCSH_DEV_HD6446XINTCREG_H_ */
