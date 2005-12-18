@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.15 2005/12/18 21:52:41 uwe Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.16 2005/12/18 22:07:56 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,20 +37,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.15 2005/12/18 21:52:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.16 2005/12/18 22:07:56 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/boot_flag.h>
+#include <sys/reboot.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/debug.h>
 
 #include <hpcsh/dev/hd64461/hd64461var.h>
-#include <hpcsh/dev/hd64461/hd64461reg.h>
-#include <hpcsh/dev/hd64461/hd64461intcreg.h>
 
 /* HD64461 modules. INTC, TIMER, POWER modules are included in hd64461if */
 STATIC struct hd64461_module {
@@ -81,13 +79,12 @@ hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	switch (cpu_product) {
-	default:
-		/* HD64461 only supports SH7709 interface */
-		return (0);
 	case CPU_PRODUCT_7709:
-		break;
 	case CPU_PRODUCT_7709A:
 		break;
+
+	default:
+		return (0);	/* HD64461 only supports SH7709 interface */
 	}
 
 	if (strcmp("hd64461if", cf->cf_name))
@@ -131,7 +128,12 @@ hd64461_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
+
 #ifdef DEBUG
+
+#include <hpcsh/dev/hd64461/hd64461reg.h>
+#include <hpcsh/dev/hd64461/hd64461intcreg.h>
+
 STATIC void
 hd64461_info(void)
 {
