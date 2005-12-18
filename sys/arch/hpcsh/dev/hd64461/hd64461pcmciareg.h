@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmciareg.h,v 1.2 2001/10/08 15:34:24 uch Exp $	*/
+/*	$NetBSD: hd64461pcmciareg.h,v 1.3 2005/12/18 21:47:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _HPCSH_DEV_HD64461PCMCIAREG_H_
+#define _HPCSH_DEV_HD64461PCMCIAREG_H_
+
 /*
  * PCC0 SH7709 Area 6 (memory and I/O card)
  */
+
 /* PCC0 Interface Status Register (R) */
 #define HD64461_PCC0ISR_REG8				0xb0002000
 #define HD64461_PCC0ISR_P0READY			HD64461_PCCISR_READY
@@ -227,3 +231,5 @@
 
 #define HD64461_PCCSCR_VCC1			0x02
 #define HD64461_PCCSCR_SWP			0x01
+
+#endif /* !_HPCSH_DEV_HD64461PCMCIAREG_H_ */
