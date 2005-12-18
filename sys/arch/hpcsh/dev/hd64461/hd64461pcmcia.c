@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.32 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.33 2005/12/18 23:38:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.32 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.33 2005/12/18 23:38:01 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -233,8 +233,8 @@ STATIC void hd64461pcmcia_info(struct hd64461pcmcia_softc *);
 STATIC void fixup_sh3_pcmcia_area(bus_space_tag_t);
 #define	_BUS_SPACE_ACCESS_HOOK()					\
 do {									\
-	u_int8_t dummy __attribute__((__unused__)) =			\
-	 *(volatile u_int8_t *)0xba000000;				\
+	uint8_t dummy __attribute__((__unused__)) =			\
+	 *(volatile uint8_t *)0xba000000;				\
 } while (/*CONSTCOND*/0)
 _BUS_SPACE_WRITE(_sh3_pcmcia_bug, 1, 8)
 _BUS_SPACE_WRITE_MULTI(_sh3_pcmcia_bug, 1, 8)
@@ -244,7 +244,7 @@ _BUS_SPACE_SET_MULTI(_sh3_pcmcia_bug, 1, 8)
 
 #define	DELAY_MS(x)	delay((x) * 1000)
 
-int
+STATIC int
 hd64461pcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -252,7 +252,7 @@ hd64461pcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (ha->ha_module_id == HD64461_MODULE_PCMCIA);
 }
 
-void
+STATIC void
 hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -278,7 +278,7 @@ hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-void
+STATIC void
 hd64461pcmcia_create_event_thread(void *arg)
 {
 	struct hd64461pcmcia_softc *sc = arg;
@@ -290,7 +290,7 @@ hd64461pcmcia_create_event_thread(void *arg)
 	KASSERT(error == 0);
 }
 
-void
+STATIC void
 hd64461pcmcia_event_thread(void *arg)
 {
 	struct hd64461pcmcia_softc *sc = arg;
@@ -325,7 +325,7 @@ hd64461pcmcia_event_thread(void *arg)
 	/* NOTREACHED */
 }
 
-int
+STATIC int
 hd64461pcmcia_print(void *arg, const char *pnp)
 {
 
@@ -335,7 +335,7 @@ hd64461pcmcia_print(void *arg, const char *pnp)
 	return (UNCONF);
 }
 
-int
+STATIC int
 hd64461pcmcia_submatch(struct device *parent, struct cfdata *cf,
 		       const int *ldesc, void *aux)
 {
@@ -359,7 +359,7 @@ hd64461pcmcia_submatch(struct device *parent, struct cfdata *cf,
 	return (config_match(parent, cf, aux));
 }
 
-void
+STATIC void
 hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
     enum controller_channel channel)
 {
@@ -428,11 +428,11 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	}
 }
 
-int
+STATIC int
 hd64461pcmcia_channel0_intr(void *arg)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)arg;
-	u_int8_t r;
+	uint8_t r;
 	int ret = 0;
 
 	r = hd64461_reg_read_1(HD64461_PCC0CSCR_REG8);
@@ -452,11 +452,11 @@ hd64461pcmcia_channel0_intr(void *arg)
 	return ret;
 }
 
-int
+STATIC int
 hd64461pcmcia_channel1_intr(void *arg)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)arg;
-	u_int8_t r;
+	uint8_t r;
 	int ret = 0;
 
 	r = hd64461_reg_read_1(HD64461_PCC1CSCR_REG8);
@@ -476,7 +476,7 @@ hd64461pcmcia_channel1_intr(void *arg)
 	return ret;
 }
 
-void
+STATIC void
 queue_event(struct hd64461pcmcia_channel *ch,
     enum hd64461pcmcia_event_type type)
 {
@@ -522,7 +522,7 @@ queue_event(struct hd64461pcmcia_channel *ch,
 /*
  * interface for pcmcia driver.
  */
-void *
+STATIC void *
 hd64461pcmcia_chip_intr_establish(pcmcia_chipset_handle_t pch,
     struct pcmcia_function *pf,
     int ipl, int (*ih_func)(void *), void *ih_arg)
@@ -531,7 +531,7 @@ hd64461pcmcia_chip_intr_establish(pcmcia_chipset_handle_t pch,
 	int channel = ch->ch_channel;
 	bus_addr_t cscier = HD64461_PCCCSCIER(channel);
 	int s = splhigh();
-	u_int8_t r;
+	uint8_t r;
 
 	ch->ch_ih_card_func = ih_func;
 	ch->ch_ih_card_arg = ih_arg;
@@ -555,14 +555,14 @@ hd64461pcmcia_chip_intr_establish(pcmcia_chipset_handle_t pch,
 	return (void *)ih_func;
 }
 
-void
+STATIC void
 hd64461pcmcia_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 	int channel = ch->ch_channel;
 	bus_addr_t cscier = HD64461_PCCCSCIER(channel);
 	int s = splhigh();
-	u_int8_t r;
+	uint8_t r;
 
 	/* disable card interrupt */
 	r = hd64461_reg_read_1(cscier);
@@ -581,7 +581,7 @@ hd64461pcmcia_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 	splx(s);
 }
 
-int
+STATIC int
 hd64461pcmcia_chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
     struct pcmcia_mem_handle *pcmhp)
 {
@@ -598,14 +598,14 @@ hd64461pcmcia_chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
 	return (0);
 }
 
-void
+STATIC void
 hd64461pcmcia_chip_mem_free(pcmcia_chipset_handle_t pch,
     struct pcmcia_mem_handle *pcmhp)
 {
 	/* nothing to do */
 }
 
-int
+STATIC int
 hd64461pcmcia_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
     bus_addr_t card_addr,
     bus_size_t size, struct pcmcia_mem_handle *pcmhp,
@@ -659,7 +659,7 @@ hd64461pcmcia_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
 	return (1);
 }
 
-void
+STATIC void
 hd64461pcmcia_chip_mem_unmap(pcmcia_chipset_handle_t pch, int window)
 {
 	struct hd64461pcmcia_window_cookie *cookie = (void *)window;
@@ -671,7 +671,7 @@ hd64461pcmcia_chip_mem_unmap(pcmcia_chipset_handle_t pch, int window)
 	free(cookie, M_DEVBUF);
 }
 
-int
+STATIC int
 hd64461pcmcia_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
     bus_size_t size, bus_size_t align, struct pcmcia_io_handle *pcihp)
 {
@@ -704,7 +704,7 @@ hd64461pcmcia_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
 	return (0);
 }
 
-int
+STATIC int
 hd64461pcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width,
     bus_addr_t offset,
     bus_size_t size, struct pcmcia_io_handle *pcihp, int *windowp)
@@ -727,7 +727,7 @@ hd64461pcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width,
 	return (0);
 }
 
-void
+STATIC void
 hd64461pcmcia_chip_io_free(pcmcia_chipset_handle_t pch,
     struct pcmcia_io_handle *pcihp)
 {
@@ -744,19 +744,20 @@ hd64461pcmcia_chip_io_free(pcmcia_chipset_handle_t pch,
 	DPRINTF("%#lx+%#lx\n", pcihp->ioh, pcihp->size);
 }
 
-void
+STATIC void
 hd64461pcmcia_chip_io_unmap(pcmcia_chipset_handle_t pch, int window)
 {
+
 	/* nothing to do */
 }
 
-void
+STATIC void
 hd64461pcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 	int channel = ch->ch_channel;
 	bus_addr_t isr, gcr;
-	u_int8_t r;
+	uint8_t r;
 	int i;
 
 	DPRINTF("enable channel %d\n", channel);
@@ -808,13 +809,13 @@ hd64461pcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 	DPRINTF("OK.\n");
 }
 
-void
+STATIC void
 hd64461pcmcia_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 	int channel = ch->ch_channel;
 	bus_addr_t gcr;
-	u_int8_t r;
+	uint8_t r;
 
 	DPRINTF("settype channel %d\n", channel);
 	gcr = HD64461_PCCGCR(channel);
@@ -835,7 +836,7 @@ hd64461pcmcia_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
 	DPRINTF("OK.\n");
 }
 
-void
+STATIC void
 hd64461pcmcia_chip_socket_disable(pcmcia_chipset_handle_t pch)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
@@ -852,11 +853,11 @@ hd64461pcmcia_chip_socket_disable(pcmcia_chipset_handle_t pch)
 /*
  * Card detect
  */
-void
+STATIC void
 hd64461pcmcia_power_off(enum controller_channel channel)
 {
-	u_int8_t r;
-	u_int16_t r16;
+	uint8_t r;
+	uint16_t r16;
 	bus_addr_t scr, gcr;
 
 	gcr = HD64461_PCCGCR(channel);
@@ -887,11 +888,11 @@ hd64461pcmcia_power_off(enum controller_channel channel)
 	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
 }
 
-void
+STATIC void
 hd64461pcmcia_power_on(enum controller_channel channel)
 {
-	u_int8_t r;
-	u_int16_t r16;
+	uint8_t r;
+	uint16_t r16;
 	bus_addr_t scr, gcr, isr;
 
 	isr = HD64461_PCCISR(channel);
@@ -967,10 +968,10 @@ hd64461pcmcia_power_on(enum controller_channel channel)
 	    HD64461_PCC1CSCR_REG8, 0);
 }
 
-enum hd64461pcmcia_event_type
+STATIC enum hd64461pcmcia_event_type
 detect_card(enum controller_channel channel)
 {
-	u_int8_t r;
+	uint8_t r;
 
 	r = hd64461_reg_read_1(HD64461_PCCISR(channel)) &
 	    (HD64461_PCCISR_CD2 | HD64461_PCCISR_CD1);
@@ -991,12 +992,12 @@ detect_card(enum controller_channel channel)
 /*
  * Memory window access ops.
  */
-void
+STATIC void
 hd64461pcmcia_memory_window_mode(enum controller_channel channel,
     enum memory_window_mode mode)
 {
 	bus_addr_t a = HD64461_PCCGCR(channel);
-	u_int8_t r = hd64461_reg_read_1(a);
+	uint8_t r = hd64461_reg_read_1(a);
 
 	r &= ~HD64461_PCCGCR_MMOD;
 	r |= (mode == MEMWIN_16M_MODE) ? HD64461_PCCGCR_MMOD_16M :
@@ -1004,12 +1005,12 @@ hd64461pcmcia_memory_window_mode(enum controller_channel channel,
 	hd64461_reg_write_1(a, r);
 }
 
-void
+STATIC void
 hd64461pcmcia_memory_window_16(enum controller_channel channel,
     enum memory_window_16 window)
 {
 	bus_addr_t a = HD64461_PCCGCR(channel);
-	u_int8_t r;
+	uint8_t r;
 
 	r = hd64461_reg_read_1(a);
 	r &= ~(HD64461_PCCGCR_PA25 | HD64461_PCCGCR_PA24);
@@ -1032,11 +1033,11 @@ hd64461pcmcia_memory_window_16(enum controller_channel channel,
 }
 
 #if unused
-void
+STATIC void
 memory_window_32(enum controller_channel channel, enum memory_window_32 window)
 {
 	bus_addr_t a = HD64461_PCCGCR(channel);
-	u_int8_t r;
+	uint8_t r;
 
 	r = hd64461_reg_read_1(a);
 	r &= ~(HD64461_PCCGCR_PA25 | HD64461_PCCGCR_PREG);
@@ -1056,10 +1057,10 @@ memory_window_32(enum controller_channel channel, enum memory_window_32 window)
 }
 #endif
 
-void
+STATIC void
 hd64461_set_bus_width(enum controller_channel channel, int width)
 {
-	u_int16_t r16;
+	uint16_t r16;
 
 	r16 = _reg_read_2(SH3_BCR2);
 	if (channel == CHANNEL_0) {
@@ -1072,7 +1073,7 @@ hd64461_set_bus_width(enum controller_channel channel, int width)
 	_reg_write_2(SH3_BCR2, r16);
 }
 
-void
+STATIC void
 fixup_sh3_pcmcia_area(bus_space_tag_t t)
 {
 	struct hpcsh_bus_space *hbs = (void *)t;
@@ -1084,10 +1085,10 @@ fixup_sh3_pcmcia_area(bus_space_tag_t t)
 }
 
 #ifdef HD64461PCMCIA_DEBUG
-void
+STATIC void
 hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 {
-	u_int8_t r8;
+	uint8_t r8;
 
 	dbg_banner_function();
 	/*
