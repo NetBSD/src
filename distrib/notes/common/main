@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.27 2005/12/18 18:32:21 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.28 2005/12/18 18:35:21 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -775,9 +775,7 @@ Added PAM (Pluggable Authentication Modules framework).
 .It
 Support wide strings in C++.
 .It
-Re-entrant library functions like
-.Xr getpwent_r 4
-have been added.
+Re-entrant library functions like getpwent_r() have been added.
 .It
 Some libc string functions for i386 have been replaced with optimized version.
 .It
