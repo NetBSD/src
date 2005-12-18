@@ -1,4 +1,4 @@
-/*	$NetBSD: hd6446x_subr.S,v 1.2 2002/05/09 12:41:09 uch Exp $	*/
+/*	$NetBSD: hd6446x_subr.S,v 1.3 2005/12/18 21:25:55 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sh3/asm.h>
-#include <sh3/locore.h>
 #include <hpcsh/dev/hd6446x/hd6446xintcreg.h>
 
 /*
@@ -67,10 +66,12 @@ NENTRY(hd6446x_intr_raise)
 	mov.l	3f,	r1
 	mov.w	r2,	@r1	/* Set new interrupt mask to HD6446x */
 1:	rts
-	 nop	/* return (SR & 0xf0) */
+	 nop			/* return (SR & 0xf0) */
+
 	.align	2
 2:	.long	_C_LABEL(hd6446x_imask)
 3:	.long	HD6446X_NIMR
+
 
 /*
  * int hd6446x_intr_resume(int s):
@@ -95,6 +96,7 @@ NENTRY(hd6446x_intr_resume)
 	ldc	r4,	sr	/* Set new IMASK to SR */
 	rts
 	 and	r2,	r0	/* return (SR & 0xf0) */
+
 	.align	2
 2:	.long	_C_LABEL(hd6446x_imask)
 3:	.long	HD6446X_NIMR
