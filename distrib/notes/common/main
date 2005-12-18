@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.24 2005/12/18 17:20:17 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.25 2005/12/18 17:25:39 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -739,7 +739,7 @@ Added
 the virtual Ethernet device.
 .It
 .Xr ppp 4
-is updated to 2.4.3.
+has been updated to 2.4.3.
 .It
 .Xr gre 4
 now supports tunneling of the IPv6 Protocol.
