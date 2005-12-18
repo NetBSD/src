@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.3 2005/11/27 05:35:52 thorpej Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.4 2005/12/18 23:57:07 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.3 2005/11/27 05:35:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.4 2005/12/18 23:57:07 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,7 +82,7 @@ static int	hpf1275a_detach(struct device *, int);
 static int	hpf1275a_wskbd_enable(void *, int);
 static void	hpf1275a_wskbd_set_leds(void *, int);
 static int	hpf1275a_wskbd_ioctl(void *, u_long, caddr_t, int,
-				     struct proc *);
+				     struct lwp *);
 
 
 CFATTACH_DECL(hpf1275a, sizeof(struct hpf1275a_softc),
@@ -227,7 +227,7 @@ hpf1275aattach(int n)
 		printf("%s: unable to register cfattach, error = %d\n",
 		       hpf1275a_cd.cd_name, error);
 		config_cfdriver_detach(&hpf1275a_cd);
-		(void) ttyldisc_detach(hpf1275a_disc.l_name);
+		(void) ttyldisc_detach(&hpf1275a_disc);
 	}
 }
 
@@ -401,7 +401,7 @@ hpf1275a_wskbd_set_leds(void *self, int leds)
 
 static int
 hpf1275a_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
-		     struct proc *p)
+		     struct lwp *l)
 {
 	/* struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self; */
 
