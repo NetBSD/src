@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.22 2005/12/15 20:18:33 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.23 2005/12/18 17:14:55 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -718,7 +718,7 @@ and
 interfaces.
 .It
 The OpenBSD Packet Filter has been integrated as alternative packet
-filer solution.
+filter solution.
 .It
 IP Filter has been upgraded to version 4.1.8.
 .It
