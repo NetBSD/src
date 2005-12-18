@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.25 2005/12/18 17:25:39 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.26 2005/12/18 17:57:39 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -772,13 +772,13 @@ The stability of the LFS file system has been improved.
 .(bullet
 Added PAM (Pluggable Authentication Modules framework).
 .It
-Support wide strings in C++
+Support wide strings in C++.
 .It
 Re-entrant library functions like
 .Xr getpwent_r 4
 have been added.
 .It
-Some libc string functions for i386 are replaced with optimized version.
+Some libc string functions for i386 have been replaced with optimized version.
 .It
 Added DCE 1.1 RPC compatible UUID (Universally Unique Identifier) routines
 to libc.
