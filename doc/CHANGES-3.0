@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.339 2005/12/16 12:01:26 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.340 2005/12/18 14:02:54 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14831,4 +14831,23 @@ usr.bin/su/Makefile				1.43
 	PR bin/32307: su fails to set umask correctly when using pam
 	and simulating a full login (-, -d, -l)
 	[hubertf, ticket #1061]
+
+lib/libc/sys/statvfs.2				1.4
+share/man/man5/statvfs.5			1.8
+
+	statvfs(2) did not appear in NetBSD 2.1, but in 3.0.
+	[riz, ticket #1062, #1063]
+
+sys/arch/macppc/dev/mesh.c			1.23
+
+	Fix serious bug in mesh() which caused failure to spin up drives
+	automatically, occasional bogus 'drive offline' messages and
+	long delays when trying to use a ZIP drive.
+	[macallan, ticket #1064]
+
+doc/LAST_MINUTE					patch
+
+	Documentent i386 issues on system with more than 2GB and problems
+	with "PTHREAD_CONCURRENCY" on all platforms.
+	[chs, #ticket 1065]
 
