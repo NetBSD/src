@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.126 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.127 2005/12/18 11:04:00 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.126 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.127 2005/12/18 11:04:00 sekiya Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1389,9 +1389,10 @@ pccbb_power(ct, command)
 		splx(s);
 		microtime(&after);
 		timersub(&after, &before, &diff);
-		printf("%s: wait took%s %ld.%06lds\n", sc->sc_dev.dv_xname,
-		    error == EWOULDBLOCK ? " too long" : "",
-		    diff.tv_sec, diff.tv_usec);
+		aprint_debug("%s: wait took%s %ld.%06lds\n",
+			sc->sc_dev.dv_xname,
+		    	error == EWOULDBLOCK ? " too long" : "",
+		    	diff.tv_sec, diff.tv_usec);
 	}
 
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
