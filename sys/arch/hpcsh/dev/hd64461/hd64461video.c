@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.32 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.33 2005/12/18 23:20:03 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.32 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.33 2005/12/18 23:20:03 uwe Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -111,7 +111,7 @@ STATIC struct hd64461video_chip {
 	enum hd64461video_display_mode mode;
 	struct hpcfb_dspconf hd;
 	struct hpcfb_fbconf hf;
-	u_int8_t *off_screen_addr;
+	uint8_t *off_screen_addr;
 	size_t off_screen_size;
 
 	struct callout unblank_ch;
@@ -132,9 +132,9 @@ STATIC size_t hd64461video_frame_buffer_size(struct hd64461video_chip *);
 STATIC void hd64461video_hwaccel_init(struct hd64461video_chip *);
 
 STATIC void hd64461video_set_clut(struct hd64461video_chip *, int, int,
-    u_int8_t *, u_int8_t *, u_int8_t *);
+    uint8_t *, uint8_t *, uint8_t *);
 STATIC void hd64461video_get_clut(struct hd64461video_chip *, int, int,
-    u_int8_t *, u_int8_t *, u_int8_t *);
+    uint8_t *, uint8_t *, uint8_t *);
 STATIC int hd64461video_power(void *, int, long, void *);
 STATIC void hd64461video_off(struct hd64461video_chip *);
 STATIC void hd64461video_on(struct hd64461video_chip *);
@@ -155,18 +155,29 @@ STATIC void hd64461video_dump(void) __attribute__((__unused__));
 CFATTACH_DECL(hd64461video, sizeof(struct hd64461video_softc),
     hd64461video_match, hd64461video_attach, NULL, NULL);
 
-int hd64461video_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-paddr_t hd64461video_mmap(void *, off_t, int);
-void hd64461video_cursor(void *, int, int, int, int, int);
-void hd64461video_bitblit(void *, int, int, int, int, int, int);
-void hd64461video_erase(void *, int, int, int, int, int);
-void hd64461video_putchar(void *, int, int, struct wsdisplay_font *, int, int,
-    u_int, int);
-void hd64461video_setclut(void *, struct rasops_info *);
-void hd64461video_font(void *, struct wsdisplay_font *);
-void hd64461video_iodone(void *);
+STATIC int hd64461video_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+STATIC paddr_t hd64461video_mmap(void *, off_t, int);
 
-struct hpcfb_accessops hd64461video_ha = {
+#ifdef HD64461VIDEO_HWACCEL
+STATIC void hd64461video_cursor(void *, int, int, int, int, int);
+STATIC void hd64461video_bitblit(void *, int, int, int, int, int, int);
+STATIC void hd64461video_erase(void *, int, int, int, int, int);
+STATIC void hd64461video_putchar(void *, int, int, struct wsdisplay_font *,
+    int, int, uint, int);
+STATIC void hd64461video_setclut(void *, struct rasops_info *);
+STATIC void hd64461video_font(void *, struct wsdisplay_font *);
+STATIC void hd64461video_iodone(void *);
+
+/* font */
+STATIC void hd64461video_font_load_16bpp(uint16_t *, uint8_t *, int, int, int);
+STATIC void hd64461video_font_load_8bpp(uint8_t *, uint8_t *, int, int, int);
+STATIC void hd64461video_font_set_attr(struct hd64461video_softc *,
+    struct wsdisplay_font *);
+STATIC void hd64461video_font_load(struct hd64461video_softc *);
+STATIC vaddr_t hd64461video_font_start_addr(struct hd64461video_softc *, int);
+#endif /* HD64461VIDEO_HWACCEL */
+
+STATIC struct hpcfb_accessops hd64461video_ha = {
 	.ioctl	= hd64461video_ioctl,
 	.mmap	= hd64461video_mmap,
 #ifdef HD64461VIDEO_HWACCEL
@@ -180,15 +191,8 @@ struct hpcfb_accessops hd64461video_ha = {
 #endif /* HD64461VIDEO_HWACCEL */
 };
 
-/* font */
-STATIC void hd64461video_font_load_16bpp(u_int16_t *, u_int8_t *, int, int, int);
-STATIC void hd64461video_font_load_8bpp(u_int8_t *, u_int8_t *, int, int, int);
-STATIC void hd64461video_font_set_attr(struct hd64461video_softc *,
-    struct wsdisplay_font *);
-STATIC void hd64461video_font_load(struct hd64461video_softc *);
-STATIC vaddr_t hd64461video_font_start_addr(struct hd64461video_softc *, int);
 
-int
+STATIC int
 hd64461video_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -196,7 +200,7 @@ hd64461video_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (ha->ha_module_id == HD64461_MODULE_VIDEO);
 }
 
-void
+STATIC void
 hd64461video_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -237,13 +241,13 @@ hd64461video_attach(struct device *parent, struct device *self, void *aux)
 	/* setup off-screen buffer */
 	on_screen_size = (vc->vc_fbwidth * vc->vc_fbheight * vc->vc_fbdepth) /
 	    NBBY;
-	hd64461video_chip.off_screen_addr = (u_int8_t *)vc->vc_fbvaddr +
+	hd64461video_chip.off_screen_addr = (uint8_t *)vc->vc_fbvaddr +
 	    on_screen_size;
 	hd64461video_chip.off_screen_size = fbsize - on_screen_size;
 	/* clean up off-screen area */
 	{
-		u_int8_t *p = hd64461video_chip.off_screen_addr;
-		u_int8_t *end = p + hd64461video_chip.off_screen_size;
+		uint8_t *p = hd64461video_chip.off_screen_addr;
+		uint8_t *end = p + hd64461video_chip.off_screen_size;
 		while (p < end)
 			*p++ = 0xff;
 	}
@@ -301,7 +305,7 @@ hd64461video_cnprobe(struct consdev *cndev)
 }
 
 /* hpcfb support */
-void
+STATIC void
 hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 {
 	struct video_chip *vc = &hvc->vc;
@@ -381,10 +385,10 @@ hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 	}
 }
 
-void
+STATIC void
 hd64461video_hwaccel_init(struct hd64461video_chip *hvc)
 {
-	u_int16_t r;
+	uint16_t r;
 
 	r = HD64461_LCDGRCFGR_ACCRESET;
 	switch (hvc->vc.vc_fbdepth) {
@@ -413,7 +417,7 @@ hd64461video_hwaccel_init(struct hd64461video_chip *hvc)
 }
 
 /* hpcfb ops */
-int
+STATIC int
 hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct hd64461video_softc *sc = (struct hd64461video_softc *)v;
@@ -424,7 +428,7 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct wsdisplay_param *dispparam;
 	long id, idmax;
 	int turnoff;
-	u_int8_t *r, *g, *b;
+	uint8_t *r, *g, *b;
 	int error;
 	size_t idx, cnt;
 
@@ -604,7 +608,7 @@ out:
 	return (EPASSTHROUGH);
 }
 
-paddr_t
+STATIC paddr_t
 hd64461video_mmap(void *ctx, off_t offset, int prot)
 {
 	struct hd64461video_softc *sc = (struct hd64461video_softc *)ctx;
@@ -616,12 +620,15 @@ hd64461video_mmap(void *ctx, off_t offset, int prot)
 	return (sh3_btop(HD64461_FBBASE + offset));
 }
 
-void
+
+#ifdef HD64461VIDEO_HWACCEL
+
+STATIC void
 hd64461video_cursor(void *ctx, int on, int xd, int yd, int w, int h)
 {
 	struct hd64461video_softc *sc = (struct hd64461video_softc *)ctx;
 	int xw, yh, width, bpp, adr;
-	u_int16_t r;
+	uint16_t r;
 
 	width = sc->sc_vc->vc.vc_fbwidth;
 	bpp = sc->sc_vc->vc.vc_fbdepth;
@@ -662,12 +669,12 @@ hd64461video_cursor(void *ctx, int on, int xd, int yd, int w, int h)
 	hd64461_reg_write_2(HD64461_LCDGRCFGR_REG16, r);
 }
 
-void
+STATIC void
 hd64461video_bitblit(void *ctx, int xs, int ys, int xd, int yd, int h, int w)
 {
 	struct hd64461video_softc *sc = (struct hd64461video_softc *)ctx;
 	int xw, yh, width, bpp, condition_a, adr;
-	u_int16_t r;
+	uint16_t r;
 
 	xw = w - 1;
 	yh = h - 1;
@@ -729,12 +736,12 @@ hd64461video_bitblit(void *ctx, int xs, int ys, int xd, int yd, int h, int w)
 	hd64461_reg_write_2(HD64461_LCDGRCFGR_REG16, r);
 }
 
-void
+STATIC void
 hd64461video_erase(void *ctx, int xd, int yd, int h, int w, int attr)
 {
 	struct hd64461video_softc *sc = (struct hd64461video_softc *)ctx;
 	int xw, yh, width, bpp, adr;
-	u_int16_t r;
+	uint16_t r;
 
 	width = sc->sc_vc->vc.vc_fbwidth;
 	bpp = sc->sc_vc->vc.vc_fbdepth;
@@ -779,7 +786,7 @@ hd64461video_erase(void *ctx, int xd, int yd, int h, int w, int attr)
 	hd64461_reg_write_2(HD64461_LCDGRCFGR_REG16, r);
 }
 
-void
+STATIC void
 hd64461video_putchar(void *ctx, int row, int col, struct wsdisplay_font *font,
     int fclr, int uclr, u_int uc, int attr)
 {
@@ -793,7 +800,7 @@ hd64461video_putchar(void *ctx, int row, int col, struct wsdisplay_font *font,
 	    sc->sc_vc->vc.vc_fbheight + (uc / cw) * h, row, col, h, w);
 }
 
-void
+STATIC void
 hd64461video_setclut(void *ctx, struct rasops_info *info)
 {
 	struct hd64461video_softc *sc = (struct hd64461video_softc *)ctx;
@@ -802,7 +809,7 @@ hd64461video_setclut(void *ctx, struct rasops_info *info)
 		return;
 }
 
-void
+STATIC void
 hd64461video_font(void *ctx, struct wsdisplay_font *font)
 {
 	struct hd64461video_softc *sc = (struct hd64461video_softc *)ctx;
@@ -811,20 +818,21 @@ hd64461video_font(void *ctx, struct wsdisplay_font *font)
 	hd64461video_font_load(sc);
 }
 
-void
+STATIC void
 hd64461video_iodone(void *ctx)
 {
+
 	while ((hd64461_reg_read_2(HD64461_LCDGRCFGR_REG16) &
 	    HD64461_LCDGRCFGR_ACCSTATUS) != 0)
-		/* busy loop */;
+		continue;
 }
 
 /* internal */
-void
-hd64461video_font_load_16bpp(u_int16_t *d, u_int8_t *s, int w, int h, int step)
+STATIC void
+hd64461video_font_load_16bpp(uint16_t *d, uint8_t *s, int w, int h, int step)
 {
 	int i, j, n;
-	n = step / sizeof(u_int16_t);
+	n = step / sizeof(uint16_t);
 	
 	for (i = 0; i < h; i++, d += n) {
 		for (j = 0; j < w; j++) {
@@ -834,11 +842,11 @@ hd64461video_font_load_16bpp(u_int16_t *d, u_int8_t *s, int w, int h, int step)
 	}
 }
 
-void
-hd64461video_font_load_8bpp(u_int8_t *d, u_int8_t *s, int w, int h, int step)
+STATIC void
+hd64461video_font_load_8bpp(uint8_t *d, uint8_t *s, int w, int h, int step)
 {
 	int i, j, n;
-	n = step / sizeof(u_int8_t);
+	n = step / sizeof(uint8_t);
 	
 	for (i = 0; i < h; i++, d += n) {
 		for (j = 0; j < w; j++) {
@@ -848,7 +856,7 @@ hd64461video_font_load_8bpp(u_int8_t *d, u_int8_t *s, int w, int h, int step)
 	}
 }
 
-void
+STATIC void
 hd64461video_font_set_attr(struct hd64461video_softc *sc,
     struct wsdisplay_font *f)
 {
@@ -871,7 +879,7 @@ hd64461video_font_set_attr(struct hd64461video_softc *sc,
 }
 
 /* return frame buffer virtual address of charcter #n */
-vaddr_t
+STATIC vaddr_t
 hd64461video_font_start_addr(struct hd64461video_softc *sc, int n)
 {
 	struct hd64461video_chip *hvc = sc->sc_vc;
@@ -884,12 +892,12 @@ hd64461video_font_start_addr(struct hd64461video_softc *sc, int n)
 	return base;
 }
 
-void
+STATIC void
 hd64461video_font_load(struct hd64461video_softc *sc)
 {
 	struct hd64461video_chip *hvc = sc->sc_vc;
 	struct wsdisplay_font *font = (struct wsdisplay_font *)&sc->sc_font;
-	u_int8_t *q;
+	uint8_t *q;
 	int w, h, step, i, n;
 
 	if (sc->sc_font.loaded) {
@@ -911,7 +919,7 @@ hd64461video_font_load(struct hd64461video_softc *sc)
 	case 8:
 		for (i = font->firstchar; i < font->numchars; i++) {
 			hd64461video_font_load_8bpp
-			    ((u_int8_t *)hd64461video_font_start_addr(sc, i),
+			    ((uint8_t *)hd64461video_font_start_addr(sc, i),
 				q, w, h, step);
 			q += n;
 		}
@@ -919,7 +927,7 @@ hd64461video_font_load(struct hd64461video_softc *sc)
 	case 16:
 		for (i = font->firstchar; i < font->numchars; i++) {
 			hd64461video_font_load_16bpp
-			    ((u_int16_t *)hd64461video_font_start_addr(sc, i),
+			    ((uint16_t *)hd64461video_font_start_addr(sc, i),
 				q, w, h, step);
 			q += n;
 		}
@@ -928,12 +936,13 @@ hd64461video_font_load(struct hd64461video_softc *sc)
 
 	sc->sc_font.loaded = TRUE;
 }
+#endif /* HD64461VIDEO_HWACCEL */
 
-void
+STATIC void
 hd64461video_update_videochip_status(struct hd64461video_chip *hvc)
 {
 	struct video_chip *vc = &hvc->vc;
-	u_int16_t r;
+	uint16_t r;
 	int i;
 	int depth, width, height;
 
@@ -1000,7 +1009,7 @@ hd64461video_update_videochip_status(struct hd64461video_chip *hvc)
 }
 
 #if notyet
-void
+STATIC void
 hd64461video_set_display_mode(struct hd64461video_chip *hvc)
 {
 
@@ -1010,12 +1019,12 @@ hd64461video_set_display_mode(struct hd64461video_chip *hvc)
 	hd64461video_set_display_mode_lcdc(hvc);
 }
 
-void
+STATIC void
 hd64461video_set_display_mode_lcdc(struct hd64461video_chip *hvc)
 {
 	struct {
-		u_int16_t clor;	/* display size 640 x 240 */
-		u_int16_t ldr3;
+		uint16_t clor;	/* display size 640 x 240 */
+		uint16_t ldr3;
 		const char *name;
 	} disp_conf[] = {
 		[LCD256_C]	= { 0x280 , HD64461_LCDLDR3_CG_COLOR8 ,
@@ -1031,7 +1040,7 @@ hd64461video_set_display_mode_lcdc(struct hd64461video_chip *hvc)
 		[LCD2_MONO]	= { 0x050 , HD64461_LCDLDR3_CG_GRAY1 ,
 				    "mono chrome" },
 	}, *conf;
-	u_int16_t r;
+	uint16_t r;
 	int omode;
 	
 	conf = &disp_conf[hvc->mode];
@@ -1046,14 +1055,15 @@ hd64461video_set_display_mode_lcdc(struct hd64461video_chip *hvc)
 	printf("%s ", conf->name);
 }
 
-void
+STATIC void
 hd64461video_set_display_mode_crtc(struct hd64461video_chip *hvc)
 {
 	/* not yet */
 }
+
 #endif /* notyet */
 
-size_t
+STATIC size_t
 hd64461video_frame_buffer_size(struct hd64461video_chip *hvc)
 {
 	vaddr_t page, startaddr, endaddr;
@@ -1091,9 +1101,9 @@ hd64461video_frame_buffer_size(struct hd64461video_chip *hvc)
 	return (page - startaddr);
 }
 
-void
+STATIC void
 hd64461video_set_clut(struct hd64461video_chip *vc, int idx, int cnt,
-    u_int8_t *r, u_int8_t *g, u_int8_t *b)
+    uint8_t *r, uint8_t *g, uint8_t *b)
 {
 	KASSERT(r && g && b);
 
@@ -1102,7 +1112,7 @@ hd64461video_set_clut(struct hd64461video_chip *vc, int idx, int cnt,
 	    HD64461_LCDCPTWAR_SET(0, idx));
 	/* set data */
 	while (cnt && LEGAL_CLUT_INDEX(idx)) {
-		u_int16_t v;
+		uint16_t v;
 #define	HD64461VIDEO_SET_CLUT(x)					\
 		v = (x >> 2) & 0x3f;					\
 		hd64461_reg_write_2(HD64461_LCDCPTWDR_REG16, v)
@@ -1115,9 +1125,9 @@ hd64461video_set_clut(struct hd64461video_chip *vc, int idx, int cnt,
 	}
 }
 
-void
+STATIC void
 hd64461video_get_clut(struct hd64461video_chip *vc, int idx, int cnt,
-    u_int8_t *r, u_int8_t *g, u_int8_t *b)
+    uint8_t *r, uint8_t *g, uint8_t *b)
 {
 	KASSERT(r && g && b);
 
@@ -1127,7 +1137,7 @@ hd64461video_get_clut(struct hd64461video_chip *vc, int idx, int cnt,
 	
 	/* get data */
 	while (cnt && LEGAL_CLUT_INDEX(idx)) {
-		u_int16_t v;
+		uint16_t v;
 #define	HD64461VIDEO_GET_CLUT(x)					\
 	v = hd64461_reg_read_2(HD64461_LCDCPTRDR_REG16);		\
 	x = HD64461_LCDCPTRDR(v);					\
@@ -1141,7 +1151,7 @@ hd64461video_get_clut(struct hd64461video_chip *vc, int idx, int cnt,
 	} 
 }
 
-int
+STATIC int
 hd64461video_power(void *ctx, int type, long id, void *msg)
 {
 	struct hd64461video_softc *sc = ctx;
@@ -1165,7 +1175,7 @@ hd64461video_power(void *ctx, int type, long id, void *msg)
 	return 0;
 }
 
-void
+STATIC void
 hd64461video_off(struct hd64461video_chip *vc)
 {
 
@@ -1180,7 +1190,7 @@ hd64461video_off(struct hd64461video_chip *vc)
 			 (void *)0);
 }
 
-void
+STATIC void
 hd64461video_on(struct hd64461video_chip *vc)
 {
 	int err;
@@ -1198,18 +1208,18 @@ hd64461video_on(struct hd64461video_chip *vc)
 		hd64461video_display_onoff(vc, TRUE);
 }
 
-void
+STATIC void
 hd64461video_display_on(void *arg)
 {
 
 	hd64461video_display_onoff(arg, TRUE);
 }
 
-void
+STATIC void
 hd64461video_display_onoff(void *arg, boolean_t on)
 {
 	/* struct hd64461video_chip *vc = arg; */
-	u_int16_t r;
+	uint16_t r;
 
 	/* turn on/off display in LCDC */
 	r = hd64461_reg_read_2(HD64461_LCDLDR1_REG16);
@@ -1221,10 +1231,10 @@ hd64461video_display_onoff(void *arg, boolean_t on)
 }
 
 #ifdef HD64461VIDEO_DEBUG
-void
+STATIC void
 hd64461video_info(struct hd64461video_softc *sc)
 {
-	u_int16_t r;
+	uint16_t r;
 	int color;
 	int i;
 
@@ -1382,14 +1392,14 @@ hd64461video_info(struct hd64461video_softc *sc)
 
 }
 
-void
-hd64461video_dump()
+STATIC void
+hd64461video_dump(void)
 {
-	u_int16_t r;
+	uint16_t r;
 	printf("---[Display Mode Setting]---\n");
 #define	DUMPREG(x)							\
 	r = hd64461_reg_read_2(HD64461_LCD ## x ## _REG16);		\
-	__dbg_bit_print(r, sizeof(u_int16_t), 0, 0, #x, DBG_BIT_PRINT_COUNT)
+	__dbg_bit_print(r, sizeof(uint16_t), 0, 0, #x, DBG_BIT_PRINT_COUNT)
 	DUMPREG(CBAR);
 	DUMPREG(CLOR);
 	DUMPREG(CCR);
