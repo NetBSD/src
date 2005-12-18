@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.37 2005/12/12 02:44:09 christos Exp $	*/
+/*	$NetBSD: machfb.c,v 1.38 2005/12/18 19:21:12 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.37 2005/12/12 02:44:09 christos Exp $");
+	"$NetBSD: machfb.c,v 1.38 2005/12/18 19:21:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -549,7 +549,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	if ((mach64_chip_id == PCI_PRODUCT_ATI_RAGE_XL_PCI) ||
 	    ((mach64_chip_id >= PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI) &&
 	    (mach64_chip_id <= PCI_PRODUCT_ATI_RAGE_LT_PRO))) {
-		printf("ref_freq=29.498MHz\n");
+		printf("%s: ref_freq=29.498MHz\n", sc->sc_dev.dv_xname);
 		sc->ref_freq = 29498;
 	} else
 		sc->ref_freq = 14318;
@@ -739,7 +739,7 @@ mach64_get_memsize(struct mach64_softc *sc)
 		512, 1024, 2048, 4096, 6144, 8192, 12288, 16384
 	};
 	tmp = regr(sc, MEM_CNTL);
-	printf("memctl: %08x\n",tmp);
+	printf("%s: memctl %08x\n", sc->sc_dev.dv_xname, tmp);
 	if (sc->has_dsp) {
 		tmp &= 0x0000000f;
 		if (tmp < 8)
@@ -1006,7 +1006,7 @@ mach64_set_dsp(struct mach64_softc *sc)
 	u_int32_t xclks_per_qw, y;
 	u_int32_t fifo_off, fifo_on;
 
-	printf("initializing the DSP\n");
+	printf("%s: initializing the DSP\n", sc->sc_dev.dv_xname);
 	if (mach64_chip_id == PCI_PRODUCT_ATI_MACH64_VT ||
 	    mach64_chip_id == PCI_PRODUCT_ATI_RAGE_II ||
 	    mach64_chip_id == PCI_PRODUCT_ATI_RAGE_IIP ||
