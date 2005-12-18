@@ -1,4 +1,4 @@
-#	$NetBSD: protocols,v 1.13 2004/06/10 10:06:51 kleink Exp $
+#	$NetBSD: protocols,v 1.14 2005/12/18 21:39:52 rpaulo Exp $
 #
 # Internet (IP) protocols
 #
@@ -139,5 +139,9 @@ sps	130	SPS		# Secure Packet Shield
 pipe	131	PIPE		# Private IP Encapsulation within IP
 sctp	132	SCTP		# Stream Control Transmission Protocol
 fc	133	FC		# Fibre Channel
-#	134-254			# Unassigned
+rsvp-e2e-ignore	134	RSVP-E2E-IGNORE
+mobility-header	135	MOBILITY-HEADER	# Mobility Header
+udplite		136	UDPLite
+mpls-in-ip	137     MPLS-in-IP	# MPLS in IP
+#	138-254			# Unassigned
 #	255			# Reserved
