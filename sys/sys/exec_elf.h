@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.84 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.85 2005/12/18 19:05:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -838,7 +838,6 @@ int	elf32_check_header(Elf32_Ehdr *, int);
 
 #ifdef EXEC_ELF64
 int	exec_elf64_makecmds(struct lwp *, struct exec_package *);
-int	elf64_read_from(struct lwp *, struct vnode *, u_long, caddr_t, int);
 int	elf64_copyargs(struct lwp *, struct exec_package *,
 	    struct ps_strings *, char **, void *);
 
