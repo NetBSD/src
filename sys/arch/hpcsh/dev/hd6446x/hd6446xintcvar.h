@@ -1,4 +1,4 @@
-/*	$NetBSD: hd6446xintcvar.h,v 1.1 2002/03/28 15:27:04 uch Exp $	*/
+/*	$NetBSD: hd6446xintcvar.h,v 1.2 2005/12/18 19:48:43 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,17 +45,18 @@ struct hd6446x_intrhand {
 	int (*hh_func)(void *);
 	void *hh_arg;
 	int hh_ipl;
-	u_int16_t hh_imask;
+	uint16_t hh_imask;
 };
 
 extern struct hd6446x_intrhand hd6446x_intrhand[];
-extern u_int16_t hd6446x_ienable;
+extern uint16_t hd6446x_ienable;
 
-void hd6446x_intr_init(void);
-void hd6446x_intr_resume(int);
-int hd6446x_intr_raise(int);
-void *hd6446x_intr_establish(int, int, int, int (*)(void *), void *);
-void hd6446x_intr_disestablish(void *);
-void hd6446x_intr_priority(int, int);
+extern void hd6446x_intr_init(void);
+extern void *hd6446x_intr_establish(int, int, int, int (*)(void *), void *);
+extern void hd6446x_intr_disestablish(void *);
+extern void hd6446x_intr_priority(int, int);
+
+extern int hd6446x_intr_raise(int);
+extern void hd6446x_intr_resume(int);
 
 #endif /* !_HPCSH_DEV_HD6446XINTCVAR_H_ */
