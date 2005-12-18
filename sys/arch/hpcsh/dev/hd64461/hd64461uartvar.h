@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uartvar.h,v 1.4 2002/03/02 22:26:26 uch Exp $	*/
+/*	$NetBSD: hd64461uartvar.h,v 1.5 2005/12/18 21:44:27 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,23 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LOCORE
-int hd64461uart_kgdb_init(void);
-#endif
+#ifndef _HPCSH_DEV_HD64461UARTVAR_H_
+#define _HPCSH_DEV_HD64461UARTVAR_H_
+
+extern int hd64461uart_kgdb_init(void);
 
 #define HD64461COM_TX_BUSY()						\
-	while ((*(volatile u_int8_t *)HD64461_ULSR_REG8 & LSR_TXRDY) == 0)
+	while ((*(volatile uint8_t *)HD64461_ULSR_REG8 & LSR_TXRDY) == 0)
 
 #define HD64461COM_PUTC(c)						\
 do {									\
 	HD64461COM_TX_BUSY();						\
-	*(volatile u_int8_t *)HD64461_UTBR_REG8 =  c;			\
+	*(volatile uint8_t *)HD64461_UTBR_REG8 = c;			\
 	HD64461COM_TX_BUSY();						\
 } while (/*CONSTCOND*/0)
 
 #define HD64461COM_PRINT(s)						\
 do {									\
-	char *__s =(char *)(s);						\
+	char *__s = (char *)(s);					\
 	int __i;							\
 	for (__i = 0; __s[__i] != '\0'; __i++) {			\
 		char __c = __s[__i];					\
@@ -62,3 +63,4 @@ do {									\
 	}								\
 } while (/*CONSTCOND*/0)
 
+#endif /* !_HPCSH_DEV_HD64461UARTVAR_H_ */
