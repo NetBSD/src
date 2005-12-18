@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.14 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.15 2005/12/18 21:52:41 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.14 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.15 2005/12/18 21:52:41 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ STATIC void hd64461_info(void);
 CFATTACH_DECL(hd64461if, sizeof(struct device),
     hd64461_match, hd64461_attach, NULL, NULL);
 
-int
+STATIC int
 hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
@@ -96,7 +96,7 @@ hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-void
+STATIC void
 hd64461_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hd64461_attach_args ha;
@@ -119,7 +119,7 @@ hd64461_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-int
+STATIC int
 hd64461_print(void *aux, const char *pnp)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -132,10 +132,10 @@ hd64461_print(void *aux, const char *pnp)
 }
 
 #ifdef DEBUG
-void
-hd64461_info()
+STATIC void
+hd64461_info(void)
 {
-	u_int16_t r16;
+	uint16_t r16;
 
 	dbg_banner_function();
 
