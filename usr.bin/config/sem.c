@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.16 2005/11/07 18:45:34 erh Exp $	*/
+/*	$NetBSD: sem.c,v 1.17 2005/12/18 23:43:15 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -351,11 +351,17 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 		attrs = newnv(dev->d_name, NULL, getattr(dev->d_name), 0,
 		    attrs);
 
-		/*
-		 * Pseudo-devices can have children.  Consider them as
-		 * attaching at root.
-		 */
-		if (ispseudo)
+	}
+
+	/*
+	 * Pseudo-devices can have children.  Consider them as
+	 * attaching at root.
+	 */
+	if (ispseudo) {
+		for (nv = attrs; nv != NULL; nv = nv->nv_next)
+			if (((struct attr *)(nv->nv_ptr))->a_iattr)
+				break;
+		if (nv != NULL)
 			ht_insert(devroottab, dev->d_name, dev);
 	}
 
