@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461gpioreg.h,v 1.1 2001/02/21 15:39:09 uch Exp $	*/
+/*	$NetBSD: hd64461gpioreg.h,v 1.2 2005/12/18 21:47:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _HPCSH_DEV_HD64461GPIOREG_H_
+#define _HPCSH_DEV_HD64461GPIOREG_H_
+
 /* Port : A,B,C,D */
 
 /* Port Control Register */
@@ -66,3 +69,4 @@
 #define HD64461_GPCISR_REG16				0xb0004044
 #define HD64461_GPDISR_REG16				0xb0004046
 
+#endif /* !_HPCSH_DEV_HD64461GPIOREG_H_ */

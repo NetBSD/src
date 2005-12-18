@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461videoreg.h,v 1.1 2001/06/04 17:08:36 uch Exp $	*/
+/*	$NetBSD: hd64461videoreg.h,v 1.2 2005/12/18 21:47:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _HPCSH_DEV_HD64461VIDEOREG_H_
+#define _HPCSH_DEV_HD64461VIDEOREG_H_
+
 /* 
  * LCD Controller Control Register 
  */
+
 /* Base Address Register */
 #define HD64461_LCDCBAR_REG16			0xb0001000
 #define HD64461_LCDCBAR_MASK			0x3fff
@@ -402,3 +406,5 @@
 #define HD64461_LCDC_BITBLT_BLACKNESS		0x0000
 #define HD64461_LCDC_BITBLT_WHITENESS		0x00ff
 #define HD64461_LCDC_BITBLT_MASKEDSRCCOPY	0xccaa
+
+#endif /* !_HPCSH_DEV_HD64461VIDEOREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461intcreg.h,v 1.1 2001/02/21 15:39:09 uch Exp $	*/
+/*	$NetBSD: hd64461intcreg.h,v 1.2 2005/12/18 21:47:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _HPCSH_DEV_HD64461INTCREG_H_
+#define _HPCSH_DEV_HD64461INTCREG_H_
+
 /* Interrupt Request Register */
 #define HD64461_INTCNIRR_REG16				0xb0005000
 #define HD64461_INTCNIRR_PCC0R			HD64461_INTC_PCC0
@@ -68,3 +71,4 @@
 #define HD64461_INTC_IRDA			0x0040
 #define HD64461_INTC_UART			0x0020
 
+#endif /* !_HPCSH_DEV_HD64461INTCREG_H_ */

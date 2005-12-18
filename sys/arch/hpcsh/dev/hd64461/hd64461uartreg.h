@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uartreg.h,v 1.3 2002/02/11 17:21:48 uch Exp $	*/
+/*	$NetBSD: hd64461uartreg.h,v 1.4 2005/12/18 21:47:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _HPCSH_DEV_HD64461UARTREG_H_
+#define _HPCSH_DEV_HD64461UARTREG_H_
+
 /*
  * UART module Register
  */
+
 /* Receiver Buffer Register (r) */
 #define HD64461_URBR_REG8			0xb0008000
 /* Transmitter Buffer Register (w) */
@@ -65,3 +69,5 @@
 #define HD64461_USCR_REG8			0xb000800e
 
 #define	LSR_TXRDY	0x20	/* Transmitter buffer empty */
+
+#endif /* !_HPCSH_DEV_HD64461UARTREG_H_ */
