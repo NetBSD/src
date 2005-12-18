@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.12 2005/12/18 16:48:06 dsl Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.13 2005/12/18 17:02:45 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.12 2005/12/18 16:48:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.13 2005/12/18 17:02:45 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.12 2005/12/18 16:48:06 dsl Exp $
 #include <sys/syslog.h>
 
 #include "opt_mbr.h"
+
+typedef struct mbr_partition mbr_partition_t;
 
 #define MBR_LABELSECTOR	1
 
@@ -85,8 +87,8 @@ typedef struct mbr_args {
 #define UPDATE_LABEL	2
 #define WRITE_LABEL	3
 static int validate_label(mbr_args_t *, uint, int);
-static int look_netbsd_part(mbr_args_t *, struct mbr_partition *, int, uint);
-static int write_netbsd_label(mbr_args_t *, struct mbr_partition *, int, uint);
+static int look_netbsd_part(mbr_args_t *, mbr_partition_t *, int, uint);
+static int write_netbsd_label(mbr_args_t *, mbr_partition_t *, int, uint);
 
 static int
 read_sector(mbr_args_t *a, uint sector)
@@ -110,10 +112,10 @@ read_sector(mbr_args_t *a, uint sector)
  */
 
 static int
-scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, struct mbr_partition *, int, uint))
+scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 {
-	struct mbr_partition ptns[MBR_PART_COUNT];
-	struct mbr_partition *dp;
+	mbr_partition_t ptns[MBR_PART_COUNT];
+	mbr_partition_t *dp;
 	struct mbr_sector *mbr;
 	uint ext_base, this_ext, next_ext;
 	int rval;
@@ -197,11 +199,8 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, struct mbr_partition *, int, u
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	struct dkbad *bdp;
 	int rval;
@@ -303,7 +302,7 @@ readdisklabel(dev, strat, lp, osdep)
 }
 
 static int
-look_netbsd_part(mbr_args_t *a, struct mbr_partition *dp, int slot, uint ext_base)
+look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 {
 	struct partition *pp;
 	int ptn_base = ext_base + le32toh(dp->mbrp_start);
@@ -434,10 +433,8 @@ validate_label(mbr_args_t *a, uint label_sector, int action)
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
+    struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -488,11 +485,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	mbr_args_t a;
 
@@ -521,7 +515,7 @@ writedisklabel(dev, strat, lp, osdep)
 }
 
 static int
-write_netbsd_label(mbr_args_t *a, struct mbr_partition *dp, int slot, uint ext_base)
+write_netbsd_label(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 {
 	int ptn_base = ext_base + le32toh(dp->mbrp_start);
 
@@ -538,10 +532,7 @@ write_netbsd_label(mbr_args_t *a, struct mbr_partition *dp, int slot, uint ext_b
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(dk, bp, wlabel)
-	struct disk *dk;
-	struct buf *bp;
-	int wlabel;
+bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 {
 	struct disklabel *lp = dk->dk_label;
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
