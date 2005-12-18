@@ -22,3 +22,5 @@ attach	loopchild at looper
  
 device	loopbaby
 attach	loopbaby at loopchild
+
+defpseudo	pseudodev: hook
