@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.33 2005/12/18 23:20:03 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.34 2005/12/18 23:32:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.33 2005/12/18 23:20:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.34 2005/12/18 23:32:39 uwe Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -404,13 +404,14 @@ hd64461video_hwaccel_init(struct hd64461video_chip *hvc)
 
 	while ((hd64461_reg_read_2(HD64461_LCDGRCFGR_REG16) &
 	    HD64461_LCDGRCFGR_ACCSTATUS) != 0)
-		/* busy loop */;
+		continue;
+
 	r &= ~HD64461_LCDGRCFGR_ACCRESET;
 	hd64461_reg_write_2(HD64461_LCDGRCFGR_REG16, r);
 
 	while ((hd64461_reg_read_2(HD64461_LCDGRCFGR_REG16) &
 	    HD64461_LCDGRCFGR_ACCSTATUS) != 0)
-		/* busy loop */;
+		continue;
 
 	hd64461_reg_write_2(HD64461_LCDGRDOR_REG16,
 	    (hvc->vc.vc_fbwidth - 1) & HD64461_LCDGRDOR_MASK);
