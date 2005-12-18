@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.9 2005/12/18 18:59:48 uwe Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.10 2005/12/18 19:09:26 uwe Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.9 2005/12/18 18:59:48 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.10 2005/12/18 19:09:26 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -289,14 +289,11 @@ j6x0lcd_contrast_raw(uint16_t bcr, int width, const uint8_t *pin)
 
 	contrast = 0;
 	for (bit = 0; bit < width; ++bit) {
-		unsigned int c, v;
+		unsigned int c;
 
 		c = (bcr >> (pin[bit] << 1)) & 0x3;
-		if (c == 1)	/* output mode? */
-			v = 1;
-		else
-			v = 0;
-		contrast |= (v << bit);
+		if (c == 1)	/* pin in output mode? */
+			contrast |= (1 << bit);
 	}
 
 	return contrast;
