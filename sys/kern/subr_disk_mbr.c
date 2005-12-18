@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.11 2005/12/14 21:40:32 dsl Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.12 2005/12/18 16:48:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.11 2005/12/14 21:40:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.12 2005/12/18 16:48:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,12 +316,13 @@ look_netbsd_part(mbr_args_t *a, struct mbr_partition *dp, int slot, uint ext_bas
 	    dp->mbrp_type == MBR_PTYPE_NETBSD) {
 		rval = validate_label(a, ptn_base + MBR_LABELSECTOR, READ_LABEL);
 
+#if RAW_PART == 3
 		/* Put actual location where we found the label into ptn 2 */
-		if (RAW_PART != 2 && (rval == SCAN_FOUND ||
-					a->lp->d_partitions[2].p_size == 0)) {
+		if (rval == SCAN_FOUND || a->lp->d_partitions[2].p_size == 0) {
 			a->lp->d_partitions[2].p_size = le32toh(dp->mbrp_size);
 			a->lp->d_partitions[2].p_offset = ptn_base;
 		}
+#endif
 
 		/* If we got a netbsd label look no further */
 		if (rval == SCAN_FOUND)
@@ -544,8 +545,12 @@ bounds_check_with_label(dk, bp, wlabel)
 {
 	struct disklabel *lp = dk->dk_label;
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsector = lp->d_partitions[2].p_offset + LABELSECTOR;
+	int labelsector = LABELSECTOR;
 	int64_t sz;
+
+#if RAW_PART == 3
+	labelsector += lp->d_partitions[2].p_offset;
+#endif
 
 	sz = howmany(bp->b_bcount, lp->d_secsize);
 
