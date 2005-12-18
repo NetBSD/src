@@ -1,4 +1,4 @@
-/*	$NetBSD: hd6446xintc.c,v 1.3 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: hd6446xintc.c,v 1.4 2005/12/18 21:20:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,22 +37,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd6446xintc.c,v 1.3 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd6446xintc.c,v 1.4 2005/12/18 21:20:48 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <sh3/devreg.h>
-#include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
 #include <hpcsh/dev/hd6446x/hd6446xintcreg.h>
+#include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
 
 struct hd6446x_intrhand hd6446x_intrhand[_HD6446X_INTR_N];
-u_int16_t hd6446x_imask[_IPL_N];
-u_int16_t hd6446x_ienable;
-void hd6446x_intr_priority_update(void);
+uint16_t hd6446x_imask[_IPL_N];
+uint16_t hd6446x_ienable;
+
+static void hd6446x_intr_priority_update(void);
+
 
 void
-hd6446x_intr_init()
+hd6446x_intr_init(void)
 {
 
 	/* Initialize interrupt priority masks. */
@@ -64,7 +66,7 @@ hd6446x_intr_establish(int irq, int mode, int level,
     int (*func)(void *), void *arg)
 {
 	struct hd6446x_intrhand *hh = &hd6446x_intrhand[ffs(irq) - 1];
-	u_int16_t r;
+	uint16_t r;
 	int s;
 
 	s = splhigh();
@@ -93,7 +95,7 @@ void
 hd6446x_intr_disestablish(void *handle)
 {
 	struct hd6446x_intrhand *hh = handle;
-	u_int16_t r;
+	uint16_t r;
 	int s;
 	
 	s = splhigh();
@@ -124,12 +126,12 @@ hd6446x_intr_priority(int irq, int level)
 	splx(s);
 }
 
-void
-hd6446x_intr_priority_update()
+static void
+hd6446x_intr_priority_update(void)
 {
 	struct hd6446x_intrhand *hh;
 	int irq, ipl;
-	u_int16_t mask;
+	uint16_t mask;
 	
 	/* I assume interrupt level is splhigh */
 	for (ipl = 0; ipl < _IPL_N; ipl++) {
