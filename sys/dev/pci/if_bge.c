@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.100 2005/12/12 19:58:11 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.101 2005/12/19 12:35:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.100 2005/12/12 19:58:11 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.101 2005/12/19 12:35:19 skrll Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3144,7 +3144,7 @@ bge_intr(xsc)
 	 * Process link state changes.
 	 * Grrr. The link status word in the status block does
 	 * not work correctly on the BCM5700 rev AX and BX chips,
-	 * according to all avaibable information. Hence, we have
+	 * according to all available information. Hence, we have
 	 * to enable MII interrupts in order to properly obtain
 	 * async link changes. Unfortunately, this also means that
 	 * we have to read the MAC status register to detect link
