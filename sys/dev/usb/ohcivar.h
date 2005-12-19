@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.37 2005/11/14 13:40:23 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.38 2005/12/19 15:06:51 tron Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -106,12 +106,10 @@ typedef struct ohci_softc {
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
 
-#ifdef OHCI_DYNAMIC_ENDIAN
 	int sc_endian;
 #define	OHCI_LITTLE_ENDIAN	0	/* typical (uninitialized default) */
-#define	OHCI_BIG_ENDIAN		1	/* do any of these exist? */
-#define	OHCI_HOST_ENDIAN	2	/* if controller always matches CPU */
-#endif
+#define	OHCI_BIG_ENDIAN		1	/* big endian OHCI? never seen it */
+#define	OHCI_HOST_ENDIAN	2	/* if OHCI always matches CPU */
 
 #ifdef USB_USE_SOFTINTR
 	char sc_softwake;
