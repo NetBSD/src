@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.750 2005/12/19 01:08:25 jonathan Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.751 2005/12/19 02:08:20 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.749 2005/12/19 01:07:12 jonathan Exp
+ *	NetBSD: pcidevs,v 1.750 2005/12/19 02:06:54 jonathan Exp
  */
 
 /*
@@ -2800,6 +2800,11 @@
 /* These next two are are really subsystem IDs */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK_9D21	0x4421		/* SK-9D21 1000BASE-T */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK_9D41	0x4441		/* SK-9D41 1000BASE-X */
+/* This next entry is used for both single-port (SK-9E21D) and dual-port
+ * (SK-9E22) gig-e based on Marvell Yukon-2, with PCI revision  0x17 for
+ * the single-port and 0x12 for the  dual-port.
+ */
+#define	PCI_PRODUCT_SCHNEIDERKOCH_SK_9E21	0x9e00		/* SK-9E21D/SK-9E22 1000base-T */
 
 /* Tamarack Microelectronics */
 #define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* TC9021 Gigabit Ethernet */
