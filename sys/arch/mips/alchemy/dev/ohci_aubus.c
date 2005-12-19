@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.6 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.7 2005/12/19 15:06:51 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.6 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.7 2005/12/19 15:06:51 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,8 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: couldn't establish interrupt\n",
 			sc->sc_bus.bdev.dv_xname);
 	}
+
+	sc->sc_endian = OHCI_HOST_ENDIAN;
 
 	if (x)
 		r = ohci_init(sc);
