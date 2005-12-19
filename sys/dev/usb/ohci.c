@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.168 2005/11/14 13:40:23 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.169 2005/12/19 21:57:27 tron Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.168 2005/11/14 13:40:23 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.169 2005/12/19 21:57:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,41 +106,16 @@ int ohcidebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-/*
- * The OHCI controller is little endian, so on big endian machines
- * the data stored in memory needs to be swapped.
- */
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #if BYTE_ORDER == BIG_ENDIAN
-#define htole32(x) (bswap32(x))
-#define le32toh(x) (bswap32(x))
+#define	SWAP_ENDIAN	OHCI_LITTLE_ENDIAN
 #else
-#define htole32(x) (x)
-#define le32toh(x) (x)
-#endif
+#define	SWAP_ENDIAN	OHCI_BIG_ENDIAN
 #endif
 
-/*
- * Well, the above comment isn't quite right.  On some machines the OHCI
- * controller may have different endianness, and on those machines we may
- * need to support multiple OHCI controllers with different endiannesses.
- * So this adds run-time support for that.
- */
-#ifdef	OHCI_DYNAMIC_ENDIAN
-Static uint32_t ohci_dev32toh(ohci_softc_t *sc, uint32_t);
-Static uint32_t ohci_htodev32(ohci_softc_t *sc, uint32_t);
-Static __inline uint16_t ohci_dev16toh(ohci_softc_t *sc, uint16_t);
-Static __inline uint16_t ohci_htodev16(ohci_softc_t *sc, uint16_t);
-#define	O32TOH(val)	ohci_dev32toh(sc, val)
-#define	HTOO32(val)	ohci_htodev32(sc, val)
-#define	O16TOH(val)	ohci_dev16toh(sc, val)
-#define	HTOO16(val)	ohci_htodev16(sc, val)
-#else
-#define	O32TOH(val)	le32toh(val)
-#define	HTOO32(val)	htole32(val)
-#define	O16TOH(val)	le16toh(val)
-#define	HTOO16(val)	htole16(val)
-#endif
+#define	O16TOH(val)	(sc->sc_endian == SWAP_ENDIAN ? bswap16(val) : val)
+#define	O32TOH(val)	(sc->sc_endian == SWAP_ENDIAN ? bswap32(val) : val)
+#define	HTOO16(val)	O16TOH(val)
+#define	HTOO32(val)	O32TOH(val)
 
 struct ohci_pipe;
 
@@ -2842,9 +2817,7 @@ Static void
 ohci_device_clear_toggle(usbd_pipe_handle pipe)
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
-#ifdef	OHCI_DYNAMIC_ENDIAN
 	ohci_softc_t *sc = (ohci_softc_t *)pipe->device->bus;
-#endif
 
 	opipe->sed->ed.ed_headp &= HTOO32(~OHCI_TOGGLECARRY);
 }
@@ -3458,70 +3431,3 @@ ohci_device_isoc_close(usbd_pipe_handle pipe)
 #endif
 	ohci_free_sitd(sc, opipe->tail.itd);
 }
-
-#ifdef OHCI_DYNAMIC_ENDIAN
-uint32_t
-ohci_htodev32(ohci_softc_t *sc, uint32_t val)
-{
-	switch (sc->sc_endian) {
-	default:
-	case OHCI_LITTLE_ENDIAN:
-		return (htole32(val));
-
-	case OHCI_BIG_ENDIAN:
-		return (htobe32(val));
-
-	case OHCI_HOST_ENDIAN:
-		return (val);
-	}
-}
-
-uint32_t
-ohci_dev32toh(ohci_softc_t *sc, uint32_t val)
-{
-	switch (sc->sc_endian) {
-	default:
-	case OHCI_LITTLE_ENDIAN:
-		return (le32toh(val));
-
-	case OHCI_BIG_ENDIAN:
-		return (be32toh(val));
-
-	case OHCI_HOST_ENDIAN:
-		return (val);
-	}
-}
-
-uint16_t
-ohci_htodev16(ohci_softc_t *sc, uint16_t val)
-{
-	switch (sc->sc_endian) {
-	case OHCI_LITTLE_ENDIAN:
-		return (htole16(val));
-
-	case OHCI_BIG_ENDIAN:
-		return (htobe16(val));
-
-	case OHCI_HOST_ENDIAN:
-	default:
-		return (val);
-	}
-}
-
-uint16_t
-ohci_dev16toh(ohci_softc_t *sc, uint16_t val)
-{
-	switch (sc->sc_endian) {
-	case OHCI_LITTLE_ENDIAN:
-		return (le16toh(val));
-
-	case OHCI_BIG_ENDIAN:
-		return (be16toh(val));
-
-	case OHCI_HOST_ENDIAN:
-	default:
-		return (val);
-	}
-}
-
-#endif	/* OHCI_DYNAMIC_ENDIAN */
