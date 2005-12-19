@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.386 2005/12/15 20:51:39 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.387 2005/12/19 16:17:55 rpaulo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -31,6 +31,7 @@ Maintainer:	INTEL
 Archive Site:	http://developer.intel.com/technology/IAPC/acpi/downloads.htm
 Home Page:	http://developer.intel.com/technology/IAPC/acpi/
 Mailing List:	acpi-devel@lists.sourceforge.net
+License:	http://developer.intel.com/technology/iapc/acpi/license2.htm
 Responsible:	kochi
 Notes:
 The sources were integrated into src/sys/dev/acpi/acpica/Subsystem.
@@ -44,6 +45,7 @@ Archive Site:	ftp://ftp.am-utils.org/pub/am-utils/
 Home Page:	http://www.am-utils.org/
 Mailing List:	am-utils
 Responsible:	christos, rpaulo
+License:	BSD (4-clause)
 Notes:
 Amd2netbsd script to convert to BSD make system and remove unneeded files.
 Fix symbolic links before import.
@@ -57,6 +59,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/bc/
 Home Page:	http://www.gnu.org/software/bc/
 Mailing List:	bug-bc@gnu.org
 Responsible:	phil, simonb
+License:	GPLv2, LGPGv2.1
 Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
@@ -68,6 +71,7 @@ Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/sw/bind/
 Mailing List:
 Responsible:	vixie, itojun, christos
+License:	BSD-like (2-clause)
 Notes:
 First bind2netbsd script to import into src/dist/bind.
 The Makefiles in src/usr.sbin/bind are not handled by the script.
@@ -92,6 +96,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	http://www.gnu.org/software/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	thorpej, mrg
+License:	GPLv2, LGPLv2, BSD
 Notes:
 
 Package:	bsd-family-tree
@@ -102,6 +107,7 @@ Archive Site:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 Home Page:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 Mailing List:
 Responsible:	itojun
+License:	See URL above.
 Notes:
 
 Package:	bzip2
@@ -112,6 +118,7 @@ Archive Site:	http://sources.redhat.com/bzip2/
 Home Page:	http://www.bzip.org/
 Mailing List:
 Responsible:
+License:	BSD (4-clause)
 Notes:
 See /usr/src/dist/bzip2/bzip2netbsd for update instructions.
 
@@ -123,6 +130,8 @@ Archive Site:	http://citrus.bsdclub.org/
 Home Page:	http://citrus.bsdclub.org/
 Mailing List:	bsd-locale@hauN.org
 Responsible:	itojun, tshiozak
+License:	Ambiguous. Either BSD or Perl Artistic License
+		See http://citrus.bsdclub.org/#pol_license for more info.
 Notes:
 language C multilingualization support suite using wchar_t and other standards.
 The main development playground of Citrus is in NetBSD CVS, so you don't
@@ -141,6 +150,7 @@ Archive Site:	ftp://ftp.isc.org/isc/cron/
 Home Page:
 Mailing List:
 Responsible:
+License:	BSD-like
 Notes:
 
 Package:	cvs
@@ -151,6 +161,7 @@ Archive Site:	http://ftp.gnu.org/non-gnu/cvs/
 Home Page:	http://cvs.nongnu.org/
 Mailing List:	bug-cvs@gnu.org
 Responsible:	Christos Zoulas <christos@NetBSD.org>, wiz
+License:	GPLv1, LGPLv2
 Notes:
 Use src/gnu/dist/cvs/cvs2netbsd for preparing the source tree
 for the import.
@@ -167,6 +178,7 @@ Archive Site:	http://www.sleepycat.com/download/index.shtml
 Home Page:	http://www.sleepycat.com/products/db.shtml
 Mailing List:
 Responsible:
+License:	BSD or specific SleepyCat license
 Notes:
 Note that we cannot use db 2.x for license reasons.
 Three bug fixes against 1.85 sent back to bostic.  Changes to
@@ -186,6 +198,7 @@ Mailing List:	dhcp-client@isc.org
 Mailing List:	dhcp-announce@isc.org
 Mailing List:	dhcp-bugs@isc.org
 Responsible:	mellon
+License:	BSD (3-clause)
 Notes:
 No changes for NetBSD integration - just import the new distribution on
 top of the current tree.
@@ -198,6 +211,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
 Home Page:	http://www.gnu.org/software/diffutils/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	wiz
+License:	GPLv2
 Notes:
 Use src/gnu/dist/diffutils/diffutils2netbsd for preparing the source tree
 for the import.
@@ -210,6 +224,7 @@ Archive Site:	ftp://netlib.lucent.com/netlib/fp/
 Home Page:	http://www.netlib.org/fp/
 Mailing List:	none
 Responsible:	kleink
+License:	BSD-like
 Notes:
 Added conditionals to automagically determine type and endianness of
 FP numbers.  Added ULong type (but Gay says he'll adopt that change
@@ -223,6 +238,7 @@ Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:
 Mailing List:	file@mx.gw.com
 Responsible:	christos, pooka
+License:	BSD (2-clause)
 Notes:
 
 Package:	flex
@@ -233,6 +249,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/non-gnu/flex/
 Home Page:	http://lex.sourceforge.net/
 Mailing List:
 Responsible:	mikel
+License:	BSD-like	
 Notes:
 flex 2.5.4a contains only copyright notice changes over version 2.5.4;
 internally not even the version number changed.
@@ -247,6 +264,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
 Mailing List:	gcc-bugs@gnu.org
 Responsible:	thorpej, mrg
+License:	GPLv2, LGPLv2.1
 Notes:
 before importing:
 	- delete all .cvsignore and .brik files
@@ -260,6 +278,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
 Mailing List:	bug-gdb@gnu.org
 Responsible:	thorpej, mrg
+License:	GPLv2, LGPLv2
 Notes:
 
 Package:	gettext
@@ -270,6 +289,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
 Home Page:	http://www.gnu.org/software/gettext/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	itojun
+License:	GPLv2
 Notes:
 GNU gettext is used for userland tools like msgfmt(1) only.  For libintl,
 we use BSD-licensed implementation from Citrus project (see entry for
@@ -283,6 +303,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	simonb, wiz
+License:	GPLv2
 Notes:
 Use src/gnu/dist/grep/grep2netbsd for preparing the source tree
 for the import.
@@ -298,6 +319,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/groff/
 Home Page:	http://www.gnu.org/software/groff/
 Mailing List:	bug-groff@gnu.org
 Responsible:	wiz
+License:	GPLv2
 Notes:
 Use groff2netbsd from src/gnu/dist/groff to prepare the distribution
 for import.
@@ -310,6 +332,7 @@ Archive Site:	ftp://ftp.pdc.kth.se/pub/heimdal/src/
 Home Page:	http://www.pdc.kth.se/heimdal/
 Mailing List:	heimdal-discuss@pdc.kth.se
 Responsible:	assar, joda, lha
+License:	BSD
 Notes:
 
 Package:	hunt
@@ -319,6 +342,7 @@ Maintainer:	Greg Couch <gregc@cgl.ucsf.edu>
 Archive Site:	ftp://ftp.cgl.ucsf.edu/pub/hunt.shar.Z
 Home Page:	http://www.cgl.ucsf.edu/home/gregc/oss.html
 Responsible:	mrg
+License:	BSD (3-clause)
 Notes:
 
 Package:	ipf
@@ -329,6 +353,7 @@ Archive Site:	http://coombs.anu.edu.au/~avalon/
 Home Page:	http://coombs.anu.edu.au/~avalon/
 Mailing List:	ipfilter@postbox.anu.edu.au
 Responsible:	darrenr, mike, martti
+License:	BSD-based, see src/dist/ipf/IPFILTER.LICENSE
 Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
 
@@ -340,6 +365,7 @@ Archive Site:	http://ipsec-tools.sourceforge.net
 Home Page:	http://ipsec-tools.sourceforge.net
 Mailing List:	ipsec-tools-devel@lists.sourceforge.net
 Responsible:	manu
+License:	BSD (3-clause)
 Notes:
 See src/crypto/dist/ipsec-tools/netbsd-import.sh to import newer versions
 
@@ -351,6 +377,7 @@ Archive Site:	http://www.kame.net/
 Home Page:	http://www.kame.net/
 Mailing List:	snap-users@kame.net
 Responsible:	itojun
+License:	BSD (3-clause)
 Notes:
 IPv6 part is based on KAME/NetBSD142 SNAP as of early June 2000, with
 more conservative implementation policy.
@@ -371,6 +398,7 @@ Archive Site:	ftp://ftp.pdc.kth.se/pub/krb/src/
 Home Page:	http://www.pdc.kth.se/kth-krb/
 Mailing List:	krb4@sics.se
 Responsible:	assar, joda
+License:	BSD, MIT
 Notes:
 
 Package:	less
@@ -381,6 +409,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/less/
 Home Page:	http://www.gnu.org/software/less/
 Mailing List:
 Responsible:	mrg
+License:	BSD or GPLv2
 Notes:
 Many changes to make less act as more when invoked as more.  Beware.
 Use the src/usr.bin/less/less2netbsd script to prepare source tree
@@ -396,6 +425,7 @@ Maintainer:	mike@vexus.ca
 Archive Site:	http://www.vexus.ca/products/CDK/
 Home Page:	http://www.vexus.ca/products/CDK/
 Responsible:	garbled
+License:	BSD (4-clause)
 Notes:
 Initial port to netbsd curses was done by mycroft.  This is a heavily
 modified version of the released CDK 4.9.9.  The current version has been
@@ -410,6 +440,7 @@ Maintainer:	Niels Provos <provos@citi.umich.edu>
 Archive Site:	http://www.monkey.org/~provos/libevent/
 Home Page:	http://www.monkey.org/~provos/libevent/
 Responsible:	provos
+License:	BSD (3/4-clause)
 Notes:
 
 Package:	libpcap
@@ -420,6 +451,7 @@ Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
 Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	itojun,dyoung
+License:	BSD (3/4-clause)
 Notes:
 
 Package:	libwrap
@@ -430,6 +462,7 @@ Archive Site:	ftp://ftp.porcupine.org/pub/security/
 Home Page:	ftp://ftp.porcupine.org/pub/security/
 Mailing List:
 Responsible:	cjs, itojun
+License:	BSD-like
 Notes:
 We import only libwrap (under src/lib), tcpdchk and tcpdmatch (both
 under src/usr.sbin). We don't use tcpd; that functionality is built
@@ -443,6 +476,7 @@ Archive Site:	BROKEN	ftp://ftp.stacken.kth.se/pub/OS/NetBSD/mopd/
 Home Page:	http://www.stacken.kth.se/~moj/mopd.html
 Mailing List:
 Responsible:	cjs
+License:	BSD (4-clause)
 Notes:
 Delete the otherOS directory before importing.
 
@@ -454,6 +488,7 @@ Archive Site:	http://cm.bell-labs.com/who/bwk/
 Home Page:	http://cm.bell-labs.com/who/bwk/
 Mailing List:
 Responsible:	jdolecek
+License:	BSD-like
 Notes:
 Build maketab from nawk sources and generate proctab.c.
 Remove buildwin.bat, mac.code, missing95.c, ytab.[ch], ytab?.bak, then import
@@ -466,6 +501,7 @@ Maintainer:	Matt Fredette <fredette@alum.mit.edu>
 Archive Site:	BROKEN	http://mit.edu/fredette/www/ndbootd/
 Home Page:	BROKEN	http://stuff.mit.edu/people/fredette/home.html
 Responsible:	fredette
+License:	BSD (4-clause)
 Notes:
 Run ./configure, save config.h, make distclean, rm all autoconf/automake
 and ndbootd-raw.c.  Restore saved config.h, and force it to define
@@ -479,6 +515,7 @@ Archive Site:	ftp://ftp.bostic.com/pub/
 Home Page:	http://www.bostic.com/vi/
 Mailing List:
 Responsible:	aymeric
+License:	BSD (3/4-clause)
 Notes:
 We have lots of local bug fixes, and the point of importing 1.81.x would
 be to get multibyte characters support. For now this means waiting for
@@ -492,6 +529,7 @@ Archive Site:	ftp://ftp.udel.edu/pub/ntp/ntp4/
 Home Page:	http://www.ntp.org/
 Mailing List:
 Responsible:	simonb, jonathan
+License:	BSD-like
 Notes:
 See /usr/src/dist/ntp/ntp2netbsd for update instructions.
 NOTE: As of 20010405 -current includes a fix for the "ntpdx" root
@@ -505,6 +543,7 @@ Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
 Mailing List:
 Responsible:	christos
+License:	BSD (3-clause)
 Notes:
 The next time OpenPAM is imported (OpenPAM Feterita or later), eliminate
 the local copy of openpam_free_envlist() in the pam_exec module.
@@ -517,6 +556,7 @@ Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
 Mailing List:	openssh-unix-announce@mindrot.org
 Responsible:	thorpej, christos, elric
+License:	BSD or more free. See src/crypto/dist/ssh/LICENSE
 Notes:
 imported from OpenBSD usr.bin/ssh (it is not from the portable OpenSSH)
 into crypto/dist/openssh.  use openssh2netbsd before import.
@@ -541,6 +581,7 @@ Archive Site:	ftp://ftp.openssl.org/source/
 Home Page:	http://www.openssl.org/
 Mailing List:	openssl-announce@openssl.org
 Responsible:	mcr, thorpej, itojun, groo, christos
+License:	OpenSSL and SSLeay license (both BSD-like)
 Notes:
 - Run openssl2netbsd to get rid of the RCSID identifiers
 - run make in /usr/src/lib/libcrypto/man to regen man pages.
@@ -553,6 +594,7 @@ Archive Site:	http://cantaforda.com/cfcl/eryk/linux/pdisk/index.html
 Home Page:	http://cantaforda.com/cfcl/eryk/linux/pdisk/index.html
 Mailing List:
 Responsible:	dbj
+License:	BSD-like
 Notes:
 This is the disk partition utility used by Apple's mkLinux and osX
 It is imported into dist/pdisk, with a reachover makefile in
@@ -566,6 +608,7 @@ Archive Site:	ftp://ftp.cs.mun.ca/pub/pdksh/
 Home Page:	http://www.cs.mun.ca/~michael/pdksh/
 Mailing List:
 Responsible:
+License:	Public domain
 pdksh-5.2.14-patches.1 and pdksh-5.2.14-patches.2 have been applied.
 
 Package:	ping
@@ -576,6 +619,7 @@ Archive Site:	ftp://ftp.rhyolite.com/src/
 Home Page:	http://www.rhyolite.com/src/
 Mailing List:
 Responsible:	christos@NetBSD.org
+License:	BSD (3-clause)
 Notes:
 We use err() and friends. We have changes for snprintf, extra
 formating in man pages, disallowing flood pinging, alignment fixes,
@@ -589,6 +633,7 @@ Archive Site:	ftp://ftp.openbsd.org/
 Home Page:	http://www.openbsd.org/faq/pf/
 Mailing List:	pf@benzedrine.cx or appropriate OpenBSD mailing list
 Responsible:	itojun@NetBSD.org
+License:	BSD (2-clause)
 Notes:
 kernel code is imported into src/sys/dist/pf and src/sys/net has reachover
 definition (files.pf).  userland code is imported into src/dist/pf, and
@@ -602,6 +647,7 @@ Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
 Mailing List:	postfix-users@postfix.org
 Responsible:	perry@NetBSD.org, itojun@NetBSD.org
+License:	Several. See src/gnu/dist/postfix
 Notes:
 
 Package:	ppp
@@ -613,6 +659,7 @@ Home Page:
 CVS root:	:pserver:cvs@pserver.samba.org:/cvsroot (password: cvs)
 Mailing List:
 Responsible:	christos@NetBSD.org
+License:	BSD (3-clause)
 Notes:
 BSD support was removed from 2.4.0; I added it back and removed
 some GPL pieces. Multilink support is missing. Repeated pings to
@@ -632,6 +679,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
 Mailing List:	bug-gnu-utils@gnu.org
 Home Page:	http://www.gnu.org/software/rcs/
 Responsible:	mycroft
+License:	GPLv2
 Notes:
 Beta versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
@@ -643,6 +691,7 @@ Archive Site:	ftp://ftp.internic.net/domain/named.root
 Home Page:	ftp://ftp.internic.net/domain/named.root
 Mailing List:
 Responsible:	perry, thorpej
+License:	Public domain
 Notes:
 The root server cache is also included with BIND.  However, the
 InterNIC version is usually more up to date.
@@ -655,6 +704,7 @@ Archive Site:	ftp://ftp.rhyolite.com/src/
 Home Page:	http://www.rhyolite.com/src/
 Mailing List:
 Responsible:	christos@NetBSD.org
+License:	BSD (4-clause)
 Notes:
 We use the md5 code from libc
 We don't allow RIP_TRACEON and RIP_TRACEOFF
@@ -668,6 +718,7 @@ Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gnats/
 Home Page:	http://www.gnu.org/software/gnats/
 Mailing List:	bug-gnats@gnu.org
+License:	GPLv2
 Responsible:
 Notes:
 
@@ -679,6 +730,7 @@ Archive Site:	ftp://ftp.sendmail.org/pub/sendmail/
 Home Page:	http://www.sendmail.org/
 Mailing List:
 Responsible:	atatat@NetBSD.org
+License:	Specific. See src/gnu/dist/sendmail/LICENSE
 Notes:
 use gnu/dist/sendmail/sendmail2netbsd to strip off RCS tags.
 local changes:
@@ -693,6 +745,7 @@ Archive Site:	http://www.jhauser.us/arithmetic/SoftFloat.html
 Home Page:	http://www.jhauser.us/arithmetic/SoftFloat.html
 Mailing List:
 Responsible:	bjh21
+License:	Public domain
 Notes:
 Heavily modified for use as a soft float library for GCC.  The actual
 arithmetic code is unchanged, though, and should behave exactly like the
@@ -706,6 +759,7 @@ Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
 Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	itojun
+License:	BSD (3-clause)
 Notes:
 Code will be imported into src/dist/tcpdump.  Changes have to go back to
 tcpdump.org.
@@ -718,6 +772,7 @@ Archive Site:	http://www.catb.org/~esr/terminfo/
 Home Page:	http://www.catb.org/~esr/terminfo/
 Mailing List:
 Responsible:
+License:	Public domain
 Notes:
 
 Package:	TestFloat
@@ -728,6 +783,7 @@ Archive Site:	http://www.jhauser.us/arithmetic/TestFloat.html
 Home Page:	http://www.jhauser.us/arithmetic/TestFloat.html
 Mailing List:
 Responsible:	ross
+License:	BSD (4-clause)
 Notes:
 
 Package:	texinfo
@@ -738,6 +794,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Home Page:	http://www.gnu.org/software/texinfo/
 Mailing List:	bug-texinfo@gnu.org
 Responsible:	wiz
+License:	GPLv2
 Notes:
 Use src/gnu/dist/texinfo/texinfo2netbsd for preparing the source tree
 for the import.
@@ -750,6 +807,7 @@ Archive Site:	ftp://ftp.groupsys.com/pub/top/
 Home Page:	http://www.unixtop.org/
 Mailing List:	top-spinners@ocee.groupsys.com
 Responsible:	simonb
+License:	BSD (2-clause)
 Notes:
 Remove all non-current NetBSD machine definitions and man page
 extensions in machine/ before importing.
@@ -766,6 +824,7 @@ Archive Site:	ftp://ftp.ee.lbl.gov/
 Home Page:	http://ftp.ee.lbl.gov/
 Mailing List:
 Responsible:
+License:	BSD (4-clause)
 Notes:
 
 Package:	tz
@@ -776,6 +835,7 @@ Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:
 Mailing List:	tz@elsie.nci.nih.gov
 Responsible:	kleink
+License:	Public domain
 Notes:
 Use src/lib/libc/time/tzcode2netbsd to prepare the source tree
 for import.
@@ -788,6 +848,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/uucp/
 Home Page:	http://www.airs.com/ian/uucp.html
 Mailing List:	taylor-uucp@cirr.com
 Responsible:	jtk
+License:	GPLv2
 Notes:
 
 Package:	Vinum
@@ -798,6 +859,7 @@ Archive Site:
 Home page:	http://www.vinumvm.org/
 Mailing List:	vinum-devel@auug.org.au
 Responsible:	grog
+License:	BSD (4-clause)
 Notes:
         Based on a NetBSD-specific version generated on the fly.  This
         should remain effectively identical to the NetBSD branch
@@ -811,6 +873,7 @@ Archive Site:	http://hostap.epitest.fi/releases/
 Home Page:	http://hostap.epitest.fi/
 Mailing List:
 Responsible:	scw, dyoung
+License:	BSD or GPLv2
 Notes:
 See /usr/src/dist/wpa_supplicant/NetBSD-upgrade for update instructions.
 
@@ -822,6 +885,7 @@ Archive Site:	ftp://ftp.xfree86.org/pub/XFree86/
 Home Page:	http://www.xfree86.org/
 Mailing List:	devel@xfree86.org
 Responsible:	tron
+License:	XFree
 Notes:
 4.x:
  Only X4??src-1 to X4??src-6 were imported. X4??src-7 contains postscript
@@ -837,6 +901,7 @@ Archive Site:	http://www.gzip.org/zlib/
 Home Page:	http://www.gzip.org/zlib/
 Mailing List:
 Responsible:	gwr, tron
+License:	BSD (3-clause)
 Notes:
 The sources were integrated into src/lib/libz as usual on *nix,
 and partially duplicated under src/sys/lib/libz and
