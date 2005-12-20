@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.42 2005/12/07 09:10:11 tsutsui Exp $
+#	$NetBSD: RPC_WSCONS,v 1.43 2005/12/20 05:35:27 thorpej Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.42 $"
+#ident		"GENERIC-$Revision: 1.43 $"
 
 # estimated number of users
 maxusers	32
@@ -328,7 +328,6 @@ pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	raid	8		# RAIDframe disk driver

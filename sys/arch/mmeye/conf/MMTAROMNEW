@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.33 2005/12/07 09:10:16 tsutsui Exp $
+#	$NetBSD: MMTAROMNEW,v 1.34 2005/12/20 05:35:29 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -223,7 +223,6 @@ include	"arch/mmeye/conf/GENERIC.local"
 
 # miscellaneous pseudo-devices
 #pseudo-device	pty			# pseudo-terminals
-#pseudo-device	tb		1	# tablet line discipline
 pseudo-device	clockctl		# user control of clock subsystem
 
 # rnd is EXPERIMENTAL at this point.

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.24 2005/12/07 12:40:47 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.25 2005/12/20 05:35:30 thorpej Exp $
 #
 #	Shark installation kernel
 #
@@ -210,7 +210,6 @@ pseudo-device	bpfilter 8		# packet filter
 #pseudo-device	ipfilter 1		# ip filter
 
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	tb	1		# tablet line discipline
 #pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	fss	4		# file system snapshot device
