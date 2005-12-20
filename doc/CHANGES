@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.545 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.546 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -143,3 +143,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	userland: Generation and decode of new ktrace record type (sa_upcall)
 		and LWP information for kdump and ktruss. Ability to trace
 		upcalls. [skrll, christos 20051211]
+	sip(4): Now enabled and known working for sparc64.  [mrg 20051220]
