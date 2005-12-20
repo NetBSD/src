@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.65 2005/12/07 09:10:12 tsutsui Exp $
+#	$NetBSD: RAMDISK,v 1.66 2005/12/20 05:35:27 thorpej Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -7,7 +7,7 @@ include		"arch/arc/conf/std.arc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.65 $"
+#ident		"GENERIC-$Revision: 1.66 $"
 
 maxusers	32		# estimated number of users
 
@@ -406,7 +406,6 @@ pseudo-device	sl		2	# Serial Line IP
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		2	# pseudo-terminals
-#pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port arc yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator

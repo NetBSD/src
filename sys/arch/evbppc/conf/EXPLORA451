@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.19 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: EXPLORA451,v 1.20 2005/12/20 05:35:27 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -195,7 +195,6 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	tb		1	# tablet line discipline
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem

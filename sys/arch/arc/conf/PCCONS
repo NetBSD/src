@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.50 2005/12/07 09:10:12 tsutsui Exp $
+#	$NetBSD: PCCONS,v 1.51 2005/12/20 05:35:27 thorpej Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -360,7 +360,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port arc yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator

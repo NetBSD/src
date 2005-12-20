@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.160 2005/12/11 02:11:50 christos Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.161 2005/12/20 05:35:28 thorpej Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.160 $"
+#ident 		"GENERIC-$Revision: 1.161 $"
 
 maxusers	32		# estimated number of users
 
@@ -892,7 +892,6 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
