@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.108 2005/12/01 13:21:05 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.109 2005/12/20 15:52:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.108 2005/12/01 13:21:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.109 2005/12/20 15:52:14 christos Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -929,13 +929,13 @@ pool_get(struct pool *pp, int flags)
 			/*
 			 * Wait for items to be returned to this pool.
 			 *
-			 * XXX: maybe we should wake up once a second and
-			 * try again?
+			 * wake up once a second and try again,
+			 * as the check in pool_cache_put_paddr() is racy.
 			 */
 			pp->pr_flags |= PR_WANTED;
 			/* PA_WANTED is already set on the allocator. */
 			pr_leave(pp);
-			ltsleep(pp, PSWP, pp->pr_wchan, 0, &pp->pr_slock);
+			ltsleep(pp, PSWP, pp->pr_wchan, hz, &pp->pr_slock);
 			pr_enter(pp, file, line);
 			goto startover;
 		}
@@ -2019,6 +2019,10 @@ pool_cache_put_paddr(struct pool_cache *pc, void *object, paddr_t pa)
 	struct pool_cache_group *pcg;
 	int s;
 
+	if (__predict_false((pc->pc_pool->pr_flags & PR_WANTED) != 0)) {
+		goto destruct;
+	}
+
 	simple_lock(&pc->pc_slock);
 
 	pcg = LIST_FIRST(&pc->pc_partgroups);
@@ -2040,6 +2044,7 @@ pool_cache_put_paddr(struct pool_cache *pc, void *object, paddr_t pa)
 		pcg = pool_get(&pcgpool, PR_NOWAIT);
 		splx(s);
 		if (pcg == NULL) {
+destruct:
 
 			/*
 			 * Unable to allocate a cache group; destruct the object
@@ -2249,8 +2254,8 @@ pool_allocator_alloc(struct pool *org, int flags)
 		}
 
 		/*
-		 * Drain all pools, except "org", that use this
-		 * allocator.  We do this to reclaim VA space.
+		 * Drain all pools, that use this allocator.
+		 * We do this to reclaim VA space.
 		 * pa_alloc is responsible for waiting for
 		 * physical memory.
 		 *
@@ -2271,8 +2276,6 @@ pool_allocator_alloc(struct pool *org, int flags)
 		do {
 			TAILQ_REMOVE(&pa->pa_list, pp, pr_alloc_list);
 			TAILQ_INSERT_TAIL(&pa->pa_list, pp, pr_alloc_list);
-			if (pp == org)
-				continue;
 			simple_unlock(&pa->pa_slock);
 			freed = pool_reclaim(pp);
 			simple_lock(&pa->pa_slock);
