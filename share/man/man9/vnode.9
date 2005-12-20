@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.28 2005/08/05 13:37:25 jmmv Exp $
+.\"     $NetBSD: vnode.9,v 1.29 2005/12/20 19:53:15 rpaulo Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 5, 2005
+.Dd December 20, 2005
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -95,11 +95,11 @@
 .Ft void
 .Fn ungetnewvnode "struct vnode *vp"
 .Ft int
-.Fn vrecycle "struct vnode *vp" "struct simplelock *inter_lkp" "struct proc *p"
+.Fn vrecycle "struct vnode *vp" "struct simplelock *inter_lkp" "struct lwp *l"
 .Ft void
 .Fn vgone "struct vnode *vp"
 .Ft void
-.Fn vgonel "struct vnode *vp" "struct proc *p"
+.Fn vgonel "struct vnode *vp" "struct lwp *l"
 .Ft int
 .Fn vflush "struct mount *mp" "struct vnode *skipvp" "int flags"
 .Ft int
@@ -119,7 +119,7 @@
 .Ft void
 .Fn vflushbuf "struct vnode *vp" "int sync"
 .Ft int
-.Fn vinvalbuf "struct vnode *vp" "int flags" "struct ucred *cred" "struct proc *p" "int slpflag" "int slptimeo"
+.Fn vinvalbuf "struct vnode *vp" "int flags" "struct ucred *cred" "struct lwp *l" "int slpflag" "int slptimeo"
 .Ft int
 .Fn vtruncbuf "struct vnode *vp" "daddr_t lbn" "int slpflag" "int slptimeo"
 .Ft void

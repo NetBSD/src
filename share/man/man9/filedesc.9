@@ -1,4 +1,4 @@
-.\"     $NetBSD: filedesc.9,v 1.5 2003/04/16 13:35:28 wiz Exp $
+.\"     $NetBSD: filedesc.9,v 1.6 2005/12/20 19:53:15 rpaulo Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 12, 2002
+.Dd December 20, 2005
 .Dt FILEDESC 9
 .Os
 .Sh NAME
@@ -60,37 +60,37 @@
 .In sys/file.h
 .In sys/filedesc.h
 .Ft int
-.Fn falloc "struct proc *p" "struct file **resultfp" "int *resultfd"
+.Fn falloc "struct lwp *l" "struct file **resultfp" "int *resultfd"
 .Ft struct file *
 .Fn fd_getfile "struct filedesc *fdp" "int fd"
 .Ft int
-.Fn dupfdopen "struct proc *p" "int indx" "int dfd" "int mode" "int error"
+.Fn dupfdopen "struct lwp *l" "int indx" "int dfd" "int mode" "int error"
 .Ft int
-.Fn fdalloc "struct proc *p" "int want" "int *result"
+.Fn fdalloc "struct lwp *l" "int want" "int *result"
 .Ft int
-.Fn fdavail "struct proc *p" "int n"
+.Fn fdavail "struct lwp *l" "int n"
 .Ft int
-.Fn fdcheckstd "struct proc *p"
+.Fn fdcheckstd "struct lwp *l"
 .Ft void
-.Fn fdclear "struct proc *p"
+.Fn fdclear "struct lwp *l"
 .Ft void
-.Fn fdcloseexec "struct proc *p"
+.Fn fdcloseexec "struct lwp *l"
 .Ft struct filedesc *
-.Fn fdcopy "struct proc *p"
+.Fn fdcopy "struct lwp *l"
 .Ft void
-.Fn fdexpand "struct proc *p"
+.Fn fdexpand "struct lwp *l"
 .Ft void
-.Fn fdfree "struct proc *p"
+.Fn fdfree "struct lwp *l"
 .Ft struct filedesc *
-.Fn fdinit "struct proc *p"
+.Fn fdinit "struct lwp *l"
 .Ft int
-.Fn fdrelease "struct proc *p" "int fd"
+.Fn fdrelease "struct lwp *l" "int fd"
 .Ft void
 .Fn fdremove "struct filedesc *fdp" "int fd"
 .Ft void
-.Fn fdshare "struct proc *p1" "struct proc *p2"
+.Fn fdshare "struct lwp *l1" "struct lwp *l2"
 .Ft void
-.Fn fdunshare "struct proc *p"
+.Fn fdunshare "struct lwp *l"
 .Sh DESCRIPTION
 For user processes, all I/O is done through file descriptors.
 These file descriptors represent underlying objects supported by the kernel
