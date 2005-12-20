@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.59 2005/12/09 23:34:01 elad Exp $
+# $NetBSD: GENERIC,v 1.60 2005/12/20 05:35:27 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.59 $"
+#ident 		"GENERIC-$Revision: 1.60 $"
 
 maxusers	32		# estimated number of users
 
@@ -563,7 +563,6 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port hp700 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator

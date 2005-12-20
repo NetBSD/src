@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.36 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: MALTA,v 1.37 2005/12/20 05:35:27 thorpej Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.36 $"
+#ident 		"MALTA-$Revision: 1.37 $"
 
 maxusers	32
 
@@ -319,7 +319,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
-#pseudo-device	tb		1		# tablet line discipline
 #pseudo-device	sequencer	1		# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd				# /dev/random & kernel generator

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.41 2005/12/10 14:41:17 tsutsui Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.42 2005/12/20 05:35:30 thorpej Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.41 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.42 $"
 
 maxusers	32
 
@@ -297,7 +297,6 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem

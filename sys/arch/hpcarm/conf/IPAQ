@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.42 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: IPAQ,v 1.43 2005/12/20 05:35:28 thorpej Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -205,7 +205,6 @@ pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	tb	1		# tablet line discipline
 #pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	cgd	2		# cryptographic disk devices

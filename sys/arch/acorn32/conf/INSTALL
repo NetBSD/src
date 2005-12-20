@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.36 2005/12/07 12:40:46 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.37 2005/12/20 05:35:27 thorpej Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.36 $"
+#ident		"INSTALL-$Revision: 1.37 $"
 
 # estimated number of users
 maxusers	32
@@ -334,7 +334,6 @@ pseudo-device	loop	1		# network loopback
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	raid	8		# RAIDframe disk driver

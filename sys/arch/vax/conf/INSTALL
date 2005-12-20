@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.41 2005/12/07 12:40:48 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.42 2005/12/20 05:35:30 thorpej Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -212,7 +212,6 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	bpfilter 8	# Not supported by de yet.
 #pseudo-device	tun	2
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	tb	1
 #pseudo-device	vnd	4
 #pseudo-device	ccd	4
 #pseudo-device	raid	4		# RAIDframe disk driver

@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.36 2005/12/11 12:16:05 christos Exp $
+#	$NetBSD: NC,v 1.37 2005/12/20 05:35:27 thorpej Exp $
 #
 #	NC - with vidcconsole
 #
@@ -265,7 +265,6 @@ pseudo-device	loop	1		# network loopback
 #pseudo-device	ipfilter 1		# ip filter
 #pseudo-device	strip	4		# STRIP
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	fss	4		# file system snapshot device

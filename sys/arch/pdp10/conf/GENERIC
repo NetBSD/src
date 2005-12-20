@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.21 2005/12/09 23:34:03 elad Exp $
+# $NetBSD: GENERIC,v 1.22 2005/12/20 05:35:29 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10
@@ -156,7 +156,6 @@ hp*		at rh? drive?		# RM/RP disk drives
 #pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
-#pseudo-device	tb	1
 #pseudo-device	vnd	4
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd	4
