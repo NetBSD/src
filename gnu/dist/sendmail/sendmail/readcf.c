@@ -1,7 +1,7 @@
-/* $NetBSD: readcf.c,v 1.15 2005/03/15 02:14:17 atatat Exp $ */
+/* $NetBSD: readcf.c,v 1.16 2005/12/20 22:54:44 christos Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readcf.c,v 1.15 2005/03/15 02:14:17 atatat Exp $");
+__RCSID("$NetBSD: readcf.c,v 1.16 2005/12/20 22:54:44 christos Exp $");
 #endif
 
 /*
@@ -685,7 +685,7 @@ readcf(cfname, safe, e)
 			p = strchr(bp, '=');
 			if (p != NULL)
 				*p++ = '\0';
-			setuserenv(&bp[1], p);
+			setuserenviron(&bp[1], p);
 			break;
 
 		  case 'X':		/* mail filter */
