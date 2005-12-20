@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.13 2005/12/11 23:34:27 simonb Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.14 2005/12/20 01:44:22 reinoud Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -201,7 +201,7 @@ struct scsipi_read_discinfo_data {
 	uint8_t  last_session_leadin_hmsf[4];
 	uint8_t  last_possible_start_leadout_hmsf[4];
 	uint8_t  disc_bar_code[8];
-	uint8_t  unused;
+	uint8_t  application_code;
 	uint8_t  num_opc_table_entries;
 	uint8_t  opc_table_entries[1];	/* opc table entries follow	*/
 } __attribute__((packed));
