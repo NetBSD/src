@@ -1,7 +1,7 @@
-/* $NetBSD: main.c,v 1.14 2005/03/15 02:14:17 atatat Exp $ */
+/* $NetBSD: main.c,v 1.15 2005/12/20 22:54:44 christos Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.14 2005/03/15 02:14:17 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2005/12/20 22:54:44 christos Exp $");
 #endif
 
 /*
@@ -655,7 +655,7 @@ main(argc, argv, envp)
 	}
 
 	/* prime the child environment */
-	setuserenv("AGENT", "sendmail");
+	setuserenviron("AGENT", "sendmail");
 
 	(void) sm_signal(SIGPIPE, SIG_IGN);
 	OldUmask = umask(022);
@@ -1324,9 +1324,9 @@ main(argc, argv, envp)
 	if (TimeZoneSpec == NULL)
 		unsetenv("TZ");
 	else if (TimeZoneSpec[0] != '\0')
-		setuserenv("TZ", TimeZoneSpec);
+		setuserenviron("TZ", TimeZoneSpec);
 	else
-		setuserenv("TZ", NULL);
+		setuserenviron("TZ", NULL);
 	tzset();
 
 	/* initialize mailbox database */
@@ -3452,14 +3452,14 @@ getextenv(envar)
 **		value -- the value to which it should be set.  If
 **			null, this is extracted from the incoming
 **			environment.  If that is not set, the call
-**			to setuserenv is ignored.
+**			to setuserenviron is ignored.
 **
 **	Returns:
 **		none.
 */
 
 void
-setuserenv(envar, value)
+setuserenviron(envar, value)
 	const char *envar;
 	const char *value;
 {
@@ -3494,7 +3494,7 @@ setuserenv(envar, value)
 
 	/* make sure it is in our environment as well */
 	if (putenv(p) < 0)
-		syserr("setuserenv: putenv(%s) failed", p);
+		syserr("setuserenviron: putenv(%s) failed", p);
 }
 /*
 **  DUMPSTATE -- dump state
