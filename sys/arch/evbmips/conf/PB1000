@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.27 2005/12/20 05:35:27 thorpej Exp $
+#	$NetBSD: PB1000,v 1.28 2005/12/20 21:06:42 tron Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"PB1000-$Revision: 1.27 $"
+#ident 		"PB1000-$Revision: 1.28 $"
 
 maxusers	32
 
@@ -143,6 +143,7 @@ options 	AUMAC_EVENT_COUNTERS
 amhphy*		at mii? phy ?			# AMD 79c901 Ethernet PHYs
 bmtphy*		at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 sqphy*		at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+acphy*		at mii? phy ?			# AMD/Altima AC101 PHYs
 
 # USB
 ohci*		at aubus? addr ?		# USB Open Host Controller
