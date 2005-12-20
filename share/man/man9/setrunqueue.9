@@ -1,4 +1,4 @@
-.\"	$NetBSD: setrunqueue.9,v 1.7 2003/04/16 13:35:33 wiz Exp $
+.\"	$NetBSD: setrunqueue.9,v 1.8 2005/12/20 19:53:15 rpaulo Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 21, 2002
+.Dd December 20, 2005
 .Dt SETRUNQUEUE 9
 .Os
 .Sh NAME
@@ -43,10 +43,10 @@
 .In sys/proc.h
 .In sys/sched.h
 .Ft void
-.Fn setrunqueue "struct proc *p"
+.Fn setrunqueue "struct lwp *l"
 .Ft void
-.Fn remrunqueue "struct proc *p"
-.Ft struct proc *
+.Fn remrunqueue "struct lwp *l"
+.Ft struct lwp *
 .Fn nextrunqueue "void"
 .Sh DESCRIPTION
 The

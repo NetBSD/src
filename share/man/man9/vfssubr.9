@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.11 2005/09/23 12:10:32 jmmv Exp $
+.\"     $NetBSD: vfssubr.9,v 1.12 2005/12/20 19:53:15 rpaulo Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,7 +78,7 @@
 .Ft int
 .Fn vfs_mountroot "void"
 .Ft void
-.Fn vfs_unmountall  "struct proc *p"
+.Fn vfs_unmountall  "struct lwp *l"
 .Ft int
 .Fn vfs_busy "struct mount *mp" "int flags" "struct simplelock *interlkp"
 .Ft void

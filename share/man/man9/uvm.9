@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.69 2005/12/01 13:01:39 yamt Exp $
+.\"	$NetBSD: uvm.9,v 1.70 2005/12/20 19:53:15 rpaulo Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 1, 2005
+.Dd December 20, 2005
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ There are also several miscellaneous functions.
 .Pp
 .Ft void
 .br
-.Fn uvm_init_limits "struct proc *p" ;
+.Fn uvm_init_limits "struct lwp *l" ;
 .Pp
 .Ft void
 .br
@@ -140,7 +140,7 @@ initialises the swap sub-system.
 .Pp
 .Ft void
 .br
-.Fn uvmspace_exec "struct proc *p" "vaddr_t start" "vaddr_t end" ;
+.Fn uvmspace_exec "struct lwp *l" "vaddr_t start" "vaddr_t end" ;
 .Pp
 .Ft struct vmspace *
 .br
@@ -152,11 +152,11 @@ initialises the swap sub-system.
 .Pp
 .Ft void
 .br
-.Fn uvmspace_share "struct proc *p1" "struct proc *p2" ;
+.Fn uvmspace_share "struct lwp *l1" "struct lwp *l2" ;
 .Pp
 .Ft void
 .br
-.Fn uvmspace_unshare "struct proc *p" ;
+.Fn uvmspace_unshare "struct lwp *l" ;
 .Pp
 .Ft boolean_t
 .br
@@ -794,7 +794,7 @@ addresses of pages not already in use.
 .Pp
 .Ft void
 .br
-.Fn uvm_swapin "struct proc *p" ;
+.Fn uvm_swapin "struct lwp *l" ;
 .Pp
 .Fn uvm_pageout
 is the main loop for the page daemon.
@@ -890,11 +890,11 @@ and should match what was used for previous call to
 .Pp
 .Ft int
 .br
-.Fn uvm_vslock "struct proc *p" "caddr_t addr" "size_t len" "vm_prot_t prot" ;
+.Fn uvm_vslock "struct lwp *l" "caddr_t addr" "size_t len" "vm_prot_t prot" ;
 .Pp
 .Ft void
 .br
-.Fn uvm_vsunlock "struct proc *p" "caddr_t addr" "size_t len" ;
+.Fn uvm_vsunlock "struct lwp *l" "caddr_t addr" "size_t len" ;
 .Pp
 .Ft void
 .br
@@ -902,15 +902,15 @@ and should match what was used for previous call to
 .Pp
 .Ft void
 .br
-.Fn uvm_fork "struct proc *p1" "struct proc *p2" "boolean_t shared" ;
+.Fn uvm_fork "struct lwp *l1" "struct lwp *l2" "boolean_t shared" ;
 .Pp
 .Ft int
 .br
-.Fn uvm_grow "struct proc *p" "vaddr_t sp" ;
+.Fn uvm_grow "struct lwp *l" "vaddr_t sp" ;
 .Pp
 .Ft int
 .br
-.Fn uvm_coredump "struct proc *p" "struct vnode *vp" "struct ucred *cred" "struct core *chdr" ;
+.Fn uvm_coredump "struct lwp *l" "struct vnode *vp" "struct ucred *cred" "struct core *chdr" ;
 .Pp
 .Ft void
 .br

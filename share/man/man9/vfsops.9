@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.24 2005/11/09 20:17:55 pooka Exp $
+.\"     $NetBSD: vfsops.9,v 1.25 2005/12/20 19:53:15 rpaulo Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 23, 2005
+.Dd December 20, 2005
 .Dt VFSOPS 9
 .Os
 .Sh NAME
@@ -57,21 +57,21 @@
 .In sys/vnode.h
 .Ft int
 .Fn VFS_MOUNT "struct mount *mp" "const char *path" "void *data" \
-"struct nameidata *ndp" "struct proc *p"
+"struct nameidata *ndp" "struct lwp *l"
 .Ft int
-.Fn VFS_START "struct mount *mp" "int flags" "struct proc *p"
+.Fn VFS_START "struct mount *mp" "int flags" "struct lwp *l"
 .Ft int
-.Fn VFS_UNMOUNT "struct mount *mp" "int mntflags" "struct proc *p"
+.Fn VFS_UNMOUNT "struct mount *mp" "int mntflags" "struct lwp *l"
 .Ft int
 .Fn VFS_ROOT "struct mount *mp" "struct vnode **vpp"
 .Ft int
 .Fn VFS_QUOTACTL "struct mount *mp" "int cmds" "uid_t uid" \
-"caddr_t arg" "struct proc *p"
+"caddr_t arg" "struct lwp *l"
 .Ft int
-.Fn VFS_STATVFS "struct mount *mp" "struct statvfs *sbp" "struct proc *p"
+.Fn VFS_STATVFS "struct mount *mp" "struct statvfs *sbp" "struct lwp *l"
 .Ft int
 .Fn VFS_SYNC "struct mount *mp" "int waitfor" "struct ucred *cred" \
-"struct proc *p"
+"struct lwp *l"
 .Ft int
 .Fn VFS_VGET "struct mount *mp" "ino_t ino" "struct vnode **vpp"
 .Ft int
@@ -172,7 +172,7 @@ queried and modified using the
 interface.
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn VFS_MOUNT "mp" "path" "data" "ndp" "p"
+.It Fn VFS_MOUNT "mp" "path" "data" "ndp" "l"
 Mount a file system specified by the mount structure
 .Fa mp
 on the mount point described by
@@ -203,7 +203,7 @@ This can be used, for instance, to convert a read-only filesystem to
 read-write.
 If the MNT_UPDATE flag is not specified, then this is a newly
 mounted filesystem.
-.It Fn VFS_START "mp" "flags" "p"
+.It Fn VFS_START "mp" "flags" "l"
 Make the file system specified by the mount structure
 .Fa mp
 operational.
@@ -217,7 +217,7 @@ is a set of flags for controlling the operation of
 This function is invoked after
 .Fn VFS_MOUNT
 and before the first access to the file system.
-.It Fn VFS_UNMOUNT "mp" "mntflags" "p"
+.It Fn VFS_UNMOUNT "mp" "mntflags" "l"
 Unmount a file system specified by the mount structure
 .Fa mp .
 The argument
@@ -243,7 +243,7 @@ While resolving the pathname, the pathname translation algorithm will
 have to go through the directory tree in the file system associated
 with that mount point and therefore requires the root vnode of the
 file system.
-.It Fn VFS_QUOTACTL "mp" "cmds" "uid" "arg" "p"
+.It Fn VFS_QUOTACTL "mp" "cmds" "uid" "arg" "l"
 Query/modify user space quotas for the file system specified by the
 mount structure
 .Fa mp .
@@ -260,7 +260,7 @@ interface.
 is the file system type specific implementation of the
 .Xr quotactl 2
 system call.
-.It Fn VFS_STATVFS "mp" "sbp" "p"
+.It Fn VFS_STATVFS "mp" "sbp" "l"
 Get file system statistics for the file system specified by the mount
 structure
 .Fa mp .
@@ -275,7 +275,7 @@ is the file system type specific implementation of the
 and
 .Xr fstatvfs 2
 system calls.
-.It Fn VFS_SYNC "mp" "waitfor" "cred" "p"
+.It Fn VFS_SYNC "mp" "waitfor" "cred" "l"
 Flush file system I/O buffers for the file system specified by the mount
 structure
 .Fa mp .

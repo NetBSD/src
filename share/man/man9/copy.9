@@ -1,4 +1,4 @@
-.\"	$NetBSD: copy.9,v 1.16 2005/09/10 22:24:42 wiz Exp $
+.\"	$NetBSD: copy.9,v 1.17 2005/12/20 19:53:15 rpaulo Exp $
 .\"
 .\" Copyright (c) 1996, 2002 Jason R. Thorpe.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 28, 2005
+.Dd December 20, 2005
 .Dt COPY 9
 .Os
 .Sh NAME
@@ -57,9 +57,9 @@
 .Ft int
 .Fn copyoutstr "const void *kaddr" "void *uaddr" "size_t len" "size_t *done"
 .Ft int
-.Fn copyin_proc "struct proc *p" "const void *uaddr" "void *kaddr" "size_t len"
+.Fn copyin_proc "struct lwp *l" "const void *uaddr" "void *kaddr" "size_t len"
 .Ft int
-.Fn copyout_proc "struct proc *p" "const void *kaddr" "void *uaddr" "size_t len"
+.Fn copyout_proc "struct lwp *l" "const void *kaddr" "void *uaddr" "size_t len"
 .Ft int
 .Fn ioctl_copyin "int ioctlflags" "const void *src" "void *dst" "size_t len"
 .Ft int
