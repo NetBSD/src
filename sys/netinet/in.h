@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.72 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: in.h,v 1.73 2005/12/20 19:32:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -208,9 +208,7 @@ struct in_addr {
 #define	INADDR_ANY		__IPADDR(0x00000000)
 #define	INADDR_LOOPBACK		__IPADDR(0x7f000001)
 #define	INADDR_BROADCAST	__IPADDR(0xffffffff)	/* must be masked */
-#ifndef _KERNEL
 #define	INADDR_NONE		__IPADDR(0xffffffff)	/* -1 return */
-#endif
 
 #define	INADDR_UNSPEC_GROUP	__IPADDR(0xe0000000)	/* 224.0.0.0 */
 #define	INADDR_ALLHOSTS_GROUP	__IPADDR(0xe0000001)	/* 224.0.0.1 */
