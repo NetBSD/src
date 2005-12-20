@@ -1,4 +1,4 @@
-/* $NetBSD: sendmail.h,v 1.15 2005/03/15 02:14:17 atatat Exp $ */
+/* $NetBSD: sendmail.h,v 1.16 2005/12/20 22:54:44 christos Exp $ */
 /*
  * Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -2540,7 +2540,7 @@ extern bool	setvendor __P((char *));
 extern void	set_op_mode __P((int));
 extern void	setoption __P((int, char *, bool, bool, ENVELOPE *));
 extern sigfunc_t	setsignal __P((int, sigfunc_t));
-extern void	setuserenv __P((const char *, const char *));
+extern void	setuserenviron __P((const char *, const char *));
 extern void	settime __P((ENVELOPE *));
 extern char	*sfgets __P((char *, int, SM_FILE_T *, time_t, char *));
 extern char	*shortenstring __P((const char *, size_t));
