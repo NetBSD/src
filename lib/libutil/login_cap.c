@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.22 2005/08/27 17:24:42 elad Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.23 2005/12/20 21:32:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.22 2005/08/27 17:24:42 elad Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.23 2005/12/20 21:32:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -60,13 +60,12 @@ __RCSID("$NetBSD: login_cap.c,v 1.22 2005/08/27 17:24:42 elad Exp $");
 #include <unistd.h>
 #include <util.h>
 
-static void	setuserpath(login_cap_t *, const char *);
 static u_quad_t	multiply(u_quad_t, u_quad_t);
 static u_quad_t	strtolimit(const char *, char **, int);
 static u_quad_t	strtosize(const char *, char **, int);
 static int	gsetrl(login_cap_t *, int, const char *, int type);
-static int	setuserenv(login_cap_t *);
 static int	isinfinite(const char *);
+static int	envset(void *, const char *, const char *, int);
 
 login_cap_t *
 login_getclass(const char *class)
@@ -481,7 +480,14 @@ gsetrl(login_cap_t *lc, int what, const char *name, int type)
 }
 
 static int
-setuserenv(login_cap_t *lc)
+/*ARGSUSED*/
+envset(void *envp, const char *name, const char *value, int overwrite)
+{
+	return setenv(name, value, overwrite);	
+}
+
+int
+setuserenv(login_cap_t *lc, envfunc_t senv, void *envp)
 {
 	const char *stop = ", \t";
 	int i, count;
@@ -525,7 +531,7 @@ setuserenv(login_cap_t *lc)
 				*ptr++ = '\0';
 			else 
 				ptr = NULL;
-			setenv(res[i], ptr ? ptr : "", 1);
+			(void)(*senv)(envp, res[i], ptr ? ptr : "", 1);
 		}
 	}
 	
@@ -617,17 +623,17 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 		}
 
 	if (flags & LOGIN_SETENV)
-		setuserenv(lc);
+		setuserenv(lc, envset, NULL);
 
 	if (flags & LOGIN_SETPATH)
-		setuserpath(lc, pwd ? pwd->pw_dir : "");
+		setuserpath(lc, pwd ? pwd->pw_dir : "", envset, NULL);
 
 	login_close(flc);
 	return (0);
 }
 
-static void
-setuserpath(login_cap_t *lc, const char *home)
+void
+setuserpath(login_cap_t *lc, const char *home, envfunc_t senv, void *envp)
 {
 	size_t hlen, plen;
 	int cnt = 0;
@@ -675,7 +681,7 @@ setuserpath(login_cap_t *lc, const char *home)
 			cpath = _PATH_DEFPATH;
 	} else
 		cpath = _PATH_DEFPATH;
-	if (setenv("PATH", cpath, 1))
+	if ((*senv)(envp, "PATH", cpath, 1))
 		warn("could not set PATH");
 }
 
