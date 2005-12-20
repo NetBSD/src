@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.22 2005/12/06 16:01:13 chs Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.23 2005/12/20 08:25:58 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.22 2005/12/06 16:01:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.23 2005/12/20 08:25:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,6 @@ uvm_io(struct vm_map *map, struct uio *uio)
 		error = uiomove((caddr_t) (kva + pageoffset), sz, uio);
 		togo -= sz;
 		baseva += chunksz;
-
 
 		/*
 		 * step 4: unmap the area of kernel memory
