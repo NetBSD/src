@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.76 2005/12/11 12:24:37 christos Exp $
+#	$NetBSD: Makefile,v 1.77 2005/12/20 19:35:26 christos Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -24,6 +24,8 @@ ARCHSUBDIR=     ${MACHINE_CPU}
 M= ${KERNDIR}/arch/${ARCHSUBDIR}
 
 CPPFLAGS=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
+
+.include "${.PARSEDIR}/../../../common/lib/libc/Makefile.inc"
 
 .PATH.c: ${KERNDIR}
 .if exists ($M/Makefile.inc)

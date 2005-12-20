@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.39 2005/12/11 12:24:37 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.40 2005/12/20 19:35:26 christos Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -89,3 +89,5 @@ __always_make_kernlib:	.NOTMAIN
 
 .PHONY: __always_make_kernlib
 .PHONY: cleankernlib cleandirkernlib dependkernlib
+
+.include "${.PARSEDIR}/../../../common/lib/libc/Makefile.inc"
