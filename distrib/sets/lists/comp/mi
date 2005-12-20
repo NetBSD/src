@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.835 2005/12/20 05:36:48 thorpej Exp $
+#	$NetBSD: mi,v 1.836 2005/12/20 16:28:55 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1335,6 +1335,7 @@
 ./usr/include/sys/endian.h			comp-c-include
 ./usr/include/sys/envsys.h			comp-c-include
 ./usr/include/sys/errno.h			comp-c-include
+./usr/include/sys/evcnt.h			comp-c-include
 ./usr/include/sys/event.h			comp-c-include
 ./usr/include/sys/exec.h			comp-c-include
 ./usr/include/sys/exec_aout.h			comp-c-include
