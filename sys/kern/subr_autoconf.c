@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.101 2005/12/11 12:24:29 christos Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.102 2005/12/20 04:39:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.101 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.102 2005/12/20 04:39:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -131,7 +131,7 @@ static struct cftable initcftable;
  */
 propdb_t dev_propdb;
 
-#define	ROOT ((struct device *)NULL)
+#define	ROOT ((device_t)NULL)
 
 struct matchinfo {
 	cfsubmatch_t fn;
@@ -143,12 +143,12 @@ struct matchinfo {
 };
 
 static char *number(char *, int);
-static void mapply(struct matchinfo *, struct cfdata *);
+static void mapply(struct matchinfo *, cfdata_t);
 
 struct deferred_config {
 	TAILQ_ENTRY(deferred_config) dc_queue;
-	struct device *dc_dev;
-	void (*dc_func)(struct device *);
+	device_t dc_dev;
+	void (*dc_func)(device_t);
 };
 
 TAILQ_HEAD(deferred_config_head, deferred_config);
@@ -156,14 +156,13 @@ TAILQ_HEAD(deferred_config_head, deferred_config);
 struct deferred_config_head deferred_config_queue;
 struct deferred_config_head interrupt_config_queue;
 
-static void config_process_deferred(struct deferred_config_head *,
-	struct device *);
+static void config_process_deferred(struct deferred_config_head *, device_t);
 
 /* Hooks to finalize configuration once all real devices have been found. */
 struct finalize_hook {
 	TAILQ_ENTRY(finalize_hook) f_list;
-	int (*f_func)(struct device *);
-	struct device *f_dev;
+	int (*f_func)(device_t);
+	device_t f_dev;
 };
 static TAILQ_HEAD(, finalize_hook) config_finalize_list;
 static int config_finalize_done;
@@ -379,7 +378,7 @@ int
 config_cfattach_detach(const char *driver, struct cfattach *ca)
 {
 	struct cfdriver *cd;
-	struct device *dev;
+	device_t dev;
 	int i;
 
 	cd = config_cfdriver_lookup(driver);
@@ -435,7 +434,7 @@ config_cfattach_lookup(const char *name, const char *atname)
  * a few times and we want to keep the code small.
  */
 static void
-mapply(struct matchinfo *m, struct cfdata *cf)
+mapply(struct matchinfo *m, cfdata_t cf)
 {
 	int pri;
 
@@ -451,8 +450,7 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 }
 
 int
-config_stdsubmatch(struct device *parent, struct cfdata *cf,
-		   const int *locs, void *aux)
+config_stdsubmatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 {
 	const struct cfiattrdata *ci;
 	const struct cflocdesc *cl;
@@ -520,7 +518,7 @@ cfiattr_lookup(const char *name, const struct cfdriver *cd)
  * on `cfp'.
  */
 static int
-cfparent_match(const struct device *parent, const struct cfparent *cfp)
+cfparent_match(const device_t parent, const struct cfparent *cfp)
 {
 	struct cfdriver *pcd;
 
@@ -569,7 +567,7 @@ cfparent_match(const struct device *parent, const struct cfparent *cfp)
 static void
 rescan_with_cfdata(const struct cfdata *cf)
 {
-	struct device *d;
+	device_t d;
 	const struct cfdata *cf1;
 
 	/*
@@ -597,7 +595,7 @@ rescan_with_cfdata(const struct cfdata *cf)
  * parent devices if required.
  */
 int
-config_cfdata_attach(struct cfdata *cf, int scannow)
+config_cfdata_attach(cfdata_t cf, int scannow)
 {
 	struct cftable *ct;
 
@@ -632,9 +630,9 @@ dev_in_cfdata(const struct device *d, const struct cfdata *cf)
  * through that table (and thus keeping references to it) before.
  */
 int
-config_cfdata_detach(struct cfdata *cf)
+config_cfdata_detach(cfdata_t cf)
 {
-	struct device *d;
+	device_t d;
 	int error;
 	struct cftable *ct;
 
@@ -668,7 +666,7 @@ again:
  * an external caller, usually a "submatch" routine.
  */
 int
-config_match(struct device *parent, struct cfdata *cf, void *aux)
+config_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cfattach *ca;
 
@@ -692,12 +690,12 @@ config_match(struct device *parent, struct cfdata *cf, void *aux)
  * an arbitrary function to all potential children (its return value
  * can be ignored).
  */
-struct cfdata *
-config_search_loc(cfsubmatch_t fn, struct device *parent,
+cfdata_t
+config_search_loc(cfsubmatch_t fn, device_t parent,
 		  const char *ifattr, const int *locs, void *aux)
 {
 	struct cftable *ct;
-	struct cfdata *cf;
+	cfdata_t cf;
 	struct matchinfo m;
 
 	KASSERT(config_initialized);
@@ -743,16 +741,24 @@ config_search_loc(cfsubmatch_t fn, struct device *parent,
 	return (m.match);
 }
 
+cfdata_t
+config_search_ia(cfsubmatch_t fn, device_t parent, const char *ifattr,
+    void *aux)
+{
+
+	return (config_search_loc(fn, parent, ifattr, NULL, aux));
+}
+
 /*
  * Find the given root device.
  * This is much like config_search, but there is no parent.
  * Don't bother with multiple cfdata tables; the root node
  * must always be in the initial table.
  */
-struct cfdata *
+cfdata_t
 config_rootsearch(cfsubmatch_t fn, const char *rootname, void *aux)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 	const short *p;
 	struct matchinfo m;
 
@@ -784,12 +790,12 @@ static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" 
  * functions) and attach it, and return true.  If the device was
  * not configured, call the given `print' function and return 0.
  */
-struct device *
-config_found_sm_loc(struct device *parent,
+device_t
+config_found_sm_loc(device_t parent,
 		const char *ifattr, const int *locs, void *aux,
 		cfprint_t print, cfsubmatch_t submatch)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 
 	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
 		return(config_attach_loc(parent, cf, locs, aux, print));
@@ -801,13 +807,28 @@ config_found_sm_loc(struct device *parent,
 	return (NULL);
 }
 
+device_t
+config_found_ia(device_t parent, const char *ifattr, void *aux,
+    cfprint_t print)
+{
+
+	return (config_found_sm_loc(parent, ifattr, NULL, aux, print, NULL));
+}
+
+device_t
+config_found(device_t parent, void *aux, cfprint_t print)
+{
+
+	return (config_found_sm_loc(parent, NULL, NULL, aux, print, NULL));
+}
+
 /*
  * As above, but for root devices.
  */
-struct device *
+device_t
 config_rootfound(const char *rootname, void *aux)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 
 	if ((cf = config_rootsearch((cfsubmatch_t)NULL, rootname, aux)) != NULL)
 		return (config_attach(ROOT, cf, aux, (cfprint_t)NULL));
@@ -868,11 +889,11 @@ config_makeroom(int n, struct cfdriver *cd)
 /*
  * Attach a found device.  Allocates memory for device variables.
  */
-struct device *
-config_attach_loc(struct device *parent, struct cfdata *cf,
+device_t
+config_attach_loc(device_t parent, cfdata_t cf,
 	const int *locs, void *aux, cfprint_t print)
 {
-	struct device *dev;
+	device_t dev;
 	struct cftable *ct;
 	struct cfdriver *cd;
 	struct cfattach *ca;
@@ -923,7 +944,7 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
 		panic("config_attach: device name too long");
 
 	/* get memory for all device vars */
-	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF,
+	dev = (device_t)malloc(ca->ca_devsize, M_DEVBUF,
 	    cold ? M_NOWAIT : M_WAITOK);
 	if (!dev)
 	    panic("config_attach: memory allocation for device softc failed");
@@ -1000,6 +1021,13 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
 	return (dev);
 }
 
+device_t
+config_attach(device_t parent, cfdata_t cf, void *aux, cfprint_t print)
+{
+
+	return (config_attach_loc(parent, cf, NULL, aux, print));
+}
+
 /*
  * As above, but for pseudo-devices.  Pseudo-devices attached in this
  * way are silently inserted into the device tree, and their children
@@ -1009,10 +1037,10 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
  * the attach routine wishes to print should be prefixed with the device
  * name by the attach routine.
  */
-struct device *
-config_attach_pseudo(struct cfdata *cf)
+device_t
+config_attach_pseudo(cfdata_t cf)
 {
-	struct device *dev;
+	device_t dev;
 	struct cfdriver *cd;
 	struct cfattach *ca;
 	size_t lname, lunit;
@@ -1060,7 +1088,7 @@ config_attach_pseudo(struct cfdata *cf)
 		panic("config_attach_pseudo: device name too long");
 
 	/* get memory for all device vars */
-	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF,
+	dev = (device_t)malloc(ca->ca_devsize, M_DEVBUF,
 	    cold ? M_NOWAIT : M_WAITOK);
 	if (!dev)
 		panic("config_attach_pseudo: memory allocation for device "
@@ -1103,14 +1131,14 @@ config_attach_pseudo(struct cfdata *cf)
  * open to run and unwind their stacks.
  */
 int
-config_detach(struct device *dev, int flags)
+config_detach(device_t dev, int flags)
 {
 	struct cftable *ct;
-	struct cfdata *cf;
+	cfdata_t cf;
 	const struct cfattach *ca;
 	struct cfdriver *cd;
 #ifdef DIAGNOSTIC
-	struct device *d;
+	device_t d;
 #endif
 	int rv = 0, i;
 
@@ -1177,7 +1205,7 @@ config_detach(struct device *dev, int flags)
 
 	/* notify the parent that the child is gone */
 	if (dev->dv_parent) {
-		struct device *p = dev->dv_parent;
+		device_t p = dev->dv_parent;
 		if (p->dv_cfattach->ca_childdetached)
 			(*p->dv_cfattach->ca_childdetached)(p, dev);
 	}
@@ -1240,7 +1268,7 @@ config_detach(struct device *dev, int flags)
 }
 
 int
-config_activate(struct device *dev)
+config_activate(device_t dev)
 {
 	const struct cfattach *ca = dev->dv_cfattach;
 	int rv = 0, oflags = dev->dv_flags;
@@ -1258,7 +1286,7 @@ config_activate(struct device *dev)
 }
 
 int
-config_deactivate(struct device *dev)
+config_deactivate(device_t dev)
 {
 	const struct cfattach *ca = dev->dv_cfattach;
 	int rv = 0, oflags = dev->dv_flags;
@@ -1280,7 +1308,7 @@ config_deactivate(struct device *dev)
  * of its parent's devices have been attached.
  */
 void
-config_defer(struct device *dev, void (*func)(struct device *))
+config_defer(device_t dev, void (*func)(device_t))
 {
 	struct deferred_config *dc;
 
@@ -1310,7 +1338,7 @@ config_defer(struct device *dev, void (*func)(struct device *))
  * are enabled.
  */
 void
-config_interrupts(struct device *dev, void (*func)(struct device *))
+config_interrupts(device_t dev, void (*func)(device_t))
 {
 	struct deferred_config *dc;
 
@@ -1345,7 +1373,7 @@ config_interrupts(struct device *dev, void (*func)(struct device *))
  */
 static void
 config_process_deferred(struct deferred_config_head *queue,
-    struct device *parent)
+    device_t parent)
 {
 	struct deferred_config *dc, *ndc;
 
@@ -1390,7 +1418,7 @@ config_pending_decr(void)
  * any work.
  */
 int
-config_finalize_register(struct device *dev, int (*fn)(struct device *))
+config_finalize_register(device_t dev, int (*fn)(device_t))
 {
 	struct finalize_hook *f;
 
