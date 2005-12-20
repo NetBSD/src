@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2005/12/20 19:28:49 christos Exp $
+# $NetBSD: Makefile.inc,v 1.2 2005/12/20 22:51:18 christos Exp $
 
 COMMON_DIR:=${.PARSEDIR}
 COMMON_CODEDIRS=gen gmon hash/sha1 inet md net quad stdlib string
@@ -24,4 +24,4 @@ COMMON_ARCHDIR=${COMMON_DIR}/arch/${COMMON_ARCHSUBDIR}
 .endif
 .endfor
 
-CPPFLAGS+=-I${COMMON_DIR}/quad -I${COMMON_ARCHDIR}/string
+CPPFLAGS+=-I${COMMON_DIR}/quad -I${COMMON_DIR}/string -I${COMMON_ARCHDIR}/string
