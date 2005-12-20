@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.182 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.183 2005/12/20 21:06:43 tron Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.182 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.183 2005/12/20 21:06:43 tron Exp $");
 
 #include "opt_cputype.h"
 
@@ -408,6 +408,10 @@ static const struct pridtab cputab[] = {
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1100, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
 						"Au1100 (Rev 2 core)" 	},
+
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1550, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1550 (Rev 2 core)" 	},
 
 	/* The SB-1 CPU uses a CCA of 5 - "Cacheable Coherent Shareable" */
 	{ MIPS_PRID_CID_SIBYTE, MIPS_SB1, -1,	-1, -1, 0,
