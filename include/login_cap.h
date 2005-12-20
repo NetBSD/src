@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.h,v 1.6 2004/12/11 06:41:57 christos Exp $	*/
+/*	$NetBSD: login_cap.h,v 1.7 2005/12/20 21:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -58,6 +58,8 @@ typedef struct {
 	char	*lc_style;
 } login_cap_t;
 
+typedef int (*envfunc_t)(void *, const char *, const char *, int);
+
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 struct passwd;
@@ -73,6 +75,8 @@ quad_t	 login_getcaptime(login_cap_t *, const char *, quad_t, quad_t);
 
 int	setclasscontext(const char *, u_int);
 int	setusercontext(login_cap_t *, struct passwd *, uid_t, u_int);
+void	setuserpath(login_cap_t *, const char *, envfunc_t, void *);
+int	setuserenv(login_cap_t *, envfunc_t, void *);
 
 __END_DECLS
 
