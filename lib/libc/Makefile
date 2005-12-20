@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.124 2005/11/29 03:11:58 christos Exp $
+#	$NetBSD: Makefile,v 1.125 2005/12/20 19:31:47 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -85,6 +85,7 @@ assym.h: ${ARCHDIR}/genassym.cf
 	mv -f assym.h.tmp assym.h
 .endif
 
+.include "${.CURDIR}/../../common/lib/libc/Makefile.inc"
 .include "${.CURDIR}/db/Makefile.inc"
 .include "${.CURDIR}/citrus/Makefile.inc"
 .include "${.CURDIR}/compat-43/Makefile.inc"
