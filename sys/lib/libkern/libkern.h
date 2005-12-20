@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.51 2005/12/11 12:24:37 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.52 2005/12/20 19:35:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,6 +35,7 @@
 #define _LIB_LIBKERN_LIBKERN_H_
 
 #include <sys/types.h>
+#include <sys/null.h>
 
 #ifndef LIBKERN_INLINE
 #define LIBKERN_INLINE	static __inline
@@ -183,12 +184,14 @@ tolower(int ch)
 #endif
 
 #ifndef DIAGNOSTIC
+#define _DIAGASSERT(a)	(void)0
 #ifdef lint
 #define	KASSERT(e)	/* NOTHING */
 #else /* !lint */
 #define	KASSERT(e)	((void)0)
 #endif /* !lint */
-#else
+#else /* DIAGNOSTIC */
+#define _DIAGASSERT(a)	assert(a)
 #ifdef __STDC__
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("diagnostic ", __FILE__, __LINE__, #e))
@@ -269,7 +272,9 @@ int	 ffs __P((int));
 void	 __assert __P((const char *, const char *, int, const char *))
 	    __attribute__((__noreturn__));
 u_int32_t
-	 inet_addr __P((const char *));
+	inet_addr __P((const char *));
+struct in_addr;
+int	inet_aton __P((const char *, struct in_addr *));
 char	*intoa __P((u_int32_t));
 #define inet_ntoa(a) intoa((a).s_addr)
 void	*memchr __P((const void *, int, size_t));
