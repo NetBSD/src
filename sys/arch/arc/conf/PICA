@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.53 2005/12/07 09:10:12 tsutsui Exp $
+#	$NetBSD: PICA,v 1.54 2005/12/20 05:35:27 thorpej Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -217,7 +217,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port arc yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator

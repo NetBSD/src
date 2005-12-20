@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.34 2005/12/11 02:11:50 christos Exp $
+# $NetBSD: VIRTUALPC,v 1.35 2005/12/20 05:35:29 thorpej Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.34 $"
+#ident 		"VIRTUALPC-$Revision: 1.35 $"
 
 maxusers	32		# estimated number of users
 
@@ -629,7 +629,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
