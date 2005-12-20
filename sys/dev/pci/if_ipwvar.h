@@ -1,7 +1,7 @@
-/*      Id: if_ipwvar.h,v 1.1.2.2 2004/08/19 16:28:26 damien Exp  */
+/*      $FreeBSD: src/sys/dev/ipw/if_ipwvar.h,v 1.3 2005/06/10 16:49:11 brooks Exp $	*/
 
 /*-
- * Copyright (c) 2004
+ * Copyright (c) 2004, 2005
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,15 @@
  * SUCH DAMAGE.
  */
 
+struct ipw_firmware {
+	void	*main;
+	int	main_size;
+	void	*ucode;
+	int	ucode_size;
+};
+
+#define IPW_MAX_NSEG	1
+
 struct ipw_soft_bd {
 	struct ipw_bd	*bd;
 	int		type;
@@ -40,71 +49,126 @@ struct ipw_soft_bd {
 struct ipw_soft_hdr {
 	struct ipw_hdr			hdr;
 	bus_dmamap_t			map;
-	TAILQ_ENTRY(ipw_soft_hdr)	next;
+	SLIST_ENTRY(ipw_soft_hdr)	next;
 };
 
 struct ipw_soft_buf {
 	struct mbuf			*m;
 	struct ieee80211_node		*ni;
 	bus_dmamap_t			map;
-	TAILQ_ENTRY(ipw_soft_buf)	next;
+	SLIST_ENTRY(ipw_soft_buf)	next;
 };
 
-struct ipw_softc {
-	struct device			sc_dev;
+struct ipw_rx_radiotap_header {
+	struct ieee80211_radiotap_header wr_ihdr;
+	uint8_t		wr_flags;
+	uint16_t	wr_chan_freq;
+	uint16_t	wr_chan_flags;
+	uint8_t		wr_antsignal;
+};
 
-        struct ieee80211com		sc_ic;
+#define IPW_RX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
+
+struct ipw_tx_radiotap_header {
+	struct ieee80211_radiotap_header wt_ihdr;
+	uint8_t		wt_flags;
+	uint16_t	wt_chan_freq;
+	uint16_t	wt_chan_flags;
+};
+
+#define IPW_TX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))
+
+struct ipw_softc {
+	struct ifnet			*sc_ifp;
+	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
+	device_t			sc_dev;
 
-	u_int32_t			flags;
-#define IPW_FLAG_FW_INITED	(1 << 0)
+	struct mtx			sc_mtx;
 
+	struct ipw_firmware		fw;
+	uint32_t			flags;
+#define IPW_FLAG_FW_CACHED		(1 << 0)
+#define IPW_FLAG_FW_INITED		(1 << 1)
+#define IPW_FLAG_HAS_RADIO_SWITCH	(1 << 2)
+#define	IPW_FLAG_FW_WARNED		(1 << 3)
+
+	int				irq_rid;
+	int				mem_rid;
 	struct resource			*irq;
 	struct resource			*mem;
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
 	void 				*sc_ih;
-	pci_chipset_tag_t		sc_pct;
-	bus_size_t			sc_sz;
 
 	int				sc_tx_timer;
 
-	bus_dma_tag_t			sc_dmat;
+	bus_dma_tag_t			tbd_dmat;
+	bus_dma_tag_t			rbd_dmat;
+	bus_dma_tag_t			status_dmat;
+	bus_dma_tag_t			cmd_dmat;
+	bus_dma_tag_t			hdr_dmat;
+	bus_dma_tag_t			txbuf_dmat;
+	bus_dma_tag_t			rxbuf_dmat;
 
 	bus_dmamap_t			tbd_map;
 	bus_dmamap_t			rbd_map;
 	bus_dmamap_t			status_map;
 	bus_dmamap_t			cmd_map;
 
-	bus_dma_segment_t		tbd_seg;
-	bus_dma_segment_t		rbd_seg;
-	bus_dma_segment_t		status_seg;
-	bus_dma_segment_t		cmd_seg;
+	bus_addr_t			tbd_phys;
+	bus_addr_t			rbd_phys;
+	bus_addr_t			status_phys;
 
 	struct ipw_bd			*tbd_list;
 	struct ipw_bd			*rbd_list;
 	struct ipw_status		*status_list;
 
-	struct ipw_cmd			*cmd;
-	struct ipw_soft_bd		*stbd_list;
-	struct ipw_soft_bd		*srbd_list;
-	struct ipw_soft_hdr		*shdr_list;
-	struct ipw_soft_buf		*tx_sbuf_list;
-	struct ipw_soft_buf		*rx_sbuf_list;
+	struct ipw_cmd			cmd;
+	struct ipw_soft_bd		stbd_list[IPW_NTBD];
+	struct ipw_soft_buf		tx_sbuf_list[IPW_NDATA];
+	struct ipw_soft_hdr		shdr_list[IPW_NDATA];
+	struct ipw_soft_bd		srbd_list[IPW_NRBD];
+	struct ipw_soft_buf		rx_sbuf_list[IPW_NRBD];
 
-	TAILQ_HEAD(, ipw_soft_hdr)	sc_free_shdr;
-	TAILQ_HEAD(, ipw_soft_buf)	sc_free_sbuf;
+	SLIST_HEAD(, ipw_soft_hdr)	free_shdr;
+	SLIST_HEAD(, ipw_soft_buf)	free_sbuf;
 
-	u_int32_t			table1_base;
-	u_int32_t			table2_base;
+	uint32_t			table1_base;
+	uint32_t			table2_base;
 
-	u_int32_t			txcur;
-	u_int32_t			txold;
-	u_int32_t			rxcur;
+	uint32_t			txcur;
+	uint32_t			txold;
+	uint32_t			rxcur;
+	int				txfree;
+
+	int				dwelltime;
+
+	struct bpf_if			*sc_drvbpf;
+
+	union {
+		struct ipw_rx_radiotap_header th;
+		uint8_t	pad[64];
+	} sc_rxtapu;
+#define sc_rxtap	sc_rxtapu.th
+	int				sc_rxtap_len;
+
+	union {
+		struct ipw_tx_radiotap_header th;
+		uint8_t	pad[64];
+	} sc_txtapu;
+#define sc_txtap	sc_txtapu.th
+	int				sc_txtap_len;
 };
 
 #define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
 #define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
-#define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
-#define SIOCGTABLE1	_IOWR('i', 140, struct ifreq)
+
+#define IPW_LOCK(sc)	mtx_lock(&(sc)->sc_mtx)
+#define IPW_UNLOCK(sc)	mtx_unlock(&(sc)->sc_mtx)
