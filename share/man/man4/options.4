@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.298 2005/12/15 20:52:20 wiz Exp $
+.\"	$NetBSD: options.4,v 1.299 2005/12/20 18:15:30 elad Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 15, 2005
+.Dd December 20, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1079,23 +1079,6 @@ See
 for details.
 .Em NOTE :
 not available on all architectures.
-.It Cd options INSECURE
-Hardwires the kernel security level at -1.
-This means that the system
-always runs in secure level 0 mode, even when running multiuser.
-See the manual page for
-.Xr init 8
-for details on the implications of this.
-The kernel secure level may manipulated by the superuser by altering the
-.Em kern.securelevel
-.Xr sysctl 3
-variable (the secure level may only be lowered by a call from process ID 1,
-i.e.
-.Xr init 8 ) .
-See also
-.Xr sysctl 8
-and
-.Xr sysctl 3 .
 .It Cd options MEMORY_DISK_DYNAMIC
 This options makes the
 .Xr md 4
@@ -2126,6 +2109,40 @@ for port specific details including availability.
 .It Cd options VMSWAP
 Enable paging device/file support.
 This option is on by default.
+.El
+.Ss Security Options
+.Bl -ohang
+.It Cd options INSECURE
+Hardwires the kernel security level at -1.
+This means that the system
+always runs in secure level -1 mode, even when running multiuser.
+See the manual page for
+.Xr init 8
+for details on the implications of this.
+The kernel secure level may manipulated by the superuser by altering the
+.Em kern.securelevel
+.Xr sysctl 3
+variable (the secure level may only be lowered by a call from process ID 1,
+i.e.
+.Xr init 8 ) .
+See also
+.Xr sysctl 8
+and
+.Xr sysctl 3 .
+.It Cd options VERIFIED_EXEC
+Enables Veriexec, the in-kernel file integrity subsystem.
+.It Cd options VERIFIED_EXEC_FP_MD5
+Enables support for MD5 hashes in Veriexec.
+.It Cd options VERIFIED_EXEC_FP_SHA1
+Enables support for SHA1 hashes in Veriexec.
+.It Cd options VERIFIED_EXEC_FP_RMD160
+Enables support for RMD160 hashes in Veriexec.
+.It Cd options VERIFIED_EXEC_FP_SHA256
+Enables support for SHA256 hashes in Veriexec.
+.It Cd options VERIFIED_EXEC_FP_SHA384
+Enables support for SHA384 hashes in Veriexec.
+.It Cd options VERIFIED_EXEC_FP_SHA512
+Enables support for SHA512 hashes in Veriexec.
 .El
 .Ss amiga-specific Options
 .Bl -ohang
