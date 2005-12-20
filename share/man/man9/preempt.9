@@ -1,4 +1,4 @@
-.\"     $NetBSD: preempt.9,v 1.3 2003/04/16 13:35:32 wiz Exp $
+.\"     $NetBSD: preempt.9,v 1.4 2005/12/20 19:34:43 rpaulo Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,28 +34,27 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 21, 2002
+.Dd December 20, 2005
 .Dt PREEMPT 9
 .Os
 .Sh NAME
 .Nm preempt
 .Nd general preempt function
 .Sh SYNOPSIS
-.In sys/proc.h
 .In sys/sched.h
 .Ft void
-.Fn preempt "struct proc *p"
+.Fn preempt "int more"
 .Sh DESCRIPTION
 The
 .Fn preempt
 function puts the current process back on the system run queue
 and performs an involuntary context switch.
-If the specified process argument
-.Fa p
+If the specified argument
+.Fa more
 is not
-.Dv NULL
-then a context switch is done to that process.
-Otherwise, the normal process selection criteria inside
+.Dv 0
+then a "voluntary" preemption is made, using
+.Fn sa_preempt .
 .Xr mi_switch 9
 is used to select the new process.
 .Pp
