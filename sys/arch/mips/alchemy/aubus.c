@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.16 2005/12/11 12:18:06 christos Exp $ */
+/* $NetBSD: aubus.c,v 1.17 2005/12/20 21:06:42 tron Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.16 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.17 2005/12/20 21:06:42 tron Exp $");
 
 #include "locators.h"
 
@@ -101,7 +101,7 @@ const struct au1x00_dev au1000_devs [] = {
 	{ "aumac",	{ MAC0_BASE, MAC0_ENABLE, MAC0_DMA_BASE }, { 28, -1 }},
 	{ "aumac",	{ MAC1_BASE, MAC1_ENABLE, MAC1_DMA_BASE }, { 29, -1 }},
 	{ "auaudio",	{ AC97_BASE },				   { 27, 31 }},
-	{ "ohci",	{ USBH_BASE },				   { 26, -1 }},
+	{ "ohci",	{ USBH_BASE, USBH_ENABLE, USBH_SIZE },	   { 26, -1 }},
 	{ "usbd",	{ USBD_BASE },				   { 24, 25 }},
 	{ "irda",	{ IRDA_BASE },				   { 22, 23 }},
 	{ "gpio",	{ SYS_BASE },				   { -1, -1 }},
@@ -123,7 +123,7 @@ const struct au1x00_dev au1500_devs [] = {
 	{ "aumac",	{ AU1500_MAC1_BASE, AU1500_MAC1_ENABLE,
 			      MAC1_DMA_BASE },			   { 29, -1 }},
 	{ "auaudio",	{ AC97_BASE },				   { 27, 31 }},
-	{ "ohci",	{ USBH_BASE },				   { 26, -1 }},
+	{ "ohci",	{ USBH_BASE, USBH_ENABLE, USBH_SIZE },	   { 26, -1 }},
 	{ "usbd",	{ USBD_BASE },				   { 24, 25 }},
 	{ "gpio",	{ SYS_BASE },				   { -1, -1 }},
 	{ "gpio2",	{ GPIO2_BASE },				   { -1, -1 }},
@@ -131,6 +131,26 @@ const struct au1x00_dev au1500_devs [] = {
 	{ NULL }
 };
 
+
+/*
+ * The devices built in to the Au1550 CPU.
+ */
+const struct au1x00_dev au1550_devs [] = {
+	{ "aucom",	{ UART0_BASE },				   {  0, -1 }},
+	{ "aucom",	{ UART1_BASE },				   {  8, -1 }},
+	{ "aucom",	{ UART3_BASE },				   {  9, -1 }},
+	{ "aurtc",	{ },					   { -1, -1 }},
+	{ "aumac",	{ MAC0_BASE, MAC0_ENABLE, MAC0_DMA_BASE }, { 27, -1 }},
+	{ "aumac",	{ MAC1_BASE, MAC1_ENABLE, MAC1_DMA_BASE }, { 28, -1 }},
+	{ "auaudio",	{ AC97_BASE },				   { 27, 31 }},
+	{ "ohci",	{ AU1550_USBH_BASE, AU1550_USBH_ENABLE,
+				AU1550_USBH_SIZE },		   { 26, -1 }},
+	{ "usbd",	{ USBD_BASE },				   { 24, 25 }},
+	{ "gpio",	{ SYS_BASE },				   { -1, -1 }},
+	{ "gpio2",	{ GPIO2_BASE },				   { -1, -1 }},
+	{ "aupci",	{ },					   { -1, -1 }},
+	{ NULL }
+};
 
 /*
  * The devices built in to the Au1100 CPU.
@@ -142,7 +162,7 @@ const struct au1x00_dev au1100_devs [] = {
 	{ "aurtc",	{ },					   { -1, -1 }},
 	{ "aumac",	{ MAC0_BASE, MAC0_ENABLE, MAC0_DMA_BASE }, { 28, -1 }},
 	{ "auaudio",	{ AC97_BASE },				   { 27, 31 }},
-	{ "ohci",	{ USBH_BASE },				   { 26, -1 }},
+	{ "ohci",	{ USBH_BASE, USBH_ENABLE, USBH_SIZE },	   { 26, -1 }},
 	{ "usbd",	{ USBD_BASE },				   { 24, 25 }},
 	{ "irda",	{ IRDA_BASE },				   { 22, 23 }},
 	{ "gpio",	{ SYS_BASE },				   { -1, -1 }},
@@ -199,6 +219,9 @@ aubus_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case MIPS_AU1100:
 		ad = au1100_devs;
+		break;
+	case MIPS_AU1550:
+		ad = au1550_devs;
 		break;
 	default:
 		panic("Unknown Alchemy SOC identification %d",

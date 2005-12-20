@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.6 2005/12/11 12:18:06 christos Exp $ */
+/* $NetBSD: aureg.h,v 1.7 2005/12/20 21:06:42 tron Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -177,7 +177,11 @@
 #define	  UE_C			  0x00000002	/* coherent */
 #define	  UE_BE			  0x00000001	/* big-endian */
 
-#define	USBH_SIZE		0x80000		/* size of register set */
+#define	USBH_SIZE		0x100000	/* size of register set */
+
+#define	AU1550_USBH_BASE	0x14020000
+#define	AU1550_USBH_ENABLE	0x7ffc
+#define AU1550_USBH_SIZE	0x60000
 
 /************************************************************************/
 /**********************   USB Device registers   ************************/

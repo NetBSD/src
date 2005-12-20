@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.68 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.69 2005/12/20 21:06:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -778,6 +778,7 @@
 #define	MIPS_AU1000	0x00
 #define	MIPS_AU1500	0x01
 #define	MIPS_AU1100	0x02
+#define	MIPS_AU1550	0x03
 
 /*
  * CPU processor revision IDs for company ID == 4 (SiByte)
