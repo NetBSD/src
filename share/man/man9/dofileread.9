@@ -1,4 +1,4 @@
-.\"     $NetBSD: dofileread.9,v 1.5 2003/04/16 13:35:28 wiz Exp $
+.\"     $NetBSD: dofileread.9,v 1.6 2005/12/20 19:53:15 rpaulo Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 20, 2002
+.Dd December 20, 2005
 .Dt DOFILEREAD 9
 .Os
 .Sh NAME
@@ -46,18 +46,18 @@
 .Sh SYNOPSIS
 .In sys/file.h
 .Ft int
-.Fn dofileread "struct proc *p" "int fd" "struct file *fp" "void *buf" \
+.Fn dofileread "struct lwp *l" "int fd" "struct file *fp" "void *buf" \
 "size_t nbyte" "off_t *offset" "int flags" "register_t *retval"
 .Ft int
-.Fn dofilewrite "struct proc *p" "int fd" "struct file *fp" \
+.Fn dofilewrite "struct lwp *l" "int fd" "struct file *fp" \
 "const void *buf" "size_t nbyte" "off_t *offset" "int flags" \
 "register_t *retval"
 .Ft int
-.Fn dofilereadv "struct proc *p" "int fd" "struct file *fp" \
+.Fn dofilereadv "struct lwp *l" "int fd" "struct file *fp" \
 "const struct iovec *iovp" "int iovcnt" "off_t *offset" "int flags" \
 "register_t *retval"
 .Ft int
-.Fn dofilewritev "struct proc *p" "int fd" "struct file *fp" \
+.Fn dofilewritev "struct lwp *l" "int fd" "struct file *fp" \
 "const struct iovec *iovp" "int iovcnt" "off_t *offset" "int flags" \
 "register_t *retval"
 .Sh DESCRIPTION
