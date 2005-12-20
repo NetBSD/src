@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.124 2005/12/10 14:46:37 tsutsui Exp $
+# 	$NetBSD: GENERIC32,v 1.125 2005/12/20 13:02:13 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.124 $"
+#ident 		"GENERIC-$Revision: 1.125 $"
 
 maxusers	64
 
@@ -483,8 +483,7 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
 # XXX cause uncorrectable DMA error
 #pcn*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
-# XXX cause uncorrectable DMA error
-#sip*	at pci? dev ? function ?	# SiS 900 Ethernet
+sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
