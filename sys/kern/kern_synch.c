@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.155 2005/12/15 13:43:49 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.156 2005/12/20 19:26:15 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.155 2005/12/15 13:43:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.156 2005/12/20 19:26:15 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -854,9 +854,11 @@ yield(void)
 
 /*
  * General preemption call.  Puts the current process back on its run queue
- * and performs an involuntary context switch.  If a process is supplied,
- * we switch to that process.  Otherwise, we use the normal process selection
- * criteria.
+ * and performs an involuntary context switch.
+ * The 'more' ("more work to do") argument is boolean. Returning to userspace
+ * preempt() calls pass 0. "Voluntary" preemptions in e.g. uiomove() pass 1.
+ * This will be used to indicate to the SA subsystem that the LWP is
+ * not yet finished in the kernel.
  */
 
 void
