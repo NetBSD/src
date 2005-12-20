@@ -1,7 +1,7 @@
-/*	$NetBSD: if_ipwreg.h,v 1.4 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_ipwreg.h,v 1.5 2005/12/20 07:51:38 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2004
+ * Copyright (c) 2004, 2005
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,11 @@
  * SUCH DAMAGE.
  */
 
-#define IPW_NTBD	256
+#define IPW_NTBD	128
 #define IPW_TBD_SZ	(IPW_NTBD * sizeof (struct ipw_bd))
 #define IPW_NDATA	(IPW_NTBD / 2)
-#define IPW_NRBD	256
+#define IPW_HDR_SZ	(IPW_NDATA * sizeof (struct ipw_soft_hdr))
+#define IPW_NRBD	128
 #define IPW_RBD_SZ	(IPW_NRBD * sizeof (struct ipw_bd))
 #define IPW_STATUS_SZ	(IPW_NRBD * sizeof (struct ipw_status))
 
@@ -43,18 +44,19 @@
 #define IPW_CSR_RST		0x0020
 #define IPW_CSR_CTL		0x0024
 #define IPW_CSR_IO		0x0030
+#define IPW_CSR_TX_BASE		0x0200
+#define IPW_CSR_TX_SIZE		0x0204
+#define IPW_CSR_RX_BASE		0x0240
+#define IPW_CSR_STATUS_BASE	0x0244
+#define IPW_CSR_RX_SIZE		0x0248
+#define IPW_CSR_TX_READ		0x0280
+#define IPW_CSR_RX_READ		0x02a0
 #define IPW_CSR_TABLE1_BASE	0x0380
 #define IPW_CSR_TABLE2_BASE	0x0384
-#define IPW_CSR_RX_BD_BASE	0x0240
-#define IPW_CSR_RX_STATUS_BASE	0x0244
-#define IPW_CSR_RX_BD_SIZE	0x0248
-#define IPW_CSR_RX_READ_INDEX	0x02a0
-#define IPW_CSR_RX_WRITE_INDEX	0x0fa0
-#define IPW_CSR_TX_BD_BASE	0x0200
-#define IPW_CSR_TX_BD_SIZE	0x0204
-#define IPW_CSR_TX_READ_INDEX	0x0280
-#define IPW_CSR_TX_WRITE_INDEX	0x0f80
+#define IPW_CSR_TX_WRITE	0x0f80
+#define IPW_CSR_RX_WRITE	0x0fa0
 
+/* possible flags for register IPW_CSR_INTR */
 #define IPW_INTR_TX_TRANSFER	0x00000001
 #define IPW_INTR_RX_TRANSFER	0x00000002
 #define IPW_INTR_STATUS_CHANGE	0x00000010
@@ -78,7 +80,7 @@
 /* possible flags for register IPW_CSR_CTL */
 #define IPW_CTL_CLOCK_READY	0x00000001
 #define IPW_CTL_ALLOW_STANDBY	0x00000002
-#define IPW_CTL_INIT_DONE	0x00000004
+#define IPW_CTL_INIT		0x00000004
 
 /* possible flags for register IPW_CSR_IO */
 #define IPW_IO_GPIO1_ENABLE	0x00000008
@@ -96,21 +98,29 @@
 
 /* table1 offsets */
 #define IPW_INFO_LOCK			480
+#define IPW_INFO_APS_CNT		604
+#define IPW_INFO_APS_BASE		608
 #define IPW_INFO_CARD_DISABLED		628
 #define IPW_INFO_CURRENT_CHANNEL	756
 #define IPW_INFO_CURRENT_TX_RATE	768
 #define IPW_INFO_EEPROM_ADDRESS		816
 
+
 /* table2 offsets */
-#define IPW_INFO_ADAPTER_MAC	8
 #define IPW_INFO_CURRENT_SSID	48
 #define IPW_INFO_CURRENT_BSSID	112
 
+/* supported rates */
+#define IPW_RATE_DS1	1
+#define IPW_RATE_DS2	2
+#define IPW_RATE_DS5	4
+#define IPW_RATE_DS11	8
+
 /* firmware binary image header */
-struct ipw_fw_hdr {
+struct ipw_firmware_hdr {
 	u_int32_t	version;
-	u_int32_t	fw_size;	/* firmware size */
-	u_int32_t	uc_size;	/* microcode size */
+	u_int32_t	main_size;	/* firmware size */
+	u_int32_t	ucode_size;	/* microcode size */
 } __attribute__((__packed__));
 
 /* buffer descriptor */
@@ -186,6 +196,7 @@ struct ipw_cmd {
 #define IPW_CMD_PREPARE_POWER_DOWN		58
 #define IPW_CMD_DISABLE_PHY			61
 #define IPW_CMD_SET_SECURITY_INFORMATION	67
+#define IPW_CMD_SET_WPA_IE			69
 	u_int32_t	subtype;
 	u_int32_t	seq;
 	u_int32_t	len;
@@ -203,6 +214,9 @@ struct ipw_cmd {
 #define IPW_MODE_IBSS		1
 #define IPW_MODE_MONITOR	2
 
+/* possible flags for command IPW_CMD_SET_WEP_FLAGS */
+#define IPW_WEPON	0x8
+
 /* structure for command IPW_CMD_SET_WEP_KEY */
 struct ipw_wep_key {
 	u_int8_t	idx;
@@ -215,13 +229,15 @@ struct ipw_security {
 	u_int32_t	ciphers;
 #define IPW_CIPHER_NONE		0x00000001
 #define IPW_CIPHER_WEP40	0x00000002
+#define IPW_CIPHER_TKIP		0x00000004
+#define IPW_CIPHER_CCMP		0x00000010
 #define IPW_CIPHER_WEP104	0x00000020
-	u_int16_t	version;
+#define IPW_CIPHER_CKIP		0x00000040
+	u_int16_t	reserved1;
 	u_int8_t	authmode;
 #define IPW_AUTH_OPEN	0
 #define IPW_AUTH_SHARED	1
-	u_int8_t	replay_counters_number;
-	u_int8_t	unicast_using_group;
+	u_int16_t	reserved2;
 } __attribute__((__packed__));
 
 /* structure for command IPW_CMD_SET_SCAN_OPTIONS */
@@ -236,14 +252,60 @@ struct ipw_scan_options {
 struct ipw_configuration {
 	u_int32_t	flags;
 #define IPW_CFG_PROMISCUOUS	0x00000004
-#define IPW_CFG_PREAMBLE_LEN	0x00000010
+#define IPW_CFG_PREAMBLE_AUTO	0x00000010
 #define IPW_CFG_IBSS_AUTO_START	0x00000020
 #define IPW_CFG_802_1x_ENABLE	0x00004000
 #define IPW_CFG_BSS_MASK	0x00008000
 #define IPW_CFG_IBSS_MASK	0x00010000
-	u_int32_t	channels;
+	u_int32_t	bss_chan;
 	u_int32_t	ibss_chan;
 } __attribute__((__packed__));
+
+/* structure for command IPW_CMD_SET_WPA_IE */
+struct ipw_wpa_ie {
+	u_int16_t	mask;
+	u_int16_t	capinfo;
+	u_int16_t	lintval;
+	u_int8_t	bssid[IEEE80211_ADDR_LEN];
+	u_int32_t	len;
+	struct ieee80211_ie_wpa	ie;
+} __attribute__((__packed__));
+
+/* element in AP table */
+struct ipw_node {
+	u_int32_t	reserved1[2];
+	u_int8_t	bssid[IEEE80211_ADDR_LEN];
+	u_int8_t	chan;
+	u_int8_t	rates;
+	u_int16_t	reserved2;
+	u_int16_t	capinfo;
+	u_int16_t	reserved3;
+	u_int16_t	intval;
+	u_int8_t	reserved4[28];
+	u_int8_t	essid[IEEE80211_NWID_LEN];
+	u_int16_t	reserved5;
+	u_int8_t	esslen;
+	u_int8_t	reserved6[7];
+	u_int8_t	rssi;
+} __attribute__((__packed__));
+
+/* EEPROM = Electrically Erasable Programmable Read-Only Memory */
+
+#define IPW_MEM_EEPROM_CTL	0x00300040
+
+#define IPW_EEPROM_RADIO	0x11
+#define IPW_EEPROM_MAC		0x21
+#define IPW_EEPROM_CHANNEL_LIST	0x37
+
+#define IPW_EEPROM_DELAY	1	/* minimum hold time (microsecond) */
+
+#define IPW_EEPROM_C	(1 << 0)	/* Serial Clock */
+#define IPW_EEPROM_S	(1 << 1)	/* Chip Select */
+#define IPW_EEPROM_D	(1 << 2)	/* Serial data input */
+#define IPW_EEPROM_Q	(1 << 4)	/* Serial data output */
+
+#define IPW_EEPROM_SHIFT_D	2
+#define IPW_EEPROM_SHIFT_Q	4
 
 /*
  * control and status registers access macros
@@ -267,13 +329,12 @@ struct ipw_configuration {
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
 #define CSR_WRITE_MULTI_1(sc, reg, buf, len)				\
-	bus_space_write_multi_1((sc)->sc_st, (sc)->sc_sh, (reg),	\
-	    (buf), (len));
+	bus_space_write_multi_1((sc)->sc_st, (sc)->sc_sh, (reg), 	\
+	    (buf), (len))
 
 /*
  * indirect memory space access macros
  */
-
 #define MEM_WRITE_1(sc, addr, val) do {					\
 	CSR_WRITE_4((sc), IPW_CSR_INDIRECT_ADDR, (addr));		\
 	CSR_WRITE_1((sc), IPW_CSR_INDIRECT_DATA, (val));		\
@@ -293,3 +354,11 @@ struct ipw_configuration {
 	CSR_WRITE_4((sc), IPW_CSR_INDIRECT_ADDR, (addr));		\
 	CSR_WRITE_MULTI_1((sc), IPW_CSR_INDIRECT_DATA, (buf), (len));	\
 } while (/* CONSTCOND */0)
+
+/*
+ * EEPROM access macro
+ */
+#define IPW_EEPROM_CTL(sc, val) do {					\
+	MEM_WRITE_4((sc), IPW_MEM_EEPROM_CTL, (val));			\
+	DELAY(IPW_EEPROM_DELAY);					\
+} while (0)
