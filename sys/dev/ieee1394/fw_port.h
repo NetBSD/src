@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.6 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.7 2005/12/20 04:31:28 thorpej Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -553,8 +553,6 @@ typedef bus_dma_tag_t fw_bus_dma_tag_t;
 #define BUS_SPACE_MAXSIZE_32BIT		0xFFFFFFFF
 
 #define DFLTPHYS			(64 * 1024)	/* fake */
-
-typedef struct device *	device_t;
 
 #define dev2unit	minor
 #define unit2minor(x)	(((x) & 0xff) | (((x) << 12) & ~0xfffff)) /* XXX */
