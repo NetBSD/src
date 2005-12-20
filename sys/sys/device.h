@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.82 2005/12/20 04:30:28 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.83 2005/12/20 16:28:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,6 +77,7 @@
 #ifndef _SYS_DEVICE_H_
 #define	_SYS_DEVICE_H_
 
+#include <sys/evcnt.h>
 #include <sys/properties.h>
 #include <sys/queue.h>
 
@@ -123,56 +124,6 @@ struct device {
 #define	DVF_ACTIVE	0x0001		/* device is activated */
 
 TAILQ_HEAD(devicelist, device);
-
-/*
- * `event' counters (use zero or more per device instance, as needed)
- */
-
-struct evcnt {
-	u_int64_t	ev_count;	/* how many have occurred */
-	TAILQ_ENTRY(evcnt) ev_list;	/* entry on list of all counters */
-	unsigned char	ev_type;	/* counter type; see below */
-	unsigned char	ev_grouplen;	/* 'group' len, excluding NUL */
-	unsigned char	ev_namelen;	/* 'name' len, excluding NUL */
-	char		ev_pad1;	/* reserved (for now); 0 */
-	const struct evcnt *ev_parent;	/* parent, for hierarchical ctrs */
-	const char	*ev_group;	/* name of group */
-	const char	*ev_name;	/* name of specific event */
-};
-TAILQ_HEAD(evcntlist, evcnt);
-
-/* maximum group/name lengths, including trailing NUL */
-#define	EVCNT_STRING_MAX	256
-
-/* ev_type values */
-#define	EVCNT_TYPE_MISC		0	/* miscellaneous; catch all */
-#define	EVCNT_TYPE_INTR		1	/* interrupt; count with vmstat -i */
-#define	EVCNT_TYPE_TRAP		2	/* processor trap/execption */
-
-/*
- * initializer for an event count structure.  the lengths are initted and
- * it is added to the evcnt list at attach time.
- */
-#define	EVCNT_INITIALIZER(type, parent, group, name)			\
-    {									\
-	0,			/* ev_count */				\
-	{ 0 },			/* ev_list */				\
-	type,			/* ev_type */				\
-	0,			/* ev_grouplen */			\
-	0,			/* ev_namelen */			\
-	0,			/* ev_pad1 */				\
-	parent,			/* ev_parent */				\
-	group,			/* ev_group */				\
-	name,			/* ev_name */				\
-    }
-
-/*
- * Attach a static event counter.  This uses a link set to do the work.
- * NOTE: "ev" should not be a pointer to the object, but rather a direct
- * reference to the object itself.
- */
-#define	EVCNT_ATTACH_STATIC(ev)		__link_set_add_data(evcnts, ev)
-#define	EVCNT_ATTACH_STATIC2(ev, n)	__link_set_add_data2(evcnts, ev, n)
 
 /*
  * Description of a locator, as part of interface attribute definitions.
@@ -345,7 +296,6 @@ struct pdevinit {
 
 extern struct cfdriverlist allcfdrivers;/* list of all cfdrivers */
 extern struct devicelist alldevs;	/* list of all devices */
-extern struct evcntlist allevents;	/* list of all event counters */
 extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern device_t booted_device;		/* the device we booted from */
 extern device_t booted_wedge;		/* the wedge on that device */
@@ -404,19 +354,10 @@ void	config_finalize(void);
 void	device_register(device_t, void *);
 #endif
 
-void	evcnt_init(void);
-void	evcnt_attach_static(struct evcnt *);
-void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
-	    const char *, const char *);
-void	evcnt_detach(struct evcnt *);
-
 /* convenience definitions */
 #define	device_lookup(cfd, unit)					\
 	(((unit) < (cfd)->cd_ndevs) ? (cfd)->cd_devs[(unit)] : NULL)
 
-#ifdef DDB
-void	event_print(int, void (*)(const char *, ...));
-#endif
 #endif /* _KERNEL */
 
 #endif /* !_SYS_DEVICE_H_ */
