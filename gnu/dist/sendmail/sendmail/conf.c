@@ -1,7 +1,7 @@
-/* $NetBSD: conf.c,v 1.19 2005/03/15 02:14:17 atatat Exp $ */
+/* $NetBSD: conf.c,v 1.20 2005/12/20 22:54:44 christos Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.19 2005/03/15 02:14:17 atatat Exp $");
+__RCSID("$NetBSD: conf.c,v 1.20 2005/12/20 22:54:44 christos Exp $");
 #endif
 
 /*
@@ -3879,8 +3879,8 @@ vendor_pre_defaults(e)
 	**  /etc/mail/sendmail.cf without this
 	*/
 
-	setuserenv("ISP", NULL);
-	setuserenv("SYSTYPE", NULL);
+	setuserenviron("ISP", NULL);
+	setuserenviron("SYSTYPE", NULL);
 #endif /* apollo */
 }
 
@@ -3894,7 +3894,7 @@ vendor_post_defaults(e)
 
 	/* Makes sure the SOCK environment variable remains */
 	if (p = getextenv("SOCK"))
-		setuserenv("SOCK", p);
+		setuserenviron("SOCK", p);
 #endif /* __QNX__ */
 #if defined(SUN_EXTENSIONS) && defined(SUN_DEFAULT_VALUES)
 	sun_post_defaults(e);
