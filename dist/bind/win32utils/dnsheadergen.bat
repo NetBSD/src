@@ -1,19 +1,19 @@
 echo off
 rem
-rem  Copyright (C) 2000, 2001  Internet Software Consortium.
+rem Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+rem Copyright (C) 2001-2002  Internet Software Consortium.
 rem 
-rem  Permission to use, copy, modify, and distribute this software for any
-rem  purpose with or without fee is hereby granted, provided that the above
-rem  copyright notice and this permission notice appear in all copies.
+rem Permission to use, copy, modify, and distribute this software for any
+rem purpose with or without fee is hereby granted, provided that the above
+rem copyright notice and this permission notice appear in all copies.
 rem 
-rem  THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-rem  DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-rem  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-rem  INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-rem  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-rem  FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-rem  NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-rem  WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+rem THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+rem REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+rem AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+rem INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+rem LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+rem OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+rem PERFORMANCE OF THIS SOFTWARE.
 
 cd ..\lib\dns
 cd win32

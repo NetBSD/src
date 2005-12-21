@@ -1,23 +1,23 @@
-/*	$NetBSD: socket.h,v 1.1.1.2 2005/12/21 19:59:02 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.1.1.3 2005/12/21 23:17:29 christos Exp $	*/
 
 /*
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.h,v 1.54 2001/03/06 01:23:02 bwelling Exp */
+/* Id: socket.h,v 1.54.12.4 2004/03/08 09:04:53 marka Exp */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -326,6 +326,13 @@ isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *addressp);
  *	ISC_R_ADDRINUSE
  *	ISC_R_BOUND
  *	ISC_R_UNEXPECTED
+ */
+
+isc_result_t
+isc_socket_filter(isc_socket_t *sock, const char *filter);
+/*
+ * Inform the kernel that it should perform accept filtering.
+ * If filter is NULL the current filter will be removed.:w
  */
 
 isc_result_t
@@ -683,6 +690,16 @@ isc_socket_gettype(isc_socket_t *sock);
 
 isc_boolean_t
 isc_socket_isbound(isc_socket_t *sock);
+
+void
+isc_socket_ipv6only(isc_socket_t *sock, isc_boolean_t yes);
+/*
+ * If the socket is an IPv6 socket set/clear the IPV6_IPV6ONLY socket
+ * option if the host OS supports this option.
+ *
+ * Requires:
+ *	'sock' is a valid socket.
+ */
 
 ISC_LANG_ENDDECLS
 

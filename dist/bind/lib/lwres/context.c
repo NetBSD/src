@@ -1,23 +1,23 @@
-/*	$NetBSD: context.c,v 1.1.1.2 2005/12/21 19:59:24 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.1.1.3 2005/12/21 23:17:56 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: context.c,v 1.41.2.2 2003/10/09 07:32:54 marka Exp */
+/* Id: context.c,v 1.41.2.1.2.4 2004/09/17 05:50:31 marka Exp */
 
 #include <config.h>
 
@@ -62,8 +62,8 @@ do { \
 } while (0)
 #endif
 
-lwres_uint16_t lwres_udp_port = LWRES_UDP_PORT;
-const char *lwres_resolv_conf = LWRES_RESOLV_CONF;
+LIBLWRES_EXTERNAL_DATA lwres_uint16_t lwres_udp_port = LWRES_UDP_PORT;
+LIBLWRES_EXTERNAL_DATA const char *lwres_resolv_conf = LWRES_RESOLV_CONF;
 
 static void *
 lwres_malloc(void *, size_t);
@@ -130,7 +130,7 @@ lwres_context_destroy(lwres_context_t **contextp) {
 	*contextp = NULL;
 
 	if (ctx->sock != -1) {
-		close(ctx->sock);
+		(void)close(ctx->sock);
 		ctx->sock = -1;
 	}
 
@@ -239,7 +239,7 @@ context_connect(lwres_context_t *ctx) {
 
 	ret = connect(s, sa, salen);
 	if (ret != 0) {
-		close(s);
+		(void)close(s);
 		return (LWRES_R_IOERROR);
 	}
 
@@ -348,13 +348,12 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	struct timeval timeout;
 
 	/*
-	 * Type of tv_sec is long, so make sure the unsigned long timeout
-	 * does not overflow it.
+	 * Type of tv_sec is 32 bits long. 
 	 */
-	if (ctx->timeout <= (unsigned int)LONG_MAX)
-		timeout.tv_sec = (long)ctx->timeout;
+	if (ctx->timeout <= 0x7FFFFFFFU)
+		timeout.tv_sec = (int)ctx->timeout;
 	else
-		timeout.tv_sec = LONG_MAX;
+		timeout.tv_sec = 0x7FFFFFFF;
 
 	timeout.tv_usec = 0;
 

@@ -1,15 +1,39 @@
+Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2001, 2003  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
-Id: readme1st.txt,v 1.7.2.5 2003/08/06 02:43:28 marka Exp
+Id: readme1st.txt,v 1.7.2.4.4.4 2005/09/06 02:12:43 marka Exp
 
-	   Release of BIND 9.2.3rc1 for Window NT/2000
+	   Release of BIND 9.3 for Window NT/2000/XP/2003
 
-This is a maintenance release of BIND 9.2 for Window NT/2000.  Only
-IPv4 stacks are supported on the box running this version of BIND.
+This is a release of BIND 9.3 for Window NT/2000/XP/2003.
+Only IPv4 stacks are supported on the box running this version of BIND.
 IPv6 stacks will be supported in a future release.
   
-	Kit Installation Information
+	Important Kit Installation Information
+
+As of release 9.3.0, BINDInstall requires that you install
+it under an account with restricted privileges. The installer
+will prompt you for an account name, the default is "named", and
+a password for that account. It will also check for the existence
+of that account. If it does not exist is will create it with only
+the privileges required to run BIND. If the account does exist it
+will check that it has only the one privilege required:
+"Log on as a service". If it has too many privileges it will prompt
+you if you want to continue. 
+
+With BIND running under an account name it is necessary for all
+files and directories that BIND uses to have permissions set up
+for the named account if the files are on an NTFS disk. BIND requires
+that the account have read and write access to the directory for
+the pid file, any files that are maintained either for slave zones
+or for master zones supporting dynamic updates. The account will
+also need read access to the named.conf and any other file that
+it needs to read.
+
+It is important that on Windows the directory directive is used in
+the options section to tell BIND where to find the files used in
+named.conf.
 
 If you have previously installed BIND 8 or BIND 4 on the system that
 you wish to install this kit, you MUST use the BIND 8 or BIND 4 installer
@@ -21,6 +45,8 @@ in a future release.
 Unpack the kit into any convenient directory and run the BINDInstall
 program.  This will install the named and associated programs into
 the correct directories and set up the required registry keys.
+
+Messages are logged to the Application log in the EventViewer.
 
 	Controlling BIND
 
@@ -63,6 +89,13 @@ the servers you wish to control, specifically the IP address and key
 in both named.conf and rndc.conf. Again see section 3.4.1.2 of the
 ARM for details.
 
+In order to you rndc from a different system it is important to
+ensure that the clocks are synchronized. The clocks must be kept
+within 5 minutes of each other or the rndc commands will fail
+authentication. Use NTP or other time synchronization software
+to keep your clocks accurate. NTP can be found at
+http://www.ntp.org/.
+
 In addition BIND is installed as a win32 system service, can be
 started and stopped in the same way as any other service and
 automatically starts whenever the system is booted. Signals are
@@ -71,7 +104,7 @@ not supported and are in fact ignored.
 Note: Unlike most Windows applications, named does not, change its
 working directory when started as a service.  If you wish to use
 relative files in named.conf you will need to specify a working
-directory.
+directory using the directory directive options.
 
 	Documentation
 
@@ -84,31 +117,30 @@ BIND 9 applications.
 
 	DNS Tools
 
-The following tools have been built for Windows NT: dig, nslookup, host,
-nsupdate, rndc, rndc-confgen, named-checkconf, named-checkzone, dnssec-keygen,
-dnssec-makekeyset, dnssec-signkey, dnssec-signzone. The tools will NOT run on
-Win9x, only WinNT and Win2000. The latter tools are for use with DNSSEC. All
-tools are installed in the dns/bin directory.
+The following tools have been built for Windows NT: dig, nslookup,
+host, nsupdate, rndc, rndc-confgen, named-checkconf, named-checkzone,
+dnssec-keygen, dnssec-signzone. The tools will NOT run on Win9x,
+only WinNT and Win2000. The latter tools are for use with DNSSEC.
+All tools are installed in the dns/bin directory.
 
 IMPORTANT NOTE ON USING THE TOOLS:
-If you wish to use nsupdate on a win32 platform to do dynamic updates
-to a zone you MUST create a resolv.conf in the System32\Drivers\etc
-directory containing a list of nameserver addresses to use to find
-the nameserver authoritative for the zone. The format of this file is:
+
+It is no longer necessary to create a resolv.conf file on Windows as
+the tools will look in the registry for the required nameserver
+information. However if you wish to create a resolv.conf file as
+follows it will use it in preference to the registry nameserver
+entries.
+
+To create a resolv.conf you need to place it in the System32\Drivers\etc
+directory and it needs to contain a list of nameserver addresses to
+use to find the nameserver authoritative for the zone. The format of
+this file is:
 
 nameserver 1.2.3.4
 nameserver 5.6.7.8
 
 Replace the IP addresses with your real addresses.  127.0.0.1 is a valid
 address if you are running a nameserver on the localhost. 
-
-In addition, if you use dig, host or nslookup, you will need this
-file on the system where you are running these tools unless you have
-BIND running on that system.
-
-This will be fixed in a future release.
-
-Messages are logged to the Application log in the EventViewer.
 
 	Problems
 
@@ -117,4 +149,5 @@ other questions should go to the bind-users@isc.org mailing list or the
 comp.protocol.dns.bind news group.
 
 	Danny Mayer
+	mayer@ntp.isc.org
 

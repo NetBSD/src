@@ -1,23 +1,23 @@
-/*	$NetBSD: tsig_250.c,v 1.1.1.2 2005/12/21 19:58:32 christos Exp $	*/
+/*	$NetBSD: tsig_250.c,v 1.1.1.3 2005/12/21 23:17:00 christos Exp $	*/
 
 /*
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsig_250.c,v 1.52.2.2 2003/10/09 07:32:41 marka Exp */
+/* Id: tsig_250.c,v 1.52.2.1.2.8 2005/03/20 22:34:01 marka Exp */
 
 /* Reviewed: Thu Mar 16 13:39:43 PST 2000 by gson */
 
@@ -52,14 +52,14 @@ fromtext_any_tsig(ARGS_FROMTEXT) {
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
 	origin = (origin != NULL) ? origin : dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, downcase, target));
+	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 
 	/*
 	 * Time Signed: 48 bits.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	sigtime = isc_string_touint64(token.value.as_pointer, &e, 10);
+	sigtime = isc_string_touint64(DNS_AS_STR(token), &e, 10);
 	if (*e != 0)
 		RETTOK(DNS_R_SYNTAX);
 	if ((sigtime >> 48) != 0)
@@ -107,7 +107,7 @@ fromtext_any_tsig(ARGS_FROMTEXT) {
 	if (dns_tsigrcode_fromtext(&rcode, &token.value.as_textregion)
 				!= ISC_R_SUCCESS)
 	{
-		i = strtol(token.value.as_pointer, &e, 10);
+		i = strtol(DNS_AS_STR(token), &e, 10);
 		if (*e != 0)
 			RETTOK(DNS_R_UNKNOWN);
 		if (i < 0 || i > 0xffff)
@@ -135,7 +135,7 @@ static inline isc_result_t
 totext_any_tsig(ARGS_TOTEXT) {
 	isc_region_t sr;
 	isc_region_t sigr;
-	char buf[sizeof "281474976710655 "];
+	char buf[sizeof("281474976710655 ")];
 	char *bufp;
 	dns_name_t name;
 	dns_name_t prefix;
@@ -164,10 +164,12 @@ totext_any_tsig(ARGS_TOTEXT) {
 	 */
 	sigtime = ((isc_uint64_t)sr.base[0] << 40) |
 		  ((isc_uint64_t)sr.base[1] << 32) |
-		  (sr.base[2] << 24) | (sr.base[3] << 16) |
-		  (sr.base[4] << 8) | sr.base[5];
+		  ((isc_uint64_t)sr.base[2] << 24) |
+		  ((isc_uint64_t)sr.base[3] << 16) |
+		  ((isc_uint64_t)sr.base[4] << 8) |
+		  (isc_uint64_t)sr.base[5];
 	isc_region_consume(&sr, 6);
-	bufp = &buf[sizeof buf - 1];
+	bufp = &buf[sizeof(buf) - 1];
 	*bufp-- = 0;
 	*bufp-- = ' ';
 	do {
@@ -262,7 +264,7 @@ fromwire_any_tsig(ARGS_FROMWIRE) {
 	 * Algorithm Name.
 	 */
 	dns_name_init(&name, NULL);
-	RETERR(dns_name_fromwire(&name, source, dctx, downcase, target));
+	RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 
 	isc_buffer_activeregion(source, &sr);
 	/*
@@ -352,7 +354,7 @@ compare_any_tsig(ARGS_COMPARE) {
 		return (order);
 	isc_region_consume(&r1, name_length(&name1));
 	isc_region_consume(&r2, name_length(&name2));
-	return (compare_region(&r1, &r2));
+	return (isc_region_compare(&r1, &r2));
 }
 
 static inline isc_result_t
@@ -459,8 +461,10 @@ tostruct_any_tsig(ARGS_TOSTRUCT) {
 	INSIST(sr.length >= 6);
 	tsig->timesigned = ((isc_uint64_t)sr.base[0] << 40) |
 			   ((isc_uint64_t)sr.base[1] << 32) |
-			   (sr.base[2] << 24) | (sr.base[3] << 16) |
-			   (sr.base[4] << 8) | sr.base[5];
+			   ((isc_uint64_t)sr.base[2] << 24) |
+			   ((isc_uint64_t)sr.base[3] << 16) |
+			   ((isc_uint64_t)sr.base[4] << 8) |
+			   (isc_uint64_t)sr.base[5];
 	isc_region_consume(&sr, 6);
 
 	/*
@@ -563,6 +567,33 @@ digest_any_tsig(ARGS_DIGEST) {
 	UNUSED(arg);
 
 	return (ISC_R_NOTIMPLEMENTED);
+}
+
+static inline isc_boolean_t
+checkowner_any_tsig(ARGS_CHECKOWNER) {
+
+	REQUIRE(type == 250);
+	REQUIRE(rdclass == 255);
+
+	UNUSED(name);
+	UNUSED(type);
+	UNUSED(rdclass);
+	UNUSED(wildcard);
+
+	return (ISC_TRUE);
+}
+
+static inline isc_boolean_t
+checknames_any_tsig(ARGS_CHECKNAMES) {
+
+	REQUIRE(rdata->type == 250);
+	REQUIRE(rdata->rdclass == 250);
+
+	UNUSED(rdata);
+	UNUSED(owner);
+	UNUSED(bad);
+
+	return (ISC_TRUE);
 }
 
 #endif	/* RDATA_ANY_255_TSIG_250_C */
