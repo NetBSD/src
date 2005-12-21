@@ -1,23 +1,23 @@
-/*	$NetBSD: t_api.c,v 1.1.1.3 2005/12/21 19:59:49 christos Exp $	*/
+/*	$NetBSD: t_api.c,v 1.1.1.4 2005/12/21 23:18:14 christos Exp $	*/
 
 /*
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_api.c,v 1.48.2.2 2003/10/09 07:32:57 marka Exp */
+/* Id: t_api.c,v 1.48.2.1.2.8 2005/06/18 01:03:24 marka Exp */
 
 #include <config.h>
 
@@ -35,7 +35,9 @@
 
 #include <isc/boolean.h>
 #include <isc/commandline.h>
+#include <isc/print.h>
 #include <isc/string.h>
+#include <isc/mem.h>
 
 #include <dns/compress.h>
 #include <dns/result.h>
@@ -120,6 +122,7 @@ main(int argc, char **argv) {
 	testspec_t		*pts;
 	struct sigaction	sa;
 
+	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 	first = ISC_TRUE;
 	subprocs = 1;
 	T_timeout = T_TCTOUT;
@@ -255,7 +258,7 @@ main(int argc, char **argv) {
 	 * Output start stanza to journal.
 	 */
 
-	sprintf(T_buf, "%s:", argv[0]);
+	snprintf(T_buf, sizeof(T_buf), "%s:", argv[0]);
 	len = strlen(T_buf);
 	(void) t_getdate(T_buf + len, T_BIGBUF - len);
 	t_putinfo("S", T_buf);
@@ -336,7 +339,7 @@ main(int argc, char **argv) {
 		++tnum;
 	}
 
-	sprintf(T_buf, "%s:", argv[0]);
+	snprintf(T_buf, sizeof(T_buf), "%s:", argv[0]);
 	len = strlen(T_buf);
 	(void) t_getdate(T_buf + len, T_BIGBUF - len);
 	t_putinfo("E", T_buf);
@@ -355,7 +358,7 @@ t_assert(const char *component, int anum, int class, const char *what, ...) {
 	 * Format text to a buffer.
 	 */
 	va_start(args, what);
-	(void)vsprintf(T_buf, what, args);
+	(void)vsnprintf(T_buf, sizeof(T_buf), what, args);
 	va_end(args);
 
 	(void)t_putinfo("A", T_buf);
@@ -367,7 +370,7 @@ t_info(const char *format, ...) {
 	va_list	args;
 
 	va_start(args, format);
-	(void) vsprintf(T_buf, format, args);
+	(void) vsnprintf(T_buf, sizeof(T_buf), format, args);
 	va_end(args);
 	(void) t_putinfo("I", T_buf);
 }
@@ -391,6 +394,9 @@ t_result(int result) {
 			break;
 		case T_UNTESTED:
 			p = "UNTESTED";
+			break;
+		case T_THREADONLY:
+			p = "THREADONLY";
 			break;
 		default:
 			p = "UNKNOWN";
@@ -590,8 +596,8 @@ struct dns_errormap {
 	{ ISC_R_RANGE,			"ISC_R_RANGE"		},
 	{ DNS_R_LABELTOOLONG,		"DNS_R_LABELTOOLONG"	},
 	{ DNS_R_BADESCAPE,		"DNS_R_BADESCAPE"	},
-	{ DNS_R_BADBITSTRING,		"DNS_R_BADBITSTRING"	},
-	{ DNS_R_BITSTRINGTOOLONG,	"DNS_R_BITSTRINGTOOLONG"},
+	/* { DNS_R_BADBITSTRING,	"DNS_R_BADBITSTRING"	}, */
+	/* { DNS_R_BITSTRINGTOOLONG,	"DNS_R_BITSTRINGTOOLONG"}, */
 	{ DNS_R_EMPTYLABEL,		"DNS_R_EMPTYLABEL"	},
 	{ DNS_R_BADDOTTEDQUAD,		"DNS_R_BADDOTTEDQUAD"	},
 	{ DNS_R_UNKNOWN,		"DNS_R_UNKNOWN"		},

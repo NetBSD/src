@@ -1,23 +1,23 @@
-/*	$NetBSD: time.c,v 1.1.1.2 2005/12/21 19:59:16 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.3 2005/12/21 23:17:48 christos Exp $	*/
 
 /*
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.c,v 1.24.2.3 2001/10/01 01:42:38 gson Exp */
+/* Id: time.c,v 1.24.2.3.10.4 2004/03/11 05:58:42 marka Exp */
 
 #include <config.h>
 
@@ -50,14 +50,14 @@
  ***/
 
 static isc_time_t epoch = { { 0, 0 } };
-isc_time_t *isc_time_epoch = &epoch;
+LIBISC_EXTERNAL_DATA isc_time_t *isc_time_epoch = &epoch;
 
 /***
  *** Intervals
  ***/
 
 static isc_interval_t zero_interval = { 0 };
-isc_interval_t *isc_interval_zero = &zero_interval;
+LIBISC_EXTERNAL_DATA isc_interval_t *isc_interval_zero = &zero_interval;
 
 void
 isc_interval_set(isc_interval_t *i, unsigned int seconds,
@@ -71,7 +71,7 @@ isc_interval_set(isc_interval_t *i, unsigned int seconds,
 }
 
 isc_boolean_t
-isc_interval_iszero(isc_interval_t *i) {
+isc_interval_iszero(const isc_interval_t *i) {
 	REQUIRE(i != NULL);
 	if (i->interval == 0)
 		return (ISC_TRUE);
@@ -88,7 +88,7 @@ isc_time_settoepoch(isc_time_t *t) {
 }
 
 isc_boolean_t
-isc_time_isepoch(isc_time_t *t) {
+isc_time_isepoch(const isc_time_t *t) {
 	REQUIRE(t != NULL);
 
 	if (t->absolute.dwLowDateTime == 0 &&
@@ -108,7 +108,7 @@ isc_time_now(isc_time_t *t) {
 }
 
 isc_result_t
-isc_time_nowplusinterval(isc_time_t *t, isc_interval_t *i) {
+isc_time_nowplusinterval(isc_time_t *t, const isc_interval_t *i) {
 	ULARGE_INTEGER i1;
 
 	REQUIRE(t != NULL);
@@ -131,14 +131,15 @@ isc_time_nowplusinterval(isc_time_t *t, isc_interval_t *i) {
 }
 
 int
-isc_time_compare(isc_time_t *t1, isc_time_t *t2) {
+isc_time_compare(const isc_time_t *t1, const isc_time_t *t2) {
 	REQUIRE(t1 != NULL && t2 != NULL);
 
 	return ((int)CompareFileTime(&t1->absolute, &t2->absolute));
 }
 
 isc_result_t
-isc_time_add(isc_time_t *t, isc_interval_t *i, isc_time_t *result) {
+isc_time_add(const isc_time_t *t, const isc_interval_t *i, isc_time_t *result)
+{
 	ULARGE_INTEGER i1;
 
 	REQUIRE(t != NULL && i != NULL && result != NULL);
@@ -158,7 +159,8 @@ isc_time_add(isc_time_t *t, isc_interval_t *i, isc_time_t *result) {
 }
 
 isc_result_t
-isc_time_subtract(isc_time_t *t, isc_interval_t *i, isc_time_t *result) {
+isc_time_subtract(const isc_time_t *t, const isc_interval_t *i,
+		  isc_time_t *result) {
 	ULARGE_INTEGER i1;
 
 	REQUIRE(t != NULL && i != NULL && result != NULL);
@@ -178,7 +180,7 @@ isc_time_subtract(isc_time_t *t, isc_interval_t *i, isc_time_t *result) {
 }
 
 isc_uint64_t
-isc_time_microdiff(isc_time_t *t1, isc_time_t *t2) {
+isc_time_microdiff(const isc_time_t *t1, const isc_time_t *t2) {
 	ULARGE_INTEGER i1, i2;
 	LONGLONG i3;
 
@@ -201,7 +203,20 @@ isc_time_microdiff(isc_time_t *t1, isc_time_t *t2) {
 }
 
 isc_uint32_t
-isc_time_nanoseconds(isc_time_t *t) {
+isc_time_seconds(const isc_time_t *t) {
+	SYSTEMTIME st;
+
+	/*
+	 * Convert the time to a SYSTEMTIME structure and the grab the
+	 * milliseconds
+	 */
+	FileTimeToSystemTime(&t->absolute, &st);
+
+	return ((isc_uint32_t)(st.wMilliseconds / 1000));
+}
+
+isc_uint32_t
+isc_time_nanoseconds(const isc_time_t *t) {
 	SYSTEMTIME st;
 
 	/*
@@ -217,21 +232,22 @@ void
 isc_time_formattimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	FILETIME localft;
 	SYSTEMTIME st;
-
-	static const char badtime[] = "Bad 00 99:99:99.999";
-	static const char *months[] = {
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-	};
+	char DateBuf[50];
+	char TimeBuf[50];
+	
+	static const char badtime[] = "99-Bad-9999 99:99:99.999";
 	
 	REQUIRE(len > 0);
 	if (FileTimeToLocalFileTime(&t->absolute, &localft) &&
-	    FileTimeToSystemTime(&localft, &st))
-	{
-		snprintf(buf, len, "%s %2u %02u:%02u:%02u.%03u",
-		months[st.wMonth - 1], st.wDay, st.wHour, st.wMinute,
-		st.wSecond, st.wMilliseconds);
-	} else {
+	    FileTimeToSystemTime(&localft, &st)) {
+		GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, "dd-MMM-yyyy",
+			      DateBuf, 50);
+		GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOTIMEMARKER|
+			      TIME_FORCE24HOURFORMAT, &st, NULL, TimeBuf, 50);
+		
+		snprintf(buf, len, "%s %s.%03u", DateBuf, TimeBuf,
+			 st.wMilliseconds);
+		
+	} else
 		snprintf(buf, len, badtime);
-	}
 }

@@ -1,6 +1,7 @@
-/*	$NetBSD: sexpr.c,v 1.1.1.2 2005/12/21 19:59:18 christos Exp $	*/
+/*	$NetBSD: sexpr.c,v 1.1.1.3 2005/12/21 23:17:51 christos Exp $	*/
 
 /*
+ * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  * Portions Copyright (C) 2001  Nominum, Inc.
  *
@@ -8,17 +9,16 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM AND
- * NOMINUM DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING
- * ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT
- * SHALL INTERNET SOFTWARE CONSORTIUM OR NOMINUM BE LIABLE FOR ANY
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NOMINUM DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY
  * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
- * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sexpr.c,v 1.2 2001/03/27 20:08:01 bwelling Exp */
+/* Id: sexpr.c,v 1.2.12.3 2004/03/08 09:05:04 marka Exp */
 
 #include <config.h>
 
@@ -40,7 +40,7 @@ isccc_sexpr_cons(isccc_sexpr_t *car, isccc_sexpr_t *cdr)
 {
 	isccc_sexpr_t *sexpr;
 
-	sexpr = malloc(sizeof *sexpr);
+	sexpr = malloc(sizeof(*sexpr));
 	if (sexpr == NULL)
 		return (NULL);
 	sexpr->type = ISCCC_SEXPRTYPE_DOTTEDPAIR;
@@ -61,7 +61,7 @@ isccc_sexpr_fromstring(const char *str)
 {
 	isccc_sexpr_t *sexpr;
 
-	sexpr = malloc(sizeof *sexpr);
+	sexpr = malloc(sizeof(*sexpr));
 	if (sexpr == NULL)
 		return (NULL);
 	sexpr->type = ISCCC_SEXPRTYPE_STRING;
@@ -80,7 +80,7 @@ isccc_sexpr_frombinary(const isccc_region_t *region)
 	isccc_sexpr_t *sexpr;
 	unsigned int region_size;
 
-	sexpr = malloc(sizeof *sexpr);
+	sexpr = malloc(sizeof(*sexpr));
 	if (sexpr == NULL)
 		return (NULL);
 	sexpr->type = ISCCC_SEXPRTYPE_BINARY;

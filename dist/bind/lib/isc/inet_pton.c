@@ -1,25 +1,25 @@
-/*	$NetBSD: inet_pton.c,v 1.1.1.2 2005/12/21 19:58:44 christos Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.1.1.3 2005/12/21 23:17:16 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"Id: inet_pton.c,v 1.10.2.4 2003/07/22 04:03:47 marka Exp";
+	"Id: inet_pton.c,v 1.10.2.4.2.3 2005/03/31 23:56:14 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -134,7 +134,7 @@ inet_pton6(const char *src, unsigned char *dst) {
 			  xdigits_u[] = "0123456789ABCDEF";
 	unsigned char tmp[NS_IN6ADDRSZ], *tp, *endp, *colonp;
 	const char *xdigits, *curtok;
-	int ch, saw_xdigit;
+	int ch, seen_xdigits;
 	unsigned int val;
 
 	memset((tp = tmp), '\0', NS_IN6ADDRSZ);
@@ -145,7 +145,7 @@ inet_pton6(const char *src, unsigned char *dst) {
 		if (*++src != ':')
 			return (0);
 	curtok = src;
-	saw_xdigit = 0;
+	seen_xdigits = 0;
 	val = 0;
 	while ((ch = *src++) != '\0') {
 		const char *pch;
@@ -155,14 +155,13 @@ inet_pton6(const char *src, unsigned char *dst) {
 		if (pch != NULL) {
 			val <<= 4;
 			val |= (pch - xdigits);
-			if (val > 0xffff)
+			if (++seen_xdigits > 4)
 				return (0);
-			saw_xdigit = 1;
 			continue;
 		}
 		if (ch == ':') {
 			curtok = src;
-			if (!saw_xdigit) {
+			if (!seen_xdigits) {
 				if (colonp)
 					return (0);
 				colonp = tp;
@@ -172,19 +171,19 @@ inet_pton6(const char *src, unsigned char *dst) {
 				return (0);
 			*tp++ = (unsigned char) (val >> 8) & 0xff;
 			*tp++ = (unsigned char) val & 0xff;
-			saw_xdigit = 0;
+			seen_xdigits = 0;
 			val = 0;
 			continue;
 		}
 		if (ch == '.' && ((tp + NS_INADDRSZ) <= endp) &&
 		    inet_pton4(curtok, tp) > 0) {
 			tp += NS_INADDRSZ;
-			saw_xdigit = 0;
+			seen_xdigits = 0;
 			break;	/* '\0' was seen by inet_pton4(). */
 		}
 		return (0);
 	}
-	if (saw_xdigit) {
+	if (seen_xdigits) {
 		if (tp + NS_INT16SZ > endp)
 			return (0);
 		*tp++ = (unsigned char) (val >> 8) & 0xff;

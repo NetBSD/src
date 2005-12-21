@@ -1,23 +1,23 @@
-/*	$NetBSD: zone.h,v 1.1.1.2 2005/12/21 19:58:29 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.1.1.3 2005/12/21 23:16:59 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.h,v 1.106.2.7 2003/03/06 04:38:22 marka Exp */
+/* Id: zone.h,v 1.106.2.7.4.15 2004/10/26 02:08:43 marka Exp */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
@@ -41,12 +41,19 @@ typedef enum {
 	dns_zone_stub
 } dns_zonetype_t;
 
-#define DNS_ZONEOPT_SERVERS	0x00000001U	/* perform server checks */
-#define DNS_ZONEOPT_PARENTS	0x00000002U	/* perform parent checks */
-#define DNS_ZONEOPT_CHILDREN	0x00000004U	/* perform child checks */
-#define DNS_ZONEOPT_NOTIFY	0x00000008U	/* perform NOTIFY */
-#define DNS_ZONEOPT_MANYERRORS	0x00000010U	/* return many errors on load */
-#define DNS_ZONEOPT_NOMERGE	0x00000040U	/* don't merge journal */
+#define DNS_ZONEOPT_SERVERS	  0x00000001U	/* perform server checks */
+#define DNS_ZONEOPT_PARENTS	  0x00000002U	/* perform parent checks */
+#define DNS_ZONEOPT_CHILDREN	  0x00000004U	/* perform child checks */
+#define DNS_ZONEOPT_NOTIFY	  0x00000008U	/* perform NOTIFY */
+#define DNS_ZONEOPT_MANYERRORS	  0x00000010U	/* return many errors on load */
+#define DNS_ZONEOPT_IXFRFROMDIFFS 0x00000020U	/* calculate differences */
+#define DNS_ZONEOPT_NOMERGE	  0x00000040U	/* don't merge journal */
+#define DNS_ZONEOPT_CHECKNS	  0x00000080U	/* check if NS's are addresses */
+#define DNS_ZONEOPT_FATALNS	  0x00000100U	/* DNS_ZONEOPT_CHECKNS is fatal */
+#define DNS_ZONEOPT_MULTIMASTER	  0x00000200U	/* this zone has multiple masters */
+#define DNS_ZONEOPT_USEALTXFRSRC  0x00000400U	/* use alternate transfer sources */
+#define DNS_ZONEOPT_CHECKNAMES	  0x00000800U	/* check-names */
+#define DNS_ZONEOPT_CHECKNAMESFAIL 0x00001000U	/* fatal check-name failures */
 
 #ifndef NOMINUM_PUBLIC
 /*
@@ -230,6 +237,9 @@ dns_zone_loadnew(dns_zone_t *zone);
  * Returns:
  *	ISC_R_UNEXPECTED
  *	ISC_R_SUCCESS
+ *	DNS_R_CONTINUE	  Incremental load has been queued.
+ *	DNS_R_UPTODATE	  The zone has already been loaded based on
+ *			  file system timestamps.
  *	DNS_R_BADZONE
  *	Any result value from dns_db_load().
  */
@@ -384,6 +394,17 @@ dns_zone_dumptostream(dns_zone_t *zone, FILE *fd);
  *	'fd' to be a stream open for writing.
  */
 
+isc_result_t
+dns_zone_fulldumptostream(dns_zone_t *zone, FILE *fd);
+/*
+ *	The same as dns_zone_dumptostream, but dumps the zone with
+ *	different dump settings (dns_master_style_full).
+ *
+ * Require:
+ *	'zone' to be a valid zone.
+ *	'fd' to be a stream open for writing.
+ */
+
 void
 dns_zone_maintenance(dns_zone_t *zone);
 /*
@@ -430,7 +451,7 @@ dns_zone_setalsonotify(dns_zone_t *zone, isc_sockaddr_t *notify,
  * Require:
  *	'zone' to be a valid zone.
  *	'notify' to be non-NULL if count != 0.
- *	'count' to be the number of notifyees
+ *	'count' to be the number of notifyees.
  *
  * Returns:
  *	ISC_R_SUCCESS
@@ -507,6 +528,8 @@ dns_zone_setmaxretrytime(dns_zone_t *zone, isc_uint32_t val);
 
 isc_result_t
 dns_zone_setxfrsource4(dns_zone_t *zone, isc_sockaddr_t *xfrsource);
+isc_result_t
+dns_zone_setaltxfrsource4(dns_zone_t *zone, isc_sockaddr_t *xfrsource);
 /*
  * 	Set the source address to be used in IPv4 zone transfers.
  *
@@ -520,6 +543,8 @@ dns_zone_setxfrsource4(dns_zone_t *zone, isc_sockaddr_t *xfrsource);
 
 isc_sockaddr_t *
 dns_zone_getxfrsource4(dns_zone_t *zone);
+isc_sockaddr_t *
+dns_zone_getaltxfrsource4(dns_zone_t *zone);
 /*
  *	Returns the source address set by a previous dns_zone_setxfrsource4
  *	call, or the default of inaddr_any, port 0.
@@ -530,6 +555,8 @@ dns_zone_getxfrsource4(dns_zone_t *zone);
 
 isc_result_t
 dns_zone_setxfrsource6(dns_zone_t *zone, isc_sockaddr_t *xfrsource);
+isc_result_t
+dns_zone_setaltxfrsource6(dns_zone_t *zone, isc_sockaddr_t *xfrsource);
 /*
  * 	Set the source address to be used in IPv6 zone transfers.
  *
@@ -543,6 +570,8 @@ dns_zone_setxfrsource6(dns_zone_t *zone, isc_sockaddr_t *xfrsource);
 
 isc_sockaddr_t *
 dns_zone_getxfrsource6(dns_zone_t *zone);
+isc_sockaddr_t *
+dns_zone_getaltxfrsource6(dns_zone_t *zone);
 /*
  *	Returns the source address set by a previous dns_zone_setxfrsource6
  *	call, or the default of in6addr_any, port 0.
@@ -757,6 +786,12 @@ dns_zone_clearxfracl(dns_zone_t *zone);
  *	'zone' to be a valid zone.
  */
 
+isc_boolean_t
+dns_zone_getupdatedisabled(dns_zone_t *zone);
+
+void
+dns_zone_setupdatedisabled(dns_zone_t *zone, isc_boolean_t state);
+
 void
 dns_zone_setchecknames(dns_zone_t *zone, dns_severity_t severity);
 /*
@@ -938,6 +973,13 @@ dns_zone_replacedb(dns_zone_t *zone, dns_db_t *db, isc_boolean_t dump);
  *
  * Requires:
  *	'zone' to be a valid zone.
+ *
+ * Returns:
+ *	DNS_R_SUCCESS
+ *	DNS_R_BADZONE	zone failed basic consistancy checks:
+ *			* a single SOA must exist
+ *			* some NS records must exist.
+ *	Others
  */
 
 isc_uint32_t
@@ -1098,6 +1140,34 @@ dns_zone_first(dns_zonemgr_t *zmgr, dns_zone_t **first);
  */
 
 isc_result_t
+dns_zone_setkeydirectory(dns_zone_t *zone, const char *directory);
+/*
+ *	Sets the name of the directory where private keys used for
+ *	online signing of dynamic zones are found.
+ *
+ * Require:
+ *	'zone' to be a valid zone.
+ *
+ * Returns:
+ *	ISC_R_NOMEMORY
+ *	ISC_R_SUCCESS
+ */
+
+const char *
+dns_zone_getkeydirectory(dns_zone_t *zone);
+/*
+ * 	Gets the name of the directory where private keys used for
+ *	online signing of dynamic zones are found.
+ *
+ * Requires:
+ *	'zone' to be valid initialised zone.
+ *
+ * Returns:
+ *	Pointer to null-terminated file name, or NULL.
+ */
+
+
+isc_result_t
 dns_zonemgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 		   isc_timermgr_t *timermgr, isc_socketmgr_t *socketmgr,
 		   dns_zonemgr_t **zmgrp);
@@ -1126,6 +1196,12 @@ dns_zonemgr_forcemaint(dns_zonemgr_t *zmgr);
 /*
  * Force zone maintenance of all zones managed by 'zmgr' at its
  * earliest conveniene.
+ */
+
+void
+dns_zonemgr_resumexfrs(dns_zonemgr_t *zmgr);
+/*
+ * Attempt to start any stalled zone transfers.
  */
 
 void
@@ -1322,6 +1398,40 @@ dns_zone_log(dns_zone_t *zone, int level, const char *msg, ...)
 /*
  * Log the message 'msg...' at 'level', including text that identifies
  * the message as applying to 'zone'.
+ */
+
+void
+dns_zone_logc(dns_zone_t *zone, isc_logcategory_t *category, int level,
+	      const char *msg, ...) ISC_FORMAT_PRINTF(4, 5);
+/*
+ * Log the message 'msg...' at 'level', including text that identifies
+ * the message as applying to 'zone'.
+ */
+
+void
+dns_zone_name(dns_zone_t *zone, char *buf, size_t len);
+/*
+ * Return the name of the zone with class and view.
+ * 
+ * Requires:
+ *	'zone' to be valid.
+ *	'buf' to be non NULL.
+ */
+
+isc_result_t
+dns_zone_checknames(dns_zone_t *zone, dns_name_t *name, dns_rdata_t *rdata);
+/*
+ * Check if this record meets the check-names policy.
+ *
+ * Requires:
+ *	'zone' to be valid.
+ *	'name' to be valid.
+ *	'rdata' to be valid.
+ *
+ * Returns:
+ *	DNS_R_SUCCESS		passed checks.
+ *	DNS_R_BADOWNERNAME	failed ownername checks.
+ *	DNS_R_BADNAME		failed rdata checks.
  */
 
 ISC_LANG_ENDDECLS

@@ -1,7 +1,7 @@
-/*	$NetBSD: print.c,v 1.1.1.1 2004/11/06 23:56:01 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.1.1.2 2005/12/21 23:18:01 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,19 +17,22 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: print.c,v 1.2.4.1 2004/08/28 06:25:25 marka Exp */
+/* Id: print.c,v 1.2.4.7 2005/10/14 01:38:51 marka Exp */
 
 #include <config.h>
 
 #include <ctype.h>
 #include <stdio.h>		/* for sprintf */
+#include <string.h>
 
 #define	LWRES__PRINT_SOURCE	/* Used to get the lwres_print_* prototypes. */
 
-#include <stdlib.h>
+#include <lwres/stdlib.h>
 
 #include "assert_p.h"
 #include "print_p.h"
+
+#define LWRES_PRINT_QUADFORMAT LWRES_PLATFORM_QUADFORMAT
 
 int
 lwres__print_sprintf(char *str, const char *format, ...) {
@@ -71,7 +74,6 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 	int left;
 	int plus;
 	int space;
-	int neg;
 	long long tmpi;
 	unsigned long long tmpui;
 	unsigned long width;
@@ -98,7 +100,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 
 	while (*format != '\0') {
 		if (*format != '%') {
-			if (size > 1) {
+			if (size > 1U) {
 				*str++ = *format;
 				size--;
 			}
@@ -111,7 +113,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 		/*
 		 * Reset flags.
 		 */
-		dot = neg = space = plus = left = zero = alt = h = l = q = 0;
+		dot = space = plus = left = zero = alt = h = l = q = 0;
 		width = precision = 0;
 		head = "";
 		length = pad = zeropad = 0;
@@ -172,7 +174,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 		case '\0':
 			continue;
 		case '%':
-			if (size > 1) {
+			if (size > 1U) {
 				*str++ = *format;
 				size--;
 			}
@@ -202,7 +204,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 		case 'x':
 		case 'X':
 		doint:
-			if (precision != 0)
+			if (precision != 0U)
 				zero = 0;
 			switch (*format) {
 			case 'n':
@@ -243,7 +245,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 						head = "";
 					tmpui = tmpi;
 				}
-				sprintf(buf, "%llu",
+				sprintf(buf, "%" LWRES_PRINT_QUADFORMAT "u",
 					tmpui);
 				goto printint;
 			case 'o':
@@ -255,7 +257,9 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 				else
 					tmpui = va_arg(ap, int);
 				sprintf(buf,
-					alt ? "%#llo" : "%llo", tmpui);
+					alt ? "%#" LWRES_PRINT_QUADFORMAT "o"
+					    : "%" LWRES_PRINT_QUADFORMAT "o",
+					tmpui);
 				goto printint;
 			case 'u':
 				if (q)
@@ -265,7 +269,8 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 					tmpui = va_arg(ap, unsigned long int);
 				else
 					tmpui = va_arg(ap, unsigned int);
-				sprintf(buf, "%llu", tmpui);
+				sprintf(buf, "%" LWRES_PRINT_QUADFORMAT "u",
+					tmpui);
 				goto printint;
 			case 'x':
 				if (q)
@@ -277,10 +282,11 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 					tmpui = va_arg(ap, unsigned int);
 				if (alt) {
 					head = "0x";
-					if (precision > 2)
+					if (precision > 2U)
 						precision -= 2;
 				}
-				sprintf(buf, "%llx", tmpui);
+				sprintf(buf, "%" LWRES_PRINT_QUADFORMAT "x",
+					tmpui);
 				goto printint;
 			case 'X':
 				if (q)
@@ -292,19 +298,20 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 					tmpui = va_arg(ap, unsigned int);
 				if (alt) {
 					head = "0X";
-					if (precision > 2)
+					if (precision > 2U)
 						precision -= 2;
 				}
-				sprintf(buf, "%llX", tmpui);
+				sprintf(buf, "%" LWRES_PRINT_QUADFORMAT "X",
+					tmpui);
 				goto printint;
 			printint:
-				if (precision != 0 || width != 0) {
+				if (precision != 0U || width != 0U) {
 					length = strlen(buf);
 					if (length < precision)
 						zeropad = precision - length;
 					else if (length < width && zero)
 						zeropad = width - length;
-					if (width != 0) {
+					if (width != 0U) {
 						pad = width - length -
 						      zeropad - strlen(head);
 						if (pad < 0)
@@ -314,28 +321,28 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 				count += strlen(head) + strlen(buf) + pad +
 					 zeropad;
 				if (!left) {
-					while (pad > 0 && size > 1) {
+					while (pad > 0 && size > 1U) {
 						*str++ = ' ';
 						size--;
 						pad--;
 					}
 				}
 				cp = head;
-				while (*cp != '\0' && size > 1) {
+				while (*cp != '\0' && size > 1U) {
 					*str++ = *cp++;
 					size--;
 				}
-				while (zeropad > 0 && size > 1) {
+				while (zeropad > 0 && size > 1U) {
 					*str++ = '0';
 					size--;
 					zeropad--;
 				}
 				cp = buf;
-				while (*cp != '\0' && size > 1) {
+				while (*cp != '\0' && size > 1U) {
 					*str++ = *cp++;
 					size--;
 				}
-				while (pad > 0 && size > 1) {
+				while (pad > 0 && size > 1U) {
 					*str++ = ' ';
 					size--;
 					pad--;
@@ -349,7 +356,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 			cp = va_arg(ap, char *);
 			REQUIRE(cp != NULL);
 
-			if (precision != 0) {
+			if (precision != 0U) {
 				/*
 				 * cp need not be NULL terminated.
 				 */
@@ -358,37 +365,37 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 
 				n = precision;
 				tp = cp;
-				while (n != 0 && *tp != '\0')
+				while (n != 0U && *tp != '\0')
 					n--, tp++;
 				length = precision - n;
 			} else {
 				length = strlen(cp);
 			}
-			if (width != 0) {
+			if (width != 0U) {
 				pad = width - length;
 				if (pad < 0)
 					pad = 0;
 			}
 			count += pad + length;
 			if (!left)
-				while (pad > 0 && size > 1) {
+				while (pad > 0 && size > 1U) {
 					*str++ = ' ';
 					size--;
 					pad--;
 				}
-			if (precision != 0)
-				while (precision > 0 && *cp != '\0' &&
-				       size > 1) {
+			if (precision != 0U)
+				while (precision > 0U && *cp != '\0' &&
+				       size > 1U) {
 					*str++ = *cp++;
 					size--;
 					precision--;
 				}
 			else
-				while (*cp != '\0' && size > 1) {
+				while (*cp != '\0' && size > 1U) {
 					*str++ = *cp++;
 					size--;
 				}
-			while (pad > 0 && size > 1) {
+			while (pad > 0 && size > 1U) {
 				*str++ = ' ';
 				size--;
 				pad--;
@@ -396,24 +403,24 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 			break;
 		case 'c':
 			c = va_arg(ap, int);
-			if (width > 0) {
+			if (width > 0U) {
 				count += width;
 				width--;
 				if (left) {
 					*str++ = c;
 					size--;
 				}
-				while (width-- > 0 && size > 1) {
+				while (width-- > 0U && size > 1U) {
 					*str++ = ' ';
 					size--;
 				}
-				if (!left && size > 1) {
+				if (!left && size > 1U) {
 					*str++ = c;
 					size--;
 				}
 			} else {
 				count++;
-				if (size > 1) {
+				if (size > 1U) {
 					*str++ = c;
 					size--;
 				}
@@ -425,14 +432,14 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 			length = strlen(buf);
 			if (precision > length)
 				zeropad = precision - length;
-			if (width > 0) {
+			if (width > 0U) {
 				pad = width - length - zeropad;
 				if (pad < 0)
 					pad = 0;
 			}
 			count += length + pad + zeropad;
 			if (!left)
-				while (pad > 0 && size > 1) {
+				while (pad > 0 && size > 1U) {
 					*str++ = ' ';
 					size--;
 					pad--;
@@ -440,25 +447,25 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 			cp = buf;
 			if (zeropad > 0 && buf[0] == '0' &&
 			    (buf[1] == 'x' || buf[1] == 'X')) {
-				if (size > 1) {
+				if (size > 1U) {
 					*str++ = *cp++;
 					size--;
 				}
-				if (size > 1) {
+				if (size > 1U) {
 					*str++ = *cp++;
 					size--;
 				}
-				while (zeropad > 0 && size > 1) {
+				while (zeropad > 0 && size > 1U) {
 					*str++ = '0';
 					size--;
 					zeropad--;
 				}
 			}
-			while (*cp != '\0' && size > 1) {
+			while (*cp != '\0' && size > 1U) {
 				*str++ = *cp++;
 				size--;
 			}
-			while (pad > 0 && size > 1) {
+			while (pad > 0 && size > 1U) {
 				*str++ = ' ';
 				size--;
 				pad--;
@@ -495,7 +502,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 			 * if we cap the precision at 512 we will not
 			 * overflow buf.
 			 */
-			if (precision > 512)
+			if (precision > 512U)
 				precision = 512;
 			sprintf(fmt, "%%%s%s.%lu%s%c", alt ? "#" : "",
 				plus ? "+" : space ? " " : "",
@@ -517,24 +524,24 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 					sprintf(buf, fmt, dbl);
 				}
 				length = strlen(buf);
-				if (width > 0) {
+				if (width > 0U) {
 					pad = width - length;
 					if (pad < 0)
 						pad = 0;
 				}
 				count += length + pad;
 				if (!left)
-					while (pad > 0 && size > 1) {
+					while (pad > 0 && size > 1U) {
 						*str++ = ' ';
 						size--;
 						pad--;
 					}
 				cp = buf;
-				while (*cp != ' ' && size > 1) {
+				while (*cp != ' ' && size > 1U) {
 					*str++ = *cp++;
 					size--;
 				}
-				while (pad > 0 && size > 1) {
+				while (pad > 0 && size > 1U) {
 					*str++ = ' ';
 					size--;
 					pad--;
@@ -549,7 +556,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 		}
 		format++;
 	}
-	if (size > 0)
+	if (size > 0U)
 		*str = '\0';
 	return (count);
 }

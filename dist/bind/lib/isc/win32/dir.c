@@ -1,23 +1,23 @@
-/*	$NetBSD: dir.c,v 1.1.1.2 2005/12/21 19:59:10 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.1.1.3 2005/12/21 23:17:41 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dir.c,v 1.10 2001/07/06 21:47:15 gson Exp */
+/* Id: dir.c,v 1.10.12.3 2004/03/08 09:04:58 marka Exp */
 
 /* Principal Authors: DCL */
 
@@ -245,34 +245,6 @@ isc_dir_chdir(const char *dirname) {
 isc_result_t
 isc_dir_chroot(const char *dirname) {
 	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-isc_dir_current(char *dirname, size_t length, isc_boolean_t end_sep) {
-	char *cwd;
-	isc_result_t result = ISC_R_SUCCESS;
-
-	/*
-	 * XXXDCL Could automatically allocate memory if dirname == NULL.
-	 */
-	REQUIRE(dirname != NULL);
-	REQUIRE(length > 0);
-
-	cwd = getcwd(dirname, length);
-
-	if (cwd == NULL) {
-		if (errno == ERANGE)
-			result = ISC_R_NOSPACE;
-		else
-			result = isc__errno2result(errno);
-	} else if (end_sep) {
-		if (strlen(dirname) + 1 == length)
-			result = ISC_R_NOSPACE;
-		else if (dirname[1] != '\0')
-			strcat(dirname, "/");
-	}
-
-	return (result);
 }
 
 isc_result_t

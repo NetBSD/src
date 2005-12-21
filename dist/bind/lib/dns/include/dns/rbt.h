@@ -1,28 +1,29 @@
-/*	$NetBSD: rbt.h,v 1.1.1.2 2005/12/21 19:58:23 christos Exp $	*/
+/*	$NetBSD: rbt.h,v 1.1.1.3 2005/12/21 23:16:54 christos Exp $	*/
 
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.h,v 1.55 2001/06/01 03:07:54 halley Exp */
+/* Id: rbt.h,v 1.55.12.6 2004/10/11 05:55:51 marka Exp */
 
 #ifndef DNS_RBT_H
 #define DNS_RBT_H 1
 
 #include <isc/lang.h>
+#include <isc/magic.h>
 
 #include <dns/types.h>
 
@@ -45,6 +46,13 @@ ISC_LANG_BEGINDECLS
 #define DNS_RBT_LOCKLENGTH			10
 #define DNS_RBT_REFLENGTH			20
 
+#define DNS_RBTNODE_MAGIC		ISC_MAGIC('R','B','N','O')
+#if DNS_RBT_USEMAGIC
+#define DNS_RBTNODE_VALID(n)		ISC_MAGIC_VALID(n, DNS_RBTNODE_MAGIC)
+#else
+#define DNS_RBTNODE_VALID(n)		ISC_TRUE
+#endif
+
 /*
  * This is the structure that is used for each node in the red/black
  * tree of trees.  NOTE WELL:  the implementation manages this as a variable
@@ -53,6 +61,9 @@ ISC_LANG_BEGINDECLS
  * multiple dns_rbtnode structures will not work.
  */
 typedef struct dns_rbtnode {
+#if DNS_RBT_USEMAGIC
+	unsigned int magic;
+#endif
 	struct dns_rbtnode *parent;
 	struct dns_rbtnode *left;
 	struct dns_rbtnode *right;
@@ -139,7 +150,8 @@ typedef isc_result_t (*dns_rbtfindcallback_t)(dns_rbtnode_t *node,
  * definition of "@" as the current origin.
  *
  * dns_rbtnodechain_current is similar to the _first, _last, _prev and _next
- * functions but additionally can provide the node to which the chain points.  */
+ * functions but additionally can provide the node to which the chain points.
+ */
 
 /*
  * The number of level blocks to allocate at a time.  Currently the maximum
@@ -590,16 +602,28 @@ dns_rbt_nodecount(dns_rbt_t *rbt);
 
 void
 dns_rbt_destroy(dns_rbt_t **rbtp);
+isc_result_t
+dns_rbt_destroy2(dns_rbt_t **rbtp, unsigned int quantum);
 /*
- * Stop working with a red-black tree of trees.
- *
+ * Stop working with a red-black tree of trees. 
+ * If 'quantum' is zero then the entire tree will be destroyed.
+ * If 'quantum' is non zero then up to 'quantum' nodes will be destroyed
+ * allowing the rbt to be incrementally destroyed by repeated calls to
+ * dns_rbt_destroy2().  Once dns_rbt_destroy2() has been called no other
+ * operations than dns_rbt_destroy()/dns_rbt_destroy2() should be
+ * performed on the tree of trees.
+ * 
  * Requires:
  * 	*rbt is a valid rbt manager.
  *
- * Ensures:
+ * Ensures on ISC_R_SUCCESS:
  *	All space allocated by the RBT library has been returned.
  *
  *	*rbt is invalidated as an rbt manager.
+ *
+ * Returns:
+ *	ISC_R_SUCCESS
+ *	ISC_R_QUOTA if 'quantum' nodes have been destroyed.
  */
 
 void

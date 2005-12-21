@@ -1,23 +1,23 @@
-/*	$NetBSD: rdataset.h,v 1.1.1.2 2005/12/21 19:58:25 christos Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.1.1.3 2005/12/21 23:16:55 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.h,v 1.41.2.5 2003/07/22 04:03:45 marka Exp */
+/* Id: rdataset.h,v 1.41.2.5.2.8 2005/03/17 03:58:31 marka Exp */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -70,6 +70,12 @@ typedef struct dns_rdatasetmethods {
 	void			(*clone)(dns_rdataset_t *source,
 					 dns_rdataset_t *target);
 	unsigned int		(*count)(dns_rdataset_t *rdataset);
+	isc_result_t		(*addnoqname)(dns_rdataset_t *rdataset,
+					      dns_name_t *name);
+	isc_result_t		(*getnoqname)(dns_rdataset_t *rdataset,
+					      dns_name_t *name,
+					      dns_rdataset_t *nsec,
+					      dns_rdataset_t *nsecsig);
 } dns_rdatasetmethods_t;
 
 #define DNS_RDATASET_MAGIC	       ISC_MAGIC('D','N','S','R')
@@ -100,6 +106,13 @@ struct dns_rdataset {
 	 */
 	unsigned int			attributes;
 	/*
+	 * the counter provides the starting point in the "cyclic" order.
+	 * The value ISC_UINT32_MAX has a special meaning of "picking up a
+	 * random value." in order to take care of databases that do not
+	 * increment the counter.
+	 */
+	isc_uint32_t			count;
+	/*
 	 * These are for use by the rdataset implementation, and MUST NOT
 	 * be changed by clients.
 	 */
@@ -108,6 +121,7 @@ struct dns_rdataset {
 	void *				private3;
 	unsigned int			privateuint4;
 	void *				private5;
+	void *				private6;
 };
 
 /*
@@ -118,20 +132,29 @@ struct dns_rdataset {
  *	Used by message.c to indicate that the rdataset's rdata had differing
  *	TTL values, and the rdataset->ttl holds the smallest.
  */
-#define DNS_RDATASETATTR_QUESTION	0x0001
-#define DNS_RDATASETATTR_RENDERED	0x0002		/* Used by message.c */
-#define DNS_RDATASETATTR_ANSWERED	0x0004		/* Used by server. */
-#define DNS_RDATASETATTR_CACHE		0x0008		/* Used by resolver. */
-#define DNS_RDATASETATTR_ANSWER		0x0010		/* Used by resolver. */
-#define DNS_RDATASETATTR_ANSWERSIG	0x0020		/* Used by resolver. */
-#define DNS_RDATASETATTR_EXTERNAL	0x0040		/* Used by resolver. */
-#define DNS_RDATASETATTR_NCACHE		0x0080		/* Used by resolver. */
-#define DNS_RDATASETATTR_CHAINING	0x0100		/* Used by resolver. */
-#define DNS_RDATASETATTR_TTLADJUSTED	0x0200		/* Used by message.c */
-#define DNS_RDATASETATTR_FIXEDORDER	0x0400
-#define DNS_RDATASETATTR_RANDOMIZE	0x0800
-#define DNS_RDATASETATTR_CHASE		0x1000		/* Used by resolver. */
-#define DNS_RDATASETATTR_NXDOMAIN	0x2000
+#define DNS_RDATASETATTR_QUESTION	0x00000001
+#define DNS_RDATASETATTR_RENDERED	0x00000002	/* Used by message.c */
+#define DNS_RDATASETATTR_ANSWERED	0x00000004	/* Used by server. */
+#define DNS_RDATASETATTR_CACHE		0x00000008	/* Used by resolver. */
+#define DNS_RDATASETATTR_ANSWER		0x00000010	/* Used by resolver. */
+#define DNS_RDATASETATTR_ANSWERSIG	0x00000020	/* Used by resolver. */
+#define DNS_RDATASETATTR_EXTERNAL	0x00000040	/* Used by resolver. */
+#define DNS_RDATASETATTR_NCACHE		0x00000080	/* Used by resolver. */
+#define DNS_RDATASETATTR_CHAINING	0x00000100	/* Used by resolver. */
+#define DNS_RDATASETATTR_TTLADJUSTED	0x00000200	/* Used by message.c */
+#define DNS_RDATASETATTR_FIXEDORDER	0x00000400
+#define DNS_RDATASETATTR_RANDOMIZE	0x00000800
+#define DNS_RDATASETATTR_CHASE		0x00001000	/* Used by resolver. */
+#define DNS_RDATASETATTR_NXDOMAIN	0x00002000
+#define DNS_RDATASETATTR_NOQNAME	0x00004000
+#define DNS_RDATASETATTR_CHECKNAMES	0x00008000	/* Used by resolver. */
+#define DNS_RDATASETATTR_REQUIREDGLUE	0x00010000
+
+/*
+ * _OMITDNSSEC:
+ * 	Omit DNSSEC records when rendering ncache records.
+ */
+#define DNS_RDATASETTOWIRE_OMITDNSSEC	0x0001
 
 void
 dns_rdataset_init(dns_rdataset_t *rdataset);
@@ -308,6 +331,7 @@ dns_rdataset_towire(dns_rdataset_t *rdataset,
 		    dns_name_t *owner_name,
 		    dns_compress_t *cctx,
 		    isc_buffer_t *target,
+		    unsigned int options,
 		    unsigned int *countp);
 /*
  * Convert 'rdataset' to wire format, compressing names as specified
@@ -348,6 +372,7 @@ dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
 			  isc_buffer_t *target,
 			  dns_rdatasetorderfunc_t order,
 			  void *order_arg,
+			  unsigned int options,
 			  unsigned int *countp);
 /*
  * Like dns_rdataset_towire(), but sorting the rdatasets according to
@@ -366,6 +391,7 @@ dns_rdataset_towirepartial(dns_rdataset_t *rdataset,
 			   isc_buffer_t *target,
 			   dns_rdatasetorderfunc_t order,
 			   void *order_arg,
+			   unsigned int options,
 			   unsigned int *countp,
 			   void **state);
 /*
@@ -413,6 +439,31 @@ dns_rdataset_additionaldata(dns_rdataset_t *rdataset,
  *	ISC_R_SUCCESS
  *
  *	Any error that dns_rdata_additionaldata() can return.
+ */
+
+isc_result_t
+dns_rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
+			dns_rdataset_t *nsec, dns_rdataset_t *nsecsig);
+/*
+ * Return the noqname proof for this record.
+ *
+ * Requires:
+ *	'rdataset' to be valid and DNS_RDATASETATTR_NOQNAME to be set.
+ *	'name' to be valid.
+ *	'nsec' and 'nsecsig' to be valid and not associated.
+ */
+
+isc_result_t
+dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name);
+/*
+ * Associate a noqname proof with this record.
+ * Sets DNS_RDATASETATTR_NOQNAME if successful.
+ * Adjusts the 'rdataset->ttl' to minimum of the 'rdataset->ttl' and
+ * the 'nsec' and 'rrsig(nsec)' ttl.
+ *
+ * Requires:
+ *	'rdataset' to be valid and DNS_RDATASETATTR_NOQNAME to be set.
+ *	'name' to be valid and have NSEC and RRSIG(NSEC) rdatasets.
  */
 
 ISC_LANG_ENDDECLS
