@@ -1,30 +1,27 @@
 <!--
- - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- - Copyright (C) 2001  Internet Software Consortium.
- -
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- -
- - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- - PERFORMANCE OF THIS SOFTWARE.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
-
-<!-- Id: lwres_gabn.html,v 1.6.2.1.4.2 2004/08/22 23:39:03 marka Exp -->
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres_gabn</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -35,8 +32,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
-></A
->lwres_gabn</H1
+>lwres_gabn</A
+></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -54,11 +51,11 @@ NAME="AEN16"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
-><P
-></P
 ><A
 NAME="AEN17"
 ></A
+><P
+></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/lwres.h&gt;</PRE
@@ -178,42 +175,52 @@ typedef struct {
 } lwres_gabnresponse_t;</PRE
 ></P
 ><P
-><CODE
+><TT
 CLASS="FUNCTION"
->lwres_gabnrequest_render()</CODE
+>lwres_gabnrequest_render()</TT
 >
 uses resolver context
-<VAR
+<TT
 CLASS="PARAMETER"
->ctx</VAR
+><I
+>ctx</I
+></TT
 >
 to convert getaddrbyname request structure
-<VAR
+<TT
 CLASS="PARAMETER"
->req</VAR
+><I
+>req</I
+></TT
 >
 to canonical format.
 The packet header structure
-<VAR
+<TT
 CLASS="PARAMETER"
->pkt</VAR
+><I
+>pkt</I
+></TT
 >
 is initialised and transferred to
 buffer
-<VAR
+<TT
 CLASS="PARAMETER"
->b</VAR
+><I
+>b</I
+></TT
 >.
 
 The contents of
-<VAR
+<TT
 CLASS="PARAMETER"
->*req</VAR
+><I
+>*req</I
+></TT
 >
 are then appended to the buffer in canonical format.
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_gabnresponse_render()</CODE
+>lwres_gabnresponse_render()</TT
 >
 performs the same task, except it converts a getaddrbyname response structure
 <SPAN
@@ -222,19 +229,23 @@ CLASS="TYPE"
 >
 to the lightweight resolver's canonical format.</P
 ><P
-><CODE
+><TT
 CLASS="FUNCTION"
->lwres_gabnrequest_parse()</CODE
+>lwres_gabnrequest_parse()</TT
 >
 uses context
-<VAR
+<TT
 CLASS="PARAMETER"
->ctx</VAR
+><I
+>ctx</I
+></TT
 >
 to convert the contents of packet
-<VAR
+<TT
 CLASS="PARAMETER"
->pkt</VAR
+><I
+>pkt</I
+></TT
 >
 to a
 <SPAN
@@ -243,9 +254,11 @@ CLASS="TYPE"
 >
 structure.
 Buffer
-<VAR
+<TT
 CLASS="PARAMETER"
->b</VAR
+><I
+>b</I
+></TT
 >
 provides space to be used for storing this structure.
 When the function succeeds, the resulting
@@ -254,19 +267,21 @@ CLASS="TYPE"
 >lwres_gabnrequest_t</SPAN
 >
 is made available through
-<VAR
+<TT
 CLASS="PARAMETER"
->*structp</VAR
+><I
+>*structp</I
+></TT
 >.
 
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_gabnresponse_parse()</CODE
+>lwres_gabnresponse_parse()</TT
 >
 offers the same semantics as
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_gabnrequest_parse()</CODE
+>lwres_gabnrequest_parse()</TT
 >
 except it yields a
 <SPAN
@@ -275,19 +290,21 @@ CLASS="TYPE"
 >
 structure.</P
 ><P
-><CODE
+><TT
 CLASS="FUNCTION"
->lwres_gabnresponse_free()</CODE
+>lwres_gabnresponse_free()</TT
 >
 and
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_gabnrequest_free()</CODE
+>lwres_gabnrequest_free()</TT
 >
 release the memory in resolver context
-<VAR
+<TT
 CLASS="PARAMETER"
->ctx</VAR
+><I
+>ctx</I
+></TT
 >
 that was allocated to the
 <SPAN
@@ -300,9 +317,11 @@ CLASS="TYPE"
 >lwres_gabnrequest_t</SPAN
 >
 structures referenced via
-<VAR
+<TT
 CLASS="PARAMETER"
->structp</VAR
+><I
+>structp</I
+></TT
 >.
 
 Any memory associated with ancillary buffers and strings for those
@@ -317,22 +336,22 @@ NAME="AEN93"
 >RETURN VALUES</H2
 ><P
 >The getaddrbyname opcode functions
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_gabnrequest_render()</CODE
+>lwres_gabnrequest_render()</TT
 >, 
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_gabnresponse_render()</CODE
+>lwres_gabnresponse_render()</TT
 >
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_gabnrequest_parse()</CODE
+>lwres_gabnrequest_parse()</TT
 >
 and
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_gabnresponse_parse()</CODE
+>lwres_gabnresponse_parse()</TT
 >
 all return
 <SPAN
@@ -351,9 +370,11 @@ CLASS="ERRORCODE"
 >LWRES_R_UNEXPECTEDEND</SPAN
 >
 is returned if the available space in the buffer
-<VAR
+<TT
 CLASS="PARAMETER"
->b</VAR
+><I
+>b</I
+></TT
 >
 is too small to accommodate the packet header or the
 <SPAN
@@ -366,14 +387,14 @@ CLASS="TYPE"
 >lwres_gabnresponse_t</SPAN
 >
 structures.
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_gabnrequest_parse()</CODE
+>lwres_gabnrequest_parse()</TT
 >
 and
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_gabnresponse_parse()</CODE
+>lwres_gabnresponse_parse()</TT
 >
 will return
 <SPAN
@@ -387,9 +408,11 @@ CLASS="ERRORCODE"
 >LWRES_R_FAILURE</SPAN
 >
 if
-<CODE
+<TT
 CLASS="STRUCTFIELD"
->pktflags</CODE
+><I
+>pktflags</I
+></TT
 >
 in the packet header structure
 <SPAN

@@ -1,23 +1,23 @@
-/*	$NetBSD: util.h,v 1.1.1.1 2004/05/17 23:45:05 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.1.1.2 2005/12/21 19:59:03 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: util.h,v 1.21.12.5 2004/03/08 09:04:53 marka Exp */
+/* Id: util.h,v 1.21 2001/01/09 21:57:43 bwelling Exp */
 
 #ifndef ISC_UTIL_H
 #define ISC_UTIL_H 1
@@ -65,12 +65,6 @@
 		_u.k = konst; \
 		var = _u.v; \
 	} while (0)
-
-/*
- * Use this in translation units that would otherwise be empty, to
- * suppress compiler warnings.
- */
-#define EMPTY_TRANSLATION_UNIT static void isc__empty(void) { isc__empty(); }
 
 /*
  * We use macros instead of calling the routines directly because
@@ -174,9 +168,6 @@
 	RUNTIME_CHECK(isc_rwlock_unlock((lp), (t)) == ISC_R_SUCCESS); \
 	} while (0)
 
-#define DESTROYMUTEXBLOCK(bp, n) \
-	RUNTIME_CHECK(isc_mutexblock_destroy((bp), (n)) == ISC_R_SUCCESS)
-
 /*
  * List Macros.
  */
@@ -218,10 +209,5 @@
 #define UNEXPECTED_ERROR		isc_error_unexpected
 #define FATAL_ERROR			isc_error_fatal
 #define RUNTIME_CHECK(cond)		ISC_ERROR_RUNTIMECHECK(cond)
-
-/*
- * Time
- */
-#define TIME_NOW(tp) 	RUNTIME_CHECK(isc_time_now((tp)) == ISC_R_SUCCESS)
 
 #endif /* ISC_UTIL_H */

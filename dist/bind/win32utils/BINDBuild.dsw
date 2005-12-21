@@ -41,9 +41,6 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libisc
     End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libbind9
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -62,9 +59,6 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libisc
     End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libbind9
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -82,27 +76,6 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libisc
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "libbind9"="..\lib\bind9\win32\libbind9.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name libdns
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libisc
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libisccfg
     End Project Dependency
 }}}
 
@@ -218,9 +191,6 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name liblwres
     End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libbind9
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -238,9 +208,6 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libisccfg
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libdns
     End Project Dependency
 }}}
 
@@ -278,9 +245,6 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libisc
     End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libbind9
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -298,9 +262,6 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libisc
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libbind9
     End Project Dependency
 }}}
 
@@ -322,9 +283,6 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libisccfg
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libbind9
     End Project Dependency
 }}}
 

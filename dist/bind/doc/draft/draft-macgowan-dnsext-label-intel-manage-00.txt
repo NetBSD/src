@@ -1,0 +1,802 @@
+INTERNET-DRAFT           DNS Label Intelligence and Management System
+UPDATES RFC 1034                                        February 2001
+                                                  Expires August 2001
+
+
+
+
+Domain Name System (DNS) DNS Label Intelligence and Management System
+         draft-macgowan-dnsext-label-intel-manage-00.txt
+
+
+
+Michael L. Macgowan Jr.
+
+
+Status of This Document
+
+This draft is intended to become a Proposed Standard RFC. Distribution 
+of this document is unlimited. Comments should be sent to the Domain 
+Name Server Extensions working group mailing 
+list<namedroppers@ops.ietf.org> or to the author.
+
+This document is an Internet-Draft and is in full conformance with all 
+provisions of Section 10 of RFC 2026.  Internet-Drafts are working 
+documents of the Internet Engineering Task Force (IETF), its areas, and 
+its working groups.  Note that other groups may also distribute working 
+documents as Internet-Drafts.
+
+Internet-Drafts are draft documents valid for a maximum of six months 
+and may be updated, replaced, or obsoleted by other documents at any 
+time.  It is inappropriate to use Internet- Drafts as reference 
+material or to cite them other than as "work in progress."
+
+The list of current Internet-Drafts can be accessed at 
+http://www.ietf.org/ietf/1id-abstracts.txt
+
+The list of Internet-Draft Shadow Directories can be accessed at 
+http://www.ietf.org/shadow.html.
+
+
+
+Abstract
+
+
+A multidimensional array of domain label analysis and extensions are 
+offered to overcome a number of issues with the DNS and its use to 
+locate resources on the Internet. These goals are accomplished by 
+proposing a naming convention to add labels to domain strings. The 
+result will be a rational relationship to the content that will provide 
+a method for meeting the ever-increasing need to expand the namespace, 
+while providing an efficient search system to access content in a user-
+friendly manner.
+
+A fundamental problem exists in the design of DNS. A user must know the 
+domain name including the Top Level Domain, TLD, and type the Uniform 
+Resource Locator, URL, accurately to connect to resources on the 
+Internet. The current lookup organization of the DNS uses domain labels 
+separated by periods to provide hierarchical levels for a resolver to 
+seek in finding a path to an authority. A new masking technique within 
+labels is proposed to accommodate lookups based on the request. 
+Multiple processing trees are proposed to redistribute the requests 
+based on the known pieces of the domain name. Rather than knowing the 
+fully qualified domain name, FQDN, the user can search for content 
+based upon known pieces of the string like group (business), country, 
+area code, phone number, type of organization, street address, zip code 
+and/or GPS location, etc.. Intelligence is added for determining the 
+fastest route to resolution based on user weighting, number of 
+requests, and traffic within the system.
+
+A result of the masking technique is an opportunity to provide a 
+completely hidden label(s) for maintenance of the system. A TTL (Time 
+to Live), version, and type of request could be keyed into a label to 
+provide information, which remains with the client but is normally lost 
+after a request is processed. This system could be implemented to 
+create automatically updated records and content. Or hidden labels 
+could be used to distinguish between version 4 and version 6 requests 
+in the TCP/IP, Transmission Control Protocol/ Internet Protocol, 
+rollover.
+
+Implementation of the new name system is facilitated by the addition of 
+a client interface for building requests. Longer domain names are 
+enhanced by smart AutoCompletes and group edit boxes.
+
+Table of Contents
+
+      Status of This Document                                    1
+      Abstract                                                   1
+
+      Table of Contents                                          3
+
+      1. Introduction                                            4
+      2. Inputting Request for Resolution                        4
+      3. Resolution Processing                                   7
+      4. Processing Forest                                      13
+      5. Extended Label Uses                                    14
+      6. IANA Considerations                                    16
+      6. Security Considerations                                16
+
+      References                                                16
+
+      Authors Address                                           16
+      Expiration and File Name                                  17
+
+
+
+
+
+
+
+
+
+
+
+
+1. Introduction
+
+The Domain Name System (DNS) [RFC 1034, 1035] is the global 
+hierarchical replicated distributed database system for Internet 
+addressing, mail proxy, and other information.  The DNS has been 
+extended to phone numbers as described in [RFC 2535]. It is designed to 
+accommodate a user-friendly name as an abstraction level over an IP 
+address, which provides a path to the physical connection to resources 
+and/or content on the Internet. This abstraction allows for changing 
+the physical location of the content without an update by the client. 
+The design, however, lacks a user-friendly method for assigning TLDs 
+and determining which TLD a content provider will be registered under.
+
+According to COMPUTERGRAM INTERNATIONAL: January 08, 2001, over 100 
+million hosts are connected to the Internet with over 350 million 
+users.  ICANN has submitted plans to increase the number of TLDs to 
+accommodate the lack of namespace, but the problem of organization and 
+extensibility continues to exist. As the number of TLDs grows, it 
+becomes harder for a user to input a user friendly domain name. In 
+essence, the user must know what derivations and which TLDs were 
+available to a provider at the time the organization chose a domain 
+name. The method of one response, in an all or nothing request, forces 
+precision on the part of the user that is a distraction to the original 
+goal of a user-friendly name. Consider a user that wants to find a new 
+theoretical health related company called Healthy Foods. Will the 
+company be called Healthyfoods.com? Or will it have an extension like 
+healthfoods.net, healthfoods.org, or healthfoods.health? Maybe it will 
+be forced to be a derivation like healthf.com, healthf.net, etc. There 
+is no user-friendly method to determine what the associated domain name 
+might be. This is a central problem of focus and organization. The 
+number of iterations a user must try increases with each new TLD that 
+is added. If a user forms multiple guesses for the TLD, excess traffic 
+is generated and the search is slowed by the inefficient nature of 
+human typing. Further, if a system were proposed under the current root 
+structure to allow for a search of all possible TLDs, the number of 
+requests would grow exponentially with the addition of each new TLD.
+
+2. Inputting Request for Resolution
+ 
+
+
+The key to making a New Name System, NNS, is to provide a user 
+interface, which will accommodate a friendly method of building name 
+requests. AutoComplete and multiple-selection drop-down, group list 
+boxes (some editable, some not) will make more complicated names easier 
+to input. Consider the previous example of Healthy Foods. Additional 
+extensions could be added as labels to make the namespace exponentially 
+larger. The web content might be reached at 
+www.healthy.food.US2081234567.Fairview101. In this example, www is the 
+Device label or content desired by the user. Health is the domain or 
+Subgroup/Group name label. Food is the item under the Type label.  
+US2081234567 is the item country/area code/number for the Global label. 
+Sfairview101 is the street/address of the Local label.
+
+Derivations of this example provide a limitless expansion of the 
+namespace within the physical limits of the protocol. A competitor down 
+the block might have the same FQDN, except for the street number and 
+phone number e.g. www.healthy.food.US2088901234.SFairview990. A second 
+type of business could also be run from the same location by changing 
+the type e.g. www.healthy.entertainment.US2081234567.SFairview101. A 
+parody of the site might be offered at 
+www.healthy.parody.us2086669999.SState103.
+
+A method of using less descriptive labels could also be used to 
+generalize the content. For example, the site for the regional office 
+might use only the country and area code designation e.g. .US208. A 
+corporate address might be located at www.healthy.food.US.corporate. 
+This way the Global and Local labels are not tied to physical 
+locations. Or there may be an 800 or 888 number that could be used for 
+multiple sites that are tied to multiple registrations at different 
+street addresses in the Local label.
+
+The task of building these longer names with labels can be accomplished 
+by updating list items from the NNS and by designing a better 
+interface. Instead of waiting for ICANN to vote on the relative merits 
+of a proposal for a new TLD, items could be automatically updated and 
+added to the system by a list of requirements. This would force a 
+relationship between labels but provide a nonbiased method without 
+prejudice. For example, a .Bus(iness) item for the Type label would 
+require a copy of a business license to be granted by the governing 
+authorities for the area specified in the Global label or the address 
+specified in the Local label. A “TM” item could separate the 
+Intellectual Property of Trademarks and Copyrights from other 
+registered listings issued from the government specified by the country 
+code in the Global label. Additionally, the Academy of Motion Pictures 
+might request an Oscar item, which would restrict membership to 
+nominees or recipients of the coveted award. 
+
+Just as the resolver gets an updated list of root servers upon first 
+connection, the resolver could also receive an updated list of items in 
+the Type label and return them to the client. The list could be updated 
+by a TTL trigger and should not be editable from the user’s standpoint. 
+The user interface should allow for multiple selections, which could be 
+used to form separate requests for resolution. Finally, the 
+implementation should begin with at least a list that is equal to a 
+subject list found in the yellow pages of the phone book. This will 
+provide a well-known classification that will greatly reduce 
+competition for names of organizations, which are similar but provide 
+for very different products/services. Delta.airline is readily 
+distinguished from Delta.homeimprovement.
+
+The device label would remain largely unaffected. A list of previously 
+connected items such as www, toasters, lock, refrigerator, etc. would 
+facilitate input. The list would be editable. As the number of devices 
+connected to the Internet grows, this method will be invaluable. 
+Consider mail and faxes being sent directly to 
+printer.mybusiness.computer.us2081234567.sfairview101. A user that 
+needs to send a fax to a satellite office might also be able to try 
+searching for mybusiness at its other street address or telephone 
+number eg., printer.mybusiness.computer.us714*.sPensylvaiaave2345. 
+Wildcards and searching are discussed in the next section. 
+
+The items under the Groups/Subgroups labels would also be a list of 
+previously connected to domains (less the TLD) such as sales.business 
+or kitchen.home. The list would contain a history of previous 
+connections and be editable.
+
+The Global label would have two characters to represent the country 
+code followed optionally by all or part of a representative telephone 
+number or mask for identifying the voice number(s) associated as items 
+in the domain. An international code would require a rational 
+relationship with world organizations. The interface would contain the 
+country codes and/or area codes, but the numbers would have to be 
+added.
+
+The Local label would require a single character to represent the type 
+of information presented, followed by the information in a standardized 
+form. The following codes are proposed for the Local label, “P” for 
+Postal code, “G” for Global Satellite Positioning and “S” for street 
+address. For example, P83706 would represent the author’s postal code, 
+GP0445004N1162498 (since the “+” key is not valid, “p” and “n” 
+represent positive and negative) would represent the GPS position of 
+the author with padding to standardize degrees/min/sec or SOrchard15541 
+would represent the Street address (house number at the end). Note each 
+of these would require a separate name registration. The editable list 
+box could be a fly out list box with one of the designators specified, 
+while the remainder would be user input.
+
++------------------+
+|Street            |
+|	   Fairview101  |
+	   State101     |
+|Postal            |
+|GPS               |
++------------------+
+
+The added labels would exponentially expand the name space. This may 
+cause an undesired relation to a Global or Local designation. This 
+could hamper changes to an organization or business in the future.  
+Hence a business might want to use a CNAME entry to reference users to 
+a non-distinct item in a label. For instance, a corporation might want 
+to register mybusiness.bus.In(ternational).corporate so that the 
+corporate office could be used for email addresses and bookmarking. 
+Content might be located at each mybusiness.bus.country.location where 
+the company does business. This way a corporation does not have to be 
+penalized for moving to a new physical location. The goal of the DNS 
+was to remove a physical relationship to the network, but the need of 
+the users is for some content to have a physical relationship to the 
+content; which is why, in part, the NNS is proposed. The concept of an 
+update is also discussed in section 5.
+
+The system would need to distinguish between the need for a request for 
+a connection to single IP address versus multiple requests. In an 
+application like a browser, traditional requests for IP resolution are 
+all or none. Either an IP address is connected to or not. If wildcards 
+are added to the request, multiple entries could be returned as a “hit” 
+list. An option on the browser could determine the number of requests 
+specified by the user. The “hits” should also be weighted. For 
+instance, if a user wanted to find all the movie theatres in the local 
+area he/she might submit a request for www.*.movies.US8370*.*. She/he 
+would be more inclined to desire additional theatres at different 
+nearby area codes than derivations of different domain names or Local 
+label derivations for a single theatre. A simple listing of each label 
+with an associated numerical value in an advanced option field could 
+determine how the responses are weighted against one another. The NNS 
+could also take into account the number of requests on the system and 
+further limit the number of responses based upon traffic.
+
+For registration, the content provider might want to register a more 
+global entry to be displayed on a restrictive search e.g. loans.US*.*. 
+A business content provider might want to register mybusiness.com.US* 
+so that requests for www.mybusiness.com.US208.* and 
+www.mybusiness.com.us714.* both resolve to mybusiness. A process would 
+have to be in place to copy an entry with wildcards to each of the 
+associated branches of the processing trees as discussed in section 4. 
+Similarly wildcard registrations should meet the rational requirements 
+required for the known item with the generalized scope. In the previous 
+example the provider would have to be licensed as a financial 
+institution in each of the states of the United States.
+
+3. Resolution Processing
+
+The key to expanding the DNS is to provide for a name space, which can 
+be accessed quickly and efficiently. Organization is key to this 
+process. The current DNS has one root organized by TLDs of the Type 
+label combined with Country TLDs. If a user does not know the extension 
+for the name, requests must be created for each one until a match is 
+found. The NNS creates separate roots for each label that can be used 
+for a search (see graphic on next page, description of TLDs is in 
+section 5). Instead of one tree, a forest is created, connected by a 
+common list of authorities for devices in the zones requested. Requests 
+can be organized by the known piece(s) of information. For instance, if 
+a user is trying to find Hewlett Packard and does not know that content 
+is provided at HP, a search of www.H*.*.US*.* should be returned 
+alphabetically from the Group label, not the Type label. However, if 
+the type item is known to be “computer”, a search of the Type tree 
+would be fastest. If a user wants to find a local voice number for 
+Microsoft he/she could submit a request generalized request within the 
+local area code for www.Microsoft.software.US208*.*. The authority 
+would best be located by the Global processor, which might list 
+www.Microsoft.software.US5041234567.SState123 and 
+www.Microsoft.software.US5044567890.SredmondAve123. If the request for 
+www.Microsoft.software.US504*.* were sent to the Local processor, every 
+TLD would have to be queried. The result might be one phone number with 
+separate Local label listings for the street address, GPS, and postal 
+code. This would create unwanted traffic on the system.
+
+
+Root “.” Group                                            Root “.”Type
+      |                                                         |
+      |                                                         |
+     “H”  TLD                                          TLD  “Computer”
+      |                                                         |
+      |                                                         |
+      --- Authority for..HP.computer.US2081234567.SChinden12----
+      |                                                         |
+      |                                                         |
+   “US208”  TLD                                         TLD  “SChi”
+      |                                                         |
+      |                                                         |
+Root “.” Global                                           Root “.”Local
+
+
+In addition to determining which label(s) to process the request, the 
+system would also have to take into account the weighting by the user 
+and the traffic on the system as discussed in the previous section. 
+When the FQDN is specified, the resolver would query the processor with 
+the fastest expected response time. A FQDN can be resolved from any of 
+the search processor trees. In the example 
+oven.macgowan.private.US2081234567.SOrchard15541, it does not matter 
+whether the request is sent to the Group, Type, Global, or Local 
+processing tree. Each leads to the authority, 
+macgowan.private.us2081234567.SOrchard15541.
+
+If wildcards or null characters exist in the request, the system should 
+take into account the number of requests that might be generated. 
+Currently the DNS does not account for the “?” and reserves the “” for 
+the root. The “*” could replace the singe character wildcard “?” and 
+the word “null” could be used in lieu of “”. The following table could 
+be used to determine which processing tree should be the most desirable 
+under such conditions:
+
+any =	any combination of characters displayed in request
+reject=	no preferred processor
+*=	match any combination of characters for response
+?=	match any single character for response
+null=	no character specified
+
+
+Device	Sub	Group	T	G	L	Result
+*	*	*	*	*	*	reject
+*	any	any	any	any	any	reject
+*	*	any	any	any	any	reject
+*	*	*	any	any	any	submit to T, G, or L 
+*	*	*	*	any	any	submit to G, or L 
+*	*	*	*	*	any	submit to L 
+any	*	*	*	*	*	reject
+any	any	*	*	*	*	reject
+any	any	any	*	*	*	submit to group 
+any	any	any	any	*	*	submit to group, or T 
+any	any	any	any	any	*	submit to group, T, or G 
+any	any	any	any	any	any	submit to any 
+any	*	any	any	any	any	submit to any 
+any	*	*	any	any	any	submit to T, G, or L 
+any	*	*	*	any	any	submit to any G, or L 
+any	*	*	*	*	any	submit to any L 
+any	any	*	any	any	any	submit to any T, G, or L 
+any	any	*	*	any	any	submit to any G, or L 
+any	any	*	*	*	any	submit to any L 
+any	any	any	*	any	any	submit to any group, G, or L 
+any	any	any	*	*	any	submit to any group, or L 
+any	any	any	any	*	any	submit to any group, T, or L 
+any	any	any	any	*	*	submit to any group, or T 
+						
+*	*	*	*	*	*	reject
+*	any*any	any*any	any*any	any*any	any*any	reject
+*	*	any*any	any*any	any*any	any*any	reject
+*	*	*	any*any	any*any	any*any	submit to T, G, or L 
+*	*	*	*	any*any	any*any	submit to G, or L 
+*	*	*	*	*	any*any	submit to L 
+any*any	*	*	*	*	*	reject
+any*any	any*any	*	*	*	*	reject
+any*any	any*any	any*any	*	*	*	submit to group 
+any*any	any*any	any*any	any*any	*	*	submit to group, or T 
+any*any	any*any	any*any	any*any	any*any	*	submit to group, T, or G 
+any*any	any*any	any*any	any*any	any*any	any*any	reject
+any*any	*	any*any	any*any	any*any	any*any	reject
+any*any	*	*	any*any	any*any	any*any	submit to T, G, or L 
+any*any	*	*	*	any*any	any*any	submit to any G, or L 
+any*any	*	*	*	*	any*any	submit to any L 
+any*any	any*any	*	any*any	any*any	any*any	reject
+any*any	any*any	*	*	any*any	any*any	submit to any G, or L 
+any*any	any*any	*	*	*	any*any	submit to any L 
+any*any	any*any	any*any	*	any*any	any*any	reject
+any*any	any*any	any*any	*	*	any*any	submit to any group, or L 
+any*any	any*any	any*any	any*any	*	any*any	submit to any group, T, or L 
+any*any	any*any	any*any	any*any	*	*	submit to any group, or T 
+						
+*	*	*	*	*	*	reject
+*	any*	any*	any*	any*	any*	reject
+*	*	any*	any*	any*	any*	reject
+*	*	*	any*	any*	any*	reject
+*	*	*	*	any*	any*	submit to G, or L 
+*	*	*	*	*	any*	submit to L 
+any*	*	*	*	*	*	reject
+any*	any*	*	*	*	*	reject
+any*	any*	any*	*	*	*	reject
+any*	any*	any*	any*	*	*	reject
+any*	any*	any*	any*	any*	*	reject
+any*	any*	any*	any*	any*	any*	reject
+any*	*	any*	any*	any*	any*	reject
+any*	*	*	any*	any*	any*	submit to T, G, or L 
+any*	*	*	*	any*	any*	submit to any G, or L 
+any*	*	*	*	*	any*	submit to any L 
+any*	any*	*	any*	any*	any*	reject
+any*	any*	*	*	any*	any*	submit to any G, or L 
+any*	any*	*	*	*	any*	submit to any L 
+any*	any*	any*	*	any*	any*	reject
+any*	any*	any*	*	*	any*	submit to any group, or L 
+any*	any*	any*	any*	*	any*	reject
+any*	any*	any*	any*	*	*	submit to any group, or T 
+						
+?any	?any	?any	?any	?any	?any	reject
+?any	any	any	any	any	any	reject
+?any	?any	any	any	any	any	reject
+?any	?any	?any	any	any	any	submit to T, G, or L 
+?any	?any	?any	?any	any	any	submit to G, or L 
+?any	?any	?any	?any	?any	any	submit to L 
+any	?any	?any	?any	?any	?any	reject
+any	any	?any	?any	?any	?any	reject
+any	any	any	?any	?any	?any	submit to group 
+any	any	any	any	?any	?any	submit to group, or T 
+any	any	any	any	any	?any	submit to group, T, or G 
+any	any	any	any	any	any	submit to any 
+any	?any	any	any	any	any	submit to any 
+any	?any	?any	any	any	any	submit to T, G, or L 
+any	?any	?any	?any	any	any	submit to any G, or L 
+any	?any	?any	?any	?any	any	submit to any L 
+any	any	?any	any	any	any	submit to any T, G, or L 
+any	any	?any	?any	any	any	submit to any G, or L 
+any	any	?any	?any	?any	any	submit to any L 
+any	any	any	?any	any	any	submit to any group, G, or L 
+any	any	any	?any	?any	any	submit to any group, or L 
+any	any	any	any	?any	any	submit to any group, T, or L 
+any	any	any	any	?any	?any	submit to any group, or T 
+						
+any?any	any?any	any?any	any?any	any?any	any?any	reject
+any?any	any	any	any	any	any	submit to any 
+any?any	any?any	any	any	any	any	submit to any 
+any?any	any?any	any?any	any	any	any	submit to any 
+any?any	any?any	any?any	any?any	any	any	submit to G, or L 
+any?any	any?any	any?any	any?any	any?any	any	submit to L 
+any	any?any	any?any	any?any	any?any	any?any	reject
+any	any	any?any	any?any	any?any	any?any	reject
+any	any	any	any?any	any?any	any?any	submit to group 
+any	any	any	any	any?any	any?any	submit to group, or T 
+any	any	any	any	any	any?any	submit to any 
+any	any	any	any	any	any	submit to any 
+any	any?any	any	any	any	any	submit to any 
+any	any?any	any?any	any	any	any	submit to any 
+any	any?any	any?any	any?any	any	any	submit to any G, or L 
+any	any?any	any?any	any?any	any?any	any	submit to any L 
+any	any	any?any	any	any	any	submit to any 
+any	any	any?any	any?any	any	any	submit to any G, or L 
+any	any	any?any	any?any	any?any	any	submit to any L 
+any	any	any	any?any	any	any	submit to any 
+any	any	any	any?any	any?any	any	submit to any group, or L 
+any	any	any	any	any?any	any	submit to any 
+any	any	any	any	any?any	any?any	submit to any group, or T 
+						
+any?	any?	any?	any?	any?	any?	reject
+any?	any	any	any	any	any	submit to any 
+any?	any?	any	any	any	any	submit to any 
+any?	any?	any?	any	any	any	submit to any 
+any?	any?	any?	any?	any	any	submit to any 
+any?	any?	any?	any?	any?	any	submit to any 
+any	any?	any?	any?	any?	any?	submit to any 
+any	any	any?	any?	any?	any?	submit to any 
+any	any	any	any?	any?	any?	submit to any 
+any	any	any	any	any?	any?	submit to any 
+any	any	any	any	any	any?	submit to any 
+any	any	any	any	any	any	submit to any 
+any	any?	any	any	any	any	submit to any 
+any	any?	any?	any	any	any	submit to any 
+any	any?	any?	any?	any	any	submit to any 
+any	any?	any?	any?	any?	any	submit to any 
+any	any	any?	any	any	any	submit to any 
+any	any	any?	any?	any	any	submit to any 
+any	any	any?	any?	any?	any	submit to any 
+any	any	any	any?	any	any	submit to any 
+any	any	any	any?	any?	any	submit to any 
+any	any	any	any	any?	any	submit to any 
+any	any	any	any	any?	any?	submit to any 
+						
+Null	any	any	any	any	any	not valid
+any	Null	any	any	any	any	submit to any 
+any	any	Null	any	any	any	reject
+any	any	any	Null	any	any	submit to group, G, L 
+any	any	any	any	Null	any	submit to group, T, L 
+any	any	any	any	any	Null	submit to group, T, G 
+Null	Null	any	any	any	any	not valid
+any	Null	Null	any	any	any	reject
+any	any	Null	Null	any	any	submit to G, L 
+any	any	any	Null	Null	any	submit to group, L 
+any	any	any	any	Null	Null	submit to group, T 
+Null	Null	Null	any	any	any	not valid
+any	Null	Null	Null	any	any	submit to G, L 
+any	any	Null	Null	Null	any	submit to L 
+any	any	any	Null	Null	Null	submit to group 
+Null	Null	Null	Null	any	any	not valid
+any	Null	Null	Null	Null	any	submit to L 
+any	any	Null	Null	Null	Null	not valid
+Null	Null	Null	Null	Null	any	not valid
+any	Null	Null	Null	Null	Null	not valid
+Null	Null	Null	Null	Null	Null	not valid
+
+
+
+4. Processing Forest
+
+
+
+                               |--Group Root---|
+                               |               |
+                               |---Type Root---|
+                               |               |
+client->------Resolver ->------|               |----Authority->---
+return
+                               |               |
+                               |--Global Root--|
+                               |               |
+                               |--Local Root---|
+
+Once the resolver has determined which root to send the resolution 
+request to, each tree should be organized according to an exhaustive 
+replication of each name string on the route to an authority. For 
+instance, the Group tree would be organized alphabetically with TLDs 
+“A” through “Z” initially. Since there are a lot of organizations with 
+business name derivations using the word “micron”, there might be a 
+need to reorganize the “M” TLD to accommodate a “Mic” and a “Mid” TLD. 
+Although it would be more efficient to break down each letter according 
+to the demands of the system, it would be easier to specify one mask 
+for the entire tree. The number of TLDs becomes a function of the 
+permutations of the number of masked characters in the available set of 
+usable characters rather than a select few that are added over time. 
+The resolver can cache the TLDs and know when to use them based upon 
+the mask for the tree. If a larger mask is needed to further distribute 
+the load, the resolvers would have to be updated.
+
+To replicate the current DNS entries under the additional labels 
+specified in this proposal a number of applications and uses would have 
+to be accounted for. The ARPA listings would remain unchanged or they 
+could be replicated under each root by recombining telephone numbers in 
+a single label under the e164 or padding IP addresses under the inverse 
+lookup tables without the periods separating the octets.
+
+Since the NNS uses a forest of processing trees and the current system 
+uses only one tree, a conversion process would have to be developed to 
+distinguish between DNS requests and NNS requests. This could be 
+handled using a number of different methods.
+
+A version flag in the request could accomplish this. This way the 
+resolver would be able to determine which searchable labels were used 
+and the order of presentation by standardization. The resolver 
+intelligence would know which labels to use for lookup or in the 
+preferred embodiment. The resolver could also reorganize the labels to 
+be presented under the correct processor so that the Global label is 
+presented at the right of the name string for processing through the 
+Global tree. Legacy requests without a version would be sent to the 
+Type tree. 
+
+Another method could accomplish the goal by combining the labels the 
+request for the processing tree. In the previous example, the request 
+oven.macgowan.private.US2081234567.SOrchard15541 could be recombined by 
+the submitting processor as 
+oven.macgowanUS2081234567SOrchard15541.private to be searched under the 
+Type tree. Similarly it could be recombined as 
+oven.macgowanprivateUS2081234567.SOrchard15541 to be searched under the 
+Local tree. If a legacy DNS based system submitted a request for 
+www.yahoo.com, it might be appended as www.yahoo.com..... The first “.” 
+after com is to end the Type label. The second “.” Represents the null 
+character at the end of the Global label. The third “.” is for the 
+Local label. The fourth “.” is for the root. The last “.” is for the 
+end of the sentence. If applications are affected by the reservation of 
+the “.” for the root, the request could be recreated as 
+www.yahoo.com.null.null..
+
+A final method is to create a hidden label. Hidden labels are discussed 
+further in extended label uses.
+
+Once the authority for a label is found within the label, the system 
+must also determine if there are Subgroups. Subgroups can be used for a 
+number of internal functions and/or divisions within the authority for 
+an organization. At this point the system would continue to resolve 
+using subgroup labels as levels as it does under the current system 
+toward the device at the left of the name string.
+
+The remaining searchable labels would be serviced using a similar 
+method. The Type tree would be organized as it is in the DNS with TLDs 
+representing each item in the list. Since the items in the list are 
+limited by the system, the mask could be set to none. The Global label 
+should be organized by a mask, which would accommodate at least the 
+country and area codes. The Local label would mask the PGS items until 
+enough TLDs are derived to equal processing traffic under the other 
+trees. Provisions should be made for the non-distinct items like 
+“corporate” that may use characters not reserved for physical 
+locations. In addition, a null TLD could be used to organize the 
+remainder of name strings that have omitted labels. The null “” 
+character or the word “null” could be used to represent legacy DNS 
+strings under the new labels until the name strings are updated with 
+the longer requirements.
+
+The NNS allows a FQDN to be resolved from each searchable label. Please 
+refer to the previous example, 
+oven.macgowan.private.US2081234567.SOrchard15541. The authority, 
+“Macgowan.private.US2081234567.SOrchard15541” is found using the 
+traditional method of the DNS using a Type item of “private” (mask of 
+zero). The authority, “Macgowan.private.US2081234567.SOrchard15541” is 
+found through the Group processor under the “Mac” branch using a mask 
+of three characters. The “Macgowan.private.US2081234567.SOrchard15541” 
+authority is found under “US208” using a mask of four characters within 
+the Global processing tree. The 
+“Macgowan.private.US2081234567.SOrchard15541” authority is also found 
+under “SOr” of the branch masked under the Local tree.
+
+5. Extended Label Uses
+
+The NNS is a simple design which can accommodate the future of Internet 
+name strings by incorporating additional processing trees and a large 
+name space organized by labels with a user friendly interface. A search 
+engine is automatically derived from the organization within labels as 
+opposed to across labels. In other words, you send the known pieces of 
+the request to the processing tree that will yield the quickest results 
+with the least amount of traffic. Once names are bookmarked or selected 
+from a list of AutoCompletes, requests can be sent to any processing 
+tree to balance the load on the system.
+
+The present proposal also provides an extensible path for future labels 
+that may or may not have associated processors.  A “Contact” label 
+might always be masked during the request for resolution, but provide 
+additional value to the user with a description about the connection or 
+a webmaster’s email address. This has extreme value in the event a name 
+can be resolved, but not reached by connection to the IP address. In 
+addition to adding new labels, a group or association might request a 
+new item under the Type label or a new area code might be added under 
+the Group label.  Therefore, one result of this system is a combination 
+of devices and labels which expands exponentially to meet the demand 
+for namespace with an inherent capability to adjust to future needs.
+
+An additional hidden label (mask of all) adjacent to the root could be 
+hidden and give information for maintenance of the system and/or the 
+listing. The most important consideration is keying the order and 
+number of labels in the string. Or using this method, a hidden security 
+label could help create a firewall between valid requests from users in 
+the domain versus outsiders or tie to a public key for the destination. 
+The hidden label could also be used to pass a request for content 
+delivered in a specific language. With the addition of the Local and 
+Global labels it might also be necessary to add a TTL label which could 
+serve as a timer for the registration or the life of a bookmark or 
+connection. The client could use this value in a history of valid 
+connections to make a request for an updated TTL, a new IP address, 
+and/or a trigger for replacing the name with a new string. This would 
+allow for a change in address, phone number, new area code, etc. on the 
+part of the provider. Just as the domain name was an abstraction layer 
+over the IP address, the current domain string is an abstraction for a 
+future domain string. A routine could prompt a user to change an entry 
+in a contact/bookmark list. Services such as WWW could also 
+automatically update links in the content or reflect changes to related 
+destinations within the content. In use, the client could compare its 
+value to the value at the authority. If the authority has a value of 
+zero, the client would update its name and IP address to the new 
+pointer returned by the resolver. An electronically updating NNS with 
+updating links in content is a product of this system.
+
+An example of using this procedure could be applied to finding the best 
+cell phone plan. A user buys a cell plan. The user emails contact links 
+to friends and associates. The recipients use their link to dial the 
+user. The user determines a new provider would be more advantageous and 
+purchases a new plan with a new number. The user sets their old TTL to 
+zero in the NNS and creates a new FQDN with the new cell number. Now 
+when the recipients use the old string, they are pointed to the new 
+string. The string with the new number is updated in the recipient’s 
+contact list. The user is not tied to their telephone number and the 
+recipients do not need to manually adjust their entries.
+
+Hidden labels and masking would also have to be present at the client. 
+A business might have a lot of phone numbers or locations listed on the 
+name servers but use a shorter version of the string for making local 
+connections. This way all the devices under a group could be combined 
+as a single domain name. The future direction of label intelligence and 
+the ideas expressed here suggest that there may be numerous ways to 
+provide abstraction levels within the label string. Even the IP address 
+might be used as an identifier to search for the rest of the domain 
+string or an item like the telephone number.
+
+6. IANA Considerations
+
+The focus of the IANA will change considerably. The need to regulate 
+name hoarders, TM infringement considerations, and the decision to 
+implement new TLDs will be greatly reduced. The IANA might be used to 
+determine the relationships between labels as new items are added under 
+the requirements that provide for fair and equal addition to the Type 
+label.
+
+7. Security Consideration
+
+Name resolution is an inherent problem for spoofing content, but is 
+beyond the scope of this proposal. The suggested ability to update name 
+strings at the client also increases the need to provide secure 
+communications between the system and the client.
+
+
+References
+
+
+
+   [RFC 1034] - "Domain names - concepts and facilities", P.
+
+   Mockapetris, 11/01/1987.
+
+   [RFC 1035] - "Domain names - implementation and specification", P.
+
+   Mockapetris, 11/01/1987.
+
+              [RFC 2535] – “E.164 number and DNS” , P.
+
+              P. Faltstrom,  9/1/2000.
+
+Authors Address
+
+   Michael L. Macgowan Jr.
+   15541 Orchard Ave.
+   Caldwell, ID 83607 USA
+
+
+   Telephone:   +1 208.454.1177 (h)
+   FAX:         +1 208.455.0439
+   EMail:       mmacgowa@yahoo.com
+
+
+Expiration and File Name
+
+   This draft expires in August 2001
+
+   Its file name is labelmanage.txt
+
+Full Copyright Statement
+
+Copyright (C) The Internet Society (February 2001). All Rights 
+Reserved.
+
+This document and translations of it may be copied and furnished to
+others, and derivative works that comment on or otherwise explain it or 
+assist in its implementation may be prepared, copied, published and 
+distributed, in whole or in part, without restriction of any kind, 
+provided that the above copyright notice and this paragraph are 
+included on all such copies and derivative works. However, this 
+document itself may not be modified in any way, such as by removing the 
+copyright notice or references to the Internet Society or other 
+Internet organizations, except as needed for the purpose of developing 
+Internet standards in which case the procedures for copyrights defined 
+in the Internet Standards process must be followed, or as required to 
+translate it into languages other than English.
+
+The limited permissions granted above are perpetual and will not be 
+revoked by the Internet Society or its successors or assigns. This 
+document and the information contained herein is provided on an "AS IS" 
+basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE 
+DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED 
+TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT 
+INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR 
+FITNESS FOR A PARTICULAR PURPOSE."
+Michael L. Macgowan Jr.	February  2001	[Page 17]
+
+Internet Draft		DNS Label Intelligence and Management System
+
+
+

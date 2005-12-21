@@ -1,23 +1,23 @@
-/*	$NetBSD: interfaceiter.c,v 1.1.1.1 2004/05/17 23:45:07 christos Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.1.1.2 2005/12/21 19:59:11 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: interfaceiter.c,v 1.4.12.4 2004/03/08 09:04:59 marka Exp */
+/* Id: interfaceiter.c,v 1.4 2001/07/17 20:29:27 gson Exp */
 
 /*
  * Note that this code will need to be revisited to support IPv6 Interfaces.
@@ -37,9 +37,9 @@
 #include <isc/mem.h>
 #include <isc/result.h>
 #include <isc/string.h>
-#include <isc/strerror.h>
 #include <isc/types.h>
 #include <isc/util.h>
+#include "errno2result.h"
 
 /* Common utility functions */
 
@@ -103,7 +103,6 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src) {
 
 isc_result_t
 isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
-	char strbuf[ISC_STRERRORSIZE]; 
 	isc_interfaceiter_t *iter;
 	isc_result_t result;
 	int error;
@@ -125,11 +124,9 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	 * SIO_GET_INTERFACE_LIST WSAIoctl on.
 	 */
 	if ((iter->socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		error = WSAGetLastError();
-		isc__strerror(error, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				"making interface scan socket: %s",
-				strbuf);
+				 "making interface scan socket: %s",
+				 strerror(errno));
 		result = ISC_R_UNEXPECTED;
 		goto socket_failure;
 	}
@@ -149,15 +146,15 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 
 		if (WSAIoctl(iter->socket, SIO_GET_INTERFACE_LIST,
 			     0, 0, iter->buf, iter->bufsize,
-			     &bytesReturned, 0, 0) == SOCKET_ERROR)
+			     &bytesReturned, 0, 0)
+		    == SOCKET_ERROR)
 		{
 			error = WSAGetLastError();
 			if (error != WSAEFAULT && error != WSAENOBUFS) {
 				errno = error;
-				isc__strerror(error, strbuf, sizeof(strbuf));
 				UNEXPECTED_ERROR(__FILE__, __LINE__,
-						"get interface configuration: %s",
-						strbuf);
+					     "get interface configuration: %s",
+						 NTstrerror(error));
 				result = ISC_R_UNEXPECTED;
 				goto ioctl_failure;
 			}
@@ -211,7 +208,7 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	(void) closesocket(iter->socket);
 
  socket_failure:
-	isc_mem_put(mctx, iter, sizeof(*iter));
+	isc_mem_put(mctx, iter, sizeof *iter);
 	return (result);
 }
 
@@ -376,7 +373,7 @@ isc_interfaceiter_destroy(isc_interfaceiter_t **iterp) {
 	isc_mem_put(iter->mctx, iter->buf, iter->bufsize);
 
 	iter->magic = 0;
-	isc_mem_put(iter->mctx, iter, sizeof(*iter));
+	isc_mem_put(iter->mctx, iter, sizeof *iter);
 	*iterp = NULL;
 }
 

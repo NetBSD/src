@@ -1,23 +1,23 @@
-/*	$NetBSD: opt_41.c,v 1.1.1.1 2004/05/17 23:44:59 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.1.1.2 2005/12/21 19:58:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: opt_41.c,v 1.25.12.4 2004/03/08 09:04:41 marka Exp */
+/* Id: opt_41.c,v 1.25 2001/07/16 03:06:24 marka Exp */
 
 /* Reviewed: Thu Mar 16 14:06:44 PST 2000 by gson */
 
@@ -42,7 +42,7 @@ fromtext_opt(ARGS_FROMTEXT) {
 	UNUSED(rdclass);
 	UNUSED(lexer);
 	UNUSED(origin);
-	UNUSED(options);
+	UNUSED(downcase);
 	UNUSED(target);
 	UNUSED(callbacks);
 
@@ -103,7 +103,7 @@ fromwire_opt(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(dctx);
-	UNUSED(options);
+	UNUSED(downcase);
 
 	isc_buffer_activeregion(source, &sregion);
 	total = 0;
@@ -156,7 +156,7 @@ compare_opt(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return (compare_region(&r1, &r2));
 }
 
 static inline isc_result_t
@@ -253,30 +253,6 @@ digest_opt(ARGS_DIGEST) {
 	UNUSED(arg);
 
 	return (ISC_R_NOTIMPLEMENTED);
-}
-
-static inline isc_boolean_t
-checkowner_opt(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == 41);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (dns_name_equal(name, dns_rootname));
-}
-
-static inline isc_boolean_t
-checknames_opt(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == 41);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	return (ISC_TRUE);
 }
 
 #endif	/* RDATA_GENERIC_OPT_41_C */
