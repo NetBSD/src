@@ -1,23 +1,23 @@
-/*	$NetBSD: getnameinfo.c,v 1.3 2004/11/07 00:16:59 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.4 2005/12/21 22:34:32 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getnameinfo.c,v 1.30.2.3.2.4 2004/08/28 06:25:24 marka Exp */
+/* Id: getnameinfo.c,v 1.30.2.3 2003/07/23 06:57:56 marka Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,7 +63,6 @@
 #include <lwres/lwres.h>
 #include <lwres/net.h>
 #include <lwres/netdb.h>
-#include "print_p.h"
 
 #ifdef __KAME__
 #include <net/if.h>
@@ -175,7 +174,7 @@ lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 		 */
 	} else if ((flags & NI_NUMERICSERV) != 0 ||
 		   (sp = getservbyport(port, proto)) == NULL) {
-		snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
+		sprintf(numserv, "%d", ntohs(port));
 		if ((strlen(numserv) + 1) > servlen)
 			ERR(ENI_MEMORY);
 		strcpy(serv, numserv);
