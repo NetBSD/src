@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.1 2005/12/20 19:28:52 christos Exp $	*/
+/*	$NetBSD: random.c,v 1.2 2005/12/21 14:19:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,12 +29,13 @@
  * SUCH DAMAGE.
  */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
+__RCSID("$NetBSD: random.c,v 1.2 2005/12/21 14:19:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,12 +53,18 @@ __weak_alias(setstate,_setstate)
 __weak_alias(srandom,_srandom)
 #endif
 
-static void srandom_unlocked __P((unsigned int));
-static long random_unlocked __P((void));
 
 #ifdef _REENTRANT
 static mutex_t random_mutex = MUTEX_INITIALIZER;
 #endif
+#else
+#include <lib/libkern/libkern.h>
+#define mutex_lock(a)	(void)0
+#define mutex_unlock(a) (void)0
+#endif
+
+static void srandom_unlocked(unsigned int);
+static long random_unlocked(void);
 
 #define USE_BETTER_RANDOM
 
@@ -256,8 +263,7 @@ static int *end_ptr = &randtbl[DEG_3 + 1];
  * for default usage relies on values produced by this routine.
  */
 static void
-srandom_unlocked(x)
-	unsigned int x;
+srandom_unlocked(unsigned int x)
 {
 	int i;
 
@@ -295,8 +301,7 @@ srandom_unlocked(x)
 }
 
 void
-srandom(x)
-	unsigned long x;
+srandom(unsigned long x)
 {
 
 	mutex_lock(&random_mutex);
@@ -328,10 +333,10 @@ srandom(x)
  * complain about mis-alignment, but you should disregard these messages.
  */
 char *
-initstate(seed, arg_state, n)
-	unsigned long seed;		/* seed for R.N.G. */
-	char *arg_state;		/* pointer to state array */
-	size_t n;			/* # bytes of state info */
+initstate(
+	unsigned long seed,		/* seed for R.N.G. */
+	char *arg_state,		/* pointer to state array */
+	size_t n)			/* # bytes of state info */
 {
 	void *ostate = (void *)(&state[-1]);
 	int *int_arg_state;
@@ -400,8 +405,7 @@ initstate(seed, arg_state, n)
  * complain about mis-alignment, but you should disregard these messages.
  */
 char *
-setstate(arg_state)
-	char *arg_state;		/* pointer to state array */
+setstate(char *arg_state)		/* pointer to state array */
 {
 	int *new_state;
 	int type;
@@ -461,7 +465,7 @@ setstate(arg_state)
  * Returns a 31-bit random number.
  */
 static long
-random_unlocked()
+random_unlocked(void)
 {
 	int i;
 	int *f, *r;
@@ -491,7 +495,7 @@ random_unlocked()
 }
 
 long
-random()
+random(void)
 {
 	long r;
 
