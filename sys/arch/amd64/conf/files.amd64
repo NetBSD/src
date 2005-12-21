@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.18 2005/12/11 12:16:21 christos Exp $
+#	$NetBSD: files.amd64,v 1.19 2005/12/21 22:35:41 rjs Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -171,6 +171,18 @@ file	arch/x86/x86/linux_trap.c			compat_linux
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
+
+#
+# CARDBUS
+#
+include	"dev/cardbus/files.cardbus"
+file	arch/amd64/amd64/rbus_machdep.c	cardbus
+
+# this wants to be probed as late as possible.
+#
+# Machine-independent PCMCIA drivers
+#
+include	"dev/pcmcia/files.pcmcia"
 
 include	"dev/usb/files.usb"
 
