@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.38 2005/12/21 12:19:04 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.39 2005/12/21 12:23:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.38 2005/12/21 12:19:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.39 2005/12/21 12:23:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -438,7 +438,7 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "inactivepct",
-		       SYSCTL_DESCR("Percentage of inactive queue of"
+		       SYSCTL_DESCR("Percentage of inactive queue of "
 				    "the entire (active + inactive) queue"),
 		       sysctl_uvmpctparam, 0, &uvmexp.inactivepct, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
