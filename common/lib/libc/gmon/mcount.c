@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.2 2005/12/21 15:14:09 christos Exp $	*/
+/*	$NetBSD: mcount.c,v 1.3 2005/12/21 16:58:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -76,14 +76,16 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.2 2005/12/21 15:14:09 christos Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.3 2005/12/21 16:58:04 christos Exp $");
 #endif
 #endif
 
 #include <sys/param.h>
 #include <sys/gmon.h>
 
+#ifndef _KERNEL
 #include "reentrant.h"
+#endif
 
 #ifdef _REENTRANT
 extern thread_key_t _gmonkey;
@@ -93,12 +95,12 @@ struct gmonparam *_m_gmon_alloc(void);
 
 _MCOUNT_DECL __P((u_long, u_long))
 #ifdef _KERNEL
-	__attribute__((__unused__,__no_instrument_function__));	/* see below. */
+    __attribute__((__unused__,__no_instrument_function__));	/* see below. */
 #else
 #ifdef __vax__
-_MCOUNT_DECL __P((u_long, u_long)) __attribute__((__unused__));	/* see below. */
+    __attribute__((__unused__));	/* see below. */
 #else
-_MCOUNT_DECL __P((u_long, u_long)) __attribute__((__used__));	/* see below. */
+    __attribute__((__used__));		/* see below. */
 #endif
 #endif
 
