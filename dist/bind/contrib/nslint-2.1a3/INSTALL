@@ -1,4 +1,4 @@
-@(#) Header: /proj/cvs/isc/bind9/contrib/nslint-2.1a3/INSTALL,v 1.1 2001/12/21 04:12:02 marka Exp (LBL)
+@(#) Header: /proj/cvs/prod/bind9/contrib/nslint-2.1a3/INSTALL,v 1.1 2001/12/21 04:12:02 marka Exp (LBL)
 
 You will need an ANSI C compiler to build nslint. The configure
 script will abort if your compiler is not ANSI compliant. If this

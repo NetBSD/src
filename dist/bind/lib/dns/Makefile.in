@@ -1,33 +1,38 @@
-# Copyright (C) 1998-2001, 2003  Internet Software Consortium.
+# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.126.2.4 2003/10/09 06:47:59 marka Exp
+# Id: Makefile.in,v 1.126.2.3.2.17 2004/12/09 04:07:15 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
 
+# Attempt to disable parallel processing.
+.NOTPARALLEL:
+.NO_PARALLEL:
+
 @BIND9_VERSION@
 
 @LIBDNS_API@
 
-@BIND9_INCLUDES@
+@BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	-I. ${DNS_INCLUDES} ${ISC_INCLUDES}
+CINCLUDES =	-I. -Iinclude ${DNS_INCLUDES} \
+		${ISC_INCLUDES} @DST_OPENSSL_INC@ @DST_GSSAPI_INC@
 
-CDEFINES =
+CDEFINES =	-DUSE_MD5 @USE_OPENSSL@ @USE_GSSAPI@
 CWARNINGS =
 
 ISCLIBS =	../../lib/isc/libisc.@A@
@@ -38,46 +43,53 @@ LIBS =		@LIBS@
 
 # Alphabetically
 
-DSTOBJS =	sec/dst/dst_api.@O@ sec/dst/dst_lib.@O@ sec/dst/dst_parse.@O@ \
-		sec/dst/dst_result.@O@ sec/dst/hmac_link.@O@ sec/dst/key.@O@
-
-OPENSSLOBJS =	sec/dst/openssl_link.@O@ sec/dst/openssldh_link.@O@ \
-		sec/dst/openssldsa_link.@O@ sec/dst/opensslrsa_link.@O@
-
-GSSAPIOBJS =	sec/dst/gssapi_link.@O@ sec/dst/gssapictx.@O@
+DSTOBJS =	dst_api.@O@ dst_lib.@O@ dst_parse.@O@ dst_result.@O@ \
+		gssapi_link.@O@ gssapictx.@O@ hmac_link.@O@ key.@O@ \
+		openssl_link.@O@ openssldh_link.@O@ openssldsa_link.@O@ \
+		opensslrsa_link.@O@
 
 # Alphabetically
-OBJS =		a6.@O@ acl.@O@ adb.@O@ byaddr.@O@ \
+DNSOBJS =	acl.@O@ adb.@O@ byaddr.@O@ \
 		cache.@O@ callbacks.@O@ compress.@O@ \
 		db.@O@ dbiterator.@O@ dbtable.@O@ diff.@O@ dispatch.@O@ \
-		dnssec.@O@ forward.@O@ journal.@O@ keytable.@O@ \
+		dnssec.@O@ ds.@O@ forward.@O@ journal.@O@ keytable.@O@ \
 		lib.@O@ log.@O@ lookup.@O@ \
 		master.@O@ masterdump.@O@ message.@O@ \
-		name.@O@ ncache.@O@ nxt.@O@ peer.@O@ \
-		rbt.@O@ rbtdb.@O@ rbtdb64.@O@ rdata.@O@ rdatalist.@O@ \
+		name.@O@ ncache.@O@ nsec.@O@ order.@O@ peer.@O@ portlist.@O@ \
+		rbt.@O@ rbtdb.@O@ rbtdb64.@O@ rcode.@O@ rdata.@O@ \
+		rdatalist.@O@ \
 		rdataset.@O@ rdatasetiter.@O@ rdataslab.@O@ request.@O@ \
 		resolver.@O@ result.@O@ rootns.@O@ sdb.@O@ soa.@O@ ssu.@O@ \
 		stats.@O@ tcpmsg.@O@ time.@O@ timer.@O@ tkey.@O@ \
 		tsig.@O@ ttl.@O@ validator.@O@ \
-		version.@O@ view.@O@ xfrin.@O@ zone.@O@ zonekey.@O@ zt.@O@ \
-		${OTHEROBJS} ${DSTOBJS} ${OPENSSLOBJS} ${GSSAPIOBJS}
+		version.@O@ view.@O@ xfrin.@O@ zone.@O@ zonekey.@O@ zt.@O@
+
+OBJS=		${DNSOBJS} ${OTHEROBJS} ${DSTOBJS}
 
 # Alphabetically
-SRCS =		a6.c acl.c adb.c byaddr.c \
+DSTSRCS =	dst_api.c dst_lib.c dst_parse.c \
+		dst_result.c gssapi_link.c gssapictx.c \
+		hmac_link.c key.c \
+		openssl_link.c openssldh_link.c \
+		openssldsa_link.c opensslrsa_link.c
+
+SRCS =		acl.c adb.c byaddr.c \
 		cache.c callbacks.c compress.c \
 		db.c dbiterator.c dbtable.c diff.c dispatch.c \
-		dnssec.c forward.c journal.c keytable.c \
+		dnssec.c ds.c forward.c journal.c keytable.c \
 		lib.c log.c lookup.c \
 		master.c masterdump.c message.c \
-		name.c ncache.c nxt.c peer.c \
-		rbt.c rbtdb.c rbtdb64.c rdata.c rdatalist.c \
+		name.c ncache.c nsec.c order.c peer.c portlist.c \
+		rbt.c rbtdb.c rbtdb64.c rcode.c rdata.c \
+		rdatalist.c \
 		rdataset.c rdatasetiter.c rdataslab.c request.c \
 		resolver.c result.c rootns.c sdb.c soa.c ssu.c \
 		stats.c tcpmsg.c time.c timer.c tkey.c \
 		tsig.c ttl.c validator.c \
 		version.c view.c xfrin.c zone.c zonekey.c zt.c ${OTHERSRCS}
+SRCS = ${DSTSRCS} ${DNSSRCS}
 
-SUBDIRS =	include sec
+SUBDIRS =	include 
 TARGETS =	include/dns/enumtype.h include/dns/enumclass.h \
 		include/dns/rdatastruct.h timestamp
 
@@ -87,7 +99,7 @@ DEPENDEXTRA =	./gen -F include/dns/rdatastruct.h \
 @BIND9_MAKE_RULES@
 
 version.@O@: version.c
-	${LIBTOOL} ${CC} ${ALL_CFLAGS} \
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \
 		-DVERSION=\"${VERSION}\" \
 		-DLIBINTERFACE=${LIBINTERFACE} \
 		-DLIBREVISION=${LIBREVISION} \
@@ -99,30 +111,10 @@ libdns.@SA@: ${OBJS}
 	${RANLIB} $@
 
 libdns.la: ${OBJS}
-	${LIBTOOL} --mode=link \
-		${CC} ${ALL_CFLAGS} -o libdns.la -rpath ${libdir} \
+	${LIBTOOL_MODE_LINK} \
+		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libdns.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OBJS} ${LIBS} ${ISCLIBS}
-
-libdstcypto.@SA@: ${OPENSSLOBJS}
-	${AR} ${ARFLAGS} $@ ${OPENSSLOBJS}
-	${RANLIB} $@
-
-libdstcypto.la: ${OPENSSLOBJS}
-	${LIBTOOL} --mode=link \
-		${CC} ${ALL_CFLAGS} -o $@ -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OPENSSLOBJS} ${LIBS}
-
-libdstgssapi.@SA@: ${GSSAPIOBJS}
-	${AR} ${ARFLAGS} $@ ${GSSAPIOBJS}
-	${RANLIB} $@
-
-libdstgssapi.la: ${GSSAPIOBJS}
-	${LIBTOOL} --mode=link \
-		${CC} ${ALL_CFLAGS} -o $@ -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${GSSAPIOBJS} ${LIBS}
+		${OBJS} ${ISCLIBS} @DNS_CRYPTO_LIBS@ ${LIBS}
 
 timestamp: libdns.@A@
 	touch timestamp
@@ -131,7 +123,7 @@ installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${libdir}
 
 install:: timestamp installdirs
-	${LIBTOOL} ${INSTALL_DATA} libdns.@A@ ${DESTDIR}${libdir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_DATA} libdns.@A@ ${DESTDIR}${libdir}
 
 clean distclean::
 	rm -f libdns.@A@ timestamp
@@ -164,7 +156,7 @@ code.h:	gen
 	./gen -s ${srcdir} > code.h
 
 gen: gen.c
-	${CC} ${ALL_CFLAGS} -o $@ ${srcdir}/gen.c ${LIBS}
+	${CC} ${ALL_CFLAGS} ${LDFLAGS} -o $@ ${srcdir}/gen.c ${LIBS}
 
 rbtdb64.@O@: rbtdb.c
 
@@ -172,3 +164,5 @@ depend: include/dns/enumtype.h include/dns/enumclass.h \
 	include/dns/rdatastruct.h code.h
 subdirs: include/dns/enumtype.h include/dns/enumclass.h \
 	include/dns/rdatastruct.h code.h
+${OBJS}: include/dns/enumtype.h include/dns/enumclass.h \
+	include/dns/rdatastruct.h

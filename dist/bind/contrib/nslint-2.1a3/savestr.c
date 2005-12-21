@@ -1,4 +1,4 @@
-/*	$NetBSD: savestr.c,v 1.1.1.2 2005/12/21 19:53:55 christos Exp $	*/
+/*	$NetBSD: savestr.c,v 1.1.1.3 2005/12/21 23:11:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /proj/cvs/isc/bind9/contrib/nslint-2.1a3/savestr.c,v 1.1 2001/12/21 04:12:04 marka Exp (LBL)";
+    "@(#) Header: /proj/cvs/prod/bind9/contrib/nslint-2.1a3/savestr.c,v 1.1 2001/12/21 04:12:04 marka Exp (LBL)";
 #endif
 
 #include <sys/types.h>

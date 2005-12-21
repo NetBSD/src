@@ -1,23 +1,23 @@
-/*	$NetBSD: rndc-confgen.c,v 1.1.1.2 2005/12/21 19:51:27 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.1.1.3 2005/12/21 23:08:16 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc-confgen.c,v 1.9.2.6 2003/07/22 04:03:37 marka Exp */
+/* Id: rndc-confgen.c,v 1.9.2.6.2.5 2004/09/28 07:14:57 marka Exp */
 
 #include <config.h>
 
@@ -107,6 +107,7 @@ write_key_file(const char *keyfile, const char *user,
 		fatal("write to %s failed\n", keyfile);
 	if (fclose(fd))
 		fatal("fclose(%s) failed\n", keyfile);
+	fprintf(stderr, "wrote key file \"%s\"\n", keyfile);
 }
 
 int
@@ -173,7 +174,7 @@ main(int argc, char **argv) {
 			keyname = isc_commandline_argument;
 			break;
 		case 'M':
-			isc_mem_debugging = 1;
+			isc_mem_debugging = ISC_MEM_DEBUGTRACE;
 			break;
 
 		case 'm':
@@ -274,7 +275,8 @@ main(int argc, char **argv) {
 			buf = isc_mem_get(mctx, len);
 			if (buf == NULL)
 				fatal("isc_mem_get(%d) failed\n", len);
-			snprintf(buf, len, "%s/%s", chrootdir, keyfile);
+			snprintf(buf, len, "%s%s%s", chrootdir,
+				 (*keyfile != '/') ? "/" : "", keyfile);
 			
 			write_key_file(buf, user, keyname, &key_txtbuffer);
 			isc_mem_put(mctx, buf, len);

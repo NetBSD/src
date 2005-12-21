@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.1.1.2 2005/12/21 19:57:37 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.1.1.3 2005/12/21 23:15:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -54,25 +54,25 @@
  */
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_query.c,v 1.2.2.3 2003/06/27 03:51:44 marka Exp";
+static const char rcsid[] = "Id: res_query.c,v 1.2.2.3.4.2 2004/03/16 12:34:19 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -135,7 +135,7 @@ again:
 			 buf, sizeof(buf));
 #ifdef RES_USE_EDNS0
 	if (n > 0 && (statp->_flags & RES_F_EDNS0ERR) == 0 &&
-	    (statp->options & (RES_USE_EDNS0|RES_USE_DNSSEC)) != 0)
+	    (statp->options & (RES_USE_EDNS0|RES_USE_DNSSEC)) != 0U)
 		n = res_nopt(statp, n, buf, sizeof(buf), anslen);
 #endif
 	if (n <= 0) {
@@ -150,7 +150,7 @@ again:
 	if (n < 0) {
 #ifdef RES_USE_EDNS0
 		/* if the query choked with EDNS0, retry without EDNS0 */
-		if ((statp->options & (RES_USE_EDNS0|RES_USE_DNSSEC)) != 0 &&
+		if ((statp->options & (RES_USE_EDNS0|RES_USE_DNSSEC)) != 0U &&
 		    ((oflags ^ statp->_flags) & RES_F_EDNS0ERR) != 0) {
 			statp->_flags |= RES_F_EDNS0ERR;
 			if (statp->options & RES_DEBUG)
@@ -244,7 +244,7 @@ res_nsearch(res_state statp,
 					 answer, anslen);
 		if (ret > 0 || trailing_dot)
 			return (ret);
-		saved_herrno = h_errno;
+		saved_herrno = statp->res_h_errno;
 		tried_as_is++;
 	}
 
@@ -254,8 +254,8 @@ res_nsearch(res_state statp,
 	 *	- there is at least one dot, there is no trailing dot,
 	 *	  and RES_DNSRCH is set.
 	 */
-	if ((!dots && (statp->options & RES_DEFNAMES) != 0) ||
-	    (dots && !trailing_dot && (statp->options & RES_DNSRCH) != 0)) {
+	if ((!dots && (statp->options & RES_DEFNAMES) != 0U) ||
+	    (dots && !trailing_dot && (statp->options & RES_DNSRCH) != 0U)) {
 		int done = 0;
 
 		for (domain = (const char * const *)statp->dnsrch;
@@ -313,7 +313,7 @@ res_nsearch(res_state statp,
 			/* if we got here for some reason other than DNSRCH,
 			 * we only wanted one iteration of the loop, so stop.
 			 */
-			if ((statp->options & RES_DNSRCH) == 0)
+			if ((statp->options & RES_DNSRCH) == 0U)
 				done++;
 		}
 	}
@@ -322,7 +322,7 @@ res_nsearch(res_state statp,
 	 * If the query has not already been tried as is then try it
 	 * unless RES_NOTLDQUERY is set and there were no dots.
 	 */
-	if ((dots || !searched || (statp->options & RES_NOTLDQUERY) == 0) &&
+	if ((dots || !searched || (statp->options & RES_NOTLDQUERY) == 0U) &&
 	    !(tried_as_is || root_on_list)) {
 		ret = res_nquerydomain(statp, name, NULL, class, type,
 				       answer, anslen);

@@ -1,20 +1,20 @@
-/*	$NetBSD: ev_timers.c,v 1.1.1.2 2005/12/21 19:57:24 christos Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.1.1.3 2005/12/21 23:15:41 christos Exp $	*/
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-1999 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /* ev_timers.c - implement timers for the eventlib
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_timers.c,v 1.2.2.1 2003/06/27 03:51:41 marka Exp";
+static const char rcsid[] = "Id: ev_timers.c,v 1.2.2.1.4.5 2004/03/17 02:39:13 marka Exp";
 #endif
 
 /* Import. */
@@ -111,7 +111,30 @@ evCmpTime(struct timespec a, struct timespec b) {
 struct timespec
 evNowTime() {
 	struct timeval now;
+#ifdef CLOCK_REALTIME
+	struct timespec tsnow;
+	int m = CLOCK_REALTIME;
 
+#ifdef CLOCK_MONOTONIC
+	if (__evOptMonoTime)
+		m = CLOCK_MONOTONIC;
+#endif
+	if (clock_gettime(m, &tsnow) == 0)
+		return (tsnow);
+#endif
+	if (gettimeofday(&now, NULL) < 0)
+		return (evConsTime(0, 0));
+	return (evTimeSpec(now));
+}
+
+struct timespec
+evUTCTime() {
+	struct timeval now;
+#ifdef CLOCK_REALTIME
+	struct timespec tsnow;
+	if (clock_gettime(CLOCK_REALTIME, &tsnow) == 0)
+		return (tsnow);
+#endif
 	if (gettimeofday(&now, NULL) < 0)
 		return (evConsTime(0, 0));
 	return (evTimeSpec(now));
@@ -159,8 +182,25 @@ evSetTimer(evContext opaqueCtx,
 		 (long)due.tv_sec, due.tv_nsec,
 		 (long)inter.tv_sec, inter.tv_nsec);
 
+#ifdef __hpux
+	/*
+	 * tv_sec and tv_nsec are unsigned.
+	 */
+	if (due.tv_nsec >= BILLION)
+		EV_ERR(EINVAL);
+
+	if (inter.tv_nsec >= BILLION)
+		EV_ERR(EINVAL);
+#else
+	if (due.tv_sec < 0 || due.tv_nsec < 0 || due.tv_nsec >= BILLION)
+		EV_ERR(EINVAL);
+
+	if (inter.tv_sec < 0 || inter.tv_nsec < 0 || inter.tv_nsec >= BILLION)
+		EV_ERR(EINVAL);
+#endif
+
 	/* due={0,0} is a magic cookie meaning "now." */
-	if (due.tv_sec == 0 && due.tv_nsec == 0L)
+	if (due.tv_sec == (time_t)0 && due.tv_nsec == 0L)
 		due = evNowTime();
 
 	/* Allocate and fill. */
@@ -218,6 +258,31 @@ evClearTimer(evContext opaqueCtx, evTimerID id) {
 }
 
 int
+evConfigTimer(evContext opaqueCtx,
+	     evTimerID id,
+	     const char *param,
+	     int value
+) {
+	evContext_p *ctx = opaqueCtx.opaque;
+	evTimer *timer = id.opaque;
+	int result=0;
+
+	UNUSED(value);
+
+	if (heap_element(ctx->timers, timer->index) != timer)
+		EV_ERR(ENOENT);
+
+	if (strcmp(param, "rate") == 0)
+		timer->mode |= EV_TMR_RATE;
+	else if (strcmp(param, "interval") == 0)
+		timer->mode &= ~EV_TMR_RATE;
+	else
+		EV_ERR(EINVAL);
+
+	return (result);
+}
+
+int
 evResetTimer(evContext opaqueCtx,
 	     evTimerID id,
 	     evTimerFunc func,
@@ -232,6 +297,23 @@ evResetTimer(evContext opaqueCtx,
 
 	if (heap_element(ctx->timers, timer->index) != timer)
 		EV_ERR(ENOENT);
+
+#ifdef __hpux
+	/*
+	 * tv_sec and tv_nsec are unsigned.
+	 */
+	if (due.tv_nsec >= BILLION)
+		EV_ERR(EINVAL);
+
+	if (inter.tv_nsec >= BILLION)
+		EV_ERR(EINVAL);
+#else
+	if (due.tv_sec < 0 || due.tv_nsec < 0 || due.tv_nsec >= BILLION)
+		EV_ERR(EINVAL);
+
+	if (inter.tv_sec < 0 || inter.tv_nsec < 0 || inter.tv_nsec >= BILLION)
+		EV_ERR(EINVAL);
+#endif
 
 	old_due = timer->due;
 

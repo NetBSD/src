@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.1.1.3 2005/12/21 19:57:08 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.1.1.4 2005/12/21 23:15:30 christos Exp $	*/
 
 /*
  * Issues to be discussed:
@@ -134,7 +134,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	port = ((const struct sockinet *)sa)->si_port; /* network byte order */
 	addr = (const char *)sa + afd->a_off;
 
-	if (serv == NULL || servlen == 0) {
+	if (serv == NULL || servlen == 0U) {
 		/*
 		 * rfc2553bis says that serv == NULL or servlen == 0 means that
 		 * the caller does not want the result.
@@ -156,7 +156,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 
 	switch (sa->sa_family) {
 	case AF_INET:
-		if (ntohl(*(const u_long *)addr) >> IN_CLASSA_NSHIFT == 0)
+		if (ntohl(*(const u_int32_t *)addr) >> IN_CLASSA_NSHIFT == 0)
 			flags |= NI_NUMERICHOST;			
 		break;
 	case AF_INET6:
@@ -179,7 +179,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		}
 		break;
 	}
-	if (host == NULL || hostlen == 0) {
+	if (host == NULL || hostlen == 0U) {
 		/*
 		 * rfc2553bis says that host == NULL or hostlen == 0 means that
 		 * the caller does not want the result.
@@ -285,7 +285,7 @@ ip6_sa2str(const struct sockaddr_in6 *sa6, char *buf,
 #ifdef NI_NUMERICSCOPE
 	if (flags & NI_NUMERICSCOPE) {
 		sprintf(tmp, "%u", sa6->sin6_scope_id);
-		if (bufsiz != 0) {
+		if (bufsiz != 0U) {
 			strncpy(buf, tmp, bufsiz - 1);
 			buf[bufsiz - 1] = '\0';
 		}
@@ -315,7 +315,7 @@ ip6_sa2str(const struct sockaddr_in6 *sa6, char *buf,
 
 	/* last resort */
 	sprintf(tmp, "%u", sa6->sin6_scope_id);
-	if (bufsiz != 0) {
+	if (bufsiz != 0U) {
 		strncpy(buf, tmp, bufsiz - 1);
 		buf[bufsiz - 1] = '\0';
 	}

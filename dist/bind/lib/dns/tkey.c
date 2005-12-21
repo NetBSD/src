@@ -1,24 +1,24 @@
-/*	$NetBSD: tkey.c,v 1.1.1.3 2005/12/21 19:58:08 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.1.1.4 2005/12/21 23:16:39 christos Exp $	*/
 
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
- * Id: tkey.c,v 1.71.2.1 2001/10/09 23:06:57 gson Exp
+ * Id: tkey.c,v 1.71.2.1.10.7 2005/06/12 00:02:26 marka Exp
  */
 
 #include <config.h>
@@ -234,8 +234,7 @@ compute_secret(isc_buffer_t *shared, isc_region_t *queryrandomness,
 		for (i = 0; i < sizeof(digests); i++)
 			r.base[i] ^= digests[i];
 		isc_buffer_add(secret, r2.length);
-	}
-	else {
+	} else {
 		memcpy(r.base, digests, sizeof(digests));
 		for (i = 0; i < r2.length; i++)
 			r.base[i] ^= r2.base[i];
@@ -311,8 +310,7 @@ process_dhtkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 					found_key = ISC_TRUE;
 					ttl = keyset->ttl;
 					break;
-				}
-				else
+				} else
 					found_incompatible = ISC_TRUE;
 			}
 			dst_key_free(&pubkey);
@@ -360,7 +358,7 @@ process_dhtkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 
 	isc_buffer_init(&secret, secretdata, sizeof(secretdata));
 
-	randomdata = isc_mem_get(tctx->mctx, TKEY_RANDOM_AMOUNT);
+	randomdata = isc_mem_get(tkeyout->mctx, TKEY_RANDOM_AMOUNT);
 	if (randomdata == NULL)
 		goto failure;
 
@@ -401,8 +399,8 @@ process_dhtkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 		isc_buffer_free(&shared);
 	if (pubkey != NULL)
 		dst_key_free(&pubkey);
-	if (randomdata == NULL)
-		isc_mem_put(tctx->mctx, randomdata, TKEY_RANDOM_AMOUNT);
+	if (randomdata != NULL)
+		isc_mem_put(tkeyout->mctx, randomdata, TKEY_RANDOM_AMOUNT);
 	return (result);
 }
 
@@ -645,10 +643,10 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 
 		if (!dns_name_equal(qname, dns_rootname)) {
 			unsigned int n = dns_name_countlabels(qname);
-			dns_name_copy(qname, keyname, NULL);
+			RUNTIME_CHECK(dns_name_copy(qname, keyname, NULL)
+				      == ISC_R_SUCCESS);
 			dns_name_getlabelsequence(keyname, 0, n - 1, keyname);
-		}
-		else {
+		} else {
 			static char hexdigits[16] = {
 				'0', '1', '2', '3', '4', '5', '6', '7',
 				'8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
@@ -686,11 +684,9 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 			tkeyout.error = dns_tsigerror_badname;
 			dns_tsigkey_detach(&tsigkey);
 			goto failure_with_tkey;
-		}
-		else if (result != ISC_R_NOTFOUND)
+		} else if (result != ISC_R_NOTFOUND)
 			goto failure;
-	}
-	else
+	} else
 		keyname = qname;
 
 	switch (tkeyin.mode) {

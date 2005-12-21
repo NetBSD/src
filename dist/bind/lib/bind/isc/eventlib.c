@@ -1,20 +1,20 @@
-/*	$NetBSD: eventlib.c,v 1.1.1.2 2005/12/21 19:57:25 christos Exp $	*/
+/*	$NetBSD: eventlib.c,v 1.1.1.3 2005/12/21 23:15:42 christos Exp $	*/
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-1999 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /* eventlib.c - implement glue for the eventlib
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: eventlib.c,v 1.2.2.1 2003/06/27 03:51:41 marka Exp";
+static const char rcsid[] = "Id: eventlib.c,v 1.2.2.1.4.5 2005/07/28 07:43:20 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -31,6 +31,9 @@ static const char rcsid[] = "Id: eventlib.c,v 1.2.2.1 2003/06/27 03:51:41 marka 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#ifdef SOLARIS2
+#include <limits.h>
+#endif /* SOLARIS2 */
 
 #include <errno.h>
 #include <signal.h>
@@ -44,13 +47,21 @@ static const char rcsid[] = "Id: eventlib.c,v 1.2.2.1 2003/06/27 03:51:41 marka 
 
 #include "port_after.h"
 
+int      __evOptMonoTime;
+
+#ifdef USE_POLL
+#define pselect Pselect
+#endif /* USE_POLL */
+
 /* Forward. */
 
-#ifdef NEED_PSELECT
+#if defined(NEED_PSELECT) || defined(USE_POLL)
 static int		pselect(int, void *, void *, void *,
 				struct timespec *,
 				const sigset_t *);
 #endif
+
+int    __evOptMonoTime;
 
 /* Public. */
 
@@ -76,6 +87,18 @@ evCreate(evContext *opaqueCtx) {
 	INIT_LIST(ctx->accepts);
 
 	/* Files. */
+#ifdef USE_POLL
+	ctx->pollfds = NULL;
+	ctx->maxnfds = 0;
+	ctx->firstfd = 0;
+	emulMaskInit(ctx, rdLast, EV_READ, 1);
+	emulMaskInit(ctx, rdNext, EV_READ, 0);
+	emulMaskInit(ctx, wrLast, EV_WRITE, 1);
+	emulMaskInit(ctx, wrNext, EV_WRITE, 0);
+	emulMaskInit(ctx, exLast, EV_EXCEPT, 1);
+	emulMaskInit(ctx, exNext, EV_EXCEPT, 0);
+	emulMaskInit(ctx, nonblockBefore, EV_WASNONBLOCKING, 0);
+#endif /* USE_POLL */
 	ctx->files = NULL;
 	FD_ZERO(&ctx->rdNext);
 	FD_ZERO(&ctx->wrNext);
@@ -84,11 +107,16 @@ evCreate(evContext *opaqueCtx) {
 	ctx->fdMax = -1;
 	ctx->fdNext = NULL;
 	ctx->fdCount = 0;	/* Invalidate {rd,wr,ex}Last. */
+#ifndef USE_POLL
 	ctx->highestFD = FD_SETSIZE - 1;
+	memset(ctx->fdTable, 0, sizeof ctx->fdTable);
+#else
+	ctx->highestFD = INT_MAX / sizeof(struct pollfd);
+	ctx->fdTable = NULL;
+#endif
 #ifdef EVENTLIB_TIME_CHECKS
 	ctx->lastFdCount = 0;
 #endif
-	memset(ctx->fdTable, 0, sizeof ctx->fdTable);
 
 	/* Streams. */
 	ctx->streams = NULL;
@@ -274,7 +302,7 @@ evGetNext(evContext opaqueCtx, evEvent *opaqueEv, int options) {
 		if (ctx->debug > 0) {
 			interval = evSubTime(ctx->lastEventTime,
 					     ctx->lastSelectTime);
-			if (interval.tv_sec > 0)
+			if (interval.tv_sec > 0 || interval.tv_nsec > 0)
 				evPrintf(ctx, 1,
 				   "time between pselect() %u.%09u count %d\n",
 					 interval.tv_sec, interval.tv_nsec,
@@ -282,24 +310,23 @@ evGetNext(evContext opaqueCtx, evEvent *opaqueEv, int options) {
 		}
 #endif
 		do {
+#ifndef USE_POLL
 			/* XXX need to copy only the bits we are using. */
 			ctx->rdLast = ctx->rdNext;
 			ctx->wrLast = ctx->wrNext;
 			ctx->exLast = ctx->exNext;
-
+#else
+			/*
+			 * The pollfd structure uses separate fields for
+			 * the input and output events (corresponding to
+			 * the ??Next and ??Last fd sets), so there's no
+			 * need to copy one to the other.
+			 */
+#endif /* USE_POLL */
 			if (m == Timer) {
 				INSIST(tp == &t);
 				t = evSubTime(nextTime, ctx->lastEventTime);
 			}
-
-			evPrintf(ctx, 4,
-				"pselect(%d, 0x%lx, 0x%lx, 0x%lx, %ld.%09ld)\n",
-				 ctx->fdMax+1,
-				 (u_long)ctx->rdLast.fds_bits[0],
-				 (u_long)ctx->wrLast.fds_bits[0],
-				 (u_long)ctx->exLast.fds_bits[0],
-				 tp ? (long)tp->tv_sec : -1L,
-				 tp ? tp->tv_nsec : -1);
 
 			/* XXX should predict system's earliness and adjust. */
 			x = pselect(ctx->fdMax+1,
@@ -307,9 +334,13 @@ evGetNext(evContext opaqueCtx, evEvent *opaqueEv, int options) {
 				    tp, NULL);
 			pselect_errno = errno;
 
+#ifndef USE_POLL
 			evPrintf(ctx, 4, "select() returns %d (err: %s)\n",
 				 x, (x == -1) ? strerror(errno) : "none");
-
+#else
+			evPrintf(ctx, 4, "poll() returns %d (err: %s)\n",
+				x, (x == -1) ? strerror(errno) : "none");
+#endif /* USE_POLL */
 			/* Anything but a poll can change the time. */
 			if (m != JustPoll)
 				ctx->lastEventTime = evNowTime();
@@ -592,14 +623,17 @@ evDrop(evContext opaqueCtx, evEvent opaqueEv) {
 		 * Timer is still there.  Delete it if it has expired,
 		 * otherwise set it according to its next interval.
 		 */
-		if (this->inter.tv_sec == 0 && this->inter.tv_nsec == 0L) {
+		if (this->inter.tv_sec == (time_t)0 &&
+		    this->inter.tv_nsec == 0L) {
 			opaque.opaque = this;			
 			(void) evClearTimer(opaqueCtx, opaque);
 		} else {
 			opaque.opaque = this;
 			(void) evResetTimer(opaqueCtx, opaque, this->func,
 					    this->uap,
-					    evAddTime(ctx->lastEventTime,
+					    evAddTime((this->mode & EV_TMR_RATE) ?
+						      this->due :
+						      ctx->lastEventTime,
 						      this->inter),
 					    this->inter);
 		}
@@ -650,7 +684,56 @@ evPrintf(const evContext_p *ctx, int level, const char *fmt, ...) {
 	va_end(ap);
 }
 
-#ifdef NEED_PSELECT
+int
+evSetOption(evContext *opaqueCtx, const char *option, int value) {
+	/* evContext_p *ctx = opaqueCtx->opaque; */
+
+	UNUSED(opaqueCtx);
+	UNUSED(value);
+#ifndef CLOCK_MONOTONIC
+	UNUSED(option);
+#endif 
+
+#ifdef CLOCK_MONOTONIC
+	if (strcmp(option, "monotime") == 0) {
+		if (opaqueCtx  != NULL)
+			errno = EINVAL;
+		if (value == 0 || value == 1) {
+			__evOptMonoTime = value;
+			return (0);
+		} else {
+			errno = EINVAL;
+			return (-1);
+		}
+	} 
+#endif
+	errno = ENOENT;
+	return (-1);
+}
+
+int
+evGetOption(evContext *opaqueCtx, const char *option, int *value) {
+	/* evContext_p *ctx = opaqueCtx->opaque; */
+
+	UNUSED(opaqueCtx);
+#ifndef CLOCK_MONOTONIC
+	UNUSED(value);
+	UNUSED(option);
+#endif 
+
+#ifdef CLOCK_MONOTONIC
+	if (strcmp(option, "monotime") == 0) {
+		if (opaqueCtx  != NULL)
+			errno = EINVAL;
+		*value = __evOptMonoTime;
+		return (0);
+	}
+#endif
+	errno = ENOENT;
+	return (-1);
+}
+
+#if defined(NEED_PSELECT) || defined(USE_POLL)
 /* XXX needs to move to the porting library. */
 static int
 pselect(int nfds, void *rfds, void *wfds, void *efds,
@@ -660,15 +743,69 @@ pselect(int nfds, void *rfds, void *wfds, void *efds,
 	struct timeval tv, *tvp;
 	sigset_t sigs;
 	int n;
+#ifdef USE_POLL
+	int polltimeout = INFTIM;
+	evContext_p *ctx;
+	struct pollfd *fds;
+	nfds_t pnfds;
+
+	UNUSED(nfds);
+#endif /* USE_POLL */
 
 	if (tsp) {
 		tvp = &tv;
 		tv = evTimeVal(*tsp);
+#ifdef USE_POLL
+		polltimeout = 1000 * tv.tv_sec + tv.tv_usec / 1000;
+#endif /* USE_POLL */
 	} else
 		tvp = NULL;
 	if (sigmask)
 		sigprocmask(SIG_SETMASK, sigmask, &sigs);
+#ifndef USE_POLL
 	n = select(nfds, rfds, wfds, efds, tvp);
+#else
+	/*
+	 * rfds, wfds, and efds should all be from the same evContext_p,
+	 * so any of them will do. If they're all NULL, the caller is
+	 * presumably calling us to block.
+	 */
+	if (rfds != NULL)
+		ctx = ((__evEmulMask *)rfds)->ctx;
+	else if (wfds != NULL)
+		ctx = ((__evEmulMask *)wfds)->ctx;
+	else if (efds != NULL)
+		ctx = ((__evEmulMask *)efds)->ctx;
+	else
+		ctx = NULL;
+	if (ctx != NULL && ctx->fdMax != -1) {
+		fds = &(ctx->pollfds[ctx->firstfd]);
+		pnfds = ctx->fdMax - ctx->firstfd + 1;
+	} else {
+		fds = NULL;
+		pnfds = 0;
+	}
+	n = poll(fds, pnfds, polltimeout);
+	/*
+	 * pselect() should return the total number of events on the file
+	 * desriptors, not just the count of fd:s with activity. Hence,
+	 * traverse the pollfds array and count the events.
+	 */
+	if (n > 0) {
+		int     i, e;
+		for (e = 0, i = ctx->firstfd; i <= ctx->fdMax; i++) {
+			if (ctx->pollfds[i].fd < 0)
+				continue;
+			if (FD_ISSET(i, &ctx->rdLast))
+				e++;
+			if (FD_ISSET(i, &ctx->wrLast))
+				e++;
+			if (FD_ISSET(i, &ctx->exLast))
+				e++;
+			}
+		n = e;
+	}
+#endif /* USE_POLL */
 	if (sigmask)
 		sigprocmask(SIG_SETMASK, &sigs, NULL);
 	if (tsp)
@@ -676,3 +813,127 @@ pselect(int nfds, void *rfds, void *wfds, void *efds,
 	return (n);
 }
 #endif
+
+#ifdef USE_POLL
+int
+evPollfdRealloc(evContext_p *ctx, int pollfd_chunk_size, int fd) {
+ 
+	int     i, maxnfds;
+	void	*pollfds, *fdTable;
+ 
+	if (fd < ctx->maxnfds)
+		return (0);
+ 
+	/* Don't allow ridiculously small values for pollfd_chunk_size */
+	if (pollfd_chunk_size < 20)
+		pollfd_chunk_size = 20;
+ 
+	maxnfds = (1 + (fd/pollfd_chunk_size)) * pollfd_chunk_size;
+ 
+	pollfds = realloc(ctx->pollfds, maxnfds * sizeof(*ctx->pollfds));
+	if (pollfds != NULL)
+		ctx->pollfds = pollfds;
+	fdTable = realloc(ctx->fdTable, maxnfds * sizeof(*ctx->fdTable));
+	if (fdTable != NULL)
+		ctx->fdTable = fdTable;
+ 
+	if (pollfds == NULL || fdTable == NULL) {
+		evPrintf(ctx, 2, "pollfd() realloc (%ld) failed\n",
+			 (long)maxnfds*sizeof(struct pollfd));
+		return (-1);
+	}
+ 
+	for (i = ctx->maxnfds; i < maxnfds; i++) {
+		ctx->pollfds[i].fd = -1;
+		ctx->pollfds[i].events = 0;
+		ctx->fdTable[i] = 0;
+	}
+
+	ctx->maxnfds = maxnfds;
+
+	return (0);
+}
+ 
+/* Find the appropriate 'events' or 'revents' field in the pollfds array */
+short *
+__fd_eventfield(int fd, __evEmulMask *maskp) {
+ 
+	evContext_p     *ctx = (evContext_p *)maskp->ctx;
+ 
+	if (!maskp->result || maskp->type == EV_WASNONBLOCKING)
+		return (&(ctx->pollfds[fd].events));
+	else
+		return (&(ctx->pollfds[fd].revents));
+}
+ 
+/* Translate to poll(2) event */
+short
+__poll_event(__evEmulMask *maskp) {
+ 
+	switch ((maskp)->type) {
+	case EV_READ:
+		return (POLLRDNORM);
+	case EV_WRITE:
+		return (POLLWRNORM);
+	case EV_EXCEPT:
+		return (POLLRDBAND | POLLPRI | POLLWRBAND);
+	case EV_WASNONBLOCKING:
+		return (POLLHUP);
+	default:
+		return (0);
+	}
+}
+ 
+/*
+ * Clear the events corresponding to the specified mask. If this leaves
+ * the events mask empty (apart from the POLLHUP bit), set the fd field
+ * to -1 so that poll(2) will ignore this fd.
+ */
+void
+__fd_clr(int fd, __evEmulMask *maskp) {
+ 
+	evContext_p     *ctx = maskp->ctx;
+ 
+	*__fd_eventfield(fd, maskp) &= ~__poll_event(maskp);
+	if ((ctx->pollfds[fd].events & ~POLLHUP) == 0) {
+		ctx->pollfds[fd].fd = -1;
+		if (fd == ctx->fdMax)
+			while (ctx->fdMax > ctx->firstfd &&
+			       ctx->pollfds[ctx->fdMax].fd < 0)
+				ctx->fdMax--;
+		if (fd == ctx->firstfd)
+			while (ctx->firstfd <= ctx->fdMax &&
+			       ctx->pollfds[ctx->firstfd].fd < 0)
+				ctx->firstfd++;
+		/*
+		 * Do we have a empty set of descriptors?
+		 */
+		if (ctx->firstfd > ctx->fdMax) {
+			ctx->fdMax = -1;
+			ctx->firstfd = 0;
+		}
+	}
+}
+ 
+/*
+ * Set the events bit(s) corresponding to the specified mask. If the events
+ * field has any other bits than POLLHUP set, also set the fd field so that
+ * poll(2) will watch this fd.
+ */
+void
+__fd_set(int fd, __evEmulMask *maskp) {
+ 
+	evContext_p     *ctx = maskp->ctx;
+
+	*__fd_eventfield(fd, maskp) |= __poll_event(maskp);
+	if ((ctx->pollfds[fd].events & ~POLLHUP) != 0) {
+		ctx->pollfds[fd].fd = fd;
+		if (fd < ctx->firstfd || ctx->fdMax == -1)
+			ctx->firstfd = fd;
+		if (fd > ctx->fdMax)
+			ctx->fdMax = fd;
+	}
+}
+#endif /* USE_POLL */
+
+/*! \file */

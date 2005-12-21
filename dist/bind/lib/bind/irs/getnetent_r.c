@@ -1,24 +1,24 @@
-/*	$NetBSD: getnetent_r.c,v 1.1.1.2 2005/12/21 19:57:14 christos Exp $	*/
+/*	$NetBSD: getnetent_r.c,v 1.1.1.3 2005/12/21 23:15:30 christos Exp $	*/
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1998-1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: getnetent_r.c,v 1.3 2001/07/16 08:05:20 marka Exp";
+static const char rcsid[] = "Id: getnetent_r.c,v 1.3.206.2 2005/09/03 12:47:38 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <port_before.h>
@@ -120,6 +120,9 @@ setnetent_r(int stay_open, NET_R_ENT_ARGS)
 setnetent_r(int stay_open)
 #endif
 {
+#ifdef NET_R_ENT_ARGS
+	UNUSED(ndptr);
+#endif
 	setnetent(stay_open);
 #ifdef NET_R_SET_RESULT
 	return (NET_R_SET_RESULT);
@@ -133,6 +136,9 @@ endnetent_r(NET_R_ENT_ARGS)
 endnetent_r()
 #endif
 {
+#ifdef NET_R_ENT_ARGS
+	UNUSED(ndptr);
+#endif
 	endnetent();
 	NET_R_END_RESULT(NET_R_OK);
 }

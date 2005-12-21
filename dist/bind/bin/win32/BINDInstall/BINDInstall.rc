@@ -73,39 +73,48 @@ IDR_MAINFRAME           ICON    DISCARDABLE     "res\\BINDInstall.ico"
 // Dialog
 //
 
-IDD_BINDINSTALL_DIALOG DIALOGEX 0, 0, 210, 234
+IDD_BINDINSTALL_DIALOG DIALOGEX 0, 0, 210, 301
 STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "BIND 9 Installer"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif",0,0,0x1
 BEGIN
-    LTEXT           "Target Directory:",IDC_STATIC,7,69,54,8
-    EDITTEXT        IDC_TARGETDIR,7,82,196,14,ES_AUTOHSCROLL
-    GROUPBOX        "Progress",IDC_STATIC,7,157,196,70
-    RTEXT           "",IDC_COPY_TAG,10,191,84,8
-    LTEXT           "",IDC_COPY_FILE,100,191,97,8
-    RTEXT           "",IDC_SERVICE_TAG,10,202,84,8
-    LTEXT           "",IDC_REG_SERVICE,100,203,97,8
-    RTEXT           "",IDC_MESSAGE_TAG,10,213,84,8
+    EDITTEXT        IDC_TARGETDIR,7,62,196,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ACCOUNT_NAME,7,94,196,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ACCOUNT_PASSWORD,7,122,196,14,ES_PASSWORD | 
+                    ES_AUTOHSCROLL
+    EDITTEXT        IDC_ACCOUNT_PASSWORD_CONFIRM,7,151,196,14,ES_PASSWORD | 
+                    ES_AUTOHSCROLL
     DEFPUSHBUTTON   "&Install",IDC_INSTALL,153,7,50,14
-    LTEXT           "",IDC_REG_MESSAGE,100,214,97,8
-    RTEXT           "",IDC_DIR_TAG,10,180,84,8
     PUSHBUTTON      "E&xit",IDC_EXIT,153,39,50,14
     CONTROL         "&Automatic Startup",IDC_AUTO_START,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,112,72,10
-    GROUPBOX        "Options",IDC_STATIC,7,102,196,49
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,190,72,10
+    CONTROL         "&Keep Config Files After Uninstall",IDC_KEEP_FILES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,200,116,10
+    CONTROL         "&Start BIND Service After Install",IDC_START,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,210,113,10
     PUSHBUTTON      "&Uninstall",IDC_UNINSTALL,153,23,50,14
+    PUSHBUTTON      "Browse",IDC_BROWSE,7,22,50,14
+    LTEXT           "Target Directory:",IDC_STATIC,7,53,54,8
+    GROUPBOX        "Progress",IDC_STATIC,7,224,196,70
+    RTEXT           "",IDC_COPY_TAG,14,261,78,8
+    LTEXT           "",IDC_COPY_FILE,105,261,90,8
+    RTEXT           "",IDC_SERVICE_TAG,15,271,77,8
+    LTEXT           "",IDC_REG_SERVICE,105,271,89,8
+    RTEXT           "",IDC_MESSAGE_TAG,15,281,77,8
+    LTEXT           "",IDC_REG_MESSAGE,105,281,88,8
+    RTEXT           "",IDC_DIR_TAG,15,251,77,8
+    GROUPBOX        "Options",IDC_STATIC,7,172,196,49
     CTEXT           "Version Unknown",IDC_VERSION,7,7,61,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    CONTROL         "&Keep Config Files After Uninstall",IDC_KEEP_FILES,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,122,116,10
-    PUSHBUTTON      "Browse",IDC_BROWSE,7,22,50,14
-    RTEXT           "Current Operation:",IDC_CURRENT_TAG,36,166,58,8
-    LTEXT           "",IDC_CURRENT,100,166,97,8
-    LTEXT           "",IDC_CREATE_DIR,100,180,97,8
-    CONTROL         "&Start BIND Service After Install",IDC_START,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,132,113,10
+    RTEXT           "Current Operation:",IDC_CURRENT_TAG,34,235,58,8
+    LTEXT           "",IDC_CURRENT,105,235,90,8
+    LTEXT           "",IDC_CREATE_DIR,105,251,88,8
+    LTEXT           "Service Account Name",IDC_STATIC,7,84,74,8
+    LTEXT           "Service Account Password",IDC_STATIC,7,112,86,8
+    LTEXT           "Confirm Service Account Password",IDC_STATIC,7,140,112,
+                    8
 END
 
 IDD_BROWSE DIALOG DISCARDABLE  0, 0, 227, 117
@@ -122,6 +131,15 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
 END
 
+IDD_DIALOG1 DIALOG DISCARDABLE  0, 0, 186, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,129,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,129,24,50,14
+END
+
 
 #ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
@@ -130,8 +148,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,5,0,0
- PRODUCTVERSION 1,5,0,0
+ FILEVERSION 2,0,0,0
+ PRODUCTVERSION 2,0,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -149,14 +167,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "Internet Software Consortium\0"
             VALUE "FileDescription", "ISC BIND Install Utility\0"
-            VALUE "FileVersion", "1.5.0\0"
+            VALUE "FileVersion", "2.0.0\0"
             VALUE "InternalName", "BINDInstall\0"
             VALUE "LegalCopyright", "Copyright © 2000\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "BINDInstall.EXE\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "ISC BIND\0"
-            VALUE "ProductVersion", "9.2.0\0"
+            VALUE "ProductVersion", "9.3.0\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -181,8 +199,19 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 203
+        VERTGUIDE, 14
+        VERTGUIDE, 92
+        VERTGUIDE, 105
         TOPMARGIN, 7
-        BOTTOMMARGIN, 227
+        BOTTOMMARGIN, 294
+        HORZGUIDE, 195
+        HORZGUIDE, 205
+        HORZGUIDE, 215
+        HORZGUIDE, 239
+        HORZGUIDE, 255
+        HORZGUIDE, 265
+        HORZGUIDE, 275
+        HORZGUIDE, 285
     END
 
     IDD_BROWSE, DIALOG
@@ -191,6 +220,14 @@ BEGIN
         RIGHTMARGIN, 220
         TOPMARGIN, 7
         BOTTOMMARGIN, 110
+    END
+
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 88
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -262,6 +299,14 @@ BEGIN
     IDS_NO_VERSION          "Version Unknown"
     IDS_EXISTING_NEWER      "%s\nThe existing version of this file is newer than the version being installed.\nDo you wish to overwrite the existing file?"
     IDS_FILE_BAD            "Could not retrieve version info for file %s.  Do you wish to continue?\n(Continuing may overwrite a newer version of the file) "
+    IDS_ERR_TOOPRIVED       "Chosen account has too many privileges. Do you wish to choose a different account name?"
+    IDS_ERR_BADACCOUNT      "Error Validating Account. Unable to install service using this account."
+    IDS_ERR_WRONGPRIV       "The wrong privilege: %s was detected.  Only the Service Logon Right privilege should be enabled for this account."
+    IDS_CREATEACCOUNT_FAILED "Unable to Create Account for the Service."
+    IDS_ERR_PASSWORD        "Passwords entered did not match. Please reenter password."
+    IDS_ERR_UPDATE_SERVICE  "Error updating service\n(%s)"
+    IDS_ERR_NULLPASSWORD    "Service account password cannot be null"
+    IDS_ERR_WHITESPACE      "Service account password has leading/trailing whitespace"
 END
 
 #endif    // English (U.S.) resources

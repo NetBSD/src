@@ -1,23 +1,23 @@
-/*	$NetBSD: sock_test.c,v 1.1.1.3 2005/12/21 19:51:40 christos Exp $	*/
+/*	$NetBSD: sock_test.c,v 1.1.1.4 2005/12/21 23:08:25 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sock_test.c,v 1.47 2001/01/09 21:41:41 bwelling Exp */
+/* Id: sock_test.c,v 1.47.12.4 2004/08/28 06:25:32 marka Exp */
 
 #include <config.h>
 
@@ -26,6 +26,7 @@
 #include <unistd.h>
 
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/socket.h>
 #include <isc/timer.h>
@@ -84,12 +85,12 @@ my_recv(isc_task_t *task, isc_event_t *event) {
 	       dev->n, dev->result);
 	if (dev->address.type.sa.sa_family == AF_INET6) {
 		inet_ntop(AF_INET6, &dev->address.type.sin6.sin6_addr,
-			  host, sizeof (host));
+			  host, sizeof(host));
 		printf("\tFrom: %s port %d\n", host,
 		       ntohs(dev->address.type.sin6.sin6_port));
 	} else {
 		inet_ntop(AF_INET, &dev->address.type.sin.sin_addr,
-			  host, sizeof (host));
+			  host, sizeof(host));
 		printf("\tFrom: %s port %d\n", host,
 		       ntohs(dev->address.type.sin.sin_port));
 	}

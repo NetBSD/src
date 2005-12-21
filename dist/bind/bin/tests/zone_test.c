@@ -1,23 +1,23 @@
-/*	$NetBSD: zone_test.c,v 1.1.1.2 2005/12/21 19:51:40 christos Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.1.1.3 2005/12/21 23:08:26 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone_test.c,v 1.26.2.2 2002/08/05 06:57:06 marka Exp */
+/* Id: zone_test.c,v 1.26.2.2.8.5 2005/03/17 03:58:29 marka Exp */
 
 #include <config.h>
 
@@ -122,7 +122,7 @@ setup(const char *zonename, const char *filename, const char *classname) {
 	region.base = classname;
 	region.length = strlen(classname);
 	result = dns_rdataclass_fromtext(&rdclass,
-					 (isc_textregion_t *)&region);
+					 (isc_textregion_t *)(void *)&region);
 	ERRRET(result, "dns_rdataclass_fromtext");
 
 	dns_zone_setclass(zone, rdclass);
@@ -186,7 +186,7 @@ query(void) {
 		FD_ZERO(&rfdset);
 		FD_SET(0, &rfdset);
 		select(1, &rfdset, NULL, NULL, NULL);
-		if (fgets(buf, sizeof buf, stdin) == NULL) {
+		if (fgets(buf, sizeof(buf), stdin) == NULL) {
 			fprintf(stdout, "\n");
 			break;
 		}
@@ -202,7 +202,7 @@ query(void) {
 			dns_zone_dumptostream(zone, stdout);
 			continue;
 		}
-		if (strlen(buf) == 0)
+		if (strlen(buf) == 0U)
 			continue;
 		dns_fixedname_init(&name);
 		isc_buffer_init(&buffer, buf, strlen(buf));
@@ -261,7 +261,7 @@ main(int argc, char **argv) {
 			filename = isc_commandline_argument;
 			break;
 		case 'm':
-			memset(&addr, 0, sizeof addr);
+			memset(&addr, 0, sizeof(addr));
 			addr.type.sin.sin_family = AF_INET;
 			inet_pton(AF_INET, isc_commandline_argument,
 				  &addr.type.sin.sin_addr);

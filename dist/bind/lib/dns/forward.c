@@ -1,23 +1,23 @@
-/*	$NetBSD: forward.c,v 1.1.1.2 2005/12/21 19:57:45 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.1.1.3 2005/12/21 23:16:09 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: forward.c,v 1.5 2001/06/04 19:33:01 tale Exp */
+/* Id: forward.c,v 1.5.206.3 2005/03/17 03:58:30 marka Exp */
 
 #include <config.h>
 
@@ -141,13 +141,20 @@ isc_result_t
 dns_fwdtable_find(dns_fwdtable_t *fwdtable, dns_name_t *name,
 		  dns_forwarders_t **forwardersp)
 {
+	return (dns_fwdtable_find2(fwdtable, name, NULL, forwardersp));
+} 
+
+isc_result_t
+dns_fwdtable_find2(dns_fwdtable_t *fwdtable, dns_name_t *name,
+		   dns_name_t *foundname, dns_forwarders_t **forwardersp)
+{
 	isc_result_t result;
 
 	REQUIRE(VALID_FWDTABLE(fwdtable));
 
 	RWLOCK(&fwdtable->rwlock, isc_rwlocktype_read);
 
-	result = dns_rbt_findname(fwdtable->table, name, 0, NULL,
+	result = dns_rbt_findname(fwdtable->table, name, 0, foundname,
 				  (void **)forwardersp);
 	if (result == DNS_R_PARTIALMATCH)
 		result = ISC_R_SUCCESS;

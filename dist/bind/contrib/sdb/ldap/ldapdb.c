@@ -1,20 +1,33 @@
-/*	$NetBSD: ldapdb.c,v 1.1.1.3 2005/12/21 19:53:58 christos Exp $	*/
+/*	$NetBSD: ldapdb.c,v 1.1.1.4 2005/12/21 23:11:00 christos Exp $	*/
 
 /*
- * ldapdb.c version 0.9
+ * ldapdb.c version 1.0-beta
  *
- * Copyright (C) 2002 Stig Venaas
+ * Copyright (C) 2002, 2004 Stig Venaas
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
+ *
+ * Contributors: Jeremy C. McDermond
  */
+
+/*
+ * If you want to use TLS, uncomment the define below
+ */
+/* #define LDAPDB_TLS */
 
 /*
  * If you are using an old LDAP API uncomment the define below. Only do this
  * if you know what you're doing or get compilation errors on ldap_memfree().
+ * This also forces LDAPv2.
  */
-/* #define RFC1823API */
+/* #define LDAPDB_RFC1823API */
+
+/* Using LDAPv3 by default, change this if you want v2 */
+#ifndef LDAPDB_LDAP_VERSION
+#define LDAPDB_LDAP_VERSION 3
+#endif
 
 #include <config.h>
 
@@ -57,6 +70,11 @@ struct ldapdb_data {
 	char *filterone;
 	int filteronelen;
 	char *filtername;
+	char *bindname;
+	char *bindpw;
+#ifdef LDAPDB_TLS
+	int tls;
+#endif
 };
 
 /* used by ldapdb_getconn */
@@ -162,7 +180,7 @@ ldapdb_getconn(struct ldapdb_data *data)
 		conndata = malloc(sizeof(*conndata));
 		if (conndata == NULL)
 			return (NULL);
-		(char *)conndata->index = data->hostport;
+		conndata->index = data->hostport;
 		conndata->size = strlen(data->hostport);
 		conndata->data = NULL;
 		ldapdb_insert((struct ldapdb_entry **)&threaddata->data,
@@ -175,12 +193,27 @@ ldapdb_getconn(struct ldapdb_data *data)
 static void
 ldapdb_bind(struct ldapdb_data *data, LDAP **ldp)
 {
+#ifndef LDAPDB_RFC1823API
+	const int ver = LDAPDB_LDAP_VERSION;
+#endif
+
 	if (*ldp != NULL)
 		ldap_unbind(*ldp);
 	*ldp = ldap_open(data->hostname, data->portno);
 	if (*ldp == NULL)
 		return;
-	if (ldap_simple_bind_s(*ldp, NULL, NULL) != LDAP_SUCCESS) {
+
+#ifndef LDAPDB_RFC1823API
+	ldap_set_option(*ldp, LDAP_OPT_PROTOCOL_VERSION, &ver);
+#endif
+
+#ifdef LDAPDB_TLS
+	if (data->tls) {
+		ldap_start_tls_s(*ldp, NULL, NULL);
+	}
+#endif
+
+	if (ldap_simple_bind_s(*ldp, data->bindname, data->bindpw) != LDAP_SUCCESS) {
 		ldap_unbind(*ldp);
 		*ldp = NULL;
 	}
@@ -193,9 +226,9 @@ ldapdb_search(const char *zone, const char *name, void *dbdata, void *retdata)
 	isc_result_t result = ISC_R_NOTFOUND;
 	LDAP **ldp;
 	LDAPMessage *res, *e;
-	char *fltr, *a, **vals, **names = NULL;
+	char *fltr, *a, **vals = NULL, **names = NULL;
 	char type[64];
-#ifdef RFC1823API
+#ifdef LDAPDB_RFC1823API
 	void *ptr;
 #else
 	BerElement *ptr;
@@ -280,7 +313,7 @@ ldapdb_search(const char *zone, const char *name, void *dbdata, void *retdata)
 				*s = toupper(*s);
 			s = strstr(a, "RECORD");
 			if ((s == NULL) || (s == a) || (s - a >= (signed int)sizeof(type))) {
-#ifndef RFC1823API
+#ifndef LDAPDB_RFC1823API
 				ldap_memfree(a);
 #endif
 				continue;
@@ -304,7 +337,7 @@ ldapdb_search(const char *zone, const char *name, void *dbdata, void *retdata)
 						isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER, ISC_LOG_ERROR,	
 							      "LDAP sdb zone '%s': dns_sdb_put... failed for %s", zone, vals[i]);
 						ldap_value_free(vals);
-#ifndef RFC1823API
+#ifndef LDAPDB_RFC1823API
 						ldap_memfree(a);
 						if (ptr != NULL)
 							ber_free(ptr, 0);
@@ -317,21 +350,23 @@ ldapdb_search(const char *zone, const char *name, void *dbdata, void *retdata)
 				}
 				ldap_value_free(vals);
 			}
-#ifndef RFC1823API
+#ifndef LDAPDB_RFC1823API
 			ldap_memfree(a);
 #endif
 		}
-#ifndef RFC1823API
+#ifndef LDAPDB_RFC1823API
 		if (ptr != NULL)
 			ber_free(ptr, 0);
 #endif
 		if (name == NULL)
 			ldap_value_free(names);
 
-		/* cleanup this result */
+		/* free this result */
 		ldap_msgfree(res);
 	}
 
+	/* free final result */
+	ldap_msgfree(res);
         return (result);
 }
 
@@ -373,7 +408,56 @@ unhex(char *in)
 	return in;
 }
 
+/* returns 0 for ok, -1 for bad syntax, -2 for unknown critical extension */
+static int
+parseextensions(char *extensions, struct ldapdb_data *data)
+{
+	char *s, *next, *name, *value;
+	int critical;
 
+	while (extensions != NULL) {
+		s = strchr(extensions, ',');
+		if (s != NULL) {
+			*s++ = '\0';
+			next = s;
+		} else {
+			next = NULL;
+		}
+
+		if (*extensions != '\0') {
+			s = strchr(extensions, '=');
+			if (s != NULL) {
+				*s++ = '\0';
+				value = *s != '\0' ? s : NULL;
+			} else {
+				value = NULL;
+			}
+			name = extensions;
+
+			critical = *name == '!';
+			if (critical) {
+				name++;
+			}
+			if (*name == '\0') {
+				return -1;
+			}
+			
+			if (!strcasecmp(name, "bindname")) {
+				data->bindname = value;
+			} else if (!strcasecmp(name, "x-bindpw")) {
+				data->bindpw = value;
+#ifdef LDAPDB_TLS
+			} else if (!strcasecmp(name, "x-tls")) {
+				data->tls = value == NULL || !strcasecmp(value, "true");
+#endif
+			} else if (critical) {
+				return -2;
+			}
+		}
+		extensions = next;
+	}
+	return 0;
+}
 
 static void
 free_data(struct ldapdb_data *data)
@@ -395,7 +479,7 @@ ldapdb_create(const char *zone, int argc, char **argv,
 	      void *driverdata, void **dbdata)
 {
 	struct ldapdb_data *data;
-	char *s, *filter = NULL;
+	char *s, *filter = NULL, *extensions = NULL;
 	int defaultttl;
 
 	UNUSED(driverdata);
@@ -441,6 +525,15 @@ ldapdb_create(const char *zone, int argc, char **argv,
 					s = strchr(s, '?');
 					if (s != NULL) {
 						*s++ = '\0';
+						/* extensions */
+						extensions = s;
+						s = strchr(s, '?');
+						if (s != NULL) {
+							*s++ = '\0';
+						}
+						if (*extensions == '\0') {
+							extensions = NULL;
+						}
 					}
 					if (*filter == '\0') {
 						filter = NULL;
@@ -451,13 +544,35 @@ ldapdb_create(const char *zone, int argc, char **argv,
 		if (*data->base == '\0') {
 			data->base = NULL;
 		}
+	}
 
-		if ((data->base != NULL && unhex(data->base) == NULL) || (filter != NULL && unhex(filter) == NULL)) {
+	/* parse extensions */
+	if (extensions != NULL) {
+		int err;
+
+		err = parseextensions(extensions, data);
+		if (err < 0) {
+			/* err should be -1 or -2 */
 			free_data(data);
-			isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER, ISC_LOG_ERROR,	
-				      "LDAP sdb zone '%s': bad hex values", zone);
+			if (err == -1) {
+				isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
+					      "LDAP sdb zone '%s': URL: extension syntax error", zone);
+			} else if (err == -2) {
+				isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
+					      "LDAP sdb zone '%s': URL: unknown critical extension", zone);
+			}
 			return (ISC_R_FAILURE);
 		}
+	}
+
+	if ((data->base != NULL && unhex(data->base) == NULL) ||
+	    (filter != NULL && unhex(filter) == NULL) ||
+	    (data->bindname != NULL && unhex(data->bindname) == NULL) ||
+	    (data->bindpw != NULL && unhex(data->bindpw) == NULL)) {
+		free_data(data);
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER, ISC_LOG_ERROR,	
+			      "LDAP sdb zone '%s': URL: bad hex values", zone);
+		return (ISC_R_FAILURE);
 	}
 
 	/* compute filterall and filterone once and for all */
