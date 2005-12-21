@@ -25,15 +25,29 @@ NULL=
 NULL=nul
 !ENDIF 
 
+CPP=cl.exe
+RSC=rc.exe
+
 !IF  "$(CFG)" == "nsupdate - Win32 Release"
 
 OUTDIR=.\Release
 INTDIR=.\Release
 
+!IF "$(RECURSE)" == "0" 
+
 ALL : "..\..\..\Build\Release\nsupdate.exe"
 
+!ELSE 
 
+ALL : "libbind9 - Win32 Release" "libisc - Win32 Release" "libdns - Win32 Release" "..\..\..\Build\Release\nsupdate.exe"
+
+!ENDIF 
+
+!IF "$(RECURSE)" == "1" 
+CLEAN :"libdns - Win32 ReleaseCLEAN" "libisc - Win32 ReleaseCLEAN" "libbind9 - Win32 ReleaseCLEAN" 
+!ELSE 
 CLEAN :
+!ENDIF 
 	-@erase "$(INTDIR)\nsupdate.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "..\..\..\Build\Release\nsupdate.exe"
@@ -41,48 +55,18 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "./" /I "../include" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/lwres/win32/include/lwres" /I "../../../lib/dns/include" /I "../../../lib/dns/sec/dst/include" /D "WIN32" /D "__STDC__" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fp"$(INTDIR)\nsupdate.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-RSC=rc.exe
+CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "./" /I "../include" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/lwres/win32/include/lwres" /I "../../../lib/dns/include" /I "../../../lib/bind9/include" /D "WIN32" /D "__STDC__" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fp"$(INTDIR)\nsupdate.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\nsupdate.bsc" 
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=../../../lib/isc/win32/Release/libisc.lib ../../../lib/dns/win32/Release/libdns.lib ../../../lib/lwres/win32/Release/liblwres.lib user32.lib advapi32.lib ws2_32.lib /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\nsupdate.pdb" /machine:I386 /out:"../../../Build/Release/nsupdate.exe" 
+LINK32_FLAGS=../../../lib/isc/win32/Release/libisc.lib ../../../lib/dns/win32/Release/libdns.lib ../../../lib/lwres/win32/Release/liblwres.lib user32.lib advapi32.lib ws2_32.lib  ../../../lib/bind9/win32/Release/libbind9.lib /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\nsupdate.pdb" /machine:I386 /out:"../../../Build/Release/nsupdate.exe" 
 LINK32_OBJS= \
-	"$(INTDIR)\nsupdate.obj"
+	"$(INTDIR)\nsupdate.obj" \
+	"..\..\..\lib\dns\win32\Release\libdns.lib" \
+	"..\..\..\lib\isc\win32\Release\libisc.lib" \
+	"..\..\..\lib\bind9\win32\Release\libbind9.lib"
 
 "..\..\..\Build\Release\nsupdate.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -97,10 +81,21 @@ INTDIR=.\Debug
 OutDir=.\Debug
 # End Custom Macros
 
+!IF "$(RECURSE)" == "0" 
+
 ALL : "..\..\..\Build\Debug\nsupdate.exe" "$(OUTDIR)\nsupdate.bsc"
 
+!ELSE 
 
+ALL : "libbind9 - Win32 Debug" "libisc - Win32 Debug" "libdns - Win32 Debug" "..\..\..\Build\Debug\nsupdate.exe" "$(OUTDIR)\nsupdate.bsc"
+
+!ENDIF 
+
+!IF "$(RECURSE)" == "1" 
+CLEAN :"libdns - Win32 DebugCLEAN" "libisc - Win32 DebugCLEAN" "libbind9 - Win32 DebugCLEAN" 
+!ELSE 
 CLEAN :
+!ENDIF 
 	-@erase "$(INTDIR)\nsupdate.obj"
 	-@erase "$(INTDIR)\nsupdate.sbr"
 	-@erase "$(INTDIR)\vc60.idb"
@@ -113,8 +108,31 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /I "./" /I "../include" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/lwres/win32/include/lwres" /I "../../../lib/dns/include" /I "../../../lib/dns/sec/dst/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../include" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/lwres/win32/include/lwres" /I "../../../lib/dns/include" /I "../../../lib/bind9/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\nsupdate.bsc" 
+BSC32_SBRS= \
+	"$(INTDIR)\nsupdate.sbr"
+
+"$(OUTDIR)\nsupdate.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
+    $(BSC32) @<<
+  $(BSC32_FLAGS) $(BSC32_SBRS)
+<<
+
+LINK32=link.exe
+LINK32_FLAGS=../../../lib/isc/win32/Debug/libisc.lib ../../../lib/dns/win32/Debug/libdns.lib ../../../lib/lwres/win32/Debug/liblwres.lib user32.lib advapi32.lib ws2_32.lib  ../../../lib/bind9/win32/Debug/libbind9.lib /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\nsupdate.pdb" /debug /machine:I386 /out:"../../../Build/Debug/nsupdate.exe" /pdbtype:sept 
+LINK32_OBJS= \
+	"$(INTDIR)\nsupdate.obj" \
+	"..\..\..\lib\dns\win32\Debug\libdns.lib" \
+	"..\..\..\lib\isc\win32\Debug\libisc.lib" \
+	"..\..\..\lib\bind9\win32\Debug\libbind9.lib"
+
+"..\..\..\Build\Debug\nsupdate.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+
+!ENDIF 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -145,29 +163,6 @@ CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /I "./" /I "../include" /I "../../../"
    $(CPP) @<<
    $(CPP_PROJ) $< 
 <<
-
-RSC=rc.exe
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\nsupdate.bsc" 
-BSC32_SBRS= \
-	"$(INTDIR)\nsupdate.sbr"
-
-"$(OUTDIR)\nsupdate.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
-    $(BSC32) @<<
-  $(BSC32_FLAGS) $(BSC32_SBRS)
-<<
-
-LINK32=link.exe
-LINK32_FLAGS=../../../lib/isc/win32/Debug/libisc.lib ../../../lib/dns/win32/Debug/libdns.lib ../../../lib/lwres/win32/Debug/liblwres.lib user32.lib advapi32.lib ws2_32.lib /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\nsupdate.pdb" /debug /machine:I386 /out:"../../../Build/Debug/nsupdate.exe" /pdbtype:sept 
-LINK32_OBJS= \
-	"$(INTDIR)\nsupdate.obj"
-
-"..\..\..\Build\Debug\nsupdate.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
-!ENDIF 
 
 
 !IF "$(NO_EXTERNAL_DEPS)" != "1"
@@ -195,6 +190,84 @@ SOURCE=..\nsupdate.c
 "$(INTDIR)\nsupdate.obj"	"$(INTDIR)\nsupdate.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
+
+!ENDIF 
+
+!IF  "$(CFG)" == "nsupdate - Win32 Release"
+
+"libdns - Win32 Release" : 
+   cd "..\..\..\lib\dns\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libdns.mak" CFG="libdns - Win32 Release" 
+   cd "..\..\..\bin\nsupdate\win32"
+
+"libdns - Win32 ReleaseCLEAN" : 
+   cd "..\..\..\lib\dns\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libdns.mak" CFG="libdns - Win32 Release" RECURSE=1 CLEAN 
+   cd "..\..\..\bin\nsupdate\win32"
+
+!ELSEIF  "$(CFG)" == "nsupdate - Win32 Debug"
+
+"libdns - Win32 Debug" : 
+   cd "..\..\..\lib\dns\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libdns.mak" CFG="libdns - Win32 Debug" 
+   cd "..\..\..\bin\nsupdate\win32"
+
+"libdns - Win32 DebugCLEAN" : 
+   cd "..\..\..\lib\dns\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libdns.mak" CFG="libdns - Win32 Debug" RECURSE=1 CLEAN 
+   cd "..\..\..\bin\nsupdate\win32"
+
+!ENDIF 
+
+!IF  "$(CFG)" == "nsupdate - Win32 Release"
+
+"libisc - Win32 Release" : 
+   cd "..\..\..\lib\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - Win32 Release" 
+   cd "..\..\..\bin\nsupdate\win32"
+
+"libisc - Win32 ReleaseCLEAN" : 
+   cd "..\..\..\lib\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - Win32 Release" RECURSE=1 CLEAN 
+   cd "..\..\..\bin\nsupdate\win32"
+
+!ELSEIF  "$(CFG)" == "nsupdate - Win32 Debug"
+
+"libisc - Win32 Debug" : 
+   cd "..\..\..\lib\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - Win32 Debug" 
+   cd "..\..\..\bin\nsupdate\win32"
+
+"libisc - Win32 DebugCLEAN" : 
+   cd "..\..\..\lib\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - Win32 Debug" RECURSE=1 CLEAN 
+   cd "..\..\..\bin\nsupdate\win32"
+
+!ENDIF 
+
+!IF  "$(CFG)" == "nsupdate - Win32 Release"
+
+"libbind9 - Win32 Release" : 
+   cd "..\..\..\lib\bind9\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libbind9.mak" CFG="libbind9 - Win32 Release" 
+   cd "..\..\..\bin\nsupdate\win32"
+
+"libbind9 - Win32 ReleaseCLEAN" : 
+   cd "..\..\..\lib\bind9\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libbind9.mak" CFG="libbind9 - Win32 Release" RECURSE=1 CLEAN 
+   cd "..\..\..\bin\nsupdate\win32"
+
+!ELSEIF  "$(CFG)" == "nsupdate - Win32 Debug"
+
+"libbind9 - Win32 Debug" : 
+   cd "..\..\..\lib\bind9\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libbind9.mak" CFG="libbind9 - Win32 Debug" 
+   cd "..\..\..\bin\nsupdate\win32"
+
+"libbind9 - Win32 DebugCLEAN" : 
+   cd "..\..\..\lib\bind9\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libbind9.mak" CFG="libbind9 - Win32 Debug" RECURSE=1 CLEAN 
+   cd "..\..\..\bin\nsupdate\win32"
 
 !ENDIF 
 

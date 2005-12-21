@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser_compat.h,v 1.1.1.3 2005/12/21 19:57:05 christos Exp $	*/
+/*	$NetBSD: nameser_compat.h,v 1.1.1.4 2005/12/21 23:15:21 christos Exp $	*/
 
 /* Copyright (c) 1983, 1989
  *    The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 /*
  *      from nameser.h	8.1 (Berkeley) 6/2/93
- *	Id: nameser_compat.h,v 1.1.2.3 2003/06/27 03:51:37 marka Exp
+ *	Id: nameser_compat.h,v 1.1.2.3.4.2 2004/07/01 04:43:41 marka Exp
  */
 
 #ifndef _ARPA_NAMESER_COMPAT_
@@ -46,7 +46,7 @@
 #if (BSD >= 199103)
 # include <machine/endian.h>
 #else
-#ifdef linux
+#ifdef __linux
 # include <endian.h>
 #else
 #define	LITTLE_ENDIAN	1234	/* least-significant byte first (vax, pc) */
@@ -67,12 +67,12 @@
     defined(__hppa) || defined(__hp9000) || \
     defined(__hp9000s300) || defined(__hp9000s700) || \
     defined(__hp3000s900) || defined(__hpux) || defined(MPE) || \
-    defined (BIT_ZERO_ON_LEFT) || defined(m68k) || \
+    defined (BIT_ZERO_ON_LEFT) || defined(m68k) || defined(__sparc) ||  \
     (defined(__Lynx__) && \
      (defined(__68k__) || defined(__sparc__) || defined(__powerpc__)))
 #define BYTE_ORDER	BIG_ENDIAN
 #endif
-#endif /* linux */
+#endif /* __linux */
 #endif /* BSD */
 #endif /* BYTE_ORDER */
 

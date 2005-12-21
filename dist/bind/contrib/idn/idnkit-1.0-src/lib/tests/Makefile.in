@@ -1,4 +1,4 @@
-# Id: Makefile.in,v 1.1.1.1 2003/06/04 00:26:46 marka Exp
+# Id: Makefile.in,v 1.1.1.1.32.1 2004/07/20 07:01:55 marka Exp
 # Copyright (c) 2000, 2002 Japan Network Information Center.
 # All rights reserved.
 #  
@@ -300,5 +300,5 @@ testconfig.h: ../../include/config.h
 		../../include/config.h > testconfig.h
 
 iconvchk: iconvchk.c codeset.h
-	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) -o $@ \
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -o $@ \
 		$(srcdir)/iconvchk.c $(IDNLIB) $(ICONVLIB)

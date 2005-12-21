@@ -1,0 +1,8 @@
+query-loc [-v] [-d nnn] host-name-or-address
+
+Examples of hosts with LOCation info (quite uncommon, if you know more, 
+please tell me):
+
+- Everything in the 193.105.79.0 network, such as www.humanite.presse.fr
+- Everything in the 192.88.144 network, such as www.kei.com
+

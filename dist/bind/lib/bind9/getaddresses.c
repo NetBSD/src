@@ -1,7 +1,7 @@
-/*	$NetBSD: getaddresses.c,v 1.1.1.2 2004/11/06 23:55:34 christos Exp $	*/
+/*	$NetBSD: getaddresses.c,v 1.1.1.3 2005/12/21 23:16:00 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getaddresses.c,v 1.13.126.5 2004/05/15 03:46:12 jinmei Exp */
+/* Id: getaddresses.c,v 1.13.126.8 2005/10/14 02:13:06 marka Exp */
 
 #include <config.h>
 #include <string.h>
@@ -67,8 +67,8 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 	REQUIRE(addrcount != NULL);
 	REQUIRE(addrsize > 0);
 
-	have_ipv4 = (isc_net_probeipv4() == ISC_R_SUCCESS);
-	have_ipv6 = (isc_net_probeipv6() == ISC_R_SUCCESS);
+	have_ipv4 = ISC_TF((isc_net_probeipv4() == ISC_R_SUCCESS));
+	have_ipv6 = ISC_TF((isc_net_probeipv6() == ISC_R_SUCCESS));
 
 	/*
 	 * Try IPv4, then IPv6.  In order to handle the extended format
@@ -86,7 +86,7 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 			isc_sockaddr_v6fromin(&addrs[0], &in4, port);
 		*addrcount = 1;
 		return (ISC_R_SUCCESS);
-	} else if (strlen(hostname) <= 127) {
+	} else if (strlen(hostname) <= 127U) {
 		char tmpbuf[128], *d;
 		isc_uint32_t zone = 0;
 

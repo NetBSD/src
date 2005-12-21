@@ -1,22 +1,24 @@
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.0//EN"
+               "http://www.oasis-open.org/docbook/xml/4.0/docbookx.dtd"
+	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2001  Internet Software Consortium.
+ - Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  -
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: rndc.docbook,v 1.7 2001/08/06 04:25:04 marka Exp -->
+<!-- Id: rndc.docbook,v 1.7.206.4 2005/05/12 21:36:05 sra Exp -->
 
 <refentry>
   <refentryinfo>
@@ -28,6 +30,19 @@
     <manvolnum>8</manvolnum>
     <refmiscinfo>BIND9</refmiscinfo>
   </refmeta>
+
+  <docinfo>
+    <copyright>
+      <year>2004</year>
+      <year>2005</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+    <copyright>
+      <year>2000</year>
+      <year>2001</year>
+      <holder>Internet Software Consortium.</holder>
+    </copyright>
+  </docinfo>
 
   <refnamediv>
     <refname><application>rndc</application></refname>
@@ -214,7 +229,7 @@
   <refsect1>
     <title>AUTHOR</title>
     <para>
-        <corpauthor>Internet Software Consortium</corpauthor>
+        <corpauthor>Internet Systems Consortium</corpauthor>
     </para>
   </refsect1>
 
