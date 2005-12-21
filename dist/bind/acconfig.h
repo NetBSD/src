@@ -1,23 +1,23 @@
-/*	$NetBSD: acconfig.h,v 1.1.1.3 2005/12/21 19:50:19 christos Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.1.1.4 2005/12/21 23:06:56 christos Exp $	*/
 
 /*
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acconfig.h,v 1.35.2.5 2003/08/05 00:42:53 marka Exp */
+/* Id: acconfig.h,v 1.35.2.4.2.10 2004/12/04 06:50:02 marka Exp */
 
 /***
  *** This file is not to be included by any public header files, because
@@ -55,19 +55,17 @@
 /* define if catgets() is available */
 #undef HAVE_CATGETS
 
+/* define if getifaddrs() exists */
+#undef HAVE_GETIFADDRS
+
 /* define if you have the NET_RT_IFLIST sysctl variable and sys/sysctl.h */
 #undef HAVE_IFLIST_SYSCTL
 
-/* define if you need to #define _XPG4_2 before including sys/socket.h */
-#undef NEED_XPG4_2_BEFORE_SOCKET_H
-
-/* define if you need to #define _XOPEN_SOURCE_ENTENDED before including
- * sys/socket.h
- */
-#undef NEED_XSE_BEFORE_SOCKET_H
-
 /* define if chroot() is available */
 #undef HAVE_CHROOT
+
+/* define if tzset() is available */
+#undef HAVE_TZSET
 
 /* define if struct addrinfo exists */
 #undef HAVE_ADDRINFO
@@ -137,3 +135,15 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* define if you have strerror in the C library. */
 #undef HAVE_STRERROR
+
+/* Define if you are running under Compaq TruCluster. */
+#undef HAVE_TRUCLUSTER
+
+/* Define if OpenSSL includes DSA support */
+#undef HAVE_OPENSSL_DSA
+
+/* Define to the length type used by the socket API (socklen_t, size_t, int). */
+#undef ISC_SOCKADDR_LEN_T
+
+/* Define if threads need PTHREAD_SCOPE_SYSTEM */
+#undef NEED_PTHREAD_SCOPE_SYSTEM

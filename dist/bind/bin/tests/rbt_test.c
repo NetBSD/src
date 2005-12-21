@@ -1,23 +1,23 @@
-/*	$NetBSD: rbt_test.c,v 1.1.1.2 2005/12/21 19:51:35 christos Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.1.1.3 2005/12/21 23:08:24 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt_test.c,v 1.42 2001/01/09 21:41:32 bwelling Exp */
+/* Id: rbt_test.c,v 1.42.12.5 2005/03/17 03:58:28 marka Exp */
 
 #include <config.h>
 
@@ -226,7 +226,7 @@ iterate(dns_rbt_t *rbt, isc_boolean_t forward) {
 		printf("start not found!\n");
 
 	else {
-		while (1) {
+		for (;;) {
 			if (result == DNS_R_NEWORIGIN) {
 				printf("  new origin: ");
 				print_name(origin);
@@ -294,7 +294,7 @@ main(int argc, char **argv) {
 	/*
 	 * So isc_mem_stats() can report any allocation leaks.
 	 */
-	isc_mem_debugging = 2;
+	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 
 	result = isc_mem_create(0, 0, &mctx);
 	if (result != ISC_R_SUCCESS) {
@@ -316,8 +316,8 @@ main(int argc, char **argv) {
 		length = strlen(buffer);
 
 		if (buffer[length - 1] != '\n') {
-			printf("line to long (%d max), ignored\n",
-			       sizeof(buffer) - 2);
+			printf("line to long (%lu max), ignored\n",
+			       (unsigned long)sizeof(buffer) - 2);
 			continue;
 		}
 

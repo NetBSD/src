@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.1.1.2 2005/12/21 19:57:04 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.1.1.3 2005/12/21 23:15:20 christos Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -88,7 +88,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	Id: netdb.h,v 1.12.2.1 2003/06/27 03:51:37 marka Exp
+ *	Id: netdb.h,v 1.12.2.1.4.5 2004/11/30 01:15:42 marka Exp
  */
 
 #ifndef _NETDB_H_
@@ -120,10 +120,14 @@
 #define	_PATH_SERVICES	"/etc/services"
 #endif
 
+#if (__GLIBC__ > 2 || __GLIBC__ == 2 &&  __GLIBC_MINOR__ >= 3)
+#define __h_errno __h_errno_location
+#endif
 __BEGIN_DECLS
 extern int * __h_errno __P((void));
 __END_DECLS
-#ifdef _REENTRANT
+#if defined(_REENTRANT) || \
+    (__GLIBC__ > 2 || __GLIBC__ == 2 &&  __GLIBC_MINOR__ >= 3)
 #define	h_errno (*__h_errno())
 #else
 extern int h_errno;
@@ -172,9 +176,21 @@ struct	addrinfo {
 	int		ai_family;	/* PF_xxx */
 	int		ai_socktype;	/* SOCK_xxx */
 	int		ai_protocol;	/* 0 or IPPROTO_xxx for IPv4 and IPv6 */
+#if defined(sun) && defined(_SOCKLEN_T)
+#ifdef __sparc9
+	int		_ai_pad;
+#endif
+	socklen_t	ai_addrlen;
+#else
 	size_t		ai_addrlen;	/* length of ai_addr */
+#endif
+#ifdef __linux
+	struct sockaddr	*ai_addr; 	/* binary address */
+	char		*ai_canonname;	/* canonical name for hostname */
+#else
 	char		*ai_canonname;	/* canonical name for hostname */
 	struct sockaddr	*ai_addr; 	/* binary address */
+#endif
 	struct addrinfo	*ai_next; 	/* next structure in linked list */
 };
 
@@ -376,7 +392,14 @@ const char	*gai_strerror __P((int));
 struct hostent  *getipnodebyname __P((const char *, int, int, int *));
 struct hostent	*getipnodebyaddr __P((const void *, size_t, int, int *));
 void		freehostent __P((struct hostent *));
-
+#ifdef __GLIBC__
+int		getnetgrent __P((/* const */ char **, /* const */ char **,
+				 /* const */ char **));
+void		setnetgrent __P((const char *));
+void		endnetgrent __P((void));
+int		innetgr __P((const char *, const char *, const char *,
+			     const char *));
+#endif
 
 #ifdef _REENTRANT
 #if defined(__hpux) || defined(__osf__) || defined(_AIX)
@@ -502,6 +525,13 @@ struct servent	*getservent_r __P((struct servent *, char *, int));
 #endif
 void		setservent_r __P((int));
 void		endservent_r __P((void));
+
+#ifdef __GLIBC__
+int		getnetgrent_r __P((char **, char **, char **, char *, size_t));
+#endif
+#ifdef _AIX
+int		setnetgrent_r __P((char *, void **));
+#endif
 
 #endif
 #endif

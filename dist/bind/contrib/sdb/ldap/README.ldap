@@ -1,7 +1,15 @@
 This is an attempt at an LDAP back-end for BIND 9 using the new simplified
-database interface "sdb". This is the nineth release (0.9) and seems to
-be pretty stable. Note that since version 0.4 a new schema is used.
-It is not backwards compatible with versions before 0.4.
+database interface "sdb". This is release 1.0-beta and should be pretty
+stable. Note that since version 0.4 a new schema is used. It is not
+backwards compatible with versions before 0.4.
+
+1.0-beta fixes a large memory leak. An extension x-tls for enabling TLS
+has been added.
+
+1.0-alpha uses LDAPv3 by default and also supports LDAP simple bind. That
+is, one can use plain text password for authentication. The bind dn and
+password is coded into the URL using extensions bindname and x-bindpw
+per RFC 2255.
 
 In 0.9 the code has been cleaned up a bit and should be slightly faster
 than previous versions. It also fixes an error with zone transfers (AXFR)
@@ -37,4 +45,4 @@ contact me. See also http://www.venaas.no/ldap/bind-sdb/ for information.
 
 See INSTALL for how to build, install and use.
 
-Stig Venaas <venaas@uninett.no> 2001-12-29
+Stig Venaas <venaas@uninett.no> 2004-08-15

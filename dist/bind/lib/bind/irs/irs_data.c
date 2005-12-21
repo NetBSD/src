@@ -1,24 +1,24 @@
-/*	$NetBSD: irs_data.c,v 1.1.1.2 2005/12/21 19:57:18 christos Exp $	*/
+/*	$NetBSD: irs_data.c,v 1.1.1.3 2005/12/21 23:15:30 christos Exp $	*/
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996,1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irs_data.c,v 1.3.2.2 2003/06/27 03:51:40 marka Exp";
+static const char rcsid[] = "Id: irs_data.c,v 1.3.2.2.4.3 2004/11/30 01:15:43 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -46,10 +46,12 @@ static const char rcsid[] = "Id: irs_data.c,v 1.3.2.2 2003/06/27 03:51:40 marka 
 
 #include "irs_data.h"
 #undef _res
+#if !(__GLIBC__ > 2 || __GLIBC__ == 2 &&  __GLIBC_MINOR__ >= 3)
 #undef h_errno
+extern int h_errno;
+#endif
 
 extern struct __res_state _res;
-extern int h_errno;
 
 #ifdef	DO_PTHREADS
 static pthread_key_t	key;
@@ -121,7 +123,10 @@ net_data_destroy(void *p) {
 struct net_data *
 net_data_init(const char *conf_file) {
 #ifdef	DO_PTHREADS
-	static pthread_mutex_t keylock = PTHREAD_MUTEX_INITIALIZER;
+#ifndef LIBBIND_MUTEX_INITIALIZER
+#define LIBBIND_MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+#endif
+	static pthread_mutex_t keylock = LIBBIND_MUTEX_INITIALIZER;
 	struct net_data *net_data;
 
 	if (!once) {
@@ -169,7 +174,7 @@ net_data_create(const char *conf_file) {
 		return (NULL);
 	}
 
-	if ((net_data->res->options & RES_INIT) == 0 &&
+	if ((net_data->res->options & RES_INIT) == 0U &&
 	    res_ninit(net_data->res) == -1) {
 		(*net_data->irs->close)(net_data->irs);
 		memput(net_data, sizeof (struct net_data));
@@ -178,8 +183,6 @@ net_data_create(const char *conf_file) {
 
 	return (net_data);
 }
-
-
 
 void
 net_data_minimize(struct net_data *net_data) {
@@ -196,6 +199,13 @@ __res_state(void) {
 
 	return (&_res);
 }
+#else
+#ifdef __linux
+struct __res_state *
+__res_state(void) {
+	return (&_res);
+}
+#endif
 #endif
 
 int *
@@ -204,13 +214,22 @@ __h_errno(void) {
 	struct net_data *net_data = net_data_init(NULL);
 	if (net_data && net_data->res)
 		return (&net_data->res->res_h_errno);
+#if !(__GLIBC__ > 2 || __GLIBC__ == 2 &&  __GLIBC_MINOR__ >= 3)
+	return(&_res.res_h_errno);
+#else
 	return (&h_errno);
+#endif
 }
 
 void
 __h_errno_set(struct __res_state *res, int err) {
 
+
+#if (__GLIBC__ > 2 || __GLIBC__ == 2 &&  __GLIBC_MINOR__ >= 3)
+	res->res_h_errno = err;
+#else
 	h_errno = res->res_h_errno = err;
+#endif
 }
 
 #endif /*__BIND_NOSTATIC*/

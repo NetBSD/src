@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.1.1.3 2005/12/21 19:57:04 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.1.1.4 2005/12/21 23:15:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -34,25 +34,25 @@
  */
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	Id: resolv.h,v 1.7.2.11 2003/06/27 03:51:37 marka Exp
+ *	Id: resolv.h,v 1.7.2.11.4.3 2005/08/25 04:44:13 marka Exp
  */
 
 #ifndef _RESOLV_H_
@@ -117,13 +117,21 @@ __END_DECLS
 typedef enum { res_goahead, res_nextns, res_modified, res_done, res_error }
 	res_sendhookact;
 
-typedef res_sendhookact (*res_send_qhook)__P((struct sockaddr * const *,
-					      const u_char **, int *,
-					      u_char *, int, int *));
+#ifndef __PMT
+#if defined(__STDC__) || defined(__cplusplus)
+#define __PMT(args) args
+#else
+#define __PMT(args) ()
+#endif
+#endif
 
-typedef res_sendhookact (*res_send_rhook)__P((const struct sockaddr *,
-					      const u_char *, int, u_char *,
-					      int, int *));
+typedef res_sendhookact (*res_send_qhook)__PMT((struct sockaddr * const *,
+						const u_char **, int *,
+						u_char *, int, int *));
+
+typedef res_sendhookact (*res_send_rhook)__PMT((const struct sockaddr *,
+						const u_char *, int, u_char *,
+						int, int *));
 
 struct res_sym {
 	int		number;	   /* Identifying number, like T_MX */
@@ -248,12 +256,14 @@ union res_sockaddr_union {
 #define	RES_BLAST	0x00020000	/* blast all recursive servers */
 #define RES_NOTLDQUERY	0x00100000	/* don't unqualified name as a tld */
 #define RES_USE_DNSSEC	0x00200000	/* use DNSSEC using OK bit in OPT */
+/* #define RES_DEBUG2	0x00400000 */	/* nslookup internal */
 /* KAME extensions: use higher bit to avoid conflict with ISC use */
 #define RES_USE_DNAME	0x10000000	/* use DNAME */
 #define RES_USE_EDNS0	0x40000000	/* use EDNS0 if configured */
 #define RES_NO_NIBBLE2	0x80000000	/* disable alternate nibble lookup */
 
-#define RES_DEFAULT	(RES_RECURSE | RES_DEFNAMES | RES_DNSRCH)
+#define RES_DEFAULT	(RES_RECURSE | RES_DEFNAMES | \
+			 RES_DNSRCH | RES_NO_NIBBLE2)
 
 /*
  * Resolver "pfcode" values.  Used by dig.
@@ -283,6 +293,11 @@ extern struct __res_state *__res_state(void);
 __END_DECLS
 #define _res (*__res_state())
 #else
+#ifdef __linux
+__BEGIN_DECLS
+extern struct __res_state * __res_state(void);
+__END_DECLS
+#endif
 #ifndef __BIND_NOSTATIC
 extern struct __res_state _res;
 #endif

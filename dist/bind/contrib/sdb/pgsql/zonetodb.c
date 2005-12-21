@@ -1,28 +1,30 @@
-/*	$NetBSD: zonetodb.c,v 1.1.1.2 2005/12/21 19:53:59 christos Exp $	*/
+/*	$NetBSD: zonetodb.c,v 1.1.1.3 2005/12/21 23:11:01 christos Exp $	*/
 
 /*
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zonetodb.c,v 1.12.4.2 2002/08/05 06:57:08 marka Exp */
+/* Id: zonetodb.c,v 1.12.4.2.8.6 2005/09/06 02:12:40 marka Exp */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include <isc/buffer.h>
+#include <isc/entropy.h>
+#include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/result.h>
@@ -142,6 +144,7 @@ main(int argc, char **argv) {
 	dns_rdataset_t rdataset;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_mem_t *mctx = NULL;
+	isc_entropy_t *ectx = NULL;
 	isc_buffer_t b;
 	isc_result_t result;
 	PGresult *res;
@@ -162,6 +165,12 @@ main(int argc, char **argv) {
 	mctx = NULL;
 	result = isc_mem_create(0, 0, &mctx);
 	check_result(result, "isc_mem_create");
+
+	result = isc_entropy_create(mctx, &ectx);
+	result_check (result, "isc_entropy_create");
+
+	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
+	check_result (result, "isc_hash_create");
 
 	isc_buffer_init(&b, porigin, strlen(porigin));
 	isc_buffer_add(&b, strlen(porigin));
@@ -277,6 +286,8 @@ main(int argc, char **argv) {
 	PQclear(res);
 	dns_dbiterator_destroy(&dbiter);
 	dns_db_detach(&db);
+	isc_hash_destroy();
+	isc_entropy_detach(&ectx);
 	isc_mem_destroy(&mctx);
 	closeandexit(0);
 	exit(0);
