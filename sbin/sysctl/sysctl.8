@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.133 2005/12/13 10:07:21 yamt Exp $
+.\"	$NetBSD: sysctl.8,v 1.134 2005/12/21 12:21:06 yamt Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd December 13, 2005
+.Dd December 21, 2005
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -551,6 +551,7 @@ privilege can change the value.
 .It vm.execmin	integer	yes
 .It vm.filemax	integer	yes
 .It vm.filemin	integer	yes
+.It vm.inactivepct	integer	yes
 .It vm.idlezero	integer	yes
 .It vm.loadavg	struct	no
 .It vm.nkmempages	integer	no
