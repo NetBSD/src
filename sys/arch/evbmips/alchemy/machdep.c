@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19 2005/12/11 12:17:11 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.20 2005/12/21 18:55:33 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2005/12/21 18:55:33 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -124,10 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2005/12/11 12:17:11 christos Exp $"
 #if NAUCOM > 0
 #include <mips/alchemy/dev/aucomvar.h>
 
-#ifndef CONSPEED
-#define CONSPEED TTYDEF_SPEED
-#endif
-int	aucomcnrate = CONSPEED;
+int	aucomcnrate = 0;
 #endif /* NAUCOM > 0 */
 
 #include "ohci.h"
@@ -222,6 +219,25 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * Bring up the console.
 	 */
 #if NAUCOM > 0
+#ifdef CONSPEED
+	if (aucomcnrate == 0)
+		aucomcnrate = CONSPEED;
+#else /* !CONSPEED */
+	/*
+	 * Learn default console speed.  We use the YAMON environment,
+	 * though we could probably also figure it out by checking the
+	 * aucom registers directly.
+	 */
+	if ((aucomcnrate == 0) && ((cp = yamon_getenv("modetty0")) != NULL))
+		aucomcnrate = strtoul(cp, NULL, 0);
+
+	if (aucomcnrate == 0) {
+		panic("pb1000: The `modetty0' YAMON variable not set. "
+		    "Either set it to the speed of the console and try again, "
+		    or build a kernel with the `CONSPEED' option.");
+	}
+#endif /* CONSPEED */
+
 	/*
 	 * Delay to allow firmware putchars to complete.
 	 * FIFO depth * character time.
