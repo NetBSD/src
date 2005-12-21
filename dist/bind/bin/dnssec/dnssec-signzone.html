@@ -1,553 +1,220 @@
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - Copyright (C) 2004, 2005 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  - 
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
-<HTML
-><HEAD
-><TITLE
->dnssec-signzone</TITLE
-><META
-NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
-><BODY
-CLASS="REFENTRY"
-BGCOLOR="#FFFFFF"
-TEXT="#000000"
-LINK="#0000FF"
-VLINK="#840084"
-ALINK="#0000FF"
-><H1
-><A
-NAME="AEN1"
-><SPAN
-CLASS="APPLICATION"
->dnssec-signzone</SPAN
-></A
-></H1
-><DIV
-CLASS="REFNAMEDIV"
-><A
-NAME="AEN9"
-></A
-><H2
->Name</H2
-><SPAN
-CLASS="APPLICATION"
->dnssec-signzone</SPAN
->&nbsp;--&nbsp;DNSSEC zone signing tool</DIV
-><DIV
-CLASS="REFSYNOPSISDIV"
-><A
-NAME="AEN13"
-></A
-><H2
->Synopsis</H2
-><P
-><B
-CLASS="COMMAND"
->dnssec-signzone</B
->  [<TT
-CLASS="OPTION"
->-a</TT
->] [<TT
-CLASS="OPTION"
->-c <TT
-CLASS="REPLACEABLE"
-><I
->class</I
-></TT
-></TT
->] [<TT
-CLASS="OPTION"
->-d <TT
-CLASS="REPLACEABLE"
-><I
->directory</I
-></TT
-></TT
->] [<TT
-CLASS="OPTION"
->-s <TT
-CLASS="REPLACEABLE"
-><I
->start-time</I
-></TT
-></TT
->] [<TT
-CLASS="OPTION"
->-e <TT
-CLASS="REPLACEABLE"
-><I
->end-time</I
-></TT
-></TT
->] [<TT
-CLASS="OPTION"
->-f <TT
-CLASS="REPLACEABLE"
-><I
->output-file</I
-></TT
-></TT
->] [<TT
-CLASS="OPTION"
->-h</TT
->] [<TT
-CLASS="OPTION"
->-i <TT
-CLASS="REPLACEABLE"
-><I
->interval</I
-></TT
-></TT
->] [<TT
-CLASS="OPTION"
->-n <TT
-CLASS="REPLACEABLE"
-><I
->nthreads</I
-></TT
-></TT
->] [<TT
-CLASS="OPTION"
->-o <TT
-CLASS="REPLACEABLE"
-><I
->origin</I
-></TT
-></TT
->] [<TT
-CLASS="OPTION"
->-p</TT
->] [<TT
-CLASS="OPTION"
->-r <TT
-CLASS="REPLACEABLE"
-><I
->randomdev</I
-></TT
-></TT
->] [<TT
-CLASS="OPTION"
->-t</TT
->] [<TT
-CLASS="OPTION"
->-v <TT
-CLASS="REPLACEABLE"
-><I
->level</I
-></TT
-></TT
->] {zonefile} [key...]</P
-></DIV
-><DIV
-CLASS="REFSECT1"
-><A
-NAME="AEN56"
-></A
-><H2
->DESCRIPTION</H2
-><P
->        <B
-CLASS="COMMAND"
->dnssec-signzone</B
-> signs a zone.  It generates NXT
-	and SIG records and produces a signed version of the zone.  If there
-	is a <TT
-CLASS="FILENAME"
->signedkey</TT
-> file from the zone's parent,
-	the parent's signatures will be incorporated into the generated
-	signed zone file.  The security status of delegations from the the
-        signed zone (that is, whether the child zones are secure or not) is
-        determined by the presence or absence of a
-	<TT
-CLASS="FILENAME"
->signedkey</TT
-> file for each child zone.
-    </P
-></DIV
-><DIV
-CLASS="REFSECT1"
-><A
-NAME="AEN62"
-></A
-><H2
->OPTIONS</H2
-><P
-></P
-><DIV
-CLASS="VARIABLELIST"
-><DL
-><DT
->-a</DT
-><DD
-><P
->	      Verify all generated signatures.
-	  </P
-></DD
-><DT
->-c <TT
-CLASS="REPLACEABLE"
-><I
->class</I
-></TT
-></DT
-><DD
-><P
->	       Specifies the DNS class of the zone.
-	  </P
-></DD
-><DT
->-d <TT
-CLASS="REPLACEABLE"
-><I
->directory</I
-></TT
-></DT
-><DD
-><P
->	       Look for <TT
-CLASS="FILENAME"
->signedkey</TT
-> files in
-	       <TT
-CLASS="OPTION"
->directory</TT
-> as the directory 
-	  </P
-></DD
-><DT
->-s <TT
-CLASS="REPLACEABLE"
-><I
->start-time</I
-></TT
-></DT
-><DD
-><P
->	       Specify the date and time when the generated SIG records
+<!-- Id: dnssec-signzone.html,v 1.4.2.1.4.14 2005/10/13 02:33:46 marka Exp -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>dnssec-signzone</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.69.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en">
+<a name="id2463721"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p><span class="application">dnssec-signzone</span> &#8212; DNSSEC zone signing tool</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="cmdsynopsis"><p><code class="command">dnssec-signzone</code>  [<code class="option">-a</code>] [<code class="option">-c <em class="replaceable"><code>class</code></em></code>] [<code class="option">-d <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-e <em class="replaceable"><code>end-time</code></em></code>] [<code class="option">-f <em class="replaceable"><code>output-file</code></em></code>] [<code class="option">-g</code>] [<code class="option">-h</code>] [<code class="option">-k <em class="replaceable"><code>key</code></em></code>] [<code class="option">-l <em class="replaceable"><code>domain</code></em></code>] [<code class="option">-i <em class="replaceable"><code>interval</code></em></code>] [<code class="option">-n <em class="replaceable"><code>nthreads</code></em></code>] [<code class="option">-o <em class="replaceable"><code>origin</code></em></code>] [<code class="option">-p</code>] [<code class="option">-r <em class="replaceable"><code>randomdev</code></em></code>] [<code class="option">-s <em class="replaceable"><code>start-time</code></em></code>] [<code class="option">-t</code>] [<code class="option">-v <em class="replaceable"><code>level</code></em></code>] [<code class="option">-z</code>] {zonefile} [key...]</p></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2525979"></a><h2>DESCRIPTION</h2>
+<p>
+        <span><strong class="command">dnssec-signzone</strong></span> signs a zone.  It generates
+	NSEC and RRSIG records and produces a signed version of the
+	zone. The security status of delegations from the signed zone
+	(that is, whether the child zones are secure or not) is
+	determined by the presence or absence of a
+	<code class="filename">keyset</code> file for each child zone.
+    </p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2525995"></a><h2>OPTIONS</h2>
+<div class="variablelist"><dl>
+<dt><span class="term">-a</span></dt>
+<dd><p>
+	      Verify all generated signatures.
+	  </p></dd>
+<dt><span class="term">-c <em class="replaceable"><code>class</code></em></span></dt>
+<dd><p>
+	       Specifies the DNS class of the zone.
+	  </p></dd>
+<dt><span class="term">-k <em class="replaceable"><code>key</code></em></span></dt>
+<dd><p>
+	       Treat specified key as a key signing key ignoring any
+	       key flags.  This option may be specified multiple times.
+	  </p></dd>
+<dt><span class="term">-l <em class="replaceable"><code>domain</code></em></span></dt>
+<dd><p>
+		Generate a DLV set in addition to the key (DNSKEY) and DS sets.
+		The domain is appended to the name of the records.
+	  </p></dd>
+<dt><span class="term">-d <em class="replaceable"><code>directory</code></em></span></dt>
+<dd><p>
+	       Look for <code class="filename">keyset</code> files in
+	       <code class="option">directory</code> as the directory 
+	  </p></dd>
+<dt><span class="term">-g</span></dt>
+<dd><p>
+		Generate DS records for child zones from keyset files.
+		Existing DS records will be removed.
+	  </p></dd>
+<dt><span class="term">-s <em class="replaceable"><code>start-time</code></em></span></dt>
+<dd><p>
+	       Specify the date and time when the generated RRSIG records
 	       become valid.  This can be either an absolute or relative
 	       time.  An absolute start time is indicated by a number
 	       in YYYYMMDDHHMMSS notation; 20000530144500 denotes
 	       14:45:00 UTC on May 30th, 2000.  A relative start time is
 	       indicated by +N, which is N seconds from the current time.
-	       If no <TT
-CLASS="OPTION"
->start-time</TT
-> is specified, the current
-	       time is used.
-	  </P
-></DD
-><DT
->-e <TT
-CLASS="REPLACEABLE"
-><I
->end-time</I
-></TT
-></DT
-><DD
-><P
->	       Specify the date and time when the generated SIG records
-	       expire.  As with <TT
-CLASS="OPTION"
->start-time</TT
->, an absolute
+	       If no <code class="option">start-time</code> is specified, the current
+	       time minus 1 hour (to allow for clock skew) is used.
+	  </p></dd>
+<dt><span class="term">-e <em class="replaceable"><code>end-time</code></em></span></dt>
+<dd><p>
+	       Specify the date and time when the generated RRSIG records
+	       expire.  As with <code class="option">start-time</code>, an absolute
 	       time is indicated in YYYYMMDDHHMMSS notation.  A time relative
 	       to the start time is indicated with +N, which is N seconds from
 	       the start time.  A time relative to the current time is
-	       indicated with now+N.  If no <TT
-CLASS="OPTION"
->end-time</TT
-> is
+	       indicated with now+N.  If no <code class="option">end-time</code> is
 	       specified, 30 days from the start time is used as a default.
-	  </P
-></DD
-><DT
->-f <TT
-CLASS="REPLACEABLE"
-><I
->output-file</I
-></TT
-></DT
-><DD
-><P
->	       The name of the output file containing the signed zone.  The
-	       default is to append <TT
-CLASS="FILENAME"
->.signed</TT
-> to the
+	  </p></dd>
+<dt><span class="term">-f <em class="replaceable"><code>output-file</code></em></span></dt>
+<dd><p>
+	       The name of the output file containing the signed zone.  The
+	       default is to append <code class="filename">.signed</code> to the
 	       input file.
-	  </P
-></DD
-><DT
->-h</DT
-><DD
-><P
->	       Prints a short summary of the options and arguments to
-	       <B
-CLASS="COMMAND"
->dnssec-signzone</B
->.
-	  </P
-></DD
-><DT
->-i <TT
-CLASS="REPLACEABLE"
-><I
->interval</I
-></TT
-></DT
-><DD
-><P
->	       When a previously signed zone is passed as input, records
-	       may be resigned.  The <TT
-CLASS="OPTION"
->interval</TT
-> option
+	  </p></dd>
+<dt><span class="term">-h</span></dt>
+<dd><p>
+	       Prints a short summary of the options and arguments to
+	       <span><strong class="command">dnssec-signzone</strong></span>.
+	  </p></dd>
+<dt><span class="term">-i <em class="replaceable"><code>interval</code></em></span></dt>
+<dd>
+<p>
+	       When a previously signed zone is passed as input, records
+	       may be resigned.  The <code class="option">interval</code> option
 	       specifies the cycle interval as an offset from the current
-	       time (in seconds).  If a SIG record expires after the
+	       time (in seconds).  If a RRSIG record expires after the
 	       cycle interval, it is retained.  Otherwise, it is considered
 	       to be expiring soon, and it will be replaced.
-	  </P
-><P
->	       The default cycle interval is one quarter of the difference
+	  </p>
+<p>
+	       The default cycle interval is one quarter of the difference
 	       between the signature end and start times.  So if neither
-	       <TT
-CLASS="OPTION"
->end-time</TT
-> or <TT
-CLASS="OPTION"
->start-time</TT
->
-	       are specified, <B
-CLASS="COMMAND"
->dnssec-signzone</B
-> generates
+	       <code class="option">end-time</code> or <code class="option">start-time</code>
+	       are specified, <span><strong class="command">dnssec-signzone</strong></span> generates
 	       signatures that are valid for 30 days, with a cycle
-	       interval of 7.5 days.  Therefore, if any existing SIG records
+	       interval of 7.5 days.  Therefore, if any existing RRSIG records
 	       are due to expire in less than 7.5 days, they would be
 	       replaced.
-	  </P
-></DD
-><DT
->-n <TT
-CLASS="REPLACEABLE"
-><I
->ncpus</I
-></TT
-></DT
-><DD
-><P
->	       Specifies the number of threads to use.  By default, one
+	  </p>
+</dd>
+<dt><span class="term">-n <em class="replaceable"><code>ncpus</code></em></span></dt>
+<dd><p>
+	       Specifies the number of threads to use.  By default, one
 	       thread is started for each detected CPU.
-	  </P
-></DD
-><DT
->-o <TT
-CLASS="REPLACEABLE"
-><I
->origin</I
-></TT
-></DT
-><DD
-><P
->	       The zone origin.  If not specified, the name of the zone file
+	  </p></dd>
+<dt><span class="term">-o <em class="replaceable"><code>origin</code></em></span></dt>
+<dd><p>
+	       The zone origin.  If not specified, the name of the zone file
 	       is assumed to be the origin.
-	  </P
-></DD
-><DT
->-p</DT
-><DD
-><P
->	       Use pseudo-random data when signing the zone.  This is faster,
+	  </p></dd>
+<dt><span class="term">-p</span></dt>
+<dd><p>
+	       Use pseudo-random data when signing the zone.  This is faster,
 	       but less secure, than using real random data.  This option
 	       may be useful when signing large zones or when the entropy
 	       source is limited.
-	  </P
-></DD
-><DT
->-r <TT
-CLASS="REPLACEABLE"
-><I
->randomdev</I
-></TT
-></DT
-><DD
-><P
->	       Specifies the source of randomness.  If the operating
-	       system does not provide a <TT
-CLASS="FILENAME"
->/dev/random</TT
->
+	  </p></dd>
+<dt><span class="term">-r <em class="replaceable"><code>randomdev</code></em></span></dt>
+<dd><p>
+	       Specifies the source of randomness.  If the operating
+	       system does not provide a <code class="filename">/dev/random</code>
 	       or equivalent device, the default source of randomness
-	       is keyboard input.  <TT
-CLASS="FILENAME"
->randomdev</TT
-> specifies
+	       is keyboard input.  <code class="filename">randomdev</code> specifies
 	       the name of a character device or file containing random
 	       data to be used instead of the default.  The special value
-	       <TT
-CLASS="FILENAME"
->keyboard</TT
-> indicates that keyboard
+	       <code class="filename">keyboard</code> indicates that keyboard
 	       input should be used.
-	  </P
-></DD
-><DT
->-t</DT
-><DD
-><P
->	       Print statistics at completion.
-	  </P
-></DD
-><DT
->-v <TT
-CLASS="REPLACEABLE"
-><I
->level</I
-></TT
-></DT
-><DD
-><P
->	       Sets the debugging level.
-	  </P
-></DD
-><DT
->zonefile</DT
-><DD
-><P
->	       The file containing the zone to be signed.
+	  </p></dd>
+<dt><span class="term">-t</span></dt>
+<dd><p>
+	       Print statistics at completion.
+	  </p></dd>
+<dt><span class="term">-v <em class="replaceable"><code>level</code></em></span></dt>
+<dd><p>
 	       Sets the debugging level.
-	  </P
-></DD
-><DT
->key</DT
-><DD
-><P
->	       The keys used to sign the zone.  If no keys are specified, the
+	  </p></dd>
+<dt><span class="term">-z</span></dt>
+<dd><p>
+	       Ignore KSK flag on key when determining what to sign.
+	  </p></dd>
+<dt><span class="term">zonefile</span></dt>
+<dd><p>
+	       The file containing the zone to be signed.
+	  </p></dd>
+<dt><span class="term">key</span></dt>
+<dd><p>
+	       The keys used to sign the zone.  If no keys are specified, the
 	       default all zone keys that have private key files in the
 	       current directory.
-	  </P
-></DD
-></DL
-></DIV
-></DIV
-><DIV
-CLASS="REFSECT1"
-><A
-NAME="AEN154"
-></A
-><H2
->EXAMPLE</H2
-><P
->        The following command signs the <TT
-CLASS="USERINPUT"
-><B
->example.com</B
-></TT
->
-	zone with the DSA key generated in the <B
-CLASS="COMMAND"
->dnssec-keygen</B
->
+	  </p></dd>
+</dl></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2526435"></a><h2>EXAMPLE</h2>
+<p>
+        The following command signs the <strong class="userinput"><code>example.com</code></strong>
+	zone with the DSA key generated in the <span><strong class="command">dnssec-keygen</strong></span>
 	man page.  The zone's keys must be in the zone.  If there are
-	<TT
-CLASS="FILENAME"
->signedkey</TT
-> files associated with this zone
-	or any child zones, they must be in the current directory.
-	<TT
-CLASS="USERINPUT"
-><B
->example.com</B
-></TT
->, the following command would be
+	<code class="filename">keyset</code> files associated with child zones,
+	they must be in the current directory.
+	<strong class="userinput"><code>example.com</code></strong>, the following command would be
 	issued:
-    </P
-><P
->        <TT
-CLASS="USERINPUT"
-><B
->dnssec-signzone -o example.com db.example.com Kexample.com.+003+26160</B
-></TT
->
-    </P
-><P
->        The command would print a string of the form:
-    </P
-><P
->        In this example, <B
-CLASS="COMMAND"
->dnssec-signzone</B
-> creates
-	the file <TT
-CLASS="FILENAME"
->db.example.com.signed</TT
->.  This file
+    </p>
+<p>
+        <strong class="userinput"><code>dnssec-signzone -o example.com db.example.com Kexample.com.+003+26160</code></strong>
+    </p>
+<p>
+        The command would print a string of the form:
+    </p>
+<p>
+        In this example, <span><strong class="command">dnssec-signzone</strong></span> creates
+	the file <code class="filename">db.example.com.signed</code>.  This file
 	should be referenced in a zone statement in a
-	<TT
-CLASS="FILENAME"
->named.conf</TT
-> file.
-    </P
-></DIV
-><DIV
-CLASS="REFSECT1"
-><A
-NAME="AEN168"
-></A
-><H2
->SEE ALSO</H2
-><P
->      <SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->dnssec-keygen</SPAN
->(8)</SPAN
->,
-      <SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->dnssec-signkey</SPAN
->(8)</SPAN
->,
-      <I
-CLASS="CITETITLE"
->BIND 9 Administrator Reference Manual</I
->,
-      <I
-CLASS="CITETITLE"
->RFC 2535</I
->.
-    </P
-></DIV
-><DIV
-CLASS="REFSECT1"
-><A
-NAME="AEN179"
-></A
-><H2
->AUTHOR</H2
-><P
->        Internet Software Consortium
-    </P
-></DIV
-></BODY
-></HTML
->
+	<code class="filename">named.conf</code> file.
+    </p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2526485"></a><h2>SEE ALSO</h2>
+<p>
+      <span class="citerefentry"><span class="refentrytitle">dnssec-keygen</span>(8)</span>,
+      <em class="citetitle">BIND 9 Administrator Reference Manual</em>,
+      <em class="citetitle">RFC 2535</em>.
+    </p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2526512"></a><h2>AUTHOR</h2>
+<p>
+        <span class="corpauthor">Internet Systems Consortium</span>
+    </p>
+</div>
+</div></body>
+</html>

@@ -1,26 +1,26 @@
-/*	$NetBSD: eventlib_p.h,v 1.1.1.2 2005/12/21 19:57:25 christos Exp $	*/
+/*	$NetBSD: eventlib_p.h,v 1.1.1.3 2005/12/21 23:15:42 christos Exp $	*/
 
 /*
+ * Copyright (c) 2005 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-1999 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /* eventlib_p.h - private interfaces for eventlib
  * vix 09sep95 [initial]
  *
- * Id: eventlib_p.h,v 1.3.2.1 2003/06/27 03:51:41 marka Exp
+ * Id: eventlib_p.h,v 1.3.2.1.4.3 2005/07/28 07:43:20 marka Exp
  */
 
 #ifndef _EVENTLIB_P_H
@@ -64,6 +64,13 @@
 #else
 #define FILL(p)
 #endif
+
+#ifdef USE_POLL
+#ifdef HAVE_STROPTS_H
+#include <stropts.h>
+#endif
+#include <poll.h>
+#endif /* USE_POLL */
 
 typedef struct evConn {
 	evConnFunc	func;
@@ -137,6 +144,8 @@ typedef struct evTimer {
 	void *		uap;
 	struct timespec	due, inter;
 	int		index;
+	int		mode;
+#define EV_TMR_RATE	1
 } evTimer;
 
 typedef struct evWait {
@@ -166,6 +175,40 @@ typedef struct evEvent_p {
 	} u;
 } evEvent_p;
 
+#ifdef USE_POLL
+typedef struct { 
+	void		*ctx;	/* pointer to the evContext_p   */ 
+	uint32_t	type;	/* READ, WRITE, EXCEPT, nonblk  */ 
+	uint32_t	result;	/* 1 => revents, 0 => events    */ 
+} __evEmulMask; 
+
+#define emulMaskInit(ctx, field, ev, lastnext) \
+	ctx->field.ctx = ctx; \
+	ctx->field.type = ev; \
+	ctx->field.result = lastnext; 
+  
+extern short	*__fd_eventfield(int fd, __evEmulMask *maskp); 
+extern short	__poll_event(__evEmulMask *maskp); 
+extern void		__fd_clr(int fd, __evEmulMask *maskp); 
+extern void		__fd_set(int fd, __evEmulMask *maskp); 
+
+#undef  FD_ZERO 
+#define FD_ZERO(maskp) 
+  
+#undef  FD_SET 
+#define FD_SET(fd, maskp) \
+	__fd_set(fd, maskp) 
+
+#undef  FD_CLR 
+#define FD_CLR(fd, maskp) \
+	__fd_clr(fd, maskp) 
+
+#undef  FD_ISSET 
+#define FD_ISSET(fd, maskp) \
+	((*__fd_eventfield(fd, maskp) & __poll_event(maskp)) != 0) 
+
+#endif /* USE_POLL */
+
 typedef struct {
 	/* Global. */
 	const evEvent_p	*cur;
@@ -177,12 +220,26 @@ typedef struct {
 	LIST(evAccept)	accepts;
 	/* Files. */
 	evFile		*files, *fdNext;
+#ifndef USE_POLL
 	fd_set		rdLast, rdNext;
 	fd_set		wrLast, wrNext;
 	fd_set		exLast, exNext;
 	fd_set		nonblockBefore;
 	int		fdMax, fdCount, highestFD;
 	evFile		*fdTable[FD_SETSIZE];
+#else
+	struct pollfd	*pollfds;	/* Allocated as needed  */ 
+	evFile		**fdTable;	/* Ditto                */ 
+	int		maxnfds;	/* # elements in above  */ 
+	int		firstfd;	/* First active fd      */ 
+	int		fdMax;		/* Last active fd       */ 
+	int		fdCount;	/* # fd:s with I/O      */ 
+	int		highestFD;	/* max fd allowed by OS */ 
+	__evEmulMask	rdLast, rdNext; 
+	__evEmulMask	wrLast, wrNext; 
+	__evEmulMask	exLast, exNext; 
+	__evEmulMask	nonblockBefore; 
+#endif /* USE_POLL */
 #ifdef EVENTLIB_TIME_CHECKS
 	struct timespec	lastSelectTime;
 	int		lastFdCount;
@@ -203,6 +260,10 @@ typedef struct {
 void evPrintf(const evContext_p *ctx, int level, const char *fmt, ...)
      ISC_FORMAT_PRINTF(3, 4);
 
+#ifdef USE_POLL
+extern int evPollfdRealloc(evContext_p *ctx, int pollfd_chunk_size, int fd);
+#endif /* USE_POLL */
+
 /* ev_timers.c */
 #define evCreateTimers __evCreateTimers
 heap_context evCreateTimers(const evContext_p *);
@@ -212,5 +273,8 @@ void evDestroyTimers(const evContext_p *);
 /* ev_waits.c */
 #define evFreeWait __evFreeWait
 evWait *evFreeWait(evContext_p *ctx, evWait *old);
+
+/* Global options */
+extern int	__evOptMonoTime;
 
 #endif /*_EVENTLIB_P_H*/

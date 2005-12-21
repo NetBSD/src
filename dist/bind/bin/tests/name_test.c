@@ -1,23 +1,23 @@
-/*	$NetBSD: name_test.c,v 1.1.1.2 2005/12/21 19:51:36 christos Exp $	*/
+/*	$NetBSD: name_test.c,v 1.1.1.3 2005/12/21 23:08:22 christos Exp $	*/
 
 /*
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name_test.c,v 1.33 2001/01/09 21:41:20 bwelling Exp */
+/* Id: name_test.c,v 1.33.12.6 2005/03/17 03:58:28 marka Exp */
 
 #include <config.h>
 
@@ -85,7 +85,7 @@ main(int argc, char *argv[]) {
 	isc_boolean_t test_downcase = ISC_FALSE;
 	isc_boolean_t inplace = ISC_FALSE;
 	isc_boolean_t want_split = ISC_FALSE;
-	unsigned int depth, split_depth = 0;
+	unsigned int labels, split_label = 0;
 	dns_fixedname_t fprefix, fsuffix;
 	dns_name_t *prefix, *suffix;
 	int ch;
@@ -109,7 +109,7 @@ main(int argc, char *argv[]) {
 			break;
 		case 's':
 			want_split = ISC_TRUE;
-			split_depth = atoi(isc_commandline_argument);
+			split_label = atoi(isc_commandline_argument);
 			break;
 		case 'w':
 			check_wildcard = ISC_TRUE;
@@ -168,16 +168,16 @@ main(int argc, char *argv[]) {
 	dns_fixedname_init(&wname);
 	name = dns_fixedname_name(&wname);
 	dns_fixedname_init(&wname2);
-	while (fgets(s, sizeof s, stdin) != NULL) {
+	while (fgets(s, sizeof(s), stdin) != NULL) {
 		len = strlen(s);
-		if (len > 0 && s[len - 1] == '\n') {
+		if (len > 0U && s[len - 1] == '\n') {
 			s[len - 1] = '\0';
 			len--;
 		}
 		isc_buffer_init(&source, s, len);
 		isc_buffer_add(&source, len);
 
-		if (len > 0)
+		if (len > 0U)
 			result = dns_name_fromtext(name, &source, origin,
 						   downcase, NULL);
 		else {
@@ -294,11 +294,11 @@ main(int argc, char *argv[]) {
 
 		if (comp != NULL && dns_name_countlabels(name) > 0) {
 			int order;
-			unsigned int nlabels, nbits;
+			unsigned int nlabels;
 			dns_namereln_t namereln;
 
 			namereln = dns_name_fullcompare(name, comp, &order,
-							&nlabels, &nbits);
+							&nlabels);
 			if (!quiet) {
 				if (order < 0)
 					printf("<");
@@ -321,32 +321,25 @@ main(int argc, char *argv[]) {
 				}
 				if (namereln != dns_namereln_none &&
 				    namereln != dns_namereln_equal)
-					printf(", nlabels = %u, nbits = %u",
-					       nlabels, nbits);
+					printf(", nlabels = %u", nlabels);
 				printf("\n");
 			}
 			printf("dns_name_equal() returns %s\n",
 			       dns_name_equal(name, comp) ? "TRUE" : "FALSE");
 		}
 
-		depth = dns_name_depth(name);
-		if (want_split && split_depth < depth) {
+		labels = dns_name_countlabels(name);
+		if (want_split && split_label < labels) {
 			dns_fixedname_init(&fprefix);
 			prefix = dns_fixedname_name(&fprefix);
 			dns_fixedname_init(&fsuffix);
 			suffix = dns_fixedname_name(&fsuffix);
-			printf("splitting at depth %u: ", split_depth);
-			result = dns_name_splitatdepth(name, split_depth,
-						       prefix, suffix);
-			if (result == ISC_R_SUCCESS) {
-				printf("\n    prefix = ");
-				print_name(prefix);
-				printf("    suffix = ");
-				print_name(suffix);
-			} else {
-				printf("failed: %s\n",
-				       isc_result_totext(result));
-			}
+			printf("splitting at label %u: ", split_label);
+			dns_name_split(name, split_label, prefix, suffix);
+			printf("\n    prefix = ");
+			print_name(prefix);
+			printf("    suffix = ");
+			print_name(suffix);
 		}
 
 		if (concatenate) {

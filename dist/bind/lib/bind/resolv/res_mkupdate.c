@@ -1,20 +1,20 @@
-/*	$NetBSD: res_mkupdate.c,v 1.1.1.3 2005/12/21 19:57:37 christos Exp $	*/
+/*	$NetBSD: res_mkupdate.c,v 1.1.1.4 2005/12/21 23:15:58 christos Exp $	*/
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: res_mkupdate.c,v 1.1.2.1 2003/06/27 03:51:43 marka Exp";
+static const char rcsid[] = "Id: res_mkupdate.c,v 1.1.2.1.4.5 2005/10/14 05:43:47 marka Exp";
 #endif /* not lint */
 
 #include "port_before.h"
@@ -80,7 +80,7 @@ int
 res_nmkupdate(res_state statp, ns_updrec *rrecp_in, u_char *buf, int buflen) {
 	ns_updrec *rrecp_start = rrecp_in;
 	HEADER *hp;
-	u_char *cp, *sp1, *sp2, *startp, *endp;
+	u_char *cp, *sp2, *startp, *endp;
 	int n, i, soanum, multiline;
 	ns_updrec *rrecp;
 	struct in_addr ina;
@@ -103,7 +103,6 @@ res_nmkupdate(res_state statp, ns_updrec *rrecp_in, u_char *buf, int buflen) {
 	hp->id = htons(++statp->id);
 	hp->opcode = ns_o_update;
 	hp->rcode = NOERROR;
-	sp1 = buf + 2*INT16SZ;  /* save pointer to zocount */
 	cp = buf + HFIXEDSZ;
 	buflen -= HFIXEDSZ;
 	dpp = dnptrs;
@@ -221,6 +220,7 @@ res_nmkupdate(res_state statp, ns_updrec *rrecp_in, u_char *buf, int buflen) {
 		case T_MR:
 		case T_NS:
 		case T_PTR:
+		case ns_t_dname:
 			if (!getword_str(buf2, sizeof buf2, &startp, endp))
 				return (-1);
 			n = dn_comp(buf2, cp, buflen, dnptrs, lastdnptr);
@@ -351,13 +351,13 @@ res_nmkupdate(res_state statp, ns_updrec *rrecp_in, u_char *buf, int buflen) {
 				bm[i] = 0;
 
 			while (getword_str(buf2, sizeof buf2, &startp, endp)) {
-				if ((n1 = res_servicenumber(buf2)) <= 0)
+				if ((n = res_servicenumber(buf2)) <= 0)
 					return (-1);
 
-				if (n1 < MAXPORT) {
-					bm[n1/8] |= (0x80>>(n1%8));
-					if (n1 > maxbm)
-						maxbm = n1;
+				if (n < MAXPORT) {
+					bm[n/8] |= (0x80>>(n%8));
+					if ((unsigned)n > maxbm)
+						maxbm = n;
 				} else
 					return (-1);
 			}
@@ -381,7 +381,7 @@ res_nmkupdate(res_state statp, ns_updrec *rrecp_in, u_char *buf, int buflen) {
 			}
 			break;
 		case T_TXT:
-			while (1) {
+			for (;;) {
 				if ((n = getstr_str(buf2, sizeof buf2,
 						&startp, endp)) < 0) {
 					if (cp != (sp2 + INT16SZ))
@@ -583,7 +583,7 @@ res_nmkupdate(res_state statp, ns_updrec *rrecp_in, u_char *buf, int buflen) {
 			ShrinkBuffer(n);
 			maxtype = 0;
 			memset(data, 0, sizeof data);
-			while (1) {
+			for (;;) {
 				if (!getword_str(buf2, sizeof buf2, &startp,
 						 endp))
 					break;
@@ -923,10 +923,10 @@ res_mkupdrec(int section, const char *dname,
 	}
 	INIT_LINK(rrecp, r_link);
 	INIT_LINK(rrecp, r_glink);
- 	rrecp->r_class = class;
-	rrecp->r_type = type;
+ 	rrecp->r_class = (ns_class)class;
+	rrecp->r_type = (ns_type)type;
 	rrecp->r_ttl = ttl;
-	rrecp->r_section = section;
+	rrecp->r_section = (ns_sect)section;
 	return (rrecp);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.h,v 1.1.1.1 2004/05/17 23:44:40 christos Exp $	*/
+/*	$NetBSD: md5.h,v 1.1.1.2 2005/12/21 23:15:19 christos Exp $	*/
 
 /* crypto/md/md5.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
@@ -61,6 +61,8 @@
 #ifndef HEADER_MD5_H
 #define HEADER_MD5_H
 
+#ifndef	HAVE_MD5
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -101,3 +103,6 @@ unsigned char *MD5();
 #endif
 
 #endif
+#else 
+#include <sys/md5.h>
+#endif /* HAVE_MD5 */
