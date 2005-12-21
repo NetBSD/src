@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.107 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.108 2005/12/21 12:19:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.107 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.108 2005/12/21 12:19:04 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -433,6 +433,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	uvmexp.anonmax = uvmexp.anonmaxpct * 256 / 100;
 	uvmexp.filemax = uvmexp.filemaxpct * 256 / 100;
 	uvmexp.execmax = uvmexp.execmaxpct * 256 / 100;
+	uvm_pctparam_set(&uvmexp.inactivepct, 33);
 
 	/*
 	 * determine if we should zero pages in the idle loop.

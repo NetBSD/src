@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.37 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.38 2005/12/21 12:19:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.37 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.38 2005/12/21 12:19:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -300,6 +300,34 @@ sysctl_vm_updateminmax(SYSCTLFN_ARGS)
 }
 
 /*
+ * sysctl helper routine for uvm_pctparam.
+ */
+static int
+sysctl_uvmpctparam(SYSCTLFN_ARGS)
+{
+	int t, error;
+	struct sysctlnode node;
+	struct uvm_pctparam *pct;
+
+	pct = rnode->sysctl_data;
+	t = pct->pct_pct;
+
+	node = *rnode;
+	node.sysctl_data = &t;
+	t = *(int*)rnode->sysctl_data;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t < 0 || t > 100)
+		return EINVAL;
+
+	uvm_pctparam_set(pct, t);
+
+	return (0);
+}
+
+/*
  * uvm_sysctl: sysctl hook into UVM system.
  */
 SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
@@ -407,6 +435,13 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       SYSCTL_DESCR("Whether try to zero pages in idle loop"),
 		       NULL, 0, &vm_page_zero_enable, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "inactivepct",
+		       SYSCTL_DESCR("Percentage of inactive queue of"
+				    "the entire (active + inactive) queue"),
+		       sysctl_uvmpctparam, 0, &uvmexp.inactivepct, 0,
+		       CTL_VM, CTL_CREATE, CTL_EOL);
 }
 
 /*
@@ -495,4 +530,12 @@ uvm_total(struct vmtotal *totalp)
 	totalp->t_avmshr = 0;		/* XXX */
 	totalp->t_rmshr = 0;		/* XXX */
 	totalp->t_armshr = 0;		/* XXX */
+}
+
+void
+uvm_pctparam_set(struct uvm_pctparam *pct, int val)
+{
+
+	pct->pct_pct = val;
+	pct->pct_scaled = val * UVM_PCTPARAM_SCALE / 100;
 }

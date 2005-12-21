@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.69 2005/11/29 15:45:28 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.70 2005/12/21 12:19:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.69 2005/11/29 15:45:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.70 2005/12/21 12:19:04 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -245,7 +245,8 @@ uvm_pageout(void *arg)
 			uvmpd_tune();
 		}
 
-		uvmexp.inactarg = (uvmexp.active + uvmexp.inactive) / 3;
+		uvmexp.inactarg = UVM_PCTPARAM_APPLY(&uvmexp.inactivepct,
+		    uvmexp.active + uvmexp.inactive);
 		if (uvmexp.inactarg <= uvmexp.freetarg) {
 			uvmexp.inactarg = uvmexp.freetarg + 1;
 		}

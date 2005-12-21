@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.107 2005/11/29 22:52:03 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.108 2005/12/21 12:19:04 yamt Exp $	*/
 
 /*
  *
@@ -248,6 +248,19 @@ struct vm_page;
 struct vmtotal;
 
 /*
+ * uvm_pctparam: parameter to be shown as percentage to user.
+ */
+
+#define	UVM_PCTPARAM_SHIFT	8
+#define	UVM_PCTPARAM_SCALE	(1 << UVM_PCTPARAM_SHIFT)
+#define	UVM_PCTPARAM_APPLY(pct, x) \
+	(((x) * (pct)->pct_scaled) >> UVM_PCTPARAM_SHIFT)
+struct uvm_pctparam {
+	int pct_pct;	/* percent [0, 100] */
+	int pct_scaled;
+};
+
+/*
  * uvmexp: global data structures that are exported to parts of the kernel
  * other than the vm system.
  */
@@ -298,6 +311,8 @@ struct uvmexp {
 	int anonmaxpct;	/* max percent anon pages */
 	int execmaxpct;	/* max percent executable pages */
 	int filemaxpct;	/* max percent file pages */
+	struct uvm_pctparam inactivepct; /* length of inactive queue
+					    (pct of the whole queue) */
 
 	/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
@@ -306,9 +321,6 @@ struct uvmexp {
 	int swpginuse;	/* number of swap pages in use */
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
-	int unused1;	/* used to be nanon */
-	int unused2;	/* used to be nanonneeded */
-	int unused3;	/* used to be nfreeanon */
 
 	/* stat counters */
 	int faults;		/* page fault count */
@@ -636,6 +648,7 @@ void			uvmspace_unshare(struct lwp *);
 void			uvm_meter(void);
 int			uvm_sysctl(int *, u_int, void *, size_t *,
 			    void *, size_t, struct proc *);
+void			uvm_pctparam_set(struct uvm_pctparam *, int);
 
 /* uvm_mmap.c */
 int			uvm_mmap(struct vm_map *, vaddr_t *, vsize_t,
