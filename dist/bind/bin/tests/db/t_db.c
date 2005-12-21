@@ -1,23 +1,23 @@
-/*	$NetBSD: t_db.c,v 1.1.1.1 2004/05/17 23:43:28 christos Exp $	*/
+/*	$NetBSD: t_db.c,v 1.1.1.2 2005/12/21 19:51:46 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_db.c,v 1.29.206.2 2004/03/08 21:06:23 marka Exp */
+/* Id: t_db.c,v 1.29 2001/08/08 22:54:30 gson Exp */
 
 #include <config.h>
 
@@ -46,7 +46,7 @@ t_create(const char *db_type, const char *origin, const char *class,
 	int			len;
 	isc_result_t		dns_result;
 	dns_dbtype_t		dbtype;
-	isc_textregion_t	region;
+	isc_constregion_t	region;
 	isc_buffer_t		origin_buffer;
 	dns_fixedname_t		dns_origin;
 	dns_rdataclass_t	rdataclass;
@@ -68,9 +68,10 @@ t_create(const char *db_type, const char *origin, const char *class,
 		return(dns_result);
 	}
 
-	DE_CONST(class, region.base);
+	region.base = class;
 	region.length = strlen(class);
-	dns_result = dns_rdataclass_fromtext(&rdataclass, &region);
+	dns_result = dns_rdataclass_fromtext(&rdataclass,
+					     (isc_textregion_t *)&region);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_rdataclass_fromtext failed %s\n",
 		       dns_result_totext(dns_result));

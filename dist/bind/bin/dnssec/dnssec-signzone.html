@@ -1,30 +1,27 @@
 <!--
- - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- - Copyright (C) 2001-2003  Internet Software Consortium.
- -
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- -
- - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- - PERFORMANCE OF THIS SOFTWARE.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
-
-<!-- Id: dnssec-signzone.html,v 1.4.2.1.4.7 2004/08/22 23:38:58 marka Exp -->
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >dnssec-signzone</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -35,10 +32,10 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
-></A
 ><SPAN
 CLASS="APPLICATION"
 >dnssec-signzone</SPAN
+></A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
@@ -62,102 +59,104 @@ NAME="AEN13"
 ><B
 CLASS="COMMAND"
 >dnssec-signzone</B
->  [<VAR
+>  [<TT
 CLASS="OPTION"
->-a</VAR
->] [<VAR
+>-a</TT
+>] [<TT
 CLASS="OPTION"
->-c <VAR
+>-c <TT
 CLASS="REPLACEABLE"
->class</VAR
-></VAR
->] [<VAR
+><I
+>class</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-d <VAR
+>-d <TT
 CLASS="REPLACEABLE"
->directory</VAR
-></VAR
->] [<VAR
+><I
+>directory</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-e <VAR
+>-s <TT
 CLASS="REPLACEABLE"
->end-time</VAR
-></VAR
->] [<VAR
+><I
+>start-time</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-f <VAR
+>-e <TT
 CLASS="REPLACEABLE"
->output-file</VAR
-></VAR
->] [<VAR
+><I
+>end-time</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-g</VAR
->] [<VAR
-CLASS="OPTION"
->-h</VAR
->] [<VAR
-CLASS="OPTION"
->-k <VAR
+>-f <TT
 CLASS="REPLACEABLE"
->key</VAR
-></VAR
->] [<VAR
+><I
+>output-file</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-l <VAR
+>-h</TT
+>] [<TT
+CLASS="OPTION"
+>-i <TT
 CLASS="REPLACEABLE"
->domain</VAR
-></VAR
->] [<VAR
+><I
+>interval</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-i <VAR
+>-n <TT
 CLASS="REPLACEABLE"
->interval</VAR
-></VAR
->] [<VAR
+><I
+>nthreads</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-n <VAR
+>-o <TT
 CLASS="REPLACEABLE"
->nthreads</VAR
-></VAR
->] [<VAR
+><I
+>origin</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-o <VAR
+>-p</TT
+>] [<TT
+CLASS="OPTION"
+>-r <TT
 CLASS="REPLACEABLE"
->origin</VAR
-></VAR
->] [<VAR
+><I
+>randomdev</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-p</VAR
->] [<VAR
+>-t</TT
+>] [<TT
 CLASS="OPTION"
->-r <VAR
+>-v <TT
 CLASS="REPLACEABLE"
->randomdev</VAR
-></VAR
->] [<VAR
-CLASS="OPTION"
->-s <VAR
-CLASS="REPLACEABLE"
->start-time</VAR
-></VAR
->] [<VAR
-CLASS="OPTION"
->-t</VAR
->] [<VAR
-CLASS="OPTION"
->-v <VAR
-CLASS="REPLACEABLE"
->level</VAR
-></VAR
->] [<VAR
-CLASS="OPTION"
->-z</VAR
+><I
+>level</I
+></TT
+></TT
 >] {zonefile} [key...]</P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN66"
+NAME="AEN56"
 ></A
 ><H2
 >DESCRIPTION</H2
@@ -165,21 +164,26 @@ NAME="AEN66"
 >        <B
 CLASS="COMMAND"
 >dnssec-signzone</B
-> signs a zone.  It generates
-	NSEC and RRSIG records and produces a signed version of the
-	zone. The security status of delegations from the signed zone
-	(that is, whether the child zones are secure or not) is
-	determined by the presence or absence of a
+> signs a zone.  It generates NXT
+	and SIG records and produces a signed version of the zone.  If there
+	is a <TT
+CLASS="FILENAME"
+>signedkey</TT
+> file from the zone's parent,
+	the parent's signatures will be incorporated into the generated
+	signed zone file.  The security status of delegations from the the
+        signed zone (that is, whether the child zones are secure or not) is
+        determined by the presence or absence of a
 	<TT
 CLASS="FILENAME"
->keyset</TT
+>signedkey</TT
 > file for each child zone.
     </P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN71"
+NAME="AEN62"
 ></A
 ><H2
 >OPTIONS</H2
@@ -196,9 +200,11 @@ CLASS="VARIABLELIST"
 	  </P
 ></DD
 ><DT
->-c <VAR
+>-c <TT
 CLASS="REPLACEABLE"
->class</VAR
+><I
+>class</I
+></TT
 ></DT
 ><DD
 ><P
@@ -206,98 +212,76 @@ CLASS="REPLACEABLE"
 	  </P
 ></DD
 ><DT
->-k <VAR
+>-d <TT
 CLASS="REPLACEABLE"
->key</VAR
-></DT
-><DD
-><P
->	       Treat specified key as a key signing key ignoring any
-	       key flags.  This option may be specified multiple times.
-	  </P
-></DD
-><DT
->-l <VAR
-CLASS="REPLACEABLE"
->domain</VAR
-></DT
-><DD
-><P
->		Generate a DLV set in addition to the key (DNSKEY) and DS sets.
-		The domain is appended to the name of the records.
-	  </P
-></DD
-><DT
->-d <VAR
-CLASS="REPLACEABLE"
->directory</VAR
+><I
+>directory</I
+></TT
 ></DT
 ><DD
 ><P
 >	       Look for <TT
 CLASS="FILENAME"
->keyset</TT
+>signedkey</TT
 > files in
-	       <VAR
+	       <TT
 CLASS="OPTION"
->directory</VAR
+>directory</TT
 > as the directory 
 	  </P
 ></DD
 ><DT
->-g</DT
-><DD
-><P
->		Generate DS records for child zones from keyset files.
-		Existing DS records will be removed.
-	  </P
-></DD
-><DT
->-s <VAR
+>-s <TT
 CLASS="REPLACEABLE"
->start-time</VAR
+><I
+>start-time</I
+></TT
 ></DT
 ><DD
 ><P
->	       Specify the date and time when the generated RRSIG records
+>	       Specify the date and time when the generated SIG records
 	       become valid.  This can be either an absolute or relative
 	       time.  An absolute start time is indicated by a number
 	       in YYYYMMDDHHMMSS notation; 20000530144500 denotes
 	       14:45:00 UTC on May 30th, 2000.  A relative start time is
 	       indicated by +N, which is N seconds from the current time.
-	       If no <VAR
+	       If no <TT
 CLASS="OPTION"
->start-time</VAR
+>start-time</TT
 > is specified, the current
-	       time minus 1 hour (to allow for clock skew) is used.
+	       time is used.
 	  </P
 ></DD
 ><DT
->-e <VAR
+>-e <TT
 CLASS="REPLACEABLE"
->end-time</VAR
+><I
+>end-time</I
+></TT
 ></DT
 ><DD
 ><P
->	       Specify the date and time when the generated RRSIG records
-	       expire.  As with <VAR
+>	       Specify the date and time when the generated SIG records
+	       expire.  As with <TT
 CLASS="OPTION"
->start-time</VAR
+>start-time</TT
 >, an absolute
 	       time is indicated in YYYYMMDDHHMMSS notation.  A time relative
 	       to the start time is indicated with +N, which is N seconds from
 	       the start time.  A time relative to the current time is
-	       indicated with now+N.  If no <VAR
+	       indicated with now+N.  If no <TT
 CLASS="OPTION"
->end-time</VAR
+>end-time</TT
 > is
 	       specified, 30 days from the start time is used as a default.
 	  </P
 ></DD
 ><DT
->-f <VAR
+>-f <TT
 CLASS="REPLACEABLE"
->output-file</VAR
+><I
+>output-file</I
+></TT
 ></DT
 ><DD
 ><P
@@ -321,46 +305,50 @@ CLASS="COMMAND"
 	  </P
 ></DD
 ><DT
->-i <VAR
+>-i <TT
 CLASS="REPLACEABLE"
->interval</VAR
+><I
+>interval</I
+></TT
 ></DT
 ><DD
 ><P
 >	       When a previously signed zone is passed as input, records
-	       may be resigned.  The <VAR
+	       may be resigned.  The <TT
 CLASS="OPTION"
->interval</VAR
+>interval</TT
 > option
 	       specifies the cycle interval as an offset from the current
-	       time (in seconds).  If a RRSIG record expires after the
+	       time (in seconds).  If a SIG record expires after the
 	       cycle interval, it is retained.  Otherwise, it is considered
 	       to be expiring soon, and it will be replaced.
 	  </P
 ><P
 >	       The default cycle interval is one quarter of the difference
 	       between the signature end and start times.  So if neither
-	       <VAR
+	       <TT
 CLASS="OPTION"
->end-time</VAR
-> or <VAR
+>end-time</TT
+> or <TT
 CLASS="OPTION"
->start-time</VAR
+>start-time</TT
 >
 	       are specified, <B
 CLASS="COMMAND"
 >dnssec-signzone</B
 > generates
 	       signatures that are valid for 30 days, with a cycle
-	       interval of 7.5 days.  Therefore, if any existing RRSIG records
+	       interval of 7.5 days.  Therefore, if any existing SIG records
 	       are due to expire in less than 7.5 days, they would be
 	       replaced.
 	  </P
 ></DD
 ><DT
->-n <VAR
+>-n <TT
 CLASS="REPLACEABLE"
->ncpus</VAR
+><I
+>ncpus</I
+></TT
 ></DT
 ><DD
 ><P
@@ -369,9 +357,11 @@ CLASS="REPLACEABLE"
 	  </P
 ></DD
 ><DT
->-o <VAR
+>-o <TT
 CLASS="REPLACEABLE"
->origin</VAR
+><I
+>origin</I
+></TT
 ></DT
 ><DD
 ><P
@@ -390,9 +380,11 @@ CLASS="REPLACEABLE"
 	  </P
 ></DD
 ><DT
->-r <VAR
+>-r <TT
 CLASS="REPLACEABLE"
->randomdev</VAR
+><I
+>randomdev</I
+></TT
 ></DT
 ><DD
 ><P
@@ -423,20 +415,15 @@ CLASS="FILENAME"
 	  </P
 ></DD
 ><DT
->-v <VAR
+>-v <TT
 CLASS="REPLACEABLE"
->level</VAR
+><I
+>level</I
+></TT
 ></DT
 ><DD
 ><P
 >	       Sets the debugging level.
-	  </P
-></DD
-><DT
->-z</DT
-><DD
-><P
->	       Ignore KSK flag on key when determining what to sign.
 	  </P
 ></DD
 ><DT
@@ -462,14 +449,16 @@ CLASS="REPLACEABLE"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN181"
+NAME="AEN154"
 ></A
 ><H2
 >EXAMPLE</H2
 ><P
->        The following command signs the <KBD
+>        The following command signs the <TT
 CLASS="USERINPUT"
->example.com</KBD
+><B
+>example.com</B
+></TT
 >
 	zone with the DSA key generated in the <B
 CLASS="COMMAND"
@@ -478,19 +467,23 @@ CLASS="COMMAND"
 	man page.  The zone's keys must be in the zone.  If there are
 	<TT
 CLASS="FILENAME"
->keyset</TT
-> files associated with child zones,
-	they must be in the current directory.
-	<KBD
+>signedkey</TT
+> files associated with this zone
+	or any child zones, they must be in the current directory.
+	<TT
 CLASS="USERINPUT"
->example.com</KBD
+><B
+>example.com</B
+></TT
 >, the following command would be
 	issued:
     </P
 ><P
->        <KBD
+>        <TT
 CLASS="USERINPUT"
->dnssec-signzone -o example.com db.example.com Kexample.com.+003+26160</KBD
+><B
+>dnssec-signzone -o example.com db.example.com Kexample.com.+003+26160</B
+></TT
 >
     </P
 ><P
@@ -515,7 +508,7 @@ CLASS="FILENAME"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN195"
+NAME="AEN168"
 ></A
 ><H2
 >SEE ALSO</H2
@@ -525,6 +518,13 @@ CLASS="CITEREFENTRY"
 ><SPAN
 CLASS="REFENTRYTITLE"
 >dnssec-keygen</SPAN
+>(8)</SPAN
+>,
+      <SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>dnssec-signkey</SPAN
 >(8)</SPAN
 >,
       <I
@@ -540,12 +540,12 @@ CLASS="CITETITLE"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN203"
+NAME="AEN179"
 ></A
 ><H2
 >AUTHOR</H2
 ><P
->        Internet Systems Consortium
+>        Internet Software Consortium
     </P
 ></DIV
 ></BODY

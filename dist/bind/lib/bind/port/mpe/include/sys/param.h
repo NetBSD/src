@@ -1,6 +1,6 @@
-/*	$NetBSD: param.h,v 1.1.1.1 2004/05/17 23:44:46 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.1.1.2 2005/12/21 19:57:31 christos Exp $	*/
 
 /* Omitted from MPE. */
 
 #define MAXHOSTNAMELEN	64
-#define MAXPATHLEN	1024
+#define MAXPATHLEN	255

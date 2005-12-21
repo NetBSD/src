@@ -1,25 +1,25 @@
-/*	$NetBSD: lwinetntop.c,v 1.1.1.2 2004/11/06 23:56:00 christos Exp $	*/
+/*	$NetBSD: lwinetntop.c,v 1.1.1.3 2005/12/21 19:59:28 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1996-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"Id: lwinetntop.c,v 1.9.12.3 2004/08/28 06:25:24 marka Exp";
+	"Id: lwinetntop.c,v 1.9 2001/08/08 22:54:54 gson Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -29,7 +29,6 @@ static char rcsid[] =
 #include <string.h>
 
 #include <lwres/net.h>
-#include "print_p.h"
 
 #define NS_INT16SZ	 2
 #define NS_IN6ADDRSZ	16
@@ -85,11 +84,10 @@ lwres_net_ntop(int af, const void *src, char *dst, size_t size) {
 static const char *
 inet_ntop4(const unsigned char *src, char *dst, size_t size) {
 	static const char fmt[] = "%u.%u.%u.%u";
-	char tmp[sizeof("255.255.255.255")];
-	size_t len;
+	char tmp[sizeof "255.255.255.255"];
 
-	len = snprintf(tmp, sizeof(tmp), fmt, src[0], src[1], src[2], src[3]);
-	if (len >= size) {
+	if ((size_t)sprintf(tmp, fmt, src[0], src[1], src[2], src[3]) >= size)
+	{
 		errno = ENOSPC;
 		return (NULL);
 	}
@@ -114,7 +112,7 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size) {
 	 * Keep this in mind if you think this function should have been coded
 	 * to use pointer overlays.  All the world's not a VAX.
 	 */
-	char tmp[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")], *tp;
+	char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"], *tp;
 	struct { int base, len; } best, cur;
 	unsigned int words[NS_IN6ADDRSZ / NS_INT16SZ];
 	int i;
@@ -124,7 +122,7 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size) {
 	 *	Copy the input (bytewise) array into a wordwise array.
 	 *	Find the longest run of 0x00's in src[] for :: shorthanding.
 	 */
-	memset(words, '\0', sizeof(words));
+	memset(words, '\0', sizeof words);
 	for (i = 0; i < NS_IN6ADDRSZ; i++)
 		words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;
@@ -169,12 +167,12 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size) {
 		if (i == 6 && best.base == 0 &&
 		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
 			if (!inet_ntop4(src+12, tp,
-					sizeof(tmp) - (tp - tmp)))
+					sizeof tmp - (tp - tmp)))
 				return (NULL);
 			tp += strlen(tp);
 			break;
 		}
-		tp += sprintf(tp, "%x", words[i]); /* XXX */
+		tp += sprintf(tp, "%x", words[i]);
 	}
 	/* Was it a trailing run of 0x00's? */
 	if (best.base != -1 && (best.base + best.len) ==

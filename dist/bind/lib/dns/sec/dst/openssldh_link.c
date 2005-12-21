@@ -1,26 +1,27 @@
-/*	$NetBSD: openssldh_link.c,v 1.1.1.1 2004/05/17 23:45:01 christos Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.1.1.2 2005/12/21 19:58:31 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (C) 1999-2002  Internet Software Consortium.
+ * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
- * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM AND
+ * NETWORK ASSOCIATES DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
+ * SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE CONSORTIUM OR NETWORK
+ * ASSOCIATES BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
+ * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+ * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
  * Principal Author: Brian Wellington
- * Id: openssldh_link.c,v 1.38.2.2.8.7 2004/03/16 05:50:23 marka Exp
+ * Id: openssldh_link.c,v 1.38.2.2 2001/12/19 01:29:34 marka Exp
  */
 
 #ifdef OPENSSL
@@ -36,7 +37,6 @@
 #include <dst/result.h>
 
 #include "dst_internal.h"
-#include "dst_openssl.h"
 #include "dst_parse.h"
 
 #include <openssl/dh.h>
@@ -50,19 +50,9 @@
 	"5F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406" \
 	"B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF"
 
-#define PRIME1536 "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1" \
-	"29024E088A67CC74020BBEA63B139B22514A08798E3404DD" \
-	"EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245" \
-	"E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED" \
-	"EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3D" \
-	"C2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F" \
-	"83655D23DCA3AD961C62F356208552BB9ED529077096966D" \
-	"670C354E4ABC9804F1746C08CA237327FFFFFFFFFFFFFFFF"
-
-
 static isc_result_t openssldh_todns(const dst_key_t *key, isc_buffer_t *data);
 
-static BIGNUM bn2, bn768, bn1024, bn1536;
+static BIGNUM bn2, bn768, bn1024;
 
 static isc_result_t
 openssldh_computesecret(const dst_key_t *pub, const dst_key_t *priv,
@@ -85,7 +75,7 @@ openssldh_computesecret(const dst_key_t *pub, const dst_key_t *priv,
 		return (ISC_R_NOSPACE);
 	ret = DH_compute_key(r.base, dhpub->pub_key, dhpriv);
 	if (ret == 0)
-		return (dst__openssl_toresult(DST_R_COMPUTESECRETFAILURE));
+		return (DST_R_COMPUTESECRETFAILURE);
 	isc_buffer_add(secret, len);
 	return (ISC_R_SUCCESS);
 }
@@ -145,19 +135,14 @@ openssldh_generate(dst_key_t *key, int generator) {
 	DH *dh = NULL;
 
 	if (generator == 0) {
-		if (key->key_size == 768 ||
-		    key->key_size == 1024 ||
-		    key->key_size == 1536)
-		{
+		if (key->key_size == 768 || key->key_size == 1024) {
 			dh = DH_new();
 			if (dh == NULL)
 				return (ISC_R_NOMEMORY);
 			if (key->key_size == 768)
 				dh->p = &bn768;
-			else if (key->key_size == 1024)
-				dh->p = &bn1024;
 			else
-				dh->p = &bn1536;
+				dh->p = &bn1024;
 			dh->g = &bn2;
 		}
 		else
@@ -169,11 +154,11 @@ openssldh_generate(dst_key_t *key, int generator) {
 					    NULL, NULL);
 
 	if (dh == NULL)
-		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
+		return (DST_R_OPENSSLFAILURE);
 
 	if (DH_generate_key(dh) == 0) {
 		DH_free(dh);
-		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
+		return (DST_R_OPENSSLFAILURE);
 	}
 	dh->flags &= ~DH_FLAG_CACHE_MONT_P;
 
@@ -188,6 +173,11 @@ openssldh_isprivate(const dst_key_t *key) {
 	return (ISC_TF(dh != NULL && dh->priv_key != NULL));
 }
 
+static isc_boolean_t
+openssldh_issymmetric(void) {
+        return (ISC_FALSE);
+}
+
 static void
 openssldh_destroy(dst_key_t *key) {
 	DH *dh = key->opaque;
@@ -195,7 +185,7 @@ openssldh_destroy(dst_key_t *key) {
 	if (dh == NULL)
 		return;
 
-	if (dh->p == &bn768 || dh->p == &bn1024 || dh->p == &bn1536)
+	if (dh->p == &bn768 || dh->p == &bn1024)
 		dh->p = NULL;
 	if (dh->g == &bn2)
 		dh->g = NULL;
@@ -233,8 +223,7 @@ openssldh_todns(const dst_key_t *key, isc_buffer_t *data) {
 
 	isc_buffer_availableregion(data, &r);
 
-	if (dh->g == &bn2 &&
-	    (dh->p == &bn768 || dh->p == &bn1024 || dh->p == &bn1536)) {
+	if (dh->g == &bn2 && (dh->p == &bn768 || dh->p == &bn1024)) {
 		plen = 1;
 		glen = 0;
 	}
@@ -251,10 +240,8 @@ openssldh_todns(const dst_key_t *key, isc_buffer_t *data) {
 	if (plen == 1) {
 		if (dh->p == &bn768)
 			*r.base = 1;
-		else if (dh->p == &bn1024)
-			*r.base = 2;
 		else
-			*r.base = 3;
+			*r.base = 2;
 	}
 	else
 		BN_bn2bin(dh->p, r.base);
@@ -318,9 +305,6 @@ openssldh_fromdns(dst_key_t *key, isc_buffer_t *data) {
 				break;
 			case 2:
 				dh->p = &bn1024;
-				break;
-			case 3:
-				dh->p = &bn1536;
 				break;
 			default:
 				DH_free(dh);
@@ -450,7 +434,7 @@ openssldh_tofile(const dst_key_t *key, const char *directory) {
 }
 
 static isc_result_t
-openssldh_parse(dst_key_t *key, isc_lex_t *lexer) {
+openssldh_fromfile(dst_key_t *key, const char *filename) {
 	dst_private_t priv;
 	isc_result_t ret;
 	int i;
@@ -461,7 +445,7 @@ openssldh_parse(dst_key_t *key, isc_lex_t *lexer) {
 	mctx = key->mctx;
 
 	/* read private key file */
-	ret = dst__privstruct_parse(key, DST_ALG_DH, lexer, mctx, &priv);
+	ret = dst__privstruct_parsefile(key, filename, mctx, &priv);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 
@@ -497,9 +481,7 @@ openssldh_parse(dst_key_t *key, isc_lex_t *lexer) {
 
 	key->key_size = BN_num_bits(dh->p);
 
-	if ((key->key_size == 768 ||
-	     key->key_size == 1024 ||
-	     key->key_size == 1536) &&
+	if ((key->key_size == 768 || key->key_size == 1024) &&
 	    BN_cmp(dh->g, &bn2) == 0)
 	{
 		if (key->key_size == 768 && BN_cmp(dh->p, &bn768) == 0) {
@@ -512,12 +494,6 @@ openssldh_parse(dst_key_t *key, isc_lex_t *lexer) {
 			BN_free(dh->p);
 			BN_free(dh->g);
 			dh->p = &bn1024;
-			dh->g = &bn2;
-		} else if (key->key_size == 1536 &&
-			   BN_cmp(dh->p, &bn1536) == 0) {
-			BN_free(dh->p);
-			BN_free(dh->g);
-			dh->p = &bn1536;
 			dh->g = &bn2;
 		}
 	}
@@ -538,7 +514,7 @@ BN_fromhex(BIGNUM *b, const char *str) {
 	unsigned int i;
 	BIGNUM *out;
 
-	RUNTIME_CHECK(strlen(str) < 1024U && strlen(str) % 2 == 0U);
+	RUNTIME_CHECK(strlen(str) < 1024 && strlen(str) % 2 == 0);
 	for (i = 0; i < strlen(str); i += 2) {
 		char *s;
 		unsigned int high, low;
@@ -557,14 +533,6 @@ BN_fromhex(BIGNUM *b, const char *str) {
 	RUNTIME_CHECK(out != NULL);
 }
 
-static void
-openssldh_cleanup(void) {
-	BN_free(&bn2);
-	BN_free(&bn768);
-	BN_free(&bn1024);
-	BN_free(&bn1536);
-}
-
 static dst_func_t openssldh_functions = {
 	NULL, /* createctx */
 	NULL, /* destroyctx */
@@ -576,35 +544,32 @@ static dst_func_t openssldh_functions = {
 	openssldh_paramcompare,
 	openssldh_generate,
 	openssldh_isprivate,
+	openssldh_issymmetric,
 	openssldh_destroy,
 	openssldh_todns,
 	openssldh_fromdns,
 	openssldh_tofile,
-	openssldh_parse,
-	openssldh_cleanup,
+	openssldh_fromfile,
 };
 
 isc_result_t
 dst__openssldh_init(dst_func_t **funcp) {
-	REQUIRE(funcp != NULL);
-	if (*funcp == NULL) {
-		BN_init(&bn2);
-		BN_init(&bn768);
-		BN_init(&bn1024);
-		BN_init(&bn1536);
-		BN_set_word(&bn2, 2);
-		BN_fromhex(&bn768, PRIME768);
-		BN_fromhex(&bn1024, PRIME1024);
-		BN_fromhex(&bn1536, PRIME1536);
-		*funcp = &openssldh_functions;
-	}
+	REQUIRE(funcp != NULL && *funcp == NULL);
+	BN_init(&bn2);
+	BN_init(&bn768);
+	BN_init(&bn1024);
+	BN_set_word(&bn2, 2);
+	BN_fromhex(&bn768, PRIME768);
+	BN_fromhex(&bn1024, PRIME1024);
+	*funcp = &openssldh_functions;
 	return (ISC_R_SUCCESS);
 }
 
-#else /* OPENSSL */
-
-#include <isc/util.h>
-
-EMPTY_TRANSLATION_UNIT
+void
+dst__openssldh_destroy(void) {
+	BN_free(&bn2);
+	BN_free(&bn768);
+	BN_free(&bn1024);
+}
 
 #endif /* OPENSSL */

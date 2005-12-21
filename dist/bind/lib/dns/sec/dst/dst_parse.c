@@ -1,26 +1,27 @@
-/*	$NetBSD: dst_parse.c,v 1.1.1.1 2004/05/17 23:45:00 christos Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.1.1.2 2005/12/21 19:58:30 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (C) 1999-2002  Internet Software Consortium.
+ * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
- * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM AND
+ * NETWORK ASSOCIATES DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
+ * SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE CONSORTIUM OR NETWORK
+ * ASSOCIATES BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
+ * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+ * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
  * Principal Author: Brian Wellington
- * Id: dst_parse.c,v 1.31.2.1.10.10 2004/03/16 05:50:22 marka Exp
+ * Id: dst_parse.c,v 1.31.2.1 2001/09/15 00:37:18 gson Exp
  */
 
 #include <config.h>
@@ -37,10 +38,13 @@
 #include "dst_parse.h"
 #include "dst/result.h"
 
-#define DST_AS_STR(t) ((t).value.as_textregion.base)
 
 #define PRIVATE_KEY_STR "Private-key-format:"
 #define ALGORITHM_STR "Algorithm:"
+#define RSA_STR "RSA"
+#define DH_STR "DH"
+#define DSA_STR "DSA"
+#define HMACMD5_STR "HMAC_MD5"
 
 struct parse_map {
 	const int value;
@@ -153,19 +157,17 @@ check_hmac_md5(const dst_private_t *priv) {
 
 static int
 check_data(const dst_private_t *priv, const unsigned int alg) {
-	/* XXXVIX this switch statement is too sparse to gen a jump table. */
 	switch (alg) {
-	case DST_ALG_RSAMD5:
-	case DST_ALG_RSASHA1:
-		return (check_rsa(priv));
-	case DST_ALG_DH:
-		return (check_dh(priv));
-	case DST_ALG_DSA:
-		return (check_dsa(priv));
-	case DST_ALG_HMACMD5:
-		return (check_hmac_md5(priv));
-	default:
-		return (DST_R_UNSUPPORTEDALG);
+		case DST_ALG_RSAMD5:
+			return (check_rsa(priv));
+		case DST_ALG_DH:
+			return (check_dh(priv));
+		case DST_ALG_DSA:
+			return (check_dsa(priv));
+		case DST_ALG_HMACMD5:
+			return (check_hmac_md5(priv));
+		default:
+			return (DST_R_UNSUPPORTEDALG);
 	}
 }
 
@@ -185,42 +187,56 @@ dst__privstruct_free(dst_private_t *priv, isc_mem_t *mctx) {
 }
 
 int
-dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
-		      isc_mem_t *mctx, dst_private_t *priv)
+dst__privstruct_parsefile(dst_key_t *key, const char *filename,
+			  isc_mem_t *mctx, dst_private_t *priv)
 {
 	int n = 0, major, minor;
 	isc_buffer_t b;
+	isc_lex_t *lex = NULL;
 	isc_token_t token;
-	unsigned char *data = NULL;
 	unsigned int opt = ISC_LEXOPT_EOL;
+	char *newfilename;
+	int newfilenamelen;
 	isc_result_t ret;
 
 	REQUIRE(priv != NULL);
 
+	newfilenamelen = strlen(filename) + 9;
+	newfilename = isc_mem_get(mctx, newfilenamelen);
+	if (newfilename == NULL)
+		return (ISC_R_NOMEMORY);
+	ret = dst__file_addsuffix(newfilename, newfilenamelen, filename,
+				  ".private");
+	INSIST(ret == ISC_R_SUCCESS);
+
 	priv->nelements = 0;
 
-#define NEXTTOKEN(lex, opt, token)				\
-	do {							\
-		ret = isc_lex_gettoken(lex, opt, token);	\
-		if (ret != ISC_R_SUCCESS)			\
-			goto fail;				\
-	} while (0)
+	ret = isc_lex_create(mctx, 1024, &lex);
+	if (ret != ISC_R_SUCCESS)
+		return (ret);
 
-#define READLINE(lex, opt, token)				\
-	do {							\
-		ret = isc_lex_gettoken(lex, opt, token);	\
-		if (ret == ISC_R_EOF)				\
-			break;					\
-		else if (ret != ISC_R_SUCCESS)			\
-			goto fail;				\
-	} while ((*token).type != isc_tokentype_eol)
+	ret = isc_lex_openfile(lex, newfilename);
+	if (ret != ISC_R_SUCCESS)
+		goto fail;
+
+#define NEXTTOKEN(lex, opt, token) \
+	{ \
+		ret = isc_lex_gettoken(lex, opt, token); \
+		if (ret != ISC_R_SUCCESS) \
+			goto fail; \
+	}
+
+#define READLINE(lex, opt, token) \
+	do { \
+		NEXTTOKEN(lex, opt, token) \
+	} while ((*token).type != isc_tokentype_eol) \
 
 	/*
 	 * Read the description line.
 	 */
 	NEXTTOKEN(lex, opt, &token);
 	if (token.type != isc_tokentype_string ||
-	    strcmp(DST_AS_STR(token), PRIVATE_KEY_STR) != 0)
+	    strcmp(token.value.as_pointer, PRIVATE_KEY_STR) != 0)
 	{
 		ret = DST_R_INVALIDPRIVATEKEY;
 		goto fail;
@@ -228,12 +244,12 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 
 	NEXTTOKEN(lex, opt, &token);
 	if (token.type != isc_tokentype_string ||
-	    (DST_AS_STR(token))[0] != 'v')
+	    ((char *)token.value.as_pointer)[0] != 'v')
 	{
 		ret = DST_R_INVALIDPRIVATEKEY;
 		goto fail;
 	}
-	if (sscanf(DST_AS_STR(token), "v%d.%d", &major, &minor) != 2)
+	if (sscanf(token.value.as_pointer, "v%d.%d", &major, &minor) != 2)
 	{
 		ret = DST_R_INVALIDPRIVATEKEY;
 		goto fail;
@@ -253,7 +269,7 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 	 */
 	NEXTTOKEN(lex, opt, &token);
 	if (token.type != isc_tokentype_string ||
-	    strcmp(DST_AS_STR(token), ALGORITHM_STR) != 0)
+	    strcmp(token.value.as_pointer, ALGORITHM_STR) != 0)
 	{
 		ret = DST_R_INVALIDPRIVATEKEY;
 		goto fail;
@@ -274,6 +290,7 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 	 */
 	for (n = 0; n < MAXFIELDS; n++) {
 		int tag;
+		unsigned char *data;
 		isc_region_t r;
 
 		do {
@@ -290,8 +307,8 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		}
 
 		memset(&priv->elements[n], 0, sizeof(dst_private_element_t));
-		tag = find_value(DST_AS_STR(token), alg);
-		if (tag < 0 || TAG_ALG(tag) != alg) {
+		tag = find_value(token.value.as_pointer, dst_key_alg(key));
+		if (tag < 0 || TAG_ALG(tag) != dst_key_alg(key)) {
 			ret = DST_R_INVALIDPRIVATEKEY;
 			goto fail;
 		}
@@ -310,22 +327,28 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		priv->elements[n].data = r.base;
 
 		READLINE(lex, opt, &token);
-		data = NULL;
 	}
  done:
 	priv->nelements = n;
 
-	if (check_data(priv, alg) < 0)
+	if (check_data(priv, dst_key_alg(key)) < 0)
 		goto fail;
+
+	isc_lex_close(lex);
+	isc_lex_destroy(&lex);
+	isc_mem_put(mctx, newfilename, newfilenamelen);
 
 	return (ISC_R_SUCCESS);
 
 fail:
+	if (lex != NULL) {
+		isc_lex_close(lex);
+		isc_lex_destroy(&lex);
+	}
+	isc_mem_put(mctx, newfilename, newfilenamelen);
+
 	priv->nelements = n;
 	dst__privstruct_free(priv, mctx);
-	if (data != NULL)
-		isc_mem_put(mctx, data, MAXFIELDSIZE);
-
 	return (ret);
 }
 
@@ -365,26 +388,12 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 		MINOR_VERSION);
 
 	fprintf(fp, "%s %d ", ALGORITHM_STR, dst_key_alg(key));
-	/* XXXVIX this switch statement is too sparse to gen a jump table. */
 	switch (dst_key_alg(key)) {
-	case DST_ALG_RSAMD5:
-		fprintf(fp, "(RSA)\n");
-		break;
-	case DST_ALG_DH:
-		fprintf(fp, "(DH)\n");
-		break;
-	case DST_ALG_DSA:
-		fprintf(fp, "(DSA)\n");
-		break;
-	case DST_ALG_RSASHA1:
-		fprintf(fp, "(RSASHA1)\n");
-		break;
-	case DST_ALG_HMACMD5:
-		fprintf(fp, "(HMAC_MD5)\n");
-		break;
-	default:
-		fprintf(fp, "(?)\n");
-		break;
+		case DST_ALG_RSAMD5: fprintf(fp, "(RSA)\n"); break;
+		case DST_ALG_DH: fprintf(fp, "(DH)\n"); break;
+		case DST_ALG_DSA: fprintf(fp, "(DSA)\n"); break;
+		case DST_ALG_HMACMD5: fprintf(fp, "(HMAC_MD5)\n"); break;
+		default : fprintf(fp, "(?)\n"); break;
 	}
 
 	for (i = 0; i < priv->nelements; i++) {
