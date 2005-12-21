@@ -1,21 +1,21 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-# PERFORMANCE OF THIS SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# Id: makeversion.pl,v 1.4.12.3 2004/03/08 09:05:15 marka Exp 
+# Id: makeversion.pl,v 1.4 2001/07/27 17:25:23 gson Exp 
 
 # This script takes the version information from the version file located
 # at the root of the source tree and the api files in each library directory
@@ -24,14 +24,12 @@
 # This program was written by PDM. danny.mayer@nominum.com 1-Jul-2001.
 
 # List of directories with version files
-@dirlist = ("isc","dns","isccc","isccfg","lwres","bind9");
+@dirlist = ("isc","dns","isccc","isccfg","lwres");
 $LibMacros{"isc"} = "LIBISC_EXPORTS";
 $LibMacros{"dns"} = "LIBDNS_EXPORTS";
 $LibMacros{"isccc"} = "LIBISCCC_EXPORTS";
 $LibMacros{"isccfg"} = "LIBISCCFG_EXPORTS";
 $LibMacros{"lwres"} = "LIBLWRES_EXPORTS";
-$LibMacros{"bind9"} = "LIBBIND9_EXPORTS";
-
 
 @VersionNames = ("LIBINTERFACE", "LIBREVISION", "LIBAGE");
 $versionfile = "versions.h";

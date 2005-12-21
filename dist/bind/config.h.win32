@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.win32,v 1.6.12.5 2004/04/29 05:12:04 marka Exp */
+/* Id: config.h.win32,v 1.6 2001/07/26 03:15:03 mayer Exp */
 
 /*
  * win32 configuration file
@@ -104,10 +104,6 @@
 /* Define if you have h_errno */
 #define HAVE_H_ERRNO
 
-#define ISC_PLATFORM_NEEDSTRLCAT
-
-#define ISC_PLATFORM_NEEDSTRLCPY
-
 #define S_IFMT   _S_IFMT         /* file type mask */
 #define S_IFDIR  _S_IFDIR        /* directory */
 #define S_IFCHR  _S_IFCHR        /* character special */
@@ -191,13 +187,21 @@ typedef long off_t;
 #include <isc/ntpaths.h>
 #endif
 
+/*
+ * Outside of lib isc we need to redefine these functions
+ * This is due to the way _iob is set up
+ */
+#if !defined(LIBISC_EXPORTS) && !defined(LIBLWRES_EXPORTS)
+
+#include <isc/ntfile.h>
+
+#else
 #define fdopen	_fdopen
 #define read	_read
 #define open	_open
 #define close	_close
 #define write	_write
-#include <io.h>
-#define isatty	_isatty
+#endif
 
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */

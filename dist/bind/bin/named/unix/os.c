@@ -1,28 +1,28 @@
-/*	$NetBSD: os.c,v 1.1.1.2 2004/11/06 23:53:37 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.3 2005/12/21 19:51:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.46.2.4.8.16 2004/05/04 03:19:42 marka Exp */
+/* Id: os.c,v 1.46.2.4 2002/08/05 06:57:03 marka Exp */
 
 #include <config.h>
 #include <stdarg.h>
 
-#include <sys/types.h>	/* dev_t FreeBSD 2.1 */
+#include <sys/types.h>  /* dev_t FreeBSD 2.1 */
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -32,14 +32,9 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <syslog.h>
-#ifdef HAVE_TZSET
-#include <time.h>
-#endif
 #include <unistd.h>
 
-#include <isc/buffer.h>
 #include <isc/file.h>
 #include <isc/print.h>
 #include <isc/result.h>
@@ -50,11 +45,6 @@
 #include <named/os.h>
 
 static char *pidfile = NULL;
-static int devnullfd = -1;
-
-#ifndef ISC_FACILITY
-#define ISC_FACILITY LOG_DAEMON
-#endif
 
 /*
  * If there's no <linux/capability.h>, we don't care about <sys/prctl.h>
@@ -154,10 +144,10 @@ linux_setcaps(unsigned int caps) {
 	if ((getuid() != 0 && !non_root_caps) || non_root)
 		return;
 
-	memset(&caphead, 0, sizeof(caphead));
+	memset(&caphead, 0, sizeof caphead);
 	caphead.version = _LINUX_CAPABILITY_VERSION;
 	caphead.pid = 0;
-	memset(&cap, 0, sizeof(cap));
+	memset(&cap, 0, sizeof cap);
 	cap.effective = caps;
 	cap.permitted = caps;
 	cap.inheritable = caps;
@@ -282,7 +272,8 @@ setup_syslog(const char *progname) {
 #ifdef LOG_NDELAY
 	options |= LOG_NDELAY;
 #endif
-	openlog(isc_file_basename(progname), options, ISC_FACILITY);
+
+	openlog(isc_file_basename(progname), options, LOG_DAEMON);
 }
 
 void
@@ -294,14 +285,12 @@ ns_os_init(const char *progname) {
 #ifdef HAVE_LINUXTHREADS
 	mainpid = getpid();
 #endif
-#ifdef SIGXFSZ
-	signal(SIGXFSZ, SIG_IGN);
-#endif
 }
 
 void
 ns_os_daemonize(void) {
 	pid_t pid;
+	int fd;
 	char strbuf[ISC_STRERRORSIZE];
 
 	pid = fork();
@@ -335,34 +324,18 @@ ns_os_daemonize(void) {
 	 * and will end up closing the wrong FD.  This will be fixed eventually,
 	 * and these calls will be removed.
 	 */
-	if (devnullfd != -1) {
-		if (devnullfd != STDIN_FILENO) {
-			(void)close(STDIN_FILENO);
-			(void)dup2(devnullfd, STDIN_FILENO);
-		}
-		if (devnullfd != STDOUT_FILENO) {
-			(void)close(STDOUT_FILENO);
-			(void)dup2(devnullfd, STDOUT_FILENO);
-		}
-		if (devnullfd != STDERR_FILENO) {
-			(void)close(STDERR_FILENO);
-			(void)dup2(devnullfd, STDERR_FILENO);
-		}
-	}
-}
-
-void
-ns_os_opendevnull(void) {
-	devnullfd = open("/dev/null", O_RDWR, 0);
-}
-
-void
-ns_os_closedevnull(void) {
-	if (devnullfd != STDIN_FILENO &&
-	    devnullfd != STDOUT_FILENO &&
-	    devnullfd != STDERR_FILENO) {
-		close(devnullfd);
-		devnullfd = -1;
+	fd = open("/dev/null", O_RDWR, 0);
+	if (fd != -1) {
+		close(STDIN_FILENO);
+		(void)dup2(fd, STDIN_FILENO);
+		close(STDOUT_FILENO);
+		(void)dup2(fd, STDOUT_FILENO);
+		close(STDERR_FILENO);
+		(void)dup2(fd, STDERR_FILENO);
+		if (fd != STDIN_FILENO &&
+		    fd != STDOUT_FILENO &&
+		    fd != STDERR_FILENO)
+			(void)close(fd);
 	}
 }
 
@@ -514,9 +487,6 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
 
 	cleanup_pidfile();
 
-	if (filename == NULL)
-		return;
-
 	len = strlen(filename);
 	pidfile = malloc(len + 1);
 	if (pidfile == NULL) {
@@ -568,65 +538,4 @@ void
 ns_os_shutdown(void) {
 	closelog();
 	cleanup_pidfile();
-}
-
-isc_result_t
-ns_os_gethostname(char *buf, size_t len) {
-	int n;
-
-	n = gethostname(buf, len);
-	return ((n == 0) ? ISC_R_SUCCESS : ISC_R_FAILURE);
-}
-
-static char *
-next_token(char **stringp, const char *delim) {
-	char *res;
-
-	do {
-		res = strsep(stringp, delim);
-		if (res == NULL)
-			break;
-	} while (*res == '\0');
-	return (res);
-}
-
-void
-ns_os_shutdownmsg(char *command, isc_buffer_t *text) {
-	char *input, *ptr;
-	unsigned int n;
-	pid_t pid;
-
-	input = command;
-
-	/* Skip the command name. */
-	ptr = next_token(&input, " \t");
-	if (ptr == NULL)
-		return;
-
-	ptr = next_token(&input, " \t");
-	if (ptr == NULL)
-		return;
-	
-	if (strcmp(ptr, "-p") != 0)
-		return;
-
-#ifdef HAVE_LINUXTHREADS
-	pid = mainpid;
-#else
-	pid = getpid();
-#endif
-
-	n = snprintf((char *)isc_buffer_used(text),
-		     isc_buffer_availablelength(text),
-		     "pid: %ld", (long)pid);
-	/* Only send a message if it is complete. */
-	if (n < isc_buffer_availablelength(text))
-		isc_buffer_add(text, n);
-}
-
-void
-ns_os_tzset(void) {
-#ifdef HAVE_TZSET
-	tzset();
-#endif
 }

@@ -1,23 +1,23 @@
-/*	$NetBSD: dnssectool.c,v 1.1.1.1 2004/05/17 23:43:21 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.1.1.2 2005/12/21 19:50:54 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssectool.c,v 1.31.2.3.2.4 2004/03/08 02:07:38 marka Exp */
+/* Id: dnssectool.c,v 1.31.2.4 2003/10/09 07:32:31 marka Exp */
 
 #include <config.h>
 
@@ -25,8 +25,6 @@
 
 #include <isc/buffer.h>
 #include <isc/entropy.h>
-#include <isc/list.h>
-#include <isc/mem.h>
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
@@ -35,7 +33,6 @@
 #include <dns/log.h>
 #include <dns/name.h>
 #include <dns/rdatastruct.h>
-#include <dns/rdataclass.h>
 #include <dns/rdatatype.h>
 #include <dns/result.h>
 #include <dns/secalg.h>
@@ -46,15 +43,7 @@
 extern int verbose;
 extern const char *program;
 
-typedef struct entropysource entropysource_t;
-
-struct entropysource {
-	isc_entropysource_t *source;
-	isc_mem_t *mctx;
-	ISC_LINK(entropysource_t) link;
-};
-
-static ISC_LIST(entropysource_t) sources;
+static isc_entropysource_t *source = NULL;
 static fatalcallback_t *fatalcallback = NULL;
 
 void
@@ -120,12 +109,12 @@ alg_format(const dns_secalg_t alg, char *cp, unsigned int size) {
 }
 
 void
-sig_format(dns_rdata_rrsig_t *sig, char *cp, unsigned int size) {
+sig_format(dns_rdata_sig_t *sig, char *cp, unsigned int size) {
 	char namestr[DNS_NAME_FORMATSIZE];
 	char algstr[DNS_NAME_FORMATSIZE];
 
-	dns_name_format(&sig->signer, namestr, sizeof(namestr));
-	alg_format(sig->algorithm, algstr, sizeof(algstr));
+	dns_name_format(&sig->signer, namestr, sizeof namestr);
+	alg_format(sig->algorithm, algstr, sizeof algstr);
 	snprintf(cp, size, "%s/%s/%d", namestr, algstr, sig->keyid);
 }
 
@@ -134,8 +123,8 @@ key_format(const dst_key_t *key, char *cp, unsigned int size) {
 	char namestr[DNS_NAME_FORMATSIZE];
 	char algstr[DNS_NAME_FORMATSIZE];
 
-	dns_name_format(dst_key_name(key), namestr, sizeof(namestr));
-	alg_format((dns_secalg_t) dst_key_alg(key), algstr, sizeof(algstr));
+	dns_name_format(dst_key_name(key), namestr, sizeof namestr);
+	alg_format((dns_secalg_t) dst_key_alg(key), algstr, sizeof algstr);
 	snprintf(cp, size, "%s/%s/%d", namestr, algstr, dst_key_id(key));
 }
 
@@ -211,8 +200,6 @@ cleanup_logging(isc_log_t **logp) {
 void
 setup_entropy(isc_mem_t *mctx, const char *randomfile, isc_entropy_t **ectx) {
 	isc_result_t result;
-	isc_entropysource_t *source = NULL;
-	entropysource_t *elt;
 	int usekeyboard = ISC_ENTROPY_KEYBOARDMAYBE;
 
 	REQUIRE(ectx != NULL);
@@ -221,7 +208,6 @@ setup_entropy(isc_mem_t *mctx, const char *randomfile, isc_entropy_t **ectx) {
 		result = isc_entropy_create(mctx, ectx);
 		if (result != ISC_R_SUCCESS)
 			fatal("could not create entropy object");
-		ISC_LIST_INIT(sources);
 	}
 
 	if (randomfile != NULL && strcmp(randomfile, "keyboard") == 0) {
@@ -235,32 +221,17 @@ setup_entropy(isc_mem_t *mctx, const char *randomfile, isc_entropy_t **ectx) {
 	if (result != ISC_R_SUCCESS)
 		fatal("could not initialize entropy source: %s",
 		      isc_result_totext(result));
-
-	if (source != NULL) {
-		elt = isc_mem_get(mctx, sizeof(*elt));
-		if (elt == NULL)
-			fatal("out of memory");
-		elt->source = source;
-		elt->mctx = mctx;
-		ISC_LINK_INIT(elt, link);
-		ISC_LIST_APPEND(sources, elt, link);
-	}
 }
 
 void
 cleanup_entropy(isc_entropy_t **ectx) {
-	entropysource_t *source;
-	while (!ISC_LIST_EMPTY(sources)) {
-		source = ISC_LIST_HEAD(sources);
-		ISC_LIST_UNLINK(sources, source, link);
-		isc_entropy_destroysource(&source->source);
-		isc_mem_put(source->mctx, source, sizeof(*source));
-	}
+	if (source != NULL)
+		isc_entropy_destroysource(&source);
 	isc_entropy_detach(ectx);
 }
 
 isc_stdtime_t
-strtotime(const char *str, isc_int64_t now, isc_int64_t base) {
+strtotime(char *str, isc_int64_t now, isc_int64_t base) {
 	isc_int64_t val, offset;
 	isc_result_t result;
 	char *endp;
@@ -288,20 +259,4 @@ strtotime(const char *str, isc_int64_t now, isc_int64_t base) {
 	}
 
 	return ((isc_stdtime_t) val);
-}
-
-dns_rdataclass_t
-strtoclass(const char *str) {
-	isc_textregion_t r;
-	dns_rdataclass_t rdclass;
-	isc_result_t ret;
-
-	if (str == NULL)
-		return dns_rdataclass_in;
-	DE_CONST(str, r.base);
-	r.length = strlen(str);
-	ret = dns_rdataclass_fromtext(&rdclass, &r);
-	if (ret != ISC_R_SUCCESS)
-		fatal("unknown class %s", str);
-	return (rdclass);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: md5_locl.h,v 1.1.1.1 2004/05/17 23:44:40 christos Exp $	*/
+/*	$NetBSD: md5_locl.h,v 1.1.1.2 2005/12/21 19:57:03 christos Exp $	*/
 
 /* crypto/md/md5_locl.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
@@ -103,9 +103,9 @@
 			switch (sc) \
 				{ \
 			case 0: l =((unsigned long)(*((c)++))); \
-				if (--len == 0U) break; \
+				if (--len == 0) break; \
 			case 1: l|=((unsigned long)(*((c)++)))<< 8; \
-				if (--len == 0U) break; \
+				if (--len == 0) break; \
 			case 2: l|=((unsigned long)(*((c)++)))<<16; \
 				} \
 			}

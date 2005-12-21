@@ -1,30 +1,27 @@
 <!--
- - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- - Copyright (C) 2001  Internet Software Consortium.
- -
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- -
- - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- - PERFORMANCE OF THIS SOFTWARE.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
-
-<!-- Id: lwres_getnameinfo.html,v 1.5.2.1.4.2 2004/08/22 23:39:04 marka Exp -->
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres_getnameinfo</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -35,8 +32,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
-></A
->lwres_getnameinfo</H1
+>lwres_getnameinfo</A
+></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -54,11 +51,11 @@ NAME="AEN11"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
-><P
-></P
 ><A
 NAME="AEN12"
 ></A
+><P
+></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/netdb.h&gt;</PRE
@@ -89,54 +86,70 @@ CLASS="REFENTRYTITLE"
 >getnameinfo</SPAN
 >(3)</SPAN
 > function defined in RFC2133.
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_getnameinfo()</CODE
+>lwres_getnameinfo()</TT
 > returns the hostname for the
 <SPAN
 CLASS="TYPE"
 >struct sockaddr</SPAN
-> <VAR
+> <TT
 CLASS="PARAMETER"
->sa</VAR
+><I
+>sa</I
+></TT
 > which is
-<VAR
+<TT
 CLASS="PARAMETER"
->salen</VAR
+><I
+>salen</I
+></TT
 > bytes long.  The hostname is of length
-<VAR
+<TT
 CLASS="PARAMETER"
->hostlen</VAR
+><I
+>hostlen</I
+></TT
 > and is returned via
-<VAR
+<TT
 CLASS="PARAMETER"
->*host.</VAR
+><I
+>*host.</I
+></TT
 > The maximum length of the hostname is
-1025 bytes: <CODE
+1025 bytes: <TT
 CLASS="CONSTANT"
->NI_MAXHOST</CODE
+>NI_MAXHOST</TT
 >.</P
 ><P
 > The name of the service associated with the port number in
-<VAR
+<TT
 CLASS="PARAMETER"
->sa</VAR
-> is returned in <VAR
+><I
+>sa</I
+></TT
+> is returned in <TT
 CLASS="PARAMETER"
->*serv.</VAR
+><I
+>*serv.</I
+></TT
 >
-It is <VAR
+It is <TT
 CLASS="PARAMETER"
->servlen</VAR
+><I
+>servlen</I
+></TT
 > bytes long.  The maximum length
-of the service name is <CODE
+of the service name is <TT
 CLASS="CONSTANT"
->NI_MAXSERV</CODE
+>NI_MAXSERV</TT
 > - 32 bytes.</P
 ><P
-> The <VAR
+> The <TT
 CLASS="PARAMETER"
->flags</VAR
+><I
+>flags</I
+></TT
 > argument sets the following
 bits:
 <P
@@ -145,9 +158,9 @@ bits:
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->NI_NOFQDN</CODE
+>NI_NOFQDN</TT
 ></DT
 ><DD
 ><P
@@ -155,9 +168,9 @@ CLASS="CONSTANT"
 The local part of the fully qualified domain name is returned instead.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->NI_NUMERICHOST</CODE
+>NI_NUMERICHOST</TT
 ></DT
 ><DD
 ><P
@@ -165,9 +178,9 @@ CLASS="CONSTANT"
 instead of a host name.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->NI_NAMEREQD</CODE
+>NI_NAMEREQD</TT
 ></DT
 ><DD
 ><P
@@ -177,18 +190,18 @@ If the hostname is not found and the flag is not set, the
 address is returned in numeric form.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->NI_NUMERICSERV</CODE
+>NI_NUMERICSERV</TT
 ></DT
 ><DD
 ><P
 >The service name is returned as a digit string representing the port number.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->NI_DGRAM</CODE
+>NI_DGRAM</TT
 ></DT
 ><DD
 ><P
@@ -210,9 +223,9 @@ NAME="AEN70"
 ><H2
 >RETURN VALUES</H2
 ><P
-><CODE
+><TT
 CLASS="FUNCTION"
->lwres_getnameinfo()</CODE
+>lwres_getnameinfo()</TT
 >
 returns 0 on success or a non-zero error code if an error occurs.</P
 ></DIV

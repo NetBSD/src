@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libdns_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../../../../openssl-0.9.6k/inc32/openssl/include" /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../dns/sec/dst/include" /I "../../../../openssl-0.9.6k/inc32" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../../../../openssl-0.9.6f/inc32/openssl/include" /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../dns/sec/dst/include" /I "../../../../openssl-0.9.6f/inc32" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /YX /FD /c
 # SUBTRACT CPP /X
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/Release/libisc.lib ../../../../openssl-0.9.6k/out32dll/libeay32.lib /nologo /dll /machine:I386 /out:"../../../Build/Release/libdns.dll"
+# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/Release/libisc.lib ../../../../openssl-0.9.6f/out32dll/libeay32.lib /nologo /dll /machine:I386 /out:"../../../Build/Release/libdns.dll"
 
 !ELSEIF  "$(CFG)" == "libdns - Win32 Debug"
 
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libdns_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../dns/sec/dst/include" /I "../../../../openssl-0.9.6k/inc32" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../dns/sec/dst/include" /I "../../../../openssl-0.9.6f/inc32" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /FR /YX /FD /GZ /c
 # SUBTRACT CPP /X
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
@@ -81,7 +81,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/debug/libisc.lib ../../../../openssl-0.9.6k/out32dll/libeay32.lib /nologo /dll /map /debug /machine:I386 /out:"../../../Build/Debug/libdns.dll" /pdbtype:sept
+# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/debug/libisc.lib  ../../../../openssl-0.9.6f/out32dll/libeay32.lib /nologo /dll /map /debug /machine:I386 /out:"../../../Build/Debug/libdns.dll" /pdbtype:sept
 
 !ENDIF 
 
@@ -96,298 +96,6 @@ LINK32=link.exe
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=..\include\dns\acl.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\adb.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\bit.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\byaddr.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\cache.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\callbacks.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\cert.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\code.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\compress.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\db.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\dbiterator.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\dbtable.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\diff.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\dispatch.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\dnssec.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\ds.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\enumclass.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\enumtype.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\events.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\fixedname.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\forward.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\journal.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\keyflags.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\keytable.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\keyvalues.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\lib.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\log.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\lookup.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\master.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\masterdump.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\message.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\name.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\ncache.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\nsec.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\order.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\peer.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\portlist.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\rbt.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\rbtdb.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\rbtdb64.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\rcode.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\rdata.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\rdataclass.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\rdatalist.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\rdataset.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\rdatasetiter.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\rdataslab.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\rdatastruct.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\rdatatype.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\request.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\resolver.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\result.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\rootns.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\sdb.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\secalg.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\secproto.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\soa.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\ssu.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\stats.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\tcpmsg.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\time.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\timer.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\tkey.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\tsig.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\ttl.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\types.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\validator.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\version.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\view.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\xfrin.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\zone.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\zonekey.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\include\dns\zt.h
-# End Source File
 # End Group
 # Begin Group "Resource Files"
 
@@ -396,6 +104,10 @@ SOURCE=..\include\dns\zt.h
 # Begin Group "Main Dns Lib"
 
 # PROP Default_Filter "c"
+# Begin Source File
+
+SOURCE=..\a6.c
+# End Source File
 # Begin Source File
 
 SOURCE=..\acl.c
@@ -459,10 +171,6 @@ SOURCE=..\dnssec.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\ds.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\forward.c
 # End Source File
 # Begin Source File
@@ -507,19 +215,11 @@ SOURCE=..\ncache.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\nsec.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\order.c
+SOURCE=..\nxt.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\peer.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\portlist.c
 # End Source File
 # Begin Source File
 
@@ -532,10 +232,6 @@ SOURCE=..\rbtdb.c
 # Begin Source File
 
 SOURCE=..\rbtdb64.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\rcode.c
 # End Source File
 # Begin Source File
 

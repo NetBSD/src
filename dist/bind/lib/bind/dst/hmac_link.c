@@ -1,8 +1,8 @@
-/*	$NetBSD: hmac_link.c,v 1.1.1.1 2004/05/17 23:44:40 christos Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.1.1.2 2005/12/21 19:57:02 christos Exp $	*/
 
 #ifdef HMAC_MD5
 #ifndef LINT
-static const char rcsid[] = "Header: /proj/cvs/prod/bind9/lib/bind/dst/hmac_link.c,v 1.2.2.1 2003/06/27 03:51:36 marka Exp";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind9/lib/bind/dst/hmac_link.c,v 1.2.2.1 2003/06/27 03:51:36 marka Exp";
 #endif
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.

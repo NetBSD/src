@@ -1,30 +1,27 @@
 <!--
- - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- - Copyright (C) 2001  Internet Software Consortium.
- -
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- -
- - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- - PERFORMANCE OF THIS SOFTWARE.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
-
-<!-- Id: lwres.html,v 1.4.2.1.4.2 2004/08/22 23:39:02 marka Exp -->
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -35,8 +32,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
-></A
->lwres</H1
+>lwres</A
+></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -54,11 +51,11 @@ NAME="AEN11"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
-><P
-></P
 ><A
 NAME="AEN12"
 ></A
+><P
+></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/lwres.h&gt;</PRE
@@ -98,41 +95,41 @@ NAME="AEN18"
 ><P
 >The lwresd library implements multiple name service APIs.
 The standard
-<CODE
+<TT
 CLASS="FUNCTION"
->gethostbyname()</CODE
+>gethostbyname()</TT
 >,
-<CODE
+<TT
 CLASS="FUNCTION"
->gethostbyaddr()</CODE
+>gethostbyaddr()</TT
 >,
-<CODE
+<TT
 CLASS="FUNCTION"
->gethostbyname_r()</CODE
+>gethostbyname_r()</TT
 >,
-<CODE
+<TT
 CLASS="FUNCTION"
->gethostbyaddr_r()</CODE
+>gethostbyaddr_r()</TT
 >,
-<CODE
+<TT
 CLASS="FUNCTION"
->getaddrinfo()</CODE
+>getaddrinfo()</TT
 >,
-<CODE
+<TT
 CLASS="FUNCTION"
->getipnodebyname()</CODE
+>getipnodebyname()</TT
 >,
 and
-<CODE
+<TT
 CLASS="FUNCTION"
->getipnodebyaddr()</CODE
+>getipnodebyaddr()</TT
 >
 functions are all supported.  To allow the lwres library to coexist
 with system libraries that define functions of the same name,
 the library defines these functions with names prefixed by
-<VAR
+<TT
 CLASS="LITERAL"
->lwres_</VAR
+>lwres_</TT
 >.
 To define the standard names, applications must include the
 header file
@@ -142,23 +139,23 @@ CLASS="FILENAME"
 >
 which contains macro definitions mapping the standard function names
 into
-<VAR
+<TT
 CLASS="LITERAL"
->lwres_</VAR
+>lwres_</TT
 >
 prefixed ones.  Operating system vendors who integrate the lwres
 library into their base distributions should rename the functions
 in the library proper so that the renaming macros are not needed.</P
 ><P
 >The library also provides a native API consisting of the functions
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_getaddrsbyname()</CODE
+>lwres_getaddrsbyname()</TT
 >
 and
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_getnamebyaddr()</CODE
+>lwres_getnamebyaddr()</TT
 >.
 These may be called by applications that require more detailed
 control over the lookup process than the standard functions
@@ -167,9 +164,9 @@ provide.</P
 >In addition to these name service independent address lookup
 functions, the library implements a new, experimental API
 for looking up arbitrary DNS resource records, using the
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_getaddrsbyname()</CODE
+>lwres_getaddrsbyname()</TT
 >
 function.</P
 ><P
@@ -201,58 +198,66 @@ sequence of actions.</P
 CLASS="TYPE"
 >lwres_packet_t</SPAN
 >,
-called <VAR
+called <TT
 CLASS="VARNAME"
->pkt</VAR
+>pkt</TT
 > below.</P
 ><P
->(2) Set <CODE
+>(2) Set <TT
 CLASS="STRUCTFIELD"
->pkt.recvlength</CODE
+><I
+>pkt.recvlength</I
+></TT
 > to the maximum length we will accept.  
 This is done so the receiver of our packets knows how large our receive 
 buffer is.  The "default" is a constant in
 <TT
 CLASS="FILENAME"
 >lwres.h</TT
->: <CODE
+>: <TT
 CLASS="CONSTANT"
->LWRES_RECVLENGTH = 4096</CODE
+>LWRES_RECVLENGTH = 4096</TT
 >.</P
 ><P
->(3) Set <CODE
+>(3) Set <TT
 CLASS="STRUCTFIELD"
->pkt.serial</CODE
+><I
+>pkt.serial</I
+></TT
 >
 to a unique serial number.  This value is echoed
 back to the application by the remote server.</P
 ><P
->(4) Set <CODE
+>(4) Set <TT
 CLASS="STRUCTFIELD"
->pkt.pktflags</CODE
+><I
+>pkt.pktflags</I
+></TT
 >.  Usually this is set to 0.</P
 ><P
->(5) Set <CODE
+>(5) Set <TT
 CLASS="STRUCTFIELD"
->pkt.result</CODE
+><I
+>pkt.result</I
+></TT
 > to 0.</P
 ><P
->(6) Call <CODE
+>(6) Call <TT
 CLASS="FUNCTION"
->lwres_*request_render()</CODE
+>lwres_*request_render()</TT
 >, 
 or marshall in the data using the primitives
-such as <CODE
+such as <TT
 CLASS="FUNCTION"
->lwres_packet_render()</CODE
+>lwres_packet_render()</TT
 >
 and storing the packet data.</P
 ><P
 >(7) Transmit the resulting buffer.</P
 ><P
->(8) Call <CODE
+>(8) Call <TT
 CLASS="FUNCTION"
->lwres_*response_parse()</CODE
+>lwres_*response_parse()</TT
 >
 to parse any packets received.</P
 ><P
@@ -275,27 +280,27 @@ following is typically involved in processing each request packet.</P
 CLASS="TYPE"
 >lwres_packet_t</SPAN
 > is used
-in both the <CODE
+in both the <TT
 CLASS="FUNCTION"
->_parse()</CODE
-> and <CODE
+>_parse()</TT
+> and <TT
 CLASS="FUNCTION"
->_render()</CODE
+>_render()</TT
 > calls,
 with only a few modifications made
 to the packet header's contents between uses.  This method is recommended
 as it keeps the serial, opcode, and other fields correct.</P
 ><P
->(1) When a packet is received, call <CODE
+>(1) When a packet is received, call <TT
 CLASS="FUNCTION"
->lwres_*request_parse()</CODE
+>lwres_*request_parse()</TT
 > to
 unmarshall it.  This returns a <SPAN
 CLASS="TYPE"
 >lwres_packet_t</SPAN
-> (also called <VAR
+> (also called <TT
 CLASS="VARNAME"
->pkt</VAR
+>pkt</TT
 >, below)
 as well as a data specific type, such as <SPAN
 CLASS="TYPE"
@@ -304,36 +309,42 @@ CLASS="TYPE"
 ><P
 >(2) Process the request in the data specific type.</P
 ><P
->(3) Set the <CODE
+>(3) Set the <TT
 CLASS="STRUCTFIELD"
->pkt.result</CODE
+><I
+>pkt.result</I
+></TT
 >,
-<CODE
+<TT
 CLASS="STRUCTFIELD"
->pkt.recvlength</CODE
+><I
+>pkt.recvlength</I
+></TT
 > as above.  All other fields can
-be left untouched since they were filled in by the <CODE
+be left untouched since they were filled in by the <TT
 CLASS="FUNCTION"
->*_parse()</CODE
+>*_parse()</TT
 > call
-above.  If using <CODE
+above.  If using <TT
 CLASS="FUNCTION"
->lwres_*response_render()</CODE
+>lwres_*response_render()</TT
 >,
-<CODE
+<TT
 CLASS="STRUCTFIELD"
->pkt.pktflags</CODE
+><I
+>pkt.pktflags</I
+></TT
 > will be set up
-properly.  Otherwise, the <CODE
+properly.  Otherwise, the <TT
 CLASS="CONSTANT"
->LWRES_LWPACKETFLAG_RESPONSE</CODE
+>LWRES_LWPACKETFLAG_RESPONSE</TT
 > bit should be
 set.</P
 ><P
 >(4) Call the data specific rendering function, such as
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_gabnresponse_render()</CODE
+>lwres_gabnresponse_render()</TT
 >.</P
 ><P
 >(5) Send the resulting packet to the client.</P

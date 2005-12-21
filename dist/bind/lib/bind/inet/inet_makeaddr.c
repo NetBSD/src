@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_makeaddr.c,v 1.1.1.1 2004/05/17 23:44:44 christos Exp $	*/
+/*	$NetBSD: inet_makeaddr.c,v 1.1.1.2 2005/12/21 19:57:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -55,9 +55,9 @@ inet_makeaddr(net, host)
 {
 	u_long addr;
 
-	if (net < 128U)
+	if (net < 128)
 		addr = (net << IN_CLASSA_NSHIFT) | (host & IN_CLASSA_HOST);
-	else if (net < 65536U)
+	else if (net < 65536)
 		addr = (net << IN_CLASSB_NSHIFT) | (host & IN_CLASSB_HOST);
 	else if (net < 16777216L)
 		addr = (net << IN_CLASSC_NSHIFT) | (host & IN_CLASSC_HOST);

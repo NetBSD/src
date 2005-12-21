@@ -1,30 +1,27 @@
 <!--
- - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- - Copyright (C) 2001, 2003  Internet Software Consortium.
- -
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- -
- - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- - PERFORMANCE OF THIS SOFTWARE.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
-
-<!-- Id: lwres_getipnode.html,v 1.7.2.1.4.2 2004/08/22 23:39:04 marka Exp -->
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres_getipnode</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -35,8 +32,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
-></A
->lwres_getipnode</H1
+>lwres_getipnode</A
+></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -54,11 +51,11 @@ NAME="AEN13"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
-><P
-></P
 ><A
 NAME="AEN14"
 ></A
+><P
+></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/netdb.h&gt;</PRE
@@ -131,27 +128,27 @@ CLASS="PROGRAMLISTING"
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->h_name</CODE
+>h_name</TT
 ></DT
 ><DD
 ><P
 >The official (canonical) name of the host.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->h_aliases</CODE
+>h_aliases</TT
 ></DT
 ><DD
 ><P
 >A NULL-terminated array of alternate names (nicknames) for the host.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->h_addrtype</CODE
+>h_addrtype</TT
 ></DT
 ><DD
 ><P
@@ -167,18 +164,18 @@ CLASS="TYPE"
 >.&#13;</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->h_length</CODE
+>h_length</TT
 ></DT
 ><DD
 ><P
 >The length of the address in bytes.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->h_addr_list</CODE
+>h_addr_list</TT
 ></DT
 ><DD
 ><P
@@ -194,26 +191,32 @@ Host addresses are returned in network byte order.</P
 ></DIV
 ></P
 ><P
-><CODE
+><TT
 CLASS="FUNCTION"
->lwres_getipnodebyname()</CODE
+>lwres_getipnodebyname()</TT
 >
 looks up addresses of protocol family
-<VAR
+<TT
 CLASS="PARAMETER"
->af</VAR
+><I
+>af</I
+></TT
 >
 
 for the hostname
-<VAR
+<TT
 CLASS="PARAMETER"
->name</VAR
+><I
+>name</I
+></TT
 >.
 
 The
-<VAR
+<TT
 CLASS="PARAMETER"
->flags</VAR
+><I
+>flags</I
+></TT
 >
 parameter contains ORed flag bits to 
 specify the types of addresses that are searched
@@ -225,40 +228,44 @@ The flag bits are:
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->AI_V4MAPPED</CODE
+>AI_V4MAPPED</TT
 ></DT
 ><DD
 ><P
 >This is used with an
-<VAR
+<TT
 CLASS="PARAMETER"
->af</VAR
+><I
+>af</I
+></TT
 >
 of AF_INET6, and causes IPv4 addresses to be returned as IPv4-mapped
 IPv6 addresses.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->AI_ALL</CODE
+>AI_ALL</TT
 ></DT
 ><DD
 ><P
 >This is used with an
-<VAR
+<TT
 CLASS="PARAMETER"
->af</VAR
+><I
+>af</I
+></TT
 >
 of AF_INET6, and causes all known addresses (IPv6 and IPv4) to be returned.
 If AI_V4MAPPED is also set, the IPv4 addresses are return as mapped
 IPv6 addresses.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->AI_ADDRCONFIG</CODE
+>AI_ADDRCONFIG</TT
 ></DT
 ><DD
 ><P
@@ -267,21 +274,21 @@ interface of that type.  This is not currently implemented
 in the BIND 9 lightweight resolver, and the flag is ignored.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->AI_DEFAULT</CODE
+>AI_DEFAULT</TT
 ></DT
 ><DD
 ><P
 >This default sets the
-<CODE
+<TT
 CLASS="CONSTANT"
->AI_V4MAPPED</CODE
+>AI_V4MAPPED</TT
 >
 and
-<CODE
+<TT
 CLASS="CONSTANT"
->AI_ADDRCONFIG</CODE
+>AI_ADDRCONFIG</TT
 >
 flag bits.</P
 ></DD
@@ -289,25 +296,31 @@ flag bits.</P
 ></DIV
 ></P
 ><P
-><CODE
+><TT
 CLASS="FUNCTION"
->lwres_getipnodebyaddr()</CODE
+>lwres_getipnodebyaddr()</TT
 >
 performs a reverse lookup
 of address
-<VAR
+<TT
 CLASS="PARAMETER"
->src</VAR
+><I
+>src</I
+></TT
 >
 which is
-<VAR
+<TT
 CLASS="PARAMETER"
->len</VAR
+><I
+>len</I
+></TT
 >
 bytes long.
-<VAR
+<TT
 CLASS="PARAMETER"
->af</VAR
+><I
+>af</I
+></TT
 >
 denotes the protocol family, typically
 <SPAN
@@ -320,9 +333,9 @@ CLASS="TYPE"
 >PF_INET6</SPAN
 >.&#13;</P
 ><P
-><CODE
+><TT
 CLASS="FUNCTION"
->lwres_freehostent()</CODE
+>lwres_freehostent()</TT
 >
 releases all the memory associated with
 the
@@ -331,25 +344,27 @@ CLASS="TYPE"
 >struct hostent</SPAN
 >
 pointer
-<VAR
+<TT
 CLASS="PARAMETER"
->he</VAR
+><I
+>he</I
+></TT
 >.
 
 Any memory allocated for the
-<CODE
+<TT
 CLASS="CONSTANT"
->h_name</CODE
+>h_name</TT
 >,
 
-<CODE
+<TT
 CLASS="CONSTANT"
->h_addr_list</CODE
+>h_addr_list</TT
 >
 and
-<CODE
+<TT
 CLASS="CONSTANT"
->h_aliases</CODE
+>h_aliases</TT
 >
 is freed, as is the memory for the
 <SPAN
@@ -367,19 +382,21 @@ NAME="AEN116"
 >RETURN VALUES</H2
 ><P
 >If an error occurs,
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_getipnodebyname()</CODE
+>lwres_getipnodebyname()</TT
 >
 and
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_getipnodebyaddr()</CODE
+>lwres_getipnodebyaddr()</TT
 >
 set
-<VAR
+<TT
 CLASS="PARAMETER"
->*error_num</VAR
+><I
+>*error_num</I
+></TT
 >
 to an appropriate error code and the function returns a
 <SPAN
@@ -398,18 +415,18 @@ CLASS="FILENAME"
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->HOST_NOT_FOUND</CODE
+>HOST_NOT_FOUND</TT
 ></DT
 ><DD
 ><P
 >No such host is known.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->NO_ADDRESS</CODE
+>NO_ADDRESS</TT
 ></DT
 ><DD
 ><P
@@ -418,9 +435,9 @@ available.  Another type of request to the name server for the
 domain might return an answer.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->TRY_AGAIN</CODE
+>TRY_AGAIN</TT
 ></DT
 ><DD
 ><P
@@ -429,9 +446,9 @@ failure of a server to respond.  The request may succeed if
 retried.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->NO_RECOVERY</CODE
+>NO_RECOVERY</TT
 ></DT
 ><DD
 ><P

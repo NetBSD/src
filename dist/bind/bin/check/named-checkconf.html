@@ -1,30 +1,27 @@
 <!--
- - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- - Copyright (C) 2001, 2002  Internet Software Consortium.
- -
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- -
- - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- - PERFORMANCE OF THIS SOFTWARE.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
-
-<!-- Id: named-checkconf.html,v 1.5.2.1.4.5 2004/08/22 23:38:57 marka Exp -->
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >named-checkconf</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -35,10 +32,10 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
-></A
 ><SPAN
 CLASS="APPLICATION"
 >named-checkconf</SPAN
+></A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
@@ -62,27 +59,23 @@ NAME="AEN13"
 ><B
 CLASS="COMMAND"
 >named-checkconf</B
->  [<VAR
+>  [<TT
 CLASS="OPTION"
->-v</VAR
->] [<VAR
+>-v</TT
+>] [<TT
 CLASS="OPTION"
->-j</VAR
->] [<VAR
-CLASS="OPTION"
->-t <VAR
+>-t <TT
 CLASS="REPLACEABLE"
->directory</VAR
-></VAR
->] {filename} [<VAR
-CLASS="OPTION"
->-z</VAR
->]</P
+><I
+>directory</I
+></TT
+></TT
+>] {filename}</P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN26"
+NAME="AEN22"
 ></A
 ><H2
 >DESCRIPTION</H2
@@ -97,7 +90,7 @@ CLASS="COMMAND"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN30"
+NAME="AEN26"
 ></A
 ><H2
 >OPTIONS</H2
@@ -107,9 +100,11 @@ NAME="AEN30"
 CLASS="VARIABLELIST"
 ><DL
 ><DT
->-t <VAR
+>-t <TT
 CLASS="REPLACEABLE"
->directory</VAR
+><I
+>directory</I
+></TT
 ></DT
 ><DD
 ><P
@@ -133,24 +128,6 @@ CLASS="COMMAND"
 	  </P
 ></DD
 ><DT
->-z</DT
-><DD
-><P
->	      Perform a check load the master zonefiles found in
-	      <TT
-CLASS="FILENAME"
->named.conf</TT
->.
-	  </P
-></DD
-><DT
->-j</DT
-><DD
-><P
->	      When loading a zonefile read the journal if it exists.
-	  </P
-></DD
-><DT
 >filename</DT
 ><DD
 ><P
@@ -167,7 +144,7 @@ CLASS="FILENAME"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN58"
+NAME="AEN45"
 ></A
 ><H2
 >RETURN VALUES</H2
@@ -182,7 +159,7 @@ CLASS="COMMAND"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN62"
+NAME="AEN49"
 ></A
 ><H2
 >SEE ALSO</H2
@@ -203,12 +180,12 @@ CLASS="CITETITLE"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN69"
+NAME="AEN56"
 ></A
 ><H2
 >AUTHOR</H2
 ><P
->        Internet Systems Consortium
+>        Internet Software Consortium
     </P
 ></DIV
 ></BODY

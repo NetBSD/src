@@ -1,19 +1,19 @@
-.\" Id: eventlib.mdoc,v 1.1.2.1.10.1 2004/03/09 08:33:43 marka Exp
+.\" Id: eventlib.mdoc,v 1.1.2.1 2001/11/02 21:06:00 gson Exp
 .\"
-.\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
-.\" Copyright (c) 1995-1999 by Internet Software Consortium
+.\"Copyright (c) 1995-1999 by Internet Software Consortium
 .\"
-.\" Permission to use, copy, modify, and distribute this software for any
-.\" purpose with or without fee is hereby granted, provided that the above
-.\" copyright notice and this permission notice appear in all copies.
+.\"Permission to use, copy, modify, and distribute this software for any
+.\"purpose with or without fee is hereby granted, provided that the above
+.\"copyright notice and this permission notice appear in all copies.
 .\"
-.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
-.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
-.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
-.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
+.\"ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+.\"OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
+.\"CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+.\"DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+.\"PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+.\"ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+.\"SOFTWARE.
 .\"
 .Dd March 6, 1996
 .Dt EVENTLIB 3
@@ -37,11 +37,9 @@
 .Nm evSubTime ,
 .Nm evCmpTime ,
 .Nm evNowTime ,
-.Nm evUTCTime ,
 .Nm evLastEventTime ,
 .Nm evSetTimer ,
 .Nm evResetTimer ,
-.Nm evConfigTimer ,
 .Nm evClearTimer ,
 .Nm evSetIdleTimer ,
 .Nm evTouchIdleTimer ,
@@ -67,9 +65,7 @@
 .Nm evSetDebug ,
 .Nm evPrintf ,
 .Nm evInitID ,
-.Nm evTestID ,
-.Nm evGetOption ,
-.Nm evSetOption
+.Nm evTestID
 .Nd event handling library
 .Sh SYNOPSIS
 .Fd #include <isc/eventlib.h>
@@ -112,8 +108,6 @@
 .Ft struct timespec
 .Fn evNowTime "void"
 .Ft struct timespec
-.Fn evUTCTime "void"
-.Ft struct timespec
 .Fn evLastEventTime "evContext opaqueCtx"
 .Ft int
 .Fn evSetTimer "evContext ctx" "evTimerFunc func" "void *uap" \
@@ -121,9 +115,6 @@
 .Ft int
 .Fn evResetTimer "evContext ctx" "evTimerID id" "evTimerFunc func" \
 "void *uap" "struct timespec due" "struct timespec inter"
-.Ft int
-.Fn evConfigTimer "evContext ctx" "evTimerID id" "const char *param" \
-"int value"
 .Ft int
 .Fn evClearTimer "evContext ctx" "evTimerID id"
 .Ft int
@@ -186,10 +177,6 @@
 .Fn evInitID "*\s-1ID\s+1"
 .Ft int
 .Fn evTestID "\s-1ID\s+1"
-.Ft int
-.Fn evGetOption "evContext *ctx" "const char *option" "int *ret"
-.Ft int
-.Fn evSetOption "evContext *ctx" "const char *option" "int val"
 .Sh DESCRIPTION
 This library provides multiple outstanding asynchronous timers and I/O
 to a cooperating application.  The model is similar to that of the X
@@ -363,24 +350,13 @@ The function
 .Fn evNowTime
 returns a
 .Dq Fa struct timespec
-which either describes the current time
-(using
-.Xr clock_gettime 2 or
+which either describes the current time (using
 .Xr gettimeofday 2 ) ,
 if successful, or has its fields set to zero, if there is an error.
 (In the latter case, the caller can check
 .Va errno ,
 since it will be set by
 .Xr gettimeofday 2 . )
-The timestamp returned may not be UTC time if
-the "monotime" option has been enabled with
-.Fn evSetOption .
-.Pp
-The function 
-.Fn evUTCTime
-is like 
-.Fn evNowTime
-except the result is always on the UTC timescale.
 .Pp
 The function
 .Fn evLastEventTime 
@@ -430,8 +406,9 @@ Note that in a
 timer (which has an
 .Fa inter
 argument equal to
-.Dq Fa evConsTime(0,0) )
-the user function
+.Dq Fa evConsTime(0,0)
+.\" putting the ) after the Dq Fa arg did not work well.  --vix
+) the user function
 .Fa func
 should deallocate any dynamic memory that is uniquely bound to the
 .Fa uap ,
@@ -460,21 +437,6 @@ be freed by the caller before the handle is lost.  After a call to
 no handles to this
 .Fa uap
 will exist within the event library.
-.Pp
-The function
-.Fn evConfigTimer
-can be used to manipulate other aspects of a timer.
-Currently two modes are defined "rate" and "interval" which affect the
-way recurrent timers are scheduled.
-The default mode is "interval" where the event gets scheduled
-.Fa inter
-after last time it was run.
-If mode "rate" is selected the event gets scheduled
-.Fa inter
-after last time it was scheduled.
-For both "rate" and "interval" the numerical argument
-.Fa value
-is ignored.
 .Pp
 The function
 .Fn evSetIdleTimer 
@@ -825,39 +787,13 @@ will initialize an opaque
 .Dq evContext , 
 or
 .Dq evEvent ,
-which is passed by reference to a state which
-.Fn evTestID
-will recognize.
-This is useful to make a handle as "not in use".
+which is passed by reference.
 .Pp
 The function
 .Fn evTestID
 will examine an opaque \s-1ID\s+1 and return
 .Dq TRUE
 only if it is not in its initialized state.
-.Pp
-The functions
-.Fn evGetOption
-and 
-.Fn evSetOption
-can be used to inspect and modify options.
-Currently there is only one option,  "monotime" and it is global for all 
-instances of eventlib so the ctx argument must be passed as NULL.
-.Pp
-The default value for the "monotime" option is zero which selects
-the UTC timescale.
-When set to a value of one, eventlib will use the
-CLOCK_MONOTONIC timescale from
-.Xr clock_gettime
-instead.
-The CLOCK_MONOTONIC timescale is never stepped and should
-run at a rate as close to TAI as possible, so it is unaffected
-when the system clock is set.
-If timerevents should run at a predictable rate, set the value
-to one, of they should run at a predictable time of day, leave
-it at zero.
-If the CLOCK_MONOTONIC timescale is not available on the system,
-attempts to set/get this option will fail.
 .Sh RETURN VALUES
 All the functions whose return type is
 .Dq Fa int

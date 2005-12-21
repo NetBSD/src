@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.1.1.1 2004/05/17 23:44:44 christos Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.1.1.2 2005/12/21 19:57:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -68,14 +68,14 @@ again:
 		base = 16, cp++;
 	while ((c = *cp) != 0) {
 		if (isdigit((unsigned char)c)) {
-			if (base == 8U && (c == '8' || c == '9'))
+			if (base == 8 && (c == '8' || c == '9'))
 				return (INADDR_NONE);
 			val = (val * base) + (c - '0');
 			cp++;
 			digit = 1;
 			continue;
 		}
-		if (base == 16U && isxdigit((unsigned char)c)) {
+		if (base == 16 && isxdigit((unsigned char)c)) {
 			val = (val << 4) +
 			      (c + 10 - (islower((unsigned char)c) ? 'a' : 'A'));
 			cp++;
@@ -87,7 +87,7 @@ again:
 	if (!digit)
 		return (INADDR_NONE);
 	if (*cp == '.') {
-		if (pp >= parts + 4 || val > 0xffU)
+		if (pp >= parts + 4 || val > 0xff)
 			return (INADDR_NONE);
 		*pp++ = val, cp++;
 		goto again;
@@ -96,7 +96,7 @@ again:
 		return (INADDR_NONE);
 	*pp++ = val;
 	n = pp - parts;
-	if (n > 4U)
+	if (n > 4)
 		return (INADDR_NONE);
 	for (val = 0, i = 0; i < n; i++) {
 		val <<= 8;

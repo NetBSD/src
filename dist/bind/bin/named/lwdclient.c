@@ -1,23 +1,23 @@
-/*	$NetBSD: lwdclient.c,v 1.1.1.1 2004/05/17 23:43:22 christos Exp $	*/
+/*	$NetBSD: lwdclient.c,v 1.1.1.2 2005/12/21 19:50:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwdclient.c,v 1.13.12.5 2004/03/08 09:04:15 marka Exp */
+/* Id: lwdclient.c,v 1.13 2001/01/22 22:29:02 gson Exp */
 
 #include <config.h>
 
@@ -31,7 +31,6 @@
 #include <dns/log.h>
 
 #include <named/types.h>
-#include <named/log.h>
 #include <named/lwresd.h>
 #include <named/lwdclient.h>
 
@@ -84,7 +83,7 @@ ns_lwdclientmgr_create(ns_lwreslistener_t *listener, unsigned int nclients,
 	    != ISC_R_SUCCESS)
 		goto errout;
 
-	for (i = 0; i < nclients; i++) {
+	for (i = 0 ; i < nclients ; i++) {
 		client = isc_mem_get(lwresd->mctx, sizeof(ns_lwdclient_t));
 		if (client != NULL) {
 			ns_lwdclient_log(50, "created client %p, manager %p",
@@ -119,7 +118,7 @@ ns_lwdclientmgr_create(ns_lwreslistener_t *listener, unsigned int nclients,
 	client = ISC_LIST_HEAD(cm->idle);
 	while (client != NULL) {
 		ISC_LIST_UNLINK(cm->idle, client, link);
-		isc_mem_put(lwresd->mctx, client, sizeof(*client));
+		isc_mem_put(lwresd->mctx, client, sizeof (*client));
 		client = ISC_LIST_HEAD(cm->idle);
 	}
 
@@ -129,7 +128,7 @@ ns_lwdclientmgr_create(ns_lwreslistener_t *listener, unsigned int nclients,
 	if (cm->lwctx != NULL)
 		lwres_context_destroy(&cm->lwctx);
 
-	isc_mem_put(lwresd->mctx, cm, sizeof(*cm));
+	isc_mem_put(lwresd->mctx, cm, sizeof (*cm));
 	return (result);
 }
 
@@ -151,7 +150,7 @@ lwdclientmgr_destroy(ns_lwdclientmgr_t *cm) {
 		ns_lwdclient_log(50, "destroying client %p, manager %p",
 				 client, cm);
 		ISC_LIST_UNLINK(cm->idle, client, link);
-		isc_mem_put(cm->mctx, client, sizeof(*client));
+		isc_mem_put(cm->mctx, client, sizeof (*client));
 		client = ISC_LIST_HEAD(cm->idle);
 	}
 
@@ -166,7 +165,7 @@ lwdclientmgr_destroy(ns_lwdclientmgr_t *cm) {
 	listener = cm->listener;
 	ns_lwreslistener_unlinkcm(listener, cm);
 	ns_lwdclient_log(50, "destroying manager %p", cm);
-	isc_mem_put(cm->mctx, cm, sizeof(*cm));
+	isc_mem_put(cm->mctx, cm, sizeof (*cm));
 	ns_lwreslistener_detach(&listener);
 }
 
@@ -214,7 +213,6 @@ process_request(ns_lwdclient_t *client) {
 
 void
 ns_lwdclient_recv(isc_task_t *task, isc_event_t *ev) {
-	isc_result_t result;
 	ns_lwdclient_t *client = ev->ev_arg;
 	ns_lwdclientmgr_t *cm = client->clientmgr;
 	isc_socketevent_t *dev = (isc_socketevent_t *)ev;
@@ -254,13 +252,7 @@ ns_lwdclient_recv(isc_task_t *task, isc_event_t *ev) {
 	isc_event_free(&ev);
 	dev = NULL;
 
-	result = ns_lwdclient_startrecv(cm);
-	if (result != ISC_R_SUCCESS)
-		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
-			      NS_LOGMODULE_LWRESD, ISC_LOG_ERROR,
-			      "could not start lwres "
-			      "client handler: %s",
-			      isc_result_totext(result));
+	ns_lwdclient_startrecv(cm);
 
 	process_request(client);
 }
@@ -339,7 +331,7 @@ lwdclientmgr_shutdown_callback(isc_task_t *task, isc_event_t *ev) {
 		ns_lwdclient_log(50, "destroying client %p, manager %p",
 				 client, cm);
 		ISC_LIST_UNLINK(cm->idle, client, link);
-		isc_mem_put(cm->mctx, client, sizeof(*client));
+		isc_mem_put(cm->mctx, client, sizeof (*client));
 		client = ISC_LIST_HEAD(cm->idle);
 	}
 
@@ -376,7 +368,6 @@ lwdclientmgr_shutdown_callback(isc_task_t *task, isc_event_t *ev) {
 void
 ns_lwdclient_stateidle(ns_lwdclient_t *client) {
 	ns_lwdclientmgr_t *cm;
-	isc_result_t result;
 
 	cm = client->clientmgr;
 
@@ -391,13 +382,7 @@ ns_lwdclient_stateidle(ns_lwdclient_t *client) {
 
 	NS_LWDCLIENT_SETIDLE(client);
 
-	result = ns_lwdclient_startrecv(cm);
-	if (result != ISC_R_SUCCESS)
-		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
-			      NS_LOGMODULE_LWRESD, ISC_LOG_ERROR,
-			      "could not start lwres "
-			      "client handler: %s",
-			      isc_result_totext(result));
+	ns_lwdclient_startrecv(cm);
 }
 
 void

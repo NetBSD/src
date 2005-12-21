@@ -1,23 +1,23 @@
-/*	$NetBSD: BINDInstallDlg.h,v 1.1.1.1 2004/05/17 23:43:39 christos Exp $	*/
+/*	$NetBSD: BINDInstallDlg.h,v 1.1.1.2 2005/12/21 19:52:43 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: BINDInstallDlg.h,v 1.3.12.3 2004/03/08 09:04:21 marka Exp */
+/* Id: BINDInstallDlg.h,v 1.3 2001/07/31 00:03:14 gson Exp */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation
@@ -74,7 +74,6 @@ protected:
 	void DeleteFiles(BOOL uninstall);
 
 	void RegisterService();
-	void UpdateService();
 	void UnregisterService(BOOL uninstall);
 
 	void RegisterMessages();
@@ -83,8 +82,6 @@ protected:
 	void FailedInstall();
 	void SetItemStatus(UINT nID, BOOL bSuccess = TRUE);
 
-	void GetCurrentServiceAccountName();
-	BOOL ValidateServiceAccount();
 protected:
 	CString DestDir(int destination);
 	int MsgBox(int id,  ...);
@@ -99,16 +96,9 @@ protected:
 	CString m_etcDir;
 	CString m_binDir;
 	CString m_winSysDir;
-	BOOL m_installed;
+	BOOL m_reboot;
 	CString m_currentDir;
-	BOOL	m_accountExists;
-	BOOL	m_accountUsed;
-	CString	m_currentAccount;
-	CString m_accountName;
-	CString m_accountPasswordConfirm;
-	CString m_accountPassword;
-	BOOL	m_serviceExists;
- 
+
 	// Generated message map functions
 	//{{AFX_MSG(CBINDInstallDlg)
 	virtual BOOL OnInitDialog();

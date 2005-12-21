@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.1.1.2 2004/11/06 23:55:34 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.1.1.3 2005/12/21 19:57:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -54,25 +54,25 @@
  */
 
 /*
- * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
- * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
+ * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_send.c,v 1.5.2.2.4.5 2004/08/10 02:19:56 marka Exp";
+static const char rcsid[] = "Id: res_send.c,v 1.5.2.2 2003/06/27 03:51:44 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -174,8 +174,7 @@ res_ourserver_p(const res_state statp, const struct sockaddr *sa) {
 			if (srv6->sin6_family == in6p->sin6_family &&
 			    srv6->sin6_port == in6p->sin6_port &&
 #ifdef HAVE_SIN6_SCOPE_ID
-			    (srv6->sin6_scope_id == 0 ||
-			     srv6->sin6_scope_id == in6p->sin6_scope_id) &&
+			    srv6->sin6_scope_id == in6p->sin6_scope_id &&
 #endif
 			    (IN6_IS_ADDR_UNSPECIFIED(&srv6->sin6_addr) ||
 			     IN6_ARE_ADDR_EQUAL(&srv6->sin6_addr, &in6p->sin6_addr)))
@@ -355,8 +354,8 @@ res_nsend(res_state statp,
 	 * Some resolvers want to even out the load on their nameservers.
 	 * Note that RES_BLAST overrides RES_ROTATE.
 	 */
-	if ((statp->options & RES_ROTATE) != 0U &&
-	    (statp->options & RES_BLAST) == 0U) {
+	if ((statp->options & RES_ROTATE) != 0 &&
+	    (statp->options & RES_BLAST) == 0) {
 		union res_sockaddr_union inu;
 		struct sockaddr_in ina;
 		int lastns = statp->nscount - 1;
@@ -470,8 +469,8 @@ res_nsend(res_state statp,
 		 * or if we haven't been asked to keep a socket open,
 		 * close the socket.
 		 */
-		if ((v_circuit && (statp->options & RES_USEVC) == 0U) ||
-		    (statp->options & RES_STAYOPEN) == 0U) {
+		if ((v_circuit && (statp->options & RES_USEVC) == 0) ||
+		    (statp->options & RES_STAYOPEN) == 0) {
 			res_nclose(statp);
 		}
 		if (statp->rhook) {
@@ -613,19 +612,9 @@ send_vc(res_state statp,
 			errno = ENOTSOCK;
 		}
 		if (statp->_vcsock < 0) {
-			switch (errno) {
-			case EPROTONOSUPPORT:
-#ifdef EPFNOSUPPORT
-			case EPFNOSUPPORT:
-#endif
-			case EAFNOSUPPORT:
-				Perror(statp, stderr, "socket(vc)", errno);
-				return (0);
-			default:
-				*terrno = errno;
-				Perror(statp, stderr, "socket(vc)", errno);
-				return (-1);
-			}
+			*terrno = errno;
+			Perror(statp, stderr, "socket(vc)", errno);
+			return (-1);
 		}
 		errno = 0;
 		if (connect(statp->_vcsock, nsap, nsaplen) < 0) {
@@ -659,7 +648,7 @@ send_vc(res_state statp,
 	len = INT16SZ;
 	while ((n = read(statp->_vcsock, (char *)cp, (int)len)) > 0) {
 		cp += n;
-		if ((len -= n) == 0)
+		if ((len -= n) <= 0)
 			break;
 	}
 	if (n <= 0) {
@@ -776,19 +765,9 @@ send_dg(res_state statp,
 			errno = ENOTSOCK;
 		}
 		if (EXT(statp).nssocks[ns] < 0) {
-			switch (errno) {
-			case EPROTONOSUPPORT:
-#ifdef EPFNOSUPPORT
-			case EPFNOSUPPORT:
-#endif
-			case EAFNOSUPPORT:
-				Perror(statp, stderr, "socket(dg)", errno);
-				return (0);
-			default:
-				*terrno = errno;
-				Perror(statp, stderr, "socket(dg)", errno);
-				return (-1);
-			}
+			*terrno = errno;
+			Perror(statp, stderr, "socket(dg)", errno);
+			return (-1);
 		}
 #ifndef CANNOT_CONNECT_DGRAM
 		/*
@@ -909,7 +888,7 @@ send_dg(res_state statp,
 		goto wait;
 	}
 #ifdef RES_USE_EDNS0
-	if (anhp->rcode == FORMERR && (statp->options & RES_USE_EDNS0) != 0U) {
+	if (anhp->rcode == FORMERR && (statp->options & RES_USE_EDNS0) != 0) {
 		/*
 		 * Do not retry if the server do not understand EDNS0.
 		 * The case has to be captured here, as FORMERR packet do not
@@ -977,7 +956,7 @@ Aerror(const res_state statp, FILE *file, const char *string, int error,
 
 	alen = alen;
 
-	if ((statp->options & RES_DEBUG) != 0U) {
+	if ((statp->options & RES_DEBUG) != 0) {
 		if (getnameinfo(address, alen, hbuf, sizeof(hbuf),
 		    sbuf, sizeof(sbuf), niflags)) {
 			strncpy(hbuf, "?", sizeof(hbuf) - 1);
@@ -995,7 +974,7 @@ static void
 Perror(const res_state statp, FILE *file, const char *string, int error) {
 	int save = errno;
 
-	if ((statp->options & RES_DEBUG) != 0U)
+	if ((statp->options & RES_DEBUG) != 0)
 		fprintf(file, "res_send: %s: %s\n",
 			string, strerror(error));
 	errno = save;

@@ -1,30 +1,27 @@
 <!--
- - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- - Copyright (C) 2000-2003  Internet Software Consortium.
- -
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- -
- - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- - PERFORMANCE OF THIS SOFTWARE.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
-
-<!-- Id: dig.html,v 1.6.2.4.2.7 2004/08/22 23:38:57 marka Exp -->
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >dig</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -35,8 +32,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
-></A
->dig</H1
+>dig</A
+></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -56,68 +53,78 @@ NAME="AEN11"
 ><B
 CLASS="COMMAND"
 >dig</B
->  [@server] [<VAR
+>  [@server] [<TT
 CLASS="OPTION"
->-b <VAR
+>-b <TT
 CLASS="REPLACEABLE"
->address</VAR
-></VAR
->] [<VAR
+><I
+>address</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-c <VAR
+>-c <TT
 CLASS="REPLACEABLE"
->class</VAR
-></VAR
->] [<VAR
+><I
+>class</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-f <VAR
+>-f <TT
 CLASS="REPLACEABLE"
->filename</VAR
-></VAR
->] [<VAR
+><I
+>filename</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-k <VAR
+>-k <TT
 CLASS="REPLACEABLE"
->filename</VAR
-></VAR
->] [<VAR
+><I
+>filename</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-p <VAR
+>-p <TT
 CLASS="REPLACEABLE"
->port#</VAR
-></VAR
->] [<VAR
+><I
+>port#</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-t <VAR
+>-t <TT
 CLASS="REPLACEABLE"
->type</VAR
-></VAR
->] [<VAR
+><I
+>type</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-x <VAR
+>-x <TT
 CLASS="REPLACEABLE"
->addr</VAR
-></VAR
->] [<VAR
+><I
+>addr</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-y <VAR
+>-y <TT
 CLASS="REPLACEABLE"
->name:key</VAR
-></VAR
->] [<VAR
-CLASS="OPTION"
->-4</VAR
->] [<VAR
-CLASS="OPTION"
->-6</VAR
+><I
+>name:key</I
+></TT
+></TT
 >] [name] [type] [class] [queryopt...]</P
 ><P
 ><B
 CLASS="COMMAND"
 >dig</B
->  [<VAR
+>  [<TT
 CLASS="OPTION"
->-h</VAR
+>-h</TT
 >]</P
 ><P
 ><B
@@ -128,7 +135,7 @@ CLASS="COMMAND"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN55"
+NAME="AEN51"
 ></A
 ><H2
 >DESCRIPTION</H2
@@ -156,9 +163,9 @@ CLASS="COMMAND"
 > is normally used with command-line
 arguments, it also has a batch mode of operation for reading lookup
 requests from a file.  A brief summary of its command-line arguments
-and options is printed when the <VAR
+and options is printed when the <TT
 CLASS="OPTION"
->-h</VAR
+>-h</TT
 > option is given.
 Unlike earlier versions, the BIND9 implementation of
 <B
@@ -180,7 +187,7 @@ CLASS="FILENAME"
 >When no command line arguments or options are given, will perform an
 NS query for "." (the root).</P
 ><P
->It is possible to set per-user defaults for <B
+>It is possible to set per user defaults for <B
 CLASS="COMMAND"
 >dig</B
 > via
@@ -188,12 +195,12 @@ CLASS="COMMAND"
 CLASS="FILENAME"
 >${HOME}/.digrc</TT
 >.  This file is read and any options in it
-are applied before the command line arguments.</P
+are applied before the command line arguements.</P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN72"
+NAME="AEN68"
 ></A
 ><H2
 >SIMPLE USAGE</H2
@@ -213,26 +220,30 @@ CLASS="PROGRAMLISTING"
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->server</CODE
+>server</TT
 ></DT
 ><DD
 ><P
 >is the name or IP address of the name server to query.  This can be an IPv4
 address in dotted-decimal notation or an IPv6
 address in colon-delimited notation.  When the supplied
-<VAR
+<TT
 CLASS="PARAMETER"
->server</VAR
+><I
+>server</I
+></TT
 > argument is a hostname,
 <B
 CLASS="COMMAND"
 >dig</B
 > resolves that name before querying that name
-server.  If no <VAR
+server.  If no <TT
 CLASS="PARAMETER"
->server</VAR
+><I
+>server</I
+></TT
 > argument is provided,
 <B
 CLASS="COMMAND"
@@ -245,30 +256,34 @@ and queries the name servers listed there.  The reply from the name
 server that responds is displayed.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->name</CODE
+>name</TT
 ></DT
 ><DD
 ><P
 >is the name of the resource record that is to be looked up.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->type</CODE
+>type</TT
 ></DT
 ><DD
 ><P
 >indicates what type of query is required &mdash;
 ANY, A, MX, SIG, etc.
-<VAR
+<TT
 CLASS="PARAMETER"
->type</VAR
+><I
+>type</I
+></TT
 > can be any valid query type.  If no
-<VAR
+<TT
 CLASS="PARAMETER"
->type</VAR
+><I
+>type</I
+></TT
 > argument is supplied,
 <B
 CLASS="COMMAND"
@@ -282,43 +297,48 @@ CLASS="COMMAND"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN101"
+NAME="AEN97"
 ></A
 ><H2
 >OPTIONS</H2
 ><P
->The <VAR
+>The <TT
 CLASS="OPTION"
->-b</VAR
+>-b</TT
 > option sets the source IP address of the query
-to <VAR
+to <TT
 CLASS="PARAMETER"
->address</VAR
+><I
+>address</I
+></TT
 >.  This must be a valid address on
-one of the host's network interfaces or "0.0.0.0" or "::".  An optional port
-may be specified by appending "#&lt;port&gt;"</P
+one of the host's network interfaces.</P
 ><P
 >The default query class (IN for internet) is overridden by the
-<VAR
+<TT
 CLASS="OPTION"
->-c</VAR
-> option.  <VAR
+>-c</TT
+> option.  <TT
 CLASS="PARAMETER"
->class</VAR
+><I
+>class</I
+></TT
 > is any valid
 class, such as HS for Hesiod records or CH for CHAOSNET records.</P
 ><P
->The <VAR
+>The <TT
 CLASS="OPTION"
->-f</VAR
+>-f</TT
 > option makes <B
 CLASS="COMMAND"
 >dig </B
 > operate
 in batch mode by reading a list of lookup requests to process from the
-file <VAR
+file <TT
 CLASS="PARAMETER"
->filename</VAR
+><I
+>filename</I
+></TT
 >.  The file contains a number of
 queries, one per line.  Each entry in the file should be organised in
 the same way they would be presented as queries to
@@ -328,12 +348,14 @@ CLASS="COMMAND"
 > using the command-line interface.</P
 ><P
 >If a non-standard port number is to be queried, the
-<VAR
+<TT
 CLASS="OPTION"
->-p</VAR
-> option is used.  <VAR
+>-p</TT
+> option is used.  <TT
 CLASS="PARAMETER"
->port#</VAR
+><I
+>port#</I
+></TT
 > is
 the port number that <B
 CLASS="COMMAND"
@@ -343,109 +365,110 @@ instead of the standard DNS port number 53.  This option would be used
 to test a name server that has been configured to listen for queries
 on a non-standard port number.</P
 ><P
->The <VAR
+>The <TT
 CLASS="OPTION"
->-4</VAR
-> option forces <B
-CLASS="COMMAND"
->dig</B
-> to only
-use IPv4 query transport.  The <VAR
-CLASS="OPTION"
->-6</VAR
-> option forces
-<B
-CLASS="COMMAND"
->dig</B
-> to only use IPv6 query transport.</P
-><P
->The <VAR
-CLASS="OPTION"
->-t</VAR
+>-t</TT
 > option sets the query type to
-<VAR
+<TT
 CLASS="PARAMETER"
->type</VAR
+><I
+>type</I
+></TT
 >.  It can be any valid query type which is
 supported in BIND9.  The default query type "A", unless the
-<VAR
+<TT
 CLASS="OPTION"
->-x</VAR
+>-x</TT
 > option is supplied to indicate a reverse lookup.
 A zone transfer can be requested by specifying a type of AXFR.  When
 an incremental zone transfer (IXFR) is required,
-<VAR
+<TT
 CLASS="PARAMETER"
->type</VAR
-> is set to <VAR
+><I
+>type</I
+></TT
+> is set to <TT
 CLASS="LITERAL"
->ixfr=N</VAR
+>ixfr=N</TT
 >.
 The incremental zone transfer will contain the changes made to the zone
 since the serial number in the zone's SOA record was
-<VAR
+<TT
 CLASS="PARAMETER"
->N</VAR
+><I
+>N</I
+></TT
 >.</P
 ><P
 >Reverse lookups - mapping addresses to names - are simplified by the
-<VAR
+<TT
 CLASS="OPTION"
->-x</VAR
-> option.  <VAR
+>-x</TT
+> option.  <TT
 CLASS="PARAMETER"
->addr</VAR
+><I
+>addr</I
+></TT
 > is an IPv4
 address in dotted-decimal notation, or a colon-delimited IPv6 address.
 When this option is used, there is no need to provide the
-<VAR
+<TT
 CLASS="PARAMETER"
->name</VAR
->, <VAR
+><I
+>name</I
+></TT
+>, <TT
 CLASS="PARAMETER"
->class</VAR
+><I
+>class</I
+></TT
 > and
-<VAR
+<TT
 CLASS="PARAMETER"
->type</VAR
+><I
+>type</I
+></TT
 > arguments.  <B
 CLASS="COMMAND"
 >dig</B
 >
 automatically performs a lookup for a name like
-<VAR
+<TT
 CLASS="LITERAL"
->11.12.13.10.in-addr.arpa</VAR
+>11.12.13.10.in-addr.arpa</TT
 > and sets the query type and
 class to PTR and IN respectively.  By default, IPv6 addresses are
-looked up using nibble format under the IP6.ARPA domain.
-To use the older RFC1886 method using the IP6.INT domain 
-specify the <VAR
+looked up using the IP6.ARPA domain and binary labels as defined in
+RFC2874.  To use the older RFC1886 method using the IP6.INT domain and
+"nibble" labels, specify the <TT
 CLASS="OPTION"
->-i</VAR
-> option.  Bit string labels (RFC2874)
-are now experimental and are not attempted.</P
+>-n</TT
+> (nibble) option.</P
 ><P
 >To sign the DNS queries sent by <B
 CLASS="COMMAND"
 >dig</B
 > and their
 responses using transaction signatures (TSIG), specify a TSIG key file
-using the <VAR
+using the <TT
 CLASS="OPTION"
->-k</VAR
+>-k</TT
 > option.  You can also specify the TSIG
-key itself on the command line using the <VAR
+key itself on the command line using the <TT
 CLASS="OPTION"
->-y</VAR
+>-y</TT
 > option;
-<VAR
+<TT
 CLASS="PARAMETER"
->name</VAR
+><I
+>name</I
+></TT
 > is the name of the TSIG key and
-<VAR
+<TT
 CLASS="PARAMETER"
->key</VAR
+><I
+>key</I
+></TT
 > is the actual key.  The key is a base-64
 encoded string, typically generated by <SPAN
 CLASS="CITEREFENTRY"
@@ -455,9 +478,9 @@ CLASS="REFENTRYTITLE"
 >(8)</SPAN
 >.
 
-Caution should be taken when using the <VAR
+Caution should be taken when using the <TT
 CLASS="OPTION"
->-y</VAR
+>-y</TT
 > option on
 multi-user systems as the key can be visible in the output from
 <SPAN
@@ -488,7 +511,7 @@ CLASS="FILENAME"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN156"
+NAME="AEN147"
 ></A
 ><H2
 >QUERY OPTIONS</H2
@@ -503,18 +526,18 @@ sections of the answer get printed, and others determine the timeout
 and retry strategies.</P
 ><P
 >Each query option is identified by a keyword preceded by a plus sign
-(<VAR
+(<TT
 CLASS="LITERAL"
->+</VAR
+>+</TT
 >).  Some keywords set or reset an option.  These may be preceded
-by the string <VAR
+by the string <TT
 CLASS="LITERAL"
->no</VAR
+>no</TT
 > to negate the meaning of that keyword.  Other
 keywords assign values to options like the timeout interval.  They
-have the form <VAR
+have the form <TT
 CLASS="OPTION"
->+keyword=value</VAR
+>+keyword=value</TT
 >.
 The query options are:
 
@@ -524,9 +547,9 @@ The query options are:
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]tcp</VAR
+>+[no]tcp</TT
 ></DT
 ><DD
 ><P
@@ -535,23 +558,25 @@ behaviour is to use UDP unless an AXFR or IXFR query is requested, in
 which case a TCP connection is used.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]vc</VAR
+>+[no]vc</TT
 ></DT
 ><DD
 ><P
 >Use [do not use] TCP when querying name servers.  This alternate
-syntax to <VAR
+syntax to <TT
 CLASS="PARAMETER"
->+[no]tcp</VAR
+><I
+>+[no]tcp</I
+></TT
 > is provided for backwards
 compatibility.  The "vc" stands for "virtual circuit".</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]ignore</VAR
+>+[no]ignore</TT
 ></DT
 ><DD
 ><P
@@ -559,16 +584,18 @@ CLASS="OPTION"
 default, TCP retries are performed.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+domain=somename</VAR
+>+domain=somename</TT
 ></DT
 ><DD
 ><P
 >Set the search list to contain the single domain
-<VAR
+<TT
 CLASS="PARAMETER"
->somename</VAR
+><I
+>somename</I
+></TT
 >, as if specified in a
 <B
 CLASS="COMMAND"
@@ -578,15 +605,17 @@ CLASS="COMMAND"
 CLASS="FILENAME"
 >/etc/resolv.conf</TT
 >, and enable search list
-processing as if the <VAR
+processing as if the <TT
 CLASS="PARAMETER"
->+search</VAR
+><I
+>+search</I
+></TT
 > option were given.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]search</VAR
+>+[no]search</TT
 ></DT
 ><DD
 ><P
@@ -598,42 +627,37 @@ CLASS="FILENAME"
 The search list is not used by default.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]defname</VAR
+>+[no]defname</TT
 ></DT
 ><DD
 ><P
->Deprecated, treated as a synonym for <VAR
+>Deprecated, treated as a synonym for <TT
 CLASS="PARAMETER"
->+[no]search</VAR
+><I
+>+[no]search</I
+></TT
 ></P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]aaonly</VAR
+>+[no]aaonly</TT
 ></DT
 ><DD
 ><P
->Sets the "aa" flag in the query.</P
+>This option does nothing.  It is provided for compatibility with old
+versions of <B
+CLASS="COMMAND"
+>dig</B
+> where it set an unimplemented
+resolver flag.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]aaflag</VAR
-></DT
-><DD
-><P
->A synonym for <VAR
-CLASS="PARAMETER"
->+[no]aaonly</VAR
->.</P
-></DD
-><DT
-><VAR
-CLASS="OPTION"
->+[no]adflag</VAR
+>+[no]adflag</TT
 ></DT
 ><DD
 ><P
@@ -643,9 +667,9 @@ but the ability to set the bit in the query is provided for
 completeness.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]cdflag</VAR
+>+[no]cdflag</TT
 ></DT
 ><DD
 ><P
@@ -653,27 +677,9 @@ CLASS="OPTION"
 requests the server to not perform DNSSEC validation of responses.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]cl</VAR
-></DT
-><DD
-><P
->Display [do not display] the CLASS when printing the record.</P
-></DD
-><DT
-><VAR
-CLASS="OPTION"
->+[no]ttlid</VAR
-></DT
-><DD
-><P
->Display [do not display] the TTL when printing the record.</P
-></DD
-><DT
-><VAR
-CLASS="OPTION"
->+[no]recurse</VAR
+>+[no]recurse</TT
 ></DT
 ><DD
 ><P
@@ -683,19 +689,23 @@ CLASS="COMMAND"
 >dig</B
 >
 normally sends recursive queries.  Recursion is automatically disabled
-when the <VAR
+when the <TT
 CLASS="PARAMETER"
->+nssearch</VAR
+><I
+>+nssearch</I
+></TT
 > or
-<VAR
+<TT
 CLASS="PARAMETER"
->+trace</VAR
+><I
+>+trace</I
+></TT
 > query options are used.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]nssearch</VAR
+>+[no]nssearch</TT
 ></DT
 ><DD
 ><P
@@ -708,9 +718,9 @@ looked up and display the SOA record that each name server has for the
 zone.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]trace</VAR
+>+[no]trace</TT
 ></DT
 ><DD
 ><P
@@ -725,9 +735,9 @@ root servers, showing the answer from each server that was used to
 resolve the lookup.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]cmd</VAR
+>+[no]cmd</TT
 ></DT
 ><DD
 ><P
@@ -739,9 +749,9 @@ CLASS="COMMAND"
 been applied.  This comment is printed by default.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]short</VAR
+>+[no]short</TT
 ></DT
 ><DD
 ><P
@@ -749,24 +759,26 @@ CLASS="OPTION"
 verbose form.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]identify</VAR
+>+[no]identify</TT
 ></DT
 ><DD
 ><P
 >Show [or do not show] the IP address and port number that supplied the
-answer when the <VAR
+answer when the <TT
 CLASS="PARAMETER"
->+short</VAR
+><I
+>+short</I
+></TT
 > option is enabled.  If
 short form answers are requested, the default is not to show the
 source address and port number of the server that provided the answer.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]comments</VAR
+>+[no]comments</TT
 ></DT
 ><DD
 ><P
@@ -774,9 +786,9 @@ CLASS="OPTION"
 print comments.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]stats</VAR
+>+[no]stats</TT
 ></DT
 ><DD
 ><P
@@ -785,9 +797,9 @@ was made, the size of the reply and so on.  The default behaviour is
 to print the query statistics.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]qr</VAR
+>+[no]qr</TT
 ></DT
 ><DD
 ><P
@@ -795,9 +807,9 @@ CLASS="OPTION"
 By default, the query is not printed.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]question</VAR
+>+[no]question</TT
 ></DT
 ><DD
 ><P
@@ -805,9 +817,9 @@ CLASS="OPTION"
 returned.  The default is to print the question section as a comment.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]answer</VAR
+>+[no]answer</TT
 ></DT
 ><DD
 ><P
@@ -815,9 +827,9 @@ CLASS="OPTION"
 is to display it.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]authority</VAR
+>+[no]authority</TT
 ></DT
 ><DD
 ><P
@@ -825,9 +837,9 @@ CLASS="OPTION"
 default is to display it.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]additional</VAR
+>+[no]additional</TT
 ></DT
 ><DD
 ><P
@@ -835,82 +847,76 @@ CLASS="OPTION"
 The default is to display it.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]all</VAR
+>+[no]all</TT
 ></DT
 ><DD
 ><P
 >Set or clear all display flags.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+time=T</VAR
+>+time=T</TT
 ></DT
 ><DD
 ><P
 >&#13;Sets the timeout for a query to
-<VAR
+<TT
 CLASS="PARAMETER"
->T</VAR
+><I
+>T</I
+></TT
 > seconds.  The default time out is 5 seconds.
-An attempt to set <VAR
+An attempt to set <TT
 CLASS="PARAMETER"
->T</VAR
+><I
+>T</I
+></TT
 > to less than 1 will result
 in a query timeout of 1 second being applied.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+tries=T</VAR
-></DT
-><DD
-><P
->Sets the number of times to try UDP queries to server to
-<VAR
-CLASS="PARAMETER"
->T</VAR
-> instead of the default, 3.  If
-<VAR
-CLASS="PARAMETER"
->T</VAR
-> is less than or equal to zero, the number of
-tries is silently rounded up to 1.</P
-></DD
-><DT
-><VAR
-CLASS="OPTION"
->+retry=T</VAR
+>+tries=T</TT
 ></DT
 ><DD
 ><P
 >Sets the number of times to retry UDP queries to server to
-<VAR
+<TT
 CLASS="PARAMETER"
->T</VAR
-> instead of the default, 2.  Unlike
-<VAR
+><I
+>T</I
+></TT
+> instead of the default, 3.  If
+<TT
 CLASS="PARAMETER"
->+tries</VAR
->, this does not include the initial
-query.</P
+><I
+>T</I
+></TT
+> is less than or equal to zero, the number of
+retries is silently rounded up to 1.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+ndots=D</VAR
+>+ndots=D</TT
 ></DT
 ><DD
 ><P
 >Set the number of dots that have to appear in
-<VAR
+<TT
 CLASS="PARAMETER"
->name</VAR
-> to <VAR
+><I
+>name</I
+></TT
+> to <TT
 CLASS="PARAMETER"
->D</VAR
+><I
+>D</I
+></TT
 > for it to be
 considered absolute.  The default value is that defined using the
 ndots statement in <TT
@@ -919,12 +925,12 @@ CLASS="FILENAME"
 >, or 1 if no
 ndots statement is present.  Names with fewer dots are interpreted as
 relative names and will be searched for in the domains listed in the
-<VAR
+<TT
 CLASS="OPTION"
->search</VAR
-> or <VAR
+>search</TT
+> or <TT
 CLASS="OPTION"
->domain</VAR
+>domain</TT
 > directive in
 <TT
 CLASS="FILENAME"
@@ -932,24 +938,26 @@ CLASS="FILENAME"
 >.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+bufsize=B</VAR
+>+bufsize=B</TT
 ></DT
 ><DD
 ><P
 >Set the UDP message buffer size advertised using EDNS0 to
-<VAR
+<TT
 CLASS="PARAMETER"
->B</VAR
+><I
+>B</I
+></TT
 > bytes.  The maximum and minimum sizes of this
 buffer are 65535 and 0 respectively.  Values outside this range are
 rounded up or down appropriately.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]multiline</VAR
+>+[no]multiline</TT
 ></DT
 ><DD
 ><P
@@ -962,9 +970,9 @@ CLASS="COMMAND"
 > output.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]fail</VAR
+>+[no]fail</TT
 ></DT
 ><DD
 ><P
@@ -973,9 +981,9 @@ to not try the next server which is the reverse of normal stub resolver
 behaviour.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]besteffort</VAR
+>+[no]besteffort</TT
 ></DT
 ><DD
 ><P
@@ -983,47 +991,14 @@ CLASS="OPTION"
 The default is to not display malformed answers.</P
 ></DD
 ><DT
-><VAR
+><TT
 CLASS="OPTION"
->+[no]dnssec</VAR
+>+[no]dnssec</TT
 ></DT
 ><DD
 ><P
 >Requests DNSSEC records be sent by setting the DNSSEC OK bit (DO)
 in the OPT record in the additional section of the query.</P
-></DD
-><DT
-><VAR
-CLASS="OPTION"
->+[no]sigchase</VAR
-></DT
-><DD
-><P
->Chase DNSSEC signature chains.  Requires dig be compiled with
--DDIG_SIGCHASE.</P
-></DD
-><DT
-><VAR
-CLASS="OPTION"
->+trusted-key=####</VAR
-></DT
-><DD
-><P
->Specify a trusted key to be used with <VAR
-CLASS="OPTION"
->+sigchase</VAR
->.
-Requires dig be compiled with -DDIG_SIGCHASE.</P
-></DD
-><DT
-><VAR
-CLASS="OPTION"
->+[no]topdown</VAR
-></DT
-><DD
-><P
->When chasing DNSSEC signature chains perform a top down validation.
-Requires dig be compiled with -DDIG_SIGCHASE.</P
 ></DD
 ></DL
 ></DIV
@@ -1032,7 +1007,7 @@ Requires dig be compiled with -DDIG_SIGCHASE.</P
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN385"
+NAME="AEN338"
 ></A
 ><H2
 >MULTIPLE QUERIES</H2
@@ -1042,16 +1017,18 @@ CLASS="COMMAND"
 >dig </B
 > supports
 specifying multiple queries on the command line (in addition to
-supporting the <VAR
+supporting the <TT
 CLASS="OPTION"
->-f</VAR
+>-f</TT
 > batch file option).  Each of those
 queries can be supplied with its own set of flags, options and query
 options.</P
 ><P
->In this case, each <VAR
+>In this case, each <TT
 CLASS="PARAMETER"
->query</VAR
+><I
+>query</I
+></TT
 > argument represent an
 individual query in the command-line syntax described above.  Each
 consists of any of the standard options and flags, the name to be
@@ -1062,9 +1039,9 @@ should be applied to that query.</P
 can also be supplied.  These global query options must precede the
 first tuple of name, class, type, options, flags, and query options
 supplied on the command line.  Any global query options (except
-the <VAR
+the <TT
 CLASS="OPTION"
->+[no]cmd</VAR
+>+[no]cmd</TT
 > option) can be
 overridden by a query-specific set of query options.  For example:
 <PRE
@@ -1075,42 +1052,46 @@ shows how <B
 CLASS="COMMAND"
 >dig</B
 > could be used from the command line
-to make three lookups: an ANY query for <VAR
+to make three lookups: an ANY query for <TT
 CLASS="LITERAL"
->www.isc.org</VAR
+>www.isc.org</TT
 >, a
 reverse lookup of 127.0.0.1 and a query for the NS records of
-<VAR
+<TT
 CLASS="LITERAL"
->isc.org</VAR
+>isc.org</TT
 >.
 
-A global query option of <VAR
+A global query option of <TT
 CLASS="PARAMETER"
->+qr</VAR
+><I
+>+qr</I
+></TT
 > is applied, so
 that <B
 CLASS="COMMAND"
 >dig</B
 > shows the initial query it made for each
 lookup.  The final query has a local query option of
-<VAR
+<TT
 CLASS="PARAMETER"
->+noqr</VAR
+><I
+>+noqr</I
+></TT
 > which means that <B
 CLASS="COMMAND"
 >dig</B
 >
 will not print the initial query when it looks up the NS records for
-<VAR
+<TT
 CLASS="LITERAL"
->isc.org</VAR
+>isc.org</TT
 >.</P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN403"
+NAME="AEN356"
 ></A
 ><H2
 >FILES</H2
@@ -1128,7 +1109,7 @@ CLASS="FILENAME"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN409"
+NAME="AEN362"
 ></A
 ><H2
 >SEE ALSO</H2
@@ -1162,7 +1143,7 @@ CLASS="CITETITLE"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN422"
+NAME="AEN375"
 ></A
 ><H2
 >BUGS </H2

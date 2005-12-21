@@ -1,23 +1,23 @@
-/*	$NetBSD: os.c,v 1.1.1.1 2004/05/17 23:43:25 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.2 2005/12/21 19:51:23 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.5.2.3.8.9 2004/03/08 04:04:22 marka Exp */
+/* Id: os.c,v 1.5.2.3 2002/08/08 19:15:19 mayer Exp */
 
 #include <config.h>
 #include <stdarg.h>
@@ -35,26 +35,19 @@
 
 #include <isc/print.h>
 #include <isc/result.h>
-#include <isc/strerror.h>
 #include <isc/string.h>
+//#include <isc/ntfile.h>
 #include <isc/ntpaths.h>
-#include <isc/util.h>
-#include <isc/win32os.h>
 
 #include <named/main.h>
-#include <named/log.h>
 #include <named/os.h>
 #include <named/globals.h>
 #include <named/ntservice.h>
 
 
 static char *pidfile = NULL;
-static int devnullfd = -1;
 
 static BOOL Initialized = FALSE;
-
-static char *version_error = 
-	"named requires Windows 2000 Service Pack 2 or later to run correctly";
 
 void
 ns_paths_init() {
@@ -72,22 +65,6 @@ ns_paths_init() {
 	Initialized = TRUE;
 }
 
-/*
- * Due to Knowledge base article Q263823 we need to make sure that
- * Windows 2000 systems have Service Pack 2 or later installed and
- * warn when it isn't.
- */
-static void
-version_check(const char *progname) {
-
-	if(isc_win32os_majorversion() < 5)
-		return;	/* No problem with Version 4.0 */
-	if(isc_win32os_versioncheck(5, 0, 2, 0) < 0)
-		if (ntservice_isservice())
-			NTReportError(progname, version_error);
-		else 
-			fprintf(stderr, "%s\n", version_error);
-}
 
 static void
 setup_syslog(const char *progname) {
@@ -106,43 +83,34 @@ ns_os_init(const char *progname) {
 	ns_paths_init();
 	setup_syslog(progname);
 	ntservice_init();
-	version_check(progname);
 }
 
 void
 ns_os_daemonize(void) {
+	int fd;
+
 	/*
 	 * Try to set stdin, stdout, and stderr to /dev/null, but press
 	 * on even if it fails.
+	 *
+	 * XXXMLG The close() calls here are unneeded on all but NetBSD, but
+	 * are harmless to include everywhere.  dup2() is supposed to close
+	 * the FD if it is in use, but unproven-pthreads-0.16 is broken
+	 * and will end up closing the wrong FD.  This will be fixed eventually,
+	 * and these calls will be removed.
 	 */
-	if (devnullfd != -1) {
-		if (devnullfd != _fileno(stdin)) {
-			close(_fileno(stdin));
-			(void)_dup2(devnullfd, _fileno(stdin));
-		}
-		if (devnullfd != _fileno(stdout)) {
-			close(_fileno(stdout));
-			(void)_dup2(devnullfd, _fileno(stdout));
-		}
-		if (devnullfd != _fileno(stderr)) {
-			close(_fileno(stderr));
-			(void)_dup2(devnullfd, _fileno(stderr));
-		}
-	}
-}
-
-void
-ns_os_opendevnull(void) {
-	devnullfd = open("NUL", O_RDWR, 0);
-}
-
-void
-ns_os_closedevnull(void) {
-	if (devnullfd != _fileno(stdin) &&
-	    devnullfd != _fileno(stdout) &&
-	    devnullfd != _fileno(stderr)) {
-		close(devnullfd);
-		devnullfd = -1;
+	fd = open("NUL", O_RDWR, 0);
+	if (fd != -1) {
+		close(_fileno(stdin));
+		(void)_dup2(fd, _fileno(stdin));
+		close(_fileno(stdout));
+		(void)_dup2(fd, _fileno(stdout));
+		close(_fileno(stderr));
+		(void)_dup2(fd, _fileno(stderr));
+		if (fd != _fileno(stdin) &&
+		    fd != _fileno(stdout) &&
+		    fd != _fileno(stderr))
+			(void)close(fd);
 	}
 }
 
@@ -199,7 +167,6 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
 	FILE *lockfile;
 	size_t len;
 	pid_t pid;
-	char strbuf[ISC_STRERRORSIZE];
 	void (*report)(const char *, ...);
 
 	/*
@@ -210,13 +177,11 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
 
 	cleanup_pidfile();
 
-	if (strcmp(filename, "none") == 0)
-		return;
 	len = strlen(filename);
 	pidfile = malloc(len + 1);
 	if (pidfile == NULL) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		(*report)("couldn't malloc '%s': %s", filename, strbuf);
+		(*report)("couldn't malloc '%s': %s", filename,
+			  strerror(errno));
 		return;
 	}
 	/* This is safe. */
@@ -224,17 +189,16 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
 
 	fd = safe_open(filename, ISC_FALSE);
 	if (fd < 0) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		(*report)("couldn't open pid file '%s': %s", filename, strbuf);
+		(*report)("couldn't open pid file '%s': %s", filename,
+			  strerror(errno));
 		free(pidfile);
 		pidfile = NULL;
 		return;
 	}
 	lockfile = fdopen(fd, "w");
 	if (lockfile == NULL) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		(*report)("could not fdopen() pid file '%s': %s",
-			  filename, strbuf);
+		(*report)("could not fdopen() pid file '%s': %s", filename,
+			  strerror(errno));
 		(void)close(fd);
 		cleanup_pidfile();
 		return;
@@ -262,25 +226,4 @@ ns_os_shutdown(void) {
 	closelog();
 	cleanup_pidfile();
 	ntservice_shutdown();	/* This MUST be the last thing done */
-}
-
-isc_result_t
-ns_os_gethostname(char *buf, size_t len) {
-	int n;
-
-	n = gethostname(buf, len);
-	return ((n == 0) ? ISC_R_SUCCESS : ISC_R_FAILURE);
-}
-
-void
-ns_os_shutdownmsg(char *command, isc_buffer_t *text) {
-	UNUSED(command);
-	UNUSED(text);
-}
-
-void
-ns_os_tzset(void) {
-#ifdef HAVE_TZSET
-	tzset();
-#endif
 }

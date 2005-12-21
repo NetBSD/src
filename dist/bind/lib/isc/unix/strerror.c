@@ -1,23 +1,23 @@
-/*	$NetBSD: strerror.c,v 1.1.1.1 2004/05/17 23:45:06 christos Exp $	*/
+/*	$NetBSD: strerror.c,v 1.1.1.2 2005/12/21 19:59:08 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: strerror.c,v 1.1.2.1.10.3 2004/03/08 09:04:57 marka Exp */
+/* Id: strerror.c,v 1.1.2.1 2001/10/22 23:28:25 gson Exp */
 
 #include <config.h>
 
@@ -43,7 +43,7 @@ extern const char * const sys_errlist[];
 extern const int sys_nerr;
 #endif
 
-void
+char *
 isc__strerror(int num, char *buf, size_t size) {
 #ifdef HAVE_STRERROR
 	char *msg;
@@ -61,6 +61,7 @@ isc__strerror(int num, char *buf, size_t size) {
 	else
 		snprintf(buf, size, "Unknown error: %u", unum);
 	UNLOCK(&isc_strerror_lock);
+	return (buf);
 #else
 	unsigned int unum = num;
 
@@ -70,5 +71,6 @@ isc__strerror(int num, char *buf, size_t size) {
 		snprintf(buf, size, "%s", sys_errlist[num]);
 	else
 		snprintf(buf, size, "Unknown error: %u", unum);
+	return (buf);
 #endif
 }

@@ -1,0 +1,953 @@
+
+
+Network Working Group                                       S. Josefsson
+Internet-Draft                                              RSA Security
+Expires: May 25, 2001                                  November 24, 2000
+
+
+   Authenticating denial of existence in DNS with minimum disclosure
+               (or; An alternative to DNSSEC NXT records)
+                  draft-ietf-dnsext-not-existing-rr-01
+
+Status of this Memo
+
+   This document is an Internet-Draft and is in full conformance with
+   all provisions of Section 10 of RFC2026.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF), its areas, and its working groups. Note that
+   other groups may also distribute working documents as
+   Internet-Drafts.
+
+   Internet-Drafts are draft documents valid for a maximum of six
+   months and may be updated, replaced, or obsoleted by other documents
+   at any time. It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   The list of current Internet-Drafts can be accessed at
+   http://www.ietf.org/ietf/1id-abstracts.txt.
+
+   The list of Internet-Draft Shadow Directories can be accessed at
+   http://www.ietf.org/shadow.html.
+
+   This Internet-Draft will expire on May 25, 2001.
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (2000). All Rights Reserved.
+
+Abstract
+
+   This draft present an alternative to NXT records, used to achieve
+   authenticated denial of existence of a domain name, class and type. 
+   Problems with NXT records, as specified in RFC 2535, are identified.
+   One solution, the NO record, is presented.
+
+   The NO record differ from the NXT record by using a cryptographic
+   hash value instead of the domain name.  This prevent an adversery
+   from collecting information by "chaining" through a zone.  It also
+   remove delegation point concerns that was a side effect of NXT
+   records.  The document also describe hash truncation and record
+   merging that reduces storage/network load.
+
+
+
+Josefsson                 Expires May 25, 2001                  [Page 1]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+Table of Contents
+
+   1.     Introduction . . . . . . . . . . . . . . . . . . . . . . .   3
+   2.     Context  . . . . . . . . . . . . . . . . . . . . . . . . .   3
+   3.     The NO Resource Record . . . . . . . . . . . . . . . . . .   4
+   3.1    Idea . . . . . . . . . . . . . . . . . . . . . . . . . . .   4
+   3.2    NO RDATA Format  . . . . . . . . . . . . . . . . . . . . .   4
+   3.3    NO RDATA on-the-wire format example  . . . . . . . . . . .   6
+   3.4    Owner Names  . . . . . . . . . . . . . . . . . . . . . . .   6
+   3.5    Additional Complexity Due To Wildcards . . . . . . . . . .   7
+   3.6    No Considerations at Delegation Points . . . . . . . . . .   7
+   3.7    Hash Truncation and Dynamic Updates  . . . . . . . . . . .   8
+   3.8    Reducing Number of Records . . . . . . . . . . . . . . . .   9
+   3.9    Hash Collisions  . . . . . . . . . . . . . . . . . . . . .   9
+   3.10   Authenticating Denial of NO Records  . . . . . . . . . . .   9
+   3.11   Case Considerations  . . . . . . . . . . . . . . . . . . .  10
+   3.12   Presentation Format  . . . . . . . . . . . . . . . . . . .  10
+   3.13   Examples . . . . . . . . . . . . . . . . . . . . . . . . .  10
+   3.13.1 Adding NO Records to a Zone  . . . . . . . . . . . . . . .  10
+   3.13.2 Simple NO creating entity  . . . . . . . . . . . . . . . .  11
+   3.13.3 Advanced NO creating entity  . . . . . . . . . . . . . . .  11
+   3.13.4 Resolver Query for Non-existing Domain . . . . . . . . . .  11
+   3.13.5 Resolver Query for Non-existing Type At Existing Domain  .  12
+   4.     Comparing NO and NXT . . . . . . . . . . . . . . . . . . .  13
+   4.1    Denial Of Existence Of Non-Existing Names  . . . . . . . .  13
+   4.2    Denial Of Types Of Existing Names  . . . . . . . . . . . .  13
+   4.3    Information disclosure (chain problem) . . . . . . . . . .  13
+   4.4    Delegation problem . . . . . . . . . . . . . . . . . . . .  13
+   4.5    Zone size (Bytes)  . . . . . . . . . . . . . . . . . . . .  13
+   4.6    Zone size (Number Of Records)  . . . . . . . . . . . . . .  13
+   4.7    Zone size (Number Of Owner names)  . . . . . . . . . . . .  14
+   4.8    SIG Labels field and Wildcard records  . . . . . . . . . .  14
+   4.9    Dynamic Updates  . . . . . . . . . . . . . . . . . . . . .  14
+   5.     Security Considerations  . . . . . . . . . . . . . . . . .  15
+   6.     IANA Considerations  . . . . . . . . . . . . . . . . . . .  15
+          References . . . . . . . . . . . . . . . . . . . . . . . .  16
+          Author's Address . . . . . . . . . . . . . . . . . . . . .  16
+          Full Copyright Statement . . . . . . . . . . . . . . . . .  17
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson                 Expires May 25, 2001                  [Page 2]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+1. Introduction
+
+   "Domain Name Security Extensions", RFC 2535 [1], specifies several
+   extensions to DNS that provides data integrity and authentication. 
+   Among them is the NXT record, used to achieve authenticated denial
+   of existence of domains, and authenticated denial of existence on
+   certain class/types on existing domains.
+
+   As a consequence of NXT records it is possible to "chain" through a
+   zone secured by DNS security extensions, collecting all names and/or
+   records in the zone.  NXT records also introduce a complication at
+   delegation points.  These are the main problems that motivated this
+   draft.
+
+2. Context
+
+   There have been arguments that the "chain" problem of NXT records is
+   a non-issue.  Often used is the argument that information in DNS is
+   public, and if you wish to keep information private, you shouldn't
+   publish it in DNS.  This might be true, but nonetheless major
+   service providers and companies are restricting access to zone
+   transfers.  Also, people have debated whether NXT records should be
+   part of DNSSEC at all because of this problem [5].
+
+   Another aspect exist.  When DNS is used to store certificates, as
+   described in RFC 2538 [2], certificates can identify individuals
+   and/or carry authentication information for special purposes. This
+   context has been the motivation for developing this draft.
+
+   The "chain" problem is not the only concern with NXT records.  The
+   delegation considerations for NXT records (different RRsets in the
+   parent and child for the same domain) has also been regarded as a
+   flaw of the NXT records.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson                 Expires May 25, 2001                  [Page 3]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+3. The NO Resource Record
+
+   This section describe the NO Resource Record.
+
+3.1 Idea
+
+   A straight-forward extension to the NXT record that minimize
+   disclosure of information is to store a one-way function value
+   instead of the actual domain name.  This is similar to NXT records;
+   where NXT records secure a interval where no existing domain names
+   are to be found, NO records secure a interval where no one-way value
+   of existing domain names are to be found.
+
+   The benefit, of course, is that an adversary does not yield any
+   useful information from the record.  Specifically, "chaining"
+   through a zone to collect all records is no longer possible.
+
+   This idea has been extended in this document into allowing (but not
+   requiring) one record to deny existence of several records, and
+   truncating the hash value to the shortest unique prefix to preserve
+   space.
+
+3.2 NO RDATA Format
+
+   The RDATA for a NO RR consists of one or more fields with the
+   following structure.  The structure have the following elements: a
+   zero-terminated list of RR types, a hash length specifier, and a
+   hash value, as shown below.  Both the "RR type" list and the "next
+   hash value" fields are of variable width.
+
+                        1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               /
+   /                       owner RR type list                      /
+   /                                                               |
+   +---------------+-----------------------------------------------+
+   | # hash octets |       SHA-1 hash value                        /
+   +---------------+                                               /
+   /                                                               /
+   +---------------------------------------------------------------+
+
+   Replacing the NXT RR "type bit map" field is a variable length list
+   of RR types.  Each RR type is 16 bits.  As the list is of variable
+   length, a end-of-list indicator is require.  End of the list is
+   signalled by a all-zero RR type. Each element is a 2 byte RR type. 
+   The list MUST be sorted in RR type order.  The change from NXT's
+   bitmap field removes the limit of authenticating only the first 127
+   RR types.
+
+
+Josefsson                 Expires May 25, 2001                  [Page 4]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+   The RR type list indicates what types exist at the previous hash
+   value -- i.e. the first RR type list in the RRdata of a NO record
+   indicate what RR types exist at the domain name that hashes to the
+   owner name of that NO record.  The second RR type list, if any, in
+   the RRdata of a NO record indicate what RR types exist at the domain
+   name that hashes the first SHA-1 value in the RRdata.  And so on. 
+   See below for a complete example of the on-the-wire-format of a NO
+   record with hash truncation and record merging and its
+   interpretation.
+
+   Length of the hash value field is denoted by the # hash octets
+   fields, it is a unsigned integer ranging from 0 to 255. The meaning
+   of a zero length integer is reserved.
+
+   The SHA-1 hash value field is a variable length field containing the
+   actual hash value.
+
+   The NO RRs for a zone SHOULD be automatically calculated and added
+   to the zone when SIGs are added.  The NO RR's TTL SHOULD NOT exceed
+   the zone minimum TTL.
+
+   The type number for the NO RR is TBD.
+
+   NO RR's MUST only be signed by zone level keys [7].
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson                 Expires May 25, 2001                  [Page 5]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+3.3 NO RDATA on-the-wire format example
+
+   The following is a example of the on-the-wire-format of a complete
+   NO resource record were hash truncation and record merging is used. 
+   It is the on-the-wire format of the NO record in section 3.13.1.2.
+
+                        1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |         RR type 1 (A)         |   RR type 0 (end-of-list)     |
+   +---------------+-----------------------------------------------+
+   |  1 hash octet |  Hash 0x22    |        RR type 2 (NS)         |
+   +---------------+---------------+-------------------------------+
+   |         RR type 6 (SOA)       |        RR type 15 (MX)        |
+   +-------------------------------+---------------+---------------+
+   |    RR type 0 (end-of-list)    |  1 hash octet |  Hash 0x83    |
+   +-------------------------------+---------------+---------------+
+   |         RR type 1 (A)         |   RR type 0 (end-of-list)     |
+   +---------------+-----------------------------------------------+
+   |  1 hash octet |  Hash 0x90    |        RR type 1 (A)          |
+   +---------------+---------------+-------------------------------+
+   |         RR type 16 (TXT)      |   RR type 0 (end-of-list)     |
+   +---------------+---------------+-------------------------------+
+   |  1 hash octet |  Hash 0x1b    |
+   +-------------------------------+
+
+   The intepretation here is that the domain that corresponds with the
+   NO owner name ("1b._no.example.org.", not shown above) have a A
+   record, that the domain that hash to 0x22 (truncated to one octet)
+   have a NS, SOA and MX record, that the domain that hash to 0x83
+   (truncated to 1 octet) have a A record etc. Note that the last hash
+   value of NO RRdata does not have a RR type list in the same record.
+
+3.4 Owner Names
+
+   As the previous NO RR format describe, the "next domain name" of NXT
+   records is replaced by its hash value. This removes the possibility
+   of chaining both backwards and forwards through a zone.
+
+   But without also modifying the owner names of NO records it is still
+   not difficult to chain through a zone. Consider querying a server
+   for (say) "m._no.example.org", the reply could contain a NO record
+   for "g._no.example.org", now an adversary can lookup records for
+   "g._no.example.org", and then issue a query for a domain that would
+   sort (in "the canonical order" described in RFC 2535) just before
+   "g._no.example.org". Applying the technique over and over again, all
+   records in the zone can still be collected.
+
+   To prevent this, the owner names of NO records is replaced by its
+
+
+Josefsson                 Expires May 25, 2001                  [Page 6]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+   hash value.  As DNS places limits on what characters can be used in
+   owner names, the owner name uses a base 16 "hex" encoding [6].
+
+   In order to remove the (very small) chance of generated NO record
+   names colliding with existing, "real", domains, all NO records MUST
+   be stored directly in the "_no" domain of the zone.  I.e., a zone
+   "example.org." store its NO records as, say,
+   "35a4d1._no.example.org.".
+
+   This change in owner names also make sure that the delegation point
+   concerns of NXT records does not occur in NO records.
+
+3.5 Additional Complexity Due To Wildcards
+
+   Proving that a non-existent name response is correct, or that a
+   wildcard expansion response is correct, makes things a little more
+   complex.
+
+   In particular, when a non-existent name response is returned, an NO
+   must be returned showing that the exact name did not exist and, in
+   general, one or more additional NO need to be returned to also prove
+   that there wasn't a wildcard whose expansion should have been
+   returned. (There is no need to return multiple copies of the same
+   NO.) These NOs, if any, are returned in the authority section of the
+   response.
+
+   Furthermore, if a wildcard expansion is returned in a response, in
+   general one or more NOs needs to also be returned in the authority
+   section to prove that no more specific name (including possibly more
+   specific wildcards in the zone) existed on which the response should
+   have been based.
+
+3.6 No Considerations at Delegation Points
+
+   When NXT records are used to deny existance, there exists a special
+   case at delegation points.  Namely, that two distinct RRsets exist
+   for the same owner name, one in the parent zone and one in the child
+   zone.
+
+   $ORIGIN parent.example.org.
+   @       SOA
+           NS
+           NXT     child   SOA NS SIG NXT
+   child   NS      foo
+           NXT     next    NS SIG NXT
+   next    A       127.0.0.2
+
+
+
+
+
+Josefsson                 Expires May 25, 2001                  [Page 7]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+   $ORIGIN child.parent.example.org.
+   @       SOA
+           NS
+           NXT     name    SOA NS SIG NXT
+   name    A       127.0.2.1
+           NXT     child.parent.example.org.
+
+   With NO records, the parent would deny existance of domains in
+   "_no.parent.example" and the child in
+   "_no.child.parent.example.org".  Thus no NO RRset collision occur.
+
+3.7 Hash Truncation and Dynamic Updates
+
+   Entities that create NO records MAY truncate the hash field.  It
+   MUST NOT truncate hash fields so they are no longer unique
+   throughout a zone.  Hash truncations MUST only be done to octet
+   offsets.  Truncation MUST be such that less significant bits are
+   truncated, i.e. higher-order bits are preserved (see the examples).
+
+   Zones that are dynamically updated will have to calculate and add NO
+   records on-the-fly.  If hash truncation is used, adding a new name
+   to the zone will require updating (and signing) NO records for the
+   conflicting name(s).
+
+   Since truncation (and also "compression" described in the next
+   section) make it impossible to predict the corresponding NO record
+   given a domain name, resolvers should not ask for a hashed NO record
+   (aaaa._no.example.org. IN NO) for a known domain name if they want
+   to find out what types exist at the domain.  Instead, a resolver
+   might ask for NO records on the original name (www.example.org. IN
+   NO).  Such records will never exist, and the correct NO record will
+   be returned by the server.
+
+   To summarize, the behaviour of hash truncation should be
+   configurable in the entity that creates NO records, to accomodate
+   different usage-patterns.  If the zone is intended to be dynamicly
+   updated, hash truncation may be considered not worth the extra
+   on-the-fly processing required.
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson                 Expires May 25, 2001                  [Page 8]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+3.8 Reducing Number of Records
+
+   Entitities that create NO records MAY deny existence for several
+   records per NO record.  Entities that create NO records should take
+   care so that each resulting NO record is not "too large".  [Comments
+   on this?  Should there be a specific limit? It might be left as a
+   DNS Operational consideration]
+
+   Merging several NO records into one record also place more work on
+   the resolver.  Instead of parsing two hash values for each NO record
+   to determine if it's applicaple, a resolver will have to parse
+   several hash values and compare each.
+
+   The NO RR record consist of one or more RR type list / hash values,
+   described above, and a resolver need to parse the entire record to
+   collect each individual field.  I.e., a NO parse algorithm could
+   looke like: read RRs, stop when you read a zero RR type, read hash
+   length indicator, read hash size, if the entire record is read stop,
+   otherwise read RRs, stop when you read a zero RR type, etc..
+
+3.9 Hash Collisions
+
+   Hash value collisions are expected not to occur.  For SHA-1, the
+   probability that this should happen is 1 out of 2^80 on average.
+
+   However, collisions are actually only a problem if the domain names
+   producing the same hash value have different sets of existing types.
+
+   Consider the following records
+
+   ; SHA-1(one.example.org) = SHA-1(two.example.org)
+
+   one.example.org.	IN A 1.2.3.4
+   two.example.org.	IN A 5.6.7.8
+
+   Given that no other RR types exist for neither domain, both
+   "one.example.org" and "two.example.org" would be authenticated not
+   to exist by the same NO record.
+
+3.10 Authenticating Denial of NO Records
+
+   NO records (together with SIG records) authenticate denial for other
+   types in a zone.  Unlike NXT records that re-use the namespace in
+   the zone, NO records are not intended to authenticate denial of
+   other NO records.
+
+
+
+
+
+
+Josefsson                 Expires May 25, 2001                  [Page 9]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+3.11 Case Considerations
+
+   Before calculating SHA-1 hash values, domain names MUST be converted
+   into canonical format as described in RFC 2535. This is to make hash
+   comparisons possible.
+
+3.12 Presentation Format
+
+   NO RRs do not appear in original unsigned zone master files since
+   they should be derived from the zone as it is being signed.
+
+   If a signed file with NO records is printed or NO records are
+   printed by debugging code, they appear as a list of unsigned
+   integers or RR mnemonics, and the hash value in base 16 hex
+   representation [6] with "0x" prepended (to distinguish it from
+   integer RR codes).  The zero RR that terminate the list of RR types,
+   and the hash value length indicator, does not appear.
+
+   See the next section for examples of printed NO RRs.
+
+3.13 Examples
+
+   This section contain examples of NO records, using the reserved
+   domain exmaple.org [3].
+
+3.13.1 Adding NO Records to a Zone
+
+   Consider the following zone file.
+
+   $ORIGIN example.org.
+   @	IN SOA ...
+   @	IN NS ns
+   @	IN MX 0 server
+   ns	IN A ...
+   www	IN A ...
+   sERVEr	IN A ...
+   sERVEr	IN TXT "text"
+
+   ; SHA1(example.org.)          = 0x222c7a74bc40e818aa53b3eb0b15cd2350fbb3a1
+   ; SHA1(ns.example.org.)       = 0x1b7838c69a66eb50cc215f66ee4554d0c4c940a5
+   ; SHA1(www.example.org.)      = 0x839ebd4386c0b26d81f147421b5b7036e61438cf
+   ; SHA1(server.example.org.)   = 0x906a0ad5e604b1905828499dc8672ecb8de73e2f
+
+   Note that hash values are calculcated on the canonical form.
+
+   The following two sections describe two valid ways of adding NO
+   records to a zone.
+
+
+
+
+Josefsson                 Expires May 25, 2001                 [Page 10]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+3.13.2 Simple NO creating entity
+
+   A simple NO creator entity might not implement truncation or provide
+   the possibility to deny more than one records per NO record.  In
+   this case, the following would be added to the zone file.
+
+   $ORIGIN _no.example.org.
+   1b7838c69a66eb50cc215f66ee4554d0c4c940a5
+   		IN NO A 0x222c7a74bc40e818aa53b3eb0b15cd2350fbb3a1
+   222c7a74bc40e818aa53b3eb0b15cd2350fbb3a1
+   		IN NO NS SOA MX 0x839ebd4386c0b26d81f147421b5b7036e61438cf
+   839ebd4386c0b26d81f147421b5b7036e61438cf
+   		IN NO A 0x906a0ad5e604b1905828499dc8672ecb8de73e2f
+   906a0ad5e604b1905828499dc8672ecb8de73e2f
+   		IN NO A TXT 0x1b7838c69a66eb50cc215f66ee4554d0c4c940a5
+
+3.13.3 Advanced NO creating entity
+
+   A more advanced NO creator entity might append the following
+   instead, using both truncation and "compression".
+
+   $ORIGIN _no.example.org
+   1b	IN NO A 0x22 NS SOA MX 0x83 A 0x90 A TXT 0x1b A
+
+   Note that this contain 5 hash values while the zone only contain 4
+   records, the last value in the line above is in fact the first hash
+   value in the zone, closing the circular NO chain.
+
+3.13.4 Resolver Query for Non-existing Domain
+
+   Consider a client looking up the non-existant domain name
+   "baz.example.org.", using the zone file from the previous section. 
+   First, we note the following calculations.
+
+   SHA-1(baz.example.org.) = 0xd5d0f98783eec6e9943750f35904304bd1a4090e
+   SHA-1(*.example.org.)   = 0x7ab3776e3b529eb42467cc5d279c88ec951cf021
+
+   A server would reply with an RCODE of NXDOMAIN and the authority
+   section data including the following:
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson                 Expires May 25, 2001                 [Page 11]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+   ; backwards compatibility
+   example.org.		IN SOA
+
+   ; prove no baz.example.org
+   906a0ad5e604b1905828499dc8672ecb8de73e2f._no.example.org.
+   		IN NO A TXT 0x1b7838c69a66eb50cc215f66ee4554d0c4c940a5
+   906a0ad5e604b1905828499dc8672ecb8de73e2f._no.example.org. IN SIG NO
+
+   ; prove no *.example.org:
+   222c7a74bc40e818aa53b3eb0b15cd2350fbb3a1._no.example.org.
+   		IN NO NS SOA MX 0x839ebd4386c0b26d81f147421b5b7036e61438cf
+   222c7a74bc40e818aa53b3eb0b15cd2350fbb3a1._no.example.org. IN SIG NO
+
+   In order for a client to verify the authenticity of this reply, in
+   addition of verifying the SIG record, it will also need to calculate
+   the one-way hash of "baz.example.org." and verify it is contained
+   inside the interval of any NO record in the authority section. 
+   Also, to prove there are no wildcard records for baz.example.org.,
+   NO records for possible wildcard expansions are returned.  A client
+   should similarily calculate hash values of possible wildcards and
+   compare them to the authority section.
+
+   Of course, if the zone was generated with the more advanced NO
+   creating entity, only the NO record from the previous section would
+   have to be returned.
+
+3.13.5 Resolver Query for Non-existing Type At Existing Domain
+
+   Consider a client looking up TXT records for the existing domain
+   "www.example.org.", again, using the same zone file as previous.  A
+   server would reply with an authority section like the following:
+
+   839ebd4386c0b26d81f147421b5b7036e61438cf._no.example.org.
+   		IN NO A 0x906a0ad5e604b1905828499dc8672ecb8de73e2f
+   839ebd4386c0b26d81f147421b5b7036e61438cf._no.example.org. IN SIG NO
+
+   The resolver verifies the signature and make sure
+   SHA-1("bar.example.org.") hashes correctly.
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson                 Expires May 25, 2001                 [Page 12]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+4. Comparing NO and NXT
+
+   To ease comparison between NXT and NO records, this section
+   summarize (mis-)features of the NXT and the NO record formats. The
+   intent here is to address all operational differences between NO and
+   NXT records.
+
+4.1 Denial Of Existence Of Non-Existing Names
+
+   Both NXT and NO provide strong data non-existance for non-existing
+   names.
+
+   NXT records authenticate data non-existance up to the probability of
+   finding a collision in the signature algorithm (1 in 2^64 for
+   RSA/MD5).  NO records authenticate data non-existance up to the
+   probability of finding a collision in the signature algorithm (1 in
+   2^64 for RSA/MD5) and the NO record hash value (varies due to
+   truncation).  If the RSA/MD5 scheme is used, hash values in NO
+   records may be truncated to 64 bits.
+
+4.2 Denial Of Types Of Existing Names
+
+   Both NXT and NO provide strong data non-existance of types for
+   existing names.  The previous discussion also apply here.
+
+4.3 Information disclosure (chain problem)
+
+   NXT records make it possible to collect all names (and records) in a
+   zone.  NO records prohibit this.
+
+4.4 Delegation problem
+
+   NXT records require a special case where two different RRsets exist
+   at the same owner name, class and type.  NO records does not have
+   this problem.
+
+4.5 Zone size (Bytes)
+
+   The size difference is due to changing complete domain names with
+   hash values (SHA1 20 bytes).  Without truncation, NO records are
+   probably larger than most NXT records.  With truncation, NO records
+   uses a few byte per hash value instead of the (possibly compressed)
+   complete owner name.
+
+4.6 Zone size (Number Of Records)
+
+   When NO compression is not used, NXT and NO uses the same number of
+   records.
+
+
+
+Josefsson                 Expires May 25, 2001                 [Page 13]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+   However, NO compression can greatly reduce the number of records. 
+   As an example, considering a zone with records of 100.000 different
+   names.  NXT uses 200.000 records (NXT+SIG). Using NO compression
+   with 10 hash values on each reduce this number to 20.000 records
+   (NO+SIG).
+
+4.7 Zone size (Number Of Owner names)
+
+   NO uses twice the amount of owner names as NXT.
+
+   However, NO compression can be used to reduce this to a fraction of
+   the normal amount.  From the previous example with 10 hash values
+   per NO record, it will uses 10.000 additional owner names in a zone
+   with 100.000 names
+
+4.8 SIG Labels field and Wildcard records
+
+   It is marginally faster to verify signatures for NXT records when
+   wildcard records are involved -- the SIG "Label fields" hints can be
+   used to determine the canonical name. With NO records this hint
+   cannot be used, because it relies on knowing the full name whereas
+   only the hash is available. One need to try a few SHA1 hashes to
+   find the correct canonical name.  The number of hashes required to
+   try depend on the number of labels in the name, and scale linearly.
+
+   N.B.  This penalty only apply to wildcard records.
+
+4.9 Dynamic Updates
+
+   Resigning dynamically updated records is required both with NXT and
+   NO records.
+
+   However, when NO truncation and compression is used, the additional
+   penalty of re-hashing might also be required.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson                 Expires May 25, 2001                 [Page 14]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+5. Security Considerations
+
+   Chaining through all NO records is still technically possible,
+   altough it cannot be used to collect names and/or records in the
+   zone (other than NO records themself).
+
+   The security of NO record hash values is dependent on the security
+   of the SHA-1 hash functions used.  Truncation may affect this, but
+   the birthday-paradox argument does not apply. One must find a hash
+   collision given an existing hash value -- not simply find any hash
+   collision.  It is thus reasonably to truncate NO records to half the
+   hash length used in the signature scheme (this would mean 64 bits in
+   the RSA/MD5 case).
+
+   It should be pointed out that given this scheme, it is easy to
+   estimate the number of records within a zone, considering hash
+   values are supposed to be equally distributed.  This can be foiled
+   by adding any number of bogus records in the zone.
+
+   The authentication of NO records is provided by DNS SIG records, as
+   specified in RFC 2535. The security considerations of RFC 2535 is
+   not affected by this document, and should also be considered.
+
+6. IANA Considerations
+
+   The NO RR type number should be selected by the IANA from the normal
+   RR type space.
+
+   The meaning of a zero hash length value can only be assigned by a
+   standards action.
+
+Acknowledgement
+
+   The idea of encrypting names, that later evolved into just hashing
+   them, was originally proposed by Jonas Holmerin in private
+   discussions about DNS Security.  Magnus Nystr÷m proposed truncating
+   the hash values.
+
+   Thanks to John Linn and Magnus Nystr÷m for comments on a early
+   version of this draft.
+
+   Olafur Gudmundsson pointed out delegation point issues, suggested
+   the use of a "_no" subdomain, and suggested replacing the type bit
+   map field with a sorted list.  From the namedroppers mailing list,
+   I'd like to thank Alan Barrett, Andrew Draper, Andreas Gustafsson,
+   Peter Koch and Brian Wellington for comments and suggestions.  Ed
+   Lewis noted that truncation to shortest unique prefix would not work.
+
+
+
+
+Josefsson                 Expires May 25, 2001                 [Page 15]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+References
+
+   [1]  Eastlake, D., "Domain Name System Security Extensions", RFC
+        2535, March 1999.
+
+   [2]  Eastlake, D. and O. Gudmundsson, "Storing Certificates in the
+        Domain Name System (DNS)", RFC 2538, March 1999.
+
+   [3]  Eastlake, D. and A. Panitz, "Reserved Top Level DNS Names", RFC
+        2606, June 1999.
+
+   [4]  NIST, , "Secure Hash Standard", FIPS PUB 180-1, April 1995.
+
+   [5]  Massey, D., Lehman, T. and E. Lewis, "DNSSEC Implementation in
+        the CAIRN Testbed.", I.D. draft-ietf-dnsop-dnsseccairn-00.txt,
+        October 1999.
+
+   [6]  Josefsson, S.A. (editor), "Base 64, 32 and 16 Encodings", I.D.
+        draft-josefsson-base-encoding-00.txt, August 2000.
+
+   [7]  Wellington, B, "Domain Name System Security (DNSSEC) Signing
+        Authority", I.D. draft-ietf-dnsext-signing-auth-01.txt, May
+        2000.
+
+
+Author's Address
+
+   Simon Josefsson
+   RSA Security
+   Arenav„gen 29
+   Stockholm  121 29
+   Sweden
+
+   Phone: +46 8 7250914
+   EMail: sjosefsson@rsasecurity.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson                 Expires May 25, 2001                 [Page 16]
+
+Internet-Draft               The NO Record                 November 2000
+
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (2000). All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph
+   are included on all such copies and derivative works. However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC editor function is currently provided by the
+   Internet Society.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson                 Expires May 25, 2001                 [Page 17]
+
+

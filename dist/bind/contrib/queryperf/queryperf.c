@@ -1,4 +1,4 @@
-/*	$NetBSD: queryperf.c,v 1.1.1.2 2004/11/06 23:54:25 christos Exp $	*/
+/*	$NetBSD: queryperf.c,v 1.1.1.3 2005/12/21 19:53:57 christos Exp $	*/
 
 /*
  * Copyright (C) 2000, 2001  Nominum, Inc.
@@ -20,7 +20,7 @@
 /***
  ***	DNS Query Performance Testing Tool  (queryperf.c)
  ***
- ***	Version Id: queryperf.c,v 1.1.1.2.2.5.4.3 2004/06/21 00:45:30 marka Exp
+ ***	Version Id: queryperf.c,v 1.1.1.2.2.5 2003/05/12 07:07:13 marka Exp
  ***
  ***	Stephen Jacob <sj@nominum.com>
  ***/
@@ -41,18 +41,14 @@
 #include <math.h>
 #include <errno.h>
 
-#ifndef HAVE_GETADDRINFO
-#include "missing/addrinfo.h"
-#endif
-
 /*
  * Configuration defaults
  */
 
 #define DEF_MAX_QUERIES_OUTSTANDING	20
 #define DEF_QUERY_TIMEOUT		5		/* in seconds */
-#define DEF_SERVER_TO_QUERY		"127.0.0.1"
-#define DEF_SERVER_PORT			"53"
+#define DEF_SERVER_TO_QUERY		"localhost"
+#define DEF_SERVER_PORT			53
 #define DEF_BUFFER_SIZE			32		/* in k */
 
 /*
@@ -81,13 +77,13 @@ enum directives_enum	{ V_SERVER, V_PORT, V_MAXQUERIES, V_MAXWAIT };
 #define QTYPE_STRINGS { \
 	"A", "NS", "MD", "MF", "CNAME", "SOA", "MB", "MG", \
 	"MR", "NULL", "WKS", "PTR", "HINFO", "MINFO", "MX", "TXT", \
-	"AAAA", "SRV", "NAPTR", "A6", "AXFR", "MAILB", "MAILA", "*", "ANY" \
+	"AAAA", "SRV", "A6", "AXFR", "MAILB", "MAILA", "*", "ANY" \
 }
 
 #define QTYPE_CODES { \
 	1, 2, 3, 4, 5, 6, 7, 8, \
 	9, 10, 11, 12, 13, 14, 15, 16, \
-	28, 33, 35, 38, 252, 253, 254, 255, 255 \
+	28, 33, 38, 252, 253, 254, 255, 255 \
 }
 
 #define RCODE_STRINGS { \
@@ -122,13 +118,11 @@ unsigned int query_timeout = DEF_QUERY_TIMEOUT;
 int ignore_config_changes = FALSE;
 unsigned int socket_bufsize = DEF_BUFFER_SIZE;
 
-int family = AF_UNSPEC;
 int use_stdin = TRUE;
 char *datafile_name;					/* init NULL */
 
 char *server_to_query;					/* init NULL */
-char *server_port;					/* init NULL */
-struct addrinfo *server_ai;				/* init NULL */
+unsigned int server_port = DEF_SERVER_PORT;
 
 int run_only_once = FALSE;
 int use_timelimit = FALSE;
@@ -162,8 +156,8 @@ struct timeval time_of_end_of_run;
 struct query_status *status;				/* init NULL */
 unsigned int query_status_allocated;			/* init 0 */
 
-int query_socket = -1;
-int socket4 = -1, socket6 = -1;
+int query_socket;					/* init 0 */
+struct sockaddr_in qaddr;
 
 static char *rcode_strings[] = RCODE_STRINGS;
 
@@ -188,7 +182,7 @@ void
 show_startup_info(void) {
 	printf("\n"
 "DNS Query Performance Testing Tool\n"
-"Version: Id: queryperf.c,v 1.1.1.2.2.5.4.3 2004/06/21 00:45:30 marka Exp\n"
+"Version: Id: queryperf.c,v 1.1.1.2.2.5 2003/05/12 07:07:13 marka Exp\n"
 "\n");
 }
 
@@ -201,18 +195,17 @@ show_usage(void) {
 	fprintf(stderr,
 "\n"
 "Usage: queryperf [-d datafile] [-s server_addr] [-p port] [-q num_queries]\n"
-"                 [-b bufsize] [-t timeout] [-n] [-l limit] [-f family] [-1]\n"
+"                 [-b bufsize] [-t timeout] [-n] [-l limit] [-1]\n"
 "                 [-e] [-D] [-c] [-v] [-h]\n"
 "  -d specifies the input data file (default: stdin)\n"
 "  -s sets the server to query (default: %s)\n"
-"  -p sets the port on which to query the server (default: %s)\n"
+"  -p sets the port on which to query the server (default: %u)\n"
 "  -q specifies the maximum number of queries outstanding (default: %d)\n"
 "  -t specifies the timeout for query completion in seconds (default: %d)\n"
 "  -n causes configuration changes to be ignored\n"
 "  -l specifies how a limit for how long to run tests in seconds (no default)\n"
 "  -1 run through input only once (default: multiple iff limit given)\n"
 "  -b set input/output buffer size in kilobytes (default: %d k)\n"
-"  -f specify address family of DNS transport, inet or inet6 (default: any)\n"
 "  -e enable EDNS 0\n"
 "  -D set the DNSSEC OK bit (implies EDNS)\n"
 "  -c print the number of packets with each rcode\n"
@@ -296,7 +289,14 @@ set_server(char *new_name) {
 		return (-1);
 	}
 
+	if ((server_he = gethostbyname(new_name)) == NULL) {
+		fprintf(stderr, "Error: gethostbyname(\"%s\") failed\n",
+		        new_name);
+		return (-1);
+	}
+
 	strcpy(server_to_query, new_name);
+	qaddr.sin_addr = *((struct in_addr *)server_he->h_addr);
 
 	return (0);
 }
@@ -309,62 +309,14 @@ set_server(char *new_name) {
  *   Return a non-negative integer otherwise
  */
 int
-set_server_port(char *new_port) {
-	unsigned int uint_val;
-
-	if ((is_uint(new_port, &uint_val)) != TRUE)
-		return (-1);
-
-	if (uint_val && uint_val > MAX_PORT)
+set_server_port(unsigned int new_port) {
+	if (new_port > MAX_PORT)
 		return (-1);
 	else {
-		if (server_port != NULL && new_port != NULL &&
-		    strcmp(server_port, new_port) == 0)
-			return (0);
-
-		free(server_port);
-		server_port = NULL;
-
-		if ((server_port = malloc(strlen(new_port) + 1)) == NULL) {
-			fprintf(stderr,
-				"Error allocating memory for server port: "
-				"%s\n", new_port);
-			return (-1);
-		}
-
-		strcpy(server_port, new_port);
-
+		server_port = new_port;
+		qaddr.sin_port = htons(server_port);
 		return (0);
 	}
-}
-
-int
-set_server_sa(void) {
-	struct addrinfo hints, *res;
-	static struct protoent *proto;
-	int error;
-
-	if (proto == NULL && (proto = getprotobyname("udp")) == NULL) {
-		fprintf(stderr, "Error: getprotobyname call failed");
-		return (-1);
-	}
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = family;
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_protocol = proto->p_proto;
-	if ((error = getaddrinfo(server_to_query, server_port,
-				 &hints, &res)) != 0) {
-		fprintf(stderr, "Error: getaddrinfo(%s, %s) failed\n",
-			server_to_query, server_port);
-		return (-1);
-	}
-
-	/* replace the server's addrinfo */
-	if (server_ai != NULL)
-		freeaddrinfo(server_ai);
-	server_ai = res;
-	return (0);
 }
 
 /*
@@ -475,23 +427,8 @@ parse_args(int argc, char **argv) {
 	int c;
 	unsigned int uint_arg_val;
 
-	while ((c = getopt(argc, argv, "f:q:t:nd:s:p:1l:b:eDcvh")) != -1) {
+	while ((c = getopt(argc, argv, "q:t:nd:s:p:1l:b:eDcvh")) != -1) {
 		switch (c) {
-		case 'f':
-			if (strcmp(optarg, "inet") == 0)
-				family = AF_INET;
-#ifdef AF_INET6
-			else if (strcmp(optarg, "inet6") == 0)
-				family = AF_INET6;
-#endif
-			else if (strcmp(optarg, "any") == 0)
-				family = AF_UNSPEC;
-			else {
-				fprintf(stderr, "Invalid address family: %s\n",
-					optarg);
-				return (-1);
-			}
-			break;
 		case 'q':
 			if (is_uint(optarg, &uint_arg_val) == TRUE) {
 				set_max_queries(uint_arg_val);
@@ -541,7 +478,7 @@ parse_args(int argc, char **argv) {
 			if (is_uint(optarg, &uint_arg_val) == TRUE &&
 			    uint_arg_val < MAX_PORT)
 			{
-				set_server_port(optarg);
+				set_server_port(uint_arg_val);
 				portset = TRUE;
 			} else {
 				fprintf(stderr, "Option requires a positive "
@@ -647,54 +584,39 @@ close_datafile(void) {
 
 /*
  * open_socket:
- *   Open a socket for the queries.  When we have an active socket already,
- *   close it and open a new one.
+ *   Open a socket for the queries
  *
  *   Return -1 on failure
- *   Return the socket identifier
+ *   Return a non-negative integer otherwise
  */
 int
 open_socket(void) {
 	int sock;
+	struct protoent *proto;
+	struct sockaddr_in bind_addr;
 	int ret;
 	int bufsize;
-	struct addrinfo hints, *res;
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = server_ai->ai_family;
-	hints.ai_socktype = server_ai->ai_socktype;
-	hints.ai_protocol = server_ai->ai_protocol;
-	hints.ai_flags = AI_PASSIVE;
+	bind_addr.sin_family = AF_INET;
+	bind_addr.sin_port = htons(0); /* Have bind allocate a random port */
+	bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	bzero(&(bind_addr.sin_zero), 8);
 
-	if ((ret = getaddrinfo(NULL, "0", &hints, &res)) != 0) {
-		fprintf(stderr,
-			"Error: getaddrinfo for bind socket failed: %s\n",
-			gai_strerror(ret));
+	if ((proto = getprotobyname("udp")) == NULL) {
+		fprintf(stderr, "Error: getprotobyname call failed");
 		return (-1);
 	}
 
-	if ((sock = socket(res->ai_family, SOCK_DGRAM,
-			   res->ai_protocol)) == -1) {
+	if ((sock = socket(PF_INET, SOCK_DGRAM, proto->p_proto)) == -1) {
 		fprintf(stderr, "Error: socket call failed");
-		goto fail;
+		return (-1);
 	}
 
-#if defined(AF_INET6) && defined(IPV6_V6ONLY)
-	if (res->ai_family == AF_INET6) {
-		int on = 1;
-
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
-			       &on, sizeof(on)) == -1) {
-			fprintf(stderr,
-				"Warning: setsockopt(IPV6_V6ONLY) failed\n");
-		}
-	}
-#endif
-
-	if (bind(sock, res->ai_addr, res->ai_addrlen) == -1)
+	if (bind(sock, (struct sockaddr *)&bind_addr, sizeof(struct sockaddr))
+	    == -1) {
 		fprintf(stderr, "Error: bind call failed");
-
-	freeaddrinfo(res);
+		return (-1);
+	}
 
 	bufsize = 1024 * socket_bufsize;
 
@@ -708,78 +630,30 @@ open_socket(void) {
 	if (ret < 0)
 		fprintf(stderr, "Warning:  setsockbuf(SO_SNDBUF) failed\n");
 
-	return (sock);
-
- fail:
-	if (res)
-		freeaddrinfo(res);
-	return (-1);
+	query_socket = sock;
+	
+	return (0);
 }
 
 /*
  * close_socket:
- *   Close the query socket(s)
+ *   Close the query socket
  *
  *   Return -1 on failure
  *   Return a non-negative integer otherwise
  */
 int
 close_socket(void) {
-	if (socket4 != -1) {
-		if (close(socket4) != 0) {
-			fprintf(stderr,
-				"Error: unable to close IPv4 socket\n");
+	if (query_socket != 0) {
+		if (close(query_socket) != 0) {
+			fprintf(stderr, "Error: unable to close socket\n");
 			return (-1);
 		}
 	}
 
-	if (socket6 != -1) {
-		if (close(socket6) != 0) {
-			fprintf(stderr,
-				"Error: unable to close IPv6 socket\n");
-			return (-1);
-		}
-	}
-
-	query_socket = -1;
+	query_socket = 0;
 
 	return (0);
-}
-
-/*
- * change_socket:
- *   Choose an appropriate socket according to the address family of the
- *   current server.  Open a new socket if necessary.
- *
- *   Return -1 on failure
- *   Return the socket identifier
- */
-int
-change_socket(void) {
-	int s, *sockp;
-
-	switch (server_ai->ai_family) {
-	case AF_INET:
-		sockp = &socket4;
-		break;
-#ifdef AF_INET6
-	case AF_INET6:
-		sockp = &socket6;
-		break;
-#endif
-	default:
-		fprintf(stderr, "unexpected address family: %d\n",
-			server_ai->ai_family);
-		exit(1);
-	}
-
-	if (*sockp == -1) {
-		if ((s = open_socket()) == -1)
-			return (-1);
-		*sockp = s;
-	}
-
-	return (*sockp);
 }
 
 /*
@@ -792,6 +666,11 @@ change_socket(void) {
  */
 int
 setup(int argc, char **argv) {
+	qaddr.sin_family = AF_INET;
+	qaddr.sin_port = htons(0);
+	qaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	bzero(&(qaddr.sin_zero), 8);
+
 	set_input_stdin();
 
 	if (set_max_queries(DEF_MAX_QUERIES_OUTSTANDING) == -1) {
@@ -820,10 +699,7 @@ setup(int argc, char **argv) {
 	if (open_datafile() == -1)
 		return (-1);
 
-	if (set_server_sa() == -1)
-		return (-1);
-
-	if ((query_socket = change_socket()) == -1)
+	if (open_socket() == -1)
 		return (-1);
 
 	return (0);
@@ -859,7 +735,7 @@ difftv(struct timeval tv1, struct timeval tv2) {
 
 	diff = (double)diff_sec + ((double)diff_usec / 1000000.0);
 
-	return (diff);
+	return diff;
 }
 
 /*
@@ -1001,7 +877,6 @@ update_config(char *config_change_desc) {
 	unsigned int uint_val;
 	int directive_number;
 	int check;
-	int old_af;
 
 	if (ignore_config_changes == TRUE) {
 		fprintf(stderr, "Ignoring configuration change: %s",
@@ -1050,39 +925,19 @@ update_config(char *config_change_desc) {
 
 	case V_SERVER:
 		if (serverset && (setup_phase == TRUE)) {
-			fprintf(stderr, "Config change overridden by command "
+			fprintf(stderr, "Config change overriden by command "
 			        "line: %s\n", directive);
 			return;
 		}
 
-		if (set_server(config_value) == -1) {
+		if (set_server(config_value) == -1)
 			fprintf(stderr, "Set server error: unable to change "
 			        "the server name to '%s'\n", config_value);
-			return;
-		}
-
-		old_af = server_ai->ai_family;
-		if (set_server_sa() == -1) {
-			fprintf(stderr, "Set server error: unable to resolve "
-				"a new server '%s'\n",
-				config_value);
-			return;
-		}
-		if (old_af != server_ai->ai_family) {
-			if ((query_socket = change_socket()) == -1) {
-				/* XXX: this is fatal */
-				fprintf(stderr, "Set server error: "
-					"unable to open a new socket "
-					"for '%s'\n", config_value);
-				exit(1);
-			}
-		}
-
 		break;
 
 	case V_PORT:
 		if (portset && (setup_phase == TRUE)) {
-			fprintf(stderr, "Config change overridden by command "
+			fprintf(stderr, "Config change overriden by command "
 			        "line: %s\n", directive);
 			return;
 		}
@@ -1090,15 +945,9 @@ update_config(char *config_change_desc) {
 		check = is_uint(config_value, &uint_val);
 
 		if ((check == TRUE) && (uint_val > 0)) {
-			if (set_server_port(config_value) == -1) {
+			if (set_server_port(uint_val) == -1) {
 				fprintf(stderr, "Invalid config: Bad value for"
 				        " %s: %s\n", directive, config_value);
-			} else {
-				if (set_server_sa() == -1) {
-					fprintf(stderr,
-						"Failed to set a new port\n");
-					return;
-				}
 			}
 		} else
 			fprintf(stderr, "Invalid config: Bad value for "
@@ -1107,7 +956,7 @@ update_config(char *config_change_desc) {
 
 	case V_MAXQUERIES:
 		if (queriesset && (setup_phase == TRUE)) {
-			fprintf(stderr, "Config change overridden by command "
+			fprintf(stderr, "Config change overriden by command "
 			        "line: %s\n", directive);
 			return;
 		}
@@ -1123,7 +972,7 @@ update_config(char *config_change_desc) {
 
 	case V_MAXWAIT:
 		if (timeoutset && (setup_phase == TRUE)) {
-			fprintf(stderr, "Config change overridden by command "
+			fprintf(stderr, "Config change overriden by command "
 			        "line: %s\n", directive);
 			return;
 		}
@@ -1251,7 +1100,7 @@ dispatch_query(unsigned short int id, char *dom, int qt) {
 	packet_buffer[1] = id_ptr[1];
 
 	bytes_sent = sendto(query_socket, packet_buffer, buffer_len, 0,
-			    server_ai->ai_addr, server_ai->ai_addrlen);
+			    (struct sockaddr *)&qaddr, sockaddrlen);
 	if (bytes_sent == -1) {
 		fprintf(stderr, "Failed to send query packet: %s %d\n",
 		        dom, qt);
@@ -1274,7 +1123,6 @@ send_query(char *query_desc) {
 	static unsigned short int use_query_id = 0;
 	static int qname_len = MAX_DOMAIN_LEN;
 	static char domain[MAX_DOMAIN_LEN + 1];
-	char serveraddr[NI_MAXHOST];
 	int query_type;
 	unsigned int count;
 
@@ -1286,30 +1134,14 @@ send_query(char *query_desc) {
 	}
 
 	if (dispatch_query(use_query_id, domain, query_type) == -1) {
-		char *addrstr;
-
-		if (getnameinfo(server_ai->ai_addr, server_ai->ai_addrlen,
-				serveraddr, sizeof(serveraddr), NULL, 0,
-				NI_NUMERICHOST) == 0) {
-			addrstr = serveraddr;
-		} else
-			addrstr = "???"; /* XXX: this should not happen */
-		fprintf(stderr, "Error sending query to %s: %s\n",
-			addrstr, query_desc);
+		fprintf(stderr, "Error sending query: %s\n", query_desc);
 		return;
 	}
 
 	if (setup_phase == TRUE) {
 		set_timenow(&time_of_first_query);
 		setup_phase = FALSE;
-		if (getnameinfo(server_ai->ai_addr, server_ai->ai_addrlen,
-				serveraddr, sizeof(serveraddr), NULL, 0,
-				NI_NUMERICHOST) != 0) {
-			fprintf(stderr, "Error printing server address\n");
-			return;
-		}
-		printf("[Status] Sending queries (beginning with %s)\n",
-		       serveraddr);
+		printf("[Status] Sending queries\n");
 	}
 
 	/* Find the first slot in status[] that is not in use */
@@ -1331,6 +1163,39 @@ send_query(char *query_desc) {
 
 	num_queries_sent++;
 	num_queries_outstanding++;
+}
+
+/*
+ * data_available:
+ *   Is there data available on the given file descriptor?
+ *
+ *   Return TRUE if there is
+ *   Return FALSE otherwise
+ */
+int
+data_available(int fd, double wait) {
+	fd_set read_fds;
+	struct timeval tv;
+	int retval;
+
+	/* Set list of file descriptors */
+	FD_ZERO(&read_fds);
+	FD_SET(fd, &read_fds);
+
+	if ((wait > 0.0) && (wait < (double)LONG_MAX)) {
+		tv.tv_sec = (long)floor(wait);
+		tv.tv_usec = (long)(1000000.0 * (wait - floor(wait)));
+	} else {
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
+	}
+
+	retval = select(fd + 1, &read_fds, NULL, NULL, &tv);
+
+	if (FD_ISSET(fd, &read_fds))
+		return (TRUE);
+	else
+		return (FALSE);
 }
 
 /*
@@ -1373,18 +1238,15 @@ register_response(unsigned short int id, unsigned int rcode) {
  */
 void
 process_single_response(int sockfd) {
-	struct sockaddr_storage from_addr_ss;
-	struct sockaddr *from_addr;
+	static struct sockaddr_in from_addr;
 	static unsigned char in_buf[MAX_BUFFER_LEN];
 	int numbytes, addr_len, resp_id;
 	int flags;
 
-	memset(&from_addr_ss, 0, sizeof(from_addr_ss));
-	from_addr = (struct sockaddr *)&from_addr_ss;
-	addr_len = sizeof(from_addr_ss);
+	addr_len = sizeof(struct sockaddr);
 
 	if ((numbytes = recvfrom(sockfd, in_buf, MAX_BUFFER_LEN,
-	     0, from_addr, &addr_len)) == -1) {
+	     0, (struct sockaddr *)&from_addr, &addr_len)) == -1) {
 		fprintf(stderr, "Error receiving datagram\n");
 		return;
 	}
@@ -1393,55 +1255,6 @@ process_single_response(int sockfd) {
 	flags = get_uint16(in_buf + 2);
 
 	register_response(resp_id, flags & 0xF);
-}
-
-/*
- * data_available:
- *   Is there data available on the given file descriptor?
- *
- *   Return TRUE if there is
- *   Return FALSE otherwise
- */
-int
-data_available(double wait) {
-	fd_set read_fds;
-	struct timeval tv;
-	int retval;
-	int available = FALSE;
-	int maxfd = -1;
-
-	/* Set list of file descriptors */
-	FD_ZERO(&read_fds);
-	if (socket4 != -1) {
-		FD_SET(socket4, &read_fds);
-		maxfd = socket4;
-	}
-	if (socket6 != -1) {
-		FD_SET(socket6, &read_fds);
-		if (maxfd == -1 || maxfd < socket6)
-			maxfd = socket6;
-	}
-
-	if ((wait > 0.0) && (wait < (double)LONG_MAX)) {
-		tv.tv_sec = (long)floor(wait);
-		tv.tv_usec = (long)(1000000.0 * (wait - floor(wait)));
-	} else {
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;
-	}
-
-	retval = select(maxfd + 1, &read_fds, NULL, NULL, &tv);
-
-	if (socket4 != -1 && FD_ISSET(socket4, &read_fds)) {
-		available = TRUE;
-		process_single_response(socket4);
-	}
-	if (socket6 != -1 && FD_ISSET(socket6, &read_fds)) {
-		available = TRUE;
-		process_single_response(socket6);
-	}
-
-	return (available);
 }
 
 /*
@@ -1463,9 +1276,11 @@ process_responses(void) {
 		first_packet_wait = 0.0;
 	}
 
-	if (data_available(first_packet_wait) == TRUE) {
-		while (data_available(0.0) == TRUE)
-			;
+	if (data_available(query_socket, first_packet_wait) == TRUE) {
+		process_single_response(query_socket);
+
+		while (data_available(query_socket, 0.0) == TRUE)
+			process_single_response(query_socket);
 	}
 }
 
@@ -1580,10 +1395,9 @@ print_statistics(void) {
 
 	printf("\n");
 
-	printf("  Started at:           %s",
-	       ctime((const time_t *)&start_time.tv_sec));
+	printf("  Started at:           %s", ctime(&start_time.tv_sec));
 	printf("  Finished at:          %s",
-	       ctime((const time_t *)&time_of_end_of_run.tv_sec));
+	       ctime(&time_of_end_of_run.tv_sec));
 	printf("  Ran for:              %.6lf seconds\n", run_time);
 
 	printf("\n");

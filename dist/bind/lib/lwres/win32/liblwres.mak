@@ -25,10 +25,6 @@ NULL=
 NULL=nul
 !ENDIF 
 
-CPP=cl.exe
-MTL=midl.exe
-RSC=rc.exe
-
 !IF  "$(CFG)" == "liblwres - Win32 Release"
 
 OUTDIR=.\Release
@@ -67,14 +63,48 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
+CPP=cl.exe
 CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "./" /I "../../../lib/lwres/win32/include/lwres" /I "include" /I "../include" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isc/include" /I "../..../lib/dns/sec/openssl/include" /I "../../../lib/dns/sec/dst/include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBLWRES_EXPORTS" /Fp"$(INTDIR)\liblwres.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
+RSC=rc.exe
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\liblwres.bsc" 
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib iphlpapi.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\liblwres.pdb" /machine:I386 /def:".\liblwres.def" /out:"../../../Build/Release/liblwres.dll" /implib:"$(OUTDIR)\liblwres.lib" 
+LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\liblwres.pdb" /machine:I386 /def:".\liblwres.def" /out:"../../../Build/Release/liblwres.dll" /implib:"$(OUTDIR)\liblwres.lib" 
 DEF_FILE= \
 	".\liblwres.def"
 LINK32_OBJS= \
@@ -88,6 +118,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\getrrset.obj" \
 	"$(INTDIR)\herror.obj" \
 	"$(INTDIR)\lwbuffer.obj" \
+	"$(INTDIR)\lwconfig.obj" \
 	"$(INTDIR)\lwinetaton.obj" \
 	"$(INTDIR)\lwinetntop.obj" \
 	"$(INTDIR)\lwinetpton.obj" \
@@ -97,8 +128,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\lwres_grbn.obj" \
 	"$(INTDIR)\lwres_noop.obj" \
 	"$(INTDIR)\lwresutil.obj" \
-	"$(INTDIR)\version.obj" \
-	"$(INTDIR)\lwconfig.obj"
+	"$(INTDIR)\version.obj"
 
 "..\..\..\Build\Release\liblwres.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -171,71 +201,8 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
+CPP=cl.exe
 CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../lib/lwres/win32/include/lwres" /I "include" /I "../include" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBLWRES_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\liblwres.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
-MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\liblwres.bsc" 
-BSC32_SBRS= \
-	"$(INTDIR)\context.sbr" \
-	"$(INTDIR)\DLLMain.sbr" \
-	"$(INTDIR)\gai_strerror.sbr" \
-	"$(INTDIR)\getaddrinfo.sbr" \
-	"$(INTDIR)\gethost.sbr" \
-	"$(INTDIR)\getipnode.sbr" \
-	"$(INTDIR)\getnameinfo.sbr" \
-	"$(INTDIR)\getrrset.sbr" \
-	"$(INTDIR)\herror.sbr" \
-	"$(INTDIR)\lwbuffer.sbr" \
-	"$(INTDIR)\lwinetaton.sbr" \
-	"$(INTDIR)\lwinetntop.sbr" \
-	"$(INTDIR)\lwinetpton.sbr" \
-	"$(INTDIR)\lwpacket.sbr" \
-	"$(INTDIR)\lwres_gabn.sbr" \
-	"$(INTDIR)\lwres_gnba.sbr" \
-	"$(INTDIR)\lwres_grbn.sbr" \
-	"$(INTDIR)\lwres_noop.sbr" \
-	"$(INTDIR)\lwresutil.sbr" \
-	"$(INTDIR)\version.sbr" \
-	"$(INTDIR)\lwconfig.sbr"
-
-"$(OUTDIR)\liblwres.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
-    $(BSC32) @<<
-  $(BSC32_FLAGS) $(BSC32_SBRS)
-<<
-
-LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib iphlpapi.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\liblwres.pdb" /debug /machine:I386 /def:".\liblwres.def" /out:"../../../Build/Debug/liblwres.dll" /implib:"$(OUTDIR)\liblwres.lib" /pdbtype:sept 
-DEF_FILE= \
-	".\liblwres.def"
-LINK32_OBJS= \
-	"$(INTDIR)\context.obj" \
-	"$(INTDIR)\DLLMain.obj" \
-	"$(INTDIR)\gai_strerror.obj" \
-	"$(INTDIR)\getaddrinfo.obj" \
-	"$(INTDIR)\gethost.obj" \
-	"$(INTDIR)\getipnode.obj" \
-	"$(INTDIR)\getnameinfo.obj" \
-	"$(INTDIR)\getrrset.obj" \
-	"$(INTDIR)\herror.obj" \
-	"$(INTDIR)\lwbuffer.obj" \
-	"$(INTDIR)\lwinetaton.obj" \
-	"$(INTDIR)\lwinetntop.obj" \
-	"$(INTDIR)\lwinetpton.obj" \
-	"$(INTDIR)\lwpacket.obj" \
-	"$(INTDIR)\lwres_gabn.obj" \
-	"$(INTDIR)\lwres_gnba.obj" \
-	"$(INTDIR)\lwres_grbn.obj" \
-	"$(INTDIR)\lwres_noop.obj" \
-	"$(INTDIR)\lwresutil.obj" \
-	"$(INTDIR)\version.obj" \
-	"$(INTDIR)\lwconfig.obj"
-
-"..\..\..\Build\Debug\liblwres.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
-!ENDIF 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -266,6 +233,73 @@ LINK32_OBJS= \
    $(CPP) @<<
    $(CPP_PROJ) $< 
 <<
+
+MTL=midl.exe
+MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
+RSC=rc.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\liblwres.bsc" 
+BSC32_SBRS= \
+	"$(INTDIR)\context.sbr" \
+	"$(INTDIR)\DLLMain.sbr" \
+	"$(INTDIR)\gai_strerror.sbr" \
+	"$(INTDIR)\getaddrinfo.sbr" \
+	"$(INTDIR)\gethost.sbr" \
+	"$(INTDIR)\getipnode.sbr" \
+	"$(INTDIR)\getnameinfo.sbr" \
+	"$(INTDIR)\getrrset.sbr" \
+	"$(INTDIR)\herror.sbr" \
+	"$(INTDIR)\lwbuffer.sbr" \
+	"$(INTDIR)\lwconfig.sbr" \
+	"$(INTDIR)\lwinetaton.sbr" \
+	"$(INTDIR)\lwinetntop.sbr" \
+	"$(INTDIR)\lwinetpton.sbr" \
+	"$(INTDIR)\lwpacket.sbr" \
+	"$(INTDIR)\lwres_gabn.sbr" \
+	"$(INTDIR)\lwres_gnba.sbr" \
+	"$(INTDIR)\lwres_grbn.sbr" \
+	"$(INTDIR)\lwres_noop.sbr" \
+	"$(INTDIR)\lwresutil.sbr" \
+	"$(INTDIR)\version.sbr"
+
+"$(OUTDIR)\liblwres.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
+    $(BSC32) @<<
+  $(BSC32_FLAGS) $(BSC32_SBRS)
+<<
+
+LINK32=link.exe
+LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\liblwres.pdb" /debug /machine:I386 /def:".\liblwres.def" /out:"../../../Build/Debug/liblwres.dll" /implib:"$(OUTDIR)\liblwres.lib" /pdbtype:sept 
+DEF_FILE= \
+	".\liblwres.def"
+LINK32_OBJS= \
+	"$(INTDIR)\context.obj" \
+	"$(INTDIR)\DLLMain.obj" \
+	"$(INTDIR)\gai_strerror.obj" \
+	"$(INTDIR)\getaddrinfo.obj" \
+	"$(INTDIR)\gethost.obj" \
+	"$(INTDIR)\getipnode.obj" \
+	"$(INTDIR)\getnameinfo.obj" \
+	"$(INTDIR)\getrrset.obj" \
+	"$(INTDIR)\herror.obj" \
+	"$(INTDIR)\lwbuffer.obj" \
+	"$(INTDIR)\lwconfig.obj" \
+	"$(INTDIR)\lwinetaton.obj" \
+	"$(INTDIR)\lwinetntop.obj" \
+	"$(INTDIR)\lwinetpton.obj" \
+	"$(INTDIR)\lwpacket.obj" \
+	"$(INTDIR)\lwres_gabn.obj" \
+	"$(INTDIR)\lwres_gnba.obj" \
+	"$(INTDIR)\lwres_grbn.obj" \
+	"$(INTDIR)\lwres_noop.obj" \
+	"$(INTDIR)\lwresutil.obj" \
+	"$(INTDIR)\version.obj"
+
+"..\..\..\Build\Debug\liblwres.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+
+!ENDIF 
 
 
 !IF "$(NO_EXTERNAL_DEPS)" != "1"
@@ -456,18 +490,20 @@ SOURCE=..\lwbuffer.c
 
 !ENDIF 
 
-SOURCE=.\lwconfig.c
+SOURCE=..\lwconfig.c
 
 !IF  "$(CFG)" == "liblwres - Win32 Release"
 
 
 "$(INTDIR)\lwconfig.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "liblwres - Win32 Debug"
 
 
 "$(INTDIR)\lwconfig.obj"	"$(INTDIR)\lwconfig.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 

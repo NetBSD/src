@@ -83,7 +83,6 @@ isc_file_absolutepath
 isc_fsaccess_add
 isc_fsaccess_remove
 isc_fsaccess_set
-isc_fsaccess_changeowner
 isc_hash_calc
 isc_hash_create
 isc_hash_ctxattach
@@ -218,8 +217,6 @@ isc_netaddr_any
 isc_netaddr_any6
 isc_netaddr_ismulticast
 isc_netaddr_fromv4mapped
-isc_netaddr_setzone
-isc_netscope_pton
 isc_ntpaths_init
 isc_ntpaths_get
 isc_ondestroy_init
@@ -229,7 +226,6 @@ isc_task_sendanddetach
 isc_os_ncpus
 isc_quota_init
 isc_quota_destroy
-isc_quota_soft
 isc_quota_reserve
 isc_quota_release
 isc_quota_attach
@@ -253,6 +249,8 @@ isc_rwlock_lock
 isc_rwlock_trylock
 isc_rwlock_unlock
 isc_rwlock_destroy
+isc_rwlock_tryupgrade
+isc_rwlock_downgrade
 isc_serial_lt
 isc_serial_gt
 isc_serial_le
@@ -310,6 +308,7 @@ isc_stdio_read
 isc_stdio_write
 isc_stdio_flush
 isc_stdio_sync
+isc__strerror
 isc_string_touint64
 isc_string_separate
 isc_symtab_create
@@ -361,6 +360,7 @@ isc_dir_reset
 isc_dir_close
 isc_dir_chdir
 isc_dir_chroot
+isc_dir_current
 isc_net_probeipv4
 isc_net_probeipv6
 isc_net_ntop
@@ -408,38 +408,40 @@ openlog
 syslog
 closelog
 isc_syslog_facilityfromstring
-NTReportError
+isc_ntfile_fopen
+isc_ntfile_fclose
+isc_ntfile_fwrite
+isc_ntfile_fread
+isc_ntfile_fseek
+isc_ntfile_flush
+isc_ntfile_sync
+isc_ntfile_printf
+isc_ntfile_fprintf
+isc_ntfile_vfprintf
+isc_ntfile_getaddress
+isc_ntfile_getc
+isc_ntfile_fgetc
+isc_ntfile_fgets
+isc_ntfile_fputc
+isc_ntfile_fputs
+isc_ntfile_fgetpos
+isc_ntfile_freopen
+isc_ntfile_fdopen
+isc_ntfile_open
+isc_ntfile_close
+isc_ntfile_read
+isc_ntfile_write
 
-isc_file_truncate
-isc__strerror
-isc_parse_uint32
-isc_parse_uint16
-isc_parse_uint8
-isc_win32os_majorversion
-isc_win32os_minorversion
-isc_win32os_servicepackmajor
-isc_win32os_servicepackminor
-isc_win32os_versioncheck
-isc_socket_ipv6only
-isc_region_compare
-isc_socket_filter
-isc_string_strlcpy
-isc_rwlock_tryupgrade
-isc_rwlock_downgrade
-isc_sockaddr_isexperimental
-isc_net_disableipv4
-isc_net_disableipv6
-isc_task_getcurrenttime
-isc_net_probe_ipv6only
-isc_net_probe_ipv6pktinfo
-isc_string_strlcat
-isc_string_strlcpy
 
 ; Exported Data
 
 EXPORTS
 
-isc_mem_debugging		DATA
+;isc_categories
+;isc_lctx
+;isc_modules
+
+isc_mem_debugging			DATA
 
 isc_commandline_index	
 isc_commandline_option		DATA
@@ -448,4 +450,5 @@ isc_commandline_progname	DATA
 isc_commandline_errprint	DATA
 isc_commandline_reset		DATA
 isc_assertion_failed		DATA
+_iob						DATA
 			

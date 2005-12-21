@@ -1,30 +1,27 @@
 <!--
- - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- - Copyright (C) 2001  Internet Software Consortium.
- -
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- -
- - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- - PERFORMANCE OF THIS SOFTWARE.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
-
-<!-- Id: lwres_packet.html,v 1.8.2.1.4.2 2004/08/22 23:39:05 marka Exp -->
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres_packet</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -35,8 +32,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
-></A
->lwres_packet</H1
+>lwres_packet</A
+></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -54,11 +51,11 @@ NAME="AEN12"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
-><P
-></P
 ><A
 NAME="AEN13"
 ></A
+><P
+></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/lwpacket.h&gt;</PRE
@@ -125,9 +122,9 @@ struct lwres_lwpacket {
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->length</CODE
+>length</TT
 ></DT
 ><DD
 ><P
@@ -136,9 +133,9 @@ This field is filled in by the lwres_gabn_*() and lwres_gnba_*()
 calls.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->version</CODE
+>version</TT
 ></DT
 ><DD
 ><P
@@ -152,9 +149,9 @@ This field is filled in by the lwres_gabn_*() and lwres_gnba_*()
 calls.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->pktflags</CODE
+>pktflags</TT
 ></DT
 ><DD
 ><P
@@ -166,9 +163,9 @@ LWRES_LWPACKETFLAG_RESPONSE bit, which is set by the library in the
 lwres_gabn_*() and lwres_gnba_*() calls.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->serial</CODE
+>serial</TT
 ></DT
 ><DD
 ><P
@@ -179,9 +176,9 @@ may be dropped.
 This field must be set by the application.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->opcode</CODE
+>opcode</TT
 ></DT
 ><DD
 ><P
@@ -193,9 +190,9 @@ This field is filled in by the lwres_gabn_*() and lwres_gnba_*()
 calls.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->result</CODE
+>result</TT
 ></DT
 ><DD
 ><P
@@ -206,9 +203,9 @@ This field is filled in by the lwres_gabn_*() and lwres_gnba_*()
 calls.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->recvlength</CODE
+>recvlength</TT
 ></DT
 ><DD
 ><P
@@ -218,9 +215,9 @@ is too large for replies.
 This field is supplied by the application.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->authtype</CODE
+>authtype</TT
 ></DT
 ><DD
 ><P
@@ -230,9 +227,9 @@ and types between 0x0000 and 0x0fff are reserved for library use.
 Currently these are not used and must be zero.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->authlen</CODE
+>authlen</TT
 ></DT
 ><DD
 ><P
@@ -250,9 +247,9 @@ Since packet authentication is currently not used, this must be zero.</P
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->NOOP</CODE
+>NOOP</TT
 ></DT
 ><DD
 ><P
@@ -260,9 +257,9 @@ CLASS="CONSTANT"
 The lwres_noop_*() functions should be used for this type.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->GETADDRSBYNAME</CODE
+>GETADDRSBYNAME</TT
 ></DT
 ><DD
 ><P
@@ -270,9 +267,9 @@ CLASS="CONSTANT"
 The lwres_gabn_*() functions should be used for this type.</P
 ></DD
 ><DT
-><CODE
+><TT
 CLASS="CONSTANT"
->GETNAMEBYADDR</CODE
+>GETNAMEBYADDR</TT
 ></DT
 ><DD
 ><P
@@ -283,40 +280,50 @@ The lwres_gnba_*() functions should be used for this type.</P
 ></DIV
 ></P
 ><P
-><CODE
+><TT
 CLASS="FUNCTION"
->lwres_lwpacket_renderheader()</CODE
+>lwres_lwpacket_renderheader()</TT
 > transfers the
 contents of lightweight resolver packet structure
 <SPAN
 CLASS="TYPE"
 >lwres_lwpacket_t</SPAN
-> <VAR
+> <TT
 CLASS="PARAMETER"
->*pkt</VAR
+><I
+>*pkt</I
+></TT
 > in network
 byte order to the lightweight resolver buffer,
-<VAR
+<TT
 CLASS="PARAMETER"
->*b</VAR
+><I
+>*b</I
+></TT
 >.</P
 ><P
-><CODE
+><TT
 CLASS="FUNCTION"
->lwres_lwpacket_parseheader()</CODE
+>lwres_lwpacket_parseheader()</TT
 > performs the
 converse operation.  It transfers data in network byte order from
-buffer <VAR
+buffer <TT
 CLASS="PARAMETER"
->*b</VAR
+><I
+>*b</I
+></TT
 > to resolver packet
-<VAR
+<TT
 CLASS="PARAMETER"
->*pkt</VAR
+><I
+>*pkt</I
+></TT
 >.  The contents of the buffer
-<VAR
+<TT
 CLASS="PARAMETER"
->b</VAR
+><I
+>b</I
+></TT
 > should correspond to a
 <SPAN
 CLASS="TYPE"
@@ -332,25 +339,29 @@ NAME="AEN107"
 >RETURN VALUES</H2
 ><P
 > Successful calls to
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_lwpacket_renderheader()</CODE
+>lwres_lwpacket_renderheader()</TT
 > and
-<CODE
+<TT
 CLASS="FUNCTION"
->lwres_lwpacket_parseheader()</CODE
+>lwres_lwpacket_parseheader()</TT
 > return
 <SPAN
 CLASS="ERRORCODE"
 >LWRES_R_SUCCESS</SPAN
 >.  If there is insufficient
-space to copy data between the buffer <VAR
+space to copy data between the buffer <TT
 CLASS="PARAMETER"
->*b</VAR
+><I
+>*b</I
+></TT
 > and
-lightweight resolver packet <VAR
+lightweight resolver packet <TT
 CLASS="PARAMETER"
->*pkt</VAR
+><I
+>*pkt</I
+></TT
 > both functions
 return <SPAN
 CLASS="ERRORCODE"

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_sendsigned.c,v 1.1.1.1 2004/05/17 23:44:48 christos Exp $	*/
+/*	$NetBSD: res_sendsigned.c,v 1.1.1.2 2005/12/21 19:57:38 christos Exp $	*/
 
 #include "port_before.h"
 #include "fd_setsize.h"
@@ -40,7 +40,6 @@ res_nsendsigned(res_state statp, const u_char *msg, int msglen,
 	HEADER *hp;
 	time_t tsig_time;
 	int ret;
-	int len;
 
 	dst_init();
 
@@ -89,21 +88,16 @@ res_nsendsigned(res_state statp, const u_char *msg, int msglen,
 		return (ret);
 	}
 
-	if (newmsglen > PACKETSZ || nstatp->options & RES_USEVC)
+	if (newmsglen > PACKETSZ || (nstatp->options & RES_IGNTC))
 		usingTCP = 1;
 	if (usingTCP == 0)
 		nstatp->options |= RES_IGNTC;
 	else
 		nstatp->options |= RES_USEVC;
-	/*
-	 * Stop res_send printing the answer.
-	 */
-	nstatp->options &= ~RES_DEBUG;
-	nstatp->pfcode &= ~RES_PRF_REPLY;
 
 retry:
 
-	len = res_nsend(nstatp, newmsg, newmsglen, answer, anslen);
+	ret = res_nsend(nstatp, newmsg, newmsglen, answer, anslen);
 	if (ret < 0) {
 		free (nstatp);
 		free (newmsg);
@@ -111,20 +105,11 @@ retry:
 		return (ret);
 	}
 
-	ret = ns_verify(answer, &len, dstkey, sig, siglen,
+	anslen = ret;
+	ret = ns_verify(answer, &anslen, dstkey, sig, siglen,
 			NULL, NULL, &tsig_time, nstatp->options & RES_KEEPTSIG);
 	if (ret != 0) {
-		Dprint((statp->options & RES_DEBUG) ||
-		       ((statp->pfcode & RES_PRF_REPLY) &&
-			(statp->pfcode & RES_PRF_HEAD1)),
-		       (stdout, ";; got answer:\n"));
-
-		DprintQ((statp->options & RES_DEBUG) ||
-			(statp->pfcode & RES_PRF_REPLY),
-			(stdout, "%s", ""),
-			answer, (anslen > len) ? len : anslen);
-
-		Dprint(statp->pfcode & RES_PRF_REPLY,
+		Dprint(nstatp->pfcode & RES_PRF_REPLY,
 		       (stdout, ";; TSIG invalid (%s)\n", p_rcode(ret)));
 		free (nstatp);
 		free (newmsg);
@@ -135,27 +120,17 @@ retry:
 			errno = ENOTTY;
 		return (-1);
 	}
+	Dprint(nstatp->pfcode & RES_PRF_REPLY, (stdout, ";; TSIG ok\n"));
 
 	hp = (HEADER *) answer;
-	if (hp->tc && !usingTCP && (statp->options & RES_IGNTC) == 0U) {
+	if (hp->tc && usingTCP == 0) {
 		nstatp->options &= ~RES_IGNTC;
 		usingTCP = 1;
 		goto retry;
 	}
-	Dprint((statp->options & RES_DEBUG) ||
-	       ((statp->pfcode & RES_PRF_REPLY) &&
-		(statp->pfcode & RES_PRF_HEAD1)),
-	       (stdout, ";; got answer:\n"));
-
-	DprintQ((statp->options & RES_DEBUG) ||
-		(statp->pfcode & RES_PRF_REPLY),
-		(stdout, "%s", ""),
-		answer, (anslen > len) ? len : anslen);
-
-	Dprint(statp->pfcode & RES_PRF_REPLY, (stdout, ";; TSIG ok\n"));
 
 	free (nstatp);
 	free (newmsg);
 	dst_free_key(dstkey);
-	return (len);
+	return (anslen);
 }

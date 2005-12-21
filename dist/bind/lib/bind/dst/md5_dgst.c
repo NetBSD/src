@@ -1,4 +1,4 @@
-/*	$NetBSD: md5_dgst.c,v 1.1.1.1 2004/05/17 23:44:40 christos Exp $	*/
+/*	$NetBSD: md5_dgst.c,v 1.1.1.2 2005/12/21 19:57:03 christos Exp $	*/
 
 /* crypto/md/md5_dgst.c */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
@@ -101,7 +101,7 @@ unsigned long len;
 	int sw,sc;
 	ULONG l;
 
-	if (len == 0U) return;
+	if (len == 0) return;
 
 	l=(c->Nl+(len<<3))&0xffffffffL;
 	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
@@ -117,7 +117,7 @@ unsigned long len;
 		sw=c->num>>2;
 		sc=c->num&0x03;
 
-		if ((c->num+len) >= (size_t)MD5_CBLOCK)
+		if ((c->num+len) >= MD5_CBLOCK)
 			{
 			l= p[sw];
 			p_c2l(data,l,sc);
@@ -138,7 +138,7 @@ unsigned long len;
 			int ew,ec;
 
 			c->num+=(int)len;
-			if ((sc+len) < 4U) /* ugly, add char's to a word */
+			if ((sc+len) < 4) /* ugly, add char's to a word */
 				{
 				l= p[sw];
 				p_c2l_p(data,l,sc,len);
@@ -165,7 +165,7 @@ unsigned long len;
 	/* we now can process the input data in blocks of MD5_CBLOCK
 	 * chars and save the leftovers to c->data. */
 	p=c->data;
-	while (len >= (size_t)MD5_CBLOCK)
+	while (len >= MD5_CBLOCK)
 		{
 #if defined(L_ENDIAN) || defined(B_ENDIAN)
 		memcpy(p,data,MD5_CBLOCK);

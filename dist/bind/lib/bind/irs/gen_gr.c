@@ -1,24 +1,24 @@
-/*	$NetBSD: gen_gr.c,v 1.1.1.2 2004/11/06 23:55:26 christos Exp $	*/
+/*	$NetBSD: gen_gr.c,v 1.1.1.3 2005/12/21 19:57:11 christos Exp $	*/
 
 /*
- * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
- * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
+ * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: gen_gr.c,v 1.4.2.1.4.2 2004/05/17 07:48:56 marka Exp";
+static const char rcsid[] = "Id: gen_gr.c,v 1.4.2.1 2003/06/27 03:51:39 marka Exp";
 #endif
 
 /* Imports */
@@ -85,7 +85,7 @@ static void		gr_res_set(struct irs_gr *,
 				      struct __res_state *,
 				      void (*)(void *));
 
-static int		grmerge(struct irs_gr *gr, const struct group *src,
+static void		grmerge(struct irs_gr *gr, const struct group *src,
 				int preserve);
 
 static int		countvec(char **vec);
@@ -93,10 +93,6 @@ static int		isnew(char **old, char *new);
 static int		countnew(char **old, char **new);
 static size_t		sizenew(char **old, char **new);
 static int		newgid(int, gid_t *, gid_t);
-
-/* Macros */
-
-#define FREE_IF(x) do { if ((x) != NULL) { free(x); (x) = NULL; } } while (0)
 
 /* Public */
 
@@ -177,8 +173,7 @@ gr_byname(struct irs_gr *this, const char *name) {
 		gr = rule->inst->gr;
 		tval = (*gr->byname)(gr, name);
 		if (tval) {
-			if (!grmerge(this, tval, dirty++))
-				return (NULL);
+			grmerge(this, tval, dirty++);
 			if (!(rule->flags & IRS_MERGE))
 				break;
 		} else {
@@ -204,8 +199,7 @@ gr_bygid(struct irs_gr *this, gid_t gid) {
 		gr = rule->inst->gr;
 		tval = (*gr->bygid)(gr, gid);
 		if (tval) {
-			if (!grmerge(this, tval, dirty++))
-				return (NULL);
+			grmerge(this, tval, dirty++);
 			if (!(rule->flags & IRS_MERGE))
 				break;
 		} else {
@@ -329,7 +323,7 @@ gr_res_set(struct irs_gr *this, struct __res_state *res,
 
 /* Private. */
 
-static int
+static void
 grmerge(struct irs_gr *this, const struct group *src, int preserve) {
 	struct pvt *pvt = (struct pvt *)this->private;
 	char *cp, **m, **p, *oldmembuf, *ep;
@@ -340,9 +334,9 @@ grmerge(struct irs_gr *this, const struct group *src, int preserve) {
 		pvt->group.gr_gid = src->gr_gid;
 		if (pvt->nmemb < 1) {
 			m = malloc(sizeof *m);
-			if (m == NULL) {
+			if (!m) {
 				/* No harm done, no work done. */
-				return (0);
+				return;
 			}
 			pvt->group.gr_mem = m;
 			pvt->nmemb = 1;
@@ -359,9 +353,9 @@ grmerge(struct irs_gr *this, const struct group *src, int preserve) {
 	n = ndst + nnew + 1;
 	if ((size_t)n > pvt->nmemb) {
 		m = realloc(pvt->group.gr_mem, n * sizeof *m);
-		if (m == NULL) {
+		if (!m) {
 			/* No harm done, no work done. */
-			return (0);
+			return;
 		}
 		pvt->group.gr_mem = m;
 		pvt->nmemb = n;
@@ -379,13 +373,13 @@ grmerge(struct irs_gr *this, const struct group *src, int preserve) {
 	}
 	if (n == 0) {
 		/* No work to do. */
-		return (1);
+		return;
 	}
 	used = preserve ? pvt->membufsize : 0;
 	cp = malloc(used + n);
-	if (cp == NULL) {
+	if (!cp) {
 		/* No harm done, no work done. */
-		return (0);
+		return;
 	}
 	ep = cp + used + n;
 	if (used != 0)
@@ -409,13 +403,12 @@ grmerge(struct irs_gr *this, const struct group *src, int preserve) {
 		if (isnew(pvt->group.gr_mem, *m)) {
 			*p++ = cp;
 			*p = NULL;
-			n = strlen(*m) + 1;
-			if (n > ep - cp) {
-				FREE_IF(oldmembuf);
-				return (0);
-			}
-			strcpy(cp, *m);		/* (checked) */
-			cp += n;
+#ifdef HAVE_STRLCPY
+			strlcpy(cp, *m, ep - cp);
+#else
+			strcpy(cp, *m);
+#endif
+			cp += strlen(cp) + 1;
 		}
 	if (preserve) {
 		pvt->group.gr_name = pvt->membuf + 
@@ -424,26 +417,23 @@ grmerge(struct irs_gr *this, const struct group *src, int preserve) {
 				       (pvt->group.gr_passwd - oldmembuf);
 	} else {
 		pvt->group.gr_name = cp;
-		n = strlen(src->gr_name) + 1;
-		if (n > ep - cp) {
-			FREE_IF(oldmembuf);
-			return (0);
-		}
-		strcpy(cp, src->gr_name);	/* (checked) */
-		cp += n;
-
+#ifdef HAVE_STRLCPY
+		strlcpy(cp, src->gr_name, ep - cp);
+#else
+		strcpy(cp, src->gr_name);
+#endif
+		cp += strlen(src->gr_name) + 1;
 		pvt->group.gr_passwd = cp;
-		n = strlen(src->gr_passwd) + 1;
-		if (n > ep - cp) {
-			FREE_IF(oldmembuf);
-			return (0);
-		}
-		strcpy(cp, src->gr_passwd);	/* (checked) */
-		cp += n;
+#ifdef HAVE_STRLCPY
+		strlcpy(cp, src->gr_passwd, ep - cp);
+#else
+		strcpy(cp, src->gr_passwd);
+#endif
+		cp += strlen(src->gr_passwd) + 1;
 	}
-	FREE_IF(oldmembuf);
+	if (oldmembuf != NULL)
+		free(oldmembuf);
 	INSIST(cp >= pvt->membuf && cp <= &pvt->membuf[pvt->membufsize]);
-	return (1);
 }
 
 static int

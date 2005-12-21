@@ -1,0 +1,560 @@
+
+
+DNS Extensions                                                O. Kolkman
+Internet-Draft                                                  RIPE NCC
+Expires: August 18, 2003                                     J. Schlyter
+                                                    Carlstedt Research &
+                                                              Technology
+                                                                E. Lewis
+                                                                    ARIN
+                                                       February 17, 2003
+
+
+                   KEY RR Key-Signing Key (KSK) Flag
+              draft-ietf-dnsext-keyrr-key-signing-flag-06
+
+Status of this Memo
+
+   This document is an Internet-Draft and is in full conformance with
+   all provisions of Section 10 of RFC2026.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF), its areas, and its working groups. Note that other
+   groups may also distribute working documents as Internet-Drafts.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time. It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   The list of current Internet-Drafts can be accessed at http://
+   www.ietf.org/ietf/1id-abstracts.txt.
+
+   The list of Internet-Draft Shadow Directories can be accessed at
+   http://www.ietf.org/shadow.html.
+
+   This Internet-Draft will expire on August 18, 2003.
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (2003). All Rights Reserved.
+
+Abstract
+
+   With the DS resource record the concept of key-signing and
+   zone-signing keys has been introduced. During key-exchanges with the
+   parent there is a need to differentiate between these zone- and
+   key-signing keys. We propose a flag to indicate which key is used as
+   key-signing key.
+
+
+
+
+
+
+Kolkman, et al.         Expires August 18, 2003                 [Page 1]
+
+Internet-Draft     KEY RR Key-Signing Key (KSK) Flag       February 2003
+
+
+Table of Contents
+
+   1.  Introduction . . . . . . . . . . . . . . . . . . . . . . . . .  3
+   2.  The Key-Signing Key (KSK) Flag . . . . . . . . . . . . . . . .  4
+   3.  DNSSEC Protocol Changes  . . . . . . . . . . . . . . . . . . .  4
+   4.  Operational Guidelines . . . . . . . . . . . . . . . . . . . .  4
+   5.  Security Considerations  . . . . . . . . . . . . . . . . . . .  5
+   6.  IANA Considerations  . . . . . . . . . . . . . . . . . . . . .  5
+   7.  Internationalization Considerations  . . . . . . . . . . . . .  5
+   8.  Document Changes . . . . . . . . . . . . . . . . . . . . . . .  6
+   8.1 draft version 00 -> 01 . . . . . . . . . . . . . . . . . . . .  6
+   8.2 draft version 01 -> 02 . . . . . . . . . . . . . . . . . . . .  6
+   8.3 draft version 02 -> 03 . . . . . . . . . . . . . . . . . . . .  6
+   8.4 draft version 03 -> 04 . . . . . . . . . . . . . . . . . . . .  6
+   8.5 draft version 04 -> 05 . . . . . . . . . . . . . . . . . . . .  6
+   8.6 draft version 05 -> 06 . . . . . . . . . . . . . . . . . . . .  7
+   9.  Acknowledgements . . . . . . . . . . . . . . . . . . . . . . .  7
+       Normative References . . . . . . . . . . . . . . . . . . . . .  7
+       Informative References . . . . . . . . . . . . . . . . . . . .  8
+       Authors' Addresses . . . . . . . . . . . . . . . . . . . . . .  8
+       Intellectual Property and Copyright Statements . . . . . . . .  9
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Kolkman, et al.         Expires August 18, 2003                 [Page 2]
+
+Internet-Draft     KEY RR Key-Signing Key (KSK) Flag       February 2003
+
+
+1. Introduction
+
+   "All keys are equal but some keys are more equal than others" [6]
+
+   With the definition of the DS Resource Record [5] the concept of a
+   key being either a key-signing key (KSK) or zone-signing key(ZSK) has
+   been introduced into DNSSEC[3].  A KSK is one that signs the zone's
+   KEY RR set, and is a key that is either used to generate a DS RR or
+   is distributed to resolvers that use the key as the root of a trusted
+   subtree[4].
+
+   In early deployment tests, the use of two keys has been prevalent,
+   one key for exchange with delegating zone and the other key to sign
+   the zone.  These dual roles were defined to allow a zone to more
+   rapidly change the ZSK without a high volume of traffic needed to
+   make new DS RRs.  Because of this, participants have had to manage
+   two keys at all times, one acting as a KSK and the other ZSK (per
+   cryptographic algorithm).  In practice, participants used a longer
+   key for the KSK or resorted to writing the footprints on paper.
+
+   There is a need to differentiate between a KSK and a ZSK by the zone
+   administrator.  This need is driven by knowing which keys are to be
+   sent for DS RRs, which keys are to be distributed to resolvers, and
+   which keys are fed to the signer application at the appropriate time.
+
+   While addressing this need it is important that the distinction is
+   made in a way compatible with single key zone, those whose KSK and
+   ZSK is one in the same.  The best way to address this is to define a
+   bit setting in the KEY RR flags field that is ignored in the
+   resolver.  This allows for both dual key and single key management to
+   be workable.
+
+   The key words "MAY","MAY NOT", "MUST", "MUST NOT", "REQUIRED",
+   "RECOMMENDED", "SHOULD", and "SHOULD NOT" in this document are to be
+   interpreted as described in RFC2119.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Kolkman, et al.         Expires August 18, 2003                 [Page 3]
+
+Internet-Draft     KEY RR Key-Signing Key (KSK) Flag       February 2003
+
+
+2. The Key-Signing Key (KSK) Flag
+
+        1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
+        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        |              flags          |K|   protocol    |   algorithm   |
+        |                             |S|               |               |
+        |                             |K|               |               |
+        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        |                                                               /
+        /                        public key                             /
+        /                                                               /
+        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+        KEY RR Format
+
+   The KSK bit (TBD) in the flags field is assigned to be the
+   key-signing key flag. If the the bit is set to 1 the key is intended
+   to be used as key-signing key.  One SHOULD NOT assign special meaning
+   to the key if the bit is set to 0.  The document proposes using the
+   current 15th bit [1] as the KSK bit. This way operators can recognize
+   the key-signing by the even or odd-ness of the decimal representation
+   of the flag field.
+
+3. DNSSEC Protocol Changes
+
+   The bit MUST NOT be used during the resolving and verification
+   process. The KSK flag is only used to provide a hint about the
+   different administrative properties of the key and therefore the use
+   of the KSK flag does not change the DNS resolution and resolution
+   protocol.
+
+4. Operational Guidelines
+
+   The KSK bit is set by the key-generator and used by the zone signer:
+
+   The KSK bit is used to indicate that the key represented in the KEY
+   RR is intended to sign the KEY RR set of the zone.  As the KSK bit is
+   within the data that is used to compute a KEY RR's footprint,
+   changing the KSK bit will change the identity of the key within DNS.
+
+   When a key pair is created, the operator needs to indicate whether
+   the KSK bit is to be set in the KEY RR.  The KSK bit is recommended
+   whenever the public key of the key pair will be distributed to the
+   parent zone to build the authentication chain or if the public key is
+   to be distributed for static configuration in verifiers.
+
+   When signing a zone, it is intended that the key(s) with the KSK bit
+
+
+
+Kolkman, et al.         Expires August 18, 2003                 [Page 4]
+
+Internet-Draft     KEY RR Key-Signing Key (KSK) Flag       February 2003
+
+
+   set (if such keys exist) are used to sign the KEY RR set of the zone.
+   The same key can be used to sign the rest of the zone data too.  It
+   is conceivable that not all keys with a KSK bit set will sign the KEY
+   RR set, such keys might be pending retirement or not yet in use.
+
+   When verifying a RR set, the KSK bit is not intended to play a role.
+   How the key is used by the verifier is not intended to be a
+   consideration at key creation time.
+
+   Although the KSK flag provides a hint on which key to be used as
+   trusted root, administrators can choose to ignore the flag when
+   configuring a trusted root for their resolvers.
+
+   Using the flag a key roll over can be automated. The parent can use
+   an existing trust relation to verify key sets in which a new key with
+   the KSK flag appears.
+
+5. Security Considerations
+
+   As stated in Section 3 the flag is not to used in the resolution
+   protocol or to determine the security status of a key. The flag is to
+   be used for administrative purposes only.
+
+   No trust in a key should be inferred from this flag - trust MUST be
+   inferred from an existing chain of trust or an out-of-band exchange.
+
+   Since this flag might be used for automating key exchanges, we think
+   the following consideration is in place.
+
+   Automated mechanisms for roll over of the DS RR might be vulnerable
+   to a class of replay attacks.  This might happen after a key exchange
+   where a key set, containing two keys with the KSK flag set, is sent
+   to the parent.  The parent verifies the key set with the existing
+   trust relation and creates the new DS RR from the key that the
+   current DS is not pointing to.  This key exchange might be replayed.
+   Parents are encouraged to implement a replay defence. A simple
+   defence can be based on a registry of keys that have been used to
+   generate DS RRs during the most recent roll over.
+
+6. IANA Considerations
+
+   draft-ietf-dnsext-restrict-key-for-dnssec [1] eliminates all flags
+   field except for the zone key flag in the KEY RR. We propose to use
+   the 15'th bit as the KSK bit; the decimal representation of the
+   flagfield will then be odd for key-signing keys.
+
+7. Internationalization Considerations
+
+
+
+
+Kolkman, et al.         Expires August 18, 2003                 [Page 5]
+
+Internet-Draft     KEY RR Key-Signing Key (KSK) Flag       February 2003
+
+
+   There are no internationalization considerations.
+
+8. Document Changes
+
+8.1 draft version 00 -> 01
+
+      Clean up of references and correction of typos;
+
+      modified Abstract text a little;
+
+      Added explicit warning for replay attacks to the security section;
+
+      Removed the text that hinted on a distinction between a
+      key-signing key configured in resolvers and in parent zones.
+
+
+8.2 draft version 01 -> 02
+
+      Added IANA and Internationalization section.
+
+      Split references into informational and normative.
+
+      Spelling and style corrections.
+
+
+8.3 draft version 02 -> 03
+
+      Changed the name from KS to KSK, this to prevent confusion with
+      NS, DS and other acronyms in DNS.
+
+      In the security section: Rewrote the section so that it does not
+      suggest to use a particular type of registry and that it is clear
+      that a key registry is only one of the defences possible.
+
+      Spelling and style corrections.
+
+
+8.4 draft version 03 -> 04
+
+      Text has been made consistent with the statement: 'No special
+      meaning should be assigned to the bit not being set.'
+
+      Made explicit that the keytag changes in SIG RR.
+
+
+8.5 draft version 04 -> 05
+
+      One occurrence of must and one occurrence of should uppercased
+
+
+
+Kolkman, et al.         Expires August 18, 2003                 [Page 6]
+
+Internet-Draft     KEY RR Key-Signing Key (KSK) Flag       February 2003
+
+
+      (RFC2119).
+
+      Reordering of sentences in section 3, so that the point of the bit
+      NOT being used in resolving is made directly.
+
+      To make explicit that the KSK is used at key generation and at
+      signing time I added the first sentence to section 4.
+
+      Some minor style and spelling corrections.
+
+
+8.6 draft version 05 -> 06
+
+      References and acronyms where stripped from the Abstract. the
+      Introduction and the the Operational Guideline section were
+      rewritten in such a way that the draft does not suggest any use of
+      the bit in the verification process and that the draft does not
+      enforce, but suggests, the use of a key- and zone-signing key.
+
+      Added 'and verification' in the sentence "MUST NOT be used during
+      the resolving and verification process" (protocol changes
+      section).
+
+
+9. Acknowledgements
+
+   The ideas documented in this document are inspired by communications
+   we had with numerous people and ideas published by other folk. Among
+   others Mark Andrews, Olafur Gudmundsson, Daniel Karrenberg, Dan
+   Massey, Marcos Sanz and Sam Weiler have contributed ideas and
+   provided feedback.
+
+   This document saw the light during a workshop on DNSSEC operations
+   hosted by USC/ISI.
+
+Normative References
+
+   [1]  Massey, D. and S. Rose, "Limiting the Scope of the KEY Resource
+        Record out", draft-ietf-dnsext-restrict-key-for-dnssec-04 (work
+        in progress), September 2002.
+
+   [2]  Bradner, S., "Key words for use in RFCs to Indicate Requirement
+        Levels", BCP 14, RFC 2119, March 1997.
+
+   [3]  Eastlake, D., "Domain Name System Security Extensions", RFC
+        2535, March 1999.
+
+   [4]  Lewis, E., "DNS Security Extension Clarification on Zone
+
+
+
+Kolkman, et al.         Expires August 18, 2003                 [Page 7]
+
+Internet-Draft     KEY RR Key-Signing Key (KSK) Flag       February 2003
+
+
+        Status", RFC 3090, March 2001.
+
+Informative References
+
+   [5]  Gudmundsson, O., "Delegation Signer Resource Record",
+        draft-ietf-dnsext-delegation-signer-12 (work in progress),
+        December 2002.
+
+   [6]  Orwell, G. and R. Steadman (illustrator), "Animal Farm; a Fairy
+        Story"", ISBN 0151002177 (50th anniversery edition), April 1996.
+
+
+Authors' Addresses
+
+   Olaf M. Kolkman
+   RIPE NCC
+   Singel 256
+   Amsterdam  1016 AB
+   NL
+
+   Phone: +31 20 535 4444
+   EMail: olaf@ripe.net
+   URI:   http://www.ripe.net/
+
+
+   Jakob Schlyter
+   Carlstedt Research & Technology
+   Stora Badhusgatan 18-20
+   Goteborg  SE-411 21
+   Sweden
+
+   EMail: jakob@crt.se
+   URI:   http://www.crt.se/~jakob/
+
+
+   Edward P. Lewis
+   ARIN
+   3635 Concorde Parkway Suite 200
+   Chantilly, VA  20151
+   US
+
+   Phone: +1 703 227 9854
+   EMail: edlewis@arin.net
+   URI:   http://www.arin.net/
+
+
+
+
+
+
+
+Kolkman, et al.         Expires August 18, 2003                 [Page 8]
+
+Internet-Draft     KEY RR Key-Signing Key (KSK) Flag       February 2003
+
+
+Intellectual Property Statement
+
+   The IETF takes no position regarding the validity or scope of any
+   intellectual property or other rights that might be claimed to
+   pertain to the implementation or use of the technology described in
+   this document or the extent to which any license under such rights
+   might or might not be available; neither does it represent that it
+   has made any effort to identify any such rights. Information on the
+   IETF's procedures with respect to rights in standards-track and
+   standards-related documentation can be found in BCP-11. Copies of
+   claims of rights made available for publication and any assurances of
+   licenses to be made available, or the result of an attempt made to
+   obtain a general license or permission for the use of such
+   proprietary rights by implementors or users of this specification can
+   be obtained from the IETF Secretariat.
+
+   The IETF invites any interested party to bring to its attention any
+   copyrights, patents or patent applications, or other proprietary
+   rights which may cover technology that may be required to practice
+   this standard. Please address the information to the IETF Executive
+   Director.
+
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (2003). All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works. However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assignees.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+
+
+
+Kolkman, et al.         Expires August 18, 2003                 [Page 9]
+
+Internet-Draft     KEY RR Key-Signing Key (KSK) Flag       February 2003
+
+
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Kolkman, et al.         Expires August 18, 2003                [Page 10]
+

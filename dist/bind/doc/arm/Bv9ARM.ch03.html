@@ -1,11 +1,11 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
->Name Server Configuration</TITLE
+>Nameserver Configuration</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"><LINK
 REL="HOME"
 TITLE="BIND 9 Administrator Reference Manual"
 HREF="Bv9ARM.html"><LINK
@@ -13,7 +13,7 @@ REL="PREVIOUS"
 TITLE="BIND Resource Requirements"
 HREF="Bv9ARM.ch02.html"><LINK
 REL="NEXT"
-TITLE="Advanced DNS Features"
+TITLE="Advanced Concepts"
 HREF="Bv9ARM.ch04.html"></HEAD
 ><BODY
 CLASS="chapter"
@@ -70,8 +70,8 @@ CLASS="chapter"
 ><H1
 ><A
 NAME="ch03"
-></A
->Chapter 3. Name Server Configuration</H1
+>Chapter 3. Nameserver Configuration</A
+></H1
 ><DIV
 CLASS="TOC"
 ><DL
@@ -86,13 +86,18 @@ HREF="Bv9ARM.ch03.html#sample_configuration"
 ></DT
 ><DT
 >3.2. <A
-HREF="Bv9ARM.ch03.html#AEN268"
+HREF="Bv9ARM.ch03.html#AEN281"
 >Load Balancing</A
 ></DT
 ><DT
 >3.3. <A
-HREF="Bv9ARM.ch03.html#AEN345"
->Name Server Operations</A
+HREF="Bv9ARM.ch03.html#notify"
+>Notify</A
+></DT
+><DT
+>3.4. <A
+HREF="Bv9ARM.ch03.html#AEN369"
+>Nameserver Operations</A
 ></DT
 ></DL
 ></DIV
@@ -113,26 +118,24 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN257"
->3.1.1. A Caching-only Name Server</A
+NAME="AEN271"
+>3.1.1. A Caching-only Nameserver</A
 ></H2
 ><P
 >The following sample configuration is appropriate for a caching-only
 name server for use by clients internal to a corporation.  All queries
-from outside clients are refused using the <B
-CLASS="command"
->allow-query</B
->
-option.  Alternatively, the same effect could be achieved using suitable
-firewall rules.</P
+from outside clients are refused.</P
 ><PRE
 CLASS="programlisting"
 >&#13;// Two corporate subnets we wish to allow queries from.
-acl corpnets { 192.168.4.0/24; 192.168.7.0/24; };
+acl "corpnets" { 192.168.4.0/24; 192.168.7.0/24; };
 options {
      directory "/etc/namedb";           // Working directory
-     allow-query { corpnets; };
+     pid-file "named.pid";              // Put pid file in working dir
+     allow-query { "corpnets"; };
 };
+// Root server hints
+zone "." { type hint; file "root.hint"; };
 // Provide a reverse mapping for the loopback address 127.0.0.1
 zone "0.0.127.in-addr.arpa" {
      type master;
@@ -146,8 +149,8 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN262"
->3.1.2. An Authoritative-only Name Server</A
+NAME="AEN275"
+>3.1.2. An Authoritative-only Nameserver</A
 ></H2
 ><P
 >This sample configuration is for an authoritative-only server
@@ -163,9 +166,12 @@ CLASS="filename"
 CLASS="programlisting"
 >&#13;options {
      directory "/etc/namedb";           // Working directory
+     pid-file "named.pid";              // Put pid file in working dir
      allow-query { any; };              // This is the default
      recursion no;                      // Do not provide recursive service
 };
+// Root server hints
+zone "." { type hint; file "root.hint"; };
 
 // Provide a reverse mapping for the loopback address 127.0.0.1
 zone "0.0.127.in-addr.arpa" {
@@ -198,15 +204,15 @@ CLASS="sect1"
 ><H1
 CLASS="sect1"
 ><A
-NAME="AEN268"
+NAME="AEN281"
 >3.2. Load Balancing</A
 ></H1
 ><P
->A primitive form of load balancing can be achieved in
-the <ACRONYM
+>Primitive load balancing can be achieved in <SPAN
 CLASS="acronym"
->DNS</ACRONYM
-> by using multiple A records for one name.</P
+>DNS</SPAN
+> using multiple
+A records for one name.</P
 ><P
 >For example, if you have three WWW servers with network addresses
 of 10.0.0.1, 10.0.0.2 and 10.0.0.3, a set of records such as the
@@ -214,11 +220,11 @@ following means that clients will connect to each machine one third
 of the time:</P
 ><DIV
 CLASS="informaltable"
+><A
+NAME="AEN286"
+></A
 ><P
 ></P
-><A
-NAME="AEN273"
-></A
 ><TABLE
 CELLPADDING="3"
 BORDER="1"
@@ -226,128 +232,188 @@ CLASS="CALSTABLE"
 ><TBODY
 ><TR
 ><TD
+WIDTH="84"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 >Name</P
 ></TD
 ><TD
+WIDTH="48"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 >TTL</P
 ></TD
 ><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 >CLASS</P
 ></TD
 ><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 >TYPE</P
 ></TD
 ><TD
+WIDTH="195"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 >Resource Record (RR) Data</P
 ></TD
 ></TR
 ><TR
 ><TD
+WIDTH="84"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->www</VAR
+>www</TT
 ></P
 ></TD
 ><TD
+WIDTH="48"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->600</VAR
+>600</TT
 ></P
 ></TD
 ><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->IN</VAR
+>IN</TT
 ></P
 ></TD
 ><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->A</VAR
+>A</TT
 ></P
 ></TD
 ><TD
+WIDTH="195"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->10.0.0.1</VAR
+>10.0.0.1</TT
 ></P
 ></TD
 ></TR
 ><TR
 ><TD
+WIDTH="84"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 ></P
 ></TD
 ><TD
+WIDTH="48"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->600</VAR
+>600</TT
 ></P
 ></TD
 ><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->IN</VAR
+>IN</TT
 ></P
 ></TD
 ><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->A</VAR
+>A</TT
 ></P
 ></TD
 ><TD
+WIDTH="195"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->10.0.0.2</VAR
+>10.0.0.2</TT
 ></P
 ></TD
 ></TR
 ><TR
 ><TD
+WIDTH="84"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 ></P
 ></TD
 ><TD
+WIDTH="48"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->600</VAR
+>600</TT
 ></P
 ></TD
 ><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->IN</VAR
+>IN</TT
 ></P
 ></TD
 ><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->A</VAR
+>A</TT
 ></P
 ></TD
 ><TD
+WIDTH="195"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
-><VAR
+><TT
 CLASS="literal"
->10.0.0.3</VAR
+>10.0.0.3</TT
 ></P
 ></TD
 ></TR
@@ -357,9 +423,9 @@ CLASS="literal"
 ></P
 ></DIV
 ><P
->When a resolver queries for these records, <ACRONYM
+>When a resolver queries for these records, <SPAN
 CLASS="acronym"
->BIND</ACRONYM
+>BIND</SPAN
 > will rotate
     them and respond to the query with the records in a different
     order.  In the example above, clients will randomly receive
@@ -382,9 +448,9 @@ HREF="Bv9ARM.ch06.html#rrset_ordering"
 ></A
 >.
     This substatement is not supported in
-    <ACRONYM
+    <SPAN
 CLASS="acronym"
->BIND</ACRONYM
+>BIND</SPAN
 > 9, and only the ordering scheme described above is
     available.</P
 ></DIV
@@ -393,21 +459,63 @@ CLASS="sect1"
 ><H1
 CLASS="sect1"
 ><A
-NAME="AEN345"
->3.3. Name Server Operations</A
+NAME="notify"
+>3.3. Notify</A
+></H1
+><P
+><SPAN
+CLASS="acronym"
+>DNS</SPAN
+> Notify is a mechanism that allows master nameservers to
+    notify their slave servers of changes to a zone's data. In
+    response to a <B
+CLASS="command"
+>NOTIFY</B
+> from a master server, the
+    slave will check to see that its version of the zone is the
+    current version and, if not, initiate a transfer.</P
+><P
+><SPAN
+CLASS="acronym"
+>DNS</SPAN
+>
+    Notify is fully documented in RFC 1996. See also the description
+    of the zone option <B
+CLASS="command"
+>also-notify</B
+>, see
+    <A
+HREF="Bv9ARM.ch06.html#zone_transfers"
+>Section 6.2.14.6</A
+>. For more information about
+    <B
+CLASS="command"
+>notify</B
+>, see <A
+HREF="Bv9ARM.ch06.html#boolean_options"
+>Section 6.2.14.1</A
+>.</P
+></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="AEN369"
+>3.4. Nameserver Operations</A
 ></H1
 ><DIV
 CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN347"
->3.3.1. Tools for Use With the Name Server Daemon</A
+NAME="AEN371"
+>3.4.1. Tools for Use With the Nameserver Daemon</A
 ></H2
 ><P
 >There are several indispensable diagnostic, administrative
 and monitoring tools available to the system administrator for controlling
-and debugging the name server daemon. We describe several in this
+and debugging the nameserver daemon. We describe several in this
 section </P
 ><DIV
 CLASS="sect3"
@@ -415,23 +523,8 @@ CLASS="sect3"
 CLASS="sect3"
 ><A
 NAME="diagnostic_tools"
->3.3.1.1. Diagnostic Tools</A
+>3.4.1.1. Diagnostic Tools</A
 ></H3
-><P
->The <B
-CLASS="command"
->dig</B
->, <B
-CLASS="command"
->host</B
->, and
-<B
-CLASS="command"
->nslookup</B
-> programs are all command line tools
-for manually querying name servers.  They differ in style and
-output format.
-</P
 ><P
 ></P
 ><DIV
@@ -447,9 +540,9 @@ CLASS="command"
 >The domain information groper (<B
 CLASS="command"
 >dig</B
->)
-is the most versatile and complete of these lookup tools.
-It has two modes: simple interactive
+>) is
+a command line tool that can be used to gather information from
+the Domain Name System servers. Dig has two modes: simple interactive
 mode for a single query, and batch mode which executes a query for
 each in a list of several query lines. All query options are accessible
 from the command line.</P
@@ -457,27 +550,41 @@ from the command line.</P
 ><B
 CLASS="command"
 >dig</B
->  [@<VAR
+>  [@<TT
 CLASS="replaceable"
->server</VAR
->]  <VAR
+><I
+>server</I
+></TT
+>]  <TT
 CLASS="replaceable"
->domain</VAR
->  [<VAR
+><I
+>domain</I
+></TT
+>  [<TT
 CLASS="replaceable"
->query-type</VAR
->] [<VAR
+><I
+>query-type</I
+></TT
+>] [<TT
 CLASS="replaceable"
->query-class</VAR
->] [+<VAR
+><I
+>query-class</I
+></TT
+>] [+<TT
 CLASS="replaceable"
->query-option</VAR
->] [-<VAR
+><I
+>query-option</I
+></TT
+>] [-<TT
 CLASS="replaceable"
->dig-option</VAR
->] [%<VAR
+><I
+>dig-option</I
+></TT
+>] [%<TT
 CLASS="replaceable"
->comment</VAR
+><I
+>comment</I
+></TT
 >]</P
 ><P
 >The usual simple use of dig will take the form</P
@@ -503,35 +610,53 @@ CLASS="command"
 >The <B
 CLASS="command"
 >host</B
-> utility emphasizes simplicity
-and ease of use.  By default, it converts
+> utility
+provides a simple <SPAN
+CLASS="acronym"
+>DNS</SPAN
+> lookup using a command-line interface for
+looking up Internet hostnames. By default, the utility converts
 between host names and Internet addresses, but its functionality
 can be extended with the use of options.</P
 ><P
 ><B
 CLASS="command"
 >host</B
->  [-aCdlrTwv] [-c <VAR
+>  [-aCdlrTwv] [-c <TT
 CLASS="replaceable"
->class</VAR
->] [-N <VAR
+><I
+>class</I
+></TT
+>] [-N <TT
 CLASS="replaceable"
->ndots</VAR
->] [-t <VAR
+><I
+>ndots</I
+></TT
+>] [-t <TT
 CLASS="replaceable"
->type</VAR
->] [-W <VAR
+><I
+>type</I
+></TT
+>] [-W <TT
 CLASS="replaceable"
->timeout</VAR
->] [-R <VAR
+><I
+>timeout</I
+></TT
+>] [-R <TT
 CLASS="replaceable"
->retries</VAR
->]  <VAR
+><I
+>retries</I
+></TT
+>]  <TT
 CLASS="replaceable"
->hostname</VAR
->  [<VAR
+><I
+>hostname</I
+></TT
+>  [<TT
 CLASS="replaceable"
->server</VAR
+><I
+>server</I
+></TT
 >]</P
 ><P
 >For more information and a list of available commands and
@@ -550,8 +675,12 @@ CLASS="command"
 ><B
 CLASS="command"
 >nslookup</B
+> is a program used to query Internet
+domain nameservers. <B
+CLASS="command"
+>nslookup</B
 > has two modes: interactive
-and non-interactive. Interactive mode allows the user to query name servers
+and non-interactive. Interactive mode allows the user to query nameservers
 for information about various hosts and domains or to print a list
 of hosts in a domain. Non-interactive mode is used to print just
 the name and requested information for a host or domain.</P
@@ -559,19 +688,21 @@ the name and requested information for a host or domain.</P
 ><B
 CLASS="command"
 >nslookup</B
->  [-option...] [<VAR
+>  [-option...] [<TT
 CLASS="replaceable"
->host-to-find</VAR
+><I
+>host-to-find</I
+></TT
 > | -  [server]]</P
 ><P
 >Interactive mode is entered when no arguments are given (the
-default name server will be used) or when the first argument is a
+default nameserver will be used) or when the first argument is a
 hyphen (`-') and the second argument is the host name or Internet address
-of a name server.</P
+of a nameserver.</P
 ><P
 >Non-interactive mode is used when the name or Internet address
 of the host to be looked up is given as the first argument. The
-optional second argument specifies the host name or address of a name server.</P
+optional second argument specifies the host name or address of a nameserver.</P
 ><P
 >Due to its arcane user interface and frequently inconsistent
 behavior, we do not recommend the use of <B
@@ -592,7 +723,7 @@ CLASS="sect3"
 CLASS="sect3"
 ><A
 NAME="admin_tools"
->3.3.1.2. Administrative Tools</A
+>3.4.1.2. Administrative Tools</A
 ></H3
 ><P
 >Administrative tools play an integral part in the management
@@ -605,10 +736,10 @@ CLASS="variablelist"
 ><DT
 ><A
 NAME="named-checkconf"
-></A
 ><B
 CLASS="command"
 >named-checkconf</B
+></A
 ></DT
 ><DD
 ><P
@@ -624,21 +755,25 @@ CLASS="filename"
 ><B
 CLASS="command"
 >named-checkconf</B
->  [-t <VAR
+>  [-t <TT
 CLASS="replaceable"
->directory</VAR
->] [<VAR
+><I
+>directory</I
+></TT
+>] [<TT
 CLASS="replaceable"
->filename</VAR
+><I
+>filename</I
+></TT
 >]</P
 ></DD
 ><DT
 ><A
 NAME="named-checkzone"
-></A
 ><B
 CLASS="command"
 >named-checkzone</B
+></A
 ></DT
 ><DD
 ><P
@@ -651,24 +786,30 @@ CLASS="command"
 ><B
 CLASS="command"
 >named-checkzone</B
->  [-dq] [-c <VAR
+>  [-dq] [-c <TT
 CLASS="replaceable"
->class</VAR
->]  <VAR
+><I
+>class</I
+></TT
+>]  <TT
 CLASS="replaceable"
->zone</VAR
->  [<VAR
+><I
+>zone</I
+></TT
+>  [<TT
 CLASS="replaceable"
->filename</VAR
+><I
+>filename</I
+></TT
 >]</P
 ></DD
 ><DT
 ><A
 NAME="rndc"
-></A
 ><B
 CLASS="command"
 >rndc</B
+></A
 ></DT
 ><DD
 ><P
@@ -677,7 +818,7 @@ CLASS="command"
 CLASS="command"
 >rndc</B
 >) program allows the system
-              administrator to control the operation of a name server.
+              administrator to control the operation of a nameserver.
               If you run <B
 CLASS="command"
 >rndc</B
@@ -687,24 +828,36 @@ CLASS="command"
 ><B
 CLASS="command"
 >rndc</B
->  [-c <VAR
+>  [-c <TT
 CLASS="replaceable"
->config</VAR
->] [-s <VAR
+><I
+>config</I
+></TT
+>] [-s <TT
 CLASS="replaceable"
->server</VAR
->] [-p <VAR
+><I
+>server</I
+></TT
+>] [-p <TT
 CLASS="replaceable"
->port</VAR
->] [-y <VAR
+><I
+>port</I
+></TT
+>] [-y <TT
 CLASS="replaceable"
->key</VAR
->]  <VAR
+><I
+>key</I
+></TT
+>]  <TT
 CLASS="replaceable"
->command</VAR
->  [<VAR
+><I
+>command</I
+></TT
+>  [<TT
 CLASS="replaceable"
->command</VAR
+><I
+>command</I
+></TT
 >...]</P
 ><P
 ><B
@@ -717,155 +870,90 @@ CLASS="command"
 CLASS="variablelist"
 ><DL
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->reload</KBD
+><B
+>reload</B
+></TT
 ></DT
 ><DD
 ><P
 >Reload configuration file and zones.</P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->reload <VAR
+><B
+>reload <TT
 CLASS="replaceable"
->zone</VAR
+><I
+>zone</I
+></TT
 >
        [<SPAN
 CLASS="optional"
-><VAR
+><TT
 CLASS="replaceable"
->class</VAR
+><I
+>class</I
+></TT
 >
            [<SPAN
 CLASS="optional"
-><VAR
+><TT
 CLASS="replaceable"
->view</VAR
+><I
+>view</I
+></TT
 ></SPAN
 >]</SPAN
->]</KBD
+>]</B
+></TT
 ></DT
 ><DD
 ><P
 >Reload the given zone.</P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->refresh <VAR
+><B
+>refresh <TT
 CLASS="replaceable"
->zone</VAR
+><I
+>zone</I
+></TT
 >
        [<SPAN
 CLASS="optional"
-><VAR
+><TT
 CLASS="replaceable"
->class</VAR
+><I
+>class</I
+></TT
 >
            [<SPAN
 CLASS="optional"
-><VAR
+><TT
 CLASS="replaceable"
->view</VAR
+><I
+>view</I
+></TT
 ></SPAN
 >]</SPAN
->]</KBD
+>]</B
+></TT
 ></DT
 ><DD
 ><P
 >Schedule zone maintenance for the given zone.</P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->retransfer <VAR
-CLASS="replaceable"
->zone</VAR
->
-       [<SPAN
-CLASS="optional"
-><VAR
-CLASS="replaceable"
->class</VAR
->
-           [<SPAN
-CLASS="optional"
-><VAR
-CLASS="replaceable"
->view</VAR
-></SPAN
->]</SPAN
->]</KBD
-></DT
-><DD
-><P
->Retransfer the given zone from the master.</P
-></DD
-><DT
-><KBD
-CLASS="userinput"
->freeze <VAR
-CLASS="replaceable"
->zone</VAR
->
-       [<SPAN
-CLASS="optional"
-><VAR
-CLASS="replaceable"
->class</VAR
->
-           [<SPAN
-CLASS="optional"
-><VAR
-CLASS="replaceable"
->view</VAR
-></SPAN
->]</SPAN
->]</KBD
-></DT
-><DD
-><P
->Suspend updates to a dynamic zone.  This allows manual
-    edits to be made to a zone normally updated by dynamic update.  It
-    also causes changes in the journal file to be synced into the master
-    and the journal file to be removed.  All dynamic update attempts will
-    be refused while the zone is frozen.</P
-></DD
-><DT
-><KBD
-CLASS="userinput"
->unfreeze <VAR
-CLASS="replaceable"
->zone</VAR
->
-       [<SPAN
-CLASS="optional"
-><VAR
-CLASS="replaceable"
->class</VAR
->
-           [<SPAN
-CLASS="optional"
-><VAR
-CLASS="replaceable"
->view</VAR
-></SPAN
->]</SPAN
->]</KBD
-></DT
-><DD
-><P
->Enable updates to a frozen dynamic zone.  This causes
-    the server to reload the zone from disk, and re-enables dynamic updates
-    after the load has completed.  After a zone is unfrozen, dynamic updates
-    will no longer be refused.</P
-></DD
-><DT
-><KBD
-CLASS="userinput"
->reconfig</KBD
+><B
+>reconfig</B
+></TT
 ></DT
 ><DD
 ><P
@@ -880,18 +968,22 @@ CLASS="command"
    </P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->stats</KBD
+><B
+>stats</B
+></TT
 ></DT
 ><DD
 ><P
 >Write server statistics to the statistics file.</P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->querylog</KBD
+><B
+>querylog</B
+></TT
 ></DT
 ><DD
 ><P
@@ -917,18 +1009,22 @@ CLASS="filename"
 >.</P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->dumpdb</KBD
+><B
+>dumpdb</B
+></TT
 ></DT
 ><DD
 ><P
 >Dump the server's caches to the dump file. </P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->stop</KBD
+><B
+>stop</B
+></TT
 ></DT
 ><DD
 ><P
@@ -938,9 +1034,11 @@ CLASS="userinput"
    of the updated zones.</P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->halt</KBD
+><B
+>halt</B
+></TT
 ></DT
 ><DD
 ><P
@@ -950,21 +1048,27 @@ CLASS="userinput"
    is restarted.</P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->trace</KBD
+><B
+>trace</B
+></TT
 ></DT
 ><DD
 ><P
 >Increment the servers debugging level by one. </P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->trace <VAR
+><B
+>trace <TT
 CLASS="replaceable"
->level</VAR
-></KBD
+><I
+>level</I
+></TT
+></B
+></TT
 ></DT
 ><DD
 ><P
@@ -972,27 +1076,33 @@ CLASS="replaceable"
    value.</P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->notrace</KBD
+><B
+>notrace</B
+></TT
 ></DT
 ><DD
 ><P
 >Sets the server's debugging level to 0.</P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->flush</KBD
+><B
+>flush</B
+></TT
 ></DT
 ><DD
 ><P
 >Flushes the server's cache.</P
 ></DD
 ><DT
-><KBD
+><TT
 CLASS="userinput"
->status</KBD
+><B
+>status</B
+></TT
 ></DT
 ><DD
 ><P
@@ -1010,9 +1120,9 @@ explicit root zone configured.</P
 ></DL
 ></DIV
 ><P
->In <ACRONYM
+>In <SPAN
 CLASS="acronym"
->BIND</ACRONYM
+>BIND</SPAN
 > 9.2, <B
 CLASS="command"
 >rndc</B
@@ -1024,11 +1134,7 @@ CLASS="command"
 utility except <B
 CLASS="command"
 >ndc start</B
-> and
-<B
-CLASS="command"
->ndc restart</B
->, which were also
+>, which was also
 not supported in <B
 CLASS="command"
 >ndc</B
@@ -1047,9 +1153,9 @@ CLASS="command"
 CLASS="filename"
 >/etc/rndc.conf</TT
 >, but an alternate
-location can be specified with the <VAR
+location can be specified with the <TT
 CLASS="option"
->-c</VAR
+>-c</TT
 >
 option.  If the configuration file is not found,
 <B
@@ -1060,13 +1166,13 @@ CLASS="command"
 CLASS="filename"
 >/etc/rndc.key</TT
 > (or whatever
-<VAR
+<TT
 CLASS="varname"
->sysconfdir</VAR
+>sysconfdir</TT
 > was defined when
-the <ACRONYM
+the <SPAN
 CLASS="acronym"
->BIND</ACRONYM
+>BIND</SPAN
 > build was configured).
 The <TT
 CLASS="filename"
@@ -1126,16 +1232,16 @@ CLASS="command"
 >default-server</B
 > takes a
 host name or address argument  and represents the server that will
-be contacted if no <VAR
+be contacted if no <TT
 CLASS="option"
->-s</VAR
+>-s</TT
 >
 option is provided on the command line.  
 <B
 CLASS="command"
 >default-key</B
 > takes
-the name of a key as its argument, as defined by a <B
+the name of key as its argument, as defined by a <B
 CLASS="command"
 >key</B
 > statement.
@@ -1156,28 +1262,14 @@ CLASS="command"
 >The <B
 CLASS="command"
 >key</B
-> statement defines an key to be used
-by <B
-CLASS="command"
->rndc</B
-> when authenticating with
-<B
-CLASS="command"
->named</B
->.  Its syntax is identical to the
-<B
-CLASS="command"
->key</B
-> statement in named.conf.
-The keyword <KBD
-CLASS="userinput"
->key</KBD
-> is
-followed by a key name, which must be a valid
+> statement names a key with its
+string argument. The string is required by the server to be a valid
 domain name, though it need not actually be hierarchical; thus,
-a string like "<KBD
+a string like "<TT
 CLASS="userinput"
->rndc_key</KBD
+><B
+>rndc_key</B
+></TT
 >" is a valid name.
 The <B
 CLASS="command"
@@ -1191,49 +1283,40 @@ CLASS="command"
 >secret</B
 >.
 While the configuration parser will accept any string as the argument
-to algorithm, currently only the string "<KBD
+to algorithm, currently only the string "<TT
 CLASS="userinput"
->hmac-md5</KBD
+><B
+>hmac-md5</B
+></TT
 >"
 has any meaning.  The secret is a base-64 encoded string.</P
 ><P
 >The <B
 CLASS="command"
 >server</B
-> statement associates a key
-defined using the <B
+> statement uses the key clause
+to associate a <B
 CLASS="command"
 >key</B
-> statement with a server.
-The keyword <KBD
-CLASS="userinput"
->server</KBD
-> is followed by a
-host name or address.  The <B
+>-defined key with a server.
+The argument to the <B
 CLASS="command"
 >server</B
-> statement
-has two clauses: <B
+> statement is a
+host name or address (addresses must be double quoted).  The argument
+to the key clause is the name of the key as defined by the <B
 CLASS="command"
 >key</B
-> and <B
-CLASS="command"
->port</B
->.
+> statement.
 The <B
 CLASS="command"
->key</B
-> clause specifies the name of the key
-to be used when communicating with this server, and the
-<B
-CLASS="command"
 >port</B
-> clause can be used to
-specify the port <B
+> clause can be used to 
+specify the port to which <B
 CLASS="command"
 >rndc</B
 > should connect
-to on the server.</P
+on the given server.</P
 ><P
 >A sample minimal configuration file is as follows:</P
 ><PRE
@@ -1243,7 +1326,7 @@ CLASS="programlisting"
      secret "c3Ryb25nIGVub3VnaCBmb3IgYSBtYW4gYnV0IG1hZGUgZm9yIGEgd29tYW4K";
 };
 options {
-     default-server 127.0.0.1;
+     default-server localhost;
      default-key    rndc_key;
 };
 </PRE
@@ -1254,16 +1337,18 @@ CLASS="filename"
 >,
 would allow the command:</P
 ><P
-><SAMP
+><TT
 CLASS="prompt"
->$ </SAMP
-><KBD
+>$ </TT
+><TT
 CLASS="userinput"
->rndc reload</KBD
+><B
+>rndc reload</B
+></TT
 ></P
 ><P
->to connect to 127.0.0.1 port 953 and cause the name server
-to reload, if a name server on the local machine were running with
+>to connect to 127.0.0.1 port 953 and cause the nameserver
+to reload, if a nameserver on the local machine were running with
 following controls statements:</P
 ><PRE
 CLASS="programlisting"
@@ -1273,9 +1358,9 @@ CLASS="programlisting"
 </PRE
 ><P
 >and it had an identical key statement for
-<VAR
+<TT
 CLASS="literal"
->rndc_key</VAR
+>rndc_key</TT
 >.</P
 ><P
 >Running the <B
@@ -1318,8 +1403,8 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN679"
->3.3.2. Signals</A
+NAME="AEN663"
+>3.4.2. Signals</A
 ></H2
 ><P
 >Certain UNIX signals cause the name server to take specific
@@ -1330,11 +1415,11 @@ CLASS="command"
 > command.</P
 ><DIV
 CLASS="informaltable"
+><A
+NAME="AEN667"
+></A
 ><P
 ></P
-><A
-NAME="AEN683"
-></A
 ><TABLE
 CELLPADDING="3"
 BORDER="1"
@@ -1342,6 +1427,9 @@ CLASS="CALSTABLE"
 ><TBODY
 ><TR
 ><TD
+WIDTH="108"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 ><B
 CLASS="command"
@@ -1349,6 +1437,9 @@ CLASS="command"
 ></P
 ></TD
 ><TD
+WIDTH="384"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 >Causes the server to read <TT
 CLASS="filename"
@@ -1359,6 +1450,9 @@ reload the database. </P
 ></TR
 ><TR
 ><TD
+WIDTH="108"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 ><B
 CLASS="command"
@@ -1366,12 +1460,18 @@ CLASS="command"
 ></P
 ></TD
 ><TD
+WIDTH="384"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 >Causes the server to clean up and exit.</P
 ></TD
 ></TR
 ><TR
 ><TD
+WIDTH="108"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 >&#13;<P
 ><B
 CLASS="command"
@@ -1380,6 +1480,9 @@ CLASS="command"
 >
 </TD
 ><TD
+WIDTH="384"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
 ><P
 >Causes the server to clean up and exit.</P
 ></TD
@@ -1436,9 +1539,9 @@ ACCESSKEY="N"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
-><ACRONYM
+><SPAN
 CLASS="acronym"
->BIND</ACRONYM
+>BIND</SPAN
 > Resource Requirements</TD
 ><TD
 WIDTH="34%"
@@ -1449,7 +1552,7 @@ VALIGN="top"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Advanced DNS Features</TD
+>Advanced Concepts</TD
 ></TR
 ></TABLE
 ></DIV

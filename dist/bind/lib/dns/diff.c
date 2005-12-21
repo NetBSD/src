@@ -1,23 +1,23 @@
-/*	$NetBSD: diff.c,v 1.1.1.1 2004/05/17 23:44:49 christos Exp $	*/
+/*	$NetBSD: diff.c,v 1.1.1.2 2005/12/21 19:57:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: diff.c,v 1.4.2.1.8.4 2004/03/08 02:07:52 marka Exp */
+/* Id: diff.c,v 1.4.2.1 2002/08/08 04:54:30 marka Exp */
 
 #include <config.h>
 
@@ -46,7 +46,7 @@
 
 static dns_rdatatype_t
 rdata_covers(dns_rdata_t *rdata) {
-	return (rdata->type == dns_rdatatype_rrsig ?
+	return (rdata->type == dns_rdatatype_sig ?
 		dns_rdata_covers(rdata) : 0);
 }
 
@@ -190,9 +190,8 @@ dns_diff_appendminimal(dns_diff_t *diff, dns_difftuple_t **tuplep)
 	ENSURE(*tuplep == NULL);
 }
 
-static isc_result_t
-diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
-	   isc_boolean_t warn)
+isc_result_t
+dns_diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver)
 {
 	dns_difftuple_t *t;
 	dns_dbnode_t *node = NULL;
@@ -256,13 +255,14 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 			       t->rdata.type == type &&
 			       rdata_covers(&t->rdata) == covers)
 			{
-				if (t->ttl != rdl.ttl && warn)
+				if (t->ttl != rdl.ttl) {
 					isc_log_write(DIFF_COMMON_LOGARGS,
 					      	ISC_LOG_WARNING,
 						"TTL differs in rdataset, "
 						"adjusting %lu -> %lu",
 						(unsigned long) t->ttl,
 						(unsigned long) rdl.ttl);
+				}
 				ISC_LIST_APPEND(rdl.rdata, &t->rdata, link);
 				t = ISC_LIST_NEXT(t, link);
 			}
@@ -272,7 +272,6 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 			 */
 			dns_rdataset_init(&rds);
 			CHECK(dns_rdatalist_tordataset(&rdl, &rds));
-			rds.trust = dns_trust_ultimate;
 
 			/*
 			 * Merge the rdataset into the database.
@@ -301,10 +300,9 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 				 * from a server that is not as careful.
 				 * Issue a warning and continue.
 				 */
-				if (warn)
-					isc_log_write(DIFF_COMMON_LOGARGS,
-						      ISC_LOG_WARNING,
-						      "update with no effect");
+				isc_log_write(DIFF_COMMON_LOGARGS,
+					      ISC_LOG_WARNING,
+					      "update with no effect");
 			} else if (result == ISC_R_SUCCESS ||
 				   result == DNS_R_NXRRSET) {
 				/*
@@ -324,17 +322,7 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 	return (result);
 }
 
-isc_result_t
-dns_diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver) {
-	return (diff_apply(diff, db, ver, ISC_TRUE));
-}
-
-isc_result_t
-dns_diff_applysilently(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver) {
-	return (diff_apply(diff, db, ver, ISC_FALSE));
-}
-
-/* XXX this duplicates lots of code in diff_apply(). */
+/* XXX this duplicates lots of code in dns_diff_apply(). */
 
 isc_result_t
 dns_diff_load(dns_diff_t *diff, dns_addrdatasetfunc_t addfunc,

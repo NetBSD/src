@@ -1,0 +1,1456 @@
+
+
+DNSEXT                                                         R. Arends
+Internet-Draft                                      Telematica Instituut
+Expires: August 28, 2003                                      M. Kosters
+                                                               D. Blacka
+                                                          Verisign, Inc.
+                                                       February 27, 2003
+
+
+                             DNSSEC Opt-In
+                   draft-ietf-dnsext-dnssec-opt-in-05
+
+Status of this Memo
+
+   This document is an Internet-Draft and is in full conformance with
+   all provisions of Section 10 of RFC2026.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF), its areas, and its working groups. Note that other
+   groups may also distribute working documents as Internet-Drafts.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time. It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   The list of current Internet-Drafts can be accessed at http://
+   www.ietf.org/ietf/1id-abstracts.txt.
+
+   The list of Internet-Draft Shadow Directories can be accessed at
+   http://www.ietf.org/shadow.html.
+
+   This Internet-Draft will expire on August 28, 2003.
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (2003). All Rights Reserved.
+
+Abstract
+
+   In RFC 2535, delegations to unsigned subzones are cryptographically
+   secured.  Maintaining this cryptography is not practical or
+   necessary.  This document describes an "Opt-In" model that allows
+   administrators to omit this cryptography and manage the cost of
+   adopting DNSSEC with large zones.
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                 [Page 1]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+Table of Contents
+
+   1.    Definitions and Terminology  . . . . . . . . . . . . . . . .  3
+   2.    Overview . . . . . . . . . . . . . . . . . . . . . . . . . .  4
+   3.    Protocol Additions . . . . . . . . . . . . . . . . . . . . .  5
+   3.1   Server Considerations  . . . . . . . . . . . . . . . . . . .  6
+   3.1.1 Delegations Only . . . . . . . . . . . . . . . . . . . . . .  6
+   3.1.2 Insecure Delegation Responses  . . . . . . . . . . . . . . .  6
+   3.1.3 Wildcards and Opt-In . . . . . . . . . . . . . . . . . . . .  6
+   3.1.4 Dynamic Update . . . . . . . . . . . . . . . . . . . . . . .  7
+   3.2   Client Considerations  . . . . . . . . . . . . . . . . . . .  7
+   3.2.1 Delegations Only . . . . . . . . . . . . . . . . . . . . . .  7
+   3.2.2 Validation Process Changes . . . . . . . . . . . . . . . . .  7
+   3.2.3 NXT Record Caching . . . . . . . . . . . . . . . . . . . . .  8
+   3.2.4 Use of the AD bit  . . . . . . . . . . . . . . . . . . . . .  8
+   4.    Benefits . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+   5.    Example  . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+   6.    Transition Issues  . . . . . . . . . . . . . . . . . . . . . 13
+   7.    Security Considerations  . . . . . . . . . . . . . . . . . . 14
+   8.    IANA Considerations  . . . . . . . . . . . . . . . . . . . . 16
+   9.    Acknowledgments  . . . . . . . . . . . . . . . . . . . . . . 17
+         Normative References . . . . . . . . . . . . . . . . . . . . 18
+         Informative References . . . . . . . . . . . . . . . . . . . 19
+         Authors' Addresses . . . . . . . . . . . . . . . . . . . . . 19
+   A.    Implementing Opt-In using "Views"  . . . . . . . . . . . . . 21
+   B.    Changes from Prior Versions  . . . . . . . . . . . . . . . . 23
+         Intellectual Property and Copyright Statements . . . . . . . 25
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                 [Page 2]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+1. Definitions and Terminology
+
+   Throughout this document, familiarity with the DNS system, RFC 1035
+   [1], DNS security extensions, RFC 2535 [2], and DNSSEC terminology
+   RFC 3090 [8] is assumed.
+
+   The following abbreviations and terms are used in this document:
+
+   RR: is used to refer to a DNS resource record.
+
+   RRset: refers to a Resource Record Set, as defined by [6].  In this
+      document, the RRset is also defined to include the covering SIG
+      records, if any exist.
+
+   signed name: refers to a DNS name that has, at minimum, a (signed)
+      NXT record.
+
+   unsigned name: refers to a DNS name that does not (at least) have a
+      NXT record.
+
+   covering NXT record/RRset: is the NXT record used to prove
+      (non)existence of a particular name or RRset. This means that for
+      a RRset or name 'N', the covering NXT record has the name 'N', or
+      has an owner name less than 'N' and "next" name greater than 'N'.
+
+   delegation: refers to a NS RRset with a name different from the
+      current zone apex (non-zone-apex), signifying a delegation to a
+      subzone.
+
+   secure delegation: refers to a signed name containing a delegation
+      (NS RRset), and a signed DS RRset, signifying a delegation to a
+      signed subzone.
+
+   2535/DS insecure delegation: refers to a signed name containing a
+      delegation (NS RRset), but lacking a DS RRset, signifying a
+      delegation to an unsigned subzone.
+
+   Opt-In insecure delegation: refers to an unsigned name containing
+      only a delegation NS RRset.  The covering NXT record uses the
+      Opt-In methodology described in this document.
+
+   The key words "MUST, "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY, and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119 [5].
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                 [Page 3]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+2. Overview
+
+   The cost to cryptographically secure delegations to unsigned zones is
+   high for large delegation-centric zones and zones where insecure
+   delegations will be updated rapidly.  For these zones, the costs of
+   maintaining the NXT record chain may be extremely high relative to
+   the gain of cryptographically authenticating existence of unsecured
+   zones.
+
+   This document describes a method of eliminating the superfluous
+   cryptography present in secure delegations to insecure zones.  Using
+   "Opt-In", a zone administrator can choose to remove insecure
+   delegations from the NXT chain.  This is accomplished by extending
+   the semantics of the NXT record by using a redundant bit in the type
+   map.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                 [Page 4]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+3. Protocol Additions
+
+   In RFC 2535, delegation NS RRsets are not signed, but are instead
+   accompanied by a NXT RRset of the same name, and possibly a
+   ("no-key") KEY RR [2] or DS record [3].  The security status of the
+   subzone is determined by the presence of the KEY or DS records,
+   cryptographically proven by the NXT record.  Opt-In expands this
+   definition by allowing insecure delegations to exist within an
+   otherwise signed zone without the corresponding NXT record at the
+   delegation's owner name.  These insecure delegations are proven
+   insecure by using a covering NXT record.
+
+   Since this represents a change of the interpretation of NXT records,
+   resolvers must be able to distinguish between RFC 2535 NXT records
+   and Opt-In NXT records.  This is accomplished by "tagging" the NXT
+   records that cover (or potentially cover) insecure delegation nodes.
+   This tag is indicated by the absence of the NXT bit in the type map.
+   Since the NXT bit in the type map merely indicates the existence of
+   the record itself, this bit is redundant and safe for use as a tag.
+
+   An Opt-In tagged NXT record does not assert the (non)existence of the
+   delegations that it covers (except for a delegation with the same
+   name).  This allows for the addition or removal of these delegations
+   without recalculating or resigning the NXT chain.  However, Opt-In
+   tagged NXT records do assert the (non)existence of other RRsets.
+
+   An Opt-In NXT record MAY have the same name as an insecure
+   delegation.  In this case, the delegation is proven insecure by the
+   lack of a DS bit in type map, or the presence of a "no-key" KEY
+   RRset, and the NXT record does assert the existence of the
+   delegation.
+
+   Zones using Opt-In MAY contain a mixture of Opt-In tagged NXT records
+   and RFC 2535 NXT records.  If a NXT record is not Opt-In, there MUST
+   NOT be any insecure delegations (or any other records) between it and
+   the RRsets indicated by the 'next domain name' in the NXT RDATA.  If
+   it is Opt-In, there MUST only be insecure delegations between it and
+   the next node indicated by the 'next domain name' in the NXT RDATA.
+
+   In summary,
+
+   o  An Opt-In NXT type is identified by a zero-valued (or
+      not-specified) NXT bit in the type bit map of the NXT record.
+
+   o  A RFC2535 NXT type is identified by a one-valued NXT bit in the
+      type bit map of the NXT record.
+
+   and,
+
+
+
+Arends, et al.          Expires August 28, 2003                 [Page 5]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+   o  An Opt-In NXT record does not assert the non-existence of a name
+      between its owner name and "next" name, although it does assert
+      that any name in this span MUST be an insecure delegation.
+
+   o  An Opt-In NXT record does assert the (non)existence of RRsets with
+      the same owner name.
+
+
+3.1 Server Considerations
+
+   Opt-In imposes some new requirements on authoritative DNS servers.
+
+3.1.1 Delegations Only
+
+   This specification dictates that only insecure delegations may exist
+   between the owner and "next" names of an Opt-In tagged NXT record.
+   Signing tools SHOULD NOT generate signed zones that violate this
+   restriction. Servers SHOULD refuse to load and/or serve zones that
+   violate this restriction.
+
+3.1.2 Insecure Delegation Responses
+
+   When returning an Opt-In insecure delegation, the server MUST return
+   the covering NXT RRset in the Authority section.
+
+   This presents a change from RFC 2535, where the "no-key" KEY RRset
+   would be returned instead.  However, in the delegation signer
+   proposal, NXT records already must be returned along with the
+   insecure delegation.  The primary difference that this proposal
+   introduces is that the Opt-In tagged NXT record will have a different
+   owner name from the delegation RRset.  This may require
+   implementations to do a NXT search on cached responses.
+
+3.1.3 Wildcards and Opt-In
+
+   RFC 2535, in section 5.3, describes the practice of returning NXT
+   records to prove the non-existence of an applicable wildcard in
+   non-existent name responses.  This NXT record can be described as a
+   "negative wildcard proof". The use of Opt-In NXT records changes the
+   necessity for this practice. For non-existent name responses when the
+   query name (qname) is covered by an Opt-In tagged NXT record, servers
+   MAY choose to omit the wildcard proof record, and clients MUST NOT
+   treat the absence of this NXT record as a validation error.
+
+   The intent of the RFC 2535 negative wildcard proof requirement is to
+   prevent malicious users from undetectably removing valid wildcard
+   responses.  In order for this cryptographic proof to work, the
+   resolver must be able to prove:
+
+
+
+Arends, et al.          Expires August 28, 2003                 [Page 6]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+   1.  The exact qname does not exist.  This is done by the "normal" NXT
+       record.
+
+   2.  No applicable wildcard exists.  This is done by returning a NXT
+       record proving that the wildcard does not exist (negative
+       wildcard proof).
+
+   However, if the NXT record covering the exact qname is an Opt-In NXT
+   record, the resolver will not be able to prove the first part of this
+   equation, as the qname might exist as an insecure delegation.  Thus,
+   since the total proof cannot be completed, the negative wildcard
+   proof record is not useful.
+
+   The negative wildcard proof is also not useful when returned as part
+   of an Opt-In insecure delegation response for a similar reason: the
+   resolver cannot prove that the qname does or does not exist, and
+   therefore cannot prove that a wildcard expansion is valid.
+
+   The presence of an Opt-In tagged NXT record does not change the
+   practice of returning a NXT along with a wildcard expansion.  Even
+   though the Opt-In NXT will not be able to prove that the wildcard
+   expansion is valid, it will prove that the wildcard expansion is not
+   masking any signed records.
+
+3.1.4 Dynamic Update
+
+   Opt-In changes the semantics of Secure DNS Dynamic Update [7].  In
+   particular, it introduces the need for rules that describe when to
+   add or remove a delegation name from the NXT chain.  This document
+   does not attempt to define these rules.  Until these rules are
+   defined, servers MUST NOT process DNS Dynamic Update requests against
+   zones that use Opt-In NXT records.
+
+3.2 Client Considerations
+
+   Opt-In imposes some new requirements on DNS resolvers (caching or
+   otherwise).
+
+3.2.1 Delegations Only
+
+   As stated in the "Server Considerations" section above, this
+   specification restricts the namespace covered by Opt-In tagged NXT
+   records to insecure delegations only.  Thus, resolvers MUST reject as
+   invalid any records that fall within an Opt-In NXT record's span that
+   are not NS records or corresponding glue records.
+
+3.2.2 Validation Process Changes
+
+
+
+
+Arends, et al.          Expires August 28, 2003                 [Page 7]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+   This specification does not change the resolver's resolution
+   algorithm.  However, it does change the DNSSEC validation process.
+   Resolvers MUST be able to use Opt-In tagged NXT records to
+   cryptographically prove the validity and security status (as
+   insecure) of a referral.  Resolvers determine the security status of
+   the referred-to zone as follows:
+
+   o  In RFC 2535, the security status is proven by existence of a
+      verified "no-key" KEY RRset.  The absence of the "no-key" KEY
+      RRset indicates that the referred-to zone is secure.
+
+   o  Using Delegation Signer, the security status is proven by the
+      existence or absence of a DS RRset at the same name as the
+      delegation.  The existence of the DS RRset indicates that the
+      referred-to zone is secure. The absence of the DS RRset is proven
+      using a verified NXT record of the same name that does not have
+      the DS bit set in the type map.  This NXT record MAY also be
+      tagged as Opt-In.
+
+   o  Using Opt-In, the security status is proven by the existence of a
+      DS record (for secure) or the presence of a verified Opt-In tagged
+      NXT record that covers the delegation name.  That is, the NXT
+      record does not have the NXT bit set in the type map, and the
+      delegation name falls between the NXT's owner and "next" name.
+
+   Using Opt-In does not substantially change the nature of following
+   referrals within DNSSEC.  At every delegation point, the resolver
+   will have cryptographic proof that the subzone is secure or insecure.
+
+   When receiving either an Opt-In insecure delegation response or a
+   non-existent name response where that name is covered by an Opt-In
+   tagged NXT record, the resolver MUST NOT require proof (in the form
+   of a NXT record) that a wildcard did not exist.
+
+3.2.3 NXT Record Caching
+
+   Caching resolvers MUST be able to retrieve the appropriate covering
+   Opt-In NXT record when returning referrals that need them.  This
+   requirement differs from Delegation Signer in that the covering NXT
+   will not have the same owner name as the delegation.  Some
+   implementations may have to use new methods for finding these NXT
+   records.
+
+3.2.4 Use of the AD bit
+
+   The AD bit, as defined by [4], MUST NOT be set when:
+
+   o  sending a non-existent name (NXDOMAIN) response where the covering
+
+
+
+Arends, et al.          Expires August 28, 2003                 [Page 8]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+      NXT is tagged as Opt-In.
+
+   o  sending an Opt-In insecure delegation response, unless the
+      covering (Opt-In) NXT record's owner name equals the delegation
+      name.
+
+   This rule is based on what the Opt-In NXT record actually proves.
+   For names that exist between the Opt-In NXT record's owner and "next"
+   names, the Opt-In NXT record cannot prove the non-existence or
+   existence of the name.  As such, not all data in the response has
+   been cryptographically verified, so the AD bit cannot be set.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                 [Page 9]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+4. Benefits
+
+   Using Opt-In allows administrators of large and/or changing
+   delegation-centric zones to minimize the overhead involved in
+   maintaining the security of the zone.
+
+   Opt-In accomplishes this by eliminating the need for both "no-key"
+   KEY (in [2]) and NXT records for insecure delegations.  This, in a
+   zone with a large number of delegations to unsigned subzones, can
+   lead to substantial space savings (both in memory and on disk).
+   Additionally, Opt-In allows for the addition or removal of insecure
+   delegations without modifying the NXT record chain.  Zones that are
+   frequently updating insecure delegations (e.g., TLDs) can avoid the
+   substantial overhead of modifying and resigning the affected NXT
+   records.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 10]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+5. Example
+
+   Consider the zone EXAMPLE, shown below.  This is a zone where all of
+   the NXT records are tagged as Opt-In.
+
+   Example A: Fully DS/Opt-In Zone.
+
+         EXAMPLE.               SOA   ...
+         EXAMPLE.               SIG   SOA ...
+         EXAMPLE.               NS    FIRST-SECURE.EXAMPLE.
+         EXAMPLE.               SIG   NS ...
+         EXAMPLE.               KEY   ...
+         EXAMPLE.               SIG   KEY ...
+         EXAMPLE.               NXT   FIRST-SECURE.EXAMPLE. SOA NS SIG KEY
+         EXAMPLE.               SIG   NXT ...
+
+         FIRST-SECURE.EXAMPLE.  A     ...
+         FIRST-SECURE.EXAMPLE.  SIG   A ...
+         FIRST-SECURE.EXAMPLE.  NXT   NOT-SECURE-2.EXAMPLE. A SIG
+         FIRST-SECURE.EXAMPLE.  SIG   NXT ...
+
+         NOT-SECURE.EXAMPLE.    NS    NS.NOT-SECURE.EXAMPLE.
+         NS.NOT-SECURE.EXAMPLE. A     ...
+
+         NOT-SECURE-2.EXAMPLE.  NS    NS.NOT-SECURE.EXAMPLE.
+         NOT-SECURE-2.EXAMPLE   NXT   SECOND-SECURE.EXAMPLE NS SIG
+         NOT-SECURE-2.EXAMPLE   SIG   NXT ...
+
+         SECOND-SECURE.EXAMPLE. NS    NS.ELSEWHERE.
+         SECOND-SECURE.EXAMPLE. DS    ...
+         SECOND-SECURE.EXAMPLE. SIG   DS ...
+         SECOND-SECURE.EXAMPLE. NXT   EXAMPLE. NS SIG KEY
+         SECOND-SECURE.EXAMPLE. SIG   NXT ...
+
+         UNSIGNED.EXAMPLE.      NS    NS.UNSIGNED.EXAMPLE.
+         NS.UNSIGNED.EXAMPLE.   A     ...
+
+
+   In this example, a query for a signed RRset (e.g.,
+   "FIRST-SECURE.EXAMPLE A"), or a secure delegation
+   ("WWW.SECOND-SECURE.EXAMPLE A") will result in a standard RFC 2535
+   response.
+
+   A query for a nonexistent RRset will result in a response that
+   differs from RFC 2535 by: the NXT record will be tagged as Opt-In,
+   there may be no NXT record proving the non-existence of a matching
+   wildcard record, and the AD bit will not be set.
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 11]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+   A query for an insecure delegation RRset (or a referral) will return
+   both the answer (in the Authority section) and the corresponding
+   Opt-In NXT record to prove that it is not secure.
+
+   Example A.1: Response to query for WWW.UNSIGNED.EXAMPLE. A
+
+
+         RCODE=NOERROR, AD=0
+
+         Answer Section:
+
+         Authority Section:
+         UNSIGNED.EXAMPLE.      NS    NS.UNSIGNED.EXAMPLE
+         SECOND-SECURE.EXAMPLE. NXT   EXAMPLE. NS SIG DS
+         SECOND-SECURE.EXAMPLE. SIG   NXT ...
+
+         Additional Section:
+         NS.UNSIGNED.EXAMPLE.   A     ...
+
+   In the Example A.1 zone, the EXAMPLE. node MAY use either style of
+   NXT record, because there are no insecure delegations that occur
+   between it and the next node, FIRST-SECURE.EXAMPLE. In other words,
+   Example A would still be a valid zone if the NXT record for EXAMPLE.
+   was changed to the following RR:
+
+         EXAMPLE.               NXT   FIRST-SECURE.EXAMPLE. SOA NS SIG KEY NXT
+
+   However, the other NXT records (FIRST-SECURE.EXAMPLE. and
+   SECOND-SECURE.EXAMPLE.) MUST be tagged as Opt-In because there are
+   insecure delegations in the range they define. (NOT-SECURE.EXAMPLE.
+   and UNSIGNED.EXAMPLE., respectively).
+
+   NOT-SECURE-2.EXAMPLE. is an example of an insecure delegation that is
+   part of the NXT chain and also covered by an Opt-In tagged NXT
+   record.  Because NOT-SECURE-2.EXAMPLE. is a signed name, it cannot be
+   removed from the zone without modifying and resigning the prior NXT
+   record.  Delegations with names that fall between
+   NOT-SECURE-2.EXAMPLE. and SECOND-SECURE.EXAMPLE. may be added or
+   removed without resigning any NXT records.
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 12]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+6. Transition Issues
+
+   Opt-In is not backwards compatible with RFC 2535.  RFC 2535 compliant
+   DNSSEC implementations will not recognize Opt-In tagged NXT records
+   as different from RFC 2535 NXT records. Because of this, RFC 2535
+   implementations will reject all Opt-In insecure delegations within a
+   zone as invalid.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 13]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+7. Security Considerations
+
+   Opt-In allows for unsigned names, in the form of delegations to
+   unsigned subzones, to exist within an otherwise signed zone. All
+   unsigned names are, by definition, insecure, and their validity or
+   existence cannot by cryptographically proven.
+
+   In general:
+
+   o  Records with unsigned names (whether existing or not) suffer from
+      the same vulnerabilities as records in an unsigned zone.  These
+      vulnerabilites are described in more detail in [10] (note in
+      particular sections 2.3, "Name Games" and 2.6, "Authenticated
+      Denial").
+
+   o  Records with signed names have the same security whether or not
+      Opt-In is used.
+
+   Note that with or without Opt-In, an insecure delegation may have its
+   contents undetectably altered by an attacker.  Because of this, the
+   primary difference in security that Opt-In introduces is the loss of
+   the ability to prove the existence or nonexistence of an insecure
+   delegation within the span of an Opt-In NXT record.
+
+   In particular, this means that a malicious entity may be able to
+   insert or delete records with unsigned names.  These records are
+   normally NS records, but this also includes signed wildcard
+   expansions (while the wildcard record itself is signed, its expanded
+   name is an unsigned name).
+
+   For example, if a resolver received the following response from the
+   example zone above:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 14]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+   Example S.1: Response to query for WWW.DOES-NOT-EXIST.EXAMPLE. A
+
+         RCODE=NOERROR
+
+         Answer Section:
+
+         Authority Section:
+         DOES-NOT-EXIST.EXAMPLE. NS    NS.FORGED.
+         EXAMPLE.                NXT   FIRST-SECURE.EXAMPLE. SOA NS SIG KEY
+         EXAMPLE.                SIG   NXT ...
+
+         Additional Section:
+
+
+   The resolver would have no choice but to believe that the referral to
+   NS.FORGED. is valid.  If a wildcard existed that would have been
+   expanded to cover "WWW.DOES-NOT-EXIST.EXAMPLE.", an attacker could
+   have undetectably removed it and replaced it with the forged
+   delegation.
+
+   Note that being able to add a delegation is functionally equivalent
+   to being able to add any record type: an attacker merely has to forge
+   a delegation to nameserver under his/her control and place whatever
+   records needed at the subzone apex.
+
+   While in particular cases, this issue may not present a significant
+   security problem, in general it should not be lightly dismissed.
+   Therefore, it is strongly RECOMMENDED that Opt-In be used sparingly.
+   In particular, zone signing tools SHOULD NOT default to Opt-In, and
+   MAY choose to not support Opt-In at all.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 15]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+8. IANA Considerations
+
+   None.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 16]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+9. Acknowledgments
+
+   The contributions, suggestions and remarks of the following persons
+   (in alphabetic order) to this draft are acknowledged:
+
+      Mats Dufberg, Miek Gieben, Olafur Gudmundsson, Bob Halley, Olaf
+      Kolkman, Edward Lewis, Ted Lindgreen, Rip Loomis, Bill Manning,
+      Dan Massey, Scott Rose, Mike Schiraldi, Jakob Schlyter, Brian
+      Wellington.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 17]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+Normative References
+
+   [1]  Mockapetris, P., "Domain names - implementation and
+        specification", STD 13, RFC 1035, November 1987.
+
+   [2]  Eastlake, D., "Domain Name System Security Extensions", RFC
+        2535, March 1999.
+
+   [3]  Gudmundsson, O., "Delegation Signer Resource Record",
+        draft-ietf-dnsext-delegation-signer-12 (work in progress),
+        December 2002.
+
+   [4]  Gudmundsson, O. and B. Wellington, "Redefinition of DNS AD bit",
+        draft-ietf-dnsext-ad-is-secure-06 (work in progress), June 2002.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 18]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+Informative References
+
+   [5]   Bradner, S., "Key words for use in RFCs to Indicate Requirement
+         Levels", BCP 14, RFC 2119, March 1997.
+
+   [6]   Elz, R. and R. Bush, "Clarifications to the DNS Specification",
+         RFC 2181, July 1997.
+
+   [7]   Eastlake, D., "Secure Domain Name System Dynamic Update", RFC
+         2137, April 1997.
+
+   [8]   Lewis, E., "DNS Security Extension Clarification on Zone
+         Status", RFC 3090, March 2001.
+
+   [9]   Conrad, D., "Indicating Resolver Support of DNSSEC", RFC 3225,
+         December 2001.
+
+   [10]  Atkins, D. and R. Austein, "Threat Analysis Of The Domain Name
+         System", draft-ietf-dnsext-dns-threats-02 (work in progress),
+         November 2002.
+
+
+Authors' Addresses
+
+   Roy Arends
+   Telematica Instituut
+   Drienerlolaan 5
+   7522 NB  Enschede
+   NL
+
+   EMail: roy.arends@telin.nl
+
+
+   Mark Kosters
+   Verisign, Inc.
+   21355 Ridgetop Circle
+   Dulles, VA  20166
+   US
+
+   Phone: +1 703 948 3200
+   EMail: markk@verisign.com
+   URI:   http://www.verisignlabs.com
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 19]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+   David Blacka
+   Verisign, Inc.
+   21355 Ridgetop Circle
+   Dulles, VA  20166
+   US
+
+   Phone: +1 703 948 3200
+   EMail: davidb@verisign.com
+   URI:   http://www.verisignlabs.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 20]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+Appendix A. Implementing Opt-In using "Views"
+
+   In many cases, it may be convenient to implement an Opt-In zone by
+   combining two separately maintained "views" of a zone at request
+   time.  In this context, "view" refers to a particular version of a
+   zone, not to any specific DNS implementation feature.
+
+   In this scenario, one view is the secure view, the other is the
+   insecure (or legacy) view.  The secure view consists of an entirely
+   signed zone using Opt-In tagged NXT records.  The insecure view
+   contains no DNSSEC information.  It is helpful, although not
+   necessary, for the secure view to be a subset (minus DNSSEC records)
+   of the insecure view.
+
+   In addition, the only RRsets that may solely exist in the insecure
+   view are non-zone-apex NS RRsets. That is, all non-NS RRsets (and the
+   zone apex NS RRset) MUST be signed and in the secure view.
+
+   These two views may be combined at request time to provide a virtual,
+   single Opt-In zone.  The following algorithm is used when responding
+   to each query:
+
+      V_A is the secure view as described above.
+
+      V_B is the insecure view as described above.
+
+      R_A is a response generated from V_A, following RFC 2535 [2].
+
+      R_B is a response generated from V_B, following DNS resolution as
+      per RFC 1035 [1].
+
+      R_C is the response generated by combining R_A with R_B, as
+      described below.
+
+      A query is DNSSEC-aware if it either has the DO bit [9] turned on,
+      or is for a DNSSEC-specific record type.
+
+
+
+
+   1.  If V_A is a subset of V_B and the query is not DNSSEC-aware,
+       generate and return R_B, otherwise
+
+   2.  Generate R_A.
+
+   3.  If R_A's RCODE != NXDOMAIN, return R_A, otherwise
+
+   4.  Generate R_B and combine it with R_A to form R_C:
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 21]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+          For each section (ANSWER, AUTHORITY, ADDITIONAL), copy the
+          records from R_A into R_B, EXCEPT the AUTHORITY section SOA
+          record, if R_B's RCODE = NOERROR.
+
+   5.  Return R_C.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 22]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+Appendix B. Changes from Prior Versions
+
+   Changes from version 04:
+
+      Added definitions for "signed name" and "unsigned name".
+
+      Added text to make it clear that insecure delegations may have
+      Opt-In NXT records of the same name.  Updated the example to have
+      one of these.
+
+      Changed Server-side requirements from MUST NOT to SHOULD NOT and
+      added some basic description of what action to take in the face of
+      violating the delegation-only restriction.
+
+      Relaxed requirement that servers drop negative wildcard proof from
+      MUST to MAY, reiterated the client requirement.
+
+      Added section on Dynamic Update declaring it to be undefined wrt
+      Opt-In.
+
+      Essentially rewrote the "Security Considerations" section. It does
+      not actually say anything different, but hopefully it says it in a
+      clearer fashion.
+
+      Split references into Normative and Informative.
+
+      Fixed the example zone and responses to match Delegation Signer.
+
+   Changes from version 03:
+
+      Editorial changes for clarification only.
+
+   Changes from version 02:
+
+      Added text on changes to validation process, use of the AD bit,
+      and interactions with wildcards.  Added wildcard caveats to the
+      "Security Considerations" section.  Added "Transition Issues"
+      section.
+
+   Changes from version 01:
+
+      Changed to "delegation only". Strengthened "Security
+      Considerations" section. Added "Server Considerations" and "Client
+      Considerations" sections.  Added AD bit requirement.
+
+   Changes from version 00:
+
+      Complete rewrite, altering approach from "views" to tagged NXT
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 23]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+      records
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 24]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+Intellectual Property Statement
+
+   The IETF takes no position regarding the validity or scope of any
+   intellectual property or other rights that might be claimed to
+   pertain to the implementation or use of the technology described in
+   this document or the extent to which any license under such rights
+   might or might not be available; neither does it represent that it
+   has made any effort to identify any such rights. Information on the
+   IETF's procedures with respect to rights in standards-track and
+   standards-related documentation can be found in BCP-11. Copies of
+   claims of rights made available for publication and any assurances of
+   licenses to be made available, or the result of an attempt made to
+   obtain a general license or permission for the use of such
+   proprietary rights by implementors or users of this specification can
+   be obtained from the IETF Secretariat.
+
+   The IETF invites any interested party to bring to its attention any
+   copyrights, patents or patent applications, or other proprietary
+   rights which may cover technology that may be required to practice
+   this standard. Please address the information to the IETF Executive
+   Director.
+
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (2003). All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works. However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assignees.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 25]
+
+Internet-Draft               DNSSEC Opt-In                 February 2003
+
+
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Arends, et al.          Expires August 28, 2003                [Page 26]
+

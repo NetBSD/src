@@ -1,30 +1,27 @@
 <!--
- - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000, 2001  Internet Software Consortium.
- -
+ - 
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- -
- - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- - PERFORMANCE OF THIS SOFTWARE.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
-
-<!-- Id: lwresd.html,v 1.4.2.1.4.3 2004/08/22 23:38:59 marka Exp -->
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwresd</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -35,10 +32,10 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
-></A
 ><SPAN
 CLASS="APPLICATION"
 >lwresd</SPAN
+></A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
@@ -62,66 +59,82 @@ NAME="AEN13"
 ><B
 CLASS="COMMAND"
 >lwresd</B
->  [<VAR
+>  [<TT
 CLASS="OPTION"
->-C <VAR
+>-C <TT
 CLASS="REPLACEABLE"
->config-file</VAR
-></VAR
->] [<VAR
+><I
+>config-file</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-d <VAR
+>-d <TT
 CLASS="REPLACEABLE"
->debug-level</VAR
-></VAR
->] [<VAR
+><I
+>debug-level</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-f</VAR
->] [<VAR
+>-f</TT
+>] [<TT
 CLASS="OPTION"
->-g</VAR
->] [<VAR
+>-g</TT
+>] [<TT
 CLASS="OPTION"
->-i <VAR
+>-i <TT
 CLASS="REPLACEABLE"
->pid-file</VAR
-></VAR
->] [<VAR
+><I
+>pid-file</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-n <VAR
+>-n <TT
 CLASS="REPLACEABLE"
->#cpus</VAR
-></VAR
->] [<VAR
+><I
+>#cpus</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-P <VAR
+>-P <TT
 CLASS="REPLACEABLE"
->port</VAR
-></VAR
->] [<VAR
+><I
+>port</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-p <VAR
+>-p <TT
 CLASS="REPLACEABLE"
->port</VAR
-></VAR
->] [<VAR
+><I
+>port</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-s</VAR
->] [<VAR
+>-s</TT
+>] [<TT
 CLASS="OPTION"
->-t <VAR
+>-t <TT
 CLASS="REPLACEABLE"
->directory</VAR
-></VAR
->] [<VAR
+><I
+>directory</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-u <VAR
+>-u <TT
 CLASS="REPLACEABLE"
->user</VAR
-></VAR
->] [<VAR
+><I
+>user</I
+></TT
+></TT
+>] [<TT
 CLASS="OPTION"
->-v</VAR
+>-v</TT
 >]</P
 ></DIV
 ><DIV
@@ -170,18 +183,18 @@ CLASS="COMMAND"
 CLASS="FILENAME"
 >/etc/resolv.conf</TT
 > contains any
-	<VAR
+	<TT
 CLASS="OPTION"
->nameserver</VAR
+>nameserver</TT
 > entries, <B
 CLASS="COMMAND"
 >lwresd</B
 >
 	sends recursive DNS queries to those servers.  This is similar
 	to the use of forwarders in a caching name server.  If no
-	<VAR
+	<TT
 CLASS="OPTION"
->nameserver</VAR
+>nameserver</TT
 > entries are present, or if
 	forwarding fails, <B
 CLASS="COMMAND"
@@ -204,15 +217,19 @@ NAME="AEN63"
 CLASS="VARIABLELIST"
 ><DL
 ><DT
->-C <VAR
+>-C <TT
 CLASS="REPLACEABLE"
->config-file</VAR
+><I
+>config-file</I
+></TT
 ></DT
 ><DD
 ><P
->		Use <VAR
+>		Use <TT
 CLASS="REPLACEABLE"
->config-file</VAR
+><I
+>config-file</I
+></TT
 > as the
 		configuration file instead of the default,
 		<TT
@@ -222,15 +239,19 @@ CLASS="FILENAME"
           </P
 ></DD
 ><DT
->-d <VAR
+>-d <TT
 CLASS="REPLACEABLE"
->debug-level</VAR
+><I
+>debug-level</I
+></TT
 ></DT
 ><DD
 ><P
->		Set the daemon's debug level to <VAR
+>		Set the daemon's debug level to <TT
 CLASS="REPLACEABLE"
->debug-level</VAR
+><I
+>debug-level</I
+></TT
 >.
 		Debugging traces from <B
 CLASS="COMMAND"
@@ -258,15 +279,19 @@ CLASS="FILENAME"
           </P
 ></DD
 ><DT
->-n <VAR
+>-n <TT
 CLASS="REPLACEABLE"
->#cpus</VAR
+><I
+>#cpus</I
+></TT
 ></DT
 ><DD
 ><P
->		Create <VAR
+>		Create <TT
 CLASS="REPLACEABLE"
->#cpus</VAR
+><I
+>#cpus</I
+></TT
 > worker threads
 		to take advantage of multiple CPUs.  If not specified,
 		<B
@@ -279,30 +304,38 @@ CLASS="COMMAND"
           </P
 ></DD
 ><DT
->-P <VAR
+>-P <TT
 CLASS="REPLACEABLE"
->port</VAR
+><I
+>port</I
+></TT
 ></DT
 ><DD
 ><P
 >		Listen for lightweight resolver queries on port
-		<VAR
+		<TT
 CLASS="REPLACEABLE"
->port</VAR
+><I
+>port</I
+></TT
 >.  If
 		not specified, the default is port 921.
           </P
 ></DD
 ><DT
->-p <VAR
+>-p <TT
 CLASS="REPLACEABLE"
->port</VAR
+><I
+>port</I
+></TT
 ></DT
 ><DD
 ><P
->		Send DNS lookups to port <VAR
+>		Send DNS lookups to port <TT
 CLASS="REPLACEABLE"
->port</VAR
+><I
+>port</I
+></TT
 >.  If not
 		specified, the default is port 53.  This provides a
 		way of testing the lightweight resolver daemon with a
@@ -334,18 +367,22 @@ CLASS="NOTE"
 ></DIV
 ></DD
 ><DT
->-t <VAR
+>-t <TT
 CLASS="REPLACEABLE"
->directory</VAR
+><I
+>directory</I
+></TT
 ></DT
 ><DD
 ><P
->		<CODE
+>		<TT
 CLASS="FUNCTION"
->chroot()</CODE
-> to <VAR
+>chroot()</TT
+> to <TT
 CLASS="REPLACEABLE"
->directory</VAR
+><I
+>directory</I
+></TT
 > after
 		processing the command line arguments, but before
 		reading the configuration file.
@@ -370,14 +407,14 @@ ALIGN="CENTER"
 ALIGN="LEFT"
 ><P
 >		This option should be used in conjunction with the
-		<VAR
+		<TT
 CLASS="OPTION"
->-u</VAR
+>-u</TT
 > option, as chrooting a process
 		running as root doesn't enhance security on most
-		systems; the way <CODE
+		systems; the way <TT
 CLASS="FUNCTION"
->chroot()</CODE
+>chroot()</TT
 > is
 		defined allows a process with root privileges to
 		escape a chroot jail.
@@ -388,18 +425,22 @@ CLASS="FUNCTION"
 ></DIV
 ></DD
 ><DT
->-u <VAR
+>-u <TT
 CLASS="REPLACEABLE"
->user</VAR
+><I
+>user</I
+></TT
 ></DT
 ><DD
 ><P
->		<CODE
+>		<TT
 CLASS="FUNCTION"
->setuid()</CODE
-> to <VAR
+>setuid()</TT
+> to <TT
 CLASS="REPLACEABLE"
->user</VAR
+><I
+>user</I
+></TT
 > after completing
 		privileged operations, such as creating sockets that
 		listen on privileged ports.
@@ -489,7 +530,7 @@ NAME="AEN162"
 ><H2
 >AUTHOR</H2
 ><P
->	Internet Systems Consortium
+>	Internet Software Consortium
     </P
 ></DIV
 ></BODY
