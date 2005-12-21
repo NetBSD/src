@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.52 2005/12/20 19:35:12 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.53 2005/12/21 14:24:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -216,6 +216,10 @@ tolower(int ch)
 			    __assert("debugging ", __FILE__, __LINE__, "e"))
 #endif
 #endif
+/*
+ * XXX: For compatibility we use SMALL_RANDOM by default.
+ */
+#define SMALL_RANDOM
 
 #ifndef offsetof
 #define	offsetof(type, member) \
@@ -282,7 +286,12 @@ void	*memmove __P((void *, const void *, size_t));
 int	 pmatch __P((const char *, const char *, const char **));
 u_int32_t arc4random __P((void));
 void	 arc4randbytes __P((void *, size_t));
-u_long	 random __P((void));
+#ifndef SMALL_RANDOM
+void	 srandom __P((unsigned long));
+char	*initstate __P((unsigned long, char *, size_t));
+char	*setstate __P((char *));
+#endif /* SMALL_RANDOM */
+long	 random __P((void));
 int	 scanc __P((u_int, const u_char *, const u_char *, int));
 int	 skpc __P((int, size_t, u_char *));
 int	 strcasecmp __P((const char *, const char *));
