@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.1.1.2 2004/11/06 23:55:26 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.1.1.3 2005/12/21 19:57:11 christos Exp $	*/
 
 /*	$KAME: getaddrinfo.c,v 1.14 2001/01/06 09:41:15 jinmei Exp $	*/
 
@@ -939,7 +939,11 @@ copy_ai(pai)
 			free(ai);
 			return NULL;
 		}
-		strcpy(ai->ai_canonname, pai->ai_canonname);	/* (checked) */
+#ifdef HAVE_STRLCPY
+		strlcpy(ai->ai_canonname, pai->ai_canonname, l);
+#else
+		strncpy(ai->ai_canonname, pai->ai_canonname, l);
+#endif
 	} else {
 		/* just to make sure */
 		ai->ai_canonname = NULL;
@@ -1094,8 +1098,7 @@ ip6_str2scopeid(char *scope, struct sockaddr_in6 *sin6,
 		return (0);
 
 #ifdef USE_IFNAMELINKID
-	if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6) ||
-	    IN6_IS_ADDR_MC_NODELOCAL(a6)) {
+	if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6)) {
 		/*
 		 * Using interface names as link indices can be allowed
 		 * only when we can assume a one-to-one mappings between
@@ -1103,7 +1106,6 @@ ip6_str2scopeid(char *scope, struct sockaddr_in6 *sin6,
 		 */
 		scopeid = if_nametoindex(scope);
 		if (scopeid == 0)
-			goto trynumeric;
 		*scopeidp = scopeid;
 		return (1);
 	}

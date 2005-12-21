@@ -1,23 +1,23 @@
-/*	$NetBSD: nsap-ptr_23.c,v 1.1.1.1 2004/05/17 23:45:00 christos Exp $	*/
+/*	$NetBSD: nsap-ptr_23.c,v 1.1.1.2 2005/12/21 19:58:39 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsap-ptr_23.c,v 1.32.206.2 2004/03/06 08:14:17 marka Exp */
+/* Id: nsap-ptr_23.c,v 1.32 2001/07/16 03:06:46 marka Exp */
 
 /* Reviewed: Fri Mar 17 10:16:02 PST 2000 by gson */
 
@@ -47,7 +47,7 @@ fromtext_in_nsap_ptr(ARGS_FROMTEXT) {
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
 	origin = (origin != NULL) ? origin : dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
+	RETTOK(dns_name_fromtext(&name, &buffer, origin, downcase, target));
 	return (ISC_R_SUCCESS);
 }
 
@@ -86,7 +86,7 @@ fromwire_in_nsap_ptr(ARGS_FROMWIRE) {
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
 
         dns_name_init(&name, NULL);
-        return (dns_name_fromwire(&name, source, dctx, options, target));
+        return (dns_name_fromwire(&name, source, dctx, downcase, target));
 }
 
 static inline isc_result_t
@@ -215,33 +215,6 @@ digest_in_nsap_ptr(ARGS_DIGEST) {
 	dns_name_fromregion(&name, &r);
 
 	return (dns_name_digest(&name, digest, arg));
-}
-
-static inline isc_boolean_t
-checkowner_in_nsap_ptr(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == 23);
-	REQUIRE(rdclass == 1);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_in_nsap_ptr(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == 23);
-	REQUIRE(rdata->rdclass == 1);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	return (ISC_TRUE);
 }
 
 #endif	/* RDATA_IN_1_NSAP_PTR_23_C */

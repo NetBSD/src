@@ -1,23 +1,23 @@
-/*	$NetBSD: loc_29.c,v 1.1.1.1 2004/05/17 23:44:59 christos Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.1.1.2 2005/12/21 19:58:34 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: loc_29.c,v 1.30.2.3.2.6 2004/03/06 08:14:06 marka Exp */
+/* Id: loc_29.c,v 1.30.2.4 2003/10/09 07:32:42 marka Exp */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -57,7 +57,8 @@ fromtext_loc(ARGS_FROMTEXT) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(origin);
-	UNUSED(options);
+	UNUSED(downcase);
+	UNUSED(callbacks);
 
 	/*
 	 * Defaults.
@@ -82,11 +83,11 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	if (strcasecmp(DNS_AS_STR(token), "N") == 0)
+	if (strcasecmp(token.value.as_pointer, "N") == 0)
 		north = ISC_TRUE;
-	if (north || strcasecmp(DNS_AS_STR(token), "S") == 0)
+	if (north || strcasecmp(token.value.as_pointer, "S") == 0)
 		goto getlong;
-	m1 = strtol(DNS_AS_STR(token), &e, 10);
+	m1 = strtol(token.value.as_pointer, &e, 10);
 	if (*e != 0)
 		RETTOK(DNS_R_SYNTAX);
 	if (m1 < 0 || m1 > 59)
@@ -99,19 +100,18 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	if (strcasecmp(DNS_AS_STR(token), "N") == 0)
+	if (strcasecmp(token.value.as_pointer, "N") == 0)
 		north = ISC_TRUE;
-	if (north || strcasecmp(DNS_AS_STR(token), "S") == 0)
+	if (north || strcasecmp(token.value.as_pointer, "S") == 0)
 		goto getlong;
-	s1 = strtol(DNS_AS_STR(token), &e, 10);
+	s1 = strtol(token.value.as_pointer, &e, 10);
 	if (*e != 0 && *e != '.')
 		RETTOK(DNS_R_SYNTAX);
 	if (s1 < 0 || s1 > 59)
 		RETTOK(ISC_R_RANGE);
 	if (*e == '.') {
-		const char *l;
 		e++;
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < 3 ; i++) {
 			if (*e == 0)
 				break;
 			if ((tmp = decvalue(*e++)) < 0)
@@ -119,24 +119,10 @@ fromtext_loc(ARGS_FROMTEXT) {
 			s1 *= 10;
 			s1 += tmp;
 		}
-		for (; i < 3; i++)
+		for ( ; i < 3 ; i++)
 			s1 *= 10;
-		l = e;
-		while (*e != 0) {
-			if (decvalue(*e++) < 0)
-				RETTOK(DNS_R_SYNTAX);
-		}
-		if (*l != '\0' && callbacks != NULL) {
-			const char *file = isc_lex_getsourcename(lexer);
-			unsigned long line = isc_lex_getsourceline(lexer);
-
-			if (file == NULL)
-				file = "UNKNOWN";
-			(*callbacks->warn)(callbacks, "%s: %s:%u: '%s' extra "
-					   "precision digits ignored",
-					   "dns_rdata_fromtext", file, line,
-					   DNS_AS_STR(token));
-		}
+		if (*e != 0)
+			RETTOK(DNS_R_SYNTAX);
 	} else
 		s1 *= 1000;
 	if (d1 == 90 && s1 != 0)
@@ -147,9 +133,9 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	if (strcasecmp(DNS_AS_STR(token), "N") == 0)
+	if (strcasecmp(token.value.as_pointer, "N") == 0)
 		north = ISC_TRUE;
-	if (!north && strcasecmp(DNS_AS_STR(token), "S") != 0)
+	if (!north && strcasecmp(token.value.as_pointer, "S") != 0)
 		RETTOK(DNS_R_SYNTAX);
 
  getlong:
@@ -167,11 +153,11 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	if (strcasecmp(DNS_AS_STR(token), "E") == 0)
+	if (strcasecmp(token.value.as_pointer, "E") == 0)
 		east = ISC_TRUE;
-	if (east || strcasecmp(DNS_AS_STR(token), "W") == 0)
+	if (east || strcasecmp(token.value.as_pointer, "W") == 0)
 		goto getalt;
-	m2 = strtol(DNS_AS_STR(token), &e, 10);
+	m2 = strtol(token.value.as_pointer, &e, 10);
 	if (*e != 0)
 		RETTOK(DNS_R_SYNTAX);
 	if (m2 < 0 || m2 > 59)
@@ -184,19 +170,18 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	if (strcasecmp(DNS_AS_STR(token), "E") == 0)
+	if (strcasecmp(token.value.as_pointer, "E") == 0)
 		east = ISC_TRUE;
-	if (east || strcasecmp(DNS_AS_STR(token), "W") == 0)
+	if (east || strcasecmp(token.value.as_pointer, "W") == 0)
 		goto getalt;
-	s2 = strtol(DNS_AS_STR(token), &e, 10);
+	s2 = strtol(token.value.as_pointer, &e, 10);
 	if (*e != 0 && *e != '.')
 		RETTOK(DNS_R_SYNTAX);
 	if (s2 < 0 || s2 > 59)
 		RETTOK(ISC_R_RANGE);
 	if (*e == '.') {
-		const char *l;
 		e++;
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < 3 ; i++) {
 			if (*e == 0)
 				break;
 			if ((tmp = decvalue(*e++)) < 0)
@@ -204,24 +189,10 @@ fromtext_loc(ARGS_FROMTEXT) {
 			s2 *= 10;
 			s2 += tmp;
 		}
-		for (; i < 3; i++)
+		for ( ; i < 3 ; i++)
 			s2 *= 10;
-		l = e;
-		while (*e != 0) {
-			if (decvalue(*e++) < 0)
-				RETTOK(DNS_R_SYNTAX);
-		}
-		if (*l != '\0' && callbacks != NULL) {
-			const char *file = isc_lex_getsourcename(lexer);
-			unsigned long line = isc_lex_getsourceline(lexer);
-
-			if (file == NULL)
-				file = "UNKNOWN";
-			(*callbacks->warn)(callbacks, "%s: %s:%u: '%s' extra "
-					   "precision digits ignored",
-					   "dns_rdata_fromtext",
-					   file, line, DNS_AS_STR(token));
-		}
+		if (*e != 0)
+			RETTOK(DNS_R_SYNTAX);
 	} else
 		s2 *= 1000;
 	if (d2 == 180 && s2 != 0)
@@ -232,9 +203,9 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	if (strcasecmp(DNS_AS_STR(token), "E") == 0)
+	if (strcasecmp(token.value.as_pointer, "E") == 0)
 		east = ISC_TRUE;
-	if (!east && strcasecmp(DNS_AS_STR(token), "W") != 0)
+	if (!east && strcasecmp(token.value.as_pointer, "W") != 0)
 		RETTOK(DNS_R_SYNTAX);
 
  getalt:
@@ -243,7 +214,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	m = strtol(DNS_AS_STR(token), &e, 10);
+	m = strtol(token.value.as_pointer, &e, 10);
 	if (*e != 0 && *e != '.' && *e != 'm')
 		RETTOK(DNS_R_SYNTAX);
 	if (m < -100000 || m > 42849672)
@@ -251,7 +222,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 	cm = 0;
 	if (*e == '.') {
 		e++;
-		for (i = 0; i < 2; i++) {
+		for (i = 0; i < 2 ; i++) {
 			if (*e == 0 || *e == 'm')
 				break;
 			if ((tmp = decvalue(*e++)) < 0)
@@ -262,7 +233,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 			else
 				cm += tmp;
 		}
-		for (; i < 2; i++)
+		for ( ; i < 2 ; i++)
 			cm *= 10;
 	}
 	if (*e == 'm')
@@ -290,7 +261,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 		isc_lex_ungettoken(lexer, &token);
 		goto encode;
 	}
-	m = strtol(DNS_AS_STR(token), &e, 10);
+	m = strtol(token.value.as_pointer, &e, 10);
 	if (*e != 0 && *e != '.' && *e != 'm')
 		RETTOK(DNS_R_SYNTAX);
 	if (m < 0 || m > 90000000)
@@ -298,7 +269,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 	cm = 0;
 	if (*e == '.') {
 		e++;
-		for (i = 0; i < 2; i++) {
+		for (i = 0; i < 2 ; i++) {
 			if (*e == 0 || *e == 'm')
 				break;
 			if ((tmp = decvalue(*e++)) < 0)
@@ -306,7 +277,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 			cm *= 10;
 			cm += tmp;
 		}
-		for (; i < 2; i++)
+		for ( ; i < 2 ; i++)
 			cm *= 10;
 	}
 	if (*e == 'm')
@@ -317,7 +288,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 * We don't just multiply out as we will overflow.
 	 */
 	if (m > 0) {
-		for (exp = 0; exp < 7; exp++)
+		for (exp = 0 ; exp < 7 ; exp++)
 			if (m < poweroften[exp+1])
 				break;
 		man = m / poweroften[exp];
@@ -343,7 +314,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 		isc_lex_ungettoken(lexer, &token);
 		goto encode;
 	}
-	m = strtol(DNS_AS_STR(token), &e, 10);
+	m = strtol(token.value.as_pointer, &e, 10);
 	if (*e != 0 && *e != '.' && *e != 'm')
 		RETTOK(DNS_R_SYNTAX);
 	if (m < 0 || m > 90000000)
@@ -351,7 +322,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 	cm = 0;
 	if (*e == '.') {
 		e++;
-		for (i = 0; i < 2; i++) {
+		for (i = 0; i < 2 ; i++) {
 			if (*e == 0 || *e == 'm')
 				break;
 			if ((tmp = decvalue(*e++)) < 0)
@@ -359,7 +330,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 			cm *= 10;
 			cm += tmp;
 		}
-		for (; i < 2; i++)
+		for ( ; i < 2 ; i++)
 			cm *= 10;
 	}
 	if (*e == 'm')
@@ -370,7 +341,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 * We don't just multiply out as we will overflow.
 	 */
 	if (m > 0) {
-		for (exp = 0; exp < 7; exp++)
+		for (exp = 0 ; exp < 7 ; exp++)
 			if (m < poweroften[exp+1])
 				break;
 		man = m / poweroften[exp];
@@ -394,7 +365,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 		isc_lex_ungettoken(lexer, &token);
 		goto encode;
 	}
-	m = strtol(DNS_AS_STR(token), &e, 10);
+	m = strtol(token.value.as_pointer, &e, 10);
 	if (*e != 0 && *e != '.' && *e != 'm')
 		RETTOK(DNS_R_SYNTAX);
 	if (m < 0 || m > 90000000)
@@ -402,7 +373,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 	cm = 0;
 	if (*e == '.') {
 		e++;
-		for (i = 0; i < 2; i++) {
+		for (i = 0; i < 2 ; i++) {
 			if (*e == 0 || *e == 'm')
 				break;
 			if ((tmp = decvalue(*e++)) < 0)
@@ -410,7 +381,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 			cm *= 10;
 			cm += tmp;
 		}
-		for (; i < 2; i++)
+		for ( ; i < 2 ; i++)
 			cm *= 10;
 	}
 	if (*e == 'm')
@@ -421,7 +392,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 * We don't just multiply out as we will overflow.
 	 */
 	if (m > 0) {
-		for (exp = 0; exp < 7; exp++)
+		for (exp = 0 ; exp < 7 ; exp++)
 			if (m < poweroften[exp+1])
 				break;
 		man = m / poweroften[exp];
@@ -565,7 +536,7 @@ fromwire_loc(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(dctx);
-	UNUSED(options);
+	UNUSED(downcase);
 
 	isc_buffer_activeregion(source, &sr);
 	if (sr.length < 1)
@@ -650,7 +621,7 @@ compare_loc(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return (compare_region(&r1, &r2));
 }
 
 static inline isc_result_t
@@ -766,31 +737,6 @@ digest_loc(ARGS_DIGEST) {
 	dns_rdata_toregion(rdata, &r);
 
 	return ((digest)(arg, &r));
-}
-
-static inline isc_boolean_t
-checkowner_loc(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == 29);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_loc(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == 29);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	return (ISC_TRUE);
 }
 
 #endif	/* RDATA_GENERIC_LOC_29_C */

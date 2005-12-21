@@ -1,0 +1,68 @@
+A new Request for Comments is now available in online RFC libraries.
+
+
+        RFC 3492
+
+        Title:      Punycode: A Bootstring encoding of Unicode
+                    for Internationalized Domain Names in Applications
+                    (IDNA)
+        Author(s):  A. Costello
+        Status:     Standards Track
+        Date:       March 2003
+        Mailbox:    http://www.nicemice.net/amc/
+        Pages:      35
+        Characters: 67439
+        Updates/Obsoletes/SeeAlso:  None
+
+        I-D Tag:    draft-ietf-idn-punycode-03.txt
+
+        URL:        ftp://ftp.rfc-editor.org/in-notes/rfc3492.txt
+
+
+Punycode is a simple and efficient transfer encoding syntax designed
+for use with Internationalized Domain Names in Applications
+(IDNA).  It uniquely and reversibly transforms a Unicode string into
+an ASCII string.  ASCII characters in the Unicode string are
+represented literally, and non-ASCII characters are represented by
+ASCII characters that are allowed in host name labels (letters,
+digits, and hyphens).  This document defines a general algorithm
+called Bootstring that allows a string of basic code points to
+uniquely represent any string of code points drawn from a larger set.
+Punycode is an instance of Bootstring that uses particular parameter
+values specified by this document, appropriate for IDNA.
+
+This document is a product of the Internationalized Domain Name
+Working Group of the IETF.
+
+This is now a Proposed Standard Protocol.
+
+This document specifies an Internet standards track protocol for
+the Internet community, and requests discussion and suggestions
+for improvements.  Please refer to the current edition of the
+"Internet Official Protocol Standards" (STD 1) for the
+standardization state and status of this protocol.  Distribution
+of this memo is unlimited.
+
+This announcement is sent to the IETF list and the RFC-DIST list.
+Requests to be added to or deleted from the IETF distribution list
+should be sent to IETF-REQUEST@IETF.ORG.  Requests to be
+added to or deleted from the RFC-DIST distribution list should
+be sent to RFC-DIST-REQUEST@RFC-EDITOR.ORG.
+
+Details on obtaining RFCs via FTP or EMAIL may be obtained by sending
+an EMAIL message to rfc-info@RFC-EDITOR.ORG with the message body 
+help: ways_to_get_rfcs.  For example:
+
+        To: rfc-info@RFC-EDITOR.ORG
+        Subject: getting rfcs
+
+        help: ways_to_get_rfcs
+
+Requests for special distribution should be addressed to either the
+author of the RFC in question, or to RFC-Manager@RFC-EDITOR.ORG.  Unless
+specifically noted otherwise on the RFC itself, all RFCs are for
+unlimited distribution.echo 
+Submissions for Requests for Comments should be sent to
+RFC-EDITOR@RFC-EDITOR.ORG.  Please consult RFC 2223, Instructions to RFC
+Authors, for further information.
+
