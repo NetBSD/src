@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.70 2005/12/21 12:19:04 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.71 2005/12/21 12:24:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.70 2005/12/21 12:19:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.71 2005/12/21 12:24:47 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -932,6 +932,7 @@ uvmpd_scan(void)
 
 		if (inactive_shortage > 0) {
 			/* no need to check wire_count as pg is "active" */
+			pmap_clear_reference(p);
 			uvm_pagedeactivate(p);
 			uvmexp.pddeact++;
 			inactive_shortage--;
