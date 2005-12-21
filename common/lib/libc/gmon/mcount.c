@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.3 2005/12/21 16:58:04 christos Exp $	*/
+/*	$NetBSD: mcount.c,v 1.4 2005/12/21 18:11:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 /* If building a standalone libkern, don't include mcount. */
-#ifndef _STANDALONE
+#if defined(GPROF) && !defined(_STANDALONE)
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.3 2005/12/21 16:58:04 christos Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.4 2005/12/21 18:11:32 christos Exp $");
 #endif
 #endif
 
@@ -262,4 +262,4 @@ overflow:
 MCOUNT
 #endif
 
-#endif /* !_STANDALONE */
+#endif /* GPROF && !_STANDALONE */
