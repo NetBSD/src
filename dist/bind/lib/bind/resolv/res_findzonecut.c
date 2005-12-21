@@ -1,24 +1,24 @@
-/*	$NetBSD: res_findzonecut.c,v 1.1.1.2 2005/12/21 19:57:35 christos Exp $	*/
+/*	$NetBSD: res_findzonecut.c,v 1.1.1.3 2005/12/21 23:15:55 christos Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: res_findzonecut.c,v 1.2.2.3 2003/06/27 03:51:43 marka Exp";
+static const char rcsid[] = "Id: res_findzonecut.c,v 1.2.2.3.4.4 2005/10/11 00:48:16 marka Exp";
 #endif /* not lint */
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /* Import. */
@@ -92,7 +92,7 @@ static void	res_dprintf(const char *, ...) ISC_FORMAT_PRINTF(1, 2);
 
 #define DPRINTF(x) do {\
 		int save_errno = errno; \
-		if ((statp->options & RES_DEBUG) != 0) res_dprintf x; \
+		if ((statp->options & RES_DEBUG) != 0U) res_dprintf x; \
 		errno = save_errno; \
 	} while (0)
 
@@ -321,7 +321,6 @@ get_soa(res_state statp, const char *dname, ns_class class, int opts,
 		for (i = 0; i < n; i++) {
 			const char *t;
 			const u_char *rdata;
-			int rdlen;
 			ns_rr rr;
 
 			if (ns_parserr(&msg, sect, i, &rr) < 0) {
@@ -362,14 +361,14 @@ get_soa(res_state statp, const char *dname, ns_class class, int opts,
 				abort();
 			}
 			if (strlen(t) + 1 > zsize) {
-				DPRINTF(("get_soa: zname(%d) too small (%d)",
-					 zsize, strlen(t) + 1));
+				DPRINTF(("get_soa: zname(%lu) too small (%lu)",
+					 (unsigned long)zsize,
+					 (unsigned long)strlen(t) + 1));
 				errno = EMSGSIZE;
 				goto cleanup;
 			}
 			strcpy(zname, t);
 			rdata = ns_rr_rdata(rr);
-			rdlen = ns_rr_rdlen(rr);
 			if (ns_name_uncompress(resp, ns_msg_end(msg), rdata,
 					       mname, msize) < 0) {
 				DPRINTF(("get_soa: ns_name_uncompress failed")
@@ -527,7 +526,6 @@ save_ns(res_state statp, ns_msg *msg, ns_sect sect,
 		const u_char *rdata;
 		rr_ns *nsrr;
 		ns_rr rr;
-		int rdlen;
 
 		if (ns_parserr(msg, sect, i, &rr) < 0) {
 			DPRINTF(("save_ns: ns_parserr(%s, %d) failed",
@@ -546,7 +544,6 @@ save_ns(res_state statp, ns_msg *msg, ns_sect sect,
 				return (-1);
 			}
 			rdata = ns_rr_rdata(rr);
-			rdlen = ns_rr_rdlen(rr);
 			if (ns_name_uncompress(ns_msg_base(*msg),
 					       ns_msg_end(*msg), rdata,
 					       tname, sizeof tname) < 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.1.1.3 2005/12/21 19:57:36 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.1.1.4 2005/12/21 23:15:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1985
@@ -79,25 +79,25 @@
  */
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5 2003/06/27 03:51:43 marka Exp";
+static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5.4.6 2005/07/28 07:43:22 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -115,6 +115,7 @@ static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5 2003/06/27 03:51:43 marka
 #include <math.h>
 #include <netdb.h>
 #include <resolv.h>
+#include <resolv_mt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -139,7 +140,7 @@ fp_resstat(const res_state statp, FILE *file) {
 	u_long mask;
 
 	fprintf(file, ";; res options:");
-	for (mask = 1;  mask != 0;  mask <<= 1)
+	for (mask = 1;  mask != 0U;  mask <<= 1)
 		if (statp->options & mask)
 			fprintf(file, " %s", p_option(mask));
 	putc('\n', file);
@@ -364,6 +365,7 @@ p_fqname(const u_char *cp, const u_char *msg, FILE *file) {
  */
 const struct res_sym __p_class_syms[] = {
 	{C_IN,		"IN",		(char *)0},
+	{C_CHAOS,	"CH",		(char *)0},
 	{C_CHAOS,	"CHAOS",	(char *)0},
 	{C_HS,		"HS",		(char *)0},
 	{C_HS,		"HESIOD",	(char *)0},
@@ -505,7 +507,7 @@ sym_ston(const struct res_sym *syms, const char *name, int *success) {
 
 const char *
 sym_ntos(const struct res_sym *syms, int number, int *success) {
-	static char unname[20];
+	char *unname = sym_ntos_unname;
 
 	for ((void)NULL; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -523,7 +525,7 @@ sym_ntos(const struct res_sym *syms, int number, int *success) {
 
 const char *
 sym_ntop(const struct res_sym *syms, int number, int *success) {
-	static char unname[20];
+	char *unname = sym_ntop_unname;
 
 	for ((void)NULL; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -550,7 +552,7 @@ p_type(int type) {
 	result = sym_ntos(__p_type_syms, type, &success);
 	if (success)
 		return (result);
-	if (type < 0 || type > 0xfff)
+	if (type < 0 || type > 0xffff)
 		return ("BADTYPE");
 	sprintf(typebuf, "TYPE%d", type);
 	return (typebuf);
@@ -586,7 +588,7 @@ p_class(int class) {
 	result = sym_ntos(__p_class_syms, class, &success);
 	if (success)
 		return (result);
-	if (class < 0 || class > 0xfff)
+	if (class < 0 || class > 0xffff)
 		return ("BADCLASS");
 	sprintf(classbuf, "CLASS%d", class);
 	return (classbuf);
@@ -597,7 +599,7 @@ p_class(int class) {
  */
 const char *
 p_option(u_long option) {
-	static char nbuf[40];
+	char *nbuf = p_option_nbuf;
 
 	switch (option) {
 	case RES_INIT:		return "init";
@@ -626,7 +628,9 @@ p_option(u_long option) {
 #ifdef RES_NOTLDQUERY
 	case RES_NOTLDQUERY:	return "no-tld-query";
 #endif
-
+#ifdef RES_NO_NIBBLE2
+	case RES_NO_NIBBLE2:	return "no-nibble2";
+#endif
 				/* XXX nonreentrant */
 	default:		sprintf(nbuf, "?0x%lx?", (u_long)option);
 				return (nbuf);
@@ -638,7 +642,7 @@ p_option(u_long option) {
  */
 const char *
 p_time(u_int32_t value) {
-	static char nbuf[40];		/* XXX nonreentrant */
+	char *nbuf = p_time_nbuf;
 
 	if (ns_format_ttl(value, nbuf, sizeof nbuf) < 0)
 		sprintf(nbuf, "%u", value);
@@ -673,7 +677,7 @@ p_sockun(union res_sockaddr_union u, char *buf, size_t size) {
 		sprintf(ret, "[af%d]", u.sin.sin_family);
 		break;
 	}
-	if (size > 0) {
+	if (size > 0U) {
 		strncpy(buf, ret, size - 1);
 		buf[size - 1] = '0';
 	}
@@ -694,7 +698,7 @@ static const char *
 precsize_ntoa(prec)
 	u_int8_t prec;
 {
-	static char retbuf[sizeof "90000000.00"];	/* XXX nonreentrant */
+	char *retbuf = precsize_ntoa_retbuf;
 	unsigned long val;
 	int mantissa, exponent;
 
@@ -1096,13 +1100,13 @@ dn_count_labels(const char *name) {
  */
 char *
 p_secstodate (u_long secs) {
-	/* XXX nonreentrant */
-	static char output[15];		/* YYYYMMDDHHMMSS and null */
+	char *output = p_secstodate_output;
 	time_t clock = secs;
 	struct tm *time;
-	
 #ifdef HAVE_TIME_R
-	gmtime_r(&clock, &time);
+	struct tm res;
+	
+	time = gmtime_r(&clock, &res);
 #else
 	time = gmtime(&clock);
 #endif
@@ -1129,7 +1133,7 @@ res_nametoclass(const char *buf, int *successp) {
 		goto done;
 	errno = 0;
 	result = strtoul(buf + 5, &endptr, 10);
-	if (errno == 0 && *endptr == '\0' && result <= 0xffff)
+	if (errno == 0 && *endptr == '\0' && result <= 0xffffU)
 		success = 1;
  done:
 	if (successp)
@@ -1152,7 +1156,7 @@ res_nametotype(const char *buf, int *successp) {
 		goto done;
 	errno = 0;
 	result = strtoul(buf + 4, &endptr, 10);
-	if (errno == 0 && *endptr == '\0' && result <= 0xffff)
+	if (errno == 0 && *endptr == '\0' && result <= 0xffffU)
 		success = 1;
  done:
 	if (successp)

@@ -1,26 +1,26 @@
-/*	$NetBSD: eventlib.h,v 1.1.1.2 2005/12/21 19:57:05 christos Exp $	*/
+/*	$NetBSD: eventlib.h,v 1.1.1.3 2005/12/21 23:15:22 christos Exp $	*/
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-1999 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /* eventlib.h - exported interfaces for eventlib
  * vix 09sep95 [initial]
  *
- * Id: eventlib.h,v 1.1.2.1 2003/06/27 03:51:38 marka Exp
+ * Id: eventlib.h,v 1.1.2.1.4.2 2005/07/28 07:43:18 marka Exp
  */
 
 #ifndef _EVENTLIB_H
@@ -78,6 +78,8 @@ typedef	struct { unsigned char mask[256/8]; } evByteMask;
 #define	EV_WRITE	2
 #define	EV_EXCEPT	4
 
+#define EV_WASNONBLOCKING 8	/* Internal library use. */
+
 /* eventlib.c */
 #define evCreate	__evCreate
 #define evSetDebug	__evSetDebug
@@ -87,6 +89,8 @@ typedef	struct { unsigned char mask[256/8]; } evByteMask;
 #define evDrop		__evDrop
 #define evMainLoop	__evMainLoop
 #define evHighestFD	__evHighestFD
+#define evGetOption	__evGetOption
+#define evSetOption	__evSetOption
 
 int  evCreate __P((evContext *));
 void evSetDebug __P((evContext, int, FILE *));
@@ -96,6 +100,8 @@ int  evDispatch __P((evContext, evEvent));
 void evDrop __P((evContext, evEvent));
 int  evMainLoop __P((evContext));
 int  evHighestFD __P((evContext));
+int  evGetOption __P((evContext *, const char *, int *));
+int  evSetOption __P((evContext *, const char *, int));
 
 /* ev_connects.c */
 #define evListen	__evListen
@@ -146,9 +152,11 @@ int evCancelRW __P((evContext, evStreamID));
 #define	evTimeVal	__evTimeVal
 
 #define evNowTime		__evNowTime
+#define evUTCTime		__evUTCTime
 #define evLastEventTime		__evLastEventTime
 #define evSetTimer		__evSetTimer
 #define evClearTimer		__evClearTimer
+#define evConfigTimer		__evConfigTimer
 #define evResetTimer		__evResetTimer
 #define evSetIdleTimer		__evSetIdleTimer
 #define evClearIdleTimer	__evClearIdleTimer
@@ -159,6 +167,7 @@ struct timespec evConsTime __P((time_t sec, long nsec));
 struct timespec evAddTime __P((struct timespec, struct timespec));
 struct timespec evSubTime __P((struct timespec, struct timespec));
 struct timespec evNowTime __P((void));
+struct timespec evUTCTime __P((void));
 struct timespec evLastEventTime __P((evContext));
 struct timespec evTimeSpec __P((struct timeval));
 struct timeval evTimeVal __P((struct timespec));
@@ -166,6 +175,8 @@ int evCmpTime __P((struct timespec, struct timespec));
 int evSetTimer __P((evContext, evTimerFunc, void *, struct timespec,
 		    struct timespec, evTimerID *));
 int evClearTimer __P((evContext, evTimerID));
+int evConfigTimer __P((evContext, evTimerID, const char *param,
+		      int value));
 int evResetTimer __P((evContext, evTimerID, evTimerFunc, void *,
 		      struct timespec, struct timespec));
 int evSetIdleTimer __P((evContext, evTimerFunc, void *, struct timespec,

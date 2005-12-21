@@ -1,23 +1,23 @@
-/*	$NetBSD: lfsr_test.c,v 1.1.1.2 2005/12/21 19:51:36 christos Exp $	*/
+/*	$NetBSD: lfsr_test.c,v 1.1.1.3 2005/12/21 23:08:22 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lfsr_test.c,v 1.10 2001/01/09 21:41:14 bwelling Exp */
+/* Id: lfsr_test.c,v 1.10.12.3 2004/03/08 04:04:26 marka Exp */
 
 #include <config.h>
 
@@ -41,12 +41,12 @@ main(int argc, char **argv) {
 	 * Verify that returned values are reproducable.
 	 */
 	isc_lfsr_init(&lfsr1, 0, 32, 0x80000057U, 0, NULL, NULL);
-	for (i = 0 ; i < 32 ; i++) {
+	for (i = 0; i < 32; i++) {
 		isc_lfsr_generate(&lfsr1, &state[i], 4);
 		printf("lfsr1:  state[%2d] = %08x\n", i, state[i]);
 	}
 	isc_lfsr_init(&lfsr1, 0, 32, 0x80000057U, 0, NULL, NULL);
-	for (i = 0 ; i < 32 ; i++) {
+	for (i = 0; i < 32; i++) {
 		isc_lfsr_generate(&lfsr1, &temp, 4);
 		if (state[i] != temp)
 			printf("lfsr1:  state[%2d] = %08x, "
@@ -58,13 +58,13 @@ main(int argc, char **argv) {
 	 * Now do the same with skipping.
 	 */
 	isc_lfsr_init(&lfsr1, 0, 32, 0x80000057U, 0, NULL, NULL);
-	for (i = 0 ; i < 32 ; i++) {
+	for (i = 0; i < 32; i++) {
 		isc_lfsr_generate(&lfsr1, &state[i], 4);
 		isc_lfsr_skip(&lfsr1, 32);
 		printf("lfsr1:  state[%2d] = %08x\n", i, state[i]);
 	}
 	isc_lfsr_init(&lfsr1, 0, 32, 0x80000057U, 0, NULL, NULL);
-	for (i = 0 ; i < 32 ; i++) {
+	for (i = 0; i < 32; i++) {
 		isc_lfsr_generate(&lfsr1, &temp, 4);
 		isc_lfsr_skip(&lfsr1, 32);
 		if (state[i] != temp)
@@ -79,12 +79,12 @@ main(int argc, char **argv) {
 	 *	x^16 + x^5 + x^3 + x^2 + 1
 	 */
 	isc_lfsr_init(&lfsr2, 0, 16, 0x00008016U, 0, NULL, NULL);
-	for (i = 0 ; i < 32 ; i++) {
+	for (i = 0; i < 32; i++) {
 		isc_lfsr_generate(&lfsr2, &state[i], 4);
 		printf("lfsr2:  state[%2d] = %08x\n", i, state[i]);
 	}
 	isc_lfsr_init(&lfsr2, 0, 16, 0x00008016U, 0, NULL, NULL);
-	for (i = 0 ; i < 32 ; i++) {
+	for (i = 0; i < 32; i++) {
 		isc_lfsr_generate(&lfsr2, &temp, 4);
 		if (state[i] != temp)
 			printf("lfsr2:  state[%2d] = %08x, "

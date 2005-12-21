@@ -17,7 +17,7 @@
 #  WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 #  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
-# @(#) Id: Makefile.in,v 1.1 2001/12/21 04:12:02 marka Exp (LBL)
+# @(#) Id: Makefile.in,v 1.1.204.1 2004/07/20 07:01:55 marka Exp (LBL)
 
 #
 # Various configurable paths (remember to edit Makefile.in, not Makefile)
@@ -79,7 +79,7 @@ CLEANFILES = $(PROG) $(OBJ) $(GENSRC)
 
 $(PROG): $(OBJ)
 	@rm -f $@
-	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 
 version.o: version.c
 version.c: $(srcdir)/VERSION
