@@ -1,23 +1,23 @@
-/*	$NetBSD: mutex.c,v 1.1.1.2 2005/12/21 19:59:09 christos Exp $	*/
+/*	$NetBSD: mutex.c,v 1.1.1.3 2005/12/21 23:17:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mutex.c,v 1.6 2001/01/09 21:58:01 bwelling Exp */
+/* Id: mutex.c,v 1.6.26.5 2005/03/17 03:58:32 marka Exp */
 
 #include <config.h>
 
@@ -128,19 +128,6 @@ isc_mutex_lock_profile(isc_mutex_t *mp, const char *file, int line) {
 	isc_mutexlocker_t *locker = NULL;
 	int i;
 
-	for (i = 0; i < ISC_MUTEX_MAX_LOCKERS; i++) {
-		if (mp->stats->lockers[i].file == NULL) {
-			locker = &mp->stats->lockers[i];
-			locker->file = file;
-			locker->line = line;
-			break;
-		} else if (mp->stats->lockers[i].file == file &&
-			   mp->stats->lockers[i].line == line) {
-			locker = &mp->stats->lockers[i];
-			break;
-		}
-	}
-
 	gettimeofday(&prelock_t, NULL);
 
 	if (pthread_mutex_lock(&mp->mutex) != 0)
@@ -153,6 +140,19 @@ isc_mutex_lock_profile(isc_mutex_t *mp, const char *file, int line) {
 
 	mp->stats->count++;
 	timevaladd(&mp->stats->wait_total, &postlock_t);
+
+	for (i = 0; i < ISC_MUTEX_MAX_LOCKERS; i++) {
+		if (mp->stats->lockers[i].file == NULL) {
+			locker = &mp->stats->lockers[i];
+			locker->file = file;
+			locker->line = line;
+			break;
+		} else if (mp->stats->lockers[i].file == file &&
+			   mp->stats->lockers[i].line == line) {
+			locker = &mp->stats->lockers[i];
+			break;
+		}
+	}
 
 	if (locker != NULL) {
 		locker->count++;
@@ -215,6 +215,25 @@ isc_mutex_statsprofile(FILE *fp) {
 }
 
 #endif /* ISC_MUTEX_PROFILE */
+
+#if ISC_MUTEX_DEBUG && defined(PTHREAD_MUTEX_ERRORCHECK)
+isc_result_t
+isc_mutex_init_errcheck(isc_mutex_t *mp)
+{
+	pthread_mutexattr_t attr;
+
+	if (pthread_mutexattr_init(&attr) != 0)
+		return ISC_R_UNEXPECTED;
+
+	if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK) != 0)
+		return ISC_R_UNEXPECTED;
+  
+	if (pthread_mutex_init(mp, &attr) != 0)
+		return ISC_R_UNEXPECTED;
+
+	return ISC_R_SUCCESS;
+}
+#endif
 
 #if ISC_MUTEX_DEBUG && defined(__NetBSD__) && defined(PTHREAD_MUTEX_ERRORCHECK)
 pthread_mutexattr_t isc__mutex_attrs = {
