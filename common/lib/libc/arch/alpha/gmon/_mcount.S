@@ -1,4 +1,4 @@
-/* $NetBSD: _mcount.S,v 1.1 2005/12/20 19:28:49 christos Exp $ */
+/* $NetBSD: _mcount.S,v 1.2 2005/12/21 18:11:11 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#if defined(GPROF) && !defined(_STANDALONE)
 
 #include <machine/asm.h>
 #include <machine/profile.h>
@@ -123,3 +125,4 @@ LEAF_NOPROFILE(_mcount,0)		/* XXX */
 	ret	zero, (at_reg), 1
 
 	END(_mcount)
+#endif
