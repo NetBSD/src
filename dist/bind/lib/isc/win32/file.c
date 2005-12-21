@@ -1,23 +1,23 @@
-/*	$NetBSD: file.c,v 1.1.1.2 2005/12/21 19:59:11 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.3 2005/12/21 23:17:42 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: file.c,v 1.20.2.4 2002/03/26 00:55:11 marka Exp */
+/* Id: file.c,v 1.20.2.4.8.3 2004/03/08 09:04:59 marka Exp */
 
 #include <config.h>
 
@@ -185,9 +185,8 @@ isc_file_safemovefile(const char *oldname, const char *newname) {
 		 */
 		if (exists == TRUE) {
 			filestatus = MoveFile(buf, newname);
-			if (filestatus == 0) {
+			if (filestatus == 0)
 				errno = EACCES;
-			}
 		}
 		return (-1);
 	}
@@ -488,5 +487,23 @@ isc_file_absolutepath(const char *filename, char *path, size_t pathlen) {
 	/* Caller needs to provide a larger buffer to contain the string */
 	if (retval >= pathlen)
 		return (ISC_R_NOSPACE);
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_file_truncate(const char *filename, isc_offset_t size) {
+	int fh;
+
+	REQUIRE(filename != NULL && size >= 0);
+
+	if ((fh = open(filename, _O_RDWR | _O_BINARY)) < 0)
+		return (isc__errno2result(errno));
+
+	if(_chsize(fh, size) != 0) {
+		close(fh);
+		return (isc__errno2result(errno));
+	}
+	close(fh);
+
 	return (ISC_R_SUCCESS);
 }

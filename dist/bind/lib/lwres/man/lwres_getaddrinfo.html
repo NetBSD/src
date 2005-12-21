@@ -1,94 +1,78 @@
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - Copyright (C) 2004, 2005 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000, 2001, 2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  - 
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
-<HTML
-><HEAD
-><TITLE
->lwres_getaddrinfo</TITLE
-><META
-NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
-><BODY
-CLASS="REFENTRY"
-BGCOLOR="#FFFFFF"
-TEXT="#000000"
-LINK="#0000FF"
-VLINK="#840084"
-ALINK="#0000FF"
-><H1
-><A
-NAME="AEN1"
->lwres_getaddrinfo</A
-></H1
-><DIV
-CLASS="REFNAMEDIV"
-><A
-NAME="AEN8"
-></A
-><H2
->Name</H2
->lwres_getaddrinfo, lwres_freeaddrinfo&nbsp;--&nbsp;socket address structure to host and service name</DIV
-><DIV
-CLASS="REFSYNOPSISDIV"
-><A
-NAME="AEN12"
-></A
-><H2
->Synopsis</H2
-><DIV
-CLASS="FUNCSYNOPSIS"
-><A
-NAME="AEN13"
-></A
-><P
-></P
-><PRE
-CLASS="FUNCSYNOPSISINFO"
->#include &lt;lwres/netdb.h&gt;</PRE
-><P
-><CODE
-><CODE
-CLASS="FUNCDEF"
->int
-lwres_getaddrinfo</CODE
->(const char *hostname, const char *servname, const struct addrinfo *hints, struct addrinfo **res);</CODE
-></P
-><P
-><CODE
-><CODE
-CLASS="FUNCDEF"
->void
-lwres_freeaddrinfo</CODE
->(struct addrinfo *ai);</CODE
-></P
-><P
-></P
-></DIV
-><P
->If the operating system does not provide a
-<SPAN
-CLASS="TYPE"
->struct addrinfo</SPAN
->,
+<!-- Id: lwres_getaddrinfo.html,v 1.8.2.1.4.10 2005/10/13 02:33:56 marka Exp -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>lwres_getaddrinfo</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.69.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en">
+<a name="id2463721"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>lwres_getaddrinfo, lwres_freeaddrinfo &#8212; socket address structure to host and service name</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="funcsynopsis">
+<pre class="funcsynopsisinfo">#include &lt;lwres/netdb.h&gt;</pre>
+<table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em">
+<tr>
+<td><code class="funcdef">
+int
+<b class="fsfunc">lwres_getaddrinfo</b>(</code></td>
+<td> </td>
+<td>, </td>
+</tr>
+<tr>
+<td> </td>
+<td> </td>
+<td>, </td>
+</tr>
+<tr>
+<td> </td>
+<td> </td>
+<td>, </td>
+</tr>
+<tr>
+<td> </td>
+<td> </td>
+<td>
+<code>)</code>;</td>
+</tr>
+</table>
+<table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0"><tr>
+<td><code class="funcdef">
+void
+<b class="fsfunc">lwres_freeaddrinfo</b>(</code></td>
+<td> </td>
+<td>
+<code>)</code>;</td>
+</tr></table>
+</div>
+<p>
+If the operating system does not provide a
+<span class="type">struct addrinfo</span>,
 the following structure is used:
 
-<PRE
-CLASS="PROGRAMLISTING"
->struct  addrinfo {
+</p>
+<pre class="programlisting">
+struct  addrinfo {
         int             ai_flags;       /* AI_PASSIVE, AI_CANONNAME */
         int             ai_family;      /* PF_xxx */
         int             ai_socktype;    /* SOCK_xxx */
@@ -97,626 +81,253 @@ CLASS="PROGRAMLISTING"
         char            *ai_canonname;  /* canonical name for hostname */
         struct sockaddr *ai_addr;       /* binary address */
         struct addrinfo *ai_next;       /* next structure in linked list */
-};</PRE
-></P
-></DIV
-><DIV
-CLASS="REFSECT1"
-><A
-NAME="AEN29"
-></A
-><H2
->DESCRIPTION</H2
-><P
-><TT
-CLASS="FUNCTION"
->lwres_getaddrinfo()</TT
->
+};
+</pre>
+<p>
+</p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2525883"></a><h2>DESCRIPTION</h2>
+<p>
+<code class="function">lwres_getaddrinfo()</code>
 is used to get a list of IP addresses and port numbers for host
-<TT
-CLASS="PARAMETER"
-><I
->hostname</I
-></TT
->
+<em class="parameter"><code>hostname</code></em>
 and service
-<TT
-CLASS="PARAMETER"
-><I
->servname</I
-></TT
->.
+<em class="parameter"><code>servname</code></em>.
 
 The function is the lightweight resolver's implementation of
-<TT
-CLASS="FUNCTION"
->getaddrinfo()</TT
->
+<code class="function">getaddrinfo()</code>
 as defined in RFC2133.
-<TT
-CLASS="PARAMETER"
-><I
->hostname</I
-></TT
->
+<em class="parameter"><code>hostname</code></em>
 and
-<TT
-CLASS="PARAMETER"
-><I
->servname</I
-></TT
->
+<em class="parameter"><code>servname</code></em>
 are pointers to null-terminated
 strings or
-<SPAN
-CLASS="TYPE"
->NULL</SPAN
->.
+<span class="type">NULL</span>.
 
-<TT
-CLASS="PARAMETER"
-><I
->hostname</I
-></TT
->
+<em class="parameter"><code>hostname</code></em>
 is either a host name or a numeric host address string: a dotted decimal
 IPv4 address or an IPv6 address.
-<TT
-CLASS="PARAMETER"
-><I
->servname</I
-></TT
->
+<em class="parameter"><code>servname</code></em>
 is either a decimal port number or a service name as listed in
-<TT
-CLASS="FILENAME"
->/etc/services</TT
->.</P
-><P
-><TT
-CLASS="PARAMETER"
-><I
->hints</I
-></TT
->
+<code class="filename">/etc/services</code>.
+</p>
+<p>
+<em class="parameter"><code>hints</code></em>
 is an optional pointer to a
-<SPAN
-CLASS="TYPE"
->struct addrinfo</SPAN
->.
+<span class="type">struct addrinfo</span>.
 This structure can be used to provide hints concerning the type of socket
 that the caller supports or wishes to use.
 The caller can supply the following structure elements in
-<TT
-CLASS="PARAMETER"
-><I
->*hints</I
-></TT
->:
+<em class="parameter"><code>*hints</code></em>:
 
-<P
-></P
-><DIV
-CLASS="VARIABLELIST"
-><DL
-><DT
-><TT
-CLASS="CONSTANT"
->ai_family</TT
-></DT
-><DD
-><P
->The protocol family that should be used.
+</p>
+<div class="variablelist"><dl>
+<dt><span class="term"><code class="constant">ai_family</code></span></dt>
+<dd><p>The protocol family that should be used.
 When
-<TT
-CLASS="CONSTANT"
->ai_family</TT
->
+<code class="constant">ai_family</code>
 is set to
-<SPAN
-CLASS="TYPE"
->PF_UNSPEC</SPAN
->,
+<span class="type">PF_UNSPEC</span>,
 it means the caller will accept any protocol family supported by the
-operating system.</P
-></DD
-><DT
-><TT
-CLASS="CONSTANT"
->ai_socktype</TT
-></DT
-><DD
-><P
->denotes the type of socket &mdash;
-<SPAN
-CLASS="TYPE"
->SOCK_STREAM</SPAN
->,
-<SPAN
-CLASS="TYPE"
->SOCK_DGRAM</SPAN
->
+operating system.
+</p></dd>
+<dt><span class="term"><code class="constant">ai_socktype</code></span></dt>
+<dd><p>
+denotes the type of socket &#8212;
+<span class="type">SOCK_STREAM</span>,
+<span class="type">SOCK_DGRAM</span>
 or
-<SPAN
-CLASS="TYPE"
->SOCK_RAW</SPAN
->
-&mdash; that is wanted.
+<span class="type">SOCK_RAW</span>
+&#8212; that is wanted.
 When
-<TT
-CLASS="CONSTANT"
->ai_socktype</TT
->
-is zero the caller will accept any socket type.</P
-></DD
-><DT
-><TT
-CLASS="CONSTANT"
->ai_protocol</TT
-></DT
-><DD
-><P
->indicates which transport protocol is wanted: IPPROTO_UDP or 
+<code class="constant">ai_socktype</code>
+is zero the caller will accept any socket type.
+</p></dd>
+<dt><span class="term"><code class="constant">ai_protocol</code></span></dt>
+<dd><p>
+indicates which transport protocol is wanted: IPPROTO_UDP or 
 IPPROTO_TCP.
 If
-<TT
-CLASS="CONSTANT"
->ai_protocol</TT
->
-is zero the caller will accept any protocol.</P
-></DD
-><DT
-><TT
-CLASS="CONSTANT"
->ai_flags</TT
-></DT
-><DD
-><P
->Flag bits.
+<code class="constant">ai_protocol</code>
+is zero the caller will accept any protocol.
+</p></dd>
+<dt><span class="term"><code class="constant">ai_flags</code></span></dt>
+<dd>
+<p>
+Flag bits.
 If the
-<SPAN
-CLASS="TYPE"
->AI_CANONNAME</SPAN
->
+<span class="type">AI_CANONNAME</span>
 bit is set, a successful call to
-<TT
-CLASS="FUNCTION"
->lwres_getaddrinfo()</TT
->
-will return a a null-terminated string containing the canonical name
+<code class="function">lwres_getaddrinfo()</code>
+will return a null-terminated string containing the canonical name
 of the specified hostname in
-<TT
-CLASS="CONSTANT"
->ai_canonname</TT
->
+<code class="constant">ai_canonname</code>
 of the first
-<SPAN
-CLASS="TYPE"
->addrinfo</SPAN
->
+<span class="type">addrinfo</span>
 structure returned.
 Setting the
-<SPAN
-CLASS="TYPE"
->AI_PASSIVE</SPAN
->
+<span class="type">AI_PASSIVE</span>
 bit indicates that the returned socket address structure is intended
 for used in a call to
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->bind</SPAN
->(2)</SPAN
->.
+<span class="citerefentry"><span class="refentrytitle">bind</span>(2)</span>.
 
 In this case, if the hostname argument is a
-<SPAN
-CLASS="TYPE"
->NULL</SPAN
->
+<span class="type">NULL</span>
 pointer, then the IP address portion of the socket
 address structure will be set to
-<SPAN
-CLASS="TYPE"
->INADDR_ANY</SPAN
->
+<span class="type">INADDR_ANY</span>
 for an IPv4 address or
-<SPAN
-CLASS="TYPE"
->IN6ADDR_ANY_INIT</SPAN
->
-for an IPv6 address.</P
-><P
->When
-<TT
-CLASS="CONSTANT"
->ai_flags</TT
->
+<span class="type">IN6ADDR_ANY_INIT</span>
+for an IPv6 address.
+</p>
+<p>
+When
+<code class="constant">ai_flags</code>
 does not set the
-<SPAN
-CLASS="TYPE"
->AI_PASSIVE</SPAN
->
+<span class="type">AI_PASSIVE</span>
 bit, the returned socket address structure will be ready
 for use in a call to
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->connect</SPAN
->(2)</SPAN
->
+<span class="citerefentry"><span class="refentrytitle">connect</span>(2
+)</span>
 for a connection-oriented protocol or
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->connect</SPAN
->(2)</SPAN
->,
+<span class="citerefentry"><span class="refentrytitle">connect</span>(2)</span>,
 
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->sendto</SPAN
->(2)</SPAN
->,
+<span class="citerefentry"><span class="refentrytitle">sendto</span>(2)</span>,
 
 or
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->sendmsg</SPAN
->(2)</SPAN
->
+<span class="citerefentry"><span class="refentrytitle">sendmsg</span>(2
+)</span>
 if a connectionless protocol was chosen.
 The IP address portion of the socket address structure will be
 set to the loopback address if
-<TT
-CLASS="PARAMETER"
-><I
->hostname</I
-></TT
->
+<em class="parameter"><code>hostname</code></em>
 is a
-<SPAN
-CLASS="TYPE"
->NULL</SPAN
->
+<span class="type">NULL</span>
 pointer and
-<SPAN
-CLASS="TYPE"
->AI_PASSIVE</SPAN
->
+<span class="type">AI_PASSIVE</span>
 is not set in
-<TT
-CLASS="CONSTANT"
->ai_flags</TT
->.</P
-><P
->If
-<TT
-CLASS="CONSTANT"
->ai_flags</TT
->
+<code class="constant">ai_flags</code>.
+</p>
+<p>
+If
+<code class="constant">ai_flags</code>
 is set to
-<SPAN
-CLASS="TYPE"
->AI_NUMERICHOST</SPAN
->
+<span class="type">AI_NUMERICHOST</span>
 it indicates that
-<TT
-CLASS="PARAMETER"
-><I
->hostname</I
-></TT
->
+<em class="parameter"><code>hostname</code></em>
 should be treated as a numeric string defining an IPv4 or IPv6 address
-and no name resolution should be attempted.</P
-></DD
-></DL
-></DIV
-></P
-><P
->All other elements of the <SPAN
-CLASS="TYPE"
->struct addrinfo</SPAN
-> passed
-via <TT
-CLASS="PARAMETER"
-><I
->hints</I
-></TT
-> must be zero.</P
-><P
->A <TT
-CLASS="PARAMETER"
-><I
->hints</I
-></TT
-> of <SPAN
-CLASS="TYPE"
->NULL</SPAN
-> is treated as if
-the caller provided a <SPAN
-CLASS="TYPE"
->struct addrinfo</SPAN
-> initialized to zero
-with <TT
-CLASS="CONSTANT"
->ai_family</TT
->set to
-<TT
-CLASS="CONSTANT"
->PF_UNSPEC</TT
->.</P
-><P
->After a successful call to
-<TT
-CLASS="FUNCTION"
->lwres_getaddrinfo()</TT
->,
-<TT
-CLASS="PARAMETER"
-><I
->*res</I
-></TT
->
+and no name resolution should be attempted.
+</p>
+</dd>
+</dl></div>
+<p>
+</p>
+<p>
+All other elements of the <span class="type">struct addrinfo</span> passed
+via <em class="parameter"><code>hints</code></em> must be zero.
+</p>
+<p>
+A <em class="parameter"><code>hints</code></em> of <span class="type">NULL</span> is treated as if
+the caller provided a <span class="type">struct addrinfo</span> initialized to zero
+with <code class="constant">ai_family</code>set to
+<code class="constant">PF_UNSPEC</code>.
+</p>
+<p>
+After a successful call to
+<code class="function">lwres_getaddrinfo()</code>,
+<em class="parameter"><code>*res</code></em>
 is a pointer to a linked list of one or more
-<SPAN
-CLASS="TYPE"
->addrinfo</SPAN
->
+<span class="type">addrinfo</span>
 structures.
 Each
-<SPAN
-CLASS="TYPE"
->struct addrinfo</SPAN
->
+<span class="type">struct addrinfo</span>
 in this list cn be processed by following
 the
-<TT
-CLASS="CONSTANT"
->ai_next</TT
->
+<code class="constant">ai_next</code>
 pointer, until a
-<SPAN
-CLASS="TYPE"
->NULL</SPAN
->
+<span class="type">NULL</span>
 pointer is encountered.
 The three members
-<TT
-CLASS="CONSTANT"
->ai_family</TT
->,
-<TT
-CLASS="CONSTANT"
->ai_socktype</TT
->,
+<code class="constant">ai_family</code>,
+<code class="constant">ai_socktype</code>,
 and
-<TT
-CLASS="CONSTANT"
->ai_protocol</TT
->
+<code class="constant">ai_protocol</code>
 in each
 returned
-<SPAN
-CLASS="TYPE"
->addrinfo</SPAN
->
+<span class="type">addrinfo</span>
 structure contain the corresponding arguments for a call to
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->socket</SPAN
->(2)</SPAN
->.
+<span class="citerefentry"><span class="refentrytitle">socket</span>(2)</span>.
 For each
-<SPAN
-CLASS="TYPE"
->addrinfo</SPAN
->
+<span class="type">addrinfo</span>
 structure in the list, the
-<TT
-CLASS="CONSTANT"
->ai_addr</TT
->
+<code class="constant">ai_addr</code>
 member points to a filled-in socket address structure of length
-<TT
-CLASS="CONSTANT"
->ai_addrlen</TT
->.</P
-><P
->All of the information returned by
-<TT
-CLASS="FUNCTION"
->lwres_getaddrinfo()</TT
->
+<code class="constant">ai_addrlen</code>.
+</p>
+<p>
+All of the information returned by
+<code class="function">lwres_getaddrinfo()</code>
 is dynamically allocated: the addrinfo structures, and the socket
 address structures and canonical host name strings pointed to by the
-<TT
-CLASS="CONSTANT"
->addrinfo</TT
->structures.
+<code class="constant">addrinfo</code>structures.
 Memory allocated for the dynamically allocated structures created by
 a successful call to
-<TT
-CLASS="FUNCTION"
->lwres_getaddrinfo()</TT
->
+<code class="function">lwres_getaddrinfo()</code>
 is released by
-<TT
-CLASS="FUNCTION"
->lwres_freeaddrinfo()</TT
->.
-<TT
-CLASS="PARAMETER"
-><I
->ai</I
-></TT
->
+<code class="function">lwres_freeaddrinfo()</code>.
+<em class="parameter"><code>ai</code></em>
 is a pointer to a
-<SPAN
-CLASS="TYPE"
->struct addrinfo</SPAN
->
+<span class="type">struct addrinfo</span>
 created by a call to
-<TT
-CLASS="FUNCTION"
->lwres_getaddrinfo()</TT
->.</P
-></DIV
-><DIV
-CLASS="REFSECT1"
-><A
-NAME="AEN142"
-></A
-><H2
->RETURN VALUES</H2
-><P
-><TT
-CLASS="FUNCTION"
->lwres_getaddrinfo()</TT
->
+<code class="function">lwres_getaddrinfo()</code>.
+</p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2526309"></a><h2>RETURN VALUES</h2>
+<p>
+<code class="function">lwres_getaddrinfo()</code>
 returns zero on success or one of the error codes listed in
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->gai_strerror</SPAN
->(3)</SPAN
->
+<span class="citerefentry"><span class="refentrytitle">gai_strerror</span>(3
+)</span>
 if an error occurs.
 If both
-<TT
-CLASS="PARAMETER"
-><I
->hostname</I
-></TT
->
+<em class="parameter"><code>hostname</code></em>
 and
-<TT
-CLASS="PARAMETER"
-><I
->servname</I
-></TT
->
+<em class="parameter"><code>servname</code></em>
 are
-<SPAN
-CLASS="TYPE"
->NULL</SPAN
->
-<TT
-CLASS="FUNCTION"
->lwres_getaddrinfo()</TT
->
+<span class="type">NULL</span>
+<code class="function">lwres_getaddrinfo()</code>
 returns
-<SPAN
-CLASS="ERRORCODE"
->EAI_NONAME</SPAN
->.&#13;</P
-></DIV
-><DIV
-CLASS="REFSECT1"
-><A
-NAME="AEN154"
-></A
-><H2
->SEE ALSO</H2
-><P
-><SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->lwres</SPAN
->(3)</SPAN
->,
+<span class="errorcode">EAI_NONAME</span>.
 
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->lwres_getaddrinfo</SPAN
->(3)</SPAN
->,
+</p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2526347"></a><h2>SEE ALSO</h2>
+<p>
+<span class="citerefentry"><span class="refentrytitle">lwres</span>(3)</span>,
 
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->lwres_freeaddrinfo</SPAN
->(3)</SPAN
->,
+<span class="citerefentry"><span class="refentrytitle">lwres_getaddrinfo</span>(3)</span>,
 
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->lwres_gai_strerror</SPAN
->(3)</SPAN
->,
+<span class="citerefentry"><span class="refentrytitle">lwres_freeaddrinfo</span>(3)</span>,
 
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->RFC2133</SPAN
-></SPAN
->,
+<span class="citerefentry"><span class="refentrytitle">lwres_gai_strerror</span>(3)</span>,
 
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->getservbyname</SPAN
->(3)</SPAN
->,
+<span class="citerefentry"><span class="refentrytitle">RFC2133</span></span>,
 
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->bind</SPAN
->(2)</SPAN
->,
+<span class="citerefentry"><span class="refentrytitle">getservbyname</span>(3)</span>,
 
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->connect</SPAN
->(2)</SPAN
->,
+<span class="citerefentry"><span class="refentrytitle">bind</span>(2)</span>,
 
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->sendto</SPAN
->(2)</SPAN
->,
+<span class="citerefentry"><span class="refentrytitle">connect</span>(2)</span>,
 
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->sendmsg</SPAN
->(2)</SPAN
->,
+<span class="citerefentry"><span class="refentrytitle">sendto</span>(2)</span>,
 
-<SPAN
-CLASS="CITEREFENTRY"
-><SPAN
-CLASS="REFENTRYTITLE"
->socket</SPAN
->(2)</SPAN
->.</P
-></DIV
-></BODY
-></HTML
->
+<span class="citerefentry"><span class="refentrytitle">sendmsg</span>(2)</span>,
+
+<span class="citerefentry"><span class="refentrytitle">socket</span>(2)</span>.
+</p>
+</div>
+</div></body>
+</html>
