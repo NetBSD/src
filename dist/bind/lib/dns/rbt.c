@@ -1,30 +1,29 @@
-/*	$NetBSD: rbt.c,v 1.1.1.1 2004/05/17 23:44:52 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.1.1.2 2005/12/21 19:57:55 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.c,v 1.115.2.2.2.9 2004/03/08 21:06:27 marka Exp */
+/* Id: rbt.c,v 1.115.2.2 2003/07/22 04:03:42 marka Exp */
 
 /* Principal Authors: DCL */
 
 #include <config.h>
 
 #include <isc/mem.h>
-#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -66,7 +65,6 @@ struct dns_rbt {
 	unsigned int		nodecount;
 	unsigned int		hashsize;
 	dns_rbtnode_t **	hashtable;
-	unsigned int		quantum;
 };
 
 #define RED 0
@@ -142,11 +140,6 @@ do { \
 	(name)->attributes |= DNS_NAMEATTR_READONLY; \
 } while (0)
 
-#ifdef DNS_RBT_USEHASH
-static isc_result_t
-inithash(dns_rbt_t *rbt);
-#endif
-
 #ifdef DEBUG
 #define inline
 /*
@@ -179,7 +172,28 @@ find_up(dns_rbtnode_t *node) {
 	for (root = node; ! IS_ROOT(root); root = PARENT(root))
 		; /* Nothing. */
 
-	return (PARENT(root));
+	return(PARENT(root));
+}
+
+static inline unsigned int
+name_hash(dns_name_t *name) {
+	unsigned int nlabels;
+	unsigned int hash;
+	dns_name_t tname;
+
+	if (dns_name_countlabels(name) == 1)
+		return (dns_name_hash(name, ISC_FALSE));
+
+	dns_name_init(&tname, NULL);
+	nlabels = dns_name_countlabels(name);
+	hash = 0;
+
+	for ( ; nlabels > 0; nlabels--) {
+		dns_name_getlabelsequence(name, nlabels - 1, 1, &tname);
+		hash += dns_name_hash(&tname, ISC_FALSE);
+	}
+
+	return (hash);
 }
 
 #ifdef DNS_RBT_USEHASH
@@ -191,7 +205,7 @@ compute_node_hash(dns_rbtnode_t *node) {
 
 	dns_name_init(&name, NULL);
 	NODENAME(node, &name);
-	hash = dns_name_hashbylabel(&name, ISC_FALSE);
+	hash = name_hash(&name);
 
 	up_node = find_up(node);
 	if (up_node != NULL)
@@ -208,7 +222,7 @@ static isc_result_t
 create_node(isc_mem_t *mctx, dns_name_t *name, dns_rbtnode_t **nodep);
 
 #ifdef DNS_RBT_USEHASH
-static inline void
+static inline isc_result_t
 hash_node(dns_rbt_t *rbt, dns_rbtnode_t *node);
 static inline void
 unhash_node(dns_rbt_t *rbt, dns_rbtnode_t *node);
@@ -229,11 +243,8 @@ dns_rbt_addonlevel(dns_rbtnode_t *node, dns_rbtnode_t *current, int order,
 static void
 dns_rbt_deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp);
 
-static isc_result_t
-dns_rbt_deletetree(dns_rbt_t *rbt, dns_rbtnode_t *node);
-
 static void
-dns_rbt_deletetreeflat(dns_rbt_t *rbt, dns_rbtnode_t **nodep);
+dns_rbt_deletetree(dns_rbt_t *rbt, dns_rbtnode_t *node);
 
 /*
  * Initialize a red/black tree of trees.
@@ -242,11 +253,7 @@ isc_result_t
 dns_rbt_create(isc_mem_t *mctx, void (*deleter)(void *, void *),
 	       void *deleter_arg, dns_rbt_t **rbtp)
 {
-#ifdef DNS_RBT_USEHASH
-	isc_result_t result;
-#endif
 	dns_rbt_t *rbt;
-	
 
 	REQUIRE(mctx != NULL);
 	REQUIRE(rbtp != NULL && *rbtp == NULL);
@@ -263,14 +270,6 @@ dns_rbt_create(isc_mem_t *mctx, void (*deleter)(void *, void *),
 	rbt->nodecount = 0;
 	rbt->hashtable = NULL;
 	rbt->hashsize = 0;
-#ifdef DNS_RBT_USEHASH
-	result = inithash(rbt);
-	if (result != ISC_R_SUCCESS) {
-		isc_mem_put(mctx, rbt, sizeof(*rbt));
-		return (result);
-	}
-#endif
-	rbt->quantum = 0;
 	rbt->magic = RBT_MAGIC;
 
 	*rbtp = rbt;
@@ -283,22 +282,13 @@ dns_rbt_create(isc_mem_t *mctx, void (*deleter)(void *, void *),
  */
 void
 dns_rbt_destroy(dns_rbt_t **rbtp) {
-	RUNTIME_CHECK(dns_rbt_destroy2(rbtp, 0) == ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_rbt_destroy2(dns_rbt_t **rbtp, unsigned int quantum) {
 	dns_rbt_t *rbt;
 
 	REQUIRE(rbtp != NULL && VALID_RBT(*rbtp));
 
 	rbt = *rbtp;
 
-	rbt->quantum = quantum;
-
-	dns_rbt_deletetreeflat(rbt, &rbt->root);
-	if (rbt->root != NULL)
-		return (ISC_R_QUOTA);
+	dns_rbt_deletetree(rbt, rbt->root);
 
 	INSIST(rbt->nodecount == 0);
 
@@ -309,8 +299,8 @@ dns_rbt_destroy2(dns_rbt_t **rbtp, unsigned int quantum) {
 	rbt->magic = 0;
 
 	isc_mem_put(rbt->mctx, rbt, sizeof(*rbt));
+
 	*rbtp = NULL;
-	return (ISC_R_SUCCESS);
 }
 
 unsigned int
@@ -385,7 +375,7 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 	dns_namereln_t compared;
 	isc_result_t result = ISC_R_SUCCESS;
 	dns_rbtnodechain_t chain;
-	unsigned int common_labels;
+	unsigned int common_labels, common_bits, add_bits;
 	int order;
 
 	REQUIRE(VALID_RBT(rbt));
@@ -394,7 +384,8 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 
 	/*
 	 * Create a copy of the name so the original name structure is
-	 * not modified.
+	 * not modified.  The name data needs to be modifiable when
+	 * a node is split on a bitstring label.
 	 */
 	dns_fixedname_init(&fixedcopy);
 	add_name = dns_fixedname_name(&fixedcopy);
@@ -407,7 +398,7 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 			new_current->is_root = 1;
 			rbt->root = new_current;
 			*nodep = new_current;
-			hash_node(rbt, new_current);
+			result = hash_node(rbt, new_current);
 		}
 		return (result);
 	}
@@ -431,7 +422,8 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 
 		NODENAME(current, &current_name);
 		compared = dns_name_fullcompare(add_name, &current_name,
-						&order, &common_labels);
+						&order,
+						&common_labels, &common_bits);
 
 		if (compared == dns_namereln_equal) {
 			*nodep = current;
@@ -472,8 +464,13 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 				 * not-in-common part to be searched for
 				 * in the next level.
 				 */
-				dns_name_split(add_name, common_labels,
-					       add_name, NULL);
+				result = dns_name_split(add_name,
+							common_labels,
+							common_bits,
+							add_name, NULL);
+
+				if (result != ISC_R_SUCCESS)
+					break;
 
 				/*
 				 * Follow the down pointer (possibly NULL).
@@ -527,10 +524,14 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 				 * two names and a suffix that is the common
 				 * parts of them.
 				 */
-				dns_name_split(&current_name, common_labels,
-					       prefix, suffix);
-				result = create_node(rbt->mctx, suffix,
-						     &new_current);
+				result = dns_name_split(&current_name,
+							common_labels,
+							common_bits,
+							prefix, suffix);
+
+				if (result == ISC_R_SUCCESS)
+					result = create_node(rbt->mctx, suffix,
+							     &new_current);
 
 				if (result != ISC_R_SUCCESS)
 					break;
@@ -563,6 +564,89 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 				if (*root == current)
 					*root = new_current;
 
+				/*
+				 * Now make the new root of the subtree
+				 * as the not-in-common labels of the current
+				 * node, keeping the same memory location so
+				 * as not to break any external references to
+				 * the node.  The down pointer and name data
+				 * are preserved, while left and right
+				 * pointers are nullified when the node is
+				 * established as the start of the next level.
+				 *
+				 * The name stored at the node is effectively
+				 * truncated in place by setting the shorter
+				 * name length, moving the offsets to the
+				 * end of the truncated name, and then
+				 * updating PADBYTES to reflect the truncation.
+				 *
+				 * When bitstring labels are involved, things
+				 * are just a tad more complicated (aren't
+				 * they always?) because the splitting
+				 * has shifted the bits that this name needs
+				 * from the end of the label they were in
+				 * to either the beginning of the label or
+				 * even to the previous (lesser significance)
+				 * label if the split was done in a maximally
+				 * sized bitstring label.  The bit count has
+				 * been adjusted too, so there are convolutions
+				 * to deal with all the bit movement.  Yay,
+				 * I *love* bit labels.  Grumble grumble.
+				 */
+				if (common_bits > 0) {
+					unsigned char *p;
+					unsigned int skip_width;
+					unsigned int start_label =
+					    dns_name_countlabels(&current_name)
+						- common_labels;
+
+					/*
+					 * If it is not the first label which
+					 * was split, also copy the label
+					 * before it -- which will essentially
+					 * be a NO-OP unless the preceding
+					 * label is a bitstring and the split
+					 * label was 256 bits.  Testing for
+					 * that case is probably roughly
+					 * as expensive as just unconditionally
+					 * copying the preceding label.
+					 */
+					if (start_label > 0)
+						start_label--;
+
+					skip_width =
+						prefix->offsets[start_label];
+
+					memcpy(NAME(current) + skip_width,
+					       prefix->ndata + skip_width,
+					       prefix->length - skip_width);
+
+					/*
+					 * Now add_bits is set to the total
+					 * number of bits in the split label of
+					 * the name being added, and used later
+					 * to determine if the job was
+					 * completed by pushing the
+					 * not-in-common bits down one level.
+					 */
+					start_label =
+						dns_name_countlabels(add_name)
+						- common_labels;
+
+					p = add_name->ndata +
+						add_name->offsets[start_label];
+					INSIST(*p == DNS_LABELTYPE_BITSTRING);
+
+					add_bits = *(p + 1);
+
+					/*
+					 * A bitstring that was split would not
+					 * result in a part of maximal length.
+					 */
+					INSIST(add_bits != 0);
+				} else
+					add_bits = 0;
+
 				NAMELEN(current) = prefix->length;
 				OFFSETLEN(current) = prefix->labels;
 				memcpy(OFFSETS(current), prefix->offsets,
@@ -590,10 +674,13 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 				ATTRS(current) &= ~DNS_NAMEATTR_ABSOLUTE;
 
 				rbt->nodecount++;
-				hash_node(rbt, new_current);
+				result = hash_node(rbt, new_current);
+				if (result != ISC_R_SUCCESS)
+					break;
 
 				if (common_labels ==
-				    dns_name_countlabels(add_name)) {
+				    dns_name_countlabels(add_name) &&
+				    common_bits == add_bits) {
 					/*
 					 * The name has been added by pushing
 					 * the not-in-common parts down to
@@ -618,8 +705,12 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 					 * result != ISC_R_SUCCESS, which
 					 * is tested after the loop ends).
 					 */
-					dns_name_split(add_name, common_labels,
-						       add_name, NULL);
+					result = dns_name_split(add_name,
+								common_labels,
+								common_bits,
+								add_name,
+								NULL);
+
 
 					break;
 				}
@@ -637,7 +728,18 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 		dns_rbt_addonlevel(new_current, current, order, root);
 		rbt->nodecount++;
 		*nodep = new_current;
-		hash_node(rbt, new_current);
+		result = hash_node(rbt, new_current);
+		/*
+		 * XXXDCL Ugh.  If hash_node failed, it was because
+		 * there is not enough memory.  The node is now unfindable,
+		 * and ideally should be removed.  This is kind of tricky,
+		 * and all hell is probably going to break loose throughout
+		 * the rest of the library because of the lack of memory,
+		 * so fixing up the tree as though no addition had been
+		 * made is skipped.  (Actually, this hash_node failing is
+		 * not the only situation in this file where an unexpected
+		 * error can leave things in an incorrect state.)
+		 */
 	}
 
 	return (result);
@@ -688,7 +790,7 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 	dns_fixedname_t fixedcallbackname, fixedsearchname;
 	dns_namereln_t compared;
 	isc_result_t result, saved_result;
-	unsigned int common_labels;
+	unsigned int common_labels, common_bits;
 	int order;
 
 	REQUIRE(VALID_RBT(rbt));
@@ -714,7 +816,7 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 	else {
 		/*
 		 * Appease GCC about variables it incorrectly thinks are
-		 * possibly used uninitialized.
+		 * possibly used unitialized.
 		 */
 		compared = dns_namereln_none;
 		last_compared = NULL;
@@ -726,9 +828,9 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 	/*
 	 * search_name is the name segment being sought in each tree level.
 	 * By using a fixedname, the search_name will definitely have offsets
-	 * for use by any splitting.
-	 * By using dns_name_clone, no name data should be copied thanks to
-	 * the lack of bitstring labels.
+	 * and a buffer for use by any splitting that happens in the middle
+	 * of a bitstring label.  By using dns_name_clone, no name data is
+	 * copied unless a bitstring split occurs.
 	 */
 	dns_fixedname_init(&fixedsearchname);
 	search_name = dns_fixedname_name(&fixedsearchname);
@@ -743,7 +845,8 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 	while (current != NULL) {
 		NODENAME(current, &current_name);
 		compared = dns_name_fullcompare(search_name, &current_name,
-						&order, &common_labels);
+						&order,
+						&common_labels, &common_bits);
 		last_compared = current;
 
 		if (compared == dns_namereln_equal)
@@ -757,22 +860,20 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 			unsigned int nlabels;
 			unsigned int tlabels = 1;
 			unsigned int hash;
+			isc_boolean_t has_bitstring = ISC_FALSE;
 
 			/*
 			 * If there is no hash table, hashing can't be done.
-			 */
-			if (rbt->hashtable == NULL)
-				goto nohash;
-
-			/*
-			 * The case of current != current_root, that
-			 * means a left or right pointer was followed,
+			 * Similarly, when current != current_root, that
+			 * means a left or right pointer was followed, which
 			 * only happens when the algorithm fell through to
 			 * the traditional binary search because of a
-			 * bitstring label.  Since we dropped the bitstring
-			 * support, this should not happen.
+			 * bitstring label, so that traditional search
+			 * should be continued.
 			 */
-			INSIST(current == current_root);
+			if (rbt->hashtable == NULL ||
+			    current != current_root)
+				goto nohash;
 
 			nlabels = dns_name_countlabels(search_name);
 
@@ -787,8 +888,7 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 			dns_name_getlabelsequence(search_name,
 						  nlabels - tlabels,
 						  tlabels, &hash_name);
-			hash = HASHVAL(up_current) +
-			       dns_name_hashbylabel(&hash_name, ISC_FALSE);
+			hash = HASHVAL(up_current) + name_hash(&hash_name);
 
 			for (hnode = rbt->hashtable[hash % rbt->hashsize];
 			     hnode != NULL;
@@ -823,22 +923,46 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 					break;
 				} else {
 					common_labels = tlabels;
+					common_bits = 0;
 					compared = dns_namereln_subdomain;
 					goto subdomain;
 				}
 			}
+
+			/*
+			 * XXXDCL Bitstring labels complicate things, as usual.
+			 * Checking for the situation could be done up by the
+			 * dns_name_getlabelsequence so that they could still
+			 * use the hashing code, but it would be messy to
+			 * repeatedly try various bitstring lengths.  Instead
+			 * just notice when a bitstring label is involved and
+			 * then punt to the traditional binary search if no
+			 * hash node is found after all of the labels are
+			 * tried.
+			 */
+			if (has_bitstring == ISC_FALSE &&
+			    hash_name.ndata[0] ==
+			    DNS_LABELTYPE_BITSTRING)
+				has_bitstring = ISC_TRUE;
 
 			if (tlabels++ < nlabels)
 				goto hashagain;
 
 			/*
 			 * All of the labels have been tried against the hash
-			 * table.  Since we dropped the support of bitstring
-			 * labels, the name isn't in the table.
+			 * table.  If there wasn't a bitstring label involved,
+			 * the name isn't in the table.  If there was, fall
+			 * through to the traditional search algorithm.
 			 */
-			current = NULL;
-			continue;
+			if (! has_bitstring) {
+				/*
+				 * Done with the search.
+				 */
+				current = NULL;
+				continue;
+			}
 			    
+			/* FALLTHROUGH */
 		nohash:
 #endif /* DNS_RBT_USEHASH */
 			/*
@@ -863,8 +987,15 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 				 * Whack off the current node's common parts
 				 * for the name to search in the next level.
 				 */
-				dns_name_split(search_name, common_labels,
-					       search_name, NULL);
+				result = dns_name_split(search_name,
+							common_labels,
+							common_bits,
+							search_name, NULL);
+				if (result != ISC_R_SUCCESS) {
+					dns_rbtnodechain_reset(chain);
+					return (result);
+				}
+
 				/*
 				 * This might be the closest enclosing name.
 				 */
@@ -1076,7 +1207,8 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 								search_name,
 								&current_name,
 								&order,
-								&common_labels);
+								&common_labels,
+								&common_bits);
 
 					last_compared = current;
 
@@ -1160,8 +1292,6 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 			}
 		}
 	}
-
-	ENSURE(*node == NULL || DNS_RBTNODE_VALID(*node));
 
 	return (result);
 }
@@ -1263,20 +1393,19 @@ dns_rbt_deletename(dns_rbt_t *rbt, dns_name_t *name, isc_boolean_t recurse) {
  *
  * The one positive aspect of all of this is that joining used to have a
  * case where it might fail.  Without trying to join, now this function always
- * succeeds. It still returns isc_result_t, though, so the API wouldn't change.
- */
+ * succeeds. It still returns isc_result_t, though, so the API wouldn't change.  */
 isc_result_t
 dns_rbt_deletenode(dns_rbt_t *rbt, dns_rbtnode_t *node, isc_boolean_t recurse)
 {
 	dns_rbtnode_t *parent;
 
 	REQUIRE(VALID_RBT(rbt));
-	REQUIRE(DNS_RBTNODE_VALID(node));
+	REQUIRE(node != NULL);
 
 	if (DOWN(node) != NULL) {
 		if (recurse)
-			RUNTIME_CHECK(dns_rbt_deletetree(rbt, DOWN(node))
-				      == ISC_R_SUCCESS);
+			dns_rbt_deletetree(rbt, DOWN(node));
+
 		else {
 			if (DATA(node) != NULL && rbt->data_deleter != NULL)
 				rbt->data_deleter(DATA(node),
@@ -1314,9 +1443,6 @@ dns_rbt_deletenode(dns_rbt_t *rbt, dns_rbtnode_t *node, isc_boolean_t recurse)
 		rbt->data_deleter(DATA(node), rbt->deleter_arg);
 
 	unhash_node(rbt, node);
-#if DNS_RBT_USEMAGIC
-	node->magic = 0;
-#endif
 	isc_mem_put(rbt->mctx, node, NODE_SIZE(node));
 	rbt->nodecount--;
 
@@ -1352,7 +1478,7 @@ dns_rbt_deletenode(dns_rbt_t *rbt, dns_rbtnode_t *node, isc_boolean_t recurse)
 void
 dns_rbt_namefromnode(dns_rbtnode_t *node, dns_name_t *name) {
 
-	REQUIRE(DNS_RBTNODE_VALID(node));
+	REQUIRE(node != NULL);
 	REQUIRE(name != NULL);
 	REQUIRE(name->offsets == NULL);
 
@@ -1364,7 +1490,7 @@ dns_rbt_fullnamefromnode(dns_rbtnode_t *node, dns_name_t *name) {
 	dns_name_t current;
 	isc_result_t result;
 
-	REQUIRE(DNS_RBTNODE_VALID(node));
+	REQUIRE(node != NULL);
 	REQUIRE(name != NULL);
 	REQUIRE(name->buffer != NULL);
 
@@ -1393,7 +1519,7 @@ dns_rbt_formatnodename(dns_rbtnode_t *node, char *printname, unsigned int size)
 	dns_name_t *name;
 	isc_result_t result;
 
-	REQUIRE(DNS_RBTNODE_VALID(node));
+	REQUIRE(node != NULL);
 	REQUIRE(printname != NULL);
 
 	dns_fixedname_init(&fixedname);
@@ -1467,9 +1593,6 @@ create_node(isc_mem_t *mctx, dns_name_t *name, dns_rbtnode_t **nodep) {
 	memcpy(NAME(node), region.base, region.length);
 	memcpy(OFFSETS(node), name->offsets, labels);
 
-#if DNS_RBT_USEMAGIC
-	node->magic = DNS_RBTNODE_MAGIC;
-#endif
 	*nodep = node;
 
 	return (ISC_R_SUCCESS);
@@ -1504,7 +1627,7 @@ inithash(dns_rbt_t *rbt) {
 	return (ISC_R_SUCCESS);
 }
 
-static void
+static isc_result_t
 rehash(dns_rbt_t *rbt) {
 	unsigned int oldsize;
 	dns_rbtnode_t **oldtable;
@@ -1513,15 +1636,12 @@ rehash(dns_rbt_t *rbt) {
 	unsigned int i;
 
 	oldsize = rbt->hashsize;
+	rbt->hashsize *= 2;
 	oldtable = rbt->hashtable;
-	rbt->hashsize *= 2 + 1;
 	rbt->hashtable = isc_mem_get(rbt->mctx,
 				     rbt->hashsize * sizeof(dns_rbtnode_t *));
-	if (rbt->hashtable == NULL) {
-		rbt->hashtable = oldtable;
-		rbt->hashsize = oldsize;
-		return;
-	}
+	if (rbt->hashtable == NULL)
+		return (ISC_R_NOMEMORY);
 
 	for (i = 0; i < rbt->hashsize; i++)
 		rbt->hashtable[i] = NULL;
@@ -1537,26 +1657,31 @@ rehash(dns_rbt_t *rbt) {
 		}
 	}
 
-	isc_mem_put(rbt->mctx, oldtable, oldsize * sizeof(dns_rbtnode_t *));
+	isc_mem_put(rbt->mctx, oldtable,
+		    rbt->hashsize * sizeof(dns_rbtnode_t *) / 2);
+
+	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static inline isc_result_t
 hash_node(dns_rbt_t *rbt, dns_rbtnode_t *node) {
+	isc_result_t result = ISC_R_SUCCESS;
 
-	REQUIRE(DNS_RBTNODE_VALID(node));
+	if (rbt->hashtable == NULL)
+		result = inithash(rbt);
+	else if (rbt->nodecount >= rbt->hashsize)
+		result = rehash(rbt);
 
-	if (rbt->nodecount >= (rbt->hashsize *3))
-		rehash(rbt);
+	if (result == ISC_R_SUCCESS)
+		hash_add_node(rbt, node);
 
-	hash_add_node(rbt, node);
+	return (result);
 }
 
 static inline void
 unhash_node(dns_rbt_t *rbt, dns_rbtnode_t *node) {
 	unsigned int bucket;
 	dns_rbtnode_t *bucket_node;
-
-	REQUIRE(DNS_RBTNODE_VALID(node));
 
 	if (rbt->hashtable != NULL) {
 		bucket = HASHVAL(node) % rbt->hashsize;
@@ -1579,7 +1704,7 @@ static inline void
 rotate_left(dns_rbtnode_t *node, dns_rbtnode_t **rootp) {
 	dns_rbtnode_t *child;
 
-	REQUIRE(DNS_RBTNODE_VALID(node));
+	REQUIRE(node != NULL);
 	REQUIRE(rootp != NULL);
 
 	child = RIGHT(node);
@@ -1612,7 +1737,7 @@ static inline void
 rotate_right(dns_rbtnode_t *node, dns_rbtnode_t **rootp) {
 	dns_rbtnode_t *child;
 
-	REQUIRE(DNS_RBTNODE_VALID(node));
+	REQUIRE(node != NULL);
 	REQUIRE(rootp != NULL);
 
 	child = LEFT(node);
@@ -1654,8 +1779,7 @@ dns_rbt_addonlevel(dns_rbtnode_t *node, dns_rbtnode_t *current, int order,
 	dns_offsets_t add_offsets, current_offsets;
 
 	REQUIRE(rootp != NULL);
-	REQUIRE(DNS_RBTNODE_VALID(node) && LEFT(node) == NULL &&
-		RIGHT(node) == NULL);
+	REQUIRE(node != NULL && LEFT(node) == NULL && RIGHT(node) == NULL);
 	REQUIRE(current != NULL);
 
 	root = *rootp;
@@ -1788,6 +1912,7 @@ dns_rbt_deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
 		 * This node has one child, on the left.
 		 */
 		child = LEFT(delete);
+
 	else {
 		dns_rbtnode_t holder, *tmp = &holder;
 
@@ -1808,8 +1933,7 @@ dns_rbt_deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
 		if (RIGHT(successor) != NULL)
 			child = RIGHT(successor);
 
-		/*
-		 * Swap the two nodes; it would be simpler to just replace
+		/* Swap the two nodes; it would be simpler to just replace
 		 * the value being deleted with that of the successor,
 		 * but this rigamarole is done so the caller has complete
 		 * control over the pointers (and memory allocation) of
@@ -1994,100 +2118,26 @@ dns_rbt_deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
  * a pointer needs to be told that this tree no longer exists,
  * this function would need to adjusted accordingly.
  */
-static isc_result_t
+static void
 dns_rbt_deletetree(dns_rbt_t *rbt, dns_rbtnode_t *node) {
-	isc_result_t result = ISC_R_SUCCESS;
 	REQUIRE(VALID_RBT(rbt));
 
 	if (node == NULL)
-		return (result);
+		return;
 
-	if (LEFT(node) != NULL) {
-		result = dns_rbt_deletetree(rbt, LEFT(node));
-		if (result != ISC_R_SUCCESS)
-			goto done;
-		LEFT(node) = NULL;
-	}
-	if (RIGHT(node) != NULL) {
-		result = dns_rbt_deletetree(rbt, RIGHT(node));
-		if (result != ISC_R_SUCCESS)
-			goto done;
-		RIGHT(node) = NULL;
-	}
-	if (DOWN(node) != NULL) {
-		result = dns_rbt_deletetree(rbt, DOWN(node));
-		if (result != ISC_R_SUCCESS)
-			goto done;
-		DOWN(node) = NULL;
-	}
- done:
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	if (rbt->quantum != 0 && --rbt->quantum == 0)
-		return (ISC_R_QUOTA);
+	if (LEFT(node) != NULL)
+		dns_rbt_deletetree(rbt, LEFT(node));
+	if (RIGHT(node) != NULL)
+		dns_rbt_deletetree(rbt, RIGHT(node));
+	if (DOWN(node) != NULL)
+		dns_rbt_deletetree(rbt, DOWN(node));
 
 	if (DATA(node) != NULL && rbt->data_deleter != NULL)
 		rbt->data_deleter(DATA(node), rbt->deleter_arg);
 
 	unhash_node(rbt, node);
-#if DNS_RBT_USEMAGIC
-	node->magic = 0;
-#endif
 	isc_mem_put(rbt->mctx, node, NODE_SIZE(node));
 	rbt->nodecount--;
-	return (result);
-}
-
-static void
-dns_rbt_deletetreeflat(dns_rbt_t *rbt, dns_rbtnode_t **nodep) {
-	dns_rbtnode_t *parent;
-	dns_rbtnode_t *node = *nodep;
-	REQUIRE(VALID_RBT(rbt));
-
- again:
-	if (node == NULL) {
-		*nodep = NULL;
-		return;
-	}
-
- traverse:
-	if (LEFT(node) != NULL) {
-		node = LEFT(node);
-		goto traverse;
-	}
-	if (RIGHT(node) != NULL) {
-		node = RIGHT(node);
-		goto traverse;
-	}
-	if (DOWN(node) != NULL) {
-		node = DOWN(node);
-		goto traverse;
-	}
-
-	if (DATA(node) != NULL && rbt->data_deleter != NULL)
-		rbt->data_deleter(DATA(node), rbt->deleter_arg);
-
-	unhash_node(rbt, node);
-#if DNS_RBT_USEMAGIC
-	node->magic = 0;
-#endif
-	parent = PARENT(node);
-	if (parent != NULL) {
-		if (LEFT(parent) == node)
-			LEFT(parent) = NULL;
-		else if (DOWN(parent) == node)
-			DOWN(parent) = NULL;
-		else if (RIGHT(parent) == node)
-			RIGHT(parent) = NULL;
-	}
-	isc_mem_put(rbt->mctx, node, NODE_SIZE(node));
-	rbt->nodecount--;
-	node = parent;
-	if (rbt->quantum != 0 && --rbt->quantum == 0) {
-		*nodep = node;
-		return;
-	}
-	goto again;
 }
 
 static void
@@ -2100,9 +2150,10 @@ dns_rbt_indent(int depth) {
 
 static void
 dns_rbt_printnodename(dns_rbtnode_t *node) {
+	isc_buffer_t target;
 	isc_region_t r;
 	dns_name_t name;
-	char buffer[DNS_NAME_FORMATSIZE];
+	char buffer[1024];
 	dns_offsets_t offsets;
 
 	r.length = NAMELEN(node);
@@ -2111,9 +2162,14 @@ dns_rbt_printnodename(dns_rbtnode_t *node) {
 	dns_name_init(&name, offsets);
 	dns_name_fromregion(&name, &r);
 
-	dns_name_format(&name, buffer, sizeof(buffer));
+	isc_buffer_init(&target, buffer, 255);
 
-	printf("%s", buffer);
+	/*
+	 * ISC_FALSE means absolute names have the final dot added.
+	 */
+	dns_name_totext(&name, ISC_FALSE, &target);
+
+	printf("%.*s", (int)target.used, (char *)target.base);
 }
 
 static void

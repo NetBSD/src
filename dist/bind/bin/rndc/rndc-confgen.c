@@ -1,23 +1,23 @@
-/*	$NetBSD: rndc-confgen.c,v 1.1.1.1 2004/05/17 23:43:26 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.1.1.2 2005/12/21 19:51:27 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc-confgen.c,v 1.9.2.6.2.4 2004/03/06 10:21:31 marka Exp */
+/* Id: rndc-confgen.c,v 1.9.2.6 2003/07/22 04:03:37 marka Exp */
 
 #include <config.h>
 
@@ -107,7 +107,6 @@ write_key_file(const char *keyfile, const char *user,
 		fatal("write to %s failed\n", keyfile);
 	if (fclose(fd))
 		fatal("fclose(%s) failed\n", keyfile);
-	fprintf(stderr, "wrote key file \"%s\"\n", keyfile);
 }
 
 int
@@ -174,7 +173,7 @@ main(int argc, char **argv) {
 			keyname = isc_commandline_argument;
 			break;
 		case 'M':
-			isc_mem_debugging = ISC_MEM_DEBUGTRACE;
+			isc_mem_debugging = 1;
 			break;
 
 		case 'm':

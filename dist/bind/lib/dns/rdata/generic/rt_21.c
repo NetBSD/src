@@ -1,23 +1,23 @@
-/*	$NetBSD: rt_21.c,v 1.1.1.1 2004/05/17 23:45:00 christos Exp $	*/
+/*	$NetBSD: rt_21.c,v 1.1.1.2 2005/12/21 19:58:36 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rt_21.c,v 1.37.2.1.2.3 2004/03/06 08:14:11 marka Exp */
+/* Id: rt_21.c,v 1.37.2.2 2003/10/09 07:32:42 marka Exp */
 
 /* reviewed: Thu Mar 16 15:02:31 PST 2000 by brister */
 
@@ -33,7 +33,6 @@ fromtext_rt(ARGS_FROMTEXT) {
 	isc_token_t token;
 	dns_name_t name;
 	isc_buffer_t buffer;
-	isc_boolean_t ok;
 
 	REQUIRE(type == 21);
 
@@ -53,14 +52,7 @@ fromtext_rt(ARGS_FROMTEXT) {
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
 	origin = (origin != NULL) ? origin : dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-	ok = ISC_TRUE;
-	if ((options & DNS_RDATA_CHECKNAMES) != 0)
-		ok = dns_name_ishostname(&name, ISC_FALSE);
-	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
-		RETTOK(DNS_R_BADNAME);
-	if (!ok && callbacks != NULL)
-		warn_badname(&name, lexer, callbacks);
+	RETTOK(dns_name_fromtext(&name, &buffer, origin, downcase, target));
 	return (ISC_R_SUCCESS);
 }
 
@@ -70,7 +62,7 @@ totext_rt(ARGS_TOTEXT) {
 	dns_name_t name;
 	dns_name_t prefix;
 	isc_boolean_t sub;
-	char buf[sizeof("64000")];
+	char buf[sizeof "64000"];
 	unsigned short num;
 
 	REQUIRE(rdata->type == 21);
@@ -114,7 +106,7 @@ fromwire_rt(ARGS_FROMWIRE) {
 	memcpy(tregion.base, sregion.base, 2);
 	isc_buffer_forward(source, 2);
 	isc_buffer_add(target, 2);
-	return (dns_name_fromwire(&name, source, dctx, options, target));
+	return (dns_name_fromwire(&name, source, dctx, downcase, target));
 }
 
 static inline isc_result_t
@@ -274,40 +266,6 @@ digest_rt(ARGS_DIGEST) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &r2);
 	return (dns_name_digest(&name, digest, arg));
-}
-
-static inline isc_boolean_t
-checkowner_rt(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == 21);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_rt(ARGS_CHECKNAMES) {
-	isc_region_t region;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == 21);
-
-	UNUSED(owner);
-
-	dns_rdata_toregion(rdata, &region);
-	isc_region_consume(&region, 2);
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &region);
-	if (dns_name_ishostname(&name, ISC_FALSE)) {
-		if (bad != NULL)
-			dns_name_clone(&name, bad);
-		return (ISC_FALSE);
-	}
-	return (ISC_TRUE);
 }
 
 #endif	/* RDATA_GENERIC_RT_21_C */

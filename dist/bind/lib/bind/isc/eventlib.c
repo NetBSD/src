@@ -1,20 +1,20 @@
-/*	$NetBSD: eventlib.c,v 1.1.1.1 2004/05/17 23:44:45 christos Exp $	*/
+/*	$NetBSD: eventlib.c,v 1.1.1.2 2005/12/21 19:57:25 christos Exp $	*/
 
 /*
- * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-1999 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
- * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
+ * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
  */
 
 /* eventlib.c - implement glue for the eventlib
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: eventlib.c,v 1.2.2.1.4.2 2004/03/17 01:49:41 marka Exp";
+static const char rcsid[] = "Id: eventlib.c,v 1.2.2.1 2003/06/27 03:51:41 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -274,7 +274,7 @@ evGetNext(evContext opaqueCtx, evEvent *opaqueEv, int options) {
 		if (ctx->debug > 0) {
 			interval = evSubTime(ctx->lastEventTime,
 					     ctx->lastSelectTime);
-			if (interval.tv_sec > 0 || interval.tv_nsec > 0)
+			if (interval.tv_sec > 0)
 				evPrintf(ctx, 1,
 				   "time between pselect() %u.%09u count %d\n",
 					 interval.tv_sec, interval.tv_nsec,
@@ -592,17 +592,14 @@ evDrop(evContext opaqueCtx, evEvent opaqueEv) {
 		 * Timer is still there.  Delete it if it has expired,
 		 * otherwise set it according to its next interval.
 		 */
-		if (this->inter.tv_sec == (time_t)0 &&
-		    this->inter.tv_nsec == 0L) {
+		if (this->inter.tv_sec == 0 && this->inter.tv_nsec == 0L) {
 			opaque.opaque = this;			
 			(void) evClearTimer(opaqueCtx, opaque);
 		} else {
 			opaque.opaque = this;
 			(void) evResetTimer(opaqueCtx, opaque, this->func,
 					    this->uap,
-					    evAddTime((this->mode & EV_TMR_RATE) ?
-						      this->due :
-						      ctx->lastEventTime,
+					    evAddTime(ctx->lastEventTime,
 						      this->inter),
 					    this->inter);
 		}
@@ -651,55 +648,6 @@ evPrintf(const evContext_p *ctx, int level, const char *fmt, ...) {
 		fflush(ctx->output);
 	}
 	va_end(ap);
-}
-
-int
-evSetOption(evContext *opaqueCtx, const char *option, int value) {
-	/* evContext_p *ctx = opaqueCtx->opaque; */
-
-	UNUSED(opaqueCtx);
-	UNUSED(value);
-#ifndef CLOCK_MONOTONIC
-	UNUSED(option);
-#endif 
-
-#ifdef CLOCK_MONOTONIC
-	if (strcmp(option, "monotime") == 0) {
-		if (opaqueCtx  != NULL)
-			errno = EINVAL;
-		if (value == 0 || value == 1) {
-			__evOptMonoTime = value;
-			return (0);
-		} else {
-			errno = EINVAL;
-			return (-1);
-		}
-	} 
-#endif
-	errno = ENOENT;
-	return (-1);
-}
-
-int
-evGetOption(evContext *opaqueCtx, const char *option, int *value) {
-	/* evContext_p *ctx = opaqueCtx->opaque; */
-
-	UNUSED(opaqueCtx);
-#ifndef CLOCK_MONOTONIC
-	UNUSED(value);
-	UNUSED(option);
-#endif 
-
-#ifdef CLOCK_MONOTONIC
-	if (strcmp(option, "monotime") == 0) {
-		if (opaqueCtx  != NULL)
-			errno = EINVAL;
-		*value = __evOptMonoTime;
-		return (0);
-	}
-#endif
-	errno = ENOENT;
-	return (-1);
 }
 
 #ifdef NEED_PSELECT
