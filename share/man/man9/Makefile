@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.184 2005/12/20 19:53:14 rpaulo Exp $
+#       $NetBSD: Makefile,v 1.185 2005/12/21 15:36:38 rpaulo Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -155,7 +155,7 @@ MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 ioctl_copyin.9 copy.9 ioctl_copyout.9
 MLINKS+=cpu_dumpconf.9 cpu_dump.9 cpu_dumpconf.9 cpu_dumpsize.9 \
 	cpu_dumpconf.9 dumpsys.9
-MLINKS+=cpu_fork.9 child_return.9 cpu_fork.9 proc_trampoline.9
+MLINKS+=cpu_lwp_fork.9 child_return.9 cpu_lwp_fork.9 proc_trampoline.9
 MLINKS+=cpu_swapout.9 cpu_swapin.9
 MLINKS+=cred.9 crfree.9 \
 	cred.9 crhold.9 \
