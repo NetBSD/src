@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.2 2005/12/21 14:19:45 christos Exp $	*/
+/*	$NetBSD: random.c,v 1.3 2005/12/21 14:23:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.2 2005/12/21 14:19:45 christos Exp $");
+__RCSID("$NetBSD: random.c,v 1.3 2005/12/21 14:23:58 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,6 +63,7 @@ static mutex_t random_mutex = MUTEX_INITIALIZER;
 #define mutex_unlock(a) (void)0
 #endif
 
+#ifndef SMALL_RANDOM
 static void srandom_unlocked(unsigned int);
 static long random_unlocked(void);
 
@@ -504,3 +505,26 @@ random(void)
 	mutex_unlock(&random_mutex);
 	return (r);
 }
+#else
+long
+random(void)
+{
+	static u_long randseed = 1;
+	long x, hi, lo, t;
+ 
+	/*
+	 * Compute x[n + 1] = (7^5 * x[n]) mod (2^31 - 1).
+	 * From "Random number generators: good ones are hard to find",
+	 * Park and Miller, Communications of the ACM, vol. 31, no. 10,
+	 * October 1988, p. 1195.
+	 */
+	x = randseed;
+	hi = x / 127773;
+	lo = x % 127773;
+	t = 16807 * lo - 2836 * hi;
+	if (t <= 0)
+		t += 0x7fffffff;
+	randseed = t;
+	return (t);
+}
+#endif /* SMALL_RANDOM */
