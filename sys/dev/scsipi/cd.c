@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.233 2005/12/16 17:54:36 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.234 2005/12/21 13:11:27 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.233 2005/12/16 17:54:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.234 2005/12/21 13:11:27 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1088,11 +1088,18 @@ lba2msf(u_long lba, u_char *m, u_char *s, u_char *f)
 	*f = tmp % CD_FRAMES;
 }
 
-static u_long
-msf2lba(u_char m, u_char s, u_char f)
+/*
+ * Convert an hour:minute:second:frame address to a logical block adres. In
+ * theory the number of secs/minute and number of frames/second could be
+ * configured differently in the device  as could the block offset but in
+ * practice these values are rock solid and most drives don't even allow
+ * theses values to be changed.
+ */
+static uint32_t
+hmsf2lba(uint8_t h, uint8_t m, uint8_t s, uint8_t f)
 {
-
-	return ((((m * CD_SECS) + s) * CD_FRAMES + f) - CD_BLOCK_OFFSET);
+	return (((((uint32_t) h * 60 + m) * CD_SECS) + s) * CD_FRAMES + f)
+		- CD_BLOCK_OFFSET;
 }
 #endif /* XXX Not used */
 
@@ -1616,37 +1623,89 @@ cdgetdisklabel(struct cd_softc *cd)
 	cdgetdefaultlabel(cd, lp);
 }
 
+/*
+ * Reading a discs total capacity is aparently a very difficult issue for the
+ * SCSI standardisation group. Every disc type seems to have its own
+ * (re)invented size request method and modifiers. The failsafe way of
+ * determining the total (max) capacity i.e. not the recorded capacity but the
+ * total maximum capacity is to request the info on the last track and
+ * calucate the total size.
+ *
+ * For ROM drives, we go for the CD recorded capacity. For recordable devices
+ * we count.
+ */
 static int
 read_cd_capacity(struct scsipi_periph *periph, int *blksize, u_long *size)
 {
-	struct scsipi_read_cd_capacity cmd;
-	struct scsipi_read_cd_cap_data data;
-	int error, flags;
+	struct scsipi_read_cd_capacity    cap_cmd;
+	struct scsipi_read_cd_cap_data    cap;
+	struct scsipi_read_discinfo       di_cmd;
+	struct scsipi_read_discinfo_data  di;
+	struct scsipi_read_trackinfo      ti_cmd;
+	struct scsipi_read_trackinfo_data ti;
+	uint32_t track_start, track_size;
+	int error, flags, msb, lsb, last_track;
 
 	/* if the device doesn't grog capacity, return the dummies */
 	if (periph->periph_quirks & PQUIRK_NOCAPACITY)
 		return 0;
 
-	/* issue the request */
+	/* first try read CD capacity for blksize and recorded size */
+	/* issue the cd capacity request */
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = READ_CD_CAPACITY;
+	memset(&cap_cmd, 0, sizeof(cap_cmd));
+	cap_cmd.opcode = READ_CD_CAPACITY;
 
 	error = scsipi_command(periph,
-	    (void *) &cmd,  sizeof(cmd),
-	    (void *) &data, sizeof(data),
+	    (void *) &cap_cmd, sizeof(cap_cmd),
+	    (void *) &cap,     sizeof(cap),
 	    CDRETRIES, 30000, NULL, flags);
 	if (error)
 		return error;
 
 	/* retrieve values and sanity check them */
-	*blksize = _4btol(data.length);
+	*blksize = _4btol(cap.length);
+	*size    = _4btol(cap.addr);
 
 	/* blksize is 2048 for CD, but some drives give gibberish */
 	if ((*blksize < 512) || ((*blksize & 511) != 0))
 		*blksize = 2048;	/* some drives lie ! */
 
-	*size = _4btol(data.addr);
+	/* recordables have READ_DISCINFO implemented */
+	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
+	memset(&di_cmd, 0, sizeof(di_cmd));
+	di_cmd.opcode = READ_DISCINFO;
+	_lto2b(sizeof(di), di_cmd.data_len);
+
+	error = scsipi_command(periph,
+	    (void *) &di_cmd,  sizeof(di_cmd),
+	    (void *) &di,      sizeof(di),
+	    CDRETRIES, 30000, NULL, flags);
+	if (error == 0) {
+		msb = di.last_track_last_session_msb;
+		lsb = di.last_track_last_session_lsb;
+		last_track = (msb << 8) | lsb;
+
+		/* request info on last track */
+		memset(&ti_cmd, 0, sizeof(ti_cmd));
+		ti_cmd.opcode = READ_TRACKINFO;
+		ti_cmd.addr_type = 1;			/* on tracknr */
+		_lto4b(last_track, ti_cmd.address);	/* tracknr    */
+		_lto2b(sizeof(ti), ti_cmd.data_len);
+
+		error = scsipi_command(periph,
+		    (void *) &ti_cmd,  sizeof(ti_cmd),
+		    (void *) &ti,      sizeof(ti),
+		    CDRETRIES, 30000, NULL, flags);
+		if (error == 0) {
+			track_start = _4btol(ti.track_start);
+			track_size  = _4btol(ti.track_size);
+
+			*size = track_start + track_size;
+		};
+	};
+
+	/* sanity check for size */
 	if (*size < 100)
 		*size = 400000;
 
