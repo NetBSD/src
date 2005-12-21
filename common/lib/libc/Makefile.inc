@@ -1,12 +1,15 @@
-# $NetBSD: Makefile.inc,v 1.2 2005/12/20 22:51:18 christos Exp $
+# $NetBSD: Makefile.inc,v 1.3 2005/12/21 21:47:30 christos Exp $
 
 COMMON_DIR:=${.PARSEDIR}
 COMMON_CODEDIRS=gen gmon hash/sha1 inet md net quad stdlib string
 
-.if exists(${COMMON_DIR}/arch/${MACHINE_ARCH})
-COMMON_ARCHSUBDIR=     ${MACHINE_ARCH}
+.if defined(LIBKERN_ARCH) && !empty(LIBKERN_ARCH) && \
+    exists(${KERNDIR}/arch/${LIBKERN_ARCH})
+COMMON_ARCHSUBDIR=	${LIBKERN_ARCH}
+.elif exists(${COMMON_DIR}/arch/${MACHINE_ARCH})
+COMMON_ARCHSUBDIR=	${MACHINE_ARCH}
 .elif exists(${COMMON_DIR}/arch/${MACHINE_CPU})
-COMMON_ARCHSUBDIR=     ${MACHINE_CPU}
+COMMON_ARCHSUBDIR=	${MACHINE_CPU}
 .else
 .BEGIN:
         @echo no COMMON_ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
