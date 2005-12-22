@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.29 2005/12/21 07:43:30 uwe Exp $
+.\"	$NetBSD: mk.conf.5,v 1.30 2005/12/22 02:52:40 hubertf Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -31,7 +31,7 @@
 .\"  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 .\"  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2005
+.Dd April 21, 2005
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -76,51 +76,25 @@ Unset.
 .DFLT
 .Dq no
 ..
-The basic rule for the variable naming scheme is as follows:
-.Bl -tag -width USE_XXX
+.Bl -tag -width MKDYNAMICROOT
 .
-.It Sy MKxxx
-Can be set to
-.Dq no
-to disable functionality, or
-.Dq yes 
-to enable it.
-Usually defaults to 
-.Dq yes ,
-although some variables
-default to
-.Dq no .
-.Pp
-Due to
+.It Sy NETBSDSRCDIR
+The path to the top level of the
+.Nx
+sources.
+If
 .Xr make 1
-implementation issues, if a temporary command-line override of a
-.Pa mk.conf or
-\*[Lt]bsd.own.mk\*[Gt]
-setting is required whilst still honouring a particular
-Makefile's setting of
-MKxxx ,
-use
-.Dl Ic env MKxxx=value make
-instead of
-.Dl Ic make MKxxx=value
-.Pp
-.It Sy NOxxx
-If defined, disables a feature.
-Not intended for users.
-This is to allow Makefiles to disable functionality
-that they don't support (such as missing man pages).
-NOxxx variables must be defined before \*[Lt]bsd.own.mk\*[Gt]
-is included.
-.Pp
-.El
-The following variables that control how things are made/installed that
-are not set by default. These should not be set by Makefiles; they're for
-the user to define in
-.Sy MAKECONF
-(see \*[Lt]bsd.own.mk\*[Gt], below) or on the
-.Xr make 1
-command line:
-.Bl -tag -width CXXFLAGS.lib\*[Lt]lib\*[Gt]
+is run from within the
+.Nx
+source tree, the default is the top
+level of that tree (as determined by the presence of
+.Pa build.sh
+and
+.Pa tools/ ) ,
+otherwise
+.Sy BSDSRCDIR
+will be used.
+.
 .It Sy BSDOBJDIR
 The real path to the
 .Sq obj
@@ -194,19 +168,6 @@ unless run in
 .Sq expert
 mode
 .
-.It Sy MAKEVERBOSE
-Control how "verbose" the standard make(1) rules are.
-Default: 2, supported values:
-.Bl -tag -width M
-.It Dv 0
-Minimal output
-.Pq Dq quiet
-.It Dv 1
-Describe what is occurring
-.It Dv 2
-Describe what is occurring and echo the actual command
-.El
-.Pp
 .It Sy MKBFD
 .YorN
 Indicates whether
@@ -226,7 +187,7 @@ should be built.
 .It Sy MKCATPAGES
 .YorN
 Indicates whether preformatted plaintext manual pages will be created
-and installed during a build.
+during a build.
 .DFLTy
 .
 .It Sy MKCRYPTO
@@ -241,7 +202,7 @@ Will not affect use of the standard low-security password encryption system,
 If
 .Dq no ,
 acts as
-.Sy MKKERBEROS=no MKKERBEROS4=no .
+.Sy MKKERBEROS=no .
 .
 .It Sy MKCRYPTO_IDEA
 .YorN
@@ -293,7 +254,7 @@ link programs in
 and
 .Pa /sbin
 statically.
-.DFLTy
+.DFTLy
 .
 .It Sy MKGCC
 .YorN
@@ -304,12 +265,6 @@ or any related libraries
 are built.
 .DFLTy
 .
-.It Sy MKGCCCMDS
-.YorN
-Indicates whether
-.Xr gcc 1
-is built. 
-.DFLTy
 .It Sy MKGDB
 .YorN
 Indicates whether
@@ -351,12 +306,6 @@ Indicates whether code for IEEE754/IEC60559 conformance is built.
 Has no effect on most platforms.
 .DFLTy
 .
-.It Sy MKINET6
-.YorN
-Indicates if the IPv6 infrastructure
-(libraries and support programs) is built.
-.DFLTy
-.
 .It Sy MKINFO
 .YorN
 Indicates whether GNU Info files, used for the documentation for
@@ -385,35 +334,29 @@ Indicates whether the Kerberos v5 infrastructure
 .
 .It Sy MKLINKLIB
 .YorN
-Indicates whether all of the library infrastructure is built.
+Indicates whether all of the shared library infrastructure is built.
 If
 .Sq no ,
 prevents:
-.Bl -dash
-.It
 installation of the
 .Sy *.a
 libraries,
-.It
 installation of the
 .Sy *_pic.a
-.It
 libraries on PIC systems,
 building of
 .Sy *.a
 libraries on PIC systems,
-.It
+or
 installation of
 .Sy .so
-symlinks on ELF systems
-.El
-i.e., only install the shared library (and the .so.major symlink on ELF).
-If 
-.Sq no 
-acts as
-.Sy MKPICINSTALL=no MKPROFILE=no .
+symlinks on ELF systems.
 .DFLTy
 .Pp
+If
+.Dq no ,
+acts as
+.Sy MKPICINSTALL=no MKPROFILE=no .
 .
 .It Sy MKLINT
 .YorN
@@ -476,6 +419,7 @@ pass) at the start of a build.
 Indicates whether the
 .Xr pam 8
 framework (libraries and support files) is built.
+The pre-PAM code is not supported and may be removed in the future.
 .DFLTy
 .
 .It Sy MKPF
@@ -492,8 +436,14 @@ installed during a build.
 If set to
 .Dq no ,
 the entire built system will be statically linked.
-.DFLTy
-(for most platforms)
+.DFLT
+Platform dependent.
+As of this writing, all platforms except
+.Sy m68000
+and
+.Sy sh3
+default to
+.Dq yes .
 .Pp
 If
 .Dq no ,
@@ -511,27 +461,16 @@ used to generate shared libraries, are installed during a build.
 .
 .It Sy MKPICLIB
 .YorN
-If
-.Sq no ,
-don't build
-.Sy *_pic.a
-libraries, and build the shared object libraries from the
-.Sy *.a
-libraries instead.
-A symlink is installed in
-.Pa ${DESTDIR}/usr/lib
-for the
-.Sy _pic.a
-library pointing to the
-.Sy .a
-library.
+Indicates whether the
+.Xr ar 1
+format libraries
+.Sy ( lib*_pic.a ) ,
+used to generate shared libraries.
 .DFLTy
 .
 .It Sy MKPOSTFIX
 .YorN
-Indicates whether 
-.Xr postfix 1
-is built.
+Indicates whether Postfix is built.
 .DFLTy
 .
 .It Sy MKPROFILE
@@ -547,16 +486,12 @@ by default at times due to toolchain problems with profiled code.
 .
 .It Sy MKSENDMAIL
 .YorN
-Indicates whether
-.Xr sendmail 8
-is built.
+Indicates whether Sendmail is built.
 .DFLTy
 .
 .It Sy MKSHARE
 .YorN
-Indicates whether 
-pages, documentation, Info documentation, man pages, NLS files, ...
-destined to reside in
+Indicates whether files destined to reside in
 .Sy DESTDIR Ns Pa /usr/share
 will be built and installed during a build.
 .DFLTy
@@ -564,7 +499,7 @@ will be built and installed during a build.
 If
 .Dq no ,
 acts as
-.Sy MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no MKMAN=no MKNLS=no .
+.Sy MKCATPAGES=no MKDOC=no MKINFO=no MKHTML=no MKMAN=no MKNLS=no .
 .
 .It Sy MKSKEY
 .YorN
@@ -578,13 +513,6 @@ Indicates whether the compiler generates output containing
 library calls for floating point and possibly soft-float library
 support.
 .DFLTn
-.
-.It Sy MKSTATICLIB
-.YorN
-Indicates if the normal static libraries
-.Sy ( *.a )
-will be built and installed.
-.DFLTy
 .
 .It Sy MKUNPRIVED
 .YorN
@@ -603,11 +531,11 @@ that the appropriate file ownership is stored.
 .
 .It Sy MKUPDATE
 .YorN
-If 
-.Sq yes ,
-.Sq make install
-only installs targets that are more recently modified in the source
-directories that their installed counterparts
+Indicates whether all install operations intended to write to
+.Sy DESTDIR
+will compare file timestamps before installing, and skip the install
+phase if the destination files are up-to-date.
+This also has implications on full builds (see next subsection).
 .DFLTn
 .
 .It Sy MKUUCP
@@ -617,38 +545,11 @@ Indicates whether
 and related programs are built.
 .DFLTy
 .
-.It Sy MKX11
-.YorN
-If set to
-Indicates if building the system also
-descends into
-.Pa src/x11
-to cross build X11R6 and automatically enables creation
-of X sets.
-.DFLTn
-.
 .It Sy MKYP
 .YorN
 Indicates whether the YP (NIS) infrastructure
 (libraries and support programs) is built.
 .DFLTy
-.
-.It Sy NETBSDSRCDIR
-The path to the top level of the
-.Nx
-sources.
-If
-.Xr make 1
-is run from within the
-.Nx
-source tree, the default is the top
-level of that tree (as determined by the presence of
-.Pa build.sh
-and
-.Pa tools/ ) ,
-otherwise
-.Sy BSDSRCDIR
-will be used.
 .
 .It Sy OBJMACHINE
 If defined, creates objdirs of the form
@@ -732,134 +633,6 @@ otherwise (to preserve traditional semantics of the
 .Aq bsd.*.mk
 .Xr make 1
 include files).
-.
-.It Sy USE_HESIOD
-.YorN
-If 
-.Dq no ,
-disables building Hesiod support into various system utilities/libraries
-that support it.
-If
-.Sy ${MKHESIOD}
-is
-.Dq no ,
-.Sy USE_HESIOD 
-will also be forced to
-.Dq no .
-.
-.It Sy USE_INET6
-.YorN
-If 
-.Sq no ,
-disables building INET6 (IPv6) support into
-various system utilities/libraries that support it.
-If
-.Sy ${MKINET6}
-is
-.Dq no ,
-.Sy USE_INET6 
-will also be forced to
-.Dq no .
-.
-.It Sy USE_KERBEROS4
-.YorN
-If 
-.Sq no ,
-disables building Kerberos v4 support into various system utilities/libraries
-that support it.
-If
-.Sy ${MKKERBEROS4} 
-is
-.Dq no ,
-.Sy USE_KERBEROS4 
-will also be forced to
-.Dq no .
-.
-.It Sy USE_KERBEROS
-.YorN
-If 
-.Sq no ,
-disables building Kerberos v4 and v5 support into various system
-utilities/libraries that support it.
-If
-.Sy ${MKKERBEROS} 
-is
-.Dq no ,
-.Sy USE_KERBEROS 
-will also be forced to
-.Dq no .
-.
-.It Sy USE_PAM
-.YorN
-If
-.Sq no ,
-disables building PAM authentication support into various system
-utilities/libraries that support it.
-If
-.Sy ${MKPAM}
-is
-.Dq no ,
-.Sy USE_PAM
-will also be forced to
-.Dq no .
-.
-.It Sy USE_SKEY
-.YorN
-If
-.Sq no ,
-disables building S/key authentication support into various system
-utilities/libraries that support it.
-If
-.Sy ${MKSKEY}
-is
-.Dq no ,
-.Sy USE_SKEY
-will also be forced to
-.Dq no .
-.
-.It Sy USE_YP
-.YorN
-If
-.Sq no ,
-disables building YP (NIS) support into various system utilities/libraries
-that support it.
-If
-.Sy ${MKYP}
-is
-.Dq no ,
-.Sy USE_YP
-will also be forced to
-.Dq no .
-.
-.It Sy COPTS.lib\*[Lt]lib\*[Gt]
-.It Sy LDADD.lib\*[Lt]lib\*[Gt]
-.It Sy CPPFLAGS.lib\*[Lt]lib\*[Gt]
-.It Sy CXXFLAGS.lib\*[Lt]lib\*[Gt]
-.It Sy COPTS.\*[Lt]prog\*[Gt]
-.It Sy LDADD.\*[Lt]prog\*[Gt]
-.It Sy CPPFLAGS.\*[Lt]prog\*[Gt]
-.It Sy CXXFLAGS.\*[Lt]prog\*[Gt]
-These provide a way to specify additions to the associated
-variables in a way that applies only to a particular library
-or program. 
-\*[Lt]lib\*[Gt] corresponds to the
-.Sy LIB
-variable set in
-the library's
-.Pa Makefile . 
-\*[Lt]prog\*[Gt] corresponds to either
-.Sy PROG
-or
-.Sy PROG_CXX
-(if set). 
-For example, if
-.Sy COPTS.libcrypto
-is set to
-.Dq -g ,
-.Dq -g
-will be added to
-.Sy COPTS
-only when compiling the crypto library.
 .
 .El
 .
