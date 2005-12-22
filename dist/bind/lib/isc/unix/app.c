@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.4 2005/12/22 00:26:24 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.5 2005/12/22 15:14:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -297,7 +297,7 @@ isc_app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
  * Event loop for nonthreaded programs.
  */
 static isc_result_t
-evloop() {
+evloop(void) {
 	isc_result_t result;
 	while (!want_shutdown) {
 		int n;
@@ -434,10 +434,10 @@ isc_app_run(void) {
 #ifdef ISC_PLATFORM_USETHREADS
 	sigset_t sset;
 	char strbuf[ISC_STRERRORSIZE];
-#endif /* ISC_PLATFORM_USETHREADS */
 #ifdef HAVE_SIGWAIT
 	int sig;
 #endif
+#endif /* ISC_PLATFORM_USETHREADS */
 
 #ifdef HAVE_LINUXTHREADS
 	REQUIRE(main_thread == pthread_self());
