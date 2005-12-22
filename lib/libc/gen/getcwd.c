@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.40 2005/08/13 21:16:58 elad Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.41 2005/12/22 23:29:23 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.40 2005/08/13 21:16:58 elad Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.41 2005/12/22 23:29:23 elad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -159,6 +159,13 @@ loop:
 	 * target to unresolved path.
 	 */
 	if (lstat(resolved, &sb) == -1) {
+		/* Allow nonexistent component if this is the last one. */
+		while (*q == '/')
+			q++;
+
+		if (*q == 0  && errno == ENOENT)
+			return (resolved);
+
 		return (NULL);
 	}
 	if (S_ISLNK(sb.st_mode)) {
