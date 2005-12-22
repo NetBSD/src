@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.842 2005/12/13 18:23:31 christos Exp $
+# $NetBSD: mi,v 1.843 2005/12/22 00:31:05 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1747,8 +1747,8 @@
 ./usr/share/man/cat8/dkctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dmesg.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dnssec-keygen.0		man-bind-catman		.cat
-./usr/share/man/cat8/dnssec-makekeyset.0	man-bind-catman		.cat
-./usr/share/man/cat8/dnssec-signkey.0		man-bind-catman		.cat
+./usr/share/man/cat8/dnssec-makekeyset.0	man-obsolete		obsolete
+./usr/share/man/cat8/dnssec-signkey.0		man-obsolete		obsolete
 ./usr/share/man/cat8/dnssec-signzone.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-obsolete		obsolete
 ./usr/share/man/cat8/dreamcast/boot.0		man-sysutil-catman	.cat
@@ -4039,8 +4039,8 @@
 ./usr/share/man/man8/dkctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/dmesg.8			man-sysutil-man		.man
 ./usr/share/man/man8/dnssec-keygen.8		man-bind-man		.man
-./usr/share/man/man8/dnssec-makekeyset.8	man-bind-man		.man
-./usr/share/man/man8/dnssec-signkey.8		man-bind-man		.man
+./usr/share/man/man8/dnssec-makekeyset.8	man-obsolete		obsolete
+./usr/share/man/man8/dnssec-signkey.8		man-obsolete		obsolete
 ./usr/share/man/man8/dnssec-signzone.8		man-bind-man		.man
 ./usr/share/man/man8/dreamcast/MAKEDEV.8	man-obsolete		obsolete
 ./usr/share/man/man8/dreamcast/boot.8		man-sysutil-man		.man
