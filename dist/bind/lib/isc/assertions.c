@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.4 2005/12/21 22:34:32 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.5 2005/12/22 00:26:24 christos Exp $	*/
 
 /*
  * Copyright (C) 1997-2001  Internet Software Consortium.

@@ -1,41 +1,36 @@
-/*	$NetBSD: getaddrinfo.c,v 1.3 2005/12/21 22:34:32 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.4 2005/12/22 00:26:25 christos Exp $	*/
 
 /*
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * This code is derived from software contributed to Internet Software
- * Consortium by Berkeley Software Design, Inc.
+ * This code is derived from software contributed to ISC by
+ * Berkeley Software Design, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM AND
- * BERKELEY SOFTWARE DESIGN, INC DISCLAIM ALL WARRANTIES WITH REGARD TO
- * THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE CONSORTIUM OR BERKELEY
- * SOFTWARE DESIGN, INC BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
- * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
- * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND BERKELEY SOFTWARE DESIGN, INC.
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getaddrinfo.c,v 1.41 2001/07/18 02:37:07 mayer Exp */
+/* Id: getaddrinfo.c,v 1.41.206.3 2005/06/09 23:54:33 marka Exp */
 
 #include <config.h>
 
 #include <string.h>
 #include <errno.h>
-#include <stdlib.h>
 
 #include <lwres/lwres.h>
 #include <lwres/net.h>
 #include <lwres/netdb.h>
-
-#ifdef __KAME__
-#include <net/if.h>
-#endif
+#include <lwres/stdlib.h>
 
 #define SA(addr)	((struct sockaddr *)(addr))
 #define SIN(addr)	((struct sockaddr_in *)(addr))
@@ -259,18 +254,14 @@ lwres_getaddrinfo(const char *hostname, const char *servname,
 			p = strchr(ntmp, '%');
 			ep = NULL;
 
-#ifdef __KAME__
-			if (p != NULL) {
-				scopeid = if_nametoindex(p + 1);
-				if (scopeid)
-					p = NULL;
-			}
-#endif
+			/*
+			 * Vendors may want to support non-numeric
+			 * scopeid around here.
+			 */
 
-			if (p != NULL) {
+			if (p != NULL)
 				scopeid = (lwres_uint32_t)strtoul(p + 1,
 								  &ep, 10);
-			}
 			if (p != NULL && ep != NULL && ep[0] == '\0')
 				*p = '\0';
 			else {
