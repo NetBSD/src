@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.171 2005/12/21 04:25:54 hubertf Exp $
+#	$NetBSD: bsd.README,v 1.172 2005/12/22 02:54:01 hubertf Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -63,9 +63,272 @@ There are various make variables used during the build.
 Many variables support a (case sensitive) value of "no" or "yes",
 and are tested with  ${VAR} == "no"  and  ${VAR} != "no" .
 
-Please see mk.conf(5) for documentation of all the possible
-variables that can be set!
 
+The basic rule for the variable naming scheme is as follows:
+
+MKxxx		Can be set to "no" to disable functionality, or
+		"yes" to enable it.
+		Usually defaults to "yes", although some variables
+		default to "no".
+		Due to make(1) implementation issues, if a temporary
+		command-line override of a mk.conf or <bsd.own.mk>
+		setting is required whilst still honouring a particular
+		Makefile's setting of MKxxx, use
+			env MKxxx=value make
+		instead of
+			make MKxxx=value
+
+NOxxx		If defined, disables a feature.
+		Not intended for users.
+		This is to allow Makefiles to disable functionality
+		that they don't support (such as missing man pages).
+		NOxxx variables must be defined before <bsd.own.mk>
+		is included.
+
+The following variables that control how things are made/installed that
+are not set by default. These should not be set by Makefiles; they're for
+the user to define in MAKECONF (see <bsd.own.mk>, below) or on the make(1)
+command line:
+
+BUILD 		If defined, 'make install' checks that the targets in the
+		source directories are up-to-date and remakes them if they
+                are out of date, instead of blindly trying to install
+                out of date or non-existent targets.
+
+MAKEVERBOSE	Control how "verbose" the standard make(1) rules are.
+		Default: 2
+		Supported values:
+		    0	Minimal output ("quiet")
+		    1	Describe what is occurring
+		    2	Describe what is occurring and echo the actual command
+
+
+MKBFD		If "no", don't build libbfd, libiberty, or any of the things
+		that depend on them (binutils/gas/ld, gdb, dbsym, mdsetimage).
+		Default: yes
+
+MKCATPAGES	If "no", don't build or install the catman pages.
+		Default: yes
+
+MKCRYPTO	If "no", no cryptography support will be built into the system,
+		and also acts as "MKKERBEROS=no MKKERBEROS4=no".
+		Default: yes
+
+MKCRYPTO_IDEA	If not "no", IDEA support will be built into libcrypto_idea.a.
+		Default: no
+
+MKCRYPTO_MDC2	If not "no", MDC2 support will be built into libcrypto_mdc2.a
+		Default: no
+
+MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5.a.
+		Default: no
+
+MKCVS		If "no", don't build or install cvs(1).
+		Default: yes
+
+MKDOC		If "no", don't build or install the documentation.
+		Default: yes
+
+MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
+		don't install certain libraries in /lib, and don't
+		install the shared linker into /libexec.
+		Default: yes
+
+MKGCC		If "no", don't build gcc(1) or any of the gcc-related
+		libraries (libg2c, libgcc, libobjc, libstdc++).
+		Default: yes
+
+MKGCCCMDS	If "no", don't build gcc(1).
+		Default: yes
+
+MKGDB		If "no", don't build gdb(1).
+		Default: yes
+
+MKHESIOD	If "no", disables building of Hesiod infrastructure
+		(libraries and support programs).
+		Default: yes
+
+MKHOSTOBJ	If not "no", for programs intended to be run on the compile
+		host, the name, release, and architecture of the host
+		operating system will be suffixed to the name of the object
+		directory created by "make obj".
+		Default: no
+
+MKHTML		If "no", don't build or install the html man pages.
+		Default: no
+
+MKIEEEFP	If "no", don't add code for IEEE754/IEC60559 conformance.
+		Has no effect on most platforms.
+		Default: yes
+
+MKINET6		If "no", disables building of INET6 (IPv6) infrastructure
+		(libraries and support programs).
+		Default: yes
+
+MKINFO		If "no", don't build or install Info documentation from
+		Texinfo source files.
+		Default: yes
+
+MKIPFILTER	If "no", don't build or install the IP Filter programs and LKM.
+		Default: yes
+
+MKKERBEROS4	If "no", disables building of Kerberos v4
+		infrastructure (libraries and support programs).
+		Default: yes
+
+MKKERBEROS	If "no", disables building of Kerberos v5
+		infrastructure (libraries and support programs).
+		Default: yes
+
+MKLINKLIB	If "no", act as "MKPICINSTALL=no MKPROFILE=no".
+		Also:
+			- don't install the .a libraries
+			- don't install _pic.a libraries on PIC systems
+			- don't build .a libraries on PIC systems
+			- don't install the .so symlink on ELF systems
+		I.e, only install the shared library (and the .so.major
+		symlink on ELF).
+		Default: yes
+
+MKLINT		If "no", don't build or install the lint libraries.
+		Default: yes
+
+MKMAN		If "no", don't build or install the man or catman pages,
+		and also acts as "MKCATPAGES=no MKHTML=no".
+		Default: yes
+
+MKMANZ		If not "no", compress manual pages at installation time.
+		Default: no
+
+MKNLS		If "no", don't build or install the NLS files and locale
+		definition files.
+		Default: yes
+
+MKOBJ		If "no", don't enable the rule which creates objdirs,
+		and also acts as "MKOBJDIRS=no".
+		Default: yes
+
+MKOBJDIRS	If "no", don't create objdirs during a "make build".
+		Default: no
+
+MKPAM		If "no", disables building of PAM authentication
+		infrastructure (libraries and support programs).
+		Default: no
+
+MKPF		If "no", don't build or install the pf programs and LKM.
+		Default: yes
+
+MKPIC		If "no", don't build or install shared libraries, and
+		also acts as "MKPICLIB=no"
+		Default: yes (for MACHINE_ARCHs that support it) 
+
+MKPICINSTALL	If "no", don't install the *_pic.a libraries.
+		Default: yes
+
+MKPICLIB	If "no", don't build *_pic.a libraries, and build the
+		shared object libraries from the .a libraries.
+		A symlink is installed in ${DESTDIR}/usr/lib for the
+		_pic.a library pointing to the .a library.
+		Default: yes
+
+MKPOSTFIX	If "no", don't build or install postfix(1).
+		Default: yes
+
+MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
+		Default: yes
+
+MKSENDMAIL	If "no", don't build or install sendmail(8).
+		Default: yes
+
+MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
+		MKMAN=no MKNLS=no".
+		I.e, don't build catman pages, documentation, Info
+		documentation, man pages, NLS files, ...
+		Default: yes
+
+MKSKEY		If "no", disables building of S/key authentication
+		infrastructure (libraries and support programs).
+		Default: yes
+
+MKSOFTFLOAT	If not "no", build with options to enable the compiler to
+		generate output containing library calls for floating
+		point and possibly soft-float library support.
+		Default: no
+
+MKSTATICLIB	If "no", don't build or install the normal static (*.a)
+		libraries.
+		Default: yes
+
+MKUNPRIVED	If not "no", don't set the owner/group/mode when installing
+		files or directories, and keep a metadata log of what
+		the owner/group/mode should be.  This allows a
+		non-root "make install".
+		Default: no
+
+MKUPDATE 	If not "no", 'make install' only installs targets that are
+		more recently modified in the source directories that their
+		installed counterparts.
+		Default: no
+
+MKUUCP		If "no", don't build or install uucp(1).
+		Default: yes
+
+MKX11		If not "no", 'make build' also descends into src/x11
+		to cross build X11R6 and automatically enables creation
+		of X sets.
+		Default: no
+
+MKYP		If "no", disables building of YP (NIS)
+		infrastructure (libraries and support programs).
+		Default: yes
+
+USE_HESIOD	If "no", disables building Hesiod support into
+		various system utilities/libraries that support it.
+		If ${MKHESIOD} is "no", USE_HESIOD will also be
+		forced to "no".
+
+USE_INET6	If "no", disables building INET6 (IPv6) support into
+		various system utilities/libraries that support it.
+		If ${MKINET6} is "no", USE_INET6 will also be
+		forced to "no".
+
+USE_KERBEROS4	If "no", disables building Kerberos v4
+		support into various system utilities/libraries that
+		support it.  If ${MKKERBEROS4} is "no", USE_KERBEROS4
+		will also be forced to "no".
+
+USE_KERBEROS	If "no", disables building Kerberos v4 or v5)
+		support into various system utilities/libraries that
+		support it.  If ${MKKERBEROS} is "no", USE_KERBEROS
+		will also be forced to "no".
+
+USE_PAM		If "no", disables building PAM authentication support
+		into various system utilities/libraries that support it.
+		If ${MKPAM} is "no", USE_PAM will also be forced to "no".
+
+USE_SKEY	If "no", disables building S/key authentication
+		support into various system utilities/libraries that
+		support it.  If ${MKSKEY} is "no", USE_SKEY will
+		also be forced to "no".
+
+USE_YP		If "no", disables building YP (NIS) support into
+		various system utilities/libraries that support it.
+		If ${MKYP} is "no", USE_YP will also be forced to "no".
+
+COPTS.lib<lib>
+LDADD.lib<lib>
+CPPFLAGS.lib<lib>
+CXXFLAGS.lib<lib>
+COPTS.<prog>
+LDADD.<prog>
+CPPFLAGS.<prog>
+CXXFLAGS.<prog>	These provide a way to specify additions to the associated
+		variables in a way that applies only to a particular library
+		or program.  <lib> corresponds to the LIB variable set in
+		the library's makefile.  <prog> corresponds to either PROG
+		or PROG_CXX (if set).  For example, if COPTS.libcrypto is
+		set to "-g", "-g" will be added to COPTS only when compiling
+		the crypto library.
 
 =-=-=-=-=   sys.mk   =-=-=-=-=
 
@@ -210,7 +473,29 @@ make configuration file to modify the behaviour of the system build
 process (default values are in brackets along with comments, if set by
 <bsd.own.mk>):
 
-USETOOLS	Documented in mk.conf(5)
+USETOOLS	Indicates whether the tools specified by ${TOOLDIR} should
+		be used as part of a build in progress.
+		Supported values:
+
+		yes	Use the tools from TOOLDIR.
+			Must be set to this if cross-compiling.
+
+		no	Do not use the tools from TOOLDIR, but refuse to
+			build native compilation tool components that are
+			version-specific for that tool.
+
+		never	Do not use the tools from TOOLDIR, even when
+			building native tool components.  This is similar to
+			the traditional NetBSD build method, but does not
+			verify that the compilation tools in use are
+			up-to-date enough in order to build the tree
+			successfully.  This may cause build or runtime
+			problems when building the whole NetBSD source tree.
+
+		Default: "yes" if building all or part of a whole NetBSD
+		source tree (detected automatically); "no" otherwise
+		(to preserve traditional semantics of the <bsd.*.mk>
+		make(1) include files).
 
 OBJECT_FMT	Object file format.  [set to "ELF" on architectures that
 		use ELF -- currently all architectures but ns32k, set to
