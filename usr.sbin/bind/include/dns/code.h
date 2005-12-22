@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 1998-2005 Internet Software Consortium.
+ * Copyright (C) 2004-2005 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 /***************
@@ -68,99 +68,117 @@
 #include "./rdata/in_1/a6_38.c"
 #include "./rdata/generic/dname_39.c"
 #include "./rdata/generic/opt_41.c"
+#include "./rdata/in_1/apl_42.c"
+#include "./rdata/generic/ds_43.c"
+#include "./rdata/generic/sshfp_44.c"
+#include "./rdata/generic/rrsig_46.c"
+#include "./rdata/generic/nsec_47.c"
+#include "./rdata/generic/dnskey_48.c"
 #include "./rdata/generic/unspec_103.c"
 #include "./rdata/generic/tkey_249.c"
 #include "./rdata/any_255/tsig_250.c"
+#include "./rdata/generic/dlv_65323.c"
 
 
 
 #define FROMTEXTSWITCH \
 	switch (type) { \
 	case 1: switch (rdclass) { \
-		case 1: result = fromtext_in_a(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-		case 4: result = fromtext_hs_a(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+		case 1: result = fromtext_in_a(rdclass, type, lexer, origin, options, target, callbacks); break; \
+		case 4: result = fromtext_hs_a(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
-	case 2: result = fromtext_ns(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 3: result = fromtext_md(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 4: result = fromtext_mf(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 5: result = fromtext_cname(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 6: result = fromtext_soa(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 7: result = fromtext_mb(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 8: result = fromtext_mg(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 9: result = fromtext_mr(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 10: result = fromtext_null(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+	case 2: result = fromtext_ns(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 3: result = fromtext_md(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 4: result = fromtext_mf(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 5: result = fromtext_cname(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 6: result = fromtext_soa(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 7: result = fromtext_mb(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 8: result = fromtext_mg(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 9: result = fromtext_mr(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 10: result = fromtext_null(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 11: switch (rdclass) { \
-		case 1: result = fromtext_in_wks(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+		case 1: result = fromtext_in_wks(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
-	case 12: result = fromtext_ptr(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 13: result = fromtext_hinfo(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 14: result = fromtext_minfo(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 15: result = fromtext_mx(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 16: result = fromtext_txt(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 17: result = fromtext_rp(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 18: result = fromtext_afsdb(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 19: result = fromtext_x25(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 20: result = fromtext_isdn(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 21: result = fromtext_rt(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+	case 12: result = fromtext_ptr(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 13: result = fromtext_hinfo(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 14: result = fromtext_minfo(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 15: result = fromtext_mx(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 16: result = fromtext_txt(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 17: result = fromtext_rp(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 18: result = fromtext_afsdb(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 19: result = fromtext_x25(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 20: result = fromtext_isdn(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 21: result = fromtext_rt(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 22: switch (rdclass) { \
-		case 1: result = fromtext_in_nsap(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+		case 1: result = fromtext_in_nsap(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
 	case 23: switch (rdclass) { \
-		case 1: result = fromtext_in_nsap_ptr(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+		case 1: result = fromtext_in_nsap_ptr(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
-	case 24: result = fromtext_sig(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 25: result = fromtext_key(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+	case 24: result = fromtext_sig(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 25: result = fromtext_key(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 26: switch (rdclass) { \
-		case 1: result = fromtext_in_px(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+		case 1: result = fromtext_in_px(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
-	case 27: result = fromtext_gpos(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+	case 27: result = fromtext_gpos(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 28: switch (rdclass) { \
-		case 1: result = fromtext_in_aaaa(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+		case 1: result = fromtext_in_aaaa(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
-	case 29: result = fromtext_loc(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 30: result = fromtext_nxt(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+	case 29: result = fromtext_loc(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 30: result = fromtext_nxt(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 33: switch (rdclass) { \
-		case 1: result = fromtext_in_srv(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+		case 1: result = fromtext_in_srv(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
 	case 35: switch (rdclass) { \
-		case 1: result = fromtext_in_naptr(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+		case 1: result = fromtext_in_naptr(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
 	case 36: switch (rdclass) { \
-		case 1: result = fromtext_in_kx(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+		case 1: result = fromtext_in_kx(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
-	case 37: result = fromtext_cert(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+	case 37: result = fromtext_cert(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 38: switch (rdclass) { \
-		case 1: result = fromtext_in_a6(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+		case 1: result = fromtext_in_a6(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
-	case 39: result = fromtext_dname(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 41: result = fromtext_opt(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 103: result = fromtext_unspec(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
-	case 249: result = fromtext_tkey(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+	case 39: result = fromtext_dname(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 41: result = fromtext_opt(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 42: switch (rdclass) { \
+		case 1: result = fromtext_in_apl(rdclass, type, lexer, origin, options, target, callbacks); break; \
+		default: result = DNS_R_UNKNOWN; break; \
+		} \
+		break; \
+	case 43: result = fromtext_ds(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 44: result = fromtext_sshfp(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 46: result = fromtext_rrsig(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 47: result = fromtext_nsec(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 48: result = fromtext_dnskey(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 103: result = fromtext_unspec(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 249: result = fromtext_tkey(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 250: switch (rdclass) { \
-		case 255: result = fromtext_any_tsig(rdclass, type, lexer, origin, downcase, target, callbacks); break; \
+		case 255: result = fromtext_any_tsig(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
+	case 65323: result = fromtext_dlv(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	default: result = DNS_R_UNKNOWN; break; \
 	}
 
@@ -244,6 +262,16 @@
 		break; \
 	case 39: result = totext_dname(rdata, tctx, target); break; \
 	case 41: result = totext_opt(rdata, tctx, target); break; \
+	case 42: switch (rdata->rdclass) { \
+		case 1: result = totext_in_apl(rdata, tctx, target); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 43: result = totext_ds(rdata, tctx, target); break; \
+	case 44: result = totext_sshfp(rdata, tctx, target); break; \
+	case 46: result = totext_rrsig(rdata, tctx, target); break; \
+	case 47: result = totext_nsec(rdata, tctx, target); break; \
+	case 48: result = totext_dnskey(rdata, tctx, target); break; \
 	case 103: result = totext_unspec(rdata, tctx, target); break; \
 	case 249: result = totext_tkey(rdata, tctx, target); break; \
 	case 250: switch (rdata->rdclass) { \
@@ -251,96 +279,108 @@
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
+	case 65323: result = totext_dlv(rdata, tctx, target); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
 #define FROMWIRESWITCH \
 	switch (type) { \
 	case 1: switch (rdclass) { \
-		case 1: result = fromwire_in_a(rdclass, type, source, dctx, downcase, target); break; \
-		case 4: result = fromwire_hs_a(rdclass, type, source, dctx, downcase, target); break; \
+		case 1: result = fromwire_in_a(rdclass, type, source, dctx, options, target); break; \
+		case 4: result = fromwire_hs_a(rdclass, type, source, dctx, options, target); break; \
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
-	case 2: result = fromwire_ns(rdclass, type, source, dctx, downcase, target); break; \
-	case 3: result = fromwire_md(rdclass, type, source, dctx, downcase, target); break; \
-	case 4: result = fromwire_mf(rdclass, type, source, dctx, downcase, target); break; \
-	case 5: result = fromwire_cname(rdclass, type, source, dctx, downcase, target); break; \
-	case 6: result = fromwire_soa(rdclass, type, source, dctx, downcase, target); break; \
-	case 7: result = fromwire_mb(rdclass, type, source, dctx, downcase, target); break; \
-	case 8: result = fromwire_mg(rdclass, type, source, dctx, downcase, target); break; \
-	case 9: result = fromwire_mr(rdclass, type, source, dctx, downcase, target); break; \
-	case 10: result = fromwire_null(rdclass, type, source, dctx, downcase, target); break; \
+	case 2: result = fromwire_ns(rdclass, type, source, dctx, options, target); break; \
+	case 3: result = fromwire_md(rdclass, type, source, dctx, options, target); break; \
+	case 4: result = fromwire_mf(rdclass, type, source, dctx, options, target); break; \
+	case 5: result = fromwire_cname(rdclass, type, source, dctx, options, target); break; \
+	case 6: result = fromwire_soa(rdclass, type, source, dctx, options, target); break; \
+	case 7: result = fromwire_mb(rdclass, type, source, dctx, options, target); break; \
+	case 8: result = fromwire_mg(rdclass, type, source, dctx, options, target); break; \
+	case 9: result = fromwire_mr(rdclass, type, source, dctx, options, target); break; \
+	case 10: result = fromwire_null(rdclass, type, source, dctx, options, target); break; \
 	case 11: switch (rdclass) { \
-		case 1: result = fromwire_in_wks(rdclass, type, source, dctx, downcase, target); break; \
+		case 1: result = fromwire_in_wks(rdclass, type, source, dctx, options, target); break; \
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
-	case 12: result = fromwire_ptr(rdclass, type, source, dctx, downcase, target); break; \
-	case 13: result = fromwire_hinfo(rdclass, type, source, dctx, downcase, target); break; \
-	case 14: result = fromwire_minfo(rdclass, type, source, dctx, downcase, target); break; \
-	case 15: result = fromwire_mx(rdclass, type, source, dctx, downcase, target); break; \
-	case 16: result = fromwire_txt(rdclass, type, source, dctx, downcase, target); break; \
-	case 17: result = fromwire_rp(rdclass, type, source, dctx, downcase, target); break; \
-	case 18: result = fromwire_afsdb(rdclass, type, source, dctx, downcase, target); break; \
-	case 19: result = fromwire_x25(rdclass, type, source, dctx, downcase, target); break; \
-	case 20: result = fromwire_isdn(rdclass, type, source, dctx, downcase, target); break; \
-	case 21: result = fromwire_rt(rdclass, type, source, dctx, downcase, target); break; \
+	case 12: result = fromwire_ptr(rdclass, type, source, dctx, options, target); break; \
+	case 13: result = fromwire_hinfo(rdclass, type, source, dctx, options, target); break; \
+	case 14: result = fromwire_minfo(rdclass, type, source, dctx, options, target); break; \
+	case 15: result = fromwire_mx(rdclass, type, source, dctx, options, target); break; \
+	case 16: result = fromwire_txt(rdclass, type, source, dctx, options, target); break; \
+	case 17: result = fromwire_rp(rdclass, type, source, dctx, options, target); break; \
+	case 18: result = fromwire_afsdb(rdclass, type, source, dctx, options, target); break; \
+	case 19: result = fromwire_x25(rdclass, type, source, dctx, options, target); break; \
+	case 20: result = fromwire_isdn(rdclass, type, source, dctx, options, target); break; \
+	case 21: result = fromwire_rt(rdclass, type, source, dctx, options, target); break; \
 	case 22: switch (rdclass) { \
-		case 1: result = fromwire_in_nsap(rdclass, type, source, dctx, downcase, target); break; \
+		case 1: result = fromwire_in_nsap(rdclass, type, source, dctx, options, target); break; \
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
 	case 23: switch (rdclass) { \
-		case 1: result = fromwire_in_nsap_ptr(rdclass, type, source, dctx, downcase, target); break; \
+		case 1: result = fromwire_in_nsap_ptr(rdclass, type, source, dctx, options, target); break; \
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
-	case 24: result = fromwire_sig(rdclass, type, source, dctx, downcase, target); break; \
-	case 25: result = fromwire_key(rdclass, type, source, dctx, downcase, target); break; \
+	case 24: result = fromwire_sig(rdclass, type, source, dctx, options, target); break; \
+	case 25: result = fromwire_key(rdclass, type, source, dctx, options, target); break; \
 	case 26: switch (rdclass) { \
-		case 1: result = fromwire_in_px(rdclass, type, source, dctx, downcase, target); break; \
+		case 1: result = fromwire_in_px(rdclass, type, source, dctx, options, target); break; \
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
-	case 27: result = fromwire_gpos(rdclass, type, source, dctx, downcase, target); break; \
+	case 27: result = fromwire_gpos(rdclass, type, source, dctx, options, target); break; \
 	case 28: switch (rdclass) { \
-		case 1: result = fromwire_in_aaaa(rdclass, type, source, dctx, downcase, target); break; \
+		case 1: result = fromwire_in_aaaa(rdclass, type, source, dctx, options, target); break; \
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
-	case 29: result = fromwire_loc(rdclass, type, source, dctx, downcase, target); break; \
-	case 30: result = fromwire_nxt(rdclass, type, source, dctx, downcase, target); break; \
+	case 29: result = fromwire_loc(rdclass, type, source, dctx, options, target); break; \
+	case 30: result = fromwire_nxt(rdclass, type, source, dctx, options, target); break; \
 	case 33: switch (rdclass) { \
-		case 1: result = fromwire_in_srv(rdclass, type, source, dctx, downcase, target); break; \
+		case 1: result = fromwire_in_srv(rdclass, type, source, dctx, options, target); break; \
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
 	case 35: switch (rdclass) { \
-		case 1: result = fromwire_in_naptr(rdclass, type, source, dctx, downcase, target); break; \
+		case 1: result = fromwire_in_naptr(rdclass, type, source, dctx, options, target); break; \
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
 	case 36: switch (rdclass) { \
-		case 1: result = fromwire_in_kx(rdclass, type, source, dctx, downcase, target); break; \
+		case 1: result = fromwire_in_kx(rdclass, type, source, dctx, options, target); break; \
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
-	case 37: result = fromwire_cert(rdclass, type, source, dctx, downcase, target); break; \
+	case 37: result = fromwire_cert(rdclass, type, source, dctx, options, target); break; \
 	case 38: switch (rdclass) { \
-		case 1: result = fromwire_in_a6(rdclass, type, source, dctx, downcase, target); break; \
+		case 1: result = fromwire_in_a6(rdclass, type, source, dctx, options, target); break; \
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
-	case 39: result = fromwire_dname(rdclass, type, source, dctx, downcase, target); break; \
-	case 41: result = fromwire_opt(rdclass, type, source, dctx, downcase, target); break; \
-	case 103: result = fromwire_unspec(rdclass, type, source, dctx, downcase, target); break; \
-	case 249: result = fromwire_tkey(rdclass, type, source, dctx, downcase, target); break; \
+	case 39: result = fromwire_dname(rdclass, type, source, dctx, options, target); break; \
+	case 41: result = fromwire_opt(rdclass, type, source, dctx, options, target); break; \
+	case 42: switch (rdclass) { \
+		case 1: result = fromwire_in_apl(rdclass, type, source, dctx, options, target); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 43: result = fromwire_ds(rdclass, type, source, dctx, options, target); break; \
+	case 44: result = fromwire_sshfp(rdclass, type, source, dctx, options, target); break; \
+	case 46: result = fromwire_rrsig(rdclass, type, source, dctx, options, target); break; \
+	case 47: result = fromwire_nsec(rdclass, type, source, dctx, options, target); break; \
+	case 48: result = fromwire_dnskey(rdclass, type, source, dctx, options, target); break; \
+	case 103: result = fromwire_unspec(rdclass, type, source, dctx, options, target); break; \
+	case 249: result = fromwire_tkey(rdclass, type, source, dctx, options, target); break; \
 	case 250: switch (rdclass) { \
-		case 255: result = fromwire_any_tsig(rdclass, type, source, dctx, downcase, target); break; \
+		case 255: result = fromwire_any_tsig(rdclass, type, source, dctx, options, target); break; \
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
+	case 65323: result = fromwire_dlv(rdclass, type, source, dctx, options, target); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -424,6 +464,16 @@
 		break; \
 	case 39: result = towire_dname(rdata, cctx, target); break; \
 	case 41: result = towire_opt(rdata, cctx, target); break; \
+	case 42: switch (rdata->rdclass) { \
+		case 1: result = towire_in_apl(rdata, cctx, target); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 43: result = towire_ds(rdata, cctx, target); break; \
+	case 44: result = towire_sshfp(rdata, cctx, target); break; \
+	case 46: result = towire_rrsig(rdata, cctx, target); break; \
+	case 47: result = towire_nsec(rdata, cctx, target); break; \
+	case 48: result = towire_dnskey(rdata, cctx, target); break; \
 	case 103: result = towire_unspec(rdata, cctx, target); break; \
 	case 249: result = towire_tkey(rdata, cctx, target); break; \
 	case 250: switch (rdata->rdclass) { \
@@ -431,6 +481,7 @@
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
+	case 65323: result = towire_dlv(rdata, cctx, target); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -514,6 +565,16 @@
 		break; \
 	case 39: result = compare_dname(rdata1, rdata2); break; \
 	case 41: result = compare_opt(rdata1, rdata2); break; \
+	case 42: switch (rdata1->rdclass) { \
+		case 1: result = compare_in_apl(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 43: result = compare_ds(rdata1, rdata2); break; \
+	case 44: result = compare_sshfp(rdata1, rdata2); break; \
+	case 46: result = compare_rrsig(rdata1, rdata2); break; \
+	case 47: result = compare_nsec(rdata1, rdata2); break; \
+	case 48: result = compare_dnskey(rdata1, rdata2); break; \
 	case 103: result = compare_unspec(rdata1, rdata2); break; \
 	case 249: result = compare_tkey(rdata1, rdata2); break; \
 	case 250: switch (rdata1->rdclass) { \
@@ -521,6 +582,7 @@
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
+	case 65323: result = compare_dlv(rdata1, rdata2); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -604,6 +666,16 @@
 		break; \
 	case 39: result = fromstruct_dname(rdclass, type, source, target); break; \
 	case 41: result = fromstruct_opt(rdclass, type, source, target); break; \
+	case 42: switch (rdclass) { \
+		case 1: result = fromstruct_in_apl(rdclass, type, source, target); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 43: result = fromstruct_ds(rdclass, type, source, target); break; \
+	case 44: result = fromstruct_sshfp(rdclass, type, source, target); break; \
+	case 46: result = fromstruct_rrsig(rdclass, type, source, target); break; \
+	case 47: result = fromstruct_nsec(rdclass, type, source, target); break; \
+	case 48: result = fromstruct_dnskey(rdclass, type, source, target); break; \
 	case 103: result = fromstruct_unspec(rdclass, type, source, target); break; \
 	case 249: result = fromstruct_tkey(rdclass, type, source, target); break; \
 	case 250: switch (rdclass) { \
@@ -611,6 +683,7 @@
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
+	case 65323: result = fromstruct_dlv(rdclass, type, source, target); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -694,6 +767,16 @@
 		break; \
 	case 39: result = tostruct_dname(rdata, target, mctx); break; \
 	case 41: result = tostruct_opt(rdata, target, mctx); break; \
+	case 42: switch (rdata->rdclass) { \
+		case 1: result = tostruct_in_apl(rdata, target, mctx); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 43: result = tostruct_ds(rdata, target, mctx); break; \
+	case 44: result = tostruct_sshfp(rdata, target, mctx); break; \
+	case 46: result = tostruct_rrsig(rdata, target, mctx); break; \
+	case 47: result = tostruct_nsec(rdata, target, mctx); break; \
+	case 48: result = tostruct_dnskey(rdata, target, mctx); break; \
 	case 103: result = tostruct_unspec(rdata, target, mctx); break; \
 	case 249: result = tostruct_tkey(rdata, target, mctx); break; \
 	case 250: switch (rdata->rdclass) { \
@@ -701,6 +784,7 @@
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
+	case 65323: result = tostruct_dlv(rdata, target, mctx); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -784,6 +868,16 @@
 		break; \
 	case 39: freestruct_dname(source); break; \
 	case 41: freestruct_opt(source); break; \
+	case 42: switch (common->rdclass) { \
+		case 1: freestruct_in_apl(source); break; \
+		default: break; \
+		} \
+		break; \
+	case 43: freestruct_ds(source); break; \
+	case 44: freestruct_sshfp(source); break; \
+	case 46: freestruct_rrsig(source); break; \
+	case 47: freestruct_nsec(source); break; \
+	case 48: freestruct_dnskey(source); break; \
 	case 103: freestruct_unspec(source); break; \
 	case 249: freestruct_tkey(source); break; \
 	case 250: switch (common->rdclass) { \
@@ -791,6 +885,7 @@
 		default: break; \
 		} \
 		break; \
+	case 65323: freestruct_dlv(source); break; \
 	default: break; \
 	}
 
@@ -874,6 +969,16 @@
 		break; \
 	case 39: result = additionaldata_dname(rdata, add, arg); break; \
 	case 41: result = additionaldata_opt(rdata, add, arg); break; \
+	case 42: switch (rdata->rdclass) { \
+		case 1: result = additionaldata_in_apl(rdata, add, arg); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 43: result = additionaldata_ds(rdata, add, arg); break; \
+	case 44: result = additionaldata_sshfp(rdata, add, arg); break; \
+	case 46: result = additionaldata_rrsig(rdata, add, arg); break; \
+	case 47: result = additionaldata_nsec(rdata, add, arg); break; \
+	case 48: result = additionaldata_dnskey(rdata, add, arg); break; \
 	case 103: result = additionaldata_unspec(rdata, add, arg); break; \
 	case 249: result = additionaldata_tkey(rdata, add, arg); break; \
 	case 250: switch (rdata->rdclass) { \
@@ -881,6 +986,7 @@
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
+	case 65323: result = additionaldata_dlv(rdata, add, arg); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -964,6 +1070,16 @@
 		break; \
 	case 39: result = digest_dname(rdata, digest, arg); break; \
 	case 41: result = digest_opt(rdata, digest, arg); break; \
+	case 42: switch (rdata->rdclass) { \
+		case 1: result = digest_in_apl(rdata, digest, arg); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 43: result = digest_ds(rdata, digest, arg); break; \
+	case 44: result = digest_sshfp(rdata, digest, arg); break; \
+	case 46: result = digest_rrsig(rdata, digest, arg); break; \
+	case 47: result = digest_nsec(rdata, digest, arg); break; \
+	case 48: result = digest_dnskey(rdata, digest, arg); break; \
 	case 103: result = digest_unspec(rdata, digest, arg); break; \
 	case 249: result = digest_tkey(rdata, digest, arg); break; \
 	case 250: switch (rdata->rdclass) { \
@@ -971,276 +1087,216 @@
 		default: use_default = ISC_TRUE; break; \
 		} \
 		break; \
+	case 65323: result = digest_dlv(rdata, digest, arg); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
-typedef struct {
-	const char *name;
-	unsigned int flags;
-} typeattr_t;
-static typeattr_t typeattr[] = {
-	{ "RESERVED0", DNS_RDATATYPEATTR_RESERVED },
-	{ "A", RRTYPE_A_ATTRIBUTES },
-	{ "NS", RRTYPE_NS_ATTRIBUTES },
-	{ "MD", RRTYPE_MD_ATTRIBUTES },
-	{ "MF", RRTYPE_MF_ATTRIBUTES },
-	{ "CNAME", RRTYPE_CNAME_ATTRIBUTES },
-	{ "SOA", RRTYPE_SOA_ATTRIBUTES },
-	{ "MB", RRTYPE_MB_ATTRIBUTES },
-	{ "MG", RRTYPE_MG_ATTRIBUTES },
-	{ "MR", RRTYPE_MR_ATTRIBUTES },
-	{ "NULL", RRTYPE_NULL_ATTRIBUTES },
-	{ "WKS", RRTYPE_WKS_ATTRIBUTES },
-	{ "PTR", RRTYPE_PTR_ATTRIBUTES },
-	{ "HINFO", RRTYPE_HINFO_ATTRIBUTES },
-	{ "MINFO", RRTYPE_MINFO_ATTRIBUTES },
-	{ "MX", RRTYPE_MX_ATTRIBUTES },
-	{ "TXT", RRTYPE_TXT_ATTRIBUTES },
-	{ "RP", RRTYPE_RP_ATTRIBUTES },
-	{ "AFSDB", RRTYPE_AFSDB_ATTRIBUTES },
-	{ "X25", RRTYPE_X25_ATTRIBUTES },
-	{ "ISDN", RRTYPE_ISDN_ATTRIBUTES },
-	{ "RT", RRTYPE_RT_ATTRIBUTES },
-	{ "NSAP", RRTYPE_NSAP_ATTRIBUTES },
-	{ "NSAP-PTR", RRTYPE_NSAP_PTR_ATTRIBUTES },
-	{ "SIG", RRTYPE_SIG_ATTRIBUTES },
-	{ "KEY", RRTYPE_KEY_ATTRIBUTES },
-	{ "PX", RRTYPE_PX_ATTRIBUTES },
-	{ "GPOS", RRTYPE_GPOS_ATTRIBUTES },
-	{ "AAAA", RRTYPE_AAAA_ATTRIBUTES },
-	{ "LOC", RRTYPE_LOC_ATTRIBUTES },
-	{ "NXT", RRTYPE_NXT_ATTRIBUTES },
-	{ "EID", DNS_RDATATYPEATTR_RESERVED },
-	{ "NIMLOC", DNS_RDATATYPEATTR_RESERVED },
-	{ "SRV", RRTYPE_SRV_ATTRIBUTES },
-	{ "ATMA", DNS_RDATATYPEATTR_RESERVED },
-	{ "NAPTR", RRTYPE_NAPTR_ATTRIBUTES },
-	{ "KX", RRTYPE_KX_ATTRIBUTES },
-	{ "CERT", RRTYPE_CERT_ATTRIBUTES },
-	{ "A6", RRTYPE_A6_ATTRIBUTES },
-	{ "DNAME", RRTYPE_DNAME_ATTRIBUTES },
-	{ "TYPE40", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "OPT", RRTYPE_OPT_ATTRIBUTES },
-	{ "TYPE42", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE43", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE44", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE45", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE46", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE47", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE48", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE49", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE50", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE51", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE52", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE53", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE54", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE55", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE56", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE57", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE58", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE59", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE60", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE61", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE62", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE63", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE64", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE65", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE66", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE67", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE68", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE69", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE70", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE71", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE72", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE73", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE74", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE75", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE76", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE77", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE78", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE79", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE80", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE81", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE82", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE83", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE84", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE85", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE86", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE87", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE88", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE89", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE90", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE91", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE92", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE93", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE94", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE95", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE96", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE97", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE98", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE99", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "UINFO", DNS_RDATATYPEATTR_RESERVED },
-	{ "UID", DNS_RDATATYPEATTR_RESERVED },
-	{ "GID", DNS_RDATATYPEATTR_RESERVED },
-	{ "UNSPEC", RRTYPE_UNSPEC_ATTRIBUTES },
-	{ "TYPE104", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE105", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE106", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE107", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE108", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE109", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE110", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE111", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE112", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE113", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE114", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE115", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE116", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE117", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE118", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE119", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE120", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE121", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE122", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE123", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE124", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE125", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE126", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE127", DNS_RDATATYPEATTR_UNKNOWN},
-	{ "TYPE128", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE129", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE130", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE131", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE132", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE133", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE134", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE135", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE136", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE137", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE138", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE139", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE140", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE141", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE142", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE143", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE144", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE145", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE146", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE147", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE148", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE149", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE150", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE151", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE152", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE153", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE154", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE155", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE156", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE157", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE158", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE159", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE160", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE161", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE162", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE163", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE164", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE165", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE166", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE167", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE168", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE169", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE170", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE171", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE172", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE173", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE174", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE175", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE176", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE177", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE178", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE179", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE180", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE181", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE182", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE183", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE184", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE185", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE186", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE187", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE188", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE189", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE190", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE191", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE192", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE193", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE194", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE195", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE196", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE197", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE198", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE199", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE200", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE201", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE202", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE203", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE204", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE205", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE206", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE207", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE208", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE209", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE210", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE211", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE212", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE213", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE214", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE215", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE216", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE217", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE218", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE219", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE220", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE221", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE222", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE223", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE224", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE225", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE226", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE227", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE228", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE229", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE230", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE231", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE232", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE233", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE234", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE235", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE236", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE237", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE238", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE239", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE240", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE241", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE242", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE243", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE244", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE245", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE246", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE247", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TYPE248", DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META},
-	{ "TKEY", RRTYPE_TKEY_ATTRIBUTES },
-	{ "TSIG", RRTYPE_TSIG_ATTRIBUTES },
-	{ "IXFR", DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY },
-	{ "AXFR", DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY },
-	{ "MAILB", DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY },
-	{ "MAILA", DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY },
-	{ "ANY", DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY }
-};
+#define CHECKOWNERSWITCH \
+	switch (type) { \
+	case 1: switch (rdclass) { \
+		case 1: result = checkowner_in_a(name, rdclass, type, wildcard); break; \
+		case 4: result = checkowner_hs_a(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 2: result = checkowner_ns(name, rdclass, type, wildcard); break; \
+	case 3: result = checkowner_md(name, rdclass, type, wildcard); break; \
+	case 4: result = checkowner_mf(name, rdclass, type, wildcard); break; \
+	case 5: result = checkowner_cname(name, rdclass, type, wildcard); break; \
+	case 6: result = checkowner_soa(name, rdclass, type, wildcard); break; \
+	case 7: result = checkowner_mb(name, rdclass, type, wildcard); break; \
+	case 8: result = checkowner_mg(name, rdclass, type, wildcard); break; \
+	case 9: result = checkowner_mr(name, rdclass, type, wildcard); break; \
+	case 10: result = checkowner_null(name, rdclass, type, wildcard); break; \
+	case 11: switch (rdclass) { \
+		case 1: result = checkowner_in_wks(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 12: result = checkowner_ptr(name, rdclass, type, wildcard); break; \
+	case 13: result = checkowner_hinfo(name, rdclass, type, wildcard); break; \
+	case 14: result = checkowner_minfo(name, rdclass, type, wildcard); break; \
+	case 15: result = checkowner_mx(name, rdclass, type, wildcard); break; \
+	case 16: result = checkowner_txt(name, rdclass, type, wildcard); break; \
+	case 17: result = checkowner_rp(name, rdclass, type, wildcard); break; \
+	case 18: result = checkowner_afsdb(name, rdclass, type, wildcard); break; \
+	case 19: result = checkowner_x25(name, rdclass, type, wildcard); break; \
+	case 20: result = checkowner_isdn(name, rdclass, type, wildcard); break; \
+	case 21: result = checkowner_rt(name, rdclass, type, wildcard); break; \
+	case 22: switch (rdclass) { \
+		case 1: result = checkowner_in_nsap(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 23: switch (rdclass) { \
+		case 1: result = checkowner_in_nsap_ptr(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 24: result = checkowner_sig(name, rdclass, type, wildcard); break; \
+	case 25: result = checkowner_key(name, rdclass, type, wildcard); break; \
+	case 26: switch (rdclass) { \
+		case 1: result = checkowner_in_px(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 27: result = checkowner_gpos(name, rdclass, type, wildcard); break; \
+	case 28: switch (rdclass) { \
+		case 1: result = checkowner_in_aaaa(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 29: result = checkowner_loc(name, rdclass, type, wildcard); break; \
+	case 30: result = checkowner_nxt(name, rdclass, type, wildcard); break; \
+	case 33: switch (rdclass) { \
+		case 1: result = checkowner_in_srv(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 35: switch (rdclass) { \
+		case 1: result = checkowner_in_naptr(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 36: switch (rdclass) { \
+		case 1: result = checkowner_in_kx(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 37: result = checkowner_cert(name, rdclass, type, wildcard); break; \
+	case 38: switch (rdclass) { \
+		case 1: result = checkowner_in_a6(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 39: result = checkowner_dname(name, rdclass, type, wildcard); break; \
+	case 41: result = checkowner_opt(name, rdclass, type, wildcard); break; \
+	case 42: switch (rdclass) { \
+		case 1: result = checkowner_in_apl(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 43: result = checkowner_ds(name, rdclass, type, wildcard); break; \
+	case 44: result = checkowner_sshfp(name, rdclass, type, wildcard); break; \
+	case 46: result = checkowner_rrsig(name, rdclass, type, wildcard); break; \
+	case 47: result = checkowner_nsec(name, rdclass, type, wildcard); break; \
+	case 48: result = checkowner_dnskey(name, rdclass, type, wildcard); break; \
+	case 103: result = checkowner_unspec(name, rdclass, type, wildcard); break; \
+	case 249: result = checkowner_tkey(name, rdclass, type, wildcard); break; \
+	case 250: switch (rdclass) { \
+		case 255: result = checkowner_any_tsig(name, rdclass, type, wildcard); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 65323: result = checkowner_dlv(name, rdclass, type, wildcard); break; \
+	default: result = ISC_TRUE; break; \
+	}
+
+#define CHECKNAMESSWITCH \
+	switch (rdata->type) { \
+	case 1: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_a(rdata, owner, bad); break; \
+		case 4: result = checknames_hs_a(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 2: result = checknames_ns(rdata, owner, bad); break; \
+	case 3: result = checknames_md(rdata, owner, bad); break; \
+	case 4: result = checknames_mf(rdata, owner, bad); break; \
+	case 5: result = checknames_cname(rdata, owner, bad); break; \
+	case 6: result = checknames_soa(rdata, owner, bad); break; \
+	case 7: result = checknames_mb(rdata, owner, bad); break; \
+	case 8: result = checknames_mg(rdata, owner, bad); break; \
+	case 9: result = checknames_mr(rdata, owner, bad); break; \
+	case 10: result = checknames_null(rdata, owner, bad); break; \
+	case 11: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_wks(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 12: result = checknames_ptr(rdata, owner, bad); break; \
+	case 13: result = checknames_hinfo(rdata, owner, bad); break; \
+	case 14: result = checknames_minfo(rdata, owner, bad); break; \
+	case 15: result = checknames_mx(rdata, owner, bad); break; \
+	case 16: result = checknames_txt(rdata, owner, bad); break; \
+	case 17: result = checknames_rp(rdata, owner, bad); break; \
+	case 18: result = checknames_afsdb(rdata, owner, bad); break; \
+	case 19: result = checknames_x25(rdata, owner, bad); break; \
+	case 20: result = checknames_isdn(rdata, owner, bad); break; \
+	case 21: result = checknames_rt(rdata, owner, bad); break; \
+	case 22: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_nsap(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 23: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_nsap_ptr(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 24: result = checknames_sig(rdata, owner, bad); break; \
+	case 25: result = checknames_key(rdata, owner, bad); break; \
+	case 26: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_px(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 27: result = checknames_gpos(rdata, owner, bad); break; \
+	case 28: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_aaaa(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 29: result = checknames_loc(rdata, owner, bad); break; \
+	case 30: result = checknames_nxt(rdata, owner, bad); break; \
+	case 33: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_srv(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 35: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_naptr(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 36: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_kx(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 37: result = checknames_cert(rdata, owner, bad); break; \
+	case 38: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_a6(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 39: result = checknames_dname(rdata, owner, bad); break; \
+	case 41: result = checknames_opt(rdata, owner, bad); break; \
+	case 42: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_apl(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 43: result = checknames_ds(rdata, owner, bad); break; \
+	case 44: result = checknames_sshfp(rdata, owner, bad); break; \
+	case 46: result = checknames_rrsig(rdata, owner, bad); break; \
+	case 47: result = checknames_nsec(rdata, owner, bad); break; \
+	case 48: result = checknames_dnskey(rdata, owner, bad); break; \
+	case 103: result = checknames_unspec(rdata, owner, bad); break; \
+	case 249: result = checknames_tkey(rdata, owner, bad); break; \
+	case 250: switch (rdata->rdclass) { \
+		case 255: result = checknames_any_tsig(rdata, owner, bad); break; \
+		default: result = ISC_TRUE; break; \
+		} \
+		break; \
+	case 65323: result = checknames_dlv(rdata, owner, bad); break; \
+	default: result = ISC_TRUE; break; \
+	}
 #define RDATATYPE_COMPARE(_s, _d, _tn, _n, _tp) \
 	do { \
 		if (sizeof(_s) - 1 == _n && \
 		    strncasecmp(_s,(_tn),(sizeof(_s) - 1)) == 0) { \
-			if ((typeattr[_d].flags & DNS_RDATATYPEATTR_RESERVED) != 0) \
+			if ((dns_rdatatype_attributes(_d) & DNS_RDATATYPEATTR_RESERVED) != 0) \
 				return (ISC_R_NOTIMPLEMENTED); \
 			*(_tp) = _d; \
 			return (ISC_R_SUCCESS); \
@@ -1322,6 +1378,7 @@ static typeattr_t typeattr[] = {
 			break; \
 		case 122: \
 			RDATATYPE_COMPARE("sig", 24, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("dlv", 65323, _typename, _length, _typep); \
 			break; \
 		case 254: \
 			RDATATYPE_COMPARE("key", 25, _typename, _length, _typep); \
@@ -1363,6 +1420,24 @@ static typeattr_t typeattr[] = {
 		case 168: \
 			RDATATYPE_COMPARE("opt", 41, _typename, _length, _typep); \
 			break; \
+		case 48: \
+			RDATATYPE_COMPARE("apl", 42, _typename, _length, _typep); \
+			break; \
+		case 210: \
+			RDATATYPE_COMPARE("ds", 43, _typename, _length, _typep); \
+			break; \
+		case 128: \
+			RDATATYPE_COMPARE("sshfp", 44, _typename, _length, _typep); \
+			break; \
+		case 225: \
+			RDATATYPE_COMPARE("rrsig", 46, _typename, _length, _typep); \
+			break; \
+		case 22: \
+			RDATATYPE_COMPARE("nsec", 47, _typename, _length, _typep); \
+			break; \
+		case 26: \
+			RDATATYPE_COMPARE("dnskey", 48, _typename, _length, _typep); \
+			break; \
 		case 230: \
 			RDATATYPE_COMPARE("uinfo", 100, _typename, _length, _typep); \
 			break; \
@@ -1393,5 +1468,129 @@ static typeattr_t typeattr[] = {
 		case 68: \
 			RDATATYPE_COMPARE("any", 255, _typename, _length, _typep); \
 			break; \
+	}
+#define RDATATYPE_ATTRIBUTE_SW \
+	switch (type) { \
+	case 0: return (DNS_RDATATYPEATTR_RESERVED); \
+	case 1: return (RRTYPE_A_ATTRIBUTES); \
+	case 2: return (RRTYPE_NS_ATTRIBUTES); \
+	case 3: return (RRTYPE_MD_ATTRIBUTES); \
+	case 4: return (RRTYPE_MF_ATTRIBUTES); \
+	case 5: return (RRTYPE_CNAME_ATTRIBUTES); \
+	case 6: return (RRTYPE_SOA_ATTRIBUTES); \
+	case 7: return (RRTYPE_MB_ATTRIBUTES); \
+	case 8: return (RRTYPE_MG_ATTRIBUTES); \
+	case 9: return (RRTYPE_MR_ATTRIBUTES); \
+	case 10: return (RRTYPE_NULL_ATTRIBUTES); \
+	case 11: return (RRTYPE_WKS_ATTRIBUTES); \
+	case 12: return (RRTYPE_PTR_ATTRIBUTES); \
+	case 13: return (RRTYPE_HINFO_ATTRIBUTES); \
+	case 14: return (RRTYPE_MINFO_ATTRIBUTES); \
+	case 15: return (RRTYPE_MX_ATTRIBUTES); \
+	case 16: return (RRTYPE_TXT_ATTRIBUTES); \
+	case 17: return (RRTYPE_RP_ATTRIBUTES); \
+	case 18: return (RRTYPE_AFSDB_ATTRIBUTES); \
+	case 19: return (RRTYPE_X25_ATTRIBUTES); \
+	case 20: return (RRTYPE_ISDN_ATTRIBUTES); \
+	case 21: return (RRTYPE_RT_ATTRIBUTES); \
+	case 22: return (RRTYPE_NSAP_ATTRIBUTES); \
+	case 23: return (RRTYPE_NSAP_PTR_ATTRIBUTES); \
+	case 24: return (RRTYPE_SIG_ATTRIBUTES); \
+	case 25: return (RRTYPE_KEY_ATTRIBUTES); \
+	case 26: return (RRTYPE_PX_ATTRIBUTES); \
+	case 27: return (RRTYPE_GPOS_ATTRIBUTES); \
+	case 28: return (RRTYPE_AAAA_ATTRIBUTES); \
+	case 29: return (RRTYPE_LOC_ATTRIBUTES); \
+	case 30: return (RRTYPE_NXT_ATTRIBUTES); \
+	case 31: return (DNS_RDATATYPEATTR_RESERVED); \
+	case 32: return (DNS_RDATATYPEATTR_RESERVED); \
+	case 33: return (RRTYPE_SRV_ATTRIBUTES); \
+	case 34: return (DNS_RDATATYPEATTR_RESERVED); \
+	case 35: return (RRTYPE_NAPTR_ATTRIBUTES); \
+	case 36: return (RRTYPE_KX_ATTRIBUTES); \
+	case 37: return (RRTYPE_CERT_ATTRIBUTES); \
+	case 38: return (RRTYPE_A6_ATTRIBUTES); \
+	case 39: return (RRTYPE_DNAME_ATTRIBUTES); \
+	case 41: return (RRTYPE_OPT_ATTRIBUTES); \
+	case 42: return (RRTYPE_APL_ATTRIBUTES); \
+	case 43: return (RRTYPE_DS_ATTRIBUTES); \
+	case 44: return (RRTYPE_SSHFP_ATTRIBUTES); \
+	case 46: return (RRTYPE_RRSIG_ATTRIBUTES); \
+	case 47: return (RRTYPE_NSEC_ATTRIBUTES); \
+	case 48: return (RRTYPE_DNSKEY_ATTRIBUTES); \
+	case 100: return (DNS_RDATATYPEATTR_RESERVED); \
+	case 101: return (DNS_RDATATYPEATTR_RESERVED); \
+	case 102: return (DNS_RDATATYPEATTR_RESERVED); \
+	case 103: return (RRTYPE_UNSPEC_ATTRIBUTES); \
+	case 249: return (RRTYPE_TKEY_ATTRIBUTES); \
+	case 250: return (RRTYPE_TSIG_ATTRIBUTES); \
+	case 251: return (DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY); \
+	case 252: return (DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY); \
+	case 253: return (DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY); \
+	case 254: return (DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY); \
+	case 255: return (DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY); \
+	case 65323: return (RRTYPE_DLV_ATTRIBUTES); \
+	}
+#define RDATATYPE_TOTEXT_SW \
+	switch (type) { \
+	case 0: return (str_totext("RESERVED0", target)); \
+	case 1: return (str_totext("A", target)); \
+	case 2: return (str_totext("NS", target)); \
+	case 3: return (str_totext("MD", target)); \
+	case 4: return (str_totext("MF", target)); \
+	case 5: return (str_totext("CNAME", target)); \
+	case 6: return (str_totext("SOA", target)); \
+	case 7: return (str_totext("MB", target)); \
+	case 8: return (str_totext("MG", target)); \
+	case 9: return (str_totext("MR", target)); \
+	case 10: return (str_totext("NULL", target)); \
+	case 11: return (str_totext("WKS", target)); \
+	case 12: return (str_totext("PTR", target)); \
+	case 13: return (str_totext("HINFO", target)); \
+	case 14: return (str_totext("MINFO", target)); \
+	case 15: return (str_totext("MX", target)); \
+	case 16: return (str_totext("TXT", target)); \
+	case 17: return (str_totext("RP", target)); \
+	case 18: return (str_totext("AFSDB", target)); \
+	case 19: return (str_totext("X25", target)); \
+	case 20: return (str_totext("ISDN", target)); \
+	case 21: return (str_totext("RT", target)); \
+	case 22: return (str_totext("NSAP", target)); \
+	case 23: return (str_totext("NSAP-PTR", target)); \
+	case 24: return (str_totext("SIG", target)); \
+	case 25: return (str_totext("KEY", target)); \
+	case 26: return (str_totext("PX", target)); \
+	case 27: return (str_totext("GPOS", target)); \
+	case 28: return (str_totext("AAAA", target)); \
+	case 29: return (str_totext("LOC", target)); \
+	case 30: return (str_totext("NXT", target)); \
+	case 31: return (str_totext("EID", target)); \
+	case 32: return (str_totext("NIMLOC", target)); \
+	case 33: return (str_totext("SRV", target)); \
+	case 34: return (str_totext("ATMA", target)); \
+	case 35: return (str_totext("NAPTR", target)); \
+	case 36: return (str_totext("KX", target)); \
+	case 37: return (str_totext("CERT", target)); \
+	case 38: return (str_totext("A6", target)); \
+	case 39: return (str_totext("DNAME", target)); \
+	case 41: return (str_totext("OPT", target)); \
+	case 42: return (str_totext("APL", target)); \
+	case 43: return (str_totext("DS", target)); \
+	case 44: return (str_totext("SSHFP", target)); \
+	case 46: return (str_totext("RRSIG", target)); \
+	case 47: return (str_totext("NSEC", target)); \
+	case 48: return (str_totext("DNSKEY", target)); \
+	case 100: return (str_totext("UINFO", target)); \
+	case 101: return (str_totext("UID", target)); \
+	case 102: return (str_totext("GID", target)); \
+	case 103: return (str_totext("UNSPEC", target)); \
+	case 249: return (str_totext("TKEY", target)); \
+	case 250: return (str_totext("TSIG", target)); \
+	case 251: return (str_totext("IXFR", target)); \
+	case 252: return (str_totext("AXFR", target)); \
+	case 253: return (str_totext("MAILB", target)); \
+	case 254: return (str_totext("MAILA", target)); \
+	case 255: return (str_totext("ANY", target)); \
+	case 65323: return (str_totext("DLV", target)); \
 	}
 #endif /* DNS_CODE_H */
