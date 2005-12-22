@@ -1,7 +1,7 @@
-/*	$NetBSD: platform.h,v 1.2 2004/11/07 01:13:32 christos Exp $	*/
+/*	$NetBSD: platform.h,v 1.3 2005/12/22 00:19:00 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.12.2.1.10.2 2004/08/28 06:25:26 marka Exp */
+/* Id: platform.h.in,v 1.12.2.1.10.5 2005/06/08 02:08:32 marka Exp */
 
 #ifndef LWRES_PLATFORM_H
 #define LWRES_PLATFORM_H 1
@@ -89,6 +89,16 @@
  * If this system need a modern sprintf() that returns (int) not (char*).
  */
 #undef LWRES_PLATFORM_NEEDSPRINTF
+
+/*
+ * The printf format string modifier to use with lwres_uint64_t values.
+ */
+#define LWRES_PLATFORM_QUADFORMAT "ll"
+
+/*! \brief
+ * Define if this system needs strtoul.
+ */
+#undef ISC_PLATFORM_NEEDSTRTOUL
 
 #ifndef LWRES_PLATFORM_USEDECLSPEC
 #define LIBLWRES_EXTERNAL_DATA
