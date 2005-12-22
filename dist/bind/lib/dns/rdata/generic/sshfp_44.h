@@ -1,8 +1,8 @@
-/*	$NetBSD: dst_openssl.h,v 1.1.1.1 2004/05/17 23:45:00 christos Exp $	*/
+/*	$NetBSD: sshfp_44.h,v 1.3 2005/12/22 00:26:24 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2002  Internet Software Consortium.
+ * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,19 +17,20 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_openssl.h,v 1.1.202.3 2004/03/08 09:04:45 marka Exp */
+/* Id: sshfp_44.h,v 1.1.8.2 2004/03/06 08:14:13 marka Exp */
 
-#ifndef DST_OPENSSL_H
-#define DST_OPENSSL_H 1
+/* draft-ietf-secsh-dns-05.txt */
 
-#include <isc/lang.h>
-#include <isc/result.h>
+#ifndef GENERIC_SSHFP_44_H
+#define GENERIC_SSHFP_44_H 1
 
-ISC_LANG_BEGINDECLS
+typedef struct dns_rdata_sshfp {
+	dns_rdatacommon_t	common;
+	isc_mem_t		*mctx;
+	isc_uint8_t		algorithm;
+	isc_uint8_t		digest_type;
+	isc_uint16_t		length;
+	unsigned char		*digest;
+} dns_rdata_sshfp_t;
 
-isc_result_t
-dst__openssl_toresult(isc_result_t fallback);
-
-ISC_LANG_ENDDECLS
-
-#endif /* DST_OPENSSL_H */
+#endif /* GENERIC_SSHFP_44_H */
