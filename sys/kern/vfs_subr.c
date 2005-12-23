@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.256 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.257 2005/12/23 15:31:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.256 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.257 2005/12/23 15:31:40 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1175,7 +1175,7 @@ vget(struct vnode *vp, int flags)
 
 	if ((flags & LK_INTERLOCK) == 0)
 		simple_lock(&vp->v_interlock);
-	if (vp->v_flag & VXLOCK) {
+	if ((vp->v_flag & (VXLOCK | VFREEING)) != 0) {
 		if (flags & LK_NOWAIT) {
 			simple_unlock(&vp->v_interlock);
 			return EBUSY;
@@ -1201,32 +1201,7 @@ vget(struct vnode *vp, int flags)
 #endif
 	if (flags & LK_TYPE_MASK) {
 		if ((error = vn_lock(vp, flags | LK_INTERLOCK))) {
-			/*
-			 * must expand vrele here because we do not want
-			 * to call VOP_INACTIVE if the reference count
-			 * drops back to zero since it was never really
-			 * active. We must remove it from the free list
-			 * before sleeping so that multiple processes do
-			 * not try to recycle it.
-			 */
-			simple_lock(&vp->v_interlock);
-			vp->v_usecount--;
-			if (vp->v_usecount > 0) {
-				simple_unlock(&vp->v_interlock);
-				return (error);
-			}
-			/*
-			 * insert at tail of LRU list
-			 */
-			simple_lock(&vnode_free_list_slock);
-			if (vp->v_holdcnt > 0)
-				TAILQ_INSERT_TAIL(&vnode_hold_list, vp,
-				    v_freelist);
-			else
-				TAILQ_INSERT_TAIL(&vnode_free_list, vp,
-				    v_freelist);
-			simple_unlock(&vnode_free_list_slock);
-			simple_unlock(&vp->v_interlock);
+			vrele(vp);
 		}
 		return (error);
 	}
