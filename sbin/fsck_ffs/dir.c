@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.46 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.47 2005/12/23 12:58:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.46 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.47 2005/12/23 12:58:11 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -540,7 +540,9 @@ linkup(ino_t orphan, ino_t parentdir, char *name)
 							printf("\n");
 					}
 				}
-				reparent(lfdir, ROOTINO);
+				if (lfdir != 0) {
+					reparent(lfdir, ROOTINO);
+				}
 			}
 		}
 		if (lfdir == 0) {
