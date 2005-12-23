@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.56 2005/12/23 15:31:40 yamt Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.57 2005/12/23 23:20:00 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.56 2005/12/23 15:31:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.57 2005/12/23 23:20:00 rpaulo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -102,7 +102,7 @@ ufs_inactive(void *v)
 			(void)chkiq(ip, -1, NOCRED, 0);
 #endif
 #ifdef UFS_EXTATTR
-		ufs_extattr_vnode_inactive(vp, p);
+		ufs_extattr_vnode_inactive(vp, l);
 #endif
 		if (ip->i_size != 0) {
 			error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED, l);
