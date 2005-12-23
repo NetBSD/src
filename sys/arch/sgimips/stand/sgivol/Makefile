@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2002/12/13 02:36:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2005/12/23 03:28:10 ginsbach Exp $
 
 NOMAN=	# defined
 
 PROG=	sgivol
+.if (${HOSTPROG:U} == "")
+DPADD+=	${LIBUTIL}
 LDADD+=	-lutil
+.endif
 
 WARNS=	2
 
