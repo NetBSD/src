@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.177 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.178 2005/12/23 23:20:00 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.177 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.178 2005/12/23 23:20:00 rpaulo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -999,7 +999,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		 * XXX Just ignore errors.  Not clear that we should
 		 * XXX fail the mount in this case.
 		 */
-		(void) ufs_extattr_autostart(mp, p);
+		(void) ufs_extattr_autostart(mp, l);
 #endif
 	}
 #endif /* UFS_EXTATTR */
@@ -1150,7 +1150,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		flags |= FORCECLOSE;
 #ifdef UFS_EXTATTR
 	if (ump->um_fstype == UFS1) {
-		error = ufs_extattr_stop(mp, p);
+		error = ufs_extattr_stop(mp, l);
 		if (error) {
 			if (error != EOPNOTSUPP)
 				printf("%s: ufs_extattr_stop returned %d\n",
