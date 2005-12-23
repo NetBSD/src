@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.89 2005/11/27 11:45:56 dsl Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.90 2005/12/23 15:31:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.89 2005/11/27 11:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.90 2005/12/23 15:31:40 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -684,6 +684,7 @@ ffs_valloc(struct vnode *pvp, int mode, struct ucred *cred,
 		ffs_vfree(pvp, ino, mode);
 		return (error);
 	}
+	KASSERT((*vpp)->v_type == VNON);
 	ip = VTOI(*vpp);
 	if (ip->i_mode) {
 #if 0
