@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 2005/12/20 19:28:50 christos Exp $ */
+/*	$NetBSD: ffs.S,v 1.2 2005/12/23 10:04:51 skrll Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -27,6 +27,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*----------------------------------------------------------------------*/
+
+#define _NOREGNAMES
+
 #include <machine/asm.h>
 
 .align 4
