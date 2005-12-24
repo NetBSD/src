@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.16 2004/10/30 15:46:31 dsl Exp $ */
+/* $NetBSD: sunlabel.c,v 1.17 2005/12/24 21:35:57 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.16 2004/10/30 15:46:31 dsl Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.17 2005/12/24 21:35:57 perry Exp $");
 #endif
 
 #include <stdio.h>
@@ -215,9 +215,9 @@ static struct field fields[] =
  * We'd _like_ to use howmany() from the include files, but can't count
  *  on its being present or working.
  */
-static __inline__ uint32_t how_many(uint32_t amt, uint32_t unit)
-    __attribute__((__const__));
-static __inline__ uint32_t
+static inline uint32_t how_many(uint32_t amt, uint32_t unit)
+    __attribute__((const));
+static inline uint32_t
 how_many(uint32_t amt, uint32_t unit)
 {
 	return ((amt + unit - 1) / unit);
