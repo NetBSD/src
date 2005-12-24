@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.134 2005/12/11 12:20:23 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.135 2005/12/24 23:41:33 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.134 2005/12/11 12:20:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.135 2005/12/24 23:41:33 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -417,7 +417,7 @@ async_daemon(l, v, retval)
 void	native_to_sunos_sigset __P((const sigset_t *, int *));
 void	sunos_to_native_sigset __P((const int, sigset_t *));
 
-__inline__ void
+inline void
 native_to_sunos_sigset(ss, mask)
 	const sigset_t *ss;
 	int *mask;
@@ -425,7 +425,7 @@ native_to_sunos_sigset(ss, mask)
 	*mask = ss->__bits[0];
 }
 
-__inline__ void
+inline void
 sunos_to_native_sigset(mask, ss)
 	const int mask;
 	sigset_t *ss;
@@ -726,9 +726,9 @@ sunos_sys_setsockopt(l, v, retval)
 	return (error);
 }
 
-static __inline__ int sunos_sys_socket_common(struct lwp *, register_t *,
+static inline int sunos_sys_socket_common(struct lwp *, register_t *,
 					      int type);
-static __inline__ int
+static inline int
 sunos_sys_socket_common(l, retval, type)
 	struct lwp *l;
 	register_t *retval;

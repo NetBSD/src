@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.91 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.92 2005/12/24 23:41:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.91 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.92 2005/12/24 23:41:34 perry Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -310,7 +310,7 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
  * uvm_uarea_free: free a u-area; never blocks
  */
 
-static __inline__ void
+static inline void
 uvm_uarea_free(vaddr_t uaddr)
 {
 	simple_lock(&uvm_uareas_slock);

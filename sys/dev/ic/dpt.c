@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.45 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: dpt.c,v 1.46 2005/12/24 23:41:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.45 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.46 2005/12/24 23:41:33 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,10 +204,10 @@ static void	dpt_shutdown(void *);
 static void	dpt_sysinfo(struct dpt_softc *, struct dpt_sysinfo *);
 static int	dpt_wait(struct dpt_softc *, u_int8_t, u_int8_t, int);
 
-static __inline__ struct dpt_ccb	*dpt_ccb_alloc(struct dpt_softc *);
-static __inline__ void	dpt_ccb_free(struct dpt_softc *, struct dpt_ccb *);
+static inline struct dpt_ccb	*dpt_ccb_alloc(struct dpt_softc *);
+static inline void	dpt_ccb_free(struct dpt_softc *, struct dpt_ccb *);
 
-static __inline__ struct dpt_ccb *
+static inline struct dpt_ccb *
 dpt_ccb_alloc(struct dpt_softc *sc)
 {
 	struct dpt_ccb *ccb;
@@ -221,7 +221,7 @@ dpt_ccb_alloc(struct dpt_softc *sc)
 	return (ccb);
 }
 
-static __inline__ void
+static inline void
 dpt_ccb_free(struct dpt_softc *sc, struct dpt_ccb *ccb)
 {
 	int s;

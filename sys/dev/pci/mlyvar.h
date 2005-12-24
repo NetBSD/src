@@ -1,4 +1,4 @@
-/*	$NetBSD: mlyvar.h,v 1.1 2001/07/30 19:59:07 ad Exp $	*/
+/*	$NetBSD: mlyvar.h,v 1.2 2005/12/24 23:41:34 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -232,17 +232,17 @@ struct mly_softc {
  * Register access helpers.
  */
 
-static __inline__ u_int8_t	mly_inb(struct mly_softc *, int);
-static __inline__ u_int16_t	mly_inw(struct mly_softc *, int);
-static __inline__ u_int32_t	mly_inl(struct mly_softc *, int);
-static __inline__ void		mly_outb(struct mly_softc *, int, u_int8_t);
-static __inline__ void		mly_outw(struct mly_softc *, int, u_int16_t);
-static __inline__ void		mly_outl(struct mly_softc *, int, u_int32_t);
-static __inline__ int		mly_idbr_true(struct mly_softc *, u_int8_t);
-static __inline__ int		mly_odbr_true(struct mly_softc *, u_int8_t);
-static __inline__ int		mly_error_valid(struct mly_softc *);
+static inline u_int8_t	mly_inb(struct mly_softc *, int);
+static inline u_int16_t	mly_inw(struct mly_softc *, int);
+static inline u_int32_t	mly_inl(struct mly_softc *, int);
+static inline void		mly_outb(struct mly_softc *, int, u_int8_t);
+static inline void		mly_outw(struct mly_softc *, int, u_int16_t);
+static inline void		mly_outl(struct mly_softc *, int, u_int32_t);
+static inline int		mly_idbr_true(struct mly_softc *, u_int8_t);
+static inline int		mly_odbr_true(struct mly_softc *, u_int8_t);
+static inline int		mly_error_valid(struct mly_softc *);
 
-static __inline__ u_int8_t
+static inline u_int8_t
 mly_inb(struct mly_softc *mly, int off)
 {
 
@@ -251,7 +251,7 @@ mly_inb(struct mly_softc *mly, int off)
 	return (bus_space_read_1(mly->mly_iot, mly->mly_ioh, off));
 }
 
-static __inline__ u_int16_t
+static inline u_int16_t
 mly_inw(struct mly_softc *mly, int off)
 {
 
@@ -260,7 +260,7 @@ mly_inw(struct mly_softc *mly, int off)
 	return (bus_space_read_2(mly->mly_iot, mly->mly_ioh, off));
 }
 
-static __inline__ u_int32_t
+static inline u_int32_t
 mly_inl(struct mly_softc *mly, int off)
 {
 
@@ -269,7 +269,7 @@ mly_inl(struct mly_softc *mly, int off)
 	return (bus_space_read_4(mly->mly_iot, mly->mly_ioh, off));
 }
 
-static __inline__ void
+static inline void
 mly_outb(struct mly_softc *mly, int off, u_int8_t val)
 {
 
@@ -278,7 +278,7 @@ mly_outb(struct mly_softc *mly, int off, u_int8_t val)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-static __inline__ void
+static inline void
 mly_outw(struct mly_softc *mly, int off, u_int16_t val)
 {
 
@@ -287,7 +287,7 @@ mly_outw(struct mly_softc *mly, int off, u_int16_t val)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-static __inline__ void
+static inline void
 mly_outl(struct mly_softc *mly, int off, u_int32_t val)
 {
 
@@ -296,7 +296,7 @@ mly_outl(struct mly_softc *mly, int off, u_int32_t val)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-static __inline__ int
+static inline int
 mly_idbr_true(struct mly_softc *mly, u_int8_t mask)
 {
 	u_int8_t val;
@@ -305,14 +305,14 @@ mly_idbr_true(struct mly_softc *mly, u_int8_t mask)
 	return ((val & mask) == mask);
 }
 
-static __inline__ int
+static inline int
 mly_odbr_true(struct mly_softc *mly, u_int8_t mask)
 {
 
 	return ((mly_inb(mly, mly->mly_odbr) & mask) == mask);
 }
 
-static __inline__ int
+static inline int
 mly_error_valid(struct mly_softc *mly)
 {
 	u_int8_t val;

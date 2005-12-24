@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.10 2005/12/11 12:21:27 christos Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.11 2005/12/24 23:41:33 perry Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -128,12 +128,12 @@ struct igsfb_softc {
  * Access sugar for indexed registers
  */
 
-static __inline__ uint8_t
+static inline uint8_t
 igs_idx_read(bus_space_tag_t, bus_space_handle_t, u_int, uint8_t);
-static __inline__ void
+static inline void
 igs_idx_write(bus_space_tag_t, bus_space_handle_t, u_int, uint8_t, uint8_t);
 
-static __inline__ uint8_t
+static inline uint8_t
 igs_idx_read(t, h, idxport, idx)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -144,7 +144,7 @@ igs_idx_read(t, h, idxport, idx)
 	return (bus_space_read_1(t, h, idxport + 1));
 }
 
-static __inline__ void
+static inline void
 igs_idx_write(t, h, idxport, idx, val)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -176,10 +176,10 @@ igs_idx_write(t, h, idxport, idx, val)
 #define igs_attr_read(t,h,x)	\
 	(igs_idx_read((t),(h),IGS_ATTR_IDX,(x)))
 
-static __inline__ void
+static inline void
 igs_attr_write(bus_space_tag_t, bus_space_handle_t, uint8_t, uint8_t);
 
-static __inline__ void
+static inline void
 igs_attr_write(t, h, idx, val)
 	bus_space_tag_t t;
 	bus_space_handle_t h;

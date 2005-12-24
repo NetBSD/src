@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.37 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: qe.c,v 1.38 2005/12/24 23:41:34 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.37 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.38 2005/12/24 23:41:34 perry Exp $");
 
 #define QEDEBUG
 
@@ -344,7 +344,7 @@ qeattach(parent, self, aux)
  * We copy the data into mbufs.  When full cluster sized units are present,
  * we copy into clusters.
  */
-static __inline__ struct mbuf *
+static inline struct mbuf *
 qe_get(sc, idx, totlen)
 	struct qe_softc *sc;
 	int idx, totlen;
@@ -397,7 +397,7 @@ qe_get(sc, idx, totlen)
  * Routine to copy from mbuf chain to transmit buffer in
  * network buffer memory.
  */
-__inline__ int
+inline int
 qe_put(sc, idx, m)
 	struct qe_softc *sc;
 	int idx;
@@ -426,7 +426,7 @@ qe_put(sc, idx, m)
 /*
  * Pass a packet to the higher levels.
  */
-__inline__ void
+inline void
 qe_read(sc, idx, len)
 	struct qe_softc *sc;
 	int idx, len;
