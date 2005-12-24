@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.14 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.15 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.14 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.15 2005/12/24 23:24:02 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,13 +64,13 @@ void sh4_emode_dcache_wbinv_all(void);
 void sh4_emode_dcache_wbinv_range_index(vaddr_t, vsize_t);
 
 /* must be inlined. */
-static __inline__ void cache_sh4_op_line_32(vaddr_t, vaddr_t, uint32_t,
+static inline void cache_sh4_op_line_32(vaddr_t, vaddr_t, uint32_t,
     uint32_t);
-static __inline__ void cache_sh4_op_8lines_32(vaddr_t, vaddr_t, uint32_t,
+static inline void cache_sh4_op_8lines_32(vaddr_t, vaddr_t, uint32_t,
     uint32_t);
-static __inline__ void cache_sh4_emode_op_line_32(vaddr_t, vaddr_t,
+static inline void cache_sh4_emode_op_line_32(vaddr_t, vaddr_t,
     uint32_t, uint32_t, uint32_t);
-static __inline__ void cache_sh4_emode_op_8lines_32(vaddr_t, vaddr_t,
+static inline void cache_sh4_emode_op_8lines_32(vaddr_t, vaddr_t,
     uint32_t, uint32_t, uint32_t);
 
 void
@@ -176,7 +176,7 @@ sh4_cache_config(void)
  *
  *	Clear the specified bits on single 32-byte cache line.
  */
-static __inline__ void
+static inline void
 cache_sh4_op_line_32(vaddr_t va, vaddr_t base, uint32_t mask, uint32_t bits)
 {
 	vaddr_t cca;
@@ -190,10 +190,10 @@ cache_sh4_op_line_32(vaddr_t va, vaddr_t base, uint32_t mask, uint32_t bits)
  *
  *	Clear the specified bits on 8 32-byte cache lines.
  */
-static __inline__ void
+static inline void
 cache_sh4_op_8lines_32(vaddr_t va, vaddr_t base, uint32_t mask, uint32_t bits)
 {
-	__volatile__ uint32_t *cca = (__volatile__ uint32_t *)
+	volatile uint32_t *cca = (volatile uint32_t *)
 	    (base | (va & mask));
 
 	cca[ 0] &= ~bits;
@@ -284,7 +284,7 @@ sh4_dcache_wbinv_range(vaddr_t va, vsize_t sz)
 	va = trunc_line(va);
 
 	while (va < eva) {
-		__asm__ __volatile__("ocbp @%0" : : "r"(va));
+		__asm volatile("ocbp @%0" : : "r"(va));
 		va += 32;
 	}
 }
@@ -317,7 +317,7 @@ sh4_dcache_inv_range(vaddr_t va, vsize_t sz)
 	va = trunc_line(va);
 
 	while (va < eva) {
-		__asm__ __volatile__("ocbi @%0" : : "r"(va));
+		__asm volatile("ocbi @%0" : : "r"(va));
 		va += 32;
 	}
 }
@@ -329,7 +329,7 @@ sh4_dcache_wb_range(vaddr_t va, vsize_t sz)
 	va = trunc_line(va);
 
 	while (va < eva) {
-		__asm__ __volatile__("ocbwb @%0" : : "r"(va));
+		__asm volatile("ocbwb @%0" : : "r"(va));
 		va += 32;
 	}
 }
@@ -342,7 +342,7 @@ sh4_dcache_wb_range(vaddr_t va, vsize_t sz)
  *
  *	Clear the specified bits on single 32-byte cache line. 2-ways.
  */
-static __inline__ void
+static inline void
 cache_sh4_emode_op_line_32(vaddr_t va, vaddr_t base, uint32_t mask,
     uint32_t bits, uint32_t way_shift)
 {
@@ -364,17 +364,17 @@ cache_sh4_emode_op_line_32(vaddr_t va, vaddr_t base, uint32_t mask,
  *
  *	Clear the specified bits on 8 32-byte cache lines. 2-ways.
  */
-static __inline__ void
+static inline void
 cache_sh4_emode_op_8lines_32(vaddr_t va, vaddr_t base, uint32_t mask,
     uint32_t bits, uint32_t way_shift)
 {
-	__volatile__ uint32_t *cca;
+	volatile uint32_t *cca;
 
 	/* extract entry # */
 	va &= mask;
 
 	/* operate for each way */
-	cca = (__volatile__ uint32_t *)(base | (0 << way_shift) | va);
+	cca = (volatile uint32_t *)(base | (0 << way_shift) | va);
 	cca[ 0] &= ~bits;
 	cca[ 8] &= ~bits;
 	cca[16] &= ~bits;
@@ -384,7 +384,7 @@ cache_sh4_emode_op_8lines_32(vaddr_t va, vaddr_t base, uint32_t mask,
 	cca[48] &= ~bits;
 	cca[56] &= ~bits;
 
-	cca = (__volatile__ uint32_t *)(base | (1 << way_shift) | va);
+	cca = (volatile uint32_t *)(base | (1 << way_shift) | va);
 	cca[ 0] &= ~bits;
 	cca[ 8] &= ~bits;
 	cca[16] &= ~bits;

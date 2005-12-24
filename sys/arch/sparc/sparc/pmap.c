@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.306 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: pmap.c,v 1.307 2005/12/24 23:24:02 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.306 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307 2005/12/24 23:24:02 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -679,7 +679,7 @@ sp_tlb_flush(int va, int ctx, int lvl)
 	__asm("nop");
 }
 
-static __inline__ void
+static inline void
 sp_tlb_flush_all(void)
 {
 
@@ -693,16 +693,16 @@ sp_tlb_flush_all(void)
  * have an Xbus which broadcasts TLB demaps in hardware.
  */
 
-static __inline__ void	smp_tlb_flush_page (int va, int ctx, u_int cpuset);
-static __inline__ void	smp_tlb_flush_segment (int va, int ctx, u_int cpuset);
-static __inline__ void	smp_tlb_flush_region (int va, int ctx, u_int cpuset);
-static __inline__ void	smp_tlb_flush_context (int ctx, u_int cpuset);
-static __inline__ void	smp_tlb_flush_all (void);
+static inline void	smp_tlb_flush_page (int va, int ctx, u_int cpuset);
+static inline void	smp_tlb_flush_segment (int va, int ctx, u_int cpuset);
+static inline void	smp_tlb_flush_region (int va, int ctx, u_int cpuset);
+static inline void	smp_tlb_flush_context (int ctx, u_int cpuset);
+static inline void	smp_tlb_flush_all (void);
 
 /* From locore: */
 extern void ft_tlb_flush(int va, int ctx, int lvl);
 
-static __inline__ void
+static inline void
 smp_tlb_flush_page(int va, int ctx, u_int cpuset)
 {
 
@@ -712,7 +712,7 @@ smp_tlb_flush_page(int va, int ctx, u_int cpuset)
 		FXCALL3(sp_tlb_flush, ft_tlb_flush, va, ctx, ASI_SRMMUFP_L3, cpuset);
 }
 
-static __inline__ void
+static inline void
 smp_tlb_flush_segment(int va, int ctx, u_int cpuset)
 {
 
@@ -722,7 +722,7 @@ smp_tlb_flush_segment(int va, int ctx, u_int cpuset)
 		FXCALL3(sp_tlb_flush, ft_tlb_flush, va, ctx, ASI_SRMMUFP_L2, cpuset);
 }
 
-static __inline__ void
+static inline void
 smp_tlb_flush_region(int va, int ctx, u_int cpuset)
 {
 
@@ -732,7 +732,7 @@ smp_tlb_flush_region(int va, int ctx, u_int cpuset)
 		FXCALL3(sp_tlb_flush, ft_tlb_flush, va, ctx, ASI_SRMMUFP_L1, cpuset);
 }
 
-static __inline__ void
+static inline void
 smp_tlb_flush_context(int ctx, u_int cpuset)
 {
 
@@ -742,7 +742,7 @@ smp_tlb_flush_context(int ctx, u_int cpuset)
 		FXCALL3(sp_tlb_flush, ft_tlb_flush, 0, ctx, ASI_SRMMUFP_L0, cpuset);
 }
 
-static __inline__ void
+static inline void
 smp_tlb_flush_all(void)
 {
 
@@ -1578,7 +1578,7 @@ static void	region_free(struct pmap *, u_int);
  * since it implements the dynamic allocation of MMU entries.
  */
 
-static __inline__ int
+static inline int
 me_alloc(struct mmuq *mh, struct pmap *newpm, int newvreg, int newvseg)
 {
 	struct mmuentry *me;
@@ -1768,7 +1768,7 @@ me_alloc(struct mmuq *mh, struct pmap *newpm, int newvreg, int newvseg)
  * Assumes the corresponding pmap is already locked.
  * Caller must update hardware.
  */
-static __inline__ void
+static inline void
 me_free(struct pmap *pm, u_int pmeg)
 {
 	struct mmuentry *me = &mmusegments[pmeg];
@@ -4119,7 +4119,7 @@ pmap_map(vaddr_t va, paddr_t pa, paddr_t endpa, int prot)
 /*
  * Check a pmap for spuriously lingering mappings
  */
-static __inline__ void
+static inline void
 pmap_quiet_check(struct pmap *pm)
 {
 	int vs, vr;

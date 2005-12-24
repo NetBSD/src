@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.24 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.25 2005/12/24 23:23:59 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.24 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.25 2005/12/24 23:23:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -538,7 +538,7 @@ cursor32(struct ite_softc *ip, int flag)
 		cend = ip->font.height-1; 
 		pl   = cci->column_offset[ip->cursorx]
 				+ cci->row_ptr[ip->cursory];
-		__asm__ __volatile__
+		__asm volatile
 			("1: notb  %0@ ; addaw %4,%0\n\t"
 			 "dbra  %1,1b"
 			 : "=a" (pl), "=d" (cend)
@@ -563,7 +563,7 @@ cursor32(struct ite_softc *ip, int flag)
 	pl          = cci->column_offset[ip->cursorx]
 			+ cci->row_ptr[ip->cursory];
 
-	__asm__ __volatile__
+	__asm volatile
 		("1: notb  %0@ ; addaw %4,%0\n\t"
 		 "dbra  %1,1b"
 		 : "=a" (pl), "=d" (cend)

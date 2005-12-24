@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2005/12/24 23:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2005/12/24 23:24:00 perry Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -303,7 +303,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 #endif /* KGDB */
 
 	/* Jump to main */
-	__asm__ __volatile__(
+	__asm volatile(
 		"jmp	@%0;"
 		"mov	%1, sp"
 		:: "r"(main),"r"(lwp0.l_md.md_pcb->pcb_sf.sf_r7_bank));

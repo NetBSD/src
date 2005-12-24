@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 2005/12/24 23:24:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -237,23 +237,23 @@ struct playstation2_bus_space {
 };
 
 #ifdef _KERNEL
-#define _wbflush()	__asm__ __volatile__("sync.l")
+#define _wbflush()	__asm volatile("sync.l")
 #ifdef _PLAYSTATION2_BUS_SPACE_PRIVATE
 
 #ifndef __read_1
-#define	__read_1(a)	(*(__volatile__ u_int8_t *)(a))
+#define	__read_1(a)	(*(volatile u_int8_t *)(a))
 #endif
 #ifndef __read_2
-#define	__read_2(a)	(*(__volatile__ u_int16_t *)(a))
+#define	__read_2(a)	(*(volatile u_int16_t *)(a))
 #endif
 #ifndef __read_4
-#define	__read_4(a)	(*(__volatile__ u_int32_t *)(a))
+#define	__read_4(a)	(*(volatile u_int32_t *)(a))
 #endif
 #ifndef __read_8
 #define __read_8(a)							\
 ({									\
 	u_int32_t lo, hi;						\
-	__asm__ __volatile__(						\
+	__asm volatile(						\
 		".set noreorder;"					\
 		".set push;"						\
 		".set mips3;"						\
@@ -271,19 +271,19 @@ struct playstation2_bus_space {
 
 #ifndef __write_1
 #define	__write_1(a, v) {						\
-	*(__volatile__ u_int8_t *)(a) = (v);				\
+	*(volatile u_int8_t *)(a) = (v);				\
 	_wbflush();							\
 }
 #endif
 #ifndef __write_2
 #define	__write_2(a, v)	{						\
-	*(__volatile__ u_int16_t *)(a) = (v);				\
+	*(volatile u_int16_t *)(a) = (v);				\
 	_wbflush();							\
 }
 #endif
 #ifndef __write_4
 #define	__write_4(a, v)	{						\
-	*(__volatile__ u_int32_t *)(a) = (v);				\
+	*(volatile u_int32_t *)(a) = (v);				\
 	_wbflush();							\
 }
 #endif
@@ -302,10 +302,10 @@ struct playstation2_bus_space {
 #ifdef __write_8
 #error "can't override __write_8"
 #endif
-static __inline__ void
+static inline void
 __write_8(bus_addr_t a, u_int64_t v)
 {
-	__asm__ __volatile__(
+	__asm volatile(
 		".set noreorder;"
 		".set push;"
 		".set r5900;"

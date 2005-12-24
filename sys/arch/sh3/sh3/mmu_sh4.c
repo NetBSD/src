@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.9 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.10 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.9 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.10 2005/12/24 23:24:02 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,11 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.9 2005/12/11 12:19:00 christos Exp $")
 #include <sh3/mmu.h>
 #include <sh3/mmu_sh4.h>
 
-#define	SH4_MMU_HAZARD	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop;nop;")
+#define	SH4_MMU_HAZARD	__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop;")
 
-static __inline__ void __sh4_itlb_invalidate_all(void);
+static inline void __sh4_itlb_invalidate_all(void);
 
-static __inline__ void
+static inline void
 __sh4_itlb_invalidate_all()
 {
 
@@ -179,7 +179,7 @@ sh4_tlb_update(int asid, vaddr_t va, u_int32_t pte)
 		_reg_write_4(SH4_PTEA, 0);
 	}
 	_reg_write_4(SH4_PTEL, ptel);
-	__asm__ __volatile__("ldtlb; nop");
+	__asm volatile("ldtlb; nop");
 
 	/* Restore old ASID */
 	if (asid != oasid)

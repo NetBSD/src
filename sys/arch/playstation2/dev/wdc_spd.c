@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.20 2005/12/11 12:18:35 christos Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.21 2005/12/24 23:24:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.20 2005/12/11 12:18:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.21 2005/12/24 23:24:01 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.20 2005/12/11 12:18:35 christos Exp $"
 #define __read_1(a)							\
 ({									\
 	u_int32_t ra_ = (a);						\
-	u_int8_t r = (*(__volatile__ u_int8_t *)ra_);			\
+	u_int8_t r = (*(volatile u_int8_t *)ra_);			\
 									\
 	if (ra_ == 0xb400004e)	/* (wdc)STAT  LED off */		\
 		SPD_LED_OFF();						\
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.20 2005/12/11 12:18:35 christos Exp $"
 #define __write_1(a, v)							\
 {									\
 	u_int32_t wa_ = (a);						\
-	(*(__volatile__ u_int8_t *)wa_) = (v);				\
+	(*(volatile u_int8_t *)wa_) = (v);				\
 									\
 	if (wa_ == 0xb400004e)	/* (wdc)CMD  LED on */			\
 		SPD_LED_ON();						\

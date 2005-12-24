@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.8 2005/12/12 20:06:22 christos Exp $ */
+/* $NetBSD: privcmd.c,v 1.9 2005/12/24 23:24:07 perry Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.8 2005/12/12 20:06:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.9 2005/12/24 23:24:07 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ privcmd_ioctl(void *v)
 
 	switch (ap->a_command) {
 	case IOCTL_PRIVCMD_HYPERCALL:
-		__asm__ __volatile__ (
+		__asm volatile (
 			"pushl %%ebx; pushl %%ecx; pushl %%edx;"
 			"pushl %%esi; pushl %%edi; "
 			"movl  4(%%eax),%%ebx ;"
