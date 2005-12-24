@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.c,v 1.3 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: fabs.c,v 1.4 2005/12/24 23:10:08 perry Exp $	*/
 
 #include <math.h>
 
@@ -9,7 +9,7 @@ fabs(double x)
 	if (x < 0)
 		x = -x;
 #else
-	__asm__ volatile("fabs %0,%1" : "=f"(x) : "f"(x));
+	__asm volatile("fabs %0,%1" : "=f"(x) : "f"(x));
 #endif
 	return (x);
 }

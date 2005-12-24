@@ -1,4 +1,4 @@
-/*	$NetBSD: htonl.c,v 1.2 2003/08/07 16:42:20 agc Exp $	*/
+/*	$NetBSD: htonl.c,v 1.3 2005/12/24 23:10:08 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #include <sys/types.h>
 #include <machine/endian.h>
 #if defined(LIBC_SCCS)
-	__RCSID("$NetBSD: htonl.c,v 1.2 2003/08/07 16:42:20 agc Exp $");
+	__RCSID("$NetBSD: htonl.c,v 1.3 2005/12/24 23:10:08 perry Exp $");
 #endif
 
 /* hostorder = htonl(netorder) */
@@ -48,9 +48,9 @@ htonl(x)
 {
 	u_int32_t y = 0;
 
-	__asm__("swap.b %1, %0" : "=r" (y) : "r" (x));
-	__asm__("swap.w %1, %0" : "=r" (y) : "r" (y));
-	__asm__("swap.b %1, %0" : "=r" (y) : "r" (y));
+	__asm("swap.b %1, %0" : "=r" (y) : "r" (x));
+	__asm("swap.w %1, %0" : "=r" (y) : "r" (y));
+	__asm("swap.b %1, %0" : "=r" (y) : "r" (y));
 	return y;
 }
 #endif
