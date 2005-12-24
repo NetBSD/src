@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.12 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.13 2005/12/24 12:31:57 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -408,14 +408,8 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 /*
  * Macros/functions to convert from generic data structures to tmpfs
  * specific ones.
- *
- * Macros are used when no sanity checks have to be done, as they provide
- * the fastest conversion.  On the other hand, inlined functions are used
- * when expensive sanity checks are enabled, mostly because the checks
- * have to be done separately from the return value.
  */
 
-#if defined(DIAGNOSTIC)
 static inline
 struct tmpfs_mount *
 VFS_TO_TMPFS(struct mount *mp)
@@ -448,11 +442,6 @@ VP_TO_TMPFS_DIR(struct vnode *vp)
 	TMPFS_VALIDATE_DIR(node);
 	return node;
 }
-#else
-#	define VFS_TO_TMPFS(mp) ((struct tmpfs_mount *)mp->mnt_data)
-#	define VP_TO_TMPFS_NODE(vp) ((struct tmpfs_node *)vp->v_data)
-#	define VP_TO_TMPFS_DIR(vp) VP_TO_TMPFS_NODE(vp)
-#endif
 
 #endif /* _KERNEL */
 
