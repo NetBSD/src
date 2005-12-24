@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.210 2005/12/24 12:57:14 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.211 2005/12/24 19:01:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -389,7 +389,7 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 
 static struct proc *__curproc(void);
 
-static __inline struct proc *
+static inline struct proc *
 __curproc()
 {
 	struct lwp *l = curlwp;
@@ -446,10 +446,10 @@ void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	resetprocpriority(struct proc *);
 void	suspendsched(void);
-int	ltsleep(__volatile const void *, int, const char *, int,
-	    __volatile struct simplelock *);
-void	wakeup(__volatile const void *);
-void	wakeup_one(__volatile const void *);
+int	ltsleep(volatile const void *, int, const char *, int,
+	    volatile struct simplelock *);
+void	wakeup(volatile const void *);
+void	wakeup_one(volatile const void *);
 void	exit1(struct lwp *, int);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **);
 struct proc *proc_alloc(void);
@@ -489,9 +489,9 @@ void	p_sugid(struct proc *);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);
-static __inline struct proc *_proclist_skipmarker(struct proc *);
+static inline struct proc *_proclist_skipmarker(struct proc *);
 
-static __inline struct proc *
+static inline struct proc *
 _proclist_skipmarker(struct proc *p0)
 {
 	struct proc *p = p0;
