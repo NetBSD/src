@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.8 2005/12/24 20:27:52 perry Exp $ */
+/* $NetBSD: if_plip.c,v 1.9 2005/12/24 23:00:49 perry Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.8 2005/12/24 20:27:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.9 2005/12/24 23:00:49 perry Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.8 2005/12/24 20:27:52 perry Exp $");
  * Expect transfer-rates up to 75 kbyte/sec.
  *
  * If GCC could correctly grok
- *	register int port asm("edx")
+ *	register int port __asm("edx")
  * the code would be cleaner
  *
  * Poul-Henning Kamp <phk@freebsd.org>
