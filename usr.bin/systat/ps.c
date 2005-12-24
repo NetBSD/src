@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.26 2005/02/26 22:12:33 dsl Exp $  */
+/*      $NetBSD: ps.c,v 1.27 2005/12/24 21:14:50 matt Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.26 2005/02/26 22:12:33 dsl Exp $");
+__RCSID("$NetBSD: ps.c,v 1.27 2005/12/24 21:14:50 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -61,8 +61,8 @@ __RCSID("$NetBSD: ps.c,v 1.26 2005/02/26 22:12:33 dsl Exp $");
 #include <tzfile.h>
 #include <unistd.h>
 
-#include "extern.h"
 #include "systat.h"
+#include "extern.h"
 #include "ps.h"
 
 int compare_pctcpu_noidle(const void *, const void *);
