@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.14 2005/12/11 12:16:05 christos Exp $ */
+/* $NetBSD: if_ie.c,v 1.15 2005/12/24 20:06:46 perry Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.14 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.15 2005/12/24 20:06:46 perry Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.14 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.14 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.15 2005/12/24 20:06:46 perry Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -181,16 +181,16 @@ static int command_and_wait __P(( struct ie_softc *sc, u_short cmd,
 int ieprobe __P((struct device *, struct cfdata *, void *));
 void ieattach __P((struct device *, struct device *, void *));
 
-static __inline void ie_cli(struct ie_softc *);
-static __inline void ieattn(struct ie_softc *);
-static __inline void setpage(struct ie_softc *, u_long);
+static inline void ie_cli(struct ie_softc *);
+static inline void ieattn(struct ie_softc *);
+static inline void setpage(struct ie_softc *, u_long);
 static void ie_ack(struct ie_softc *, u_short);
 void PWriteShorts(char *, char *, int);
 void ReadShorts(char *, char *, int);
 static void run_tdr(struct ie_softc *);
 u_long setup_rfa(struct ie_softc *, u_long);
-static __inline int ie_buflen(struct ie_softc *, int);
-static __inline int ie_packet_len(struct ie_softc *);
+static inline int ie_buflen(struct ie_softc *, int);
+static inline int ie_packet_len(struct ie_softc *);
 struct mbuf *ieget(struct ie_softc *, int *);
 void ie_drop_packet_buffer(struct ie_softc *);
 void ie_read_frame(struct ie_softc *, int num);
@@ -212,7 +212,7 @@ CFATTACH_DECL(ie, sizeof(struct ie_softc),
  * Clear all pending interrupts from the i82586 chip
  */
 
-static __inline void
+static inline void
 ie_cli(sc)
 	struct ie_softc *sc;
 {
@@ -223,7 +223,7 @@ ie_cli(sc)
  * Wake the i82586 chip up and get it to do something
  */
 
-static __inline void
+static inline void
 ieattn(sc)
 	struct ie_softc *sc;
 {
@@ -234,7 +234,7 @@ ieattn(sc)
  * Set the podule page register to bring a given address into view
  */
 
-static __inline void
+static inline void
 setpage(sc, off)
 	struct ie_softc *sc;
 	u_long off;
@@ -1079,7 +1079,7 @@ command_and_wait(sc, cmd, pscb, pcmd, ocmd, scmd, mask)
 	PWriteShort(sc->sc_ram + IE_COFF2POFF(ptr) +	\
 	       (xoffsetof(type, member)), dest );
 
-static __inline int
+static inline int
 ie_buflen(sc, head)
 	struct ie_softc *sc;
 	int head;
@@ -1092,7 +1092,7 @@ ie_buflen(sc, head)
 	return(actual & (IE_RXBUF_SIZE | (IE_RXBUF_SIZE-1))) ;
 }
 
-static __inline int
+static inline int
 ie_packet_len(sc)
 	struct ie_softc *sc;
 {

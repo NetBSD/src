@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.36 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.37 2005/12/24 20:06:58 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37 2005/12/24 20:06:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -355,9 +355,9 @@ int	n;
 	{
 	    u_int	temp;
 		
-	    __asm __volatile ("mulul %2,%1:%0" : "=d" (n), "=d" (temp)
+	    __asm volatile ("mulul %2,%1:%0" : "=d" (n), "=d" (temp)
 					       : "d" (TIMB_FREQ), "d" (n));
-	    __asm __volatile ("divul %1,%2:%0" : "=d" (n)
+	    __asm volatile ("divul %1,%2:%0" : "=d" (n)
 					       : "d"(1000000),"d"(temp),"0"(n));
 	}
 

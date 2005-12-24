@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.37 2005/12/11 12:19:06 christos Exp $ */
+/*	$NetBSD: psl.h,v 1.38 2005/12/24 20:07:32 perry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -231,32 +231,32 @@
 /*
  * GCC pseudo-functions for manipulating PSR (primarily PIL field).
  */
-static __inline int
+static inline int
 getpsr(void)
 {
 	int psr;
 
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
 	return (psr);
 }
 
-static __inline int
+static inline int
 getmid(void)
 {
 	int mid;
 
-	__asm __volatile("rd %%tbr,%0" : "=r" (mid));
+	__asm volatile("rd %%tbr,%0" : "=r" (mid));
 	return ((mid >> 20) & 0x3);
 }
 
-static __inline void
+static inline void
 setpsr(int newpsr)
 {
-	__asm __volatile("wr %0,0,%%psr" : : "r" (newpsr));
-	__asm __volatile("nop; nop; nop");
+	__asm volatile("wr %0,0,%%psr" : : "r" (newpsr));
+	__asm volatile("nop; nop; nop");
 }
 
-static __inline void
+static inline void
 spl0(void)
 {
 	int psr, oldipl;
@@ -266,15 +266,15 @@ spl0(void)
 	 * which gives us the same value as the old psr but with all
 	 * the old PIL bits turned off.
 	 */
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
 	oldipl = psr & PSR_PIL;
-	__asm __volatile("wr %0,%1,%%psr" : : "r" (psr), "r" (oldipl));
+	__asm volatile("wr %0,%1,%%psr" : : "r" (psr), "r" (oldipl));
 
 	/*
 	 * Three instructions must execute before we can depend
 	 * on the bits to be changed.
 	 */
-	__asm __volatile("nop; nop; nop");
+	__asm volatile("nop; nop; nop");
 }
 
 /*
@@ -283,27 +283,27 @@ spl0(void)
  * into the ipl field.)
  */
 #define	_SPLSET(name, newipl) \
-static __inline void name(void) \
+static inline void name(void) \
 { \
 	int psr, oldipl; \
-	__asm __volatile("rd %%psr,%0" : "=r" (psr)); \
+	__asm volatile("rd %%psr,%0" : "=r" (psr)); \
 	oldipl = psr & PSR_PIL; \
 	psr &= ~oldipl; \
-	__asm __volatile("wr %0,%1,%%psr" : : \
+	__asm volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr), "n" ((newipl) << 8)); \
-	__asm __volatile("nop; nop; nop"); \
+	__asm volatile("nop; nop; nop"); \
 }
 
 _SPLSET(spllowersoftclock, IPL_SOFTCLOCK)
 _SPLSET(spllowerschedclock, IPL_SCHED)
 
 /* Raise IPL and return previous value */
-static __inline int
+static inline int
 splraise(int newipl)
 {
 	int psr, oldipl;
 
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
 
 	oldipl = psr & PSR_PIL;
 	newipl <<= 8;
@@ -312,8 +312,8 @@ splraise(int newipl)
 
 	psr = (psr & ~oldipl) | newipl;
 
-	__asm __volatile("wr %0,0,%%psr" : : "r" (psr));
-	__asm __volatile("nop; nop; nop");
+	__asm volatile("wr %0,0,%%psr" : : "r" (psr));
+	__asm volatile("nop; nop; nop");
 
 	return (oldipl);
 }
@@ -347,14 +347,14 @@ splraise(int newipl)
 
 #define	splstatclock()	splraise(IPL_STATCLOCK)
 
-static __inline int
+static inline int
 splhigh(void)
 {
 	int psr, oldipl;
 
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
-	__asm __volatile("wr %0,0,%%psr" : : "r" (psr | PSR_PIL));
-	__asm __volatile("and %1,%2,%0; nop; nop" : "=r" (oldipl) : \
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("wr %0,0,%%psr" : : "r" (psr | PSR_PIL));
+	__asm volatile("and %1,%2,%0; nop; nop" : "=r" (oldipl) : \
 	    "r" (psr), "n" (PSR_PIL));
 	return (oldipl);
 }
@@ -362,15 +362,15 @@ splhigh(void)
 #define	spllock()	splhigh()
 
 /* splx does not have a return value */
-static __inline void
+static inline void
 splx(int newipl)
 {
 	int psr;
 
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
-	__asm __volatile("wr %0,%1,%%psr" : : \
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr & ~PSR_PIL), "rn" (newipl));
-	__asm __volatile("nop; nop; nop");
+	__asm volatile("nop; nop; nop");
 }
 #endif /* KERNEL && !_LOCORE */
 

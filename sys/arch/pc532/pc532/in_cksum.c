@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.12 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.13 2005/12/24 20:07:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.12 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.13 2005/12/24 20:07:24 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.12 2005/12/11 12:18:31 christos Exp $
  * Thanks to gcc we don't have to guess
  * which registers contain sum & w.
  */
-#define	Asm	__asm __volatile
+#define	Asm	__asm volatile
 #define ADD(n)  Asm("addd "  #n "(%2),%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define ADC(n)  Asm("addcd " #n "(%2),%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define MOP     Asm("addcd  0,%0" :         "=r" (sum) : "0" (sum))

@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.14 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: pcb.h,v 1.15 2005/12/24 20:06:46 perry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -60,7 +60,7 @@ struct pcb {
 	struct fpreg	pcb_fp;			/* FP registers		[SW] */
 	unsigned long	pcb_onfault;		/* for copy faults	[SW] */
 	unsigned long	pcb_accessaddr;		/* for [fs]uswintr	[SW] */
-	struct cpu_info * __volatile pcb_fpcpu;	/* CPU with our FP state[SW] */
+	struct cpu_info * volatile pcb_fpcpu;	/* CPU with our FP state[SW] */
 	struct simplelock pcb_fpcpu_slock;	/* simple lock on fpcpu [SW] */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.16 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: asc.c,v 1.17 2005/12/24 20:07:19 perry Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.16 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.17 2005/12/24 20:07:19 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -247,7 +247,7 @@ dma_status(struct ncr53c9x_softc *sc)
 		 asc_read_reg(sc, NCR_FFLAG));
 }
 
-static __inline void
+static inline void
 check_fifo(struct asc_softc *esc)
 {
 	register int i=100;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.25 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: bt459.c,v 1.26 2005/12/24 20:07:25 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.25 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.26 2005/12/24 20:07:25 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,8 @@ static void bt459_set_cursor_ram (struct fbinfo *, int, u_char);
 static void bt459_select_reg (bt459_regmap_t *, int);
 static void bt459_write_reg (bt459_regmap_t *, int, int);
 static u_char bt459_read_reg (bt459_regmap_t *, int);
-static __inline void bt459_cursor_on(bt459_regmap_t *);
-static __inline void bt459_cursor_off(bt459_regmap_t *);
+static inline void bt459_cursor_on(bt459_regmap_t *);
+static inline void bt459_cursor_off(bt459_regmap_t *);
 
 /*
  * Initialization
@@ -204,7 +204,7 @@ static u_char	cursor_RGB[6];	/* cursor color 2 & 3 */
 /*
  * Enable the hardware cursor sprite.
  */
-static __inline void
+static inline void
 bt459_cursor_on(btregs)
 	bt459_regmap_t *btregs;
 {
@@ -220,7 +220,7 @@ bt459_cursor_on(btregs)
 /*
  * Disable the hardware cursor sprite.
  */
-static __inline void
+static inline void
 bt459_cursor_off(btregs)
 	bt459_regmap_t *btregs;
 {

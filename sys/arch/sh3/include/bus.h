@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 2005/12/24 20:07:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -138,11 +138,11 @@ int shpcmcia_memio_subregion(bus_space_tag_t, bus_space_handle_t,
  * Read a 1, 2, 4, or 8 byte quantity from bus space
  * described by tag/handle/offset.
  */
-static __inline u_int8_t bus_space_read_1
+static inline u_int8_t bus_space_read_1
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-static __inline u_int16_t bus_space_read_2
+static inline u_int16_t bus_space_read_2
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-static __inline u_int32_t bus_space_read_4
+static inline u_int32_t bus_space_read_4
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 u_int8_t
@@ -169,10 +169,10 @@ bus_space_read_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 	return bswap32(*(volatile u_int32_t *)(bsh + offset));
 }
 
-static __inline u_int16_t bus_space_read_stream_2
+static inline u_int16_t bus_space_read_stream_2
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-static __inline u_int32_t bus_space_read_stream_4
+static inline u_int32_t bus_space_read_stream_4
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 u_int16_t
@@ -199,11 +199,11 @@ bus_space_read_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle/offset and copy into buffer provided.
  */
-static __inline void bus_space_read_multi_1(bus_space_tag_t,
+static inline void bus_space_read_multi_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
-static __inline void bus_space_read_multi_2(bus_space_tag_t,
+static inline void bus_space_read_multi_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
-static __inline void bus_space_read_multi_4(bus_space_tag_t,
+static inline void bus_space_read_multi_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
 
 void
@@ -233,9 +233,9 @@ bus_space_read_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 		*addr++ = bus_space_read_4(tag, bsh, offset);
 }
 
-static __inline void bus_space_read_multi_stream_2(bus_space_tag_t,
+static inline void bus_space_read_multi_stream_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
-static __inline void bus_space_read_multi_stream_4(bus_space_tag_t,
+static inline void bus_space_read_multi_stream_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
 
 void
@@ -314,11 +314,11 @@ int sh_memio_subregion(bus_space_tag_t, bus_space_handle_t,
  * described by tag/handle and starting at `offset' and copy into
  * buffer provided.
  */
-static __inline void bus_space_read_region_1(bus_space_tag_t,
+static inline void bus_space_read_region_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
-static __inline void bus_space_read_region_2(bus_space_tag_t,
+static inline void bus_space_read_region_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
-static __inline void bus_space_read_region_4(bus_space_tag_t,
+static inline void bus_space_read_region_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
 
 void
@@ -360,11 +360,11 @@ bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  * described by tag/handle and starting at `offset' and copy into
  * buffer provided.
  */
-static __inline void bus_space_read_region_stream_1(bus_space_tag_t,
+static inline void bus_space_read_region_stream_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
-static __inline void bus_space_read_region_stream_2(bus_space_tag_t,
+static inline void bus_space_read_region_stream_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
-static __inline void bus_space_read_region_stream_4(bus_space_tag_t,
+static inline void bus_space_read_region_stream_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
 
 void
@@ -405,11 +405,11 @@ bus_space_read_region_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
  */
-static __inline void bus_space_write_region_1(bus_space_tag_t,
+static inline void bus_space_write_region_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t);
-static __inline void bus_space_write_region_2(bus_space_tag_t,
+static inline void bus_space_write_region_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
-static __inline void bus_space_write_region_4(bus_space_tag_t,
+static inline void bus_space_write_region_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
 
 void
@@ -450,11 +450,11 @@ bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
  */
-static __inline void bus_space_write_region_stream_1(bus_space_tag_t,
+static inline void bus_space_write_region_stream_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t);
-static __inline void bus_space_write_region_stream_2(bus_space_tag_t,
+static inline void bus_space_write_region_stream_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
-static __inline void bus_space_write_region_stream_4(bus_space_tag_t,
+static inline void bus_space_write_region_stream_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
 
 void
@@ -495,11 +495,11 @@ bus_space_write_region_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
  */
-static __inline void bus_space_write_1(bus_space_tag_t,
+static inline void bus_space_write_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t);
-static __inline void bus_space_write_2(bus_space_tag_t,
+static inline void bus_space_write_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t);
-static __inline void bus_space_write_4(bus_space_tag_t,
+static inline void bus_space_write_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t);
 
 void
@@ -526,9 +526,9 @@ bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 	*(volatile u_int32_t *)(bsh + offset) = bswap32(value);
 }
 
-static __inline void bus_space_write_stream_2(bus_space_tag_t,
+static inline void bus_space_write_stream_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t);
-static __inline void bus_space_write_stream_4(bus_space_tag_t,
+static inline void bus_space_write_stream_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t);
 
 void
@@ -555,11 +555,11 @@ bus_space_write_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
  * provided to bus space described by tag/handle/offset.
  */
-static __inline void bus_space_write_multi_1(bus_space_tag_t,
+static inline void bus_space_write_multi_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
-static __inline void bus_space_write_multi_2(bus_space_tag_t,
+static inline void bus_space_write_multi_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
-static __inline void bus_space_write_multi_4(bus_space_tag_t,
+static inline void bus_space_write_multi_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
 
 void
@@ -589,9 +589,9 @@ bus_space_write_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 		bus_space_write_4(tag, bsh, offset, *addr++);
 }
 
-static __inline void bus_space_write_multi_stream_2(bus_space_tag_t,
+static inline void bus_space_write_multi_stream_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
-static __inline void bus_space_write_multi_stream_4(bus_space_tag_t,
+static inline void bus_space_write_multi_stream_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
 
 void
@@ -620,11 +620,11 @@ bus_space_write_multi_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  * Write the 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle/offset `count' times.
  */
-static __inline void bus_space_set_multi_1(bus_space_tag_t,
+static inline void bus_space_set_multi_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
-static __inline void bus_space_set_multi_2(bus_space_tag_t,
+static inline void bus_space_set_multi_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
-static __inline void bus_space_set_multi_4(bus_space_tag_t,
+static inline void bus_space_set_multi_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
 
 void
@@ -662,11 +662,11 @@ bus_space_set_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle starting at `offset'.
  */
-static __inline void bus_space_set_region_1(bus_space_tag_t,
+static inline void bus_space_set_region_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
-static __inline void bus_space_set_region_2(bus_space_tag_t,
+static inline void bus_space_set_region_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
-static __inline void bus_space_set_region_4(bus_space_tag_t,
+static inline void bus_space_set_region_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
 
 void
@@ -709,11 +709,11 @@ bus_space_set_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle starting at `offset'.
  */
-static __inline void bus_space_set_region_stream_1(bus_space_tag_t,
+static inline void bus_space_set_region_stream_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
-static __inline void bus_space_set_region_stream_2(bus_space_tag_t,
+static inline void bus_space_set_region_stream_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
-static __inline void bus_space_set_region_stream_4(bus_space_tag_t,
+static inline void bus_space_set_region_stream_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
 
 void
@@ -755,13 +755,13 @@ bus_space_set_region_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  * Copy `count' 1, 2, 4, or 8 byte values from bus space starting
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
-static __inline void bus_space_copy_region_1(bus_space_tag_t,
+static inline void bus_space_copy_region_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t,
     bus_size_t);
-static __inline void bus_space_copy_region_2(bus_space_tag_t,
+static inline void bus_space_copy_region_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t,
     bus_size_t);
-static __inline void bus_space_copy_region_4(bus_space_tag_t,
+static inline void bus_space_copy_region_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t,
     bus_size_t);
 

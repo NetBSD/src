@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.8 2005/11/27 14:01:45 yamt Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.9 2005/12/24 20:07:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,10 +89,10 @@ void *intr_establish(int, int, int, int (*)(void *), void *);
 void intr_disestablish(void *);
 void intr_init(void);
 
-static __inline int splraise(int);
-static __inline int spllower(int);
-static __inline void splx(int);
-static __inline void set_sint(int);
+static inline int splraise(int);
+static inline int spllower(int);
+static inline void splx(int);
+static inline void set_sint(int);
 
 extern volatile int cpl, ipending, astpending;
 extern u_long imask[];
@@ -103,7 +103,7 @@ extern u_long intrcnt[];
  * achived with the "eieio" instruction which the assembler
  * seems to detect and then doesn't move instructions past....
  */
-static __inline int
+static inline int
 splraise(newcpl)
 	int newcpl;
 {
@@ -116,7 +116,7 @@ splraise(newcpl)
 	return(oldcpl);
 }
 
-static __inline void
+static inline void
 splx(newcpl)
 	int newcpl;
 {
@@ -127,7 +127,7 @@ splx(newcpl)
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 }
 
-static __inline int
+static inline int
 spllower(newcpl)
 	int newcpl;
 {
@@ -144,7 +144,7 @@ spllower(newcpl)
 
 /* Following code should be implemented with lwarx/stwcx to avoid
  * the disable/enable. i need to read the manual once more.... */
-static __inline void
+static inline void
 set_sint(pending)
 	int	pending;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.10 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.11 2005/12/24 20:06:52 perry Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.10 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.11 2005/12/24 20:06:52 perry Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -291,7 +291,7 @@ static inline uint32_t
 read_clock_counter_xsc1(void)
 {
   uint32_t x;
-  __asm __volatile("mrc	p14, 0, %0, c1, c0, 0" : "=r" (x) );
+  __asm volatile("mrc	p14, 0, %0, c1, c0, 0" : "=r" (x) );
 
   return x;
 }
@@ -300,7 +300,7 @@ static inline uint32_t
 read_clock_counter_xsc2(void)
 {
   uint32_t x;
-  __asm __volatile("mrc	p14, 0, %0, c1, c1, 0" : "=r" (x) );
+  __asm volatile("mrc	p14, 0, %0, c1, c1, 0" : "=r" (x) );
 
   return x;
 }
@@ -323,17 +323,17 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 	irq = disable_interrupts(I32_bit|F32_bit);
 
 	if (is_xsc2) {
-		__asm __volatile(
+		__asm volatile(
 			"mrc p14, 0, %0, c0, c1, 0" : "=r" (pmcr_save));
 		/* Enable clock counter */
-		__asm __volatile(
+		__asm volatile(
 			"mcr p14, 0, %0, c0, c1, 0" : : "r" (PMNC_E|PMNC_C));
 	}
 	else {
-		__asm __volatile(
+		__asm volatile(
 			"mrc p14, 0, %0, c0, c0, 0" : "=r" (pmcr_save));
 		/* Enable clock counter */
-		__asm __volatile(
+		__asm volatile(
 			"mcr p14, 0, %0, c0, c0, 0" : : "r" (PMNC_E|PMNC_C));
 	}
 
@@ -347,10 +347,10 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 	end = read_clock_counter();
 
 	if (is_xsc2)
-		__asm __volatile(
+		__asm volatile(
 			"mcr p14, 0, %0, c0, c1, 0" : : "r" (pmcr_save));
 	else
-		__asm __volatile(
+		__asm volatile(
 			"mcr p14, 0, %0, c0, c0, 0" : : "r" (pmcr_save));
 	restore_interrupts(irq);
 
@@ -362,7 +362,7 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 void
 pxa2x0_turbo_mode(int f)
 {
-  __asm __volatile("mcr p14, 0, %0, c6, c0, 0" : : "r" (f));
+  __asm volatile("mcr p14, 0, %0, c6, c0, 0" : : "r" (f));
 }
 
 void

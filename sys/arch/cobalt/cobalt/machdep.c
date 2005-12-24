@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2005/12/11 12:17:05 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 2005/12/24 20:06:58 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2005/12/11 12:17:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2005/12/24 20:06:58 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -356,7 +356,7 @@ haltsys:
 
 unsigned long cpuspeed;
 
-__inline void
+inline void
 delay(n)
 	unsigned long n;
 {

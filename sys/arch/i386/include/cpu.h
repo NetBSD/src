@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.118 2005/08/11 20:32:55 cube Exp $	*/
+/*	$NetBSD: cpu.h,v 1.119 2005/12/24 20:07:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -192,12 +192,12 @@ extern struct cpu_info *cpu_info_list;
 
 static struct cpu_info *curcpu(void);
 
-__inline static struct cpu_info * __attribute__((__unused__))
+inline static struct cpu_info * __attribute__((__unused__))
 curcpu()
 {
 	struct cpu_info *ci;
 
-	__asm __volatile("movl %%fs:%1, %0" :
+	__asm volatile("movl %%fs:%1, %0" :
 	    "=r" (ci) :
 	    "m"
 	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_self)));

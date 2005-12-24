@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.9 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.10 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.9 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.10 2005/12/24 20:07:19 perry Exp $");
 
 #include <sys/param.h>
 
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.9 2005/12/11 12:18:09 christos Ex
 
 
 #ifdef SB1250_PASS1
-#define	SYNC	__asm __volatile("sync; sync")
+#define	SYNC	__asm volatile("sync; sync")
 #else
-#define	SYNC	__asm __volatile("sync")
+#define	SYNC	__asm volatile("sync")
 #endif
 
 __asm(".set mips32");

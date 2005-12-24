@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.7 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.8 2005/12/24 20:07:24 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -36,42 +36,42 @@
 /*
  * Load a mmu register.
  */
-#define	lmr(reg, src) __asm __volatile("lmr " #reg ",%0" : : "g" (src))
+#define	lmr(reg, src) __asm volatile("lmr " #reg ",%0" : : "g" (src))
 
 /*
  * Store a mmu register.
  */
-#define	smr(reg, dst) __asm __volatile("smr " #reg ",%0" : "=g" (dst) :)
+#define	smr(reg, dst) __asm volatile("smr " #reg ",%0" : "=g" (dst) :)
 
 /*
  * Load the FPU status register.
  */
-#define	lfsr(src) __asm __volatile("lfsr %0" : : "g" (src))
+#define	lfsr(src) __asm volatile("lfsr %0" : : "g" (src))
 
 /*
  * Store the FPU status register.
  */
-#define	sfsr(src) __asm __volatile("sfsr %0" : "=g" (src) :)
+#define	sfsr(src) __asm volatile("sfsr %0" : "=g" (src) :)
 
 /*
  * Load a processor register.
  */
-#define	lprd(reg, src) __asm __volatile("lprd " #reg ",%0" : : "g" (src))
-#define	lprw(reg, src) __asm __volatile("lprw " #reg ",%0" : : "g" (src))
-#define	lprb(reg, src) __asm __volatile("lprb " #reg ",%0" : : "g" (src))
+#define	lprd(reg, src) __asm volatile("lprd " #reg ",%0" : : "g" (src))
+#define	lprw(reg, src) __asm volatile("lprw " #reg ",%0" : : "g" (src))
+#define	lprb(reg, src) __asm volatile("lprb " #reg ",%0" : : "g" (src))
 
 /*
  * Store a processor register.
  */
-#define	sprd(reg, dst) __asm __volatile("sprd " #reg ",%0" : "=g" (dst) :)
-#define	sprw(reg, dst) __asm __volatile("sprw " #reg ",%0" : "=g" ((short) (dst)) :)
-#define	sprb(reg, dst) __asm __volatile("sprb " #reg ",%0" : "=g" ((char) (dst)) :)
+#define	sprd(reg, dst) __asm volatile("sprd " #reg ",%0" : "=g" (dst) :)
+#define	sprw(reg, dst) __asm volatile("sprw " #reg ",%0" : "=g" ((short) (dst)) :)
+#define	sprb(reg, dst) __asm volatile("sprb " #reg ",%0" : "=g" ((char) (dst)) :)
 
 /*
  * Move data. This can be used to force
  * gcc to load a register variable.
  */
-#define	movd(src, dst) __asm __volatile("movd %1,%0" : "=g" (dst) : "g" (src))
+#define	movd(src, dst) __asm volatile("movd %1,%0" : "=g" (dst) : "g" (src))
 
 /*
  * movs[bdw] for fast blockmoves.
@@ -82,7 +82,7 @@
 	register int r0 __asm ("r0") = n; \
 	register void *r1 __asm("r1") = from; \
 	register void *r2 __asm("r2") = to; \
-	__asm __volatile ("movs" type \
+	__asm volatile ("movs" type \
 		: "+r" (r0), "+r" (r1), "+r" (r2) \
 		: \
 		: "memory" \
@@ -107,20 +107,20 @@
 /*
  * Invalidate data and/or instruction cache lines.
  */
-#define	cinv(mode, adr) __asm __volatile("cinv " #mode ",%0" : : "g" (adr))
+#define	cinv(mode, adr) __asm volatile("cinv " #mode ",%0" : : "g" (adr))
 
 /*
  * Load the ptb. This loads ptb0 and ptb1 to
  * avoid a cpu-bug when using dual address
  * space instructions.
  */
-#define	load_ptb(src) __asm __volatile("lmr ptb0,%0; lmr ptb1,%0" : : "g" (src))
+#define	load_ptb(src) __asm volatile("lmr ptb0,%0; lmr ptb1,%0" : : "g" (src))
 
 /*
  * Flush tlb. Just to be save this flushes
  * kernelmode and usermode translations.
  */
-#define	tlbflush() __asm __volatile("smr ptb0,r0; lmr ptb0,r0; lmr ptb1,r0" : : : "r0")
+#define	tlbflush() __asm volatile("smr ptb0,r0; lmr ptb0,r0; lmr ptb1,r0" : : : "r0")
 #define	tlbflush_entry(p) do { \
 		lmr(ivar0, p); \
 		lmr(ivar1, p); \
@@ -129,7 +129,7 @@
 /*
  * Trigger a T_BPT.
  */
-#define	breakpoint() __asm __volatile("bpt")
+#define	breakpoint() __asm volatile("bpt")
 
 /*
  * Bits in the cfg register.

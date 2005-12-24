@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2005/12/24 20:07:20 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2005/12/11 12:18:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2005/12/24 20:07:20 perry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -256,7 +256,7 @@ cpu_startup()
 		int msr;
 
 		splraise(-1);
-		__asm __volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+		__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
 
@@ -413,12 +413,12 @@ lcsplx(ipl)
 {
 	int oldcpl;
 
-	__asm __volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	oldcpl = cpl;
 	cpl = ipl;
 	if (ipending & ~ipl)
 		do_pending_int();
-	__asm __volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 
 	return (oldcpl);
 }

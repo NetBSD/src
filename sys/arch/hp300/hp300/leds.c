@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.16 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: leds.c,v 1.17 2005/12/24 20:07:03 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.16 2005/12/11 12:17:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.17 2005/12/24 20:07:03 perry Exp $");
 
 #include <sys/param.h>
 
@@ -115,7 +115,7 @@ void
 ledcontrol(int ons, int offs, int togs)
 {
 
-	__asm __volatile (
+	__asm volatile (
 		"orb	%1,%0	;\n"
 		"andb	%2,%0	;\n"
 		"eorb	%3,%0"

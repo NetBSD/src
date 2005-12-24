@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.9 2005/12/24 20:07:28 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2005/12/24 20:07:28 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -82,7 +82,7 @@ cntlzw(int x)
 {
 	int a;
 
-	__asm __volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
+	__asm volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
 	return a;
 }
 

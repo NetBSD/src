@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.23 2005/12/17 21:48:13 macallan Exp $	*/
+/*	$NetBSD: mesh.c,v 1.24 2005/12/24 20:07:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.23 2005/12/17 21:48:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.24 2005/12/24 20:07:15 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -133,8 +133,8 @@ struct mesh_softc {
 #define SEND_IDENTIFY	2
 #define SEND_SDTR	4
 
-static __inline int mesh_read_reg __P((struct mesh_softc *, int));
-static __inline void mesh_set_reg __P((struct mesh_softc *, int, int));
+static inline int mesh_read_reg __P((struct mesh_softc *, int));
+static inline void mesh_set_reg __P((struct mesh_softc *, int, int));
 
 int mesh_match __P((struct device *, struct cfdata *, void *));
 void mesh_attach __P((struct device *, struct device *, void *));

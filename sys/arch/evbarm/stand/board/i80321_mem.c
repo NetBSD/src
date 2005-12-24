@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mem.c,v 1.2 2002/04/25 22:11:51 thorpej Exp $	*/
+/*	$NetBSD: i80321_mem.c,v 1.3 2005/12/24 20:07:03 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
 
 #include "board.h"
 
-#define	INL(x)		*((__volatile uint32_t *) \
+#define	INL(x)		*((volatile uint32_t *) \
 			  (VERDE_PMMR_BASE + VERDE_MCU_BASE + (x)))
 
 void

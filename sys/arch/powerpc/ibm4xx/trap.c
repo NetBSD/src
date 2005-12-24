@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.28 2005/12/24 20:07:28 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28 2005/12/24 20:07:28 perry Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -154,7 +154,7 @@ trap(struct trapframe *frame)
 		{
 			int srr2, srr3;
 
-			__asm __volatile("mfspr %0,0x3f0" :
+			__asm volatile("mfspr %0,0x3f0" :
 			    "=r" (rv), "=r" (srr2), "=r" (srr3) :);
 			printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2,
 			    srr3);
@@ -410,7 +410,7 @@ ctx_setup(int ctx, int srr1)
 				 *
 				 * XXX this is also used by jtag debuggers...
 				 */
-			__asm __volatile("mfspr %0,0x3f2;"
+			__asm volatile("mfspr %0,0x3f2;"
 			    "or %0,%0,%1;"
 			    "mtspr 0x3f2,%0;" :
 			    "=&r" (dbreg) : "r" (mask));
@@ -634,15 +634,15 @@ badaddr_read(void *addr, size_t size, int *rptr)
 	int x;
 
 	/* Get rid of any stale machine checks that have been waiting.  */
-	__asm __volatile ("sync; isync");
+	__asm volatile ("sync; isync");
 
 	if (setfault(&env)) {
 		curpcb->pcb_onfault = 0;
-		__asm __volatile ("sync");
+		__asm volatile ("sync");
 		return 1;
 	}
 
-	__asm __volatile ("sync");
+	__asm volatile ("sync");
 
 	switch (size) {
 	case 1:
@@ -659,10 +659,10 @@ badaddr_read(void *addr, size_t size, int *rptr)
 	}
 
 	/* Make sure we took the machine check, if we caused one. */
-	__asm __volatile ("sync; isync");
+	__asm volatile ("sync; isync");
 
 	curpcb->pcb_onfault = 0;
-	__asm __volatile ("sync");	/* To be sure. */
+	__asm volatile ("sync");	/* To be sure. */
 
 	/* Use the value to avoid reorder. */
 	if (rptr)

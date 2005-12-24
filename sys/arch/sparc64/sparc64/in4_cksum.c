@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.6 2005/12/11 12:19:14 christos Exp $ */
+/*	$NetBSD: in4_cksum.c,v 1.7 2005/12/24 20:07:37 perry Exp $ */
 
 /*
  * Copyright (c) 1995 Matthew R. Green.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.6 2005/12/11 12:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.7 2005/12/24 20:07:37 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ in4_cksum(m, nxt, off, len)
 		w = (u_char *)&ipov;
 		/* assumes sizeof(ipov) == 20 */
 #ifdef __arch64__
-		__asm __volatile(" lduw [%5 + 0], %1; "
+		__asm volatile(" lduw [%5 + 0], %1; "
 			" lduw [%5 + 4], %2; "
 			" lduw [%5 + 8], %3; add %0, %1, %0; "
 			" lduw [%5 + 12], %1; add %0, %2, %0; "
@@ -136,7 +136,7 @@ in4_cksum(m, nxt, off, len)
 		 * upper 32-bits of the registers, we use addxcc which cannot
 		 * be grouped with any other instructions.
 		 */
-		__asm __volatile(" lduw [%5 + 0], %1; "
+		__asm volatile(" lduw [%5 + 0], %1; "
 			" lduw [%5 + 4], %2; "
 			" lduw [%5 + 8], %3; addcc %0, %1, %0; "
 			" lduw [%5 + 12], %1; "

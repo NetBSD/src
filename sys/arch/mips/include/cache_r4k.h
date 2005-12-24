@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.10 2003/03/08 04:43:26 rafal Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.11 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
  */
 #define	cache_op_r4k_line(va, op)					\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		"cache %1, 0(%0)				\n\t"	\
 		".set reorder"						\
@@ -80,7 +80,7 @@ do {									\
  */
 #define	cache_r4k_op_8lines_16(va, op)					\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		"cache %1, 0x00(%0); cache %1, 0x10(%0)		\n\t"	\
 		"cache %1, 0x20(%0); cache %1, 0x30(%0)		\n\t"	\
@@ -99,7 +99,7 @@ do {									\
  */
 #define	cache_r4k_op_8lines_32(va, op)					\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		"cache %1, 0x00(%0); cache %1, 0x20(%0)		\n\t"	\
 		"cache %1, 0x40(%0); cache %1, 0x60(%0)		\n\t"	\
@@ -119,7 +119,7 @@ do {									\
  */
 #define	cache_r4k_op_32lines_16(va, op)					\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		"cache %1, 0x000(%0); cache %1, 0x010(%0);	\n\t"	\
 		"cache %1, 0x020(%0); cache %1, 0x030(%0);	\n\t"	\
@@ -151,7 +151,7 @@ do {									\
  */
 #define	cache_r4k_op_32lines_32(va, op)					\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		"cache %1, 0x000(%0); cache %1, 0x020(%0);	\n\t"	\
 		"cache %1, 0x040(%0); cache %1, 0x060(%0);	\n\t"	\
@@ -183,7 +183,7 @@ do {									\
  */
 #define	cache_r4k_op_32lines_128(va, op)				\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		"cache %1, 0x0000(%0); cache %1, 0x0080(%0);	\n\t"	\
 		"cache %1, 0x0100(%0); cache %1, 0x0180(%0);	\n\t"	\
@@ -215,7 +215,7 @@ do {									\
  */
 #define	cache_r4k_op_16lines_16_2way(va1, va2, op)			\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		"cache %2, 0x000(%0); cache %2, 0x000(%1);	\n\t"	\
 		"cache %2, 0x010(%0); cache %2, 0x010(%1);	\n\t"	\
@@ -247,7 +247,7 @@ do {									\
  */
 #define	cache_r4k_op_16lines_32_2way(va1, va2, op)			\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		"cache %2, 0x000(%0); cache %2, 0x000(%1);	\n\t"	\
 		"cache %2, 0x020(%0); cache %2, 0x020(%1);	\n\t"	\
@@ -279,7 +279,7 @@ do {									\
  */
 #define	cache_r4k_op_8lines_16_4way(va1, va2, va3, va4, op)		\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		"cache %4, 0x000(%0); cache %4, 0x000(%1);	\n\t"	\
 		"cache %4, 0x000(%2); cache %4, 0x000(%3);	\n\t"	\
@@ -311,7 +311,7 @@ do {									\
  */
 #define	cache_r4k_op_8lines_32_4way(va1, va2, va3, va4, op)		\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		"cache %4, 0x000(%0); cache %4, 0x000(%1);	\n\t"	\
 		"cache %4, 0x000(%2); cache %4, 0x000(%3);	\n\t"	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 2005/12/24 20:07:04 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29 2005/12/11 12:17:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2005/12/24 20:07:04 perry Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -198,7 +198,7 @@ void syscall(struct trapframe *, int *);
 u_int rctr_next_iioq;
 #endif
 
-static __inline void
+static inline void
 userret(struct lwp *l, register_t pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.14 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: pdc.c,v 1.15 2005/12/24 20:07:03 perry Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.14 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.15 2005/12/24 20:07:03 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,7 +422,7 @@ pdccnputc(dev_t dev, int c)
 
 	if (err < 0) {
 #if defined(DDB) || defined(KGDB)
-		__asm __volatile ("break        %0, %1"
+		__asm volatile ("break        %0, %1"
 			:: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_KGDB));
 #endif /* DDB || KGDB */
 		delay(250000);

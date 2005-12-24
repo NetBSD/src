@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2005/11/23 13:00:51 nonaka Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 2005/12/24 20:07:24 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2005/11/23 13:00:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2005/12/24 20:07:24 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,14 +112,14 @@ cpu_initclocks()
 	/*
 	 * Should check for correct CPU here?		XXX
 	 */
-	__asm __volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
+	__asm volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
 		: "=r"(msr), "=r"(scratch)
 		: "K"((u_short)~PSL_EE));
 	ns_per_tick = 1000000000 / cpu_timebase;
 	ticks_per_intr = cpu_timebase / hz;
-	__asm __volatile ("mftb %0" : "=r"(lasttb));
-	__asm __volatile ("mtdec %0" :: "r"(ticks_per_intr));
-	__asm __volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mftb %0" : "=r"(lasttb));
+	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 }
 
 /*

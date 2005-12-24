@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2005/12/08 22:41:44 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2005/12/08 22:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2005/12/24 20:07:32 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -439,7 +439,7 @@ int pmap_pvo_remove_depth;
 /*
  * Returns non-zero if the given pmap is `current'.
  */
-static __inline int
+static inline int
 pmap_is_curpmap(pmap_t pm)
 {
 	if ((curlwp->l_proc && curlwp->l_proc->p_vmspace->vm_map.pmap == pm) ||
@@ -453,7 +453,7 @@ pmap_is_curpmap(pmap_t pm)
  * Given a Kernel Virtual Address in KSEG1, return the
  * corresponding index into pmap_kernel_ipt[].
  */
-static __inline int
+static inline int
 kva_to_iptidx(vaddr_t kva)
 {
 	int idx;
@@ -474,7 +474,7 @@ kva_to_iptidx(vaddr_t kva)
  *
  * XXX: This hack generates *much* better code than the compiler.
  */
-static __inline ptel_t
+static inline ptel_t
 pmap_kernel_ipt_get_ptel(kpte_t *kpte)
 {
 	ptel_t ptel;
@@ -484,25 +484,25 @@ pmap_kernel_ipt_get_ptel(kpte_t *kpte)
 	 * XXX: Need to revisit for big-endian
 	 */
 #if SH5_NEFF_BITS == 32
-	__asm __volatile("ldlo.l %3, 0, %1; ldhi.l %3, 3, %2; or %1, %2, %0":
+	__asm volatile("ldlo.l %3, 0, %1; ldhi.l %3, 3, %2; or %1, %2, %0":
 	    "=r"(ptel), "=r"(r1), "=r"(r2): "r"(kpte));
 #else
-	__asm __volatile("ldlo.q %3, 0, %1; ldhi.q %3, 7, %2; or %1, %2, %0":
+	__asm volatile("ldlo.q %3, 0, %1; ldhi.q %3, 7, %2; or %1, %2, %0":
 	    "=r"(ptel), "=r"(r1), "=r"(r2): "r"(kpte));
 #endif
 
 	return (ptel);
 }
 
-static __inline void
+static inline void
 pmap_kernel_ipt_set_ptel(kpte_t *kpte, ptel_t ptel)
 {
 
 #if SH5_NEFF_BITS == 32
-	__asm __volatile("stlo.l %0, 0, %1; sthi.l %0, 3, %r1"::
+	__asm volatile("stlo.l %0, 0, %1; sthi.l %0, 3, %r1"::
 	    "r"(kpte), "r"(ptel));
 #else
-	__asm __volatile("stlo.q %0, 0, %1; sthi.q %0, 7, %r1"::
+	__asm volatile("stlo.q %0, 0, %1; sthi.q %0, 7, %r1"::
 	    "r"(kpte), "r"(ptel));
 #endif
 }
@@ -511,7 +511,7 @@ pmap_kernel_ipt_set_ptel(kpte_t *kpte, ptel_t ptel)
  * Given a pointer to an element of the pmap_kernel_ipt array,
  * return the tlbcookie.
  */
-static __inline tlbcookie_t
+static inline tlbcookie_t
 pmap_kernel_ipt_get_tlbcookie(kpte_t *kpte)
 {
 	volatile u_int16_t *kpp = (volatile u_int16_t *)&kpte->tlbcookie;
@@ -519,7 +519,7 @@ pmap_kernel_ipt_get_tlbcookie(kpte_t *kpte)
 	return ((tlbcookie_t)*kpp);
 }
 
-static __inline void
+static inline void
 pmap_kernel_ipt_set_tlbcookie(kpte_t *kpte, tlbcookie_t tlbcookie)
 {
 	volatile u_int16_t *kpp = (volatile u_int16_t *)&kpte->tlbcookie;
@@ -531,7 +531,7 @@ pmap_kernel_ipt_set_tlbcookie(kpte_t *kpte, tlbcookie_t tlbcookie)
  * Given a user virtual address, return the corresponding
  * index of the PTE group which is likely to contain the mapping.
  */
-static __inline u_int
+static inline u_int
 va_to_pteg(vsid_t vsid, vaddr_t va)
 {
 
@@ -542,7 +542,7 @@ va_to_pteg(vsid_t vsid, vaddr_t va)
  * Given a physical address, return a pointer to the head of the
  * list of virtual address which map to that physical address.
  */
-static __inline struct pvo_head *
+static inline struct pvo_head *
 pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
 {
 	struct vm_page *pg;
@@ -562,7 +562,7 @@ pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
  * Given a vm_page, return a pointer to the head of the list
  * of virtual addresses which map to that page.
  */
-static __inline struct pvo_head *
+static inline struct pvo_head *
 vm_page_to_pvoh(struct vm_page *pg)
 {
 
@@ -572,7 +572,7 @@ vm_page_to_pvoh(struct vm_page *pg)
 /*
  * Clear the specified bits in the cached attributes of a physical page.
  */
-static __inline void
+static inline void
 pmap_attr_clear(struct vm_page *pg, int ptebit)
 {
 
@@ -582,7 +582,7 @@ pmap_attr_clear(struct vm_page *pg, int ptebit)
 /*
  * Return the cached attributes of a physical page
  */
-static __inline int
+static inline int
 pmap_attr_fetch(struct vm_page *pg)
 {
 
@@ -592,7 +592,7 @@ pmap_attr_fetch(struct vm_page *pg)
 /*
  * Cache the specified attributes for the physical page "pg"
  */
-static __inline void
+static inline void
 pmap_attr_save(struct vm_page *pg, ptel_t ptebit)
 {
 
@@ -606,7 +606,7 @@ pmap_attr_save(struct vm_page *pg, ptel_t ptebit)
  * That is, the mapping decribed by `pvo' is exactly the same
  * as described by `vsid' and `va'.
  */
-static __inline int
+static inline int
 pmap_pteh_match(struct pvo_entry *pvo, vsid_t vsid, vaddr_t va)
 {
 
@@ -620,7 +620,7 @@ pmap_pteh_match(struct pvo_entry *pvo, vsid_t vsid, vaddr_t va)
  * Recover the Referenced/Modified bits from the specified PTEL value
  * and cache them temporarily in the PVO.
  */
-static __inline void
+static inline void
 pmap_pteg_synch(ptel_t ptel, struct pvo_entry *pvo)
 {
 
@@ -832,7 +832,7 @@ pmap_kpte_clear_bit(int idx, struct pvo_entry *pvo, ptel_t ptebit)
  * hence not in the cache either. Therefore neither need to be
  * synchronised.
  */
-static __inline void
+static inline void
 pmap_pteg_set(volatile pte_t *pt, struct pvo_entry *pvo)
 {
 
@@ -889,7 +889,7 @@ pmap_pteg_unset(volatile pte_t *pt, struct pvo_entry *pvo)
  * had its attributes modified in some way. For example, it may have
  * been a read-only mapping but is now read/write.
  */
-static __inline void
+static inline void
 pmap_pteg_change(volatile pte_t *pt, struct pvo_entry *pvo)
 {
 
@@ -1126,7 +1126,7 @@ pmap_bootstrap(vaddr_t avail, paddr_t kseg0base, struct mem_region *mr)
 	/*
 	 * It should now be safe to take TLB miss exceptions.
 	 */
-	__asm __volatile("putcon %0, sr" :: "r"(SH5_CONREG_SR_IMASK_ALL));
+	__asm volatile("putcon %0, sr" :: "r"(SH5_CONREG_SR_IMASK_ALL));
 
 	/*
 	 * Tell UVM about physical memory

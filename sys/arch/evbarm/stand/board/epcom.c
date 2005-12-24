@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.2 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: epcom.c,v 1.3 2005/12/24 20:07:03 perry Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -46,12 +46,12 @@
 #include "board.h"
 
 #define SCADDR	(EP93XX_APB_HWBASE + EP93XX_APB_SYSCON)
-#define	EPCOM_READ(x)		*((__volatile uint32_t *) (CONADDR + (EPCOM_ ## x)))
-#define	EPCOM_WRITE(x, v)	*((__volatile uint32_t *) \
+#define	EPCOM_READ(x)		*((volatile uint32_t *) (CONADDR + (EPCOM_ ## x)))
+#define	EPCOM_WRITE(x, v)	*((volatile uint32_t *) \
 					(CONADDR + (EPCOM_ ## x))) = (v)
-#define	SYSCON_READ(x)		*((__volatile uint32_t *) \
+#define	SYSCON_READ(x)		*((volatile uint32_t *) \
 					(SCADDR + (EP93XX_SYSCON_ ## x)))
-#define	SYSCON_WRITE(x, v)	*((__volatile uint32_t *) \
+#define	SYSCON_WRITE(x, v)	*((volatile uint32_t *) \
 					(SCADDR + (EP93XX_SYSCON_ ## x))) = (v)
 
 #define	ISSET(t,f)	((t) & (f))

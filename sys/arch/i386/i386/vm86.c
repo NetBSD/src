@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.39 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: vm86.c,v 1.40 2005/12/24 20:07:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.39 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.40 2005/12/24 20:07:10 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.39 2005/12/11 12:17:41 christos Exp $");
 #include <machine/vm86.h>
 
 static void fast_intxx(struct lwp *, int);
-static __inline int is_bitset(int, caddr_t);
+static inline int is_bitset(int, caddr_t);
 
 #define	CS(tf)		(*(u_short *)&tf->tf_cs)
 #define	IP(tf)		(*(u_short *)&tf->tf_eip)
@@ -110,7 +110,7 @@ static __inline int is_bitset(int, caddr_t);
 		dword = w1 | w2 << 16; \
 	} while (0)
 
-static __inline int
+static inline int
 is_bitset(nr, bitmap)
 	int nr;
 	caddr_t bitmap;

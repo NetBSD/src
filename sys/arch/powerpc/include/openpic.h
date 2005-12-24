@@ -1,4 +1,4 @@
-/*	$NetBSD: openpic.h,v 1.3 2001/02/05 19:22:23 briggs Exp $	*/
+/*	$NetBSD: openpic.h,v 1.4 2005/12/24 20:07:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -37,12 +37,12 @@ void openpic_set_priority __P((int, int));
 
 extern volatile unsigned char *openpic_base;
 
-static __inline u_int openpic_read __P((int));
-static __inline void openpic_write __P((int, u_int));
-static __inline int openpic_read_irq __P((int));
-static __inline void openpic_eoi __P((int));
+static inline u_int openpic_read __P((int));
+static inline void openpic_write __P((int, u_int));
+static inline int openpic_read_irq __P((int));
+static inline void openpic_eoi __P((int));
 
-static __inline u_int
+static inline u_int
 openpic_read(reg)
 	int reg;
 {
@@ -51,7 +51,7 @@ openpic_read(reg)
 	return in32rb(addr);
 }
 
-static __inline void
+static inline void
 openpic_write(reg, val)
 	int reg;
 	u_int val;
@@ -61,14 +61,14 @@ openpic_write(reg, val)
 	out32rb(addr, val);
 }
 
-static __inline int
+static inline int
 openpic_read_irq(cpu)
 	int cpu;
 {
 	return openpic_read(OPENPIC_IACK(cpu)) & OPENPIC_VECTOR_MASK;
 }
 
-static __inline void
+static inline void
 openpic_eoi(cpu)
 	int cpu;
 {

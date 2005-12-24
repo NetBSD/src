@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.11 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: becc.c,v 1.12 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.11 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.12 2005/12/24 20:06:52 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,8 @@ becc_attach(struct becc_softc *sc)
 	 * This allows the BECC to return the requested 4-byte word
 	 * first when filling a cache line.
 	 */
-	__asm __volatile("mrc p13, 0, %0, c1, c1, 0" : "=r" (reg));
-	__asm __volatile("mcr p13, 0, %0, c1, c1, 0" : : "r" (reg | BCUMOD_AF));
+	__asm volatile("mrc p13, 0, %0, c1, c1, 0" : "=r" (reg));
+	__asm volatile("mcr p13, 0, %0, c1, c1, 0" : : "r" (reg | BCUMOD_AF));
 
 	/*
 	 * Program the address windows of the PCI core.  Note
@@ -334,7 +334,7 @@ becc_pcicore_read(struct becc_softc *sc, bus_addr_t reg)
 {
 	vaddr_t va = sc->sc_pci_cfg_base | (1U << BECC_IDSEL_BIT) | reg;
 
-	return (*(__volatile uint32_t *) va);
+	return (*(volatile uint32_t *) va);
 }
 
 void
@@ -342,5 +342,5 @@ becc_pcicore_write(struct becc_softc *sc, bus_addr_t reg, uint32_t val)
 {
 	vaddr_t va = sc->sc_pci_cfg_base | (1U << BECC_IDSEL_BIT) | reg;
 
-	*(__volatile uint32_t *) va = val;
+	*(volatile uint32_t *) va = val;
 }

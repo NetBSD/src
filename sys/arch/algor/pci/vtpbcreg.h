@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbcreg.h,v 1.1 2001/05/28 16:22:21 thorpej Exp $	*/
+/*	$NetBSD: vtpbcreg.h,v 1.2 2005/12/24 20:06:46 perry Exp $	*/
 
 /*
  * Registers for the V3 Semiconductor V962 and V360EPC i960
@@ -9,13 +9,13 @@
  */
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-#define V96XW(vt, x)	*(__volatile u_int32_t *)((vt)->vt_addr + (x))
-#define V96XH(vt, x)	*(__volatile u_int16_t *)((vt)->vt_addr + (x))
-#define V96XB(vt, x)	*(__volatile u_int8_t  *)((vt)->vt_addr + (x))
+#define V96XW(vt, x)	*(volatile u_int32_t *)((vt)->vt_addr + (x))
+#define V96XH(vt, x)	*(volatile u_int16_t *)((vt)->vt_addr + (x))
+#define V96XB(vt, x)	*(volatile u_int8_t  *)((vt)->vt_addr + (x))
 #else
-#define V96XW(vt, x)	*(__volatile u_int32_t *)((vt)->vt_addr + (x))
-#define V96XH(vt, x)	*(__volatile u_int16_t *)((vt)->vt_addr + ((x) ^ 2))
-#define V96XB(vt, x)	*(__volatile u_int8_t  *)((vt)->vt_addr + ((x) ^ 3))
+#define V96XW(vt, x)	*(volatile u_int32_t *)((vt)->vt_addr + (x))
+#define V96XH(vt, x)	*(volatile u_int16_t *)((vt)->vt_addr + ((x) ^ 2))
+#define V96XB(vt, x)	*(volatile u_int8_t  *)((vt)->vt_addr + ((x) ^ 3))
 #endif
 
 #define V96X_PCI_VENDOR(vt)		V96XH(vt, 0x00)

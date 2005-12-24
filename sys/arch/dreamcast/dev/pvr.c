@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.20 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: pvr.c,v 1.21 2005/12/24 20:06:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.20 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.21 2005/12/24 20:06:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +155,9 @@ __KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.20 2005/12/11 12:17:06 christos Exp $");
 #define	DIWVSTRT_V2(x)		((x) << 16)
 
 #define	PVR_REG_READ(dc, reg)						\
-	((__volatile uint32_t *)(dc)->dc_regvaddr)[(reg) >> 2]
+	((volatile uint32_t *)(dc)->dc_regvaddr)[(reg) >> 2]
 #define	PVR_REG_WRITE(dc, reg, val)					\
-	((__volatile uint32_t *)(dc)->dc_regvaddr)[(reg) >> 2] = (val)
+	((volatile uint32_t *)(dc)->dc_regvaddr)[(reg) >> 2] = (val)
 
 struct fb_devconfig {
 	vaddr_t dc_vaddr;		/* framebuffer virtual address */
@@ -466,15 +466,15 @@ pvr_show_screen(void *v, void *cookie, int waitok,
 static void
 pvr_check_cable(struct fb_devconfig *dc)
 {
-	__volatile uint32_t *porta =
-	    (__volatile uint32_t *)0xff80002c;
+	volatile uint32_t *porta =
+	    (volatile uint32_t *)0xff80002c;
 	uint16_t v;
 
 	/* PORT8 and PORT9 is input */
 	*porta = (*porta & ~0xf0000) | 0xa0000;
 
 	/* Read PORT8 and PORT9 */
-	v = ((*(__volatile uint16_t *)(porta + 1)) >> 8) & 3;
+	v = ((*(volatile uint16_t *)(porta + 1)) >> 8) & 3;
 
 	if ((v & 2) == 0)
 		dc->dc_dispflags |= PVR_VGAMODE|PVR_RGBMODE;
@@ -487,7 +487,7 @@ pvr_check_tvsys(struct fb_devconfig *dc)
 {
 
 	/* XXX should use flashmem device when one exists */
-	dc->dc_tvsystem = (*(__volatile uint8_t *)0xa021a004) & 3;
+	dc->dc_tvsystem = (*(volatile uint8_t *)0xa021a004) & 3;
 }
 
 void
@@ -591,7 +591,7 @@ pvrinit(struct fb_devconfig *dc)
 	PVR_REG_WRITE(dc, PVRREG_DIWCONF, DIWCONF_MAGIC);
 
 	/* RGB / composite */
-	*(__volatile uint32_t *)
+	*(volatile uint32_t *)
 	    SH3_PHYS_TO_P2SEG(0x00702c00) =
 	    ((dc->dc_dispflags & PVR_RGBMODE) ? 0 : 3) << 8;
 

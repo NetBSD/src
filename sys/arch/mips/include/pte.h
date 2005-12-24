@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.14 2005/11/25 14:10:35 simonb Exp $	*/
+/*	$NetBSD: pte.h,v 1.15 2005/12/24 20:07:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -123,25 +123,25 @@ int pmap_is_page_ro(pmap_t, vaddr_t, int);
 /* MIPS1 and MIPS3 (or greater) */
 #if defined(MIPS1) && defined(MIPS3_PLUS)
 
-static __inline int
+static inline int
     mips_pg_v(unsigned int entry),
     mips_pg_wired(unsigned int entry),
     PAGE_IS_RDONLY(unsigned int pte, vaddr_t va);
 
-static __inline unsigned int
+static inline unsigned int
     mips_pg_wired_bit(void), mips_pg_m_bit(void),
     mips_pg_ro_bit(void), mips_pg_rw_bit(void),
     mips_pg_ropage_bit(void),
     mips_pg_cwpage_bit(void),
     mips_pg_rwpage_bit(void),
     mips_pg_global_bit(void);
-static __inline paddr_t PTE_TO_PADDR(unsigned int pte);
+static inline paddr_t PTE_TO_PADDR(unsigned int pte);
 
-static __inline paddr_t mips_tlbpfn_to_paddr(unsigned int pfn);
-static __inline unsigned int mips_paddr_to_tlbpfn(paddr_t pa);
+static inline paddr_t mips_tlbpfn_to_paddr(unsigned int pfn);
+static inline unsigned int mips_paddr_to_tlbpfn(paddr_t pa);
 
 
-static __inline int
+static inline int
 mips_pg_v(entry)
 	unsigned int entry;
 {
@@ -150,7 +150,7 @@ mips_pg_v(entry)
 	return (entry & MIPS1_PG_V);
 }
 
-static __inline int
+static inline int
 mips_pg_wired(entry)
 	unsigned int entry;
 {
@@ -159,7 +159,7 @@ mips_pg_wired(entry)
 	return (entry & MIPS1_PG_WIRED);
 }
 
-static __inline unsigned int
+static inline unsigned int
 mips_pg_m_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
@@ -167,7 +167,7 @@ mips_pg_m_bit(void)
 	return (MIPS1_PG_D);
 }
 
-static __inline unsigned int
+static inline unsigned int
 mips_pg_ro_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
@@ -175,7 +175,7 @@ mips_pg_ro_bit(void)
 	return (MIPS1_PG_RO);
 }
 
-static __inline unsigned int
+static inline unsigned int
 mips_pg_rw_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
@@ -183,7 +183,7 @@ mips_pg_rw_bit(void)
 	return (MIPS1_PG_RW);
 }
 
-static __inline unsigned int
+static inline unsigned int
 mips_pg_ropage_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
@@ -191,7 +191,7 @@ mips_pg_ropage_bit(void)
 	return (MIPS1_PG_RO);
 }
 
-static __inline unsigned int
+static inline unsigned int
 mips_pg_rwpage_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
@@ -199,7 +199,7 @@ mips_pg_rwpage_bit(void)
 	return (MIPS1_PG_RWPAGE);
 }
 
-static __inline unsigned int
+static inline unsigned int
 mips_pg_cwpage_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
@@ -208,7 +208,7 @@ mips_pg_cwpage_bit(void)
 }
 
 
-static __inline unsigned int
+static inline unsigned int
 mips_pg_global_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
@@ -216,7 +216,7 @@ mips_pg_global_bit(void)
 	return (MIPS1_PG_G);
 }
 
-static __inline unsigned int
+static inline unsigned int
 mips_pg_wired_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
@@ -224,7 +224,7 @@ mips_pg_wired_bit(void)
 	return (MIPS1_PG_WIRED);
 }
 
-static __inline paddr_t
+static inline paddr_t
 PTE_TO_PADDR(pte)
 	unsigned int pte;
 {
@@ -233,7 +233,7 @@ PTE_TO_PADDR(pte)
 	return (MIPS1_PTE_TO_PADDR(pte));
 }
 
-static __inline int
+static inline int
 PAGE_IS_RDONLY(pte, va)
 	unsigned int pte;
 	vaddr_t va;
@@ -243,7 +243,7 @@ PAGE_IS_RDONLY(pte, va)
 	return (MIPS1_PAGE_IS_RDONLY(pte, va));
 }
 
-static __inline paddr_t
+static inline paddr_t
 mips_tlbpfn_to_paddr(pfn)
 	unsigned int pfn;
 {
@@ -252,7 +252,7 @@ mips_tlbpfn_to_paddr(pfn)
 	return (mips1_tlbpfn_to_paddr(pfn));
 }
 
-static __inline unsigned int
+static inline unsigned int
 mips_paddr_to_tlbpfn(pa)
 	paddr_t pa;
 {

@@ -1,4 +1,4 @@
-/* $NetBSD: gscpcib.c,v 1.3 2005/12/11 12:17:43 christos Exp $ */
+/* $NetBSD: gscpcib.c,v 1.4 2005/12/24 20:07:11 perry Exp $ */
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -139,7 +139,7 @@ corepcib:
 }
 
 #ifndef SMALL_KERNEL
-static __inline void
+static inline void
 gscpcib_gpio_pin_select(struct gscpcib_softc *sc, int pin)
 {
 	bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GSCGPIO_SEL, pin);

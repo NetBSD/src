@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 2005/12/24 20:07:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.8 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.9 2005/12/24 20:07:19 perry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -104,7 +104,7 @@ static int le_attached;
 #define	integrate
 #define hide
 #else
-#define	integrate	static __inline
+#define	integrate	static inline
 #define hide		static
 #endif
 

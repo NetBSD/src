@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2005/12/11 12:16:26 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2005/12/24 20:06:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2005/12/11 12:16:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2005/12/24 20:06:47 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -190,10 +190,10 @@ int	bintobcd __P((int));
 static inline int gettick_broken_latch __P((void));
 
 
-__inline u_int mc146818_read __P((void *, u_int));
-__inline void mc146818_write __P((void *, u_int, u_int));
+inline u_int mc146818_read __P((void *, u_int));
+inline void mc146818_write __P((void *, u_int, u_int));
 
-__inline u_int
+inline u_int
 mc146818_read(sc, reg)
 	void *sc;					/* XXX use it? */
 	u_int reg;
@@ -203,7 +203,7 @@ mc146818_read(sc, reg)
 	return (inb(IO_RTC+1));
 }
 
-__inline void
+inline void
 mc146818_write(sc, reg, datum)
 	void *sc;					/* XXX use it? */
 	u_int reg, datum;
@@ -517,10 +517,10 @@ i8254_delay(n)
 		 * quantity to prevent loss of significance.
 		 */
 		int m;
-		__asm __volatile("mul %3"
+		__asm volatile("mul %3"
 				 : "=a" (n), "=d" (m)
 				 : "0" (n), "r" (TIMER_FREQ));
-		__asm __volatile("div %4"
+		__asm volatile("div %4"
 				 : "=a" (n), "=d" (m)
 				 : "0" (n), "1" (m), "r" (1000000));
 #else

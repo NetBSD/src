@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.14 2005/12/11 12:19:14 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.15 2005/12/24 20:07:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.14 2005/12/11 12:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.15 2005/12/24 20:07:37 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,18 +59,18 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.14 2005/12/11 12:19:14 christos Exp $");
 #define IPR(tf, i)	((int32_t *)(u_long)tf->tf_out[6])[i - 16]
 #define FPR(l, i)	((int32_t) l->l_md.md_fpstate->fs_regs[i])
 
-static __inline int readgpreg __P((struct trapframe64 *, int, void *));
-static __inline int readfpreg __P((struct lwp *, int, void *));
-static __inline int writegpreg __P((struct trapframe64 *, int, const void *));
-static __inline int writefpreg __P((struct lwp *, int, const void *));
-static __inline int decodeaddr __P((struct trapframe64 *, union instr *, void *));
+static inline int readgpreg __P((struct trapframe64 *, int, void *));
+static inline int readfpreg __P((struct lwp *, int, void *));
+static inline int writegpreg __P((struct trapframe64 *, int, const void *));
+static inline int writefpreg __P((struct lwp *, int, const void *));
+static inline int decodeaddr __P((struct trapframe64 *, union instr *, void *));
 static int muldiv __P((struct trapframe64 *, union instr *, int32_t *, int32_t *,
     int32_t *));
 
 #define	REGNAME(i)	"goli"[i >> 3], i & 7
 
 
-static __inline int
+static inline int
 readgpreg(tf, i, val)
 	struct trapframe64 *tf;
 	int i;
@@ -88,7 +88,7 @@ readgpreg(tf, i, val)
 }
 
 		
-static __inline int
+static inline int
 writegpreg(tf, i, val)
 	struct trapframe64 *tf;
 	int i;
@@ -108,7 +108,7 @@ writegpreg(tf, i, val)
 }
 	
 
-static __inline int
+static inline int
 readfpreg(l, i, val)
 	struct lwp *l;
 	int i;
@@ -119,7 +119,7 @@ readfpreg(l, i, val)
 }
 
 		
-static __inline int
+static inline int
 writefpreg(l, i, val)
 	struct lwp *l;
 	int i;
@@ -129,7 +129,7 @@ writefpreg(l, i, val)
 	return 0;
 }
 
-static __inline int
+static inline int
 decodeaddr(tf, code, val)
 	struct trapframe64 *tf;
 	union instr *code;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.114 2005/12/24 20:07:03 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2005/12/11 12:17:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.114 2005/12/24 20:07:03 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -215,7 +215,7 @@ int mmupid = -1;
  * trap and syscall both need the following work done before returning
  * to user mode.
  */
-static __inline void
+static inline void
 userret(struct lwp *l, struct frame *fp, u_quad_t oticks,
     u_int faultaddr, int fromtrap)
 {

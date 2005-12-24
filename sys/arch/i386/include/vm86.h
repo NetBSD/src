@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.h,v 1.12 2003/10/27 13:44:20 junyoung Exp $	*/
+/*	$NetBSD: vm86.h,v 1.13 2005/12/24 20:07:10 perry Exp $	*/
 
 #undef	VM86_USE_VIF
 
@@ -82,14 +82,14 @@ int compat_16_i386_vm86(struct lwp *, char *, register_t *);
 #endif
 void vm86_gpfault(struct lwp *, int);
 void vm86_return(struct lwp *, int);
-static __inline void clr_vif(struct lwp *);
-static __inline void set_vif(struct lwp *);
-static __inline void set_vflags(struct lwp *, int);
-static __inline int get_vflags(struct lwp *);
-static __inline void set_vflags_short(struct lwp *, int);
-static __inline int get_vflags_short(struct lwp *);
+static inline void clr_vif(struct lwp *);
+static inline void set_vif(struct lwp *);
+static inline void set_vflags(struct lwp *, int);
+static inline int get_vflags(struct lwp *);
+static inline void set_vflags_short(struct lwp *, int);
+static inline int get_vflags_short(struct lwp *);
 
-static __inline void
+static inline void
 clr_vif(l)
 	struct lwp *l;
 {
@@ -102,7 +102,7 @@ clr_vif(l)
 #endif
 }
 
-static __inline void
+static inline void
 set_vif(l)
 	struct lwp *l;
 {
@@ -118,7 +118,7 @@ set_vif(l)
 		vm86_return(l, VM86_STI);
 }
 
-static __inline void
+static inline void
 set_vflags(l, flags)
 	struct lwp *l;
 	int flags;
@@ -137,7 +137,7 @@ set_vflags(l, flags)
 		vm86_return(l, VM86_STI);
 }
 
-static __inline int
+static inline int
 get_vflags(l)
 	struct lwp *l;
 {
@@ -150,7 +150,7 @@ get_vflags(l)
 	return (flags);
 }
 
-static __inline void
+static inline void
 set_vflags_short(l, flags)
 	struct lwp *l;
 	int flags;
@@ -167,7 +167,7 @@ set_vflags_short(l, flags)
 #endif
 }
 
-static __inline int
+static inline int
 get_vflags_short(l)
 	struct lwp *l;
 {

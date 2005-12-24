@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2005/12/24 20:06:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2005/12/24 20:06:47 perry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1594,7 +1594,7 @@ cpu_reset()
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
-	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0)); 
+	__asm volatile("divl %0,%1" : : "q" (0), "a" (0)); 
 
 #if 0
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.52 2005/12/11 12:18:39 christos Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.53 2005/12/24 20:07:25 perry Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.52 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.53 2005/12/24 20:07:25 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,7 +347,7 @@ dec_3maxplus_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_INT_MASK_1) {
 		struct clockframe cf;
 
-		__asm __volatile("lbu $0,48(%0)" ::
+		__asm volatile("lbu $0,48(%0)" ::
 			"r"(ioasic_base + IOASIC_SLOT_8_START));
 		latched_cycle_cnt = *(u_int32_t *)(ioasic_base + IOASIC_CTR);
 		cf.pc = pc;
@@ -463,7 +463,7 @@ static void
 kn03_wbflush()
 {
 	/* read once IOASIC SLOT 0 */
-	__asm __volatile("lw $0,%0" :: "i"(0xbf840000));
+	__asm volatile("lw $0,%0" :: "i"(0xbf840000));
 }
 
 /*

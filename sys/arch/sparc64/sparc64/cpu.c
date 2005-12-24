@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.42 2005/12/11 12:19:14 christos Exp $ */
+/*	$NetBSD: cpu.c,v 1.43 2005/12/24 20:07:37 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2005/12/11 12:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2005/12/24 20:07:37 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ struct cacheinfo cacheinfo;
 int sparc_ncpus = 0;
 struct cpu_info *cpus = NULL;
 
-__volatile cpuset_t cpus_active;/* set of active cpus */
+volatile cpuset_t cpus_active;/* set of active cpus */
 struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
 
 static struct cpu_info *alloc_cpuinfo(u_int);
