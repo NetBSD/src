@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3-gcc.h,v 1.1 2000/06/06 17:28:42 tsubai Exp $	*/
+/*	$NetBSD: sh3-gcc.h,v 1.2 2005/12/24 21:11:16 perry Exp $	*/
 
 /*
 -------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ a compiler does not support explicit inlining, this macro should be defined
 to be `static'.
 -------------------------------------------------------------------------------
 */
-#define INLINE static __inline
+#define INLINE static inline
 
 #define FLOAT64_DEMANGLE(a)	(a)
 #define FLOAT64_MANGLE(a)	(a)

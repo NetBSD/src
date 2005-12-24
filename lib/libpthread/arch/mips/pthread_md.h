@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.5 2004/07/03 05:10:06 simonb Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.6 2005/12/24 21:11:16 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _LIB_PTHREAD_MIPS_MD_H
 #define _LIB_PTHREAD_MIPS_MD_H
 
-static __inline long
+static inline long
 pthread__sp(void)
 {
 	long ret;

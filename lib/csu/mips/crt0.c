@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.17 2004/08/26 21:13:01 thorpej Exp $ */
+/* $NetBSD: crt0.c,v 1.18 2005/12/24 21:11:15 perry Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -86,7 +86,7 @@ __start(u_long sp,
 	 */
 
 #ifndef DYNAMIC
-	__asm __volatile("la $28,_gp");
+	__asm volatile("la $28,_gp");
 #endif
 
 	ksp = (char**)sp;
@@ -104,10 +104,10 @@ __start(u_long sp,
 
 #ifndef DYNAMIC
 		/* XXX 56 is compiler and stackframe dependent */
-		__asm __volatile("	addiu	%0,$29,56" : "=r" (ksp));
+		__asm volatile("	addiu	%0,$29,56" : "=r" (ksp));
 #else
 		/* XXX 64 is compiler and stackframe dependent */
-		__asm __volatile("	addiu	%0,$29,64" : "=r" (ksp));
+		__asm volatile("	addiu	%0,$29,64" : "=r" (ksp));
 #endif
 	}
 
@@ -157,7 +157,7 @@ __start(u_long sp,
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.17 2004/08/26 21:13:01 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.18 2005/12/24 21:11:15 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.26 2004/08/28 00:19:22 thorpej Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.27 2005/12/24 21:11:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -113,9 +113,9 @@ extern void __cxa_finalize(void *) __attribute__((weak));
 static void __attribute__((__unused__))					\
 __call_##func(void)							\
 {									\
-	__asm __volatile (".section " #section);			\
+	__asm volatile (".section " #section);			\
 	func();								\
-	__asm __volatile (".previous");					\
+	__asm volatile (".previous");					\
 }
 #else
 #error Need MD_CALL_STATIC_FUNCTION
