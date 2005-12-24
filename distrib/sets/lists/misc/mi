@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.128 2005/10/11 13:40:21 peter Exp $
+# $NetBSD: mi,v 1.129 2005/12/24 12:59:21 jmmv Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -503,7 +503,7 @@
 ./usr/share/examples/fstab/fstab.sd0.2		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.sd0.amiga	misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.sd0.atari	misc-fstab-examples	share
-./usr/share/examples/fstab/fstab.tmpfs		misc-fstab-examples	share
+./usr/share/examples/fstab/fstab.tmpfs		misc-obsolete		obsolete
 ./usr/share/examples/fstab/fstab.wd0.1		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.wd0.2		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.wd0.3		misc-fstab-examples	share

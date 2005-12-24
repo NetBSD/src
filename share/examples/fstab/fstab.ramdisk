@@ -1,7 +1,32 @@
-#	$NetBSD: fstab.ramdisk,v 1.3 2005/11/27 14:11:44 sketch Exp $
+#	$NetBSD: fstab.ramdisk,v 1.4 2005/12/24 12:59:21 jmmv Exp $
 #
-# Sample fstab for ramdisk (mfs) based /tmp filesystem.
+# Sample fstab for multiple ramdisks (mfs and tmpfs).
+#
+
+#
+# mfs examples
+#
+
 # /tmp is on a 5MB mfs partition; see mount_mfs(8) for details.
 # Adjust the size according to the amount of free RAM.
+swap	/tmp	mfs	rw,-s=5m,nodev,nosuid
+
 #
-swap		/tmp	mfs	rw,-s=5m,nodev,nosuid
+# tmpfs examples
+#
+
+# Standard tmpfs entry for /tmp.
+tmpfs	/tmp		tmpfs	rw
+
+# Standard tmpfs entry for /var/run.
+#tmpfs	/var/run	tmpfs	rw
+# Note that for this to work correctly you must add /var/run to the list
+# of critical local file systems in /etc/rc.conf.  You can do so by adding
+# the following to that file:
+#critical_filesystems_local="${critical_filesystems_local} /var/run"
+
+# Mounts tmpfs over /tmp with a size limit.
+#tmpfs	/tmp		tmpfs	rw,-s128M
+
+# Mounts a tmpfs instance to be used by a specific user.
+#tmpfs	/home/foo/tmp	tmpfs	rw,-ufoo,-gusers,-s50M
