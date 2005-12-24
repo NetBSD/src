@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.47 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: be.c,v 1.48 2005/12/24 23:41:34 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.47 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.48 2005/12/24 23:41:34 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -494,7 +494,7 @@ beattach(parent, self, aux)
  * Routine to copy from mbuf chain to transmit buffer in
  * network buffer memory.
  */
-static __inline__ int
+static inline int
 be_put(sc, idx, m)
 	struct be_softc *sc;
 	int idx;
@@ -526,7 +526,7 @@ be_put(sc, idx, m)
  * We copy the data into mbufs.  When full cluster sized units are present,
  * we copy into clusters.
  */
-static __inline__ struct mbuf *
+static inline struct mbuf *
 be_get(sc, idx, totlen)
 	struct be_softc *sc;
 	int idx, totlen;
@@ -579,7 +579,7 @@ be_get(sc, idx, totlen)
 /*
  * Pass a packet to the higher levels.
  */
-static __inline__ void
+static inline void
 be_read(sc, idx, len)
 	struct be_softc *sc;
 	int idx, len;

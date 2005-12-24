@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.10 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.11 2005/12/24 23:41:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -194,30 +194,30 @@ int	mlx_ccb_poll(struct mlx_softc *, struct mlx_ccb *, int);
 void	mlx_ccb_unmap(struct mlx_softc *, struct mlx_ccb *);
 int	mlx_ccb_wait(struct mlx_softc *, struct mlx_ccb *);
 
-static __inline__ void	mlx_make_type1(struct mlx_ccb *, u_int8_t, u_int16_t,
+static inline void	mlx_make_type1(struct mlx_ccb *, u_int8_t, u_int16_t,
 				       u_int32_t, u_int8_t, u_int32_t,
 				       u_int8_t);
-static __inline__ void	mlx_make_type2(struct mlx_ccb *, u_int8_t, u_int8_t,
+static inline void	mlx_make_type2(struct mlx_ccb *, u_int8_t, u_int8_t,
 				       u_int8_t, u_int8_t, u_int8_t,
 				       u_int8_t, u_int8_t, u_int32_t,
 				       u_int8_t);
-static __inline__ void	mlx_make_type3(struct mlx_ccb *, u_int8_t, u_int8_t,
+static inline void	mlx_make_type3(struct mlx_ccb *, u_int8_t, u_int8_t,
 				       u_int8_t, u_int16_t, u_int8_t,
 				       u_int8_t, u_int32_t, u_int8_t);
-static __inline__ void	mlx_make_type4(struct mlx_ccb *, u_int8_t, u_int16_t,
+static inline void	mlx_make_type4(struct mlx_ccb *, u_int8_t, u_int16_t,
 				       u_int32_t, u_int32_t, u_int8_t);
-static __inline__ void	mlx_make_type5(struct mlx_ccb *, u_int8_t,  u_int8_t,
+static inline void	mlx_make_type5(struct mlx_ccb *, u_int8_t,  u_int8_t,
 				       u_int8_t, u_int32_t, u_int32_t,
 				       u_int8_t);
 
-static __inline__ u_int8_t	mlx_inb(struct mlx_softc *, int);
-static __inline__ u_int16_t	mlx_inw(struct mlx_softc *, int);
-static __inline__ u_int32_t	mlx_inl(struct mlx_softc *, int);
-static __inline__ void		mlx_outb(struct mlx_softc *, int, u_int8_t);
-static __inline__ void		mlx_outw(struct mlx_softc *, int, u_int16_t);
-static __inline__ void		mlx_outl(struct mlx_softc *, int, u_int32_t);
+static inline u_int8_t	mlx_inb(struct mlx_softc *, int);
+static inline u_int16_t	mlx_inw(struct mlx_softc *, int);
+static inline u_int32_t	mlx_inl(struct mlx_softc *, int);
+static inline void		mlx_outb(struct mlx_softc *, int, u_int8_t);
+static inline void		mlx_outw(struct mlx_softc *, int, u_int16_t);
+static inline void		mlx_outl(struct mlx_softc *, int, u_int32_t);
 
-static __inline__ void
+static inline void
 mlx_make_type1(struct mlx_ccb *mc, u_int8_t code, u_int16_t f1, u_int32_t f2,
 	       u_int8_t f3, u_int32_t f4, u_int8_t f5)
 {
@@ -236,7 +236,7 @@ mlx_make_type1(struct mlx_ccb *mc, u_int8_t code, u_int16_t f1, u_int32_t f2,
 	mc->mc_mbox[0xc] = f5;
 }
 
-static __inline__ void
+static inline void
 mlx_make_type2(struct mlx_ccb *mc, u_int8_t code, u_int8_t f1, u_int8_t f2,
 	       u_int8_t f3, u_int8_t f4, u_int8_t f5, u_int8_t f6,
 	       u_int32_t f7, u_int8_t f8)
@@ -256,7 +256,7 @@ mlx_make_type2(struct mlx_ccb *mc, u_int8_t code, u_int8_t f1, u_int8_t f2,
 	mc->mc_mbox[0xc] = f8;
 }
 
-static __inline__ void
+static inline void
 mlx_make_type3(struct mlx_ccb *mc, u_int8_t code, u_int8_t f1, u_int8_t f2,
 	       u_int16_t f3, u_int8_t f4, u_int8_t f5, u_int32_t f6,
 	       u_int8_t f7)
@@ -276,7 +276,7 @@ mlx_make_type3(struct mlx_ccb *mc, u_int8_t code, u_int8_t f1, u_int8_t f2,
 	mc->mc_mbox[0xc] = f7;
 }
 
-static __inline__ void
+static inline void
 mlx_make_type4(struct mlx_ccb *mc, u_int8_t code,  u_int16_t f1, u_int32_t f2,
 	       u_int32_t f3, u_int8_t f4)
 {
@@ -295,7 +295,7 @@ mlx_make_type4(struct mlx_ccb *mc, u_int8_t code,  u_int16_t f1, u_int32_t f2,
 	mc->mc_mbox[0xc] = f4;
 }
 
-static __inline__ void
+static inline void
 mlx_make_type5(struct mlx_ccb *mc, u_int8_t code, u_int8_t f1, u_int8_t f2,
 	       u_int32_t f3, u_int32_t f4, u_int8_t f5)
 {
@@ -314,7 +314,7 @@ mlx_make_type5(struct mlx_ccb *mc, u_int8_t code, u_int8_t f1, u_int8_t f2,
 	mc->mc_mbox[0xc] = f5;
 }
 
-static __inline__ u_int8_t
+static inline u_int8_t
 mlx_inb(struct mlx_softc *mlx, int off)
 {
 
@@ -323,7 +323,7 @@ mlx_inb(struct mlx_softc *mlx, int off)
 	return (bus_space_read_1(mlx->mlx_iot, mlx->mlx_ioh, off));
 }
 
-static __inline__ u_int16_t
+static inline u_int16_t
 mlx_inw(struct mlx_softc *mlx, int off)
 {
 
@@ -332,7 +332,7 @@ mlx_inw(struct mlx_softc *mlx, int off)
 	return (bus_space_read_2(mlx->mlx_iot, mlx->mlx_ioh, off));
 }
 
-static __inline__ u_int32_t
+static inline u_int32_t
 mlx_inl(struct mlx_softc *mlx, int off)
 {
 
@@ -341,7 +341,7 @@ mlx_inl(struct mlx_softc *mlx, int off)
 	return (bus_space_read_4(mlx->mlx_iot, mlx->mlx_ioh, off));
 }
 
-static __inline__ void
+static inline void
 mlx_outb(struct mlx_softc *mlx, int off, u_int8_t val)
 {
 
@@ -350,7 +350,7 @@ mlx_outb(struct mlx_softc *mlx, int off, u_int8_t val)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-static __inline__ void
+static inline void
 mlx_outw(struct mlx_softc *mlx, int off, u_int16_t val)
 {
 
@@ -359,7 +359,7 @@ mlx_outw(struct mlx_softc *mlx, int off, u_int16_t val)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-static __inline__ void
+static inline void
 mlx_outl(struct mlx_softc *mlx, int off, u_int32_t val)
 {
 

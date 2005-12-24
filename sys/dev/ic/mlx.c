@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.37 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: mlx.c,v 1.38 2005/12/24 23:41:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.37 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.38 2005/12/24 23:41:33 perry Exp $");
 
 #include "ld.h"
 
@@ -135,7 +135,7 @@ static int	mlx_rebuild(struct mlx_softc *, int, int);
 static void	mlx_shutdown(void *);
 static int	mlx_user_command(struct mlx_softc *, struct mlx_usercommand *);
 
-static __inline__ time_t	mlx_curtime(void);
+static inline time_t	mlx_curtime(void);
 
 dev_type_open(mlxopen);
 dev_type_close(mlxclose);
@@ -257,7 +257,7 @@ struct {
  * Return the current time in seconds - we're not particularly interested in
  * precision here.
  */
-static __inline__ time_t
+static inline time_t
 mlx_curtime(void)
 {
 	time_t rt;

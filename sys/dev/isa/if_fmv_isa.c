@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isa.c,v 1.5 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.6 2005/12/24 23:41:33 perry Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.5 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.6 2005/12/24 23:41:33 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ struct fe_simple_probe_struct {
 	uint8_t bits;	/* Values to be compared against. */
 };
 
-static __inline__ int fe_simple_probe(bus_space_tag_t, bus_space_handle_t,
+static inline int fe_simple_probe(bus_space_tag_t, bus_space_handle_t,
     struct fe_simple_probe_struct const *);
 static int fmv_find(bus_space_tag_t, bus_space_handle_t, int *, int *);
 
@@ -178,7 +178,7 @@ fmv_isa_match(struct device *parent, struct cfdata *match, void *aux)
 /*
  * Check for specific bits in specific registers have specific values.
  */
-static __inline__ int
+static inline int
 fe_simple_probe(bus_space_tag_t iot, bus_space_handle_t ioh,
     struct fe_simple_probe_struct const *sp)
 {

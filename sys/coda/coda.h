@@ -1,4 +1,4 @@
-/* $NetBSD: coda.h,v 1.11 2005/12/11 12:19:50 christos Exp $ */
+/* $NetBSD: coda.h,v 1.12 2005/12/24 23:41:33 perry Exp $ */
 
 /*
 
@@ -202,13 +202,13 @@ typedef struct {
     u_long Unique;
 } CodaFid;
 
-static __inline__ ino_t coda_f2i(CodaFid *fid)
+static inline ino_t coda_f2i(CodaFid *fid)
 {
 	if (!fid) return 0;
 	return (fid->Unique + (fid->Vnode<<10) + (fid->Volume<<20));
 }
 
-static __inline__ char * coda_f2s(CodaFid *fid)
+static inline char * coda_f2s(CodaFid *fid)
 {
   static char fid_str [35];
   snprintf (fid_str, 35, "[%lx.%lx.%lx]", fid->Volume,
@@ -216,7 +216,7 @@ static __inline__ char * coda_f2s(CodaFid *fid)
   return fid_str;
 }
 
-static __inline__ int coda_fid_eq (CodaFid *fid1, CodaFid *fid2)
+static inline int coda_fid_eq (CodaFid *fid1, CodaFid *fid2)
 {
   return (fid1->Volume == fid2->Volume &&
 	  fid1->Vnode == fid2->Vnode &&
@@ -235,13 +235,13 @@ typedef struct {
 } CodaFid;
 
 
-static __inline__ ino_t coda_f2i(CodaFid *fid)
+static inline ino_t coda_f2i(CodaFid *fid)
 {
 	if (!fid) return 0;
 	return (fid->opaque[1] + (fid->opaque[2]<<10) + (fid->opaque[3]<<20));
 }
 
-static __inline__ char * coda_f2s(CodaFid *fid)
+static inline char * coda_f2s(CodaFid *fid)
 {
   static char fid_str [35];
   snprintf (fid_str, 35, "[%x.%x.%x.%x]", fid->opaque[0],
@@ -249,7 +249,7 @@ static __inline__ char * coda_f2s(CodaFid *fid)
   return fid_str;
 }
 
-static __inline__ int coda_fid_eq (CodaFid *fid1, CodaFid *fid2)
+static inline int coda_fid_eq (CodaFid *fid1, CodaFid *fid2)
 {
   return (fid1->opaque[0] == fid2->opaque[0] &&
 	  fid1->opaque[1] == fid2->opaque[1] &&

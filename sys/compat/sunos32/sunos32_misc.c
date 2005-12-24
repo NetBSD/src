@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.34 2005/12/24 20:45:08 perry Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.35 2005/12/24 23:41:33 perry Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.34 2005/12/24 20:45:08 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.35 2005/12/24 23:41:33 perry Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -636,7 +636,7 @@ async_daemon(l, v, retval)
 void	native_to_sunos_sigset __P((const sigset_t *, int *));
 void	sunos_to_native_sigset __P((const int, sigset_t *));
 
-__inline__ void
+inline void
 native_to_sunos_sigset(ss, mask)
 	const sigset_t *ss;
 	int *mask;
@@ -644,7 +644,7 @@ native_to_sunos_sigset(ss, mask)
 	*mask = ss->__bits[0];
 }
 
-__inline__ void
+inline void
 sunos_to_native_sigset(mask, ss)
 	const int mask;
 	sigset_t *ss;
@@ -979,9 +979,9 @@ sunos32_sys_setsockopt(l, v, retval)
 	return (error);
 }
 
-static __inline__ int sunos32_sys_socket_common(struct lwp *, register_t *,
+static inline int sunos32_sys_socket_common(struct lwp *, register_t *,
 					      int type);
-static __inline__ int
+static inline int
 sunos32_sys_socket_common(l, retval, type)
 	struct lwp *l;
 	register_t *retval;

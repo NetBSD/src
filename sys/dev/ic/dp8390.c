@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.56 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.57 2005/12/24 23:41:33 perry Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.56 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.57 2005/12/24 23:41:33 perry Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -69,17 +69,17 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.56 2005/12/11 12:21:26 christos Exp $")
 #include <dev/ic/dp8390var.h>
 
 #ifdef DEBUG
-#define __inline__	/* XXX for debugging porpoises */
+#define inline	/* XXX for debugging porpoises */
 int	dp8390_debug = 0;
 #endif
 
-static __inline__ void	dp8390_xmit(struct dp8390_softc *);
+static inline void	dp8390_xmit(struct dp8390_softc *);
 
-static __inline__ void	dp8390_read_hdr(struct dp8390_softc *,
+static inline void	dp8390_read_hdr(struct dp8390_softc *,
 			    int, struct dp8390_ring *);
-static __inline__ int	dp8390_ring_copy(struct dp8390_softc *,
+static inline int	dp8390_ring_copy(struct dp8390_softc *,
 			    int, caddr_t, u_short);
-static __inline__ int	dp8390_write_mbuf(struct dp8390_softc *,
+static inline int	dp8390_write_mbuf(struct dp8390_softc *,
 			    struct mbuf *, int);
 
 static int		dp8390_test_mem(struct dp8390_softc *);
@@ -409,7 +409,7 @@ dp8390_init(sc)
 /*
  * This routine actually starts the transmission on the interface.
  */
-static __inline__ void
+static inline void
 dp8390_xmit(sc)
 	struct dp8390_softc *sc;
 {
@@ -1182,7 +1182,7 @@ dp8390_test_mem(sc)
 /*
  * Read a packet header from the ring, given the source offset.
  */
-static __inline__ void
+static inline void
 dp8390_read_hdr(sc, src, hdrp)
 	struct dp8390_softc *sc;
 	int src;
@@ -1206,7 +1206,7 @@ dp8390_read_hdr(sc, src, hdrp)
  * destination buffer, given a source offset and destination address.
  * Takes into account ring-wrap.
  */
-static __inline__ int
+static inline int
 dp8390_ring_copy(sc, src, dst, amount)
 	struct dp8390_softc *sc;
 	int src;
@@ -1239,7 +1239,7 @@ dp8390_ring_copy(sc, src, dst, amount)
  * Currently uses an extra buffer/extra memory copy, unless the whole
  * packet fits in one mbuf.
  */
-static __inline__ int
+static inline int
 dp8390_write_mbuf(sc, m, buf)
 	struct dp8390_softc *sc;
 	struct mbuf *m;

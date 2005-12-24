@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.117 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.118 2005/12/24 23:41:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.117 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.118 2005/12/24 23:41:33 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,7 +543,7 @@ ncr53c9x_init(sc, doreset)
  * only make sense when he DMA CSR has an interrupt showing. Call only
  * if an interrupt is pending.
  */
-__inline__ void
+inline void
 ncr53c9x_readregs(sc)
 	struct ncr53c9x_softc *sc;
 {
