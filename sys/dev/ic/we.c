@@ -1,4 +1,4 @@
-/*	$NetBSD: we.c,v 1.8 2005/12/11 12:21:29 christos Exp $	*/
+/*	$NetBSD: we.c,v 1.9 2005/12/24 20:27:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.8 2005/12/11 12:21:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.9 2005/12/24 20:27:30 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ static int	we_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
 static void	we_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 static int	we_test_mem(struct dp8390_softc *);
 
-static __inline void we_readmem(struct we_softc *, int, u_int8_t *, int);
+static inline void we_readmem(struct we_softc *, int, u_int8_t *, int);
 
 /*
  * Delay needed when switching 16-bit access to shared memory.
@@ -325,7 +325,7 @@ we_test_mem(sc)
  * copy 'len' from NIC to host using shared memory.  The 'len' is rounded
  * up to a word - ok as long as mbufs are word-sized.
  */
-static __inline void
+static inline void
 we_readmem(wsc, from, to, len)
 	struct we_softc *wsc;
 	int from;

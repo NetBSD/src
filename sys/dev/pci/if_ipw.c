@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.15 2005/12/20 07:51:38 skrll Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.16 2005/12/24 20:27:42 perry Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.15 2005/12/20 07:51:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.16 2005/12/24 20:27:42 perry Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -140,14 +140,14 @@ static void	ipw_write_mem_1(struct ipw_softc *, bus_size_t, uint8_t *,
 static const struct ieee80211_rateset ipw_rateset_11b =
 	{ 4, { 2, 4, 11, 22 } };
 
-static __inline uint8_t
+static inline uint8_t
 MEM_READ_1(struct ipw_softc *sc, uint32_t addr)
 {
 	CSR_WRITE_4(sc, IPW_CSR_INDIRECT_ADDR, addr);
 	return CSR_READ_1(sc, IPW_CSR_INDIRECT_DATA);
 }
 
-static __inline uint32_t
+static inline uint32_t
 MEM_READ_4(struct ipw_softc *sc, uint32_t addr)
 {
 	CSR_WRITE_4(sc, IPW_CSR_INDIRECT_ADDR, addr);

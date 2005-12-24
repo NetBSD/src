@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.101 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.102 2005/12/24 20:27:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -500,7 +500,7 @@ struct scsipi_xfer {
 	TAILQ_ENTRY(scsipi_xfer) device_q;  /* device's pending xfers */
 	struct callout xs_callout;	/* callout for adapter use */
 	int	xs_control;		/* control flags */
-	__volatile int xs_status;	/* status flags */
+	volatile int xs_status;	/* status flags */
 	struct scsipi_periph *xs_periph;/* peripherial doing the xfer */
 	int	xs_retries;		/* the number of times to retry */
 	int	xs_requeuecnt;		/* number of requeues */
@@ -706,7 +706,7 @@ void	show_scsipi_cmd(struct scsipi_xfer *);
 void	show_mem(u_char *, int);
 #endif /* _KERNEL */
 
-static __inline void __unused
+static inline void __unused
 _lto2b(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -714,7 +714,7 @@ _lto2b(u_int32_t val, u_int8_t *bytes)
 	bytes[1] = val & 0xff;
 }
 
-static __inline void __unused
+static inline void __unused
 _lto3b(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -723,7 +723,7 @@ _lto3b(u_int32_t val, u_int8_t *bytes)
 	bytes[2] = val & 0xff;
 }
 
-static __inline void __unused
+static inline void __unused
 _lto4b(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -733,7 +733,7 @@ _lto4b(u_int32_t val, u_int8_t *bytes)
 	bytes[3] = val & 0xff;
 }
 
-static __inline void __unused
+static inline void __unused
 _lto8b(u_int64_t val, u_int8_t *bytes)
 {
 
@@ -747,7 +747,7 @@ _lto8b(u_int64_t val, u_int8_t *bytes)
 	bytes[7] = val         & 0xff;
 }
 
-static __inline u_int32_t __unused
+static inline u_int32_t __unused
 _2btol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
@@ -757,7 +757,7 @@ _2btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int32_t __unused
+static inline u_int32_t __unused
 _3btol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
@@ -768,7 +768,7 @@ _3btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int32_t __unused
+static inline u_int32_t __unused
 _4btol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
@@ -780,7 +780,7 @@ _4btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int64_t __unused
+static inline u_int64_t __unused
 _5btol(const u_int8_t *bytes)
 {
 	u_int64_t rv;
@@ -793,7 +793,7 @@ _5btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int64_t __unused
+static inline u_int64_t __unused
 _8btol(const u_int8_t *bytes)
 {
 	u_int64_t rv;
@@ -809,7 +809,7 @@ _8btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline void __unused
+static inline void __unused
 _lto2l(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -817,7 +817,7 @@ _lto2l(u_int32_t val, u_int8_t *bytes)
 	bytes[1] = (val >> 8) & 0xff;
 }
 
-static __inline void __unused
+static inline void __unused
 _lto3l(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -826,7 +826,7 @@ _lto3l(u_int32_t val, u_int8_t *bytes)
 	bytes[2] = (val >> 16) & 0xff;
 }
 
-static __inline void __unused
+static inline void __unused
 _lto4l(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -836,7 +836,7 @@ _lto4l(u_int32_t val, u_int8_t *bytes)
 	bytes[3] = (val >> 24) & 0xff;
 }
 
-static __inline u_int32_t __unused
+static inline u_int32_t __unused
 _2ltol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
@@ -846,7 +846,7 @@ _2ltol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int32_t __unused
+static inline u_int32_t __unused
 _3ltol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
@@ -857,7 +857,7 @@ _3ltol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int32_t __unused
+static inline u_int32_t __unused
 _4ltol(const u_int8_t *bytes)
 {
 	u_int32_t rv;

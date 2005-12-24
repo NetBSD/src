@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.6 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.7 2005/12/24 20:27:41 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.6 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.7 2005/12/24 20:27:41 perry Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -153,7 +153,7 @@ static inline void
 idma_cache_flush(void * p)
 {
 	KASSERT(((unsigned int)p & (CACHELINESIZE-1)) == 0);
-        __asm __volatile ("eieio; dcbf 0,%0; eieio; lwz %0,0(%0); sync;"
+        __asm volatile ("eieio; dcbf 0,%0; eieio; lwz %0,0(%0); sync;"
                                         : "+r"(p):);
 }
 
@@ -161,7 +161,7 @@ static inline void
 idma_cache_invalidate(void * const p)
 {
 	KASSERT(((unsigned int)p & (CACHELINESIZE-1)) == 0);
-	__asm __volatile ("eieio; dcbi 0,%0; sync;" :: "r"(p));
+	__asm volatile ("eieio; dcbi 0,%0; sync;" :: "r"(p));
 }
 
 static inline void

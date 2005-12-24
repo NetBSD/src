@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.33 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: lance.c,v 1.34 2005/12/24 20:27:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.33 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.34 2005/12/24 20:27:30 perry Exp $");
 
 #include "opt_ccitt.h"
 #include "opt_llc.h"
@@ -121,7 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.33 2005/12/11 12:21:27 christos Exp $");
 #define	integrate
 #define hide
 #else
-#define	integrate	static __inline
+#define	integrate	static inline
 #define hide		static
 #endif
 

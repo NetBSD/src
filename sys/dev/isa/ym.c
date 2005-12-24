@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.26 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: ym.c,v 1.27 2005/12/24 20:27:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.26 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.27 2005/12/24 20:27:41 perry Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -206,8 +206,8 @@ const struct audio_hw_if ym_hw_if = {
 	NULL,
 };
 
-static __inline int ym_read(struct ym_softc *, int);
-static __inline void ym_write(struct ym_softc *, int, int);
+static inline int ym_read(struct ym_softc *, int);
+static inline void ym_write(struct ym_softc *, int, int);
 
 void
 ym_attach(struct ym_softc *sc)
@@ -328,7 +328,7 @@ ym_attach(struct ym_softc *sc)
 	}
 }
 
-static __inline int
+static inline int
 ym_read(struct ym_softc *sc, int reg)
 {
 
@@ -337,7 +337,7 @@ ym_read(struct ym_softc *sc, int reg)
 	return bus_space_read_1(sc->sc_iot, sc->sc_controlioh, SA3_CTL_DATA);
 }
 
-static __inline void
+static inline void
 ym_write(struct ym_softc *sc, int reg, int data)
 {
 

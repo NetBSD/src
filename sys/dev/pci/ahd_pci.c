@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.20 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.21 2005/12/24 20:27:42 perry Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.20 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.21 2005/12/24 20:27:42 perry Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.20 2005/12/11 12:22:48 christos Exp $"
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
 
-static __inline uint64_t
+static inline uint64_t
 ahd_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 {
 	uint64_t id;

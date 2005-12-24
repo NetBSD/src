@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.113 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.114 2005/12/24 20:27:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.113 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.114 2005/12/24 20:27:30 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -225,7 +225,7 @@ u_int16_t ep_read_eeprom(struct ep_softc *, u_int16_t);
 static inline void ep_reset_cmd(struct ep_softc *sc, u_int cmd, u_int arg);
 static inline void ep_finish_reset(bus_space_tag_t, bus_space_handle_t);
 static inline void ep_discard_rxtop(bus_space_tag_t, bus_space_handle_t);
-static __inline int ep_w1_reg(struct ep_softc *, int);
+static inline int ep_w1_reg(struct ep_softc *, int);
 
 /*
  * MII bit-bang glue.
@@ -249,7 +249,7 @@ const struct mii_bitbang_ops ep_mii_bitbang_ops = {
  * Some chips (3c515 [Corkscrew] and 3c574 [RoadRunner]) have
  * Window 1 registers offset!
  */
-static __inline int
+static inline int
 ep_w1_reg(sc, reg)
 	struct ep_softc *sc;
 	int reg;

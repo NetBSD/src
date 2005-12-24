@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.16 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.17 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.16 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.17 2005/12/24 20:27:29 perry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -117,7 +117,7 @@ void le_dec_writereg(volatile u_short *regptr, u_short val);
 #define	integrate
 #define hide
 #else
-#define	integrate	static __inline
+#define	integrate	static inline
 #define hide		static
 #endif
 

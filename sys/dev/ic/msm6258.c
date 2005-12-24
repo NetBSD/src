@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.14 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.15 2005/12/24 20:27:30 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.14 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.15 2005/12/24 20:27:30 perry Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -55,8 +55,8 @@ struct msm6258_codecvar {
 static stream_filter_t *msm6258_factory
 	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
 static void msm6258_dtor(struct stream_filter *);
-static __inline uint8_t	pcm2adpcm_step(struct msm6258_codecvar *, int16_t);
-static __inline int16_t	adpcm2pcm_step(struct msm6258_codecvar *, uint8_t);
+static inline uint8_t	pcm2adpcm_step(struct msm6258_codecvar *, int16_t);
+static inline int16_t	adpcm2pcm_step(struct msm6258_codecvar *, uint8_t);
 
 static const int adpcm_estimindex[16] = {
 	 2,  6,  10,  14,  18,  22,  26,  30,
@@ -99,7 +99,7 @@ msm6258_dtor(struct stream_filter *this)
 /*
  * signed 16bit linear PCM -> OkiADPCM
  */
-static __inline uint8_t
+static inline uint8_t
 pcm2adpcm_step(struct msm6258_codecvar *mc, int16_t a)
 {
 	int estim = (int)mc->mc_estim;
@@ -259,7 +259,7 @@ DEFINE_FILTER(msm6258_linear8_to_adpcm)
 /*
  * OkiADPCM -> signed 16bit linear PCM
  */
-static __inline int16_t
+static inline int16_t
 adpcm2pcm_step(struct msm6258_codecvar *mc, uint8_t b)
 {
 	int estim = (int)mc->mc_estim;

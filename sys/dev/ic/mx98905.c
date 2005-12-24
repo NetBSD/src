@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.7 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.8 2005/12/24 20:27:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.7 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.8 2005/12/24 20:27:30 perry Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -92,8 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.7 2005/12/11 12:21:28 christos Exp $")
 #define	bus_space_read_multi_stream_2	bus_space_read_multi_2
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
-static __inline void mx98905_write_setup(struct dp8390_softc *, int, int);
-static __inline void mx98905_write_wait(struct dp8390_softc *);
+static inline void mx98905_write_setup(struct dp8390_softc *, int, int);
+static inline void mx98905_write_wait(struct dp8390_softc *);
 
 void
 mx98905_attach(struct dp8390_softc *sc)
@@ -104,7 +104,7 @@ mx98905_attach(struct dp8390_softc *sc)
 	sc->read_hdr = mx98905_read_hdr;
 }
 
-static __inline void
+static inline void
 mx98905_write_setup(sc, len, buf)
 	struct dp8390_softc *sc;
 	int len, buf;
@@ -138,7 +138,7 @@ mx98905_write_setup(sc, len, buf)
 }
 
 
-static __inline void
+static inline void
 mx98905_write_wait(sc)
 	struct dp8390_softc *sc;
 {
@@ -349,7 +349,7 @@ mx98905_read_hdr(sc, buf, hdr)
 #endif
 }
 
-static __inline void
+static inline void
 mx98905_read_setup(bus_space_tag_t nict, bus_space_handle_t nich,
     int len, int buf)
 {

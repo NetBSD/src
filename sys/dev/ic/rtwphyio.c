@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.8 2005/12/11 12:21:28 christos Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.9 2005/12/24 20:27:30 perry Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.8 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.9 2005/12/24 20:27:30 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 }
 
 /* Help rtw_rf_hostwrite bang bits to RF over 3-wire interface. */
-static __inline void
+static inline void
 rtw_rf_hostbangbits(struct rtw_regs *regs, uint32_t bits, int lo_to_hi,
     u_int nbits)
 {
@@ -173,7 +173,7 @@ rtw_rf_hostbangbits(struct rtw_regs *regs, uint32_t bits, int lo_to_hi,
 /* Help rtw_rf_macwrite: tell MAC to bang bits to RF over the 3-wire
  * interface.
  */
-static __inline int
+static inline int
 rtw_rf_macbangbits(struct rtw_regs *regs, uint32_t reg)
 {
 	int i;
@@ -226,7 +226,7 @@ rtw_grf5101_mac_crypt(u_int addr, uint32_t val)
 #undef EXTRACT_NIBBLE
 }
 
-static __inline const char *
+static inline const char *
 rtw_rfchipid_string(enum rtw_rfchipid rfchipid)
 {
 	switch (rfchipid) {

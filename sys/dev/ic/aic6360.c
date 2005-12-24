@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.85 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.86 2005/12/24 20:27:29 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.85 2005/12/11 12:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.86 2005/12/24 20:27:29 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -684,7 +684,7 @@ aic_poll(struct aic_softc *sc, struct scsipi_xfer *xs, int count)
  * LOW LEVEL SCSI UTILITIES
  */
 
-static __inline void
+static inline void
 aic_sched_msgout(struct aic_softc *sc, u_char m)
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -701,7 +701,7 @@ aic_sched_msgout(struct aic_softc *sc, u_char m)
 #if !AIC_USE_SYNCHRONOUS
 /* ARGSUSED */
 #endif
-static __inline void
+static inline void
 aic_setsync(struct aic_softc *sc, struct aic_tinfo *ti)
 {
 #if AIC_USE_SYNCHRONOUS

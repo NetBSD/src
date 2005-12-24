@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.22 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.23 2005/12/24 20:27:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -151,10 +151,10 @@ struct isapnp_attach_args {
 	struct isapnp_pin	ipa_drq[ISAPNP_NUM_DRQ];
 };
 
-static __inline void isapnp_write_reg(struct isapnp_softc *, int, u_char);
-static __inline u_char isapnp_read_reg(struct isapnp_softc *, int);
+static inline void isapnp_write_reg(struct isapnp_softc *, int, u_char);
+static inline u_char isapnp_read_reg(struct isapnp_softc *, int);
 
-static __inline void
+static inline void
 isapnp_write_reg(sc, r, v)
 	struct isapnp_softc *sc;
 	int r;
@@ -164,7 +164,7 @@ isapnp_write_reg(sc, r, v)
 	ISAPNP_WRITE_DATA(sc, v);
 }
 
-static __inline u_char
+static inline u_char
 isapnp_read_reg(sc, r)
 	struct isapnp_softc *sc;
 {

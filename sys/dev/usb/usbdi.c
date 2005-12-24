@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.109 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.110 2005/12/24 20:27:52 perry Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.109 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.110 2005/12/24 20:27:52 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ usbd_finish(void)
 	--usbd_nbuses;
 }
 
-static __inline int
+static inline int
 usbd_xfer_isread(usbd_xfer_handle xfer)
 {
 	if (xfer->rqflags & URQ_REQUEST)

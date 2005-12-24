@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.140 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: tulip.c,v 1.141 2005/12/24 20:27:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.140 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.141 2005/12/24 20:27:30 perry Exp $");
 
 #include "bpfilter.h"
 
@@ -2593,7 +2593,7 @@ tlp_filter_setup(struct tulip_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	__volatile u_int32_t *sp;
+	volatile u_int32_t *sp;
 	struct tulip_txsoft *txs;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t hash, hashsize;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.14 $
+ *       $Revision: 1.15 $
  *
  *****************************************************************************/
 
@@ -163,7 +163,7 @@
 #endif /* DDB */
 #endif /* ACPI_DEBUG */
 
-static __inline int
+static inline int
 isprint(int ch)
 {
 	return(isspace(ch) || isascii(ch));
@@ -180,7 +180,7 @@ isprint(int ch)
 #define __sti()
 
 /* XXX */
-#define __inline inline
+#define inline inline
 
 #endif /* _KERNEL */
 
@@ -189,7 +189,7 @@ isprint(int ch)
 #define ACPI_USE_NATIVE_DIVIDE
 
 /* NetBSD doesn't have strupr, should be fixed. (move to libkern) */
-static __inline char *
+static inline char *
 strupr(char *str)
 {
 	char *c = str;
