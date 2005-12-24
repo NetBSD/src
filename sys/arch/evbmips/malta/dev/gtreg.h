@@ -1,6 +1,6 @@
-/*	$NetBSD: gtreg.h,v 1.1 2002/03/07 14:44:05 simonb Exp $	*/
+/*	$NetBSD: gtreg.h,v 1.2 2005/12/24 20:07:03 perry Exp $	*/
 
-#define GT_REGVAL(x)	*((__volatile u_int32_t *) \
+#define GT_REGVAL(x)	*((volatile u_int32_t *) \
 			    (MIPS_PHYS_TO_KSEG1(MALTA_CORECTRL_BASE + (x))))
 
 /* CPU Configuration Register Map */

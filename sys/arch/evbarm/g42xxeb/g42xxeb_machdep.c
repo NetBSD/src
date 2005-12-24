@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.5 2005/12/11 12:17:08 christos Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.6 2005/12/24 20:06:59 perry Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -329,13 +329,13 @@ cpu_reboot(int howto, char *bootstr)
 	/*NOTREACHED*/
 }
 
-static __inline
+static inline
 pd_entry_t *
 read_ttb(void)
 {
   long ttb;
 
-  __asm __volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
+  __asm volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
 
 
   return (pd_entry_t *)(ttb & ~((1<<14)-1));

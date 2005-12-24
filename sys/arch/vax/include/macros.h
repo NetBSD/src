@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.33 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: macros.h,v 1.34 2005/12/24 20:07:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -45,7 +45,7 @@ ffs(int reg)
 {
 	register int val;
 
-	__asm__ __volatile ("ffs $0,$32,%1,%0;"
+	__asm__ volatile ("ffs $0,$32,%1,%0;"
 			    "bneq 1f;"
 			    "mnegl $1,%0;"
 			    "1:;"
@@ -58,7 +58,7 @@ ffs(int reg)
 static __inline__ void __attribute__((__unused__))
 _remque(void *p)
 {
-	__asm__ __volatile ("remque (%0),%0;clrl 4(%0)"
+	__asm__ volatile ("remque (%0),%0;clrl 4(%0)"
 			:
 			: "r" (p)
 			: "memory" );
@@ -67,7 +67,7 @@ _remque(void *p)
 static __inline__ void  __attribute__((__unused__))
 _insque(void *p, void *q)
 {
-	__asm__ __volatile ("insque (%0),(%1)"
+	__asm__ volatile ("insque (%0),(%1)"
 			:
 			: "r" (p),"r" (q)
 			: "memory" );
@@ -79,7 +79,7 @@ memcpy(void *to, const void *from, size_t len)
 	if (len > 65535) {
 		__blkcpy(from, to, len);
 	} else {
-		__asm__ __volatile ("movc3 %0,%1,%2"
+		__asm__ volatile ("movc3 %0,%1,%2"
 			:
 			: "g" (len), "m" (*(const char *)from), "m" (*(char *)to)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
@@ -92,7 +92,7 @@ memmove(void *to, const void *from, size_t len)
 	if (len > 65535) {
 		__blkcpy(from, to, len);
 	} else {
-		__asm__ __volatile ("movc3 %0,%1,%2"
+		__asm__ volatile ("movc3 %0,%1,%2"
 			:
 			: "g" (len), "m" (*(const char *)from), "m" (*(char *)to)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
@@ -104,7 +104,7 @@ memmove(void *to, const void *from, size_t len)
 static __inline__ void __attribute__((__unused__))
 bcopy(const void *from, void *to, size_t len)
 {
-	__asm__ __volatile ("movc3 %0,%1,%2"
+	__asm__ volatile ("movc3 %0,%1,%2"
 			:
 			: "g" (len), "m" (*(char *)from), "m" (*(char *)to)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
@@ -117,7 +117,7 @@ memset(void *block, int c, size_t len)
 	if (len > 65535) {
 		__blkset(block, c, len);
 	} else {
-		__asm__ __volatile ("movc5 $0,(%%sp),%2,%1,%0"
+		__asm__ volatile ("movc5 $0,(%%sp),%2,%1,%0"
 			:
 			: "m" (*(char *)block), "g" (len), "g" (c)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
@@ -132,7 +132,7 @@ bzero(void *block, size_t len)
 	if (len > 65535)
 		__blkset(block, 0, len);
 	else {
-		__asm__ __volatile ("movc5 $0,(%%sp),$0,%1,%0"
+		__asm__ volatile ("movc5 $0,(%%sp),$0,%1,%0"
 			:
 			: "m" (*(char *)block), "g" (len)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
@@ -147,7 +147,7 @@ memcmp(const void *b1, const void *b2, size_t len)
 {
 	register int ret;
 
-	__asm__ __volatile("cmpc3 %3,(%1),(%2);"
+	__asm__ volatile("cmpc3 %3,(%1),(%2);"
 			   "movl %%r0,%0"
 			: "=r" (ret)
 			: "r" (b1), "r" (b2), "r" (len)
@@ -160,7 +160,7 @@ bcmp(const void *b1, const void *b2, size_t len)
 {
 	register int ret;
 
-	__asm__ __volatile("cmpc3 %3,(%1),(%2);"
+	__asm__ volatile("cmpc3 %3,(%1),(%2);"
 			   "movl %%r0,%0"
 			: "=r" (ret)
 			: "r" (b1), "r" (b2), "r" (len)
@@ -174,7 +174,7 @@ strlen(const char *cp)
 {
         register size_t ret;
 
-        __asm__ __volatile("locc $0,$65535,(%1);"
+        __asm__ volatile("locc $0,$65535,(%1);"
 			   "subl3 %%r0,$65535,%0"
                         : "=r" (ret)
                         : "r" (cp)
@@ -185,7 +185,7 @@ strlen(const char *cp)
 static __inline__ char * __attribute__((__unused__))
 strcat(char *cp, const char *c2)
 {
-        __asm__ __volatile("locc $0,$65535,(%1);"
+        __asm__ volatile("locc $0,$65535,(%1);"
 			   "subl3 %%r0,$65535,%%r2;"
 			   "incl %%r2;"
                            "locc $0,$65535,(%0);"
@@ -199,7 +199,7 @@ strcat(char *cp, const char *c2)
 static __inline__ char * __attribute__((__unused__))
 strncat(char *cp, const char *c2, size_t count)
 {
-        __asm__ __volatile("locc $0,%2,(%1);"
+        __asm__ volatile("locc $0,%2,(%1);"
 			   "subl3 %%r0,%2,%%r2;"
                            "locc $0,$65535,(%0);"
 			   "movc3 %%r2,(%1),(%%r1);"
@@ -213,7 +213,7 @@ strncat(char *cp, const char *c2, size_t count)
 static __inline__ char * __attribute__((__unused__))
 strcpy(char *cp, const char *c2)
 {
-        __asm__ __volatile("locc $0,$65535,(%1);"
+        __asm__ volatile("locc $0,$65535,(%1);"
 			   "subl3 %%r0,$65535,%%r2;"
                            "movc3 %%r2,(%1),(%0);"
 			   "movb $0,(%%r3)"
@@ -226,7 +226,7 @@ strcpy(char *cp, const char *c2)
 static __inline__ char * __attribute__((__unused__))
 strncpy(char *cp, const char *c2, size_t len)
 {
-        __asm__ __volatile("movl %2,%%r2;"
+        __asm__ volatile("movl %2,%%r2;"
 			   "locc $0,%%r2,(%1);"
 			   "beql 1f;"
 			   "subl3 %%r0,%2,%%r2;"
@@ -243,7 +243,7 @@ static __inline__ void * __attribute__((__unused__))
 memchr(const void *cp, int c, size_t len)
 {
         void *ret;
-        __asm__ __volatile("locc %2,%3,(%1);"
+        __asm__ volatile("locc %2,%3,(%1);"
 			   "bneq 1f;"
 			   "clrl %%r1;"
 			   "1:;"
@@ -258,7 +258,7 @@ static __inline__ int __attribute__((__unused__))
 strcmp(const char *cp, const char *c2)
 {
         register int ret;
-        __asm__ __volatile("locc $0,$65535,(%1);"
+        __asm__ volatile("locc $0,$65535,(%1);"
 			   "subl3 %%r0,$65535,%%r0;"
 			   "incl %%r0;"
                            "cmpc3 %%r0,(%1),(%2);"
@@ -281,7 +281,7 @@ static __inline__ int __attribute__((__unused__))
 locc(int mask, char *cp, size_t size){
 	register ret;
 
-	__asm__ __volatile("locc %1,%2,(%3);"
+	__asm__ volatile("locc %1,%2,(%3);"
 			   "movl %%r0,%0"
 			: "=r" (ret)
 			: "r" (mask),"r"(size),"r"(cp)
@@ -295,7 +295,7 @@ scanc(u_int size, const u_char *cp, const u_char *table, int mask)
 {
 	register int ret;
 
-	__asm__ __volatile("scanc %1,(%2),(%3),%4;"
+	__asm__ volatile("scanc %1,(%2),(%3),%4;"
 			   "movl %%r0,%0"
 			: "=g"(ret)
 			: "r"(size),"r"(cp),"r"(table),"r"(mask)
@@ -308,7 +308,7 @@ skpc(int mask, size_t size, u_char *cp)
 {
 	register int ret;
 
-	__asm__ __volatile("skpc %1,%2,(%3);"
+	__asm__ volatile("skpc %1,%2,(%3);"
 			   "movl %%r0,%0"
 			: "=g"(ret)
 			: "r"(mask),"r"(size),"r"(cp)
@@ -325,7 +325,7 @@ bbssi(int bitnr, long *addr)
 {
 	register int ret;
 
-	__asm__ __volatile("clrl %%r0;"
+	__asm__ volatile("clrl %%r0;"
 			   "bbssi %1,%2,1f;"
 			   "incl %%r0;"
 			   "1:;"
@@ -341,7 +341,7 @@ bbcci(int bitnr, long *addr)
 {
 	register int ret;
 
-	__asm__ __volatile("clrl %%r0;"
+	__asm__ volatile("clrl %%r0;"
 			   "bbcci %1,%2,1f;"
 			   "incl %%r0;"
 			   "1:;"
@@ -353,19 +353,19 @@ bbcci(int bitnr, long *addr)
 }
 
 #define setrunqueue(p)	\
-	__asm__ __volatile("movl %0,%%r0;jsb Setrq" :: "g"(p):"r0","r1","r2")
+	__asm__ volatile("movl %0,%%r0;jsb Setrq" :: "g"(p):"r0","r1","r2")
 
 #define remrunqueue(p)	\
-	__asm__ __volatile("movl %0,%%r0;jsb Remrq" :: "g"(p):"r0","r1","r2")
+	__asm__ volatile("movl %0,%%r0;jsb Remrq" :: "g"(p):"r0","r1","r2")
 
 #define cpu_switch(p, newp) ({ 						\
 	register int ret;						\
-	__asm__ __volatile("movpsl -(%%sp);jsb Swtch; movl %%r0,%0"	\
+	__asm__ volatile("movpsl -(%%sp);jsb Swtch; movl %%r0,%0"	\
 	    : "=g"(ret) ::"r0","r1","r2","r3","r4","r5");		\
 	ret; })
 
 #define	cpu_switchto(p, newp)						\
-	__asm __volatile("movpsl -(%%sp); movl %0,%%r2; jsb Swtchto"	\
+	__asm volatile("movpsl -(%%sp); movl %0,%%r2; jsb Swtchto"	\
 	    :: "g" (newp) : "r0", "r1", "r2", "r3", "r4", "r5")
 
 /*
@@ -381,7 +381,7 @@ static __inline__ int __attribute__((__unused__))
 insqti(void *entry, void *header) {
 	register int ret;
 
-	__asm__ __volatile(
+	__asm__ volatile(
 		"	mnegl $1,%0;"
 		"	insqti (%1),(%2);"
 		"	bcs 1f;"		/* failed insert */
@@ -406,7 +406,7 @@ static __inline__ void * __attribute__((__unused__))
 remqhi(void *header) {
 	register void *ret;
 
-	__asm__ __volatile(
+	__asm__ volatile(
 		"	remqhi (%1),%0;"
 		"	bcs 1f;"		/* failed interlock */
 		"	bvs 2f;"		/* nothing was removed */

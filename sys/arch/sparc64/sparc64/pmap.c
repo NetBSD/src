@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.165 2005/12/11 12:19:15 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.166 2005/12/24 20:07:37 perry Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.165 2005/12/11 12:19:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2005/12/24 20:07:37 perry Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -174,13 +174,13 @@ paddr_t avail_start, avail_end;	/* These are used by ps & family */
 
 static int ptelookup_va __P((vaddr_t va));
 
-static __inline void
+static inline void
 clrx(void *addr)
 {
-	__asm __volatile("clrx [%0]" : : "r" (addr) : "memory");
+	__asm volatile("clrx [%0]" : : "r" (addr) : "memory");
 }
 
-static __inline void
+static inline void
 tsb_invalidate(int ctx, vaddr_t va)
 {
 	int i;
@@ -1989,12 +1989,12 @@ pmap_enter(pm, va, pa, prot, flags)
 		}
 		if (flags & (VM_PROT_READ | VM_PROT_WRITE)) {
 			tsb_dmmu[i].tag = tte.tag;
-			__asm __volatile("" : : : "memory");
+			__asm volatile("" : : : "memory");
 			tsb_dmmu[i].data = tte.data;
 		}
 		if (flags & VM_PROT_EXECUTE) {
 			tsb_immu[i].tag = tte.tag;
-			__asm __volatile("" : : : "memory");
+			__asm volatile("" : : : "memory");
 			tsb_immu[i].data = tte.data;
 		}
 

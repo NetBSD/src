@@ -1,4 +1,4 @@
-/*	$NetBSD: mot_ulmb60xa.c,v 1.9 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: mot_ulmb60xa.c,v 1.10 2005/12/24 20:07:31 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mot_ulmb60xa.c,v 1.9 2005/12/11 12:18:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mot_ulmb60xa.c,v 1.10 2005/12/24 20:07:31 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ mot_ulmb60xa_match(struct platform *p)
 		return 0;
 	/* Should possibly match against the FirmwareSupplier as well. */
 	cputype = *(volatile uint8_t *)MOT_CPUTYPE_REG;
-	__asm __volatile ("eieio; sync");
+	__asm volatile ("eieio; sync");
 	if (MOT_CPUTYPE_BOARDID(cputype) != MOT_CPUTYPE_BOARDID_ULTRA)
 		return 0;
 	

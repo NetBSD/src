@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2005/12/24 20:07:04 perry Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2005/12/24 20:07:04 perry Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -162,7 +162,7 @@ cpu_configure(void)
 
 	/* in spl*() we trust */
 	hp700_intr_init();
-	__asm __volatile("ssm %0, %%r0" :: "i" (PSW_I));
+	__asm volatile("ssm %0, %%r0" :: "i" (PSW_I));
 	kpsw |= PSW_I;
 	spl0();
 

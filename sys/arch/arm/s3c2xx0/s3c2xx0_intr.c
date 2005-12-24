@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.9 2005/12/11 12:16:51 christos Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.10 2005/12/24 20:06:52 perry Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.9 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.10 2005/12/24 20:06:52 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.9 2005/12/11 12:16:51 christos Ex
 
 volatile uint32_t *s3c2xx0_intr_mask_reg;
 
-static __inline void
+static inline void
 __raise(int ipl)
 {
 	if (current_spl_level < ipl) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_hppa.c,v 1.5 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: kgdb_hppa.c,v 1.6 2005/12/24 20:07:04 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.5 2005/12/11 12:17:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.6 2005/12/24 20:07:04 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>
@@ -244,7 +244,7 @@ kgdb_connect(int verbose)
 	if (verbose)
 		printf("kgdb waiting...");
 
-	__asm __volatile ("break        %0, %1"
+	__asm volatile ("break        %0, %1"
   		:: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_KGDB));
 
 	if (verbose)

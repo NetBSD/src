@@ -1,4 +1,4 @@
-/* $NetBSD: kgdb_machdep.c,v 1.3 2003/06/14 17:01:08 thorpej Exp $ */
+/* $NetBSD: kgdb_machdep.c,v 1.4 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.3 2003/06/14 17:01:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.4 2005/12/24 20:06:46 perry Exp $");
 
 #include "com.h"
 
@@ -277,7 +277,7 @@ kgdb_connect(int verbose)
 	if (verbose)
 		printf("kgdb waiting...");
 
-	__asm __volatile("call_pal 0x81");	/* bugchk */
+	__asm volatile("call_pal 0x81");	/* bugchk */
 
 	if (verbose)
 		printf("connected.\n");

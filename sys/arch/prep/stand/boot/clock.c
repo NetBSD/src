@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2005/12/24 20:07:31 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,7 +61,7 @@ mfrtc(up, lp)
 {
 	u_long scratch;
 
-	__asm __volatile ("1: mfspr %0,%3; mfspr %1,%4; mfspr %2,%3;"
+	__asm volatile ("1: mfspr %0,%3; mfspr %1,%4; mfspr %2,%3;"
 	    "cmpw %0,%2; bne 1b"
 	    : "=r"(*up), "=r"(*lp), "=r"(scratch)
 	    : "n"(SPR_RTCU_R), "n"(SPR_RTCL_R));
@@ -78,7 +78,7 @@ delay(n)
 	u_long tbh, tbl, scratch;
 	unsigned int cpuvers;
 
-	__asm __volatile ("mfpvr %0" : "=r"(cpuvers));
+	__asm volatile ("mfpvr %0" : "=r"(cpuvers));
 	cpuvers >>= 16;
 
 	if (cpuvers == MPC601) {
@@ -92,7 +92,7 @@ delay(n)
 			tbh++;
 			tbl -= 1000000000;
 		}
-		__asm __volatile ("1: mfspr %0,%3; cmplw %0,%1; blt 1b; bgt 2f;"
+		__asm volatile ("1: mfspr %0,%3; cmplw %0,%1; blt 1b; bgt 2f;"
 		    "mfspr %0,%4; cmplw %0,%2; blt 1b; 2:"
 		    : "=&r"(scratch)
 		    : "r"(tbh), "r"(tbl), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R));
@@ -101,7 +101,7 @@ delay(n)
 		tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 		tbh = tb >> 32;
 		tbl = tb;
-		__asm __volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f;"
+		__asm volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f;"
 		                  "mftb %0; cmpw %0,%2; blt 1b; 2:"
 		                  : "=&r"(scratch)
 		                  : "r"(tbh), "r"(tbl));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.307 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.308 2005/12/24 20:07:15 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.308 2005/12/24 20:07:15 perry Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -2340,7 +2340,7 @@ gray_bar(void)
    	3) restore regs
 */
 
-	__asm __volatile (
+	__asm volatile (
 			"	movl %a0,%sp@-;"
 			"	movl %a1,%sp@-;"
 			"	movl %d0,%sp@-;"
@@ -2356,7 +2356,7 @@ gray_bar(void)
 			((u_long *)videoaddr)[gray_nextaddr++] = 0x00000000;
 	}
 
-	__asm __volatile (
+	__asm volatile (
 			"	movl %sp@+,%d1;"
 			"	movl %sp@+,%d0;"
 			"	movl %sp@+,%a1;"
@@ -2748,7 +2748,7 @@ printstar(void)
 	 * Be careful as we assume that no registers are clobbered
 	 * when we call this from assembly.
 	 */
-	__asm __volatile (
+	__asm volatile (
 			"	movl %a0,%sp@-;"
 			"	movl %a1,%sp@-;"
 			"	movl %d0,%sp@-;"
@@ -2756,7 +2756,7 @@ printstar(void)
 
 	/* printf("*"); */
 
-	__asm __volatile (
+	__asm volatile (
 			"	movl %sp@+,%d1;"
 			"	movl %sp@+,%d0;"
 			"	movl %sp@+,%a1;"

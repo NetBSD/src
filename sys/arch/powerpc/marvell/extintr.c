@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.14 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: extintr.c,v 1.15 2005/12/24 20:07:28 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.14 2005/12/11 12:18:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.15 2005/12/24 20:07:28 perry Exp $");
 
 #include "opt_marvell.h"
 #include "opt_kgdb.h"
@@ -247,7 +247,7 @@ STATIC int	ext_intr_cause(volatile imask_t *, volatile imask_t *,
 				const imask_t *);
 STATIC int	cause_irq(const imask_t *, const imask_t *);
 
-static __inline void
+static inline void
 imask_print(char *str, volatile imask_t *imp)
 {
 	DPRINTF(("%s: %#10x %#10x %#10x %#10x\n",
@@ -261,12 +261,12 @@ imask_print(char *str, volatile imask_t *imp)
 /*
  * Count leading zeros.
  */
-static __inline int
+static inline int
 cntlzw(int x)
 {
 	int a;
 
-	__asm __volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
+	__asm volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
 
 	return a;
 }
@@ -826,7 +826,7 @@ _mftb()
         u_long scratch;
         u_int64_t tb;
 
-        __asm __volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
+        __asm volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
 		: "=r"(tb), "=r"(scratch));
         return tb;
 }
@@ -1175,11 +1175,11 @@ spl_stats_log(int ipl, int cc)
 
 	if (cc == 0) {
 		/* log our calling address */
-		__asm __volatile ("mflr %0;" : "=r"(pc));
+		__asm volatile ("mflr %0;" : "=r"(pc));
 		pc--;
 	} else {
 		/* log our caller's calling address */
-		__asm __volatile ("mr %0,1;" : "=r"(fp));
+		__asm volatile ("mr %0,1;" : "=r"(fp));
 		fp = (register_t *)*fp;
 		pc = (register_t *)(fp[1] - sizeof(register_t));
 	}

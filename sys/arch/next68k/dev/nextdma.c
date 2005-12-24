@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.39 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.40 2005/12/24 20:07:24 perry Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.39 2005/12/11 12:18:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.40 2005/12/24 20:07:24 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.39 2005/12/11 12:18:25 christos Exp $"
 
 extern int turbo;
 
-#define panic		__asm __volatile("trap  #15"); printf
+#define panic		__asm volatile("trap  #15"); printf
 
 #define NEXTDMA_DEBUG nextdma_debug
 /* (nsc->sc_chan->nd_intr == NEXT_I_SCSI_DMA) && nextdma_debug */

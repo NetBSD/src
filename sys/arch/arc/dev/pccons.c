@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.41 2005/12/11 12:16:38 christos Exp $	*/
+/*	$NetBSD: pccons.c,v 1.42 2005/12/24 20:06:47 perry Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.41 2005/12/11 12:16:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42 2005/12/24 20:06:47 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -161,8 +161,8 @@ void pc_xmode_on(void);
 void pc_xmode_off(void);
 static u_char kbc_get8042cmd(void);
 int kbd_cmd(u_char, u_char);
-static __inline int kbd_wait_output(void);
-static __inline int kbd_wait_input(void);
+static inline int kbd_wait_output(void);
+static inline int kbd_wait_input(void);
 void kbd_flush_input(void);
 void set_cursor_shape(void);
 void get_cursor_shape(void);
@@ -196,7 +196,7 @@ void sput(u_char *, int);
 
 void	pcstart(struct tty *);
 int	pcparam(struct tty *, struct termios *);
-static __inline void wcopy(void *, void *, u_int);
+static inline void wcopy(void *, void *, u_int);
 void	pc_context_init(bus_space_tag_t, bus_space_tag_t, bus_space_tag_t,
 	    struct pccons_config *);
 
@@ -269,7 +269,7 @@ pc_context_init(bus_space_tag_t crt_iot, bus_space_tag_t crt_memt,
  * bcopy variant that only moves word-aligned 16-bit entities,
  * for stupid VGA cards.  cnt is required to be an even vale.
  */
-static __inline void
+static inline void
 wcopy(void *src, void *tgt, u_int cnt)
 {
 	uint16_t *from = src;
@@ -287,7 +287,7 @@ wcopy(void *src, void *tgt, u_int cnt)
 	}
 }
 
-static __inline int
+static inline int
 kbd_wait_output(void)
 {
 	u_int i;
@@ -300,7 +300,7 @@ kbd_wait_output(void)
 	return 0;
 }
 
-static __inline int
+static inline int
 kbd_wait_input(void)
 {
 	u_int i;

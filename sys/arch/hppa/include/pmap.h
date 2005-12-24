@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 2005/12/24 20:07:10 perry Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -134,7 +134,7 @@ do { if (pmap) { \
 #define	pmap_update(p)
 void	pmap_activate __P((struct lwp *));
 
-static __inline void
+static inline void
 pmap_deactivate(struct lwp *lwp)
 {
 }
@@ -142,13 +142,13 @@ pmap_deactivate(struct lwp *lwp)
 #define pmap_phys_address(x)	((x) << PGSHIFT)
 #define pmap_phys_to_frame(x)	((x) >> PGSHIFT)
 
-static __inline void
+static inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }
 
-static __inline int
+static inline int
 pmap_prot(struct pmap *pmap, vm_prot_t prot)
 {
 	extern u_int kern_prot[], user_prot[];

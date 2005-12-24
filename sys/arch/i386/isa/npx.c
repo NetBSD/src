@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.108 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: npx.c,v 1.109 2005/12/24 20:07:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.108 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.109 2005/12/24 20:07:10 perry Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -158,7 +158,7 @@ extern int i386_fpu_fdivbug;
 
 struct npx_softc		*npx_softc;
 
-static __inline void
+static inline void
 fpu_save(union savefpu *addr)
 {
 #ifdef I686_CPU

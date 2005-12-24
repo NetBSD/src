@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2005/12/11 12:16:36 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2005/12/24 20:06:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -101,10 +101,10 @@ struct intrhand {
 
 void do_pending_int __P((void));
 
-static __inline int splraise __P((int));
-static __inline int spllower __P((int));
-static __inline void splx __P((int));
-static __inline void softintr __P((int));
+static inline int splraise __P((int));
+static inline int spllower __P((int));
+static inline void splx __P((int));
+static inline void softintr __P((int));
 
 extern volatile int cpl, ipending, astpending, tickspending;
 extern int imask[];
@@ -114,7 +114,7 @@ extern int imask[];
  * achieved with the "eieio" instruction which the assembler
  * seems to detect and then doesn't move instructions past....
  */
-static __inline int
+static inline int
 splraise(ncpl)
 	int ncpl;
 {
@@ -127,7 +127,7 @@ splraise(ncpl)
 	return (ocpl);
 }
 
-static __inline void
+static inline void
 splx(ncpl)
 	int ncpl;
 {
@@ -138,7 +138,7 @@ splx(ncpl)
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 }
 
-static __inline int
+static inline int
 spllower(ncpl)
 	int ncpl;
 {
@@ -155,7 +155,7 @@ spllower(ncpl)
 
 /* Following code should be implemented with lwarx/stwcx to avoid
  * the disable/enable. i need to read the manual once more.... */
-static __inline void
+static inline void
 softintr(ipl)
 	int ipl;
 {

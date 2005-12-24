@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.22 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.23 2005/12/24 20:06:46 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.22 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.23 2005/12/24 20:06:46 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -302,7 +302,7 @@ void fdcpseudointr __P((void *arg));
 int fdcintr __P((void *));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
-__inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
+inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 int fdformat __P((dev_t, struct ne7_fd_formb *, struct lwp *));
 
 int
@@ -555,7 +555,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 	}
 }
 
-__inline struct fd_type *
+inline struct fd_type *
 fd_dev_to_type(fd, dev)
 	struct fd_softc *fd;
 	dev_t dev;

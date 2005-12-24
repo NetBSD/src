@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.26 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.27 2005/12/24 20:07:15 perry Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -32,7 +32,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.26 2005/12/11 12:18:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.27 2005/12/24 20:07:15 perry Exp $");
 
 #include "opt_adb.h"
 
@@ -889,7 +889,7 @@ pm_pmgrop_mrg(PMData *pmdata)
 {
 	u_int32_t rval=0;
 
-	__asm __volatile(
+	__asm volatile(
 	"	movl	%1,%%a0	\n"
 	"	.word	0xa085	\n"
 	"	movl	%%d0,%0"

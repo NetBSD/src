@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2001/07/06 19:00:14 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2005/12/24 20:07:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -90,11 +90,11 @@
 
 #ifndef _LOCORE
 
-static __inline void
+static inline void
 splx(int sr)
 {
 
-	__asm __volatile("movw %0,%%sr" : : "di" (sr));
+	__asm volatile("movw %0,%%sr" : : "di" (sr));
 }
 
 #define setsoft(x)		x = 0

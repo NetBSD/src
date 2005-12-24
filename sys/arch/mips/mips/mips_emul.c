@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.12 2005/12/11 12:18:09 christos Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.13 2005/12/24 20:07:19 perry Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.12 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.13 2005/12/24 20:07:19 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,9 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.12 2005/12/11 12:18:09 christos Exp 
 
 void MachEmulateFP(u_int32_t, struct frame *, u_int32_t);
 
-static __inline void	send_sigsegv(u_int32_t, u_int32_t, struct frame *,
+static inline void	send_sigsegv(u_int32_t, u_int32_t, struct frame *,
 			    u_int32_t);
-static __inline void	update_pc(struct frame *, u_int32_t);
+static inline void	update_pc(struct frame *, u_int32_t);
 
 vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
 void	MachEmulateInst(u_int32_t, u_int32_t, u_int32_t, struct frame *);
@@ -264,7 +264,7 @@ MachEmulateInst(status, cause, opc, frame)
 	}
 }
 
-static __inline void
+static inline void
 send_sigsegv(u_int32_t vaddr, u_int32_t exccode, struct frame *frame,
     u_int32_t cause)
 {
@@ -280,7 +280,7 @@ send_sigsegv(u_int32_t vaddr, u_int32_t exccode, struct frame *frame,
 	(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
 }
 
-static __inline void
+static inline void
 update_pc(struct frame *frame, u_int32_t cause)
 {
 

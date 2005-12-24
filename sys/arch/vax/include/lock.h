@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.18 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: lock.h,v 1.19 2005/12/24 20:07:41 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -41,34 +41,34 @@
 #include <machine/cpu.h>
 #endif
 
-static __inline void
+static inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 #ifdef _KERNEL
-	__asm__ __volatile ("movl %0,%%r1;jsb Sunlock"
+	__asm__ volatile ("movl %0,%%r1;jsb Sunlock"
 		: /* No output */
 		: "g"(alp)
 		: "r1","cc","memory");
 #else
-	__asm__ __volatile ("bbcci $0,%0,1f;1:"
+	__asm__ volatile ("bbcci $0,%0,1f;1:"
 		: /* No output */
 		: "m"(*alp)
 		: "cc");
 #endif
 }
 
-static __inline int
+static inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int ret;
 
 #ifdef _KERNEL
-	__asm__ __volatile ("movl %1,%%r1;jsb Slocktry;movl %%r0,%0"
+	__asm__ volatile ("movl %1,%%r1;jsb Slocktry;movl %%r0,%0"
 		: "=&r"(ret)
 		: "g"(alp)
 		: "r0","r1","cc","memory");
 #else
-	__asm__ __volatile ("clrl %0;bbssi $0,%1,1f;incl %0;1:"
+	__asm__ volatile ("clrl %0;bbssi $0,%1,1f;incl %0;1:"
 		: "=&r"(ret)
 		: "m"(*alp)
 		: "cc");
@@ -94,10 +94,10 @@ do {									\
 	}								\
 } while (0)
 #else
-static __inline void
+static inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
-	__asm__ __volatile ("1:bbssi $0,%0,1b"
+	__asm__ volatile ("1:bbssi $0,%0,1b"
 		: /* No outputs */
 		: "m"(*alp)
 		: "cc");
@@ -105,7 +105,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 #endif /* _KERNEL */
 
 #if 0
-static __inline void
+static inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	struct cpu_info *ci = curcpu();
@@ -121,29 +121,29 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	}
 
 #if 0
-	__asm__ __volatile ("movl %0,%%r1;jsb Slock"
+	__asm__ volatile ("movl %0,%%r1;jsb Slock"
 		: /* No output */
 		: "g"(alp)
 		: "r0","r1","cc","memory");
 #endif
 #if 0
-	__asm__ __volatile ("1:;bbssi $0, %0, 1b"
+	__asm__ volatile ("1:;bbssi $0, %0, 1b"
 		: /* No output */
 		: "m"(*alp));
 #endif
 }
 #endif
 
-static __inline void
+static inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 #ifdef _KERNEL
-	__asm__ __volatile ("movl %0,%%r1;jsb Sunlock"
+	__asm__ volatile ("movl %0,%%r1;jsb Sunlock"
 		: /* No output */
 		: "g"(alp)
 		: "r1","cc","memory");
 #else
-	__asm__ __volatile ("bbcci $0,%0,1f;1:"
+	__asm__ volatile ("bbcci $0,%0,1f;1:"
 		: /* No output */
 		: "m"(*alp)
 		: "cc");

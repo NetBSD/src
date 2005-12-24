@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.13 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.14 2005/12/24 20:07:03 perry Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.13 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.14 2005/12/24 20:07:03 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -407,12 +407,12 @@ static const struct pmap_devmap smdk2410_devmap[] = {
 #undef	_A
 #undef	_S
 
-static __inline	pd_entry_t *
+static inline	pd_entry_t *
 read_ttb(void)
 {
 	long ttb;
 
-	__asm __volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r"(ttb));
+	__asm volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r"(ttb));
 
 
 	return (pd_entry_t *)(ttb & ~((1 << 14) - 1));
@@ -1022,7 +1022,7 @@ kgdb_port_init(void)
 }
 #endif
 
-static __inline void
+static inline void
 writeback_dcache_line(vaddr_t va)
 {
 	/* writeback Dcache line */
@@ -1034,7 +1034,7 @@ writeback_dcache_line(vaddr_t va)
 	    : :	"r"(va));
 }
 
-static __inline void
+static inline void
 clean_dcache_line(vaddr_t va)
 {
 	/* writeback and invalidate Dcache line */

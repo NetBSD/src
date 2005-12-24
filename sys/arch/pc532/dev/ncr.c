@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.52 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: ncr.c,v 1.53 2005/12/24 20:07:24 perry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.52 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.53 2005/12/24 20:07:24 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ ncr_intr(arg)
 
 #define TIMEOUT	1000000
 
-static __inline int
+static inline int
 ncr_ready(sc)
 	struct ncr5380_softc *sc;
 {
@@ -237,7 +237,7 @@ ncr_ready(sc)
 }
 
 /* Return zero on success. */
-static __inline void ncr_wait_not_req(sc)
+static inline void ncr_wait_not_req(sc)
 	struct ncr5380_softc *sc;
 {
 	int timo;

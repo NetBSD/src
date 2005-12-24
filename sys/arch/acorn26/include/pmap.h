@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.4 2002/09/22 07:53:39 chs Exp $ */
+/* $NetBSD: pmap.h,v 1.5 2005/12/24 20:06:46 perry Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -54,7 +54,7 @@ extern boolean_t pmap_fault(pmap_t, vaddr_t, vm_prot_t);
 extern long _pmap_resident_count(pmap_t);
 extern long _pmap_wired_count(pmap_t);
 
-static __inline void
+static inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */

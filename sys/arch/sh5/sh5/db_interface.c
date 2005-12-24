@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.14 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.15 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.14 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.15 2005/12/24 20:07:32 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -180,12 +180,12 @@ db_var_reg(const struct db_variable *varp, db_expr_t *valp, int op)
 	if (op == DB_VAR_GET)
 		if (ep == &reg_kcr0) {
 			register_t kcr0;
-			__asm __volatile("getcon kcr0, %0" : "=r"(kcr0));
+			__asm volatile("getcon kcr0, %0" : "=r"(kcr0));
 			*valp = kcr0;
 		} else
 		if (ep == &reg_kcr1) {
 			register_t kcr1;
-			__asm __volatile("getcon kcr1, %0" : "=r"(kcr1));
+			__asm volatile("getcon kcr1, %0" : "=r"(kcr1));
 			*valp = kcr1;
 		} else
 			*valp = *ep;
@@ -196,11 +196,11 @@ db_var_reg(const struct db_variable *varp, db_expr_t *valp, int op)
 
 		if (ep == &reg_kcr0) {
 			register_t kcr0 = *valp;
-			__asm __volatile("putcon %0, kcr0" :: "r"(kcr0));
+			__asm volatile("putcon %0, kcr0" :: "r"(kcr0));
 		} else
 		if (ep == &reg_kcr1) {
 			register_t kcr1 = *valp;
-			__asm __volatile("putcon %0, kcr1" :: "r"(kcr1));
+			__asm volatile("putcon %0, kcr1" :: "r"(kcr1));
 		} else {
 
 			*ep = *valp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.8 2005/12/11 12:19:29 christos Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.9 2005/12/24 20:07:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -290,7 +290,7 @@ void
 mmu_atc_flush(vaddr_t va)
 {
 
-	__asm __volatile ("pflush	#0,#0,%0@" : : "a" (va));
+	__asm volatile ("pflush	#0,#0,%0@" : : "a" (va));
 }
 
 void 

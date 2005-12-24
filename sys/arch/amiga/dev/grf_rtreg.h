@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rtreg.h,v 1.13 2005/12/11 12:16:28 christos Exp $	*/
+/*	$NetBSD: grf_rtreg.h,v 1.14 2005/12/24 20:06:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -502,22 +502,22 @@ extern unsigned char NCRStdPalette[];
 #define Map(m) \
 	do { WGfx(ba, GCT_ID_READ_MAP_SELECT, m & 3 ); WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3))); } while (0)
 
-static __inline unsigned char RAttr(volatile void * ba, short idx) {
+static inline unsigned char RAttr(volatile void * ba, short idx) {
 	vgaw (ba, ACT_ADDRESS, idx);
 	return vgar (ba, ACT_ADDRESS_R);
 }
 
-static __inline unsigned char RSeq(volatile void * ba, short idx) {
+static inline unsigned char RSeq(volatile void * ba, short idx) {
 	vgaw (ba, SEQ_ADDRESS, idx);
 	return vgar (ba, SEQ_ADDRESS_R);
 }
 
-static __inline unsigned char RCrt(volatile void * ba, short idx) {
+static inline unsigned char RCrt(volatile void * ba, short idx) {
 	vgaw (ba, CRT_ADDRESS, idx);
 	return vgar (ba, CRT_ADDRESS_R);
 }
 
-static __inline unsigned char RGfx(volatile void * ba, short idx) {
+static inline unsigned char RGfx(volatile void * ba, short idx) {
 	vgaw(ba, GCT_ADDRESS, idx);
 	return vgar (ba, GCT_ADDRESS_R);
 }

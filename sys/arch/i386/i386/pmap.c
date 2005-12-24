@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.186 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.187 2005/12/24 20:07:10 perry Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187 2005/12/24 20:07:10 perry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -384,7 +384,7 @@ static int pv_nfpvents;			/* # of free pv entries */
 #define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
 					/* high water mark */
 
-static __inline int
+static inline int
 pv_compare(struct pv_entry *a, struct pv_entry *b)
 {
 	if (a->pv_pmap < b->pv_pmap)
@@ -508,7 +508,7 @@ static boolean_t	 pmap_reactivate(struct pmap *);
  *		of course the kernel is always loaded
  */
 
-__inline static boolean_t
+inline static boolean_t
 pmap_is_curpmap(pmap)
 	struct pmap *pmap;
 {
@@ -521,7 +521,7 @@ pmap_is_curpmap(pmap)
  * pmap_is_active: is this pmap loaded into the specified processor's %cr3?
  */
 
-__inline static boolean_t
+inline static boolean_t
 pmap_is_active(pmap, cpu_id)
 	struct pmap *pmap;
 	int cpu_id;
@@ -535,7 +535,7 @@ pmap_is_active(pmap, cpu_id)
  * pmap_tmpmap_pa: map a page in for tmp usage
  */
 
-__inline static vaddr_t
+inline static vaddr_t
 pmap_tmpmap_pa(pa)
 	paddr_t pa;
 {
@@ -556,7 +556,7 @@ pmap_tmpmap_pa(pa)
  * pmap_tmpunmap_pa: unmap a tmp use page (undoes pmap_tmpmap_pa)
  */
 
-__inline static void
+inline static void
 pmap_tmpunmap_pa()
 {
 #ifdef MULTIPROCESSOR
@@ -583,7 +583,7 @@ pmap_tmpunmap_pa()
  * => do NOT use this on kernel mappings [why?  because pv_ptp may be NULL]
  */
 
-__inline static pt_entry_t *
+inline static pt_entry_t *
 pmap_tmpmap_pvepte(pve)
 	struct pv_entry *pve;
 {
@@ -604,7 +604,7 @@ pmap_tmpmap_pvepte(pve)
  * pmap_tmpunmap_pvepte: release a mapping obtained with pmap_tmpmap_pvepte
  */
 
-__inline static void
+inline static void
 pmap_tmpunmap_pvepte(pve)
 	struct pv_entry *pve;
 {
@@ -615,7 +615,7 @@ pmap_tmpunmap_pvepte(pve)
 	pmap_tmpunmap_pa();
 }
 
-__inline static void
+inline static void
 pmap_apte_flush(struct pmap *pmap)
 {
 #if defined(MULTIPROCESSOR)
@@ -657,7 +657,7 @@ pmap_apte_flush(struct pmap *pmap)
  * => must be undone with pmap_unmap_ptes before returning
  */
 
-__inline static pt_entry_t *
+inline static pt_entry_t *
 pmap_map_ptes(pmap)
 	struct pmap *pmap;
 {
@@ -707,7 +707,7 @@ pmap_map_ptes(pmap)
  * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
  */
 
-__inline static void
+inline static void
 pmap_unmap_ptes(pmap)
 	struct pmap *pmap;
 {
@@ -730,7 +730,7 @@ pmap_unmap_ptes(pmap)
 	}
 }
 
-__inline static void
+inline static void
 pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
 {
 	if (curproc == NULL || curproc->p_vmspace == NULL ||
@@ -1194,7 +1194,7 @@ pmap_init()
  * "try" is for optional functions like pmap_copy().
  */
 
-__inline static struct pv_entry *
+inline static struct pv_entry *
 pmap_alloc_pv(pmap, mode)
 	struct pmap *pmap;
 	int mode;
@@ -1332,7 +1332,7 @@ pmap_add_pvpage(pvp, need_entry)
  * => we must be holding pvalloc_lock
  */
 
-__inline static void
+inline static void
 pmap_free_pv_doit(pv)
 	struct pv_entry *pv;
 {
@@ -1367,7 +1367,7 @@ pmap_free_pv_doit(pv)
  * => we gain the pvalloc_lock
  */
 
-__inline static void
+inline static void
 pmap_free_pv(pmap, pv)
 	struct pmap *pmap;
 	struct pv_entry *pv;
@@ -1392,7 +1392,7 @@ pmap_free_pv(pmap, pv)
  * => we gain the pvalloc_lock
  */
 
-__inline static void
+inline static void
 pmap_free_pvs(pmap, pvs)
 	struct pmap *pmap;
 	struct pv_entry *pvs;
@@ -1447,7 +1447,7 @@ pmap_free_pvpage()
  *                 Observe locking order when locking both pvhs
  */
 
-__inline static void
+inline static void
 pmap_lock_pvhs(struct pv_head *pvh1, struct pv_head *pvh2)
 {
 
@@ -1484,7 +1484,7 @@ pmap_lock_pvhs(struct pv_head *pvh1, struct pv_head *pvh2)
  * => caller should adjust ptp's wire_count before calling
  */
 
-__inline static void
+inline static void
 pmap_enter_pv(pvh, pve, pmap, va, ptp)
 	struct pv_head *pvh;
 	struct pv_entry *pve;	/* preallocated pve for us to use */
@@ -1508,7 +1508,7 @@ pmap_enter_pv(pvh, pve, pmap, va, ptp)
  * => we return the removed pve
  */
 
-__inline static struct pv_entry *
+inline static struct pv_entry *
 pmap_remove_pv(pvh, pmap, va)
 	struct pv_head *pvh;
 	struct pmap *pmap;
@@ -1538,7 +1538,7 @@ pmap_remove_pv(pvh, pmap, va)
  *	will ever leak onto the active/inactive queues)
  */
 
-__inline static struct vm_page *
+inline static struct vm_page *
 pmap_alloc_ptp(pmap, pde_index)
 	struct pmap *pmap;
 	int pde_index;
@@ -2260,7 +2260,7 @@ pmap_pageidlezero(pa)
 		}
 #if defined(I686_CPU)
 		if (cpu_features & CPUID_SSE2)
-			__asm __volatile ("movnti %1, %0" :
+			__asm volatile ("movnti %1, %0" :
 			    "=m"(*ptr) : "r" (0));
 		else
 #endif /* defined(I686_CPU) */
@@ -2269,7 +2269,7 @@ pmap_pageidlezero(pa)
 
 #if defined(I686_CPU)
 	if (cpu_features & CPUID_SSE2)
-		__asm __volatile ("sfence" ::: "memory");
+		__asm volatile ("sfence" ::: "memory");
 #endif /* defined(I686_CPU) */
 
 #ifdef DIAGNOSTIC
@@ -3750,7 +3750,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
  * => called at splvm if !MULTIPROCESSOR.
  * => return TRUE if we need to maintain user tlbs.
  */
-static __inline boolean_t
+static inline boolean_t
 pmap_do_tlb_shootdown_checktlbstate(struct cpu_info *ci)
 {
 

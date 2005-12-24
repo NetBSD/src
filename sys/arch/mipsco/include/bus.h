@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.14 2005/12/24 20:07:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -372,7 +372,7 @@ int	mipsco_bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
  */
 
 #define __bus_space_read(BYTES,BITS)					\
-static __inline __CONCAT3(u_int,BITS,_t)				\
+static inline __CONCAT3(u_int,BITS,_t)				\
 __CONCAT(bus_space_read_,BYTES)(bus_space_tag_t bst,			\
     bus_space_handle_t bsh, bus_size_t offset)				\
 {									\
@@ -394,11 +394,11 @@ __bus_space_read(8,64)
  */
 
 #define __bus_space_read_multi(BYTES,BITS)				\
-static __inline void __BS_FUNCTION(bus_space_read_multi,BYTES)		\
+static inline void __BS_FUNCTION(bus_space_read_multi,BYTES)		\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__BS_TYPENAME(BITS) *, size_t));				\
 									\
-static __inline void							\
+static inline void							\
 __BS_FUNCTION(bus_space_read_multi,BYTES)(t, h, o, a, c)		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -428,11 +428,11 @@ __bus_space_read_multi(8,64)
  */
 
 #define __bus_space_read_region(BYTES,BITS)				\
-static __inline void __BS_FUNCTION(bus_space_read_region,BYTES)		\
+static inline void __BS_FUNCTION(bus_space_read_region,BYTES)		\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__BS_TYPENAME(BITS) *, size_t));				\
 									\
-static __inline void							\
+static inline void							\
 __BS_FUNCTION(bus_space_read_region,BYTES)(t, h, o, a, c)		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -463,7 +463,7 @@ __bus_space_read_region(8,64)
  */
 
 #define __bus_space_write(BYTES,BITS)					\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_write_,BYTES)(bus_space_tag_t bst,			\
     bus_space_handle_t bsh,						\
     bus_size_t offset, __CONCAT3(u_int,BITS,_t) data)			\
@@ -487,11 +487,11 @@ __bus_space_write(8,64)
  */
 
 #define __bus_space_write_multi(BYTES,BITS)				\
-static __inline void __BS_FUNCTION(bus_space_write_multi,BYTES)       	\
+static inline void __BS_FUNCTION(bus_space_write_multi,BYTES)       	\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__BS_TYPENAME(BITS) *, size_t));				\
 									\
-static __inline void							\
+static inline void							\
 __BS_FUNCTION(bus_space_write_multi,BYTES)(t, h, o, a, c)     		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -520,11 +520,11 @@ __bus_space_write_multi(8,64)
  */
 
 #define __bus_space_write_region(BYTES,BITS)				\
-static __inline void __BS_FUNCTION(bus_space_write_region,BYTES)      	\
+static inline void __BS_FUNCTION(bus_space_write_region,BYTES)      	\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __BS_TYPENAME(BITS) *, size_t));				\
 									\
-static __inline void							\
+static inline void							\
 __BS_FUNCTION(bus_space_write_region,BYTES)(t, h, o, a, c)    		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -555,11 +555,11 @@ __bus_space_write_region(8,64)
  */
 
 #define __bus_space_set_multi(BYTES,BITS)				\
-static __inline void __BS_FUNCTION(bus_space_set_multi,BYTES)		\
+static inline void __BS_FUNCTION(bus_space_set_multi,BYTES)		\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__BS_TYPENAME(BITS), size_t));					\
 									\
-static __inline void							\
+static inline void							\
 __BS_FUNCTION(bus_space_set_multi,BYTES)(t, h, o, v, c)       		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -588,11 +588,11 @@ __bus_space_set_multi(8,64)
  */
 
 #define __bus_space_set_region(BYTES,BITS)				\
-static __inline void __BS_FUNCTION(bus_space_set_region,BYTES)		\
+static inline void __BS_FUNCTION(bus_space_set_region,BYTES)		\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__BS_TYPENAME(BITS), size_t));					\
 									\
-static __inline void							\
+static inline void							\
 __BS_FUNCTION(bus_space_set_region,BYTES)(t, h, o, v, c)		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -624,13 +624,13 @@ __bus_space_set_region(8,64)
  */
 
 #define	__bus_space_copy_region(BYTES)					\
-static __inline void __BS_FUNCTION(bus_space_copy_region,BYTES)		\
+static inline void __BS_FUNCTION(bus_space_copy_region,BYTES)		\
 	__P((bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
 	    bus_size_t count));						\
 									\
-static __inline void							\
+static inline void							\
 __BS_FUNCTION(bus_space_copy_region,BYTES)(t, h1, o1, h2, o2, c)	\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h1, h2;					\
@@ -683,7 +683,7 @@ __bus_space_copy_region(8)
 
 
 #define __bus_space_read_stream(BYTES,BITS)				\
-static __inline __BS_TYPENAME(BITS)					\
+static inline __BS_TYPENAME(BITS)					\
 __CONCAT(bus_space_read_stream_,BYTES)(bus_space_tag_t bst,		\
     bus_space_handle_t bsh, bus_size_t offset)				\
 {									\
@@ -699,7 +699,7 @@ __bus_space_read_stream(8, 64)		/* bus_space_read_stream_8 */
 
 
 #define __bus_space_write_stream(BYTES,BITS)				\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_write_stream_,BYTES)(bus_space_tag_t bst,		\
     bus_space_handle_t bsh,						\
     bus_size_t offset, __CONCAT3(u_int,BITS,_t) data)			\

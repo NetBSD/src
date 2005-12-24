@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.11 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.12 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@ typedef struct label_t {
 } label_t;
 #endif
 
-typedef	__volatile __int64_t	__cpu_simple_lock_t;
+typedef	volatile __int64_t	__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0

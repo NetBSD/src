@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.9 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.10 2005/12/24 20:07:03 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct intio_builtins {
 	while (!(bus_space_read_1(bst, bsh, INTIO_DEV_3xx_STAT) \
 		& INTIO_DEV_DATA_READY))
 
-static __inline int
+static inline int
 intio_device_readcmd(bus_space_tag_t bst, bus_space_handle_t bsh, int cmd,
 	uint8_t *datap)
 {
@@ -98,7 +98,7 @@ intio_device_readcmd(bus_space_tag_t bst, bus_space_handle_t bsh, int cmd,
 	return (0);
 }
 
-static __inline int
+static inline int
 intio_device_writecmd(bus_space_tag_t bst, bus_space_handle_t bsh,
 	int cmd, uint8_t *datap, int len)
 {
@@ -111,7 +111,7 @@ intio_device_writecmd(bus_space_tag_t bst, bus_space_handle_t bsh,
 	return (0);
 }
 
-static __inline int
+static inline int
 intio_device_readstate(bus_space_tag_t bst, bus_space_handle_t bsh,
 	uint8_t *statusp, uint8_t *datap)
 {

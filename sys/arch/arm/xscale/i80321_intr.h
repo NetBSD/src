@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_intr.h,v 1.6 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: i80321_intr.h,v 1.7 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -49,12 +49,12 @@
 
 void i80321_do_pending(void);
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 i80321_set_intrmask(void)
 {
-	extern __volatile uint32_t intr_enabled;
+	extern volatile uint32_t intr_enabled;
 
-	__asm __volatile("mcr p6, 0, %0, c0, c0, 0"
+	__asm volatile("mcr p6, 0, %0, c0, c0, 0"
 		:
 		: "r" (intr_enabled & ICU_INT_HWMASK));
 }
@@ -63,12 +63,12 @@ i80321_set_intrmask(void)
         ((1U << ICU_INT_bit26) | (1U << ICU_INT_bit22) |                \
          (1U << ICU_INT_bit5)  | (1U << ICU_INT_bit4))
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 i80321_splx(int new)
 {
-	extern __volatile uint32_t intr_enabled;
-	extern __volatile int current_spl_level;
-	extern __volatile int i80321_ipending;
+	extern volatile uint32_t intr_enabled;
+	extern volatile int current_spl_level;
+	extern volatile int i80321_ipending;
 	extern void i80321_do_pending(void);
 	int oldirqstate, hwpend;
 
@@ -89,10 +89,10 @@ i80321_splx(int new)
 		i80321_do_pending();
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 i80321_splraise(int ipl)
 {
-	extern __volatile int current_spl_level;
+	extern volatile int current_spl_level;
 	extern int i80321_imask[];
 	int	old;
 
@@ -105,10 +105,10 @@ i80321_splraise(int ipl)
 	return (old);
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 i80321_spllower(int ipl)
 {
-	extern __volatile int current_spl_level;
+	extern volatile int current_spl_level;
 	extern int i80321_imask[];
 	int old = current_spl_level;
 

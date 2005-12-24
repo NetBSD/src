@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_7seg.c,v 1.5 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: iq80321_7seg.c,v 1.6 2005/12/24 20:06:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_7seg.c,v 1.5 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_7seg.c,v 1.6 2005/12/24 20:06:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: iq80321_7seg.c,v 1.5 2005/12/11 12:17:09 christos Ex
 #include <evbarm/iq80321/iq80321reg.h>
 #include <evbarm/iq80321/iq80321var.h>
 
-#define	WRITE(x, v)	*((__volatile uint8_t *) (x)) = (v)
+#define	WRITE(x, v)	*((volatile uint8_t *) (x)) = (v)
 
 static int snakestate;
 

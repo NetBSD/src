@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2005/12/24 20:07:04 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2005/12/24 20:07:04 perry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -265,7 +265,7 @@ struct vm_map *phys_map = NULL;
 
 
 void delay_init(void);
-static __inline void fall(int, int, int, int, int);
+static inline void fall(int, int, int, int, int);
 void dumpsys(void);
 
 /*
@@ -957,7 +957,7 @@ delay(u_int us)
 	}
 }
 
-static __inline void
+static inline void
 fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
 	int loop;
@@ -1397,12 +1397,12 @@ cpu_reboot(int howto, char *user_boot_string)
 	if (howto & RB_HALT) {
 		printf("System halted!\n");
 		DELAY(1000000);
-		__asm __volatile("stwas %0, 0(%1)"
+		__asm volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_STOP), "r" (LBCAST_ADDR + iomod_command));
 	} else {
 		printf("rebooting...");
 		DELAY(1000000);
-		__asm __volatile("stwas %0, 0(%1)"
+		__asm volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_RESET), "r" (LBCAST_ADDR + iomod_command));
 	}
 

@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.3 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.4 2005/12/24 20:07:28 perry Exp $");
 
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>
@@ -63,7 +63,7 @@ static struct softintr_qh
 struct pool softintr_pool;
 struct softintr *softnet_handlers[32];
 
-static __inline struct softintr_qh *
+static inline struct softintr_qh *
 softintr_queue(int ipl)
 {
 	switch (ipl) {

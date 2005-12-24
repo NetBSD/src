@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.38 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.39 2005/12/24 20:06:58 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.38 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.39 2005/12/24 20:06:58 perry Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -558,7 +558,7 @@ extern	int			*nofault;
 				 */
 				SCSI_DMA->s_hdma_ctrl |= SDH_BUSERR;
 			}
-			__asm __volatile ("tstb	%0@(0)": : "a" (dma_ptr));
+			__asm volatile ("tstb	%0@(0)": : "a" (dma_ptr));
 			nofault = (int *)0;
 		}
 

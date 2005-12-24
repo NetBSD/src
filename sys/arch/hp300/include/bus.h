@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.12 2005/12/24 20:07:03 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ do {									\
 	if ((t)->bsrm1 != NULL)						\
 		((t)->bsrm1)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -279,7 +279,7 @@ do {									\
 	if ((t)->bsrm2 != NULL)						\
 		((t)->bsrm2)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -296,7 +296,7 @@ do {									\
 	if ((t)->bsrm4 != NULL)						\
 		((t)->bsrm4)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -328,7 +328,7 @@ do {									\
 	if ((t)->bsrr1 != NULL)						\
 		((t)->bsrr1)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -346,7 +346,7 @@ do {									\
 	if ((t)->bsrr2 != NULL)						\
 		((t)->bsrr2)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -364,7 +364,7 @@ do {									\
 	if ((t)->bsrr4 != NULL)						\
 		((t)->bsrr4)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -432,7 +432,7 @@ do {									\
 	if ((t)->bswm1 != NULL)						\
 		((t)->bswm1)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -450,7 +450,7 @@ do {									\
 	if ((t)->bswm2 != NULL)						\
 		((t)->bswm2)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -469,7 +469,7 @@ do {									\
 	if ((t)->bswm4 != NULL)					\
 		((t)->bswm4)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -501,7 +501,7 @@ do {									\
 	if ((t)->bswr1 != NULL)					\
 		((t)->bswr1)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -519,7 +519,7 @@ do {									\
 	if ((t)->bswr2) != NULL)					\
 		((t)->bswr2)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -537,7 +537,7 @@ do {									\
 	if ((t)->bswr4) != NULL)					\
 		((t)->bswr4)(t, h, o, a, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%a1				;	\
 			movl	%2,%%d0				;	\
@@ -569,7 +569,7 @@ do {									\
 	if ((t)->bssm1 != NULL)						\
 		((t)->bssm1)(t, h, o, val, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%d1				;	\
 			movl	%2,%%d0				;	\
@@ -587,7 +587,7 @@ do {									\
 	if ((t)->bssm2 != NULL)						\
 		((t)->bssm2)(t, h, o, val, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%d1				;	\
 			movl	%2,%%d0				;	\
@@ -605,7 +605,7 @@ do {									\
 	if ((t)->bssm4 != NULL)						\
 		((t)->bssm4)(t, h, o, val, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%d1				;	\
 			movl	%2,%%d0				;	\
@@ -637,7 +637,7 @@ do {									\
 	if ((t)->bssr1 != NULL)						\
 		((t)->bssr1)(t, h, o, val, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%d1				;	\
 			movl	%2,%%d0				;	\
@@ -655,7 +655,7 @@ do {									\
 	if ((t)->bssr2 != NULL)						\
 		((t)->bssr2)(t, h, o, val, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%d1				;	\
 			movl	%2,%%d0				;	\
@@ -674,7 +674,7 @@ do {									\
 	if ((t)->bssr4 != NULL)						\
 		((t)->bssr4)(t, h, o, val, c);				\
 	else {								\
-		__asm __volatile ("					\
+		__asm volatile ("					\
 			movl	%0,%%a0				;	\
 			movl	%1,%%d1				;	\
 			movl	%2,%%d0				;	\
@@ -703,7 +703,7 @@ do {									\
  */
 
 #define	__HP300_copy_region_N(BYTES)					\
-static __inline void __unused						\
+static inline void __unused						\
 __CONCAT(bus_space_copy_region_,BYTES)(bus_space_tag_t t,		\
     bus_space_handle_t h1, bus_size_t o1, bus_space_handle_t h2,	\
     bus_size_t o2, bus_size_t c)					\

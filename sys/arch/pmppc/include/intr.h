@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2005/12/11 12:18:41 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2005/12/24 20:07:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,10 +80,10 @@ void	do_pending_int(void);
 void	*intr_establish(int, int, int, int (*)(void *), void *);
 void	intr_disestablish(void *);
 
-static __inline int splraise(int);
-static __inline int spllower(int);
-static __inline void splx(int);
-static __inline void set_sint(int);
+static inline int splraise(int);
+static inline int spllower(int);
+static inline void splx(int);
+static inline void set_sint(int);
 
 void softnet(int);	/* Defined in machdep.c, used in extintr.c */
 
@@ -95,7 +95,7 @@ extern long intrcnt[];
  * Reorder protection in the following inline functions is
  * protected with the "eieio" instruction.
  */
-static __inline int
+static inline int
 splraise(newcpl)
 	int newcpl;
 {
@@ -108,7 +108,7 @@ splraise(newcpl)
 	return(oldcpl);
 }
 
-static __inline void
+static inline void
 splx(newcpl)
 	int newcpl;
 {
@@ -119,7 +119,7 @@ splx(newcpl)
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 }
 
-static __inline int
+static inline int
 spllower(newcpl)
 	int newcpl;
 {
@@ -136,7 +136,7 @@ spllower(newcpl)
 
 /* Following code should be implemented with lwarx/stwcx to avoid
  * the disable/enable. i need to read the manual once more.... */
-static __inline void
+static inline void
 set_sint(pending)
 	int	pending;
 {

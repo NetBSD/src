@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.165 2005/12/17 05:44:11 jmc Exp $	*/
+/*	$NetBSD: pmap.c,v 1.166 2005/12/24 20:07:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.165 2005/12/17 05:44:11 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2005/12/24 20:07:19 perry Exp $");
 
 /*
  *	Manages physical address maps.
@@ -755,7 +755,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	if (PMAP_IS_ACTIVE(pmap)) {
 		unsigned asid;
 
-		__asm __volatile("mfc0 %0,$10; nop" : "=r"(asid));
+		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
 		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
 		if (asid != pmap->pm_asid) {
 			panic("inconsistency for active TLB flush: %d <-> %d",
@@ -913,7 +913,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	if (PMAP_IS_ACTIVE(pmap)) {
 		unsigned asid;
 
-		__asm __volatile("mfc0 %0,$10; nop" : "=r"(asid));
+		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
 		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
 		if (asid != pmap->pm_asid) {
 			panic("inconsistency for active TLB update: %d <-> %d",
@@ -1283,7 +1283,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (PMAP_IS_ACTIVE(pmap)) {
 		unsigned asid;
 
-		__asm __volatile("mfc0 %0,$10; nop" : "=r"(asid));
+		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
 		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
 		if (asid != pmap->pm_asid) {
 			panic("inconsistency for active TLB update: %d <-> %d",

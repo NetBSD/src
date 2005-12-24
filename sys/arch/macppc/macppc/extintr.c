@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.53 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: extintr.c,v 1.54 2005/12/24 20:07:16 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.53 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.54 2005/12/24 20:07:16 perry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -184,7 +184,7 @@ mapirq(irq)
 /*
  * Count leading zeros.
  */
-static __inline int
+static inline int
 cntlzw(x)
 	int x;
 {

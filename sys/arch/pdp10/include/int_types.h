@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.3 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: int_types.h,v 1.4 2005/12/24 20:07:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,7 +47,7 @@
 /* 7.18.1.1 Exact-width integer types */
 
 #ifdef __GNUC__
-typedef	__signed char		 __int8_t __attribute__ ((size (8)));
+typedef	signed char		 __int8_t __attribute__ ((size (8)));
 typedef	unsigned char		__uint8_t __attribute__ ((size (8)));
 typedef	short int		__int16_t __attribute__ ((size (16)));
 typedef	unsigned short int     __uint16_t __attribute__ ((size (16)));

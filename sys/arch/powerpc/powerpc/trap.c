@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.108 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.109 2005/12/24 20:07:28 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 2005/12/24 20:07:28 perry Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 2005/12/11 12:18:46 christos Exp $");
 
 static int emulated_opcode(struct lwp *, struct trapframe *);
 static int fix_unaligned(struct lwp *, struct trapframe *);
-static __inline vaddr_t setusr(vaddr_t, size_t *);
-static __inline void unsetusr(void);
+static inline vaddr_t setusr(vaddr_t, size_t *);
+static inline void unsetusr(void);
 
 void trap(struct trapframe *);	/* Called from locore / trap_subr */
 /* Why are these not defined in a header? */
@@ -548,7 +548,7 @@ setusr(vaddr_t uva, size_t *len_p)
 	pcb->pcb_umapsr = uva >> ADDR_SR_SHFT;
 	*len_p = SEGMENT_LENGTH - (uva & ~SEGMENT_MASK);
 	p = (USER_SR << ADDR_SR_SHFT) + (uva & ~SEGMENT_MASK);
-	__asm __volatile ("isync; mtsr %0,%1; isync"
+	__asm volatile ("isync; mtsr %0,%1; isync"
 	    ::	"n"(USER_SR), "r"(pcb->pcb_pm->pm_sr[pcb->pcb_umapsr]));
 	return p;
 }
@@ -557,7 +557,7 @@ static void
 unsetusr(void)
 {
 	curpcb->pcb_kmapsr = 0;
-	__asm __volatile ("isync; mtsr %0,%1; isync"
+	__asm volatile ("isync; mtsr %0,%1; isync"
 	    ::	"n"(USER_SR), "r"(EMPTY_SEGMENT));
 }
 #endif
@@ -660,15 +660,15 @@ badaddr_read(void *addr, size_t size, int *rptr)
 	int x;
 
 	/* Get rid of any stale machine checks that have been waiting.  */
-	__asm __volatile ("sync; isync");
+	__asm volatile ("sync; isync");
 
 	if (setfault(&env)) {
 		curpcb->pcb_onfault = 0;
-		__asm __volatile ("sync");
+		__asm volatile ("sync");
 		return 1;
 	}
 
-	__asm __volatile ("sync");
+	__asm volatile ("sync");
 
 	switch (size) {
 	case 1:
@@ -685,10 +685,10 @@ badaddr_read(void *addr, size_t size, int *rptr)
 	}
 
 	/* Make sure we took the machine check, if we caused one. */
-	__asm __volatile ("sync; isync");
+	__asm volatile ("sync; isync");
 
 	curpcb->pcb_onfault = 0;
-	__asm __volatile ("sync");	/* To be sure. */
+	__asm volatile ("sync");	/* To be sure. */
 
 	/* Use the value to avoid reorder. */
 	if (rptr)

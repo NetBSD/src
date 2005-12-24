@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 2005/12/24 20:07:31 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -115,7 +115,7 @@ boot(resp, loadaddr)
 	/*
 	 * clock
 	 */
-	__asm __volatile ("mfpvr %0" : "=r"(cpuvers));
+	__asm volatile ("mfpvr %0" : "=r"(cpuvers));
 	cpuvers >>= 16;
 	btinfo_clock.common.next = 0;
 	btinfo_clock.common.type = BTINFO_CLOCK;

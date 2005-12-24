@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2005/12/24 20:06:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -112,14 +112,14 @@ void	_setsoftintr(int);
  * void	splx(int);
  * void	_setsoftintr(int);
  *
- * These may be defined as functions, static __inline functions, or macros,
+ * These may be defined as functions, static inline functions, or macros,
  * but there must be a _spllower() and splx() defined as functions callable
  * from assembly language (for cpu_switch()).  However, since it's quite
  * useful to be able to inline splx(), you could do something like the
  * following:
  *
  * in <boardtype>_intr.h:
- * 	static __inline int
+ * 	static inline int
  *	boardtype_splx(int spl)
  *	{...}
  *

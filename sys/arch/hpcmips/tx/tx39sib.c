@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.17 2005/12/11 12:17:34 christos Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.18 2005/12/24 20:07:04 perry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.17 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.18 2005/12/24 20:07:04 perry Exp $");
 
 #undef TX39SIBDEBUG
 
@@ -137,7 +137,7 @@ struct tx39sib_softc {
 	int sc_attached;
 };
 
-__inline int	__txsibsf0_ready(tx_chipset_tag_t);
+inline int	__txsibsf0_ready(tx_chipset_tag_t);
 #ifdef TX39SIBDEBUG
 void	tx39sib_dump(struct tx39sib_softc *);
 #endif

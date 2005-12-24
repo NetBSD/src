@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.11 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.12 2005/12/24 20:07:03 perry Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.11 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.12 2005/12/24 20:07:03 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,7 @@ ie_gsc_read16(struct ie_softc *sc, int offset)
 {
 	uint16_t val;
 
-	__asm __volatile(
+	__asm volatile(
 	"	ldh	0(%1), %0	\n"
 	"	fdc	%%r0(%1)	\n"
 	: "=&r" (val)
@@ -259,7 +259,7 @@ void
 ie_gsc_write16(struct ie_softc *sc, int offset, uint16_t v)
 {
 
-	__asm __volatile(
+	__asm volatile(
 	"	sth	%0, 0(%1)	\n"
 	"	fdc	%%r0(%1)	\n"
 	: /* no outputs */
@@ -275,7 +275,7 @@ ie_gsc_write24(struct ie_softc *sc, int offset, int addr)
 	 * zero, so we have to add in the appropriate offset here.
 	 */
 	addr += sc->sc_dmamap->dm_segs[0].ds_addr;
-	__asm __volatile(
+	__asm volatile(
 	"	ldi	2, %%r21		\n"
 	"	extru	%0, 15, 16, %%r22	\n"
 	"	sth	%0, 0(%1)		\n"

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.123 2005/12/11 12:19:15 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.124 2005/12/24 20:07:37 perry Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2005/12/11 12:19:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2005/12/24 20:07:37 perry Exp $");
 
 #define NEW_FPSTATE
 
@@ -109,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2005/12/11 12:19:15 christos Exp $");
 /* What trap level are we running? */
 #define tl() ({ \
 	int _l; \
-	__asm __volatile("rdpr %%tl, %0" : "=r" (_l) :); \
+	__asm volatile("rdpr %%tl, %0" : "=r" (_l) :); \
 	_l; \
 })
 #endif
@@ -158,7 +158,7 @@ int	rwindow_debug = RW_ERR;
 #define TDB_STOPCPIO	0x400
 #define TDB_SYSTOP	0x800
 int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/;
-/* #define __inline */
+/* #define inline */
 #endif
 
 #ifdef DDB

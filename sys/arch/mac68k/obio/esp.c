@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.41 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: esp.c,v 1.42 2005/12/24 20:07:15 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.41 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.42 2005/12/24 20:07:15 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -744,7 +744,7 @@ restart_dmago:
 	if (esc->sc_datain == 0) {
 		/* while (cnt32--) { 16 instances of *pdma = *addr++; } */
 		/* while (cnt2--) { *pdma = *addr++; } */
-		__asm __volatile (
+		__asm volatile (
 			"	movl %1, %%a2	\n"
 			"	movl %2, %%a3	\n"
 			"	movw %3, %%d2	\n"
@@ -787,7 +787,7 @@ restart_dmago:
 	} else {
 		/* while (cnt32--) { 16 instances of *addr++ = *pdma; } */
 		/* while (cnt2--) { *addr++ = *pdma; } */
-		__asm __volatile (
+		__asm volatile (
 			"	movl %1, %%a2	\n"
 			"	movl %2, %%a3	\n"
 			"	movw %3, %%d2	\n"

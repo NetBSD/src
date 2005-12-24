@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.79 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 2005/12/24 20:07:19 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -773,8 +773,8 @@ char wberrstr[] =
 /*
  * Because calling memcpy() for 16 bytes is *way* too much overhead ...
  */
-static __inline void fastcopy16(u_int *, u_int *);
-static __inline void
+static inline void fastcopy16(u_int *, u_int *);
+static inline void
 fastcopy16(src, dst)
 	u_int *src, *dst;
 {
