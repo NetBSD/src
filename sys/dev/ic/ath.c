@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.65 2005/12/03 21:20:07 rpaulo Exp $	*/
+/*	$NetBSD: ath.c,v 1.66 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.65 2005/12/03 21:20:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.66 2005/12/24 20:27:29 perry Exp $");
 #endif
 
 /*
@@ -2701,7 +2701,7 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
  * Extend 15-bit time stamp from rx descriptor to
  * a full 64-bit TSF using the current h/w TSF.
  */
-static __inline u_int64_t
+static inline u_int64_t
 ath_extend_tsf(struct ath_hal *ah, u_int32_t rstamp)
 {
 	u_int64_t tsf;

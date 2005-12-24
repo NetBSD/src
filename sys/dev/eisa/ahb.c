@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.43 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: ahb.c,v 1.44 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.43 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.44 2005/12/24 20:27:29 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -419,7 +419,7 @@ ahbintr(void *arg)
 	}
 }
 
-static __inline void
+static inline void
 ahb_reset_ecb(struct ahb_softc *sc, struct ahb_ecb *ecb)
 {
 

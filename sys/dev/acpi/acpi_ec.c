@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.34 2005/12/11 12:21:01 christos Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.35 2005/12/24 20:27:29 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.34 2005/12/11 12:21:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.35 2005/12/24 20:27:29 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,9 +263,9 @@ static ACPI_STATUS	EcRead(struct acpi_ec_softc *sc, UINT8 Address,
 static ACPI_STATUS	EcWrite(struct acpi_ec_softc *sc, UINT8 Address,
 			    UINT8 *Data);
 static void		EcGpeQueryHandler(void *);
-static __inline int	EcIsLocked(struct acpi_ec_softc *);
-static __inline void	EcLock(struct acpi_ec_softc *);
-static __inline void	EcUnlock(struct acpi_ec_softc *);
+static inline int	EcIsLocked(struct acpi_ec_softc *);
+static inline void	EcLock(struct acpi_ec_softc *);
+static inline void	EcUnlock(struct acpi_ec_softc *);
 
 
 static int	acpiec_match(struct device *, struct cfdata *, void *);
@@ -276,14 +276,14 @@ CFATTACH_DECL(acpiec, sizeof(struct acpi_ec_softc),
 
 static struct acpi_ec_softc *ecdt_sc;
 
-static __inline int
+static inline int
 EcIsLocked(struct acpi_ec_softc *sc)
 {
 
 	return (lockstatus(&sc->sc_lock) == LK_EXCLUSIVE);
 }
 
-static __inline void
+static inline void
 EcLock(struct acpi_ec_softc *sc)
 {
 	ACPI_STATUS rv;
@@ -308,7 +308,7 @@ EcLock(struct acpi_ec_softc *sc)
 	splx(s);
 }
 
-static __inline void
+static inline void
 EcUnlock(struct acpi_ec_softc *sc)
 {
 	ACPI_STATUS rv;

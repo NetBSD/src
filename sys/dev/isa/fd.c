@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.61 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.62 2005/12/24 20:27:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.61 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62 2005/12/24 20:27:41 perry Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -252,7 +252,7 @@ void fdctimeout(void *arg);
 void fdcpseudointr(void *arg);
 void fdcretry(struct fdc_softc *fdc);
 void fdfinish(struct fd_softc *fd, struct buf *bp);
-__inline const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+inline const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
 
 void	fd_mountroot_hook(struct device *);
@@ -559,7 +559,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 }
 #endif /* i386 */
 
-__inline const struct fd_type *
+inline const struct fd_type *
 fd_dev_to_type(fd, dev)
 	struct fd_softc *fd;
 	dev_t dev;

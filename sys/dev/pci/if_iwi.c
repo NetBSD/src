@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.43 2005/12/05 09:24:54 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.44 2005/12/24 20:27:42 perry Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.43 2005/12/05 09:24:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.44 2005/12/24 20:27:42 perry Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -168,14 +168,14 @@ static const struct ieee80211_rateset iwi_rateset_11b =
 static const struct ieee80211_rateset iwi_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-static __inline uint8_t
+static inline uint8_t
 MEM_READ_1(struct iwi_softc *sc, uint32_t addr)
 {
 	CSR_WRITE_4(sc, IWI_CSR_INDIRECT_ADDR, addr);
 	return CSR_READ_1(sc, IWI_CSR_INDIRECT_DATA);
 }
 
-static __inline uint32_t
+static inline uint32_t
 MEM_READ_4(struct iwi_softc *sc, uint32_t addr)
 {
 	CSR_WRITE_4(sc, IWI_CSR_INDIRECT_ADDR, addr);

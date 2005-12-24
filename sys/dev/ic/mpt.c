@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.6 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: mpt.c,v 1.7 2005/12/24 20:27:30 perry Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.6 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.7 2005/12/24 20:27:30 perry Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -49,13 +49,13 @@ static int maxwait_ack = 0;
 static int maxwait_int = 0;
 static int maxwait_state = 0;
 
-static __inline u_int32_t
+static inline u_int32_t
 mpt_rd_db(mpt_softc_t *mpt)
 {
 	return mpt_read(mpt, MPT_OFFSET_DOORBELL);
 }
 
-static __inline u_int32_t
+static inline u_int32_t
 mpt_rd_intr(mpt_softc_t *mpt)
 {
 	return mpt_read(mpt, MPT_OFFSET_INTR_STATUS);

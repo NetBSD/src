@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.69 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.70 2005/12/24 20:27:41 perry Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.69 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.70 2005/12/24 20:27:41 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -169,8 +169,8 @@ static void iy_mc_setup(struct iy_softc *);
 static void iy_mc_reset(struct iy_softc *);
 void iyget(struct iy_softc *, bus_space_tag_t, bus_space_handle_t, int);
 void iyprobemem(struct iy_softc *);
-static __inline void eepromwritebit(bus_space_tag_t, bus_space_handle_t, int);
-static __inline int eepromreadbit(bus_space_tag_t, bus_space_handle_t);
+static inline void eepromwritebit(bus_space_tag_t, bus_space_handle_t, int);
+static inline int eepromreadbit(bus_space_tag_t, bus_space_handle_t);
 
 #ifdef IYDEBUGX
 void print_rbd(volatile struct iy_recv_buf_desc *);
@@ -875,7 +875,7 @@ struct ifnet *ifp;
 }
 
 
-static __inline void
+static inline void
 eepromwritebit(iot, ioh, what)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -889,7 +889,7 @@ eepromwritebit(iot, ioh, what)
 	delay(1);
 }
 
-static __inline int
+static inline int
 eepromreadbit(iot, ioh)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;

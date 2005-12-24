@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.8 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.9 2005/12/24 20:27:30 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.8 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.9 2005/12/24 20:27:30 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,13 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.8 2005/12/11 12:21:28 christos Exp $");
 
 static int	oosiop_alloc_cb(struct oosiop_softc *, int);
 
-static __inline void oosiop_relocate_io(struct oosiop_softc *, bus_addr_t);
-static __inline void oosiop_relocate_tc(struct oosiop_softc *, bus_addr_t);
-static __inline void oosiop_fixup_select(struct oosiop_softc *, bus_addr_t,
+static inline void oosiop_relocate_io(struct oosiop_softc *, bus_addr_t);
+static inline void oosiop_relocate_tc(struct oosiop_softc *, bus_addr_t);
+static inline void oosiop_fixup_select(struct oosiop_softc *, bus_addr_t,
 		         int);
-static __inline void oosiop_fixup_jump(struct oosiop_softc *, bus_addr_t,
+static inline void oosiop_fixup_jump(struct oosiop_softc *, bus_addr_t,
 		         bus_addr_t);
-static __inline void oosiop_fixup_move(struct oosiop_softc *, bus_addr_t,
+static inline void oosiop_fixup_move(struct oosiop_softc *, bus_addr_t,
 		         bus_size_t, bus_addr_t);
 
 static void	oosiop_load_script(struct oosiop_softc *);
@@ -323,7 +323,7 @@ oosiop_alloc_cb(struct oosiop_softc *sc, int ncb)
 	return (0);
 }
 
-static __inline void
+static inline void
 oosiop_relocate_io(struct oosiop_softc *sc, bus_addr_t addr)
 {
 	uint32_t dcmd;
@@ -350,7 +350,7 @@ oosiop_relocate_io(struct oosiop_softc *sc, bus_addr_t addr)
 	sc->sc_scr[addr / 4 + 1] = htole32(dsps + sc->sc_scrbase);
 }
 
-static __inline void
+static inline void
 oosiop_relocate_tc(struct oosiop_softc *sc, bus_addr_t addr)
 {
 	uint32_t dcmd;
@@ -377,7 +377,7 @@ oosiop_relocate_tc(struct oosiop_softc *sc, bus_addr_t addr)
 	sc->sc_scr[addr / 4 + 1] = htole32(dsps + sc->sc_scrbase);
 }
 
-static __inline void
+static inline void
 oosiop_fixup_select(struct oosiop_softc *sc, bus_addr_t addr, int id)
 {
 	uint32_t dcmd;
@@ -388,14 +388,14 @@ oosiop_fixup_select(struct oosiop_softc *sc, bus_addr_t addr, int id)
 	sc->sc_scr[addr / 4] = htole32(dcmd);
 }
 
-static __inline void
+static inline void
 oosiop_fixup_jump(struct oosiop_softc *sc, bus_addr_t addr, bus_addr_t dst)
 {
 
 	sc->sc_scr[addr / 4 + 1] = htole32(dst);
 }
 
-static __inline void
+static inline void
 oosiop_fixup_move(struct oosiop_softc *sc, bus_addr_t addr, bus_size_t dbc,
     bus_addr_t dsps)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.132 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.133 2005/12/24 20:27:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.132 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.133 2005/12/24 20:27:52 perry Exp $");
 
 #include "opt_scsi.h"
 
@@ -269,7 +269,7 @@ scsipi_get_resource(struct scsipi_channel *chan)
  *
  *	NOTE: Must be called at splbio().
  */
-static __inline int
+static inline int
 scsipi_grow_resources(struct scsipi_channel *chan)
 {
 

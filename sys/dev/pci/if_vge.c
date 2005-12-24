@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.7 2005/11/21 20:25:15 martin Exp $ */
+/* $NetBSD: if_vge.c,v 1.8 2005/12/24 20:27:42 perry Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.7 2005/11/21 20:25:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.8 2005/12/24 20:27:42 perry Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -127,7 +127,7 @@ static int vge_newbuf		(struct vge_softc *, int, struct mbuf *);
 static int vge_rx_list_init	(struct vge_softc *);
 static int vge_tx_list_init	(struct vge_softc *);
 #ifdef VGE_FIXUP_RX
-static __inline void vge_fixup_rx
+static inline void vge_fixup_rx
 				(struct mbuf *);
 #endif
 static void vge_rxeof		(struct vge_softc *);
@@ -1144,7 +1144,7 @@ vge_rx_list_init(sc)
 }
 
 #ifdef VGE_FIXUP_RX
-static __inline void
+static inline void
 vge_fixup_rx(m)
 	struct mbuf		*m;
 {

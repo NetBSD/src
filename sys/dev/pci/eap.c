@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.80 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: eap.c,v 1.81 2005/12/24 20:27:42 perry Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.80 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.81 2005/12/24 20:27:42 perry Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -372,7 +372,7 @@ eap1370_write_codec(struct eap_softc *sc, int a, int d)
  * FreeBSD and Linux drivers.
  */
 
-static __inline void
+static inline void
 eap1371_ready_codec(struct eap_softc *sc, uint8_t a, uint32_t wd)
 {
 	int to, s;

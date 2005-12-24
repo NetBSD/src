@@ -39,7 +39,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.5 2005/11/18 16:48:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.6 2005/12/24 20:27:29 perry Exp $");
 #endif
 
 
@@ -116,7 +116,7 @@ enum {
 
 static void	ath_rate_ctl_reset(struct ath_softc *, struct ieee80211_node *);
 
-static __inline int size_to_bin(int size) 
+static inline int size_to_bin(int size) 
 {
 	int x = 0;
 	for (x = 0; x < NUM_PACKET_SIZE_BINS; x++) {
@@ -126,11 +126,11 @@ static __inline int size_to_bin(int size)
 	}
 	return NUM_PACKET_SIZE_BINS-1;
 }
-static __inline int bin_to_size(int index) {
+static inline int bin_to_size(int index) {
 	return packet_size_bins[index];
 }
 
-static __inline int rate_to_ndx(struct sample_node *sn, int rate) {
+static inline int rate_to_ndx(struct sample_node *sn, int rate) {
 	int x = 0;
 	for (x = 0; x < sn->num_rates; x++) {
 		if (sn->rates[x].rate == rate) {
@@ -175,7 +175,7 @@ ath_rate_node_cleanup(struct ath_softc *sc, struct ath_node *an)
  * returns the ndx with the lowest average_tx_time,
  * or -1 if all the average_tx_times are 0.
  */
-static __inline int best_rate_ndx(struct sample_node *sn, int size_bin, 
+static inline int best_rate_ndx(struct sample_node *sn, int size_bin, 
 				  int require_acked_before)
 {
 	int x = 0;
@@ -200,7 +200,7 @@ static __inline int best_rate_ndx(struct sample_node *sn, int size_bin,
  * is less than the best bit-rate's average_tx_time
  * and the ndx has not had four successive failures.
  */
-static __inline int pick_sample_ndx(struct sample_node *sn, int size_bin) 
+static inline int pick_sample_ndx(struct sample_node *sn, int size_bin) 
 {
 	int x = 0;
 	int current_ndx = 0;

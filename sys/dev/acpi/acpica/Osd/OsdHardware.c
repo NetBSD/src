@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.10 2005/12/11 12:21:02 christos Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.11 2005/12/24 20:27:29 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.10 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.11 2005/12/24 20:27:29 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -135,15 +135,15 @@ AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 *Value, UINT32 Width)
 
 	switch (Width) {
 	case 8:
-		*Value = *(__volatile uint8_t *) LogicalAddress;
+		*Value = *(volatile uint8_t *) LogicalAddress;
 		break;
 
 	case 16:
-		*Value = *(__volatile uint16_t *) LogicalAddress;
+		*Value = *(volatile uint16_t *) LogicalAddress;
 		break;
 
 	case 32:
-		*Value = *(__volatile uint32_t *) LogicalAddress;
+		*Value = *(volatile uint32_t *) LogicalAddress;
 		break;
 
 	default:
@@ -172,15 +172,15 @@ AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 Value, UINT32 Width)
 
 	switch (Width) {
 	case 8:
-		*(__volatile uint8_t *) LogicalAddress = Value;
+		*(volatile uint8_t *) LogicalAddress = Value;
 		break;
 
 	case 16:
-		*(__volatile uint16_t *) LogicalAddress = Value;
+		*(volatile uint16_t *) LogicalAddress = Value;
 		break;
 
 	case 32:
-		*(__volatile uint32_t *) LogicalAddress = Value;
+		*(volatile uint32_t *) LogicalAddress = Value;
 		break;
 
 	default:

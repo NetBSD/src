@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.48 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.49 2005/12/24 20:27:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.48 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.49 2005/12/24 20:27:41 perry Exp $");
 
 #include "isadma.h"
 
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.48 2005/12/11 12:22:16 christos Exp $")
 #endif
 
 static void isapnp_init(struct isapnp_softc *);
-static __inline u_char isapnp_shift_bit(struct isapnp_softc *);
+static inline u_char isapnp_shift_bit(struct isapnp_softc *);
 static int isapnp_findcard(struct isapnp_softc *);
 static void isapnp_free_region(bus_space_tag_t, struct isapnp_region *);
 static int isapnp_alloc_region(bus_space_tag_t, struct isapnp_region *);
@@ -127,7 +127,7 @@ isapnp_init(sc)
 /* isapnp_shift_bit():
  *	Read a bit at a time from the config card.
  */
-static __inline u_char
+static inline u_char
 isapnp_shift_bit(sc)
 	struct isapnp_softc *sc;
 {

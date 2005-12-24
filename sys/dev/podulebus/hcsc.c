@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.15 2005/12/11 12:23:28 christos Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.16 2005/12/24 20:27:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.15 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.16 2005/12/24 20:27:52 perry Exp $");
 
 #include <sys/param.h>
 
@@ -235,7 +235,7 @@ hcsc_attach(struct device *parent, struct device *self, void *aux)
 
 #define TIMEOUT 1000000
 
-static __inline int
+static inline int
 hcsc_ready(struct ncr5380_softc *sc)
 {
 	int i;
@@ -257,7 +257,7 @@ hcsc_ready(struct ncr5380_softc *sc)
 
 
 /* Return zero on success. */
-static __inline void hcsc_wait_not_req(struct ncr5380_softc *sc)
+static inline void hcsc_wait_not_req(struct ncr5380_softc *sc)
 {
 	int timo;
 	for (timo = TIMEOUT; timo; timo--) {

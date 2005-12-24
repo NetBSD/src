@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.60 2005/12/13 05:10:55 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.61 2005/12/24 20:27:30 perry Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.60 2005/12/13 05:10:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.61 2005/12/24 20:27:30 perry Exp $");
 
 #include "bpfilter.h"
 
@@ -519,7 +519,7 @@ rtw_txdac_enable(struct rtw_softc *sc, int enable)
 	RTW_SYNC(regs, RTW_ANAPARM, RTW_ANAPARM);
 }
 
-static __inline int
+static inline int
 rtw_chip_reset1(struct rtw_regs *regs, const char *dvname)
 {
 	uint8_t cr;
@@ -543,7 +543,7 @@ rtw_chip_reset1(struct rtw_regs *regs, const char *dvname)
 	return ETIMEDOUT;
 }
 
-static __inline int
+static inline int
 rtw_chip_reset(struct rtw_regs *regs, const char *dvname)
 {
 	uint32_t tcr;
@@ -634,7 +634,7 @@ rtw_key_update_end(struct ieee80211com *ic)
 	    (ifp->if_flags & IFF_RUNNING) != 0);
 }
 
-static __inline int
+static inline int
 rtw_key_hwsupp(uint32_t flags, const struct ieee80211_key *k)
 {
 	if (k->wk_cipher->ic_cipher != IEEE80211_CIPHER_WEP)
@@ -718,7 +718,7 @@ out:
 	sc->sc_flags |= RTW_F_DK_VALID;
 }
 
-static __inline int
+static inline int
 rtw_recall_eeprom(struct rtw_regs *regs, const char *dvname)
 {
 	int i;
@@ -745,7 +745,7 @@ rtw_recall_eeprom(struct rtw_regs *regs, const char *dvname)
 	return ETIMEDOUT;
 }
 
-static __inline int
+static inline int
 rtw_reset(struct rtw_softc *sc)
 {
 	int rc;
@@ -766,7 +766,7 @@ rtw_reset(struct rtw_softc *sc)
 	return 0;
 }
 
-static __inline int
+static inline int
 rtw_txdesc_dmamaps_create(bus_dma_tag_t dmat, struct rtw_txsoft *descs,
     u_int ndescs)
 {
@@ -780,7 +780,7 @@ rtw_txdesc_dmamaps_create(bus_dma_tag_t dmat, struct rtw_txsoft *descs,
 	return rc;
 }
 
-static __inline int
+static inline int
 rtw_rxdesc_dmamaps_create(bus_dma_tag_t dmat, struct rtw_rxsoft *descs,
     u_int ndescs)
 {
@@ -794,7 +794,7 @@ rtw_rxdesc_dmamaps_create(bus_dma_tag_t dmat, struct rtw_rxsoft *descs,
 	return rc;
 }
 
-static __inline void
+static inline void
 rtw_rxdesc_dmamaps_destroy(bus_dma_tag_t dmat, struct rtw_rxsoft *descs,
     u_int ndescs)
 {
@@ -805,7 +805,7 @@ rtw_rxdesc_dmamaps_destroy(bus_dma_tag_t dmat, struct rtw_rxsoft *descs,
 	}
 }
 
-static __inline void
+static inline void
 rtw_txdesc_dmamaps_destroy(bus_dma_tag_t dmat, struct rtw_txsoft *descs,
     u_int ndescs)
 {
@@ -816,7 +816,7 @@ rtw_txdesc_dmamaps_destroy(bus_dma_tag_t dmat, struct rtw_txsoft *descs,
 	}
 }
 
-static __inline void
+static inline void
 rtw_srom_free(struct rtw_srom *sr)
 {
 	sr->sr_size = 0;
@@ -1069,7 +1069,7 @@ rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 	    RTW_READ8(regs, RTW_CONFIG4)));
 }
 
-static __inline void
+static inline void
 rtw_init_channels(enum rtw_locale locale,
     struct ieee80211_channel (*chans)[IEEE80211_CHAN_MAX+1],
     const char *dvname)
@@ -1110,7 +1110,7 @@ rtw_init_channels(enum rtw_locale locale,
 }
 
 
-static __inline void
+static inline void
 rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale)
 {
 	uint8_t cfg0 = RTW_READ8(regs, RTW_CONFIG0);
@@ -1132,7 +1132,7 @@ rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale)
 	}
 }
 
-static __inline int
+static inline int
 rtw_identify_sta(struct rtw_regs *regs, uint8_t (*addr)[IEEE80211_ADDR_LEN],
     const char *dvname)
 {
@@ -1231,7 +1231,7 @@ rtw_txsoft_blk_init_all(struct rtw_txsoft_blk *tsb)
 		rtw_txsoft_blk_init(&tsb[pri]);
 }
 
-static __inline void
+static inline void
 rtw_rxdescs_sync(struct rtw_rxdesc_blk *rdb, int desc0, int nsync, int ops)
 {
 	KASSERT(nsync <= rdb->rdb_ndesc);
@@ -1301,7 +1301,7 @@ rtw_rxbufs_release(bus_dma_tag_t dmat, struct rtw_rxsoft *desc)
 	}
 }
 
-static __inline int
+static inline int
 rtw_rxsoft_alloc(bus_dma_tag_t dmat, struct rtw_rxsoft *rs)
 {
 	int rc;
@@ -1363,7 +1363,7 @@ rtw_rxsoft_init_all(bus_dma_tag_t dmat, struct rtw_rxsoft *desc,
 	return rc;
 }
 
-static __inline void
+static inline void
 rtw_rxdesc_init(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *rs,
     int idx, int kick)
 {
@@ -1692,7 +1692,7 @@ rtw_txsofts_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
 	tsb->tsb_tx_timer = 0;
 }
 
-static __inline void
+static inline void
 rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *tdb,
     struct rtw_txsoft *ts, int ndesc)
 {
@@ -1748,7 +1748,7 @@ rtw_reset_oactive(struct rtw_softc *sc)
 }
 
 /* Collect transmitted packets. */
-static __inline void
+static inline void
 rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
     struct rtw_txdesc_blk *tdb, int force)
 {
@@ -2086,7 +2086,7 @@ rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 		rtw_txring_fixup(sc);
 }
 
-static __inline void
+static inline void
 rtw_suspend_ticks(struct rtw_softc *sc)
 {
 	RTW_DPRINTF(RTW_DEBUG_TIMEOUT,
@@ -2094,7 +2094,7 @@ rtw_suspend_ticks(struct rtw_softc *sc)
 	sc->sc_do_tick = 0;
 }
 
-static __inline void
+static inline void
 rtw_resume_ticks(struct rtw_softc *sc)
 {
 	uint32_t tsftrl0, tsftrl1, next_tick;
@@ -2543,7 +2543,7 @@ rtw_transmit_config(struct rtw_regs *regs)
 	RTW_SYNC(regs, RTW_TCR, RTW_TCR);
 }
 
-static __inline void
+static inline void
 rtw_enable_interrupts(struct rtw_softc *sc)
 {
 	struct rtw_regs *regs = &sc->sc_regs;
@@ -2778,7 +2778,7 @@ out:
 	return rc;
 }
 
-static __inline void
+static inline void
 rtw_led_init(struct rtw_regs *regs)
 {
 	uint8_t cfg0, cfg1;
@@ -2932,7 +2932,7 @@ rtw_led_slowblink(void *arg)
 	callout_schedule(&ls->ls_slow_ch, RTW_LED_SLOW_TICKS);
 }
 
-static __inline void
+static inline void
 rtw_led_attach(struct rtw_led_state *ls, void *arg)
 {
 	callout_init(&ls->ls_fast_ch);
@@ -2990,7 +2990,7 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 /* Select a transmit ring with at least one h/w and s/w descriptor free.
  * Return 0 on success, -1 on failure.
  */
-static __inline int
+static inline int
 rtw_txring_choose(struct rtw_softc *sc, struct rtw_txsoft_blk **tsbp,
     struct rtw_txdesc_blk **tdbp, int pri)
 {
@@ -3014,7 +3014,7 @@ rtw_txring_choose(struct rtw_softc *sc, struct rtw_txsoft_blk **tsbp,
 	return 0;
 }
 
-static __inline struct mbuf *
+static inline struct mbuf *
 rtw_80211_dequeue(struct rtw_softc *sc, struct ifqueue *ifq, int pri,
     struct rtw_txsoft_blk **tsbp, struct rtw_txdesc_blk **tdbp,
     struct ieee80211_node **nip, short *if_flagsp)
@@ -3040,7 +3040,7 @@ rtw_80211_dequeue(struct rtw_softc *sc, struct ifqueue *ifq, int pri,
 /* Point *mp at the next 802.11 frame to transmit.  Point *tsbp
  * at the driver's selection of transmit control block for the packet.
  */
-static __inline int
+static inline int
 rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
     struct rtw_txdesc_blk **tdbp, struct mbuf **mp,
     struct ieee80211_node **nip)
@@ -3782,7 +3782,7 @@ rtw_shutdown(void *arg)
 	rtw_stop(&sc->sc_if, 1);
 }
 
-static __inline void
+static inline void
 rtw_setifprops(struct ifnet *ifp, const char *dvname, void *softc)
 {
 	(void)memcpy(ifp->if_xname, dvname, IFNAMSIZ);
@@ -3796,7 +3796,7 @@ rtw_setifprops(struct ifnet *ifp, const char *dvname, void *softc)
 	ifp->if_stop = rtw_stop;
 }
 
-static __inline void
+static inline void
 rtw_set80211props(struct ieee80211com *ic)
 {
 	int nrate;
@@ -3815,7 +3815,7 @@ rtw_set80211props(struct ieee80211com *ic)
 	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates = nrate;
 }
 
-static __inline void
+static inline void
 rtw_set80211methods(struct rtw_mtbl *mtbl, struct ieee80211com *ic)
 {
 	mtbl->mt_newstate = ic->ic_newstate;
@@ -3836,7 +3836,7 @@ rtw_set80211methods(struct rtw_mtbl *mtbl, struct ieee80211com *ic)
 	ic->ic_crypto.cs_key_update_end = rtw_key_update_end;
 }
 
-static __inline void
+static inline void
 rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
     void *arg)
 {
@@ -3858,7 +3858,7 @@ rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
 		    dvname);
 }
 
-static __inline void
+static inline void
 rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
     void *arg)
 {
@@ -3869,7 +3869,7 @@ rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
 		powerhook_disestablish(hooks->rh_power);
 }
 
-static __inline void
+static inline void
 rtw_init_radiotap(struct rtw_softc *sc)
 {
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.101 2005/12/19 12:35:19 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.102 2005/12/24 20:27:42 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.101 2005/12/19 12:35:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.102 2005/12/24 20:27:42 perry Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -193,8 +193,8 @@ void bge_rxeof(struct bge_softc *);
 void bge_tick(void *);
 void bge_stats_update(struct bge_softc *);
 int bge_encap(struct bge_softc *, struct mbuf *, u_int32_t *);
-static __inline int bge_cksum_pad(struct mbuf *pkt);
-static __inline int bge_compact_dma_runt(struct mbuf *pkt);
+static inline int bge_cksum_pad(struct mbuf *pkt);
+static inline int bge_compact_dma_runt(struct mbuf *pkt);
 
 int bge_intr(void *);
 void bge_start(struct ifnet *);
@@ -3337,7 +3337,7 @@ bge_stats_update(sc)
  * from incorporating its own padding into the UDP/TCP checksum; who knows).
  * If we pad such runts with zeros, the onboard checksum comes out correct.
  */
-static __inline int
+static inline int
 bge_cksum_pad(struct mbuf *pkt)
 {
 	struct mbuf *last = NULL;
@@ -3386,7 +3386,7 @@ bge_cksum_pad(struct mbuf *pkt)
 /*
  * Compact outbound packets to avoid bug with DMA segments less than 8 bytes.
  */
-static __inline int
+static inline int
 bge_compact_dma_runt(struct mbuf *pkt)
 {
 	struct mbuf	*m, *prev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.30 2005/12/11 12:21:27 christos Exp $ */
+/*	$NetBSD: iha.c,v 1.31 2005/12/24 20:27:30 perry Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.30 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.31 2005/12/24 20:27:30 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,15 +135,15 @@ static uint16_t eeprom_default[EEPROM_SIZE] = {
 
 static void iha_append_free_scb(struct iha_softc *, struct iha_scb *);
 static void iha_append_done_scb(struct iha_softc *, struct iha_scb *, uint8_t);
-static __inline struct iha_scb *iha_pop_done_scb(struct iha_softc *);
+static inline struct iha_scb *iha_pop_done_scb(struct iha_softc *);
 
 static struct iha_scb *iha_find_pend_scb(struct iha_softc *);
-static __inline void iha_append_pend_scb(struct iha_softc *, struct iha_scb *);
-static __inline void iha_push_pend_scb(struct iha_softc *, struct iha_scb *);
-static __inline void iha_del_pend_scb(struct iha_softc *, struct iha_scb *);
-static __inline void iha_mark_busy_scb(struct iha_scb *);
+static inline void iha_append_pend_scb(struct iha_softc *, struct iha_scb *);
+static inline void iha_push_pend_scb(struct iha_softc *, struct iha_scb *);
+static inline void iha_del_pend_scb(struct iha_softc *, struct iha_scb *);
+static inline void iha_mark_busy_scb(struct iha_scb *);
 
-static __inline void iha_set_ssig(struct iha_softc *, uint8_t, uint8_t);
+static inline void iha_set_ssig(struct iha_softc *, uint8_t, uint8_t);
 
 static int iha_alloc_sglist(struct iha_softc *);
 
@@ -278,7 +278,7 @@ iha_append_done_scb(struct iha_softc *sc, struct iha_scb *scb, uint8_t hastat)
 	splx(s);
 }
 
-static __inline struct iha_scb *
+static inline struct iha_scb *
 iha_pop_done_scb(struct iha_softc *sc)
 {
 	struct iha_scb *scb;
@@ -358,7 +358,7 @@ iha_find_pend_scb(struct iha_softc *sc)
 	return (scb);
 }
 
-static __inline void
+static inline void
 iha_append_pend_scb(struct iha_softc *sc, struct iha_scb *scb)
 {
 	/* ASSUMPTION: only called within a splbio()/splx() pair */
@@ -371,7 +371,7 @@ iha_append_pend_scb(struct iha_softc *sc, struct iha_scb *scb)
 	TAILQ_INSERT_TAIL(&sc->sc_pendscb, scb, chain);
 }
 
-static __inline void
+static inline void
 iha_push_pend_scb(struct iha_softc *sc, struct iha_scb *scb)
 {
 	int s;
@@ -391,7 +391,7 @@ iha_push_pend_scb(struct iha_softc *sc, struct iha_scb *scb)
 /*
  * iha_del_pend_scb - remove scb from sc_pendscb
  */
-static __inline void
+static inline void
 iha_del_pend_scb(struct iha_softc *sc, struct iha_scb *scb)
 {
 	int s;
@@ -403,7 +403,7 @@ iha_del_pend_scb(struct iha_softc *sc, struct iha_scb *scb)
 	splx(s);
 }
 
-static __inline void
+static inline void
 iha_mark_busy_scb(struct iha_scb *scb)
 {
 	int  s;
@@ -424,7 +424,7 @@ iha_mark_busy_scb(struct iha_scb *scb)
  * iha_set_ssig - read the current scsi signal mask, then write a new
  *		  one which turns off/on the specified signals.
  */
-static __inline void
+static inline void
 iha_set_ssig(struct iha_softc *sc, uint8_t offsigs, uint8_t onsigs)
 {
 	bus_space_tag_t iot = sc->sc_iot;

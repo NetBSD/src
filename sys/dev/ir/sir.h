@@ -1,4 +1,4 @@
-/*	$NetBSD: sir.h,v 1.4 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: sir.h,v 1.5 2005/12/24 20:27:41 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,6 +59,6 @@ int irda_sir_frame(u_int8_t *, u_int, struct uio *, u_int);
 
 extern const u_int16_t irda_fcstab[];
 
-static __inline u_int16_t updateFCS(u_int16_t fcs, int c) {
+static inline u_int16_t updateFCS(u_int16_t fcs, int c) {
 	return (fcs >> 8) ^ irda_fcstab[(fcs^c) & 0xff];
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.54 2005/12/11 12:21:27 christos Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.55 2005/12/24 20:27:30 perry Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -139,7 +139,7 @@ struct isposinfo {
  * Required Macros/Defines
  */
 
-#define	INLINE			__inline
+#define	INLINE			inline
 
 #define	ISP2100_SCRLEN		0x800
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.71 2005/12/11 12:22:51 christos Exp $	*/
+/*	$NetBSD: twe.c,v 1.72 2005/12/24 20:27:42 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.71 2005/12/11 12:22:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.72 2005/12/24 20:27:42 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1400,7 +1400,7 @@ twe_status_check(struct twe_softc *sc, u_int status)
 /*
  * Allocate and initialise a CCB.
  */
-static __inline void
+static inline void
 twe_ccb_init(struct twe_softc *sc, struct twe_ccb *ccb, int flags)
 {
 	struct twe_cmd *tc;

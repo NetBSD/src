@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.18 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.19 2005/12/24 20:27:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 struct scsipi_xfer *scsipi_get_xs(struct scsipi_periph *, int);
 void	scsipi_put_xs(struct scsipi_xfer *);
 
-static __inline struct scsipi_xfer *scsipi_make_xs(struct scsipi_periph *,
+static inline struct scsipi_xfer *scsipi_make_xs(struct scsipi_periph *,
 	    struct scsipi_generic *, int cmdlen, u_char *data_addr,
 	    int datalen, int retries, int timeout, struct buf *,
 	    int flags) __unused;
@@ -51,7 +51,7 @@ static __inline struct scsipi_xfer *scsipi_make_xs(struct scsipi_periph *,
  * Make a scsipi_xfer, and return a pointer to it.
  */
 
-static __inline struct scsipi_xfer * __unused
+static inline struct scsipi_xfer * __unused
 scsipi_make_xs(struct scsipi_periph *periph, struct scsipi_generic *cmd,
     int cmdlen, u_char *data_addr, int datalen, int retries, int timeout,
     struct buf *bp, int flags)

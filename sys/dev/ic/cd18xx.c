@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.12 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.13 2005/12/24 20:27:29 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.12 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13 2005/12/24 20:27:29 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -131,9 +131,9 @@ __KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.12 2005/12/11 12:21:26 christos Exp $")
 
 static void	cdtty_attach(struct cd18xx_softc *, int);
 
-static __inline void cd18xx_rint(struct cd18xx_softc *, int *);
-static __inline void cd18xx_tint(struct cd18xx_softc *, int *);
-static __inline void cd18xx_mint(struct cd18xx_softc *, int *);
+static inline void cd18xx_rint(struct cd18xx_softc *, int *);
+static inline void cd18xx_tint(struct cd18xx_softc *, int *);
+static inline void cd18xx_mint(struct cd18xx_softc *, int *);
 
 void cdtty_rxsoft(struct cd18xx_softc *, struct cdtty_port *, struct tty *);
 void cdtty_txsoft(struct cd18xx_softc *, struct cdtty_port *, struct tty *);
@@ -198,8 +198,8 @@ struct cd18xx_revs {
 };
 
 /* wait for the CCR to go to zero */
-static __inline int cd18xx_wait_ccr(struct cd18xx_softc *);
-static __inline int
+static inline int cd18xx_wait_ccr(struct cd18xx_softc *);
+static inline int
 cd18xx_wait_ccr(sc)
 	struct cd18xx_softc *sc;
 {
@@ -1124,7 +1124,7 @@ do { \
 #endif
 
 /* receiver interrupt */
-static __inline void
+static inline void
 cd18xx_rint(sc, ns)
 	struct cd18xx_softc *sc;
 	int *ns;
@@ -1202,7 +1202,7 @@ cd18xx_rint(sc, ns)
  * note this relys on the fact that we allow the transmitter FIFO to
  * drain completely
  */
-static __inline void
+static inline void
 cd18xx_tint(sc, ns)
 	struct cd18xx_softc *sc;
 	int *ns;
@@ -1282,7 +1282,7 @@ cd18xx_tint(sc, ns)
 }
 
 /* modem signal change interrupt */
-static __inline void
+static inline void
 cd18xx_mint(sc, ns)
 	struct cd18xx_softc *sc;
 	int *ns;

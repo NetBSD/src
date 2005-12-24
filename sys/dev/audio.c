@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.198 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.199 2005/12/24 20:27:29 perry Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.198 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.199 2005/12/24 20:27:29 perry Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -137,12 +137,12 @@ void	audio_init_ringbuffer(struct audio_softc *,
 			      struct audio_ringbuffer *, int);
 int	audio_initbufs(struct audio_softc *);
 void	audio_calcwater(struct audio_softc *);
-static __inline int audio_sleep_timo(int *, const char *, int);
-static __inline int audio_sleep(int *, const char *);
-static __inline void audio_wakeup(int *);
+static inline int audio_sleep_timo(int *, const char *, int);
+static inline int audio_sleep(int *, const char *);
+static inline void audio_wakeup(int *);
 int	audio_drain(struct audio_softc *);
 void	audio_clear(struct audio_softc *);
-static __inline void audio_pint_silence
+static inline void audio_pint_silence
 	(struct audio_softc *, struct audio_ringbuffer *, uint8_t *, int);
 
 int	audio_alloc_ring
@@ -1234,7 +1234,7 @@ audio_calcwater(struct audio_softc *sc)
 		 sc->sc_rr.usedlow, sc->sc_rr.usedhigh));
 }
 
-static __inline int
+static inline int
 audio_sleep_timo(int *chan, const char *label, int timo)
 {
 	int st;
@@ -1254,7 +1254,7 @@ audio_sleep_timo(int *chan, const char *label, int timo)
 	return st;
 }
 
-static __inline int
+static inline int
 audio_sleep(int *chan, const char *label)
 {
 
@@ -1262,7 +1262,7 @@ audio_sleep(int *chan, const char *label)
 }
 
 /* call at splaudio() */
-static __inline void
+static inline void
 audio_wakeup(int *chan)
 {
 
@@ -2397,7 +2397,7 @@ audiostartp(struct audio_softc *sc)
  * Putting silence into the output buffer should not really be done
  * at splaudio, but there is no softaudio level to do it at yet.
  */
-static __inline void
+static inline void
 audio_pint_silence(struct audio_softc *sc, struct audio_ringbuffer *cb,
 		   uint8_t *inp, int cc)
 {

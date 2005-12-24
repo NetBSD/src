@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.9 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.10 2005/12/24 20:27:52 perry Exp $	*/
 /* magmareg.h
  *
  *  Copyright (c) 1998 Iain Hibbert
@@ -87,7 +87,7 @@ struct magma_board_info {
  * cd1400 chip data
  */
 struct cd1400 {
-	__volatile u_char *cd_reg;	/* chip registers */
+	volatile u_char *cd_reg;	/* chip registers */
 	int cd_chiprev;			/* chip revision */
 	int cd_clock;			/* clock speed in MHz */
 	int cd_parmode;			/* parallel mode operation */
@@ -97,7 +97,7 @@ struct cd1400 {
  * cd1190 chip data
  */
 struct cd1190 {
-	__volatile u_char *cd_reg;	/* chip registers */
+	volatile u_char *cd_reg;	/* chip registers */
 	int cd_chiprev;			/* chip revision */
 };
 
@@ -110,9 +110,9 @@ struct magma_softc {
 	/* cd1400 chip info */
 	int	ms_ncd1400;
 	struct cd1400 ms_cd1400[MAGMA_MAX_CD1400];
-	__volatile u_char *ms_svcackr;	/* CD1400 service acknowledge receive */
-	__volatile u_char *ms_svcackt;	/* CD1400 service acknowledge transmit */
-	__volatile u_char *ms_svcackm;	/* CD1400 service acknowledge modem */
+	volatile u_char *ms_svcackr;	/* CD1400 service acknowledge receive */
+	volatile u_char *ms_svcackt;	/* CD1400 service acknowledge transmit */
+	volatile u_char *ms_svcackm;	/* CD1400 service acknowledge modem */
 
 	/* cd1190 chip info */
 	int ms_ncd1190;
@@ -204,9 +204,9 @@ struct mbpp_softc {
 /* internal function prototypes */
 
 int cd1400_compute_baud(speed_t, int, int *, int *);
-__inline void cd1400_write_ccr(struct cd1400 *, u_char);
-__inline u_char cd1400_read_reg(struct cd1400 *, int);
-__inline void cd1400_write_reg(struct cd1400 *, int, u_char);
+inline void cd1400_write_ccr(struct cd1400 *, u_char);
+inline u_char cd1400_read_reg(struct cd1400 *, int);
+inline void cd1400_write_reg(struct cd1400 *, int, u_char);
 void cd1400_enable_transmitter(struct cd1400 *, int);
 
 int magma_match(struct device *, struct cfdata *, void *);

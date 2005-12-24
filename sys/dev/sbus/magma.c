@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.31 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: magma.c,v 1.32 2005/12/24 20:27:52 perry Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.31 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.32 2005/12/24 20:27:52 perry Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -250,7 +250,7 @@ cd1400_compute_baud(speed, clock, cor, bpr)
 /*
  * Write a CD1400 channel command, should have a timeout?
  */
-__inline void
+inline void
 cd1400_write_ccr(cd, cmd)
 	struct cd1400 *cd;
 	u_char cmd;
@@ -264,7 +264,7 @@ cd1400_write_ccr(cd, cmd)
 /*
  * read a value from a cd1400 register
  */
-__inline u_char
+inline u_char
 cd1400_read_reg(cd, reg)
 	struct cd1400 *cd;
 	int reg;
@@ -275,7 +275,7 @@ cd1400_read_reg(cd, reg)
 /*
  * write a value to a cd1400 register
  */
-__inline void
+inline void
 cd1400_write_reg(cd, reg, value)
 	struct cd1400 *cd;
 	int reg;

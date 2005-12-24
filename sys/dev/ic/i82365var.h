@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.24 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.25 2005/12/24 20:27:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -195,8 +195,8 @@ void	pcic_chip_socket_settype(pcmcia_chipset_handle_t, int);
 
 #if 0
 
-static __inline int pcic_read(struct pcic_handle *, int);
-static __inline int
+static inline int pcic_read(struct pcic_handle *, int);
+static inline int
 pcic_read(h, idx)
 	struct pcic_handle *h;
 	int idx;
@@ -207,8 +207,8 @@ pcic_read(h, idx)
 	return (bus_space_read_1(h->sc->iot, h->sc->ioh, PCIC_REG_DATA));
 }
 
-static __inline void pcic_write(struct pcic_handle *, int, int);
-static __inline void
+static inline void pcic_write(struct pcic_handle *, int, int);
+static inline void
 pcic_write(h, idx, data)
 	struct pcic_handle *h;
 	int idx;

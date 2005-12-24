@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.91 2005/11/23 01:11:23 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.92 2005/12/24 20:27:29 perry Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.91 2005/11/23 01:11:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.92 2005/12/24 20:27:29 perry Exp $");
 
 #include "bpfilter.h"
 
@@ -270,7 +270,7 @@ static void	atw_filter_setup(struct atw_softc *);
 static void			atw_frame_setdurs(struct atw_softc *,
 				                  struct atw_frame *, int, int);
 static uint64_t			atw_get_tsft(struct atw_softc *);
-static __inline uint32_t	atw_last_even_tsft(uint32_t, uint32_t,
+static inline uint32_t	atw_last_even_tsft(uint32_t, uint32_t,
 				                   uint32_t);
 static struct ieee80211_node	*atw_node_alloc(struct ieee80211_node_table *);
 static void			atw_node_free(struct ieee80211_node *);
@@ -2416,7 +2416,7 @@ atw_start_beacon(struct atw_softc *sc, int start)
 }
 
 /* Return the 32 lsb of the last TSFT divisible by ival. */
-static __inline uint32_t
+static inline uint32_t
 atw_last_even_tsft(uint32_t tsfth, uint32_t tsftl, uint32_t ival)
 {
 	/* Following the reference driver's lead, I compute
@@ -3034,7 +3034,7 @@ atw_linkintr(struct atw_softc *sc, u_int32_t linkstatus)
 	}
 }
 
-static __inline int
+static inline int
 atw_hw_decrypted(struct atw_softc *sc, struct ieee80211_frame_min *wh)
 {
 	if ((sc->sc_ic.ic_flags & IEEE80211_F_PRIVACY) == 0)

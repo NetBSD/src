@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.3 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: sbp.c,v 1.4 2005/12/24 20:27:41 perry Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -1028,7 +1028,7 @@ END_DEBUG
 }
 #endif
 
-static __inline void
+static inline void
 sbp_xfer_free(struct fw_xfer *xfer)
 {
 	struct sbp_dev *sdev;
@@ -1185,7 +1185,7 @@ END_DEBUG
 	sdev->freeze = 1;
 }
 
-static __inline void
+static inline void
 sbp_scan_dev(struct sbp_dev *sdev)
 {
 	sdev->status = SBP_DEV_PROBE;
@@ -1247,7 +1247,7 @@ sbp_scsipi_scan_target(void *arg)
 	kthread_exit(0);
 }
 
-static __inline void
+static inline void
 sbp_scan_dev(struct sbp_dev *sdev)
 {
 	sdev->status = SBP_DEV_PROBE;

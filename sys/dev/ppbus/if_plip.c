@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.7 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: if_plip.c,v 1.8 2005/12/24 20:27:52 perry Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.7 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.8 2005/12/24 20:27:52 perry Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -468,7 +468,7 @@ end:
 	return error;
 }
 
-static __inline int
+static inline int
 clpoutbyte (u_char byte, int spin, struct device * ppbus)
 {
 	int s = spin;
@@ -488,7 +488,7 @@ clpoutbyte (u_char byte, int spin, struct device * ppbus)
 	return 0;
 }
 
-static __inline int
+static inline int
 clpinbyte (int spin, struct device * ppbus)
 {
 	u_char c, cl;
@@ -686,7 +686,7 @@ done:
 	return;
 }
 
-static __inline int
+static inline int
 lpoutbyte(u_char byte, int spin, struct device * ppbus)
 {
 	int s = spin;

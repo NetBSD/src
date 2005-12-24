@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.13 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.14 2005/12/24 20:27:41 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.13 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.14 2005/12/24 20:27:41 perry Exp $");
 
 #include "opt_kgdb.h"
 
@@ -251,14 +251,14 @@ unsigned int gtmpsc_poll_pollc_miss = 0;
 static volatile inline void
 gtmpsc_cache_flush(void *p)
 {
-	__asm __volatile ("eieio; dcbf 0,%0; lwz %0,0(%0); sync;"
+	__asm volatile ("eieio; dcbf 0,%0; lwz %0,0(%0); sync;"
 					: "+r"(p):);
 }
 
 static volatile inline void
 gtmpsc_cache_invalidate(void *p)
 {
-	__asm __volatile ("eieio; dcbi 0,%0; sync;" :: "r"(p));
+	__asm volatile ("eieio; dcbi 0,%0; sync;" :: "r"(p));
 }
 #else
 
@@ -301,7 +301,7 @@ desc_read(unsigned int *ip)
 {
 	unsigned int rv;
 
-	__asm __volatile ("lwzx %0,0,%1; eieio;"
+	__asm volatile ("lwzx %0,0,%1; eieio;"
 		: "=r"(rv) : "r"(ip));
 	return rv;
 }
@@ -309,7 +309,7 @@ desc_read(unsigned int *ip)
 static volatile inline void
 desc_write(unsigned int *ip, unsigned int val)
 {
-	__asm __volatile ("stwx %0,0,%1; eieio;"
+	__asm volatile ("stwx %0,0,%1; eieio;"
 		:: "r"(val), "r"(ip));
 }
 
@@ -880,13 +880,13 @@ gtmpsc_get_causes(void)
 		desc_addr[0] =
 		    &sc->gtmpsc_poll_sdmapage->rx[sc->gtmpsc_poll_rxix].rxdesc;
 		    GTMPSC_CACHE_INVALIDATE(desc_addr[0]);
-		    __asm __volatile ("dcbt 0,%0" :: "r"(desc_addr[0]));
+		    __asm volatile ("dcbt 0,%0" :: "r"(desc_addr[0]));
 	    }
 	    if (sdma_imask & SDMA_INTR_TXBUF(0)) {
 		desc_addr[1] =
 		    &sc->gtmpsc_poll_sdmapage->tx[sc->gtmpsc_poll_txix].txdesc;
 		    GTMPSC_CACHE_INVALIDATE(desc_addr[1]);
-		    __asm __volatile ("dcbt 0,%0" :: "r"(desc_addr[1]));
+		    __asm volatile ("dcbt 0,%0" :: "r"(desc_addr[1]));
 	    }
 	}
 	sc = gtmpsc_cd.cd_devs[1];
@@ -895,13 +895,13 @@ gtmpsc_get_causes(void)
 		desc_addr[2] =
 		    &sc->gtmpsc_poll_sdmapage->rx[sc->gtmpsc_poll_rxix].rxdesc;
 		    GTMPSC_CACHE_INVALIDATE(desc_addr[2]);
-		    __asm __volatile ("dcbt 0,%0" :: "r"(desc_addr[2]));
+		    __asm volatile ("dcbt 0,%0" :: "r"(desc_addr[2]));
 	    }
 	    if (sdma_imask & SDMA_INTR_TXBUF(1)) {
 		desc_addr[3] =
 		    &sc->gtmpsc_poll_sdmapage->tx[sc->gtmpsc_poll_txix].txdesc;
 		    GTMPSC_CACHE_INVALIDATE(desc_addr[3]);
-		    __asm __volatile ("dcbt 0,%0" :: "r"(desc_addr[3]));
+		    __asm volatile ("dcbt 0,%0" :: "r"(desc_addr[3]));
 	    }
 	}
 
