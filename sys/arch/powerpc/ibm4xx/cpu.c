@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.22 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	cpufound++;
 	ncpus++;
 
-	asm ("mfpvr %0" : "=r"(pvr));
+	__asm ("mfpvr %0" : "=r"(pvr));
 	cpu = pvr >> 16;
 
 	/* Break PVR up into separate fields and print them out. */
@@ -251,8 +251,8 @@ dcache_flush_page(vaddr_t va)
 	if (curcpu()->ci_ci.dcache_line_size)
 		for (i = 0; i < PAGE_SIZE;
 		     i += curcpu()->ci_ci.dcache_line_size)
-			asm volatile("dcbf %0,%1" : : "r" (va), "r" (i));
-	asm volatile("sync;isync" : : );
+			__asm volatile("dcbf %0,%1" : : "r" (va), "r" (i));
+	__asm volatile("sync;isync" : : );
 }
 
 void
@@ -263,8 +263,8 @@ icache_flush_page(vaddr_t va)
 	if (curcpu()->ci_ci.icache_line_size)
 		for (i = 0; i < PAGE_SIZE;
 		     i += curcpu()->ci_ci.icache_line_size)
-			asm volatile("icbi %0,%1" : : "r" (va), "r" (i));
-	asm volatile("sync;isync" : : );
+			__asm volatile("icbi %0,%1" : : "r" (va), "r" (i));
+	__asm volatile("sync;isync" : : );
 }
 
 void
@@ -279,8 +279,8 @@ dcache_flush(vaddr_t va, vsize_t len)
 	len += va & (curcpu()->ci_ci.dcache_line_size-1);
 	if (curcpu()->ci_ci.dcache_line_size)
 		for (i = 0; i < len; i += curcpu()->ci_ci.dcache_line_size)
-			asm volatile("dcbf %0,%1" : : "r" (va), "r" (i));
-	asm volatile("sync;isync" : : );
+			__asm volatile("dcbf %0,%1" : : "r" (va), "r" (i));
+	__asm volatile("sync;isync" : : );
 }
 
 void
@@ -295,6 +295,6 @@ icache_flush(vaddr_t va, vsize_t len)
 	len += va & (curcpu()->ci_ci.icache_line_size-1);
 	if (curcpu()->ci_ci.icache_line_size)
 		for (i = 0; i < len; i += curcpu()->ci_ci.icache_line_size)
-			asm volatile("icbi %0,%1" : : "r" (va), "r" (i));
-	asm volatile("sync;isync" : : );
+			__asm volatile("icbi %0,%1" : : "r" (va), "r" (i));
+	__asm volatile("sync;isync" : : );
 }

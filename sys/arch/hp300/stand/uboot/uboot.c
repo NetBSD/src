@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.13 2005/12/11 12:17:23 christos Exp $	*/
+/*	$NetBSD: uboot.c,v 1.14 2005/12/24 22:45:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -113,7 +113,7 @@ getbootdev(int *howto)
 		if (strcmp(line, "reset") == 0) {
 			call_req_reboot();      /* reset machine */
 			printf("panic: can't reboot, halting\n");
-			asm("stop #0x2700");
+			__asm("stop #0x2700");
 		}
 		while ((c = *ptr) != '\0') {
 			while (c == ' ')

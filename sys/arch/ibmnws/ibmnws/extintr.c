@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.2 2005/12/11 12:17:50 christos Exp $ */
+/*	$NetBSD: extintr.c,v 1.3 2005/12/24 22:45:35 perry Exp $ */
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -415,9 +415,9 @@ do_pending_int(void)
 		return;
 
 	processing = 1;
-	asm volatile("mfmsr %0" : "=r"(emsr));
+	__asm volatile("mfmsr %0" : "=r"(emsr));
 	dmsr = emsr & ~PSL_EE;
-	asm volatile("mtmsr %0" :: "r"(dmsr));
+	__asm volatile("mtmsr %0" :: "r"(dmsr));
 
 	pcpl = splhigh();		/* Turn off all */
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
@@ -457,7 +457,7 @@ do_pending_int(void)
 
 	isa_intr_mask(imen);
 
-	asm volatile("mtmsr %0" :: "r"(emsr));
+	__asm volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
 }
 
@@ -474,13 +474,13 @@ install_extint(void (*handler)(void))
 	if (offset > 0x1ffffff)
 		panic("install_extint: too far away");
 #endif
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
 	extint_call = (extint_call & 0xfc000003) | offset;
 	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
 	__syncicache((void *)&extint_call, sizeof extint_call);
 	__syncicache((void *)EXC_EXI, (int)&extsize);
-	asm volatile ("mtmsr %0" :: "r"(omsr));
+	__asm volatile ("mtmsr %0" :: "r"(omsr));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2005/12/24 22:45:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2005/12/24 22:45:35 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -61,7 +61,7 @@ cpu_configure(void)
 	/*
 	 * Now allow hardware interrupts.
 	 */
-	asm volatile ("wrteei 1");
+	__asm volatile ("wrteei 1");
 }
 
 void

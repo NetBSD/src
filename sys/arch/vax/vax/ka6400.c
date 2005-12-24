@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.7 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.8 2005/12/24 22:45:40 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.7 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.8 2005/12/24 22:45:40 perry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -387,9 +387,9 @@ ka6400_sendstr(int id, const char *buf)
 		 * Cannot check that flag in C...
 		 */
 #ifdef __GNUC__
-		asm("1:;mtpr %0,$92;bvs 1b" :: "g"(utchr));
+		__asm("1:;mtpr %0,$92;bvs 1b" :: "g"(utchr));
 #else
-		asm("1:;mtpr r11,$92;bvs 1b");
+		__asm("1:;mtpr r11,$92;bvs 1b");
 #endif
 		buf++;
 		i = 30000;

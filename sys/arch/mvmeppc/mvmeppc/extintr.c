@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.7 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: extintr.c,v 1.8 2005/12/24 22:45:36 perry Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.7 2005/12/11 12:18:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.8 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,9 +407,9 @@ do_pending_int(void)
 		return;
 
 	processing = 1;
-	asm volatile("mfmsr %0" : "=r"(emsr));
+	__asm volatile("mfmsr %0" : "=r"(emsr));
 	dmsr = emsr & ~PSL_EE;
-	asm volatile("mtmsr %0" :: "r"(dmsr));
+	__asm volatile("mtmsr %0" :: "r"(dmsr));
 
 	pcpl = splhigh();		/* Turn off all */
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
@@ -449,6 +449,6 @@ do_pending_int(void)
 
 	isa_intr_mask(imen);
 
-	asm volatile("mtmsr %0" :: "r"(emsr));
+	__asm volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.6 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.7 2005/12/24 22:45:35 perry Exp $	*/
 
 /*	$OpenBSD: in_cksum.c,v 1.1 2001/01/13 00:00:20 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.6 2005/12/11 12:17:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.7 2005/12/24 22:45:35 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.6 2005/12/11 12:17:37 christos Exp $"
  * HPPA version.
  */
 
-#define ADD32	asm volatile(	"ldw 0x00(%1), %%r19! ldw 0x04(%1), %%r20\n\t" \
+#define ADD32	__asm volatile(	"ldw 0x00(%1), %%r19! ldw 0x04(%1), %%r20\n\t" \
 				"add  %0, %%r19, %0 ! addc  %0, %%r20, %0\n\t" \
 				"ldw 0x08(%1), %%r19! ldw 0x0c(%1), %%r20\n\t" \
 				"addc %0, %%r19, %0 ! addc  %0, %%r20, %0\n\t" \
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.6 2005/12/11 12:17:37 christos Exp $"
 				"addc %0, %%r19, %0 ! addc  %0, %%r20, %0\n\t" \
 				"ldo 0x20(%1), %1   ! addc  %0, %%r0 , %0" \
 				: "+r" (sum), "+r" (w) :: "r20", "r19")
-#define ADD16	asm volatile(	"ldw 0x00(%1), %%r19! ldw 0x04(%1), %%r20\n\t" \
+#define ADD16	__asm volatile(	"ldw 0x00(%1), %%r19! ldw 0x04(%1), %%r20\n\t" \
 				"add   %0, %%r19, %0! addc  %0, %%r20, %0\n\t" \
 				"ldw 0x08(%1), %%r19! ldw 0x0c(%1), %%r20\n\t" \
 				"addc  %0, %%r19, %0! addc  %0, %%r20, %0\n\t" \
@@ -72,10 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.6 2005/12/11 12:17:37 christos Exp $"
 
 #define ADDCARRY	{if (sum > 0xffff) sum -= 0xffff;}
 #define REDUCE		{sum = (sum & 0xffff) + (sum >> 16); ADDCARRY}
-#define ROL		asm volatile ("shd %0, %0, 8, %0" : "+r" (sum))
+#define ROL		__asm volatile ("shd %0, %0, 8, %0" : "+r" (sum))
 #define ADDBYTE		{ROL; sum += *w++; bins++; mlen--;}
 #define ADDSHORT	{sum += *(u_short *)w; w += 2; mlen -= 2;}
-#define ADDWORD	asm volatile(	"ldwm 4(%1), %%r19! add %0, %%r19, %0\n\t" \
+#define ADDWORD	__asm volatile(	"ldwm 4(%1), %%r19! add %0, %%r19, %0\n\t" \
 				"ldo -4(%2), %2   ! addc    %0, 0, %0" \
 				: "+r" (sum), "+r" (w), "+r" (mlen) :: "r19")
 

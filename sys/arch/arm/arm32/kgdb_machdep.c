@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.3 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.4 2005/12/24 22:45:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.3 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.4 2005/12/24 22:45:34 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -165,7 +165,7 @@ kgdb_connect(verbose)
 	if (verbose)
 		printf("kgdb waiting...");
 
-	asm volatile(KBPT_ASM);
+	__asm volatile(KBPT_ASM);
 
 	if (verbose)
 		printf("connected.\n");

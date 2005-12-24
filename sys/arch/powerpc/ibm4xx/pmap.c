@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1190,7 +1190,7 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 	if (!pid)
 		return;
 
-	asm("mfpid %1;"			/* Save PID */
+	__asm("mfpid %1;"			/* Save PID */
 		"mfmsr %2;"		/* Save MSR */
 		"li %0,0;"		/* Now clear MSR */
 		"mtmsr %0;"
@@ -1210,7 +1210,7 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 	if (found && !TLB_LOCKED(i)) {
 
 		/* Now flush translation */
-		asm volatile(
+		__asm volatile(
 			"tlbwe %0,%1,0;"
 			"sync;isync;"
 			: : "r" (0), "r" (i));
@@ -1230,7 +1230,7 @@ ppc4xx_tlb_flush_all(void)
 
 	for (i = 0; i < NTLB; i++)
 		if (!TLB_LOCKED(i)) {
-			asm volatile(
+			__asm volatile(
 				"tlbwe %0,%1,0;"
 				"sync;isync;"
 				: : "r" (0), "r" (i));
@@ -1238,7 +1238,7 @@ ppc4xx_tlb_flush_all(void)
 			tlb_info[i].ti_flags = 0;
 		}
 
-	asm volatile("sync;isync");
+	__asm volatile("sync;isync");
 }
 
 /* Find a TLB entry to evict. */
@@ -1301,7 +1301,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	tlb_info[idx].ti_ctx = ctx;
 	tlb_info[idx].ti_flags = TLBF_USED | TLBF_REF;
 
-	asm volatile(
+	__asm volatile(
 		"mfmsr %0;"			/* Save MSR */
 		"li %1,0;"
 		"tlbwe %1,%3,0;"		/* Invalidate old entry. */
@@ -1350,7 +1350,7 @@ ppc4xx_tlb_init(void)
 	 * Z3 - full access regardless of TLB entry permissions
 	 */
 
-	asm volatile(
+	__asm volatile(
 		"mtspr %0,%1;"
 		"sync;"
 		::  "K"(SPR_ZPR), "r" (0x1b000000));
@@ -1423,7 +1423,7 @@ ctx_flush(int cnum)
 				panic("TLB entry %d not locked", i);
 #endif
 			/* Invalidate particular TLB entry regardless of locked status */
-			asm volatile("tlbwe %0,%1,0" : :"r"(0),"r"(i));
+			__asm volatile("tlbwe %0,%1,0" : :"r"(0),"r"(i));
 			tlb_info[i].ti_flags = 0;
 		}
 	}

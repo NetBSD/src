@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.12 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: extintr.c,v 1.13 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.12 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.13 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -208,7 +208,7 @@ ext_intr()
 				ih = ih->ih_next;
 			}
 #if RECINTR
-			asm volatile ("mtmsr %0" :: "r"(msr));
+			__asm volatile ("mtmsr %0" :: "r"(msr));
 			cpl = pcpl; /* restore splraise() */
 #endif
 
@@ -220,9 +220,9 @@ ext_intr()
 	}
 
 #if RECINTR
-	asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
+	__asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
 	splx(pcpl); /* also processes pendings */
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 #else
 	splx(pcpl); /* also processes pendings */
 #endif
@@ -457,9 +457,9 @@ do_pending_int(void)
 		return;
 
 	processing = 1;
-	asm volatile("mfmsr %0" : "=r"(emsr));
+	__asm volatile("mfmsr %0" : "=r"(emsr));
 	dmsr = emsr & ~PSL_EE;
-	asm volatile("mtmsr %0" :: "r"(dmsr));
+	__asm volatile("mtmsr %0" :: "r"(dmsr));
 
 	pcpl = splhigh();		/* Turn off all */
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
@@ -500,5 +500,5 @@ do_pending_int(void)
 	}
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	processing = 0;
-	asm volatile("mtmsr %0" :: "r"(emsr));
+	__asm volatile("mtmsr %0" :: "r"(emsr));
 }

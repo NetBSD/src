@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 2005/12/24 22:50:07 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,7 +43,7 @@ mftb()
 	u_long scratch;
 	u_quad_t tb;
 
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
+	__asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 	    : "=r"(tb), "=r"(scratch));
 	return (tb);
 }
@@ -62,7 +62,7 @@ delay(n)
 	tb += (n * 1000 + NS_PER_TICK - 1) / NS_PER_TICK;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f;"
+	__asm ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f;"
 	     "mftb %0; cmpw 0, %0,%2; blt 1b; 2:"
 	     : "=&r"(scratch) : "r"(tbh), "r"(tbl));
 }

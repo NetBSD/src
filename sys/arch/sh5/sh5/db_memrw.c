@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.5 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.6 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.5 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.6 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -125,7 +125,7 @@ db_write_bytes(db_addr_t addr, size_t size, const char *data)
 	if (dst < etext && (dst + size) >= (char *)SH5_KSEG0_BASE) {
 		char *dp;
 		for (dp = dst; dp < &dst[size]; dp += 32)
-			asm volatile("ocbp %0, 0; icbi %0, 0; synci"
+			__asm volatile("ocbp %0, 0; icbi %0, 0; synci"
 			    : : "r"(dp));
 		in_text = 1;
 	}
@@ -133,21 +133,21 @@ db_write_bytes(db_addr_t addr, size_t size, const char *data)
 	if (size == 8) {
 		*((register_t*)dst) = *((const register_t*)data);
 		if (in_text)
-			asm volatile("ocbp %0, 0; synci" :: "r"(dst));
+			__asm volatile("ocbp %0, 0; synci" :: "r"(dst));
 		return;
 	}
 
 	if (size == 4) {
 		*((int*)dst) = *((const int*)data);
 		if (in_text)
-			asm volatile("ocbp %0, 0; synci" :: "r"(dst));
+			__asm volatile("ocbp %0, 0; synci" :: "r"(dst));
 		return;
 	}
 
 	if (size == 2) {
 		*((short*)dst) = *((const short*)data);
 		if (in_text)
-			asm volatile("ocbp %0, 0; synci" :: "r"(dst));
+			__asm volatile("ocbp %0, 0; synci" :: "r"(dst));
 		return;
 	}
 
@@ -155,7 +155,7 @@ db_write_bytes(db_addr_t addr, size_t size, const char *data)
 		--size;
 		*dst = *data++;
 		if (in_text)
-			asm volatile("ocbp %0, 0; synci" :: "r"(dst));
+			__asm volatile("ocbp %0, 0; synci" :: "r"(dst));
 		dst++;
 	}
 }

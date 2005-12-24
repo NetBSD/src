@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.15 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.16 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.15 2005/12/24 20:07:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16 2005/12/24 22:45:36 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -230,7 +230,7 @@ void
 cpu_Debugger(void)
 {
 
-	asm volatile("brk");
+	__asm volatile("brk");
 }
 
 int
@@ -397,10 +397,10 @@ db_sh5_tlb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 		for (i = 0; i < 64; i++) {
 			tlbreg = ITLB_REG(i);
 
-			asm volatile("getcfg %1, 0, %0" :
+			__asm volatile("getcfg %1, 0, %0" :
 			    "=r"(pteh) : "r"(tlbreg));
 
-			asm volatile("getcfg %1, 1, %0" :
+			__asm volatile("getcfg %1, 1, %0" :
 			    "=r"(ptel) : "r"(tlbreg));
 
 			if (flagv == 0 && (pteh & SH5_PTEH_V) == 0)
@@ -415,10 +415,10 @@ db_sh5_tlb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 		for (i = 0; i < 64; i++) {
 			tlbreg = DTLB_REG(i);
 
-			asm volatile("getcfg %1, 0, %0" :
+			__asm volatile("getcfg %1, 0, %0" :
 			    "=r"(pteh) : "r"(tlbreg));
 
-			asm volatile("getcfg %1, 1, %0" :
+			__asm volatile("getcfg %1, 1, %0" :
 			    "=r"(ptel) : "r"(tlbreg));
 
 			if (flagv == 0 && (pteh & SH5_PTEH_V) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.23 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.24 2005/12/24 22:45:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.23 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.24 2005/12/24 22:45:34 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -691,9 +691,9 @@ int				dir, sx, count;
 			int	t;
 			sofs2 -= ip->font.width;
 			dofs2 -= ip->font.width;
-			asm("bfextu %1@{%2:%3},%0" : "=d" (t)
+			__asm("bfextu %1@{%2:%3},%0" : "=d" (t)
 				: "a" (pl), "d" (sofs2), "d" (ip->font.width));
-			asm("bfins %3,%0@{%1:%2}" :
+			__asm("bfins %3,%0@{%1:%2}" :
 				: "a" (pl), "d" (dofs2), "d" (ip->font.width),
 				  "d" (t));
 		    }
@@ -711,9 +711,9 @@ int				dir, sx, count;
 		    for(i = (ip->cols - sx)-1; i >= 0; i--) {
 			int	t;
 
-			asm("bfextu %1@{%2:%3},%0" : "=d" (t)
+			__asm("bfextu %1@{%2:%3},%0" : "=d" (t)
 				: "a" (pl), "d" (sofs2), "d" (ip->font.width));
-			asm("bfins %3,%0@{%1:%2}"
+			__asm("bfins %3,%0@{%1:%2}"
 				: : "a" (pl), "d" (dofs2),"d" (ip->font.width),
 				    "d" (t));
 			sofs2 += ip->font.width;
