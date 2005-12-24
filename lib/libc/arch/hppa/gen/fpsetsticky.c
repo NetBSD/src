@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.c,v 1.3 2005/12/24 21:41:01 perry Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.4 2005/12/24 21:42:32 perry Exp $	*/
 
 /*	$OpenBSD: fpsetsticky.c,v 1.4 2004/01/05 06:06:16 otto Exp $	*/
 
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetsticky.c,v 1.3 2005/12/24 21:41:01 perry Exp $");
+__RCSID("$NetBSD: fpsetsticky.c,v 1.4 2005/12/24 21:42:32 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -20,9 +20,9 @@ fpsetsticky(fp_except mask)
 	uint64_t fpsr;
 	fp_except old;
 
-	__asm __volatile("fstd %%fr0,0(%1)" : "=m" (fpsr) : "r" (&fpsr));
+	__asm volatile("fstd %%fr0,0(%1)" : "=m" (fpsr) : "r" (&fpsr));
 	old = (fpsr >> 59) & 0x1f;
 	fpsr = (fpsr & 0x07ffffff00000000LL) | ((uint64_t)(mask & 0x1f) << 59);
-	__asm __volatile("fldd 0(%0),%%fr0" : : "r" (&fpsr));
+	__asm volatile("fldd 0(%0),%%fr0" : : "r" (&fpsr));
 	return (old);
 }
