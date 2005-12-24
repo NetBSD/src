@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.61 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.62 2005/12/24 23:41:33 perry Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.61 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.62 2005/12/24 23:41:33 perry Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -111,10 +111,10 @@ int	mb86960_get_packet(struct mb86960_softc *, u_int);
 void	mb86960_stop(struct mb86960_softc *);
 void	mb86960_tint(struct mb86960_softc *, uint8_t);
 void	mb86960_rint(struct mb86960_softc *, uint8_t);
-static __inline__
+static inline
 void	mb86960_xmit(struct mb86960_softc *);
 void	mb86960_write_mbufs(struct mb86960_softc *, struct mbuf *);
-static __inline__
+static inline
 void	mb86960_droppacket(struct mb86960_softc *);
 void	mb86960_getmcaf(struct ethercom *, uint8_t *);
 void	mb86960_setmode(struct mb86960_softc *);
@@ -449,7 +449,7 @@ mb86960_watchdog(struct ifnet *ifp)
 /*
  * Drop (skip) a packet from receive buffer in 86960 memory.
  */
-static __inline__ void
+static inline void
 mb86960_droppacket(struct mb86960_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
@@ -619,7 +619,7 @@ mb86960_init(struct mb86960_softc *sc)
 /*
  * This routine actually starts the transmission on the interface
  */
-static __inline__ void
+static inline void
 mb86960_xmit(struct mb86960_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
