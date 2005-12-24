@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.32 2005/11/29 13:38:07 tsutsui Exp $	*/
+/*	$NetBSD: cache.c,v 1.33 2005/12/24 23:24:01 perry Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.32 2005/11/29 13:38:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33 2005/12/24 23:24:01 perry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -866,9 +866,9 @@ tx39_cache_config_write_through(void)
 
 	mips_dcache_wbinv_all();
 
-	__asm__ __volatile__("mfc0 %0, $3" : "=r"(r));
+	__asm volatile("mfc0 %0, $3" : "=r"(r));
 	r &= 0xffffdfff;
-	__asm__ __volatile__("mtc0 %0, $3" : : "r"(r));
+	__asm volatile("mtc0 %0, $3" : : "r"(r));
 }
 
 #endif /* ENABLE_MIPS_TX3900 */

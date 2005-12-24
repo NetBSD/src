@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.62 2005/12/24 20:07:41 perry Exp $	   */
+/*	$NetBSD: pmap.h,v 1.63 2005/12/24 23:24:07 perry Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -269,14 +269,14 @@ pmap_remove_all(struct pmap *pmap)
 
 /* These can be done as efficient inline macros */
 #define pmap_copy_page(src, dst)			\
-	__asm__("addl3 $0x80000000,%0,%%r0;"		\
+	__asm("addl3 $0x80000000,%0,%%r0;"		\
 		"addl3 $0x80000000,%1,%%r1;"		\
 		"movc3 $4096,(%%r0),(%%r1)"		\
 	    :: "r"(src), "r"(dst)			\
 	    : "r0","r1","r2","r3","r4","r5");
 
 #define pmap_zero_page(phys)				\
-	__asm__("addl3 $0x80000000,%0,%%r0;"		\
+	__asm("addl3 $0x80000000,%0,%%r0;"		\
 		"movc5 $0,(%%r0),$0,$4096,(%%r0)"	\
 	    :: "r"(phys)				\
 	    : "r0","r1","r2","r3","r4","r5");

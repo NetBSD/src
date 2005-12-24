@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2005/12/24 20:07:31 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2005/12/24 23:24:02 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,7 +49,7 @@ mftb()
 	u_long scratch;
 	u_quad_t tb;
 
-	__asm__ volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
+	__asm volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 	    : "=r"(tb), "=r"(scratch));
 	return (tb);
 }

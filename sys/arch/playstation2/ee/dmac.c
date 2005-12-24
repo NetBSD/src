@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac.c,v 1.5 2005/12/24 20:07:25 perry Exp $	*/
+/*	$NetBSD: dmac.c,v 1.6 2005/12/24 23:24:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.5 2005/12/24 20:07:25 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.6 2005/12/24 23:24:01 perry Exp $");
 
 #include "debug_playstation2.h"
 
@@ -313,7 +313,7 @@ dmac_sync_buffer()
 {
 
 	mips_dcache_wbinv_all();
-	__asm__ volatile("sync.l");
+	__asm volatile("sync.l");
 }
 
 /*
@@ -344,7 +344,7 @@ dmac_cpc_clear(enum dmac_channel ch)
 void
 dmac_cpc_poll()
 {
-	__asm__ __volatile__(
+	__asm volatile(
 		".set noreorder;"
 	"1:	 nop;"
 		"nop;"

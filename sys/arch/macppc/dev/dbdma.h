@@ -1,4 +1,4 @@
-/*	$NetBSD: dbdma.h,v 1.3 2001/06/19 12:02:56 simonb Exp $	*/
+/*	$NetBSD: dbdma.h,v 1.4 2005/12/24 23:24:01 perry Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -129,48 +129,48 @@ typedef struct dbdma_command dbdma_command_t;
 				((branch) << 2) | (wait));		\
 	}
 
-static __inline__ void dbdma_st32(volatile u_int32_t *, u_int32_t);
-static __inline__ void dbdma_st16(volatile u_int16_t *, u_int16_t);
-static __inline__ u_int32_t dbdma_ld32(volatile u_int32_t *);
-static __inline__ u_int16_t dbdma_ld16(volatile u_int16_t *);
+static inline void dbdma_st32(volatile u_int32_t *, u_int32_t);
+static inline void dbdma_st16(volatile u_int16_t *, u_int16_t);
+static inline u_int32_t dbdma_ld32(volatile u_int32_t *);
+static inline u_int16_t dbdma_ld16(volatile u_int16_t *);
 
-static __inline__ void
+static inline void
 dbdma_st32(a, x)
 	volatile u_int32_t *a;
 	u_int32_t x;
 {
-	__asm__ volatile
+	__asm volatile
 		("stwbrx %0,0,%1" : : "r" (x), "r" (a) : "memory");
 }
 
-static __inline__ void
+static inline void
 dbdma_st16(a, x)
 	volatile u_int16_t *a;
 	u_int16_t x;
 {
-	__asm__ volatile
+	__asm volatile
 		("sthbrx %0,0,%1" : : "r" (x), "r" (a) : "memory");
 }
 
-static __inline__ u_int32_t
+static inline u_int32_t
 dbdma_ld32(a)
 	volatile u_int32_t *a;
 {
 	u_int32_t swap;
 
-	__asm__ volatile
+	__asm volatile
 		("lwbrx %0,0,%1" :  "=r" (swap) : "r" (a));
 
 	return	swap;
 }
 
-static __inline__ u_int16_t
+static inline u_int16_t
 dbdma_ld16(a)
 	volatile u_int16_t *a;
 {
 	u_int16_t swap;
 
-	__asm__ volatile
+	__asm volatile
 		("lhbrx %0,0,%1" :  "=r" (swap) : "r" (a));
 
 	return	swap;

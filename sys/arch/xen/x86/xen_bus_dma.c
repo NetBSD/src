@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.4 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.5 2005/12/24 23:24:07 perry Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.4 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.5 2005/12/24 23:24:07 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.4 2005/12/11 12:19:50 christos Exp
 extern paddr_t avail_end;
 
 /* Pure 2^n version of get_order */
-static __inline__ int get_order(unsigned long size)
+static inline int get_order(unsigned long size)
 {
 	int order = -1;
 	size = (size - 1) >> (PAGE_SHIFT - 1);

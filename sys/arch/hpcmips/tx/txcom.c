@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.26 2005/12/11 12:17:34 christos Exp $ */
+/*	$NetBSD: txcom.c,v 1.27 2005/12/24 23:24:00 perry Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.26 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27 2005/12/24 23:24:00 perry Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -159,7 +159,7 @@ int	txcom_dcd_hook(void *, int, long, void *);
 int	txcom_cts_hook(void *, int, long, void *);
 
 
-__inline__ int	__txcom_txbufready(struct txcom_chip *, int);
+inline int	__txcom_txbufready(struct txcom_chip *, int);
 const char *__txcom_slotname(int);
 
 #ifdef TX39UARTDEBUG
@@ -407,7 +407,7 @@ txcom_disable(struct txcom_chip *chip)
 	
 }
 
-__inline__ int
+inline int
 __txcom_txbufready(struct txcom_chip *chip, int retry)
 {
 	tx_chipset_tag_t tc = chip->sc_tc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 2005/12/06 17:56:25 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 2005/12/24 23:23:59 perry Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2005/12/06 17:56:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2005/12/24 23:23:59 perry Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -626,7 +626,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	(*platform->reset)();
 
-	__asm__(" li $2, 0xbfc00000; jr $2; nop\n");
+	__asm(" li $2, 0xbfc00000; jr $2; nop\n");
 	for (;;)
 		; /* Forever */
 	/* NOTREACHED */

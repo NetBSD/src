@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.h,v 1.9 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: cache_sh4.h,v 1.10 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,12 +111,12 @@ do {									\
 	/* D-cache */							\
 	for (__e = 0; __e < (SH4_DCACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
 		__a = SH4_CCDA | (__e << CCDA_ENTRY_SHIFT);		\
-		(*(__volatile__ uint32_t *)__a) &= ~(CCDA_U | CCDA_V);	\
+		(*(volatile uint32_t *)__a) &= ~(CCDA_U | CCDA_V);	\
 	}								\
 	/* I-cache */							\
 	for (__e = 0; __e < (SH4_ICACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
 		__a = SH4_CCIA | (__e << CCIA_ENTRY_SHIFT);		\
-		(*(__volatile__ uint32_t *)__a) &= ~(CCIA_V);		\
+		(*(volatile uint32_t *)__a) &= ~(CCIA_V);		\
 	}								\
 } while(/*CONSTCOND*/0)
 
@@ -127,12 +127,12 @@ do {									\
 	/* D-cache */							\
 	for (__e = 0;__e < (SH4_EMODE_DCACHE_SIZE / SH4_CACHE_LINESZ);__e++) {\
 		__a = SH4_CCDA | (__e << CCDA_ENTRY_SHIFT);		\
-		(*(__volatile__ uint32_t *)__a) &= ~(CCDA_U | CCDA_V);	\
+		(*(volatile uint32_t *)__a) &= ~(CCDA_U | CCDA_V);	\
 	}								\
 	/* I-cache */							\
 	for (__e = 0;__e < (SH4_EMODE_ICACHE_SIZE / SH4_CACHE_LINESZ);__e++) {\
 		__a = SH4_CCIA | (__e << CCIA_ENTRY_SHIFT);		\
-		(*(__volatile__ uint32_t *)__a) &= ~(CCIA_V);		\
+		(*(volatile uint32_t *)__a) &= ~(CCIA_V);		\
 	}								\
 } while(/*CONSTCOND*/0)
 

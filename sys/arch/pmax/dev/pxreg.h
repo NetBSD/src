@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxreg.h,v 1.8 2000/06/13 13:39:12 ad Exp $	*/
+/* 	$NetBSD: pxreg.h,v 1.9 2005/12/24 23:24:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -330,11 +330,11 @@ struct stic_regs {
  * system address space. The poll address will either return STAMP_OK, or
  * STAMP_BUSY.
  */
-static __inline__ u_long px_sys2stic __P((void *));
-static __inline__ u_long px_sys2dma __P((void *));
-static __inline__ volatile int32_t *px_poll_addr __P((caddr_t, void *));
+static inline u_long px_sys2stic __P((void *));
+static inline u_long px_sys2dma __P((void *));
+static inline volatile int32_t *px_poll_addr __P((caddr_t, void *));
 
-static __inline__ u_long
+static inline u_long
 px_sys2stic(addr)
 	void *addr;
 {
@@ -345,7 +345,7 @@ px_sys2stic(addr)
 	return (v & 0x1ffff800);
 }
 
-static __inline__ u_long
+static inline u_long
 px_sys2dma(addr)
 	void *addr;
 {
@@ -357,7 +357,7 @@ px_sys2dma(addr)
  * This is simply a wrapper for the above that returns a proper VA to
  * poll when given a px_softc.
  */
-static __inline__ volatile int32_t *
+static inline volatile int32_t *
 px_poll_addr(slotbase, addr)
 	caddr_t slotbase;
 	void *addr;

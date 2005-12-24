@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.11 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.12 2005/12/24 23:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.11 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.12 2005/12/24 23:24:00 perry Exp $");
 
 #include "opt_kgdb.h"
 
@@ -209,7 +209,7 @@ u_int8_t
 hd64465uart_read_1(void *t, bus_space_handle_t h, bus_size_t ofs)
 {
 
-	return *(__volatile__ u_int8_t *)(h + (ofs << 1));
+	return *(volatile u_int8_t *)(h + (ofs << 1));
 }
 
 void
@@ -217,5 +217,5 @@ hd64465uart_write_1(void *t, bus_space_handle_t h, bus_size_t ofs,
     u_int8_t val)
 {
 
-	*(__volatile__ u_int8_t *)(h + (ofs << 1)) = val;	
+	*(volatile u_int8_t *)(h + (ofs << 1)) = val;	
 }

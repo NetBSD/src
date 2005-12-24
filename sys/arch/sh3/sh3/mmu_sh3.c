@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.c,v 1.9 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: mmu_sh3.c,v 1.10 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.9 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.10 2005/12/24 23:24:02 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ sh3_tlb_update(int asid, vaddr_t va, u_int32_t pte)
 	/* Load new entry */
 	_reg_write_4(SH3_PTEH, (va & ~PGOFSET) | asid);
 	_reg_write_4(SH3_PTEL, pte & PG_HW_BITS);
-	__asm__ __volatile__("ldtlb");
+	__asm volatile("ldtlb");
 
 	/* Restore old ASID */
 	if (asid != oasid)
