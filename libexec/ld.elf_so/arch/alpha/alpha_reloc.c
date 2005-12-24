@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.28 2005/08/20 19:01:16 skrll Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.29 2005/12/24 20:59:30 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.28 2005/08/20 19:01:16 skrll Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.29 2005/12/24 20:59:30 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -143,7 +143,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 		obj->pltgot[3] = (Elf_Addr) obj;
 	}
 
-	__asm __volatile("imb");
+	__asm volatile("imb");
 }
 
 /*
@@ -153,7 +153,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 #define	RELOC_ALIGNED_P(x) \
 	(((uintptr_t)(x) & (sizeof(void *) - 1)) == 0)
 
-static __inline Elf_Addr
+static inline Elf_Addr
 load_ptr(void *where)
 {
 	Elf_Addr res;
@@ -163,7 +163,7 @@ load_ptr(void *where)
 	return (res);
 }
 
-static __inline void
+static inline void
 store_ptr(void *where, Elf_Addr val)
 {
 
@@ -469,7 +469,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		 * Commit the tail of the insn sequence to memory
 		 * before overwriting the first insn.
 		 */
-		__asm __volatile("wmb" ::: "memory");
+		__asm volatile("wmb" ::: "memory");
 		stubptr[0] = insn[0];
 		/*
 		 * I-stream will be sync'd when we either return from
