@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.18 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.19 2005/12/24 23:29:06 perry Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -12,10 +12,10 @@
 #define	_C_LABEL_STRING(x)	"_"x
 
 #if __STDC__
-#define	___RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
+#define	___RENAME(x)	__asm(___STRING(_C_LABEL(x)))
 #else
 #define	___RENAME(x)	____RENAME(_/**/x)
-#define	____RENAME(x)	__asm__(___STRING(x))
+#define	____RENAME(x)	__asm(___STRING(x))
 #endif
 
 #define	__indr_reference(sym,alias)	/* nada, since we do weak refs */
@@ -23,26 +23,26 @@
 #ifdef __GNUC__
 #if __STDC__
 #define	__strong_alias(alias,sym)	       				\
-    __asm__(".global " _C_LABEL_STRING(#alias) "\n"			\
+    __asm(".global " _C_LABEL_STRING(#alias) "\n"			\
 	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
 #define	__weak_alias(alias,sym)						\
-    __asm__(".weak " _C_LABEL_STRING(#alias) "\n"			\
+    __asm(".weak " _C_LABEL_STRING(#alias) "\n"			\
 	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
 #define	__weak_extern(sym)						\
-    __asm__(".weak " _C_LABEL_STRING(#sym));
+    __asm(".weak " _C_LABEL_STRING(#sym));
 #define	__warn_references(sym,msg)					\
-	__asm__(".stabs \"" msg "\",30,0,0,0");				\
-	__asm__(".stabs \"_" #sym "\",1,0,0,0");
+	__asm(".stabs \"" msg "\",30,0,0,0");				\
+	__asm(".stabs \"_" #sym "\",1,0,0,0");
 #else /* __STDC__ */
 #define	__weak_alias(alias,sym) ___weak_alias(_/**/alias,_/**/sym)
 #define	___weak_alias(alias,sym)					\
-    __asm__(".weak alias\nalias = sym");
+    __asm(".weak alias\nalias = sym");
 #define	__weak_extern(sym) ___weak_extern(_/**/sym)
 #define	___weak_extern(sym)						\
-    __asm__(".weak sym");
+    __asm(".weak sym");
 #define	__warn_references(sym,msg)					\
-	__asm__(".stabs msg,30,0,0,0");					\
-	__asm__(".stabs \"_/**/sym\",1,0,0,0");
+	__asm(".stabs msg,30,0,0,0");					\
+	__asm(".stabs \"_/**/sym\",1,0,0,0");
 #endif /* __STDC__ */
 #else /* __GNUC__ */
 #define	__warn_references(sym,msg)
@@ -55,7 +55,7 @@
 #endif
 
 #define	__IDSTRING(_n,_s)						\
-	__asm__(".data ; .asciz \"" _s "\" ; .text")
+	__asm(".data ; .asciz \"" _s "\" ; .text")
 
 #undef __KERNEL_RCSID
 
