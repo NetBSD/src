@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.77 2005/12/05 01:24:07 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.78 2005/12/24 13:22:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.77 2005/12/05 01:24:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.78 2005/12/24 13:22:13 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1181,6 +1181,11 @@ gotpage:
 #else /* defined(VMSWAP) */
 			panic("%s: pagein", __func__);
 #endif /* defined(VMSWAP) */
+		}
+
+		if ((access_type & VM_PROT_WRITE) == 0) {
+			ptmp->flags |= PG_CLEAN;
+			pmap_clear_modify(ptmp);
 		}
 
 		/*
