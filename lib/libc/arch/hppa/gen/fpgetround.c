@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetround.c,v 1.2 2005/06/12 05:21:25 lukem Exp $	*/
+/*	$NetBSD: fpgetround.c,v 1.3 2005/12/24 21:41:01 perry Exp $	*/
 
 /*	$OpenBSD: fpgetround.c,v 1.3 2002/10/21 18:41:05 mickey Exp $	*/
 
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpgetround.c,v 1.2 2005/06/12 05:21:25 lukem Exp $");
+__RCSID("$NetBSD: fpgetround.c,v 1.3 2005/12/24 21:41:01 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -19,6 +19,6 @@ fpgetround(void)
 {
 	uint64_t fpsr;
 
-	__asm__ __volatile__("fstd %%fr0,0(%1)" : "=m" (fpsr) : "r" (&fpsr));
+	__asm __volatile("fstd %%fr0,0(%1)" : "=m" (fpsr) : "r" (&fpsr));
 	return ((fpsr >> 41) & 0x3);
 }

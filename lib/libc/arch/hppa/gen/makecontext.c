@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1 2004/07/18 22:37:32 chs Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.2 2005/12/24 21:41:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1 2004/07/18 22:37:32 chs Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.2 2005/12/24 21:41:01 perry Exp $");
 #endif
 
 #include <inttypes.h>
@@ -56,7 +56,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
 	__greg_t *gr = ucp->uc_mcontext.__gregs;
 	__greg_t *gp, rp, fp;
-	register __greg_t dp __asm__("r27");
+	register __greg_t dp __asm("r27");
 	uintptr_t *sp;
 	int i;
 	va_list ap;
