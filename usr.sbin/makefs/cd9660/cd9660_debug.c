@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_debug.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $	*/
+/*	$NetBSD: cd9660_debug.c,v 1.4 2005/12/24 20:56:41 perry Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_debug.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_debug.c,v 1.4 2005/12/24 20:56:41 perry Exp $");
 #endif  /* !__lint */
 
 #if !HAVE_NBTOOL_CONFIG_H
@@ -55,7 +55,7 @@ static void debug_print_susp_attrs(cd9660node *, int);
 static void debug_dump_to_xml_padded_hex_output(const char *, unsigned char *,
 						int);
 
-static __inline void
+static inline void
 print_n_tabs(int n)
 {
 	int i;

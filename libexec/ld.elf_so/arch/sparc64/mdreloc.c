@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.37 2005/08/20 19:01:17 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.38 2005/12/24 20:59:31 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.37 2005/08/20 19:01:17 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.38 2005/12/24 20:59:31 perry Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -581,7 +581,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		 *
 		 */
 		where[1] = BAA | ((offset >> 2) &0x3fffff);
-		__asm __volatile("iflush %0+4" : : "r" (where));
+		__asm volatile("iflush %0+4" : : "r" (where));
 	} else if (value >= 0 && value < (1L<<32)) {
 		/* 
 		 * We're within 32-bits of address zero.
@@ -600,8 +600,8 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		 */
 		where[2] = JMP   | LOVAL(value, 0);
 		where[1] = SETHI | HIVAL(value, 10);
-		__asm __volatile("iflush %0+8" : : "r" (where));
-		__asm __volatile("iflush %0+4" : : "r" (where));
+		__asm volatile("iflush %0+8" : : "r" (where));
+		__asm volatile("iflush %0+4" : : "r" (where));
 
 	} else if (value <= 0 && value > -(1L<<32)) {
 		/* 
@@ -622,9 +622,9 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		where[3] = JMP;
 		where[2] = XOR | ((~value) & 0x00001fff);
 		where[1] = SETHI | HIVAL(~value, 10);
-		__asm __volatile("iflush %0+12" : : "r" (where));
-		__asm __volatile("iflush %0+8" : : "r" (where));
-		__asm __volatile("iflush %0+4" : : "r" (where));
+		__asm volatile("iflush %0+12" : : "r" (where));
+		__asm volatile("iflush %0+8" : : "r" (where));
+		__asm volatile("iflush %0+4" : : "r" (where));
 
 	} else if (offset <= (1L<<32) && offset >= -((1L<<32) - 4)) {
 		/* 
@@ -645,9 +645,9 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		where[3] = MOV17;
 		where[2] = CALL	  | ((offset >> 4) & 0x3fffffff);
 		where[1] = MOV71;
-		__asm __volatile("iflush %0+12" : : "r" (where));
-		__asm __volatile("iflush %0+8" : : "r" (where));
-		__asm __volatile("iflush %0+4" : : "r" (where));
+		__asm volatile("iflush %0+12" : : "r" (where));
+		__asm volatile("iflush %0+8" : : "r" (where));
+		__asm volatile("iflush %0+4" : : "r" (where));
 
 	} else if (offset >= 0 && offset < (1L<<44)) {
 		/* 
@@ -669,10 +669,10 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		where[3] = SLLX  | 12;
 		where[2] = OR    | (((offset) >> 12) & 0x00001fff);
 		where[1] = SETHI | HIVAL(offset, 22);
-		__asm __volatile("iflush %0+16" : : "r" (where));
-		__asm __volatile("iflush %0+12" : : "r" (where));
-		__asm __volatile("iflush %0+8" : : "r" (where));
-		__asm __volatile("iflush %0+4" : : "r" (where));
+		__asm volatile("iflush %0+16" : : "r" (where));
+		__asm volatile("iflush %0+12" : : "r" (where));
+		__asm volatile("iflush %0+8" : : "r" (where));
+		__asm volatile("iflush %0+4" : : "r" (where));
 
 	} else if (offset < 0 && offset > -(1L<<44)) {
 		/* 
@@ -694,10 +694,10 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		where[3] = SLLX  | 12;
 		where[2] = XOR   | (((~offset) >> 12) & 0x00001fff);
 		where[1] = SETHI | HIVAL(~offset, 22);
-		__asm __volatile("iflush %0+16" : : "r" (where));
-		__asm __volatile("iflush %0+12" : : "r" (where));
-		__asm __volatile("iflush %0+8" : : "r" (where));
-		__asm __volatile("iflush %0+4" : : "r" (where));
+		__asm volatile("iflush %0+16" : : "r" (where));
+		__asm volatile("iflush %0+12" : : "r" (where));
+		__asm volatile("iflush %0+8" : : "r" (where));
+		__asm volatile("iflush %0+4" : : "r" (where));
 
 	} else {
 		/* 
@@ -721,12 +721,12 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		where[3] = OR      | LOVAL(value, 32);
 		where[2] = SETHIG5 | HIVAL(value, 10);
 		where[1] = SETHI   | HIVAL(value, 42);
-		__asm __volatile("iflush %0+24" : : "r" (where));
-		__asm __volatile("iflush %0+20" : : "r" (where));
-		__asm __volatile("iflush %0+16" : : "r" (where));
-		__asm __volatile("iflush %0+12" : : "r" (where));
-		__asm __volatile("iflush %0+8" : : "r" (where));
-		__asm __volatile("iflush %0+4" : : "r" (where));
+		__asm volatile("iflush %0+24" : : "r" (where));
+		__asm volatile("iflush %0+20" : : "r" (where));
+		__asm volatile("iflush %0+16" : : "r" (where));
+		__asm volatile("iflush %0+12" : : "r" (where));
+		__asm volatile("iflush %0+8" : : "r" (where));
+		__asm volatile("iflush %0+4" : : "r" (where));
 
 	}
 

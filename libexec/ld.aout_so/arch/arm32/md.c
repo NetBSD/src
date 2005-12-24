@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 1999/02/27 03:34:05 tv Exp $	*/
+/*	$NetBSD: md.c,v 1.12 2005/12/24 20:59:30 perry Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -56,14 +56,14 @@
 #endif
 
 #ifdef RTLD
-__inline void iflush __P((void *addr, int len));
+inline void iflush __P((void *addr, int len));
 
 /*
  * Flush the instruction cache of the specified address
  * Some processors have separate instruction caches and
  * as such may need a flush following a jump slot fixup.
  */
-__inline void
+inline void
 iflush(addr, len)
 	void *addr;
 	int len;
@@ -78,7 +78,7 @@ iflush(addr, len)
 	p.addr = (u_int)addr;
 	p.len = len;
 
-	__asm __volatile("mov r0, %0; mov r1, %1; swi %2"
+	__asm volatile("mov r0, %0; mov r1, %1; swi %2"
 	 : : "I" (ARM32_SYNC_ICACHE), "r" (&p), "J" (SYS_sysarch));
 }
 #endif	/* RTLD */

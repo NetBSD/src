@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.37 2005/08/20 19:01:17 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.38 2005/12/24 20:59:31 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.37 2005/08/20 19:01:17 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.38 2005/12/24 20:59:31 perry Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -389,8 +389,8 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 #define NOP	0x01000000
 	where[2] = JMP   | (value & 0x000003ff);
 	where[1] = SETHI | ((value >> 10) & 0x003fffff);
-	__asm __volatile("iflush %0+8" : : "r" (where));
-	__asm __volatile("iflush %0+4" : : "r" (where));
+	__asm volatile("iflush %0+8" : : "r" (where));
+	__asm volatile("iflush %0+4" : : "r" (where));
 
 	if (tp)
 		*tp = value;

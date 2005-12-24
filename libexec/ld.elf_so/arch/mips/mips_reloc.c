@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.48 2005/08/20 19:01:17 skrll Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.49 2005/12/24 20:59:30 perry Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.48 2005/08/20 19:01:17 skrll Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.49 2005/12/24 20:59:30 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ caddr_t _rtld_bind(Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
 #define	RELOC_ALIGNED_P(x) \
 	(((uintptr_t)(x) & (sizeof(void *) - 1)) == 0)
 
-static __inline Elf_Addr
+static inline Elf_Addr
 load_ptr(void *where)
 {
 	Elf_Addr res;
@@ -65,7 +65,7 @@ load_ptr(void *where)
 	return res;
 }
 
-static __inline void
+static inline void
 store_ptr(void *where, Elf_Addr val)
 {
 

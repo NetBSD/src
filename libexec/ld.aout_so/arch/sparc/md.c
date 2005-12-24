@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 1998/12/17 14:29:50 pk Exp $	*/
+/*	$NetBSD: md.c,v 1.20 2005/12/24 20:59:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,13 +100,13 @@ static int reloc_target_bitsize[] = {
 
 static void iflush __P((jmpslot_t *));
 
-static __inline void
+static inline void
 iflush(sp)
 	jmpslot_t		*sp;
 {
-	__asm __volatile("iflush %0+0" : : "r" (sp));
-	__asm __volatile("iflush %0+4" : : "r" (sp));
-	__asm __volatile("iflush %0+8" : : "r" (sp));
+	__asm volatile("iflush %0+0" : : "r" (sp));
+	__asm volatile("iflush %0+4" : : "r" (sp));
+	__asm volatile("iflush %0+8" : : "r" (sp));
 }
 
 /*

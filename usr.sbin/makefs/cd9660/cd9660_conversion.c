@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_conversion.c,v 1.2 2005/10/30 03:10:28 dyoung Exp $	*/
+/*	$NetBSD: cd9660_conversion.c,v 1.3 2005/12/24 20:56:41 perry Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -35,14 +35,14 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_conversion.c,v 1.2 2005/10/30 03:10:28 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_conversion.c,v 1.3 2005/12/24 20:56:41 perry Exp $");
 #endif  /* !__lint */
 
 
 static char cd9660_compute_gm_offset(time_t);
 
 #if 0
-static __inline int
+static inline int
 cd9660_pad_even(length)
 int length;
 {
