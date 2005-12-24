@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.64 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.65 2005/12/24 22:45:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.64 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.65 2005/12/24 22:45:34 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -532,26 +532,26 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		 */
 		if (cputype == CPU_68060) {
 			/* XXX: Need the branch cache be cleared? */
-			asm volatile (".word 0x4e7a,0x0002;" 
+			__asm volatile (".word 0x4e7a,0x0002;" 
 				      "orl #0x400000,%%d0;" 
 				      ".word 0x4e7b,0x0002" : : : "d0");
 		}
-		asm volatile ("movel %0,%%a0;"
+		__asm volatile ("movel %0,%%a0;"
 			      ".word 0x4e7b,0x8807" : : "a" (Sysseg_pa) : "a0");
-		asm volatile (".word 0xf518" : : );
-		asm volatile ("movel #0xc000,%%d0;"
+		__asm volatile (".word 0xf518" : : );
+		__asm volatile ("movel #0xc000,%%d0;"
 			      ".word 0x4e7b,0x0003" : : : "d0" );
 	} else
 #endif
 	{
-		asm volatile ("pmove %0@,%%srp" : : "a" (&protorp[0]));
+		__asm volatile ("pmove %0@,%%srp" : : "a" (&protorp[0]));
 		/*
 		 * setup and load TC register.
 		 * enable_cpr, enable_srp, pagesize=8k,
 		 * A = 8 bits, B = 11 bits
 		 */
 		tc = 0x82d08b00;
-		asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
+		__asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
 	}
  
 	/* Is this to fool the optimizer?? */
@@ -1044,7 +1044,7 @@ initcpu()
 			extern trapfun illinst;
 #endif
 
-			asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : : 
+			__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : : 
 					"d"(m68060_pcr_init):"d0" );
 
 			/* bus/addrerr vectors */

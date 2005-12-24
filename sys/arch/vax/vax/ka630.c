@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.25 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: ka630.c,v 1.26 2005/12/24 22:45:40 perry Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.25 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.26 2005/12/24 22:45:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -143,7 +143,7 @@ static void
 ka630_halt()
 {
 	((volatile struct ka630clock *)clk_page)->cpmbx = KA630CLK_DOTHIS|KA630CLK_HALT;
-	asm("halt");
+	__asm("halt");
 }
 
 static void

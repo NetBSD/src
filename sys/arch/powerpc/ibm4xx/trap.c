@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.29 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29 2005/12/24 22:45:36 perry Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -452,7 +452,7 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		ctx = pm->pm_ctx;
 	}
 
-	asm volatile("addi %6,%6,1; mtctr %6;"	/* Set up counter */
+	__asm volatile("addi %6,%6,1; mtctr %6;"	/* Set up counter */
 		"mfmsr %0;"			/* Save MSR */
 		"li %1,0x20; "
 		"andc %1,%0,%1; mtmsr %1;"	/* Disable IMMU */
@@ -533,7 +533,7 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		ctx = pm->pm_ctx;
 	}
 
-	asm volatile("addi %6,%6,1; mtctr %6;"	/* Set up counter */
+	__asm volatile("addi %6,%6,1; mtctr %6;"	/* Set up counter */
 		"mfmsr %0;"			/* Save MSR */
 		"li %1,0x20; "
 		"andc %1,%0,%1; mtmsr %1;"	/* Disable IMMU */

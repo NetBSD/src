@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.27 2005/12/11 12:19:36 christos Exp $ */
+/*	$NetBSD: ka410.c,v 1.28 2005/12/24 22:45:40 perry Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka410.c,v 1.27 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka410.c,v 1.28 2005/12/24 22:45:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -149,16 +149,16 @@ ka410_mchk(addr)
 static void
 ka410_halt()
 {
-	asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
-	asm("halt");
+	__asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
+	__asm("halt");
 }
 
 static void
 ka410_reboot(arg)
 	int arg;
 {
-	asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
-	asm("halt");
+	__asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
+	__asm("halt");
 }
 
 static void

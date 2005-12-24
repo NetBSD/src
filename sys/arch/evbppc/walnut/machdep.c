@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2005/12/24 22:45:35 perry Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2005/12/24 22:45:35 perry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -269,8 +269,8 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	consinit();
 
 	/* Handle trap instruction as PGM exception */
-	asm volatile("mfspr %0,%1":"=r"(dbcr0):"K"(SPR_DBCR0));
-	asm volatile("mtspr %0,%1"::"K"(SPR_DBCR0),"r"(dbcr0 & ~DBCR0_TDE));
+	__asm volatile("mfspr %0,%1":"=r"(dbcr0):"K"(SPR_DBCR0));
+	__asm volatile("mtspr %0,%1"::"K"(SPR_DBCR0),"r"(dbcr0 & ~DBCR0_TDE));
 
 	/*
 	 * external interrupt handler install
@@ -280,7 +280,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
-	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
+	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 		      : : "r"(0), "K"(PSL_IR|PSL_DR)); 
 	/* XXXX PSL_ME - With ME set kernel gets stuck... */
 
@@ -338,12 +338,12 @@ install_extint(void (*handler)(void))
 	if (offset > 0x1ffffff)
 		panic("install_extint: too far away");
 #endif
-	asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr));
+	__asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr));
 	extint_call = (extint_call & 0xfc000003) | offset;
 	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
 	__syncicache((void *)&extint_call, sizeof extint_call);
 	__syncicache((void *)EXC_EXI, (int)&extsize);
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 }
 
 /*

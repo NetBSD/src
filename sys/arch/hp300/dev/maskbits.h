@@ -1,4 +1,4 @@
-/*	$NetBSD: maskbits.h,v 1.6 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: maskbits.h,v 1.7 2005/12/24 22:45:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -61,11 +61,11 @@ and the number of whole longwords between the ends.
 	nlw = (w) >> 5;
 
 #define FASTGETBITS(psrc, x, w, dst) \
-    asm ("bfextu %3{%1:%2},%0" \
+    __asm ("bfextu %3{%1:%2},%0" \
     : "=d" (dst) : "di" (x), "di" (w), "o" (*(char *)(psrc)))
 
 #define FASTPUTBITS(src, x, w, pdst) \
-    asm ("bfins %3,%0{%1:%2}" \
+    __asm ("bfins %3,%0{%1:%2}" \
 	 : "=o" (*(char *)(pdst)) \
 	 : "di" (x), "di" (w), "d" (src))
 

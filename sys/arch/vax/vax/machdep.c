@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.151 2005/12/11 12:19:36 christos Exp $	 */
+/* $NetBSD: machdep.c,v 1.152 2005/12/24 22:45:40 perry Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2005/12/24 22:45:40 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -396,7 +396,7 @@ cpu_reboot(howto, b)
 		 * rely on that.
 		 */
 #ifdef notyet
-		asm(	"\tmovl	%sp, (0x80000200)\n"
+		__asm(	"\tmovl	%sp, (0x80000200)\n"
 			"\tmovl	0x80000200, %sp\n"
 			"\tmfpr	$0x10, -(%sp)\n"	/* PR_PCBB */
 			"\tmfpr	$0x11, -(%sp)\n"	/* PR_SCBB */
@@ -417,9 +417,9 @@ cpu_reboot(howto, b)
 
 		mtpr(GC_CONS|GC_BTFL, PR_TXDB);
 	}
-	asm("movl %0, %%r5":: "g" (showto)); /* How to boot */
-	asm("movl %0, %%r11":: "r"(showto)); /* ??? */
-	asm("halt");
+	__asm("movl %0, %%r5":: "g" (showto)); /* How to boot */
+	__asm("movl %0, %%r11":: "r"(showto)); /* ??? */
+	__asm("halt");
 	panic("Halt sket sej");
 }
 
@@ -795,7 +795,7 @@ void
 generic_halt()
 {
 	if (cpmbx == NULL)  /* Too late to complain here, but avoid panic */
-		asm("halt");
+		__asm("halt");
 
 	if (cpmbx->user_halt != UHALT_DEFAULT) {
 		if (cpmbx->mbox_halt != 0)
@@ -803,14 +803,14 @@ generic_halt()
 	} else if (cpmbx->mbox_halt != MHALT_HALT)
 		cpmbx->mbox_halt = MHALT_HALT;  /* the os decides */
 
-	asm("halt");
+	__asm("halt");
 }
 
 void
 generic_reboot(int arg)
 {
 	if (cpmbx == NULL)  /* Too late to complain here, but avoid panic */
-		asm("halt");
+		__asm("halt");
 
 	if (cpmbx->user_halt != UHALT_DEFAULT) {
 		if (cpmbx->mbox_halt != 0)
@@ -818,6 +818,6 @@ generic_reboot(int arg)
 	} else if (cpmbx->mbox_halt != MHALT_REBOOT)
 		cpmbx->mbox_halt = MHALT_REBOOT;
 
-	asm("halt");
+	__asm("halt");
 }
 

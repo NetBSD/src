@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka49.c,v 1.13 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka49.c,v 1.14 2005/12/24 22:45:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -184,7 +184,7 @@ ka49_cache_enable()
 		mtpr(0, start);
 
 	/* Flush the pipes (via REI) */
-	asm("movpsl -(%sp); movab 1f,-(%sp); rei; 1:;");
+	__asm("movpsl -(%sp); movab 1f,-(%sp); rei; 1:;");
 
 	/* Enable primary cache */
 	mtpr(PCCTL_P_EN|PCCTL_I_EN|PCCTL_D_EN, PR_PCCTL);
@@ -230,12 +230,12 @@ static void
 ka49_halt()
 {
 	((volatile u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_HALT;
-	asm("halt");
+	__asm("halt");
 }
 
 static void
 ka49_reboot(int arg)
 {
 	((volatile u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_BOOT;
-	asm("halt");
+	__asm("halt");
 }

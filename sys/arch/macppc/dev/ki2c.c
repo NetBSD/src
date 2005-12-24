@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.5 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.6 2005/12/24 22:45:35 perry Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -202,7 +202,7 @@ ki2c_writereg(sc, reg, val)
 	u_char *addr = sc->sc_reg + sc->sc_regstep * reg;
 
 	*addr = val;
-	asm volatile ("eieio");
+	__asm volatile ("eieio");
 	delay(10);
 }
 

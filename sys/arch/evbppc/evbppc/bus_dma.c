@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.10 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.11 2005/12/24 22:45:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 2005/12/24 22:45:35 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -435,14 +435,14 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			 */
 			for (addr = startline; addr <= endline;
 			    addr += cachestride)
-				asm volatile("dcbf 0,%0"::"r"(addr));
+				__asm volatile("dcbf 0,%0"::"r"(addr));
 		} else if (ops & BUS_DMASYNC_PREWRITE) {
 			/*
 			 * Flush cache so memory contains correct data.
 			 */
 			for (addr = startline; addr <= endline;
 			    addr += cachestride)
-				asm volatile("dcbst 0,%0"::"r"(addr));
+				__asm volatile("dcbst 0,%0"::"r"(addr));
 		} else if (ops & BUS_DMASYNC_POSTREAD){
 			/*
 			 * Invalidate cache w/o flush, so we'll read whatever's
@@ -450,13 +450,13 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			 */
 			for (addr = startline; addr <= endline;
 			    addr += cachestride)
-				asm volatile("dcbi 0,%0"::"r"(addr));
+				__asm volatile("dcbi 0,%0"::"r"(addr));
 		}
 
 		offset = 0;
 		len -= minlen;
 	}
-	asm volatile("eieio; sync; isync");
+	__asm volatile("eieio; sync; isync");
 }
 
 /*

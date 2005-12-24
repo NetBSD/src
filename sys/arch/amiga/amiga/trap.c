@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.104 2005/12/11 12:16:26 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.105 2005/12/24 22:45:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 2005/12/11 12:16:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2005/12/24 22:45:34 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -883,19 +883,19 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	switch(wb_sts & WBS_SZMASK) {
 
 	case WBS_SIZE_BYTE :
-		asm volatile ("movec %0,%%dfc ; movesb %1,%2@":: "d" (wb_sts & WBS_TMMASK),
+		__asm volatile ("movec %0,%%dfc ; movesb %1,%2@":: "d" (wb_sts & WBS_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
 
 	case WBS_SIZE_WORD :
-		asm volatile ("movec %0,%%dfc ; movesw %1,%2@":: "d" (wb_sts & WBS_TMMASK),
+		__asm volatile ("movec %0,%%dfc ; movesw %1,%2@":: "d" (wb_sts & WBS_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
 
 	case WBS_SIZE_LONG :
-		asm volatile ("movec %0,%%dfc ; movesl %1,%2@":: "d" (wb_sts & WBS_TMMASK),
+		__asm volatile ("movec %0,%%dfc ; movesl %1,%2@":: "d" (wb_sts & WBS_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
@@ -904,7 +904,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	if (curpcb->pcb_onfault == (caddr_t) _wb_fault)
 		curpcb->pcb_onfault = NULL;
 	if ((wb_sts & WBS_TMMASK) != FC_USERD)
-		asm volatile ("movec %0,%%dfc\n" : : "d" (FC_USERD));
+		__asm volatile ("movec %0,%%dfc\n" : : "d" (FC_USERD));
 	return 0;
 }
 

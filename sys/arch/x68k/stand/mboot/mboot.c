@@ -1,4 +1,4 @@
-/*	$NetBSD: mboot.c,v 1.4 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: mboot.c,v 1.5 2005/12/24 22:45:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ bootmain(scsiid)
 				IOCS_B_PRINT("Invalid disk.\r\n");
 				return 0;
 			}
-			asm volatile ("movl %0,%%d4\n\t"
+			__asm volatile ("movl %0,%%d4\n\t"
 				      "movl %1,%%d2\n\t"
 				      "jsr 0x2400"
 				      :

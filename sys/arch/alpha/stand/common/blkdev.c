@@ -1,4 +1,4 @@
-/* $NetBSD: blkdev.c,v 1.6 2005/12/11 12:16:20 christos Exp $ */
+/* $NetBSD: blkdev.c,v 1.7 2005/12/24 22:45:34 perry Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -179,7 +179,7 @@ blkdevstrategy(devdata, rw, bn, reqcnt, addrvoid, cnt)
 
 	if ((reqcnt & 0xffffff) != reqcnt ||
 	    reqcnt == 0)
-		asm("call_pal 0");
+		__asm("call_pal 0");
 
 	twiddle();
 

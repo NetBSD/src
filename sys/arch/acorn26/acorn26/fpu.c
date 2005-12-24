@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.7 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: fpu.c,v 1.8 2005/12/24 22:45:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.7 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8 2005/12/24 22:45:33 perry Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -124,7 +124,7 @@ fpu_identify()
 	if (setjmp(&undef_jmp) == 0) {
 		uh = install_coproc_handler(FPA_COPROC, fpu_undef_handler);
 		fpsr = 0;
-		asm volatile ("rfs %0" : "=r" (fpsr));
+		__asm volatile ("rfs %0" : "=r" (fpsr));
 	}
 	remove_coproc_handler(uh);
 	return fpsr & FPSR_SYSID_MASK;

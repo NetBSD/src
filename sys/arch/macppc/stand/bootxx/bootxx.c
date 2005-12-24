@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.15 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.16 2005/12/24 22:50:07 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,7 +58,7 @@ struct shared_bbinfo bbinfo = {
 void (*entry_point)(int, int, void *) = (void *)DEFAULT_ENTRY_POINT;
 
 
-asm(
+__asm(
 "	.text			\n"
 "	.align 2		\n"
 "	.globl	_start		\n"
@@ -321,7 +321,7 @@ startup(arg1, arg2, openfirm)
 	/*
 	 * enable D/I cache
 	 */
-	asm(
+	__asm(
 		"mtdbatu	3,%0\n\t"
 		"mtdbatl	3,%1\n\t"
 		"mtibatu	3,%0\n\t"

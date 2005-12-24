@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 2005/12/24 22:45:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2005/12/24 22:45:34 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -363,7 +363,7 @@ identifycpu()
 			u_int32_t	pcr;
 			char		cputxt[30];
 
-			asm(".word 0x4e7a,0x0808;"
+			__asm(".word 0x4e7a,0x0808;"
 			    "movl %%d0,%0" : "=d"(pcr) : : "d0");
 			sprintf(cputxt, "68%s060 rev.%d",
 				pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
@@ -446,7 +446,7 @@ cpu_reboot(howto, bootstr)
 	splhigh();			/* extreme priority */
 	if(howto & RB_HALT) {
 		printf("halted\n\n");
-		asm("	stop	#0x2700");
+		__asm("	stop	#0x2700");
 	}
 	else {
 		if(howto & RB_DUMP)

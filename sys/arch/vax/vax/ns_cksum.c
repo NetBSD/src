@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_cksum.c,v 1.7 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: ns_cksum.c,v 1.8 2005/12/24 22:45:40 perry Exp $	*/
 /*
  * Copyright (c) 1985, 1986 Regents of the University of California.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_cksum.c,v 1.7 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_cksum.c,v 1.8 2005/12/24 22:45:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -49,9 +49,9 @@ ns_cksum(m, len)
 	register struct mbuf *m;
 	register int len;
 {
-	register u_short *w asm("r9");		/* on vax, known to be r9 */
-	register int sum asm("r8");		/* on vax, known to be r8 */
-	register int low asm("r7");		/* on vax, known to be r7 */
+	register u_short *w __asm("r9");		/* on vax, known to be r9 */
+	register int sum __asm("r8");		/* on vax, known to be r8 */
+	register int low __asm("r7");		/* on vax, known to be r7 */
 	register int mlen;		/* want 0, shuts lint up about low */
 
 	sum = 0;
@@ -101,10 +101,10 @@ ns_cksum(m, len)
 		 *
 		 */
 		while ((mlen -= 32) >= 0) {
-			/*asm("bicpsw $1");		 clears carry */
+			/*__asm("bicpsw $1");		 clears carry */
 #undef ADD
-#define ADD asm("movw (r9)+,r7; addl2 r7,r8; addl2 r8,r8")
-#define FOLD { asm("ashl $-16,r8,r0; addw2 r0,r8; adwc $0,r8; movzwl r8,r8"); }
+#define ADD __asm("movw (r9)+,r7; addl2 r7,r8; addl2 r8,r8")
+#define FOLD { __asm("ashl $-16,r8,r0; addw2 r0,r8; adwc $0,r8; movzwl r8,r8"); }
 			FOLD;
 			ADD; ADD; ADD; ADD; ADD; ADD; ADD; ADD;
 			FOLD;
@@ -112,7 +112,7 @@ ns_cksum(m, len)
 		}
 		mlen += 32;
 		while ((mlen -= 8) >= 0) {
-			/*asm("bicpsw $1");		 clears carry */
+			/*__asm("bicpsw $1");		 clears carry */
 			FOLD;
 			ADD; ADD; ADD; ADD;
 		}

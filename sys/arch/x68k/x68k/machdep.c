@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 2005/12/11 12:19:45 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.131 2005/12/24 22:45:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2005/12/11 12:19:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2005/12/24 22:45:40 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1092,8 +1092,8 @@ mem_exists(caddr_t mem, u_long basemax)
 	b = (void*)base_v;
 
 	/* This is somewhat paranoid -- avoid overwriting myself */
-	asm("lea %%pc@(begin_check_mem),%0" : "=a"(begin_check));
-	asm("lea %%pc@(end_check_mem),%0" : "=a"(end_check));
+	__asm("lea %%pc@(begin_check_mem),%0" : "=a"(begin_check));
+	__asm("lea %%pc@(end_check_mem),%0" : "=a"(end_check));
 	if (base >= begin_check && base < end_check) {
 		size_t off = end_check - begin_check;
 
@@ -1129,7 +1129,7 @@ mem_exists(caddr_t mem, u_long basemax)
 		save_b = *b;
 	save_m = *m;
 
-asm("begin_check_mem:");
+__asm("begin_check_mem:");
 	/*
 	 * stack and other data segment variables are unusable
 	 * til end_check_mem, because they may be clobbered.
@@ -1156,7 +1156,7 @@ out:
 	if (baseismem)
 		*b = save_b;
 
-asm("end_check_mem:");
+__asm("end_check_mem:");
 
 	nofault = (int *)0;
 	pmap_remove(pmap_kernel(), mem_v, mem_v+PAGE_SIZE);
@@ -1201,7 +1201,7 @@ setmemrange(void)
 			cacr = CACHE60_OFF;
 			break;
 		}
-		asm volatile ("movc %0,%%cacr"::"d"(cacr));
+		__asm volatile ("movc %0,%%cacr"::"d"(cacr));
 	}
 
 	/* discover extended memory */
@@ -1246,7 +1246,7 @@ setmemrange(void)
 			cacr = CACHE60_ON;
 			break;
 		}
-		asm volatile ("movc %0,%%cacr"::"d"(cacr));
+		__asm volatile ("movc %0,%%cacr"::"d"(cacr));
 	}
 
 	physmem = m68k_btop(mem_size);

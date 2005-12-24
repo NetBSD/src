@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.7 2005/12/24 20:06:52 perry Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.8 2005/12/24 22:45:34 perry Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -143,7 +143,7 @@ find_first_bit( uint32_t bits )
 	/* since CLZ is available only on ARMv5, this isn't portable
 	 * to all ARM CPUs.  This file is for PXA2[15]0 processor. 
 	 */
-	asm( "clz %0, %1" : "=r" (count) : "r" (bits) );
+	__asm( "clz %0, %1" : "=r" (count) : "r" (bits) );
 	return 31-count;
 }
 

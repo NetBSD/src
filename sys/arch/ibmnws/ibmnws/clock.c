@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2005/11/23 13:00:51 nonaka Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2005/12/24 22:45:35 perry Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -119,8 +119,8 @@ cpu_initclocks()
 {
 
 	ticks_per_intr = ticks_per_sec / hz;
-	asm volatile ("mftb %0" : "=r"(lasttb));
-	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+	__asm volatile ("mftb %0" : "=r"(lasttb));
+	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 
 	/*
 	 * The NS 1000 has no RTC hardware, so fake the clock functions
@@ -275,10 +275,10 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mfdec %0" : "=r"(count));
+	__asm ("mfdec %0" : "=r"(count));
 	for (nticks = 0; count < 0; nticks++)
 		count += ticks_per_intr;
-	asm volatile ("mtdec %0" :: "r"(count));
+	__asm volatile ("mtdec %0" :: "r"(count));
 
 	intrcnt[CNT_CLOCK]++;
 
@@ -293,13 +293,13 @@ decr_intr(frame)
 		 * lasttb is used during microtime. Set it to the virtual
 		 * start of this tick interval.
 		 */
-		asm ("mftb %0" : "=r"(tb));
+		__asm ("mftb %0" : "=r"(tb));
 		lasttb = tb + count - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts
 		 */
-		asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
+		__asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 		
 		/*
@@ -326,12 +326,12 @@ microtime(tvp)
 	u_long ticks;
 	int msr, scratch;
 	
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	asm ("mftb %0" : "=r"(tb));
+	__asm ("mftb %0" : "=r"(tb));
 	ticks = (tb - lasttb) * ns_per_tick;
 	*tvp = time;
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
 	while (tvp->tv_usec >= 1000000) {
@@ -354,7 +354,7 @@ delay(n)
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+	__asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
 		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
 }

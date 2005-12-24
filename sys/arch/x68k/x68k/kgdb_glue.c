@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.7 2005/12/11 12:19:45 christos Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.8 2005/12/24 22:45:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.7 2005/12/11 12:19:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.8 2005/12/24 22:45:40 perry Exp $");
 
 #include "opt_kgdb.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.7 2005/12/11 12:19:45 christos Exp $
 #include <machine/reg.h>
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.7 2005/12/11 12:19:45 christos Exp $";
+static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.8 2005/12/24 22:45:40 perry Exp $";
 #endif
 
 #define KGDB_STACKSIZE 0x800
@@ -65,8 +65,8 @@ static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.7 2005/12/11 12:19:45 christos E
 
 u_long kgdb_stack[KGDB_STACKWORDS];
 
-#define getsp(v) asm("movl %%sp, %0" : "=r" (v))
-#define setsp(v) asm("movl %0, %%sp" :: "r" (v))
+#define getsp(v) __asm("movl %%sp, %0" : "=r" (v))
+#define setsp(v) __asm("movl %0, %%sp" :: "r" (v))
 
 static inline void
 copywords(u_long *src, u_long *dst, u_int nbytes)
@@ -137,7 +137,7 @@ kgdb_trap_glue(int type, struct frame frame)
 	 * unneeded usp (we trapped from kernel mode) and pad word,
 	 * and return to the trapped thread.
 	 */
-	asm("moveml %sp@+,#0x7FFF; addql #8,sp; rte");
+	__asm("moveml %sp@+,#0x7FFF; addql #8,sp; rte");
 }
 
 int kgdb_testval;

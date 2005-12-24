@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.29 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: ka650.c,v 1.30 2005/12/24 22:45:40 perry Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.29 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.30 2005/12/24 22:45:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -283,7 +283,7 @@ static void
 ka650_halt()
 {
 	ka650ssc_ptr->ssc_cpmbx = CPMB650_DOTHIS | CPMB650_HALT;
-	asm("halt");
+	__asm("halt");
 }
 
 static void

@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.35 2005/12/11 12:18:46 christos Exp $ */
+/*	$NetBSD: db_interface.c,v 1.36 2005/12/24 22:45:36 perry Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.35 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.36 2005/12/24 22:45:36 perry Exp $");
 
 #define USERACC
 
@@ -320,7 +320,7 @@ db_ppc4xx_dumptlb(db_expr_t addr, int have_addr, db_expr_t count,
 
 	zpr = mfspr(SPR_ZPR);
 	for (i = 0; i < NTLB; i++) {
-		asm volatile("mfmsr %3;"
+		__asm volatile("mfmsr %3;"
 			"mfpid %4;"
 			"li %0,0;"
 			"mtmsr %0;"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2005/12/24 22:50:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
 #define curcpu()	({struct cpu_info *__ci;                  \
-			asm volatile("movq %%gs:8,%0" : "=r" (__ci)); \
+			__asm volatile("movq %%gs:8,%0" : "=r" (__ci)); \
 			__ci;})
 #define cpu_number()	(curcpu()->ci_cpuid)
 

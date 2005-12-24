@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.7 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.8 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.7 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.8 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -77,7 +77,7 @@ ipkdb_trap_glue(struct trapframe *frame)
 		|| frame->exc == EXC_BPT)) {
 #ifdef	IPKDBUSERHACK
 		/* XXX see above */
-		asm ("mfsr %0,%1" : "=r"(savesr) : "n"(USER_SR));
+		__asm ("mfsr %0,%1" : "=r"(savesr) : "n"(USER_SR));
 #endif
 		ipkdbzero(ipkdbregs, sizeof ipkdbregs);
 		ipkdbcopy(frame->fixreg, &ipkdbregs[FIX], NFIX * sizeof(int));
@@ -105,7 +105,7 @@ ipkdb_trap_glue(struct trapframe *frame)
 		frame->ctr = ipkdbregs[CTR];
 		frame->xer = ipkdbregs[XER];
 #ifdef	IPKDBUSERHACK
-		asm ("mtsr %0,%1; isync" :: "n"(USER_SR), "r"(savesr));
+		__asm ("mtsr %0,%1; isync" :: "n"(USER_SR), "r"(savesr));
 #endif
 		return 1;
 	}

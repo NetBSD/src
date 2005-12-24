@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: intr.c,v 1.10 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -115,7 +115,7 @@ ext_intr(void)
 	u_long int_state;
 
 	pcpl = cpl;
-	asm volatile ("mfmsr %0" : "=r"(msr));
+	__asm volatile ("mfmsr %0" : "=r"(msr));
 
 	int_state = mfdcr(INTR_STATUS);	/* Read non-masked interrupt status */
 	bits_to_clear = int_state;
@@ -131,7 +131,7 @@ ext_intr(void)
 			disable_irq(i);
  		} else {
 			splraise(intrmask[i]);
-			asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
+			__asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 			ih = intrhand[i];
 			while (ih) {
@@ -139,7 +139,7 @@ ext_intr(void)
 				ih = ih->ih_next;
 			}
 			KERNEL_UNLOCK();
-			asm volatile ("mtmsr %0" :: "r"(msr));
+			__asm volatile ("mtmsr %0" :: "r"(msr));
 			cpl = pcpl;
 			uvmexp.intrs++;
 			intrcnt[i]++;
@@ -147,9 +147,9 @@ ext_intr(void)
 	}
 	mtdcr(INTR_ACK, bits_to_clear);	/* Acknowledge all pending interrupts */
 
-	asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
+	__asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
 	splx(pcpl);
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 }
 
 static inline void
@@ -408,9 +408,9 @@ do_pending_int(void)
 		return;
 
 	processing = 1;
-	asm volatile("mfmsr %0" : "=r"(emsr));
+	__asm volatile("mfmsr %0" : "=r"(emsr));
 	dmsr = emsr & ~PSL_EE;
-	asm volatile("mtmsr %0" :: "r"(dmsr));
+	__asm volatile("mtmsr %0" :: "r"(dmsr));
 
 	pcpl = cpl;		/* Turn off all */
   again:
@@ -421,7 +421,7 @@ do_pending_int(void)
 		ipending &= ~IRQ_TO_MASK(irq);
 
 		splraise(intrmask[irq]);
-		asm volatile("mtmsr %0" :: "r"(emsr));
+		__asm volatile("mtmsr %0" :: "r"(emsr));
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		ih = intrhand[irq];
 		while(ih) {
@@ -429,7 +429,7 @@ do_pending_int(void)
 			ih = ih->ih_next;
 		}
 		KERNEL_UNLOCK();
-		asm volatile("mtmsr %0" :: "r"(dmsr));
+		__asm volatile("mtmsr %0" :: "r"(dmsr));
 		cpl = pcpl;
 		intrcnt[irq]++;
 	}
@@ -437,11 +437,11 @@ do_pending_int(void)
 	if ((ipending & ~pcpl) & SINT_SERIAL) {
 		ipending &= ~SINT_SERIAL;
 		splsoftserial();
-		asm volatile("mtmsr %0" :: "r"(emsr));
+		__asm volatile("mtmsr %0" :: "r"(emsr));
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		softserial();
 		KERNEL_UNLOCK();
-		asm volatile("mtmsr %0" :: "r"(dmsr));
+		__asm volatile("mtmsr %0" :: "r"(dmsr));
 		cpl = pcpl;
 		intrcnt[CNT_SINT_SERIAL]++;
 		goto again;
@@ -449,11 +449,11 @@ do_pending_int(void)
 	if ((ipending & ~pcpl) & SINT_NET) {
 		ipending &= ~SINT_NET;
 		splsoftnet();
-		asm volatile("mtmsr %0" :: "r"(emsr));
+		__asm volatile("mtmsr %0" :: "r"(emsr));
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		softnet();
 		KERNEL_UNLOCK();
-		asm volatile("mtmsr %0" :: "r"(dmsr));
+		__asm volatile("mtmsr %0" :: "r"(dmsr));
 		cpl = pcpl;
 		intrcnt[CNT_SINT_NET]++;
 		goto again;
@@ -461,16 +461,16 @@ do_pending_int(void)
 	if ((ipending & ~pcpl) & SINT_CLOCK) {
 		ipending &= ~SINT_CLOCK;
 		splsoftclock();
-		asm volatile("mtmsr %0" :: "r"(emsr));
+		__asm volatile("mtmsr %0" :: "r"(emsr));
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		softclock(NULL);
 		KERNEL_UNLOCK();
-		asm volatile("mtmsr %0" :: "r"(dmsr));
+		__asm volatile("mtmsr %0" :: "r"(dmsr));
 		cpl = pcpl;
 		intrcnt[CNT_SINT_CLOCK]++;
 		goto again;
 	}
 	cpl = pcpl;	/* Don't use splx... we are here already! */
-	asm volatile("mtmsr %0" :: "r"(emsr));
+	__asm volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
 }

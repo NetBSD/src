@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.10 2005/11/25 14:10:35 simonb Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.11 2005/12/24 22:45:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.10 2005/11/25 14:10:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.11 2005/12/24 22:45:35 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -272,7 +272,7 @@ kgdb_connect(verbose)
 	if (verbose)
 		printf("kgdb waiting...");
 
-	asm("break");
+	__asm("break");
 
 	if (verbose)
 		printf("connected.\n");

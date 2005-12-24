@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.28 2005/12/11 12:16:36 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.29 2005/12/24 22:45:34 perry Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2005/12/11 12:16:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2005/12/24 22:45:34 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -165,16 +165,16 @@ initppc(startkernel, endkernel)
 	battable[3].batu = BATU(0xfff00000, BAT_BL_512K, BAT_Vs);
 
 	/* Load BAT registers */
-	asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
+	__asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
 		"mtdbatl 0,%0; mtdbatu 0,%1" ::
 		"r"(battable[0].batl), "r"(battable[0].batu));
-	asm volatile ("mtibatl 1,%0; mtibatu 1,%1;"
+	__asm volatile ("mtibatl 1,%0; mtibatu 1,%1;"
 		"mtdbatl 1,%0; mtdbatu 1,%1" ::
 		"r"(battable[1].batl), "r"(battable[1].batu));
-	asm volatile ("mtibatl 2,%0; mtibatu 2,%1;"
+	__asm volatile ("mtibatl 2,%0; mtibatu 2,%1;"
 		"mtdbatl 2,%0; mtdbatu 2,%1" ::
 		"r"(battable[2].batl), "r"(battable[2].batu));
-	asm volatile ("mtibatl 3,%0; mtibatu 3,%1;"
+	__asm volatile ("mtibatl 3,%0; mtibatu 3,%1;"
 		"mtdbatl 3,%0; mtdbatu 3,%1" ::
 		"r"(battable[3].batl), "r"(battable[3].batu));
 
@@ -243,7 +243,7 @@ initppc(startkernel, endkernel)
 	/*
 	 * Enable translation and interrupts
 	 */
-	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync" :
+	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync" :
 		"=r"(scratch) : "K"(PSL_EE|PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
 	/*
@@ -361,57 +361,57 @@ void show_me_regs()
 {
 	register u_long	scr0, scr1, scr2, scr3;
 
-	asm volatile ("mfspr %0,1; mfspr %1,8; mfspr %2,9; mfspr %3,18"
+	__asm volatile ("mfspr %0,1; mfspr %1,8; mfspr %2,9; mfspr %3,18"
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("XER   %08lx\tLR    %08lx\tCTR   %08lx\tDSISR %08lx\n",
 		scr0, scr1, scr2, scr3);
 
-	asm volatile ("mfspr %0,19; mfspr %1,22; mfspr %2,25; mfspr %3,26"
+	__asm volatile ("mfspr %0,19; mfspr %1,22; mfspr %2,25; mfspr %3,26"
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("DAR   %08lx\tDEC   %08lx\tSDR1  %08lx\tSRR0  %08lx\n",
 		scr0, scr1, scr2, scr3);
 
-	asm volatile ("mfspr %0,27; mfspr %1,268; mfspr %2,269; mfspr %3,272"
+	__asm volatile ("mfspr %0,27; mfspr %1,268; mfspr %2,269; mfspr %3,272"
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("SRR1  %08lx\tTBL   %08lx\tTBU   %08lx\tSPRG0 %08lx\n",
 		scr0, scr1, scr2, scr3);
 
-	asm volatile ("mfspr %0,273; mfspr %1,274; mfspr %2,275; mfspr %3,282"
+	__asm volatile ("mfspr %0,273; mfspr %1,274; mfspr %2,275; mfspr %3,282"
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("SPRG1 %08lx\tSPRG2 %08lx\tSPRG3 %08lx\tEAR   %08lx\n",
 		scr0, scr1, scr2, scr3);
 
-	asm volatile ("mfspr %0,528; mfspr %1,529; mfspr %2,530; mfspr %3,531"
+	__asm volatile ("mfspr %0,528; mfspr %1,529; mfspr %2,530; mfspr %3,531"
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("IBAT0U%08lx\tIBAT0L%08lx\tIBAT1U%08lx\tIBAT1L%08lx\n",
 		scr0, scr1, scr2, scr3);
 
-	asm volatile ("mfspr %0,532; mfspr %1,533; mfspr %2,534; mfspr %3,535" 
+	__asm volatile ("mfspr %0,532; mfspr %1,533; mfspr %2,534; mfspr %3,535" 
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("IBAT2U%08lx\tIBAT2L%08lx\tIBAT3U%08lx\tIBAT3L%08lx\n",
 		scr0, scr1, scr2, scr3);
 
-	asm volatile ("mfspr %0,536; mfspr %1,537; mfspr %2,538; mfspr %3,539"
+	__asm volatile ("mfspr %0,536; mfspr %1,537; mfspr %2,538; mfspr %3,539"
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("DBAT0U%08lx\tDBAT0L%08lx\tDBAT1U%08lx\tDBAT1L%08lx\n",
 		scr0, scr1, scr2, scr3);
 
-	asm volatile ("mfspr %0,540; mfspr %1,541; mfspr %2,542; mfspr %3,543"
+	__asm volatile ("mfspr %0,540; mfspr %1,541; mfspr %2,542; mfspr %3,543"
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("DBAT2U%08lx\tDBAT2L%08lx\tDBAT3U%08lx\tDBAT3L%08lx\n",
 		scr0, scr1, scr2, scr3);
 
-	asm volatile ("mfspr %0,1008; mfspr %1,1009; mfspr %2,1010; mfspr %3,1013"
+	__asm volatile ("mfspr %0,1008; mfspr %1,1009; mfspr %2,1010; mfspr %3,1013"
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("HID0  %08lx\tHID1  %08lx\tIABR  %08lx\tDABR  %08lx\n",
 		scr0, scr1, scr2, scr3);
 
-	asm volatile ("mfspr %0,953; mfspr %1,954; mfspr %2,957; mfspr %3,958"
+	__asm volatile ("mfspr %0,953; mfspr %1,954; mfspr %2,957; mfspr %3,958"
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("PCM1  %08lx\tPCM2  %08lx\tPCM3  %08lx\tPCM4  %08lx\n",
 		scr0, scr1, scr2, scr3);
 
-	asm volatile ("mfspr %0,952; mfspr %1,956; mfspr %2,959; mfspr %3,955"
+	__asm volatile ("mfspr %0,952; mfspr %1,956; mfspr %2,959; mfspr %3,955"
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("MMCR0 %08lx\tMMCR1 %08lx\tSDA   %08lx\tSIA   %08lx\n",
 		scr0, scr1, scr2, scr3);
@@ -438,7 +438,7 @@ mem_regions(memp, availp)
 void
 do_pending_int(void)
 {
-	asm volatile ("sync");
+	__asm volatile ("sync");
 }
 
 /*
@@ -613,7 +613,7 @@ identifycpu()
 		mach = "Amiga 1200";
 	}
 
-	asm ("mfpvr %0; mfspr %1,1009" : "=r"(pvr), "=r"(hid1));
+	__asm ("mfpvr %0; mfspr %1,1009" : "=r"(pvr), "=r"(hid1));
 
 	/* XXX removethis */printf("p5serial = %8s\n", p5type_p);
 	switch (p5type_p[0]) {

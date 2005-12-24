@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.9 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: profile.c,v 1.10 2005/12/24 22:45:39 perry Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.9 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.10 2005/12/24 22:45:39 perry Exp $");
 
 #include "profiler.h"
 
@@ -505,12 +505,12 @@ profFiq(int  x)
      * at the mercy of the assembler for our stack.
      *
      */
-    asm("mov %0, ip" : "=r" (ip) : );
+    __asm("mov %0, ip" : "=r" (ip) : );
     stacklr = *(ip+4);
     
     /* get the spsr register
      */
-    asm("mrs %0, spsr" : "=r" (spsr) : );
+    __asm("mrs %0, spsr" : "=r" (spsr) : );
 
     /* now check whether we want this sample.
      * NB. We place kernel and user level samples in the 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.16 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: mfp.c,v 1.17 2005/12/24 22:45:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.16 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.17 2005/12/24 22:45:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,9 +188,9 @@ mfp_wait_for_hsync(void)
 {
 	/* wait for CRT HSYNC */
 	while (mfp_get_gpip() & MFP_GPIP_HSYNC)
-		asm("nop");
+		__asm("nop");
 	while (!(mfp_get_gpip() & MFP_GPIP_HSYNC))
-		asm("nop");
+		__asm("nop");
 }
 
 /*
@@ -211,6 +211,6 @@ int
 mfp_receive_usart(void)
 {
 	while (!(mfp_get_rsr() & MFP_RSR_BF))
-		asm("nop");
+		__asm("nop");
 	return mfp_get_udr();
 }

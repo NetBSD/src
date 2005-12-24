@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rt.c,v 1.19 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: ite_rt.c,v 1.20 2005/12/24 22:45:34 perry Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.19 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.20 2005/12/24 22:45:34 perry Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -198,22 +198,22 @@ screen_up(struct ite_softc *ip, int top, int bottom, int lines)
 		/* transfer all characters but LINES lines, unroll by 16 */
 		short x = (1 + bottom - (top + lines)) * (md->TX / 16) - 1;
 		do {
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
 		} while (x--);
 	}
 
@@ -317,22 +317,22 @@ screen_down(struct ite_softc *ip, int top, int bottom, int lines)
 		short x = (1 + bottom - (top + lines)) * (md->TX / 16) - 1;
 		p += (1 + bottom - (top + lines)) * md->TX;
 		do {
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			__asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
 		} while (x--);
 	}
 

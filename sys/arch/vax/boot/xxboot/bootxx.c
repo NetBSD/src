@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.21 2005/12/11 12:19:34 christos Exp $ */
+/* $NetBSD: bootxx.c,v 1.22 2005/12/24 22:45:40 perry Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -131,7 +131,7 @@ Xmain()
 	if (io < 0)
 		io = open("/boot", 0);
 	if (io < 0)
-		asm("halt");
+		__asm("halt");
 
 	read(io, (void *)&hdr.aout, sizeof(hdr.aout));
 	if (N_GETMAGIC(hdr.aout) == OMAGIC && N_GETMID(hdr.aout) == MID_VAX) {
@@ -174,7 +174,7 @@ Xmain()
 	}
 	hoppabort(entry);
 die:
-	asm("halt");
+	__asm("halt");
 }
 
 /*
@@ -343,7 +343,7 @@ hpread(int bn)
 	/*
 	 * Avoid four subroutine calls by using hardware division.
 	 */
-	asm("clrl %%r1;"
+	__asm("clrl %%r1;"
 	    "movl %3,%%r0;"
 	    "ediv %4,%%r0,%0,%1;"
 	    "movl %1,%%r0;"

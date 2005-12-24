@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.11 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: platform.c,v 1.12 2005/12/24 22:45:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.11 2005/12/11 12:18:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.12 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,9 +135,9 @@ reset_prep_generic(void)
 	int msr;
 	u_char reg;
 
-	asm volatile("mfmsr %0" : "=r"(msr));
+	__asm volatile("mfmsr %0" : "=r"(msr));
 	msr |= PSL_IP;
-	asm volatile("mtmsr %0" :: "r"(msr));
+	__asm volatile("mtmsr %0" :: "r"(msr));
 
 	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
 	reg &= ~1UL;

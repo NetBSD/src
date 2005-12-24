@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_clreg.h,v 1.8 2002/04/25 09:20:31 aymeric Exp $	*/
+/*	$NetBSD: grf_clreg.h,v 1.9 2005/12/24 22:45:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -282,7 +282,7 @@ struct grfcltext_mode {
 		vgaw(ba, SEQ_ADDRESS_W , val); \
 	} while (0) \
 
-/*		asm volatile ("nop"); \ */
+/*		__asm volatile ("nop"); \ */
 
 #define WCrt(ba, idx, val) \
 	do { \

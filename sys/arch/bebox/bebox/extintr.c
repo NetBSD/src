@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.23 2005/12/11 12:17:02 christos Exp $	*/
+/*	$NetBSD: extintr.c,v 1.24 2005/12/24 22:45:34 perry Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.23 2005/12/11 12:17:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.24 2005/12/24 22:45:34 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -447,9 +447,9 @@ do_pending_int()
 
 	irq = 0;
 	processing = 1;
-	asm volatile("mfmsr %0" : "=r"(emsr));
+	__asm volatile("mfmsr %0" : "=r"(emsr));
 	dmsr = emsr & ~PSL_EE;
-	asm volatile("mtmsr %0" :: "r"(dmsr));
+	__asm volatile("mtmsr %0" :: "r"(dmsr));
 
 	pcpl = splhigh();		/* Turn off all */
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
@@ -496,6 +496,6 @@ do_pending_int()
 	}
 	ipending &= pcpl;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
-	asm volatile("mtmsr %0" :: "r"(emsr));
+	__asm volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
 }

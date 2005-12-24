@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.9 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.10 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.9 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.10 2005/12/24 22:45:36 perry Exp $");
 
 #include "locators.h"
 
@@ -162,7 +162,7 @@ ecc_plb_intr(void *arg)
 	 * date is set and can't reliably be used to measure intervals.
 	 */
 
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
+	__asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 		: "=r"(tb), "=r"(tmp));
 	sc->sc_ecc_cnt++;
 
@@ -199,7 +199,7 @@ ecc_plb_intr(void *arg)
 		 * Does kernel always map all of physical RAM VA=PA? If so,
 		 * just loop over lowmem.
 		 */
-		asm volatile(
+		__asm volatile(
 			"mfmsr 	%0;"
 			"li	%1, 0x00;"
 			"ori	%1, %1, 0x8010;"
@@ -237,7 +237,7 @@ ecc_plb_intr(void *arg)
 		printf("ECC: Recycling complete, ESR=%x. "
 			"Checking for persistent errors.\n", esr);
 
-		asm volatile(
+		__asm volatile(
 			"mfmsr 	%0;"
 			"li	%1, 0x00;"
 			"ori	%1, %1, 0x8010;"

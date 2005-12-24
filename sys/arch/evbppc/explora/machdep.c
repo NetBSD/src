@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2005/12/24 22:45:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2005/12/24 22:45:35 perry Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -146,7 +146,7 @@ set_tlb(int idx, u_int addr, u_int flags)
 #endif
 	hi = addr | TLB_VALID | TLB_PG_16M;
 
-	asm volatile(
+	__asm volatile(
 	    "	tlbwe %1,%0,1	\n"
 	    "	tlbwe %2,%0,0	\n"
 	    "	sync		\n"
@@ -194,7 +194,7 @@ bootstrap(u_int startkernel, u_int endkernel)
 	avail_mem[0].start = startkernel;
 	avail_mem[0].size = size-startkernel;
 
-	asm volatile(
+	__asm volatile(
 	    "	mtpid %0	\n"
 	    "	sync		\n"
 	    : : "r" (1) );
@@ -269,7 +269,7 @@ bootstrap(u_int startkernel, u_int endkernel)
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
-	asm volatile (
+	__asm volatile (
 	    "	mfmsr %0	\n"
 	    "	ori %0,%0,%1	\n"
 	    "	mtmsr %0	\n"
@@ -302,7 +302,7 @@ install_extint(void (*handler)(void))
 	if (offset > 0x1ffffff)
 		panic("install_extint: too far away");
 #endif
-	asm volatile (
+	__asm volatile (
 	    "	mfmsr %0	\n"
 	    "	andi. %1,%0,%2	\n"
 	    "	mtmsr %1	\n"
@@ -311,7 +311,7 @@ install_extint(void (*handler)(void))
 	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
 	__syncicache((void *)&extint_call, sizeof extint_call);
 	__syncicache((void *)EXC_EXI, (int)&extsize);
-	asm volatile (
+	__asm volatile (
 	    "	mtmsr %0	\n"
 	    : : "r" (omsr) );
 }

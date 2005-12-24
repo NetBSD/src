@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.27 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: ka860.c,v 1.28 2005/12/24 22:45:40 perry Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.27 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.28 2005/12/24 22:45:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -144,15 +144,15 @@ ka86_memerr()
 #ifdef lint
 	reg11 = 0;
 #else
-	asm("mtpr $0x27,$0x4e; mfpr $0x4f,%0":: "r" (reg11));
+	__asm("mtpr $0x27,$0x4e; mfpr $0x4f,%0":: "r" (reg11));
 #endif
 	mdecc = reg11;	/* must acknowledge interrupt? */
 	if (M8600_MEMERR(mdecc)) {
-		asm("mtpr $0x2a,$0x4e; mfpr $0x4f,%0":: "r" (reg11));
+		__asm("mtpr $0x2a,$0x4e; mfpr $0x4f,%0":: "r" (reg11));
 		mear = reg11;
-		asm("mtpr $0x25,$0x4e; mfpr $0x4f,%0":: "r" (reg11));
+		__asm("mtpr $0x25,$0x4e; mfpr $0x4f,%0":: "r" (reg11));
 		mstat1 = reg11;
-		asm("mtpr $0x26,$0x4e; mfpr $0x4f,%0":: "r" (reg11));
+		__asm("mtpr $0x26,$0x4e; mfpr $0x4f,%0":: "r" (reg11));
 		mstat2 = reg11;
 		array = M8600_ARRAY(mear);
 
@@ -357,7 +357,7 @@ ka86_reboot(int howto)
 	mtpr(GC_BTFL, PR_TXDB);
 	WAIT;
 
-	asm("halt");
+	__asm("halt");
 }
 
 static	int abus_print __P((void *, const char *));

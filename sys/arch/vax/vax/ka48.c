@@ -34,7 +34,7 @@
 /*** needs to be completed MK-990306 ***/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.16 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.17 2005/12/24 22:45:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -153,7 +153,7 @@ static void
 ka48_halt()
 {
 	((volatile u_int8_t *) clk_page)[KA48_CPMBX] = KA48_HLT_HALT;
-	asm("halt");
+	__asm("halt");
 }
 
 static void
@@ -161,5 +161,5 @@ ka48_reboot(arg)
 	int arg;
 {
 	((volatile u_int8_t *) clk_page)[KA48_CPMBX] = KA48_HLT_BOOT;
-	asm("halt");
+	__asm("halt");
 }

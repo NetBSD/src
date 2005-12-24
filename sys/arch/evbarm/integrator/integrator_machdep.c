@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.54 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.55 2005/12/24 22:45:34 perry Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.54 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.55 2005/12/24 22:45:34 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -384,8 +384,8 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	extern char etext asm ("_etext");
-	extern char end asm ("_end");
+	extern char etext __asm ("_etext");
+	extern char end __asm ("_end");
 	pv_addr_t kernel_l1pt;
 	paddr_t memstart;
 	psize_t memsize;

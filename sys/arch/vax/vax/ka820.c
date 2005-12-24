@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.44 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: ka820.c,v 1.45 2005/12/24 22:45:40 perry Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.44 2005/12/24 20:07:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.45 2005/12/24 22:45:40 perry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -590,7 +590,7 @@ ka820_sendchr(int chr)
 	 * It seems like mtpr to TXCD sets the V flag if it fails.
 	 * Cannot check that flag in C...
 	 */
-	asm volatile("1:;mtpr %0,$92;bvs 1b" :: "g"(chr));
+	__asm volatile("1:;mtpr %0,$92;bvs 1b" :: "g"(chr));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2005/12/24 20:07:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2005/12/24 22:45:36 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2005/12/24 20:07:32 perry Exp $");
 #define pmap_debugger()	panic("")
 #else
 #include <machine/db_machdep.h>
-#define	pmap_debugger() asm volatile("brk");
+#define	pmap_debugger() __asm volatile("brk");
 int validate_kipt(int);
 #endif
 #endif

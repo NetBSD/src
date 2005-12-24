@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasic.c,v 1.11 2005/12/24 20:06:59 perry Exp $	*/
+/*	$NetBSD: sysasic.c,v 1.12 2005/12/24 22:45:34 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.11 2005/12/24 20:06:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.12 2005/12/24 22:45:34 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,7 @@ sysasic_intr(void *arg)
 				n += pos;
 #ifdef __OPTIMIZE__
 				/* optimized, assuming 1 <= pos <= 32 */
-				asm("shld	%2,%0"
+				__asm("shld	%2,%0"
 				    : "=r" (ev) : "0" (ev), "r" (-pos));
 #else
 				/* ``shift count >= bit width'' is undefined */

@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.7 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.8 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.7 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.8 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -64,7 +64,7 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 	}
 
 	if (len) {
-		asm volatile("mtctr %3;"		/* Set up counter */
+		__asm volatile("mtctr %3;"		/* Set up counter */
 			"mfmsr %0;"			/* Save MSR */
 			"li %1,0x20; "
 			"andc %1,%0,%1; mtmsr %1;"	/* Disable IMMU */

@@ -1,4 +1,4 @@
-/* $NetBSD: common.c,v 1.16 2004/08/26 21:01:12 thorpej Exp $ */
+/* $NetBSD: common.c,v 1.17 2005/12/24 22:53:15 perry Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -53,11 +53,11 @@ _strrchr(char *p, int ch)
 }
 
 #ifdef MCRT0
-asm ("  .text");
+__asm ("  .text");
 #ifdef EPROL_EXPORT
 EPROL_EXPORT;
 #endif
-asm ("_eprol:");
+__asm ("_eprol:");
 #endif
 
 #ifdef DYNAMIC
