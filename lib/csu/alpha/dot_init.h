@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.3 2002/11/22 16:47:20 thorpej Exp $ */
+/* $NetBSD: dot_init.h,v 1.4 2005/12/24 21:51:51 perry Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -80,7 +80,7 @@
 
 /* We assume we need to reload our GP. */
 #define MD_CALL_STATIC_FUNCTION(section, func) \
-asm(".section " #section "\n"		\
+__asm(".section " #section "\n"		\
 "    br $29, 1f		\n"		\
 "1:  ldgp $29, 0($29)	\n"		\
 "    unop		\n"		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.21 1999/01/22 11:29:16 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.22 2005/12/24 22:02:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "common.h"
 
-extern	void		start __P((void)) asm("start");
+extern	void		start __P((void)) __asm("start");
 	void		__start __P((int, char *[], char *[]));
 
 __asm("
@@ -59,7 +59,7 @@ start:
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.21 1999/01/22 11:29:16 mycroft Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.22 2005/12/24 22:02:10 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void

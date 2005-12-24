@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.32 1999/07/02 15:53:55 simonb Exp $	*/
+/*	$NetBSD: crt0.c,v 1.33 2005/12/24 22:02:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "common.h"
 
-extern	void		start __P((void)) asm("start");
+extern	void		start __P((void)) __asm("start");
 	void		__start __P((int, char *[], char *[]));
 
 __asm("
@@ -59,7 +59,7 @@ start:
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.32 1999/07/02 15:53:55 simonb Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.33 2005/12/24 22:02:10 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
@@ -98,7 +98,7 @@ __asm("__callmain:");		/* Defined for the benefit of debuggers */
 }
 
 #ifdef DYNAMIC
-asm("
+__asm("
 	.text
 	.align	2
 ___syscall:
