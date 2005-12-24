@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2000/05/25 22:11:59 is Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2005/12/24 21:44:59 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -148,7 +148,7 @@ const struct amiga_bus_space_methods amiga_interleaved_wordaccess_methods;
  * Inline definition of other _1 functions:
  */
 
-extern __inline__ void
+extern inline void
 bus_space_read_multi_1(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
@@ -159,7 +159,7 @@ bus_space_read_multi_1(t, h, o, a, c)
 		*a = bus_space_read_1(t, h, o);
 }
 
-extern __inline__ void
+extern inline void
 bus_space_write_multi_1(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
@@ -170,7 +170,7 @@ bus_space_write_multi_1(t, h, o, a, c)
 		bus_space_write_1(t, h, o, *a);
 }
 
-extern __inline__ void
+extern inline void
 bus_space_read_region_1(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
@@ -181,7 +181,7 @@ bus_space_read_region_1(t, h, o, a, c)
 		*a = bus_space_read_1(t, h, o++);
 }
 
-extern __inline__ void
+extern inline void
 bus_space_write_region_1(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
@@ -192,7 +192,7 @@ bus_space_write_region_1(t, h, o, a, c)
 		 bus_space_write_1(t, h, o++, *a);
 }
 
-extern __inline__ void
+extern inline void
 bus_space_set_region_1(t, h, o, v, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
@@ -203,7 +203,7 @@ bus_space_set_region_1(t, h, o, v, c)
 		 bus_space_write_1(t, h, o++, v);
 }
 
-extern __inline__ void
+extern inline void
 bus_space_copy_region_1(t, srch, srco, dsth, dsto, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	srch, dsth;
@@ -217,7 +217,7 @@ bus_space_copy_region_1(t, srch, srco, dsth, dsto, c)
 	}
 }
 
-extern __inline__ void
+extern inline void
 bus_space_read_region_stream_1(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
@@ -228,7 +228,7 @@ bus_space_read_region_stream_1(t, h, o, a, c)
 		*a = bus_space_read_1(t, h, o++);
 }
 
-extern __inline__ void
+extern inline void
 bus_space_write_region_stream_1(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
