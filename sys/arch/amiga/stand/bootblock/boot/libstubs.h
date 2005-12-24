@@ -1,4 +1,4 @@
-/* $NetBSD: libstubs.h,v 1.4 2001/12/17 05:41:12 mhitch Exp $ */
+/* $NetBSD: libstubs.h,v 1.5 2005/12/24 22:45:34 perry Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ struct cfdev *FindConfigDev(struct cfdev *, int, int);
 void CacheClearU(void);
 #else
 #define LibCallNone(lib, what)  \
-	asm("movl a6,sp@-; movl %0,a6; " what "; movl sp@+,a6" :: \
+	__asm("movl a6,sp@-; movl %0,a6; " what "; movl sp@+,a6" :: \
 	    "r"(lib) : "d0", "d1", "a0", "a1")
 
 #define CacheClearU() LibCallNone(SysBase, "jsr a6@(-0x27c)")

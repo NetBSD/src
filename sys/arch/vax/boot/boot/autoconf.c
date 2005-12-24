@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2005/12/11 12:19:30 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.23 2005/12/24 22:45:40 perry Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -216,7 +216,7 @@ rtimer(void *arg)
 #define	CMN_IDSPTCH "_cmn_idsptch"
 #endif
 
-asm(
+__asm(
 "	.text;"
 "	.align	2;"
 "	.globl  " IDSPTCH ", " EIDSPTCH ";"

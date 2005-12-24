@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.38 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.39 2005/12/24 22:45:34 perry Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.38 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.39 2005/12/24 22:45:34 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -360,7 +360,7 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 void
 cpu_Debugger(void)
 {
-	asm(".word	0xe7ffffff");
+	__asm(".word	0xe7ffffff");
 }
 
 const struct db_command db_machine_command_table[] = {

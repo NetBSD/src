@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.11 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: softintr.c,v 1.12 2005/12/24 22:45:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.11 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.12 2005/12/24 22:45:35 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ softintr_schedule(void *cookie)
 	register int pending, saved_cpsr;
 
 	pending = 1;
-	asm("swp %0, %0, [%1]" : "+r" (pending) : "r" (&sh->sh_pending));
+	__asm("swp %0, %0, [%1]" : "+r" (pending) : "r" (&sh->sh_pending));
 
 	if (pending)
 		return;
@@ -123,7 +123,7 @@ softintr_schedule(void *cookie)
 	sh->sh_hlink = NULL;
 
 #ifdef __GNUC__
-	asm volatile("mrs %0, cpsr_all\n orr r1, %0, %1\n msr cpsr_all, r1" :
+	__asm volatile("mrs %0, cpsr_all\n orr r1, %0, %1\n msr cpsr_all, r1" :
 	    "=r" (saved_cpsr) : "i" (I32_bit) : "r1");
 #else
 	saved_cpsr = SetCPSR(I32_bit, I32_bit);
@@ -148,7 +148,7 @@ softintr_schedule(void *cookie)
 set_and_exit:
 	*p = sh;
 #ifdef __GNUC__
-	asm volatile("msr cpsr_c, %0" : : "r" (saved_cpsr));
+	__asm volatile("msr cpsr_c, %0" : : "r" (saved_cpsr));
 #else
 	SetCPSR(I32_bit, I32_bit & saved_cpsr);
 #endif
@@ -164,7 +164,7 @@ softintr_dispatch(int s)
 	while (1) {
 		/* Protect list operation from interrupts */
 #ifdef __GNUC__
-		asm volatile("mrs %0, cpsr_all\n orr r1, %0, %1\n"
+		__asm volatile("mrs %0, cpsr_all\n orr r1, %0, %1\n"
 		    " msr cpsr_all, r1" : "=r" (saved_cpsr) :
 		    "i" (I32_bit) : "r1");
 #else
@@ -174,7 +174,7 @@ softintr_dispatch(int s)
 		if (softintr_pending == NULL ||
 		    softintr_pending->sh_level <= s) {
 #ifdef __GNUC__
-			asm("msr cpsr_c, %0" : : "r" (saved_cpsr));
+			__asm("msr cpsr_c, %0" : : "r" (saved_cpsr));
 #else
 			SetCPSR(I32_bit, I32_bit & saved_cpsr);
 #endif
@@ -187,7 +187,7 @@ softintr_dispatch(int s)
 		if (sh->sh_level > current_spl_level)
 			raisespl(sh->sh_level);
 #ifdef __GNUC__
-		asm volatile("msr cpsr_c, %0" : : "r" (saved_cpsr));
+		__asm volatile("msr cpsr_c, %0" : : "r" (saved_cpsr));
 #else
 		SetCPSR(I32_bit, I32_bit & saved_cpsr);
 #endif

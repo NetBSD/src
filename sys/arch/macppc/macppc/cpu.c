@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.41 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.42 2005/12/24 22:45:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2005/12/24 22:45:35 perry Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -269,12 +269,12 @@ cpu_spinup(self, ci)
 	cpu_info[1].ci_lasttb = cpu_info[0].ci_lasttb;
 
 	/* copy special registers */
-	asm volatile ("mfspr %0,%1" : "=r"(h->hid0) : "n"(SPR_HID0));
-	asm volatile ("mfsdr1 %0" : "=r"(h->sdr1));
+	__asm volatile ("mfspr %0,%1" : "=r"(h->hid0) : "n"(SPR_HID0));
+	__asm volatile ("mfsdr1 %0" : "=r"(h->sdr1));
 	for (i = 0; i < 16; i++)
-		asm ("mfsrin %0,%1" : "=r"(h->sr[i]) : "r"(i << ADDR_SR_SHFT));
+		__asm ("mfsrin %0,%1" : "=r"(h->sr[i]) : "r"(i << ADDR_SR_SHFT));
 
-	asm volatile ("sync; isync");
+	__asm volatile ("sync; isync");
 
 	if (openpic_base) {
 		uint64_t tb;
@@ -314,7 +314,7 @@ cpu_spinup(self, ci)
 		while (tb > mftb())
 			;
 
-		asm volatile ("sync; isync");
+		__asm volatile ("sync; isync");
 		h->running = 0;
 
 		delay(500000);
@@ -325,7 +325,7 @@ cpu_spinup(self, ci)
 		out32(HH_INTR_SECONDARY, 0);
 
 		/* sync timebase (XXX shouldn't be zero'ed) */
-		asm volatile ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
+		__asm volatile ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
 
 		/*
 		 * wait for secondary spin up (1.5ms @ 604/200MHz)
@@ -368,50 +368,50 @@ cpu_hatch()
 	int i;
 
 	/* Initialize timebase. */
-	asm ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
+	__asm ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
 
 	/* Set PIR (Processor Identification Register).  i.e. whoami */
-	asm volatile ("mtspr 1023,%0" :: "r"(h->pir));
-	asm volatile ("mtsprg 0,%0" :: "r"(h->ci));
+	__asm volatile ("mtspr 1023,%0" :: "r"(h->pir));
+	__asm volatile ("mtsprg 0,%0" :: "r"(h->ci));
 
 	/* Initialize MMU. */
-	asm ("mtibatu 0,%0" :: "r"(0));
-	asm ("mtibatu 1,%0" :: "r"(0));
-	asm ("mtibatu 2,%0" :: "r"(0));
-	asm ("mtibatu 3,%0" :: "r"(0));
-	asm ("mtdbatu 0,%0" :: "r"(0));
-	asm ("mtdbatu 1,%0" :: "r"(0));
-	asm ("mtdbatu 2,%0" :: "r"(0));
-	asm ("mtdbatu 3,%0" :: "r"(0));
+	__asm ("mtibatu 0,%0" :: "r"(0));
+	__asm ("mtibatu 1,%0" :: "r"(0));
+	__asm ("mtibatu 2,%0" :: "r"(0));
+	__asm ("mtibatu 3,%0" :: "r"(0));
+	__asm ("mtdbatu 0,%0" :: "r"(0));
+	__asm ("mtdbatu 1,%0" :: "r"(0));
+	__asm ("mtdbatu 2,%0" :: "r"(0));
+	__asm ("mtdbatu 3,%0" :: "r"(0));
 
-	asm ("mtspr %1,%0" :: "r"(h->hid0), "n"(SPR_HID0));
+	__asm ("mtspr %1,%0" :: "r"(h->hid0), "n"(SPR_HID0));
 
-	asm ("mtibatl 0,%0; mtibatu 0,%1;"
+	__asm ("mtibatl 0,%0; mtibatu 0,%1;"
 	     "mtdbatl 0,%0; mtdbatu 0,%1;"
 		:: "r"(battable[0].batl), "r"(battable[0].batu));
 
 	if (openpic_base) {
-		asm ("mtibatl 1,%0; mtibatu 1,%1;"
+		__asm ("mtibatl 1,%0; mtibatu 1,%1;"
 		     "mtdbatl 1,%0; mtdbatu 1,%1;"
 			:: "r"(battable[0x8].batl), "r"(battable[0x8].batu));
 	} else {
-		asm ("mtibatl 1,%0; mtibatu 1,%1;"
+		__asm ("mtibatl 1,%0; mtibatu 1,%1;"
 		     "mtdbatl 1,%0; mtdbatu 1,%1;"
 			:: "r"(battable[0xf].batl), "r"(battable[0xf].batu));
 	}
 
 	for (i = 0; i < 16; i++)
-		asm ("mtsrin %0,%1" :: "r"(h->sr[i]), "r"(i << ADDR_SR_SHFT));
-	asm ("mtsdr1 %0" :: "r"(h->sdr1));
+		__asm ("mtsrin %0,%1" :: "r"(h->sr[i]), "r"(i << ADDR_SR_SHFT));
+	__asm ("mtsdr1 %0" :: "r"(h->sdr1));
 
-	asm volatile ("isync");
+	__asm volatile ("isync");
 
 	/* Enable I/D address translations. */
-	asm volatile ("mfmsr %0" : "=r"(msr));
+	__asm volatile ("mfmsr %0" : "=r"(msr));
 	msr |= PSL_IR|PSL_DR|PSL_ME|PSL_RI;
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 
-	asm volatile ("sync; isync");
+	__asm volatile ("sync; isync");
 
 	if (openpic_base) {
 		/* Sync timebase. */
@@ -419,24 +419,24 @@ cpu_hatch()
 		u_int tbl = h->tbl;
 		while (h->running == -1)
 			;
-		asm volatile ("sync; isync");
-		asm volatile ("mttbl %0" :: "r"(0));
-		asm volatile ("mttbu %0" :: "r"(tbu));
-		asm volatile ("mttbl %0" :: "r"(tbl));
+		__asm volatile ("sync; isync");
+		__asm volatile ("mttbl %0" :: "r"(0));
+		__asm volatile ("mttbu %0" :: "r"(tbu));
+		__asm volatile ("mttbl %0" :: "r"(tbl));
 	}
 
 	cpu_setup(h->self, h->ci);
 
 	h->running = 1;
-	asm volatile ("sync; isync");
+	__asm volatile ("sync; isync");
 
 	while (start_secondary_cpu == 0)
 		;
 
-	asm volatile ("sync; isync");
+	__asm volatile ("sync; isync");
 
 	printf("cpu%d: started\n", cpu_number());
-	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 
 	if (openpic_base)
 		openpic_set_priority(cpu_number(), 0);
@@ -452,7 +452,7 @@ cpu_boot_secondary_processors()
 {
 
 	start_secondary_cpu = 1;
-	asm volatile ("sync");
+	__asm volatile ("sync");
 }
 
 static volatile u_long IPI[CPU_MAXNUM];
@@ -508,7 +508,7 @@ cpuintr(v)
 		printf("halt{%d}\n", cpu_id);
 		msr = (mfmsr() & ~PSL_EE) | PSL_POW;
 		for (;;) {
-			asm volatile ("sync; isync");
+			__asm volatile ("sync; isync");
 			mtmsr(msr);
 		}
 	}

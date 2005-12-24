@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.2 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: tsarm_machdep.c,v 1.3 2005/12/24 22:45:34 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.2 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.3 2005/12/24 22:45:34 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -317,7 +317,7 @@ cpu_reboot(int howto, char *bootstr)
 		feed = TS7XXX_IO16_VBASE + TS7XXX_WDOGFEED;
 		ctrl = TS7XXX_IO16_VBASE + TS7XXX_WDOGCTRL;
 
-		asm volatile (
+		__asm volatile (
 			"mov r0, #0x5\n"
 			"mov r1, #0x1\n"
 			"strh r0, [%0]\n"

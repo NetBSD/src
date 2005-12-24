@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.31 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.32 2005/12/24 22:45:35 perry Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.31 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.32 2005/12/24 22:45:35 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -150,5 +150,5 @@ kdbprinttrap(int type, int code)
 void
 cpu_Debugger(void)
 {
-	asm ("trap #15");
+	__asm ("trap #15");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.10 2005/12/11 12:18:51 christos Exp $	*/
+/*	$NetBSD: extintr.c,v 1.11 2005/12/24 22:45:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.10 2005/12/11 12:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.11 2005/12/24 22:45:36 perry Exp $");
 
 #include "opt_openpic.h"
 
@@ -405,9 +405,9 @@ do_pending_int()
 	}
 
 	processing = 1;
-	asm volatile("mfmsr %0" : "=r"(emsr));
+	__asm volatile("mfmsr %0" : "=r"(emsr));
 	dmsr = emsr & ~PSL_EE;
-	asm volatile("mtmsr %0" :: "r"(dmsr));
+	__asm volatile("mtmsr %0" :: "r"(dmsr));
 
 	pcpl = splhigh();		/* Turn off all */
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
@@ -458,7 +458,7 @@ do_pending_int()
 	}
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	processing = 0;
-	asm volatile("mtmsr %0" :: "r"(emsr));
+	__asm volatile("mtmsr %0" :: "r"(emsr));
 }
 
 void

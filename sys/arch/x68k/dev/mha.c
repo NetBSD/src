@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.38 2005/11/26 13:54:18 tsutsui Exp $	*/
+/*	$NetBSD: mha.c,v 1.39 2005/12/24 22:45:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.38 2005/11/26 13:54:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.39 2005/12/24 22:45:40 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -405,12 +405,12 @@ mha_reset(struct mha_softc *sc)
 	u_short	dummy;
 printf("reset...");
 	CMR = CMD_SOFT_RESET;
-	asm volatile ("nop");	/* XXX wait (4clk in 20mhz) ??? */
+	__asm volatile ("nop");	/* XXX wait (4clk in 20mhz) ??? */
 	dummy = sc->sc_ps[-1];
 	dummy = sc->sc_ps[-1];
 	dummy = sc->sc_ps[-1];
 	dummy = sc->sc_ps[-1];
-	asm volatile ("nop");
+	__asm volatile ("nop");
 	CMR = CMD_SOFT_RESET;
 	sc->sc_spcinitialized = 0;
 	CMR = CMD_SET_UP_REG;	/* setup reg cmd. */
@@ -1420,7 +1420,7 @@ nextbyte:
 	sc->sc_ps[4] = n >> 8;
 	sc->sc_pc[10] = n;
 	sc->sc_ps[-1] = 0x000F;	/* burst */
-	asm volatile ("nop");
+	__asm volatile ("nop");
 	CMR = CMD_SEND_FROM_DMA;	/* send from DMA */
 	for (;;) {
 		if ((SSR & SS_BUSY) != 0)
@@ -1605,7 +1605,7 @@ mha_dataio_dma(int dw, int cw, struct mha_softc *sc, u_char *p, int n)
 	   1 ... BURST XFER.
 	   0 ... R/W */
 	sc->sc_ps[-1] = dw;	/* burst */
-	asm volatile ("nop");
+	__asm volatile ("nop");
 	CMR = cw;	/* receive to DMA */
 	return n;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.14 2005/12/24 20:07:03 perry Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.15 2005/12/24 22:45:34 perry Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.14 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.15 2005/12/24 22:45:34 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -444,8 +444,8 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	extern int etext asm("_etext");
-	extern int end asm("_end");
+	extern int etext __asm("_etext");
+	extern int end __asm("_end");
 	pv_addr_t kernel_l1pt;
 	int progress_counter = 0;
 
@@ -1030,7 +1030,7 @@ writeback_dcache_line(vaddr_t va)
 	 * assume write-through cache, and always flush Dcache instead of
 	 * cleaning it. Since Boot loader maps page table with write-back
 	 * cached, we really need to clean Dcache. */
-	asm("mcr	p15, 0, %0, c7, c10, 1"
+	__asm("mcr	p15, 0, %0, c7, c10, 1"
 	    : :	"r"(va));
 }
 
@@ -1038,7 +1038,7 @@ static inline void
 clean_dcache_line(vaddr_t va)
 {
 	/* writeback and invalidate Dcache line */
-	asm("mcr	p15, 0, %0, c7, c14, 1"
+	__asm("mcr	p15, 0, %0, c7, c14, 1"
 	    : : "r"(va));
 }
 

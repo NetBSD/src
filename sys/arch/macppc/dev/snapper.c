@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.7 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: snapper.c,v 1.8 2005/12/24 22:45:35 perry Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -1257,7 +1257,7 @@ gpio_write(char *addr, int val)
 	if (val)
 		data |= GPIO_DATA;
 	*addr = data;
-	asm volatile ("eieio");
+	__asm volatile ("eieio");
 }
 
 #define headphone_active 0	/* XXX OF */
@@ -1453,7 +1453,7 @@ snapper_init(struct snapper_softc *sc, int node)
 
 	/* Enable headphone interrupt? */
 	*headphone_detect |= 0x80;
-	asm volatile ("eieio");
+	__asm volatile ("eieio");
 
 	/* i2c_set_port(port); */
 

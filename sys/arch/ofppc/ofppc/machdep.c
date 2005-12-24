@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 2005/11/23 13:00:51 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2005/11/23 13:00:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2005/12/24 22:45:36 perry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -349,7 +349,7 @@ fake_spl(int new)
 {
 	int scratch;
 
-	asm volatile ("mfmsr %0; andi. %0,%0,%1; mtmsr %0; isync"
+	__asm volatile ("mfmsr %0; andi. %0,%0,%1; mtmsr %0; isync"
 	    : "=r"(scratch) : "K"((u_short)~(PSL_EE|PSL_ME)));
 	return (-1);
 }

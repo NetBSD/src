@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.7 2005/11/12 05:33:23 hamajima Exp $	*/
+/*	$NetBSD: epclk.c,v 1.8 2005/12/24 22:45:34 perry Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.7 2005/11/12 05:33:23 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.8 2005/12/24 22:45:34 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,7 +95,7 @@ static u_int32_t tmark;
 /* This is a quick ARM way to multiply by 983040/1000000 */
 #define US_TO_TIMER4VAL(x) { \
 	u_int32_t hi, lo, scalar = 4222124650UL; \
-	asm volatile ( \
+	__asm volatile ( \
 		"umull %0, %1, %2, %3;" \
 		: "=&r"(lo), "=&r"(hi) \
 		: "r"((x)), "r"(scalar) \
@@ -106,7 +106,7 @@ static u_int32_t tmark;
 /* This is a quick ARM way to multiply by 1000000/983040 */
 #define TIMER4VAL_TO_US(x) { \
 	u_int32_t hi, lo, scalar = 2184533333UL; \
-	asm volatile ( \
+	__asm volatile ( \
 		"umull %0, %1, %2, %3;" \
 		"mov %1, %1, lsl #1;" \
 		"mov %0, %0, lsr #31;" \

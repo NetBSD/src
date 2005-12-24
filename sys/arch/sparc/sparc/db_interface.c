@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.67 2005/11/16 03:00:23 uwe Exp $ */
+/*	$NetBSD: db_interface.c,v 1.68 2005/12/24 22:45:39 perry Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.67 2005/11/16 03:00:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68 2005/12/24 22:45:39 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -116,7 +116,7 @@ db_regs_t *ddb_regp;
 void
 cpu_Debugger(void)
 {
-	asm("ta 0x81");
+	__asm("ta 0x81");
 	sparc_noop();	/* Force this function to allocate a stack frame */
 }
 
