@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.18 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.19 2005/12/24 20:27:29 perry Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.18 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.19 2005/12/24 20:27:29 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -87,7 +87,7 @@ struct dmio_state {
 	TAILQ_HEAD(, dmio_usrreq_state) ds_pending;
 	TAILQ_HEAD(, dmio_usrreq_state) ds_complete;
 	struct selinfo ds_selq;
-	__volatile int ds_flags;
+	volatile int ds_flags;
 	u_int ds_nreqs;
 	struct simplelock ds_slock;
 };

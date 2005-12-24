@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.16 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: am79900.c,v 1.17 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.16 2005/12/11 12:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.17 2005/12/24 20:27:29 perry Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -258,7 +258,7 @@ am79900_meminit(struct lance_softc *sc)
 	}
 }
 
-static __inline void
+static inline void
 am79900_rint(struct lance_softc *sc)
 {
 	int bix;
@@ -330,7 +330,7 @@ am79900_rint(struct lance_softc *sc)
 	sc->sc_last_rd = bix;
 }
 
-static __inline void
+static inline void
 am79900_tint(struct lance_softc *sc)
 {
 	int bix;

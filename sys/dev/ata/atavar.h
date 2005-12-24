@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.70 2005/12/11 12:21:14 christos Exp $	*/
+/*	$NetBSD: atavar.h,v 1.71 2005/12/24 20:27:29 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -49,7 +49,7 @@
  * commands are queued in a list.
  */
 struct ata_xfer {
-	__volatile u_int c_flags;	/* command state flags */
+	volatile u_int c_flags;	/* command state flags */
 
 	/* Channel and drive that are to process the request. */
 	struct ata_channel *c_chp;

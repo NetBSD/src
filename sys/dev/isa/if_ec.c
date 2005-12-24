@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.25 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.26 2005/12/24 20:27:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.25 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.26 2005/12/24 20:27:41 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ void	ec_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 int	ec_fake_test_mem(struct dp8390_softc *);
 int	ec_test_mem(struct dp8390_softc *);
 
-__inline void ec_readmem(struct ec_softc *, int, u_int8_t *, int);
+inline void ec_readmem(struct ec_softc *, int, u_int8_t *, int);
 
 static const int ec_iobase[] = {
 	0x2e0, 0x2a0, 0x280, 0x250, 0x350, 0x330, 0x310, 0x300,
@@ -565,7 +565,7 @@ ec_test_mem(sc)
  * copy 'len' from NIC to host using shared memory.  The 'len' is rounded
  * up to a word - ok as long as mbufs are word-sized.
  */
-__inline void
+inline void
 ec_readmem(esc, from, to, len)
 	struct ec_softc *esc;
 	int from;

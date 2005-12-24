@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.53 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: i82586.c,v 1.54 2005/12/24 20:27:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.53 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.54 2005/12/24 20:27:30 perry Exp $");
 
 #include "bpfilter.h"
 
@@ -423,7 +423,7 @@ ie_ack(sc, mask)
 /*
  * Transfer accumulated chip error counters to IF.
  */
-static __inline void
+static inline void
 i82586_count_errors(sc)
 	struct ie_softc *sc;
 {
@@ -924,7 +924,7 @@ i82586_chk_rx_ring(sc)
  * chain of partially-full mbufs.  This should help to speed up the
  * operation considerably.  (Provided that it works, of course.)
  */
-static __inline struct mbuf *
+static inline struct mbuf *
 ieget(sc, head, totlen)
 	struct ie_softc *sc;
 	int head;

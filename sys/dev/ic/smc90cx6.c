@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.44 2005/12/11 12:21:28 christos Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.45 2005/12/24 20:27:30 perry Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.44 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.45 2005/12/24 20:27:30 perry Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -656,7 +656,7 @@ cleanup:
 	splx(s);
 }
 
-__inline static void
+inline static void
 bah_tint(sc, isr)
 	struct bah_softc *sc;
 	int isr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.32 2005/11/28 21:03:19 bouyer Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.33 2005/12/24 20:27:29 perry Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.32 2005/11/28 21:03:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.33 2005/12/24 20:27:29 perry Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -265,11 +265,11 @@ static void ahd_freedmamem(bus_dma_tag_t tag,
 			   int nseg);
 
 /******************************** Private Inlines *****************************/
-static __inline void	ahd_assert_atn(struct ahd_softc *ahd);
-static __inline int	ahd_currently_packetized(struct ahd_softc *ahd);
-static __inline int	ahd_set_active_fifo(struct ahd_softc *ahd);
+static inline void	ahd_assert_atn(struct ahd_softc *ahd);
+static inline int	ahd_currently_packetized(struct ahd_softc *ahd);
+static inline int	ahd_set_active_fifo(struct ahd_softc *ahd);
 
-static __inline void
+static inline void
 ahd_assert_atn(struct ahd_softc *ahd)
 {
 	ahd_outb(ahd, SCSISIGO, ATNO);
@@ -281,7 +281,7 @@ ahd_assert_atn(struct ahd_softc *ahd)
  * are currently in a packetized transfer.  We could
  * just as easily be sending or receiving a message.
  */
-static __inline int
+static inline int
 ahd_currently_packetized(struct ahd_softc *ahd)
 {
 	ahd_mode_state	 saved_modes;
@@ -304,7 +304,7 @@ ahd_currently_packetized(struct ahd_softc *ahd)
 	return (packetized);
 }
 
-static __inline int
+static inline int
 ahd_set_active_fifo(struct ahd_softc *ahd)
 {
 	u_int active_fifo;
@@ -6902,7 +6902,7 @@ ahd_resume(struct ahd_softc *ahd)
  * scbid that should be restored once manipualtion
  * of the TCL entry is complete.
  */
-static __inline u_int
+static inline u_int
 ahd_index_busy_tcl(struct ahd_softc *ahd, u_int *saved_scbid, u_int tcl)
 {
 	/*

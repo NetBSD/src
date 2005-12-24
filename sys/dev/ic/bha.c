@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.64 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: bha.c,v 1.65 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.64 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.65 2005/12/24 20:27:29 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -128,7 +128,7 @@ static void	bha_free_ccb(struct bha_softc *, struct bha_ccb *);
  */
 static int	bha_ccbs_per_group;
 
-static __inline struct bha_mbx_out *
+static inline struct bha_mbx_out *
 bha_nextmbo(struct bha_softc *sc, struct bha_mbx_out *mbo)
 {
 
@@ -137,7 +137,7 @@ bha_nextmbo(struct bha_softc *sc, struct bha_mbx_out *mbo)
 	return (mbo + 1);
 }
 
-static __inline struct bha_mbx_in *
+static inline struct bha_mbx_in *
 bha_nextmbi(struct bha_softc *sc, struct bha_mbx_in *mbi)
 {
 	if (mbi == &sc->sc_mbi[sc->sc_mbox_count - 1])
@@ -1725,7 +1725,7 @@ bha_collect_mbo(struct bha_softc *sc)
  * CCB management functions
  *****************************************************************************/
 
-static __inline void
+static inline void
 bha_reset_ccb(struct bha_ccb *ccb)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.26 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: satalink.c,v 1.27 2005/12/24 20:27:42 perry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -322,7 +322,7 @@ satalink_attach(struct device *parent, struct device *self, void *aux)
 
 }
 
-static __inline uint32_t
+static inline uint32_t
 ba5_read_4_ind(struct pciide_softc *sc, bus_addr_t reg)
 {
 	uint32_t rv;
@@ -336,7 +336,7 @@ ba5_read_4_ind(struct pciide_softc *sc, bus_addr_t reg)
 	return (rv);
 }
 
-static __inline uint32_t
+static inline uint32_t
 ba5_read_4(struct pciide_softc *sc, bus_addr_t reg)
 {
 
@@ -349,7 +349,7 @@ ba5_read_4(struct pciide_softc *sc, bus_addr_t reg)
 #define	BA5_READ_4(sc, chan, reg)					\
 	ba5_read_4((sc), satalink_ba5_regmap[(chan)].reg)
 
-static __inline void
+static inline void
 ba5_write_4_ind(struct pciide_softc *sc, bus_addr_t reg, uint32_t val)
 {
 	int s;
@@ -360,7 +360,7 @@ ba5_write_4_ind(struct pciide_softc *sc, bus_addr_t reg, uint32_t val)
 	splx(s);
 }
 
-static __inline void
+static inline void
 ba5_write_4(struct pciide_softc *sc, bus_addr_t reg, uint32_t val)
 {
 

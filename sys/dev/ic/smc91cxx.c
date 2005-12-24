@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.53 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.54 2005/12/24 20:27:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.53 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.54 2005/12/24 20:27:30 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -220,8 +220,8 @@ void	smc91cxx_stop(struct smc91cxx_softc *);
 void	smc91cxx_watchdog(struct ifnet *);
 int	smc91cxx_ioctl(struct ifnet *, u_long, caddr_t);
 
-static __inline int ether_cmp(void *, void *);
-static __inline int
+static inline int ether_cmp(void *, void *);
+static inline int
 ether_cmp(va, vb)
 	void *va, *vb;
 {

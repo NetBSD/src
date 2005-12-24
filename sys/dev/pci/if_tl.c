@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.71 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.72 2005/12/24 20:27:42 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.71 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.72 2005/12/24 20:27:42 perry Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -187,24 +187,24 @@ static const struct i2c_bitbang_ops tl_i2cbb_ops = {
 	}
 };
 
-static __inline void netsio_clr(tl_softc_t*, u_int8_t);
-static __inline void netsio_set(tl_softc_t*, u_int8_t);
-static __inline u_int8_t netsio_read(tl_softc_t*, u_int8_t);
-static __inline void netsio_clr(sc, bits)
+static inline void netsio_clr(tl_softc_t*, u_int8_t);
+static inline void netsio_set(tl_softc_t*, u_int8_t);
+static inline u_int8_t netsio_read(tl_softc_t*, u_int8_t);
+static inline void netsio_clr(sc, bits)
 	tl_softc_t* sc;
 	u_int8_t bits;
 {
 	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetSio,
 	    tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & (~bits));
 }
-static __inline void netsio_set(sc, bits)
+static inline void netsio_set(sc, bits)
 	tl_softc_t* sc;
 	u_int8_t bits;
 {
 	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetSio,
 	    tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) | bits);
 }
-static __inline u_int8_t netsio_read(sc, bits)
+static inline u_int8_t netsio_read(sc, bits)
 	tl_softc_t* sc;
 	u_int8_t bits;
 {
