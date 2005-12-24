@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.2 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3 2005/12/24 23:11:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 static inline long
 pthread__sp(void)
 {
-	register long sp __asm__("r30");
+	register long sp __asm("r30");
 
 	return sp;
 }
