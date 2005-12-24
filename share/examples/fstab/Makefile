@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/09/30 12:55:13 simonb Exp $
+#	$NetBSD: Makefile,v 1.5 2005/12/24 12:59:21 jmmv Exp $
 
 NOOBJ=	# defined
 
@@ -12,7 +12,6 @@ FILES=	fstab.cdrom \
 	fstab.ramdisk \
 	fstab.rd \
 	fstab.sd0.1 fstab.sd0.2 fstab.sd0.amiga fstab.sd0.atari \
-	fstab.tmpfs \
 	fstab.wd0.1 fstab.wd0.2 fstab.wd0.3 fstab.wd0.cobalt
 FILESDIR=/usr/share/examples/fstab
 .endif
