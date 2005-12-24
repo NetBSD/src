@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.28 2005/02/26 22:12:33 dsl Exp $	*/
+/*	$NetBSD: pigs.c,v 1.29 2005/12/24 21:14:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.28 2005/02/26 22:12:33 dsl Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.29 2005/12/24 21:14:50 matt Exp $");
 #endif /* not lint */
 
 /*
@@ -51,8 +51,8 @@ __RCSID("$NetBSD: pigs.c,v 1.28 2005/02/26 22:12:33 dsl Exp $");
 #include <stdlib.h>
 #include <string.h>
 
-#include "extern.h"
 #include "systat.h"
+#include "extern.h"
 #include "ps.h"
 
 int compare_pctcpu(const void *, const void *);

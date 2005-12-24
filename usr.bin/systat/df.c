@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.3 2005/08/01 02:38:03 xtraeme Exp $	*/
+/*	$NetBSD: df.c,v 1.4 2005/12/24 21:14:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: df.c,v 1.3 2005/08/01 02:38:03 xtraeme Exp $");
+__RCSID("$NetBSD: df.c,v 1.4 2005/12/24 21:14:50 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,8 +46,8 @@ __RCSID("$NetBSD: df.c,v 1.3 2005/08/01 02:38:03 xtraeme Exp $");
 #include <string.h>
 #include <util.h>
 
-#include "extern.h"
 #include "systat.h"
+#include "extern.h"
 
 static int nfss;
 static struct statvfs *fss;
