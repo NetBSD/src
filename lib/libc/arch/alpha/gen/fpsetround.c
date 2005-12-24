@@ -1,4 +1,4 @@
-/* $NetBSD: fpsetround.c,v 1.9 2005/06/12 05:21:25 lukem Exp $ */
+/* $NetBSD: fpsetround.c,v 1.10 2005/12/24 23:10:08 perry Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetround.c,v 1.9 2005/06/12 05:21:25 lukem Exp $");
+__RCSID("$NetBSD: fpsetround.c,v 1.10 2005/12/24 23:10:08 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,16 +55,16 @@ fpsetround(rnd_dir)
 	double fpcrval;
 	u_int64_t old, new;
 
-	__asm__("excb");
-	__asm__("mf_fpcr %0" : "=f" (fpcrval));
+	__asm("excb");
+	__asm("mf_fpcr %0" : "=f" (fpcrval));
 	old = *(u_int64_t *)(void *)&fpcrval;
 
 	new = old & ~(long)0x0c00000000000000;
 	new = (long)rnd_dir << 58;
 	*(u_int64_t *)(void *)&fpcrval = new;
 
-	__asm__("mt_fpcr %0" : : "f" (fpcrval));
-	__asm__("excb");
+	__asm("mt_fpcr %0" : : "f" (fpcrval));
+	__asm("excb");
 
 	return ((old >> 58) & 0x3);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.9 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.10 2005/12/24 23:10:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.9 2005/12/24 21:11:16 perry Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.10 2005/12/24 23:10:08 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <ieeefp.h>
@@ -56,7 +56,7 @@ __flt_rounds(void)
 #else
 	uint64_t fpscr;
 
-	__asm__ volatile("mffs %0" : "=f"(fpscr));
+	__asm volatile("mffs %0" : "=f"(fpscr));
 	return map[((uint32_t)fpscr & FPSCR_RN)];
 #endif
 }
