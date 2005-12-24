@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.7 2005/12/24 20:27:41 perry Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.8 2005/12/24 23:00:49 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.7 2005/12/24 20:27:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.8 2005/12/24 23:00:49 perry Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -131,7 +131,7 @@ _mftb()
         u_long scratch;
         u_int64_t tb;
 
-        asm volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
+        __asm volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
 		: "=r"(tb), "=r"(scratch));
         return tb;
 }
