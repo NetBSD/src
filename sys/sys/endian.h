@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.17 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: endian.h,v 1.18 2005/12/24 23:44:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -65,10 +65,10 @@ typedef __in_port_t	in_port_t;
 #endif
 
 __BEGIN_DECLS
-uint32_t htonl(uint32_t) __attribute__((__const__));
-uint16_t htons(uint16_t) __attribute__((__const__));
-uint32_t ntohl(uint32_t) __attribute__((__const__));
-uint16_t ntohs(uint16_t) __attribute__((__const__));
+uint32_t htonl(uint32_t) __attribute__((const));
+uint16_t htons(uint16_t) __attribute__((const));
+uint32_t ntohl(uint32_t) __attribute__((const));
+uint16_t ntohs(uint16_t) __attribute__((const));
 __END_DECLS
 
 #endif /* !_LOCORE */
