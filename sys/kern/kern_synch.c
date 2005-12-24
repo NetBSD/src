@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.156 2005/12/20 19:26:15 rpaulo Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.157 2005/12/24 12:57:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.156 2005/12/20 19:26:15 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.157 2005/12/24 12:57:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -140,7 +140,7 @@ __inline void sa_awaken(struct lwp *);
 __inline void awaken(struct lwp *);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER_SETFUNC(schedcpu, NULL);
-
+static unsigned int schedcpu_ticks;
 
 
 /*
@@ -262,6 +262,29 @@ decay_cpu(fixpt_t loadfac, fixpt_t estcpu)
 	return (uint64_t)estcpu * loadfac / (loadfac + FSCALE);
 }
 
+/*
+ * For all load averages >= 1 and max p_estcpu of (255 << ESTCPU_SHIFT),
+ * sleeping for at least seven times the loadfactor will decay p_estcpu to
+ * less than (1 << ESTCPU_SHIFT).
+ *
+ * note that our ESTCPU_MAX is actually much smaller than (255 << ESTCPU_SHIFT).
+ */
+static fixpt_t
+decay_cpu_batch(fixpt_t loadfac, fixpt_t estcpu, unsigned int n)
+{
+
+	if ((n << FSHIFT) >= 7 * loadfac) {
+		return 0;
+	}
+
+	while (estcpu != 0 && n > 1) {
+		estcpu = decay_cpu(loadfac, estcpu);
+		n--;
+	}
+
+	return estcpu;
+}
+
 /* decay 95% of `p_pctcpu' in 60 seconds; see CCPU_SHIFT before changing */
 fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
 
@@ -291,6 +314,8 @@ schedcpu(void *arg)
 	struct proc *p;
 	int s, minslp;
 	int clkhz;
+
+	schedcpu_ticks++;
 
 	proclist_lock_read();
 	PROCLIST_FOREACH(p, &allproc) {
@@ -359,32 +384,21 @@ schedcpu(void *arg)
 
 /*
  * Recalculate the priority of a process after it has slept for a while.
- * For all load averages >= 1 and max p_estcpu of (255 << ESTCPU_SHIFT),
- * sleeping for at least eight times the loadfactor will decay p_estcpu to
- * less than (1 << ESTCPU_SHIFT).
- *
- * note that our ESTCPU_MAX is actually much smaller than (255 << ESTCPU_SHIFT).
  */
 void
 updatepri(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
-	fixpt_t newcpu;
 	fixpt_t loadfac;
 
 	SCHED_ASSERT_LOCKED();
+	KASSERT(l->l_slptime > 1);
 
-	newcpu = p->p_estcpu;
 	loadfac = loadfactor(averunnable.ldavg[0]);
 
-	if ((l->l_slptime << FSHIFT) >= 8 * loadfac)
-		p->p_estcpu = 0; /* XXX NJWLWP */
-	else {
-		l->l_slptime--;	/* the first time was done in schedcpu */
-		while (newcpu && --l->l_slptime)
-			newcpu = decay_cpu(loadfac, newcpu);
-		p->p_estcpu = newcpu;
-	}
+	l->l_slptime--; /* the first time was done in schedcpu */
+	/* XXX NJWLWP */
+	p->p_estcpu = decay_cpu_batch(loadfac, p->p_estcpu, l->l_slptime);
 	resetpriority(l);
 }
 
@@ -1240,7 +1254,8 @@ void
 scheduler_fork_hook(struct proc *parent, struct proc *child)
 {
 
-	child->p_estcpu = parent->p_estcpu;
+	child->p_estcpu = child->p_estcpu_inherited = parent->p_estcpu;
+	child->p_forktime = schedcpu_ticks;
 }
 
 /*
@@ -1251,9 +1266,17 @@ scheduler_fork_hook(struct proc *parent, struct proc *child)
 void
 scheduler_wait_hook(struct proc *parent, struct proc *child)
 {
+	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
+	fixpt_t estcpu;
 
 	/* XXX Only if parent != init?? */
-	parent->p_estcpu = ESTCPULIM(parent->p_estcpu + child->p_estcpu);
+
+	estcpu = decay_cpu_batch(loadfac, child->p_estcpu_inherited,
+	    schedcpu_ticks - child->p_forktime);
+	if (child->p_estcpu > estcpu) {
+		parent->p_estcpu =
+		    ESTCPULIM(parent->p_estcpu + child->p_estcpu - estcpu);
+	}
 }
 
 /*
