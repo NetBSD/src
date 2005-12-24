@@ -1,4 +1,4 @@
-/*	$NetBSD: md4c.c,v 1.1 2005/12/20 19:28:51 christos Exp $	*/
+/*	$NetBSD: md4c.c,v 1.2 2005/12/24 08:34:10 matt Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -31,7 +31,7 @@
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: md4c.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
+__RCSID("$NetBSD: md4c.c,v 1.2 2005/12/24 08:34:10 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: md4c.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
 
 #else
 
+#include <sys/param.h>
 #include <sys/md4.h>
 #include <lib/libkern/libkern.h>
 
