@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.23 2004/08/26 21:21:33 thorpej Exp $ */
+/* $NetBSD: crt0.c,v 1.24 2005/12/24 21:38:40 perry Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -44,7 +44,7 @@
  * 	%g1 instead of a termination routine.
  */
 
-__asm__("\n\
+__asm("\n\
 	.data\n\
 __data_start:					! Start of data section\n\
 	.text\n\
@@ -113,7 +113,7 @@ ___start(char **sp,
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.23 2004/08/26 21:21:33 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.24 2005/12/24 21:38:40 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

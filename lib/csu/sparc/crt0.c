@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.27 1999/01/22 11:29:17 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.28 2005/12/24 21:38:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "common.h"
 
-extern void		start __P((void)) __asm__ ("start");
+extern void		start __P((void)) __asm ("start");
 
 #if defined(sun) && defined(sparc)
 static void		__call __P((void));
@@ -54,7 +54,7 @@ static void		__call __P((void));
 extern int		__syscall2 __P((quad_t, ...));
 #endif
 
-__asm__("
+__asm("
 	.text
 	.align 4
 	.global start
@@ -72,7 +72,7 @@ start:
 /*
  * We get a pointer to PSSTRINGS in %g1.
  */
-__asm__("
+__asm("
 	cmp	%g1, 0
 	be	1f
 	sethi	%hi(___ps_strings), %l3
@@ -83,7 +83,7 @@ __asm__("
 /*
  * Finish diddling with stack.
  */
-__asm__("
+__asm("
 	andn	%sp, 7,	%sp		! align
 	sub	%sp, 24, %sp		! expand to standard stack frame size
 ");
@@ -96,7 +96,7 @@ __asm__("
  *		else
  *			++__progname;
  */
-__asm__("
+__asm("
 	ld	[%l1], %o0
 	cmp	%o0, 0
 	mov	%o0, %l6
@@ -104,11 +104,11 @@ __asm__("
 	 sethi	%hi(___progname), %l7
 ");
 #ifdef DYNAMIC
-__asm__("call	__strrchr");
+__asm("call	__strrchr");
 #else
-__asm__("call	_strrchr");
+__asm("call	_strrchr");
 #endif
-__asm__("
+__asm("
 	mov	47, %o1
 	cmp	%o0, 0
 	be,a	1f
@@ -120,7 +120,7 @@ __asm__("
 
 #ifdef DYNAMIC
 /* Resolve symbols in dynamic libraries */
-__asm__("
+__asm("
 	sethi	%hi(__DYNAMIC), %o0
 	orcc	%o0, %lo(__DYNAMIC), %o0
 	be	1f
@@ -137,7 +137,7 @@ __asm__("
  * atexit(_mcleanup);
  * monstartup((u_long)&eprol, (u_long)&etext);
  */
-__asm__("
+__asm("
 	sethi	%hi(__mcleanup), %o0
 	call	_atexit
 	 or	%o0, %lo(__mcleanup), %o0
@@ -153,7 +153,7 @@ __asm__("
 /*
  * SunOS compatibility
  */
-__asm__("
+__asm("
 	call	start_float
 	 nop
 ");
@@ -162,7 +162,7 @@ __asm__("
 /*
  * Move `argc', `argv', and `envp' from locals to parameters for `main'.
  */
-__asm__("
+__asm("
 	mov	%l0,%o0
 	mov	%l1,%o1
 __callmain:
@@ -177,7 +177,7 @@ __callmain:
 /*
  * System call entry
  */
-__asm__("
+__asm("
 	.set	SYSCALL_G2RFLAG, 0x400
 	.set	SYS___syscall, 198
 ___syscall2:
@@ -204,7 +204,7 @@ __call()
 	 * adjust the C generated pointer to the crt struct to the
 	 * likings of ld.so, which is an offset relative to its %fp
 	 */
-	__asm__("
+	__asm("
 		mov	%i0, %o0
 		mov	%i1, %o1
 		call	%i2
@@ -217,11 +217,11 @@ __call()
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.27 1999/01/22 11:29:17 mycroft Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.28 2005/12/24 21:38:40 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0
-__asm__ ("
+__asm ("
 	.text
 	_eprol:
 ");
