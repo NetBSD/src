@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.5 2005/12/11 12:19:08 christos Exp $ */
+/*	$NetBSD: promlib.c,v 1.6 2005/12/24 23:24:06 perry Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ obp_v2_getbootpath()
 static void prom_init_oldmon __P((void));
 static void prom_init_obp __P((void));
 
-static __inline__ void
+static inline void
 prom_init_oldmon()
 {
 	struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
@@ -147,7 +147,7 @@ prom_init_oldmon()
 	promops.po_bootpath = obp_v0_getbootpath;
 }
 
-static __inline__ void
+static inline void
 prom_init_obp()
 {
 	/*

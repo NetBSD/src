@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.7 2005/12/11 12:17:36 christos Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.8 2005/12/24 23:24:00 perry Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.7 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.8 2005/12/24 23:24:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -202,7 +202,7 @@ j6x0pwr_sleep(void *self)
 		/* Disable interrupt except for power button. */
 		s = _cpu_intr_resume(IPL_CLOCK << 4);
 		_reg_write_1(SH7709_PKDR, 0xff);	/* Green LED off */
-		__asm__ __volatile__("sleep");
+		__asm volatile("sleep");
 		_reg_write_1(SH7709_PKDR, 0);		/* Green LED on */
 		_cpu_intr_resume(s);
 	} while (sc->sc_poweroff);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.52 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.53 2005/12/24 23:23:59 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.52 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.53 2005/12/24 23:23:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,19 +225,19 @@ static void	fdmoff __P((struct fd_softc *));
        void	write_fdreg __P((u_short, u_short));
        u_char	read_dmastat __P((void));
 
-extern __inline__ u_char read_fdreg(u_short regno)
+extern inline u_char read_fdreg(u_short regno)
 {
 	DMA->dma_mode = regno;
 	return(DMA->dma_data);
 }
 
-extern __inline__ void write_fdreg(u_short regno, u_short val)
+extern inline void write_fdreg(u_short regno, u_short val)
 {
 	DMA->dma_mode = regno;
 	DMA->dma_data = val;
 }
 
-extern __inline__ u_char read_dmastat(void)
+extern inline u_char read_dmastat(void)
 {
 	DMA->dma_mode = FDC_CS | DMA_SCREG;
 	return(DMA->dma_stat);

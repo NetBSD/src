@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.9 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.10 2005/12/24 23:24:01 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.10 2005/12/24 23:24:01 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9 2005/12/24 20:07:28 perry Exp $");
 /* Two REDUCE1s is faster than REDUCE1; if (sum > 65535) sum -= 65536; */
 #define	REDUCE		{ REDUCE1; REDUCE1; }
 
-static __inline__ int
+static inline int
 in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 {
 	uint8_t *w;

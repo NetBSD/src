@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.16 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.17 2005/12/24 23:24:07 perry Exp $	*/
 
 /*
  * 
@@ -104,7 +104,7 @@ HYPERVISOR_set_trap_table(trap_info_t *table)
     int ret;
     unsigned long ign1;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1)
 	: "0" (__HYPERVISOR_set_trap_table), "1" (table)
@@ -119,7 +119,7 @@ HYPERVISOR_mmu_update(mmu_update_t *req, int count, int *success_count)
     int ret;
     unsigned long ign1, ign2, ign3;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)
 	: "0" (__HYPERVISOR_mmu_update), "1" (req), "2" (count),
@@ -135,7 +135,7 @@ HYPERVISOR_set_gdt(unsigned long *frame_list, int entries)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2)
 	: "0" (__HYPERVISOR_set_gdt), "1" (frame_list), "2" (entries)
@@ -150,7 +150,7 @@ HYPERVISOR_stack_switch(unsigned long ss, unsigned long esp)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2)
 	: "0" (__HYPERVISOR_stack_switch), "1" (ss), "2" (esp)
@@ -167,7 +167,7 @@ HYPERVISOR_set_callbacks(
     int ret;
     unsigned long ign1, ign2, ign3, ign4;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)
 	: "0" (__HYPERVISOR_set_callbacks), "1" (event_selector),
@@ -181,7 +181,7 @@ static inline int
 HYPERVISOR_fpu_taskswitch(void)
 {
     int ret;
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret) : "0" (__HYPERVISOR_fpu_taskswitch) : "memory" );
 
@@ -194,7 +194,7 @@ HYPERVISOR_yield(void)
     int ret;
     unsigned long ign1;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1)
 	: "0" (__HYPERVISOR_sched_op), "1" (SCHEDOP_yield)
@@ -209,7 +209,7 @@ HYPERVISOR_block(void)
     int ret;
     unsigned long ign1;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1)
 	: "0" (__HYPERVISOR_sched_op), "1" (SCHEDOP_block)
@@ -224,7 +224,7 @@ HYPERVISOR_shutdown(void)
     int ret;
     unsigned long ign1;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1)
 	: "0" (__HYPERVISOR_sched_op),
@@ -240,7 +240,7 @@ HYPERVISOR_reboot(void)
     int ret;
     unsigned long ign1;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1)
 	: "0" (__HYPERVISOR_sched_op),
@@ -257,7 +257,7 @@ HYPERVISOR_suspend(unsigned long srec)
     unsigned long ign1, ign2;
 
     /* NB. On suspend, control software expects a suspend record in %esi. */
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=S" (ign2)
 	: "0" (__HYPERVISOR_sched_op),
@@ -275,7 +275,7 @@ HYPERVISOR_set_timer_op(uint64_t timeout)
     unsigned long timeout_lo = (unsigned long)timeout;
     unsigned long ign1, ign2;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2)
 	: "0" (__HYPERVISOR_set_timer_op), "b" (timeout_hi), "c" (timeout_lo)
@@ -291,7 +291,7 @@ HYPERVISOR_dom0_op(dom0_op_t *dom0_op)
     unsigned long ign1;
 
     dom0_op->interface_version = DOM0_INTERFACE_VERSION;
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1)
 	: "0" (__HYPERVISOR_dom0_op), "1" (dom0_op)
@@ -306,7 +306,7 @@ HYPERVISOR_set_debugreg(int reg, unsigned long value)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2)
 	: "0" (__HYPERVISOR_set_debugreg), "1" (reg), "2" (value)
@@ -321,7 +321,7 @@ HYPERVISOR_get_debugreg(int reg)
     unsigned long ret;
     unsigned long ign1;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1)
 	: "0" (__HYPERVISOR_get_debugreg), "1" (reg)
@@ -337,7 +337,7 @@ HYPERVISOR_update_descriptor(unsigned long pa, unsigned long word1,
     int ret;
     unsigned long ign1, ign2, ign3;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)
 	: "0" (__HYPERVISOR_update_descriptor), "1" (pa), "2" (word1),
@@ -353,7 +353,7 @@ HYPERVISOR_set_fast_trap(int idx)
     int ret;
     unsigned long ign1;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1)
 	: "0" (__HYPERVISOR_set_fast_trap), "1" (idx)
@@ -369,7 +369,7 @@ HYPERVISOR_dom_mem_op(unsigned int op, unsigned long *extent_list,
     int ret;
     unsigned long ign1, ign2, ign3, ign4, ign5;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4),
 	  "=D" (ign5)
@@ -386,7 +386,7 @@ HYPERVISOR_multicall(void *call_list, int nr_calls)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2)
 	: "0" (__HYPERVISOR_multicall), "1" (call_list), "2" (nr_calls)
@@ -402,7 +402,7 @@ HYPERVISOR_update_va_mapping(unsigned long page_nr, unsigned long new_val,
     int ret;
     unsigned long ign1, ign2, ign3;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)
 	: "0" (__HYPERVISOR_update_va_mapping), 
@@ -424,7 +424,7 @@ HYPERVISOR_event_channel_op(void *op)
     int ret;
     unsigned long ign1;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1)
 	: "0" (__HYPERVISOR_event_channel_op), "1" (op)
@@ -439,7 +439,7 @@ HYPERVISOR_xen_version(int cmd)
     int ret;
     unsigned long ign1;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1)
 	: "0" (__HYPERVISOR_xen_version), "1" (cmd)
@@ -454,7 +454,7 @@ HYPERVISOR_console_io(int cmd, int count, char *str)
     int ret;
     unsigned long ign1, ign2, ign3;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)
 	: "0" (__HYPERVISOR_console_io), "1" (cmd), "2" (count), "3" (str)
@@ -469,7 +469,7 @@ HYPERVISOR_physdev_op(void *physdev_op)
     int ret;
     unsigned long ign1;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1)
 	: "0" (__HYPERVISOR_physdev_op), "1" (physdev_op)
@@ -484,7 +484,7 @@ HYPERVISOR_grant_table_op(unsigned int cmd, void *uop, unsigned int count)
     int ret;
     unsigned long ign1, ign2, ign3;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)
 	: "0" (__HYPERVISOR_grant_table_op), "1" (cmd), "2" (count), "3" (uop)
@@ -500,7 +500,7 @@ HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
     int ret;
     unsigned long ign1, ign2, ign3, ign4;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)
 	: "0" (__HYPERVISOR_update_va_mapping_otherdomain),
@@ -516,7 +516,7 @@ HYPERVISOR_vm_assist(unsigned int cmd, unsigned int type)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm__ __volatile__ (
+    __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2)
 	: "0" (__HYPERVISOR_vm_assist), "1" (cmd), "2" (type)

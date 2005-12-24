@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.8 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.9 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.8 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.9 2005/12/24 23:24:02 perry Exp $");
 
 #include "opt_memsize.h"	/* IOM_RAM_BEGIN */
 
@@ -152,7 +152,7 @@ sh_cache_information()
 void
 __cache_flush()
 {
-	__volatile__ int *p = (int *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
+	volatile int *p = (int *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
 	int i;
 	int d;
 
@@ -171,7 +171,7 @@ __cache_flush()
 	/* Flush I-Cache */
 	/*
 	 * this code flush I-cache. but can't compile..
-	 *  __asm__ __volatile__(".space 8192");
+	 *  __asm volatile(".space 8192");
 	 *
 	 */
 }

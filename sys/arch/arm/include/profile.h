@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.6 2002/08/14 21:55:52 briggs Exp $	*/
+/*	$NetBSD: profile.h,v 1.7 2005/12/24 23:23:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -52,39 +52,39 @@
 #endif
 
 #define	MCOUNT								\
-	__asm__(".text");						\
-	__asm__(".align	0");						\
-	__asm__(".type	" MCOUNT_ASM_NAME ",%function");		\
-	__asm__(".global	" MCOUNT_ASM_NAME);			\
-	__asm__(MCOUNT_ASM_NAME ":");					\
+	__asm(".text");						\
+	__asm(".align	0");						\
+	__asm(".type	" MCOUNT_ASM_NAME ",%function");		\
+	__asm(".global	" MCOUNT_ASM_NAME);			\
+	__asm(MCOUNT_ASM_NAME ":");					\
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
-	__asm__("stmfd	sp!, {r0-r3, ip, lr}");				\
+	__asm("stmfd	sp!, {r0-r3, ip, lr}");				\
 	/* Check what mode we're in.  EQ => 32, NE => 26 */		\
-	__asm__("teq	r0, r0");					\
-	__asm__("teq	pc, r15");					\
+	__asm("teq	r0, r0");					\
+	__asm("teq	pc, r15");					\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
 	 *								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	__asm__("moveq	r0, ip");					\
-	__asm__("bicne	r0, ip, #0xfc000003");	       			\
+	__asm("moveq	r0, ip");					\
+	__asm("bicne	r0, ip, #0xfc000003");	       			\
 	/*								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	__asm__("moveq	r1, lr");					\
-	__asm__("bicne	r1, lr, #0xfc000003");				\
+	__asm("moveq	r1, lr");					\
+	__asm("bicne	r1, lr, #0xfc000003");				\
 	/*								\
 	 * Call the real mcount code					\
 	 */								\
-	__asm__("bl	" ___STRING(_C_LABEL(_mcount)) PLTSYM);		\
+	__asm("bl	" ___STRING(_C_LABEL(_mcount)) PLTSYM);		\
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm__("ldmfd	sp!, {r0-r3, lr, pc}");
+	__asm("ldmfd	sp!, {r0-r3, lr, pc}");
 
 #ifdef _KERNEL
 #ifdef __PROG26

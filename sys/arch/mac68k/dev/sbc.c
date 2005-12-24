@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.47 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: sbc.c,v 1.48 2005/12/24 23:24:00 perry Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.47 2005/12/11 12:18:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.48 2005/12/24 23:24:00 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -111,7 +111,7 @@ int sbc_ready_timo = 1000 * 5000;	/* X2 = 10 S. */
 int sbc_wait_dreq_timo = 1000 * 5000;	/* X2 = 10 S. */
 
 /* Return zero on success. */
-static __inline__ int
+static inline int
 sbc_wait_busy(struct ncr5380_softc *sc)
 {
 	int timo = sbc_wait_busy_timo;
@@ -127,7 +127,7 @@ sbc_wait_busy(struct ncr5380_softc *sc)
 	return (timo);
 }
 
-static __inline__ int
+static inline int
 sbc_ready(struct ncr5380_softc *sc)
 {
 	int timo = sbc_ready_timo;
@@ -150,7 +150,7 @@ sbc_ready(struct ncr5380_softc *sc)
 	return (timo);
 }
 
-static __inline__ int
+static inline int
 sbc_wait_dreq(struct ncr5380_softc *sc)
 {
 	int timo = sbc_wait_dreq_timo;

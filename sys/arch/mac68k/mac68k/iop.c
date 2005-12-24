@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.9 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.10 2005/12/24 23:24:00 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.9 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10 2005/12/24 23:24:00 perry Exp $");
 
 #include "opt_mac68k.h"
 
@@ -57,27 +57,27 @@ static void	iop_message_sent(IOP *, int);
 static void	receive_iop_message(IOP *, int);
 static void	default_listener(IOP *, struct iop_msg *);
 
-static __inline__ int iop_alive(IOPHW *);
-static __inline__ int iop_read1(IOPHW *, u_long);
-static __inline__ void iop_write1(IOPHW *, u_long, u_char);
-static __inline__ void _iop_upload(IOPHW *, u_char *, u_long, u_long);
-static __inline__ void _iop_download(IOPHW *, u_char *, u_long, u_long);
+static inline int iop_alive(IOPHW *);
+static inline int iop_read1(IOPHW *, u_long);
+static inline void iop_write1(IOPHW *, u_long, u_char);
+static inline void _iop_upload(IOPHW *, u_char *, u_long, u_long);
+static inline void _iop_download(IOPHW *, u_char *, u_long, u_long);
 
-static __inline__ int
+static inline int
 iop_read1(IOPHW *ioph, u_long iopbase)
 {
 	IOP_LOADADDR(ioph, iopbase);
 	return ioph->data;
 }
 
-static __inline__ void
+static inline void
 iop_write1(IOPHW *ioph, u_long iopbase, u_char data)
 {
 	IOP_LOADADDR(ioph, iopbase);
 	ioph->data = data;
 }
 
-static __inline__ int
+static inline int
 iop_alive(IOPHW *ioph)
 {
 	int alive;
@@ -199,7 +199,7 @@ iop_init(int fullinit)
 }
 }
 
-static __inline__ void
+static inline void
 _iop_upload(IOPHW *ioph, u_char *mem, u_long nb, u_long iopbase)
 {
 	IOP_LOADADDR(ioph, iopbase);
@@ -220,7 +220,7 @@ iop_upload(int iopn, u_char *mem, u_long nb, u_long iopbase)
 	_iop_upload(ioph, mem, nb, iopbase);
 }
 
-static __inline__ void
+static inline void
 _iop_download(IOPHW *ioph, u_char *mem, u_long nb, u_long iopbase)
 {
 	IOP_LOADADDR(ioph, iopbase);

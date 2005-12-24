@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.18 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: in_cksum.c,v 1.19 2005/12/24 23:24:02 perry Exp $ */
 
 /*
  * Copyright (c) 1995 Matthew R. Green.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.18 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.19 2005/12/24 23:24:02 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.18 2005/12/24 20:07:37 perry Exp $");
 #define ADDSHORT	{sum += *(u_short *)w;}
 #define ADVANCE(n)	{w += n; mlen -= n;}
 
-static __inline__ int
+static inline int
 in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 {
 	u_char *w;

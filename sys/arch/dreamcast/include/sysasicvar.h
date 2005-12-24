@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasicvar.h,v 1.4 2002/12/27 11:43:39 tsutsui Exp $	*/
+/*	$NetBSD: sysasicvar.h,v 1.5 2005/12/24 23:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define SYSASIC_EVENT_EXT		35
 #define SYSASIC_EVENT_MAX		65
 
-const char *__pure sysasic_intr_string(int /*ipl*/) __attribute__((__const__));
+const char *__pure sysasic_intr_string(int /*ipl*/) __attribute__((const));
 void	*sysasic_intr_establish(int /*event*/, int /*ipl*/,
 	    int (*ih_fun)(void *), void *);
 void	sysasic_intr_disestablish(void *);

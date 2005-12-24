@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.3 2005/12/24 20:07:28 perry Exp $ */
+/*	$NetBSD: pio.h,v 1.4 2005/12/24 23:24:01 perry Exp $ */
 /*	$OpenBSD: pio.h,v 1.1 1997/10/13 10:53:47 pefo Exp $ */
 
 /*
@@ -71,7 +71,7 @@ __outb(a,v)
 	u_int8_t v;
 {
 	*a = v;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -80,7 +80,7 @@ __outw(a,v)
 	u_int16_t v;
 {
 	*a = v;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -89,7 +89,7 @@ __outl(a,v)
 	u_int32_t v;
 {
 	*a = v;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -97,8 +97,8 @@ __outwrb(a,v)
 	volatile u_int16_t *a;
 	u_int16_t v;
 {
-	__asm__ volatile("sthbrx %0, 0, %1" :: "r"(v), "r"(a));
-	__asm__ volatile("eieio; sync");
+	__asm volatile("sthbrx %0, 0, %1" :: "r"(v), "r"(a));
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -106,8 +106,8 @@ __outlrb(a,v)
 	volatile u_int32_t *a;
 	u_int32_t v;
 {
-	__asm__ volatile("stwbrx %0, 0, %1" :: "r"(v), "r"(a));
-	__asm__ volatile("eieio; sync");
+	__asm volatile("stwbrx %0, 0, %1" :: "r"(v), "r"(a));
+	__asm volatile("eieio; sync");
 }
 
 static inline u_int8_t
@@ -117,7 +117,7 @@ __inb(a)
 	u_int8_t _v_;
 
 	_v_ = *a;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 	return _v_;
 }
 
@@ -128,7 +128,7 @@ __inw(a)
 	u_int16_t _v_;
 
 	_v_ = *a;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 	return _v_;
 }
 
@@ -139,7 +139,7 @@ __inl(a)
 	u_int32_t _v_;
 
 	_v_ = *a;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 	return _v_;
 }
 
@@ -149,8 +149,8 @@ __inwrb(a)
 {
 	u_int16_t _v_;
 
-	__asm__ volatile("lhbrx %0, 0, %1" : "=r"(_v_) : "r"(a));
-	__asm__ volatile("eieio; sync");
+	__asm volatile("lhbrx %0, 0, %1" : "=r"(_v_) : "r"(a));
+	__asm volatile("eieio; sync");
 	return _v_;
 }
 
@@ -160,8 +160,8 @@ __inlrb(a)
 {
 	u_int32_t _v_;
 
-	__asm__ volatile("lwbrx %0, 0, %1" : "=r"(_v_) : "r"(a));
-	__asm__ volatile("eieio; sync");
+	__asm volatile("lwbrx %0, 0, %1" : "=r"(_v_) : "r"(a));
+	__asm volatile("eieio; sync");
 	return _v_;
 }
 
@@ -198,7 +198,7 @@ __outsb(a,s,c)
 {
 	while (c--)
 		*a = *s++;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -209,7 +209,7 @@ __outsw(a,s,c)
 {
 	while (c--)
 		*a = *s++;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -220,7 +220,7 @@ __outsl(a,s,c)
 {
 	while (c--)
 		*a = *s++;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -230,8 +230,8 @@ __outswrb(a,s,c)
 	size_t c;
 {
 	while (c--)
-		__asm__ volatile("sthbrx %0, 0, %1" :: "r"(*s++), "r"(a));
-	__asm__ volatile("eieio; sync");
+		__asm volatile("sthbrx %0, 0, %1" :: "r"(*s++), "r"(a));
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -241,8 +241,8 @@ __outslrb(a,s,c)
 	size_t c;
 {
 	while (c--)
-		__asm__ volatile("stwbrx %0, 0, %1" :: "r"(*s++), "r"(a));
-	__asm__ volatile("eieio; sync");
+		__asm volatile("stwbrx %0, 0, %1" :: "r"(*s++), "r"(a));
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -253,7 +253,7 @@ __insb(a,d,c)
 {
 	while (c--)
 		*d++ = *a;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -264,7 +264,7 @@ __insw(a,d,c)
 {
 	while (c--)
 		*d++ = *a;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -275,7 +275,7 @@ __insl(a,d,c)
 {
 	while (c--)
 		*d++ = *a;
-	__asm__ volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -285,8 +285,8 @@ __inswrb(a,d,c)
 	size_t c;
 {
 	while (c--)
-		__asm__ volatile("lhbrx %0, 0, %1" : "=r"(*d++) : "r"(a));
-	__asm__ volatile("eieio; sync");
+		__asm volatile("lhbrx %0, 0, %1" : "=r"(*d++) : "r"(a));
+	__asm volatile("eieio; sync");
 }
 
 static inline void
@@ -296,8 +296,8 @@ __inslrb(a,d,c)
 	size_t c;
 {
 	while (c--)
-		__asm__ volatile("lwbrx %0, 0, %1" : "=r"(*d++) : "r"(a));
-	__asm__ volatile("eieio; sync");
+		__asm volatile("lwbrx %0, 0, %1" : "=r"(*d++) : "r"(a));
+	__asm volatile("eieio; sync");
 }
 
 #define	outsb(a,s,c)	(__outsb((volatile u_int8_t *)(a), s, c))

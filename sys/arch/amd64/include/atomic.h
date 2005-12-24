@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.2 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: atomic.h,v 1.3 2005/12/24 23:23:59 perry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -42,13 +42,13 @@
 
 static inline u_int64_t
 x86_atomic_testset_u64(volatile u_int64_t *ptr, u_int64_t val) {
-    __asm__ volatile ("xchgq %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
+    __asm volatile ("xchgq %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
     return val;
 }
 
 static inline u_int32_t
 x86_atomic_testset_u32(volatile u_int32_t *ptr, u_int32_t val) {
-    __asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
+    __asm volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
     return val;
 }
 
@@ -56,7 +56,7 @@ x86_atomic_testset_u32(volatile u_int32_t *ptr, u_int32_t val) {
 
 static inline int32_t
 x86_atomic_testset_i32(volatile int32_t *ptr, int32_t val) {
-    __asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
+    __asm volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
     return val;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.38 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.39 2005/12/24 23:24:00 perry Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.38 2005/12/11 12:18:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.39 2005/12/24 23:24:00 perry Exp $");
 
 #include "opt_inet.h"
 
@@ -79,9 +79,9 @@ static void	camdump(struct sn_softc *);
 static void	sonictxint(struct sn_softc *);
 static void	sonicrxint(struct sn_softc *);
 
-static __inline__ u_int	sonicput(struct sn_softc *, struct mbuf *, int);
-static __inline__ int	sonic_read(struct sn_softc *, caddr_t, int);
-static __inline__ struct mbuf *sonic_get(struct sn_softc *, caddr_t, int);
+static inline u_int	sonicput(struct sn_softc *, struct mbuf *, int);
+static inline int	sonic_read(struct sn_softc *, caddr_t, int);
+static inline struct mbuf *sonic_get(struct sn_softc *, caddr_t, int);
 
 #undef assert
 #undef _assert
@@ -547,7 +547,7 @@ snwatchdog(struct ifnet *ifp)
 /*
  * stuff packet into sonic (at splnet)
  */
-static __inline__ u_int
+static inline u_int
 sonicput(struct sn_softc *sc, struct mbuf *m0, int mtd_next)
 {
 	struct mtd *mtdp;
@@ -1074,7 +1074,7 @@ sonicrxint(struct sn_softc *sc)
  * sonic_read -- pull packet off interface and forward to
  * appropriate protocol handler
  */
-static __inline__ int 
+static inline int 
 sonic_read(struct sn_softc *sc, caddr_t pkt, int len)
 {
 	struct ifnet *ifp = &sc->sc_if;
@@ -1111,7 +1111,7 @@ sonic_read(struct sn_softc *sc, caddr_t pkt, int len)
 /*
  * munge the received packet into an mbuf chain
  */
-static __inline__ struct mbuf *
+static inline struct mbuf *
 sonic_get(struct sn_softc *sc, caddr_t pkt, int datalen)
 {
 	struct mbuf *m, *top, **mp;

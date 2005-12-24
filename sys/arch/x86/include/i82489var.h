@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.3 2003/10/27 13:43:48 junyoung Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.4 2005/12/24 23:24:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,15 +43,15 @@
  * Software definitions belonging to Local APIC driver.
  */
 
-static __inline__ u_int32_t i82489_readreg(int);
-static __inline__ void i82489_writereg(int, u_int32_t);
+static inline u_int32_t i82489_readreg(int);
+static inline void i82489_writereg(int, u_int32_t);
 
 #ifdef _KERNEL
 extern volatile u_int32_t local_apic[];
 extern volatile u_int32_t lapic_tpr;
 #endif
 
-static __inline__ u_int32_t
+static inline u_int32_t
 i82489_readreg(reg)
 	int reg;
 {
@@ -59,7 +59,7 @@ i82489_readreg(reg)
 	    + reg));
 }
 
-static __inline__ void
+static inline void
 i82489_writereg(reg, val)
 	int reg;
 	u_int32_t val;

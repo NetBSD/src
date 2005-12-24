@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.3 2005/12/11 12:18:35 christos Exp $	*/
+/*	$NetBSD: emac3.c,v 1.4 2005/12/24 23:24:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.3 2005/12/11 12:18:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.4 2005/12/24 23:24:01 perry Exp $");
 
 #include "debug_playstation2.h"
 
@@ -78,7 +78,7 @@ n		printf("%s: " fmt, __FUNCTION__ , ##args)
 
 /* SMAP specific EMAC3 define */
 #define EMAC3_BASE			MIPS_PHYS_TO_KSEG1(0x14002000)
-static __inline__ u_int32_t
+static inline u_int32_t
 _emac3_reg_read_4(int ofs)
 {
 	bus_addr_t a_ = EMAC3_BASE + ofs;
@@ -86,7 +86,7 @@ _emac3_reg_read_4(int ofs)
 	return (_reg_read_2(a_) << 16) | _reg_read_2(a_ + 2);
 }
 
-static __inline__ void
+static inline void
 _emac3_reg_write_4(int ofs, u_int32_t v)
 {
 	bus_addr_t a_ = EMAC3_BASE + ofs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.h,v 1.1 2001/10/16 15:38:54 uch Exp $	*/
+/*	$NetBSD: interrupt.h,v 1.2 2005/12/24 23:24:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,4 +67,4 @@ void _sif_call_end(void);
 
 /* SPL */
 void md_ipl_register(enum ipl_type, struct _ipl_holder *);
-__inline__ void md_imask_update(void);
+inline void md_imask_update(void);

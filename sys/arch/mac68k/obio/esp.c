@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.42 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: esp.c,v 1.43 2005/12/24 23:24:01 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.42 2005/12/24 20:07:15 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.43 2005/12/24 23:24:01 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -138,8 +138,8 @@ void	esp_intr(void *);
 void	esp_dualbus_intr(void *);
 static struct esp_softc		*esp0, *esp1;
 
-static __inline__ int esp_dafb_have_dreq(struct esp_softc *);
-static __inline__ int esp_iosb_have_dreq(struct esp_softc *);
+static inline int esp_dafb_have_dreq(struct esp_softc *);
+static inline int esp_iosb_have_dreq(struct esp_softc *);
 int (*esp_have_dreq)(struct esp_softc *);
 
 struct ncr53c9x_glue esp_glue = {
@@ -582,13 +582,13 @@ esp_quick_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	return 0;
 }
 
-static __inline__ int
+static inline int
 esp_dafb_have_dreq(struct esp_softc *esc)
 {
 	return (*(volatile u_int32_t *)(esc->sc_bsh.base) & 0x200);
 }
 
-static __inline__ int
+static inline int
 esp_iosb_have_dreq(struct esp_softc *esc)
 {
 	return (via2_reg(vIFR) & V2IF_SCSIDRQ);

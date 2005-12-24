@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 2001/10/16 15:38:42 uch Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 2005/12/24 23:24:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define BOOTINFO_SYSCONF	0x20
 
 #define BOOTINFO_REF(x)							\
-    (*(__volatile__ u_int32_t *)MIPS_PHYS_TO_KSEG1(BOOTINFO_BLOCK_BASE + (x)))
+    (*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(BOOTINFO_BLOCK_BASE + (x)))
 
 struct bootinfo_rtc {
 	u_int8_t __reserved1;

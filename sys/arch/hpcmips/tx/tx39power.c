@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.14 2005/12/11 12:17:34 christos Exp $ */
+/*	$NetBSD: tx39power.c,v 1.15 2005/12/24 23:24:00 perry Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.14 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.15 2005/12/24 23:24:00 perry Exp $");
 
 #include "opt_tx39power_debug.h"
 #define TX39POWERDEBUG 
@@ -161,7 +161,7 @@ tx39power_suspend_cpu() /* I assume already splhigh */
 	txreg_t reg, *iregs = sc->sc_icu_state;
 
 	printf ("%s: CPU sleep\n", sc->sc_dev.dv_xname);
-	__asm__ __volatile__(".set noreorder");
+	__asm volatile(".set noreorder");
 	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
 	reg |= TX39_POWERCTRL_STOPCPU;
 	/* save interrupt state */
@@ -189,11 +189,11 @@ tx39power_suspend_cpu() /* I assume already splhigh */
 	/* enable power button interrupt only */
 	tx_conf_write(tc, TX39_INTRCLEAR5_REG, TX39_INTRSTATUS5_NEGONBUTNINT);
 	tx_conf_write(tc, TX39_INTRENABLE5_REG, TX39_INTRSTATUS5_NEGONBUTNINT);
-	__asm__ __volatile__("sync");
+	__asm volatile("sync");
 
 	/* stop CPU clock */
 	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
-	__asm__ __volatile__("sync");
+	__asm volatile("sync");
 	/* wait until power button pressed */
 	/* clear interrupt */
 	tx_conf_write(tc, TX39_INTRCLEAR5_REG, TX39_INTRSTATUS5_NEGONBUTNINT);
@@ -215,7 +215,7 @@ tx39power_suspend_cpu() /* I assume already splhigh */
 	tx_conf_write(tc, TX39_INTRENABLE7_REG, iregs[7]);
 	tx_conf_write(tc, TX39_INTRENABLE8_REG, iregs[8]);
 #endif
-	__asm__ __volatile__(".set reorder");
+	__asm volatile(".set reorder");
 
 	printf ("%s: CPU wakeup\n", sc->sc_dev.dv_xname);
 }

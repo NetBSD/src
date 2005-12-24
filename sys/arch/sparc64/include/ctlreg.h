@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.38 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.39 2005/12/24 23:24:06 perry Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -469,7 +469,7 @@
  */
 
 #ifdef __arch64__
-static __inline__ u_char 
+static inline u_char 
 lduba(paddr_t loc, int asi) 
 {
 	register unsigned int _lduba_v;
@@ -482,7 +482,7 @@ lduba(paddr_t loc, int asi)
 	return (_lduba_v);
 }
 #else
-static __inline__ u_char 
+static inline u_char 
 lduba(paddr_t loc, int asi) 
 {
 	register unsigned int _lduba_v, _loc_hi, _pstate;
@@ -518,7 +518,7 @@ lduba(paddr_t loc, int asi)
 
 #ifdef __arch64__
 /* load half-word from alternate address space */
-static __inline__ u_short 
+static inline u_short 
 lduha(paddr_t loc, int asi) 
 {
 	register unsigned int _lduha_v;
@@ -532,7 +532,7 @@ lduha(paddr_t loc, int asi)
 }
 #else
 /* load half-word from alternate address space */
-static __inline__ u_short 
+static inline u_short 
 lduha(paddr_t loc, int asi) {
 	register unsigned int _lduha_v, _loc_hi, _pstate;
 
@@ -569,7 +569,7 @@ lduha(paddr_t loc, int asi) {
 
 #ifdef __arch64__
 /* load unsigned int from alternate address space */
-static __inline__ u_int 
+static inline u_int 
 lda(paddr_t loc, int asi)
 {
 	register unsigned int _lda_v;
@@ -583,7 +583,7 @@ lda(paddr_t loc, int asi)
 }
 
 /* load signed int from alternate address space */
-static __inline__ int 
+static inline int 
 ldswa(paddr_t loc, int asi)
 {
 	register int _lda_v;
@@ -597,7 +597,7 @@ ldswa(paddr_t loc, int asi)
 }
 #else	/* __arch64__ */
 /* load unsigned int from alternate address space */
-static __inline__ u_int 
+static inline u_int 
 lda(paddr_t loc, int asi)
 {
 	register unsigned int _lda_v, _loc_hi, _pstate;
@@ -631,7 +631,7 @@ lda(paddr_t loc, int asi)
 }
 
 /* load signed int from alternate address space */
-static __inline__ int
+static inline int
 ldswa(paddr_t loc, int asi)
 {
 	register int _lda_v, _loc_hi, _pstate;
@@ -667,7 +667,7 @@ ldswa(paddr_t loc, int asi)
 
 #ifdef	__arch64__
 /* load 64-bit int from alternate address space -- these should never be used */
-static __inline__ u_int64_t
+static inline u_int64_t
 ldda(paddr_t loc, int asi)
 {
 	register long long _lda_v;
@@ -681,7 +681,7 @@ ldda(paddr_t loc, int asi)
 }
 #else
 /* load 64-bit int from alternate address space */
-static __inline__ u_int64_t
+static inline u_int64_t
 ldda(paddr_t loc, int asi)
 {
 	register long long _lda_v, _loc_hi, _pstate;
@@ -718,7 +718,7 @@ ldda(paddr_t loc, int asi)
 
 #ifdef __arch64__
 /* native load 64-bit int from alternate address space w/64-bit compiler*/
-static __inline__ u_int64_t
+static inline u_int64_t
 ldxa(paddr_t loc, int asi)
 {
 	register unsigned long _lda_v;
@@ -732,7 +732,7 @@ ldxa(paddr_t loc, int asi)
 }
 #else
 /* native load 64-bit int from alternate address space w/32-bit compiler*/
-static __inline__ u_int64_t
+static inline u_int64_t
 ldxa(paddr_t loc, int asi)
 {
 	register unsigned long _ldxa_lo, _ldxa_hi, _loc_hi;
@@ -772,7 +772,7 @@ ldxa(paddr_t loc, int asi)
 
 /* store byte to alternate address space */
 #ifdef __arch64__
-static __inline__ void 
+static inline void 
 stba(paddr_t loc, int asi, u_char value)
 {
 	__asm volatile(
@@ -781,7 +781,7 @@ stba(paddr_t loc, int asi, u_char value)
 		: : "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (asi));
 }
 #else
-static __inline__ void 
+static inline void 
 stba(paddr_t loc, int asi, u_char value)
 {
 	register int _loc_hi, _pstate;
@@ -815,7 +815,7 @@ stba(paddr_t loc, int asi, u_char value)
 
 /* store half-word to alternate address space */
 #ifdef __arch64__
-static __inline__ void
+static inline void
 stha(paddr_t loc, int asi, u_short value)
 {
 	__asm volatile(
@@ -825,7 +825,7 @@ stha(paddr_t loc, int asi, u_short value)
 		"r" (asi) : "memory");
 }
 #else
-static __inline__ void
+static inline void
 stha(paddr_t loc, int asi, u_short value)
 {
 	register int _loc_hi, _pstate;
@@ -862,7 +862,7 @@ stha(paddr_t loc, int asi, u_short value)
 
 /* store int to alternate address space */
 #ifdef __arch64__
-static __inline__ void
+static inline void
 sta(paddr_t loc, int asi, u_int value)
 {
 	__asm volatile(
@@ -872,7 +872,7 @@ sta(paddr_t loc, int asi, u_int value)
 		"r" (asi) : "memory");
 }
 #else
-static __inline__ void
+static inline void
 sta(paddr_t loc, int asi, u_int value)
 {
 	register int _loc_hi, _pstate;
@@ -908,7 +908,7 @@ sta(paddr_t loc, int asi, u_int value)
 
 /* store 64-bit int to alternate address space */
 #ifdef __arch64__
-static __inline__ void
+static inline void
 stda(paddr_t loc, int asi, u_int64_t value)
 {
 	__asm volatile(
@@ -918,7 +918,7 @@ stda(paddr_t loc, int asi, u_int64_t value)
 		: "memory");
 }
 #else
-static __inline__ void
+static inline void
 stda(paddr_t loc, int asi, u_int64_t value)
 {
 	register int _loc_hi, _pstate;
@@ -956,7 +956,7 @@ stda(paddr_t loc, int asi, u_int64_t value)
 
 #ifdef __arch64__
 /* native store 64-bit int to alternate address space w/64-bit compiler*/
-static __inline__ void
+static inline void
 stxa(paddr_t loc, int asi, u_int64_t value)
 {
 	__asm volatile(
@@ -968,7 +968,7 @@ stxa(paddr_t loc, int asi, u_int64_t value)
 }
 #else
 /* native store 64-bit int to alternate address space w/32-bit compiler*/
-static __inline__ void
+static inline void
 stxa(paddr_t loc, int asi, u_int64_t value)
 {
 	int _stxa_lo, _stxa_hi, _loc_hi;
@@ -1013,7 +1013,7 @@ stxa(paddr_t loc, int asi, u_int64_t value)
 
 #ifdef __arch64__
 /* native store 32-bit int to alternate address space w/64-bit compiler*/
-static __inline__ u_int32_t
+static inline u_int32_t
 casa(paddr_t loc, int asi, u_int32_t value, u_int32_t oldvalue)
 {
 	__asm volatile(
@@ -1025,7 +1025,7 @@ casa(paddr_t loc, int asi, u_int32_t value, u_int32_t oldvalue)
 	return (value);
 }
 /* native store 64-bit int to alternate address space w/64-bit compiler*/
-static __inline__ u_int64_t
+static inline u_int64_t
 casxa(paddr_t loc, int asi, u_int64_t value, u_int64_t oldvalue)
 {
 	__asm volatile(
@@ -1039,7 +1039,7 @@ casxa(paddr_t loc, int asi, u_int64_t value, u_int64_t oldvalue)
 #else
 #if 0
 /* native store 64-bit int to alternate address space w/32-bit compiler*/
-static __inline__ u_int64_t
+static inline u_int64_t
 casxa(paddr_t loc, int asi, u_int64_t value, u_int64_t oldvalue)
 {
 	int _casxa_lo, _casxa_hi, _loc_hi, _oval_hi;

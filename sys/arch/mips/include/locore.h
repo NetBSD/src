@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.72 2005/12/11 12:18:09 christos Exp $ */
+/* $NetBSD: locore.h,v 1.73 2005/12/24 23:24:01 perry Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -147,7 +147,7 @@ mips3_lw_a64(uint64_t addr)
 
 	addrlo = addr & 0xffffffff;
 	addrhi = addr >> 32;
-	__asm__ __volatile__ ("		\n\
+	__asm volatile ("		\n\
 		.set push		\n\
 		.set mips3		\n\
 		.set noreorder		\n\
@@ -176,7 +176,7 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
 
 	addrlo = addr & 0xffffffff;
 	addrhi = addr >> 32;
-	__asm__ __volatile__ ("			\n\
+	__asm volatile ("			\n\
 		.set push			\n\
 		.set mips3			\n\
 		.set noreorder			\n\

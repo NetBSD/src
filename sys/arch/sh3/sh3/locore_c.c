@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.9 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.10 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.9 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.10 2005/12/24 23:24:02 perry Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -214,7 +214,7 @@ idle()
 
 	spl0();
 	uvm_pageidlezero();
-	__asm__ __volatile__("sleep");
+	__asm volatile("sleep");
 	splsched();
 }
 

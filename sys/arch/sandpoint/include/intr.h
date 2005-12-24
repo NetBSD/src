@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2005/12/24 20:07:31 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,10 +130,10 @@ splraise(newcpl)
 {
 	int oldcpl;
 
-	__asm__ volatile("sync; eieio\n");	/* don't reorder.... */
+	__asm volatile("sync; eieio\n");	/* don't reorder.... */
 	oldcpl = cpl;
 	cpl = oldcpl | newcpl;
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	return(oldcpl);
 }
 
@@ -141,11 +141,11 @@ static inline void
 splx(newcpl)
 	int newcpl;
 {
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	cpl = newcpl;
 	if(ipending & ~newcpl)
 		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 }
 
 static inline int
@@ -154,12 +154,12 @@ spllower(newcpl)
 {
 	int oldcpl;
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	oldcpl = cpl;
 	cpl = newcpl;
 	if(ipending & ~newcpl)
 		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	return(oldcpl);
 }
 
@@ -171,10 +171,10 @@ set_sint(pending)
 {
 	int	msrsave;
 
-	__asm__ ("mfmsr %0" : "=r"(msrsave));
-	__asm__ volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
+	__asm ("mfmsr %0" : "=r"(msrsave));
+	__asm volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
 	ipending |= pending;
-	__asm__ volatile ("mtmsr %0" :: "r"(msrsave));
+	__asm volatile ("mtmsr %0" :: "r"(msrsave));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.17 2005/12/24 20:07:48 perry Exp $	*/
+/*	$NetBSD: xen.h,v 1.18 2005/12/24 23:24:07 perry Exp $	*/
 
 /*
  *
@@ -169,7 +169,7 @@ do {									\
  */
 #define __LOCK_PREFIX "lock; "
 
-static __inline__ uint32_t
+static inline uint32_t
 x86_atomic_xchg(volatile uint32_t *ptr, unsigned long val)
 {
 	unsigned long result;
@@ -183,7 +183,7 @@ x86_atomic_xchg(volatile uint32_t *ptr, unsigned long val)
 	return result;
 }
 
-static __inline__ int
+static inline int
 x86_atomic_test_and_clear_bit(volatile void *ptr, int bitno)
 {
         int result;
@@ -196,7 +196,7 @@ x86_atomic_test_and_clear_bit(volatile void *ptr, int bitno)
         return result;
 }
 
-static __inline__ int
+static inline int
 x86_atomic_test_and_set_bit(volatile void *ptr, int bitno)
 {
         int result;

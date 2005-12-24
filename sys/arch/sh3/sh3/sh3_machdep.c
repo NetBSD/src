@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.56 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.57 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.56 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.57 2005/12/24 23:24:02 perry Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -194,7 +194,7 @@ sh_cpu_init(int arch, int product)
 	if (!SH_HAS_UNIFIED_CACHE)
 		sh_icache_sync_all();
 
-	__asm__ __volatile__("ldc %0, vbr" :: "r"(VBR));
+	__asm volatile("ldc %0, vbr" :: "r"(VBR));
 
 	/* kernel stack setup */
 	__sh_switch_resume = CPU_IS_SH3 ? sh3_switch_resume : sh4_switch_resume;
@@ -235,8 +235,8 @@ sh_proc0_init()
 	sf = &curpcb->pcb_sf;
 	sf->sf_r6_bank = u + PAGE_SIZE;
 	sf->sf_r7_bank = sf->sf_r15	= u + USPACE;
-	__asm__ __volatile__("ldc %0, r6_bank" :: "r"(sf->sf_r6_bank));
-	__asm__ __volatile__("ldc %0, r7_bank" :: "r"(sf->sf_r7_bank));
+	__asm volatile("ldc %0, r6_bank" :: "r"(sf->sf_r6_bank));
+	__asm volatile("ldc %0, r7_bank" :: "r"(sf->sf_r7_bank));
 
 	lwp0.l_md.md_regs = (struct trapframe *)sf->sf_r6_bank - 1;
 #ifdef KSTACK_DEBUG

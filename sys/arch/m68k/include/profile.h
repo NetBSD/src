@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.16 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: profile.h,v 1.17 2005/12/24 23:24:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,12 +41,12 @@
 
 #ifndef	__mc68010__
 #define	MCOUNT \
-extern void mcount __P((void)) __asm__(MCOUNT_ENTRY) \
+extern void mcount __P((void)) __asm(MCOUNT_ENTRY) \
 	__attribute__((__no_instrument_function__)); \
 void mcount() { \
 	int selfpc, frompcindex; \
-	__asm__("movl %%a6@(4),%0" : "=r" (selfpc)); \
-	__asm__("movl %%a6@(0)@(4),%0" : "=r" (frompcindex)); \
+	__asm("movl %%a6@(4),%0" : "=r" (selfpc)); \
+	__asm("movl %%a6@(0)@(4),%0" : "=r" (frompcindex)); \
 	_mcount(frompcindex, selfpc); \
 }
 #else	/* __mc68010__ */
@@ -56,10 +56,10 @@ void mcount() { \
  * to do something different.
  */
 #define	MCOUNT \
-extern void mcount __P((void)) __asm__("mcount"); void mcount() { \
+extern void mcount __P((void)) __asm("mcount"); void mcount() { \
 	int selfpc, frompcindex; \
-	__asm__("movl %%a6@(4),%0" : "=r" (selfpc)); \
-	__asm__("movl %%a6@(0),%%a0 ; movl %%a0@(4),%0" : "=r" (frompcindex) : /* no inputs */ : "a0"); \
+	__asm("movl %%a6@(4),%0" : "=r" (selfpc)); \
+	__asm("movl %%a6@(0),%%a0 ; movl %%a0@(4),%0" : "=r" (frompcindex) : /* no inputs */ : "a0"); \
 	_mcount(frompcindex, selfpc); \
 }
 #endif	/* __mc68010__ */
@@ -72,9 +72,9 @@ extern void mcount __P((void)) __asm__("mcount"); void mcount() { \
  * recursively.
  */
 #define MCOUNT_ENTER \
-	__asm__("movw	%%sr,%0" : "=g" (s)); \
-	__asm__("movw	#0x2700,%sr")
+	__asm("movw	%%sr,%0" : "=g" (s)); \
+	__asm("movw	#0x2700,%sr")
 
 #define MCOUNT_EXIT \
-	__asm__("movw	%0,%%sr" : : "g" (s))
+	__asm("movw	%0,%%sr" : : "g" (s))
 #endif /* _KERNEL */

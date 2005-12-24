@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2005/12/24 20:07:11 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2005/12/24 23:24:00 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -312,21 +312,21 @@ halt_sys:
 	    int msr;
 	    u_char reg;
 
-	    __asm__ volatile("mfmsr %0" : "=r"(msr));
+	    __asm volatile("mfmsr %0" : "=r"(msr));
 	    msr |= PSL_IP;
-	    __asm__ volatile("mtmsr %0" :: "r"(msr));
+	    __asm volatile("mtmsr %0" :: "r"(msr));
 
 	    reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
 	    reg &= ~1UL;
 	    *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
 
-	    __asm__ volatile("sync; eieio\n");
+	    __asm volatile("sync; eieio\n");
 
 	    reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
 	    reg |= 1;
 	    *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
 
-	    __asm__ volatile("sync; eieio\n");
+	    __asm volatile("sync; eieio\n");
 	}
 
 	for (;;)
@@ -344,12 +344,12 @@ lcsplx(ipl)
 {
 	int oldcpl;
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	oldcpl = cpl;
 	cpl = ipl;
 	if (ipending & ~ipl)
 		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 
 	return (oldcpl);
 }

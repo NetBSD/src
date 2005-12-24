@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2005/12/24 20:07:31 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 2005/12/24 23:24:01 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2005/12/24 20:07:31 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2005/12/24 23:24:01 perry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -381,12 +381,12 @@ lcsplx(ipl)
 {
 	int oldcpl;
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	oldcpl = cpl;
 	cpl = ipl;
 	if (ipending & ~ipl)
 		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 
 	return (oldcpl);
 }

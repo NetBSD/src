@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.h,v 1.4 2002/05/09 12:26:16 uch Exp $	*/
+/*	$NetBSD: mmu_sh3.h,v 1.5 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -85,5 +85,5 @@
 #define	  SH3_MMUDA_D_D			  0x00000004
 #define	  SH3_MMUDA_D_SH		  0x00000002
 
-#define	SH3_TLB_DISABLE	*(__volatile__ u_int32_t *)SH3_MMUCR = SH3_MMUCR_TF
+#define	SH3_TLB_DISABLE	*(volatile u_int32_t *)SH3_MMUCR = SH3_MMUCR_TF
 #endif /* !_SH3_MMU_SH3_H_ */

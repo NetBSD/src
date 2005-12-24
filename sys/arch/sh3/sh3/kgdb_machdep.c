@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.11 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.12 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.11 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12 2005/12/24 23:24:02 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -218,7 +218,7 @@ kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 	gdb_regs[15] = regs->tf_r15;
 	gdb_regs[16] = regs->tf_spc;
 	gdb_regs[17] = regs->tf_pr;
-	__asm__ __volatile__("stc vbr, %0" : "=r"(r));
+	__asm volatile("stc vbr, %0" : "=r"(r));
 	gdb_regs[19] = r;
 	gdb_regs[20] = regs->tf_mach;
 	gdb_regs[21] = regs->tf_macl;
@@ -252,7 +252,7 @@ kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 	regs->tf_r15	= gdb_regs[15];
 	regs->tf_spc	= gdb_regs[16];
 	regs->tf_pr	= gdb_regs[17];
-	__asm__ __volatile__("ldc %0, vbr" :: "r"(gdb_regs[19]));
+	__asm volatile("ldc %0, vbr" :: "r"(gdb_regs[19]));
 	regs->tf_mach	= gdb_regs[20];
 	regs->tf_macl	= gdb_regs[21];
 	regs->tf_ssr	= gdb_regs[22];
@@ -274,7 +274,7 @@ kgdb_connect(int verbose)
 	if (verbose)
 		printf("kgdb waiting...");
 
-	__asm__ __volatile__("trapa %0" :: "i"(_SH_TRA_BREAK));
+	__asm volatile("trapa %0" :: "i"(_SH_TRA_BREAK));
 
 	if (verbose)
 		printf("connected.\n");

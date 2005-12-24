@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89 2005/12/24 23:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2005/12/24 23:24:00 perry Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -496,7 +496,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 */
 	{
 		u_int32_t sp;
-		__asm__ __volatile__("move %0, $29" : "=r"(sp));
+		__asm volatile("move %0, $29" : "=r"(sp));
 		KDASSERT(sp > KERNBASE + 0x400);
 		memset((void *)(KERNBASE + 0x400), 0, sp - (KERNBASE + 0x400));
 	}

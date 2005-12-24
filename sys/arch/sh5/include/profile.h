@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.4 2003/03/24 14:24:38 scw Exp $	*/
+/*	$NetBSD: profile.h,v 1.5 2005/12/24 23:24:02 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #define	_MCOUNT_DECL	static void _mcount
 
 __weak_alias(mcount, __mcount)
-extern void mcount(void) __asm__("__mcount");
+extern void mcount(void) __asm("__mcount");
 
 /*
  * See _PROF_PROLOGUE in <sh5/asm.h>

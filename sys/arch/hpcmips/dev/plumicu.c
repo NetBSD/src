@@ -1,4 +1,4 @@
-/*	$NetBSD: plumicu.c,v 1.9 2005/12/11 12:17:33 christos Exp $ */
+/*	$NetBSD: plumicu.c,v 1.10 2005/12/24 23:24:00 perry Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumicu.c,v 1.9 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumicu.c,v 1.10 2005/12/24 23:24:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ int plumicu_match(struct device *, struct cfdata *, void *);
 void plumicu_attach(struct device *, struct device *, void *);
 int plumicu_intr(void *);
 
-static __inline__ void plum_di(plum_chipset_tag_t);
-static __inline__ void plum_ei(plum_chipset_tag_t);
+static inline void plum_di(plum_chipset_tag_t);
+static inline void plum_ei(plum_chipset_tag_t);
 
 const struct plum_intr_ctrl {
 	plumreg_t	ic_ackpat1;
@@ -226,7 +226,7 @@ plumicu_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 }
 
-__inline__ void
+inline void
 plum_di(plum_chipset_tag_t pc)
 {
 	struct plumicu_softc *sc = pc->pc_intrt;
@@ -234,7 +234,7 @@ plum_di(plum_chipset_tag_t pc)
 	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_INT_INTIEN_REG, 0);
 }
 
-__inline__ void
+inline void
 plum_ei(plum_chipset_tag_t pc)
 {
 	struct plumicu_softc *sc = pc->pc_intrt;

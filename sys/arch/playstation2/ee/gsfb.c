@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.12 2005/12/17 10:26:59 he Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.13 2005/12/24 23:24:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.12 2005/12/17 10:26:59 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.13 2005/12/24 23:24:01 perry Exp $");
 
 #include "debug_playstation2.h"
 
@@ -77,7 +77,7 @@ STATIC struct gsfb {
 STATIC void gsfb_dma_kick(paddr_t, size_t);
 STATIC void gsfb_font_expand_psmct32(const struct wsdisplay_font *, u_int,
     long, u_int32_t *);
-STATIC __inline__ void gsfb_set_cursor_pos(u_int32_t *, int, int, int, int);
+STATIC inline void gsfb_set_cursor_pos(u_int32_t *, int, int, int, int);
 
 #define ATTR_FG_GET(a)	(((a )>> 24) & 0xf)
 #define ATTR_BG_GET(a)	(((a )>> 16) & 0xf)
@@ -393,7 +393,7 @@ _gsfb_cursor(void *cookie, int on, int row, int col)
 	gsfb_dma_kick(paddr, sizeof gsfb_cursor_cmd);
 }
 
-__inline__ void
+inline void
 gsfb_set_cursor_pos(u_int32_t *p, int x, int y, int w, int h)
 {
 

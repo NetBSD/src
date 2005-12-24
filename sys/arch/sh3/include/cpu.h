@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -169,7 +169,7 @@ do {									\
 do {									\
 	u_int32_t p;							\
 	p = (u_int32_t)&&P1;						\
-	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop;nop");	\
+	__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop");	\
 	goto *(u_int32_t *)(p & ~0x20000000);				\
  P1:	(void)0;							\
 } while (/*CONSTCOND*/0)

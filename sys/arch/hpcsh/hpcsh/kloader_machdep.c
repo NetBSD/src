@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.11 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.12 2005/12/24 23:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.11 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.12 2005/12/24 23:24:00 perry Exp $");
 
 #include "debug_kloader.h"
 
@@ -61,7 +61,7 @@ kloader_hpcsh ## cpu ## _boot(struct kloader_bootinfo *kbi,		\
 	int tmp = 0;	/* XXX: -Wuninitialized */			\
 									\
 	/* Disable interrupt. block exception. */			\
-	__asm__ __volatile__(						\
+	__asm volatile(						\
 		"stc	sr, %1;"					\
 		"or	%0, %1;"					\
 		"ldc	%1, sr" : : "r"(0x500000f0), "r"(tmp));		\
@@ -80,7 +80,7 @@ kloader_hpcsh ## cpu ## _boot(struct kloader_bootinfo *kbi,		\
 	SH ## product ## _CACHE_FLUSH();				\
 									\
 	/* jump to kernel entry. */					\
-	__asm__ __volatile__(						\
+	__asm volatile(						\
 		"mov	%0, r4;"					\
 		"mov	%1, r5;"					\
 		"jmp	@%3;"						\
@@ -119,7 +119,7 @@ kloader_hpcsh_jump(kloader_bootfunc_t func, vaddr_t sp,
 
 	sh_icache_sync_all();	/* also flush d-cache */
 
-	__asm__ __volatile__(
+	__asm volatile(
 	    	"mov	%0, r4;"
 		"mov	%1, r5;"
 		"jmp	@%2;"

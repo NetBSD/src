@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.9 2005/12/11 12:18:41 christos Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.10 2005/12/24 23:24:01 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.9 2005/12/11 12:18:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.10 2005/12/24 23:24:01 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,11 +97,11 @@ in64(uint a)
 	double save, *dp = (double *)a;
 	u_int32_t msr, nmsr;
 
-	__asm__ volatile("mfmsr %0" : "=r"(msr));
+	__asm volatile("mfmsr %0" : "=r"(msr));
 	nmsr = (msr | PSL_FP) & ~(PSL_FE0 | PSL_FE1);
-	__asm__ volatile("mtmsr %0" :: "r"(nmsr));
-	__asm__ volatile("mfmsr %0" : "=r"(nmsr)); /* some interlock nonsense */
-	__asm__ volatile(
+	__asm volatile("mtmsr %0" :: "r"(nmsr));
+	__asm volatile("mfmsr %0" : "=r"(nmsr)); /* some interlock nonsense */
+	__asm volatile(
        "stfd 0,%0\n\
 	lfd 0,%1\n\
 	stfd 0,%2\n\
@@ -109,8 +109,8 @@ in64(uint a)
 		 : "=m"(save), "=m"(*dp)
 		 : "m"(u.d)
 		);
-	__asm__ volatile ("eieio; sync");
-	__asm__ volatile("mtmsr %0" :: "r"(msr));
+	__asm volatile ("eieio; sync");
+	__asm volatile("mtmsr %0" :: "r"(msr));
 	return (u.i);
 }
 #endif
@@ -128,11 +128,11 @@ out64(uint a, u_int64_t v)
 
 	s = splhigh();
 	u.i = v;
-	__asm__ volatile("mfmsr %0" : "=r"(msr));
+	__asm volatile("mfmsr %0" : "=r"(msr));
 	nmsr = (msr | PSL_FP) & ~(PSL_FE0 | PSL_FE1);
-	__asm__ volatile("mtmsr %0" :: "r"(nmsr));
-	__asm__ volatile("mfmsr %0" : "=r"(nmsr)); /* some interlock nonsense */
-	__asm__ volatile(
+	__asm volatile("mtmsr %0" :: "r"(nmsr));
+	__asm volatile("mfmsr %0" : "=r"(nmsr)); /* some interlock nonsense */
+	__asm volatile(
        "stfd 0,%0\n\
 	lfd 0,%2\n\
 	stfd 0,%1\n\
@@ -140,8 +140,8 @@ out64(uint a, u_int64_t v)
 		 : "=m"(save), "=m"(*dp)
 		 : "m"(u.d)
 		);
-	__asm__ volatile ("eieio; sync");
-	__asm__ volatile("mtmsr %0" :: "r"(msr));
+	__asm volatile ("eieio; sync");
+	__asm volatile("mtmsr %0" :: "r"(msr));
 	splx(s);
 }
 
@@ -207,21 +207,21 @@ cs_io_write_multi_2(struct cs_softc *sc, bus_size_t offs,
 	dp = (double *)(sc->sc_ioh + (offs << 2));
 
 	s = splhigh();
-	__asm__ volatile("mfmsr %0" : "=r"(msr));
+	__asm volatile("mfmsr %0" : "=r"(msr));
 	nmsr = (msr | PSL_FP) & ~(PSL_FE0 | PSL_FE1);
-	__asm__ volatile("mtmsr %0" :: "r"(nmsr));
-	__asm__ volatile("mfmsr %0" : "=r"(nmsr)); /* some interlock nonsense */
-	__asm__ volatile("stfd 0,%0" : "=m"(save));
+	__asm volatile("mtmsr %0" :: "r"(nmsr));
+	__asm volatile("mfmsr %0" : "=r"(nmsr)); /* some interlock nonsense */
+	__asm volatile("stfd 0,%0" : "=m"(save));
 
 	while (cnt--) {
 		v = *buf++;
 		v = bswap16(v);
 		u.i = (u_int64_t)v << 48;
-		__asm__ volatile("lfd 0,%1\nstfd 0,%0" : "=m"(*dp) : "m"(u.d) );
-		__asm__ volatile ("eieio; sync");
+		__asm volatile("lfd 0,%1\nstfd 0,%0" : "=m"(*dp) : "m"(u.d) );
+		__asm volatile ("eieio; sync");
 	}
-	__asm__ volatile("lfd 0,%0" :: "m"(save));
-	__asm__ volatile("mtmsr %0" :: "r"(msr));
+	__asm volatile("lfd 0,%0" :: "m"(save));
+	__asm volatile("mtmsr %0" :: "r"(msr));
 	splx(s);
 }
 

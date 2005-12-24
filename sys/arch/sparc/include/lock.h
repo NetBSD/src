@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.20 2005/12/24 20:07:32 perry Exp $ */
+/*	$NetBSD: lock.h,v 1.21 2005/12/24 23:24:02 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@
 #ifdef __lint__
 #define __ldstub(__addr)	(__addr)
 #else /* !__lint__ */
-static __inline__ int __ldstub(__cpu_simple_lock_t *addr);
-static __inline__ int __ldstub(__cpu_simple_lock_t *addr)
+static inline int __ldstub(__cpu_simple_lock_t *addr);
+static inline int __ldstub(__cpu_simple_lock_t *addr)
 {
 	int v;
 

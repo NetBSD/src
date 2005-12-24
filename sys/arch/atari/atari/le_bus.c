@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.9 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.10 2005/12/24 23:23:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.9 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.10 2005/12/24 23:23:59 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,13 +233,13 @@ static void		leb_bus_space_set_region_8 __P((bus_space_tag_t,
 static u_int16_t swap16 __P((u_int16_t v));
 static u_int32_t swap32 __P((u_int32_t v));
 
-static __inline__ u_int16_t swap16(u_int16_t v)
+static inline u_int16_t swap16(u_int16_t v)
 {
 	__asm volatile ("rolw	#8, %0" : "=d"(v) : "0"(v));
 	return(v);
 }
 
-static __inline__ u_int32_t swap32(u_int32_t v)
+static inline u_int32_t swap32(u_int32_t v)
 {
 	__asm volatile ("	rolw	#8, %0	\n"
 			"	swap	%0	\n"

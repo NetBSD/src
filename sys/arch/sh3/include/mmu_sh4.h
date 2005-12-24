@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.h,v 1.4 2002/05/09 12:26:16 uch Exp $	*/
+/*	$NetBSD: mmu_sh4.h,v 1.5 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -149,5 +149,5 @@
 #define	  SH4_UTLB_DA2_SA_MASK		  0x00000003
 #define	  SH4_UTLB_DA2_TC		  0x00000004
 
-#define	SH4_TLB_DISABLE	*(__volatile__ u_int32_t *)SH4_MMUCR = SH4_MMUCR_TI
+#define	SH4_TLB_DISABLE	*(volatile u_int32_t *)SH4_MMUCR = SH4_MMUCR_TI
 #endif /* !_SH3_MMU_SH4_H_ */
