@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.53 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.54 2005/12/24 19:12:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.53 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.54 2005/12/24 19:12:23 perry Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -120,7 +120,7 @@ static int expool_initialized;
  * (This is deferred until one of our callers thinks we can malloc()).
  */
 
-static __inline void
+static inline void
 expool_init(void)
 {
 
