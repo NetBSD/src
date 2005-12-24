@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.3 2003/11/25 21:27:30 christos Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.4 2005/12/24 21:11:16 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #define _LIB_PTHREAD_M68K_MD_H
 
 
-static __inline long
+static inline long
 pthread__sp(void)
 {
 	long ret;

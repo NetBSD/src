@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.5 2004/02/11 21:04:10 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.6 2005/12/24 21:11:16 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ void pthread__i386_init(void);
 
 #define PTHREAD_MD_INIT pthread__i386_init();
 
-static __inline long
+static inline long
 pthread__sp(void)
 {
 	long ret;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.3 2003/01/18 18:40:08 christos Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.4 2005/12/24 21:11:16 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,12 +38,12 @@
 #ifndef _LIB_PTHREAD_ARM_MD_H
 #define	_LIB_PTHREAD_ARM_MD_H
 
-static __inline long
+static inline long
 pthread__sp(void)
 {
 	long ret;
 
-	__asm __volatile("mov %0, sp"
+	__asm volatile("mov %0, sp"
 		: "=r" (ret));
 
 	return (ret);

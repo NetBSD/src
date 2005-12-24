@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcompat.c,v 1.12 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: sigcompat.c,v 1.13 2005/12/24 21:11:16 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sigcompat.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: sigcompat.c,v 1.12 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: sigcompat.c,v 1.13 2005/12/24 21:11:16 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -42,10 +42,10 @@ __RCSID("$NetBSD: sigcompat.c,v 1.12 2005/09/13 01:44:09 christos Exp $");
 #include <signal.h>
 #include <compat/sys/signal.h>
 
-static __inline void sv2sa(struct sigaction *, const struct sigvec *);
-static __inline void sa2sv(struct sigvec *, const struct sigaction *);
+static inline void sv2sa(struct sigaction *, const struct sigvec *);
+static inline void sa2sv(struct sigvec *, const struct sigaction *);
 
-static __inline void
+static inline void
 sv2sa(struct sigaction *sa, const struct sigvec *sv)
 {
 	sigemptyset(&sa->sa_mask);
@@ -54,7 +54,7 @@ sv2sa(struct sigaction *sa, const struct sigvec *sv)
 	sa->sa_flags = sv->sv_flags ^ SV_INTERRUPT; /* !SA_INTERRUPT */
 }
 
-static __inline void
+static inline void
 sa2sv(struct sigvec *sv, const struct sigaction *sa)
 {
 	sv->sv_mask = sa->sa_mask.__bits[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1 2004/07/19 03:39:02 chs Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.2 2005/12/24 21:11:16 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <machine/frame.h>
 
-static __inline long
+static inline long
 pthread__sp(void)
 {
 	register long sp __asm__("r30");
