@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.h,v 1.6 2002/04/28 17:10:33 uch Exp $	*/
+/*	$NetBSD: cache_sh3.h,v 1.7 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ do {									\
 		__wa = SH3_CCA | __w << CCA_8K_WAY_SHIFT;		\
 		for (__e = 0; __e < CCA_8K_ENTRY; __e++)	{	\
 			__a = __wa |(__e << CCA_ENTRY_SHIFT);		\
-			(*(__volatile__ u_int32_t *)__a) &=		\
+			(*(volatile u_int32_t *)__a) &=		\
 				~(CCA_U | CCA_V);			\
 		}							\
 	}								\
@@ -135,7 +135,7 @@ do {									\
 		__wa = SH3_CCA | __w << CCA_16K_WAY_SHIFT;		\
 		for (__e = 0; __e < CCA_16K_ENTRY; __e++)	{	\
 			__a = __wa |(__e << CCA_ENTRY_SHIFT);		\
-			(*(__volatile__ u_int32_t *)__a) &=		\
+			(*(volatile u_int32_t *)__a) &=		\
 				~(CCA_U | CCA_V);			\
 		}							\
 	}								\

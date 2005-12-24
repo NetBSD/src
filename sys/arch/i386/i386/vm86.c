@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.40 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: vm86.c,v 1.41 2005/12/24 23:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.40 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.41 2005/12/24 23:24:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ is_bitset(nr, bitmap)
 	nr = nr % NBBY;
 	byte = fubyte(bitmap);
 
-	__asm__ __volatile__("btl %2,%1\n\tsbbl %0,%0"
+	__asm volatile("btl %2,%1\n\tsbbl %0,%0"
 			     :"=r" (nr)
 			     :"r" (byte),"r" (nr));
 	return (nr);

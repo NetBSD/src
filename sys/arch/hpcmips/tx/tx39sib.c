@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.18 2005/12/24 20:07:04 perry Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.19 2005/12/24 23:24:00 perry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.18 2005/12/24 20:07:04 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.19 2005/12/24 23:24:00 perry Exp $");
 
 #undef TX39SIBDEBUG
 
@@ -318,7 +318,7 @@ tx39sib_print(void *aux, const char *pnp)
  * sync access method. don't use runtime.
  */
 
-__inline__ int
+inline int
 __txsibsf0_ready(tx_chipset_tag_t tc)
 {
 	int i;

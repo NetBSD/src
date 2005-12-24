@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.29 2005/12/24 22:45:34 perry Exp $ */
+/* $NetBSD: machdep.c,v 1.30 2005/12/24 23:23:59 perry Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2005/12/24 23:23:59 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -268,7 +268,7 @@ splraise(ncpl)
 
 	ocpl = ~(*p5_ipl) & 7;
 
-	__asm__ volatile("sync; eieio\n");	/* don't reorder.... */
+	__asm volatile("sync; eieio\n");	/* don't reorder.... */
 
 	/*custom.intreq = 0x7fff;*/
 	if (ncpl > ocpl) {
@@ -282,7 +282,7 @@ splraise(ncpl)
 		/*p5_ipl = 0x40;*/
 	}
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	return (ocpl);
 }
 
@@ -292,7 +292,7 @@ splx(ncpl)
 {
 	volatile unsigned char *p5_ipl = (void *)0xf60030;
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 
 /*	if (ipending & ~ncpl)
 		do_pending_int();*/
@@ -307,7 +307,7 @@ splx(ncpl)
 	/* enable int */
 	/*p5_ipl = 0x40;*/
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 }
 
 volatile int
@@ -319,7 +319,7 @@ spllower(ncpl)
 
 	ocpl = ~(*p5_ipl) & 7;
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 
 /*	if (ipending & ~ncpl)
 		do_pending_int();*/
@@ -336,7 +336,7 @@ spllower(ncpl)
 		/*p5_ipl = 0x40;*/
 	}
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	return (ocpl);
 }
 
@@ -348,10 +348,10 @@ softintr(ipl)
 {
 	int msrsave;
 
-	__asm__ volatile("mfmsr %0" : "=r"(msrsave));
-	__asm__ volatile("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
+	__asm volatile("mfmsr %0" : "=r"(msrsave));
+	__asm volatile("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
 	ipending |= 1 << ipl;
-	__asm__ volatile("mtmsr %0" :: "r"(msrsave));
+	__asm volatile("mtmsr %0" :: "r"(msrsave));
 }
 /* XXX: end of intr.h */
 

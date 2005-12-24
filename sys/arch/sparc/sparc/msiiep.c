@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.33 2005/11/24 13:08:34 yamt Exp $ */
+/*	$NetBSD: msiiep.c,v 1.34 2005/12/24 23:24:02 perry Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.33 2005/11/24 13:08:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.34 2005/12/24 23:24:02 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -394,7 +394,7 @@ mspcic_assigned_interrupt(int line)
  *			  BUS space methods
  */
 
-static __inline__ void
+static inline void
 mspcic_pci_map_from_reg(struct mspcic_pci_map *m,
 			uint8_t sbar, uint8_t pbar, uint8_t sizemask)
 {

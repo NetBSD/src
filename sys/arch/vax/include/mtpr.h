@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.18 2005/12/24 20:07:41 perry Exp $     */
+/*      $NetBSD: mtpr.h,v 1.19 2005/12/24 23:24:07 perry Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -168,7 +168,7 @@
 
 #define mtpr(val,reg)						\
 {								\
-	__asm__ volatile ("mtpr %0,%1"			\
+	__asm volatile ("mtpr %0,%1"			\
 			: /* No output */			\
 			: "g" ((long)(val)), "g" (reg));        \
 }
@@ -176,7 +176,7 @@
 #define mfpr(reg)					\
 ({							\
 	register int __val;				\
-	__asm__ volatile ("mfpr %1,%0"		\
+	__asm volatile ("mfpr %1,%0"		\
 			: "=g" (__val)			\
 			: "g" (reg));			\
 	__val;						\

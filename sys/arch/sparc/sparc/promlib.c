@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.38 2005/11/16 22:10:58 uwe Exp $ */
+/*	$NetBSD: promlib.c,v 1.39 2005/12/24 23:24:02 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.38 2005/11/16 22:10:58 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.39 2005/12/24 23:24:02 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -546,7 +546,7 @@ obp_v0_write(int fd, const void *buf, int len)
 	return (-1);
 }
 
-__inline__ void
+inline void
 obp_v2_putchar(int c)
 {
 	char c0;
@@ -1082,7 +1082,7 @@ static void prom_init_oldmon(void);
 static void prom_init_obp(void);
 static void prom_init_opf(void);
 
-static __inline__ void
+static inline void
 prom_init_oldmon(void)
 {
 	struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
@@ -1121,7 +1121,7 @@ prom_init_oldmon(void)
 #endif
 }
 
-static __inline__ void
+static inline void
 prom_init_obp(void)
 {
 	struct nodeops *no;
@@ -1227,7 +1227,7 @@ prom_init_obp(void)
 	}
 }
 
-static __inline__ void
+static inline void
 prom_init_opf(void)
 {
 	int node;

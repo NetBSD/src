@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.18 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.19 2005/12/24 23:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.18 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.19 2005/12/24 23:24:00 perry Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -211,7 +211,7 @@ clear_reg(void)
 	memset(&r_gdt, 0, sizeof(r_gdt));
 }
 
-__asm__("							\
+__asm("							\
 	.text;							\
 	.p2align 2, 0x90;					\
 	.type acpi_restorecpu, @function;			\
@@ -351,7 +351,7 @@ acpi_md_sleep(int state)
 		/* Execute Sleep */
 
 		/* load proc 0 PTD */
-		__asm__( "movl %0,%%cr3;" : : "a" (PDPpaddr) );
+		__asm( "movl %0,%%cr3;" : : "a" (PDPpaddr) );
 
 		p_gdt = (struct region_descriptor *)(phys_wakeup+physical_gdt);
 		p_gdt->rd_limit = r_gdt.rd_limit;
@@ -395,7 +395,7 @@ acpi_md_sleep(int state)
 		 * although the context switching during sleep
 		 * process is also unpreferable.
 		 */
-		__asm__( "movl %0,%%cr3;" : : "a" (r_cr3) );
+		__asm( "movl %0,%%cr3;" : : "a" (r_cr3) );
 
 #ifdef ACPI_PRINT_REG
 		acpi_printcpu();

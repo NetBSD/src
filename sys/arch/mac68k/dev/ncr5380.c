@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.60 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.61 2005/12/24 23:24:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.60 2005/12/11 12:18:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.61 2005/12/24 23:24:00 perry Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -103,7 +103,7 @@ static SC_REQ	*free_head = NULL;	/* Free request structures	*/
  *
  * -- A sleeping Fujitsu M2512 is even worse; try 2.5 sec     -hf 20 Jun
  */
-extern __inline__ int wait_req_true(void)
+extern inline int wait_req_true(void)
 {
 	int	timeout = 2500000;
 
@@ -116,7 +116,7 @@ extern __inline__ int wait_req_true(void)
  * Wait for request-line to become inactive. When it doesn't return 0.
  * Otherwise return != 0.
  */
-extern __inline__ int wait_req_false(void)
+extern inline int wait_req_false(void)
 {
 	int	timeout = 2500000;
 
@@ -125,18 +125,18 @@ extern __inline__ int wait_req_false(void)
 	return (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_REQ));
 }
 
-extern __inline__ void ack_message(void)
+extern inline void ack_message(void)
 {
 	SET_5380_REG(NCR5380_ICOM, 0);
 }
 
-extern __inline__ void nack_message(SC_REQ *reqp, u_char msg)
+extern inline void nack_message(SC_REQ *reqp, u_char msg)
 {
 	SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
 	reqp->msgout = msg;
 }
 
-extern __inline__ void finish_req(SC_REQ *reqp)
+extern inline void finish_req(SC_REQ *reqp)
 {
 	int			sps;
 	struct scsipi_xfer	*xs = reqp->xs;

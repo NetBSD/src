@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.19 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: profile.h,v 1.20 2005/12/24 23:24:01 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@
     void __attribute__((unused)) __mcount
 
 #define	MCOUNT \
-	__asm__(".globl _mcount;" \
+	__asm(".globl _mcount;" \
 	".type _mcount,@function;" \
 	"_mcount:;" \
 	".set noreorder;" \

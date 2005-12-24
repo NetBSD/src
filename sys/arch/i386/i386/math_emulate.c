@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.30 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.31 2005/12/24 23:24:00 perry Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.30 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.31 2005/12/24 23:24:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -739,7 +739,7 @@ void get_longlong_int(temp_real * tmp,
 	ti.a = fuword((u_long *) addr);
 	ti.b = fuword((u_long *) addr + 1);
 	if ((ti.sign = (ti.b < 0)) != 0)
-		__asm__("notl %0 ; notl %1\n\t"
+		__asm("notl %0 ; notl %1\n\t"
 			"addl $1,%0 ; adcl $0,%1"
 			:"=r" (ti.a),"=r" (ti.b)
 			:"0" (ti.a),"1" (ti.b));
@@ -747,7 +747,7 @@ void get_longlong_int(temp_real * tmp,
 }
 
 #define MUL10(low,high) \
-__asm__("addl %0,%0 ; adcl %1,%1\n\t" \
+__asm("addl %0,%0 ; adcl %1,%1\n\t" \
 "movl %0,%%ecx ; movl %1,%%ebx\n\t" \
 "addl %0,%0 ; adcl %1,%1\n\t" \
 "addl %0,%0 ; adcl %1,%1\n\t" \
@@ -756,7 +756,7 @@ __asm__("addl %0,%0 ; adcl %1,%1\n\t" \
 :"0" (low),"1" (high):"cx","bx")
 
 #define ADD64(val,low,high) \
-__asm__("addl %4,%0 ; adcl $0,%1":"=r" (low),"=r" (high) \
+__asm("addl %4,%0 ; adcl $0,%1":"=r" (low),"=r" (high) \
 :"0" (low),"1" (high),"r" ((u_long) (val)))
 
 void get_BCD(temp_real * tmp, struct trapframe * info, u_short code)
@@ -849,7 +849,7 @@ void put_longlong_int(const temp_real * tmp,
 	addr = ea(info,code);
 	real_to_int(tmp,&ti);
 	if (ti.sign)
-		__asm__("notl %0 ; notl %1\n\t"
+		__asm("notl %0 ; notl %1\n\t"
 			"addl $1,%0 ; adcl $0,%1"
 			:"=r" (ti.a),"=r" (ti.b)
 			:"0" (ti.a),"1" (ti.b));
@@ -858,7 +858,7 @@ void put_longlong_int(const temp_real * tmp,
 }
 
 #define DIV10(low,high,rem) \
-__asm__("divl %6 ; xchgl %1,%2 ; divl %6" \
+__asm("divl %6 ; xchgl %1,%2 ; divl %6" \
 	:"=d" (rem),"=a" (low),"=r" (high) \
 	:"0" (0),"1" (high),"2" (low),"c" (10))
 
@@ -897,7 +897,7 @@ void put_BCD(const temp_real * tmp,struct trapframe * info, u_short code)
 
 static void shift(int * c)
 {
-	__asm__("movl (%0),%%eax ; addl %%eax,(%0)\n\t"
+	__asm("movl (%0),%%eax ; addl %%eax,(%0)\n\t"
 		"movl 4(%0),%%eax ; adcl %%eax,4(%0)\n\t"
 		"movl 8(%0),%%eax ; adcl %%eax,8(%0)\n\t"
 		"movl 12(%0),%%eax ; adcl %%eax,12(%0)"
@@ -906,7 +906,7 @@ static void shift(int * c)
 
 static void mul64(const temp_real * a, const temp_real * b, int * c)
 {
-	__asm__("movl (%0),%%eax\n\t"
+	__asm("movl (%0),%%eax\n\t"
 		"mull (%1)\n\t"
 		"movl %%eax,(%2)\n\t"
 		"movl %%edx,4(%2)\n\t"
@@ -971,7 +971,7 @@ void fmul(const temp_real * src1, const temp_real * src2, temp_real * result)
 
 static void shift_left(int * c)
 {
-	__asm__ __volatile__("movl (%0),%%eax ; addl %%eax,(%0)\n\t"
+	__asm volatile("movl (%0),%%eax ; addl %%eax,(%0)\n\t"
 		"movl 4(%0),%%eax ; adcl %%eax,4(%0)\n\t"
 		"movl 8(%0),%%eax ; adcl %%eax,8(%0)\n\t"
 		"movl 12(%0),%%eax ; adcl %%eax,12(%0)"
@@ -980,7 +980,7 @@ static void shift_left(int * c)
 
 static void shift_right(int * c)
 {
-	__asm__("shrl $1,12(%0) ; rcrl $1,8(%0) ; rcrl $1,4(%0) ; rcrl $1,(%0)"
+	__asm("shrl $1,12(%0) ; rcrl $1,8(%0) ; rcrl $1,4(%0) ; rcrl $1,(%0)"
 		::"r" ((long) c));
 }
 
@@ -988,7 +988,7 @@ static int try_sub(int * a, int * b)
 {
 	char ok;
 
-	__asm__ __volatile__("movl (%1),%%eax ; subl %%eax,(%2)\n\t"
+	__asm volatile("movl (%1),%%eax ; subl %%eax,(%2)\n\t"
 		"movl 4(%1),%%eax ; sbbl %%eax,4(%2)\n\t"
 		"movl 8(%1),%%eax ; sbbl %%eax,8(%2)\n\t"
 		"movl 12(%1),%%eax ; sbbl %%eax,12(%2)\n\t"
@@ -1087,14 +1087,14 @@ void fdiv(const temp_real * src1, const temp_real * src2, temp_real * result)
  */
 
 #define NEGINT(a) \
-__asm__("notl %0 ; notl %1 ; addl $1,%0 ; adcl $0,%1" \
+__asm("notl %0 ; notl %1 ; addl $1,%0 ; adcl $0,%1" \
 	:"=r" (a->a),"=r" (a->b) \
 	:"0" (a->a),"1" (a->b))
 
 static void signify(temp_real * a)
 {
 	a->exponent += 2;
-	__asm__("shrdl $2,%1,%0 ; shrl $2,%1"
+	__asm("shrdl $2,%1,%0 ; shrl $2,%1"
 		:"=r" (a->a),"=r" (a->b)
 		:"0" (a->a),"1" (a->b));
 	if (a->exponent < 0)
@@ -1115,7 +1115,7 @@ static void unsignify(temp_real * a)
 	}
 	while (a->b >= 0) {
 		a->exponent--;
-		__asm__("addl %0,%0 ; adcl %1,%1"
+		__asm("addl %0,%0 ; adcl %1,%1"
 			:"=r" (a->a),"=r" (a->b)
 			:"0" (a->a),"1" (a->b));
 	}
@@ -1146,12 +1146,12 @@ void fadd(const temp_real * src1, const temp_real * src2, temp_real * result)
 		b.b = 0;
 		shft -= 32;
 	}
-	__asm__("shrdl %4,%1,%0 ; shrl %4,%1"
+	__asm("shrdl %4,%1,%0 ; shrl %4,%1"
 		:"=r" (b.a),"=r" (b.b)
 		:"0" (b.a),"1" (b.b),"c" ((char) shft));
 	signify(&a);
 	signify(&b);
-	__asm__("addl %4,%0 ; adcl %5,%1"
+	__asm("addl %4,%0 ; adcl %5,%1"
 		:"=r" (a.a),"=r" (a.b)
 		:"0" (a.a),"1" (a.b),"g" (b.a),"g" (b.b));
 	unsignify(&a);
@@ -1182,7 +1182,7 @@ static void normalize(temp_real * a)
 	}
 	while (i && a->b >= 0) {
 		i--;
-		__asm__("addl %0,%0 ; adcl %1,%1"
+		__asm("addl %0,%0 ; adcl %1,%1"
 			:"=r" (a->a),"=r" (a->b)
 			:"0" (a->a),"1" (a->b));
 	}
@@ -1313,19 +1313,19 @@ void temp_to_long(const temp_real * a, long_real * b)
 	switch (ROUNDING) {
 		case ROUND_NEAREST:
 			if ((a->a & 0x7ff) > 0x400)
-				__asm__("addl $1,%0 ; adcl $0,%1"
+				__asm("addl $1,%0 ; adcl $0,%1"
 					:"=r" (b->a),"=r" (b->b)
 					:"0" (b->a),"1" (b->b));
 			break;
 		case ROUND_DOWN:
 			if ((a->exponent & 0x8000) && (a->b & 0xff))
-				__asm__("addl $1,%0 ; adcl $0,%1"
+				__asm("addl $1,%0 ; adcl $0,%1"
 					:"=r" (b->a),"=r" (b->b)
 					:"0" (b->a),"1" (b->b));
 			break;
 		case ROUND_UP:
 			if (!(a->exponent & 0x8000) && (a->b & 0xff))
-				__asm__("addl $1,%0 ; adcl $0,%1"
+				__asm("addl $1,%0 ; adcl $0,%1"
 					:"=r" (b->a),"=r" (b->b)
 					:"0" (b->a),"1" (b->b));
 			break;
@@ -1358,18 +1358,18 @@ void frndint(const temp_real * a, temp_real * b)
 		shft = 0;
 	}
 	b->exponent += shft;
-	__asm__("shrdl %2,%1,%0"
+	__asm("shrdl %2,%1,%0"
 		:"=r" (underflow),"=r" (b->a)
 		:"c" ((char) shft),"0" (underflow),"1" (b->a));
-	__asm__("shrdl %2,%1,%0"
+	__asm("shrdl %2,%1,%0"
 		:"=r" (b->a),"=r" (b->b)
 		:"c" ((char) shft),"0" (b->a),"1" (b->b));
-	__asm__("shrl %1,%0"
+	__asm("shrl %1,%0"
 		:"=r" (b->b)
 		:"c" ((char) shft),"0" (b->b));
 	switch (ROUNDING) {
 		case ROUND_NEAREST:
-			__asm__("addl %4,%5 ; adcl $0,%0 ; adcl $0,%1"
+			__asm("addl %4,%5 ; adcl $0,%0 ; adcl $0,%1"
 				:"=r" (b->a),"=r" (b->b)
 				:"0" (b->a),"1" (b->b)
 				,"r" (0x7fffffff + (b->a & 1))
@@ -1377,13 +1377,13 @@ void frndint(const temp_real * a, temp_real * b)
 			break;
 		case ROUND_UP:
 			if ((b->exponent >= 0) && underflow)
-				__asm__("addl $1,%0 ; adcl $0,%1"
+				__asm("addl $1,%0 ; adcl $0,%1"
 					:"=r" (b->a),"=r" (b->b)
 					:"0" (b->a),"1" (b->b));
 			break;
 		case ROUND_DOWN:
 			if ((b->exponent < 0) && underflow)
-				__asm__("addl $1,%0 ; adcl $0,%1"
+				__asm("addl $1,%0 ; adcl $0,%1"
 					:"=r" (b->a),"=r" (b->b)
 					:"0" (b->a),"1" (b->b));
 			break;
@@ -1391,7 +1391,7 @@ void frndint(const temp_real * a, temp_real * b)
 	if (b->a || b->b)
 		while (b->b >= 0) {
 			b->exponent--;
-			__asm__("addl %0,%0 ; adcl %1,%1"
+			__asm("addl %0,%0 ; adcl %1,%1"
 				:"=r" (b->a),"=r" (b->b)
 				:"0" (b->a),"1" (b->b));
 		}
@@ -1438,18 +1438,18 @@ void real_to_int(const temp_real * a, temp_int * b)
 		underflow = 1;
 		shft = 0;
 	}
-	__asm__("shrdl %2,%1,%0"
+	__asm("shrdl %2,%1,%0"
 		:"=r" (underflow),"=r" (b->a)
 		:"c" ((char) shft),"0" (underflow),"1" (b->a));
-	__asm__("shrdl %2,%1,%0"
+	__asm("shrdl %2,%1,%0"
 		:"=r" (b->a),"=r" (b->b)
 		:"c" ((char) shft),"0" (b->a),"1" (b->b));
-	__asm__("shrl %1,%0"
+	__asm("shrl %1,%0"
 		:"=r" (b->b)
 		:"c" ((char) shft),"0" (b->b));
 	switch (ROUNDING) {
 		case ROUND_NEAREST:
-			__asm__("addl %4,%5 ; adcl $0,%0 ; adcl $0,%1"
+			__asm("addl %4,%5 ; adcl $0,%0 ; adcl $0,%1"
 				:"=r" (b->a),"=r" (b->b)
 				:"0" (b->a),"1" (b->b)
 				,"r" (0x7fffffff + (b->a & 1))
@@ -1457,13 +1457,13 @@ void real_to_int(const temp_real * a, temp_int * b)
 			break;
 		case ROUND_UP:
 			if (!b->sign && underflow)
-				__asm__("addl $1,%0 ; adcl $0,%1"
+				__asm("addl $1,%0 ; adcl $0,%1"
 					:"=r" (b->a),"=r" (b->b)
 					:"0" (b->a),"1" (b->b));
 			break;
 		case ROUND_DOWN:
 			if (b->sign && underflow)
-				__asm__("addl $1,%0 ; adcl $0,%1"
+				__asm("addl $1,%0 ; adcl $0,%1"
 					:"=r" (b->a),"=r" (b->b)
 					:"0" (b->a),"1" (b->b));
 			break;
@@ -1482,7 +1482,7 @@ void int_to_real(const temp_int * a, temp_real * b)
 	}
 	while (b->b >= 0) {
 		b->exponent--;
-		__asm__("addl %0,%0 ; adcl %1,%1"
+		__asm("addl %0,%0 ; adcl %1,%1"
 			:"=r" (b->a),"=r" (b->b)
 			:"0" (b->a),"1" (b->b));
 	}
