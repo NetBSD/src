@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.26 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.27 2005/12/24 20:45:10 perry Exp $	*/
 
 /*
  *
@@ -70,7 +70,7 @@ struct vm_amap;
  */
 
 #ifdef UVM_AMAP_INLINE			/* defined/undef'd in uvm_amap.c */
-#define AMAP_INLINE static __inline	/* inline enabled */
+#define AMAP_INLINE static inline	/* inline enabled */
 #else
 #define AMAP_INLINE			/* inline disabled */
 #endif /* UVM_AMAP_INLINE */

@@ -31,15 +31,15 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/libkern/qsort.c,v 1.12 2002/11/09 12:55:06 alfred Exp $
- * $NetBSD: qsort.c,v 1.2 2005/12/11 12:24:46 christos Exp $
+ * $NetBSD: qsort.c,v 1.3 2005/12/24 20:45:09 perry Exp $
  */
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
 typedef int		 cmp_t(const void *, const void *);
-static __inline char	*med3(char *, char *, char *, cmp_t *);
-static __inline void	 swapfunc(char *, char *, int, int);
+static inline char	*med3(char *, char *, char *, cmp_t *);
+static inline void	 swapfunc(char *, char *, int, int);
 
 #define min(a, b)	(a) < (b) ? (a) : (b)
 
@@ -62,7 +62,7 @@ void qsort(void *a, size_t n, size_t es, cmp_t *cmp);
 #define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
 	es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
 
-static __inline void
+static inline void
 swapfunc(a, b, n, swaptype)
 	char *a, *b;
 	int n, swaptype;
@@ -83,7 +83,7 @@ swapfunc(a, b, n, swaptype)
 
 #define vecswap(a, b, n) 	if ((n) > 0) swapfunc(a, b, n, swaptype)
 
-static __inline char *
+static inline char *
 med3(a, b, c, cmp)
 	char *a, *b, *c;
 	cmp_t *cmp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.106 2005/08/09 21:36:42 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.107 2005/12/24 20:52:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.106 2005/08/09 21:36:42 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.107 2005/12/24 20:52:20 perry Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.106 2005/08/09 21:36:42 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.107 2005/12/24 20:52:20 perry Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -305,7 +305,7 @@ static int ParseAddDir(ClientData, ClientData);
 static int ParseClearPath(ClientData, ClientData);
 static void ParseDoDependency(char *);
 static int ParseAddCmd(ClientData, ClientData);
-static __inline int ParseReadc(void);
+static inline int ParseReadc(void);
 static void ParseUnreadc(int);
 static void ParseHasCommands(ClientData);
 static void ParseDoInclude(char *);
@@ -2307,7 +2307,7 @@ ParseEOF(int opened)
  * Side Effects:
  *---------------------------------------------------------------------
  */
-static __inline int 
+static inline int 
 ParseReadc(void)
 {
     if (curFile.F)

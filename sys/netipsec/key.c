@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.26 2005/12/11 12:25:05 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.27 2005/12/24 20:45:09 perry Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.26 2005/12/11 12:25:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.27 2005/12/24 20:45:09 perry Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -503,7 +503,7 @@ static const char *key_getfqdn __P((void));
 static const char *key_getuserfqdn __P((void));
 #endif
 static void key_sa_chgstate __P((struct secasvar *, u_int8_t));
-static  __inline void key_sp_dead __P((struct secpolicy *));
+static inline void key_sp_dead __P((struct secpolicy *));
 static void key_sp_unlink __P((struct secpolicy *sp));
 
 static struct mbuf *key_alloc_mbuf __P((int));
@@ -532,7 +532,7 @@ struct callout key_timehandler_ch;
 } while (0)
 
 
-static __inline void
+static inline void
 key_sp_dead(struct secpolicy *sp)
 {
 

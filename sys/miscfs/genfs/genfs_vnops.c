@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.117 2005/12/15 02:23:38 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.118 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.117 2005/12/15 02:23:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.118 2005/12/24 20:45:09 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.117 2005/12/15 02:23:38 yamt Exp $
 #include <nfs/nfs_var.h>
 #endif
 
-static __inline void genfs_rel_pages(struct vm_page **, int);
+static inline void genfs_rel_pages(struct vm_page **, int);
 static void filt_genfsdetach(struct knote *);
 static int filt_genfsread(struct knote *, long);
 static int filt_genfsvnode(struct knote *, long);
@@ -399,7 +399,7 @@ genfs_mmap(void *v)
 	return (0);
 }
 
-static __inline void
+static inline void
 genfs_rel_pages(struct vm_page **pgs, int npages)
 {
 	int i;

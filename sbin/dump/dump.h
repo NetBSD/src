@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.40 2005/06/27 01:37:32 christos Exp $	*/
+/*	$NetBSD: dump.h,v 1.41 2005/12/24 20:55:03 perry Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -129,11 +129,11 @@ int needswap;	/* file system in swapped byte order */
 
 
 /* some inline functions to help the byte-swapping mess */
-static __inline u_int16_t iswap16(u_int16_t);
-static __inline u_int32_t iswap32(u_int32_t);
-static __inline u_int64_t iswap64(u_int64_t);
+static inline u_int16_t iswap16(u_int16_t);
+static inline u_int32_t iswap32(u_int32_t);
+static inline u_int64_t iswap64(u_int64_t);
 
-static __inline u_int16_t iswap16(u_int16_t x)
+static inline u_int16_t iswap16(u_int16_t x)
 {
 	if (needswap)
 		return bswap16(x);
@@ -141,7 +141,7 @@ static __inline u_int16_t iswap16(u_int16_t x)
 		return x;
 }
 
-static __inline u_int32_t iswap32(u_int32_t x)
+static inline u_int32_t iswap32(u_int32_t x)
 {
 	if (needswap)
 		return bswap32(x);
@@ -149,7 +149,7 @@ static __inline u_int32_t iswap32(u_int32_t x)
 		return x;
 }
 
-static __inline u_int64_t iswap64(u_int64_t x)
+static inline u_int64_t iswap64(u_int64_t x)
 {
 	if (needswap)
 		return bswap64(x);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.43 2005/06/27 01:25:35 christos Exp $	*/
+/*	$NetBSD: fsck.h,v 1.44 2005/12/24 20:55:04 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -305,11 +305,11 @@ struct	ufs2_dinode ufs2_zino;
 #define	EEXIT	8		/* Standard error exit. */
 
 /* some inline functs to help the byte-swapping mess */
-static __inline u_int16_t iswap16 (u_int16_t);
-static __inline u_int32_t iswap32 (u_int32_t);
-static __inline u_int64_t iswap64 (u_int64_t);
+static inline u_int16_t iswap16 (u_int16_t);
+static inline u_int32_t iswap32 (u_int32_t);
+static inline u_int64_t iswap64 (u_int64_t);
 
-static __inline u_int16_t iswap16(x)
+static inline u_int16_t iswap16(x)
 	u_int16_t x;
 {
 	if (needswap)
@@ -317,7 +317,7 @@ static __inline u_int16_t iswap16(x)
 	else return x;
 }
 
-static __inline u_int32_t iswap32(x)
+static inline u_int32_t iswap32(x)
 	u_int32_t x;
 {
 	if (needswap)
@@ -325,7 +325,7 @@ static __inline u_int32_t iswap32(x)
 	else return x;
 }
 
-static __inline u_int64_t iswap64(x)
+static inline u_int64_t iswap64(x)
 	u_int64_t x;
 {
 	if (needswap)

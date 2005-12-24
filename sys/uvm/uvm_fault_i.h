@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.19 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.20 2005/12/24 20:45:10 perry Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  * uvmfault_unlockmaps: unlock the maps
  */
 
-static __inline void
+static inline void
 uvmfault_unlockmaps(struct uvm_faultinfo *ufi, boolean_t write_locked)
 {
 	/*
@@ -70,7 +70,7 @@ uvmfault_unlockmaps(struct uvm_faultinfo *ufi, boolean_t write_locked)
  * => maps must be read-locked (not write-locked).
  */
 
-static __inline void
+static inline void
 uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
     struct uvm_object *uobj, struct vm_anon *anon)
 {
@@ -99,7 +99,7 @@ uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
  *	map and the submap is unnecessary).
  */
 
-static __inline boolean_t
+static inline boolean_t
 uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
 {
 	struct vm_map *tmpmap;
@@ -184,7 +184,7 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
  * => if a success (TRUE) maps will be locked after call.
  */
 
-static __inline boolean_t
+static inline boolean_t
 uvmfault_relock(struct uvm_faultinfo *ufi)
 {
 	/*

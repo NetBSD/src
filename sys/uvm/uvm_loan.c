@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.56 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.57 2005/12/24 20:45:10 perry Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.56 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.57 2005/12/24 20:45:10 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ static int	uvm_loanpage(struct vm_page **, int);
  * from one place.
  */
 
-static __inline int
+static inline int
 uvm_loanentry(struct uvm_faultinfo *ufi, void ***output, int flags)
 {
 	vaddr_t curaddr = ufi->orig_rvaddr;

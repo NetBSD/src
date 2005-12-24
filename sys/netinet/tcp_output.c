@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.140 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.141 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.140 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.141 2005/12/24 20:45:09 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -233,7 +233,7 @@ extern struct evcnt tcp_output_refbig;
 
 static
 #ifndef GPROF
-__inline
+inline
 #endif
 int
 tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
@@ -424,7 +424,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 
 static
 #ifndef GPROF
-__inline
+inline
 #endif
 int
 tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
