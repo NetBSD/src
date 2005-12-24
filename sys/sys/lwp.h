@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.31 2005/12/03 17:10:46 christos Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.32 2005/12/24 19:01:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ struct	lwp {
 
 	LIST_ENTRY(lwp) l_sibling;	/* Entry on process's list of LWPs. */
 
-	struct cpu_info * __volatile l_cpu; /* CPU we're running on if
+	struct cpu_info * volatile l_cpu; /* CPU we're running on if
 					       SONPROC */
 	int	l_flag;
 	int	l_stat;
@@ -66,7 +66,7 @@ struct	lwp {
 	u_int	l_swtime;	/* Time swapped in or out. */
 	u_int	l_slptime;	/* Time since last blocked. */
 
-	__volatile const void *l_wchan;	/* Sleep address. */
+	volatile const void *l_wchan;	/* Sleep address. */
 	struct callout l_tsleep_ch;	/* callout for tsleep */
 	const char *l_wmesg;	/* Reason for sleep. */
 	int	l_holdcnt;	/* If non-zero, don't swap. */

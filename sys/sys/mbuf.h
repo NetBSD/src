@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.116 2005/12/04 20:21:33 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.117 2005/12/24 19:01:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -861,8 +861,8 @@ void	mbinit(void);
 void	m_move_pkthdr(struct mbuf *to, struct mbuf *from);
 
 /* Inline routines. */
-static __inline u_int m_length(struct mbuf *) __unused;
-static __inline void m_ext_free(struct mbuf *, boolean_t) __unused;
+static inline u_int m_length(struct mbuf *) __unused;
+static inline void m_ext_free(struct mbuf *, boolean_t) __unused;
 
 /* Packet tag routines */
 struct	m_tag *m_tag_get(int, int, int);
@@ -906,7 +906,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 /*
  * Return the number of bytes in the mbuf chain, m.
  */
-static __inline u_int
+static inline u_int
 m_length(struct mbuf *m)
 {
 	struct mbuf *m0;
@@ -927,7 +927,7 @@ m_length(struct mbuf *m)
  * => if 'dofree', free the mbuf m itsself as well.
  * => called at splvm.
  */
-static __inline void
+static inline void
 m_ext_free(struct mbuf *m, boolean_t dofree)
 {
 
