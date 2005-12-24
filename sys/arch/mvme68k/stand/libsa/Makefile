@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.26 2005/12/11 12:18:19 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2005/12/24 22:18:40 tsutsui Exp $
 
 LIB=sa
 
 # Logically src/sys
 DIR_SA=$S/lib/libsa
 DIR_KERN=$S/lib/libkern
+DIR_LIBC=$S/../common/lib/libc
 
 SRC_net= arp.c \
 	 bootp.c bootparam.c \
@@ -34,9 +35,9 @@ SRC_sa= alloc.c \
 # XXX Needed until libsa's memcmp.c doesn't depend on bcmp...
 SRC_sa+= bcmp.c
 
-SRC_kern= ashldi3.c ashrdi3.c \
-	  inet_addr.c \
-	  strcmp.c strlen.c strncpy.c
+SRC_libc_inet= inet_addr.c
+SRC_libc_quad= ashldi3.c ashrdi3.c
+SRC_libc_string= strcmp.c strlen.c strncpy.c
 
 SRC_mvme= exec_mvme.c
 
@@ -59,7 +60,8 @@ CLEANFILES+= SRT0.o
 
 .include "../Makefile.booters"
 
-.PATH:  ${DIR_SA} ${DIR_KERN} 
+.PATH:	${DIR_SA} ${DIR_KERN} \
+	${DIR_LIBC}/inet ${DIR_LIBC}/quad ${DIR_LIBC}/string
 
 # only needed during build
 libinstall::
