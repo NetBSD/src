@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.45 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.46 2005/12/24 21:42:02 perry Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ void utrace(struct ut *, int);
 #   define UTRACE_LABEL "malloc",
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.45 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.46 2005/12/24 21:42:02 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 #include <sys/types.h>
 int utrace(const char *, void *, size_t);
@@ -627,7 +627,7 @@ malloc_pages(size_t size)
  * Allocate a page of fragments
  */
 
-static __inline__ int
+static inline int
 malloc_make_chunks(int bits)
 {
     struct  pginfo *bp;
@@ -874,7 +874,7 @@ irealloc(void *ptr, size_t size)
  * Free a sequence of pages
  */
 
-static __inline__ void
+static inline void
 free_pages(void *ptr, size_t idx, struct pginfo *info)
 {
     size_t i;
@@ -1005,7 +1005,7 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
  * Free a chunk, and possibly the page it's on, if the page becomes empty.
  */
 
-static __inline__ void
+static inline void
 free_bytes(void *ptr, size_t idx, struct pginfo *info)
 {
     size_t i;
