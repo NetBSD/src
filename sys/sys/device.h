@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.83 2005/12/20 16:28:55 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.84 2005/12/24 19:01:28 perry Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -301,7 +301,7 @@ extern device_t booted_device;		/* the device we booted from */
 extern device_t booted_wedge;		/* the wedge on that device */
 extern int booted_partition;		/* or the partition on that device */
 
-extern __volatile int config_pending; 	/* semaphore for mountroot */
+extern volatile int config_pending; 	/* semaphore for mountroot */
 
 extern propdb_t dev_propdb;		/* device properties database */
 
