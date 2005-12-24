@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.12 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $	*/
 /*	$KAME: altq_red.c,v 1.9 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.12 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -200,13 +200,13 @@ static int red_request __P((struct ifaltq *, int, void *));
 static void red_purgeq __P((red_queue_t *));
 static int red_detach __P((red_queue_t *));
 #ifdef ALTQ_FLOWVALVE
-static __inline struct fve *flowlist_lookup __P((struct flowvalve *,
+static inline struct fve *flowlist_lookup __P((struct flowvalve *,
 			 struct altq_pktattr *, struct timeval *));
-static __inline struct fve *flowlist_reclaim __P((struct flowvalve *,
+static inline struct fve *flowlist_reclaim __P((struct flowvalve *,
 						  struct altq_pktattr *));
-static __inline void flowlist_move_to_head __P((struct flowvalve *,
+static inline void flowlist_move_to_head __P((struct flowvalve *,
 						struct fve *));
-static __inline int fv_p2f __P((struct flowvalve *, int));
+static inline int fv_p2f __P((struct flowvalve *, int));
 static struct flowvalve *fv_alloc __P((struct red *));
 static void fv_destroy __P((struct flowvalve *));
 static int fv_checkflow __P((struct flowvalve *, struct altq_pktattr *,
@@ -1129,7 +1129,7 @@ const int brtt_tab[BRTT_SIZE] = {
 	4611, 4504, 4400, 4299, 4201, 4106, 4014, 3924
 };
 
-static __inline struct fve *
+static inline struct fve *
 flowlist_lookup(fv, pktattr, now)
 	struct flowvalve *fv;
 	struct altq_pktattr *pktattr;
@@ -1199,7 +1199,7 @@ flowlist_lookup(fv, pktattr, now)
 	return (NULL);
 }
 
-static __inline struct fve *
+static inline struct fve *
 flowlist_reclaim(fv, pktattr)
 	struct flowvalve *fv;
 	struct altq_pktattr *pktattr;
@@ -1245,7 +1245,7 @@ flowlist_reclaim(fv, pktattr)
 	return (fve);
 }
 
-static __inline void
+static inline void
 flowlist_move_to_head(fv, fve)
 	struct flowvalve *fv;
 	struct fve *fve;
@@ -1323,7 +1323,7 @@ static void fv_destroy(fv)
 	FREE(fv, M_DEVBUF);
 }
 
-static __inline int
+static inline int
 fv_p2f(fv, p)
 	struct flowvalve	*fv;
 	int	p;

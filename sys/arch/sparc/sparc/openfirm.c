@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.12 2005/11/14 19:11:24 uwe Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.13 2005/12/24 20:07:37 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.12 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.13 2005/12/24 20:07:37 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -757,7 +757,7 @@ OF_sym2val(void *cells)
 	db_expr_t value;
 
 	/* Set data segment pointer */
-	__asm __volatile("clr %%g4" : :);
+	__asm volatile("clr %%g4" : :);
 
 	/* No args?  Nothing to do. */
 	if (args->nargs == 0 || args->nreturns == 0)
@@ -795,7 +795,7 @@ OF_val2sym(void *cells)
 	db_expr_t offset;
 
 	/* Set data segment pointer */
-	__asm __volatile("clr %%g4" : :);
+	__asm volatile("clr %%g4" : :);
 
 	if (obp_symbol_debug)
 		prom_printf("OF_val2sym: nargs %lx nreturns %lx\n",

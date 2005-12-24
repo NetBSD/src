@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.34 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.35 2005/12/24 20:06:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.34 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.35 2005/12/24 20:06:59 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -316,7 +316,7 @@ cpu_reboot(int howto, char *bootstr)
 	 * and poke the Internal Bus and Peripheral Bus reset lines.
 	 */
 	(void) disable_interrupts(I32_bit|F32_bit);
-	*(__volatile uint32_t *)(IQ80321_80321_VBASE + VERDE_ATU_BASE +
+	*(volatile uint32_t *)(IQ80321_80321_VBASE + VERDE_ATU_BASE +
 	    ATU_PCSR) = PCSR_RIB | PCSR_RPB;
 
 	/* ...and if that didn't work, just croak. */

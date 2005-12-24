@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.18 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: fpu.c,v 1.19 2005/12/24 20:07:28 perry Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.18 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.19 2005/12/24 20:07:28 perry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -68,12 +68,12 @@ enable_fpu(void)
 	}
 	msr = mfmsr();
         mtmsr((msr & ~PSL_EE) | PSL_FP);
-	__asm __volatile ("isync");
+	__asm volatile ("isync");
 	if (ci->ci_fpulwp) {
 		save_fpu_cpu();
 	}
 	KASSERT(ci->ci_fpulwp == NULL);
-	__asm __volatile (
+	__asm volatile (
 		"lfd	0,0(%0)\n"
 		"mtfsf	0xff,0\n"
 	    :: "b"(&pcb->pcb_fpu.fpscr));
@@ -111,12 +111,12 @@ enable_fpu(void)
 		"lfd	30,240(%0)\n"
 		"lfd	31,248(%0)\n"
 	    :: "b"(&pcb->pcb_fpu.fpreg[0]));
-	__asm __volatile ("isync");
+	__asm volatile ("isync");
 	tf->srr1 |= PSL_FP | (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
 	ci->ci_fpulwp = l;
 	pcb->pcb_fpcpu = ci;
 	pcb->pcb_flags |= PCB_OWNFPU;
-	__asm __volatile ("sync");
+	__asm volatile ("sync");
 	mtmsr(msr);
 }
 
@@ -133,7 +133,7 @@ save_fpu_cpu(void)
 
 	msr = mfmsr();
         mtmsr((msr & ~PSL_EE) | PSL_FP);
-	__asm __volatile ("isync");
+	__asm volatile ("isync");
 	l = ci->ci_fpulwp;
 	if (l == NULL) {
 		goto out;
@@ -173,15 +173,15 @@ save_fpu_cpu(void)
 		"stfd	30,240(%0)\n"
 		"stfd	31,248(%0)\n"
 	    :: "b"(&pcb->pcb_fpu.fpreg[0]));
-	__asm __volatile (
+	__asm volatile (
 		"mffs	0\n"
 		"stfd	0,0(%0)\n"
 	    :: "b"(&pcb->pcb_fpu.fpscr));
-	__asm __volatile ("sync");
+	__asm volatile ("sync");
 	pcb->pcb_fpcpu = NULL;
 	ci->ci_fpulwp = NULL;
 	ci->ci_ev_fpusw.ev_count++;
-	__asm __volatile ("sync");
+	__asm volatile ("sync");
  out:
 	mtmsr(msr);
 }
@@ -260,8 +260,8 @@ get_fpu_fault_code(void)
 	KASSERT(ci->ci_fpulwp == curlwp);
 	msr = mfmsr();
         mtmsr((msr & ~PSL_EE) | PSL_FP);
-	__asm __volatile ("isync");
-	__asm __volatile (
+	__asm volatile ("isync");
+	__asm volatile (
 		"stfd	0,0(%0)\n"	/* save f0 */
 		"mffs	0\n"		/* get FPSCR */
 		"stfd	0,0(%2)\n"	/* store a temp copy */
@@ -276,7 +276,7 @@ get_fpu_fault_code(void)
 		"lfd	0,0(%0)\n"	/* restore f0 */
 	    :: "b"(&tmp), "b"(&pcb->pcb_fpu.fpscr), "b"(&fpscr64));
         mtmsr(msr);
-	__asm __volatile ("isync");
+	__asm volatile ("isync");
 	/*
 	 * Now determine the fault type.  First we test to see if any of sticky
 	 * bits correspond to the enabled exceptions.  If so, we only test

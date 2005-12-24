@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.h,v 1.5 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: ixp425_intr.h,v 1.6 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -51,10 +51,10 @@
 
 void ixp425_do_pending(void);
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 ixp425_set_intrmask(void)
 {
-	extern __volatile uint32_t intr_enabled;
+	extern volatile uint32_t intr_enabled;
 
 	IXPREG(IXP425_INT_ENABLE) = intr_enabled & IXP425_INT_HWMASK;
 }
@@ -63,12 +63,12 @@ ixp425_set_intrmask(void)
 	((1U << IXP425_INT_bit31) | (1U << IXP425_INT_bit30) |	\
 	 (1U << IXP425_INT_bit14) | (1U << IXP425_INT_bit11))
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 ixp425_splx(int new)
 {
-	extern __volatile uint32_t intr_enabled;
-	extern __volatile int current_spl_level;
-	extern __volatile int ixp425_ipending;
+	extern volatile uint32_t intr_enabled;
+	extern volatile int current_spl_level;
+	extern volatile int ixp425_ipending;
 	extern void ixp425_do_pending(void);
 	int oldirqstate, hwpend;
 
@@ -89,10 +89,10 @@ ixp425_splx(int new)
 		ixp425_do_pending();
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 ixp425_splraise(int ipl)
 {
-	extern __volatile int current_spl_level;
+	extern volatile int current_spl_level;
 	extern int ixp425_imask[];
 	int	old;
 
@@ -105,10 +105,10 @@ ixp425_splraise(int ipl)
 	return (old);
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 ixp425_spllower(int ipl)
 {
-	extern __volatile int current_spl_level;
+	extern volatile int current_spl_level;
 	extern int ixp425_imask[];
 	int old = current_spl_level;
 

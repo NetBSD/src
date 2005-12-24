@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_wdog.c,v 1.7 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: i80321_wdog.c,v 1.8 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_wdog.c,v 1.7 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_wdog.c,v 1.8 2005/12/24 20:06:52 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,11 @@ struct iopwdog_softc {
 	int sc_wdog_period;
 };
 
-static __inline void
+static inline void
 wdtcr_write(uint32_t val)
 {
 
-	__asm __volatile("mcr p6, 0, %0, c7, c1, 0"
+	__asm volatile("mcr p6, 0, %0, c7, c1, 0"
 		:
 		: "r" (val));
 }

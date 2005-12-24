@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.9 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.9 2005/12/11 12:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $");
 
 #include "opt_pci.h"
 
@@ -445,20 +445,20 @@ shpcic_iomem_free(void *v, bus_space_handle_t bsh, bus_size_t size)
  * shpcic bus space io/mem read/write
  */
 /* read */
-static __inline uint8_t __shpcic_io_read_1(bus_space_handle_t bsh,
+static inline uint8_t __shpcic_io_read_1(bus_space_handle_t bsh,
     bus_size_t offset);
-static __inline uint16_t __shpcic_io_read_2(bus_space_handle_t bsh,
+static inline uint16_t __shpcic_io_read_2(bus_space_handle_t bsh,
     bus_size_t offset);
-static __inline uint32_t __shpcic_io_read_4(bus_space_handle_t bsh,
+static inline uint32_t __shpcic_io_read_4(bus_space_handle_t bsh,
     bus_size_t offset);
-static __inline uint8_t __shpcic_mem_read_1(bus_space_handle_t bsh,
+static inline uint8_t __shpcic_mem_read_1(bus_space_handle_t bsh,
     bus_size_t offset);
-static __inline uint16_t __shpcic_mem_read_2(bus_space_handle_t bsh,
+static inline uint16_t __shpcic_mem_read_2(bus_space_handle_t bsh,
     bus_size_t offset);
-static __inline uint32_t __shpcic_mem_read_4(bus_space_handle_t bsh,
+static inline uint32_t __shpcic_mem_read_4(bus_space_handle_t bsh,
     bus_size_t offset);
 
-static __inline uint8_t
+static inline uint8_t
 __shpcic_io_read_1(bus_space_handle_t bsh, bus_size_t offset)
 {
 	u_long adr = (u_long)(bsh + offset) & SH4_PCIC_IO_MASK;
@@ -466,7 +466,7 @@ __shpcic_io_read_1(bus_space_handle_t bsh, bus_size_t offset)
 	return *(volatile uint8_t *)(SH4_PCIC_IO + adr);
 }
 
-static __inline uint16_t
+static inline uint16_t
 __shpcic_io_read_2(bus_space_handle_t bsh, bus_size_t offset)
 {
 	u_long adr = (u_long)(bsh + offset) & SH4_PCIC_IO_MASK;
@@ -474,7 +474,7 @@ __shpcic_io_read_2(bus_space_handle_t bsh, bus_size_t offset)
 	return *(volatile uint16_t *)(SH4_PCIC_IO + adr);
 }
 
-static __inline uint32_t
+static inline uint32_t
 __shpcic_io_read_4(bus_space_handle_t bsh, bus_size_t offset)
 {
 	u_long adr = (u_long)(bsh + offset) & SH4_PCIC_IO_MASK;
@@ -482,7 +482,7 @@ __shpcic_io_read_4(bus_space_handle_t bsh, bus_size_t offset)
 	return *(volatile uint32_t *)(SH4_PCIC_IO + adr);
 }
 
-static __inline uint8_t
+static inline uint8_t
 __shpcic_mem_read_1(bus_space_handle_t bsh, bus_size_t offset)
 {
 	u_long adr = (u_long)(bsh + offset) & SH4_PCIC_MEM_MASK;
@@ -490,7 +490,7 @@ __shpcic_mem_read_1(bus_space_handle_t bsh, bus_size_t offset)
 	return *(volatile uint8_t *)(SH4_PCIC_MEM + adr);
 }
 
-static __inline uint16_t
+static inline uint16_t
 __shpcic_mem_read_2(bus_space_handle_t bsh, bus_size_t offset)
 {
 	u_long adr = (u_long)(bsh + offset) & SH4_PCIC_MEM_MASK;
@@ -498,7 +498,7 @@ __shpcic_mem_read_2(bus_space_handle_t bsh, bus_size_t offset)
 	return *(volatile uint16_t *)(SH4_PCIC_MEM + adr);
 }
 
-static __inline uint32_t
+static inline uint32_t
 __shpcic_mem_read_4(bus_space_handle_t bsh, bus_size_t offset)
 {
 	u_long adr = (u_long)(bsh + offset) & SH4_PCIC_MEM_MASK;
@@ -703,20 +703,20 @@ shpcic_mem_read_region_4(void *v, bus_space_handle_t bsh,
 }
 
 /* write */
-static __inline void __shpcic_io_write_1(bus_space_handle_t bsh,
+static inline void __shpcic_io_write_1(bus_space_handle_t bsh,
     bus_size_t offset, uint8_t value);
-static __inline void __shpcic_io_write_2(bus_space_handle_t bsh,
+static inline void __shpcic_io_write_2(bus_space_handle_t bsh,
     bus_size_t offset, uint16_t value);
-static __inline void __shpcic_io_write_4(bus_space_handle_t bsh,
+static inline void __shpcic_io_write_4(bus_space_handle_t bsh,
     bus_size_t offset, uint32_t value);
-static __inline void __shpcic_mem_write_1(bus_space_handle_t bsh,
+static inline void __shpcic_mem_write_1(bus_space_handle_t bsh,
     bus_size_t offset, uint8_t value);
-static __inline void __shpcic_mem_write_2(bus_space_handle_t bsh,
+static inline void __shpcic_mem_write_2(bus_space_handle_t bsh,
     bus_size_t offset, uint16_t value);
-static __inline void __shpcic_mem_write_4(bus_space_handle_t bsh,
+static inline void __shpcic_mem_write_4(bus_space_handle_t bsh,
     bus_size_t offset, uint32_t value);
 
-static __inline void
+static inline void
 __shpcic_io_write_1(bus_space_handle_t bsh, bus_size_t offset,
     uint8_t value)
 {
@@ -725,7 +725,7 @@ __shpcic_io_write_1(bus_space_handle_t bsh, bus_size_t offset,
 	*(volatile uint8_t *)(SH4_PCIC_IO + adr) = value;
 }
 
-static __inline void
+static inline void
 __shpcic_io_write_2(bus_space_handle_t bsh, bus_size_t offset,
     uint16_t value)
 {
@@ -734,7 +734,7 @@ __shpcic_io_write_2(bus_space_handle_t bsh, bus_size_t offset,
 	*(volatile uint16_t *)(SH4_PCIC_IO + adr) = value;
 }
 
-static __inline void
+static inline void
 __shpcic_io_write_4(bus_space_handle_t bsh, bus_size_t offset,
     uint32_t value)
 {
@@ -743,7 +743,7 @@ __shpcic_io_write_4(bus_space_handle_t bsh, bus_size_t offset,
 	*(volatile uint32_t *)(SH4_PCIC_IO + adr) = value;
 }
 
-static __inline void
+static inline void
 __shpcic_mem_write_1(bus_space_handle_t bsh, bus_size_t offset,
     uint8_t value)
 {
@@ -752,7 +752,7 @@ __shpcic_mem_write_1(bus_space_handle_t bsh, bus_size_t offset,
 	*(volatile uint8_t *)(SH4_PCIC_MEM + adr) = value;
 }
 
-static __inline void
+static inline void
 __shpcic_mem_write_2(bus_space_handle_t bsh, bus_size_t offset,
     uint16_t value)
 {
@@ -761,7 +761,7 @@ __shpcic_mem_write_2(bus_space_handle_t bsh, bus_size_t offset,
 	*(volatile uint16_t *)(SH4_PCIC_MEM + adr) = value;
 }
 
-static __inline void
+static inline void
 __shpcic_mem_write_4(bus_space_handle_t bsh, bus_size_t offset,
     uint32_t value)
 {

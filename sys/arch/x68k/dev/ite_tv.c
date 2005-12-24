@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.13 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.14 2005/12/24 20:07:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.13 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.14 2005/12/24 20:07:41 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.13 2005/12/11 12:19:37 christos Exp $")
 u_int  tv_top;
 u_char *tv_row[PLANELINES];
 char   *tv_font[256];
-__volatile char *tv_kfont[0x7f];
+volatile char *tv_kfont[0x7f];
 
 u_char kern_font[256 * FONTHEIGHT];
 
@@ -91,10 +91,10 @@ void tv_cursor(struct ite_softc *, int);
 void tv_clear(struct ite_softc *, int, int, int, int);
 void tv_scroll(struct ite_softc *, int, int, int, int);
 
-__inline static int expbits(int);
-__inline static void txrascpy(u_char, u_char, short, signed short);
+inline static int expbits(int);
+inline static void txrascpy(u_char, u_char, short, signed short);
 
-static __inline void
+static inline void
 txrascpy(u_char src, u_char dst, short size, short mode)
 {
 	/*int s;*/
@@ -365,7 +365,7 @@ tv_putc_bd(struct ite_softc *ip, int ch, char *p)
 	}
 }
 
-__inline static int
+inline static int
 expbits(int data)
 {
 	int i, nd = 0;

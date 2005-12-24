@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.11 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.12 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.11 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.12 2005/12/24 20:07:19 perry Exp $");
 
 #include <sys/param.h>
 
@@ -98,7 +98,7 @@ r5k_icache_sync_all_32(void)
 
 	mips_dcache_wbinv_all();
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	while (va < eva) {
 		cache_r4k_op_32lines_32(va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
@@ -115,7 +115,7 @@ r5k_icache_sync_range_32(vaddr_t va, vsize_t size)
 
 	mips_dcache_wb_range(va, (eva - va));
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	while ((eva - va) >= (32 * 32)) {
 		cache_r4k_op_32lines_32(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
@@ -140,7 +140,7 @@ r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 
 	mips_dcache_wbinv_range_index(va, (eva - va));
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	/*
 	 * Since we're doing Index ops, we expect to not be able
@@ -233,7 +233,7 @@ r4600v1_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
 	while (va < eva) {
-		__asm __volatile("nop; nop; nop; nop;");
+		__asm volatile("nop; nop; nop; nop;");
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
 		va += 32;
 	}
@@ -254,13 +254,13 @@ r4600v2_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
 	while ((eva - va) >= (32 * 32)) {
-		(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
+		(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
 		cache_r4k_op_32lines_32(va,
 		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
 		va += (32 * 32);
 	}
 
-	(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
+	(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
 		va += 32;
@@ -412,7 +412,7 @@ r4600v1_pdcache_inv_range_32(vaddr_t va, vsize_t size)
 	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
 	while (va < eva) {
-		__asm __volatile("nop; nop; nop; nop;");
+		__asm volatile("nop; nop; nop; nop;");
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
 		va += 32;
 	}
@@ -437,12 +437,12 @@ r4600v2_pdcache_inv_range_32(vaddr_t va, vsize_t size)
 	 * a chance to get though.
 	 */
 	while ((eva - va) >= (32 * 32)) {
-		(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
+		(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
 		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
 		va += (32 * 32);
 	}
 
-	(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
+	(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
 		va += 32;
@@ -506,7 +506,7 @@ r4600v1_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
 	while (va < eva) {
-		__asm __volatile("nop; nop; nop; nop;");
+		__asm volatile("nop; nop; nop; nop;");
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
 		va += 32;
 	}
@@ -531,12 +531,12 @@ r4600v2_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 	 * a chance to get though.
 	 */
 	while ((eva - va) >= (32 * 32)) {
-		(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
+		(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
 		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
 		va += (32 * 32);
 	}
 
-	(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
+	(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
 		va += 32;
@@ -632,7 +632,7 @@ r5k_sdcache_wbinv_range(vaddr_t va, vsize_t size)
 
 	va = trunc_page(va);
 
-	__asm __volatile(
+	__asm volatile(
 		".set noreorder		\n\t"
 		".set noat		\n\t"
 		"mfc0 %0, $12		\n\t"
@@ -641,16 +641,16 @@ r5k_sdcache_wbinv_range(vaddr_t va, vsize_t size)
 		".set at"
 		: "=r"(ostatus));
 
-	__asm __volatile("mfc0 %0, $28" : "=r"(taglo));
-	__asm __volatile("mtc0 $0, $28");
+	__asm volatile("mfc0 %0, $28" : "=r"(taglo));
+	__asm volatile("mtc0 $0, $28");
 
 	while (va < eva) {
 		cache_op_r4k_line(va, R5K_Page_Invalidate_S);
 		va += (128 * 32);
 	}
 
-	__asm __volatile("mtc0 %0, $12; nop" :: "r"(ostatus));
-	__asm __volatile("mtc0 %0, $28; nop" :: "r"(taglo));
+	__asm volatile("mtc0 %0, $12; nop" :: "r"(ostatus));
+	__asm volatile("mtc0 %0, $28; nop" :: "r"(taglo));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.10 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.11 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.10 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.11 2005/12/24 20:06:52 perry Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -67,13 +67,13 @@ struct intrq intrq[NIRQ];
 int i80321_imask[NIPL];
 
 /* Current interrupt priority level. */
-__volatile int current_spl_level;  
+volatile int current_spl_level;  
 
 /* Interrupts pending. */
-__volatile int i80321_ipending;
+volatile int i80321_ipending;
 
 /* Software copy of the IRQs we have enabled. */
-__volatile uint32_t intr_enabled;
+volatile uint32_t intr_enabled;
 
 /* Mask if interrupts steered to FIQs. */
 uint32_t intr_steer;
@@ -142,12 +142,12 @@ const char *i80321_irqnames[] = {
 
 void	i80321_intr_dispatch(struct clockframe *frame);
 
-static __inline uint32_t
+static inline uint32_t
 i80321_iintsrc_read(void)
 {
 	uint32_t iintsrc;
 
-	__asm __volatile("mrc p6, 0, %0, c8, c0, 0"
+	__asm volatile("mrc p6, 0, %0, c8, c0, 0"
 		: "=r" (iintsrc));
 
 	/*
@@ -158,16 +158,16 @@ i80321_iintsrc_read(void)
 	return (iintsrc & intr_enabled);
 }
 
-static __inline void
+static inline void
 i80321_set_intrsteer(void)
 {
 
-	__asm __volatile("mcr p6, 0, %0, c4, c0, 0"
+	__asm volatile("mcr p6, 0, %0, c4, c0, 0"
 		:
 		: "r" (intr_steer & ICU_INT_HWMASK));
 }
 
-static __inline void
+static inline void
 i80321_enable_irq(int irq)
 {
 
@@ -175,7 +175,7 @@ i80321_enable_irq(int irq)
 	i80321_set_intrmask();
 }
 
-static __inline void
+static inline void
 i80321_disable_irq(int irq)
 {
 
@@ -298,7 +298,7 @@ i80321_intr_calculate_masks(void)
 	}
 }
 
-__inline void
+inline void
 i80321_do_pending(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;

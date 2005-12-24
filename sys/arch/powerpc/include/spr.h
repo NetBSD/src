@@ -1,15 +1,15 @@
-/*	$NetBSD: spr.h,v 1.37 2005/11/15 18:26:49 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.38 2005/12/24 20:07:28 perry Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
 
 #ifndef _LOCORE
 #define	mtspr(reg, val)							\
-	__asm __volatile("mtspr %0,%1" : : "K"(reg), "r"(val))
+	__asm volatile("mtspr %0,%1" : : "K"(reg), "r"(val))
 #ifdef __GNUC__
 #define	mfspr(reg)							\
 	( { register_t val;						\
-	  __asm __volatile("mfspr %0,%1" : "=r"(val) : "K"(reg));	\
+	  __asm volatile("mfspr %0,%1" : "=r"(val) : "K"(reg));	\
 	  val; } )
 #endif
 #endif /* _LOCORE */

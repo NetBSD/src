@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.7 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.8 2005/12/24 20:07:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -36,12 +36,12 @@
 
 #include <sys/types.h>
 
-static __inline uint32_t __attribute__((__unused__))
+static inline uint32_t __attribute__((__unused__))
 __byte_swap_long_variable(uint32_t x)
 {
 	uint32_t y;
 
-	__asm __volatile(
+	__asm volatile(
 		"rotl	$-8, %1, %0	\n"
 		"insv	%0, $16, $8, %0	\n"
 		"rotl	$8, %1, %%r1	\n"
@@ -53,7 +53,7 @@ __byte_swap_long_variable(uint32_t x)
 	return (y);
 }
 
-static __inline uint16_t __attribute__((__unused__))
+static inline uint16_t __attribute__((__unused__))
 __byte_swap_word_variable(uint16_t x)
 {
 

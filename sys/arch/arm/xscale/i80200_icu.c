@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_icu.c,v 1.8 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: i80200_icu.c,v 1.9 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80200_icu.c,v 1.8 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80200_icu.c,v 1.9 2005/12/24 20:06:52 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: i80200_icu.c,v 1.8 2005/12/11 12:16:51 christos Exp 
 #include <arm/xscale/i80200var.h>
 
 /* Software shadow copy of INTCTL. */
-static __volatile uint32_t intctl;
+static volatile uint32_t intctl;
 
 /* Pointer to board-specific external IRQ dispatcher. */
 void	(*i80200_extirq_dispatch)(struct irqframe *);
@@ -74,12 +74,12 @@ i80200_icu_init(void)
 
 	/* Disable all interrupt sources. */
 	intctl = 0;
-	__asm __volatile("mcr p13, 0, %0, c0, c0"
+	__asm volatile("mcr p13, 0, %0, c0, c0"
 		:
 		: "r" (intctl));
 
 	/* Steer PMU and BMU to IRQ. */
-	__asm __volatile("mcr p13, 0, %0, c8, c0"
+	__asm volatile("mcr p13, 0, %0, c8, c0"
 		:
 		: "r" (0));
 
@@ -99,7 +99,7 @@ i80200_intr_enable(uint32_t intr)
 	oldirqstate = disable_interrupts(I32_bit|F32_bit);
 
 	intctl |= intr;
-	__asm __volatile("mcr p13, 0, %0, c0, c0"
+	__asm volatile("mcr p13, 0, %0, c0, c0"
 		:
 		: "r" (intctl));
 
@@ -119,7 +119,7 @@ i80200_intr_disable(uint32_t intr)
 	oldirqstate = disable_interrupts(I32_bit|F32_bit);
 
 	intctl &= ~intr;
-	__asm __volatile("mcr p13, 0, %0, c0, c0"
+	__asm volatile("mcr p13, 0, %0, c0, c0"
 		:
 		: "r" (intctl));
 

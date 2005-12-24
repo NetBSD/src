@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.66 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.67 2005/12/24 20:07:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.66 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.67 2005/12/24 20:07:41 perry Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -294,7 +294,7 @@ void fdctimeout(void *);
 void fdcpseudointr(void *);
 void fdcretry(struct fdc_softc *);
 void fdfinish(struct fd_softc *, struct buf *);
-__inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 static int fdcpoll(struct fdc_softc *);
 static int fdgetdisklabel(struct fd_softc *, dev_t);
 static void fd_do_eject(struct fdc_softc *, int);
@@ -302,11 +302,11 @@ static void fd_do_eject(struct fdc_softc *, int);
 void fd_mountroot_hook(struct device *);
 
 /* DMA transfer routines */
-__inline static void fdc_dmastart(struct fdc_softc *, int, caddr_t, vsize_t);
+inline static void fdc_dmastart(struct fdc_softc *, int, caddr_t, vsize_t);
 static int fdcdmaintr(void *);
 static int fdcdmaerrintr(void *);
 
-__inline static void
+inline static void
 fdc_dmastart(struct fdc_softc *fdc, int read, caddr_t addr, vsize_t count)
 {
 	int error;
@@ -613,7 +613,7 @@ fdattach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-__inline struct fd_type *
+inline struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);

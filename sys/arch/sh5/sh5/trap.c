@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.36 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36 2005/12/24 20:07:32 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -193,9 +193,9 @@ trap(struct lwp *l, struct trapframe *tf)
 			register_t sr;
 
 			/* Make sure the FPU is enabled */
-			__asm __volatile("getcon sr, %0" : "=r"(sr));
+			__asm volatile("getcon sr, %0" : "=r"(sr));
 			sr &= ~SH5_CONREG_SR_FD;
-			__asm __volatile("putcon %0, sr" :: "r"(sr));
+			__asm volatile("putcon %0, sr" :: "r"(sr));
 		}
 		printf("\ntrap: %s in %s mode\n",
 		    trap_type(traptype), USERMODE(tf) ? "user" : "kernel");
@@ -580,9 +580,9 @@ panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
 		register_t sr;
 
 		/* Make sure the FPU is enabled */
-		__asm __volatile("getcon sr, %0" : "=r"(sr));
+		__asm volatile("getcon sr, %0" : "=r"(sr));
 		sr &= ~SH5_CONREG_SR_FD;
-		__asm __volatile("putcon %0, sr" :: "r"(sr));
+		__asm volatile("putcon %0, sr" :: "r"(sr));
 	}
 
 	/*

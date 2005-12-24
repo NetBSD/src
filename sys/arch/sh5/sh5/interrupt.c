@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.9 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2005/12/24 20:07:32 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -239,7 +239,7 @@ sh5_intr_dispatch(struct intrframe *fr)
 
 	if ((ih = intrhand[idx]) == NULL) {
 		int level;
-		__asm __volatile("getcon sr, %0" : "=r"(level));
+		__asm volatile("getcon sr, %0" : "=r"(level));
 		printf(
 		    "sh5_intr_dispatch: spurious level %d irq: intevt 0x%lx\n",
 		    (level >> SH5_CONREG_SR_IMASK_SHIFT) &

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.4 2005/12/11 12:16:21 christos Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.5 2005/12/24 20:06:47 perry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.4 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.5 2005/12/24 20:06:47 perry Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -96,7 +96,7 @@ x86_64_ipi_halt(struct cpu_info *ci)
 
 	printf("%s: shutting down\n", ci->ci_dev->dv_xname);
 	for(;;) {
-		__asm __volatile("hlt");
+		__asm volatile("hlt");
 	}
 }
 

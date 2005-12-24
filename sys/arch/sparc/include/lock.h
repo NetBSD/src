@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.19 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: lock.h,v 1.20 2005/12/24 20:07:32 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ static __inline__ int __ldstub(__cpu_simple_lock_t *addr)
 {
 	int v;
 
-	__asm __volatile("ldstub [%1],%0"
+	__asm volatile("ldstub [%1],%0"
 	    : "=&r" (v)
 	    : "r" (addr)
 	    : "memory");
@@ -65,20 +65,20 @@ static __inline__ int __ldstub(__cpu_simple_lock_t *addr)
 }
 #endif /* __lint__ */
 
-static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
+static inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
+static inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
+static inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 #ifndef __CPU_SIMPLE_LOCK_NOINLINE
-static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
+static inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 #else
 extern void __cpu_simple_lock __P((__cpu_simple_lock_t *));
 #endif
 
-static __inline void
+static inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
@@ -86,7 +86,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 }
 
 #ifndef __CPU_SIMPLE_LOCK_NOINLINE
-static __inline void
+static inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 
@@ -104,14 +104,14 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 }
 #endif /* __CPU_SIMPLE_LOCK_NOINLINE */
 
-static __inline int
+static inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 
 	return (__ldstub(alp) == __SIMPLELOCK_UNLOCKED);
 }
 
-static __inline void
+static inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 

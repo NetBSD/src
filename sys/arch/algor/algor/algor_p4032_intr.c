@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.9 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.10 2005/12/24 20:06:46 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.9 2005/12/11 12:16:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.10 2005/12/24 20:06:46 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.9 2005/12/11 12:16:08 christo
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#define	REGVAL(x)	*((__volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
+#define	REGVAL(x)	*((volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
 
 struct p4032_irqreg {
 	bus_addr_t	addr;

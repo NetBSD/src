@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.9 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.10 2005/12/24 20:06:59 perry Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -39,7 +39,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.9 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.10 2005/12/24 20:06:59 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,14 +87,14 @@ static int clock_started = 0;
 
 static int load_timer(int, int);
 
-static __inline u_int
+static inline u_int
 getclock(void)
 {
 	return bus_space_read_4(ifpga_sc->sc_iot, ifpga_sc->sc_tmr_ioh,
 	    TIMER_1_VALUE);
 }
 
-static __inline u_int
+static inline u_int
 getstatclock(void)
 {
 	return bus_space_read_4(ifpga_sc->sc_iot, ifpga_sc->sc_tmr_ioh,

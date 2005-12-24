@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.18 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.19 2005/12/24 20:07:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.18 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.19 2005/12/24 20:07:41 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,9 +80,9 @@ cache_flush_page(vaddr_t pgva)
 	pgva |= VAC_FLUSH_BASE;
 
 	/* Set up for writes to control space. */
-	__asm __volatile ("movc %%dfc, %0" : "=d" (old_dfc));
+	__asm volatile ("movc %%dfc, %0" : "=d" (old_dfc));
 	ctl_dfc = FC_CONTROL;
-	__asm __volatile ("movc %0, %%dfc" : : "d" (ctl_dfc));
+	__asm volatile ("movc %0, %%dfc" : : "d" (ctl_dfc));
 
 	/* Write to control space for each cache line. */
 	va = (char *) pgva;
@@ -90,12 +90,12 @@ cache_flush_page(vaddr_t pgva)
 	data = VAC_FLUSH_PAGE;
 
 	do {
-		__asm __volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
+		__asm volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
 		va += VAC_FLUSH_INCR;
 	} while (va < endva);
 
 	/* Restore destination function code. */
-	__asm __volatile ("movc %0, %%dfc" : : "d" (old_dfc));
+	__asm volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
 void 
@@ -109,9 +109,9 @@ cache_flush_segment(vaddr_t sgva)
 	sgva |= VAC_FLUSH_BASE;
 
 	/* Set up for writes to control space. */
-	__asm __volatile ("movc %%dfc, %0" : "=d" (old_dfc));
+	__asm volatile ("movc %%dfc, %0" : "=d" (old_dfc));
 	ctl_dfc = FC_CONTROL;
-	__asm __volatile ("movc %0, %%dfc" : : "d" (ctl_dfc));
+	__asm volatile ("movc %0, %%dfc" : : "d" (ctl_dfc));
 
 	/* Write to control space for each cache line. */
 	va = (char *) sgva;
@@ -119,12 +119,12 @@ cache_flush_segment(vaddr_t sgva)
 	data = VAC_FLUSH_SEGMENT;
 
 	do {
-		__asm __volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
+		__asm volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
 		va += VAC_FLUSH_INCR;
 	} while (va < endva);
 
 	/* Restore destination function code. */
-	__asm __volatile ("movc %0, %%dfc" : : "d" (old_dfc));
+	__asm volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
 void 
@@ -135,9 +135,9 @@ cache_flush_context(void)
 	int data;
 
 	/* Set up for writes to control space. */
-	__asm __volatile ("movc %%dfc, %0" : "=d" (old_dfc));
+	__asm volatile ("movc %%dfc, %0" : "=d" (old_dfc));
 	ctl_dfc = FC_CONTROL;
-	__asm __volatile ("movc %0, %%dfc" : : "d" (ctl_dfc));
+	__asm volatile ("movc %0, %%dfc" : : "d" (ctl_dfc));
 
 	/* Write to control space for each cache line. */
 	va = (char *) VAC_FLUSH_BASE;
@@ -145,12 +145,12 @@ cache_flush_context(void)
 	data = VAC_FLUSH_CONTEXT;
 
 	do {
-		__asm __volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
+		__asm volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
 		va += VAC_FLUSH_INCR;
 	} while (va < endva);
 
 	/* Restore destination function code. */
-	__asm __volatile ("movc %0, %%dfc" : : "d" (old_dfc));
+	__asm volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
 static void 
@@ -161,9 +161,9 @@ cache_clear_tags(void)
 	int data;
 
 	/* Set up for writes to control space. */
-	__asm __volatile ("movc %%dfc, %0" : "=d" (old_dfc));
+	__asm volatile ("movc %%dfc, %0" : "=d" (old_dfc));
 	ctl_dfc = FC_CONTROL;
-	__asm __volatile ("movc %0, %%dfc" : : "d" (ctl_dfc));
+	__asm volatile ("movc %0, %%dfc" : : "d" (ctl_dfc));
 
 	/* Write to control space for each cache line. */
 	va = (char *) VAC_CACHE_TAGS;
@@ -171,12 +171,12 @@ cache_clear_tags(void)
 	data = 0;	/* invalid tags */
 
 	do {
-		__asm __volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
+		__asm volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
 		va += CACHE_LINE;
 	} while (va < endva);
 
 	/* Restore destination function code. */
-	__asm __volatile ("movc %0, %%dfc" : : "d" (old_dfc));
+	__asm volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
 void 

@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.5 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.6 2005/12/24 20:07:24 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -34,7 +34,7 @@
 #ifndef _PC532_BYTE_SWAP_H_
 #define	_PC532_BYTE_SWAP_H_
 
-static __inline unsigned int
+static inline unsigned int
 __byte_swap_long_variable(unsigned int x)
 {
 
@@ -42,7 +42,7 @@ __byte_swap_long_variable(unsigned int x)
 	return (x);
 }
 
-static __inline unsigned short
+static inline unsigned short
 __byte_swap_word_variable(unsigned short x)
 {
 

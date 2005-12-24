@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.c,v 1.9 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: cache_r4k.c,v 1.10 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r4k.c,v 1.9 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r4k.c,v 1.10 2005/12/24 20:07:19 perry Exp $");
 
 #include <sys/param.h>
 
@@ -66,7 +66,7 @@ r4k_icache_sync_all_16(void)
 
 	mips_dcache_wbinv_all();
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	while (va < eva) {
 		cache_r4k_op_32lines_16(va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
@@ -83,7 +83,7 @@ r4k_icache_sync_range_16(vaddr_t va, vsize_t size)
 
 	mips_dcache_wb_range(va, (eva - va));
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	while ((eva - va) >= (32 * 16)) {
 		cache_r4k_op_32lines_16(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
@@ -108,7 +108,7 @@ r4k_icache_sync_range_index_16(vaddr_t va, vsize_t size)
 
 	mips_dcache_wbinv_range_index(va, (eva - va));
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	/*
 	 * Since we're doing Index ops, we expect to not be able
@@ -242,7 +242,7 @@ r4k_icache_sync_all_32(void)
 
 	mips_dcache_wbinv_all();
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	while (va < eva) {
 		cache_r4k_op_32lines_32(va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
@@ -259,7 +259,7 @@ r4k_icache_sync_range_32(vaddr_t va, vsize_t size)
 
 	mips_dcache_wb_range(va, (eva - va));
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	while ((eva - va) >= (32 * 32)) {
 		cache_r4k_op_32lines_32(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
@@ -282,7 +282,7 @@ r4k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 
 	mips_dcache_wbinv_range_index(va, (eva - va));
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	/*
 	 * Since we're doing Index ops, we expect to not be able

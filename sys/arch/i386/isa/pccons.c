@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.174 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: pccons.c,v 1.175 2005/12/24 20:07:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.174 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.175 2005/12/24 20:07:11 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -297,9 +297,9 @@ void update_leds(void);
 #endif
 
 #if (NPCCONSKBD == 0)
-static __inline int kbd_wait_output(void);
-static __inline int kbd_wait_input(void);
-static __inline void kbd_flush_input(void);
+static inline int kbd_wait_output(void);
+static inline int kbd_wait_input(void);
+static inline void kbd_flush_input(void);
 static u_char kbc_get8042cmd(void);
 static int kbc_put8042cmd(u_char);
 #endif
@@ -320,7 +320,7 @@ void pccnpollc(dev_t, int);
 	{ u_char x = inb(0x84); (void) x; } \
 	{ u_char x = inb(0x84); (void) x; }
 
-static __inline int
+static inline int
 kbd_wait_output(void)
 {
 	u_int i;
@@ -333,7 +333,7 @@ kbd_wait_output(void)
 	return (0);
 }
 
-static __inline int
+static inline int
 kbd_wait_input(void)
 {
 	u_int i;
@@ -346,7 +346,7 @@ kbd_wait_input(void)
 	return (0);
 }
 
-static __inline void
+static inline void
 kbd_flush_input(void)
 {
 	u_int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.11 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.12 2005/12/24 20:06:52 perry Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.11 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.12 2005/12/24 20:06:52 perry Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -99,13 +99,13 @@ struct intrq intrq[NIRQ];
 int ixp425_imask[NIPL];
 
 /* Current interrupt priority level. */
-__volatile int current_spl_level;  
+volatile int current_spl_level;  
 
 /* Interrupts pending. */
-__volatile int ixp425_ipending;
+volatile int ixp425_ipending;
 
 /* Software copy of the IRQs we have enabled. */
-__volatile uint32_t intr_enabled;
+volatile uint32_t intr_enabled;
 
 /* Mask if interrupts steered to FIQs. */
 uint32_t intr_steer;
@@ -144,19 +144,19 @@ static const int si_to_ipl[SI_NQUEUES] = {
 
 void	ixp425_intr_dispatch(struct clockframe *frame);
 
-static __inline uint32_t
+static inline uint32_t
 ixp425_irq_read(void)
 {
 	return IXPREG(IXP425_INT_STATUS) & intr_enabled;
 }
 
-static __inline void
+static inline void
 ixp425_set_intrsteer(void)
 {
 	IXPREG(IXP425_INT_SELECT) = intr_steer & IXP425_INT_HWMASK;
 }
 
-static __inline void
+static inline void
 ixp425_enable_irq(int irq)
 {
 
@@ -164,7 +164,7 @@ ixp425_enable_irq(int irq)
 	ixp425_set_intrmask();
 }
 
-static __inline void
+static inline void
 ixp425_disable_irq(int irq)
 {
 
@@ -172,7 +172,7 @@ ixp425_disable_irq(int irq)
 	ixp425_set_intrmask();
 }
 
-static __inline u_int32_t
+static inline u_int32_t
 ixp425_irq2gpio_bit(int irq)
 {
 
@@ -308,7 +308,7 @@ ixp425_intr_calculate_masks(void)
 	}
 }
 
-__inline void
+inline void
 ixp425_do_pending(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;

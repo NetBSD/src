@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.6 2005/12/24 20:06:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.5 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.6 2005/12/24 20:06:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -162,7 +162,7 @@ static void	mlcd_intr(void *, struct maple_response *, int, int);
 static void	mlcd_printerror(const char *, uint32_t);
 static struct mlcd_buf *mlcd_buf_alloc(int /*dev*/, int /*flags*/);
 static void	mlcd_buf_free(struct mlcd_buf *);
-static __inline uint32_t reverse_32(uint32_t);
+static inline uint32_t reverse_32(uint32_t);
 static void	mlcd_rotate_bitmap(void *, size_t);
 static void	mlcdstart(struct mlcd_softc *);
 static void	mlcdstart_bp(struct mlcd_softc *);
@@ -633,7 +633,7 @@ mlcd_buf_free(struct mlcd_buf *bp)
 }
 
 /* invert order of bits */
-static __inline uint32_t
+static inline uint32_t
 reverse_32(uint32_t b)
 {
 	uint32_t b1;

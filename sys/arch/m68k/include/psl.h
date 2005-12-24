@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11 2005/12/11 12:17:53 christos Exp $	*/
+/*	$NetBSD: psl.h,v 1.12 2005/12/24 20:07:15 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -73,26 +73,26 @@
  * spl functions; platform-specific code must define spl0 and splx().
  */
 
-static __inline int
+static inline int
 _spl(int s)
 {
 	int sr;
 
-	__asm __volatile ("movew %%sr,%0; movew %1,%%sr" :
+	__asm volatile ("movew %%sr,%0; movew %1,%%sr" :
 	    "=&d" (sr) : "di" (s));
 
 	return sr;
 }
 
-static __inline int
+static inline int
 _splraise(int level)
 {
 	int sr;
 
-	__asm __volatile("movw %%sr,%0" : "=d" (sr));
+	__asm volatile("movw %%sr,%0" : "=d" (sr));
 
 	if ((u_int16_t)level >= PSL_HIGHIPL || (u_int16_t)level > (u_int16_t)sr)
-		__asm __volatile("movw %0,%%sr" :: "di" (level));
+		__asm volatile("movw %0,%%sr" :: "di" (level));
 
 	return sr;
 }

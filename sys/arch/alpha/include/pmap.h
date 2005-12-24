@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.64 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: pmap.h,v 1.65 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 #define	pmap_update(pmap)		/* nothing (yet) */
 
-static __inline void
+static inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
@@ -290,13 +290,13 @@ do {									\
 
 #define	pmap_pte_prot_chg(pte, np) ((np) ^ pmap_pte_prot(pte))
 
-static __inline pt_entry_t *pmap_l2pte(pmap_t, vaddr_t, pt_entry_t *);
-static __inline pt_entry_t *pmap_l3pte(pmap_t, vaddr_t, pt_entry_t *);
+static inline pt_entry_t *pmap_l2pte(pmap_t, vaddr_t, pt_entry_t *);
+static inline pt_entry_t *pmap_l3pte(pmap_t, vaddr_t, pt_entry_t *);
 
 #define	pmap_l1pte(pmap, v)						\
 	(&(pmap)->pm_lev1map[l1pte_index((vaddr_t)(v))])
 
-static __inline pt_entry_t *
+static inline pt_entry_t *
 pmap_l2pte(pmap, v, l1pte)
 	pmap_t pmap;
 	vaddr_t v;
@@ -314,7 +314,7 @@ pmap_l2pte(pmap, v, l1pte)
 	return (&lev2map[l2pte_index(v)]);
 }
 
-static __inline pt_entry_t *
+static inline pt_entry_t *
 pmap_l3pte(pmap, v, l2pte)
 	pmap_t pmap;
 	vaddr_t v;

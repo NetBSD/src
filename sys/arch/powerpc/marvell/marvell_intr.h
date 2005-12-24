@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.8 2005/11/27 14:01:45 yamt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.9 2005/12/24 20:07:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,21 +108,21 @@ typedef struct {
 	u_int32_t bits[4];
 } imask_t __attribute__ ((aligned(16)));
 
-static __inline void imask_zero(imask_t *);
-static __inline void imask_zero_v(volatile imask_t *);
-static __inline void imask_dup_v(imask_t *, const volatile imask_t *);
-static __inline void imask_and(imask_t *, const imask_t *);
-static __inline void imask_andnot_v(volatile imask_t *, const imask_t *);
-static __inline void imask_andnot_icu_vv(volatile imask_t *, const volatile imask_t *);
-static __inline int imask_empty(const imask_t *);
-static __inline void imask_orbit(imask_t *, int);
-static __inline void imask_orbit_v(volatile imask_t *, int);
-static __inline void imask_clrbit(imask_t *, int);
-static __inline void imask_clrbit_v(volatile imask_t *, int);
-static __inline u_int32_t imask_andbit_v(const volatile imask_t *, int);
-static __inline int imask_test_v(const volatile imask_t *, const imask_t *);
+static inline void imask_zero(imask_t *);
+static inline void imask_zero_v(volatile imask_t *);
+static inline void imask_dup_v(imask_t *, const volatile imask_t *);
+static inline void imask_and(imask_t *, const imask_t *);
+static inline void imask_andnot_v(volatile imask_t *, const imask_t *);
+static inline void imask_andnot_icu_vv(volatile imask_t *, const volatile imask_t *);
+static inline int imask_empty(const imask_t *);
+static inline void imask_orbit(imask_t *, int);
+static inline void imask_orbit_v(volatile imask_t *, int);
+static inline void imask_clrbit(imask_t *, int);
+static inline void imask_clrbit_v(volatile imask_t *, int);
+static inline u_int32_t imask_andbit_v(const volatile imask_t *, int);
+static inline int imask_test_v(const volatile imask_t *, const imask_t *);
 
-static __inline void
+static inline void
 imask_zero(imask_t *idp)
 {
 	idp->bits[IMASK_ICU_LO]  = 0;
@@ -131,7 +131,7 @@ imask_zero(imask_t *idp)
 	idp->bits[IMASK_SOFTINT] = 0;
 }
 
-static __inline void
+static inline void
 imask_zero_v(volatile imask_t *idp)
 {
 	idp->bits[IMASK_ICU_LO]  = 0;
@@ -140,13 +140,13 @@ imask_zero_v(volatile imask_t *idp)
 	idp->bits[IMASK_SOFTINT] = 0;
 }
 
-static __inline void
+static inline void
 imask_dup_v(imask_t *idp, const volatile imask_t *isp)
 {
 	*idp = *isp;
 }
 
-static __inline void
+static inline void
 imask_and(imask_t *idp, const imask_t *isp)
 {
 	idp->bits[IMASK_ICU_LO]  &= isp->bits[IMASK_ICU_LO]; 
@@ -155,7 +155,7 @@ imask_and(imask_t *idp, const imask_t *isp)
 	idp->bits[IMASK_SOFTINT] &= isp->bits[IMASK_SOFTINT];
 }
 
-static __inline void
+static inline void
 imask_andnot_v(volatile imask_t *idp, const imask_t *isp)
 {
 	idp->bits[IMASK_ICU_LO]  &= ~isp->bits[IMASK_ICU_LO]; 
@@ -164,7 +164,7 @@ imask_andnot_v(volatile imask_t *idp, const imask_t *isp)
 	idp->bits[IMASK_SOFTINT] &= ~isp->bits[IMASK_SOFTINT];
 }
 
-static __inline void
+static inline void
 imask_andnot_icu_vv(volatile imask_t *idp, const volatile imask_t *isp)
 {
 	idp->bits[IMASK_ICU_LO]  &= ~isp->bits[IMASK_ICU_LO]; 
@@ -172,44 +172,44 @@ imask_andnot_icu_vv(volatile imask_t *idp, const volatile imask_t *isp)
 	idp->bits[IMASK_ICU_GPP] &= ~isp->bits[IMASK_ICU_GPP]; 
 }
 
-static __inline int
+static inline int
 imask_empty(const imask_t *isp)
 {
 	return (! (isp->bits[IMASK_ICU_LO] | isp->bits[IMASK_ICU_HI] | 
 		   isp->bits[IMASK_ICU_GPP]| isp->bits[IMASK_SOFTINT]));
 }
 
-static __inline void
+static inline void
 imask_orbit(imask_t *idp, int bitno)
 {
 	idp->bits[bitno>>IMASK_WORDSHIFT] |= (1 << (bitno&IMASK_BITMASK));
 }
 
-static __inline void
+static inline void
 imask_orbit_v(volatile imask_t *idp, int bitno)
 {
 	idp->bits[bitno>>IMASK_WORDSHIFT] |= (1 << (bitno&IMASK_BITMASK));
 }
 
-static __inline void
+static inline void
 imask_clrbit(imask_t *idp, int bitno)
 {
 	idp->bits[bitno>>IMASK_WORDSHIFT] &= ~(1 << (bitno&IMASK_BITMASK));
 }
 
-static __inline void
+static inline void
 imask_clrbit_v(volatile imask_t *idp, int bitno)
 {
 	idp->bits[bitno>>IMASK_WORDSHIFT] &= ~(1 << (bitno&IMASK_BITMASK));
 }
 
-static __inline u_int32_t
+static inline u_int32_t
 imask_andbit_v(const volatile imask_t *idp, int bitno)
 {
 	return idp->bits[bitno>>IMASK_WORDSHIFT] & (1 << (bitno&IMASK_BITMASK));
 }
 
-static __inline int
+static inline int
 imask_test_v(const volatile imask_t *idp, const imask_t *isp)
 {
 	return ((idp->bits[IMASK_ICU_LO]  & isp->bits[IMASK_ICU_LO]) || 
@@ -317,9 +317,9 @@ void clearsoftnet __P((void));
 
 void intr_dispatch __P((void));
 #ifdef SPL_INLINE
-static __inline int splraise __P((int));
-static __inline int spllower __P((int));
-static __inline void splx __P((int));
+static inline int splraise __P((int));
+static inline int spllower __P((int));
+static inline void splx __P((int));
 #else
 extern int splraise __P((int));
 extern int spllower __P((int));
@@ -334,38 +334,38 @@ extern imask_t imask[];
 /*
  * inlines for manipulating PSL_EE
  */
-static __inline void
+static inline void
 extintr_restore(register_t omsr)
 {
-	__asm __volatile ("sync; mtmsr %0;" :: "r"(omsr));
+	__asm volatile ("sync; mtmsr %0;" :: "r"(omsr));
 }
 
-static __inline register_t
+static inline register_t
 extintr_enable(void)
 {
 	register_t omsr;
 
-	__asm __volatile("sync;");
-	__asm __volatile("mfmsr %0;" : "=r"(omsr));
-	__asm __volatile("mtmsr %0;" :: "r"(omsr | PSL_EE)); 
+	__asm volatile("sync;");
+	__asm volatile("mfmsr %0;" : "=r"(omsr));
+	__asm volatile("mtmsr %0;" :: "r"(omsr | PSL_EE)); 
 
 	return omsr;
 }
 
-static __inline register_t
+static inline register_t
 extintr_disable(void)
 {
 	register_t omsr;
 
-	__asm __volatile("mfmsr %0;" : "=r"(omsr));
-	__asm __volatile("mtmsr %0;" :: "r"(omsr & ~PSL_EE)); 
-	__asm __volatile("isync;");
+	__asm volatile("mfmsr %0;" : "=r"(omsr));
+	__asm volatile("mtmsr %0;" :: "r"(omsr & ~PSL_EE)); 
+	__asm volatile("isync;");
 
 	return omsr;
 }
 
 #ifdef SPL_INLINE
-static __inline int
+static inline int
 splraise(int ncpl)
 {
 	int ocpl;
@@ -385,7 +385,7 @@ splraise(int ncpl)
         return (ocpl);
 }
 
-static __inline void
+static inline void
 splx(int xcpl)
 {
 	imask_t *ncplp;
@@ -406,7 +406,7 @@ splx(int xcpl)
 	extintr_restore(omsr); 
 }
 
-static __inline int
+static inline int
 spllower(int ncpl)
 {
 	int ocpl;

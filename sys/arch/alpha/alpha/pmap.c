@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.212 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: pmap.c,v 1.213 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213 2005/12/24 20:06:46 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2370,7 +2370,7 @@ pmap_zero_page(paddr_t phys)
 	 * Do only 8 back-to-back stores, and alternate registers.
 	 */
 	do {
-		__asm __volatile(
+		__asm volatile(
 		"# BEGIN loop body\n"
 		"	addq	%2, (8 * 8), %1		\n"
 		"	stq	$31, (0 * 8)(%0)	\n"

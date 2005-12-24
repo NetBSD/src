@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.10 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.11 2005/12/24 20:07:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 2005/12/11 12:18:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 2005/12/24 20:07:28 perry Exp $");
 
 #define DEBUG 1
 
@@ -73,16 +73,16 @@ invaldcache(vaddr_t va, bus_size_t sz)
 	DPRINTF(("invaldcache: %#lx %ld\n", va, (long) sz));
 	KASSERT(sz != 0);
 
-	__asm __volatile("eieio;");
+	__asm volatile("eieio;");
 	off = (u_int)va & (CACHELINESIZE - 1);
 	sz += off;
 	va -= off;
 	while ((int)sz > 0) {
-		__asm __volatile("dcbi 0, %0;" :: "r"(va));
+		__asm volatile("dcbi 0, %0;" :: "r"(va));
 		va += CACHELINESIZE;
 		sz -= CACHELINESIZE;
 	}
-	__asm __volatile("sync;");
+	__asm volatile("sync;");
 }
 
 static inline void
@@ -93,12 +93,12 @@ flushdcache(vaddr_t va, bus_size_t sz)
 	DPRINTF(("flushdcache: %#lx %ld\n", va, (long) sz));
 	KASSERT(sz != 0);
 
-	__asm __volatile("eieio;");
+	__asm volatile("eieio;");
 	off = (u_int)va & (CACHELINESIZE - 1);
 	sz += off;
 	va -= off;
 	while ((int)sz > CACHELINESIZE) {
-		__asm __volatile("dcbf 0, %0;" :: "r"(va));
+		__asm volatile("dcbf 0, %0;" :: "r"(va));
 		va += CACHELINESIZE;
 		sz -= CACHELINESIZE;
 	}
@@ -108,8 +108,8 @@ flushdcache(vaddr_t va, bus_size_t sz)
 	 * read-after-write ensures last cache line
 	 * (and therefore all cache lines) made it to  memory
 	 */
-	__asm __volatile("eieio; dcbf 0, %0;" :: "r"(va));
-	__asm __volatile("lwz %0,0(%0); sync;" : "+r"(va));
+	__asm volatile("eieio; dcbf 0, %0;" :: "r"(va));
+	__asm volatile("lwz %0,0(%0); sync;" : "+r"(va));
 }
 
 static inline void
@@ -120,16 +120,16 @@ storedcache(vaddr_t va, bus_size_t sz)
 	DPRINTF(("storedcache: %#lx %ld\n", va, (long) sz));
 	KASSERT(sz != 0);
 
-	__asm __volatile("eieio;");
+	__asm volatile("eieio;");
 	off = (u_int)va & (CACHELINESIZE - 1);
 	sz += off;
 	va -= off;
 	while ((int)sz > 0) {
-		__asm __volatile("dcbst 0, %0;" :: "r"(va));
+		__asm volatile("dcbst 0, %0;" :: "r"(va));
 		va += CACHELINESIZE;
 		sz -= CACHELINESIZE;
 	}
-	__asm __volatile("sync;");
+	__asm volatile("sync;");
 }
 
 int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,

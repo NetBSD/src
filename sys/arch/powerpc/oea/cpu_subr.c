@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.25 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.26 2005/12/24 20:07:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.25 2005/12/11 12:18:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.26 2005/12/24 20:07:28 perry Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -234,7 +234,7 @@ cpu_idlespin(void)
 	if (powersave <= 0)
 		return;
 
-	__asm __volatile(
+	__asm volatile(
 		"sync;"
 		"mfmsr	%0;"
 		"oris	%0,%0,%1@h;"	/* enter power saving mode */
@@ -462,7 +462,7 @@ cpu_setup(self, ci)
 	}
 
 	mtspr(SPR_HID0, hid0);
-	__asm __volatile("sync;isync");
+	__asm volatile("sync;isync");
 
 	switch (vers) {
 	case MPC601:
@@ -654,11 +654,11 @@ cpu_enable_l2cr(register_t l2cr)
 	mtmsr(msr & ~PSL_EE);
 #ifdef ALTIVEC
 	if (cpu_altivec)
-		__asm __volatile("dssall");
+		__asm volatile("dssall");
 #endif
-	__asm __volatile("sync");
+	__asm volatile("sync");
 	mtspr(SPR_L2CR, l2cr & ~L2CR_L2E);
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	/* Wait for L2 clock to be stable (640 L2 clocks). */
 	delay(100);
@@ -699,7 +699,7 @@ cpu_enable_l3cr(register_t l3cr)
 	mtspr(SPR_L3CR, l3cr);
 
 	/* 4/5: Perform a global cache invalidate (ref section 3.7.3.6) */
-	__asm __volatile("dssall;sync");
+	__asm volatile("dssall;sync");
 	/* L3 cache is already disabled, no need to clear L3E */
 	mtspr(SPR_L3CR, l3cr|L3CR_L3I);
 	do {
@@ -711,7 +711,7 @@ cpu_enable_l3cr(register_t l3cr)
 	mtspr(SPR_L3CR, l3cr);
 
 	/* 7: Perform a 'sync' and wait at least 100 CPU cycles */
-	__asm __volatile("sync");
+	__asm volatile("sync");
 	delay(100);
 
 	/* 8: Set L3E and L3CLKEN */
@@ -719,7 +719,7 @@ cpu_enable_l3cr(register_t l3cr)
 	mtspr(SPR_L3CR, l3cr);
 
 	/* 9: Perform a 'sync' and wait at least 100 CPU cycles */
-	__asm __volatile("sync");
+	__asm volatile("sync");
 	delay(100);
 }
 

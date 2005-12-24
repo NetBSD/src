@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.15 2005/12/11 12:17:53 christos Exp $	*/
+/*	$NetBSD: profile.h,v 1.16 2005/12/24 20:07:15 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -31,7 +31,7 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/10/93
  */
 
-#define	_MCOUNT_DECL static __inline void _mcount
+#define	_MCOUNT_DECL static inline void _mcount
 
 #ifdef __ELF__
 #define	MCOUNT_ENTRY	"__mcount"

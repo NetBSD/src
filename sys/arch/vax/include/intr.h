@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.18 2005/12/04 19:26:34 christos Exp $	*/
+/* 	$NetBSD: intr.h,v 1.19 2005/12/24 20:07:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -80,7 +80,7 @@
 #define splx(reg)						\
 ({								\
 	register int __val;					\
-	__asm __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"		\
+	__asm volatile ("mfpr $0x12,%0;mtpr %1,$0x12"		\
 				: "=&g" (__val)			\
 				: "g" (reg));			\
 	__val;							\
@@ -88,7 +88,7 @@
 
 #define _splset(reg)						\
 ((void)({							\
-	__asm __volatile ("mtpr %0,$0x12"			\
+	__asm volatile ("mtpr %0,$0x12"			\
 				: 				\
 				: "g" (reg));			\
 }))
@@ -96,7 +96,7 @@
 #define splraiseipl(reg)						\
 ({								\
 	register int __val;					\
-	__asm __volatile ("mfpr $0x12,%0"			\
+	__asm volatile ("mfpr $0x12,%0"			\
 				: "=&g" (__val)			\
 				: );				\
 	if ((reg) > __val) {					\
@@ -107,7 +107,7 @@
 
 #define _setsirr(reg)						\
 do {								\
-	__asm __volatile ("mtpr %0,$0x14"			\
+	__asm volatile ("mtpr %0,$0x14"			\
 				:				\
 				: "g" (reg));			\
 } while (0)
@@ -152,7 +152,7 @@ struct softintr_handler {
 extern void *softintr_establish(int, void (*)(void *), void *);
 extern void softintr_disestablish(void *);
 
-static __inline void
+static inline void
 softintr_schedule(void *arg)
 {
 	struct softintr_handler * const sh = arg;

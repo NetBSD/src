@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.18 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.19 2005/12/24 20:06:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.18 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.19 2005/12/24 20:06:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ gdrom_intr(void *arg)
 			}
 		}
 		while (cnt > 0) {
-			__volatile int16_t tmp;
+			volatile int16_t tmp;
 			tmp = GDROM_DATA;
 			cnt -= 2;
 		}
@@ -392,9 +392,9 @@ gdromattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * reenable disabled drive
 	 */
-	*((__volatile uint32_t *)0xa05f74e4) = 0x1fffff;
+	*((volatile uint32_t *)0xa05f74e4) = 0x1fffff;
 	for (p = 0; p < 0x200000 / 4; p++)
-		x = ((__volatile uint32_t *)0xa0000000)[p];
+		x = ((volatile uint32_t *)0xa0000000)[p];
 
 	printf(": %s\n", sysasic_intr_string(IPL_BIO));
 	sysasic_intr_establish(SYSASIC_EVENT_GDROM, IPL_BIO, gdrom_intr, sc);

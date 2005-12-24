@@ -115,7 +115,7 @@ static struct sapcic_tag opcic_tag = {
 
 #define HAVE_CARD(r)	(((r)&CARDDET_DET)==0)
 
-static __inline uint8_t
+static inline uint8_t
 opcic_read_card_status(struct opcic_socket *so)
 {
 	struct opcic_softc *sc = (struct opcic_softc *)(so->ss.sc);

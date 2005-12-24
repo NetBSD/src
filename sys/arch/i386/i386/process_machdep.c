@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.53 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.54 2005/12/24 20:07:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.53 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.54 2005/12/24 20:07:10 perry Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -83,14 +83,14 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.53 2005/12/11 12:17:41 christo
 #include <machine/vm86.h>
 #endif
 
-static __inline struct trapframe *
+static inline struct trapframe *
 process_frame(struct lwp *l)
 {
 
 	return (l->l_md.md_regs);
 }
 
-static __inline union savefpu *
+static inline union savefpu *
 process_fpframe(struct lwp *l)
 {
 

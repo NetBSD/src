@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_pci.c,v 1.3 2001/09/15 04:31:40 thorpej Exp $ */
+/* $NetBSD: irongate_pci.c,v 1.4 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.3 2001/09/15 04:31:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.4 2005/12/24 20:06:46 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ void		irongate_conf_write __P((void *, pcitag_t, int, pcireg_t));
 #define	PCI_CONF_ADDR	(IRONGATE_IO_BASE|IRONGATE_CONFADDR)
 #define	PCI_CONF_DATA	(IRONGATE_IO_BASE|IRONGATE_CONFDATA)
 
-#define	REGVAL(r)	(*(__volatile u_int32_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define	REGVAL(r)	(*(volatile u_int32_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 void
 irongate_pci_init(pci_chipset_tag_t pc, void *v)

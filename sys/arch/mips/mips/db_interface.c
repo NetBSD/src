@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.54 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.55 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.54 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.55 2005/12/24 20:07:19 perry Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -406,7 +406,7 @@ db_kvtophys_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 do {									\
 	uint32_t __val;							\
 									\
-	__asm __volatile("mfc0 %0,$" ___STRING(reg) : "=r"(__val));	\
+	__asm volatile("mfc0 %0,$" ___STRING(reg) : "=r"(__val));	\
 	printf("  %s:%*s %#x\n", name, FLDWIDTH - (int) strlen(name),	\
 	    "", __val);							\
 } while (0)
@@ -416,7 +416,7 @@ do {									\
 do {									\
 	uint64_t __val;							\
 									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set push 			\n\t"			\
 		".set mips3			\n\t"			\
 		".set noat			\n\t"			\

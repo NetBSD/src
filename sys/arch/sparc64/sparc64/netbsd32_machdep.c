@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.55 2005/12/11 12:19:15 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.56 2005/12/24 20:07:37 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.55 2005/12/11 12:19:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.56 2005/12/24 20:07:37 perry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1043,23 +1043,23 @@ struct netbsd32_opiocdesc {
 #endif
 
 /* prototypes for the converters */
-static __inline void netbsd32_to_fbcmap(struct netbsd32_fbcmap *,
+static inline void netbsd32_to_fbcmap(struct netbsd32_fbcmap *,
 					struct fbcmap *, u_long);
-static __inline void netbsd32_to_fbcursor(struct netbsd32_fbcursor *,
+static inline void netbsd32_to_fbcursor(struct netbsd32_fbcursor *,
 					  struct fbcursor *, u_long);
-static __inline void netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *,
+static inline void netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *,
 					   struct opiocdesc *, u_long);
 
-static __inline void netbsd32_from_fbcmap(struct fbcmap *,
+static inline void netbsd32_from_fbcmap(struct fbcmap *,
 					  struct netbsd32_fbcmap *, u_long);
-static __inline void netbsd32_from_fbcursor(struct fbcursor *,
+static inline void netbsd32_from_fbcursor(struct fbcursor *,
 					    struct netbsd32_fbcursor *, u_long);
-static __inline void netbsd32_from_opiocdesc(struct opiocdesc *,
+static inline void netbsd32_from_opiocdesc(struct opiocdesc *,
 					     struct netbsd32_opiocdesc *,
 					     u_long);
 
 /* convert to/from different structures */
-static __inline void
+static inline void
 netbsd32_to_fbcmap(s32p, p, cmd)
 	struct netbsd32_fbcmap *s32p;
 	struct fbcmap *p;
@@ -1073,7 +1073,7 @@ netbsd32_to_fbcmap(s32p, p, cmd)
 	p->blue = (u_char *)(u_long)s32p->blue;
 }
 
-static __inline void
+static inline void
 netbsd32_to_fbcursor(s32p, p, cmd)
 	struct netbsd32_fbcursor *s32p;
 	struct fbcursor *p;
@@ -1090,7 +1090,7 @@ netbsd32_to_fbcursor(s32p, p, cmd)
 	p->mask = (char *)(u_long)s32p->mask;
 }
 
-static __inline void
+static inline void
 netbsd32_to_opiocdesc(s32p, p, cmd)
 	struct netbsd32_opiocdesc *s32p;
 	struct opiocdesc *p;
@@ -1104,7 +1104,7 @@ netbsd32_to_opiocdesc(s32p, p, cmd)
 	p->op_buf = (char *)(u_long)s32p->op_buf;
 }
 
-static __inline void
+static inline void
 netbsd32_from_fbcmap(p, s32p, cmd)
 	struct fbcmap *p;
 	struct netbsd32_fbcmap *s32p;
@@ -1121,7 +1121,7 @@ netbsd32_from_fbcmap(p, s32p, cmd)
 #endif
 }
 
-static __inline void
+static inline void
 netbsd32_from_fbcursor(p, s32p, cmd)
 	struct fbcursor *p;
 	struct netbsd32_fbcursor *s32p;
@@ -1141,7 +1141,7 @@ netbsd32_from_fbcursor(p, s32p, cmd)
 #endif
 }
 
-static __inline void
+static inline void
 netbsd32_from_opiocdesc(p, s32p, cmd)
 	struct opiocdesc *p;
 	struct netbsd32_opiocdesc *s32p;

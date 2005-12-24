@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.h,v 1.4 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: iq80310_intr.h,v 1.5 2005/12/24 20:06:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -68,10 +68,10 @@
 
 void	iq80310_do_soft(void);
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 iq80310_splraise(int ipl)
 {
-	extern __volatile int current_spl_level;
+	extern volatile int current_spl_level;
 	extern int iq80310_imask[];
 	int old;
 
@@ -84,11 +84,11 @@ iq80310_splraise(int ipl)
 	return (old);
 }
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 iq80310_splx(int new)
 {
-	extern __volatile int iq80310_ipending;
-	extern __volatile int current_spl_level;
+	extern volatile int iq80310_ipending;
+	extern volatile int current_spl_level;
 	int old;
 
 	/* Don't let the compiler re-order this code with preceding code */
@@ -115,10 +115,10 @@ iq80310_splx(int new)
 		i80200_intr_enable(INTCTL_IM | INTCTL_PM);
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 iq80310_spllower(int ipl)
 {
-	extern __volatile int current_spl_level;
+	extern volatile int current_spl_level;
 	extern int iq80310_imask[];
 	int old = current_spl_level;
 

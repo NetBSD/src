@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.183 2005/12/20 21:06:43 tron Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.184 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.183 2005/12/20 21:06:43 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.184 2005/12/24 20:07:19 perry Exp $");
 
 #include "opt_cputype.h"
 
@@ -1493,7 +1493,7 @@ savefpregs(l)
 	/*
 	 * turnoff interrupts enabling CP1 to read FPCSR register.
 	 */
-	__asm __volatile (
+	__asm volatile (
 		".set noreorder					\n\t"
 		".set noat					\n\t"
 		"mfc0	%0, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
@@ -1516,7 +1516,7 @@ savefpregs(l)
 	 */
 	fp = (int *)l->l_addr->u_pcb.pcb_fpregs.r_regs;
 	fp[32] = fpcsr;
-	__asm __volatile (
+	__asm volatile (
 		".set noreorder		;"
 		"swc1	$f0, 0(%0)	;"
 		"swc1	$f1, 4(%0)	;"
@@ -1554,7 +1554,7 @@ savefpregs(l)
 	/*
 	 * stop CP1, enable interrupts.
 	 */
-	__asm __volatile ("mtc0 %0, $" ___STRING(MIPS_COP_0_STATUS)
+	__asm volatile ("mtc0 %0, $" ___STRING(MIPS_COP_0_STATUS)
 	    :: "r"(status));
 #endif
 }
@@ -1573,7 +1573,7 @@ loadfpregs(l)
 	/*
 	 * turnoff interrupts enabling CP1 to load FP registers.
 	 */
-	__asm __volatile(
+	__asm volatile(
 		".set noreorder					\n\t"
 		".set noat					\n\t"
 		"mfc0	%0, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
@@ -1588,7 +1588,7 @@ loadfpregs(l)
 	/*
 	 * load 32bit FP registers and establish processes' FP context.
 	 */
-	__asm __volatile(
+	__asm volatile(
 		".set noreorder		;"
 		"lwc1	$f0, 0(%0)	;"
 		"lwc1	$f1, 4(%0)	;"
@@ -1626,7 +1626,7 @@ loadfpregs(l)
 	/*
 	 * load FPCSR and stop CP1 again while enabling interrupts.
 	 */
-	__asm __volatile(
+	__asm volatile(
 		".set noreorder					\n\t"
 		".set noat					\n\t"
 		"ctc1	%0, $31					\n\t"

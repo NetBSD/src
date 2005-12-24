@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.10 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: aica.c,v 1.11 2005/12/24 20:06:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.10 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.11 2005/12/24 20:06:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ const struct audio_device aica_device = {
 	"aica"
 };
 
-__inline static void aica_g2fifo_wait(void);
+inline static void aica_g2fifo_wait(void);
 void aica_enable(struct aica_softc *);
 void aica_disable(struct aica_softc *);
 void aica_memwrite(struct aica_softc *, bus_size_t, uint32_t *, int);

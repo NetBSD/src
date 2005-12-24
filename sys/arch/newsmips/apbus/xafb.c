@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.11 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: xafb.c,v 1.12 2005/12/24 20:07:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,7 +29,7 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.11 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.12 2005/12/24 20:07:24 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -93,7 +93,7 @@ int xafb_cnattach(void);
 int xafb_getcmap(struct xafb_softc *, struct wsdisplay_cmap *);
 int xafb_putcmap(struct xafb_softc *, struct wsdisplay_cmap *);
 
-static __inline void xafb_setcolor(struct xafb_devconfig *, int, int, int, int);
+static inline void xafb_setcolor(struct xafb_devconfig *, int, int, int, int);
 
 CFATTACH_DECL(xafb, sizeof(struct xafb_softc),
     xafb_match, xafb_attach, NULL, NULL);

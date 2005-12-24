@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.75 2005/12/11 12:19:14 christos Exp $ */
+/*	$NetBSD: clock.c,v 1.76 2005/12/24 20:07:37 perry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.75 2005/12/11 12:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.76 2005/12/24 20:07:37 perry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -585,11 +585,11 @@ cpu_initclocks()
 	
 	/* Initialize the %tick register */
 #ifdef __arch64__
-	__asm __volatile("wrpr %0, 0, %%tick" : : "r" (start_time));
+	__asm volatile("wrpr %0, 0, %%tick" : : "r" (start_time));
 #else
 	{
 		int start_hi = (start_time>>32), start_lo = start_time;
-		__asm __volatile("sllx %1,32,%0; or %0,%2,%0; wrpr %0, 0, %%tick" 
+		__asm volatile("sllx %1,32,%0; or %0,%2,%0; wrpr %0, 0, %%tick" 
 				 : "=&r" (start_hi) /* scratch register */
 				 : "r" ((int)(start_hi)), "r" ((int)(start_lo)));
 	}

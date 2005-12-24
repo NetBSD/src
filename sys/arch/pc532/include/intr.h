@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 2005/12/24 20:07:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@ extern unsigned int imask[], Cur_pl, sirpending, astpending;
 #if defined(NO_INLINE_SPLX)
 # define INTR_INLINE
 #else
-# define INTR_INLINE __inline
+# define INTR_INLINE inline
 #endif
 
 void	intr_init __P((void));
@@ -109,8 +109,8 @@ INTR_STATIC INTR_INLINE int splx __P((unsigned int));
  * Disable/Enable CPU-Interrupts
  */
 #define	di() /* Removing the nop will give you *BIG* trouble */ \
-	__asm __volatile("bicpsrw 0x800 ; nop" : : : "cc")
-#define	ei() __asm __volatile("bispsrw 0x800" : : : "cc")
+	__asm volatile("bicpsrw 0x800 ; nop" : : : "cc")
+#define	ei() __asm volatile("bispsrw 0x800" : : : "cc")
 
 /*
  * Add a mask to Cur_pl, and return the old value of Cur_pl.

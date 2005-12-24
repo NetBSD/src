@@ -1,4 +1,4 @@
-/* $NetBSD: cpuvar.h,v 1.3 2003/05/31 00:38:05 kristerw Exp $ */
+/* $NetBSD: cpuvar.h,v 1.4 2005/12/24 20:06:46 perry Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -34,7 +34,7 @@ extern int cpu_delay_factor;
 
 /* Fixed code sequence for reliability */
 #define cpu_delayloop(loops)						\
-	__asm __volatile ("1:subs %0, %0, #1; bne 1b" : : "r" (loops) : "cc")
+	__asm volatile ("1:subs %0, %0, #1; bne 1b" : : "r" (loops) : "cc")
 
 extern void cpu_cache_flush(void);
 

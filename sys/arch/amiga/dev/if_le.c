@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.40 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: if_le.c,v 1.41 2005/12/24 20:06:47 perry Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.40 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.41 2005/12/24 20:06:47 perry Exp $");
 
 #include "bpfilter.h"
 
@@ -129,7 +129,7 @@ CFATTACH_DECL(le_zbus, sizeof(struct le_softc),
 #define	integrate
 #define hide
 #else
-#define	integrate	static __inline
+#define	integrate	static inline
 #define hide		static
 #endif
 

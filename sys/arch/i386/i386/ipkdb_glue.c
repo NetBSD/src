@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.7 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.8 2005/12/24 20:07:10 perry Exp $	*/
 
 /*
  * Copyright (C) 2000 Wolfgang Solfrank.
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.7 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.8 2005/12/24 20:07:10 perry Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -72,7 +72,7 @@ void
 ipkdb_trap()
 {
 	ipkdb_mode = IPKDB_CMD_STEP;
-	__asm __volatile ("pushf; pop %%eax; orl %0,%%eax; push %%eax; popf"
+	__asm volatile ("pushf; pop %%eax; orl %0,%%eax; push %%eax; popf"
 			  :: "i"(PSL_T));
 }
 
@@ -87,7 +87,7 @@ ipkdb_trap_glue(frame)
 	    || (ipkdb_mode != IPKDB_CMD_STEP && frame.tf_trapno == T_TRCTRAP))
 		return 0;
 
-	__asm __volatile ("cli");		/* Interrupts need to be disabled while in IPKDB */
+	__asm volatile ("cli");		/* Interrupts need to be disabled while in IPKDB */
 	ipkdbregs[EAX] = frame.tf_eax;
 	ipkdbregs[ECX] = frame.tf_ecx;
 	ipkdbregs[EDX] = frame.tf_edx;

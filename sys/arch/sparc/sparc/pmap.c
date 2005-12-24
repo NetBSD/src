@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.305 2005/11/16 21:42:51 uwe Exp $ */
+/*	$NetBSD: pmap.c,v 1.306 2005/12/24 20:07:37 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.305 2005/11/16 21:42:51 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.306 2005/12/24 20:07:37 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -860,14 +860,14 @@ updatepte4m(vaddr_t va, int *pte, int bic, int bis, int ctx, u_int cpuset)
 	return (oldval);
 }
 
-__inline void
+inline void
 setpgt4m(int *ptep, int pte)
 {
 
 	swap(ptep, pte);
 }
 
-__inline void
+inline void
 setpgt4m_va(vaddr_t va, int *ptep, int pte, int pageflush, int ctx,
 	    u_int cpuset)
 {
