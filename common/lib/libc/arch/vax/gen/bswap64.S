@@ -1,10 +1,10 @@
 /* Written by Anders Magnusson. Public Domain */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "$NetBSD: bswap64.S,v 1.1 2005/12/20 19:28:50 christos Exp $"
+	.asciz "$NetBSD: bswap64.S,v 1.2 2005/12/24 08:33:32 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(bswap64, 0)
         movq 4(%ap),%r3

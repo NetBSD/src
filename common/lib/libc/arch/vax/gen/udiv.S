@@ -32,7 +32,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)udiv.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: udiv.S,v 1.1 2005/12/20 19:28:50 christos Exp $"
+	.asciz "$NetBSD: udiv.S,v 1.2 2005/12/24 08:33:32 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -41,7 +41,7 @@
  * audiv() takes a pointer to a dividend and an ordinary divisor.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 #define	DIVIDEND	4(%ap)
 #define	DIVISOR		8(%ap)

@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.1 2005/12/20 19:28:50 christos Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.2 2005/12/24 08:33:32 matt Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
  * of some extra memory references and branches when count >= 65536.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(memcpy, 0)
 	movzwl	$65535,%r0	/* %r0 = 64K (needed below) */
