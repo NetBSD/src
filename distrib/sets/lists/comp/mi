@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.837 2005/12/20 19:53:15 rpaulo Exp $
+#	$NetBSD: mi,v 1.838 2005/12/24 21:07:05 matt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5127,6 +5127,7 @@
 ./usr/share/man/cat9/copyout_proc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/copyoutstr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/copystr.0			comp-sys-catman		.cat
+./usr/share/man/cat9/coredump_write.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_configure.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_coredump.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_dump.0			comp-sys-catman		.cat
@@ -9057,6 +9058,7 @@
 ./usr/share/man/man9/copyout_proc.9		comp-sys-man		.man
 ./usr/share/man/man9/copyoutstr.9		comp-sys-man		.man
 ./usr/share/man/man9/copystr.9			comp-sys-man		.man
+./usr/share/man/man9/coredump_write.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_configure.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_coredump.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_dump.9			comp-sys-man		.man
