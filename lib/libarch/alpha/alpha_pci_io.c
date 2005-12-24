@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_pci_io.c,v 1.2 2001/07/17 17:46:42 thorpej Exp $	*/
+/*	$NetBSD: alpha_pci_io.c,v 1.3 2005/12/24 21:11:16 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ alpha_pci_io_enable(int onoff)
 	return (0);
 }
 
-static __inline struct alpha_bus_window *
+static inline struct alpha_bus_window *
 alpha_pci_io_findwindow(bus_addr_t ioaddr)
 {
 	struct alpha_bus_window *abw;
@@ -150,7 +150,7 @@ alpha_pci_io_findwindow(bus_addr_t ioaddr)
 	/* NOTREACHED */
 }
 
-static __inline uint32_t *
+static inline uint32_t *
 alpha_pci_io_swiz(bus_addr_t ioaddr, int size)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);

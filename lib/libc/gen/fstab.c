@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.26 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: fstab.c,v 1.27 2005/12/24 21:11:16 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.26 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.27 2005/12/24 21:11:16 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,10 +65,10 @@ static struct fstab _fs_fstab;
 
 static int fstabscan __P((void));
 
-static __inline char *nextfld __P((char **, const char *));
+static inline char *nextfld __P((char **, const char *));
 
 
-static __inline char *
+static inline char *
 nextfld(str, sep)
 	char **str;
 	const char *sep;

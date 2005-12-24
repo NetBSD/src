@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.6 2005/06/12 05:21:26 lukem Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.7 2005/12/24 21:11:16 perry Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetmask.c,v 1.6 2005/06/12 05:21:26 lukem Exp $");
+__RCSID("$NetBSD: fpsetmask.c,v 1.7 2005/12/24 21:11:16 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -60,10 +60,10 @@ fpsetmask(fp_except mask)
 	uint64_t fpscr;
 	fp_except old;
 
-	__asm__ __volatile("mffs %0" : "=f"(fpscr));
+	__asm__ volatile("mffs %0" : "=f"(fpscr));
 	old = ((uint32_t)fpscr & MASKBITS) >> MASKSHFT;
 	fpscr &= ~MASKBITS;
 	fpscr |= ((uint32_t)mask << MASKSHFT) & MASKBITS;
-	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
+	__asm__ volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);
 }
