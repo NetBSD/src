@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmover.9,v 1.9 2003/04/16 13:35:28 wiz Exp $
+.\"	$NetBSD: dmover.9,v 1.10 2005/12/24 21:27:22 perry Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 15, 2002
+.Dd December 24, 2005
 .Dt DMOVER 9
 .Os
 .Sh NAME
@@ -213,7 +213,7 @@ This is a pointer to client private data specific to the request.
 .It void *dreq_dmbcookie
 This is a pointer to back-end private data, for use while the back-end
 is actively processing a request.
-.It __volatile int dreq_flags
+.It volatile int dreq_flags
 The following flags are defined:
 .Bl -tag -width "DMOVER_REQ_RUNNINGXX"
 .It DMOVER_REQ_DONE

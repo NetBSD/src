@@ -1,4 +1,4 @@
-/* $NetBSD: abortfixup.c,v 1.6 2002/04/09 03:13:18 thorpej Exp $ */
+/* $NetBSD: abortfixup.c,v 1.7 2005/12/24 21:22:46 perry Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/types.h>
 
-__RCSID("$NetBSD: abortfixup.c,v 1.6 2002/04/09 03:13:18 thorpej Exp $");
+__RCSID("$NetBSD: abortfixup.c,v 1.7 2005/12/24 21:22:46 perry Exp $");
 
 #include <setjmp.h>
 #include <signal.h>
@@ -73,7 +73,7 @@ main(void)
 	 */
 
 	if (setjmp(buf) == 0) {
-		__asm __volatile (
+		__asm volatile (
 		"	mov r0, #0			\n"
 		"	mov r1, r0			\n"
 		"	str r1, [r0], r1, ror #10");
@@ -88,7 +88,7 @@ main(void)
 	/* Similar but pre-indexed, to check ARM2/3 abort address function. */
 
 	if (setjmp(buf) == 0) {
-		__asm __volatile (
+		__asm volatile (
 		"	mov r0, #0			\n"
 		"	mov r1, r0			\n"
 		"	str r1, [r0, r1, ror #10]");
