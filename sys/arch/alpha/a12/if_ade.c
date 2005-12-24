@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.24 2005/12/11 12:16:10 christos Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.25 2005/12/24 21:44:28 perry Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.24 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.25 2005/12/24 21:44:28 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1681,7 +1681,7 @@ tulip_null_media_poll(
 #endif
 }
 
-__inline__ static void
+inline static void
 tulip_21140_mediainit(
     tulip_softc_t * const sc,
     tulip_media_info_t * const mip,
