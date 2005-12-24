@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.18 2005/12/24 21:11:15 perry Exp $ */
+/* $NetBSD: crt0.c,v 1.19 2005/12/24 22:02:10 perry Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -55,7 +55,7 @@
 void __start(u_long, void (*)(void), const Obj_Entry *,
 		struct ps_strings *);
 
-asm(".text; .align 4;  .globl _start; _start:");
+__asm(".text; .align 4;  .globl _start; _start:");
 
 void
 __start(u_long sp,
@@ -157,7 +157,7 @@ __start(u_long sp,
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.18 2005/12/24 21:11:15 perry Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.19 2005/12/24 22:02:10 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

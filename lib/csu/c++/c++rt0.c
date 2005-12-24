@@ -1,4 +1,4 @@
-/*	$NetBSD: c++rt0.c,v 1.9 1999/07/02 15:53:55 simonb Exp $	*/
+/*	$NetBSD: c++rt0.c,v 1.10 2005/12/24 22:02:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,8 +84,8 @@ __ctors()
 		(**p++)();
 }
 
-extern void __init __P((void)) asm(".init");
-extern void __fini __P((void)) asm(".fini");
+extern void __init __P((void)) __asm(".init");
+extern void __fini __P((void)) __asm(".fini");
 
 void
 __init()

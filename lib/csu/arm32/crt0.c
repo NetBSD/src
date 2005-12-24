@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.10 2001/02/18 23:03:34 simonb Exp $	*/
+/*	$NetBSD: crt0.c,v 1.11 2005/12/24 21:54:43 perry Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -42,7 +42,7 @@
 	__syscall(SYS_mmap, (addr), (len), (prot), (flags),	\
 	(fd), 0, (off_t)(off))
 
-extern	void		start(void) asm("start");
+extern	void		start(void) __asm("start");
 	void		__start(int, char *[], char *[]);
 
 __asm("
@@ -69,7 +69,7 @@ Lps_strings:
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.10 2001/02/18 23:03:34 simonb Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.11 2005/12/24 21:54:43 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
