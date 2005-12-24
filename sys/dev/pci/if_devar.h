@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.41 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.42 2005/12/24 23:29:06 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -1094,7 +1094,7 @@ TULIP_PERFREAD(
     void)
 {
     tulip_cycle_t x;
-    __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
+    __asm volatile (".byte 0x0f, 0x31" : "=A" (x));
     return x;
 }
 #define	TULIP_PERFDIFF(s, f)	((f) - (s))
@@ -1105,7 +1105,7 @@ TULIP_PERFREAD(
     void)
 {
     tulip_cycle_t x;
-    __asm__ volatile ("rpcc %0" : "=r" (x));
+    __asm volatile ("rpcc %0" : "=r" (x));
     return x;
 }
 #define	TULIP_PERFDIFF(s, f)	((unsigned int) ((f) - (s)))
