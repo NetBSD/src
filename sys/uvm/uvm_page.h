@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.41 2005/11/29 15:45:28 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.42 2005/12/24 20:45:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -235,7 +235,7 @@ extern int vm_nphysseg;
  */
 
 #ifdef UVM_PAGE_INLINE
-#define PAGE_INLINE static __inline
+#define PAGE_INLINE static inline
 #else
 #define PAGE_INLINE /* nothing */
 #endif /* UVM_PAGE_INLINE */
@@ -307,7 +307,7 @@ static int vm_physseg_find(paddr_t, int *);
 /*
  * vm_physseg_find: find vm_physseg structure that belongs to a PA
  */
-static __inline int
+static inline int
 vm_physseg_find(pframe, offp)
 	paddr_t pframe;
 	int	*offp;
@@ -389,7 +389,7 @@ vm_physseg_find(pframe, offp)
  * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
  * back from an I/O mapping (ugh!).   used in some MD code as well.
  */
-static __inline struct vm_page *
+static inline struct vm_page *
 PHYS_TO_VM_PAGE(pa)
 	paddr_t pa;
 {

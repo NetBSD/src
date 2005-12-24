@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.33 2005/12/11 12:20:23 christos Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.34 2005/12/24 20:45:08 perry Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.33 2005/12/11 12:20:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.34 2005/12/24 20:45:08 perry Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -263,9 +263,9 @@ sunos32_sys_access(l, v, retval)
 	return (sys_access(l, &ua, retval));
 }
 
-static __inline void sunos32_from___stat13 __P((struct stat *, struct netbsd32_stat43 *));
+static inline void sunos32_from___stat13 __P((struct stat *, struct netbsd32_stat43 *));
 
-static __inline void
+static inline void
 sunos32_from___stat13(sbp, sb32p)
 	struct stat *sbp;
 	struct netbsd32_stat43 *sb32p;

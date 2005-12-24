@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.75 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.76 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -257,7 +257,7 @@ void	ipflow_slowtimo(void);
 void	ipflow_invalidate_all(void);
 
 extern uint16_t	ip_id;
-static __inline uint16_t ip_newid(void);
+static inline uint16_t ip_newid(void);
 
 u_int16_t ip_randomid(void);
 extern int ip_do_randomid;
@@ -268,7 +268,7 @@ extern int ip_do_randomid;
  * => return the first id.
  */
 
-static __inline uint16_t
+static inline uint16_t
 ip_newid_range(unsigned int num)
 {
 	uint16_t id;
@@ -284,7 +284,7 @@ ip_newid_range(unsigned int num)
 	return id;
 }
 
-static __inline uint16_t
+static inline uint16_t
 ip_newid(void)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.11 2005/12/11 12:24:44 christos Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.12 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -110,11 +110,11 @@ __syncicache(void *from, size_t len)
 		l = (len + off + linesz - 1) & ~(linesz - 1);
 		p = (char *)from - off;
 		do {
-			__asm__ __volatile ("dcbst 0,%0" :: "r"(p));
+			__asm__ volatile ("dcbst 0,%0" :: "r"(p));
 			p += linesz;
 		} while ((l -= linesz) != 0);
 	}
-	__asm__ __volatile ("sync");
+	__asm__ volatile ("sync");
 
 	if (CACHEINFO.icache_size > 0 ) {
 		linesz = CACHEINFO.icache_line_size;
@@ -122,9 +122,9 @@ __syncicache(void *from, size_t len)
 		l = (len + off + linesz - 1) & ~(linesz - 1);
 		p = (char *)from - off;
 		do {
-			__asm__ __volatile ("icbi 0,%0" :: "r"(p));
+			__asm__ volatile ("icbi 0,%0" :: "r"(p));
 			p += linesz;
 		} while ((l -= linesz) != 0);
 	}
-	__asm__ __volatile ("sync; isync");
+	__asm__ volatile ("sync; isync");
 }

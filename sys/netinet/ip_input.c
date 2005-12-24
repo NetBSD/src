@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.222 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.223 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.222 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.223 2005/12/24 20:45:09 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -279,10 +279,10 @@ static u_int	ip_reass_ttl_decr(u_int ticks);
 static void	ip_reass_drophalf(void);
 
 
-static __inline int ipq_lock_try(void);
-static __inline void ipq_unlock(void);
+static inline int ipq_lock_try(void);
+static inline void ipq_unlock(void);
 
-static __inline int
+static inline int
 ipq_lock_try(void)
 {
 	int s;
@@ -301,7 +301,7 @@ ipq_lock_try(void)
 	return (1);
 }
 
-static __inline void
+static inline void
 ipq_unlock(void)
 {
 	int s;

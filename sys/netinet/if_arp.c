@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.107 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.108 2005/12/24 20:45:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.107 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.108 2005/12/24 20:45:09 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -238,10 +238,10 @@ struct domain arpdomain =
  */
 
 static int	arp_locked;
-static __inline int arp_lock_try(int);
-static __inline void arp_unlock(void);
+static inline int arp_lock_try(int);
+static inline void arp_unlock(void);
 
-static __inline int
+static inline int
 arp_lock_try(int recurse)
 {
 	int s;
@@ -260,7 +260,7 @@ arp_lock_try(int recurse)
 	return (1);
 }
 
-static __inline void
+static inline void
 arp_unlock(void)
 {
 	int s;

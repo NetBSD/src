@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.h,v 1.1 2005/12/15 21:32:00 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.2 2005/12/24 20:52:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ buf_grow(struct buffer *buf, size_t minsize)
 	buf->ptr += diff;
 }
 
-static __inline void
+static inline void
 buf_putc(struct buffer *buf, char c)
 {
 	if (buf->ptr >= buf->eptr)
@@ -90,13 +90,13 @@ buf_putc(struct buffer *buf, char c)
 	*buf->ptr++ = c;
 }
 
-static __inline void
+static inline void
 buf_reset(struct buffer *buf)
 {
 	buf->ptr = buf->bptr;
 }
 
-static __inline char 
+static inline char 
 buf_unputc(struct buffer *buf)
 {
 	return buf->ptr > buf->bptr ? *--buf->ptr : '\0';

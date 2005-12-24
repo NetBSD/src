@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.114 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.115 2005/12/24 20:45:08 perry Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.114 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.115 2005/12/24 20:45:08 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.114 2005/12/11 12:20:26 christos Exp
 
 static int svr4_to_bsd_mmap_flags __P((int));
 
-static __inline clock_t timeval_to_clock_t __P((struct timeval *));
+static inline clock_t timeval_to_clock_t __P((struct timeval *));
 static int svr4_setinfo	__P((struct proc *, int, svr4_siginfo_t *));
 
 struct svr4_hrtcntl_args;
@@ -824,7 +824,7 @@ svr4_sys_break(l, v, retval)
 }
 
 
-static __inline clock_t
+static inline clock_t
 timeval_to_clock_t(tv)
 	struct timeval *tv;
 {

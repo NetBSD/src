@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.3 2005/12/11 12:20:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.4 2005/12/24 20:45:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.3 2005/12/11 12:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.4 2005/12/24 20:45:08 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -55,10 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.3 2005/12/11 12:20:22 chris
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
-static __inline void compat_20_netbsd32_from_statvfs(struct statvfs *,
+static inline void compat_20_netbsd32_from_statvfs(struct statvfs *,
     struct netbsd32_statfs *);
 
-static __inline void
+static inline void
 compat_20_netbsd32_from_statvfs(sbp, sb32p)
 	struct statvfs *sbp;
 	struct netbsd32_statfs *sb32p;

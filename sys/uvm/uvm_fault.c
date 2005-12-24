@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.102 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.103 2005/12/24 20:45:10 perry Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.102 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.103 2005/12/24 20:45:10 perry Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -190,7 +190,7 @@ static const struct uvm_advice uvmadvice[] = {
  * => does not have to deactivate page if it is busy
  */
 
-static __inline void
+static inline void
 uvmfault_anonflush(struct vm_anon **anons, int n)
 {
 	int lcv;

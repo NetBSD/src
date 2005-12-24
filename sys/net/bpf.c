@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.113 2005/12/14 22:46:52 rpaulo Exp $	*/
+/*	$NetBSD: bpf.c,v 1.114 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.113 2005/12/14 22:46:52 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.114 2005/12/24 20:45:09 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ static void	bpf_attachd(struct bpf_d *, struct bpf_if *);
 static void	bpf_detachd(struct bpf_d *);
 static int	bpf_setif(struct bpf_d *, struct ifreq *);
 static void	bpf_timed_out(void *);
-static __inline void
+static inline void
 		bpf_wakeup(struct bpf_d *);
 static void	catchpacket(struct bpf_d *, u_char *, u_int, u_int,
 				 void *(*)(void *, const void *, size_t));
@@ -553,7 +553,7 @@ done:
 /*
  * If there are processes sleeping on this descriptor, wake them up.
  */
-static __inline void
+static inline void
 bpf_wakeup(struct bpf_d *d)
 {
 	wakeup(d);
@@ -1244,7 +1244,7 @@ bpf_mcpy(void *dst_arg, const void *src_arg, size_t len)
  * pktlen  length of the packet
  * rcvif   either NULL or the interface the packet came in on.
  */
-static __inline void
+static inline void
 bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 	    void *marg, u_int pktlen, u_int buflen, struct ifnet *rcvif)
 {

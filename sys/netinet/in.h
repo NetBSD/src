@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.73 2005/12/20 19:32:30 christos Exp $	*/
+/*	$NetBSD: in.h,v 1.74 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -487,7 +487,7 @@ struct ip_mreq {
  *		dst		Destination IP address
  *		lenproto	htons(proto-hdr-len + proto-number)
  */
-static __inline u_int16_t __attribute__((__unused__))
+static inline u_int16_t __attribute__((__unused__))
 in_cksum_phdr(u_int32_t src, u_int32_t dst, u_int32_t lenproto)
 {
 	u_int32_t sum;
@@ -511,7 +511,7 @@ in_cksum_phdr(u_int32_t src, u_int32_t dst, u_int32_t lenproto)
  *
  *	Add the two 16-bit network-order values, carry, and return.
  */
-static __inline u_int16_t __attribute__((__unused__))
+static inline u_int16_t __attribute__((__unused__))
 in_cksum_addword(u_int16_t a, u_int16_t b)
 {
 	u_int32_t sum = a + b;

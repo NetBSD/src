@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.205 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.206 2005/12/24 20:45:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.205 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.206 2005/12/24 20:45:10 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -281,7 +281,7 @@ static void	uvm_map_unreference_amap(struct vm_map_entry *, int);
 int _uvm_tree_sanity(struct vm_map *, const char *);
 static vsize_t uvm_rb_subtree_space(const struct vm_map_entry *);
 
-static __inline int
+static inline int
 uvm_compare(const struct vm_map_entry *a, const struct vm_map_entry *b)
 {
 
@@ -293,7 +293,7 @@ uvm_compare(const struct vm_map_entry *a, const struct vm_map_entry *b)
 	return (0);
 }
 
-static __inline void
+static inline void
 uvm_rb_augment(struct vm_map_entry *entry)
 {
 
@@ -304,7 +304,7 @@ RB_PROTOTYPE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
 
 RB_GENERATE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
 
-static __inline vsize_t
+static inline vsize_t
 uvm_rb_space(const struct vm_map *map, const struct vm_map_entry *entry)
 {
 	/* XXX map is not used */
@@ -334,7 +334,7 @@ uvm_rb_subtree_space(const struct vm_map_entry *entry)
 	return (space);
 }
 
-static __inline void
+static inline void
 uvm_rb_fixup(struct vm_map *map, struct vm_map_entry *entry)
 {
 	/* We need to traverse to the very top */
@@ -562,7 +562,7 @@ uvm_mapent_free_merged(struct vm_map *map, struct vm_map_entry *me)
  * uvm_mapent_copy: copy a map entry, preserving flags
  */
 
-static __inline void
+static inline void
 uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
 {
 
@@ -576,7 +576,7 @@ uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
  * => map should be locked by caller
  */
 
-static __inline void
+static inline void
 uvm_map_entry_unwire(struct vm_map *map, struct vm_map_entry *entry)
 {
 
@@ -588,7 +588,7 @@ uvm_map_entry_unwire(struct vm_map *map, struct vm_map_entry *entry)
 /*
  * wrapper for calling amap_ref()
  */
-static __inline void
+static inline void
 uvm_map_reference_amap(struct vm_map_entry *entry, int flags)
 {
 
@@ -600,7 +600,7 @@ uvm_map_reference_amap(struct vm_map_entry *entry, int flags)
 /*
  * wrapper for calling amap_unref()
  */
-static __inline void
+static inline void
 uvm_map_unreference_amap(struct vm_map_entry *entry, int flags)
 {
 
@@ -4085,7 +4085,7 @@ uvm_kmapent_map(struct vm_map_entry *entry)
 }
 #endif
 
-static __inline struct vm_map_entry *
+static inline struct vm_map_entry *
 uvm_kmapent_get(struct uvm_kmapent_hdr *ukh)
 {
 	struct vm_map_entry *entry;
@@ -4107,7 +4107,7 @@ uvm_kmapent_get(struct uvm_kmapent_hdr *ukh)
 	return entry;
 }
 
-static __inline void
+static inline void
 uvm_kmapent_put(struct uvm_kmapent_hdr *ukh, struct vm_map_entry *entry)
 {
 

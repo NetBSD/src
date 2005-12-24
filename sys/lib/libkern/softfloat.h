@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.h,v 1.1 2001/04/26 03:10:48 ross Exp $ */
+/* $NetBSD: softfloat.h,v 1.2 2005/12/24 20:45:09 perry Exp $ */
 
 /* This is a derivative work. */
 
@@ -253,13 +253,13 @@ Software IEC/IEEE double-precision operations.
 */
 #define float64_default_nan 0xFFF8000000000000LL
 
-static __inline int
+static inline int
 float64_is_nan(float64 a)
 {
 	return 0xFFE0000000000000LL < a << 1;
 }
 
-static __inline int
+static inline int
 float64_is_signaling_nan(float64 a)
 {
 	return (a >> 51 & 0xFFF) == 0xFFE && (a & 0x0007FFFFFFFFFFFFLL);

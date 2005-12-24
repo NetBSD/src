@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.6 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: iso.h,v 1.7 2005/12/24 20:45:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -171,31 +171,31 @@ struct iso_extended_attributes {
 	u_char len_au			[ISODCL (247, 250)]; /* 723 */
 };
 
-static __inline int isonum_711(u_char *) __attribute__ ((unused));
-static __inline int isonum_712(char *) __attribute__ ((unused));
-static __inline uint16_t isonum_721(u_char *) __attribute__ ((unused));
-static __inline uint16_t isonum_722(u_char *) __attribute__ ((unused));
-static __inline uint16_t isonum_723(u_char *) __attribute__ ((unused));
-static __inline uint32_t isonum_731(u_char *) __attribute__ ((unused));
-static __inline uint32_t isonum_732(u_char *) __attribute__ ((unused));
-static __inline uint32_t isonum_733(u_char *) __attribute__ ((unused));
+static inline int isonum_711(u_char *) __attribute__ ((unused));
+static inline int isonum_712(char *) __attribute__ ((unused));
+static inline uint16_t isonum_721(u_char *) __attribute__ ((unused));
+static inline uint16_t isonum_722(u_char *) __attribute__ ((unused));
+static inline uint16_t isonum_723(u_char *) __attribute__ ((unused));
+static inline uint32_t isonum_731(u_char *) __attribute__ ((unused));
+static inline uint32_t isonum_732(u_char *) __attribute__ ((unused));
+static inline uint32_t isonum_733(u_char *) __attribute__ ((unused));
 
 /* 7.1.1: unsigned char */
-static __inline int
+static inline int
 isonum_711(u_char *p)
 {
 	return *p;
 }
 
 /* 7.1.2: signed(?) char */
-static __inline int
+static inline int
 isonum_712(char *p)
 {
 	return *p;
 }
 
 /* 7.2.1: unsigned little-endian 16-bit value.  NOT USED IN KERNEL. */
-static __inline uint16_t
+static inline uint16_t
 isonum_721(u_char *p)
 {
 #if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == LITTLE_ENDIAN)
@@ -206,7 +206,7 @@ isonum_721(u_char *p)
 }
 
 /* 7.2.2: unsigned big-endian 16-bit value.  NOT USED IN KERNEL. */
-static __inline uint16_t
+static inline uint16_t
 isonum_722(u_char *p)
 {
 #if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == BIG_ENDIAN)
@@ -217,7 +217,7 @@ isonum_722(u_char *p)
 }
 
 /* 7.2.3: unsigned both-endian (little, then big) 16-bit value */
-static __inline uint16_t
+static inline uint16_t
 isonum_723(u_char *p)
 {
 #if defined(UNALIGNED_ACCESS) && \
@@ -233,7 +233,7 @@ isonum_723(u_char *p)
 }
 
 /* 7.3.1: unsigned little-endian 32-bit value.  NOT USED IN KERNEL. */
-static __inline uint32_t
+static inline uint32_t
 isonum_731(u_char *p)
 {
 #if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == LITTLE_ENDIAN)
@@ -244,7 +244,7 @@ isonum_731(u_char *p)
 }
 
 /* 7.3.2: unsigned big-endian 32-bit value.  NOT USED IN KERNEL. */
-static __inline uint32_t
+static inline uint32_t
 isonum_732(u_char *p)
 {
 #if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == BIG_ENDIAN)
@@ -255,7 +255,7 @@ isonum_732(u_char *p)
 }
 
 /* 7.3.3: unsigned both-endian (little, then big) 32-bit value */
-static __inline uint32_t
+static inline uint32_t
 isonum_733(u_char *p)
 {
 #if defined(UNALIGNED_ACCESS) && \

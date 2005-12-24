@@ -91,12 +91,6 @@
 
 #ifdef BSD4_4
 # include <sys/cdefs.h>
-#else
-# ifndef __GNUC__
-#  ifndef __inline
-#   define __inline
-#  endif
-# endif
 #endif
 
 #if !defined(__GNUC_PREREQ__)

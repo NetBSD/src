@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_msgs.h,v 1.2 2005/12/10 23:51:50 elad Exp $	*/
+/*	$NetBSD: i4b_capi_msgs.h,v 1.3 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -308,38 +308,38 @@
 #define CAPIMSG_LEN(msg)             (msg[0]|(msg[1]<<8))
 #define CAPIMSG_DATALEN(msg)         (msg[16]|(msg[17]<<8))
 
-static __inline u_int8_t* capimsg_getu8(u_int8_t *msg, u_int8_t *val)
+static inline u_int8_t* capimsg_getu8(u_int8_t *msg, u_int8_t *val)
 {
     *val = *msg;
     return (msg + 1);
 }
 
-static __inline u_int8_t* capimsg_getu16(u_int8_t *msg, u_int16_t *val)
+static inline u_int8_t* capimsg_getu16(u_int8_t *msg, u_int16_t *val)
 {
     *val = (msg[0]|(msg[1]<<8));
     return (msg + 2);
 }
 
-static __inline u_int8_t* capimsg_getu32(u_int8_t *msg, u_int32_t *val)
+static inline u_int8_t* capimsg_getu32(u_int8_t *msg, u_int32_t *val)
 {
     *val = (msg[0]|(msg[1]<<8)|(msg[2]<<16)|(msg[3]<<24));
     return (msg + 4);
 }
 
-static __inline u_int8_t* capimsg_setu8(u_int8_t *msg, u_int8_t val)
+static inline u_int8_t* capimsg_setu8(u_int8_t *msg, u_int8_t val)
 {
     msg[0] = val;
     return (msg + 1);
 }
 
-static __inline u_int8_t* capimsg_setu16(u_int8_t *msg, u_int16_t val)
+static inline u_int8_t* capimsg_setu16(u_int8_t *msg, u_int16_t val)
 {
     msg[0] = (val & 0xff);
     msg[1] = (val >> 8) & 0xff;
     return (msg + 2);
 }
 
-static __inline u_int8_t* capimsg_setu32(u_int8_t *msg, u_int32_t val)
+static inline u_int8_t* capimsg_setu32(u_int8_t *msg, u_int32_t val)
 {
     msg[0] = (val & 0xff);
     msg[1] = (val >> 8) & 0xff;

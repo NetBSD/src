@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.31 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.32 2005/12/24 20:45:10 perry Exp $	*/
 
 /*
  *
@@ -173,7 +173,7 @@ struct uvm_pagerops {
  */
 
 #ifdef UVM_PAGER_INLINE
-#define PAGER_INLINE static __inline
+#define PAGER_INLINE static inline
 #else
 #define PAGER_INLINE /* nothing */
 #endif /* UVM_PAGER_INLINE */

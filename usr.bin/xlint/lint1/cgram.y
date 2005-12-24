@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.35 2005/07/17 19:35:48 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.36 2005/12/24 20:47:56 perry Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.35 2005/07/17 19:35:48 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.36 2005/12/24 20:47:56 perry Exp $");
 #endif
 
 #include <stdlib.h>
@@ -69,8 +69,8 @@ static	void	idecl(sym_t *, int, sbuf_t *);
 static	void	ignuptorp(void);
 
 #ifdef DEBUG
-static __inline void CLRWFLGS(void);
-static __inline void CLRWFLGS(void)
+static inline void CLRWFLGS(void);
+static inline void CLRWFLGS(void)
 {
 	printf("%s, %d: clear flags %s %d\n", curr_pos.p_file,
 	    curr_pos.p_line, __FILE__, __LINE__);
@@ -78,8 +78,8 @@ static __inline void CLRWFLGS(void)
 	onowarn = -1;
 }
 
-static __inline void SAVE(void);
-static __inline void SAVE(void)
+static inline void SAVE(void);
+static inline void SAVE(void)
 {
 	if (onowarn != -1)
 		abort();
@@ -88,8 +88,8 @@ static __inline void SAVE(void)
 	onowarn = nowarn;
 }
 
-static __inline void RESTORE(void);
-static __inline void RESTORE(void)
+static inline void RESTORE(void);
+static inline void RESTORE(void)
 {
 	if (onowarn != -1) {
 		nowarn = onowarn;

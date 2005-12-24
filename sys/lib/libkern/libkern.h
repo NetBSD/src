@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.53 2005/12/21 14:24:44 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.54 2005/12/24 20:45:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #include <sys/null.h>
 
 #ifndef LIBKERN_INLINE
-#define LIBKERN_INLINE	static __inline
+#define LIBKERN_INLINE	static inline
 #define LIBKERN_BODY
 #endif
 

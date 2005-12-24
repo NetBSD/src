@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.115 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.116 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.115 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.116 2005/12/24 20:45:09 perry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -255,7 +255,7 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 const struct vnodeopv_desc kernfs_vnodeop_opv_desc =
 	{ &kernfs_vnodeop_p, kernfs_vnodeop_entries };
 
-static __inline int
+static inline int
 kernfs_fileop_compare(struct kernfs_fileop *a, struct kernfs_fileop *b)
 {
 	if (a->kf_type < b->kf_type)
