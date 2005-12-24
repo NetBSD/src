@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.18 2005/12/24 21:10:28 uwe Exp $	*/
+/*	$NetBSD: asm.h,v 1.19 2005/12/24 22:57:26 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -128,12 +128,7 @@
 	_C_LABEL(alias) = _C_LABEL(sym)
 #endif
 
-#ifdef __STDC__
-#define	__STRING(x)			#x
-#define	WARN_REFERENCES(sym, msg)
-#else
-#define	__STRING(x)			"x"
-#define	WARN_REFERENCES(sym, msg)
-#endif /* __STDC__ */
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning._sym; .ascii _msg; .previous
 
 #endif /* !_SH3_ASM_H_ */
