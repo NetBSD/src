@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.59 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: if_se.c,v 1.60 2005/12/24 20:27:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.59 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.60 2005/12/24 20:27:52 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -216,7 +216,7 @@ static void	sedone(struct scsipi_xfer *, int);
 static int	se_ioctl(struct ifnet *, u_long, caddr_t);
 static void	sewatchdog(struct ifnet *);
 
-static __inline u_int16_t ether_cmp(void *, void *);
+static inline u_int16_t ether_cmp(void *, void *);
 static void	se_recv(void *);
 static struct mbuf *se_get(struct se_softc *, char *, int);
 static int	se_read(struct se_softc *, char *, int);
@@ -231,7 +231,7 @@ static int	se_remove_multi(struct se_softc *, u_int8_t *);
 static int	sc_set_all_multi(struct se_softc *, int);
 #endif
 static void	se_stop(struct se_softc *);
-static __inline int se_scsipi_cmd(struct scsipi_periph *periph,
+static inline int se_scsipi_cmd(struct scsipi_periph *periph,
 			struct scsipi_generic *scsipi_cmd,
 			int cmdlen, u_char *data_addr, int datalen,
 			int retries, int timeout, struct buf *bp,
@@ -275,7 +275,7 @@ const struct scsipi_inquiry_pattern se_patterns[] = {
  * unrolled for speed.
  * Note: use this like memcmp()
  */
-static __inline u_int16_t
+static inline u_int16_t
 ether_cmp(one, two)
 	void *one, *two;
 {
@@ -371,7 +371,7 @@ seattach(parent, self, aux)
 }
 
 
-static __inline int
+static inline int
 se_scsipi_cmd(periph, cmd, cmdlen, data_addr, datalen,
 		       retries, timeout, bp, flags)
 	struct scsipi_periph *periph;

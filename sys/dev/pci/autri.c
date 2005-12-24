@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.27 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: autri.c,v 1.28 2005/12/24 20:27:42 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.27 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.28 2005/12/24 20:27:42 perry Exp $");
 
 #include "midi.h"
 
@@ -204,28 +204,28 @@ static const struct audio_format autri_formats[AUTRI_NFORMATS] = {
 /*
  * register set/clear bit
  */
-static __inline void
+static inline void
 autri_reg_set_1(struct autri_softc *sc, int no, uint8_t mask)
 {
 	bus_space_write_1(sc->memt, sc->memh, no,
 	    (bus_space_read_1(sc->memt, sc->memh, no) | mask));
 }
 
-static __inline void
+static inline void
 autri_reg_clear_1(struct autri_softc *sc, int no, uint8_t mask)
 {
 	bus_space_write_1(sc->memt, sc->memh, no,
 	    (bus_space_read_1(sc->memt, sc->memh, no) & ~mask));
 }
 
-static __inline void
+static inline void
 autri_reg_set_4(struct autri_softc *sc, int no, uint32_t mask)
 {
 	bus_space_write_4(sc->memt, sc->memh, no,
 	    (bus_space_read_4(sc->memt, sc->memh, no) | mask));
 }
 
-static __inline void
+static inline void
 autri_reg_clear_4(struct autri_softc *sc, int no, uint32_t mask)
 {
 	bus_space_write_4(sc->memt, sc->memh, no,

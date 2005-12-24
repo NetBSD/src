@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110var.h,v 1.6 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: tms320av110var.h,v 1.7 2005/12/24 20:27:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ static void tav_write_short(bus_space_tag_t, bus_space_handle_t,
 
 #define tav_write_byte(ioh, iot, off, v) bus_space_write_1(ioh, iot, off, v)
 
-static __inline void
+static inline void
 tav_write_short(bus_space_tag_t iot, bus_space_handle_t ioh,
     bus_size_t off, uint16_t val)
 {

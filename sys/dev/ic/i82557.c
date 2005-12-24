@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.95 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: i82557.c,v 1.96 2005/12/24 20:27:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.95 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.96 2005/12/24 20:27:30 perry Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -237,7 +237,7 @@ static int tx_threshold = 64;
  * Wait for the previous command to be accepted (but not necessarily
  * completed).
  */
-static __inline void
+static inline void
 fxp_scb_wait(struct fxp_softc *sc)
 {
 	int i = 10000;
@@ -252,7 +252,7 @@ fxp_scb_wait(struct fxp_softc *sc)
 /*
  * Submit a command to the i82557.
  */
-static __inline void
+static inline void
 fxp_scb_cmd(struct fxp_softc *sc, u_int8_t cmd)
 {
 

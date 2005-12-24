@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.210 2005/11/18 16:53:56 skrll Exp $	*/
+/*	$NetBSD: wi.c,v 1.211 2005/12/24 20:27:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.210 2005/11/18 16:53:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.211 2005/12/24 20:27:30 perry Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1565,7 +1565,7 @@ wi_sync_bssid(struct wi_softc *sc, u_int8_t new_bssid[IEEE80211_ADDR_LEN])
         ieee80211_sta_join(ic, ieee80211_ref_node(ni));
 }
 
-static __inline void
+static inline void
 wi_rssadapt_input(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_frame *wh, int rssi)
 {

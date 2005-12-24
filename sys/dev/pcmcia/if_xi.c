@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.53 2005/12/11 12:23:23 christos Exp $ */
+/*	$NetBSD: if_xi.c,v 1.54 2005/12/24 20:27:52 perry Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.53 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.54 2005/12/24 20:27:52 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -118,7 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.53 2005/12/11 12:23:23 christos Exp $");
 #include <dev/pcmcia/if_xivar.h>
 
 #ifdef __GNUC__
-#define INLINE	__inline
+#define INLINE	inline
 #else
 #define INLINE
 #endif	/* __GNUC__ */

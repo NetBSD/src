@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.11 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gt.c,v 1.12 2005/12/24 20:27:41 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.11 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.12 2005/12/24 20:27:41 perry Exp $");
 
 #include "opt_marvell.h"
 #include "locators.h"
@@ -773,12 +773,12 @@ gt_watchdog_init(struct gt_softc *gt)
 		/*
 		 * configure EMCP in HID0 in case it's not already set
 		 */
-		__asm __volatile("sync");
+		__asm volatile("sync");
 		hid0 = mfspr(SPR_HID0);
 		if ((hid0 & HID0_EMCP) == 0) {
 			hid0 |= HID0_EMCP;
-			__asm __volatile("sync"); mtspr(SPR_HID0, hid0);
-			__asm __volatile("sync"); hid0 = mfspr(SPR_HID0);
+			__asm volatile("sync"); mtspr(SPR_HID0, hid0);
+			__asm volatile("sync"); hid0 = mfspr(SPR_HID0);
 			printf(", EMCP set");
 		}
 	}
@@ -794,7 +794,7 @@ u_int32_t
 hid0_print()
 {
 	u_int32_t hid0;
-	__asm __volatile("sync; mfspr %0,1008;" : "=r"(hid0));
+	__asm volatile("sync; mfspr %0,1008;" : "=r"(hid0));
 	printf("hid0: %#x\n", hid0);
 	return hid0;
 }

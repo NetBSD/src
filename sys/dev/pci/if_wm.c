@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.109 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.110 2005/12/24 20:27:42 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.109 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.110 2005/12/24 20:27:42 perry Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -646,7 +646,7 @@ static char wm_txseg_evcnt_names[WM_NTXSEGS][sizeof("txsegXXX")];
 #endif /* WM_EVENT_COUNTERS */
 
 #if 0 /* Not currently used */
-static __inline uint32_t
+static inline uint32_t
 wm_io_read(struct wm_softc *sc, int reg)
 {
 
@@ -655,7 +655,7 @@ wm_io_read(struct wm_softc *sc, int reg)
 }
 #endif
 
-static __inline void
+static inline void
 wm_io_write(struct wm_softc *sc, int reg, uint32_t val)
 {
 
@@ -663,8 +663,8 @@ wm_io_write(struct wm_softc *sc, int reg, uint32_t val)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 4, val);
 }
 
-static __inline void
-wm_set_dma_addr(__volatile wiseman_addr_t *wa, bus_addr_t v)
+static inline void
+wm_set_dma_addr(volatile wiseman_addr_t *wa, bus_addr_t v)
 {
 	wa->wa_low = htole32(v & 0xffffffffU);
 	if (sizeof(bus_addr_t) == 8)

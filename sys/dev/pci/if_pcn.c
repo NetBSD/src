@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.27 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.28 2005/12/24 20:27:42 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.27 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.28 2005/12/24 20:27:42 perry Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -476,7 +476,7 @@ CFATTACH_DECL(pcn, sizeof(struct pcn_softc),
  * Routines to read and write the PCnet-PCI CSR/BCR space.
  */
 
-static __inline uint32_t
+static inline uint32_t
 pcn_csr_read(struct pcn_softc *sc, int reg)
 {
 
@@ -484,7 +484,7 @@ pcn_csr_read(struct pcn_softc *sc, int reg)
 	return (bus_space_read_4(sc->sc_st, sc->sc_sh, PCN32_RDP));
 }
 
-static __inline void
+static inline void
 pcn_csr_write(struct pcn_softc *sc, int reg, uint32_t val)
 {
 
@@ -492,7 +492,7 @@ pcn_csr_write(struct pcn_softc *sc, int reg, uint32_t val)
 	bus_space_write_4(sc->sc_st, sc->sc_sh, PCN32_RDP, val);
 }
 
-static __inline uint32_t
+static inline uint32_t
 pcn_bcr_read(struct pcn_softc *sc, int reg)
 {
 
@@ -500,7 +500,7 @@ pcn_bcr_read(struct pcn_softc *sc, int reg)
 	return (bus_space_read_4(sc->sc_st, sc->sc_sh, PCN32_BDP));
 }
 
-static __inline void
+static inline void
 pcn_bcr_write(struct pcn_softc *sc, int reg, uint32_t val)
 {
 

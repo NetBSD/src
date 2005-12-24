@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.10 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.11 2005/12/24 20:27:29 perry Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -209,13 +209,13 @@ void ahc_timeout(void*);
 #define ahc_timer_init callout_init
 #define ahc_timer_stop callout_stop
 
-static __inline void
+static inline void
 ahc_timer_reset(ahc_timer_t *timer, u_int usec, ahc_callback_t *func, void *arg)
 {
 	callout_reset(timer, (usec * hz)/1000000, func, arg);
 }
 
-static __inline void
+static inline void
 ahc_scb_timer_reset(struct scb *scb, u_int usec)
 {
   	if (!(scb->xs->xs_control & XS_CTL_POLL)) {
@@ -237,9 +237,9 @@ ahc_scb_timer_reset(struct scb *scb, u_int usec)
 #define ahc_insb(ahc, port, valp, count)		\
 	bus_space_read_multi_1((ahc)->tag, (ahc)->bsh, port, valp, count)
 
-static __inline void ahc_flush_device_writes(struct ahc_softc *);
+static inline void ahc_flush_device_writes(struct ahc_softc *);
 
-static __inline void
+static inline void
 ahc_flush_device_writes(struct ahc_softc *ahc)
 {
 	/* XXX Is this sufficient for all architectures??? */
@@ -248,65 +248,65 @@ ahc_flush_device_writes(struct ahc_softc *ahc)
 
 /**************************** Locking Primitives ******************************/
 /* Lock protecting internal data structures */
-static __inline void ahc_lockinit(struct ahc_softc *);
-static __inline void ahc_lock(struct ahc_softc *, unsigned long *);
-static __inline void ahc_unlock(struct ahc_softc *, unsigned long *);
+static inline void ahc_lockinit(struct ahc_softc *);
+static inline void ahc_lock(struct ahc_softc *, unsigned long *);
+static inline void ahc_unlock(struct ahc_softc *, unsigned long *);
 
 /* Lock held during command completion to the upper layer */
-static __inline void ahc_done_lockinit(struct ahc_softc *);
-static __inline void ahc_done_lock(struct ahc_softc *, unsigned long *);
-static __inline void ahc_done_unlock(struct ahc_softc *, unsigned long *);
+static inline void ahc_done_lockinit(struct ahc_softc *);
+static inline void ahc_done_lock(struct ahc_softc *, unsigned long *);
+static inline void ahc_done_unlock(struct ahc_softc *, unsigned long *);
 
 /* Lock held during ahc_list manipulation and ahc softc frees */
-static __inline void ahc_list_lockinit(void);
-static __inline void ahc_list_lock(unsigned long *);
-static __inline void ahc_list_unlock(unsigned long *);
+static inline void ahc_list_lockinit(void);
+static inline void ahc_list_lock(unsigned long *);
+static inline void ahc_list_unlock(unsigned long *);
 
-static __inline void
+static inline void
 ahc_lockinit(struct ahc_softc *ahc)
 {
 }
 
-static __inline void
+static inline void
 ahc_lock(struct ahc_softc *ahc, unsigned long *flags)
 {
 	*flags = splbio();
 }
 
-static __inline void
+static inline void
 ahc_unlock(struct ahc_softc *ahc, unsigned long *flags)
 {
 	splx(*flags);
 }
 
 /* Lock held during command completion to the upper layer */
-static __inline void
+static inline void
 ahc_done_lockinit(struct ahc_softc *ahc)
 {
 }
 
-static __inline void
+static inline void
 ahc_done_lock(struct ahc_softc *ahc, unsigned long *flags)
 {
 }
 
-static __inline void
+static inline void
 ahc_done_unlock(struct ahc_softc *ahc, unsigned long *flags)
 {
 }
 
 /* Lock held during ahc_list manipulation and ahc softc frees */
-static __inline void
+static inline void
 ahc_list_lockinit()
 {
 }
 
-static __inline void
+static inline void
 ahc_list_lock(unsigned long *flags)
 {
 }
 
-static __inline void
+static inline void
 ahc_list_unlock(unsigned long *flags)
 {
 }
@@ -314,97 +314,97 @@ ahc_list_unlock(unsigned long *flags)
 #define ahc_delay DELAY
 
 /************************** Transaction Operations ****************************/
-static __inline void ahc_set_transaction_status(struct scb *, uint32_t);
-static __inline void ahc_set_scsi_status(struct scb *, uint32_t);
-static __inline uint32_t ahc_get_transaction_status(struct scb *);
-static __inline uint32_t ahc_get_scsi_status(struct scb *);
-static __inline void ahc_set_transaction_tag(struct scb *, int, u_int);
-static __inline u_long ahc_get_transfer_length(struct scb *);
-static __inline int ahc_get_transfer_dir(struct scb *);
-static __inline void ahc_set_residual(struct scb *, u_long);
-static __inline void ahc_set_sense_residual(struct scb *, u_long);
-static __inline u_long ahc_get_residual(struct scb *);
-static __inline int ahc_perform_autosense(struct scb *);
-static __inline uint32_t ahc_get_sense_bufsize(struct ahc_softc *,
+static inline void ahc_set_transaction_status(struct scb *, uint32_t);
+static inline void ahc_set_scsi_status(struct scb *, uint32_t);
+static inline uint32_t ahc_get_transaction_status(struct scb *);
+static inline uint32_t ahc_get_scsi_status(struct scb *);
+static inline void ahc_set_transaction_tag(struct scb *, int, u_int);
+static inline u_long ahc_get_transfer_length(struct scb *);
+static inline int ahc_get_transfer_dir(struct scb *);
+static inline void ahc_set_residual(struct scb *, u_long);
+static inline void ahc_set_sense_residual(struct scb *, u_long);
+static inline u_long ahc_get_residual(struct scb *);
+static inline int ahc_perform_autosense(struct scb *);
+static inline uint32_t ahc_get_sense_bufsize(struct ahc_softc *,
     struct scb *);
-static __inline void ahc_freeze_scb(struct scb *);
-static __inline void ahc_platform_freeze_devq(struct ahc_softc *, struct scb *);
-static __inline int  ahc_platform_abort_scbs(struct ahc_softc *, int, char,
+static inline void ahc_freeze_scb(struct scb *);
+static inline void ahc_platform_freeze_devq(struct ahc_softc *, struct scb *);
+static inline int  ahc_platform_abort_scbs(struct ahc_softc *, int, char,
     int, u_int, role_t, uint32_t);
 
-static __inline
+static inline
 void ahc_set_transaction_status(struct scb *scb, uint32_t status)
 {
 	scb->xs->error = status;
 }
 
-static __inline
+static inline
 void ahc_set_scsi_status(struct scb *scb, uint32_t status)
 {
 	scb->xs->xs_status = status;
 }
 
-static __inline
+static inline
 uint32_t ahc_get_transaction_status(struct scb *scb)
 {
 	return (scb->xs->error);
 }
 
-static __inline
+static inline
 uint32_t ahc_get_scsi_status(struct scb *scb)
 {
 	return (scb->xs->xs_status);
 }
 
-static __inline
+static inline
 void ahc_set_transaction_tag(struct scb *scb, int enabled, u_int type)
 {
 	scb->xs->xs_tag_type = type;
 }
 
-static __inline
+static inline
 u_long ahc_get_transfer_length(struct scb *scb)
 {
 	return (scb->xs->datalen);
 }
 
-static __inline
+static inline
 int ahc_get_transfer_dir(struct scb *scb)
 {
 	return (scb->xs->xs_control & (XS_CTL_DATA_IN|XS_CTL_DATA_OUT));
 }
 
-static __inline
+static inline
 void ahc_set_residual(struct scb *scb, u_long resid)
 {
 	scb->xs->resid = resid;
 }
 
-static __inline
+static inline
 void ahc_set_sense_residual(struct scb *scb, u_long resid)
 {
   //scb->io_ctx->csio.sense_resid = resid;
 }
 
-static __inline
+static inline
 u_long ahc_get_residual(struct scb *scb)
 {
 	return (scb->xs->resid);
 }
 
-static __inline
+static inline
 int ahc_perform_autosense(struct scb *scb)
 {
 	return (!(scb->flags & SCB_SENSE));
 }
 
-static __inline uint32_t
+static inline uint32_t
 ahc_get_sense_bufsize(struct ahc_softc *ahc, struct scb *scb)
 {
 	return (sizeof(struct scsi_sense_data));
 }
 
-static __inline void
+static inline void
 ahc_freeze_scb(struct scb *scb)
 {
 	struct scsipi_xfer *xs = scb->xs;
@@ -415,12 +415,12 @@ ahc_freeze_scb(struct scb *scb)
 	}
 }
 
-static __inline void
+static inline void
 ahc_platform_freeze_devq(struct ahc_softc *ahc, struct scb *scb)
 {
 }
 
-static __inline int
+static inline int
 ahc_platform_abort_scbs(struct ahc_softc *ahc, int target,
 			char channel, int lun, u_int tag,
 			role_t role, uint32_t status)
@@ -428,7 +428,7 @@ ahc_platform_abort_scbs(struct ahc_softc *ahc, int target,
 	return (0);
 }
 
-static __inline void
+static inline void
 ahc_platform_scb_free(struct ahc_softc *ahc, struct scb *scb)
 {
 #ifdef _FreeBSD_
@@ -445,41 +445,41 @@ ahc_platform_scb_free(struct ahc_softc *ahc, struct scb *scb)
 
 /********************************** PCI ***************************************/
 #ifdef AHC_PCI_CONFIG
-static __inline uint32_t ahc_pci_read_config(ahc_dev_softc_t, int, int);
-static __inline void	 ahc_pci_write_config(ahc_dev_softc_t, int, uint32_t,
+static inline uint32_t ahc_pci_read_config(ahc_dev_softc_t, int, int);
+static inline void	 ahc_pci_write_config(ahc_dev_softc_t, int, uint32_t,
     int);
-static __inline int	 ahc_get_pci_function(ahc_dev_softc_t);
-static __inline int	 ahc_get_pci_slot(ahc_dev_softc_t);
-static __inline int	 ahc_get_pci_bus(ahc_dev_softc_t);
+static inline int	 ahc_get_pci_function(ahc_dev_softc_t);
+static inline int	 ahc_get_pci_slot(ahc_dev_softc_t);
+static inline int	 ahc_get_pci_bus(ahc_dev_softc_t);
 
 int			 ahc_pci_map_registers(struct ahc_softc *);
 int			 ahc_pci_map_int(struct ahc_softc *);
 
-static __inline uint32_t
+static inline uint32_t
 ahc_pci_read_config(ahc_dev_softc_t pci, int reg, int width)
 {
 	return (pci_read_config(pci, reg, width));
 }
 
-static __inline void
+static inline void
 ahc_pci_write_config(ahc_dev_softc_t pci, int reg, uint32_t value, int width)
 {
 	pci_write_config(pci, reg, value, width);
 }
 
-static __inline int
+static inline int
 ahc_get_pci_function(ahc_dev_softc_t pci)
 {
 	return (pci_get_function(pci));
 }
 
-static __inline int
+static inline int
 ahc_get_pci_slot(ahc_dev_softc_t pci)
 {
 	return (pci_get_slot(pci));
 }
 
-static __inline int
+static inline int
 ahc_get_pci_bus(ahc_dev_softc_t pci)
 {
 	return (pci_get_bus(pci));
@@ -500,16 +500,16 @@ int aic7770_map_registers(struct ahc_softc *, u_int);
 int aic7770_map_int(struct ahc_softc *, int);
 
 /********************************* Debug **************************************/
-static __inline void	ahc_print_path(struct ahc_softc *, struct scb *);
-static __inline void	ahc_platform_dump_card_state(struct ahc_softc *);
+static inline void	ahc_print_path(struct ahc_softc *, struct scb *);
+static inline void	ahc_platform_dump_card_state(struct ahc_softc *);
 
-static __inline void
+static inline void
 ahc_print_path(struct ahc_softc *ahc, struct scb *scb)
 {
 	printf("%s:", ahc->sc_dev.dv_xname);
 }
 
-static __inline void
+static inline void
 ahc_platform_dump_card_state(struct ahc_softc *ahc)
 {
 }
@@ -528,8 +528,8 @@ int	  ahc_detach(struct device *, int);
 
 /****************************** Interrupts ************************************/
 void			ahc_platform_intr(void *);
-static __inline void	ahc_platform_flushwork(struct ahc_softc *);
-static __inline void
+static inline void	ahc_platform_flushwork(struct ahc_softc *);
+static inline void
 ahc_platform_flushwork(struct ahc_softc *ahc)
 {
 }

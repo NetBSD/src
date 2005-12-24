@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.31 2005/12/11 12:22:49 christos Exp $      */
+/*      $NetBSD: esm.c,v 1.32 2005/12/24 20:27:42 perry Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.31 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.32 2005/12/24 20:27:42 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ int esm_debug = 0xfffc;
 #define RANGE(x,y,z)	/* nothing */
 #endif
 
-#define inline __inline
+#define inline inline
 
 static inline void	ringbus_setdest(struct esm_softc *, int, int);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtvar.h,v 1.9 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gtvar.h,v 1.10 2005/12/24 20:27:42 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -132,13 +132,13 @@ bus_addr_t gt_dma_bus_mem_to_phys(bus_dma_tag_t, bus_addr_t);
 	bus_space_write_4((gt)->gt_memt, (gt)->gt_memh, (o), (v))
 
 #if defined(__powerpc__)
-static __inline volatile int
+static inline volatile int
 atomic_add(volatile int *p, int	v)
 {
 	int	rv;
 	int	rtmp;
 
-	__asm __volatile(
+	__asm volatile(
 	"1:	lwarx	%0,0,%2\n"
 	"	add	%1,%3,%0\n"
 	"	stwcx.	%1,0,%2\n"

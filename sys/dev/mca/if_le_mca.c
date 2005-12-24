@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.11 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.12 2005/12/24 20:27:42 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.11 2005/12/11 12:22:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.12 2005/12/24 20:27:42 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ static void	le_mca_copytobuf(struct lance_softc *, void *, int, int);
 static void	le_mca_copyfrombuf(struct lance_softc *, void *, int, int);
 static void	le_mca_zerobuf(struct lance_softc *, int, int);
 
-static __inline void le_mca_wrreg(struct le_mca_softc *, int, int);
+static inline void le_mca_wrreg(struct le_mca_softc *, int, int);
 #define le_mca_set_RAP(sc, reg_number) \
 		le_mca_wrreg(sc, reg_number, RAP | REGWRITE)
 
@@ -298,7 +298,7 @@ le_mca_intredge(arg)
 /*
  * Push a value to LANCE controller.
  */
-static __inline void
+static inline void
 le_mca_wrreg(sc, val, type)
 	struct le_mca_softc *sc;
 	int val, type;
