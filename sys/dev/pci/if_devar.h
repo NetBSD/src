@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.42 2005/12/24 23:29:06 perry Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.43 2005/12/24 23:41:34 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -1089,7 +1089,7 @@ extern struct cfdriver de_cd;
 	} while (0)
 #if defined(__i386__)
 typedef u_quad_t tulip_cycle_t;
-static __inline__ tulip_cycle_t
+static inline tulip_cycle_t
 TULIP_PERFREAD(
     void)
 {
@@ -1100,7 +1100,7 @@ TULIP_PERFREAD(
 #define	TULIP_PERFDIFF(s, f)	((f) - (s))
 #elif defined(__alpha__)
 typedef unsigned long tulip_cycle_t;
-static __inline__ tulip_cycle_t
+static inline tulip_cycle_t
 TULIP_PERFREAD(
     void)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.117 2005/12/06 18:37:57 christos Exp $	*/
+/*	$NetBSD: if_de.c,v 1.118 2005/12/24 23:41:34 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.117 2005/12/06 18:37:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.118 2005/12/24 23:41:34 perry Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -1644,7 +1644,7 @@ tulip_null_media_poll(
 #endif
 }
 
-__inline__ static void
+inline static void
 tulip_21140_mediainit(
     tulip_softc_t * const sc,
     tulip_media_info_t * const mip,
