@@ -1,4 +1,4 @@
-/*	$NetBSD: testldt.c,v 1.12 2003/09/12 16:18:37 christos Exp $	*/
+/*	$NetBSD: testldt.c,v 1.13 2005/12/24 21:43:51 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 static void
 set_fs(unsigned int val)
 {
-	__asm__ __volatile__("mov %0,%%fs"::"r" ((unsigned short) val));
+	__asm volatile("mov %0,%%fs"::"r" ((unsigned short) val));
 }
 
 static unsigned char
@@ -56,7 +56,7 @@ get_fs_byte(const char *addr)
 {
 	unsigned char _v;
 
-	__asm__ ("movb %%fs:%1,%0":"=q" (_v):"m" (*addr));
+	__asm ("movb %%fs:%1,%0":"=q" (_v):"m" (*addr));
 	return _v;
 }
 
@@ -65,7 +65,7 @@ get_cs(void)
 {
 	unsigned short _v;
 
-	__asm__ ("movw %%cs,%0": "=r" ((unsigned short) _v));
+	__asm ("movw %%cs,%0": "=r" ((unsigned short) _v));
 	return _v;
 }
 
@@ -81,9 +81,9 @@ static void
 gated_call(void)
 {
 	printf("Called from call gate...");
-	__asm__ __volatile__("movl %ebp,%esp");
-	__asm__ __volatile__("popl %ebp");
-	__asm__ __volatile__(".byte 0xcb");
+	__asm volatile("movl %ebp,%esp");
+	__asm volatile("popl %ebp");
+	__asm volatile(".byte 0xcb");
 }
 
 static union descriptor *
@@ -318,7 +318,7 @@ main(int argc, char *argv[])
 	 * Long call to call gate.
 	 * Only the selector matters; offset is irrelevant.
 	 */
-	__asm__ __volatile__("lcall $0x7fff,$0x0");
+	__asm volatile("lcall $0x7fff,$0x0");
 
 	printf("Gated call returned\n");
 
