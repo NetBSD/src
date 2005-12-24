@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.52 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.53 2005/12/24 20:07:15 perry Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.52 2005/12/11 12:18:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.53 2005/12/24 20:07:15 perry Exp $");
 
 #include "opt_adb.h"
 
@@ -1788,7 +1788,7 @@ adb_soft_intr(void)
 		/* call default completion routine if it's valid */
 		if (comprout) {
 #ifdef __NetBSD__
-			__asm __volatile (
+			__asm volatile (
 			"	movml #0xffff,%%sp@- \n" /* save all regs */
 			"	movl %0,%%a2	\n" 	/* compdata */
 			"	movl %1,%%a1	\n" 	/* comprout */
@@ -2362,7 +2362,7 @@ adb_comp_exec(void)
 {
 	if ((long)0 != adbCompRout) /* don't call if empty return location */
 #ifdef __NetBSD__
-		__asm __volatile(
+		__asm volatile(
 		"	movml #0xffff,%%sp@- \n" /* save all registers */
 		"	movl %0,%%a2 \n"	/* adbCompData */
 		"	movl %1,%%a1 \n"	/* adbCompRout */

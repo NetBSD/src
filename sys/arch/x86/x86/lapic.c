@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.13 2005/12/11 12:19:47 christos Exp $ */
+/* $NetBSD: lapic.c,v 1.14 2005/12/24 20:07:42 perry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.13 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.14 2005/12/24 20:07:42 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -438,9 +438,9 @@ void lapic_delay(usec)
  * XXX the following belong mostly or partly elsewhere..
  */
 
-static __inline void i82489_icr_wait(void);
+static inline void i82489_icr_wait(void);
 
-static __inline void
+static inline void
 i82489_icr_wait()
 {
 #ifdef DIAGNOSTIC

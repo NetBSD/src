@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_extint.c,v 1.5 2005/12/11 12:16:51 christos Exp $ */
+/* $NetBSD: s3c2410_extint.c,v 1.6 2005/12/24 20:06:52 perry Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.5 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.6 2005/12/24 20:06:52 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ static int	ssextio_print(void *, const char *);
 static int	ssextio_cascaded_intr(void *);
 static void	ssextio_softintr(void *);
 
-static __inline void
+static inline void
 update_hw_mask(void)
 {
 	bus_space_write_4(ssextio_softc->sc_iot, ssextio_softc->sc_ioh,

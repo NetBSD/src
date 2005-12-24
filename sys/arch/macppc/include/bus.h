@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.20 2005/12/24 20:07:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -110,50 +110,50 @@ typedef u_int32_t bus_space_handle_t;
 #define BUS_SPACE_MAP_LINEAR		0x02
 #define BUS_SPACE_MAP_PREFETCHABLE	0x04
 
-static __inline int bus_space_map(bus_space_tag_t, bus_addr_t,
+static inline int bus_space_map(bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
-static __inline void bus_space_read_region_1(bus_space_tag_t,
+static inline void bus_space_read_region_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t *, size_t);
-static __inline void bus_space_read_region_2(bus_space_tag_t,
+static inline void bus_space_read_region_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t *, size_t);
-static __inline void bus_space_read_region_4(bus_space_tag_t,
+static inline void bus_space_read_region_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t *, size_t);
-static __inline void bus_space_read_region_stream_2(bus_space_tag_t,
+static inline void bus_space_read_region_stream_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t *, size_t);
-static __inline void bus_space_read_region_stream_4(bus_space_tag_t,
+static inline void bus_space_read_region_stream_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t *, size_t);
-static __inline void bus_space_write_region_1(bus_space_tag_t,
+static inline void bus_space_write_region_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, const u_int8_t *, size_t);
-static __inline void bus_space_write_region_2(bus_space_tag_t,
+static inline void bus_space_write_region_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, const u_int16_t *, size_t);
-static __inline void bus_space_write_region_4(bus_space_tag_t,
+static inline void bus_space_write_region_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, const u_int32_t *, size_t);
-static __inline void bus_space_write_region_stream_2(bus_space_tag_t,
+static inline void bus_space_write_region_stream_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, const u_int16_t *, size_t);
-static __inline void bus_space_write_region_stream_4(bus_space_tag_t,
+static inline void bus_space_write_region_stream_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, const u_int32_t *, size_t);
-static __inline void bus_space_set_multi_1(bus_space_tag_t,
+static inline void bus_space_set_multi_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t, size_t);
-static __inline void bus_space_set_multi_2(bus_space_tag_t,
+static inline void bus_space_set_multi_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t, size_t);
-static __inline void bus_space_set_multi_4(bus_space_tag_t,
+static inline void bus_space_set_multi_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t, size_t);
-static __inline void bus_space_set_multi_stream_2(bus_space_tag_t,
+static inline void bus_space_set_multi_stream_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t, size_t);
-static __inline void bus_space_set_multi_stream_4(bus_space_tag_t,
+static inline void bus_space_set_multi_stream_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t, size_t);
-static __inline void bus_space_set_region_1(bus_space_tag_t,
+static inline void bus_space_set_region_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t, size_t);
-static __inline void bus_space_set_region_2(bus_space_tag_t,
+static inline void bus_space_set_region_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t, size_t);
-static __inline void bus_space_set_region_4(bus_space_tag_t,
+static inline void bus_space_set_region_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t, size_t);
-static __inline void bus_space_set_region_stream_2(bus_space_tag_t,
+static inline void bus_space_set_region_stream_2(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int16_t, size_t);
-static __inline void bus_space_set_region_stream_4(bus_space_tag_t,
+static inline void bus_space_set_region_stream_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int32_t, size_t);
 
-static __inline int
+static inline int
 bus_space_map(t, addr, size, flags, bshp)
 	bus_space_tag_t t;
 	bus_addr_t addr;
@@ -285,7 +285,7 @@ bus_space_map(t, addr, size, flags, bshp)
  * buffer provided.
  */
 
-static __inline void
+static inline void
 bus_space_read_region_1(tag, bsh, offset, addr, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -297,10 +297,10 @@ bus_space_read_region_1(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*addr++ = *s++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_read_region_2(tag, bsh, offset, addr, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -311,12 +311,12 @@ bus_space_read_region_2(tag, bsh, offset, addr, count)
 	volatile u_int16_t *s = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("lhbrx %0, 0, %1" :
+		__asm volatile("lhbrx %0, 0, %1" :
 			"=r"(*addr++) : "r"(s++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_read_region_4(tag, bsh, offset, addr, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -327,16 +327,16 @@ bus_space_read_region_4(tag, bsh, offset, addr, count)
 	volatile u_int32_t *s = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("lwbrx %0, 0, %1" :
+		__asm volatile("lwbrx %0, 0, %1" :
 			"=r"(*addr++) : "r"(s++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0	/* Cause a link error for bus_space_read_region_8 */
 #define	bus_space_read_region_8		!!! unimplemented !!!
 #endif
 
-static __inline void
+static inline void
 bus_space_read_region_stream_2(tag, bsh, offset, addr, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -348,10 +348,10 @@ bus_space_read_region_stream_2(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*addr++ = *s++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -363,7 +363,7 @@ bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*addr++ = *s++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0	/* Cause a link error */
@@ -445,7 +445,7 @@ bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
  * to bus space described by tag/handle starting at `offset'.
  */
 
-static __inline void
+static inline void
 bus_space_write_region_1(tag, bsh, offset, addr, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -457,10 +457,10 @@ bus_space_write_region_1(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*d++ = *addr++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_write_region_2(tag, bsh, offset, addr, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -471,12 +471,12 @@ bus_space_write_region_2(tag, bsh, offset, addr, count)
 	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("sthbrx %0, 0, %1" ::
+		__asm volatile("sthbrx %0, 0, %1" ::
 			"r"(*addr++), "r"(d++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_write_region_4(tag, bsh, offset, addr, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -487,16 +487,16 @@ bus_space_write_region_4(tag, bsh, offset, addr, count)
 	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("stwbrx %0, 0, %1" ::
+		__asm volatile("stwbrx %0, 0, %1" ::
 			"r"(*addr++), "r"(d++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0
 #define	bus_space_write_region_8 !!! bus_space_write_region_8 unimplemented !!!
 #endif
 
-static __inline void
+static inline void
 bus_space_write_region_stream_2(tag, bsh, offset, addr, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -508,10 +508,10 @@ bus_space_write_region_stream_2(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*d++ = *addr++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_write_region_stream_4(tag, bsh, offset, addr, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -523,7 +523,7 @@ bus_space_write_region_stream_4(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*d++ = *addr++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0
@@ -539,7 +539,7 @@ bus_space_write_region_stream_4(tag, bsh, offset, addr, count)
  * by tag/handle/offset `count' times.
  */
 
-static __inline void
+static inline void
 bus_space_set_multi_1(tag, bsh, offset, val, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -551,10 +551,10 @@ bus_space_set_multi_1(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_set_multi_2(tag, bsh, offset, val, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -565,12 +565,12 @@ bus_space_set_multi_2(tag, bsh, offset, val, count)
 	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("sthbrx %0, 0, %1" ::
+		__asm volatile("sthbrx %0, 0, %1" ::
 			"r"(val), "r"(d));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_set_multi_4(tag, bsh, offset, val, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -581,16 +581,16 @@ bus_space_set_multi_4(tag, bsh, offset, val, count)
 	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("stwbrx %0, 0, %1" ::
+		__asm volatile("stwbrx %0, 0, %1" ::
 			"r"(val), "r"(d));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0
 #define	bus_space_set_multi_8 !!! bus_space_set_multi_8 unimplemented !!!
 #endif
 
-static __inline void
+static inline void
 bus_space_set_multi_stream_2(tag, bsh, offset, val, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -602,10 +602,10 @@ bus_space_set_multi_stream_2(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_set_multi_stream_4(tag, bsh, offset, val, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -617,7 +617,7 @@ bus_space_set_multi_stream_4(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0
@@ -633,7 +633,7 @@ bus_space_set_multi_stream_4(tag, bsh, offset, val, count)
  * by tag/handle starting at `offset'.
  */
 
-static __inline void
+static inline void
 bus_space_set_region_1(tag, bsh, offset, val, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -645,10 +645,10 @@ bus_space_set_region_1(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d++ = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_set_region_2(tag, bsh, offset, val, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -659,12 +659,12 @@ bus_space_set_region_2(tag, bsh, offset, val, count)
 	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("sthbrx %0, 0, %1" ::
+		__asm volatile("sthbrx %0, 0, %1" ::
 			"r"(val), "r"(d++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_set_region_4(tag, bsh, offset, val, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -675,16 +675,16 @@ bus_space_set_region_4(tag, bsh, offset, val, count)
 	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("stwbrx %0, 0, %1" ::
+		__asm volatile("stwbrx %0, 0, %1" ::
 			"r"(val), "r"(d++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0
 #define	bus_space_set_region_8 !!! bus_space_set_region_8 unimplemented !!!
 #endif
 
-static __inline void
+static inline void
 bus_space_set_region_stream_2(tag, bsh, offset, val, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -696,10 +696,10 @@ bus_space_set_region_stream_2(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d++ = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
-static __inline void
+static inline void
 bus_space_set_region_stream_4(tag, bsh, offset, val, count)
 	bus_space_tag_t tag;
 	bus_space_handle_t bsh;
@@ -711,7 +711,7 @@ bus_space_set_region_stream_4(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d++ = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0

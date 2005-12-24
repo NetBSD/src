@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -139,11 +139,11 @@ struct cpu_info {
 	struct tlb_scratch_frame ci_tscratch;	/* TLB miss scratch area */
 };
 
-static __inline struct cpu_info *
+static inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *ci;
-	__asm __volatile("getcon kcr0, %0" : "=r"(ci));
+	__asm volatile("getcon kcr0, %0" : "=r"(ci));
 	return (ci);
 }
 

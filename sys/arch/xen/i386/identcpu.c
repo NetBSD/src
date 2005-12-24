@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.7 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.8 2005/12/24 20:07:48 perry Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7 2005/12/11 12:19:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.8 2005/12/24 20:07:48 perry Exp $");
 
 #include "opt_cputype.h"
 
@@ -141,14 +141,14 @@ static const char *intel_family6_name(struct cpu_info *);
 
 static void transmeta_cpu_info(struct cpu_info *);
 
-static __inline u_char
+static inline u_char
 cyrix_read_reg(u_char reg)
 {
 	outb(0x22, reg);
 	return inb(0x23);
 }
 
-static __inline void
+static inline void
 cyrix_write_reg(u_char reg, u_char data)
 {
 	outb(0x22, reg);

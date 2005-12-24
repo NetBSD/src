@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.3 2005/12/11 12:17:51 christos Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.4 2005/12/24 20:07:15 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.3 2005/12/11 12:17:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.4 2005/12/24 20:07:15 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -315,7 +315,7 @@ cpu_reboot(int howto, char *bootstr)
 	 * and poke the Internal Bus and Peripheral Bus reset lines.
 	 */
 	(void) disable_interrupts(I32_bit|F32_bit);
-	*(__volatile uint32_t *)(IYONIX_80321_VBASE + VERDE_ATU_BASE +
+	*(volatile uint32_t *)(IYONIX_80321_VBASE + VERDE_ATU_BASE +
 	    ATU_PCSR) = PCSR_RIB | PCSR_RPB;
 
 	/* ...and if that didn't work, just croak. */

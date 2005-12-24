@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.16 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: xen.h,v 1.17 2005/12/24 20:07:48 perry Exp $	*/
 
 /*
  *
@@ -174,7 +174,7 @@ x86_atomic_xchg(volatile uint32_t *ptr, unsigned long val)
 {
 	unsigned long result;
 
-        __asm __volatile(__LOCK_PREFIX
+        __asm volatile(__LOCK_PREFIX
 	    "xchgl %0,%1"
 	    :"=r" (result)
 	    :"m" (*ptr), "0" (val)
@@ -188,7 +188,7 @@ x86_atomic_test_and_clear_bit(volatile void *ptr, int bitno)
 {
         int result;
 
-        __asm __volatile(__LOCK_PREFIX
+        __asm volatile(__LOCK_PREFIX
 	    "btrl %2,%1 ;"
 	    "sbbl %0,%0"
 	    :"=r" (result), "=m" (*(volatile uint32_t *)(ptr))
@@ -201,7 +201,7 @@ x86_atomic_test_and_set_bit(volatile void *ptr, int bitno)
 {
         int result;
 
-        __asm __volatile(__LOCK_PREFIX
+        __asm volatile(__LOCK_PREFIX
 	    "btsl %2,%1 ;"
 	    "sbbl %0,%0"
 	    :"=r" (result), "=m" (*(volatile uint32_t *)(ptr))
@@ -209,19 +209,19 @@ x86_atomic_test_and_set_bit(volatile void *ptr, int bitno)
         return result;
 }
 
-static __inline int
+static inline int
 x86_constant_test_bit(const volatile void *ptr, int bitno)
 {
 	return ((1UL << (bitno & 31)) &
 	    (((const volatile uint32_t *) ptr)[bitno >> 5])) != 0;
 }
 
-static __inline int
+static inline int
 x86_variable_test_bit(const volatile void *ptr, int bitno)
 {
 	int result;
     
-	__asm __volatile(
+	__asm volatile(
 		"btl %2,%1 ;"
 		"sbbl %0,%0"
 		:"=r" (result)
@@ -234,25 +234,25 @@ x86_variable_test_bit(const volatile void *ptr, int bitno)
 	 x86_constant_test_bit((ptr),(bitno)) : \
 	 x86_variable_test_bit((ptr),(bitno)))
 
-static __inline void
+static inline void
 x86_atomic_set_bit(volatile void *ptr, int bitno)
 {
-        __asm __volatile(__LOCK_PREFIX
+        __asm volatile(__LOCK_PREFIX
 	    "btsl %1,%0"
 	    :"=m" (*(volatile uint32_t *)(ptr))
 	    :"Ir" (bitno));
 }
 
-static __inline void
+static inline void
 x86_atomic_clear_bit(volatile void *ptr, int bitno)
 {
-        __asm __volatile(__LOCK_PREFIX
+        __asm volatile(__LOCK_PREFIX
 	    "btrl %1,%0"
 	    :"=m" (*(volatile uint32_t *)(ptr))
 	    :"Ir" (bitno));
 }
 
-static __inline void
+static inline void
 wbinvd(void)
 {
 	xpq_flush_cache();

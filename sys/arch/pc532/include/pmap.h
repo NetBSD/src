@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.41 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42 2005/12/24 20:07:24 perry Exp $	*/
 
 /*
  *
@@ -365,7 +365,7 @@ boolean_t	pmap_zero_page_uncached __P((paddr_t));
  * inline functions
  */
 
-static __inline void
+static inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
@@ -376,7 +376,7 @@ pmap_remove_all(struct pmap *pmap)
  *	if hardware doesn't support one-page flushing)
  */
 
-__inline static void
+inline static void
 pmap_update_pg(va)
 	vaddr_t va;
 {
@@ -387,7 +387,7 @@ pmap_update_pg(va)
  * pmap_update_2pg: flush two pages from the TLB
  */
 
-__inline static void
+inline static void
 pmap_update_2pg(va, vb)
 	vaddr_t va, vb;
 {
@@ -404,7 +404,7 @@ pmap_update_2pg(va, vb)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void
+inline static void
 pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t prot;
@@ -426,7 +426,7 @@ pmap_page_protect(pg, prot)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void
+inline static void
 pmap_protect(pmap, sva, eva, prot)
 	struct pmap *pmap;
 	vaddr_t sva, eva;
@@ -452,7 +452,7 @@ pmap_protect(pmap, sva, eva, prot)
 
 #include <lib/libkern/libkern.h>
 
-static __inline pt_entry_t *
+static inline pt_entry_t *
 vtopte(vaddr_t va)
 {
 
@@ -461,7 +461,7 @@ vtopte(vaddr_t va)
 	return (PTE_BASE + ns532_btop(va));
 }
 
-static __inline pt_entry_t *
+static inline pt_entry_t *
 kvtopte(vaddr_t va)
 {
 

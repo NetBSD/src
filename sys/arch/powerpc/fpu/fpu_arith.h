@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_arith.h,v 1.3 2005/12/11 12:18:42 christos Exp $ */
+/*	$NetBSD: fpu_arith.h,v 1.4 2005/12/24 20:07:28 perry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,22 +129,22 @@
  * into carry; GET_CARRY sets its argument to 0 or 1.
  */
 #define	FPU_ADDC(r, x, y) \
-	__asm __volatile("adde %0,%1,%2" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("adde %0,%1,%2" : "=r"(r) : "r"(x), "r"(y))
 #define	FPU_ADDS(r, x, y) \
-	__asm __volatile("addc %0,%1,%2" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("addc %0,%1,%2" : "=r"(r) : "r"(x), "r"(y))
 #define	FPU_ADDCS(r, x, y) \
-	__asm __volatile("adde %0,%1,%2" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("adde %0,%1,%2" : "=r"(r) : "r"(x), "r"(y))
 #define	FPU_SUBC(r, x, y) \
-	__asm __volatile("subfe %0,%2,%1" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("subfe %0,%2,%1" : "=r"(r) : "r"(x), "r"(y))
 #define	FPU_SUBS(r, x, y) \
-	__asm __volatile("subfc %0,%2,%1" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("subfc %0,%2,%1" : "=r"(r) : "r"(x), "r"(y))
 #define	FPU_SUBCS(r, x, y) \
-	__asm __volatile("subfe %0,%2,%1" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("subfe %0,%2,%1" : "=r"(r) : "r"(x), "r"(y))
 
-#define	FPU_GET_CARRY(r) __asm __volatile("li %0,0; addie %0,%0,0" : "=r"(r))
+#define	FPU_GET_CARRY(r) __asm volatile("li %0,0; addie %0,%0,0" : "=r"(r))
 /* This one needs to destroy a temp register. */
 #define	FPU_SET_CARRY(v) do { int __tmp;				\
-		__asm __volatile("addic %0,%0,-1" : "r"(__tmp) : "r"(v)); \
+		__asm volatile("addic %0,%0,-1" : "r"(__tmp) : "r"(v)); \
 	} while (0)
 
 #define	FPU_SHL1_BY_ADD	/* shift left 1 faster by ADDC than (a<<1)|(b>>31) */

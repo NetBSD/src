@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.11 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: userret.h,v 1.12 2005/12/24 20:07:28 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,7 +41,7 @@
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
-static __inline void
+static inline void
 userret(struct lwp *l, struct trapframe *frame)
 {
 	struct cpu_info * const ci = curcpu();
@@ -84,7 +84,7 @@ userret(struct lwp *l, struct trapframe *frame)
 	 * it will be a different address space).
 	 */
 	if (ci->ci_veclwp != NULL && ci->ci_veclwp != l) {
-		__asm __volatile("dssall;sync");
+		__asm volatile("dssall;sync");
 	}
 #endif
 

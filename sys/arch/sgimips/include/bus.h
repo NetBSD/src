@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.16 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -160,11 +160,11 @@ u_int64_t bus_space_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
  */
 
 #define __SGIMIPS_bus_space_read_multi(BYTES,BITS)				\
-static __inline void __CONCAT(bus_space_read_multi_,BYTES)		\
+static inline void __CONCAT(bus_space_read_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_read_multi_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -198,11 +198,11 @@ __SGIMIPS_bus_space_read_multi(4,32)
  */
 
 #define __SGIMIPS_bus_space_read_region(BYTES,BITS)			\
-static __inline void __CONCAT(bus_space_read_region_,BYTES)		\
+static inline void __CONCAT(bus_space_read_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_read_region_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -255,11 +255,11 @@ void	bus_space_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t,
  */
 
 #define __SGIMIPS_bus_space_write_multi(BYTES,BITS)			\
-static __inline void __CONCAT(bus_space_write_multi_,BYTES)		\
+static inline void __CONCAT(bus_space_write_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -293,11 +293,11 @@ __SGIMIPS_bus_space_write_multi(4,32)
  */
 
 #define __SGIMIPS_bus_space_write_region(BYTES,BITS)			\
-static __inline void __CONCAT(bus_space_write_region_,BYTES)		\
+static inline void __CONCAT(bus_space_write_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -333,11 +333,11 @@ __SGIMIPS_bus_space_write_region(4,32)
  */
 
 #define __SGIMIPS_bus_space_set_multi(BYTES,BITS)				\
-static __inline void __CONCAT(bus_space_set_multi_,BYTES)		\
+static inline void __CONCAT(bus_space_set_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_set_multi_,BYTES)(t, h, o, v, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -371,11 +371,11 @@ __SGIMIPS_bus_space_set_multi(4,32)
  */
 
 #define __SGIMIPS_bus_space_set_region(BYTES,BITS)				\
-static __inline void __CONCAT(bus_space_set_region_,BYTES)		\
+static inline void __CONCAT(bus_space_set_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_set_region_,BYTES)(t, h, o, v, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -412,13 +412,13 @@ __SGIMIPS_bus_space_set_region(4,32)
  */
 
 #define	__SGIMIPS_copy_region(BYTES)					\
-static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
+static inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	(bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
 	    bus_size_t count);						\
 									\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h1, h2;					\

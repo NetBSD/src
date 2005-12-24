@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.5 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.6 2005/12/24 20:07:10 perry Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -72,47 +72,47 @@
 #define hptbtop(b) ((b) >> 17)
 
 /* Get space register for an address */
-static __inline register_t ldsid(vaddr_t p) {
+static inline register_t ldsid(vaddr_t p) {
 	register_t ret;
-	__asm __volatile("ldsid (%1),%0" : "=r" (ret) : "r" (p));
+	__asm volatile("ldsid (%1),%0" : "=r" (ret) : "r" (p));
 	return ret;
 }
 
-#define mtctl(v,r) __asm __volatile("mtctl %0,%1":: "r" (v), "i" (r))
-#define mfctl(r,v) __asm __volatile("mfctl %1,%0": "=r" (v): "i" (r))
+#define mtctl(v,r) __asm volatile("mtctl %0,%1":: "r" (v), "i" (r))
+#define mfctl(r,v) __asm volatile("mfctl %1,%0": "=r" (v): "i" (r))
 
 #define mfcpu(r,v)	/* XXX for the lack of the mnemonics */		\
-	__asm __volatile("diag  %1\n\t"					\
+	__asm volatile("diag  %1\n\t"					\
 			 "copy  %%r22, %0"				\
 	: "=r" (v) : "i" ((0x1400 | ((r) << 21) | (22))) : "r22")
 
-#define mtsp(v,r) __asm __volatile("mtsp %0,%1":: "r" (v), "i" (r))
-#define mfsp(r,v) __asm __volatile("mfsp %1,%0": "=r" (v): "i" (r))
+#define mtsp(v,r) __asm volatile("mtsp %0,%1":: "r" (v), "i" (r))
+#define mfsp(r,v) __asm volatile("mfsp %1,%0": "=r" (v): "i" (r))
 
-#define ssm(v,r) __asm __volatile("ssm %1,%0": "=r" (r): "i" (v))
-#define rsm(v,r) __asm __volatile("rsm %1,%0": "=r" (r): "i" (v))
+#define ssm(v,r) __asm volatile("ssm %1,%0": "=r" (r): "i" (v))
+#define rsm(v,r) __asm volatile("rsm %1,%0": "=r" (r): "i" (v))
 
 /* Move to system mask. Old value of system mask is returned. */
-static __inline register_t mtsm(register_t mask) {
+static inline register_t mtsm(register_t mask) {
 	register_t ret;
-	__asm __volatile("ssm 0,%0\n\t"
+	__asm volatile("ssm 0,%0\n\t"
 			 "mtsm %1": "=&r" (ret) : "r" (mask));
 	return ret;
 }
 
-static __inline register_t get_psw(void)
+static inline register_t get_psw(void)
 {
 	register_t ret;
-	__asm __volatile("break %1, %2\n\tcopy %%ret0, %0" : "=r" (ret)
+	__asm volatile("break %1, %2\n\tcopy %%ret0, %0" : "=r" (ret)
 		: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_GET_PSW)
 		: "r28");
 	return ret;
 }
 
-static __inline register_t set_psw(register_t psw)
+static inline register_t set_psw(register_t psw)
 {
 	register_t ret;
-	__asm __volatile("copy	%0, %%arg0\n\tbreak %1, %2\n\tcopy %%ret0, %0"
+	__asm volatile("copy	%0, %%arg0\n\tbreak %1, %2\n\tcopy %%ret0, %0"
 		: "=r" (ret)
 		: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_SET_PSW), "0" (psw)
 		: "r26", "r28");
@@ -120,61 +120,61 @@ static __inline register_t set_psw(register_t psw)
 }
 
 
-#define	fdce(sp,off) __asm __volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
-#define	fice(sp,off) __asm __volatile("fice 0(%0,%1)":: "i" (sp), "r" (off))
+#define	fdce(sp,off) __asm volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
+#define	fice(sp,off) __asm volatile("fice 0(%0,%1)":: "i" (sp), "r" (off))
 #define sync_caches() \
-    __asm __volatile("sync\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop")
+    __asm volatile("sync\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop")
 
-static __inline void
+static inline void
 iitlba(u_int pg, pa_space_t sp, vaddr_t va)
 {
 	mtsp(sp, 1);
 	__asm volatile("iitlba %0,(%%sr1, %1)":: "r" (pg), "r" (va));
 }
 
-static __inline void
+static inline void
 idtlba(u_int pg, pa_space_t sp, vaddr_t va)
 {
 	mtsp(sp, 1);
 	__asm volatile("idtlba %0,(%%sr1, %1)":: "r" (pg), "r" (va));
 }
 
-static __inline void
+static inline void
 iitlbp(u_int prot, pa_space_t sp, vaddr_t va)
 {
 	mtsp(sp, 1);
 	__asm volatile("iitlbp %0,(%%sr1, %1)":: "r" (prot), "r" (va));
 }
 
-static __inline void
+static inline void
 idtlbp(u_int prot, pa_space_t sp, vaddr_t va)
 {
 	mtsp(sp, 1);
 	__asm volatile("idtlbp %0,(%%sr1, %1)":: "r" (prot), "r" (va));
 }
 
-static __inline void
+static inline void
 pitlb(pa_space_t sp, vaddr_t va)
 {
 	mtsp(sp, 1);
 	__asm volatile("pitlb %%r0(%%sr1, %0)":: "r" (va));
 }
 
-static __inline void
+static inline void
 pdtlb(pa_space_t sp, vaddr_t va)
 {
 	mtsp(sp, 1);
 	__asm volatile("pdtlb %%r0(%%sr1, %0)":: "r" (va));
 }
 
-static __inline void
+static inline void
 pitlbe(pa_space_t sp, vaddr_t va)
 {
 	mtsp(sp, 1);
 	__asm volatile("pitlbe %%r0(%%sr1, %0)":: "r" (va));
 }
 
-static __inline void
+static inline void
 pdtlbe(pa_space_t sp, vaddr_t va)
 {
 	mtsp(sp, 1);
@@ -199,7 +199,7 @@ void eaio_l2(int);
  * size is <= the size of a data cache line, however they don't
  * check this constraint.
  */
-static __inline void
+static inline void
 fdcache_small(pa_space_t sp, vaddr_t va, vsize_t size)
 {
 	__asm volatile(
@@ -211,7 +211,7 @@ fdcache_small(pa_space_t sp, vaddr_t va, vsize_t size)
 		:
 		: "r" (sp), "r" (va), "r" (size - 1));
 }
-static __inline void
+static inline void
 pdcache_small(pa_space_t sp, vaddr_t va, vsize_t size)
 {
 	__asm volatile(

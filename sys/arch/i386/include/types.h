@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.45 2004/01/18 18:23:19 martin Exp $	*/
+/*	$NetBSD: types.h,v 1.46 2005/12/24 20:07:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,7 @@ typedef int		pmc_evid_t;
 typedef __uint64_t	pmc_ctr_t;
 typedef int		register_t;
 
-typedef	__volatile int		__cpu_simple_lock_t;
+typedef	volatile int		__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0

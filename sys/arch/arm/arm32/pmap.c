@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.156 2005/12/10 21:19:57 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.157 2005/12/24 20:06:47 perry Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156 2005/12/10 21:19:57 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2005/12/24 20:06:47 perry Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -552,7 +552,7 @@ pmap_debug(int level)
  * on whether the specified pmap actually needs to be flushed at any
  * given time.
  */
-static __inline void
+static inline void
 pmap_tlb_flushID_SE(pmap_t pm, vaddr_t va)
 {
 
@@ -560,7 +560,7 @@ pmap_tlb_flushID_SE(pmap_t pm, vaddr_t va)
 		cpu_tlb_flushID_SE(va);
 }
 
-static __inline void
+static inline void
 pmap_tlb_flushD_SE(pmap_t pm, vaddr_t va)
 {
 
@@ -568,7 +568,7 @@ pmap_tlb_flushD_SE(pmap_t pm, vaddr_t va)
 		cpu_tlb_flushD_SE(va);
 }
 
-static __inline void
+static inline void
 pmap_tlb_flushID(pmap_t pm)
 {
 
@@ -578,7 +578,7 @@ pmap_tlb_flushID(pmap_t pm)
 	}
 }
 
-static __inline void
+static inline void
 pmap_tlb_flushD(pmap_t pm)
 {
 
@@ -588,7 +588,7 @@ pmap_tlb_flushD(pmap_t pm)
 	}
 }
 
-static __inline void
+static inline void
 pmap_idcache_wbinv_range(pmap_t pm, vaddr_t va, vsize_t len)
 {
 
@@ -596,7 +596,7 @@ pmap_idcache_wbinv_range(pmap_t pm, vaddr_t va, vsize_t len)
 		cpu_idcache_wbinv_range(va, len);
 }
 
-static __inline void
+static inline void
 pmap_dcache_wb_range(pmap_t pm, vaddr_t va, vsize_t len,
     boolean_t do_inv, boolean_t rd_only)
 {
@@ -613,7 +613,7 @@ pmap_dcache_wb_range(pmap_t pm, vaddr_t va, vsize_t len,
 	}
 }
 
-static __inline void
+static inline void
 pmap_idcache_wbinv_all(pmap_t pm)
 {
 
@@ -623,7 +623,7 @@ pmap_idcache_wbinv_all(pmap_t pm)
 	}
 }
 
-static __inline void
+static inline void
 pmap_dcache_wbinv_all(pmap_t pm)
 {
 
@@ -633,7 +633,7 @@ pmap_dcache_wbinv_all(pmap_t pm)
 	}
 }
 
-static __inline boolean_t
+static inline boolean_t
 pmap_is_current(pmap_t pm)
 {
 
@@ -644,7 +644,7 @@ pmap_is_current(pmap_t pm)
 	return (FALSE);
 }
 
-static __inline boolean_t
+static inline boolean_t
 pmap_is_cached(pmap_t pm)
 {
 
@@ -731,7 +731,7 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, pmap_t pm,
  *
  * => caller should hold lock on vm_page
  */
-static __inline struct pv_entry *
+static inline struct pv_entry *
 pmap_find_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
 {
 	struct pv_entry *pv;
@@ -951,7 +951,7 @@ pmap_free_l1(pmap_t pm)
 	simple_unlock(&l1_lru_lock);
 }
 
-static __inline void
+static inline void
 pmap_use_l1(pmap_t pm)
 {
 	struct l1_ttable *l1;
@@ -996,7 +996,7 @@ pmap_use_l1(pmap_t pm)
  *
  * Free an L2 descriptor table.
  */
-static __inline void
+static inline void
 #ifndef PMAP_INCLUDE_PTE_SYNC
 pmap_free_l2_ptp(pt_entry_t *l2, paddr_t pa)
 #else
@@ -1025,7 +1025,7 @@ pmap_free_l2_ptp(boolean_t need_sync, pt_entry_t *l2, paddr_t pa)
  * Returns a pointer to the L2 bucket associated with the specified pmap
  * and VA, or NULL if no L2 bucket exists for the address.
  */
-static __inline struct l2_bucket *
+static inline struct l2_bucket *
 pmap_get_l2_bucket(pmap_t pm, vaddr_t va)
 {
 	struct l2_dtable *l2;
@@ -1288,7 +1288,7 @@ static const int pmap_vac_flags[4][4] = {
 	{PVF_UNC,	PVF_NC,		PVF_NC,		PVF_NC}
 };
 
-static __inline int
+static inline int
 pmap_get_vac_flags(const struct vm_page *pg)
 {
 	int kidx, uidx;
@@ -1308,7 +1308,7 @@ pmap_get_vac_flags(const struct vm_page *pg)
 	return (pmap_vac_flags[uidx][kidx]);
 }
 
-static __inline void
+static inline void
 pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 {
 	int nattr;
@@ -3065,8 +3065,8 @@ pmap_activate(struct lwp *l)
 	if (l == curlwp) {
 		u_int cur_dacr, cur_ttb;
 
-		__asm __volatile("mrc p15, 0, %0, c2, c0, 0" : "=r"(cur_ttb));
-		__asm __volatile("mrc p15, 0, %0, c3, c0, 0" : "=r"(cur_dacr));
+		__asm volatile("mrc p15, 0, %0, c2, c0, 0" : "=r"(cur_ttb));
+		__asm volatile("mrc p15, 0, %0, c3, c0, 0" : "=r"(cur_dacr));
 
 		cur_ttb &= ~(L1_TABLE_SIZE - 1);
 
@@ -3501,7 +3501,7 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 /*
  * Helper function for pmap_grow_l2_bucket()
  */
-static __inline int
+static inline int
 pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
 {
 	struct l2_bucket *l2b;
@@ -3537,7 +3537,7 @@ pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
  * This is the same as pmap_alloc_l2_bucket(), except that it is only
  * used by pmap_growkernel().
  */
-static __inline struct l2_bucket *
+static inline struct l2_bucket *
 pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 {
 	struct l2_dtable *l2;
@@ -4870,9 +4870,9 @@ pmap_pte_init_xscale(void)
 	/*
 	 * Disable ECC protection of page table access, for now.
 	 */
-	__asm __volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
+	__asm volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
 	auxctl &= ~XSCALE_AUXCTL_P;
-	__asm __volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
+	__asm volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
 }
 
 /*
@@ -4931,10 +4931,10 @@ xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 	 */
 
 	/* Invalidate data and mini-data. */
-	__asm __volatile("mcr p15, 0, %0, c7, c6, 0" : : "r" (0));
-	__asm __volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
+	__asm volatile("mcr p15, 0, %0, c7, c6, 0" : : "r" (0));
+	__asm volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
 	auxctl = (auxctl & ~XSCALE_AUXCTL_MD_MASK) | XSCALE_AUXCTL_MD_WB_RWA;
-	__asm __volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
+	__asm volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
 }
 
 /*

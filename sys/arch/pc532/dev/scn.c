@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.67 2005/12/11 12:18:31 christos Exp $ */
+/*	$NetBSD: scn.c,v 1.68 2005/12/24 20:07:24 perry Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.67 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68 2005/12/24 20:07:24 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -162,7 +162,7 @@ const struct cdevsw scn_cdevsw = {
 #endif
 
 #ifdef CPU30MHZ
-#define RECOVER()	__asm __volatile("bispsrw 0x800" : : : "cc")
+#define RECOVER()	__asm volatile("bispsrw 0x800" : : : "cc")
 #else
 #define RECOVER()
 #endif
@@ -761,7 +761,7 @@ scnprobe(parent, cf, aux)
  * No need to make scn_rx{en,dis}able too efficient,
  * they're only called on setup, open & close!
  */
-static __inline void
+static inline void
 scn_rxenable(sc)
 	struct scn_softc *sc;
 {
@@ -779,7 +779,7 @@ scn_rxenable(sc)
 	dp->base[DU_OPCR] = dp->opcr;
 }
 
-static __inline void
+static inline void
 scn_rxdisable(sc)
 	struct scn_softc *sc;
 {
@@ -1310,7 +1310,7 @@ scntty(dev)
 }
 
 /* Worker routines for interrupt processing */
-static __inline void
+static inline void
 dcd_int(sc, tp, new)
 	struct scn_softc *sc;
 	struct tty *tp;
@@ -1460,7 +1460,7 @@ scnintr(arg)
  * THIS ROUTINE SHOULD BE KEPT AS CLEAN AS POSSIBLE!!
  * IT'S A CANDIDATE FOR RECODING IN ASSEMBLER!!
  */
-static __inline int
+static inline int
 scn_rxintr(struct scn_softc *sc)
 {
 	char sr;

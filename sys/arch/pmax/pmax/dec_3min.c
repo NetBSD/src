@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.53 2005/12/11 12:18:39 christos Exp $ */
+/* $NetBSD: dec_3min.c,v 1.54 2005/12/24 20:07:25 perry Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.53 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.54 2005/12/24 20:07:25 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,7 +420,7 @@ dec_3min_intr(status, cause, pc, ipending)
 		if (intr & KMIN_INTR_CLOCK) {
 			struct clockframe cf;
 
-			__asm __volatile("lbu $0,48(%0)" ::
+			__asm volatile("lbu $0,48(%0)" ::
 				"r"(ioasic_base + IOASIC_SLOT_8_START));
 #ifdef MIPS3
 			if (CPUISMIPS3) {
@@ -511,7 +511,7 @@ static void
 kn02ba_wbflush()
 {
 	/* read twice IOASIC_IMSK */
-	__asm __volatile("lw $0,%0; lw $0,%0" ::
+	__asm volatile("lw $0,%0; lw $0,%0" ::
 	    "i"(MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK)));
 }
 

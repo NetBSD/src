@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.78 2005/12/10 21:19:57 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.79 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -298,7 +298,7 @@ extern vaddr_t	pmap_curmaxkvaddr;
  */
 
 /* Virtual address to page table entry */
-static __inline pt_entry_t *
+static inline pt_entry_t *
 vtopte(vaddr_t va)
 {
 	pd_entry_t *pdep;
@@ -312,7 +312,7 @@ vtopte(vaddr_t va)
 /*
  * Virtual address to physical address
  */
-static __inline paddr_t
+static inline paddr_t
 vtophys(vaddr_t va)
 {
 	paddr_t pa;

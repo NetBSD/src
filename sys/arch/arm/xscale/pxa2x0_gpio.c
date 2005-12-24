@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.4 2005/12/11 12:16:52 christos Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.5 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.4 2005/12/11 12:16:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.5 2005/12/24 20:06:52 perry Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -93,7 +93,7 @@ static int gpio_dispatch(struct pxagpio_softc *, int);
 static int gpio_intrN(void *);
 #endif
 
-static __inline u_int32_t
+static inline u_int32_t
 pxagpio_reg_read(struct pxagpio_softc *sc, int reg)
 {
 	if (__predict_true(sc != NULL))
@@ -104,7 +104,7 @@ pxagpio_reg_read(struct pxagpio_softc *sc, int reg)
 	panic("pxagpio_reg_read: not bootstrapped");
 }
 
-static __inline void
+static inline void
 pxagpio_reg_write(struct pxagpio_softc *sc, int reg, u_int32_t val)
 {
 	if (__predict_true(sc != NULL))

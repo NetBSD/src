@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.17 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.18 2005/12/24 20:06:47 perry Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.17 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.18 2005/12/24 20:06:47 perry Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -109,8 +109,8 @@ int	cv3d_toggle(struct grf_softc *);
 int	cv3d_mondefok(struct grfvideo_mode *);
 int	cv3d_load_mon(struct grf_softc *, struct grfcv3dtext_mode *);
 void	cv3d_inittextmode(struct grf_softc *);
-static	__inline void cv3dscreen(int, volatile caddr_t);
-static	__inline void cv3d_gfx_on_off(int, volatile caddr_t);
+static	inline void cv3dscreen(int, volatile caddr_t);
+static	inline void cv3d_gfx_on_off(int, volatile caddr_t);
 
 #ifdef CV3D_HARDWARE_CURSOR
 int	cv3d_getspritepos(struct grf_softc *, struct grf_position *);
@@ -1549,7 +1549,7 @@ cv3d_inittextmode(struct grf_softc *gp)
  *  1 = Amiga Signal,
  * ba = boardaddr
  */
-static __inline void
+static inline void
 cv3dscreen(int toggle, volatile caddr_t ba)
 {
 	*((short *)(ba)) = (toggle & 1);
@@ -1558,7 +1558,7 @@ cv3dscreen(int toggle, volatile caddr_t ba)
 
 /* 0 = on, 1= off */
 /* ba= registerbase */
-static __inline void
+static inline void
 cv3d_gfx_on_off(int toggle, volatile caddr_t ba)
 {
 	int r;
@@ -1644,7 +1644,7 @@ cv3d_setspritepos(struct grf_softc *gp, struct grf_position *pos)
 	return(0);
 }
 
-static __inline short
+static inline short
 M2I(short val)
 {
 	return ( ((val & 0xff00) >> 8) | ((val & 0xff) << 8));
@@ -1713,10 +1713,10 @@ cv3d_setup_hwc(struct grf_softc *gp)
 	/* reset colour stack */
 #if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	__asm __volatile("nop");
+	__asm volatile("nop");
 #else
 	/* do it in assembler, the above does't seem to work */
-	__asm __volatile ("moveb #0x45, %1@(0x3d4); \
+	__asm volatile ("moveb #0x45, %1@(0x3d4); \
 		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
 #endif
 
@@ -1728,10 +1728,10 @@ cv3d_setup_hwc(struct grf_softc *gp)
 
 #if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	__asm __volatile("nop");
+	__asm volatile("nop");
 #else
 	/* do it in assembler, the above does't seem to work */
-	__asm __volatile ("moveb #0x45, %1@(0x3d4); \
+	__asm volatile ("moveb #0x45, %1@(0x3d4); \
 		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
 #endif
 	switch (gp->g_display.gd_planes) {
@@ -1959,7 +1959,7 @@ cv3d_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 
 		/* reset colour stack */
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		__asm __volatile("nop");
+		__asm volatile("nop");
 		switch (depth) {
 		    case 8:
 		    case 15:
@@ -1978,7 +1978,7 @@ cv3d_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		}
 
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		__asm __volatile("nop");
+		__asm volatile("nop");
 		switch (depth) {
 		    case 8:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);

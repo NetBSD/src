@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.46 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.47 2005/12/24 20:06:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.46 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.47 2005/12/24 20:06:47 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ struct arm32_dma_range *_bus_dma_inrange(struct arm32_dma_range *,
 /*
  * Check to see if the specified page is in an allowed DMA range.
  */
-__inline struct arm32_dma_range *
+inline struct arm32_dma_range *
 _bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
     bus_addr_t curaddr)
 {
@@ -491,7 +491,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->_dm_proc = NULL;
 }
 
-static __inline void
+static inline void
 _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
@@ -517,7 +517,7 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	}
 }
 
-static __inline void
+static inline void
 _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
@@ -585,7 +585,7 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	}
 }
 
-static __inline void
+static inline void
 _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {

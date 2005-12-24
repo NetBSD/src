@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.14 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: opm.c,v 1.15 2005/12/24 20:07:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.14 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.15 2005/12/24 20:07:41 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,14 +119,14 @@ void opm_set_volume(int, int);
 void opm_set_key(int, int);
 void opm_set_voice(int, struct opm_voice *);
 void opm_set_voice_sub(int, struct opm_operator *);
-__inline static void writeopm(int, int);
-__inline static int readopm(int);
+inline static void writeopm(int, int);
+inline static int readopm(int);
 void opm_key_on(u_char);
 void opm_key_off(u_char);
 int opmopen(dev_t, int, int);
 int opmclose(dev_t);
 
-__inline static void 
+inline static void 
 writeopm(int reg, int dat)
 {
 	while (bus_space_read_1 (opm0->sc_bst, opm0->sc_bht, OPM_DATA) & 0x80);
@@ -136,7 +136,7 @@ writeopm(int reg, int dat)
 	opm0->sc_regs[reg] = dat;
 }
 
-__inline static int 
+inline static int 
 readopm(int reg)
 {
 	return opm0->sc_regs[reg];

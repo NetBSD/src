@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.8 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.9 2005/12/24 20:07:48 perry Exp $	*/
 
 /*
  *
@@ -50,7 +50,7 @@
 void xen_set_ldt(vaddr_t, uint32_t);
 void xen_update_descriptor(union descriptor *, union descriptor *);
 
-static __inline void 
+static inline void 
 invlpg(u_int addr)
 {
 	int s = splvm();
@@ -59,7 +59,7 @@ invlpg(u_int addr)
 	splx(s);
 }  
 
-static __inline void
+static inline void
 lldt(u_short sel)
 {
 
@@ -71,19 +71,19 @@ lldt(u_short sel)
 		    cpu_info_primary.ci_gdt[IDXSELN(sel)].ld.ld_entries);
 }
 
-static __inline void
+static inline void
 ltr(u_short sel)
 {
 	__PRINTK(("XXX ltr not supported\n"));
 }
 
-static __inline void
+static inline void
 lcr0(u_int val)
 {
 	__PRINTK(("XXX lcr0 not supported\n"));
 }
 
-static __inline u_int
+static inline u_int
 rcr0(void)
 {
 	__PRINTK(("XXX rcr0 not supported\n"));
@@ -91,7 +91,7 @@ rcr0(void)
 }
 
 #define lcr3(_v) _lcr3((_v), __FILE__, __LINE__)
-static __inline void
+static inline void
 _lcr3(u_int val, const char *file, int line)
 {
 	int s = splvm();
@@ -101,7 +101,7 @@ _lcr3(u_int val, const char *file, int line)
 	splx(s);
 }
 
-static __inline void
+static inline void
 tlbflush(void)
 {
 	int s = splvm();
@@ -112,7 +112,7 @@ tlbflush(void)
 
 #define	tlbflushg()	tlbflush()	/* we don't use PGE */
 
-static __inline u_int
+static inline u_int
 rdr6(void)
 {
 	u_int val;
@@ -121,7 +121,7 @@ rdr6(void)
 	return val;
 }
 
-static __inline void
+static inline void
 ldr6(u_int val)
 {
 

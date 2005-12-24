@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.8 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: gdt.c,v 1.9 2005/12/24 20:06:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.8 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.9 2005/12/24 20:06:47 perry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -66,8 +66,8 @@ int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
 struct lock gdt_lock_store;
 
-static __inline void gdt_lock __P((void));
-static __inline void gdt_unlock __P((void));
+static inline void gdt_lock __P((void));
+static inline void gdt_unlock __P((void));
 void gdt_init __P((void));
 void gdt_grow __P((void));
 int gdt_get_slot __P((void));
@@ -82,14 +82,14 @@ void gdt_put_slot __P((int));
  * some time after the GDT is unlocked, so gdt_compact() could attempt to
  * reclaim it.
  */
-static __inline void
+static inline void
 gdt_lock()
 {
 
 	(void) lockmgr(&gdt_lock_store, LK_EXCLUSIVE, NULL);
 }
 
-static __inline void
+static inline void
 gdt_unlock()
 {
 

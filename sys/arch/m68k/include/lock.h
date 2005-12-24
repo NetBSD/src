@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.7 2005/12/11 12:17:53 christos Exp $	*/
+/*	$NetBSD: lock.h,v 1.8 2005/12/24 20:07:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,29 +43,29 @@
 #ifndef _M68K_LOCK_H_
 #define	_M68K_LOCK_H_
 
-static __inline void __unused
+static inline void __unused
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
-static __inline void __unused
+static inline void __unused
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 
-	__asm __volatile(
+	__asm volatile(
 		"1:	tas	%0	\n"
 		"	jne	1b	\n"
 		: "=m" (*alp));
 }
 
-static __inline int __unused
+static inline int __unused
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int __rv;
 
-	__asm __volatile(
+	__asm volatile(
 		"	moveq	#1, %1	\n"
 		"	tas	%0	\n"
 		"	jeq	1f	\n"
@@ -76,7 +76,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return (__rv);
 }
 
-static __inline void __unused
+static inline void __unused
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 

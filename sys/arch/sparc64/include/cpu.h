@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.49 2005/12/11 12:19:10 christos Exp $ */
+/*	$NetBSD: cpu.h,v 1.50 2005/12/24 20:07:37 perry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,7 +105,7 @@ struct cpu_info {
 	 * self-reference the global VA so that we can return it
 	 * in the curcpu() macro.
 	 */
-	struct cpu_info * __volatile ci_self;
+	struct cpu_info * volatile ci_self;
 
 	/* Most important fields first */
 	struct lwp		*ci_curlwp;
@@ -146,7 +146,7 @@ struct cpu_info {
  */
 struct cpu_bootargs {
 	u_int	cb_node;	/* PROM CPU node */
-	__volatile int cb_flags;
+	volatile int cb_flags;
 
 	vaddr_t cb_ktext;
 	paddr_t cb_ktextp;
@@ -318,8 +318,8 @@ void	loadfpstate __P((struct fpstate64 *));
 u_int64_t	probeget __P((paddr_t, int, int));
 int	probeset __P((paddr_t, int, int, u_int64_t));
 
-#define	 write_all_windows() __asm __volatile("flushw" : : )
-#define	 write_user_windows() __asm __volatile("flushw" : : )
+#define	 write_all_windows() __asm volatile("flushw" : : )
+#define	 write_user_windows() __asm volatile("flushw" : : )
 
 void 	proc_trampoline __P((void));
 struct pcb;

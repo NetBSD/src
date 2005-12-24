@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.4 2001/06/19 12:02:56 simonb Exp $	*/
+/*	$NetBSD: viareg.h,v 1.5 2005/12/24 20:07:15 perry Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -188,13 +188,13 @@ extern volatile unsigned char *Via1Base;
 
 #include <machine/pio.h>
 
-static __inline void via_reg_and(int, int, int);
-static __inline void via_reg_or(int, int, int);
-static __inline void via_reg_xor(int, int, int);
-static __inline void write_via_reg(int, int, int);
-static __inline int read_via_reg(int, int);
+static inline void via_reg_and(int, int, int);
+static inline void via_reg_or(int, int, int);
+static inline void via_reg_xor(int, int, int);
+static inline void write_via_reg(int, int, int);
+static inline int read_via_reg(int, int);
 
-static __inline void
+static inline void
 via_reg_and(ign, reg, val) 
 	int ign, reg, val;
 {
@@ -203,7 +203,7 @@ via_reg_and(ign, reg, val)
 	out8(addr, in8(addr) & val);
 }
 
-static __inline void
+static inline void
 via_reg_or(ign, reg, val) 
 	int ign, reg, val;
 {
@@ -212,7 +212,7 @@ via_reg_or(ign, reg, val)
 	out8(addr, in8(addr) | val);
 }
 
-static __inline void
+static inline void
 via_reg_xor(ign, reg, val) 
 	int ign, reg, val;
 {
@@ -221,7 +221,7 @@ via_reg_xor(ign, reg, val)
 	out8(addr, in8(addr) ^ val);
 }
 
-static __inline int
+static inline int
 read_via_reg(ign, reg)
 	int ign, reg;
 {
@@ -230,7 +230,7 @@ read_via_reg(ign, reg)
 	return in8(addr);
 }
 
-static __inline void
+static inline void
 write_via_reg(ign, reg, val)
 	int ign, reg, val;
 {

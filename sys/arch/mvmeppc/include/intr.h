@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2005/12/11 12:18:19 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2005/12/24 20:07:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,9 +94,9 @@ void isa_intr_mask(int);
 void isa_intr_clr(int);
 void isa_setirqstat(int, int, int);
 
-static __inline int splraise(int);
-static __inline void spllower(int);
-static __inline void set_sint(int);
+static inline int splraise(int);
+static inline void spllower(int);
+static inline void set_sint(int);
 
 extern volatile int cpl, ipending, astpending, tickspending;
 extern int imen;
@@ -112,7 +112,7 @@ extern vaddr_t mvmeppc_intr_reg;
  * achieved with the "eieio" instruction which the assembler
  * seems to detect and then doesn't move instructions past....
  */
-static __inline int
+static inline int
 splraise(int newcpl)
 {
 	int oldcpl;
@@ -124,7 +124,7 @@ splraise(int newcpl)
 	return(oldcpl);
 }
 
-static __inline void
+static inline void
 spllower(int newcpl)
 {
 
@@ -137,7 +137,7 @@ spllower(int newcpl)
 
 /* Following code should be implemented with lwarx/stwcx to avoid
  * the disable/enable. i need to read the manual once more.... */
-static __inline void
+static inline void
 set_sint(int pending)
 {
 	int	msrsave;

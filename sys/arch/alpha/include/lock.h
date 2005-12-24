@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.20 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: lock.h,v 1.21 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -48,11 +48,11 @@
 #include "opt_multiprocessor.h"
 #endif
 
-static __inline void
+static inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN __cpu_simple_lock_init\n"
 		"	stl	$31, %0		\n"
 		"	mb			\n"
@@ -60,7 +60,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 		: "=m" (*alp));
 }
 
-static __inline void
+static inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	unsigned long t0;
@@ -72,7 +72,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	 * some work.
 	 */
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN __cpu_simple_lock\n"
 		"1:	ldl_l	%0, %3		\n"
 		"	bne	%0, 2f		\n"
@@ -92,12 +92,12 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 		: "memory");
 }
 
-static __inline int
+static inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	unsigned long t0, v0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN __cpu_simple_lock_try\n"
 		"1:	ldl_l	%0, %4		\n"
 		"	bne	%0, 2f		\n"
@@ -119,11 +119,11 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return (v0 != 0);
 }
 
-static __inline void
+static inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN __cpu_simple_unlock\n"
 		"	mb			\n"
 		"	stl	$31, %0		\n"

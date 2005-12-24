@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.2 2003/02/27 11:22:46 fvdl Exp $	*/
+/*	$NetBSD: pio.h,v 1.3 2005/12/24 20:07:42 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,28 +63,28 @@
 #define	inb(port) \
     (/* CONSTCOND */ __use_immediate_port(port) ? __inbc(port) : __inb(port))
 
-static __inline u_int8_t
+static inline u_int8_t
 __inbc(unsigned port)
 {
 	u_int8_t data;
-	__asm __volatile("inb %w1,%0" : "=a" (data) : "id" (port));
+	__asm volatile("inb %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
-static __inline u_int8_t
+static inline u_int8_t
 __inb(unsigned port)
 {
 	u_int8_t data;
-	__asm __volatile("inb %w1,%0" : "=a" (data) : "d" (port));
+	__asm volatile("inb %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
-static __inline void
+static inline void
 insb(unsigned port, void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm __volatile("cld\n\trepne\n\tinsb"			:
+	__asm volatile("cld\n\trepne\n\tinsb"			:
 			 "=D" (dummy1), "=c" (dummy2) 		:
 			 "d" (port), "0" (addr), "1" (cnt)	:
 			 "memory");
@@ -93,28 +93,28 @@ insb(unsigned port, void *addr, int cnt)
 #define	inw(port) \
     (/* CONSTCOND */ __use_immediate_port(port) ? __inwc(port) : __inw(port))
 
-static __inline u_int16_t
+static inline u_int16_t
 __inwc(unsigned port)
 {
 	u_int16_t data;
-	__asm __volatile("inw %w1,%0" : "=a" (data) : "id" (port));
+	__asm volatile("inw %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
-static __inline u_int16_t
+static inline u_int16_t
 __inw(unsigned port)
 {
 	u_int16_t data;
-	__asm __volatile("inw %w1,%0" : "=a" (data) : "d" (port));
+	__asm volatile("inw %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
-static __inline void
+static inline void
 insw(unsigned port, void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm __volatile("cld\n\trepne\n\tinsw"			:
+	__asm volatile("cld\n\trepne\n\tinsw"			:
 			 "=D" (dummy1), "=c" (dummy2)		:
 			 "d" (port), "0" (addr), "1" (cnt)	:
 			 "memory");
@@ -123,28 +123,28 @@ insw(unsigned port, void *addr, int cnt)
 #define	inl(port) \
     (/* CONSTCOND */ __use_immediate_port(port) ? __inlc(port) : __inl(port))
 
-static __inline u_int32_t
+static inline u_int32_t
 __inlc(unsigned port)
 {
 	u_int32_t data;
-	__asm __volatile("inl %w1,%0" : "=a" (data) : "id" (port));
+	__asm volatile("inl %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
-static __inline u_int32_t
+static inline u_int32_t
 __inl(unsigned port)
 {
 	u_int32_t data;
-	__asm __volatile("inl %w1,%0" : "=a" (data) : "d" (port));
+	__asm volatile("inl %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
-static __inline void
+static inline void
 insl(unsigned port, void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm __volatile("cld\n\trepne\n\tinsl"			:
+	__asm volatile("cld\n\trepne\n\tinsl"			:
 			 "=D" (dummy1), "=c" (dummy2)		:
 			 "d" (port), "0" (addr), "1" (cnt)	:
 			 "memory");
@@ -154,24 +154,24 @@ insl(unsigned port, void *addr, int cnt)
     (/* CONSTCOND */__use_immediate_port(port) ? __outbc(port, data) : \
 						__outb(port, data))
 
-static __inline void
+static inline void
 __outbc(unsigned port, u_int8_t data)
 {
-	__asm __volatile("outb %0,%w1" : : "a" (data), "id" (port));
+	__asm volatile("outb %0,%w1" : : "a" (data), "id" (port));
 }
 
-static __inline void
+static inline void
 __outb(unsigned port, u_int8_t data)
 {
-	__asm __volatile("outb %0,%w1" : : "a" (data), "d" (port));
+	__asm volatile("outb %0,%w1" : : "a" (data), "d" (port));
 }
 
-static __inline void
+static inline void
 outsb(unsigned port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm __volatile("cld\n\trepne\n\toutsb"		:
+	__asm volatile("cld\n\trepne\n\toutsb"		:
 			 "=S" (dummy1), "=c" (dummy2)		:
 			 "d" (port), "0" (addr), "1" (cnt));
 }
@@ -180,24 +180,24 @@ outsb(unsigned port, const void *addr, int cnt)
     (/* CONSTCOND */ __use_immediate_port(port) ? __outwc(port, data) : \
 						__outw(port, data))
 
-static __inline void
+static inline void
 __outwc(unsigned port, u_int16_t data)
 {
-	__asm __volatile("outw %0,%w1" : : "a" (data), "id" (port));
+	__asm volatile("outw %0,%w1" : : "a" (data), "id" (port));
 }
 
-static __inline void
+static inline void
 __outw(unsigned port, u_int16_t data)
 {
-	__asm __volatile("outw %0,%w1" : : "a" (data), "d" (port));
+	__asm volatile("outw %0,%w1" : : "a" (data), "d" (port));
 }
 
-static __inline void
+static inline void
 outsw(unsigned port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm __volatile("cld\n\trepne\n\toutsw"		:
+	__asm volatile("cld\n\trepne\n\toutsw"		:
 			 "=S" (dummy1), "=c" (dummy2)		:
 			 "d" (port), "0" (addr), "1" (cnt));
 }
@@ -206,24 +206,24 @@ outsw(unsigned port, const void *addr, int cnt)
     (/* CONSTCOND */ __use_immediate_port(port) ? __outlc(port, data) : \
 						__outl(port, data))
 
-static __inline void
+static inline void
 __outlc(unsigned port, u_int32_t data)
 {
-	__asm __volatile("outl %0,%w1" : : "a" (data), "id" (port));
+	__asm volatile("outl %0,%w1" : : "a" (data), "id" (port));
 }
 
-static __inline void
+static inline void
 __outl(unsigned port, u_int32_t data)
 {
-	__asm __volatile("outl %0,%w1" : : "a" (data), "d" (port));
+	__asm volatile("outl %0,%w1" : : "a" (data), "d" (port));
 }
 
-static __inline void
+static inline void
 outsl(unsigned port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm __volatile("cld\n\trepne\n\toutsl"		:
+	__asm volatile("cld\n\trepne\n\toutsl"		:
 			 "=S" (dummy1), "=c" (dummy2)		:
 			 "d" (port), "0" (addr), "1" (cnt));
 }

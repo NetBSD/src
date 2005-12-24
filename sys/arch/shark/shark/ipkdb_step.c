@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_step.c,v 1.3 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: ipkdb_step.c,v 1.4 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_step.c,v 1.3 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_step.c,v 1.4 2005/12/24 20:07:32 perry Exp $");
 
 #include <sys/param.h>
 
@@ -61,7 +61,7 @@ fetchinst(pc)
 	return inst;
 }
 
-static __inline void
+static inline void
 execute(inst, args, regs)
 	int inst;
 	int *args;
@@ -83,7 +83,7 @@ execute(inst, args, regs)
 	*/
 }
 
-static __inline int
+static inline int
 condition(inst, args, regs)
 	int inst;
 	int *args;
@@ -95,7 +95,7 @@ condition(inst, args, regs)
 	return args[0];
 }
 
-static __inline int
+static inline int
 immediate(inst)
 	int inst;
 {
@@ -106,7 +106,7 @@ immediate(inst)
 	return (imm >> rot)|(imm << (32 - rot));
 }
 
-static __inline int
+static inline int
 getreg(reg, ahead, regs)
 	int reg;
 	int ahead;
@@ -117,7 +117,7 @@ getreg(reg, ahead, regs)
 	return regs[reg];
 }
 
-static __inline void
+static inline void
 setreg(reg, val, regs)
 	int reg;
 	int val;

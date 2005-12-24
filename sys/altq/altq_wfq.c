@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.8 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.9 2005/12/24 20:10:16 perry Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.8 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.9 2005/12/24 20:10:16 perry Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -74,8 +74,8 @@ static int		wfq_ifdetach(struct wfq_interface *);
 static int		wfq_ifenqueue(struct ifaltq *, struct mbuf *,
 				      struct altq_pktattr *);
 static u_long		wfq_hash(struct flowinfo *, int);
-static __inline u_long	wfq_hashbydstaddr(struct flowinfo *, int);
-static __inline u_long	wfq_hashbysrcport(struct flowinfo *, int);
+static inline u_long	wfq_hashbydstaddr(struct flowinfo *, int);
+static inline u_long	wfq_hashbysrcport(struct flowinfo *, int);
 static wfq		*wfq_maxqueue(wfq_state_t *);
 static struct mbuf	*wfq_ifdequeue(struct ifaltq *, int);
 static int		wfq_getqid(struct wfq_getqid *);
@@ -361,7 +361,7 @@ static u_long wfq_hash(flow, n)
 }
 
 
-static __inline u_long wfq_hashbydstaddr(flow, n)
+static inline u_long wfq_hashbydstaddr(flow, n)
 	struct flowinfo *flow;
 	int n;
 {
@@ -386,7 +386,7 @@ static __inline u_long wfq_hashbydstaddr(flow, n)
 	return (val % n);
 }
 
-static __inline u_long wfq_hashbysrcport(flow, n)
+static inline u_long wfq_hashbysrcport(flow, n)
 	struct flowinfo *flow;
 	int n;
 {

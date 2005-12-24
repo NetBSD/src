@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.36 2005/12/11 12:18:39 christos Exp $ */
+/* $NetBSD: dec_5100.c,v 1.37 2005/12/24 20:07:25 perry Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.36 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.37 2005/12/24 20:07:25 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ dec_5100_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_INT_MASK_2) {
 		struct clockframe cf;
 
-		__asm __volatile("lbu $0,48(%0)" ::
+		__asm volatile("lbu $0,48(%0)" ::
 			"r"(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK)));
 		cf.pc = pc;
 		cf.sr = status;

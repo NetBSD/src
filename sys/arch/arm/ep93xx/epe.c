@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.4 2005/11/12 05:33:23 hamajima Exp $	*/
+/*	$NetBSD: epe.c,v 1.5 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.4 2005/11/12 05:33:23 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.5 2005/12/24 20:06:52 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,9 +107,9 @@ __KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.4 2005/11/12 05:33:23 hamajima Exp $");
 #define CTRLPAGE_DMASYNC(x, y, z) \
 	bus_dmamap_sync(sc->sc_dmat, sc->ctrlpage_dmamap, (x), (y), (z))
 #else
-#define EPE_READ(x) *(__volatile u_int32_t *) \
+#define EPE_READ(x) *(volatile u_int32_t *) \
 	(EP93XX_AHB_VBASE + EP93XX_AHB_EPE + (EPE_ ## x))
-#define EPE_WRITE(x, y) *(__volatile u_int32_t *) \
+#define EPE_WRITE(x, y) *(volatile u_int32_t *) \
 	(EP93XX_AHB_VBASE + EP93XX_AHB_EPE + (EPE_ ## x)) = y
 #define CTRLPAGE_DMASYNC(x, y, z)
 #endif /* ! EPE_FAST */

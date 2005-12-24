@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2005/12/11 12:19:08 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.5 2005/12/24 20:07:37 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2005/12/11 12:19:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2005/12/24 20:07:37 perry Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -96,16 +96,16 @@ struct args {
 	register_t i[MAXARGS];
 };
 
-static __inline int handle_new(struct trapframe *, register_t *);
-static __inline int getargs(struct proc *p, struct trapframe *,
+static inline int handle_new(struct trapframe *, register_t *);
+static inline int getargs(struct proc *p, struct trapframe *,
     register_t *, const struct sysent **, struct args *);
 #ifdef FPU_DEBUG
-static __inline void save_fpu(struct trapframe *);
+static inline void save_fpu(struct trapframe *);
 #endif
 void syscall_plain(register_t, struct trapframe *, register_t);
 void syscall_fancy(register_t, struct trapframe *, register_t);
 
-static __inline int
+static inline int
 handle_new(struct trapframe *tf, register_t *code)
 {
 	int new = *code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
@@ -124,7 +124,7 @@ handle_new(struct trapframe *tf, register_t *code)
  * of ``easy'' arguments as appropriate; we will copy the hard
  * ones later as needed.
  */
-static __inline int
+static inline int
 getargs(struct proc *p, struct trapframe *tf, register_t *code,
     const struct sysent **callp, struct args *args)
 {
@@ -168,7 +168,7 @@ getargs(struct proc *p, struct trapframe *tf, register_t *code,
 }
 
 #ifdef FPU_DEBUG
-static __inline void
+static inline void
 save_fpu(struct trapframe *tf)
 {
 	struct lwp *l = curlwp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.2 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.3 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -190,28 +190,28 @@ static const struct audio_format acu_formats[] = {
 };
 #define	ACU_NFORMATS	(sizeof(acu_formats) / sizeof(struct audio_format))
 
-static __inline u_int32_t
+static inline u_int32_t
 acu_reg_read(struct acu_softc *sc, int reg)
 {
 
 	return (bus_space_read_4(sc->sc_bust, sc->sc_bush, reg));
 }
 
-static __inline void
+static inline void
 acu_reg_write(struct acu_softc *sc, int reg, u_int32_t val)
 {
 
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, reg, val);
 }
 
-static __inline int
+static inline int
 acu_codec_ready(struct acu_softc *sc)
 {
 
 	return (acu_reg_read(sc, AC97_GSR) & GSR_PCR);
 }
 
-static __inline int
+static inline int
 acu_wait_gsr(struct acu_softc *sc, u_int32_t bit)
 {
 	int timeout;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.4 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.5 2005/12/24 20:07:15 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.4 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.5 2005/12/24 20:07:15 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kgdb.h>
 
-#define INVOKE_KGDB()   __asm __volatile("trap  #15")
+#define INVOKE_KGDB()   __asm volatile("trap  #15")
 
 /*
  * Determine if the memory at va..(va+len) is valid.

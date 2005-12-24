@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.40 2005/12/11 12:19:06 christos Exp $ */
+/*	$NetBSD: types.h,v 1.41 2005/12/24 20:07:32 perry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,7 +92,7 @@ typedef paddr_t			psize_t;
  * `lock_data' given its address (and the fact that SPARC is big-endian).
  */
 
-typedef	__volatile int		__cpu_simple_lock_t;
+typedef	volatile int		__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	0xff000000
 #define	__SIMPLELOCK_UNLOCKED	0

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.53 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: intr.h,v 1.54 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -155,12 +155,12 @@ struct scbvec {
 #ifdef	_KERNEL
 
 /* Simulated software interrupt register. */
-extern __volatile unsigned long ssir;
+extern volatile unsigned long ssir;
 
 /* IPL-lowering/restoring macros */
 void	spl0(void);
 
-static __inline void
+static inline void
 splx(int s)
 {
 	if (s == ALPHA_PSL_IPL_0 && ssir != 0)
@@ -171,7 +171,7 @@ splx(int s)
 #define	spllowersoftclock()	((void)alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT))
 
 /* IPL-raising functions/macros */
-static __inline int
+static inline int
 _splraise(int s)
 {
 	int cur = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;

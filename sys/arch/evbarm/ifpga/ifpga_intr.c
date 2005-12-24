@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.c,v 1.2 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: ifpga_intr.c,v 1.3 2005/12/24 20:06:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -64,13 +64,13 @@ struct intrq intrq[NIRQ];
 int ifpga_imask[NIPL];
 
 /* Current interrupt priority level. */
-__volatile int current_spl_level;  
+volatile int current_spl_level;  
 
 /* Interrupts pending. */
-__volatile int ifpga_ipending;
+volatile int ifpga_ipending;
 
 /* Software copy of the IRQs we have enabled. */
-__volatile uint32_t intr_enabled;
+volatile uint32_t intr_enabled;
 
 /* Mask if interrupts steered to FIQs. */
 uint32_t intr_steer;
@@ -141,14 +141,14 @@ void	ifpga_intr_dispatch(struct clockframe *frame);
 
 extern struct ifpga_softc *ifpga_sc;
 
-static __inline uint32_t
+static inline uint32_t
 ifpga_iintsrc_read(void)
 {
 	return bus_space_read_4(ifpga_sc->sc_iot, ifpga_sc->sc_irq_ioh,
 	    IFPGA_INTR_STATUS);
 }
 
-static __inline void
+static inline void
 ifpga_enable_irq(int irq)
 {
 
@@ -156,7 +156,7 @@ ifpga_enable_irq(int irq)
 	ifpga_set_intrmask();
 }
 
-static __inline void
+static inline void
 ifpga_disable_irq(int irq)
 {
 
@@ -279,7 +279,7 @@ ifpga_intr_calculate_masks(void)
 	}
 }
 
-__inline void
+inline void
 ifpga_do_pending(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;

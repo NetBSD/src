@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_var.h,v 1.6 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_var.h,v 1.7 2005/12/24 20:10:16 perry Exp $	*/
 /*	$KAME: altq_var.h,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -116,11 +116,11 @@ extern void init_machclk(void);
 
 #define	read_machclk()		rdtsc()
 #ifdef __OpenBSD__
-static __inline u_int64_t
+static inline u_int64_t
 rdtsc(void)
 {
 	u_int64_t rv;
-	__asm __volatile(".byte 0x0f, 0x31" : "=A" (rv));
+	__asm volatile(".byte 0x0f, 0x31" : "=A" (rv));
 	return (rv);
 }
 #endif /* __OpenBSD__ */
@@ -132,7 +132,7 @@ extern u_int64_t read_machclk(void);
 #else /* !i386 && !alpha */
 /* emulate 256MHz using microtime() */
 #define	MACHCLK_SHIFT	8
-static __inline u_int64_t
+static inline u_int64_t
 read_machclk(void)
 {
 	struct timeval tv;

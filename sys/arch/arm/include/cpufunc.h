@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.35 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.36 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -448,14 +448,14 @@ void	xscale_setup		__P((char *));
  * Macros for manipulating CPU interrupts
  */
 #ifdef __PROG32
-static __inline u_int32_t __set_cpsr_c(u_int bic, u_int eor) __attribute__((__unused__));
+static inline u_int32_t __set_cpsr_c(u_int bic, u_int eor) __attribute__((__unused__));
 
-static __inline u_int32_t
+static inline u_int32_t
 __set_cpsr_c(u_int bic, u_int eor)
 {
 	u_int32_t	tmp, ret;
 
-	__asm __volatile(
+	__asm volatile(
 		"mrs     %0, cpsr\n"	/* Get the CPSR */
 		"bic	 %1, %0, %2\n"	/* Clear bits */
 		"eor	 %1, %1, %3\n"	/* XOR bits */

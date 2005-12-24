@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.6 2005/11/12 08:17:59 hamajima Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.7 2005/12/24 20:06:52 perry Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.6 2005/11/12 08:17:59 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.7 2005/12/24 20:06:52 perry Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -69,15 +69,15 @@ static u_int32_t vic1_imask[NIPL];
 static u_int32_t vic2_imask[NIPL];
 
 /* Current interrupt priority level. */
-__volatile int current_spl_level;
-__volatile int hardware_spl_level;
+volatile int current_spl_level;
+volatile int hardware_spl_level;
 
 /* Software copy of the IRQs we have enabled. */
-__volatile u_int32_t vic1_intr_enabled;
-__volatile u_int32_t vic2_intr_enabled;
+volatile u_int32_t vic1_intr_enabled;
+volatile u_int32_t vic2_intr_enabled;
 
 /* Interrupts pending. */
-static __volatile int ipending;
+static volatile int ipending;
 
 /*
  * Map a software interrupt queue index (to the unused bits in the
@@ -135,7 +135,7 @@ ep93xx_enable_irq(int irq)
 	}
 }
 
-static __inline void
+static inline void
 ep93xx_disable_irq(int irq)
 {
 	if (irq < VIC_NIRQ) {
@@ -326,7 +326,7 @@ ep93xx_do_pending(void)
 	restore_interrupts(oldirqstate);
 }
 
-__inline void
+inline void
 splx(int new)
 {
 	int	old;

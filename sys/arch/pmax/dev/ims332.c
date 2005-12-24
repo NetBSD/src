@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.18 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: ims332.c,v 1.19 2005/12/24 20:07:25 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.18 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.19 2005/12/24 20:07:25 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.18 2005/12/11 12:18:36 christos Exp $")
  */
 static u_int ims332_read_register (struct fbinfo *, int);
 static void ims332_write_register (struct fbinfo *, int, unsigned int);
-static __inline void ims332_cursor_off(struct fbinfo *fi);
-static __inline void ims332_cursor_on(struct fbinfo *fi);
+static inline void ims332_cursor_off(struct fbinfo *fi);
+static inline void ims332_cursor_on(struct fbinfo *fi);
 
 
 int
@@ -162,7 +162,7 @@ ims332_write_register(fi, regno, val)
 /*
  * Turn off hardware cursor sprite.
  */
-static __inline void
+static inline void
 ims332_cursor_off(fi)
 	struct fbinfo *fi;
 {
@@ -177,7 +177,7 @@ ims332_cursor_off(fi)
 /*
  * Turn on hardware cursor.
  */
-static __inline void
+static inline void
 ims332_cursor_on(fi)
 	struct fbinfo *fi;
 {

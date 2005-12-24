@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3dreg.h,v 1.6 2003/05/31 03:05:45 kristerw Exp $	*/
+/*	$NetBSD: grf_cv3dreg.h,v 1.7 2005/12/24 20:06:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -77,14 +77,14 @@ struct grfcv3dtext_mode {
 		if (!cv3d_zorroIII) { \
 		        *((volatile caddr_t)(((caddr_t)cv3d_vcode_switch_base) + \
 			    0x04)) = (0x01 & 0xffff); \
-			__asm __volatile ("nop"); \
+			__asm volatile ("nop"); \
 		} \
 		*((volatile caddr_t)(((caddr_t)cv3d_special_register_base) + \
 		    ( ByteAccessIO(reg) & 0xffff ))) = ((val) & 0xff); \
 		if (!cv3d_zorroIII) { \
 		        *((volatile caddr_t)(((caddr_t)cv3d_vcode_switch_base) + \
 			    0x04)) = (0x02 & 0xffff); \
-			__asm __volatile ("nop"); \
+			__asm volatile ("nop"); \
 		} \
 	} while (0)
 
@@ -107,17 +107,17 @@ struct grfcv3dtext_mode {
 	do { \
 		*((volatile caddr_t)(((caddr_t)cv3d_vcode_switch_base) + \
 		    0x08)) = ((flag * 0x40) & 0xffff); \
-		__asm __volatile ("nop"); \
+		__asm volatile ("nop"); \
 } while (0)
 
 int grfcv3d_cnprobe(void);
 void grfcv3d_iteinit(struct grf_softc *);
-static __inline void GfxBusyWait(volatile caddr_t);
-static __inline void GfxFifoWait(volatile caddr_t);
-static __inline unsigned char RAttr(volatile caddr_t, short);
-static __inline unsigned char RSeq(volatile caddr_t, short);
-static __inline unsigned char RCrt(volatile caddr_t, short);
-static __inline unsigned char RGfx(volatile caddr_t, short);
+static inline void GfxBusyWait(volatile caddr_t);
+static inline void GfxFifoWait(volatile caddr_t);
+static inline unsigned char RAttr(volatile caddr_t, short);
+static inline unsigned char RSeq(volatile caddr_t, short);
+static inline unsigned char RCrt(volatile caddr_t, short);
+static inline unsigned char RGfx(volatile caddr_t, short);
 
 
 /*
@@ -559,7 +559,7 @@ static __inline unsigned char RGfx(volatile caddr_t, short);
 
 /* Gfx engine busy wait */
 
-static __inline void
+static inline void
 GfxBusyWait (ba)
 	volatile caddr_t ba;
 {
@@ -567,12 +567,12 @@ GfxBusyWait (ba)
 
 	do {
 		test = vgar32(ba, MR_SUBSYSTEM_STATUS_CNTL);
-		__asm __volatile ("nop");
+		__asm volatile ("nop");
 	} while (!(test & (1 << 13)));
 }
 
 
-static __inline void
+static inline void
 GfxFifoWait(ba)
 	volatile caddr_t ba;
 {
@@ -590,10 +590,10 @@ GfxFifoWait(ba)
  *
  * The methods have diverged a bit for each board, so
  * WPass(P) has been converted into a set of specific
- * __inline functions.
+ * inline functions.
  */
 
-static __inline unsigned char
+static inline unsigned char
 RAttr(ba, idx)
 	volatile caddr_t ba;
 	short idx;
@@ -604,7 +604,7 @@ RAttr(ba, idx)
 	return vgar(ba, ACT_ADDRESS_R);
 }
 
-static __inline unsigned char
+static inline unsigned char
 RSeq(ba, idx)
 	volatile caddr_t ba;
 	short idx;
@@ -613,7 +613,7 @@ RSeq(ba, idx)
 	return vgar(ba, SEQ_ADDRESS_R);
 }
 
-static __inline unsigned char
+static inline unsigned char
 RCrt(ba, idx)
 	volatile caddr_t ba;
 	short idx;
@@ -622,7 +622,7 @@ RCrt(ba, idx)
 	return vgar(ba, CRT_ADDRESS_R);
 }
 
-static __inline unsigned char
+static inline unsigned char
 RGfx(ba, idx)
 	volatile caddr_t ba;
 	short idx;

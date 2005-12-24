@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.20 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21 2005/12/24 20:07:28 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2005/12/24 20:07:28 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ cpu_probe_cache()
 	 * cache line size, or things like memset/memcpy may lose
 	 * badly.
 	 */
-	__asm __volatile("mfpvr %0" : "=r" (pvr));
+	__asm volatile("mfpvr %0" : "=r" (pvr));
 	switch (pvr & 0xffff0000) {
 	case PVR_401A1:
 		curcpu()->ci_ci.dcache_size = 1024;

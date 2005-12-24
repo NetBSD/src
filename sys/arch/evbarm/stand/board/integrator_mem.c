@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_mem.c,v 1.2 2002/04/25 22:11:51 thorpej Exp $	*/
+/*	$NetBSD: integrator_mem.c,v 1.3 2005/12/24 20:07:03 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 
 #include "board.h"
 
-#define	INL(x)		*((__volatile uint32_t *) (x))
+#define	INL(x)		*((volatile uint32_t *) (x))
 
 void
 mem_init(void)

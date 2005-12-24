@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb.h,v 1.2 1997/04/16 22:57:06 thorpej Exp $	*/
+/*	$NetBSD: ipkdb.h,v 1.3 2005/12/24 20:07:28 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,7 +50,7 @@
 extern int ipkdbregs[NREG];
 
 /* Doesn't handle overlapping regions */
-__inline extern void
+inline extern void
 ipkdbcopy(s,d,n)
 	void *s, *d;
 	int n;
@@ -61,7 +61,7 @@ ipkdbcopy(s,d,n)
 		*dp++ = *sp++;
 }
 
-__inline extern void
+inline extern void
 ipkdbzero(d,n)
 	void *d;
 	int n;
@@ -72,7 +72,7 @@ ipkdbzero(d,n)
 		*dp++ = 0;
 }
 
-__inline extern int
+inline extern int
 ipkdbcmp(s,d,n)
 	void *s, *d;
 {

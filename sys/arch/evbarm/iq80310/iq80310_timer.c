@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.18 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.19 2005/12/24 20:06:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.18 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.19 2005/12/24 20:06:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ static uint32_t counts_per_hz;
 
 int	clockhandler(void *);
 
-static __inline void
+static inline void
 timer_enable(uint8_t bit)
 {
 
@@ -90,7 +90,7 @@ timer_enable(uint8_t bit)
 	    CPLD_READ(IQ80310_TIMER_ENABLE) | bit);
 }
 
-static __inline void
+static inline void
 timer_disable(uint8_t bit)
 {
 
@@ -98,7 +98,7 @@ timer_disable(uint8_t bit)
 	    CPLD_READ(IQ80310_TIMER_ENABLE) & ~bit);
 }
 
-static __inline uint32_t
+static inline uint32_t
 timer_read(void)
 {
 	uint32_t rv;
@@ -125,7 +125,7 @@ timer_read(void)
 	return (rv);
 }
 
-static __inline void
+static inline void
 timer_write(uint32_t x)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_space.c,v 1.4 2005/11/24 13:08:32 yamt Exp $ */
+/*	$NetBSD: ixp425_pci_space.c,v 1.5 2005/12/24 20:06:52 perry Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.4 2005/11/24 13:08:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.5 2005/12/24 20:06:52 perry Exp $");
 
 /*
  * bus_space PCI functions for ixp425
@@ -54,9 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.4 2005/11/24 13:08:32 yamt Ex
 /*
  * Macros to read/write registers
 */
-#define CSR_READ_4(x)		*(__volatile uint32_t *) \
+#define CSR_READ_4(x)		*(volatile uint32_t *) \
 	(IXP425_PCI_CSR_BASE + (x))
-#define CSR_WRITE_4(x, v)	*(__volatile uint32_t *) \
+#define CSR_WRITE_4(x, v)	*(volatile uint32_t *) \
 	(IXP425_PCI_CSR_BASE + (x)) = (v)
 
 /* Proto types for all the bus_space structure functions */

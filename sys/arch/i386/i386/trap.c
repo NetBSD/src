@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.206 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.207 2005/12/24 20:07:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.206 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207 2005/12/24 20:07:10 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.206 2005/12/11 12:17:41 christos Exp $");
 
 #include "npx.h"
 
-static __inline int xmm_si_code(struct lwp *);
+static inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
 #if defined(I386_CPU)
@@ -200,7 +200,7 @@ trap_tss(struct i386tss *tss, int trapno, int code)
 	trap(&tf);
 }
 
-static __inline int
+static inline int
 xmm_si_code(struct lwp *l)
 {
 	uint32_t mxcsr, mask;

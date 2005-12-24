@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.17 2005/12/11 12:19:50 christos Exp $      */
+/*      $NetBSD: xbdback.c,v 1.18 2005/12/24 20:07:48 perry Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -132,7 +132,7 @@ struct xbdback_instance {
 #define xbdi_get(xbdip) (++(xbdip)->refcnt)
 #define xbdi_put(xbdip)                                      \
 do {                                                         \
-	__asm __volatile("decl %0"                           \
+	__asm volatile("decl %0"                           \
 	    : "=m"((xbdip)->refcnt) : "m"((xbdip)->refcnt)); \
 	if (0 == (xbdip)->refcnt)                            \
                xbdback_finish_disconnect(xbdip);             \

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sub.c,v 1.2 2002/12/10 17:14:24 thorpej Exp $ */
+/*	$NetBSD: exec_sub.c,v 1.3 2005/12/24 20:07:41 perry Exp $ */
 
 #include <sys/cdefs.h>
 
@@ -10,7 +10,7 @@
 void B_PRINT __P((const unsigned char *p));
 #endif
 
-static __inline void bzero4 __P((void *ptr, size_t siz));
+static inline void bzero4 __P((void *ptr, size_t siz));
 static void xk_aout __P((struct execkern_arg *xarg, struct exec *hdr));
 static void xk_elf __P((struct execkern_arg *xarg, Elf32_Ehdr *hdr));
 
@@ -60,7 +60,7 @@ DPRINT_SEC(ident, sec)
 #define SECTION_NOPAD(sec, ident, image, size)	\
 		SECTION(sec, (ident), (image), (size), 0)
 
-static __inline void
+static inline void
 bzero4(ptr, siz)
 	void *ptr;
 	size_t siz;

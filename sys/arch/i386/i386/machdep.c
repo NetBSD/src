@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.566 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.567 2005/12/24 20:07:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.566 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.567 2005/12/24 20:07:10 perry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -804,7 +804,7 @@ haltsys:
 		if (cngetc() == 0) {
 			/* no console attached, so just hlt */
 			for(;;) {
-				__asm __volatile("hlt");
+				__asm volatile("hlt");
 			}
 		}
 		cnpollc(0);
@@ -2088,7 +2088,7 @@ cpu_reset()
 	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
-	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0));
+	__asm volatile("divl %0,%1" : : "q" (0), "a" (0));
 
 #if 0
 	/*

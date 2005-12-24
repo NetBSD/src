@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.29 2005/12/11 12:17:44 christos Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.30 2005/12/24 20:07:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.29 2005/12/11 12:17:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.30 2005/12/24 20:07:11 perry Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -369,7 +369,7 @@ pcibios_get_status(u_int32_t *rev_maj, u_int32_t *rev_min,
 	u_int32_t edx;
 	int rv;
 
-	__asm __volatile("lcall *(%%edi)				; \
+	__asm volatile("lcall *(%%edi)				; \
 			jc 1f						; \
 			xor %%ah, %%ah					; \
 		1:"
@@ -415,7 +415,7 @@ pcibios_get_intr_routing(struct pcibios_intr_routing *table,
 
 	memset(table, 0, args.size);
 
-	__asm __volatile("lcall *(%%esi)				; \
+	__asm volatile("lcall *(%%esi)				; \
 			jc 1f						; \
 			xor %%ah, %%ah					; \
 		1:	movw %w2, %%ds					; \
@@ -629,7 +629,7 @@ pcibios_biosroute(int bus, int device, int func, int pin, int irq)
 	bx = (bus << 8) | (device << 3) | func;
 	cx = (irq << 8) | (0xa + pin);
 
-	__asm __volatile("lcall *(%%esi)				; \
+	__asm volatile("lcall *(%%esi)				; \
 			jc 1f						; \
 			xor %%ah, %%ah					; \
 		1:	movw %w1, %%ds					; \

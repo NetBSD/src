@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.6 2005/12/24 20:07:04 perry Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.5 2005/12/11 12:17:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.6 2005/12/24 20:07:04 perry Exp $");
 
 #define DDB_DEBUG
 
@@ -136,7 +136,7 @@ int db_active = 0;
 void
 Debugger(void)
 {
-	__asm __volatile ("break	%0, %1"
+	__asm volatile ("break	%0, %1"
 			  :: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_KGDB));
 }
 

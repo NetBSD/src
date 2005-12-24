@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.17 2005/12/11 12:16:50 christos Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.18 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.17 2005/12/11 12:16:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.18 2005/12/24 20:06:52 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -220,7 +220,7 @@ static struct fsyn fsyn_pref[] = {
 
 /*#define mod(x)	(((x) > 0) ? (x) : (-x))*/
 
-static __inline int
+static inline int
 mod(int n)
 {
 	if (n < 0)

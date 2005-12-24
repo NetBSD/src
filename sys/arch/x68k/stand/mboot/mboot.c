@@ -1,4 +1,4 @@
-/*	$NetBSD: mboot.c,v 1.3 2001/06/12 16:57:28 minoura Exp $	*/
+/*	$NetBSD: mboot.c,v 1.4 2005/12/24 20:07:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ IOCS_BITSNS (int row)
 {
 	register unsigned int reg_d0 __asm ("%d0");
 
-	__asm __volatile ("movel %1,%%d1\n\t"
+	__asm volatile ("movel %1,%%d1\n\t"
 			  "movel #0x04,%0\n\t"
 			  "trap #15"
 			  : "=d" (reg_d0)
@@ -60,7 +60,7 @@ IOCS_BITSNS (int row)
 static inline void
 IOCS_B_PRINT (const char *str)
 {
-	__asm __volatile ("moval %0,%%a1\n\t"
+	__asm volatile ("moval %0,%%a1\n\t"
 			  "movel #0x21,%%d0\n\t"
 			  "trap #15\n\t"
 			  :
@@ -73,7 +73,7 @@ IOCS_S_READCAP (int id, struct iocs_readcap *cap)
 {
 	register int reg_d0 __asm ("%d0");
 
-	__asm __volatile ("moveml %%d4,%%sp@-\n\t"
+	__asm volatile ("moveml %%d4,%%sp@-\n\t"
 			  "movel %2,%%d4\n\t"
 			  "moval %3,%%a1\n\t"
 			  "movel #0x25,%%d1\n\t"
@@ -91,7 +91,7 @@ IOCS_S_READ (int pos, int blk, int id, int size, void *buf)
 {
 	register int reg_d0 __asm ("%d0");
 
-	__asm __volatile ("moveml %%d3-%%d5,%%sp@-\n\t"
+	__asm volatile ("moveml %%d3-%%d5,%%sp@-\n\t"
 			  "movel %2,%%d2\n\t"
 			  "movel %3,%%d3\n\t"
 			  "movel %4,%%d4\n\t"
@@ -113,7 +113,7 @@ IOCS_S_READEXT (int pos, int blk, int id, int size, void *buf)
 {
 	register int reg_d0 __asm ("%d0");
 
-	__asm __volatile ("moveml %%d3-%%d5,%%sp@-\n\t"
+	__asm volatile ("moveml %%d3-%%d5,%%sp@-\n\t"
 			  "movel %2,%%d2\n\t"
 			  "movel %3,%%d3\n\t"
 			  "movel %4,%%d4\n\t"

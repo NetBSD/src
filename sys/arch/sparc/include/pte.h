@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.29 2005/12/11 12:19:06 christos Exp $ */
+/*	$NetBSD: pte.h,v 1.30 2005/12/24 20:07:32 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -322,7 +322,7 @@ struct srmmu_pte {
 
 /* %%%: Fix above and below for 4m? */
 
-/* static __inline int PG_VALID(void *va) {
+/* static inline int PG_VALID(void *va) {
 	register int t = va; t >>= PG_VSHIFT; return (t == 0 || t == -1);
 } */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2005/12/11 12:19:21 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2005/12/24 20:07:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,15 +65,15 @@
  * (See the GCC extensions info document.)
  */
 
-static __inline int _getsr(void);
+static inline int _getsr(void);
 
 /* Get current sr value. */
-static __inline int
+static inline int
 _getsr(void)
 {
 	int rv;
 
-	__asm __volatile ("clrl %0; movew %%sr,%0" : "=&d" (rv));
+	__asm volatile ("clrl %0; movew %%sr,%0" : "=&d" (rv));
 	return (rv);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2005/12/24 20:07:04 perry Exp $	*/
 
 /*
  * Copyright (c) 2003 ITOH Yasufumi.
@@ -55,8 +55,8 @@ struct loadinfo {
 #endif
 	unsigned entry_offset;
 };
-static __inline void xi_elf32 __P((struct loadinfo *, Elf32_Ehdr *));
-static __inline void xi_elf64 __P((struct loadinfo *, Elf64_Ehdr *));
+static inline void xi_elf32 __P((struct loadinfo *, Elf32_Ehdr *));
+static inline void xi_elf64 __P((struct loadinfo *, Elf64_Ehdr *));
 int xi_load __P((struct loadinfo *, void *));
 
 void reboot __P((void)), halt __P((void));
@@ -355,7 +355,7 @@ load_file_ino(ino, fn, loadadr, interactive, part)
 /*
  * fill in loading information from an ELF executable
  */
-static __inline void
+static inline void
 xi_elf32(inf, hdr)
 	struct loadinfo *inf;
 	Elf32_Ehdr *hdr;
@@ -374,7 +374,7 @@ xi_elf32(inf, hdr)
 	inf->entry_offset = hdr->e_entry - ph->p_vaddr;
 }
 
-static __inline void
+static inline void
 xi_elf64(inf, hdr)
 	struct loadinfo *inf;
 	Elf64_Ehdr *hdr;

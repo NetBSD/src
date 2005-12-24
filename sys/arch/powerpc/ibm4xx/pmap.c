@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 2005/12/24 20:07:28 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2005/12/24 20:07:28 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -681,7 +681,7 @@ pmap_zero_page(paddr_t pa)
 	int i;
 
 	for (i = PAGE_SIZE/CACHELINESIZE; i > 0; i--) {
-		__asm __volatile ("dcbz 0,%0" :: "r"(pa));
+		__asm volatile ("dcbz 0,%0" :: "r"(pa));
 		pa += CACHELINESIZE;
 	}
 #endif
@@ -1156,7 +1156,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		ctx_alloc(pm);
 		ctx = pm->pm_ctx;
 	}
-	__asm __volatile("mfmsr %0;"
+	__asm volatile("mfmsr %0;"
 		"li %1, %7;"
 		"andc %1,%0,%1;"
 		"mtmsr %1;"

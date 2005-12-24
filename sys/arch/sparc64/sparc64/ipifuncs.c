@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.2 2005/12/11 12:19:14 christos Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.3 2005/12/24 20:07:37 perry Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.2 2005/12/11 12:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.3 2005/12/24 20:07:37 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,16 +59,16 @@ extern int db_active;
 typedef void (* ipifunc_t)(void *);
 
 /* CPU sets containing halted, paused and resumed cpus */
-static __volatile cpuset_t cpus_halted;
-static __volatile cpuset_t cpus_paused;
-static __volatile cpuset_t cpus_resumed;
+static volatile cpuset_t cpus_halted;
+static volatile cpuset_t cpus_paused;
+static volatile cpuset_t cpus_resumed;
 
-__volatile struct ipi_tlb_args ipi_tlb_args;
+volatile struct ipi_tlb_args ipi_tlb_args;
 
 /* IPI handlers. */
 static int	sparc64_ipi_halt(void *);
 static int	sparc64_ipi_pause(void *);
-static int	sparc64_ipi_wait(cpuset_t __volatile *, cpuset_t);
+static int	sparc64_ipi_wait(cpuset_t volatile *, cpuset_t);
 static void	sparc64_ipi_error(const char *, cpuset_t, cpuset_t);
 
 void	sparc64_ipi_flush_pte(void *);
@@ -255,7 +255,7 @@ sparc64_send_ipi(upaid, ipimask)
  */
 int
 sparc64_ipi_wait(cpus_watchset, cpus_mask)
-	cpuset_t __volatile *cpus_watchset;
+	cpuset_t volatile *cpus_watchset;
 	cpuset_t cpus_mask;
 {
 	int i;

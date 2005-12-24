@@ -2,7 +2,7 @@
  * X680x0 ROM IOCS access definitions.
  *  based on Project C Library X68000 Programing Interface Definition
  *           /usr/include/sys/scsi.h
- *  $Id: scsi.h,v 1.1 2001/09/27 10:03:27 minoura Exp $
+ *  $Id: scsi.h,v 1.2 2005/12/24 20:07:41 perry Exp $
  */
 /*
  * PROJECT C Library, X68000 PROGRAMMING INTERFACE DEFINITION
@@ -31,11 +31,11 @@ struct _inquiry {
     unsigned char buff[0];
 };
 
-static __inline int _scsi_inquiry (int n, int id, struct _inquiry *buf)
+static inline int _scsi_inquiry (int n, int id, struct _inquiry *buf)
 {
     register int reg_d0 __asm ("%d0");
 
-    __asm __volatile ("moveml %%d3-%%d4,%%sp@-\n\t"
+    __asm volatile ("moveml %%d3-%%d4,%%sp@-\n\t"
 		      "movel %2,%%d3\n\t"
 		      "movel %3,%%d4\n\t"
 		      "movel %4,%%a1\n\t"
@@ -49,11 +49,11 @@ static __inline int _scsi_inquiry (int n, int id, struct _inquiry *buf)
 
     return reg_d0;
 }
-static __inline int _scsi_modesense (int page, int n, int id, void *buf)
+static inline int _scsi_modesense (int page, int n, int id, void *buf)
 {
     register int reg_d0 __asm ("%d0");
 
-    __asm __volatile ("moveml %%d3-%%d4,%%sp@-\n\t"
+    __asm volatile ("moveml %%d3-%%d4,%%sp@-\n\t"
 		      "movel %2,%%d2\n\t"
 		      "movel %3,%%d3\n\t"
 		      "movel %4,%%d4\n\t"
@@ -69,11 +69,11 @@ static __inline int _scsi_modesense (int page, int n, int id, void *buf)
     return reg_d0;
 }
 
-static __inline int _scsi_read (int pos, int blk, int id, int size, void *buf)
+static inline int _scsi_read (int pos, int blk, int id, int size, void *buf)
 {
     register int reg_d0 __asm ("%d0");
 
-    __asm __volatile ("moveml %%d3-%%d5,%%sp@-\n\t"
+    __asm volatile ("moveml %%d3-%%d5,%%sp@-\n\t"
 		      "movel %2,%%d2\n\t"
 		      "movel %3,%%d3\n\t"
 		      "movel %4,%%d4\n\t"
@@ -90,11 +90,11 @@ static __inline int _scsi_read (int pos, int blk, int id, int size, void *buf)
     return reg_d0;
 }
 
-static __inline int _scsi_readcap (int id, struct _readcap *buf)
+static inline int _scsi_readcap (int id, struct _readcap *buf)
 {
     register int reg_d0 __asm ("%d0");
 
-    __asm __volatile ("moveml %%d4,%%sp@-\n\t"
+    __asm volatile ("moveml %%d4,%%sp@-\n\t"
 		      "movel %2,%%d4\n\t"
 		      "movel %3,%%a1\n\t"
 		      "movel #0x25,%%d1\n\t"
@@ -108,11 +108,11 @@ static __inline int _scsi_readcap (int id, struct _readcap *buf)
     return reg_d0;
 }
 
-static __inline int _scsi_seek (int pos, int id)
+static inline int _scsi_seek (int pos, int id)
 {
     register int reg_d0 __asm ("%d0");
 
-    __asm __volatile ("moveml %%d4,%%sp@-\n\t"
+    __asm volatile ("moveml %%d4,%%sp@-\n\t"
 		      "movel %1,%%d2\n\t"
 		      "movel %2,%%d4\n\t"
 		      "movel #0x2d,%%d1\n\t"
@@ -126,11 +126,11 @@ static __inline int _scsi_seek (int pos, int id)
     return reg_d0;
 }
 
-static __inline int _scsi_testunit (int id)
+static inline int _scsi_testunit (int id)
 {
     register int reg_d0 __asm ("%d0");
 
-    __asm __volatile ("moveml %%d4,%%sp@-\n\t"
+    __asm volatile ("moveml %%d4,%%sp@-\n\t"
 		      "movel %1,%%d4\n\t"
 		      "movel #0x24,%%d1\n\t"
 		      "movel #0xf5,%%d0\n\t"
@@ -143,11 +143,11 @@ static __inline int _scsi_testunit (int id)
     return reg_d0;
 }
 
-static __inline int _scsi_write (int pos, int blk, int id, int size, void *buf)
+static inline int _scsi_write (int pos, int blk, int id, int size, void *buf)
 {
     register int reg_d0 __asm ("%d0");
 
-    __asm __volatile ("moveml %%d3-%%d5,%%sp@-\n\t"
+    __asm volatile ("moveml %%d3-%%d5,%%sp@-\n\t"
 		      "movel %1,%%d2\n\t"
 		      "movel %2,%%d3\n\t"
 		      "movel %3,%%d4\n\t"
@@ -164,9 +164,9 @@ static __inline int _scsi_write (int pos, int blk, int id, int size, void *buf)
     return reg_d0;
 }
 
-static __inline void _scsi_reset (void)
+static inline void _scsi_reset (void)
 {
-    __asm __volatile ("movel #0,%%d1\n\t"
+    __asm volatile ("movel #0,%%d1\n\t"
 		      "movel #0xf5,%%d0\n\t"
 		      "trap #15\n\t"
 			:

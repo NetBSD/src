@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.162 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.163 2005/12/24 20:07:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163 2005/12/24 20:07:24 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1015,7 +1015,7 @@ init532()
 #endif
 
 	/* Jump to high memory */
-	__asm __volatile("jump @1f; 1:");
+	__asm volatile("jump @1f; 1:");
 
 	/* Initialize the pmap module. */
 	pmap_bootstrap(avail_start + KERNBASE);
@@ -1090,7 +1090,7 @@ cpu_reset()
 	tlbflush();
 
 	/* Jump to low memory. */
-	__asm __volatile(
+	__asm volatile(
 		"addr 	1f(pc),r0;"
 		"andd	~%0,r0;"
 		"jump	0(r0);"
@@ -1108,7 +1108,7 @@ cpu_reset()
 	memcpy((void *)0, (void *)0x10000000, 0x1f00);
 
 	/* Jump into ROM copy. */
-	__asm __volatile("jump @0");
+	__asm volatile("jump @0");
 }
 
 /*

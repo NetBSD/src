@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2005/12/24 20:07:03 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2005/12/24 20:07:03 perry Exp $");
 
 #include "opt_sh5_debug.h"
 #include "opt_sh5_cpu.h"
@@ -296,7 +296,7 @@ compute_ctc_tick_per_us(void)
 	while (r64cnt == rtc_read_r64cnt(bt, bh))
 		;
 
-	__asm __volatile("putcon %0, ctc" :: "r"(ctcstart));
+	__asm volatile("putcon %0, ctc" :: "r"(ctcstart));
 
 	r64cnt = (r64cnt + 17) & RTC_R64CNT_MASK;
 
@@ -306,7 +306,7 @@ compute_ctc_tick_per_us(void)
 	while (rtc_read_r64cnt(bt, bh) != r64cnt)
 		;
 
-	__asm __volatile("getcon ctc, %0" : "=r"(ctcstop));
+	__asm volatile("getcon ctc, %0" : "=r"(ctcstop));
 
 	/*
 	 * Compute the number of CTC ticks per micro-second, for use

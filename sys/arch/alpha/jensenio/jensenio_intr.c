@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.4 2002/09/27 15:35:36 provos Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.5 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.4 2002/09/27 15:35:36 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.5 2005/12/24 20:06:46 perry Exp $");
 
 #include <sys/types.h> 
 #include <sys/param.h> 
@@ -99,7 +99,7 @@ const int jensenio_intr_deftype[JENSEN_MAX_IRQ] = {
 	IST_NONE,		/* 15: EISA pin D06 */
 };
 
-static __inline void
+static inline void
 jensenio_specific_eoi(int irq)
 {
 

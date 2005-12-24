@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 2005/12/24 20:06:47 perry Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2005/12/24 20:06:47 perry Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -434,7 +434,7 @@ static int pv_nfpvents;			/* # of free pv entries */
 #define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
 					/* high water mark */
 
-static __inline int
+static inline int
 pv_compare(struct pv_entry *a, struct pv_entry *b)
 {
 	if (a->pv_pmap < b->pv_pmap)
@@ -579,7 +579,7 @@ static void		pmap_alloc_level __P((pd_entry_t **, vaddr_t, int,
  *		of course the kernel is always loaded
  */
 
-__inline static boolean_t
+inline static boolean_t
 pmap_is_curpmap(pmap)
 	struct pmap *pmap;
 {
@@ -591,7 +591,7 @@ pmap_is_curpmap(pmap)
  * pmap_is_active: is this pmap loaded into the specified processor's %cr3?
  */
 
-__inline static boolean_t
+inline static boolean_t
 pmap_is_active(pmap, cpu_num)
 	struct pmap *pmap;
 	int cpu_num;
@@ -605,7 +605,7 @@ pmap_is_active(pmap, cpu_num)
  * pmap_tmpmap_pa: map a page in for tmp usage
  */
 
-__inline static vaddr_t
+inline static vaddr_t
 pmap_tmpmap_pa(pa)
 	paddr_t pa;
 {
@@ -626,7 +626,7 @@ pmap_tmpmap_pa(pa)
  * pmap_tmpunmap_pa: unmap a tmp use page (undoes pmap_tmpmap_pa)
  */
 
-__inline static void
+inline static void
 pmap_tmpunmap_pa()
 {
 #ifdef MULTIPROCESSOR
@@ -653,7 +653,7 @@ pmap_tmpunmap_pa()
  * => do NOT use this on kernel mappings [why?  because pv_ptp may be NULL]
  */
 
-__inline static pt_entry_t *
+inline static pt_entry_t *
 pmap_tmpmap_pvepte(pve)
 	struct pv_entry *pve;
 {
@@ -674,7 +674,7 @@ pmap_tmpmap_pvepte(pve)
  * pmap_tmpunmap_pvepte: release a mapping obtained with pmap_tmpmap_pvepte
  */
 
-__inline static void
+inline static void
 pmap_tmpunmap_pvepte(pve)
 	struct pv_entry *pve;
 {
@@ -685,7 +685,7 @@ pmap_tmpunmap_pvepte(pve)
 	pmap_tmpunmap_pa();
 }
 
-__inline static void
+inline static void
 pmap_apte_flush(struct pmap *pmap)
 {
 #if defined(MULTIPROCESSOR)
@@ -727,7 +727,7 @@ pmap_apte_flush(struct pmap *pmap)
  * => must be undone with pmap_unmap_ptes before returning
  */
 
-__inline static void
+inline static void
 pmap_map_ptes(pmap, ptepp, pdeppp)
 	struct pmap *pmap;
 	pt_entry_t **ptepp;
@@ -775,7 +775,7 @@ pmap_map_ptes(pmap, ptepp, pdeppp)
  * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
  */
 
-__inline static void
+inline static void
 pmap_unmap_ptes(pmap)
 	struct pmap *pmap;
 {
@@ -1350,7 +1350,7 @@ pmap_init()
  * "try" is for optional functions like pmap_copy().
  */
 
-__inline static struct pv_entry *
+inline static struct pv_entry *
 pmap_alloc_pv(pmap, mode)
 	struct pmap *pmap;
 	int mode;
@@ -1489,7 +1489,7 @@ pmap_add_pvpage(pvp, need_entry)
  * => we must be holding pvalloc_lock
  */
 
-__inline static void
+inline static void
 pmap_free_pv_doit(pv)
 	struct pv_entry *pv;
 {
@@ -1524,7 +1524,7 @@ pmap_free_pv_doit(pv)
  * => we gain the pvalloc_lock
  */
 
-__inline static void
+inline static void
 pmap_free_pv(pmap, pv)
 	struct pmap *pmap;
 	struct pv_entry *pv;
@@ -1549,7 +1549,7 @@ pmap_free_pv(pmap, pv)
  * => we gain the pvalloc_lock
  */
 
-__inline static void
+inline static void
 pmap_free_pvs(pmap, pvs)
 	struct pmap *pmap;
 	struct pv_entry *pvs;
@@ -1617,7 +1617,7 @@ pmap_free_pvpage()
  * => caller should adjust ptp's wire_count before calling
  */
 
-__inline static void
+inline static void
 pmap_enter_pv(pvh, pve, pmap, va, ptp)
 	struct pv_head *pvh;
 	struct pv_entry *pve;	/* preallocated pve for us to use */
@@ -1641,7 +1641,7 @@ pmap_enter_pv(pvh, pve, pmap, va, ptp)
  * => we return the removed pve
  */
 
-__inline static struct pv_entry *
+inline static struct pv_entry *
 pmap_remove_pv(pvh, pmap, va)
 	struct pv_head *pvh;
 	struct pmap *pmap;
@@ -1662,7 +1662,7 @@ pmap_remove_pv(pvh, pmap, va)
  * p t p   f u n c t i o n s
  */
 
-static __inline struct vm_page *
+static inline struct vm_page *
 pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 {
 	int lidx = level - 1;
@@ -1682,7 +1682,7 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 	return pg;
 }
 
-static __inline void
+static inline void
 pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
 	int lidx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.3 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.4 2005/12/24 20:07:10 perry Exp $	*/
 
 /*	$OpenBSD: endian.h,v 1.7 2001/06/29 20:28:54 mickey Exp $	*/
 
@@ -35,10 +35,10 @@
 #ifndef _HPPA_BYTE_SWAP_H_
 #define	_HPPA_BYTE_SWAP_H_
 
-static __inline u_int16_t __byte_swap_word __P((u_int16_t));
-static __inline u_int32_t __byte_swap_long __P((u_int32_t));
+static inline u_int16_t __byte_swap_word __P((u_int16_t));
+static inline u_int32_t __byte_swap_long __P((u_int32_t));
 
-static __inline u_int32_t
+static inline u_int32_t
 __byte_swap_long(u_int32_t x)
 {
 	register in_addr_t __swap32md_x;	\
@@ -61,7 +61,7 @@ __byte_swap_long(u_int32_t x)
  */
 #define	__swap16md(x)	__swap16gen(x)
 #else
-static __inline u_int16_t
+static inline u_int16_t
 __byte_swap_word(u_int16_t x)
 {
 	register in_port_t __swap16md_x;				\

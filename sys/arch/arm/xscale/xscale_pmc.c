@@ -1,4 +1,4 @@
-/*	$NetBSD: xscale_pmc.c,v 1.8 2005/12/11 12:16:52 christos Exp $	*/
+/*	$NetBSD: xscale_pmc.c,v 1.9 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.8 2005/12/11 12:16:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.9 2005/12/24 20:06:52 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -75,23 +75,23 @@ uint32_t	pmc_reset_vals[3] = {0x80000000, 0x80000000, 0x80000000};
 
 int		pmc_usecount[3] = {0, 0, 0};
 
-static __inline uint32_t
+static inline uint32_t
 xscale_pmnc_read(void)
 {
 	uint32_t pmnc;
 
-	__asm __volatile("mrc p14, 0, %0, c0, c0, 0"
+	__asm volatile("mrc p14, 0, %0, c0, c0, 0"
 		: "=r" (pmnc));
 
 	return pmnc;
 }
 
-static __inline uint32_t
+static inline uint32_t
 xscale_pmnc_write(uint32_t val)
 {
 	uint32_t pmnc;
 
-	__asm __volatile("mcr p14, 0, %0, c0, c0, 0"
+	__asm volatile("mcr p14, 0, %0, c0, c0, 0"
 		: : "r" (val));
 
 	return pmnc;
@@ -122,7 +122,7 @@ xscale_pmc_dispatch(void *arg)
 	if (pmnc & PMNC_CC_IF) {
 		if (pmc_profiling_enabled & __PMC_CCNT) {
 			proftick(frame);
-			__asm __volatile("mcr p14, 0, %0, c1, c0, 0"
+			__asm volatile("mcr p14, 0, %0, c1, c0, 0"
 			    : : "r" (pmc_reset_vals[__PMC_CCNT_I]));
 		} else if ((p = curproc) != NULL &&
 			   (p->p_md.pmc_enabled & __PMC_CCNT) != 0) {
@@ -133,7 +133,7 @@ xscale_pmc_dispatch(void *arg)
 			 */
 			pmcs = p->p_md.pmc_state;
 			pmcs->pmcv[__PMC_CCNT_I] += 0x100000000ULL;
-			__asm __volatile("mcr p14, 0, %0, c1, c0, 0"
+			__asm volatile("mcr p14, 0, %0, c1, c0, 0"
 			    : : "r" (pmcs->pmcr[__PMC_CCNT_I]));
 		}
 	}
@@ -144,7 +144,7 @@ xscale_pmc_dispatch(void *arg)
 	if (pmnc & PMNC_PMN0_IF) {
 		if (pmc_profiling_enabled & __PMC0) {
 			proftick(frame);
-			__asm __volatile("mcr p14, 0, %0, c2, c0, 0"
+			__asm volatile("mcr p14, 0, %0, c2, c0, 0"
 			    : : "r" (pmc_reset_vals[__PMC0_I]));
 		} else if ((p = curproc) != NULL &&
 			   (p->p_md.pmc_enabled & __PMC0) != 0) {
@@ -153,7 +153,7 @@ xscale_pmc_dispatch(void *arg)
 			 */
 			pmcs = p->p_md.pmc_state;
 			pmcs->pmcv[__PMC0_I] += 0x100000000ULL;
-			__asm __volatile("mcr p14, 0, %0, c2, c0, 0"
+			__asm volatile("mcr p14, 0, %0, c2, c0, 0"
 			    : : "r" (pmcs->pmcr[__PMC0_I]));
 		}
 	}
@@ -164,13 +164,13 @@ xscale_pmc_dispatch(void *arg)
 	if (pmnc & PMNC_PMN1_IF) {
 		if (pmc_profiling_enabled & __PMC1) {
 			proftick(frame);
-			__asm __volatile("mcr p14, 0, %0, c3, c0, 0"
+			__asm volatile("mcr p14, 0, %0, c3, c0, 0"
 			    : : "r" (pmc_reset_vals[__PMC1_I]));
 		} else if ((p = curproc) != NULL &&
 			   (p->p_md.pmc_enabled & __PMC1) != 0) {
 			pmcs = p->p_md.pmc_state;
 			pmcs->pmcv[__PMC1_I] += 0x100000000ULL;
-			__asm __volatile("mcr p14, 0, %0, c3, c0, 0"
+			__asm volatile("mcr p14, 0, %0, c3, c0, 0"
 			    : : "r" (pmcs->pmcr[__PMC1_I]));
 		}
 	}
@@ -266,7 +266,7 @@ xscale_save_context(struct proc *p)
 
 		if (p->p_md.pmc_enabled & __PMC_CCNT) {
 			/* save ccnt */
-			__asm __volatile("mrc p14, 0, %0, c1, c0, 0"
+			__asm volatile("mrc p14, 0, %0, c1, c0, 0"
 			    : "=r" (val));
 			pmcs->pmcv[__PMC_CCNT_I] &= ~0xffffffffULL;
 			pmcs->pmcv[__PMC_CCNT_I] |= val;
@@ -274,7 +274,7 @@ xscale_save_context(struct proc *p)
 
 		if (p->p_md.pmc_enabled & __PMC0) {
 			/* save pmc0 */
-			__asm __volatile("mrc p14, 0, %0, c2, c0, 0"
+			__asm volatile("mrc p14, 0, %0, c2, c0, 0"
 			    : "=r" (val));
 			pmcs->pmcv[__PMC0_I] &= ~0xffffffffULL;
 			pmcs->pmcv[__PMC0_I] |= val;
@@ -282,14 +282,14 @@ xscale_save_context(struct proc *p)
 
 		if (p->p_md.pmc_enabled & __PMC1) {
 			/* save pmc1 */
-			__asm __volatile("mrc p14, 0, %0, c3, c0, 0"
+			__asm volatile("mrc p14, 0, %0, c3, c0, 0"
 			    : "=r" (val));
 			pmcs->pmcv[__PMC1_I] &= ~0xffffffffULL;
 			pmcs->pmcv[__PMC1_I] |= val;
 		}
 
 		if (pmc_kernel_bits) {
-			__asm __volatile("mcr p14, 0, %0, c0, c0, 0"
+			__asm volatile("mcr p14, 0, %0, c0, c0, 0"
 			    : : "r" (pmc_kernel_bits | PMNC_E));
 		}
 	}
@@ -308,21 +308,21 @@ xscale_restore_context(struct proc *p)
 		if (p->p_md.pmc_enabled & __PMC1) {
 			/* restore pmc1 */
 			val = pmcs->pmcv[__PMC1_I] & 0xffffffffULL;
-			__asm __volatile("mcr p14, 0, %0, c3, c0, 0" : :
+			__asm volatile("mcr p14, 0, %0, c3, c0, 0" : :
 			    "r" (val));
 		}
 
 		if (p->p_md.pmc_enabled & __PMC0) {
 			/* restore pmc0 */
 			val = pmcs->pmcv[__PMC0_I] & 0xffffffffULL;
-			__asm __volatile("mcr p14, 0, %0, c2, c0, 0" : :
+			__asm volatile("mcr p14, 0, %0, c2, c0, 0" : :
 			    "r" (val));
 		}
 
 		if (p->p_md.pmc_enabled & __PMC_CCNT) {
 			/* restore ccnt */
 			val = pmcs->pmcv[__PMC_CCNT_I] & 0xffffffffULL;
-			__asm __volatile("mcr p14, 0, %0, c1, c0, 0" : :
+			__asm volatile("mcr p14, 0, %0, c1, c0, 0" : :
 			    "r" (val));
 		}
 
@@ -332,7 +332,7 @@ xscale_restore_context(struct proc *p)
 
 	if (r | pmc_kernel_bits) {
 		/* restore pmnc & enable counters */
-		__asm __volatile("mcr p14, 0, %0, c0, c0, 0"
+		__asm volatile("mcr p14, 0, %0, c0, c0, 0"
 		    : : "r" (r | pmc_kernel_bits | PMNC_E));
 	}
 }
@@ -512,13 +512,13 @@ xscale_get_counter_value(struct proc *p, int ctr, int flags, uint64_t *pval)
 
 	switch (ctr) {
 	case __PMC_CCNT_I:
-		__asm __volatile("mrc p14, 0, %0, c1, c0, 0" : "=r" (val));
+		__asm volatile("mrc p14, 0, %0, c1, c0, 0" : "=r" (val));
 		break;
 	case __PMC0_I:
-		__asm __volatile("mrc p14, 0, %0, c2, c0, 0" : "=r" (val));
+		__asm volatile("mrc p14, 0, %0, c2, c0, 0" : "=r" (val));
 		break;
 	case __PMC1_I:
-		__asm __volatile("mrc p14, 0, %0, c3, c0, 0" : "=r" (val));
+		__asm volatile("mrc p14, 0, %0, c3, c0, 0" : "=r" (val));
 		break;
 	default:
 		val = 0;
@@ -567,27 +567,27 @@ xscale_start_profiling(int ctr, struct pmc_counter_cfg *cfg)
 		pmc_kernel_bits |= PMNC_CC_IE;
 		if (cfg->event_id)
 			pmc_kernel_bits |= PMNC_D;
-		__asm __volatile("mcr p14, 0, %0, c1, c0, 0" : :
+		__asm volatile("mcr p14, 0, %0, c1, c0, 0" : :
 		    "r" (pmc_reset_vals[__PMC_CCNT_I]));
-		__asm __volatile("mcr p14, 0, %0, c0, c0, 0" : :
+		__asm volatile("mcr p14, 0, %0, c0, c0, 0" : :
 		    "r" (PMNC_CC_IF));
 		break;
 	case __PMC0_I:
 		pmc_kernel_bits &= ~PMNC_EVCNT0_MASK;
 		pmc_kernel_bits |= (cfg->event_id << PMNC_EVCNT0_SHIFT)
 		    | PMNC_PMN0_IE;
-		__asm __volatile("mcr p14, 0, %0, c2, c0, 0" : :
+		__asm volatile("mcr p14, 0, %0, c2, c0, 0" : :
 		    "r" (pmc_reset_vals[__PMC0_I]));
-		__asm __volatile("mcr p14, 0, %0, c0, c0, 0" : :
+		__asm volatile("mcr p14, 0, %0, c0, c0, 0" : :
 		    "r" (PMNC_PMN0_IF));
 		break;
 	case __PMC1_I:
 		pmc_kernel_bits &= ~PMNC_EVCNT1_MASK;
 		pmc_kernel_bits |= (cfg->event_id << PMNC_EVCNT1_SHIFT)
 		    | PMNC_PMN1_IE;
-		__asm __volatile("mcr p14, 0, %0, c3, c0, 0" : :
+		__asm volatile("mcr p14, 0, %0, c3, c0, 0" : :
 		    "r" (pmc_reset_vals[__PMC1_I]));
-		__asm __volatile("mcr p14, 0, %0, c0, c0, 0" : :
+		__asm volatile("mcr p14, 0, %0, c0, c0, 0" : :
 		    "r" (PMNC_PMN1_IF));
 		break;
 	}
@@ -672,19 +672,19 @@ xscale_alloc_kernel_counter(int ctr, struct pmc_counter_cfg *cfg)
 		pmc_kernel_bits &= PMNC_D;
 		if (cfg->event_id)
 			pmc_kernel_bits |= PMNC_D;
-		__asm __volatile("mcr p14, 0, %0, c1, c0, 0" : :
+		__asm volatile("mcr p14, 0, %0, c1, c0, 0" : :
 		    "r" (pmc_reset_vals[__PMC_CCNT_I]));
 		break;
 	case __PMC0_I:
 		pmc_kernel_bits &= ~PMNC_EVCNT0_MASK;
 		pmc_kernel_bits |= (cfg->event_id << PMNC_EVCNT0_SHIFT);
-		__asm __volatile("mcr p14, 0, %0, c2, c0, 0" : :
+		__asm volatile("mcr p14, 0, %0, c2, c0, 0" : :
 		    "r" (pmc_reset_vals[__PMC0_I]));
 		break;
 	case __PMC1_I:
 		pmc_kernel_bits &= ~PMNC_EVCNT1_MASK;
 		pmc_kernel_bits |= (cfg->event_id << PMNC_EVCNT1_SHIFT);
-		__asm __volatile("mcr p14, 0, %0, c3, c0, 0" : :
+		__asm volatile("mcr p14, 0, %0, c3, c0, 0" : :
 		    "r" (pmc_reset_vals[__PMC1_I]));
 		break;
 	}

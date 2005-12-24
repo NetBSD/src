@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.11 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.12 2005/12/24 20:10:16 perry Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.11 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.12 2005/12/24 20:10:16 perry Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -117,11 +117,11 @@ static void actlist_insert __P((struct hfsc_class *));
 static void actlist_remove __P((struct hfsc_class *));
 static void actlist_update __P((struct hfsc_class *));
 
-static __inline u_int64_t seg_x2y __P((u_int64_t, u_int64_t));
-static __inline u_int64_t seg_y2x __P((u_int64_t, u_int64_t));
-static __inline u_int64_t m2sm __P((u_int));
-static __inline u_int64_t m2ism __P((u_int));
-static __inline u_int64_t d2dx __P((u_int));
+static inline u_int64_t seg_x2y __P((u_int64_t, u_int64_t));
+static inline u_int64_t seg_y2x __P((u_int64_t, u_int64_t));
+static inline u_int64_t m2sm __P((u_int));
+static inline u_int64_t m2ism __P((u_int));
+static inline u_int64_t d2dx __P((u_int));
 static u_int sm2m __P((u_int64_t));
 static u_int dx2d __P((u_int64_t));
 
@@ -1165,7 +1165,7 @@ actlist_update(cl)
 #define	SC_LARGEVAL	(1LL << 32)
 #define	SC_INFINITY	0xffffffffffffffffLL
 
-static __inline u_int64_t
+static inline u_int64_t
 seg_x2y(x, sm)
 	u_int64_t x;
 	u_int64_t sm;
@@ -1179,7 +1179,7 @@ seg_x2y(x, sm)
 	return (y);
 }
 
-static __inline u_int64_t
+static inline u_int64_t
 seg_y2x(y, ism)
 	u_int64_t y;
 	u_int64_t ism;
@@ -1197,7 +1197,7 @@ seg_y2x(y, ism)
 	return (x);
 }
 
-static __inline u_int64_t
+static inline u_int64_t
 m2sm(m)
 	u_int m;
 {
@@ -1207,7 +1207,7 @@ m2sm(m)
 	return (sm);
 }
 
-static __inline u_int64_t
+static inline u_int64_t
 m2ism(m)
 	u_int m;
 {
@@ -1220,7 +1220,7 @@ m2ism(m)
 	return (ism);
 }
 
-static __inline u_int64_t
+static inline u_int64_t
 d2dx(d)
 	u_int	d;
 {

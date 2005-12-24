@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.6 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: pdc.c,v 1.7 2005/12/24 20:07:04 perry Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
@@ -404,7 +404,7 @@ pdc_findev(int unit, int class)
 	return NULL;
 }
 
-static __inline void
+static inline void
 fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
 	int loop;

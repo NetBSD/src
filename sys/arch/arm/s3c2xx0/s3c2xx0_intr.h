@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.9 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.10 2005/12/24 20:06:52 perry Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -85,17 +85,17 @@ typedef int (* s3c2xx0_irq_handler_t)(void *);
 
 extern volatile uint32_t *s3c2xx0_intr_mask_reg;
 
-extern __volatile int current_spl_level;
-extern __volatile int intr_mask;
-extern __volatile int global_intr_mask;
-extern __volatile int softint_pending;
+extern volatile int current_spl_level;
+extern volatile int intr_mask;
+extern volatile int global_intr_mask;
+extern volatile int softint_pending;
 extern int s3c2xx0_imask[];
 extern int s3c2xx0_ilevel[];
 
 void s3c2xx0_do_pending(int);
 void s3c2xx0_update_intr_masks( int, int );
 
-static __inline void
+static inline void
 s3c2xx0_mask_interrupts(int mask)
 {
 	int save = disable_interrupts(I32_bit);
@@ -104,7 +104,7 @@ s3c2xx0_mask_interrupts(int mask)
 	restore_interrupts(save);
 }
 
-static __inline void
+static inline void
 s3c2xx0_unmask_interrupts(int mask)
 {
 	int save = disable_interrupts(I32_bit);
@@ -113,7 +113,7 @@ s3c2xx0_unmask_interrupts(int mask)
 	restore_interrupts(save);
 }
 
-static __inline void
+static inline void
 s3c2xx0_setipl(int new)
 {
 	current_spl_level = new;
@@ -123,7 +123,7 @@ s3c2xx0_setipl(int new)
 }
 
 
-static __inline void
+static inline void
 s3c2xx0_splx(int new)
 {
 	int psw;
@@ -138,7 +138,7 @@ s3c2xx0_splx(int new)
 }
 
 
-static __inline int
+static inline int
 s3c2xx0_splraise(int ipl)
 {
 	int	old, psw;
@@ -153,7 +153,7 @@ s3c2xx0_splraise(int ipl)
 	return (old);
 }
 
-static __inline int
+static inline int
 s3c2xx0_spllower(int ipl)
 {
 	int old = current_spl_level;
@@ -163,7 +163,7 @@ s3c2xx0_spllower(int ipl)
 	return(old);
 }
 
-static __inline void
+static inline void
 s3c2xx0_setsoftintr(int si)
 {
 

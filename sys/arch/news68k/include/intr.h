@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2005/12/24 20:07:20 perry Exp $	*/
 
 /*
  *
@@ -63,11 +63,11 @@
 #define	splsched()	spl7()
 #define	spllock()	spl7()
 
-static __inline void
+static inline void
 splx(int sr)
 {
 
-	__asm __volatile("movw %0,%%sr" : : "di" (sr));
+	__asm volatile("movw %0,%%sr" : : "di" (sr));
 }
 
 /*

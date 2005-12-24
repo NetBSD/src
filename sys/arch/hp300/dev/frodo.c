@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.22 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: frodo.c,v 1.23 2005/12/24 20:07:03 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.22 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.23 2005/12/24 20:07:03 perry Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -425,7 +425,7 @@ frodo_bus_space_read_multi_sparse_1(bus_space_tag_t bst, bus_space_handle_t bsh,
     bus_size_t offset, uint8_t *addr, bus_size_t len)
 {
 
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;\n"
 	"	movl	%1,%%a1		;\n"
 	"	movl	%2,%%d0		;\n"
@@ -443,7 +443,7 @@ frodo_bus_space_write_multi_sparse_1(bus_space_tag_t bst,
     bus_size_t len)
 {
 
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;\n"
 	"	movl	%1,%%a1		;\n"
 	"	movl	%2,%%d0		;\n"
@@ -459,7 +459,7 @@ static void
 frodo_bus_space_read_region_sparse_1(bus_space_tag_t bst,
     bus_space_handle_t bsh, bus_size_t offset, uint8_t *addr, bus_size_t len)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;\n"
 	"	movl	%1,%%a1		;\n"
 	"	movl	%2,%%d0		;\n"
@@ -478,7 +478,7 @@ frodo_bus_space_write_region_sparse_1(bus_space_tag_t bst,
     bus_size_t len)
 {
 
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;\n"
 	"	movl	%1,%%a1		;\n"
 	"	movl	%2,%%d0		;\n"
@@ -495,7 +495,7 @@ static void
 frodo_bus_space_set_multi_sparse_1(bus_space_tag_t bst, bus_space_handle_t bsh,
     bus_size_t offset, uint8_t val, bus_size_t count)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;\n"
 	"	movl	%1,%%d1		;\n"
 	"	movl	%2,%%d0		;\n"
@@ -512,7 +512,7 @@ frodo_bus_space_set_region_sparse_1(bus_space_tag_t bst, bus_space_handle_t bsh,
     bus_size_t offset, uint8_t val, bus_size_t count)
 {
 
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;\n"
 	"	movl	%1,%%d1		;\n"
 	"	movl	%2,%%d0		;\n"

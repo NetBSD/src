@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.18 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.19 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@ struct mdlwp {
 };
 
 struct mdproc {
-	__volatile int md_astpending;	/* AST pending on return to userland */
+	volatile int md_astpending;	/* AST pending on return to userland */
 					/* syscall entry for this process */
 	void	(*md_syscall)(struct lwp *, u_int, u_int, u_int);
 };

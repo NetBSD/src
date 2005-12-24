@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.6 2005/12/11 12:16:03 christos Exp $ */
+/* $NetBSD: irq.c,v 1.7 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.6 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.7 2005/12/24 20:06:46 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,7 +107,7 @@ struct irq_handler {
 
 volatile static int current_spl = IPL_HIGH;
 
-__inline int hardsplx(int);
+inline int hardsplx(int);
 
 void
 irq_init(void)
@@ -339,7 +339,7 @@ int schedbreak = 0;
 #include <machine/db_machdep.h>
 #include <ddb/db_interface.h>
 
-__inline int
+inline int
 hardsplx(int s)
 {
 	int was;

@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.68 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: interrupt.c,v 1.69 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.68 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.69 2005/12/24 20:06:46 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,7 +502,7 @@ netintr()
 }
 
 struct alpha_soft_intr alpha_soft_intrs[SI_NQUEUES];
-__volatile unsigned long ssir;
+volatile unsigned long ssir;
 
 /* XXX For legacy software interrupts. */
 struct alpha_soft_intrhand *softnet_intrhand;

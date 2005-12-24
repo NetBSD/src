@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.64 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: cpu.h,v 1.65 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -136,8 +136,8 @@
  * Machine check information.
  */
 struct mchkinfo {
-	__volatile int mc_expected;	/* machine check is expected */
-	__volatile int mc_received;	/* machine check was received */
+	volatile int mc_expected;	/* machine check is expected */
+	volatile int mc_received;	/* machine check was received */
 };
 
 struct cpu_info {
@@ -164,8 +164,8 @@ struct cpu_info {
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 
 #if defined(MULTIPROCESSOR)
-	__volatile u_long ci_flags;	/* flags; see below */
-	__volatile u_long ci_ipis;	/* interprocessor interrupts pending */
+	volatile u_long ci_flags;	/* flags; see below */
+	volatile u_long ci_ipis;	/* interprocessor interrupts pending */
 #endif
 };
 
@@ -183,8 +183,8 @@ extern	struct cpu_info *cpu_info_list;
 					ci != NULL; ci = ci->ci_next
 
 #if defined(MULTIPROCESSOR)
-extern	__volatile u_long cpus_running;
-extern	__volatile u_long cpus_paused;
+extern	volatile u_long cpus_running;
+extern	volatile u_long cpus_paused;
 extern	struct cpu_info *cpu_info[];
 
 #define	curcpu()		((struct cpu_info *)alpha_pal_rdval())

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.11 2005/12/11 12:17:52 christos Exp $ */
+/* $NetBSD: cpu.h,v 1.12 2005/12/24 20:07:15 perry Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -166,9 +166,9 @@ extern unsigned char ssir;
 #define SIR_CLOCK	0x2
 
 #define siron(x)	\
-	__asm __volatile ("orb %0,%1" : : "di" ((u_char)(x)), "g" (ssir))
+	__asm volatile ("orb %0,%1" : : "di" ((u_char)(x)), "g" (ssir))
 #define siroff(x)	\
-	__asm __volatile ("andb %0,%1" : : "di" ((u_char)~(x)), "g" (ssir))
+	__asm volatile ("andb %0,%1" : : "di" ((u_char)~(x)), "g" (ssir))
 
 #define setsoftnet()	siron(SIR_NET)
 #define setsoftclock()	siron(SIR_CLOCK)

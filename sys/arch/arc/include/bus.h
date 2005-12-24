@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.20 2005/12/24 20:06:47 perry Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -332,7 +332,7 @@ int	arc_bus_space_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t,
  */
 
 #define bus_space_read(BYTES,BITS)					\
-static __inline __CONCAT3(uint,BITS,_t)					\
+static inline __CONCAT3(uint,BITS,_t)					\
 __CONCAT(bus_space_read_,BYTES)(bus_space_tag_t bst,			\
     bus_space_handle_t bsh, bus_size_t offset)				\
 {									\
@@ -355,7 +355,7 @@ bus_space_read(8,64)
  */
 
 #define bus_space_read_multi(BYTES,BITS)				\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_read_multi_,BYTES)(bus_space_tag_t bst,		\
     bus_space_handle_t bsh, bus_size_t offset,				\
     __CONCAT3(uint,BITS,_t) *datap, bus_size_t count)			\
@@ -384,7 +384,7 @@ bus_space_read_multi(8,64)
  */
 
 #define bus_space_read_region(BYTES,BITS)				\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_read_region_,BYTES)(bus_space_tag_t bst,		\
     bus_space_handle_t bsh, bus_size_t offset,				\
     __CONCAT3(uint,BITS,_t) *datap, bus_size_t count)			\
@@ -415,7 +415,7 @@ bus_space_read_region(8,64)
  */
 
 #define bus_space_write(BYTES,BITS)					\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_write_,BYTES)(bus_space_tag_t bst,			\
     bus_space_handle_t bsh,						\
     bus_size_t offset, __CONCAT3(uint,BITS,_t) data)			\
@@ -439,7 +439,7 @@ bus_space_write(8,64)
  */
 
 #define bus_space_write_multi(BYTES,BITS)				\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_write_multi_,BYTES)(bus_space_tag_t bst,		\
     bus_space_handle_t bsh, bus_size_t offset,				\
     const __CONCAT3(uint,BITS,_t) *datap, bus_size_t count)		\
@@ -467,7 +467,7 @@ bus_space_write_multi(8,64)
  */
 
 #define bus_space_write_region(BYTES,BITS)				\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_write_region_,BYTES)(bus_space_tag_t bst,		\
     bus_space_handle_t bsh, bus_size_t offset,				\
     const __CONCAT3(uint,BITS,_t) *datap, bus_size_t count)		\
@@ -498,7 +498,7 @@ bus_space_write_region(8,64)
  */
 
 #define bus_space_set_multi(BYTES,BITS)					\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_set_multi_,BYTES)(bus_space_tag_t bst,		\
     bus_space_handle_t bsh, bus_size_t offset,				\
     const __CONCAT3(uint,BITS,_t) data, bus_size_t count)		\
@@ -526,7 +526,7 @@ bus_space_set_multi(8,64)
  */
 
 #define bus_space_set_region(BYTES,BITS)				\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_set_region_,BYTES)(bus_space_tag_t bst,		\
     bus_space_handle_t bsh, bus_size_t offset,				\
     __CONCAT3(uint,BITS,_t) data, bus_size_t count)			\
@@ -558,7 +558,7 @@ bus_space_set_region(8,64)
  */
 
 #define bus_space_copy_region(BYTES,BITS)				\
-static __inline void							\
+static inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(bus_space_tag_t bst,		\
     bus_space_handle_t srcbsh, bus_size_t srcoffset,			\
     bus_space_handle_t dstbsh, bus_size_t dstoffset, bus_size_t count)	\

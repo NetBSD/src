@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.24 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.25 2005/12/24 20:07:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.24 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25 2005/12/24 20:07:28 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,28 +57,28 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.24 2005/12/11 12:18:46 christos Exp $"
 int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
 
-static __inline void
+static inline void
 dcbst(paddr_t pa, long len, int dcache_line_size)
 {
 	paddr_t epa;
 	for (epa = pa + len; pa < epa; pa += dcache_line_size)
-		__asm __volatile("dcbst 0,%0" :: "r"(pa));
+		__asm volatile("dcbst 0,%0" :: "r"(pa));
 }
 
-static __inline void
+static inline void
 dcbi(paddr_t pa, long len, int dcache_line_size)
 {
 	paddr_t epa;
 	for (epa = pa + len; pa < epa; pa += dcache_line_size)
-		__asm __volatile("dcbi 0,%0" :: "r"(pa));
+		__asm volatile("dcbi 0,%0" :: "r"(pa));
 }
 
-static __inline void
+static inline void
 dcbf(paddr_t pa, long len, int dcache_line_size)
 {
 	paddr_t epa;
 	for (epa = pa + len; pa < epa; pa += dcache_line_size)
-		__asm __volatile("dcbf 0,%0" :: "r"(pa));
+		__asm volatile("dcbf 0,%0" :: "r"(pa));
 }
 
 /*
@@ -485,7 +485,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		offset -= ds->ds_len;
 		ds++;
 	}
-	__asm __volatile("eieio");
+	__asm volatile("eieio");
 	for (; len > 0; ds++, offset = 0) {
 		bus_size_t seglen = ds->ds_len - offset;
 		bus_addr_t addr = ds->ds_addr + offset;
@@ -545,7 +545,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 				 */
 				seglen &= ~(dcache_line_size - 1);
 			}
-			__asm __volatile("sync; eieio"); /* is this needed? */
+			__asm volatile("sync; eieio"); /* is this needed? */
 			/* FALLTHROUGH */
 		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
 		case BUS_DMASYNC_POSTREAD:
@@ -572,7 +572,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			break;
 		}
 	}
-	__asm __volatile("sync");
+	__asm volatile("sync");
 }
 
 /*

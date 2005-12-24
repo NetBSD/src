@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.12 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.13 2005/12/24 20:06:46 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.12 2005/12/11 12:16:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.13 2005/12/24 20:06:46 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.12 2005/12/11 12:16:08 christ
 
 #include <dev/isa/isavar.h>
 
-#define	REGVAL(x)	*((__volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
+#define	REGVAL(x)	*((volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
 
 struct p5064_irqreg {
 	bus_addr_t	addr;

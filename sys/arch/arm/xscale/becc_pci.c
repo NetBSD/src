@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.7 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.8 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.7 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.8 2005/12/24 20:06:52 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ becc_pci_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 
 	va = sc->sc_pci_cfg_base + ps.ps_offset;
 
-	*(__volatile pcireg_t *)va = val;
+	*(volatile pcireg_t *)va = val;
 
 	becc_pci_conf_cleanup(sc);
 

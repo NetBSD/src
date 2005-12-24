@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.55 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: fault.c,v 1.56 2005/12/24 20:06:47 perry Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.55 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.56 2005/12/24 20:06:47 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ static const struct data_abort data_aborts[] = {
 #define	TRAPSIGNAL(l,k)	trapsignal((l), (k))
 #endif
 
-static __inline void
+static inline void
 call_trapsignal(struct lwp *l, ksiginfo_t *ksi)
 {
 
@@ -179,7 +179,7 @@ call_trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	KERNEL_PROC_UNLOCK(l);
 }
 
-static __inline int
+static inline int
 data_abort_fixup(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l)
 {
 #ifdef CPU_ABORT_FIXUP_REQUIRED
@@ -710,7 +710,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 	return (1);
 }
 
-static __inline int
+static inline int
 prefetch_abort_fixup(trapframe_t *tf)
 {
 #ifdef CPU_ABORT_FIXUP_REQUIRED

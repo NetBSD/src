@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_machdep.h,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: cacheops_machdep.h,v 1.6 2005/12/24 20:07:03 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -75,7 +75,7 @@
 
 extern vaddr_t MMUbase;
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 DCIA_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUCMD);
@@ -89,7 +89,7 @@ DCIA_md(void)
 	return 1;
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 DCIS_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUSSTP);
@@ -102,7 +102,7 @@ DCIS_md(void)
 	return 1;
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 DCIU_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUUSTP);
@@ -115,7 +115,7 @@ DCIU_md(void)
 	return 1;
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 PCIA_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUCMD);
@@ -135,7 +135,7 @@ PCIA_md(void)
 	return 0;
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 TBIA_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUTBINVAL);
@@ -148,7 +148,7 @@ TBIA_md(void)
 	return 1;
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 TBIS_md(vaddr_t va)
 {
 	register vaddr_t r_va __asm("%a1") = va;
@@ -159,7 +159,7 @@ TBIS_md(vaddr_t va)
 	}
 
 	s = splhigh();
-	__asm __volatile (" movc   %0, %%dfc;"	/* select purge space */
+	__asm volatile (" movc   %0, %%dfc;"	/* select purge space */
 			  " movsl  %3, %1@;"	/* purge it */
 			  " movc   %2, %%dfc;"
 			  : : "r" (FC_PURGE), "a" (r_va), "r" (FC_USERD),
@@ -168,7 +168,7 @@ TBIS_md(vaddr_t va)
 	return 1;
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 TBIAS_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUTBINVAL);
@@ -181,7 +181,7 @@ TBIAS_md(void)
 	return 1;
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 TBIAU_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUTBINVAL);

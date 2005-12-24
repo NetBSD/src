@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.12 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.13 2005/12/24 20:07:28 perry Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.12 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.13 2005/12/24 20:07:28 perry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.12 2005/12/11 12:18:46 christos Exp 
 #include <powerpc/psl.h>
 
 #define	MFMSR()		mfmsr()
-#define	MTMSR(psl)	__asm __volatile("sync; mtmsr %0; isync" :: "r"(psl))
+#define	MTMSR(psl)	__asm volatile("sync; mtmsr %0; isync" :: "r"(psl))
 
 #ifdef PMAPCOUNTERS
 struct evcnt pmap_evcnt_zeroed_pages =
@@ -287,7 +287,7 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	/*
 	 * Wait for it to finish
 	 */
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	/*
 	 * Now invalidate the instruction cache.

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.39 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.40 2005/12/24 20:06:47 perry Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.39 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.40 2005/12/24 20:06:47 perry Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -88,9 +88,9 @@ int	cv_toggle(struct grf_softc *);
 int	cv_mondefok(struct grfvideo_mode *);
 int	cv_load_mon(struct grf_softc *, struct grfcvtext_mode *);
 void	cv_inittextmode(struct grf_softc *);
-static	__inline void cv_write_port(unsigned short, volatile caddr_t);
-static	__inline void cvscreen(int, volatile caddr_t);
-static	__inline void gfx_on_off(int, volatile caddr_t);
+static	inline void cv_write_port(unsigned short, volatile caddr_t);
+static	inline void cvscreen(int, volatile caddr_t);
+static	inline void gfx_on_off(int, volatile caddr_t);
 
 #ifndef CV_NO_HARDWARE_CURSOR
 int	cv_getspritepos(struct grf_softc *, struct grf_position *);
@@ -311,7 +311,7 @@ cvintr(void *arg)
 		WCrt(ba, CRT_ID_END_VER_RETR, test);
 #else
 		vgaw(ba, CRT_ADDRESS, CRT_ID_END_VER_RETR);
-		__asm __volatile("bclr #4,%0@(0x3d5);nop" : : "a" (ba));
+		__asm volatile("bclr #4,%0@(0x3d5);nop" : : "a" (ba));
 #endif
 
 #ifndef CV_NO_HARDWARE_CURSOR
@@ -330,13 +330,13 @@ cvintr(void *arg)
 		WCrt(ba, CRT_ID_END_VER_RETR, test);
 #else
 		/* I don't trust the optimizer here... */
-		__asm __volatile("bset #4,%0@(0x3d5);nop" : : "a" (ba));
+		__asm volatile("bset #4,%0@(0x3d5);nop" : : "a" (ba));
 #endif
 		cv_setspritepos (gp, NULL);
 
 		/* Restore the old CR index */
 		vgaw(ba, CRT_ADDRESS, cridx);
-		__asm __volatile("nop");
+		__asm volatile("nop");
 #endif  /* !CV_NO_HARDWARE_CURSOR */
 		return (1);
 	}
@@ -358,7 +358,7 @@ cv_has_4mb(volatile caddr_t fb)
 	testfbw = (volatile unsigned long *)fb;
 	testfbr = (volatile unsigned long *)(fb + 0x02000000);
 	*testfbw = 0x87654321;
-	__asm __volatile("nop");
+	__asm volatile("nop");
 	if (*testfbr != 0x87654321)
 		return (0);
 
@@ -366,15 +366,15 @@ cv_has_4mb(volatile caddr_t fb)
 	testfbw = (volatile unsigned long *)(fb + 0x00200000);
 	testfbr = (volatile unsigned long *)(fb + 0x02200000);
 	*testfbw = 0x87654321;
-	__asm __volatile("nop");
+	__asm volatile("nop");
 	if (*testfbr != 0x87654321)
 		return (0);
 	*testfbw = 0xAAAAAAAA;
-	__asm __volatile("nop");
+	__asm volatile("nop");
 	if (*testfbr != 0xAAAAAAAA)
 		return (0);
 	*testfbw = 0x55555555;
-	__asm __volatile("nop");
+	__asm volatile("nop");
 	if (*testfbr != 0x55555555)
 		return (0);
 	return (1);
@@ -1658,7 +1658,7 @@ cv_inittextmode(struct grf_softc *gp)
 }
 
 
-static __inline void
+static inline void
 cv_write_port(unsigned short bits, volatile caddr_t BoardAddr)
 {
 	volatile caddr_t addr;
@@ -1683,7 +1683,7 @@ cv_write_port(unsigned short bits, volatile caddr_t BoardAddr)
  *  1 = Amiga Signal,
  * ba = boardaddr
  */
-static __inline void
+static inline void
 cvscreen(int toggle, volatile caddr_t ba)
 {
 
@@ -1696,7 +1696,7 @@ cvscreen(int toggle, volatile caddr_t ba)
 
 /* 0 = on, 1= off */
 /* ba= registerbase */
-static __inline void
+static inline void
 gfx_on_off(int toggle, volatile caddr_t ba)
 {
 	int r;
@@ -1779,7 +1779,7 @@ cv_setspritepos(struct grf_softc *gp, struct grf_position *pos)
 	return(0);
 }
 
-static __inline short
+static inline short
 M2I(short val)
 {
 	return ( ((val & 0xff00) >> 8) | ((val & 0xff) << 8));
@@ -1848,10 +1848,10 @@ cv_setup_hwc(struct grf_softc *gp)
 	/* reset colour stack */
 #if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	__asm __volatile("nop");
+	__asm volatile("nop");
 #else
 	/* do it in assembler, the above does't seem to work */
-	__asm __volatile ("moveb #0x45, %1@(0x3d4); \
+	__asm volatile ("moveb #0x45, %1@(0x3d4); \
 		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
 #endif
 
@@ -1863,10 +1863,10 @@ cv_setup_hwc(struct grf_softc *gp)
 
 #if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	__asm __volatile("nop");
+	__asm volatile("nop");
 #else
 	/* do it in assembler, the above does't seem to work */
-	__asm __volatile ("moveb #0x45, %1@(0x3d4); \
+	__asm volatile ("moveb #0x45, %1@(0x3d4); \
 		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
 #endif
 	switch (gp->g_display.gd_planes) {
@@ -2105,7 +2105,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 
 		/* reset colour stack */
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		__asm __volatile("nop");
+		__asm volatile("nop");
 		switch (depth) {
 		    case 8:
 		    case 15:
@@ -2124,7 +2124,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		}
 
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		__asm __volatile("nop");
+		__asm volatile("nop");
 		switch (depth) {
 		    case 8:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);

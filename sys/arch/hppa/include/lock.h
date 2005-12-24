@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.7 2005/12/11 12:17:37 christos Exp $	*/
+/* 	$NetBSD: lock.h,v 1.8 2005/12/24 20:07:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,10 +44,10 @@
 #ifndef _HPPA_LOCK_H_
 #define	_HPPA_LOCK_H_
 
-static __inline void
+static inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
-	__asm __volatile(
+	__asm volatile(
 		"	; BEGIN __cpu_simple_lock_init\n"
 		"	stw	%1, %0		\n"
 		"	sync			\n"
@@ -56,7 +56,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 		: "r" (__SIMPLELOCK_UNLOCKED));
 }
 
-static __inline void
+static inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	int32_t t0;
@@ -69,7 +69,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	 */
 
 #if 0
-	__asm __volatile(
+	__asm volatile(
 		"	; BEGIN __cpu_simple_lock\n"
 		"	ldcw		%1, %0		\n"
 		"	comb,<>,n	%%r0,%0, 2f	\n"
@@ -86,13 +86,13 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 #endif
 }
 
-static __inline int
+static inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int32_t t0;
 
 #if 0
-	__asm __volatile(
+	__asm volatile(
 		"	; BEGIN __cpu_simple_lock_try\n"
 		"	ldcw		%1, %0		\n"
 		"	sync				\n"
@@ -104,10 +104,10 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return (t0 != 0);
 }
 
-static __inline void
+static inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
-	__asm __volatile(
+	__asm volatile(
 		"	; BEGIN __cpu_simple_unlock\n"
 		"	sync			\n"
 		"	stw	%1, %0		\n"

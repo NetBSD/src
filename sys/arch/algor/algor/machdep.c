@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2005/12/24 20:06:46 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2005/12/11 12:16:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2005/12/24 20:06:46 perry Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -739,7 +739,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("Returning to the monitor...\n\n");
 	led_display('r', 'v', 'e', 'c');
 	/* Jump to the reset vector. */
-	__asm __volatile("li %0, 0xbfc00000; jr %0; nop"
+	__asm volatile("li %0, 0xbfc00000; jr %0; nop"
 		: "=r" (tmp)
 		: /* no inputs */
 		: "memory");

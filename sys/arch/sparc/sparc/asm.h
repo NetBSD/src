@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.10 2005/12/11 12:19:08 christos Exp $ */
+/*	$NetBSD: asm.h,v 1.11 2005/12/24 20:07:37 perry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
 /* load byte from alternate address space */
 #define	lduba(loc, asi) ({ \
 	register int _lduba_v; \
-	__asm __volatile("lduba [%1]%2,%0" : "=r" (_lduba_v) : \
+	__asm volatile("lduba [%1]%2,%0" : "=r" (_lduba_v) : \
 	    "r" ((int)(loc)), "n" (asi)); \
 	_lduba_v; \
 })
@@ -68,7 +68,7 @@
 /* load half-word from alternate address space */
 #define	lduha(loc, asi) ({ \
 	register int _lduha_v; \
-	__asm __volatile("lduha [%1]%2,%0" : "=r" (_lduha_v) : \
+	__asm volatile("lduha [%1]%2,%0" : "=r" (_lduha_v) : \
 	    "r" ((int)(loc)), "n" (asi)); \
 	_lduha_v; \
 })
@@ -76,52 +76,52 @@
 /* load int from alternate address space */
 #define	lda(loc, asi) ({ \
 	register int _lda_v; \
-	__asm __volatile("lda [%1]%2,%0" : "=r" (_lda_v) : \
+	__asm volatile("lda [%1]%2,%0" : "=r" (_lda_v) : \
 	    "r" ((int)(loc)), "n" (asi)); \
 	_lda_v; \
 })
 
 /* store byte to alternate address space */
 #define	stba(loc, asi, value) ({ \
-	__asm __volatile("stba %0,[%1]%2" : : \
+	__asm volatile("stba %0,[%1]%2" : : \
 	    "r" ((int)(value)), "r" ((int)(loc)), "n" (asi)); \
 })
 
 /* store half-word to alternate address space */
 #define	stha(loc, asi, value) ({ \
-	__asm __volatile("stha %0,[%1]%2" : : \
+	__asm volatile("stha %0,[%1]%2" : : \
 	    "r" ((int)(value)), "r" ((int)(loc)), "n" (asi)); \
 })
 
 /* store int to alternate address space */
 #define	sta(loc, asi, value) ({ \
-	__asm __volatile("sta %0,[%1]%2" : : \
+	__asm volatile("sta %0,[%1]%2" : : \
 	    "r" ((int)(value)), "r" ((int)(loc)), "n" (asi)); \
 })
 
 /* load 64-bit int from alternate address space */
 #define	ldda(loc, asi) ({ \
 	register long long _lda_v; \
-	__asm __volatile("ldda [%1]%2,%0" : "=r" (_lda_v) : \
+	__asm volatile("ldda [%1]%2,%0" : "=r" (_lda_v) : \
 	    "r" ((int)(loc)), "n" (asi)); \
 	_lda_v; \
 })
 
 /* store 64-bit int to alternate address space */
 #define	stda(loc, asi, value) ({ \
-	__asm __volatile("stda %0,[%1]%2" : : \
+	__asm volatile("stda %0,[%1]%2" : : \
 	    "r" ((long long)(value)), "r" ((int)(loc)), "n" (asi)); \
 })
 
 /* atomic swap of a word between a register and memory */
 #define	swap(loc, val) ({ \
-	__asm __volatile("swap [%2],%0" : "=&r" (val) : "0" (val), "r" (loc)); \
+	__asm volatile("swap [%2],%0" : "=&r" (val) : "0" (val), "r" (loc)); \
 })
 
 /* atomic load/store of a byte in memory */
 #define	ldstub(loc) ({ \
 	int _v; \
-	__asm __volatile("ldstub [%1],%0" : "=r" (_v) : "r" (loc) : "memory"); \
+	__asm volatile("ldstub [%1],%0" : "=r" (_v) : "r" (loc) : "memory"); \
 	_v; \
 })
 
@@ -129,12 +129,12 @@
 #define	rdasr(asr) _rdasr(asr)
 #define	_rdasr(asr) ({ \
 	register int _rdasr_v; \
-	__asm __volatile("rd %%asr" #asr ",%0" : "=r" (_rdasr_v)); \
+	__asm volatile("rd %%asr" #asr ",%0" : "=r" (_rdasr_v)); \
 	_rdasr_v; \
 })
 
 /* write ancillary state register */
 #define	wrasr(value, asr) _wrasr(value, asr)
 #define	_wrasr(value, asr) ({ \
-	__asm __volatile("wr %0,%%asr" #asr : : "r" ((int)(value))); \
+	__asm volatile("wr %0,%%asr" #asr : : "r" ((int)(value))); \
 })

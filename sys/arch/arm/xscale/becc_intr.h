@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_intr.h,v 1.1 2003/01/25 01:57:18 thorpej Exp $	*/
+/*	$NetBSD: becc_intr.h,v 1.2 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -44,10 +44,10 @@
 #include <arm/xscale/beccreg.h>
 #include <arm/xscale/becc_csrvar.h>
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 becc_set_intrmask(void)
 {
-	extern __volatile uint32_t intr_enabled;
+	extern volatile uint32_t intr_enabled;
 
 	/*
 	 * The bits in the ICMR indicate which interrupts are masked
@@ -58,10 +58,10 @@ becc_set_intrmask(void)
 	(void) BECC_CSR_READ(BECC_ICMR);
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 becc_splraise(int ipl)
 {
-	extern __volatile uint32_t current_spl_level;
+	extern volatile uint32_t current_spl_level;
 	extern uint32_t becc_imask[];
 	uint32_t old;
 
@@ -71,11 +71,11 @@ becc_splraise(int ipl)
 	return (old);
 }
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 becc_splx(int new)
 {
-	extern __volatile uint32_t intr_enabled, becc_ipending;
-	extern __volatile uint32_t current_spl_level;
+	extern volatile uint32_t intr_enabled, becc_ipending;
+	extern volatile uint32_t current_spl_level;
 	uint32_t oldirqstate, hwpend;
 
 	current_spl_level = new;
@@ -95,10 +95,10 @@ becc_splx(int new)
 	}
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 becc_spllower(int ipl)
 {
-	extern __volatile uint32_t current_spl_level;
+	extern volatile uint32_t current_spl_level;
 	extern uint32_t becc_imask[];
 	uint32_t old = current_spl_level;
 
@@ -106,10 +106,10 @@ becc_spllower(int ipl)
 	return (old);
 }
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 becc_setsoftintr(int si)
 {
-	extern __volatile uint32_t	becc_sipending;
+	extern volatile uint32_t	becc_sipending;
 
 	becc_sipending |= (1 << si);
 	BECC_CSR_WRITE(BECC_ICSR, (1U << ICU_SOFT));

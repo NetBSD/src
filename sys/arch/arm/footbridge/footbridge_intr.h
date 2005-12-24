@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.5 2003/06/16 20:00:57 thorpej Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.6 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -83,23 +83,23 @@
 #define ICU_INT_HWMASK	(0xffffffff & ~(INT_SWMASK |  (1U << IRQ_RESERVED3)))
 
 /* only call this with interrupts off */
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
     footbridge_set_intrmask(void)
 {
-    extern __volatile uint32_t intr_enabled;
+    extern volatile uint32_t intr_enabled;
     /* fetch once so we write the same number to both registers */
     uint32_t tmp = intr_enabled & ICU_INT_HWMASK;
 
-    ((__volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_ENABLE_SET>>2] = tmp;
-    ((__volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_ENABLE_CLEAR>>2] = ~tmp;
+    ((volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_ENABLE_SET>>2] = tmp;
+    ((volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_ENABLE_CLEAR>>2] = ~tmp;
 }
     
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 footbridge_splx(int newspl)
 {
-	extern __volatile uint32_t intr_enabled;
-	extern __volatile int current_spl_level;
-	extern __volatile int footbridge_ipending;
+	extern volatile uint32_t intr_enabled;
+	extern volatile int current_spl_level;
+	extern volatile int footbridge_ipending;
 	extern void footbridge_do_pending(void);
 	int oldirqstate, hwpend;
 
@@ -117,10 +117,10 @@ footbridge_splx(int newspl)
 		footbridge_do_pending();
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 footbridge_splraise(int ipl)
 {
-	extern __volatile int current_spl_level;
+	extern volatile int current_spl_level;
 	extern int footbridge_imask[];
 	int	old;
 
@@ -130,10 +130,10 @@ footbridge_splraise(int ipl)
 	return (old);
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 footbridge_spllower(int ipl)
 {
-	extern __volatile int current_spl_level;
+	extern volatile int current_spl_level;
 	extern int footbridge_imask[];
 	int old = current_spl_level;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.13 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: if_xb.c,v 1.14 2005/12/24 20:06:46 perry Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.13 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.14 2005/12/24 20:06:46 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ static int xb_debug;
 
 Static void xb_start __P((struct ifnet *));
 Static void xb_mcrp_write __P((long *, int, int));
-static __inline void xb_onefree __P((void));
+static inline void xb_onefree __P((void));
 static long set_interrupt_on_fifo_empty(void);
 static void xb_init(struct ifnet *);
 static int  xb_intr __P((void *));
@@ -232,7 +232,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %d\n", "$Revision: 1.13 $", xbi.if_mtu);
+	printf(": driver %s mtu %d\n", "$Revision: 1.14 $", xbi.if_mtu);
 }
 
 static void
@@ -400,7 +400,7 @@ long	t1,t2;
 /*
  * Verify during debugging that we have not overflowed the FIFO 
  */
-static __inline void
+static inline void
 xb_onefree()
 {
 	if (XB_DEBUG && REGVAL(A12_MCSR) & A12_MCSR_OMFF)
@@ -467,7 +467,7 @@ xb_ioctl(ifp, cmd, data)
  * 200 or 300 instructions in the time it takes to do the read part of an
  * external bus cycle RMW op. (Or 10 - 20 cache cycles.)
  */
-static __inline long
+static inline long
 xb_fifo_empty(void)
 {
 	return REGVAL(A12_MCSR) & A12_MCSR_OMFE;

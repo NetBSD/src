@@ -1,4 +1,4 @@
-/*	$NetBSD: timervar.h,v 1.6 2005/11/16 03:00:23 uwe Exp $	*/
+/*	$NetBSD: timervar.h,v 1.7 2005/12/24 20:07:37 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@ extern void (*timer_init)(void);
 void	timerattach(volatile int *, volatile int *);
 void	*sched_cookie;	/* for schedclock() interrupts */
 
-static __inline u_long __attribute__((__unused__))
+static inline u_long __attribute__((__unused__))
 new_interval(void)
 {
 	u_long newint, r, var;

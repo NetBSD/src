@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.8 2005/12/11 12:16:51 christos Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.9 2005/12/24 20:06:52 perry Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.8 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.9 2005/12/24 20:06:52 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ microtime(struct timeval *tvp)
 	last = *tvp;
 }
 
-static __inline int
+static inline int
 read_timer(struct s3c2800_softc *sc)
 {
 	int count;

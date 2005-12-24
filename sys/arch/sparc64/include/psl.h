@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.29 2005/12/11 12:19:10 christos Exp $ */
+/*	$NetBSD: psl.h,v 1.30 2005/12/24 20:07:37 perry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -250,46 +250,46 @@
 /*
  * Inlines for manipulating privileged registers
  */
-static __inline int
+static inline int
 getpstate(void)
 {
 	int pstate;
 
-	__asm __volatile("rdpr %%pstate,%0" : "=r" (pstate));
+	__asm volatile("rdpr %%pstate,%0" : "=r" (pstate));
 	return (pstate);
 }
 
-static __inline void
+static inline void
 setpstate(int newpstate)
 {
-	__asm __volatile("wrpr %0,0,%%pstate" : : "r" (newpstate));
+	__asm volatile("wrpr %0,0,%%pstate" : : "r" (newpstate));
 }
 
-static __inline int
+static inline int
 getcwp(void)
 {
 	int cwp;
 
-	__asm __volatile("rdpr %%cwp,%0" : "=r" (cwp));
+	__asm volatile("rdpr %%cwp,%0" : "=r" (cwp));
 	return (cwp);
 }
 
-static __inline void
+static inline void
 setcwp(int newcwp)
 {
-	__asm __volatile("wrpr %0,0,%%cwp" : : "r" (newcwp));
+	__asm volatile("wrpr %0,0,%%cwp" : : "r" (newcwp));
 }
 
-static __inline uint64_t
+static inline uint64_t
 getver(void)
 {
 	uint64_t ver;
 
-	__asm __volatile("rdpr %%ver,%0" : "=r" (ver));
+	__asm volatile("rdpr %%ver,%0" : "=r" (ver));
 	return (ver);
 }
 
-static __inline int
+static inline int
 intr_disable(void)
 {
 	int pstate = getpstate();
@@ -298,7 +298,7 @@ intr_disable(void)
 	return (pstate);
 }
 
-static __inline void
+static inline void
 intr_restore(int pstate)
 {
 	setpstate(pstate);
@@ -321,46 +321,46 @@ extern int printspl;
 	} \
 }
 #define	SPL(name, newpil) \
-static __inline int name##X(const char* file, int line) \
+static inline int name##X(const char* file, int line) \
 { \
 	int oldpil; \
-	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
+	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
 	SPLPRINT(("{%s:%d %d=>%d}", file, line, oldpil, newpil)); \
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
+	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
 	return (oldpil); \
 }
 /* A non-priority-decreasing version of SPL */
 #define	SPLHOLD(name, newpil) \
-static __inline int name##X(const char* file, int line) \
+static inline int name##X(const char* file, int line) \
 { \
 	int oldpil; \
-	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
+	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
 	if (newpil <= oldpil) \
 		return oldpil; \
 	SPLPRINT(("{%s:%d %d->!d}", file, line, oldpil, newpil)); \
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
+	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
 	return (oldpil); \
 }
 
 #else
 #define SPLPRINT(x)	
 #define	SPL(name, newpil) \
-static __inline int name(void) \
+static inline int name(void) \
 { \
 	int oldpil; \
-	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
+	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
+	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
 	return (oldpil); \
 }
 /* A non-priority-decreasing version of SPL */
 #define	SPLHOLD(name, newpil) \
-static __inline int name(void) \
+static inline int name(void) \
 { \
 	int oldpil; \
-	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
+	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
 	if (newpil <= oldpil) \
 		return oldpil; \
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
+	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
 	return (oldpil); \
 }
 #endif
@@ -445,18 +445,18 @@ SPLHOLD(splhigh, PIL_HIGH)
 #define splx(x)		splxX((x),__FILE__, __LINE__)
 #define splipi()	splhighX(__FILE__, __LINE__)
 
-static __inline void splxX(int newpil, const char *file, int line)
+static inline void splxX(int newpil, const char *file, int line)
 #else
-static __inline void splx(int newpil)
+static inline void splx(int newpil)
 #endif
 {
 #ifdef SPLDEBUG
 	int pil;
 
-	__asm __volatile("rdpr %%pil,%0" : "=r" (pil));
+	__asm volatile("rdpr %%pil,%0" : "=r" (pil));
 	SPLPRINT(("{%d->%d}", pil, newpil));
 #endif
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "rn" (newpil));
+	__asm volatile("wrpr %%g0,%0,%%pil" : : "rn" (newpil));
 }
 #endif /* KERNEL && !_LOCORE */
 

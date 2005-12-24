@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.22 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.23 2005/12/24 20:06:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.22 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.23 2005/12/24 20:06:59 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -708,7 +708,7 @@ initarm(void *arg)
 		    PCI_CLASS_REG;
 		uint32_t reg;
 
-		reg = *(__volatile uint32_t *) va;
+		reg = *(volatile uint32_t *) va;
 		becc_rev = PCI_REVISION(reg);
 		if (becc_rev <= BECC_REV_V7 &&
 		    memsize > (64UL * 1024 * 1024)) {

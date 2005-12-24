@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_30.h,v 1.6 2002/11/03 01:34:42 chs Exp $	*/
+/*	$NetBSD: cacheops_30.h,v 1.7 2005/12/24 20:07:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,58 +39,58 @@
 /*
  * Invalidate entire TLB.
  */
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 TBIA_30(void)
 {
 	int tmp = DC_CLEAR;
 
-	__asm __volatile (" pflusha;"
+	__asm volatile (" pflusha;"
 			  " movc %0,%%cacr" : : "d" (tmp));
 }
 	
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 TBIS_30(vaddr_t	va)
 {
-	__asm __volatile (" pflush #0,#0,%0@;"
+	__asm volatile (" pflush #0,#0,%0@;"
 			  " movc   %1,%%cacr" : : "a" (va), "d" (DC_CLEAR));
 }
 
 /*
  * Invalidate supervisor side of TLB
  */
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 TBIAS_30(void)
 {
-	__asm __volatile (" pflush #4,#4;"
+	__asm volatile (" pflush #4,#4;"
 			  " movc   %0,%%cacr;" :: "d" (DC_CLEAR));
 }
 
 /*
  * Invalidate user side of TLB
  */
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 TBIAU_30(void)
 {
-	__asm __volatile (" pflush #0,#4;"
+	__asm volatile (" pflush #0,#4;"
 			  " movc   %0,%%cacr;" :: "d" (DC_CLEAR));
 }
 
 /*
  * Invalidate instruction cache
  */
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 ICIA_30(void)
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
+	__asm volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
 }
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 ICPA_30(void)
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
+	__asm volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
 }
 
 /*
@@ -107,8 +107,8 @@ ICPA_30(void)
 #define	DCFA_30()
 #define	DCPA_30()
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 PCIA_30(void)
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (DC_CLEAR));
+	__asm volatile (" movc %0,%%cacr;" : : "d" (DC_CLEAR));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 2005/12/11 12:19:16 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 2005/12/24 20:07:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ extern vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, int);
 /* Extract the PMEG for a given physical address. */
 extern int _pmap_extract_pmeg(pmap_t, vaddr_t);
 
-static __inline void
+static inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */

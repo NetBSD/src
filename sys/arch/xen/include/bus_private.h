@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.4 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.5 2005/12/24 20:07:48 perry Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -31,9 +31,9 @@
 #define	_BUS_PHYS_TO_BUS(pa)	((bus_addr_t)xpmap_ptom(pa))
 #define	_BUS_VIRT_TO_BUS(pm, va) _bus_virt_to_bus((pm), (va))
 
-static __inline bus_addr_t _bus_virt_to_bus(struct pmap *, vaddr_t);
+static inline bus_addr_t _bus_virt_to_bus(struct pmap *, vaddr_t);
 
-static __inline bus_addr_t
+static inline bus_addr_t
 _bus_virt_to_bus(struct pmap *pm, vaddr_t va)
 {
 	bus_addr_t ba;

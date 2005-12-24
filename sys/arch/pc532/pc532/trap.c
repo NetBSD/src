@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.70 2005/12/24 20:07:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2005/12/24 20:07:24 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -132,13 +132,13 @@ int ieee_handler_disable = 0;
 
 void syscall __P((struct syscframe)) __CDECL__;
 void trap __P((struct trapframe)) __CDECL__;
-static __inline void userret __P((struct lwp *, int, u_quad_t));
+static inline void userret __P((struct lwp *, int, u_quad_t));
 
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
-static __inline void
+static inline void
 userret(l, pc, oticks)
 	struct lwp *l;
 	int pc;
@@ -292,7 +292,7 @@ trap(frame)
 			*(struct trapframe *)sp = *db_frame--;
 			lprd(fp, &((struct trapframe *)sp)->tf_regs.r_fp);
 			lprd(sp, sp);
-			__asm __volatile("jump 0(%0)" : : "g" (ret));
+			__asm volatile("jump 0(%0)" : : "g" (ret));
 		}
 		db_frame--;
 		lprd(sp, sp); /* Frame should be intact */

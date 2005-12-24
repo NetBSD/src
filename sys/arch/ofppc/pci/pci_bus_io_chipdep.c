@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_io_chipdep.c,v 1.3 2005/12/11 12:18:30 christos Exp $	*/
+/*	$NetBSD: pci_bus_io_chipdep.c,v 1.4 2005/12/24 20:07:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_bus_io_chipdep.c,v 1.3 2005/12/11 12:18:30 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_bus_io_chipdep.c,v 1.4 2005/12/24 20:07:24 perry Exp $");
 
 #include <sys/extent.h>
 
@@ -656,7 +656,7 @@ __C(CHIP,_io_barrier)(v, h, o, l, f)
 {
 
 	/* XXX Double-check. */
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 inline u_int8_t

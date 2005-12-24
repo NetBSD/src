@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.12 2005/12/11 12:17:03 christos Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.13 2005/12/24 20:06:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.12 2005/12/11 12:17:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.13 2005/12/24 20:06:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,15 +150,15 @@ static int yeartoday __P((int));
 int 	hexdectodec __P((int));
 int	dectohexdec __P((int));
 
-__inline u_int mc146818_read __P((void *, u_int));
-__inline void mc146818_write __P((void *, u_int, u_int));
+inline u_int mc146818_read __P((void *, u_int));
+inline void mc146818_write __P((void *, u_int, u_int));
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
 #define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
 #define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
 
-__inline u_int
+inline u_int
 mc146818_read(sc, reg)
 	void *sc;					/* XXX use it? */
 	u_int reg;
@@ -168,7 +168,7 @@ mc146818_read(sc, reg)
 	return (isa_inb(IO_RTC+1));
 }
 
-__inline void
+inline void
 mc146818_write(sc, reg, datum)
 	void *sc;					/* XXX use it? */
 	u_int reg, datum;

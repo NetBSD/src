@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2005/12/24 20:07:04 perry Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -227,12 +227,12 @@ extern int want_resched;
 
 #define DELAY(x) delay(x)
 
-static __inline paddr_t
+static inline paddr_t
 kvtop(const caddr_t va)
 {
 	paddr_t pa;
 
-	__asm __volatile ("lpa %%r0(%1), %0" : "=r" (pa) : "r" (va));
+	__asm volatile ("lpa %%r0(%1), %0" : "=r" (pa) : "r" (va));
 	return pa;
 }
 

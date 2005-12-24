@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.26 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.27 2005/12/24 20:07:15 perry Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.26 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.27 2005/12/24 20:07:15 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -104,10 +104,10 @@ struct bmac_softc {
 
 extern u_int *heathrow_FCR;
 
-static __inline int bmac_read_reg __P((struct bmac_softc *, int));
-static __inline void bmac_write_reg __P((struct bmac_softc *, int, int));
-static __inline void bmac_set_bits __P((struct bmac_softc *, int, int));
-static __inline void bmac_reset_bits __P((struct bmac_softc *, int, int));
+static inline int bmac_read_reg __P((struct bmac_softc *, int));
+static inline void bmac_write_reg __P((struct bmac_softc *, int, int));
+static inline void bmac_set_bits __P((struct bmac_softc *, int, int));
+static inline void bmac_reset_bits __P((struct bmac_softc *, int, int));
 
 int bmac_match __P((struct device *, struct cfdata *, void *));
 void bmac_attach __P((struct device *, struct device *, void *));

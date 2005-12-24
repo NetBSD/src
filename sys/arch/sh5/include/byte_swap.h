@@ -1,4 +1,4 @@
-/*      $NetBSD: byte_swap.h,v 1.2 2003/03/26 12:00:41 scw Exp $	*/
+/*      $NetBSD: byte_swap.h,v 1.3 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,35 +40,35 @@
 
 #include <sys/types.h>
 
-static __inline u_int16_t _sh5_bswap16(u_int16_t);
-static __inline u_int32_t _sh5_bswap32(u_int32_t);
-static __inline u_int64_t _sh5_bswap64(u_int64_t);
+static inline u_int16_t _sh5_bswap16(u_int16_t);
+static inline u_int32_t _sh5_bswap32(u_int32_t);
+static inline u_int64_t _sh5_bswap64(u_int64_t);
 
-static __inline u_int16_t
+static inline u_int16_t
 _sh5_bswap16(u_int16_t x)
 {
 
-	__asm __volatile("byterev %0, %0; shlri %0, 32, %0; shlri.l %0, 16, %0"
+	__asm volatile("byterev %0, %0; shlri %0, 32, %0; shlri.l %0, 16, %0"
 	    : "+r"(x));
 
 	return (x);
 }
 
-static __inline u_int32_t
+static inline u_int32_t
 _sh5_bswap32(u_int32_t x)
 {
 
-	__asm __volatile("byterev %0, %0; shlri %0, 32, %0; add.l %0, r63, %0"
+	__asm volatile("byterev %0, %0; shlri %0, 32, %0; add.l %0, r63, %0"
 	    : "+r"(x));
 
 	return (x);
 }
 
-static __inline u_int64_t
+static inline u_int64_t
 _sh5_bswap64(u_int64_t x)
 {
 
-	__asm __volatile("byterev %0, %0" : "+r"(x));
+	__asm volatile("byterev %0, %0" : "+r"(x));
 
 	return (x);
 }

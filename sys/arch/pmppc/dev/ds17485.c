@@ -1,4 +1,4 @@
-/*	$NetBSD: ds17485.c,v 1.8 2005/12/11 12:18:41 christos Exp $	*/
+/*	$NetBSD: ds17485.c,v 1.9 2005/12/24 20:07:25 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.8 2005/12/11 12:18:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.9 2005/12/24 20:07:25 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,8 +181,8 @@ int 	hexdectodec(int);
 int	dectohexdec(int);
 void	rtc_print(void);
 
-__inline u_int mc146818_read(void *, u_int);
-__inline void mc146818_write(void *, u_int, u_int);
+inline u_int mc146818_read(void *, u_int);
+inline void mc146818_write(void *, u_int, u_int);
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
@@ -247,7 +247,7 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-__inline u_int
+inline u_int
 mc146818_read(void *vsc, u_int reg)
 {
 	struct rtc_softc *sc = vsc;
@@ -255,7 +255,7 @@ mc146818_read(void *vsc, u_int reg)
 	return (bus_space_read_1(sc->sc_tag, sc->sc_handle, reg));
 }
 
-__inline void
+inline void
 mc146818_write(void *vsc, u_int reg, u_int datum)
 {
 	struct rtc_softc *sc = vsc;

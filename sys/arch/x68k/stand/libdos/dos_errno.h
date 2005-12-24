@@ -5,7 +5,7 @@
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: dos_errno.h,v 1.2 1999/11/11 08:14:43 itohy Exp $
+ *	$NetBSD: dos_errno.h,v 1.3 2005/12/24 20:07:41 perry Exp $
  */
 
 #ifndef X68K_DOS_ERRNO_H
@@ -15,9 +15,9 @@
 #include <sys/cdefs.h>
 
 extern int dos_errno;
-extern __const int dos_nerr;
+extern const int dos_nerr;
 
-__const char * __pure dos_strerror __P((int)) __attribute__((__const__));
+const char * __pure dos_strerror __P((int)) __attribute__((__const__));
 #endif
 
 /*

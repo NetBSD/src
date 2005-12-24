@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 2005/12/24 20:07:04 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@
  *		(maybe just use the pid itself)
  *	some ppl say, block tlb entries should be maintained somewhere in uvm
  *		and be ready for reloads in the fault handler.
- *	usage of __inline grows the code size by 100%, but hopefully
+ *	usage of inline grows the code size by 100%, but hopefully
  *		makes it faster as well, since the functions are actually
  *		very small.
  *		retail:  8.1k -> 15.1K
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2005/12/11 12:17:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2005/12/24 20:07:04 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2005/12/11 12:17:37 christos Exp $");
 #include <hppa/hppa/machdep.h>
 
 #define static	/**/
-#define	__inline /* */
+#define	inline /* */
 
 #ifdef PMAPDEBUG
 #define	PDB_INIT	0x00000002
@@ -304,14 +304,14 @@ vsize_t	hpt_mask;
 
 /* Prototypes. */
 void __pmap_pv_update(paddr_t, struct pv_entry *, u_int, u_int);
-static __inline void pmap_pv_remove(struct pv_entry *);
+static inline void pmap_pv_remove(struct pv_entry *);
 
 /*
  * Given a directly-mapped region, this makes pv_entries out of it and
  * adds them to the free list.
  */
-static __inline void pmap_pv_add(vaddr_t, vaddr_t);
-static __inline void
+static inline void pmap_pv_add(vaddr_t, vaddr_t);
+static inline void
 pmap_pv_add(vaddr_t pv_start, vaddr_t pv_end)
 {
 	struct pv_entry *pv;
@@ -342,8 +342,8 @@ pmap_pv_add(vaddr_t pv_start, vaddr_t pv_end)
  * in physical mode and thus require that all pv_entries be directly
  * mapped, a quality unlikely for malloc()-returned memory.
  */
-static __inline struct pv_entry *pmap_pv_alloc(void);
-static __inline struct pv_entry *
+static inline struct pv_entry *pmap_pv_alloc(void);
+static inline struct pv_entry *
 pmap_pv_alloc(void)
 {
 	struct pv_entry *pv, *pv_fallback;
@@ -406,8 +406,8 @@ pmap_pv_alloc(void)
 /*
  * Given a struct pv_entry allocated by pmap_pv_alloc, this frees it.
  */
-static __inline void pmap_pv_free(struct pv_entry *);
-static __inline void
+static inline void pmap_pv_free(struct pv_entry *);
+static inline void
 pmap_pv_free(struct pv_entry *pv)
 {
 	PMAP_PRINTF(PDB_PV_ALLOC, ("(%p)\n", pv));
@@ -429,12 +429,12 @@ pmap_pv_free(struct pv_entry *pv)
  * This HPT is also used as a general VA->PA mapping store, with
  * struct pv_entry chains hanging off of the HPT entries.
  */
-static __inline struct hpt_entry *pmap_hpt_hash(pa_space_t, vaddr_t);
-static __inline struct hpt_entry *
+static inline struct hpt_entry *pmap_hpt_hash(pa_space_t, vaddr_t);
+static inline struct hpt_entry *
 pmap_hpt_hash(pa_space_t sp, vaddr_t va)
 {
 	struct hpt_entry *hpt;
-	__asm __volatile (
+	__asm volatile (
 		"extru	%2, 23, 20, %%r22\n\t"	/* r22 = (va >> 8) */
 		"zdep	%1, 22, 16, %%r23\n\t"	/* r23 = (sp << 9) */
 		"dep	%%r0, 31, 4, %%r22\n\t"	/* r22 &= ~0xf */
@@ -450,8 +450,8 @@ pmap_hpt_hash(pa_space_t sp, vaddr_t va)
 /*
  * Given a PA, returns the table offset for it.
  */
-static __inline int pmap_table_find_pa(paddr_t);
-static __inline int
+static inline int pmap_table_find_pa(paddr_t);
+static inline int
 pmap_table_find_pa(paddr_t pa)
 {
 	int off;
@@ -463,8 +463,8 @@ pmap_table_find_pa(paddr_t pa)
 /*
  * Given a PA, returns the first mapping for it.
  */
-static __inline struct pv_entry *pmap_pv_find_pa(paddr_t);
-static __inline struct pv_entry *
+static inline struct pv_entry *pmap_pv_find_pa(paddr_t);
+static inline struct pv_entry *
 pmap_pv_find_pa(paddr_t pa)
 {
 	int table_off;
@@ -477,8 +477,8 @@ pmap_pv_find_pa(paddr_t pa)
 /*
  * Given a VA, this finds any mapping for it.
  */
-static __inline struct pv_entry *pmap_pv_find_va(pa_space_t, vaddr_t);
-static __inline struct pv_entry *
+static inline struct pv_entry *pmap_pv_find_va(pa_space_t, vaddr_t);
+static inline struct pv_entry *
 pmap_pv_find_va(pa_space_t space, vaddr_t va)
 {
 	struct pv_entry *pv = pmap_hpt_hash(space, va)->hpt_entry;
@@ -559,8 +559,8 @@ pmap_pv_check_alias(paddr_t pa)
  * the protection accordingly.  This is used when a mapping is
  * changing.
  */
-static __inline void _pmap_pv_update(paddr_t, struct pv_entry *, u_int, u_int);
-static __inline void
+static inline void _pmap_pv_update(paddr_t, struct pv_entry *, u_int, u_int);
+static inline void
 _pmap_pv_update(paddr_t pa, struct pv_entry *pv, u_int tlbprot_clear,
     u_int tlbprot_set)
 {
@@ -623,9 +623,9 @@ _pmap_pv_update(paddr_t pa, struct pv_entry *pv, u_int tlbprot_clear,
  * Given a pmap, a VA, a PA, and a TLB protection, this enters
  * a new mapping and returns the new struct pv_entry.
  */
-static __inline struct pv_entry *pmap_pv_enter(pmap_t, pa_space_t, vaddr_t,
+static inline struct pv_entry *pmap_pv_enter(pmap_t, pa_space_t, vaddr_t,
     paddr_t, u_int);
-static __inline struct pv_entry *
+static inline struct pv_entry *
 pmap_pv_enter(pmap_t pmap, pa_space_t space, vaddr_t va, paddr_t pa,
     u_int tlbprot)
 {
@@ -711,7 +711,7 @@ pmap_pv_enter(pmap_t pmap, pa_space_t space, vaddr_t va, paddr_t pa,
 /*
  * Given a particular VA->PA mapping, this removes it.
  */
-static __inline void
+static inline void
 pmap_pv_remove(struct pv_entry *pv)
 {
 	paddr_t pa = tlbptob(pv->pv_tlbpage);
@@ -961,7 +961,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * is to allow (smaller) kernels (linked lower) to work fine.
 	 */
 	btlb_entry_min = (vaddr_t) &kernel_text;
-	__asm __volatile (
+	__asm volatile (
 		"	ldil L%%$global$, %0	\n"
 		"	ldo R%%$global$(%0), %0	\n"
 		: "=r" (kernel_data)); 
@@ -1703,8 +1703,8 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
  * Given a PA and a bit, this tests and clears that bit in 
  * the modref information for the PA.
  */
-static __inline boolean_t pmap_clear_bit(paddr_t, u_int);
-static __inline boolean_t
+static inline boolean_t pmap_clear_bit(paddr_t, u_int);
+static inline boolean_t
 pmap_clear_bit(paddr_t pa, u_int tlbprot_bit)
 {
 	int table_off;
@@ -1729,8 +1729,8 @@ pmap_clear_bit(paddr_t pa, u_int tlbprot_bit)
  * Given a PA and a bit, this tests that bit in the modref
  * information for the PA.
  */
-static __inline boolean_t pmap_test_bit(paddr_t, u_int);
-static __inline boolean_t
+static inline boolean_t pmap_test_bit(paddr_t, u_int);
+static inline boolean_t
 pmap_test_bit(paddr_t pa, u_int tlbprot_bit)
 {
 	int table_off;

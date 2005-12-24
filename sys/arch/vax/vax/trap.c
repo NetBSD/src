@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.97 2005/12/11 12:19:36 christos Exp $     */
+/*	$NetBSD: trap.c,v 1.98 2005/12/24 20:07:41 perry Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2005/12/24 20:07:41 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -78,7 +78,7 @@ volatile int startsysc = 0, faultdebug = 0;
 
 int	cpu_printfataltraps = 0;
 
-static __inline void userret (struct lwp *, struct trapframe *, u_quad_t);
+static inline void userret (struct lwp *, struct trapframe *, u_quad_t);
 
 void	trap (struct trapframe *);
 void	syscall (struct trapframe *);
@@ -121,7 +121,7 @@ int no_traps = 18;
  *	Common code used by various execption handlers to
  *	return to usermode.
  */
-static __inline void
+static inline void
 userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 {
 	int sig;

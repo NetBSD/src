@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.11 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.12 2005/12/24 20:07:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.11 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.12 2005/12/24 20:07:19 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.11 2005/12/11 12:18:06 christos Exp $")
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 
-#define	REGVAL(x)	*((__volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
+#define	REGVAL(x)	*((volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
 
 /*
  * This is a mask of bits to clear in the SR when we go to a

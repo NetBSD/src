@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_icu.c,v 1.5 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: becc_icu.c,v 1.6 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.5 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.6 2005/12/24 20:06:52 perry Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -70,14 +70,14 @@ struct intrq intrq[NIRQ];
 uint32_t becc_imask[NIPL];
 
 /* Current interrupt priority level. */
-__volatile uint32_t current_spl_level;  
+volatile uint32_t current_spl_level;  
 
 /* Interrupts pending. */
-__volatile uint32_t becc_ipending;
-__volatile uint32_t becc_sipending;
+volatile uint32_t becc_ipending;
+volatile uint32_t becc_sipending;
 
 /* Software copy of the IRQs we have enabled. */
-__volatile uint32_t intr_enabled;
+volatile uint32_t intr_enabled;
 
 /* Mask if interrupts steered to FIQs. */
 uint32_t intr_steer;
@@ -123,7 +123,7 @@ const char *becc_irqnames[] = {
 
 void	becc_intr_dispatch(struct irqframe *frame);
 
-static __inline uint32_t
+static inline uint32_t
 becc_icsr_read(void)
 {
 	uint32_t icsr;
@@ -138,7 +138,7 @@ becc_icsr_read(void)
 	return (icsr & intr_enabled);
 }
 
-static __inline void
+static inline void
 becc_set_intrsteer(void)
 {
 
@@ -146,7 +146,7 @@ becc_set_intrsteer(void)
 	(void) BECC_CSR_READ(BECC_ICSTR);
 }
 
-static __inline void
+static inline void
 becc_enable_irq(int irq)
 {
 
@@ -154,7 +154,7 @@ becc_enable_irq(int irq)
 	becc_set_intrmask();
 }
 
-static __inline void
+static inline void
 becc_disable_irq(int irq)
 {
 

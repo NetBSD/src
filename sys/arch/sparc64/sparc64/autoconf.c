@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.105 2005/12/11 12:19:14 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.106 2005/12/24 20:07:37 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.105 2005/12/11 12:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.106 2005/12/24 20:07:37 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -781,7 +781,7 @@ romgetcursoraddr(rowp, colp)
 void callrom()
 {
 
-	__asm __volatile("wrpr	%%g0, 0, %%tl" : );
+	__asm volatile("wrpr	%%g0, 0, %%tl" : );
 	OF_enter();
 }
 #endif

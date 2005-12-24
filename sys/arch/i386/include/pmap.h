@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.83 2005/08/08 05:54:07 junyoung Exp $	*/
+/*	$NetBSD: pmap.h,v 1.84 2005/12/24 20:07:10 perry Exp $	*/
 
 /*
  *
@@ -370,7 +370,7 @@ boolean_t			pmap_pageidlezero(paddr_t);
  */
 
 /*ARGSUSED*/
-static __inline void
+static inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
@@ -381,7 +381,7 @@ pmap_remove_all(struct pmap *pmap)
  *	if hardware doesn't support one-page flushing)
  */
 
-__inline static void __attribute__((__unused__))
+inline static void __attribute__((__unused__))
 pmap_update_pg(vaddr_t va)
 {
 #if defined(I386_CPU)
@@ -396,7 +396,7 @@ pmap_update_pg(vaddr_t va)
  * pmap_update_2pg: flush two pages from the TLB
  */
 
-__inline static void __attribute__((__unused__))
+inline static void __attribute__((__unused__))
 pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
 #if defined(I386_CPU)
@@ -419,7 +419,7 @@ pmap_update_2pg(vaddr_t va, vaddr_t vb)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void __attribute__((__unused__))
+inline static void __attribute__((__unused__))
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -439,7 +439,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void __attribute__((__unused__))
+inline static void __attribute__((__unused__))
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -462,7 +462,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 #include <lib/libkern/libkern.h>
 
-static __inline pt_entry_t * __attribute__((__unused__))
+static inline pt_entry_t * __attribute__((__unused__))
 vtopte(vaddr_t va)
 {
 
@@ -471,7 +471,7 @@ vtopte(vaddr_t va)
 	return (PTE_BASE + x86_btop(va));
 }
 
-static __inline pt_entry_t * __attribute__((__unused__))
+static inline pt_entry_t * __attribute__((__unused__))
 kvtopte(vaddr_t va)
 {
 

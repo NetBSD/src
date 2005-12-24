@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.9 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.10 2005/12/24 20:07:03 perry Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.9 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.10 2005/12/24 20:07:03 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -334,13 +334,13 @@ cpu_reboot(int howto, char *bootstr)
 	/*NOTREACHED*/
 }
 
-static __inline
+static inline
 pd_entry_t *
 read_ttb(void)
 {
   long ttb;
 
-  __asm __volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
+  __asm volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
 
 
   return (pd_entry_t *)(ttb & ~((1<<14)-1));

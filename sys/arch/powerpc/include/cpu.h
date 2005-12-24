@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46 2005/12/24 20:07:28 perry Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -118,7 +118,7 @@ struct cpu_info {
 };
 
 #ifdef MULTIPROCESSOR
-static __inline int
+static inline int
 cpu_number(void)
 {
 	int pir;
@@ -147,12 +147,12 @@ void	cpu_boot_secondary_processors(void);
 
 extern struct cpu_info cpu_info[];
 
-static __inline struct cpu_info *
+static inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *ci;
 
-	__asm __volatile ("mfsprg %0,0" : "=r"(ci));
+	__asm volatile ("mfsprg %0,0" : "=r"(ci));
 	return ci;
 }
 
@@ -160,28 +160,28 @@ curcpu(void)
 #define curpcb			(curcpu()->ci_curpcb)
 #define curpm			(curcpu()->ci_curpm)
 
-static __inline register_t
+static inline register_t
 mfmsr(void)
 {
 	register_t msr;
 
-	__asm __volatile ("mfmsr %0" : "=r"(msr));
+	__asm volatile ("mfmsr %0" : "=r"(msr));
 	return msr;
 }
 
-static __inline void
+static inline void
 mtmsr(register_t msr)
 {
 
-	__asm __volatile ("mtmsr %0" : : "r"(msr));
+	__asm volatile ("mtmsr %0" : : "r"(msr));
 }
 
-static __inline uint32_t
+static inline uint32_t
 mftbl(void)
 {
 	uint32_t tbl;
 
-	__asm __volatile (
+	__asm volatile (
 #ifdef PPC_IBM403
 "	mftblo %0	\n"
 #else
@@ -192,17 +192,17 @@ mftbl(void)
 	return tbl;
 }
 
-static __inline uint64_t
+static inline uint64_t
 mftb(void)
 {
 	uint64_t tb;
 
 #ifdef _LP64
-	__asm __volatile ("mftb %0" : "=r"(tb));
+	__asm volatile ("mftb %0" : "=r"(tb));
 #else
 	int tmp;
 
-	__asm __volatile (
+	__asm volatile (
 #ifdef PPC_IBM403
 "1:	mftbhi %0	\n"
 "	mftblo %0+1	\n"
@@ -220,21 +220,21 @@ mftb(void)
 	return tb;
 }
 
-static __inline uint32_t
+static inline uint32_t
 mfrtcl(void)
 {
 	uint32_t rtcl;
 
-	__asm __volatile ("mfrtcl %0" : "=r"(rtcl));
+	__asm volatile ("mfrtcl %0" : "=r"(rtcl));
 	return rtcl;
 }
 
-static __inline void
+static inline void
 mfrtc(uint32_t *rtcp)
 {
 	uint32_t tmp;
 
-	__asm __volatile (
+	__asm volatile (
 "1:	mfrtcu	%0	\n"
 "	mfrtcl	%1	\n"
 "	mfrtcu	%2	\n"
@@ -243,12 +243,12 @@ mfrtc(uint32_t *rtcp)
 	    : "=r"(*rtcp), "=r"(*(rtcp + 1)), "=r"(tmp) :: "cr0");
 }
 
-static __inline uint32_t
+static inline uint32_t
 mfpvr(void)
 {
 	uint32_t pvr;
 
-	__asm __volatile ("mfpvr %0" : "=r"(pvr));
+	__asm volatile ("mfpvr %0" : "=r"(pvr));
 	return (pvr);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.c,v 1.2 2005/12/11 12:16:52 christos Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.c,v 1.3 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -234,21 +234,21 @@ static void dmac_dmover_run(struct dmover_backend *);
 static void dmac_dmover_done(struct dmac_xfer *, int);
 #endif
 
-static __inline u_int32_t
+static inline u_int32_t
 dmac_reg_read(struct pxadmac_softc *sc, int reg)
 {
 
 	return (bus_space_read_4(sc->sc_bust, sc->sc_bush, reg));
 }
 
-static __inline void
+static inline void
 dmac_reg_write(struct pxadmac_softc *sc, int reg, u_int32_t val)
 {
 
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, reg, val);
 }
 
-static __inline int
+static inline int
 dmac_allocate_channel(struct pxadmac_softc *sc, dmac_priority_t priority,
     u_int *chanp)
 {
@@ -264,7 +264,7 @@ dmac_allocate_channel(struct pxadmac_softc *sc, dmac_priority_t priority,
 	return (0);
 }
 
-static __inline void
+static inline void
 dmac_free_channel(struct pxadmac_softc *sc, dmac_priority_t priority,
     u_int channel)
 {
@@ -758,7 +758,7 @@ pxa2x0_dmac_free_xfer(struct dmac_xfer *dx)
 	free(dx, M_DEVBUF);
 }
 
-static __inline int
+static inline int
 dmac_validate_desc(struct dmac_xfer_desc *xd, size_t *psize)
 {
 	size_t size;
@@ -782,7 +782,7 @@ dmac_validate_desc(struct dmac_xfer_desc *xd, size_t *psize)
 	return (0);
 }
 
-static __inline int
+static inline int
 dmac_init_desc(struct dmac_desc_segs *ds, struct dmac_xfer_desc *xd,
     size_t *psize)
 {

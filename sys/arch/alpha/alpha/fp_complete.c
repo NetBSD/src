@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.8 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: fp_complete.c,v 1.9 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.8 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.9 2005/12/24 20:06:46 perry Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -169,28 +169,28 @@ this_cannot_happen(int what_cannot_happen, int64_t bits)
 	printf("Please report this to port-alpha-maintainer@NetBSD.org\n");
 }
 
-static __inline void
+static inline void
 sts(unsigned int rn, s_float *v, struct lwp *l)
 {
 	alpha_sts(rn, v);
 	PREFILTER_SUBNORMAL(l, v);
 }
 
-static __inline void
+static inline void
 stt(unsigned int rn, t_float *v, struct lwp *l)
 {
 	alpha_stt(rn, v);
 	PREFILTER_SUBNORMAL(l, v);
 }
 
-static __inline void
+static inline void
 lds(unsigned int rn, s_float *v, struct lwp *l)
 {
 	POSTFILTER_SUBNORMAL(l, v);
 	alpha_lds(rn, v);
 }
 
-static __inline void
+static inline void
 ldt(unsigned int rn, t_float *v, struct lwp *l)
 {
 	POSTFILTER_SUBNORMAL(l, v);

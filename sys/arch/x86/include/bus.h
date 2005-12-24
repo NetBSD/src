@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2005/04/16 07:53:35 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 2005/12/24 20:07:42 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -271,7 +271,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	movb (%2),%%al				;	\
 			stosb					;	\
@@ -293,7 +293,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	movw (%2),%%ax				;	\
 			stosw					;	\
@@ -315,7 +315,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	movl (%2),%%eax				;	\
 			stosl					;	\
@@ -353,7 +353,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	inb %w1,%%al				;	\
 			stosb					;	\
@@ -367,7 +367,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsb"					:	\
@@ -386,7 +386,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	inw %w1,%%ax				;	\
 			stosw					;	\
@@ -400,7 +400,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsw"					:	\
@@ -419,7 +419,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	inl %w1,%%eax				;	\
 			stosl					;	\
@@ -433,7 +433,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsl"					:	\
@@ -516,7 +516,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsb					;	\
 			movb %%al,(%2)				;	\
@@ -537,7 +537,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsw					;	\
 			movw %%ax,(%2)				;	\
@@ -558,7 +558,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsl					;	\
 			movl %%eax,(%2)				;	\
@@ -595,7 +595,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsb					;	\
 			outb %%al,%w1				;	\
@@ -609,7 +609,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsb"					:	\
@@ -628,7 +628,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsw					;	\
 			outw %%ax,%w1				;	\
@@ -642,7 +642,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsw"					:	\
@@ -661,7 +661,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsl					;	\
 			outl %%eax,%w1				;	\
@@ -675,7 +675,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsl"					:	\
@@ -705,11 +705,11 @@ do {									\
  * by tag/handle/offset `count' times.
  */
 
-static __inline void x86_memio_set_multi_1(bus_space_tag_t,
+static inline void x86_memio_set_multi_1(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int8_t, size_t);
-static __inline void x86_memio_set_multi_2(bus_space_tag_t,
+static inline void x86_memio_set_multi_2(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int16_t, size_t);
-static __inline void x86_memio_set_multi_4(bus_space_tag_t,
+static inline void x86_memio_set_multi_4(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int32_t, size_t);
 
 #define	bus_space_set_multi_1(t, h, o, v, c)				\
@@ -727,7 +727,7 @@ do {									\
 	x86_memio_set_multi_4((t), (h), (o), (v), (c));		\
 } while (/* CONSTCOND */ 0)
 
-static __inline void
+static inline void
 x86_memio_set_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     u_int8_t v, size_t c)
 {
@@ -741,7 +741,7 @@ x86_memio_set_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 			*(volatile u_int8_t *)(addr) = v;
 }
 
-static __inline void
+static inline void
 x86_memio_set_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     u_int16_t v, size_t c)
 {
@@ -755,7 +755,7 @@ x86_memio_set_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 			*(volatile u_int16_t *)(addr) = v;
 }
 
-static __inline void
+static inline void
 x86_memio_set_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     u_int32_t v, size_t c)
 {
@@ -782,11 +782,11 @@ x86_memio_set_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
  * by tag/handle starting at `offset'.
  */
 
-static __inline void x86_memio_set_region_1(bus_space_tag_t,
+static inline void x86_memio_set_region_1(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int8_t, size_t);
-static __inline void x86_memio_set_region_2(bus_space_tag_t,
+static inline void x86_memio_set_region_2(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int16_t, size_t);
-static __inline void x86_memio_set_region_4(bus_space_tag_t,
+static inline void x86_memio_set_region_4(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int32_t, size_t);
 
 #define	bus_space_set_region_1(t, h, o, v, c)				\
@@ -804,7 +804,7 @@ do {									\
 	x86_memio_set_region_4((t), (h), (o), (v), (c));		\
 } while (/* CONSTCOND */ 0)
 
-static __inline void
+static inline void
 x86_memio_set_region_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     u_int8_t v, size_t c)
 {
@@ -818,7 +818,7 @@ x86_memio_set_region_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 			*(volatile u_int8_t *)(addr) = v;
 }
 
-static __inline void
+static inline void
 x86_memio_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     u_int16_t v, size_t c)
 {
@@ -832,7 +832,7 @@ x86_memio_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 			*(volatile u_int16_t *)(addr) = v;
 }
 
-static __inline void
+static inline void
 x86_memio_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     u_int32_t v, size_t c)
 {
@@ -860,13 +860,13 @@ x86_memio_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-static __inline void x86_memio_copy_region_1(bus_space_tag_t,
+static inline void x86_memio_copy_region_1(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t);
-static __inline void x86_memio_copy_region_2(bus_space_tag_t,
+static inline void x86_memio_copy_region_2(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t);
-static __inline void x86_memio_copy_region_4(bus_space_tag_t,
+static inline void x86_memio_copy_region_4(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t);
 
@@ -887,7 +887,7 @@ do {									\
 	x86_memio_copy_region_4((t), (h1), (o1), (h2), (o2), (c));	\
 } while (/* CONSTCOND */ 0)
 
-static __inline void
+static inline void
 x86_memio_copy_region_1(bus_space_tag_t t,
     bus_space_handle_t h1, bus_size_t o1,
     bus_space_handle_t h2, bus_size_t o2, size_t c)
@@ -922,7 +922,7 @@ x86_memio_copy_region_1(bus_space_tag_t t,
 	}
 }
 
-static __inline void
+static inline void
 x86_memio_copy_region_2(bus_space_tag_t t,
     bus_space_handle_t h1, bus_size_t o1,
     bus_space_handle_t h2, bus_size_t o2, size_t c)
@@ -957,7 +957,7 @@ x86_memio_copy_region_2(bus_space_tag_t t,
 	}
 }
 
-static __inline void
+static inline void
 x86_memio_copy_region_4(bus_space_tag_t t,
     bus_space_handle_t h1, bus_size_t o1,
     bus_space_handle_t h2, bus_size_t o2, size_t c)
@@ -1110,7 +1110,7 @@ struct x86_bus_dma_tag {
 		    int, off_t, int, int);
 };
 
-static __inline void bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
+static inline void bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
     bus_addr_t, bus_size_t, int) __attribute__((__unused__));
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
@@ -1127,7 +1127,7 @@ static __inline void bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
 	(*(t)->_dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
 #define	bus_dmamap_unload(t, p)					\
 	(*(t)->_dmamap_unload)((t), (p))
-static __inline void
+static inline void
 bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t p, bus_addr_t o, bus_size_t l,
     int ops)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.8 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: todclock.c,v 1.9 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.8 2005/12/11 12:16:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.9 2005/12/24 20:06:52 perry Exp $");
 
 /* Include header files */
 
@@ -148,7 +148,7 @@ todclockattach(parent, self, aux)
 	printf("\n");
 }
 
-static __inline int
+static inline int
 yeartoday(year)
 	int year;
 {

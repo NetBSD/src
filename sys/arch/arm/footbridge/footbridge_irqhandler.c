@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.13 2005/12/11 12:16:45 christos Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.14 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.13 2005/12/11 12:16:45 christos Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.14 2005/12/24 20:06:52 perry Exp $");
 
 #include "opt_irqstats.h"
 
@@ -68,13 +68,13 @@ static struct intrq footbridge_intrq[NIRQ];
 int footbridge_imask[NIPL];
 
 /* Software copy of the IRQs we have enabled. */
-__volatile uint32_t intr_enabled;
+volatile uint32_t intr_enabled;
 
 /* Current interrupt priority level */
-__volatile int current_spl_level;
+volatile int current_spl_level;
 
 /* Interrupts pending */
-__volatile int footbridge_ipending;
+volatile int footbridge_ipending;
 
 void footbridge_intr_dispatch(struct clockframe *frame);
 
@@ -114,7 +114,7 @@ footbridge_pci_intr_evcnt(pcv, ih)
 	return &footbridge_intrq[ih].iq_ev;
 }
 
-static __inline void
+static inline void
 footbridge_enable_irq(int irq)
 {
 	intr_enabled |= (1U << irq);
@@ -122,7 +122,7 @@ footbridge_enable_irq(int irq)
 	footbridge_set_intrmask();
 }
 
-static __inline void
+static inline void
 footbridge_disable_irq(int irq)
 {
 	intr_enabled &= ~(1U << irq);
@@ -253,7 +253,7 @@ _spllower(int ipl)
     return (footbridge_spllower(ipl));
 }
 
-__inline void
+inline void
 footbridge_do_pending(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
@@ -390,7 +390,7 @@ static uint32_t footbridge_intstatus(void);
 
 static inline uint32_t footbridge_intstatus()
 {
-    return ((__volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_STATUS>>2];
+    return ((volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_STATUS>>2];
 }
 
 /* called with external interrupts disabled */

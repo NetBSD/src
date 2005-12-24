@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_20.h,v 1.6 2002/11/03 01:34:42 chs Exp $	*/
+/*	$NetBSD: cacheops_20.h,v 1.7 2005/12/24 20:07:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,53 +39,53 @@
 /*
  * Invalidate entire TLB.
  */
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 TBIA_20(void)
 {
-	__asm __volatile (" pflusha");
+	__asm volatile (" pflusha");
 }
 
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 TBIS_20(vaddr_t	va)
 {
 
-	__asm __volatile (" pflushs	#0,#0,%0@" : : "a" (va) );
+	__asm volatile (" pflushs	#0,#0,%0@" : : "a" (va) );
 }
 
 /*
  * Invalidate supervisor side of TLB
  */
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 TBIAS_20(void)
 {
-	__asm __volatile (" pflushs #4,#4");
+	__asm volatile (" pflushs #4,#4");
 }
 
 /*
  * Invalidate user side of TLB
  */
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 TBIAU_20(void)
 {
-	__asm __volatile (" pflushs #0,#4;");
+	__asm volatile (" pflushs #0,#4;");
 }
 
 /*
  * Invalidate instruction cache
  */
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 ICIA_20(void)
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
+	__asm volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
 }
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 ICPA_20(void)
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
+	__asm volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
 }
 
 /*
@@ -102,8 +102,8 @@ ICPA_20(void)
 #define	DCFA_20()
 #define	DCPA_20()
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 PCIA_20(void)
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (DC_CLEAR));
+	__asm volatile (" movc %0,%%cacr;" : : "d" (DC_CLEAR));
 }

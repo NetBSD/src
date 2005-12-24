@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_etreg.h,v 1.5 2002/01/26 13:40:54 aymeric Exp $	*/
+/*	$NetBSD: grf_etreg.h,v 1.6 2005/12/24 20:06:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -299,7 +299,7 @@ struct grfettext_mode {
  * WPass(P) has been converted into a set of specific
  * inline functions.
  */
-static __inline void RegWakeup(volatile void *ba) {
+static inline void RegWakeup(volatile void *ba) {
 	extern int ettype;
 
 	switch (ettype) {
@@ -316,7 +316,7 @@ static __inline void RegWakeup(volatile void *ba) {
 }
 
 
-static __inline void RegOnpass(volatile void *ba) {
+static inline void RegOnpass(volatile void *ba) {
 	extern int ettype;
 	extern unsigned char pass_toggle;
 	extern unsigned char Merlin_switch;
@@ -338,7 +338,7 @@ static __inline void RegOnpass(volatile void *ba) {
 }
 
 
-static __inline void RegOffpass(volatile void *ba) {
+static inline void RegOffpass(volatile void *ba) {
 	extern int ettype;
 	extern unsigned char pass_toggle;
 	extern unsigned char Merlin_switch;
@@ -359,23 +359,23 @@ static __inline void RegOffpass(volatile void *ba) {
 	delay(200000);
 }
 
-static __inline unsigned char RAttr(volatile void * ba, short idx) {
+static inline unsigned char RAttr(volatile void * ba, short idx) {
 	if(vgar(ba, GREG_STATUS1_R));
 	vgaw(ba, ACT_ADDRESS_W, idx);
 	return vgar (ba, ACT_ADDRESS_R);
 }
 
-static __inline unsigned char RSeq(volatile void * ba, short idx) {
+static inline unsigned char RSeq(volatile void * ba, short idx) {
 	vgaw (ba, SEQ_ADDRESS, idx);
 	return vgar (ba, SEQ_ADDRESS_R);
 }
 
-static __inline unsigned char RCrt(volatile void * ba, short idx) {
+static inline unsigned char RCrt(volatile void * ba, short idx) {
 	vgaw (ba, CRT_ADDRESS, idx);
 	return vgar (ba, CRT_ADDRESS_R);
 }
 
-static __inline unsigned char RGfx(volatile void * ba, short idx) {
+static inline unsigned char RGfx(volatile void * ba, short idx) {
 	vgaw(ba, GCT_ADDRESS, idx);
 	return vgar (ba, GCT_ADDRESS_R);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2005/12/24 20:07:48 perry Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2005/12/11 12:19:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2005/12/24 20:07:48 perry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -880,7 +880,7 @@ haltsys:
 		if (cngetc() == 0) {
 			/* no console attached, so just hlt */
 			for(;;) {
-				__asm __volatile("hlt");
+				__asm volatile("hlt");
 			}
 		}
 		cnpollc(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2005/12/24 20:07:32 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,15 +188,15 @@ static int  gettick(void);
 
 void startrtclock(void);
 
-__inline u_int mc146818_read(void *, u_int);
-__inline void mc146818_write(void *, u_int, u_int);
+inline u_int mc146818_read(void *, u_int);
+inline void mc146818_write(void *, u_int, u_int);
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
 #define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
 #define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
 
-__inline u_int
+inline u_int
 mc146818_read(sc, reg)
 	void *sc;					/* XXX use it? */
 	u_int reg;
@@ -206,7 +206,7 @@ mc146818_read(sc, reg)
 	return (inb(IO_RTC+1));
 }
 
-__inline void
+inline void
 mc146818_write(sc, reg, datum)
 	void *sc;					/* XXX use it? */
 	u_int reg, datum;

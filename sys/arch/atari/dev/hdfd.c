@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.47 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.48 2005/12/24 20:06:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.47 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.48 2005/12/24 20:06:58 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -319,7 +319,7 @@ static void	fdgetdisklabel __P((struct fd_softc *, dev_t));
 static void	fdgetdefaultlabel __P((struct fd_softc *, struct disklabel *,
 		    int));
 
-__inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
+inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 
 int
 fdcprobe(parent, cfp, aux)
@@ -590,7 +590,7 @@ fdc_ctrl_intr(frame)
 	}
 }
 
-__inline struct fd_type *
+inline struct fd_type *
 fd_dev_to_type(fd, dev)
 	struct fd_softc *fd;
 	dev_t dev;

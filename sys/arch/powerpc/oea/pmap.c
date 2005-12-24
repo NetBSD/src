@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 2005/12/08 22:41:44 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 2005/12/24 20:07:28 perry Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2005/12/08 22:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2005/12/24 20:07:28 perry Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -470,10 +470,10 @@ EVCNT_ATTACH_STATIC(pmap_evcnt_pvos_failed);
 #define	PMAPCOUNT2(ev)	((void) 0)
 #endif
 
-#define	TLBIE(va)	__asm __volatile("tlbie %0" :: "r"(va))
-#define	TLBSYNC()	__asm __volatile("tlbsync")
-#define	SYNC()		__asm __volatile("sync")
-#define	EIEIO()		__asm __volatile("eieio")
+#define	TLBIE(va)	__asm volatile("tlbie %0" :: "r"(va))
+#define	TLBSYNC()	__asm volatile("tlbsync")
+#define	SYNC()		__asm volatile("sync")
+#define	EIEIO()		__asm volatile("eieio")
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	mtmsr(psl)
 #define	MFPVR()		mfpvr()
@@ -481,16 +481,16 @@ EVCNT_ATTACH_STATIC(pmap_evcnt_pvos_failed);
 #define	MFTB()		mfrtcltbl()
 
 #ifndef PPC_OEA64
-static __inline register_t
+static inline register_t
 mfsrin(vaddr_t va)
 {
 	register_t sr;
-	__asm __volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(va));
+	__asm volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(va));
 	return sr;
 }
 #endif	/* PPC_OEA64 */
 
-static __inline register_t
+static inline register_t
 pmap_interrupts_off(void)
 {
 	register_t msr = MFMSR();
@@ -506,7 +506,7 @@ pmap_interrupts_restore(register_t msr)
 		MTMSR(msr);
 }
 
-static __inline u_int32_t
+static inline u_int32_t
 mfrtcltbl(void)
 {
 
@@ -542,7 +542,7 @@ tlbia(void)
 	SYNC();
 }
 
-static __inline register_t
+static inline register_t
 va_to_vsid(const struct pmap *pm, vaddr_t addr)
 {
 #ifdef PPC_OEA64
@@ -586,7 +586,7 @@ va_to_vsid(const struct pmap *pm, vaddr_t addr)
 #endif
 }
 
-static __inline register_t
+static inline register_t
 va_to_pteg(const struct pmap *pm, vaddr_t addr)
 {
 	register_t hash;
@@ -631,7 +631,7 @@ pmap_pte_to_va(volatile const struct pte *pt)
 }
 #endif
 
-static __inline struct pvo_head *
+static inline struct pvo_head *
 pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
 {
 #ifdef __HAVE_VM_PAGE_MD
@@ -656,7 +656,7 @@ pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
 #endif
 }
 
-static __inline struct pvo_head *
+static inline struct pvo_head *
 vm_page_to_pvoh(struct vm_page *pg)
 {
 #ifdef __HAVE_VM_PAGE_MD
@@ -669,7 +669,7 @@ vm_page_to_pvoh(struct vm_page *pg)
 
 
 #ifdef __HAVE_PMAP_PHYSSEG
-static __inline char *
+static inline char *
 pa_to_attr(paddr_t pa)
 {
 	int bank, pg;
@@ -681,7 +681,7 @@ pa_to_attr(paddr_t pa)
 }
 #endif
 
-static __inline void
+static inline void
 pmap_attr_clear(struct vm_page *pg, int ptebit)
 {
 #ifdef __HAVE_PMAP_PHYSSEG
@@ -692,7 +692,7 @@ pmap_attr_clear(struct vm_page *pg, int ptebit)
 #endif
 }
 
-static __inline int
+static inline int
 pmap_attr_fetch(struct vm_page *pg)
 {
 #ifdef __HAVE_PMAP_PHYSSEG
@@ -703,7 +703,7 @@ pmap_attr_fetch(struct vm_page *pg)
 #endif
 }
 
-static __inline void
+static inline void
 pmap_attr_save(struct vm_page *pg, int ptebit)
 {
 #ifdef __HAVE_PMAP_PHYSSEG
@@ -714,7 +714,7 @@ pmap_attr_save(struct vm_page *pg, int ptebit)
 #endif
 }
 
-static __inline int
+static inline int
 pmap_pte_compare(const volatile struct pte *pt, const struct pte *pvo_pt)
 {
 	if (pt->pte_hi == pvo_pt->pte_hi
@@ -727,7 +727,7 @@ pmap_pte_compare(const volatile struct pte *pt, const struct pte *pvo_pt)
 	return 0;
 }
 
-static __inline void
+static inline void
 pmap_pte_create(struct pte *pt, const struct pmap *pm, vaddr_t va, register_t pte_lo)
 {
 	/*
@@ -741,13 +741,13 @@ pmap_pte_create(struct pte *pt, const struct pmap *pm, vaddr_t va, register_t pt
 	pt->pte_lo = pte_lo;
 }
 
-static __inline void
+static inline void
 pmap_pte_synch(volatile struct pte *pt, struct pte *pvo_pt)
 {
 	pvo_pt->pte_lo |= pt->pte_lo & (PTE_REF|PTE_CHG);
 }
 
-static __inline void
+static inline void
 pmap_pte_clear(volatile struct pte *pt, vaddr_t va, int ptebit)
 {
 	/*
@@ -761,7 +761,7 @@ pmap_pte_clear(volatile struct pte *pt, vaddr_t va, int ptebit)
 	SYNC();
 }
 
-static __inline void
+static inline void
 pmap_pte_set(volatile struct pte *pt, struct pte *pvo_pt)
 {
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
@@ -781,7 +781,7 @@ pmap_pte_set(volatile struct pte *pt, struct pte *pvo_pt)
 	pmap_pte_valid++;
 }
 
-static __inline void
+static inline void
 pmap_pte_unset(volatile struct pte *pt, struct pte *pvo_pt, vaddr_t va)
 {
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
@@ -813,7 +813,7 @@ pmap_pte_unset(volatile struct pte *pt, struct pte *pvo_pt, vaddr_t va)
 	pmap_pte_valid--;
 }
 
-static __inline void
+static inline void
 pmap_pte_change(volatile struct pte *pt, struct pte *pvo_pt, vaddr_t va)
 {
 	/*
@@ -1296,7 +1296,7 @@ pmap_collect(pmap_t pm)
 	PMAPCOUNT(collects);
 }
 
-static __inline int
+static inline int
 pmap_pvo_pte_index(const struct pvo_entry *pvo, int ptegidx)
 {
 	int pteidx;
@@ -2528,7 +2528,7 @@ pmap_print_mmuregs(void)
 	register_t sdr1;
 	
 	cpuvers = MFPVR() >> 16;
-	__asm __volatile ("mfsdr1 %0" : "=r"(sdr1));
+	__asm volatile ("mfsdr1 %0" : "=r"(sdr1));
 #ifndef PPC_OEA64
 	addr = 0;
 	for (i = 0; i < 16; i++) {
@@ -2538,26 +2538,26 @@ pmap_print_mmuregs(void)
 #endif
 
 	/* read iBAT (601: uBAT) registers */
-	__asm __volatile ("mfibatu %0,0" : "=r"(soft_ibat[0].batu));
-	__asm __volatile ("mfibatl %0,0" : "=r"(soft_ibat[0].batl));
-	__asm __volatile ("mfibatu %0,1" : "=r"(soft_ibat[1].batu));
-	__asm __volatile ("mfibatl %0,1" : "=r"(soft_ibat[1].batl));
-	__asm __volatile ("mfibatu %0,2" : "=r"(soft_ibat[2].batu));
-	__asm __volatile ("mfibatl %0,2" : "=r"(soft_ibat[2].batl));
-	__asm __volatile ("mfibatu %0,3" : "=r"(soft_ibat[3].batu));
-	__asm __volatile ("mfibatl %0,3" : "=r"(soft_ibat[3].batl));
+	__asm volatile ("mfibatu %0,0" : "=r"(soft_ibat[0].batu));
+	__asm volatile ("mfibatl %0,0" : "=r"(soft_ibat[0].batl));
+	__asm volatile ("mfibatu %0,1" : "=r"(soft_ibat[1].batu));
+	__asm volatile ("mfibatl %0,1" : "=r"(soft_ibat[1].batl));
+	__asm volatile ("mfibatu %0,2" : "=r"(soft_ibat[2].batu));
+	__asm volatile ("mfibatl %0,2" : "=r"(soft_ibat[2].batl));
+	__asm volatile ("mfibatu %0,3" : "=r"(soft_ibat[3].batu));
+	__asm volatile ("mfibatl %0,3" : "=r"(soft_ibat[3].batl));
 
 
 	if (cpuvers != MPC601) {
 		/* read dBAT registers */
-		__asm __volatile ("mfdbatu %0,0" : "=r"(soft_dbat[0].batu));
-		__asm __volatile ("mfdbatl %0,0" : "=r"(soft_dbat[0].batl));
-		__asm __volatile ("mfdbatu %0,1" : "=r"(soft_dbat[1].batu));
-		__asm __volatile ("mfdbatl %0,1" : "=r"(soft_dbat[1].batl));
-		__asm __volatile ("mfdbatu %0,2" : "=r"(soft_dbat[2].batu));
-		__asm __volatile ("mfdbatl %0,2" : "=r"(soft_dbat[2].batl));
-		__asm __volatile ("mfdbatu %0,3" : "=r"(soft_dbat[3].batu));
-		__asm __volatile ("mfdbatl %0,3" : "=r"(soft_dbat[3].batl));
+		__asm volatile ("mfdbatu %0,0" : "=r"(soft_dbat[0].batu));
+		__asm volatile ("mfdbatl %0,0" : "=r"(soft_dbat[0].batl));
+		__asm volatile ("mfdbatu %0,1" : "=r"(soft_dbat[1].batu));
+		__asm volatile ("mfdbatl %0,1" : "=r"(soft_dbat[1].batl));
+		__asm volatile ("mfdbatu %0,2" : "=r"(soft_dbat[2].batu));
+		__asm volatile ("mfdbatl %0,2" : "=r"(soft_dbat[2].batl));
+		__asm volatile ("mfdbatu %0,3" : "=r"(soft_dbat[3].batu));
+		__asm volatile ("mfdbatl %0,3" : "=r"(soft_dbat[3].batl));
 	}
 
 	printf("SDR1:\t0x%lx\n", (long) sdr1);
@@ -3199,28 +3199,28 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 #ifndef PPC_OEA64
 	for (i = 0; i < 16; i++) {
 		pmap_kernel()->pm_sr[i] = EMPTY_SEGMENT;
-		__asm __volatile ("mtsrin %0,%1"
+		__asm volatile ("mtsrin %0,%1"
 			      :: "r"(EMPTY_SEGMENT), "r"(i << ADDR_SR_SHFT));
 	}
 
 	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
-	__asm __volatile ("mtsr %0,%1"
+	__asm volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL_SR), "r"(KERNEL_SEGMENT));
 #ifdef KERNEL2_SR
 	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT|SR_SUKEY|SR_PRKEY;
-	__asm __volatile ("mtsr %0,%1"
+	__asm volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL2_SR), "r"(KERNEL2_SEGMENT));
 #endif
 	for (i = 0; i < 16; i++) {
 		if (iosrtable[i] & SR601_T) {
 			pmap_kernel()->pm_sr[i] = iosrtable[i];
-			__asm __volatile ("mtsrin %0,%1"
+			__asm volatile ("mtsrin %0,%1"
 			    :: "r"(iosrtable[i]), "r"(i << ADDR_SR_SHFT));
 		}
 	}
 #endif /* !PPC_OEA64 */
 
-	__asm __volatile ("sync; mtsdr1 %0; isync"
+	__asm volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
 	tlbia();
 

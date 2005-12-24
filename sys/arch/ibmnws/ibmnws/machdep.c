@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2005/12/11 12:17:50 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2005/12/24 20:07:11 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -234,7 +234,7 @@ cpu_startup()
 		int msr;
 
 		splraise(-1);
-		__asm __volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+		__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
 

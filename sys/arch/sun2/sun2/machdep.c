@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2005/12/11 12:19:16 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 2005/12/24 20:07:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2005/12/11 12:19:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2005/12/24 20:07:41 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -259,7 +259,7 @@ vaddr_t vmmap;
 int	safepri = PSL_LOWIPL;
 
 /* Soft copy of the enable register. */
-__volatile u_short enable_reg_soft = ENABLE_REG_SOFT_UNDEF;
+volatile u_short enable_reg_soft = ENABLE_REG_SOFT_UNDEF;
 
 /*
  * Our no-fault fault handler.

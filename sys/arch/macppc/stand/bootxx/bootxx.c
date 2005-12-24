@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.14 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.15 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -98,7 +98,7 @@ asm(
 );
 
 
-static __inline int
+static inline int
 OF_finddevice(name)
 	char *name;
 {
@@ -120,7 +120,7 @@ OF_finddevice(name)
 	return args.phandle;
 }
 
-static __inline int
+static inline int
 OF_getprop(handle, prop, buf, buflen)
 	int handle;
 	char *prop;
@@ -151,7 +151,7 @@ OF_getprop(handle, prop, buf, buflen)
 	return args.size;
 }
 
-static __inline int
+static inline int
 OF_open(dname)
 	char *dname;
 {
@@ -173,7 +173,7 @@ OF_open(dname)
 	return args.handle;
 }
 
-static __inline int
+static inline int
 OF_read(handle, addr, len)
 	int handle;
 	void *addr;
@@ -201,7 +201,7 @@ OF_read(handle, addr, len)
 	return args.actual;
 }
 
-static __inline int
+static inline int
 OF_seek(handle, pos)
 	int handle;
 	u_quad_t pos;
@@ -228,7 +228,7 @@ OF_seek(handle, pos)
 	return args.status;
 }
 
-static __inline int
+static inline int
 OF_write(handle, addr, len)
 	int handle;
 	const void *addr;

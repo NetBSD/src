@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.8 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.9 2005/12/24 20:07:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.8 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9 2005/12/24 20:07:41 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.8 2005/12/11 12:19:36 christos Exp $"
 #define ADVANCE(n)	{w += n; mlen -= n;}
 #define SWAP		{sum <<= 8;}		/* depends on recent REDUCE */
 
-#define Asm     __asm __volatile
+#define Asm     __asm volatile
 #define ADDL    Asm("addl2 (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define ADWC    Asm("adwc  (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define ADDC    Asm("adwc     $0,%0" : "=r" (sum) : "0" (sum))

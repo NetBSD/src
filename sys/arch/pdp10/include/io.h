@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.2 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: io.h,v 1.3 2005/12/24 20:07:24 perry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -33,21 +33,21 @@
 #ifndef _LOCORE
 #ifdef __GNUC__
 #define CONO(dev,val) \
-	asm __volatile("xct %0" :: "r"(0700200000000 | ((dev) << 24) | (val)))
+	asm volatile("xct %0" :: "r"(0700200000000 | ((dev) << 24) | (val)))
 #define CONI(dev,val) \
-	asm __volatile("xct %1 \n move %0,6 " \
+	asm volatile("xct %1 \n move %0,6 " \
 	    : "=r"(val) : "r"(0700240000006 | ((dev) << 24)) : "6")
 #define DATAO(dev,val) \
-	asm __volatile("move 6,%1 \n xct %0" \
+	asm volatile("move 6,%1 \n xct %0" \
 	    : : "r"(0700140000006 | ((dev) << 24)), "r"(val) : "6")
 #define DATAI(dev,val) \
-	asm __volatile("xct %1 \n move %0,6 " \
+	asm volatile("xct %1 \n move %0,6 " \
 	    : "=r"(val) : "r"(0700040000006 | ((dev) << 24)) : "6")
 #define BLKI(dev,val) \
-	asm __volatile("xct %1 \n move %0,6 " \
+	asm volatile("xct %1 \n move %0,6 " \
 	    : "=r"(val) : "r"(0700000000006 | ((dev) << 24)) : "6")
 #define BLKO(dev,val) \
-	asm __volatile("move 6,%1 \n xct %0" \
+	asm volatile("move 6,%1 \n xct %0" \
 	    : : "r"(0700100000006 | ((dev) << 24)), "r"(val) : "6")
 #endif /* __GNUC__ */
 

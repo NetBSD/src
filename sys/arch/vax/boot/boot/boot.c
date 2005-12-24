@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.24 2005/12/11 12:19:30 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.25 2005/12/24 20:07:41 perry Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -258,7 +258,7 @@ load:
 
 #define	extzv(one, two, three,four)	\
 ({			\
-	asm __volatile ("extzv %0,%3,%1,%2"	\
+	asm volatile ("extzv %0,%3,%1,%2"	\
 			:			\
 			: "g"(one),"m"(two),"mo>"(three),"g"(four));	\
 })

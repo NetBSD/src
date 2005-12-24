@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.14 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: sscom.c,v 1.15 2005/12/24 20:06:52 perry Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.14 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.15 2005/12/24 20:06:52 perry Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -279,7 +279,7 @@ void	sscom_kgdb_putc (void *, int);
 #define UCON_DEBUGPORT	  (UCON_RXINT_ENABLE|UCON_TXINT_ENABLE)
 
 
-static __inline void
+static inline void
 __sscom_output_chunk(struct sscom_softc *sc, int ufstat)
 {
 	int n, space;

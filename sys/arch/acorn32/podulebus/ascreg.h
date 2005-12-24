@@ -1,4 +1,4 @@
-/* $NetBSD: ascreg.h,v 1.3 2005/12/11 12:16:05 christos Exp $ */
+/* $NetBSD: ascreg.h,v 1.4 2005/12/24 20:06:46 perry Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -291,7 +291,7 @@ temphi  = dmac + 0x0218;/*    RO  T15  T14  T13  T12  T11  T10   T9   T8 */
 	ReadSBIC1(sbic_base, a)
 
 
-static __inline int
+static inline int
 ReadSBIC1(sbic_base, a)
 	u_int sbic_base;
 	int a;

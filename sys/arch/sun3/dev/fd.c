@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.45 2005/12/11 12:19:20 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.46 2005/12/24 20:07:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.45 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.46 2005/12/24 20:07:41 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -190,7 +190,7 @@ CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
 
 extern struct cfdriver fdc_cd;
 
-__inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -604,7 +604,7 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
 }
 
-__inline struct fd_type *
+inline struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);

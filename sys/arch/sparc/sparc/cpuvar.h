@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.67 2005/12/11 12:19:08 christos Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.68 2005/12/24 20:07:37 perry Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -98,12 +98,12 @@ struct module_info {
  * Message structure for Inter Processor Communication in MP systems
  */
 struct xpmsg {
-	__volatile int tag;
+	volatile int tag;
 #define	XPMSG15_PAUSECPU	1
 #define	XPMSG_FUNC		4
 #define	XPMSG_FTRP		5
 
-	__volatile union {
+	volatile union {
 		/*
 		 * Cross call: ask to run (*func)(arg0,arg1,arg2)
 		 * or (*trap)(arg0,arg1,arg2). `trap' should be the
@@ -119,8 +119,8 @@ struct xpmsg {
 			int	retval;
 		} xpmsg_func;
 	} u;
-	__volatile int	received;
-	__volatile int	complete;
+	volatile int	received;
+	volatile int	complete;
 };
 
 /*
@@ -156,7 +156,7 @@ struct cpu_info {
 	 * self-reference the global VA so that we can return it
 	 * in the curcpu() macro.
 	 */
-	struct cpu_info * __volatile ci_self;
+	struct cpu_info * volatile ci_self;
 
 	/* Primary Inter-processor message area */
 	struct xpmsg	msg;
@@ -171,13 +171,13 @@ struct cpu_info {
 	struct cacheinfo	cacheinfo;	/* see cache.h */
 
 	/* various flags to workaround anomalies in chips */
-	__volatile int	flags;		/* see CPUFLG_xxx, below */
+	volatile int	flags;		/* see CPUFLG_xxx, below */
 
 	/* Per processor counter register (sun4m only) */
-	__volatile struct counter_4m	*counterreg_4m;
+	volatile struct counter_4m	*counterreg_4m;
 
 	/* Per processor interrupt mask register (sun4m only) */
-	__volatile struct icr_pi	*intreg_4m;
+	volatile struct icr_pi	*intreg_4m;
 	/*
 	 * Send a IPI to (cpi).  For Ross cpus we need to read
 	 * the pending register to avoid a hardware bug.
@@ -303,7 +303,7 @@ struct cpu_info {
 	char		fpu_namebuf[32];/* Buffer for FPU name, if necessary */
 
 	/* XXX */
-	__volatile void	*ci_ddb_regs;		/* DDB regs */
+	volatile void	*ci_ddb_regs;		/* DDB regs */
 
 	/*
 	 * The following are function pointers to do interesting CPU-dependent

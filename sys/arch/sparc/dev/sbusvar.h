@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.16 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.17 2005/12/24 20:07:32 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ struct sbus_softc {
  */
 #define	sbus_promaddr_to_handle(tag, promaddr, hp) sparc_promaddr_to_handle(tag, promaddr, hp)
 
-static __inline void
+static inline void
 sparc_promaddr_to_handle(bus_space_tag_t tag, u_int promaddr, bus_space_handle_t *hp)
 {
 	*(hp) = (bus_space_handle_t)(promaddr);

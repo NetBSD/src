@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.5 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: softintr.c,v 1.6 2005/12/24 20:07:04 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.5 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.6 2005/12/24 20:07:04 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -129,7 +129,7 @@ softintr_dispatch(void *arg)
 
 	/* Special handling for softnet. */
 	if (which == HP700_SOFTINTR_SOFTNET) {
-		__asm __volatile(
+		__asm volatile(
 		"	mfctl	%%eiem, %%r22	\n"
 		"	mtctl	%%r0, %%eiem	\n"
 		"	ldw	0(%1), %0	\n"

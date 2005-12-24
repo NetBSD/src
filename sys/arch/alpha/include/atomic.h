@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.7 2001/12/17 23:34:57 thorpej Exp $ */
+/* $NetBSD: atomic.h,v 1.8 2005/12/24 20:06:46 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -49,12 +49,12 @@
  *
  *	Atomically set bits in a `unsigned long'.
  */
-static __inline void
-atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
+static inline void
+atomic_setbits_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_setbits_ulong\n"
 		"1:	ldq_l	%0, %3		\n"
 		"	or	%0, %2, %0	\n"
@@ -75,12 +75,12 @@ atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
  *
  *	Atomically clear bits in a `unsigned long'.
  */
-static __inline void
-atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
+static inline void
+atomic_clearbits_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_clearbits_ulong\n"
 		"1:	ldq_l	%0, %3		\n"
 		"	and	%0, %2, %0	\n"
@@ -101,12 +101,12 @@ atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
  *
  *	Atomically add a value to a `unsigned long'.
  */
-static __inline void
-atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
+static inline void
+atomic_add_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_add_ulong\n"
 		"1:	ldq_l	%0, %3		\n"
 		"	addq	%0, %2, %0	\n"
@@ -127,12 +127,12 @@ atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
  *
  *	Atomically subtract a value from a `unsigned long'.
  */
-static __inline void
-atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
+static inline void
+atomic_sub_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_sub_ulong\n"
 		"1:	ldq_l	%0, %3		\n"
 		"	subq	%0, %2, %0	\n"
@@ -153,12 +153,12 @@ atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
  *
  *	Atomically load and latch a `unsigned long' value.
  */
-static __inline unsigned long
-atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
+static inline unsigned long
+atomic_loadlatch_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0, v0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_loadlatch_ulong\n"
 		"1:	mov	%3, %0		\n"
 		"	ldq_l	%1, %4		\n"

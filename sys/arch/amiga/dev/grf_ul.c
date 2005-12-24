@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.38 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.39 2005/12/24 20:06:47 perry Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.38 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.39 2005/12/24 20:06:47 perry Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -79,7 +79,7 @@ static void ul_load_code(struct grf_softc *);
 static int ul_load_mon(struct grf_softc *, struct grfvideo_mode *);
 static int ul_getvmode(struct grf_softc *, struct grfvideo_mode *);
 static int ul_setvmode(struct grf_softc *, unsigned);
-static __inline void ul_setfb(struct grf_softc *, u_long);
+static inline void ul_setfb(struct grf_softc *, u_long);
 
 /*
  * marked true early so that ulowell_cnprobe() can tell if we are alive.
@@ -641,7 +641,7 @@ ul_setvmode (gp, mode)
  * Always succeeds.
  */
 
-static __inline void
+static inline void
 ul_setfb(gp, cmd)
 	struct grf_softc *gp;
 	u_long cmd;
