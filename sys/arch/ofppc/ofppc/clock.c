@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2005/12/24 20:07:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +89,10 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mfdec %0" : "=r"(ticks));
+	__asm ("mfdec %0" : "=r"(ticks));
 	for (nticks = 0; ticks < 0; nticks++)
 		ticks += ticks_per_intr;
-	asm volatile ("mtdec %0" :: "r"(ticks));
+	__asm volatile ("mtdec %0" :: "r"(ticks));
 
 	clock_return(frame, nticks, ticks);
 }
@@ -133,12 +133,12 @@ microtime(tvp)
 	u_long ticks;
 	int msr, scratch;
 	
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	asm ("mftb %0" : "=r"(tb));
+	__asm ("mftb %0" : "=r"(tb));
 	ticks = (tb - lasttb) * ns_per_tick;
 	*tvp = time;
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
 	while (tvp->tv_usec >= 1000000) {
@@ -161,7 +161,7 @@ delay(n)
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+	__asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
 		      : "=&r"(scratch) : "r"(tbh), "r"(tbl));
 }

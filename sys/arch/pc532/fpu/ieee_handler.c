@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.20 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.21 2005/12/24 22:45:36 perry Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -52,7 +52,7 @@
  * */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.20 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.21 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/types.h>
 #include "ieee_internal.h"
@@ -91,30 +91,30 @@ __KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.20 2005/12/11 12:18:31 christos E
 
 
 static void get_fstate(state *state) {
-  asm("sfsr %0" : "=g" (state->FSR));
-  asm("movl f0, %0" : "=m" (state->LREG(0)));
-  asm("movl f1, %0" : "=m" (state->LREG(1)));
-  asm("movl f2, %0" : "=m" (state->LREG(2)));
-  asm("movl f3, %0" : "=m" (state->LREG(3)));
-  asm("movl f4, %0" : "=m" (state->LREG(4)));
-  asm("movl f5, %0" : "=m" (state->LREG(5)));
-  asm("movl f6, %0" : "=m" (state->LREG(6)));
-  asm("movl f7, %0" : "=m" (state->LREG(7)));
+  __asm("sfsr %0" : "=g" (state->FSR));
+  __asm("movl f0, %0" : "=m" (state->LREG(0)));
+  __asm("movl f1, %0" : "=m" (state->LREG(1)));
+  __asm("movl f2, %0" : "=m" (state->LREG(2)));
+  __asm("movl f3, %0" : "=m" (state->LREG(3)));
+  __asm("movl f4, %0" : "=m" (state->LREG(4)));
+  __asm("movl f5, %0" : "=m" (state->LREG(5)));
+  __asm("movl f6, %0" : "=m" (state->LREG(6)));
+  __asm("movl f7, %0" : "=m" (state->LREG(7)));
 }
 
 static void set_fstate(state *state) {
   /* DON'T tell gcc we are clobbering fp registers, else it will
    * save and restore some, undoing our changes!
    */
-  asm("lfsr %0":: "g" (state->FSR));
-  asm("movl %0, f0":: "m" (state->LREG(0)));
-  asm("movl %0, f1":: "m" (state->LREG(1)));
-  asm("movl %0, f2":: "m" (state->LREG(2)));
-  asm("movl %0, f3":: "m" (state->LREG(3)));
-  asm("movl %0, f4":: "m" (state->LREG(4)));
-  asm("movl %0, f5":: "m" (state->LREG(5)));
-  asm("movl %0, f6":: "m" (state->LREG(6)));
-  asm("movl %0, f7":: "m" (state->LREG(7)));
+  __asm("lfsr %0":: "g" (state->FSR));
+  __asm("movl %0, f0":: "m" (state->LREG(0)));
+  __asm("movl %0, f1":: "m" (state->LREG(1)));
+  __asm("movl %0, f2":: "m" (state->LREG(2)));
+  __asm("movl %0, f3":: "m" (state->LREG(3)));
+  __asm("movl %0, f4":: "m" (state->LREG(4)));
+  __asm("movl %0, f5":: "m" (state->LREG(5)));
+  __asm("movl %0, f6":: "m" (state->LREG(6)));
+  __asm("movl %0, f7":: "m" (state->LREG(7)));
 }
 
 

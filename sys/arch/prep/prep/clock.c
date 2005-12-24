@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 2005/11/21 15:04:52 nonaka Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 2005/12/24 22:45:36 perry Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2005/11/21 15:04:52 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,10 +82,10 @@ cpu_initclocks()
 	ticks_per_intr = ticks_per_sec / hz;
 	cpu_timebase = ticks_per_sec;
 	if ((mfpvr() >> 16) == MPC601)
-		asm volatile ("mfspr %0,%1" : "=r"(lasttb) : "n"(SPR_RTCL_R));
+		__asm volatile ("mfspr %0,%1" : "=r"(lasttb) : "n"(SPR_RTCL_R));
 	else
-		asm volatile ("mftb %0" : "=r"(lasttb));
-	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+		__asm volatile ("mftb %0" : "=r"(lasttb));
+	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 }
 
 /*
@@ -187,10 +187,10 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mfdec %0" : "=r"(ticks));
+	__asm ("mfdec %0" : "=r"(ticks));
 	for (nticks = 0; ticks < 0; nticks++)
 		ticks += ticks_per_intr;
-	asm volatile ("mtdec %0" :: "r"(ticks));
+	__asm volatile ("mtdec %0" :: "r"(ticks));
 
 	uvmexp.intrs++;
 	intrcnt[CNT_CLOCK]++;
@@ -207,16 +207,16 @@ decr_intr(frame)
 		 * start of this tick interval.
 		 */
 		if ((mfpvr() >> 16) == MPC601) {
-			asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+			__asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
 		} else {
-			asm volatile ("mftb %0" : "=r"(tb));
+			__asm volatile ("mftb %0" : "=r"(tb));
 		}
 		lasttb = tb + ticks - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts
 		 */
-		asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
+		__asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 
 		/*
@@ -243,15 +243,15 @@ microtime(tvp)
 	u_long ticks;
 	int msr, scratch;
 	
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
 	if ((mfpvr() >> 16) == MPC601)
-		asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+		__asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
 	else
-		asm volatile ("mftb %0" : "=r"(tb));
+		__asm volatile ("mftb %0" : "=r"(tb));
 	ticks = (tb - lasttb) * ns_per_tick;
 	*tvp = time;
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
 	while (tvp->tv_usec >= 1000000) {
@@ -283,7 +283,7 @@ delay(n)
 			rtc[0]++;
 			rtc[1] -= 1000000000;
 		}
-		asm volatile ("1: mfspr %0,%3; cmplw %0,%1; blt 1b; bgt 2f;"
+		__asm volatile ("1: mfspr %0,%3; cmplw %0,%1; blt 1b; bgt 2f;"
 		    "mfspr %0,%4; cmplw %0,%2; blt 1b; 2:"
 		    : "=&r"(scratch)
 		    : "r"(rtc[0]), "r"(rtc[1]), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R)
@@ -293,7 +293,7 @@ delay(n)
 		tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 		tbh = tb >> 32;
 		tbl = tb;
-		asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+		__asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 			      "mftb %0; cmplw %0,%2; blt 1b; 2:"
 			      : "=&r"(scratch) : "r"(tbh), "r"(tbl)
 			      : "cr0");

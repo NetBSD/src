@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.13 2002/11/12 14:33:49 itohy Exp $	*/
+/*	$NetBSD: common.h,v 1.14 2005/12/24 22:53:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,5 +118,5 @@ struct ps_strings	*__ps_strings = 0;
 #endif
 
 extern unsigned char	etext;
-extern unsigned char	eprol asm ("eprol");
+extern unsigned char	eprol __asm ("eprol");
 

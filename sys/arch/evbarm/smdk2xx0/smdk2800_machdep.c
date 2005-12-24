@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.22 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.23 2005/12/24 22:45:34 perry Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.22 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.23 2005/12/24 22:45:34 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -378,8 +378,8 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	extern int etext asm("_etext");
-	extern int end asm("_end");
+	extern int etext __asm("_etext");
+	extern int end __asm("_end");
 	pv_addr_t kernel_l1pt;
 	int progress_counter = 0;
 

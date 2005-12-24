@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.82 2005/12/11 12:19:14 christos Exp $ */
+/*	$NetBSD: db_interface.c,v 1.83 2005/12/24 22:45:39 perry Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.82 2005/12/11 12:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.83 2005/12/24 22:45:39 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -437,7 +437,7 @@ void
 Debugger()
 {
 	/* We use the breakpoint to trap into DDB */
-	asm("ta 1; nop");
+	__asm("ta 1; nop");
 }
 
 void

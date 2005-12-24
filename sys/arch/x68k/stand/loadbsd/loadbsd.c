@@ -19,13 +19,13 @@
  *		-q	quiet boot
  *		-v	verbose boot (also turn on verbosity of loadbsd)
  *
- *	$NetBSD: loadbsd.c,v 1.8 2002/05/18 13:54:39 isaki Exp $
+ *	$NetBSD: loadbsd.c,v 1.9 2005/12/24 22:45:40 perry Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.8 2002/05/18 13:54:39 isaki Exp $");
-#define VERSION	"$Revision: 1.8 $ $Date: 2002/05/18 13:54:39 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.9 2005/12/24 22:45:40 perry Exp $");
+#define VERSION	"$Revision: 1.9 $ $Date: 2005/12/24 22:45:40 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -397,9 +397,9 @@ read_kernel(fn)
 static int
 chkmpu()
 {
-	register int ret asm("%d0");
+	register int ret __asm("%d0");
 
-	asm("| %0 <- this must be %%d0\n\
+	__asm("| %0 <- this must be %%d0\n\
 	moveq	#1,%%d0\n\
 	.long	0x103B02FF	| foo: moveb %%pc@((foo+1)-foo-2:B,d0:W:2),%%d0\n\
 	|	      ^ ^\n\

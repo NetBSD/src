@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.75 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.76 2005/12/24 22:50:08 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@ do {									\
 } while (0)
 
 #define	MIPS_COUNT_TO_MHZ(cpu, count, res)				\
-	asm volatile("multu %1,%2 ; mfhi %0"				\
+	__asm volatile("multu %1,%2 ; mfhi %0"				\
 	    : "=r"((res)) : "r"((count)), "r"((cpu)->ci_divisor_recip))
 
 #endif /* !_LOCORE */

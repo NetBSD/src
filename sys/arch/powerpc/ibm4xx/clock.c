@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2005/11/23 13:00:51 nonaka Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 2005/12/24 22:45:36 perry Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2005/11/23 13:00:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2005/12/24 22:45:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -117,7 +117,7 @@ decr_intr(struct clockframe *frame)
 		/*
 		 * Reenable interrupts
 		 */
-		asm volatile ("wrteei 1");
+		__asm volatile ("wrteei 1");
 
 		/*
 		 * Do standard timer interrupt stuff.
@@ -168,7 +168,7 @@ microtime(struct timeval *tvp)
 	u_long ticks;
 	int msr;
 
-	asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr) :);
+	__asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr) :);
 
 	tb = mftbl();
 	ticks = ((tb - lasttb) * 1000000ULL) / ticks_per_sec;
@@ -180,7 +180,7 @@ microtime(struct timeval *tvp)
 		tvp->tv_sec++;
 	}
 
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 }
 
 /*
@@ -197,7 +197,7 @@ delay(unsigned int n)
 	tb += (n * 1000ULL + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm volatile (
+	__asm volatile (
 #ifdef PPC_IBM403
 	    "1:	mftbhi %0	\n"
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.29 2005/12/11 12:19:36 christos Exp $ */
+/*	$NetBSD: ka43.c,v 1.30 2005/12/24 22:45:40 perry Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka43.c,v 1.29 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka43.c,v 1.30 2005/12/24 22:45:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -380,7 +380,7 @@ ka43_halt()
 {
 	volatile struct ka43_clock *clk = (volatile void *)clk_page;
 	clk->req = 3;		/* 3 is halt. */
-	asm("halt");
+	__asm("halt");
 }
 
 static void
@@ -389,6 +389,6 @@ ka43_reboot(arg)
 {
 	volatile struct ka43_clock *clk = (volatile void *)clk_page;
 	clk->req = 2;		/* 2 is reboot. */
-	asm("halt");
+	__asm("halt");
 }
 

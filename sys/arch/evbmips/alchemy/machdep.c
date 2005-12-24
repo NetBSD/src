@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.20 2005/12/21 18:55:33 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.21 2005/12/24 22:45:34 perry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2005/12/21 18:55:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2005/12/24 22:45:34 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -474,7 +474,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("reseting board...\n\n");
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
-	asm volatile("jr	%0" :: "r"(MIPS_RESET_EXC_VEC));
+	__asm volatile("jr	%0" :: "r"(MIPS_RESET_EXC_VEC));
 #else
 	printf("%s\n\n", ((howto & RB_HALT) != 0) ? "halted." : "rebooting...");
 	yamon_exit(boothowto);

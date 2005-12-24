@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.26 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.27 2005/12/24 22:45:35 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2005/12/24 22:45:35 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ decr_intr(struct clockframe *frame)
 		/*
 		 * Reenable interrupts
 		 */
-		asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
+		__asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 
 		if (clockrunning) {
@@ -226,7 +226,7 @@ found:
 	/*
 	 * Should check for correct CPU here?		XXX
 	 */
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
@@ -247,7 +247,7 @@ microtime(tvp)
 	u_long ticks;
 	int msr, scratch;
 	
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
 	tb = mftbl();
 	ticks = (tb - curcpu()->ci_lasttb) * ns_per_tick;
@@ -275,7 +275,7 @@ delay(n)
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+	__asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
 		      : "=&r"(scratch) : "r"(tbh), "r"(tbl));
 }

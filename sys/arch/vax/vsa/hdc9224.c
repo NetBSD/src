@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.33 2005/12/11 12:19:37 christos Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.34 2005/12/24 22:50:08 perry Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.33 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.34 2005/12/24 22:50:08 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ const struct cdevsw rd_cdevsw = {
 /* At least 0.7 uS between register accesses */
 static int rd_dmasize, inq = 0;
 static int u;
-#define	WAIT	asm("movl %0,%0;movl %0,%0;movl %0,%0; movl %0,%0" :: "m"(u))
+#define	WAIT	__asm("movl %0,%0;movl %0,%0;movl %0,%0; movl %0,%0" :: "m"(u))
 
 #define	HDC_WREG(x)	*(volatile char *)(sc->sc_regs) = (x)
 #define	HDC_RREG	*(volatile char *)(sc->sc_regs)
