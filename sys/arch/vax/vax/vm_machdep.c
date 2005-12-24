@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.89 2005/12/11 12:19:36 christos Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.90 2005/12/24 07:37:18 christos Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.89 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90 2005/12/24 07:37:18 christos Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -190,7 +190,7 @@ cpu_setfunc(l, func, arg)
 	void *arg;
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct trapframe *tf = (struct trapframe *)(l->l_addr + USPACE) - 1;
+	struct trapframe *tf = (struct trapframe *)((u_int)l->l_addr + USPACE) - 1;
 	struct callsframe *cf;
 	extern int sret;
 
