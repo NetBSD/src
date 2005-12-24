@@ -1,4 +1,4 @@
-/* $NetBSD: ras1.c,v 1.6 2004/03/03 21:06:25 thorpej Exp $ */
+/* $NetBSD: ras1.c,v 1.7 2005/12/24 21:22:46 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@
 
 #define COUNT	10
 
-__volatile int handled = 0;
-__volatile int count = 0;
+volatile int handled = 0;
+volatile int count = 0;
 struct itimerval itv;
 
 void handler(int);

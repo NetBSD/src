@@ -1,4 +1,4 @@
-/* $NetBSD: lock.c,v 1.1 2002/08/28 07:41:04 gmcgarry Exp $ */
+/* $NetBSD: lock.c,v 1.2 2005/12/24 21:22:46 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <machine/lock.h>
 
 __cpu_simple_lock_t lk;
-__volatile int handled = 0;
+volatile int handled = 0;
 
 void handler(int);
 
