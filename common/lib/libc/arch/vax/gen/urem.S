@@ -32,10 +32,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)urem.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: urem.S,v 1.1 2005/12/20 19:28:50 christos Exp $"
+	.asciz "$NetBSD: urem.S,v 1.2 2005/12/24 08:33:32 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 /*
  * Unsigned modulus, PCC flavor.
