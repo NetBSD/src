@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.31 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.32 2005/12/24 23:43:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.31 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.32 2005/12/24 23:43:17 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ ipflow_fastforward(struct mbuf *m)
 	 *
 	 * This method of adding the checksum works on either endian CPU.
 	 * If htons() is inlined, all the arithmetic is folded; otherwise
-	 * the htons()s are combined by CSE due to the __const__ attribute.
+	 * the htons()s are combined by CSE due to the const attribute.
 	 *
 	 * Don't bother using HW checksumming here -- the incremental
 	 * update is pretty fast.
