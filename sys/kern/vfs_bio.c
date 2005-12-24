@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.147 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.148 2005/12/24 19:12:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.147 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.148 2005/12/24 19:12:23 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,16 +122,16 @@ static void buf_setwm(void);
 static int buf_trim(void);
 static void *bufpool_page_alloc(struct pool *, int);
 static void bufpool_page_free(struct pool *, void *);
-static __inline struct buf *bio_doread(struct vnode *, daddr_t, int,
+static inline struct buf *bio_doread(struct vnode *, daddr_t, int,
     struct ucred *, int);
 static int buf_lotsfree(void);
 static int buf_canrelease(void);
-static __inline u_long buf_mempoolidx(u_long);
-static __inline u_long buf_roundsize(u_long);
-static __inline caddr_t buf_malloc(size_t);
+static inline u_long buf_mempoolidx(u_long);
+static inline u_long buf_roundsize(u_long);
+static inline caddr_t buf_malloc(size_t);
 static void buf_mrelease(caddr_t, size_t);
-static __inline void binsheadfree(struct buf *, struct bqueue *);
-static __inline void binstailfree(struct buf *, struct bqueue *);
+static inline void binsheadfree(struct buf *, struct bqueue *);
+static inline void binstailfree(struct buf *, struct bqueue *);
 int count_lock_queue(void); /* XXX */
 #ifdef DEBUG
 static int checkfreelist(struct buf *, struct bqueue *);
@@ -285,7 +285,7 @@ checkfreelist(struct buf *bp, struct bqueue *dp)
  * Insq/Remq for the buffer hash lists.
  * Call with buffer queue locked.
  */
-static __inline void
+static inline void
 binsheadfree(struct buf *bp, struct bqueue *dp)
 {
 
@@ -295,7 +295,7 @@ binsheadfree(struct buf *bp, struct bqueue *dp)
 	bp->b_freelistindex = dp - bufqueues;
 }
 
-static __inline void
+static inline void
 binstailfree(struct buf *bp, struct bqueue *dp)
 {
 
@@ -504,7 +504,7 @@ buf_canrelease(void)
 /*
  * Buffer memory allocation helper functions
  */
-static __inline u_long
+static inline u_long
 buf_mempoolidx(u_long size)
 {
 	u_int n = 0;
@@ -520,14 +520,14 @@ buf_mempoolidx(u_long size)
 	return n;
 }
 
-static __inline u_long
+static inline u_long
 buf_roundsize(u_long size)
 {
 	/* Round up to nearest power of 2 */
 	return (1 << (buf_mempoolidx(size) + MEMPOOL_INDEX_OFFSET));
 }
 
-static __inline caddr_t
+static inline caddr_t
 buf_malloc(size_t size)
 {
 	u_int n = buf_mempoolidx(size);
@@ -565,7 +565,7 @@ buf_mrelease(caddr_t addr, size_t size)
 /*
  * bread()/breadn() helper.
  */
-static __inline struct buf *
+static inline struct buf *
 bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
     int async)
 {
