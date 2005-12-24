@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.11 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.12 2005/12/24 19:12:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.11 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.12 2005/12/24 19:12:23 perry Exp $");
 
 #include "opt_posix.h"
 
@@ -150,7 +150,7 @@ ksem_free(struct ksem *ks)
 	simple_unlock(&ks->ks_interlock);
 }
 
-static __inline void
+static inline void
 ksem_addref(struct ksem *ks)
 {
 
@@ -159,7 +159,7 @@ ksem_addref(struct ksem *ks)
 	KASSERT(ks->ks_ref != 0);	/* XXX KDASSERT */
 }
 
-static __inline void
+static inline void
 ksem_delref(struct ksem *ks)
 {
 

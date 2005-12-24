@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.138 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.139 2005/12/24 19:12:23 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.138 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.139 2005/12/24 19:12:23 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ MALLOC_DEFINE(M_FILE, "file", "Open file structure");
 MALLOC_DEFINE(M_FILEDESC, "file desc", "Open file descriptor table");
 MALLOC_DEFINE(M_IOCTLOPS, "ioctlops", "ioctl data buffer");
 
-static __inline int
+static inline int
 find_next_zero(uint32_t *bitmap, int want, u_int bits)
 {
 	int i, off, maxoff;
@@ -139,7 +139,7 @@ find_last_set(struct filedesc *fd, int last)
 	return (i);
 }
 
-static __inline void
+static inline void
 fd_used(struct filedesc *fdp, int fd)
 {
 	u_int off = fd >> NDENTRYSHIFT;
@@ -158,7 +158,7 @@ fd_used(struct filedesc *fdp, int fd)
 		fdp->fd_lastfile = fd;
 }
 
-static __inline void
+static inline void
 fd_unused(struct filedesc *fdp, int fd)
 {
 	u_int off = fd >> NDENTRYSHIFT;

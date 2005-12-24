@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.69 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.70 2005/12/24 19:12:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #include "opt_ktrace.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.69 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.70 2005/12/24 19:12:23 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,21 +57,21 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.69 2005/12/11 12:24:29 christos Exp $"
 #include <uvm/uvm_extern.h>
 
 static struct sadata_vp *sa_newsavp(struct sadata *);
-static __inline int sa_stackused(struct sastack *, struct sadata *);
-static __inline void sa_setstackfree(struct sastack *, struct sadata *);
+static inline int sa_stackused(struct sastack *, struct sadata *);
+static inline void sa_setstackfree(struct sastack *, struct sadata *);
 static struct sastack *sa_getstack(struct sadata *);
-static __inline struct sastack *sa_getstack0(struct sadata *);
-static __inline int sast_compare(struct sastack *, struct sastack *);
+static inline struct sastack *sa_getstack0(struct sadata *);
+static inline int sast_compare(struct sastack *, struct sastack *);
 #ifdef MULTIPROCESSOR
 static int sa_increaseconcurrency(struct lwp *, int);
 #endif
 static void sa_setwoken(struct lwp *);
 static void sa_switchcall(void *);
 static int sa_newcachelwp(struct lwp *);
-static __inline void sa_makeupcalls(struct lwp *);
+static inline void sa_makeupcalls(struct lwp *);
 static struct lwp *sa_vp_repossess(struct lwp *l);
 
-static __inline int sa_pagefault(struct lwp *, ucontext_t *);
+static inline int sa_pagefault(struct lwp *, ucontext_t *);
 
 static void sa_upcall0(struct sadata_upcall *, int, struct lwp *, struct lwp *,
     size_t, void *, void (*)(void *));
@@ -263,7 +263,7 @@ sa_release(struct proc *p)
 }
 
 
-static __inline int
+static inline int
 sa_stackused(struct sastack *sast, struct sadata *sa)
 {
 	unsigned int gen;
@@ -281,7 +281,7 @@ sa_stackused(struct sastack *sast, struct sadata *sa)
 	return (sast->sast_gen != gen);
 }
 
-static __inline void
+static inline void
 sa_setstackfree(struct sastack *sast, struct sadata *sa)
 {
 
@@ -318,7 +318,7 @@ sa_getstack(struct sadata *sa)
 	return sast;
 }
 
-static __inline struct sastack *
+static inline struct sastack *
 sa_getstack0(struct sadata *sa)
 {
 	struct sastack *start;
@@ -342,7 +342,7 @@ sa_getstack0(struct sadata *sa)
 	return sa->sa_stacknext;
 }
 
-static __inline int
+static inline int
 sast_compare(struct sastack *a, struct sastack *b)
 {
 	if ((vaddr_t)a->sast_stack.ss_sp + a->sast_stack.ss_size <=
@@ -817,7 +817,7 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
  * - pagefaults on upcalls are detected by checking if the userspace
  *   thread is running on an upcall stack
  */
-static __inline int
+static inline int
 sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 {
 	struct proc *p;
@@ -1302,7 +1302,7 @@ sa_upcall_userret(struct lwp *l)
 	return;
 }
 
-static __inline void
+static inline void
 sa_makeupcalls(struct lwp *l)
 {
 	struct lwp *l2, *eventq;

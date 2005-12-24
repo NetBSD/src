@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.108 2005/09/26 12:52:42 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.109 2005/12/24 19:16:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ int	 iruserok_sa(const void *, int, int, const char *, const char *);
 #ifndef __SYS_SIGLIST_DECLARED
 #define __SYS_SIGLIST_DECLARED
 /* also in signal.h */
-extern __const char *__const *sys_siglist __RENAME(__sys_siglist14);
+extern const char *const *sys_siglist __RENAME(__sys_siglist14);
 #endif /* __SYS_SIGLIST_DECLARED */
 extern	 int optreset;		/* getopt(3) external variable */
 extern	 char *suboptarg;	/* getsubopt(3) external variable */

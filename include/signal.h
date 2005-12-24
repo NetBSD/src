@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.45 2005/09/15 13:44:41 drochner Exp $	*/
+/*	$NetBSD: signal.h,v 1.46 2005/12/24 19:16:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,13 +45,13 @@
 #include <sys/signal.h>
 
 #if defined(_NETBSD_SOURCE)
-extern __const char *__const *sys_signame __RENAME(__sys_signame14);
+extern const char *const *sys_signame __RENAME(__sys_signame14);
 #ifndef __SYS_SIGLIST_DECLARED
 #define __SYS_SIGLIST_DECLARED
 /* also in unistd.h */
-extern __const char *__const *sys_siglist __RENAME(__sys_siglist14);
+extern const char *const *sys_siglist __RENAME(__sys_siglist14);
 #endif /* __SYS_SIGLIST_DECLARED */
-extern __const int sys_nsig __RENAME(__sys_nsig14);
+extern const int sys_nsig __RENAME(__sys_nsig14);
 #endif
 
 __BEGIN_DECLS
@@ -91,7 +91,7 @@ int *__errno(void);
 #define errno (*__errno())
 #endif
 #ifndef _SIGINLINE
-#define _SIGINLINE extern __inline
+#define _SIGINLINE extern inline
 #endif
 _SIGINLINE int
 sigaddset(sigset_t *set, int signo)

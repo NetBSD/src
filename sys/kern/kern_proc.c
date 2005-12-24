@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.83 2005/11/26 05:26:33 simonb Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.84 2005/12/24 19:12:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.83 2005/11/26 05:26:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.84 2005/12/24 19:12:23 perry Exp $");
 
 #include "opt_kstack.h"
 
@@ -140,7 +140,7 @@ struct pid_table {
 	struct pgrp	*pt_pgrp;
 };
 #if 1	/* strongly typed cast - should be a noop */
-static __inline uint p2u(struct proc *p) { return (uint)(uintptr_t)p; }
+static inline uint p2u(struct proc *p) { return (uint)(uintptr_t)p; }
 #else
 #define p2u(p) ((uint)p)
 #endif

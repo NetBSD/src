@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.69 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.70 2005/12/24 19:12:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.69 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.70 2005/12/24 19:12:23 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ static void pipeclose(struct file *fp, struct pipe *pipe);
 static void pipe_free_kmem(struct pipe *pipe);
 static int pipe_create(struct pipe **pipep, int allockva);
 static int pipelock(struct pipe *pipe, int catch);
-static __inline void pipeunlock(struct pipe *pipe);
+static inline void pipeunlock(struct pipe *pipe);
 static void pipeselwakeup(struct pipe *pipe, struct pipe *sigp, int code);
 #ifndef PIPE_NODIRECT
 static int pipe_direct_write(struct file *fp, struct pipe *wpipe,
@@ -356,7 +356,7 @@ pipelock(struct pipe *pipe, int catch)
 /*
  * unlock a pipe I/O lock
  */
-static __inline void
+static inline void
 pipeunlock(struct pipe *pipe)
 {
 

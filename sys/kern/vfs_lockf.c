@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.47 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.48 2005/12/24 19:12:23 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.47 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.48 2005/12/24 19:12:23 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,7 +509,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		if ((lock->lf_flags & F_POSIX) &&
 		    (block->lf_flags & F_POSIX)) {
 			struct lwp *wlwp;
-			__volatile const struct lockf *waitblock;
+			volatile const struct lockf *waitblock;
 			int i = 0;
 
 			/*

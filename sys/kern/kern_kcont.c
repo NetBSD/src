@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.12 2005/12/11 12:24:29 christos Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.13 2005/12/24 19:12:23 perry Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,7 +37,7 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.12 2005/12/11 12:24:29 christos Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.13 2005/12/24 19:12:23 perry Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,7 +85,7 @@ static kcq_t kcq_process_ctxt;
  * For fine-grained SMP, both enqueueing and dequeueing will
  * need a locking mechanism.
  */
-static __inline void
+static inline void
 kcont_enqueue_atomic(kcq_t *kcq, struct kc *kc)
 {
 	int s;
@@ -95,7 +95,7 @@ kcont_enqueue_atomic(kcq_t *kcq, struct kc *kc)
 	splx(s);
 }
 
-static __inline struct kc *
+static inline struct kc *
 kcont_dequeue_atomic(kcq_t *kcq)
 {
 	struct kc *kc;
@@ -116,7 +116,7 @@ kcont_dequeue_atomic(kcq_t *kcq)
  * Used by functions that are about call an asynchronous operation,
  * to build a continuation to be called once the operation completes.
  */
-static __inline struct kc *
+static inline struct kc *
 kc_set(struct kc *kc, void (*func)(void *, void *, int),
     void *env_arg, int ipl)
 {

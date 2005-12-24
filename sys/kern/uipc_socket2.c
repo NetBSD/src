@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.69 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.70 2005/12/24 19:12:23 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.69 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.70 2005/12/24 19:12:23 perry Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -775,7 +775,7 @@ sbappendaddr(struct sockbuf *sb, const struct sockaddr *asa, struct mbuf *m0,
  * Helper for sbappendchainaddr: prepend a struct sockaddr* to
  * an mbuf chain.
  */
-static __inline struct mbuf *
+static inline struct mbuf *
 m_prepend_sockaddr(struct sockbuf *sb, struct mbuf *m0,
 		   const struct sockaddr *asa)
 {

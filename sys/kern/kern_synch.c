@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.157 2005/12/24 12:57:14 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.158 2005/12/24 19:12:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.157 2005/12/24 12:57:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.158 2005/12/24 19:12:23 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -127,7 +127,7 @@ int	rrticks;		/* number of hardclock ticks per roundrobin() */
  * The global scheduler state.
  */
 struct prochd sched_qs[RUNQUE_NQS];	/* run queues */
-__volatile u_int32_t sched_whichqs;	/* bitmap of non-empty queues */
+volatile u_int32_t sched_whichqs;	/* bitmap of non-empty queues */
 struct slpque sched_slpque[SLPQUE_TABLESIZE]; /* sleep queues */
 
 struct simplelock sched_lock = SIMPLELOCK_INITIALIZER;
@@ -136,8 +136,8 @@ void schedcpu(void *);
 void updatepri(struct lwp *);
 void endtsleep(void *);
 
-__inline void sa_awaken(struct lwp *);
-__inline void awaken(struct lwp *);
+inline void sa_awaken(struct lwp *);
+inline void awaken(struct lwp *);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER_SETFUNC(schedcpu, NULL);
 static unsigned int schedcpu_ticks;
@@ -430,8 +430,8 @@ int safepri;
  * interlock will always be unlocked upon return.
  */
 int
-ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
-    __volatile struct simplelock *interlock)
+ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
+    volatile struct simplelock *interlock)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l ? l->l_proc : NULL;
@@ -675,7 +675,7 @@ unsleep(struct lwp *l)
 	}
 }
 
-__inline void
+inline void
 sa_awaken(struct lwp *l)
 {
 
@@ -688,7 +688,7 @@ sa_awaken(struct lwp *l)
 /*
  * Optimized-for-wakeup() version of setrunnable().
  */
-__inline void
+inline void
 awaken(struct lwp *l)
 {
 
@@ -738,7 +738,7 @@ sched_lock_idle(void)
  */
 
 void
-wakeup(__volatile const void *ident)
+wakeup(volatile const void *ident)
 {
 	int s;
 
@@ -750,7 +750,7 @@ wakeup(__volatile const void *ident)
 }
 
 void
-sched_wakeup(__volatile const void *ident)
+sched_wakeup(volatile const void *ident)
 {
 	struct slpque *qp;
 	struct lwp *l, **q;
@@ -784,7 +784,7 @@ sched_wakeup(__volatile const void *ident)
  * identifier runnable.
  */
 void
-wakeup_one(__volatile const void *ident)
+wakeup_one(volatile const void *ident)
 {
 	struct slpque *qp;
 	struct lwp *l, **q;
@@ -1055,7 +1055,7 @@ rqinit()
 		    (struct lwp *)&sched_qs[i];
 }
 
-static __inline void
+static inline void
 resched_proc(struct lwp *l, u_char pri)
 {
 	struct cpu_info *ci;

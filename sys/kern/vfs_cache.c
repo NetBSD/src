@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.62 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.63 2005/12/24 19:12:23 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.62 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.63 2005/12/24 19:12:23 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -97,7 +97,7 @@ static struct simplelock namecache_slock = SIMPLELOCK_INITIALIZER;
 
 static void cache_remove(struct namecache *);
 static void cache_free(struct namecache *);
-static __inline struct namecache *cache_lookup_entry(
+static inline struct namecache *cache_lookup_entry(
     const struct vnode *, const struct componentname *);
 
 static void
@@ -136,7 +136,7 @@ cache_free(struct namecache *ncp)
 	numcache--;
 }
 
-static __inline struct namecache *
+static inline struct namecache *
 cache_lookup_entry(const struct vnode *dvp, const struct componentname *cnp)
 {
 	struct nchashhead *ncpp;

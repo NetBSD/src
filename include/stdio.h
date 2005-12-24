@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.61 2005/05/25 20:45:38 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.62 2005/12/24 19:16:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -389,7 +389,7 @@ int	 vfscanf(FILE * __restrict, const char * __restrict,
 int	 vsscanf(const char * __restrict, const char * __restrict,
 	    _BSD_VA_LIST_)
 	    __attribute__((__format__(__scanf__, 2, 0)));
-__const char *fmtcheck(const char *, const char *)
+const char *fmtcheck(const char *, const char *)
 	    __attribute__((__format_arg__(2)));
 __END_DECLS
 
@@ -421,7 +421,7 @@ __END_DECLS
  */
 #define	__sgetc(p) (--(p)->_r < 0 ? __srget(p) : (int)(*(p)->_p++))
 #if defined(__GNUC__) && defined(__STDC__)
-static __inline int __sputc(int _c, FILE *_p) {
+static inline int __sputc(int _c, FILE *_p) {
 	if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
 		return (*_p->_p++ = _c);
 	else

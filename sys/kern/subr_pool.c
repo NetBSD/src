@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.109 2005/12/20 15:52:14 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.110 2005/12/24 19:12:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.109 2005/12/20 15:52:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.110 2005/12/24 19:12:23 perry Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -214,7 +214,7 @@ struct pool_log {
 
 int pool_logsize = POOL_LOGSIZE;
 
-static __inline void
+static inline void
 pr_log(struct pool *pp, void *v, int action, const char *file, long line)
 {
 	int n = pp->pr_curlogentry;
@@ -267,7 +267,7 @@ pr_printlog(struct pool *pp, struct pool_item *pi,
 	}
 }
 
-static __inline void
+static inline void
 pr_enter(struct pool *pp, const char *file, long line)
 {
 
@@ -283,7 +283,7 @@ pr_enter(struct pool *pp, const char *file, long line)
 	pp->pr_entered_line = line;
 }
 
-static __inline void
+static inline void
 pr_leave(struct pool *pp)
 {
 
@@ -296,7 +296,7 @@ pr_leave(struct pool *pp)
 	pp->pr_entered_line = 0;
 }
 
-static __inline void
+static inline void
 pr_enter_check(struct pool *pp, void (*pr)(const char *, ...))
 {
 
@@ -312,7 +312,7 @@ pr_enter_check(struct pool *pp, void (*pr)(const char *, ...))
 #define	pr_enter_check(pp, pr)
 #endif /* POOL_DIAGNOSTIC */
 
-static __inline int
+static inline int
 pr_item_notouch_index(const struct pool *pp, const struct pool_item_header *ph,
     const void *v)
 {
@@ -331,7 +331,7 @@ pr_item_notouch_index(const struct pool *pp, const struct pool_item_header *ph,
 #define	PR_INDEX_USED	((pool_item_freelist_t)-1)
 #define	PR_INDEX_EOL	((pool_item_freelist_t)-2)
 
-static __inline void
+static inline void
 pr_item_notouch_put(const struct pool *pp, struct pool_item_header *ph,
     void *obj)
 {
@@ -343,7 +343,7 @@ pr_item_notouch_put(const struct pool *pp, struct pool_item_header *ph,
 	ph->ph_firstfree = idx;
 }
 
-static __inline void *
+static inline void *
 pr_item_notouch_get(const struct pool *pp, struct pool_item_header *ph)
 {
 	int idx = ph->ph_firstfree;
@@ -356,7 +356,7 @@ pr_item_notouch_get(const struct pool *pp, struct pool_item_header *ph)
 	return ph->ph_page + ph->ph_off + idx * pp->pr_size;
 }
 
-static __inline int
+static inline int
 phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
 {
 	if (a->ph_page < b->ph_page)
@@ -373,7 +373,7 @@ SPLAY_GENERATE(phtree, pool_item_header, ph_node, phtree_compare);
 /*
  * Return the pool page header based on page address.
  */
-static __inline struct pool_item_header *
+static inline struct pool_item_header *
 pr_find_pagehead(struct pool *pp, caddr_t page)
 {
 	struct pool_item_header *ph, tmp;
@@ -406,7 +406,7 @@ pr_pagelist_free(struct pool *pp, struct pool_pagelist *pq)
 /*
  * Remove a page from the pool.
  */
-static __inline void
+static inline void
 pr_rmpage(struct pool *pp, struct pool_item_header *ph,
      struct pool_pagelist *pq)
 {
@@ -1894,7 +1894,7 @@ pool_cache_destroy(struct pool_cache *pc)
 	simple_unlock(&pp->pr_slock);
 }
 
-static __inline void *
+static inline void *
 pcg_get(struct pool_cache_group *pcg, paddr_t *pap)
 {
 	void *object;
@@ -1913,7 +1913,7 @@ pcg_get(struct pool_cache_group *pcg, paddr_t *pap)
 	return (object);
 }
 
-static __inline void
+static inline void
 pcg_put(struct pool_cache_group *pcg, void *object, paddr_t pa)
 {
 	u_int idx;
