@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.90 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.91 2005/12/24 19:12:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.90 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.91 2005/12/24 19:12:23 perry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.90 2005/12/11 12:24:29 christos Exp 
 void	lock_printf(const char *fmt, ...)
     __attribute__((__format__(__printf__,1,2)));
 
-static int acquire(__volatile struct lock **, int *, int, int, int);
+static int acquire(volatile struct lock **, int *, int, int, int);
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 
@@ -213,11 +213,11 @@ do {									\
  * Acquire a resource.
  */
 static int
-acquire(__volatile struct lock **lkpp, int *s, int extflags,
+acquire(volatile struct lock **lkpp, int *s, int extflags,
     int drain, int wanted)
 {
 	int error;
-	__volatile struct lock *lkp = *lkpp;
+	volatile struct lock *lkp = *lkpp;
 
 	KASSERT(drain || (wanted & LK_WAIT_NONZERO) == 0);
 
@@ -327,7 +327,7 @@ struct simplelock spinlock_list_slock = SIMPLELOCK_INITIALIZER;
 #define	SPINLOCK_LIST_UNLOCK()	/* nothing */
 #endif /* MULTIPROCESSOR */ /* } */
 
-_TAILQ_HEAD(, struct lock, __volatile) spinlock_list =
+_TAILQ_HEAD(, struct lock, volatile) spinlock_list =
     TAILQ_HEAD_INITIALIZER(spinlock_list);
 
 #define	HAVEIT(lkp)							\
@@ -537,10 +537,10 @@ spinlock_switchcheck(void)
  */
 int
 #if defined(LOCKDEBUG)
-_lockmgr(__volatile struct lock *lkp, u_int flags,
+_lockmgr(volatile struct lock *lkp, u_int flags,
     struct simplelock *interlkp, const char *file, int line)
 #else
-lockmgr(__volatile struct lock *lkp, u_int flags,
+lockmgr(volatile struct lock *lkp, u_int flags,
     struct simplelock *interlkp)
 #endif
 {
@@ -916,9 +916,9 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 
 int
 #if defined(LOCKDEBUG)
-_spinlock_release_all(__volatile struct lock *lkp, const char *file, int line)
+_spinlock_release_all(volatile struct lock *lkp, const char *file, int line)
 #else
-spinlock_release_all(__volatile struct lock *lkp)
+spinlock_release_all(volatile struct lock *lkp)
 #endif
 {
 	int s, count;
@@ -969,10 +969,10 @@ spinlock_release_all(__volatile struct lock *lkp)
 
 void
 #if defined(LOCKDEBUG)
-_spinlock_acquire_count(__volatile struct lock *lkp, int count,
+_spinlock_acquire_count(volatile struct lock *lkp, int count,
     const char *file, int line)
 #else
-spinlock_acquire_count(__volatile struct lock *lkp, int count)
+spinlock_acquire_count(volatile struct lock *lkp, int count)
 #endif
 {
 	int s, error;
@@ -1022,7 +1022,7 @@ spinlock_acquire_count(__volatile struct lock *lkp, int count)
  * routines to display ststus about contained locks.
  */
 void
-lockmgr_printinfo(__volatile struct lock *lkp)
+lockmgr_printinfo(volatile struct lock *lkp)
 {
 
 	if (lkp->lk_sharecount)
@@ -1043,7 +1043,7 @@ lockmgr_printinfo(__volatile struct lock *lkp)
 }
 
 #if defined(LOCKDEBUG) /* { */
-_TAILQ_HEAD(, struct simplelock, __volatile) simplelock_list =
+_TAILQ_HEAD(, struct simplelock, volatile) simplelock_list =
     TAILQ_HEAD_INITIALIZER(simplelock_list);
 
 #if defined(MULTIPROCESSOR) /* { */
@@ -1095,7 +1095,7 @@ do {									\
  * they are being called.
  */
 void
-simple_lock_init(__volatile struct simplelock *alp)
+simple_lock_init(volatile struct simplelock *alp)
 {
 
 #if defined(MULTIPROCESSOR) /* { */
@@ -1111,7 +1111,7 @@ simple_lock_init(__volatile struct simplelock *alp)
 }
 
 void
-_simple_lock(__volatile struct simplelock *alp, const char *id, int l)
+_simple_lock(volatile struct simplelock *alp, const char *id, int l)
 {
 	cpuid_t cpu_num = cpu_number();
 	int s;
@@ -1163,7 +1163,7 @@ _simple_lock(__volatile struct simplelock *alp, const char *id, int l)
 }
 
 int
-_simple_lock_held(__volatile struct simplelock *alp)
+_simple_lock_held(volatile struct simplelock *alp)
 {
 #if defined(MULTIPROCESSOR) || defined(DIAGNOSTIC)
 	cpuid_t cpu_num = cpu_number();
@@ -1190,7 +1190,7 @@ _simple_lock_held(__volatile struct simplelock *alp)
 }
 
 int
-_simple_lock_try(__volatile struct simplelock *alp, const char *id, int l)
+_simple_lock_try(volatile struct simplelock *alp, const char *id, int l)
 {
 	cpuid_t cpu_num = cpu_number();
 	int s, rv = 0;
@@ -1238,7 +1238,7 @@ _simple_lock_try(__volatile struct simplelock *alp, const char *id, int l)
 }
 
 void
-_simple_unlock(__volatile struct simplelock *alp, const char *id, int l)
+_simple_unlock(volatile struct simplelock *alp, const char *id, int l)
 {
 	int s;
 
@@ -1283,7 +1283,7 @@ _simple_unlock(__volatile struct simplelock *alp, const char *id, int l)
 void
 simple_lock_dump(void)
 {
-	__volatile struct simplelock *alp;
+	volatile struct simplelock *alp;
 	int s;
 
 	s = spllock();
@@ -1300,14 +1300,14 @@ simple_lock_dump(void)
 void
 simple_lock_freecheck(void *start, void *end)
 {
-	__volatile struct simplelock *alp;
+	volatile struct simplelock *alp;
 	int s;
 
 	s = spllock();
 	SLOCK_LIST_LOCK();
 	TAILQ_FOREACH(alp, &simplelock_list, list) {
-		if ((__volatile void *)alp >= start &&
-		    (__volatile void *)alp < end) {
+		if ((volatile void *)alp >= start &&
+		    (volatile void *)alp < end) {
 			lock_printf("freeing simple_lock %p CPU %lu %s:%d\n",
 			    alp, alp->lock_holder, alp->lock_file,
 			    alp->lock_line);
@@ -1332,7 +1332,7 @@ simple_lock_switchcheck(void)
 void
 simple_lock_only_held(volatile struct simplelock *lp, const char *where)
 {
-	__volatile struct simplelock *alp;
+	volatile struct simplelock *alp;
 	cpuid_t cpu_num = cpu_number();
 	int s;
 

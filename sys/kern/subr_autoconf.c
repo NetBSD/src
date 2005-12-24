@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.102 2005/12/20 04:39:36 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.103 2005/12/24 19:12:23 perry Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.102 2005/12/20 04:39:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.103 2005/12/24 19:12:23 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -170,7 +170,7 @@ static int config_finalize_done;
 /* list of all devices */
 struct devicelist alldevs;
 
-__volatile int config_pending;		/* semaphore for mountroot */
+volatile int config_pending;		/* semaphore for mountroot */
 
 #define	STREQ(s1, s2)			\
 	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)

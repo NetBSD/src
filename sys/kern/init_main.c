@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.260 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.261 2005/12/24 19:12:23 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.260 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.261 2005/12/24 19:12:23 perry Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_sysv.h"
@@ -182,7 +182,7 @@ int	cold = 1;			/* still working on startup */
 struct	timeval boottime;
 time_t	rootfstime;			/* recorded root fs time, if known */
 
-__volatile int start_init_exec;		/* semaphore for start_init() */
+volatile int start_init_exec;		/* semaphore for start_init() */
 
 static void check_console(struct lwp *l);
 static void start_init(void *);

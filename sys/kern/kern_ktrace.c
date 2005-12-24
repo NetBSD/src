@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.99 2005/12/13 13:12:18 reinoud Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.100 2005/12/24 19:12:23 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.99 2005/12/13 13:12:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.100 2005/12/24 19:12:23 perry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -152,7 +152,7 @@ MALLOC_DEFINE(M_KTRACE, "ktrace", "ktrace data buffer");
 POOL_INIT(kte_pool, sizeof(struct ktrace_entry), 0, 0, 0,
     "ktepl", &pool_allocator_nointr);
 
-static __inline void
+static inline void
 ktd_wakeup(struct ktr_desc *ktd)
 {
 

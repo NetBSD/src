@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.212 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.213 2005/12/24 19:12:23 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.212 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.213 2005/12/24 19:12:23 perry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1425,9 +1425,9 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 	(*p->p_emul->e_sendsig)(ksi, mask);
 }
 
-static __inline int firstsig(const sigset_t *);
+static inline int firstsig(const sigset_t *);
 
-static __inline int
+static inline int
 firstsig(const sigset_t *ss)
 {
 	int sig;
