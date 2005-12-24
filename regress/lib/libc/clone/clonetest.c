@@ -1,4 +1,4 @@
-/*	$NetBSD: clonetest.c,v 1.9 2004/07/19 06:34:10 chs Exp $	*/
+/*	$NetBSD: clonetest.c,v 1.10 2005/12/24 21:22:46 perry Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -46,7 +46,7 @@ test1()
 	sigset_t mask;
 	void *allocstack, *stack;
 	pid_t pid;
-	__volatile long frobme[2];
+	volatile long frobme[2];
 	int stat;
 
 	allocstack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE|PROT_EXEC,
