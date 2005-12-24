@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.108 2005/12/21 12:19:04 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.109 2005/12/24 20:45:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.108 2005/12/21 12:19:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.109 2005/12/24 20:45:10 perry Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -167,7 +167,7 @@ static void uvm_pageremove(struct vm_page *);
  *    and bumped the version counter
  */
 
-__inline static void
+inline static void
 uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
 {
 	struct pglist *buck;
@@ -204,7 +204,7 @@ uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
 	uobj->uo_npages++;
 }
 
-__inline static void
+inline static void
 uvm_pageinsert(struct vm_page *pg)
 {
 
@@ -218,7 +218,7 @@ uvm_pageinsert(struct vm_page *pg)
  * => caller must lock page queues
  */
 
-static __inline void
+static inline void
 uvm_pageremove(struct vm_page *pg)
 {
 	struct pglist *buck;
@@ -983,7 +983,7 @@ uvm_page_recolor(int newncolors)
  * uvm_pagealloc_pgfl: helper routine for uvm_pagealloc_strat
  */
 
-static __inline struct vm_page *
+static inline struct vm_page *
 uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
     int *trycolorp)
 {

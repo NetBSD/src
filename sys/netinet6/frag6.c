@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.27 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: frag6.c,v 1.28 2005/12/24 20:45:09 perry Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.27 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.28 2005/12/24 20:45:09 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,10 @@ u_int frag6_nfragpackets;
 u_int frag6_nfrags;
 struct	ip6q ip6q;	/* ip6 reassemble queue */
 
-static __inline int ip6q_lock_try __P((void));
-static __inline void ip6q_unlock __P((void));
+static inline int ip6q_lock_try __P((void));
+static inline void ip6q_unlock __P((void));
 
-static __inline int
+static inline int
 ip6q_lock_try()
 {
 	int s;
@@ -97,7 +97,7 @@ ip6q_lock_try()
 	return (1);
 }
 
-static __inline void
+static inline void
 ip6q_unlock()
 {
 	int s;

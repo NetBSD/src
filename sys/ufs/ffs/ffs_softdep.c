@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.72 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.73 2005/12/24 20:45:10 perry Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.72 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.73 2005/12/24 20:45:10 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -415,7 +415,7 @@ static POOL_INIT(dirrem_pool, sizeof(struct dirrem), 0, 0, 0, "dirrempl",
 static POOL_INIT(newdirblk_pool, sizeof (struct newdirblk), 0, 0, 0,
     "newdirblkpl", &pool_allocator_nointr);
 
-static __inline void
+static inline void
 softdep_free(struct worklist *item, int type)
 {
 	switch (type) {
@@ -478,7 +478,7 @@ softdep_free(struct worklist *item, int type)
 
 struct workhead softdep_freequeue;
 
-static __inline void
+static inline void
 softdep_freequeue_add(struct worklist *item)
 {
 	int s;
@@ -488,7 +488,7 @@ softdep_freequeue_add(struct worklist *item)
 	splx(s);
 }
 
-static __inline void
+static inline void
 softdep_freequeue_process(void)
 {
 	struct worklist *wk;
@@ -506,7 +506,7 @@ static int emerginoblk_inuse;
 static const struct buf *emerginoblk_origbp;
 static struct simplelock emerginoblk_slock = SIMPLELOCK_INITIALIZER;
 
-static __inline void *
+static inline void *
 inodedep_allocdino(struct inodedep *inodedep, const struct buf *origbp,
     size_t size)
 {
@@ -544,7 +544,7 @@ inodedep_allocdino(struct inodedep *inodedep, const struct buf *origbp,
 	return vp;
 }
 
-static __inline void
+static inline void
 inodedep_freedino(struct inodedep *inodedep)
 {
 	void *vp = inodedep->id_savedino1;

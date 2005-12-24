@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.8 2003/01/18 08:44:27 thorpej Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.9 2005/12/24 20:45:08 perry Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.8 2003/01/18 08:44:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.9 2005/12/24 20:45:08 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.8 2003/01/18 08:44:27 thorpej Ex
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 
-static __inline int svr4_to_native_rl __P((int));
+static inline int svr4_to_native_rl __P((int));
 
-static __inline int
+static inline int
 svr4_to_native_rl(rl)
 	int rl;
 {

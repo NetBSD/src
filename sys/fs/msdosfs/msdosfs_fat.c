@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.6 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.7 2005/12/24 20:45:09 perry Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.6 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.7 2005/12/24 20:45:09 perry Exp $");
 
 /*
  * kernel include files.
@@ -88,8 +88,8 @@ int fc_largedistance;		/* off by more than LMMAX		 */
 static void fatblock(struct msdosfsmount *, u_long, u_long *, u_long *,
 			  u_long *);
 void updatefats(struct msdosfsmount *, struct buf *, u_long);
-static __inline void usemap_free(struct msdosfsmount *, u_long);
-static __inline void usemap_alloc(struct msdosfsmount *, u_long);
+static inline void usemap_free(struct msdosfsmount *, u_long);
+static inline void usemap_alloc(struct msdosfsmount *, u_long);
 static int fatchain(struct msdosfsmount *, u_long, u_long, u_long);
 int chainlength(struct msdosfsmount *, u_long, u_long);
 int chainalloc(struct msdosfsmount *, u_long, u_long, u_long, u_long *,
@@ -431,7 +431,7 @@ updatefats(pmp, bp, fatbn)
  * Where n is even. m = n + (n >> 2)
  *
  */
-static __inline void
+static inline void
 usemap_alloc(pmp, cn)
 	struct msdosfsmount *pmp;
 	u_long cn;
@@ -441,7 +441,7 @@ usemap_alloc(pmp, cn)
 	pmp->pm_freeclustercount--;
 }
 
-static __inline void
+static inline void
 usemap_free(pmp, cn)
 	struct msdosfsmount *pmp;
 	u_long cn;

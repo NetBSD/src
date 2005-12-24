@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.58 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.59 2005/12/24 20:45:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.58 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.59 2005/12/24 20:45:10 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -473,7 +473,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	return (error);
 }
 
-static __inline int
+static inline int
 lge(struct lbnentry *a, struct lbnentry *b)
 {
 	return a->lbn - b->lbn;

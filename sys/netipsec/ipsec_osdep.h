@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.15 2005/12/10 23:44:08 elad Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.16 2005/12/24 20:45:09 perry Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -86,9 +86,9 @@
 
 #ifdef	__NetBSD__
 #include <sys/rnd.h>
-static __inline u_int read_random(void *p, u_int len);
+static inline u_int read_random(void *p, u_int len);
 
-static __inline u_int
+static inline u_int
 read_random(void *bufp, u_int len)
 {
 	return rnd_extract_data(bufp, len, RND_EXTRACT_ANY /*XXX FIXME */);
@@ -137,7 +137,7 @@ read_random(void *bufp, u_int len)
 
 #include <net/if.h>
 
-static __inline int
+static inline int
 if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 {
 	int need_if_start = 0;

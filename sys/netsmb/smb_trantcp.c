@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.19 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.20 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.19 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.20 2005/12/24 20:45:09 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ nb_setsockopt_int(struct socket *so, int level, int name, int val)
 #endif
 }
 
-static __inline int
+static inline int
 nb_poll(struct nbpcb *nbp, int events, struct lwp *l)
 {
 #ifndef __NetBSD__
