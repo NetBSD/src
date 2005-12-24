@@ -1,10 +1,10 @@
-.\"     $NetBSD: cpu_coredump.9,v 1.8 2005/12/24 21:07:05 matt Exp $
+.\"     $NetBSD: coredump_write.9,v 1.1 2005/12/24 21:07:05 matt Exp $
 .\"
-.\" Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Gregory McGarry.
+.\" by Matt THomas.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -35,39 +35,38 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd December 24, 2005
-.Dt CPU_COREDUMP 9
+.Dt COREDUMP_WRITE 9
 .Os
 .Sh NAME
-.Nm cpu_coredump
-.Nd machine-dependent process core dump interface
+.Nm coredump_write
+.Nd common coredump write routine
 .Sh SYNOPSIS
 .In sys/signalvar.h
 .Ft int
-.Fn cpu_coredump "struct lwp *l" "void *iocookie" "struct core *chdr"
-.Ft int
-.Fn cpu_coredump32 "struct lwp *l" "void *iocookie" "struct core32 *chdr"
+.Fn coredump_write "void *iocookie" "enum uio_seg segflg" "const void *data" "size_t len"
 .Sh DESCRIPTION
-.Fn cpu_coredump
-is the machine-dependent interface invoked by machine-independent code
-to dump the machine-dependent header information at the start of a
-process core dump.
-The header information primarily consists of the
-CPU and floating-point registers.
-.Fa l
-is the lwp structure of the thread being dumped.
+.Fn coredump_write
+is used by both machine-dependent and machine-independent components to write information to a coredump.
 .Fa iocookie
-is an opaque pointer to be passed to
+is an opaque pointer that was supplied to the caller of
 .Fn coredump_write .
-Information about the machine-dependent header sections are returned in
-.Fa chdr .
+.Fa segflg
+indicates where the
+.Fa data
+is located, system space or user space.
+.Fa data
+points to the information to be written to the coredump.
+.Fa len
+is the amount of data to be written.
 .Pp
-.Fn cpu_coredump
+.Fn coredump_write
 returns 0 on success and an appropriate error code on failure.
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
-source tree where actual code implementing or using the
-machine-dependent coredump interface can be found.
+source tree where actual code implementing or using
+.Fn coredump_write
+can be found.
 All pathnames are relative to
 .Pa /usr/src .
 .Pp
@@ -84,4 +83,4 @@ Process core dumps for other
 binaries are performed within the file
 .Pa sys/kern/core_netbsd.c .
 .Sh SEE ALSO
-.Xr coredump_write 9
+.Xr cpu_coredump 9
