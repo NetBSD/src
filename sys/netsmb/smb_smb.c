@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.25 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.26 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.25 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.26 2005/12/24 20:45:09 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -582,7 +582,7 @@ smb_smb_treedisconnect(struct smb_share *ssp, struct smb_cred *scred)
 	return error;
 }
 
-static __inline int
+static inline int
 smb_smb_readx(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	      struct uio *uio, struct smb_cred *scred)
 {
@@ -663,7 +663,7 @@ smb_smb_readx(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	return (error);
 }
 
-static __inline int
+static inline int
 smb_smb_writex(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	struct uio *uio, struct smb_cred *scred)
 {
@@ -720,7 +720,7 @@ smb_smb_writex(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid
 	return (error);
 }
 
-static __inline int
+static inline int
 smb_smb_read(struct smb_share *ssp, u_int16_t fid,
 	size_t *len, size_t *rresid, struct uio *uio, struct smb_cred *scred)
 {
@@ -803,7 +803,7 @@ smb_read(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 	return error;
 }
 
-static __inline int
+static inline int
 smb_smb_write(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	struct uio *uio, struct smb_cred *scred)
 {

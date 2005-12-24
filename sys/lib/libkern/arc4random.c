@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.15 2005/12/11 12:24:37 christos Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.16 2005/12/24 20:45:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ extern struct timeval mono_time;
 
 static inline u_int8_t arc4_randbyte(void);
 
-static __inline void
+static inline void
 arc4_swap(u_int8_t *a, u_int8_t *b)
 {
 	u_int8_t c;
@@ -175,7 +175,7 @@ arc4_init(void)
 /*
  * Generate a random byte.
  */
-static __inline u_int8_t
+static inline u_int8_t
 arc4_randbyte(void)
 {
 	u_int8_t arc4_t;

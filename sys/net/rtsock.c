@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.79 2005/12/11 12:24:52 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.80 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.79 2005/12/11 12:24:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.80 2005/12/24 20:45:09 perry Exp $");
 
 #include "opt_inet.h"
 
@@ -106,7 +106,7 @@ static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
 static int sysctl_dumpentry(struct radix_node *, void *);
 static int sysctl_iflist(int, struct walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
-static __inline void rt_adjustcount(int, int);
+static inline void rt_adjustcount(int, int);
 
 /* Sleazy use of local variables throughout file, warning!!!! */
 #define dst	info.rti_info[RTAX_DST]
@@ -117,7 +117,7 @@ static __inline void rt_adjustcount(int, int);
 #define ifaaddr	info.rti_info[RTAX_IFA]
 #define brdaddr	info.rti_info[RTAX_BRD]
 
-static __inline void
+static inline void
 rt_adjustcount(int af, int cnt)
 {
 	route_cb.any_count += cnt;

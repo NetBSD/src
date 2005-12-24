@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.33 2005/12/11 23:05:24 thorpej Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.34 2005/12/24 20:45:09 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.33 2005/12/11 23:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.34 2005/12/24 20:45:09 perry Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1853,7 +1853,7 @@ do {									\
 	c -= a; c -= b; c ^= (b >> 15);					\
 } while (/*CONSTCOND*/0)
 
-static __inline uint32_t
+static inline uint32_t
 bridge_rthash(struct bridge_softc *sc, const uint8_t *addr)
 {
 	uint32_t a = 0x9e3779b9, b = 0x9e3779b9, c = sc->sc_rthash_key;

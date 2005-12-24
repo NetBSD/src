@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.67 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.68 2005/12/24 20:45:10 perry Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.67 2005/12/11 12:25:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.68 2005/12/24 20:45:10 perry Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -78,7 +78,7 @@ static LIST_HEAD(, vm_amap) amap_list;
  * local functions
  */
 
-static __inline void
+static inline void
 amap_list_insert(struct vm_amap *amap)
 {
 
@@ -87,7 +87,7 @@ amap_list_insert(struct vm_amap *amap)
 	simple_unlock(&amap_list_lock);
 }
 
-static __inline void
+static inline void
 amap_list_remove(struct vm_amap *amap)
 {
 
@@ -135,7 +135,7 @@ amap_list_remove(struct vm_amap *amap)
  *
  * => ppref's amap must be locked
  */
-static __inline void
+static inline void
 pp_getreflen(int *ppref, int offset, int *refp, int *lenp)
 {
 
@@ -153,7 +153,7 @@ pp_getreflen(int *ppref, int offset, int *refp, int *lenp)
  *
  * => ppref's amap must be locked
  */
-static __inline void
+static inline void
 pp_setreflen(int *ppref, int offset, int ref, int len)
 {
 	if (len == 0)
