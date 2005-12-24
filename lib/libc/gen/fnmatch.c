@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.20 2003/08/07 16:42:48 agc Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.21 2005/12/24 21:11:16 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fnmatch.c,v 1.20 2003/08/07 16:42:48 agc Exp $");
+__RCSID("$NetBSD: fnmatch.c,v 1.21 2005/12/24 21:11:16 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ __weak_alias(fnmatch,_fnmatch)
 
 static const char *rangematch __P((const char *, int, int));
 
-static __inline int
+static inline int
 foldcase(int ch, int flags)
 {
 

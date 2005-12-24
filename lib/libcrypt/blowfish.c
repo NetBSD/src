@@ -1,4 +1,4 @@
-/*	$NetBSD: blowfish.c,v 1.3 2003/08/06 08:34:32 jdolecek Exp $	*/
+/*	$NetBSD: blowfish.c,v 1.4 2005/12/24 21:11:16 perry Exp $	*/
 /* $OpenBSD: blowfish.c,v 1.16 2002/02/19 19:39:36 millert Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
@@ -46,7 +46,7 @@
  * directly by bcrypt.c, not built separately.
  */
 
-__RCSID("$NetBSD: blowfish.c,v 1.3 2003/08/06 08:34:32 jdolecek Exp $");
+__RCSID("$NetBSD: blowfish.c,v 1.4 2005/12/24 21:11:16 perry Exp $");
 
 #include <sys/types.h>
 
@@ -66,12 +66,6 @@ typedef struct BlowfishContext {
 	u_int32_t P[BLF_N + 2];	/* Subkeys */
 } blf_ctx;
 
-#undef inline
-#ifdef __GNUC__
-#define inline __inline
-#else				/* !__GNUC__ */
-#define inline
-#endif				/* !__GNUC__ */
 
 /* Function for Feistel Networks */
 

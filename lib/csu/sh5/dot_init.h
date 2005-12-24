@@ -1,4 +1,4 @@
-/*	$NetBSD: dot_init.h,v 1.4 2003/03/24 14:32:57 scw Exp $	*/
+/*	$NetBSD: dot_init.h,v 1.5 2005/12/24 21:11:16 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 #define	FINI_FALLTHRU_DECL
 
 #define	INIT_FALLTHRU()	\
-	__asm __volatile("	addi	r15, -16, r15		\n"\
+	__asm volatile("	addi	r15, -16, r15		\n"\
 			"	st.q	r15, 0, r18		\n"\
 			"	gettr	tr0, r18		\n"\
 			"	st.q	r15, 8, r18		\n"\
@@ -92,7 +92,7 @@
 			"	ld.q	r15, 0, r18		\n"\
 			"	addi	r15, 16, r15")
 #define	FINI_FALLTHRU()	\
-	__asm __volatile("	addi	r15, -16, r15		\n"\
+	__asm volatile("	addi	r15, -16, r15		\n"\
 			"	st.q	r15, 0, r18		\n"\
 			"	gettr	tr0, r18		\n"\
 			"	st.q	r15, 8, r18		\n"\

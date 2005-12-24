@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.3 2003/01/20 01:49:36 matt Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.4 2005/12/24 21:11:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _LIB_PTHREAD_VAX_MD_H
 #define _LIB_PTHREAD_VAX_MD_H
 
-static __inline long
+static inline long
 pthread__sp(void)
 {
 	long ret;

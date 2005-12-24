@@ -1,4 +1,4 @@
-/* $NetBSD: arm-gcc.h,v 1.2 2001/02/21 18:09:25 bjh21 Exp $ */
+/* $NetBSD: arm-gcc.h,v 1.3 2005/12/24 21:11:16 perry Exp $ */
 
 /*
 -------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ a compiler does not support explicit inlining, this macro should be defined
 to be `static'.
 -------------------------------------------------------------------------------
 */
-#define INLINE static __inline
+#define INLINE static inline
 
 /*
 -------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.3 2003/11/11 16:21:05 martin Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.4 2005/12/24 21:11:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /*
  * pthread__sp used for identifying thread
  */
-static __inline long
+static inline long
 pthread__sp(void)
 {
 	long ret;

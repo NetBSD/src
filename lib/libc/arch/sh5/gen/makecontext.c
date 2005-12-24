@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.4 2003/01/22 13:44:36 scw Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.5 2005/12/24 21:11:16 perry Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.4 2003/01/22 13:44:36 scw Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.5 2005/12/24 21:11:16 perry Exp $");
 #endif
 
 #include <sys/types.h>
@@ -76,9 +76,9 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	 * XXXSCW: I've never actually seen these used anywhere, so this
 	 * may well be unnecessary...
 	 */
-	__asm __volatile("or r26, r63, %0" : "=r"(r));
+	__asm volatile("or r26, r63, %0" : "=r"(r));
 	gr[_REG_R(26)] = r;
-	__asm __volatile("or r27, r63, %0" : "=r"(r));
+	__asm volatile("or r27, r63, %0" : "=r"(r));
 	gr[_REG_R(27)] = r;
 
 	/*

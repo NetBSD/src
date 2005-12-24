@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.4 2004/02/11 21:04:10 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.5 2005/12/24 21:11:16 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #ifndef _LIB_PTHREAD_POWERPC_MD_H
 #define _LIB_PTHREAD_POWERPC_MD_H
 
-static __inline long
+static inline long
 pthread__sp(void)
 {
 	long	ret;

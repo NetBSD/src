@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.2 2003/01/22 13:52:48 scw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3 2005/12/24 21:11:17 perry Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -38,12 +38,12 @@
 #ifndef _LIB_PTHREAD_SH5_MD_H
 #define _LIB_PTHREAD_SH5_MD_H
 
-static __inline long
+static inline long
 pthread__sp(void)
 {
 	register_t ret;
 
-	__asm __volatile("add r15, r63, %0" : "=g" (ret));
+	__asm volatile("add r15, r63, %0" : "=g" (ret));
 
 	return ((long)ret);
 }
