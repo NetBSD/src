@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.142 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.143 2005/12/24 19:01:28 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1215,7 +1215,7 @@ struct sysctldesc {
 		__sysc_desc_roundup(l)))
 #define NEXT_DESCR(d) __sysc_desc_adv((d), (d)->descr_len)
 
-static __inline const struct sysctlnode *
+static inline const struct sysctlnode *
 sysctl_rootof(const struct sysctlnode *n)
 {
 	while (n->sysctl_parent != NULL)

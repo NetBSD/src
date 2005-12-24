@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.148 2005/12/23 15:31:40 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.149 2005/12/24 19:01:28 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -309,8 +309,8 @@ ilstatic void holdrelel(struct vnode *);
 ilstatic void vholdl(struct vnode *);
 ilstatic void vref(struct vnode *);
 
-static __inline void holdrele(struct vnode *) __attribute__((__unused__));
-static __inline void vhold(struct vnode *) __attribute__((__unused__));
+static inline void holdrele(struct vnode *) __attribute__((__unused__));
+static inline void vhold(struct vnode *) __attribute__((__unused__));
 
 #ifdef DIAGNOSTIC
 #define	VATTR_NULL(vap)	vattr_null(vap)
@@ -322,7 +322,7 @@ static __inline void vhold(struct vnode *) __attribute__((__unused__));
  *
  * called with v_interlock held
  */
-static __inline void
+static inline void
 holdrelel(struct vnode *vp)
 {
 
@@ -341,7 +341,7 @@ holdrelel(struct vnode *vp)
  *
  * called with v_interlock held
  */
-static __inline void
+static inline void
 vholdl(struct vnode *vp)
 {
 
@@ -358,7 +358,7 @@ vholdl(struct vnode *vp)
 /*
  * increase reference
  */
-static __inline void
+static inline void
 vref(struct vnode *vp)
 {
 
@@ -371,7 +371,7 @@ vref(struct vnode *vp)
 /*
  * decrease buf or page ref
  */
-static __inline void
+static inline void
 holdrele(struct vnode *vp)
 {
 
@@ -383,7 +383,7 @@ holdrele(struct vnode *vp)
 /*
  * increase buf or page ref
  */
-static __inline void
+static inline void
 vhold(struct vnode *vp)
 {
 
