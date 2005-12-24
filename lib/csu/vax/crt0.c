@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.14 2002/05/16 19:38:21 wiz Exp $	*/
+/*	$NetBSD: crt0.c,v 1.15 2005/12/24 22:02:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "common.h"
 
-extern void	start __P((void)) asm("start");
+extern void	start __P((void)) __asm("start");
 struct kframe {
 	int	kargc;
 	char	*kargv[1];	/* size depends on kargc */
@@ -48,15 +48,15 @@ struct kframe {
 	char	kenvstr[1];	/* size varies */
 };
 
-	asm("	.text");
-	asm("	.align 2");
-	asm("	.globl start");
-	asm("	.type start,@function");
-	asm("	start:");
-	asm("		.word 0x0101");		/* two nops just in case */
-	asm("		pushl %sp");		/* no registers to save */
-	asm("		calls $1,___start");	/* do the real start */
-	asm("		halt");
+	__asm("	.text");
+	__asm("	.align 2");
+	__asm("	.globl start");
+	__asm("	.type start,@function");
+	__asm("	start:");
+	__asm("		.word 0x0101");		/* two nops just in case */
+	__asm("		pushl %sp");		/* no registers to save */
+	__asm("		calls $1,___start");	/* do the real start */
+	__asm("		halt");
 
 void
 __start(kfp)
@@ -86,41 +86,41 @@ __start(kfp)
 		__load_rtld(&_DYNAMIC);
 #endif /* DYNAMIC */
 
-asm("eprol:");
+__asm("eprol:");
 
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&eprol, (u_long)&etext);
 #endif /* MCRT0 */
 
-asm ("__callmain:");		/* Defined for the benefit of debuggers */
+__asm ("__callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(kfp->kargc, argv, environ));
 }
 
 #ifdef DYNAMIC
-	asm("	___syscall:");
-	asm("		.word 0");		/* no registers to save */
-	asm("		addl2 $4,%ap");		/* n-1 args to syscall */
-	asm("		movl (%ap),r0");	/* get syscall number */
-	asm("		subl3 $1,-4(%ap),(%ap)"); /* n-1 args to syscall */
-	asm("		chmk %r0");		/* do system call */
-	asm("		jcc 1f");		/* check error */
-	asm("		mnegl $1,%r0");
-	asm("		ret");
-	asm("	1:	movpsl -(%sp)");	/* flush the icache */
-	asm("		pushab 2f");		/* by issuing an REI */
-	asm("		rei");
-	asm("	2:	ret");
+	__asm("	___syscall:");
+	__asm("		.word 0");		/* no registers to save */
+	__asm("		addl2 $4,%ap");		/* n-1 args to syscall */
+	__asm("		movl (%ap),r0");	/* get syscall number */
+	__asm("		subl3 $1,-4(%ap),(%ap)"); /* n-1 args to syscall */
+	__asm("		chmk %r0");		/* do system call */
+	__asm("		jcc 1f");		/* check error */
+	__asm("		mnegl $1,%r0");
+	__asm("		ret");
+	__asm("	1:	movpsl -(%sp)");	/* flush the icache */
+	__asm("		pushab 2f");		/* by issuing an REI */
+	__asm("		rei");
+	__asm("	2:	ret");
 
 #endif /* DYNAMIC */
 
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.14 2002/05/16 19:38:21 wiz Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.15 2005/12/24 22:02:10 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0
-asm ("	.text");
-asm ("_eprol:");
+__asm ("	.text");
+__asm ("_eprol:");
 #endif

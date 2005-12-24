@@ -1,4 +1,4 @@
-/*	$NetBSD: md-static-funcs.c,v 1.2 1998/01/05 22:00:41 cgd Exp $	*/
+/*	$NetBSD: md-static-funcs.c,v 1.3 2005/12/24 22:04:11 perry Exp $	*/
 
 /*
  * Called by ld.so when onanating.
@@ -9,14 +9,14 @@
 #define write(fd, s, n)		__syscall(SYS_write, (fd), (s), (n))
 #define _exit(n)		__syscall(SYS_exit, (n))
 
-asm("___syscall:");
-asm("	movd tos,r1");		/* return address */
-asm("	movd tos,r0");		/* syscall number */
-asm("	movd r1,tos");
-asm("	svc");			/* do system call */
-asm("	bcc 1f");		/* check error */
-asm("	movqd -1,r0");
-asm("1:	jump 0(0(sp))");	/* return */
+__asm("___syscall:");
+__asm("	movd tos,r1");		/* return address */
+__asm("	movd tos,r0");		/* syscall number */
+__asm("	movd r1,tos");
+__asm("	svc");			/* do system call */
+__asm("	bcc 1f");		/* check error */
+__asm("	movqd -1,r0");
+__asm("1:	jump 0(0(sp))");	/* return */
 
 static void
 md_relocate_simple(r, relocation, addr)
