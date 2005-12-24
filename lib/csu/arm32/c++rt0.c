@@ -1,4 +1,4 @@
-/*	$NetBSD: c++rt0.c,v 1.2 1999/07/02 15:53:55 simonb Exp $	*/
+/*	$NetBSD: c++rt0.c,v 1.3 2005/12/24 21:54:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,11 +112,11 @@ __ctors()
 }
 
 #ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
-extern void __init __P((long)) asm(".init"); /* XXX ARM32_BROKEN_RELOCATIONS */
-extern void __fini __P((long)) asm(".fini"); /* XXX ARM32_BROKEN_RELOCATIONS */
+extern void __init __P((long)) __asm(".init"); /* XXX ARM32_BROKEN_RELOCATIONS */
+extern void __fini __P((long)) __asm(".fini"); /* XXX ARM32_BROKEN_RELOCATIONS */
 #else					/* XXX ARM32_BROKEN_RELOCATIONS */
-extern void __init __P((void)) asm(".init");
-extern void __fini __P((void)) asm(".fini");
+extern void __init __P((void)) __asm(".init");
+extern void __fini __P((void)) __asm(".fini");
 #endif
 
 void
