@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.84 2004/08/07 21:43:18 chs Exp $
+#	$NetBSD: sys.mk,v 1.85 2005/12/25 18:34:23 perry Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -74,7 +74,7 @@ LFLAGS?=
 LEX.l?=		${LEX} ${LFLAGS}
 
 LINT?=		lint
-LINTFLAGS?=	-chapbxzF
+LINTFLAGS?=	-chapbxzFS
 
 LORDER?=	lorder
 
