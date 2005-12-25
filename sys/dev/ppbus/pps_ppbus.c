@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.3 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.4 2005/12/25 18:43:31 rpaulo Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.3 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.4 2005/12/25 18:43:31 rpaulo Exp $");
 
 #include "opt_ntp.h"
 
@@ -95,7 +95,7 @@ pps_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ppsopen(dev_t dev, int flags, int fmt, struct proc *p)
+ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct pps_softc *sc;
 	int res;
@@ -128,7 +128,7 @@ ppsopen(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 static int
-ppsclose(dev_t dev, int flags, int fmt, struct proc *p)
+ppsclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct pps_softc *sc = device_lookup(&pps_cd, minor(dev));
 	struct device *ppbus = sc->ppbus;
@@ -173,7 +173,7 @@ ppsintr(void *arg)
 }
 
 static int
-ppsioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+ppsioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct pps_softc *sc = device_lookup(&pps_cd, minor(dev));
 	int error = 0;
