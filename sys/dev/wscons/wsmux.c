@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.40 2005/12/11 12:24:12 christos Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.41 2005/12/25 17:23:42 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.40 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.41 2005/12/25 17:23:42 jmmv Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -203,8 +203,8 @@ wsmuxopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (sc == NULL)
 		return (ENXIO);
 
-	DPRINTF(("wsmuxopen: %s: sc=%p p=%p\n", sc->sc_base.me_dv.dv_xname,
-		 sc, p));
+	DPRINTF(("wsmuxopen: %s: sc=%p l=%p\n", sc->sc_base.me_dv.dv_xname,
+		 sc, l));
 
 	if (WSMUXCTL(minr)) {
 		/* This is the control device which does not allow reads. */
