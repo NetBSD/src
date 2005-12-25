@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.60 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.61 2005/12/25 18:46:27 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.60 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.61 2005/12/25 18:46:27 rpaulo Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -112,10 +112,7 @@ const struct cdevsw mem_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	switch (minor(dev)) {
@@ -138,10 +135,7 @@ mmopen(dev, flag, mode, l)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	register vaddr_t o, v;
 	register int c;
@@ -227,10 +221,7 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	struct proc *p = curproc;	/* XXX */
 
