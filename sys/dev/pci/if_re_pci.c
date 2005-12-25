@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.11 2005/11/23 18:56:22 riz Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.12 2005/12/25 19:55:41 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -41,7 +41,7 @@
  * Senior Networking Software Engineer
  * Wind River Systems
  *
- * NetBSD bus-specific frontends for written by
+ * Netbsd bus-specific frontends for written by
  * Jonathan Stone <jonathan@netbsd.org>
  */
 
@@ -106,6 +106,8 @@ static const struct rtk_type re_devs[] = {
 		"RealTek 8169 Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169S,
 		"RealTek 8169S Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169SB,
+		"RealTek 8169SB Single-chip Gigabit Ethernet" },
 	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_LAPCIGT, RTK_HWREV_8169S,
 		"Corega CG-LAPCIGT Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8110S,
@@ -130,6 +132,7 @@ static const struct rtk_hwrev re_hwrevs[] = {
 	{ RTK_HWREV_8139CPLUS, RTK_8139CPLUS, "C+"},
 	{ RTK_HWREV_8169, RTK_8169, "8169"},
 	{ RTK_HWREV_8169S, RTK_8169, "8169S"},
+	{ RTK_HWREV_8169SB, RTK_8169, "8169SB"},
 	{ RTK_HWREV_8110S, RTK_8169, "8110S"},
 	{ RTK_HWREV_8100, RTK_8139, "8100"},
 	{ RTK_HWREV_8101, RTK_8139, "8101"},
