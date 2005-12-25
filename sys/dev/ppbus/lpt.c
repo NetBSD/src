@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.14 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: lpt.c,v 1.15 2005/12/25 18:43:31 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.14 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.15 2005/12/25 18:43:31 rpaulo Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -409,7 +409,7 @@ lpt_logstatus(const struct device * const dev, const unsigned char status)
  * lptopen -- reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev_t dev_id, int flags, int fmt, struct proc *p)
+lptopen(dev_t dev_id, int flags, int fmt, struct lwp *l)
 {
 	int trys, err;
 	u_int8_t status;
@@ -502,7 +502,7 @@ lptopen(dev_t dev_id, int flags, int fmt, struct proc *p)
  * Check for interrupted write call added.
  */
 int
-lptclose(dev_t dev_id, int flags, int fmt, struct proc *p)
+lptclose(dev_t dev_id, int flags, int fmt, struct lwp *l)
 {
 	struct device * dev = device_lookup(&lpt_cd, LPTUNIT(dev_id));
 	struct lpt_softc * sc = (struct lpt_softc *) dev;
@@ -608,7 +608,7 @@ lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 
 /* Printer ioctl */
 int
-lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct proc *p)
+lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct device *dev = device_lookup(&lpt_cd, LPTUNIT(dev_id));
 	struct lpt_softc *sc = (struct lpt_softc *) dev;
