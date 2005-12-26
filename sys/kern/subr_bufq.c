@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.10 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.11 2005/12/26 10:00:34 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.10 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.11 2005/12/26 10:00:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ bufq_alloc(struct bufq_state **bufqp, const char *strategy, int flags)
 	(*bsp->bs_initfn)(bufq);
 
 out:
-	return 0;
+	return error;
 }
 
 void
