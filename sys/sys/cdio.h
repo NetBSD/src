@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.22 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: cdio.h,v 1.23 2005/12/26 18:41:36 perry Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -12,7 +12,7 @@ union msf_lba {
 		u_char second;
 		u_char frame;
 	} msf;
-	u_int32_t lba;
+	uint32_t lba;
 	u_char	addr[4];
 };
 

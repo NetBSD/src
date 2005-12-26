@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.37 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.38 2005/12/26 18:41:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -123,18 +123,18 @@ struct exec {
  */
 #define	N_GETMAGIC(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    (be32toh((u_int32_t)((ex).a_midmag))&0xffff) : ((ex).a_midmag))
+    (be32toh((uint32_t)((ex).a_midmag))&0xffff) : ((ex).a_midmag))
 #define	N_GETMAGIC2(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    (be32toh((u_int32_t)((ex).a_midmag))&0xffff) : (((ex).a_midmag) | 0x10000))
+    (be32toh((uint32_t)((ex).a_midmag))&0xffff) : (((ex).a_midmag) | 0x10000))
 #define	N_GETMID(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    ((be32toh((u_int32_t)((ex).a_midmag))>>16)&0x03ff) : MID_ZERO)
+    ((be32toh((uint32_t)((ex).a_midmag))>>16)&0x03ff) : MID_ZERO)
 #define	N_GETFLAG(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    ((be32toh((u_int32_t)((ex).a_midmag))>>26)&0x3f) : 0)
+    ((be32toh((uint32_t)((ex).a_midmag))>>26)&0x3f) : 0)
 #define	N_SETMAGIC(ex,mag,mid,flag) \
-    ((ex).a_midmag = htobe32((u_int32_t) \
+    ((ex).a_midmag = htobe32((uint32_t) \
     ((((flag)&0x3f)<<26)|(((mid)&0x03ff)<<16)|(((mag)&0xffff)))))
 
 #define	N_ALIGN(ex,x) \

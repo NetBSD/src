@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.39 2005/11/10 18:35:15 christos Exp $	*/
+/*	$NetBSD: shm.h,v 1.40 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -152,13 +152,13 @@ struct shminfo {
 /* Warning: 64-bit structure padding is needed here */
 struct shmid_ds_sysctl {
 	struct		ipc_perm_sysctl shm_perm;
-	u_int64_t	shm_segsz;
+	uint64_t	shm_segsz;
 	pid_t		shm_lpid;
 	pid_t		shm_cpid;
 	time_t		shm_atime;
 	time_t		shm_dtime;
 	time_t		shm_ctime;
-	u_int32_t	shm_nattch;
+	uint32_t	shm_nattch;
 };
 struct shm_sysctl_info {
 	struct	shminfo shminfo;

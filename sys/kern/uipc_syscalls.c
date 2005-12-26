@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.95 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.96 2005/12/26 18:45:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.95 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.96 2005/12/26 18:45:27 perry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -910,7 +910,7 @@ sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 			i = min(m->m_len, (valsize - op));
 			error = copyout(mtod(m, caddr_t), SCARG(uap, val), i);
 			op += i;
-			SCARG(uap, val) = ((u_int8_t *)SCARG(uap, val)) + i;
+			SCARG(uap, val) = ((uint8_t *)SCARG(uap, val)) + i;
 			m = m_free(m);
 		}
 		valsize = op;

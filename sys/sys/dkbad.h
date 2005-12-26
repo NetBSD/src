@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.h,v 1.14 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: dkbad.h,v 1.15 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -57,11 +57,11 @@
 
 struct dkbad {
 	int32_t   bt_csn;		/* cartridge serial number */
-	u_int16_t bt_mbz;		/* unused; should be 0 */
-	u_int16_t bt_flag;		/* -1 => alignment cartridge */
+	uint16_t bt_mbz;		/* unused; should be 0 */
+	uint16_t bt_flag;		/* -1 => alignment cartridge */
 	struct bt_bad {
-		u_int16_t bt_cyl;	/* cylinder number of bad sector */
-		u_int16_t bt_trksec;	/* track and sector number */
+		uint16_t bt_cyl;	/* cylinder number of bad sector */
+		uint16_t bt_trksec;	/* track and sector number */
 	} bt_bad[NBT_BAD];
 };
 

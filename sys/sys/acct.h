@@ -1,4 +1,4 @@
-/*	$NetBSD: acct.h,v 1.25 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: acct.h,v 1.26 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -44,7 +44,7 @@
  * exponent, 13 bit fraction ``floating point'' number.  Units are 1/AHZ
  * seconds.
  */
-typedef u_int16_t comp_t;
+typedef uint16_t comp_t;
 
 struct acct {
 	char	  ac_comm[10];	/* command name */
@@ -54,7 +54,7 @@ struct acct {
 	time_t	  ac_btime;	/* starting time */
 	uid_t	  ac_uid;	/* user id */
 	gid_t	  ac_gid;	/* group id */
-	u_int16_t ac_mem;	/* average memory usage */
+	uint16_t  ac_mem;	/* average memory usage */
 	comp_t	  ac_io;	/* count of IO blocks */
 	dev_t	  ac_tty;	/* controlling tty */
 
@@ -63,7 +63,7 @@ struct acct {
 #define	ACOMPAT	0x04		/* used compatibility mode */
 #define	ACORE	0x08		/* dumped core */
 #define	AXSIG	0x10		/* killed by a signal */
-	u_int8_t  ac_flag;	/* accounting flags */
+	uint8_t   ac_flag;	/* accounting flags */
 };
 
 /*

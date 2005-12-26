@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.120 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.121 2005/12/26 18:45:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.120 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.121 2005/12/26 18:45:27 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1248,7 +1248,7 @@ humanize_number(char *buf, size_t len, uint64_t bytes, const char *suffix,
        	/* prefixes are: (none), kilo, Mega, Giga, Tera, Peta, Exa */
 	const char *prefixes;
 	int		r;
-	u_int64_t	umax;
+	uint64_t	umax;
 	size_t		i, suffixlen;
 
 	if (buf == NULL || suffix == NULL)

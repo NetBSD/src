@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.52 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.53 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -90,9 +90,9 @@ struct stat {
 	off_t	  st_size;		/* file size, in bytes */
 	blkcnt_t  st_blocks;		/* blocks allocated for file */
 	blksize_t st_blksize;		/* optimal blocksize for I/O */
-	u_int32_t st_flags;		/* user defined flags for file */
-	u_int32_t st_gen;		/* file generation number */
-	u_int32_t st_spare[2];
+	uint32_t  st_flags;		/* user defined flags for file */
+	uint32_t  st_gen;		/* file generation number */
+	uint32_t  st_spare[2];
 };
 
 #undef __STATPAD

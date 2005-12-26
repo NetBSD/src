@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.72 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.73 2005/12/26 18:45:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.72 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.73 2005/12/26 18:45:27 perry Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -523,7 +523,7 @@ sysctl_hw_diskstats(SYSCTLFN_ARGS)
  * and the media size the size of the device in DEV_BSIZE sectors.
  */
 int
-bounds_check_with_mediasize(struct buf *bp, int secsize, u_int64_t mediasize)
+bounds_check_with_mediasize(struct buf *bp, int secsize, uint64_t mediasize)
 {
 	int64_t sz;
 

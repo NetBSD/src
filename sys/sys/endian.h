@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.18 2005/12/24 23:44:14 perry Exp $	*/
+/*	$NetBSD: endian.h,v 1.19 2005/12/26 18:41:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -137,29 +137,29 @@ __END_DECLS
 #define htobe16(x)	(x)
 #define htobe32(x)	(x)
 #define htobe64(x)	(x)
-#define htole16(x)	bswap16((u_int16_t)(x))
-#define htole32(x)	bswap32((u_int32_t)(x))
-#define htole64(x)	bswap64((u_int64_t)(x))
+#define htole16(x)	bswap16((uint16_t)(x))
+#define htole32(x)	bswap32((uint32_t)(x))
+#define htole64(x)	bswap64((uint64_t)(x))
 
 #define HTOBE16(x)	(void) (x)
 #define HTOBE32(x)	(void) (x)
 #define HTOBE64(x)	(void) (x)
-#define HTOLE16(x)	(x) = bswap16((u_int16_t)(x))
-#define HTOLE32(x)	(x) = bswap32((u_int32_t)(x))
-#define HTOLE64(x)	(x) = bswap64((u_int64_t)(x))
+#define HTOLE16(x)	(x) = bswap16((uint16_t)(x))
+#define HTOLE32(x)	(x) = bswap32((uint32_t)(x))
+#define HTOLE64(x)	(x) = bswap64((uint64_t)(x))
 
 #else	/* LITTLE_ENDIAN */
 
-#define htobe16(x)	bswap16((u_int16_t)(x))
-#define htobe32(x)	bswap32((u_int32_t)(x))
-#define htobe64(x)	bswap64((u_int64_t)(x))
+#define htobe16(x)	bswap16((uint16_t)(x))
+#define htobe32(x)	bswap32((uint32_t)(x))
+#define htobe64(x)	bswap64((uint64_t)(x))
 #define htole16(x)	(x)
 #define htole32(x)	(x)
 #define htole64(x)	(x)
 
-#define HTOBE16(x)	(x) = bswap16((u_int16_t)(x))
-#define HTOBE32(x)	(x) = bswap32((u_int32_t)(x))
-#define HTOBE64(x)	(x) = bswap64((u_int64_t)(x))
+#define HTOBE16(x)	(x) = bswap16((uint16_t)(x))
+#define HTOBE32(x)	(x) = bswap32((uint32_t)(x))
+#define HTOBE64(x)	(x) = bswap64((uint64_t)(x))
 #define HTOLE16(x)	(void) (x)
 #define HTOLE32(x)	(void) (x)
 #define HTOLE64(x)	(void) (x)

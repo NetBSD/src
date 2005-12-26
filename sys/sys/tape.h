@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.h,v 1.2 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: tape.h,v 1.3 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,18 +41,18 @@ struct tape_sysctl {
 	char		name[TAPENAMELEN];
 	int32_t		busy;
 	int32_t		pad;
-	u_int64_t	xfer;
-	u_int64_t	bytes;
-	u_int32_t	attachtime_sec;
-	u_int32_t	attachtime_usec;
-	u_int32_t	timestamp_sec;
-	u_int32_t	timestamp_usec;
-	u_int32_t	time_sec;
-	u_int32_t	time_usec;
-	u_int64_t	rxfer;
-	u_int64_t	rbytes;
-	u_int64_t	wxfer;
-	u_int64_t	wbytes;
+	uint64_t	xfer;
+	uint64_t	bytes;
+	uint32_t	attachtime_sec;
+	uint32_t	attachtime_usec;
+	uint32_t	timestamp_sec;
+	uint32_t	timestamp_usec;
+	uint32_t	time_sec;
+	uint32_t	time_usec;
+	uint64_t	rxfer;
+	uint64_t	rbytes;
+	uint64_t	wxfer;
+	uint64_t	wbytes;
 };
 
 /*
@@ -63,10 +63,10 @@ struct tape_sysctl {
 struct tape {
 	char		*name; 		/* name of drive */
 	int		busy;		/* drive is busy */
-	u_int64_t       rxfer;		/* total number of read transfers */
-	u_int64_t       wxfer;		/* total number of write transfers */
-	u_int64_t       rbytes;		/* total bytes read */
-	u_int64_t       wbytes;		/* total bytes written */
+	uint64_t       rxfer;		/* total number of read transfers */
+	uint64_t       wxfer;		/* total number of write transfers */
+	uint64_t       rbytes;		/* total bytes read */
+	uint64_t       wbytes;		/* total bytes written */
 	struct timeval  attachtime;	/* time tape was attached */
 	struct timeval  timestamp;	/* timestamp of last unbusy */
 	struct timeval  time;		/* total time spent busy */

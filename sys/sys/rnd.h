@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.18 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: rnd.h,v 1.19 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,33 +78,33 @@
 
 typedef struct
 {
-	u_int32_t	poolsize;
-	u_int32_t 	threshold;
-	u_int32_t	maxentropy;
+	uint32_t	poolsize;
+	uint32_t 	threshold;
+	uint32_t	maxentropy;
 
-	u_int32_t	added;
-	u_int32_t	curentropy;
-	u_int32_t	removed;
-	u_int32_t	discarded;
-	u_int32_t	generated;
+	uint32_t	added;
+	uint32_t	curentropy;
+	uint32_t	removed;
+	uint32_t	discarded;
+	uint32_t	generated;
 } rndpoolstat_t;
 
 
 typedef struct {
-	u_int32_t	cursor;		/* current add point in the pool */
-	u_int32_t	rotate;		/* how many bits to rotate by */
+	uint32_t	cursor;		/* current add point in the pool */
+	uint32_t	rotate;		/* how many bits to rotate by */
 	rndpoolstat_t	stats;		/* current statistics */
-	u_int32_t	pool[RND_POOLWORDS]; /* random pool data */
+	uint32_t	pool[RND_POOLWORDS]; /* random pool data */
 } rndpool_t;
 
 typedef struct {
 	char		name[16];	/* device name */
-	u_int32_t	last_time;	/* last time recorded */
-	u_int32_t	last_delta;	/* last delta value */
-	u_int32_t	last_delta2;	/* last delta2 value */
-	u_int32_t	total;		/* entropy from this source */
-	u_int32_t	type;		/* type */
-	u_int32_t	flags;		/* flags */
+	uint32_t	last_time;	/* last time recorded */
+	uint32_t	last_delta;	/* last delta value */
+	uint32_t	last_delta2;	/* last delta2 value */
+	uint32_t	total;		/* entropy from this source */
+	uint32_t	type;		/* type */
+	uint32_t	flags;		/* flags */
 	void		*state;		/* state informaiton */
 } rndsource_t;
 
@@ -145,22 +145,22 @@ struct __rndsource_element {
 
 void		rndpool_init(rndpool_t *);
 void		rndpool_init_global(void);
-u_int32_t	rndpool_get_entropy_count(rndpool_t *);
+uint32_t	rndpool_get_entropy_count(rndpool_t *);
 void		rndpool_get_stats(rndpool_t *, void *, int);
-void		rndpool_increment_entropy_count(rndpool_t *, u_int32_t);
-u_int32_t	*rndpool_get_pool(rndpool_t *);
-u_int32_t	rndpool_get_poolsize(void);
-void		rndpool_add_data(rndpool_t *, void *, u_int32_t, u_int32_t);
-u_int32_t	rndpool_extract_data(rndpool_t *, void *, u_int32_t,
-		    u_int32_t);
+void		rndpool_increment_entropy_count(rndpool_t *, uint32_t);
+uint32_t	*rndpool_get_pool(rndpool_t *);
+uint32_t	rndpool_get_poolsize(void);
+void		rndpool_add_data(rndpool_t *, void *, uint32_t, uint32_t);
+uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t,
+		    uint32_t);
 
 void		rnd_init(void);
-void		rnd_add_uint32(rndsource_element_t *, u_int32_t);
-void		rnd_add_data(rndsource_element_t *, void *, u_int32_t,
-		    u_int32_t);
-u_int32_t	rnd_extract_data(void *, u_int32_t, u_int32_t);
+void		rnd_add_uint32(rndsource_element_t *, uint32_t);
+void		rnd_add_data(rndsource_element_t *, void *, uint32_t,
+		    uint32_t);
+uint32_t	rnd_extract_data(void *, uint32_t, uint32_t);
 void		rnd_attach_source(rndsource_element_t *, char *,
-		    u_int32_t, u_int32_t);
+		    uint32_t, uint32_t);
 void		rnd_detach_source(rndsource_element_t *);
 
 #endif /* _KERNEL */
@@ -171,8 +171,8 @@ void		rnd_detach_source(rndsource_element_t *);
  * return "count" random entries, starting at "start"
  */
 typedef struct {
-	u_int32_t	start;
-	u_int32_t	count;
+	uint32_t	start;
+	uint32_t	count;
 	rndsource_t	source[RND_MAXSTATCOUNT];
 } rndstat_t;
 
@@ -191,18 +191,18 @@ typedef struct {
  */
 typedef struct {
 	char		name[16];	/* the name we are adjusting */
-	u_int32_t	type;		/* the type of device we want */
-	u_int32_t	flags;		/* flags to set or clear */
-	u_int32_t	mask;		/* mask for the flags we are setting */
+	uint32_t	type;		/* the type of device we want */
+	uint32_t	flags;		/* flags to set or clear */
+	uint32_t	mask;		/* mask for the flags we are setting */
 } rndctl_t;
 
 typedef struct {
-	u_int32_t	len;
-	u_int32_t	entropy;
+	uint32_t	len;
+	uint32_t	entropy;
 	u_char		data[RND_POOLWORDS * 4];
 } rnddata_t;
 
-#define	RNDGETENTCNT	_IOR('R',  101, u_int32_t) /* get entropy count */
+#define	RNDGETENTCNT	_IOR('R',  101, uint32_t) /* get entropy count */
 #define	RNDGETSRCNUM	_IOWR('R', 102, rndstat_t) /* get rnd source info */
 #define	RNDGETSRCNAME	_IOWR('R', 103, rndstat_name_t) /* get src by name */
 #define	RNDCTL		_IOW('R',  104, rndctl_t)  /* set/clear source flags */

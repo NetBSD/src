@@ -1,4 +1,4 @@
-/* $NetBSD: radioio.h,v 1.1 2002/01/01 21:51:39 augustss Exp $ */
+/* $NetBSD: radioio.h,v 1.2 2005/12/26 18:41:36 perry Exp $ */
 /* $OpenBSD: radioio.h,v 1.2 2001/12/05 10:27:05 mickey Exp $ */
 /* $RuOBSD: radioio.h,v 1.4 2001/10/18 16:51:36 pva Exp $ */
 
@@ -44,8 +44,8 @@ struct radio_info {
 	int	stereo;
 	int	rfreq;	/* reference frequency */
 	int	lock;	/* locking field strength during an automatic search */
-	u_int32_t	freq;	/* in kHz */
-	u_int32_t	caps;	/* card capabilities */
+	uint32_t	freq;	/* in kHz */
+	uint32_t	caps;	/* card capabilities */
 #define RADIO_CAPS_DETECT_STEREO	(1<<0)
 #define RADIO_CAPS_DETECT_SIGNAL	(1<<1)
 #define RADIO_CAPS_SET_MONO		(1<<2)
@@ -56,7 +56,7 @@ struct radio_info {
 #define RADIO_CAPS_RESERVED1		(1<<7)
 #define RADIO_CAPS_RESERVED2		(0xFF<<8)
 #define RADIO_CARD_TYPE			(0xFF<<16)
-	u_int32_t	info;
+	uint32_t	info;
 #define RADIO_INFO_STEREO		(1<<0)
 #define RADIO_INFO_SIGNAL		(1<<1)
 };

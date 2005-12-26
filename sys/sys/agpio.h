@@ -1,4 +1,4 @@
-/*	$NetBSD: agpio.h,v 1.4 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: agpio.h,v 1.5 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -71,14 +71,14 @@
 #define AGPIOC_UNBIND     _IOW (AGPIOC_BASE, 9, agp_unbind)
 
 typedef struct _agp_version {
-	u_int16_t major;
-	u_int16_t minor;
+	uint16_t major;
+	uint16_t minor;
 } agp_version;
 
 typedef struct _agp_info {
 	agp_version version;	/* version of the driver        */
-	u_int32_t bridge_id;	/* bridge vendor/device         */
-	u_int32_t agp_mode;	/* mode info of bridge          */
+	uint32_t bridge_id;	/* bridge vendor/device         */
+	uint32_t agp_mode;	/* mode info of bridge          */
 	off_t aper_base;	/* base of aperture             */
 	size_t aper_size;	/* size of aperture             */
 	size_t pg_total;	/* max pages (swap + system)    */
@@ -87,7 +87,7 @@ typedef struct _agp_info {
 } agp_info;
 
 typedef struct _agp_setup {
-	u_int32_t agp_mode;		/* mode info of bridge          */
+	uint32_t agp_mode;		/* mode info of bridge          */
 } agp_setup;
 
 #if 0
@@ -110,7 +110,7 @@ typedef struct _agp_region {
 typedef struct _agp_allocate {
 	int key;		/* tag of allocation            */
 	size_t pg_count;	/* number of pages              */
-	u_int32_t type;		/* 0 == normal, other devspec   */
+	uint32_t type;		/* 0 == normal, other devspec   */
    	paddr_t physical;	/* device specific (some devices
 				 * need a phys address of the
 				 * actual page behind the gatt
@@ -124,7 +124,7 @@ typedef struct _agp_bind {
 
 typedef struct _agp_unbind {
 	int key;		/* tag of allocation            */
-	u_int32_t priority;	/* priority for paging out      */
+	uint32_t priority;	/* priority for paging out      */
 } agp_unbind;
 
 #endif /* !_SYS_AGPIO_H_ */
