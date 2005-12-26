@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.23 2005/08/14 12:01:26 yamt Exp $
+.\"	$NetBSD: disk.9,v 1.24 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -82,11 +82,11 @@ struct disk {
 	 * on certain types of disks.
 	 */
 	int	  dk_busy;	/* busy counter */
-	u_int64_t dk_rxfer;	/* total number of read transfers */
-	u_int64_t dk_wxfer;	/* total number of write transfers */
-	u_int64_t dk_seek;	/* total independent seek operations */
-	u_int64_t dk_rbytes;	/* total bytes read */
-	u_int64_t dk_wbytes;	/* total bytes written */
+	uint64_t dk_rxfer;	/* total number of read transfers */
+	uint64_t dk_wxfer;	/* total number of write transfers */
+	uint64_t dk_seek;	/* total independent seek operations */
+	uint64_t dk_rbytes;	/* total bytes read */
+	uint64_t dk_wbytes;	/* total bytes written */
 	struct timeval	dk_attachtime;	/* time disk was attached */
 	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
 	struct timeval	dk_time;	/* total time spent busy */

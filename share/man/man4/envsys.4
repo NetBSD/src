@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.16 2004/05/11 22:55:00 wiz Exp $
+.\"	$NetBSD: envsys.4,v 1.17 2005/12/26 19:48:12 perry Exp $
 .\"
 .\"
 .\" Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -150,13 +150,13 @@ This command makes use of:
 typedef struct envsys_tre_data {
 	u_int sensor;
 	union {				/* all data is given */
-		u_int32_t data_us;	/* in microKelvins, */
+		uint32_t data_us;	/* in microKelvins, */
 		int32_t data_s;		/* rpms, volts, amps, */
 	} cur, min, max, avg;		/* ohms, watts, etc */
 					/* see units below */
 
-	u_int32_t	warnflags;	/* warning flags */
-	u_int32_t	validflags;	/* sensor valid flags */
+	uint32_t	warnflags;	/* warning flags */
+	uint32_t	validflags;	/* sensor valid flags */
 	u_int		units;		/* type of sensor */
 } envsys_tre_data_t;
 .Ed
@@ -233,7 +233,7 @@ typedef struct envsys_basic_info {
 	char	desc[33];	/* sensor description */
 	u_int	rfact;		/* for volts, (int)(factor x 10^4) */
 	u_int	rpms;		/* for fans */
-	u_int32_t validflags;	/* sensor valid flags */
+	uint32_t validflags;	/* sensor valid flags */
 } envsys_basic_info_t;
 .Ed
 .Pp

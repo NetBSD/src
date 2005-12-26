@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.9,v 1.14 2005/09/10 22:30:33 wiz Exp $
+.\"	$NetBSD: wdc.9,v 1.15 2005/12/26 19:48:13 perry Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -86,8 +86,8 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_SINGLE_DRIVE 0x0800
 #define WDC_CAPABILITY_NOIRQ  0x1000
 #define WDC_CAPABILITY_SELECT  0x2000
-        u_int8_t      pio_mode;
-        u_int8_t      dma_mode;
+        uint8_t      pio_mode;
+        uint8_t      dma_mode;
         int nchannels;
         struct channel_softc *channels;
 
@@ -114,15 +114,15 @@ struct channel_softc { /* Per channel data */
         int ch_flags;
 #define WDCF_ACTIVE   0x01
 #define WDCF_IRQ_WAIT 0x10
-        u_int8_t ch_status;
-        u_int8_t ch_error;
+        uint8_t ch_status;
+        uint8_t ch_error;
         struct ata_drive_datas ch_drive[2];
         struct channel_queue *ch_queue;
 };
 
 struct ata_drive_datas {
-    u_int8_t drive;
-    u_int8_t drive_flags;
+    uint8_t drive;
+    uint8_t drive_flags;
 #define DRIVE_ATA   0x01
 #define DRIVE_ATAPI 0x02
 #define DRIVE (DRIVE_ATA|DRIVE_ATAPI)
@@ -130,10 +130,10 @@ struct ata_drive_datas {
 #define DRIVE_DMA   0x08
 #define DRIVE_UDMA  0x10
 #define DRIVE_MODE 0x20
-    u_int8_t PIO_mode;
-    u_int8_t DMA_mode;
-    u_int8_t UDMA_mode;
-    u_int8_t state;
+    uint8_t PIO_mode;
+    uint8_t DMA_mode;
+    uint8_t UDMA_mode;
+    uint8_t state;
 
     struct device *drv_softc;
     void* chnl_softc;

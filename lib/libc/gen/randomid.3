@@ -1,4 +1,4 @@
-.\"	$NetBSD: randomid.3,v 1.5 2003/12/10 05:22:18 itojun Exp $
+.\"	$NetBSD: randomid.3,v 1.6 2005/12/26 19:40:14 perry Exp $
 .\"
 .\" Copyright (C) 2003 WIDE Project.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .In sys/types.h
 .In randomid.h
-.Ft u_int32_t
+.Ft uint32_t
 .Fn randomid "randomid_t ctx"
 .Ft randomid_t
 .Fn randomid_new "int bits" "long timeo"
@@ -113,7 +113,7 @@ It must not be shared among multiple data streams with different usage.
 #include \*[Lt]sys/types.h\*[Gt]
 #include \*[Lt]randomid.h\*[Gt]
 
-u_int32_t
+uint32_t
 genid(void)
 {
 	static randomid_t ctx = NULL;
