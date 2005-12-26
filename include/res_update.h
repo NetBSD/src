@@ -1,4 +1,4 @@
-/*	$NetBSD: res_update.h,v 1.2 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: res_update.h,v 1.3 2005/12/26 19:01:47 perry Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -38,7 +38,7 @@ struct ns_updrec {
 	char *		r_dname;	/* owner of the RR */
 	ns_class	r_class;	/* class number */
 	ns_type		r_type;		/* type number */
-	u_int32_t	r_ttl;		/* time to live */
+	uint32_t	r_ttl;		/* time to live */
 	u_char *	r_data;		/* rdata fields as text string */
 	u_int		r_size;		/* size of r_data field */
 	int		r_opcode;	/* type of operation */

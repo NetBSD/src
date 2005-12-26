@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.h,v 1.1 2003/09/09 22:10:33 itojun Exp $	*/
+/*	$NetBSD: randomid.h,v 1.2 2005/12/26 19:01:47 perry Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -73,7 +73,7 @@ struct randomid_ctx;
 
 typedef struct randomid_ctx *randomid_t;
 
-extern u_int32_t randomid(randomid_t);
+extern uint32_t randomid(randomid_t);
 extern randomid_t randomid_new(int, long);
 extern void randomid_delete(randomid_t);
 

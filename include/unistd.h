@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.109 2005/12/24 19:16:02 perry Exp $	*/
+/*	$NetBSD: unistd.h,v 1.110 2005/12/26 19:01:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -315,7 +315,7 @@ mode_t	 getmode(const void *, mode_t);
 int	 getsubopt(char **, char * const *, char **);
 __aconst char *getusershell(void);
 int	 initgroups(const char *, gid_t);
-int	 iruserok(u_int32_t, int, const char *, const char *);
+int	 iruserok(uint32_t, int, const char *, const char *);
 int      issetugid(void);
 int	 nfssvc(int, void *);
 int	 profil(char *, size_t, u_long, u_int);

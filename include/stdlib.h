@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.74 2005/12/24 23:04:05 perry Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.75 2005/12/26 19:01:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -239,7 +239,7 @@ void	*alloca(int);     /* built-in for gcc */
 void	*alloca(size_t); 
 #endif /* __GNUC__ */ 
 
-u_int32_t arc4random(void);
+uint32_t arc4random(void);
 void	 arc4random_stir(void);
 void	 arc4random_addrandom(u_char *, int);
 char	*getbsize(int *, long *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.h,v 1.9 2005/09/24 16:40:01 christos Exp $	*/
+/*	$NetBSD: talkd.h,v 1.10 2005/12/26 19:01:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -56,7 +56,7 @@
  * 4.3 compat sockaddr
  */
 struct talkd_sockaddr {
-	u_int16_t	sa_family;	/* address family */
+	uint16_t	sa_family;	/* address family */
 	char		sa_data[14];	/* up to 14 bytes of direct address */
 };
 
@@ -68,7 +68,7 @@ typedef struct {
 	u_char	  type;			/* request type, see below */
 	u_char	  answer;		/* not used */
 	u_char	  pad;
-	u_int32_t id_num;		/* message id */
+	uint32_t id_num;		/* message id */
 	struct	  talkd_sockaddr addr;	/* old (4.3) style */
 	struct	  talkd_sockaddr ctl_addr;/* old (4.3) style */
 	int32_t	  pid;			/* caller's process id */
@@ -87,7 +87,7 @@ typedef struct {
 	u_char	  type;		/* type of request message, see below */
 	u_char	  answer;	/* respose to request message, see below */
 	u_char	  pad;
-	u_int32_t id_num;	/* message id */
+	uint32_t id_num;	/* message id */
 	struct	  talkd_sockaddr addr; /* address for establishing conversation */
 } CTL_RESPONSE;
 

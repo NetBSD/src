@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.21 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: db.h,v 1.22 2005/12/26 19:01:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -44,11 +44,11 @@
 #define	RET_SPECIAL	 1
 
 #define	MAX_PAGE_NUMBER	0xffffffff	/* >= # of pages in a file */
-typedef u_int32_t	pgno_t;
+typedef uint32_t	pgno_t;
 #define	MAX_PAGE_OFFSET	65535		/* >= # of bytes in a page */
-typedef u_int16_t	indx_t;
+typedef uint16_t	indx_t;
 #define	MAX_REC_NUMBER	0xffffffff	/* >= # of records in a tree */
-typedef u_int32_t	recno_t;
+typedef uint32_t	recno_t;
 
 /* Key/data structure -- a Data-Base Thang. */
 typedef struct {
@@ -134,7 +134,7 @@ typedef struct {
 	u_int	ffactor;	/* fill factor */
 	u_int	nelem;		/* number of elements */
 	u_int	cachesize;	/* bytes to cache */
-	u_int32_t		/* hash function */
+	uint32_t		/* hash function */
 		(*hash)(const void *, size_t);
 	int	lorder;		/* byte order */
 } HASHINFO;
@@ -161,7 +161,7 @@ typedef struct {
  *	P_32_COPY	swap from one location to another
  */
 #define	M_32_SWAP(a) {							\
-	u_int32_t _tmp = a;						\
+	uint32_t _tmp = a;						\
 	((char *)(void *)&a)[0] = ((char *)(void *)&_tmp)[3];		\
 	((char *)(void *)&a)[1] = ((char *)(void *)&_tmp)[2];		\
 	((char *)(void *)&a)[2] = ((char *)(void *)&_tmp)[1];		\
@@ -192,7 +192,7 @@ typedef struct {
  *	P_16_COPY	swap from one location to another
  */
 #define	M_16_SWAP(a) {							\
-	u_int16_t _tmp = a;						\
+	uint16_t _tmp = a;						\
 	((char *)(void *)&a)[0] = ((char *)(void *)&_tmp)[1];		\
 	((char *)(void *)&a)[1] = ((char *)(void *)&_tmp)[0];		\
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.16 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: auth.h,v 1.17 2005/12/26 19:01:47 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -69,12 +69,10 @@ enum auth_stat {
 	AUTH_FAILED=7			/* some unknown reason */
 };
 
-typedef u_int32_t u_int32;	/* 32-bit unsigned integers */
-
 union des_block {
 	struct {
-		u_int32 high;
-		u_int32 low;
+		uint32_t high;
+		uint32_t low;
 	} key;
 	char c[8];
 };

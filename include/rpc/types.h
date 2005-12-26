@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.14 2004/12/30 04:58:40 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.15 2005/12/26 19:01:47 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -43,11 +43,11 @@
 typedef int32_t bool_t;
 typedef int32_t enum_t;
 
-typedef u_int32_t rpcprog_t;
-typedef u_int32_t rpcvers_t;
-typedef u_int32_t rpcproc_t;
-typedef u_int32_t rpcprot_t;
-typedef u_int32_t rpcport_t;
+typedef uint32_t rpcprog_t;
+typedef uint32_t rpcvers_t;
+typedef uint32_t rpcproc_t;
+typedef uint32_t rpcprot_t;
+typedef uint32_t rpcport_t;
 typedef   int32_t rpc_inline_t;
 
 #define __dontcare__	-1

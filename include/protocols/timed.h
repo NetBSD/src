@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.h,v 1.9 2005/07/05 21:57:08 he Exp $	*/
+/*	$NetBSD: timed.h,v 1.10 2005/12/26 19:01:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,9 +42,9 @@
 #define ANYADDR 	NULL
 
 struct tsp {
-	u_int8_t tsp_type;
-	u_int8_t tsp_vers;
-	u_int16_t tsp_seq;
+	uint8_t tsp_type;
+	uint8_t tsp_vers;
+	uint16_t tsp_seq;
 	union {
 		struct {
 			int32_t tv_sec;

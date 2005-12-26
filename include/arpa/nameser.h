@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.18 2005/02/06 04:41:40 perry Exp $	*/
+/*	$NetBSD: nameser.h,v 1.19 2005/12/26 19:01:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -84,9 +84,9 @@
 #define NS_HFIXEDSZ	12	/* #/bytes of fixed data in header */
 #define NS_QFIXEDSZ	4	/* #/bytes of fixed data in query */
 #define NS_RRFIXEDSZ	10	/* #/bytes of fixed data in r record */
-#define NS_INT32SZ	4	/* #/bytes of data in a u_int32_t */
-#define NS_INT16SZ	2	/* #/bytes of data in a u_int16_t */
-#define NS_INT8SZ	1	/* #/bytes of data in a u_int8_t */
+#define NS_INT32SZ	4	/* #/bytes of data in a uint32_t */
+#define NS_INT16SZ	2	/* #/bytes of data in a uint16_t */
+#define NS_INT8SZ	1	/* #/bytes of data in a uint8_t */
 #define NS_INADDRSZ	4	/* IPv4 T_A */
 #define NS_IN6ADDRSZ	16	/* IPv6 T_AAAA */
 #define NS_CMPRSFLGS	0xc0	/* Flag bits indicating name compression. */
@@ -114,7 +114,7 @@ typedef enum __ns_sect {
  */
 typedef struct __ns_msg {
 	const u_char	*_msg, *_eom;
-	u_int16_t	_id, _flags, _counts[ns_s_max];
+	uint16_t	_id, _flags, _counts[ns_s_max];
 	const u_char	*_sections[ns_s_max];
 	ns_sect		_sect;
 	int		_rrnum;
@@ -138,10 +138,10 @@ extern struct _ns_flagdata _ns_flagdata[];
  */
 typedef	struct __ns_rr {
 	char		name[NS_MAXDNAME];
-	u_int16_t	type;
-	u_int16_t	rr_class;
-	u_int32_t	ttl;
-	u_int16_t	rdlength;
+	uint16_t	type;
+	uint16_t	rr_class;
+	uint32_t	ttl;
+	uint16_t	rdlength;
 	const u_char *	rdata;
 } ns_rr;
 
@@ -437,24 +437,24 @@ typedef enum __ns_cert_types {
  */
 #define NS_GET16(s, cp) do { \
 	const u_char *t_cp = (const u_char *)(cp); \
-	(s) = ((u_int16_t)t_cp[0] << 8) \
-	    | ((u_int16_t)t_cp[1]) \
+	(s) = ((uint16_t)t_cp[0] << 8) \
+	    | ((uint16_t)t_cp[1]) \
 	    ; \
 	(cp) += NS_INT16SZ; \
 } while (/*CONSTCOND*/0)
 
 #define NS_GET32(l, cp) do { \
 	const u_char *t_cp = (const u_char *)(cp); \
-	(l) = ((u_int32_t)t_cp[0] << 24) \
-	    | ((u_int32_t)t_cp[1] << 16) \
-	    | ((u_int32_t)t_cp[2] << 8) \
-	    | ((u_int32_t)t_cp[3]) \
+	(l) = ((uint32_t)t_cp[0] << 24) \
+	    | ((uint32_t)t_cp[1] << 16) \
+	    | ((uint32_t)t_cp[2] << 8) \
+	    | ((uint32_t)t_cp[3]) \
 	    ; \
 	(cp) += NS_INT32SZ; \
 } while (/*CONSTCOND*/0)
 
 #define NS_PUT16(s, cp) do { \
-	u_int32_t t_s = (u_int32_t)(s); \
+	uint32_t t_s = (uint32_t)(s); \
 	u_char *t_cp = (u_char *)(cp); \
 	*t_cp++ = t_s >> 8; \
 	*t_cp   = t_s; \
@@ -462,7 +462,7 @@ typedef enum __ns_cert_types {
 } while (/*CONSTCOND*/0)
 
 #define NS_PUT32(l, cp) do { \
-	u_int32_t t_l = (u_int32_t)(l); \
+	uint32_t t_l = (uint32_t)(l); \
 	u_char *t_cp = (u_char *)(cp); \
 	*t_cp++ = t_l >> 24; \
 	*t_cp++ = t_l >> 16; \
@@ -512,10 +512,10 @@ typedef enum __ns_cert_types {
 
 __BEGIN_DECLS
 int		ns_msg_getflag(ns_msg, int);
-u_int16_t	ns_get16(const u_char *);
-u_int32_t	ns_get32(const u_char *);
-void		ns_put16(u_int16_t, u_char *);
-void		ns_put32(u_int32_t, u_char *);
+uint16_t	ns_get16(const u_char *);
+uint32_t	ns_get32(const u_char *);
+void		ns_put16(uint16_t, u_char *);
+void		ns_put32(uint32_t, u_char *);
 int		ns_initparse(const u_char *, int, ns_msg *);
 int		ns_skiprr(const u_char *, const u_char *, ns_sect, int);
 int		ns_parserr(ns_msg *, ns_sect, int, ns_rr *);
@@ -527,7 +527,7 @@ int		ns_sprintrrf(const u_char *, size_t, const char *,
 				  char *, size_t);
 int		ns_format_ttl(u_long, char *, size_t);
 int		ns_parse_ttl(const char *, u_long *);
-u_int32_t	ns_datetosecs(const char *cp, int *errp);
+uint32_t	ns_datetosecs(const char *cp, int *errp);
 int		ns_name_ntol(const u_char *, u_char *, size_t);
 int		ns_name_ntop(const u_char *, char *, size_t);
 int		ns_name_pton(const char *, u_char *, size_t);
