@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.26 2005/12/13 08:24:30 yamt Exp $ */
+/* $NetBSD: xbd.c,v 1.27 2005/12/26 10:36:47 yamt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.26 2005/12/13 08:24:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.27 2005/12/26 10:36:47 yamt Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -1522,7 +1522,7 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct	xbd_softc *xs;
 	struct	dk_softc *dksc;
-	int	ret;
+	int	error;
 	struct	disk *dk;
 
 	DPRINTF_FOLLOW(("xbdioctl(%d, %08lx, %p, %d, %p)\n",
@@ -1531,13 +1531,18 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	dksc = &xs->sc_dksc;
 	dk = &dksc->sc_dkdev;
 
+	KASSERT(bufq == dksc->sc_bufq);
+
 	switch (cmd) {
+	case DIOCSSTRATEGY:
+		error = EOPNOTSUPP;
+		break;
 	default:
-		ret = dk_ioctl(xs->sc_di, dksc, dev, cmd, data, flag, l);
+		error = dk_ioctl(xs->sc_di, dksc, dev, cmd, data, flag, l);
 		break;
 	}
 
-	return ret;
+	return error;
 }
 
 int
