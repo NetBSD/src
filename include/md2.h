@@ -1,4 +1,4 @@
-/*	$NetBSD: md2.h,v 1.5 2005/09/25 00:48:21 xtraeme Exp $	*/
+/*	$NetBSD: md2.h,v 1.6 2005/12/26 19:01:47 perry Exp $	*/
 
 #ifndef _MD2_H_
 #define _MD2_H_
@@ -11,7 +11,7 @@
 
 /* MD2 context. */
 typedef struct MD2Context {
-	u_int32_t i;
+	uint32_t i;
 	unsigned char C[16];		/* checksum */
 	unsigned char X[48];		/* input buffer */
 } MD2_CTX;

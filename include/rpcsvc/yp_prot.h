@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_prot.h,v 1.14 2005/02/03 04:39:33 perry Exp $	*/
+/*	$NetBSD: yp_prot.h,v 1.15 2005/12/26 19:01:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -237,7 +237,7 @@ enum ypbind_resptype {
 /* network order, of course */
 struct ypbind_binding {
 	struct in_addr	ypbind_binding_addr;
-	u_int16_t	ypbind_binding_port;
+	uint16_t	ypbind_binding_port;
 };
 
 struct ypbind_resp {

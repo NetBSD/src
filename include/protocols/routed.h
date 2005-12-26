@@ -1,4 +1,4 @@
-/*	$NetBSD: routed.h,v 1.13 2003/08/07 09:44:13 agc Exp $	*/
+/*	$NetBSD: routed.h,v 1.14 2005/12/26 19:01:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1993
@@ -60,44 +60,44 @@ extern "C" {
 #if RIPVERSION == 1
 /* We include the V2 fields to get the right size */
 struct netinfo {
-	u_int16_t   rip_family;
-	u_int16_t   rip_tag;
-	u_int32_t   rip_dst;		/* destination net/host */
-	u_int32_t   rip_dst_mask;	/* destination mask (V2 only) */
-	u_int32_t   rip_router;		/* next host (V2 only) */
-	u_int32_t   rip_metric;		/* cost of route */
+	uint16_t   rip_family;
+	uint16_t   rip_tag;
+	uint32_t   rip_dst;		/* destination net/host */
+	uint32_t   rip_dst_mask;	/* destination mask (V2 only) */
+	uint32_t   rip_router;		/* next host (V2 only) */
+	uint32_t   rip_metric;		/* cost of route */
 };
 #else
 struct netinfo {
-	u_int16_t   n_family;
+	uint16_t   n_family;
 #define	    RIP_AF_INET	    htons(AF_INET)
 #define	    RIP_AF_UNSPEC   0
 #define	    RIP_AF_AUTH	    0xffff
-	u_int16_t   n_tag;		/* optional in RIPv2 */
-	u_int32_t   n_dst;		/* destination net or host */
+	uint16_t   n_tag;		/* optional in RIPv2 */
+	uint32_t   n_dst;		/* destination net or host */
 #define	    RIP_DEFAULT	    0
-	u_int32_t   n_mask;		/* netmask in RIPv2 */
-	u_int32_t   n_nhop;		/* optional next hop in RIPv2 */
-	u_int32_t   n_metric;		/* cost of route */
+	uint32_t   n_mask;		/* netmask in RIPv2 */
+	uint32_t   n_nhop;		/* optional next hop in RIPv2 */
+	uint32_t   n_metric;		/* cost of route */
 };
 #endif
 
 /* RIPv2 authentication */
 struct netauth {
-	u_int16_t   a_family;		/* always RIP_AF_AUTH */
-	u_int16_t   a_type;
+	uint16_t   a_family;		/* always RIP_AF_AUTH */
+	uint16_t   a_type;
 #define	    RIP_AUTH_NONE   0
 #define	    RIP_AUTH_PW	    htons(2)	/* password type */
 #define	    RIP_AUTH_MD5    htons(3)	/* Keyed MD5 */
 	union {
 #define	    RIP_AUTH_PW_LEN 16
-	    u_int8_t    au_pw[RIP_AUTH_PW_LEN];
+	    uint8_t    au_pw[RIP_AUTH_PW_LEN];
 	    struct a_md5 {
 		int16_t	md5_pkt_len;	/* RIP-II packet length */
 		int8_t	md5_keyid;	/* key ID and auth data len */
 		int8_t	md5_auth_len;	/* 16 */
-		u_int32_t md5_seqno;	/* sequence number */
-		u_int32_t rsvd[2];	/* must be 0 */
+		uint32_t md5_seqno;	/* sequence number */
+		uint32_t rsvd[2];	/* must be 0 */
 #define	    RIP_AUTH_MD5_KEY_LEN   RIP_AUTH_PW_LEN
 #define	    RIP_AUTH_MD5_HASH_XTRA (sizeof(struct netauth)-sizeof(struct a_md5))
 #define	    RIP_AUTH_MD5_HASH_LEN  (RIP_AUTH_MD5_KEY_LEN+RIP_AUTH_MD5_HASH_XTRA)
@@ -106,9 +106,9 @@ struct netauth {
 };
 
 struct rip {
-	u_int8_t    rip_cmd;		/* request/response */
-	u_int8_t    rip_vers;		/* protocol version # */
-	u_int16_t   rip_res1;		/* pad to 32-bit boundary */
+	uint8_t    rip_cmd;		/* request/response */
+	uint8_t    rip_vers;		/* protocol version # */
+	uint16_t   rip_res1;		/* pad to 32-bit boundary */
 	union {				/* variable length... */
 	    struct netinfo ru_nets[1];
 	    int8_t    ru_tracefile[1];
@@ -145,7 +145,7 @@ const char *ripcmds[RIPCMD_MAX] = {
 #define NETS_LEN ((MAXPACKETSIZE-sizeof(struct rip))	\
 		      / sizeof(struct netinfo) +1)
 
-#define INADDR_RIP_GROUP (u_int32_t)0xe0000009	/* 224.0.0.9 */
+#define INADDR_RIP_GROUP (uint32_t)0xe0000009	/* 224.0.0.9 */
 
 
 /* Timer values used in managing the routing table.

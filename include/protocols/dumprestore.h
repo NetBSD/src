@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprestore.h,v 1.13 2005/09/06 17:03:59 christos Exp $	*/
+/*	$NetBSD: dumprestore.h,v 1.14 2005/12/26 19:01:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -73,15 +73,15 @@ union u_spcl {
 		int32_t	c_old_ddate;	    /* date of previous dump */
 		int32_t	c_volume;	    /* dump volume number */
 		int32_t	c_old_tapea;	    /* logical block of this record */
-		u_int32_t c_inumber;	    /* number of inode */
+		uint32_t c_inumber;	    /* number of inode */
 		int32_t	c_magic;	    /* magic number (see above) */
 		int32_t	c_checksum;	    /* record checksum */
 		union {
 			struct ufs1_dinode __uc_dinode;
 			struct {
-				u_int16_t __uc_mode;
+				uint16_t __uc_mode;
 				int16_t __uc_spare1[3];
-				u_int64_t __uc_size;
+				uint64_t __uc_size;
 				int32_t __uc_old_atime;
 				int32_t __uc_atimensec;
 				int32_t __uc_old_mtime;
@@ -93,10 +93,10 @@ union u_spcl {
 				int64_t __uc_atime;
 				int64_t __uc_mtime;
 				int32_t __uc_spare4[7];
-				u_int32_t __uc_file_flags;
+				uint32_t __uc_file_flags;
 				int32_t __uc_spare5[2];
-				u_int32_t __uc_uid;
-				u_int32_t __uc_gid;
+				uint32_t __uc_uid;
+				uint32_t __uc_gid;
 				int32_t __uc_spare6[2];
 			} __uc_ino;
 		} __c_ino;
