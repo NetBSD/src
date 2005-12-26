@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.21 2005/11/12 09:35:31 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.22 2005/12/26 13:30:25 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.21 2005/11/12 09:35:31 dsl Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.22 2005/12/26 13:30:25 jmmv Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -285,6 +285,9 @@ main(int argc, char *argv[])
 		op = "Clear";
 		rv = params->machine->clearboot(params);
 	} else {
+		if (argc < 2)
+			errx(EXIT_FAILURE, "Please specify the primary "
+			    "bootstrap file");
 		op = "Set";
 		rv = params->machine->setboot(params);
 	}
