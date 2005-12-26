@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.13 2005/12/18 17:02:45 dsl Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.14 2005/12/26 16:08:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.13 2005/12/18 17:02:45 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.14 2005/12/26 16:08:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,23 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 
 		/* Copy data out of buffer so action can use bp */
 		memcpy(ptns, &mbr->mbr_parts, sizeof ptns);
+
+		/* Look for drivers and skip them */
+		if (ptns[0].mbrp_type == MBR_PTYPE_DM6_DDO) {
+			/* We've found DM6 DDO drivers.  Ensure that there
+			 * are no other partitions in the MBR and jump to
+			 * the real MBR. */
+			boolean_t ok = TRUE;
+
+			for (i = 1; i < MBR_PART_COUNT; i++)
+				if (ptns[i].mbrp_type != MBR_PTYPE_UNUSED)
+					ok = FALSE;
+
+			if (ok) {
+				this_ext = le32toh(63);
+				continue;
+			}
+		}
 
 		/* look for NetBSD partition */
 		next_ext = 0;
