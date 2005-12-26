@@ -1,4 +1,4 @@
-.\"	$NetBSD: 0.t,v 1.3 2003/08/07 10:30:48 agc Exp $
+.\"	$NetBSD: 0.t,v 1.4 2005/12/26 20:04:46 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -155,15 +155,15 @@ ssize_t	int	/* signed size_t */
 time_t	long	/* seconds since the Epoch */
 u_char	unsigned char
 u_int	unsigned int
-u_int16_t	unsigned short	/* unsigned 16-bit integer */
-u_int32_t	unsigned int	/* unsigned 32-bit integer */
-u_int64_t	unsigned long long	/* unsigned 64-bit integer */
-u_int8_t	unsigned char	/* unsigned 8-bit integer */
 u_long	unsigned long
 u_quad_t	unsigned long long
 u_short	unsigned short
 uid_t	unsigned long	/* user ID */
 uint	unsigned int	/* System V compatibility */
+uint16_t	unsigned short	/* unsigned 16-bit integer */
+uint32_t	unsigned int	/* unsigned 32-bit integer */
+uint64_t	unsigned long long	/* unsigned 64-bit integer */
+uint8_t		unsigned char	/* unsigned 8-bit integer */
 ushort	unsigned short	/* System V compatibility */
 .TE
 .ft R
