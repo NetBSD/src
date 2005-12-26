@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.114 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: bpf.c,v 1.115 2005/12/26 15:45:48 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.114 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115 2005/12/26 15:45:48 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -641,11 +641,6 @@ reset_d(struct bpf_d *d)
 	d->bd_ccount = 0;
 }
 
-#ifdef BPF_KERN_FILTER
-extern struct bpf_insn *bpf_tcp_filter;
-extern struct bpf_insn *bpf_udp_filter;
-#endif
-
 /*
  *  FIONREAD		Check for read packet available.
  *  BIOCGBLEN		Get buffer len [for read()].
@@ -669,9 +664,6 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 {
 	struct bpf_d *d = fp->f_data;
 	int s, error = 0;
-#ifdef BPF_KERN_FILTER
-	struct bpf_insn **p;
-#endif
 
 	/*
 	 * Refresh the PID associated with this bpf file.
@@ -737,36 +729,6 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 	case BIOCSETF:
 		error = bpf_setf(d, addr);
 		break;
-
-#ifdef BPF_KERN_FILTER
-	/*
-	 * Set TCP or UDP reject filter.
-	 */
-	case BIOCSTCPF:
-	case BIOCSUDPF:
-		if (!suser()) {
-			error = EPERM;
-			break;
-		}
-
-		/* Validate and store filter */
-		error = bpf_setf(d, addr);
-
-		/* Free possible old filter */
-		if (cmd == BIOCSTCPF)
-			p = &bpf_tcp_filter;
-		else
-			p = &bpf_udp_filter;
-		if (*p != NULL)
-			free(*p, M_DEVBUF);
-
-		/* Steal new filter (noop if error) */
-		s = splnet();
-		*p = d->bd_filter;
-		d->bd_filter = NULL;
-		splx(s);
-		break;
-#endif
 
 	/*
 	 * Flush read packet buffer.
