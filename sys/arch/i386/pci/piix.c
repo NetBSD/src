@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.9 2005/12/11 12:17:44 christos Exp $	*/
+/*	$NetBSD: piix.c,v 1.10 2005/12/26 19:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.9 2005/12/11 12:17:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.10 2005/12/26 19:24:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ piix_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct piix_handle *ph = v;
 	int off, bit;
-	u_int8_t elcr;
+	uint8_t elcr;
 
 	if (PIIX_LEGAL_IRQ(irq) == 0)
 		return (1);
@@ -295,7 +295,7 @@ piix_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct piix_handle *ph = v;
 	int off, bit;
-	u_int8_t elcr;
+	uint8_t elcr;
 
 	if (PIIX_LEGAL_IRQ(irq) == 0)
 		return (1);
@@ -319,7 +319,7 @@ piix_pir_dump(struct piix_handle *ph)
 {
 	int i, irq;
 	pcireg_t irqs = pci_conf_read(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ);
-	u_int8_t elcr[2];
+	uint8_t elcr[2];
 
 	elcr[0] = bus_space_read_1(ph->ph_iot, ph->ph_elcr_ioh, 0);
 	elcr[1] = bus_space_read_1(ph->ph_iot, ph->ph_elcr_ioh, 1);

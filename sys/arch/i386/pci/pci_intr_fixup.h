@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.h,v 1.6 2005/12/11 12:17:44 christos Exp $	*/
+/*	$NetBSD: pci_intr_fixup.h,v 1.7 2005/12/26 19:24:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -48,7 +48,7 @@ typedef const struct pciintr_icu *pciintr_icu_tag_t;
 #define	pciintr_icu_set_trigger(t, h, irq, trigger)			\
 	(*(t)->pi_set_trigger)((h), (irq), (trigger))
 
-int pci_intr_fixup(pci_chipset_tag_t, bus_space_tag_t, u_int16_t *);
+int pci_intr_fixup(pci_chipset_tag_t, bus_space_tag_t, uint16_t *);
 
 /*
  * Init functions for our known PCI ICUs.

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.76 2005/12/11 12:17:41 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.77 2005/12/26 19:23:59 perry Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.76 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.77 2005/12/26 19:23:59 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -593,8 +593,8 @@ svr4_fasttrap(frame)
 		 */
 		microtime(&tv);
 
-		frame.tf_eax = (u_int32_t) tv.tv_sec;
-		frame.tf_edx = (u_int32_t) tv.tv_usec * 1000;
+		frame.tf_eax = (uint32_t) tv.tv_sec;
+		frame.tf_edx = (uint32_t) tv.tv_usec * 1000;
 		break;
 
 	default:

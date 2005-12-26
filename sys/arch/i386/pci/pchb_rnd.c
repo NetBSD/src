@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.14 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.15 2005/12/26 19:24:00 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.14 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.15 2005/12/26 19:24:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ void
 pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 {
 	int i;
-	u_int8_t reg8;
+	uint8_t reg8;
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_INTEL:

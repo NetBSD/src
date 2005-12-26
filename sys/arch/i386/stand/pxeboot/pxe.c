@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.8 2005/12/11 12:17:49 christos Exp $	*/
+/*	$NetBSD: pxe.c,v 1.9 2005/12/26 19:24:00 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -102,10 +102,10 @@
 #include "pxe.h"
 #include "pxe_netif.h"
 
-void	(*pxe_call)(u_int16_t);
+void	(*pxe_call)(uint16_t);
 
-void	pxecall_bangpxe(u_int16_t);	/* pxe_call.S */
-void	pxecall_pxenv(u_int16_t);	/* pxe_call.S */
+void	pxecall_bangpxe(uint16_t);	/* pxe_call.S */
+void	pxecall_pxenv(uint16_t);	/* pxe_call.S */
 
 char pxe_command_buf[256];
 
@@ -277,11 +277,11 @@ socktodesc(sock)
  * PXE initialization and support routines
  *****************************************************************************/
 
-u_int16_t pxe_command_buf_seg;
-u_int16_t pxe_command_buf_off;
+uint16_t pxe_command_buf_seg;
+uint16_t pxe_command_buf_off;
 
-extern u_int16_t bangpxe_off, bangpxe_seg;
-extern u_int16_t pxenv_off, pxenv_seg;
+extern uint16_t bangpxe_off, bangpxe_seg;
+extern uint16_t pxenv_off, pxenv_seg;
 
 static struct btinfo_netif bi_netif;
 
@@ -294,7 +294,7 @@ pxe_init(void)
 	pxe_t *pxe;
 	char *cp;
 	int i;
-	u_int8_t cksum, *ucp;
+	uint8_t cksum, *ucp;
 
 	/*
 	 * Checking for the presence of PXE is a machine-dependent
@@ -317,7 +317,7 @@ pxe_init(void)
 			if (MEMSTRCMP(pxenv->Signature, "PXENV+"))
 				pxenv = NULL;
 			else {
-				for (i = 0, ucp = (u_int8_t *)cp, cksum = 0;
+				for (i = 0, ucp = (uint8_t *)cp, cksum = 0;
 				     i < pxenv->Length; i++)
 					cksum += ucp[i];
 				if (cksum != 0) {
@@ -334,7 +334,7 @@ pxe_init(void)
 			if (MEMSTRCMP(pxe->Signature, "!PXE"))
 				pxe = NULL;
 			else {
-				for (i = 0, ucp = (u_int8_t *)cp, cksum = 0;
+				for (i = 0, ucp = (uint8_t *)cp, cksum = 0;
 				     i < pxe->StructLength; i++)
 					cksum += ucp[i];
 				if (cksum != 0) {

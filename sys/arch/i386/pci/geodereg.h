@@ -1,4 +1,4 @@
-/*	$NetBSD: geodereg.h,v 1.3 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: geodereg.h,v 1.4 2005/12/26 19:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -46,7 +46,7 @@
 #ifndef _BIT_TWIDDLE
 #define _BIT_TWIDDLE
 /* nth bit, BIT(0) == 0x1. */
-#define BIT(n) (((n) == 32) ? 0 : ((u_int32_t) 1 << (n)))
+#define BIT(n) (((n) == 32) ? 0 : ((uint32_t) 1 << (n)))
 
 /* bits m through n, m < n. */
 #define BITS(m, n) ((BIT(MAX((m), (n)) + 1) - 1) ^ (BIT(MIN((m), (n))) - 1))

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.567 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.568 2005/12/26 19:23:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.567 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.568 2005/12/26 19:23:59 perry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -272,7 +272,7 @@ void	init386(paddr_t);
 void	initgdt(union descriptor *);
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-void	add_mem_cluster(u_int64_t, u_int64_t, u_int32_t);
+void	add_mem_cluster(uint64_t, uint64_t, uint32_t);
 #endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
 extern int time_adjusted;
@@ -821,7 +821,7 @@ haltsys:
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
@@ -1228,7 +1228,7 @@ void cpu_init_idt()
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void
-add_mem_cluster(u_int64_t seg_start, u_int64_t seg_end, u_int32_t type)
+add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 {
 	extern struct extent *iomem_ex;
 	int i;
@@ -1352,8 +1352,8 @@ init386(paddr_t first_avail)
 #endif
 	struct region_descriptor region;
 	int x, first16q;
-	u_int64_t seg_start, seg_end;
-	u_int64_t seg_start1, seg_end1;
+	uint64_t seg_start, seg_end;
+	uint64_t seg_start1, seg_end1;
 	paddr_t realmode_reserved_start;
 	psize_t realmode_reserved_size;
 	int needs_earlier_install_pte0;
@@ -1617,7 +1617,7 @@ init386(paddr_t first_avail)
 		if (seg_start != seg_end) {
 			if (seg_start < (16 * 1024 * 1024) &&
 			    first16q != VM_FREELIST_DEFAULT) {
-				u_int64_t tmp;
+				uint64_t tmp;
 
 				if (seg_end > (16 * 1024 * 1024))
 					tmp = (16 * 1024 * 1024);
@@ -1654,7 +1654,7 @@ init386(paddr_t first_avail)
 		if (seg_start1 != seg_end1) {
 			if (seg_start1 < (16 * 1024 * 1024) &&
 			    first16q != VM_FREELIST_DEFAULT) {
-				u_int64_t tmp;
+				uint64_t tmp;
 
 				if (seg_end1 > (16 * 1024 * 1024))
 					tmp = (16 * 1024 * 1024);
