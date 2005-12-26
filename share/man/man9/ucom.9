@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucom.9,v 1.12 2005/12/20 19:53:15 rpaulo Exp $
+.\"	$NetBSD: ucom.9,v 1.13 2005/12/26 19:48:13 perry Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,9 +140,9 @@ struct ucom_methods {
 	int (*ucom_open)(void *sc, int portno);
 	void (*ucom_close)(void *sc, int portno);
 	void (*ucom_read)(void *sc, int portno, u_char **ptr,
-			  u_int32_t *count);
+			  uint32_t *count);
 	void (*ucom_write)(void *sc, int portno, u_char *to,
-			   u_char *from, u_int32_t *count);
+			   u_char *from, uint32_t *count);
 };
 .Ed
 .Pp
@@ -174,14 +174,14 @@ driver opens the bulk pipes for the port.
 called just after the
 .Nm
 driver closes the bulk pipes for the port.
-.It Fn "void (*ucom_read)" "void *sc, int portno, u_char **ptr, u_int32_t *count"
+.It Fn "void (*ucom_read)" "void *sc, int portno, u_char **ptr, uint32_t *count"
 if the data delivered on the bulk pipe is not just the raw input characters
 this routine needs to adjust
 .Fa ptr
 and
 .Fa count
 so that they tell where to find the given number of raw characters.
-.It Fn "void (*ucom_write)" "void *sc, int portno, u_char *dst, u_char *src, u_int32_t *count"
+.It Fn "void (*ucom_write)" "void *sc, int portno, u_char *dst, u_char *src, uint32_t *count"
 if the data written to the bulk pipe is not just the raw characters then
 this routine needs to copy
 .Fa count

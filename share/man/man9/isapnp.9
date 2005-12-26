@@ -1,4 +1,4 @@
-.\"     $NetBSD: isapnp.9,v 1.8 2003/04/16 13:35:29 wiz Exp $
+.\"     $NetBSD: isapnp.9,v 1.9 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,18 +106,18 @@ Describes ISAPNP bus-space regions.
 It contains the following members:
 .Bd -literal
 	bus_space_handle_t h;
-	u_int32_t base;
-	u_int32_t length;
+	uint32_t base;
+	uint32_t length;
 .Ed
 .It Fa struct isapnp_pin
 Describes the wiring of interrupts and DMA pins from the ISAPNP bus
 onto the host processor.
 It contains the following members:
 .Bd -literal
-	u_int8_t  num;
-	u_int8_t  flags:4;
-	u_int8_t  type:4;
-	u_int16_t bits;
+	uint8_t  num;
+	uint8_t  flags:4;
+	uint8_t  type:4;
+	uint16_t bits;
 .Ed
 .It Fa struct isapnp_attach_args
 A structure used to inform the driver of the device properties.
