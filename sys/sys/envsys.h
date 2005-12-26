@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.7 2003/02/20 20:57:56 christos Exp $ */
+/* $NetBSD: envsys.h,v 1.8 2005/12/26 18:41:36 perry Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -61,13 +61,13 @@ typedef struct envsys_range envsys_range_t;
 struct envsys_tre_data {
 	u_int sensor;
 	union {				/* all data is given */
-		u_int32_t data_us;	/* in microKelvins, */
+		uint32_t data_us;	/* in microKelvins, */
 		int32_t data_s;		/* rpms, volts, amps, */
 	} cur, min, max, avg;		/* ohms, watts, etc */
 					/* see units below */
 
-	u_int32_t	warnflags;	/* warning flags */
-	u_int32_t	validflags;	/* sensor valid flags */
+	uint32_t	warnflags;	/* warning flags */
+	uint32_t	validflags;	/* sensor valid flags */
 	u_int		units;		/* type of sensor */
 };
 typedef struct envsys_tre_data envsys_temp_data_t;
@@ -123,7 +123,7 @@ struct envsys_basic_info {
 	char	desc[33];	/* sensor description */
 	u_int	rfact;		/* for volts, (int)(factor x 10^4) */
 	u_int	rpms;		/* for fans, set nominal RPMs */
-	u_int32_t validflags;	/* sensor valid flags */
+	uint32_t validflags;	/* sensor valid flags */
 };
 typedef struct envsys_basic_info envsys_temp_info_t;
 typedef struct envsys_basic_info envsys_rpm_info_t;

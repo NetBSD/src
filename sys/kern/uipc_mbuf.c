@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.103 2005/12/08 03:11:14 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.104 2005/12/26 18:45:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.103 2005/12/08 03:11:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.104 2005/12/26 18:45:27 perry Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -999,8 +999,8 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
 		 * If 'off' is non-zero, packet is trailer-encapsulated,
 		 * so we have to skip the type and length fields.
 		 */
-		cp += off + 2 * sizeof(u_int16_t);
-		totlen -= 2 * sizeof(u_int16_t);
+		cp += off + 2 * sizeof(uint16_t);
+		totlen -= 2 * sizeof(uint16_t);
 	}
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)

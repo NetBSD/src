@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.84 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.85 2005/12/26 18:45:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.84 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.85 2005/12/26 18:45:27 perry Exp $");
 
 #include "opt_kstack.h"
 
@@ -1130,8 +1130,8 @@ int kstackleftthres = KSTACK_SIZE / 8; /* warn if remaining stack is
 void
 kstack_setup_magic(const struct lwp *l)
 {
-	u_int32_t *ip;
-	u_int32_t const *end;
+	uint32_t *ip;
+	uint32_t const *end;
 
 	KASSERT(l != NULL);
 	KASSERT(l != &lwp0);
@@ -1140,8 +1140,8 @@ kstack_setup_magic(const struct lwp *l)
 	 * fill all the stack with magic number
 	 * so that later modification on it can be detected.
 	 */
-	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	ip = (uint32_t *)KSTACK_LOWEST_ADDR(l);
+	end = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++) {
 		*ip = KSTACK_MAGIC;
 	}
@@ -1150,7 +1150,7 @@ kstack_setup_magic(const struct lwp *l)
 void
 kstack_check_magic(const struct lwp *l)
 {
-	u_int32_t const *ip, *end;
+	uint32_t const *ip, *end;
 	int stackleft;
 
 	KASSERT(l != NULL);
@@ -1161,8 +1161,8 @@ kstack_check_magic(const struct lwp *l)
 
 #ifdef __MACHINE_STACK_GROWS_UP
 	/* stack grows upwards (eg. hppa) */
-	ip = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
-	end = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
+	ip = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	end = (uint32_t *)KSTACK_LOWEST_ADDR(l);
 	for (ip--; ip >= end; ip--)
 		if (*ip != KSTACK_MAGIC)
 			break;
@@ -1170,8 +1170,8 @@ kstack_check_magic(const struct lwp *l)
 	stackleft = (caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE - (caddr_t)ip;
 #else /* __MACHINE_STACK_GROWS_UP */
 	/* stack grows downwards (eg. i386) */
-	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	ip = (uint32_t *)KSTACK_LOWEST_ADDR(l);
+	end = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++)
 		if (*ip != KSTACK_MAGIC)
 			break;

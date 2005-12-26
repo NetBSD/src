@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.25 2005/12/24 23:41:34 perry Exp $	*/
+/*	$NetBSD: ucred.h,v 1.26 2005/12/26 18:41:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,11 +51,11 @@ struct uucred {
 
 struct ucred {
 	struct simplelock cr_lock;		/* mutex for ref count */
-	u_int32_t	cr_ref;			/* reference count */
+	uint32_t	cr_ref;			/* reference count */
 #define cr_startcopy	cr_uid			/* for dup & copy */
 	uid_t		cr_uid;			/* effective user id */
 	gid_t		cr_gid;			/* effective group id */
-	u_int32_t	cr_ngroups;		/* number of groups */
+	uint32_t	cr_ngroups;		/* number of groups */
 	gid_t		cr_groups[NGROUPS];	/* groups */
 };
 

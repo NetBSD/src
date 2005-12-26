@@ -1,4 +1,4 @@
-/*	$NetBSD: dvdio.h,v 1.7 2005/12/03 17:10:46 christos Exp $	*/
+/*	$NetBSD: dvdio.h,v 1.8 2005/12/26 18:41:36 perry Exp $	*/
 
 #ifndef _SYS_DVDIO_H_
 #define _SYS_DVDIO_H_
@@ -24,59 +24,59 @@
 #define DVD_STRUCT_MANUFACT		0x04
 
 struct dvd_layer {
-	u_int8_t book_version	: 4;
-	u_int8_t book_type	: 4;
-	u_int8_t min_rate	: 4;
-	u_int8_t disc_size	: 4;
-	u_int8_t layer_type	: 4;
-	u_int8_t track_path	: 1;
-	u_int8_t nlayers	: 2;
-	u_int8_t track_density	: 4;
-	u_int8_t linear_density	: 4;
-	u_int8_t bca		: 1;
-	u_int32_t start_sector;
-	u_int32_t end_sector;
-	u_int32_t end_sector_l0;
+	uint8_t book_version	: 4;
+	uint8_t book_type	: 4;
+	uint8_t min_rate	: 4;
+	uint8_t disc_size	: 4;
+	uint8_t layer_type	: 4;
+	uint8_t track_path	: 1;
+	uint8_t nlayers	: 2;
+	uint8_t track_density	: 4;
+	uint8_t linear_density	: 4;
+	uint8_t bca		: 1;
+	uint32_t start_sector;
+	uint32_t end_sector;
+	uint32_t end_sector_l0;
 };
 
 struct dvd_physical {
-	u_int8_t type;
-	u_int8_t layer_num;
+	uint8_t type;
+	uint8_t layer_num;
 	struct dvd_layer layer[4];
 };
 
 struct dvd_copyright {
-	u_int8_t type;
+	uint8_t type;
 
-	u_int8_t layer_num;
-	u_int8_t cpst;
-	u_int8_t rmi;
+	uint8_t layer_num;
+	uint8_t cpst;
+	uint8_t rmi;
 };
 
 struct dvd_disckey {
-	u_int8_t type;
+	uint8_t type;
 
 	unsigned agid		: 2;
-	u_int8_t value[2048];
+	uint8_t value[2048];
 };
 
 struct dvd_bca {
-	u_int8_t type;
+	uint8_t type;
 
 	int len;
-	u_int8_t value[188];
+	uint8_t value[188];
 };
 
 struct dvd_manufact {
-	u_int8_t type;
+	uint8_t type;
 
-	u_int8_t layer_num;
+	uint8_t layer_num;
 	int len;
-	u_int8_t value[2048];
+	uint8_t value[2048];
 };
 
 typedef union {
-	u_int8_t type;
+	uint8_t type;
 
 	struct dvd_physical	physical;
 	struct dvd_copyright	copyright;
@@ -108,30 +108,30 @@ typedef union {
 #define DVD_HOST_SEND_RPC_STATE	11
 
 /* State data */
-typedef u_int8_t dvd_key[5];		/* 40-bit value, MSB is first elem. */
-typedef u_int8_t dvd_challenge[10];	/* 80-bit value, MSB is first elem. */
+typedef uint8_t dvd_key[5];		/* 40-bit value, MSB is first elem. */
+typedef uint8_t dvd_challenge[10];	/* 80-bit value, MSB is first elem. */
 
 struct dvd_lu_send_agid {
-	u_int8_t type;
+	uint8_t type;
 	unsigned agid		: 2;
 };
 
 struct dvd_host_send_challenge {
-	u_int8_t type;
+	uint8_t type;
 	unsigned agid		: 2;
 
 	dvd_challenge chal;
 };
 
 struct dvd_send_key {
-	u_int8_t type;
+	uint8_t type;
 	unsigned agid		: 2;
 
 	dvd_key key;
 };
 
 struct dvd_lu_send_challenge {
-	u_int8_t type;
+	uint8_t type;
 	unsigned agid		: 2;
 
 	dvd_challenge chal;
@@ -148,7 +148,7 @@ struct dvd_lu_send_challenge {
 #define DVD_CGMS_RESTRICTED	3
 
 struct dvd_lu_send_title_key {
-	u_int8_t type;
+	uint8_t type;
 	unsigned agid		: 2;
 
 	dvd_key title_key;
@@ -159,27 +159,27 @@ struct dvd_lu_send_title_key {
 };
 
 struct dvd_lu_send_asf {
-	u_int8_t type;
+	uint8_t type;
 	unsigned agid		: 2;
 
 	unsigned asf		: 1;
 };
 
 struct dvd_host_send_rpcstate {
-	u_int8_t type;
-	u_int8_t pdrc;
+	uint8_t type;
+	uint8_t pdrc;
 };
 
 struct dvd_lu_send_rpcstate {
-	u_int8_t type		: 2;
-	u_int8_t vra		: 3;
-	u_int8_t ucca		: 3;
-	u_int8_t region_mask;
-	u_int8_t rpc_scheme;
+	uint8_t type		: 2;
+	uint8_t vra		: 3;
+	uint8_t ucca		: 3;
+	uint8_t region_mask;
+	uint8_t rpc_scheme;
 };
 
 typedef union {
-	u_int8_t type;
+	uint8_t type;
 
 	struct dvd_lu_send_agid		lsa;
 	struct dvd_host_send_challenge	hsc;
@@ -193,14 +193,14 @@ typedef union {
 } dvd_authinfo;
 
 typedef struct {
-	u_int16_t report_key_length;
-	u_int8_t reserved1[2];
-	u_int8_t ucca		: 3;
-	u_int8_t vra		: 3;
-	u_int8_t type_code	: 2;
-	u_int8_t region_mask;
-	u_int8_t rpc_scheme;
-	u_int8_t reserved2;
+	uint16_t report_key_length;
+	uint8_t reserved1[2];
+	uint8_t ucca		: 3;
+	uint8_t vra		: 3;
+	uint8_t type_code	: 2;
+	uint8_t region_mask;
+	uint8_t rpc_scheme;
+	uint8_t reserved2;
 } dvd_rpc_state_t;
 
 #endif /* _SYS_DVDIO_H_ */

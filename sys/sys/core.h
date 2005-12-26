@@ -1,4 +1,4 @@
-/*	$NetBSD: core.h,v 1.9 2001/08/20 12:00:54 wiz Exp $	*/
+/*	$NetBSD: core.h,v 1.10 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,12 +76,12 @@
  */
 
 struct core {
-	u_int32_t c_midmag;		/* magic, id, flags */
-	u_int16_t c_hdrsize;		/* Size of this header (machdep algn) */
-	u_int16_t c_seghdrsize;		/* Size of a segment header */
-	u_int32_t c_nseg;		/* # of core segments */
+	uint32_t c_midmag;		/* magic, id, flags */
+	uint16_t c_hdrsize;		/* Size of this header (machdep algn) */
+	uint16_t c_seghdrsize;		/* Size of a segment header */
+	uint32_t c_nseg;		/* # of core segments */
 	char	c_name[MAXCOMLEN+1];	/* Copy of p->p_comm */
-	u_int32_t c_signo;		/* Killing signal */
+	uint32_t c_signo;		/* Killing signal */
 	u_long	c_ucode;		/* Hmm ? */
 	u_long	c_cpusize;		/* Size of machine dependent segment */
 	u_long	c_tsize;		/* Size of traditional text segment */
@@ -90,7 +90,7 @@ struct core {
 };
 
 struct coreseg {
-	u_int32_t c_midmag;		/* magic, id, flags */
+	uint32_t c_midmag;		/* magic, id, flags */
 	u_long	c_addr;			/* Virtual address of segment */
 	u_long	c_size;			/* Size of this segment */
 };
@@ -99,12 +99,12 @@ struct coreseg {
  * 32-bit versions of the above.
  */
 struct core32 {
-	u_int32_t c_midmag;		/* magic, id, flags */
-	u_int16_t c_hdrsize;		/* Size of this header (machdep algn) */
-	u_int16_t c_seghdrsize;		/* Size of a segment header */
-	u_int32_t c_nseg;		/* # of core segments */
+	uint32_t c_midmag;		/* magic, id, flags */
+	uint16_t c_hdrsize;		/* Size of this header (machdep algn) */
+	uint16_t c_seghdrsize;		/* Size of a segment header */
+	uint32_t c_nseg;		/* # of core segments */
 	char	c_name[MAXCOMLEN+1];	/* Copy of p->p_comm */
-	u_int32_t c_signo;		/* Killing signal */
+	uint32_t c_signo;		/* Killing signal */
 	u_int	c_ucode;		/* Hmm ? */
 	u_int	c_cpusize;		/* Size of machine dependent segment */
 	u_int	c_tsize;		/* Size of traditional text segment */
@@ -113,7 +113,7 @@ struct core32 {
 };
 
 struct coreseg32 {
-	u_int32_t c_midmag;		/* magic, id, flags */
+	uint32_t c_midmag;		/* magic, id, flags */
 	u_int	c_addr;			/* Virtual address of segment */
 	u_int	c_size;			/* Size of this segment */
 };

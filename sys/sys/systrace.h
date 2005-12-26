@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.17 2005/12/03 17:10:46 christos Exp $	*/
+/*	$NetBSD: systrace.h,v 1.18 2005/12/26 18:41:36 perry Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -86,7 +86,7 @@ struct str_msg_child {
 struct str_message {
 	int32_t msg_type;
 	pid_t msg_pid;
-	u_int16_t msg_seqnr;	/* answer has to match seqnr */
+	uint16_t msg_seqnr;	/* answer has to match seqnr */
 	int16_t msg_policy;
 	union {
 		struct str_msg_emul msg_emul;
@@ -108,7 +108,7 @@ struct str_msgcontainer {
 
 struct systrace_answer {
 	pid_t stra_pid;
-	u_int16_t stra_seqnr;
+	uint16_t stra_seqnr;
 	int16_t reserved;
  	uid_t stra_seteuid;	/* elevated privileges for system call */
  	gid_t stra_setegid;
@@ -159,7 +159,7 @@ struct systrace_policy {
 
 struct systrace_replace {
 	pid_t strr_pid;
-	u_int16_t strr_seqnr;
+	uint16_t strr_seqnr;
 	int16_t reserved;
 	int32_t strr_nrepl;
 	caddr_t	strr_base;	/* Base memory */

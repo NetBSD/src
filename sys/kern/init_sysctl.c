@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.58 2005/12/11 12:24:29 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.59 2005/12/26 18:45:27 perry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.58 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.59 2005/12/26 18:45:27 perry Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1439,7 +1439,7 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 
 #else /* MULTIPROCESSOR */
 
-	u_int64_t *cp_time = NULL;
+	uint64_t *cp_time = NULL;
 	int error, n = sysctl_ncpus(), i;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -1454,19 +1454,19 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 	 */
 	switch (namelen) {
 	case 0:
-	    	if (*oldlenp == sizeof(u_int64_t) * CPUSTATES || oldp == NULL) {
-			node.sysctl_size = sizeof(u_int64_t) * CPUSTATES;
+	    	if (*oldlenp == sizeof(uint64_t) * CPUSTATES || oldp == NULL) {
+			node.sysctl_size = sizeof(uint64_t) * CPUSTATES;
 			n = -1; /* SUM */
 		}
 		else {
-			node.sysctl_size = n * sizeof(u_int64_t) * CPUSTATES;
+			node.sysctl_size = n * sizeof(uint64_t) * CPUSTATES;
 			n = -2; /* ALL */
 		}
 		break;
 	case 1:
 		if (name[0] < 0 || name[0] >= n)
 			return (ENOENT); /* ENOSUCHPROCESSOR */
-		node.sysctl_size = sizeof(u_int64_t) * CPUSTATES;
+		node.sysctl_size = sizeof(uint64_t) * CPUSTATES;
 		n = name[0];
 		/*
 		 * adjust these so that sysctl_lookup() will be happy
@@ -2524,7 +2524,7 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 
 #ifndef MULTIPROCESSOR
-	u_int64_t id;
+	uint64_t id;
 
 	if (namelen == 1) {
 		if (name[0] != 0)
@@ -2541,7 +2541,7 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 
 #else /* MULTIPROCESSOR */
-	u_int64_t *cp_id = NULL;
+	uint64_t *cp_id = NULL;
 	int error, n = sysctl_ncpus();
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -2553,13 +2553,13 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 	 */
 	switch (namelen) {
 	case 0:
-		node.sysctl_size = n * sizeof(u_int64_t);
+		node.sysctl_size = n * sizeof(uint64_t);
 		n = -2; /* ALL */
 		break;
 	case 1:
 		if (name[0] < 0 || name[0] >= n)
 			return (ENOENT); /* ENOSUCHPROCESSOR */
-		node.sysctl_size = sizeof(u_int64_t);
+		node.sysctl_size = sizeof(uint64_t);
 		n = name[0];
 		/*
 		 * adjust these so that sysctl_lookup() will be happy

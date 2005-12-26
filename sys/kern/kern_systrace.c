@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.48 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.49 2005/12/26 18:45:27 perry Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.48 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.49 2005/12/26 18:45:27 perry Exp $");
 
 #include "opt_systrace.h"
 
@@ -138,7 +138,7 @@ struct str_process {
 	int flags;
 	short answer;
 	short error;
-	u_int16_t seqnr;	/* expected reply sequence number */
+	uint16_t seqnr;		/* expected reply sequence number */
 
 	uid_t seteuid;
 	uid_t saveuid;

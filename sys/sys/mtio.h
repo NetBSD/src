@@ -1,4 +1,4 @@
-/*	$NetBSD: mtio.h,v 1.22 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: mtio.h,v 1.23 2005/12/26 18:41:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -142,10 +142,10 @@ struct mtget {
  * rethink these ioctls to support all the entities they haul into
  * the picture (64 bit blocks, logical file record numbers, etc..).
  */
-#define	MTIOCRDSPOS	_IOR('m', 5, u_int32_t)	/* get logical blk addr */
-#define	MTIOCRDHPOS	_IOR('m', 6, u_int32_t)	/* get hardware blk addr */
-#define	MTIOCSLOCATE	_IOW('m', 5, u_int32_t)	/* seek to logical blk addr */
-#define	MTIOCHLOCATE	_IOW('m', 6, u_int32_t)	/* seek to hardware blk addr */
+#define	MTIOCRDSPOS	_IOR('m', 5, uint32_t)	/* get logical blk addr */
+#define	MTIOCRDHPOS	_IOR('m', 6, uint32_t)	/* get hardware blk addr */
+#define	MTIOCSLOCATE	_IOW('m', 5, uint32_t)	/* seek to logical blk addr */
+#define	MTIOCHLOCATE	_IOW('m', 6, uint32_t)	/* seek to hardware blk addr */
 
 #ifdef	_KERNEL
 /*

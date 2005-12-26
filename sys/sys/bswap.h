@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.4 2005/12/11 12:25:20 christos Exp $      */
+/*      $NetBSD: bswap.h,v 1.5 2005/12/26 18:41:36 perry Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -15,13 +15,13 @@
 
 __BEGIN_DECLS
 #if defined(_KERNEL) || defined(_STANDALONE) || !defined(__BSWAP_RENAME)
-u_int16_t bswap16(u_int16_t);
-u_int32_t bswap32(u_int32_t);
+uint16_t bswap16(uint16_t);
+uint32_t bswap32(uint32_t);
 #else
-u_int16_t bswap16(u_int16_t) __RENAME(__bswap16);
-u_int32_t bswap32(u_int32_t) __RENAME(__bswap32);
+uint16_t bswap16(uint16_t) __RENAME(__bswap16);
+uint32_t bswap32(uint32_t) __RENAME(__bswap32);
 #endif
-u_int64_t bswap64(u_int64_t);
+uint64_t bswap64(uint64_t);
 __END_DECLS
 #endif /* !_LOCORE */
 
