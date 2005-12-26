@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.11 2005/01/20 15:53:35 xtraeme Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.12 2005/12/26 10:38:52 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.11 2005/01/20 15:53:35 xtraeme Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.12 2005/12/26 10:38:52 yamt Exp $");
 #endif
 
 
@@ -98,6 +98,7 @@ void	disk_addwedge(int, char *[]);
 void	disk_delwedge(int, char *[]);
 void	disk_getwedgeinfo(int, char *[]);
 void	disk_listwedges(int, char *[]);
+void	disk_strategy(int, char *[]);
 
 struct command commands[] = {
 	{ "getcache",
@@ -144,6 +145,11 @@ struct command commands[] = {
 	  "",
 	  disk_listwedges,
 	  O_RDONLY },
+
+	{ "strategy",
+	  "[name]",
+	  disk_strategy,
+	  O_RDWR },
 
 	{ NULL,
 	  NULL,
@@ -201,6 +207,37 @@ usage(void)
 		    commands[i].arg_names);
 
 	exit(1);
+}
+
+void
+disk_strategy(int argc, char *argv[])
+{
+	struct disk_strategy odks;
+	struct disk_strategy dks;
+
+	memset(&dks, 0, sizeof(dks));
+	if (ioctl(fd, DIOCGSTRATEGY, &odks) == -1) {
+		err(EXIT_FAILURE, "%s: DIOCGSTRATEGY", dvname);
+	}
+
+	memset(&dks, 0, sizeof(dks));
+	switch (argc) {
+	case 0:
+		/* show the buffer queue strategy used */
+		printf("%s: %s\n", dvname, odks.dks_name);
+		return;
+	case 1:
+		/* set the buffer queue strategy */
+		strlcpy(dks.dks_name, argv[0], sizeof(dks.dks_name));
+		if (ioctl(fd, DIOCSSTRATEGY, &dks) == -1) {
+			err(EXIT_FAILURE, "%s: DIOCSSTRATEGY", dvname);
+		}
+		printf("%s: %s -> %s\n", dvname, odks.dks_name, argv[0]);
+		break;
+	default:
+		usage();
+		/* NOTREACHED */
+	}
 }
 
 void
