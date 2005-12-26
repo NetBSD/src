@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.25 2005/12/24 19:01:28 perry Exp $ */
+/* $NetBSD: sched.h,v 1.26 2005/12/26 18:41:36 perry Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ struct schedstate_percpu {
 	struct timeval spc_runtime;	/* time curproc started running */
 	volatile int spc_flags;	/* flags; see below */
 	u_int spc_schedticks;		/* ticks for schedclock() */
-	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
+	uint64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
 	u_char spc_curpriority;		/* usrpri of curproc */
 	int spc_rrticks;		/* ticks until roundrobin() */
 	int spc_pscnt;			/* prof/stat counter */
@@ -184,7 +184,7 @@ extern int rrticks;			/* ticks per roundrobin() */
  * in kern/kern_synch.c.
  */
 extern struct prochd sched_qs[];
-extern volatile u_int32_t sched_whichqs;
+extern volatile uint32_t sched_whichqs;
 
 struct proc;
 struct cpu_info;

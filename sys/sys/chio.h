@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.h,v 1.10 1999/09/09 23:24:11 thorpej Exp $	*/
+/*	$NetBSD: chio.h,v 1.11 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ struct changer_params {
  */
 struct ochanger_element_status_request {
 	int	cesr_type;	/* element type */
-	u_int8_t *cesr_data;	/* pre-allocated data storage */
+	uint8_t *cesr_data;	/* pre-allocated data storage */
 };
 
 /*
@@ -132,7 +132,7 @@ struct ochanger_element_status_request {
 #define	CHANGER_VOLTAG_SIZE	32	/* same as SCSI voltag size */
 struct changer_voltag {
 	char	cv_tag[CHANGER_VOLTAG_SIZE + 1];	/* ASCII tag */
-	u_int16_t cv_serial;				/* serial number */
+	uint16_t cv_serial;				/* serial number */
 };
 
 /*
@@ -165,16 +165,16 @@ struct changer_element_status {
 	 * These two fields are only valid if CESTATUS_EXCEPT is
 	 * set in ces_flags, and are only valid on SCSI changers.
 	 */
-	u_int8_t ces_asc;	/* Additional Sense Code */
-	u_int8_t ces_ascq;	/* Additional Sense Code Qualifier */
+	uint8_t ces_asc;	/* Additional Sense Code */
+	uint8_t ces_ascq;	/* Additional Sense Code Qualifier */
 
 	/*
 	 * These two fields may be useful if ces_xname is not valid.
 	 * They indicate the target and lun of a drive element.  These
 	 * are only valid on SCSI changers.
 	 */
-	u_int8_t ces_target;	/* SCSI target of drive */
-	u_int8_t ces_lun;	/* SCSI LUN of drive */
+	uint8_t ces_target;	/* SCSI target of drive */
+	uint8_t ces_lun;	/* SCSI LUN of drive */
 };
 
 /*

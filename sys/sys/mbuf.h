@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.117 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.118 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -101,8 +101,8 @@
 /* Packet tags structure */
 struct m_tag {
 	SLIST_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
-	u_int16_t		m_tag_id;	/* Tag ID */
-	u_int16_t		m_tag_len;	/* Length of data */
+	uint16_t		m_tag_id;	/* Tag ID */
+	uint16_t		m_tag_len;	/* Length of data */
 };
 
 /* mbuf ownership structure */
@@ -157,7 +157,7 @@ struct	pkthdr {
 	SLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
 	int	len;			/* total packet length */
 	int	csum_flags;		/* checksum flags */
-	u_int32_t csum_data;		/* checksum data */
+	uint32_t csum_data;		/* checksum data */
 	u_int	segsz;			/* segment size */
 };
 
@@ -901,7 +901,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define	PACKET_TAG_IPSEC_HISTORY		23 /* IPSEC history */
 
 #define	PACKET_TAG_PF_TRANSLATE_LOCALHOST	24 /* translated to localhost */
-#define	PACKET_TAG_IPSEC_NAT_T_PORTS		25 /* two u_int16_t */
+#define	PACKET_TAG_IPSEC_NAT_T_PORTS		25 /* two uint16_t */
 
 /*
  * Return the number of bytes in the mbuf chain, m.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.h,v 1.12 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: sha1.h,v 1.13 2005/12/26 18:41:36 perry Exp $	*/
 
 /*
  * SHA-1 in C
@@ -16,13 +16,13 @@
 #define SHA1_DIGEST_STRING_LENGTH	41
 
 typedef struct {
-	u_int32_t state[5];
-	u_int32_t count[2];
+	uint32_t state[5];
+	uint32_t count[2];
 	u_char buffer[64];
 } SHA1_CTX;
 
 __BEGIN_DECLS
-void	SHA1Transform(u_int32_t[5], const u_char[64]);
+void	SHA1Transform(uint32_t[5], const u_char[64]);
 void	SHA1Init(SHA1_CTX *);
 void	SHA1Update(SHA1_CTX *, const u_char *, u_int);
 void	SHA1Final(u_char[SHA1_DIGEST_LENGTH], SHA1_CTX *);
