@@ -1,4 +1,4 @@
-/*	$NetBSD: macho_machdep.c,v 1.3 2002/10/29 22:22:31 manu Exp $	*/
+/*	$NetBSD: macho_machdep.c,v 1.4 2005/12/26 19:23:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macho_machdep.c,v 1.3 2002/10/29 22:22:31 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macho_machdep.c,v 1.4 2005/12/26 19:23:59 perry Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/exec_macho.h>
 
-u_int32_t exec_macho_supported_cpu[] = { MACHO_CPU_TYPE_I386, 0 };
+uint32_t exec_macho_supported_cpu[] = { MACHO_CPU_TYPE_I386, 0 };
 
 #ifdef DEBUG_MACHO
 #define DPRINTF(a) printf a

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.187 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.188 2005/12/26 19:23:59 perry Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188 2005/12/26 19:23:59 perry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -954,7 +954,7 @@ pmap_bootstrap(kva_start)
 	kpm->pm_obj.uo_refs = 1;
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
 	kpm->pm_pdir = (pd_entry_t *)(lwp0.l_addr->u_pcb.pcb_cr3 + KERNBASE);
-	kpm->pm_pdirpa = (u_int32_t) lwp0.l_addr->u_pcb.pcb_cr3;
+	kpm->pm_pdirpa = (uint32_t) lwp0.l_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		x86_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
 
@@ -1915,10 +1915,10 @@ static boolean_t
 pmap_reactivate(struct pmap *pmap)
 {
 	struct cpu_info *ci = curcpu();
-	u_int32_t cpumask = 1U << ci->ci_cpuid;
+	uint32_t cpumask = 1U << ci->ci_cpuid;
 	int s;
 	boolean_t result;
-	u_int32_t oldcpus;
+	uint32_t oldcpus;
 
 	KASSERT(pmap->pm_pdirpa == rcr3());
 
@@ -1957,7 +1957,7 @@ void
 pmap_load()
 {
 	struct cpu_info *ci = curcpu();
-	u_int32_t cpumask = 1U << ci->ci_cpuid;
+	uint32_t cpumask = 1U << ci->ci_cpuid;
 	struct pmap *pmap;
 	struct pmap *oldpmap;
 	struct lwp *l;
@@ -2235,7 +2235,7 @@ pmap_pageidlezero(pa)
 	int *ptr;
 	int *ep;
 #if defined(I686_CPU)
-	const u_int32_t cpu_features = curcpu()->ci_feature_flags;
+	const uint32_t cpu_features = curcpu()->ci_feature_flags;
 #endif /* defined(I686_CPU) */
 
 #ifdef DIAGNOSTIC
@@ -2943,7 +2943,7 @@ pmap_clear_attrs(pg, clearbits)
 	int clearbits;
 {
 	struct vm_page_md *mdpg;
-	u_int32_t result;
+	uint32_t result;
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	pt_entry_t *ptes, opte;

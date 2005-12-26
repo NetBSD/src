@@ -1,4 +1,4 @@
-/* $NetBSD: i82557.c,v 1.7 2002/01/24 02:52:15 gson Exp $ */
+/* $NetBSD: i82557.c,v 1.8 2005/12/26 19:24:00 perry Exp $ */
 
 /*
  * Copyright (c) 1998, 1999
@@ -72,7 +72,7 @@ void *dmamem; /* virtual */
 #define SNDBUF_VIRT ((void *)(((char *)dmamem) + RECVBUF_SIZE))
 #endif /* _STANDALONE */
 
-static void fxp_read_eeprom	__P((u_int16_t *, int, int));
+static void fxp_read_eeprom	__P((uint16_t *, int, int));
 static inline void fxp_scb_wait	__P((void));
 #ifdef DEBUG
 static void fxp_checkintr __P((char *));
@@ -85,7 +85,7 @@ static void fxp_startreceiver __P((void));
  * Template for default configuration parameters.
  * See struct fxp_cb_config for the bit definitions.
  */
-static u_int8_t fxp_cb_config_template[] = {
+static uint8_t fxp_cb_config_template[] = {
 	0x0, 0x0,		/* cb_status */
 	0x80, 0x2,		/* cb_command */
 	0xff, 0xff, 0xff, 0xff,	/* link_addr */
@@ -148,7 +148,7 @@ static void
 fxp_checkintr(msg)
 	char *msg;
 {
-	u_int8_t statack;
+	uint8_t statack;
 	int i = 10000;
 
 	do {
@@ -167,7 +167,7 @@ EtherInit(myadr)
 	unsigned char *myadr;
 {
 #ifndef _STANDALONE
-	u_int32_t id;
+	uint32_t id;
 #endif
 	volatile struct fxp_cb_config *cbp;
 	volatile struct fxp_cb_ias *cb_ias;
@@ -375,7 +375,7 @@ static void
 fxp_startreceiver()
 {
 	volatile struct fxp_rfa *rfa;
-	u_int32_t v;
+	uint32_t v;
 
 	rfa = RECVBUF_VIRT;
 	rfa->size = RECVBUF_SIZE - sizeof(struct fxp_rfa);
@@ -397,7 +397,7 @@ EtherReceive(pkt, maxlen)
 	char *pkt;
 	int maxlen;
 {
-	u_int8_t ruscus;
+	uint8_t ruscus;
 	volatile struct fxp_rfa *rfa;
 	int len = 0;
 
@@ -437,11 +437,11 @@ EtherReceive(pkt, maxlen)
  */
 static void
 fxp_read_eeprom(data, offset, words)
-	u_int16_t *data;
+	uint16_t *data;
 	int offset;
 	int words;
 {
-	u_int16_t reg;
+	uint16_t reg;
 	int i, x;
 
 	for (i = 0; i < words; i++) {

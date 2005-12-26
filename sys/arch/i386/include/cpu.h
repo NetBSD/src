@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.119 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.120 2005/12/26 19:23:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@ struct cpu_info {
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
 
-	volatile u_int32_t	ci_tlb_ipi_mask;
+	volatile uint32_t	ci_tlb_ipi_mask;
 
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_want_pmapload;		/* pmap_load() is needed */
@@ -105,27 +105,27 @@ struct cpu_info {
 	int ci_idle_tss_sel;		/* TSS selector of idle PCB */
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
-	u_int32_t	ci_ipending;
+	uint32_t	ci_ipending;
 	int		ci_ilevel;
 	int		ci_idepth;
-	u_int32_t	ci_imask[NIPL];
-	u_int32_t	ci_iunmask[NIPL];
+	uint32_t	ci_imask[NIPL];
+	uint32_t	ci_iunmask[NIPL];
 
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
-	u_int32_t ci_flags;		/* flags; see below */
-	u_int32_t ci_ipis;		/* interprocessor interrupts pending */
+	uint32_t ci_flags;		/* flags; see below */
+	uint32_t ci_ipis;		/* interprocessor interrupts pending */
 	int sc_apic_version;		/* local APIC version */
 
 	int32_t		ci_cpuid_level;
-	u_int32_t	ci_signature;	 /* X86 cpuid type */
-	u_int32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
-	u_int32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
-	u_int32_t	ci_feature3_flags;/* X86 extended feature bits */
-	u_int32_t	ci_cpu_class;	 /* CPU class */
-	u_int32_t	ci_brand_id;	 /* Intel brand id */
-	u_int32_t	ci_vendor[4];	 /* vendor string */
-	u_int32_t	ci_cpu_serial[3]; /* PIII serial number */
-	u_int64_t	ci_tsc_freq;	 /* cpu cycles/second */
+	uint32_t	ci_signature;	 /* X86 cpuid type */
+	uint32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
+	uint32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
+	uint32_t	ci_feature3_flags;/* X86 extended feature bits */
+	uint32_t	ci_cpu_class;	 /* CPU class */
+	uint32_t	ci_brand_id;	 /* Intel brand id */
+	uint32_t	ci_vendor[4];	 /* vendor string */
+	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
+	uint64_t	ci_tsc_freq;	 /* cpu cycles/second */
 
 	struct cpu_functions *ci_func;  /* start/stop functions */
 	void (*cpu_setup)(struct cpu_info *);
@@ -249,7 +249,7 @@ do {									\
 
 #endif /* MULTIPROCESSOR */
 
-extern u_int32_t cpus_attached;
+extern uint32_t cpus_attached;
 
 #define	curpcb			curcpu()->ci_curpcb
 #define	curlwp			curcpu()->ci_curlwp
@@ -483,7 +483,7 @@ struct disklist {
 		int bi_cyl;			   /* cylinders on disk */
 		int bi_head;			   /* heads per track */
 		int bi_sec;			   /* sectors per track */
-		u_int64_t bi_lbasecs;		   /* total sec. (iff ext13) */
+		uint64_t bi_lbasecs;		   /* total sec. (iff ext13) */
 #define BIFLAG_INVALID		0x01
 #define BIFLAG_EXTINT13		0x02
 		int bi_flags;

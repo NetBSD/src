@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.30 2005/12/24 20:07:11 perry Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.31 2005/12/26 19:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.30 2005/12/24 20:07:11 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.31 2005/12/26 19:24:00 perry Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -112,12 +112,12 @@ struct bios32_entry pcibios_entry;
 
 void	pcibios_pir_init(void);
 
-int	pcibios_get_status(u_int32_t *, u_int32_t *, u_int32_t *,
-	    u_int32_t *, u_int32_t *, u_int32_t *, u_int32_t *);
+int	pcibios_get_status(uint32_t *, uint32_t *, uint32_t *,
+	    uint32_t *, uint32_t *, uint32_t *, uint32_t *);
 int	pcibios_get_intr_routing(struct pcibios_intr_routing *,
-	    int *, u_int16_t *);
+	    int *, uint16_t *);
 
-int	pcibios_return_code(u_int16_t, const char *);
+int	pcibios_return_code(uint16_t, const char *);
 
 void	pcibios_print_exclirq(void);
 
@@ -149,7 +149,7 @@ void
 pcibios_init(void)
 {
 	struct bios32_entry_info ei;
-	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2;
+	uint32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2;
 
 	if (bios32_service(BIOS32_MAKESIG('$', 'P', 'C', 'I'),
 	    &pcibios_entry, &ei) == 0) {
@@ -202,7 +202,7 @@ pcibios_init(void)
 #ifdef PCI_INTR_FIXUP
 	if (pcibios_pir_table != NULL) {
 		int rv;
-		u_int16_t pciirq;
+		uint16_t pciirq;
 
 		/*
 		 * Fixup interrupt routing.
@@ -236,8 +236,8 @@ pcibios_pir_init(void)
 	paddr_t pa;
 	caddr_t p;
 	unsigned char cksum;
-	u_int16_t tablesize;
-	u_int8_t rev_maj, rev_min;
+	uint16_t tablesize;
+	uint8_t rev_maj, rev_min;
 	int i;
 
 	for (pa = PCI_IRQ_TABLE_START; pa < PCI_IRQ_TABLE_END; pa += 16) {
@@ -253,7 +253,7 @@ pcibios_pir_init(void)
 		
 		rev_min = *(p + 4);
 		rev_maj = *(p + 5);
-		tablesize = *(u_int16_t *)(p + 6);
+		tablesize = *(uint16_t *)(p + 6);
 
 		cksum = 0;
 		for (i = 0; i < tablesize; i++)
@@ -361,12 +361,12 @@ pcibios_pir_init(void)
 }
 
 int
-pcibios_get_status(u_int32_t *rev_maj, u_int32_t *rev_min,
-    u_int32_t *mech1, u_int32_t *mech2, u_int32_t *scmech1, u_int32_t *scmech2,
-    u_int32_t *maxbus)
+pcibios_get_status(uint32_t *rev_maj, uint32_t *rev_min,
+    uint32_t *mech1, uint32_t *mech2, uint32_t *scmech1, uint32_t *scmech2,
+    uint32_t *maxbus)
 {
-	u_int16_t ax, bx, cx;
-	u_int32_t edx;
+	uint16_t ax, bx, cx;
+	uint32_t edx;
 	int rv;
 
 	__asm volatile("lcall *(%%edi)				; \
@@ -399,14 +399,14 @@ pcibios_get_status(u_int32_t *rev_maj, u_int32_t *rev_min,
 
 int
 pcibios_get_intr_routing(struct pcibios_intr_routing *table,
-    int *nentries, u_int16_t *exclirq)
+    int *nentries, uint16_t *exclirq)
 {
-	u_int16_t ax, bx;
+	uint16_t ax, bx;
 	int rv;
 	struct {
-		u_int16_t size;
+		uint16_t size;
 		caddr_t offset;
-		u_int16_t segment;
+		uint16_t segment;
 	} __attribute__((__packed__)) args;
 
 	args.size = *nentries * sizeof(*table);
@@ -435,7 +435,7 @@ pcibios_get_intr_routing(struct pcibios_intr_routing *table,
 }
 
 int
-pcibios_return_code(u_int16_t ax, const char *func)
+pcibios_return_code(uint16_t ax, const char *func)
 {
 	const char *errstr;
 	int rv = ax >> 8;
@@ -591,7 +591,7 @@ static struct bios32_entry pcibios_entry_shadow;
 static void
 pcibios_copy_bios(void)
 {
-	u_int8_t *bad_instr;
+	uint8_t *bad_instr;
 
 	memcpy(pcibios_shadow, ISA_HOLE_VADDR(BIOS32_START), BIOS32_SIZE);
 	pcibios_entry_shadow = pcibios_entry;
@@ -600,7 +600,7 @@ pcibios_copy_bios(void)
 		    (u_long)pcibios_entry.offset -
 		    (u_long)ISA_HOLE_VADDR(BIOS32_START));
 	
-	bad_instr = (u_int8_t *)pcibios_entry_shadow.offset + 0x499;
+	bad_instr = (uint8_t *)pcibios_entry_shadow.offset + 0x499;
 	if (*bad_instr != 0x2e)
 		panic("bad bios");
 	bad_instr[0] = 0xb4; bad_instr[1] = 0xff; /* mov $0xff,%ah */
@@ -620,7 +620,7 @@ pcibios_copy_bios(void)
 static int
 pcibios_biosroute(int bus, int device, int func, int pin, int irq)
 {
-	u_int16_t ax, bx, cx;
+	uint16_t ax, bx, cx;
 	int rv;
 
 	printf("pcibios_biosroute: b,d,f=%d,%d,%d pin=%x irq=%d\n",

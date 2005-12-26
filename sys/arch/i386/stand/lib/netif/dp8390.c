@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.3 2001/11/01 09:37:17 yamt Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.4 2005/12/26 19:24:00 perry Exp $	*/
 
 /*
  * Polling driver for National Semiconductor DS8390/WD83C690 based
@@ -33,8 +33,8 @@ int dp8390_iobase, dp8390_membase, dp8390_memsize;
 #if defined(SUPPORT_WD80X3) && defined(SUPPORT_SMC_ULTRA)
 int dp8390_is790;
 #endif
-u_int8_t dp8390_cr_proto;
-u_int8_t dp8390_dcr_reg;
+uint8_t dp8390_cr_proto;
+uint8_t dp8390_dcr_reg;
 
 #define WE_IOBASE dp8390_iobase
 
