@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.314 2005/12/11 12:21:14 christos Exp $ */
+/*	$NetBSD: wd.c,v 1.315 2005/12/26 10:36:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.314 2005/12/11 12:21:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.315 2005/12/26 10:36:47 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1438,6 +1438,47 @@ bad:
 	    	struct dkwedge_list *dkwl = (void *) addr;
 
 		return (dkwedge_list(&wd->sc_dk, dkwl, l));
+	    }
+
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)addr;
+
+		s = splbio();
+		strlcpy(dks->dks_name, bufq_getstrategyname(wd->sc_q),
+		    sizeof(dks->dks_name));
+		splx(s);
+		dks->dks_paramlen = 0;
+
+		return 0;
+	    }
+	
+	case DIOCSSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)addr;
+		struct bufq_state *new;
+		struct bufq_state *old;
+
+		if ((flag & FWRITE) == 0) {
+			return EBADF;
+		}
+		if (dks->dks_param != NULL) {
+			return EINVAL;
+		}
+		dks->dks_name[sizeof(dks->dks_name) - 1] = 0; /* ensure term */
+		error = bufq_alloc(&new, dks->dks_name,
+		    BUFQ_EXACT|BUFQ_SORT_RAWBLOCK);
+		if (error) {
+			return error;
+		}
+		s = splbio();
+		old = wd->sc_q;
+		bufq_move(new, old);
+		wd->sc_q = new;
+		splx(s);
+		bufq_free(old);
+
+		return 0;
 	    }
 
 	default:

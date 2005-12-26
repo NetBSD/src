@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.31 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: disk.h,v 1.32 2005/12/26 10:36:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -308,6 +308,13 @@ struct disk_badsecinfo {
 	u_int32_t	dbsi_copied;	/* how many got copied back */
 	u_int32_t	dbsi_left;	/* remaining to copy */
 	caddr_t		dbsi_buffer;	/* region to copy disk_badsectors to */
+};
+
+#define	DK_STRATEGYNAMELEN	32
+struct disk_strategy {
+	char dks_name[DK_STRATEGYNAMELEN]; /* name of strategy */
+	char *dks_param;		/* notyet; should be NULL */
+	size_t dks_paramlen;		/* notyet; should be 0 */
 };
 
 #ifdef _KERNEL
