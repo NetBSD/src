@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.5 2005/12/24 23:24:00 perry Exp $ */
+/* $NetBSD: atomic.h,v 1.6 2005/12/26 19:23:59 perry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #ifndef _LOCORE
 
 static inline unsigned long
-x86_atomic_testset_ul (volatile u_int32_t *ptr, unsigned long val) {
+x86_atomic_testset_ul (volatile uint32_t *ptr, unsigned long val) {
     __asm volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
     return val;
 }
@@ -56,12 +56,12 @@ x86_atomic_testset_i (volatile int *ptr, int val) {
 }
 
 static inline void
-x86_atomic_setbits_l (volatile u_int32_t *ptr, unsigned long bits) {
+x86_atomic_setbits_l (volatile uint32_t *ptr, unsigned long bits) {
     __asm volatile("lock ; orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 static inline void
-x86_atomic_clearbits_l (volatile u_int32_t *ptr, unsigned long bits) {
+x86_atomic_clearbits_l (volatile uint32_t *ptr, unsigned long bits) {
     __asm volatile("lock ; andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 

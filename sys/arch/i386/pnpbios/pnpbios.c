@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.52 2005/12/11 12:17:47 christos Exp $ */
+/* $NetBSD: pnpbios.c,v 1.53 2005/12/26 19:24:00 perry Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.52 2005/12/11 12:17:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.53 2005/12/26 19:24:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ struct pnpbios_softc {
 	int		sc_version;
 	int		sc_control;
 #ifdef PNPBIOSEVENTS
-	u_int8_t	*sc_evaddr;
+	uint8_t	*	sc_evaddr;
 	int		sc_threadrun;
 	int		sc_docked;
 #endif
@@ -106,20 +106,20 @@ struct pnpbios_softc {
 /* bios calls */
 #if 0
 /* XXX these are not called */
-static int	pnpbios_getapmtable(u_int8_t *, size_t *);
+static int	pnpbios_getapmtable(uint8_t *, size_t *);
 static int	pnpbios_setnode(int, int,
-			    const u_int8_t *, size_t);
+			    const uint8_t *, size_t);
 #endif
 
 static int	pnpbios_getnode(int, int *,
-			    u_int8_t *, size_t);
+			    uint8_t *, size_t);
 static int	pnpbios_getnumnodes(int *, size_t *);
 
 #ifdef PNPBIOSEVENTS
 static int	pnpbios_getdockinfo(struct pnpdockinfo *);
 
 static void	pnpbios_create_event_thread(void *);
-static int	pnpbios_getevent(u_int16_t *);
+static int	pnpbios_getevent(uint16_t *);
 static void	pnpbios_event_thread(void *);
 static int	pnpbios_sendmessage(int);
 #endif
@@ -133,12 +133,12 @@ static void	pnpbios_attach(struct device *,
 			    struct device *, void *);
 static void	pnpbios_printres(struct pnpresources *);
 static int	pnpbios_print(void *aux, const char *);
-static void	pnpbios_id_to_string(u_int32_t, char *);
+static void	pnpbios_id_to_string(uint32_t, char *);
 static int	pnpbios_attachnode(struct pnpbios_softc *,
-			    int, const u_int8_t *,
+			    int, const uint8_t *,
 			    size_t, int);
 
-static int	pnp_scan(const u_int8_t **, size_t,
+static int	pnp_scan(const uint8_t **, size_t,
 			struct pnpresources *, int);
 extern int	pnpbioscall(int);
 
@@ -207,7 +207,7 @@ static caddr_t
 pnpbios_find(void)
 {
 	caddr_t p, c;
-	u_int8_t cksum;
+	uint8_t cksum;
 	size_t structlen;
 
 	for (p = (caddr_t)ISA_HOLE_VADDR(0xf0000);
@@ -215,14 +215,14 @@ pnpbios_find(void)
 	     p += 16) {
 		if (*(int *)p != PNPBIOS_SIGNATURE)
 			continue;
-		structlen = *(u_int8_t *)(p + 5);
+		structlen = *(uint8_t *)(p + 5);
 		if ((structlen < 0x21) ||
 		    ((p + structlen - 1) > (caddr_t)ISA_HOLE_VADDR(0xfffff)))
 			continue;
 
 		cksum = 0;
 		for (c = p; c < p + structlen; c++)
-			cksum += *(u_int8_t *)c;
+			cksum += *(uint8_t *)c;
 		if (cksum != 0)
 			continue;
 
@@ -296,12 +296,12 @@ pnpbios_attach(struct device *parent, struct device *self, void *aux)
 	if (!p)
 		panic("pnpbios_attach: disappeared");
 
-	sc->sc_version = *(u_int8_t *)(p + 0x04);
-	sc->sc_control = *(u_int8_t *)(p + 0x06);
-	evaddrp = *(u_int32_t *)(p + 0x09);
-	codepbase = *(u_int32_t *)(p + 0x13);
-	datapbase = *(u_int32_t *)(p + 0x1d);
-	pnpbios_entry = *(u_int16_t *)(p + 0x11);
+	sc->sc_version = *(uint8_t *)(p + 0x04);
+	sc->sc_control = *(uint8_t *)(p + 0x06);
+	evaddrp = *(uint32_t *)(p + 0x09);
+	codepbase = *(uint32_t *)(p + 0x13);
+	datapbase = *(uint32_t *)(p + 0x1d);
+	pnpbios_entry = *(uint16_t *)(p + 0x11);
 
 	if (pnpbiosverbose) {
 		printf(": code %x, data %x, entry %x, control %x eventp %x\n%s",
@@ -380,7 +380,7 @@ pnpbios_enumerate(struct pnpbios_softc *sc)
 {
 	int res, num, i, size, idx, dynidx;
 	struct pnpdevnode *dn;
-	u_int8_t *buf;
+	uint8_t *buf;
 
 	res = pnpbios_getnumnodes(&num, &size);
 	if (res) {
@@ -542,7 +542,7 @@ pnpbios_getnumnodes(int *nump, size_t *sizep)
 }
 
 static int
-pnpbios_getnode(int flags, int *idxp, u_int8_t *buf, size_t len)
+pnpbios_getnode(int flags, int *idxp, uint8_t *buf, size_t len)
 {
 	int res;
 	short *help = (short *)(pnpbios_scratchbuf + PNPBIOS_BUFSIZE);
@@ -571,7 +571,7 @@ pnpbios_getnode(int flags, int *idxp, u_int8_t *buf, size_t len)
 /* XXX - pnpbios_setnode() is never called. */
 
 static int
-pnpbios_setnode(int flags, int idx, const u_int8_t *buf, size_t len)
+pnpbios_setnode(int flags, int idx, const uint8_t *buf, size_t len)
 {
 	short *help = (short *)(pnpbios_scratchbuf + PNPBIOS_BUFSIZE);
 
@@ -590,7 +590,7 @@ pnpbios_setnode(int flags, int idx, const u_int8_t *buf, size_t len)
 
 #ifdef PNPBIOSEVENTS
 static int
-pnpbios_getevent(u_int16_t *event)
+pnpbios_getevent(uint16_t *event)
 {
 	int res;
 	short *help = (short *)(pnpbios_scratchbuf + PNPBIOS_BUFSIZE);
@@ -639,7 +639,7 @@ pnpbios_getdockinfo(struct pnpdockinfo *di)
 
 /* XXX we don't support more than PNPBIOS_BUFSIZE - (stacklen + 2) */
 static int
-pnpbios_getapmtable(u_int8_t *tab, size_t *len)
+pnpbios_getapmtable(uint8_t *tab, size_t *len)
 {
 	short *help = (short *)(pnpbios_scratchbuf + PNPBIOS_BUFSIZE);
 	size_t origlen, stacklen;
@@ -656,10 +656,10 @@ pnpbios_getapmtable(u_int8_t *tab, size_t *len)
 	stacklen = (caddr_t)help - pnpbios_scratchbuf;
 	if (origlen > PNPBIOS_BUFSIZE - stacklen - 2)
 		origlen = PNPBIOS_BUFSIZE - stacklen - 2;
-	*(u_int16_t *)(pnpbios_scratchbuf) = origlen;
+	*(uint16_t *)(pnpbios_scratchbuf) = origlen;
 
 	res = pnpbioscall(((caddr_t)help) - pnpbios_scratchbuf);
-	*len = *(u_int16_t *)pnpbios_scratchbuf;
+	*len = *(uint16_t *)pnpbios_scratchbuf;
 	if (res)
 		return (res);
 	if (origlen && *len > origlen) {
@@ -672,11 +672,11 @@ pnpbios_getapmtable(u_int8_t *tab, size_t *len)
 #endif
 
 static void
-pnpbios_id_to_string(u_int32_t pnpid, char *s)
+pnpbios_id_to_string(uint32_t pnpid, char *s)
 {
-	u_int8_t *id;
+	uint8_t *id;
 	
-	id = (u_int8_t *)&pnpid;
+	id = (uint8_t *)&pnpid;
 	*s++ = 'A' + (id[0] >> 2) - 1;
 	*s++ = 'A' + ((id[0] & 3) << 3) + (id[1] >> 5) - 1;
 	*s++ = 'A' + (id[1] & 0x1f) - 1;
@@ -782,11 +782,11 @@ pnpbios_attachchild(struct pnpbios_softc *sc,
 }
 
 static int
-pnpbios_attachnode(struct pnpbios_softc *sc, int idx, const u_int8_t *buf,
+pnpbios_attachnode(struct pnpbios_softc *sc, int idx, const uint8_t *buf,
     size_t len, int matchonly)
 {
 	const struct pnpdevnode *dn;
-	const u_int8_t *p;
+	const uint8_t *p;
 	char idstr[8];
 	struct pnpresources r, s;
 	struct pnpbiosdev_attach_args aa;
@@ -907,11 +907,11 @@ dump:
 }
 
 static int
-pnp_scan(const u_int8_t **bufp, size_t maxlen,
+pnp_scan(const uint8_t **bufp, size_t maxlen,
     struct pnpresources *r, int in_depends)
 {
 	const void *start;
-	const u_int8_t *p;
+	const uint8_t *p;
 	struct pnp_mem *mem;
 	int tag, type, len;
 	char *idstr;
@@ -933,7 +933,7 @@ pnp_scan(const u_int8_t **bufp, size_t maxlen,
 		start = p;
 		tag = *p;
 		if (tag & ISAPNP_LARGE_TAG) {
-			len = *(const u_int16_t *)(p + 1);
+			len = *(const uint16_t *)(p + 1);
 			p += sizeof(struct pnplargeres) + len;
 
 			switch (tag) {
@@ -1237,7 +1237,7 @@ pnp_compatid(struct pnpresources *r, const void *vres, size_t len)
 static int
 pnp_debugdump(struct pnpresources *r, const void *vres, size_t len)
 {
-	const u_int8_t *res = vres;
+	const uint8_t *res = vres;
 	int type, i;
 
 	if (res[0] & ISAPNP_LARGE_TAG) {
@@ -1401,7 +1401,7 @@ static void
 pnpbios_event_thread(void *arg)
 {
 	struct pnpbios_softc *sc;
-	u_int16_t event;
+	uint16_t event;
 	u_int evflag;
 	int rv, poll;
 

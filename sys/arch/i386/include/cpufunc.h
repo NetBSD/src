@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.29 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.30 2005/12/26 19:23:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);
 #endif
 
 /* debug register */
-void dr0(caddr_t, u_int32_t, u_int32_t, u_int32_t);
+void dr0(caddr_t, uint32_t, uint32_t, uint32_t);
 
 static inline u_int
 rdr6(void)
@@ -236,17 +236,17 @@ write_eflags(u_long ef)
 	__asm volatile("pushl %0; popfl" : : "r" (ef));
 }
 
-static inline u_int64_t
+static inline uint64_t
 rdmsr(u_int msr)
 {
-	u_int64_t rv;
+	uint64_t rv;
 
 	__asm volatile("rdmsr" : "=A" (rv) : "c" (msr));
 	return (rv);
 }
 
 static inline void
-wrmsr(u_int msr, u_int64_t newval)
+wrmsr(u_int msr, uint64_t newval)
 {
 	__asm volatile("wrmsr" : : "A" (newval), "c" (msr));
 }
@@ -257,19 +257,19 @@ wbinvd(void)
 	__asm volatile("wbinvd");
 }
 
-static inline u_int64_t
+static inline uint64_t
 rdtsc(void)
 {
-	u_int64_t rv;
+	uint64_t rv;
 
 	__asm volatile("rdtsc" : "=A" (rv));
 	return (rv);
 }
 
-static inline u_int64_t
+static inline uint64_t
 rdpmc(u_int pmc)
 {
-	u_int64_t rv;
+	uint64_t rv;
 
 	__asm volatile("rdpmc" : "=A" (rv) : "c" (pmc));
 	return (rv);

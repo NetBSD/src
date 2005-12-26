@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.25 2005/12/11 12:17:41 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.26 2005/12/26 19:23:59 perry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2005/12/26 19:23:59 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -152,7 +152,7 @@ struct cpu_info *cpu_info_list = &cpu_info_primary;
 static void	cpu_set_tss_gates(struct cpu_info *ci);
 static void	cpu_init_tss(struct i386tss *, void *, void *);
 
-u_int32_t cpus_attached = 0;
+uint32_t cpus_attached = 0;
 
 #ifdef MULTIPROCESSOR
 /*
@@ -161,7 +161,7 @@ u_int32_t cpus_attached = 0;
  */
 struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
 
-u_int32_t cpus_running = 0;
+uint32_t cpus_running = 0;
 
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
@@ -525,7 +525,7 @@ cpu_start_secondary (ci)
 	struct pcb *pcb;
 	int i;
 	struct pmap *kpm = pmap_kernel();
-	extern u_int32_t mp_pdirpa;
+	extern uint32_t mp_pdirpa;
 
 	mp_pdirpa = kpm->pm_pdirpa; /* XXX move elsewhere, not per CPU. */
 
@@ -766,7 +766,7 @@ mp_cpu_start(struct cpu_info *ci)
 	dwordptr[1] = MP_TRAMPOLINE >> 4;
 
 	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
-	memcpy ((u_int8_t *) 0x467, dwordptr, 4);
+	memcpy ((uint8_t *) 0x467, dwordptr, 4);
 	pmap_kremove (0, PAGE_SIZE);
 
 #if NLAPIC > 0

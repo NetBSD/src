@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.h,v 1.4 2001/11/01 09:37:17 yamt Exp $	*/
+/*	$NetBSD: dp8390.h,v 1.5 2005/12/26 19:24:00 perry Exp $	*/
 
 extern int dp8390_config __P((void));
 extern void dp8390_stop __P((void));
@@ -29,5 +29,5 @@ extern int dp8390_is790;
 #define TX_PAGE_START 0
 #endif
 
-extern u_int8_t dp8390_cr_proto; /* values always set in CR */
-extern u_int8_t dp8390_dcr_reg; /* override DCR if LS is set */
+extern uint8_t dp8390_cr_proto; /* values always set in CR */
+extern uint8_t dp8390_dcr_reg; /* override DCR if LS is set */

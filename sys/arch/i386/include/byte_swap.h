@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.7 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.8 2005/12/26 19:23:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,11 +46,11 @@
 #endif
 
 
-static inline u_int32_t __byte_swap_long_variable(u_int32_t);
-static inline u_int16_t __byte_swap_word_variable(u_int16_t);
+static inline uint32_t __byte_swap_long_variable(uint32_t);
+static inline uint16_t __byte_swap_word_variable(uint16_t);
 
-static inline u_int32_t
-__byte_swap_long_variable(u_int32_t x)
+static inline uint32_t
+__byte_swap_long_variable(uint32_t x)
 {
 	__asm volatile (
 #if defined(_KERNEL) && !defined(_LKM) && !defined(I386_CPU)
@@ -62,8 +62,8 @@ __byte_swap_long_variable(u_int32_t x)
 	return (x);
 }
 
-static inline u_int16_t
-__byte_swap_word_variable(u_int16_t x)
+static inline uint16_t
+__byte_swap_word_variable(uint16_t x)
 {
 	__asm volatile ("rorw $8, %w1" : "=r" (x) : "0" (x)); 
 	return (x);

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_pnpbios.c,v 1.2 2005/12/11 12:17:47 christos Exp $ */
+/* $NetBSD: atppc_pnpbios.c,v 1.3 2005/12/26 19:24:00 perry Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.2 2005/12/11 12:17:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.3 2005/12/26 19:24:00 perry Exp $");
 
 #include "opt_atppc.h"
 
@@ -74,7 +74,7 @@ CFATTACH_DECL(atppc_pnpbios, sizeof(struct atppc_pnpbios_softc),
     atppc_pnpbios_match, atppc_pnpbios_attach, NULL, NULL);
 
 static int atppc_pnpbios_dma_start(struct atppc_softc *, void *, u_int, 
-	u_int8_t);
+	uint8_t);
 static int atppc_pnpbios_dma_finish(struct atppc_softc *);
 static int atppc_pnpbios_dma_abort(struct atppc_softc *);
 static int atppc_pnpbios_dma_malloc(struct device *, caddr_t *, bus_addr_t *, 
@@ -148,7 +148,7 @@ atppc_pnpbios_attach(struct device *parent, struct device *self, void *aux)
 /* Start DMA operation over ISA bus */
 static int 
 atppc_pnpbios_dma_start(struct atppc_softc *lsc, void *buf, u_int nbytes,
-	u_int8_t mode)
+	uint8_t mode)
 {
 	struct atppc_pnpbios_softc * sc = (struct atppc_pnpbios_softc *) lsc;
 	

@@ -1,4 +1,4 @@
-/* $NetBSD: ne.c,v 1.4 2001/11/07 08:46:24 yamt Exp $ */
+/* $NetBSD: ne.c,v 1.5 2005/12/26 19:24:00 perry Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ static struct btinfo_netif bi_netif;
 int
 EtherInit(unsigned char *myadr)
 {
-	u_int8_t tmp;
+	uint8_t tmp;
 	int i;
 
 	printf("ne: trying iobase=0x%x\n", NE_BASEREG);
@@ -166,7 +166,7 @@ EtherInit(unsigned char *myadr)
 		myadr[i] = eth_myaddr[i] = HWADDR[i];
 #else
 {
-	u_int8_t romdata[16];
+	uint8_t romdata[16];
 	
 	ne2000_readmem(0, romdata, 16);
 	for (i = 0; i < 6; i++)
@@ -191,7 +191,7 @@ out:
 
 void
 EtherStop() {
-	u_int8_t tmp;
+	uint8_t tmp;
 
 	dp8390_stop();
 
@@ -205,7 +205,7 @@ EtherStop() {
 }
 
 void
-ne2000_writemem(u_int8_t *src, int dst, size_t len)
+ne2000_writemem(uint8_t *src, int dst, size_t len)
 {
 	size_t i;
 	int maxwait = 100;	/* about 120us */
@@ -229,7 +229,7 @@ ne2000_writemem(u_int8_t *src, int dst, size_t len)
 
 #ifdef NE_16BIT
 	for (i = 0; i < len; i += 2, src += 2)
-		ASIC_OUTW(NE2000_ASIC_DATA, *(u_int16_t *)src);
+		ASIC_OUTW(NE2000_ASIC_DATA, *(uint16_t *)src);
 #else
 	for (i = 0; i < len; i++)
 		ASIC_OUTB(NE2000_ASIC_DATA, *src++);
@@ -250,7 +250,7 @@ ne2000_writemem(u_int8_t *src, int dst, size_t len)
 }
 
 void
-ne2000_readmem(int src, u_int8_t *dst, size_t amount)
+ne2000_readmem(int src, uint8_t *dst, size_t amount)
 {
 	size_t i;
 
@@ -273,7 +273,7 @@ ne2000_readmem(int src, u_int8_t *dst, size_t amount)
 
 #ifdef NE_16BIT
 	for (i = 0; i < amount; i += 2, dst += 2)
-		*(u_int16_t *)dst = ASIC_INW(NE2000_ASIC_DATA);
+		*(uint16_t *)dst = ASIC_INW(NE2000_ASIC_DATA);
 #else
 	for (i = 0; i < amount; i++)
 		*dst++ = ASIC_INB(NE2000_ASIC_DATA);

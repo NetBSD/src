@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.8 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: bios32.c,v 1.9 2005/12/26 19:23:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.8 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.9 2005/12/26 19:23:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ bios32_init()
 		if (*(p + 9) != 1)
 			continue;
 
-		entry = *(u_int32_t *)(p + 4);
+		entry = *(uint32_t *)(p + 4);
 
 		printf("BIOS32 rev. %d found at 0x%lx\n",
 		    *(p + 8), entry);
@@ -138,11 +138,11 @@ bios32_init()
  */
 int
 bios32_service(service, e, ei)
-	u_int32_t service;
+	uint32_t service;
 	bios32_entry_t e;
 	bios32_entry_info_t ei;
 {
-	u_int32_t eax, ebx, ecx, edx;
+	uint32_t eax, ebx, ecx, edx;
 	paddr_t entry;
 
 	if (bios32_entry.offset == 0)

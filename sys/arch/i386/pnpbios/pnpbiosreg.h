@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbiosreg.h,v 1.2 2000/05/11 05:54:49 jhawk Exp $ */
+/*	$NetBSD: pnpbiosreg.h,v 1.3 2005/12/26 19:24:00 perry Exp $ */
 /*
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -86,19 +86,19 @@
 
 /* main pnpbios structure -- note not naturally aligned */
 struct pnpinstcheck {
-	u_int32_t	ic_sig;			/* '$PnP' */
-	u_int8_t	ic_version;		/* 0x10 currently */
-	u_int8_t	ic_length;		/* 0x21 currently */
-	u_int16_t	ic_control;
-	u_int8_t	ic_cksum;
-	u_int32_t	ic_evaddr;
-	u_int16_t	ic_rcodeoff;
-	u_int16_t	ic_rcodeseg;
-	u_int16_t	ic_pcodeoff;
-	u_int32_t	ic_pcodeseg;
-	u_int32_t	ic_oemid;
-	u_int16_t	ic_rdataseg;
-	u_int32_t	ic_pdataseg;
+	uint32_t	ic_sig;			/* '$PnP' */
+	uint8_t		ic_version;		/* 0x10 currently */
+	uint8_t		ic_length;		/* 0x21 currently */
+	uint16_t	ic_control;
+	uint8_t		ic_cksum;
+	uint32_t	ic_evaddr;
+	uint16_t	ic_rcodeoff;
+	uint16_t	ic_rcodeseg;
+	uint16_t	ic_pcodeoff;
+	uint32_t	ic_pcodeseg;
+	uint32_t	ic_oemid;
+	uint16_t	ic_rdataseg;
+	uint32_t	ic_pdataseg;
 } __attribute__((__packed__));
 #define	PNP_IC_VERSION_1_0		0x10
 #define	PNP_IC_CONTORL_EVENT_MASK	0x0003
@@ -108,13 +108,13 @@ struct pnpinstcheck {
 
 /* structure used by [GS]ET_DEVICE_NODE -- note not naturally aligned */
 struct pnpdevnode {
-	u_int16_t	dn_size;
-	u_int8_t	dn_handle;
-	u_int32_t	dn_product;
-	u_int8_t	dn_type;	/* base type */
-	u_int8_t	dn_subtype;	/* sub type depends on base */
-	u_int8_t	dn_dpi;		/* dev prog intf depends on subtype */
-	u_int16_t	dn_attr;
+	uint16_t	dn_size;
+	uint8_t		dn_handle;
+	uint32_t	dn_product;
+	uint8_t		dn_type;	/* base type */
+	uint8_t		dn_subtype;	/* sub type depends on base */
+	uint8_t		dn_dpi;		/* dev prog intf depends on subtype */
+	uint16_t	dn_attr;
 	/* variable - allocated resource */
 	/* variable - possible resource */
 	/* variable - compatible identifiers */
@@ -134,9 +134,9 @@ struct pnpdevnode {
 
 /* returned by GET_DOCK_INFO bios call */
 struct pnpdockinfo {
-	u_int32_t	di_id;		/* dock station id */
-	u_int32_t	di_serial;	/* serial number */
-	u_int16_t	di_cap;		/* capabilities */
+	uint32_t	di_id;		/* dock station id */
+	uint32_t	di_serial;	/* serial number */
+	uint16_t	di_cap;		/* capabilities */
 } __attribute__((__packed__));
 #define	PNP_DI_ID_UNKNOWN_DOCKING_ID	0xffffffff
 #define	PNP_DI_DOCK_WHEN_MASK		0x0006
@@ -149,86 +149,86 @@ struct pnpdockinfo {
 #define	PNP_DI_DOCK_STYLE_VCR		0x0001	/* controlled */
 
 struct pnplargeres {
-	u_int8_t	r_type;
-	u_int16_t	r_len;
+	uint8_t		r_type;
+	uint16_t	r_len;
 	/* variable */
 } __attribute__((__packed__));
 
 /* resource descriptors */
 struct pnpmem16rangeres {
 	struct pnplargeres	r_hdr;
-	u_int8_t	r_flags;
-	u_int16_t	r_minbase;	/* bits 23-8 */
-	u_int16_t	r_maxbase;	/* bits 23-8 */
-	u_int16_t	r_align;	/* 0 == 0x10000 */
-	u_int16_t	r_len;		/* bits 23-8 */
+	uint8_t		r_flags;
+	uint16_t	r_minbase;	/* bits 23-8 */
+	uint16_t	r_maxbase;	/* bits 23-8 */
+	uint16_t	r_align;	/* 0 == 0x10000 */
+	uint16_t	r_len;		/* bits 23-8 */
 } __attribute__((__packed__));
 
 struct pnpmem32rangeres {
 	struct pnplargeres	r_hdr;
-	u_int8_t	r_flags;
-	u_int32_t	r_minbase;
-	u_int32_t	r_maxbase;
-	u_int32_t	r_align;
-	u_int32_t	r_len;
+	uint8_t		r_flags;
+	uint32_t	r_minbase;
+	uint32_t	r_maxbase;
+	uint32_t	r_align;
+	uint32_t	r_len;
 } __attribute__((__packed__));
 
 struct pnpfixedmem32rangeres {
 	struct pnplargeres	r_hdr;
-	u_int8_t	r_flags;
-	u_int32_t	r_base;
-	u_int32_t	r_len;
+	uint8_t		r_flags;
+	uint32_t	r_base;
+	uint32_t	r_len;
 } __attribute__((__packed__));
 
 struct pnpansiidentres {
 	struct pnplargeres	r_hdr;
-	u_int8_t	r_id[1];	/* variable */
+	uint8_t		r_id[1];	/* variable */
 } __attribute__((__packed__));
 
 struct pnpdevidres {
-	u_int8_t	r_hdr;
-	u_int32_t	r_id;
-	u_int16_t	r_flags;
+	uint8_t		r_hdr;
+	uint32_t	r_id;
+	uint16_t	r_flags;
 } __attribute__((__packed__));
 
 struct pnpcompatres {
-	u_int8_t	r_hdr;
-	u_int32_t	r_id;
+	uint8_t		r_hdr;
+	uint32_t	r_id;
 } __attribute__((__packed__));
 
 struct pnpirqres {
-	u_int8_t	r_hdr;
-	u_int16_t	r_mask;
-	u_int8_t	r_info;		/* may not be present */
+	uint8_t		r_hdr;
+	uint16_t	r_mask;
+	uint8_t		r_info;		/* may not be present */
 } __attribute__((__packed__));
 
 struct pnpdmares {
-	u_int8_t	r_hdr;
-	u_int8_t	r_mask;
-	u_int8_t	r_flags;
+	uint8_t		r_hdr;
+	uint8_t		r_mask;
+	uint8_t		r_flags;
 } __attribute__((__packed__));
 
 struct pnpportres {
-	u_int8_t	r_hdr;
-	u_int8_t	r_flags;
-	u_int16_t	r_minbase;
-	u_int16_t	r_maxbase;
-	u_int8_t	r_align;
-	u_int8_t	r_len;
+	uint8_t		r_hdr;
+	uint8_t		r_flags;
+	uint16_t	r_minbase;
+	uint16_t	r_maxbase;
+	uint8_t		r_align;
+	uint8_t		r_len;
 } __attribute__((__packed__));
 
 struct pnpfixedportres {
-	u_int8_t	r_hdr;
-	u_int16_t	r_base;
-	u_int8_t	r_len;
+	uint8_t		r_hdr;
+	uint16_t	r_base;
+	uint8_t		r_len;
 } __attribute__((__packed__));
 
 struct pnpdepstartres {
-	u_int8_t	r_hdr;
-	u_int8_t	r_pri;	/* may not be present */
+	uint8_t		r_hdr;
+	uint8_t		r_pri;	/* may not be present */
 } __attribute__((__packed__));
 
 struct pnpendres {
-	u_int8_t	r_hdr;
-	u_int8_t	r_cksum;
+	uint8_t		r_hdr;
+	uint8_t		r_cksum;
 } __attribute__((__packed__));

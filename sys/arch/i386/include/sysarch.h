@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.15 2003/10/27 13:44:20 junyoung Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.16 2005/12/26 19:23:59 perry Exp $	*/
 
 #ifndef _I386_SYSARCH_H_
 #define _I386_SYSARCH_H_
@@ -69,11 +69,11 @@ struct i386_pmc_info_args {
 
 struct i386_pmc_startstop_args {
 	int counter;
-	u_int64_t val;
-	u_int8_t event;
-	u_int8_t unit;
-	u_int8_t compare;
-	u_int8_t flags;
+	uint64_t val;
+	uint8_t event;
+	uint8_t unit;
+	uint8_t compare;
+	uint8_t flags;
 };
 
 #define	PMC_SETUP_KERNEL	0x01
@@ -83,8 +83,8 @@ struct i386_pmc_startstop_args {
 
 struct i386_pmc_read_args {
 	int counter;
-	u_int64_t val;
-	u_int64_t time;
+	uint64_t val;
+	uint64_t time;
 };
 
 struct mtrr;

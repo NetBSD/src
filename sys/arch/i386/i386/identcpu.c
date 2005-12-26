@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.23 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.24 2005/12/26 19:23:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.23 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.24 2005/12/26 19:23:59 perry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -726,9 +726,9 @@ cpu_probe_base_features(struct cpu_info *ci)
 	const struct x86_cache_info *cai;
 	u_int descs[4];
 	int iterations, i, j;
-	u_int8_t desc;
-	u_int32_t dummy1, dummy2, miscbytes;
-	u_int32_t brand[12];
+	uint8_t desc;
+	uint32_t dummy1, dummy2, miscbytes;
+	uint32_t brand[12];
 
 	if (ci->ci_cpuid_level < 0)
 		return;
@@ -848,8 +848,8 @@ cpu_probe_features(struct cpu_info *ci)
 void
 intel_family_new_probe(struct cpu_info *ci)
 {
-	u_int32_t lfunc;
-	u_int32_t descs[4];
+	uint32_t lfunc;
+	uint32_t descs[4];
 
 	CPUID(0x80000000, lfunc, descs[1], descs[2], descs[3]);
 
@@ -865,8 +865,8 @@ intel_family_new_probe(struct cpu_info *ci)
 void
 amd_family6_probe(struct cpu_info *ci)
 {
-	u_int32_t lfunc;
-	u_int32_t descs[4];
+	uint32_t lfunc;
+	uint32_t descs[4];
 	char *p;
 	int i;
 
@@ -934,11 +934,11 @@ amd_family5_setup(struct cpu_info *ci)
 #define	LONGRUN_MODE_MAX		0x04
 
 union msrinfo {
-	u_int64_t	msr;
-	u_int32_t	regs[2];
+	uint64_t	msr;
+	uint32_t	regs[2];
 };
 
-u_int32_t longrun_modes[LONGRUN_MODE_MAX][3] = {
+uint32_t longrun_modes[LONGRUN_MODE_MAX][3] = {
 	/*  MSR low, MSR high, flags bit0 */
 	{	  0,	  0,		0},	/* LONGRUN_MODE_MINFREQUENCY */
 	{	  0,	100,		0},	/* LONGRUN_MODE_ECONOMY */
@@ -1224,7 +1224,7 @@ identifycpu(struct cpu_info *ci)
 	 * XXX this needs to run on the CPU being probed..
 	 */
 	if (ci->ci_feature_flags & CPUID_TSC) {
-		u_int64_t last_tsc;
+		uint64_t last_tsc;
 
 		last_tsc = rdtsc();
 		delay(100000);

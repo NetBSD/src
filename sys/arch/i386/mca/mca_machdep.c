@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.26 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.27 2005/12/26 19:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.26 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.27 2005/12/26 19:24:00 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,11 +70,11 @@ __KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.26 2005/12/11 12:17:43 christos Ex
 
 /* System Configuration Block - this info is returned by the BIOS call */
 struct bios_config {
-	u_int16_t	count;
-	u_int8_t	model;
-	u_int8_t	submodel;
-	u_int8_t	bios_rev;
-	u_int8_t	feature1;
+	uint16_t	count;
+	uint8_t		model;
+	uint8_t		submodel;
+	uint8_t		bios_rev;
+	uint8_t		feature1;
 #define FEATURE_MCAISA	0x01	/* Machine contains both MCA and ISA bus */
 #define FEATURE_MCABUS	0x02	/* Machine has MCA bus instead of ISA	*/
 #define FEATURE_EBDA	0x04	/* Extended BIOS data area allocated	*/
@@ -83,8 +83,8 @@ struct bios_config {
 #define FEATURE_RTC	0x20	/* Real-time clock present		*/
 #define FEATURE_IC2	0x40	/* Second interrupt chip present	*/
 #define FEATURE_DMA3	0x80	/* DMA channel 3 used by hard disk BIOS	*/
-	u_int8_t	feature2;
-	u_int8_t	pad[9];
+	uint8_t		feature2;
+	uint8_t		pad[9];
 } __attribute__ ((packed));
 
 /*
@@ -521,7 +521,7 @@ mca_dmamap_create(bus_dma_tag_t t, bus_size_t size, int flags,
  * so that it's available for one-shot setup.
  */
 void
-mca_dma_set_ioport(int dma, u_int16_t port)
+mca_dma_set_ioport(int dma, uint16_t port)
 {
 	/* Disable access to dma channel. */
 	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_MASK | dma);

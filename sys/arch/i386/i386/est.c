@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.11 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: est.c,v 1.12 2005/12/26 19:23:59 perry Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.11 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.12 2005/12/26 19:23:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,7 +406,7 @@ est_sysctl_helper(SYSCTLFN_ARGS)
 		/* support writing to ...frequency.target */
 	if (rnode->sysctl_num == est_node_target && fq != oldfq) {
 		int		i;
-		u_int64_t	msr;
+		uint64_t	msr;
 
 		for (i = est_fqlist->tablec - 1; i > 0; i--)
 			if (est_fqlist->table[i].mhz >= fq)
@@ -428,7 +428,7 @@ est_init(struct cpu_info *ci)
 	const struct est_cpu	*ccpu;
 	const struct fqlist	*fql;
 	const struct sysctlnode	*node, *estnode, *freqnode;
-	u_int64_t		msr;
+	uint64_t		msr;
 	int			i, j, rc;
 	int			mhz, mv;
 	size_t			len, freq_len;

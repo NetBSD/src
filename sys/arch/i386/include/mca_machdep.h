@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.9 2003/02/26 21:29:01 fvdl Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.10 2005/12/26 19:23:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct mcabus_attach_args;
 void	mca_attach_hook(struct device *, struct device *,
 		struct mcabus_attach_args *);
 int	mca_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_dmamap_t *, int);
-void	mca_dma_set_ioport(int dma, u_int16_t port);
+void	mca_dma_set_ioport(int dma, uint16_t port);
 const struct evcnt *mca_intr_evcnt(mca_chipset_tag_t, mca_intr_handle_t);
 void	*mca_intr_establish(mca_chipset_tag_t, mca_intr_handle_t,
 		int, int (*)(void *), void *);

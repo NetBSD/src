@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.10 2005/12/04 12:20:31 xtraeme Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.11 2005/12/26 19:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.10 2005/12/04 12:20:31 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.11 2005/12/26 19:24:00 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -317,7 +317,7 @@ speedstep_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC ||
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC &&
 	     pci_find_device(pa, speedstep_bad_hb_check) == 0)) {
-		u_int8_t pmcon;
+		uint8_t pmcon;
 
 		/* Enable SpeedStep if it isn't already enabled. */
 		pmcon = pci_conf_read(pa->pa_pc, pa->pa_tag,
@@ -361,7 +361,7 @@ speedstep_sysctl_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode	node;
 	struct lpcib_softc *sc = speedstep_cookie;
-	u_int8_t		state, state2;
+	uint8_t		state, state2;
 	int			ostate, nstate, s, error = 0;
 
 	/*
@@ -398,7 +398,7 @@ speedstep_sysctl_helper(SYSCTLFN_ARGS)
 		ostate = 0;
 	if (ostate != nstate)
 	{
-		u_int8_t cntl;
+		uint8_t cntl;
 
 		if (nstate == 0)
 			state2 |= LPCIB_PM_SS_STATE_LOW;

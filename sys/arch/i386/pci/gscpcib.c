@@ -1,4 +1,4 @@
-/* $NetBSD: gscpcib.c,v 1.4 2005/12/24 20:07:11 perry Exp $ */
+/* $NetBSD: gscpcib.c,v 1.5 2005/12/26 19:24:00 perry Exp $ */
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -150,7 +150,7 @@ gscpcib_gpio_pin_read(void *arg, int pin)
 {
 	struct gscpcib_softc *sc = arg;
 	int reg, shift;
-	u_int32_t data;
+	uint32_t data;
 
 	reg = (pin < 32 ? GSCGPIO_GPDI0 : GSCGPIO_GPDI1);
 	shift = pin % 32;
@@ -164,7 +164,7 @@ gscpcib_gpio_pin_write(void *arg, int pin, int value)
 {
 	struct gscpcib_softc *sc = arg;
 	int reg, shift;
-	u_int32_t data;
+	uint32_t data;
 
 	reg = (pin < 32 ? GSCGPIO_GPDO0 : GSCGPIO_GPDO1);
 	shift = pin % 32;
@@ -181,7 +181,7 @@ void
 gscpcib_gpio_pin_ctl(void *arg, int pin, int flags)
 {
 	struct gscpcib_softc *sc = arg;
-	u_int32_t conf;
+	uint32_t conf;
 
 	gscpcib_gpio_pin_select(sc, pin);
 	conf = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.27 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.28 2005/12/26 19:23:59 perry Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.27 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.28 2005/12/26 19:23:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ static int ahc_isa_slot_initialized;
 int
 ahc_isa_idstring(bus_space_tag_t iot, bus_space_handle_t ioh, char *idstring)
 {
-	u_int8_t vid[EISA_NVIDREGS], pid[EISA_NPIDREGS];
+	uint8_t vid[EISA_NVIDREGS], pid[EISA_NPIDREGS];
 	int i;
 
 	/* Get the vendor ID bytes */
@@ -475,7 +475,7 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 {
 	struct	  seeprom_descriptor sd;
 	struct	  seeprom_config sc;
-	u_int8_t  scsi_conf;
+	uint8_t  scsi_conf;
 	int	  have_seeprom;
 
 	sd.sd_tag = ahc->tag;
@@ -493,7 +493,7 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 
 	if (bootverbose)
 		printf("%s: Reading SEEPROM...", ahc_name(ahc));
-	have_seeprom = read_seeprom(&sd, (u_int16_t *)&sc,
+	have_seeprom = read_seeprom(&sd, (uint16_t *)&sc,
 				    /*start_addr*/0, sizeof(sc)/2);
 
 	if (have_seeprom) {
@@ -517,11 +517,11 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 		 */
 		int i;
 		int max_targ = (ahc->features & AHC_WIDE) != 0 ? 16 : 8;
-		u_int16_t discenable;
+		uint16_t discenable;
 
 		discenable = 0;
 		for (i = 0; i < max_targ; i++){
-	                u_int8_t target_settings;
+	                uint8_t target_settings;
 			target_settings = (sc.device_flags[i] & CFXFER) << 4;
 			if (sc.device_flags[i] & CFSYNCH)
 				target_settings |= SOFS;

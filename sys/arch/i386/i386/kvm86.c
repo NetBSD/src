@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.9 2005/12/11 12:17:41 christos Exp $ */
+/* $NetBSD: kvm86.c,v 1.10 2005/12/26 19:23:59 perry Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.9 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.10 2005/12/26 19:23:59 perry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -56,7 +56,7 @@ struct kvm86_data {
 	u_long iomap[0x10000/32]; /* full size io permission map */
 };
 
-static void kvm86_map(struct kvm86_data *, paddr_t, u_int32_t);
+static void kvm86_map(struct kvm86_data *, paddr_t, uint32_t);
 static void kvm86_mapbios(struct kvm86_data *);
 
 /*
@@ -152,7 +152,7 @@ static void
 kvm86_map(vmd, pa, vmva)
 	struct kvm86_data *vmd;
 	paddr_t pa;
-	u_int32_t vmva;
+	uint32_t vmva;
 {
 
 	vmd->pgtbl[vmva >> 12] = pa | PG_V | PG_RW | PG_U | PG_u;
@@ -174,7 +174,7 @@ kvm86_mapbios(vmd)
 
 void *
 kvm86_bios_addpage(vmva)
-	u_int32_t vmva;
+	uint32_t vmva;
 {
 	void *mem;
 
@@ -193,7 +193,7 @@ kvm86_bios_addpage(vmva)
 
 void
 kvm86_bios_delpage(vmva, kva)
-	u_int32_t vmva;
+	uint32_t vmva;
 	void *kva;
 {
 
@@ -203,7 +203,7 @@ kvm86_bios_delpage(vmva, kva)
 
 size_t
 kvm86_bios_read(vmva, buf, len)
-	u_int32_t vmva;
+	uint32_t vmva;
 	char *buf;
 	size_t len;
 {
@@ -295,7 +295,7 @@ kvm86_gpfault(tf)
 	struct trapframe *tf;
 {
 	unsigned char *kva, insn, trapno;
-	u_int16_t *sp;
+	uint16_t *sp;
 
 	kva = (unsigned char *)((tf->tf_cs << 4) + tf->tf_eip);
 	insn = *kva;
@@ -313,16 +313,16 @@ kvm86_gpfault(tf)
 	case 0xcd: /* INTxx */
 		/* fake a return stack frame and call real mode handler */
 		trapno = *(kva + 1);
-		sp = (u_int16_t *)((tf->tf_ss << 4) + tf->tf_esp);
+		sp = (uint16_t *)((tf->tf_ss << 4) + tf->tf_esp);
 		*(--sp) = tf->tf_eflags;
 		*(--sp) = tf->tf_cs;
 		*(--sp) = tf->tf_eip + 2;
 		tf->tf_esp -= 6;
-		tf->tf_cs = *(u_int16_t *)(trapno * 4 + 2);
-		tf->tf_eip = *(u_int16_t *)(trapno * 4);
+		tf->tf_cs = *(uint16_t *)(trapno * 4 + 2);
+		tf->tf_eip = *(uint16_t *)(trapno * 4);
 		break;
 	case 0xcf: /* IRET */
-		sp = (u_int16_t *)((tf->tf_ss << 4) + tf->tf_esp);
+		sp = (uint16_t *)((tf->tf_ss << 4) + tf->tf_esp);
 		tf->tf_eip = *(sp++);
 		tf->tf_cs = *(sp++);
 		tf->tf_eflags = *(sp++);
@@ -336,13 +336,13 @@ kvm86_gpfault(tf)
 		tf->tf_eip++;
 		break;
 	case 0x9c: /* PUSHF */
-		sp = (u_int16_t *)((tf->tf_ss << 4) + tf->tf_esp);
+		sp = (uint16_t *)((tf->tf_ss << 4) + tf->tf_esp);
 		*(--sp) = tf->tf_eflags;
 		tf->tf_esp -= 2;
 		tf->tf_eip++;
 		break;
 	case 0x9d: /* POPF */
-		sp = (u_int16_t *)((tf->tf_ss << 4) + tf->tf_esp);
+		sp = (uint16_t *)((tf->tf_ss << 4) + tf->tf_esp);
 		tf->tf_eflags = *(sp++);
 		tf->tf_esp += 2;
 		tf->tf_eip++;

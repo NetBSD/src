@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.34 2005/12/25 19:26:33 rpaulo Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.35 2005/12/26 19:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.34 2005/12/25 19:26:33 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.35 2005/12/26 19:24:00 perry Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -93,7 +93,7 @@ struct pciintr_link_map {
 	int link;
 	int clink;
 	int irq;
-	u_int16_t bitmap;
+	uint16_t bitmap;
 	int fixup_stage;
 	SIMPLEQ_ENTRY(pciintr_link_map) list;
 };
@@ -116,8 +116,8 @@ int	pciintr_link_init (void);
 int	pciintr_guess_irq(void);
 #endif
 int	pciintr_link_fixup(void);
-int	pciintr_link_route(u_int16_t *);
-int	pciintr_irq_release(u_int16_t *);
+int	pciintr_link_route(uint16_t *);
+int	pciintr_irq_release(uint16_t *);
 int	pciintr_header_fixup(pci_chipset_tag_t);
 void	pciintr_do_header_fixup(pci_chipset_tag_t, pcitag_t, void*);
 
@@ -430,7 +430,7 @@ pciintr_link_fixup(void)
 {
 	struct pciintr_link_map *l;
 	int irq;
-	u_int16_t pciirq = 0;
+	uint16_t pciirq = 0;
 
 	/*
 	 * First stage: Attempt to connect PIRQs which aren't
@@ -521,7 +521,7 @@ pciintr_link_fixup(void)
 }
 
 int
-pciintr_link_route(u_int16_t *pciirq)
+pciintr_link_route(uint16_t *pciirq)
 {
 	struct pciintr_link_map *l;
 	int rv = 0;
@@ -575,10 +575,10 @@ pciintr_link_route(u_int16_t *pciirq)
 }
 
 int
-pciintr_irq_release(u_int16_t *pciirq)
+pciintr_irq_release(uint16_t *pciirq)
 {
 	int i, bit;
-	u_int16_t bios_pciirq;
+	uint16_t bios_pciirq;
 	int reg;
 
 #ifdef PCIINTR_DEBUG
@@ -745,7 +745,7 @@ pciintr_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 }
 
 int
-pci_intr_fixup(pci_chipset_tag_t pc, bus_space_tag_t iot, u_int16_t *pciirq)
+pci_intr_fixup(pci_chipset_tag_t pc, bus_space_tag_t iot, uint16_t *pciirq)
 {
 	const struct pciintr_icu_table *piit = NULL;
 	pcitag_t icutag;

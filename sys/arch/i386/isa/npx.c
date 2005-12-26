@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.109 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: npx.c,v 1.110 2005/12/26 19:23:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.109 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.110 2005/12/26 19:23:59 perry Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -141,7 +141,7 @@ static int	npxdna_s87(struct cpu_info *);
 #ifdef I686_CPU
 static int	npxdna_xmm(struct cpu_info  *);
 #endif /* I686_CPU */
-static int	x86fpflags_to_ksiginfo(u_int32_t flags);
+static int	x86fpflags_to_ksiginfo(uint32_t flags);
 
 #ifdef I686_CPU
 #define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
@@ -476,7 +476,7 @@ npxintr(void *arg, struct intrframe iframe)
 /* Software Developer's Manual, Volume 1		*/
 /* XXX punting on the stack fault with FLTINV		*/
 static int
-x86fpflags_to_ksiginfo(u_int32_t flags)
+x86fpflags_to_ksiginfo(uint32_t flags)
 {
 	int i;
 	static int x86fp_ksiginfo_table[] = {

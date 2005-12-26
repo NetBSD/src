@@ -1,4 +1,4 @@
-/* $NetBSD: 3c90xb.c,v 1.10 2005/12/11 12:17:48 christos Exp $ */
+/* $NetBSD: 3c90xb.c,v 1.11 2005/12/26 19:24:00 perry Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -121,7 +121,7 @@ static struct btinfo_netif bi_netif;
 	while (CSR_READ_2(ELINK_STATUS) & COMMAND_IN_PROGRESS);
 
 void ex_reset __P((void));
-u_int16_t ex_read_eeprom __P((int));
+uint16_t ex_read_eeprom __P((int));
 static int ex_eeprom_busy __P((void));
 void ex_init __P((void));
 void ex_set_media __P((void));
@@ -138,11 +138,11 @@ ex_reset()
  * Read EEPROM data.
  * XXX what to do if EEPROM doesn't unbusy?
  */
-u_int16_t
+uint16_t
 ex_read_eeprom(offset)
 	int offset;
 {
-	u_int16_t data = 0;
+	uint16_t data = 0;
 
 	GO_WINDOW(0);
 	if (ex_eeprom_busy())
@@ -296,11 +296,11 @@ int
 EtherInit(myadr)
 	unsigned char *myadr;
 {
-	u_int32_t pcicsr;
-	u_int16_t val;
+	uint32_t pcicsr;
+	uint16_t val;
 	volatile struct ex_upd *upd;
 #ifndef _STANDALONE
-	u_int32_t id;
+	uint32_t id;
 #endif
 
 	if (pcicheck()) {
