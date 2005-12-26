@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.14 2005/12/26 16:08:34 christos Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.15 2005/12/26 16:11:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.14 2005/12/26 16:08:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.15 2005/12/26 16:11:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,8 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 					ok = FALSE;
 
 			if (ok) {
-				this_ext = le32toh(63);
+				this_ext = le32toh(a->lp->d_secpercyl /
+				    a->lp->d_ntracks);
 				continue;
 			}
 		}
