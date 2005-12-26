@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.35 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.36 2005/12/26 18:45:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.35 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.36 2005/12/26 18:45:27 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -381,7 +381,7 @@ exec_macho_load_vnode(struct lwp *l, struct exec_package *epp,
 	int error = ENOEXEC, i;
 	size_t size;
 	void *bf = &lc;
-	u_int32_t *sc = NULL;
+	uint32_t *sc = NULL;
 
 #ifdef DEBUG_MACHO
 	exec_macho_print_fat_header(fat);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstat.h,v 1.16 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: dkstat.h,v 1.17 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,10 +40,10 @@
 #define _SYS_DKSTAT_H_
 
 #ifdef _KERNEL
-extern u_int64_t tk_cancc;
-extern u_int64_t tk_nin;
-extern u_int64_t tk_nout;
-extern u_int64_t tk_rawcc;
+extern uint64_t tk_cancc;
+extern uint64_t tk_nin;
+extern uint64_t tk_nout;
+extern uint64_t tk_rawcc;
 #endif
 
 #endif /* _SYS_DKSTAT_H_ */

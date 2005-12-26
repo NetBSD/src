@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.182 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.183 2005/12/26 18:41:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -208,7 +208,7 @@ int	snprintf(char *, size_t, const char *, ...)
 void	vprintf(const char *, _BSD_VA_LIST_);
 int	vsprintf(char *, const char *, _BSD_VA_LIST_);
 int	vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_);
-int	humanize_number(char *, size_t, u_int64_t, const char *, int);
+int	humanize_number(char *, size_t, uint64_t, const char *, int);
 
 void	twiddle(void);
 #endif /* _KERNEL */
@@ -222,7 +222,7 @@ void	ttyprintf(struct tty *, const char *, ...)
 
 char	*bitmask_snprintf(u_quad_t, const char *, char *, size_t);
 
-int	format_bytes(char *, size_t, u_int64_t);
+int	format_bytes(char *, size_t, uint64_t);
 
 void	tablefull(const char *, const char *);
 

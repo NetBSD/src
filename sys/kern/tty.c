@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.178 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.179 2005/12/26 18:45:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.178 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.179 2005/12/26 18:45:27 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,10 +174,10 @@ int tty_count;
 POOL_INIT(tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
     &pool_allocator_nointr);
 
-u_int64_t tk_cancc;
-u_int64_t tk_nin;
-u_int64_t tk_nout;
-u_int64_t tk_rawcc;
+uint64_t tk_cancc;
+uint64_t tk_nin;
+uint64_t tk_nout;
+uint64_t tk_rawcc;
 
 SYSCTL_SETUP(sysctl_kern_tkstat_setup, "sysctl kern.tkstat subtree setup")
 {

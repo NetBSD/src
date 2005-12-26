@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.1 2005/12/20 16:28:55 thorpej Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.2 2005/12/26 18:41:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -82,7 +82,7 @@
  */
 
 struct evcnt {
-	u_int64_t	ev_count;	/* how many have occurred */
+	uint64_t	ev_count;	/* how many have occurred */
 	TAILQ_ENTRY(evcnt) ev_list;	/* entry on list of all counters */
 	unsigned char	ev_type;	/* counter type; see below */
 	unsigned char	ev_grouplen;	/* 'group' len, excluding NUL */

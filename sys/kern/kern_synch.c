@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.158 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.159 2005/12/26 18:45:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.158 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.159 2005/12/26 18:45:27 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -127,7 +127,7 @@ int	rrticks;		/* number of hardclock ticks per roundrobin() */
  * The global scheduler state.
  */
 struct prochd sched_qs[RUNQUE_NQS];	/* run queues */
-volatile u_int32_t sched_whichqs;	/* bitmap of non-empty queues */
+volatile uint32_t sched_whichqs;	/* bitmap of non-empty queues */
 struct slpque sched_slpque[SLPQUE_TABLESIZE]; /* sleep queues */
 
 struct simplelock sched_lock = SIMPLELOCK_INITIALIZER;

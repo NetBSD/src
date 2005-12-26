@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.12 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: timepps.h,v 1.13 2005/12/26 18:41:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -47,7 +47,7 @@
  * PPSAPI type definitions
  */
 typedef int32_t pps_handle_t;	/* represents a PPS source */
-typedef u_int32_t pps_seq_t;	/* sequence number, at least 32 bits */
+typedef uint32_t pps_seq_t;	/* sequence number, at least 32 bits */
 
 typedef union pps_timeu {
 	struct timespec	tspec;
