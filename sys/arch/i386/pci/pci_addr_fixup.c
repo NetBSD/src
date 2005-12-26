@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.16 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.17 2005/12/26 19:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.16 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.17 2005/12/26 19:24:00 perry Exp $");
 
 #include "opt_pcibios.h"
 
@@ -339,7 +339,7 @@ pciaddr_do_resource_reserve(pci_chipset_tag_t pc, pcitag_t tag,
 }
 
 bus_addr_t
-pciaddr_ioaddr(u_int32_t val)
+pciaddr_ioaddr(uint32_t val)
 {
 	return ((PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_MEM)
 		? PCI_MAPREG_MEM_ADDR(val)

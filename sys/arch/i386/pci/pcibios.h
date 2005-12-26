@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.9 2005/12/11 12:17:44 christos Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.10 2005/12/26 19:24:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -49,16 +49,16 @@
  * Slot entry (per PCI 2.1)
  */
 struct pcibios_linkmap {
-	u_int8_t	link;
-	u_int16_t	bitmap;
+	uint8_t		link;
+	uint16_t	bitmap;
 } __attribute__((__packed__));
 
 struct pcibios_intr_routing {
-	u_int8_t	bus;
-	u_int8_t	device;
+	uint8_t		bus;
+	uint8_t		device;
 	struct pcibios_linkmap linkmap[4];	/* INT[A:D]# */
-	u_int8_t	slot;
-	u_int8_t	reserved;
+	uint8_t		slot;
+	uint8_t		reserved;
 } __attribute__((__packed__));
 
 /*
@@ -67,16 +67,16 @@ struct pcibios_intr_routing {
  *	http://www.microsoft.com/whdc/hwdev/archive/BUSBIOS/pciirq.mspx
  */
 struct pcibios_pir_header {
-	u_int32_t	signature;		/* $PIR */
-	u_int16_t	version;
-	u_int16_t	tablesize;
-	u_int8_t	router_bus;
-	u_int8_t	router_devfunc;
-	u_int16_t	exclusive_irq;
-	u_int32_t	compat_router;		/* PCI vendor/product */
-	u_int32_t	miniport;
-	u_int8_t	reserved[11];
-	u_int8_t	checksum;
+	uint32_t	signature;		/* $PIR */
+	uint16_t	version;
+	uint16_t	tablesize;
+	uint8_t		router_bus;
+	uint8_t		router_devfunc;
+	uint16_t	exclusive_irq;
+	uint32_t	compat_router;		/* PCI vendor/product */
+	uint32_t	miniport;
+	uint8_t		reserved[11];
+	uint8_t		checksum;
 } __attribute__((__packed__));
 
 #define	PIR_DEVFUNC_DEVICE(devfunc)	(((devfunc) >> 3) & 0x1f)

@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.12 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: elan520.c,v 1.13 2005/12/26 19:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.12 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.13 2005/12/26 19:24:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,7 @@ elansc_gpio_pin_read(void *arg, int pin)
 {
 	struct elansc_softc *sc = arg;
 	int reg, shift;
-	u_int16_t data;
+	uint16_t data;
 
 	reg = (pin < 16 ? MMCR_PIODATA15_0 : MMCR_PIODATA31_16);
 	shift = pin % 16;
@@ -365,7 +365,7 @@ elansc_gpio_pin_write(void *arg, int pin, int value)
 {
 	struct elansc_softc *sc = arg;
 	int reg, shift;
-	u_int16_t data;
+	uint16_t data;
 
 	reg = (pin < 16 ? MMCR_PIODATA15_0 : MMCR_PIODATA31_16);
 	shift = pin % 16;
@@ -383,7 +383,7 @@ elansc_gpio_pin_ctl(void *arg, int pin, int flags)
 {
 	struct elansc_softc *sc = arg;
 	int reg, shift;
-	u_int16_t data;
+	uint16_t data;
 
 	reg = (pin < 16 ? MMCR_PIODIR15_0 : MMCR_PIODIR31_16);
 	shift = pin % 16;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd80x3.c,v 1.7 2002/02/17 19:47:41 thorpej Exp $	*/
+/*	$NetBSD: wd80x3.c,v 1.8 2005/12/26 19:24:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ extern int mapio __P((void));
 
 u_char eth_myaddr[6];
 
-static u_int8_t we_type;
+static uint8_t we_type;
 static int we_is16bit;
 
 #ifdef _STANDALONE
@@ -152,7 +152,7 @@ we_params()
 	case WE_TYPE_SMC8216C:
 	case WE_TYPE_SMC8216T:
 	    {
-		u_int8_t hwr;
+		uint8_t hwr;
 
 		typestr = (we_type == WE_TYPE_SMC8216C) ?
 		    "SMC8216/SMC8216C" : "SMC8216T";
@@ -220,10 +220,10 @@ EtherInit(myadr)
 	unsigned char *myadr;
 {
 	const char *typestr;
-	u_int8_t x;
+	uint8_t x;
 	int i;
-	u_int8_t laar_proto;
-	u_int8_t msr_proto;
+	uint8_t laar_proto;
+	uint8_t msr_proto;
 
 	dp8390_iobase = WD_BASEREG + WE_NIC_OFFSET;
 	dp8390_membase = WD_BASEMEM;

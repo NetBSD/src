@@ -1,7 +1,7 @@
-/* $NetBSD: vesabios.c,v 1.12 2005/12/11 12:17:40 christos Exp $ */
+/* $NetBSD: vesabios.c,v 1.13 2005/12/26 19:23:59 perry Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.12 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.13 2005/12/26 19:23:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -18,13 +18,13 @@ __KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.12 2005/12/11 12:17:40 christos Exp $
 struct vbeinfoblock
 {
 	char VbeSignature[4];
-	u_int16_t VbeVersion;
-	u_int32_t OemStringPtr;
-	u_int32_t Capabilities;
-	u_int32_t VideoModePtr;
-	u_int16_t TotalMemory;
-	u_int16_t OemSoftwareRev;
-	u_int32_t OemVendorNamePtr, OemProductNamePtr, OemProductRevPtr;
+	uint16_t VbeVersion;
+	uint32_t OemStringPtr;
+	uint32_t Capabilities;
+	uint32_t VideoModePtr;
+	uint16_t TotalMemory;
+	uint16_t OemSoftwareRev;
+	uint32_t OemVendorNamePtr, OemProductNamePtr, OemProductRevPtr;
 	/* data area, in total max 512 bytes for VBE 2.0 */
 } __attribute__ ((packed));
 
@@ -149,11 +149,11 @@ vesabios_attach(parent, dev, aux)
 	int res;
 	char name[256];
 #define MAXMODES 60
-	u_int16_t modes[MAXMODES];
+	uint16_t modes[MAXMODES];
 	int raster8modes[MAXMODES];
 	int textmodes[MAXMODES];
 	int nmodes, nraster8modes, ntextmodes, i;
-	u_int32_t modeptr;
+	uint32_t modeptr;
 	struct modeinfoblock *mi;
 	struct vesabiosdev_attach_args vbaa;
 
