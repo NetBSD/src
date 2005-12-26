@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.15 2003/04/16 13:35:28 wiz Exp $
+.\"	$NetBSD: ethersubr.9,v 1.16 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .Sh SYNOPSIS
 .In net/if_ether.h
 .Ft void
-.Fn ether_ifattach "struct ifnet *ifp" "u_int8_t *lla"
+.Fn ether_ifattach "struct ifnet *ifp" "uint8_t *lla"
 .Ft int
 .Fn ether_addmulti "struct ifrequest *ifr" "struct ethercom *ec"
 .Ft int
@@ -62,10 +62,10 @@
 .Ft void
 .Fn ETHER_NEXT_MULTI  "struct ether_multistep step" "struct ether_multi *enm"
 .Ft int
-.Fn ETHER_IS_MULTICAST "u_int8_t *addr"
+.Fn ETHER_IS_MULTICAST "uint8_t *addr"
 .In net/if_fddi.h
 .Ft void
-.Fn fddi_ifattach "struct ifnet *ifp" "u_int8_t *lla"
+.Fn fddi_ifattach "struct ifnet *ifp" "uint8_t *lla"
 .Ft int
 .Fn fddi_addmulti "struct ifrequest *ifr" "struct ethercom *ec"
 .Ft int

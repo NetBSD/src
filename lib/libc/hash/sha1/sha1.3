@@ -1,4 +1,4 @@
-.\"	$NetBSD: sha1.3,v 1.1 2005/09/24 19:07:00 elad Exp $
+.\"	$NetBSD: sha1.3,v 1.2 2005/12/26 19:40:14 perry Exp $
 .\"	$OpenBSD: sha1.3,v 1.9 1998/03/07 22:18:12 millert Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -52,7 +52,7 @@
 .Ft void
 .Fn SHA1Final "u_char digest[20]" "SHA1_CTX *context"
 .Ft void
-.Fn SHA1Transform "u_int32_t state[5]" "u_char buffer[64]"
+.Fn SHA1Transform "uint32_t state[5]" "u_char buffer[64]"
 .Ft "char *"
 .Fn SHA1End "SHA1_CTX *context" "char *buf"
 .Ft "char *"

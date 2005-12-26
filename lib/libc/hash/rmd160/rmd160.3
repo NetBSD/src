@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmd160.3,v 1.1 2005/09/24 19:07:00 elad Exp $
+.\"	$NetBSD: rmd160.3,v 1.2 2005/12/26 19:40:14 perry Exp $
 .\"	$OpenBSD: rmd160.3,v 1.12 2000/04/18 03:01:29 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -51,7 +51,7 @@
 .Ft void
 .Fn RMD160Final "u_char digest[20]" "RMD160_CTX *context"
 .Ft void
-.Fn RMD160Transform "u_int32_t state[5]" "const u_int32_t block[16]"
+.Fn RMD160Transform "uint32_t state[5]" "const uint32_t block[16]"
 .Ft "char *"
 .Fn RMD160End "RMD160_CTX *context" "char *buf"
 .Ft "char *"

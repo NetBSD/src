@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.31 2003/06/30 12:10:40 wiz Exp $
+.\" $NetBSD: bus_space.9,v 1.32 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -138,118 +138,118 @@
 "int prot" "int flags"
 .Ft int
 .Fn bus_space_peek_1 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int8_t *datap"
+"bus_size_t offset" "uint8_t *datap"
 .Ft int
 .Fn bus_space_peek_2 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int16_t *datap"
+"bus_size_t offset" "uint16_t *datap"
 .Ft int
 .Fn bus_space_peek_4 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int32_t *datap"
+"bus_size_t offset" "uint32_t *datap"
 .Ft int
 .Fn bus_space_peek_8 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int64_t *datap"
+"bus_size_t offset" "uint64_t *datap"
 .Ft int
 .Fn bus_space_poke_1 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int8_t data"
+"bus_size_t offset" "uint8_t data"
 .Ft int
 .Fn bus_space_poke_2 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int16_t data"
+"bus_size_t offset" "uint16_t data"
 .Ft int
 .Fn bus_space_poke_4 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int32_t data"
+"bus_size_t offset" "uint32_t data"
 .Ft int
 .Fn bus_space_poke_8 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int64_t data"
-.Ft u_int8_t
+"bus_size_t offset" "uint64_t data"
+.Ft uint8_t
 .Fn bus_space_read_1 "bus_space_tag_t space" "bus_space_handle_t handle" \
 "bus_size_t offset"
-.Ft u_int16_t
+.Ft uint16_t
 .Fn bus_space_read_2 "bus_space_tag_t space" "bus_space_handle_t handle" \
 "bus_size_t offset"
-.Ft u_int32_t
+.Ft uint32_t
 .Fn bus_space_read_4 "bus_space_tag_t space" "bus_space_handle_t handle" \
 "bus_size_t offset"
-.Ft u_int64_t
+.Ft uint64_t
 .Fn bus_space_read_8 "bus_space_tag_t space" "bus_space_handle_t handle" \
 "bus_size_t offset"
 .Ft void
 .Fn bus_space_write_1 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int8_t value"
+"bus_size_t offset" "uint8_t value"
 .Ft void
 .Fn bus_space_write_2 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int16_t value"
+"bus_size_t offset" "uint16_t value"
 .Ft void
 .Fn bus_space_write_4 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int32_t value"
+"bus_size_t offset" "uint32_t value"
 .Ft void
 .Fn bus_space_write_8 "bus_space_tag_t space" "bus_space_handle_t handle" \
-"bus_size_t offset" "u_int64_t value"
+"bus_size_t offset" "uint64_t value"
 .Ft void
 .Fn bus_space_barrier "bus_space_tag_t space" "bus_space_handle_t handle" \
 "bus_size_t offset" "bus_size_t length" "int flags"
 .Ft void
 .Fn bus_space_read_region_1 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int8_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint8_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_region_2 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int16_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint16_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_region_4 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int32_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint32_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_region_8 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int64_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint64_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_region_stream_1 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int8_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint8_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_region_stream_2 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int16_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint16_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_region_stream_4 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int32_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint32_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_region_stream_8 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int64_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint64_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_1 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int8_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint8_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_2 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int16_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint16_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_4 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int32_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint32_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_8 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int64_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint64_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_stream_1 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int8_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint8_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_stream_2 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int16_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint16_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_stream_4 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int32_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint32_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_stream_8 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int64_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint64_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_copy_region_1 "bus_space_tag_t space" \
@@ -269,83 +269,83 @@
 "bus_space_handle_t dsthandle" "bus_size_t dstoffset" "bus_size_t count"
 .Ft void
 .Fn bus_space_set_region_1 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int8_t value" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint8_t value" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_set_region_2 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int16_t value" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint16_t value" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_set_region_4 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int32_t value" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint32_t value" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_set_region_8 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int64_t value" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint64_t value" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_multi_1 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int8_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint8_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_multi_2 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int16_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint16_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_multi_4 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int32_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint32_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_multi_8 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int64_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint64_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_multi_stream_1 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int8_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint8_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_multi_stream_2 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int16_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint16_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_multi_stream_4 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int32_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint32_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_read_multi_stream_8 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int64_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "uint64_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_1 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int8_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint8_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_2 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int16_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint16_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_4 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int32_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint32_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_8 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int64_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint64_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_stream_1 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int8_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint8_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_stream_2 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int16_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint16_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_stream_4 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int32_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint32_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_stream_8 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "const u_int64_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const uint64_t *datap" \
 "bus_size_t count"
 .Sh DESCRIPTION
 The

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.14 2003/04/16 13:35:33 wiz Exp $
+.\"	$NetBSD: rnd.9,v 1.15 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,13 +47,13 @@
 .Sh SYNOPSIS
 .In sys/rnd.h
 .Ft void
-.Fn rnd_attach_source "rndsource_element_t *rnd_source" "char *devname" "u_int32_t source_type" "u_int32_t flags"
+.Fn rnd_attach_source "rndsource_element_t *rnd_source" "char *devname" "uint32_t source_type" "uint32_t flags"
 .Ft void
 .Fn rnd_detach_source "rndsource_element_t *rnd_source"
 .Ft void
-.Fn rnd_add_data "rndsource_element_t *rnd_source" "void *data" "u_int32_t len" "u_int32_t entropy"
+.Fn rnd_add_data "rndsource_element_t *rnd_source" "void *data" "uint32_t len" "uint32_t entropy"
 .Ft void
-.Fn rnd_add_uint32 "rndsource_element_t *rnd_source" "u_int32_t datum"
+.Fn rnd_add_uint32 "rndsource_element_t *rnd_source" "uint32_t datum"
 .Sh DESCRIPTION
 These
 .Nm
@@ -70,7 +70,7 @@ Do not share
 structures between two devices.
 .Pp
 .Bl -tag -width 8n
-.It Fn rnd_attach_source "rndsource_element_t *rnd_source" "char *devname" "u_int32_t source_type" "u_int32_t flags"
+.It Fn rnd_attach_source "rndsource_element_t *rnd_source" "char *devname" "uint32_t source_type" "uint32_t flags"
 This function announces the availability of a device for entropy collection.
 It must be called before the source struct pointed to by
 .Fa rnd_source
@@ -110,7 +110,7 @@ default to
 .Pp
 .It Fn rnd_detach_source "rndsource_element_t *rnd_source"
 This function disconnects the device from entropy collection.
-.It Fn rnd_add_uint32 "rndsource_element_t *rnd_source" "u_int32_t datum"
+.It Fn rnd_add_uint32 "rndsource_element_t *rnd_source" "uint32_t datum"
 This function adds the value of
 .Va datum
 to the entropy pool.
@@ -143,7 +143,7 @@ of randomness, passing
 for
 .Va rnd_source
 is permitted, and the device does not need to be attached.
-.It Fn rnd_add_data "rndsource_element_t *rnd_source" "void *data" "u_int32_t len" "u_int32_t entropy"
+.It Fn rnd_add_data "rndsource_element_t *rnd_source" "void *data" "uint32_t len" "uint32_t entropy"
 adds (hopefully) random
 .Fa data
 to the entropy pool.

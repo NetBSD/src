@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.3,v 1.26 2005/03/31 15:45:53 christos Exp $
+.\"	$NetBSD: rcmd.3,v 1.27 2005/12/26 19:40:15 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,7 @@
 .Ft int
 .Fn rresvport_af "int *port" "int family"
 .Ft int
-.Fn iruserok "u_int32_t raddr" "int superuser" "const char *ruser" "const char *luser"
+.Fn iruserok "uint32_t raddr" "int superuser" "const char *ruser" "const char *luser"
 .Ft int
 .Fn ruserok "const char *rhost" "int superuser" "const char *ruser" "const char *luser"
 .Ft int

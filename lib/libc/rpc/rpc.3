@@ -1,6 +1,6 @@
 .\" @(#)rpc.3n 1.31 93/08/31 SMI; from SVr4
 .\" Copyright 1989 AT&T
-.\"	$NetBSD: rpc.3,v 1.18 2003/06/27 15:33:24 wiz Exp $
+.\"	$NetBSD: rpc.3,v 1.19 2005/12/26 19:40:15 perry Exp $
 .Dd May 7, 1993
 .Dt RPC 3
 .Os
@@ -117,11 +117,11 @@ file.
 .Ss Derived Types
 The derived types used in the RPC interfaces are defined as follows:
 .Bd -literal
-	typedef u_int32_t rpcprog_t;
-	typedef u_int32_t rpcvers_t;
-	typedef u_int32_t rpcproc_t;
-	typedef u_int32_t rpcprot_t;
-	typedef u_int32_t rpcport_t;
+	typedef uint32_t rpcprog_t;
+	typedef uint32_t rpcvers_t;
+	typedef uint32_t rpcproc_t;
+	typedef uint32_t rpcprot_t;
+	typedef uint32_t rpcport_t;
 	typedef   int32_t rpc_inline_t;
 .Ed
 .Ss Data Structures

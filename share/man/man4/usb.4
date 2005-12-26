@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.79 2005/09/10 22:25:58 wiz Exp $
+.\" $NetBSD: usb.4,v 1.80 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -311,28 +311,28 @@ be filled by information about the device on that address.
 Should no such device exist an error is reported.
 .Bd -literal
 struct usb_device_info {
-	u_int8_t	udi_bus;
-	u_int8_t	udi_addr;
+	uint8_t	udi_bus;
+	uint8_t	udi_addr;
 	usb_event_cookie_t udi_cookie;
 	char		udi_product[USB_MAX_ENCODED_STRING_LEN];
 	char		udi_vendor[USB_MAX_ENCODED_STRING_LEN];
 	char		udi_release[8];
 	char		udi_serial[USB_MAX_ENCODED_STRING_LEN];
-	u_int16_t	udi_productNo;
-	u_int16_t	udi_vendorNo;
-	u_int16_t	udi_releaseNo;
-	u_int8_t	udi_class;
-	u_int8_t	udi_subclass;
-	u_int8_t	udi_protocol;
-	u_int8_t	udi_config;
-	u_int8_t	udi_speed;
+	uint16_t	udi_productNo;
+	uint16_t	udi_vendorNo;
+	uint16_t	udi_releaseNo;
+	uint8_t	udi_class;
+	uint8_t	udi_subclass;
+	uint8_t	udi_protocol;
+	uint8_t	udi_config;
+	uint8_t	udi_speed;
 #define USB_SPEED_LOW  1
 #define USB_SPEED_FULL 2
 #define USB_SPEED_HIGH 3
 	int		udi_power;
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
-	u_int8_t	udi_ports[16];
+	uint8_t	udi_ports[16];
 #define USB_PORT_ENABLED 0xff
 #define USB_PORT_SUSPENDED 0xfe
 #define USB_PORT_POWERED 0xfd

@@ -1,4 +1,4 @@
-.\"     $NetBSD: agp.4,v 1.10 2003/05/14 07:59:00 wiz Exp $
+.\"     $NetBSD: agp.4,v 1.11 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,8 +89,8 @@ structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 .Bd -literal
 typedef struct _agp_info {
         agp_version version;    /* version of the driver        */
-        u_int32_t bridge_id;    /* bridge vendor/device         */
-        u_int32_t agp_mode;     /* mode info of bridge          */
+        uint32_t bridge_id;    /* bridge vendor/device         */
+        uint32_t agp_mode;     /* mode info of bridge          */
         off_t aper_base;        /* base of aperture             */
         size_t aper_size;       /* size of aperture             */
         size_t pg_total;        /* max pages (swap + system)    */
@@ -108,7 +108,7 @@ Set up AGP, using the members in the
 structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 .Bd -literal
 typedef struct _agp_setup {
-        u_int32_t agp_mode;     /* mode info of bridge          */
+        uint32_t agp_mode;     /* mode info of bridge          */
 } agp_setup;
 .Ed
 .It Dv AGPIOC_ALLOCATE
@@ -119,7 +119,7 @@ structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 typedef struct _agp_allocate {
         int key;                /* tag of allocation            */
         size_t pg_count;        /* number of pages              */
-        u_int32_t type;         /* 0 == normal, other devspec   */
+        uint32_t type;         /* 0 == normal, other devspec   */
         paddr_t physical;       /* device specific (some devices
                                  * need a phys address of the
                                  * actual page behind the gatt
@@ -145,7 +145,7 @@ structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 .Bd -literal
 typedef struct _agp_unbind {
         int key;                /* tag of allocation            */
-        u_int32_t priority;     /* priority for paging out      */
+        uint32_t priority;     /* priority for paging out      */
 } agp_unbind;
 .Ed
 .El

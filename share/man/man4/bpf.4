@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.35 2005/12/14 22:50:07 rpaulo Exp $
+.\"	$NetBSD: bpf.4,v 1.36 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -209,10 +209,10 @@ indicating no timeout.
 Returns the following structure of packet statistics:
 .Bd -literal -offset indent
 struct bpf_stat {
-	u_int64_t bs_recv;
-	u_int64_t bs_drop;
-	u_int64_t bs_capt;
-	u_int64_t bs_padding[13];
+	uint64_t bs_recv;
+	uint64_t bs_drop;
+	uint64_t bs_capt;
+	uint64_t bs_padding[13];
 };
 .Ed
 .Pp
@@ -346,9 +346,9 @@ The following structure is prepended to each packet returned by
 .Bd -literal -offset indent
 struct bpf_hdr {
 	struct timeval bh_tstamp;
-	u_int32_t bh_caplen;
-	u_int32_t bh_datalen;
-	u_int16_t bh_hdrlen;
+	uint32_t bh_caplen;
+	uint32_t bh_datalen;
+	uint16_t bh_hdrlen;
 };
 .Ed
 .Pp
@@ -420,7 +420,7 @@ and implicit program counter.
 The following structure defines the instruction format:
 .Bd -literal -offset indent
 struct bpf_insn {
-	u_int16_t code;
+	uint16_t code;
 	u_char 	jt;
 	u_char 	jf;
 	int32_t k;

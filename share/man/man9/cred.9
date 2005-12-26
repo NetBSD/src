@@ -1,4 +1,4 @@
-.\"     $NetBSD: cred.9,v 1.5 2003/04/16 13:35:27 wiz Exp $
+.\"     $NetBSD: cred.9,v 1.6 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,10 +69,10 @@ structure:
 .Pp
 .Bd -literal
 struct ucred {
-        u_int32_t       cr_ref;                 /* reference count */
+        uint32_t       cr_ref;                 /* reference count */
         uid_t           cr_uid;                 /* effective user id */
         gid_t           cr_gid;                 /* effective group id */
-        u_int32_t       cr_ngroups;             /* number of groups */
+        uint32_t       cr_ngroups;             /* number of groups */
         gid_t           cr_groups[NGROUPS];     /* groups */
 };
 .Ed

@@ -1,4 +1,4 @@
-.\"	$NetBSD: humanize_number.9,v 1.6 2004/10/04 19:12:52 rumble Exp $
+.\"	$NetBSD: humanize_number.9,v 1.7 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,11 +44,11 @@
 .Sh SYNOPSIS
 .Ft int
 .Fo humanize_number
-.Fa "char *buf" "size_t len" "u_int64_t number" "const char *suffix"
+.Fa "char *buf" "size_t len" "uint64_t number" "const char *suffix"
 .Fa "int divisor"
 .Fc
 .Ft int
-.Fn format_bytes "char *buf" "size_t len" "u_int64_t number"
+.Fn format_bytes "char *buf" "size_t len" "uint64_t number"
 .Sh DESCRIPTION
 .Ss humanize_number
 The

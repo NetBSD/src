@@ -1,4 +1,4 @@
-.\"	$NetBSD: radio.4,v 1.10 2003/12/16 11:31:04 wiz Exp $
+.\"	$NetBSD: radio.4,v 1.11 2005/12/26 19:48:12 perry Exp $
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
 .\"	$OpenBSD: radio.4,v 1.3 2001/12/05 10:58:54 mickey Exp $
 .\"
@@ -72,8 +72,8 @@ struct radio_info {
 	int	stereo;
 	int	rfreq;	/* reference frequency */
 	int	lock;	/* locking field strength */
-	u_int32_t	freq;	/* in kHz */
-	u_int32_t	caps;	/* card capabilities */
+	uint32_t	freq;	/* in kHz */
+	uint32_t	caps;	/* card capabilities */
 #define RADIO_CAPS_DETECT_STEREO	(1\*[Lt]\*[Lt]0)
 #define RADIO_CAPS_DETECT_SIGNAL	(1\*[Lt]\*[Lt]1)
 #define RADIO_CAPS_SET_MONO		(1\*[Lt]\*[Lt]2)
@@ -82,7 +82,7 @@ struct radio_info {
 #define RADIO_CAPS_REFERENCE_FREQ	(1\*[Lt]\*[Lt]5)
 #define RADIO_CAPS_LOCK_SENSITIVITY	(1\*[Lt]\*[Lt]6)
 #define RADIO_CARD_TYPE			(0xFF\*[Lt]\*[Lt]16)
-	u_int32_t	info;
+	uint32_t	info;
 #define RADIO_INFO_STEREO		(1\*[Lt]\*[Lt]0)
 #define RADIO_INFO_SIGNAL		(1\*[Lt]\*[Lt]1)
 };

@@ -1,4 +1,4 @@
-.\" $NetBSD: bswap.3,v 1.9 2003/10/05 17:48:49 bouyer Exp $
+.\" $NetBSD: bswap.3,v 1.10 2005/12/26 19:40:14 perry Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -37,12 +37,12 @@
 .Sh SYNOPSIS
 .In sys/types.h
 .In machine/bswap.h
-.Ft u_int16_t
-.Fn bswap16 "u_int16_t"
-.Ft u_int32_t
-.Fn bswap32 "u_int32_t"
-.Ft u_int64_t
-.Fn bswap64 "u_int64_t"
+.Ft uint16_t
+.Fn bswap16 "uint16_t"
+.Ft uint32_t
+.Fn bswap32 "uint32_t"
+.Ft uint64_t
+.Fn bswap64 "uint64_t"
 .Sh DESCRIPTION
 The
 .Fn bswap16 ,

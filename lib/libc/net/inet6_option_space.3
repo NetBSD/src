@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet6_option_space.3,v 1.15 2004/12/20 18:30:26 christos Exp $
+.\"	$NetBSD: inet6_option_space.3,v 1.16 2005/12/26 19:40:15 perry Exp $
 .\"	$KAME: inet6_option_space.3,v 1.7 2000/05/17 14:32:13 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -48,13 +48,13 @@
 .Ft "int"
 .Fn inet6_option_init "void *bp" "struct cmsghdr **cmsgp" "int type"
 .Ft "int"
-.Fn inet6_option_append "struct cmsghdr *cmsg" "const u_int8_t *typep" "int multx" "int plusy"
-.Ft "u_int8_t *"
+.Fn inet6_option_append "struct cmsghdr *cmsg" "const uint8_t *typep" "int multx" "int plusy"
+.Ft "uint8_t *"
 .Fn inet6_option_alloc "struct cmsghdr *cmsg" "int datalen" "int multx" "int plusy"
 .Ft "int"
-.Fn inet6_option_next "const struct cmsghdr *cmsg" "u_int8_t **tptrp"
+.Fn inet6_option_next "const struct cmsghdr *cmsg" "uint8_t **tptrp"
 .Ft "int"
-.Fn inet6_option_find "const struct cmsghdr *cmsg" "u_int8_t **tptrp" "int type"
+.Fn inet6_option_find "const struct cmsghdr *cmsg" "uint8_t **tptrp" "int type"
 .\"
 .Sh DESCRIPTION
 .\"
