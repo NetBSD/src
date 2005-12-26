@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.28 2005/04/15 23:46:07 rillig Exp $	*/
+/*	$NetBSD: ctype.h,v 1.29 2005/12/26 19:01:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -126,7 +126,7 @@ __END_DECLS
 #define _CTYPE_ID	 	"BSDCTYPE"
 #define _CTYPE_REV		2
 
-extern const u_int8_t _C_ctype_[];
+extern const uint8_t _C_ctype_[];
 extern const int16_t _C_toupper_[];
 extern const int16_t _C_tolower_[];
 #endif

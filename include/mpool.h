@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.h,v 1.11 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: mpool.h,v 1.12 2005/12/26 19:01:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -56,7 +56,7 @@ typedef struct _bkt {
 
 #define	MPOOL_DIRTY	0x01		/* page needs to be written */
 #define	MPOOL_PINNED	0x02		/* page is pinned into memory */
-	u_int8_t flags;			/* flags */
+	uint8_t flags;			/* flags */
 } BKT;
 
 typedef struct MPOOL {

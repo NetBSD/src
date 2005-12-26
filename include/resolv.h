@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.30 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: resolv.h,v 1.31 2005/12/26 19:01:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -170,7 +170,7 @@ struct __res_state {
 	char	unused[3];
 	struct {
 		struct in_addr	addr;
-		u_int32_t	mask;
+		uint32_t	mask;
 	} sort_list[MAXRESOLVSORT];
 #ifdef __OLD_RES_STATE
 	char lookups[4];
@@ -185,8 +185,8 @@ struct __res_state {
 		/* On an 32-bit arch this means 512b total. */
 		char	pad[72 - 4*sizeof (int) - 2*sizeof (void *)];
 		struct {
-			u_int16_t		nscount;
-			u_int16_t		nstimes[MAXNS];	/* ms. */
+			uint16_t		nscount;
+			uint16_t		nstimes[MAXNS];	/* ms. */
 			int			nssocks[MAXNS];
 			struct __res_state_ext *ext;	/* extention for IPv6 */
 		} _ext;
@@ -424,14 +424,14 @@ int		b64_pton(char const *, u_char *, size_t);
 int		loc_aton(const char *, u_char *);
 const char *	loc_ntoa(const u_char *, char *);
 int		dn_skipname(const u_char *, const u_char *);
-void		putlong(u_int32_t, u_char *);
-void		putshort(u_int16_t, u_char *);
+void		putlong(uint32_t, u_char *);
+void		putshort(uint16_t, u_char *);
 #ifndef __ultrix__
-u_int16_t	_getshort(const u_char *);
-u_int32_t	_getlong(const u_char *);
+uint16_t	_getshort(const u_char *);
+uint32_t	_getlong(const u_char *);
 #endif
 const char *	p_class(int);
-const char *	p_time(u_int32_t);
+const char *	p_time(uint32_t);
 const char *	p_type(int);
 const char *	p_rcode(int);
 const char *	p_sockun(union res_sockaddr_union, char *, size_t);
@@ -479,15 +479,15 @@ void		res_send_setqhook(res_send_qhook);
 void		res_send_setrhook(res_send_rhook);
 int		__res_vinit(res_state, int);
 void		res_destroyservicelist(void);
-const char *	res_servicename(u_int16_t, const char *);
+const char *	res_servicename(uint16_t, const char *);
 const char *	res_protocolname(int);
 void		res_destroyprotolist(void);
 void		res_buildprotolist(void);
 const char *	res_get_nibblesuffix(res_state);
 const char *	res_get_nibblesuffix2(res_state);
 void		res_ndestroy(res_state);
-u_int16_t	res_nametoclass(const char *, int *);
-u_int16_t	res_nametotype(const char *, int *);
+uint16_t	res_nametoclass(const char *, int *);
+uint16_t	res_nametotype(const char *, int *);
 void		res_setservers(res_state,
 				    const union res_sockaddr_union *, int);
 int		res_getservers(res_state,
