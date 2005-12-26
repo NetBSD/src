@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdents.2,v 1.17 2005/09/05 21:58:38 yamt Exp $
+.\"	$NetBSD: getdents.2,v 1.18 2005/12/26 19:40:15 perry Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,9 +66,9 @@ The data in the buffer is a series of
 structures each containing the following entries:
 .Bd -literal -offset indent
 ino_t		d_fileno;
-u_int16_t	d_reclen;
-u_int16_t	d_namlen;
-u_int8_t	d_type;
+uint16_t	d_reclen;
+uint16_t	d_namlen;
+uint8_t	d_type;
 char    	d_name[MAXNAMLEN + 1]; /* see below */
 .Ed
 .Pp

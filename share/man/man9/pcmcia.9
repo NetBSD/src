@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcmcia.9,v 1.14 2005/11/02 06:42:36 wiz Exp $
+.\"     $NetBSD: pcmcia.9,v 1.15 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,15 +99,15 @@
 "int (*handler)(void *)" "void *arg"
 .Ft void
 .Fn pcmcia_intr_disestablish "struct pcmcia_function *pf" "void *ih"
-.Ft u_int8_t
+.Ft uint8_t
 .Fn pcmcia_cis_read_1 "struct pcmcia_tuple *tuple" "int index"
-.Ft u_int16_t
+.Ft uint16_t
 .Fn pcmcia_cis_read_2 "struct pcmcia_tuple *tuple" "int index"
-.Ft u_int32_t
+.Ft uint32_t
 .Fn pcmcia_cis_read_3 "struct pcmcia_tuple *tuple" "int index"
-.Ft u_int32_t
+.Ft uint32_t
 .Fn pcmcia_cis_read_4 "struct pcmcia_tuple *tuple" "int index"
-.Ft u_int32_t
+.Ft uint32_t
 .Fn pcmcia_cis_read_n "struct pcmcia_tuple *tuple" "int number" "int index"
 .Ft int
 .Fn pcmcia_scan_cis "struct device *dev" \
@@ -157,7 +157,7 @@ It contains the following members:
 	char		*cis1_info[4];
         int32_t         manufacturer;
         int32_t         product;
-        u_int16_t       error;
+        uint16_t       error;
         SIMPLEQ_HEAD(, pcmcia_function)	pf_head;
 .Ed
 .It Fa struct pcmcia_function
@@ -170,7 +170,7 @@ Contains information about the resources requested by the device.
 It contains the following members:
 .Bd -literal
         int             number;
-        u_int32_t       flags;
+        uint32_t       flags;
         int     	iftype;
         int   		num_iospace;
         u_long 		iomask;
@@ -178,7 +178,7 @@ It contains the following members:
                 u_long  length;
                 u_long  start;
         } iospace[4];
-        u_int16_t       irqmask;
+        uint16_t       irqmask;
         int             num_memspace;
         struct {
                 u_long  length;

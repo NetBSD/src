@@ -1,4 +1,4 @@
-.\"     $NetBSD: i386_pmc_info.2,v 1.9 2003/06/27 11:51:07 wiz Exp $
+.\"     $NetBSD: i386_pmc_info.2,v 1.10 2005/12/26 19:40:14 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,11 +104,11 @@ has the following structure:
 .Bd -literal
 struct i386_pmc_startstop_args {
         int counter;
-        u_int64_t val;
-        u_int8_t event;
-        u_int8_t unit;
-        u_int8_t compare;
-        u_int8_t flags;
+        uint64_t val;
+        uint8_t event;
+        uint8_t unit;
+        uint8_t compare;
+        uint8_t flags;
 };
 .Ed
 .Pp
@@ -143,8 +143,8 @@ having the following structure:
 .Bd -literal
 struct i386_pmc_read_args {
         int counter;
-        u_int64_t val;
-        u_int64_t time;
+        uint64_t val;
+        uint64_t time;
 };
 .Ed
 .Pp

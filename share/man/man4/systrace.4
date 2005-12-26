@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.4,v 1.12 2005/07/01 17:13:32 wiz Exp $
+.\"	$NetBSD: systrace.4,v 1.13 2005/12/26 19:48:12 perry Exp $
 .\"	$OpenBSD: systrace.4,v 1.2 2002/06/03 15:44:17 mpech Exp $
 .\"
 .\" Copyright (c) 2002 CubeSoft Communications, Inc.
@@ -87,7 +87,7 @@ struct str_message {
 #define SYSTR_MSG_EXECVE	7
 #define SYSTR_MSG_SCRIPTNAME	8
 	pid_t msg_pid;
-	u_int16_t msg_seqnr;	/* answer has to match seqnr */
+	uint16_t msg_seqnr;	/* answer has to match seqnr */
 	int16_t msg_policy;
 	union {
 		struct str_msg_emul msg_emul;
@@ -193,7 +193,7 @@ message what to do with a system call that was assigned a policy of
 .Bd -literal
 struct systrace_answer {
 	pid_t stra_pid;		/* PID of process being traced */
-	u_int16_t stra_seqnr;
+	uint16_t stra_seqnr;
 	int16_t reserved;
 	uid_t stra_seteuid;
 	gid_t stra_setegid;
@@ -290,7 +290,7 @@ by the monitoring process.
 .Bd -literal
 struct systrace_replace {
 	pid_t strr_pid;
-	u_int16_t strr_seqnr;
+	uint16_t strr_seqnr;
 	int16_t reserved;
 	int32_t strr_nrepl;	/* # of arguments to replace */
 	caddr_t strr_base;	/* Base user memory */

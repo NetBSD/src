@@ -1,4 +1,4 @@
-.\"	$NetBSD: atalk.4,v 1.17 2004/05/11 22:42:47 wiz Exp $
+.\"	$NetBSD: atalk.4,v 1.18 2005/12/26 19:48:12 perry Exp $
 .\"
 .\" This file is derived from the atalk.4 man page in the Netatalk 1.4b2
 .\" distribution. That distribution is covered by the following copyright:
@@ -72,9 +72,9 @@ Sockets in the AppleTalk protocol family use the following address
 structure:
 .Bd -literal -offset indent
 struct sockaddr_at {
-	u_int8_t	sat_len;
+	uint8_t	sat_len;
 	sa_family_t	sat_family;
-	u_int8_t	sat_port;
+	uint8_t	sat_port;
 	struct at_addr	sat_addr;
 	union {
 		struct netrange r_netrange;

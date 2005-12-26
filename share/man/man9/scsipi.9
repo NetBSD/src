@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.17 2005/12/20 19:53:15 rpaulo Exp $
+.\"	$NetBSD: scsipi.9,v 1.18 2005/12/26 19:48:13 perry Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -298,14 +298,14 @@ error value returned by the HBA driver to mid-layer.
 See description of
 .Fn scsipi_done
 for valid values
-.It Va union {struct scsipi_sense_data scsi_sense; u_int32_t atapi_sense;} sense
+.It Va union {struct scsipi_sense_data scsi_sense; uint32_t atapi_sense;} sense
 where to store sense info if
 .Fa error
 is
 .Dv XS_SENSE
 or
 .Dv XS_SHORTSENSE
-.It Va u_int8_t status
+.It Va uint8_t status
 SCSI status; checked by middle layer when
 .Fa error is
 .Dv XS_BUSY
@@ -313,9 +313,9 @@ SCSI status; checked by middle layer when
 .Dv SCSI_CHECK
 and
 .Dv SCSI_QUEUE_FULL )
-.It Va u_int8_t xs_tag_type
+.It Va uint8_t xs_tag_type
 SCSI tag type, set to 0 if untagged command
-.It Va u_int8_t xs_tag_id
+.It Va uint8_t xs_tag_id
 tag ID, used for tagged commands
 .El
 .Ss FUNCTIONS AND CALLBACKS
