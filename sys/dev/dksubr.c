@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.20 2005/12/11 23:42:33 rpaulo Exp $ */
+/* $NetBSD: dksubr.c,v 1.21 2005/12/26 10:36:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.20 2005/12/11 23:42:33 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.21 2005/12/26 10:36:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,6 +449,49 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	    	struct dkwedge_list *dkwl = (void *)data;
 
 		return (dkwedge_list(&dksc->sc_dkdev, dkwl, l));
+	    }
+
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)data;
+		int s;
+
+		s = splbio();
+		strlcpy(dks->dks_name, bufq_getstrategyname(dksc->sc_bufq),
+		    sizeof(dks->dks_name));
+		splx(s);
+		dks->dks_paramlen = 0;
+
+		return 0;
+	    }
+	
+	case DIOCSSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)data;
+		struct bufq_state *new;
+		struct bufq_state *old;
+		int s;
+
+		if ((flag & FWRITE) == 0) {
+			return EBADF;
+		}
+		if (dks->dks_param != NULL) {
+			return EINVAL;
+		}
+		dks->dks_name[sizeof(dks->dks_name) - 1] = 0; /* ensure term */
+		error = bufq_alloc(&new, dks->dks_name,
+		    BUFQ_EXACT|BUFQ_SORT_RAWBLOCK);
+		if (error) {
+			return error;
+		}
+		s = splbio();
+		old = dksc->sc_bufq;
+		bufq_move(new, old);
+		dksc->sc_bufq = new;
+		splx(s);
+		bufq_free(old);
+
+		return 0;
 	    }
 
 	default:
