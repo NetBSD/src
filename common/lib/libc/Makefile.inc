@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2005/12/21 21:47:30 christos Exp $
+# $NetBSD: Makefile.inc,v 1.4 2005/12/27 07:31:45 yamt Exp $
 
 COMMON_DIR:=${.PARSEDIR}
 COMMON_CODEDIRS=gen gmon hash/sha1 inet md net quad stdlib string
@@ -12,7 +12,7 @@ COMMON_ARCHSUBDIR=	${MACHINE_ARCH}
 COMMON_ARCHSUBDIR=	${MACHINE_CPU}
 .else
 .BEGIN:
-        @echo no COMMON_ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
+	@echo no COMMON_ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
 	@false
 .endif    
 
