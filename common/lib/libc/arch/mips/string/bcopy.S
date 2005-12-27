@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.1 2005/12/21 00:25:56 christos Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.2 2005/12/27 11:23:53 tsutsui Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,13 +36,15 @@
 
 
 #include <mips/asm.h>
+#ifndef _LOCORE
 #define _LOCORE		/* XXX not really, just assembly-code source */
+#endif
 #include <machine/endian.h>
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)mips_bcopy.s	2.2 CMU 18/06/93")
-	ASMSTR("$NetBSD: bcopy.S,v 1.1 2005/12/21 00:25:56 christos Exp $")
+	ASMSTR("$NetBSD: bcopy.S,v 1.2 2005/12/27 11:23:53 tsutsui Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __ABICALLS__
