@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.31 2005/12/13 16:25:59 christos Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.32 2005/12/27 04:06:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -136,9 +136,6 @@ int ext2fs_blkatoff(struct vnode *, off_t, char **, struct buf **);
 void ext2fs_fragacct(struct m_ext2fs *, int, int32_t[], int);
 void ext2fs_itimes(struct inode *, const struct timespec *,
     const struct timespec *, const struct timespec *);
-#ifdef DIAGNOSTIC
-void	ext2fs_checkoverlap(struct buf *, struct inode *);
-#endif
 
 /* ext2fs_vfsops.c */
 void ext2fs_init(void);

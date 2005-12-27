@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.159 2005/12/26 18:45:27 perry Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.160 2005/12/27 04:06:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.159 2005/12/26 18:45:27 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.160 2005/12/27 04:06:46 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -927,10 +927,8 @@ mi_switch(struct lwp *l, struct lwp *newl)
 
 	spc = &l->l_cpu->ci_schedstate;
 
-#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
-	spinlock_switchcheck();
-#endif
 #ifdef LOCKDEBUG
+	spinlock_switchcheck();
 	simple_lock_switchcheck();
 #endif
 

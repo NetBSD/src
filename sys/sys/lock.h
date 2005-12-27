@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.61 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.62 2005/12/27 04:06:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -305,7 +305,7 @@ void	transferlockers(struct lock *, struct lock *);
 int	lockstatus(struct lock *);
 void	lockmgr_printinfo(volatile struct lock *);
 
-#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
+#if defined(LOCKDEBUG)
 void	spinlock_switchcheck(void);
 #endif
 

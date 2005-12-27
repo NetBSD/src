@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.21 2005/11/20 14:27:25 augustss Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.22 2005/12/27 04:06:45 chs Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,9 +63,7 @@ struct ehci_xfer {
 	LIST_ENTRY(ehci_xfer) inext; /* list of active xfers */
 	ehci_soft_qtd_t *sqtdstart;
 	ehci_soft_qtd_t *sqtdend;
-#ifdef DIAGNOSTIC
-	int isdone;
-#endif
+	int isdone;	/* used only when DIAGNOSTIC is defined */
 };
 #define EXFER(xfer) ((struct ehci_xfer *)(xfer))
 
