@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipf2netbsd,v 1.17 2004/12/30 13:12:01 martti Exp $
+#	$NetBSD: ipf2netbsd,v 1.18 2005/12/27 15:19:38 martti Exp $
 #
 # Copyright (c) 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,7 +70,7 @@ rm -rf $dbase $dsys $dlkm $dregress
 mkdir -p $dbase $dsys $dlkm $dregress
 cd $r
 pax -rvw . $dbase
-pax -rvw fil.c ip_auth.c ip_auth.h ip_compat.h ip_fil_netbsd.c ip_fil.h ip_frag.c ip_frag.h ip_ftp_pxy.c ip_h323_pxy.c ip_htable.c ip_htable.h ip_ipsec_pxy.c ip_irc_pxy.c ip_log.c ip_lookup.c ip_lookup.h ip_nat.c ip_nat.h ip_netbios_pxy.c ip_pool.c ip_pool.h ip_pptp_pxy.c ip_proxy.c ip_proxy.h ip_raudio_pxy.c ip_rcmd_pxy.c ip_rpcb_pxy.c ip_rules.c ip_rules.h ip_scan.c ip_scan.h ip_state.c ip_state.h ip_sync.c ip_sync.h ipl.h $dsys
+pax -rvw fil.c ip_auth.c ip_auth.h ip_compat.h ip_fil_netbsd.c ip_fil.h ip_frag.c ip_frag.h ip_ftp_pxy.c ip_h323_pxy.c ip_htable.c ip_htable.h ip_ipsec_pxy.c ip_irc_pxy.c ip_log.c ip_lookup.c ip_lookup.h ip_nat.c ip_nat.h ip_netbios_pxy.c ip_pool.c ip_pool.h ip_pptp_pxy.c ip_proxy.c ip_proxy.h ip_raudio_pxy.c ip_rcmd_pxy.c ip_rpcb_pxy.c ip_scan.c ip_scan.h ip_state.c ip_state.h ip_sync.c ip_sync.h ipl.h $dsys
 pax -rvw mln_ipl.c $dlkm
 cd $r/test
 pax -rvw * $dregress
