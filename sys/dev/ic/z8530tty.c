@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.101 2005/12/11 12:21:29 christos Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.102 2005/12/27 17:20:54 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.101 2005/12/11 12:21:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102 2005/12/27 17:20:54 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -1026,7 +1026,8 @@ zsstart(tp)
 {
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
-	int s;
+	u_char *tba;
+	int s, tbc;
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
@@ -1045,22 +1046,23 @@ zsstart(tp)
 	}
 
 	/* Grab the first contiguous region of buffer space. */
-	{
-		u_char *tba;
-		int tbc;
+	tba = tp->t_outq.c_cf;
+	tbc = ndqb(&tp->t_outq, 0);
 
-		tba = tp->t_outq.c_cf;
-		tbc = ndqb(&tp->t_outq, 0);
+	(void) splzs();
+	simple_lock(&cs->cs_lock);
 
-		(void) splzs();
-		simple_lock(&cs->cs_lock);
-
-		zst->zst_tba = tba;
-		zst->zst_tbc = tbc;
-	}
-
+	zst->zst_tba = tba;
+	zst->zst_tbc = tbc;
 	SET(tp->t_state, TS_BUSY);
 	zst->zst_tx_busy = 1;
+
+#ifdef ZS_TXDMA
+	if (zst->zst_tbc > 1) {
+		zs_dma_setup(cs, zst->zst_tba, zst->zst_tbc);
+		goto out;
+	}
+#endif
 
 	/* Enable transmit completion interrupts if necessary. */
 	if (!ISSET(cs->cs_preg[1], ZSWR1_TIE)) {
@@ -1070,11 +1072,10 @@ zsstart(tp)
 	}
 
 	/* Output the first character of the contiguous buffer. */
-	{
-		zs_write_data(cs, *zst->zst_tba);
-		zst->zst_tbc--;
-		zst->zst_tba++;
-	}
+	zs_write_data(cs, *zst->zst_tba);
+	zst->zst_tbc--;
+	zst->zst_tba++;
+
 	simple_unlock(&cs->cs_lock);
 out:
 	splx(s);
@@ -1942,3 +1943,22 @@ struct zsops zsops_tty = {
 	zstty_txint,	/* xmit buffer empty */
 	zstty_softint,	/* process software interrupt */
 };
+
+#ifdef ZS_TXDMA
+void
+zstty_txdma_int(arg)
+	void *arg;
+{
+	struct zs_chanstate *cs = arg;
+	struct zstty_softc *zst = cs->cs_private;
+
+	zst->zst_tba += zst->zst_tbc;
+	zst->zst_tbc = 0;
+
+	if (zst->zst_tx_busy) {
+		zst->zst_tx_busy = 0;
+		zst->zst_tx_done = 1;
+		cs->cs_softreq = 1;
+	}
+}
+#endif
