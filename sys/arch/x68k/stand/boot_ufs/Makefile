@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2005/12/11 12:19:44 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2005/12/27 23:20:50 he Exp $
 
 NOMAN=		# defined
 
@@ -52,6 +52,7 @@ OBJCOPY?=  objcopy
 .endif
 
 .include "${.CURDIR}/../Makefile.booters"
+.include "${S}/../common/lib/libc/Makefile.inc"
 
 CLEANFILES+=	$(PROG).x $(PROG).map
 
