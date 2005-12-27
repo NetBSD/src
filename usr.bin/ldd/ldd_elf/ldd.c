@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.25 2004/09/07 02:54:40 enami Exp $	*/
+/*	$NetBSD: ldd.c,v 1.26 2005/12/27 11:29:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,6 +66,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ldd.c,v 1.26 2005/12/27 11:29:30 yamt Exp $");
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/mman.h>
