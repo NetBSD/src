@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.12 2005/12/11 12:17:08 christos Exp $	*/
+/*	$NetBSD: plcom.c,v 1.13 2005/12/27 00:46:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.12 2005/12/11 12:17:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.13 2005/12/27 00:46:38 chs Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -271,17 +271,8 @@ void	plcom_kgdb_putc (void *, int);
 #define	BW	BUS_SPACE_BARRIER_WRITE
 #define PLCOM_BARRIER(t, h, f) bus_space_barrier((t), (h), 0, PLCOM_UART_SIZE, (f))
 
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(PLCOM_MPLOCK)
-
 #define PLCOM_LOCK(sc) simple_lock(&(sc)->sc_lock)
 #define PLCOM_UNLOCK(sc) simple_unlock(&(sc)->sc_lock)
-
-#else
-
-#define PLCOM_LOCK(sc)
-#define PLCOM_UNLOCK(sc)
-
-#endif
 
 int
 plcomspeed(long speed, long frequency)
@@ -387,9 +378,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 	struct tty *tp;
 
 	callout_init(&sc->sc_diag_callout);
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(PLCOM_MPLOCK)
 	simple_lock_init(&sc->sc_lock);
-#endif
 
 	/* Disable interrupts before configuring the device. */
 	sc->sc_cr = 0;

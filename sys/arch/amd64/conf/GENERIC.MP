@@ -1,6 +1,5 @@
-#	$NetBSD: GENERIC.MP,v 1.1 2003/04/26 18:39:34 fvdl Exp $
+#	$NetBSD: GENERIC.MP,v 1.2 2005/12/27 00:46:38 chs Exp $
 
 include "arch/amd64/conf/GENERIC"
 
 options 	MULTIPROCESSOR
-options 	COM_MPLOCK

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.748 2005/12/21 10:57:22 yamt Exp $
+#	$NetBSD: files,v 1.749 2005/12/27 00:46:38 chs Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -717,7 +717,7 @@ file	dev/ic/ne2000.c			ne | ipkdb_ne
 
 # 8250/16[45]50-based "com" ports
 #
-defflag	opt_com.h		COM_DEBUG COM_MPLOCK
+defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
 defflag	opt_com.h		COM_16650 COM_HAYESP COM_PXA2X0
 device	com { } : tty
