@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.4 2005/12/03 17:10:46 christos Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.5 2005/12/27 04:06:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -69,17 +69,13 @@ struct cpu_data {
 	/*
 	 * for LOCKDEBUG
 	 */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long cpu_spin_locks;		/* # of spin locks held */
 	u_long cpu_simple_locks;	/* # of simple locks held */
-#endif /* defined(DIAGNOSTIC) || defined(LOCKDEBUG) */
 };
 
 /* compat definitions */
 #define	ci_schedstate	ci_data.cpu_schedstate
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 #define	ci_spin_locks	ci_data.cpu_spin_locks
 #define	ci_simple_locks	ci_data.cpu_simple_locks
-#endif /* defined(DIAGNOSTIC) || defined(LOCKDEBUG) */
 
 #endif /* _SYS_CPU_DATA_H_ */

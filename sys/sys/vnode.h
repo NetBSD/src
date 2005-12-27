@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.150 2005/12/25 14:48:59 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.151 2005/12/27 04:06:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -299,74 +299,14 @@ extern struct freelst	vnode_hold_list; /* free vnodes referencing buffers */
 extern struct freelst	vnode_free_list; /* vnode free list */
 extern struct simplelock vnode_free_list_slock;
 
-#ifdef DIAGNOSTIC
-#define	ilstatic
-#else
-#define	ilstatic static
-#endif
-
-ilstatic void holdrelel(struct vnode *);
-ilstatic void vholdl(struct vnode *);
-ilstatic void vref(struct vnode *);
+void holdrelel(struct vnode *);
+void vholdl(struct vnode *);
+void vref(struct vnode *);
 
 static inline void holdrele(struct vnode *) __attribute__((__unused__));
 static inline void vhold(struct vnode *) __attribute__((__unused__));
 
-#ifdef DIAGNOSTIC
 #define	VATTR_NULL(vap)	vattr_null(vap)
-#else
-#define	VATTR_NULL(vap)	(*(vap) = va_null)	/* initialize a vattr */
-
-/*
- * decrease buf or page ref
- *
- * called with v_interlock held
- */
-static inline void
-holdrelel(struct vnode *vp)
-{
-
-	vp->v_holdcnt--;
-	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
-	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
-		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-		simple_unlock(&vnode_free_list_slock);
-	}
-}
-
-/*
- * increase buf or page ref
- *
- * called with v_interlock held
- */
-static inline void
-vholdl(struct vnode *vp)
-{
-
-	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
-	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
-		TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
-		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
-		simple_unlock(&vnode_free_list_slock);
-	}
-	vp->v_holdcnt++;
-}
-
-/*
- * increase reference
- */
-static inline void
-vref(struct vnode *vp)
-{
-
-	simple_lock(&vp->v_interlock);
-	vp->v_usecount++;
-	simple_unlock(&vp->v_interlock);
-}
-#endif /* DIAGNOSTIC */
 
 /*
  * decrease buf or page ref
@@ -406,7 +346,6 @@ extern time_t		syncdelay;	/* max time to delay syncing data */
 extern time_t		filedelay;	/* time to delay syncing files */
 extern time_t		dirdelay;	/* time to delay syncing directories */
 extern time_t		metadelay;	/* time to delay syncing metadata */
-extern struct vattr	va_null;	/* predefined null vattr structure */
 
 /*
  * Macro/function to check for client cache inconsistency w.r.t. leasing.

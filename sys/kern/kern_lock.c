@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.91 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.92 2005/12/27 04:06:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.91 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.92 2005/12/27 04:06:46 chs Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -459,7 +459,7 @@ lockstatus(struct lock *lkp)
 	return (lock_type);
 }
 
-#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
+#if defined(LOCKDEBUG)
 /*
  * Make sure no spin locks are held by a CPU that is about
  * to context switch.
@@ -482,7 +482,7 @@ spinlock_switchcheck(void)
 		panic("spinlock_switchcheck: CPU %lu has %lu spin locks",
 		    (u_long) cpu_number(), cnt);
 }
-#endif /* LOCKDEBUG || DIAGNOSTIC */
+#endif /* LOCKDEBUG */
 
 /*
  * Locks and IPLs (interrupt priority levels):

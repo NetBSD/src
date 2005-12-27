@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.36 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.37 2005/12/27 04:06:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.36 2005/12/11 12:25:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.37 2005/12/27 04:06:46 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -721,7 +721,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 		 */
 		if (dq->dq_cnt == 0)
 			TAILQ_REMOVE(&dqfreelist, dq, dq_freelist);
-		DQREF(dq);
+		dqref(dq);
 		*dqp = dq;
 		return (0);
 	}
@@ -753,7 +753,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	if (vp != dqvp)
 		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	LIST_INSERT_HEAD(dqh, dq, dq_hash);
-	DQREF(dq);
+	dqref(dq);
 	dq->dq_flags = DQ_LOCK;
 	dq->dq_id = id;
 	dq->dq_ump = ump;

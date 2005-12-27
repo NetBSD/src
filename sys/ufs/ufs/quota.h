@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.20 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: quota.h,v 1.21 2005/12/27 04:06:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -158,15 +158,6 @@ struct dquot {
  */
 #define	FORCE	0x01	/* force usage changes independent of limits */
 #define	CHOWN	0x02	/* (advisory) change initiated by chown */
-
-/*
- * Macros to avoid subroutine calls to trivial functions.
- */
-#ifdef DIAGNOSTIC
-#define	DQREF(dq)	dqref(dq)
-#else
-#define	DQREF(dq)	(dq)->dq_cnt++
-#endif
 
 #include <sys/cdefs.h>
 

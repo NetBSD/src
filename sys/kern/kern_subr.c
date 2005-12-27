@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.122 2005/12/27 00:27:34 chs Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.123 2005/12/27 04:06:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.122 2005/12/27 00:27:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.123 2005/12/27 04:06:46 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -144,10 +144,8 @@ uiomove(void *buf, size_t n, struct uio *uio)
 
 	hold_count = KERNEL_LOCK_RELEASE_ALL();
 
-#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
-	spinlock_switchcheck();
-#endif
 #ifdef LOCKDEBUG
+	spinlock_switchcheck();
 	simple_lock_only_held(NULL, "uiomove");
 #endif
 
