@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.49 2005/12/26 18:45:27 perry Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.50 2005/12/27 00:26:58 chs Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.49 2005/12/26 18:45:27 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.50 2005/12/27 00:26:58 chs Exp $");
 
 #include "opt_systrace.h"
 
@@ -1742,11 +1742,7 @@ systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 	struct str_msgcontainer *cont;
 	struct str_message *msg;
 	struct fsystrace *fst = strp->parent;
-	int st, pri;
-
-	pri = PWAIT|PCATCH;
-	if (type == SYSTR_MSG_EXECVE)
-		pri &= ~PCATCH;
+	int st;
 
 	cont = pool_get(&systr_msgcontainer_pl, PR_WAITOK);
 	memset(cont, 0, sizeof(struct str_msgcontainer));
@@ -1783,7 +1779,7 @@ systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 		int f;
 		f = curlwp->l_flag & L_SA;
 		curlwp->l_flag &= ~L_SA;
-		st = tsleep(strp, pri, "systrmsg", 0);
+		st = tsleep(strp, PWAIT, "systrmsg", 0);
 		curlwp->l_flag |= f;
 		if (st != 0)
 			return (ERESTART);
