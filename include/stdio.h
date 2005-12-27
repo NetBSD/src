@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.62 2005/12/24 19:16:02 perry Exp $	*/
+/*	$NetBSD: stdio.h,v 1.63 2005/12/27 17:21:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -421,7 +421,7 @@ __END_DECLS
  */
 #define	__sgetc(p) (--(p)->_r < 0 ? __srget(p) : (int)(*(p)->_p++))
 #if defined(__GNUC__) && defined(__STDC__)
-static inline int __sputc(int _c, FILE *_p) {
+static __inline int __sputc(int _c, FILE *_p) {
 	if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
 		return (*_p->_p++ = _c);
 	else
