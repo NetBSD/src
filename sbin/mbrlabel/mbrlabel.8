@@ -27,9 +27,9 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: mbrlabel.8,v 1.14 2003/07/13 09:56:09 lukem Exp $
+.\"	$NetBSD: mbrlabel.8,v 1.15 2005/12/27 15:37:56 jmmv Exp $
 .\"
-.Dd July 13, 2003
+.Dd December 27, 2005
 .Dt MBRLABEL 8
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl fqrw
+.Op Fl s Ar sector
 .Ar device
 .Sh DESCRIPTION
 .Nm
@@ -48,8 +49,10 @@ on disks that were previously used on DOS/Windows systems (or
 other MBR using systems).
 .Pp
 .Nm
-scans the MBR contained in the very first block of the disk,
-then walks through every extended partition found and generating
+scans the MBR contained in the very first block of the disk (or the
+block specified through the
+.Fl s
+flag), then walks through every extended partition found and generating
 additional partition entries for the disk from the MBRs found in
 those extended partitions.
 .Pp
@@ -78,7 +81,7 @@ disk label update will occur.
 .Pp
 Available options:
 .Pp
-.Bl -tag -width indent
+.Bl -tag -width sXsectorX
 .It Fl f
 Force an update, even if there has been no change.
 .It Fl q
@@ -89,6 +92,12 @@ Update the in-core label if it has been changed.
 In conjunction with
 .Fl w ,
 also update the on-disk label.
+.It Fl s Ar sector
+Specifies the logical sector number that has to be read from the disk
+in order to find the MBR.
+Useful if the disk has remapping drivers on it and the MBR is located
+in a non-standard place.
+Defaults to 0.
 .El
 .Sh SEE ALSO
 .Xr disklabel 8 ,
