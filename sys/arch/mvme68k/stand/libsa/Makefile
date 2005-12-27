@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2005/12/24 22:18:40 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.28 2005/12/27 12:38:53 he Exp $
 
 LIB=sa
 
@@ -32,6 +32,8 @@ SRC_sa= alloc.c \
 	twiddle.c \
 	udp.c ufs.c
 
+SRC_common+= ashrdi3.c inet_addr.c strncpy.c strlen.c
+
 # XXX Needed until libsa's memcmp.c doesn't depend on bcmp...
 SRC_sa+= bcmp.c
 
@@ -45,7 +47,7 @@ SRC_here= bugdev.c \
 	  chiptotime.c clock.c \
 	  parse_args.c
 
-SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_mvme} ${SRC_here}
+SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_common} ${SRC_mvme} ${SRC_here}
 
 # DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
@@ -59,6 +61,7 @@ CPPFLAGS+= -DSUPPORT_NFS -DNFS_NOSYMLINK
 CLEANFILES+= SRT0.o
 
 .include "../Makefile.booters"
+.include "${S}/../common/lib/libc/Makefile.inc"
 
 .PATH:	${DIR_SA} ${DIR_KERN} \
 	${DIR_LIBC}/inet ${DIR_LIBC}/quad ${DIR_LIBC}/string
