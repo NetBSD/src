@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/12/11 12:18:20 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2005/12/27 12:29:05 he Exp $
 
 LIB=sa
 
@@ -39,8 +39,9 @@ CPPFLAGS+= -DSUPPORT_NFS -DNFS_NOSYMLINK
 CLEANFILES+= srt0.o
 
 .include "../Makefile.booters"
+.include "${S}/../common/lib/libc/Makefile.inc"
 
-.PATH:  ${DIR_SA} ${DIR_KERN} 
+.PATH:  ${DIR_SA} ${DIR_KERN}
 
 # only needed during build
 libinstall::
