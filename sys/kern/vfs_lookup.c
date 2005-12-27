@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.64 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.65 2005/12/27 17:24:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.64 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.65 2005/12/27 17:24:07 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -484,7 +484,17 @@ lookup(struct nameidata *ndp)
 		 */
 		if (cnp->cn_nameptr[0] == '\0') {
 			if (ndp->ni_dvp == NULL && wantparent) {
-				error = EISDIR;
+				switch (cnp->cn_nameiop) {
+				case CREATE:
+					error = EEXIST;
+					break;
+				case DELETE:
+				case RENAME:
+					error = EBUSY;
+					break;
+				default:
+					KASSERT(0);
+				}
 				goto bad;
 			}
 			ndp->ni_vp = dp;
