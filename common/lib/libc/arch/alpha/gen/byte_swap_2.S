@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap_2.S,v 1.1 2005/12/20 19:28:49 christos Exp $ */
+/* $NetBSD: byte_swap_2.S,v 1.2 2005/12/27 09:22:08 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -34,11 +34,16 @@
  *
  * Argument is an unsigned 2-byte integer (u_int16_t).
  */
-LEAF(__bswap16, 1)		/* a0 contains 0x0123 */
+#if defined(_KERNEL) || defined(_STANDALONE)
+#define	BSWAP16	bswap16
+#else /* defined(_KERNEL) || defined(_STANDALONE) */
+#define	BSWAP16	__bswap16
+#endif /* defined(_KERNEL) || defined(_STANDALONE) */
+LEAF(BSWAP16, 1)		/* a0 contains 0x0123 */
 XLEAF(htons, 1)
 XLEAF(ntohs, 1)
 	insbl	a0, 1, t0	/* t0 = 0x23   */
 	extbl	a0, 1, t1	/* t1 = 0x  01 */
 	or	t0, t1, v0	/* v0 = 0x2301 */
 	RET
-END(__bswap16)
+END(BSWAP16)
