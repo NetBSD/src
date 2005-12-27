@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.15 2005/12/26 16:11:04 christos Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.16 2005/12/27 15:45:09 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.15 2005/12/26 16:11:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.16 2005/12/27 15:45:09 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,9 +142,12 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 
 		/* Look for drivers and skip them */
 		if (ptns[0].mbrp_type == MBR_PTYPE_DM6_DDO) {
-			/* We've found DM6 DDO drivers.  Ensure that there
-			 * are no other partitions in the MBR and jump to
-			 * the real MBR. */
+			/* We've found a DM6 DDO partition type (used by
+			 * the Ontrack Disk Manager drivers).
+			 *
+			 * Ensure that there are no other partitions in the
+			 * MBR and jump to the real partition table (stored
+			 * in the first sector of the second track). */
 			boolean_t ok = TRUE;
 
 			for (i = 1; i < MBR_PART_COUNT; i++)
