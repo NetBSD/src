@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.56 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.57 2005/12/27 00:28:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.56 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.57 2005/12/27 00:28:08 chs Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -109,6 +109,7 @@ scdebug_call(struct lwp *l, register_t code, register_t args[])
 	    || sy->sy_call == sys_nosys))
 		return;
 
+	KERNEL_PROC_LOCK(l);
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
 	if (code < 0
 #ifndef __HAVE_MINIMAL_EMUL
@@ -127,6 +128,7 @@ scdebug_call(struct lwp *l, register_t code, register_t args[])
 		}
 	}
 	printf("\n");
+	KERNEL_PROC_UNLOCK(l);
 }
 
 void
@@ -148,6 +150,7 @@ scdebug_ret(struct lwp *l, register_t code, int error, register_t retval[])
 	    || sy->sy_call == sys_nosys))
 		return;
 
+	KERNEL_PROC_LOCK(l);
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
 	if (code < 0
 #ifndef __HAVE_MINIMAL_EMUL
@@ -159,5 +162,6 @@ scdebug_ret(struct lwp *l, register_t code, int error, register_t retval[])
 		printf("%ld ret: err = %d, rv = 0x%lx,0x%lx", (long)code,
 		    error, (long)retval[0], (long)retval[1]);
 	printf("\n");
+	KERNEL_PROC_UNLOCK(l);
 }
 #endif /* SYSCALL_DEBUG */
