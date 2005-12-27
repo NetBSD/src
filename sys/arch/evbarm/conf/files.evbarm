@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.17 2003/02/17 20:51:53 ichiro Exp $
+#	$NetBSD: files.evbarm,v 1.18 2005/12/27 00:46:38 chs Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -62,7 +62,7 @@ defparam	opt_evbarm_boardtype.h EVBARM_BOARDTYPE
 
 # We need to define the Integrator's "plcom" device here since
 # it we need to generate a "plcom.h" header file for conf.c
-defflag	opt_plcom.h	PLCOM_DEBUG PLCOM_MPLOCK
+defflag	opt_plcom.h	PLCOM_DEBUG
 device	plcom { }: tty
 file	arch/evbarm/dev/plcom.c			plcom needs-flag
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.23 2005/12/11 12:16:51 christos Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.24 2005/12/27 00:46:38 chs Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.23 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.24 2005/12/27 00:46:38 chs Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -305,9 +305,7 @@ sacom_attach_subr(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	struct tty *tp;
 
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
 	simple_lock_init(&sc->sc_lock);
-#endif
 
 	/* XXX Do we need to disable interrupts here? */
 
