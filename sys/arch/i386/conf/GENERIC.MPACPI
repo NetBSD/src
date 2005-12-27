@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.54 2005/12/20 05:35:28 thorpej Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.55 2005/12/27 00:46:38 chs Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.54 $"
+#ident 		"GENERIC-$Revision: 1.55 $"
 
 maxusers	32		# estimated number of users
 
@@ -19,7 +19,6 @@ maxusers	32		# estimated number of users
 options 	I686_CPU
 
 options 	MULTIPROCESSOR
-options 	COM_MPLOCK	# com MP locking; REQUIRED on MP i386
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
