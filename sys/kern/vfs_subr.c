@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.257 2005/12/23 15:31:40 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.258 2005/12/27 04:06:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.257 2005/12/23 15:31:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.258 2005/12/27 04:06:46 chs Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1295,9 +1295,9 @@ vrele(struct vnode *vp)
 		VOP_INACTIVE(vp, l);
 }
 
-#ifdef DIAGNOSTIC
 /*
  * Page or buffer structure gets a reference.
+ * Called with v_interlock held.
  */
 void
 vholdl(struct vnode *vp)
@@ -1328,6 +1328,7 @@ vholdl(struct vnode *vp)
 
 /*
  * Page or buffer structure frees a reference.
+ * Called with v_interlock held.
  */
 void
 holdrelel(struct vnode *vp)
@@ -1379,7 +1380,6 @@ vref(struct vnode *vp)
 #endif
 	simple_unlock(&vp->v_interlock);
 }
-#endif /* DIAGNOSTIC */
 
 /*
  * Remove any vnodes in the vnode table belonging to mount point mp.

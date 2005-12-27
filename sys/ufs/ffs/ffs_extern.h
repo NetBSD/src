@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.49 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.50 2005/12/27 04:06:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -122,9 +122,6 @@ void	ffs_load_inode(struct buf *, struct inode *, struct fs *, ino_t);
 int	ffs_blkatoff(struct vnode *, off_t, char **, struct buf **);
 int	ffs_freefile(struct fs *, struct vnode *, ino_t, int);
 void	ffs_fragacct(struct fs *, int, int32_t[], int, int);
-#ifdef DIAGNOSTIC
-void	ffs_checkoverlap(struct buf *, struct inode *);
-#endif
 int	ffs_isblock(struct fs *, u_char *, int32_t);
 int	ffs_isfreeblock(struct fs *, u_char *, int32_t);
 void	ffs_clrblock(struct fs *, u_char *, int32_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.38 2005/12/19 15:06:51 tron Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.39 2005/12/27 04:06:45 chs Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -71,9 +71,7 @@ typedef struct ohci_soft_itd {
 	LIST_ENTRY(ohci_soft_itd) hnext;
 	usbd_xfer_handle xfer;
 	u_int16_t flags;
-#ifdef DIAGNOSTIC
-	char isdone;
-#endif
+	char isdone;	/* used only when DIAGNOSTIC is defined */
 } ohci_soft_itd_t;
 #define OHCI_SITD_SIZE ((sizeof (struct ohci_soft_itd) + OHCI_ITD_ALIGN - 1) / OHCI_ITD_ALIGN * OHCI_ITD_ALIGN)
 #define OHCI_SITD_CHUNK 64

@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100var.h,v 1.11 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wsemul_vt100var.h,v 1.12 2005/12/27 04:06:46 chs Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -38,9 +38,7 @@ struct wsemul_vt100_emuldata {
 
 	long kernattr;			/* attribute for kernel output */
 	void *cbcookie;
-#ifdef DIAGNOSTIC
-	int console;
-#endif
+	int console;			/* used for DIAGNOSTIC */
 
 	u_int state;			/* processing state */
 	int flags;

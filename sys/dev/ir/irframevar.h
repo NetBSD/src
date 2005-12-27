@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.14 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.15 2005/12/27 04:06:46 chs Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,9 +55,7 @@ struct irframe_softc {
 	char				sc_open;
 	struct irda_params		sc_params;
 	u_int				sc_speedmask;
-#ifdef DIAGNOSTIC
-	u_int				sc_speed;
-#endif
+	u_int				sc_speed;	/* DIAGNOSTIC only */
 };
 
 #define IRDA_DEFAULT_SPEED	9600
