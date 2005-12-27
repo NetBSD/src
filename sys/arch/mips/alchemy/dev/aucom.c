@@ -1,4 +1,4 @@
-/*	$NetBSD: aucom.c,v 1.16 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: aucom.c,v 1.17 2005/12/27 00:46:38 chs Exp $	*/
 /*	 NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.16 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.17 2005/12/27 00:46:38 chs Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -299,17 +299,8 @@ void	com_kgdb_putc(void *, int);
 #define	BW	BUS_SPACE_BARRIER_WRITE
 #define COM_BARRIER(t, h, f) bus_space_barrier((t), (h), 0, COM_NPORTS, (f))
 
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
-
 #define COM_LOCK(sc) simple_lock(&(sc)->sc_lock)
 #define COM_UNLOCK(sc) simple_unlock(&(sc)->sc_lock)
-
-#else
-
-#define COM_LOCK(sc)
-#define COM_UNLOCK(sc)
-
-#endif
 
 /*ARGSUSED*/
 int
@@ -479,9 +470,7 @@ com_attach_subr(struct com_softc *sc)
 	const char *fifo_msg = NULL;
 
 	callout_init(&sc->sc_diag_callout);
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
 	simple_lock_init(&sc->sc_lock);
-#endif
 
 	/* Disable interrupts before configuring the device. */
 #ifdef COM_PXA2X0
