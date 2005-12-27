@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.24 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.25 2005/12/27 15:37:56 jmmv Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,11 +33,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.24 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.25 2005/12/27 15:37:56 jmmv Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
+#include <err.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -128,7 +131,11 @@ getparts(int sd, u_int32_t off, u_int32_t extoff, int verbose)
 		exit(1);
 	}
 	if (read(sd, buf, sizeof buf) != DEV_BSIZE) {
-		perror("read label");
+		if (off != MBR_BBSECTOR)
+			perror("read label (sector is possibly out of "
+			    "range)");
+		else
+			perror("read label");
 		exit(1);
 	}
 	if (getshort(buf + MBR_MAGIC_OFFSET) != MBR_MAGIC)
@@ -233,7 +240,8 @@ getparts(int sd, u_int32_t off, u_int32_t extoff, int verbose)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-fqrw] rawdisk\n", getprogname());
+	fprintf(stderr, "usage: %s [-fqrw] [-s sector] rawdisk\n",
+	    getprogname());
 	exit(1);
 }
 
@@ -242,17 +250,19 @@ int
 main(int argc, char **argv)
 {
 	int	sd, ch, changed;
-	char	name[MAXPATHLEN];
+	char	*ep, name[MAXPATHLEN];
 	int	force;			/* force label update */
 	int	raw;			/* update on-disk label as well */
 	int	verbose;		/* verbose output */
 	int	write_it;		/* update in-core label if changed */
+	uint32_t sector;		/* sector that contains the MBR */
 
 	force = 0;
 	raw = 0;
 	verbose = 1;
 	write_it = 0;
-	while ((ch = getopt(argc, argv, "fqrw")) != -1) {
+	sector = MBR_BBSECTOR;
+	while ((ch = getopt(argc, argv, "fqrs:w")) != -1) {
 		switch (ch) {
 		case 'f':
 			force = 1;
@@ -262,6 +272,20 @@ main(int argc, char **argv)
 			break;
 		case 'r':
 			raw = 1;
+			break;
+		case 's':
+			errno = 0;
+			sector = strtoul(optarg, &ep, 10);
+			if (optarg[0] == '\0' || *ep != '\0')
+				errx(EXIT_FAILURE,
+				    "sector number (%s) incorrectly specified",
+				    optarg);
+			if ((errno == ERANGE && sector == ULONG_MAX) ||
+			    sector > UINT32_MAX)
+			    	errx(EXIT_FAILURE,
+				    "sector number (%s) out of range",
+				    optarg);
+
 			break;
 		case 'w':
 			write_it = 1;
@@ -281,7 +305,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 	getlabel(sd);
-	changed = getparts(sd, MBR_BBSECTOR, 0, verbose);
+	changed = getparts(sd, sector, 0, verbose);
 
 	if (verbose) {
 		putchar('\n');
