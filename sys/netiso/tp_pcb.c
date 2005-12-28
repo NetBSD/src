@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.27 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.28 2005/12/28 09:18:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.27 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.28 2005/12/28 09:18:46 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -332,10 +332,14 @@ tp_init(void)
 	if (init_done++)
 		return;
 
+#ifdef INET
 	/* FOR INET */
 	in_pcbinit(&tp_inpcb, 1, 1);
+#endif
+#ifdef ISO
 	/* FOR ISO */
 	tp_isopcb.isop_next = tp_isopcb.isop_prev = &tp_isopcb;
+#endif
 
 	tp_start_win = 2;
 
