@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2005/12/11 12:16:41 christos Exp $
+# $NetBSD: Makefile,v 1.4 2005/12/28 08:04:44 skrll Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -34,6 +34,7 @@ CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 LDSCRIPT=  ${S}/arch/mips/conf/stand.ldscript
 TEXTADDR=  0x80f00000
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN: machine mips
 .NOPATH: machine mips
 
@@ -44,6 +45,7 @@ machine::
 mips::
 	-rm -f $@
 	ln -s ${S}/arch/mips/include $@
+.endif
 
 CLEANFILES+= machine mips
 
