@@ -1,4 +1,4 @@
-/*      $NetBSD: byte_swap.h,v 1.3 2005/12/24 20:07:32 perry Exp $	*/
+/*      $NetBSD: byte_swap.h,v 1.4 2005/12/28 18:40:13 perry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,11 +40,11 @@
 
 #include <sys/types.h>
 
-static inline u_int16_t _sh5_bswap16(u_int16_t);
-static inline u_int32_t _sh5_bswap32(u_int32_t);
-static inline u_int64_t _sh5_bswap64(u_int64_t);
+static __inline u_int16_t _sh5_bswap16(u_int16_t);
+static __inline u_int32_t _sh5_bswap32(u_int32_t);
+static __inline u_int64_t _sh5_bswap64(u_int64_t);
 
-static inline u_int16_t
+static __inline u_int16_t
 _sh5_bswap16(u_int16_t x)
 {
 
@@ -54,7 +54,7 @@ _sh5_bswap16(u_int16_t x)
 	return (x);
 }
 
-static inline u_int32_t
+static __inline u_int32_t
 _sh5_bswap32(u_int32_t x)
 {
 
@@ -64,7 +64,7 @@ _sh5_bswap32(u_int32_t x)
 	return (x);
 }
 
-static inline u_int64_t
+static __inline u_int64_t
 _sh5_bswap64(u_int64_t x)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.6 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.7 2005/12/28 18:40:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,17 +39,17 @@
 #ifndef	M68K_BYTE_SWAP_H_
 #define	M68K_BYTE_SWAP_H_
 
-static inline u_int16_t __byte_swap_word(u_int16_t);
-static inline u_int32_t __byte_swap_long(u_int32_t);
+static __inline u_int16_t __byte_swap_word(u_int16_t);
+static __inline u_int32_t __byte_swap_long(u_int32_t);
 
-static inline u_int16_t
+static __inline u_int16_t
 __byte_swap_word(u_int16_t var)
 {
 	__asm volatile ("rorw #8, %0" : "=d" (var) : "0" (var));
 	return (var);
 }
 
-static inline u_int32_t
+static __inline u_int32_t
 __byte_swap_long(u_int32_t var)
 {
 	__asm volatile (
