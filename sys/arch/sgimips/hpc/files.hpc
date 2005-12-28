@@ -1,4 +1,4 @@
-# $NetBSD: files.hpc,v 1.9 2005/12/11 12:18:53 christos Exp $
+# $NetBSD: files.hpc,v 1.10 2005/12/28 08:31:09 kurahone Exp $
 
 device	sq: arp, ether, ifnet
 attach	sq at hpc
@@ -30,3 +30,9 @@ attach	zsc at hpc with zsc_hpc
 
 attach	pckbc at hpc with pckbc_hpc
 file	arch/sgimips/hpc/pckbc_hpc.c	pckbc_hpc
+
+defflag	opt_pi1ppc.h			PI1PPC_INDY_ACK_HACK	
+device	pi1ppc: parport 
+attach	pi1ppc at hpc
+file	arch/sgimips/hpc/pi1ppc.c	pi1ppc
+
