@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#       $NetBSD: MAKEDEV2manpage.sh,v 1.4 2003/10/24 20:26:57 jdolecek Exp $
+#       $NetBSD: MAKEDEV2manpage.sh,v 1.5 2005/12/28 03:54:07 dbj Exp $
 #
 # Copyright (c) 2002
 #       Dieter Baron <dillo@NetBSD.org>.  All rights reserved.
@@ -58,7 +58,7 @@ then
 else
 	result='updated';
 	if [ `wc -l < ${tmpfile}` -ne `wc -l < ${manpage}` ]; then
-		LC_ALL=C LC_CTYPE=C date=`date +"%B %e, %Y`
+		LC_ALL=C LC_CTYPE=C date=`date +"%B %e, %Y"`
 	else
 		date=`sed -n 's/^\.Dd //p' ${manpage}`
 	fi
