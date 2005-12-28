@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.20 2005/12/11 12:24:20 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.21 2005/12/28 09:29:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.20 2005/12/11 12:24:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.21 2005/12/28 09:29:48 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.57 2005/03/28 10:47:50 darrenr Exp";
@@ -2670,6 +2670,7 @@ int len;
 /*                                                                          */
 /* Expects ip_len to be in host byte order when called.                     */
 /* ------------------------------------------------------------------------ */
+#ifdef INET
 u_short fr_cksum(m, ip, l4proto, l4hdr)
 mb_t *m;
 ip_t *ip;
@@ -2910,6 +2911,7 @@ nodata:
 		*csump = sumsave;
 	return sum2;
 }
+#endif
 
 
 #if defined(_KERNEL) && ( ((BSD < 199103) && !defined(MENTAT)) || \
@@ -5421,8 +5423,12 @@ fr_info_t *fin;
 			hdrsum = *csump;
 
 		if (dosum)
+#ifdef INET
 			sum = fr_cksum(fin->fin_m, fin->fin_ip,
 				       fin->fin_p, fin->fin_dp);
+#else
+			return 1;
+#endif
 #if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6) && defined(ICK_VALID)
 	}
 #endif
