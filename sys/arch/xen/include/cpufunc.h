@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.9 2005/12/24 20:07:48 perry Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.10 2005/12/28 19:09:30 perry Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -51,13 +51,13 @@
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 
-static inline void
+static __inline void
 x86_pause(void)
 {
 	__asm volatile("pause");
 }
 
-static inline void
+static __inline void
 x86_lfence(void)
 {
 
@@ -72,21 +72,21 @@ x86_lfence(void)
 extern unsigned int cpu_feature;
 
 #if 0
-static inline void 
+static __inline void 
 invlpg(u_int addr)
 {
         __asm volatile("invlpg (%0)" : : "r" (addr) : "memory");
 }  
 #endif
 
-static inline void
+static __inline void
 lidt(void *p)
 {
 	__asm volatile("lidt (%0)" : : "r" (p));
 }
 
 #if 0
-static inline void
+static __inline void
 lldt(u_short sel)
 {
 	__asm volatile("lldt %0" : : "r" (sel));
@@ -94,19 +94,19 @@ lldt(u_short sel)
 #endif
 
 #if 0
-static inline void
+static __inline void
 ltr(u_short sel)
 {
 	__asm volatile("ltr %0" : : "r" (sel));
 }
 
-static inline void
+static __inline void
 lcr0(u_int val)
 {
 	__asm volatile("movl %0,%%cr0" : : "r" (val));
 }
 
-static inline u_int
+static __inline u_int
 rcr0(void)
 {
 	u_int val;
@@ -115,21 +115,21 @@ rcr0(void)
 }
 #endif
 
-static inline u_int
+static __inline u_int
 rcr2(void)
 {
 	return 0;
 }
 
 #if 0
-static inline void
+static __inline void
 lcr3(u_int val)
 {
 	__asm volatile("movl %0,%%cr3" : : "r" (val));
 }
 #endif
 
-static inline u_int
+static __inline u_int
 rcr3(void)
 {
 	u_int val;
@@ -137,13 +137,13 @@ rcr3(void)
 	return val;
 }
 
-static inline void
+static __inline void
 lcr4(u_int val)
 {
 	__asm volatile("movl %0,%%cr4" : : "r" (val));
 }
 
-static inline u_int
+static __inline u_int
 rcr4(void)
 {
 	u_int val;
@@ -152,7 +152,7 @@ rcr4(void)
 }
 
 #if 0
-static inline void
+static __inline void
 tlbflush(void)
 {
 	u_int val;
@@ -160,7 +160,7 @@ tlbflush(void)
 	lcr3(val);
 }
 
-static inline void
+static __inline void
 tlbflushg(void)
 {
 	/*
@@ -202,7 +202,7 @@ void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);
 void dr0(caddr_t, u_int32_t, u_int32_t, u_int32_t);
 
 #if 0
-static inline u_int
+static __inline u_int
 rdr6(void)
 {
 	u_int val;
@@ -211,7 +211,7 @@ rdr6(void)
 	return val;
 }
 
-static inline void
+static __inline void
 ldr6(u_int val)
 {
 
@@ -221,19 +221,19 @@ ldr6(u_int val)
 
 /* XXXX ought to be in psl.h with spl() functions */
 
-static inline void
+static __inline void
 disable_intr(void)
 {
 	__cli();
 }
 
-static inline void
+static __inline void
 enable_intr(void)
 {
 	__sti();
 }
 
-static inline u_long
+static __inline u_long
 read_eflags(void)
 {
 	u_long	ef;
@@ -242,13 +242,13 @@ read_eflags(void)
 	return (ef);
 }
 
-static inline void
+static __inline void
 write_eflags(u_long ef)
 {
 	__asm volatile("pushl %0; popfl" : : "r" (ef));
 }
 
-static inline u_int64_t
+static __inline u_int64_t
 rdmsr(u_int msr)
 {
 	u_int64_t rv;
@@ -257,13 +257,13 @@ rdmsr(u_int msr)
 	return (rv);
 }
 
-static inline void
+static __inline void
 wrmsr(u_int msr, u_int64_t newval)
 {
 	__asm volatile("wrmsr" : : "A" (newval), "c" (msr));
 }
 
-static inline u_int64_t
+static __inline u_int64_t
 rdtsc(void)
 {
 	u_int64_t rv;
@@ -272,7 +272,7 @@ rdtsc(void)
 	return (rv);
 }
 
-static inline u_int64_t
+static __inline u_int64_t
 rdpmc(u_int pmc)
 {
 	u_int64_t rv;
@@ -282,7 +282,7 @@ rdpmc(u_int pmc)
 }
 
 /* Break into DDB/KGDB. */
-static inline void
+static __inline void
 breakpoint(void)
 {
 	__asm volatile("int $3");

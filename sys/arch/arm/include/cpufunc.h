@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.36 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.37 2005/12/28 19:09:29 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -448,9 +448,9 @@ void	xscale_setup		__P((char *));
  * Macros for manipulating CPU interrupts
  */
 #ifdef __PROG32
-static inline u_int32_t __set_cpsr_c(u_int bic, u_int eor) __attribute__((__unused__));
+static __inline u_int32_t __set_cpsr_c(u_int bic, u_int eor) __attribute__((__unused__));
 
-static inline u_int32_t
+static __inline u_int32_t
 __set_cpsr_c(u_int bic, u_int eor)
 {
 	u_int32_t	tmp, ret;

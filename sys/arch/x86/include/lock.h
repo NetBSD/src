@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.10 2005/12/24 20:07:42 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.11 2005/12/28 19:09:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,16 +60,16 @@ extern void __cpu_simple_unlock(__cpu_simple_lock_t *);
 
 #include <machine/atomic.h>
 
-static inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
+static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static inline void __cpu_simple_lock(__cpu_simple_lock_t *)
+static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
+static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
+static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
 
-static inline void
+static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
 {
 
@@ -77,7 +77,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
 	__insn_barrier();
 }
 
-static inline void
+static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
 
@@ -90,7 +90,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 	__insn_barrier();
 }
 
-static inline int
+static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 {
 	int r = (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
@@ -101,7 +101,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 	return (r);
 }
 
-static inline void
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 {
 
