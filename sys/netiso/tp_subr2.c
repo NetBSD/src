@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.28 2005/11/16 20:44:19 dsl Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.29 2005/12/28 09:18:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.28 2005/11/16 20:44:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.29 2005/12/28 09:18:46 christos Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -843,9 +843,11 @@ void
 dump_addr(struct sockaddr *addr)
 {
 	switch (addr->sa_family) {
+#ifdef INET
 	case AF_INET:
 		dump_inaddr(satosin(addr));
 		break;
+#endif
 #ifdef ISO
 	case AF_ISO:
 		dump_isoaddr(satosiso(addr));
