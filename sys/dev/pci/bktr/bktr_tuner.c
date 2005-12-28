@@ -1,6 +1,6 @@
-/* $SourceForge: bktr_tuner.c,v 1.4 2003/03/11 23:11:27 thomasklausner Exp $ */
+/* $Sourceforge: bktr_tuner.c,v 1.5 2003/03/13 22:21:04 emsi Exp $ */
 
-/*	$NetBSD: bktr_tuner.c,v 1.10 2003/03/12 00:14:41 wiz Exp $	*/
+/*	$NetBSD: bktr_tuner.c,v 1.11 2005/12/28 20:41:56 wiz Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp$ */
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_tuner.c,v 1.10 2003/03/12 00:14:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_tuner.c,v 1.11 2005/12/28 20:41:56 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ static const struct TUNER tuners[] = {
  	     0x00,
  	     0x00,
  	     0x00 },
-	   { 0x00, 0x00 },			/* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
 	   { 0x00, 0x00, 0x00,0x00} },		/* the band-switch values */
 
 	/* TEMIC_NTSC */
@@ -160,7 +160,7 @@ static const struct TUNER tuners[] = {
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
 	     0x00 },
-	   { 0x00, 0x00},			/* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
 	   { 0x02, 0x04, 0x01, 0x00 } },	/* the band-switch values */
 
 	/* TEMIC_PAL */
@@ -170,7 +170,7 @@ static const struct TUNER tuners[] = {
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
 	     0x00 },
-	   { 0x00, 0x00 },			/* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
 	   { 0x02, 0x04, 0x01, 0x00 } },	/* the band-switch values */
 
 	/* TEMIC_SECAM */
@@ -180,7 +180,7 @@ static const struct TUNER tuners[] = {
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
 	     0x00 },
-	   { 0x00, 0x00 },			/* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
 	   { 0x02, 0x04, 0x01,0x00 } },		/* the band-switch values */
 
 	/* PHILIPS_NTSC */
@@ -190,7 +190,7 @@ static const struct TUNER tuners[] = {
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
 	     0x00 },
-	   { 0x00, 0x00 },			/* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
 	   { 0xa0, 0x90, 0x30, 0x00 } },	/* the band-switch values */
 
 	/* PHILIPS_PAL */
@@ -200,7 +200,7 @@ static const struct TUNER tuners[] = {
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
 	     0x00 },
-	   { 0x00, 0x00 },			/* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
 	   { 0xa0, 0x90, 0x30, 0x00 } },	/* the band-switch values */
 
 	/* PHILIPS_SECAM */
@@ -210,7 +210,7 @@ static const struct TUNER tuners[] = {
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
 	     0x00 },
-	   { 0x00, 0x00 },			/* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
 	   { 0xa7, 0x97, 0x37, 0x00 } },	/* the band-switch values */
 
 	/* TEMIC_PAL I */
@@ -220,7 +220,7 @@ static const struct TUNER tuners[] = {
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
 	     0x00 },
-	   { 0x00, 0x00 },			/* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
 	   { 0x02, 0x04, 0x01,0x00 } },		/* the band-switch values */
 
 	/* PHILIPS_PALI */
@@ -230,7 +230,7 @@ static const struct TUNER tuners[] = {
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
 	     0x00 },
-          { 0x00, 0x00 },                      /* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
           { 0xa0, 0x90, 0x30,0x00 } },         /* the band-switch values */
 
        /* PHILIPS_FR1236_NTSC */
@@ -240,7 +240,7 @@ static const struct TUNER tuners[] = {
 	    TSA552x_FCONTROL,
 	    TSA552x_FCONTROL,
 	    TSA552x_RADIO  },
-          { 0x00, 0x00 },			/* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
 	  { 0xa0, 0x90, 0x30,0xa4 } },		/* the band-switch values */
 
 	/* PHILIPS_FR1216_PAL */
@@ -250,7 +250,7 @@ static const struct TUNER tuners[] = {
 	     TSA552x_FCONTROL,
 	     TSA552x_FCONTROL,
 	     TSA552x_RADIO },
-	   { 0x00, 0x00 },			/* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
 	   { 0xa0, 0x90, 0x30, 0xa4 } },	/* the band-switch values */
 
 	/* PHILIPS_FR1236_SECAM */
@@ -260,7 +260,7 @@ static const struct TUNER tuners[] = {
 	     TSA552x_FCONTROL,
 	     TSA552x_FCONTROL,
 	     TSA552x_RADIO },
-	   { 0x00, 0x00 },			/* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
 	   { 0xa7, 0x97, 0x37, 0xa4 } },	/* the band-switch values */
 
         /* ALPS TSCH5 NTSC */
@@ -270,7 +270,7 @@ static const struct TUNER tuners[] = {
              TSCH5_FCONTROL,
              TSCH5_FCONTROL,
              TSCH5_RADIO },
-           { 0x00, 0x00 },                      /* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
            { 0x14, 0x12, 0x11, 0x04 } },        /* the band-switch values */
 
         /* ALPS TSBH1 NTSC */
@@ -280,7 +280,7 @@ static const struct TUNER tuners[] = {
              TSBH1_FCONTROL,
              TSBH1_FCONTROL,
              0x00 },
-           { 0x00, 0x00 },                      /* band-switch crosspoints */
+	   { 160, 454 },			/* band-switch crosspoints */
            { 0x01, 0x02, 0x08, 0x00 } }         /* the band-switch values */
 };
 
@@ -795,11 +795,10 @@ tv_freq(bktr_ptr_t bktr, int frequency, int type)
 	if (type == TV_FREQUENCY) {
 		/*
 		 * select the band based on frequency
-		 * XXX FIXME: get the cross-over points from the tuner struct
 		 */
-		if (frequency < (160 * FREQFACTOR))
+		if (frequency < (tuner->bandLimits[0] * FREQFACTOR))
 		    band_select = LOW_BAND;
-		else if (frequency < (454 * FREQFACTOR))
+		else if (frequency < (tuner->bandLimits[1] * FREQFACTOR))
 		    band_select = MID_BAND;
 		else
 		    band_select = HIGH_BAND;
