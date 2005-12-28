@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.7 2005/12/11 12:24:21 christos Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.8 2005/12/28 09:29:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -108,7 +108,9 @@ struct file;
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.12 2005/03/03 14:28:24 darrenr Exp";
 #endif
 
+#ifdef INET
 static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
+#endif
 
 #define	AP_SESS_SIZE	53
 
@@ -572,6 +574,7 @@ nat_t *nat;
 		}
 #endif
 
+#ifdef INET
 		/*
 		 * For TCP packets, we may need to adjust the sequence and
 		 * acknowledgement numbers to reflect changes in size of the
@@ -601,6 +604,7 @@ nat_t *nat;
 					       IPPROTO_UDP, udp);
 #endif
 		}
+#endif
 		aps->aps_bytes += fin->fin_plen;
 		aps->aps_pkts++;
 		return 1;
@@ -672,6 +676,7 @@ ap_session_t *aps;
 }
 
 
+#ifdef INET
 /*
  * returns 2 if ack or seq number in TCP header is changed, returns 0 otherwise
  */
@@ -815,6 +820,7 @@ int inc;
 			ntohl(tcp->th_seq), ntohl(tcp->th_ack));
 	return ch ? 2 : 0;
 }
+#endif
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.17 2005/12/28 09:05:54 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.18 2005/12/28 09:29:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1572,8 +1572,12 @@ fr_info_t *fin;
 		asz = sizeof(fin->fin_src);
 	else	/* XXX: no way to return error */
 		return 0;
+#ifdef INET
 	return tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
 			    fin->fin_sport, fin->fin_dport, asz, 0);
+#else
+	return ENOSYS;
+#endif
 #else
 	static int iss_seq_off = 0;
 	u_char hash[16];
