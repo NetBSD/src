@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2005/01/10 02:58:59 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2005/12/28 11:54:45 martti Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/sys
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/dist/ipf
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/dist/ipf/netinet
 CPPFLAGS+=	-DSTATETOP -D__UIO_EXPOSE
+CPPFLAGS+=	-DINET -DINET6
 
 .if (${USE_INET6} == "no")
 CPPFLAGS+=	-DNOINET6
