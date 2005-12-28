@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.103 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.104 2005/12/28 08:13:24 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.103 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.104 2005/12/28 08:13:24 christos Exp $");
 
 #include "ppp.h"
 
@@ -314,6 +314,8 @@ ppp_create(const char *name, int unit)
     sc->sc_inq.ifq_maxlen = IFQ_MAXLEN;
     sc->sc_fastq.ifq_maxlen = IFQ_MAXLEN;
     sc->sc_rawq.ifq_maxlen = IFQ_MAXLEN;
+    /* Ratio of 1:2 packets between the regular and the fast queue */
+    sc->sc_maxfastq = 2;	
     IFQ_SET_READY(&sc->sc_if.if_snd);
     if_attach(&sc->sc_if);
     if_alloc_sadl(&sc->sc_if);
@@ -1129,9 +1131,21 @@ ppp_dequeue(struct ppp_softc *sc)
      * normal queue.
      */
     s = splnet();
-    IF_DEQUEUE(&sc->sc_fastq, m);
-    if (m == NULL)
+    if (sc->sc_nfastq < sc->sc_maxfastq) {
+	IF_DEQUEUE(&sc->sc_fastq, m);
+	if (m != NULL)
+	    sc->sc_nfastq++;
+	else
+	    IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
+    } else {
+	sc->sc_nfastq = 0;
 	IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
+	if (m != NULL) {
+	    IF_DEQUEUE(&sc->sc_fastq, m);
+	    if (m != NULL)
+		sc->sc_nfastq++;
+	}
+    }
     splx(s);
 
     if (m == NULL)
