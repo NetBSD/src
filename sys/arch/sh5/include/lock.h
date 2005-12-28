@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.5 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.6 2005/12/28 19:09:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,14 +43,14 @@
 #ifndef _SH5_LOCK_H_
 #define	_SH5_LOCK_H_
 
-static inline void
+static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
-static inline void
+static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	register_t l;
@@ -61,7 +61,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	} while (l == __SIMPLELOCK_LOCKED);
 }
 
-static inline int
+static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	register_t l;
@@ -71,7 +71,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return (__SIMPLELOCK_LOCKED - (int)l);
 }
 
-static inline void
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 

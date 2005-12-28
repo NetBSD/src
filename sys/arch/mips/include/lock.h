@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.7 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.8 2005/12/28 19:09:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #ifndef _MIPS_LOCK_H_
 #define	_MIPS_LOCK_H_
 
-static inline void
+static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *lp)
 {
 
@@ -60,7 +60,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *lp)
 		: "=m" (*lp));
 }
 
-static inline void
+static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *lp)
 {
 	unsigned long t0;
@@ -100,7 +100,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *lp)
 		: "i" (__SIMPLELOCK_LOCKED), "1" (*lp));
 }
 
-static inline int
+static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 {
 	unsigned long t0, v0;
@@ -131,7 +131,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 	return (v0 != 0);
 }
 
-static inline void
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *lp)
 {
 

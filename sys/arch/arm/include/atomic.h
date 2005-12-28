@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.4 2005/12/24 20:06:52 perry Exp $ */
+/* $NetBSD: atomic.h,v 1.5 2005/12/28 19:09:29 perry Exp $ */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -75,13 +75,13 @@ void atomic_clear_bit( u_int *, u_int );
 			: "cc" );		\
 	} while(0)
 
-static inline void
+static __inline void
 inline_atomic_set_bit( u_int *address, u_int setmask )
 {
 	__with_interrupts_disabled( *address |= setmask );
 }
 
-static inline void
+static __inline void
 inline_atomic_clear_bit( u_int *address, u_int clearmask )
 {
 	__with_interrupts_disabled( *address &= ~clearmask );

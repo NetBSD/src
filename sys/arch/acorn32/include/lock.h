@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.5 2005/12/24 20:06:46 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.6 2005/12/28 19:09:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <arm/cpufunc.h>
 
-static inline int
+static __inline int
 __swp(int __val, volatile int *__ptr)
 {
 
@@ -56,14 +56,14 @@ __swp(int __val, volatile int *__ptr)
 	return __val;
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 
@@ -72,7 +72,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	cpu_idcache_wbinv_all();
 }
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int __result;
@@ -83,7 +83,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return __result;
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 

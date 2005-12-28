@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.21 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: lock.h,v 1.22 2005/12/28 19:09:29 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #include "opt_multiprocessor.h"
 #endif
 
-static inline void
+static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
@@ -60,7 +60,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 		: "=m" (*alp));
 }
 
-static inline void
+static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	unsigned long t0;
@@ -92,7 +92,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 		: "memory");
 }
 
-static inline int
+static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	unsigned long t0, v0;
@@ -119,7 +119,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return (v0 != 0);
 }
 
-static inline void
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 

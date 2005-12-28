@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.7 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.8 2005/12/28 19:09:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,23 +43,23 @@
 #ifndef _PC532_LOCK_H_
 #define	_PC532_LOCK_H_
 
-static inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
+static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 
-static inline void
+static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
-static inline void
+static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 
@@ -70,7 +70,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 		: "i" (__SIMPLELOCK_LOCKED));
 }
 
-static inline int
+static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int __rv = 1;
@@ -86,7 +86,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return (__rv);
 }
 
-static inline void
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 

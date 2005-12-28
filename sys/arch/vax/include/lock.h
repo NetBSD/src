@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.20 2005/12/24 23:24:07 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.21 2005/12/28 19:09:30 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -41,7 +41,7 @@
 #include <machine/cpu.h>
 #endif
 
-static inline void
+static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 #ifdef _KERNEL
@@ -57,7 +57,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 #endif
 }
 
-static inline int
+static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int ret;
@@ -94,7 +94,7 @@ do {									\
 	}								\
 } while (0)
 #else
-static inline void
+static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	__asm volatile ("1:bbssi $0,%0,1b"
@@ -105,7 +105,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 #endif /* _KERNEL */
 
 #if 0
-static inline void
+static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	struct cpu_info *ci = curcpu();
@@ -134,7 +134,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 }
 #endif
 
-static inline void
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 #ifdef _KERNEL
