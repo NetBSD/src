@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.4 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.5 2005/12/28 18:40:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/types.h>
 
-static inline u_int32_t
+static __inline u_int32_t
 __byte_swap_32_variable(u_int32_t v)
 {
 	u_int32_t t1;
@@ -54,7 +54,7 @@ __byte_swap_32_variable(u_int32_t v)
 	return (v);
 }
 
-static inline u_int16_t
+static __inline u_int16_t
 __byte_swap_16_variable(u_int16_t v)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.8 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.9 2005/12/28 18:40:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <sys/types.h>
 
-static inline uint32_t __attribute__((__unused__))
+static __inline uint32_t __attribute__((__unused__))
 __byte_swap_long_variable(uint32_t x)
 {
 	uint32_t y;
@@ -53,7 +53,7 @@ __byte_swap_long_variable(uint32_t x)
 	return (y);
 }
 
-static inline uint16_t __attribute__((__unused__))
+static __inline uint16_t __attribute__((__unused__))
 __byte_swap_word_variable(uint16_t x)
 {
 
