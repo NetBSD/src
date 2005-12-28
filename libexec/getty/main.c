@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.49 2005/09/10 21:29:36 elad Exp $	*/
+/*	$NetBSD: main.c,v 1.50 2005/12/28 09:43:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.49 2005/09/10 21:29:36 elad Exp $");
+__RCSID("$NetBSD: main.c,v 1.50 2005/12/28 09:43:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -381,6 +381,7 @@ main(int argc, char *argv[])
 				*q++ = *p++;
 			}
 		} else if ((rval = getname()) == 2) {
+			setflags(2);
 		        execle(PP, "ppplogin", ttyn, (char *) 0, env);
 		        syslog(LOG_ERR, "%s: %m", PP);
 		        exit(1);
