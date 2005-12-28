@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.34 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: hpc.c,v 1.35 2005/12/28 08:31:09 kurahone Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.34 2005/12/11 12:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.35 2005/12/28 08:31:09 kurahone Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,6 +165,12 @@ const struct hpc_device {
 	  HPC_BASE_ADDRESS_0,
 	  HPC3_PBUS_CH0_DEVREGS, HPC3_PBUS_DMAREGS,
 	  8 + 4, /* XXX IRQ_LOCAL1 + 4 */
+	  HPCDEV_IP22 | HPCDEV_IP24 },
+
+	{ "pi1ppc",
+	  HPC_BASE_ADDRESS_0,
+	  HPC3_PBUS_CH6_DEVREGS + IOC_PLP_REGS, 0,
+	  -1,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ NULL,

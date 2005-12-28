@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.42 2005/12/20 05:35:30 thorpej Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.43 2005/12/28 08:31:09 kurahone Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.42 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.43 $"
 
 maxusers	32
 
@@ -249,6 +249,12 @@ wsmouse*	at zsms? mux 0
 
 # I/O Controller -- IP22/24
 ioc0		at mainbus0 addr 0x1fbd9800
+
+# IOC's parallel port
+pi1ppc0		at hpc0 offset ? 
+options		PI1PPC_INDY_ACK_HACK	# Indy hardware bug workaround.
+ppbus*		at pi1ppc?
+lpt*		at ppbus?		# Parallel printer
 
 #
 # As always, the zs chip is wired funny, so channel 1 is actually the
