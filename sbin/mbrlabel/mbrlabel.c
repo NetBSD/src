@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.25 2005/12/27 15:37:56 jmmv Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.26 2005/12/28 06:03:15 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.25 2005/12/27 15:37:56 jmmv Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.26 2005/12/28 06:03:15 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -256,6 +256,7 @@ main(int argc, char **argv)
 	int	verbose;		/* verbose output */
 	int	write_it;		/* update in-core label if changed */
 	uint32_t sector;		/* sector that contains the MBR */
+	ulong	ulsector;
 
 	force = 0;
 	raw = 0;
@@ -275,17 +276,17 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			errno = 0;
-			sector = strtoul(optarg, &ep, 10);
+			ulsector = strtoul(optarg, &ep, 10);
 			if (optarg[0] == '\0' || *ep != '\0')
 				errx(EXIT_FAILURE,
 				    "sector number (%s) incorrectly specified",
 				    optarg);
-			if ((errno == ERANGE && sector == ULONG_MAX) ||
-			    sector > UINT32_MAX)
+			if ((errno == ERANGE && ulsector == ULONG_MAX) ||
+			    ulsector > UINT32_MAX)
 			    	errx(EXIT_FAILURE,
 				    "sector number (%s) out of range",
 				    optarg);
-
+			sector = (uint32_t)ulsector;
 			break;
 		case 'w':
 			write_it = 1;
