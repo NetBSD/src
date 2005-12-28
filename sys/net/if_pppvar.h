@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.21 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.22 2005/12/28 08:13:24 christos Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -141,6 +141,12 @@ struct ppp_softc {
 	u_int16_t sc_ilen;		/* length of input packet so far */
 	u_int16_t sc_fcs;		/* FCS so far (input) */
 	u_int16_t sc_outfcs;		/* FCS so far for output packet */
+	u_int16_t sc_maxfastq;		/* Maximum number of packets that
+					 * can be received back-to-back in
+					 * the high priority queue */
+	u_int8_t sc_nfastq;		/* Number of packets received
+					 * back-to-back in the high priority
+					 * queue */
 	u_char sc_rawin_start;		/* current char start */
 	struct ppp_rawin sc_rawin;	/* chars as received */
 	LIST_ENTRY(ppp_softc) sc_iflist;
