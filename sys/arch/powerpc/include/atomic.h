@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.3 2005/12/24 20:07:28 perry Exp $ */
+/* $NetBSD: atomic.h,v 1.4 2005/12/28 19:09:29 perry Exp $ */
 
 /*-
  */
@@ -15,7 +15,7 @@
  *
  *	Atomically set bits in a `unsigned long'.
  */
-static inline void
+static __inline void
 atomic_setbits_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
@@ -38,7 +38,7 @@ atomic_setbits_ulong(volatile unsigned long *ulp, unsigned long v)
  *
  *	Atomically clear bits in a `unsigned long'.
  */
-static inline void
+static __inline void
 atomic_clearbits_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
@@ -61,7 +61,7 @@ atomic_clearbits_ulong(volatile unsigned long *ulp, unsigned long v)
  *
  *	Atomically add a value to a `unsigned long'.
  */
-static inline void
+static __inline void
 atomic_add_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
@@ -84,7 +84,7 @@ atomic_add_ulong(volatile unsigned long *ulp, unsigned long v)
  *
  *	Atomically subtract a value from a `unsigned long'.
  */
-static inline void
+static __inline void
 atomic_sub_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
@@ -107,7 +107,7 @@ atomic_sub_ulong(volatile unsigned long *ulp, unsigned long v)
  *
  *	Atomically load and latch a `unsigned long' value.
  */
-static inline unsigned long
+static __inline unsigned long
 atomic_loadlatch_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;

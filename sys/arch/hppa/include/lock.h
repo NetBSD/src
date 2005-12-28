@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.8 2005/12/24 20:07:10 perry Exp $	*/
+/* 	$NetBSD: lock.h,v 1.9 2005/12/28 19:09:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #ifndef _HPPA_LOCK_H_
 #define	_HPPA_LOCK_H_
 
-static inline void
+static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 	__asm volatile(
@@ -56,7 +56,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 		: "r" (__SIMPLELOCK_UNLOCKED));
 }
 
-static inline void
+static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	int32_t t0;
@@ -86,7 +86,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 #endif
 }
 
-static inline int
+static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int32_t t0;
@@ -104,7 +104,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return (t0 != 0);
 }
 
-static inline void
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 	__asm volatile(

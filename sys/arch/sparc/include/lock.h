@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.21 2005/12/24 23:24:02 perry Exp $ */
+/*	$NetBSD: lock.h,v 1.22 2005/12/28 19:09:30 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@
 #ifdef __lint__
 #define __ldstub(__addr)	(__addr)
 #else /* !__lint__ */
-static inline int __ldstub(__cpu_simple_lock_t *addr);
-static inline int __ldstub(__cpu_simple_lock_t *addr)
+static __inline int __ldstub(__cpu_simple_lock_t *addr);
+static __inline int __ldstub(__cpu_simple_lock_t *addr)
 {
 	int v;
 
@@ -65,20 +65,20 @@ static inline int __ldstub(__cpu_simple_lock_t *addr)
 }
 #endif /* __lint__ */
 
-static inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
+static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 #ifndef __CPU_SIMPLE_LOCK_NOINLINE
-static inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 #else
 extern void __cpu_simple_lock __P((__cpu_simple_lock_t *));
 #endif
 
-static inline void
+static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
@@ -86,7 +86,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 }
 
 #ifndef __CPU_SIMPLE_LOCK_NOINLINE
-static inline void
+static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 
@@ -104,14 +104,14 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 }
 #endif /* __CPU_SIMPLE_LOCK_NOINLINE */
 
-static inline int
+static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 
 	return (__ldstub(alp) == __SIMPLELOCK_UNLOCKED);
 }
 
-static inline void
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.7 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.8 2005/12/28 19:09:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,14 +43,14 @@
 #ifndef _POWERPC_LOCK_H_
 #define _POWERPC_LOCK_H_
 
-static inline void
+static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 	*alp = __SIMPLELOCK_UNLOCKED;
 	__asm volatile ("sync");
 }
 
-static inline void
+static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	int old;
@@ -73,7 +73,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	: "memory");
 }
 
-static inline int
+static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int old, dummy;
@@ -96,7 +96,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return (old == __SIMPLELOCK_UNLOCKED);
 }
 
-static inline void
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 	__asm volatile ("sync");
