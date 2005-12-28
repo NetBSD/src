@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2005/12/11 12:18:51 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2005/12/28 09:10:26 skrll Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -13,6 +13,7 @@ CFLAGS= -Os -mmultiple -ffreestanding
 
 CLEANFILES+= machine powerpc
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .PHONY: machine-links
 beforedepend: machine-links
 
@@ -21,6 +22,7 @@ machine-links:
 	ln -s ${S}/arch/${MACHINE}/include machine
 	-rm -f ${MACHINE_ARCH}
 	ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+.endif
 
 .include <bsd.prog.mk>
 
