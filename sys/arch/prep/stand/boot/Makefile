@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2005/12/11 12:18:48 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2005/12/28 09:10:26 skrll Exp $
 
 NOMAN= # defined
 
@@ -51,6 +51,7 @@ CLEANFILES+= vers.c machine powerpc
 
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN: machine powerpc
 .NOPATH: machine powerpc
 
@@ -61,6 +62,7 @@ machine::
 powerpc::
 	-rm -f $@
 	ln -s ${S}/arch/powerpc/include $@
+.endif
 
 vers.c: ${.CURDIR}/../boot/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version "prep" ${NEWVERSWHAT}
