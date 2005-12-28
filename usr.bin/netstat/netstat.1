@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.43 2005/09/11 23:20:12 wiz Exp $
+.\"	$NetBSD: netstat.1,v 1.44 2005/12/28 17:57:16 rpaulo Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -374,6 +374,18 @@ The first line of each screen of information contains a summary since the
 system was last rebooted.
 Subsequent lines of output show values
 accumulated over the preceding interval.
+.Pp
+The first character of the flags column in the
+.Fl B
+option shows the status of the
+.Xr bpf 4
+descriptor which has three different values:
+Idle ('I'), Waiting ('W') and Timed Out ('T').
+The second character indicates wheter the promisc flag is set.
+The third character indicates the status of the immediate mode.
+The fourth character indicates whether the peer will have the ability
+to see the packets sent.
+And the fifth character shows the header complete flag status.
 .Sh SEE ALSO
 .Xr fstat 1 ,
 .Xr nfsstat 1 ,
