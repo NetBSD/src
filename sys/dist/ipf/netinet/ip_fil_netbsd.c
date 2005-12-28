@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.16 2005/12/11 12:24:21 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.17 2005/12/28 09:05:54 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1116,15 +1116,18 @@ mb_t *m0, **mpp;
 fr_info_t *fin;
 frdest_t *fdp;
 {
-	register struct ip *ip, *mhip;
-	register struct mbuf *m = m0;
-	register struct route *ro;
-	int len, off, error = 0, hlen, code;
+	int error = 0;
+#ifdef INET
+	struct ip *ip, *mhip;
+	struct mbuf *m = m0;
+	struct route *ro;
+	int off, len, hlen, code;
 	struct ifnet *ifp, *sifp;
 	struct sockaddr_in *dst;
 	struct route iproute;
 	u_short ip_off;
 	frentry_t *fr;
+#endif
 
 	if (fin->fin_v == 6) {
 #ifdef USE_INET6
