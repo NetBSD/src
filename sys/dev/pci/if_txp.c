@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.13 2005/12/11 12:22:50 christos Exp $ */
+/* $NetBSD: if_txp.c,v 1.14 2005/12/28 09:15:32 christos Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.13 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.14 2005/12/28 09:15:32 christos Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -540,7 +540,9 @@ txp_download_fw_section(sc, sect, sectnum)
 	struct txp_dma_alloc dma;
 	int rseg, err = 0;
 	struct mbuf m;
+#ifdef INET
 	u_int16_t csum;
+#endif
 
 	/* Skip zero length sections */
 	if (sect->nbytes == 0)
@@ -577,13 +579,15 @@ txp_download_fw_section(sc, sect, sectnum)
 	m.m_len = le32toh(sect->nbytes);
 	m.m_data = dma.dma_vaddr;
 	m.m_flags = 0;
+#ifdef INET
 	csum = in_cksum(&m, le32toh(sect->nbytes));
 	if (csum != sect->cksum) {
 		printf(": fw section %d, bad cksum (expected 0x%x got 0x%x)\n",
 		    sectnum, sect->cksum, csum);
-		err = -1;
-		goto bail;
+		txp_dma_free(sc, &dma);
+		return -1;
 	}
+#endif
 
 	bus_dmamap_sync(sc->sc_dmat, dma.dma_map, 0,
 	    dma.dma_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
@@ -604,9 +608,7 @@ txp_download_fw_section(sc, sect, sectnum)
 	bus_dmamap_sync(sc->sc_dmat, dma.dma_map, 0,
 	    dma.dma_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
-bail:
 	txp_dma_free(sc, &dma);
-
 	return (err);
 }
 
