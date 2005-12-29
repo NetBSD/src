@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.2 2005/12/28 15:24:31 riz Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.3 2005/12/29 16:28:51 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -13,4 +13,12 @@ sys/sys/param.h					patch
 doc/README.files				patch
 
 	Update for release and new CHANGES-3.0.1 file.
+
+lib/libc/gen/getcwd.c				1.41
+
+	Allow last component to be non-existing again.
+	This is what broke systrace's filename normalization.
+	Go back to original behavior as in revision 1.35: return resolved name,
+	but also set errno to ENOENT.
+	[elad, ticket #1068]
 
