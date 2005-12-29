@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.751 2005/12/19 02:08:20 jonathan Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.752 2005/12/29 11:07:30 silke Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.750 2005/12/19 02:06:54 jonathan Exp
+ *	NetBSD: pcidevs,v 1.751 2005/12/29 05:44:51 jonathan Exp
  */
 
 /*
@@ -2623,6 +2623,7 @@
 #define	PCI_PRODUCT_SERVERWORKS_CSB6_USB	0x0221		/* CSB6 USB Host Controller */
 #define	PCI_PRODUCT_SERVERWORKS_CSB5_LPC	0x0225		/* CSB5 ISA/LPC bridge */
 #define	PCI_PRODUCT_SERVERWORKS_CSB6_LPC	0x0227		/* CSB6 ISA/LPC bridge */
+#define	PCI_PRODUCT_SERVERWORKS_BCM5714	0x0103		/* bcm5714/bcm5715 integral PCI-E to PCI-X bridge */
 
 /* SGI products */
 #define	PCI_PRODUCT_SGI_IOC3	0x0003		/* IOC3 */
