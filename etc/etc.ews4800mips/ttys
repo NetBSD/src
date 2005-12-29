@@ -1,0 +1,9 @@
+#
+#	$NetBSD: ttys,v 1.1 2005/12/29 15:28:36 tsutsui Exp $
+#
+# name	getty				type	status		comments
+
+ttyE0	"/usr/libexec/getty std.9600"	wsvt25	on secure
+
+ttyZ0	"/usr/libexec/getty std.9600"	vt100	on secure
+ttyZ1	"/usr/libexec/getty std.9600"	vt100	on secure
