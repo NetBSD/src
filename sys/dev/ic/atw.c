@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.95 2005/12/29 21:34:53 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.96 2005/12/29 21:37:27 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.95 2005/12/29 21:34:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.96 2005/12/29 21:37:27 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -262,7 +262,6 @@ static void	atw_write_wep(struct atw_softc *);
 
 /* Media */
 static int	atw_media_change(struct ifnet *);
-static void	atw_media_status(struct ifnet *, struct ifmediareq *);
 
 static void	atw_filter_setup(struct atw_softc *);
 
@@ -842,7 +841,7 @@ atw_attach(struct atw_softc *sc)
 	 */
 
 	/* complete initialization */
-	ieee80211_media_init(ic, atw_media_change, atw_media_status);
+	ieee80211_media_init(ic, atw_media_change, ieee80211_media_status);
 	callout_init(&sc->sc_scan_ch);
 
 #if NBPFILTER > 0
@@ -3889,17 +3888,4 @@ atw_media_change(struct ifnet *ifp)
 		error = 0;
 	}
 	return error;
-}
-
-static void
-atw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
-{
-	struct atw_softc *sc = ifp->if_softc;
-
-	if (ATW_IS_ENABLED(sc) == 0) {
-		imr->ifm_active = IFM_IEEE80211 | IFM_NONE;
-		imr->ifm_status = 0;
-		return;
-	}
-	ieee80211_media_status(ifp, imr);
 }
