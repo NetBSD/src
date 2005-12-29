@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.4.2.3 2005/12/29 19:36:17 riz Exp $	*/
+/*	$NetBSD: azalia.h,v 1.4.2.4 2005/12/29 19:37:20 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -514,6 +514,7 @@ typedef struct {
 typedef struct codec_t {
 	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
 	int (*init_dacgroup)(struct codec_t *);
+	int (*init_widget)(const struct codec_t *, widget_t *, nid_t);
 
 	struct azalia_t *az;
 	const char *name;
