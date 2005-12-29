@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.232.2.2 2005/09/13 20:59:37 tron Exp $
+#	$NetBSD: files.pci,v 1.232.2.3 2005/12/29 19:33:40 riz Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -441,6 +441,7 @@ file	dev/pci/auixp.c			auixp
 device	azalia: audiobus, auconv, mulaw, ac97, aurateconv
 attach	azalia at pci
 file	dev/pci/azalia.c		azalia
+file	dev/pci/azalia_codec.c		azalia
 
 # NeoMagic 256 AC'97 Audio
 device	neo: audiobus, auconv, mulaw, ac97
