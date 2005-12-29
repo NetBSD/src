@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.101 2005/12/29 21:51:43 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.102 2005/12/29 21:59:07 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.101 2005/12/29 21:51:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.102 2005/12/29 21:59:07 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2630,6 +2630,10 @@ atw_txdrain(struct atw_softc *sc)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 		sc->sc_txfree += txs->txs_ndescs;
 	}
+
+	KASSERT((sc->sc_if.if_flags & IFF_RUNNING) == 0 ||
+	        !(SIMPLEQ_EMPTY(&sc->sc_txfreeq) ||
+		  sc->sc_txfree != ATW_NTXDESC));
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	sc->sc_tx_timer = 0;
 }
@@ -3266,6 +3270,8 @@ atw_txintr(struct atw_softc *sc)
 
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 
+		KASSERT(!(SIMPLEQ_EMPTY(&sc->sc_txfreeq) ||
+		        sc->sc_txfree == 0));
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 		if ((ifp->if_flags & IFF_DEBUG) != 0 &&
@@ -3305,8 +3311,10 @@ atw_txintr(struct atw_softc *sc)
 	 * If there are no more pending transmissions, cancel the watchdog
 	 * timer.
 	 */
-	if (txs == NULL)
+	if (txs == NULL) {
+		KASSERT((ifp->if_flags & IFF_OACTIVE) == 0);
 		sc->sc_tx_timer = 0;
+	}
 #undef TXSTAT_ERRMASK
 #undef TXSTAT_FMT
 }
