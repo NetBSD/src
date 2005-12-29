@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.97 2005/12/29 21:40:41 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.98 2005/12/29 21:44:33 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.97 2005/12/29 21:40:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.98 2005/12/29 21:44:33 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2513,23 +2513,21 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	ostate = ic->ic_state;
 	callout_stop(&sc->sc_scan_ch);
-	atw_start_beacon(sc, 0);
 
 	switch (nstate) {
+	case IEEE80211_S_AUTH:
 	case IEEE80211_S_ASSOC:
 		error = atw_tune(sc);
 		break;
 	case IEEE80211_S_INIT:
 		callout_stop(&sc->sc_scan_ch);
 		sc->sc_cur_chan = IEEE80211_CHAN_ANY;
+		atw_start_beacon(sc, 0);
 		break;
 	case IEEE80211_S_SCAN:
 		error = atw_tune(sc);
 		callout_reset(&sc->sc_scan_ch, atw_dwelltime * hz / 1000,
 		    atw_next_scan, sc);
-		break;
-	case IEEE80211_S_AUTH:
-		error = atw_tune(sc);
 		break;
 	case IEEE80211_S_RUN:
 		error = atw_tune(sc);
@@ -2549,13 +2547,22 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		    LSHIFT(ic->ic_lintval / ic->ic_bss->ni_intval,
 			   ATW_BPLI_LI_MASK));
 
-		DPRINTF(sc, ("%s: reg[ATW_BPLI] = %08x\n",
-		    sc->sc_dev.dv_xname, ATW_READ(sc, ATW_BPLI)));
+		DPRINTF(sc, ("%s: reg[ATW_BPLI] = %08x\n", sc->sc_dev.dv_xname,
+		    ATW_READ(sc, ATW_BPLI)));
 
 		atw_predict_beacon(sc);
-		atw_start_beacon(sc,
-		    ic->ic_opmode == IEEE80211_M_HOSTAP ||
-		    ic->ic_opmode == IEEE80211_M_IBSS);
+
+		switch (ic->ic_opmode) {
+		case IEEE80211_M_AHDEMO:
+		case IEEE80211_M_HOSTAP:
+		case IEEE80211_M_IBSS:
+			atw_start_beacon(sc, 1);
+			break;
+		case IEEE80211_M_MONITOR:
+		case IEEE80211_M_STA:
+			break;
+		}
+
 		break;
 	}
 	return (error != 0) ? error : (*sc->sc_newstate)(ic, nstate, arg);
