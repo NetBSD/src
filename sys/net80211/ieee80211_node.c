@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.48 2005/12/29 22:13:40 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.49 2005/12/29 22:17:09 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.48 2005/12/29 22:13:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.49 2005/12/29 22:17:09 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -844,15 +844,23 @@ ieee80211_sta_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 int
 ieee80211_get_rate(struct ieee80211com *ic)
 {
-	u_int8_t (*rates)[IEEE80211_RATE_MAXSIZE];
-	int rate;
+#define	RATE(_ix)	(ni->ni_rates.rs_rates[(_ix)] & IEEE80211_RATE_VAL)
+	int ix, rate;
+	const struct ieee80211_node *ni;
+	const struct ieee80211_rateset *rs;
 
-	rates = &ic->ic_bss->ni_rates.rs_rates;
+	ni = ic->ic_bss;
 
-	if (ic->ic_fixed_rate != -1)
-		rate = (*rates)[ic->ic_fixed_rate];
-	else if (ic->ic_state == IEEE80211_S_RUN)
-		rate = (*rates)[ic->ic_bss->ni_txrate];
+	if (ic->ic_fixed_rate != IEEE80211_FIXED_RATE_NONE) {
+		rs = &ic->ic_sup_rates[ic->ic_curmode];
+		rate = rs->rs_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
+		for (ix = ni->ni_rates.rs_nrates - 1;
+		     ix >= 0 && RATE(ix) != rate; ix--)
+			;
+		IASSERT(ix >= 0,
+			("fixed rate %d not in rate set", ic->ic_fixed_rate));
+	} else if (ic->ic_state == IEEE80211_S_RUN)
+		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
 	else
 		rate = 0;
 
