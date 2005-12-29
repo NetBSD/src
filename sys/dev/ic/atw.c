@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.100 2005/12/29 21:49:59 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.101 2005/12/29 21:51:43 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.100 2005/12/29 21:49:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.101 2005/12/29 21:51:43 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2054,6 +2054,7 @@ setit:
 	ATW_WRITE(sc, ATW_MAR1, hashes[1]);
 	ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
 	DELAY(atw_nar_delay);
+	ATW_WRITE(sc, ATW_RDR, 0x1);
 
 	DPRINTF(sc, ("%s: ATW_NAR %08x opmode %08x\n", sc->sc_dev.dv_xname,
 	    ATW_READ(sc, ATW_NAR), sc->sc_opmode));
@@ -2192,6 +2193,8 @@ atw_key_update_end(struct ieee80211com *ic)
 	atw_idle(sc, ATW_NAR_SR | ATW_NAR_ST);
 	atw_write_wep(sc);
 	ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
+	DELAY(atw_nar_delay);
+	ATW_WRITE(sc, ATW_RDR, 0x1);
 }
 
 /* Write WEP keys from the ieee80211com to the ADM8211's SRAM. */
