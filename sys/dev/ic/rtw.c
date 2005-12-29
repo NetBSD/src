@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.63 2005/12/29 22:23:52 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.64 2005/12/29 22:27:17 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.63 2005/12/29 22:23:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.64 2005/12/29 22:27:17 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3967,6 +3967,10 @@ rtw_rf_attach(struct rtw_softc *sc, enum rtw_rfchipid rfchipid, int digphy)
 	}
 
 	switch (rfchipid) {
+	case RTW_RFCHIPID_GCT:
+		rf = rtw_grf5101_create(&sc->sc_regs, rf_write, 0);
+		sc->sc_pwrstate_cb = rtw_maxim_pwrstate;
+		break;
 	case RTW_RFCHIPID_MAXIM:
 		rf = rtw_max2820_create(&sc->sc_regs, rf_write, 0);
 		sc->sc_pwrstate_cb = rtw_maxim_pwrstate;

@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.7 2005/12/11 12:21:28 christos Exp $ */
+/* $NetBSD: rtwphy.c,v 1.8 2005/12/29 22:27:17 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.7 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.8 2005/12/29 22:27:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,13 @@ __KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.7 2005/12/11 12:21:28 christos Exp $");
 
 static int rtw_max2820_pwrstate(struct rtw_rf *, enum rtw_pwrstate);
 static int rtw_sa2400_pwrstate(struct rtw_rf *, enum rtw_pwrstate);
+
+#define	GCT_WRITE(__gr, __addr, __val, __label)				\
+	do {								\
+		if (rtw_rfbus_write(&(__gr)->gr_bus, RTW_RFCHIPID_GCT,	\
+		    (__addr), (__val)) == -1)				\
+			goto __label;					\
+	} while(0)
 
 static int
 rtw_bbp_preinit(struct rtw_regs *regs, u_int antatten0, int dflantb,
@@ -449,6 +456,175 @@ rtw_sa2400_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int digphy)
 	bus->b_write = rf_write;
 
 	return &sa->sa_rf;
+}
+
+static int
+rtw_grf5101_txpower(struct rtw_rf *rf, uint8_t opaque_txpower)
+{
+	struct rtw_grf5101 *gr = (struct rtw_grf5101 *)rf;
+
+	GCT_WRITE(gr, 0x15, 0, err);
+	GCT_WRITE(gr, 0x06, opaque_txpower, err);
+	GCT_WRITE(gr, 0x15, 0x10, err);
+	GCT_WRITE(gr, 0x15, 0x00, err);
+	return 0;
+err:
+	return -1;
+}
+
+static int
+rtw_grf5101_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
+{
+	struct rtw_grf5101 *gr = (struct rtw_grf5101 *)rf;
+	switch (power) {
+	case RTW_OFF:
+	case RTW_SLEEP:
+		GCT_WRITE(gr, 0x07, 0x0000, err);
+		GCT_WRITE(gr, 0x1f, 0x0045, err);
+		GCT_WRITE(gr, 0x1f, 0x0005, err);
+		GCT_WRITE(gr, 0x00, 0x08e4, err);
+	default:
+		break;
+	case RTW_ON:
+		GCT_WRITE(gr, 0x1f, 0x0001, err);
+		DELAY(10);
+		GCT_WRITE(gr, 0x1f, 0x0001, err);
+		DELAY(10);
+		GCT_WRITE(gr, 0x1f, 0x0041, err);
+		DELAY(10);
+		GCT_WRITE(gr, 0x1f, 0x0061, err);
+		DELAY(10);
+		GCT_WRITE(gr, 0x00, 0x0ae4, err);
+		DELAY(10);
+		GCT_WRITE(gr, 0x07, 0x1000, err);
+		DELAY(100);
+		break;
+	}
+
+	return 0;
+err:
+	return -1;
+}
+
+static int
+rtw_grf5101_tune(struct rtw_rf *rf, u_int freq)
+{
+	int channel;
+	struct rtw_grf5101 *gr = (struct rtw_grf5101 *)rf;
+
+	if (freq == 2484)
+		channel = 14;
+	else if ((channel = (freq - 2412) / 5 + 1) < 1 || channel > 13) {
+		RTW_DPRINTF(RTW_DEBUG_PHY,
+		    ("%s: invalid channel %d (freq %d)\n", __func__, channel,
+		     freq));
+		return -1;
+	}
+
+	GCT_WRITE(gr, 0x07, 0, err);
+	GCT_WRITE(gr, 0x0b, channel - 1, err);
+	GCT_WRITE(gr, 0x07, 0x1000, err);
+	return 0;
+err:
+	return -1;
+}
+
+static int
+rtw_grf5101_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower,
+    enum rtw_pwrstate power)
+{
+	int rc;
+	struct rtw_grf5101 *gr = (struct rtw_grf5101 *)rf;
+
+	/*
+         * These values have been derived from the rtl8180-sa2400
+         * Linux driver.  It is unknown what they all do, GCT refuse
+         * to release any documentation so these are more than
+         * likely sub optimal settings
+	 */
+
+	GCT_WRITE(gr, 0x01, 0x1a23, err);
+	GCT_WRITE(gr, 0x02, 0x4971, err);
+	GCT_WRITE(gr, 0x03, 0x41de, err);
+	GCT_WRITE(gr, 0x04, 0x2d80, err);
+
+	GCT_WRITE(gr, 0x05, 0x61ff, err);
+
+	GCT_WRITE(gr, 0x06, 0x0, err);
+
+	GCT_WRITE(gr, 0x08, 0x7533, err);
+	GCT_WRITE(gr, 0x09, 0xc401, err);
+	GCT_WRITE(gr, 0x0a, 0x0, err);
+	GCT_WRITE(gr, 0x0c, 0x1c7, err);
+	GCT_WRITE(gr, 0x0d, 0x29d3, err);
+	GCT_WRITE(gr, 0x0e, 0x2e8, err);
+	GCT_WRITE(gr, 0x10, 0x192, err);
+	GCT_WRITE(gr, 0x11, 0x248, err);
+	GCT_WRITE(gr, 0x12, 0x0, err);
+	GCT_WRITE(gr, 0x13, 0x20c4, err);
+	GCT_WRITE(gr, 0x14, 0xf4fc, err);
+	GCT_WRITE(gr, 0x15, 0x0, err);
+	GCT_WRITE(gr, 0x16, 0x1500, err);
+
+	if ((rc = rtw_grf5101_txpower(rf, opaque_txpower)) != 0)
+		return rc;
+
+	if ((rc = rtw_grf5101_tune(rf, freq)) != 0)
+		return rc;
+
+	return 0;
+err:
+	return -1;
+}
+
+static void
+rtw_grf5101_destroy(struct rtw_rf *rf)
+{
+	struct rtw_grf5101 *gr = (struct rtw_grf5101 *)rf;
+	memset(gr, 0, sizeof(*gr));
+	free(gr, M_DEVBUF);
+}
+
+struct rtw_rf *
+rtw_grf5101_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int digphy)
+{
+	struct rtw_grf5101 *gr;
+	struct rtw_rfbus *bus;
+	struct rtw_rf *rf;
+	struct rtw_bbpset *bb;
+
+	gr = malloc(sizeof(*gr), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (gr == NULL)
+		return NULL;
+
+	rf = &gr->gr_rf;
+	bus = &gr->gr_bus;
+
+	rf->rf_init = rtw_grf5101_init;
+	rf->rf_destroy = rtw_grf5101_destroy;
+	rf->rf_txpower = rtw_grf5101_txpower;
+	rf->rf_tune = rtw_grf5101_tune;
+	rf->rf_pwrstate = rtw_grf5101_pwrstate;
+	bb = &rf->rf_bbpset;
+
+	/* XXX magic */
+	bb->bb_antatten = RTW_BBP_ANTATTEN_GCT_MAGIC;
+	bb->bb_chestlim =       0x00;
+	bb->bb_chsqlim =        0xa0;
+	bb->bb_ifagcdet =       0x64;
+	bb->bb_ifagcini =       0x90;
+	bb->bb_ifagclimit =     0x1e;
+	bb->bb_lnadet =         0xc0;
+	bb->bb_sys1 =           0xa8;
+	bb->bb_sys2 =           0x47;
+	bb->bb_sys3 =           0x9b;
+	bb->bb_trl =            0x88;
+	bb->bb_txagc =          0x08;
+
+	bus->b_regs = regs;
+	bus->b_write = rf_write;
+
+	return &gr->gr_rf;
 }
 
 /* freq is in MHz */
