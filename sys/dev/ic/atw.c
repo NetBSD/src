@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.94 2005/12/29 21:32:06 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.95 2005/12/29 21:34:53 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.94 2005/12/29 21:32:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.95 2005/12/29 21:34:53 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3541,7 +3541,7 @@ atw_start(struct ifnet *ifp)
 		hh->atw_paylen = htole16(m0->m_pkthdr.len -
 		    sizeof(struct atw_frame));
 
-		hh->atw_fragthr = htole16(ATW_FRAGTHR_FRAGTHR_MASK);
+		hh->atw_fragthr = htole16(ic->ic_fragthreshold);
 		hh->atw_rtylmt = 3;
 		hh->atw_hdrctl = htole16(ATW_HDRCTL_UNKNOWN1);
 		if (do_encrypt) {
@@ -3560,7 +3560,7 @@ atw_start(struct ifnet *ifp)
 
 		/* never fragment multicast frames */
 		if (IEEE80211_IS_MULTICAST(hh->atw_dst)) {
-			hh->atw_fragthr = htole16(ATW_FRAGTHR_FRAGTHR_MASK);
+			hh->atw_fragthr = htole16(ic->ic_fragthreshold);
 		} else if (sc->sc_flags & ATWF_RTSCTS) {
 			hh->atw_hdrctl |= htole16(ATW_HDRCTL_RTSCTS);
 		}
