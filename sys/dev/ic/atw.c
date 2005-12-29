@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.96 2005/12/29 21:37:27 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.97 2005/12/29 21:40:41 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.96 2005/12/29 21:37:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.97 2005/12/29 21:40:41 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2253,14 +2253,6 @@ atw_write_wep(struct atw_softc *sc)
 }
 
 static void
-atw_change_ibss(struct atw_softc *sc)
-{
-	atw_predict_beacon(sc);
-	atw_write_bssid(sc);
-	atw_start_beacon(sc, 1);
-}
-
-static void
 atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
 {
@@ -2275,12 +2267,11 @@ atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 	switch (subtype) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
 	case IEEE80211_FC0_SUBTYPE_BEACON:
-		if (ic->ic_opmode != IEEE80211_M_IBSS ||
-		    ic->ic_state != IEEE80211_S_RUN)
-			break;
-		if (le64toh(ni->ni_tstamp.tsf) >= atw_get_tsft(sc) &&
-		    ieee80211_ibss_merge(ni) == ENETRESET)
-			atw_change_ibss(sc);
+		if (ic->ic_opmode == IEEE80211_M_IBSS &&
+		    ic->ic_state == IEEE80211_S_RUN) {
+			if (le64toh(ni->ni_tstamp.tsf) >= atw_get_tsft(sc))
+				(void)ieee80211_ibss_merge(ni);
+		}
 		break;
 	default:
 		break;
