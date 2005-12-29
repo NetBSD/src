@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.47 2005/11/23 04:24:00 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.48 2005/12/29 22:13:40 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.47 2005/11/23 04:24:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.48 2005/12/29 22:13:40 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -765,6 +765,8 @@ ieee80211_ibss_merge(struct ieee80211_node *ni)
 		ic->ic_stats.is_ibss_capmismatch++;
 		return 0;
 	}
+	if (!ieee80211_sta_join(ic, ieee80211_ref_node(ni)))
+		return 0;
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 		"%s: new bssid %s: %s preamble, %s slot time%s\n", __func__,
 		ether_sprintf(ni->ni_bssid),
@@ -772,7 +774,8 @@ ieee80211_ibss_merge(struct ieee80211_node *ni)
 		ic->ic_flags&IEEE80211_F_SHSLOT ? "short" : "long",
 		ic->ic_flags&IEEE80211_F_USEPROT ? ", protection" : ""
 	);
-	return ieee80211_sta_join(ic, ieee80211_ref_node(ni));
+	ic->ic_flags &= ~IEEE80211_F_SIBSS;
+	return 1;
 }
 
 /*
