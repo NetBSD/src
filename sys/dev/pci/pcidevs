@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.750 2005/12/19 02:06:54 jonathan Exp $
+$NetBSD: pcidevs,v 1.751 2005/12/29 05:44:51 jonathan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2616,6 +2616,7 @@ product SERVERWORKS OSB4_USB		0x0220	OSB4/CSB5 USB Host Controller
 product SERVERWORKS CSB6_USB		0x0221	CSB6 USB Host Controller
 product SERVERWORKS CSB5_LPC		0x0225	CSB5 ISA/LPC bridge
 product SERVERWORKS CSB6_LPC		0x0227	CSB6 ISA/LPC bridge
+product SERVERWORKS BCM5714		0x0103	bcm5714/bcm5715 integral PCI-E to PCI-X bridge
 
 /* SGI products */
 product SGI IOC3	0x0003	IOC3
