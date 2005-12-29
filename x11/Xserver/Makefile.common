@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.29 2005/10/01 22:51:31 macallan Exp $
+#	$NetBSD: Makefile.common,v 1.30 2005/12/29 15:52:20 tsutsui Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -34,6 +34,10 @@ XSERVER_HAS_IPLAN?=	yes
 
 .if ${MACHINE} == "dreamcast"
 XSERVER_XDREAMCAST?=	yes
+.endif
+
+.if ${MACHINE} == "ews4800mips"
+XSERVER_XEWS4800MIPS?=	yes
 .endif
 
 .if ${MACHINE} == "newsmips"
@@ -111,6 +115,8 @@ XSERVER_XDECNETBSD?=	no
 XSERVER_XDMX?=		yes
 # Does this platform build the Xdreamcast server?
 XSERVER_XDREAMCAST?=	no
+# Does this platform build the Xews4800mips server?
+XSERVER_XEWS4800MIPS?=	no
 # Does this platform build the Xnewsmips server?
 XSERVER_XNEWSMIPS?=	no
 # Does this platform build the Xfree68 servers?

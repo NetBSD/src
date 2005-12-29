@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2005/03/21 00:49:17 rtr Exp $
+#	$NetBSD: Makefile,v 1.17 2005/12/29 15:52:20 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -32,6 +32,10 @@ SUBDIR+=	Xdmx
 
 .if ${XSERVER_XDREAMCAST} != "no"
 SUBDIR+=	Xdreamcast
+.endif
+
+.if ${XSERVER_XEWS4800MIPS} != "no"
+SUBDIR+=	Xews4800mips
 .endif
 
 .if ${XSERVER_XFREE68} != "no" 
