@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.3 2005/12/29 15:24:22 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.4 2005/12/29 16:34:43 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -75,4 +75,44 @@ sys/dev/scsipi/sd.c				1.242-1.243
 	For DIOCLOCK, return ENOTTY if the device is not removable instead of
 	trying a command which will fail.
 	[bouyer, ticket #1045]
+
+usr.bin/gzip/gzip.c				1.81
+
+	Remove unhandled H option from getopt() argument.
+	Describe -l in usage. Both from Igor Sobrado in private mail.
+	While here, sort options.
+	[wiz, ticket #1053]
+
+sys/netinet/udp_usrreq.c			1.144
+
+	Fix a bug in ESP over UDP: because udp4_espinudp() called m_pullup, it
+	could modify the struct mbuf and calling functions (udp_input() and
+	udp4_realinput()) would have used a garbled local copy of the pointer.
+	The fix is not perfect. udp4_espinudp() should use m_pulldown()...
+	[manu, ticket #1052]
+
+lib/libdes/ornd_keys.c				1.2
+
+	Fix wrong buffer size calculation. From Henning Petersen in PR
+	lib/32291.
+	[martin, ticket #1056]
+
+usr.bin/su/su.1					1.45 via patch
+
+	Give a general description what this command does before going into
+	all the details.
+	[hubertf, ticket #1060]
+
+share/mk/bsd.README				1.167
+
+	document MKINET6 and USE_INET6
+	[hubertf, ticket #1066]
+
+lib/libc/gen/getcwd.c				1.41
+
+	Allow last component to be non-existing again.
+	This is what broke systrace's filename normalization.
+	Go back to original behavior as in revision 1.35: return resolved name,
+	but also set errno to ENOENT.
+	[elad, ticket #1068]
 
