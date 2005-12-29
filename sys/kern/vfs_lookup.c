@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.57 2005/03/08 17:29:29 wrstuden Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.57.2.1 2005/12/29 00:57:09 riz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.57 2005/03/08 17:29:29 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.57.2.1 2005/12/29 00:57:09 riz Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/syslimits.h>
 #include <sys/time.h>
 #include <sys/namei.h>
@@ -67,6 +68,85 @@ struct pool pnbuf_pool;		/* pathname buffer pool */
 struct pool_cache pnbuf_cache;	/* pathname buffer cache */
 
 MALLOC_DEFINE(M_NAMEI, "namei", "namei path buffer");
+
+/*
+ * Substitute replacement text for 'magic' strings in symlinks.
+ * Returns 0 if successful, and returns non-zero if an error
+ * occurs.  (Currently, the only possible error is running out
+ * of temporary pathname space.)
+ *
+ * Looks for "@<string>" and "@<string>/", where <string> is a
+ * recognized 'magic' string.  Replaces the "@<string>" with the
+ * appropriate replacement text.  (Note that in some cases the
+ * replacement text may have zero length.)
+ *
+ * This would have been table driven, but the variance in
+ * replacement strings (and replacement string lengths) made
+ * that impractical.
+ */
+#define	MATCH(str)						\
+		((i + (sizeof(str) - 1) == *len) ||		\
+		    ((i + (sizeof(str) - 1) < *len) &&		\
+		      (cp[i + sizeof(str) - 1] == '/'))) &&	\
+		!strncmp((str), &cp[i], sizeof(str) - 1)
+
+#define	SUBSTITUTE(m, s, sl)					\
+		if ((newlen + (sl)) > MAXPATHLEN)		\
+			return (1);				\
+		i += sizeof(m) - 1;				\
+		memcpy(&tmp[newlen], (s), (sl));		\
+		newlen += (sl);					\
+		change = 1;
+
+static int
+symlink_magic(char *cp, int *len)
+{
+	char tmp[MAXPATHLEN];
+	int change, i, newlen;
+
+	for (change = i = newlen = 0; i < *len; ) {
+		if (cp[i] != '@')
+			tmp[newlen++] = cp[i++];
+		else {
+			i++;
+			/*
+			 * The following checks should be ordered according
+			 * to frequency of use.
+			 */
+			if (MATCH("machine_arch")) {
+				SUBSTITUTE("machine_arch", MACHINE_ARCH,
+				    sizeof(MACHINE_ARCH) - 1);
+			} else if (MATCH("machine")) {
+				SUBSTITUTE("machine", MACHINE,
+				    sizeof(MACHINE) - 1);
+			} else if (MATCH("hostname")) {
+				SUBSTITUTE("hostname", hostname,
+				    hostnamelen);
+			} else if (MATCH("osrelease")) {
+				SUBSTITUTE("osrelease", osrelease,
+				    strlen(osrelease));
+			} else if (MATCH("kernel_ident")) {
+				SUBSTITUTE("kernel_ident", kernel_ident,
+				    strlen(kernel_ident));
+			} else if (MATCH("domainname")) {
+				SUBSTITUTE("domainname", domainname,
+				    domainnamelen);
+			} else if (MATCH("ostype")) {
+				SUBSTITUTE("ostype", ostype,
+				    strlen(ostype));
+			} else
+				tmp[newlen++] = '@';
+		}
+	}
+
+	if (! change)
+		return (0);
+
+	memcpy(cp, tmp, newlen);
+	*len = newlen;
+
+	return (0);
+}
 
 /*
  * Convert a pathname into a pointer to a locked inode.
@@ -220,7 +300,13 @@ namei(ndp)
 			error = ENOENT;
 			goto badlink;
 		}
-		if (linklen + ndp->ni_pathlen >= MAXPATHLEN) {
+		/*
+		 * Do symlink substitution, if appropriate, and
+		 * check length for potential overflow.
+		 */
+		if (((ndp->ni_vp->v_mount->mnt_flag & MNT_MAGICLINKS) &&
+		     symlink_magic(cp, &linklen)) ||
+		    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
 			error = ENAMETOOLONG;
 			goto badlink;
 		}
