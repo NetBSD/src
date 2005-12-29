@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.99 2005/12/29 21:45:56 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.100 2005/12/29 21:49:59 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.99 2005/12/29 21:45:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.100 2005/12/29 21:49:59 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -965,7 +965,7 @@ atw_reset(struct atw_softc *sc)
 	ATW_WRITE(sc, ATW_PAR, ATW_PAR_SWR);
 
 	for (i = 0; i < 50000 / atw_pseudo_milli; i++) {
-		if (ATW_READ(sc, ATW_PAR) == 0)
+		if ((ATW_READ(sc, ATW_PAR) & ATW_PAR_SWR) == 0)
 			break;
 		DELAY(atw_pseudo_milli);
 	}
@@ -978,7 +978,6 @@ atw_reset(struct atw_softc *sc)
 	if (ATW_ISSET(sc, ATW_PAR, ATW_PAR_SWR))
 		printf("%s: reset failed to complete\n", sc->sc_dev.dv_xname);
 
-	atw_test1_reset(sc);
 	/*
 	 * Initialize the PCI Access Register.
 	 */
@@ -988,11 +987,9 @@ atw_reset(struct atw_softc *sc)
 	DPRINTF(sc, ("%s: ATW_PAR %08x busmode %08x\n", sc->sc_dev.dv_xname,
 	    ATW_READ(sc, ATW_PAR), sc->sc_busmode));
 
-	/* Turn off maximum power saving, etc.
-	 *
-	 * XXX Following example of reference driver, should I set
-	 * an AID of 1?  It didn't seem to help....
-	 */
+	atw_test1_reset(sc);
+
+	/* Turn off maximum power saving, etc. */
 	ATW_WRITE(sc, ATW_FRCTL, 0x0);
 
 	DELAY(atw_magic_delay2);
