@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.27 2005/11/11 21:09:50 dsl Exp $	*/
+/*	$NetBSD: installboot.h,v 1.28 2005/12/29 15:32:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -164,6 +164,7 @@ int		raw_findstage2(ib_params *, uint32_t *, ib_block *);
 int		alpha_setboot(ib_params *);
 int		alpha_clearboot(ib_params *);
 int		amiga_setboot(ib_params *);
+int		ews4800mips_setboot(ib_params *);
 int		hp300_setboot(ib_params *);
 int		hp700_setboot(ib_params *);
 int		hp700_clearboot(ib_params *);
