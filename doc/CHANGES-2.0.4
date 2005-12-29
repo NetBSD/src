@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.15 2005/12/16 20:08:43 jmc Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.16 2005/12/29 01:41:36 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -129,3 +129,18 @@ sys/dev/ic/aic7xxxvar.h				1.50
 	ADAPTER_REQ_RUN_XFER context (which can be interrupt context), defer 
 	this to the ADAPTER_REQ_GROW_RESOURCES callback. Fixes a panic in uvm.
 	[bouyer, ticket #10177]
+
+sys/kern/kern_sig.c				1.211
+
+	in kpsignal2(), do not try to wake up a cached LWP for SA processes
+	in the case where we're sending SIGKILL but all LWPs are not signalable.
+	some LWP will wake up soon enough to process the signal, and there may
+	not be any LWPs in the cache to wake up anyway.  fixes PR 28886 and
+	PR 26771.  also, add a missing "break" pointed out by yamt.
+	[chs, ticket #10206]
+
+sys/kern/vfs_subr.c				1.231
+
+	Fix an annoying deadlock involving 3 separate processes.
+	[chs, ticket #10207]
+
