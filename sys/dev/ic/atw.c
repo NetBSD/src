@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.93 2005/12/29 21:08:26 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.94 2005/12/29 21:32:06 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.93 2005/12/29 21:08:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.94 2005/12/29 21:32:06 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1423,8 +1423,7 @@ atw_init(struct ifnet *ifp)
 
 	atw_write_ssid(sc);
 	atw_write_sup_rates(sc);
-	if (ic->ic_caps & IEEE80211_C_WEP)
-		atw_write_wep(sc);
+	atw_write_wep(sc);
 
 	ic->ic_state = IEEE80211_S_INIT;
 
