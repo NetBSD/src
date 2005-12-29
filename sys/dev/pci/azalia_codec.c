@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.4.2.3 2005/12/29 19:36:17 riz Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.4.2.4 2005/12/29 19:37:20 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.3 2005/12/29 19:36:17 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.4 2005/12/29 19:37:20 riz Exp $");
 
 #include <sys/null.h>
+#include <sys/systm.h>
 #include <dev/pci/azalia.h>
 
 
@@ -50,6 +51,7 @@ static int	azalia_codec_find_dac(const codec_t *, int, int);
 static int	alc260_init_dacgroup(codec_t *);
 static int	alc880_init_dacgroup(codec_t *);
 static int	alc882_init_dacgroup(codec_t *);
+static int	alc882_init_widget(const codec_t *, widget_t *, nid_t);
 static int	stac9221_init_dacgroup(codec_t *);
 
 
@@ -68,6 +70,7 @@ azalia_codec_init_vtbl(codec_t *this, uint32_t vid)
 	case 0x10ec0882:
 		this->name = "Realtek ALC882";
 		this->init_dacgroup = alc882_init_dacgroup;
+		this->init_widget = alc882_init_widget;
 		break;
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
@@ -250,20 +253,18 @@ azalia_codec_find_dac(const codec_t *this, int index, int depth)
 static int
 alc260_init_dacgroup(codec_t *this)
 {
+	static const convgroup_t dacs[2] = {
+		{1, {0x02}},	/* analog 2ch */
+		{1, {0x03}}};	/* digital */
+
 	this->ndacgroups = 2;
-	/* analog 2ch */
-	this->dacgroups[0].nconv = 1;
-	this->dacgroups[0].conv[0] = 2;
-	/* digital */
-	this->dacgroups[1].nconv = 1;
-	this->dacgroups[1].conv[0] = 3;
-	this->cur_dac = 0;
+	this->dacgroups[0] = dacs[0];
+	this->dacgroups[1] = dacs[1];
 
 	this->nadcs = 3;
 	this->adcs[0] = 0x04;
 	this->adcs[1] = 0x05;
 	this->adcs[2] = 0x06;	/* digital */
-	this->cur_adc = 0;
 	return 0;
 }
 
@@ -274,24 +275,19 @@ alc260_init_dacgroup(codec_t *this)
 static int
 alc880_init_dacgroup(codec_t *this)
 {
+	static const convgroup_t dacs[2] = {
+		{4, {0x02, 0x04, 0x03, 0x05}}, /* analog 8ch */
+		{1, {0x06}}};	/* digital */
+
 	this->ndacgroups = 2;
-	/* analog 8ch */
-	this->dacgroups[0].nconv = 4;
-	this->dacgroups[0].conv[0] = 2;
-	this->dacgroups[0].conv[1] = 4;
-	this->dacgroups[0].conv[2] = 3;
-	this->dacgroups[0].conv[3] = 5;
-	/* digital */
-	this->dacgroups[1].nconv = 1;
-	this->dacgroups[1].conv[0] = 6;
-	this->cur_dac = 0;
+	this->dacgroups[0] = dacs[0];
+	this->dacgroups[1] = dacs[1];
 
 	this->nadcs = 4;
 	this->adcs[0] = 0x07;
 	this->adcs[1] = 0x08;
 	this->adcs[2] = 0x09;
 	this->adcs[3] = 0x0a;	/* digital */
-	this->cur_adc = 0;
 	return 0;
 }
 
@@ -302,27 +298,60 @@ alc880_init_dacgroup(codec_t *this)
 static int
 alc882_init_dacgroup(codec_t *this)
 {
+	static const convgroup_t dacs[3] = {
+		{4, {0x02, 0x04, 0x03, 0x05}}, /* analog 8ch */
+		{1, {0x06}},	/* digital */
+		{1, {0x25}}};	/* another analog */
+		
 	this->ndacgroups = 3;
-	/* analog 8ch */
-	this->dacgroups[0].nconv = 4;
-	this->dacgroups[0].conv[0] = 2;
-	this->dacgroups[0].conv[1] = 4;
-	this->dacgroups[0].conv[2] = 3;
-	this->dacgroups[0].conv[3] = 5;
-	/* digital */
-	this->dacgroups[1].nconv = 1;
-	this->dacgroups[1].conv[0] = 6;
-	/* another analog */
-	this->dacgroups[2].nconv = 1;
-	this->dacgroups[2].conv[0] = 0x25;
-	this->cur_dac = 0;
+	this->dacgroups[0] = dacs[0];
+	this->dacgroups[1] = dacs[1];
+	this->dacgroups[2] = dacs[2];
 
 	this->nadcs = 4;
 	this->adcs[0] = 0x07;
 	this->adcs[1] = 0x08;
 	this->adcs[2] = 0x09;
 	this->adcs[3] = 0x0a;	/* digital */
-	this->cur_adc = 0;
+	return 0;
+}
+
+static int
+alc882_init_widget(const codec_t *this, widget_t *w, nid_t nid)
+{
+	switch (nid) {
+	case 0x14:
+		strlcpy(w->name, "green", sizeof(w->name));
+		break;
+	case 0x15:
+		strlcpy(w->name, "gray", sizeof(w->name));
+		break;
+	case 0x16:
+		strlcpy(w->name, "orange", sizeof(w->name));
+		break;
+	case 0x17:
+		strlcpy(w->name, "black", sizeof(w->name));
+		break;
+	case 0x18:
+		strlcpy(w->name, "mic1", sizeof(w->name));
+		break;
+	case 0x19:
+		strlcpy(w->name, "mic2", sizeof(w->name));
+		break;
+	case 0x1a:
+		strlcpy(w->name, AudioNline, sizeof(w->name));
+		break;
+	case 0x1b:
+		/* AudioNheadphone is too long */
+		strlcpy(w->name, "hp", sizeof(w->name));
+		break;
+	case 0x1c:
+		strlcpy(w->name, AudioNcd, sizeof(w->name));
+		break;
+	case 0x1d:
+		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
+		break;
+	}
 	return 0;
 }
 
@@ -333,25 +362,19 @@ alc882_init_dacgroup(codec_t *this)
 static int
 stac9221_init_dacgroup(codec_t *this)
 {
+	static const convgroup_t dacs[3] = {
+		{4, {0x02, 0x03, 0x05, 0x04}}, /* analog 8ch */
+		{1, {0x08}},	/* digital */
+		{1, {0x1a}}};	/* another digital? */
+
 	this->ndacgroups = 3;
-	/* analog 8ch */
-	this->dacgroups[0].nconv = 4;
-	this->dacgroups[0].conv[0] = 2;
-	this->dacgroups[0].conv[1] = 3;
-	this->dacgroups[0].conv[2] = 5;
-	this->dacgroups[0].conv[3] = 4;
-	/* digital */
-	this->dacgroups[1].nconv = 1;
-	this->dacgroups[1].conv[0] = 8;
-	/* another digital? */
-	this->dacgroups[2].nconv = 1;
-	this->dacgroups[2].conv[0] = 0x1a;
-	this->cur_dac = 0;
+	this->dacgroups[0] = dacs[0];
+	this->dacgroups[1] = dacs[1];
+	this->dacgroups[2] = dacs[2];
 
 	this->nadcs = 3;
 	this->adcs[0] = 6;	/* XXX four channel recording */
 	this->adcs[1] = 7;
 	this->adcs[2] = 9;	/* digital */
-	this->cur_adc = 0;
 	return 0;
 }
