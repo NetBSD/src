@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.15 2005/12/13 05:10:55 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.16 2005/12/29 22:27:17 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -1116,6 +1116,7 @@ struct rtw_rxdesc {
 					 */
 
 #define RTW_BBP_ANTATTEN	0x10	/* guess: antenna & attenuation */
+#define RTW_BBP_ANTATTEN_GCT_MAGIC		0xa3
 #define RTW_BBP_ANTATTEN_PHILIPS_MAGIC		0x91
 #define RTW_BBP_ANTATTEN_INTERSIL_MAGIC		0x92
 #define RTW_BBP_ANTATTEN_RFMD_MAGIC		0x93

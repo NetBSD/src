@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.26 2005/12/24 20:27:30 perry Exp $ */
+/* $NetBSD: rtwvar.h,v 1.27 2005/12/29 22:27:17 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -372,6 +372,11 @@ struct rtw_max2820 {
 	struct rtw_rf		mx_rf;
 	struct rtw_rfbus	mx_bus;
 	int			mx_is_a;	/* 1: MAX2820A/MAX2821A */
+};
+
+struct rtw_grf5101 {
+	struct rtw_rf		gr_rf;
+	struct rtw_rfbus	gr_bus;
 };
 
 struct rtw_sa2400 {
