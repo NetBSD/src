@@ -1,0 +1,4 @@
+# $NetBSD: md.ews4800mips,v 1.1 2005/12/29 15:26:54 tsutsui Exp $
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/bootxx_bfs				base-sysutil-bin
+./usr/mdec/bootxx_ustarfs			base-sysutil-bin
