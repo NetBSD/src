@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.4.2.2 2005/12/29 19:33:40 riz Exp $	*/
+/*	$NetBSD: azalia.h,v 1.4.2.3 2005/12/29 19:36:17 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -513,7 +513,10 @@ typedef struct {
 
 typedef struct codec_t {
 	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
+	int (*init_dacgroup)(struct codec_t *);
+
 	struct azalia_t *az;
+	const char *name;
 	int address;
 	int nfunctions;
 	nid_t audiofunc;	/* NID of an audio function node */
@@ -539,4 +542,4 @@ typedef struct codec_t {
 } codec_t;
 
 
-int	azalia_codec_init_dacgroup(codec_t *);
+int	azalia_codec_init_vtbl(codec_t *, uint32_t);
