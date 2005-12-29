@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.7.2.12 2005/08/14 21:44:31 riz Exp $	*/
+/*	$NetBSD: azalia.c,v 1.7.2.13 2005/12/29 19:30:01 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.12 2005/08/14 21:44:31 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.13 2005/12/29 19:30:01 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -621,7 +621,8 @@ typedef struct azalia_t {
 	bus_dma_tag_t dmat;
 
 	codec_t codecs[15];
-	int ncodecs;
+	int ncodecs;		/* number of codecs */
+	int codecno;		/* index of the using codec */
 
 	azalia_dma_t corb_dma;
 	int corb_size;
@@ -629,6 +630,7 @@ typedef struct azalia_t {
 	int rirb_size;
 	int rirb_rp;
 
+	boolean_t ok64;
 	int nistreams, nostreams, nbstreams;
 	stream_t pstream;
 	stream_t rstream;
@@ -950,6 +952,7 @@ azalia_attach(azalia_t *az)
 	az->nistreams = HDA_GCAP_ISS(gcap);
 	az->nostreams = HDA_GCAP_OSS(gcap);
 	az->nbstreams = HDA_GCAP_BSS(gcap);
+	az->ok64 = (gcap & HDA_GCAP_64OK) != 0;
 	DPRINTF(("%s: host: %d output, %d input, and %d bidi streams\n",
 	    XNAME(az), az->nostreams, az->nistreams, az->nbstreams));
 
@@ -1003,7 +1006,7 @@ static void
 azalia_attach_intr(struct device *self)
 {
 	azalia_t *az;
-	int err, i;
+	int err, i, c;
 
 	az = (azalia_t*)self;
 
@@ -1021,11 +1024,17 @@ azalia_attach_intr(struct device *self)
 	AZ_WRITE_4(az, INTCTL,
 	    AZ_READ_4(az, INTCTL) | HDA_INTCTL_CIE | HDA_INTCTL_GIE);
 
+	c = -1;
 	for (i = 0; i < az->ncodecs; i++) {
 		err = azalia_codec_init(&az->codecs[i]);
-		if (err)
-			goto err_exit;
+		if (!err && c < 0)
+			c = i;
 	}
+	if (c < 0)
+		goto err_exit;
+	/* Use the first audio codec */
+	az->codecno = c;
+	DPRINTF(("%s: using the #%d codec\n", XNAME(az), az->codecno));
 
 	if (azalia_stream_init(&az->pstream, az, az->nistreams + 0,
 	    1, AUMODE_PLAY))
@@ -1350,6 +1359,11 @@ azalia_alloc_dmamem(azalia_t *az, size_t size, size_t align, azalia_dma_t *d)
 	    NULL, BUS_DMA_NOWAIT);
 	if (err)
 		goto destroy;
+
+	if (!az->ok64 && PTR_UPPER32(AZALIA_DMA_DMAADDR(d)) != 0) {
+		azalia_free_dmamem(az, d);
+		return -1;
+	}
 	return 0;
 
 destroy:
@@ -3194,8 +3208,8 @@ azalia_stream_start(stream_t *this, void *start, void *end, int blk,
 
 	STR_WRITE_2(this, FMT, fmt);
 
-	err = azalia_codec_connect_stream(&this->az->codecs[0], this->dir,
-	    fmt, this->number);
+	err = azalia_codec_connect_stream(&this->az->codecs[this->az->codecno],
+	    this->dir, fmt, this->number);
 	if (err)
 		return EINVAL;
 
@@ -3264,7 +3278,7 @@ azalia_query_encoding(void *v, audio_encoding_t *enc)
 	codec_t *codec;
 
 	az = v;
-	codec = &az->codecs[0];
+	codec = &az->codecs[az->codecno];
 	return auconv_query_encoding(codec->encodings, enc);
 }
 
@@ -3277,7 +3291,7 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 	int index;
 
 	az = v;
-	codec = &az->codecs[0];
+	codec = &az->codecs[az->codecno];
 	if (smode & AUMODE_RECORD && r != NULL) {
 		index = auconv_set_converter(codec->formats, codec->nformats,
 		    AUMODE_RECORD, r, TRUE, rfil);
@@ -3360,7 +3374,7 @@ azalia_set_port(void *v, mixer_ctrl_t *mc)
 	codec_t *co;
 
 	az = v;
-	co = &az->codecs[0];
+	co = &az->codecs[az->codecno];
 	return azalia_mixer_set(co, mc);
 }
 
@@ -3371,7 +3385,7 @@ azalia_get_port(void *v, mixer_ctrl_t *mc)
 	codec_t *co;
 
 	az = v;
-	co = &az->codecs[0];
+	co = &az->codecs[az->codecno];
 	return azalia_mixer_get(co, mc);
 }
 
@@ -3382,7 +3396,7 @@ azalia_query_devinfo(void *v, mixer_devinfo_t *mdev)
 	codec_t *co;
 
 	az = v;
-	co = &az->codecs[0];
+	co = &az->codecs[az->codecno];
 	if (mdev->index >= co->nmixers)
 		return ENXIO;
 	*mdev = co->mixers[mdev->index].devinfo;
