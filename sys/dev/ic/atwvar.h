@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.18 2005/12/29 21:08:26 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.19 2005/12/29 21:53:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -357,14 +357,14 @@ struct atw_frame {
 #define ATW_FRAGNUM_FRAGNUM_MASK	BITS(4, 7)
 
 /* Values for sc_flags. */
-#define	ATWF_MRL		0x00000010	/* memory read line okay */
-#define	ATWF_MRM		0x00000020	/* memory read multi okay */
-#define	ATWF_MWI		0x00000040	/* memory write inval okay */
-#define	ATWF_SHORT_PREAMBLE	0x00000080	/* short preamble enabled */
-#define	ATWF_RTSCTS		0x00000100	/* RTS/CTS enabled */
-#define	ATWF_ATTACHED		0x00000800	/* attach has succeeded */
-#define	ATWF_ENABLED		0x00001000	/* chip is enabled */
-#define	ATWF_WEP_SRAM_VALID	0x00002000	/* SRAM matches s/w state */
+#define	ATWF_MRL		0x00000001	/* memory read line okay */
+#define	ATWF_MRM		0x00000002	/* memory read multi okay */
+#define	ATWF_MWI		0x00000004	/* memory write inval okay */
+#define	ATWF_SHORT_PREAMBLE	0x00000008	/* short preamble enabled */
+#define	ATWF_RTSCTS		0x00000010	/* RTS/CTS enabled */
+#define	ATWF_ATTACHED		0x00000020	/* attach has succeeded */
+#define	ATWF_ENABLED		0x00000040	/* chip is enabled */
+#define	ATWF_WEP_SRAM_VALID	0x00000080	/* SRAM matches s/w state */
 
 #define	ATW_IS_ENABLED(sc)	((sc)->sc_flags & ATWF_ENABLED)
 
