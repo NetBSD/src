@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.749 2005/12/19 02:08:20 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.750 2005/12/29 05:46:34 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.750 2005/12/19 02:06:54 jonathan Exp
+ *	NetBSD: pcidevs,v 1.751 2005/12/29 05:44:51 jonathan Exp
  */
 
 /*
@@ -8800,6 +8800,10 @@ static const struct pci_product pci_products[] = {
 	    "CSB6 ISA/LPC bridge",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_BCM5714,
+	    "bcm5714/bcm5715 integral PCI-E to PCI-X bridge",
+	},
+	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
 	    "IOC3",
 	},
@@ -10680,4 +10684,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2086;
+const int pci_nproducts = 2087;
