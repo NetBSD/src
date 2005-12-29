@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.62 2005/12/29 21:08:26 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.63 2005/12/29 22:23:52 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.62 2005/12/29 21:08:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.63 2005/12/29 22:23:52 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3644,25 +3644,6 @@ rtw_tsf_extend(struct rtw_regs *regs, uint32_t rstamp)
 }
 
 static void
-rtw_ibss_merge(struct rtw_softc *sc, struct ieee80211_node *ni, uint32_t rstamp)
-{
-	uint8_t tppoll;
-
-	if (le64toh(ni->ni_tstamp.tsf) < rtw_tsf_extend(&sc->sc_regs, rstamp))
-		return;
-	if (ieee80211_ibss_merge(ni) == ENETRESET) {
-		/* Stop beacon queue.  Kick state machine to synchronize
-		 * with the new IBSS.
-		 */
-		tppoll = RTW_READ8(&sc->sc_regs, RTW_TPPOLL);
-		tppoll |= RTW_TPPOLL_SBQ;
-		RTW_WRITE8(&sc->sc_regs, RTW_TPPOLL, tppoll);
-		(void)ieee80211_new_state(&sc->sc_ic, IEEE80211_S_RUN, -1);
-	}
-	return;
-}
-
-static void
 rtw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni, int subtype, int rssi, uint32_t rstamp)
 {
@@ -3674,10 +3655,12 @@ rtw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 	switch (subtype) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
 	case IEEE80211_FC0_SUBTYPE_BEACON:
-		if (ic->ic_opmode != IEEE80211_M_IBSS ||
-		    ic->ic_state != IEEE80211_S_RUN)
-			return;
-		rtw_ibss_merge(sc, ni, rstamp);
+		if (ic->ic_opmode == IEEE80211_M_IBSS &&
+		    ic->ic_state == IEEE80211_S_RUN) {
+			uint64_t tsf = rtw_tsf_extend(&sc->sc_regs, rstamp);
+			if (le64toh(ni->ni_tstamp.tsf) >= tsf)
+				(void)ieee80211_ibss_merge(ni);
+		}
 		break;
 	default:
 		break;
