@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.581 2005/12/22 00:31:04 christos Exp $
+# $NetBSD: mi,v 1.582 2005/12/29 14:53:45 tsutsui Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -159,6 +159,7 @@
 ./sbin/mount_procfs				base-sysutil-root
 ./sbin/mount_ptyfs				base-miscfs-root
 ./sbin/mount_smbfs				base-smbfs-root
+./sbin/mount_sysvbfs				base-sysutil-root
 ./sbin/mount_tmpfs				base-miscfs-root
 ./sbin/mount_ufs				base-sysutil-root
 ./sbin/mount_umap				base-miscfs-root
@@ -168,6 +169,7 @@
 ./sbin/newfs					base-sysutil-root
 ./sbin/newfs_lfs				base-sysutil-root
 ./sbin/newfs_msdos				base-sysutil-root
+./sbin/newfs_sysvbfs				base-sysutil-root
 ./sbin/newlfs					base-obsolete		obsolete
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
@@ -734,6 +736,7 @@
 ./usr/include/filecorefs			base-c-usr
 ./usr/include/fs				base-c-usr
 ./usr/include/fs/smbfs				base-c-usr
+./usr/include/fs/sysvbfs			base-c-usr
 ./usr/include/g++				base-cxx-usr
 ./usr/include/g++/backward			base-cxx-usr
 ./usr/include/g++/bits				base-cxx-usr

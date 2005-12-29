@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.843 2005/12/22 00:31:05 christos Exp $
+# $NetBSD: mi,v 1.844 2005/12/29 14:53:47 tsutsui Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1962,6 +1962,7 @@
 ./usr/share/man/cat8/mount_procfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_ptyfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_smbfs.0		man-smbfs-catman	.cat
+./usr/share/man/cat8/mount_sysvbfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_tmpfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_ufs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_umap.0		man-miscfs-catman	.cat
@@ -1999,6 +2000,7 @@
 ./usr/share/man/cat8/newfs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs_lfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs_msdos.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/newfs_sysvbfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newlfs.0			man-obsolete		obsolete
 ./usr/share/man/cat8/news68k/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/news68k/makedev.0		man-obsolete		obsolete
@@ -4255,6 +4257,7 @@
 ./usr/share/man/man8/mount_procfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_ptyfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_smbfs.8		man-smbfs-man		.man
+./usr/share/man/man8/mount_sysvbfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_tmpfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_ufs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_umap.8		man-miscfs-man		.man
@@ -4292,6 +4295,7 @@
 ./usr/share/man/man8/newfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/newfs_lfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs_msdos.8		man-sysutil-man		.man
+./usr/share/man/man8/newfs_sysvbfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/newlfs.8			man-obsolete		obsolete
 ./usr/share/man/man8/news68k/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/news68k/makedev.8		man-obsolete		obsolete

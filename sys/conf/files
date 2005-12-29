@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.749 2005/12/27 00:46:38 chs Exp $
+#	$NetBSD: files,v 1.750 2005/12/29 14:53:47 tsutsui Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1134,6 +1134,7 @@ include "fs/msdosfs/files.msdosfs"
 include "fs/ntfs/files.ntfs"
 include "fs/ptyfs/files.ptyfs"
 include "fs/smbfs/files.smbfs"
+include "fs/sysvbfs/files.sysvbfs"
 include "fs/tmpfs/files.tmpfs"
 include "fs/union/files.union"
 include "miscfs/fdesc/files.fdesc"
