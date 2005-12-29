@@ -1,0 +1,9 @@
+#	$NetBSD: files.sysvbfs,v 1.1 2005/12/29 14:53:45 tsutsui Exp $
+
+deffs	SYSVBFS
+
+file	fs/sysvbfs/bfs.c		sysvbfs
+file	fs/sysvbfs/bfs_sysvbfs.c	sysvbfs
+file	fs/sysvbfs/sysvbfs.c		sysvbfs
+file	fs/sysvbfs/sysvbfs_vnops.c	sysvbfs
+file	fs/sysvbfs/sysvbfs_vfsops.c	sysvbfs
