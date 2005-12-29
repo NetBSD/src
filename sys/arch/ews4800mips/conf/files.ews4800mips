@@ -1,0 +1,117 @@
+#	$NetBSD: files.ews4800mips,v 1.1 2005/12/29 15:20:08 tsutsui Exp $
+
+maxpartitions 16
+
+maxusers 2 8 64
+
+include "arch/ews4800mips/conf/majors.ews4800mips"
+
+file arch/mips/mips/softintr.c
+
+file arch/ews4800mips/ews4800mips/autoconf.c
+file arch/ews4800mips/ews4800mips/interrupt.c
+file arch/ews4800mips/ews4800mips/bus_space.c
+file arch/ews4800mips/ews4800mips/bus_dma.c
+file arch/ews4800mips/ews4800mips/clock.c
+file arch/ews4800mips/ews4800mips/machdep.c
+file arch/ews4800mips/ews4800mips/disklabel_conv.c	disk
+file arch/ews4800mips/ews4800mips/disksubr.c		disk
+file arch/ews4800mips/ews4800mips/pdinfo.c		disk
+file arch/ews4800mips/ews4800mips/sector.c		disk
+file arch/ews4800mips/ews4800mips/vtoc.c		disk
+
+file arch/ews4800mips/ews4800mips/cons_machdep.c
+file dev/cons.c
+
+file dev/md_root.c					memory_disk_hooks
+
+
+# system board
+defflag	opt_sbd.h	EWS4800_TR2	# EWS4800/350
+			EWS4800_TR2A	# EWS4800/360,360AD,ADII
+
+file	arch/ews4800mips/ews4800mips/sbd.c
+
+# TR2
+file	arch/ews4800mips/ews4800mips/tr2.c		ews4800_tr2
+file	arch/ews4800mips/ews4800mips/tr2_intr.c		ews4800_tr2
+
+# TR2A
+file	arch/ews4800mips/ews4800mips/tr2a.c		ews4800_tr2a
+file	arch/ews4800mips/ews4800mips/tr2a_intr.c	ews4800_tr2a
+
+
+device mainbus { }
+attach mainbus at root
+file arch/ews4800mips/ews4800mips/mainbus.c		mainbus
+
+device cpu
+attach cpu at mainbus
+file arch/ews4800mips/ews4800mips/cpu.c			cpu
+
+#
+# Workstation Console
+#
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
+include "dev/rasops/files.rasops"
+
+#
+# Machine-independent SCSI drivers
+#
+include "dev/scsipi/files.scsipi"
+
+#
+# VME
+#
+include "dev/vme/files.vme"
+
+#
+# System board I/O device
+#
+device	sbdio { }
+attach	sbdio at mainbus
+file	arch/ews4800mips/sbd/sbdio.c			sbdio
+
+device	zsc { [channel = -1] }
+file	arch/ews4800mips/dev/zs.c			zsc needs-count
+file	dev/ic/z8530sc.c				zsc
+
+attach	zsc at sbdio with zsc_sbdio
+file	arch/ews4800mips/sbd/zs_sbdio.c			zsc_sbdio needs-flag
+
+device	zstty: tty
+attach	zstty at zsc
+file	dev/ic/z8530tty.c				zstty needs-count
+
+device	kbms: wskbddev, wsmousedev
+attach	kbms at sbdio with kbms_sbdio
+file	arch/ews4800mips/sbd/kbms_sbdio.c		kbms_sbdio needs-flag
+
+device	ewskbd: wskbddev
+attach	ewskbd at zsc with ewskbd_zsc
+file	arch/ews4800mips/dev/ews4800keymap.c		ewskbd | kbms
+file	arch/ews4800mips/dev/ewskbd.c			ewskbd_zsc needs-flag
+
+device	ewsms: wsmousedev
+attach	ewsms at zsc with ewsms_zsc
+file	arch/ews4800mips/dev/ewsms.c			ewsms_zsc
+
+device	mkclock: mk48txx
+attach	mkclock at sbdio with mkclock_sbdio
+file	arch/ews4800mips/sbd/mkclock_sbdio.c		mkclock_sbdio
+
+device	iee: ifnet, ether, arp, i82596
+attach	iee at sbdio with iee_sbdio
+file	arch/ews4800mips/sbd/if_iee_sbdio.c		iee_sbdio
+
+attach	le at sbdio with le_sbdio:			le24
+file	arch/ews4800mips/sbd/if_le_sbdio.c		le_sbdio
+
+attach	osiop at sbdio with osiop_sbdio
+file	arch/ews4800mips/sbd/osiop_sbdio.c		osiop_sbdio
+
+device	fb: wsemuldisplaydev, rasops8
+attach	fb at sbdio with fb_sbdio
+file	arch/ews4800mips/dev/ga.c			fb
+file	arch/ews4800mips/sbd/fb_sbdio.c			fb_sbdio needs-flag

@@ -1,0 +1,61 @@
+#	$NetBSD: Makefile.bootxx,v 1.1 2005/12/29 15:20:09 tsutsui Exp $
+
+NOMAN		=
+
+BINMODE		= 0444
+
+S		= ${.CURDIR}/../../../..
+COMMON		= ${.CURDIR}/../common
+
+.PATH:		${COMMON}
+
+PROG		= ${BASE}
+SRCS		+= entry.S bootxx.c
+SRCS		+= boot_device.c floppy_2d.c floppy_2hd_ibmpc.c
+#SRCS		+= floppy_2hc.c
+BINMODE		= 444
+
+LDFLAGS		= -T ${COMMON}/bootxx.ldscript -S -N
+MIPSFLAGS	= -mips1 -G 0 -mno-abicalls
+DEBUGFLAGS	= -Wall -Werror
+DEBUGFLAGS	+= -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
+DEBUGFLAGS	+= -Wno-format-zero-length -Wno-sign-compare
+OPTFLAGS	= -Os -mmemcpy
+FLAGS		= ${MIPSFLAGS} ${DEBUGFLAGS} ${OPTFLAGS}
+AFLAGS		= -xassembler-with-cpp -D_LOCORE ${FLAGS}
+CFLAGS		= ${FLAGS} -ffreestanding
+
+CPPFLAGS	+= -D_STANDALONE
+CPPFLAGS	+= -nostdinc -I${.OBJDIR} -I${COMMON} -I${S}
+CPPFLAGS	+= -D__daddr_t=int32_t
+
+CLEANFILES	+= ${PROG} ${PROG}.bin ${PROG}.elf ${PROG}.tmp machine mips
+
+KERN_AS		= library
+.include	"${S}/lib/libkern/Makefile.inc"
+LIBKERN		= ${KERNLIB}
+
+LIBS		= ${LIBKERN}
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@[ -h machine ] || ln -s $S/arch/${MACHINE}/include machine
+	@[ -h mips ] || ln -s $S/arch/mips/include mips
+.NOPATH: machine mips
+.endif
+
+${PROG}: ${OBJS} ${LIBS}
+	${LD} ${LDFLAGS} -o ${PROG}.elf ${OBJS} ${LIBS}
+	${OBJCOPY} -O binary ${PROG}.elf ${BASE}.bin
+	ls -al ${BASE}.bin
+	dd if=${BASE}.bin of=${PROG}.tmp bs=4096 conv=sync
+	mv ${PROG}.tmp ${PROG}
+	ls -al ${PROG}
+#	-rm -f ${BASE}.tmp
+
+clean cleandir distclean: cleanlibdir
+
+cleanlibdir:
+	-rm -rf lib
+
+.include <bsd.prog.mk>
