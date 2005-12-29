@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.189.2.6 2004/10/01 03:46:37 jmc Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.189.2.6.2.1 2005/12/29 01:21:35 riz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.189.2.6 2004/10/01 03:46:37 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.189.2.6.2.1 2005/12/29 01:21:35 riz Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1159,11 +1159,10 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 				if (l->l_stat == LSSLEEP && 
 				    l->l_flag & L_SINTR) {
 					/* ok to signal vp lwp */
+					break;
 				} else
 					l = NULL;
 			}
-			if (l == NULL)
-				allsusp = 1;
 		} else if (p->p_stat == SSTOP) {
 			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 				l = vp->savp_lwp;
@@ -1253,16 +1252,6 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 			 * them.
 			 */
 			if (allsusp && (signum == SIGKILL)) {
-				if (p->p_flag & P_SA) {
-					/*
-					 * get a suspended lwp from
-					 * the cache to send KILL
-					 * signal
-					 * XXXcl add signal checks at resume points
-					 */
-					suspended = sa_getcachelwp
-						(SLIST_FIRST(&p->p_sa->sa_vps));
-				}
 				lwp_continue(suspended);
 			}
 			goto done;
