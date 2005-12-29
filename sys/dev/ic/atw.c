@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.104 2005/12/29 22:04:21 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.105 2005/12/29 22:20:03 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.104 2005/12/29 22:04:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.105 2005/12/29 22:20:03 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -271,7 +271,6 @@ static inline uint32_t	atw_last_even_tsft(uint32_t, uint32_t,
 				                   uint32_t);
 static struct ieee80211_node	*atw_node_alloc(struct ieee80211_node_table *);
 static void			atw_node_free(struct ieee80211_node *);
-static void			atw_change_ibss(struct atw_softc *);
 
 /*
  * Tuner/transceiver/modem
