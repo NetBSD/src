@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.55 2005/12/16 11:27:33 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.56 2005/12/29 10:06:52 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.55 2005/12/16 11:27:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.56 2005/12/29 10:06:52 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -146,6 +146,9 @@ static void ieee80211_node_pwrsave(struct ieee80211_node *, int enable);
 static void ieee80211_recv_pspoll(struct ieee80211com *,
 	struct ieee80211_node *, struct mbuf *);
 #endif /* !IEEE80211_NO_HOSTAP */
+static void ieee80211_update_adhoc_node(struct ieee80211com *,
+    struct ieee80211_node *, struct ieee80211_frame *,
+    struct ieee80211_scanparams *, int, u_int32_t);
 
 /*
  * Process a received frame.  The node associated with the sender
@@ -1784,6 +1787,68 @@ ieee80211_saveie(u_int8_t **iep, const u_int8_t *ie)
 	/* XXX note failure */
 }
 
+static void
+ieee80211_update_adhoc_node(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_frame *wh, struct ieee80211_scanparams *scan, int rssi,
+    u_int32_t rstamp)
+{
+	if (!IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_macaddr)) {
+		/*
+		 * Create a new entry in the neighbor table.
+		 * Records the TSF.
+		 */
+		if ((ni = ieee80211_add_neighbor(ic, wh, scan)) == NULL)
+			return;
+	} else if (ni->ni_capinfo == 0) {
+		/*
+		 * Initialize a node that was "faked up."  Records
+		 * the TSF.
+		 *
+		 * No need to check for a change of BSSID: ni could
+		 * not have been the IBSS (ic_bss)
+		 */
+		ieee80211_init_neighbor(ic, ni, wh, scan, 0);
+	} else {
+		/* Record TSF for potential resync. */
+		memcpy(ni->ni_tstamp.data, scan->tstamp, sizeof(ni->ni_tstamp));
+	}
+
+	ni->ni_rssi = rssi;
+	ni->ni_rstamp = rstamp;
+
+	/* Mark a neighbor's change of BSSID. */
+	if (IEEE80211_ADDR_EQ(wh->i_addr3, ni->ni_bssid))
+		return;
+
+	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
+
+	if (ni != ic->ic_bss)
+		return;
+	else if (ic->ic_flags & IEEE80211_F_DESBSSID) {
+		/*
+		 * Now, ni does not represent a network we
+		 * want to belong to, so start a scan.
+		 */
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, 0);
+		return;
+	} else {
+		/*
+		 * A RUN->RUN transition lets the driver
+		 * reprogram its BSSID filter.
+		 *
+		 * No need to SCAN, we already belong to
+		 * an IBSS that meets our criteria: channel,
+		 * SSID, etc.  It could be harmful to scan,
+		 * too: if a scan does not detect nodes
+		 * belonging to my current IBSS, then we
+		 * will create a new IBSS at the end of
+		 * the scan, needlessly splitting the
+		 * network.
+		 */
+		ieee80211_new_state(ic, IEEE80211_S_RUN, 0);
+	}
+}
+
 void
 ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	struct ieee80211_node *ni,
@@ -2030,57 +2095,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				subtype, rssi, rstamp);
 			return;
 		}
-		if (scan.capinfo & IEEE80211_CAPINFO_IBSS) {
-			if (!IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_macaddr)) {
-				/*
-				 * Create a new entry in the neighbor table.
-				 */
-				ni = ieee80211_add_neighbor(ic, wh, &scan);
-			} else if (ni->ni_capinfo == 0) {
-				/*
-                                 * Initialize a node that was "faked
-                                 * up."  This updates the TSF, too.
-				 */
-				ieee80211_init_neighbor(ic, ni, wh, &scan, 0);
-			} else if (!IEEE80211_ADDR_EQ(wh->i_addr3,
-				                      ni->ni_bssid)) {
-                                /* Mark a neighbor's change of BSSID. */
-				IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
-
-                                /* If ni is not the BSS node, then
-                                 * there is nothing more to do.
-				 *
-                                 * Otherwise, if ic_des_bssid is
-                                 * set, then ni does not now
-                                 * represent a network we want to
-                                 * belong to, so start a scan.
-                                 * Otherwise, make a RUN->RUN
-                                 * transition to give the driver
-                                 * an opportunity to reprogram its
-                                 * BSSID filter.
-				 */
-				if (ni != ic->ic_bss)
-					;
-				else if (ic->ic_flags & IEEE80211_F_DESBSSID) {
-					ieee80211_new_state(ic,
-					    IEEE80211_S_SCAN, 0);
-					return;
-				} else {
-					ieee80211_new_state(ic,
-					    IEEE80211_S_RUN, 0);
-				}
-			} else {
-				/*
-				 * Record tsf for potential resync.
-				 */
-				memcpy(ni->ni_tstamp.data, scan.tstamp,
-					sizeof(ni->ni_tstamp));
-			}
-			if (ni != NULL) {
-				ni->ni_rssi = rssi;
-				ni->ni_rstamp = rstamp;
-			}
-		}
+		if (scan.capinfo & IEEE80211_CAPINFO_IBSS)
+			ieee80211_update_adhoc_node(ic, ni, wh, &scan, rssi,
+			    rstamp);
 		break;
 	}
 
