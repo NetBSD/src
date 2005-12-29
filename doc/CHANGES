@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.551 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.552 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -153,3 +153,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		Written by UCHIYAMA Yasushi. [tsutsui 20051229]
 	ews4800mips: Initial import of ews4800mips port. Most porting work
 		was done by UCHIYAMA Yasushi. [tsutsui 20051229]
+	rtw(4): Add support for GCT Semiconductor GRF5101
+		transceiver/synthesizer.  [dyoung 20051229]
