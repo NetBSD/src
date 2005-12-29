@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.165.2.2 2005/07/02 23:38:05 tron Exp $
+#	$NetBSD: bsd.README,v 1.165.2.3 2005/12/29 16:21:02 riz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -161,6 +161,10 @@ MKIEEEFP	If "no", don't add code for IEEE754/IEC60559 conformance.
 		Has no effect on most platforms.
 		Default: yes
 
+MKINET6		If "no", disables building of INET6 (IPv6) infrastructure
+		(libraries and support programs).
+		Default: yes
+
 MKINFO		If "no", don't build or install Info documentation from
 		Texinfo source files.
 		Default: yes
@@ -281,6 +285,11 @@ MKYP		If "no", disables building of YP (NIS)
 USE_HESIOD	If "no", disables building Hesiod support into
 		various system utilities/libraries that support it.
 		If ${MKHESIOD} is "no", USE_HESIOD will also be
+		forced to "no".
+
+USE_INET6	If "no", disables building INET6 (IPv6) support into
+		various system utilities/libraries that support it.
+		If ${MKINET6} is "no", USE_INET6 will also be
 		forced to "no".
 
 USE_KERBEROS4	If "no", disables building Kerberos v4
