@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.9 2005/12/24 20:27:30 perry Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.10 2005/12/29 22:27:17 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.9 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.10 2005/12/29 22:27:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,15 +273,17 @@ rtw_rf_hostwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 		lo_to_hi = 1;
 		break;
 	case RTW_RFCHIPID_GCT:
+		KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
+		KASSERT((val & ~PRESHIFT(SI4126_TWI_DATA_MASK)) == 0);
+		bits = rtw_grf5101_host_crypt(addr, val);
+		nbits = 21;
+		lo_to_hi = 1;
+		break;
 	case RTW_RFCHIPID_RFMD:
 		KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
 		KASSERT((val & ~PRESHIFT(SI4126_TWI_DATA_MASK)) == 0);
-		if (rfchipid == RTW_RFCHIPID_GCT)
-			bits = rtw_grf5101_host_crypt(addr, val);
-		else {
-			bits = LSHIFT(val, SI4126_TWI_DATA_MASK) |
-			       LSHIFT(addr, SI4126_TWI_ADDR_MASK);
-		}
+		bits = LSHIFT(val, SI4126_TWI_DATA_MASK) |
+		       LSHIFT(addr, SI4126_TWI_ADDR_MASK);
 		nbits = 22;
 		lo_to_hi = 0;
 		break;
