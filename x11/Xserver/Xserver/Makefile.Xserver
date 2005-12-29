@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.22 2005/07/03 14:30:52 tron Exp $
+#	$NetBSD: Makefile.Xserver,v 1.23 2005/12/29 15:52:20 tsutsui Exp $
 
 .for _SL in	dix os mi printer printer/pcl printer/ps printer/raster \
 		Xext/ext Xext/exts GL/glx GL/GLcore xkb xinput lbx dbe \
@@ -15,7 +15,7 @@
 		hw/netbsd/macppc hw/netbsd/hpc hw/netbsd/x68k \
 		hw/netbsd/mac68k hw/netbsd/amiga hw/netbsd/dec \
 		hw/netbsd/arm32vidc hw/netbsd/alpha hw/netbsd/dreamcast \
-		hw/netbsd/newsmips
+		hw/netbsd/ews4800mips hw/netbsd/newsmips
 
 .if !defined(LIBDIR.${_SL})
 LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/x11/Xserver/${_SL} && ${PRINTOBJDIR}
