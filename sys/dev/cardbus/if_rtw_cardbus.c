@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.8 2005/12/11 12:21:15 christos Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.9 2005/12/29 22:41:16 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.8 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.9 2005/12/29 22:41:16 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -133,6 +133,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.8 2005/12/11 12:21:15 christos 
  */
 #define	RTW_PCI_IOBA		0x10	/* i/o mapped base */
 #define	RTW_PCI_MMBA		0x14	/* memory mapped base */
+
+#define	RTW_LATTIMER	0x50
 
 struct rtw_cardbus_softc {
 	struct rtw_softc sc_rtw;	/* real RTL8180 softc */
@@ -517,9 +519,9 @@ rtw_cardbus_setup(csc)
 	 * value.
 	 */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG);
-	if (CARDBUS_LATTIMER(reg) < 0x20) {
+	if (CARDBUS_LATTIMER(reg) < RTW_LATTIMER) {
 		reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-		reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
+		reg |= (RTW_LATTIMER << CARDBUS_LATTIMER_SHIFT);
 		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
 	}
 }
