@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.151 2005/12/27 04:06:46 chs Exp $	*/
+/*	$NetBSD: vnode.h,v 1.152 2005/12/29 14:53:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -71,7 +71,7 @@ enum vtagtype	{
 	VT_FDESC, VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS,
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
-	VT_TMPFS, VT_UDF
+	VT_TMPFS, VT_UDF, VT_SYSVBFS
 };
 
 #define VNODE_TAGS \
@@ -79,7 +79,7 @@ enum vtagtype	{
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
-    "VT_TMPFS", "VT_UDF"
+    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS"
 
 LIST_HEAD(buflists, buf);
 
