@@ -1,0 +1,38 @@
+
+OUTPUT_FORMAT("elf32-tradbigmips")
+OUTPUT_ARCH(mips)
+STARTUP(entry.o)
+
+/*0xa0190000 : EWS-UX's 1stboot VMA */
+
+MEMORY {
+	ram	: o = 0xa0190000, l = 4K
+}
+
+SECTIONS {
+	. = 0xa0190000;
+	.text ALIGN(4) :
+	{
+		_text = .;
+		*(.text)
+		_etext = .;
+	} > ram
+	.data ALIGN(4) :
+	{
+		_data = .;
+		*(.rodata)
+		*(.data)
+		_edata = .;
+		PROVIDE (edata = .);
+	} > ram
+	.bss ALIGN(4) :
+	{
+		_bss = .;
+		*(.bss)
+		*(.scommon)
+		*(.reginfo)
+		_ebss = .;
+	} > ram
+	_end = .;
+	PROVIDE (end = .);	/* libsa/alloc.c use this symbol */
+}
