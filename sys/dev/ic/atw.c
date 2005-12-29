@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.103 2005/12/29 22:01:43 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.104 2005/12/29 22:04:21 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.103 2005/12/29 22:01:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.104 2005/12/29 22:04:21 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -311,6 +311,12 @@ const char *atw_rx_state[] = {
 	"RUNNING - flush fifo",
 	"RUNNING - fifo drain"
 };
+
+static inline int
+is_running(struct ifnet *ifp)
+{
+	return (ifp->if_flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP);
+}
 
 int
 atw_activate(struct device *self, enum devact act)
@@ -3861,8 +3867,8 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	default:
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
-		if (error == ENETRESET) {
-			if (ATW_IS_ENABLED(sc))
+		if (error == ENETRESET || error == ERESTART) {
+			if (is_running(ifp))
 				error = atw_init(ifp);
 			else
 				error = 0;
@@ -3885,10 +3891,10 @@ atw_media_change(struct ifnet *ifp)
 
 	error = ieee80211_media_change(ifp);
 	if (error == ENETRESET) {
-		if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) ==
-		    (IFF_RUNNING|IFF_UP))
-			atw_init(ifp);		/* XXX lose error */
-		error = 0;
+		if (is_running(ifp))
+			error = atw_init(ifp);
+		else
+			error = 0;
 	}
 	return error;
 }
