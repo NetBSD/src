@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.237.2.2 2005/12/29 15:20:29 riz Exp $	*/
+/*	$NetBSD: sd.c,v 1.237.2.3 2005/12/29 15:21:00 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.237.2.2 2005/12/29 15:20:29 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.237.2.3 2005/12/29 15:21:00 riz Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1362,10 +1362,10 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 	 * lock the door of a digicam, which doesn't have a door that
 	 * can be locked) for the SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL command.
 	 */
-	if (xs->cmd.opcode == SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL &&
-	    (sense->flags & SSD_KEY) == SKEY_ILLEGAL_REQUEST &&
-	    sense->add_sense_code == 0x24 &&
-	    sense->add_sense_code_qual == 0x00) { /* Illegal field in CDB */
+	if (xs->cmd->opcode == SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL &&
+	    SSD_SENSE_KEY(sense->flags) == SKEY_ILLEGAL_REQUEST &&
+	    sense->asc == 0x24 &&
+	    sense->ascq == 0x00) { /* Illegal field in CDB */
 		scsipi_printaddr(periph);
 		printf("no door lock\n");
 		periph->periph_flags &= ~PERIPH_REMOVABLE;
