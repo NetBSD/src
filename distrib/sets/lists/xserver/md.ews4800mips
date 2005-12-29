@@ -1,0 +1,8 @@
+# $NetBSD: md.ews4800mips,v 1.1 2005/12/29 16:37:42 tsutsui Exp $
+./usr/X11R6/bin/X
+./usr/X11R6/bin/Xews4800mips
+./usr/X11R6/bin/Xvfb
+./usr/X11R6/man/cat1/Xews4800mips.0		-unknown-		.cat
+./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
+./usr/X11R6/man/man1/Xews4800mips.1		-unknown-		.man
+./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
