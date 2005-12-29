@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.14 2005/12/10 23:26:35 elad Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.15 2005/12/29 21:08:26 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -219,7 +219,8 @@ void	ieee80211_wme_updateparams_locked(struct ieee80211com *);
 
 #define	ieee80211_new_state(_ic, _nstate, _arg) \
 	(((_ic)->ic_newstate)((_ic), (_nstate), (_arg)))
-extern	int ieee80211_compute_duration(struct ieee80211_frame_min *, int,
+extern	int ieee80211_compute_duration(const struct ieee80211_frame_min *,
+		const struct ieee80211_key *, int,
 		uint32_t, int, int, struct ieee80211_duration *,
 		struct ieee80211_duration *, int *, int);
 void	ieee80211_print_essid(const u_int8_t *, int);

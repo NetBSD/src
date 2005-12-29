@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.17 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.18 2005/12/29 21:08:26 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -103,6 +103,8 @@ struct atw_txsoft {
 	int txs_firstdesc;		/* first descriptor in packet */
 	int txs_lastdesc;		/* last descriptor in packet */
 	int txs_ndescs;			/* number of descriptors */
+	struct ieee80211_duration	txs_d0;
+	struct ieee80211_duration	txs_dn;
 	SIMPLEQ_ENTRY(atw_txsoft) txs_q;
 };
 
