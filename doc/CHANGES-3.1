@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.2 2005/12/29 01:06:11 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.3 2005/12/29 15:24:22 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -50,4 +50,29 @@ share/man/man7/symlink.7			1.9
 	Document the new @emul magic symlink var as well as the new @{var}  
 	syntax.
 	[thorpej, ticket #560]
+
+usr.sbin/pkg_install/add/perform.c		1.115
+
+	(pkg_do) When marking already installed package as manually installed,
+	only print message if we succeeded.
+	[dillo, ticket #1039]
+
+sys/dev/mii/brgphy.c				1.24-1.25
+sys/dev/mii/miidevs				1.61
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+
+	Add support for bcm5714 phys.
+	[jonathan, ticket #1044]
+
+sys/dev/scsipi/sd.c				1.242-1.243
+
+	Some USB devices reports themselves as removable, but have no door and
+	so don't support the SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL command.
+	When an "Illegal field in CDB" is reported for this command, mark the
+	device as non-removable (which is always true for USB keys from the SCSI
+	point of view), print a message and ignore the error.
+	For DIOCLOCK, return ENOTTY if the device is not removable instead of
+	trying a command which will fail.
+	[bouyer, ticket #1045]
 
