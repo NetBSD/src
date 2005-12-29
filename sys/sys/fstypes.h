@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.3 2004/08/15 07:19:54 mycroft Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.3.10.1 2005/12/29 00:57:09 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,6 @@ typedef struct fhandle	fhandle_t;
  * one of the __MNT_UNUSED flags.
  */
 
-#define	__MNT_UNUSED3	0x00800000
 #define	__MNT_UNUSED4	0x00200000
 #define	__MNT_UNUSED5	0x01000000
 #define	__MNT_UNUSED6	0x02000000
@@ -84,6 +83,7 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
 #define MNT_IGNORE	0x00100000	/* don't show entry in df */
+#define	MNT_MAGICLINKS	0x00800000	/* interpret symlinks for magic names */
 #define MNT_NOATIME	0x04000000	/* Never update access times in fs */
 #define MNT_SYMPERM	0x20000000	/* recognize symlink permission */
 #define MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
@@ -102,6 +102,7 @@ typedef struct fhandle	fhandle_t;
 	{ MNT_NOATIME,		0,	"noatime" }, \
 	{ MNT_SYMPERM,		0,	"symperm" }, \
 	{ MNT_NODEVMTIME,	0,	"nodevmtime" }, \
+	{ MNT_MAGICLINKS,	0,	"magiclinks" }, \
 	{ MNT_SOFTDEP,		0,	"soft dependencies" },
 
 /*
@@ -142,7 +143,7 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_VISFLAGMASK	\
     (MNT_SOFTDEP | MNT_NODEVMTIME | MNT_SYMPERM | MNT_EXPUBLIC | \
      MNT_EXNORESPORT | MNT_NOATIME | \
-     MNT_IGNORE | \
+     MNT_IGNORE | MNT_MAGICLINKS | \
      MNT_NOCOREDUMP | MNT_ROOTFS | MNT_QUOTA | MNT_LOCAL | \
      MNT_EXKERB | MNT_EXPORTANON | MNT_DEFEXPORTED | MNT_EXPORTED | \
      MNT_EXRDONLY | MNT_ASYNC | MNT_UNION | MNT_NODEV | \
@@ -196,7 +197,7 @@ typedef struct fhandle	fhandle_t;
 	"\33MNT_NOATIME" \
 	"\32MNT_UNUSED6" \
 	"\31MNT_UNUSED5" \
-	"\30MNT_UNUSED3" \
+	"\30MNT_MAGICLINKS" \
 	"\27MNT_GETARGS" \
 	"\26MNT_UNUSED4" \
 	"\25MNT_IGNORE" \
