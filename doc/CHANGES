@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.550 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.551 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -151,3 +151,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		the partition table is located.  [jmmv 20051227]
 	kernel: Add preliminary support for System V Boot File System.
 		Written by UCHIYAMA Yasushi. [tsutsui 20051229]
+	ews4800mips: Initial import of ews4800mips port. Most porting work
+		was done by UCHIYAMA Yasushi. [tsutsui 20051229]
