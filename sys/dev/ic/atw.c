@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.102 2005/12/29 21:59:07 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.103 2005/12/29 22:01:43 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.102 2005/12/29 21:59:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.103 2005/12/29 22:01:43 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3745,11 +3745,6 @@ atw_start(struct ifnet *ifp)
 		last_txs = txs;
 	}
 
-	if (txs == NULL || sc->sc_txfree == 0) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
-	}
-
 	if (sc->sc_txfree != ofree) {
 		DPRINTF2(sc, ("%s: packets enqueued, IC on %d, OWN on %d\n",
 		    sc->sc_dev.dv_xname, lasttx, firsttx));
@@ -3771,6 +3766,9 @@ atw_start(struct ifnet *ifp)
 
 		/* Wake up the transmitter. */
 		ATW_WRITE(sc, ATW_TDR, 0x1);
+
+		if (txs == NULL || sc->sc_txfree == 0)
+			ifp->if_flags |= IFF_OACTIVE;
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		sc->sc_tx_timer = 5;
