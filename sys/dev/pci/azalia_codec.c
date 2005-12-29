@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.4.2.2 2005/12/29 19:33:40 riz Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.4.2.3 2005/12/29 19:36:17 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,15 +37,53 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.2 2005/12/29 19:33:40 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.3 2005/12/29 19:36:17 riz Exp $");
 
+#include <sys/null.h>
 #include <dev/pci/azalia.h>
 
+
+static int	azalia_codec_init_dacgroup(codec_t *);
 static int	azalia_codec_add_dacgroup(codec_t *, int, uint32_t);
 static int	azalia_codec_find_pin(const codec_t *, int, int, uint32_t);
 static int	azalia_codec_find_dac(const codec_t *, int, int);
+static int	alc260_init_dacgroup(codec_t *);
+static int	alc880_init_dacgroup(codec_t *);
+static int	alc882_init_dacgroup(codec_t *);
+static int	stac9221_init_dacgroup(codec_t *);
+
 
 int
+azalia_codec_init_vtbl(codec_t *this, uint32_t vid)
+{
+	switch (vid) {
+	case 0x10ec0260:
+		this->name = "Realtek ALC260";
+		this->init_dacgroup = alc260_init_dacgroup;
+		break;
+	case 0x10ec0880:
+		this->name = "Realtek ALC880";
+		this->init_dacgroup = alc880_init_dacgroup;
+		break;
+	case 0x10ec0882:
+		this->name = "Realtek ALC882";
+		this->init_dacgroup = alc882_init_dacgroup;
+		break;
+	case 0x83847680:
+		this->name = "Sigmatel STAC9221";
+		this->init_dacgroup = stac9221_init_dacgroup;
+	default:
+		this->name = NULL;
+		this->init_dacgroup = azalia_codec_init_dacgroup;
+	}
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * functions for generic codecs
+ * ---------------------------------------------------------------- */
+
+static int
 azalia_codec_init_dacgroup(codec_t *this)
 {
 	int i, j, assoc, group;
@@ -88,15 +126,6 @@ azalia_codec_init_dacgroup(codec_t *this)
 		this->dacgroups[this->ndacgroups].conv[0] = i;
 		this->ndacgroups++;
 	}
-#ifdef AZALIA_DEBUG
-	for (group = 0; group < this->ndacgroups; group++) {
-		DPRINTF(("%s: dacgroup[%d]:", __func__, group));
-		for (j = 0; j < this->dacgroups[group].nconv; j++) {
-			DPRINTF((" %2.2x", this->dacgroups[group].conv[j]));
-		}
-		DPRINTF(("\n"));
-	}
-#endif
 	this->cur_dac = 0;
 
 	/* enumerate ADCs */
@@ -214,3 +243,115 @@ azalia_codec_find_dac(const codec_t *this, int index, int depth)
 	return -1;
 }
 
+/* ----------------------------------------------------------------
+ * Realtek ALC260
+ * ---------------------------------------------------------------- */
+
+static int
+alc260_init_dacgroup(codec_t *this)
+{
+	this->ndacgroups = 2;
+	/* analog 2ch */
+	this->dacgroups[0].nconv = 1;
+	this->dacgroups[0].conv[0] = 2;
+	/* digital */
+	this->dacgroups[1].nconv = 1;
+	this->dacgroups[1].conv[0] = 3;
+	this->cur_dac = 0;
+
+	this->nadcs = 3;
+	this->adcs[0] = 0x04;
+	this->adcs[1] = 0x05;
+	this->adcs[2] = 0x06;	/* digital */
+	this->cur_adc = 0;
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Realtek ALC880
+ * ---------------------------------------------------------------- */
+
+static int
+alc880_init_dacgroup(codec_t *this)
+{
+	this->ndacgroups = 2;
+	/* analog 8ch */
+	this->dacgroups[0].nconv = 4;
+	this->dacgroups[0].conv[0] = 2;
+	this->dacgroups[0].conv[1] = 4;
+	this->dacgroups[0].conv[2] = 3;
+	this->dacgroups[0].conv[3] = 5;
+	/* digital */
+	this->dacgroups[1].nconv = 1;
+	this->dacgroups[1].conv[0] = 6;
+	this->cur_dac = 0;
+
+	this->nadcs = 4;
+	this->adcs[0] = 0x07;
+	this->adcs[1] = 0x08;
+	this->adcs[2] = 0x09;
+	this->adcs[3] = 0x0a;	/* digital */
+	this->cur_adc = 0;
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Realtek ALC882
+ * ---------------------------------------------------------------- */
+
+static int
+alc882_init_dacgroup(codec_t *this)
+{
+	this->ndacgroups = 3;
+	/* analog 8ch */
+	this->dacgroups[0].nconv = 4;
+	this->dacgroups[0].conv[0] = 2;
+	this->dacgroups[0].conv[1] = 4;
+	this->dacgroups[0].conv[2] = 3;
+	this->dacgroups[0].conv[3] = 5;
+	/* digital */
+	this->dacgroups[1].nconv = 1;
+	this->dacgroups[1].conv[0] = 6;
+	/* another analog */
+	this->dacgroups[2].nconv = 1;
+	this->dacgroups[2].conv[0] = 0x25;
+	this->cur_dac = 0;
+
+	this->nadcs = 4;
+	this->adcs[0] = 0x07;
+	this->adcs[1] = 0x08;
+	this->adcs[2] = 0x09;
+	this->adcs[3] = 0x0a;	/* digital */
+	this->cur_adc = 0;
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Sigmatel STAC9221
+ * ---------------------------------------------------------------- */
+
+static int
+stac9221_init_dacgroup(codec_t *this)
+{
+	this->ndacgroups = 3;
+	/* analog 8ch */
+	this->dacgroups[0].nconv = 4;
+	this->dacgroups[0].conv[0] = 2;
+	this->dacgroups[0].conv[1] = 3;
+	this->dacgroups[0].conv[2] = 5;
+	this->dacgroups[0].conv[3] = 4;
+	/* digital */
+	this->dacgroups[1].nconv = 1;
+	this->dacgroups[1].conv[0] = 8;
+	/* another digital? */
+	this->dacgroups[2].nconv = 1;
+	this->dacgroups[2].conv[0] = 0x1a;
+	this->cur_dac = 0;
+
+	this->nadcs = 3;
+	this->adcs[0] = 6;	/* XXX four channel recording */
+	this->adcs[1] = 7;
+	this->adcs[2] = 9;	/* digital */
+	this->cur_adc = 0;
+	return 0;
+}

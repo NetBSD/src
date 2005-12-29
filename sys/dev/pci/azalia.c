@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.7.2.14 2005/12/29 19:33:40 riz Exp $	*/
+/*	$NetBSD: azalia.c,v 1.7.2.15 2005/12/29 19:36:17 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.14 2005/12/29 19:33:40 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.15 2005/12/29 19:36:17 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -897,7 +897,6 @@ azalia_codec_init(codec_t *this)
 	int err, addr, n, i;
 
 	this->comresp = azalia_codec_comresp;
-
 	addr = this->address;
 	DPRINTF(("%s: information of codec[%d] follows:\n",
 	    XNAME(this->az), addr));
@@ -910,9 +909,17 @@ azalia_codec_init(codec_t *this)
 	    COP_VENDOR_ID, &result);
 	if (err)
 		return err;
-	aprint_normal("%s: codec: 0x%4.4x/0x%4.4x (rev. %u.%u)\n",
-	    XNAME(this->az), result >> 16, result & 0xffff,
-	    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
+	azalia_codec_init_vtbl(this, result);
+
+	if (this->name == NULL) {
+		aprint_normal("%s: codec: 0x%4.4x/0x%4.4x (rev. %u.%u)\n",
+		    XNAME(this->az), result >> 16, result & 0xffff,
+		    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
+	} else {
+		aprint_normal("%s: codec: %s (rev. %u.%u)\n",
+		    XNAME(this->az), this->name,
+		    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
+	}
 	aprint_normal("%s: codec: High Definition Audio rev. %u.%u\n",
 	    XNAME(this->az), COP_RID_MAJ(rev), COP_RID_MIN(rev));
 
@@ -1003,7 +1010,18 @@ azalia_codec_init(codec_t *this)
 			return err;
 	}
 
-	azalia_codec_init_dacgroup(this);
+	err = this->init_dacgroup(this);
+	if (err)
+		return err;
+#ifdef AZALIA_DEBUG
+	for (i = 0; i < this->ndacgroups; i++) {
+		DPRINTF(("%s: dacgroup[%d]:", __func__, i));
+		for (n = 0; n < this->dacgroups[group].nconv; n++) {
+			DPRINTF((" %2.2x", this->dacgroups[group].conv[n]));
+		}
+		DPRINTF(("\n"));
+	}
+#endif
 	err = azalia_codec_construct_format(this);
 	if (err)
 		return err;
