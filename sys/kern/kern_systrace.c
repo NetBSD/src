@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.44.2.2 2005/07/02 18:50:06 tron Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.44.2.2.2.1 2005/12/29 20:25:29 riz Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.44.2.2 2005/07/02 18:50:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.44.2.2.2.1 2005/12/29 20:25:29 riz Exp $");
 
 #include "opt_systrace.h"
 
@@ -1651,7 +1651,7 @@ systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 		int f;
 		f = curlwp->l_flag & L_SA;
 		curlwp->l_flag &= ~L_SA;
-		st = tsleep(strp, PWAIT | PCATCH, "systrmsg", 0);
+		st = tsleep(strp, PWAIT, "systrmsg", 0);
 		curlwp->l_flag |= f;
 		if (st != 0)
 			return (ERESTART);
