@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.61 2005/12/24 20:27:30 perry Exp $ */
+/* $NetBSD: rtw.c,v 1.62 2005/12/29 21:08:26 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.61 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.62 2005/12/29 21:08:26 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3334,7 +3334,7 @@ rtw_start(struct ifnet *ifp)
 				ctl0 |= RTW_TXCTL0_BEACON;
 		}
 
-		if (ieee80211_compute_duration(wh, m0->m_pkthdr.len,
+		if (ieee80211_compute_duration(wh, k, m0->m_pkthdr.len,
 		    ic->ic_flags, ic->ic_fragthreshold,
 		    rate, &ts->ts_d0, &ts->ts_dn, &npkt,
 		    (ifp->if_flags & (IFF_DEBUG|IFF_LINK2)) ==
