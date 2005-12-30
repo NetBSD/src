@@ -1,7 +1,31 @@
-#	$NetBSD: Makefile,v 1.1 2002/05/17 16:22:59 toshii Exp $
+#	$NetBSD: Makefile,v 1.2 2005/12/30 11:48:15 rjs Exp $
 
-# No install stuff yet.
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-release:
+.include <bsd.kernobj.mk>
 
-.include <bsd.subdir.mk>
+MINIROOTOBJ!=	cd ${.CURDIR}/../miniroot && ${PRINTOBJDIR}
+MINIROOT=	${MINIROOTOBJ}/miniroot.fs
+
+MDSETTARGETS=		INSTALL_IPAQ	${MINIROOT}	netbsd-IPAQ
+MDSET_RELEASEDIR=	installation
+
+HPCBOOTDIR=	${KERNSRCDIR}/arch/hpc/stand/binary/ARM
+HPCBOOT=	hpcboot.exe
+
+.PATH: ${HPCBOOTDIR}
+
+UUDECODE_FILES=	${HPCBOOT}
+UUDECODE_FILES_RENAME_${HPCBOOT}= ${HPCBOOT}
+
+.include "${DISTRIBDIR}/common/Makefile.mdset"
+
+release:: check_RELEASEDIR .WAIT ${HPCBOOT}
+	${INSTALL} -c -m ${NONBINMODE} \
+		hpcboot.exe ${RELEASEDIR}/${MACHINE}/installation
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation '*.gz' '*.exe'
+
+.include <bsd.files.mk>
+.include <bsd.prog.mk>
+
