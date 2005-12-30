@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/04/26 18:55:44 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2 2005/12/30 11:30:33 rjs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,7 +12,8 @@ ${V}DIR!=	cd ${.CURDIR}/../${F} && ${PRINTOBJDIR}
 ${V}=		${${V}DIR}/${F}.fs
 .endfor
 
-MDSETTARGETS=		INSTALL		${RAMDISK}	-
+MDSETTARGETS=		INSTALL		${RAMDISK}	-	\
+			INSTALL_ACPI	${RAMDISK}	-
 
 MDSET_RELEASEDIR=	binary/kernel
 
