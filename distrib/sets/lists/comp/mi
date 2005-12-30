@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.839 2005/12/29 14:53:45 tsutsui Exp $
+#	$NetBSD: mi,v 1.840 2005/12/30 23:07:32 agc Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -519,6 +519,7 @@
 ./usr/include/fstab.h				comp-c-include
 ./usr/include/fs/sysvbfs/bfs.h			comp-c-include
 ./usr/include/fts.h				comp-c-include
+./usr/include/ftw.h				comp-c-include
 ./usr/include/g++/ACG.h				comp-obsolete		obsolete
 ./usr/include/g++/AllocRing.h			comp-obsolete		obsolete
 ./usr/include/g++/Binomial.h			comp-obsolete		obsolete
@@ -3173,6 +3174,7 @@
 ./usr/share/man/cat3/ftok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ftrylockfile.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fts.0			comp-c-catman		.cat
+./usr/share/man/cat3/ftw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fts_children.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fts_close.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fts_open.0			comp-c-catman		.cat
@@ -3934,6 +3936,7 @@
 ./usr/share/man/cat3/newwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nextafter.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nextafterf.0		comp-c-catman		.cat
+./usr/share/man/cat3/nftw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ngettext.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nice.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nl.0			comp-c-catman		.cat
@@ -7110,6 +7113,7 @@
 ./usr/share/man/man3/ftok.3			comp-c-man		.man
 ./usr/share/man/man3/ftrylockfile.3		comp-c-man		.man
 ./usr/share/man/man3/fts.3			comp-c-man		.man
+./usr/share/man/man3/ftw.3			comp-c-man		.man
 ./usr/share/man/man3/fts_children.3		comp-c-man		.man
 ./usr/share/man/man3/fts_close.3		comp-c-man		.man
 ./usr/share/man/man3/fts_open.3			comp-c-man		.man
@@ -7871,6 +7875,7 @@
 ./usr/share/man/man3/newwin.3			comp-c-man		.man
 ./usr/share/man/man3/nextafter.3		comp-c-man		.man
 ./usr/share/man/man3/nextafterf.3		comp-c-man		.man
+./usr/share/man/man3/nftw.3			comp-c-man		.man
 ./usr/share/man/man3/ngettext.3			comp-c-man		.man
 ./usr/share/man/man3/nice.3			comp-c-man		.man
 ./usr/share/man/man3/nl.3			comp-c-man		.man
