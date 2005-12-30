@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.147 2005/10/03 14:56:32 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.148 2005/12/30 23:07:32 agc Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -9,14 +9,15 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	devname.c dirname.c disklabel.c err.c errx.c errlist.c \
 	errno.c execl.c execle.c execlp.c execv.c execvp.c extattr.c \
 	fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
-	fts.c getbsize.c getcap.c getcwd.c \
+	fts.c ftw.c getbsize.c getcap.c getcwd.c \
 	getdevmajor.c getdomainname.c getgrent.c \
 	getgrouplist.c getgroupmembership.c gethostname.c \
 	getloadavg.c getlogin.c getmntinfo.c \
 	getnetgrent.c getpagesize.c \
 	getpass.c getprogname.c getpwent.c getttyent.c \
 	getusershell.c glob.c humanize_number.c initgroups.c \
-	isascii.c isatty.c isctype.c lockf.c nice.c nlist.c nlist_aout.c \
+	isascii.c isatty.c isctype.c lockf.c nftw.c \
+	nice.c nlist.c nlist_aout.c \
 	nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \
 	pause.c popen.c psignal.c pthread_atfork.c pwcache.c \
 	pw_scan.c raise.c randomid.c readdir.c rewinddir.c \
@@ -47,7 +48,7 @@ MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 confstr.3 \
 	ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 \
 	endutxent.3 err.3 exec.3 extattr.3 \
 	fmtcheck.3 fmtmsg.3 fnmatch.3 fpclassify.3 fpgetmask.3 frexp.3 \
-	ftok.3 fts.3 \
+	ftok.3 fts.3 ftw.3 \
 	getbsize.3 cgetcap.3 getcwd.3 getdevmajor.3 \
 	getdomainname.3 getdiskbyname.3 getfsent.3 \
 	getgrent.3 getgrouplist.3 gethostname.3 getlastlogx.3 getloadavg.3 \
@@ -86,6 +87,7 @@ MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
 	fpgetmask.3 fpsetsticky.3
 MLINKS+=fts.3 fts_open.3 fts.3 fts_read.3 fts.3 fts_children.3 \
 	fts.3 fts_set.3 fts.3 fts_close.3
+MLINKS+=ftw.3 nftw.3
 MLINKS+=cgetcap.3 cgetclose.3 cgetcap.3 cgetent.3 \
 	cgetcap.3 cgetfirst.3 cgetcap.3 cgetmatch.3 cgetcap.3 cgetnext.3 \
 	cgetcap.3 cgetnum.3 cgetcap.3 cgetset.3 cgetcap.3 cgetstr.3 \

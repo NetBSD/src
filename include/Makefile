@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.120 2005/04/03 20:09:29 christos Exp $
+#	$NetBSD: Makefile,v 1.121 2005/12/30 23:07:33 agc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -9,7 +9,7 @@ NOOBJ=		# defined
 
 INCS=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	disktab.h dlfcn.h err.h errno.h fmtmsg.h fnmatch.h fstab.h fts.h \
-	getopt.h glob.h grp.h ifaddrs.h iconv.h \
+	ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
 	inttypes.h iso646.h kvm.h langinfo.h libgen.h \
 	limits.h link.h link_aout.h link_elf.h locale.h \
 	login_cap.h lwp.h malloc.h math.h md2.h \
