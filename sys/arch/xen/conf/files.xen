@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.31 2005/11/21 22:15:13 bouyer Exp $
+#	$NetBSD: files.xen,v 1.32 2005/12/30 13:37:57 jmmv Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -93,6 +93,7 @@ file	arch/xen/x86/intr.c
 file	arch/x86/x86/ipi.c		multiprocessor
 file	arch/x86/x86/lock_machdep.c	lockdebug
 file	arch/x86/x86/softintr.c
+file	arch/x86/x86/x86_machdep.c
 
 include	"arch/xen/conf/files.compat"
 
