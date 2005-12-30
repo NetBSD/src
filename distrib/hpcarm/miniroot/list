@@ -1,0 +1,44 @@
+#	$NetBSD: list,v 1.1 2005/12/30 11:47:19 rjs Exp $
+
+# extras in bin
+PROG	bin/csh
+PROG	bin/date
+PROG	bin/rcp
+PROG	bin/rcmd
+
+# extras in sbin
+PROG	sbin/dhclient
+PROG	sbin/disklabel
+PROG	sbin/fdisk
+PROG	sbin/mount_ext2fs
+PROG	sbin/fsck_ext2fs
+PROG	sbin/mount_kernfs
+PROG	sbin/mount_msdos
+
+# extras in /usr.bin
+PROG	usr/bin/netstat
+PROG	usr/bin/rsh
+PROG	usr/bin/tset usr/bin/reset
+PROG	usr/bin/vi
+
+# crunchgen source directory specials: progs built in nonstandard places
+SPECIAL	dhclient	srcdir distrib/utils/x_dhclient
+SPECIAL	vi		srcdir usr.bin/vi/build
+
+# Minimize use of MFS
+SYMLINK	/tmp	var/tmp
+
+# termcap file
+COPY	${ARCHDIR}/termcap.vt100	usr/share/misc/termcap
+
+# sysinst needs disktab template
+COPY	${DESTDIR}/etc/disktab		etc/disktab.preinstall
+
+# and the installation tools
+COPY	${ARCHDIR}/dot.profile		.profile
+
+# and a spare .profile
+COPY	${DESTDIR}/.profile		tmp/.hdprofile
+
+# various files that we need in /etc for the install
+COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script	555
