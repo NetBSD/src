@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.554 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.555 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -139,10 +139,10 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	lmc(4): New driver from David Boggs [christos 20051205]
 	kernel: Add a new ktrace record type for SA upcalls and add LWP
 		information to ktrace records
-		[darrenr, skrll, christos 20051211]
+		[darrenr,skrll,christos 20051211]
 	userland: Generation and decode of new ktrace record type (sa_upcall)
 		and LWP information for kdump and ktruss. Ability to trace
-		upcalls. [skrll, christos 20051211]
+		upcalls. [skrll,christos 20051211]
 	sip(4): Now enabled and known working for sparc64.  [mrg 20051220]
 	bind:	Imported 9.3.2 for named and tools [christos 20051221]
 	dkctl(8), bufq(9): Add a functionality to switch bufq strategy
