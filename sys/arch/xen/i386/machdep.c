@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2005/12/24 20:07:48 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2005/12/30 13:37:57 jmmv Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2005/12/24 20:07:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2005/12/30 13:37:57 jmmv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -234,8 +234,6 @@ void xen_dbglow_init(void);
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* CPU "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
-
-char bootinfo[BOOTINFO_MAXSIZE];
 
 extern struct bi_devmatch *x86_alldisks;
 extern int x86_ndisks;
@@ -2224,20 +2222,6 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #endif /* ! COMPAT_NOMID */
 
 	return error;
-}
-
-void *
-lookup_bootinfo(int type)
-{
-	struct btinfo_common *help;
-	int n = *(int*)bootinfo;
-	help = (struct btinfo_common *)(bootinfo + sizeof(int));
-	while(n--) {
-		if(help->type == type)
-			return(help);
-		help = (struct btinfo_common *)((char*)help + help->len);
-	}
-	return(0);
 }
 
 #include <dev/ic/mc146818reg.h>		/* for NVRAM POST */
