@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_reg.h,v 1.3 2003/03/11 23:11:27 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_reg.h,v 1.15 2005/12/11 12:23:22 christos Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.16 2005/12/30 00:16:32 mjl Exp $	*/
 /*
  * $FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp$
  *
@@ -411,7 +411,7 @@ struct TUNER {
 	const char*	name;
 	u_char		type;
 	u_char		pllControl[4];
-	u_char		bandLimits[2];
+	u_int		bandLimits[2];
 	u_char		bandAddrs[4];        /* 3 first for the 3 TV
 					       ** bands. Last for radio
 					       ** band (0x00=NoRadio).
