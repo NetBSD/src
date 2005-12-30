@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.3 2005/12/29 16:28:51 riz Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.4 2005/12/30 01:22:07 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -21,4 +21,18 @@ lib/libc/gen/getcwd.c				1.41
 	Go back to original behavior as in revision 1.35: return resolved name,
 	but also set errno to ENOENT.
 	[elad, ticket #1068]
+
+sys/kern/kern_subr.c				1.122
+
+	hold kernel_lock while calling systrace_exit().
+	fixes PR 25856.
+	[chs, ticket #1072]
+
+sys/kern/kern_systrace.c			1.50 via patch
+
+	in systrace_make_msg(), sleep uninterruptibly while waiting for
+	the response from the systrace daemon, so that the message protocol
+	between the kernel and the daemon doesn't get out of sync.
+	fixes PR 29654.
+	[chs, ticket #1071]
 
