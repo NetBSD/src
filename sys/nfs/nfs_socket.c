@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.119 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.120 2005/12/30 10:35:44 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.119 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.120 2005/12/30 10:35:44 jmmv Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -558,7 +558,6 @@ nfs_receive(rep, aname, mp, l)
 	struct mbuf **mp;
 	struct lwp *l;
 {
-	struct proc *p;
 	struct socket *so;
 	struct uio auio;
 	struct iovec aio;
@@ -568,7 +567,6 @@ nfs_receive(rep, aname, mp, l)
 	struct mbuf **getnam;
 	int error, sotype, rcvflg;
 
-	p = l->l_proc;
 	/*
 	 * Set up arguments for soreceive()
 	 */
