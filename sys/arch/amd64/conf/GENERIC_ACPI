@@ -1,0 +1,9 @@
+# $NetBSD: GENERIC_ACPI,v 1.1 2005/12/30 11:27:07 rjs Exp $
+#
+# GENERIC_ACPI machine description file
+
+include "arch/amd64/conf/GENERIC"
+
+no options MPBIOS_SCANPCI
+options MPACPI
+acpi0	at mainbus0
