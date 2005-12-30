@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2005/12/30 13:37:57 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2005/12/30 13:37:57 jmmv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -160,8 +160,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2005/12/24 20:06:47 perry Exp $");
 /* the following is used externally (sysctl_hw) */
 char machine[] = "amd64";		/* CPU "architecture" */
 char machine_arch[] = "x86_64";		/* machine == machine_arch */
-
-char bootinfo[BOOTINFO_MAXSIZE];
 
 /* Our exported CPU info; we have only one right now. */  
 struct cpu_info cpu_info_primary;
@@ -1552,21 +1550,6 @@ init_x86_64(first_avail)
         /* Make sure maxproc is sane */ 
         if (maxproc > cpu_maxproc())
                 maxproc = cpu_maxproc();
-}
-
-void *
-lookup_bootinfo(type)
-	int type;
-{
-	struct btinfo_common *help;
-	int n = *(int*)bootinfo;
-	help = (struct btinfo_common *)(bootinfo + sizeof(int));
-	while(n--) {
-		if(help->type == type)
-			return(help);
-		help = (struct btinfo_common *)((char*)help + help->len);
-	}
-	return(0);
 }
 
 void
