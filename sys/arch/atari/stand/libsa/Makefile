@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2005/12/11 12:17:00 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2005/12/30 00:24:48 he Exp $
 
 LIB=	sa
 
@@ -21,7 +21,7 @@ INCL=	-I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
 # machine dependant routines
 SRCS=	consio.S diskio.c
 
-# from lib/libkern
+# from common/lib/libc
 SRCS+=	ashldi3.c ashrdi3.c bzero.c strcmp.c strlen.c
 
 # stand routines
@@ -49,6 +49,8 @@ S=${.CURDIR}/../../../..
 S_SA=${S}/lib/libsa
 S_KERN=${S}/lib/libkern
 S_MACHSA=${S}/arch/atari/stand/libsa
+
+.include "${S}/../common/lib/libc/Makefile.inc"
 
 .PATH:  ${S_SA} ${S_KERN}
 
