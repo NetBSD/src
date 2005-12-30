@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.553 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.554 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -21,7 +21,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ipf(8): Updated to version 4.1.8. [martti 20050403]
 	identd(8): Add support for forwarding ident queries and receiving of
 		proxied ident queries. [peter 20050404]
-	ac97: Add support for AC'97 modems. [jmcneill 20050407]
+	ac97(4): Add support for AC'97 modems. [jmcneill 20050407]
 	auich(4): Add support for Intel ICH AC'97 modems as audio devices.
 		Currently disabled by default. [jmcneill 20050407]
 	event(3): Updated libevent to 1.0c [provos 20050417]
@@ -30,7 +30,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	cvs(1): Upgrade to 1.11.20. [christos 20050419]
 	openssh: Upgrade to 4.0. [christos 20050423]
 	crypto: Upgrade to OpenSSL 0.9.7g [christos 20050423]
-	gettext: Upgrade to 0.14.4 [christos 20050429]
+	gettext(1): Upgrade to 0.14.4 [christos 20050429]
 	ehci(4): Various bug fixes.  The most visible is that low/full speed
 		devices can now be connected to high speed hubs.
 		[augustss 20050501]
@@ -77,7 +77,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[peter 20050804]
 	bpf(4): Add two new sysctls to retrieve statistics and current
 		peers, viewable with netstat(1). [rpaulo 20050805]
-	postfix: Updated to 2.2.5. [rpaulo 20050818]
+	postfix(1): Updated to 2.2.5. [rpaulo 20050818]
 	kernel: 64 bit inode changes [christos 20050819]
 	getent(1): Add support for "ethers" database. [ginsbach 20050824]
 	ftpd(8): Add new ftpd.conf(5) option, recvbufsize, and make
@@ -94,7 +94,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	kernel: Add tmpfs file system. [jmmv 20050910]
 	mount_tmpfs(8): Add utility to mount a tmpfs file system.
 		[jmmv 20050910]
-	kernel/libc: Re-factor compatibility code to hide compatibility
+	kernel, libc: Re-factor compatibility code to hide compatibility
 		info from the header files and to allow libc to compile
 		without the compatibility hooks [christos 20050912]
 	am-utils: Upgrade to 6.1.2.1 [rpaulo 20050920]
@@ -120,7 +120,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[cube 20050930]
 	wpa:	Add wpa_cli and wpa_supplicant.
 		[scw 20051001]
-	Xen:	Improvements to the network backend to avoid data copy when
+	xen:	Improvements to the network backend to avoid data copy when
 		possible. [bouyer 20051002]
 	file(1): update to 4.16.  [pooka 20051018]
 	evbarm: Add support for the Atmark Techno Armadillo-9.
@@ -133,7 +133,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	kernel:	Switch to a stateful read-ahead algorithm. [yamt 20051130]
 	posix_fadvise(2): Add.  (Only POSIX_FADV_NORMAL, POSIX_FADV_RANDOM,
 		and POSIX_FADV_SEQUENTIAL are implemented.) [yamt 20051130]
-	postfix: Updated to 2.2.6. [rpaulo 20051201]
+	postfix(1): Updated to 2.2.6. [rpaulo 20051201]
 	auich(4): Now it supports ICH7 and Intel 6300ESB audio controllers.
 		[xtraeme 20051204]
 	lmc(4): New driver from David Boggs [christos 20051205]
