@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.4 2005/12/29 16:34:43 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.5 2005/12/30 01:21:41 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -115,4 +115,38 @@ lib/libc/gen/getcwd.c				1.41
 	Go back to original behavior as in revision 1.35: return resolved name,
 	but also set errno to ENOENT.
 	[elad, ticket #1068]
+
+sys/dev/pci/azalia.c				1.12-1.15
+sys/dev/pci/azalia.h				1.1-1.3
+sys/dev/pci/azalia_codec.c			1.1-1.3
+sys/dev/pci/files.pci				1.239
+
+	Improve support for ALC880/ALC882 codec.
+	[kent, ticket #916]
+
+sys/dev/ic/rtl81x9reg.h				1.14
+sys/dev/pci/if_re_pci.c				1.12
+
+	PR/32386: Dawid Szymanski (arhea). Add support for the 8169SB chipset.
+	From FreeBSD.
+	[rpaulo, ticket #1070]
+
+sys/kern/kern_subr.c				1.122
+
+	hold kernel_lock while calling systrace_exit().
+	fixes PR 25856.
+	[chs, ticket #1072]
+
+sbin/newfs/newfs.8				1.67 via patch
+
+	Xref newfs_msdos, noted by rabioli on Freenode #NetBSD
+	[hubertf, ticket #1073]
+
+sys/kern/kern_systrace.c			1.50 via patch
+
+	in systrace_make_msg(), sleep uninterruptibly while waiting for
+	the response from the systrace daemon, so that the message protocol
+	between the kernel and the daemon doesn't get out of sync.
+	fixes PR 29654.
+	[chs, ticket #1071]
 
