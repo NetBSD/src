@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2005/12/30 11:40:23 rjs Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2005/12/30 11:41:43 rjs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,8 +59,8 @@
  *  or upgrade. The standard sets are:
  *      base etc comp games man misc text xbase xcomp xetc xfont xserver
  */
-#define SET_KERNEL_1_NAME	"kern-GENERIC"
-#define SET_KERNEL_2_NAME	"kern-TX3912"
+#define SET_KERNEL_1_NAME	"kern-IPAQ"
+#define SET_KERNEL_2_NAME	"kern-JORNADA720"
 
 
 /*
