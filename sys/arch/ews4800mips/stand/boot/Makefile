@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2005/12/29 15:20:09 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2005/12/30 06:00:01 tsutsui Exp $
 
 NOMAN		=
 
@@ -66,7 +66,8 @@ CFLAGS		= ${FLAGS} -ffreestanding
 CPPFLAGS	+= -D_STANDALONE -DSUPPORT_BOOTP
 CPPFLAGS	+= -nostdinc -I${.OBJDIR} -I${.CURDIR} -I${COMMON} -I${S}
 CPPFLAGS	+= -D__daddr_t=int32_t
-#CPPFLAGS	+= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
+#CPPFLAGS	+= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG
+#CPPFLAGS	+= -DRPC_DEBUG -DRARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 
 CLEANFILES	+= ${BINKERNEL_DUMMY_O} ${BINKERNEL_O}
 CLEANFILES	+= ${PROG} ${PROG}.elf ${PROG}.tmp ${PROG}.dis
@@ -107,7 +108,8 @@ ${BINKERNEL_DUMMY_O}: ${BINKERNEL_C}
 	${COMPILE.c} -DKERNEL_SIZE=0 ${BINKERNEL_C} -o ${.TARGET}
 
 ${BINKERNEL_O}: ${BINKERNEL_C}
-	${COMPILE.c} -DKERNEL_SIZE=${BINKERNEL_SIZE} ${BINKERNEL_C} -o ${.TARGET}
+	${COMPILE.c} -DKERNEL_SIZE=${BINKERNEL_SIZE} ${BINKERNEL_C} \
+	    -o ${.TARGET}
 
 all realall: ${BOOT_KERNEL}.gz
 
@@ -118,6 +120,8 @@ ${PROG}: ${BINKERNEL_DUMMY_O} ${OBJS} ${LIBS}
 	mv ${PROG}.elf ${PROG}
 	ls -al ${PROG}
 
+.include <bsd.prog.mk>
+
 ${BOOT_KERNEL}.gz: ${BINKERNEL_O} ${OBJS} ${LIBS} coffhdrfix
 	${LD} ${LDFLAGS} -o ${BOOT_KERNEL}.elf ${OBJS} ${LIBS} \
 	    ${BINKERNEL_O}
@@ -126,7 +130,4 @@ ${BOOT_KERNEL}.gz: ${BINKERNEL_O} ${OBJS} ${LIBS} coffhdrfix
 	mv ${BOOT_KERNEL}.coff ${BOOT_KERNEL}
 	gzip -9c ${BOOT_KERNEL} > ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
-#	-rm -f ${BOOT_KERNEL}.coff
 	ls -al ${BOOT_KERNEL}.gz
-
-.include <bsd.prog.mk>
