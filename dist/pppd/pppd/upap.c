@@ -1,4 +1,4 @@
-/*	$NetBSD: upap.c,v 1.1.1.1 2005/02/20 10:28:53 cube Exp $	*/
+/*	$NetBSD: upap.c,v 1.2 2005/12/31 08:58:50 christos Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: upap.c,v 1.29 2002/12/04 23:03:33 paulus Exp"
 #else
-__RCSID("$NetBSD: upap.c,v 1.1.1.1 2005/02/20 10:28:53 cube Exp $");
+__RCSID("$NetBSD: upap.c,v 1.2 2005/12/31 08:58:50 christos Exp $");
 #endif
 #endif
 
@@ -509,7 +509,6 @@ upap_rauthack(u, inp, id, len)
 
     u->us_clientstate = UPAPCS_OPEN;
 
-    notice("PAP authentication succeeded");
     auth_withpeer_success(u->us_unit, PPP_PAP, 0);
 }
 
