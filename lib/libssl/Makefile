@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2005/11/25 20:28:18 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2005/12/31 00:14:35 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -41,7 +41,7 @@ AFLAGS+=-DOUT
 .endif
 
 # This is from the include/openssl directory; see ../libcrypto/Makefile
-INCS=	dtls1.h ssl.h ssl2.h ssl3.h ssl23.h tls1.h kssl.h pqueue.h pq_compat.h
+INCS=	dtls1.h ssl.h ssl2.h ssl3.h ssl23.h tls1.h kssl.h
 INCSDIR=/usr/include/openssl
 
 # this rebuilds the `srcs.inc' and the .inc files it reads.
