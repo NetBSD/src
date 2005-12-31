@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.96 2005/12/26 18:45:27 perry Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.96.2.1 2005/12/31 11:14:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.96 2005/12/26 18:45:27 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.96.2.1 2005/12/31 11:14:01 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -481,11 +481,11 @@ sendit(struct lwp *l, int s, struct msghdr *mp, int flags, register_t *retsize)
 	so = (struct socket *)fp->f_data;
 	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
-	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_lwp = l;
 	auio.uio_offset = 0;			/* XXX */
 	auio.uio_resid = 0;
+	KASSERT(l == curlwp);
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 	iov = mp->msg_iov;
 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
 #if 0
@@ -688,11 +688,11 @@ recvit(struct lwp *l, int s, struct msghdr *mp, caddr_t namelenp,
 	so = (struct socket *)fp->f_data;
 	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
-	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_lwp = l;
 	auio.uio_offset = 0;			/* XXX */
 	auio.uio_resid = 0;
+	KASSERT(l == curlwp);
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 	iov = mp->msg_iov;
 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
 #if 0

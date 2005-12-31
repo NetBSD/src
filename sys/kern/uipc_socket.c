@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.115 2005/12/27 00:00:29 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.115.2.1 2005/12/31 11:14:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.115 2005/12/27 00:00:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.115.2.1 2005/12/31 11:14:01 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -390,7 +390,7 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	vaddr_t lva, va;
 	int npgs, i, error;
 
-	if (uio->uio_segflg != UIO_USERSPACE)
+	if (VM_MAP_IS_KERNEL(&uio->uio_vmspace->vm_map))
 		return (0);
 
 	if (iov->iov_len < (size_t) space)
@@ -405,13 +405,12 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 
 	/* XXX KDASSERT */
 	KASSERT(npgs <= M_EXT_MAXPAGES);
-	KASSERT(uio->uio_lwp != NULL);
 
 	lva = sokvaalloc(len, so);
 	if (lva == 0)
 		return 0;
 
-	error = uvm_loan(&uio->uio_lwp->l_proc->p_vmspace->vm_map, sva, len,
+	error = uvm_loan(&uio->uio_vmspace->vm_map, sva, len,
 	    m->m_ext.ext_pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		sokvafree(lva, len);
@@ -934,7 +933,7 @@ int
 soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct mbuf **mp0, struct mbuf **controlp, int *flagsp)
 {
-	struct lwp *l;
+	struct lwp *l = curlwp;
 	struct mbuf	*m, **mp;
 	int		flags, len, error, s, offset, moff, type, orig_resid;
 	const struct protosw	*pr;
@@ -945,7 +944,6 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	mp = mp0;
 	type = 0;
 	orig_resid = uio->uio_resid;
-	l = uio->uio_lwp;
 
 	if (paddr)
 		*paddr = 0;

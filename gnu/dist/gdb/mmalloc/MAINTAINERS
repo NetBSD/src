@@ -1,5 +1,0 @@
-The mmalloc directory is maintained by the GDB group's Host
-maintainers.
-
-This code is in a maintain-only phase - only configury patches fixing
-host compile problems are generally accepted.

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.211 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: proc.h,v 1.211.2.1 2005/12/31 11:14:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -486,6 +486,8 @@ void	proclist_unlock_read(void);
 int	proclist_lock_write(void);
 void	proclist_unlock_write(int);
 void	p_sugid(struct proc *);
+
+int	proc_vmspace_getref(struct proc *, struct vmspace **);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);

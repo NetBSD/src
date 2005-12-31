@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.45 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.45.2.1 2005/12/31 11:14:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.45 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.45.2.1 2005/12/31 11:14:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ soo_write(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
     int flags)
 {
 	struct socket *so = (struct socket *) fp->f_data;
-	return ((*so->so_send)(so, (struct mbuf *)0,
-		uio, (struct mbuf *)0, (struct mbuf *)0, 0, uio->uio_lwp));
+	return (*so->so_send)(so, (struct mbuf *)0,
+		uio, (struct mbuf *)0, (struct mbuf *)0, 0, curlwp);
 }
 
 int

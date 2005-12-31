@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.97 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.97.2.1 2005/12/31 11:14:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.97 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.97.2.1 2005/12/31 11:14:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	struct iovec iov;
 	struct ptrace_io_desc piod;
 	struct ptrace_lwpinfo pl;
+	struct vmspace *vm;
 	int s, error, write, tmp, size;
 	char *path;
 
@@ -311,9 +312,8 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		uio.uio_iovcnt = 1;
 		uio.uio_offset = (off_t)(unsigned long)SCARG(uap, addr);
 		uio.uio_resid = sizeof(tmp);
-		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-		uio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&uio);
 		error = process_domem(l, lt, &uio);
 		if (!write)
 			*retval = tmp;
@@ -329,8 +329,11 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		uio.uio_iovcnt = 1;
 		uio.uio_offset = (off_t)(unsigned long)piod.piod_offs;
 		uio.uio_resid = piod.piod_len;
-		uio.uio_segflg = UIO_USERSPACE;
-		uio.uio_lwp = l;
+		error = proc_vmspace_getref(l->l_proc, &vm);
+		if (error) {
+			return error;
+		}
+		uio.uio_vmspace = vm;
 		switch (piod.piod_op) {
 		case PIOD_READ_D:
 		case PIOD_READ_I:
@@ -346,6 +349,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		error = process_domem(l, lt, &uio);
 		piod.piod_len -= uio.uio_resid;
 		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
+		uvmspace_free(vm);
 		return (error);
 
 	case  PT_DUMPCORE:
@@ -526,16 +530,21 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		if (!process_validregs(proc_representative_lwp(t)))
 			return (EINVAL);
 		else {
+			error = proc_vmspace_getref(l->l_proc, &vm);
+			if (error) {
+				return error;
+			}
 			iov.iov_base = SCARG(uap, addr);
 			iov.iov_len = sizeof(struct reg);
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
 			uio.uio_offset = 0;
 			uio.uio_resid = sizeof(struct reg);
-			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-			uio.uio_lwp = l;
-			return (process_doregs(l, lt, &uio));
+			uio.uio_vmspace = vm;
+			error = process_doregs(l, lt, &uio);
+			uvmspace_free(vm);
+			return error;
 		}
 #endif
 
@@ -559,16 +568,21 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		if (!process_validfpregs(proc_representative_lwp(t)))
 			return (EINVAL);
 		else {
+			error = proc_vmspace_getref(l->l_proc, &vm);
+			if (error) {
+				return error;
+			}
 			iov.iov_base = SCARG(uap, addr);
 			iov.iov_len = sizeof(struct fpreg);
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
 			uio.uio_offset = 0;
 			uio.uio_resid = sizeof(struct fpreg);
-			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-			uio.uio_lwp = l;
-			return (process_dofpregs(l, lt, &uio));
+			uio.uio_vmspace = vm;
+			error = process_dofpregs(l, lt, &uio);
+			uvmspace_free(vm);
+			return error;
 		}
 #endif
 

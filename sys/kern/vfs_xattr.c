@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.4 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.4.2.1 2005/12/31 11:14:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.4 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.4.2.1 2005/12/31 11:14:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,8 +245,8 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	}
 	auio.uio_resid = nbytes;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	KASSERT(l == curlwp);
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 	cnt = nbytes;
 
 	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio,
@@ -297,8 +297,8 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		}
 		auio.uio_resid = nbytes;
 		auio.uio_rw = UIO_READ;
-		auio.uio_segflg = UIO_USERSPACE;
-		auio.uio_lwp = l;
+		KASSERT(l == curlwp);
+		auio.uio_vmspace = l->l_proc->p_vmspace;
 		auiop = &auio;
 		cnt = nbytes;
 	} else
@@ -378,8 +378,8 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 		}
 		auio.uio_resid = nbytes;
 		auio.uio_rw = UIO_READ;
-		auio.uio_segflg = UIO_USERSPACE;
-		auio.uio_lwp = l;
+		KASSERT(l == curlwp);
+		auio.uio_vmspace = l->l_proc->p_vmspace;
 		auiop = &auio;
 		cnt = nbytes;
 	} else

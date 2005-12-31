@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.33 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: uio.h,v 1.33.2.1 2005/12/31 11:14:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -81,10 +81,10 @@ struct uio {
 	int	uio_iovcnt;	/* number of iovecs in array */
 	off_t	uio_offset;	/* offset into file this uio corresponds to */
 	size_t	uio_resid;	/* residual i/o count */
-	enum	uio_seg uio_segflg; /* see above */
 	enum	uio_rw uio_rw;	/* see above */
-	struct	lwp *uio_lwp;	/* LWP if UIO_USERSPACE */
+	struct	vmspace *uio_vmspace;
 };
+#define	UIO_SETUP_SYSSPACE(uio)	(uio)->uio_vmspace = proc0.p_vmspace
 
 #endif /* __UIO_EXPOSE */
 
