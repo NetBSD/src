@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2005/12/31 14:09:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2005/12/31 14:09:02 hannken Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -153,6 +153,22 @@ set_tlb(int idx, u_int addr, u_int flags)
 	    : : "r" (idx), "r" (lo), "r" (hi) );
 }
 
+/*
+ * Install a trap vector. We cannot use memcpy because the
+ * destination may be zero.
+ */
+static void
+trap_copy(void *src, int dest, size_t len)
+{
+	uint32_t *src_p = src;
+	uint32_t *dest_p = (void *)dest;
+
+	while (len > 0) {
+		*dest_p++ = *src_p++;
+		len -= sizeof(uint32_t);
+	}
+}
+
 void
 bootstrap(u_int startkernel, u_int endkernel)
 {
@@ -240,10 +256,10 @@ bootstrap(u_int startkernel, u_int endkernel)
 	 */
 
 	for (i = EXC_RSVD; i <= EXC_LAST; i += 0x100)
-		memcpy((void *)i, &defaulttrap, (size_t)&defaultsize);
+		trap_copy(&defaulttrap, i, (size_t)&defaultsize);
 
 	for (i = 0; i < sizeof(trap_table)/sizeof(trap_table[0]); i++) {
-		memcpy((void *)trap_table[i].vector, trap_table[i].addr,
+		trap_copy(trap_table[i].addr, trap_table[i].vector,
 		    (size_t)trap_table[i].size);
 	}
 
