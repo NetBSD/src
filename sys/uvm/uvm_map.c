@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.206 2005/12/24 20:45:10 perry Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.206.2.1 2005/12/31 11:21:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.206 2005/12/24 20:45:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.206.2.1 2005/12/31 11:21:26 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3654,12 +3654,9 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax)
 void
 uvmspace_share(struct proc *p1, struct proc *p2)
 {
-	struct simplelock *slock = &p1->p_vmspace->vm_map.ref_lock;
 
+	uvmspace_addref(p1->p_vmspace);
 	p2->p_vmspace = p1->p_vmspace;
-	simple_lock(slock);
-	p1->p_vmspace->vm_refcnt++;
-	simple_unlock(slock);
 }
 
 /*
@@ -3766,6 +3763,23 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 
 		uvmspace_free(ovm);
 	}
+}
+
+/*
+ * uvmspace_addref: add a referece to a vmspace.
+ */
+
+void
+uvmspace_addref(struct vmspace *vm)
+{
+	struct vm_map *map = &vm->vm_map;
+
+	KASSERT((map->flags & VM_MAP_DYING) == 0);
+
+	simple_lock(&map->ref_lock);
+	KASSERT(vm->vm_refcnt > 0);
+	vm->vm_refcnt++;
+	simple_unlock(&map->ref_lock);
 }
 
 /*
