@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.123.2.3 2005/12/31 11:34:25 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.123.2.4 2005/12/31 16:08:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.123.2.3 2005/12/31 11:34:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.123.2.4 2005/12/31 16:08:22 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -167,21 +167,17 @@ uiomove(void *buf, size_t n, struct uio *uio)
 			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(1);
-			if (uio->uio_rw == UIO_READ)
-				error = copyout_vmspace(vm, cp, iov->iov_base,
-				    cnt);
-			else
-				error = copyin_vmspace(vm, iov->iov_base, cp,
-				    cnt);
-			if (error)
-				goto out;
+		}
+
+		if (uio->uio_rw == UIO_READ) {
+			error = copyout_vmspace(vm, cp, iov->iov_base,
+			    cnt);
 		} else {
-			if (uio->uio_rw == UIO_READ)
-				error = kcopy(cp, iov->iov_base, cnt);
-			else
-				error = kcopy(iov->iov_base, cp, cnt);
-			if (error)
-				goto out;
+			error = copyin_vmspace(vm, iov->iov_base, cp,
+			    cnt);
+		}
+		if (error) {
+			break;
 		}
 		iov->iov_base = (caddr_t)iov->iov_base + cnt;
 		iov->iov_len -= cnt;
@@ -191,7 +187,6 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		KDASSERT(cnt <= n);
 		n -= cnt;
 	}
-out:
 	KERNEL_LOCK_ACQUIRE_COUNT(hold_count);
 	return (error);
 }
@@ -258,8 +253,12 @@ copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
 	if (len == 0)
 		return (0);
 
-	if (__predict_true(vm == curproc->p_vmspace))
+	if (VMSPACE_IS_KERNEL(vm)) {
+		return kcopy(uaddr, kaddr, len);
+	}
+	if (__predict_true(vm == curproc->p_vmspace)) {
 		return copyin(uaddr, kaddr, len);
+	}
 
 	iov.iov_base = kaddr;
 	iov.iov_len = len;
@@ -287,8 +286,12 @@ copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
 	if (len == 0)
 		return (0);
 
-	if (__predict_true(vm == curproc->p_vmspace))
+	if (VMSPACE_IS_KERNEL(vm)) {
+		return kcopy(kaddr, uaddr, len);
+	}
+	if (__predict_true(vm == curproc->p_vmspace)) {
 		return copyout(kaddr, uaddr, len);
+	}
 
 	iov.iov_base = __UNCONST(kaddr); /* XXXUNCONST cast away const */
 	iov.iov_len = len;
