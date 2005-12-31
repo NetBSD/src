@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.10 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.11 2005/12/31 14:07:32 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ set_sint(pending)
 
 #define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
 
-#define	splraiseipl(x)	splraise(x)
+#define	splraiseipl(x)	splraise(imask[x])
 
 #include <sys/spl.h>
 
