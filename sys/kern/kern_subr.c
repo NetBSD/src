@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.123.2.2 2005/12/31 11:21:51 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.123.2.3 2005/12/31 11:34:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.123.2.2 2005/12/31 11:21:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.123.2.3 2005/12/31 11:34:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -163,7 +163,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		}
 		if (cnt > n)
 			cnt = n;
-		if (!VMSPACE_IS_KERNEL(&vm->vm_map)) {
+		if (!VMSPACE_IS_KERNEL(vm)) {
 			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(1);
@@ -232,7 +232,7 @@ again:
 		uio->uio_iov++;
 		goto again;
 	}
-	if (!VMSPACE_IS_KERNEL(&uio->uio_vmspace->vm_map)) {
+	if (!VMSPACE_IS_KERNEL(uio->uio_vmspace)) {
 		if (subyte(iov->iov_base, c) < 0)
 			return (EFAULT);
 	} else {
