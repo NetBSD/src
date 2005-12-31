@@ -1,4 +1,4 @@
-/*	$NetBSD: ccp.c,v 1.1.1.1 2005/02/20 10:28:37 cube Exp $	*/
+/*	$NetBSD: ccp.c,v 1.2 2005/12/31 08:58:50 christos Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -35,7 +35,7 @@
 #if 0
 #define RCSID	"Id: ccp.c,v 1.48 2004/11/13 02:28:15 paulus Exp"
 #else
-__RCSID("$NetBSD: ccp.c,v 1.1.1.1 2005/02/20 10:28:37 cube Exp $");
+__RCSID("$NetBSD: ccp.c,v 1.2 2005/12/31 08:58:50 christos Exp $");
 #endif
 #endif
 
@@ -1169,8 +1169,11 @@ ccp_reqci(f, p, lenp, dont_nak)
 		    }
 		} else {
 		    /* Neither are set. */
-		    newret = CONFREJ;
-		    break;
+		    /* We cannot accept this.  */
+		    newret = CONFNAK;
+		    /* Give the peer our idea of what can be used,
+		       so it can choose and confirm */
+		    ho->mppe = ao->mppe;
 		}
 
 		/* rebuild the opts */

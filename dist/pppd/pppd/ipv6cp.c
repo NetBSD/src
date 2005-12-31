@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -145,7 +145,7 @@
 #if 0
 #define RCSID	"Id: ipv6cp.c,v 1.20 2004/11/13 02:28:15 paulus Exp"
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.3 2005/12/31 08:58:50 christos Exp $");
 #endif
 #endif
 
@@ -1432,7 +1432,8 @@ ipv6cp_script(script)
     argv[6] = ipparam;
     argv[7] = NULL;
 
-    ipv6cp_script_pid = run_program(script, argv, 0, ipv6cp_script_done, NULL);
+    ipv6cp_script_pid = run_program(script, argv, 0, ipv6cp_script_done,
+				    NULL, 0);
 }
 
 /*

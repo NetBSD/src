@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -73,7 +73,7 @@
 #if 0
 #define RCSID	"Id: main.c,v 1.148 2004/11/13 12:05:48 paulus Exp"
 #else
-__RCSID("$NetBSD: main.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2005/12/31 08:58:50 christos Exp $");
 #endif
 #endif
 
@@ -242,7 +242,6 @@ static void create_pidfile __P((int pid));
 static void create_linkpidfile __P((int pid));
 static void cleanup __P((void));
 static void get_input __P((void));
-static const char *protocol_name __P((int));
 static void calltimeout __P((void));
 static struct timeval *timeleft __P((struct timeval *));
 static void kill_my_pg __P((int));
@@ -493,14 +492,8 @@ main(argc, argv)
 	/*
 	 * Open the loopback channel and set it up to be the ppp interface.
 	 */
-#ifdef USE_TDB
-	tdb_writelock(pppdb);
-#endif
 	fd_loop = open_ppp_loopback();
 	set_ifunit(1);
-#ifdef USE_TDB
-	tdb_writeunlock(pppdb);
-#endif
 	/*
 	 * Configure the interface and mark it up, etc.
 	 */
@@ -551,6 +544,7 @@ main(argc, argv)
 	script_unsetenv("BYTES_RCVD");
 
 	lcp_open(0);		/* Start protocol */
+	start_link(0);
 	while (phase != PHASE_DEAD) {
 	    handle_events();
 	    get_input();
@@ -568,6 +562,8 @@ main(argc, argv)
 		}
 	    }
 	}
+	/* restore FSMs to original state */
+	lcp_close(0, "");
 
 	if (!persist || asked_to_quit || (maxfail > 0 && unsuccess >= maxfail))
 	    break;
@@ -906,14 +902,54 @@ struct protocol_list {
     { 0x4b,	"SNA over 802.2" },
     { 0x4d,	"SNA" },
     { 0x4f,	"IP6 Header Compression" },
+    { 0x51,	"KNX Bridging Data" },
+    { 0x53,	"Encryption" },
+    { 0x55,	"Individual Link Encryption" },
+    { 0x57,	"IPv6" },
+    { 0x59,	"PPP Muxing" },
+    { 0x5b,	"Vendor-Specific Network Protocol" },
+    { 0x61,	"RTP IPHC Full Header" },
+    { 0x63,	"RTP IPHC Compressed TCP" },
+    { 0x65,	"RTP IPHC Compressed non-TCP" },
+    { 0x67,	"RTP IPHC Compressed UDP 8" },
+    { 0x69,	"RTP IPHC Compressed RTP 8" },
     { 0x6f,	"Stampede Bridging" },
+    { 0x73,	"MP+" },
+    { 0xc1,	"NTCITS IPI" },
     { 0xfb,	"single-link compression" },
-    { 0xfd,	"1st choice compression" },
+    { 0xfd,	"Compressed Datagram" },
     { 0x0201,	"802.1d Hello Packets" },
     { 0x0203,	"IBM Source Routing BPDU" },
     { 0x0205,	"DEC LANBridge100 Spanning Tree" },
+    { 0x0207,	"Cisco Discovery Protocol" },
+    { 0x0209,	"Netcs Twin Routing" },
+    { 0x020b,	"STP - Scheduled Transfer Protocol" },
+    { 0x020d,	"EDP - Extreme Discovery Protocol" },
+    { 0x0211,	"Optical Supervisory Channel Protocol" },
+    { 0x0213,	"Optical Supervisory Channel Protocol" },
     { 0x0231,	"Luxcom" },
     { 0x0233,	"Sigma Network Systems" },
+    { 0x0235,	"Apple Client Server Protocol" },
+    { 0x0281,	"MPLS Unicast" },
+    { 0x0283,	"MPLS Multicast" },
+    { 0x0285,	"IEEE p1284.4 standard - data packets" },
+    { 0x0287,	"ETSI TETRA Network Protocol Type 1" },
+    { 0x0289,	"Multichannel Flow Treatment Protocol" },
+    { 0x2063,	"RTP IPHC Compressed TCP No Delta" },
+    { 0x2065,	"RTP IPHC Context State" },
+    { 0x2067,	"RTP IPHC Compressed UDP 16" },
+    { 0x2069,	"RTP IPHC Compressed RTP 16" },
+    { 0x4001,	"Cray Communications Control Protocol" },
+    { 0x4003,	"CDPD Mobile Network Registration Protocol" },
+    { 0x4005,	"Expand accelerator protocol" },
+    { 0x4007,	"ODSICP NCP" },
+    { 0x4009,	"DOCSIS DLL" },
+    { 0x400B,	"Cetacean Network Detection Protocol" },
+    { 0x4021,	"Stacker LZS" },
+    { 0x4023,	"RefTek Protocol" },
+    { 0x4025,	"Fibre Channel" },
+    { 0x4027,	"EMIT Protocols" },
+    { 0x405b,	"Vendor-Specific Protocol (VSP)" },
     { 0x8021,	"Internet Protocol Control Protocol" },
     { 0x8023,	"OSI Network Layer Control Protocol" },
     { 0x8025,	"Xerox NS IDP Control Protocol" },
@@ -933,24 +969,50 @@ struct protocol_list {
     { 0x804b,	"SNA over 802.2 Control Protocol" },
     { 0x804d,	"SNA Control Protocol" },
     { 0x804f,	"IP6 Header Compression Control Protocol" },
-    { 0x006f,	"Stampede Bridging Control Protocol" },
+    { 0x8051,	"KNX Bridging Control Protocol" },
+    { 0x8053,	"Encryption Control Protocol" },
+    { 0x8055,	"Individual Link Encryption Control Protocol" },
+    { 0x8057,	"IPv6 Control Protovol" },
+    { 0x8059,	"PPP Muxing Control Protocol" },
+    { 0x805b,	"Vendor-Specific Network Control Protocol (VSNCP)" },
+    { 0x806f,	"Stampede Bridging Control Protocol" },
+    { 0x8073,	"MP+ Control Protocol" },
+    { 0x80c1,	"NTCITS IPI Control Protocol" },
     { 0x80fb,	"Single Link Compression Control Protocol" },
     { 0x80fd,	"Compression Control Protocol" },
+    { 0x8207,	"Cisco Discovery Protocol Control" },
+    { 0x8209,	"Netcs Twin Routing" },
+    { 0x820b,	"STP - Control Protocol" },
+    { 0x820d,	"EDPCP - Extreme Discovery Protocol Ctrl Prtcl" },
+    { 0x8235,	"Apple Client Server Protocol Control" },
+    { 0x8281,	"MPLSCP" },
+    { 0x8285,	"IEEE p1284.4 standard - Protocol Control" },
+    { 0x8287,	"ETSI TETRA TNP1 Control Protocol" },
+    { 0x8289,	"Multichannel Flow Treatment Protocol" },
     { 0xc021,	"Link Control Protocol" },
     { 0xc023,	"Password Authentication Protocol" },
     { 0xc025,	"Link Quality Report" },
     { 0xc027,	"Shiva Password Authentication Protocol" },
     { 0xc029,	"CallBack Control Protocol (CBCP)" },
+    { 0xc02b,	"BACP Bandwidth Allocation Control Protocol" },
+    { 0xc02d,	"BAP" },
+    { 0xc05b,	"Vendor-Specific Authentication Protocol (VSAP)" },
     { 0xc081,	"Container Control Protocol" },
     { 0xc223,	"Challenge Handshake Authentication Protocol" },
+    { 0xc225,	"RSA Authentication Protocol" },
+    { 0xc227,	"Extensible Authentication Protocol" },
+    { 0xc229,	"Mitsubishi Security Info Exch Ptcl (SIEP)" },
+    { 0xc26f,	"Stampede Bridging Authorization Protocol" },
     { 0xc281,	"Proprietary Authentication Protocol" },
+    { 0xc283,	"Proprietary Authentication Protocol" },
+    { 0xc481,	"Proprietary Node ID Authentication Protocol" },
     { 0,	NULL },
 };
 
 /*
  * protocol_name - find a name for a PPP protocol.
  */
-static const char *
+const char *
 protocol_name(proto)
     int proto;
 {
@@ -1610,7 +1672,7 @@ device_script(program, in, out, dont_wait)
 
 /*
  * run-program - execute a program with given arguments,
- * but don't wait for it.
+ * but don't wait for it unless wait is non-zero.
  * If the program can't be executed, logs an error unless
  * must_exist is 0 and the program file doesn't exist.
  * Returns -1 if it couldn't fork, 0 if the file doesn't exist
@@ -1619,14 +1681,15 @@ device_script(program, in, out, dont_wait)
  * reap_kids) iff the return value is > 0.
  */
 pid_t
-run_program(prog, args, must_exist, done, arg)
+run_program(prog, args, must_exist, done, arg, wait)
     char *prog;
     char **args;
     int must_exist;
     void (*done) __P((void *));
     void *arg;
+    int wait;
 {
-    int pid;
+    int pid, status;
     struct stat sbuf;
 
     /*
@@ -1652,6 +1715,14 @@ run_program(prog, args, must_exist, done, arg)
 	if (debug)
 	    dbglog("Script %s started (pid %d)", prog, pid);
 	record_child(pid, prog, done, arg);
+	if (wait) {
+	    while (waitpid(pid, &status, 0) < 0) {
+		if (errno == EINTR)
+		    continue;
+		fatal("error waiting for script %s: %m", prog);
+	    }
+	    reap_kids();
+	}
 	return pid;
     }
 
@@ -1677,7 +1748,7 @@ run_program(prog, args, must_exist, done, arg)
 	syslog(LOG_ERR, "Can't execute %s: %m", prog);
 	closelog();
     }
-    _exit(1);
+    _exit(-1);
 }
 
 
@@ -1934,6 +2005,49 @@ script_unsetenv(var)
 #ifdef USE_TDB
     if (pppdb != NULL)
 	update_db_entry();
+#endif
+}
+
+/*
+ * Any arbitrary string used as a key for locking the database.
+ * It doesn't matter what it is as long as all pppds use the same string.
+ */
+#define PPPD_LOCK_KEY	"pppd lock"
+
+/*
+ * lock_db - get an exclusive lock on the TDB database.
+ * Used to ensure atomicity of various lookup/modify operations.
+ */
+void lock_db()
+{
+#ifdef USE_TDB
+#ifdef notyet
+	TDB_DATA key;
+
+	key.dptr = PPPD_LOCK_KEY;
+	key.dsize = strlen(key.dptr);
+	tdb_chainlock(pppdb, key);
+#else
+	tdb_writelock(pppdb);
+#endif
+#endif
+}
+
+/*
+ * unlock_db - remove the exclusive lock obtained by lock_db.
+ */
+void unlock_db()
+{
+#ifdef USE_TDB
+#ifdef notyet
+	TDB_DATA key;
+
+	key.dptr = PPPD_LOCK_KEY;
+	key.dsize = strlen(key.dptr);
+	tdb_chainunlock(pppdb, key);
+#else
+	tdb_writeunlock(pppdb);
+#endif
 #endif
 }
 

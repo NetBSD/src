@@ -1,4 +1,4 @@
-/*	$NetBSD: ipxcp.c,v 1.1.1.1 2005/02/20 10:28:47 cube Exp $	*/
+/*	$NetBSD: ipxcp.c,v 1.2 2005/12/31 08:58:50 christos Exp $	*/
 
 /*
  * ipxcp.c - PPP IPX Control Protocol.
@@ -49,7 +49,7 @@
 #if 0
 #define RCSID	"Id: ipxcp.c,v 1.23 2004/11/13 02:28:15 paulus Exp"
 #else
-__RCSID("$NetBSD: ipxcp.c,v 1.1.1.1 2005/02/20 10:28:47 cube Exp $");
+__RCSID("$NetBSD: ipxcp.c,v 1.2 2005/12/31 08:58:50 christos Exp $");
 #endif
 #endif
 
@@ -1469,7 +1469,7 @@ ipxcp_script(f, script)
     argv[11] = ipparam;
     argv[12] = strpid;
     argv[13] = NULL;
-    run_program(script, argv, 0, NULL, NULL);
+    run_program(script, argv, 0, NULL, NULL, 0);
 }
 
 /*

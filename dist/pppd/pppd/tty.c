@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
+/*	$NetBSD: tty.c,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
 
 /*
  * tty.c - code for handling serial ports in pppd.
@@ -75,7 +75,7 @@
 #if 0
 #define RCSID	"Id: tty.c,v 1.22 2004/11/13 12:07:29 paulus Exp"
 #else
-__RCSID("$NetBSD: tty.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
+__RCSID("$NetBSD: tty.c,v 1.3 2005/12/31 08:58:50 christos Exp $");
 #endif
 #endif
 
@@ -763,14 +763,6 @@ int connect_tty()
 		close(pty_master);
 		pty_master = -1;
 	}
-	if (pty_slave >= 0) {
-		close(pty_slave);
-		pty_slave = -1;
-	}
-	if (real_ttyfd >= 0) {
-		close(real_ttyfd);
-		real_ttyfd = -1;
-	}
 	ttyfd = -1;
 	if (got_sigterm)
 		asked_to_quit = 1;
@@ -789,6 +781,7 @@ void disconnect_tty()
 	} else {
 		info("Serial link disconnected.");
 	}
+	stop_charshunt(NULL, 0);
 }
 
 void tty_close_fds()
@@ -952,7 +945,6 @@ start_charshunt(ifd, ofd)
 	exit(0);
     }
     charshunt_pid = cpid;
-    add_notifier(&sigreceived, stop_charshunt, 0);
     record_child(cpid, "pppd (charshunt)", charshunt_done, NULL);
     return 1;
 }

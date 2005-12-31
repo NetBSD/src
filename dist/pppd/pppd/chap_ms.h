@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.h,v 1.1.1.1 2005/02/20 10:28:42 cube Exp $	*/
+/*	$NetBSD: chap_ms.h,v 1.2 2005/12/31 08:58:50 christos Exp $	*/
 
 /*
  * chap_ms.h - Challenge Handshake Authentication Protocol definitions.
@@ -51,36 +51,23 @@
 #define MS_CHAP_ERROR_CHANGING_PASSWORD		709
 
 /*
- * Apparently gcc on ARM gives all structures 4-byte alignment
- * by default.  This tells gcc that these structures may be
- * unaligned and may not have extra padding inside them.
+ * Offsets within the response field for MS-CHAP
  */
-#ifdef __GNUC__
-#define PACKED	__attribute__((__packed__))
-#else
-#define PACKED
-#endif
+#define MS_CHAP_LANMANRESP	0
+#define MS_CHAP_LANMANRESP_LEN	24
+#define MS_CHAP_NTRESP		24
+#define MS_CHAP_NTRESP_LEN	24
+#define MS_CHAP_USENT		48
 
 /*
- * Use MS_CHAP_RESPONSE_LEN, rather than sizeof(MS_ChapResponse),
- * in case this struct gets padded.
+ * Offsets within the response field for MS-CHAP2
  */
-typedef struct {
-    u_char LANManResp[24];
-    u_char NTResp[24];
-    u_char UseNT[1];		/* If 1, ignore the LANMan response field */
-} MS_ChapResponse PACKED;
-
-/*
- * Use MS_CHAP2_RESPONSE_LEN, rather than sizeof(MS_Chap2Response),
- * in case this struct gets padded.
- */
-typedef struct {
-    u_char PeerChallenge[16];
-    u_char Reserved[8];		/* Must be zero */
-    u_char NTResp[24];
-    u_char Flags[1];		/* Must be zero */
-} MS_Chap2Response PACKED;
+#define MS_CHAP2_PEER_CHALLENGE	0
+#define MS_CHAP2_PEER_CHAL_LEN	16
+#define MS_CHAP2_RESERVED_LEN	8
+#define MS_CHAP2_NTRESP		24
+#define MS_CHAP2_NTRESP_LEN	24
+#define MS_CHAP2_FLAGS		48
 
 #ifdef MPPE
 #include <net/ppp-comp.h>	/* MPPE_MAX_KEY_LEN */
@@ -102,9 +89,9 @@ extern void set_mppe_enc_types(int, int);
 #define MS_CHAP2_AUTHENTICATEE 0
 #define MS_CHAP2_AUTHENTICATOR 1
 
-void ChapMS __P((u_char *, char *, int, MS_ChapResponse *));
+void ChapMS __P((u_char *, char *, int, u_char *));
 void ChapMS2 __P((u_char *, u_char *, char *, char *, int,
-		  MS_Chap2Response *, u_char[MS_AUTH_RESPONSE_LENGTH+1], int));
+		  u_char *, u_char[MS_AUTH_RESPONSE_LENGTH+1], int));
 #ifdef MPPE
 void mppe_set_keys __P((u_char *, u_char[MD4_SIGNATURE_SIZE]));
 void mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
