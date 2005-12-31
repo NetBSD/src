@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.29 2005/12/11 12:24:30 christos Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.29.2.1 2005/12/31 11:14:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.29 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.29.2.1 2005/12/31 11:14:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,9 +181,8 @@ unionread:
 		uio.uio_iovcnt = 1;
 		uio.uio_offset = off;
 		uio.uio_resid = dirbuflen;
-		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_READ;
-		uio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&uio);
 
 		eofflag = 0;
 

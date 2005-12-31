@@ -1,3 +1,0 @@
-# Host: UltraSPARC running NetBSD
-NATDEPFILES= fork-child.o infptrace.o inftarg.o sparc64nbsd-nat.o
-NAT_FILE= nm-nbsd.h

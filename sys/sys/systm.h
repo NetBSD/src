@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.183 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: systm.h,v 1.183.2.1 2005/12/31 11:14:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -83,6 +83,7 @@ struct timeval;
 struct tty;
 struct uio;
 struct vnode;
+struct vmspace;
 
 extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
@@ -247,6 +248,8 @@ typedef int	(*copyout_t)(const void *, void *, size_t);
 
 int	copyin_proc(struct proc *, const void *, void *, size_t);
 int	copyout_proc(struct proc *, const void *, void *, size_t);
+int	copyin_vmspace(struct vmspace *, const void *, void *, size_t);
+int	copyout_vmspace(struct vmspace *, const void *, void *, size_t);
 
 int	ioctl_copyin(int ioctlflags, const void *src, void *dst, size_t len);
 int	ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len);

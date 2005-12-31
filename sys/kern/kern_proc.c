@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.85 2005/12/26 18:45:27 perry Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.85.2.1 2005/12/31 11:14:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.85 2005/12/26 18:45:27 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.85.2.1 2005/12/31 11:14:01 yamt Exp $");
 
 #include "opt_kstack.h"
 
@@ -1230,4 +1230,21 @@ proclist_foreach_call(struct proclist *list,
 	PRELE(l);
 
 	return ret;
+}
+
+int
+proc_vmspace_getref(struct proc *p, struct vmspace **vm)
+{
+
+	/* XXXCDC: how should locking work here? */
+
+	if ((p->p_flag & P_WEXIT) != 0 ||
+	    (p->p_vmspace->vm_refcnt < 1)) { /* XXX */
+		return EFAULT;
+	}
+
+	uvmspace_addref(p->p_vmspace);
+	*vm = p->p_vmspace;
+
+	return 0;
 }
