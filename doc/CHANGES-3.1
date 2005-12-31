@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.5 2005/12/30 01:21:41 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.6 2005/12/31 16:42:07 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -149,4 +149,9 @@ sys/kern/kern_systrace.c			1.50 via patch
 	between the kernel and the daemon doesn't get out of sync.
 	fixes PR 29654.
 	[chs, ticket #1071]
+
+sys/arch/i386/i386/est.c			1.13
+
+	PR kern/32418: Support for the Pentium M 770.
+	[xtraeme, ticket #1075]
 
