@@ -1,8 +1,8 @@
-# $NetBSD: shl.mi,v 1.330 2005/12/30 23:07:32 agc Exp $
+# $NetBSD: shl.mi,v 1.331 2005/12/31 07:02:05 christos Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.136				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
-./lib/libcrypto.so.3.0				base-crypto-shlib	crypto
+./lib/libcrypto.so.3.1				base-crypto-shlib	crypto
 ./lib/libedit.so.2.9				base-sys-shlib
 ./lib/libevent.so.1.0				base-sys-shlib
 ./lib/libipsec.so.2.1				base-net-shlib
@@ -38,7 +38,7 @@
 ./usr/lib/libcdk.so.1.0				base-sys-shlib
 ./usr/lib/libcom_err.so.4.1			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.0.2			base-sys-shlib
-./usr/lib/libcrypto.so.3.0			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.3.1			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so.6.1			base-sys-shlib
 ./usr/lib/libdes.so.7.0				base-crypto-shlib	crypto
 ./usr/lib/libedit.so.2.9			base-sys-shlib
