@@ -1,6 +1,0 @@
-# $NetBSD: mapper.dir.CNS.src,v 1.1 2005/03/27 22:30:06 tnozaki Exp $
-
-CNS11643-1/UCS		mapper_std	CNS/CNS11643-1%UCS.mps
-CNS11643-2/UCS		mapper_std	CNS/CNS11643-2%UCS.mps
-UCS/CNS11643-1		mapper_std	CNS/UCS%CNS11643-1.mps
-UCS/CNS11643-2		mapper_std	CNS/UCS%CNS11643-2.mps

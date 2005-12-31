@@ -1,8 +1,0 @@
-# configuration for Darwin host
-
-# Show we need to use the C version of ALLOCA
-ALLOCA=alloca.o
-
-# Some of the code in GCC makes Darwin's pre-compiled header support
-# croak; disable it.
-X_CFLAGS = -no-cpp-precomp

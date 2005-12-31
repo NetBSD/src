@@ -1,3 +1,0 @@
-# $NetBSD: gcc.mi,v 1.4 2004/01/11 10:24:58 lukem Exp $
-./usr/libexec/cpp0				base-obsolete		obsolete
-./usr/sbin/dbsym				base-sysutil-bin	bfd

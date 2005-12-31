@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.84 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.84.2.1 2005/12/31 11:14:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.84 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.84.2.1 2005/12/31 11:14:01 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.84 2005/12/11 12:24:30 christos Ex
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_extern.h>
 
 int selscan(struct lwp *, fd_mask *, fd_mask *, int, register_t *);
 int pollscan(struct lwp *, struct pollfd *, int, register_t *);
@@ -109,13 +111,18 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	struct iovec aiov;
 	struct uio auio;
 	struct proc *p;
+	struct vmspace *vm;
 	size_t cnt;
 	int error;
 #ifdef KTRACE
 	struct iovec	ktriov = {0};
 #endif
 	p = l->l_proc;
-	error = 0;
+
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		goto out;
+	}
 
 	aiov.iov_base = (caddr_t)buf;
 	aiov.iov_len = nbyte;
@@ -123,8 +130,7 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = nbyte;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = vm;
 
 	/*
 	 * Reads return ssize_t because -1 is returned on error.  Therefore
@@ -157,6 +163,7 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	*retval = cnt;
  out:
 	FILE_UNUSE(fp, l);
+	uvmspace_free(vm);
 	return (error);
 }
 
@@ -202,6 +209,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	struct proc *p;
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
+	struct vmspace	*vm;
 	int		i, error;
 	size_t		cnt;
 	u_int		iovlen;
@@ -210,7 +218,11 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 #endif
 
 	p = l->l_proc;
-	error = 0;
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		goto out;
+	}
+
 #ifdef KTRACE
 	ktriov = NULL;
 #endif
@@ -234,8 +246,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = vm;
 	error = copyin(iovp, iov, iovlen);
 	if (error)
 		goto done;
@@ -282,6 +293,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 		free(needfree, M_IOV);
  out:
 	FILE_UNUSE(fp, l);
+	uvmspace_free(vm);
 	return (error);
 }
 
@@ -327,6 +339,7 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 	struct iovec aiov;
 	struct uio auio;
 	struct proc *p;
+	struct vmspace *vm;
 	size_t cnt;
 	int error;
 #ifdef KTRACE
@@ -334,15 +347,17 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 #endif
 
 	p = l->l_proc;
-	error = 0;
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		goto out;
+	}
 	aiov.iov_base = __UNCONST(buf);		/* XXXUNCONST kills const */
 	aiov.iov_len = nbyte;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = nbyte;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = vm;
 
 	/*
 	 * Writes return ssize_t because -1 is returned on error.  Therefore
@@ -378,6 +393,7 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 	*retval = cnt;
  out:
 	FILE_UNUSE(fp, l);
+	uvmspace_free(vm);
 	return (error);
 }
 
@@ -423,6 +439,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	struct proc	*p;
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
+	struct vmspace	*vm;
 	int		i, error;
 	size_t		cnt;
 	u_int		iovlen;
@@ -431,7 +448,10 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 #endif
 
 	p = l->l_proc;
-	error = 0;
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		goto out;
+	}
 #ifdef KTRACE
 	ktriov = NULL;
 #endif
@@ -455,8 +475,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = vm;
 	error = copyin(iovp, iov, iovlen);
 	if (error)
 		goto done;
@@ -506,6 +525,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 		free(needfree, M_IOV);
  out:
 	FILE_UNUSE(fp, l);
+	uvmspace_free(vm);
 	return (error);
 }
 

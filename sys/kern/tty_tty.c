@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.26 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.26.2.1 2005/12/31 11:14:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.26 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.26.2.1 2005/12/31 11:14:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ cttyopen(dev_t dev, int flag, int mode, struct lwp *l)
 static int
 cttyread(dev_t dev, struct uio *uio, int flag)
 {
-	struct vnode *ttyvp = cttyvp(uio->uio_lwp->l_proc);
+	struct vnode *ttyvp = cttyvp(curproc);
 	int error;
 
 	if (ttyvp == NULL)
@@ -96,7 +96,7 @@ cttyread(dev_t dev, struct uio *uio, int flag)
 static int
 cttywrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct vnode *ttyvp = cttyvp(uio->uio_lwp->l_proc);
+	struct vnode *ttyvp = cttyvp(curproc);
 	struct mount *mp;
 	int error;
 

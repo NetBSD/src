@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.70 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.70.2.1 2005/12/31 11:14:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.70 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.70.2.1 2005/12/31 11:14:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -688,7 +688,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 
 	/* Loan the write buffer memory from writer process */
 	pgs = wpipe->pipe_map.pgs;
-	error = uvm_loan(&uio->uio_lwp->l_proc->p_vmspace->vm_map, base, blen,
+	error = uvm_loan(&uio->uio_vmspace->vm_map, base, blen,
 			 pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		pipe_loan_free(wpipe);

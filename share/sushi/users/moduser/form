@@ -1,9 +1,0 @@
-# $NetBSD: form,v 1.1 2004/03/09 20:06:42 garbled Exp $
-noedit:@@@1@@@		Username
-script:script2,@@@1@@@,1stgroup	Primary group
-script:script2,@@@1@@@,2ndgroup	Secondary group
-escript:30,script2,@@@1@@@,realname	User's real name
-escript:50,script2,@@@1@@@,homedir	User's home directory
-iscript:5,0,2000,script2,@@@1@@@,expire	Days before password expires
-script:script2,@@@1@@@,shell	User's login shell
-iscript:6,0,32767,script2,@@@1@@@,uid	User's UID
