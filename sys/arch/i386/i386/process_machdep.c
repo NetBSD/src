@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.54 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.54.2.1 2005/12/31 12:37:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.54 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.54.2.1 2005/12/31 12:37:20 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -476,16 +476,23 @@ ptrace_machdep_dorequest(l, lt, req, addr, data)
 		if (!process_machdep_validxmmregs(lt->l_proc))
 			return (EINVAL);
 		else {
+			struct vmspace *vm;
+			int error;
+
+			error = proc_vmspace_getref(l->l_proc, &vm);
+			if (error) {
+				return error;
+			}
 			iov.iov_base = addr;
 			iov.iov_len = sizeof(struct xmmregs);
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
 			uio.uio_offset = 0;
 			uio.uio_resid = sizeof(struct xmmregs);
-			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-			uio.uio_lwp = l;
-			return (process_machdep_doxmmregs(l, lt, &uio));
+			error = process_machdep_doxmmregs(l, lt, &uio);
+			uvmspace_free(vm);
+			return error;
 		}
 	}
 
