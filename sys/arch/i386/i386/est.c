@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.13 2005/12/31 09:52:46 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.14 2005/12/31 17:55:55 xtraeme Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.13 2005/12/31 09:52:46 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.14 2005/12/31 17:55:55 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,9 +353,6 @@ static const struct fqlist pentium_m_dothan[] = {
 	ENTRY("2.00", pentium_m_n755),
 	ENTRY("2.10", pentium_m_n765),
 	ENTRY("2.13", pentium_m_n770),
-	ENTRY("1.00", pentium_m_n723),
-	ENTRY("1.10", pentium_m_n733),
-	ENTRY("1.40", pentium_m_n738),
 };
 #undef ENTRY
 
