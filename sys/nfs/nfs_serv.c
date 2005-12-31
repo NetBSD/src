@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.99 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.99.2.1 2005/12/31 16:29:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.99 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.99.2.1 2005/12/31 16:29:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,8 +527,7 @@ nfsrv_readlink(nfsd, slp, lwp, mrq)
 	uiop->uio_offset = 0;
 	uiop->uio_resid = len;
 	uiop->uio_rw = UIO_READ;
-	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(uiop);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
@@ -760,7 +759,7 @@ loan_fail:
 			uiop->uio_offset = off;
 			uiop->uio_resid = cnt;
 			uiop->uio_rw = UIO_READ;
-			uiop->uio_segflg = UIO_SYSSPACE;
+			UIO_SETUP_SYSSPACE(uiop);
 			error = VOP_READ(vp, uiop, IO_NODELOCKED, cred);
 			free((caddr_t)iv2, M_TEMP);
 		}
@@ -949,9 +948,8 @@ nfsrv_write(nfsd, slp, lwp, mrq)
 			ioflags = (IO_METASYNC | IO_SYNC | IO_NODELOCKED);
 		uiop->uio_resid = len;
 		uiop->uio_rw = UIO_WRITE;
-		uiop->uio_segflg = UIO_SYSSPACE;
-		uiop->uio_lwp = NULL;
 		uiop->uio_offset = off;
+		UIO_SETUP_SYSSPACE(uiop);
 		error = VOP_WRITE(vp, uiop, ioflags, cred);
 		nfsstats.srvvop_writes++;
 		free(iv, M_TEMP);
@@ -1188,10 +1186,9 @@ loop1:
 		else
 		    ioflags = (IO_METASYNC | IO_SYNC | IO_NODELOCKED);
 		uiop->uio_rw = UIO_WRITE;
-		uiop->uio_segflg = UIO_SYSSPACE;
-		uiop->uio_lwp = NULL;
 		uiop->uio_offset = nfsd->nd_off;
 		uiop->uio_resid = nfsd->nd_eoff - nfsd->nd_off;
+		UIO_SETUP_SYSSPACE(uiop);
 		if (uiop->uio_resid > 0) {
 		    mp = mrep;
 		    i = 0;
@@ -2227,9 +2224,8 @@ nfsrv_symlink(nfsd, slp, lwp, mrq)
 	io.uio_offset = 0;
 	io.uio_iov = &iv;
 	io.uio_iovcnt = 1;
-	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&io);
 	nfsm_mtouio(&io, len2);
 	if (!v3) {
 		nfsm_dissect(sp, struct nfsv2_sattr *, NFSX_V2SATTR);
@@ -2651,9 +2647,8 @@ again:
 	io.uio_iovcnt = 1;
 	io.uio_offset = (off_t)off;
 	io.uio_resid = fullsiz;
-	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&io);
 	eofflag = 0;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
@@ -2910,9 +2905,8 @@ again:
 	io.uio_iovcnt = 1;
 	io.uio_offset = (off_t)off;
 	io.uio_resid = fullsiz;
-	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&io);
 	eofflag = 0;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);

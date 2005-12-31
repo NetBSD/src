@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.156 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.156.2.1 2005/12/31 16:29:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.156 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.156.2.1 2005/12/31 16:29:01 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -825,19 +825,11 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 				len = mp->m_len;
 			}
 			xfer = (left > len) ? len : left;
-#ifdef notdef
-			/* Not Yet.. */
-			if (uiop->uio_iov->iov_op != NULL)
-				(*(uiop->uio_iov->iov_op))
-				(mbufcp, uiocp, xfer);
-			else
-#endif
-			if (uiop->uio_segflg == UIO_SYSSPACE)
-				memcpy(uiocp, mbufcp, xfer);
-			else
-				if ((error = copyout_proc(uiop->uio_lwp->l_proc,
-				    mbufcp, uiocp, xfer)) != 0)
-					return error;
+			error = copyout_vmspace(uiop->uio_vmspace, mbufcp,
+			    uiocp, xfer);
+			if (error) {
+				return error;
+			}
 			left -= xfer;
 			len -= xfer;
 			mbufcp += xfer;
@@ -882,6 +874,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 	int xfer, left, mlen;
 	int uiosiz, clflg, rem;
 	char *cp;
+	int error;
 
 #ifdef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1)
@@ -914,18 +907,11 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 			}
 			xfer = (left > mlen) ? mlen : left;
 			cp = mtod(mp, caddr_t) + mp->m_len;
-#ifdef notdef
-			/* Not Yet.. */
-			if (uiop->uio_iov->iov_op != NULL)
-				(*(uiop->uio_iov->iov_op))(uiocp, cp, xfer);
-			else
-#endif
-			if (uiop->uio_segflg == UIO_SYSSPACE)
-				(void)memcpy(cp, uiocp, xfer);
-			else
-				/*XXX: Check error */
-				(void)copyin_proc(uiop->uio_lwp->l_proc, uiocp,
-				    cp, xfer);
+			error = copyin_vmspace(uiop->uio_vmspace, uiocp, cp,
+			    xfer);
+			if (error) {
+				/* XXX */
+			}
 			mp->m_len += xfer;
 			left -= xfer;
 			uiocp += xfer;
@@ -2046,10 +2032,9 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = NULL;
 	auio.uio_resid = NFS_DIRFRAGSIZ;
 	auio.uio_offset = 0;
+	UIO_SETUP_SYSSPACE(&auio);
 
 	error = VOP_READDIR(vp, &auio, cred, &eof, &cookies, &nc);
 
@@ -2292,9 +2277,8 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_lwp = NULL;
 		auio.uio_resid = MAXPATHLEN;
+		UIO_SETUP_SYSSPACE(&auio);
 		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
 		if (error) {
 		badlink:

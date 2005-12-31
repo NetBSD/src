@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.230 2005/12/11 12:25:17 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.230.2.1 2005/12/31 16:29:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.230 2005/12/11 12:25:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.230.2.1 2005/12/31 16:29:01 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1195,7 +1195,7 @@ nfs_readlinkrpc(vp, uiop, cred)
 	nfsstats.rpccnt[NFSPROC_READLINK]++;
 	nfsm_reqhead(np, NFSPROC_READLINK, NFSX_FH(v3));
 	nfsm_fhtom(np, v3);
-	nfsm_request(np, NFSPROC_READLINK, uiop->uio_lwp, cred);
+	nfsm_request(np, NFSPROC_READLINK, curlwp, cred);
 #ifndef NFS_V2_ONLY
 	if (v3)
 		nfsm_postop_attr(vp, attrflag, 0);
@@ -1271,7 +1271,7 @@ nfs_readrpc(vp, uiop)
 			*tl++ = txdr_unsigned(len);
 			*tl = 0;
 		}
-		nfsm_request(np, NFSPROC_READ, uiop->uio_lwp, np->n_rcred);
+		nfsm_request(np, NFSPROC_READ, curlwp, np->n_rcred);
 #ifndef NFS_V2_ONLY
 		if (v3) {
 			nfsm_postop_attr(vp, attrflag, NAC_NOTRUNC);
@@ -1444,7 +1444,7 @@ retry:
 		} else {
 			nfsm_uiotom(uiop, len);
 		}
-		nfsm_request(np, NFSPROC_WRITE, uiop->uio_lwp, np->n_wcred);
+		nfsm_request(np, NFSPROC_WRITE, curlwp, np->n_wcred);
 #ifndef NFS_V2_ONLY
 		if (v3) {
 			wccflag = NFSV3_WCCCHK;
@@ -2492,7 +2492,8 @@ nfs_readdir(v)
 		 * load the directory block into system space, so we can
 		 * just look at it directly.
 		 */
-		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
+		if (!VMSPACE_IS_KERNEL(uio->uio_vmspace) ||
+		    uio->uio_iovcnt != 1)
 			panic("nfs_readdir: lost in space");
 		for (nc = 0; ncookies-- &&
 		     base < (char *)uio->uio_iov->iov_base; nc++){
@@ -2592,7 +2593,7 @@ nfs_readdirrpc(vp, uiop, cred)
 			*tl++ = txdr_unsigned(uiop->uio_offset);
 		}
 		*tl = txdr_unsigned(nmp->nm_readdirsize);
-		nfsm_request(dnp, NFSPROC_READDIR, uiop->uio_lwp, cred);
+		nfsm_request(dnp, NFSPROC_READDIR, curlwp, cred);
 		nrpcs++;
 #ifndef NFS_V2_ONLY
 		if (v3) {
@@ -2800,7 +2801,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		*tl++ = dnp->n_cookieverf.nfsuquad[1];
 		*tl++ = txdr_unsigned(nmp->nm_readdirsize);
 		*tl = txdr_unsigned(nmp->nm_rsize);
-		nfsm_request(dnp, NFSPROC_READDIRPLUS, uiop->uio_lwp, cred);
+		nfsm_request(dnp, NFSPROC_READDIRPLUS, curlwp, cred);
 		nfsm_postop_attr(vp, attrflag, 0);
 		if (error) {
 			m_freem(mrep);

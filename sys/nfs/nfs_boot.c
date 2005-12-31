@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.62 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.62.2.1 2005/12/31 16:29:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.62 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.62.2.1 2005/12/31 16:29:01 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_nfs_boot.h"
@@ -459,7 +459,6 @@ send_again:
 			m = NULL;
 		}
 		uio.uio_resid = 1 << 16; /* ??? */
-		uio.uio_lwp = lwp;
 		rcvflg = 0;
 		error = (*so->so_receive)(so, &from, &uio, &m, NULL, &rcvflg);
 		if (error == EWOULDBLOCK) {
