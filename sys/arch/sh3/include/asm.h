@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.19 2005/12/24 22:57:26 uwe Exp $	*/
+/*	$NetBSD: asm.h,v 1.20 2005/12/31 05:06:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,12 +36,6 @@
 
 #ifndef _SH3_ASM_H_
 #define	_SH3_ASM_H_
-
-#define	PIC_PROLOGUE
-#define	PIC_EPILOGUE
-#define	PIC_PLT(x)	x
-#define	PIC_GOT(x)	x
-#define	PIC_GOTOFF(x)	x
 
 /*
  * The old NetBSD/sh3 ELF toolchain used underscores.  The new
@@ -107,6 +101,86 @@
 	.globl _C_LABEL(name)			;\
 	_C_LABEL(name):
 #endif
+
+
+/*
+ * Hide the gory details of PIC calls vs. normal calls.  Use as in the
+ * following example:
+ *
+ *	sts.l	pr, @-sp
+ *	PIC_PROLOGUE(.L_got, r0)	! saves old r12 on stack
+ *	...
+ *	mov.l	.L_function_1, r0
+ * 1:	CALL	r0			! each call site needs a label
+ *	 nop
+ *      ...
+ *	mov.l	.L_function_2, r0
+ * 2:	CALL	r0
+ *	 nop
+ *	...
+ *	PIC_EPILOGUE			! restores r12 from stack
+ *	lds.l	@sp+, pr		!  so call in right order 
+ *	rts
+ *	 nop
+ *
+ *	.align 2
+ * .L_got:
+ *	PIC_GOT_DATUM
+ * .L_function_1:			! if you call the same function twice
+ *	CALL_DATUM(function, 1b)	!  provide call datum for each call
+ * .L_function_2:
+ * 	CALL_DATUM(function, 2b)
+ */
+
+#ifdef PIC
+
+#define	PIC_PLT(x)	x@PLT
+#define	PIC_GOT(x)	x@GOT
+#define	PIC_GOTOFF(x)	x@GOTOFF
+
+#define	PIC_PROLOGUE(got, temp)			\
+        	mov.l	r12, @-sp;		\
+        	mov.l	got, r12;		\
+        	mova	got, temp;		\
+        	add	temp, r12
+
+#define	PIC_EPILOGUE				\
+		mov.l	@sp+, r12
+
+#define PIC_GOT_DATUM \
+		.long	_GLOBAL_OFFSET_TABLE_
+
+#define CALL	bsrf
+#define JUMP	braf
+
+#define CALL_DATUM(function, lpcs) \
+		.long	PIC_PLT(function) - ((lpcs) + 4 - (.))
+
+/*
+ * This will result in text relocations in the shared library,
+ * unless the function is local or has hidden or protected visibility.
+ * Does not require PIC prologue.
+ */
+#define CALL_DATUM_LOCAL(function, lpcs) \
+		.long	function - ((lpcs) + 4)
+
+#else  /* !PIC */
+
+#define	PIC_PROLOGUE(label, temp)
+#define	PIC_EPILOGUE
+#define PIC_GOT_DATUM
+
+#define CALL	jsr @
+#define JUMP	jmp @
+
+#define CALL_DATUM(function, lpcs) \
+		.long	function
+
+#define CALL_DATUM_LOCAL(function, lpcs) \
+		.long	function
+
+#endif /* !PIC */
+
 
 #define	ASMSTR		.asciz
 
