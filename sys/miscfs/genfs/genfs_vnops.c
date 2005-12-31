@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.118 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.118.2.1 2005/12/31 12:37:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.118 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.118.2.1 2005/12/31 12:37:20 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1666,10 +1666,9 @@ genfs_compat_getpages(void *v)
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
 		uio.uio_offset = origoffset + (i << PAGE_SHIFT);
-		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_resid = PAGE_SIZE;
-		uio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&uio);
 		/* XXX vn_lock */
 		error = VOP_READ(vp, &uio, 0, cred);
 		if (error) {
@@ -1720,10 +1719,9 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
 	uio.uio_offset = offset;
-	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_resid = npages << PAGE_SHIFT;
-	uio.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&uio);
 	/* XXX vn_lock */
 	error = VOP_WRITE(vp, &uio, 0, cred);
 
