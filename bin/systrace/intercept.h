@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.h,v 1.17 2005/06/27 17:11:20 elad Exp $	*/
+/*	$NetBSD: intercept.h,v 1.18 2005/12/31 12:33:41 elad Exp $	*/
 /*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -202,5 +202,7 @@ void intercept_newimage(int, pid_t, int, const char *, char *,
     struct intercept_pid *);
 
 int intercept_isvalidsystemcall(char *, char *);
+
+char *intercept_realpath(const char *, char *);
 
 #endif /* _INTERCEPT_H_ */
