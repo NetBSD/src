@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.115.2.1 2005/12/31 11:14:01 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.115.2.2 2005/12/31 11:21:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.115.2.1 2005/12/31 11:14:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.115.2.2 2005/12/31 11:21:51 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -390,7 +390,7 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	vaddr_t lva, va;
 	int npgs, i, error;
 
-	if (VM_MAP_IS_KERNEL(&uio->uio_vmspace->vm_map))
+	if (VMSPACE_IS_KERNEL(&uio->uio_vmspace->vm_map))
 		return (0);
 
 	if (iov->iov_len < (size_t) space)
