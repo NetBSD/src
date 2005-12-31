@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.125 2005/12/14 19:49:16 bouyer Exp $	*/
+/*	$NetBSD: vnd.c,v 1.125.2.1 2005/12/31 12:37:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.125 2005/12/14 19:49:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.125.2.1 2005/12/31 12:37:20 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1348,8 +1348,8 @@ vndsetcred(struct vnd_softc *vnd, struct ucred *cred)
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_resid = aiov.iov_len;
+	UIO_SETUP_SYSSPACE(&auio);
 	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READ(vnd->sc_vp, &auio, 0, vnd->sc_cred);
 	if (error == 0) {

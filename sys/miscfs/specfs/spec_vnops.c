@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.85 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.85.2.1 2005/12/31 12:37:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.85 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.85.2.1 2005/12/31 12:37:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -278,7 +278,7 @@ spec_read(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
- 	struct lwp *l = uio->uio_lwp;
+ 	struct lwp *l = curlwp;
 	struct buf *bp;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
@@ -291,7 +291,8 @@ spec_read(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
 		panic("spec_read mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_lwp != curlwp)
+	if (&uio->uio_vmspace->vm_map != kernel_map &&
+	    uio->uio_vmspace != curproc->p_vmspace)
 		panic("spec_read proc");
 #endif
 	if (uio->uio_resid == 0)
@@ -360,7 +361,7 @@ spec_write(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	struct lwp *l = uio->uio_lwp;
+	struct lwp *l = curlwp;
 	struct buf *bp;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
@@ -373,7 +374,8 @@ spec_write(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("spec_write mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_lwp != curlwp)
+	if (&uio->uio_vmspace->vm_map != kernel_map &&
+	    uio->uio_vmspace != curproc->p_vmspace)
 		panic("spec_write proc");
 #endif
 
