@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.555 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.556 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -153,7 +153,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		Written by UCHIYAMA Yasushi. [tsutsui 20051229]
 	newfs_sysvbfs(8), mount_sysvbfs(8): Add utilities for System V
 		Boot File System. Also written by UCHIYAMA Yasushi.
-		[20051229 tsutsui]
+		[tsutsui 20051229]
 	ews4800mips: Initial import of ews4800mips port. Most porting work
 		was done by UCHIYAMA Yasushi. [tsutsui 20051229]
 	rtw(4): Add support for GCT Semiconductor GRF5101
