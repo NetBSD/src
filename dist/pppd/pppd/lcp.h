@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.h,v 1.1.1.1 2005/02/20 10:28:49 cube Exp $	*/
+/*	$NetBSD: lcp.h,v 1.2 2005/12/31 08:58:50 christos Exp $	*/
 
 /*
  * lcp.h - Link Control Protocol definitions.
@@ -47,6 +47,7 @@
 /*
  * Options.
  */
+#define CI_VENDOR	0	/* Vendor Specific */
 #define CI_MRU		1	/* Maximum Receive Unit */
 #define CI_ASYNCMAP	2	/* Async Control Character Map */
 #define CI_AUTHTYPE	3	/* Authentication Type */
@@ -54,18 +55,33 @@
 #define CI_MAGICNUMBER	5	/* Magic Number */
 #define CI_PCOMPRESSION	7	/* Protocol Field Compression */
 #define CI_ACCOMPRESSION 8	/* Address/Control Field Compression */
+#define CI_FCSALTERN	9	/* FCS-Alternatives */
+#define CI_SDP		10	/* Self-Describing-Pad */
+#define CI_NUMBERED	11	/* Numbered-Mode */
 #define CI_CALLBACK	13	/* callback */
 #define CI_MRRU		17	/* max reconstructed receive unit; multilink */
 #define CI_SSNHF	18	/* short sequence numbers for multilink */
 #define CI_EPDISC	19	/* endpoint discriminator */
+#define CI_MPPLUS	22	/* Multi-Link-Plus-Procedure */
+#define CI_LDISC	23	/* Link-Discriminator */
+#define CI_LCPAUTH	24	/* LCP Authentication */
+#define CI_COBS		25	/* Consistent Overhead Byte Stuffing */
+#define CI_PREFELIS	26	/* Prefix Elision */
+#define CI_MPHDRFMT	27	/* MP Header Format */
+#define CI_I18N		28	/* Internationalization */
+#define CI_SDL		29	/* Simple Data Link */
 
 /*
- * LCP-specific packet types.
+ * LCP-specific packet types (code numbers).
  */
 #define PROTREJ		8	/* Protocol Reject */
 #define ECHOREQ		9	/* Echo Request */
 #define ECHOREP		10	/* Echo Reply */
 #define DISCREQ		11	/* Discard Request */
+#define IDENTIF		12	/* Identification */
+#define TIMEREM		13	/* Time Remaining */
+
+/* Value used as data for CI_CALLBACK option */
 #define CBCP_OPT	6	/* Use callback control protocol */
 
 /*
