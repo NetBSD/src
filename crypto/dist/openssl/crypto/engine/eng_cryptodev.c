@@ -32,9 +32,9 @@
 #include <openssl/bn.h>
 
 #if (defined(__unix__) || defined(unix)) && !defined(USG) && \
-	(defined(OpenBSD) || defined(__FreeBSD_version))
+	(defined(OpenBSD) || defined(__FreeBSD_version)) || defined(__NetBSD__)
 #include <sys/param.h>
-# if (OpenBSD >= 200112) || ((__FreeBSD_version >= 470101 && __FreeBSD_version < 500000) || __FreeBSD_version >= 500041)
+# if (OpenBSD >= 200112) || ((__FreeBSD_version >= 470101 && __FreeBSD_version < 500000) || __FreeBSD_version >= 500041) || defined(__NetBSD__)
 #  define HAVE_CRYPTODEV
 # endif
 # if (OpenBSD >= 200110)
@@ -100,7 +100,7 @@ static int cryptodev_asym(struct crypt_kop *kop, int rlen, BIGNUM *r,
 static int cryptodev_bn_mod_exp(BIGNUM *r, const BIGNUM *a,
     const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 static int cryptodev_rsa_nocrt_mod_exp(BIGNUM *r0, const BIGNUM *I,
-    RSA *rsa);
+    RSA *rsa, BN_CTX *);
 static int cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
 static int cryptodev_dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a,
     const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
@@ -756,7 +756,7 @@ err:
 }
 
 static int
-cryptodev_rsa_nocrt_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
+cryptodev_rsa_nocrt_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *dummy)
 {
 	int r;
 	BN_CTX *ctx;
