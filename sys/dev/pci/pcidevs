@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.751 2005/12/29 05:44:51 jonathan Exp $
+$NetBSD: pcidevs,v 1.752 2006/01/01 11:32:03 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3029,7 +3029,7 @@ product VIATECH KT880_4         0x4269  KT880 CPU to PCI Bridge
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8378_IG       0x7205  VT8378 KM400 UniChrome Integrated Graphics
 product VIATECH KT880_5         0x7269  KT880 CPU to PCI Bridge
-product VIATECH VT8231		0x8231	VT8231 IDE Controller
+product VIATECH VT8231		0x8231	VT8231 PCI-ISA Bridge
 product VIATECH VT8231_PWR	0x8235	VT8231 Power Management Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 (Apollo KT133) PCI to AGP Bridge
 product VIATECH VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
