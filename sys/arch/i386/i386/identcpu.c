@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.17.2.2 2005/07/18 20:48:58 riz Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.17.2.3 2006/01/01 23:25:59 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17.2.2 2005/07/18 20:48:58 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17.2.3 2006/01/01 23:25:59 riz Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -67,6 +67,7 @@ intel_cpuid_cache_info[] = {
 
 	{ CAI_ICACHE,   0x06,  4,        8 * 1024, 32 },
 	{ CAI_ICACHE,   0x08,  4,       16 * 1024, 32 },
+	{ CAI_ICACHE,   0x30,  8,       32 * 1024, 64 },
 	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32 },
 	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32 },
 	{ CAI_L2CACHE,  0x40,  0,               0,  0, "not present" },
@@ -77,6 +78,7 @@ intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32 },
 	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64 },
 	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64 },
+	{ CAI_DCACHE,   0x2c,  8,       32 * 1024, 64 },
 	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64 },
 	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64, "12K uOp cache"},
 	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64, "16K uOp cache"},
@@ -85,6 +87,7 @@ intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64 },
 	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64 },
 	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64 },
+	{ CAI_L2CACHE,  0x7d,  8, 2 * 1024 * 1024, 64 },
 	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32 },
 	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32 },
 	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32 },
