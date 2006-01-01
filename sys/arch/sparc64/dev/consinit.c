@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.17 2004/03/21 15:08:24 pk Exp $	*/
+/*	$NetBSD: consinit.c,v 1.17.14.1 2006/01/01 23:03:23 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,10 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.17 2004/03/21 15:08:24 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.17.14.1 2006/01/01 23:03:23 riz Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
+#include "ukbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.17 2004/03/21 15:08:24 pk Exp $");
 #include <dev/cons.h>
 
 #include <sparc64/dev/cons.h>
+
+#include <dev/usb/ukbdvar.h>
 
 static void prom_cnprobe __P((struct consdev *));
 static void prom_cninit __P((struct consdev *));
@@ -206,11 +209,19 @@ consinit()
 
 	if (prom_stdin_node != 0 &&
 	    (prom_getproplen(prom_stdin_node, "keyboard") >= 0)) {
-#if NKBD > 0
-		printf("cninit: kdb/display not configured\n");
+#if NUKBD > 0
+		if ((OF_instance_to_path(prom_stdin(), buffer, sizeof(buffer)) >= 0) &&
+		    (strstr(buffer, "/usb@") != NULL)) {
+			/*
+		 	* If we have a USB keyboard, it will show up as (e.g.)
+		 	*   /pci@1f,0/usb@c,3/keyboard@1	(Blade 100)
+		 	*/
+			consname = "usb-keyboard/display";
+			ukbd_cnattach();
+		} else
 #endif
-		consname = "keyboard/display";
-	} else if (prom_stdout_node != 0 &&
+			consname = "sun-keyboard/display";
+	} else if (prom_stdin_node != 0 &&
 		   (OF_instance_to_path(prom_stdin(), buffer, sizeof(buffer)) >= 0)) {
 		consname = buffer;
 	}
