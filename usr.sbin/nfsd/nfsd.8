@@ -1,4 +1,4 @@
-.\"   $NetBSD: nfsd.8,v 1.19 2003/09/07 16:22:26 wiz Exp $
+.\"   $NetBSD: nfsd.8,v 1.20 2006/01/01 17:03:54 yamt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)nfsd.8	8.4 (Berkeley) 3/29/95
 .\"
-.Dd March 29, 1995
+.Dd January 2, 2006
 .Dt NFSD 8
 .Os
 .Sh NAME
@@ -92,8 +92,9 @@ transports using six daemons.
 .Pp
 A server should run enough daemons to handle
 the maximum level of concurrency from its clients,
-typically four to six. The maximum number of daemon is 20, the default is 4.
-If the number of servers on the command line exceeds 20, it is reset to
+typically four to six.
+The maximum number of daemon is 1024, the default is 4.
+If the number of servers on the command line exceeds 1024, it is reset to
 the default.
 .Pp
 .Nm
