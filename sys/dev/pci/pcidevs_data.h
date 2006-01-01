@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.751 2005/12/29 11:07:30 silke Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.752 2006/01/01 11:32:41 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.751 2005/12/29 05:44:51 jonathan Exp
+ *	NetBSD: pcidevs,v 1.752 2006/01/01 11:32:03 xtraeme Exp
  */
 
 /*
@@ -10165,7 +10165,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231,
-	    "VT8231 IDE Controller",
+	    "VT8231 PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231_PWR,
