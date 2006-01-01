@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.35 2005/12/26 19:24:00 perry Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.36 2006/01/01 12:12:44 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.35 2005/12/26 19:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.36 2006/01/01 12:12:44 xtraeme Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -170,6 +170,15 @@ const struct pciintr_icu_table {
 	  via82c586_init },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT82C686A_ISA,
 	  via82c586_init },
+
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8231,
+	  via8231_init },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8233A,
+	  via8231_init },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8235,
+	  via8231_init },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8237,
+	  via8231_init },
 
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_85C503,
 	  sis85c503_init },
