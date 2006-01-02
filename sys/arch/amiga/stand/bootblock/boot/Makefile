@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2005/12/11 12:16:36 christos Exp $
+#	$NetBSD: Makefile,v 1.36 2006/01/02 22:10:31 is Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -9,8 +9,13 @@ DIR_SA = 	${DIR_TOP}/lib/libsa
 DIR_LIBZ =	${DIR_TOP}/lib/libz
 DIR_KERN=	${DIR_TOP}/lib/libkern
 DIR_KERN_MD=	${DIR_TOP}/lib/libkern/arch/$(MACHINE_ARCH)
+DIR_LIBC=	${DIR_TOP}/../common/lib/libc
 
-.PATH:  $(DIR_SA) ${DIR_LIBZ} $(DIR_KERN) $(DIR_KERN_MD)
+.PATH:  $(DIR_SA) ${DIR_LIBZ} $(DIR_KERN) $(DIR_KERN_MD) \
+	${DIR_LIBC}/gen ${DIR_LIBC}/arch/m68k/gen \
+	${DIR_LIBC}/inet ${DIR_LIBC}/arch/m68k/inet \
+	${DIR_LIBC}/quad ${DIR_LIBC}/arch/m68k/quad \
+	${DIR_LIBC}/string ${DIR_LIBC}/arch/m68k/string
 
 # prefer our assembler versions over assembler, and assembler over C:
 
@@ -26,7 +31,7 @@ COBJS+=  ufs.o ustarfs.o panic.o vers.o files.o
 COBJS+=  divdi3.o moddi3.o qdivrem.o snprintf.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
-SOBJS += strlen.o strcmp.o memcmp.o strerror.o sprintf.o subr_prf.o
+SOBJS += strlen.o memcmp.o strerror.o sprintf.o subr_prf.o
 SOBJS += libstubs.o memcmp.o memmove.o memset.o strncmp.o
 
 OBJS=	$(SOBJS) $(COBJS)
