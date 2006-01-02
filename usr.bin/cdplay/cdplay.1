@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdplay.1,v 1.16 2004/03/18 21:14:54 wiz Exp $
+.\"	$NetBSD: cdplay.1,v 1.17 2006/01/02 21:29:53 garbled Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran.
 .\" All rights reserved.
@@ -119,6 +119,13 @@ Used after the
 command.
 .It Cm shuffle
 Select shuffle play.
+Only valid in interactive mode.
+.It Cm single Op Ar track
+Pick a single track and play it repeatedly.  If a 
+.Ar track
+argument is not given the
+.Cm single
+command will shut shuffle mode off and play the disc normally.
 Only valid in interactive mode.
 .It Cm skip
 Skip to another track.
