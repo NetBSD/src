@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.25 2005/12/31 17:55:55 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.26 2006/01/02 20:55:42 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.25 2005/12/31 17:55:55 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.26 2006/01/02 20:55:42 xtraeme Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -131,7 +131,6 @@ static const char * const amd_brand[] = {
 };
 
 u_int cpu_serial[3];
-u_int amd_powernow_probe(struct cpu_info *);
 char cpu_brand_string[49];
 static char amd_brand_name[48];
 
@@ -882,6 +881,16 @@ amd_family6_probe(struct cpu_info *ci)
 		ci->ci_feature_flags |= descs[3];
 	}
 
+#ifdef POWERNOW_K7
+	if (lfunc >= 0x80000007) {
+		CPUID(0x80000007, descs[0], descs[1], descs[2], descs[3]);
+		if ((descs[3] & 0x06)) {
+			if ((ci->ci_signature & 0xF00) == 0x600)
+				pnowk7_init(ci);
+		}
+	}
+#endif
+
 	if (*cpu_brand_string == '\0')
 		return;
 	
@@ -913,20 +922,6 @@ amd_family5_setup(struct cpu_info *ci)
 		 */
 		break;
 	}
-}
-
-u_int
-amd_powernow_probe(struct cpu_info *ci)
-{
-	u_int32_t	eax, ebx, ecx, edx;
-
-	CPUID(0x80000007, eax, ebx, ecx, edx);
-
-	/* checking for Freq ID control (FID) and Voltage ID control (VID) */
-	if ((edx & (0x2 | 0x4)) > 0)
-		return 1;
-
-	return 0;
 }
 
 /*
@@ -1445,11 +1440,4 @@ identifycpu(struct cpu_info *ci)
 			    cpuname);
 	}
 #endif /* ENHANCED_SPEEDSTEP */
-
-#ifdef POWERNOW_K7
-	if (amd_powernow_probe (ci)) {
-		pnowk7_init(ci);
-	}
-#endif /* POWERNOW_K7 */
-
 }
