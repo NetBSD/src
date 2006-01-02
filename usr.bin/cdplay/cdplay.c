@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.30 2005/06/02 01:40:10 lukem Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.31 2006/01/02 21:29:53 garbled Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.30 2005/06/02 01:40:10 lukem Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.31 2006/01/02 21:29:53 garbled Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,6 +78,7 @@ enum cmd {
 	CMD_RESUME,
 	CMD_SET,
 	CMD_SHUFFLE,
+	CMD_SINGLE,
 	CMD_SKIP,
 	CMD_STATUS,
 	CMD_STOP,
@@ -107,6 +108,7 @@ struct cmdtab {
 	{ CMD_RESUME,	"resume",  4, NULL },
 	{ CMD_SET,	"set",     2, "msf | lba" },
 	{ CMD_SHUFFLE,	"shuffle", 2, NULL },
+	{ CMD_SINGLE,	"single",  2, "[<track>]" },
 	{ CMD_SKIP,	"skip",    2, NULL },
 	{ CMD_STATUS,	"status",  3, NULL },
 	{ CMD_STOP,	"stop",    3, NULL },
@@ -378,6 +380,11 @@ run(int cmd, const char *arg)
 		rv = skip(1, 1);
 		break;
 
+	case CMD_SINGLE:
+		if (interactive == 0)
+			errx(EXIT_FAILURE,
+			    "'single' valid only in interactive mode");
+	/*FALLTHROUGH*/
 	case CMD_SHUFFLE:
 		if (interactive == 0)
 			errx(EXIT_FAILURE,
@@ -388,7 +395,13 @@ run(int cmd, const char *arg)
 			itv_timer.it_value.tv_sec = 1;
 			itv_timer.it_value.tv_usec = 0;
 			if (setitimer(ITIMER_REAL, &itv_timer, NULL) == 0) {
-				shuffle = 1;
+				if (cmd == CMD_SHUFFLE) {
+						shuffle = 1;
+				} else {
+					while (isspace((unsigned char)*arg))
+						arg++;
+					shuffle = -atoi(arg);
+				}
 				skip(0, 1);
 			}
 		} else {
@@ -399,7 +412,10 @@ run(int cmd, const char *arg)
 			if (setitimer(ITIMER_REAL, &itv_timer, NULL) == 0)
 				shuffle = 0;
 		}
-		printf("shuffle play:\t%s\n", shuffle ? "on" : "off");
+		if (shuffle < 0)
+			printf("single track:\t%d\n", -shuffle);
+		else
+			printf("shuffle play:\t%s\n", (shuffle != 0) ? "on" : "off");
 		rv = 0;
 		break;
 
@@ -711,8 +727,8 @@ skip(int dir, int fromuser)
 	if (dir == 0) {
 		if (fromuser || (rv != CD_AS_PLAY_IN_PROGRESS &&
 		    rv != CD_AS_PLAY_PAUSED))
-			trk = h.starting_track +
-			    arc4random() % (h.ending_track - h.starting_track + 1);
+			trk = shuffle < 0 ? (-shuffle) : (h.starting_track +
+			    arc4random() % (h.ending_track - h.starting_track + 1));
 		else
 			return (0);
 	} else {
@@ -779,7 +795,10 @@ print_status(const char *arg)
 	} else
 		printf("audio status:\tno info available\n");
 
-	printf("shuffle play:\t%s\n", shuffle ? "on" : "off");
+	if (shuffle < 0)
+		printf("single track:\t%d\n", -shuffle);
+	else
+		printf("shuffle play:\t%s\n", (shuffle != 0) ? "on" : "off");
 
 	bzero(&ss, sizeof(ss));
 	ss.data = &data;
