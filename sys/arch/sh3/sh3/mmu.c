@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.11 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: mmu.c,v 1.12 2006/01/02 23:30:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.11 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.12 2006/01/02 23:30:33 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,23 +88,22 @@ sh_mmu_information()
 	u_int32_t r;
 #ifdef SH3
 	if (CPU_IS_SH3) {
-		printf("4-way set-associative 128 TLB entries\n");
+		printf("cpu0: 4-way set-associative 128 TLB entries\n");
 		r = _reg_read_4(SH3_MMUCR);
-		printf("%s mode, %s virtual storage mode\n",
-		    r & SH3_MMUCR_IX
-		    ? "ASID+VPN" : "VPN",
+		printf("cpu0: %s mode, %s virtual storage mode\n",
+		    r & SH3_MMUCR_IX ? "ASID+VPN" : "VPN",
 		    r & SH3_MMUCR_SV ? "single" : "multiple");
 	}
 #endif
 #ifdef SH4
 	if (CPU_IS_SH4) {
-		printf("full-associative 4 ITLB, 64 UTLB entries\n");
+		printf("cpu0: full-associative 4 ITLB, 64 UTLB entries\n");
 		r = _reg_read_4(SH4_MMUCR);
-		printf("%s virtual storage mode, SQ access: kernel%s, ",
+		printf("cpu0: %s virtual storage mode, SQ access: kernel%s, ",
 		    r & SH3_MMUCR_SV ? "single" : "multiple",
 		    r & SH4_MMUCR_SQMD ? "" : "/user");
-		printf("wired %d\n", (r & SH4_MMUCR_URB_MASK) >>
-		    SH4_MMUCR_URB_SHIFT);
+		printf("wired %d\n",
+		    (r & SH4_MMUCR_URB_MASK) >> SH4_MMUCR_URB_SHIFT);
 	}
 #endif
 }
