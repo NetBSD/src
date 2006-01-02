@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.31 2003/08/07 09:05:30 agc Exp $	*/
+/*	$NetBSD: error.c,v 1.32 2006/01/02 19:10:33 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.31 2003/08/07 09:05:30 agc Exp $");
+__RCSID("$NetBSD: error.c,v 1.32 2006/01/02 19:10:33 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -336,6 +336,9 @@ STATIC const struct errname errormsg[] = {
 #endif
 #ifdef ELOOP
 	{ ELOOP,	ALL,	"symbolic link loop" },
+#endif
+#ifdef ENAMETOOLONG
+	{ ENAMETOOLONG,	ALL,	"file name too long" },
 #endif
 	{ E2BIG,	E_EXEC,	"argument list too long" },
 #ifdef ELIBACC
