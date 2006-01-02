@@ -266,8 +266,19 @@ shnbsd_get_next_pc (CORE_ADDR pc)
   int displacement;
   int reg;
   CORE_ADDR next_pc;
+  int delay_slot;
 
   insn = read_memory_integer (pc, sizeof (insn));
+  delay_slot = 0;
+
+  /* As we cannot step through the delay slot, we break at the target
+     address of the control transfer.  One tricky case is when the
+     target of the jump is the delay slot of that same instruction
+     (e.g. PLT entries use such code).  In that case we cannot set the
+     break to the target, as trapa is illegal in the delay slot.  Set
+     break to the next instruction instead, we are guaranteed to
+     arrive there, as control transfers are illegal in the delay
+     slot. */
 
   /* BT, BF, BT/S, BF/S */
   if (CONDITIONAL_BRANCH_P(insn))
@@ -280,8 +291,8 @@ shnbsd_get_next_pc (CORE_ADDR pc)
 	{
 	  displacement = shnbsd_displacement_8 (insn);
 
-	  /* XXX: cannot step through delay slot, so break at the target */
 	  next_pc = pc + 4 + (displacement << 1);
+	  delay_slot = CONDITIONAL_BRANCH_SLOT_P(insn);
 	}
     }
 
@@ -289,32 +300,40 @@ shnbsd_get_next_pc (CORE_ADDR pc)
   else if (BRANCH_P(insn))
     {
       displacement = shnbsd_displacement_12 (insn);
-      /* XXX: cannot step through delay slot, so break at the target */
+
       next_pc = pc + 4 + (displacement << 1);
+      delay_slot = 1;
     }
 
   /* BRAF, BSRF */
   else if (BRANCH_FAR_P(insn))
     {
       displacement = read_register (BRANCH_FAR_REG(insn));
-      /* XXX: cannot step through delay slot, so break at the target */
+
       next_pc = pc + 4 + displacement;
+      delay_slot = 1;
     }
 
   /* JMP, JSR */
   else if (JUMP_P(insn))
     {
-      /* XXX: cannot step through delay slot, so break at the target */
       next_pc = read_register (JUMP_REG(insn));
+      delay_slot = 1;
     }
 
   /* RTS */
   else if (insn == RTS_INSN)
-    next_pc = read_register (gdbarch_tdep (current_gdbarch)->PR_REGNUM);
+    {
+      next_pc = read_register (gdbarch_tdep (current_gdbarch)->PR_REGNUM);
+      delay_slot = 1;
+    }
 
   /* RTE - XXX: privileged */
   else if (insn == RTE_INSN)
-    next_pc = read_register (gdbarch_tdep (current_gdbarch)->SPC_REGNUM);
+    {
+      next_pc = read_register (gdbarch_tdep (current_gdbarch)->SPC_REGNUM);
+      delay_slot = 1;
+    }
 
   /* TRAPA */
   else if (TRAPA_P(insn))
@@ -323,6 +342,10 @@ shnbsd_get_next_pc (CORE_ADDR pc)
   /* not a control transfer instruction */
   else
     next_pc = pc + 2;
+
+  /* jumping to our own delay slot? */
+  if (delay_slot && next_pc == pc + 2)
+    next_pc += 2;
 
   return next_pc;
 }
