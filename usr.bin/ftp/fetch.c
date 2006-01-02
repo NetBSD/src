@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.164 2005/08/21 16:16:33 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.165 2006/01/02 12:30:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.164 2005/08/21 16:16:33 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.165 2006/01/02 12:30:01 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -995,6 +995,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		case 302:
 		case 303:
 		case 305:
+		case 307:
 			if (EMPTYSTRING(location)) {
 				warnx(
 				"No redirection Location provided by server");
