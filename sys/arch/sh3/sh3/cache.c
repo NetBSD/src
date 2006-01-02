@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.10 2006/01/02 23:32:11 uwe Exp $	*/
+/*	$NetBSD: cache.c,v 1.11 2006/01/02 23:37:34 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.10 2006/01/02 23:32:11 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.11 2006/01/02 23:37:34 uwe Exp $");
 
 #include "opt_memsize.h"	/* IOM_RAM_BEGIN */
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.10 2006/01/02 23:32:11 uwe Exp $");
  * __cache_flush is used before sh_cache_config() is called.
  */
 static void __cache_flush(void);
+
 struct sh_cache_ops sh_cache_ops = {
 	._icache_sync_all = (void (*)(void))__cache_flush,
 	._icache_sync_range = (void (*)(vaddr_t, vsize_t))__cache_flush,
@@ -164,7 +165,7 @@ __cache_flush()
 	 * 16KB line-size 16B 4-way ... [11:4]  * 4
 	 * 16KB line-size 32B 1-way ... [13:5]
 	 */
-	for(i = 0; i < 256/*entry*/ * 4/*way*/; i++) {
+	for (i = 0; i < 256/*entry*/ * 4/*way*/; i++) {
 		d = *p;
 		p += 4;	/* next line index (16B) */
 	}
