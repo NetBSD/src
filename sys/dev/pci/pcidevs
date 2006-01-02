@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.753 2006/01/02 12:48:34 tron Exp $
+$NetBSD: pcidevs,v 1.754 2006/01/02 21:48:41 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2298,7 +2298,7 @@ product	NVIDIA	NFORCE4_SMBUS	0x0052	nForce4 SMBus
 product NVIDIA	NFORCE4_ATA133	0x0053	nForce4 ATA133 IDE
 product	NVIDIA	NFORCE4_SATA1	0x0054	nForce4 Serial ATA 1
 product	NVIDIA	NFORCE4_SATA2	0x0055	nForce4 Serial ATA 2
-product	NVIDIA	NFORCE4_NET	0x0055	nForce4 Ethernet
+product	NVIDIA	NFORCE4_NET	0x0057	nForce4 Ethernet
 product NVIDIA	NFORCE4_AC	0x0059	nForce4 AC-97
 product NVIDIA	NFORCE4_USB	0x005a	nForce4 USB Host Controller
 product NVIDIA	NFORCE4_USB2	0x005b	nForce4 USB2 Host Controller
