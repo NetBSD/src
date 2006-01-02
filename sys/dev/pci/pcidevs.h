@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.753 2006/01/01 11:32:41 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.754 2006/01/02 12:49:29 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.752 2006/01/01 11:32:03 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.753 2006/01/02 12:48:34 tron Exp
  */
 
 /*
@@ -275,7 +275,7 @@
 #define	PCI_VENDOR_ROHM	0x10db		/* Rohm Research */
 #define	PCI_VENDOR_CERN	0x10dc		/* CERN/ECP/EDU */
 #define	PCI_VENDOR_ES	0x10dd		/* Evans & Sutherland */
-#define	PCI_VENDOR_NVIDIA	0x10de		/* Nvidia */
+#define	PCI_VENDOR_NVIDIA	0x10de		/* NVIDIA */
 #define	PCI_VENDOR_EMULEX	0x10df		/* Emulex */
 #define	PCI_VENDOR_IMS	0x10e0		/* Integrated Micro Solutions */
 #define	PCI_VENDOR_TEKRAM	0x10e1		/* Tekram Technology (1st PCI Vendor ID) */
@@ -2305,6 +2305,7 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_ATA133	0x0053		/* nForce4 ATA133 IDE */
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_SATA1	0x0054		/* nForce4 Serial ATA 1 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_SATA2	0x0055		/* nForce4 Serial ATA 2 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE4_NET	0x0055		/* nForce4 Ethernet */
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_AC	0x0059		/* nForce4 AC-97 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_USB	0x005a		/* nForce4 USB Host Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_USB2	0x005b		/* nForce4 USB2 Host Controller */
