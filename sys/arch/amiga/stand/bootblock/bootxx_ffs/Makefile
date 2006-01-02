@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2005/12/11 12:16:36 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2006/01/02 22:10:32 is Exp $
 
 ### what we need:
 
@@ -6,8 +6,14 @@ DIR_TOP=	${.CURDIR}/../../../../..
 DIR_SA = 	${DIR_TOP}/lib/libsa
 DIR_KERN=	${DIR_TOP}/lib/libkern
 DIR_KERN_MD=	${DIR_TOP}/lib/libkern/arch/$(MACHINE_ARCH)
+DIR_LIBC=	${DIR_TOP}/../common/lib/libc
 
-.PATH:  ${.CURDIR}/../boot $(DIR_SA) $(DIR_KERN) $(DIR_KERN_MD)
+.PATH:  ${.CURDIR}/../boot $(DIR_SA) $(DIR_KERN) $(DIR_KERN_MD) \
+	${DIR_LIBC}/gen ${DIR_LIBC}/arch/m68k/gen \
+	${DIR_LIBC}/inet ${DIR_LIBC}/arch/m68k/inet \
+	${DIR_LIBC}/quad ${DIR_LIBC}/arch/m68k/quad \
+	${DIR_LIBC}/string ${DIR_LIBC}/arch/m68k/string
+
 
 # prefer our assembler versions over assembler, and assembler over C:
 
