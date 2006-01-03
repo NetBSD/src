@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.16 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: azalia.c,v 1.17 2006/01/03 14:16:28 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.16 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.17 2006/01/03 14:16:28 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1016,8 +1016,8 @@ azalia_codec_init(codec_t *this)
 #ifdef AZALIA_DEBUG
 	for (i = 0; i < this->ndacgroups; i++) {
 		DPRINTF(("%s: dacgroup[%d]:", __func__, i));
-		for (n = 0; n < this->dacgroups[group].nconv; n++) {
-			DPRINTF((" %2.2x", this->dacgroups[group].conv[n]));
+		for (n = 0; n < this->dacgroups[i].nconv; n++) {
+			DPRINTF((" %2.2x", this->dacgroups[i].conv[n]));
 		}
 		DPRINTF(("\n"));
 	}
@@ -1111,8 +1111,7 @@ azalia_codec_construct_format(codec_t *this)
 	bits_rates = this->w[nid].d.audio.bits_rates;
 	for (dac = 0; dac < group->nconv; dac++) {
 		for (chan = 0, i = 0; i <= dac; i++)
-			chan += this->w[group->conv[dac]].widgetcap
-			    & COP_AWCAP_STEREO ? 2 : 1;
+			chan += WIDGET_CHANNELS(&this->w[group->conv[dac]]);
 		azalia_codec_add_bits(this, chan, bits_rates, AUMODE_PLAY);
 	}
 	/* print playback capability */
@@ -1128,7 +1127,7 @@ azalia_codec_construct_format(codec_t *this)
 
 	/* register formats for recording */
 	nid = this->adcs[this->cur_adc];
-	chan = this->w[nid].widgetcap & COP_AWCAP_STEREO ? 2 : 1;
+	chan = WIDGET_CHANNELS(&this->w[nid]);
 	bits_rates = this->w[nid].d.audio.bits_rates;
 	azalia_codec_add_bits(this, chan, bits_rates, AUMODE_RECORD);
 	/* print recording capability */
@@ -1258,9 +1257,9 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 	}
 	group = &this->dacgroups[this->cur_dac];
 	flag222 = group->nconv >= 3 &&
-	    (this->w[group->conv[0]].widgetcap & COP_AWCAP_STEREO) &&
-	    (this->w[group->conv[1]].widgetcap & COP_AWCAP_STEREO) &&
-	    (this->w[group->conv[2]].widgetcap & COP_AWCAP_STEREO);
+	    (WIDGET_CHANNELS(&this->w[group->conv[0]]) == 2) &&
+	    (WIDGET_CHANNELS(&this->w[group->conv[1]]) == 2) &&
+	    (WIDGET_CHANNELS(&this->w[group->conv[2]]) == 2);
 	nchan = (fmt & HDA_SD_FMT_CHAN) + 1;
 	startchan = 0;
 	for (i = 0; i < group->nconv; i++) {
@@ -1280,7 +1279,7 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 				    (number << 4) | startchan, NULL);
 		if (err)
 			goto exit;
-		startchan += this->w[nid].widgetcap & COP_AWCAP_STEREO ? 2 : 1;
+		startchan += WIDGET_CHANNELS(&this->w[nid]);
 	}
 
 exit:
@@ -1442,8 +1441,7 @@ azalia_mixer_init(codec_t *this)
 			d->next = AUDIO_MIXER_LAST;
 			d->prev = AUDIO_MIXER_LAST;
 			m->target = MI_TARGET_OUTAMP;
-			d->un.v.num_channels = w->widgetcap & COP_AWCAP_STEREO
-			    ? 2 : 1;
+			d->un.v.num_channels = WIDGET_CHANNELS(w);
 #ifdef MAX_VOLUME_255
 			d->un.v.units.name[0] = 0;
 			d->un.v.delta = AUDIO_MAX_GAIN /
@@ -1503,8 +1501,7 @@ azalia_mixer_init(codec_t *this)
 				d->next = AUDIO_MIXER_LAST;
 				d->prev = AUDIO_MIXER_LAST;
 				m->target = j;
-				d->un.v.num_channels =
-				    w->widgetcap & COP_AWCAP_STEREO ? 2 : 1;
+				d->un.v.num_channels = WIDGET_CHANNELS(w);
 #ifdef MAX_VOLUME_255
 				d->un.v.units.name[0] = 0;
 				d->un.v.delta = AUDIO_MAX_GAIN /
@@ -1680,7 +1677,7 @@ azalia_mixer_init(codec_t *this)
 		mc.un.value.num_channels = 1;
 		mc.un.value.level[0] = AUDIO_MAX_GAIN / 2;
 		if (this->mixers[i].target != MI_TARGET_VOLUME &&
-		    this->w[this->mixers[i].nid].widgetcap & COP_AWCAP_STEREO) {
+		    WIDGET_CHANNELS(&this->w[this->mixers[i].nid]) == 2) {
 			mc.un.value.num_channels = 2;
 			mc.un.value.level[1] = AUDIO_MAX_GAIN / 2;
 		}
@@ -1733,7 +1730,8 @@ azalia_mixer_get(const codec_t *this, mixer_ctrl_t *mc)
 			return err;
 		mc->un.value.level[0] = azalia_mixer_from_device_value(this, m,
 		    CORB_GAGM_GAIN(result));
-		if (this->w[m->nid].widgetcap & COP_AWCAP_STEREO) {
+		mc->un.value.num_channels = WIDGET_CHANNELS(&this->w[m->nid]);
+		if (mc->un.value.num_channels == 2) {
 			err = this->comresp(this, m->nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE, CORB_GAGM_INPUT |
 			    CORB_GAGM_RIGHT | MI_TARGET_INAMP(m->target),
@@ -1742,9 +1740,6 @@ azalia_mixer_get(const codec_t *this, mixer_ctrl_t *mc)
 				return err;
 			mc->un.value.level[1] = azalia_mixer_from_device_value
 			    (this, m, CORB_GAGM_GAIN(result));
-			mc->un.value.num_channels = 2;
-		} else {
-			mc->un.value.num_channels = 1;
 		}
 	}
 
@@ -1765,7 +1760,8 @@ azalia_mixer_get(const codec_t *this, mixer_ctrl_t *mc)
 			return err;
 		mc->un.value.level[0] = azalia_mixer_from_device_value(this, m,
 		    CORB_GAGM_GAIN(result));
-		if (this->w[m->nid].widgetcap & COP_AWCAP_STEREO) {
+		mc->un.value.num_channels = WIDGET_CHANNELS(&this->w[m->nid]);
+		if (mc->un.value.num_channels == 2) {
 			err = this->comresp(this, m->nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE,
 			    CORB_GAGM_OUTPUT | CORB_GAGM_RIGHT | 0, &result);
@@ -1773,9 +1769,6 @@ azalia_mixer_get(const codec_t *this, mixer_ctrl_t *mc)
 				return err;
 			mc->un.value.level[1] = azalia_mixer_from_device_value
 			    (this, m, CORB_GAGM_GAIN(result));
-			mc->un.value.num_channels = 2;
-		} else {
-			mc->un.value.num_channels = 1;
 		}
 	}
 
@@ -1867,7 +1860,7 @@ azalia_mixer_set(codec_t *this, const mixer_ctrl_t *mc)
 		    value, &result);
 		if (err)
 			return err;
-		if (this->w[m->nid].widgetcap & COP_AWCAP_STEREO) {
+		if (WIDGET_CHANNELS(&this->w[m->nid]) == 2) {
 			err = this->comresp(this, m->nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE, CORB_GAGM_INPUT |
 			    CORB_GAGM_RIGHT | MI_TARGET_INAMP(m->target),
@@ -1908,7 +1901,7 @@ azalia_mixer_set(codec_t *this, const mixer_ctrl_t *mc)
 		if (err)
 			return err;
 		if (mc->un.value.num_channels >= 2 &&
-		    this->w[m->nid].widgetcap & COP_AWCAP_STEREO) {
+		    WIDGET_CHANNELS(&this->w[m->nid]) == 2) {
 			if (!azalia_mixer_validate_value(this, m,
 			    mc->un.value.level[1]))
 				return EINVAL;
@@ -1944,7 +1937,7 @@ azalia_mixer_set(codec_t *this, const mixer_ctrl_t *mc)
 		    value, &result);
 		if (err)
 			return err;
-		if (this->w[m->nid].widgetcap & COP_AWCAP_STEREO) {
+		if (WIDGET_CHANNELS(&this->w[m->nid]) == 2) {
 			err = this->comresp(this, m->nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE,
 			    CORB_GAGM_OUTPUT | CORB_GAGM_RIGHT, &result);
@@ -1981,7 +1974,7 @@ azalia_mixer_set(codec_t *this, const mixer_ctrl_t *mc)
 		if (err)
 			return err;
 		if (mc->un.value.num_channels >= 2 &&
-		    this->w[m->nid].widgetcap & COP_AWCAP_STEREO) {
+		    WIDGET_CHANNELS(&this->w[m->nid]) == 2) {
 			if (!azalia_mixer_validate_value(this, m,
 			    mc->un.value.level[1]))
 				return EINVAL;
