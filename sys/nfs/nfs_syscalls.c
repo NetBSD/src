@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.84 2005/12/11 12:25:17 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.85 2006/01/03 11:41:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.84 2005/12/11 12:25:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.85 2006/01/03 11:41:03 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -395,6 +395,7 @@ nfsrv_sockalloc()
 	slp = (struct nfssvc_sock *)
 	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
 	memset(slp, 0, sizeof (struct nfssvc_sock));
+	simple_lock_init(&slp->ns_lock);
 	TAILQ_INIT(&slp->ns_uidlruhead);
 	s = splsoftnet();
 	simple_lock(&nfsd_slock);
@@ -411,7 +412,7 @@ nfsrv_sockfree(struct nfssvc_sock *slp)
 
 	KASSERT(slp->ns_so == NULL);
 	KASSERT(slp->ns_fp == NULL);
-	KASSERT((slp->ns_flag & SLP_ALLFLAGS) == 0);
+	KASSERT((slp->ns_flag & SLP_VALID) == 0);
 	free(slp, M_NFSSVC);
 }
 
@@ -554,13 +555,12 @@ nfssvc_nfsd(nsd, argp, l)
 	 * Loop getting rpc requests until SIGKILL.
 	 */
 	for (;;) {
-		if ((nfsd->nfsd_flag & NFSD_REQINPROG) == 0) {
+		if (nfsd->nfsd_slp == NULL) {
 			simple_lock(&nfsd_slock);
-			while (nfsd->nfsd_slp == (struct nfssvc_sock *)0 &&
+			while (nfsd->nfsd_slp == NULL &&
 			    (nfsd_head_flag & NFSD_CHECKSLP) == 0) {
 				SLIST_INSERT_HEAD(&nfsd_idle_head, nfsd,
 				    nfsd_idle);
-				nfsd->nfsd_flag |= NFSD_WAITING;
 				nfsd_waiting++;
 				error = ltsleep(nfsd, PSOCK | PCATCH, "nfsd",
 				    0, &nfsd_slock);
@@ -579,7 +579,7 @@ nfssvc_nfsd(nsd, argp, l)
 					goto done;
 				}
 			}
-			if (nfsd->nfsd_slp == (struct nfssvc_sock *)0 &&
+			if (nfsd->nfsd_slp == NULL &&
 			    (nfsd_head_flag & NFSD_CHECKSLP) != 0) {
 				slp = TAILQ_FIRST(&nfssvc_sockpending);
 				if (slp) {
@@ -595,18 +595,14 @@ nfssvc_nfsd(nsd, argp, l)
 					nfsd_head_flag &= ~NFSD_CHECKSLP;
 			}
 			simple_unlock(&nfsd_slock);
-			if ((slp = nfsd->nfsd_slp) == (struct nfssvc_sock *)0)
+			if ((slp = nfsd->nfsd_slp) == NULL)
 				continue;
 			if (slp->ns_flag & SLP_VALID) {
 				if (slp->ns_flag & SLP_DISCONN)
 					nfsrv_zapsock(slp);
-				else if (slp->ns_flag & SLP_NEEDQ) {
-					slp->ns_flag &= ~SLP_NEEDQ;
-					(void) nfs_sndlock(&slp->ns_solock,
-						(struct nfsreq *)0);
-					nfsrv_rcv(slp->ns_so, (caddr_t)slp,
-						M_WAIT);
-					nfs_sndunlock(&slp->ns_solock);
+				else if ((slp->ns_flag & SLP_NEEDQ) != 0) {
+					nfsrv_rcv(slp->ns_so, (void *)slp,
+					    M_WAIT);
 				}
 				error = nfsrv_dorec(slp, nfsd, &nd);
 				cur_usec = (u_quad_t)time.tv_sec * 1000000 +
@@ -619,7 +615,9 @@ nfssvc_nfsd(nsd, argp, l)
 					writes_todo = 1;
 				} else
 					writes_todo = 0;
-				nfsd->nfsd_flag |= NFSD_REQINPROG;
+				if (error == 0 && slp->ns_rec != NULL) {
+					nfsrv_wakenfsd(slp);
+				}
 			}
 		} else {
 			error = 0;
@@ -630,8 +628,7 @@ nfssvc_nfsd(nsd, argp, l)
 				pool_put(&nfs_srvdesc_pool, nd);
 				nd = NULL;
 			}
-			nfsd->nfsd_slp = (struct nfssvc_sock *)0;
-			nfsd->nfsd_flag &= ~NFSD_REQINPROG;
+			nfsd->nfsd_slp = NULL;
 			nfsrv_slpderef(slp);
 			continue;
 		}
@@ -641,7 +638,7 @@ nfssvc_nfsd(nsd, argp, l)
 		if (so->so_proto->pr_flags & PR_CONNREQUIRED)
 			solockp = &slp->ns_solock;
 		else
-			solockp = (int *)0;
+			solockp = NULL;
 		if (nd) {
 			nd->nd_starttime = time;
 			if (nd->nd_nam2)
@@ -795,14 +792,16 @@ nfssvc_nfsd(nsd, argp, l)
 					    htonl(0x80000000 | siz);
 				}
 				if (solockp)
-					(void) nfs_sndlock(solockp, NULL);
+					nfs_sndlock(solockp, NULL);
 				if (slp->ns_flag & SLP_VALID) {
-					error =
-					    nfs_send(so, nd->nd_nam2, m, NULL, l);
+					error = nfs_send(so, nd->nd_nam2,
+					    m, NULL, l);
 				} else {
 					error = EPIPE;
 					m_freem(m);
 				}
+				if (solockp)
+					nfs_sndunlock(solockp);
 				if (nfsrtton)
 					nfsd_rt(sotype, nd, cacherep);
 				if (nd->nd_nam2)
@@ -811,8 +810,6 @@ nfssvc_nfsd(nsd, argp, l)
 					m_freem(nd->nd_mrep);
 				if (error == EPIPE)
 					nfsrv_zapsock(slp);
-				if (solockp)
-					nfs_sndunlock(solockp);
 				if (error == EINTR || error == ERESTART) {
 					pool_put(&nfs_srvdesc_pool, nd);
 					nfsrv_slpderef(slp);
@@ -849,7 +846,6 @@ nfssvc_nfsd(nsd, argp, l)
 		} while (writes_todo);
 		s = splsoftnet();
 		if (nfsrv_dorec(slp, nfsd, &nd)) {
-			nfsd->nfsd_flag &= ~NFSD_REQINPROG;
 			nfsd->nfsd_slp = NULL;
 			nfsrv_slpderef(slp);
 		}
@@ -883,34 +879,23 @@ nfsrv_zapsock(slp)
 	struct nfsuid *nuidp, *nnuidp;
 	struct nfsrv_descript *nwp, *nnwp;
 	struct socket *so;
-	struct file *fp;
 	int s;
 
-	simple_lock(&nfsd_slock);
-	if ((slp->ns_flag & SLP_VALID) == 0) {
-		simple_unlock(&nfsd_slock);
+	if (nfsdsock_drain(slp)) {
 		return;
 	}
+	simple_lock(&nfsd_slock);
 	if (slp->ns_flag & SLP_DOREC) {
 		TAILQ_REMOVE(&nfssvc_sockpending, slp, ns_pending);
 	}
-	slp->ns_flag &= ~SLP_ALLFLAGS;
 	simple_unlock(&nfsd_slock);
 
-	fp = slp->ns_fp;
-	slp->ns_fp = NULL;
 	so = slp->ns_so;
-	slp->ns_so = NULL;
-	KASSERT(fp != NULL);
 	KASSERT(so != NULL);
-	KASSERT(fp->f_data == so);
-	simple_lock(&fp->f_slock);
-	FILE_USE(fp);
 	so->so_upcall = NULL;
 	so->so_upcallarg = NULL;
 	so->so_rcv.sb_flags &= ~SB_UPCALL;
 	soshutdown(so, SHUT_RDWR);
-	closef(fp, (struct lwp *)0);
 
 	if (slp->ns_nam)
 		m_free(slp->ns_nam);
@@ -946,11 +931,24 @@ nfsrv_slpderef(slp)
 	LOCK_ASSERT(!simple_lock_held(&nfsd_slock));
 
 	if (--(slp->ns_sref) == 0 && (slp->ns_flag & SLP_VALID) == 0) {
+		struct file *fp;
 		int s = splsoftnet();
 		simple_lock(&nfsd_slock);
 		TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
 		simple_unlock(&nfsd_slock);
 		splx(s);
+
+		fp = slp->ns_fp;
+		if (fp != NULL) {
+			slp->ns_fp = NULL;
+			KASSERT(fp != NULL);
+			KASSERT(fp->f_data == slp->ns_so);
+			simple_lock(&fp->f_slock);
+			FILE_USE(fp);
+			closef(fp, (struct lwp *)0);
+			slp->ns_so = NULL;
+		}
+
 		nfsrv_sockfree(slp);
 	}
 }
@@ -975,11 +973,11 @@ nfsrv_init(terminating)
 
 	if (terminating) {
 		while ((slp = TAILQ_FIRST(&nfssvc_sockhead)) != NULL) {
-			TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
 			simple_unlock(&nfsd_slock);
-			if (slp->ns_flag & SLP_VALID)
-				nfsrv_zapsock(slp);
-			nfsrv_sockfree(slp);
+			KASSERT(slp->ns_sref == 0);
+			slp->ns_sref++;
+			nfsrv_zapsock(slp);
+			nfsrv_slpderef(slp);
 			simple_lock(&nfsd_slock);
 		}
 		simple_unlock(&nfsd_slock);
