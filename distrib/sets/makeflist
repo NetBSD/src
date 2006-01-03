@@ -1,14 +1,14 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.72 2006/01/03 16:40:16 apb Exp $
+# $NetBSD: makeflist,v 1.73 2006/01/03 18:31:09 apb Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname ...]
 #
 
-rundir=${0%/*}
-. ${rundir}/sets.subr
-lists=$nlists
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+lists="${nlists}"
 
 usage()
 {
@@ -18,10 +18,10 @@ Usage: ${0##*/} [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname [...]]
 	-x		print make x11 lists
 	-l		just list the selected set names, not the contents
 	-o		only match obsolete files
-	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [$MACHINE_ARCH]
-	-m machine	set machine (e.g, amiga, i386, macppc) [$MACHINE]
-	-s setsdir	directory to find sets [$setsdir]
-	[setname [...]]	sets to build [$lists]
+	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [${MACHINE_ARCH}]
+	-m machine	set machine (e.g, amiga, i386, macppc) [${MACHINE}]
+	-s setsdir	directory to find sets [${setsdir}]
+	[setname [...]]	sets to build [${lists}]
 USAGE
 	exit 1
 }
@@ -30,10 +30,10 @@ USAGE
 while getopts bxloa:m:s: ch; do
 	case ${ch} in
 	b)
-		lists="$nlists $xlists"
+		lists="${nlists} ${xlists}"
 		;;
 	x)
-		lists="$xlists"
+		lists="${xlists}"
 		;;
 	l)
 		listonly=1
@@ -42,14 +42,14 @@ while getopts bxloa:m:s: ch; do
 		obsolete=1
 		;;
 	a)
-		MACHINE_ARCH=${OPTARG}
-		MACHINE_CPU=$(arch_to_cpu ${OPTARG})
+		MACHINE_ARCH="${OPTARG}"
+		MACHINE_CPU="$(arch_to_cpu "${OPTARG}")"
 		;;
 	m)
-		MACHINE=${OPTARG}
+		MACHINE="${OPTARG}"
 		;;
 	s)
-		setsdir=${OPTARG}
+		setsdir="${OPTARG}"
 		;;
 	*)
 		usage
@@ -61,9 +61,9 @@ if [ -n "$1" ]; then
 	lists="$@"
 fi
 
-if [ -n "$listonly" ]; then
+if [ -n "${listonly}" ]; then
 	echo ${lists} | tr ' ' '\n'
 	exit 0
 fi
 
-list_set_files $lists | ${AWK} '{print $1}' | ${SORT} -u
+list_set_files ${lists} | ${AWK} '{print $1}' | ${SORT} -u
