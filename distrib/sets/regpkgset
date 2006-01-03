@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkgset,v 1.3 2004/07/23 15:11:26 erh Exp $
+# $NetBSD: regpkgset,v 1.4 2006/01/03 16:40:16 apb Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -60,19 +60,19 @@ all)	list="base comp etc games man misc text" ;;
 esac
 
 if [ x${cache} != x ]; then
-	BUILD_INFO_CACHE=$(mktemp /var/tmp/$(basename $0)-BUILD_INFO.XXXXXX)
+	BUILD_INFO_CACHE=$(${MKTEMP} /var/tmp/$(basename $0)-BUILD_INFO.XXXXXX)
 	export BUILD_INFO_CACHE
 	{
-	echo "OPSYS=`uname -s`"
-	echo "OS_VERSION=`uname -r`"
-	make -f- all <<EOF
+	echo "OPSYS=`${UNAME} -s`"
+	echo "OS_VERSION=`${UNAME} -r`"
+	${MAKE} -f- all <<EOF
 .include <bsd.own.mk>
 all:
 	@echo OBJECT_FMT=${OBJECT_FMT}
 	@echo MACHINE_ARCH=${MACHINE_ARCH}
 	@echo MACHINE_GNU_ARCH=${MACHINE_GNU_ARCH}
 EOF
-	echo "_PKGTOOLS_VER=`pkg_create -V`"
+	echo "_PKGTOOLS_VER=`${PKG_CREATE} -V`"
 	} > ${BUILD_INFO_CACHE}
 fi
 

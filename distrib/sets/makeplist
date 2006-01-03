@@ -54,11 +54,11 @@ ffilename=/tmp/makeplist.files.$$
 dfilename=/tmp/makeplist.dirs.$$ 
 
 list_set_files $setname | \
-    env PLISTPKG=$pkgname awk '
+    ${ENV_CMD} PLISTPKG=$pkgname ${AWK} '
 	$2 == ENVIRON["PLISTPKG"] {
 		sub("^\\./", "", $1);
 		print $1
-	}' | sort -u > $filename
+	}' | ${SORT} -u > $filename
 
 SELECTDIRS="-prune -type d"
 SELECTNONDIRS="! -type d -print -o ( -type d -prune )"
@@ -77,8 +77,8 @@ cd $prefix
 xargs echo $SELECTDIRS < $filename | \
 while read ignore ignore ignore args; do
 	[ -z "$args" ] && break 
-	find $args $SELECTDIRS
-done | awk '{ print "@dirrm " $1; }' > $dfilename
+	${FIND} $args $SELECTDIRS
+done | ${AWK} '{ print "@dirrm " $1; }' > $dfilename
 
 #
 # Match the non-directories.  Use find(1) to avoid repeat calls to
@@ -89,7 +89,7 @@ xargs echo $SELECTNONDIRS < $filename | \
 while read ignore ignore ignore ignore ignore ignore ignore ignore ignore \
     ignore args; do
 	[ -z "$args" ] && break 
-	find $args $SELECTNONDIRS
+	${FIND} $args $SELECTNONDIRS
 done > $ffilename
 
 cd -
@@ -99,7 +99,7 @@ if [ -s $ffilename ]; then
 	cat $ffilename
 fi
 if [ -s $dfilename ]; then
-        sort -r $dfilename
+        ${SORT} -r $dfilename
 fi
 
 rm -f $filename $ffilename $dfilename

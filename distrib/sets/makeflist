@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.71 2004/07/23 15:11:26 erh Exp $
+# $NetBSD: makeflist,v 1.72 2006/01/03 16:40:16 apb Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -66,4 +66,4 @@ if [ -n "$listonly" ]; then
 	exit 0
 fi
 
-list_set_files $lists | awk '{print $1}' | sort -u
+list_set_files $lists | ${AWK} '{print $1}' | ${SORT} -u

@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.27 2006/01/03 15:42:42 apb Exp $
+#	$NetBSD: checkflist,v 1.28 2006/01/03 16:40:16 apb Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -85,7 +85,7 @@ ${HOST_SH} ./makeflist $xargs $dargs > $SDIR/flist
 
 (
 	cd $DESTDIR
-	find $origin \( -type d -o -type f -o -type l \) -print
+	${FIND} $origin \( -type d -o -type f -o -type l \) -print
 ) | (
 	while read line; do
 		case "$line" in
@@ -96,13 +96,13 @@ ${HOST_SH} ./makeflist $xargs $dargs > $SDIR/flist
 			;;
 		esac
 	done
-) | sort > $SDIR/files
+) | ${SORT} > $SDIR/files
 
-comm -23 $SDIR/flist $SDIR/files > $SDIR/missing
-comm -13 $SDIR/flist $SDIR/files > $SDIR/extra
+${COMM} -23 $SDIR/flist $SDIR/files > $SDIR/missing
+${COMM} -13 $SDIR/flist $SDIR/files > $SDIR/extra
 
 if [ -s $SDIR/extra ]; then
-	count=$(awk 'END {print NR}' $SDIR/extra)
+	count=$(${AWK} 'END {print NR}' $SDIR/extra)
 	echo ""
 	echo "============  ${count} extra files  ==============="
 	echo "Files in DESTDIR but missing from flist."
@@ -119,7 +119,7 @@ if [ -s $SDIR/extra ]; then
 fi
 
 if [ -s $SDIR/missing ]; then
-	count=$(awk 'END {print NR}' $SDIR/missing)
+	count=$(${AWK} 'END {print NR}' $SDIR/missing)
 	echo ""
 	echo "===========  ${count} missing files  =============="
 	echo "Files in flist but missing from DESTDIR."

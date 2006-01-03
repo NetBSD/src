@@ -15,8 +15,6 @@
 rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 . "${rundir}/sets.subr"
 
-DB="${TOOL_DB} -q"
-prefix=/
 
 usage()
 {
@@ -60,7 +58,7 @@ fi
 sets=$@
 
 # TBD clean up
-SCRATCH=$(mktemp -d /var/tmp/$(basename $0).XXXXXX)
+SCRATCH=$(${MKTEMP} -d /var/tmp/$(basename $0).XXXXXX)
 
 [ $? -ne 0 ] && { echo "Could not create scratch directory." 1>&2 ; exit 1 ; }
 
@@ -71,16 +69,16 @@ PARENT_PATHNAMES=$SCRATCH/parent-pathnames
 
 echo "indexing packages by pathnames" 1>&2
 
-list_set_files $sets | sed 's/^\.\///' | \
-env PREFIX=$prefix awk '{
+list_set_files $sets | ${SED} 's/^\.\///' | \
+${ENV_CMD} PREFIX=$prefix ${AWK} '{
 	if ($1 == ".") {
 		print ENVIRON["PREFIX"] " " $2;
 	} else {
 		print ENVIRON["PREFIX"] $1 " " $2;
 	}
-}' | sort -k 1 -u > $PATH_MEMBERSHIP
+}' | ${SORT} -k 1 -u > $PATH_MEMBERSHIP
 
-$DB -w -f - btree $PATH_TO_PKGNAME < $PATH_MEMBERSHIP || echo "shit" 1>&2
+$DB -q -w -f - btree $PATH_TO_PKGNAME < $PATH_MEMBERSHIP || echo "shit" 1>&2
 
 echo "computing parent pathnames" 1>&2
 
@@ -91,9 +89,11 @@ done < $PATH_MEMBERSHIP > $PARENT_PATHNAMES
 
 echo "selecting parent packages using parent pathnames" 1>&2
 
-$DB -f - btree $PATH_TO_PKGNAME < $PARENT_PATHNAMES | \
-	paste $PATH_MEMBERSHIP - | \
-	awk '{ if ($2 != $4) print $2 " " $4; }' | sort -u | $rundir/culldeps
+$DB -q -f - btree $PATH_TO_PKGNAME < $PARENT_PATHNAMES | \
+	${PASTE} $PATH_MEMBERSHIP - | \
+	${AWK} '{ if ($2 != $4) print $2 " " $4; }' | \
+	${SORT} -u | \
+	$rundir/culldeps
 
 if [ $? -ne 0 ]; then
 	echo "error in parent-directory lookup, aborting" 1>&2
