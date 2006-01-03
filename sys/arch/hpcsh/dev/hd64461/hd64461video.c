@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.34 2005/12/18 23:32:39 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.35 2006/01/03 01:15:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.34 2005/12/18 23:32:39 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.35 2006/01/03 01:15:47 uwe Exp $");
 
-#include "debug_hpcsh.h"
+#include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
 
 #include <sys/param.h>
