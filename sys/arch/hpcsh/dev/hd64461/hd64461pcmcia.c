@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.34 2006/01/03 01:06:45 uwe Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.35 2006/01/03 01:07:54 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.34 2006/01/03 01:06:45 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.35 2006/01/03 01:07:54 uwe Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -711,7 +711,7 @@ hd64461pcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width,
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 #ifdef HD64461PCMCIA_DEBUG
-	static char *width_names[] = { "auto", "io8", "io16" };
+	static const char *width_names[] = { "auto", "io8", "io16" };
 #endif
 	if (ch->ch_channel == CHANNEL_1)
 		return (1);
