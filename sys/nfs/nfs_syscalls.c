@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.85 2006/01/03 11:41:03 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.86 2006/01/03 12:30:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.85 2006/01/03 11:41:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.86 2006/01/03 12:30:01 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -128,9 +128,9 @@ int nfs_niothreads = -1; /* == "0, and has never been set" */
 #endif
 
 #ifdef NFSSERVER
-static void nfsd_rt __P((int, struct nfsrv_descript *, int));
 static struct nfssvc_sock *nfsrv_sockalloc __P((void));
 static void nfsrv_sockfree __P((struct nfssvc_sock *));
+static void nfsd_rt __P((int, struct nfsrv_descript *, int));
 #endif
 
 /*
@@ -397,6 +397,8 @@ nfsrv_sockalloc()
 	memset(slp, 0, sizeof (struct nfssvc_sock));
 	simple_lock_init(&slp->ns_lock);
 	TAILQ_INIT(&slp->ns_uidlruhead);
+	LIST_INIT(&slp->ns_tq);
+	SIMPLEQ_INIT(&slp->ns_sendq);
 	s = splsoftnet();
 	simple_lock(&nfsd_slock);
 	TAILQ_INSERT_TAIL(&nfssvc_sockhead, slp, ns_chain);
@@ -526,8 +528,6 @@ nfssvc_nfsd(nsd, argp, l)
 	struct mbuf *m;
 	int siz;
 	struct nfssvc_sock *slp;
-	struct socket *so;
-	int *solockp;
 	struct nfsd *nfsd = nsd->nsd_nfsd;
 	struct nfsrv_descript *nd = NULL;
 	struct mbuf *mreq;
@@ -633,12 +633,7 @@ nfssvc_nfsd(nsd, argp, l)
 			continue;
 		}
 		splx(s);
-		so = slp->ns_so;
-		sotype = so->so_type;
-		if (so->so_proto->pr_flags & PR_CONNREQUIRED)
-			solockp = &slp->ns_solock;
-		else
-			solockp = NULL;
+		sotype = slp->ns_so->so_type;
 		if (nd) {
 			nd->nd_starttime = time;
 			if (nd->nd_nam2)
@@ -791,27 +786,16 @@ nfssvc_nfsd(nsd, argp, l)
 					*mtod(m, u_int32_t *) =
 					    htonl(0x80000000 | siz);
 				}
-				if (solockp)
-					nfs_sndlock(solockp, NULL);
-				if (slp->ns_flag & SLP_VALID) {
-					error = nfs_send(so, nd->nd_nam2,
-					    m, NULL, l);
-				} else {
-					error = EPIPE;
-					m_freem(m);
+				nd->nd_mreq = m;
+				if (nfsrtton) {
+					nfsd_rt(slp->ns_so->so_type, nd,
+					    cacherep);
 				}
-				if (solockp)
-					nfs_sndunlock(solockp);
-				if (nfsrtton)
-					nfsd_rt(sotype, nd, cacherep);
-				if (nd->nd_nam2)
-					m_free(nd->nd_nam2);
-				if (nd->nd_mrep)
-					m_freem(nd->nd_mrep);
+				error = nfsdsock_sendreply(slp, nd);
+				nd = NULL;
 				if (error == EPIPE)
 					nfsrv_zapsock(slp);
 				if (error == EINTR || error == ERESTART) {
-					pool_put(&nfs_srvdesc_pool, nd);
 					nfsrv_slpderef(slp);
 					s = splsoftnet();
 					goto done;
@@ -916,7 +900,6 @@ nfsrv_zapsock(slp)
 		LIST_REMOVE(nwp, nd_tq);
 		pool_put(&nfs_srvdesc_pool, nwp);
 	}
-	LIST_INIT(&slp->ns_tq);
 	splx(s);
 }
 

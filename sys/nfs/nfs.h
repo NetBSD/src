@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.53 2006/01/03 11:41:03 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.54 2006/01/03 12:30:01 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -444,6 +444,7 @@ struct nfssvc_sock {
 	int		ns_reclen;
 	int		ns_numuids;
 	u_int32_t	ns_sref;
+	SIMPLEQ_HEAD(, nfsrv_descript) ns_sendq; /* send reply list */
 	LIST_HEAD(, nfsrv_descript) ns_tq;	/* Write gather lists */
 	LIST_HEAD(, nfsuid) ns_uidhashtbl[NFS_UIDHASHSIZ];
 	LIST_HEAD(nfsrvw_delayhash, nfsrv_descript) ns_wdelayhashtbl[NFS_WDELAYHASHSIZ];
@@ -457,6 +458,7 @@ struct nfssvc_sock {
 #define	SLP_BUSY	0x10
 #define	SLP_WANT	0x20
 #define	SLP_LASTFRAG	0x40
+#define	SLP_SENDING	0x80
 
 extern TAILQ_HEAD(nfssvc_sockhead, nfssvc_sock) nfssvc_sockhead;
 extern struct nfssvc_sockhead nfssvc_sockpending;
@@ -467,6 +469,7 @@ extern int nfssvc_sockhead_flag;
 int nfsdsock_lock(struct nfssvc_sock *, boolean_t);
 void nfsdsock_unlock(struct nfssvc_sock *);
 int nfsdsock_drain(struct nfssvc_sock *);
+int nfsdsock_sendreply(struct nfssvc_sock *, struct nfsrv_descript *);
 
 /*
  * One of these structures is allocated for each nfsd.
@@ -499,6 +502,7 @@ struct nfsrv_descript {
 	LIST_ENTRY(nfsrv_descript) nd_hash;	/* Hash list */
 	LIST_ENTRY(nfsrv_descript) nd_tq;		/* and timer list */
 	LIST_HEAD(,nfsrv_descript) nd_coalesce;	/* coalesced writes */
+	SIMPLEQ_ENTRY(nfsrv_descript) nd_sendq;	/* send reply list */
 	struct mbuf		*nd_mrep;	/* Request mbuf list */
 	struct mbuf		*nd_md;		/* Current dissect mbuf */
 	struct mbuf		*nd_mreq;	/* Reply mbuf list */
