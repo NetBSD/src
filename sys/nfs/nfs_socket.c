@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.121 2006/01/03 11:41:03 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.122 2006/01/03 12:30:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.121 2006/01/03 11:41:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.122 2006/01/03 12:30:01 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2561,5 +2561,46 @@ nfsrv_wakenfsd(slp)
 	nfsd_head_flag |= NFSD_CHECKSLP;
 	TAILQ_INSERT_TAIL(&nfssvc_sockpending, slp, ns_pending);
 	simple_unlock(&nfsd_slock);
+}
+
+int
+nfsdsock_sendreply(struct nfssvc_sock *slp, struct nfsrv_descript *nd)
+{
+	int error;
+
+	if (nd->nd_mrep != NULL) {
+		m_freem(nd->nd_mrep);
+		nd->nd_mrep = NULL;
+	}
+
+	simple_lock(&slp->ns_lock);
+	if ((slp->ns_flag & SLP_SENDING) != 0) {
+		SIMPLEQ_INSERT_TAIL(&slp->ns_sendq, nd, nd_sendq);
+		simple_unlock(&slp->ns_lock);
+		return 0;
+	}
+	KASSERT(SIMPLEQ_EMPTY(&slp->ns_sendq));
+	slp->ns_flag |= SLP_SENDING;
+	simple_unlock(&slp->ns_lock);
+
+again:
+	error = nfs_send(slp->ns_so, nd->nd_nam2, nd->nd_mreq, NULL, curlwp);
+	if (nd->nd_nam2) {
+		m_free(nd->nd_nam2);
+	}
+	pool_put(&nfs_srvdesc_pool, nd);
+
+	simple_lock(&slp->ns_lock);
+	KASSERT((slp->ns_flag & SLP_SENDING) != 0); 
+	nd = SIMPLEQ_FIRST(&slp->ns_sendq);
+	if (nd != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&slp->ns_sendq, nd_sendq);
+		simple_unlock(&slp->ns_lock);
+		goto again;
+	}
+	slp->ns_flag &= ~SLP_SENDING; 
+	simple_unlock(&slp->ns_lock);
+
+	return error;
 }
 #endif /* NFSSERVER */
