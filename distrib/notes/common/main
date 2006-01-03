@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.298 2005/12/13 10:41:25 ghen Exp $
+.\"	$NetBSD: main,v 1.299 2006/01/03 21:34:05 apb Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1177,6 +1177,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Bang Jun-Young Ta Mt junyoung@NetBSD.org
 .It Ta Dieter Baron Ta Mt dillo@NetBSD.org
 .It Ta Robert V. Baron Ta Mt rvb@NetBSD.org
+.It Ta Alan Barrett Ta Mt apb@NetBSD.org
 .It Ta Grant Beattie Ta Mt grant@NetBSD.org
 .It Ta Jason Beegan Ta Mt jtb@NetBSD.org
 .It Ta Erik Berls Ta Mt cyber@NetBSD.org
