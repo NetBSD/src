@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.13 2006/01/02 20:18:59 garbled Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.14 2006/01/03 00:15:45 garbled Exp $	*/
 
 /* 
  * parsetime.c - parse time for at(1)
@@ -141,7 +141,7 @@ static int sc_tokplur;	/* scanner - is token plural? */
 #if 0
 static char rcsid[] = "$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $";
 #else
-__RCSID("$NetBSD: parsetime.c,v 1.13 2006/01/02 20:18:59 garbled Exp $");
+__RCSID("$NetBSD: parsetime.c,v 1.14 2006/01/03 00:15:45 garbled Exp $");
 #endif
 #endif
 
@@ -644,7 +644,7 @@ parsetime(int argc, char **argv)
 	}
 
 	if (runtimer < 0)
-		panic("Time not valid (likey due to daylight saving time)");
+		panic("Time not valid (possibly due to daylight saving time)");
 
 	if (nowtimer > runtimer)
 		panic("Trying to travel back in time");
