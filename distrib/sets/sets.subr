@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.41 2005/05/01 07:06:09 lukem Exp $
+#	$NetBSD: sets.subr,v 1.42 2006/01/03 15:42:42 apb Exp $
 #
 
 #
@@ -61,6 +61,15 @@ MKVARS="\
 	USE_KERBEROS	\
 	USE_YP		\
 "
+#
+# The following variables refer to tools that are used when building sets:
+#
+: ${CKSUM:=cksum}
+: ${HOST_SH:=sh}
+: ${MKTEMP:=mktemp}
+: ${MTREE:=/usr/sbin/mtree}
+: ${PAX:=pax}
+: ${TOOL_DB:=db}
 
 oIFS=$IFS
 IFS="
@@ -127,7 +136,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.41 2005/05/01 07:06:09 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.42 2006/01/03 15:42:42 apb Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root

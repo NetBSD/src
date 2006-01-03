@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.26 2005/10/21 02:41:14 jmc Exp $
+#	$NetBSD: checkflist,v 1.27 2006/01/03 15:42:42 apb Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -10,9 +10,9 @@ if [ -z "$DESTDIR" ]; then
 fi
 
 prog=${0##*/}
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
 
-: ${HOST_SH:=sh}
-: ${MKTEMP:=mktemp}
 SDIR=$(${MKTEMP} -d /tmp/${prog}.XXXXXX)
 
 es=0
