@@ -1,12 +1,10 @@
 #
 # kernel config file for system install
 #
-# 	$NetBSD: INSTALL_IPAQ,v 1.1 2005/12/30 11:36:22 rjs Exp $
+# 	$NetBSD: INSTALL_IPAQ,v 1.2 2006/01/03 22:59:49 peter Exp $
 #
 
 include		"arch/hpcarm/conf/IPAQ"
-
-pseudo-device	sl		2	# Serial Line IP
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
