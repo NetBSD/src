@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.52 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs.h,v 1.53 2006/01/03 11:41:03 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -426,6 +426,7 @@ struct nfsuid {
 #endif
 
 struct nfssvc_sock {
+	struct simplelock ns_lock;
 	TAILQ_ENTRY(nfssvc_sock) ns_chain;	/* List of all nfssvc_sock's */
 	TAILQ_ENTRY(nfssvc_sock) ns_pending;	/* List of pending sockets */
 	TAILQ_HEAD(, nfsuid) ns_uidlruhead;
@@ -450,18 +451,22 @@ struct nfssvc_sock {
 
 /* Bits for "ns_flag" */
 #define	SLP_VALID	0x01
-#define	SLP_DOREC	0x02
+#define	SLP_DOREC	0x02	/* on nfssvc_sockpending queue */
 #define	SLP_NEEDQ	0x04
 #define	SLP_DISCONN	0x08
-#define	SLP_GETSTREAM	0x10
-#define	SLP_LASTFRAG	0x20
-#define SLP_ALLFLAGS	0xff
+#define	SLP_BUSY	0x10
+#define	SLP_WANT	0x20
+#define	SLP_LASTFRAG	0x40
 
 extern TAILQ_HEAD(nfssvc_sockhead, nfssvc_sock) nfssvc_sockhead;
 extern struct nfssvc_sockhead nfssvc_sockpending;
 extern int nfssvc_sockhead_flag;
 #define	SLP_INIT	0x01
 #define	SLP_WANTINIT	0x02
+
+int nfsdsock_lock(struct nfssvc_sock *, boolean_t);
+void nfsdsock_unlock(struct nfssvc_sock *);
+int nfsdsock_drain(struct nfssvc_sock *);
 
 /*
  * One of these structures is allocated for each nfsd.
@@ -480,8 +485,6 @@ struct nfsd {
 };
 
 /* Bits for "nfsd_flag" */
-#define	NFSD_WAITING	0x01
-#define	NFSD_REQINPROG	0x02
 #define	NFSD_NEEDAUTH	0x04
 #define	NFSD_AUTHFAIL	0x08
 
