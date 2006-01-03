@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.44 2006/01/03 01:05:55 uwe Exp $
+#	$NetBSD: files.hpcsh,v 1.45 2006/01/03 01:15:04 uwe Exp $
 #
 maxpartitions 8
 
@@ -6,7 +6,6 @@ maxusers 2 16 64
 
 defflag debug_hpcsh.h	BUS_SPACE_DEBUG
 			PFCKBD_DEBUG
-			HD64461VIDEO_DEBUG
 
 defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
 
@@ -123,6 +122,8 @@ device	hd64461video: hpcfbif
 attach	hd64461video at hd64461if
 file	arch/hpcsh/dev/hd64461/hd64461video.c	hd64461video	needs-flag
 file	dev/hpc/video_subr.c			hd64461video
+defflag opt_hd64461video.h	HD64461VIDEO_DEBUG
+				HD64461VIDEO_HWACCEL
 
 #
 # HD64465
