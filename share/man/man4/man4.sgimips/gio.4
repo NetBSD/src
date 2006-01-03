@@ -1,4 +1,4 @@
-.\"	$NetBSD: gio.4,v 1.6 2004/02/10 16:55:43 wiz Exp $
+.\"	$NetBSD: gio.4,v 1.7 2006/01/03 01:35:52 rumble Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 24, 2004
+.Dd January 2, 2006
 .Dt GIO 4 sgimips
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ The
 .Nm
 bus is a bus for connecting high-speed peripherals to the main memory and
 CPU.
-The devices themselves are connected to the
+The devices themselves are typically (but not necessarily) connected to the
 .Xr hpc 4
 peripheral controller, and memory and CPU are accessed through the
 .Xr imc 4
@@ -57,7 +57,8 @@ peripheral controller, and memory and CPU are accessed through the
 (Processor Interface Controller).
 The
 .Nm
-bus is found on the Indigo, Indy, and Indigo2 machines.
+bus is found on the Personal Iris 4D/3x, Indigo, Indy, and Indigo2 machines
+and exists in three incarnations: GIO32, GIO32-bis, and GIO64.
 .Sh SEE ALSO
 .Xr hpc 4 ,
 .Xr imc 4 ,
