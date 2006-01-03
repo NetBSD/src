@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.62 2005/12/09 23:34:02 elad Exp $
+# $NetBSD: GENERIC,v 1.63 2006/01/03 01:47:37 uwe Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -21,7 +21,7 @@
 #
 # This kernel supports...
 #	HP Jornada 680/690
-#	HP HP620LX
+#	HP 620LX/660LX
 #	HITACHI HPW50PA
 #
 
@@ -46,7 +46,7 @@ options 	SH3
 # PCLOCK is estimated by kernel.
 #				PCLOCK		CPU CLOCK
 #	HP Jornada 680/690	22.22MHz	133MHz
-#	HP HP620LX		18.75MHz	 75MHz
+#	HP 620LX		18.75MHz	 75MHz
 #	HITACHI HPW50PA		25MHz		100MHz
 #
 #options 	PCLOCK=...
@@ -228,18 +228,17 @@ hpckbd*		at pfckbd?
 wskbd0		at hpckbd? mux 1
 
 #
-# HP Jornada
+# HP Jornada (620LX/660LX, 680/690)
 #
-# Serial Devices
-# don't need to define SCICONSOLE. you can select from bootloader.
-scif0		at shb?
+scif0		at shb?			# serial port/console
 options 	SCIFCN_SPEED=19200
+# don't need to define SCIFCONSOLE, you can select from the bootloader.
 
-j6x0pwr*	at adc?			# '680 battery, on/off, etc
+j6x0pwr*	at adc?			# battery, on/off, etc
 
-j6x0lcd*	at shb?			# '680 LCD power, brightness, contrast
+j6x0lcd*	at shb?			# LCD power, brightness, contrast
 
-j6x0tp*		at adc?			# '680 touch panel
+j6x0tp*		at adc?			# touch panel
 wsmouse*	at j6x0tp? mux 0	# - as a pointing device
 wskbd1		at j6x0tp? mux 1	# - "hard icons" as keys
 # Do not convert hard icons to key presses while serving mouse input.
@@ -255,15 +254,24 @@ options 	J6X0TP_WSMOUSE_EXCLUSIVE
 #
 com0		at hd64461if?
 
-psh3lcd*	at shb?			# PERSONA SH3 power, brightness, contrast
+psh3lcd*	at shb?			# LCD power, brightness, contrast
 
 psh3tp*		at adc?			# PERSONA SH3 touch panel
 wsmouse*	at psh3tp? mux 0
 
+#
+# Common HD64461 devices
+#
 hd64461if* at shb?
+
 hd64461pcmcia*	at hd64461if?
+#options 	HD64461PCMCIA_DEBUG
 #options 	HD64461PCMCIA_REORDER_ATTACH	# attach channel 1 (CF) first
+
 hd64461video*	at hd64461if?
+#options 	HD64461VIDEO_DEBUG
+#options 	HD64461VIDEO_HWACCEL		# XXX: too slow to bother
+
 
 #
 # machine independent part
