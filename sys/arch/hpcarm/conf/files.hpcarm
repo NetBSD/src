@@ -1,6 +1,6 @@
-#	$NetBSD: files.hpcarm,v 1.53 2005/12/11 12:17:30 christos Exp $
+#	$NetBSD: files.hpcarm,v 1.54 2006/01/03 23:11:00 peter Exp $
 #
-# First try for arm-specific configuration info
+# hpcarm specific configuration info
 #
 
 maxpartitions	8
@@ -37,14 +37,14 @@ include "arch/arm/conf/files.sa11x0"
 file	arch/hpcarm/dev/sacc_hpcarm.c		sacc
 
 # platform dependent part of PCMCIA support.
-file	arch/hpcarm/dev/j720pcic.c	sacpcic
+file	arch/hpcarm/dev/j720pcic.c		sacpcic
 
 # XXX iPAQ Virtual bus
 device	ipaqbus {}
 attach	ipaqbus at saip
 file	arch/hpcarm/dev/ipaq_saip.c		ipaqbus
 
-# IPAC PCMCIA
+# iPAQ PCMCIA
 device	ipaqpcic: pcmciabus
 attach	ipaqpcic at ipaqbus
 file	arch/hpcarm/dev/ipaq_pcic.c		ipaqpcic needs-flag
@@ -93,19 +93,10 @@ device	uda: udaif
 attach	uda at ipaqbus
 file	arch/hpcarm/dev/uda1341.c		uda
 
-# Include ISA stuff
-include "dev/isa/files.isa"
-
 # Include ATA stuff
 include "dev/ata/files.ata"
 
 # Include SCSI/ATAPI stuff
 include "dev/scsipi/files.scsipi"
-
-# Machine-independent I2O drivers.
-include "dev/i2o/files.i2o"
-
-# Include PCI stuff
-include "dev/pci/files.pci"
 
 include "arch/arm/conf/majors.arm32"
