@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.42 2006/01/03 15:42:42 apb Exp $
+#	$NetBSD: sets.subr,v 1.43 2006/01/03 16:40:16 apb Exp $
 #
 
 #
@@ -64,18 +64,36 @@ MKVARS="\
 #
 # The following variables refer to tools that are used when building sets:
 #
+: ${AWK:=awk}
 : ${CKSUM:=cksum}
+: ${COMM:=comm}
+: ${DB:=db}
+: ${EGREP:=egrep}
+: ${ENV_CMD:=env}       # ${ENV} is special to sh(1), ksh(1), etc.
+: ${FIND:=find}
+: ${GZIP_CMD:=gzip}     # ${GZIP} is special to gzip(1)
 : ${HOST_SH:=sh}
+: ${IDENT:=ident}
+: ${JOIN:=join}
+: ${LS:=ls}
+: ${MAKE:=make}
 : ${MKTEMP:=mktemp}
-: ${MTREE:=/usr/sbin/mtree}
+: ${MTREE:=mtree}
+: ${PASTE:=paste}
 : ${PAX:=pax}
-: ${TOOL_DB:=db}
+: ${PKG_CREATE:=pkg_create}
+: ${PRINTF:=printf}
+: ${SED:=sed}
+: ${SORT:=sort}
+: ${UNAME:=uname}
+: ${WC:=wc}
+
 
 oIFS=$IFS
 IFS="
 "
 for x in $(
-${MAKE:-make} -B -f- all <<EOMAKE
+${MAKE} -B -f- all <<EOMAKE
 .include <bsd.own.mk>
 .if (\${MKMAN} == "no" || empty(MANINSTALL:Mmaninstall))
 MKMANPAGES=no
@@ -136,7 +154,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.42 2006/01/03 15:42:42 apb Exp $
+# 	# $NetBSD: sets.subr,v 1.43 2006/01/03 16:40:16 apb Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -201,7 +219,7 @@ list_set_files()
 	for setname; do
 		list_set_lists $setname
 	done | xargs cat | \
-	awk -v obsolete=${obsolete} '
+	${AWK} -v obsolete=${obsolete} '
 		BEGIN {
 			if (! obsolete) {
 				split("'"${MKVARS}"'", needvars)
@@ -385,7 +403,7 @@ list_set_lists()
 #
 arch_to_cpu()
 {
-	MACHINE_ARCH=${1} ${MAKE:-make} -f- all <<EOMAKE
+	MACHINE_ARCH=${1} ${MAKE} -f- all <<EOMAKE
 .include <bsd.own.mk>
 all:
 	@echo \${MACHINE_CPU}

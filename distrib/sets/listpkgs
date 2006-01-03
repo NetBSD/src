@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: listpkgs,v 1.9 2004/07/23 15:11:26 erh Exp $
+# $NetBSD: listpkgs,v 1.10 2006/01/03 16:40:16 apb Exp $
 #
 # List all packages in the given pkgset by parsing the list files.
 #
@@ -46,4 +46,4 @@ if [ $# -ne 1 ]; then
 fi
 setname="$1"
 
-list_set_files $setname | awk '{print $2}' | sort -u
+list_set_files $setname | ${AWK} '{print $2}' | ${SORT} -u
