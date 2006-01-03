@@ -1,4 +1,4 @@
-.\" $NetBSD: clcs.4,v 1.3 2005/06/22 04:19:09 kent Exp $
+.\" $NetBSD: clcs.4,v 1.4 2006/01/03 01:59:25 rumble Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 22, 2005
+.Dd January 2, 2006
 .Dt CLCS 4
 .Os
 .Sh NAME
@@ -47,12 +47,18 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Cirrus Logic CS4280 chip, as well as
-for CS461x.
+driver provides support for the Cirrus Logic CS4280 chip. Partial support
+exists for the CS461x chips, but is disabled. Instead, the
+.Xr wss 4
+or
+.Xr sb 4
+drivers should be used.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr midi 4 ,
-.Xr pci 4
+.Xr pci 4 ,
+.Xr sb 4 ,
+.Xr wss 4
 .Sh HISTORY
 The
 .Nm
