@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.17 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.18 2006/01/03 23:14:23 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.17 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.18 2006/01/03 23:14:23 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,12 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.17 2005/12/11 12:16:51 christos Exp $")
 #include <arm/sa11x0/sa11x0_dmacreg.h>
 #include <arm/sa11x0/sa11x0_ppcreg.h>
 #include <arm/sa11x0/sa11x0_gpioreg.h>
-
-#ifdef hpcarm
-#include <hpc/include/config_hook.h>
-#include <hpc/include/platid.h>
-#include <hpc/include/platid_mask.h>
-#endif
 
 #include "locators.h"
 
