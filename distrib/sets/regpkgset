@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkgset,v 1.4 2006/01/03 16:40:16 apb Exp $
+# $NetBSD: regpkgset,v 1.5 2006/01/03 18:31:09 apb Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -35,15 +35,15 @@
 
 # Usage: regpkgset set
 
-rundir=${0%/*}
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 
 verbose=""
 cache=""
 
 while [ $# -gt 1 ]; do
-	case $1 in
-	-v)	verbose=$1 ;;
-	-c)	cache=$1 ;;
+	case "$1" in
+	-v)	verbose="$1" ;;
+	-c)	cache="$1" ;;
 	*)	break ;;
 	esac
 	shift
@@ -54,17 +54,17 @@ if [ $# -lt 1 ]; then
 	exit 1
 fi
 
-case $1 in
+case "$1" in
 all)	list="base comp etc games man misc text" ;;
-*)	list=$@ ;;
+*)	list="$*" ;;
 esac
 
-if [ x${cache} != x ]; then
-	BUILD_INFO_CACHE=$(${MKTEMP} /var/tmp/$(basename $0)-BUILD_INFO.XXXXXX)
+if [ x"${cache}" != x ]; then
+	BUILD_INFO_CACHE="$(${MKTEMP} "/var/tmp/${0##*/}-BUILD_INFO.XXXXXX")"
 	export BUILD_INFO_CACHE
 	{
-	echo "OPSYS=`${UNAME} -s`"
-	echo "OS_VERSION=`${UNAME} -r`"
+	echo "OPSYS=$(${UNAME} -s)"
+	echo "OS_VERSION=$(${UNAME} -r)"
 	${MAKE} -f- all <<EOF
 .include <bsd.own.mk>
 all:
@@ -72,16 +72,16 @@ all:
 	@echo MACHINE_ARCH=${MACHINE_ARCH}
 	@echo MACHINE_GNU_ARCH=${MACHINE_GNU_ARCH}
 EOF
-	echo "_PKGTOOLS_VER=`${PKG_CREATE} -V`"
-	} > ${BUILD_INFO_CACHE}
+	echo "_PKGTOOLS_VER=$(${PKG_CREATE} -V)"
+	} > "${BUILD_INFO_CACHE}"
 fi
 
-for pkgset in $list; do
-	for pkg in `$rundir/listpkgs $pkgset`; do
-		$rundir/regpkg $verbose $pkgset $pkg
+for pkgset in ${list}; do
+	for pkg in $("${rundir}/listpkgs" "${pkgset}"); do
+		"${rundir}/regpkg" ${verbose} "${pkgset}" "${pkg}"
 	done
 done
 
-[ x${BUILD_INFO_CACHE} != x ] && rm -f ${BUILD_INFO_CACHE}
+[ x"${BUILD_INFO_CACHE}" != x ] && rm -f "${BUILD_INFO_CACHE}"
 
 exit 0

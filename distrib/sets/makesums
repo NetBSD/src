@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makesums,v 1.13 2006/01/03 16:40:16 apb Exp $
+# $NetBSD: makesums,v 1.14 2006/01/03 18:31:09 apb Exp $
 #
 # Make checksum files for files in ``tardir''.  Usage:
 # makesums [-a] [-t tardir] [setname [...]]
@@ -19,12 +19,12 @@
 # output files (BSDSUM, CKSUM, MD5, SHA512, SYSVSUM) are produced.
 #
 
-prog=${0##*/}
+prog="${0##*/}"
 rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 . "${rundir}/sets.subr"
 
 # set defaults
-targetdir=$RELEASEDIR
+targetdir="${RELEASEDIR}"
 dash_all=no
 append=\>
 
@@ -34,7 +34,7 @@ usage()
 Usage: ${prog} [-A] [-a] [-t targetdir] [setname [...]]
 	-A		Append to possible existing checksum files 
 	-a		checksum all plain files instead of [setname [...]]
-	-t targetdir	\$RELEASEDIR		[$targetdir]
+	-t targetdir	\${RELEASEDIR}		[${targetdir}]
 	setname [...]	sets to checksum 	[*.tgz]
 USAGE
 	exit 1
@@ -50,7 +50,7 @@ while getopts aAt: ch; do
 		dash_all=yes
 		;;
 	t)	
-		targetdir=${OPTARG}
+		targetdir="${OPTARG}"
 		;;
 	*)
 		usage
@@ -59,24 +59,24 @@ while getopts aAt: ch; do
 done
 shift $((${OPTIND} - 1))
 
-if [ -z "$targetdir" ]; then
-	echo 1>&2 '$RELEASEDIR must be set or provided with -t'
+if [ -z "${targetdir}" ]; then
+	echo 1>&2 '${RELEASEDIR} must be set or provided with -t'
 	exit 1
 fi
 
-cd $targetdir
+cd "${targetdir}"
 pat="$*"
-if [ $dash_all = yes ]; then
+if [ "${dash_all}" = yes ]; then
 	pat='*'
-elif [ -z "$pat" ]; then
+elif [ -z "${pat}" ]; then
 	pat='*.tgz'
 fi
-lists=$(${FIND} $pat -prune \( -type f -o -type l \) \
-	\! -name '*SUM' \! -name MD5 \! -name SHA512 2>/dev/null)
-if [ -n "$lists" ]; then
-	eval ${CKSUM} -o1 $lists $append BSDSUM
-	eval ${CKSUM}     $lists $append CKSUM
-	eval ${CKSUM} -a md5  $lists $append MD5
-	eval ${CKSUM} -o2 $lists $append SYSVSUM
-	eval ${CKSUM} -a sha512  $lists $append SHA512
+lists="$(${FIND} ${pat} -prune \( -type f -o -type l \) \
+	\! -name '*SUM' \! -name MD5 \! -name SHA512 2>/dev/null)"
+if [ -n "${lists}" ]; then
+	eval ${CKSUM} -o1 ${lists} ${append} BSDSUM
+	eval ${CKSUM}     ${lists} ${append} CKSUM
+	eval ${CKSUM} -a md5  ${lists} ${append} MD5
+	eval ${CKSUM} -o2 ${lists} ${append} SYSVSUM
+	eval ${CKSUM} -a sha512  ${lists} ${append} SHA512
 fi

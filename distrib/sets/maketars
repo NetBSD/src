@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.57 2006/01/03 16:40:16 apb Exp $
+# $NetBSD: maketars,v 1.58 2006/01/03 18:31:09 apb Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -14,14 +14,14 @@
 # In this case, remove "etc" and "xetc" from the list of default sets.
 #
 
-prog=${0##*/}
+prog="${0##*/}"
 rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 . "${rundir}/sets.subr"
 
 # set defaults
-lists=$nlists
-tars=$RELEASEDIR
-dest=$DESTDIR
+lists="${nlists}"
+tars="${RELEASEDIR}"
+dest="${DESTDIR}"
 metalog=
 installdir=
 etcdir=
@@ -36,15 +36,15 @@ Usage: ${prog} [-b] [-x] [-i idir] [-a arch] [-m machine] [-s setsdir] [-S]
 	-x		Only make x11 lists
 		[Default: make netbsd lists]
 	-i idir		Install sets to idir instead of creating tar files
-	-a arch		Set arch (e.g, m68k, mipseb, mipsel, powerpc) [$MACHINE_ARCH]
-	-m machine	Set machine (e.g, amiga, i386, macppc) [$MACHINE]
-	-s setsdir	Directory to find sets [$setsdir]
-	-S		Exit after creating set files $dest/etc/mtree/set.*
+	-a arch		Set arch (e.g, m68k, mipseb, mipsel, powerpc) [${MACHINE_ARCH}]
+	-m machine	Set machine (e.g, amiga, i386, macppc) [${MACHINE}]
+	-s setsdir	Directory to find sets [${setsdir}]
+	-S		Exit after creating set files ${dest}/etc/mtree/set.*
 	-M metalog	metalog file
-	-N etcdir	etc dir for metalog use [$dest/etc]
-	-d dest		\$DESTDIR	[$dest]
-	-t targetdir	\$RELEASEDIR	[$tars]
-	[setname ...]	Sets to build 	[$lists]
+	-N etcdir	etc dir for metalog use [${dest}/etc]
+	-d dest		\${DESTDIR}	[${dest}]
+	-t targetdir	\${RELEASEDIR}	[${tars}]
+	[setname ...]	Sets to build 	[${lists}]
 USAGE
 	exit 1
 }
@@ -53,38 +53,38 @@ USAGE
 while getopts bxi:a:m:s:SM:N:d:t: ch; do
 	case ${ch} in
 	b)
-		lists="$nlists $xlists"
+		lists="${nlists} ${xlists}"
 		;;
 	x)
-		lists="$xlists"
+		lists="${xlists}"
 		;;
 	i)
-		installdir=${OPTARG}
+		installdir="${OPTARG}"
 		;;
 	a)
-		MACHINE_ARCH=${OPTARG}
-		MACHINE_CPU=$(arch_to_cpu ${OPTARG})
+		MACHINE_ARCH="${OPTARG}"
+		MACHINE_CPU="$(arch_to_cpu "${OPTARG}")"
 		;;
 	m)
-		MACHINE=${OPTARG}
+		MACHINE="${OPTARG}"
 		;;
 	s)
-		setsdir=${OPTARG}
+		setsdir="${OPTARG}"
 		;;
 	S)
 		setfilesonly=true
 		;;
 	M)
-		metalog=${OPTARG}
+		metalog="${OPTARG}"
 		;;
 	N)
-		etcdir=${OPTARG}
+		etcdir="${OPTARG}"
 		;;
 	d)
-		dest=${OPTARG}
+		dest="${OPTARG}"
 		;;
 	t)
-		tars=${OPTARG}
+		tars="${OPTARG}"
 		;;
 	*)
 		usage
@@ -92,33 +92,33 @@ while getopts bxi:a:m:s:SM:N:d:t: ch; do
 	esac
 done
 shift $((${OPTIND} - 1))
-if [ -n "$installdir" ]; then	# if -i, remove etc & xetc from the default list
-	lists=$(echo $lists | ${SED} -e 's/ etc / /;s/ xetc / /')
+if [ -n "${installdir}" ]; then	# if -i, remove etc & xetc from the default list
+	lists="$(echo ${lists} | ${SED} -e 's/ etc / /;s/ xetc / /')"
 fi
 if [ -n "$*" ]; then
 	lists="$*"
 fi
 
-if [ -z "$tars" -a -z "$installdir" ]; then
-	echo 1>&2 \$RELEASEDIR must be set, or -i must be used
+if [ -z "${tars}" -a -z "${installdir}" ]; then
+	echo 1>&2 \${RELEASEDIR} must be set, or -i must be used
 	exit 1
 fi
 
-if [ -z "$dest" ]; then
-	echo 1>&2 \$DESTDIR must be set
+if [ -z "${dest}" ]; then
+	echo 1>&2 \${DESTDIR} must be set
 	exit 1
 fi
-: ${etcdir:=${dest}/etc}
+: ${etcdir:="${dest}/etc"}
 
-SDIR=$(${MKTEMP} -d /tmp/${prog}.XXXXXX)
+SDIR="$(${MKTEMP} -d "/tmp/${prog}.XXXXXX")"
 
-setlistdir=${dest}/etc/mtree
+setlistdir="${dest}/etc/mtree"
 
 cleanup()
 {
 	es=$?
-	/bin/rm -rf $SDIR
-	exit $es
+	/bin/rm -rf "${SDIR}"
+	exit ${es}
 }
 trap cleanup 0 2 3 13		# EXIT INT QUIT PIPE
 
@@ -126,38 +126,39 @@ trap cleanup 0 2 3 13		# EXIT INT QUIT PIPE
 # build the setfiles
 #
 
-if [ -n "$metalog" ]; then
+if [ -n "${metalog}" ]; then
 	(
-		cat ${etcdir}/mtree/NetBSD.dist
+		cat "${etcdir}/mtree/NetBSD.dist"
 		echo "/unset all"
-		cat $metalog 2>/dev/null
-	) | ${MTREE} -C -k all -N ${etcdir} > $SDIR/metalog
+		cat "${metalog}" 2>/dev/null
+	) | ${MTREE} -C -k all -N "${etcdir}" > "${SDIR}/metalog"
 	rv=$?
-	if [ $rv -ne 0 ]; then
+	if [ ${rv} -ne 0 ]; then
 		echo 1>&2 "${prog}: mtree parse of ${metalog} failed"
-		exit $rv
+		exit ${rv}
 	fi
 fi
-for setname in $lists; do
-	${HOST_SH} $setsdir/makeflist -a $MACHINE_ARCH -m $MACHINE \
-	    -s $setsdir $setname > $SDIR/flist.$setname
-	if [ -n "$metalog" ]; then
-		$setfilesonly && echo "Creating ${setlistdir}/set.${setname}"
-		${AWK} -f $rundir/getdirs.awk $SDIR/flist.$setname \
-		    | ${SORT} -u > $SDIR/flist.$setname.full
+for setname in ${lists}; do
+	${HOST_SH} "${setsdir}/makeflist" -a "${MACHINE_ARCH}" -m "${MACHINE}" \
+	    -s "${setsdir}" "${setname}" > "${SDIR}/flist.${setname}"
+	if [ -n "${metalog}" ]; then
+		${setfilesonly} && echo "Creating ${setlistdir}/set.${setname}"
+		${AWK} -f "${rundir}/getdirs.awk" "${SDIR}/flist.${setname}" \
+		    | ${SORT} -u > "${SDIR}/flist.${setname}.full"
 		(
 			echo "/set uname=root gname=wheel"
-			${AWK} -f $rundir/join.awk \
-				$SDIR/flist.$setname.full $SDIR/metalog
+			${AWK} -f "${rundir}/join.awk" \
+				"${SDIR}/flist.${setname}.full" \
+				"${SDIR}/metalog"
 			echo "./etc/mtree/set.${setname} type=file mode=0444"
-		) > ${setlistdir}/set.${setname}
-	elif ! cmp -s ${SDIR}/flist.${setname} \
-			${setlistdir}/set.${setname} >/dev/null 2>&1; then
-		rm -f ${setlistdir}/set.${setname}
-		cp ${SDIR}/flist.${setname} ${setlistdir}/set.${setname}
+		) > "${setlistdir}/set.${setname}"
+	elif ! cmp -s "${SDIR}/flist.${setname}" \
+			"${setlistdir}/set.${setname}" >/dev/null 2>&1; then
+		rm -f "${setlistdir}/set.${setname}"
+		cp "${SDIR}/flist.${setname}" "${setlistdir}/set.${setname}"
 	fi
 done
-if $setfilesonly; then		# exit after creating the set lists
+if ${setfilesonly}; then		# exit after creating the set lists
 	exit 0
 fi
 
@@ -168,28 +169,30 @@ fi
 GZIP=-9			# for pax -z
 export GZIP
 es=0
-for setname in $lists; do
-	out=$setname.tgz
-	if [ -n "$installdir" ]; then
-		echo "Copying set $setname"
-		( cd $dest ; \
-		    ${PAX} -O -rwpe -d -N${etcdir} ${metalog:+-M} \
-			${installdir} < ${setlistdir}/set.${setname} )
+for setname in ${lists}; do
+	out="${setname}.tgz"
+	if [ -n "${installdir}" ]; then
+		echo "Copying set ${setname}"
+		( cd "${dest}" ; \
+		    ${PAX} -O -rwpe -d -N"${etcdir}" ${metalog:+-M} \
+			"${installdir}" < "${setlistdir}/set.${setname}" )
 	else
-		if [ -n "$metalog" -a $tars/$out -nt "$metalog" ]; then
-			echo "$out is up to date"
+		if [ -n "${metalog}" -a "${tars}/${out}" -nt "${metalog}" ]
+		then
+			echo "${out} is up to date"
 			continue
 		fi
-		echo "Creating $out"
-		rm -f ${tars}/$out
-		( cd $dest ; \
-		    ${PAX} -O -w -d -z -N${etcdir} ${metalog:+-M} \
-			< ${setlistdir}/set.${setname} ) > ${tars}/$out.tmp &&
-		mv ${tars}/$out.tmp ${tars}/$out
+		echo "Creating ${out}"
+		rm -f "${tars}/${out}"
+		( cd "${dest}" ; \
+		    ${PAX} -O -w -d -z -N"${etcdir}" ${metalog:+-M} \
+			< "${setlistdir}/set.${setname}" ) \
+			> "${tars}/${out}.tmp" &&
+		mv "${tars}/${out}.tmp" "${tars}/${out}"
 	fi
-	es=$(($es + $?))
+	es=$((${es} + $?))
 done
-if [ $es -gt 255 ] ; then
+if [ ${es} -gt 255 ] ; then
 	es=255
 fi
-exit $es
+exit ${es}

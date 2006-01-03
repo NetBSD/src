@@ -4,18 +4,18 @@
 # Usage: makeplist [-a arch] [-m machine] [-s setsdir] [-p prefix] setname pkgname
 #
 
-rundir=${0%/*}
-. ${rundir}/sets.subr
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
 prefix=/
 
 usage()
 {
 	cat 1>&2 <<USAGE
 Usage: ${0##*/} [-a arch] [-m machine] [-s setsdir] [-p prefix] setname pkgname
-	-a arch		set arch (e.g, m68k, mips, powerpc)	[$MACHINE_ARCH]
-	-m machine	set machine (e.g, amiga, i386, macppc)	[$MACHINE]
-	-s setsdir	directory to find sets			[$setsdir]
-	-p prefix	prefix for created plist		[$prefix]
+	-a arch		set arch (e.g, m68k, mips, powerpc)	[${MACHINE_ARCH}]
+	-m machine	set machine (e.g, amiga, i386, macppc)	[${MACHINE}]
+	-s setsdir	directory to find sets			[${setsdir}]
+	-p prefix	prefix for created plist		[${prefix}]
 	setname pkgname	set and package to build plist for
 USAGE
 	exit 1
@@ -25,17 +25,17 @@ USAGE
 while getopts a:m:p:s: ch; do
 	case ${ch} in
 	a)
-		MACHINE_ARCH=${OPTARG}
-		MACHINE_CPU=$(arch_to_cpu ${OPTARG})
+		MACHINE_ARCH="${OPTARG}"
+		MACHINE_CPU="$(arch_to_cpu "${OPTARG}")"
 		;;
 	m)
-		MACHINE=${OPTARG}
+		MACHINE="${OPTARG}"
 		;;
 	p)
-		prefix=${OPTARG}
+		prefix="${OPTARG}"
 		;;
 	s)
-		setsdir=${OPTARG}
+		setsdir="${OPTARG}"
 		;;
 	*)
 		usage
@@ -47,61 +47,61 @@ if [ $# -ne 2 ]; then
 	usage
 fi
 setname="$1"
-pkgname=$2
+pkgname="$2"
 
-filename=/tmp/makeplist.$$ 
-ffilename=/tmp/makeplist.files.$$ 
-dfilename=/tmp/makeplist.dirs.$$ 
+filename="/tmp/makeplist.$$"
+ffilename="/tmp/makeplist.files.$$"
+dfilename="/tmp/makeplist.dirs.$$"
 
-list_set_files $setname | \
-    ${ENV_CMD} PLISTPKG=$pkgname ${AWK} '
+list_set_files "${setname}" | \
+    ${ENV_CMD} PLISTPKG="${pkgname}" ${AWK} '
 	$2 == ENVIRON["PLISTPKG"] {
 		sub("^\\./", "", $1);
 		print $1
-	}' | ${SORT} -u > $filename
+	}' | ${SORT} -u > "${filename}"
 
 SELECTDIRS="-prune -type d"
 SELECTNONDIRS="! -type d -print -o ( -type d -prune )"
 
-cd $prefix
+cd "${prefix}"
 #
 # Match the directories.  Use find(1) to avoid repeat calls to
 # 'test -d'.
 #
 # This is a little clever.  I cannot use 'xargs find', because
 # find wants for the option arguments to follow the path arguments.
-# So I use 'xargs echo $SELECTDIRS' to make a maximum-length proto-command
+# So I use 'xargs echo ${SELECTDIRS}' to make a maximum-length proto-command
 # line.  I use 'read' to peel the options off the front of the
-# command-line, and 'find $args $SELECTDIRS' to put them at the end.
+# command-line, and 'find ${args} ${SELECTDIRS}' to put them at the end.
 #
-xargs echo $SELECTDIRS < $filename | \
+xargs echo ${SELECTDIRS} < "${filename}" | \
 while read ignore ignore ignore args; do
-	[ -z "$args" ] && break 
-	${FIND} $args $SELECTDIRS
-done | ${AWK} '{ print "@dirrm " $1; }' > $dfilename
+	[ -z "${args}" ] && break 
+	${FIND} ${args} ${SELECTDIRS}
+done | ${AWK} '{ print "@dirrm " $1; }' > "${dfilename}"
 
 #
 # Match the non-directories.  Use find(1) to avoid repeat calls to
 # 'test ! -d'.  See 'Match the directories' for an explanation of the
 # cleverness.
 #
-xargs echo $SELECTNONDIRS < $filename | \
+xargs echo ${SELECTNONDIRS} < "${filename}" | \
 while read ignore ignore ignore ignore ignore ignore ignore ignore ignore \
     ignore args; do
-	[ -z "$args" ] && break 
-	${FIND} $args $SELECTNONDIRS
-done > $ffilename
+	[ -z "${args}" ] && break 
+	${FIND} ${args} ${SELECTNONDIRS}
+done > "${ffilename}"
 
 cd -
 
-echo "@cwd $prefix"
-if [ -s $ffilename ]; then
-	cat $ffilename
+echo "@cwd ${prefix}"
+if [ -s "${ffilename}" ]; then
+	cat "${ffilename}"
 fi
-if [ -s $dfilename ]; then
-        ${SORT} -r $dfilename
+if [ -s "${dfilename}" ]; then
+        ${SORT} -r "${dfilename}"
 fi
 
-rm -f $filename $ffilename $dfilename
+rm -f "${filename}" "${ffilename}" "${dfilename}"
 
 exit 0

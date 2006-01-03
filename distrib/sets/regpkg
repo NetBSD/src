@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.7 2006/01/03 16:40:16 apb Exp $
+# $NetBSD: regpkg,v 1.8 2006/01/03 18:31:09 apb Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -35,20 +35,20 @@
 
 # Usage: regpkg set pkgname
 
-rundir=${0%/*}
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 
-SYSPKGROOT=${PKG_DBDIR:-/var/db/pkg}
+SYSPKGROOT="${PKG_DBDIR:-/var/db/pkg}"
 case "${SYSPKG_DBDIR}" in
 "")	;;
-*)	SYSPKGROOT=${SYSPKG_DBDIR} ;;
+*)	SYSPKGROOT="${SYSPKG_DBDIR}" ;;
 esac
 
-PLIST=/tmp/.PLIST.$$
+PLIST="/tmp/.PLIST.$$"
 
 verbose=""
 while [ $# -gt 2 ]; do
-	case $1 in
-	-v)	verbose=$1 ;;
+	case "$1" in
+	-v)	verbose="$1" ;;
 	*)	break ;;
 	esac
 	shift
@@ -59,52 +59,52 @@ if [ $# -ne 2 ]; then
 	exit 1
 fi
 
-pkgset=$1
+pkgset="$1"
 
-pkg=$2
+pkg="$2"
 
-case $verbose in
--v)	echo "Making PLIST for \"$pkgset\" set and \"$pkg\" package" ;;
+case "${verbose}" in
+-v)	echo "Making PLIST for \"${pkgset}\" set and \"${pkg}\" package" ;;
 esac
 
 # create the skeleton PLIST from the pkgset description
-$rundir/makeplist $pkgset $pkg > $PLIST
+"${rundir}/makeplist" "${pkgset}" "${pkg}" > "${PLIST}"
 
 # create the pkg tiny version
 case "${SYSPKG_DATES}" in
-"")	tinyvers=`${AWK} '$1 ~ '/$pkg/' { print $2 }' $rundir/versions`
-	case "$tinyvers" in
+"")	tinyvers="$(${AWK} '$1 ~ '/"${pkg}"/' { print $2 }' "${rundir}/versions")"
+	case "${tinyvers}" in
 	"")	tinyvers=0
 		;;
 	esac
 	if [ -f ../../sys/conf/osrelease.sh ]; then
-		osvers=`${HOST_SH} ../../sys/conf/osrelease.sh`
+		osvers="$(${HOST_SH} ../../sys/conf/osrelease.sh)"
 		method=osreleases
 	else
-		osvers=`${UNAME} -r`
+		osvers="$(${UNAME} -r)"
 		method=uname
 	fi
-	t=$osvers.$tinyvers
+	t="${osvers}.${tinyvers}"
 	;;
-*)	args=`${AWK} '
+*)	args="$(${AWK} '
 		/^@cwd/ { prefix = $2; next }
 		/^@dirrm/ { next }
-		{ printf("%s%s\n", prefix, $0) }' $PLIST`
+		{ printf("%s%s\n", prefix, $0) }' "${PLIST}")"
 	# first try for any RCS identifiers in the files
 	t=0
-	case "$args" in
+	case "${args}" in
 	"")	;;
-	*)	t=`${IDENT} $args 2>/dev/null | ${AWK} '
+	*)	t="$(${IDENT} ${args} 2>/dev/null | ${AWK} '
 			BEGIN { last = 0 }
 			$2 == "crt0.c,v" { next }
 			NF == 8 { t = $4; gsub("/", "", t); if (t > last) last = t; }
-			END { print last }'`
+			END { print last }')"
 		method=ident
 		;;
 	esac
-	case "$t" in
+	case "${t}" in
 	0)	# we need the last mtime of the files which make up the package
-		t=`${ENV_CMD} TZ=UTC LOCALE=C ${LS} -lT $args | ${AWK} '
+		t="$(${ENV_CMD} TZ=UTC LOCALE=C ${LS} -lT ${args} | ${AWK} '
 			BEGIN { newest = 0 }
 			{
 				t = $9 "";
@@ -127,7 +127,7 @@ case "${SYSPKG_DATES}" in
 				#t = sprintf("%s.%4.4s", t, $8);
 				if (t > newest) newest = t;
 			}
-			END { print newest }'`
+			END { print newest }')"
 		method=ls
 		;;
 	esac
@@ -135,49 +135,49 @@ case "${SYSPKG_DATES}" in
 esac
 
 # print version number that we're using
-case "$verbose" in
--v)	echo "$pkg - $t version using $method method" ;;
+case "${verbose}" in
+-v)	echo "${pkg} - ${t} version using ${method} method" ;;
 esac
 
 # create the directory and minimal contents
-SYSPKGDIR=${SYSPKGROOT}/$pkg-$t
-if [ -d ${SYSPKGDIR} ]; then
-	echo "There is already a $pkg-$t package installed (${SYSPKGDIR})"
+SYSPKGDIR="${SYSPKGROOT}/${pkg}-${t}"
+if [ -d "${SYSPKGDIR}" ]; then
+	echo "There is already a ${pkg}-${t} package installed (${SYSPKGDIR})"
 	exit 1
 fi
 
-mkdir -p ${SYSPKGDIR}
+mkdir -p "${SYSPKGDIR}"
 
 # add the dependencies
-${AWK} '$1 ~ '/$pkg/' { print $2 }' $rundir/deps | ${SORT} | \
-    ${AWK} '{ print "@pkgdep " $1 "-[0-9]*" }' >> $PLIST
+${AWK} '$1 ~ '/"${pkg}"/' { print $2 }' "${rundir}/deps" | ${SORT} | \
+    ${AWK} '{ print "@pkgdep " $1 "-[0-9]*" }' >> "${PLIST}"
 
 # create the comment
-comment=`${AWK} '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' \
-	$rundir/comments`
-case "$comment" in
-"")	echo "***WARNING ***: no comment for \"$pkg\"" 2>&1
-	comment="System package for $pkg"
+comment="$(${AWK} '$1 ~ '/"${pkg}"/' { print substr($0, length($1) + 2) }' \
+	"${rundir}/comments")"
+case "${comment}" in
+"")	echo "***WARNING ***: no comment for \"${pkg}\"" 2>&1
+	comment="System package for ${pkg}"
 	;;
 esac
-echo "$comment" > ${SYSPKGDIR}/+COMMENT
+echo "${comment}" > "${SYSPKGDIR}/+COMMENT"
 
 # create the description
-descr=`${AWK} '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' \
-	$rundir/descrs`
-case "$descr" in
-"")	echo "***WARNING ***: no description for \"$pkg\"" 2>&1
-	descr="System package for $pkg"
+descr="$(${AWK} '$1 ~ '/"${pkg}"/' { print substr($0, length($1) + 2) }' \
+	"${rundir}/descrs")"
+case "${descr}" in
+"")	echo "***WARNING ***: no description for \"${pkg}\"" 2>&1
+	descr="System package for ${pkg}"
 	;;
 esac
-echo "$descr" > ${SYSPKGDIR}/+DESC
-${PRINTF} "\nHomepage:\nhttp://www.NetBSD.org/\n" >> ${SYSPKGDIR}/+DESC
+echo "${descr}" > "${SYSPKGDIR}/+DESC"
+${PRINTF} "\nHomepage:\nhttp://www.NetBSD.org/\n" >> "${SYSPKGDIR}/+DESC"
 
 # create the build information
-if [ x${BUILD_INFO_CACHE} = x ]; then
+if [ x"${BUILD_INFO_CACHE}" = x ]; then
 	{
-	echo "OPSYS=`${UNAME} -s`"
-	echo "OS_VERSION=`${UNAME} -r`"
+	echo "OPSYS=$(${UNAME} -s)"
+	echo "OS_VERSION=$(${UNAME} -r)"
 	${MAKE} -f- all <<EOF
 .include <bsd.own.mk>
 all:
@@ -185,30 +185,30 @@ all:
 	@echo MACHINE_ARCH=${MACHINE_ARCH}
 	@echo MACHINE_GNU_ARCH=${MACHINE_GNU_ARCH}
 EOF
-	echo "_PKGTOOLS_VER=`${PKG_CREATE} -V`"
-	} > ${SYSPKGDIR}/+BUILD_INFO
+	echo "_PKGTOOLS_VER=$(${PKG_CREATE} -V)"
+	} > "${SYSPKGDIR}/+BUILD_INFO"
 else
-	cp ${BUILD_INFO_CACHE} ${SYSPKGDIR}/+BUILD_INFO
+	cp "${BUILD_INFO_CACHE}" "${SYSPKGDIR}/+BUILD_INFO"
 fi
 
 # test for attributes
 args=""
-attrs=`${AWK} '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' \
-	$rundir/attrs`
-for a in "$attrs"; do
-	case "$attrs" in
+attrs="$(${AWK} '$1 ~ '/"${pkg}"/' { print substr($0, length($1) + 2) }' \
+	"${rundir}/attrs")"
+for a in "${attrs}"; do
+	case "${attrs}" in
 	"")		;;
-	preserve)	echo "$pkg-$t" > ${SYSPKGDIR}/+PRESERVE
-			args="$args -n ${SYSPKGDIR}/+PRESERVE"
+	preserve)	echo "${pkg}-${t}" > "${SYSPKGDIR}/+PRESERVE"
+			args="${args} -n ${SYSPKGDIR}/+PRESERVE"
 			;;
 	esac
 done
 
-${PKG_CREATE} -v -c ${SYSPKGDIR}/+COMMENT \
-	-d ${SYSPKGDIR}/+DESC \
-	$args \
-	-f $PLIST -l -b /dev/null -B ${SYSPKGDIR}/+BUILD_INFO \
-	-s /dev/null -S /dev/null -O $pkg-$t.tgz \
-		> ${SYSPKGDIR}/+CONTENTS
+${PKG_CREATE} -v -c "${SYSPKGDIR}/+COMMENT" \
+	-d "${SYSPKGDIR}/+DESC" \
+	${args} \
+	-f "${PLIST}" -l -b /dev/null -B "${SYSPKGDIR}/+BUILD_INFO" \
+	-s /dev/null -S /dev/null -O "${pkg}-${t}.tgz" \
+		> "${SYSPKGDIR}/+CONTENTS"
 
-rm $PLIST
+rm "${PLIST}"
