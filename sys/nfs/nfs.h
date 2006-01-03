@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.54 2006/01/03 12:30:01 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.55 2006/01/03 12:30:46 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -465,11 +465,6 @@ extern struct nfssvc_sockhead nfssvc_sockpending;
 extern int nfssvc_sockhead_flag;
 #define	SLP_INIT	0x01
 #define	SLP_WANTINIT	0x02
-
-int nfsdsock_lock(struct nfssvc_sock *, boolean_t);
-void nfsdsock_unlock(struct nfssvc_sock *);
-int nfsdsock_drain(struct nfssvc_sock *);
-int nfsdsock_sendreply(struct nfssvc_sock *, struct nfsrv_descript *);
 
 /*
  * One of these structures is allocated for each nfsd.

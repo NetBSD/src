@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.55 2005/12/11 12:25:17 christos Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.56 2006/01/03 12:30:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -240,6 +240,10 @@ int nfsrv_getstream __P((struct nfssvc_sock *, int));
 int nfsrv_dorec __P((struct nfssvc_sock *, struct nfsd *,
 		     struct nfsrv_descript **));
 void nfsrv_wakenfsd __P((struct nfssvc_sock *));
+int nfsdsock_lock(struct nfssvc_sock *, boolean_t);
+void nfsdsock_unlock(struct nfssvc_sock *);
+int nfsdsock_drain(struct nfssvc_sock *);
+int nfsdsock_sendreply(struct nfssvc_sock *, struct nfsrv_descript *);
 
 /* nfs_srvcache.c */
 void nfsrv_initcache __P((void ));
