@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.56 2006/01/03 15:42:42 apb Exp $
+# $NetBSD: maketars,v 1.57 2006/01/03 16:40:16 apb Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -93,7 +93,7 @@ while getopts bxi:a:m:s:SM:N:d:t: ch; do
 done
 shift $((${OPTIND} - 1))
 if [ -n "$installdir" ]; then	# if -i, remove etc & xetc from the default list
-	lists=$(echo $lists | sed -e 's/ etc / /;s/ xetc / /')
+	lists=$(echo $lists | ${SED} -e 's/ etc / /;s/ xetc / /')
 fi
 if [ -n "$*" ]; then
 	lists="$*"
@@ -143,11 +143,12 @@ for setname in $lists; do
 	    -s $setsdir $setname > $SDIR/flist.$setname
 	if [ -n "$metalog" ]; then
 		$setfilesonly && echo "Creating ${setlistdir}/set.${setname}"
-		awk -f $rundir/getdirs.awk $SDIR/flist.$setname \
-		    | sort -u > $SDIR/flist.$setname.full
+		${AWK} -f $rundir/getdirs.awk $SDIR/flist.$setname \
+		    | ${SORT} -u > $SDIR/flist.$setname.full
 		(
 			echo "/set uname=root gname=wheel"
-			awk -f $rundir/join.awk $SDIR/flist.$setname.full $SDIR/metalog
+			${AWK} -f $rundir/join.awk \
+				$SDIR/flist.$setname.full $SDIR/metalog
 			echo "./etc/mtree/set.${setname} type=file mode=0444"
 		) > ${setlistdir}/set.${setname}
 	elif ! cmp -s ${SDIR}/flist.${setname} \
