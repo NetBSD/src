@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.56 2006/01/03 12:30:46 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.57 2006/01/03 12:59:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -83,257 +83,245 @@ struct nfsdircache;
 union nethostaddr;
 
 /* nfs_bio.c */
-int nfs_bioread __P((struct vnode *, struct uio *, int, struct ucred *, int));
-struct buf *nfs_getcacheblk __P((struct vnode *, daddr_t, int, struct lwp *));
-int nfs_vinvalbuf __P((struct vnode *, int, struct ucred *, struct lwp *,
-		       int));
-int nfs_flushstalebuf __P((struct vnode *, struct ucred *, struct lwp *, int));
+int nfs_bioread(struct vnode *, struct uio *, int, struct ucred *, int);
+struct buf *nfs_getcacheblk(struct vnode *, daddr_t, int, struct lwp *);
+int nfs_vinvalbuf(struct vnode *, int, struct ucred *, struct lwp *, int);
+int nfs_flushstalebuf(struct vnode *, struct ucred *, struct lwp *, int);
 #define	NFS_FLUSHSTALEBUF_MYWRITE	1	/* assume writes are ours */
-int nfs_asyncio __P((struct buf *));
-int nfs_doio __P((struct buf *));
+int nfs_asyncio(struct buf *);
+int nfs_doio(struct buf *);
 
 /* nfs_boot.c */
 /* see nfsdiskless.h */
 
 /* nfs_kq.c */
-void nfs_kqinit __P((void));
+void nfs_kqinit(void);
 
 /* nfs_node.c */
-void nfs_nhinit __P((void));
-void nfs_nhreinit __P((void));
-void nfs_nhdone __P((void));
-int nfs_nget1 __P((struct mount *, nfsfh_t *, int, struct nfsnode **, int));
+void nfs_nhinit(void);
+void nfs_nhreinit(void);
+void nfs_nhdone(void);
+int nfs_nget1(struct mount *, nfsfh_t *, int, struct nfsnode **, int);
 #define	nfs_nget(mp, fhp, fhsize, npp) \
 	nfs_nget1((mp), (fhp), (fhsize), (npp), 0)
 
 /* nfs_vnops.c */
-int nfs_null __P((struct vnode *, struct ucred *, struct lwp *));
-int nfs_setattrrpc __P((struct vnode *, struct vattr *, struct ucred *,
-			struct lwp *));
-int nfs_readlinkrpc __P((struct vnode *, struct uio *, struct ucred *));
-int nfs_readrpc __P((struct vnode *, struct uio *));
-int nfs_writerpc __P((struct vnode *, struct uio *, int *, boolean_t,
-			boolean_t *));
-int nfs_mknodrpc __P((struct vnode *, struct vnode **, struct componentname *,
-		      struct vattr *));
-int nfs_removeit __P((struct sillyrename *));
-int nfs_removerpc __P((struct vnode *, const char *, int, struct ucred *,
-		       struct lwp *));
-int nfs_renameit __P((struct vnode *, struct componentname *,
-		      struct sillyrename *));
-int nfs_renamerpc __P((struct vnode *, const char *, int, struct vnode *,
-		       const char *, int, struct ucred *, struct lwp *));
-int nfs_readdirrpc __P((struct vnode *, struct uio *, struct ucred *));
-int nfs_readdirplusrpc __P((struct vnode *, struct uio *, struct ucred *));
-int nfs_sillyrename __P((struct vnode *, struct vnode *,
-			 struct componentname *));
-int nfs_lookitup __P((struct vnode *, const char *, int, struct ucred *,
-		      struct lwp *, struct nfsnode **));
-int nfs_commit __P((struct vnode *, off_t, uint32_t, struct lwp *));
-int nfs_flush __P((struct vnode *, struct ucred *, int, struct lwp *, int));
+int nfs_null(struct vnode *, struct ucred *, struct lwp *);
+int nfs_setattrrpc(struct vnode *, struct vattr *, struct ucred *,
+	struct lwp *);
+int nfs_readlinkrpc(struct vnode *, struct uio *, struct ucred *);
+int nfs_readrpc(struct vnode *, struct uio *);
+int nfs_writerpc(struct vnode *, struct uio *, int *, boolean_t, boolean_t *);
+int nfs_mknodrpc(struct vnode *, struct vnode **, struct componentname *,
+	struct vattr *);
+int nfs_removeit(struct sillyrename *);
+int nfs_removerpc(struct vnode *, const char *, int, struct ucred *,
+	struct lwp *);
+int nfs_renameit(struct vnode *, struct componentname *, struct sillyrename *);
+int nfs_renamerpc(struct vnode *, const char *, int, struct vnode *,
+	const char *, int, struct ucred *, struct lwp *);
+int nfs_readdirrpc(struct vnode *, struct uio *, struct ucred *);
+int nfs_readdirplusrpc(struct vnode *, struct uio *, struct ucred *);
+int nfs_sillyrename(struct vnode *, struct vnode *, struct componentname *);
+int nfs_lookitup(struct vnode *, const char *, int, struct ucred *,
+	struct lwp *, struct nfsnode **);
+int nfs_commit(struct vnode *, off_t, uint32_t, struct lwp *);
+int nfs_flush(struct vnode *, struct ucred *, int, struct lwp *, int);
 
 /* nfs_nqlease.c */
-void nqnfs_lease_updatetime __P((int));
-void nqnfs_clientlease __P((struct nfsmount *, struct nfsnode *, int, int,
-			    time_t, u_quad_t));
-void nqsrv_locklease __P((struct nqlease *));
-void nqsrv_unlocklease __P((struct nqlease *));
-int nqsrv_getlease __P((struct vnode *, u_int32_t *, int, struct nfssvc_sock *,
-			struct lwp *, struct mbuf *, int *, u_quad_t *,
-			struct ucred *));
-void nqsrv_addhost __P((struct nqhost *, struct nfssvc_sock *, struct mbuf *));
-void nqsrv_instimeq __P((struct nqlease *, u_int32_t));
-int nqsrv_cmpnam __P((struct nfssvc_sock *, struct mbuf *, struct nqhost *));
-void nqsrv_send_eviction __P((struct vnode *, struct nqlease *,
-			      struct nfssvc_sock *, struct mbuf *,
-			      struct ucred *, struct lwp *));
-void nqsrv_waitfor_expiry __P((struct nqlease *));
-void nqnfs_serverd __P((void));
-int nqnfsrv_getlease __P((struct nfsrv_descript *, struct nfssvc_sock *,
-			  struct lwp *, struct mbuf **));
-int nqnfsrv_vacated __P((struct nfsrv_descript *, struct nfssvc_sock *,
-			 struct lwp *, struct mbuf **));
-int nqnfs_getlease __P((struct vnode *, int, struct ucred *, struct lwp *));
-int nqnfs_vacated __P((struct vnode *, struct ucred *, struct lwp *));
-int nqnfs_callback __P((struct nfsmount *, struct mbuf *, struct mbuf *,
-			caddr_t, struct lwp *));
+void nqnfs_lease_updatetime(int);
+void nqnfs_clientlease(struct nfsmount *, struct nfsnode *, int, int, time_t,
+	u_quad_t);
+void nqsrv_locklease(struct nqlease *);
+void nqsrv_unlocklease(struct nqlease *);
+int nqsrv_getlease(struct vnode *, u_int32_t *, int, struct nfssvc_sock *,
+	struct lwp *, struct mbuf *, int *, u_quad_t *, struct ucred *);
+void nqsrv_addhost(struct nqhost *, struct nfssvc_sock *, struct mbuf *);
+void nqsrv_instimeq(struct nqlease *, u_int32_t);
+int nqsrv_cmpnam(struct nfssvc_sock *, struct mbuf *, struct nqhost *);
+void nqsrv_send_eviction(struct vnode *, struct nqlease *,
+	struct nfssvc_sock *, struct mbuf *, struct ucred *, struct lwp *);
+void nqsrv_waitfor_expiry(struct nqlease *);
+void nqnfs_serverd(void);
+int nqnfsrv_getlease(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nqnfsrv_vacated(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nqnfs_getlease(struct vnode *, int, struct ucred *, struct lwp *);
+int nqnfs_vacated(struct vnode *, struct ucred *, struct lwp *);
+int nqnfs_callback(struct nfsmount *, struct mbuf *, struct mbuf *,
+	caddr_t, struct lwp *);
 
 /* nfs_serv.c */
-int nfsrv3_access __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		       struct lwp *, struct mbuf **));
-int nfsrv_getattr __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		       struct lwp *, struct mbuf **));
-int nfsrv_setattr __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		       struct lwp *, struct mbuf **));
-int nfsrv_lookup __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		      struct lwp *, struct mbuf **));
-int nfsrv_readlink __P((struct nfsrv_descript *, struct nfssvc_sock *,
-			struct lwp *, struct mbuf **));
-int nfsrv_read __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		    struct lwp *, struct mbuf **));
-int nfsrv_write __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		     struct lwp *, struct mbuf **));
-int nfsrv_writegather __P((struct nfsrv_descript **, struct nfssvc_sock *,
-			   struct lwp *, struct mbuf **));
-void nfsrvw_coalesce __P((struct nfsrv_descript *, struct nfsrv_descript *));
-int nfsrv_create __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		      struct lwp *, struct mbuf **));
-int nfsrv_mknod __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		     struct lwp *, struct mbuf **));
-int nfsrv_remove __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		      struct lwp *, struct mbuf **));
-int nfsrv_rename __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		      struct lwp *, struct mbuf **));
-int nfsrv_link __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		    struct lwp *, struct mbuf **));
-int nfsrv_symlink __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		       struct lwp *, struct mbuf **));
-int nfsrv_mkdir __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		     struct lwp *, struct mbuf **));
-int nfsrv_rmdir __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		     struct lwp *, struct mbuf **));
-int nfsrv_readdir __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		       struct lwp *, struct mbuf **));
-int nfsrv_readdirplus __P((struct nfsrv_descript *, struct nfssvc_sock *,
-			   struct lwp *, struct mbuf **));
-int nfsrv_commit __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		      struct lwp *, struct mbuf **));
-int nfsrv_statfs __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		      struct lwp *, struct mbuf **));
-int nfsrv_fsinfo __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		      struct lwp *, struct mbuf **));
-int nfsrv_pathconf __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		        struct lwp *, struct mbuf **));
-int nfsrv_null __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		    struct lwp *, struct mbuf **));
-int nfsrv_noop __P((struct nfsrv_descript *, struct nfssvc_sock *,
-		    struct lwp *, struct mbuf **));
-int nfsrv_access __P((struct vnode *, int, struct ucred *, int, struct lwp *,
-		      int));
+int nfsrv3_access(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_getattr(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_setattr(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_lookup(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_readlink(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_read(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_write(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_writegather(struct nfsrv_descript **, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+void nfsrvw_coalesce(struct nfsrv_descript *, struct nfsrv_descript *);
+int nfsrv_create(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_mknod(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_remove(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_rename(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_link(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_symlink(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_mkdir(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_rmdir(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_readdir(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_readdirplus(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_commit(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_statfs(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_fsinfo(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_pathconf(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_null(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_noop(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct lwp *, struct mbuf **);
+int nfsrv_access(struct vnode *, int, struct ucred *, int, struct lwp *, int);
 
 /* nfs_socket.c */
-int nfs_connect __P((struct nfsmount *, struct nfsreq *, struct lwp *));
-int nfs_reconnect __P((struct nfsreq *, struct lwp *));
-void nfs_disconnect __P((struct nfsmount *));
-void nfs_safedisconnect __P((struct nfsmount *));
-int nfs_send __P((struct socket *, struct mbuf *, struct mbuf *,
-		  struct nfsreq *, struct lwp *));
-int nfs_receive __P((struct nfsreq *, struct mbuf **, struct mbuf **,
-		     struct lwp *));
-int nfs_reply __P((struct nfsreq *, struct lwp *));
-int nfs_request __P((struct nfsnode *, struct mbuf *, int, struct lwp *,
-		     struct ucred *, struct mbuf **, struct mbuf **,
-		     caddr_t *, int *));
-int nfs_rephead __P((int, struct nfsrv_descript *, struct nfssvc_sock *,
-		     int, int, u_quad_t *, struct mbuf **, struct mbuf **,			     caddr_t *));
-void nfs_timer __P((void *));
-int nfs_sigintr __P((struct nfsmount *, struct nfsreq *, struct lwp *));
-int nfs_sndlock __P((int *, struct nfsreq *));
-void nfs_exit __P((struct proc *, void *));
-void nfs_sndunlock __P((int *));
-int nfs_rcvlock __P((struct nfsreq *));
-void nfs_rcvunlock __P((struct nfsmount *));
-int nfs_getreq __P((struct nfsrv_descript *, struct nfsd *, int));
-int nfs_msg __P((struct lwp *, const char *, const char *));
-void nfsrv_rcv __P((struct socket *, caddr_t, int));
-int nfsrv_getstream __P((struct nfssvc_sock *, int));
-int nfsrv_dorec __P((struct nfssvc_sock *, struct nfsd *,
-		     struct nfsrv_descript **));
-void nfsrv_wakenfsd __P((struct nfssvc_sock *));
+int nfs_connect(struct nfsmount *, struct nfsreq *, struct lwp *);
+int nfs_reconnect(struct nfsreq *, struct lwp *);
+void nfs_disconnect(struct nfsmount *);
+void nfs_safedisconnect(struct nfsmount *);
+int nfs_send(struct socket *, struct mbuf *, struct mbuf *, struct nfsreq *,
+	struct lwp *);
+int nfs_receive(struct nfsreq *, struct mbuf **, struct mbuf **, struct lwp *);
+int nfs_reply(struct nfsreq *, struct lwp *);
+int nfs_request(struct nfsnode *, struct mbuf *, int, struct lwp *,
+	struct ucred *, struct mbuf **, struct mbuf **, caddr_t *, int *);
+int nfs_rephead(int, struct nfsrv_descript *, struct nfssvc_sock *,
+	int, int, u_quad_t *, struct mbuf **, struct mbuf **, caddr_t *);
+void nfs_timer(void *);
+int nfs_sigintr(struct nfsmount *, struct nfsreq *, struct lwp *);
+int nfs_sndlock(int *, struct nfsreq *);
+void nfs_exit(struct proc *, void *);
+void nfs_sndunlock(int *);
+int nfs_rcvlock(struct nfsreq *);
+void nfs_rcvunlock(struct nfsmount *);
+int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
+int nfs_msg(struct lwp *, const char *, const char *);
+void nfsrv_rcv(struct socket *, caddr_t, int);
+int nfsrv_getstream(struct nfssvc_sock *, int);
+int nfsrv_dorec(struct nfssvc_sock *, struct nfsd *, struct nfsrv_descript **);
+void nfsrv_wakenfsd(struct nfssvc_sock *);
 int nfsdsock_lock(struct nfssvc_sock *, boolean_t);
 void nfsdsock_unlock(struct nfssvc_sock *);
 int nfsdsock_drain(struct nfssvc_sock *);
 int nfsdsock_sendreply(struct nfssvc_sock *, struct nfsrv_descript *);
 
 /* nfs_srvcache.c */
-void nfsrv_initcache __P((void ));
-int nfsrv_getcache __P((struct nfsrv_descript *, struct nfssvc_sock *,
-			struct mbuf **));
-void nfsrv_updatecache __P((struct nfsrv_descript *, int, struct mbuf *));
-void nfsrv_cleancache __P((void));
+void nfsrv_initcache(void);
+int nfsrv_getcache(struct nfsrv_descript *, struct nfssvc_sock *,
+	struct mbuf **);
+void nfsrv_updatecache(struct nfsrv_descript *, int, struct mbuf *);
+void nfsrv_cleancache(void);
 
 /* nfs_subs.c */
-struct mbuf *nfsm_reqh __P((struct nfsnode *, u_long, int, caddr_t *));
-struct mbuf *nfsm_rpchead __P((struct ucred *, int, int, int, int, char *, int,
-			       char *, struct mbuf *, int, struct mbuf **,
-			       u_int32_t *));
-int nfsm_mbuftouio __P((struct mbuf **, struct uio *, int, caddr_t *));
-int nfsm_uiotombuf __P((struct uio *, struct mbuf **, int, caddr_t *));
-int nfsm_disct __P((struct mbuf **, caddr_t *, int, int, caddr_t *));
-int nfs_adv __P((struct mbuf **, caddr_t *, int, int));
-int nfsm_strtmbuf __P((struct mbuf **, char **, const char *, long));
-u_long nfs_dirhash __P((off_t));
-void nfs_initdircache __P((struct vnode *));
-void nfs_initdirxlatecookie __P((struct vnode *));
-struct nfsdircache *nfs_searchdircache __P((struct vnode *, off_t, int, int *));
-struct nfsdircache *nfs_enterdircache __P((struct vnode *, off_t, off_t,						   int, daddr_t));
-void nfs_putdircache __P((struct nfsnode *, struct nfsdircache *));
-void nfs_invaldircache __P((struct vnode *, int));
+struct mbuf *nfsm_reqh(struct nfsnode *, u_long, int, caddr_t *);
+struct mbuf *nfsm_rpchead(struct ucred *, int, int, int, int, char *, int,
+	char *, struct mbuf *, int, struct mbuf **, u_int32_t *);
+int nfsm_mbuftouio(struct mbuf **, struct uio *, int, caddr_t *);
+int nfsm_uiotombuf(struct uio *, struct mbuf **, int, caddr_t *);
+int nfsm_disct(struct mbuf **, caddr_t *, int, int, caddr_t *);
+int nfs_adv(struct mbuf **, caddr_t *, int, int);
+int nfsm_strtmbuf(struct mbuf **, char **, const char *, long);
+u_long nfs_dirhash(off_t);
+void nfs_initdircache(struct vnode *);
+void nfs_initdirxlatecookie(struct vnode *);
+struct nfsdircache *nfs_searchdircache(struct vnode *, off_t, int, int *);
+struct nfsdircache *nfs_enterdircache(struct vnode *, off_t, off_t, int,
+	daddr_t);
+void nfs_putdircache(struct nfsnode *, struct nfsdircache *);
+void nfs_invaldircache(struct vnode *, int);
 #define	NFS_INVALDIRCACHE_FORCE		1
 #define	NFS_INVALDIRCACHE_KEEPEOF	2
 void nfs_init __P((void));
-int nfsm_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
-			   struct vattr *, int flags));
-int nfs_loadattrcache __P((struct vnode **, struct nfs_fattr *,
-			   struct vattr *, int flags));
-int nfs_getattrcache __P((struct vnode *, struct vattr *));
-void nfs_delayedtruncate __P((struct vnode *));
-int nfs_check_wccdata __P((struct nfsnode *, const struct timespec *,
-    struct timespec *, boolean_t));
-int nfs_namei __P((struct nameidata *, fhandle_t *, uint32_t,
-		   struct nfssvc_sock *, struct mbuf *, struct mbuf **,
-		   caddr_t *, struct vnode **, struct lwp *, int, int));
-void nfs_zeropad __P((struct mbuf *, int, int));
-void nfsm_srvwcc __P((struct nfsrv_descript *, int, struct vattr *, int,
-		      struct vattr *, struct mbuf **, char **));
-void nfsm_srvpostopattr __P((struct nfsrv_descript *, int, struct vattr *,
-			     struct mbuf **, char **));
-void nfsm_srvfattr __P((struct nfsrv_descript *, struct vattr *,
-			struct nfs_fattr *));
-int nfsrv_fhtovp __P((fhandle_t *, int, struct vnode **, struct ucred *,
-		      struct nfssvc_sock *, struct mbuf *, int *, int, int));
+int nfsm_loadattrcache(struct vnode **, struct mbuf **, caddr_t *,
+	struct vattr *, int flags);
+int nfs_loadattrcache(struct vnode **, struct nfs_fattr *, struct vattr *,
+	int flags);
+int nfs_getattrcache(struct vnode *, struct vattr *);
+void nfs_delayedtruncate(struct vnode *);
+int nfs_check_wccdata(struct nfsnode *, const struct timespec *,
+	struct timespec *, boolean_t);
+int nfs_namei(struct nameidata *, fhandle_t *, uint32_t, struct nfssvc_sock *,
+	struct mbuf *, struct mbuf **, caddr_t *, struct vnode **, struct lwp *,
+	int, int);
+void nfs_zeropad(struct mbuf *, int, int);
+void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
+	struct vattr *, struct mbuf **, char **);
+void nfsm_srvpostopattr(struct nfsrv_descript *, int, struct vattr *,
+	struct mbuf **, char **);
+void nfsm_srvfattr(struct nfsrv_descript *, struct vattr *, struct nfs_fattr *);
+int nfsrv_fhtovp(fhandle_t *, int, struct vnode **, struct ucred *,
+	struct nfssvc_sock *, struct mbuf *, int *, int, int);
 int nfs_ispublicfh __P((fhandle_t *));
-int netaddr_match __P((int, union nethostaddr *, struct mbuf *));
+int netaddr_match(int, union nethostaddr *, struct mbuf *);
 
 /* flags for nfs_loadattrcache and friends */
 #define	NAC_NOTRUNC	1	/* don't truncate file size */
 
-void nfs_clearcommit __P((struct mount *));
-void nfs_merge_commit_ranges __P((struct vnode *));
-int nfs_in_committed_range __P((struct vnode *, off_t, off_t));
-int nfs_in_tobecommitted_range __P((struct vnode *, off_t, off_t));
-void nfs_add_committed_range __P((struct vnode *, off_t, off_t));
-void nfs_del_committed_range __P((struct vnode *, off_t, off_t));
-void nfs_add_tobecommitted_range __P((struct vnode *, off_t, off_t));
-void nfs_del_tobecommitted_range __P((struct vnode *, off_t, off_t));
+void nfs_clearcommit(struct mount *);
+void nfs_merge_commit_ranges(struct vnode *);
+int nfs_in_committed_range(struct vnode *, off_t, off_t);
+int nfs_in_tobecommitted_range(struct vnode *, off_t, off_t);
+void nfs_add_committed_range(struct vnode *, off_t, off_t);
+void nfs_del_committed_range(struct vnode *, off_t, off_t);
+void nfs_add_tobecommitted_range(struct vnode *, off_t, off_t);
+void nfs_del_tobecommitted_range(struct vnode *, off_t, off_t);
 
-int nfsrv_errmap __P((struct nfsrv_descript *, int));
-void nfsrvw_sort __P((gid_t *, int));
-void nfsrv_setcred __P((struct ucred *, struct ucred *));
-void nfs_cookieheuristic __P((struct vnode *, int *, struct lwp *,
-			      struct ucred *));
+int nfsrv_errmap(struct nfsrv_descript *, int);
+void nfsrvw_sort(gid_t *, int);
+void nfsrv_setcred(struct ucred *, struct ucred *);
+void nfs_cookieheuristic(struct vnode *, int *, struct lwp *, struct ucred *);
 
-u_int32_t nfs_getxid __P((void));
-void nfs_renewxid __P((struct nfsreq *));
+u_int32_t nfs_getxid(void);
+void nfs_renewxid(struct nfsreq *);
 
 /* nfs_syscalls.c */
-int sys_getfh __P((struct lwp *, void *, register_t *));
-int sys_nfssvc __P((struct lwp *, void *, register_t *));
-int nfssvc_addsock __P((struct file *, struct mbuf *));
-int nfssvc_nfsd __P((struct nfsd_srvargs *, caddr_t, struct lwp *));
-void nfsrv_zapsock __P((struct nfssvc_sock *));
-void nfsrv_slpderef __P((struct nfssvc_sock *));
-void nfsrv_init __P((int));
-int nfssvc_iod __P((struct lwp *));
-void nfs_iodinit __P((void));
-void start_nfsio __P((void *));
-void nfs_getset_niothreads __P((int));
-int nfs_getauth __P((struct nfsmount *, struct nfsreq *, struct ucred *,
-		     char **, int *, char *, int *, NFSKERBKEY_T));
-int nfs_getnickauth __P((struct nfsmount *, struct ucred *, char **, int *,
-			 char *, int));
-int nfs_savenickauth __P((struct nfsmount *, struct ucred *, int, NFSKERBKEY_T,
-			  struct mbuf **, char **, struct mbuf *));
+int sys_getfh(struct lwp *, void *, register_t *);
+int sys_nfssvc(struct lwp *, void *, register_t *);
+int nfssvc_addsock(struct file *, struct mbuf *);
+int nfssvc_nfsd(struct nfsd_srvargs *, caddr_t, struct lwp *);
+void nfsrv_zapsock(struct nfssvc_sock *);
+void nfsrv_slpderef(struct nfssvc_sock *);
+void nfsrv_init(int);
+int nfssvc_iod(struct lwp *);
+void nfs_iodinit(void);
+void start_nfsio(void *);
+void nfs_getset_niothreads(int);
+int nfs_getauth(struct nfsmount *, struct nfsreq *, struct ucred *, char **,
+	int *, char *, int *, NFSKERBKEY_T);
+int nfs_getnickauth(struct nfsmount *, struct ucred *, char **, int *, char *,
+	int);
+int nfs_savenickauth(struct nfsmount *, struct ucred *, int, NFSKERBKEY_T,
+	struct mbuf **, char **, struct mbuf *);
 
 /* nfs_export.c */
 extern struct nfs_public nfs_pub;
