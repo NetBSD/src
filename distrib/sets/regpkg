@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.6 2004/07/23 15:11:26 erh Exp $
+# $NetBSD: regpkg,v 1.7 2006/01/03 16:40:16 apb Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -72,21 +72,21 @@ $rundir/makeplist $pkgset $pkg > $PLIST
 
 # create the pkg tiny version
 case "${SYSPKG_DATES}" in
-"")	tinyvers=`awk '$1 ~ '/$pkg/' { print $2 }' $rundir/versions`
+"")	tinyvers=`${AWK} '$1 ~ '/$pkg/' { print $2 }' $rundir/versions`
 	case "$tinyvers" in
 	"")	tinyvers=0
 		;;
 	esac
 	if [ -f ../../sys/conf/osrelease.sh ]; then
-		osvers=`sh ../../sys/conf/osrelease.sh`
+		osvers=`${HOST_SH} ../../sys/conf/osrelease.sh`
 		method=osreleases
 	else
-		osvers=`uname -r`
+		osvers=`${UNAME} -r`
 		method=uname
 	fi
 	t=$osvers.$tinyvers
 	;;
-*)	args=`awk '
+*)	args=`${AWK} '
 		/^@cwd/ { prefix = $2; next }
 		/^@dirrm/ { next }
 		{ printf("%s%s\n", prefix, $0) }' $PLIST`
@@ -94,7 +94,7 @@ case "${SYSPKG_DATES}" in
 	t=0
 	case "$args" in
 	"")	;;
-	*)	t=`ident $args 2>/dev/null | awk '
+	*)	t=`${IDENT} $args 2>/dev/null | ${AWK} '
 			BEGIN { last = 0 }
 			$2 == "crt0.c,v" { next }
 			NF == 8 { t = $4; gsub("/", "", t); if (t > last) last = t; }
@@ -104,7 +104,7 @@ case "${SYSPKG_DATES}" in
 	esac
 	case "$t" in
 	0)	# we need the last mtime of the files which make up the package
-		t=`env TZ=UTC LOCALE=C ls -lT $args | awk '
+		t=`${ENV_CMD} TZ=UTC LOCALE=C ${LS} -lT $args | ${AWK} '
 			BEGIN { newest = 0 }
 			{
 				t = $9 "";
@@ -149,11 +149,12 @@ fi
 mkdir -p ${SYSPKGDIR}
 
 # add the dependencies
-awk '$1 ~ '/$pkg/' { print $2 }' $rundir/deps | sort | \
-    awk '{ print "@pkgdep " $1 "-[0-9]*" }' >> $PLIST
+${AWK} '$1 ~ '/$pkg/' { print $2 }' $rundir/deps | ${SORT} | \
+    ${AWK} '{ print "@pkgdep " $1 "-[0-9]*" }' >> $PLIST
 
 # create the comment
-comment=`awk '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' $rundir/comments`
+comment=`${AWK} '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' \
+	$rundir/comments`
 case "$comment" in
 "")	echo "***WARNING ***: no comment for \"$pkg\"" 2>&1
 	comment="System package for $pkg"
@@ -162,28 +163,29 @@ esac
 echo "$comment" > ${SYSPKGDIR}/+COMMENT
 
 # create the description
-descr=`awk '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' $rundir/descrs`
+descr=`${AWK} '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' \
+	$rundir/descrs`
 case "$descr" in
 "")	echo "***WARNING ***: no description for \"$pkg\"" 2>&1
 	descr="System package for $pkg"
 	;;
 esac
 echo "$descr" > ${SYSPKGDIR}/+DESC
-printf "\nHomepage:\nhttp://www.NetBSD.org/\n" >> ${SYSPKGDIR}/+DESC
+${PRINTF} "\nHomepage:\nhttp://www.NetBSD.org/\n" >> ${SYSPKGDIR}/+DESC
 
 # create the build information
 if [ x${BUILD_INFO_CACHE} = x ]; then
 	{
-	echo "OPSYS=`uname -s`"
-	echo "OS_VERSION=`uname -r`"
-	make -f- all <<EOF
+	echo "OPSYS=`${UNAME} -s`"
+	echo "OS_VERSION=`${UNAME} -r`"
+	${MAKE} -f- all <<EOF
 .include <bsd.own.mk>
 all:
 	@echo OBJECT_FMT=${OBJECT_FMT}
 	@echo MACHINE_ARCH=${MACHINE_ARCH}
 	@echo MACHINE_GNU_ARCH=${MACHINE_GNU_ARCH}
 EOF
-	echo "_PKGTOOLS_VER=`pkg_create -V`"
+	echo "_PKGTOOLS_VER=`${PKG_CREATE} -V`"
 	} > ${SYSPKGDIR}/+BUILD_INFO
 else
 	cp ${BUILD_INFO_CACHE} ${SYSPKGDIR}/+BUILD_INFO
@@ -191,7 +193,8 @@ fi
 
 # test for attributes
 args=""
-attrs=`awk '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' $rundir/attrs`
+attrs=`${AWK} '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' \
+	$rundir/attrs`
 for a in "$attrs"; do
 	case "$attrs" in
 	"")		;;
@@ -201,7 +204,7 @@ for a in "$attrs"; do
 	esac
 done
 
-pkg_create -v -c ${SYSPKGDIR}/+COMMENT \
+${PKG_CREATE} -v -c ${SYSPKGDIR}/+COMMENT \
 	-d ${SYSPKGDIR}/+DESC \
 	$args \
 	-f $PLIST -l -b /dev/null -B ${SYSPKGDIR}/+BUILD_INFO \
