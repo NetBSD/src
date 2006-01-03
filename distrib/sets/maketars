@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.55 2005/10/21 02:41:14 jmc Exp $
+# $NetBSD: maketars,v 1.56 2006/01/03 15:42:42 apb Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -15,17 +15,11 @@
 #
 
 prog=${0##*/}
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
 
 # set defaults
-: ${HOST_SH:=sh}
-: ${MKTEMP:=mktemp}
-: ${MTREE:=/usr/sbin/mtree}
-: ${PAX:=pax}
-
-rundir=${0%/*}
-. ${rundir}/sets.subr
 lists=$nlists
-
 tars=$RELEASEDIR
 dest=$DESTDIR
 metalog=

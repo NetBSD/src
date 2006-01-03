@@ -1,18 +1,16 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.27 2005/10/21 04:11:49 jmc Exp $
+#	$NetBSD: makesrctars,v 1.28 2006/01/03 15:42:42 apb Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
 #
 
 prog=${0##*/}
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
 
 # set defaults
-: ${CKSUM:=cksum}
-: ${MTREE:=/usr/sbin/mtree}
-: ${PAX:=pax}
-
 xsrcdir=
 
 GZIP=-9
