@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.86 2006/01/03 12:30:01 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.87 2006/01/03 22:25:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.86 2006/01/03 12:30:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.87 2006/01/03 22:25:48 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -791,15 +791,16 @@ nfssvc_nfsd(nsd, argp, l)
 					nfsd_rt(slp->ns_so->so_type, nd,
 					    cacherep);
 				}
+				s = splsoftnet();
 				error = nfsdsock_sendreply(slp, nd);
 				nd = NULL;
 				if (error == EPIPE)
 					nfsrv_zapsock(slp);
 				if (error == EINTR || error == ERESTART) {
 					nfsrv_slpderef(slp);
-					s = splsoftnet();
 					goto done;
 				}
+				splx(s);
 				break;
 			case RC_DROPIT:
 				if (nfsrtton)
