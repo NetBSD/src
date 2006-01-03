@@ -9,14 +9,13 @@
 
 #set -u
 
-: ${TOOL_DB:=db}
-DB="${TOOL_DB} -q"
-
 #
 # set defaults and import setlist subroutines
 #
-rundir=${0%/*}
-. ${rundir}/sets.subr
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+
+DB="${TOOL_DB} -q"
 prefix=/
 
 usage()
