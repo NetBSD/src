@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.148 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.149 2006/01/04 10:13:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.148 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.149 2006/01/04 10:13:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,8 +182,9 @@ struct simplelock bqueue_slock = SIMPLELOCK_INITIALIZER;
 
 /*
  * Buffer pool for I/O buffers.
+ * Access to this pool must be protected with splbio().
  */
-struct pool bufpool;
+static struct pool bufpool;
 
 /* XXX - somewhat gross.. */
 #if MAXBSIZE == 0x2000
@@ -1731,3 +1732,42 @@ vfs_bufstats(void)
 	}
 }
 #endif /* DEBUG */
+
+static struct buf *
+getiobuf1(int prflags)
+{
+	struct buf *bp;
+	int s;
+
+	s = splbio();
+	bp = pool_get(&bufpool, prflags);
+	splx(s);
+	if (bp != NULL) {
+		BUF_INIT(bp);
+	}
+	return bp;
+}
+
+struct buf *
+getiobuf(void)
+{
+
+	return getiobuf1(PR_WAITOK);
+}
+
+struct buf *
+getiobuf_nowait(void)
+{
+
+	return getiobuf1(PR_NOWAIT);
+}
+
+void
+putiobuf(struct buf *bp)
+{
+	int s;
+
+	s = splbio();
+	pool_put(&bufpool, bp);
+	splx(s);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.234 2005/12/21 13:11:27 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.235 2006/01/04 10:13:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.234 2005/12/21 13:11:27 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.235 2006/01/04 10:13:05 yamt Exp $");
 
 #include "rnd.h"
 
@@ -649,9 +649,7 @@ cdstrategy(struct buf *bp)
 			count = roundup(count, cd->params.blksize);
 
 			blkno = ((blkno * lp->d_secsize) / cd->params.blksize);
-			s = splbio();
-			nbp = pool_get(&bufpool, PR_NOWAIT);
-			splx(s);
+			nbp = getiobuf_nowait();
 			if (!nbp) {
 				/* No memory -- fail the iop. */
 				bp->b_error = ENOMEM;
@@ -660,15 +658,12 @@ cdstrategy(struct buf *bp)
 			bounce = malloc(count, M_DEVBUF, M_NOWAIT);
 			if (!bounce) {
 				/* No memory -- fail the iop. */
-				s = splbio();
-				pool_put(&bufpool, nbp);
-				splx(s);
+				putiobuf(nbp);
 				bp->b_error = ENOMEM;
 				goto bad;
 			}
 
 			/* Set up the IOP to the bounce buffer. */
-			BUF_INIT(nbp);
 			nbp->b_error = 0;
 			nbp->b_proc = bp->b_proc;
 			nbp->b_vp = NULLVP;
@@ -930,20 +925,17 @@ cdbounce(struct buf *bp)
 			memcpy(bp->b_data+obp->b_rawblkno, obp->b_data,
 				obp->b_bcount);
 
-			s = splbio();
-
 			/* We need to alloc a new buf. */
-			nbp = pool_get(&bufpool, PR_NOWAIT);
+			nbp = getiobuf_nowait();
 			if (!nbp) {
-				splx(s);
 				/* No buf available. */
 				bp->b_flags |= B_ERROR;
 				bp->b_error = ENOMEM;
 				bp->b_resid = bp->b_bcount;
+				goto done;
 			}
 
 			/* Set up the IOP to the bounce buffer. */
-			BUF_INIT(nbp);
 			nbp->b_error = 0;
 			nbp->b_proc = bp->b_proc;
 			nbp->b_vp = NULLVP;
@@ -961,6 +953,7 @@ cdbounce(struct buf *bp)
 			/* Put ptr to orig buf in b_private and use new buf */
 			nbp->b_private = obp;
 
+			s = splbio();
 			/*
 			 * Place it in the queue of disk activities for this
 			 * disk.
