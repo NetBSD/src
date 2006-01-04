@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.43 2006/01/03 16:40:16 apb Exp $
+#	$NetBSD: sets.subr,v 1.44 2006/01/04 14:23:22 apb Exp $
 #
 
 #
@@ -67,11 +67,15 @@ MKVARS="\
 : ${AWK:=awk}
 : ${CKSUM:=cksum}
 : ${COMM:=comm}
+: ${DATE:=date}
 : ${DB:=db}
 : ${EGREP:=egrep}
 : ${ENV_CMD:=env}       # ${ENV} is special to sh(1), ksh(1), etc.
+: ${FGREP:=fgrep}
 : ${FIND:=find}
+: ${GREP:=grep}
 : ${GZIP_CMD:=gzip}     # ${GZIP} is special to gzip(1)
+: ${HOSTNAME:=hostname}
 : ${HOST_SH:=sh}
 : ${IDENT:=ident}
 : ${JOIN:=join}
@@ -85,9 +89,10 @@ MKVARS="\
 : ${PRINTF:=printf}
 : ${SED:=sed}
 : ${SORT:=sort}
+: ${STAT:=stat}
+: ${TSORT:=tsort}
 : ${UNAME:=uname}
 : ${WC:=wc}
-
 
 oIFS=$IFS
 IFS="
@@ -154,7 +159,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.43 2006/01/03 16:40:16 apb Exp $
+# 	# $NetBSD: sets.subr,v 1.44 2006/01/04 14:23:22 apb Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
