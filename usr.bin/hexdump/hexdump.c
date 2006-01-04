@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.12 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.13 2006/01/04 01:30:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hexdump.c,v 1.12 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: hexdump.c,v 1.13 2006/01/04 01:30:21 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,12 +59,10 @@ int blocksize;				/* data block size */
 int exitval;				/* final exit value */
 int length = -1;			/* max bytes to read */
 
-int	main __P((int, char **));
+int	main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FS *tfs;
 	char *p;

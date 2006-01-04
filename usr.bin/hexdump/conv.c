@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.11 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: conv.c,v 1.12 2006/01/04 01:30:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: conv.c,v 1.11 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: conv.c,v 1.12 2006/01/04 01:30:21 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,9 +50,7 @@ __RCSID("$NetBSD: conv.c,v 1.11 2003/10/27 00:12:43 lukem Exp $");
 #include "hexdump.h"
 
 void
-conv_c(pr, p)
-	PR *pr;
-	u_char *p;
+conv_c(PR *pr, u_char *p)
 {
 	char buf[10];
 	char const *str;
@@ -102,9 +100,7 @@ strpr:		*pr->cchar = 's';
 }
 
 void
-conv_u(pr, p)
-	PR *pr;
-	u_char *p;
+conv_u(PR *pr, u_char *p)
 {
 	static const char *list[] = {
 		"nul", "soh", "stx", "etx", "eot", "enq", "ack", "bel",

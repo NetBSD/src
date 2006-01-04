@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.h,v 1.8 2003/08/07 11:14:04 agc Exp $	*/
+/*	$NetBSD: hexdump.h,v 1.9 2006/01/04 01:30:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -79,25 +79,25 @@ extern int length;			/* max bytes to read */
 extern off_t skip;			/* bytes to skip */
 extern enum _vflag vflag;
 
-void	 add __P((const char *));
-void	 addfile __P((char *));
-void	 badcnt __P((char *));
-void	 badconv __P((char *));
-void	 badfmt __P((const char *));
-void	 badsfmt __P((void));
-void	 bpad __P((PR *));
-void	 conv_c __P((PR *, u_char *));
-void	 conv_u __P((PR *, u_char *));
-void	 display __P((void));
-void	 doskip __P((const char *, int));
-/*void	 err __P((const char *, ...));*/
-void	*emalloc __P((int));
-void	 escape __P((char *));
-u_char	*get __P((void));
-void	 newsyntax __P((int, char ***));
-int	 next __P((char **));
-void	 nomem __P((void));
-void	 oldsyntax __P((int, char ***));
-void	 rewrite __P((FS *));
-int	 size __P((FS *));
-void	 usage __P((void));
+void	 add(const char *);
+void	 addfile(char *);
+void	 badcnt(char *);
+void	 badconv(char *);
+void	 badfmt(const char *);
+void	 badsfmt(void);
+void	 bpad(PR *);
+void	 conv_c(PR *, u_char *);
+void	 conv_u(PR *, u_char *);
+void	 display(void);
+void	 doskip(const char *, int);
+/*void	 err(const char *, ...);*/
+void	*emalloc(int);
+void	 escape(char *);
+u_char	*get(void);
+void	 newsyntax(int, char ***);
+int	 next(char **);
+void	 nomem(void);
+void	 oldsyntax(int, char ***);
+void	 rewrite(FS *);
+int	 size(FS *);
+void	 usage(void);
