@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.21 2004/06/03 18:33:57 kleink Exp $	*/
+/*	$NetBSD: net.c,v 1.22 2006/01/04 01:17:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)net.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: net.c,v 1.21 2004/06/03 18:33:57 kleink Exp $");
+__RCSID("$NetBSD: net.c,v 1.22 2006/01/04 01:17:54 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,7 @@ __RCSID("$NetBSD: net.c,v 1.21 2004/06/03 18:33:57 kleink Exp $");
 #include "extern.h"
 
 void
-netfinger(name)
-	char *name;
+netfinger(char *name)
 {
 	FILE *fp;
 	int c, lastc;

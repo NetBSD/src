@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.23 2004/11/12 21:48:58 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.24 2006/01/04 01:17:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.23 2004/11/12 21:48:58 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.24 2006/01/04 01:17:54 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,14 +97,12 @@ __RCSID("$NetBSD: util.c,v 1.23 2004/11/12 21:48:58 christos Exp $");
 #include "finger.h"
 #include "extern.h"
 
-static void	 find_idle_and_ttywrite __P((WHERE *));
-static void	 userinfo __P((PERSON *, struct passwd *));
-static WHERE	*walloc __P((PERSON *));
+static void	 find_idle_and_ttywrite(WHERE *);
+static void	 userinfo(PERSON *, struct passwd *);
+static WHERE	*walloc(PERSON *);
 
 int
-match(pw, user)
-	struct passwd *pw;
-	char *user;
+match(struct passwd *pw, char *user)
 {
 	char *p;
 	char *bp, name[1024];
@@ -128,11 +126,7 @@ match(pw, user)
 
 /* inspired by usr.sbin/sendmail/util.c::buildfname */
 void
-expandusername(gecos, login, buf, buflen)
-	const char *gecos;
-	const char *login;
-	char *buf;
-	int buflen;
+expandusername(const char *gecos, const char *login, char *buf, int buflen)
 {
 	const char *p;
 	char *bp;
@@ -163,8 +157,7 @@ expandusername(gecos, login, buf, buflen)
 }
 
 void
-enter_lastlog(pn)
-	PERSON *pn;
+enter_lastlog(PERSON *pn)
 {
 	WHERE *w;
 	static int opened, fd;
@@ -215,9 +208,7 @@ enter_lastlog(pn)
 }
 
 void
-enter_where(ep, pn)
-	struct utmpentry *ep;
-	PERSON *pn;
+enter_where(struct utmpentry *ep, PERSON *pn)
 {
 	WHERE *w = walloc(pn);
 
@@ -229,8 +220,7 @@ enter_where(ep, pn)
 }
 
 PERSON *
-enter_person(pw)
-	struct passwd *pw;
+enter_person(struct passwd *pw)
 {
 	DBT data, key;
 	PERSON *pn;
@@ -265,8 +255,7 @@ enter_person(pw)
 }
 
 PERSON *
-find_person(name)
-	char *name;
+find_person(char *name)
 {
 	DBT data, key;
 	PERSON *p;
@@ -284,7 +273,7 @@ find_person(name)
 }
 
 PERSON *
-palloc()
+palloc(void)
 {
 	PERSON *p;
 
@@ -294,8 +283,7 @@ palloc()
 }
 
 static WHERE *
-walloc(pn)
-	PERSON *pn;
+walloc(PERSON *pn)
 {
 	WHERE *w;
 
@@ -312,8 +300,7 @@ walloc(pn)
 }
 
 char *
-prphone(num)
-	char *num;
+prphone(char *num)
 {
 	char *p;
 	int len;
@@ -362,8 +349,7 @@ prphone(num)
 }
 
 static void
-find_idle_and_ttywrite(w)
-	WHERE *w;
+find_idle_and_ttywrite(WHERE *w)
 {
 	struct stat sb;
 
@@ -379,9 +365,7 @@ find_idle_and_ttywrite(w)
 }
 
 static void
-userinfo(pn, pw)
-	PERSON *pn;
-	struct passwd *pw;
+userinfo(PERSON *pn, struct passwd *pw)
 {
 	char *p;
 	char *bp, name[1024];
