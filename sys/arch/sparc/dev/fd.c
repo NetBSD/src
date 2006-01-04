@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.121 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.122 2006/01/04 10:13:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.121 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.122 2006/01/04 10:13:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2138,20 +2138,16 @@ fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 int
 fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 {
-	int rv = 0, s;
+	int rv = 0;
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
-	s = splbio();
-	bp = (struct buf *)pool_get(&bufpool, PR_NOWAIT);
-	splx(s);
+	bp = getiobuf_nowait();
 	if (bp == NULL)
 		return (ENOBUFS);
 
-	memset((void *)bp, 0, sizeof(struct buf));
-	BUF_INIT(bp);
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;
@@ -2197,9 +2193,6 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 
 	/* ...and wait for it to complete */
 	rv = biowait(bp);
-	s = splbio();
-	pool_put(&bufpool, bp);
-	splx(s);
 	return (rv);
 }
 

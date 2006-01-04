@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.84 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.85 2006/01/04 10:13:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -263,12 +263,6 @@ do {									\
 extern	struct bio_ops bioops;
 extern	u_int nbuf;		/* The number of buffer headers */
 
-/*
- * Pool of I/O buffers.  Access to this pool must be protected with
- * splbio().
- */
-extern	struct pool bufpool;
-
 __BEGIN_DECLS
 void	allocbuf(struct buf *, int, int);
 void	bawrite(struct buf *);
@@ -304,7 +298,10 @@ int	buf_setvalimit(vsize_t);
 #ifdef DDB
 void	vfs_buf_print(struct buf *, int, void (*)(const char *, ...));
 #endif
+struct buf *getiobuf(void);
+struct buf *getiobuf_nowait(void);
+void putiobuf(struct buf *);
 
 __END_DECLS
-#endif
+#endif /* _KERNEL */
 #endif /* !_SYS_BUF_H_ */

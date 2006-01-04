@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.87 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.88 2006/01/04 10:13:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.87 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.88 2006/01/04 10:13:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -744,11 +744,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	ASSERT_MAYBE_SEGLOCK(fs);
 	nbytes = roundup(size, fsbtob(fs, 1));
 
-	s = splbio();
-	bp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
-	memset(bp, 0, sizeof(struct buf));
-	BUF_INIT(bp);
+	bp = getiobuf();
 	if (nbytes) {
 		bp->b_data = lfs_malloc(fs, nbytes, type);
 		/* memset(bp->b_data, 0, nbytes); */
@@ -788,8 +784,8 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 		lfs_free(fs, bp->b_data, LFS_NB_UNKNOWN);
 		bp->b_data = NULL;
 	}
-	pool_put(&bufpool, bp);
 	splx(s);
+	putiobuf(bp);
 }
 
 /*

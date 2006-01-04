@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.118 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.119 2006/01/04 10:13:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.118 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.119 2006/01/04 10:13:06 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -665,10 +665,7 @@ genfs_getpages(void *v)
 	kva = uvm_pagermapin(pgs, npages,
 	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
 
-	s = splbio();
-	mbp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
-	BUF_INIT(mbp);
+	mbp = getiobuf();
 	mbp->b_bufsize = totalbytes;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
@@ -802,10 +799,7 @@ genfs_getpages(void *v)
 		if (offset == startoffset && iobytes == bytes) {
 			bp = mbp;
 		} else {
-			s = splbio();
-			bp = pool_get(&bufpool, PR_WAITOK);
-			splx(s);
-			BUF_INIT(bp);
+			bp = getiobuf();
 			bp->b_data = (char *)kva + offset - startoffset;
 			bp->b_resid = bp->b_bcount = iobytes;
 			bp->b_flags = B_BUSY|B_READ|B_CALL|B_ASYNC;
@@ -856,9 +850,7 @@ loopdone:
 	if (bp != NULL) {
 		error = biowait(mbp);
 	}
-	s = splbio();
-	pool_put(&bufpool, mbp);
-	splx(s);
+	putiobuf(mbp);
 	uvm_pagermapout(kva, npages);
 	raoffset = startoffset + totalbytes;
 
@@ -1474,11 +1466,10 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	simple_lock(&global_v_numoutput_slock);
 	vp->v_numoutput += 2;
 	simple_unlock(&global_v_numoutput_slock);
-	mbp = pool_get(&bufpool, PR_WAITOK);
-	BUF_INIT(mbp);
+	splx(s);
+	mbp = getiobuf();
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
 	    vp, mbp, vp->v_numoutput, bytes);
-	splx(s);
 	mbp->b_bufsize = npages << PAGE_SHIFT;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
@@ -1512,11 +1503,10 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		} else {
 			s = splbio();
 			V_INCR_NUMOUTPUT(vp);
-			bp = pool_get(&bufpool, PR_WAITOK);
+			splx(s);
+			bp = getiobuf();
 			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
 			    vp, bp, vp->v_numoutput, 0);
-			splx(s);
-			BUF_INIT(bp);
 			bp->b_data = (char *)kva +
 			    (vaddr_t)(offset - pg->offset);
 			bp->b_resid = bp->b_bcount = iobytes;
@@ -1729,10 +1719,9 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 
 	s = splbio();
 	V_INCR_NUMOUTPUT(vp);
-	bp = pool_get(&bufpool, PR_WAITOK);
 	splx(s);
 
-	BUF_INIT(bp);
+	bp = getiobuf();
 	bp->b_flags = B_BUSY | B_WRITE | B_AGE;
 	bp->b_vp = vp;
 	bp->b_lblkno = offset >> vp->v_mount->mnt_fs_bshift;
