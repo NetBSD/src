@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.39 2005/06/20 13:25:23 peter Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.40 2006/01/04 15:35:20 apb Exp $
 .\"
 .\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -877,6 +877,17 @@ does not install all of the required files).
 Create source sets of the source tree into
 .Sy RELEASEDIR Ns Pa /source/sets .
 .
+.It Sy syspkgs
+Create syspkgs from
+.Sy DESTDIR
+into
+.Sy RELEASEDIR/MACHINE Ns Pa /binary/syspkgs .
+Should be run after
+.Dq make distribution
+(as
+.Dq make build
+does not install all of the required files).
+.
 .It Sy release
 Do a
 .Dq make distribution ,
@@ -1033,6 +1044,10 @@ Perform
 .It Sy sourcesets
 Perform
 .Dq make sourcesets .
+.
+.It Sy syspkgs
+Perform
+.Dq make syspkgs .
 .
 .El
 .
