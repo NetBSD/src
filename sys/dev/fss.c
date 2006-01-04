@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.18 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: fss.c,v 1.19 2006/01/04 10:13:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.18 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.19 2006/01/04 10:13:05 yamt Exp $");
 
 #include "fss.h"
 
@@ -839,9 +839,7 @@ fss_cluster_iodone(struct buf *bp)
 
 	FSS_UNLOCK(scp->fc_softc, s);
 
-	s = splbio();
-	pool_put(&bufpool, bp);
-	splx(s);
+	putiobuf(bp);
 }
 
 /*
@@ -908,11 +906,7 @@ restart:
 		if (len > MAXPHYS)
 			len = MAXPHYS;
 
-		s = splbio();
-		bp = pool_get(&bufpool, PR_WAITOK);
-		splx(s);
-
-		BUF_INIT(bp);
+		bp = getiobuf();
 		bp->b_flags = B_READ|B_CALL;
 		bp->b_bcount = len;
 		bp->b_bufsize = bp->b_bcount;
@@ -1036,9 +1030,7 @@ fss_bs_thread(void *arg)
 
 	scl = sc->sc_cache+sc->sc_cache_size;
 
-	s = splbio();
-	nbp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
+	nbp = getiobuf();
 
 	nfreed = nio = 1;		/* Dont sleep the first time */
 
@@ -1055,9 +1047,7 @@ fss_bs_thread(void *arg)
 
 			FSS_UNLOCK(sc, s);
 
-			s = splbio();
-			pool_put(&bufpool, nbp);
-			splx(s);
+			putiobuf(nbp);
 #ifdef FSS_STATISTICS
 			if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
 				printf("fss%d: cow called %" PRId64 " times,"

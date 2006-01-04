@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.42 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.43 2006/01/04 10:13:05 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.42 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.43 2006/01/04 10:13:05 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -449,24 +449,23 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 		       int waitflag)
 {
 	RF_DiskQueueData_t *p;
-	int s;
 
 	p = pool_get(&rf_pools.dqd, waitflag);
 	if (p == NULL)
 		return (NULL);
 
 	memset(p, 0, sizeof(RF_DiskQueueData_t));
-	/* Need to be at splbio to access bufpool! */
-	s = splbio();
-	p->bp = pool_get(&bufpool, waitflag);
-	splx(s);
+	if (waitflag == PR_WAITOK) {
+		p->bp = getiobuf();
+	} else {
+		p->bp = getiobuf_nowait();
+	}
 	if (p->bp == NULL) {
 		/* no memory for the buffer!?!? */
 		pool_put(&rf_pools.dqd, p);
 		return (NULL);
 	}
 
-	memset(p->bp, 0, sizeof(struct buf));
 	p->sectorOffset = ssect + rf_protectedSectors;
 	p->numSector = nsect;
 	p->type = typ;
@@ -487,10 +486,7 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 void
 rf_FreeDiskQueueData(RF_DiskQueueData_t *p)
 {
-	int s;
 
-	s = splbio();
-	pool_put(&bufpool, p->bp);
-	splx(s);
+	putiobuf(p->bp);
 	pool_put(&rf_pools.dqd, p);
 }
