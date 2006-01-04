@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.72 2005/11/29 15:45:28 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.73 2006/01/04 10:13:06 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.72 2005/11/29 15:45:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.73 2006/01/04 10:13:06 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -256,7 +256,7 @@ uvm_aio_biodone1(struct buf *bp)
 		mbp->b_error = bp->b_error;
 	}
 	mbp->b_resid -= bp->b_bcount;
-	pool_put(&bufpool, bp);
+	putiobuf(bp);
 	if (mbp->b_resid == 0) {
 		biodone(mbp);
 	}
@@ -475,6 +475,6 @@ uvm_aio_aiodone(struct buf *bp)
 	if (write && (bp->b_flags & B_AGE) != 0) {
 		vwakeup(bp);
 	}
-	pool_put(&bufpool, bp);
+	putiobuf(bp);
 	splx(s);
 }

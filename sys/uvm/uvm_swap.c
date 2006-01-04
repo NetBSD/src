@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.97 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.98 2006/01/04 10:13:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.97 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.98 2006/01/04 10:13:06 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1654,16 +1654,13 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * now allocate a buf for the i/o.
 	 */
 
-	s = splbio();
-	bp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
+	bp = getiobuf();
 
 	/*
 	 * fill in the bp/sbp.   we currently route our i/o through
 	 * /dev/drum's vnode [swapdev_vp].
 	 */
 
-	BUF_INIT(bp);
 	bp->b_flags = B_BUSY | B_NOCACHE | (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_vnbufs.le_next = NOLIST;
@@ -1728,7 +1725,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	s = splbio();
 	if (write)
 		vwakeup(bp);
-	pool_put(&bufpool, bp);
+	putiobuf(bp);
 	splx(s);
 	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.70 2005/12/17 05:26:41 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.71 2006/01/04 10:13:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.70 2005/12/17 05:26:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.71 2006/01/04 10:13:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,12 +117,8 @@ static struct buf *
 getphysbuf(void)
 {
 	struct buf *bp;
-	int s;
 
-	s = splbio();
-	bp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
-	BUF_INIT(bp);
+	bp = getiobuf();
 	bp->b_error = 0;
 	bp->b_flags = B_BUSY;
 	return(bp);
@@ -134,7 +130,6 @@ getphysbuf(void)
 static void
 putphysbuf(struct buf *bp)
 {
-	int s;
 
 	if ((bp->b_flags & B_DONTFREE) != 0) {
 		return;
@@ -142,9 +137,7 @@ putphysbuf(struct buf *bp)
 
 	if (__predict_false(bp->b_flags & B_WANTED))
 		panic("putphysbuf: private buf B_WANTED");
-	s = splbio();
-	pool_put(&bufpool, bp);
-	splx(s);
+	putiobuf(bp);
 }
 
 static void
