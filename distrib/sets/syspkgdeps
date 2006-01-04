@@ -9,12 +9,14 @@
 
 #set -u
 
-#
-# set defaults and import setlist subroutines
-#
+prog="${0##*/}"
 rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 . "${rundir}/sets.subr"
 
+#
+# set defaults
+#
+prefix=/
 
 usage()
 {
@@ -30,7 +32,7 @@ USAGE
 }
 
 # parse arguments
-while getopts a:m:ps: ch; do
+while getopts a:m:p:s: ch; do
 	case ${ch} in
 	a)
 		MACHINE_ARCH="${OPTARG}"
@@ -56,9 +58,12 @@ if [ $# -lt 1 ]; then
 fi
 
 sets="$*"
+case "${sets}" in
+all)	sets="${nlists}" ;;
+esac
 
 # TBD clean up
-SCRATCH="$(${MKTEMP} -d "/var/tmp/${0##*/}.XXXXXX")"
+SCRATCH="$(${MKTEMP} -d "/var/tmp/${prog}.XXXXXX")"
 
 [ $? -ne 0 ] && { echo "Could not create scratch directory." 1>&2 ; exit 1 ; }
 
@@ -84,8 +89,9 @@ ${DB} -q -w -f - btree "${PATH_TO_PKGNAME}" < "${PATH_MEMBERSHIP}" || \
 echo "computing parent pathnames" 1>&2
 
 while read pathname pkgname; do
-	# print parent pathname
-	echo "${pathname%/*}"
+	# print parent pathname.
+	# (This uses a cheap implementation of dirname from sets.subr.)
+	dirname "${pathname}"
 done < "${PATH_MEMBERSHIP}" > "${PARENT_PATHNAMES}"
 
 echo "selecting parent packages using parent pathnames" 1>&2
@@ -94,7 +100,7 @@ ${DB} -q -f - btree "${PATH_TO_PKGNAME}" < "${PARENT_PATHNAMES}" | \
 	${PASTE} "${PATH_MEMBERSHIP}" - | \
 	${AWK} '{ if ($2 != $4) print $2 " " $4; }' | \
 	${SORT} -u | \
-	"${rundir}/culldeps"
+	${HOST_SH} "${rundir}/culldeps"
 
 if [ $? -ne 0 ]; then
 	echo "error in parent-directory lookup, aborting" 1>&2
