@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.240 2005/08/25 02:04:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.241 2006/01/04 15:30:02 apb Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -59,6 +59,8 @@
 #	Populate ${RELEASEDIR}/${MACHINE}/binary/sets from ${DESTDIR}
 #   sourcesets:
 #	Populate ${RELEASEDIR}/source/sets from ${NETBSDSRCDIR}
+#   syspkgs:
+#	Populate ${RELEASEDIR}/${MACHINE}/binary/syspkgs from ${DESTDIR}
 #
 # Targets invoked by `make build,' in order:
 #   cleandir:        cleans the tree.
@@ -286,7 +288,7 @@ installworld: .PHONY
 # Create sets from $DESTDIR or $NETBSDSRCDIR into $RELEASEDIR
 #
 
-.for tgt in sets sourcesets
+.for tgt in sets sourcesets syspkgs
 ${tgt}: .PHONY
 	${MAKEDIRTARGET} distrib/sets ${tgt}
 .endfor
