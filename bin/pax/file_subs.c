@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.57 2005/09/18 12:15:41 christos Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.58 2006/01/04 22:02:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.57 2005/09/18 12:15:41 christos Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.58 2006/01/04 22:02:11 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,21 @@ static int warn_broken;
  */
 #define FILEBITS(dir)		((dir) ? (FILE_BITS | S_ISVTX) : FILE_BITS)
 #define SETBITS(dir)		((dir) ? SET_BITS : (SET_BITS | S_ISVTX))
+
+static mode_t
+apply_umask(mode_t mode)
+{
+	static mode_t cached_umask;
+	static int cached_umask_valid;
+
+	if (!cached_umask_valid) {
+		cached_umask = umask(0);
+		umask(cached_umask);
+		cached_umask_valid = 1;
+	}
+
+	return mode & ~cached_umask;
+}
 
 /*
  * file_creat()
@@ -206,7 +221,8 @@ file_close(ARCHD *arcn, int fd)
 	if (pmode)
 		set_pmode(tmp_name, arcn->sb.st_mode);
 	else
-		set_pmode(tmp_name, arcn->sb.st_mode & FILEBITS(0));
+		set_pmode(tmp_name,
+		    apply_umask((arcn->sb.st_mode & FILEBITS(0))));
 	if (patime || pmtime)
 		set_ftime(tmp_name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
 
