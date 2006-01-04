@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.25 2004/07/13 11:53:57 wiz Exp $	*/
+/*	$NetBSD: join.c,v 1.26 2006/01/04 01:44:06 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.25 2004/07/13 11:53:57 wiz Exp $");
+__RCSID("$NetBSD: join.c,v 1.26 2006/01/04 01:44:06 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,22 +101,20 @@ int spans = 1;			/* span multiple delimiters (-t) */
 char *empty;			/* empty field replacement string (-e) */
 char *tabchar = " \t";		/* delimiter characters (-t) */
 
-int  cmp __P((LINE *, u_long, LINE *, u_long));
-void enomem __P((void));
-void fieldarg __P((char *));
-void joinlines __P((INPUT *, INPUT *));
-int  main __P((int, char **));
-void obsolete __P((char **));
-void outfield __P((LINE *, u_long));
-void outoneline __P((INPUT *, LINE *));
-void outtwoline __P((INPUT *, LINE *, INPUT *, LINE *));
-void slurp __P((INPUT *));
-void usage __P((void));
+int  cmp(LINE *, u_long, LINE *, u_long);
+void enomem(void);
+void fieldarg(char *);
+void joinlines(INPUT *, INPUT *);
+int  main(int, char **);
+void obsolete(char **);
+void outfield(LINE *, u_long);
+void outoneline(INPUT *, LINE *);
+void outtwoline(INPUT *, LINE *, INPUT *, LINE *);
+void slurp(INPUT *);
+void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	INPUT *F1, *F2;
 	int aflag, ch, cval, vflag;
@@ -288,8 +286,7 @@ main(argc, argv)
 }
 
 void
-slurp(F)
-	INPUT *F;
+slurp(INPUT *F)
 {
 	LINE *lp;
 	LINE tmp;
@@ -395,9 +392,7 @@ slurp(F)
 }
 
 int
-cmp(lp1, fieldno1, lp2, fieldno2)
-	LINE *lp1, *lp2;
-	u_long fieldno1, fieldno2;
+cmp(LINE *lp1, u_long fieldno1, LINE *lp2, u_long fieldno2)
 {
 
 	if (lp1->fieldcnt <= fieldno1)
@@ -408,8 +403,7 @@ cmp(lp1, fieldno1, lp2, fieldno2)
 }
 
 void
-joinlines(F1, F2)
-	INPUT *F1, *F2;
+joinlines(INPUT *F1, INPUT *F2)
 {
 	int cnt1, cnt2;
 
@@ -429,9 +423,7 @@ joinlines(F1, F2)
 }
 
 void
-outoneline(F, lp)
-	INPUT *F;
-	LINE *lp;
+outoneline(INPUT *F, LINE *lp)
 {
 	int cnt;
 
@@ -457,9 +449,7 @@ outoneline(F, lp)
 }
 
 void
-outtwoline(F1, lp1, F2, lp2)
-	INPUT *F1, *F2;
-	LINE *lp1, *lp2;
+outtwoline(INPUT *F1, LINE *lp1, INPUT *F2, LINE *lp2)
 {
 	int cnt;
 
@@ -490,9 +480,7 @@ outtwoline(F1, lp1, F2, lp2)
 }
 
 void
-outfield(lp, fieldno)
-	LINE *lp;
-	u_long fieldno;
+outfield(LINE *lp, u_long fieldno)
 {
 	if (needsep++)
 		(void)printf("%c", *tabchar);
@@ -515,8 +503,7 @@ outfield(lp, fieldno)
  * fields.
  */
 void
-fieldarg(option)
-	char *option;
+fieldarg(char *option)
 {
 	u_long fieldno;
 	char *end, *token;
@@ -546,8 +533,7 @@ fieldarg(option)
 }
 
 void
-obsolete(argv)
-	char **argv;
+obsolete(char **argv)
 {
 	int len;
 	char **p, *ap, *t;
@@ -624,13 +610,13 @@ jbad:				errx(1, "illegal option -- %s", ap);
 }
 
 void
-enomem()
+enomem(void)
 {
 	errx(1, "no memory");
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-a fileno | -v fileno] [-e string] [-j fileno field]\n"
