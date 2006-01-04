@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.162 2005/12/31 17:55:55 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.163 2006/01/04 04:33:14 dogcow Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.162 $"
+#ident 		"GENERIC-$Revision: 1.163 $"
 
 maxusers	32		# estimated number of users
 
@@ -261,7 +261,7 @@ apm0	at mainbus0			# Advanced power management
 
 acpi0 		at mainbus0
 
-options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
+#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 #options 	ACPI_DISABLE_ON_POWEROFF	# disable acpi on power off
 
@@ -282,7 +282,7 @@ options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #mpu*		at acpi?		# Roland MPU-401 MIDI UART
 #npx* 		at acpi?		# Math coprocessor
 #pckbc*  	at acpi?		# PC keyboard controller
-#pcppi*         at acpi?                # AT-style speaker sound
+#pcppi*		at acpi?                # AT-style speaker sound
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 # Sony Vaio jog dial
