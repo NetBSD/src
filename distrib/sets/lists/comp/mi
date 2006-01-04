@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.841 2006/01/03 12:49:36 yamt Exp $
+#	$NetBSD: mi,v 1.842 2006/01/04 19:14:55 xtraeme Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5284,6 +5284,7 @@
 ./usr/share/man/cat9/ieee80211_rssadapt_lower_rate.0	comp-sys-catman	.cat
 ./usr/share/man/cat9/ieee80211_rssadapt_raise_rate.0	comp-sys-catman	.cat
 ./usr/share/man/cat9/ieee80211_rssadapt_updatestats.0	comp-sys-catman	.cat
+./usr/share/man/cat9/iic.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/in4_cksum.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/in6_cksum.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/in_cksum.0			comp-sys-catman		.cat
@@ -9217,6 +9218,7 @@
 ./usr/share/man/man9/ieee80211_rssadapt_lower_rate.9	comp-sys-man	.man
 ./usr/share/man/man9/ieee80211_rssadapt_raise_rate.9	comp-sys-man	.man
 ./usr/share/man/man9/ieee80211_rssadapt_updatestats.9	comp-sys-man	.man
+./usr/share/man/man9/iic.9			comp-sys-man		.man
 ./usr/share/man/man9/in4_cksum.9		comp-sys-man		.man
 ./usr/share/man/man9/in6_cksum.9		comp-sys-man		.man
 ./usr/share/man/man9/in_cksum.9			comp-sys-man		.man
