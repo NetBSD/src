@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.141 2005/12/29 15:38:54 tsutsui Exp $
+#	$NetBSD: build.sh,v 1.142 2006/01/04 15:31:40 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -127,6 +127,7 @@ initdefaults()
 	do_install=false
 	do_sets=false
 	do_sourcesets=false
+	do_syspkgs=false
 	do_params=false
 
 	# Create scratch directory
@@ -376,6 +377,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-D dest] [-j njob]
     sets                Create binary sets in RELEASEDIR/MACHINE/binary/sets.
 			DESTDIR should be populated beforehand.
     sourcesets          Create source sets in RELEASEDIR/source/sets.
+    syspkgs             Create syspkgs in RELEASEDIR/MACHINE/binary/syspkgs.
     params              Display various make(1) parameters.
 
  Options:
@@ -615,7 +617,7 @@ parseoptions()
 			usage
 			;;
 
-		makewrapper|obj|tools|build|distribution|release|sets|sourcesets|params)
+		makewrapper|obj|tools|build|distribution|release|sets|sourcesets|syspkgs|params)
 			;;
 
 		kernel=*|releasekernel=*)
@@ -860,7 +862,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.141 2005/12/29 15:38:54 tsutsui Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.142 2006/01/04 15:31:40 apb Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -1031,8 +1033,8 @@ main()
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
 			;;
-			
-		obj|build|distribution|release|sourcesets|params)
+
+		obj|build|distribution|release|sourcesets|syspkgs|params)
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
