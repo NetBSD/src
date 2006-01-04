@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.44 2006/01/04 14:23:22 apb Exp $
+#	$NetBSD: sets.subr,v 1.45 2006/01/04 14:35:03 apb Exp $
 #
 
 #
@@ -94,6 +94,62 @@ MKVARS="\
 : ${UNAME:=uname}
 : ${WC:=wc}
 
+#
+# If printf is a shell builtin command, then we can
+# implement cheaper versions of basename and dirname
+# that do not involve any fork/exec overhead.
+# If printf is not builtin, approximate it using echo,
+# and hope there are no weird file names that cause
+# some versions of echo to do the wrong thing.
+# (Converting to this version of dirname speeded up the
+# syspkgdeps script by an order of magnitude, from 68
+# seconds to 6.3 seconds on one particular host.)
+#
+# Note that naive approximations for dirname
+# using ${foo%/*} do not do the right thing in cases
+# where the result should be "/" or ".".
+#
+case "$(type printf)" in
+*builtin*)
+	basename ()
+	{
+		local bn
+		bn="${1##*/}"
+		bn="${bn%$2}"
+		printf "%s\n" "$bn"
+	}
+	dirname ()
+	{
+		local dn
+		case "$1" in
+		?*/*)	dn="${1%/*}" ;;
+		/*)	dn=/ ;;
+		*)	dn=. ;;
+		esac
+		printf "%s\n" "$dn"
+	}
+	;;
+*)
+	basename ()
+	{
+		local bn
+		bn="${1##*/}"
+		bn="${bn%$2}"
+		echo "$bn"
+	}
+	dirname ()
+	{
+		local dn
+		case "$1" in
+		?*/*)	dn="${1%/*}" ;;
+		/*)	dn=/ ;;
+		*)	dn=. ;;
+		esac
+		echo "$dn"
+	}
+	;;
+esac
+
 oIFS=$IFS
 IFS="
 "
@@ -159,7 +215,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.44 2006/01/04 14:23:22 apb Exp $
+# 	# $NetBSD: sets.subr,v 1.45 2006/01/04 14:35:03 apb Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
