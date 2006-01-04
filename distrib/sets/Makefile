@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2006/01/04 14:58:58 apb Exp $
+#	$NetBSD: Makefile,v 1.50 2006/01/04 15:11:07 apb Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -190,6 +190,12 @@ makesyspkgs: .PHONY check_DESTDIR check_RELEASEDIR \
 
 makesyspkgsums: .PHONY check_RELEASEDIR
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/binary/syspkgs
+
+# Update the "deps" file.
+# XXX: Why is "deps" checked in to the source tree, instead of
+# just being created as necessary?
+makedeps: .PHONY
+	${SETSCMD} ./syspkgdeps all >${.CURDIR}/deps
 
 #
 # MAIN ENTRY POINTS
