@@ -35,7 +35,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-__RCSID("$NetBSD: env.c,v 1.15 2003/08/07 11:13:35 agc Exp $");
+__RCSID("$NetBSD: env.c,v 1.16 2006/01/04 01:05:19 perry Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -46,15 +46,13 @@ __RCSID("$NetBSD: env.c,v 1.15 2003/08/07 11:13:35 agc Exp $");
 #include <locale.h>
 #include <errno.h>
 
-int	main __P((int, char **));
-static void usage __P((void));
+int	main(int, char **);
+static void usage(void);
 
 extern char **environ;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char **ep, *p;
 	char *cleanenv[1];
@@ -93,8 +91,8 @@ main(argc, argv)
 }
 
 static void
-usage ()
+usage(void)
 {
-	(void) fprintf(stderr, "usage: env [-i] [name=value ...] [command]\n");
-	exit (1);
+	(void)fprintf(stderr, "usage: env [-i] [name=value ...] [command]\n");
+	exit(1);
 }
