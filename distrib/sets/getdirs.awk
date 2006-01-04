@@ -1,4 +1,4 @@
-#	$NetBSD: getdirs.awk,v 1.2 2002/05/19 13:32:44 lukem Exp $
+#	$NetBSD: getdirs.awk,v 1.3 2006/01/04 13:46:13 apb Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,6 +38,7 @@
 
 function dirname(file) \
 {
+	# no need to worry about args that do not contain at least one "/"
 	gsub(/\/[^\/]+$/, "", file)
 	return file
 }
@@ -72,6 +73,6 @@ END \
 {
 	for (file in dirs) {
 		if (! (file in items))
-			print file " optional"
+			print file " optional type=dir"
 	}
 }
