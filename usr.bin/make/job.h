@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.22 2006/01/04 21:31:55 dsl Exp $	*/
+/*	$NetBSD: job.h,v 1.23 2006/01/04 21:35:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -276,7 +276,6 @@ extern const char *shellName;
 
 extern int	job_pipe[2];	/* token pipe for jobs. */
 extern int	jobTokensRunning; /* tokens currently "out" */
-extern int	jobTokensFree;	/* tokens free but not yet released to pipe */
 
 #ifdef REMOTE
 extern char 	*targFmt;   	/* Format string for banner that separates
