@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.h,v 1.2 2005/12/24 20:52:20 perry Exp $	*/
+/*	$NetBSD: buffer.h,v 1.3 2006/01/04 22:05:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <stdlib.h>
 #include <err.h>
 
+#define BUF_SIZE	BUFSIZ
 struct buffer {
 	char *ptr;
 	char *bptr;
@@ -50,10 +51,10 @@ struct buffer {
 static void
 buf_init(struct buffer *buf)
 {
-	buf->ptr = buf->bptr = malloc(BUFSIZ);
+	buf->ptr = buf->bptr = malloc(BUF_SIZE);
 	if (buf->ptr == NULL)
 		err(1, "Cannot allocate buffer");
-	buf->eptr = buf->ptr + BUFSIZ;
+	buf->eptr = buf->ptr + BUF_SIZE;
 }
 
 static void
@@ -67,14 +68,16 @@ buf_grow(struct buffer *buf, size_t minsize)
 {
 	ptrdiff_t diff;
 	size_t len = (buf->eptr - buf->bptr) + 
-	    minsize > BUFSIZ ? minsize : BUFSIZ;
+	    (minsize > BUF_SIZE ? minsize : BUF_SIZE);
 	char *nptr = realloc(buf->bptr, len);
 
 	if (nptr == NULL)
 		err(1, "Cannot grow buffer");
 
-	if (nptr == buf->bptr)
+	if (nptr == buf->bptr) {
+		buf->eptr = buf->bptr + len;
 		return;
+	}
 
 	diff = nptr - buf->bptr;
 	buf->bptr += diff;
