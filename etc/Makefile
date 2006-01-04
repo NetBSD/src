@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.316 2005/10/22 05:46:06 hubertf Exp $
+#	$NetBSD: Makefile,v 1.317 2006/01/04 15:27:12 apb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -365,12 +365,25 @@ TOOL_MTREE.unpriv=	-W
 .endif
 
 distrib-dirs: .PHONY check_DESTDIR
-.if !defined(DISTRIBUTION_DONE)
+.if !defined(DISTRIBUTION_DONE)						# {
+# XXX: If METALOG=${DESTDIR}/METALOG (as is normal), and if ${DESTDIR}
+# does not yet exist (as often happens), then the INSTALL_DIR command
+# immediately below will create ${DESTDIR} but will fail to register
+# an entry for "." in the metalog.  We ignore the problem, because the
+# TOOL_MTREE commands a little further below will soon register an entry
+# for "." in the metalog.
 	${INSTALL_DIR} -o root -g wheel -m 755 ${BASE_PKG} ${DESTDIR}
-.endif
+# XXX: It would be nice if a single mtree invocation could both
+# append to the metalog and do real work.  Instead, we have to
+# repeat the command twice in slightly different ways.
 	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
 	    -p ${DESTDIR}/ -U ${TOOL_MTREE.unpriv}
-
+.if ${MKUNPRIVED} != "no"						# {
+	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
+	    -p ${DESTDIR}/ -C -k all | \
+	    awk '/ optional/ {next} // {print}' | ${METALOG.add}
+.endif	# MKUNPRIVED							# }
+.endif	# DISTRIBUTION_DONE						# }
 
 # release, snapshot --
 #	Build a full distribution including kernels & install media.
