@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.18 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: display.c,v 1.19 2006/01/04 01:30:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.18 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: display.c,v 1.19 2006/01/04 01:30:21 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,10 +61,10 @@ enum _vflag vflag = FIRST;
 static off_t address;			/* address/offset in stream */
 static off_t eaddress;			/* end address */
 
-static inline void print __P((PR *, u_char *));
+static inline void print(PR *, u_char *);
 
 void
-display()
+display(void)
 {
 	FS *fs;
 	FU *fu;
@@ -119,9 +119,7 @@ display()
 }
 
 static inline void
-print(pr, bp)
-	PR *pr;
-	u_char *bp;
+print(PR *pr, u_char *bp)
 {
 	   double f8;
 	    float f4;
@@ -211,8 +209,7 @@ print(pr, bp)
 }
 
 void
-bpad(pr)
-	PR *pr;
+bpad(PR *pr)
 {
 	static const char *spec = " -0+#";
 	char *p1, *p2;
@@ -232,7 +229,7 @@ bpad(pr)
 static char **_argv;
 
 u_char *
-get()
+get(void)
 {
 	static int ateof = 1;
 	static u_char *curp, *savp;
@@ -299,8 +296,7 @@ get()
 }
 
 int
-next(argv)
-	char **argv;
+next(char **argv)
 {
 	static int done;
 	int statok;
@@ -334,9 +330,7 @@ next(argv)
 }
 
 void
-doskip(fname, statok)
-	const char *fname;
-	int statok;
+doskip(const char *fname, int statok)
 {
 	int cnt;
 	struct stat sb;
@@ -365,8 +359,7 @@ doskip(fname, statok)
 }
 
 void *
-emalloc(allocsize)
-	int allocsize;
+emalloc(int allocsize)
 {
 	void *p;
 
@@ -377,7 +370,7 @@ emalloc(allocsize)
 }
 
 void
-nomem()
+nomem(void)
 {
 	err(1, NULL);
 }
