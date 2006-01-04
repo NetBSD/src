@@ -1,4 +1,4 @@
-/*	$NetBSD: lprint.c,v 1.20 2004/06/03 18:33:57 kleink Exp $	*/
+/*	$NetBSD: lprint.c,v 1.21 2006/01/04 01:17:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID( "$NetBSD: lprint.c,v 1.20 2004/06/03 18:33:57 kleink Exp $");
+__RCSID( "$NetBSD: lprint.c,v 1.21 2006/01/04 01:17:54 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,10 +68,10 @@ __RCSID( "$NetBSD: lprint.c,v 1.20 2004/06/03 18:33:57 kleink Exp $");
 #define	_PATH_PLAN	".plan"
 #define	_PATH_PROJECT	".project"
 
-static int	demi_print __P((char *, int));
-static void	lprint __P((PERSON *));
-static int	show_text __P((char *, char *, char *));
-static void	vputc __P((int));
+static int	demi_print(char *, int);
+static void	lprint(PERSON *);
+static int	show_text(char *, char *, char *);
+static void	vputc(int);
 
 #ifdef __SVR4
 #define TIMEZONE(a)	tzname[0]
@@ -80,7 +80,7 @@ static void	vputc __P((int));
 #endif
 
 void
-lflag_print()
+lflag_print(void)
 {
 	PERSON *pn;
 	int sflag, r;
@@ -112,8 +112,7 @@ lflag_print()
 }
 
 static void
-lprint(pn)
-	PERSON *pn;
+lprint(PERSON *pn)
 {
 	struct tm *delta;
 	WHERE *w;
@@ -264,9 +263,7 @@ no_gecos:
 }
 
 static int
-demi_print(str, oddfield)
-	char *str;
-	int oddfield;
+demi_print(char *str, int oddfield)
 {
 	static int lenlast;
 	int lenthis, maxlen;
@@ -304,8 +301,7 @@ demi_print(str, oddfield)
 }
 
 static int
-show_text(directory, file_name, header)
-	char *directory, *file_name, *header;
+show_text(char *directory, char *file_name, char *header)	
 {
 	struct stat sb;
 	FILE *fp;
@@ -353,8 +349,7 @@ show_text(directory, file_name, header)
 }
 
 static void
-vputc(ch)
-	int ch;
+vputc(int ch)
 {
 	char visout[5], *s2;
 
