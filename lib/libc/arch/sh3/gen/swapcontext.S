@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.4 2006/01/04 19:13:48 uwe Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.5 2006/01/04 20:47:24 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.4 2006/01/04 19:13:48 uwe Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.5 2006/01/04 20:47:24 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -55,8 +55,9 @@ ENTRY(swapcontext)
 	tst	r0, r0
 	bf	3f			/* return error from getcontext */
 
+	/* Note: getcontext does _UC_MACHINE_INTRV(oucp) = 0 for us */
 	mov.l	@sp, r0
-	mov.l	r0, @(36 + 1 * 4, r1)	/* _UC_MACHINE_PC(oucp) = pr */
+	mov.l	r0, @(36 + 1 * 4, r1)	/* _UC_MACHINE_SET_PC(oucp, pr) */
 	mov.l	.L_setcontext, r2
 2:	CALL	r2			/* setcontext(ucp) */
 	 mov.l	@(4, sp), r4
