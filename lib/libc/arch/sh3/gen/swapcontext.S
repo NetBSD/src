@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.3 2003/07/01 14:35:44 marcus Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.4 2006/01/04 19:13:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,42 +38,34 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.3 2003/07/01 14:35:44 marcus Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.4 2006/01/04 19:13:48 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
+/*
+ * int
+ * swapcontext(ucontext_t * restrict oucp, ucontext_t * restrict ucp);
+ */
 ENTRY(swapcontext)
-	mov.l	r5, @-r15
-	sts.l	pr, @-r15
-	mov.l	_L._getcontext, r0
-#ifdef PIC
-	bsrf	r0
-#else
-	jsr	@r0
-#endif
-	 mov.l	r4, @-r15
-2:
-	mov.l	@r15+, r1
+	mov.l	r5, @-sp
+	sts.l	pr, @-sp
+	mov.l	.L__getcontext, r0
+1:	CALL	r0			/* _getcontext(oucp) */
+	 mov.l	r4, @-sp
+	mov.l	@sp+, r1
 	tst	r0, r0
-	bf	1f
-	mov.l	@r15, r0
-	mov.l	r0, @(36 + 1 * 4, r1)	/* saved pc <- pr */
-	mov.l	_L.setcontext, r2
-#ifdef PIC
-	bsrf	r2
-#else
-	jsr	@r2
-#endif
-	 mov.l	@(4, r15), r4
-1:
-	lds.l	@r15+, pr
+	bf	3f			/* return error from getcontext */
+
+	mov.l	@sp, r0
+	mov.l	r0, @(36 + 1 * 4, r1)	/* _UC_MACHINE_PC(oucp) = pr */
+	mov.l	.L_setcontext, r2
+2:	CALL	r2			/* setcontext(ucp) */
+	 mov.l	@(4, sp), r4
+	/* if we get here, return error from setcontext */
+3:
+	lds.l	@sp+, pr
 	rts
-	 add	#4, r15
+	 add	#4, sp
 
 	.align	2
-#ifdef PIC
-_L._getcontext:		.long _C_LABEL(_getcontext)-2b
-_L.setcontext:		.long _C_LABEL(setcontext)-1b
-#else
-_L._getcontext:		.long _C_LABEL(_getcontext)
-_L.setcontext:		.long _C_LABEL(setcontext)
-#endif
+.L__getcontext:		CALL_DATUM_LOCAL(_C_LABEL(_getcontext), 1b)
+.L_setcontext:		CALL_DATUM_LOCAL(_C_LABEL(setcontext), 2b)
