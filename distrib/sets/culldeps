@@ -20,6 +20,9 @@
 #
 
 prog="${0##*/}"
+rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
+. "${rundir}/sets.subr"
+
 SCRATCH="$(${MKTEMP} -d "/var/tmp/${prog}.XXXXXX")"
 NEXTLEFTOVERS="${SCRATCH}/leftovers0"
 LASTJOIN="${SCRATCH}/join0"
