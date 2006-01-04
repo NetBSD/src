@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.33 2006/01/04 10:13:05 yamt Exp $ */
+/* $NetBSD: cgd.c,v 1.34 2006/01/04 17:16:35 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.33 2006/01/04 10:13:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.34 2006/01/04 17:16:35 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -296,7 +296,6 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	caddr_t	addr;
 	caddr_t	newaddr;
 	daddr_t	bn;
-	int s;
 
 	DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
 	disk_busy(&dksc->sc_dkdev); /* XXX: put in dksubr.c */
