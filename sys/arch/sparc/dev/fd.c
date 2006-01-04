@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.122 2006/01/04 10:13:05 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.123 2006/01/04 10:30:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.122 2006/01/04 10:13:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.123 2006/01/04 10:30:26 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2193,6 +2193,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 
 	/* ...and wait for it to complete */
 	rv = biowait(bp);
+	putiobuf(bp);
 	return (rv);
 }
 
