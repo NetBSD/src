@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.43 2005/11/28 03:26:06 christos Exp $	*/
+/*	$NetBSD: printjob.c,v 1.44 2006/01/04 15:32:50 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.43 2005/11/28 03:26:06 christos Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.44 2006/01/04 15:32:50 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -1440,10 +1440,14 @@ openrem(void)
 {
 	int i, n;
 	int resp;
+	char *rmhost;
 
 	for (i = 1; ; i = i < 256 ? i << 1 : i) {
 		resp = -1;
-		pfd = getport(RM, 0);
+		if ((rmhost = strchr(RM, '@')))
+			pfd = getport(rmhost+1, atoi(RM));
+		else
+			pfd = getport(RM, 0);
 		if (pfd >= 0) {
 			n = snprintf(line, sizeof(line), "\2%s\n", RP);
 			if (write(pfd, line, n) == n &&
