@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.4 2003/11/17 22:38:11 uwe Exp $ */
+/*	$NetBSD: _context_u.S,v 1.5 2006/01/04 17:44:53 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Christian P. Groessler
@@ -114,36 +114,44 @@
 	/* NOTREACHED */
 
 #ifdef PIC
+
 /*
  * For PIC code we need a per-call offset to the setcontext.
  * Fortunately, since setcontext(2) does not return, we can
- * put the offset right after the call.
+ * put the offset right after the call.  We also don't need to
+ * save/restore r12.
  */
 #define CALL_SETCONTEXT(uc)						  \
-	mov.l	2f, r1							; \
+	mov.l	2f, r12							; \
+	mov.l	3f, r1							; \
+	mova	2f, r0							; \
+.ifnc "uc","r4"								; \
+	mov	uc, r4							; \
+.endif									; \
 1:	bsrf	r1							; \
-	 MAYBE_MOV_UC_R4(uc)						; \
+	 add	r0, r12							; \
 	NOTREACHED							; \
 	.align 2							; \
-2: .long _C_LABEL(setcontext)-(1b+4)
+2:	.long	_GLOBAL_OFFSET_TABLE_					; \
+3:	CALL_DATUM(_C_LABEL(setcontext), 1b)
+
 #else /* !PIC */
+
 /*
- * For static code all calls to setcontext can share single locations
+ * For static code all calls to setcontext can share single location
  * with the address of setcontext (see below).
  */
 #define CALL_SETCONTEXT(uc)						  \
 	mov.l	.L_setcontext, r1					; \
 	jsr	@r1							; \
-	 MAYBE_MOV_UC_R4(uc)						; \
-	NOTREACHED
-#endif
-
-#define MAYBE_MOV_UC_R4(uc)						  \
-.ifc "uc","r4"								; \
-	 nop								; \
-.else									; \
+.ifnc "uc","r4"								; \
 	 mov	uc, r4							; \
-.endif
+.else									; \
+	 nop								; \
+.endif									; \
+	NOTREACHED
+
+#endif
 
 
 
