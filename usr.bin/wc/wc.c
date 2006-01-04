@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.29 2003/08/07 11:17:15 agc Exp $	*/
+/*	$NetBSD: wc.c,v 1.30 2006/01/04 01:58:05 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.29 2003/08/07 11:17:15 agc Exp $");
+__RCSID("$NetBSD: wc.c,v 1.30 2006/01/04 01:58:05 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,17 +75,15 @@ static wc_count_t	tlinect, twordct, tcharct;
 static int		doline, doword, dobyte, dochar;
 static int 		rval = 0;
 
-static void	cnt __P((char *));
-static void	print_counts __P((wc_count_t, wc_count_t, wc_count_t, char *));
-static void	usage __P((void));
-static size_t	do_mb __P((wchar_t *, const char *, size_t, mbstate_t *,
-		    size_t *, const char *));
-int	main __P((int, char *[]));
+static void	cnt(char *);
+static void	print_counts(wc_count_t, wc_count_t, wc_count_t, char *);
+static void	usage(void);
+static size_t	do_mb(wchar_t *, const char *, size_t, mbstate_t *,
+		    size_t *, const char *);
+int	main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 
@@ -135,13 +133,8 @@ main(argc, argv)
 }
 
 static size_t
-do_mb(wc, p, mblen, st, cnt, file)
-	wchar_t *wc;
-	const char *p;
-	size_t mblen;
-	mbstate_t *st;
-	size_t *cnt;
-	const char *file;
+do_mb(wchar_t *wc, const char *p, size_t mblen, mbstate_t *st,
+    size_t *cnt, const char *file)
 {
 	size_t r;
 	size_t c = 0;
@@ -174,8 +167,7 @@ do_mb(wc, p, mblen, st, cnt, file)
 }
 
 static void
-cnt(file)
-	char *file;
+cnt(char *file)
 {
 	u_char buf[MAXBSIZE];
 	wchar_t wbuf[MAXBSIZE];
@@ -312,11 +304,7 @@ cnt(file)
 }
 
 static void
-print_counts(lines, words, chars, name)
-	wc_count_t lines;
-	wc_count_t words;
-	wc_count_t chars;
-	char *name;
+print_counts(wc_count_t lines, wc_count_t words, wc_count_t chars, char *name)
 {
 
 	if (doline)
@@ -333,7 +321,7 @@ print_counts(lines, words, chars, name)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: wc [-c | -m] [-lw] [file ...]\n");
