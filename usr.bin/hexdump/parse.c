@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.17 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: parse.c,v 1.18 2006/01/04 01:30:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.17 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: parse.c,v 1.18 2006/01/04 01:30:21 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,7 @@ __RCSID("$NetBSD: parse.c,v 1.17 2003/10/27 00:12:43 lukem Exp $");
 FU *endfu;					/* format at end-of-data */
 
 void
-addfile(name)
-	char *name;
+addfile(char *name)
 {
 	char *p;
 	FILE *fp;
@@ -84,8 +83,7 @@ addfile(name)
 }
 
 void
-add(fmt)
-	const char *fmt;
+add(const char *fmt)
 {
 	const char *p;
 	static FS **nextfs;
@@ -159,8 +157,7 @@ add(fmt)
 static const char *spec = ".#-+ 0123456789";
 
 int
-size(fs)
-	FS *fs;
+size(FS *fs)
 {
 	FU *fu;
 	int bcnt, cursize;
@@ -213,8 +210,7 @@ size(fs)
 }
 
 void
-rewrite(fs)
-	FS *fs;
+rewrite(FS *fs)
 {
 	enum { NOTOKAY, USEBCNT, USEPREC } sokay;
 	PR *pr, **nextpr;
@@ -453,8 +449,7 @@ isint2:					switch(fu->bcnt) {
 }
 
 void
-escape(p1)
-	char *p1;
+escape(char *p1)
 {
 	char *p2;
 
@@ -496,28 +491,25 @@ escape(p1)
 }
 
 void
-badcnt(s)
-	char *s;
+badcnt(char *s)
 {
 	errx(1, "%s: bad byte count", s);
 }
 
 void
-badsfmt()
+badsfmt(void)
 {
 	errx(1, "%%s: requires a precision or a byte count");
 }
 
 void
-badfmt(fmt)
-	const char *fmt;
+badfmt(const char *fmt)
 {
 	errx(1, "\"%s\": bad format", fmt);
 }
 
 void
-badconv(ch)
-	char *ch;
+badconv(char *ch)
 {
 	errx(1, "%%%s: bad conversion character", ch);
 }
