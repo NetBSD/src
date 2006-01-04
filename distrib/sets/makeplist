@@ -1,32 +1,46 @@
 #!/bin/sh
 #
 # Print out the files in some or all lists.
-# Usage: makeplist [-a arch] [-m machine] [-s setsdir] [-p prefix] setname pkgname
+# Usage: makeplist [options] setname pkgname
+# options:
+# 	-a arch		set arch (e.g, m68k, mips, powerpc)	
+# 	-m machine	set machine (e.g, amiga, i386, macppc)
+# 	-s setsdir	directory to find sets
+# 	-p prefix	prefix for package creation
+# 	-I realprefix	prefix for eventual installation
+# 	setname pkgname	set and package to build plist for
 #
 
 rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 . "${rundir}/sets.subr"
 prefix=/
+realprefix=/
+got_realprefix=false
 
-usage()
-{
+usage() {
 	cat 1>&2 <<USAGE
-Usage: ${0##*/} [-a arch] [-m machine] [-s setsdir] [-p prefix] setname pkgname
+Usage: $0 [options] setname pkgname"
+options:"
 	-a arch		set arch (e.g, m68k, mips, powerpc)	[${MACHINE_ARCH}]
 	-m machine	set machine (e.g, amiga, i386, macppc)	[${MACHINE}]
 	-s setsdir	directory to find sets			[${setsdir}]
 	-p prefix	prefix for created plist		[${prefix}]
+	-I realprefix	prefix for eventual installation	[${realprefix}]
 	setname pkgname	set and package to build plist for
 USAGE
 	exit 1
 }
 
 # handle args
-while getopts a:m:p:s: ch; do
+while getopts a:I:m:p:s: ch; do
 	case ${ch} in
 	a)
 		MACHINE_ARCH="${OPTARG}"
 		MACHINE_CPU="$(arch_to_cpu "${OPTARG}")"
+		;;
+	I)
+		realprefix=${OPTARG}
+		got_realprefix=true
 		;;
 	m)
 		MACHINE="${OPTARG}"
@@ -49,6 +63,10 @@ fi
 setname="$1"
 pkgname="$2"
 
+if ! ${got_realprefix}; then
+    realprefix="${prefix}"
+fi
+
 filename="/tmp/makeplist.$$"
 ffilename="/tmp/makeplist.files.$$"
 dfilename="/tmp/makeplist.dirs.$$"
@@ -62,6 +80,19 @@ list_set_files "${setname}" | \
 
 SELECTDIRS="-prune -type d"
 SELECTNONDIRS="! -type d -print -o ( -type d -prune )"
+
+#
+# XXX: The "lists" do not differentiate between directories and files.
+# But we need to differentiate between them, so we do so by checking
+# what's actually present in the file system.  Files or directories that
+# are listed in the "lists" but that do not exist in the file system end
+# up not appearing in our output, and this subverts a large part of the
+# purpose of the "lists".
+#
+# XXX: Given that we have to figure out what is or is not a directory
+# without assistance from the "lists", it would be much more efficient
+# to consult the metalog instead of the file system.
+#
 
 cd "${prefix}"
 #
@@ -94,7 +125,7 @@ done > "${ffilename}"
 
 cd -
 
-echo "@cwd ${prefix}"
+echo "@cwd ${realprefix}"
 if [ -s "${ffilename}" ]; then
 	cat "${ffilename}"
 fi
