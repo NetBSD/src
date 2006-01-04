@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.21 2003/12/20 00:18:22 jmc Exp $	*/
+/*	$NetBSD: job.h,v 1.22 2006/01/04 21:31:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -310,7 +310,6 @@ void Job_Wait(void);
 void Job_AbortAll(void);
 void JobFlagForMigration(int);
 void Job_TokenReturn(void);
-void Job_TokenFlush(void);
 Boolean Job_TokenWithdraw(void);
 void Job_ServerStart(int);
 
