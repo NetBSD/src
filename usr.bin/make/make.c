@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.58 2005/08/08 16:42:54 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.59 2006/01/04 21:16:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.58 2005/08/08 16:42:54 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.59 2006/01/04 21:16:53 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.58 2005/08/08 16:42:54 christos Exp $");
+__RCSID("$NetBSD: make.c,v 1.59 2006/01/04 21:16:53 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -931,6 +931,7 @@ static Boolean
 MakeStartJobs(void)
 {
     GNode	*gn;
+    int		have_token = 0;
 
     while (!Lst_IsEmpty (toBeMade)) {
 	gn = (GNode *)Lst_DeQueue(toBeMade);
@@ -966,10 +967,11 @@ MakeStartJobs(void)
 	    }
 	}
 
-	if (!Job_TokenWithdraw()) {
+	if (!have_token && !Job_TokenWithdraw()) {
 	    Lst_AtFront(toBeMade, gn);
 	    break;
 	}
+	have_token = 1;
 
 	numNodes--;
 	if (Make_OODate(gn)) {
@@ -981,6 +983,7 @@ MakeStartJobs(void)
 	    }
 	    Make_DoAllVar(gn);
 	    Job_Make(gn);
+	    have_token = 0;
 	} else {
 	    if (DEBUG(MAKE)) {
 		printf("up-to-date\n");
@@ -995,10 +998,13 @@ MakeStartJobs(void)
 		 */
 		Make_DoAllVar(gn);
 	    }
-	    Job_TokenReturn();
 	    Make_Update(gn);
 	}
     }
+
+    if (have_token)
+	Job_TokenReturn();
+
     return (FALSE);
 }
 
