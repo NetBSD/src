@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.21 2005/12/16 04:20:09 christos Exp $	*/
+/*	$NetBSD: fmt.c,v 1.22 2006/01/04 20:44:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.21 2005/12/16 04:20:09 christos Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.22 2006/01/04 20:44:57 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -382,8 +382,8 @@ pack(const char *word, size_t wlen)
 	 */
 	s = outbuf.ptr - outbuf.bptr;
 	t = wlen + s;
-	if ((t <= goal_length) ||
-	    ((t <= max_length) && (t - goal_length <= goal_length - s))) {
+	if ((t <= goal_length) || ((t <= max_length) &&
+	    (s <= goal_length) && (t - goal_length <= goal_length - s))) {
 		/*
 		 * In like flint! 
 		 */
