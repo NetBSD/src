@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.100 2006/01/04 21:25:03 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.101 2006/01/04 21:31:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.100 2006/01/04 21:25:03 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.101 2006/01/04 21:31:55 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.100 2006/01/04 21:25:03 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.101 2006/01/04 21:31:55 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -177,6 +177,7 @@ static int    	aborting = 0;	    /* why is the make aborting? */
 #define ABORT_ERROR	1   	    /* Because of an error */
 #define ABORT_INTERRUPT	2   	    /* Because it was interrupted */
 #define ABORT_WAIT	3   	    /* Waiting for jobs to finish */
+#define JOB_TOKENS	"+EI+"	    /* Token to requeue for each abort state */
 
 /*
  * XXX: Avoid SunOS bug... FILENO() is fp->_file, and file
@@ -2596,7 +2597,6 @@ Job_CatchOutput(void)
 #endif
 
     (void)fflush(stdout);
-    Job_TokenFlush();
 #ifdef RMT_WILL_WATCH
     pnJobs = nJobs;
 
@@ -3244,7 +3244,6 @@ Job_Finish(void)
 	    JobRun(postCommands);
 	}
     }
-    Job_TokenFlush();
     return(errors);
 }
 
@@ -3293,7 +3292,6 @@ Job_Wait(void)
 	Job_CatchChildren(!usePipes);
 #endif /* RMT_WILL_WATCH */
     }
-    Job_TokenFlush();
     aborting = 0;
 }
 
@@ -3524,10 +3522,16 @@ readyfd(Job *job)
 static void
 JobTokenAdd(void)
 {
+    char tok = JOB_TOKENS[aborting], tok1;
+
+    /* If we are depositing an error token flush everything else */
+    while (tok != '+' && read(job_pipe[0], &tok1, 1) == 1)
+	continue;
 
     if (DEBUG(JOB))
-	printf("deposit token\n");
-    write(job_pipe[1], "+", 1);
+	printf("(%d) aborting %d, deposit token %c\n",
+	    getpid(), aborting, JOB_TOKENS[aborting]);
+    write(job_pipe[1], &tok, 1);
 }
 
 /*-
@@ -3577,7 +3581,7 @@ Job_ServerStart(int maxproc)
 
     Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
     Var_Append(MAKEFLAGS, jobarg, VAR_GLOBAL);			
-	
+
     /*
      * Preload job_pipe with one token per job, save the one
      * "extra" token for the primary job.
@@ -3594,7 +3598,6 @@ Job_ServerStart(int maxproc)
  * this tracks the number of tokens currently "out" to build jobs.
  */
 int jobTokensRunning = 0;
-int jobTokensFree = 0;
 /*-
  *-----------------------------------------------------------------------
  * Job_TokenReturn --
@@ -3610,7 +3613,7 @@ Job_TokenReturn(void)
     if (jobTokensRunning < 0)
 	Punt("token botch");
     if (jobTokensRunning)
-	jobTokensFree++;
+	JobTokenAdd();
 }
 
 /*-
@@ -3633,10 +3636,13 @@ Job_TokenReturn(void)
 Boolean
 Job_TokenWithdraw(void)
 {
-    char tok;
+    char tok, tok1;
     int count;
 
     wantToken = FALSE;
+    if (DEBUG(JOB))
+	printf("Job_TokenWithdraw(%d): aborting %d, running %d\n",
+		getpid(), aborting, jobTokensRunning);
 
     if (aborting)
 	    return FALSE;
@@ -3644,11 +3650,6 @@ Job_TokenWithdraw(void)
     if (jobTokensRunning == 0) {
 	if (DEBUG(JOB))
 	    printf("first one's free\n");
-	jobTokensRunning++;
-	return TRUE;
-    }
-    if (jobTokensFree > 0) {
-	jobTokensFree--;
 	jobTokensRunning++;
 	return TRUE;
     }
@@ -3660,33 +3661,25 @@ Job_TokenWithdraw(void)
 	    Fatal("job pipe read: %s", strerror(errno));
 	}
 	if (DEBUG(JOB))
-	    printf("blocked for token\n");
+	    printf("(%d) blocked for token\n", getpid());
 	wantToken = TRUE;
+	return FALSE;
+    }
+    if (tok != '+') {
+	/* Remove any other job tokens */
+	if (DEBUG(JOB))
+	    printf("(%d) abort token %c\n", getpid(), tok);
+	while (read(job_pipe[0], &tok1, 1) == 1)
+	    continue;
+	/* And put the stopper back */
+	write(job_pipe[1], &tok, 1);
+	aborting = ABORT_ERROR;
 	return FALSE;
     }
     jobTokensRunning++;
     if (DEBUG(JOB))
-	printf("withdrew token\n");
+	printf("(%d) withdrew token\n", getpid());
     return TRUE;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Job_TokenFlush --
- *	Return free tokens to the pool.
- *
- *-----------------------------------------------------------------------
- */
-
-void
-Job_TokenFlush(void)
-{
-    if (compatMake) return;
-	
-    while (jobTokensFree > 0) {
-	JobTokenAdd();
-	jobTokensFree--;
-    }
 }
 
 #ifdef USE_SELECT
