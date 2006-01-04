@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.98 2005/08/08 16:42:54 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.99 2006/01/04 20:56:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.98 2005/08/08 16:42:54 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.99 2006/01/04 20:56:05 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.98 2005/08/08 16:42:54 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.99 2006/01/04 20:56:05 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2217,7 +2217,7 @@ JobOutput(Job *job, char *cp, char *endp, int msg)
 	while (ecp != NULL) {
 	    if (cp != ecp) {
 		*ecp = '\0';
-		if (msg && job->node != lastNode) {
+		if (!beSilent && msg && job->node != lastNode) {
 		    MESSAGE(stdout, job->node);
 		    lastNode = job->node;
 		}
@@ -2381,7 +2381,7 @@ end_loop:
 		 * our own free will.
 		 */
 		if (*cp != '\0') {
-		    if (job->node != lastNode) {
+		    if (!beSilent && job->node != lastNode) {
 			MESSAGE(stdout, job->node);
 			lastNode = job->node;
 		    }
