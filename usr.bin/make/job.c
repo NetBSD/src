@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.99 2006/01/04 20:56:05 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.100 2006/01/04 21:25:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.99 2006/01/04 20:56:05 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.100 2006/01/04 21:25:03 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.99 2006/01/04 20:56:05 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.100 2006/01/04 21:25:03 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3541,11 +3541,20 @@ JobTokenAdd(void)
 void
 Job_ServerStart(int maxproc)
 {
-    int i, flags;
+    int i, fd, flags;
     char jobarg[64];
     
     if (pipe(job_pipe) < 0)
 	Fatal("error in pipe: %s", strerror(errno));
+
+    for (i = 0; i < 2; i++) {
+       /* Avoid using low numbered fds */
+       fd = fcntl(job_pipe[i], F_DUPFD, 15);
+       if (fd != -1) {
+	   close(job_pipe[i]);
+	   job_pipe[i] = fd;
+       }
+    }
 
     /*
      * We mark the input side of the pipe non-blocking; we poll(2) the
