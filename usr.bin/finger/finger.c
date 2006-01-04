@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.24 2004/06/03 18:32:18 kleink Exp $	*/
+/*	$NetBSD: finger.c,v 1.25 2006/01/04 01:17:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,7 +52,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.24 2004/06/03 18:32:18 kleink Exp $");
+__RCSID("$NetBSD: finger.c,v 1.25 2006/01/04 01:17:54 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,14 +97,12 @@ int entries, gflag, lflag, mflag, oflag, sflag, eightflag, pplan;
 char tbuf[1024];
 struct utmpentry *ehead;
 
-static void loginlist __P((void));
-static void userlist __P((int, char **));
-int main __P((int, char **));
+static void loginlist(void);
+static void userlist(int, char **);
+int main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch;
 
@@ -189,7 +187,7 @@ main(argc, argv)
 }
 
 static void
-loginlist()
+loginlist(void)
 {
 	PERSON *pn;
 	DBT data, key;
@@ -220,11 +218,9 @@ loginlist()
 }
 
 static void
-userlist(argc, argv)
-	int argc;
-	char **argv;
+userlist(int argc, char **argv)
 {
-	register PERSON *pn;
+	PERSON *pn;
 	DBT data, key;
 	struct passwd *pw;
 	int r, sflag, *used, *ip;

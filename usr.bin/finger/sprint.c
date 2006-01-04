@@ -1,4 +1,4 @@
-/*	$NetBSD: sprint.c,v 1.16 2004/11/16 04:52:46 christos Exp $	*/
+/*	$NetBSD: sprint.c,v 1.17 2006/01/04 01:17:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sprint.c,v 1.16 2004/11/16 04:52:46 christos Exp $");
+__RCSID("$NetBSD: sprint.c,v 1.17 2006/01/04 01:17:54 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,10 +59,10 @@ __RCSID("$NetBSD: sprint.c,v 1.16 2004/11/16 04:52:46 christos Exp $");
 #include "finger.h"
 #include "extern.h"
 
-static void	  stimeprint __P((WHERE *));
+static void	  stimeprint(WHERE *);
 
 void
-sflag_print()
+sflag_print(void)
 {
 	PERSON *pn;
 	WHERE *w;
@@ -154,8 +154,7 @@ no_gecos:
 }
 
 static void
-stimeprint(w)
-	WHERE *w;
+stimeprint(WHERE *w)
 {
 	struct tm *delta;
 
