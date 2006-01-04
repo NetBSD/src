@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.73 2006/01/03 18:31:09 apb Exp $
+# $NetBSD: makeflist,v 1.74 2006/01/04 13:40:23 apb Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -58,7 +58,7 @@ while getopts bxloa:m:s: ch; do
 done
 shift $((${OPTIND} - 1))
 if [ -n "$1" ]; then
-	lists="$@"
+	lists="$*"
 fi
 
 if [ -n "${listonly}" ]; then
