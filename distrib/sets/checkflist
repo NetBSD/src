@@ -1,8 +1,8 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.29 2006/01/03 18:31:09 apb Exp $
+#	$NetBSD: checkflist,v 1.30 2006/01/04 15:08:42 apb Exp $
 #
-# Verify output of makeflist against contents of ${DESTDIR}.
+# Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
 if [ -z "${DESTDIR}" ]; then
 	echo "DESTDIR must be set"
@@ -25,7 +25,6 @@ cleanup()
 	exit ${es}
 }
 trap cleanup 0 2 3 13		# EXIT INT QUIT PIPE
-
 
 origin=.
 xargs=""
@@ -68,47 +67,90 @@ USAGE
 done
 shift $((${OPTIND} - 1))
 
+#
+# Exceptions to flist checking (all begin with "./"):
+#
+# * ignore var/db/syspkg and its contents
+# * ignore ${metalog}
+# * ignore METALOG
+# * ignore etc/mtree/set.*
+#
+IGNORE_REGEXP="^\./var/db/syspkg(\$|/)"
 if [ -n "${metalog}" ]; then
-	case "${metalog}" in
-	"${DESTDIR}"/*)
-		# Metalog would be noticed, so make sure it gets
-		# ignored.
-		metalog="./${metalog#"${DESTDIR}"/}"
-		;;
-	*)
-		metalog=""
-	esac
+	ml="${metalog#${DESTDIR}/}"
+	ml2="METALOG"
+	IGNORE_REGEXP="${IGNORE_REGEXP}|^\./${ml}\$|^\./${ml2}\$"
+	IGNORE_REGEXP="${IGNORE_REGEXP}|^\./etc/mtree/set\.[a-z]*\$"
 fi
 
+#
+# Here would be a good place to add custom exceptions to flist checking.
+#
 
-${HOST_SH} ./makeflist ${xargs} ${dargs} > "${SDIR}/flist"
+#
+# Make three lists:
+# * ${SDIR}/files: files present in DESTDIR.
+# * ${SDIR}/flist: files mentioned in flist;
+# * ${SDIR}/mlist: files mentioned in metalog;
+#
+( cd "${DESTDIR}" && ${FIND} ${origin} \
+	\( -type d -o -type f -o -type l \) -print ) \
+	| ${SORT} -u | ${EGREP} -v -e "${IGNORE_REGEXP}" >"${SDIR}/files"
+${HOST_SH} "${rundir}/makeflist" ${xargs} ${dargs} \
+	| ${SORT} -u | ${EGREP} -v -e "${IGNORE_REGEXP}" >"${SDIR}/flist"
+if [ -n "${metalog}" ]; then
+	${AWK} '{print $1}' <"${metalog}" \
+	| ${SORT} -u | ${EGREP} -v -e "${IGNORE_REGEXP}" >"${SDIR}/mlist"
+fi
 
-(
-	cd "${DESTDIR}"
-	${FIND} ${origin} \( -type d -o -type f -o -type l \) -print
-) | (
-	while read line; do
-		case "${line}" in
-		"${metalog}")
-			;;
-		*)
-			echo "${line}"
-			;;
-		esac
-	done
-) | ${SORT} > "${SDIR}/files"
+#
+# compare DESTDIR with METALOG, and report on differences.
+#
+if [ -n "${metalog}" ]; then
+    ${COMM} -23 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/missing"
+    ${COMM} -13 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/extra"
 
-${COMM} -23 "${SDIR}/flist}" "${SDIR}/files}" > "${SDIR}/missing}"
-${COMM} -13 "${SDIR}/flist}" "${SDIR}/files}" > "${SDIR}/extra}"
+    if [ -s "${SDIR}/extra" ]; then
+	count="$(${AWK} 'END {print NR}' "${SDIR}/extra")"
+	echo ""
+	echo "=======  ${count} extra files in METALOG  ========="
+	echo "Files in METALOG but missing from DESTDIR."
+	echo "File was deleted after installation ?"
+	echo "------------------------------------------"
+	cat "${SDIR}/extra"
+	echo "=========  end of ${count} extra files  ==========="
+	echo ""
+	es=1 # this is fatal even if ${allowextra} is true
+    fi
+
+    if [ -s "${SDIR}/missing" ]; then
+	count="$(${AWK} 'END {print NR}' "${SDIR}/missing")"
+	echo ""
+	echo "======  ${count} missing files in METALOG  ========"
+	echo "Files in DESTDIR but missing from METALOG."
+	echo "File installed but not registered in METALOG ?"
+	echo "------------------------------------------"
+	cat "${SDIR}/missing"
+	echo "========  end of ${count} missing files  =========="
+	echo ""
+	es=1 # this is fatal even if ${allowmissing} is true
+    fi
+fi
+
+#
+# compare flist with DESTDIR, and report on differences.
+#
+${COMM} -23 "${SDIR}/flist" "${SDIR}/files" > "${SDIR}/missing"
+${COMM} -13 "${SDIR}/flist" "${SDIR}/files" > "${SDIR}/extra"
 
 if [ -s "${SDIR}/extra" ]; then
 	count="$(${AWK} 'END {print NR}' "${SDIR}/extra")"
 	echo ""
-	echo "============  ${count} extra files  ==============="
+	echo "=======  ${count} extra files in DESTDIR  ========="
 	echo "Files in DESTDIR but missing from flist."
 	echo "File is obsolete or flist is out of date ?"
 	if ${allowextra}; then
-		echo "This is non-fatal."
+		echo "This is non-fatal, due to '-e' option."
 	else
 		es=1
 	fi
@@ -121,11 +163,11 @@ fi
 if [ -s "${SDIR}/missing" ]; then
 	count="$(${AWK} 'END {print NR}' "${SDIR}/missing")"
 	echo ""
-	echo "===========  ${count} missing files  =============="
+	echo "======  ${count} missing files in DESTDIR  ========"
 	echo "Files in flist but missing from DESTDIR."
 	echo "File wasn't installed ?"
 	if ${allowmissing}; then
-		echo "This is non-fatal."
+		echo "This is non-fatal, due to '-m' option."
 	else
 		es=1
 	fi
