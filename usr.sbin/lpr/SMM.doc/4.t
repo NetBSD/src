@@ -1,4 +1,4 @@
-.\" $NetBSD: 4.t,v 1.4 2003/08/07 11:25:24 agc Exp $
+.\" $NetBSD: 4.t,v 1.5 2006/01/04 15:32:50 garbled Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -111,7 +111,10 @@ lp|default line printer:\e
 The
 .B rm
 entry is the name of the remote machine to connect to; this name must
-be a known host name for a machine on the network.
+be a known host name for a machine on the network. The
+.B rm
+entry can also specify the port number of the \fIlpd\fP
+server on the remote host with the form ``port@host''.
 The
 .B rp
 capability indicates

@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.28 2005/11/28 03:26:06 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.29 2006/01/04 15:32:50 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.28 2005/11/28 03:26:06 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.29 2006/01/04 15:32:50 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -308,6 +308,7 @@ const char *
 checkremote(void)
 {
 	char lname[NI_MAXHOST], rname[NI_MAXHOST];
+	const char *rmhost;
 	struct addrinfo hints, *res, *res0;
 	static char errbuf[128];
 	int error;
@@ -337,7 +338,11 @@ checkremote(void)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	res = NULL;
-	error = getaddrinfo(RM, NULL, &hints, &res0);
+	if ((rmhost = strchr(RM, '@')))
+		rmhost++;
+	else
+		rmhost = RM;
+	error = getaddrinfo(rmhost, NULL, &hints, &res0);
 	if (error) {
 		(void)snprintf(errbuf, sizeof(errbuf),
 		    "unable to resolve remote machine %s: %s",

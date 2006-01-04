@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.28 2005/11/28 03:26:06 christos Exp $	*/
+/*	$NetBSD: displayq.c,v 1.29 2006/01/04 15:32:50 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.28 2005/11/28 03:26:06 christos Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.29 2006/01/04 15:32:50 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ displayq(int format)
 {
 	struct queue *q;
 	int i, nitems, fd, ret;
-	char *cp, *ecp;
+	char *cp, *ecp, *rmhost;
 	struct queue **queue;
 	struct stat statb;
 	FILE *fp;
@@ -235,7 +235,10 @@ displayq(int format)
 		(void)strlcpy(cp, user[i], ecp - cp);
 	}
 	(void)strlcat(line, "\n", sizeof(line));
-	fd = getport(RM, 0);
+	if ((rmhost = strchr(RM, '@')))
+		fd = getport(rmhost+1, atoi(RM));
+	else
+		fd = getport(RM, 0);
 	if (fd < 0) {
 		if (from != host)
 			printf("%s: ", host);
