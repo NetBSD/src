@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.8 2006/01/05 03:03:52 uwe Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.9 2006/01/05 04:18:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: setjmp.S,v 1.8 2006/01/05 03:03:52 uwe Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.9 2006/01/05 04:18:01 uwe Exp $")
 #endif
 
 /*
@@ -128,4 +128,4 @@ ENTRY(__longjmp14)
 	.align	2
 .L_got_2:		PIC_GOT_DATUM
 .L___sigprocmask14_2:	CALL_DATUM(_C_LABEL(__sigprocmask14), 1b)
-	SET_ENTRY_SIZE(__setjmp14)
+	SET_ENTRY_SIZE(__longjmp14)
