@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.22 2006/01/05 02:13:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.21 2005/07/19 23:07:10 christos Exp $
+ *	$NetBSD: extern.h,v 1.22 2006/01/05 02:13:41 christos Exp $
  */
 
 struct name;
@@ -50,7 +50,7 @@ FILE	*Fopen(const char *, const char *);
 FILE	*Popen(const char *, const char *);
 FILE	*collect(struct header *, int);
 char	*copy(char *, char *);
-char	*copyin(char *, char **);
+char	*copyin(const char *, char **);
 char	*detract(struct name *, int);
 const char *expand(const char *);
 const char *getdeadletter(void);
@@ -61,7 +61,7 @@ FILE	*infix(struct header *, FILE *);
 char	*ishfield(const char [], char[], const char *);
 char	*name1(struct message *, int);
 char	*nameof(struct message *, int);
-char	*nextword(char *, char *);
+const char	*nextword(const char *, char *);
 char	*readtty(const char [], char []);
 char 	*reedit(char *);
 FILE	*run_editor(FILE *, off_t, int, int);
@@ -120,7 +120,7 @@ int	 endifcmd(void *);
 int	 evalcol(int);
 int	 execute(char [], int);
 int	 exwrite(const char [], FILE *, int);
-void	 fail(char [], const char []);
+void	 fail(const char [], const char []);
 int	 file(void *);
 struct grouphead *
 	 findgroup(char []);
@@ -157,7 +157,7 @@ int	 incfile(void);
 int	 isdate(const char []);
 int	 isdir(const char []);
 int	 isfileaddr(char *);
-int	 ishead(char []);
+int	 ishead(const char []);
 int	 isign(const char *, struct ignoretab []);
 int	 isprefix(char *, const char *);
 void	 istrcpy(char *, const char *);
@@ -185,7 +185,7 @@ int	 newfileinfo(int);
 int	 next(void *);
 int	 null(void *);
 struct headline;
-void	 parse(char [], struct headline *, char []);
+void	 parse(const char [], struct headline *, char []);
 int	 pcmdlist(void *);
 int	 pdot(void *);
 void	 prepare_child(sigset_t *, int, int);
