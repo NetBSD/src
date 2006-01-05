@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.12.2.4 2006/01/05 05:28:11 riz Exp $ */
+/* $NetBSD: hypervisor.c,v 1.12.2.5 2006/01/05 05:59:03 riz Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.12.2.4 2006/01/05 05:28:11 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.12.2.5 2006/01/05 05:59:03 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,16 +291,6 @@ hypervisor_print(aux, parent)
 	if (parent)
 		aprint_normal("%s at %s", hac->hac_device, parent);
 	return (UNCONF);
-}
-
-void
-hypervisor_notify_via_evtchn(unsigned int port)
-{
-	evtchn_op_t op;
-
-	op.cmd = EVTCHNOP_send;
-	op.u.send.local_port = port;
-	(void)HYPERVISOR_event_channel_op(&op);
 }
 
 #ifdef DOM0OPS
