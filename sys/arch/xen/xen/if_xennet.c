@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.16 2006/01/05 05:28:11 riz Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.17 2006/01/05 05:30:23 riz Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.16 2006/01/05 05:28:11 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.17 2006/01/05 05:30:23 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -731,12 +731,12 @@ xen_network_handler(void *arg)
 		    (void *)(PTE_BASE[x86_btop
 			(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] & PG_FRAME)));
 
-		m->m_len = m->m_pkthdr.len = rx->status;
 		m->m_pkthdr.rcvif = ifp;
 		if (sc->sc_rx->req_prod != sc->sc_rx->resp_prod) {
+			m->m_len = m->m_pkthdr.len = rx->status;
 			MEXTADD(m, (void *)(sc->sc_rx_bufa[rx->id].xb_rx.
-			    xbrx_va + (rx->addr & PAGE_MASK)), rx->status, M_DEVBUF,
-			    xennet_rx_mbuf_free,
+			    xbrx_va + (rx->addr & PAGE_MASK)), rx->status,
+			    M_DEVBUF, xennet_rx_mbuf_free,
 			    &sc->sc_rx_bufa[rx->id]);
 		} else {
 			/*
@@ -744,14 +744,11 @@ xen_network_handler(void *arg)
 			 * memory, copy data and push the receive
 			 * buffer back to the hypervisor.
 			 */
-			MEXTMALLOC(m, rx->status, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				printf("xennet: rx no mbuf 2\n");
-				m_free(m);
-				break;
-			}
-			memcpy(m->m_data, (void *)(sc->sc_rx_bufa[rx->id].
-			    xb_rx.xbrx_va + (rx->addr & PAGE_MASK)), rx->status);
+			m->m_len = MHLEN;
+			m->m_pkthdr.len = 0;
+			m_copyback(m, 0, rx->status, 
+			    (caddr_t)(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va +
+			    (rx->addr & PAGE_MASK)));
 			xennet_rx_push_buffer(sc, rx->id);
 		}
 
