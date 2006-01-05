@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.8 2006/01/05 06:00:25 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.9 2006/01/05 22:31:05 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -254,4 +254,26 @@ sys/arch/xen/xen/hypervisor.c			1.17
 	inline 2 trivial functions that are called often (according to
 	profiling data).
 	[bouyer, ticket #1085]
+
+sys/dev/pci/pcidevs				1.755
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/viaide.c				1.27
+
+	Add support for nForce430 ATA133 and SATA controllers. My disks now run
+	at a decent speed.
+	[manu, ticket #1086]
+
+sys/dev/pci/pciide_common.c			1.29
+
+	Fix forcing use of DMA mode for the generic pciide driver:
+	default_chip_map() is called from pciide_attach() and at this point
+	we don't know which drives are here. Just assume all drives are
+	there and allocate DMA ressources for all of them.
+	[bouyer, ticket #1087]
+
+sbin/newfs/mkfs.c				1.93
+
+	The -b option is really on fsck_ffs, not fsck.
+	[hubertf, ticket #1088]
 
