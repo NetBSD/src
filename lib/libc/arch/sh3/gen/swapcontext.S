@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.6 2006/01/04 22:32:06 uwe Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.7 2006/01/05 02:46:15 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.6 2006/01/04 22:32:06 uwe Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.7 2006/01/05 02:46:15 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -46,7 +46,7 @@
  * swapcontext(ucontext_t * restrict oucp, ucontext_t * restrict ucp);
  */
 ENTRY(swapcontext)
-	PIC_PROLOGUE(.L_got, r0)
+	PIC_PROLOGUE(.L_got)
 	mov.l	r5, @-sp
 	sts.l	pr, @-sp
 
