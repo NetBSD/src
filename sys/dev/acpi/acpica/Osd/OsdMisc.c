@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.12 2005/12/11 12:21:02 christos Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.13 2006/01/05 16:56:54 rpaulo Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,8 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.13 2006/01/05 16:56:54 rpaulo Exp $");
 
+#include "opt_acpi.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -69,14 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12 2005/12/11 12:21:02 christos Exp $"
  *    -or-
  *    options ACPI_DSDT_FILE="\"yourdsdt.hex\"" in
  *    your config file and yourdsdt.hex in the build directory
- * 6. uncomment ACPI_DEDT_OVERRIDE or options ACPI_DSDT_OVERRIDE
- *    in your kernel config file and rebuild the kernel
+ * 6. options ACPI_DSDT_OVERRIDE in your kernel config file
+ *    and rebuild the kernel
  *
  * (*1) /usr/pkgsrc/sysutils/acpidump
  * (*2) /usr/pkgsrc/sysutils/acpi-iasl
  */
 
-/* #define ACPI_DSDT_OVERRIDE */
 #ifdef ACPI_DSDT_OVERRIDE
 #ifndef ACPI_DSDT_FILE
 #define ACPI_DSDT_FILE "dsdt.hex"
