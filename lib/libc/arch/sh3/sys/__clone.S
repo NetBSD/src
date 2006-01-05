@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3 2003/10/24 04:41:28 uwe Exp $	*/
+/*	$NetBSD: __clone.S,v 1.4 2006/01/05 18:20:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -45,51 +45,39 @@ ENTRY(__clone)
 	tst	r5, r5
 	bt	inval
 
-	mov	r4, r2
-	mov	r6, r4
-	mov.l	LSYS___clone, r0
+	mov	r4, r2		/* save entry point for later */
+
+	mov	r6, r4		/* r4 = flags, r5 = stack (already) */
+	mov.l	.L_SYS___clone, r0
 	trapa	#0x80
 	bf	err
 
 	tst	r0, r0
-	bf	1f		/* We're the parent, just return. */
+	bf	3f		/* we're the parent, just return */
 
-	jsr	@r2		/* Call the clone's entry point. */
-	mov	r7, r4		/* arg */
+	jsr	@r2		/* clone does _exit((*fn)(arg)); */
+	 mov	r7, r4
 
-	mov.l	L__exit, r1
-#ifdef PIC
-	braf	r1
-#else
-	jsr	@r1
-#endif
-	mov	r0, r4
-2:
+	mov.l	.L__exit, r1
+1:	JUMP	r1
+	 mov	r0, r4
+	/* NOTREACHED */
+
 inval:
 	mov	#EINVAL, r0
 err:
-	mov.l	Lcerror, r1
-#ifdef PIC
-	braf	r1
-#else
-	jmp	@r1
-#endif
-	nop
-1:
-	rts
-	nop
+	mov.l	.L_cerror, r1
+2:	JUMP	r1
+	 nop
+	/* NOTREACHED */
+
+3:	rts
+	 nop
 
 	.align	2
-LSYS___clone:
+.L_SYS___clone:
 	.long	SYS___clone
-#ifdef PIC
-L__exit:
-	.long	_C_LABEL(_exit)-2b
-Lcerror:
-	.long	cerror-1b
-#else
-L__exit:
-	.long	_C_LABEL(_exit)
-Lcerror:
-	.long	cerror
-#endif
+.L__exit:
+	CALL_DATUM_LOCAL(_C_LABEL(_exit), 1b)
+.L_cerror:
+	CALL_DATUM_LOCAL(cerror, 2b)
