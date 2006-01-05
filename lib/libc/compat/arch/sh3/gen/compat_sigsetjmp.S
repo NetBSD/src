@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsetjmp.S,v 1.3 2006/01/05 04:41:16 uwe Exp $	*/
+/*	$NetBSD: compat_sigsetjmp.S,v 1.4 2006/01/05 04:55:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: compat_sigsetjmp.S,v 1.3 2006/01/05 04:41:16 uwe Exp $")
+	RCSID("$NetBSD: compat_sigsetjmp.S,v 1.4 2006/01/05 04:55:48 uwe Exp $")
 #endif
 
 ENTRY(sigsetjmp)
@@ -59,7 +59,9 @@ ENTRY(sigsetjmp)
 	PIC_EPILOGUE
 
 	mov.l	r0, @(_JB_SIGMASK * 4, r4)
+
 2:	/* identical to _setjmp sans mask */
+	add	#((_JB_REG_R15 + 1) * 4), r4
 	mov.l	r15, @-r4
 	mov.l	r14, @-r4
 	mov.l	r13, @-r4
@@ -81,7 +83,7 @@ ENTRY(sigsetjmp)
 ENTRY(siglongjmp)
 	mov.l	@(_JB_HAS_MASK * 4, r4), r0
 	tst	r0, r0
-	bt	2f
+	bt	2f			/* if no mask */
 
 	PIC_PROLOGUE(.L_got_2)
 	/* we won't return here, so we don't need to save pr */
