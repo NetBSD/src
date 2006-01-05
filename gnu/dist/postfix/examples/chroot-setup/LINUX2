@@ -42,6 +42,8 @@
 # Revision 1.4  2001/01/15 09:36:35  emma
 # add note it was successfully tested on Debian sid
 #
+# 20060101 /lib64 support by Keith Owens.
+#
 
 CP="cp -p"
 
@@ -62,6 +64,7 @@ POSTFIX_DIR=${POSTFIX_DIR-/var/spool/postfix}
 cd ${POSTFIX_DIR}
 
 mkdir -p etc lib usr/lib/zoneinfo
+test -d /lib64 && mkdir -p lib64
 
 # find localtime (SuSE 5.3 does not have /etc/localtime)
 lt=/etc/localtime
@@ -79,5 +82,10 @@ ln -s -f /etc/localtime usr/lib/zoneinfo
 cond_copy '/lib/libnss_*.so*' lib
 cond_copy '/lib/libresolv.so*' lib
 cond_copy '/lib/libdb.so*' lib
+if test -d /lib64; then
+  cond_copy '/lib64/libnss_*.so*' lib64
+  cond_copy '/lib64/libresolv.so*' lib64
+  cond_copy '/lib64/libdb.so*' lib64
+fi
 
 postfix reload
