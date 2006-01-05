@@ -4887,7 +4887,8 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		      && ((r_type == R_SH_DIR32
 			   && (h->elf_link_hash_flags
 			       & ELF_LINK_FORCED_LOCAL) == 0)
-			  || r_type == R_SH_REL32)
+			  || (r_type == R_SH_REL32
+			      && !SYMBOL_CALLS_LOCAL (info, h)))
 		      && ((input_section->flags & SEC_ALLOC) != 0
 			  /* DWARF will emit R_SH_DIR32 relocations in its
 			     sections against symbols defined externally
