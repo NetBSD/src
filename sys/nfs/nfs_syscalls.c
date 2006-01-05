@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.87 2006/01/03 22:25:48 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.88 2006/01/05 11:22:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.87 2006/01/03 22:25:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88 2006/01/05 11:22:56 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -715,6 +715,7 @@ nfssvc_nfsd(nsd, argp, l)
 				lockcount = l->l_locks;
 #endif
 				mreq = NULL;
+				netexport_rdlock();
 				if (writes_todo || (!(nd->nd_flag & ND_NFSV3) &&
 				     nd->nd_procnum == NFSPROC_WRITE &&
 				     nfsrvw_procrastinate > 0 && !notstarted))
@@ -724,6 +725,7 @@ nfssvc_nfsd(nsd, argp, l)
 					error =
 					    (*(nfsrv3_procs[nd->nd_procnum]))
 					    (nd, slp, l, &mreq);
+				netexport_rdunlock();
 #ifdef DIAGNOSTIC
 				if (l->l_locks != lockcount) {
 					/*
