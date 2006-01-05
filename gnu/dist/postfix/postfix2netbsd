@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: postfix2netbsd,v 1.1.1.2 2005/12/01 21:36:48 rpaulo Exp $
+#	$NetBSD: postfix2netbsd,v 1.1.1.3 2006/01/05 02:02:23 rpaulo Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,7 +47,7 @@ echo deleting some superfluous files
 find . \( -type f -o -type l \) -a \
 	\( -name .indent.pro -o -name .printfck -o -name .keep \) \
 	-exec rm {} \;
-rm -rf bin include lib libexec man/cat?
+rm -rf bin include lib libexec man/cat? auxiliary
 echo done
 
 ### ditch symlinks
