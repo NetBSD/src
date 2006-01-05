@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.392 2006/01/05 02:19:44 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.393 2006/01/05 02:21:44 rpaulo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -640,13 +640,13 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	postfix
-Version:	2.2.6
+Version:	2.2.8
 Current Vers:	2.2.8/2.3-20051128
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
 Mailing List:	postfix-users@postfix.org
-Responsible:	perry, itojun
+Responsible:	perry, rpaulo
 License:	Several. See src/gnu/dist/postfix
 Notes:
 
