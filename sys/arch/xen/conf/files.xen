@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.18.2.6 2005/08/25 20:49:54 tron Exp $
+#	$NetBSD: files.xen,v 1.18.2.7 2006/01/05 05:28:11 riz Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -100,6 +100,7 @@ define apmbus {}
 define pnpbiosbus {}
 define vesabiosbus {}  
 define hypervisorbus {}
+define xendevbus {}
 
 #
 # System bus types
@@ -110,7 +111,7 @@ attach	mainbus at root
 file	arch/xen/i386/mainbus.c		mainbus
 
 # Xen hypervisor
-device	hypervisor { }: isabus, pcibus, sysmon_power
+device	hypervisor { }: isabus, pcibus, sysmon_power, xendevbus
 attach hypervisor at hypervisorbus
 file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 
@@ -118,12 +119,12 @@ file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 device	npx
 file	arch/xen/i386/npx.c		npx needs-flag
 
-attach	npx at hypervisor with npx_hv
+attach	npx at xendevbus with npx_hv
 file	arch/xen/i386/npx_hv.c		npx_hv
 
 # Xen console support
 device	xencons: tty
-attach	xencons at hypervisor
+attach	xencons at xendevbus
 file	arch/xen/xen/xencons.c		xencons needs-flag
 
 # Xen event peudo-device
@@ -131,12 +132,12 @@ defpseudo xenevt
 
 # Xen Network driver
 device	xennet: arp, ether, ifnet
-attach	xennet at hypervisor
+attach	xennet at xendevbus
 file	arch/xen/xen/if_xennet.c	xennet needs-flag
 
 # Xen Block device driver and wd/sd/cd identities
 device	xbd: disk
-attach	xbd at hypervisor
+attach	xbd at xendevbus
 file	arch/xen/xen/xbd.c		xbd | wd_xen | sd_xen | cd_xen needs-flag
 
 #attach	wd at hypervisor with wd_xen

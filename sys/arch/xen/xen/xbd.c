@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.14.2.5 2005/04/28 10:28:42 tron Exp $ */
+/* $NetBSD: xbd.c,v 1.14.2.6 2006/01/05 05:28:11 riz Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.14.2.5 2005/04/28 10:28:42 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.14.2.6 2006/01/05 05:28:11 riz Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -572,7 +572,7 @@ connect_interface(blkif_fe_interface_status_t *status)
 		xbda = get_xbda(xd);
 		if (xbda) {
 			xbda->xa_xd = xd;
-			config_found(blkctrl.xc_parent, xbda,
+			config_found_ia(blkctrl.xc_parent, "xendevbus", xbda,
 			    blkctrl.xc_cfprint);
 		}
 	}
@@ -659,8 +659,8 @@ vbd_update(void)
 			xbda = get_xbda(xd);
 			if (xbda) {
 				xbda->xa_xd = xd;
-				config_found(blkctrl.xc_parent, xbda,
-				    blkctrl.xc_cfprint);
+				config_found_ia(blkctrl.xc_parent, "xendevbus",
+				    xbda, blkctrl.xc_cfprint);
 			}
 			j++;
 		} else {
@@ -691,7 +691,7 @@ vbd_update(void)
 		xbda = get_xbda(xd);
 		if (xbda) {
 			xbda->xa_xd = xd;
-			config_found(blkctrl.xc_parent, xbda,
+			config_found_ia(blkctrl.xc_parent, "xendevbus", xbda,
 			    blkctrl.xc_cfprint);
 		}
 	}
