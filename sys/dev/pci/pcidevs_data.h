@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.17 2005/12/15 20:08:52 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.18 2006/01/05 22:19:06 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.17 2005/12/15 20:08:01 tron Exp
+ *	NetBSD
  */
 
 /*
@@ -7816,6 +7816,42 @@ const struct pci_product pci_products[] = {
 	    "Quadro4 700XGL",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_PCIB,
+	    "nForce430 PCI-ISA bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SMBUS,
+	    "nForce430 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_ATA133,
+	    "nForce430 ATA133 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SATA1,
+	    "nForce430 Serial SATA Controller 1",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SATA2,
+	    "nForce430 Serial SATA Controller 2",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_NET,
+	    "nForce430 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_AC,
+	    "nForce430 AC-97",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_OHCI,
+	    "nForce430 USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_EHCI,
+	    "nForce430 USB2 Controller",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4800,
 	    "GeForce4 Ti 4800",
 	},
@@ -10320,4 +10356,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2001;
+const int pci_nproducts = 2010;
