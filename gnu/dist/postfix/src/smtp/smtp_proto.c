@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_proto.c,v 1.1.1.9 2005/08/18 21:08:55 rpaulo Exp $	*/
+/*	$NetBSD: smtp_proto.c,v 1.1.1.10 2006/01/05 02:15:02 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -255,18 +255,18 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 #endif
 
     /*
+     * Prepare for disaster.
+     */
+    smtp_timeout_setup(state->session->stream, var_smtp_helo_tmout);
+    if ((except = vstream_setjmp(state->session->stream)) != 0)
+	return (smtp_stream_except(state, except,
+			      "performing the initial protocol handshake"));
+
+    /*
      * If not recursing after STARTTLS, examine the server greeting banner
      * and decide if we are going to send EHLO as the next command.
      */
     if ((misc_flags & SMTP_MISC_FLAG_IN_STARTTLS) == 0) {
-
-	/*
-	 * Prepare for disaster.
-	 */
-	smtp_timeout_setup(state->session->stream, var_smtp_helo_tmout);
-	if ((except = vstream_setjmp(state->session->stream)) != 0)
-	    return (smtp_stream_except(state, except,
-				    "receiving the initial SMTP greeting"));
 
 	/*
 	 * Read and parse the server's SMTP greeting banner.

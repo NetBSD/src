@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.1.1.12 2005/12/01 21:48:11 rpaulo Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.1.1.13 2006/01/05 02:18:12 rpaulo Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -26,7 +26,7 @@
   * 4.4BSD and close derivatives.
   */
 #if defined(FREEBSD2) || defined(FREEBSD3) || defined(FREEBSD4) \
-    || defined(FREEBSD5) \
+    || defined(FREEBSD5) || defined(FREEBSD6) \
     || defined(BSDI2) || defined(BSDI3) || defined(BSDI4) \
     || defined(OPENBSD2) || defined(OPENBSD3) \
     || defined(NETBSD1) || defined(NETBSD2) \
