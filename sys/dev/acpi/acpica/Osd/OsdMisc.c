@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.13 2006/01/05 16:56:54 rpaulo Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.14 2006/01/05 17:13:20 rpaulo Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.13 2006/01/05 16:56:54 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.14 2006/01/05 17:13:20 rpaulo Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.13 2006/01/05 16:56:54 rpaulo Exp $");
  * 2. disassemble with iasl -d (*2)
  * 3. modify the ASL file
  * 4. compile it with iasl -tc
- * 5. copy *.hex to /sys/dev/acpi/acpica/Osd/dsdt.hex
+ * 5. copy *.hex to src/sys/dev/acpi/acpica/Osd/dsdt.hex
  *    -or-
  *    options ACPI_DSDT_FILE="\"yourdsdt.hex\"" in
  *    your config file and yourdsdt.hex in the build directory
