@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.7 2006/01/05 02:46:15 uwe Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.8 2006/01/05 05:02:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.7 2006/01/05 02:46:15 uwe Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.8 2006/01/05 05:02:33 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -79,3 +79,4 @@ ENTRY(swapcontext)
 .L_got:			PIC_GOT_DATUM
 .L__getcontext:		CALL_DATUM(_C_LABEL(_getcontext), 1b)
 .L_setcontext:		CALL_DATUM(_C_LABEL(setcontext), 2b)
+	SET_ENTRY_SIZE(swapcontext)
