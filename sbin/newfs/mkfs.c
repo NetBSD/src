@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.92 2005/11/05 19:15:54 chs Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.93 2006/01/05 11:22:47 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.92 2005/11/05 19:15:54 chs Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.93 2006/01/05 11:22:47 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -629,7 +629,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		    0xff, 256);
 
 	if (!mfs || Nflag)
-		printf("super-block backups (for fsck -b #) at:");
+		printf("super-block backups (for fsck_ffs -b #) at:");
 	for (cylno = 0; cylno < sblock.fs_ncg; cylno++) {
 		initcg(cylno, &tv);
 		if (mfs && !Nflag)
