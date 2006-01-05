@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.17 2006/01/05 05:30:23 riz Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.18 2006/01/05 05:31:01 riz Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.17 2006/01/05 05:30:23 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.18 2006/01/05 05:31:01 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -750,6 +750,11 @@ xen_network_handler(void *arg)
 			    (caddr_t)(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va +
 			    (rx->addr & PAGE_MASK)));
 			xennet_rx_push_buffer(sc, rx->id);
+			if (m->m_pkthdr.len < rx->status) {
+				ifp->if_ierrors++;
+				m_freem(m);
+				break;
+			}
 		}
 
 #ifdef XENNET_DEBUG_DUMP
