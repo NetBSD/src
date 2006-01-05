@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.8 2006/01/05 11:22:56 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.9 2006/01/05 12:21:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.8 2006/01/05 11:22:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9 2006/01/05 12:21:00 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -226,6 +226,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	struct netexport *ne;
 	struct nameidata nd;
 	struct vnode *vp;
+	struct fid fid;
 
 	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return EPERM;
@@ -240,7 +241,8 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 
 	/* The selected file system may not support NFS exports, so ensure
 	 * it does. */
-	if (mp->mnt_op->vfs_vptofh == NULL && mp->mnt_op->vfs_fhtovp == NULL) {
+	if (mp->mnt_op->vfs_vptofh == NULL || mp->mnt_op->vfs_fhtovp == NULL ||
+	    VFS_VPTOFH(vp, &fid) != 0) {
 		error = EOPNOTSUPP;
 		goto out_locked;
 	}
