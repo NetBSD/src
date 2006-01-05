@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp.c,v 1.1.1.9 2005/08/18 21:07:16 rpaulo Exp $	*/
+/*	$NetBSD: lmtp.c,v 1.1.1.10 2006/01/05 02:12:49 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -367,7 +367,8 @@ static int deliver_message(DELIVER_REQUEST *request, char **unused_argv)
 	 * Disconnect if RSET can't be sent over an existing connection.
 	 * Discard transcript and status information for sending RSET.
 	 */
-	else if (lmtp_rset(state) != 0) {
+	else if (lmtp_rset(state) != 0
+		 || (state->features & LMTP_FEATURE_RSET_REJECTED) != 0) {
 	    lmtp_chat_reset(state);
 	    state->session = lmtp_session_free(state->session);
 #ifdef USE_SASL_AUTH
