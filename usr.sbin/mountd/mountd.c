@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.100 2005/12/04 18:01:53 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.101 2006/01/05 10:38:29 yamt Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.100 2005/12/04 18:01:53 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.101 2006/01/05 10:38:29 yamt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2024,6 +2024,8 @@ do_nfssvc(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	}
 	done = FALSE;
 	while (!done) {
+		struct mountd_exports_list mel;
+
 		switch (grp->gr_type) {
 		case GT_HOST:
 			if (addrp != NULL && addrp->sa_family == AF_INET6 &&
@@ -2073,56 +2075,23 @@ do_nfssvc(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 
 		/*
 		 * XXX:
-		 * Maybe I should just use the fsb->f_mntonname path instead
-		 * of looping back up the dirp to the mount point??
+		 * Maybe I should just use the fsb->f_mntonname path?
 		 */
-		for (;;) {
-			struct mountd_exports_list mel;
 
-			mel.mel_path = dirp;
-			mel.mel_nexports = 1;
-			mel.mel_exports = &export;
+		mel.mel_path = dirp;
+		mel.mel_nexports = 1;
+		mel.mel_exports = &export;
 
-			if (nfssvc(NFSSVC_SETEXPORTSLIST, &mel) != -1)
-				break;
-
-			if (cp)
-				*cp-- = savedc;
-			else
-				cp = dirp + dirplen - 1;
-			if (errno == EPERM) {
-				syslog(LOG_ERR,
-		    "\"%s\", line %ld: Can't change attributes for %s to %s: %m",
-				    line, (unsigned long)lineno,
-				    dirp, (grp->gr_type == GT_HOST) ?
-				    grp->gr_ptr.gt_addrinfo->ai_canonname :
-				    (grp->gr_type == GT_NET) ?
-				    grp->gr_ptr.gt_net.nt_name :
-				    "Unknown");
-				return (1);
-			}
-			if (opt_flags & OP_ALLDIRS) {
-				syslog(LOG_ERR,
-				"\"%s\", line %ld: Could not remount %s: %m",
-				    line, (unsigned long)lineno,
-				    dirp);
-				return (1);
-			}
-			/* back up over the last component */
-			while (*cp == '/' && cp > dirp)
-				cp--;
-			while (*(cp - 1) != '/' && cp > dirp)
-				cp--;
-			if (cp == dirp) {
-				if (debug)
-					(void)fprintf(stderr, "mnt unsucc\n");
-				syslog(LOG_ERR, 
-				    "\"%s\", line %ld: Can't export %s: %m",
-				    line, (unsigned long)lineno, dirp);
-				return (1);
-			}
-			savedc = *cp;
-			*cp = '\0';
+		if (nfssvc(NFSSVC_SETEXPORTSLIST, &mel) != 0) {
+			syslog(LOG_ERR,
+	    "\"%s\", line %ld: Can't change attributes for %s to %s: %m",
+			    line, (unsigned long)lineno,
+			    dirp, (grp->gr_type == GT_HOST) ?
+			    grp->gr_ptr.gt_addrinfo->ai_canonname :
+			    (grp->gr_type == GT_NET) ?
+			    grp->gr_ptr.gt_net.nt_name :
+			    "Unknown");
+			return (1);
 		}
 skip:
 		if (addrp) {
