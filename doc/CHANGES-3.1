@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.7 2006/01/01 23:32:36 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.8 2006/01/05 06:00:25 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -214,4 +214,44 @@ xfree/xc/programs/Xserver/hw/netbsd/x68k/x68kFb.c 1.2
 	the cycle time and stay unblanked.  Treat the SCREEN_SAVER_CYCLE state
 	the same as SCREEN_SAVER_ON to keep the display blanked.
 	[mhitch, ticket #1080]
+
+gnu/dist/binutils/bfd/elf32-sh.c		1.2
+
+	Don't reset relocation for R_SH_REL32 in shared objects if the
+	symbol is locally called.  Makes hidden and protected symbols
+	in shared objects work.
+	[uwe, ticket #1081]
+
+gnu/dist/gdb/gdb/shnbsd-tdep.c			1.4
+
+	Handle the case when control transfer instruction jumps to its own
+	delay slot (e.g. PLT entries use such code).  We can not set the
+	breakpoint there, as trapa is illegal in the delay slot.  Set the
+	breakpoint to the next instruction instead.  We are guaranteed to
+	arrive there, as control transfers are illegal in the delay slot.
+	[uwe, ticket #1082]
+
+sys/arch/xen/conf/files.xen			1.29
+sys/arch/xen/xen/hypervisor.c			1.16
+sys/arch/xen/xen/if_xennet.c			1.31
+sys/arch/xen/xen/xbd.c				1.22
+
+	Define a xendevbus attribute and add it to hypervisor.  Use it for
+	xen devices which attach to hypervisor. This allows to use
+	config_found_ia() instead of config_found(), instead of relying
+	on the order of which device are written in ioconf.c.
+	[bouyer, ticket #1083]
+
+sys/arch/xen/xen/if_xennet.c			1.32,1.36
+
+	Replace MEXTMALLOC/memcpy with m_copyback().
+	[bouyer, ticket #1084]
+
+sys/arch/xen/i386/hypervisor_machdep.c		1.13
+sys/arch/xen/include/hypervisor.h		1.15
+sys/arch/xen/xen/hypervisor.c			1.17
+
+	inline 2 trivial functions that are called often (according to
+	profiling data).
+	[bouyer, ticket #1085]
 
