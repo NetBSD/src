@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.149 2006/01/04 10:13:05 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.150 2006/01/05 10:18:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.149 2006/01/04 10:13:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.150 2006/01/05 10:18:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1733,6 +1733,10 @@ vfs_bufstats(void)
 }
 #endif /* DEBUG */
 
+/* ------------------------------ */
+
+POOL_INIT(bufiopool, sizeof(struct buf), 0, 0, 0, "biopl", NULL);
+
 static struct buf *
 getiobuf1(int prflags)
 {
@@ -1740,7 +1744,7 @@ getiobuf1(int prflags)
 	int s;
 
 	s = splbio();
-	bp = pool_get(&bufpool, prflags);
+	bp = pool_get(&bufiopool, prflags);
 	splx(s);
 	if (bp != NULL) {
 		BUF_INIT(bp);
@@ -1768,6 +1772,6 @@ putiobuf(struct buf *bp)
 	int s;
 
 	s = splbio();
-	pool_put(&bufpool, bp);
+	pool_put(&bufiopool, bp);
 	splx(s);
 }
