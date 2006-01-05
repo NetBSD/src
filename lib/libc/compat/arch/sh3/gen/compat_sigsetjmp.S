@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsetjmp.S,v 1.1 2005/09/15 22:44:58 uwe Exp $	*/
+/*	$NetBSD: compat_sigsetjmp.S,v 1.2 2006/01/05 04:38:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,38 +35,31 @@
  */
 
 #include <machine/asm.h>
+#include <machine/setjmp.h>
+
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: compat_sigsetjmp.S,v 1.1 2005/09/15 22:44:58 uwe Exp $")
+	RCSID("$NetBSD: compat_sigsetjmp.S,v 1.2 2006/01/05 04:38:39 uwe Exp $")
 #endif
 
 ENTRY(sigsetjmp)
-	mov	r4, r0
-	add	#4*9, r0	! &savemask
-	mov.l	r5, @r0
 	tst	r5, r5
-	bt	1f
+	mov.l	r5, @(_JB_HAS_MASK * 4, r4)
+	bt	2f			/* if (savemask == 0) */
 
-	sts.l	pr, @-r15
-	mov.l	r4, @-r15
-	mov	#0, r4
-	mov.l	Lsigblock, r0
-#ifdef PIC
-	bsrf	r0
-	nop
-2:	
-#else
-	jsr	@r0
-	nop
-#endif
-	mov.l	@r15+, r4
-	lds.l	@r15+, pr
+	PIC_PROLOGUE(.L_got_1)
+	sts.l	pr, @-sp
+	mov.l	r4, @-sp
 
-	mov	r4, r1
-	add	#4*10, r1
-	mov.l	r0, @r1
+	mov.l	.L_sigblock, r0
+1:	CALL	r0			/* int mask = sigblock(0); */
+	 mov	#0, r4
 
-1:
-	add	#4*9, r4
+	mov.l	@sp+, r4
+	lds.l	@sp+, pr
+	PIC_EPILOGUE
+
+	mov.l	r0, @(_JB_SIGMASK * 4, r4)
+2:	/* identical to _setjmp sans mask */
 	mov.l	r15, @-r4
 	mov.l	r14, @-r4
 	mov.l	r13, @-r4
@@ -77,42 +70,33 @@ ENTRY(sigsetjmp)
 	mov.l	r8, @-r4
 	sts.l	pr, @-r4
 	rts
-	xor	r0, r0
+	 xor	r0, r0
 
 	.align	2
-Lsigblock:
-#ifdef PIC
-	.long	_C_LABEL(sigblock)-2b
-#else
-	.long	_C_LABEL(sigblock)
-#endif
+.L_got_1:	PIC_GOT_DATUM
+.L_sigblock:	CALL_DATUM(_C_LABEL(sigblock), 1b)
+	SET_ENTRY_SIZE(sigsetjmp)
+
 
 ENTRY(siglongjmp)
-	mov	r4, r0
-	add	#4*9, r0
-	mov.l	@r0, r0
+	mov.l	@(_JB_HAS_MASK * 4, r4), r0
 	tst	r0, r0
 	bt	1f
 
-	mov.l	r4, @-r15
-	mov.l	r5, @-r15
-	mov	r4, r0
-	add	#4*10, r0
-	mov.l	@r0, r4
-	mov.l	Lsigsetmask, r0
-#ifdef PIC
-	bsrf	r0
-	nop
-2:	
-#else
-	jsr	@r0
-	nop
-#endif
-	mov.l	@r15+, r5
-	mov.l	@r15+, r4
+	PIC_PROLOGUE(.L_got_2)
+	/* we won't return here, so we don't need to save pr */
+	mov.l	r4, @-sp
+	mov.l	r5, @-sp
 
-1:
-	mov	r5, r0
+	mov.l	.L_sigsetmask, r0
+1:	CALL	r0			/* sigsetmask(saved mask) */
+	 mov.l	@(_JB_SIGMASK * 4, r4), r4
+
+	mov.l	@sp+, r5
+	mov.l	@sp+, r4
+	PIC_EPILOGUE
+
+2:	/* identical to _longjmp */
 	lds.l	@r4+, pr
 	mov.l	@r4+, r8
 	mov.l	@r4+, r9
@@ -122,17 +106,16 @@ ENTRY(siglongjmp)
 	mov.l	@r4+, r13
 	mov.l	@r4+, r14
 	mov.l	@r4+, r15
-	tst	r0, r0
+
+	mov	r5, r0
+	tst	r0, r0	/* make sure return value is non-zero */
 	bf	.L0
 	add	#1, r0
 .L0:
 	rts
-	nop
+	 nop
 
 	.align	2
-Lsigsetmask :
-#ifdef PIC
-	.long	_C_LABEL(sigsetmask)-2b
-#else
-	.long	_C_LABEL(sigsetmask)
-#endif
+.L_got_2:	PIC_GOT_DATUM
+.L_sigsetmask:	CALL_DATUM(_C_LABEL(sigsetmask), 1b)
+	SET_ENTRY_SIZE(siglongjmp)
