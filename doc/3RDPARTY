@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.391 2006/01/05 01:13:29 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.392 2006/01/05 02:19:44 rpaulo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -160,7 +160,7 @@ Maintainer:	cvshome
 Archive Site:	http://ftp.gnu.org/non-gnu/cvs/
 Home Page:	http://cvs.nongnu.org/
 Mailing List:	bug-cvs@gnu.org
-Responsible:	Christos Zoulas <christos@NetBSD.org>, wiz
+Responsible:	christos, wiz
 License:	GPLv1, LGPLv2
 Notes:
 Use src/gnu/dist/cvs/cvs2netbsd for preparing the source tree
@@ -190,7 +190,7 @@ src/lib/libc/db/db2netbsd.
 Package:	dhcp
 Version:	3.0.3
 Current Vers:	3.0.3
-Maintainer:	Ted Lemon <mellon@NetBSD.org>
+Maintainer:	mellon
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/sw/dhcp/
 Mailing List:	dhcp-server@isc.org
@@ -618,7 +618,7 @@ Maintainer:	Vernon Schryver <vjs@rhyolite.com>
 Archive Site:	ftp://ftp.rhyolite.com/src/
 Home Page:	http://www.rhyolite.com/src/
 Mailing List:
-Responsible:	christos@NetBSD.org
+Responsible:	christos
 License:	BSD (3-clause)
 Notes:
 We use err() and friends. We have changes for snprintf, extra
@@ -628,11 +628,11 @@ and more.
 Package:	PF (openbsd packet filter)
 Version:	OpenBSD 3.7
 Current Vers:	OpenBSD 3.7-current
-Maintainer:	itojun@NetBSD.org
+Maintainer:	itojun
 Archive Site:	ftp://ftp.openbsd.org/
 Home Page:	http://www.openbsd.org/faq/pf/
 Mailing List:	pf@benzedrine.cx or appropriate OpenBSD mailing list
-Responsible:	itojun@NetBSD.org
+Responsible:	itojun
 License:	BSD (2-clause)
 Notes:
 kernel code is imported into src/sys/dist/pf and src/sys/net has reachover
@@ -646,7 +646,7 @@ Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
 Mailing List:	postfix-users@postfix.org
-Responsible:	perry@NetBSD.org, itojun@NetBSD.org
+Responsible:	perry, itojun
 License:	Several. See src/gnu/dist/postfix
 Notes:
 
@@ -658,7 +658,7 @@ Archive Site:	ftp://ftp.samba.org/pub/ppp/
 Home Page:
 CVS root:	:pserver:cvs@pserver.samba.org:/cvsroot (password: cvs)
 Mailing List:
-Responsible:	christos@NetBSD.org
+Responsible:	christos
 License:	BSD (3-clause)
 Notes:
 BSD support was removed from 2.4.0; I added it back and removed
@@ -703,7 +703,7 @@ Maintainer:	Vernon Schryver <vjs@rhyolite.com>
 Archive Site:	ftp://ftp.rhyolite.com/src/
 Home Page:	http://www.rhyolite.com/src/
 Mailing List:
-Responsible:	christos@NetBSD.org
+Responsible:	christos
 License:	BSD (4-clause)
 Notes:
 We use the md5 code from libc
@@ -729,7 +729,7 @@ Maintainer:	Eric P. Allman
 Archive Site:	ftp://ftp.sendmail.org/pub/sendmail/
 Home Page:	http://www.sendmail.org/
 Mailing List:
-Responsible:	atatat@NetBSD.org
+Responsible:	atatat
 License:	Specific. See src/gnu/dist/sendmail/LICENSE
 Notes:
 use gnu/dist/sendmail/sendmail2netbsd to strip off RCS tags.
