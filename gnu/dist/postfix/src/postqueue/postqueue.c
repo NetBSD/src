@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.1.1.7 2005/08/18 21:08:20 rpaulo Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.1.1.8 2006/01/05 02:14:08 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -453,6 +453,7 @@ int     main(int argc, char **argv)
      * Further initialization...
      */
     mail_conf_read();
+    mail_dict_init();				/* proxy, sql, ldap */
     get_mail_conf_str_table(str_table);
 
     /*
