@@ -1,4 +1,4 @@
-/*	$NetBSD: umodsi3.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: umodsi3.S,v 1.2 2006/01/05 22:33:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,12 +39,21 @@
 #if 0
 	RCSID("from: @(#)umodsi3.s	5.1 (Berkeley) 6/7/90")(
 #else
-	RCSID("$NetBSD: umodsi3.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+	RCSID("$NetBSD: umodsi3.S,v 1.2 2006/01/05 22:33:34 he Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* unsigned % unsigned */
 ENTRY(__umodsi3)
+#ifndef __mc68010__
 	movel	%sp@(4),%d1
 	divull	%sp@(8),%d0:%d1
 	rts
+#else
+| NB: this requires that __udivsi3 preserve the %a0
+| register, and that it returns the modulus in %d1:
+	movel	%sp@+, %a0	| pop the return address
+	jsr	_C_LABEL(__udivsi3)
+	movel	%d1, %d0	| move the modulus into %d0
+	jmp	%a0@		| return
+#endif /* __mc68010__ */
