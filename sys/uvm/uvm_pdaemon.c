@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.71 2005/12/21 12:24:47 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.71 2005/12/21 12:24:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -475,7 +475,7 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			 * skip to next page.
 			 */
 
-			if (pmap_clear_reference(p)) {
+			if (pmap_is_referenced(p)) {
 				uvm_pageactivate(p);
 				uvmexp.pdreact++;
 				continue;
