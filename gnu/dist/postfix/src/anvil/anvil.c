@@ -1,4 +1,4 @@
-/*	$NetBSD: anvil.c,v 1.1.1.1 2005/08/18 21:07:49 rpaulo Exp $	*/
+/*	$NetBSD: anvil.c,v 1.1.1.2 2006/01/05 02:10:01 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -808,6 +808,12 @@ static void post_jail_init(char *unused_name, char **unused_argv)
      * Do not limit the number of client requests.
      */
     var_use_limit = 0;
+
+    /*
+     * Don't exit before the sampling interval ends.
+     */
+    if (var_idle_limit < var_anvil_time_unit)
+	var_idle_limit = var_anvil_time_unit;
 }
 
 /* anvil_status_dump - log and reset extreme usage */
