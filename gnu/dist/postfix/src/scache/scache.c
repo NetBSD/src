@@ -1,4 +1,4 @@
-/*	$NetBSD: scache.c,v 1.1.1.1 2005/08/18 21:11:11 rpaulo Exp $	*/
+/*	$NetBSD: scache.c,v 1.1.1.2 2006/01/05 02:14:39 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -424,6 +424,7 @@ static void scache_service(VSTREAM *client_stream, char *unused_service,
      * dedicated to the scache service. All connection-management stuff is
      * handled by the common code in multi_server.c.
      */
+do {
     if (attr_scan(client_stream,
 		  ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
 		  ATTR_TYPE_STR, MAIL_ATTR_REQ, scache_request,
@@ -444,6 +445,7 @@ static void scache_service(VSTREAM *client_stream, char *unused_service,
 		       ATTR_TYPE_END);
 	}
     }
+} while (vstream_peek(client_stream) > 0);
     vstream_fflush(client_stream);
 }
 
