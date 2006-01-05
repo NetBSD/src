@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.701.2.17 2005/12/15 20:08:01 tron Exp $
+$NetBSD: pcidevs,v 1.701.2.18 2006/01/05 22:17:39 riz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2309,6 +2309,15 @@ product NVIDIA	GEFORCE4_TI4200	0x0253	GeForce4 Ti 4200
 product NVIDIA	QUADRO4_900XGL	0x0258	Quadro4 900XGL
 product NVIDIA	QUADRO4_750XGL	0x0259	Quadro4 750XGL
 product NVIDIA	QUADRO4_700XGL	0x025b	Quadro4 700XGL
+product NVIDIA	NFORCE430_PCIB	0x0260	nForce430 PCI-ISA bridge
+product NVIDIA	NFORCE430_SMBUS	0x0264	nForce430 SMBus Controller
+product NVIDIA	NFORCE430_ATA133	0x0265	nForce430 ATA133 IDE Controller
+product NVIDIA	NFORCE430_SATA1	0x0266	nForce430 Serial SATA Controller 1
+product NVIDIA	NFORCE430_SATA2	0x0267	nForce430 Serial SATA Controller 2
+product NVIDIA	NFORCE430_NET	0x0269	nForce430 Gigabit Ethernet Controller
+product NVIDIA	NFORCE430_AC	0x026c	nForce430 AC-97
+product NVIDIA	NFORCE430_OHCI	0x026d	nForce430 USB Controller
+product NVIDIA	NFORCE430_EHCI	0x026e	nForce430 USB2 Controller
 product NVIDIA	GF4_TI_4800	0x0280	GeForce4 Ti 4800
 product NVIDIA	GF4_TI_4200_8X	0x0281	GeForce4 Ti 4200 (AGP8X)
 product NVIDIA	GF4_TI_4800_SE	0x0282	GeForce4 Ti 4800 SE
