@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.57 2006/01/03 12:59:49 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.58 2006/01/05 11:22:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -328,6 +328,8 @@ extern struct nfs_public nfs_pub;
 int mountd_set_exports_list(const struct mountd_exports_list *, struct lwp *);
 int netexport_check(const fsid_t *, struct mbuf *, struct mount **, int *,
     struct ucred **);
+void netexport_rdlock(void);
+void netexport_rdunlock(void);
 #ifdef COMPAT_30
 int nfs_update_exports_30(struct mount *, const char *, void *, struct lwp *);
 #endif
