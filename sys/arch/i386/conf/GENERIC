@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.717 2006/01/04 23:40:45 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.718 2006/01/05 10:24:11 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.717 $"
+#ident 		"GENERIC-$Revision: 1.718 $"
 
 maxusers	32		# estimated number of users
 
@@ -44,7 +44,7 @@ options 	ENHANCED_SPEEDSTEP
 #options 	EST_FREQ_USERWRITE	# any user can set frequency
 
 # AMD PowerNow! K7
-options		POWERNOW_K7
+#options	POWERNOW_K7
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
