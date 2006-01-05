@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsetjmp.S,v 1.2 2006/01/05 04:38:39 uwe Exp $	*/
+/*	$NetBSD: compat_sigsetjmp.S,v 1.3 2006/01/05 04:41:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: compat_sigsetjmp.S,v 1.2 2006/01/05 04:38:39 uwe Exp $")
+	RCSID("$NetBSD: compat_sigsetjmp.S,v 1.3 2006/01/05 04:41:16 uwe Exp $")
 #endif
 
 ENTRY(sigsetjmp)
@@ -81,7 +81,7 @@ ENTRY(sigsetjmp)
 ENTRY(siglongjmp)
 	mov.l	@(_JB_HAS_MASK * 4, r4), r0
 	tst	r0, r0
-	bt	1f
+	bt	2f
 
 	PIC_PROLOGUE(.L_got_2)
 	/* we won't return here, so we don't need to save pr */
