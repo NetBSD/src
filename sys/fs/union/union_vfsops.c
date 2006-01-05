@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.31 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.32 2006/01/05 20:31:33 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.31 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.32 2006/01/05 20:31:33 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,16 +336,11 @@ union_unmount(mp, mntflags, l)
 	struct lwp *l;
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
-	struct vnode *um_rootvp;
-	int error;
 	int freeing;
 
 #ifdef UNION_DIAGNOSTIC
 	printf("union_unmount(mp = %p)\n", mp);
 #endif
-
-	if ((error = union_root(mp, &um_rootvp)) != 0)
-		return (error);
 
 	/*
 	 * Keep flushing vnodes from the mount list.
@@ -356,7 +351,7 @@ union_unmount(mp, mntflags, l)
 	 * (d) times, where (d) is the maximum tree depth
 	 * in the filesystem.
 	 */
-	for (freeing = 0; vflush(mp, um_rootvp, 0) != 0;) {
+	for (freeing = 0; vflush(mp, NULL, 0) != 0;) {
 		struct vnode *vp;
 		int n;
 
@@ -379,18 +374,9 @@ union_unmount(mp, mntflags, l)
 	 */
 
 	if (mntflags & MNT_FORCE)
-		vflush(mp, um_rootvp, FORCECLOSE);
+		vflush(mp, NULL, FORCECLOSE);
 
 
-	/* At this point the root vnode should have a single reference */
-	if (um_rootvp->v_usecount > 1) {
-		vput(um_rootvp);
-		return (EBUSY);
-	}
-
-#ifdef UNION_DIAGNOSTIC
-	vprint("union root", um_rootvp);
-#endif
 	/*
 	 * Discard references to upper and lower target vnodes.
 	 */
@@ -398,14 +384,6 @@ union_unmount(mp, mntflags, l)
 		vrele(um->um_lowervp);
 	vrele(um->um_uppervp);
 	crfree(um->um_cred);
-	/*
-	 * Release reference on underlying root vnode
-	 */
-	vput(um_rootvp);
-	/*
-	 * And blow it away for future re-use
-	 */
-	vgone(um_rootvp);
 	/*
 	 * Finally, throw away the union_mount structure
 	 */
