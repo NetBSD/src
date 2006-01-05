@@ -10730,3 +10730,67 @@ Apologies for any names omitted.
 	be fixed; it must be specified before the message content
 	is received.  Files: smtpd/smtpd.c, smtpd/smtpd_check.c,
 	cleanup/cleanup_extracted.c, pickup/pickup.c.
+
+20051201
+
+	Bugfix: the LMTP client would reuse a session after negative
+	reply to the RSET command (which may happen when client and
+	server somehow get out of sync). Problem found by Christian
+	Theune.  Files: lmtp/lmtp.c, lmtp/lmtp_proto.c.
+
+20051207
+
+	Bugfix: race condition in the connection caching protocol,
+	causing the SMTP delivery agent to hang after delivering
+	mail, while trying to save a connection. Introduced with
+	Postfix 2.2.5.  Files: scache/scache.c.
+
+20051208
+
+	Bugfix: the best_mx_transport, mailbox_transport and
+	fallback_transport features did not write a per-recipient
+	defer logfile record when the target delivery agent was
+	broken.  This the analog of queue manager bugfix 20051119.
+	Files: global/deliver_pass.c.
+
+20051212
+
+	Bugfix: an EHLO I/O error after STARTTLS would be reported
+	as a STARTTLS I/O error. File: smtp/smtp_proto.c.
+
+20051213
+
+	Bugfix: the *SQL, proxy and LDAP maps were not defined in
+	user-land commands such as postqueue. Leandro Santi. File:
+	postqueue/postqueue.c.
+
+20051225
+
+	Workaround: the regexp map cleverly avoided scanning constant
+	results for non-existent $number expressions, but failed
+	to subject those constant results to $$ -> $ replacement.
+	Since fixing this requires too much change for a stable
+	release, the optimization is turned off (it doesn't exist
+	in the 2.2 PCRE map, either). Files: util/dict_regexp.c.
+
+20051231
+
+	Bugfix: the anvil server would terminate after "max_idle"
+	seconds, even when this was less than the anvil_rate_time_unit
+	interval. File: anvil/anvil.c.
+
+20060101
+
+	Portability: 64-bit support for LINUX chroot script by Keith
+	Owens.  File: examples/chroot-setup/LINUX2.
+
+20060103
+
+	Backout: the Postfix 2.2.6 paranoia about garbage in remote
+	server replies caused "multiple delivery" problems or "no
+	delivery" problems with broken servers/firewalls. Postfix
+	still logs a warning but no longer defers delivery.  File:
+	smtp/smtp_chat.c.
+
+	Portability: FreeBSD 6 is a supported platform. Files:
+	util/sys_defs.h, makedefs.
