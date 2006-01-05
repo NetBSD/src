@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.4 2005/10/15 16:00:42 uwe Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.5 2006/01/05 00:18:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: _setjmp.S,v 1.4 2005/10/15 16:00:42 uwe Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.5 2006/01/05 00:18:10 uwe Exp $")
 #endif
 
 /*
@@ -63,7 +63,8 @@ ENTRY(_setjmp)
 	mov.l	r8, @-r4
 	sts.l	pr, @-r4
 	rts
-	xor	r0, r0
+	 xor	r0, r0
+	.size	_C_LABEL(_setjmp), .-_C_LABEL(_setjmp)
 
 ENTRY(_longjmp)
 	lds.l	@r4+, pr
@@ -82,4 +83,5 @@ ENTRY(_longjmp)
 	add	#1, r0
 .L0:
 	rts
-	nop
+	 nop
+	.size	_C_LABEL(_longjmp), .-_C_LABEL(_longjmp)
