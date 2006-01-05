@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.30 2005/12/29 01:41:13 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.31 2006/01/05 22:40:14 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -448,4 +448,12 @@ sys/kern/vfs_subr.c				1.231
 
 	Fix an annoying deadlock involving 3 separate processes.
 	[chs, ticket #10207]
+
+sys/dev/pci/pciide_common.c			1.29 via patch
+
+	Fix forcing use of DMA mode for the generic pciide driver:
+	default_chip_map() is called from pciide_attach() and at
+	this point we don't know which drives are here. Just assume
+	all drives are there and allocate DMA ressources for all of them.
+	[bouyer, ticket #10212]
 
