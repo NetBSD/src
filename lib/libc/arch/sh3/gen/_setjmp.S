@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.5 2006/01/05 00:18:10 uwe Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.6 2006/01/05 00:56:21 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,8 +35,10 @@
  */
 
 #include <machine/asm.h>
+#include <machine/setjmp.h>
+
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: _setjmp.S,v 1.5 2006/01/05 00:18:10 uwe Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.6 2006/01/05 00:56:21 uwe Exp $")
 #endif
 
 /*
@@ -50,9 +52,9 @@
  */
 
 ENTRY(_setjmp)
-	add	#4*10, r4
+	add	#((_JB_HAS_MASK + 1) * 4), r4
 	mov	#0, r0
-	mov.l	r0, @-r4
+	mov.l	r0, @-r4		/* no saved signal mask */
 	mov.l	r15, @-r4
 	mov.l	r14, @-r4
 	mov.l	r13, @-r4
