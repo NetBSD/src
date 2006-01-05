@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.8.2.3.2.1 2005/03/16 13:04:31 tron Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.8.2.3.2.2 2006/01/05 22:39:22 riz Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.8.2.3.2.1 2005/03/16 13:04:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.8.2.3.2.2 2006/01/05 22:39:22 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -841,7 +841,6 @@ default_chip_map(sc, pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	pcireg_t csr;
 	int channel, drive;
-	struct ata_drive_datas *drvp;
 	u_int8_t idedma_ctl;
 	bus_size_t cmdsize, ctlsize;
 	char *failreason;
@@ -949,12 +948,10 @@ next:
 		idedma_ctl = 0;
 		cp = &sc->pciide_channels[channel];
 		for (drive = 0; drive < 2; drive++) {
-			drvp = &cp->wdc_channel.ch_drive[drive];
-			/* If no drive, skip */
-			if ((drvp->drive_flags & DRIVE) == 0)
-				continue;
-			if ((drvp->drive_flags & DRIVE_DMA) == 0)
-				continue;
+			/*
+			 * we have not probed the drives yet, allocate
+			 * ressources for all of them.
+			 */
 			if (pciide_dma_table_setup(sc, channel, drive) != 0) {
 				/* Abort DMA setup */
 				aprint_error(
@@ -962,11 +959,11 @@ next:
 				    "using PIO transfers\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname,
 				    channel, drive);
-				drvp->drive_flags &= ~DRIVE_DMA;
+				sc->sc_dma_ok = 0;
+				sc->sc_wdcdev.cap &= ~(WDC_CAPABILITY_DMA |
+				    WDC_CAPABILITY_IRQACK);
+				break;
 			}
-			aprint_normal("%s:%d:%d: using DMA data transfers\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname,
-			    channel, drive);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		}
 		if (idedma_ctl != 0) {
