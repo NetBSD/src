@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_conf.l,v 1.6 2005/06/13 15:18:44 elad Exp $	*/
+/*	$NetBSD: veriexecctl_conf.l,v 1.7 2006/01/05 20:16:20 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -67,11 +67,11 @@ STRING		[0-9a-zA-Z]+
 			return STRING;
 		}
 
-
 	/* comments, white-outs */
 [ \t\r]		|
 #.*		;
 #.*\n		|
+\\\n		|
 ^\n		{ line++; }
 
 	/* eol on a line with data. need a call to ioctl, return eol */
