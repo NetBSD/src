@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.7 2006/01/06 03:58:31 uwe Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.8 2006/01/06 20:38:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,37 +36,76 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ptrace.S,v 1.7 2006/01/06 03:58:31 uwe Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.8 2006/01/06 20:38:01 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
+/*
+ * int
+ * ptrace(int request, pid_t pid, caddr_t addr, int data);
+ */
 ENTRY(ptrace)
+#ifdef _REENTRANT
+
+	mov.l	.L___errno, r1
+	PIC_PROLOGUE(.L_GOT)
+	sts.l   pr, @-sp
+	mov.l	r7, @-sp
+	mov.l	r6, @-sp
+	mov.l	r5, @-sp
+1:	CALL	r1
+	 mov.l	r4, @-sp
+	mov.l	@sp+, r4
+	mov.l	@sp+, r5
+	mov.l	@sp+, r6
+	mov.l	@sp+, r7
+	lds.l   @sp+, pr
+	PIC_EPILOGUE
+
+#else  /* ! _REENTRANT */
+
 #ifdef PIC
-	mova	L_GOT, r0
-	mov.l	L_GOT, r1
+	mova	.L_GOT, r0
+	mov.l	.L_GOT, r1
 	add	r0, r1
-	mov.l	L_errno, r0
+	mov.l	.L_errno, r0
 	mov.l	@(r0, r1), r0
 #else
-	mov.l	L_errno, r0
+	mov.l	.L_errno, r0
 #endif
-	xor	r1, r1
-	mov.l	r1, @r0
-	mov.l	LSYS_ptrace, r0
+
+#endif /* ! _REENTRANT */
+
+	mov	#0, r1
+	mov.l	r1, @r0			/* errno = 0; */
+
+	mov	#SYS_ptrace, r0
 	trapa	#0x80
 	bf	err
 	rts
-	nop
+	 nop
 err:
 	JUMP_CERROR
 
 	.align	2
-LSYS_ptrace:	.long	SYS_ptrace
+.L_GOT:
+	PIC_GOT_DATUM
+
+#ifdef _REENTRANT
+	.global	_C_LABEL(__errno)
+.L___errno:
+	CALL_DATUM(_C_LABEL(__errno), 1b)
+
+#else  /* ! _REENTRANT */
+	.global	_C_LABEL(errno)
+.L_errno:
 #ifdef PIC
-L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
-L_errno:	.long	_C_LABEL(errno)@GOT
+	.long	PIC_GOT(_C_LABEL(errno))
 #else
-L_errno:	.long	_C_LABEL(errno)
+	.long	_C_LABEL(errno)
 #endif
+
+#endif /* ! _REENTRANT */
+
 	SET_ENTRY_SIZE(ptrace)
