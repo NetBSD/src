@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.63 2006/01/04 10:13:05 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.64 2006/01/06 09:21:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.63 2006/01/04 10:13:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64 2006/01/06 09:21:44 yamt Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1532,6 +1532,7 @@ fdformat(dev, finfo, l)
 	if (bp == NULL)
 		return ENOBUFS;
 
+	bp->b_vp = NULL;
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = l->l_proc;
 	bp->b_dev = dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.88 2006/01/04 10:13:06 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.89 2006/01/06 09:21:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.88 2006/01/04 10:13:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.89 2006/01/06 09:21:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -755,6 +755,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	if (bp == NULL)
 		panic("bp is NULL after malloc in lfs_newbuf");
 #endif
+	bp->b_vp = NULL;
 	s = splbio();
 	bgetvp(vp, bp);
 	splx(s);
@@ -766,7 +767,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bp->b_error = 0;
 	bp->b_resid = 0;
 	bp->b_iodone = lfs_callback;
-	bp->b_flags |= B_BUSY | B_CALL | B_NOCACHE;
+	bp->b_flags = B_BUSY | B_CALL | B_NOCACHE;
 	bp->b_private = fs;
 
 	return (bp);
