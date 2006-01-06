@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.6 2003/10/24 04:41:28 uwe Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.7 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ptrace.S,v 1.6 2003/10/24 04:41:28 uwe Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.7 2006/01/06 03:58:31 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -59,24 +59,14 @@ ENTRY(ptrace)
 	rts
 	nop
 err:
-	mov.l	Lcerror, r1
-#ifdef PIC
-	braf	r1
-#else
-	jmp	@r1
-#endif
-	nop
-1:
+	JUMP_CERROR
 
 	.align	2
 LSYS_ptrace:	.long	SYS_ptrace
 #ifdef PIC
 L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
 L_errno:	.long	_C_LABEL(errno)@GOT
-Lcerror:	.long	cerror-1b
 #else
 L_errno:	.long	_C_LABEL(errno)
-Lcerror:	.long	cerror
 #endif
-
-
+	SET_ENTRY_SIZE(ptrace)
