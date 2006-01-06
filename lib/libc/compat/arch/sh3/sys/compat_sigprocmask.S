@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigprocmask.S,v 1.2 2006/01/06 03:58:31 uwe Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.3 2006/01/06 04:08:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: compat_sigprocmask.S,v 1.2 2006/01/06 03:58:31 uwe Exp $")
+	RCSID("$NetBSD: compat_sigprocmask.S,v 1.3 2006/01/06 04:08:47 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -44,31 +44,31 @@
 WARN_REFERENCES(sigprocmask, \
     "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
+/*
+ * int
+ * sigprocmask(int how, const sigset_t * restrict set,
+ *     sigset_t * restrict oset);
+ */
 ENTRY(sigprocmask)
-	mov	r5, r2			/* fetch new sigset pointer */
-	tst	r2, r2			/* check new sigset pointer */
-	bf	1f			/* if not null, indirect */
-	mov	#1, r4			/* SIG_BLOCK */
-	bra	2f
-	nop
-1:	mov.l	@r2, r2			/* fetch indirect ... */
-	mov	r2, r5			/* to new mask arg */
-2:	mov.l	LSYS_sigprocmask13, r0
+	tst	r5, r5			/* set == NULL? */
+	bf	1f
+
+	bra	2f			/* r5 (new mask) is already zero */
+	 mov	#1, r4			/* how = SIG_BLOCK */
+
+1:	mov.l	@r5, r5			/* fetch new mask */
+
+2:	mov	#SYS_compat_13_sigprocmask13, r0
 	trapa	#0x80
 	bf	err
-	mov	r6, r2			/* fetch old mask requested */
-	tst	r2, r2			/* test if old mask requested */
-	bt	out
-	mov.l	r0, @r2			/* store old mask */
-out:
-	xor	r0, r0
-	rts
-	nop
+
+	tst	r6, r6			/* oset == NULL? */
+	bt	3f
+	mov.l	r0, @r6			/* store old mask */
+3:	rts
+	 mov	#0, r0
+
 err:
 	JUMP_CERROR
-
-	.align	2
-LSYS_sigprocmask13:
-	.long	SYS_compat_13_sigprocmask13
 
 	SET_ENTRY_SIZE(sigprocmask)
