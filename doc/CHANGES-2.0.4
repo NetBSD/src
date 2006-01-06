@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.16 2005/12/29 01:41:36 riz Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.17 2006/01/06 23:54:35 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -143,4 +143,12 @@ sys/kern/vfs_subr.c				1.231
 
 	Fix an annoying deadlock involving 3 separate processes.
 	[chs, ticket #10207]
+
+sys/fs/union/union_vfsops.c			1.32 via patch
+
+	Change union_unmount() to not play with the fs root vnode explicitly.
+	Let it get recycled along with all of the others. This is important
+	as if the root vnode has already been reclaimed, then we get a panic
+	when we try to vget it.  This addresses PR: kern/31382
+	[wrstuden, ticket #10213]
 
