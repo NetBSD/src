@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.6 2005/12/31 05:08:28 uwe Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.7 2006/01/06 22:46:14 uwe Exp $ */
 	
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ ASSERT_IMMEDIATE_7BIT_OK(PT_TRAPUC)
  * already dealing with spin-preemption or other gunk.  
  */
 NENTRY(pthread__switch)
+	PIC_PROLOGUE(.L_GOT_1)
 	sts.l	pr, @-sp
 	mov	r4, r7	/* free r4 for function calls */
 
@@ -149,14 +150,16 @@ ALTENTRY(pthread__switch_return_point)
 	add	r0, sp			/* ditch the ucontext_t */
 	lds.l	@sp+, pr
 	rts
-	 nop
+	 PIC_EPILOGUE_SLOT
 
 
 	.align	2
+.L_GOT_1:
+	PIC_GOT_DATUM
 .L__getcontext_u_11:
-	CALL_DATUM_LOCAL(_C_LABEL(_getcontext_u), 11b)
+	CALL_DATUM(_C_LABEL(_getcontext_u), 11b)
 .L__setcontext_u_12:
-	CALL_DATUM_LOCAL(_C_LABEL(_setcontext_u), 12b)
+	CALL_DATUM(_C_LABEL(_setcontext_u), 12b)
 
 
 
@@ -185,7 +188,7 @@ Lpthread__switch_away_decrement:
 
 	.align	2
 .L__setcontext_u_21:
-	CALL_DATUM_LOCAL(_C_LABEL(_setcontext_u), 21b)
+	CALL_DATUM(_C_LABEL(_setcontext_u), 21b)
 
 
 
@@ -206,7 +209,7 @@ Lpthread__switch_away_no_decrement:
 
 	.align	2
 .L__setcontext_u_31:
-	CALL_DATUM_LOCAL(_C_LABEL(_setcontext_u), 31b)
+	CALL_DATUM(_C_LABEL(_setcontext_u), 31b)
 
 
 
@@ -217,6 +220,7 @@ Lpthread__switch_away_no_decrement:
  * prevent being removed from the queue before being switched away).
  */
 NENTRY(pthread__locked_switch)
+	PIC_PROLOGUE(.L_GOT_4)
 	sts.l	pr, @-sp
 	mov	r4, r7	/* free r4 for function calls */
 
@@ -335,15 +339,16 @@ Lpthread__locked_switch_return_point:
 	add	r0, sp			/* ditch the ucontext_t */
 	lds.l	@sp+, pr
 	rts
-	 nop
+	 PIC_EPILOGUE_SLOT
 
 
 	.align	2
+.L_GOT_4:
+	PIC_GOT_DATUM
 .L__getcontext_u_41:
-	CALL_DATUM_LOCAL(_C_LABEL(_getcontext_u), 41b)
+	CALL_DATUM(_C_LABEL(_getcontext_u), 41b)
 .L__setcontext_u_42:
-	CALL_DATUM_LOCAL(_C_LABEL(_setcontext_u), 42b)
-
+	CALL_DATUM(_C_LABEL(_setcontext_u), 42b)
 
 
 /*
@@ -354,6 +359,7 @@ Lpthread__locked_switch_return_point:
  * registers.
  */
 NENTRY(pthread__upcall_switch)
+	PIC_PROLOGUE_NOSAVE(.L_GOT_5)
 	mov	r4, r8	/* self */
 	mov	r5, r9	/* next */
 
@@ -427,11 +433,12 @@ Lupcall_no_new_preempt:
 	NOTREACHED
 
 	.align	2
+.L_GOT_5:
+	PIC_GOT_DATUM
 .L_pthread__sa_recycle_51:
-	CALL_DATUM_LOCAL(_C_LABEL(pthread__sa_recycle), 51b)
+	CALL_DATUM(_C_LABEL(pthread__sa_recycle), 51b)
 .L__setcontext_u_52:
-	CALL_DATUM_LOCAL(_C_LABEL(_setcontext_u), 52b)
-
+	CALL_DATUM(_C_LABEL(_setcontext_u), 52b)
 
 
 /*
