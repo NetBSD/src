@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.4 2003/08/07 16:42:20 agc Exp $	*/
+/*	$NetBSD: exect.S,v 1.5 2006/01/06 01:53:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,44 +36,9 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: exect.S,v 1.4 2003/08/07 16:42:20 agc Exp $")
+	RCSID("$NetBSD: exect.S,v 1.5 2006/01/06 01:53:30 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
-#include <machine/psl.h>
 
-ENTRY(exect)
-	mov.l	LSYS_execve, r0
-	trapa	#0x80
-
-	mov.l	Lcerror, r1
-#ifdef PIC
-	braf	r0
-#else
-	jmp	@r0
-#endif
-	nop
-1:
-	.align	2
-LSYS_execve:	.long	SYS_execve
-#ifdef PIC
-Lcerror:	.long	cerror-1b
-#else
-Lcerror:	.long	cerror
-#endif
-
-#if 0
-ENTRY(exect)
-	movl	$(SYS_execve),%eax
-	pushf
-	popl	%edx
-	orl	$(PSL_T),%edx
-	pushl	%edx
-	popf
-	int	$0x80
-#ifdef PIC
-	jmp	PIC_PLT(cerror)		/* exect(file, argv, env); */
-#else
-	jmp	cerror
-#endif
-#endif
+PSEUDO(exect,execve)
