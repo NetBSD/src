@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.98 2005/11/25 08:00:18 agc Exp $ */
+/* $NetBSD: user.c,v 1.99 2006/01/06 18:11:00 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.98 2005/11/25 08:00:18 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.99 2006/01/06 18:11:00 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -951,6 +951,25 @@ valid_class(char *class)
 	}
 	return 0;
 }
+
+static int 
+valid_shell(const char *shellname)
+{
+	char *shellp;
+
+	if (access(_PATH_SHELLS, R_OK) == -1) {
+		/* Don't exit */
+		warn("Access failed for `%s'; will not validate shell `%s'",
+		    _PATH_SHELLS, shellname);
+		return 1;
+	} 
+
+	while ((shellp = getusershell()) != NULL)
+		if (strcmp(shellp, shellname) == 0)
+			return 1;
+
+	return 0;
+}
 #endif
 
 /* look for a valid time, return 0 if it was specified but bad */
@@ -1111,6 +1130,17 @@ adduser(char *login_name, user_t *up)
 		(void)snprintf(home, sizeof(home), "%s/%s", up->u_basedir,
 		    login_name);
 	}
+	if (up->u_flags & F_SHELL) {
+#ifdef EXTENSIONS
+		if (!valid_shell(up->u_shell)) {
+			(void)close(ptmpfd);
+			(void)pw_abort();
+			errx(EXIT_FAILURE, "Can't add user `%s': "
+			    "shell `%s' is not valid", login_name, up->u_shell);
+		}
+#endif
+	}
+
 	if (!scantime(&inactive, up->u_inactive)) {
 		warnx("Warning: inactive time `%s' invalid, password expiry off",
 				up->u_inactive);
@@ -1527,7 +1557,17 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 			pwp->pw_dir = up->u_home;
 		}
 		if (up->u_flags & F_SHELL) {
-			pwp->pw_shell = up->u_shell;
+#ifdef EXTENSIONS
+		if (!valid_shell(up->u_shell)) {
+			(void)close(ptmpfd);
+			(void)pw_abort();
+			errx(EXIT_FAILURE, "Can't modify user `%s': "
+			    "shell `%s' is not valid", login_name, up->u_shell);
+		}
+		pwp->pw_shell = up->u_shell;
+#else
+		pwp->pw_shell = up->u_shell;
+#endif
 		}
 #ifdef EXTENSIONS
 		if (up->u_flags & F_CLASS) {
@@ -1828,6 +1868,7 @@ useradd(int argc, char **argv)
 			break;
 #endif
 		case 's':
+			u.u_flags |= F_SHELL;
 			defaultfield = 1;
 			memsave(&u.u_shell, optarg, strlen(optarg));
 			break;
