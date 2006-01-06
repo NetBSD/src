@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.9 2003/08/07 16:42:20 agc Exp $	*/
+/*	$NetBSD: brk.S,v 1.10 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: brk.S,v 1.9 2003/08/07 16:42:20 agc Exp $")
+	RCSID("$NetBSD: brk.S,v 1.10 2006/01/06 03:58:31 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -83,15 +83,7 @@ ENTRY(_brk)
 	rts
 	mov.l	r4, @r1
 err:
-	mov.l	Lcerror, r1
-#ifdef PIC
-	braf	r1
-#else
-	jmp	@r1
-#endif
-	nop
-2:
-
+	JUMP_CERROR
 
 	.align	2
 LSYS_break:	.long	SYS_break
@@ -99,9 +91,8 @@ LSYS_break:	.long	SYS_break
 L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
 Lminbrk:	.long	_C_LABEL(__minbrk)@GOT
 Lcurbrk:	.long	curbrk@GOT
-Lcerror:	.long	cerror-2b
 #else
 Lminbrk:	.long	_C_LABEL(__minbrk)
 Lcurbrk:	.long	curbrk
-Lcerror:	.long	cerror
 #endif
+	SET_ENTRY_SIZE(_brk)
