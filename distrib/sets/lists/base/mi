@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.582 2005/12/29 14:53:45 tsutsui Exp $
+# $NetBSD: mi,v 1.583 2006/01/06 17:00:22 wiz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -231,7 +231,7 @@
 ./usr/X11R6/include/X11/bitmaps			base-x11-root
 ./usr/X11R6/include/X11/extensions		base-x11-root
 ./usr/X11R6/include/X11/fonts			base-x11-root
-./usr/X11R6/include/X11/fonts/codeconv		base-x11-root
+./usr/X11R6/include/X11/fonts/codeconv		base-obsolete		obsolete
 ./usr/X11R6/include/X11/pixmaps			base-x11-root
 ./usr/X11R6/include/fontconfig			base-x11-root
 ./usr/X11R6/include/freetype2			base-x11-root
@@ -348,7 +348,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68		base-x11-root
 ./usr/X11R6/lib/X11/xkb/types			base-x11-root
 ./usr/X11R6/lib/modules				base-x11-root
-./usr/X11R6/lib/modules/codeconv		base-x11-root-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv		base-obsolete		obsolete
 ./usr/X11R6/lib/modules/drivers			base-x11-root
 ./usr/X11R6/lib/modules/extensions		base-x11-root
 ./usr/X11R6/lib/modules/fonts			base-x11-root
