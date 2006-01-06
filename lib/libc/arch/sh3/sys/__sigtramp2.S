@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.1 2003/11/23 23:13:11 uwe Exp $ */
+/*	$NetBSD: __sigtramp2.S,v 1.2 2006/01/06 04:38:10 uwe Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -57,3 +57,5 @@ NENTRY(__sigtramp_siginfo_2)
 	SYSTRAP(setcontext)		/* and call setcontext() */
 	mov	r0, r4			/* exit with errno */
 	SYSTRAP(exit)			/* if sigreturn fails */
+
+	SET_ENTRY_SIZE(__sigtramp_siginfo_2)
