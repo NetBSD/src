@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.7 2005/12/25 11:08:35 uwe Exp $
+ *	$NetBSD: SYS.h,v 1.8 2006/01/06 03:58:31 uwe Exp $
  */
 
 #include <machine/asm.h>
@@ -63,28 +63,37 @@
 		SYSTRAP(y)
 
 #ifdef PIC
-#define _SYSCALL(x,y)					\
-		.text;					\
-	911:	mov.l	912f, r3;			\
-		braf	r3;				\
-		 nop;					\
-		.align	2;				\
-	912:	.long	cerror-(911b+6);		\
-		_SYSCALL_NOERROR(x,y);			\
-		bf	911b;				\
-		nop
-#else
-#define _SYSCALL(x,y)					\
-		.text;					\
-	911:	mov.l	912f, r3;			\
+
+#define JUMP_CERROR					\
+		mov	r0, r4;				\
+		mov.l	912f, r1;			\
+		mova	912f, r0;			\
+		mov.l	913f, r2;			\
+		add	r1, r0;				\
+		mov.l	@(r0, r2), r3;			\
 		jmp	@r3;				\
 		 nop;					\
 		.align	2;				\
-	912:	.long	cerror;				\
+	912:	.long	_GLOBAL_OFFSET_TABLE_;		\
+	913:	.long	PIC_GOT(cerror)
+
+#else  /* !PIC */
+
+#define JUMP_CERROR					\
+		mov.l	912f, r3;			\
+		jmp	@r3;				\
+		 mov	r0, r4;				\
+		.align	2;				\
+	912:	.long	cerror
+
+#endif /* !PIC */
+
+#define _SYSCALL(x,y)					\
+		.text;					\
+	911:	JUMP_CERROR;				\
 		_SYSCALL_NOERROR(x,y);			\
 		bf	911b;				\
 		nop
-#endif
 
 #define SYSCALL_NOERROR(x)				\
 		_SYSCALL_NOERROR(x,x)
