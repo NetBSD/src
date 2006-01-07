@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.4 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.5 2006/01/07 18:22:25 dsl Exp $	*/
 
 #ifndef _AMD64_SYSARCH_H_
 #define _AMD64_SYSARCH_H_
@@ -79,6 +79,12 @@ struct x86_64_pmc_read_args {
 	u_int64_t time;
 };
 
+#else
+/* Silence the build */
+struct x86_64_pmc_info_args;
+struct x86_64_pmc_startstop_args;
+struct x86_64_pmc_read_args;
+
 #endif /* todo */
 
 struct x86_64_get_mtrr_args {
@@ -93,24 +99,24 @@ struct x86_64_set_mtrr_args {
 
 
 #ifdef _KERNEL
-int x86_64_iopl __P((struct lwp *, void *, register_t *));
-int x86_64_get_mtrr __P((struct lwp *, void *, register_t *));
-int x86_64_set_mtrr __P((struct lwp *, void *, register_t *));
+int x86_64_iopl(struct lwp *, void *, register_t *);
+int x86_64_get_mtrr(struct lwp *, void *, register_t *);
+int x86_64_set_mtrr(struct lwp *, void *, register_t *);
 #else
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int x86_64_get_ldt __P((void *, int));
-int x86_64_set_ldt __P((void *, int));
-int x86_64_iopl __P((int));
-int x86_64_get_ioperm __P((u_long *));
-int x86_64_set_ioperm __P((u_long *));
-int x86_64_pmc_info __P((struct x86_64_pmc_info_args *));
-int x86_64_pmc_startstop __P((struct x86_64_pmc_startstop_args *));
-int x86_64_pmc_read __P((struct x86_64_pmc_read_args *));
-int x86_64_set_mtrr __P((struct mtrr *, int *));
-int x86_64_get_mtrr __P((struct mtrr *, int *));
-int sysarch __P((int, void *));
+int x86_64_get_ldt(void *, int);
+int x86_64_set_ldt(void *, int);
+int x86_64_iopl(int);
+int x86_64_get_ioperm(u_long *);
+int x86_64_set_ioperm(u_long *);
+int x86_64_pmc_info(struct x86_64_pmc_info_args *);
+int x86_64_pmc_startstop(struct x86_64_pmc_startstop_args *);
+int x86_64_pmc_read(struct x86_64_pmc_read_args *);
+int x86_64_set_mtrr(struct mtrr *, int *);
+int x86_64_get_mtrr(struct mtrr *, int *);
+int sysarch(int, void *);
 __END_DECLS
 #endif
 
