@@ -1,3 +1,9 @@
+2006-01-08  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/isakmp_cfg.c: make software behave as the documentation 
+	  advertise for INTERNAL_NETMASK4. Keep the old INTERNAL_MASK4 to 
+	  avoid breaking backward compatibility.
+
 2005-12-04  Frederic Senault  <fred@lacave.net>
 
 	* src/libipsec/{libpfkey.h|pfkey_dump.c}: add a sadump_withports
