@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.125 2005/12/14 19:49:16 bouyer Exp $	*/
+/*	$NetBSD: vnd.c,v 1.126 2006/01/07 13:25:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.125 2005/12/14 19:49:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.126 2006/01/07 13:25:50 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -228,7 +228,8 @@ static void	*vnd_alloc(void *, u_int, u_int);
 static void	vnd_free(void *, void *);
 #endif /* VND_COMPRESSION */
 
-void vndthread(void *);
+static void vndthread(void *);
+static void vndiodone1(struct vnd_softc *, struct vndxfer *);
 
 static dev_type_open(vndopen);
 static dev_type_close(vndclose);
@@ -463,7 +464,7 @@ done:
 	splx(s);
 }
 
-void
+static void
 vndthread(void *arg)
 {
 	struct vnd_softc *vnd = arg;
@@ -549,6 +550,9 @@ vndthread(void *arg)
 
 		if ((flags & B_READ) == 0)
 			vn_start_write(vnd->sc_vp, &mp, V_WAIT);
+
+		/* Instrumentation. */
+		disk_busy(&vnd->sc_dkdev);
 
 		/*
 		 * Feed requests sequentially.
@@ -645,9 +649,6 @@ vndthread(void *arg)
 				    nbp->vb_buf.b_bcount);
 #endif
 
-			/* Instrumentation. */
-			disk_busy(&vnd->sc_dkdev);
-
 			if ((nbp->vb_buf.b_flags & B_READ) == 0)
 				vp->v_numoutput++;
 			VOP_STRATEGY(vp, &nbp->vb_buf);
@@ -664,12 +665,7 @@ out: /* Arrive here at splbio */
 			vn_finished_write(mp, 0);
 		vnx->vx_flags &= ~VX_BUSY;
 		if (vnx->vx_pending == 0) {
-			if (vnx->vx_error != 0) {
-				bp->b_error = vnx->vx_error;
-				bp->b_flags |= B_ERROR;
-			}
-			VND_PUTXFER(vnd, vnx);
-			biodone(bp);
+			vndiodone1(vnd, vnx);
 		}
 		continue;
 done:
@@ -683,6 +679,38 @@ done:
 	kthread_exit(0);
 }
 
+static void
+vndiodone1(struct vnd_softc *vnd, struct vndxfer *vnx)
+{
+	struct buf *bp = vnx->vx_bp;
+	int error;
+
+	if ((vnx->vx_flags & VX_BUSY) != 0) {
+		return;
+	}
+	KASSERT(bp->b_resid != 0 || vnx->vx_pending == 0);
+	if (vnx->vx_pending > 0) {
+		return;
+	}
+#ifdef DEBUG
+	if (vnddebug & VDB_IO) {
+		printf("vndiodone1: bp %p iodone: error %d\n",
+		    bp, vnx->vx_error);
+	}
+#endif
+	error = vnx->vx_error;
+	if (error != 0) {
+		bp->b_flags |= B_ERROR;
+		bp->b_error = error;
+
+		/* we don't know which sub-buf failed */
+		bp->b_resid = bp->b_bcount;
+	}
+	VND_PUTXFER(vnd, vnx);
+	disk_unbusy(&vnd->sc_dkdev, bp->b_bcount - bp->b_resid,
+	    (bp->b_flags & B_READ));
+	biodone(bp);
+}
 
 static void
 vndiodone(struct buf *bp)
@@ -691,7 +719,7 @@ vndiodone(struct buf *bp)
 	struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
 	struct buf *pbp = vnx->vx_bp;
 	struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
-	int s, resid;
+	int s, done;
 
 	s = splbio();
 #ifdef DEBUG
@@ -703,11 +731,9 @@ vndiodone(struct buf *bp)
 		    vbp->vb_buf.b_bcount);
 #endif
 
-	resid = vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid;
-	pbp->b_resid -= resid;
-	disk_unbusy(&vnd->sc_dkdev, resid, (pbp->b_flags & B_READ));
+	done = vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid;
+	pbp->b_resid -= done;
 	vnx->vx_pending--;
-
 	if (vbp->vb_buf.b_error) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
@@ -723,34 +749,8 @@ vndiodone(struct buf *bp)
 	 * Wrap up this transaction if it has run to completion or, in
 	 * case of an error, when all auxiliary buffers have returned.
 	 */
-	if (vnx->vx_error != 0) {
-		pbp->b_flags |= B_ERROR;
-		pbp->b_error = vnx->vx_error;
-		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
-
-#ifdef DEBUG
-			if (vnddebug & VDB_IO)
-				printf("vndiodone: pbp %p iodone: error %d\n",
-					pbp, vnx->vx_error);
-#endif
-			VND_PUTXFER(vnd, vnx);
-			biodone(pbp);
-		}
-	} else if (pbp->b_resid == 0) {
-
-#ifdef DIAGNOSTIC
-		if (vnx->vx_pending != 0)
-			panic("vndiodone: vnx pending: %d", vnx->vx_pending);
-#endif
-
-		if ((vnx->vx_flags & VX_BUSY) == 0) {
-#ifdef DEBUG
-			if (vnddebug & VDB_IO)
-				printf("vndiodone: pbp %p iodone\n", pbp);
-#endif
-			VND_PUTXFER(vnd, vnx);
-			biodone(pbp);
-		}
+	if (vnx->vx_error != 0 || pbp->b_resid == 0) {
+		vndiodone1(vnd, vnx);
 	}
 
 	vnd->sc_active--;
