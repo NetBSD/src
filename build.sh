@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.142 2006/01/04 15:31:40 apb Exp $
+#	$NetBSD: build.sh,v 1.143 2006/01/07 18:45:15 dsl Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -862,7 +862,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.142 2006/01/04 15:31:40 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.143 2006/01/07 18:45:15 dsl Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -897,7 +897,7 @@ buildtools()
 	else
 		cleandir=
 	fi
-	${runcmd} "${makewrapper}" ${cleandir} dependall install ||
+	${runcmd} "${makewrapper}" ${parallel} ${cleandir} dependall install ||
 	    bomb "Failed to make tools"
 	statusmsg "Tools built to ${TOOLDIR}"
 	${runcmd} cd "${TOP}"
@@ -914,7 +914,7 @@ getkernelconf()
 		KERNSRCDIR="$(getmakevar KERNSRCDIR)"
 		KERNARCHDIR="$(getmakevar KERNARCHDIR)"
 		${runcmd} cd "${KERNSRCDIR}/${KERNARCHDIR}/compile"
-		${runcmd} "${makewrapper}" obj ||
+		${runcmd} "${makewrapper}" ${parallel} obj ||
 		    bomb "Failed to make obj in ${KERNSRCDIR}/${KERNARCHDIR}/compile"
 		${runcmd} cd "${TOP}"
 	fi
@@ -952,7 +952,7 @@ buildkernel()
 	    bomb "Cannot mkdir: ${kernelbuildpath}"
 	if [ "${MKUPDATE}" = "no" ]; then
 		${runcmd} cd "${kernelbuildpath}"
-		${runcmd} "${makewrapper}" cleandir ||
+		${runcmd} "${makewrapper}" ${parallel} cleandir ||
 		    bomb "Failed to make cleandir in ${kernelbuildpath}"
 		${runcmd} cd "${TOP}"
 	fi
@@ -960,7 +960,7 @@ buildkernel()
 		-s "${TOP}/sys" "${kernelconfpath}" ||
 	    bomb "${toolprefix}config failed for ${kernelconf}"
 	${runcmd} cd "${kernelbuildpath}"
-	${runcmd} "${makewrapper}" depend ||
+	${runcmd} "${makewrapper}" ${parallel} depend ||
 	    bomb "Failed to make depend in ${kernelbuildpath}"
 	${runcmd} "${makewrapper}" ${parallel} all ||
 	    bomb "Failed to make all in ${kernelbuildpath}"
