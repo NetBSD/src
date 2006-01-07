@@ -1,7 +1,8 @@
-#       $NetBSD: Makefile,v 1.1 2005/01/20 04:13:42 ginsbach Exp $
+#       $NetBSD: Makefile,v 1.2 2006/01/07 07:12:27 garbled Exp $
 
 WARNS=	3
-PROG=   seq
-LDADD+= -lm
+PROG=	seq
+DPADD=	${LIBMATH}
+LDADD=	-lm
 
 .include <bsd.prog.mk>
