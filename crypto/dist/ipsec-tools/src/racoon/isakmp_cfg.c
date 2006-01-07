@@ -1,9 +1,9 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.9 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.10 2006/01/07 23:51:50 manu Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.26.2.6 2005/09/23 14:29:45 manubsd Exp */
 
 /*
- * Copyright (C) 2004 Emmanuel Dreyfus
+ * Copyright (C) 2004-2006 Emmanuel Dreyfus
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -1558,10 +1558,21 @@ isakmp_cfg_setenv(iph1, envp, envc)
 	else
 		addrstr[0] = '\0';
 
-	if (script_env_append(envp, envc, "INTERNAL_MASK4", addrstr) != 0) { 
-		plog(LLV_ERROR, LOCATION, NULL, "Cannot set INTERNAL_MASK4\n");
-		return -1;
-	}
+       /* 
+	* During several releases, documentation adverised INTERNAL_NETMASK4
+	* while code was using INTERNAL_MASK4. We now do both.
+	*/
+	if (script_env_append(envp, envc, "INTERNAL_MASK4", addrstr) != 0) {
+                plog(LLV_ERROR, LOCATION, NULL, "Cannot set INTERNAL_MASK4\n");
+                return -1;
+        } 
+
+       if (script_env_append(envp, envc, "INTERNAL_NETMASK4", addrstr) != 0) {
+	       plog(LLV_ERROR, LOCATION, NULL,  
+		   "Cannot set INTERNAL_NETMASK4\n");
+	       return -1;
+       }
+
 
 	/* Internal IPv4 DNS */
 	if (iph1->mode_cfg->flags & ISAKMP_CFG_GOT_DNS4) 
