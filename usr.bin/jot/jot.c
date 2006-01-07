@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.13 2006/01/04 01:52:17 perry Exp $	*/
+/*	$NetBSD: jot.c,v 1.14 2006/01/07 07:09:01 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.13 2006/01/04 01:52:17 perry Exp $");
+__RCSID("$NetBSD: jot.c,v 1.14 2006/01/07 07:09:01 garbled Exp $");
 #endif /* not lint */
 
 /*
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: jot.c,v 1.13 2006/01/04 01:52:17 perry Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -311,6 +312,8 @@ putdata(double x, long notlast)
 		printf("%s", format);
 	else if (dox)				/* scalar */
 		printf(format, *dp);
+	else if (prec == 0)			/* integer */
+		printf(format, round(x));
 	else					/* real */
 		printf(format, x);
 	if (notlast != 0)
