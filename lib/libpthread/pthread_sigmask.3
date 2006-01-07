@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_sigmask.3,v 1.5 2003/10/30 12:57:11 wiz Exp $
+.\" $NetBSD: pthread_sigmask.3,v 1.6 2006/01/07 20:10:29 kleink Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_sigmask.3,v 1.10 2002/09/16 19:29:29 mini Exp $
-.Dd October 30, 2003
+.Dd January 7, 2006
 .Dt PTHREAD_SIGMASK 3
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@
 .\" .In pthread.h
 .In signal.h
 .Ft int
-.Fn pthread_sigmask "int how" "const sigset_t *set" "sigset_t *oset"
+.Fn pthread_sigmask "int how" "const sigset_t * restrict set" "sigset_t * restrict oset"
 .Sh DESCRIPTION
 The
 .Fn pthread_sigmask

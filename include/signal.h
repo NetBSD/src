@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.47 2005/12/27 17:21:28 perry Exp $	*/
+/*	$NetBSD: signal.h,v 1.48 2006/01/07 20:10:29 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,9 +64,11 @@ int	__libc_sigaction14(int, const struct sigaction * __restrict,
 
 #if (_POSIX_C_SOURCE - 0L) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
-int	pthread_sigmask(int, const sigset_t *, sigset_t *);
+int	pthread_sigmask(int, const sigset_t * __restrict,
+	    sigset_t * __restrict);
 int	pthread_kill(pthread_t, int);
-int	__libc_thr_sigsetmask(int, const sigset_t *, sigset_t *);
+int	__libc_thr_sigsetmask(int, const sigset_t * __restrict,
+	    sigset_t * __restrict);
 #ifndef __LIBPTHREAD_SOURCE__
 #define	pthread_sigmask		__libc_thr_sigsetmask
 #endif /* __LIBPTHREAD_SOURCE__ */
