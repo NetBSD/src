@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.236 2006/01/07 00:26:58 yamt Exp $	*/
+/*	$NetBSD: cd.c,v 1.237 2006/01/07 07:18:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.236 2006/01/07 00:26:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.237 2006/01/07 07:18:06 christos Exp $");
 
 #include "rnd.h"
 
@@ -976,7 +976,7 @@ cdbounce(struct buf *bp)
 		}
 	}
 done:
-	obp->b_flags |= bp->b_flags B_ERROR;
+	obp->b_flags |= bp->b_flags & B_ERROR;
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	free(bp->b_data, M_DEVBUF);
