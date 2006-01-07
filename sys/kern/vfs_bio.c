@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.150 2006/01/05 10:18:20 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.151 2006/01/07 00:26:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.150 2006/01/05 10:18:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.151 2006/01/07 00:26:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1351,11 +1351,8 @@ biowait(struct buf *bp)
 	while (!ISSET(bp->b_flags, B_DONE | B_DELWRI))
 		ltsleep(bp, PRIBIO + 1, "biowait", 0, &bp->b_interlock);
 
-	/* check for interruption of I/O (e.g. via NFS), then errors. */
-	if (ISSET(bp->b_flags, B_EINTR)) {
-		CLR(bp->b_flags, B_EINTR);
-		error = EINTR;
-	} else if (ISSET(bp->b_flags, B_ERROR))
+	/* check errors. */
+	if (ISSET(bp->b_flags, B_ERROR))
 		error = bp->b_error ? bp->b_error : EIO;
 	else
 		error = 0;

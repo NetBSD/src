@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.19 2006/01/04 10:13:05 yamt Exp $	*/
+/*	$NetBSD: fss.c,v 1.20 2006/01/07 00:26:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.19 2006/01/04 10:13:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.20 2006/01/07 00:26:58 yamt Exp $");
 
 #include "fss.h"
 
@@ -826,8 +826,6 @@ fss_cluster_iodone(struct buf *bp)
 
 	FSS_LOCK(scp->fc_softc, s);
 
-	if (bp->b_flags & B_EINTR)
-		fss_error(scp->fc_softc, "fs read interrupted");
 	if (bp->b_flags & B_ERROR)
 		fss_error(scp->fc_softc, "fs read error %d", bp->b_error);
 
