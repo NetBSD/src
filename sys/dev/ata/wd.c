@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.316 2006/01/04 10:13:05 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.317 2006/01/07 00:26:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.316 2006/01/04 10:13:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.317 2006/01/07 00:26:58 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -645,7 +645,7 @@ wd_split_mod15_write(struct buf *bp)
 	return;
 
  done:
-	obp->b_flags |= (bp->b_flags & (B_EINTR|B_ERROR));
+	obp->b_flags |= bp->b_flags & B_ERROR;
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	putiobuf(bp);
