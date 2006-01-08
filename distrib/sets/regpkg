@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.10 2006/01/08 10:10:03 apb Exp $
+# $NetBSD: regpkg,v 1.11 2006/01/08 10:24:04 apb Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -605,7 +605,7 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.10 2006/01/08 10:10:03 apb Exp $'
+		rcsid='$NetBSD: regpkg,v 1.11 2006/01/08 10:24:04 apb Exp $'
 		utcdate="$( ${ENV_CMD} TZ=UTC LOCALE=C \
 			${DATE} '+%Y-%m-%d %H:%M' )"
 		user="${USER:-root}"
@@ -779,17 +779,17 @@ create_syspkg_tgz ()
 
 		# Transform ${PLIST} into simple specfile format:
 		#
-		# "@dirrm ."		-> "."
-		# "@dirrm foo/bar"	-> "./foo/bar"
-		# "@dirrm ./foo/bar"	-> "./foo/bar"
+		# "@dirrm ."		-> ". type=dir"
+		# "@dirrm foo/bar"	-> "./foo/bar type=dir"
+		# "@dirrm ./foo/bar"	-> "./foo/bar type=dir"
 		# "foo/bar/baz"		-> "./foo/bar/baz"
 		# "./foo/bar/baz"	-> "./foo/bar/baz"
 		#
 		# Ignores @cwd lines.  This should be safe, given how
 		# makeplist works.
-		${AWK} '/^@dirrm \.\//	{print $2; next}
-			/^@dirrm \.$/	{print "."; next}
-			/^@dirrm/	{print "./" $2; next}
+		${AWK} '/^@dirrm \.\//	{print $2 " type=dir" ; next}
+			/^@dirrm \.$/	{print ". type=dir"; next}
+			/^@dirrm/	{print "./" $2 " type=dir" ; next}
 			/^@/		{next}
 			/^\.\//		{print $0; next}
 			/./		{print "./" $0; next}' \
