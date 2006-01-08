@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.206 2005/12/24 20:45:10 perry Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.207 2006/01/08 09:18:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.206 2005/12/24 20:45:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.207 2006/01/08 09:18:27 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -101,49 +101,35 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.206 2005/12/24 20:45:10 perry Exp $");
 #include <uvm/uvm_ddb.h>
 #endif
 
-#ifndef UVMMAP_NOCOUNTERS
+#if defined(UVMMAP_NOCOUNTERS)
+
+#define	UVMMAP_EVCNT_DEFINE(name)	/* nothing */
+#define UVMMAP_EVCNT_INCR(ev)		/* nothing */
+#define UVMMAP_EVCNT_DECR(ev)		/* nothing */
+
+#else /* defined(UVMMAP_NOCOUNTERS) */
+
 #include <sys/device.h>
-struct evcnt map_ubackmerge = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-    "uvmmap", "ubackmerge");
-struct evcnt map_uforwmerge = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-    "uvmmap", "uforwmerge");
-struct evcnt map_ubimerge = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-    "uvmmap", "ubimerge");
-struct evcnt map_unomerge = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-    "uvmmap", "unomerge");
-struct evcnt map_kbackmerge = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-    "uvmmap", "kbackmerge");
-struct evcnt map_kforwmerge = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-    "uvmmap", "kforwmerge");
-struct evcnt map_kbimerge = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-    "uvmmap", "kbimerge");
-struct evcnt map_knomerge = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-    "uvmmap", "knomerge");
-struct evcnt uvm_map_call = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-    "uvmmap", "map_call");
-struct evcnt uvm_mlk_call = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-    "uvmmap", "mlk_call");
-struct evcnt uvm_mlk_hint = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-    "uvmmap", "mlk_hint");
+#define	UVMMAP_EVCNT_DEFINE(name) \
+struct evcnt uvmmap_evcnt_##name = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, \
+    "uvmmap", #name); \
+EVCNT_ATTACH_STATIC(uvmmap_evcnt_##name);
+#define	UVMMAP_EVCNT_INCR(ev)		uvmmap_evcnt_##ev.ev_count++
+#define	UVMMAP_EVCNT_DECR(ev)		uvmmap_evcnt_##ev.ev_count--
 
-EVCNT_ATTACH_STATIC(map_ubackmerge);
-EVCNT_ATTACH_STATIC(map_uforwmerge);
-EVCNT_ATTACH_STATIC(map_ubimerge);
-EVCNT_ATTACH_STATIC(map_unomerge);
-EVCNT_ATTACH_STATIC(map_kbackmerge);
-EVCNT_ATTACH_STATIC(map_kforwmerge);
-EVCNT_ATTACH_STATIC(map_kbimerge);
-EVCNT_ATTACH_STATIC(map_knomerge);
-EVCNT_ATTACH_STATIC(uvm_map_call);
-EVCNT_ATTACH_STATIC(uvm_mlk_call);
-EVCNT_ATTACH_STATIC(uvm_mlk_hint);
+#endif /* defined(UVMMAP_NOCOUNTERS) */
 
-#define UVMCNT_INCR(ev)		ev.ev_count++
-#define UVMCNT_DECR(ev)		ev.ev_count--
-#else
-#define UVMCNT_INCR(ev)
-#define UVMCNT_DECR(ev)
-#endif
+UVMMAP_EVCNT_DEFINE(ubackmerge)
+UVMMAP_EVCNT_DEFINE(uforwmerge)
+UVMMAP_EVCNT_DEFINE(ubimerge)
+UVMMAP_EVCNT_DEFINE(unomerge)
+UVMMAP_EVCNT_DEFINE(kbackmerge)
+UVMMAP_EVCNT_DEFINE(kforwmerge)
+UVMMAP_EVCNT_DEFINE(kbimerge)
+UVMMAP_EVCNT_DEFINE(knomerge)
+UVMMAP_EVCNT_DEFINE(map_call)
+UVMMAP_EVCNT_DEFINE(mlk_call)
+UVMMAP_EVCNT_DEFINE(mlk_hint)
 
 const char vmmapbsy[] = "vmmapbsy";
 
@@ -927,7 +913,7 @@ retry:
 		uvm_maxkaddr = pmap_growkernel(start + size);
 #endif
 
-	UVMCNT_INCR(uvm_map_call);
+	UVMMAP_EVCNT_INCR(map_call);
 
 	/*
 	 * if uobj is null, then uoffset is either a VAC hint for PMAP_PREFER
@@ -1051,9 +1037,9 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 		}
 
 		if (kmap)
-			UVMCNT_INCR(map_kbackmerge);
+			UVMMAP_EVCNT_INCR(kbackmerge);
 		else
-			UVMCNT_INCR(map_ubackmerge);
+			UVMMAP_EVCNT_INCR(ubackmerge);
 		UVMHIST_LOG(maphist,"  starting back merge", 0, 0, 0, 0);
 
 		/*
@@ -1158,17 +1144,17 @@ forwardmerge:
 
 		if (merged) {
 			if (kmap) {
-				UVMCNT_DECR(map_kbackmerge);
-				UVMCNT_INCR(map_kbimerge);
+				UVMMAP_EVCNT_DECR(kbackmerge);
+				UVMMAP_EVCNT_INCR(kbimerge);
 			} else {
-				UVMCNT_DECR(map_ubackmerge);
-				UVMCNT_INCR(map_ubimerge);
+				UVMMAP_EVCNT_DECR(ubackmerge);
+				UVMMAP_EVCNT_INCR(ubimerge);
 			}
 		} else {
 			if (kmap)
-				UVMCNT_INCR(map_kforwmerge);
+				UVMMAP_EVCNT_INCR(kforwmerge);
 			else
-				UVMCNT_INCR(map_uforwmerge);
+				UVMMAP_EVCNT_INCR(uforwmerge);
 		}
 		UVMHIST_LOG(maphist,"  starting forward merge", 0, 0, 0, 0);
 
@@ -1206,9 +1192,9 @@ nomerge:
 	if (!merged) {
 		UVMHIST_LOG(maphist,"  allocating new map entry", 0, 0, 0, 0);
 		if (kmap)
-			UVMCNT_INCR(map_knomerge);
+			UVMMAP_EVCNT_INCR(knomerge);
 		else
-			UVMCNT_INCR(map_unomerge);
+			UVMMAP_EVCNT_INCR(unomerge);
 
 		/*
 		 * allocate new entry and link it in.
@@ -1326,7 +1312,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 	if (cur == &map->header)
 		cur = cur->next;
 
-	UVMCNT_INCR(uvm_mlk_call);
+	UVMMAP_EVCNT_INCR(mlk_call);
 	if (address >= cur->start) {
 
 		/*
@@ -1342,7 +1328,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 		 */
 
 		if (cur != &map->header && cur->end > address) {
-			UVMCNT_INCR(uvm_mlk_hint);
+			UVMMAP_EVCNT_INCR(mlk_hint);
 			*entry = cur;
 			UVMHIST_LOG(maphist,"<- got it via hint (0x%x)",
 			    cur, 0, 0, 0);
