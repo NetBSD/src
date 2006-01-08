@@ -1,5 +1,6 @@
-# $NetBSD: md.ews4800mips,v 1.2 2006/01/06 12:24:07 tsutsui Exp $
+# $NetBSD: md.ews4800mips,v 1.3 2006/01/08 15:35:00 tsutsui Exp $
 ./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/boot.coff				base-sysutil-bin
 ./usr/mdec/bootxx_bfs				base-sysutil-bin
 ./usr/mdec/bootxx_ustarfs			base-sysutil-bin
 ./usr/mdec/boot_kernel.gz			base-sysutil-bin
