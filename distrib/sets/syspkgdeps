@@ -6,6 +6,9 @@
 # nesting. E.g., if pkg P contains /foo/bar and Q contains /foo,
 # then Q is considered a dependency of P.
 #
+# Each line of output contains two syspkg names,
+# where the first syspkg depends on the second syspkg.
+#
 
 #set -u
 
