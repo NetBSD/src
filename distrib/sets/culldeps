@@ -44,9 +44,9 @@ while [ "$(${WC} -l "${LASTJOIN}" | ${AWK} '{ print $1; }')" -ne 0 ]; do
 	    ${JOIN} -1 2 -2 1 -o '1.1 2.2' - "${LASTJOIN}" | \
 	    ${SORT} -u > "${NEXTJOIN}"
 	if [ ${DEBUG:-0} -gt 0 ]; then
-		echo "### filtered ###" 1>&2
+		echo >&2 "${prog}: ### begin filtered results ###"
 		${JOIN} -t "${TAB}" "${NEXTJOIN}" "${LEFTOVERS}" | ${SORT} 1>&2
-		echo "###" 1>&2
+		echo >&2 "${prog}: ### end filtered results ###"
 	fi
 
 	#

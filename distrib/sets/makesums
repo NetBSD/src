@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makesums,v 1.14 2006/01/03 18:31:09 apb Exp $
+# $NetBSD: makesums,v 1.15 2006/01/08 10:10:03 apb Exp $
 #
 # Make checksum files for files in ``tardir''.  Usage:
 # makesums [-a] [-t tardir] [setname [...]]
@@ -60,7 +60,7 @@ done
 shift $((${OPTIND} - 1))
 
 if [ -z "${targetdir}" ]; then
-	echo 1>&2 '${RELEASEDIR} must be set or provided with -t'
+	echo >&2 "${prog}: \${RELEASEDIR} must be set or provided with -t"
 	exit 1
 fi
 

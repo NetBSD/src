@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.9 2006/01/04 14:14:35 apb Exp $
+# $NetBSD: regpkg,v 1.10 2006/01/08 10:10:03 apb Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -93,7 +93,7 @@ ERRWARNNOTE="${ERROR}"	# may be changed by "-u" (update) command line flag
 #
 SCRATCH="$( ${MKTEMP} -d "/var/tmp/${0##*/}.XXXXXX" )"
 if [ $? -ne 0 -o \! -d "${SCRATCH}" ]; then
-	echo >&2 "Could not create scratch directory."
+	echo >&2 "${prog}: Could not create scratch directory."
 	bomb
 fi
 
@@ -605,7 +605,7 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.9 2006/01/04 14:14:35 apb Exp $'
+		rcsid='$NetBSD: regpkg,v 1.10 2006/01/08 10:10:03 apb Exp $'
 		utcdate="$( ${ENV_CMD} TZ=UTC LOCALE=C \
 			${DATE} '+%Y-%m-%d %H:%M' )"
 		user="${USER:-root}"
