@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.261 2005/05/10 14:54:02 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.262 2006/01/08 01:23:51 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -194,7 +194,7 @@ FFLAGS+=	${FOPTS}
 
 .c.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.c} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
@@ -224,7 +224,7 @@ FFLAGS+=	${FOPTS}
 
 .cc.po .cpp.po .cxx.o .C.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.cc} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
@@ -254,7 +254,7 @@ FFLAGS+=	${FOPTS}
 
 .f.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} -pg ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.f} ${PROFFLAGS} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(FOPTS) && !empty(FOPTS:M*-g*)
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
@@ -288,7 +288,7 @@ FFLAGS+=	${FOPTS}
 
 .m.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.m} -pg ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.m} ${PROFFLAGS} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
@@ -320,13 +320,13 @@ FFLAGS+=	${FOPTS}
 
 .s.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.s} -DGPROF -DPROF ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.s} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
 	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
 	rm -f ${.TARGET}.tmp
 
 .S.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} -DGPROF -DPROF ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.S} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
 	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
 	rm -f ${.TARGET}.tmp
 
@@ -362,6 +362,7 @@ libinstall::
 .if ${MKPROFILE} != "no"
 _LIBS+=lib${LIB}_p.a
 POBJS+=${OBJS:.o=.po}
+PROFFLAGS?=-DGPROF -DPROF
 .endif
 
 .if ${MKPIC} != "no"							# {
