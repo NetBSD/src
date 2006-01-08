@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.5 2006/01/08 21:56:32 agc Exp $
+#	$NetBSD: ROADMAP,v 1.6 2006/01/08 21:57:26 agc Exp $
 
 A high-level roadmap for NetBSD
 
@@ -62,6 +62,15 @@ the date that you're claiming a project (or part of a project--if
 a part, please specify the part), and an expected completion date.
 This will hopefully avoid both duplication of effort and too many
 or too-extended stalls.
+
+PLEASE NOTE THAT THIS IS A VOLUNTEER PROJECT, AND THAT NONE OF THESE 
+RELEASE VERSIONS, OR NAMES, IS A GUARANTEE OF THE FUNCTIONALITY BEING  
+COMPLETE OR EVEN STARTED.  INTERESTED PARTIES SHOULD CONTACT
+
+        core@NetBSD.org
+
+FOR MORE INFORMATION.
+
 
 1. Platform independent kernel
 ==============================
