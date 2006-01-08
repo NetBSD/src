@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.8 2004/04/23 02:58:27 simonb Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.8.2.1 2006/01/08 15:58:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -168,7 +168,6 @@ NENTRY(pthread__switch_return_point)
  * Helper switch code used by pthread__locked_switch() and 
  * pthread__upcall_switch() when they discover spinlock preemption.
  */
-.globl pthread__switch_away
 pthread__switch_away:
 	STACK_SWITCH
 

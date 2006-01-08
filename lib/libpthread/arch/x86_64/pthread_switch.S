@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.10 2004/04/23 02:58:27 simonb Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.10.2.1 2006/01/08 15:58:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,7 +136,11 @@ ENTRY(pthread__switch)
 	 * Edit the context so that it continues as if returning from
 	 * the _setcontext_u below.  
 	 */
+#ifdef PIC
+	movq	PIC_GOT(pthread__switch_return_point), %r15
+#else
 	leaq	pthread__switch_return_point(%rip), %r15
+#endif
 	movq	%r15, UC_RIP(%r14)
 	movq	%r14, PT_UC(%r12)
 	
@@ -157,7 +161,6 @@ NENTRY(pthread__switch_return_point)
  * Helper switch code used by pthread__locked_switch() and 
  * pthread__upcall_switch() when they discover spinlock preemption.
  */
-.globl pthread__switch_away
 pthread__switch_away:
 	STACK_SWITCH
 
@@ -204,7 +207,11 @@ ENTRY(pthread__locked_switch)
 	 * Edit the context so that it continues as if returning from
 	 * the _setcontext_u below.  
 	 */
+#ifdef PIC
+	movq	PIC_GOT(locked_return_point), %r15
+#else
 	leaq	locked_return_point(%rip), %r15
+#endif
 	movq	%r15, UC_RIP(%r14)
 	movq	%r14, PT_UC(%r12)
 	
