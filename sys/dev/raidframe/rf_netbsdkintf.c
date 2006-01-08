@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.196 2006/01/08 09:11:21 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.197 2006/01/08 21:53:26 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.196 2006/01/08 09:11:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.197 2006/01/08 21:53:26 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1812,19 +1812,6 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 #endif
 
 	bp = req->bp;
-#if 1
-	/* XXX when there is a physical disk failure, someone is passing us a
-	 * buffer that contains old stuff!!  Attempt to deal with this problem
-	 * without taking a performance hit... (not sure where the real bug
-	 * is.  It's buried in RAIDframe somewhere) :-(  GO ) */
-
-	if (bp->b_flags & B_ERROR) {
-		bp->b_flags &= ~B_ERROR;
-	}
-	if (bp->b_error != 0) {
-		bp->b_error = 0;
-	}
-#endif
 
 	/*
 	 * context for raidiodone
@@ -1840,7 +1827,7 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 		printf(("WAKEUP CALLED\n"));
 		queue->numOutstanding++;
 
-		/* XXX need to glue the original buffer into this??  */
+		bp->b_flags = 0;
 
 		KernelWakeupFunc(bp);
 		break;
@@ -1853,7 +1840,7 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 		}
 #endif
 		InitBP(bp, queue->rf_cinfo->ci_vp,
-		    op | bp->b_flags, queue->rf_cinfo->ci_dev,
+		    op, queue->rf_cinfo->ci_dev,
 		    req->sectorOffset, req->numSector,
 		    req->buf, KernelWakeupFunc, (void *) req,
 		    queue->raidPtr->logBytesPerSector, req->b_proc);
