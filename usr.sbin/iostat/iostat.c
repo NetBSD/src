@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.45 2005/08/07 12:34:21 blymn Exp $	*/
+/*	$NetBSD: iostat.c,v 1.46 2006/01/08 08:47:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.45 2005/08/07 12:34:21 blymn Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.46 2006/01/08 08:47:16 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,8 +222,7 @@ main(int argc, char *argv[])
 		    ISSET(todo, SHOW_STATS_X)) {
 			do_header = 0;
 			header();
-			if ((hdrcnt -= lines) <= 0)
-				hdrcnt = winlines - 4;
+			hdrcnt = winlines - 4;
 		}
 
 		if (!ISSET(todo, SHOW_TOTALS)) {
