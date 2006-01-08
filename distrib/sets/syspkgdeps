@@ -116,7 +116,7 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-echo "checking for cyclic dependencies" 1>&2
+echo >&2 "${prog}: checking for cyclic dependencies"
 
 tsort_errors="$( ${TSORT} < "${SCRATCH}/alldeps" 2>&1 >/dev/null )"
 
@@ -124,16 +124,16 @@ if [ -n "${tsort_errors}" ]; then
 	# Errors from tsort are usually to do with cyclic dependencies.
 	# The most likely underlying cause is that /foo and /foo/bar/baz
 	# are in syspkg A, but /foo/bar is in syspkg B.
-	echo "${tsort_errors}" 1>&2
-	echo "Above messages probably indicate an error in the lists" 1>&2
+	echo >&2 "${tsort_errors}" # this is likely to be multiple lines
+	echo >&2 "${prog}: Above messages probably indicate an error in the lists"
 	exit 1
 fi
 
-echo "removing redundant dependencies" 1>&2
+echo >&2 "${prog}: removing redundant dependencies"
 
 ${HOST_SH} "${rundir}/culldeps" < "${SCRATCH}/alldeps"
 
 if [ $? -ne 0 ]; then
-	echo "error in culldeps, aborting" 1>&2
+	echo >&2 "${prog}: error in culldeps, aborting"
 	exit 1
 fi
