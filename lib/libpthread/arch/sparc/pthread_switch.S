@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.7 2003/09/07 14:47:54 cl Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.7.6.1 2006/01/08 15:58:26 riz Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ ENTRY_NOPROFILE(pthread__switch_return_point)
  * %i2 flag to clear lock
  */
 
-ENTRY(pthread__switch_away)
+pthread__switch_away:
 
 	STACK_SWITCH(%i1, %l2)
 
