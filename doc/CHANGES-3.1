@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.9 2006/01/05 22:31:05 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.10 2006/01/08 15:59:29 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -276,4 +276,27 @@ sbin/newfs/mkfs.c				1.93
 
 	The -b option is really on fsck_ffs, not fsck.
 	[hubertf, ticket #1088]
+
+sys/fs/union/union_vfsops.c			1.32
+
+	Change union_unmount() to not play with the fs root vnode explicitly.
+	Let it get recycled along with all of the others. This is important
+	as if the root vnode has already been reclaimed, then we get a panic
+	when we try to vget it.  This addresses PR: kern/31382
+	[wrstuden, ticket #1091]
+
+sys/net/if_gif.h				1.11
+sys/netinet/in_gif.c				1.45
+sys/netinet6/in6_gif.c				1.43
+
+	expire cached route. Fixes PR 22792.
+	[mlelstv, ticket #1092]
+
+lib/libpthread/arch/i386/pthread_switch.S	1.9
+lib/libpthread/arch/sparc/pthread_switch.S	1.8
+lib/libpthread/arch/sparc64/pthread_switch.S	1.9
+lib/libpthread/arch/x86_64/pthread_switch.S	1.11
+
+	Make libpthread really shared, i.e. not have text reocations.
+	[skrll, ticket #1093]
 
