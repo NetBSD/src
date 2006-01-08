@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.37 2005/08/08 16:42:54 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.38 2006/01/08 11:54:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.37 2005/08/08 16:42:54 christos Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.38 2006/01/08 11:54:13 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.37 2005/08/08 16:42:54 christos Exp $");
+__RCSID("$NetBSD: targ.c,v 1.38 2006/01/08 11:54:13 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -503,13 +503,23 @@ Targ_SetMain(GNode *gn)
     mainTarg = gn;
 }
 
+#define PrintWait (ClientData)1
+#define PrintPath (ClientData)2
+
 static int
-TargPrintName(ClientData gnp, ClientData ppath)
+TargPrintName(ClientData gnp, ClientData pflags)
 {
+    static int last_order;
     GNode *gn = (GNode *)gnp;
+
+    if (pflags == PrintWait && gn->order > last_order)
+	printf(".WAIT ");
+    last_order = gn->order;
+
     printf("%s ", gn->name);
+
 #ifdef notdef
-    if (ppath) {
+    if (pflags == PrintPath) {
 	if (gn->path) {
 	    printf("[%s]  ", gn->path);
 	}
@@ -518,7 +528,8 @@ TargPrintName(ClientData gnp, ClientData ppath)
 	}
     }
 #endif /* notdef */
-    return (ppath ? 0 : 0);
+
+    return 0;
 }
 
 
@@ -663,7 +674,7 @@ TargPrintNode(ClientData gnp, ClientData passp)
 		printf(":: "); break;
 	}
 	Targ_PrintType(gn->type);
-	Lst_ForEach(gn->children, TargPrintName, (ClientData)0);
+	Lst_ForEach(gn->children, TargPrintName, PrintWait);
 	fputc('\n', stdout);
 	Lst_ForEach(gn->commands, Targ_PrintCmd, (ClientData)0);
 	printf("\n\n");
