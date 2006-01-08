@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.es,v 1.1 2005/08/26 15:44:44 xtraeme Exp $	*/
+/*	$NetBSD: menus.md.es,v 1.2 2006/01/08 18:48:25 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,5 +37,5 @@
  *
  */
 
-/* macppc machine dependent menus, spanish */
+/* newsmips machine dependent menus, spanish */
 
