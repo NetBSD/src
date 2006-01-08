@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.195 2006/01/08 09:09:53 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.196 2006/01/08 09:11:21 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.195 2006/01/08 09:09:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.196 2006/01/08 09:11:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -675,29 +675,22 @@ raidstrategy(struct buf *bp)
 	if ((rs->sc_flags & RAIDF_INITED) ==0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return;
+		goto done;
 	}
 	if (raidID >= numraid || !raidPtrs[raidID]) {
 		bp->b_error = ENODEV;
 		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return;
+		goto done;
 	}
 	raidPtr = raidPtrs[raidID];
 	if (!raidPtr->valid) {
 		bp->b_error = ENODEV;
 		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return;
+		goto done;
 	}
 	if (bp->b_bcount == 0) {
 		db1_printf(("b_bcount is zero..\n"));
-		biodone(bp);
-		return;
+		goto done;
 	}
 
 	/*
@@ -706,13 +699,26 @@ raidstrategy(struct buf *bp)
 	 */
 
 	wlabel = rs->sc_flags & (RAIDF_WLABEL | RAIDF_LABELLING);
-	if (DISKPART(bp->b_dev) != RAW_PART)
+	if (DISKPART(bp->b_dev) == RAW_PART) {
+		uint64_t size; /* device size in DEV_BSIZE unit */
+
+		if (raidPtr->logBytesPerSector > DEV_BSHIFT) {
+			size = raidPtr->totalSectors <<
+			    (raidPtr->logBytesPerSector - DEV_BSHIFT);
+		} else {
+			size = raidPtr->totalSectors >>
+			    (DEV_BSHIFT - raidPtr->logBytesPerSector);
+		}
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE, size) <= 0) {
+			goto done;
+		}
+	} else {
 		if (bounds_check_with_label(&rs->sc_dkdev, bp, wlabel) <= 0) {
 			db1_printf(("Bounds check failed!!:%d %d\n",
 				(int) bp->b_blkno, (int) wlabel));
-			biodone(bp);
-			return;
+			goto done;
 		}
+	}
 	s = splbio();
 
 	bp->b_resid = 0;
@@ -724,6 +730,11 @@ raidstrategy(struct buf *bp)
 	wakeup(&(raidPtrs[raidID]->iodone));
 
 	splx(s);
+	return;
+
+done:
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 }
 /* ARGSUSED */
 int
