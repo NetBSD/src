@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.143 2006/01/07 18:45:15 dsl Exp $
+#	$NetBSD: build.sh,v 1.144 2006/01/08 11:03:40 dsl Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -862,7 +862,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.143 2006/01/07 18:45:15 dsl Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.144 2006/01/08 11:03:40 dsl Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -893,12 +893,13 @@ buildtools()
 	fi
 	${runcmd} cd tools
 	if [ "${MKUPDATE}" = "no" ]; then
-		cleandir=cleandir
-	else
-		cleandir=
+		${runcmd} "${makewrapper}" ${parallel} cleandir ||
+		    bomb "Failed to make cleandir tools"
 	fi
-	${runcmd} "${makewrapper}" ${parallel} ${cleandir} dependall install ||
-	    bomb "Failed to make tools"
+	${runcmd} "${makewrapper}" ${parallel} dependall ||
+	    bomb "Failed to make dependall tools"
+	${runcmd} "${makewrapper}" ${parallel} install ||
+	    bomb "Failed to make install tools"
 	statusmsg "Tools built to ${TOOLDIR}"
 	${runcmd} cd "${TOP}"
 }
