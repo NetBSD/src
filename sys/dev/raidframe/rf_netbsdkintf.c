@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.194 2006/01/07 16:08:44 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.195 2006/01/08 09:09:53 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.194 2006/01/07 16:08:44 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.195 2006/01/08 09:09:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -983,8 +983,6 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if (clabel == NULL)
 			return (ENOMEM);
 
-		memset((char *) clabel, 0, sizeof(RF_ComponentLabel_t));
-
 		retcode = copyin( *clabel_ptr, clabel,
 				  sizeof(RF_ComponentLabel_t));
 
@@ -1003,12 +1001,14 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			return(EINVAL);
 		}
 
-		raidread_component_label(raidPtr->Disks[column].dev,
+		retcode = raidread_component_label(raidPtr->Disks[column].dev,
 				raidPtr->raid_cinfo[column].ci_vp,
 				clabel );
 
-		retcode = copyout(clabel, *clabel_ptr,
-				  sizeof(RF_ComponentLabel_t));
+		if (retcode == 0) {
+			retcode = copyout(clabel, *clabel_ptr,
+					  sizeof(RF_ComponentLabel_t));
+		}
 		RF_Free(clabel, sizeof(RF_ComponentLabel_t));
 		return (retcode);
 
