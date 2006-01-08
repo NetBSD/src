@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkgset,v 1.6 2006/01/04 14:18:00 apb Exp $
+# $NetBSD: regpkgset,v 1.7 2006/01/08 10:25:33 apb Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -54,6 +54,9 @@ prog="${0##*/}"
 toppid=$$
 rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 . "${rundir}/sets.subr"
+
+: ${TARGET_ENDIANNESS:="$( arch_to_endian "${MACHINE_ARCH}" )"}
+export TARGET_ENDIANNESS
 
 bomb()
 {

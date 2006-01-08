@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.11 2006/01/08 10:24:04 apb Exp $
+# $NetBSD: regpkg,v 1.12 2006/01/08 10:25:33 apb Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -64,6 +64,8 @@ prog="${0##*/}"
 toppid=$$
 rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 . "${rundir}/sets.subr"
+
+: ${TARGET_ENDIANNESS:="$( arch_to_endian "${MACHINE_ARCH}" )"}
 
 bomb()
 {
@@ -605,7 +607,7 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.11 2006/01/08 10:24:04 apb Exp $'
+		rcsid='$NetBSD: regpkg,v 1.12 2006/01/08 10:25:33 apb Exp $'
 		utcdate="$( ${ENV_CMD} TZ=UTC LOCALE=C \
 			${DATE} '+%Y-%m-%d %H:%M' )"
 		user="${USER:-root}"
@@ -665,9 +667,16 @@ EOF
 		dbfile="${SYSPKG_DB_TOPDIR}/pkgdb.byfile.db"
 		dbtype="btree"
 		db_opts=''
-		# XXX: cross builds should really add "-E B" or "-E L"
-		# (big-endian or little-endian) to db_opts, but we don't
-		# do that yet.
+		case "${TARGET_ENDIANNESS}" in
+		4321)	db_opts="${db_opts} -E B" # big-endian
+			;;
+		1234)	db_opts="${db_opts} -E L" # little-endian
+			;;
+		*)
+			echo >&2 "${WARNING}Unknown or unsupported target endianness"
+			echo >&2 "${NOTE}Using host endianness"
+			;;
+		esac
 		if ${update} || ${force} ; then
 			# overwriting an existing entry is not an error
 			db_opts="${db_opts} -R"
