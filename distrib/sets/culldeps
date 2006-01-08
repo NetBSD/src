@@ -4,6 +4,9 @@
 #
 # Filter redundant dependencies.
 #
+# Each line of input and output contains two syspkg names,
+# where the first syspkg depends on the second syspkg.
+#
 # Emit all the dependencies on the standard input to the standard
 # output EXCEPT the dependencies which can be derived from other
 # dependencies by the transitive rule. For example, omit both A C
