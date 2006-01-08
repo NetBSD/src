@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.197 2006/01/08 21:53:26 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.198 2006/01/08 22:06:26 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.197 2006/01/08 21:53:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.198 2006/01/08 22:06:26 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1813,12 +1813,6 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 
 	bp = req->bp;
 
-	/*
-	 * context for raidiodone
-	 */
-
-	bp->b_fspriv.bf_private = req;
-
 	switch (req->type) {
 	case RF_IO_TYPE_NOP:	/* used primarily to unlock a locked queue */
 		/* XXX need to do something extra here.. */
@@ -1828,6 +1822,7 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 		queue->numOutstanding++;
 
 		bp->b_flags = 0;
+		bp->b_fspriv.bf_private = req;
 
 		KernelWakeupFunc(bp);
 		break;
@@ -1975,6 +1970,7 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	}
 	bp->b_proc = b_proc;
 	bp->b_iodone = cbFunc;
+	bp->b_fspriv.bf_private = cbArg;
 	bp->b_vp = b_vp;
 
 }
