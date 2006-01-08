@@ -65,14 +65,17 @@ esac
 # TBD clean up
 SCRATCH="$(${MKTEMP} -d "/var/tmp/${prog}.XXXXXX")"
 
-[ $? -ne 0 ] && { echo "Could not create scratch directory." 1>&2 ; exit 1 ; }
+if [ $? -ne 0 ]; then
+	echo >&2 "${prog}: Could not create scratch directory."
+	exit 1
+fi
 
 PATH_MEMBERSHIP="${SCRATCH}/path-membership"
 PATH_TO_PKGNAME="${SCRATCH}/pathpkg.db"
 PARENT_PKGNAMES="${SCRATCH}/parent-pkgnames"
 PARENT_PATHNAMES="${SCRATCH}/parent-pathnames"
 
-echo "indexing packages by pathnames" 1>&2
+echo >&2 "${prog}: indexing packages by pathnames"
 
 list_set_files ${sets} | ${SED} 's/^\.\///' | \
 ${ENV_CMD} PREFIX="${prefix}" ${AWK} '{
@@ -83,10 +86,14 @@ ${ENV_CMD} PREFIX="${prefix}" ${AWK} '{
 	}
 }' | ${SORT} -k 1 -u > "${PATH_MEMBERSHIP}"
 
-${DB} -q -w -f - btree "${PATH_TO_PKGNAME}" < "${PATH_MEMBERSHIP}" || \
-	echo "shit" 1>&2
+${DB} -q -w -f - btree "${PATH_TO_PKGNAME}" < "${PATH_MEMBERSHIP}"
 
-echo "computing parent pathnames" 1>&2
+if [ $? -ne 0 ]; then
+	echo >&2 "${prog}: error creating database, aborting"
+	exit 1
+fi
+
+echo >&2 "${prog}: computing parent pathnames"
 
 while read pathname pkgname; do
 	# print parent pathname.
@@ -94,7 +101,7 @@ while read pathname pkgname; do
 	dirname "${pathname}"
 done < "${PATH_MEMBERSHIP}" > "${PARENT_PATHNAMES}"
 
-echo "selecting parent packages using parent pathnames" 1>&2
+echo >&2 "${prog}: selecting parent packages using parent pathnames"
 
 ${DB} -q -f - btree "${PATH_TO_PKGNAME}" < "${PARENT_PATHNAMES}" | \
 	${PASTE} "${PATH_MEMBERSHIP}" - | \
@@ -103,6 +110,6 @@ ${DB} -q -f - btree "${PATH_TO_PKGNAME}" < "${PARENT_PATHNAMES}" | \
 	${HOST_SH} "${rundir}/culldeps"
 
 if [ $? -ne 0 ]; then
-	echo "error in parent-directory lookup, aborting" 1>&2
+	echo >&2 "${prog}: error in parent-directory lookup, aborting"
 	exit 1
 fi

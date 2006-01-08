@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.59 2006/01/04 15:03:39 apb Exp $
+# $NetBSD: maketars,v 1.60 2006/01/08 10:10:03 apb Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -100,12 +100,12 @@ if [ -n "$*" ]; then
 fi
 
 if [ -z "${tars}" -a -z "${installdir}" ]; then
-	echo 1>&2 \${RELEASEDIR} must be set, or -i must be used
+	echo >&2 "${prog}: \${RELEASEDIR} must be set, or -i must be used"
 	exit 1
 fi
 
 if [ -z "${dest}" ]; then
-	echo 1>&2 \${DESTDIR} must be set
+	echo >&2 "${prog}: \${DESTDIR} must be set"
 	exit 1
 fi
 : ${etcdir:="${dest}/etc"}
