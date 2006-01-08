@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.4 2005/12/13 15:30:18 briggs Exp $
+#	$NetBSD: ROADMAP,v 1.5 2006/01/08 21:56:32 agc Exp $
 
 A high-level roadmap for NetBSD
 
@@ -70,26 +70,38 @@ aa. Modular scheduler supporting CPU affinity and some soft RT features.
     but some applications really want some soft real-time capabilities and
     multi-processor systems could benefit from taking processor affinity
     into account (including support for HT CPUs).
+	Responsible: matt (possibly)
+	ETA: ?
 
 ab. Reduction of the giant lock
     There are several proposals for the best way forward on this, but
     we really need a couple of people with time to step forward and
     lead us here.
+	Responsible: TBD
+	ETA: ?
 
 ac. Expansion of wedge support
     Complete the development of wedges and retire disklabels except
     where needed for compatibility.
+	Responsible: thorpej (possibly)
+	ETA: 5.0
 
 ad. Volume management
     Allow us to grow, shrink, and move partitions (and, where possible,
     filesystems).
+	Responsible: TBD
+	ETA: ?
 
 ae. High-performance, maybe log-based, journalled fs w/ snapshot support
     Addition of logs, journals, and snapshots to FFS is a lot, another
     filesystem could be cleaner and faster.
+	Responsible: TBD
+	ETA: ?
 
 af. Expansion of ieee1394 support
     Where possible, fully support DV, disk, and network devices.
+	Responsible: TBD
+	ETA: Preliminary firewire support is in 4.0
 
 ag. Generic device hotplug support
     Support hotplug of all devices and busses that support it.  This
@@ -97,99 +109,166 @@ ag. Generic device hotplug support
     platform-dependent areas.  SATA, SCSI, FC, USB, Firewire,
     PCI (PCI-X, and PCI-Express), etc.  There is some rudimentary
     support present, but it is far from comprehensive.
+	Responsible: bouyer
+	ETA: ?
 
 ah. Suspend and resume support
     We should be able to fully utilize suspend and resume on PCs, macppc,
     and anyone else who supports it in hardware (sparc, hpcsh, hpcarm, etc).
+	Responsible: TBD
+	ETA: ?
 
 ai. Complete support for LWPs
     There are still vestiges of the kernel that predate LWPification
     and should be updated.  [ What other than ktrace? ]
+	Responsible: darrenr, skrll, christos did ktrace-lwp
+	ETA: 4.0
 
 aj. PTHREAD_CONCURRENCY > 1 support
     A single process that uses threads should be able to reliably
     utilize more than one CPU.
+	Responsible: TBD
+	ETA: ?
 
 ak. AIO support
     POSIX aio_*() with full support for Asynchronous I/O (AIO) in the
     kernel.
+	Responsible: briggs
+	ETA: 5.0?
 
 al. Modern parallel port support
     Complete support for bidirectional and "advanced" functionality
     from parallel ports.
+	Responsible: jdolecek
+	ETA: ?
 
 am. NFSv4
     Bring our NFS up to current standards.
+	Responsible: TBD
+	ETA: ?
 
 an. Update the locking mechanisms in the kernel
     This requires some platform support.  A good bit of work is on the
-    now-archaic "newlock" branch.  It requires some overhaul of
-    cpu_switch/scheduler so that mutex_*(9) and ltsleep(9) can interlock.
+    now-archaic "newlock" branch, from thorpej.  It requires some
+    overhaul of cpu_switch/scheduler so that mutex_*(9) and ltsleep(9)
+    can interlock.
+	Responsible: TBD
+	ETA: ?
 
 ao. Review TCP/IP developments
+    Fix NewReno
+	Responsible: mycroft
+	ETA: (3.0)
+    Add SACK support to the kernel.
+	Responsible: kurahone
+	ETA: (3.0)
     Look into RFC3168 (ECN, http://www.icir.org/floyd/ecn.html) and
     other "recent" and current TCP/IP research.  Adapt our stack to the
     more modern world.
+	Responsible: TBD
+	ETA: ?
 
 ap. Kernel linker (ala FreeBSD's kld)
+	Responsible: TBD
+	ETA: ?
 
 aq. CARP/VRRP
     Functionality is great, but there might be some concern here over
     Cisco patents.
+	Responsible: Liam Foy
+	ETA: 5.0?
 
 ar. UDF filesystem support
     OpenBSD has recently added this.
+	Responsible: reinoud
+	ETA: 4.0
 
 as. RAIDFrame support for 3-way RAID 1
+	Responsible: TBD
+	ETA: ?
 
 at. RAIDFrame support for RAID 6
+	Responsible: oster
+	ETA: 5.0?
 
 au. More modern drivers
     We lack support for a number of more modern devices (PCI-Express,
     RAID cards, etc.) that are supported on other open source OSes.
+	Responsible: TBD
+	ETA: ?
 
 av. iSCSI initiator support
     We should be able to utilize iSCSI volumes.
+	Responsible: agc
+	ETA: 5.0?
 
-aw. Run-time changable limits to SysV IPC
+aw. Run-time changeable limits to SysV IPC
     Some of the limits for SysV IPC are hardcoded in the kernel
     configuration--these should be changable via sysctl.
+	Responsible: TBD
+	ETA: ?
 
 2. Platform independent userland
 ================================
 aa. Keep up with the X world
     Track X.org progress.  Maintain existing XFree86.
+	Responsible: a cast of thousands
+	ETA: ongoing
 
 ab. Reentrant libraries
     Make sure that all libraries are re-entrant and usable for threaded
     applications.
+	Responsible: ginsbach and others
+	ETA: 5.0?
 
 ac. gcc updates
     This requires some work to rework the gcc4 builds to work with BSD
     make(1) or update BSD make(1) or consider the unthinkable.
+	Responsible: mrg, matt
+	ETA: 4.0?
 
 ad. gdb updates
+	Responsible: TBD
+	ETA: 5.0?
 
 ae. binutils updates
     Probably go along with gdb updates.
+	Responsible: skrll
+	ETA: 4.0?
 
 af. Better post-mortem debugging tools
     It would be useful to have something between ps/*stat/etc. and
     gdb with a core file.  Something, perhaps, like SysV(?) crash(8).
+	Responsible: TBD
+	ETA: ?
 
 ag. Better 802.11 utilities and support
     To truly support mobile users, we need better support for scanning
     for base stations and affiliating with them.
+	Responsible: dyoung, skrll, scw and others
+	ETA: 4.0
 
 ah. Internationalization
     Citrus, wide-char curses (SoC integration?), collation, localized
     printf with positional parameter support, time & currency
     support, etc.  NetBSD has a global user and developer base and
     our i18n support should reflect that.
+        (a) Support cond. printf fmt    tnozaki                         3.0
+		Responsible: tnozaki
+		ETA: 3.0
+        (b) Support LC_COLLATE
+        (c) mklocale(1) -> localedef(1)
+        (d) wchar_t in C++
+        (e) i18nize userland commands
+        (f) in-kernel iconv
+		Responsible: TBD
+		ETA: ?
 
 ai. System packages
     In some fashion, we need to support system packages.  This is at
     least to allow for sane binary audits and binary patches.
+	Responsible: apb
+	ETA: 4.0
 
 aj. Provide support for binary packages in install
     We should have an integrated install that can install a desktop as
@@ -197,37 +276,53 @@ aj. Provide support for binary packages in install
     the quick and clean basic installs that we have now.  An extension
     of sysinst might fit the bill.  Or a tool that's both invoked by
     sysinst and available on a running system.
+	Responsible: agc and others
+	ETA: 4.0
 
 ak. Native signing/privacy software
     This could be BPG (from SoC) or openpgp-sdk.
+	Responsible: agc, cjs and others
+	ETA: 4.0?
 
 al. Userland version identification
     What binaries are installed?  Who really knows?  This relates at
     least somewhat to (ai).
+	Responsible: TBD
+	ETA: ?
 
 3. Platform dependent kernel
 ============================
 aa. Move evb ports to evb* if they're not already there (sandpoint)
     The existing evb* ports are kind of catch-all ports for eval boards.
     Some of the existing non-evb* ports really belong in the evb* category.
+	Responsible: TBD
+	ETA: ?
 
 ab. m68k ports need to share more code
     Some progress has been made here in recent years, but there is more
     work to be done.
+	Responsible: TBD
+	ETA: ?
 
 ac. Kernel core dump support for all platforms
     Some platforms (PowerPC ports, ARM ports, etc.) don't have full
     support for kernel core dumps and post-mortem debugging through
     libkvm.  This should be updated.
+	Responsible: TBD
+	ETA: ?
 
 ad. NDIS
     Support for binary network drivers on x86 platforms.
+	Responsible: TBD
+	ETA: ?
 
 4. Platform dependent userland
 ==============================
 ab. m68k should be able to share sets
     Some progress has been made here in recent years, but there is more
     work to be done.
+	Responsible: TBD
+	ETA: ?
 
 5. Other
 ========
@@ -236,14 +331,20 @@ aa. More and better regression tests
     these and provide systems (or manage a volunteer pool?) to run the
     tests on -current and release branches on a variety of platforms.
     ( Perhaps virtualize some with qemu or similar? )
+	Responsible: TBD
+	ETA: ?
 
 ab. Native Java on multiple platforms
     Getting i386, amd64, sparc64, and PowerPC would be a good start,
     although PowerPC will require more work.  We have the go-ahead,
     but we need the people to work on it.
+	Responsible: the Java porting crew
+	ETA: ?
 
 ac. Power control framework
     Related to suspend/resume support, we should have some framework
     for dynamically stepping processor speed, controlling fans, shutting
     down and/or powering subsystems to conserve power and keep the system
     with thermal limits.
+	Responsible: TBD
+	ETA: ?
