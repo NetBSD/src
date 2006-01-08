@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.239 2005/12/27 00:46:38 chs Exp $	*/
+/*	$NetBSD: com.c,v 1.240 2006/01/08 22:19:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.239 2005/12/27 00:46:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.240 2006/01/08 22:19:59 dsl Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1509,7 +1509,7 @@ comparam(struct tty *tp, struct termios *t)
 		sc->sc_fifo = 0;
 
 	/* And copy to tty. */
-	tp->t_ispeed = 0;
+	tp->t_ispeed = t->c_ospeed;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
 
