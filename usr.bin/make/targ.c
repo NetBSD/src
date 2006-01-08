@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.38 2006/01/08 11:54:13 dsl Exp $	*/
+/*	$NetBSD: targ.c,v 1.39 2006/01/08 17:43:31 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.38 2006/01/08 11:54:13 dsl Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.39 2006/01/08 17:43:31 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.38 2006/01/08 11:54:13 dsl Exp $");
+__RCSID("$NetBSD: targ.c,v 1.39 2006/01/08 17:43:31 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -661,6 +661,16 @@ TargPrintNode(ClientData gnp, ClientData passp)
 	if (!Lst_IsEmpty (gn->parents)) {
 	    printf("# parents: ");
 	    Lst_ForEach(gn->parents, TargPrintName, (ClientData)0);
+	    fputc('\n', stdout);
+	}
+	if (!Lst_IsEmpty (gn->preds)) {
+	    printf("# preds: ");
+	    Lst_ForEach(gn->preds, TargPrintName, (ClientData)0);
+	    fputc('\n', stdout);
+	}
+	if (!Lst_IsEmpty (gn->successors)) {
+	    printf("# successors: ");
+	    Lst_ForEach(gn->successors, TargPrintName, (ClientData)0);
 	    fputc('\n', stdout);
 	}
 
