@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.6 2006/01/01 23:31:59 riz Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.7 2006/01/08 15:46:53 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -63,4 +63,12 @@ bin/systrace/intercept.h			1.18
 	Give systrace its own version of realpath() that does what it wants,
 	call it intercept_realpath().  Unbreaks systrace.
 	[elad, ticket #1078]
+
+sys/fs/union/union_vfsops.c			1.32
+
+	Change union_unmount() to not play with the fs root vnode explicitly.
+	Let it get recycled along with all of the others. This is important
+	as if the root vnode has already been reclaimed, then we get a panic
+	when we try to vget it.  This addresses PR: kern/31382
+	[wrstuden, ticket #1091]
 
