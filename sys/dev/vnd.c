@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.126 2006/01/07 13:25:50 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.127 2006/01/08 09:09:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.126 2006/01/07 13:25:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.127 2006/01/08 09:09:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -410,6 +410,7 @@ vndstrategy(struct buf *bp)
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
 	struct disklabel *lp = vnd->sc_dkdev.dk_label;
+	daddr_t blkno;
 	int s = splbio();
 
 	bp->b_resid = bp->b_bcount;
@@ -451,6 +452,26 @@ vndstrategy(struct buf *bp)
 	/* If it's a nil transfer, wake up the top half now. */
 	if (bp->b_bcount == 0)
 		goto done;
+
+	/*
+	 * Put the block number in terms of the logical blocksize
+	 * of the "device".
+	 */
+
+	blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+
+	/*
+	 * Translate the partition-relative block number to an absolute.
+	 */
+	if (DISKPART(bp->b_dev) != RAW_PART) {
+		struct partition *pp;
+
+		pp = &vnd->sc_dkdev.dk_label->d_partitions[
+		    DISKPART(bp->b_dev)];
+		blkno += pp->p_offset;
+	}
+	bp->b_rawblkno = blkno;
+
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndstrategy(%p): unit %d\n", bp, unit);
@@ -476,7 +497,6 @@ vndthread(void *arg)
 	caddr_t addr;
 	int sz, flags, error;
 	struct disklabel *lp;
-	struct partition *pp;
 
 	s = splbio();
 	vnd->sc_flags |= VNF_KTHREAD;
@@ -501,23 +521,8 @@ vndthread(void *arg)
 		lp = vnd->sc_dkdev.dk_label;
 		bp->b_resid = bp->b_bcount;
 
-		/*
-		 * Put the block number in terms of the logical blocksize
-		 * of the "device".
-		 */
-		bn = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
-
-		/*
-		 * Translate the partition-relative block number to an absolute.
-		 */
-		if (DISKPART(bp->b_dev) != RAW_PART) {
-			pp = &vnd->sc_dkdev.dk_label->d_partitions[
-			    DISKPART(bp->b_dev)];
-			bn += pp->p_offset;
-		}
-
-		/* ...and convert to a byte offset within the file. */
-		bn *= lp->d_secsize;
+		/* convert to a byte offset within the file. */
+		bn = bp->b_rawblkno * lp->d_secsize;
 
 		if (vnd->sc_vp->v_mount == NULL) {
 			bp->b_error = ENXIO;
