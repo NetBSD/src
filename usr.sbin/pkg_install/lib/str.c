@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.57 2005/11/13 19:48:35 wiz Exp $	*/
+/*	$NetBSD: str.c,v 1.58 2006/01/08 12:20:54 wiz Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.57 2005/11/13 19:48:35 wiz Exp $");
+__RCSID("$NetBSD: str.c,v 1.58 2006/01/08 12:20:54 wiz Exp $");
 #endif
 #endif
 
@@ -80,7 +80,7 @@ dirname_of(const char *path)
 {
 	size_t  cc;
 	char   *s;
-	static char buf[PATH_MAX];
+	static char buf[MaxPathSize];
 
 	if ((s = strrchr(path, '/')) == NULL) {
 		return ".";
