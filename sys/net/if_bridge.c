@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.22.2.1 2004/10/08 03:11:13 jmc Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.22.2.1.2.1 2006/01/09 13:29:53 tron Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.22.2.1 2004/10/08 03:11:13 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.22.2.1.2.1 2006/01/09 13:29:53 tron Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -480,6 +480,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 
+		memset(&args, 0, sizeof(args));
 		if (bc->bc_flags & BC_F_COPYIN) {
 			error = copyin(ifd->ifd_data, &args, ifd->ifd_len);
 			if (error)
@@ -797,6 +798,7 @@ bridge_ioctl_rts(struct bridge_softc *sc, void *arg)
 	LIST_FOREACH(brt, &sc->sc_rtlist, brt_list) {
 		if (len < sizeof(bareq))
 			goto out;
+		memset(&bareq, 0, sizeof(bareq));
 		strlcpy(bareq.ifba_ifsname, brt->brt_ifp->if_xname,
 		    sizeof(bareq.ifba_ifsname));
 		memcpy(bareq.ifba_dst, brt->brt_addr, sizeof(brt->brt_addr));
