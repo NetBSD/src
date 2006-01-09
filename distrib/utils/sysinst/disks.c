@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.90 2005/09/12 15:47:09 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.91 2006/01/09 10:00:34 tsutsui Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,6 +76,9 @@ struct disk_desc {
 
 /* Local prototypes */
 static int foundffs(struct data *, size_t);
+#ifdef USE_SYSVBFS
+static int foundsysvbfs(struct data *, size_t);
+#endif
 static int mount_root(void);
 static int fsck_preen(const char *, int, const char *);
 static void fixsb(const char *, const char *, char);
@@ -353,6 +356,13 @@ make_filesystems(void)
 			mnt_opts = "-tmsdos";
 			fsname = "msdos";
 			break;
+#ifdef USE_SYSVBFS
+		case FS_SYSVBFS:
+			asprintf(&newfs, "/sbin/newfs_sysvbfs");
+			mnt_opts = "-tsysvbfs";
+			fsname = "sysvbfs";
+			break;
+#endif
 		}
 		if (lbl->pi_flags & PIF_NEWFS && newfs != NULL) {
 			error = run_program(RUN_DISPLAY | RUN_PROGRESS,
@@ -445,6 +455,12 @@ make_fstab(void)
 			scripting_fprintf(f, "/dev/%s%c\t\tnone\tswap\tsw\t\t 0 0\n",
 				diskdev, 'a' + i);
 			continue;
+#ifdef USE_SYSVBFS
+		case FS_SYSVBFS:
+			fstype = "sysvbfs";
+			make_target_dir("/stand");
+			break;
+#endif
 		default:
 			fstype = "???";
 			s = "# ";
@@ -512,6 +528,24 @@ foundffs(struct data *list, size_t num)
 		return error;
 	return 0;
 }
+
+#ifdef USE_SYSVBFS
+static int
+/*ARGSUSED*/
+foundsysvbfs(struct data *list, size_t num)
+{
+	int error;
+
+	if (num < 2 || strcmp(list[1].u.s_val, "/") == 0 ||
+	    strstr(list[2].u.s_val, "noauto") != NULL)
+		return 0;
+
+	error = target_mount("", list[0].u.s_val, ' '-'a', list[1].u.s_val);
+	if (error != 0)
+		return error;
+	return 0;
+}
+#endif
 
 /*
  * Do an fsck. On failure, inform the user by showing a warning
@@ -635,6 +669,10 @@ mount_disks(void)
 	static struct lookfor fstabbuf[] = {
 		{"/dev/", "/dev/%s %s ffs %s", "c", NULL, 0, 0, foundffs},
 		{"/dev/", "/dev/%s %s ufs %s", "c", NULL, 0, 0, foundffs},
+#ifdef USE_SYSVBFS
+		{"/dev/", "/dev/%s %s sysvbfs %s", "c", NULL, 0, 0,
+		    foundsysvbfs},
+#endif
 	};
 	static size_t numfstabbuf = sizeof(fstabbuf) / sizeof(struct lookfor);
 
