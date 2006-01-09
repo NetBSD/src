@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.299 2006/01/03 21:34:05 apb Exp $
+.\"	$NetBSD: main,v 1.300 2006/01/09 17:58:49 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,9 +46,9 @@
 .nr DOC_XR 1
 .ds MACHINE_LIST acorn26 acorn32 algor alpha amd64 amiga amigappc arc atari
 .as MACHINE_LIST " bebox cats cesfic cobalt dreamcast evbarm evbmips evbppc
-.as MACHINE_LIST " evbsh3 evbsh5 hp300 hp700 hpcarm hpcmips hpcsh hppa i386
-.as MACHINE_LIST " ibmnws iyonix luna68k mac68k macppc mipsco mmeye mvme68k
-.as MACHINE_LIST " mvmeppc netwinder news68k newsmips next68k ofppc openblocks
+.as MACHINE_LIST " evbsh3 evbsh5 ews4800mips hp300 hp700 hpcarm hpcmips hpcsh
+.as MACHINE_LIST " hppa i386 ibmnws iyonix luna68k mac68k macppc mipsco mmeye
+.as MACHINE_LIST " mvme68k mvmeppc netwinder news68k newsmips next68k ofppc
 .as MACHINE_LIST " pc532 pdp10 playstation2 pmax pmppc prep sandpoint sbmips
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen .
 .so \*[.CURDIR]/../common/macros
@@ -1099,6 +1099,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta IWAMOTO Toshihiro              Ta Mt    toshii@NetBSD.org Ta Sy hpcarm
 .It Ta Ichiro Fukuhara                Ta Mt    ichiro@NetBSD.org Ta Sy hpcarm
 .It Ta Ignatios Souvatzis             Ta Mt        is@NetBSD.org Ta Sy amiga
+.It Ta Izumi Tsutsui                  Ta Mt   tsutsui@NetBSD.org Ta Sy ews4800mips
 .It Ta Izumi Tsutsui                  Ta Mt   tsutsui@NetBSD.org Ta Sy hp300
 .It Ta Izumi Tsutsui                  Ta Mt   tsutsui@NetBSD.org Ta Sy news68k
 .It Ta Jason Thorpe                   Ta Mt   thorpej@NetBSD.org Ta Sy algor
