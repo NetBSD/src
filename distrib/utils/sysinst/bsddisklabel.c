@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.37 2006/01/09 10:00:34 tsutsui Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.38 2006/01/09 15:25:20 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -602,12 +602,13 @@ make_bsd_partitions(void)
 #endif
 #endif
 
-#if defined(PART_SYSVBFS) && defined(BFS_SIZE)
+#if defined(PART_SYSVBFS) && defined(SYSVBFS_SIZE)
 	bsdlabel[PART_SYSVBFS].pi_offset = partstart;
 	bsdlabel[PART_SYSVBFS].pi_fstype = FS_SYSVBFS;
-	bsdlabel[PART_SYSVBFS].pi_size = BFS_SIZE;
+	bsdlabel[PART_SYSVBFS].pi_size = SYSVBFS_SIZE;
 	bsdlabel[PART_SYSVBFS].pi_flags |= PIF_NEWFS | PIF_MOUNT;
-	strcpy(bsdlabel[PART_SYSVBFS].pi_mount, "/stand");
+	strlcpy(bsdlabel[PART_SYSVBFS].pi_mount, "/stand",
+	    sizeof bsdlabel[PART_SYSVBFS].pi_mount);
 	partstart += SYSVBFS_SIZE;
 #endif
 
