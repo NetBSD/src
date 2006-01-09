@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/01/09 09:55:53 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3 2006/01/09 10:03:51 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,7 +12,7 @@ DBG=		-Os -mmemcpy
 
 CRUNCHBIN=	ramdiskbin
 CRUNCHGEN_FLAGS= -d "${DBG}"
-LISTS=		${.CURDIR}/list # ${DISTRIBDIR}/common/list.sysinst
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	ramdisk
