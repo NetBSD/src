@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.25 2004/01/17 20:48:57 dbj Exp $	*/
+/*	$NetBSD: args.c,v 1.26 2006/01/09 10:17:05 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.25 2004/01/17 20:48:57 dbj Exp $");
+__RCSID("$NetBSD: args.c,v 1.26 2006/01/09 10:17:05 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -275,8 +275,7 @@ static void
 f_progress(char *arg)
 {
 
-	if (*arg != '0')
-		progress = 1;
+	progress = strsuftoll("progress blocks", arg, 0, LLONG_MAX);
 }
 
 #ifdef	NO_CONV
