@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.25 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.26 2006/01/09 01:33:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.25 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.26 2006/01/09 01:33:27 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -75,8 +75,6 @@ int     (*rf_DiskReadFunc) (RF_DagNode_t *);
 int     (*rf_DiskWriteFunc) (RF_DagNode_t *);
 int     (*rf_DiskReadUndoFunc) (RF_DagNode_t *);
 int     (*rf_DiskWriteUndoFunc) (RF_DagNode_t *);
-int     (*rf_DiskUnlockFunc) (RF_DagNode_t *);
-int     (*rf_DiskUnlockUndoFunc) (RF_DagNode_t *);
 int     (*rf_RegularXorUndoFunc) (RF_DagNode_t *);
 int     (*rf_SimpleXorUndoFunc) (RF_DagNode_t *);
 int     (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
@@ -93,8 +91,6 @@ rf_ConfigureDAGFuncs(RF_ShutdownList_t **listp)
 	rf_DiskReadUndoFunc = rf_DiskUndoFunc;
 	rf_DiskWriteFunc = rf_DiskWriteFuncForThreads;
 	rf_DiskWriteUndoFunc = rf_DiskUndoFunc;
-	rf_DiskUnlockFunc = rf_DiskUnlockFuncForThreads;
-	rf_DiskUnlockUndoFunc = rf_NullNodeUndoFunc;
 	rf_RegularXorUndoFunc = rf_NullNodeUndoFunc;
 	rf_SimpleXorUndoFunc = rf_NullNodeUndoFunc;
 	rf_RecoveryXorUndoFunc = rf_NullNodeUndoFunc;
@@ -380,36 +376,7 @@ rf_DiskUndoFunc(RF_DagNode_t *node)
 
 	return (0);
 }
-/*****************************************************************************
- * the execution function associated with an "unlock disk queue" node
- ****************************************************************************/
-int
-rf_DiskUnlockFuncForThreads(RF_DagNode_t *node)
-{
-	RF_DiskQueueData_t *req;
-	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 
-	req = rf_CreateDiskQueueData(RF_IO_TYPE_NOP,
-	    0L, 0, NULL, 0L, 0,
-	    (int (*) (void *, int)) node->wakeFunc,
-	    (void *) node,
-#if RF_ACC_TRACE > 0
-	    node->dagHdr->tracerec,
-#else
-	    NULL,
-#endif
-	    (void *) (node->dagHdr->raidPtr),
-	    RF_UNLOCK_DISK_QUEUE, NULL, PR_NOWAIT);
-	if (!req)
-		(node->wakeFunc) (node, ENOMEM);
-	else {
-		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->col]), req, RF_IO_NORMAL_PRIORITY);
-	}
-
-	return (0);
-}
 /*****************************************************************************
  * Callback routine for DiskRead and DiskWrite nodes.  When the disk
  * op completes, the routine is called to set the node status and
