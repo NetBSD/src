@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.34 2003/11/11 20:25:26 jonathan Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.34.4.1 2006/01/09 13:12:03 tron Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.34 2003/11/11 20:25:26 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.34.4.1 2006/01/09 13:12:03 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.34 2003/11/11 20:25:26 jonathan Exp $")
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/protosw.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -181,8 +182,9 @@ in_gif_output(ifp, family, m)
 		return ENOBUFS;
 	bcopy(&iphdr, mtod(m, struct ip *), sizeof(struct ip));
 
-	if (dst->sin_family != sin_dst->sin_family ||
-	    dst->sin_addr.s_addr != sin_dst->sin_addr.s_addr) {
+	if (sc->gif_route_expire - time.tv_sec <= 0 ||
+	    dst->sin_family != sin_dst->sin_family ||
+	    !in_hosteq(dst->sin_addr, sin_dst->sin_addr)) {
 		/* cache route doesn't match */
 		bzero(dst, sizeof(*dst));
 		dst->sin_family = sin_dst->sin_family;
@@ -206,6 +208,8 @@ in_gif_output(ifp, family, m)
 			m_freem(m);
 			return ENETUNREACH;	/*XXX*/
 		}
+
+		sc->gif_route_expire = time.tv_sec + GIF_ROUTE_TTL;
 	}
 
 	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL, NULL);
@@ -430,5 +434,11 @@ in_gif_detach(sc)
 	error = encap_detach(sc->encap_cookie4);
 	if (error == 0)
 		sc->encap_cookie4 = NULL;
+
+	if (sc->gif_ro.ro_rt) {
+		RTFREE(sc->gif_ro.ro_rt);
+		sc->gif_ro.ro_rt = NULL;
+	}
+
 	return error;
 }
