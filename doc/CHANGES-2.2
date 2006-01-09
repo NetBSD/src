@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.32 2006/01/06 23:55:08 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.33 2006/01/09 13:19:09 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -464,4 +464,16 @@ sys/fs/union/union_vfsops.c			1.32 via patch
 	as if the root vnode has already been reclaimed, then we get a panic
 	when we try to vget it.  This addresses PR: kern/31382
 	[wrstuden, ticket #10213]
+
+sys/net/if_gif.h				1.11
+sys/netinet/in_gif.c				1.45
+sys/netinet6/in6_gif.c				1.43
+
+	Expire cached route. Fixes PR kern/22792.
+	[mlelstv, ticket #10214]
+
+share/man/man9/pfil.9				1.30 via patch
+
+	pfil_add_hook() and pfil_remove_hook() return int, not void.
+	[riz, ticket #10217]
 
