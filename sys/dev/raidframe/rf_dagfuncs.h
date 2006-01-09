@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.h,v 1.9 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_dagfuncs.h,v 1.10 2006/01/09 01:33:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -50,7 +50,6 @@ int     rf_NullNodeUndoFunc(RF_DagNode_t * node);
 int     rf_DiskReadFuncForThreads(RF_DagNode_t * node);
 int     rf_DiskWriteFuncForThreads(RF_DagNode_t * node);
 int     rf_DiskUndoFunc(RF_DagNode_t * node);
-int     rf_DiskUnlockFuncForThreads(RF_DagNode_t * node);
 int     rf_GenericWakeupFunc(RF_DagNode_t * node, int status);
 int     rf_RegularXorFunc(RF_DagNode_t * node);
 int     rf_SimpleXorFunc(RF_DagNode_t * node);
@@ -73,8 +72,6 @@ extern int (*rf_DiskReadFunc) (RF_DagNode_t *);
 extern int (*rf_DiskWriteFunc) (RF_DagNode_t *);
 extern int (*rf_DiskReadUndoFunc) (RF_DagNode_t *);
 extern int (*rf_DiskWriteUndoFunc) (RF_DagNode_t *);
-extern int (*rf_DiskUnlockFunc) (RF_DagNode_t *);
-extern int (*rf_DiskUnlockUndoFunc) (RF_DagNode_t *);
 extern int (*rf_SimpleXorUndoFunc) (RF_DagNode_t *);
 extern int (*rf_RegularXorUndoFunc) (RF_DagNode_t *);
 extern int (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
