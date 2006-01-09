@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.93 2006/01/05 11:22:47 hubertf Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.94 2006/01/09 20:59:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.93 2006/01/05 11:22:47 hubertf Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.94 2006/01/09 20:59:25 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,8 +123,6 @@ static void calc_memfree(void);
 static void *mkfs_malloc(size_t size);
 #endif
 
-static int count_digits(uint64_t);
-
 /*
  * make file system for cylinder-group style file systems
  */
@@ -169,7 +167,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	int32_t cylno, i, csfrags;
 	struct timeval tv;
 	long long sizepb;
-	int nprintcols, printcolwidth;
+	int col;
 
 #ifndef STANDALONE
 	gettimeofday(&tv, NULL);
@@ -530,13 +528,6 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		    sblock.fs_fpg / sblock.fs_frag, sblock.fs_ipg);
 #undef B2MBFACTOR
 	}
-	/*
-	 * Now determine how wide each column will be, and calculate how
-	 * many columns will fit in a 80 char line.
-	 */
-	printcolwidth = count_digits(
-			fsbtodb(&sblock, cgsblock(&sblock, sblock.fs_ncg -1)));
-	nprintcols = 80 / (printcolwidth + 2);
 
 	/*
 	 * allocate space for superblock, cylinder group map, and
@@ -629,17 +620,37 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		    0xff, 256);
 
 	if (!mfs || Nflag)
-		printf("super-block backups (for fsck_ffs -b #) at:");
+		printf("super-block backups (for fsck_ffs -b #) at:\n");
+#define MAX_LINE 79
+	col = 0;
 	for (cylno = 0; cylno < sblock.fs_ncg; cylno++) {
+		char numbuf[16];
+		int len;
 		initcg(cylno, &tv);
 		if (mfs && !Nflag)
 			continue;
-		if (cylno % nprintcols == 0)
+		if (col < MAX_LINE) {
+			/* Print one line of numbers (int is enough) */
+			len = snprintf(numbuf, sizeof numbuf, " %d,", 
+			    (int)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
+			if (col + len < MAX_LINE) {
+				col += len;
+				printf(numbuf);
+				fflush(stdout);
+				continue;
+			}
+			col = 2 * MAX_LINE;
+		}
+		/* Then lines of dots */
+		if (col >= 2 * MAX_LINE) {
 			printf("\n");
-		printf(" %*lld,", printcolwidth,
-			(long long)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
+			col = MAX_LINE;
+		}
+		col++;
+		printf(".");
 		fflush(stdout);
 	}
+#undef MAX_LINE
 	if (!mfs || Nflag)
 		printf("\n");
 	if (Nflag)
@@ -1399,17 +1410,6 @@ copy_dir(struct direct *dir, struct direct *dbuf)
 			((struct odirect*)dbuf)->d_namlen =
 				bswap16(((struct odirect*)dir)->d_namlen);
 	}
-}
-
-/* Determine how many digits are needed to print a given integer */
-static int
-count_digits(uint64_t num)
-{
-	int ndig;
-
-	for (ndig = 1; num > 9; num /= 10, ndig++);
-
-	return (ndig);
 }
 
 static int
