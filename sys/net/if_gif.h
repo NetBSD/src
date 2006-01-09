@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.9 2002/11/11 18:35:27 itojun Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.9.12.1 2006/01/09 13:12:03 tron Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -65,7 +65,9 @@ struct gif_softc {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void	*gif_si;		/* softintr handle */
 #endif
+	long	gif_route_expire;
 };
+#define GIF_ROUTE_TTL	10
 
 #define gif_ro gifsc_gifscr.gifscr_ro
 #ifdef INET6
