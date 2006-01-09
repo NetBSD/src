@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.10 2006/01/08 15:59:29 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.11 2006/01/09 13:40:41 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -299,4 +299,14 @@ lib/libpthread/arch/x86_64/pthread_switch.S	1.11
 
 	Make libpthread really shared, i.e. not have text reocations.
 	[skrll, ticket #1093]
+
+share/man/man9/pfil.9				1.30 via patch
+
+	pfil_add_hook() and pfil_remove_hook() return int, not void.
+	[riz, ticket #1110]
+
+sys/net/if_bridge.c				1.35
+
+	Make sure we initialize all structs to 0.
+	[christos, ticket #1111]
 
