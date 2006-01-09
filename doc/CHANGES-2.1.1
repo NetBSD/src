@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.20 2006/01/06 23:54:26 riz Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.21 2006/01/09 13:31:06 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -219,4 +219,9 @@ sys/fs/union/union_vfsops.c			1.32 via patch
 	as if the root vnode has already been reclaimed, then we get a panic
 	when we try to vget it.  This addresses PR: kern/31382
 	[wrstuden, ticket #10213]
+
+sys/net/if_bridge.c				1.35
+
+	Make sure we initialize all structs to 0.
+	[christos, ticket #10219]
 
