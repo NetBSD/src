@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.68 2004/11/21 09:17:13 jmmv Exp $
+.\"	$NetBSD: hier.7,v 1.69 2006/01/09 18:41:18 tsutsui Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd November 21, 2004
+.Dd January 9, 2006
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -684,33 +684,33 @@ architecture-specific support
 .Pp
 .Bl -tag -width "playstation2/" -compact
 .It Sy acorn26/
-ARM2 and ARM3 based systems
+Acorn Archimedes, A-series and R-series systems
 .It Sy acorn32/
-Acorn RiscPC/A7000/NC and compatibles
+Acorn RiscPC/A7000 and VLSI RC7500
 .It Sy algor/
-Algorithmics MIPS evaluations board
+Algorithmics Ltd. MIPS evaluations boards
 .It Sy alpha/
-Digital Equipment Corp. Alpha architecture
+Digital/Compaq Alpha
 .It Sy amd64/
-AMD64 based systems
+Computers with x86_64 capable CPUs
 .It Sy amiga/
-Amiga architecture
+Commodore Amiga and MacroSystem DraCo
 .It Sy amigappc/
-PowerPC based Amiga architecture
+PowerPC based Amiga boards
 .It Sy arc/
-ARC specification compliant systems.
+MIPS-based machines following the Advanced RISC Computing spec
 .It Sy arm/
 ARM processor general support
 .It Sy atari/
-Atari architecture
+Atari TT030, Falcon and Hades
 .It Sy bebox/
-Be Inc. BeBox architecture
+Be Inc. BeBox
 .It Sy cats/
-Chalice Technology StrongARM evaluation board
+Chalice Technology's CATS and Intel's EBSA-285 evaluation boards
 .It Sy cesfic/
 CES FIC8234 VME processor board
 .It Sy cobalt/
-Cobalt Networks MIPS Microserver architecture
+Cobalt Networks' MIPS-based Microserver
 .It Sy dreamcast/
 Sega Dreamcast game console
 .It Sy evbarm/
@@ -718,71 +718,87 @@ ARM based evaluation boards
 .It Sy evbmips/
 MIPS based evaluation boards
 .It Sy evbppc/
-PowerPC based evaluation board
+PowerPC based evaluation boards and appliances
 .It Sy evbsh3/
-SH3 based evaluation boards
+SH3/SH4 based evaluation boards
+.It Sy evbsh5/
+SH5 based evaluation boards
+.It Sy ews4800mips/
+NEC's MIPS based EWS4800 workstations
 .It Sy hp300/
-Hewlett-Packard 9000/300 680x0-based workstations
+Hewlett-Packard 9000/300 and 400 680x0-based workstations
+.It Sy hp700/
+Hewlett-Packard 9000/700 HPPA based workstations
 .It Sy hpcarm/
-StrongARM based WinCE hand-held devices
+StrongARM based WinCE PDA machines
 .It Sy hpcmips/
-MIPS based WinCE hand-held devices
+MIPS based WinCE PDA machines
 .It Sy hpcsh/
-Hitachi SH3/4 based WinCE hand-held devices
+Hitachi SH3/4 based WinCE PDA machines
+.It Sy hppa/
+HPPA processor general support
 .It Sy i386/
-Intel 386/486/Pentium/etc. workstations
+80x86-based IBM PCs and clones
+.It Sy ibmnws/
+IBM Network Station 1000
 .It Sy iyonix/
-Castle Technology Intel xscale based workstations
+Castle Technology's Iyonix ARM based PCs
 .It Sy luna68k/
-Omron LUNA 68000-based workstations
+Omron Tateishi Electric's 680x0-based LUNA workstations
 .It Sy m68k/
-680x0 processor support
+680x0 processor general support
 .It Sy mac68k/
-Apple Computer 680x0-based workstations
+Apple Macintosh with 68k CPU
 .It Sy macppc/
-Apple Computer PowerPC-based workstations
+Apple Power Macintosh and clones
 .It Sy mips/
-MIPS processor support
+MIPS processor general support
 .It Sy mipsco/
-MIPS Computer Systems Inc. architecture
+MIPS Computer Systems Inc. family of workstations and servers
 .It Sy mmeye/
 Brains Inc. SH3 based mmEye multimedia server
 .It Sy mvme68k/
-VME 680x0-based cards
+Motorola MVME 680x0-based SBCs
+.It Sy mvmeppc/
+Motorola PowerPC VME SBCs
+.It Sy netwinder/
+StrongARM based NetWinder machines
 .It Sy news68k/
-Sony NEWS 680x0-based workstations
+Sony's 680x0-based NEWS workstations
 .It Sy newsmips/
-Sony NEWS MIPS-based workstations
+Sony's MIPS-based NEWS workstations
 .It Sy next68k/
-NeXT 680x0-based workstations
+NeXT 68k "black" hardware
 .It Sy ofppc/
 Open Firmware PowerPC workstations
 .It Sy pc532/
-pc532 architecture
+The NS32532-based PC532 computer
 .It Sy playstation2/
 SONY PlayStation 2
 .It Sy pmax/
-MIPS-based DECstation architecture
+Digital MIPS-based DECstations and DECsystems
 .It Sy pmppc/
 Artesyn's PM/PPC board
 .It Sy powerpc/
 PowerPC processor support
 .It Sy prep/
-PowerPC Reference Platform
+PReP (PowerPC Reference Platform) and CHRP machines
 .It Sy sandpoint/
 Motorola Sandpoint reference platform
 .It Sy sbmips/
-Broadcom/SiByte MIPS architecture
+Broadcom/SiByte evaluation boards
 .It Sy sgimips/
-SGI MIPS architecture
+Silicon Graphics' MIPS-based workstations
 .It Sy sh3/
-SH3 processor general support
+SH3/SH4 processor general support
+.It Sy sh5/
+SH5 processor general support
 .It Sy shark/
-StrongARM based Digital DNARD ("Shark") machines
+Digital DNARD ("Shark")
 .It Sy sparc/
-Sun Microsystems SPARC architecture
+Sun Microsystems SPARC (32-bit) and UltraSPARC (in 32-bit mode)
 .It Sy sparc64/
-Sun Microsystems UltraSPARC architecture
+Sun Microsystems UltraSPARC (in native 64-bit mode)
 .It Sy sun2/
 Sun Microsystems 68010-based Sun 2 architecture
 .It Sy sun3/
@@ -790,10 +806,14 @@ Sun Microsystems 68020/68030-based Sun 3/3x architecture
 .It Sy sun68k/
 680x0-based Sun architecture general support
 .It Sy vax/
-Digital Equipment Corp. VAX architecture
+Digital VAX
 .It Sy x68k/
 Sharp X680x0 680x0-based workstations
-.El
+.It Sy x86/
+General support for PC/AT compatibles with ia32 or x86_64 CPUs
+.It Sy xen/
+The Xen virtual machine monitor
+El
 .Pp
 .It Sy compat/
 kernel compatibility modules directory
