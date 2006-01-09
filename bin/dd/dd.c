@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.38 2005/04/20 17:38:59 rillig Exp $	*/
+/*	$NetBSD: dd.c,v 1.39 2006/01/09 10:17:05 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.38 2005/04/20 17:38:59 rillig Exp $");
+__RCSID("$NetBSD: dd.c,v 1.39 2006/01/09 10:17:05 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ static off_t	pending = 0;		/* pending seek if sparse */
 u_int		ddflags;		/* conversion options */
 uint64_t	cbsz;			/* conversion block size */
 u_int		files_cnt = 1;		/* # of files to copy */
-int		progress = 0;		/* display sign of life */
+uint64_t	progress = 0;		/* display sign of life */
 const u_char	*ctab;			/* conversion table */
 sigset_t	infoset;		/* a set blocking SIGINFO */
 
@@ -533,7 +533,7 @@ dd_out(int force)
 		(void)memmove(out.db, out.dbp - out.dbcnt, out.dbcnt);
 	out.dbp = out.db + out.dbcnt;
 
-	if (progress)
+	if (progress && (st.out_full + st.out_part) % progress == 0)
 		(void)write(STDERR_FILENO, ".", 1);
 }
 

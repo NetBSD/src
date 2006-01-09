@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.18 2004/02/13 17:56:17 wiz Exp $
+.\"	$NetBSD: dd.1,v 1.19 2006/01/09 10:17:05 apb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,11 +136,12 @@ distinguishing between a partial or complete block being read.
 .It Cm progress= Ns Ar n
 Switch on display of progress if
 .Va n
-is set to
-.Dq 1 ,
-i.e. a
+is set to any non-zero value.
+This will cause a
 .Dq \&.
-is printed for each block written to the output file.
+to be printed (to the standard error output) for every
+.Va n
+full or partial blocks written to the output file.
 .It Xo
 .Sm off
 .Cm conv=

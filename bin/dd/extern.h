@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 2003/09/14 19:20:19 jschauma Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 2006/01/09 10:17:05 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -59,7 +59,7 @@ extern uint64_t		cpy_cnt;
 extern uint64_t		cbsz;
 extern u_int		ddflags;
 extern u_int		files_cnt;
-extern int		progress;
+extern uint64_t		progress;
 extern const u_char	*ctab;
 extern const u_char	a2e_32V[], a2e_POSIX[];
 extern const u_char	e2a_32V[], e2a_POSIX[];
