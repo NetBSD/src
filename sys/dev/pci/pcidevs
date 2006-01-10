@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.701.2.18 2006/01/05 22:17:39 riz Exp $
+$NetBSD: pcidevs,v 1.701.2.19 2006/01/10 02:09:06 snj Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -268,7 +268,7 @@ vendor THOMASCONRAD	0x10da	Thomas-Conrad
 vendor ROHM		0x10db	Rohm Research
 vendor CERN		0x10dc	CERN/ECP/EDU
 vendor ES		0x10dd	Evans & Sutherland
-vendor NVIDIA		0x10de	Nvidia
+vendor NVIDIA		0x10de	NVIDIA
 vendor EMULEX		0x10df	Emulex
 vendor IMS		0x10e0	Integrated Micro Solutions
 vendor TEKRAM		0x10e1	Tekram Technology (1st PCI Vendor ID)
@@ -2227,6 +2227,7 @@ product	NVIDIA	NFORCE4_SMBUS	0x0052	nForce4 SMBus
 product NVIDIA	NFORCE4_ATA133	0x0053	nForce4 ATA133 IDE
 product	NVIDIA	NFORCE4_SATA1	0x0054	nForce4 Serial ATA 1
 product	NVIDIA	NFORCE4_SATA2	0x0055	nForce4 Serial ATA 2
+product	NVIDIA	NFORCE4_NET	0x0055	nForce4 Ethernet
 product NVIDIA	NFORCE4_AC	0x0059	nForce4 AC-97
 product NVIDIA	NFORCE2_PCIB	0x0060	nForce2 PCI-ISA bridge
 product NVIDIA	NFORCE2_SMBUS	0x0064	nForce2 SMBus Controller
