@@ -1,4 +1,4 @@
-/* $NetBSD: powernow_k7.c,v 1.1 2005/12/31 17:55:55 xtraeme Exp $ */
+/* $NetBSD: powernow_k7.c,v 1.2 2006/01/10 15:31:11 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -32,7 +32,7 @@
 /* Sysctl related code was adapted from NetBSD's i386/est.c for compatibility */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.1 2005/12/31 17:55:55 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.2 2006/01/10 15:31:11 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,7 +102,7 @@ static int powernow_node_target, powernow_node_current;
 /* Prototypes */
 struct state_s *pnowk7_getstates(cpuid_t cpuid);
 int pnowk7_setstate(unsigned int freq);
-static int powernow_sysctl_helper(SYSCTLFN_ARGS);
+static int powernow_sysctl_helper(SYSCTLFN_PROTO);
 
 static int
 powernow_sysctl_helper(SYSCTLFN_ARGS)
@@ -111,7 +111,7 @@ powernow_sysctl_helper(SYSCTLFN_ARGS)
         int fq, oldfq, error;
 
         if (freq_table == NULL)
-                return (EOPNOTSUPP);
+                return EOPNOTSUPP;
 
         node = *rnode;
         node.sysctl_data = &fq;
@@ -122,23 +122,21 @@ powernow_sysctl_helper(SYSCTLFN_ARGS)
         else if (rnode->sysctl_num == powernow_node_current)
                 fq = cur_freq;
         else
-                return (EOPNOTSUPP);
+                return EOPNOTSUPP;
 
         error = sysctl_lookup(SYSCTLFN_CALL(&node));
         if (error || newp == NULL)
-                return (error);
+                return error;
 
 	/* support writing to ...frequency.target */
         if (rnode->sysctl_num == powernow_node_target && fq != oldfq) {
-	
 		if (pnowk7_setstate(fq) == 0)
-		{
 			cur_freq = fq;
-		} else
+		else
 			aprint_normal("\nInvalid CPU frequency request\n");
         }
 
-        return (0);
+        return 0;
 }
 
 struct state_s *
@@ -158,8 +156,7 @@ pnowk7_getstates(cpuid_t cpuid)
 	ptr = (char *)ISA_HOLE_VADDR(BIOS_START);
 
 	for (i = 0; i < BIOS_LEN; i += 16, ptr += 16) {
-		if (memcmp(ptr, "AMDK7PNOW!", 10) == 0)	
-		{
+		if (memcmp(ptr, "AMDK7PNOW!", 10) == 0) {	
 			psb = (struct psb_s *) ptr;
 			ptr += sizeof(struct psb_s);			
 
@@ -176,7 +173,7 @@ pnowk7_getstates(cpuid_t cpuid)
 
 				/* Use the first PST with matching CPUID */
 				if ((cpuid == pst->cpuid) ||
-				    (cpuid == (pst->cpuid - 0x100)))
+				    (cpuid == (pst->cpuid - 0x100))) {
 				/* 
 				 * XXX
 				 * some braindead BIOS seems to expect
@@ -184,7 +181,6 @@ pnowk7_getstates(cpuid_t cpuid)
 				 * subtract 0x100 from the BIOS supplied values
 				 * to fix.
 				 */
-				{
 					/*
 					 * XXX
 					 * I need more info on this.
@@ -221,8 +217,7 @@ pnowk7_setstate(unsigned int freq)
 
 	for (i = 0; i < n_states; i++) {
 		/* Do we know how to set that frequency? */
-		if (freq_table[i].frequency == freq)
-		{
+		if (freq_table[i].frequency == freq) {
 			fid = freq_table[i].state->fid;
 			vid = freq_table[i].state->vid;
 		}
@@ -332,7 +327,8 @@ pnowk7_init(struct cpu_info *ci)
 	aprint_normal("%s: AMD PowerNow! Technology supported\n", cpuname);
 	aprint_normal("%s: available frequencies (Mhz): %s\n",
 	    cpuname, freq_names); 
-	return;	
+	return;
+
   err:
 	aprint_normal("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
