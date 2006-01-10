@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.11 2006/01/09 13:40:41 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.12 2006/01/10 02:13:53 snj Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -309,4 +309,12 @@ sys/net/if_bridge.c				1.35
 
 	Make sure we initialize all structs to 0.
 	[christos, ticket #1111]
+
+sys/dev/pci/pcidevs				1.753-1.1754
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Spell NVIDIA as "NVIDIA" instead of "Nvidia".
+	- Add entry for builtin ethernet of NVIDIA nForce4 chipset.
+	[tron, ticket #1112]
 
