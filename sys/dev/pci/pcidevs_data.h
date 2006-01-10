@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.18 2006/01/05 22:19:06 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.19 2006/01/10 02:12:11 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.701.2.20 2006/01/10 02:10:33 snj Exp
  */
 
 /*
@@ -913,7 +913,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA,
-	    "Nvidia",
+	    "NVIDIA",
 	},
 	{
 	    PCI_VENDOR_EMULEX,
@@ -7488,6 +7488,10 @@ const struct pci_product pci_products[] = {
 	    "nForce4 Serial ATA 2",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_NET,
+	    "nForce4 Ethernet",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_AC,
 	    "nForce4 AC-97",
 	},
@@ -10356,4 +10360,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2010;
+const int pci_nproducts = 2011;

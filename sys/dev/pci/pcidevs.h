@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.18 2006/01/05 22:19:06 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.19 2006/01/10 02:12:11 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.701.2.20 2006/01/10 02:10:33 snj Exp
  */
 
 /*
@@ -275,7 +275,7 @@
 #define	PCI_VENDOR_ROHM	0x10db		/* Rohm Research */
 #define	PCI_VENDOR_CERN	0x10dc		/* CERN/ECP/EDU */
 #define	PCI_VENDOR_ES	0x10dd		/* Evans & Sutherland */
-#define	PCI_VENDOR_NVIDIA	0x10de		/* Nvidia */
+#define	PCI_VENDOR_NVIDIA	0x10de		/* NVIDIA */
 #define	PCI_VENDOR_EMULEX	0x10df		/* Emulex */
 #define	PCI_VENDOR_IMS	0x10e0		/* Integrated Micro Solutions */
 #define	PCI_VENDOR_TEKRAM	0x10e1		/* Tekram Technology (1st PCI Vendor ID) */
@@ -2234,6 +2234,7 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_ATA133	0x0053		/* nForce4 ATA133 IDE */
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_SATA1	0x0054		/* nForce4 Serial ATA 1 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_SATA2	0x0055		/* nForce4 Serial ATA 2 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE4_NET	0x0057		/* nForce4 Ethernet */
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_AC	0x0059		/* nForce4 AC-97 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_PCIB	0x0060		/* nForce2 PCI-ISA bridge */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_SMBUS	0x0064		/* nForce2 SMBus Controller */
