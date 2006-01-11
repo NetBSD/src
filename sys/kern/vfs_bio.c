@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.151 2006/01/07 00:26:58 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.152 2006/01/11 00:44:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.151 2006/01/07 00:26:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.152 2006/01/11 00:44:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1770,5 +1770,94 @@ putiobuf(struct buf *bp)
 
 	s = splbio();
 	pool_put(&bufiopool, bp);
+	splx(s);
+}
+
+/*
+ * nestiobuf_iodone: b_iodone callback for nested buffers.
+ */
+
+static void
+nestiobuf_iodone(struct buf *bp)
+{
+	struct buf *mbp = bp->b_private;
+	int error;
+	int donebytes = bp->b_bcount; /* XXX ignore b_resid */
+
+	KASSERT(bp->b_bufsize == bp->b_bcount);
+	KASSERT(mbp != bp);
+	if ((bp->b_flags & B_ERROR) != 0) {
+		error = bp->b_error;
+	} else {
+		KASSERT(bp->b_resid == 0);
+		error = 0;
+	}
+	putiobuf(bp);
+	nestiobuf_done(mbp, donebytes, error);
+}
+
+/*
+ * nestiobuf_setup: setup a "nested" buffer.
+ *
+ * => 'mbp' is a "master" buffer which is being divided into sub pieces.
+ * => 'bp' should be a buffer allocated by getiobuf or getiobuf_nowait.
+ * => 'offset' is a byte offset in the master buffer.
+ * => 'size' is a size in bytes of this nested buffer.
+ */
+
+void
+nestiobuf_setup(struct buf *mbp, struct buf *bp, int offset, size_t size)
+{
+	const int b_read = mbp->b_flags & B_READ;
+	struct vnode *vp = mbp->b_vp;
+
+	KASSERT(mbp->b_bcount >= offset + size);
+	bp->b_vp = vp;
+	bp->b_flags = B_BUSY | B_CALL | B_ASYNC | b_read;
+	bp->b_iodone = nestiobuf_iodone;
+	bp->b_data = mbp->b_data + offset;
+	bp->b_resid = bp->b_bcount = size;
+#if defined(DIAGNOSTIC)
+	bp->b_bufsize = bp->b_bcount;
+#endif /* defined(DIAGNOSTIC) */
+	bp->b_private = mbp;
+	BIO_COPYPRIO(bp, mbp);
+	if (!b_read && vp != NULL) {
+		int s;
+
+		s = splbio();
+		V_INCR_NUMOUTPUT(vp);
+		splx(s);
+	}
+}
+
+/*
+ * nestiobuf_done: propagate completion to the master buffer.
+ *
+ * => 'donebytes' specifies how many bytes in the 'mbp' is completed.
+ * => 'error' is an errno(2) that 'donebytes' has been completed with.
+ */
+
+void
+nestiobuf_done(struct buf *mbp, int donebytes, int error)
+{
+	int s;
+
+	if (donebytes == 0) {
+		return;
+	}
+	s = splbio();
+	KASSERT(mbp->b_resid >= donebytes);
+	if (error) {
+		mbp->b_flags |= B_ERROR;
+		mbp->b_error = error;
+	}
+	mbp->b_resid -= donebytes;
+	if (mbp->b_resid == 0) {
+		if ((mbp->b_flags & B_ERROR) != 0) {
+			mbp->b_resid = mbp->b_bcount; /* be conservative */
+		}
+		biodone(mbp);
+	}
 	splx(s);
 }
