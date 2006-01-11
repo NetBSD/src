@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.115 2005/11/12 09:41:28 dsl Exp $
+# $NetBSD: md.i386,v 1.116 2006/01/11 00:18:28 xtraeme Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -38,6 +38,7 @@
 ./usr/lkm/exec_linux_elf.o			base-sys-lkm
 ./usr/lkm/exec_pecoff.o				base-sys-lkm
 ./usr/lkm/exec_svr4_elf.o			base-sys-lkm
+./usr/lkm/powernow.o				base-sys-lkm
 ./usr/lkm/wi_pcmcia.o				base-sys-lkm
 ./usr/mdec/biosboot				base-obsolete		obsolete
 ./usr/mdec/biosboot.sym				base-obsolete		obsolete
