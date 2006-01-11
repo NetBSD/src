@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.12 2006/01/10 02:13:53 snj Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.13 2006/01/11 14:01:21 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -317,4 +317,22 @@ sys/dev/pci/pcidevs_data.h			regen
 	- Spell NVIDIA as "NVIDIA" instead of "Nvidia".
 	- Add entry for builtin ethernet of NVIDIA nForce4 chipset.
 	[tron, ticket #1112]
+
+lib/libpthread/arch/sh3/pthread_switch.S	1.6
+sys/arch/sh3/include/asm.h			1.18-1.24
+
+	Implement WARN_REFERENCES. Provide PIC macros. Adapt pthread_switch.S
+	to new PIC macros that are now in <machine/asm.h>.
+	[uwe, ticket #1094]
+
+lib/libpthread/arch/sh3/_context_u.S		1.5
+
+	In PIC code call setcontext(2) via PLT to avoid text reloc in the
+	shared library.
+	[uwe, ticket #1095]
+
+lib/libpthread/arch/x86_64/pthread_switch.S	1.12
+
+	Revert the locked_return_point change. This fixes PR bin/32479.
+	[skrll, ticket #1115]
 
