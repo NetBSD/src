@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.53 2006/01/10 22:57:35 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.54 2006/01/11 21:16:51 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.53 2006/01/10 22:57:35 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.54 2006/01/11 21:16:51 christos Exp $");
 #endif
 #endif
 
@@ -454,7 +454,7 @@ tty_disestablish_ppp(fd)
     if (demand)
 	restore_loop();
 
-    if (!hungup || demand || persist) {
+    if (!hungup || demand) {
 
 
 	/* Flush the tty output buffer so that the TIOCSETD doesn't hang.  */
