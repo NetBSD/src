@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.86 2006/01/07 00:26:58 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.87 2006/01/11 00:44:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -300,6 +300,9 @@ void	vfs_buf_print(struct buf *, int, void (*)(const char *, ...));
 struct buf *getiobuf(void);
 struct buf *getiobuf_nowait(void);
 void putiobuf(struct buf *);
+
+void nestiobuf_setup(struct buf *, struct buf *, int, size_t);
+void nestiobuf_done(struct buf *, int, int);
 
 __END_DECLS
 #endif /* _KERNEL */
