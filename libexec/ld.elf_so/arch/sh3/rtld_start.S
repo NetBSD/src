@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.5 2006/01/11 22:05:27 uwe Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6 2006/01/11 22:24:34 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -47,19 +47,19 @@
 	mova	2f,r0
 	mov.l	@r0,r2
 	add	r0,r2		/* GOT */
-	mov.l	@(4,r0),r4
+	mov.l	@(4,r0),r4	/* _DYNAMIC@GOTOFF */
 	add	r2,r4		/* _DYNAMIC */
-	mov.l	@(12,r0),r1
-	mov.l	@(8,r0),r0
+	mov.l	@(12,r0),r1	/* _rtld_relocate_nonplt_self offset */
+	mov.l	@(8,r0),r0	/* _DYNAMIC@GOT */
 	mov	r4,r5
-	mov.l	@(r0,r2),r0	/* Where linker thinks _DYNAMIC is */
+	mov.l	@(r0,r2),r0	/* where linker thinks _DYNAMIC is */
 	sub	r0,r5		/* compute relocation base */
 	bsrf	r1		/* _rtld_relocate_nonplt_self(dynp, relocbase) */
-	 mov.l	r5,@-r15	/* delay slot: save relocbase */
+	 mov.l	r5,@-r15	/* save relocbase */
 
 4:
 	mov.l	@r15+,r5	/* restore relocbase */
-	add	#-8,r15		/* Make room for return args */
+	add	#-8,r15		/* room for values returned by _rtld */
 	mov	r15,r4
 	mov.l	1f,r0
 	bsrf	r0		/* _rtld(sp, relocbase) */
@@ -67,8 +67,8 @@
 3:
 	mov.l	@r15+,r9	/* restore ps_strings */
 
-	mov.l	@r15+,r7	/* arg: cleanup */
-	mov.l	@r15+,r8	/* arg: obj */
+	mov.l	@r15+,r7	/* from _rtld: exit procedure */
+	mov.l	@r15+,r8	/* from _rtld: main object */
 
 	mov.l	@r15,r4		/* restore argc */
 
@@ -78,7 +78,7 @@
 	mov	r4,r6		/* restore envp */
 	shll2	r6
 	add	r15,r6
-	jmp	@r0
+	jmp	@r0		/* entry point returned by _rtld */
 	 add	#8,r6
 	.align	2
 1:	.long	_rtld-3b
