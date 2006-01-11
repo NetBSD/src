@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.5 2004/05/28 22:58:25 uwe Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.5.2.1 2006/01/11 13:53:07 tron Exp $ */
 	
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -56,31 +56,6 @@
  * Enter debugger or die with SIGTRAP if "notreached" code is reached
  */
 #define NOTREACHED	trapa #0xc3
-
-
-/*
- * It would be cumbersome to use ifdef PIC for every call.
- * These macros try to hide the difference.
- */
-#ifdef __STDC__
-# define CALL_TARGET(call_l,target_l)	.L_ ## target_l ## _ ## call_l
-#else
-# define CALL_TARGET(call_l,target_l)	.L_/**/target_l/**/_/**/call_l
-#endif
-
-#ifdef PIC
-#define CALL(r)			bsrf r
-
-#define CALL_DATUM(call_l,target_l) \
-CALL_TARGET(call_l,target_l):	.long _C_LABEL(target_l) - (call_l+4)
-
-#else /* !PIC */
-#define CALL(r)			jsr @r
-
-#define CALL_DATUM(call_l,target_l) \
-CALL_TARGET(call_l,target_l):	.long _C_LABEL(target_l)
-
-#endif /* !PIC */
 
 
 /*
@@ -145,15 +120,15 @@ NENTRY(pthread__switch)
 	mov.l	.L_rnd_ctxsize, r0
 	sub	r0, sp			/* auto ucontext_t cntx; */
 
-	mov.l	CALL_TARGET(11b,_getcontext_u), r0
-11:	CALL	(r0)			/* _getcontext_u(&cntx); */
+	mov.l	.L__getcontext_u_11, r0
+11:	CALL	r0			/* _getcontext_u(&cntx); */
 	 mov	sp, r4
 
 	/*
 	 * Edit the context so that it continues as if returning from
 	 * the _setcontext_u below:
 	 */
-	mova	_C_LABEL(pthread__switch_return_point), r0
+	mova	pthread__switch_return_point, r0
 	mov.l	r0, @(UC_PC, sp)
 
 	mov	#PT_UC, r0
@@ -161,8 +136,8 @@ NENTRY(pthread__switch)
 
 	STACK_SWITCH(r5, r4)		/* r4 = next->pt_uc; */
 
-	mov.l	CALL_TARGET(12b,_setcontext_u), r0
-12:	CALL	(r0)			/* _setcontext_u(next->pt_uc); */
+	mov.l	.L__setcontext_u_12, r0
+12:	CALL	r0			/* _setcontext_u(next->pt_uc); */
 	 nop				/* r4 already set by STACK_SWITCH */
 	NOTREACHED
 
@@ -178,8 +153,10 @@ ALTENTRY(pthread__switch_return_point)
 
 
 	.align	2
-CALL_DATUM(11b,_getcontext_u)
-CALL_DATUM(12b,_setcontext_u)
+.L__getcontext_u_11:
+	CALL_DATUM_LOCAL(_C_LABEL(_getcontext_u), 11b)
+.L__setcontext_u_12:
+	CALL_DATUM_LOCAL(_C_LABEL(_setcontext_u), 12b)
 
 
 
@@ -200,14 +177,15 @@ Lpthread__switch_away_decrement:
 	 * once we're no longer using the old stack.
 	 */
 	mov.l	@(PT_SPINLOCKS, r2), r0
-	mov.l	CALL_TARGET(21b,_setcontext_u), r1
+	mov.l	.L__setcontext_u_21, r1
 	add	#-1, r0			/* --from->pt_spinlocks; */
-21:	CALL	(r1)			/* _setcontext_u(to->pt_uc); */
+21:	CALL	r1			/* _setcontext_u(to->pt_uc); */
 	 mov.l	r0, @(PT_SPINLOCKS, r2)
 	NOTREACHED
 
 	.align	2
-CALL_DATUM(21b,_setcontext_u)
+.L__setcontext_u_21:
+	CALL_DATUM_LOCAL(_C_LABEL(_setcontext_u), 21b)
 
 
 
@@ -221,13 +199,14 @@ CALL_DATUM(21b,_setcontext_u)
 Lpthread__switch_away_no_decrement:
 	STACK_SWITCH(r3, r4)		/* side effect: r4 = to->pt_uc */
 
-	mov.l	CALL_TARGET(31b,_setcontext_u), r1
-31:	CALL	(r1)			/* _setcontext_u(to->pt_uc); */
+	mov.l	.L__setcontext_u_31, r1
+31:	CALL	r1			/* _setcontext_u(to->pt_uc); */
 	 nop
 	NOTREACHED
 
 	.align	2
-CALL_DATUM(31b,_setcontext_u)
+.L__setcontext_u_31:
+	CALL_DATUM_LOCAL(_C_LABEL(_setcontext_u), 31b)
 
 
 
@@ -248,8 +227,8 @@ NENTRY(pthread__locked_switch)
 	add	#1, r0
 	mov.l	r0, @(PT_SPINLOCKS, r5)	/* ++next->pt_spinlocks */
 
-	mov.l	CALL_TARGET(41b,_getcontext_u), r0
-41:	CALL	(r0)			/* _getcontext_u(self->pt_uc); */
+	mov.l	.L__getcontext_u_41, r0
+41:	CALL	r0			/* _getcontext_u(self->pt_uc); */
 	 mov	sp, r4
 
 	/*
@@ -343,8 +322,8 @@ Llocked_no_old_preempt:
 
 
 Llocked_no_new_preempt:
-	mov.l	CALL_TARGET(42b,_setcontext_u), r0
-42:	CALL	(r0)			/* _setcontext_u(next->pt_uc) */
+	mov.l	.L__setcontext_u_42, r0
+42:	CALL	r0			/* _setcontext_u(next->pt_uc) */
 	 nop
 	NOTREACHED
 
@@ -360,8 +339,10 @@ Lpthread__locked_switch_return_point:
 
 
 	.align	2
-CALL_DATUM(41b,_getcontext_u)
-CALL_DATUM(42b,_setcontext_u)
+.L__getcontext_u_41:
+	CALL_DATUM_LOCAL(_C_LABEL(_getcontext_u), 41b)
+.L__setcontext_u_42:
+	CALL_DATUM_LOCAL(_C_LABEL(_setcontext_u), 42b)
 
 
 
@@ -410,9 +391,9 @@ NENTRY(pthread__upcall_switch)
 
 Lupcall_no_old_preempt:
 	/* pthread__sa_recycle(old, new) */
-	mov.l	CALL_TARGET(51b,pthread__sa_recycle), r0
+	mov.l	.L_pthread__sa_recycle_51, r0
 	mov	r8, r4		/* old = self */
-51:	CALL	(r0)
+51:	CALL	r0
 	 mov	r9, r5		/* new = next */
 
 	/* Release the fake lock */
@@ -440,14 +421,16 @@ Lupcall_no_old_preempt:
 
 
 Lupcall_no_new_preempt:
-	mov.l	CALL_TARGET(52b,_setcontext_u), r0
-52:	CALL	(r0)			/* _setcontext_u(next->pt_uc); */
+	mov.l	.L__setcontext_u_52, r0
+52:	CALL	r0			/* _setcontext_u(next->pt_uc); */
 	 mov	r11, r4
 	NOTREACHED
 
 	.align	2
-CALL_DATUM(51b,pthread__sa_recycle)
-CALL_DATUM(52b,_setcontext_u)
+.L_pthread__sa_recycle_51:
+	CALL_DATUM_LOCAL(_C_LABEL(pthread__sa_recycle), 51b)
+.L__setcontext_u_52:
+	CALL_DATUM_LOCAL(_C_LABEL(_setcontext_u), 52b)
 
 
 
