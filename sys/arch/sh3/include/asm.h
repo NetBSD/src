@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.16 2003/11/24 04:07:22 uwe Exp $	*/
+/*	$NetBSD: asm.h,v 1.16.14.1 2006/01/11 13:47:24 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,7 +49,7 @@
  * defines __NO_LEADING_UNDERSCORES__ for the new ELF toolchain.
  */
 
-#if (defined(__ELF__) && defined(__NO_LEADING_UNDERSCORES__))
+#if defined(__ELF__) && defined(__NO_LEADING_UNDERSCORES__)
 # define _C_LABEL(x)	x
 #else
 #ifdef __STDC__
@@ -72,13 +72,13 @@
 	.globl x							;\
 	.type x,@function						;\
 	x:
-#else /* __ELF__ */
+#else /* !__ELF__ */
 #define	_ENTRY(x)							\
 	.text								;\
 	_ALIGN_TEXT							;\
 	.globl x							;\
 	x:
-#endif /* __ELF__ */
+#endif /* !__ELF__ */
 
 #ifdef GPROF
 #define	_PROF_PROLOGUE				  \
@@ -93,18 +93,18 @@
 #define	_PROF_PROLOGUE
 #endif /* !GPROF */
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y))				;\
-	_PROF_PROLOGUE
+#define	ENTRY(y)	_ENTRY(_C_LABEL(y)) _PROF_PROLOGUE
 #define	NENTRY(y)	_ENTRY(_C_LABEL(y))
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y))				;\
-	_PROF_PROLOGUE
+#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)) _PROF_PROLOGUE
 
 #ifdef __ELF__
-#define	ALTENTRY(name)	.globl _C_LABEL(name)				;\
-	.type _C_LABEL(name),@function					;\
+#define	ALTENTRY(name)				 \
+	.globl _C_LABEL(name)			;\
+	.type _C_LABEL(name),@function		;\
 	_C_LABEL(name):
 #else
-#define	ALTENTRY(name)	.globl _C_LABEL(name)				;\
+#define	ALTENTRY(name)				 \
+	.globl _C_LABEL(name)			;\
 	_C_LABEL(name):
 #endif
 
