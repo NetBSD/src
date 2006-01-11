@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.16.14.3 2006/01/11 13:49:59 tron Exp $	*/
+/*	$NetBSD: asm.h,v 1.16.14.4 2006/01/11 13:53:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -90,6 +90,12 @@
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)) _PROF_PROLOGUE
 #define	NENTRY(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)) _PROF_PROLOGUE
+
+#define SET_ENTRY_SIZE(y) \
+	.size	_C_LABEL(y), . - _C_LABEL(y)
+
+#define SET_ASENTRY_SIZE(y) \
+	.size	_ASM_LABEL(y), . - _ASM_LABEL(y)
 
 #ifdef __ELF__
 #define	ALTENTRY(name)				 \
