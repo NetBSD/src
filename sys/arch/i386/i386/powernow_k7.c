@@ -1,4 +1,4 @@
-/* $NetBSD: powernow_k7.c,v 1.2 2006/01/10 15:31:11 xtraeme Exp $ */
+/* $NetBSD: powernow_k7.c,v 1.3 2006/01/11 00:18:28 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -32,7 +32,7 @@
 /* Sysctl related code was adapted from NetBSD's i386/est.c for compatibility */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.2 2006/01/10 15:31:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.3 2006/01/11 00:18:28 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.2 2006/01/10 15:31:11 xtraeme Exp 
 #define CTL_SET_VID	0x0000000000020000ULL
 
 #define cpufreq(x)	fsb * fid_codes[x] / 10
+
+/* pnowk7_init() already declared on i386/include/cpu.h */
+#if defined(_LKM)
+void pnowk7_destroy(void);
+#endif
 
 struct psb_s {
 	char signature[10];  	/* AMDK7PNOW! */
@@ -97,7 +102,13 @@ static unsigned int ttime;
 static unsigned int n_states;
 static struct freq_table_s *freq_table;
 static int powernow_node_target, powernow_node_current;
-
+static char *freq_names;
+#if defined(_LKM)
+static struct sysctllog *sysctllog;
+#define SYSCTLLOG	&sysctllog
+#else
+#define SYSCTLLOG	NULL
+#endif
 
 /* Prototypes */
 struct state_s *pnowk7_getstates(cpuid_t cpuid);
@@ -260,7 +271,7 @@ pnowk7_init(struct cpu_info *ci)
 {
 	int rc;
 	unsigned int i, freq_names_len, len = 0;
-	char *freq_names, *cpuname;
+	char *cpuname;
 	const struct sysctlnode *node, *pnownode, *freqnode;
 	struct state_s *s = pnowk7_getstates(ci->ci_signature);
 
@@ -274,9 +285,8 @@ pnowk7_init(struct cpu_info *ci)
 	freq_names_len =  n_states * (sizeof("9999 ")-1) + 1;
 	freq_names = malloc(freq_names_len, M_SYSCTLDATA, M_WAITOK);
 	
-	freq_table = malloc(sizeof(struct freq_table_s) * n_states, \
-		M_TEMP, M_WAITOK);		
-
+	freq_table = malloc(sizeof(struct freq_table_s) * n_states, M_TEMP,
+	    M_WAITOK);
 
 	for (i = 0; i < n_states; i++, s++) {		
 		freq_table[i].frequency = cpufreq(s->fid);
@@ -286,49 +296,57 @@ pnowk7_init(struct cpu_info *ci)
                     freq_table[i].frequency, i < n_states - 1 ? " " : "");
 	}
 
-	/* On bootup the frequency should be at it's max */
+	/* On bootup the frequency should be at its max */
 	cur_freq = freq_table[i-1].frequency;	
 
 	/* Create sysctl machdep.powernow.frequency. */
-        if ((rc = sysctl_createv(NULL, 0, NULL, &node,
+        if ((rc = sysctl_createv(SYSCTLLOG, 0, NULL, &node,
             CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
             NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL)) != 0)
                 goto err;
 
-        if ((rc = sysctl_createv(NULL, 0, &node, &pnownode,
+        if ((rc = sysctl_createv(SYSCTLLOG, 0, &node, &pnownode,
             0, CTLTYPE_NODE, "powernow", NULL,
             NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
                 goto err;
 
-         if ((rc = sysctl_createv(NULL, 0, &pnownode, &freqnode,
+         if ((rc = sysctl_createv(SYSCTLLOG, 0, &pnownode, &freqnode,
             0, CTLTYPE_NODE, "frequency", NULL,
             NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
                 goto err;
 
-        if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
+        if ((rc = sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
             CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
             powernow_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
                 goto err;
         powernow_node_target = node->sysctl_num;
 
-        if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
+        if ((rc = sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
             0, CTLTYPE_INT, "current", NULL,
             powernow_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
                 goto err;
         powernow_node_current = node->sysctl_num;
 
-        if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
+        if ((rc = sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
             0, CTLTYPE_STRING, "available", NULL,
             NULL, 0, freq_names, freq_names_len, CTL_CREATE, CTL_EOL)) != 0)
                 goto err;
 
-	/* aprint_normal("AMD PowerNow supported current frequency : %d Mhz\n", \
-		cur_freq); */
 	aprint_normal("%s: AMD PowerNow! Technology supported\n", cpuname);
 	aprint_normal("%s: available frequencies (Mhz): %s\n",
-	    cpuname, freq_names); 
+	    cpuname, freq_names);
+        aprint_normal("%s: current frequency (Mhz): %d\n", cpuname, cur_freq);
+
 	return;
 
   err:
 	aprint_normal("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
+
+#if defined(_LKM)
+void
+pnowk7_destroy(void)
+{
+	sysctl_teardown(&sysctllog);
+}
+#endif
