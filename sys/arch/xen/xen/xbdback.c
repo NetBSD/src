@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.4.2.9 2005/08/21 22:12:21 tron Exp $      */
+/*      $NetBSD: xbdback.c,v 1.4.2.9.2.1 2006/01/11 17:03:43 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -75,7 +75,7 @@ struct xbdback_fragment;
 struct xbdback_instance;
 
 /* state of a xbdback instance */
-typedef enum {CONNECTED, DISCONNECTED} xbdback_state_t;
+typedef enum {CONNECTED, DISCONNECTING, DISCONNECTED} xbdback_state_t;
 
 /*
  * Since there are a variety of conditions that can block our I/O
@@ -94,7 +94,7 @@ struct xbdback_instance {
 	SLIST_ENTRY(xbdback_instance) next;
 	domid_t domid;		/* attached to this domain */
 	uint32_t handle;	/* domain-specific handle */
-	xbdback_state_t status;
+	volatile xbdback_state_t status;
 	/* parameters for the communication */
 	unsigned int evtchn;
 	paddr_t ma_ring;
@@ -102,6 +102,9 @@ struct xbdback_instance {
 	blkif_ring_t *blk_ring;
 	BLKIF_RING_IDX resp_prod; /* our current reply index */
 	BLKIF_RING_IDX req_cons; /* our current request index */
+	/* disconnection must be postponed until all I/O is done */
+	volatile unsigned refcnt;
+	uint8_t disconnect_rspid; /* request id of the disconnect request */
 	/* 
 	 * State for I/O processing/coalescing follows; this has to
 	 * live here instead of on the stack because of the
@@ -124,6 +127,16 @@ struct xbdback_instance {
 
 	SLIST_HEAD(, xbd_vbd) vbds; /* list of virtual block devices */
 };
+/* Manipulation of the above reference count. */
+/* XXXjld@panix.com: not MP-safe, and move the i386 asm elsewhere. */
+#define xbdi_get(xbdip) (++(xbdip)->refcnt)
+#define xbdi_put(xbdip)                                      \
+do {                                                         \
+	__asm __volatile("decl %0"                           \
+	    : "=m"((xbdip)->refcnt) : "m"((xbdip)->refcnt)); \
+	if (0 == (xbdip)->refcnt)                            \
+               xbdback_finish_disconnect(xbdip);             \
+} while (/* CONSTCOND */ 0)
 
 /* each xbdback instance has a list of vbds associated with it */
 struct xbd_vbd {
@@ -202,6 +215,7 @@ struct timeval xbdback_fragio_intvl = { 60, 0 };
 
 static void xbdback_ctrlif_rx(ctrl_msg_t *, unsigned long);
 static int  xbdback_evthandler(void *);
+static void xbdback_finish_disconnect(struct xbdback_instance *);
 
 static struct xbdback_instance *xbdif_lookup(domid_t, uint32_t);
 static struct xbd_vbd * vbd_lookup(struct xbdback_instance *, blkif_vdev_t);
@@ -317,6 +331,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		xbdi->domid = req->domid;
 		xbdi->handle = req->blkif_handle;
 		xbdi->status = DISCONNECTED;
+		xbdi->refcnt = 1;
+		xbdi->blk_ring = NULL;
 		SLIST_INIT(&xbdi->vbds);
 		SLIST_INSERT_HEAD(&xbdback_instances, xbdi, next);
 		
@@ -333,10 +349,13 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_INTERFACE_NOT_FOUND;
 			goto end;
 		}
-		if (xbdi->status == CONNECTED) {
+		if (xbdi->status != DISCONNECTED) {
 			req->status = BLKIF_BE_STATUS_INTERFACE_CONNECTED;
 			goto end;
 		}
+		if (xbdi->blk_ring != NULL)
+			uvm_km_free(kernel_map, (vaddr_t)xbdi->blk_ring,
+			    PAGE_SIZE);
 		SLIST_REMOVE(&xbdback_instances, xbdi, xbdback_instance, next);
 		free(xbdi, M_DEVBUF);
 		req->status = BLKIF_BE_STATUS_OKAY;
@@ -355,14 +374,19 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_INTERFACE_NOT_FOUND;
 			goto end;
 		}
-		if (xbdi->status == CONNECTED) {
+		if (xbdi->status != DISCONNECTED) {
 			req->status = BLKIF_BE_STATUS_INTERFACE_CONNECTED;
 			goto end;
 		}
-		ring_addr = uvm_km_alloc(kernel_map, PAGE_SIZE);
-		if (ring_addr == 0) {
-			req->status = BLKIF_BE_STATUS_OUT_OF_MEMORY;
-			goto end;
+		if (xbdi->blk_ring == NULL) {
+			ring_addr = uvm_km_alloc(kernel_map, PAGE_SIZE);
+			if (ring_addr == 0) {
+				req->status = BLKIF_BE_STATUS_OUT_OF_MEMORY;
+				goto end;
+			}
+		} else {
+			ring_addr = (vaddr_t)xbdi->blk_ring;
+			xbdi->blk_ring = NULL;
 		}
 
 		xbdi->ma_ring = req->shmem_frame << PAGE_SHIFT;
@@ -385,6 +409,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		printf("xbd backend %d for domain %d using event channel %d\n",
 		    xbdi->handle, xbdi->domid, xbdi->evtchn);
 		hypervisor_enable_event(xbdi->evtchn);
+		xbdi->status = CONNECTED;
 		req->status = BLKIF_BE_STATUS_OKAY;
 		break;
 	}
@@ -392,7 +417,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 	{
 		blkif_be_disconnect_t *req =
 		    (blkif_be_disconnect_t *)&msg->msg[0];
-		vaddr_t ring_addr;
+		int s;
 
 		if (msg->length != sizeof(blkif_be_disconnect_t))
 			goto error;
@@ -403,11 +428,12 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		}
 		hypervisor_mask_event(xbdi->evtchn);
 		event_remove_handler(xbdi->evtchn, xbdback_evthandler, xbdi);
-		ring_addr = (vaddr_t)xbdi->blk_ring;
-		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
-		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE);
-		req->status = BLKIF_BE_STATUS_OKAY;
-		break;
+		xbdi->status = DISCONNECTING;
+		xbdi->disconnect_rspid = msg->id;
+		s = splbio();
+		xbdi_put(xbdi);
+		splx(s);
+		return;
 	}
 	case CMSG_BLKIF_BE_VBD_CREATE:
 	{
@@ -586,6 +612,30 @@ end:
 	return;
 }
 
+static void xbdback_finish_disconnect(struct xbdback_instance *xbdi)
+{
+	ctrl_msg_t cmsg;
+	blkif_be_disconnect_t *pdisc = (blkif_be_disconnect_t *)&cmsg.msg;
+	vaddr_t ring_addr;
+	
+	KASSERT(xbdi->status == DISCONNECTING);
+
+       	ring_addr = (vaddr_t)xbdi->blk_ring;
+	pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
+	xbdi->status = DISCONNECTED;
+
+	memset(&cmsg, 0, sizeof(cmsg));
+	cmsg.type = CMSG_BLKIF_BE;
+	cmsg.subtype = CMSG_BLKIF_BE_DISCONNECT;
+	cmsg.id = xbdi->disconnect_rspid;
+	cmsg.length = sizeof(blkif_be_disconnect_t);
+	pdisc->domid = xbdi->domid;
+	pdisc->blkif_handle = xbdi->handle;
+	pdisc->status = BLKIF_BE_STATUS_OKAY;
+
+	ctrl_if_send_response(&cmsg);
+}
+
 static struct xbdback_instance *
 xbdif_lookup(domid_t dom , uint32_t handle)
 {
@@ -614,6 +664,7 @@ static int
 xbdback_evthandler(void *arg)
 {
 	struct xbdback_instance *xbdi = arg;
+
 	if (xbdi->cont == NULL) {
 		xbdi->cont = xbdback_co_main;
 		xbdback_trampoline(xbdi, xbdi);
@@ -724,7 +775,7 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 		printf("xbdback_io domain %d: unknown vbd %d\n",
 		       xbdi->domid, xbdi->xen_req->device);
 		error = EINVAL;
-		goto end;	
+		goto end;
 	}
 	if (xbdi->xen_req->operation == BLKIF_OP_WRITE) {
 		if (xbdi->req_vbd->flags & VBD_F_RO) {
@@ -850,6 +901,8 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	vaddr_t start_offset; /* start offset in vm area */
 	int buf_flags;
 
+	xbdi_get(xbdi);
+	
 	xbd_io = xbdi->io = obj;
 	xbd_io->xio_xbdi = xbdi;
 	SLIST_INIT(&xbd_io->xio_rq);
@@ -1063,6 +1116,7 @@ xbdback_iodone(struct buf *bp)
 		    xbd_req->rq_operation, error);
 		xbdback_pool_put(&xbdback_request_pool, xbd_req);
 	}
+	xbdi_put(xbdi);
 	xbdback_pool_put(&xbdback_io_pool, xbd_io);
 }
 
