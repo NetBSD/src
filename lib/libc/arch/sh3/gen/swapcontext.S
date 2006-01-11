@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.3.6.2 2006/01/11 16:14:04 tron Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3.6.3 2006/01/11 16:14:52 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.3.6.2 2006/01/11 16:14:04 tron Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.3.6.3 2006/01/11 16:14:52 tron Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -46,8 +46,10 @@
  * swapcontext(ucontext_t * restrict oucp, ucontext_t * restrict ucp);
  */
 ENTRY(swapcontext)
+	PIC_PROLOGUE(.L_got, r0)
 	mov.l	r5, @-sp
 	sts.l	pr, @-sp
+
 	mov.l	.L__getcontext, r0
 1:	CALL	r0			/* _getcontext(oucp) */
 	 mov.l	r4, @-sp
@@ -64,9 +66,16 @@ ENTRY(swapcontext)
 	/* if we get here, return error from setcontext */
 3:
 	lds.l	@sp+, pr
+#ifdef PIC
+	add	#4, sp
+	rts
+	 PIC_EPILOGUE
+#else
 	rts
 	 add	#4, sp
+#endif
 
 	.align	2
-.L__getcontext:		CALL_DATUM_LOCAL(_C_LABEL(_getcontext), 1b)
-.L_setcontext:		CALL_DATUM_LOCAL(_C_LABEL(setcontext), 2b)
+.L_got:			PIC_GOT_DATUM
+.L__getcontext:		CALL_DATUM(_C_LABEL(_getcontext), 1b)
+.L_setcontext:		CALL_DATUM(_C_LABEL(setcontext), 2b)
