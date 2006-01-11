@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.96 2006/01/11 22:03:51 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.97 2006/01/11 22:33:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.96 2006/01/11 22:03:51 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.97 2006/01/11 22:33:03 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -564,50 +564,53 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	 * We now start writing to the filesystem
 	 */
 
-	/*
-	 * Validate the given file system size.
-	 * Verify that its last block can actually be accessed.
-	 * Convert to file system fragment sized units.
-	 */
-	if (fssize <= 0) {
-		printf("preposterous size %lld\n", (long long)fssize);
-		exit(13);
-	}
-	wtfs(fssize - 1, sectorsize, iobuf);
+	if (!Nflag) {
+		/*
+		 * Validate the given file system size.
+		 * Verify that its last block can actually be accessed.
+		 * Convert to file system fragment sized units.
+		 */
+		if (fssize <= 0) {
+			printf("preposterous size %lld\n", (long long)fssize);
+			exit(13);
+		}
+		wtfs(fssize - 1, sectorsize, iobuf);
 
-	/*
-	 * Ensure there is nothing that looks like a filesystem
-	 * superbock anywhere other than where ours will be.
-	 * If fsck finds the wrong one all hell breaks loose!
-	 */
-	for (i = 0; ; i++) {
-		static const int sblocklist[] = SBLOCKSEARCH;
-		int sblkoff = sblocklist[i];
-		int sz;
-		if (sblkoff == -1)
-			break;
-		/* Remove main superblock */
-		zap_old_sblock(sblkoff);
-		/* and all possible locations for the first alternate */
-		sblkoff += SBLOCKSIZE;
-		for (sz = SBLOCKSIZE; sz <= 0x10000; sz <<= 1)
-			zap_old_sblock(roundup(sblkoff, sz));
-	}
+		/*
+		 * Ensure there is nothing that looks like a filesystem
+		 * superbock anywhere other than where ours will be.
+		 * If fsck finds the wrong one all hell breaks loose!
+		 */
+		for (i = 0; ; i++) {
+			static const int sblocklist[] = SBLOCKSEARCH;
+			int sblkoff = sblocklist[i];
+			int sz;
+			if (sblkoff == -1)
+				break;
+			/* Remove main superblock */
+			zap_old_sblock(sblkoff);
+			/* and all possible locations for the first alternate */
+			sblkoff += SBLOCKSIZE;
+			for (sz = SBLOCKSIZE; sz <= 0x10000; sz <<= 1)
+				zap_old_sblock(roundup(sblkoff, sz));
+		}
 
-	if (isappleufs) {
-		struct appleufslabel appleufs;
-		ffs_appleufs_set(&appleufs, appleufs_volname, tv.tv_sec, 0);
-		wtfs(APPLEUFS_LABEL_OFFSET/sectorsize, APPLEUFS_LABEL_SIZE, 
-		    &appleufs);
-	} else {
-		struct appleufslabel appleufs;
-		/* Look for and zap any existing valid apple ufs labels */
-		rdfs(APPLEUFS_LABEL_OFFSET/sectorsize, APPLEUFS_LABEL_SIZE, 
-		    &appleufs);
-		if (ffs_appleufs_validate(fsys, &appleufs, NULL) == 0) {
-			memset(&appleufs, 0, sizeof(appleufs));
-			wtfs(APPLEUFS_LABEL_OFFSET/sectorsize, APPLEUFS_LABEL_SIZE, 
-			    &appleufs);
+		if (isappleufs) {
+			struct appleufslabel appleufs;
+			ffs_appleufs_set(&appleufs, appleufs_volname,
+			    tv.tv_sec, 0);
+			wtfs(APPLEUFS_LABEL_OFFSET/sectorsize,
+			    APPLEUFS_LABEL_SIZE, &appleufs);
+		} else {
+			struct appleufslabel appleufs;
+			/* Look for & zap any existing valid apple ufs labels */
+			rdfs(APPLEUFS_LABEL_OFFSET/sectorsize,
+			    APPLEUFS_LABEL_SIZE, &appleufs);
+			if (ffs_appleufs_validate(fsys, &appleufs, NULL) == 0) {
+				memset(&appleufs, 0, sizeof(appleufs));
+				wtfs(APPLEUFS_LABEL_OFFSET/sectorsize,
+				    APPLEUFS_LABEL_SIZE, &appleufs);
+			}
 		}
 	}
 
