@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.21 2006/01/07 01:11:42 yamt Exp $	*/
+/*	$NetBSD: fss.c,v 1.22 2006/01/11 00:49:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.21 2006/01/07 01:11:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.22 2006/01/11 00:49:59 yamt Exp $");
 
 #include "fss.h"
 
@@ -909,7 +909,7 @@ restart:
 		bp->b_bufsize = bp->b_bcount;
 		bp->b_error = 0;
 		bp->b_data = addr;
-		bp->b_blkno = bp->b_rawblkno = dblk;
+		bp->b_blkno = dblk;
 		bp->b_proc = NULL;
 		bp->b_dev = sc->sc_bdev;
 		bp->b_vp = NULLVP;
@@ -1162,7 +1162,7 @@ fss_bs_thread(void *arg)
 		nbp->b_bufsize = bp->b_bcount;
 		nbp->b_error = 0;
 		nbp->b_data = bp->b_data;
-		nbp->b_blkno = nbp->b_rawblkno = bp->b_blkno;
+		nbp->b_blkno = bp->b_blkno;
 		nbp->b_proc = bp->b_proc;
 		nbp->b_dev = sc->sc_bdev;
 		nbp->b_vp = NULLVP;

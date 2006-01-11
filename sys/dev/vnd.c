@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.127 2006/01/08 09:09:00 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.128 2006/01/11 00:49:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.127 2006/01/08 09:09:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.128 2006/01/11 00:49:59 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -626,7 +626,7 @@ vndthread(void *arg)
 			    - trunc_page((ulong) addr);
 			nbp->vb_buf.b_error = 0;
 			nbp->vb_buf.b_data = addr;
-			nbp->vb_buf.b_blkno = nbp->vb_buf.b_rawblkno = nbn + btodb(off);
+			nbp->vb_buf.b_blkno = nbn + btodb(off);
 			nbp->vb_buf.b_proc = bp->b_proc;
 			nbp->vb_buf.b_iodone = vndiodone;
 			nbp->vb_buf.b_vp = vp;
