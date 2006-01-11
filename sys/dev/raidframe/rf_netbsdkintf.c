@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.186.2.2 2005/10/04 14:14:40 tron Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.186.2.2.2.1 2006/01/11 17:18:02 tron Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.186.2.2 2005/10/04 14:14:40 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.186.2.2.2.1 2006/01/11 17:18:02 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1954,9 +1954,12 @@ KernelWakeupFunc(struct buf *vbp)
 		/* but only mark it once... */
 		/* and only if it wouldn't leave this RAID set
 		   completely broken */
-		if ((queue->raidPtr->Disks[queue->col].status ==
-		    rf_ds_optimal) && (queue->raidPtr->numFailures <
-				       queue->raidPtr->Layout.map->faultsTolerated)) {
+		if (((queue->raidPtr->Disks[queue->col].status ==
+		      rf_ds_optimal) ||
+		     (queue->raidPtr->Disks[queue->col].status ==
+		      rf_ds_used_spare)) && 
+		     (queue->raidPtr->numFailures <
+		         queue->raidPtr->Layout.map->faultsTolerated)) {
 			printf("raid%d: IO Error.  Marking %s as failed.\n",
 			       queue->raidPtr->raidid,
 			       queue->raidPtr->Disks[queue->col].devname);
