@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.14 2006/01/11 16:31:51 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.15 2006/01/11 17:19:36 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -358,4 +358,25 @@ lib/libpthread/arch/sh3/pthread_switch.S	1.7
 
 	Use PLT for PIC calls to avoid text relocs in the shared library.
 	[uwe, ticket #1099]
+
+sys/arch/xen/xen/xbdback.c			1.16 via patch
+
+	Avoid dom0 kernel crash when destroying a domain with active I/O going.
+	[bouyer, ticket #1106]
+
+sys/arch/xen/i386/npx.c				1.7
+
+	Fix the FPU problems detected by paranoia on a NetBSD/Xen guest,
+	PR port-xen/30977.
+	[bouyer, ticket #1107]
+
+lib/libc/arch/sparc/sys/ptrace.S		1.6-1.7
+
+	Use __errno in the _REENTRANT case.
+	[martin, ticket #1109]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.193
+
+	We need to mark used spares as failed if they encounter IO errors.
+	[oster, ticket #1114]
 
