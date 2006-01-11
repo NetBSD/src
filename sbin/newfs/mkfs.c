@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.94 2006/01/09 20:59:25 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.95 2006/01/11 12:17:42 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.94 2006/01/09 20:59:25 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.95 2006/01/11 12:17:42 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	int32_t cylno, i, csfrags;
 	struct timeval tv;
 	long long sizepb;
-	int col;
+	int col, delta;
 
 #ifndef STANDALONE
 	gettimeofday(&tv, NULL);
@@ -622,35 +622,40 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	if (!mfs || Nflag)
 		printf("super-block backups (for fsck_ffs -b #) at:\n");
 #define MAX_LINE 79
+#define BASE 0x10000	/* For some fixed-point maths */
 	col = 0;
+	delta = 0;
 	for (cylno = 0; cylno < sblock.fs_ncg; cylno++) {
-		char numbuf[16];
 		int len;
 		initcg(cylno, &tv);
 		if (mfs && !Nflag)
 			continue;
-		if (col < MAX_LINE) {
+		if (delta == 0) {
 			/* Print one line of numbers (int is enough) */
-			len = snprintf(numbuf, sizeof numbuf, " %d,", 
+			len = printf(" %u,", 
 			    (int)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
-			if (col + len < MAX_LINE) {
-				col += len;
-				printf(numbuf);
-				fflush(stdout);
-				continue;
+			col += len;
+			if (col + len + 1 >= MAX_LINE) {
+				/* Next one won't fit, work out dot spacing */
+				delta = sblock.fs_ncg - cylno;
+				if (delta > 1) {
+					col = 0;
+					delta = MAX_LINE * BASE / (delta - 1);
+					printf("\n");
+				}
 			}
-			col = 2 * MAX_LINE;
+		} else {
+			/* Then at most one line of dots */
+			col += delta;
+			if (col < BASE)
+				continue;
+			printf(".");
+			col -= BASE;
 		}
-		/* Then lines of dots */
-		if (col >= 2 * MAX_LINE) {
-			printf("\n");
-			col = MAX_LINE;
-		}
-		col++;
-		printf(".");
 		fflush(stdout);
 	}
 #undef MAX_LINE
+#undef BASE
 	if (!mfs || Nflag)
 		printf("\n");
 	if (Nflag)
