@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.16.14.4 2006/01/11 13:53:40 tron Exp $	*/
+/*	$NetBSD: asm.h,v 1.16.14.5 2006/01/11 13:54:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -144,11 +144,11 @@
 #define	PIC_GOT(x)	x@GOT
 #define	PIC_GOTOFF(x)	x@GOTOFF
 
-#define	PIC_PROLOGUE(got, temp)			\
+#define	PIC_PROLOGUE(got)			\
         	mov.l	r12, @-sp;		\
         	mov.l	got, r12;		\
-        	mova	got, temp;		\
-        	add	temp, r12
+        	mova	got, r0;		\
+        	add	r0, r12
 
 #define	PIC_EPILOGUE				\
 		mov.l	@sp+, r12
@@ -172,7 +172,7 @@
 
 #else  /* !PIC */
 
-#define	PIC_PROLOGUE(label, temp)
+#define	PIC_PROLOGUE(label)
 #define	PIC_EPILOGUE
 #define PIC_GOT_DATUM
 
