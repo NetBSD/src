@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.128 2006/01/11 00:49:59 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.129 2006/01/11 00:50:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.128 2006/01/11 00:49:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.129 2006/01/11 00:50:29 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -181,23 +181,13 @@ int vnddebug = 0x00;
 #define vndunit(x)	DISKUNIT(x)
 
 struct vndxfer {
-	struct buf	*vx_bp;		/* Pointer to parent buffer */
-	int		vx_error;
-	int		vx_pending;	/* # of pending aux buffers */
-	int		vx_flags;
-#define VX_BUSY		1
+	struct buf vx_buf;
+	struct vnd_softc *vx_vnd;
 };
-
-struct vndbuf {
-	struct buf	vb_buf;
-	struct vndxfer	*vb_xfer;
-};
+#define	VND_BUFTOXFER(bp)	((struct vndxfer *)(void *)bp)
 
 #define VND_GETXFER(vnd)	pool_get(&(vnd)->sc_vxpool, PR_WAITOK)
 #define VND_PUTXFER(vnd, vx)	pool_put(&(vnd)->sc_vxpool, (vx))
-
-#define VND_GETBUF(vnd)		pool_get(&(vnd)->sc_vbpool, PR_WAITOK)
-#define VND_PUTBUF(vnd, vb)	pool_put(&(vnd)->sc_vbpool, (vb))
 
 struct vnd_softc *vnd_softc;
 int numvnd = 0;
@@ -229,7 +219,6 @@ static void	vnd_free(void *, void *);
 #endif /* VND_COMPRESSION */
 
 static void vndthread(void *);
-static void vndiodone1(struct vnd_softc *, struct vndxfer *);
 
 static dev_type_open(vndopen);
 static dev_type_close(vndclose);
@@ -489,13 +478,9 @@ static void
 vndthread(void *arg)
 {
 	struct vnd_softc *vnd = arg;
-	struct buf *bp;
-	struct vndxfer *vnx;
 	struct mount *mp;
-	int s, bsize, resid;
-	off_t bn;
-	caddr_t addr;
-	int sz, flags, error;
+	int s, bsize;
+	int sz, error;
 	struct disklabel *lp;
 
 	s = splbio();
@@ -507,39 +492,45 @@ vndthread(void *arg)
 	 * VOP_BMAP/VOP_STRATEGY.
 	 */
 	while ((vnd->sc_flags & VNF_VUNCONF) == 0) {
-		bp = BUFQ_GET(vnd->sc_tab);
-		if (bp == NULL) {
+		struct vndxfer *vnx;
+		off_t offset;
+		int resid;
+		int skipped = 0;
+		off_t bn;
+		int flags;
+		struct buf *obp;
+		struct buf *bp;
+
+		obp = BUFQ_GET(vnd->sc_tab);
+		if (obp == NULL) {
 			tsleep(&vnd->sc_tab, PRIBIO, "vndbp", 0);
 			continue;
 		};
 		splx(s);
-
+		flags = obp->b_flags;
 #ifdef DEBUG
 		if (vnddebug & VDB_FOLLOW)
-			printf("vndthread(%p\n", bp);
+			printf("vndthread(%p\n", obp);
 #endif
 		lp = vnd->sc_dkdev.dk_label;
-		bp->b_resid = bp->b_bcount;
 
 		/* convert to a byte offset within the file. */
-		bn = bp->b_rawblkno * lp->d_secsize;
+		bn = obp->b_rawblkno * lp->d_secsize;
 
 		if (vnd->sc_vp->v_mount == NULL) {
-			bp->b_error = ENXIO;
-			bp->b_flags |= B_ERROR;
+			obp->b_error = ENXIO;
+			obp->b_flags |= B_ERROR;
 			goto done;
 		}
 #ifdef VND_COMPRESSION
 		/* handle a compressed read */
-		if ((bp->b_flags & B_READ) && (vnd->sc_flags & VNF_COMP)) {
-			compstrategy(bp, bn);
+		if ((flags & B_READ) != 0 && (vnd->sc_flags & VNF_COMP)) {
+			compstrategy(obp, bn);
 			goto done;
 		}
 #endif /* VND_COMPRESSION */
 		
 		bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
-		addr = bp->b_data;
-		flags = (bp->b_flags & (B_READ|B_ASYNC)) | B_CALL;
 
 		/*
 		 * Allocate a header for this transfer and link it to the
@@ -548,10 +539,24 @@ vndthread(void *arg)
 		s = splbio();
 		vnx = VND_GETXFER(vnd);
 		splx(s);
-		vnx->vx_flags = VX_BUSY;
-		vnx->vx_error = 0;
-		vnx->vx_pending = 0;
-		vnx->vx_bp = bp;
+		vnx->vx_vnd = vnd;
+
+		bp = &vnx->vx_buf;
+		BUF_INIT(bp);
+		bp->b_flags = (obp->b_flags & B_READ) | B_CALL;
+		bp->b_iodone = vndiodone;
+		bp->b_private = obp;
+		bp->b_vp = NULL;
+		bp->b_data = obp->b_data;
+		bp->b_bcount = bp->b_resid = obp->b_bcount;
+		BIO_COPYPRIO(bp, obp);
+
+		s = splbio();
+		while (vnd->sc_active >= vnd->sc_maxactive) {
+			tsleep(&vnd->sc_tab, PRIBIO, "vndac", 0);
+		}
+		vnd->sc_active++;
+		splx(s);
 
 		if ((flags & B_READ) == 0)
 			vn_start_write(vnd->sc_vp, &mp, V_WAIT);
@@ -565,8 +570,10 @@ vndthread(void *arg)
 		 * are connected to an NFS file.  This places the burden on
 		 * the client rather than the server.
 		 */
-		for (resid = bp->b_resid; resid; resid -= sz) {
-			struct vndbuf *nbp;
+		error = 0;
+		for (offset = 0, resid = bp->b_resid; resid;
+		    resid -= sz, offset += sz) {
+			struct buf *nbp;
 			struct vnode *vp;
 			daddr_t nbn;
 			int off, nra;
@@ -589,9 +596,8 @@ vndthread(void *arg)
 			 * a hassle (in the write case).
 			 */
 			if (error) {
-				s = splbio();
-				vnx->vx_error = error;
-				goto out;
+				skipped += resid;
+				break;
 			}
 
 #ifdef DEBUG
@@ -612,39 +618,11 @@ vndthread(void *arg)
 				    vnd->sc_vp, vp, (long long)bn, nbn, sz);
 #endif
 
-			s = splbio();
-			while (vnd->sc_active >= vnd->sc_maxactive) {
-				tsleep(&vnd->sc_tab, PRIBIO, "vndac", 0);
-			}
-			vnd->sc_active++;
-			nbp = VND_GETBUF(vnd);
-			splx(s);
-			BUF_INIT(&nbp->vb_buf);
-			nbp->vb_buf.b_flags = flags;
-			nbp->vb_buf.b_bcount = sz;
-			nbp->vb_buf.b_bufsize = round_page((ulong)addr + sz)
-			    - trunc_page((ulong) addr);
-			nbp->vb_buf.b_error = 0;
-			nbp->vb_buf.b_data = addr;
-			nbp->vb_buf.b_blkno = nbn + btodb(off);
-			nbp->vb_buf.b_proc = bp->b_proc;
-			nbp->vb_buf.b_iodone = vndiodone;
-			nbp->vb_buf.b_vp = vp;
+			nbp = getiobuf();
+			nestiobuf_setup(bp, nbp, offset, sz);
+			nbp->b_blkno = nbn + btodb(off);
 
-			nbp->vb_xfer = vnx;
-	
-			BIO_COPYPRIO(&nbp->vb_buf, bp);
-
-			/*
-			 * Just sort by block number
-			 */
-			s = splbio();
-			if (vnx->vx_error != 0) {
-				VND_PUTBUF(vnd, nbp);
-				goto out;
-			}
-			vnx->vx_pending++;
-#ifdef DEBUG
+#if 0 /* XXX #ifdef DEBUG */
 			if (vnddebug & VDB_IO)
 				printf("vndstart(%ld): bp %p vp %p blkno "
 				    "0x%" PRIx64 " flags %x addr %p cnt 0x%x\n",
@@ -653,28 +631,18 @@ vndthread(void *arg)
 				    nbp->vb_buf.b_flags, nbp->vb_buf.b_data,
 				    nbp->vb_buf.b_bcount);
 #endif
-
-			if ((nbp->vb_buf.b_flags & B_READ) == 0)
-				vp->v_numoutput++;
-			VOP_STRATEGY(vp, &nbp->vb_buf);
-	
-			splx(s);
+			VOP_STRATEGY(vp, nbp);
 			bn += sz;
-			addr += sz;
 		}
+		nestiobuf_done(bp, skipped, error);
 
-		s = splbio();
-
-out: /* Arrive here at splbio */
 		if ((flags & B_READ) == 0)
 			vn_finished_write(mp, 0);
-		vnx->vx_flags &= ~VX_BUSY;
-		if (vnx->vx_pending == 0) {
-			vndiodone1(vnd, vnx);
-		}
+		
+		s = splbio();
 		continue;
 done:
-		biodone(bp);
+		biodone(obp);
 		s = splbio();
 	}
 
@@ -685,82 +653,31 @@ done:
 }
 
 static void
-vndiodone1(struct vnd_softc *vnd, struct vndxfer *vnx)
+vndiodone(struct buf *bp)
 {
-	struct buf *bp = vnx->vx_bp;
-	int error;
+	struct vndxfer *vnx = VND_BUFTOXFER(bp);
+	struct vnd_softc *vnd = vnx->vx_vnd;
+	struct buf *obp = bp->b_private;
 
-	if ((vnx->vx_flags & VX_BUSY) != 0) {
-		return;
-	}
-	KASSERT(bp->b_resid != 0 || vnx->vx_pending == 0);
-	if (vnx->vx_pending > 0) {
-		return;
-	}
+	KASSERT(&vnx->vx_buf == bp);
+	KASSERT(vnd->sc_active > 0);
 #ifdef DEBUG
 	if (vnddebug & VDB_IO) {
 		printf("vndiodone1: bp %p iodone: error %d\n",
-		    bp, vnx->vx_error);
+		    bp, (bp->b_flags & B_ERROR) != 0 ? bp->b_error : 0);
 	}
 #endif
-	error = vnx->vx_error;
-	if (error != 0) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = error;
-
-		/* we don't know which sub-buf failed */
-		bp->b_resid = bp->b_bcount;
-	}
-	VND_PUTXFER(vnd, vnx);
 	disk_unbusy(&vnd->sc_dkdev, bp->b_bcount - bp->b_resid,
 	    (bp->b_flags & B_READ));
-	biodone(bp);
-}
-
-static void
-vndiodone(struct buf *bp)
-{
-	struct vndbuf *vbp = (struct vndbuf *) bp;
-	struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
-	struct buf *pbp = vnx->vx_bp;
-	struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
-	int s, done;
-
-	s = splbio();
-#ifdef DEBUG
-	if (vnddebug & VDB_IO)
-		printf("vndiodone(%ld): vbp %p vp %p blkno 0x%" PRIx64
-		       " addr %p cnt 0x%x\n",
-		    (long) (vnd-vnd_softc), vbp, vbp->vb_buf.b_vp,
-		    vbp->vb_buf.b_blkno, vbp->vb_buf.b_data,
-		    vbp->vb_buf.b_bcount);
-#endif
-
-	done = vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid;
-	pbp->b_resid -= done;
-	vnx->vx_pending--;
-	if (vbp->vb_buf.b_error) {
-#ifdef DEBUG
-		if (vnddebug & VDB_IO)
-			printf("vndiodone: vbp %p error %d\n", vbp,
-			    vbp->vb_buf.b_error);
-#endif
-		vnx->vx_error = vbp->vb_buf.b_error;
-	}
-
-	VND_PUTBUF(vnd, vbp);
-
-	/*
-	 * Wrap up this transaction if it has run to completion or, in
-	 * case of an error, when all auxiliary buffers have returned.
-	 */
-	if (vnx->vx_error != 0 || pbp->b_resid == 0) {
-		vndiodone1(vnd, vnx);
-	}
-
 	vnd->sc_active--;
-	wakeup(&vnd->sc_tab);
-	splx(s);
+	if (vnd->sc_active == 0) {
+		wakeup(&vnd->sc_tab);
+	}
+	obp->b_flags |= bp->b_flags & B_ERROR;
+	obp->b_error = bp->b_error;
+	obp->b_resid = bp->b_resid;
+	VND_PUTXFER(vnd, vnx);
+	biodone(obp);
 }
 
 /* ARGSUSED */
@@ -1120,8 +1037,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		/* Initialize the xfer and buffer pools. */
 		pool_init(&vnd->sc_vxpool, sizeof(struct vndxfer), 0,
 		    0, 0, "vndxpl", NULL);
-		pool_init(&vnd->sc_vbpool, sizeof(struct vndbuf), 0,
-		    0, 0, "vndbpl", NULL);
 
 		/* Try and read the disklabel. */
 		vndgetdisklabel(dev);
@@ -1183,7 +1098,6 @@ unlock_and_exit:
 
 		/* Destroy the xfer and buffer pools. */
 		pool_destroy(&vnd->sc_vxpool);
-		pool_destroy(&vnd->sc_vbpool);
 
 		/* Detatch the disk. */
 		pseudo_disk_detach(&vnd->sc_dkdev);
