@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.107 2004/10/22 05:39:57 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.108 2006/01/11 21:40:12 uwe Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.107 2004/10/22 05:39:57 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.108 2006/01/11 21:40:12 uwe Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -100,7 +100,13 @@ Library_Xform  *_rtld_xforms;
 char           *__progname;
 char          **environ;
 
+#if defined(RTLD_DEBUG)
+#if !(defined(__sh__) && !defined(__SH5__))
 extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
+#else  /* 32-bit SuperH */
+register Elf_Addr *_GLOBAL_OFFSET_TABLE_ asm("r12");
+#endif
+#endif /* RTLD_DEBUG */
 extern Elf_Dyn  _DYNAMIC;
 
 static void _rtld_call_fini_functions(Obj_Entry *);
