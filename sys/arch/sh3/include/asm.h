@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.16.14.5 2006/01/11 13:54:13 tron Exp $	*/
+/*	$NetBSD: asm.h,v 1.16.14.6 2006/01/11 13:56:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -146,6 +146,13 @@
 
 #define	PIC_PROLOGUE(got)			\
         	mov.l	r12, @-sp;		\
+		PIC_PROLOGUE_NOSAVE(got)
+
+/*
+ * Functions that do non local jumps don't need to preserve r12,
+ * so we can shave off two instructions to save/restore it.
+ */
+#define	PIC_PROLOGUE_NOSAVE(got)		\
         	mov.l	got, r12;		\
         	mova	got, r0;		\
         	add	r0, r12
@@ -173,6 +180,7 @@
 #else  /* !PIC */
 
 #define	PIC_PROLOGUE(label)
+#define	PIC_PROLOGUE_NOSAVE(label)
 #define	PIC_EPILOGUE
 #define PIC_GOT_DATUM
 
