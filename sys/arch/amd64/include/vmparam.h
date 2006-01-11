@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 2006/01/11 09:30:45 cube Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,13 +89,13 @@
 #define	DFLDSIZ32	(256*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ32
-#define	MAXDSIZ32	(2L*1024*1024*1024)	/* max data size */
+#define	MAXDSIZ32	(3U*1024*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ32
 #define	DFLSSIZ32	(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ32
-#define	MAXSSIZ32	(32*1024*1024)		/* max stack size */
+#define	MAXSSIZ32	(64*1024*1024)		/* max stack size */
 #endif
 
 /*
@@ -122,6 +122,18 @@
 #define VM_MAX_KERNEL_ADDRESS	0xffff800100000000
 
 #define VM_MAXUSER_ADDRESS32	0xfffff000
+
+/*
+ * The address to which unspecified mapping requests default
+ */
+#ifdef _KERNEL_OPT
+#include "opt_uvm.h"
+#endif
+#define __USE_TOPDOWN_VM
+#define VM_DEFAULT_ADDRESS(da, sz) \
+	trunc_page(USRSTACK - MAXSSIZ - (sz))
+#define VM_DEFAULT_ADDRESS32(da, sz) \
+	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
 
 /*
  * XXXfvdl we have plenty of KVM now, remove this.
