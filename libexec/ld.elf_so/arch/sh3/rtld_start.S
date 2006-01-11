@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.4 2004/09/14 21:34:01 uwe Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.5 2006/01/11 22:05:27 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -55,18 +55,18 @@
 	mov.l	@(r0,r2),r0	/* Where linker thinks _DYNAMIC is */
 	sub	r0,r5		/* compute relocation base */
 	bsrf	r1		/* _rtld_relocate_nonplt_self(dynp, relocbase) */
-	mov.l	r5,@-r15	/* delay slot: save relocbase */
+	 mov.l	r5,@-r15	/* delay slot: save relocbase */
 
-4:	
+4:
 	mov.l	@r15+,r5	/* restore relocbase */
 	add	#-8,r15		/* Make room for return args */
 	mov	r15,r4
 	mov.l	1f,r0
 	bsrf	r0		/* _rtld(sp, relocbase) */
-	mov.l	r9,@-r15	/* save ps_strings */
+	 mov.l	r9,@-r15	/* save ps_strings */
 3:
 	mov.l	@r15+,r9	/* restore ps_strings */
-	
+
 	mov.l	@r15+,r7	/* arg: cleanup */
 	mov.l	@r15+,r8	/* arg: obj */
 
@@ -79,7 +79,7 @@
 	shll2	r6
 	add	r15,r6
 	jmp	@r0
-	add	#8,r6
+	 add	#8,r6
 	.align	2
 1:	.long	_rtld-3b
 2:	.long	_GLOBAL_OFFSET_TABLE_
@@ -87,7 +87,7 @@
 	.long	_DYNAMIC@GOT
 	.long	_rtld_relocate_nonplt_self-4b
 	.size	.rtld_start,.-.rtld_start
-	
+
 	.align	2
 	.globl	_rtld_bind_start
 	.type	_rtld_bind_start,@function
@@ -105,8 +105,8 @@ _rtld_bind_start:		/* r0 = obj, r1 = reloff */
 	mov	r0,r4		/* copy of obj */
 	mov.l	2f,r0
 	bsrf	r0		/* call the binder */
-	mov	r1,r5		/* copy of reloff */
-4:	
+	 mov	r1,r5		/* copy of reloff */
+4:
 	lds.l	@r15+,pr	/* restore registers */
 	lds.l	@r15+,macl
 	lds.l	@r15+,mach
@@ -116,7 +116,7 @@ _rtld_bind_start:		/* r0 = obj, r1 = reloff */
 	mov.l	@r15+,r4
 	mov.l	@r15+,r3
 	jmp	@r0
-	mov.l	@r15+,r2
+	 mov.l	@r15+,r2
 	.align	2
 2:	.long	_rtld_bind-4b
 	.size	_rtld_bind_start,.-_rtld_bind_start
