@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.584 2006/01/08 10:21:04 apb Exp $
+# $NetBSD: mi,v 1.585 2006/01/11 00:06:38 kleink Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3489,20 +3489,20 @@
 ./usr/share/zoneinfo/ROC			base-sys-share		share
 ./usr/share/zoneinfo/ROK			base-sys-share		share
 ./usr/share/zoneinfo/Singapore			base-sys-share		share
-./usr/share/zoneinfo/SystemV			base-sys-share
-./usr/share/zoneinfo/SystemV/AST4		base-sys-share		share
-./usr/share/zoneinfo/SystemV/AST4ADT		base-sys-share		share
-./usr/share/zoneinfo/SystemV/CST6		base-sys-share		share
-./usr/share/zoneinfo/SystemV/CST6CDT		base-sys-share		share
-./usr/share/zoneinfo/SystemV/EST5		base-sys-share		share
-./usr/share/zoneinfo/SystemV/EST5EDT		base-sys-share		share
-./usr/share/zoneinfo/SystemV/HST10		base-sys-share		share
-./usr/share/zoneinfo/SystemV/MST7		base-sys-share		share
-./usr/share/zoneinfo/SystemV/MST7MDT		base-sys-share		share
-./usr/share/zoneinfo/SystemV/PST8		base-sys-share		share
-./usr/share/zoneinfo/SystemV/PST8PDT		base-sys-share		share
-./usr/share/zoneinfo/SystemV/YST9		base-sys-share		share
-./usr/share/zoneinfo/SystemV/YST9YDT		base-sys-share		share
+./usr/share/zoneinfo/SystemV			base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/AST4		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/AST4ADT		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/CST6		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/CST6CDT		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/EST5		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/EST5EDT		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/HST10		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/MST7		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/MST7MDT		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/PST8		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/PST8PDT		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/YST9		base-obsolete		obsolete
+./usr/share/zoneinfo/SystemV/YST9YDT		base-obsolete		obsolete
 ./usr/share/zoneinfo/Turkey			base-sys-share		share
 ./usr/share/zoneinfo/UCT			base-sys-share		share
 ./usr/share/zoneinfo/US				base-sys-share
