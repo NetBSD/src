@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.16.14.6 2006/01/11 13:56:13 tron Exp $	*/
+/*	$NetBSD: asm.h,v 1.16.14.7 2006/01/11 13:56:36 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -160,6 +160,9 @@
 #define	PIC_EPILOGUE				\
 		mov.l	@sp+, r12
 
+#define PIC_EPILOGUE_SLOT 			\
+		PIC_EPILOGUE
+
 #define PIC_GOT_DATUM \
 		.long	_GLOBAL_OFFSET_TABLE_
 
@@ -182,6 +185,7 @@
 #define	PIC_PROLOGUE(label)
 #define	PIC_PROLOGUE_NOSAVE(label)
 #define	PIC_EPILOGUE
+#define	PIC_EPILOGUE_SLOT	nop
 #define PIC_GOT_DATUM
 
 #define CALL	jsr @
