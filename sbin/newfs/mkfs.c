@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.95 2006/01/11 12:17:42 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.96 2006/01/11 22:03:51 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.95 2006/01/11 12:17:42 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.96 2006/01/11 22:03:51 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,6 +165,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	uint cgzero;
 	uint64_t inodeblks, cgall;
 	int32_t cylno, i, csfrags;
+	int inodes_per_cg;
 	struct timeval tv;
 	long long sizepb;
 	int col, delta;
@@ -375,12 +376,10 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	/*
 	 * See what would happen if we tried to use 1 cylinder group.
 	 * Assume space linear, so work out number of cylinder groups needed.
-	 * Subtract one from the allowed size to compensate for rounding
-	 * a number of bits up to a complete byte.
 	 */
 	cgzero = CGSIZE_IF(&sblock, 0, 0);
 	cgall = CGSIZE_IF(&sblock, inodeblks * INOPB(&sblock), sblock.fs_size);
-	ncg = howmany(cgall - cgzero, sblock.fs_bsize - cgzero - 1);
+	ncg = howmany(cgall - cgzero, sblock.fs_bsize - cgzero);
 	if (ncg < MINCYLGRPS) {
 		/*
 		 * We would like to allocate MINCLYGRPS cylinder groups,
@@ -403,24 +402,29 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	 * CGSIZE becomes too big (only happens if there are a lot of CGs).
 	 */
 	sblock.fs_fpg = roundup(howmany(sblock.fs_size, ncg), sblock.fs_frag);
-	i = CGSIZE_IF(&sblock, inodeblks * INOPB(&sblock) / ncg, sblock.fs_fpg);
-	if (i > sblock.fs_bsize)
+	/* Round up the fragments/group so the bitmap bytes are full */
+	sblock.fs_fpg = roundup(sblock.fs_fpg, NBBY);
+	inodes_per_cg = ((inodeblks - 1) / ncg + 1) * INOPB(&sblock);
+
+	i = CGSIZE_IF(&sblock, inodes_per_cg, sblock.fs_fpg);
+	if (i > sblock.fs_bsize) {
 		sblock.fs_fpg -= (i - sblock.fs_bsize) * NBBY;
-	/* ... and recalculate how many cylinder groups we now need */
-	ncg = howmany(sblock.fs_size, sblock.fs_fpg);
-	inodeblks /= ncg;
-	if (inodeblks == 0)
-		inodeblks = 1;
-	sblock.fs_ipg = inodeblks * INOPB(&sblock);
+		/* ... and recalculate how many cylinder groups we now need */
+		ncg = howmany(sblock.fs_size, sblock.fs_fpg);
+		inodes_per_cg = ((inodeblks - 1) / ncg + 1) * INOPB(&sblock);
+	}
+	sblock.fs_ipg = inodes_per_cg;
 	/* Sanity check on our sums... */
 	if (CGSIZE(&sblock) > sblock.fs_bsize) {
 		printf("CGSIZE miscalculated %d > %d\n",
 		    (int)CGSIZE(&sblock), sblock.fs_bsize);
 		exit(24);
 	}
+
+	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / INOPF(&sblock);
 	/* Check that the last cylinder group has enough space for the inodes */
 	i = sblock.fs_size - sblock.fs_fpg * (ncg - 1ull);
-	if (i < sblock.fs_iblkno + inodeblks * sblock.fs_frag) {
+	if (i < sblock.fs_dblkno) {
 		/*
 		 * Since we make all the cylinder groups the same size, the
 		 * last will only be small if there are a large number of
@@ -434,7 +438,6 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	sblock.fs_ncg = ncg;
 
 	sblock.fs_cgsize = fragroundup(&sblock, CGSIZE(&sblock));
-	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / INOPF(&sblock);
 	if (Oflag <= 1) {
 		sblock.fs_old_spc = sblock.fs_fpg * sblock.fs_old_nspf;
 		sblock.fs_old_nsect = sblock.fs_old_spc;
