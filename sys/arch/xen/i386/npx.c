@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.3.14.1 2005/03/20 14:38:21 tron Exp $	*/
+/*	$NetBSD: npx.c,v 1.3.14.2 2006/01/11 17:10:31 tron Exp $	*/
 /*	NetBSD: npx.c,v 1.103 2004/03/21 10:56:24 simonb Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.3.14.1 2005/03/20 14:38:21 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.3.14.2 2006/01/11 17:10:31 tron Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -146,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.3.14.1 2005/03/20 14:38:21 tron Exp $");
 #define	stts()			lcr0(rcr0() | CR0_TS)
 #else
 #define	clts()
-#define	stts()			HYPERVISOR_fpu_taskswitch()
+#define	stts()
 #endif
 
 int npxdna(struct cpu_info *);
@@ -749,7 +749,7 @@ npxsave_lwp(struct lwp *l, int save)
 
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL)
-		return;
+		goto end;
 
 	IPRINTF(("%s: fp %s lwp %p\n", ci->ci_dev->dv_xname,
 	    save? "save" : "flush", l));
@@ -792,4 +792,6 @@ npxsave_lwp(struct lwp *l, int save)
 	KASSERT(ci->ci_fpcurlwp == l);
 	npxsave_cpu(ci, save);
 #endif
+end:
+	HYPERVISOR_fpu_taskswitch();
 }
