@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.18 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.19 2006/01/11 09:30:45 cube Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.18 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.19 2006/01/11 09:30:45 cube Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
@@ -873,5 +873,5 @@ check_mcontext32(const mcontext32_t *mcp, struct trapframe *tf)
 vaddr_t
 netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
 {
-	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
+	return VM_DEFAULT_ADDRESS32(base, size);
 }
