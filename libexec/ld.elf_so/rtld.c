@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.108 2006/01/11 21:40:12 uwe Exp $	 */
+/*	$NetBSD: rtld.c,v 1.109 2006/01/12 22:40:17 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.108 2006/01/11 21:40:12 uwe Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.109 2006/01/12 22:40:17 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -875,10 +875,20 @@ _rtld_linkmap_add(Obj_Entry *obj)
 		_rtld_debug.r_map = l;
 		return;
 	}
-	for (prev = _rtld_debug.r_map; prev->l_next != NULL; prev = prev->l_next);
+
+	/*
+	 * Scan to the end of the list, but not past the entry for the
+	 * dynamic linker, which we want to keep at the very end.
+	 */
+	for (prev = _rtld_debug.r_map;
+	    prev->l_next != NULL && prev->l_next != &_rtld_objself.linkmap;
+	    prev = prev->l_next);
+
 	l->l_prev = prev;
+	l->l_next = prev->l_next;
+	if (l->l_next != NULL)
+		l->l_next->l_prev = l;
 	prev->l_next = l;
-	l->l_next = NULL;
 }
 
 void
