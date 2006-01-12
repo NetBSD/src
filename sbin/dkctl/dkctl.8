@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.16 2005/12/26 10:38:52 yamt Exp $
+.\"	$NetBSD: dkctl.8,v 1.17 2006/01/12 20:28:29 wiz Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@ It is used by specifying a disk to manipulate, the command
 to perform, and any arguments the command may require.
 .Sh COMMANDS
 The following commands are supported:
-.Bl -tag -width XgetwedgeinfoX
+.Bl -tag -width XXstrategyXXnameXX
 .It Ic getcache
 Get and display the cache enables for the specified device.
 .It Ic setcache Ar none | r | w | rw Op Ar save
@@ -94,7 +94,7 @@ devices.
 The software bad sector list is only maintained if the option
 .Dq WD_SOFTBADSECT
 was specified on kernel configuration.
-.Bl -tag -width XflushX -offset indent
+.Bl -tag -width XflushXX -offset indent
 .It flush
 Clears the in kernel list of bad sectors.
 .It list
@@ -132,18 +132,17 @@ Display information about the specified disk wedge.
 .It Ic listwedges
 List all of the wedges configured on the specified disk.
 .It Ic strategy Op Ar name
-To set and get the disk I/O scheduler (buffer queue
-strategy) on the drive. To get the value, the argument
+Get and set the disk I/O scheduler (buffer queue strategy) on the
+drive.
+If you do not provide a
 .Ar name
-must not be specified. To set the bufq strategy, the
+argument, the currently selected strategy will be shown.
+To set the bufq strategy, the
 .Ar name
-argument must be specified. Here's the explanation for this
-argument:
-.Bl -tag -width XnameX -offset indent
-.It name
-Will be one name of the built in kernel disk I/O schedulers.
-To get the list, the following command can be used:
-.El
+argument must be specified.
+.Ar name
+must be the name of one of the built-in kernel disk I/O schedulers.
+To get the list of supported schedulers, use the following command:
 .Bd -literal -offset indent
 $ sysctl kern.bufq.strategies
 .Ed
