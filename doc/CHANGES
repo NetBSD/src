@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.558 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.559 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -161,3 +161,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	i386:	Add support for AMD PowerNow technology.
 		Written by Martin Vegiard. [xtraeme 20051231]
 	rlphy(4): Realtek 8139/8201L PHY. From OpenBSD [xtraeme 20060104]
+	postfix(1): Updated to 2.2.8. [rpaulo 20060109]
