@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.166 2005/12/24 20:07:37 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.167 2006/01/12 18:04:09 cdi Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2006/01/12 18:04:09 cdi Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -679,6 +679,7 @@ remap_data:
 		prom_printf("no memory installed?");
 		prom_halt();
 	}
+	memsize /= sizeof(struct mem_region);
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BOOT1) {
