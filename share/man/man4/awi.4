@@ -1,4 +1,4 @@
-.\"     $NetBSD: awi.4,v 1.25 2006/01/03 01:22:51 rumble Exp $
+.\"     $NetBSD: awi.4,v 1.26 2006/01/12 21:05:18 wiz Exp $
 .\"
 .\" Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,8 @@ BSS) mode.
 .Pp
 In infrastructure mode, it communicates with an Access Point,
 which serves as a link-layer bridge between an Ethernet segment and
-the wireless network.  An access point also provides roaming capability,
+the wireless network.
+An access point also provides roaming capability,
 which allows a wireless node to move between access points.
 .Pp
 In ad-hoc mode, the device communicates peer to peer.
@@ -74,7 +75,8 @@ driver also supports a variant of ad-hoc mode outside of the spec for
 DS radio cards.
 This makes it possible to communicate with the WaveLAN ad-hoc mode of
 .Xr wi 4
-driver.  The NWID has no effect in this mode.
+driver.
+The NWID has no effect in this mode.
 .Pp
 Another mode added to the
 .Nm
@@ -128,7 +130,8 @@ and
 .Em DS2
 media types, while the FH cards support the
 .Em FH1
-media type.  For each media type, the
+media type.
+For each media type, the
 .Em adhoc
 mediaopt can be used to indicate to the driver to operate in ad-hoc mode.
 The
@@ -149,7 +152,7 @@ Or, the device failed to initialize its firmware.
 The device failed to complete its self test.
 In some circumstances, resetting device after power on fails.
 Re-inserting the card or setting the interface up and then down again
-(using 
+(using
 .Xr ifconfig 8 )
 may also be helpful.
 .It "awi0: transmit timeout"
