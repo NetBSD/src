@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.45 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.46 2006/01/12 14:57:06 gdt Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.45 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.46 2006/01/12 14:57:06 gdt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1006,7 +1006,12 @@ coda_lookup(void *v)
      * we are ISLASTCN
      */
     if (!error || (error == EJUSTRETURN)) {
+	/* XXX ISDOTDOT changes locking rules - not handled. */
 	if (!(cnp->cn_flags & LOCKPARENT) || !(cnp->cn_flags & ISLASTCN)) {
+	    /*
+	     * XXX Lock child before unlocking parent?
+	     * XXX Why is it ok to fail to unlock, but a panic to fail to lock?
+	     */
 	    if ((error = VOP_UNLOCK(dvp, 0))) {
 		return error;
 	    }
@@ -1016,8 +1021,7 @@ coda_lookup(void *v)
 	     * lock it without bothering to check anything else.
 	     */
 	    if (*ap->a_vpp) {
-		if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE))) {
-		    printf("coda_lookup: ");
+		if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE|LK_RETRY))) {
 		    panic("unlocked parent but couldn't lock child");
 		}
 	    }
@@ -1025,9 +1029,8 @@ coda_lookup(void *v)
 	    /* The parent is locked, and may be the same as the child */
 	    if (*ap->a_vpp && (*ap->a_vpp != dvp)) {
 		/* Different, go ahead and lock it. */
-		if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE))) {
-		    printf("coda_lookup: ");
-		    panic("unlocked parent but couldn't lock child");
+		if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE|LK_RETRY))) {
+		    panic("kept parent locked but couldn't lock child");
 		}
 	    }
 	}
