@@ -1,4 +1,4 @@
-.\" $NetBSD: mktemp.1,v 1.12 2006/01/12 21:39:45 garbled Exp $
+.\" $NetBSD: mktemp.1,v 1.13 2006/01/12 21:54:06 wiz Exp $
 .\" From: $FreeBSD: src/usr.bin/mktemp/mktemp.1,v 1.5 1999/08/28 01:04:13 peter Exp $
 .\" From: $OpenBSD: mktemp.1,v 1.8 1998/03/19 06:13:37 millert Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" $FreeBSD: src/usr.bin/mktemp/mktemp.1,v 1.5 1999/08/28 01:04:13 peter Exp $
 .\"
-.Dd April 2, 2004
+.Dd January 12, 2006
 .Dt MKTEMP 1
 .Os
 .Sh NAME
@@ -98,10 +98,11 @@ The template string created will consist of the
 followed by a
 .So . Sc
 and an eight character unique letter combination.
-.Ql X Ns s 
+.Ql X Ns s
 in the
 .Ar prefix
-string will be treated as literal. If an additional
+string will be treated as literal.
+If an additional
 .Ar template
 argument is passed, a second file will be created.
 Care should
