@@ -1,4 +1,4 @@
-.\" $NetBSD: 4.t,v 1.5 2006/01/04 15:32:50 garbled Exp $
+.\" $NetBSD: 4.t,v 1.6 2006/01/12 21:17:49 wiz Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -33,7 +33,8 @@ Setting up
 .PP
 The 4.3BSD release comes with the necessary programs 
 installed and with the default line printer queue
-created.  If the system must be modified, the
+created.
+If the system must be modified, the
 makefile in the directory /usr/src/usr.lib/lpr
 should be used in recompiling and reinstalling
 the necessary programs.
@@ -69,8 +70,8 @@ lp|LA-180 DecWriter III:\e
 .DE
 The
 .B lp
-entry specifies the file name to open for output. Here it could
-be left out since ``/dev/lp'' is the default.
+entry specifies the file name to open for output.
+Here it could be left out since ``/dev/lp'' is the default.
 The
 .B br
 entry sets the baud rate for the tty line and the
@@ -89,9 +90,10 @@ should be used for printing the files;
 more will be said about filters later.
 The last entry causes errors
 to be written to the file ``/usr/adm/lpd-errs''
-instead of the console.  Most errors from \fIlpd\fP are logged using
-\fIsyslogd\fP\|(8) and will not be logged in the specified file.  The
-filters should use \fIsyslogd\fP to report errors; only those that
+instead of the console.
+Most errors from \fIlpd\fP are logged using
+\fIsyslogd\fP\|(8) and will not be logged in the specified file.
+The filters should use \fIsyslogd\fP to report errors; only those that
 write to standard error output will end up with errors in the \fBlf\fP file.
 (Occasionally errors sent to standard error output have not appeared
 in the log file; the use of \fIsyslogd\fP is highly recommended.)
@@ -111,7 +113,8 @@ lp|default line printer:\e
 The
 .B rm
 entry is the name of the remote machine to connect to; this name must
-be a known host name for a machine on the network. The
+be a known host name for a machine on the network.
+The
 .B rm
 entry can also specify the port number of the \fIlpd\fP
 server on the remote host with the form ``port@host''.
@@ -129,7 +132,8 @@ default value of ``/var/spool/output/lpd''.
 Output filters
 .PP
 Filters are used to handle device dependencies and to
-do accounting functions.  The output filtering of
+do accounting functions.
+The output filtering of
 .B of
 is used when accounting is
 not being done or when all text data must be passed through a filter.
@@ -192,12 +196,14 @@ Note that once the files are in the local queue, they can be printed
 locally or forwarded to another host depending on the configuration.
 .PP
 Remote access is controlled by listing the hosts in either the file
-/etc/hosts.equiv or /etc/hosts.lpd, one host per line. Note that
+/etc/hosts.equiv or /etc/hosts.lpd, one host per line.
+Note that
 .IR rsh (1)
 and
 .IR rlogin (1)
 use /etc/hosts.equiv to determine which hosts are equivalent for allowing logins
-without passwords. The file /etc/hosts.lpd is only used to control
+without passwords.
+The file /etc/hosts.lpd is only used to control
 which hosts have line printer access.
 Remote access can be further restricted to only allow remote users with accounts
 on the local host to print jobs by using the \fBrs\fP printcap entry.
