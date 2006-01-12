@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.11 2004/11/11 20:14:02 dsl Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.12 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,15 +56,15 @@
 
 /* prototypes */
 
-static int process(struct lookfor *, char *);
-static int match(char *, struct lookfor *, size_t);
-static int finddata(struct lookfor *, char *, struct data *, size_t *);
+static int process(const struct lookfor *, char *);
+static int match(char *, const struct lookfor *, size_t);
+static int finddata(const struct lookfor *, char *, struct data *, size_t *);
 
 /*
  * Walk the buffer, call match for each line.
  */
 int
-walk(char *buffer, size_t size, struct lookfor *these, size_t numthese)
+walk(char *buffer, size_t size, const struct lookfor *these, size_t numthese)
 {
 	size_t i = 0;
 	size_t len;
@@ -101,7 +101,7 @@ walk(char *buffer, size_t size, struct lookfor *these, size_t numthese)
  * For each match in these, process the match.
  */
 static int
-match(char *line, struct lookfor *these, size_t numthese)
+match(char *line, const struct lookfor *these, size_t numthese)
 {
 	size_t linelen;		/* Line length */
 	size_t patlen;		/* Pattern length */
@@ -126,7 +126,7 @@ match(char *line, struct lookfor *these, size_t numthese)
 
 /* process the matched line. */
 static int
-process(struct lookfor *item, char *line)
+process(const struct lookfor *item, char *line)
 {
 	struct data found[MAXDATA];
 	size_t numfound = 0;
@@ -202,7 +202,7 @@ process(struct lookfor *item, char *line)
  * Side Effect -- sets numfound and found.
  */
 static int
-finddata(struct lookfor *item, char *line, struct data *found, size_t *numfound)
+finddata(const struct lookfor *item, char *line, struct data *found, size_t *numfound)
 {
 	const char *fmt;
 	size_t len;

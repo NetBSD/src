@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.h,v 1.9 2003/11/30 14:36:44 dsl Exp $	*/
+/*	$NetBSD: txtwalk.h,v 1.10 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,7 +79,7 @@ struct lookfor {
 
 /* prototypes */
 
-int  walk(char *, size_t, struct lookfor *, size_t);
+int  walk(char *, size_t, const struct lookfor *, size_t);
 
 
 /* Maximum number of matched data elements per line! */

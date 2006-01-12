@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.24 2005/09/09 23:20:33 dsl Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.25 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -471,12 +471,8 @@ message distmedium
 {Ihre Festplatte ist nun bereit für die Installation der Kernel- und
 Distributionspakete. Wie im INSTALL Dokument beschrieben, haben Sie nun 
 mehrere Optionen.
-Für FTP oder NFS müssen Sie mit einem Netzwerk verbunden sein und Zugriff auf
-die entsprechenden Server haben. Wenn Sie zu diesem Zeitpunkt noch nicht
-bereit sind diese Installation zu vollenden, können Sie 'kein' auswählen,
-wodurch Sie zum Hauptmenü zurückkehren. Sie können dann zu einem späteren
-Zeitpunkt die Installation erneut starten und im Hauptmenü "Aktualisierung"
-wählen.
+Für FTP oder NFS müssen Sie mit einem Netzwerk verbunden sein und
+Zugriff auf die entsprechenden Server haben.
 }
 
 message distset
@@ -493,13 +489,14 @@ message ftpsource
 Dies sind die Daten zum Aufbau einer %s Verbindung.
 Falls der Benutzer "ftp" ist, benötigen Sie kein Passwort.
 
-Server:		%s 
-Basispfad:	%s 
-Verzeichnis:	%s 
-Benutzer:	%s 
-Passwort:	%s 
-Proxy:		%s
-}
+Server:		  %s 
+Basispfad:	  %s 
+Verzeichnis:	  %s 
+Benutzer:	  %s 
+Passwort:	  %s 
+Proxy:		  %s
+Zwischenspeicher  %s
+} /* fix XLAT */
 
 message email
 {E-Mail Adresse}
@@ -516,9 +513,6 @@ Server:		%s
 Basispfad:	%s 
 Verzeichnis:	%s
 }
-
-message nfsbadmount
-{Das Verzeichnis %s:%s konnte nicht gemountet werden.}
 
 message cdromsource
 {Geben Sie das CD-Laufwerk und das entsprechende Verzeichnis 
@@ -551,12 +545,6 @@ Verzeichnis:	%s
 
 message filesys
 {Dateisystem}
-
-message cdrombadmount
-{Die CD in %s konnte nicht gemountet werden.}
-
-message localfsbadmount
-{%s konnte auf dem Laufwerk %s nicht gemountet werden.}
 
 message badlocalsetdir
 {%s ist kein Verzeichnis.}
@@ -598,7 +586,7 @@ message net_host
 message net_ip
 {IPv4 Adresse}
 
-message net_ip_2nd
+message net_srv_ip
 {IPv4 Adressse des Servers}
 
 message net_mask
@@ -679,10 +667,10 @@ message ftperror
 {"ftp" konnte eine Datei nicht herunterladen.
 Wollen Sie es erneut versuchen?}
 
-message distdir
+message xferdir
 {Welches Verzeichnis möchten Sie für %s nutzen?}
 
-message delete_dist_files
+message delete_xfer_files
 {Wollen Sie die NetBSD Pakete von %s löschen? 
 (Sie können diese auch dazu beibehalten ein weiteres System zu installieren
 oder zu erneuern.)}
@@ -807,10 +795,10 @@ message fddev
 {Welches Diskettenlaufwerk wollen Sie nutzen? }
 
 message fdmount
-{Bitte legen Sie die Diskette ein, auf der sich die Datei "%s" befindet. }
+{Bitte legen Sie die Diskette ein, auf der sich die Datei "%s.%s" befindet. }
 
 message fdnotfound
-{Ich konnte die Datei "%s" nicht finden. Bitte legen Sie die entsprechende 
+{Ich konnte die Datei "%s.%s" nicht finden. Bitte legen Sie die entsprechende 
 Diskette ein.
 Wenn dies die letzte Diskette des Paketes war, wählen Sie "Paket fertig",
 um zum nächsten Paket überzugehen - falls ein weiteres Paket folgt.}
@@ -820,7 +808,7 @@ message fdremount
 
 Sie sollten: 
 
-Erneut probieren, die Diskette mit der Datei "%s" einzulegen.
+Erneut probieren, die Diskette mit der Datei "%s.%s" einzulegen.
 
 Keine weiteren Disketten für dieses Paket laden, und stattdessen mit dem
 nächsten Paket fortfahren - falls ein weiteres existiert.
@@ -879,17 +867,11 @@ message set_X11_fonts
 message set_X11_servers
 {X11 Server}
 
-message set_X_contrib
-{X zusätzliche Clientsoftware}
-
 message set_X11_prog
 {X11 Programmierung}
 
-message set_X11_misc
-{X11 Diverses}
-
 message cur_distsets_row
-{%-27s %3s\n}
+{%-27s %3s}
 
 message select_all
 {Alle oben angezeigten Pakete auswählen}
@@ -1058,6 +1040,7 @@ message hidden {** versteckt **}
 message Host {Host}
 message Base_dir {Basispfad}
 message Set_dir {Verzeichnis}
+message Xfer_dir {Zwischenspeicher}
 message Directory {Verzeichnis}
 message User {Benutzer}
 message Password {Passwort}
@@ -1069,6 +1052,9 @@ message Try_again {Versuchen Sie es erneut}
 message Give_up {Aufgeben}
 message Ignore_continue_anyway {Ignorieren und dennoch fortsetzen}
 message Set_finished {Paket fertig}
+message Skip_set {Paket skip}	/* XXX */
+message Skip_group {Paket skip group}	/* XXX */
+message Abandon {Abandon installation}	/* XXX */
 message Abort_install {Installation abbrechen}
 message Password_cipher {Passwort Verschlüsselungsverfahren}
 message DES {DES}

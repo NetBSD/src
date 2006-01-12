@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.123 2005/02/26 17:40:49 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.124 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,6 +67,14 @@ deconst(const void *p)
 #define T_FILE		0
 #define T_OUTPUT	1
 
+/* Some install status/response values */
+#define	SET_OK		0		/* Set extracted */
+#define	SET_RETRY	1		/* Retry */
+#define	SET_SKIP	2		/* Skip this set */
+#define	SET_SKIP_GROUP	3		/* Skip this set and rest of group */
+#define	SET_ABANDON	4		/* Abandon installation */
+#define	SET_CONTINUE	5		/* Continue (copy from floppy loop) */
+
 /* run_prog flags */
 #define RUN_DISPLAY	0x0001		/* Display program output */
 #define RUN_FATAL	0x0002		/* errors are fatal */
@@ -76,39 +84,64 @@ deconst(const void *p)
 #define RUN_ERROR_OK	0x0040		/* Don't wait for error confirmation */
 #define RUN_PROGRESS	0x0080		/* Output is just progess test */
 #define RUN_NO_CLEAR	0x0100		/* Leave program output after error */
+#define RUN_XFER_DIR	0x0200		/* cd to xfer_dir in child */
 
 /* Installation sets */
-#define SET_KERNEL	0x000000ffu	/* allow 8 kernels */
-#define SET_KERNEL_1	0x00000001u	/* Usually GENERIC */
-#define SET_KERNEL_2	0x00000002u	/* MD kernel... */
-#define SET_KERNEL_3	0x00000004u	/* MD kernel... */
-#define SET_KERNEL_4	0x00000008u	/* MD kernel... */
-#define SET_KERNEL_5	0x00000010u	/* MD kernel... */
-#define SET_KERNEL_6	0x00000020u	/* MD kernel... */
-#define SET_KERNEL_7	0x00000040u	/* MD kernel... */
-#define SET_KERNEL_8	0x00000080u	/* MD kernel... */
+enum {
+    SET_NONE,
+    SET_KERNEL_FIRST,
+    SET_KERNEL_1,	/* Usually GENERIC */
+    SET_KERNEL_2,	/* MD kernel... */
+    SET_KERNEL_3,	/* MD kernel... */
+    SET_KERNEL_4,	/* MD kernel... */
+    SET_KERNEL_5,	/* MD kernel... */
+    SET_KERNEL_6,	/* MD kernel... */
+    SET_KERNEL_7,	/* MD kernel... */
+    SET_KERNEL_8,	/* MD kernel... */
+    SET_KERNEL_LAST,	/* allow 8 kernels */
 
-#define SET_SYSTEM	0x000fff00u	/* all system sets */
-#define SET_BASE	0x00000100u	/* base */
-#define SET_ETC		0x00000200u	/* /etc */
-#define SET_COMPILER	0x00000400u	/* compiler tools */
-#define SET_GAMES	0x00000800u	/* text games */
-#define SET_MAN_PAGES	0x00001000u	/* online manual pages */
-#define SET_MISC	0x00002000u	/* miscellaneuous */
-#define SET_TEXT_TOOLS	0x00004000u	/* text processing tools */
+    /* System sets */
+    SET_BASE,		/* base */
+    SET_ETC,		/* /etc */
+    SET_COMPILER,	/* compiler tools */
+    SET_GAMES,		/* text games */
+    SET_MAN_PAGES,	/* online manual pages */
+    SET_MISC,		/* miscellaneuous */
+    SET_TEXT_TOOLS,	/* text processing tools */
 
-#define SET_X11		0x0ff00000u	/* All X11 sets */
-#define SET_X11_BASE	0x00100000u	/* X11 base and clients */
-#define SET_X11_FONTS	0x00200000u	/* X11 fonts */
-#define SET_X11_SERVERS	0x00400000u	/* X11 servers */
-#define SET_X11_PROG	0x00800000u	/* X11 programming */
-#define SET_X11_ETC	0x01000000u	/* X11 config */
+    /* X11 sets */
+    SET_X11_FIRST,
+    SET_X11_BASE,	/* X11 base and clients */
+    SET_X11_FONTS,	/* X11 fonts */
+    SET_X11_SERVERS,	/* X11 servers */
+    SET_X11_PROG,	/* X11 programming */
+    SET_X11_ETC,	/* X11 config */
+    SET_X11_LAST,
 
-#define SET_MD		0xf0000000u	/* All machine dependant sets */
-#define SET_MD_1	0x10000000u	/* Machine dependant set */
-#define SET_MD_2	0x20000000u	/* Machine dependant set */
-#define SET_MD_3	0x40000000u	/* Machine dependant set */
-#define SET_MD_4	0x80000000u	/* Machine dependant set */
+    /* Machine dependant sets */
+    SET_MD_1,		/* Machine dependant set */
+    SET_MD_2,		/* Machine dependant set */
+    SET_MD_3,		/* Machine dependant set */
+    SET_MD_4,		/* Machine dependant set */
+
+    SET_LAST,
+    SET_GROUP,		/* Start of submenu */
+    SET_GROUP_END,	/* End of submenu */
+};
+
+/* Initialisers to select sets */
+/* All kernels */
+#define SET_KERNEL SET_KERNEL_1, SET_KERNEL_2, SET_KERNEL_3, SET_KERNEL_4, \
+		    SET_KERNEL_5, SET_KERNEL_6, SET_KERNEL_7, SET_KERNEL_8
+/* All system sets */
+#define SET_SYSTEM SET_BASE, SET_ETC, SET_COMPILER, SET_GAMES, \
+		    SET_MAN_PAGES, SET_MISC, SET_TEXT_TOOLS
+/* All X11 sets */
+#define SET_X11_NOSERVERS SET_X11_BASE, SET_X11_FONTS, SET_X11_PROG, SET_X11_ETC
+#define SET_X11 SET_X11_NOSERVERS, SET_X11_SERVERS
+
+/* All machine dependant sets */
+#define SET_MD SET_MD_1, SET_MD_2, SET_MD_3, SET_MD_4
 
 /* Macros */
 #define nelem(x) (sizeof (x) / sizeof *(x))
@@ -209,8 +242,8 @@ char bsddiskname[DISKNAME_SIZE];
 const char *doessf;
 
 /* Relative file name for storing a distribution. */
-char dist_dir[STRSIZE];  
-int  clean_dist_dir;
+char xfer_dir[STRSIZE];  
+int  clean_xfer_dir;
 /* Absolute path name where the distribution should be extracted from. */
 
 #if !defined(SYSINST_FTP_HOST)
@@ -227,12 +260,16 @@ char ext_dir[STRSIZE];
 /* Place we look in all fs types */
 char set_dir[STRSIZE];
 
-char ftp_host[STRSIZE];
-char ftp_dir[STRSIZE] ;
-char ftp_user[SSTRSIZE];
-char ftp_pass[STRSIZE];
-char ftp_proxy[STRSIZE];
+struct {
+    char host[STRSIZE];
+    char dir[STRSIZE] ;
+    char user[SSTRSIZE];
+    char pass[STRSIZE];
+    char proxy[STRSIZE];
+    const char *xfer_type;		/* "ftp" or "http" */
+} ftp;
 
+int (*fetch_fn)(const char *);
 char nfs_host[STRSIZE];
 char nfs_dir[STRSIZE];
 
@@ -243,17 +280,10 @@ char localfs_fs[SSTRSIZE];
 char localfs_dir[STRSIZE];
 
 char targetroot_mnt[SSTRSIZE];
-char distfs_mnt[SSTRSIZE];
 
 int  mnt2_mounted;
 
 char dist_postfix[SSTRSIZE];
-
-/* selescted sets */
-extern distinfo dist_list[];
-extern unsigned int sets_valid;
-extern unsigned int sets_selected;
-extern unsigned int sets_installed;
 
 /* needed prototypes */
 void set_menu_numopts(int, int);
@@ -337,7 +367,6 @@ void	restore_etc(void);
 int	dir_exists_p(const char *);
 int	file_exists_p(const char *);
 int	file_mode_match(const char *, unsigned int);
-int	distribution_sets_exist_p(const char *);
 uint	get_ramsize(void);
 void	ask_sizemult(int);
 void	run_makedev(void);
@@ -345,9 +374,12 @@ int	get_via_floppy(void);
 int	get_via_cdrom(void);
 int	get_via_localfs(void);
 int	get_via_localdir(void);
-void	cd_dist_dir(const char *);
+void	get_xfer_dir(const char *);
 void	show_cur_distsets(void);
 void	make_ramdisk_dir(const char *);
+void    set_kernel_set(unsigned int);
+unsigned int    get_kernel_set(void);
+unsigned int    set_X11_selected(void);
 int 	get_and_unpack_sets(int, msg, msg, msg);
 int	sanity_check(void);
 int	set_timezone(void);

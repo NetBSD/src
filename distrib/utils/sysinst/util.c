@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.137 2005/10/22 09:31:50 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.138 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,6 +54,34 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+#ifndef MD_SETS_SELECTED
+#define MD_SETS_SELECTED SET_KERNEL_1, SET_SYSTEM, SET_X11, SET_MD
+#endif
+#ifndef MD_SETS_VALID
+#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD
+#endif
+
+static const char *msg_yes, *msg_no, *msg_all, *msg_some, *msg_none;
+static const char *msg_cur_distsets_row;
+static int select_menu_width;
+
+static uint8_t set_status[SET_GROUP_END];
+#define SET_VALID	0x01
+#define SET_SELECTED	0x02
+#define SET_SKIPPED	0x04
+#define SET_INSTALLED	0x08
+
+static char fddev[STRSIZE];
+
+struct  tarstats {
+	int nselected;
+	int nfound;
+	int nnotfound;
+	int nerror;
+	int nsuccess;
+	int nskipped;
+} tarstats;
+
 distinfo dist_list[] = {
 #ifdef SET_KERNEL_1_NAME
 	{SET_KERNEL_1_NAME,	SET_KERNEL_1,		MSG_set_kernel_1},
@@ -79,6 +107,7 @@ distinfo dist_list[] = {
 #ifdef SET_KERNEL_8_NAME
 	{SET_KERNEL_8_NAME,	SET_KERNEL_8,		MSG_set_kernel_8},
 #endif
+
 	{"base",		SET_BASE,		MSG_set_base},
 	{"etc",			SET_ETC,		MSG_set_system},
 	{"comp",		SET_COMPILER,		MSG_set_compiler},
@@ -86,12 +115,15 @@ distinfo dist_list[] = {
 	{"man",			SET_MAN_PAGES,		MSG_set_man_pages},
 	{"misc",		SET_MISC,		MSG_set_misc},
 	{"text",		SET_TEXT_TOOLS,		MSG_set_text_tools},
-	{NULL,			SET_X11,		MSG_set_X11},
+
+	{NULL,			SET_GROUP,		MSG_set_X11},
 	{"xbase",		SET_X11_BASE,		MSG_set_X11_base},
 	{"xcomp",		SET_X11_PROG,		MSG_set_X11_prog},
 	{"xetc",		SET_X11_ETC,		MSG_set_X11_etc},
 	{"xfont",		SET_X11_FONTS,		MSG_set_X11_fonts},
 	{"xserver",		SET_X11_SERVERS,	MSG_set_X11_servers},
+	{NULL,			SET_GROUP_END,		NULL},
+
 #ifdef SET_MD_1_NAME
 	{SET_MD_1_NAME,		SET_MD_1,		MSG_set_md_1},
 #endif
@@ -104,36 +136,47 @@ distinfo dist_list[] = {
 #ifdef SET_MD_4_NAME
 	{SET_MD_4_NAME,		SET_MD_4,		MSG_set_md_4},
 #endif
-	{NULL,			0,			NULL},
+
+	{NULL,			SET_LAST,		NULL},
 };
 
 /*
  * local prototypes 
  */
-struct  tarstats {
-	int nselected;
-	int nfound;
-	int nnotfound;
-	int nerror;
-	int nsuccess;
-	int nskipped;
-} tarstats;
 
-static int extract_file(int, int, int, char *path);
-static int extract_dist(int, int);
-int	distribution_sets_exist_p(const char *path);
 static int check_for(unsigned int mode, const char *pathname);
 
-#ifndef MD_SETS_SELECTED
-#define MD_SETS_SELECTED (SET_KERNEL_1 | SET_SYSTEM | SET_X11 | SET_MD)
-#endif
-#ifndef MD_SETS_VALID
-#define MD_SETS_VALID (SET_KERNEL | SET_SYSTEM | SET_X11 | SET_MD)
-#endif
+static void
+init_set_status(void)
+{
+	const static uint8_t sets_valid[] = {MD_SETS_VALID};
+	const static uint8_t sets_selected[] = {MD_SETS_SELECTED};
+	unsigned int i, len;
+	const char *longest;
 
-unsigned int sets_valid = MD_SETS_VALID;
-unsigned int sets_selected = (MD_SETS_SELECTED) & (MD_SETS_VALID);
-unsigned int sets_installed = 0;
+	for (i = 0; i < nelem(sets_valid); i++)
+		set_status[sets_valid[i]] = SET_VALID;
+	for (i = 0; i < nelem(sets_selected); i++)
+		set_status[sets_selected[i]] |= SET_SELECTED;
+
+	set_status[SET_GROUP] = SET_VALID;
+
+	/* Lookup some strings we need lots of times */
+	msg_yes = msg_string(MSG_Yes);
+	msg_no = msg_string(MSG_No);
+	msg_all = msg_string(MSG_All);
+	msg_some = msg_string(MSG_Some);
+	msg_none = msg_string(MSG_None);
+	msg_cur_distsets_row = msg_string(MSG_cur_distsets_row);
+
+	/* Find longest and use it to determine width of selection menu */
+	len = strlen(msg_no); longest = msg_no;
+	i = strlen(msg_yes); if (i > len) {len = i; longest = msg_yes; }
+	i = strlen(msg_all); if (i > len) {len = i; longest = msg_all; }
+	i = strlen(msg_some); if (i > len) {len = i; longest = msg_some; }
+	i = strlen(msg_none); if (i > len) {len = i; longest = msg_none; }
+	select_menu_width = snprintf(NULL, 0, msg_cur_distsets_row, "",longest);
+}
 
 int
 dir_exists_p(const char *path)
@@ -154,30 +197,8 @@ file_mode_match(const char *path, unsigned int mode)
 {
 	struct stat st;
 
-	return (stat(path, &st) == 0 && (st.st_mode & mode) != 0);
+	return (stat(path, &st) == 0 && (st.st_mode & S_IFMT) == mode);
 }
-
-int
-distribution_sets_exist_p(const char *path)
-{
-	char buf[STRSIZE];
-	int result;
-
-	result = 1;
-	snprintf(buf, sizeof buf, "%s/%s", path, "etc.tgz");
-	result = result && file_exists_p(buf);
-
-	snprintf(buf, sizeof buf, "%s/%s", path, "base.tgz");
-	result = result && file_exists_p(buf);
-
-	if (result == 0) {
-		msg_display(MSG_badsetdir, path);
-		process_menu(MENU_ok, NULL);
-	}
-
-	return result;
-}
-
 
 uint
 get_ramsize(void)
@@ -211,6 +232,50 @@ run_makedev(void)
 	free(owd);
 }
 
+static int
+floppy_fetch(const char *set_name)
+{
+	char post[4];
+	msg prompt;
+	int menu;
+	int status;
+
+	strcpy(post, "aa");
+
+	prompt = MSG_fdmount;
+	menu = MENU_fdok;
+	for (;;) {
+		umount_mnt2();
+		msg_display(prompt, set_name, post);
+		process_menu(menu, &status);
+		if (status != SET_CONTINUE)
+			return status;
+		menu = MENU_fdremount;
+		prompt = MSG_fdremount;
+		if (run_program(0, "/sbin/mount -r -t %s %s /mnt2",
+							fdtype, fddev))
+			continue;
+		mnt2_mounted = 1;
+		prompt = MSG_fdnotfound;
+
+		/* Display this because it might take a while.... */
+		if (run_program(RUN_DISPLAY,
+			    "sh -c '/bin/cat /mnt2/%s.%s %s %s/%s/%s%s'",
+			    set_name, post,
+			    post[0] == 'a' && post[1] == 'a' ? ">" : ">>",
+			    target_prefix(), xfer_dir, set_name, dist_postfix))
+			/* XXX: a read error will give a corrupt file! */
+			continue;
+
+		/* We got that file, advance to next fragment */
+		if (post[1] < 'z')
+			post[1]++;
+		else
+			post[1] = 'a', post[0]++;
+		prompt = MSG_fdmount;
+		menu = MENU_fdok;
+	}
+}
 
 /*
  * Load files from floppy.  Requires a /mnt2 directory for mounting them.
@@ -218,75 +283,15 @@ run_makedev(void)
 int
 get_via_floppy(void)
 {
-	char fddev[STRSIZE];
-	char fname[STRSIZE];
-	char full_name[STRSIZE];
-	char catcmd[STRSIZE];
-	distinfo *list;
-	char post[4];
-	int  first;
-	struct stat sb;
 
-	(void)strlcpy(fddev, "/dev/fd0a", STRSIZE);
-	cd_dist_dir("unloading from floppy");
+	(void)strlcpy(fddev, "/dev/fd0a", sizeof fddev);
+	get_xfer_dir("unloading from floppy");
 
-	msg_prompt_add(MSG_fddev, fddev, fddev, STRSIZE);
+	msg_prompt_add(MSG_fddev, fddev, fddev, sizeof fddev);
+	fetch_fn = floppy_fetch;
+	clean_xfer_dir = 1;
 
-	list = dist_list;
-	while (list->desc) {
-		if (list->name == NULL) {
-			list++;
-			continue;
-		}
-		strcpy(post, ".aa");
-		while (sets_selected & list->set) {
-			snprintf(fname, sizeof fname, "%s%s", list->name, post);
-			snprintf(full_name, sizeof full_name, "/mnt2/%s",
-				 fname);
-			first = 1;
-			while (!mnt2_mounted || stat(full_name, &sb)) {
-				umount_mnt2();
-				if (first)
-					msg_display(MSG_fdmount, fname);
-				else
-					msg_display(MSG_fdnotfound, fname);
-				process_menu(MENU_fdok, NULL);
-				if (!yesno)
-					return 0;
-				else if (yesno == 2)
-					return 1;
-				while (run_program(0, 
-				    "/sbin/mount -r -t %s %s /mnt2",
-				    fdtype, fddev)) {
-					msg_display(MSG_fdremount, fname);
-					process_menu(MENU_fdremount, NULL);
-					if (!yesno)
-						return 0;
-					if (yesno == 2)
-						return 1;
-				}
-				mnt2_mounted = 1;
-				first = 0;
-			}
-			snprintf(catcmd, sizeof(catcmd), "/bin/cat %s >> %s%s",
-				full_name, list->name, dist_postfix);
-			if (logging)
-				(void)fprintf(logfp, "%s\n", catcmd);
-			if (scripting)
-				(void)fprintf(script, "%s\n", catcmd);
-			do_system(catcmd);
-			if (post[2] < 'z')
-				post[2]++;
-			else
-				post[2] = 'a', post[1]++;
-		}
-		umount_mnt2();
-		list++;
-	}
-#ifndef DEBUG
-	chdir("/");	/* back to current real root */
-#endif
-	return 1;
+	return SET_OK;
 }
 
 /*
@@ -299,28 +304,18 @@ get_via_cdrom(void)
 	/* Get CD-rom device name and path within CD-rom */
 	process_menu(MENU_cdromsource, NULL);
 
-	umount_mnt2();
-
 	/* Mount it */
-	for (;;) {
-		if (run_program(0, "/sbin/mount -rt cd9660 /dev/%s /mnt2",
-				cdrom_dev) == 0)
-			break;
-		process_menu(MENU_cdrombadmount, NULL);
-		if (!yesno)
-			return -1;
-	}
+	if (run_program(0, "/sbin/mount -rt cd9660 /dev/%s /mnt2",
+	    cdrom_dev) != 0)
+		return SET_RETRY;
+
 	mnt2_mounted = 1;
 
 	snprintf(ext_dir, sizeof ext_dir, "%s/%s", "/mnt2", set_dir);
 
-	/* Verify distribution files exist.  */
-	if (distribution_sets_exist_p(ext_dir) == 0)
-		return -1;
-
 	/* return location, don't clean... */
-	clean_dist_dir = 0;
-	return 1;
+	clean_xfer_dir = 0;
+	return SET_OK;
 }
 
 
@@ -335,32 +330,19 @@ get_via_localfs(void)
 	/* Get device, filesystem, and filepath */
 	process_menu (MENU_localfssource, NULL);
 
-again:
-	umount_mnt2();
-
 	/* Mount it */
 	if (run_program(0, "/sbin/mount -rt %s /dev/%s /mnt2",
-	    localfs_fs, localfs_dev)) {
+	    localfs_fs, localfs_dev))
+		return SET_RETRY;
 
-		msg_display(MSG_localfsbadmount, localfs_dir, localfs_dev); 
-		process_menu(MENU_localfsbadmount, NULL);
-		if (!yesno)
-			return 0;
-		if (!ignorerror)
-			goto again;
-	}
 	mnt2_mounted = 1;
 
 	snprintf(ext_dir, sizeof ext_dir, "%s/%s/%s",
 		"/mnt2", localfs_dir, set_dir);
 
-	/* Verify distribution files exist.  */
-	if (distribution_sets_exist_p(ext_dir) == 0)
-		return -1;
-
 	/* return location, don't clean... */
-	clean_dist_dir = 0;
-	return 1;
+	clean_xfer_dir = 0;
+	return SET_OK;
 }
 
 /*
@@ -380,30 +362,24 @@ get_via_localdir(void)
 	 */
 	snprintf(ext_dir, sizeof ext_dir, "/%s/%s", localfs_dir, set_dir);
 
-	if (distribution_sets_exist_p(ext_dir) == 0)
-		return -1;
-
 	/* return location, don't clean... */
-	clean_dist_dir = 0;
-	return 1;
+	clean_xfer_dir = 0;
+	return SET_OK;
 }
 
 
 void
-cd_dist_dir(const char *forwhat)
+get_xfer_dir(const char *forwhat)
 {
 
 	/* ask user for the mountpoint. */
-	msg_prompt(MSG_distdir, dist_dir, dist_dir, STRSIZE, forwhat);
+	msg_prompt(MSG_xferdir, xfer_dir, xfer_dir,
+	    sizeof xfer_dir, forwhat);
 
-	/* make sure the directory exists. */
-	make_target_dir(dist_dir);
-
-	clean_dist_dir = 1;
-	target_chdir_or_die(dist_dir);
+	clean_xfer_dir = 1;
 
 	/* Set ext_dir for absolute path. */
-	getcwd(ext_dir, sizeof ext_dir);
+	snprintf(ext_dir, sizeof ext_dir, "%s/%s", target_prefix(), xfer_dir);
 }
 
 
@@ -411,150 +387,193 @@ cd_dist_dir(const char *forwhat)
  * Support for custom distribution fetches / unpacks.
  */
 
-typedef struct {
-	distinfo 		*dist;
-	unsigned int		sets;
-	struct info {
-	    unsigned int	set;
-	    char		label[44];
-	} i[32];
-} set_menu_info_t;
+unsigned int
+set_X11_selected(void)
+{
+	int i;
+
+	for (i = SET_X11_FIRST; ++i < SET_X11_LAST;)
+		if (set_status[i] & SET_SELECTED)
+			return 1;
+	return 0;
+}
+
+unsigned int
+get_kernel_set(void)
+{
+	int i;
+
+	for (i = SET_KERNEL_FIRST; ++i < SET_KERNEL_LAST;)
+		if (set_status[i] & SET_SELECTED)
+			return i;
+	return SET_NONE;
+}
+
+void
+set_kernel_set(unsigned int kernel_set)
+{
+	int i;
+
+	/* only one kernel set is allowed */
+	for (i = SET_KERNEL_FIRST; ++i < SET_KERNEL_LAST;)
+		set_status[i] &= ~SET_SELECTED;
+	set_status[kernel_set] |= SET_SELECTED;
+}
 
 static int
 set_toggle(menudesc *menu, void *arg)
 {
-	set_menu_info_t *i = arg;
-	int set = i->i[menu->cursel].set;
+	distinfo **distp = arg;
+	int set = distp[menu->cursel]->set;
 
-	if (set & SET_KERNEL)
-		/* only one kernel set is allowed */
-		sets_selected &= ~SET_KERNEL | set;
-	sets_selected ^= set;
+	if (set > SET_KERNEL_FIRST && set < SET_KERNEL_LAST &&
+	    !(set_status[set] & SET_SELECTED))
+		set_kernel_set(set);
+	else
+		set_status[set] ^= SET_SELECTED;
+	return 0;
+}
+
+static int
+set_all_none(menudesc *menu, void *arg, int set, int clr)
+{
+	distinfo **distp = arg;
+	distinfo *dist = *distp;
+	int nested;
+
+	for (nested = 0; dist->set != SET_GROUP_END || nested--; dist++) {
+		if (dist->set == SET_GROUP) {
+			nested++;
+			continue;
+		}
+		set_status[dist->set] = (set_status[dist->set] & ~clr) | set;
+	}
 	return 0;
 }
 
 static int
 set_all(menudesc *menu, void *arg)
 {
-	set_menu_info_t *i = arg;
-
-	sets_selected |= i->sets;
-	return 1;
+	return set_all_none(menu, arg, SET_SELECTED, 0);
 }
 
 static int
 set_none(menudesc *menu, void *arg)
 {
-	set_menu_info_t *i = arg;
+	return set_all_none(menu, arg, 0, SET_SELECTED);
+}
 
-	sets_selected &= ~i->sets;
-	return 1;
+static void
+set_label(menudesc *menu, int opt, void *arg)
+{
+	distinfo **distp = arg;
+	distinfo *dist = distp[opt];
+	const char *selected;
+	const char *desc;
+	int nested;
+
+	desc = dist->desc;
+
+	if (dist->set != SET_GROUP)
+		selected = set_status[dist->set] & SET_SELECTED ? msg_yes : msg_no;
+	else {
+		/* sub menu - display None/Some/All */
+		nested = 0;
+		selected = "unknown";
+		while ((++dist)->set != SET_GROUP_END || nested--) {
+			if (dist->set == SET_GROUP) {
+				nested++;
+				continue;
+			}
+			if (!(set_status[dist->set] & SET_VALID))
+				continue;
+			if (set_status[dist->set] & SET_SELECTED) {
+				if (selected == msg_none) {
+					selected = msg_some;
+					break;
+				}
+				selected = msg_all;
+			} else {
+				if (selected == msg_all) {
+					selected = msg_some;
+					break;
+				}
+				selected = msg_none;
+			}
+		}
+	}
+
+	wprintw(menu->mw, msg_cur_distsets_row, msg_string(desc), selected);
 }
 
 static int set_sublist(menudesc *menu, void *arg);
 
-static void
-set_selected_sets(menudesc *menu, void *arg)
+static int
+initialise_set_menu(distinfo *dist, menu_ent *me, distinfo **de, int all_none)
 {
-	distinfo *list;
-	static const char *yes, *no, *all, *some, *none;
-	const char *selected;
-	menu_ent *m;
-	set_menu_info_t *menu_info = arg;
-	struct info *i = menu_info->i;
-	unsigned int set;
+	int set;
+	int sets;
+	int nested;
 
-	if (yes == NULL) {
-		yes = msg_string(MSG_Yes);
-		no = msg_string(MSG_No);
-		all = msg_string(MSG_All);
-		some = msg_string(MSG_Some);
-		none = msg_string(MSG_None);
-	}
-
-	m = menu->opts;
-	for (list = menu_info->dist; list->desc; list++) {
-		if (!(menu_info->sets & list->set))
+	for (sets = 0; ; dist++) {
+		set = dist->set;
+		if (set == SET_LAST || set == SET_GROUP_END)
 			break;
-		if (!(sets_valid & list->set))
+		if (!(set_status[set] & SET_VALID))
 			continue;
-		i->set = list->set;
-		m->opt_menu = OPT_NOMENU;
-		m->opt_flags = 0;
-		m->opt_name = i->label;
-		m->opt_action = set_toggle;
-		if (list->set & (list->set - 1)) {
-			/* multiple bits possible */
-			set = list->set & sets_valid;
-			selected = (set & sets_selected) == 0 ? none :
-				(set & sets_selected) == set ? all : some;
-		} else {
-			selected = list->set & sets_selected ? yes : no;;
+		*de = dist;
+		me->opt_menu = OPT_NOMENU;
+		me->opt_flags = 0;
+		me->opt_name = NULL;
+		if (set != SET_GROUP)
+			me->opt_action = set_toggle;
+		else {
+			/* Collapse sublist */
+			nested = 0;
+			while ((++dist)->set != SET_GROUP_END || nested--) {
+				if (dist->set == SET_GROUP)
+					nested++;
+			}
+			me->opt_action = set_sublist;
 		}
-		snprintf(i->label, sizeof i->label,
-			msg_string(MSG_cur_distsets_row),
-			msg_string(list->desc), selected);
-		m++;
-		i++;
-		if (list->name != NULL)
-			continue;
-		m[-1].opt_action = set_sublist;
-		/* collapsed sublist */
-		set = list->set;
-		while (list[1].set & set)
-			list++;
+		sets++;
+		de++;
+		me++;
 	}
 
-	if (menu_info->sets == ~0u)
-		return;
+	if (all_none) {
+		me->opt_menu = OPT_NOMENU;
+		me->opt_flags = 0;
+		me->opt_name = MSG_select_all;
+		me->opt_action = set_all;
+		me++;
+		me->opt_menu = OPT_NOMENU;
+		me->opt_flags = 0;
+		me->opt_name = MSG_select_none;
+		me->opt_action = set_none;
+		sets += 2;
+	}
 
-	m->opt_menu = OPT_NOMENU;
-	m->opt_flags = 0;
-	m->opt_name = MSG_select_all;
-	m->opt_action = set_all;
-	m++;
-	m->opt_menu = OPT_NOMENU;
-	m->opt_flags = 0;
-	m->opt_name = MSG_select_none;
-	m->opt_action = set_none;
+	return sets;
 }
 
 static int
 set_sublist(menudesc *menu, void *arg)
 {
-	distinfo *list;
-	menu_ent me[32];
-	set_menu_info_t set_menu_info;
-	int sets;
+	distinfo *de[SET_LAST];
+	menu_ent me[SET_LAST];
+	distinfo **dist = arg;
 	int menu_no;
-	unsigned int set;
-	set_menu_info_t *i = arg;
+	int sets;
 
-	set = i->i[menu->cursel].set;
-	set_menu_info.sets = set;
+	sets = initialise_set_menu(dist[menu->cursel] + 1, me, de, 1);
 
-	/* Count number of entries we require */
-	for (list = dist_list; list->set != set; list++)
-		if (list->desc == NULL)
-			return 0;
-	set_menu_info.dist = ++list;
-	for (sets = 2; list->set & set; list++)
-		if (sets_valid & list->set)
-			sets++;
-
-	if (sets > nelem(me)) {
-		/* panic badly */
-		return 0;
-	}
-
-	menu_no = new_menu(NULL, me, sets, 20, 10, 0, 44,
+	menu_no = new_menu(NULL, me, sets, 20, 10, 0, select_menu_width,
 		MC_SUBMENU | MC_SCROLL | MC_DFLTEXIT,
-		set_selected_sets, NULL, NULL, NULL, MSG_install_selected_sets);
+		NULL, set_label, NULL, NULL,
+		MSG_install_selected_sets);
 
-	if (menu_no == -1)
-		return 0;
-
-	process_menu(menu_no, &set_menu_info);
+	process_menu(menu_no, de);
 	free_menu(menu_no);
 
 	return 0;
@@ -563,51 +582,25 @@ set_sublist(menudesc *menu, void *arg)
 void
 customise_sets(void)
 {
-	distinfo *list;
-	menu_ent me[32];
-	set_menu_info_t set_menu_info;
+	distinfo *de[SET_LAST];
+	menu_ent me[SET_LAST];
 	int sets;
 	int menu_no;
-	unsigned int set, valid = 0;
-
-	/* Count number of entries we require */
-	for (sets = 0, list = dist_list; list->desc != NULL; list++) {
-		if (!(sets_valid & list->set))
-			continue;
-		sets++;
-		if (list->name != NULL) {
-			valid |= list->set;
-			continue;
-		}
-		/* collapsed sublist */
-		set = list->set;
-		while (list[1].set & set) {
-			valid |= list[1].set;
-			list++;
-		}
-	}
-	if (sets > nelem(me)) {
-		/* panic badly */
-		return;
-	}
 
 	/* Static initialisation is lazy, fix it now */
-	sets_valid &= valid;
-	sets_selected &= valid;
-
-	menu_no = new_menu(NULL, me, sets, 0, 5, 0, 44,
-		MC_SCROLL | MC_NOBOX | MC_DFLTEXIT | MC_NOCLEAR,
-		set_selected_sets, NULL, NULL, NULL, MSG_install_selected_sets);
-
-	if (menu_no == -1)
-		return;
+	init_set_status();
 
 	msg_display(MSG_cur_distsets);
 	msg_table_add(MSG_cur_distsets_header);
 
-	set_menu_info.dist = dist_list;
-	set_menu_info.sets = ~0u;
-	process_menu(menu_no, &set_menu_info);
+	sets = initialise_set_menu(dist_list, me, de, 0);
+
+	menu_no = new_menu(NULL, me, sets, 0, 5, 0, select_menu_width,
+		MC_SCROLL | MC_NOBOX | MC_DFLTEXIT | MC_NOCLEAR,
+		NULL, set_label, NULL, NULL,
+		MSG_install_selected_sets);
+
+	process_menu(menu_no, de);
 	free_menu(menu_no);
 }
 
@@ -629,25 +622,33 @@ ask_verbose_dist(msg setup_done)
 }
 
 static int
-extract_file(int set, int update, int verbose, char *path)
+extract_file(distinfo *dist, int update, int verbose, char *path)
 {
 	char *owd;
-	int   tarexit;
+	int   rval;
 	
 	owd = getcwd(NULL, 0);
+
+	/* Do we need to fetch the file now? */
+	if (fetch_fn != NULL) {
+		rval = fetch_fn(dist->name);
+		if (rval != SET_OK)
+			return rval;
+	}
 
 	/* check tarfile exists */
 	if (!file_exists_p(path)) {
 		tarstats.nnotfound++;
 
 		msg_display(MSG_notarfile, path);
-		process_menu(MENU_noyes, deconst(MSG_notarfile_ok));
-		return yesno;
+		/* process_menu(MENU_noyes, deconst(MSG_notarfile_ok)); */
+		process_menu(MENU_ok, NULL);
+		return SET_RETRY;
 	}
 
 	tarstats.nfound++;	
 	/* cd to the target root. */
-	if (update && set == SET_ETC) {
+	if (update && dist->set == SET_ETC) {
 		make_target_dir("/.sysinst");
 		target_chdir_or_die("/.sysinst");
 	} else
@@ -655,90 +656,82 @@ extract_file(int set, int update, int verbose, char *path)
 
 	/* now extract set files into "./". */
 	if (verbose == 0)
-		tarexit = run_program(RUN_DISPLAY | RUN_PROGRESS, 
+		rval = run_program(RUN_DISPLAY | RUN_PROGRESS, 
 				"progress -zf %s tar --chroot -xhepf -", path);
 	else if (verbose == 1)
-		tarexit = run_program(RUN_DISPLAY, 
+		rval = run_program(RUN_DISPLAY, 
 				"tar --chroot -zxhepf %s", path);
 	else
-		tarexit = run_program(RUN_DISPLAY | RUN_PROGRESS, 
+		rval = run_program(RUN_DISPLAY | RUN_PROGRESS, 
 				"tar --chroot -zxhvepf %s", path);
 
 	chdir(owd);
 	free(owd);
 
-	/* Check tarexit for errors and give warning. */
-	if (tarexit) {
+	/* Check rval for errors and give warning. */
+	if (rval != 0) {
 		tarstats.nerror++;
 		msg_display(MSG_tarerror, path);
-		process_menu(MENU_noyes, NULL);
-		return yesno;
+		/* process_menu(MENU_noyes, NULL); */
+		process_menu(MENU_ok, NULL);
+		return SET_RETRY;
 	}
 
-	if (update && set == SET_ETC) {
+	if (update && dist->set == SET_ETC) {
 		run_program(RUN_DISPLAY | RUN_CHROOT,
 			"/usr/sbin/postinstall -s /.sysinst -d / fix");
 	}
 
+	set_status[dist->set] |= SET_INSTALLED;
 	tarstats.nsuccess++;
-	return 2;
+	return SET_OK;
 }
 
 
 /*
  * Extract_dist **REQUIRES** an absolute path in ext_dir.  Any code
- * that sets up dist_dir for use by extract_dist needs to put in the
+ * that sets up xfer_dir for use by extract_dist needs to put in the
  * full path name to the directory. 
  */
 
 static int
-extract_dist(int update, int verbose)
+extract_dist(distinfo *dist, int update, int verbose)
 {
 	char fname[STRSIZE];
-	distinfo *list;
-	int extracted;
+	int set;
 
-	/* reset failure/success counters */
-	memset(&tarstats, 0, sizeof(tarstats));
+	/* If we might need to tidy up, ensure directory exists */
+	if (fetch_fn != NULL && clean_xfer_dir)
+		make_target_dir(xfer_dir);
 
-	/*endwin();*/
-	for (extracted = 2, list = dist_list; list->desc != NULL; list++) {
-		if (list->name == NULL)
-			continue;
-		if (!(sets_selected & list->set))
-			continue;
-		tarstats.nselected++;
-		if (extracted == 0) {
-			tarstats.nskipped++;
+	set = dist->set;
+	(void)snprintf(fname, sizeof fname, "%s/%s%s",
+	    ext_dir, dist->name + (*dist->name == '/'), dist_postfix);
+
+	/* if extraction failed and user aborted, punt. */
+	return extract_file(dist, update, verbose, fname);
+
+}
+
+static void
+skip_set(distinfo *dist, int skip_type)
+{
+	int nested;
+	int set;
+
+	nested = 0;
+	while ((++dist)->set != SET_GROUP_END || nested--) {
+		set = dist->set;
+		if (set == SET_GROUP) {
+			nested++;
 			continue;
 		}
-		(void)snprintf(fname, sizeof fname, "%s/%s%s",
-		    ext_dir, list->name, dist_postfix);
-
-		/* if extraction failed and user aborted, punt. */
-		extracted = extract_file(list->set, update, verbose, fname);
-		if (extracted == 2)
-			sets_installed |= list->set;
+		if (set == SET_LAST)
+			break;
+		if (set_status[set] == (SET_SELECTED | SET_VALID))
+			set_status[set] |= SET_SKIPPED;
+		tarstats.nskipped++;
 	}
-
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	wclear(stdscr);
-	wrefresh(stdscr);
-
-	if (tarstats.nerror == 0 && tarstats.nsuccess == tarstats.nselected) {
-		msg_display(MSG_endtarok);
-		/* Give user a chance to see the success message */
-		sleep(1);
-		return 0;
-	}
-	/* We encountered errors. Let the user know. */
-	msg_display(MSG_endtar,
-	    tarstats.nselected, tarstats.nnotfound, tarstats.nskipped,
-	    tarstats.nfound, tarstats.nsuccess, tarstats.nerror);
-	process_menu(MENU_ok, NULL);
-	msg_clear();
-	return extracted == 0;
 }
 
 /*
@@ -750,41 +743,87 @@ extract_dist(int update, int verbose)
 int
 get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_msg)
 {
-	int got_dist;
+	distinfo *dist;
+	int status;
 	int verbose;
-	distinfo *list;
+	int set;
 
 	/* Ensure mountpoint for distribution files exists in current root. */
 	(void)mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
 	if (scripting)
-		(void)fprintf(script, "mkdir /mnt2\nchmod 755 /mnt2\n");
+		(void)fprintf(script, "mkdir -m 755 /mnt2\n");
+
+	/* reset failure/success counters */
+	memset(&tarstats, 0, sizeof(tarstats));
 
 	/* Find out which files to "get" if we get files. */
 
 	/* ask user whether to do normal or verbose extraction */
 	verbose = ask_verbose_dist(setupdone_msg);
 
-   again:
-	/* Get the distribution files */
-	do {
-		process_menu(MENU_distmedium, &got_dist);
-	} while (got_dist == -1);
+	status = SET_RETRY;
+	for (dist = dist_list; ; status != SET_OK || dist++) {
+		set = dist->set;
+		if (set == SET_LAST)
+			break;
+		if (dist->name == NULL)
+			continue;
+		if (set_status[set] != (SET_VALID | SET_SELECTED))
+			continue;
 
-	if (got_dist == -2)
-		return 1;
+		if (status != SET_OK) {
+			/* This might force a redraw.... */
+			clearok(curscr, 1);
+			touchwin(stdscr);
+			wrefresh(stdscr);
+			/* Sort out the location of the set files */
+			do {
+				fetch_fn = NULL;
+				process_menu(MENU_distmedium, &status);
+			} while (status == SET_RETRY);
 
-	if (got_dist != 1) {
-		msg_display(failure_msg);
-		process_menu(MENU_ok, NULL);
-		return 1;
+			if (status == SET_SKIP) {
+				set_status[set] |= SET_SKIPPED;
+				tarstats.nskipped++;
+				continue;
+			}
+			if (status == SET_SKIP_GROUP) {
+				skip_set(dist, status);
+				continue;
+			}
+			if (status != SET_OK) {
+				msg_display(failure_msg);
+				process_menu(MENU_ok, NULL);
+				return 1;
+			}
+		}
+
+		/* Extract the distribution, retry from top on errors. */
+		status = extract_dist(dist, update, verbose);
 	}
 
-	/* Extract the distribution, retry from top on errors. */
-	if (extract_dist(update, verbose))
-		goto again;
+	/* Accurately count selected sets, nsuccess is correct already. */
+	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
+		if ((set_status[set] & (SET_VALID | SET_SELECTED))
+		    == (SET_VALID | SET_SELECTED))
+			tarstats.nselected++;
+	}
+
+	if (tarstats.nerror == 0 && tarstats.nsuccess == tarstats.nselected) {
+		msg_display(MSG_endtarok);
+		/* Give user a chance to see the success message */
+		sleep(1);
+	} else {
+		/* We encountered errors. Let the user know. */
+		msg_display(MSG_endtar,
+		    tarstats.nselected, tarstats.nnotfound, tarstats.nskipped,
+		    tarstats.nfound, tarstats.nsuccess, tarstats.nerror);
+		process_menu(MENU_ok, NULL);
+		msg_clear();
+	}
 
 	/* Configure the system */
-	if (sets_installed & SET_BASE)
+	if (set_status[SET_BASE] & SET_INSTALLED)
 		run_makedev();
 
 	/* Save keybard type */
@@ -792,25 +831,27 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 	/* Other configuration. */
 	mnt_net_config();
-	
+
+#if 0
 	/* Clean up dist dir (use absolute path name) */
-	if (clean_dist_dir) {
-		msg_display(MSG_delete_dist_files, dist_dir);
+	if (clean_xfer_dir) {
+		msg_display(MSG_delete_xfer_files, xfer_dir);
 		process_menu(MENU_yesno, deconst(MSG_Delete));
 		if (yesno) {
-			for (list = dist_list; list->desc != NULL; list++) {
-				if (list->name == NULL)
+			for (dist = dist_list; dist->desc != NULL; dist++) {
+				if (dist->name == NULL)
 					/* menu entry for a group of sets */
 					continue;
 				run_program(0, "/bin/rm -f %s/%s/%s%s",
-					target_prefix(), dist_dir,
-					list->name, dist_postfix);
+					target_prefix(), xfer_dir,
+					dist->name, dist_postfix);
 			}
 			/* chroot 'cos no rmdir in install fs */
 			run_program(RUN_CHROOT | RUN_SILENT | RUN_ERROR_OK,
-					"/bin/rmdir %s", dist_dir);
+					"/bin/rmdir %s", xfer_dir);
 		}
 	}
+#endif
 
 	/* Mounted dist dir? */
 	umount_mnt2();

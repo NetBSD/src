@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.20 2004/11/13 11:49:08 sekiya Exp $	*/
+/*	$NetBSD: md.h,v 1.21 2006/01/12 22:02:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,7 +78,7 @@
 #define SET_KERNEL_1_NAME	"kern-GENERIC32_IP2x"
 #define SET_KERNEL_2_NAME	"kern-GENERIC32_IP3x"
 #define SET_KERNEL_3_NAME	"kern-GENERIC32_IP12"
-#define MD_SETS_SELECTED (SET_KERNEL_1 | SET_SYSTEM)
+#define MD_SETS_SELECTED SET_KERNEL_1, SET_SYSTEM
 
 /*
  * Default fileystem type for floppy disks.

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.138 2005/09/09 23:20:33 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.139 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -456,10 +456,7 @@ message distmedium
 {Your disk is now ready for installing the kernel and the distribution
 sets.  As noted in your INSTALL notes, you have several options.  For
 ftp or nfs, you must be connected to a network with access to the proper
-machines.  If you are not ready to complete the installation at this time,
-you may select "none" and you will be returned to the main menu.  When
-you are ready at a later time, you may select "upgrade" from the main
-menu to complete the installation.
+machines.
 }
 
 message distset
@@ -474,12 +471,13 @@ message ftpsource
 {The following are the %s site, directory, user, and password that
 will be used.  If "user" is "ftp", then the password is not needed.
 
-host:		%s 
-base directory:	%s 
-set directory:	%s 
-user:		%s 
-password:	%s 
-proxy:		%s 
+host:		    %s 
+base directory:	    %s 
+set directory:	    %s 
+user:		    %s 
+password:	    %s 
+proxy:		    %s 
+transfer directory: %s
 }
 
 message email
@@ -497,9 +495,6 @@ host:		%s
 base directory:	%s 
 set directory:	%s 
 }
-
-message nfsbadmount
-{The directory %s:%s could not be nfs mounted.}
 
 message cdromsource
 {Enter the CDROM device to be used and directory on the CDROM where
@@ -531,12 +526,6 @@ set directory:	%s
 
 message filesys
 {file system}
-
-message cdrombadmount
-{The CDROM /dev/%s could not be mounted.}
-
-message localfsbadmount
-{%s could not be mounted on local device %s.}
 
 message badlocalsetdir
 {%s is not a directory}
@@ -577,7 +566,7 @@ message net_host
 message net_ip
 {Your IPv4 number}
 
-message net_ip_2nd
+message net_srv_ip
 {Server IPv4 number}
 
 message net_mask
@@ -653,10 +642,10 @@ message ftperror
 {Ftp could not retrieve a file.
 Do you want to try again?}
 
-message distdir
+message xferdir
 {What directory shall I use for %s? }
 
-message delete_dist_files
+message delete_xfer_files
 {Do you want to delete the NetBSD sets from %s? 
 (You can keep them to install/upgrade a second system.)}
 
@@ -772,10 +761,10 @@ message fddev
 {What floppy device do you want to use? }
 
 message fdmount
-{Please load the floppy containing the file named "%s". }
+{Please load the floppy containing the file named "%s.%s". }
 
 message fdnotfound
-{Could not find the file named "%s" on the disk.  Please load the
+{Could not find the file named "%s.%s" on the disk.  Please load the
 floppy with that file on it.
 
 If this was the last set's disk, hit "Set finished" to continue on
@@ -784,7 +773,7 @@ the next set, if any.}
 message fdremount
 {The floppy was not mounted successfully.  You may:
 
-Try again and put in the floppy containing the file named "%s".
+Try again and put in the floppy containing the file named "%s.%s".
 
 Not load any more files from this set and continue on the next one, if any.
 
@@ -841,17 +830,11 @@ message set_X11_fonts
 message set_X11_servers
 {X11 servers}
 
-message set_X_contrib
-{X contrib clients}
-
 message set_X11_prog
 {X11 programming}
 
-message set_X11_misc
-{X11 Misc.}
-
 message cur_distsets_row
-{%-27s %3s\n}
+{%-27s %3s}
 
 message select_all
 {Select all the above sets}
@@ -1020,6 +1003,7 @@ message hidden {** hidden **}
 message Host {Host}
 message Base_dir {Base directory}
 message Set_dir {Set directory}
+message Xfer_dir {Transfer directory}
 message Directory {Directory}
 message User {User}
 message Password {Password}
@@ -1031,6 +1015,9 @@ message Try_again {Try again}
 message Give_up {Give up}
 message Ignore_continue_anyway {Ignore, continue anyway}
 message Set_finished {Set finished}
+message Skip_set {Skip set}
+message Skip_group {Skip set group}
+message Abandon {Abandon installation}
 message Abort_install {Abort install}
 message Password_cipher {Password cipher}
 message DES {DES}
