@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.9,v 1.1 2006/01/04 19:14:55 xtraeme Exp $
+.\"	$NetBSD: iic.9,v 1.2 2006/01/12 21:36:23 wiz Exp $
 .\"	$OpenBSD: iic.9,v 1.3 2004/08/24 05:48:22 david Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
 .Nm iic_smbus_receive_byte
 .Nd Inter IC (I2C) bus
 .Sh SYNOPSIS
-.Fd #include <dev/i2c/i2cvar.h>
+.In dev/i2c/i2cvar.h
 .Ft int
 .Fo iic_acquire_bus
 .Fa "i2c_tag_t ic"
@@ -151,21 +151,19 @@ I2C bus at a time.
 Drivers should acquire the bus lock, perform the I2C bus operations
 necessary, and then release the bus lock.
 Passing the
-.Fa I2C_F_POLL
+.Dv I2C_F_POLL
 flag indicates to
 .Fn iic_acquire_bus
 that sleeping is not permitted.
 .It Fn iic_release_bus "ic" "flags"
 Release an exclusive lock on the I2C bus.
 If the
-.Fa I2C_F_POLL
+.Dv I2C_F_POLL
 flag was passed to
 .Fn iic_acquire_bus ,
 it must also be passed to
 .Fn iic_release_bus .
-.\" XXXJRT Someone help me with the mark-up here!
-.\" .It Fn iic_exec "ic" "op" "addr" "cmdbuf" "cmdlen" "buf" "len" "flags"
-.It Fn iic_exec "ic" "op" "addr" "cmdbuf" "cmdlen" "buf" "len"
+.It Fn iic_exec "ic" "op" "addr" "cmdbuf" "cmdlen" "buf" "len" "flags"
 Perform a series of I2C transactions on the bus.
 .Fn iic_exec
 initiates the operation by sending a START condition on the I2C
@@ -192,7 +190,7 @@ If
 so indicates, a STOP condition will be sent on the I2C
 bus at the conclusion of the operation.
 Passing the
-.Fa I2C_F_POLL
+.Dv I2C_F_POLL
 flag indicates to
 .Fn iic_exec
 that sleeping is not permitted.
@@ -267,22 +265,22 @@ in order to execute the I2C bus operation:
 .It Fn (*ic_send_start) "cookie" "flags"
 Send a START condition on the I2C bus.
 The
-.Fa I2C_F_POLL
+.Dv I2C_F_POLL
 flag indicates that sleeping is not permitted.
 .It Fn (*ic_send_stop) "cookie" "flags"
 Send a STOP condition on the I2C bus.
 The
-.Fa I2C_F_POLL
+.Dv I2C_F_POLL
 flag indicates that sleeping is not permitted.
 .It Fn (*ic_initiate_xfer) "cookie" "addr" "flags"
 Initiate a transfer on the I2C bus by sending a START condition and
 then transmitting the I2C device address and transfer type.
 The
-.Fa I2C_F_READ
+.Dv I2C_F_READ
 flag indicates a read transfer; the lack of this flag indicates a
 write transfer.
 The
-.Fa I2C_F_POLL
+.Dv I2C_F_POLL
 flag indicates that sleeping is not permitted.
 The error code
 .Dv ETIMEDOUT
@@ -292,27 +290,27 @@ device is not present occurs.
 Read a byte from the I2C bus into the memory location referenced by
 .Fa datap .
 The
-.Fa I2C_F_LAST
+.Dv I2C_F_LAST
 flag indicates that this is the final byte of the transfer, and that
 a NACK condition should be sent on the I2C bus following the transfer
 of the byte.
 The
-.Fa I2C_F_STOP
+.Dv I2C_F_STOP
 flag indicates that a STOP condition should be sent on the I2C bus following
 the transfer of the byte.
 The
-.Fa I2C_F_POLL
+.Dv I2C_F_POLL
 flag indicates that sleeping is not permitted.
 .It Fn (*ic_write_byte) "cookie" "data" "flags"
 Write the byte contained in
 .Fa data
 to the I2C bus.
 The
-.Fa I2C_F_STOP
+.Dv I2C_F_STOP
 flag indicates that a STOP condition should be sent on the I2C bus following
 the transfer of the byte.
 The
-.Fa I2C_F_POLL
+.Dv I2C_F_POLL
 flag indicates that sleeping is not permitted.
 .El
 .Sh SEE ALSO
