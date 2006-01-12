@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.165 2006/01/05 10:24:11 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.166 2006/01/12 11:45:25 tron Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.165 $"
+#ident 		"GENERIC-$Revision: 1.166 $"
 
 maxusers	32		# estimated number of users
 
@@ -893,6 +893,9 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
