@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.31 2006/01/02 21:29:53 garbled Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.32 2006/01/12 18:15:59 garbled Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.31 2006/01/02 21:29:53 garbled Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.32 2006/01/12 18:15:59 garbled Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -114,6 +114,15 @@ struct cmdtab {
 	{ CMD_STOP,	"stop",    3, NULL },
 	{ CMD_VOLUME,	"volume",  1, "<l> <r>|left|right|mute|mono|stereo" },
 };
+ 
+#define IOCTL_SIMPLE(fd, ctl)	\
+	do { \
+		if ((rv = ioctl(fd, ctl)) >= 0) { \
+			close(fd); \
+			fd = -1; \
+		} else \
+			warn("ioctl(" #ctl ")"); \
+	} while (0)
 
 #define	CD_MAX_TRACK	99	/* largest 2 digit BCD number */
 
@@ -341,11 +350,7 @@ run(int cmd, const char *arg)
 		break;
 
 	case CMD_RESET:
-		if ((rv = ioctl(fd, CDIOCRESET)) >= 0) {
-			close(fd);
-			fd = -1;
-		} else
-			warn("ioctl(CDIOCRESET)");
+		IOCTL_SIMPLE(fd, CDIOCRESET);
 		return (0);
 
 	case CMD_EJECT:
@@ -353,17 +358,14 @@ run(int cmd, const char *arg)
 			run(CMD_SHUFFLE, NULL);
 		if (ioctl(fd, CDIOCALLOW) < 0)
 			warn("ioctl(CDIOCALLOW)");
-		if ((rv = ioctl(fd, CDIOCEJECT)) < 0)
-			warn("ioctl(CDIOCEJECT)");
+		IOCTL_SIMPLE(fd, CDIOCEJECT);
 		break;
 
 	case CMD_CLOSE:
 		ioctl(fd, CDIOCALLOW);
-		if ((rv = ioctl(fd, CDIOCCLOSE)) >= 0) {
-			close(fd);
-			fd = -1;
-		} else
-			warn("ioctl(CDIOCCLOSE)");
+		IOCTL_SIMPLE(fd, CDIOCCLOSE);
+		if (interactive && fd == -1)
+			opencd();
 		break;
 
 	case CMD_PLAY:
