@@ -1,4 +1,4 @@
-.\"	$NetBSD: progress.1,v 1.9 2004/04/03 06:19:22 lukem Exp $
+.\"	$NetBSD: progress.1,v 1.10 2006/01/12 20:33:20 garbled Exp $
 .\"
 .\" Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nd feed input to a command, displaying a progress bar
 .Sh SYNOPSIS
 .Nm
-.Op Fl z
+.Op Fl ez
 .Op Fl f Ar file
 .Op Fl l Ar length
 .Op Fl p Ar prefix
@@ -65,6 +65,8 @@ simply displays a count of the data and the data rate.
 .Pp
 The options are as follows:
 .Bl -tag -width XlXlengthXX
+.It Fl e
+Display progress to standard error instead of standard output.
 .It Fl f Ar file
 Read from the specified
 .Ar file
