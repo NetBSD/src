@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.300 2005/12/31 17:55:55 xtraeme Exp $
+.\"	$NetBSD: options.4,v 1.301 2006/01/12 19:52:13 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2113,9 +2113,9 @@ This option is on by default.
 .Ss Security Options
 .Bl -ohang
 .It Cd options INSECURE
-Hardwires the kernel security level at -1.
+Hardwires the kernel security level at \-1.
 This means that the system
-always runs in secure level -1 mode, even when running multiuser.
+always runs in secure level \-1 mode, even when running multiuser.
 See the manual page for
 .Xr init 8
 for details on the implications of this.
@@ -2123,7 +2123,7 @@ The kernel secure level may manipulated by the superuser by altering the
 .Em kern.securelevel
 .Xr sysctl 3
 variable (the secure level may only be lowered by a call from process ID 1,
-i.e.
+i.e.,
 .Xr init 8 ) .
 See also
 .Xr sysctl 8
