@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftw.3,v 1.1 2005/12/30 23:07:32 agc Exp $
+.\"	$NetBSD: ftw.3,v 1.2 2006/01/12 20:54:08 wiz Exp $
 .\"
 .\"	From OpenBSD: ftw.3,v 1.4 2003/10/30 18:52:58 jmc Exp
 .\"
@@ -27,7 +27,7 @@
 .Nm ftw, nftw
 .Nd traverse (walk) a file tree
 .Sh SYNOPSIS
-.Fd #include <ftw.h>
+.In ftw.h
 .Ft int
 .Fo ftw
 .Fa "const char *path"
@@ -90,8 +90,7 @@ A directory which cannot be read.
 The directory will not be descended into.
 .It Dv FTW_DP
 A directory being visited in post-order
-.No ( Ns Fn nftw
-only).
+.Pq Fn nftw No only .
 .It Dv FTW_NS
 A file for which no
 .Xr stat 2
@@ -101,8 +100,7 @@ The contents of the stat structure are undefined.
 A symbolic link.
 .It Dv FTW_SLN
 A symbolic link with a non-existent target
-.No ( Ns Fn nftw
-only).
+.Pq Fn nftw No only .
 .El
 .Pp
 The
@@ -168,7 +166,7 @@ for any of the errors specified for the library functions
 .Xr open 2 ,
 .Xr stat 2 ,
 .Xr malloc 3 ,
-.Xr opendir 3
+.Xr opendir 3 ,
 and
 .Xr readdir 3 .
 If the
