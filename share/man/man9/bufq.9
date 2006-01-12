@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.13 2005/12/26 12:18:11 xtraeme Exp $
+.\"     $NetBSD: bufq.9,v 1.14 2006/01/12 20:29:33 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -134,7 +134,7 @@ descriptor.
 .It Fn bufq_getstrategyname "bufq"
 Get a strategy identifier of a buffer queue, the
 string returned will be NUL-terminated and it always
-will be a valid strategy name. 
+will be a valid strategy name.
 .It Fn bufq_move "dst" "src"
 Move all requests from the buffer queue
 .Fa src
