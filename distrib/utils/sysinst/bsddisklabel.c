@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.38 2006/01/09 15:25:20 tsutsui Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.39 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -389,7 +389,7 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 		/* If there is a swap partition elsewhere, don't add one here.*/		if (no_swap)
 			pi.ptn_sizes[PI_SWAP].size = 0;
 		/* If installing X increase default size of /usr */
-		if (sets_selected & SET_X11)
+		if (set_X11_selected())
 			pi.ptn_sizes[PI_USR].dflt_size += XNEEDMB;
 
 		/* Start of planning to give free space to / */

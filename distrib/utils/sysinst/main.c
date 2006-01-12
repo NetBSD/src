@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 2004/11/11 20:17:48 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.49 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,6 @@
 #include "txtwalk.h"
 
 int main(int, char **);
-static void init(void);
 static void select_language(void);
 static void usage(void);
 static void miscsighandler(int);
@@ -73,36 +72,53 @@ FILE *script;			/* script file */
 extern int log_flip(void);
 #endif
 
+/* String defaults and stuff for processing the -f file argument. */
+
+struct f_arg {
+	const char *name;
+	const char *dflt;
+	char *var;
+	int size;
+};
+
+static const struct f_arg fflagopts[] = {
+	{"release", REL, rel, sizeof rel},
+	{"machine", MACH, machine, sizeof machine},
+	{"xfer dir", "/usr/INSTALL", xfer_dir, sizeof xfer_dir},
+	{"ext dir", "", ext_dir, sizeof ext_dir},
+	{"ftp host", SYSINST_FTP_HOST, ftp.host, sizeof ftp.host},
+	{"ftp dir", SYSINST_FTP_DIR, ftp.dir, sizeof ftp.dir},
+	{"ftp prefix", "/" MACH "/binary/sets", set_dir, sizeof set_dir},
+	{"ftp user", "ftp", ftp.user, sizeof ftp.user},
+	{"ftp pass", "", ftp.pass, sizeof ftp.pass},
+	{"ftp proxy", "", ftp.proxy, sizeof ftp.proxy},
+	{"nfs host", "", nfs_host, sizeof nfs_host},
+	{"nfs dir", "/bsd/release", nfs_dir, sizeof nfs_dir},
+	{"cd dev", "cd0a", cdrom_dev, sizeof cdrom_dev},
+	{"local dev", "", localfs_dev, sizeof localfs_dev},
+	{"local fs", "ffs", localfs_fs, sizeof localfs_fs},
+	{"local dir", "release", localfs_dir, sizeof localfs_dir},
+	{"targetroot mount", "/targetroot", targetroot_mnt, sizeof targetroot_mnt},
+	{"dist postfix", ".tgz", dist_postfix, sizeof dist_postfix},
+	{"diskname", "mydisk", bsddiskname, sizeof bsddiskname},
+
+	{NULL}
+};
+
 static void
 init(void)
 {
-	(void)strlcpy(rel, REL, SSTRSIZE);
-	(void)strlcpy(machine, MACH, SSTRSIZE);
+	const struct f_arg *arg;
+
 	sizemult = 1;
-	(void)strlcpy(diskdev, "", SSTRSIZE);
 	disktype = "unknown";
 	tmp_mfs_size = 0;
-	(void)strlcpy(bsddiskname, "mydisk", DISKNAME_SIZE);
 	doessf = "";
-	(void)strlcpy(dist_dir, "/usr/INSTALL", STRSIZE);  
-	clean_dist_dir = 0;
-	(void)strlcpy(ext_dir, "", STRSIZE);
-	(void)strlcpy(set_dir, "/" MACH "/binary/sets", STRSIZE);
-	(void)strlcpy(ftp_host, SYSINST_FTP_HOST, STRSIZE);
-	(void)strlcpy(ftp_dir, SYSINST_FTP_DIR, STRSIZE);
-	(void)strlcpy(ftp_user, "ftp", SSTRSIZE);
-	(void)strlcpy(ftp_pass, "", STRSIZE);
-	(void)strlcpy(ftp_proxy, "", STRSIZE);
-	(void)strlcpy(nfs_host, "", STRSIZE);
-	(void)strlcpy(nfs_dir, "/bsd/release", STRSIZE);
-	(void)strlcpy(cdrom_dev, "cd0a", SSTRSIZE);
-	(void)strlcpy(localfs_dev, "sd0a", SSTRSIZE);
-	(void)strlcpy(localfs_fs, "ffs", SSTRSIZE);
-	(void)strlcpy(localfs_dir, "release", STRSIZE);
-	(void)strlcpy(targetroot_mnt, "/targetroot", SSTRSIZE);
-	(void)strlcpy(distfs_mnt, "/mnt2", SSTRSIZE);
+	clean_xfer_dir = 0;
 	mnt2_mounted = 0;
-	(void)strlcpy(dist_postfix, ".tgz", SSTRSIZE);
+
+	for (arg = fflagopts; arg->name != NULL; arg++)
+		strlcpy(arg->var, arg->dflt, arg->size);
 }
 
 int
@@ -133,7 +149,7 @@ main(int argc, char **argv)
 			break;
 		case 'r':
 			/* Release name other than compiled in release. */
-			strncpy(rel, optarg, SSTRSIZE);
+			strncpy(rel, optarg, sizeof rel);
 			break;
 		case 'f':
 			/* Definition file to read. */
@@ -153,8 +169,8 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * XXX the following is bogus.  if screen is too small, message
-	 * XXX window will be overwritten by menus.
+	 * Put 'messages' in a window that has a one-character border
+	 * on the real screen.
 	 */
 	win = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr) - 2, 1, 1);
 	if (win == NULL) {
@@ -396,104 +412,43 @@ cleanup(void)
 }
 
 
-/* Stuff for processing the -f file argument. */
-
-/* Data definitions ... */
-
-static char *rel_ptr = rel;
-static char *machine_ptr = machine;
-static char *dist_dir_ptr = dist_dir;
-static char *ext_dir_ptr = ext_dir;
-static char *ftp_host_ptr = ftp_host;
-static char *ftp_dir_ptr = ftp_dir;
-static char *set_dir_ptr = set_dir;
-static char *ftp_user_ptr = ftp_user;
-static char *ftp_pass_ptr = ftp_pass;
-static char *ftp_proxy_ptr = ftp_proxy;
-static char *nfs_host_ptr = nfs_host;
-static char *nfs_dir_ptr = nfs_dir;
-static char *cdrom_dev_ptr = cdrom_dev;
-static char *localfs_dev_ptr = localfs_dev;
-static char *localfs_fs_ptr = localfs_fs;
-static char *localfs_dir_ptr = localfs_dir;
-static char *targetroot_mnt_ptr = targetroot_mnt;
-static char *distfs_mnt_ptr = distfs_mnt;
-static char *dist_postfix_ptr = dist_postfix;
-
-struct lookfor fflagopts[] = {
-	{"release", "release = %s", "a $0", &rel_ptr, 1, SSTRSIZE, NULL},
-	{"machine", "machine = %s", "a $0", &machine_ptr, 1, SSTRSIZE, NULL},
-	{"dist dir", "dist dir = %s", "a $0", &dist_dir_ptr, 1, STRSIZE, NULL},
-	{"ext dir", "ext dir = %s", "a $0", &ext_dir_ptr, 1, STRSIZE, NULL},
-	{"ftp host", "ftp host = %s", "a $0", &ftp_host_ptr, 1, STRSIZE, NULL},
-	{"ftp dir", "ftp dir = %s", "a $0", &ftp_dir_ptr, 1, STRSIZE, NULL},
-	{"ftp prefix", "set dir = %s", "a $0", &set_dir_ptr, 1, STRSIZE, NULL},
-	{"ftp user", "ftp user = %s", "a $0", &ftp_user_ptr, 1, STRSIZE, NULL},
-	{"ftp pass", "ftp pass = %s", "a $0", &ftp_pass_ptr, 1, STRSIZE, NULL},
-	{"ftp proxy", "ftp proxy = %s", "a $0", &ftp_proxy_ptr, 1, STRSIZE,
-		NULL},
-	{"nfs host", "nfs host = %s", "a $0", &nfs_host_ptr, 1, STRSIZE, NULL},
-	{"nfs dir", "ftp dir = %s", "a $0", &nfs_dir_ptr, 1, STRSIZE, NULL},
-	{"cd dev", "cd dev = %s", "a $0", &cdrom_dev_ptr, 1, STRSIZE, NULL},
-	{"local dev", "local dev = %s", "a $0", &localfs_dev_ptr, 1, STRSIZE,
-		NULL},
-	{"local fs", "local fs = %s", "a $0", &localfs_fs_ptr, 1, STRSIZE,
-		NULL},
-	{"local dir", "local dir = %s", "a $0", &localfs_dir_ptr, 1, STRSIZE,
-		NULL},
-	{"targetroot mount", "targetroot mount = %s", "a $0",
-		&targetroot_mnt_ptr, 1, STRSIZE, NULL},
-	{"distfs mount", "distfs mount = %s", "a $0", &distfs_mnt_ptr, 1,
-		STRSIZE, NULL},
-	{"dist postfix", "dist postfix = %s", "a $0", &dist_postfix_ptr, 1,
-		STRSIZE, NULL},
-};
-
 /* process function ... */
 
 void
 process_f_flag(char *f_name)
 {
-	char *buffer;
-	int fd;
-	int fsize;
+	char buffer[STRSIZE];
+	int len;
+	const struct f_arg *arg;
+	FILE *fp;
+	char *cp, *cp1;
 
 	/* open the file */
-	fd = open(f_name, O_RDONLY, 0);
-	if (fd < 0) {
+	fp = fopen(f_name, "r");
+	if (fp == NULL) {
 		fprintf(stderr, msg_string(MSG_config_open_error), f_name);
 		exit(1);
 	}
 
-	/* get file size */
-	fsize = lseek(fd, 0, SEEK_END);
-	lseek(fd, 0, SEEK_SET);
-	if (fsize == -1) {
-		fprintf(stderr, msg_string(MSG_not_regular_file), f_name);
-		exit(1);
+	while (fgets(buffer, sizeof buffer, fp) != NULL) {
+		cp = buffer + strspn(buffer, " \t");
+		if (strchr("#\r\n", *cp) != NULL)
+			continue;
+		for (arg = fflagopts; arg->name != NULL; arg++) {
+			len = strlen(arg->name);
+			if (memcmp(cp, arg->name, len) != 0)
+				continue;
+			cp1 = cp + len;
+			cp1 += strspn(cp1, " \t");
+			if (*cp1++ != '=')
+				continue;
+			cp1 += strspn(cp1, " \t");
+			len = strcspn(cp1, " \n\r\t");
+			cp1[len] = 0;
+			strlcpy(arg->var, cp1, arg->size);
+			break;
+		}
 	}
 
-	/* allocate buffer (error reported) */
-	buffer = malloc(fsize + 1);
-	if (buffer == NULL) {
-		fprintf(stderr, msg_string(MSG_out_of_memory));
-		exit(1); 
-	}
-
-	/* read the file */
-	if (read(fd,buffer, fsize) != fsize) {
-		fprintf(stderr, msg_string(MSG_config_read_error), f_name);
-		exit(1);
-	}
-	buffer[fsize] = 0;
-
-	/* close the file */
-	close(fd);
-
-	/* Walk the buffer */
-	walk(buffer, fsize, fflagopts,
-	    sizeof(fflagopts)/sizeof(struct lookfor));
-
-	/* free the buffer */
-	free(buffer);
+	fclose(fp);
 }

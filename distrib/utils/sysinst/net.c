@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.106 2005/05/08 19:46:33 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.107 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,9 +71,9 @@ static char *net_up;
 static char net_dev[STRSIZE];
 static char net_domain[STRSIZE];
 static char net_host[STRSIZE];
-static char net_ip[STRSIZE];
-static char net_ip_2nd[STRSIZE];
-static char net_mask[STRSIZE];
+static char net_ip[SSTRSIZE];
+static char net_srv_ip[SSTRSIZE];
+static char net_mask[SSTRSIZE];
 static char net_namesvr[STRSIZE];
 static char net_defroute[STRSIZE];
 static char net_media[STRSIZE];
@@ -490,7 +490,7 @@ config_network(void)
 	const char *prompt;
 	char *textbuf;
 	int  octet0;
-	int  pass, dhcp_config;
+	int  dhcp_config;
 
  	int  slip;
  	int  pid, status;
@@ -512,6 +512,7 @@ config_network(void)
 	get_ifconfig_info();
 
 	if (net_up != NULL) {
+		/* XXX: some retry loops come here... */
 		/* active interfaces found */
 		msg_display(MSG_netup, net_up);
 		process_menu(MENU_yesno, NULL);
@@ -546,14 +547,16 @@ again:
 	}
 	free(defname);
 
- 	slip = strncmp(net_dev, "sl", 2) == 0;
+	slip = net_dev[0] == 's' && net_dev[1] == 'l' &&
+	    isdigit((unsigned char)net_dev[2]);
 
-	if (!slip) {
+	if (slip)
+		dhcp_config = 0;
+	else {
 		/* Preload any defaults we can find */
 		get_ifinterface_info();
 		get_if6interface_info();
 		get_host_info();
-		pass = net_mask[0] == '\0' ? 0 : 1;
 
 		/* domain and host */
 		msg_display(MSG_netinfo);
@@ -653,8 +656,7 @@ again:
 				strlcpy(net_host, dhcp_host, sizeof net_host);
 			}
 		}
-	} else
-		dhcp_config = 0;
+	}
 
 	msg_prompt_add(MSG_net_domain, net_domain, net_domain,
 	    sizeof net_domain);
@@ -663,9 +665,13 @@ again:
 	if (!dhcp_config) {
 		/* Manually configure IPv4 */
 		msg_prompt_add(MSG_net_ip, net_ip, net_ip, sizeof net_ip);
-		if (!slip) {
+		if (slip)
+			msg_prompt_add(MSG_net_srv_ip, net_srv_ip, net_srv_ip,
+			    sizeof net_srv_ip);
+		else {
+			/* We don't want netmasks for SLIP */
 			octet0 = atoi(net_ip);
-			if (!pass) {
+			if (!net_mask[0]) {
 				if (0 <= octet0 && octet0 <= 127)
 					strlcpy(net_mask, "0xff000000",
 				    	sizeof(net_mask));
@@ -676,16 +682,13 @@ again:
 					strlcpy(net_mask, "0xffffff00",
 				    	sizeof(net_mask));
 			}
-		} else
-			msg_prompt_add(MSG_net_ip_2nd, net_ip_2nd, net_ip_2nd, STRSIZE);
-		/* We don't want netmasks for SLIP,
-		just in case of ... */
-		if (!slip)
 			msg_prompt_add(MSG_net_mask, net_mask, net_mask,
-		    	sizeof net_mask);
+			    sizeof net_mask);
+		}
 		msg_prompt_add(MSG_net_defroute, net_defroute, net_defroute,
 		    sizeof net_defroute);
 	}
+
 	if (!dhcp_config || net_namesvr[0] == 0)
 		msg_prompt_add(MSG_net_namesrv, net_namesvr, net_namesvr,
 		    sizeof net_namesvr);
@@ -712,7 +715,7 @@ again:
 	if (slip)
 		msg_display(MSG_netok_slip, net_domain, net_host, net_dev,
 			*net_ip == '\0' ? "<none>" : net_ip,
-			*net_ip_2nd == '\0' ? "<none>" : net_ip_2nd,
+			*net_srv_ip == '\0' ? "<none>" : net_srv_ip,
 			*net_mask == '\0' ? "<none>" : net_mask,
 			*net_namesvr == '\0' ? "<none>" : net_namesvr,
 			*net_defroute == '\0' ? "<none>" : net_defroute,
@@ -733,7 +736,6 @@ again:
 	process_menu(MENU_yesno, deconst(MSG_netok_ok));
 	if (!yesno)
 		msg_display(MSG_netagain);
-	pass++;
 	if (!yesno)
 		goto again;
 
@@ -788,11 +790,15 @@ again:
 
 	if (net_ip[0] != '\0') {
 		if (slip) {
+			/* XXX: needs 'ifconfig sl0 create' much earlier */
 			/* Set SLIP interface UP */
-			run_program(0, "/sbin/ifconfig %s inet %s %s up", net_dev, net_ip, net_ip_2nd);
+			run_program(0, "/sbin/ifconfig %s inet %s %s up",
+			    net_dev, net_ip, net_srv_ip);
 			strcpy(sl_flags, "-s 115200 -l /dev/tty00");
-			msg_prompt_add(MSG_slattach, sl_flags, sl_flags, 255);
+			msg_prompt_win(MSG_slattach, -1, 12, 70, 0,
+				sl_flags, sl_flags, 255);
 
+			/* XXX: wtf isn't run_program() used here? */
 			pid = fork();
 			if (pid == 0) {
 				strcpy(buffer, "/sbin/slattach ");
@@ -863,17 +869,63 @@ again:
 	return network_up;
 }
 
-int
-get_via_ftp(const char *xfer_type)
+static int
+ftp_fetch(const char *set_name)
 {
-	distinfo *list;
+	const char *ftp_opt;
 	char ftp_user_encoded[STRSIZE];
 	char ftp_dir_encoded[STRSIZE];
-	int  ret;
-	int got_one = 0;
 	char *cp;
-	const char *ftp_opt;
-	int cwd;
+	int rval;
+
+	/*
+	 * Invoke ftp to fetch the file.
+	 *
+	 * ftp.pass is quite likely to contain unsafe characters
+	 * that need to be encoded in the URL (for example,
+	 * "@", ":" and "/" need quoting).  Let's be
+	 * paranoid and also encode ftp.user and ftp.dir.  (For
+	 * example, ftp.dir could easily contain '~', which is
+	 * unsafe by a strict reading of RFC 1738).
+	 */
+	if (strcmp("ftp", ftp.user) == 0 && ftp.pass[0] == 0) {
+		/* do anon ftp */
+		ftp_opt = "-a ";
+		ftp_user_encoded[0] = 0;
+	} else {
+		ftp_opt = "";
+		cp = url_encode(ftp_user_encoded, ftp.user,
+			ftp_user_encoded + sizeof ftp_user_encoded - 1,
+			RFC1738_SAFE_LESS_SHELL, 0);
+		*cp++ = ':';
+		cp = url_encode(cp, ftp.pass,
+			ftp_user_encoded + sizeof ftp_user_encoded - 1,
+			NULL, 0);
+		*cp++ = '@';
+		*cp = 0;
+	}
+
+	cp = url_encode(ftp_dir_encoded, ftp.dir,
+			ftp_dir_encoded + sizeof ftp_dir_encoded - 1,
+			RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1);
+	if (set_dir[0] != '/')
+		*cp++ = '/';
+	url_encode(cp, set_dir,
+			ftp_dir_encoded + sizeof ftp_dir_encoded,
+			RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0);
+
+	rval = run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_XFER_DIR, 
+		    "/usr/bin/ftp %s%s://%s%s/%s/%s%s",
+		    ftp_opt, ftp.xfer_type, ftp_user_encoded, ftp.host,
+		    ftp_dir_encoded, set_name, dist_postfix);
+
+	return rval ? SET_RETRY : SET_OK;
+}
+
+static int
+do_config_network(void)
+{
+	int ret;
 
 	while ((ret = config_network()) <= 0) {
 		if (ret < 0)
@@ -884,145 +936,54 @@ get_via_ftp(const char *xfer_type)
 			msg_display(MSG_netnotup_continueanyway);
 			process_menu(MENU_yesno, NULL);
 			if (!yesno)
-				return 0;
+				return -1;
 			network_up = 1;
+			break;
 		}
 	}
+	return 0;
+}
 
-	cwd = open(".", O_RDONLY);
-	cd_dist_dir("ftp");
+int
+get_via_ftp(const char *xfer_type)
+{
+
+	if (do_config_network() != 0)
+		return SET_RETRY;
 
 	process_menu(MENU_ftpsource, deconst(xfer_type));
 
-	list = dist_list;
-	while (list->desc) {
-		if (list->name  == NULL || (sets_selected & list->set) == 0) {
-			list++;
-			continue;
-		}
-		/*
-		 * Invoke ftp to fetch the file.
-		 *
-		 * ftp_pass is quite likely to contain unsafe characters
-		 * that need to be encoded in the URL (for example,
-		 * "@", ":" and "/" need quoting).  Let's be
-		 * paranoid and also encode ftp_user and ftp_dir.  (For
-		 * example, ftp_dir could easily contain '~', which is
-		 * unsafe by a strict reading of RFC 1738).
-		 */
-		if (strcmp("ftp", ftp_user) == 0 && ftp_pass[0] == 0) {
-			/* do anon ftp */
-			ftp_opt = "-a ";
-			ftp_user_encoded[0] = 0;
-		} else {
-			ftp_opt = "";
-			cp = url_encode(ftp_user_encoded, ftp_user,
-				ftp_user_encoded + sizeof ftp_user_encoded - 1,
-				RFC1738_SAFE_LESS_SHELL, 0);
-			*cp++ = ':';
-			cp = url_encode(cp, ftp_pass,
-				ftp_user_encoded + sizeof ftp_user_encoded - 1,
-				NULL, 0);
-			*cp++ = '@';
-			*cp = 0;
-		}
+	/* We'll fetch each file just before installing it */
+	fetch_fn = ftp_fetch;
+	ftp.xfer_type = xfer_type;
+	clean_xfer_dir = 1;
+	snprintf(ext_dir, sizeof ext_dir, "%s/%s", target_prefix(), xfer_dir);
 
-		cp = url_encode(ftp_dir_encoded, ftp_dir,
-				ftp_dir_encoded + sizeof ftp_dir_encoded - 1,
-				RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1);
-		if (set_dir[0] != '/')
-			*cp++ = '/';
-		url_encode(cp, set_dir,
-				ftp_dir_encoded + sizeof ftp_dir_encoded,
-				RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0);
-
-		ret = run_program(RUN_DISPLAY | RUN_PROGRESS, 
-			    "/usr/bin/ftp %s%s://%s%s/%s/%s%s",
-			    ftp_opt, xfer_type, ftp_user_encoded, ftp_host,
-			    ftp_dir_encoded, list->name, dist_postfix);
-
-		if (ret == 0) {
-			got_one = 1;
-		} else {
-			/* Error getting the file.  Bad host name ... ? */
-			process_menu(MENU_yesno, deconst(MSG_ftperror));
-			if (yesno) {
-				process_menu(MENU_ftpsource, NULL);
-				continue;
-			}
-			if (got_one == 0) {
-				fchdir(cwd);	/* back to current real root */
-				close(cwd);
-				return 0;
-			}
-			/* Continue without this set... */
-		}
-		list++;
-
-	}
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	touchwin(stdscr);
-	wclear(stdscr);
-	wrefresh(stdscr);
-
-	fchdir(cwd);	/* back to current real root */
-	close(cwd);
-	return (1);
+	return SET_OK;
 }
 
 int
 get_via_nfs(void)
 {
-	int ret;
 
-        while ((ret = config_network()) <= 0) {
-		if (ret < 0)
-			return (-1);
-                msg_display(MSG_netnotup);
-                process_menu(MENU_yesno, NULL);
-                if (!yesno) {
-			msg_display(MSG_netnotup_continueanyway);
-			process_menu(MENU_yesno, NULL);
-			if (!yesno)
-				return 0;
-			network_up = 1;
-		}
-        }
+	if (do_config_network() != 0)
+		return SET_RETRY;
 
-again:
 	/* Get server and filepath */
 	process_menu(MENU_nfssource, NULL);
 
-	umount_mnt2();
-
 	/* Mount it */
 	if (run_program(0, "/sbin/mount -r -o -2,-i,-r=1024 -t nfs %s:%s /mnt2",
-	    nfs_host, nfs_dir)) {
-		msg_display(MSG_nfsbadmount, nfs_host, nfs_dir);
-		process_menu(MENU_nfsbadmount, NULL);
-		if (!yesno)
-			return (0);
-		if (!ignorerror)
-			goto again;
-	}
+	    nfs_host, nfs_dir))
+		return SET_RETRY;
+
 	mnt2_mounted = 1;
 
 	snprintf(ext_dir, sizeof ext_dir, "/mnt2/%s", set_dir);
 
-	/* Verify distribution files exist.  */
-	if (distribution_sets_exist_p(ext_dir) == 0) {
-		msg_display(MSG_badsetdir, ext_dir);
-		process_menu (MENU_nfsbadmount, NULL);
-		if (!yesno)
-			return (0);
-		if (!ignorerror)
-			goto again;
-	}
-
 	/* return location, don't clean... */
-	clean_dist_dir = 0;
-	return 1;
+	clean_xfer_dir = 0;
+	return SET_OK;
 }
 
 /*

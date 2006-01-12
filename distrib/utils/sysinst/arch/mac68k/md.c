@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.44 2004/11/14 13:34:53 he Exp $ */
+/*	$NetBSD: md.c,v 1.45 2006/01/12 22:02:45 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1150,10 +1150,10 @@ md_init()
 		/*
 		 * Running the SBC Installation Kernel, so enable GENERICSBC
 		 */
-		sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_2;
+		set_kernel_set(SET_KERNEL_2);
         else
 		/*
 		 * Running the GENERIC Installation Kernel, so enable GENERIC
 		 */
-		sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_1;
+		set_kernel_set(SET_KERNEL_1);
 }
