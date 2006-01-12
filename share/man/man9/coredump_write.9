@@ -1,4 +1,4 @@
-.\"     $NetBSD: coredump_write.9,v 1.1 2005/12/24 21:07:05 matt Exp $
+.\"     $NetBSD: coredump_write.9,v 1.2 2006/01/12 20:20:15 wiz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,10 +43,12 @@
 .Sh SYNOPSIS
 .In sys/signalvar.h
 .Ft int
-.Fn coredump_write "void *iocookie" "enum uio_seg segflg" "const void *data" "size_t len"
+.Fn coredump_write "void *iocookie" "enum uio_seg segflg" \
+"const void *data" "size_t len"
 .Sh DESCRIPTION
 .Fn coredump_write
-is used by both machine-dependent and machine-independent components to write information to a coredump.
+is used by both machine-dependent and machine-independent components
+to write information to a coredump.
 .Fa iocookie
 is an opaque pointer that was supplied to the caller of
 .Fn coredump_write .
