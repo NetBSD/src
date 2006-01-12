@@ -1,4 +1,4 @@
-.\" $NetBSD: sony.4,v 1.1 2005/12/13 18:20:56 christos Exp $
+.\" $NetBSD: sony.4,v 1.2 2006/01/12 19:47:18 wiz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,11 +45,12 @@
 .Sh DESCRIPTION
 Some
 .Tn Sony
-notebook computers have a controller that handles various built-in devices.
+notebook computers have a controller that handles various built-in
+devices.
 The
 .Nm
-driver provides support for accessing/modifying the settings of some of these
-devices via the
+driver provides support for accessing/modifying the settings of
+some of these devices via the
 .Xr sysctl 8
 interface.
 .Pp
@@ -58,26 +59,29 @@ The following
 variables are available:
 .Pp
 .Bl -tag -width "hw.sony0.brt [R/W]" -compact
-.It Em hw.sony0.brt [R/W]
-Controls current LCD brightness. Range [0-8].
-.It Em hw.sony0.pbr [R/W]
-Controls power on LCD brightness. Range [0-8].
-.It Em hw.sony0.cdp [R/W]
+.It Em hw.sony0.brt Bq R/W
+Controls current LCD brightness.
+Range [0-8].
+.It Em hw.sony0.pbr Bq R/W
+Controls power on LCD brightness.
+Range [0-8].
+.It Em hw.sony0.cdp Bq R/W
 Controls CD power.
-.It Em hw.sony0.pid [R/O]
+.It Em hw.sony0.pid Bq R/O
 Unknown
-.It Em hw.sony0.ctr [R/W]
+.It Em hw.sony0.ctr Bq R/W
 Unknown
-.It Em hw.sony0.pcr [R/W]
+.It Em hw.sony0.pcr Bq R/W
 Unknown
-.It Em hw.sony0.cmi [R/W]
+.It Em hw.sony0.cmi Bq R/W
 Unknown
-.It Em hw.sony0.ams [R/W]
+.It Em hw.sony0.ams Bq R/W
 Audio control (mute when 0)
-.It Em hw.sony0.hke [R/O]
-Indicates a Host Key Event. Bits are set when an event occurs and cleared
-when this value is read. The following table describes the bit set for
-each button pressed:
+.It Em hw.sony0.hke Bq R/O
+Indicates a Host Key Event.
+Bits are set when an event occurs and cleared when this value is
+read.
+The following table describes the bit set for each button pressed:
 .Pp
 .Bl -tag -width 0x1000 -offset indent -compact
 .It Em 0x1000
@@ -131,10 +135,9 @@ The names of the
 .Xr sysctl 8
 tree are not self-explanatory.
 .It
-No validity checks are performed in the user input.
-Playing with random values and/or unknown controls can harm your machine.
+No validity checks are performed on the user input.
+Playing with random values and/or unknown controls can harm your
+machine.
 .It
-The 
-.Nm
-of the driver is too generic.
+The name of the driver is too generic.
 .El
