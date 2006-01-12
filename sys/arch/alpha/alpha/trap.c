@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.102 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: trap.c,v 1.103 2006/01/12 00:30:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2006/01/12 00:30:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,8 +689,8 @@ ast(struct trapframe *framep)
 	uvmexp.softs++;
 	l->l_md.md_tf = framep;
 
-	if (l->l_flag & P_OWEUPC) {
-		l->l_flag &= ~P_OWEUPC;
+	if (l->l_proc->p_flag & P_OWEUPC) {
+		l->l_proc->p_flag &= ~P_OWEUPC;
 		ADDUPROF(l->l_proc);
 	}
 
