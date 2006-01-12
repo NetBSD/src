@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.10 2005/02/23 22:32:31 dsl Exp $ */
+/*	$NetBSD: progress.c,v 1.11 2006/01/12 20:33:20 garbled Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.10 2005/02/23 22:32:31 dsl Exp $");
+__RCSID("$NetBSD: progress.c,v 1.11 2006/01/12 20:33:20 garbled Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-z] [-f file] [-l length] [-p prefix] cmd [args...]\n",
+	    "usage: %s [-ez] [-f file] [-l length] [-p prefix] cmd [args...]\n",
 	    getprogname());
 	exit(1);
 }
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 	pid_t pid = 0, gzippid = 0, deadpid;
 	int ch, fd, outpipe[2];
 	int ws, gzipstat, cmdstat;
-	int lflag = 0, zflag = 0;
+	int eflag = 0, lflag = 0, zflag = 0;
 	ssize_t nr, nw, off;
 	struct stat statb;
 	struct ttysize ts;
@@ -99,8 +99,11 @@ main(int argc, char *argv[])
 	filesize = 0;
 	prefix=NULL;
 
-	while ((ch = getopt(argc, argv, "f:l:p:z")) != -1)
+	while ((ch = getopt(argc, argv, "ef:l:p:z")) != -1)
 		switch (ch) {
+		case 'e':
+			eflag++;
+			break;
 		case 'f':
 			infile = optarg;
 			break;
@@ -183,7 +186,7 @@ main(int argc, char *argv[])
 	/* Initialize progressbar.c's global state */
 	bytes = 0;
 	progress = 1;
-	ttyout = stdout;
+	ttyout = eflag ? stderr : stdout;
 
 	if (ioctl(fileno(ttyout), TIOCGSIZE, &ts) == -1) {
 		ttywidth = 80;
