@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.207 2005/12/11 12:19:14 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.208 2006/01/12 17:58:39 cdi Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5275,7 +5275,7 @@ dostart:
 	 */
 	wrpr	%g0, 13, %pil
 	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
-	wr	%o0, FPRS_FEF, %fprs		! Turn on FPU
+	wr	%g0, FPRS_FEF, %fprs		! Turn on FPU
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/*
 	 * First, check for DDB arguments.  A pointer to an argument
@@ -5919,7 +5919,7 @@ ENTRY(cpu_mp_startup)
 	wrpr    %g0, 0, %cleanwin
 	wrpr	%g0, 13, %pil
 	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
-	wr	%o0, FPRS_FEF, %fprs		! Turn on FPU
+	wr	%g0, FPRS_FEF, %fprs		! Turn on FPU
 
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
 
