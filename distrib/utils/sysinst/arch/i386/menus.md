@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md,v 1.10 2003/11/30 14:36:45 dsl Exp $	*/
+/*	$NetBSD: menus.md,v 1.11 2006/01/12 22:02:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,18 +41,20 @@
 menu getboottype, title MSG_Bootblocks_selection, y=10, exit, no clear;
 	display action { msg_display(MSG_getboottype);
 		switch (((struct x86_boot_params *)arg)->bp_consdev) {
-		case ~0:
-			msg_display_add(MSG_console_unchanged);
-			break;
+		default:
 		case 0:
 			msg_display_add(MSG_console_PC);
 			break;
-		default:
+		case 1: case 2: case 3: case 4:
+			menu->cursel = ((struct x86_boot_params *)arg)->bp_consdev;
 			msg_display_add(MSG_console_com,
-			((struct x86_boot_params *)arg)->bp_consdev - 1,
-			((struct x86_boot_params *)arg)->bp_conspeed);
-		}
-		};
+			    ((struct x86_boot_params *)arg)->bp_consdev - 1,
+			    ((struct x86_boot_params *)arg)->bp_conspeed);
+			break;
+		case ~0:
+			msg_display_add(MSG_console_unchanged);
+			break;
+		}};
 	option MSG_Use_normal_bootblocks, action
 	    {((struct x86_boot_params *)arg)->bp_consdev = 0; m->cursel = 7;};
 	option MSG_Use_serial_com0, action

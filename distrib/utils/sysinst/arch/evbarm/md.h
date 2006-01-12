@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.13 2004/12/28 17:56:40 joff Exp $	*/
+/*	$NetBSD: md.h,v 1.14 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,7 +56,7 @@
 #define SET_KERNEL_5_NAME	"kern-TEAMASA_NPWR"
 #define SET_KERNEL_6_NAME	"kern-TS7200"
 
-#define MD_SETS_SELECTED (SET_SYSTEM)
+#define MD_SETS_SELECTED SET_SYSTEM
 
 /*
  * Machine-specific command to write a new label to a disk.

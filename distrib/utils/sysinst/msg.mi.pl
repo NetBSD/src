@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.48 2005/09/10 21:51:12 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.49 2006/01/12 22:02:44 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -446,11 +446,7 @@ zatrzyma sie na trybie jednego-uzytkownika.
 message distmedium
 {Twoj dysk jest teraz gotowy na zainstalowanie jadra oraz pakietow
 dystrybucyjnych. Jak napisano w pliku INSTALL masz terz kilka opcji. Dla
-ftp lub nfs, musisz byc podlaczony do sieci z dostepem do odpowidnich
-maszyn. Jesli nie jestes gotowy aby zakonczyc instalacje teraz, mozesz
-wybrac "none" i zostaniesz przeniesiony do glownego menu. Kiedy bedziesz
-juz pozniej gotowy, mozesz wybrac "aktualizuj" z glownego menu, aby
-zakonczyc instalacje. 
+ftp lub nfs, musisz byc podlaczony do sieci z dostepem do odpowidnich maszyn.
 }
 
 message distset
@@ -464,13 +460,14 @@ message ftpsource
 {Ponizej masz site %s, katalog, uzytkownika, oraz haslo gotowe do uzycia.
 Jesli "uzytkownik" to "ftp", wtedy haslo nie jest wymagane.
 
-host:		%s 
-katalog:	%s 
-katalog:	%s 
-uzytkownik:	%s 
-haslo:		%s 
-proxy:		%s 
-}
+host:		  %s 
+katalog:	  %s 
+katalog:	  %s 
+uzytkownik:	  %s 
+haslo:	 	  %s 
+proxy:	 	  %s 
+transfer katalog: %s 
+} /* fix XLAT */
 
 message email
 {adres e-mail}
@@ -487,9 +484,6 @@ host:		%s
 katalog:	%s 
 katalog:	%s
 }
-
-message nfsbadmount
-{Katalog %s:%s jest niedostepny dla nfs.}
 
 message cdromsource
 {Podaj urzadzenie CDROM oraz katalog na CDROMie, w ktorym znajduje sie
@@ -521,12 +515,6 @@ katalog:	%s
 
 message filesys
 {system plikow}
-
-message cdrombadmount
-{CDROM nie moze zostac zamountowany na %s.}
-
-message localfsbadmount
-{%s nie mogl byc zamountowany na lokalnym urzadzeniu %s.}
 
 message badlocalsetdir
 {%s nie jest katalogiem}
@@ -567,7 +555,7 @@ message net_host
 message net_ip
 {Twoj adres IPv4}
 
-message net_ip_2nd
+message net_srv_ip
 {Server IPv4 number}
 
 message net_mask
@@ -646,10 +634,10 @@ message ftperror
 {Ftp nie moze sciagnac pliku.
 Czy chcesz sprobowac jeszcze raz?}
 
-message distdir
+message xferdir
 {Jakiego katalogu powinienem uzyc dla %s? }
 
-message delete_dist_files
+message delete_xfer_files
 {Czy chcesz usunac pakiety NetBSD z %s? 
 (Mozesz je zachowac aby zainstalowac/zaktualizowac kolejny system.)}
 
@@ -763,16 +751,16 @@ message fddev
 {Ktorego urzadzenia dyskietek chcesz uzyc ? }
 
 message fdmount
-{Wloz dyskietke zawierajaca plik "%s". }
+{Wloz dyskietke zawierajaca plik "%s.%s". }
 
 message fdnotfound
-{Nie moglem znalezc pliku "%s" na dysku. Wloz dyskietke
+{Nie moglem znalezc pliku "%s.%s" na dysku. Wloz dyskietke
 zawierajaca ten plik.}
 
 message fdremount
 {Dyskietka nie zostala pomyslnie zamountowana. Mozesz:
 
-Sprobowac jeszcze raz i wlozyc dyskietke z plikiem "%s".
+Sprobowac jeszcze raz i wlozyc dyskietke z plikiem "%s.%s".
 
 Nie wgrywac wiecej plikow z dyskietek i przerwac proces.
 }
@@ -827,17 +815,11 @@ message set_X11_fonts
 message set_X11_servers
 {Serwery X11}
 
-message set_X_contrib
-{Klienci dodatkowi X}
-
 message set_X11_prog
 {Programowanie X11}
 
-message set_X11_misc
-{Inne X11}
-
 message cur_distsets_row
-{%-30s %3s\n}
+{%-30s %3s}
 
 message select_all
 {Wybierz wszystkie powyzsze pakiety}
@@ -1002,6 +984,7 @@ message hidden {** ukryte **}
 message Host {Host}
 message Base_dir {Katalog}
 message Set_dir {Katalog}
+message Xfer_dir {Transfer Katalog} /* fix XLAT */
 message Directory {Katalog}
 message User {Uzytkownik}
 message Password {Haslo}
@@ -1013,6 +996,9 @@ message Try_again {Sprobowac jeszcze raz}
 message Give_up {Poddac sie}
 message Ignore_continue_anyway {Zignorowac, kontynuowac}
 message Set_finished {Ustawianie zakonczone}
+message Skip_set {Skip set}  /* XXX translate */
+message Skip_group {Skip set group}  /* XXX translate */
+message Abandon {Abandon installation}	/* XXX */
 message Abort_install {Przerwac instalacje}
 message Password_cipher {Kodowanie hasel}
 message DES {DES}
