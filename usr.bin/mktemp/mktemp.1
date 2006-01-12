@@ -1,4 +1,4 @@
-.\" $NetBSD: mktemp.1,v 1.11 2004/04/02 11:47:55 wiz Exp $
+.\" $NetBSD: mktemp.1,v 1.12 2006/01/12 21:39:45 garbled Exp $
 .\" From: $FreeBSD: src/usr.bin/mktemp/mktemp.1,v 1.5 1999/08/28 01:04:13 peter Exp $
 .\" From: $OpenBSD: mktemp.1,v 1.8 1998/03/19 06:13:37 millert Exp $
 .\"
@@ -93,6 +93,17 @@ The default location if
 .Ev TMPDIR
 is not set is
 .Pa /tmp .
+The template string created will consist of the
+.Ar prefix
+followed by a
+.So . Sc
+and an eight character unique letter combination.
+.Ql X Ns s 
+in the
+.Ar prefix
+string will be treated as literal. If an additional
+.Ar template
+argument is passed, a second file will be created.
 Care should
 be taken to ensure that it is appropriate to use an environment variable
 potentially supplied by the user.
@@ -188,6 +199,6 @@ The
 utility appeared in
 .Nx 1.5 .
 It has been imported from
-.Bx Free ,
+.Fx ,
 the idea and the manual page were taken from
-.Bx Open .
+.Ox .
