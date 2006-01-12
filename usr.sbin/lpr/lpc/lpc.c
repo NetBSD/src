@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.18 2006/01/12 17:53:03 garbled Exp $	*/
+/*	$NetBSD: lpc.c,v 1.19 2006/01/12 18:06:25 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.18 2006/01/12 17:53:03 garbled Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.19 2006/01/12 18:06:25 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,7 @@ makeargv(void)
 	int n = 0;
 	size_t s;
 
-	s = sizeof(char) * strlen(cmdline);
+	s = strlen(cmdline) + 1;
 	margc = 0;
 	for (cp = cmdline; *cp && (cp - cmdline) < s && n < MAX_MARGV; n++) {
 		while (isspace((unsigned char)*cp))
