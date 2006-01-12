@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.41 2005/09/10 21:38:40 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.42 2006/01/12 22:02:44 dsl Exp $
 #
 # Makefile for sysinst
+
+COPTS += -Os
 
 PROG=		sysinst
 NOMAN=		# defined

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.91 2006/01/09 10:00:34 tsutsui Exp $ */
+/*	$NetBSD: disks.c,v 1.92 2006/01/12 22:02:44 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,7 +79,6 @@ static int foundffs(struct data *, size_t);
 #ifdef USE_SYSVBFS
 static int foundsysvbfs(struct data *, size_t);
 #endif
-static int mount_root(void);
 static int fsck_preen(const char *, int, const char *);
 static void fixsb(const char *, const char *, char);
 
@@ -106,7 +105,7 @@ get_disks(struct disk_desc *dd)
 			strlcpy(dd->dd_name, *xd, sizeof dd->dd_name - 2);
 			cp = strchr(dd->dd_name, ':');
 			if (cp != NULL)
-				dd->dd_no_mbr = ~strcmp(cp, ":no_mbr");
+				dd->dd_no_mbr = !strcmp(cp, ":no_mbr");
 			else {
 				dd->dd_no_mbr = 0;
 				cp = strchr(dd->dd_name, 0);
@@ -190,6 +189,9 @@ find_disks(const char *doingwhat)
 
 	disk = disks + selected_disk;
 	strlcpy(diskdev, disk->dd_name, sizeof diskdev);
+
+	/* Use as a default disk if the user has the sets on a local disk */
+	strlcpy(localfs_dev, disk->dd_name, sizeof localfs_dev);
 
 	sectorsize = disk->dd_secsize;
 	dlcyl = disk->dd_cyl;
@@ -636,7 +638,7 @@ fixsb(const char *prog, const char *disk, char ptn)
 /*
  * fsck and mount the root partition.
  */
-int
+static int
 mount_root(void)
 {
 	int	error;
@@ -677,7 +679,10 @@ mount_disks(void)
 	static size_t numfstabbuf = sizeof(fstabbuf) / sizeof(struct lookfor);
 
 	/* First the root device. */
-	if (!target_already_root()) {
+	if (target_already_root())
+		/* avoid needing to call target_already_root() again */
+		targetroot_mnt[0] = 0;
+	else {
 		error = mount_root();
 		if (error != 0 && error != EBUSY)
 			return 0;

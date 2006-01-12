@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.18 2004/11/14 18:36:11 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.19 2006/01/12 22:02:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -203,9 +203,9 @@ md_init()
          */
         uname(&instsys);
         if (strstr(instsys.version, "(INSTALL32_IP3x)"))
-                sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_2;
+                set_kernel_set(SET_KERNEL_2);
         else if (strstr(instsys.version, "(INSTALL32_IP2x)"))
-                sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_1;
+                set_kernel_set(SET_KERNEL_1);
 	else if (strstr(instsys.version, "(GENERIC32_IP12)"))
-		sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_3;
+		set_kernel_set(SET_KERNEL_3);
 }

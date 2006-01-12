@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.87 2005/09/10 21:51:12 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.88 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -460,9 +460,6 @@ Comme indiqué dans le document d'installation, vous avez
 plusieurs possibilités.
 Pour une installation via nfs ou ftp, vous devez être
 connecté au réseau et avoir accès au bon serveur.
-Si vous n'êtes pas prêt pour terminer l'installation maintenant,
-choisissez "aucun" puis retournerez au menu principal.
-Vous pourrez choisir l'option "mise à jour" pour terminer l'installation.
 }
 
 message distset
@@ -486,7 +483,8 @@ répertoire des composants: %s
 utilisateur:		   %s 
 mot de passe:		   %s 
 proxy:			   %s
-}
+répertoire de transfer:    %s 
+} /* fix XLAT */
 
 message email
 {adresse e-mail}
@@ -505,9 +503,6 @@ serveur:		   %s
 répertoire de base:	   %s 
 répertoire des composants: %s
 }
-
-message nfsbadmount
-{Le répertoire %s:%s n'est pas montable par nfs.}
 
 message cdromsource
 {Donnez le nom de périphérique du CD-Rom à utiliser ainsi que
@@ -542,12 +537,6 @@ Répertoire des composants:	%s
 
 message filesys
 {système de fichiers}
-
-message cdrombadmount
-{Le CDROM ne peut pas être monté depuis le device %s.}
-
-message localfsbadmount
-{%s ne peut pas être monté depuis le device %s.}
 
 message badlocalsetdir
 {%s n'est pas un répertoire}
@@ -592,7 +581,7 @@ message net_host
 message net_ip
 {Votre adresse IPv4}
 
-message net_ip_2nd
+message net_srv_ip
 {Server IPv4 number}
 
 message net_mask
@@ -672,10 +661,10 @@ message ftperror
 {Impossible de télécharger un fichier par ftp.
 Voulez vous réessayer ?}
 
-message distdir
+message xferdir
 {Quel répertoire dois je utiliser pour %s ?}
 
-message delete_dist_files
+message delete_xfer_files
 {Voulez-vous supprimer les fichiers de distribution de NetBSD de %s ? 
 Vous pouvez les conserver pour installer ou mettre a jour d'autre systèmes.}
 
@@ -803,16 +792,16 @@ message fddev
 {Quel lecteur de disquette voulez vous utiliser? }
 
 message fdmount
-{Veuillez insérer la disquette contenant le fichier "%s". }
+{Veuillez insérer la disquette contenant le fichier "%s.%s". }
 
 message fdnotfound
-{Impossible de trouver le fichier "%s" sur la disquette.
+{Impossible de trouver le fichier "%s.%s" sur la disquette.
 }
 
 message fdremount
 {La disquette n'a pas été montée correctement. Vous devez :
 
-Insérer une disquette contenant le fichier %s.
+Insérer une disquette contenant le fichier %s.%s.
 
 Ne plus charger d'autre fichiers depuis la disquette et interrompre le
 processus
@@ -868,17 +857,11 @@ message set_X11_fonts
 message set_X11_servers
 {X11 serveurs}
 
-message set_X_contrib
-{X11 clients contribués}
-
 message set_X11_prog
 {X11 développement}
 
-message set_X11_misc
-{X11 Misc.}
-
 message cur_distsets_row
-{%-33s %3s\n}
+{%-33s %3s}
 
 message select_all
 {Sélectionner tout les composants}
@@ -1044,6 +1027,7 @@ message hidden {** caché **}
 message Host {Serveur ftp}
 message Base_dir {Répertoire de base}
 message Set_dir {Répertoire des composants}
+message Xfer_dir {Répertoire de transfer}	/* fix XLAT */
 message Directory {Répertoire}
 message User {Utilisateur}
 message Password {Mot de passe}
@@ -1055,6 +1039,9 @@ message Try_again {Réessayer}
 message Give_up {Abandonner}
 message Ignore_continue_anyway {Ignorer les erreurs, continuer quand même}
 message Set_finished {Extraction terminée}
+message Skip_set {Skip set}  /* XXX translate */
+message Skip_group {Skip set group}  /* XXX translate */
+message Abandon {Abandon installation}	/* XXX */
 message Abort_install {Annuler l'installation}
 message Password_cipher {Password cipher}
 message DES {DES}

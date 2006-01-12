@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.59 2005/02/26 17:40:49 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.60 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -174,7 +174,7 @@ collect(int kind, char **buffer, const char *name, ...)
 	char *cp;
 
 	va_start(ap, name);
-	vsnprintf(fileorcmd, STRSIZE, name, ap);
+	vsnprintf(fileorcmd, sizeof fileorcmd, name, ap);
 	va_end(ap);
 
 	if (kind == T_FILE) {
@@ -446,18 +446,21 @@ launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
 			fprintf(script, "%s\n", scmd);
 			fclose(script);
 		}
+		if (flags & RUN_XFER_DIR)
+			target_chdir_or_die(xfer_dir);
 		/*
 		 * If target_prefix == "", the chroot will fail, but
 		 * that's ok, since we don't need it then.
 		 */
-		if ((flags & RUN_CHROOT) != 0 && chroot(target_prefix()) != 0)
+		if (flags & RUN_CHROOT && *target_prefix()
+		    && chroot(target_prefix()) != 0)
 			warn("chroot(%s) for %s", target_prefix(), *args);
 		else {
 			execvp(*args, args);
 			warn("execvp %s", *args);
 		}
 		_exit(EXIT_FAILURE);
-		break; /* end of child */
+		// break; /* end of child */
 	default:
 		/*
 		 * parent: we've set up the subprocess.

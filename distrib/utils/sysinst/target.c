@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.47 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: target.c,v 1.48 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.47 2004/06/06 06:06:59 christos Exp $");
+__RCSID("$NetBSD: target.c,v 1.48 2006/01/12 22:02:44 dsl Exp $");
 #endif
 
 /*
@@ -303,6 +303,7 @@ do_target_chdir(const char *dir, int must_succeed)
 			       target_prefix(), strerror(error));
 		exit(1);
 	}
+	errno = error;
 	return (error);
 #else
 	printf("target_chdir (%s)\n", tgt_dir);
@@ -362,8 +363,8 @@ mv_within_target_or_die(const char *frompath, const char *topath)
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
 
-	strncpy(realfrom, target_expand(frompath), STRSIZE);
-	strncpy(realto, target_expand(topath), STRSIZE);
+	strlcpy(realfrom, target_expand(frompath), sizeof realfrom);
+	strlcpy(realto, target_expand(topath), sizeof realto);
 
 	run_program(RUN_FATAL, "mv %s %s", realfrom, realto);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.8 2005/12/13 14:23:06 xtraeme Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.9 2006/01/12 22:02:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -465,10 +465,7 @@ message distmedium
 {Su disco está ahora preparado para la instalación el nucleo y los conjuntos
 de la distribución.  Como se apunta en las notas INSTALL, tiene diversas
 opciones.  Para ftp o nfs, tiene que estar conectado a una red con acceso
-a las maquinas apropiadas.  Si no está preparado para completar la
-instalación en este momento, puede seleccionar «ninguno» y será retornado
-al menú principal.  Cuando más adelante esté preparado, deberá seleccionar
-«actualizar» desde el menú principal para completar la instalación.
+a las maquinas apropiadas.
 }
 
 message distset
@@ -489,6 +486,7 @@ dir. de conjuntos:	%s
 usuario:		%s 
 contraseña:		%s 
 proxy:			%s 
+dir de xfer:		%s 
 }
 
 message email
@@ -506,9 +504,6 @@ servidor:		%s
 directorio base:	%s 
 dir de conjuntos:	%s 
 }
-
-message nfsbadmount
-{El directorio %s:%s no pudo ser montado por nfs.}
 
 message cdromsource
 {Introduzca el dispositivo de CDROM a usar y el directorio del CDROM
@@ -540,12 +535,6 @@ dir de conjuntos:	%s
 
 message filesys
 {sistema de ficheros}
-
-message cdrombadmount
-{No se ha podido montar el CDROM /dev/%s.}
-
-message localfsbadmount
-{No se ha podido montar %s en el dispositivo local %s.}
 
 message badlocalsetdir
 {%s no es un directorio}
@@ -588,7 +577,7 @@ message net_host
 message net_ip
 {Su número IPv4}
 
-message net_ip_2nd
+message net_srv_ip
 {Número servidor IPv4}
 
 message net_mask
@@ -665,10 +654,10 @@ message ftperror
 {Ftp no ha podido descargar un fichero.
 ¿Desea intentarlo de nuevo?}
 
-message distdir
+message xferdir
 {¿Qué directorio debería usar para %s? }
 
-message delete_dist_files
+message delete_xfer_files
 {¿Quiere borrar los conjuntos de NetBSD de %s? 
 (Puede dejarlos para instalar/actualizar un segundo sistema.)}
 
@@ -793,10 +782,10 @@ message fddev
 {¿Qué dispositivo de disquete quiere usar? }
 
 message fdmount
-{Por favor, inserte el disquete que contiene el fichero «%s». }
+{Por favor, inserte el disquete que contiene el fichero «%s.%s». }
 
 message fdnotfound
-{No se ha encontrado el fichero «%s» en el disco.  Por favor, inserte
+{No se ha encontrado el fichero «%s.%s» en el disco.  Por favor, inserte
 el disquete que lo contenga.
 
 Si éste era el último disco del conjunto, pulse «Conjunto acabado» para
@@ -805,7 +794,7 @@ continuar con el siguiente conjunto, si lo hay.}
 message fdremount
 {El disquete no ha sido montado correctamente.  Puede:
 
-Intentarlo de nuevo e insertar el disquete que contenga el fichero «%s».
+Intentarlo de nuevo e insertar el disquete que contenga el fichero «%s.%s».
 
 No cargar ningún otro fichero de este conjunto y continuar con el siguiente,
 si lo hay.
@@ -863,17 +852,11 @@ message set_X11_fonts
 message set_X11_servers
 {Servidores X11}
 
-message set_X_contrib
-{Clientes de X contrib}
-
 message set_X11_prog
 {Programación de X11}
 
-message set_X11_misc
-{X11 Misc.}
-
 message cur_distsets_row
-{%-27s %3s\n}
+{%-27s %3s}
 
 message select_all
 {Seleccionar todos los conjuntos anteriores}
@@ -1046,6 +1029,7 @@ message hidden {** oculto **}
 message Host {Máquina}
 message Base_dir {Directorio base}
 message Set_dir {Directorio de conjuntos}
+message Xfer_dir {Directorio a transferir a} /* XXX translation */
 message Directory {Directorio}
 message User {Usuario}
 message Password {Contraseña}
@@ -1057,6 +1041,9 @@ message Try_again {Reintentar}
 message Give_up {Abandonar}
 message Ignore_continue_anyway {Ignorar, continuar de todos modos}
 message Set_finished {Conjunto finalizado}
+message Skip_set {Skip set}  /* XXX translation */
+message Skip_group {Skip set group}  /* XXX translation */
+message Abandon {Abandon installation}	/* XXX */
 message Abort_install {Interrumpir la instalación}
 message Password_cipher {Cifrado de las contraseñas}
 message DES {DES}
@@ -1087,4 +1074,17 @@ apuntaba a un sistema de ficheros desmontado.  Se le ha dado la extension
 '.old'.  Cuando vuelva a arrancar su sistema actualizado, puede que necesite
 preocuparse de fundir el directorio /emul/aout nuevamente creado con el viejo.
 }
+.endif
+
+.if xxxx
+Si no está preparado para completar la
+instalación en este momento, puede seleccionar «ninguno» y será retornado
+al menú principal.  Cuando más adelante esté preparado, deberá seleccionar
+«actualizar» desde el menú principal para completar la instalación.
+
+message cdrombadmount
+{No se ha podido montar el CDROM /dev/%s.}
+
+message localfsbadmount
+{No se ha podido montar %s en el dispositivo local %s.}
 .endif
