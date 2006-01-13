@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.28 2003/07/28 23:13:17 itojun Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.29 2006/01/13 10:06:10 elad Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1283,7 +1283,7 @@ copyfile(char *to, char *from)
 		av[ac++] = NULL;
 		if ((infd = open(tname, O_RDONLY, 0)) == -1 ||
 		    unlink(tname) == -1 ||
-		    (outfd = open(tname, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL)) == -1 ||
+		    (outfd = open(tname, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0600)) == -1 ||
 		    runiofd(av, infd, outfd, 2) != 0) {
 			notify("SUP: Error in uncompressing file %s (%s)\n",
 			    to, tname);
