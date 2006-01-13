@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.61 2005/03/28 15:07:16 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.62 2006/01/13 16:50:31 elad Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -21,6 +21,7 @@ ASN	autonomous system number
 ASCII	american standard code for information interchange
 AT	advanced technology
 ATA	advanced technology attachment
+ATC	address translation cache
 ATAPI	advanced technology attachment packet interface
 ATM	asynchronous transfer mode
 ATX	advanced technology extended
