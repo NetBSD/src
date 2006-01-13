@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.51 2005/11/12 16:44:07 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.52 2006/01/13 15:37:26 tsutsui Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 12, 2005
+.Dd January 13, 2006
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -191,6 +191,7 @@ The following machines are currently supported by
 .Sy alpha ,
 .Sy amd64 ,
 .Sy amiga ,
+.Sy ews4800mips ,
 .Sy hp300 ,
 .Sy hp700 ,
 .Sy i386 ,
@@ -511,6 +512,14 @@ Modify the command line to change the default from "netbsd -ASn2" to
 "netbsd -S":
 .Dl Ic installboot -m amiga -o command="netbsd -S" /dev/rsd0a /usr/mdec/bootxx_ffs
 .
+.Ss NetBSD/ews4800mips
+Install the System V Boot File System primary bootstrap on to disk
+.Sq sd0 ,
+with the secondary bootstrap
+.Sq Pa /boot
+already present in the SysVBFS partition on the disk:
+.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx_bfs
+.
 .Ss NetBSD/i386 and NetBSD/amd64
 Install new boot blocks on an existing mounted root file system on
 .Sq wd0 ,
@@ -671,8 +680,9 @@ David Laight (i386),
 Christian Limpach (next68k),
 Luke Mewburn (macppc),
 Matt Thomas (vax),
+Izumi Tsutsui (news68k, newsmips),
 and
-Izumi Tsutsui (news68k, newsmips).
+UCHIYAMA Yasushi (ews4800mips).
 .
 .Sh BUGS
 There are not currently primary bootstraps to support all file systems
