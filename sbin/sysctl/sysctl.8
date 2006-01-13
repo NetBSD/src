@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.134 2005/12/21 12:21:06 yamt Exp $
+.\"	$NetBSD: sysctl.8,v 1.135 2006/01/13 18:37:06 elad Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd December 21, 2005
+.Dd January 13, 2006
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -383,21 +383,30 @@ privilege can change the value.
 .It net.inet.icmp.errppslimit	integer	yes
 .It net.inet.icmp.rediraccept	integer	yes
 .It net.inet.icmp.redirtimeout	integer	yes
+.It net.inet.icmp.returndatabytes integer yes
 .It net.inet.ip.allowsrcrt	integer	yes
 .It net.inet.ip.anonportmax	integer	yes
 .It net.inet.ip.anonportmin	integer	yes
 .It net.inet.ip.checkinterface	integer	yes
 .It net.inet.ip.directed-broadcast	integer	yes
+.It net.inet.ip.do_loopback_cksum	integer	yes
 .It net.inet.ip.forwarding	integer	yes
 .It net.inet.ip.forwsrcrt	integer	yes
-.It net.inet.ip.maxfragpacket	integer	yes
+.It net.inet.ip.gifttl	integer	yes
+.It net.inet.ip.grettl	integer	yes
+.It net.inet.ip.hostzerobroadcast	integer	yes
+.It net.inet.ip.maxfragpackets	integer	yes
 .It net.inet.ip.lowportmax	integer	yes
 .It net.inet.ip.lowportmin	integer	yes
 .It net.inet.ip.mtudisc	integer	yes
 .It net.inet.ip.mtudisctimeout	integer	yes
+.It net.inet.ip.random_id	integer	yes
 .It net.inet.ip.redirect	integer	yes
 .It net.inet.ip.subnetsarelocal	integer	yes
 .It net.inet.ip.ttl	integer	yes
+.It net.inet.ip.ifq.drops	integer	no
+.It net.inet.ip.ifq.len	integer	no
+.It net.inet.ip.ifq.maxlen	integer	yes
 .It net.inet.ipsec.ah_cleartos	integer	yes
 .It net.inet.ipsec.ah_net_deflev	integer	yes
 .It net.inet.ipsec.ah_offsetmask	integer	yes
@@ -412,6 +421,8 @@ privilege can change the value.
 .It net.inet.tcp.compat_42	integer	yes
 .It net.inet.tcp.cwm	integer	yes
 .It net.inet.tcp.cwm_burstsize	integer	yes
+.It net.inet.tcp.delack_ticks	integer	yes
+.It net.inet.tcp.do_lookback_cksum	integer	yes
 .It net.inet.tcp.init_win	integer	yes
 .It net.inet.tcp.init_win_local	integer	yes
 .It net.inet.tcp.keepcnt	integer	yes
@@ -420,10 +431,14 @@ privilege can change the value.
 .It net.inet.tcp.log_refused	integer	yes
 .It net.inet.tcp.mss_ifmtu	integer	yes
 .It net.inet.tcp.mssdflt	integer	yes
+.It net.inet.tcp.newreno	integer	yes
 .It net.inet.tcp.recvspace	integer	yes
 .It net.inet.tcp.rfc1323	integer	yes
 .It net.inet.tcp.rstppslimit	integer	yes
-.It net.inet.tcp.sack	integer	yes
+.It net.inet.tcp.sack.enable	integer	yes
+.It net.inet.tcp.sack.globalholes	integer	no
+.It net.inet.tcp.sack.globalmaxholes	integer	yes
+.It net.inet.tcp.sack.maxholes	integer	yes
 .It net.inet.tcp.sendspace	integer	yes
 .It net.inet.tcp.slowhz	integer	no
 .It net.inet.tcp.syn_bucket_limit	integer	yes
@@ -435,6 +450,7 @@ privilege can change the value.
 .It net.inet.tcp.debug	struct	no
 .It net.inet.tcp.debx	integer	no
 .It net.inet.udp.checksum	integer	yes
+.It net.inet.udp.do_loopback_cksum	integer	yes
 .It net.inet.udp.recvspace	integer	yes
 .It net.inet.udp.sendspace	integer	yes
 .It net.ns.spp.debug	struct	yes
@@ -456,11 +472,10 @@ privilege can change the value.
 .It net.inet6.ip6.anonportmax	integer	yes
 .It net.inet6.ip6.anonportmin	integer	yes
 .It net.inet6.ip6.auto_flowlabel	integer	yes
-.It net.inet6.ip6.v6only	integer	yes
 .It net.inet6.ip6.dad_count	integer	yes
 .It net.inet6.ip6.defmcasthlim	integer	yes
 .It net.inet6.ip6.forwarding	integer	yes
-.It net.inet6.ip6.gif_hlim	integer	yes
+.It net.inet6.ip6.gifhlim	integer	yes
 .It net.inet6.ip6.hdrnestlimit	integer	yes
 .It net.inet6.ip6.hlim	integer	yes
 .It net.inet6.ip6.kame_version	string	no
@@ -473,6 +488,10 @@ privilege can change the value.
 .It net.inet6.ip6.redirect	integer	yes
 .It net.inet6.ip6.rr_prune	integer	yes
 .It net.inet6.ip6.use_deprecated	integer	yes
+.It net.inet6.ip6.v6only	integer	yes
+.It net.inet6.ip6.ifq.drops	integer	no
+.It net.inet6.ip6.ifq.len	integer	no
+.It net.inet6.ip6.ifq.maxlen	integer	yes
 .It net.inet6.ipsec6.ah_net_deflev	integer	yes
 .It net.inet6.ipsec6.ah_trans_deflev	integer	yes
 .It net.inet6.ipsec6.def_policy	integer	yes
@@ -480,10 +499,9 @@ privilege can change the value.
 .It net.inet6.ipsec6.esp_net_deflev	integer	yes
 .It net.inet6.ipsec6.esp_trans_deflev	integer	yes
 .It net.inet6.ipsec6.inbound_call_ike	integer	yes
+.It net.inet6.udp6.do_loopback_cksum	integer	yes
 .It net.inet6.udp6.recvspace	integer	yes
 .It net.inet6.udp6.sendspace	integer	yes
-.It net.key.acq_exp_int	integer	yes
-.It net.key.acq_maxtime	integer	yes
 .It net.key.ah_keymin	integer	yes
 .It net.key.debug	integer	yes
 .It net.key.esp_auth	integer	yes
@@ -512,6 +530,7 @@ privilege can change the value.
 .It proc.\*[Lt]pid\*[Gt].stopexec	int	yes
 .It proc.\*[Lt]pid\*[Gt].stopfork	int	yes
 .It security.curtain	integer	yes
+.It security.sugid_coredump	integer	yes
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
 .It user.bc_scale_max	integer	no
