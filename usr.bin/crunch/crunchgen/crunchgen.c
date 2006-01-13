@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.67 2005/02/10 16:03:04 jmc Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.68 2006/01/13 16:36:25 tsutsui Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.67 2005/02/10 16:03:04 jmc Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.68 2006/01/13 16:36:25 tsutsui Exp $");
 #endif
 
 #include <stdlib.h>
@@ -135,7 +135,7 @@ main(int argc, char **argv)
 	makeflags = strdup("");
 
     if ((machine = getenv("MACHINE")) == NULL) {
-	struct utsname utsname;
+	static struct utsname utsname;
 
 	if (uname(&utsname) == -1) {
 	    perror("uname");
