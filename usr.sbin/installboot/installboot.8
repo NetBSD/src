@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.52 2006/01/13 15:37:26 tsutsui Exp $
+.\"	$NetBSD: installboot.8,v 1.53 2006/01/13 17:45:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -467,7 +467,7 @@ is not found.
 .
 .El
 .
-.Ss NetBSD/next68k files
+.Ss Nx Ns Tn /next68k files
 .
 .Bl -tag -width /usr/mdec/bootxx_ustarfs
 .
@@ -477,7 +477,7 @@ bootstrap.
 .
 .El
 .
-.Ss NetBSD/sparc64 files
+.Ss Nx Ns Tn /sparc64 files
 .
 .Bl -tag -width /usr/mdec/bootxx_ustarfs
 .
@@ -507,12 +507,12 @@ Remove the primary bootstrap from disk
 .Sq sd1 :
 .Dl Ic installboot -c /dev/rsd1c
 .
-.Ss NetBSD/amiga
+.Ss Nx Ns Tn /amiga
 Modify the command line to change the default from "netbsd -ASn2" to
 "netbsd -S":
 .Dl Ic installboot -m amiga -o command="netbsd -S" /dev/rsd0a /usr/mdec/bootxx_ffs
 .
-.Ss NetBSD/ews4800mips
+.Ss Nx Ns Tn /ews4800mips
 Install the System V Boot File System primary bootstrap on to disk
 .Sq sd0 ,
 with the secondary bootstrap
@@ -520,7 +520,7 @@ with the secondary bootstrap
 already present in the SysVBFS partition on the disk:
 .Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx_bfs
 .
-.Ss NetBSD/i386 and NetBSD/amd64
+.Ss Nx Ns Tn /i386 and Nx Ns Tn /amd64
 Install new boot blocks on an existing mounted root file system on
 .Sq wd0 ,
 setting the timeout to five seconds, after copying a new secondary
@@ -594,13 +594,13 @@ disklabel on
 for the primary bootstrap to function correctly.
 .Ed
 .
-.Ss NetBSD/next68k
+.Ss Nx Ns Tn /next68k
 Install the bootstrap on to disk
 .Sq sd0 :
 .Dl Ic installboot /dev/rsd0c /usr/mdec/boot
 .Pp
 .
-.Ss NetBSD/pmax
+.Ss Nx Ns Tn /pmax
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 :
 .Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx_ffs
@@ -626,7 +626,7 @@ and the secondary bootstrap
 .Dl ...
 .Dl Ic installboot -b `expr 48 \e* 4` /tmp/cd-image /usr/mdec/bootxx_cd9660
 .
-.Ss NetBSD/sparc
+.Ss Nx Ns Tn /sparc
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 ,
 with the secondary bootstrap
@@ -634,7 +634,7 @@ with the secondary bootstrap
 already present:
 .Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx /boot
 .
-.Ss NetBSD/sparc64
+.Ss Nx Ns Tn /sparc64
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq wd0 :
 .Dl Ic installboot /dev/rwd0c /usr/mdec/bootblk
@@ -644,7 +644,7 @@ The secondary
 bootstrap is located in
 .Pa /usr/mdec/ofwboot .
 .
-.Ss NetBSD/sun2 and NetBSD/sun3
+.Ss Nx Ns Tn /sun2 and Nx Ns Tn /sun3
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 ,
 with the secondary bootstrap
@@ -688,7 +688,7 @@ UCHIYAMA Yasushi (ews4800mips).
 There are not currently primary bootstraps to support all file systems
 types which are capable of being the root file system.
 .
-.Ss NetBSD/alpha
+.Ss Nx Ns Tn /alpha
 The
 .Nx Ns Tn /alpha
 primary bootstrap program can only load the secondary bootstrap program
@@ -700,11 +700,11 @@ The size of primary bootstrap programs is restricted to 7.5KB, even
 though some file systems (e.g., ISO 9660) are able to accommodate larger
 ones.
 .
-.Ss NetBSD/hp300
+.Ss Nx Ns Tn /hp300
 The disk must have a boot partition large enough to hold the bootstrap code.
 Currently the primary bootstrap must be a LIF format file.
 .
-.Ss NetBSD/i386 and NetBSD/amd64
+.Ss Nx Ns Tn /i386 and Nx Ns Tn /amd64
 The bootstrap must be installed in the
 .Nx
 partition that starts at the beginning of the mbr partition.
@@ -718,11 +718,11 @@ The size of primary bootstrap programs is restricted to 8KB, even
 though some file systems (e.g., ISO 9660) are able to accommodate larger
 ones.
 .
-.Ss NetBSD/next68k
+.Ss Nx Ns Tn /next68k
 The size of bootstrap programs is restricted to the free space before
 the file system at the beginning of the disk minus 8KB.
 .
-.Ss NetBSD/pmax
+.Ss Nx Ns Tn /pmax
 The
 .Nx Ns Tn /pmax
 secondary bootstrap program can only load kernels from file
@@ -732,7 +732,7 @@ The size of primary bootstrap programs is restricted to 7.5KB, even
 though some file systems (e.g., ISO 9660) are able to accommodate larger
 ones.
 .
-.Ss NetBSD/sun2 and NetBSD/sun3
+.Ss Nx Ns Tn /sun2 and Nx Ns Tn /sun3
 The
 .Nx Ns Tn /sun2
 and
@@ -740,7 +740,7 @@ and
 secondary bootstrap program can only load kernels from file
 systems starting at the beginning of disks.
 .
-.Ss NetBSD/vax
+.Ss Nx Ns Tn /vax
 The
 .Nx Ns Tn /vax
 secondary bootstrap program can only load kernels from file systems
