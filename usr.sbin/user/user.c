@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.99 2006/01/06 18:11:00 christos Exp $ */
+/* $NetBSD: user.c,v 1.100 2006/01/13 13:43:23 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.99 2006/01/06 18:11:00 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.100 2006/01/13 13:43:23 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -963,6 +963,9 @@ valid_shell(const char *shellname)
 		    _PATH_SHELLS, shellname);
 		return 1;
 	} 
+
+	if (strcmp(shellname, "/sbin/nologin") == 0
+		return 0;
 
 	while ((shellp = getusershell()) != NULL)
 		if (strcmp(shellp, shellname) == 0)
