@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.70 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.71 2006/01/13 00:50:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.70 2005/12/11 12:25:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.71 2006/01/13 00:50:58 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -68,7 +68,7 @@ int	dirchk = 1;
 int	dirchk = 0;
 #endif
 
-#define FSFMT(vp)   (((vp)->v_mount->mnt_iflag & IMNT_DTYPE) ==  0)
+#define	FSFMT(vp)	(((vp)->v_mount->mnt_iflag & IMNT_DTYPE) == 0)
 
 /*
  * Convert a component of a pathname into a pointer to a locked inode.
