@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.63 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: param.h,v 1.64 2006/01/13 15:45:56 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,7 +142,7 @@ extern int nbpg, pgofset, pgshift;
  * logical pages.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((32 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
