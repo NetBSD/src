@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.24 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.25 2006/01/14 23:49:59 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.24 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.25 2006/01/14 23:49:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,7 +561,7 @@ msdosfs_write(v)
 	vsize_t bytelen;
 	off_t oldoff;
 	struct uio *uio = ap->a_uio;
-	struct proc *p = uio->uio_lwp->l_proc;
+	struct proc *p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
