@@ -1,4 +1,4 @@
-/*	$NetBSD: zconf.h,v 1.1.1.1 2006/01/14 20:10:34 christos Exp $	*/
+/*	$NetBSD: zconf.h,v 1.2 2006/01/14 20:27:34 christos Exp $	*/
 
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-2005 Jean-loup Gailly.
@@ -9,6 +9,8 @@
 
 #ifndef ZCONF_H
 #define ZCONF_H
+
+#include <sys/types.h>
 
 /*
  * If you *really* need a unique prefix for all types and library functions,
@@ -286,13 +288,14 @@ typedef uLong FAR uLongf;
    typedef Byte       *voidp;
 #endif
 
-#if 0           /* HAVE_UNISTD_H -- this line is updated by ./configure */
+#if defined(HAVE_UNISTD_H) || (defined(__NetBSD__) && (!defined(_KERNEL) && !defined(_STANDALONE)))
 #  include <sys/types.h> /* for off_t */
 #  include <unistd.h>    /* for SEEK_* and off_t */
 #  ifdef VMS
 #    include <unixio.h>   /* for off_t */
 #  endif
 #  define z_off_t off_t
+#  define z_ptrdiff_t ptrdiff_t
 #endif
 #ifndef SEEK_SET
 #  define SEEK_SET        0       /* Seek from beginning of file.  */
@@ -301,6 +304,9 @@ typedef uLong FAR uLongf;
 #endif
 #ifndef z_off_t
 #  define z_off_t long
+#endif
+#ifndef z_ptrdiff_t
+#  define z_ptrdiff_t long
 #endif
 
 #if defined(__OS400__)
