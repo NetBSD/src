@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.22 2005/12/11 12:24:52 christos Exp $	*/
+/*	$NetBSD: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.22 2005/12/11 12:24:52 christos Exp $
+ * $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.22 2005/12/11 12:24:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.22 2005/12/11 12:24:52 christos Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.22 2005/12/11 12:24:52 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.22 2005/12/11 12:24:52 christos Exp $");
 #  include <lib/libkern/libkern.h>
 
 #else
+#  include <sys/types.h>
+#  include <sys/param.h>
 #ifdef STDC
 #  include <stddef.h>
 #  include <string.h>
@@ -293,7 +295,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.22 2005/12/11 12:24:52 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -655,7 +657,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.22 2005/12/11 12:24:52 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $ */
 
 /* #include "deflate.h" */
 
@@ -2029,7 +2031,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.22 2005/12/11 12:24:52 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -5905,7 +5907,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.22 2005/12/11 12:24:52 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $ */
 
 /* #include "zlib.h" */
 
