@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.396 2006/01/11 00:08:36 kleink Exp $
+#	$NetBSD: 3RDPARTY,v 1.397 2006/01/14 20:23:13 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -651,7 +651,7 @@ License:	Several. See src/gnu/dist/postfix
 Notes:
 
 Package:	ppp
-Version:	2.4.3
+Version:	2.4.3 [with 2.4.4b1 changes]
 Current Vers:	2.4.4b1
 Maintainer:	Paul Mackerras <paulus@samba.org>
 Archive Site:	ftp://ftp.samba.org/pub/ppp/
@@ -664,7 +664,7 @@ Notes:
 BSD support was removed from 2.4.0; I added it back and removed
 some GPL pieces. Multilink support is missing. Repeated pings to
 Paulus have not yielded results. I've retrofitted pppdump to use
-our zlib, and <net/ppp-comp.h> and I now maintain sys-bsd.c. This
+net/zlib, and <net/ppp-comp.h> and I now maintain sys-bsd.c. This
 is clearly a pain. I have not tested the modules code, neither our
 makefiles make it easy to construct a module, but I left one there
 as an example.
@@ -894,20 +894,16 @@ Notes:
  be submitted back via http://bugzilla.xfree86.org.
 
 Package:	zlib
-Version:	1.1.4
+Version:	1.2.3
 Current Vers:	1.2.3
 Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
 Archive Site:	http://www.gzip.org/zlib/
 Home Page:	http://www.gzip.org/zlib/
 Mailing List:
-Responsible:	gwr, tron
+Responsible:	gwr, tron, christos
 License:	BSD (3-clause)
 Notes:
-The sources were integrated into src/lib/libz as usual on *nix,
-and partially duplicated under src/sys/lib/libz and
-src/sys/net/zlib.[ch] for the kernel.
-The header zconf.h was "boiled down" to the minimum for *BSD.
-The Makefile is completely new (*BSD style, of course).  Lastly,
-the file gzio.c was changed to allow -DNO_DEFLATE to eliminate
+Imported to src/common/dist/zlib and shared by the kernel and userland.
+The file gzio.c was changed to allow -DNO_DEFLATE to eliminate
 all references to deflate.c and friends, which permits building
 a really small zcat implementation.  (src/distrib/utils/zcat)
