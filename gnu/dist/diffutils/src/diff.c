@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.c,v 1.1.1.1 2003/01/26 00:43:16 wiz Exp $	*/
+/*	$NetBSD: diff.c,v 1.2 2006/01/14 09:18:17 apb Exp $	*/
 
 /* diff - compare files line by line
 
@@ -1208,9 +1208,10 @@ compare_files (struct comparison const *parent,
   else if ((same_files
 	    = (cmp.file[0].desc != NONEXISTENT
 	       && cmp.file[1].desc != NONEXISTENT
-	       && 0 < same_file (&cmp.file[0].stat, &cmp.file[1].stat)
-	       && same_file_attributes (&cmp.file[0].stat,
-					&cmp.file[1].stat)))
+	       && (same_special_file (&cmp.file[0].stat, &cmp.file[1].stat)
+	           || (0 < same_file (&cmp.file[0].stat, &cmp.file[1].stat)
+		       && same_file_attributes (&cmp.file[0].stat,
+					&cmp.file[1].stat)))))
 	   && no_diff_means_no_output)
     {
       /* The two named files are actually the same physical file.
