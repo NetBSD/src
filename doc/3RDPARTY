@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.397 2006/01/14 20:23:13 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.398 2006/01/14 20:31:21 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -904,6 +904,3 @@ Responsible:	gwr, tron, christos
 License:	BSD (3-clause)
 Notes:
 Imported to src/common/dist/zlib and shared by the kernel and userland.
-The file gzio.c was changed to allow -DNO_DEFLATE to eliminate
-all references to deflate.c and friends, which permits building
-a really small zcat implementation.  (src/distrib/utils/zcat)
