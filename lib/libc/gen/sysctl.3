@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.163 2006/01/14 15:36:38 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.164 2006/01/14 15:40:49 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -309,7 +309,7 @@ returns configuration information about the filesystem
 type given as a fourth level identifier.
 The remaining second level identifiers are the
 filesystem type number returned by a
-.Xr statfs 2
+.Xr statvfs 2
 call or from VFS_CONF.
 The third level identifiers available for each filesystem
 are given in the header file that defines the mount
