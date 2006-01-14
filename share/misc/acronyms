@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.150 2006/01/01 19:02:08 elad Exp $
+$NetBSD: acronyms,v 1.151 2006/01/14 00:00:03 rpaulo Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -217,7 +217,6 @@ THX	thanks
 TIA	thanks in advance
 TINC	there is no cabal
 TLA	three letter acronym
-TLB	translation lookaside buffer
 TMA	too many abbreviations
 TMI	too much information
 TNF	The NetBSD Foundation
