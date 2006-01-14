@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.17 2003/04/16 13:35:29 wiz Exp $
+.\"     $NetBSD: kprintf.9,v 1.18 2006/01/14 13:08:18 rillig Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -176,6 +176,12 @@ and
 .Fn vsnprintf
 functions return the number of characters placed in the buffer
 .Fa buf .
+.Pp
+The
+.Fn tprintf_open
+function returns
+.Dv NULL
+if no terminal handle could be acquired.
 .Sh SEE ALSO
 .Xr printf 1 ,
 .Xr printf 3 ,
