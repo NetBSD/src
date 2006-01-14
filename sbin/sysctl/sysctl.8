@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.140 2006/01/14 11:11:08 elad Exp $
+.\"	$NetBSD: sysctl.8,v 1.141 2006/01/14 11:52:20 elad Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -293,6 +293,7 @@ privilege can change the value.
 .It kern.domainname	string	yes
 .It kern.dump_on_panic	integer	yes
 .It kern.drivers	struct	no
+.It kern.file	struct	no
 .It kern.forkfsleep	integer	yes
 .It kern.fscale	integer	no
 .It kern.fsync	integer	no
@@ -344,6 +345,7 @@ privilege can change the value.
 .It kern.proc	struct	no
 .It kern.proc2	struct	no
 .It kern.proc_args	string	yes
+.It kern.prof	node	not applicable
 .It kern.rawpartition	integer	no
 .It kern.root_device	string	no
 .It kern.root_partition	integer	no
@@ -368,6 +370,7 @@ privilege can change the value.
 .It kern.veriexec.algorithms	string	no
 .It kern.veriexec.count.dev_\*[Lt]id\*[Gt]	quad	no
 .It kern.version	string	no
+.It kern.vnode	struct	no
 .It machdep.console_device	dev_t	no
 .It net.bpf.maxbufsize	integer	yes
 .It net.bpf.stats	struct	no
