@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.74 2006/01/06 09:27:55 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.75 2006/01/14 17:41:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -205,7 +205,6 @@ void lfs_vunref(struct vnode *);
 void lfs_vunref_head(struct vnode *);
 
 /* lfs_subr.c */
-int lfs_blkatoff(struct vnode *, off_t, char **, struct buf **);
 void lfs_setup_resblks(struct lfs *);
 void lfs_pad_check(unsigned char *, int, char *, int);
 void lfs_free_resblks(struct lfs *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.191 2006/01/04 10:13:06 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.192 2006/01/14 17:41:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.191 2006/01/04 10:13:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.192 2006/01/14 17:41:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -174,7 +174,6 @@ static const struct ufs_ops lfs_ufsops = {
 	.uo_valloc = lfs_valloc,
 	.uo_vfree = lfs_vfree,
 	.uo_balloc = lfs_balloc,
-	.uo_blkatoff = lfs_blkatoff,
 };
 
 /*
