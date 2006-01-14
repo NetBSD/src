@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.8 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: load.cpp,v 1.9 2006/01/14 23:22:53 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@ Loader::_load_segment(vaddr_t kv, vsize_t memsz, off_t fileofs, size_t filesz)
 #else
 		_pvec_prev->next = ptokv(_pvec_clr_paddr);
 #endif
-		DPRINTF((TEXT("[zero clear] ->0x%08x+0x%08x=0x%08x\n"),
+		DPRINTF((TEXT("\t->zero 0x%08x+0x%08x=0x%08x\n"),
 		    _pvec_prev->dst, _pvec_prev->sz,
 		    _pvec_prev->dst + _pvec_prev->sz));
 		_opvec_prev = _pvec_prev;
