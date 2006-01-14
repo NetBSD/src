@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.559 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.560 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -144,6 +144,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		and LWP information for kdump and ktruss. Ability to trace
 		upcalls. [skrll,christos 20051211]
 	sip(4): Now enabled and known working for sparc64.  [mrg 20051220]
+	libc/libkern: Merge common files [christos 20051220]
 	bind:	Imported 9.3.2 for named and tools [christos 20051221]
 	dkctl(8), bufq(9): Add a functionality to switch bufq strategy
 		on the fly.  [yamt 20051226]
@@ -162,3 +163,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		Written by Martin Vegiard. [xtraeme 20051231]
 	rlphy(4): Realtek 8139/8201L PHY. From OpenBSD [xtraeme 20060104]
 	postfix(1): Updated to 2.2.8. [rpaulo 20060109]
+	zlib: Updated to 1.2.3 and shared btween kernel and userland.
+		[christos 20060114]
