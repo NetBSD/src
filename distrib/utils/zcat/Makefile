@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2001/12/12 00:05:14 tv Exp $
+# $NetBSD: Makefile,v 1.14 2006/01/14 21:15:40 christos Exp $
 # Small zcat (i.e. for install media)
 #
 # Note: gzio.c is compiled here so that crunchgen will assume
@@ -6,14 +6,14 @@
 # so that the fake deflate functions in zcat.c will satisfy the
 # references to those functions in gzio.c (yes, it's a hack).
 
-SRCDIR=		${.CURDIR}/../../../lib/libz
+SRCDIR=		${.CURDIR}/../../../common/dist/zlib
 
 PROG=		zcat
 NOMAN=		# defined
 
 SRCS=		zcat.c gzio.c
 
-CPPFLAGS+=	-I${SRCDIR}
+CPPFLAGS+=	-I${SRCDIR} -DNO_GZCOMPRESS
 DPADD+=		${LIBZ}
 LDADD+=		-lz
 
