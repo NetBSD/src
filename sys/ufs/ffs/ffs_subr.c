@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.40 2005/12/27 04:06:46 chs Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.41 2006/01/14 17:41:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.40 2005/12/27 04:06:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.41 2006/01/14 17:41:16 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -65,37 +65,6 @@ void    panic(const char *, ...)
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
-
-/*
- * Return buffer with the contents of block "offset" from the beginning of
- * directory "ip".  If "res" is non-zero, fill it in with a pointer to the
- * remaining space in the directory.
- */
-int
-ffs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
-{
-	struct inode *ip;
-	struct fs *fs;
-	struct buf *bp;
-	daddr_t lbn;
-	int bsize, error;
-
-	ip = VTOI(vp);
-	fs = ip->i_fs;
-	lbn = lblkno(fs, offset);
-	bsize = blksize(fs, ip, lbn);
-
-	*bpp = NULL;
-	if ((error = bread(vp, lbn, bsize, NOCRED, &bp)) != 0) {
-		brelse(bp);
-		return (error);
-	}
-	if (res)
-		*res = (char *)bp->b_data + blkoff(fs, offset);
-	*bpp = bp;
-	return (0);
-}
-
 
 /*
  * Load up the contents of an inode and copy the appropriate pieces
