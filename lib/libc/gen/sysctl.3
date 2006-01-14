@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.162 2006/01/14 11:18:45 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.163 2006/01/14 15:36:38 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -394,8 +394,11 @@ information.
 .It KERN\_AUTONICETIME	integer	yes
 .It KERN\_AUTONICEVAL	integer	yes
 .It KERN\_BOOTTIME	struct timeval	no
+.It KERN\_BUFQ	node	not applicable
 .It KERN\_CCPU	integer	no
 .It KERN\_CLOCKRATE	struct clockinfo	no
+.It KERN\_CONSDEV	integer	no
+.It KERN\_CP\_ID	struct	no
 .It KERN\_CP\_TIME	uint64_t[\|]	no
 .It KERN\_DEFCORENAME	string	yes
 .It KERN\_DOMAINNAME	string	yes
@@ -404,6 +407,7 @@ information.
 .It KERN\_FORKFSLEEP	integer	yes
 .It KERN\_FSCALE	integer	no
 .It KERN\_FSYNC	integer	no
+.It KERN\_HARDCLOCK\_TICKS	integer	no
 .It KERN\_HOSTID	integer	yes
 .It KERN\_HOSTNAME	string	yes
 .It KERN\_IOV\_MAX	integer	no
@@ -415,6 +419,7 @@ information.
 .It KERN\_MAPPED\_FILES	integer	no
 .It KERN\_MAXFILES	integer	yes
 .It KERN\_MAXPARTITIONS	integer	no
+.It KERN\_MAXPHYS	integer	no
 .It KERN\_MAXPROC	integer	yes
 .It KERN\_MAXPTYS	integer	yes
 .It KERN\_MAXVNODES	integer	yes
@@ -423,13 +428,14 @@ information.
 .It KERN\_MEMLOCK\_RANGE	integer	no
 .It KERN\_MEMORY\_PROTECTION	integer	no
 .It KERN\_MONOTONIC\_CLOCK	integer	no
-.It KERN\_MSGBUF	char[\|]	no
+.It KERN\_MSGBUF	integer	no
 .It KERN\_MSGBUFSIZE	integer	no
 .It KERN\_NGROUPS	integer	no
 .It KERN\_NTPTIME	struct ntptimeval	no
 .It KERN\_OSRELEASE	string	no
 .It KERN\_OSREV	integer	no
 .It KERN\_OSTYPE	string	no
+.It KERN\_PIPE	node	not applicable
 .It KERN\_POSIX1	integer	no
 .It KERN\_POSIX\_BARRIERS	integer	no
 .It KERN\_POSIX\_READER\_WRITER\_LOCKS	integer	no
@@ -452,11 +458,12 @@ information.
 .It KERN\_SYSVMSG	integer	no
 .It KERN\_SYSVSEM	integer	no
 .It KERN\_SYSVSHM	integer	no
+.It KERN\_TIMEX	struct	no
 .It KERN\_TKSTAT	node	not applicable
+.It KERN\_URANDOM	integer	no
 .It KERN\_VERIEXEC	node	not applicable
 .It KERN\_VERSION	string	no
 .It KERN\_VNODE	struct vnode	no
-.It KERN\_HARDCLOCK\_TICKS	integer		no
 .El
 .ne 1i
 .Pp
@@ -485,6 +492,10 @@ structure is returned.
 This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
 skew rate.
+.It Li KERN_CONSDEV
+Console device.
+.It Li KERN_CP_ID
+Mapping of CPU number to CPU id.
 .It Li KERN_CP_TIME
 Returns an array of CPUSTATES uint64_ts.
 This array contains the
@@ -507,6 +518,8 @@ and can be changed with the kernel configuration option
 ).
 .It Li KERN_DOMAINNAME
 Get or set the YP domain name.
+.It Li KERN_DUMP_ON_PANIC
+Perform a crash dump on system panic.
 .It Li KERN_DRIVERS
 Return an array of
 .Va struct kinfo_drivers
@@ -525,8 +538,6 @@ The returned data consists of a single
 followed by an array of
 .Va struct file ,
 whose size depends on the current number of such objects in the system.
-.It Li KERN_FSCALE
-The kernel fixed-point scale factor.
 .It Li KERN_FORKFSLEEP
 If
 .Xr fork 2
@@ -538,10 +549,16 @@ error to process.
 Useful to keep heavily forking runaway processes in bay.
 Default zero (no sleep).
 Maximum is 20 seconds.
+.It Li KERN_FSCALE
+The kernel fixed-point scale factor.
 .It Li KERN_FSYNC
 Return 1 if the POSIX 1003.1b File Synchronization Option is available
 on this system,
 otherwise 0.
+.It Li KERN_HARDCLOCK_TICKS
+Returns the number of
+.Xr hardclock 9
+ticks.
 .It Li KERN_HOSTID
 Get or set the host id.
 .It Li KERN_HOSTNAME
@@ -582,6 +599,8 @@ otherwise 0.
 The maximum number of open files that may be open in the system.
 .It Li KERN_MAXPARTITIONS
 The maximum number of partitions allowed per disk.
+.It Li KERN_MAXPHYS
+Maximum raw I/O transfer size.
 .It Li KERN_MAXPROC
 The maximum number of simultaneous processes the system will allow.
 .It Li KERN_MAXPTYS
@@ -600,27 +619,27 @@ The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "MBUFXNMBCLUSTERSXXX" "struct integerXXX" -offset indent
 .It Sy Third level name	Type	Changeable
-.It MBUF\_MSIZE	integer	yes
-.It MBUF\_MCLBYTES	integer	yes
-.It MBUF\_NMBCLUSTERS	integer	yes
 .It MBUF\_MBLOWAT	integer	yes
+.It MBUF\_MCLBYTES	integer	yes
 .It MBUF\_MCLLOWAT	integer	yes
+.It MBUF\_MSIZE	integer	yes
+.It MBUF\_NMBCLUSTERS	integer	yes
 .El
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Li MBUF_MSIZE
-The mbuf base size.
+.It Li MBUF_MBLOWAT
+The mbuf low water mark.
 .It Li MBUF_MCLBYTES
 The mbuf cluster size.
+.It Li MBUF_MCLLOWAT
+The mbuf cluster low water mark.
+.It Li MBUF_MSIZE
+The mbuf base size.
 .It Li MBUF_NMBCLUSTERS
 The limit on the number of mbuf clusters.
 The variable can only be increased, and only increased on machines with
 direct-mapped pool pages.
-.It Li MBUF_MBLOWAT
-The mbuf low water mark.
-.It Li MBUF_MCLLOWAT
-The mbuf cluster low water mark.
 .El
 .It Li KERN_MEMLOCK
 Returns 1 if the POSIX 1003.1b Process Memory Locking Option is available
@@ -647,8 +666,6 @@ The returned data may contain NUL bytes.
 The maximum number of characters that the kernel message buffer can hold.
 .It Li KERN_NGROUPS
 The maximum number of supplemental groups.
-.It Li KERN_NO_TRUNC
-Return 1 if file names longer than KERN_NAME_MAX are truncated.
 .It Li KERN_NTPTIME
 A
 .Va struct ntptimeval
@@ -662,8 +679,33 @@ The system release string.
 The system revision string.
 .It Li KERN_OSTYPE
 The system type string.
-.It Li KERN_PATH_MAX
-The maximum number of bytes in a pathname.
+.It Li KERN_PIPE
+Pipe settings.
+The third level names for the  integer pipe settings is detailed below.
+The changeable column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "KERNXPIPEXFOOXXX" "integerXXX" -offset indent
+.It Sy Third level name Type    Changeable
+.It KERN\_PIPE\_KVASIZ	integer	yes
+.It KERN\_PIPE\_MAXBIGPIPES	integer	yes
+.It KERN\_PIPE\_MAXKVASZ	integer	yes
+.It KERN\_PIPE\_LIMITKVA	integer	yes
+.It KERN\_PIPE\_NBIGPIPES	integer	yes
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li KERN_PIPE_KVASIZ
+Amount of kernel memory consumed by pipe buffers.
+.It Li KERN_PIPE_MAXBIGPIPES
+Maximum number of "big" pipes.
+.It Li KERN_PIPE_MAXKVASZ
+Maximum amount of kernel memory to be used for pipes.
+.It Li KERN_PIPE_LIMITKVA
+Limit for direct transfers via page loan.
+.It Li KERN_PIPE_NBIGPIPES
+Number of "big" pipes.
+.El
 .It Li KERN_POSIX1
 The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
@@ -719,14 +761,14 @@ The third and fourth level names are as follows:
 .Bl -column "Third level nameXXXXXX" "Fourth level is:XXXXXX" -offset indent
 .It Sy Third level name	Fourth level is:
 .It KERN\_PROC\_ALL	None
+.It KERN\_PROC\_GID	A group ID
 .It KERN\_PROC\_PID	A process ID
 .It KERN\_PROC\_PGRP	A process group
+.It KERN\_PROC\_RGID	A real group ID
+.It KERN\_PROC\_RUID	A real user ID
 .It KERN\_PROC\_SESSION	A session ID
 .It KERN\_PROC\_TTY	A tty device
 .It KERN\_PROC\_UID	A user ID
-.It KERN\_PROC\_RUID	A real user ID
-.It KERN\_PROC\_GID	A group ID
-.It KERN\_PROC\_RGID	A real group ID
 .El
 .It Li KERN_PROC2
 As for KERN_PROC, but an array of
@@ -743,8 +785,8 @@ The third level name is the process ID.
 The fourth level name is as follows:
 .Bl -column "Third level nameXXXXXX" -offset indent
 .It KERN\_PROC\_ARGV	The argv strings
-.It KERN\_PROC\_NARGV	The number of argv strings
 .It KERN\_PROC\_ENV	The environ strings
+.It KERN\_PROC\_NARGV	The number of argv strings
 .It KERN\_PROC\_NENV	The number of environ strings
 .El
 .It Li KERN_PROF
@@ -758,29 +800,29 @@ The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "GPROFXGMONPARAMXXX" "struct gmonparamXXX" -offset indent
 .It Sy Third level name	Type	Changeable
-.It GPROF\_STATE	integer	yes
 .It GPROF\_COUNT	u_short[\|]	yes
 .It GPROF\_FROMS	u_short[\|]	yes
-.It GPROF\_TOS	struct tostruct	yes
 .It GPROF\_GMONPARAM	struct gmonparam	no
+.It GPROF\_STATE	integer	yes
+.It GPROF\_TOS	struct tostruct	yes
 .El
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Li GPROF_STATE
-Profiling state.
-If set to GMON_PROF_ON, starts profiling.
-If set to GMON_PROF_OFF, stops profiling.
 .It Li GPROF_COUNT
 Array of statistical program counter counts.
 .It Li GPROF_FROMS
 Array indexed by program counter of call-from points.
+.It Li GPROF_GMONPARAM
+Structure giving the sizes of the above arrays.
+.It Li GPROF_STATE
+Profiling state.
+If set to GMON_PROF_ON, starts profiling.
+If set to GMON_PROF_OFF, stops profiling.
 .It Li GPROF_TOS
 Array of
 .Va struct tostruct
 describing destination of calls and their counts.
-.It Li GPROF_GMONPARAM
-Structure giving the sizes of the above arrays.
 .El
 .It Li KERN_RAWPARTITION
 The raw partition of a disk (a == 0).
@@ -793,10 +835,14 @@ The root partition on the root device (a == 0).
 Return the offset of real time clock from UTC in minutes.
 .It Li KERN_SAVED_IDS
 Returns 1 if saved set-group and saved set-user ID is available.
+.It Li KERN_SBMAX
+Maximum socket buffer size.
 .It Li KERN_SECURELVL
 The system security level.
 This level may be raised by processes with appropriate privilege.
 It may only be lowered by process 1.
+.It Li KERN_SOMAXKVA
+Maximum amount of kernel memory to be used for socket buffers.
 .It Li KERN_SYNCHRONIZED_IO
 Returns 1 if the POSIX 1003.1b Synchronized I/O Option is available
 on this system,
@@ -843,6 +889,8 @@ otherwise 0.
 Returns 1 if System V style share memory functionality is available
 on this system,
 otherwise 0.
+.It Li KERN_TIMEX
+Not available.
 .It Li KERN_TKSTAT
 Return information about the number of characters sent and received
 on ttys.
@@ -851,23 +899,25 @@ The changeable column shows whether a process
 with appropriate privilege may change the value.
 .Bl -column "KERNXTKSTATXRAWCCXXX" "struct integerXXX" -offset indent
 .It Sy Third level name	Type	Changeable
+.It KERN\_TKSTAT\_CANCC	quad	no
 .It KERN\_TKSTAT\_NIN	quad	no
 .It KERN\_TKSTAT\_NOUT	quad	no
-.It KERN\_TKSTAT\_CANCC	quad	no
 .It KERN\_TKSTAT\_RAWCC	quad	no
 .El
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
+.It Li KERN_TKSTAT_CANCC
+The number of canonical input characters.
 .It Li KERN_TKSTAT_NIN
 The total number of input characters.
 .It Li KERN_TKSTAT_NOUT
 The total number of output characters.
-.It Li KERN_TKSTAT_CANCC
-The number of canonical input characters.
 .It Li KERN_TKSTAT_RAWCC
 The number of raw input characters.
 .El
+.It Li KERN_URND
+Random integer value.
 .It Li KERN_VERIEXEC
 Tunings for Verified Exec.
 Third level names for the veriexec variables are detailed below.
@@ -876,23 +926,28 @@ privilege may change the value or only raise it.
 Only the superuser can modify these variables.
 .Bl -column "VERIEXECXALGORITHMSXXX" "struct integerXXX" -offset indent
 .It Sy Third level name	Type	Changeable
-.It VERIEXEC\_VERBOSE	integer	yes
-.It VERIEXEC\_STRICT	integer	raise only
 .It VERIEXEC\_ALGORITHMS	string	no
 .It VERIEXEC\_COUNT	node	not applicable
+.It VERIEXEC\_STRICT	integer	raise only
+.It VERIEXEC\_VERBOSE	integer	yes
 .El
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Li VERIEXEC_VERBOSE
-Controls the verbosity level of Verified Exec.
-If 0, only the minimal
-indication required will be given about what's happening - fingerprint
-mismatches, removal of entries from the tables, modification of a
-fingerprinted file.
-If 1, more messages will be printed (ie., when a file with a valid
-fingerprint is accessed).
-Verbose level 2 is debug mode.
+.It Li VERIEXEC_ALGORITHMS
+Returns a string with the supported algorithms in Verified Exec.
+.It Li VERIEXEC_COUNT
+Variables are added to this node as new hash tables are created to
+contain Verified Exec data for a new device.
+Each variable in the node
+will have a name in the form of
+.No dev_ Ns Aq id
+where
+.Aq id
+is the device id.
+For example, the variable for the root device may be dev_0.
+The value of this
+variable will be the amount of fingerprinted files on the device.
 .It Li VERIEXEC_STRICT
 Controls the strict level of Verified Exec.
 The strict level defines how
@@ -911,20 +966,15 @@ It will have all effects of
 strict level 2, but it will also prevent access to non-monitored files.
 Furthermore, it will prevent addition of new files to the system, and
 allow writing only to files opened before the strict level was raised.
-.It Li VERIEXEC_ALGORITHMS
-Returns a string with the supported algorithms in Verified Exec.
-.It Li VERIEXEC_COUNT
-Variables are added to this node as new hash tables are created to
-contain Verified Exec data for a new device.
-Each variable in the node
-will have a name in the form of
-.No dev_ Ns Aq id
-where
-.Aq id
-is the device id.
-For example, the variable for the root device may be dev_0.
-The value of this
-variable will be the amount of fingerprinted files on the device.
+.It Li VERIEXEC_VERBOSE
+Controls the verbosity level of Verified Exec.
+If 0, only the minimal
+indication required will be given about what's happening - fingerprint
+mismatches, removal of entries from the tables, modification of a
+fingerprinted file.
+If 1, more messages will be printed (ie., when a file with a valid
+fingerprint is accessed).
+Verbose level 2 is debug mode.
 .El
 .It Li KERN_VERSION
 The system version string.
@@ -938,10 +988,6 @@ Each element of the array contains the kernel address of a vnode
 .Va struct vnode *
 followed by the vnode itself
 .Va struct vnode .
-.It Li KERN_HARDCLOCK_TICKS
-Returns the number of
-.Xr hardclock 9
-ticks.
 .El
 .Sh CTL_MACHDEP
 The set of variables defined is architecture dependent.
