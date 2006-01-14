@@ -1,15 +1,13 @@
-#	$NetBSD: Makefile,v 1.3 2005/02/21 06:41:20 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2006/01/14 19:55:11 christos Exp $
 
 .include <bsd.own.mk>
 
-.PATH: ${NETBSDSRCDIR}/dist/pppd/pppdump
+.PATH: ${NETBSDSRCDIR}/dist/pppd/pppdump ${NETBSDSRCDIR}/sys/net
 
 PROG=	pppdump
-SRCS=	pppdump.c deflate.c bsd-comp.c
+SRCS=	pppdump.c deflate.c bsd-comp.c zlib.c
 MAN=	pppdump.8
 
-CPPFLAGS+=	-I${.CURDIR}
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/net -I${.CURDIR}
 
-DPADD+=${LIBZ}
-LDADD+=-lz
 .include <bsd.prog.mk>
