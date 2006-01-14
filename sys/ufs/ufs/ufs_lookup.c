@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.71 2006/01/13 00:50:58 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.72 2006/01/14 09:09:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.71 2006/01/13 00:50:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.72 2006/01/14 09:09:02 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -908,21 +908,36 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	 * dp->i_offset + dp->i_count would yield the space.
 	 */
 	ep = (struct direct *)dirbuf;
-	dsize = DIRSIZ(FSFMT(dvp), ep, needswap);
+	dsize = ufs_rw32(ep->d_ino, needswap) ?
+	    DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
 	spacefree = ufs_rw16(ep->d_reclen, needswap) - dsize;
 	for (loc = ufs_rw16(ep->d_reclen, needswap); loc < dp->i_count; ) {
+		uint16_t reclen;
+
 		nep = (struct direct *)(dirbuf + loc);
-		if (ep->d_ino) {
-			/* trim the existing slot */
-			ep->d_reclen = ufs_rw16(dsize, needswap);
-			ep = (struct direct *)((char *)ep + dsize);
-		} else {
-			/* overwrite; nothing there; header is ours */
-			spacefree += dsize;
+
+		/* Trim the existing slot (NB: dsize may be zero). */
+		ep->d_reclen = ufs_rw16(dsize, needswap);
+		ep = (struct direct *)((char *)ep + dsize);
+
+		reclen = ufs_rw16(nep->d_reclen, needswap);
+		loc += reclen;
+		if (nep->d_ino == 0) {
+			/*
+			 * A mid-block unused entry. Such entries are
+			 * never created by the kernel, but fsck_ffs
+			 * can create them (and it doesn't fix them).
+			 *
+			 * Add up the free space, and initialise the
+			 * relocated entry since we don't memcpy it.
+			 */
+			spacefree += reclen;
+			ep->d_ino = 0;
+			dsize = 0;
+			continue;
 		}
 		dsize = DIRSIZ(FSFMT(dvp), nep, needswap);
-		spacefree += ufs_rw16(nep->d_reclen, needswap) - dsize;
-		loc += ufs_rw16(nep->d_reclen, needswap);
+		spacefree += reclen - dsize;
 #ifdef UFS_DIRHASH
 		if (dp->i_dirhash != NULL)
 			ufsdirhash_move(dp, nep,
@@ -936,6 +951,11 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			memcpy((caddr_t)ep, (caddr_t)nep, dsize);
 	}
 	/*
+	 * Here, `ep' points to a directory entry containing `dsize' in-use
+	 * bytes followed by `spacefree' unused bytes. If ep->d_ino == 0,
+	 * then the entry is completely unused (dsize == 0). The value
+	 * of ep->d_reclen is always indeterminate.
+	 *
 	 * Update the pointer fields in the previous entry (if any),
 	 * copy in the new entry, and write out the block.
 	 */
