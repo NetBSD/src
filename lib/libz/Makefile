@@ -1,15 +1,18 @@
-#	$NetBSD: Makefile,v 1.18 2003/10/03 18:46:22 wiz Exp $
+#	$NetBSD: Makefile,v 1.19 2006/01/14 20:12:36 christos Exp $
+
+.include <bsd.own.mk>
 
 USE_SHLIBDIR=	yes
 
+ZLIBDIR=${NETBSDSRCDIR}/common/dist/zlib
+.PATH: ${ZLIBDIR}
 LIB=		z
 
-SRCS=	adler32.c compress.c crc32.c deflate.c gzio.c infblock.c \
-	infcodes.c inffast.c inflate.c inftrees.c infutil.c trees.c uncompr.c \
-	zutil.c gzio_compat.c
+SRCS=	adler32.c compress.c crc32.c deflate.c gzio.c infback.c inffast.c \
+	inflate.c inftrees.c trees.c uncompr.c zutil.c 
 MAN=	zlib.3
 
-CPPFLAGS+=	-I${.CURDIR}
+CPPFLAGS+=	-I${ZLIBDIR}
 CLEANFILES+=	minigzip
 
 INCS=		zconf.h zlib.h
