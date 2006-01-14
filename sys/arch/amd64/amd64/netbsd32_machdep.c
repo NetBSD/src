@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.19 2006/01/11 09:30:45 cube Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.20 2006/01/14 17:14:46 hamajima Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.19 2006/01/11 09:30:45 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.20 2006/01/14 17:14:46 hamajima Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
@@ -89,7 +89,7 @@ static int check_mcontext32(const mcontext32_t *, struct trapframe *);
  * for i386 a.out emulation (COMPAT_NETBSD32+EXEC_AOUT).
  */
 int
-cpu_exec_aout_makecmds(struct proc *p, struct exec_package *e)
+cpu_exec_aout_makecmds(struct lwp *p, struct exec_package *e)
 {
 
 	return ENOEXEC;
