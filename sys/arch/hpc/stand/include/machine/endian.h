@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.5 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: endian.h,v 1.6 2006/01/14 21:15:53 uwe Exp $	*/
 
 /* Windows CE architecture */
 
@@ -15,7 +15,7 @@
  * ugliness, pull a copy here, so that we can hack it privately.
  */
 
-/*	From: NetBSD: endian.h,v 1.15 2005/02/03 19:16:10 perry Exp	*/
+/*	From: NetBSD: endian.h,v 1.20 2005/12/27 17:21:34 perry Exp	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -154,29 +154,29 @@ __END_DECLS
 #define htobe16(x)	(x)
 #define htobe32(x)	(x)
 #define htobe64(x)	(x)
-#define htole16(x)	bswap16((u_int16_t)(x))
-#define htole32(x)	bswap32((u_int32_t)(x))
-#define htole64(x)	bswap64((u_int64_t)(x))
+#define htole16(x)	bswap16((uint16_t)(x))
+#define htole32(x)	bswap32((uint32_t)(x))
+#define htole64(x)	bswap64((uint64_t)(x))
 
 #define HTOBE16(x)	(void) (x)
 #define HTOBE32(x)	(void) (x)
 #define HTOBE64(x)	(void) (x)
-#define HTOLE16(x)	(x) = bswap16((u_int16_t)(x))
-#define HTOLE32(x)	(x) = bswap32((u_int32_t)(x))
-#define HTOLE64(x)	(x) = bswap64((u_int64_t)(x))
+#define HTOLE16(x)	(x) = bswap16((uint16_t)(x))
+#define HTOLE32(x)	(x) = bswap32((uint32_t)(x))
+#define HTOLE64(x)	(x) = bswap64((uint64_t)(x))
 
 #else	/* LITTLE_ENDIAN */
 
-#define htobe16(x)	bswap16((u_int16_t)(x))
-#define htobe32(x)	bswap32((u_int32_t)(x))
-#define htobe64(x)	bswap64((u_int64_t)(x))
+#define htobe16(x)	bswap16((uint16_t)(x))
+#define htobe32(x)	bswap32((uint32_t)(x))
+#define htobe64(x)	bswap64((uint64_t)(x))
 #define htole16(x)	(x)
 #define htole32(x)	(x)
 #define htole64(x)	(x)
 
-#define HTOBE16(x)	(x) = bswap16((u_int16_t)(x))
-#define HTOBE32(x)	(x) = bswap32((u_int32_t)(x))
-#define HTOBE64(x)	(x) = bswap64((u_int64_t)(x))
+#define HTOBE16(x)	(x) = bswap16((uint16_t)(x))
+#define HTOBE32(x)	(x) = bswap32((uint32_t)(x))
+#define HTOBE64(x)	(x) = bswap64((uint64_t)(x))
 #define HTOLE16(x)	(void) (x)
 #define HTOLE32(x)	(void) (x)
 #define HTOLE64(x)	(void) (x)
@@ -202,7 +202,7 @@ __END_DECLS
  * to/from an octet stream.
  */
 
-static inline void __unused
+static __inline void __unused
 be16enc(void *buf, uint16_t u)
 {
 	uint8_t *p = (uint8_t *)buf;
@@ -211,7 +211,7 @@ be16enc(void *buf, uint16_t u)
 	p[1] = u & 0xff;
 }
 
-static inline void __unused
+static __inline void __unused
 le16enc(void *buf, uint16_t u)
 {
 	uint8_t *p = (uint8_t *)buf;
@@ -220,7 +220,7 @@ le16enc(void *buf, uint16_t u)
 	p[1] = ((unsigned)u >> 8) & 0xff;
 }
 
-static inline uint16_t __unused
+static __inline uint16_t __unused
 be16dec(const void *buf)
 {
 	const uint8_t *p = (const uint8_t *)buf;
@@ -228,7 +228,7 @@ be16dec(const void *buf)
 	return ((p[0] << 8) | p[1]);
 }
 
-static inline uint16_t __unused
+static __inline uint16_t __unused
 le16dec(const void *buf)
 {
 	const uint8_t *p = (const uint8_t *)buf;
@@ -236,7 +236,7 @@ le16dec(const void *buf)
 	return ((p[1] << 8) | p[0]);
 }
 
-static inline void __unused
+static __inline void __unused
 be32enc(void *buf, uint32_t u)
 {
 	uint8_t *p = (uint8_t *)buf;
@@ -247,7 +247,7 @@ be32enc(void *buf, uint32_t u)
 	p[3] = u & 0xff;
 }
 
-static inline void __unused
+static __inline void __unused
 le32enc(void *buf, uint32_t u)
 {
 	uint8_t *p = (uint8_t *)buf;
@@ -258,7 +258,7 @@ le32enc(void *buf, uint32_t u)
 	p[3] = (u >> 24) & 0xff;
 }
 
-static inline uint32_t __unused
+static __inline uint32_t __unused
 be32dec(const void *buf)
 {
 	const uint8_t *p = (const uint8_t *)buf;
@@ -266,7 +266,7 @@ be32dec(const void *buf)
 	return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
 }
 
-static inline uint32_t __unused
+static __inline uint32_t __unused
 le32dec(const void *buf)
 {
 	const uint8_t *p = (const uint8_t *)buf;
@@ -281,7 +281,7 @@ le32dec(const void *buf)
  */
 #ifndef _WIN32
 
-static inline void __unused
+static __inline void __unused
 be64enc(void *buf, uint64_t u)
 {
 	uint8_t *p = (uint8_t *)buf;
@@ -290,7 +290,7 @@ be64enc(void *buf, uint64_t u)
 	be32enc(p + 4, (uint32_t)(u & 0xffffffffULL));
 }
 
-static inline void __unused
+static __inline void __unused
 le64enc(void *buf, uint64_t u)
 {
 	uint8_t *p = (uint8_t *)buf;
@@ -299,7 +299,7 @@ le64enc(void *buf, uint64_t u)
 	le32enc(p + 4, (uint32_t)(u >> 32));
 }
 
-static inline uint64_t __unused
+static __inline uint64_t __unused
 be64dec(const void *buf)
 {
 	const uint8_t *p = (const uint8_t *)buf;
@@ -307,7 +307,7 @@ be64dec(const void *buf)
 	return (((uint64_t)be32dec(p) << 32) | be32dec(p + 4));
 }
 
-static inline uint64_t __unused
+static __inline uint64_t __unused
 le64dec(const void *buf)
 {
 	const uint8_t *p = (const uint8_t *)buf;
