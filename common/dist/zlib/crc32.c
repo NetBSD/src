@@ -1,4 +1,4 @@
-/*	$NetBSD: crc32.c,v 1.1.1.1 2006/01/14 20:10:27 christos Exp $	*/
+/*	$NetBSD: crc32.c,v 1.2 2006/01/14 20:26:26 christos Exp $	*/
 
 /* crc32.c -- compute the CRC-32 of a data stream
  * Copyright (C) 1995-2005 Mark Adler
@@ -231,7 +231,7 @@ unsigned long ZEXPORT crc32(crc, buf, len)
 #endif /* DYNAMIC_CRC_TABLE */
 
 #ifdef BYFOUR
-    if (sizeof(void *) == sizeof(ptrdiff_t)) {
+    if (sizeof(void *) == sizeof(z_ptrdiff_t)) {
         u4 endian;
 
         endian = 1;
@@ -271,7 +271,7 @@ local unsigned long crc32_little(crc, buf, len)
 
     c = (u4)crc;
     c = ~c;
-    while (len && ((ptrdiff_t)buf & 3)) {
+    while (len && ((z_ptrdiff_t)buf & 3)) {
         c = crc_table[0][(c ^ *buf++) & 0xff] ^ (c >> 8);
         len--;
     }
@@ -311,7 +311,7 @@ local unsigned long crc32_big(crc, buf, len)
 
     c = REV((u4)crc);
     c = ~c;
-    while (len && ((ptrdiff_t)buf & 3)) {
+    while (len && ((z_ptrdiff_t)buf & 3)) {
         c = crc_table[4][(c >> 24) ^ *buf++] ^ (c << 8);
         len--;
     }
