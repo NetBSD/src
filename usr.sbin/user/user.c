@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.101 2006/01/13 16:36:33 elad Exp $ */
+/* $NetBSD: user.c,v 1.102 2006/01/14 22:00:52 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.101 2006/01/13 16:36:33 elad Exp $");
+__RCSID("$NetBSD: user.c,v 1.102 2006/01/14 22:00:52 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -925,6 +925,7 @@ valid_password_length(char *newpasswd)
 }
 
 #ifdef EXTENSIONS
+/* return 1 if `class' is a valid login class */
 static int
 valid_class(char *class)
 {
@@ -952,6 +953,7 @@ valid_class(char *class)
 	return 0;
 }
 
+/* return 1 if the `shellname' is a valid user shell */
 static int 
 valid_shell(const char *shellname)
 {
@@ -964,12 +966,16 @@ valid_shell(const char *shellname)
 		return 1;
 	} 
 
-	if (strcmp(shellname, "/sbin/nologin") == 0)
-		return 0;
+	/* if nologin is used as a shell, consider it a valid shell */
+	if (strcmp(shellname, NOLOGIN) == 0) {
+		return 1;
+	}
 
-	while ((shellp = getusershell()) != NULL)
-		if (strcmp(shellp, shellname) == 0)
+	while ((shellp = getusershell()) != NULL) {
+		if (strcmp(shellp, shellname) == 0) {
 			return 1;
+		}
+	}
 
 	return 0;
 }
