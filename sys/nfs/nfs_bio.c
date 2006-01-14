@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.140 2005/12/13 13:12:18 reinoud Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.141 2006/01/14 08:57:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.140 2005/12/13 13:12:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.141 2006/01/14 08:57:40 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -955,6 +955,7 @@ nfs_doio_read(bp, uiop)
 			diff = bp->b_bcount - uiop->uio_resid;
 			len = uiop->uio_resid;
 			memset((char *)bp->b_data + diff, 0, len);
+			uiop->uio_resid = 0;
 		}
 		if (uiop->uio_lwp && (vp->v_flag & VTEXT) &&
 		    (((nmp->nm_flag & NFSMNT_NQNFS) &&
