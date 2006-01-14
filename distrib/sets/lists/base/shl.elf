@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.103 2005/11/26 12:32:43 rpaulo Exp $
+# $NetBSD: shl.elf,v 1.104 2006/01/14 20:13:57 christos Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -25,7 +25,7 @@
 ./lib/libutil.so				base-sys-shlib
 ./lib/libutil.so.7				base-sys-shlib
 ./lib/libz.so					base-sys-shlib
-./lib/libz.so.0					base-sys-shlib
+./lib/libz.so.1					base-sys-shlib
 ./libexec/ld.elf_so				base-sys-shlib
 ./usr/lib/i18n/libBIG5.so			base-i18n-shlib
 ./usr/lib/i18n/libBIG5.so.4			base-i18n-shlib
@@ -167,5 +167,5 @@
 ./usr/lib/libwrap.so				base-net-shlib
 ./usr/lib/libwrap.so.0				base-net-shlib
 ./usr/lib/libz.so				base-sys-shlib
-./usr/lib/libz.so.0				base-sys-shlib
+./usr/lib/libz.so.1				base-sys-shlib
 ./usr/libexec/ld.elf_so				base-sys-shlib
