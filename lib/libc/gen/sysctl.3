@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.160 2006/01/13 21:09:55 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.161 2006/01/14 11:14:00 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd January 13, 2006
+.Dd January 14, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -321,46 +321,23 @@ The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "Second level nameXXXXXX" "struct disk_sysctlXXX" -offset indent
 .It Sy Second level name	Type	Changeable
+.It HW\_ALIGNBYTES	integer	no
+.It HW\_BYTEORDER	integer	no
+.It HW\_CNMAGIC	string	yes
+.It HW\_DISKNAMES	string	no
+.It HW\_DISKSTATS	struct	no
 .It HW\_MACHINE	string	no
+.It HW\_MACHINE\_ARCH	string	no
 .It HW\_MODEL	string	no
 .It HW\_NCPU	integer	no
-.It HW\_BYTEORDER	integer	no
+.It HW\_PAGESIZE	integer	no
 .It HW\_PHYSMEM	integer	no
 .It HW\_PHYSMEM64	quad	no
 .It HW\_USERMEM	integer	no
 .It HW\_USERMEM64	quad	no
-.It HW\_PAGESIZE	integer	no
-.\".It HW\_DISKNAMES	struct	no
-.\".It HW\_DISKSTATS	struct	no
-.It HW\_MACHINE\_ARCH	string	no
-.It HW\_ALIGNBYTES	integer	no
-.It HW\_DISKNAMES	string	no
-.It HW\_DISKSTATS	struct disk_sysctl	no
-.It HW\_CNMAGIC	string	yes
 .El
 .Pp
 .Bl -tag -width "123456"
-.It Li HW_MACHINE
-The machine class.
-.It Li HW_MODEL
-The machine model.
-.It Li HW_NCPU
-The number of CPUs.
-.ne 1i
-.It Li HW_BYTEORDER
-The byteorder (4,321, or 1,234).
-.It Li HW_PHYSMEM
-The bytes of physical memory as a 32-bit integer.
-.It Li HW_PHYSMEM64
-The bytes of physical memory as a 64-bit integer.
-.It Li HW_USERMEM
-The bytes of non-kernel memory as a 32-bit integer.
-.It Li HW_USERMEM64
-The bytes of non-kernel memory as a 64-bit integer.
-.It Li HW_PAGESIZE
-The software page size.
-.It Li HW_MACHINE_ARCH
-The machine CPU class.
 .It Li HW_ALIGNBYTES
 Alignment constraint for all possible data types.
 This shows the value
@@ -368,6 +345,10 @@ This shows the value
 in
 .Pa /usr/include/machine/param.h ,
 at the kernel compilation time.
+.It Li HW_BYTEORDER
+The byteorder (4,321, or 1,234).
+.It Li HW_CNMAGIC
+The console magic key sequence.
 .It Li HW_DISKNAMES
 The list of (space separated) disk device names on the system.
 .It Li HW_DISKSTATS
@@ -378,8 +359,25 @@ structures is returned,
 whose size depends on the current number of such objects in the system.
 The third level name is the size of the
 .Va struct disk_sysctl .
-.It Li HW_CNMAGIC
-The console magic key sequence.
+.It Li HW_MACHINE
+The machine class.
+.It Li HW_MACHINE_ARCH
+The machine CPU class.
+.It Li HW_MODEL
+The machine model.
+.It Li HW_NCPU
+The number of CPUs.
+.ne 1i
+.It Li HW_PAGESIZE
+The software page size.
+.It Li HW_PHYSMEM
+The bytes of physical memory as a 32-bit integer.
+.It Li HW_PHYSMEM64
+The bytes of physical memory as a 64-bit integer.
+.It Li HW_USERMEM
+The bytes of non-kernel memory as a 32-bit integer.
+.It Li HW_USERMEM64
+The bytes of non-kernel memory as a 64-bit integer.
 .El
 .Sh CTL_KERN
 The string and integer information available for the CTL_KERN level
