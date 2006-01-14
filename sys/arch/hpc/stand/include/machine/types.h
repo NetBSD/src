@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.5 2005/12/11 12:17:29 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.6 2006/01/14 21:35:26 uwe Exp $	*/
 
 /* Windows CE architecture */
 
@@ -14,18 +14,25 @@ typedef	unsigned short		u_short;
 typedef	unsigned int		u_int;
 typedef	unsigned long		u_long;
 
-typedef unsigned char		u_int8_t;
-typedef unsigned short		u_int16_t;
-typedef unsigned int		u_int32_t;
-typedef unsigned __int64	u_int64_t;
-
-typedef signed char		int8_t;	
+/* 7.18.1.1 Exact-width integer types */
+typedef signed char		int8_t;
 typedef signed short		int16_t;
 typedef signed int		int32_t;
 typedef signed __int64		int64_t;
 
-typedef u_int32_t		off_t;
-#define	off_t			u_int32_t
+typedef unsigned char		uint8_t;
+typedef unsigned short		uint16_t;
+typedef unsigned int		uint32_t;
+typedef unsigned __int64	uint64_t;
+
+/* compatibility names */
+typedef uint8_t			u_int8_t;
+typedef uint16_t		u_int16_t;
+typedef uint32_t		u_int32_t;
+typedef uint64_t		u_int64_t;
+
+typedef uint32_t		off_t;
+#define	off_t			uint32_t
 #ifndef _TIME_T_DEFINED
 #if _WIN32_WCE < 210
 typedef long			time_t;
@@ -38,14 +45,14 @@ typedef unsigned long		time_t;
 typedef unsigned int		size_t;
 
 /* Windows CE virtual address */
-typedef u_int32_t		vaddr_t;
-typedef u_int32_t		vsize_t;
+typedef uint32_t		vaddr_t;
+typedef uint32_t		vsize_t;
 /* Physical address */
-typedef u_int32_t		paddr_t;
-typedef u_int32_t		psize_t;
+typedef uint32_t		paddr_t;
+typedef uint32_t		psize_t;
 
 /* kernel virtual address */
-typedef u_int32_t		kaddr_t;
-typedef u_int32_t		ksize_t;
+typedef uint32_t		kaddr_t;
+typedef uint32_t		ksize_t;
 
 #endif /* _MACHTYPES_H_ */
