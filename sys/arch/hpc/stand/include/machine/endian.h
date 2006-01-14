@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.6 2006/01/14 21:15:53 uwe Exp $	*/
+/*	$NetBSD: endian.h,v 1.7 2006/01/14 21:17:37 uwe Exp $	*/
 
 /* Windows CE architecture */
 
@@ -10,7 +10,7 @@
  * but our <sys/endian.h> is no longer compilable with eVC3 and
  * probably other old WinCE compilers because they don't grok ULL
  * constant suffix.
- * 
+ *
  * Instead of polluting sys/endian.h with WinCE compatibility
  * ugliness, pull a copy here, so that we can hack it privately.
  */
