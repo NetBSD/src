@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.11 2006/01/15 00:07:49 uwe Exp $	*/
+/*	$NetBSD: load.cpp,v 1.12 2006/01/15 02:20:35 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -212,27 +212,35 @@ Loader::_load_memory(vaddr_t kv, vsize_t memsz, void *data)
 	struct PageTag *pvec;
 	paddr_t p, pvec_paddr;
 	vaddr_t v;
+	vaddr_t dst;
+	vsize_t remsz;
 
 	DPRINTF((TEXT("\t->load 0x%08x+0x%08x=0x%08x\n"),
 	    kv, memsz, kv + memsz));
-	if (memsz > _tpsz) {
-		/* XXX failure */
-		return;
-	}
 
-	_opvec_prev = _pvec_prev;
-	if (!_mem->getTaggedPage(v, p, &pvec, pvec_paddr))
-		_error = TRUE;
-	memcpy((void *)v, data, memsz);
-	_pvec_prev->src = ptokv(p);
-	_pvec_prev->dst = kv;
-	_pvec_prev->sz = memsz;
+	dst = kv;
+	remsz = memsz;
+	while (remsz > 0) {
+		_opvec_prev = _pvec_prev;
+		if (!_mem->getTaggedPage(v, p, &pvec, pvec_paddr))
+			_error = TRUE;
+
+		vsize_t tocopy = (remsz < _tpsz) ? remsz : _tpsz;
+		memcpy((void *)v, data, tocopy);
+		_pvec_prev->src = ptokv(p);
+		_pvec_prev->dst = dst;
+		_pvec_prev->sz = tocopy;
 #ifdef PAGE_LINK_DUMP
-	_pvec_prev->next = (uint32_t)pvec;
+		_pvec_prev->next = (uint32_t)pvec;
 #else
-	_pvec_prev->next = ptokv(pvec_paddr);
+		_pvec_prev->next = ptokv(pvec_paddr);
 #endif
-	_pvec_prev = pvec;
+		data = (char *)data + tocopy;
+		dst += tocopy;
+		remsz -= tocopy;
+
+		_pvec_prev = pvec;
+	}
 
 	_kernend = kv + memsz;
 	++_nload_link;
