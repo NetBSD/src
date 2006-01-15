@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_window.3,v 1.9 2004/03/22 19:11:28 jdc Exp $
+.\"	$NetBSD: curses_window.3,v 1.10 2006/01/15 16:57:45 jdc Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd April 7, 2003
+.Dd January 15, 2006
 .Dt CURSES_WINDOW 3
 .Os
 .Sh NAME
@@ -204,6 +204,8 @@ window
 .Fa win .
 The subwindow shares internal data structures with the parent window
 and will be refreshed when the parent window is refreshed.
+The subwindow inherits the background character and attributes of the
+parent window.
 .Pp
 The
 .Fn overlay
