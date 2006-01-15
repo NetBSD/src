@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.23 2006/01/05 02:07:29 christos Exp $	*/
+/*	$NetBSD: fmt.c,v 1.24 2006/01/15 14:26:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.23 2006/01/05 02:07:29 christos Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.24 2006/01/15 14:26:10 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -64,8 +64,8 @@ __RCSID("$NetBSD: fmt.c,v 1.23 2006/01/05 02:07:29 christos Exp $");
 static size_t	goal_length;	/* Target or goal line length in output */
 static size_t	max_length;	/* Max line length in output */
 static size_t	pfx;		/* Current leading blank count */
-static size_t	lineno;		/* Current input line */
-static size_t	mark;		/* Last place we saw a head line */
+static int	lineno;		/* Current input line */
+static int	mark;		/* Last place we saw a head line */
 static int	center;
 static struct buffer outbuf;
 
@@ -100,7 +100,7 @@ main(int argc, char **argv)
 	max_length = MAX_LENGTH;
 	buf_init(&outbuf);
 	lineno = 1;
-	mark = ~0U;
+	mark = -10;
 
 	setprogname(*argv);
 	(void)setlocale(LC_ALL, "");
@@ -276,7 +276,7 @@ prefix(const struct buffer *buf, int add_space)
 		oflush();
 		mark = lineno;
 	}
-	if (mark == ~0U || (lineno - mark < 3 && lineno - mark > 0))
+	if (lineno - mark < 3 && lineno - mark > 0)
 		for (hp = &headnames[0]; *hp != NULL; hp++)
 			if (ispref(*hp, cp)) {
 				h = 1;
