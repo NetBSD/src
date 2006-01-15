@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.10 2006/01/15 00:06:39 uwe Exp $	*/
+/*	$NetBSD: load.cpp,v 1.11 2006/01/15 00:07:49 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ Loader::loadExtData(void)
 	sz = _file->realsize();
 	kv = ROUND(_kernend, static_cast <vsize_t>(KERNEL_PAGE_SIZE));
 
-	DPRINTF((TEXT("[file system image]")));
+	DPRINTF((TEXT("[file system image]\n")));
 	_load_segment(kv, sz, 0, sz);
 
 	return _load_success();
