@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.97 2006/01/11 22:33:03 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.98 2006/01/15 19:49:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.97 2006/01/11 22:33:03 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.98 2006/01/15 19:49:25 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ __RCSID("$NetBSD: mkfs.c,v 1.97 2006/01/11 22:33:03 dsl Exp $");
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+#include <sys/ioctl.h>
 #include <sys/disklabel.h>
 
 #include <err.h>
@@ -168,7 +169,8 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	int inodes_per_cg;
 	struct timeval tv;
 	long long sizepb;
-	int col, delta;
+	int len, col, delta, fld_width, max_cols;
+	struct winsize winsize;
 
 #ifndef STANDALONE
 	gettimeofday(&tv, NULL);
@@ -259,7 +261,8 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	sblock.fs_maxcontig = maxcontig;
 	if (sblock.fs_maxcontig < sblock.fs_maxbsize / sblock.fs_bsize) {
 		sblock.fs_maxcontig = sblock.fs_maxbsize / sblock.fs_bsize;
-		printf("Maxcontig raised to %d\n", sblock.fs_maxbsize);
+		if (verbosity > 0)
+			printf("Maxcontig raised to %d\n", sblock.fs_maxbsize);
 	}
 	if (sblock.fs_maxcontig > 1)
 		sblock.fs_contigsumsize = MIN(sblock.fs_maxcontig,FS_MAXCONTIG);
@@ -517,7 +520,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	/*
 	 * Dump out summary information about file system.
 	 */
-	if (!mfs || Nflag) {
+	if (verbosity > 0) {
 #define	B2MBFACTOR (1 / (1024.0 * 1024.0))
 		printf("%s: %.1fMB (%lld sectors) block size %d, "
 		       "fragment size %d\n",
@@ -625,44 +628,60 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		memset(iobuf + offsetof(struct fs, fs_old_postbl_start),
 		    0xff, 256);
 
-	if (!mfs || Nflag)
+	if (verbosity >= 3)
 		printf("super-block backups (for fsck_ffs -b #) at:\n");
-#define MAX_LINE 79
+	/* If we are printing more than one line of numbers, line up columns */
+	fld_width = verbosity < 4 ? 1 : snprintf(NULL, 0, "%" PRIu64, 
+		(uint64_t)fsbtodb(&sblock, cgsblock(&sblock, sblock.fs_ncg-1)));
+	/* Get terminal width */
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) == 0)
+		max_cols = winsize.ws_col;
+	else
+		max_cols = 80;
+	if (Nflag && verbosity == 3)
+		/* Leave space to add " ..." after onbe row of numbers */
+		max_cols -= 4;
 #define BASE 0x10000	/* For some fixed-point maths */
 	col = 0;
-	delta = 0;
+	delta = verbosity > 2 ? 0 : max_cols * BASE / sblock.fs_ncg;
 	for (cylno = 0; cylno < sblock.fs_ncg; cylno++) {
-		int len;
-		initcg(cylno, &tv);
-		if (mfs && !Nflag)
-			continue;
-		if (delta == 0) {
-			/* Print one line of numbers (int is enough) */
-			len = printf(" %u,", 
-			    (int)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
-			col += len;
-			if (col + len + 1 >= MAX_LINE) {
-				/* Next one won't fit, work out dot spacing */
-				delta = sblock.fs_ncg - cylno;
-				if (delta > 1) {
-					col = 0;
-					delta = MAX_LINE * BASE / (delta - 1);
-					printf("\n");
-				}
-			}
-		} else {
-			/* Then at most one line of dots */
-			col += delta;
-			if (col < BASE)
-				continue;
-			printf(".");
-			col -= BASE;
-		}
 		fflush(stdout);
+		initcg(cylno, &tv);
+		if (verbosity < 2)
+			continue;
+		if (delta > 0) {
+			if (Nflag)
+				/* No point doing dots for -N */
+				break;
+			/* Print dots scaled to end near RH margin */
+			for (col += delta; col > BASE; col -= BASE)
+				printf(".");
+			continue;
+		}
+		/* Print superblock numbers */
+		len = printf(" %*" PRIu64 "," + !col, fld_width,
+		    (uint64_t)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
+		col += len;
+		if (col + len < max_cols)
+			/* Next number fits */
+			continue;
+		/* Next number won't fit, need a newline */
+		if (verbosity <= 3) {
+			/* Print dots for subsequent cylinder groups */
+			delta = sblock.fs_ncg - cylno - 1;
+			if (delta != 0) {
+				if (Nflag) {
+					printf(" ...");
+					break;
+				}
+				delta = max_cols * BASE / delta;
+			}
+		}
+		col = 0;
+		printf("\n");
 	}
-#undef MAX_LINE
 #undef BASE
-	if (!mfs || Nflag)
+	if (col > 0)
 		printf("\n");
 	if (Nflag)
 		exit(0);
