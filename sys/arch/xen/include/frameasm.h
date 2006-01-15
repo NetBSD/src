@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.3 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.4 2006/01/15 22:09:51 bouyer Exp $	*/
 /*	NetBSD: frameasm.h,v 1.4 2004/02/20 17:35:01 yamt Exp 	*/
 
 #ifndef _I386_FRAMEASM_H_
@@ -6,13 +6,11 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#include "opt_xen.h"
 #endif
 
 /* XXX assym.h */
 #define TRAP_INSTR	int $0x82
-#define __HYPERVISOR_stack_switch          4
-#define __HYPERVISOR_fpu_taskswitch	   7
-#define __HYPERVISOR_physdev_op		   19
 
 #ifndef TRAPLOG
 #define TLOG		/**/
@@ -109,15 +107,9 @@
 #define	CLI(reg)	cli
 #define	STI(reg)	sti
 #else
-/* XXX assym.h */
-#define	EVENTS_MASK 136
-/* Offsets into shared_info_t. */
-#define evtchn_upcall_pending		/* 0 */
-#define evtchn_upcall_mask		1
-
-#define XEN_BLOCK_EVENTS(reg)	movb $1,evtchn_upcall_mask(reg)
-#define XEN_UNBLOCK_EVENTS(reg)	movb $0,evtchn_upcall_mask(reg)
-#define XEN_TEST_PENDING(reg)	testb $0xFF,evtchn_upcall_pending(%reg)
+#define XEN_BLOCK_EVENTS(reg)	movb $1,EVTCHN_UPCALL_MASK(reg)
+#define XEN_UNBLOCK_EVENTS(reg)	movb $0,EVTCHN_UPCALL_MASK(reg)
+#define XEN_TEST_PENDING(reg)	testb $0xFF,EVTCHN_UPCALL_PENDING(reg)
 
 #define CLI(reg)	movl	_C_LABEL(HYPERVISOR_shared_info),reg ;	\
     			XEN_BLOCK_EVENTS(reg)
@@ -125,7 +117,7 @@
     			XEN_UNBLOCK_EVENTS(reg)
 #define STIC(reg)	movl	_C_LABEL(HYPERVISOR_shared_info),reg ;	\
     			XEN_UNBLOCK_EVENTS(reg)  ; \
-			testb $1,evtchn_upcall_pending(reg)
+			testb $0xff,EVTCHN_UPCALL_PENDING(reg)
 #endif
 
 #endif /* _I386_FRAMEASM_H_ */

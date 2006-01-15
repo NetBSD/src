@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2005/12/30 13:37:57 jmmv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2006/01/15 22:09:51 bouyer Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2005/12/30 13:37:57 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2006/01/15 22:09:51 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -204,11 +204,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2005/12/30 13:37:57 jmmv Exp $");
 void ddb_trap_hook(int);
 #endif
 
-/* #define	XENDEBUG */
+#undef	XENDEBUG
 /* #define	XENDEBUG_LOW */
 
 #ifdef XENDEBUG
-extern void printk(char *, ...);
 #define	XENPRINTF(x) printf x
 #define	XENPRINTK(x) printk x
 #else
@@ -453,7 +452,6 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
 void
 i386_switch_context(struct pcb *new)
 {
-	dom0_op_t op;
 	struct cpu_info *ci;
 
 	ci = curcpu();
@@ -465,10 +463,18 @@ i386_switch_context(struct pcb *new)
 	HYPERVISOR_stack_switch(new->pcb_tss.tss_ss0, new->pcb_tss.tss_esp0);
 
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
+#ifdef XEN3
+	        struct physdev_op physop;
+		physop.cmd = PHYSDEVOP_SET_IOPL;
+		physop.u.set_iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL;
+		HYPERVISOR_physdev_op(&physop);
+#else
+		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
 		op.u.iopl.domain = DOMID_SELF;
 		op.u.iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
 		HYPERVISOR_dom0_op(&op);
+#endif
 	}
 }
 
@@ -1431,10 +1437,20 @@ initgdt()
 	/* pmap_kremove((vaddr_t)gdt, PAGE_SIZE); */
 	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE,
 	    VM_PROT_READ);
+#ifdef XEN3
+	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
+	    NGDT));
+#else
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    LAST_RESERVED_GDT_ENTRY + 1));
+#endif
+#ifdef XEN3
+	if (HYPERVISOR_set_gdt(frames, NGDT /* XXX is it right ? */))
+		panic("HYPERVISOR_set_gdt failed!\n");
+#else
 	if (HYPERVISOR_set_gdt(frames, LAST_RESERVED_GDT_ENTRY + 1))
 		panic("HYPERVISOR_set_gdt failed!\n");
+#endif
 	lgdt_finish();
 #endif
 }
@@ -1467,7 +1483,17 @@ init386(paddr_t first_avail)
 	extern u_char biostramp_image[];
 #endif
 
-	XENPRINTK(("HYPERVISOR_shared_info %p\n", HYPERVISOR_shared_info));
+	XENPRINTK(("HYPERVISOR_shared_info %p (%x)\n", HYPERVISOR_shared_info,
+	    xen_start_info.shared_info));
+#if defined(XEN3) && defined(XENDEBUG)
+	XENPRINTK(("HYPERVISOR_shared_info nsec %u\n",
+	    HYPERVISOR_shared_info->wc_sec));
+	if ((xen_start_info.flags & SIF_INITDOMAIN) == 0) {
+		extern volatile struct xencons_interface *xencons_interface;
+		XENPRINTK(("xencons %p (%x)\n",
+		    xencons_interface, xen_start_info.console_mfn));
+	}
+#endif
 #ifdef XENDEBUG_LOW
 	xen_dbglow_init();
 #endif
@@ -1524,7 +1550,7 @@ init386(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail - KERNBASE;
-	avail_end = ptoa(xen_start_info.nr_pages) + (KERNTEXTOFF - KERNBASE);
+	avail_end = ptoa(xen_start_info.nr_pages) + XPMAP_OFFSET;
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
 	mem_clusters[0].start = avail_start;
@@ -2086,15 +2112,18 @@ init386(paddr_t first_avail)
 	}
 #endif
 #ifdef DDB
+	XENPRINTF(("Debugger\n"));
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
 #ifdef IPKDB
+	XENPRINTF(("ipkdb_init\n"));
 	ipkdb_init();
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
 #ifdef KGDB
+	XENPRINTF(("kgdb_port_init\n"));
 	kgdb_port_init();
 	if (boothowto & RB_KDB) {
 		kgdb_debug_init = 1;
@@ -2103,6 +2132,7 @@ init386(paddr_t first_avail)
 #endif
 
 #if NMCA > 0
+	XENPRINTF(("mca_busprobe\n"));
 	/* check for MCA bus, needed to be done before ISA stuff - if
 	 * MCA is detected, ISA needs to use level triggered interrupts
 	 * by default */
@@ -2110,17 +2140,22 @@ init386(paddr_t first_avail)
 #endif
 
 #if defined(XEN)
+	XENPRINTF(("events_default_setup\n"));
 	events_default_setup();
 #else
 	intr_default_setup();
 #endif
 
 	/* Initialize software interrupts. */
+	XENPRINTF(("softintr_init\n"));
 	softintr_init();
 
+	XENPRINTF(("splraise(IPL_IPI)\n"));
 	splraise(IPL_IPI);
+	XENPRINTF(("enable_intr\n"));
 	enable_intr();
 
+	XENPRINTF(("physmem %lu\n", ptoa(physmem)));
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
 		       "have %lu bytes, want %lu bytes\n"
@@ -2131,10 +2166,12 @@ init386(paddr_t first_avail)
 	}
 
 #ifdef __HAVE_CPU_MAXPROC
+	XENPRINTF(("cpu_maxproc\n"));
 	/* Make sure maxproc is sane */
 	if (maxproc > cpu_maxproc())
 		maxproc = cpu_maxproc();
 #endif
+	XENPRINTF(("init386 end\n"));
 }
 
 #ifdef COMPAT_NOMID

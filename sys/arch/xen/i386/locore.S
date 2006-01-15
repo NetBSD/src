@@ -1,5 +1,35 @@
-/*	$NetBSD: locore.S,v 1.13 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.14 2006/01/15 22:09:51 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
+
+/*
+ * Copyright (c) 2006 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -156,7 +186,11 @@
  * Xen guest identifier and loader selection
  */
 .section __xen_guest
+#ifdef XEN3
+	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
+#else
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
+#endif
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
 	.ascii	",BSD_SYMTAB"
@@ -224,8 +258,6 @@ _C_LABEL(biosextmem):	.long	REALEXTMEM
 #endif
 
 #include <machine/xen.h>
-#define __HYPERVISOR_sched_op		   8
-#define __SCHEDOP_yield			   0
 
 	.space 512
 tmpstk:
@@ -242,10 +274,12 @@ tmpstk:
 	.globl	start
 start:
 	cld
-
+#ifdef XEN3
+	movl	%esp, %ebx		# save start of available space
+#else
+	movl    %esi,%ebx               # save start_info pointer
+#endif
 	lss	tmpstk,%esp		# bootstrap stack end location
-
-	movl	%esi,%ebx		# save start_info pointer
 
         /* Clear BSS first so that there are no surprises... */
 	xorl	%eax,%eax
@@ -254,11 +288,10 @@ start:
 	subl	%edi,%ecx
 	rep stosb
 
-	movl	%ebx,RELOC(avail_start)
+	movl	%ebx,RELOC(avail_start) # now init avail_start in bbs
 
 	/* Copy the necessary stuff from start_info structure. */
         /* We need to copy shared_info early, so that sti/cli work */
-	movl	%ebx,%esi
 	movl	$RELOC(start_info_union),%edi
 	movl	$128,%ecx
 	rep movsl
@@ -372,8 +405,23 @@ start:
 	leal	(PG_V|PG_KW)(%edx),%eax
 	fillkpt
 
-	movl	$0xffffffff,(%ebx)
+	/* map the shared_info page read/write */
+	movl	RELOC(start_info_union)+START_INFO_SHARED_INFO,%eax
+	orl	$(PG_V|PG_RW), %eax;
+	movl	%eax, (%ebx)
 	addl	$4,%ebx
+#ifdef XEN3
+	/* map the console page if not domain0 */
+	movl	RELOC(start_info_union)+START_INFO_FLAGS,%eax
+	testl	$SIF_INITDOMAIN, %eax;
+	jnz	1f
+	movl	RELOC(start_info_union)+START_INFO_CONSOLE_MFN,%eax
+	shll	$PGSHIFT,%eax
+	orl	$(PG_V|PG_RW), %eax;
+	movl	%eax, (%ebx)
+	addl	$4,%ebx
+1:
+#endif
 
 /*
  * Construct a page table directory.
@@ -399,6 +447,15 @@ start:
 	movl	_C_LABEL(avail_start),%edx
 	movl	%edx,_C_LABEL(HYPERVISOR_shared_info)
 	addl	$PAGE_SIZE,%edx			# shared_inf
+#ifdef XEN3
+	/* set console page virtual address if not domain0 */
+	movl	RELOC(start_info_union)+START_INFO_FLAGS,%eax
+	testl	$SIF_INITDOMAIN, %eax;
+	jnz	1f
+	movl	%edx,_C_LABEL(xencons_interface)
+	addl	$PAGE_SIZE,%edx			# xencons_interface
+1:
+#endif
 	movl	%edx,_C_LABEL(atdevbase)
 
 	/* Set up bootstrap stack. */
@@ -693,8 +750,8 @@ idle_loop:
 	addl	$4,%esp
 	jmp	idle_start
 4:
-	movl	$__HYPERVISOR_sched_op,%eax
-	movl	$__SCHEDOP_yield,%ebx
+	movl	$HYPERVISOR_sched_op,%eax
+	movl	$SCHEDOP_yield,%ebx
 	TRAP_INSTR
 NENTRY(mpidle)
 idle_start:
