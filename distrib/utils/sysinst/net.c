@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.107 2006/01/12 22:02:44 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.108 2006/01/15 20:34:20 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -957,7 +957,8 @@ get_via_ftp(const char *xfer_type)
 	fetch_fn = ftp_fetch;
 	ftp.xfer_type = xfer_type;
 	clean_xfer_dir = 1;
-	snprintf(ext_dir, sizeof ext_dir, "%s/%s", target_prefix(), xfer_dir);
+	snprintf(ext_dir, sizeof ext_dir, "%s/%s", target_prefix(),
+	    xfer_dir + (*xfer_dir == '/'));
 
 	return SET_OK;
 }
