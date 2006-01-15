@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.15 2003/08/07 16:44:19 agc Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.16 2006/01/15 11:43:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.15 2003/08/07 16:44:19 agc Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.16 2006/01/15 11:43:54 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -64,6 +64,7 @@ wclrtobot(WINDOW *win)
 {
 	int	 minx, startx, starty, y;
 	__LDATA	*sp, *end, *maxx;
+	attr_t	attr;
 
 #ifdef __GNUC__
 	maxx = NULL;		/* XXX gcc -Wuninitialized */
@@ -75,19 +76,20 @@ wclrtobot(WINDOW *win)
 		starty = win->cury;
 		startx = win->curx;
 	}
+	if (__using_color && win != curscr)
+		attr = __default_color;
+	else
+		attr = 0;
 	for (y = starty; y < win->maxy; y++) {
 		minx = -1;
 		end = &win->lines[y]->line[win->maxx];
 		for (sp = &win->lines[y]->line[startx]; sp < end; sp++)
-			if (sp->ch != ' ' || sp->attr != 0 ||
-			    sp->bch != win->bch || sp->battr != win->battr) {
+			if (sp->ch != ' ' || sp->attr != attr) {
 				maxx = sp;
 				if (minx == -1)
 					minx = sp - win->lines[y]->line;
 				sp->ch = ' ';
-				sp->bch = win->bch;
-				sp->attr = 0;
-				sp->battr = win->battr;
+				sp->attr = attr;
 			}
 		if (minx != -1)
 			__touchline(win, y, minx, maxx - win->lines[y]->line);

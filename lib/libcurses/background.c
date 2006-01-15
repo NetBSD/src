@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.8 2003/02/17 11:07:19 dsl Exp $	*/
+/*	$NetBSD: background.c,v 1.9 2006/01/15 11:43:54 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.8 2003/02/17 11:07:19 dsl Exp $");
+__RCSID("$NetBSD: background.c,v 1.9 2006/01/15 11:43:54 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -108,10 +108,16 @@ wbkgd(WINDOW *win, chtype ch)
 	wbkgdset(win, ch);
 	for (y = 0; y < win->maxy; y++)
 		for (x = 0; x < win->maxx; x++) {
-			if (ch & A_CHARTEXT)
-				win->lines[y]->line[x].bch = ch & __CHARTEXT;
-			win->lines[y]->line[x].battr =
-			    (attr_t) ch & __ATTRIBUTES;
+			/* Copy character if space */
+			if (ch & A_CHARTEXT && win->lines[y]->line[x].ch == ' ')
+				win->lines[y]->line[x].ch = ch & __CHARTEXT;
+			/* Merge attributes */
+			if (win->lines[y]->line[x].attr & __ALTCHARSET)
+				win->lines[y]->line[x].attr =
+				    (ch & __ATTRIBUTES) | __ALTCHARSET;
+			else
+				win->lines[y]->line[x].attr =
+				    ch & __ATTRIBUTES;
 		}
 	__touchwin(win);
 	return(OK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.7 2001/02/05 21:54:21 jdc Exp $	*/
+/*	$NetBSD: border.c,v 1.8 2006/01/15 11:43:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.7 2001/02/05 21:54:21 jdc Exp $");
+__RCSID("$NetBSD: border.c,v 1.8 2006/01/15 11:43:54 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -109,15 +109,23 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 	    botright & __ATTRIBUTES);
 #endif
 
-	/* Merge window attributes */
+	/* Merge window and background attributes */
 	left |= (left & __COLOR) ? (win->wattr & ~__COLOR) : win->wattr;
+	left |= (left & __COLOR) ? (win->battr & ~__COLOR) : win->battr;
 	right |= (right & __COLOR) ? (win->wattr & ~__COLOR) : win->wattr;
+	right |= (right & __COLOR) ? (win->battr & ~__COLOR) : win->battr;
 	top |= (top & __COLOR) ? (win->wattr & ~__COLOR) : win->wattr;
+	top |= (top & __COLOR) ? (win->battr & ~__COLOR) : win->battr;
 	bottom |= (bottom & __COLOR) ? (win->wattr & ~__COLOR) : win->wattr;
+	bottom |= (bottom & __COLOR) ? (win->battr & ~__COLOR) : win->battr;
 	topleft |= (topleft & __COLOR) ? (win->wattr & ~__COLOR) : win->wattr;
+	topleft |= (topleft & __COLOR) ? (win->battr & ~__COLOR) : win->battr;
 	topright |= (topright & __COLOR) ? (win->wattr & ~__COLOR) : win->wattr;
+	topright |= (topright & __COLOR) ? (win->battr & ~__COLOR) : win->battr;
 	botleft |= (botleft & __COLOR) ? (win->wattr & ~__COLOR) : win->wattr;
+	botleft |= (botleft & __COLOR) ? (win->battr & ~__COLOR) : win->battr;
 	botright |= (botright & __COLOR) ? (win->wattr & ~__COLOR) : win->wattr;
+	botright |= (botright & __COLOR) ? (win->battr & ~__COLOR) : win->battr;
 
 	endx = win->maxx - 1;
 	endy = win->maxy - 1;
@@ -127,44 +135,28 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 	/* Sides */
 	for (i = 1; i < endy; i++) {
 		win->lines[i]->line[0].ch = (wchar_t) left & __CHARTEXT;
-		win->lines[i]->line[0].bch = win->bch;
 		win->lines[i]->line[0].attr = (attr_t) left & __ATTRIBUTES;
-		win->lines[i]->line[0].battr = win->battr;
 		win->lines[i]->line[endx].ch = (wchar_t) right & __CHARTEXT;
-		win->lines[i]->line[endx].bch = win->bch;
 		win->lines[i]->line[endx].attr = (attr_t) right & __ATTRIBUTES;
-		win->lines[i]->line[endx].battr = win->battr;
 	}
 	for (i = 1; i < endx; i++) {
 		fp[i].ch = (wchar_t) top & __CHARTEXT;
-		fp[i].bch = win->bch;
 		fp[i].attr = (attr_t) top & __ATTRIBUTES;
-		fp[i].battr = win->battr;
 		lp[i].ch = (wchar_t) bottom & __CHARTEXT;
-		lp[i].bch = win->bch;
 		lp[i].attr = (attr_t) bottom & __ATTRIBUTES;
-		lp[i].battr = win->battr;
 	}
 
 	/* Corners */
 	if (!(win->maxx == LINES && win->maxy == COLS &&
 	    (win->flags & __SCROLLOK) && (win->flags & __SCROLLWIN))) {
 		fp[0].ch = (wchar_t) topleft & __CHARTEXT;
-		fp[0].bch = win->bch;
 		fp[0].attr = (attr_t) topleft & __ATTRIBUTES;
-		fp[0].battr = win->battr;
 		fp[endx].ch = (wchar_t) topright & __CHARTEXT;
-		fp[endx].bch = win->bch;
 		fp[endx].attr = (attr_t) topright & __ATTRIBUTES;
-		fp[endx].battr = win->battr;
 		lp[0].ch = (wchar_t) botleft & __CHARTEXT;
-		lp[0].bch = win->bch;
 		lp[0].attr = (attr_t) botleft & __ATTRIBUTES;
-		lp[0].battr = win->battr;
 		lp[endx].ch = (wchar_t) botright & __CHARTEXT;
-		lp[endx].bch = win->bch;
 		lp[endx].attr = (attr_t) botright & __ATTRIBUTES;
-		lp[endx].battr = win->battr;
 	}
 	__touchwin(win);
 	return (OK);
