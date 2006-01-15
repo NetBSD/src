@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.23 2006/01/12 22:02:44 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.24 2006/01/15 20:41:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -210,8 +210,7 @@ menu sizechoice, sub menu, y=0, title MSG_Choose_your_size_specifier;
 		  multname = msg_string(MSG_secname);
 		};
 
-menu distmedium, title MSG_Select_medium, y=-1;
-	display action { umount_mnt2(); msg_display(MSG_distmedium); };
+menu distmedium, title MSG_Select_medium, y=-5;
 	option MSG_cdrom,     exit, action { *(int *)arg = get_via_cdrom(); };
 	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp("ftp"); };
 	option MSG_http,      exit, action { *(int *)arg = get_via_ftp("http"); };
@@ -224,7 +223,7 @@ menu distmedium, title MSG_Select_medium, y=-1;
 	option MSG_Abandon,   exit, action { *(int *)arg = SET_ABANDON; };
 
 menu distset, title MSG_Select_your_distribution;
-	display action { msg_display (MSG_distset); };
+	display action { init_set_status(); msg_display (MSG_distset); };
 	option MSG_Full_installation, exit;
 	option MSG_Custom_installation, exit, action { customise_sets(); };
 
