@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md,v 1.11 2006/01/12 22:02:45 dsl Exp $	*/
+/*	$NetBSD: menus.md,v 1.12 2006/01/15 20:37:01 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,8 @@ menu getboottype, title MSG_Bootblocks_selection, y=10, exit, no clear;
 			msg_display_add(MSG_console_PC);
 			break;
 		case 1: case 2: case 3: case 4:
-			menu->cursel = ((struct x86_boot_params *)arg)->bp_consdev;
+			if (menu->cursel == 0)
+			    menu->cursel = ((struct x86_boot_params *)arg)->bp_consdev;
 			msg_display_add(MSG_console_com,
 			    ((struct x86_boot_params *)arg)->bp_consdev - 1,
 			    ((struct x86_boot_params *)arg)->bp_conspeed);
@@ -72,11 +73,13 @@ menu getboottype, title MSG_Bootblocks_selection, y=10, exit, no clear;
 menu consolebaud, title MSG_serial_baud_rate, x=40, y=13;
 	display action {
 		switch (((struct x86_boot_params *)arg)->bp_conspeed) {
+		default:
 		case   9600: menu->cursel = 0; break;
 		case  19200: menu->cursel = 1; break;
 		case  38400: menu->cursel = 2; break;
 		case  57600: menu->cursel = 3; break;
 		case 115200: menu->cursel = 4; break;
+		case      0: menu->cursel = 5; break;
 		}};
 	option "9600", exit, action
 	    {((struct x86_boot_params *)arg)->bp_conspeed = 9600;};
@@ -88,6 +91,8 @@ menu consolebaud, title MSG_serial_baud_rate, x=40, y=13;
 	    {((struct x86_boot_params *)arg)->bp_conspeed = 57600;};
 	option "115200", exit, action
 	    {((struct x86_boot_params *)arg)->bp_conspeed = 115200;};
+	option "BIOS", exit, action
+	    {((struct x86_boot_params *)arg)->bp_conspeed = 0;};
 
 menu biosonematch, y=-1;
 	option MSG_This_is_the_correct_geometry, exit, action { };
