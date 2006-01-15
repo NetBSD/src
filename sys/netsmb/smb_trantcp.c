@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.20 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.20.2.1 2006/01/15 10:59:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.20 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.20.2.1 2006/01/15 10:59:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,11 +406,10 @@ nbssn_recvhdr(struct nbpcb *nbp, int *lenp,
 	aio.iov_len = sizeof(len);
 	auio.uio_iov = &aio;
 	auio.uio_iovcnt = 1;
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
 	auio.uio_offset = 0;
 	auio.uio_resid = sizeof(len);
-	auio.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&auio);
 #ifndef __NetBSD__
 	error = so->so_proto->pr_usrreqs->pru_soreceive
 	    (so, (struct sockaddr **)NULL, &auio,
@@ -493,7 +492,7 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 			rcvflg = MSG_WAITALL;
 			bzero(&auio, sizeof(auio));
 			auio.uio_resid = min(resid, NB_SORECEIVE_CHUNK);
-			auio.uio_lwp = l;
+			/* not need to setup uio_vmspace */
 			resid -= auio.uio_resid;
 			/*
 			 * Spin until we have collected everything in
