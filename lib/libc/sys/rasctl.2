@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasctl.2,v 1.10 2004/01/11 16:05:27 mrg Exp $
+.\"     $NetBSD: rasctl.2,v 1.11 2006/01/15 16:35:58 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 12, 2002
+.Dd January 5, 2006
 .Dt RASCTL 2
 .Os
 .Sh NAME
@@ -149,3 +149,33 @@ The
 functionality first appeared in
 .Nx 2.0
 based on a similar interface that appeared in Mach 2.5.
+.Sh CAVEATS
+Modern compilers reorder instruction sequences to optimize speed.
+The start address and size of a
+.Nm RAS
+need to be protected against this.
+This is done via compiler dependend instructions, abstracted from
+user level code via the following macros:
+.Bl -tag -width RAS_START(name)
+.It RAS_DECL(name)
+is used to declare the start and end labels used internaly by the
+other macros to mark a
+.Nm RAS .
+The name uniquely identifies the
+.Nm RAS .
+.It RAS_START(name)
+is used to mark the start of the code.
+Each restart returns to the instruction following this macro.
+.It RAS_END(name)
+is used to mark the end of the restartable code.
+.It RAS_ADDR(name)
+returns the start address of a
+.Nm RAS
+and is used to create the first argument to
+.Nm .
+.It RAS_SIZE(name)
+returns the size of a
+.Nm RAS
+and is used as second argument to
+.Nm .
+.El
