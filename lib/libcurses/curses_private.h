@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.37 2005/02/18 22:16:27 dsl Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.38 2006/01/15 11:43:54 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -73,8 +73,6 @@ extern char	*__tc_ac, *__tc_AB, *__tc_ae, *__tc_AF, *__tc_AL,
 struct __ldata {
 	wchar_t	ch;			/* Character */
 	attr_t	attr;			/* Attributes */
-	wchar_t	bch;			/* Background character */
-	attr_t	battr;			/* Background attributes */
 };
 
 #define __LDATASIZE	(sizeof(__LDATA))

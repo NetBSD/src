@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.62 2005/10/23 18:38:52 dsl Exp $	*/
+/*	$NetBSD: refresh.c,v 1.63 2006/01/15 11:43:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.62 2005/10/23 18:38:52 dsl Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.63 2006/01/15 11:43:54 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -220,27 +220,15 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 				__CTRACE("_wnoutrefresh: copy from %d, %d to %d, %d\n",
 				    wy, wx, y_off, x_off);
 #endif
+				/* Copy character */
+				vlp->line[x_off].ch = wlp->line[wx].ch;
+				/* Copy attributes  */
 				vlp->line[x_off].attr = wlp->line[wx].attr;
-				/* Copy attributes */
-				if (wlp->line[wx].attr & __COLOR)
-					vlp->line[x_off].attr |=
-					    wlp->line[wx].battr & ~__COLOR;
-				else
-					vlp->line[x_off].attr |=
-					    wlp->line[wx].battr;
 				/* Check for nca conflict with colour */
 				if ((vlp->line[x_off].attr & __COLOR) &&
 				    (vlp->line[x_off].attr &
 				    _cursesi_screen->nca))
 					vlp->line[x_off].attr &= ~__COLOR;
-				/* Copy character */
-				if (wlp->line[wx].ch == ' ' &&
-				    wlp->line[wx].bch != ' ')
-					vlp->line[x_off].ch
-					    = wlp->line[wx].bch;
-				else
-					vlp->line[x_off].ch
-					    = wlp->line[wx].ch;
 				wx++;
 				x_off++;
 			}
@@ -530,7 +518,7 @@ makech(wy)
 	int	wy;
 {
 	WINDOW	*win;
-	static __LDATA blank = {' ', 0, ' ', 0};
+	static __LDATA blank = {' ', 0};
 	__LDATA *nsp, *csp, *cp, *cep;
 	int	clsp, nlsp;	/* Last space in lines. */
 	int	lch, wx;
@@ -1001,9 +989,7 @@ done:
 	if (buf[0].ch != ' ') {
 		for (i = 0; i < BLANKSIZE; i++) {
 			buf[i].ch = ' ';
-			buf[i].bch = ' ';
 			buf[i].attr = 0;
-			buf[i].battr = 0;
 		}
 	}
 

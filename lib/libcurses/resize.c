@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.11 2004/04/29 22:28:51 christos Exp $	*/
+/*	$NetBSD: resize.c,v 1.12 2006/01/15 11:43:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.11 2004/04/29 22:28:51 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.12 2006/01/15 11:43:54 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -258,9 +258,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 		lp = win->lines[i];
 		for (sp = lp->line, j = 0; j < win->maxx; j++, sp++) {
 			sp->ch = ' ';
-			sp->bch = ' ';
 			sp->attr = 0;
-			sp->battr = 0;
 		}
 		lp->hash = __hash((char *)(void *)lp->line,
 				  (size_t) (ncols * __LDATASIZE));
