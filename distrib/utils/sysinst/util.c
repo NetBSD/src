@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.138 2006/01/12 22:02:44 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.139 2006/01/15 13:56:15 is Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -762,7 +762,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	verbose = ask_verbose_dist(setupdone_msg);
 
 	status = SET_RETRY;
-	for (dist = dist_list; ; status != SET_OK || dist++) {
+	for (dist = dist_list; ; dist += (status == SET_OK) ? 1 : 0) {
 		set = dist->set;
 		if (set == SET_LAST)
 			break;
