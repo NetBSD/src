@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.10 2006/01/14 11:03:35 yamt Exp $ */
+/* $NetBSD: privcmd.c,v 1.11 2006/01/15 22:09:52 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.10 2006/01/14 11:03:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.11 2006/01/15 22:09:52 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -83,6 +83,7 @@ privcmd_ioctl(void *v)
 			: "=a" (error) : "0" (ap->a_data) : "memory" );
 		error = -error;
 		break;
+#ifndef XEN3
 #if defined(COMPAT_30)
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
 		{
@@ -98,6 +99,7 @@ privcmd_ioctl(void *v)
 		}
 		error = 0;
 		break;
+#endif /* XEN3 */
 	case IOCTL_PRIVCMD_MMAP:
 	{
 		int i, j;
@@ -214,6 +216,7 @@ privcmd_ioctl(void *v)
 		}
 		break;
 	}
+#ifndef XEN3
 	case IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN:
 		{
 		unsigned long *mfn_start = ap->a_data;
@@ -221,6 +224,7 @@ privcmd_ioctl(void *v)
 		error = 0;
 		}
 		break;
+#endif /* !XEN3 */
 	default:
 		error = EINVAL;
 	}

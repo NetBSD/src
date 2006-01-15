@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.17 2005/12/11 12:19:50 christos Exp $      */
+/*      $NetBSD: xennetback.c,v 1.18 2006/01/15 22:09:52 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -29,6 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "opt_xen.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,7 +64,10 @@
 #include <machine/evtchn.h>
 #include <machine/ctrl_if.h>
 
+#ifdef XEN3
+#else
 #include <machine/xen-public/io/domain_controller.h>
+#endif
 
 #include <uvm/uvm.h>
 

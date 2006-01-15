@@ -137,7 +137,7 @@ typedef struct {
     unsigned long pad[5]; /* sizeof(vcpu_info_t) == 64 */
 } arch_vcpu_info_t;
 
-#endif
+#endif /* __ASSEMBLY__ */
 
 #endif
 

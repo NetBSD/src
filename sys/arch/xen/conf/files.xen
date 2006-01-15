@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.32 2005/12/30 13:37:57 jmmv Exp $
+#	$NetBSD: files.xen,v 1.33 2006/01/15 22:09:51 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -54,14 +54,14 @@ file	arch/xen/xen/xen_debug.c
 
 file	arch/xen/xen/clock.c
 file	arch/xen/xen/evtchn.c
-file	arch/xen/xen/ctrl_if.c
+file	arch/xen/xen/ctrl_if.c			!xen3
 
 file	dev/cons.c
 
 file	arch/i386/i386/mptramp.S		multiprocessor
-file    arch/i386/i386/ipifuncs.c	multiprocessor
+file    arch/i386/i386/ipifuncs.c		multiprocessor
 
-file	arch/i386/i386/pmc.c		perfctrs
+file	arch/i386/i386/pmc.c			perfctrs
 
 file	crypto/des/arch/i386/des_enc.S		des
 file	crypto/des/arch/i386/des_cbc.S		des
@@ -266,8 +266,8 @@ include	"dev/pcmcia/files.pcmcia"
 defflag	opt_xen.h			DOM0OPS
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/i386/xen_shm_machdep.c	dom0ops
-file	arch/xen/xen/xbdback.c		dom0ops
-file	arch/xen/xen/xennetback.c	dom0ops
+file	arch/xen/xen/xbdback.c		dom0ops & !xen3
+file	arch/xen/xen/xennetback.c	dom0ops & !xen3
 file	arch/xen/xen/pci_machdep.c	hypervisor & pci
 file	arch/xen/xen/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops

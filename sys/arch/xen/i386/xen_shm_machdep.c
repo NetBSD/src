@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.13 2006/01/08 19:00:59 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.14 2006/01/15 22:09:51 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -64,6 +64,9 @@ u_long xen_shm_base_address_pg;
 vaddr_t xen_shm_end_address;
 
 /* Grab enouth VM space to map an entire vbd ring. */
+#ifdef XEN3
+#define BLKIF_RING_SIZE __RING_SIZE((blkif_sring_t *)0, PAGE_SIZE)
+#endif
 #define XENSHM_NPAGES (BLKIF_RING_SIZE * (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1))
 
 vsize_t xen_shm_size = (XENSHM_NPAGES * PAGE_SIZE);
@@ -207,7 +210,12 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 void
 xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 {
+#ifdef XEN3
+	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST + 1];
+	struct mmuext_op extop;
+#else
 	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
+#endif
 	int i, s;
 	struct xen_shm_callback_entry *xshmc;
 
@@ -236,9 +244,17 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 #endif
 		_xen_shm_vaddr2ma[va + i - xen_shm_base_address_pg] = -1;
 	}
+#ifdef XEN3
+	mcl[nentries].op = __HYPERVISOR_mmuext_op;
+	extop.cmd = MMUEXT_TLB_FLUSH_LOCAL;
+	mcl[i].args[0] = (long)&extop;
+	if (HYPERVISOR_multicall(mcl, nentries + 1) != 0)
+		panic("xen_shm_unmap");
+#else
 	mcl[nentries - 1].args[2] = UVMF_FLUSH_TLB;
 	if (HYPERVISOR_multicall(mcl, nentries) != 0)
 		panic("xen_shm_unmap");
+#endif
 	s = splvm(); /* splvm is the lowest level blocking disk and net IRQ */
 	if (extent_free(xen_shm_ex, va, nentries, EX_NOWAIT) != 0)
 		panic("xen_shm_unmap: extent_free");
