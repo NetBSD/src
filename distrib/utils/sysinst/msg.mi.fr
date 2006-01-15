@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.88 2006/01/12 22:02:44 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.89 2006/01/15 20:41:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -460,7 +460,10 @@ Comme indiqué dans le document d'installation, vous avez
 plusieurs possibilités.
 Pour une installation via nfs ou ftp, vous devez être
 connecté au réseau et avoir accès au bon serveur.
-}
+
+Sets selected %d, processed %d. Next set %s.
+
+}	/* XXX translate last line */
 
 message distset
 {La distribution de NetBSD est découpée en plusieurs composants.
