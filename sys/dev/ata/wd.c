@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.317 2006/01/07 00:26:58 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.318 2006/01/15 19:51:06 abs Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.317 2006/01/07 00:26:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.318 2006/01/15 19:51:06 abs Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -368,7 +368,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	} else if ((wd->sc_flags & WDF_LBA) != 0) {
 		aprint_normal(" LBA addressing\n");
 		wd->sc_capacity =
-		    (wd->sc_params.atap_capacity[1] << 16) |
+		    ((u_int64_t)wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
 	} else {
 		aprint_normal(" chs addressing\n");
