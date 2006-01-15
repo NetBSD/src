@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.139 2006/01/15 13:56:15 is Exp $	*/
+/*	$NetBSD: util.c,v 1.140 2006/01/15 20:41:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -146,7 +146,7 @@ distinfo dist_list[] = {
 
 static int check_for(unsigned int mode, const char *pathname);
 
-static void
+void
 init_set_status(void)
 {
 	const static uint8_t sets_valid[] = {MD_SETS_VALID};
@@ -587,9 +587,6 @@ customise_sets(void)
 	int sets;
 	int menu_no;
 
-	/* Static initialisation is lazy, fix it now */
-	init_set_status();
-
 	msg_display(MSG_cur_distsets);
 	msg_table_add(MSG_cur_distsets_header);
 
@@ -706,7 +703,7 @@ extract_dist(distinfo *dist, int update, int verbose)
 
 	set = dist->set;
 	(void)snprintf(fname, sizeof fname, "%s/%s%s",
-	    ext_dir, dist->name + (*dist->name == '/'), dist_postfix);
+	    ext_dir, dist->name, dist_postfix);
 
 	/* if extraction failed and user aborted, punt. */
 	return extract_file(dist, update, verbose, fname);
@@ -761,8 +758,15 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	/* ask user whether to do normal or verbose extraction */
 	verbose = ask_verbose_dist(setupdone_msg);
 
+	/* Accurately count selected sets */
+	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
+		if ((set_status[set] & (SET_VALID | SET_SELECTED))
+		    == (SET_VALID | SET_SELECTED))
+			tarstats.nselected++;
+	}
+
 	status = SET_RETRY;
-	for (dist = dist_list; ; dist += (status == SET_OK) ? 1 : 0) {
+	for (dist = dist_list; ; dist++) {
 		set = dist->set;
 		if (set == SET_LAST)
 			break;
@@ -778,6 +782,10 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 			wrefresh(stdscr);
 			/* Sort out the location of the set files */
 			do {
+				umount_mnt2();
+				msg_display(MSG_distmedium, tarstats.nselected,
+				    tarstats.nsuccess + tarstats.nskipped,
+				    dist->name);
 				fetch_fn = NULL;
 				process_menu(MENU_distmedium, &status);
 			} while (status == SET_RETRY);
@@ -800,13 +808,8 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 		/* Extract the distribution, retry from top on errors. */
 		status = extract_dist(dist, update, verbose);
-	}
-
-	/* Accurately count selected sets, nsuccess is correct already. */
-	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
-		if ((set_status[set] & (SET_VALID | SET_SELECTED))
-		    == (SET_VALID | SET_SELECTED))
-			tarstats.nselected++;
+		if (status == SET_RETRY)
+			dist--;
 	}
 
 	if (tarstats.nerror == 0 && tarstats.nsuccess == tarstats.nselected) {

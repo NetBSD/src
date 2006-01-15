@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.49 2006/01/12 22:02:44 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.50 2006/01/15 20:41:00 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -447,7 +447,10 @@ message distmedium
 {Twoj dysk jest teraz gotowy na zainstalowanie jadra oraz pakietow
 dystrybucyjnych. Jak napisano w pliku INSTALL masz terz kilka opcji. Dla
 ftp lub nfs, musisz byc podlaczony do sieci z dostepem do odpowidnich maszyn.
-}
+
+Sets selected %d, processed %d. Next set %s.
+
+}	/* XXX translate last line */
 
 message distset
 {Dystrybucja NetBSD jest rozbita w kolekcje pakietow dystrybucyjnych.
