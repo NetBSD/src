@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.230.2.1 2005/12/31 16:29:01 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.230.2.2 2006/01/15 10:44:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.230.2.1 2005/12/31 16:29:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.230.2.2 2006/01/15 10:44:52 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -2492,7 +2492,7 @@ nfs_readdir(v)
 		 * load the directory block into system space, so we can
 		 * just look at it directly.
 		 */
-		if (!VMSPACE_IS_KERNEL(uio->uio_vmspace) ||
+		if (!VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
 		    uio->uio_iovcnt != 1)
 			panic("nfs_readdir: lost in space");
 		for (nc = 0; ncookies-- &&

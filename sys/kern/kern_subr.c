@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.123.2.4 2005/12/31 16:08:22 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.123.2.5 2006/01/15 10:44:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.123.2.4 2005/12/31 16:08:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.123.2.5 2006/01/15 10:44:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -163,7 +163,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		}
 		if (cnt > n)
 			cnt = n;
-		if (!VMSPACE_IS_KERNEL(vm)) {
+		if (!VMSPACE_IS_KERNEL_P(vm)) {
 			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(1);
@@ -227,7 +227,7 @@ again:
 		uio->uio_iov++;
 		goto again;
 	}
-	if (!VMSPACE_IS_KERNEL(uio->uio_vmspace)) {
+	if (!VMSPACE_IS_KERNEL_P(uio->uio_vmspace)) {
 		if (subyte(iov->iov_base, c) < 0)
 			return (EFAULT);
 	} else {
@@ -253,7 +253,7 @@ copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
 	if (len == 0)
 		return (0);
 
-	if (VMSPACE_IS_KERNEL(vm)) {
+	if (VMSPACE_IS_KERNEL_P(vm)) {
 		return kcopy(uaddr, kaddr, len);
 	}
 	if (__predict_true(vm == curproc->p_vmspace)) {
@@ -286,7 +286,7 @@ copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
 	if (len == 0)
 		return (0);
 
-	if (VMSPACE_IS_KERNEL(vm)) {
+	if (VMSPACE_IS_KERNEL_P(vm)) {
 		return kcopy(kaddr, uaddr, len);
 	}
 	if (__predict_true(vm == curproc->p_vmspace)) {
