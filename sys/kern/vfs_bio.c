@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.152 2006/01/11 00:44:41 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.153 2006/01/15 08:27:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.152 2006/01/11 00:44:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.153 2006/01/15 08:27:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,8 @@ struct simplelock bqueue_slock = SIMPLELOCK_INITIALIZER;
  * Buffer pool for I/O buffers.
  * Access to this pool must be protected with splbio().
  */
-static struct pool bufpool;
+static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
+
 
 /* XXX - somewhat gross.. */
 #if MAXBSIZE == 0x2000
@@ -385,11 +386,6 @@ bufinit(void)
 			panic("bufinit: cannot allocate submap");
 	} else
 		buf_map = kernel_map;
-
-	/*
-	 * Initialize the buffer pools.
-	 */
-	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
 
 	/* On "small" machines use small pool page sizes where possible */
 	use_std = (physmem < atop(16*1024*1024));
@@ -1732,7 +1728,7 @@ vfs_bufstats(void)
 
 /* ------------------------------ */
 
-POOL_INIT(bufiopool, sizeof(struct buf), 0, 0, 0, "biopl", NULL);
+static POOL_INIT(bufiopool, sizeof(struct buf), 0, 0, 0, "biopl", NULL);
 
 static struct buf *
 getiobuf1(int prflags)
