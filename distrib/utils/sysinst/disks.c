@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.92 2006/01/12 22:02:44 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.93 2006/01/15 20:33:05 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -341,10 +341,11 @@ make_filesystems(void)
 			fsname = "ffs";
 			break;
 		case FS_BSDFFS:
-			asprintf(&newfs, "/sbin/newfs -O %d -b %d -f %d %s%.0d",
-				lbl->pi_flags & PIF_FFSv2 ? 2 : 1,
-				lbl->pi_fsize * lbl->pi_frag, lbl->pi_fsize,
-				lbl->pi_isize != 0 ? "-i" : "", lbl->pi_isize);
+			asprintf(&newfs,
+			    "/sbin/newfs -V2 -O %d -b %d -f %d%s%.0d",
+			    lbl->pi_flags & PIF_FFSv2 ? 2 : 1,
+			    lbl->pi_fsize * lbl->pi_frag, lbl->pi_fsize,
+			    lbl->pi_isize != 0 ? " -i " : "", lbl->pi_isize);
 			mnt_opts = "-tffs -o async";
 			fsname = "ffs";
 			break;
