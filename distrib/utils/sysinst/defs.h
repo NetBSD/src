@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.124 2006/01/12 22:02:44 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.125 2006/01/15 20:41:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -394,6 +394,7 @@ int	check_partitions(void);
 void	set_sizemultname_cyl(void);
 void	set_sizemultname_meg(void);
 int	check_lfs_progs(void);
+void	init_set_status(void);
 void	customise_sets(void);
 void	umount_mnt2(void);
 

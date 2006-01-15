@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.9 2006/01/12 22:02:44 dsl Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.10 2006/01/15 20:41:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -466,7 +466,10 @@ message distmedium
 de la distribución.  Como se apunta en las notas INSTALL, tiene diversas
 opciones.  Para ftp o nfs, tiene que estar conectado a una red con acceso
 a las maquinas apropiadas.
-}
+
+Sets selected %d, processed %d. Next set %s.
+
+}	/* XXX translate last line */
 
 message distset
 {La distribución NetBSD está dividida en una colección de conjuntos de
