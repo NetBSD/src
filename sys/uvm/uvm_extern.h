@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.108.2.1 2005/12/31 11:21:26 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.108.2.2 2006/01/15 10:44:52 yamt Exp $	*/
 
 /*
  *
@@ -511,7 +511,7 @@ struct vmspace {
 	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
 	caddr_t vm_minsaddr;	/* user VA at top of stack */
 };
-#define	VMSPACE_IS_KERNEL(vm)	VM_MAP_IS_KERNEL(&(vm)->vm_map)
+#define	VMSPACE_IS_KERNEL_P(vm)	VM_MAP_IS_KERNEL(&(vm)->vm_map)
 
 #ifdef _KERNEL
 
