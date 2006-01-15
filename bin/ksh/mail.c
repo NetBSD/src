@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.c,v 1.4 2003/06/23 11:39:00 agc Exp $	*/
+/*	$NetBSD: mail.c,v 1.5 2006/01/15 18:16:30 jschauma Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mail.c,v 1.4 2003/06/23 11:39:00 agc Exp $");
+__RCSID("$NetBSD: mail.c,v 1.5 2006/01/15 18:16:30 jschauma Exp $");
 #endif
 
 
@@ -18,7 +18,7 @@ __RCSID("$NetBSD: mail.c,v 1.4 2003/06/23 11:39:00 agc Exp $");
 #include "ksh_stat.h"
 #include "ksh_time.h"
 
-#define MBMESSAGE	"you have mail in $_"
+#define MBMESSAGE	"You have mail in $_"
 
 typedef struct mbox {
 	struct mbox    *mb_next;	/* next mbox in list */
