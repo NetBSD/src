@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.24 2006/01/15 14:26:10 christos Exp $	*/
+/*	$NetBSD: fmt.c,v 1.25 2006/01/15 14:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.24 2006/01/15 14:26:10 christos Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.25 2006/01/15 14:41:45 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -427,9 +427,9 @@ tabulate(struct buffer *buf)
 	/*
 	 * Toss trailing blanks in the output line.
 	 */
-	for (cp = buf->ptr; cp >= buf->bptr && *cp == ' '; cp--)
+	for (cp = buf->ptr - 1; cp >= buf->bptr && *cp == ' '; cp--)
 		continue;
-	*cp = '\0';
+	*++cp = '\0';
 	
 	/*
 	 * Count the leading blank space and tabulate.
