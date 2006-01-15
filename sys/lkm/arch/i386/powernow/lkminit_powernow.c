@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.1 2006/01/11 00:18:29 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.2 2006/01/15 04:12:09 xtraeme Exp $	*/
 
 /*
  * Derived from:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.1 2006/01/11 00:18:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.2 2006/01/15 04:12:09 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,11 +65,8 @@ void pnowk7_destroy(void);
 static int
 powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 {
-	int		err = 0;	/* default = success*/
-	extern int sys_lkmnosys(struct lwp *, void *, register_t *);
+	int err = 0;	/* default = success */
 	struct cpu_info *ci;
-	uint32_t lfunc;
-	uint32_t descs[4];
 
 	switch (cmd) {
 	case LKM_E_LOAD:
@@ -78,30 +75,16 @@ powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 		 */
 		if (lkmexists(lkmtp))
 			return EEXIST;
-
-		/*
-		 * Partial copy from /sys/arch/i386/i386/identcpu.c
-		 * amd_family6_probe().
-		 * This is only a partial protection against the wrong
-		 * cpu.
-		 */
-		CPUID(0x80000000, lfunc, descs[1], descs[2], descs[3]);
-
+	
 		ci = curcpu();
-		if (lfunc >= 0x80000007) {
-		    CPUID(0x80000007, descs[0], descs[1], descs[2], descs[3]);
-		    if ((descs[3] & 0x06)) {
-			if ((ci->ci_signature & 0xF00) == 0x600)
-			    pnowk7_init(ci);
-		    }
-		}
+		pnowk7_init(ci);
 		break;		/* Success */
 
 	case LKM_E_UNLOAD:
 		pnowk7_destroy();
 		break;		/* Success */
 
-	default:	/* we only understand load/unload*/
+	default:	/* we only understand load/unload */
 		err = EINVAL;
 		break;
 	}
