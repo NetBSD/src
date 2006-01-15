@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.751 2005/12/29 05:44:51 jonathan Exp $
+$NetBSD: pcidevs,v 1.751.2.1 2006/01/15 10:02:48 yamt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -268,7 +268,7 @@ vendor THOMASCONRAD	0x10da	Thomas-Conrad
 vendor ROHM		0x10db	Rohm Research
 vendor CERN		0x10dc	CERN/ECP/EDU
 vendor ES		0x10dd	Evans & Sutherland
-vendor NVIDIA		0x10de	Nvidia
+vendor NVIDIA		0x10de	NVIDIA
 vendor EMULEX		0x10df	Emulex
 vendor IMS		0x10e0	Integrated Micro Solutions
 vendor TEKRAM		0x10e1	Tekram Technology (1st PCI Vendor ID)
@@ -1728,6 +1728,7 @@ product INTEL PRO_100_VM_6	0x1050	PRO/100 VM Network Controller with 82562ET/EZ 
 product INTEL 82801EB_LAN	0x1051	82801EB/ER 10/100 Ethernet
 product INTEL PRO_100_M		0x1059	PRO/100 M Network Controller
 product INTEL 82801FB_LAN	0x1064	82801FB 10/100 Ethernet
+product INTEL PRO_100_VE_5	0x1068	PRO/100 VE (LOM) Network Controller
 product INTEL 82547GI		0x1075	i82547GI Gigabit Ethernet
 product INTEL 82541GI		0x1076	i82541GI Gigabit Ethernet
 product INTEL 82541GI_MOBILE	0x1077	i82541GI Mobile Gigabit Ethernet
@@ -2298,6 +2299,7 @@ product	NVIDIA	NFORCE4_SMBUS	0x0052	nForce4 SMBus
 product NVIDIA	NFORCE4_ATA133	0x0053	nForce4 ATA133 IDE
 product	NVIDIA	NFORCE4_SATA1	0x0054	nForce4 Serial ATA 1
 product	NVIDIA	NFORCE4_SATA2	0x0055	nForce4 Serial ATA 2
+product	NVIDIA	NFORCE4_NET	0x0057	nForce4 Ethernet
 product NVIDIA	NFORCE4_AC	0x0059	nForce4 AC-97
 product NVIDIA	NFORCE4_USB	0x005a	nForce4 USB Host Controller
 product NVIDIA	NFORCE4_USB2	0x005b	nForce4 USB2 Host Controller
@@ -2385,6 +2387,15 @@ product NVIDIA	GEFORCE4_TI4200	0x0253	GeForce4 Ti 4200
 product NVIDIA	QUADRO4_900XGL	0x0258	Quadro4 900XGL
 product NVIDIA	QUADRO4_750XGL	0x0259	Quadro4 750XGL
 product NVIDIA	QUADRO4_700XGL	0x025b	Quadro4 700XGL
+product NVIDIA	NFORCE430_PCIB	0x0260	nForce430 PCI-ISA bridge
+product NVIDIA	NFORCE430_SMBUS	0x0264	nForce430 SMBus Controller
+product NVIDIA	NFORCE430_ATA133	0x0265	nForce430 ATA133 IDE Controller
+product NVIDIA	NFORCE430_SATA1	0x0266	nForce430 Serial SATA Controller 1
+product NVIDIA	NFORCE430_SATA2	0x0267	nForce430 Serial SATA Controller 2
+product NVIDIA	NFORCE430_NET	0x0269	nForce430 Gigabit Ethernet Controller
+product NVIDIA	NFORCE430_AC	0x026c	nForce430 AC-97
+product NVIDIA	NFORCE430_OHCI	0x026d	nForce430 USB Controller
+product NVIDIA	NFORCE430_EHCI	0x026e	nForce430 USB2 Controller
 product NVIDIA	GF4_TI_4800	0x0280	GeForce4 Ti 4800
 product NVIDIA	GF4_TI_4200_8X	0x0281	GeForce4 Ti 4200 (AGP8X)
 product NVIDIA	GF4_TI_4800_SE	0x0282	GeForce4 Ti 4800 SE
@@ -3029,7 +3040,7 @@ product VIATECH KT880_4         0x4269  KT880 CPU to PCI Bridge
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8378_IG       0x7205  VT8378 KM400 UniChrome Integrated Graphics
 product VIATECH KT880_5         0x7269  KT880 CPU to PCI Bridge
-product VIATECH VT8231		0x8231	VT8231 IDE Controller
+product VIATECH VT8231		0x8231	VT8231 PCI-ISA Bridge
 product VIATECH VT8231_PWR	0x8235	VT8231 Power Management Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 (Apollo KT133) PCI to AGP Bridge
 product VIATECH VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge

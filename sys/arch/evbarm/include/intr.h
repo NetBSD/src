@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2005/12/24 20:06:59 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.2.1 2006/01/15 10:02:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -54,6 +54,8 @@
 #define	IPL_CLOCK	10	/* clock interrupt */
 #define	IPL_STATCLOCK	11	/* statistics clock interrupt */
 #define	IPL_HIGH	12	/* everything */
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
 #define	IPL_SERIAL	13	/* serial device */
 
 #define	NIPL		14
@@ -146,24 +148,13 @@ void	_setsoftintr(int);
 
 #endif /* _LKM */
 
-#define	splhigh()	_splraise(IPL_HIGH)
 #define	splsoft()	_splraise(IPL_SOFT)
-#define	splsoftclock()	_splraise(IPL_SOFTCLOCK)
-#define	splsoftnet()	_splraise(IPL_SOFTNET)
-#define	splbio()	_splraise(IPL_BIO)
-#define	splnet()	_splraise(IPL_NET)
-#define	spltty()	_splraise(IPL_TTY)
-#define	splvm()		_splraise(IPL_VM)
-#define	splaudio()	_splraise(IPL_AUDIO)
-#define	splclock()	_splraise(IPL_CLOCK)
-#define	splstatclock()	_splraise(IPL_STATCLOCK)
-#define	splserial()	_splraise(IPL_SERIAL)
+#define	splraiseipl(x)	_splraise(x)
 
 #define	spl0()		_spllower(IPL_NONE)
 #define	spllowersoftclock() _spllower(IPL_SOFTCLOCK)
 
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
+#include <sys/spl.h>
 
 /* Use generic software interrupt support. */
 #include <arm/softintr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.12 2005/12/11 12:21:02 christos Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.12.2.1 2006/01/15 10:02:48 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,8 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12.2.1 2006/01/15 10:02:48 yamt Exp $");
 
+#include "opt_acpi.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -65,18 +66,17 @@ __KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12 2005/12/11 12:21:02 christos Exp $"
  * 2. disassemble with iasl -d (*2)
  * 3. modify the ASL file
  * 4. compile it with iasl -tc
- * 5. copy *.hex to /sys/dev/acpi/acpica/Osd/dsdt.hex
+ * 5. copy *.hex to src/sys/dev/acpi/acpica/Osd/dsdt.hex
  *    -or-
  *    options ACPI_DSDT_FILE="\"yourdsdt.hex\"" in
  *    your config file and yourdsdt.hex in the build directory
- * 6. uncomment ACPI_DEDT_OVERRIDE or options ACPI_DSDT_OVERRIDE
- *    in your kernel config file and rebuild the kernel
+ * 6. options ACPI_DSDT_OVERRIDE in your kernel config file
+ *    and rebuild the kernel
  *
  * (*1) /usr/pkgsrc/sysutils/acpidump
  * (*2) /usr/pkgsrc/sysutils/acpi-iasl
  */
 
-/* #define ACPI_DSDT_OVERRIDE */
 #ifdef ACPI_DSDT_OVERRIDE
 #ifndef ACPI_DSDT_FILE
 #define ACPI_DSDT_FILE "dsdt.hex"

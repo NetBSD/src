@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.7 2005/12/15 21:46:31 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.7.2.1 2006/01/15 10:03:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.7 2005/12/15 21:46:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.7.2.1 2006/01/15 10:03:04 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -155,6 +155,8 @@ static struct netexport *netexport_lookup(const struct mount *);
 static struct netexport *netexport_lookup_byfsid(const fsid_t *);
 static void netexport_insert(struct netexport *);
 static void netexport_remove(struct netexport *);
+static void netexport_wrlock(void);
+static void netexport_wrunlock(void);
 
 /*
  * PUBLIC INTERFACE
@@ -184,8 +186,10 @@ nfs_export_unmount(struct mount *mp)
 
 	KASSERT(mp != NULL);
 
+	netexport_wrlock();
 	ne = netexport_lookup(mp);
 	if (ne == NULL) {
+		netexport_wrunlock();
 		return;
 	}
 
@@ -197,6 +201,7 @@ nfs_export_unmount(struct mount *mp)
 	}
 
 	netexport_remove(ne);
+	netexport_wrunlock();
 	free(ne, M_NFS_EXPORT);
 }
 
@@ -221,6 +226,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	struct netexport *ne;
 	struct nameidata nd;
 	struct vnode *vp;
+	struct fid fid;
 
 	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return EPERM;
@@ -235,7 +241,8 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 
 	/* The selected file system may not support NFS exports, so ensure
 	 * it does. */
-	if (mp->mnt_op->vfs_vptofh == NULL && mp->mnt_op->vfs_fhtovp == NULL) {
+	if (mp->mnt_op->vfs_vptofh == NULL || mp->mnt_op->vfs_fhtovp == NULL ||
+	    VFS_VPTOFH(vp, &fid) != 0) {
 		error = EOPNOTSUPP;
 		goto out_locked;
 	}
@@ -247,12 +254,12 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	if (error != 0)
 		goto out_locked;
 
+	netexport_wrlock();
 	ne = netexport_lookup(mp);
 	if (ne == NULL) {
 		error = init_exports(mp, &ne);
 		if (error != 0) {
-			vfs_unbusy(mp);
-			goto out_locked;
+			goto out_locked2;
 		}
 	}
 
@@ -285,6 +292,8 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	}
 #endif
 
+out_locked2:
+	netexport_wrunlock();
 	vfs_unbusy(mp);
 
 out_locked:
@@ -798,4 +807,34 @@ netcred_lookup(struct netexport *ne, struct mbuf *nam)
 		np = &ne->ne_defexported;
 
 	return np;
+}
+
+static struct lock netexport_lock = LOCK_INITIALIZER(PVFS, "netexp", 0, 0);
+
+void
+netexport_rdlock(void)
+{
+
+	lockmgr(&netexport_lock, LK_SHARED, NULL);
+}
+
+void
+netexport_rdunlock(void)
+{
+
+	lockmgr(&netexport_lock, LK_RELEASE, NULL);
+}
+
+static void
+netexport_wrlock(void)
+{
+
+	lockmgr(&netexport_lock, LK_EXCLUSIVE, NULL);
+}
+
+static void
+netexport_wrunlock(void)
+{
+
+	lockmgr(&netexport_lock, LK_RELEASE, NULL);
 }

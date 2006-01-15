@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.44 2005/12/11 12:21:26 christos Exp $ */
+/*	$NetBSD: gem.c,v 1.44.2.1 2006/01/15 10:02:48 yamt Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.44 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.44.2.1 2006/01/15 10:02:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1793,6 +1793,9 @@ gem_intr(v)
 			printf("%s: MAC rx fault, status %x\n",
 			    sc->sc_dev.dv_xname, rxstat);
 	}
+#if NRND > 0
+	rnd_add_uint32(&sc->rnd_source, status);
+#endif
 	return (r);
 }
 

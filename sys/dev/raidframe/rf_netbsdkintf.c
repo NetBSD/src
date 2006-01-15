@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.192 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.192.2.1 2006/01/15 10:02:56 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.192 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.192.2.1 2006/01/15 10:02:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -231,16 +231,6 @@ const struct bdevsw raid_bdevsw = {
 const struct cdevsw raid_cdevsw = {
 	raidopen, raidclose, raidread, raidwrite, raidioctl,
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
-};
-
-/*
- * Pilfered from ccd.c
- */
-
-struct raidbuf {
-	struct buf rf_buf;	/* new I/O buf.  MUST BE FIRST!!! */
-	struct buf *rf_obp;	/* ptr. to original I/O buf */
-	RF_DiskQueueData_t *req;/* the request that this was part of.. */
 };
 
 /* XXX Not sure if the following should be replacing the raidPtrs above,
@@ -357,11 +347,6 @@ raidattach(int num)
 	if (raidPtrs == NULL) {
 		panic("raidPtrs is NULL!!");
 	}
-
-	/* Initialize the component buffer pool. */
-	rf_pool_init(&rf_pools.cbuf, sizeof(struct raidbuf),
-		     "raidpl", num * RAIDOUTSTANDING,
-		     2 * num * RAIDOUTSTANDING);
 
 	rf_mutex_init(&rf_sparet_wait_mutex);
 
@@ -690,29 +675,22 @@ raidstrategy(struct buf *bp)
 	if ((rs->sc_flags & RAIDF_INITED) ==0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return;
+		goto done;
 	}
 	if (raidID >= numraid || !raidPtrs[raidID]) {
 		bp->b_error = ENODEV;
 		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return;
+		goto done;
 	}
 	raidPtr = raidPtrs[raidID];
 	if (!raidPtr->valid) {
 		bp->b_error = ENODEV;
 		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return;
+		goto done;
 	}
 	if (bp->b_bcount == 0) {
 		db1_printf(("b_bcount is zero..\n"));
-		biodone(bp);
-		return;
+		goto done;
 	}
 
 	/*
@@ -721,13 +699,26 @@ raidstrategy(struct buf *bp)
 	 */
 
 	wlabel = rs->sc_flags & (RAIDF_WLABEL | RAIDF_LABELLING);
-	if (DISKPART(bp->b_dev) != RAW_PART)
+	if (DISKPART(bp->b_dev) == RAW_PART) {
+		uint64_t size; /* device size in DEV_BSIZE unit */
+
+		if (raidPtr->logBytesPerSector > DEV_BSHIFT) {
+			size = raidPtr->totalSectors <<
+			    (raidPtr->logBytesPerSector - DEV_BSHIFT);
+		} else {
+			size = raidPtr->totalSectors >>
+			    (DEV_BSHIFT - raidPtr->logBytesPerSector);
+		}
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE, size) <= 0) {
+			goto done;
+		}
+	} else {
 		if (bounds_check_with_label(&rs->sc_dkdev, bp, wlabel) <= 0) {
 			db1_printf(("Bounds check failed!!:%d %d\n",
 				(int) bp->b_blkno, (int) wlabel));
-			biodone(bp);
-			return;
+			goto done;
 		}
+	}
 	s = splbio();
 
 	bp->b_resid = 0;
@@ -739,6 +730,11 @@ raidstrategy(struct buf *bp)
 	wakeup(&(raidPtrs[raidID]->iodone));
 
 	splx(s);
+	return;
+
+done:
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 }
 /* ARGSUSED */
 int
@@ -998,8 +994,6 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if (clabel == NULL)
 			return (ENOMEM);
 
-		memset((char *) clabel, 0, sizeof(RF_ComponentLabel_t));
-
 		retcode = copyin( *clabel_ptr, clabel,
 				  sizeof(RF_ComponentLabel_t));
 
@@ -1018,12 +1012,14 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			return(EINVAL);
 		}
 
-		raidread_component_label(raidPtr->Disks[column].dev,
+		retcode = raidread_component_label(raidPtr->Disks[column].dev,
 				raidPtr->raid_cinfo[column].ci_vp,
 				clabel );
 
-		retcode = copyout(clabel, *clabel_ptr,
-				  sizeof(RF_ComponentLabel_t));
+		if (retcode == 0) {
+			retcode = copyout(clabel, *clabel_ptr,
+					  sizeof(RF_ComponentLabel_t));
+		}
 		RF_Free(clabel, sizeof(RF_ComponentLabel_t));
 		return (retcode);
 
@@ -1804,7 +1800,6 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 {
 	int     op = (req->type == RF_IO_TYPE_READ) ? B_READ : B_WRITE;
 	struct buf *bp;
-	struct raidbuf *raidbp = NULL;
 
 	req->queue = queue;
 
@@ -1817,34 +1812,6 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 #endif
 
 	bp = req->bp;
-#if 1
-	/* XXX when there is a physical disk failure, someone is passing us a
-	 * buffer that contains old stuff!!  Attempt to deal with this problem
-	 * without taking a performance hit... (not sure where the real bug
-	 * is.  It's buried in RAIDframe somewhere) :-(  GO ) */
-
-	if (bp->b_flags & B_ERROR) {
-		bp->b_flags &= ~B_ERROR;
-	}
-	if (bp->b_error != 0) {
-		bp->b_error = 0;
-	}
-#endif
-	raidbp = pool_get(&rf_pools.cbuf, PR_NOWAIT);
-	if (raidbp == NULL) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = ENOMEM;
-		return (ENOMEM);
-	}
-	BUF_INIT(&raidbp->rf_buf);
-
-	/*
-	 * context for raidiodone
-	 */
-	raidbp->rf_obp = bp;
-	raidbp->req = req;
-
-	BIO_COPYPRIO(&raidbp->rf_buf, bp);
 
 	switch (req->type) {
 	case RF_IO_TYPE_NOP:	/* used primarily to unlock a locked queue */
@@ -1854,9 +1821,10 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 		printf(("WAKEUP CALLED\n"));
 		queue->numOutstanding++;
 
-		/* XXX need to glue the original buffer into this??  */
+		bp->b_flags = 0;
+		bp->b_fspriv.bf_private = req;
 
-		KernelWakeupFunc(&raidbp->rf_buf);
+		KernelWakeupFunc(bp);
 		break;
 
 	case RF_IO_TYPE_READ:
@@ -1866,8 +1834,8 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 			RF_ETIMER_START(req->tracerec->timer);
 		}
 #endif
-		InitBP(&raidbp->rf_buf, queue->rf_cinfo->ci_vp,
-		    op | bp->b_flags, queue->rf_cinfo->ci_dev,
+		InitBP(bp, queue->rf_cinfo->ci_vp,
+		    op, queue->rf_cinfo->ci_dev,
 		    req->sectorOffset, req->numSector,
 		    req->buf, KernelWakeupFunc, (void *) req,
 		    queue->raidPtr->logBytesPerSector, req->b_proc);
@@ -1890,10 +1858,7 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 			(int) (req->numSector <<
 			    queue->raidPtr->logBytesPerSector),
 			(int) queue->raidPtr->logBytesPerSector));
-		if ((raidbp->rf_buf.b_flags & B_READ) == 0) {
-			raidbp->rf_buf.b_vp->v_numoutput++;
-		}
-		VOP_STRATEGY(raidbp->rf_buf.b_vp, &raidbp->rf_buf);
+		VOP_STRATEGY(bp->b_vp, bp);
 
 		break;
 
@@ -1908,32 +1873,18 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
    kernel code.
  */
 static void
-KernelWakeupFunc(struct buf *vbp)
+KernelWakeupFunc(struct buf *bp)
 {
 	RF_DiskQueueData_t *req = NULL;
 	RF_DiskQueue_t *queue;
-	struct raidbuf *raidbp = (struct raidbuf *) vbp;
-	struct buf *bp;
 	int s;
 
 	s = splbio();
 	db1_printf(("recovering the request queue:\n"));
-	req = raidbp->req;
-
-	bp = raidbp->rf_obp;
+	req = bp->b_fspriv.bf_private;
 
 	queue = (RF_DiskQueue_t *) req->queue;
 
-	if (raidbp->rf_buf.b_flags & B_ERROR) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = raidbp->rf_buf.b_error ?
-		    raidbp->rf_buf.b_error : EIO;
-	}
-
-	/* XXX methinks this could be wrong... */
-#if 1
-	bp->b_resid = raidbp->rf_buf.b_resid;
-#endif
 #if RF_ACC_TRACE > 0
 	if (req->tracerec) {
 		RF_ETIMER_STOP(req->tracerec->timer);
@@ -1945,7 +1896,6 @@ KernelWakeupFunc(struct buf *vbp)
 		RF_UNLOCK_MUTEX(rf_tracing_mutex);
 	}
 #endif
-	bp->b_bcount = raidbp->rf_buf.b_bcount;	/* XXXX ?? */
 
 	/* XXX Ok, let's get aggressive... If B_ERROR is set, let's go
 	 * ballistic, and mark the component as hosed... */
@@ -1955,9 +1905,12 @@ KernelWakeupFunc(struct buf *vbp)
 		/* but only mark it once... */
 		/* and only if it wouldn't leave this RAID set
 		   completely broken */
-		if ((queue->raidPtr->Disks[queue->col].status ==
-		    rf_ds_optimal) && (queue->raidPtr->numFailures <
-				       queue->raidPtr->Layout.map->faultsTolerated)) {
+		if (((queue->raidPtr->Disks[queue->col].status ==
+		      rf_ds_optimal) ||
+		     (queue->raidPtr->Disks[queue->col].status ==
+		      rf_ds_used_spare)) && 
+		     (queue->raidPtr->numFailures <
+		         queue->raidPtr->Layout.map->faultsTolerated)) {
 			printf("raid%d: IO Error.  Marking %s as failed.\n",
 			       queue->raidPtr->raidid,
 			       queue->raidPtr->Disks[queue->col].devname);
@@ -1971,8 +1924,6 @@ KernelWakeupFunc(struct buf *vbp)
 		}
 
 	}
-
-	pool_put(&rf_pools.cbuf, raidbp);
 
 	/* Fill in the error value */
 
@@ -2016,7 +1967,11 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	}
 	bp->b_proc = b_proc;
 	bp->b_iodone = cbFunc;
+	bp->b_fspriv.bf_private = cbArg;
 	bp->b_vp = b_vp;
+	if ((bp->b_flags & B_READ) == 0) {
+		bp->b_vp->v_numoutput++;
+	}
 
 }
 

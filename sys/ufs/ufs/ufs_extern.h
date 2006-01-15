@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.47 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.47.2.1 2006/01/15 10:03:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -130,6 +130,7 @@ int	ufs_dirremove(struct vnode *, struct inode *, int, int);
 int	ufs_dirrewrite(struct inode *, struct inode *, ino_t, int, int, int);
 int	ufs_dirempty(struct inode *, ino_t, struct ucred *);
 int	ufs_checkpath(struct inode *, struct inode *, struct ucred *);
+int	ufs_blkatoff(struct vnode *, off_t, char **, struct buf **);
 
 /* ufs_quota.c */
 int	getinoquota(struct inode *);

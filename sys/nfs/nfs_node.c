@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.81 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.81.2.1 2006/01/15 10:03:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.81 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.81.2.1 2006/01/15 10:03:04 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -232,7 +232,6 @@ nfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	boolean_t removed;
-	int err;
 
 	np = VTONFS(vp);
 	if (prtactive && vp->v_usecount != 0)
@@ -263,22 +262,23 @@ nfs_inactive(v)
 		vrecycle(vp, NULL, l);
 
 	if (sp != NULL) {
+		int error;
 
 		/*
 		 * Remove the silly file that was rename'd earlier
 		 *
 		 * Just in case our thread also has the parent node locked,
-		 * we let vn_lock() fail.
+		 * we use LK_CANRECURSE.
 		 */
 
-		err = vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_RETRY
-					| LK_RECURSEFAIL);
+		error = vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_CANRECURSE);
+		if (error || sp->s_dvp->v_data == NULL) {
+			/* XXX should recover */
+			panic("%s: vp=%p error=%d", __func__, sp->s_dvp, error);
+		}
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
-		if (err != EDEADLK)
-			vput(sp->s_dvp);
-		else
-			vrele(sp->s_dvp);
+		vput(sp->s_dvp);
 		FREE(sp, M_NFSREQ);
 	}
 

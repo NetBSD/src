@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.161 2005/12/20 05:35:28 thorpej Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.161.2.1 2006/01/15 10:02:38 yamt Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.161 $"
+#ident 		"GENERIC-$Revision: 1.161.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -26,6 +26,9 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 # Enhanced SpeedStep Technology in the Pentium M
 options 	ENHANCED_SPEEDSTEP
 #options 	EST_FREQ_USERWRITE	# any user can set frequency
+
+# AMD PowerNow! K7
+#options	POWERNOW_K7
 
 options 	MTRR		# memory-type range register syscall support
 #options 	PERFCTRS	# performance-monitoring counters support
@@ -258,7 +261,7 @@ apm0	at mainbus0			# Advanced power management
 
 acpi0 		at mainbus0
 
-options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
+#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 #options 	ACPI_DISABLE_ON_POWEROFF	# disable acpi on power off
 
@@ -279,7 +282,7 @@ options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #mpu*		at acpi?		# Roland MPU-401 MIDI UART
 #npx* 		at acpi?		# Math coprocessor
 #pckbc*  	at acpi?		# PC keyboard controller
-#pcppi*         at acpi?                # AT-style speaker sound
+#pcppi*		at acpi?                # AT-style speaker sound
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 # Sony Vaio jog dial
@@ -626,6 +629,7 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 rgephy*	at mii? phy ?			# Realtek 8169S/8110 internal PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L internal PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
@@ -889,6 +893,9 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

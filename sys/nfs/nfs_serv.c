@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.99.2.1 2005/12/31 16:29:01 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.99.2.2 2006/01/15 10:03:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.99.2.1 2005/12/31 16:29:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.99.2.2 2006/01/15 10:03:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1111,12 +1111,12 @@ nfsmout:
 		owp = NULL;
 		wp = LIST_FIRST(wpp);
 		while (wp &&
-		    memcmp((caddr_t)&nfsd->nd_fh, (caddr_t)&wp->nd_fh, NFSX_V3FH)) {
+		    memcmp(&nfsd->nd_fh, &wp->nd_fh, NFSX_V3FH)) {
 		    owp = wp;
 		    wp = LIST_NEXT(wp, nd_hash);
 		}
 		while (wp && wp->nd_off < nfsd->nd_off &&
-		    !memcmp((caddr_t)&nfsd->nd_fh, (caddr_t)&wp->nd_fh, NFSX_V3FH)) {
+		    !memcmp(&nfsd->nd_fh, &wp->nd_fh, NFSX_V3FH)) {
 		    owp = wp;
 		    wp = LIST_NEXT(wp, nd_hash);
 		}

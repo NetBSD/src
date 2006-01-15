@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.8 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: load.cpp,v 1.8.2.1 2006/01/15 10:02:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ Loader::loadExtData(void)
 	sz = _file->realsize();
 	kv = ROUND(_kernend, static_cast <vsize_t>(KERNEL_PAGE_SIZE));
 
-	DPRINTF((TEXT("[file system image]")));
+	DPRINTF((TEXT("[file system image]\n")));
 	_load_segment(kv, sz, 0, sz);
 
 	return _load_success();
@@ -142,7 +142,7 @@ Loader::_load_segment_start(void)
 	if (!_mem->getTaggedPage(v, p, &_pvec_clr, _pvec_clr_paddr))
 		_error = TRUE;
 #ifdef PAGE_LINK_DUMP
-	_page_tag_start =(u_int32_t)_pvec_clr;
+	_page_tag_start = (uint32_t)_pvec_clr;
 #else
 	_page_tag_start = _pvec_clr_paddr;
 #endif
@@ -192,11 +192,11 @@ Loader::_load_segment(vaddr_t kv, vsize_t memsz, off_t fileofs, size_t filesz)
 		_pvec_prev->dst = kv_start + filesz;
 		_pvec_prev->sz = memsz - filesz;
 #ifdef PAGE_LINK_DUMP
-		_pvec_prev->next =(u_int32_t)_pvec_clr;
+		_pvec_prev->next = (uint32_t)_pvec_clr;
 #else
 		_pvec_prev->next = ptokv(_pvec_clr_paddr);
 #endif
-		DPRINTF((TEXT("[zero clear] ->0x%08x+0x%08x=0x%08x\n"),
+		DPRINTF((TEXT("\t->zero 0x%08x+0x%08x=0x%08x\n"),
 		    _pvec_prev->dst, _pvec_prev->sz,
 		    _pvec_prev->dst + _pvec_prev->sz));
 		_opvec_prev = _pvec_prev;
@@ -210,29 +210,37 @@ void
 Loader::_load_memory(vaddr_t kv, vsize_t memsz, void *data)
 {
 	struct PageTag *pvec;
-	vaddr_t kv_start = kv, v;
 	paddr_t p, pvec_paddr;
+	vaddr_t v;
+	vaddr_t dst;
+	vsize_t remsz;
 
 	DPRINTF((TEXT("\t->load 0x%08x+0x%08x=0x%08x\n"),
 	    kv, memsz, kv + memsz));
-	if (memsz > _tpsz) {
-		/* XXX failure */
-		return;
-	}
 
-	_opvec_prev = _pvec_prev;
-	if (!_mem->getTaggedPage(v, p, &pvec, pvec_paddr))
-		_error = TRUE;
-	memcpy((void *)v, data, memsz);
-	_pvec_prev->src = ptokv(p);
-	_pvec_prev->dst = kv;
-	_pvec_prev->sz = memsz;
+	dst = kv;
+	remsz = memsz;
+	while (remsz > 0) {
+		_opvec_prev = _pvec_prev;
+		if (!_mem->getTaggedPage(v, p, &pvec, pvec_paddr))
+			_error = TRUE;
+
+		vsize_t tocopy = (remsz < _tpsz) ? remsz : _tpsz;
+		memcpy((void *)v, data, tocopy);
+		_pvec_prev->src = ptokv(p);
+		_pvec_prev->dst = dst;
+		_pvec_prev->sz = tocopy;
 #ifdef PAGE_LINK_DUMP
-	_pvec_prev->next =(u_int32_t)pvec;
+		_pvec_prev->next = (uint32_t)pvec;
 #else
-	_pvec_prev->next = ptokv(pvec_paddr);
+		_pvec_prev->next = ptokv(pvec_paddr);
 #endif
-	_pvec_prev = pvec;
+		data = (char *)data + tocopy;
+		dst += tocopy;
+		remsz -= tocopy;
+
+		_pvec_prev = pvec;
+	}
 
 	_kernend = kv + memsz;
 	++_nload_link;
@@ -252,7 +260,7 @@ Loader::_load_page(vaddr_t kv, off_t ofs, size_t sz, struct PageTag *prev)
 	prev->dst = kv;
 	prev->sz = sz;
 #ifdef PAGE_LINK_DUMP
-	prev->next =(u_int32_t)pvec;
+	prev->next = (uint32_t)pvec;
 #else
 	prev->next = ptokv(pvec_paddr);
 #endif

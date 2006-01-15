@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.9 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: cache.c,v 1.9.2.1 2006/01/15 10:02:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.9 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.9.2.1 2006/01/15 10:02:38 yamt Exp $");
 
 #include "opt_memsize.h"	/* IOM_RAM_BEGIN */
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.9 2005/12/24 23:24:02 perry Exp $");
  * __cache_flush is used before sh_cache_config() is called.
  */
 static void __cache_flush(void);
+
 struct sh_cache_ops sh_cache_ops = {
 	._icache_sync_all = (void (*)(void))__cache_flush,
 	._icache_sync_range = (void (*)(vaddr_t, vsize_t))__cache_flush,
@@ -104,44 +105,45 @@ sh_cache_information()
 #endif
 
 	/* I-cache or I/D-unified cache */
-	printf("%dKB/%dB ", sh_cache_size_icache >> 10, sh_cache_line_size);
+	printf("cpu0: %dKB/%dB",
+	       sh_cache_size_icache >> 10, sh_cache_line_size);
 	if (sh_cache_ways > 1)
-		printf("%d-way set-associative ", sh_cache_ways);
+		printf(" %d-way set-associative", sh_cache_ways);
 	else
-		printf("direct-mapped ");
+		printf(" direct-mapped");
 	if (sh_cache_unified)
-		printf("I/D-unified ");
+		printf(" I/D-unified");
 	else
-		printf("Instruction ");
-	printf("cache. ");
+		printf(" Instruction");
+	printf(" cache.");
 	if (!sh_cache_enable_icache)
-		printf("DISABLED ");
+		printf(" DISABLED");
 	if (sh_cache_unified && sh_cache_ram_mode)
-		printf("RAM-mode ");
+		printf(" RAM-mode");
 	if (sh_cache_index_mode_icache)
-		printf("INDEX-mode ");
+		printf(" INDEX-mode");
 	printf("\n");
 
 	/* D-cache */
 	if (!sh_cache_unified) {
-		printf("%dKB/%dB ", sh_cache_size_dcache >> 10,
+		printf("cpu0: %dKB/%dB", sh_cache_size_dcache >> 10,
 		    sh_cache_line_size);
 		if (sh_cache_ways > 1)
-			printf("%d-way set-associative ", sh_cache_ways);
+			printf(" %d-way set-associative", sh_cache_ways);
 		else
-			printf("direct-mapped ");
-		printf("Data cache. ");
+			printf(" direct-mapped");
+		printf(" Data cache.");
 		if (!sh_cache_enable_dcache)
-			printf("DISABLED ");
+			printf(" DISABLED");
 		if (sh_cache_ram_mode)
-			printf("RAM-mode ");
+			printf(" RAM-mode");
 		if (sh_cache_index_mode_dcache)
-			printf("INDEX-mode ");
+			printf(" INDEX-mode");
 		printf("\n");
 	}
 
 	/* Write-through/back */
-	printf("P0, U0, P3 write-%s P1 write-%s\n",
+	printf("cpu0: P0, U0, P3 write-%s; P1 write-%s\n",
 	    sh_cache_write_through_p0_u0_p3 ? "through" : "back",
 	    sh_cache_write_through_p1 ? "through" : "back");
 }
@@ -163,7 +165,7 @@ __cache_flush()
 	 * 16KB line-size 16B 4-way ... [11:4]  * 4
 	 * 16KB line-size 32B 1-way ... [13:5]
 	 */
-	for(i = 0; i < 256/*entry*/ * 4/*way*/; i++) {
+	for (i = 0; i < 256/*entry*/ * 4/*way*/; i++) {
 		d = *p;
 		p += 4;	/* next line index (16B) */
 	}

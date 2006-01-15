@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.20 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.20.2.1 2006/01/15 10:02:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.20 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.20.2.1 2006/01/15 10:02:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 		return EINVAL;
 
 	SMBVDEBUG("dirname='%.*s'\n", (int) np->n_nmlen, np->n_name);
-	smb_makescred(&scred, uio->uio_lwp, cred);
+	smb_makescred(&scred, curlwp, cred);
 	offset = uio->uio_offset / DE_SIZE; 	/* offset in the directory */
 	limit = uio->uio_resid / DE_SIZE;
 
@@ -191,7 +191,7 @@ smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred)
 {
 	struct smbmount *smp = VFSTOSMBFS(vp->v_mount);
 	struct smbnode *np = VTOSMB(vp);
-	struct lwp *l;
+	struct lwp *l = curlwp;
 	struct vattr vattr;
 	struct smb_cred scred;
 	int error;
@@ -209,7 +209,6 @@ smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred)
 		return error;
 	}
 
-	l = uiop->uio_lwp;
 	if (np->n_flag & NMODIFIED) {
 		smbfs_attr_cacheremove(vp);
 		error = VOP_GETATTR(vp, &vattr, cred, l);
@@ -238,8 +237,8 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	struct smbmount *smp = VTOSMBFS(vp);
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
-	struct proc *p;
-	struct lwp *l;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	int error = 0;
 	int extended = 0;
 	size_t resid = uiop->uio_resid;
@@ -254,8 +253,6 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 		return EINVAL;
 /*	if (uiop->uio_offset + uiop->uio_resid > smp->nm_maxfilesize)
 		return (EFBIG);*/
-	l = uiop->uio_lwp;
-	p = l ? l->l_proc : NULL;
 	if (ioflag & (IO_APPEND | IO_SYNC)) {
 		if (np->n_flag & NMODIFIED) {
 			smbfs_attr_cacheremove(vp);
@@ -315,7 +312,6 @@ smbfs_doio(struct buf *bp, struct ucred *cr, struct lwp *l)
 	uiop->uio_iov = &io;
 	uiop->uio_iovcnt = 1;
 	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_lwp = NULL;
 
 	smb_makescred(&scred, l, cr);
 
