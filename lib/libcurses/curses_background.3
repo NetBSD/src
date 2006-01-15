@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_background.3,v 1.3 2003/04/16 13:35:00 wiz Exp $
+.\"	$NetBSD: curses_background.3,v 1.4 2006/01/15 11:43:54 jdc Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -65,14 +65,33 @@ sets the background attributes of the specified window
 to
 .Fa ch .
 .Pp
+When the background attributes are set on a window, characters are added to
+the window with the logical
+.Em OR
+of the background attributes and the character's attributes.
+If both the background attribute and the character attribute contain color,
+the color of the character attribute is rendered.
+If the background attribute contains a non-space character, then this
+character is added where the foreground character is a space character.
+.Pp
+Note that subwindows created from
+.Fa win
+inherit the background attributes of
+.Fa win .
+.Pp
 The function
 .Fn wbkgd win ch
 sets the background attributes of the specified window
 .Fa win
 to
 .Fa ch
-and also sets the background attribute of every character position on that
-window.
+and also sets the rendition of every character position on that window,
+as if the characters had been newly added to
+.Fa win .
+The rendition of characters on subwindows of
+.Fa win
+is also set to
+.Fa ch .
 .Pp
 The functions
 .Fn bkgdset ch
@@ -83,15 +102,6 @@ are equivalent to
 and
 .Fn wbkgd stdscr ch ,
 respectively.
-.Pp
-When the background attributes are set on a window, characters are rendered
-with the logical
-.Em OR
-of the background attributes and the character's attributes.
-If both the background attribute and the character attribute contain color,
-the color of the character attribute is displayed.
-If the background attribute contains a non-space character, then this
-character is rendered where the foreground character is a space character.
 .Pp
 The function
 .Fn getbkgd win
@@ -105,7 +115,8 @@ and
 return OK on success and ERR on failure.
 .Sh SEE ALSO
 .Xr curses_attributes 3 ,
-.Xr curses_color 3
+.Xr curses_color 3 ,
+.Xr curses_window
 .Sh STANDARDS
 The
 .Nx

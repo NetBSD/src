@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.17 2003/08/07 16:44:22 agc Exp $	*/
+/*	$NetBSD: insch.c,v 1.18 2006/01/15 11:43:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.17 2003/08/07 16:44:22 agc Exp $");
+__RCSID("$NetBSD: insch.c,v 1.18 2006/01/15 11:43:54 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -89,7 +89,12 @@ winsch(WINDOW *win, chtype ch)
 {
 
 	__LDATA	*end, *temp1, *temp2;
+	attr_t attr;
 
+	if (__using_color)
+		attr = __default_color;
+	else
+		attr = 0;
 	end = &win->lines[win->cury]->line[win->curx];
 	temp1 = &win->lines[win->cury]->line[win->maxx - 1];
 	temp2 = temp1 - 1;
@@ -98,15 +103,17 @@ winsch(WINDOW *win, chtype ch)
 		temp1--, temp2--;
 	}
 	temp1->ch = (wchar_t) ch & __CHARTEXT;
-	temp1->bch = win->bch;
+	if (temp1->ch == ' ')
+		temp1->ch = win->bch;
 	temp1->attr = (attr_t) ch & __ATTRIBUTES;
-	temp1->battr = win->battr;
+	if (temp1->attr & __COLOR)
+		temp1->attr |= (win->bch & ~__COLOR);
+	else
+		temp1->attr |= win->bch;
 	__touchline(win, (int) win->cury, (int) win->curx, (int) win->maxx - 1);
 	if (win->cury == LINES - 1 &&
 	    (win->lines[LINES - 1]->line[COLS - 1].ch != ' ' ||
-	        win->lines[LINES - 1]->line[COLS - 1].bch != ' ' ||
-		win->lines[LINES - 1]->line[COLS - 1].attr != 0 ||
-		win->lines[LINES - 1]->line[COLS - 1].battr != 0)) {
+		win->lines[LINES - 1]->line[COLS - 1].attr != attr)) {
 		if (win->flags & __SCROLLOK) {
 			wrefresh(win);
 			scroll(win);

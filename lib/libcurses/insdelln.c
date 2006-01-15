@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.10 2003/07/29 16:42:55 dsl Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.11 2006/01/15 11:43:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.10 2003/07/29 16:42:55 dsl Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.11 2006/01/15 11:43:54 jdc Exp $");
 #endif				/* not lint */
 
 /* 
@@ -113,9 +113,7 @@ winsdelln(WINDOW *win, int lines)
 		for (y = win->cury - 1 + lines; y >= win->cury; --y)
 			for (i = 0; i < win->maxx; i++) {
 				win->lines[y]->line[i].ch = ' ';
-				win->lines[y]->line[i].bch = win->bch;
 				win->lines[y]->line[i].attr = 0;
-				win->lines[y]->line[i].battr = win->battr;
 			}
 		for (y = last; y >= win->cury; --y)
 			__touchline(win, y, 0, (int) win->maxx - 1);
@@ -149,9 +147,7 @@ winsdelln(WINDOW *win, int lines)
 		for (y = last - lines; y < last; y++)
 			for (i = 0; i < win->maxx; i++) {
 				win->lines[y]->line[i].ch = ' ';
-				win->lines[y]->line[i].bch = win->bch;
 				win->lines[y]->line[i].attr = 0;
-				win->lines[y]->line[i].battr = win->battr;
 			}
 		for (y = win->cury; y < last; y++)
 			__touchline(win, y, 0, (int) win->maxx - 1);
