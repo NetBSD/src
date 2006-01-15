@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.39 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.39.2.1 2006/01/15 10:24:52 yamt Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.39 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.39.2.1 2006/01/15 10:24:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,9 +162,9 @@ ext2fs_readdir(void *v)
 	auio = *uio;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_segflg = UIO_SYSSPACE;
 	aiov.iov_len = e2fs_count;
 	auio.uio_resid = e2fs_count;
+	UIO_SETUP_SYSSPACE(&auio);
 	MALLOC(dirbuf, caddr_t, e2fs_count, M_TEMP, M_WAITOK);
 	if (ap->a_ncookies) {
 		nc = ncookies = e2fs_count / 16;
@@ -818,8 +818,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_rw = UIO_WRITE;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&auio);
 		error = VOP_WRITE(dvp, &auio, IO_SYNC, cnp->cn_cred);
 		if (dirblksiz > dvp->v_mount->mnt_stat.f_bsize)
 			/* XXX should grow with balloc() */
