@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.153 2006/01/15 08:27:07 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.154 2006/01/15 09:01:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.153 2006/01/15 08:27:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.154 2006/01/15 09:01:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1166,6 +1166,15 @@ allocbuf(struct buf *bp, int size, int preserve)
 		 * Need to trim overall memory usage.
 		 */
 		while (buf_canrelease()) {
+			if (curcpu()->ci_schedstate.spc_flags &
+			    SPCF_SHOULDYIELD) {
+				simple_unlock(&bqueue_slock);
+				splx(s);
+				preempt(1);
+				s = splbio();
+				simple_lock(&bqueue_slock);
+			}
+
 			if (buf_trim() == 0)
 				break;
 		}
