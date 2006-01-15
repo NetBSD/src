@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.23 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.23.2.1 2006/01/15 10:03:05 yamt Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.23 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.23.2.1 2006/01/15 10:03:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1984,16 +1984,12 @@ retry:
 static int
 readfsblk(struct vnode *vp, caddr_t data, ufs2_daddr_t lbn)
 {
-	int s, error;
+	int error;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 	struct buf *nbp;
 
-	s = splbio();
-	nbp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
-
-	BUF_INIT(nbp);
+	nbp = getiobuf();
 	nbp->b_flags = B_READ;
 	nbp->b_bcount = nbp->b_bufsize = fs->fs_bsize;
 	nbp->b_error = 0;
@@ -2007,9 +2003,7 @@ readfsblk(struct vnode *vp, caddr_t data, ufs2_daddr_t lbn)
 
 	error = biowait(nbp);
 
-	s = splbio();
-	pool_put(&bufpool, nbp);
-	splx(s);
+	putiobuf(nbp);
 
 	return error;
 }

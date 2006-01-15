@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.70 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.70.2.1 2006/01/15 10:03:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.70 2005/12/11 12:25:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.70.2.1 2006/01/15 10:03:05 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -68,7 +68,7 @@ int	dirchk = 1;
 int	dirchk = 0;
 #endif
 
-#define FSFMT(vp)   (((vp)->v_mount->mnt_iflag & IMNT_DTYPE) ==  0)
+#define	FSFMT(vp)	(((vp)->v_mount->mnt_iflag & IMNT_DTYPE) == 0)
 
 /*
  * Convert a component of a pathname into a pointer to a locked inode.
@@ -244,7 +244,7 @@ ufs_lookup(void *v)
 	} else {
 		dp->i_offset = dp->i_diroff;
 		if ((entryoffsetinblock = dp->i_offset & bmask) &&
-		    (error = UFS_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp)))
+		    (error = ufs_blkatoff(vdp, (off_t)dp->i_offset, NULL, &bp)))
 			return (error);
 		numdirpasses = 2;
 		nchstats.ncs_2passes++;
@@ -263,7 +263,7 @@ searchloop:
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			error = UFS_BLKATOFF(vdp, (off_t)dp->i_offset, NULL,
+			error = ufs_blkatoff(vdp, (off_t)dp->i_offset, NULL,
 			    &bp);
 			if (error)
 				return (error);
@@ -895,7 +895,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	/*
 	 * Get the block containing the space for the new directory entry.
 	 */
-	error = UFS_BLKATOFF(dvp, (off_t)dp->i_offset, &dirbuf, &bp);
+	error = ufs_blkatoff(dvp, (off_t)dp->i_offset, &dirbuf, &bp);
 	if (error) {
 		if (DOINGSOFTDEP(dvp) && newdirbp != NULL)
 			bdwrite(newdirbp);
@@ -908,21 +908,36 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	 * dp->i_offset + dp->i_count would yield the space.
 	 */
 	ep = (struct direct *)dirbuf;
-	dsize = DIRSIZ(FSFMT(dvp), ep, needswap);
+	dsize = ufs_rw32(ep->d_ino, needswap) ?
+	    DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
 	spacefree = ufs_rw16(ep->d_reclen, needswap) - dsize;
 	for (loc = ufs_rw16(ep->d_reclen, needswap); loc < dp->i_count; ) {
+		uint16_t reclen;
+
 		nep = (struct direct *)(dirbuf + loc);
-		if (ep->d_ino) {
-			/* trim the existing slot */
-			ep->d_reclen = ufs_rw16(dsize, needswap);
-			ep = (struct direct *)((char *)ep + dsize);
-		} else {
-			/* overwrite; nothing there; header is ours */
-			spacefree += dsize;
+
+		/* Trim the existing slot (NB: dsize may be zero). */
+		ep->d_reclen = ufs_rw16(dsize, needswap);
+		ep = (struct direct *)((char *)ep + dsize);
+
+		reclen = ufs_rw16(nep->d_reclen, needswap);
+		loc += reclen;
+		if (nep->d_ino == 0) {
+			/*
+			 * A mid-block unused entry. Such entries are
+			 * never created by the kernel, but fsck_ffs
+			 * can create them (and it doesn't fix them).
+			 *
+			 * Add up the free space, and initialise the
+			 * relocated entry since we don't memcpy it.
+			 */
+			spacefree += reclen;
+			ep->d_ino = 0;
+			dsize = 0;
+			continue;
 		}
 		dsize = DIRSIZ(FSFMT(dvp), nep, needswap);
-		spacefree += ufs_rw16(nep->d_reclen, needswap) - dsize;
-		loc += ufs_rw16(nep->d_reclen, needswap);
+		spacefree += reclen - dsize;
 #ifdef UFS_DIRHASH
 		if (dp->i_dirhash != NULL)
 			ufsdirhash_move(dp, nep,
@@ -936,6 +951,11 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			memcpy((caddr_t)ep, (caddr_t)nep, dsize);
 	}
 	/*
+	 * Here, `ep' points to a directory entry containing `dsize' in-use
+	 * bytes followed by `spacefree' unused bytes. If ep->d_ino == 0,
+	 * then the entry is completely unused (dsize == 0). The value
+	 * of ep->d_reclen is always indeterminate.
+	 *
 	 * Update the pointer fields in the previous entry (if any),
 	 * copy in the new entry, and write out the block.
 	 */
@@ -1034,7 +1054,7 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 		/*
 		 * Whiteout entry: set d_ino to WINO.
 		 */
-		error = UFS_BLKATOFF(dvp, (off_t)dp->i_offset, (void *)&ep,
+		error = ufs_blkatoff(dvp, (off_t)dp->i_offset, (void *)&ep,
 				     &bp);
 		if (error)
 			return (error);
@@ -1043,7 +1063,7 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 		goto out;
 	}
 
-	if ((error = UFS_BLKATOFF(dvp,
+	if ((error = ufs_blkatoff(dvp,
 	    (off_t)(dp->i_offset - dp->i_count), (void *)&ep, &bp)) != 0)
 		return (error);
 
@@ -1123,7 +1143,7 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
 	struct vnode *vdp = ITOV(dp);
 	int error;
 
-	error = UFS_BLKATOFF(vdp, (off_t)dp->i_offset, (void *)&ep, &bp);
+	error = ufs_blkatoff(vdp, (off_t)dp->i_offset, (void *)&ep, &bp);
 	if (error)
 		return (error);
 	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(dp->i_ump));
@@ -1290,4 +1310,64 @@ out:
 	if (vp != NULL)
 		vput(vp);
 	return (error);
+}
+
+#define	UFS_DIRRABLKS 0
+int ufs_dirrablks = UFS_DIRRABLKS;
+
+/*
+ * ufs_blkatoff: Return buffer with the contents of block "offset" from
+ * the beginning of directory "vp".  If "res" is non-zero, fill it in with
+ * a pointer to the remaining space in the directory.
+ */
+
+int
+ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
+{
+	struct inode *ip;
+	struct buf *bp;
+	daddr_t lbn;
+	int error;
+	const int dirrablks = ufs_dirrablks;
+	daddr_t blks[1 + dirrablks];
+	int blksizes[1 + dirrablks];
+	int run;
+	struct mount *mp = vp->v_mount;
+	const int bshift = mp->mnt_fs_bshift;
+	const int bsize = 1 << bshift;
+	off_t eof;
+
+	ip = VTOI(vp);
+	KASSERT(vp->v_size == ip->i_size);
+	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_READ);
+	lbn = offset >> bshift;
+	for (run = 0; run <= dirrablks;) {
+		const off_t curoff = lbn << bshift;
+		const int size = MIN(eof - curoff, bsize);
+
+		if (size == 0) {
+			break;
+		}
+		KASSERT(curoff < eof);
+		blks[run] = lbn;
+		blksizes[run] = size;
+		lbn++;
+		run++;
+		if (size != bsize) {
+			break;
+		}
+	}
+	KASSERT(run >= 1);
+	error = breadn(vp, blks[0], blksizes[0], &blks[1], &blksizes[1],
+	    run - 1, NOCRED, &bp);
+	if (error != 0) {
+		brelse(bp);
+		*bpp = NULL;
+		return error;
+	}
+	if (res) {
+		*res = (char *)bp->b_data + (offset & (bsize - 1));
+	}
+	*bpp = bp;
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.2.1 2006/01/15 10:02:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -83,6 +83,7 @@ extern void		_clrsoftintr(int);
 #define splbio()	_splraise(SPLBIO)
 #define splnet()	_splraise(SPLNET)
 #define spltty()	_splraise(SPLTTY)
+#define spllpt()	spltty()
 #define splserial()	_splraise(SPLTTY)
 #define splclock()	_splraise(SPLCLOCK)
 #define splvm()		splclock()

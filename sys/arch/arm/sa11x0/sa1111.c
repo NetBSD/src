@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.14 2005/12/11 12:16:51 christos Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.14.2.1 2006/01/15 10:02:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.14 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.14.2.1 2006/01/15 10:02:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.14 2005/12/11 12:16:51 christos Exp $")
 #include <sys/uio.h>
 
 #include <machine/bus.h>
-#ifdef hpcarm
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
-#endif
 
 #include <arm/sa11x0/sa11x0_reg.h>
 #include <arm/sa11x0/sa11x0_var.h>

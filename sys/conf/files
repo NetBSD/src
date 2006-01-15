@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.750 2005/12/29 14:53:47 tsutsui Exp $
+#	$NetBSD: files,v 1.750.2.1 2006/01/15 10:02:47 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1326,7 +1326,7 @@ file	net/if_tap.c			tap			needs-flag
 file	net/if_tun.c			tun			needs-flag
 file	net/if_vlan.c			vlan			needs-flag
 file	net/if_pppoe.c			pppoe			needs-flag
-file	net/pfil.c			pfil_hooks | ipfilter
+file	net/pfil.c			pfil_hooks | ipfilter | pf
 file	net/ppp-deflate.c		ppp & ppp_deflate
 file	net/ppp_tty.c			ppp
 file	net/radix.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.9 2005/12/28 19:09:29 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.9.2.1 2006/01/15 10:02:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,13 +43,13 @@
 #ifndef _SH3_LOCK_H_
 #define	_SH3_LOCK_H_
 
-static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
+static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *)) 
+static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
 
 static __inline void

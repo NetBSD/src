@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.101 2005/12/11 12:23:23 christos Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.101.2.1 2006/01/15 10:02:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.101 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.101.2.1 2006/01/15 10:02:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,6 +119,10 @@ static const struct pcmcia_product wdc_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_PANASONIC,
 	  PCMCIA_PRODUCT_PANASONIC_KXLC005,
 	  PCMCIA_CIS_PANASONIC_KXLC005 },
+
+	{ PCMCIA_VENDOR_SANDISK,
+	  PCMCIA_PRODUCT_SANDISK_SDCFB,
+	  PCMCIA_CIS_SANDISK_SDCFB },
 
 	/*
 	 * EXP IDE/ATAPI DVD Card use with some DVD players.

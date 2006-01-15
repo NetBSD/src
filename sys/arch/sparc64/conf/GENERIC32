@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.125 2005/12/20 13:02:13 mrg Exp $
+# 	$NetBSD: GENERIC32,v 1.125.2.1 2006/01/15 10:02:39 yamt Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.125 $"
+#ident 		"GENERIC-$Revision: 1.125.2.1 $"
 
 maxusers	64
 
@@ -292,20 +292,15 @@ cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 ## The following flags may be set for the NCR53c94 based esp driver:
 ##	bits 0-7:  disable disconnect/reselect for the corresponding target
 ##	bits 8-15: disable synchronous negotiation for target [bit-8]
+##	bits 16-23: disable tagged queuing for target [bit-16]
 
 ## sun4u on-board SCSI, and FSBE/S SBus SCSI cards, an NCR53c94 or
 ## equivalent behind an LSI Logic DMA controller
 
-# XXX - the esp driver has problems with tagged queueing.
-# To avoid these, tagged queueing has been disabled for the first 8 targets
-# by setting those bits to 1 (starting at bit 16, see esp(4) for details).
-# If you want tagged queueing, and are sure it works for you, set the flags
-# value to 0. CAVEAT: using tagged queueing currently can cause data loss!
-
 dma*	at sbus? slot ? offset ?		# SBus
-esp*	at dma? flags 0x00ff0000		# SBus
+esp*	at dma?					# SBus
 
-esp*	at sbus? slot ? offset ? flags 0x00ff0000
+esp*	at sbus? slot ? offset ?
 isp*	at sbus? slot ? offset ?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 siop*	at pci? 			# 53C8xx ("glm" compatible)
@@ -482,6 +477,7 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
 # XXX cause uncorrectable DMA error
 #pcn*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT

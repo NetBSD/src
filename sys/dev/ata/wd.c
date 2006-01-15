@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.315 2005/12/26 10:36:47 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.315.2.1 2006/01/15 10:02:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.315 2005/12/26 10:36:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.315.2.1 2006/01/15 10:02:48 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -645,10 +645,10 @@ wd_split_mod15_write(struct buf *bp)
 	return;
 
  done:
-	obp->b_flags |= (bp->b_flags & (B_EINTR|B_ERROR));
+	obp->b_flags |= bp->b_flags & B_ERROR;
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
-	pool_put(&bufpool, bp);
+	putiobuf(bp);
 	biodone(obp);
 	sc->openings++;
 	/* wddone() will call wdstart() */
@@ -673,7 +673,7 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 		struct buf *nbp;
 
 		/* already at splbio */
-		nbp = pool_get(&bufpool, PR_NOWAIT);
+		nbp = getiobuf_nowait();
 		if (__predict_false(nbp == NULL)) {
 			/* No memory -- fail the iop. */
 			bp->b_error = ENOMEM;
@@ -684,7 +684,6 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 			return;
 		}
 
-		BUF_INIT(nbp);
 		nbp->b_error = 0;
 		nbp->b_proc = bp->b_proc;
 		nbp->b_vp = NULLVP;

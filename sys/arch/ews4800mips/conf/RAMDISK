@@ -1,13 +1,66 @@
+# 	$NetBSD: RAMDISK,v 1.1.2.1 2006/01/15 10:02:37 yamt Exp $
 #
-# kernel config file for memory(RAM) disk
-#
-# 	$NetBSD: RAMDISK,v 1.1 2005/12/29 15:20:08 tsutsui Exp $
+# kernel config file with memory disk for installation
 #
 
 include 	"arch/ews4800mips/conf/GENERIC"
 
 # Enable the hooks used for initializing the root memory-disk.
+makeoptions	COPTS="-Os -mmemcpy"	# optimize for space
+
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks
+
+options 	PIPE_SOCKETPAIR
+options 	MALLOC_NOINLINE
+options 	NFS_V2_ONLY
+options 	FFS_NO_SNAPSHOT
+options 	NO_DEV_PTM
+
+# disable some options to shrink kernel
+no options 	INCLUDE_CONFIG_FILE
+no options 	NTP
+no options 	KTRACE
+no options 	SYSTRACE
+no options 	SYSVMSG
+no options 	SYSVSEM
+no options 	SYSVSHM
+no options 	P1003_1B_SEMAPHORE
+no options 	SYSCTL_INCLUDE_DESCR
+
+no file-system	EXT2FS
+no file-system	FDESC
+no file-system	NULLFS
+no file-system	OVERLAY
+no file-system	PORTAL
+no file-system	UMAPFS
+no file-system	UNION
+no file-system	PTYFS
+
+no options 	QUOTA
+no options 	NETATALK
+no options 	PPP_FILTER
+no options 	SCSIVERBOSE
+
+no ewsms0 at zsc?
+no wsmouse* at ewsms?
+
+no ch*	at scsibus?
+no ses*	at scsibus?
+no ss*	at scsibus?
+no uk*	at scsibus?
+
+no pseudo-device	vnd
+no pseudo-device	fss
+no pseudo-device	ipfilter
+no pseudo-device	strip
+no pseudo-device	tap
+no pseudo-device	tun
+no pseudo-device	gre
+no pseudo-device	gif
+no pseudo-device	vlan
+no pseudo-device	bridge
+no pseudo-device	clockctl
+no pseudo-device	ksyms

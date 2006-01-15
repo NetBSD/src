@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.148 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.148.2.1 2006/01/15 10:02:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.148 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.148.2.1 2006/01/15 10:02:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,8 +182,10 @@ struct simplelock bqueue_slock = SIMPLELOCK_INITIALIZER;
 
 /*
  * Buffer pool for I/O buffers.
+ * Access to this pool must be protected with splbio().
  */
-struct pool bufpool;
+static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
+
 
 /* XXX - somewhat gross.. */
 #if MAXBSIZE == 0x2000
@@ -384,11 +386,6 @@ bufinit(void)
 			panic("bufinit: cannot allocate submap");
 	} else
 		buf_map = kernel_map;
-
-	/*
-	 * Initialize the buffer pools.
-	 */
-	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
 
 	/* On "small" machines use small pool page sizes where possible */
 	use_std = (physmem < atop(16*1024*1024));
@@ -1169,6 +1166,15 @@ allocbuf(struct buf *bp, int size, int preserve)
 		 * Need to trim overall memory usage.
 		 */
 		while (buf_canrelease()) {
+			if (curcpu()->ci_schedstate.spc_flags &
+			    SPCF_SHOULDYIELD) {
+				simple_unlock(&bqueue_slock);
+				splx(s);
+				preempt(1);
+				s = splbio();
+				simple_lock(&bqueue_slock);
+			}
+
 			if (buf_trim() == 0)
 				break;
 		}
@@ -1350,11 +1356,8 @@ biowait(struct buf *bp)
 	while (!ISSET(bp->b_flags, B_DONE | B_DELWRI))
 		ltsleep(bp, PRIBIO + 1, "biowait", 0, &bp->b_interlock);
 
-	/* check for interruption of I/O (e.g. via NFS), then errors. */
-	if (ISSET(bp->b_flags, B_EINTR)) {
-		CLR(bp->b_flags, B_EINTR);
-		error = EINTR;
-	} else if (ISSET(bp->b_flags, B_ERROR))
+	/* check errors. */
+	if (ISSET(bp->b_flags, B_ERROR))
 		error = bp->b_error ? bp->b_error : EIO;
 	else
 		error = 0;
@@ -1731,3 +1734,135 @@ vfs_bufstats(void)
 	}
 }
 #endif /* DEBUG */
+
+/* ------------------------------ */
+
+static POOL_INIT(bufiopool, sizeof(struct buf), 0, 0, 0, "biopl", NULL);
+
+static struct buf *
+getiobuf1(int prflags)
+{
+	struct buf *bp;
+	int s;
+
+	s = splbio();
+	bp = pool_get(&bufiopool, prflags);
+	splx(s);
+	if (bp != NULL) {
+		BUF_INIT(bp);
+	}
+	return bp;
+}
+
+struct buf *
+getiobuf(void)
+{
+
+	return getiobuf1(PR_WAITOK);
+}
+
+struct buf *
+getiobuf_nowait(void)
+{
+
+	return getiobuf1(PR_NOWAIT);
+}
+
+void
+putiobuf(struct buf *bp)
+{
+	int s;
+
+	s = splbio();
+	pool_put(&bufiopool, bp);
+	splx(s);
+}
+
+/*
+ * nestiobuf_iodone: b_iodone callback for nested buffers.
+ */
+
+static void
+nestiobuf_iodone(struct buf *bp)
+{
+	struct buf *mbp = bp->b_private;
+	int error;
+	int donebytes = bp->b_bcount; /* XXX ignore b_resid */
+
+	KASSERT(bp->b_bufsize == bp->b_bcount);
+	KASSERT(mbp != bp);
+	if ((bp->b_flags & B_ERROR) != 0) {
+		error = bp->b_error;
+	} else {
+		KASSERT(bp->b_resid == 0);
+		error = 0;
+	}
+	putiobuf(bp);
+	nestiobuf_done(mbp, donebytes, error);
+}
+
+/*
+ * nestiobuf_setup: setup a "nested" buffer.
+ *
+ * => 'mbp' is a "master" buffer which is being divided into sub pieces.
+ * => 'bp' should be a buffer allocated by getiobuf or getiobuf_nowait.
+ * => 'offset' is a byte offset in the master buffer.
+ * => 'size' is a size in bytes of this nested buffer.
+ */
+
+void
+nestiobuf_setup(struct buf *mbp, struct buf *bp, int offset, size_t size)
+{
+	const int b_read = mbp->b_flags & B_READ;
+	struct vnode *vp = mbp->b_vp;
+
+	KASSERT(mbp->b_bcount >= offset + size);
+	bp->b_vp = vp;
+	bp->b_flags = B_BUSY | B_CALL | B_ASYNC | b_read;
+	bp->b_iodone = nestiobuf_iodone;
+	bp->b_data = mbp->b_data + offset;
+	bp->b_resid = bp->b_bcount = size;
+#if defined(DIAGNOSTIC)
+	bp->b_bufsize = bp->b_bcount;
+#endif /* defined(DIAGNOSTIC) */
+	bp->b_private = mbp;
+	BIO_COPYPRIO(bp, mbp);
+	if (!b_read && vp != NULL) {
+		int s;
+
+		s = splbio();
+		V_INCR_NUMOUTPUT(vp);
+		splx(s);
+	}
+}
+
+/*
+ * nestiobuf_done: propagate completion to the master buffer.
+ *
+ * => 'donebytes' specifies how many bytes in the 'mbp' is completed.
+ * => 'error' is an errno(2) that 'donebytes' has been completed with.
+ */
+
+void
+nestiobuf_done(struct buf *mbp, int donebytes, int error)
+{
+	int s;
+
+	if (donebytes == 0) {
+		return;
+	}
+	s = splbio();
+	KASSERT(mbp->b_resid >= donebytes);
+	if (error) {
+		mbp->b_flags |= B_ERROR;
+		mbp->b_error = error;
+	}
+	mbp->b_resid -= donebytes;
+	if (mbp->b_resid == 0) {
+		if ((mbp->b_flags & B_ERROR) != 0) {
+			mbp->b_resid = mbp->b_bcount; /* be conservative */
+		}
+		biodone(mbp);
+	}
+	splx(s);
+}

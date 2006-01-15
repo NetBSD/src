@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.32 2005/12/11 12:20:53 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.32.2.1 2006/01/15 10:02:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.32 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.32.2.1 2006/01/15 10:02:47 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -296,7 +296,6 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	caddr_t	addr;
 	caddr_t	newaddr;
 	daddr_t	bn;
-	int s;
 
 	DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
 	disk_busy(&dksc->sc_dkdev); /* XXX: put in dksubr.c */
@@ -308,9 +307,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	 * we can fail quickly if they are unavailable.
 	 */
 
-	s = splbio();
-	nbp = pool_get(&bufpool, PR_NOWAIT);
-	splx(s);
+	nbp = getiobuf_nowait();
 	if (nbp == NULL) {
 		disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
 		return -1;
@@ -325,9 +322,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	if ((bp->b_flags & B_READ) == 0) {
 		newaddr = cgd_getdata(dksc, bp->b_bcount);
 		if (!newaddr) {
-			s = splbio();
-			pool_put(&bufpool, nbp);
-			splx(s);
+			putiobuf(nbp);
 			disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
 			return -1;
 		}
@@ -335,7 +330,6 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 		    DEV_BSIZE, CGD_CIPHER_ENCRYPT);
 	}
 
-	BUF_INIT(nbp);
 	nbp->b_data = newaddr;
 	nbp->b_flags = bp->b_flags | B_CALL;
 	nbp->b_iodone = cgdiodone;
@@ -391,7 +385,7 @@ cgdiodone(struct buf *nbp)
 	if (nbp->b_data != obp->b_data)
 		cgd_putdata(dksc, nbp->b_data);
 
-	pool_put(&bufpool, nbp);
+	putiobuf(nbp);
 
 	/* Request is complete for whatever reason */
 	obp->b_resid = 0;

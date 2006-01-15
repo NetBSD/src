@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.49 2005/12/29 22:17:09 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.49.2.1 2006/01/15 10:03:04 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.49 2005/12/29 22:17:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.49.2.1 2006/01/15 10:03:04 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -699,7 +699,7 @@ ieee80211_end_scan(struct ieee80211com *ic)
 		 * Decrement the failure counts so entries will be
 		 * reconsidered the next time around.  We really want
 		 * to do this only for sta's where we've previously
-		 had some success.
+		 * had some success.
 		 */
 		IEEE80211_NODE_LOCK(nt);
 		TAILQ_FOREACH(ni, &nt->nt_node, ni_list)

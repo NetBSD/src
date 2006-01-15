@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.17 2005/12/11 12:21:14 christos Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.17.2.1 2006/01/15 10:02:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.17 2005/12/11 12:21:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.17.2.1 2006/01/15 10:02:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -286,13 +286,9 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *tbuf,
     size_t size, int bflags)
 {
 	struct buf *bp;
-	int error, s;
+	int error;
 
-	s = splbio();
-	bp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
-	BUF_INIT(bp);
-
+	bp = getiobuf();
 	bp->b_vp = vp;
 	bp->b_blkno = blkno;
 	bp->b_bcount = bp->b_resid = size;
@@ -303,8 +299,6 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *tbuf,
 	VOP_STRATEGY(vp, bp);
 	error = biowait(bp);
 
-	s = splbio();
-	pool_put(&bufpool, bp);
-	splx(s);
+	putiobuf(bp);
 	return (error);
 }

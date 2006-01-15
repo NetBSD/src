@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.59 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.59.2.1 2006/01/15 10:02:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1148,7 +1148,7 @@ LEAF(mips1_TBIS)
 /*
  * void mips1_TBIAP(int sizeofTLB)
  *
- * Invalidate TLB entries belong to per process user spaces while
+ * Invalidate TLB entries belonging to per process user spaces while
  * leaving entries for kernel space marked global intact.
  */
 LEAF(mips1_TBIAP)

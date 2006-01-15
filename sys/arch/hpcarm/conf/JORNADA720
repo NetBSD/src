@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.49 2005/12/20 05:35:28 thorpej Exp $
+#	$NetBSD: JORNADA720,v 1.49.2.1 2006/01/15 10:02:37 yamt Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.49 $"
+#ident 		"GENERIC-$Revision: 1.49.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -216,6 +216,7 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 #lpt*	at pioc? offset 0x0378 irq -1
 #lpt*	at pioc? offset 0x03bc irq -1
 
+# wscons options
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=2
 # see arch/hpcarm/dev/j720kbdmap.c for implemented layouts
@@ -224,6 +225,16 @@ options 	FONT_VT220L8x10
 # The X server requires theses two options
 options         WSDISPLAY_COMPAT_USL
 options         WSDISPLAY_COMPAT_RAWKBD
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
+#options 	WS_KERNEL_FG=WSCOL_WHITE
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+#options 	WS_KERNEL_COLATTR="(0)"
+#options 	WS_KERNEL_MONOATTR="(0)"
 
 # physical console
 sed0		at saip?

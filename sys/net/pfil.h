@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.26 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: pfil.h,v 1.26.2.1 2006/01/15 10:02:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -85,6 +85,8 @@ struct pfil_head {
 };
 typedef struct pfil_head pfil_head_t;
 
+#ifdef _KERNEL
+
 int	pfil_run_hooks(struct pfil_head *, struct mbuf **, struct ifnet *,
 	    int);
 
@@ -114,6 +116,8 @@ pfil_hook_get(int dir, struct pfil_head *ph)
 		return (NULL);
 }
 
+#endif /* _KERNEL */
+
 /* XXX */
 #if defined(_KERNEL_OPT)
 #include "ipfilter.h"
@@ -129,6 +133,6 @@ pfil_hook_get(int dir, struct pfil_head *ph)
 #ifdef _KERNEL
 /* in sys/net/if.c */
 extern struct pfil_head if_pfil; /* packet filtering hook for interfaces */
-#endif
+#endif /* _KERNEL */
 
 #endif /* !_NET_PFIL_H_ */

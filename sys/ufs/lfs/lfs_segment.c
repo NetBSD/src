@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.168 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.168.2.1 2006/01/15 10:03:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.168 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.168.2.1 2006/01/15 10:03:05 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1703,7 +1703,6 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 {
 	struct lfs_cluster *cl;
 	struct buf **bpp, *bp;
-	int s;
 
 	ASSERT_SEGLOCK(fs);
 	cl = (struct lfs_cluster *)pool_get(&fs->lfs_clpool, PR_WAITOK);
@@ -1722,12 +1721,7 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 	}
 
 	/* Get an empty buffer header, or maybe one with something on it */
-	s = splbio();
-	bp = pool_get(&bufpool, PR_WAITOK); /* XXX should use lfs_malloc? */
-	splx(s);
-	memset(bp, 0, sizeof(*bp));
-	BUF_INIT(bp);
-
+	bp = getiobuf();
 	bp->b_flags = B_BUSY | B_CALL;
 	bp->b_dev = NODEV;
 	bp->b_blkno = bp->b_lblkno = addr;
@@ -2339,9 +2333,7 @@ lfs_cluster_aiodone(struct buf *bp)
 	/* Fix up the cluster buffer, and release it */
 	if (cl->flags & LFS_CL_MALLOC)
 		lfs_free(fs, bp->b_data, LFS_NB_CLUSTER);
-	s = splbio();
-	pool_put(&bufpool, bp); /* XXX should use lfs_free? */
-	splx(s);
+	putiobuf(bp);
 
 	/* Note i/o done */
 	if (cl->flags & LFS_CL_SYNC) {
