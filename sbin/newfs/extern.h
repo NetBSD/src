@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2003/09/11 12:19:44 dsl Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2006/01/15 19:49:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -36,6 +36,7 @@ void mkfs(struct partition *, const char *, int, int, mode_t, uid_t, gid_t);
 extern int	mfs;		/* run as the memory based filesystem */
 extern int	Nflag;		/* run mkfs without writing file system */
 extern int	Oflag;		/* format as an 4.3BSD file system */
+extern int	verbosity;	/* amount of printf() output */
 extern int64_t	fssize;		/* file system size */
 extern int	sectorsize;	/* bytes/sector */
 extern int	rpm;		/* revolutions/minute of drive */

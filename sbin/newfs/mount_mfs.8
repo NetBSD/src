@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_mfs.8,v 1.13 2005/08/05 13:32:06 jmmv Exp $
+.\"	$NetBSD: mount_mfs.8,v 1.14 2006/01/15 19:49:25 dsl Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd September 11, 2003
+.Dd January 15, 2006
 .Dt MOUNT_MFS 8
 .Os
 .Sh NAME
@@ -51,6 +51,7 @@
 .Op Fl p Ar permissions
 .Op Fl s Ar size
 .Op Fl u Ar username
+.Op Fl V Ar verbose
 .Ar special node
 .Sh DESCRIPTION
 .Nm
@@ -211,6 +212,27 @@ after suffix interpretation.
 .It Fl u Ar username
 This specifies the user name or user id of the root
 inode of the file system.
+.It Fl V Ar verbose
+This controls the amount of information written to stdout:
+.Bl -tag -width 3n -offset indent -compact
+.It 0
+No output
+.It 1
+Overall size and cylinder group details.
+.It 2
+A progress bar (dots ending at right hand margin).
+.It 3
+The first few super-block backup sector numbers are displayed before the
+progress bar.
+.It 4
+All the super-block backup sector numbers are displayed (no progress bar).
+.El
+The default is 0.
+If
+.Fl N
+is specifed
+.Nm
+stops before outputting the progress bar.
 .El
 .Sh NOTES
 The owner and group ids of the root node of the new file system
