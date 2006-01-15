@@ -1,4 +1,34 @@
-/*	$NetBSD: xencons.c,v 1.10 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: xencons.c,v 1.11 2006/01/15 22:09:52 bouyer Exp $	*/
+
+/*
+ * Copyright (c) 2006 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 
 /*
  *
@@ -33,7 +63,9 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.10 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.11 2006/01/15 22:09:52 bouyer Exp $");
+
+#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -47,12 +79,27 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.10 2005/12/11 12:19:50 christos Exp $"
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
+#ifdef XEN3
+#include <sys/param.h>
+#include <uvm/uvm.h>
+#include <machine/pmap.h>
+#include <machine/xen3-public/io/console.h>
+#else
 #include <machine/ctrl_if.h>
+#endif
 
 #include <dev/cons.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>	/* XXX for db_max_line */
+#endif
+
+#undef XENDEBUG
+ 
+#ifdef XENDEBUG
+#define XENPRINTK(x) printk x
+#else 
+#define XENPRINTK(x)
 #endif
 
 static int xencons_isconsole = 0;
@@ -71,11 +118,17 @@ struct xencons_softc {
 	struct	device sc_dev;
 	struct	tty *sc_tty;
 	int polling;
+#ifndef XEN3
 	/* circular buffer when polling */
 	char buf[XENCONS_BURST];
 	volatile int buf_write;
 	volatile int buf_read;
+#endif
 };
+#ifdef XEN3
+//volatile struct xencons_interface *xencons_interface;
+struct xencons_interface *xencons_interface;
+#endif
 
 CFATTACH_DECL(xencons, sizeof(struct xencons_softc),
     xencons_match, xencons_attach, NULL, NULL);
@@ -98,7 +151,11 @@ const struct cdevsw xencons_cdevsw = {
 };
 
 
+#ifdef XEN3
+static int xencons_handler(void *);
+#else
 static void xencons_rx(ctrl_msg_t *, unsigned long);
+#endif
 int xenconscn_getc(dev_t);
 void xenconscn_putc(dev_t, int);
 void xenconscn_pollc(dev_t, int);
@@ -164,8 +221,16 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 				    "can't register xencons_intr\n");
 			hypervisor_enable_event(evtch);
 		} else {
+#ifdef XEN3
+			printf("%s: using event channel %d\n",
+			    sc->sc_dev.dv_xname, xen_start_info.console_evtchn);
+			event_set_handler(xen_start_info.console_evtchn,
+			    xencons_handler, sc, IPL_TTY, "xencons");
+			hypervisor_enable_event(xen_start_info.console_evtchn);
+#else
 			(void)ctrl_if_register_receiver(CMSG_CONSOLE,
 			    xencons_rx, 0);
+#endif
 		}
 		xencons_console_device = sc;
 		cn_init_magic(&xencons_cnm_state);
@@ -292,7 +357,7 @@ void
 xencons_start(struct tty *tp)
 {
 	struct clist *cl;
-	int s, len;
+	int s;
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP))
@@ -306,12 +371,41 @@ xencons_start(struct tty *tp)
 	 */
 	cl = &tp->t_outq;
 	if (xen_start_info.flags & SIF_INITDOMAIN) {
+		int len;
 		u_char buf[XENCONS_BURST+1];
 
 		len = q_to_b(cl, buf, XENCONS_BURST);
 		(void)HYPERVISOR_console_io(CONSOLEIO_write, len, buf);
 	} else {
+#ifdef XEN3
+		XENCONS_RING_IDX cons, prod, len;
+
+#define XNC_OUT (xencons_interface->out)
+		cons = xencons_interface->out_cons;
+		prod = xencons_interface->out_prod;
+		while (prod != cons + sizeof(xencons_interface->out)) {
+			if (MASK_XENCONS_IDX(prod, XNC_OUT) <
+			    MASK_XENCONS_IDX(cons, XNC_OUT)) {
+				len = MASK_XENCONS_IDX(cons, XNC_OUT) -
+				    MASK_XENCONS_IDX(prod, XNC_OUT);
+			} else {
+				len = sizeof(XNC_OUT) -
+				    MASK_XENCONS_IDX(prod, XNC_OUT);
+			}
+			len = q_to_b(cl,
+			    &XNC_OUT[MASK_XENCONS_IDX(prod, XNC_OUT)], len);
+			if (len == 0)
+				break;
+			prod = prod + len;
+		}
+		x86_lfence();
+		xencons_interface->out_prod = prod;
+		x86_lfence();
+		hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+#undef XNC_OUT
+#else /* XEN3 */
 		ctrl_msg_t msg;
+		int len;
 
 		len = q_to_b(cl, msg.msg, sizeof(msg.msg));
 		msg.type = CMSG_CONSOLE;
@@ -322,6 +416,7 @@ xencons_start(struct tty *tp)
 			/* XXX check return value and queue wait for space
 			 * thread/softint */
 		}
+#endif /* XEN3 */
 	}
 
 	s = spltty();
@@ -348,6 +443,42 @@ xencons_stop(struct tty *tp, int flag)
 }
 
 
+#ifdef XEN3
+/* Non-privileged console interrupt routine */
+static int 
+xencons_handler(void *arg)
+{
+	struct xencons_softc *sc = arg;
+	XENCONS_RING_IDX cons, prod, len;
+	int s = spltty();
+
+#define XNC_IN (xencons_interface->in)
+
+	cons = xencons_interface->in_cons;
+	prod = xencons_interface->in_prod;
+	x86_lfence();
+	while (cons != prod) {
+		if (MASK_XENCONS_IDX(cons, XNC_IN) <
+		    MASK_XENCONS_IDX(prod, XNC_IN))
+			len = MASK_XENCONS_IDX(prod, XNC_IN) -
+			    MASK_XENCONS_IDX(cons, XNC_IN);
+		else
+			len = sizeof(XNC_IN) - MASK_XENCONS_IDX(cons, XNC_IN);
+
+		xencons_tty_input(sc, &XNC_IN[MASK_XENCONS_IDX(cons, XNC_IN)],
+		    len);
+		cons += len;
+	}
+	x86_lfence();
+	xencons_interface->in_cons = cons;
+	x86_lfence();
+	hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+	splx(s);
+	return 1;
+#undef XNC_IN
+}
+
+#else
 /* Non-privileged receive callback. */
 static void
 xencons_rx(ctrl_msg_t *msg, unsigned long id)
@@ -392,6 +523,7 @@ xencons_rx(ctrl_msg_t *msg, unsigned long id)
 	msg->length = 0;
 	ctrl_if_send_response(msg);
 }
+#endif /* !XEN3 */
 
 void
 xencons_tty_input(struct xencons_softc *sc, char* buf, int len)
@@ -433,7 +565,11 @@ xenconscn_attach()
 
 	cn_tab = &xencons;
 
+#ifdef XEN3
+	/* console ring mapped in locore.S */
+#else /* XEN3 */
 	ctrl_if_early_init();
+#endif /* XEN3 */
 
 	xencons_isconsole = 1;
 }
@@ -441,8 +577,12 @@ xenconscn_attach()
 int
 xenconscn_getc(dev_t dev)
 {
-	int ret;
 	char c;
+#ifdef XEN3
+	XENCONS_RING_IDX cons, prod;
+#else
+	int ret;
+#endif
 
 	if (xencons_console_device == NULL) {
 		printf("xenconscn_getc(): not console\n");
@@ -459,7 +599,23 @@ xenconscn_getc(dev_t dev)
 		cn_check_magic(dev, c, xencons_cnm_state);
 		return c;
 	}
-		
+
+#ifdef XEN3
+	cons = xencons_interface->in_cons;
+	prod = xencons_interface->in_prod;
+	x86_lfence();
+	while (cons == prod) {
+		cons = xencons_interface->in_cons;
+		prod = xencons_interface->in_prod;
+		x86_lfence();
+	}
+
+	c = xencons_interface->in[MASK_XENCONS_IDX(xencons_interface->in_cons,
+	    xencons_interface->in)];
+	xencons_interface->in_cons++;
+	cn_check_magic(dev, c, xencons_cnm_state);
+	return c;
+#else /* XEN3 */
 	while (xencons_console_device->buf_write ==
 	    xencons_console_device->buf_read) {
 		ctrl_if_console_poll();
@@ -470,20 +626,42 @@ xenconscn_getc(dev_t dev)
 	if (xencons_console_device->buf_read == XENCONS_BURST)
 		xencons_console_device->buf_read = 0;
 	return ret;
+#endif /* XEN3 */
 }
 
 void
 xenconscn_putc(dev_t dev, int c)
 {
+#ifdef XEN3
+	XENCONS_RING_IDX cons, prod;
+	if (xen_start_info.flags & SIF_INITDOMAIN) {
+#else
 	extern int ctrl_if_evtchn;
-
 	if (xen_start_info.flags & SIF_INITDOMAIN ||
 		ctrl_if_evtchn == -1) {
+#endif
 		u_char buf[1];
 
 		buf[0] = c;
 		(void)HYPERVISOR_console_io(CONSOLEIO_write, 1, buf);
 	} else {
+		XENPRINTK(("xenconscn_putc(%c)\n", c));
+#ifdef XEN3
+		cons = xencons_interface->out_cons;
+		prod = xencons_interface->out_prod;
+		x86_lfence();
+		while (prod == cons + sizeof(xencons_interface->out)) {
+			cons = xencons_interface->out_cons;
+			prod = xencons_interface->out_prod;
+			x86_lfence();
+		}
+		xencons_interface->out[MASK_XENCONS_IDX(xencons_interface->out_prod,
+		    xencons_interface->out)] = c;
+		x86_lfence();
+		xencons_interface->out_prod++;
+		x86_lfence();
+		hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+#else
 		ctrl_msg_t msg;
 
 		msg.type = CMSG_CONSOLE;
@@ -493,6 +671,7 @@ xenconscn_putc(dev_t dev, int c)
 		while (ctrl_if_send_message_noblock(&msg, NULL, 0) == EAGAIN) {
 			ctrl_if_console_poll();
 		}
+#endif /* !XEN3 */
 	}
 }
 
@@ -501,10 +680,12 @@ xenconscn_pollc(dev_t dev, int on)
 {
 	if (xencons_console_device)
 		xencons_console_device->polling = on;
+#ifndef XEN3
 	if (on) {
 		xencons_console_device->buf_write = 0;
 		xencons_console_device->buf_read = 0;
 	}
+#endif
 }
 
 /*
@@ -519,4 +700,3 @@ xencons_param(struct tty *tp, struct termios *t)
 	tp->t_cflag = t->c_cflag;
 	return (0);
 }
-

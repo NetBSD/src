@@ -324,6 +324,10 @@ typedef struct vcpu_info {
     vcpu_time_info_t time;
 } vcpu_info_t; /* 64 bytes (x86) */
 
+/* Xen2 compat */
+#define vcpu_data vcpu_info
+#define evtchn_pending_sel vcpu_info[0].evtchn_pending_sel /* XXX smp */
+
 /*
  * Xen/kernel shared data -- pointer provided in start_info.
  * NB. We expect that this struct is smaller than a page.

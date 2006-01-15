@@ -1,4 +1,34 @@
-/*	$NetBSD: xen_machdep.c,v 1.14 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.15 2006/01/15 22:09:51 bouyer Exp $	*/
+
+/*
+ * Copyright (c) 2006 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 
 /*
  *
@@ -33,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.14 2005/12/11 12:19:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.15 2006/01/15 22:09:51 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -48,7 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.14 2005/12/11 12:19:48 christos Ex
 #include <machine/gdt.h>
 #include <machine/xenfunc.h>
 
-/* #define	XENDEBUG */
+#undef	XENDEBUG
+/* #define XENDEBUG_SYNC */
 /* #define	XENDEBUG_LOW */
 
 #ifdef XENDEBUG
@@ -69,6 +100,14 @@ volatile shared_info_t *HYPERVISOR_shared_info;
 union start_info_union start_info_union;
 
 void xen_failsafe_handler(void);
+
+#ifdef XEN3
+#define HYPERVISOR_mmu_update_self(req, count, success_count) \
+	HYPERVISOR_mmu_update((req), (count), (success_count), DOMID_SELF)
+#else
+#define HYPERVISOR_mmu_update_self(req, count, success_count) \
+	HYPERVISOR_mmu_update((req), (count), (success_count))
+#endif
 
 void
 xen_failsafe_handler(void)
@@ -235,10 +274,6 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 
 
 
-
-
-#define XEN_PAGE_OFFSET 0xC0100000
-
 static pd_entry_t
 xpmap_get_bootpde(paddr_t va)
 {
@@ -326,8 +361,8 @@ xpmap_init(void)
 
 	xen_pdp = (pd_entry_t *)xen_start_info.pt_base;
 
-	XENPRINTK(("text %p data %p bss %p end %p esym %p\n", &kernel_text,
-		   &_etext, &__bss_start, &end, esym));
+	/*XENPRINTK(("text %p data %p bss %p end %p esym %p\n", &kernel_text,
+		   &_etext, &__bss_start, &end, esym));*/
 	XENPRINTK(("xpmap_init PDP %p nkpde %d upages %d xen_PDP %p p2m-map %p\n",
 		   (void *)PDPpaddr, nkpde, UPAGES, xen_pdp,
 		   xpmap_phys_to_machine_mapping));
@@ -381,9 +416,6 @@ xpmap_init(void)
 		for (j = 0; j < PTES_PER_PTP; j++) {
 			if ((ptp[j] & PG_V) == 0)
 				continue;
-			if (ptp[j] == 0xffffffff)
-				ptp[j] = xen_start_info.shared_info |
-					(PG_V|PG_RW);
 			if (ptp[j] >= KERNTEXTOFF) {
 				pte = ptp[j];
 				ptp[j] = (pte & ~PG_FRAME) |
@@ -474,13 +506,13 @@ find_pmap_mem_end(vaddr_t va)
 	while (start + 1 < end) {
 		r.val = (((start + end) / 2) << PAGE_SHIFT) | PG_V;
 
-		if (HYPERVISOR_mmu_update(&r, 1, &ok) < 0)
+		if (HYPERVISOR_mmu_update_self(&r, 1, &ok) < 0)
 			end = (start + end) / 2;
 		else
 			start = (start + end) / 2;
 	}
 	r.val = old;
-	if (HYPERVISOR_mmu_update(&r, 1, &ok) < 0)
+	if (HYPERVISOR_mmu_update_self(&r, 1, &ok) < 0)
 		printf("pmap_mem_end find: old update failed %08x\n",
 		    old);
 
@@ -530,25 +562,7 @@ void xpq_debug_dump(void);
 #endif
 
 #define XPQUEUE_SIZE 2048
-typedef union xpq_queue {
-	struct {
-		uint32_t ptr;
-		uint32_t val;
-	} cmd;
-	struct {
-		pd_entry_t *ptr;
-		pd_entry_t val;
-	} pde;
-	struct {
-		pt_entry_t *ptr;
-		pt_entry_t val;
-	} pte;
-	struct {
-		paddr_t ptr;
-		uint32_t val;
-	} pa;
-} xpq_queue_t;
-static xpq_queue_t xpq_queue[XPQUEUE_SIZE];
+static mmu_update_t xpq_queue[XPQUEUE_SIZE];
 static int xpq_idx = 0;
 
 void
@@ -558,10 +572,10 @@ xpq_flush_queue()
 
 	XENPRINTK2(("flush queue %p entries %d\n", xpq_queue, xpq_idx));
 	for (i = 0; i < xpq_idx; i++)
-		XENPRINTK2(("%d: %p %08x\n", i, xpq_queue[i].pde.ptr,
-		    xpq_queue[i].pde.val));
+		XENPRINTK2(("%d: %p %08x\n", i, (u_int)xpq_queue[i].ptr,
+		    (u_int)xpq_queue[i].val));
 	if (xpq_idx != 0 &&
-	    HYPERVISOR_mmu_update((mmu_update_t *)xpq_queue, xpq_idx, &ok) < 0)
+	    HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok) < 0)
 		panic("HYPERVISOR_mmu_update failed\n");
 	xpq_idx = 0;
 }
@@ -579,77 +593,174 @@ void
 xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
 {
 	XENPRINTK2(("xpq_queue_machphys_update ma=%p pa=%p\n", (void *)ma, (void *)pa));
-	xpq_queue[xpq_idx].pa.ptr = ma | MMU_MACHPHYS_UPDATE;
-	xpq_queue[xpq_idx].pa.val = (pa - XPMAP_OFFSET) >> PAGE_SHIFT;
+	xpq_queue[xpq_idx].ptr = ma | MMU_MACHPHYS_UPDATE;
+	xpq_queue[xpq_idx].val = (pa - XPMAP_OFFSET) >> PAGE_SHIFT;
 	xpq_increment_idx();
-}
-
-void
-xpq_queue_invlpg(vaddr_t va)
-{
-
-	XENPRINTK2(("xpq_queue_invlpg %p\n", (void *)va));
-	xpq_queue[xpq_idx].pa.ptr = (va & PG_FRAME) | MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].pa.val = MMUEXT_INVLPG;
-	xpq_increment_idx();
+#ifdef XENDEBUG_SYNC
+	xpq_flush_queue();
+#endif
 }
 
 void
 xpq_queue_pde_update(pd_entry_t *ptr, pd_entry_t val)
 {
 
-	xpq_queue[xpq_idx].pde.ptr = ptr;
-	xpq_queue[xpq_idx].pde.val = val;
+	xpq_queue[xpq_idx].ptr = (paddr_t)ptr;
+	xpq_queue[xpq_idx].val = val;
 	xpq_increment_idx();
+#ifdef XENDEBUG_SYNC
+	xpq_flush_queue();
+#endif
 }
 
 void
 xpq_queue_pte_update(pt_entry_t *ptr, pt_entry_t val)
 {
 
-	xpq_queue[xpq_idx].pte.ptr = ptr;
-	xpq_queue[xpq_idx].pte.val = val;
+	xpq_queue[xpq_idx].ptr = (paddr_t)ptr;
+	xpq_queue[xpq_idx].val = val;
 	xpq_increment_idx();
-}
-
-int
-xpq_update_foreign(pt_entry_t *ptr, pt_entry_t val, int dom)
-{
-	xpq_queue_t xpq_up[3];
-
-	xpq_up[0].cmd.ptr = MMU_EXTENDED_COMMAND;
-	xpq_up[0].cmd.val = MMUEXT_SET_FOREIGNDOM | (dom << 16);
-	xpq_up[1].pte.ptr = ptr;
-	xpq_up[1].pte.val = val;
-#if 0
-	xpq_up[2].cmd.ptr = MMU_EXTENDED_COMMAND;
-	xpq_up[2].cmd.val = MMUEXT_CLEAR_FOREIGNDOM;
-	if (HYPERVISOR_mmu_update((mmu_update_t *)xpq_up, 3, NULL) < 0)
-		return EFAULT;
-#else
-	if (HYPERVISOR_mmu_update((mmu_update_t *)xpq_up, 2, NULL) < 0)
-		return EFAULT;
+#ifdef XENDEBUG_SYNC
+	xpq_flush_queue();
 #endif
-	return (0);
 }
 
 void
 xpq_queue_unchecked_pte_update(pt_entry_t *ptr, pt_entry_t val)
 {
 
-	xpq_queue[xpq_idx].pa.ptr = (paddr_t)ptr | MMU_NORMAL_PT_UPDATE;
+	xpq_queue[xpq_idx].ptr = (paddr_t)ptr | MMU_NORMAL_PT_UPDATE;
 	/* XXXcl UNCHECKED_PT_UPDATE */
-	xpq_queue[xpq_idx].pa.val = val;
+	xpq_queue[xpq_idx].val = val;
 	xpq_increment_idx();
+#ifdef XENDEBUG_SYNC
+	xpq_flush_queue();
+#endif
 }
 
+#ifdef XEN3
+void
+xpq_queue_pt_switch(paddr_t pa)
+{
+	struct mmuext_op op;
+	xpq_flush_queue();
+
+	XENPRINTK2(("xpq_queue_pt_switch: %p %p\n", (void *)pa, (void *)pa));
+	op.cmd = MMUEXT_NEW_BASEPTR;
+	op.arg1.mfn = pa >> PAGE_SHIFT;
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic("xpq_queue_pt_switch");
+}
+
+void
+xpq_queue_pin_table(paddr_t pa, int type)
+{
+	struct mmuext_op op;
+	xpq_flush_queue();
+
+	XENPRINTK2(("xpq_queue_pin_table: %p %p\n", (void *)pa, (void *)pa));
+	op.arg1.mfn = pa >> PAGE_SHIFT;
+
+	switch (type) {
+	case XPQ_PIN_L1_TABLE:
+		op.cmd = MMUEXT_PIN_L1_TABLE;
+		break;
+	case XPQ_PIN_L2_TABLE:
+		op.cmd = MMUEXT_PIN_L2_TABLE;
+		break;
+	}
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic("xpq_queue_pin_table");
+}
+
+void
+xpq_queue_unpin_table(paddr_t pa)
+{
+	struct mmuext_op op;
+	xpq_flush_queue();
+
+	XENPRINTK2(("xpq_queue_unpin_table: %p %p\n", (void *)pa, (void *)pa));
+	op.arg1.mfn = pa >> PAGE_SHIFT;
+	op.cmd = MMUEXT_UNPIN_TABLE;
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic("xpq_queue_unpin_table");
+}
+
+void
+xpq_queue_set_ldt(vaddr_t va, uint32_t entries)
+{
+	struct mmuext_op op;
+	xpq_flush_queue();
+
+	XENPRINTK2(("xpq_queue_set_ldt\n"));
+	KASSERT(va == (va & PG_FRAME));
+	op.cmd = MMUEXT_SET_LDT;
+	op.arg1.linear_addr = va;
+	op.arg2.nr_ents = entries;
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic("xpq_queue_set_ldt");
+}
+
+void
+xpq_queue_tlb_flush()
+{
+	struct mmuext_op op;
+	xpq_flush_queue();
+
+	XENPRINTK2(("xpq_queue_tlb_flush\n"));
+	op.cmd = MMUEXT_TLB_FLUSH_LOCAL;
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic("xpq_queue_tlb_flush");
+}
+
+void
+xpq_flush_cache()
+{
+	struct mmuext_op op;
+	int s = splvm();
+	xpq_flush_queue();
+
+	XENPRINTK2(("xpq_queue_flush_cache\n"));
+	op.cmd = MMUEXT_FLUSH_CACHE;
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic("xpq_flush_cache");
+	splx(s);
+}
+
+void
+xpq_queue_invlpg(vaddr_t va)
+{
+	struct mmuext_op op;
+	xpq_flush_queue();
+
+	XENPRINTK2(("xpq_queue_invlpg %p\n", (void *)va));
+	op.cmd = MMUEXT_INVLPG_LOCAL;
+	op.arg1.linear_addr = (va & PG_FRAME);
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic("xpq_queue_invlpg");
+}
+
+int
+xpq_update_foreign(pt_entry_t *ptr, pt_entry_t val, int dom)
+{
+	mmu_update_t op;
+	int ok;
+	xpq_flush_queue();
+
+	op.ptr = (uint32_t)ptr;
+	op.val = val;
+	if (HYPERVISOR_mmu_update(&op, 1, &ok, dom) < 0)
+		return EFAULT;
+	return (0);
+}
+#else /* XEN3 */
 void
 xpq_queue_pt_switch(paddr_t pa)
 {
 
 	XENPRINTK2(("xpq_queue_pt_switch: %p %p\n", (void *)pa, (void *)pa));
-	xpq_queue[xpq_idx].pa.ptr = pa | MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].pa.val = MMUEXT_NEW_BASEPTR;
+	xpq_queue[xpq_idx].ptr = pa | MMU_EXTENDED_COMMAND;
+	xpq_queue[xpq_idx].val = MMUEXT_NEW_BASEPTR;
 	xpq_increment_idx();
 }
 
@@ -658,13 +769,13 @@ xpq_queue_pin_table(paddr_t pa, int type)
 {
 
 	XENPRINTK2(("xpq_queue_pin_table: %p %p\n", (void *)pa, (void *)pa));
-	xpq_queue[xpq_idx].pa.ptr = pa | MMU_EXTENDED_COMMAND;
+	xpq_queue[xpq_idx].ptr = pa | MMU_EXTENDED_COMMAND;
 	switch (type) {
 	case XPQ_PIN_L1_TABLE:
-		xpq_queue[xpq_idx].pa.val = MMUEXT_PIN_L1_TABLE;
+		xpq_queue[xpq_idx].val = MMUEXT_PIN_L1_TABLE;
 		break;
 	case XPQ_PIN_L2_TABLE:
-		xpq_queue[xpq_idx].pa.val = MMUEXT_PIN_L2_TABLE;
+		xpq_queue[xpq_idx].val = MMUEXT_PIN_L2_TABLE;
 		break;
 	}
 	xpq_increment_idx();
@@ -675,8 +786,8 @@ xpq_queue_unpin_table(paddr_t pa)
 {
 
 	XENPRINTK2(("xpq_queue_unpin_table: %p %p\n", (void *)pa, (void *)pa));
-	xpq_queue[xpq_idx].pa.ptr = pa | MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].pa.val = MMUEXT_UNPIN_TABLE;
+	xpq_queue[xpq_idx].ptr = pa | MMU_EXTENDED_COMMAND;
+	xpq_queue[xpq_idx].val = MMUEXT_UNPIN_TABLE;
 	xpq_increment_idx();
 }
 
@@ -686,9 +797,8 @@ xpq_queue_set_ldt(vaddr_t va, uint32_t entries)
 
 	XENPRINTK2(("xpq_queue_set_ldt\n"));
 	KASSERT(va == (va & PG_FRAME));
-	xpq_queue[xpq_idx].pa.ptr = MMU_EXTENDED_COMMAND | va;
-	xpq_queue[xpq_idx].pa.val = MMUEXT_SET_LDT |
-		(entries << MMUEXT_CMD_SHIFT);
+	xpq_queue[xpq_idx].ptr = MMU_EXTENDED_COMMAND | va;
+	xpq_queue[xpq_idx].val = MMUEXT_SET_LDT | (entries << MMUEXT_CMD_SHIFT);
 	xpq_increment_idx();
 }
 
@@ -697,8 +807,8 @@ xpq_queue_tlb_flush()
 {
 
 	XENPRINTK2(("xpq_queue_tlb_flush\n"));
-	xpq_queue[xpq_idx].pa.ptr = MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].pa.val = MMUEXT_TLB_FLUSH;
+	xpq_queue[xpq_idx].ptr = MMU_EXTENDED_COMMAND;
+	xpq_queue[xpq_idx].val = MMUEXT_TLB_FLUSH;
 	xpq_increment_idx();
 }
 
@@ -708,13 +818,37 @@ xpq_flush_cache()
 	int s = splvm();
 
 	XENPRINTK2(("xpq_queue_flush_cache\n"));
-	xpq_queue[xpq_idx].pa.ptr = MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].pa.val = MMUEXT_FLUSH_CACHE;
+	xpq_queue[xpq_idx].ptr = MMU_EXTENDED_COMMAND;
+	xpq_queue[xpq_idx].val = MMUEXT_FLUSH_CACHE;
 	xpq_increment_idx();
 	xpq_flush_queue();
 	splx(s);
 }
 
+void
+xpq_queue_invlpg(vaddr_t va)
+{
+
+	XENPRINTK2(("xpq_queue_invlpg %p\n", (void *)va));
+	xpq_queue[xpq_idx].ptr = (va & PG_FRAME) | MMU_EXTENDED_COMMAND;
+	xpq_queue[xpq_idx].val = MMUEXT_INVLPG;
+	xpq_increment_idx();
+}
+
+int
+xpq_update_foreign(pt_entry_t *ptr, pt_entry_t val, int dom)
+{
+	mmu_update_t xpq_up[3];
+
+	xpq_up[0].ptr = MMU_EXTENDED_COMMAND;
+	xpq_up[0].val = MMUEXT_SET_FOREIGNDOM | (dom << 16);
+	xpq_up[1].ptr = (paddr_t)ptr;
+	xpq_up[1].val = val;
+	if (HYPERVISOR_mmu_update_self(xpq_up, 2, NULL) < 0)
+		return EFAULT;
+	return (0);
+}
+#endif /* XEN3 */
 
 #ifdef XENDEBUG
 void
@@ -724,17 +858,17 @@ xpq_debug_dump()
 
 	XENPRINTK2(("idx: %d\n", xpq_idx));
 	for (i = 0; i < xpq_idx; i++) {
-		sprintf(XBUF, "%p %08x ", xpq_queue[i].pte.ptr,
-		    xpq_queue[i].pte.val);
+		sprintf(XBUF, "%x %08x ", (u_int)xpq_queue[i].ptr,
+		    (u_int)xpq_queue[i].val);
 		if (++i < xpq_idx)
-			sprintf(XBUF + strlen(XBUF), "%p %08x ",
-			    xpq_queue[i].pte.ptr, xpq_queue[i].pte.val);
+			sprintf(XBUF + strlen(XBUF), "%x %08x ",
+			    (u_int)xpq_queue[i].ptr, (u_int)xpq_queue[i].val);
 		if (++i < xpq_idx)
-			sprintf(XBUF + strlen(XBUF), "%p %08x ",
-			    xpq_queue[i].pte.ptr, xpq_queue[i].pte.val);
+			sprintf(XBUF + strlen(XBUF), "%x %08x ",
+			    (u_int)xpq_queue[i].ptr, (u_int)xpq_queue[i].val);
 		if (++i < xpq_idx)
-			sprintf(XBUF + strlen(XBUF), "%p %08x ",
-			    xpq_queue[i].pte.ptr, xpq_queue[i].pte.val);
+			sprintf(XBUF + strlen(XBUF), "%x %08x ",
+			    (u_int)xpq_queue[i].ptr, (u_int)xpq_queue[i].val);
 		XENPRINTK2(("%d: %s\n", xpq_idx, XBUF));
 	}
 }
