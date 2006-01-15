@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.12 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.12.2.1 2006/01/15 10:59:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,13 +35,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.12 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.12.2.1 2006/01/15 10:59:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/mbuf.h>
 #include <sys/uio.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <netsmb/mchain.h>
 
@@ -329,7 +331,7 @@ mb_put_uio(struct mbchain *mbp, struct uio *uiop, int size)
 	long left;
 	int mtype, error;
 
-	mtype = (uiop->uio_segflg == UIO_SYSSPACE) ? MB_MSYSTEM : MB_MUSER;
+	mtype = VMSPACE_IS_KERNEL_P(uiop->uio_vmspace) ? MB_MSYSTEM : MB_MUSER;
 
 	while (size > 0 && uiop->uio_resid) {
 		if (uiop->uio_iovcnt <= 0 || uiop->uio_iov == NULL)
@@ -582,7 +584,7 @@ md_get_uio(struct mdchain *mdp, struct uio *uiop, int size)
 	long left;
 	int mtype, error;
 
-	mtype = (uiop->uio_segflg == UIO_SYSSPACE) ? MB_MSYSTEM : MB_MUSER;
+	mtype = VMSPACE_IS_KERNEL_P(uiop->uio_vmspace) ? MB_MSYSTEM : MB_MUSER;
 	while (size > 0 && uiop->uio_resid) {
 		if (uiop->uio_iovcnt <= 0 || uiop->uio_iov == NULL)
 			return EFBIG;
