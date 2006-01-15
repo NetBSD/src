@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.9 2006/01/14 23:22:53 uwe Exp $	*/
+/*	$NetBSD: load.cpp,v 1.10 2006/01/15 00:06:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ Loader::_load_segment_start(void)
 	if (!_mem->getTaggedPage(v, p, &_pvec_clr, _pvec_clr_paddr))
 		_error = TRUE;
 #ifdef PAGE_LINK_DUMP
-	_page_tag_start =(u_int32_t)_pvec_clr;
+	_page_tag_start = (uint32_t)_pvec_clr;
 #else
 	_page_tag_start = _pvec_clr_paddr;
 #endif
@@ -192,7 +192,7 @@ Loader::_load_segment(vaddr_t kv, vsize_t memsz, off_t fileofs, size_t filesz)
 		_pvec_prev->dst = kv_start + filesz;
 		_pvec_prev->sz = memsz - filesz;
 #ifdef PAGE_LINK_DUMP
-		_pvec_prev->next =(u_int32_t)_pvec_clr;
+		_pvec_prev->next = (uint32_t)_pvec_clr;
 #else
 		_pvec_prev->next = ptokv(_pvec_clr_paddr);
 #endif
@@ -210,8 +210,8 @@ void
 Loader::_load_memory(vaddr_t kv, vsize_t memsz, void *data)
 {
 	struct PageTag *pvec;
-	vaddr_t kv_start = kv, v;
 	paddr_t p, pvec_paddr;
+	vaddr_t v;
 
 	DPRINTF((TEXT("\t->load 0x%08x+0x%08x=0x%08x\n"),
 	    kv, memsz, kv + memsz));
@@ -228,7 +228,7 @@ Loader::_load_memory(vaddr_t kv, vsize_t memsz, void *data)
 	_pvec_prev->dst = kv;
 	_pvec_prev->sz = memsz;
 #ifdef PAGE_LINK_DUMP
-	_pvec_prev->next =(u_int32_t)pvec;
+	_pvec_prev->next = (uint32_t)pvec;
 #else
 	_pvec_prev->next = ptokv(pvec_paddr);
 #endif
@@ -252,7 +252,7 @@ Loader::_load_page(vaddr_t kv, off_t ofs, size_t sz, struct PageTag *prev)
 	prev->dst = kv;
 	prev->sz = sz;
 #ifdef PAGE_LINK_DUMP
-	prev->next =(u_int32_t)pvec;
+	prev->next = (uint32_t)pvec;
 #else
 	prev->next = ptokv(pvec_paddr);
 #endif
