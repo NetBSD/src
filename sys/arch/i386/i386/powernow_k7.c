@@ -1,4 +1,4 @@
-/* $NetBSD: powernow_k7.c,v 1.3 2006/01/11 00:18:28 xtraeme Exp $ */
+/* $NetBSD: powernow_k7.c,v 1.4 2006/01/15 04:12:09 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -32,7 +32,7 @@
 /* Sysctl related code was adapted from NetBSD's i386/est.c for compatibility */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.3 2006/01/11 00:18:28 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.4 2006/01/15 04:12:09 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,6 +103,7 @@ static unsigned int n_states;
 static struct freq_table_s *freq_table;
 static int powernow_node_target, powernow_node_current;
 static char *freq_names;
+static size_t freq_names_len;
 #if defined(_LKM)
 static struct sysctllog *sysctllog;
 #define SYSCTLLOG	&sysctllog
@@ -269,11 +270,31 @@ pnowk7_setstate(unsigned int freq)
 void
 pnowk7_init(struct cpu_info *ci)
 {
-	int rc;
-	unsigned int i, freq_names_len, len = 0;
-	char *cpuname;
 	const struct sysctlnode *node, *pnownode, *freqnode;
-	struct state_s *s = pnowk7_getstates(ci->ci_signature);
+	struct state_s *s;
+	uint32_t lfunc, descs[4];
+	int rc;
+	unsigned int i;
+	char *cpuname;
+	size_t len;
+
+	len = freq_names_len = 0;
+	s = NULL;
+
+	CPUID(0x80000000, lfunc, descs[1], descs[2], descs[3]);
+
+	ci = curcpu();
+	if (lfunc >= 0x80000007) {
+		CPUID(0x80000007, descs[0], descs[1], descs[2], descs[3]);
+		if ((descs[3] & 0x06)) {
+			if ((ci->ci_signature & 0xF00) == 0x600)
+				s = pnowk7_getstates(ci->ci_signature);
+			else
+				return; /* not supported */
+		} else
+			return; /* not supported */
+	} else
+		return; /* not supported */
 
 	cpuname = ci->ci_dev->dv_xname;
 
@@ -283,11 +304,15 @@ pnowk7_init(struct cpu_info *ci)
 	}
 
 	freq_names_len =  n_states * (sizeof("9999 ")-1) + 1;
-	freq_names = malloc(freq_names_len, M_SYSCTLDATA, M_WAITOK);
-	
-	freq_table = malloc(sizeof(struct freq_table_s) * n_states, M_TEMP,
-	    M_WAITOK);
+	freq_names = malloc(freq_names_len, M_SYSCTLDATA, M_NOWAIT | M_ZERO);
+	if (freq_names == NULL)
+		panic("pnowk7_init: freq_names alloc not possible");
 
+	freq_table = malloc(sizeof(struct freq_table_s) * n_states, M_TEMP,
+	    M_NOWAIT | M_ZERO);
+	if (freq_table == NULL)
+		panic("pnowk7_init: freq_table alloc not possible");
+	
 	for (i = 0; i < n_states; i++, s++) {		
 		freq_table[i].frequency = cpufreq(s->fid);
 		freq_table[i].state = s;
@@ -340,6 +365,8 @@ pnowk7_init(struct cpu_info *ci)
 	return;
 
   err:
+	free(freq_names, M_SYSCTLDATA);
+	free(freq_table, M_TEMP);
 	aprint_normal("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
 
@@ -348,5 +375,9 @@ void
 pnowk7_destroy(void)
 {
 	sysctl_teardown(&sysctllog);
+	if (freq_names != NULL && freq_table != NULL) {
+		free(freq_names, M_SYSCTLDATA);
+		free(freq_table, M_TEMP);
+	}
 }
 #endif
