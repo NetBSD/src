@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.8 2006/01/15 22:09:51 bouyer Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.7 2005/12/11 12:19:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.8 2006/01/15 22:09:51 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -542,7 +542,11 @@ copyfault:
 		if (frame->tf_err & PGEX_P)
 			goto we_re_toast;
 #endif
+#ifdef XEN3
+		cr2 = HYPERVISOR_shared_info->vcpu_info[0].arch.cr2;
+#else
 		cr2 = ((uint32_t *)(void *)&frame)[1];
+#endif
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		goto faultcommon;
 
@@ -553,7 +557,11 @@ copyfault:
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
 
+#ifdef XEN3
+		cr2 = HYPERVISOR_shared_info->vcpu_info[0].arch.cr2;
+#else
 		cr2 = ((uint32_t *)(void *)&frame)[1];
+#endif
 		KERNEL_PROC_LOCK(l);
 		if (l->l_flag & L_SA) {
 			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
