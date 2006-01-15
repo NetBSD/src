@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1 2005/12/29 15:20:08 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.1.2.1 2006/01/15 10:02:37 yamt Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1 $"
+#ident		"GENERIC-$Revision: 1.1.2.1 $"
 
 maxusers	16
 
@@ -38,7 +38,7 @@ options 	MIPS3_ENABLE_CLOCK_INTR
 
 # Support for specific models
 options 	EWS4800_TR2		# 350
-options 	EWS4800_TR2A		# 360,360AD,360ADII,360SX,360BX
+options 	EWS4800_TR2A		# 360,360AD,360ADII,360SX,360EX
 
 # Standard system options
 options 	NTP			# NTP phase/frequency locked loop
@@ -160,20 +160,6 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	ALTQ_RED	# Random Early Detection
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
-
-# These options control the verified exec feature
-#options 	VERIFIED_EXEC
-#
-# Uncomment the fingerprint methods below that are desired.  Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options 	VERIFIED_EXEC_FP_RMD160
-#options 	VERIFIED_EXEC_FP_SHA256
-#options 	VERIFIED_EXEC_FP_SHA384
-#options 	VERIFIED_EXEC_FP_SHA512
-#options 	VERIFIED_EXEC_FP_SHA1
-#options 	VERIFIED_EXEC_FP_MD5
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
@@ -298,3 +284,19 @@ pseudo-device	ksyms			# /dev/ksyms
 
 # wscons pseudo-devices
 pseudo-device	wsmux
+
+# Veriexec
+#options 	VERIFIED_EXEC
+
+# a pseudo device needed for veriexec
+#pseudo-device  veriexec                1
+
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#options 	VERIFIED_EXEC_FP_RMD160
+#options 	VERIFIED_EXEC_FP_SHA256
+#options 	VERIFIED_EXEC_FP_SHA384
+#options 	VERIFIED_EXEC_FP_SHA512
+#options 	VERIFIED_EXEC_FP_SHA1
+#options 	VERIFIED_EXEC_FP_MD5

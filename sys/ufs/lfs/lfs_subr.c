@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.55 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.55.2.1 2006/01/15 10:03:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.55 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.55.2.1 2006/01/15 10:03:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,36 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.55 2005/12/11 12:25:26 christos Exp $
 #include <ufs/lfs/lfs_extern.h>
 
 #include <uvm/uvm.h>
-
-/*
- * Return buffer with the contents of block "offset" from the beginning of
- * directory "ip".  If "res" is non-zero, fill it in with a pointer to the
- * remaining space in the directory.
- */
-int
-lfs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
-{
-	struct lfs *fs;
-	struct inode *ip;
-	struct buf *bp;
-	daddr_t lbn;
-	int bsize, error;
-
-	ip = VTOI(vp);
-	fs = ip->i_lfs;
-	lbn = lblkno(fs, offset);
-	bsize = blksize(fs, ip, lbn);
-
-	*bpp = NULL;
-	if ((error = bread(vp, lbn, bsize, NOCRED, &bp)) != 0) {
-		brelse(bp);
-		return (error);
-	}
-	if (res)
-		*res = (char *)bp->b_data + blkoff(fs, offset);
-	*bpp = bp;
-	return (0);
-}
 
 #ifdef DEBUG
 const char *lfs_res_names[LFS_NB_COUNT] = {

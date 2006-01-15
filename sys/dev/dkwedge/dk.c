@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.10.2.1 2005/12/31 12:37:20 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.10.2.2 2006/01/15 10:02:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.10.2.1 2005/12/31 12:37:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.10.2.2 2006/01/15 10:02:48 yamt Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -1048,7 +1048,7 @@ dkstart(struct dkwedge_softc *sc)
 		/* Instrumentation. */
 		disk_busy(&sc->sc_dk);
 
-		nbp = pool_get(&bufpool, PR_NOWAIT);
+		nbp = getiobuf_nowait();
 		if (nbp == NULL) {
 			/*
 			 * No resources to run this request; leave the
@@ -1097,7 +1097,7 @@ dkiodone(struct buf *bp)
 		obp->b_error = bp->b_error;
 	}
 	obp->b_resid = bp->b_resid;
-	pool_put(&bufpool, bp);
+	putiobuf(bp);
 
 	if (sc->sc_iopend-- == 1 && (sc->sc_flags & DK_F_WAIT_DRAIN) != 0) {
 		sc->sc_flags &= ~DK_F_WAIT_DRAIN;

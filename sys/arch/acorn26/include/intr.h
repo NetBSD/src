@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.5 2005/12/11 12:16:04 christos Exp $ */
+/* $NetBSD: intr.h,v 1.5.2.1 2006/01/15 10:02:36 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -56,6 +56,7 @@
 #define IPL_STATCLOCK	10
 #define IPL_SCHED	11
 #define IPL_HIGH	12
+#define	IPL_LOCK	IPL_HIGH
 #define NIPL		IPL_HIGH + 1
 
 #if defined(_KERNEL) && !defined(_LOCORE)
@@ -77,6 +78,8 @@
 
 /* #define	splsched()	splhigh() */
 #define spllock()	splhigh()
+
+#define	splraiseipl(x)	(((x) == IPL_HIGH) ? splhigh() : raisespl(x))
 
 #define spl0()			lowerspl(IPL_NONE)
 #define spllowersoftclock()	lowerspl(IPL_SOFTCLOCK)

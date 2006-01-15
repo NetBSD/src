@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.6 2005/12/11 12:18:13 christos Exp $ */
+/* $NetBSD: sbwdog.c,v 1.6.2.1 2006/01/15 10:02:38 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.6 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.6.2.1 2006/01/15 10:02:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ sbwdog_setmode(struct sysmon_wdog *smw)
 			smw->smw_period = SBWDOG_DEFAULT_PERIOD;	/* XXX needed?? */
 		} else if (smw->smw_period > 8) {
 			/* Maximum of 2^23 usec watchdog period. */
-			return (EOPNOTSUPP);
+			return (EINVAL);
 		}
 		sc->sc_wdog_period = smw->smw_period;
 		sc->sc_wdog_armed = 1;

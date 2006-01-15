@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.190 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.190.2.1 2006/01/15 10:03:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.190 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.190.2.1 2006/01/15 10:03:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -174,7 +174,6 @@ static const struct ufs_ops lfs_ufsops = {
 	.uo_valloc = lfs_valloc,
 	.uo_vfree = lfs_vfree,
 	.uo_balloc = lfs_balloc,
-	.uo_blkatoff = lfs_blkatoff,
 };
 
 /*
@@ -2072,11 +2071,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	simple_lock(&global_v_numoutput_slock);
 	vp->v_numoutput += 2; /* one for biodone, one for aiodone */
 	simple_unlock(&global_v_numoutput_slock);
-	mbp = pool_get(&bufpool, PR_WAITOK);
 	splx(s);
 
-	memset(mbp, 0, sizeof(*bp));
-	BUF_INIT(mbp);
+	mbp = getiobuf();
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
 	    vp, mbp, vp->v_numoutput, bytes);
 	mbp->b_bufsize = npages << PAGE_SHIFT;
@@ -2144,13 +2141,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			simple_unlock(&global_v_numoutput_slock);
 			splx(s);
 		} else {
-			s = splbio();
-			bp = pool_get(&bufpool, PR_WAITOK);
+			bp = getiobuf();
 			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
 			    vp, bp, vp->v_numoutput, 0);
-			splx(s);
-			memset(bp, 0, sizeof(*bp));
-			BUF_INIT(bp);
 			bp->b_data = (char *)kva +
 			    (vaddr_t)(offset - pg->offset);
 			bp->b_resid = bp->b_bcount = iobytes;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.120.2.1 2005/12/31 16:29:01 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.120.2.2 2006/01/15 10:03:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.120.2.1 2005/12/31 16:29:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.120.2.2 2006/01/15 10:03:04 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2216,17 +2216,29 @@ nfsrv_rcv(so, arg, waitflag)
 	struct mbuf *mp, *nam;
 	struct uio auio;
 	int flags, error;
+	int setflags = 0;
 
-	if ((slp->ns_flag & SLP_VALID) == 0)
-		return;
+	error = nfsdsock_lock(slp, (waitflag != M_DONTWAIT));
+	if (error) {
+		setflags |= SLP_NEEDQ;
+		goto dorecs_unlocked;
+	}
+
+	KASSERT(so == slp->ns_so);
 #if 1
 	/*
 	 * Define this to test for nfsds handling this under heavy load.
+	 *
+	 * XXX it isn't safe to call so_receive from so_upcall context.
 	 */
 	if (waitflag == M_DONTWAIT) {
-		slp->ns_flag |= SLP_NEEDQ; goto dorecs;
+		setflags |= SLP_NEEDQ;
+		goto dorecs;
 	}
 #endif
+	simple_lock(&slp->ns_lock);
+	slp->ns_flag &= ~SLP_NEEDQ;
+	simple_unlock(&slp->ns_lock);
 	if (so->so_type == SOCK_STREAM) {
 		/*
 		 * If there are already records on the queue, defer soreceive()
@@ -2234,7 +2246,7 @@ nfsrv_rcv(so, arg, waitflag)
 		 * the nfs servers are heavily loaded.
 		 */
 		if (slp->ns_rec && waitflag == M_DONTWAIT) {
-			slp->ns_flag |= SLP_NEEDQ;
+			setflags |= SLP_NEEDQ;
 			goto dorecs;
 		}
 
@@ -2244,12 +2256,12 @@ nfsrv_rcv(so, arg, waitflag)
 		auio.uio_resid = 1000000000;
 		/* not need to setup uio_vmspace */
 		flags = MSG_DONTWAIT;
-		error = (*so->so_receive)(so, &nam, &auio, &mp, (struct mbuf **)0, &flags);
-		if (error || mp == (struct mbuf *)0) {
+		error = (*so->so_receive)(so, &nam, &auio, &mp, NULL, &flags);
+		if (error || mp == NULL) {
 			if (error == EWOULDBLOCK)
-				slp->ns_flag |= SLP_NEEDQ;
+				setflags |= SLP_NEEDQ;
 			else
-				slp->ns_flag |= SLP_DISCONN;
+				setflags |= SLP_DISCONN;
 			goto dorecs;
 		}
 		m = mp;
@@ -2270,17 +2282,17 @@ nfsrv_rcv(so, arg, waitflag)
 		error = nfsrv_getstream(slp, waitflag);
 		if (error) {
 			if (error == EPERM)
-				slp->ns_flag |= SLP_DISCONN;
+				setflags |= SLP_DISCONN;
 			else
-				slp->ns_flag |= SLP_NEEDQ;
+				setflags |= SLP_NEEDQ;
 		}
 	} else {
 		do {
 			auio.uio_resid = 1000000000;
 			/* not need to setup uio_vmspace */
 			flags = MSG_DONTWAIT;
-			error = (*so->so_receive)(so, &nam, &auio, &mp,
-						(struct mbuf **)0, &flags);
+			error = (*so->so_receive)(so, &nam, &auio, &mp, NULL,
+			    &flags);
 			if (mp) {
 				if (nam) {
 					m = nam;
@@ -2296,21 +2308,87 @@ nfsrv_rcv(so, arg, waitflag)
 			}
 			if (error) {
 				if ((so->so_proto->pr_flags & PR_CONNREQUIRED)
-					&& error != EWOULDBLOCK) {
-					slp->ns_flag |= SLP_DISCONN;
+				    && error != EWOULDBLOCK) {
+					setflags |= SLP_DISCONN;
 					goto dorecs;
 				}
 			}
 		} while (mp);
 	}
+dorecs:
+	nfsdsock_unlock(slp);
 
+dorecs_unlocked:
 	/*
 	 * Now try and process the request records, non-blocking.
 	 */
-dorecs:
+	if (setflags) {
+		simple_lock(&slp->ns_lock);
+		slp->ns_flag |= setflags;
+		simple_unlock(&slp->ns_lock);
+	}
 	if (waitflag == M_DONTWAIT &&
-		(slp->ns_rec || (slp->ns_flag & (SLP_NEEDQ | SLP_DISCONN))))
+	    (slp->ns_rec || (slp->ns_flag & (SLP_DISCONN | SLP_NEEDQ)) != 0)) {
 		nfsrv_wakenfsd(slp);
+	}
+}
+
+int
+nfsdsock_lock(struct nfssvc_sock *slp, boolean_t waitok)
+{
+
+	simple_lock(&slp->ns_lock);
+	while ((slp->ns_flag & (SLP_BUSY|SLP_VALID)) == SLP_BUSY) {
+		if (!waitok) {
+			simple_unlock(&slp->ns_lock);
+			return EWOULDBLOCK;
+		}
+		slp->ns_flag |= SLP_WANT;
+		ltsleep(&slp->ns_flag, PSOCK, "nslock", 0, &slp->ns_lock);
+	}
+	if ((slp->ns_flag & SLP_VALID) == 0) {
+		simple_unlock(&slp->ns_lock);
+		return EINVAL;
+	}
+	slp->ns_flag |= SLP_BUSY;
+	simple_unlock(&slp->ns_lock);
+
+	return 0;
+}
+
+void
+nfsdsock_unlock(struct nfssvc_sock *slp)
+{
+
+	KASSERT((slp->ns_flag & SLP_BUSY) != 0);
+
+	simple_lock(&slp->ns_lock);
+	if ((slp->ns_flag & SLP_WANT) != 0) {
+		wakeup(&slp->ns_flag);
+	}
+	slp->ns_flag &= ~(SLP_BUSY|SLP_WANT);
+	simple_unlock(&slp->ns_lock);
+}
+
+int
+nfsdsock_drain(struct nfssvc_sock *slp)
+{
+	int error = 0;
+
+	simple_lock(&slp->ns_lock);
+	if ((slp->ns_flag & SLP_VALID) == 0) {
+		error = EINVAL;
+		goto done;
+	}
+	slp->ns_flag &= ~SLP_VALID;
+	while ((slp->ns_flag & SLP_BUSY) != 0) {
+		slp->ns_flag |= SLP_WANT;
+		ltsleep(&slp->ns_flag, PSOCK, "nsdrain", 0, &slp->ns_lock);
+	}
+done:
+	simple_unlock(&slp->ns_lock);
+
+	return error;
 }
 
 /*
@@ -2326,15 +2404,12 @@ nfsrv_getstream(slp, waitflag)
 	struct mbuf *m, **mpp;
 	struct mbuf *recm;
 	u_int32_t recmark;
+	int error = 0;
 
-	if (slp->ns_flag & SLP_GETSTREAM)
-		panic("nfs getstream");
-	slp->ns_flag |= SLP_GETSTREAM;
 	for (;;) {
 		if (slp->ns_reclen == 0) {
 			if (slp->ns_cc < NFSX_UNSIGNED) {
-				slp->ns_flag &= ~SLP_GETSTREAM;
-				return (0);
+				break;
 			}
 			m = slp->ns_raw;
 			m_copydata(m, 0, NFSX_UNSIGNED, (caddr_t)&recmark);
@@ -2347,8 +2422,8 @@ nfsrv_getstream(slp, waitflag)
 			else
 				slp->ns_flag &= ~SLP_LASTFRAG;
 			if (slp->ns_reclen > NFS_MAXPACKET) {
-				slp->ns_flag &= ~SLP_GETSTREAM;
-				return (EPERM);
+				error = EPERM;
+				break;
 			}
 		}
 
@@ -2366,8 +2441,8 @@ nfsrv_getstream(slp, waitflag)
 			recm = slp->ns_raw;
 			m = m_split(recm, slp->ns_reclen, waitflag);
 			if (m == NULL) {
-				slp->ns_flag &= ~SLP_GETSTREAM;
-				return (EWOULDBLOCK);
+				error = EWOULDBLOCK;
+				break;
 			}
 			m_claimm(recm, &nfs_mowner);
 			slp->ns_raw = m;
@@ -2376,8 +2451,7 @@ nfsrv_getstream(slp, waitflag)
 			slp->ns_cc -= slp->ns_reclen;
 			slp->ns_reclen = 0;
 		} else {
-			slp->ns_flag &= ~SLP_GETSTREAM;
-			return (0);
+			break;
 		}
 
 		/*
@@ -2396,6 +2470,8 @@ nfsrv_getstream(slp, waitflag)
 			slp->ns_frag = (struct mbuf *)0;
 		}
 	}
+
+	return error;
 }
 
 /*
@@ -2412,14 +2488,22 @@ nfsrv_dorec(slp, nfsd, ndp)
 	int error;
 
 	*ndp = NULL;
-	if ((slp->ns_flag & SLP_VALID) == 0 ||
-	    (m = slp->ns_rec) == (struct mbuf *)0)
-		return (ENOBUFS);
+
+	if (nfsdsock_lock(slp, TRUE)) {
+		return ENOBUFS;
+	}
+	m = slp->ns_rec;
+	if (m == NULL) {
+		nfsdsock_unlock(slp);
+		return ENOBUFS;
+	}
 	slp->ns_rec = m->m_nextpkt;
 	if (slp->ns_rec)
-		m->m_nextpkt = (struct mbuf *)0;
+		m->m_nextpkt = NULL;
 	else
-		slp->ns_recend = (struct mbuf *)0;
+		slp->ns_recend = NULL;
+	nfsdsock_unlock(slp);
+
 	if (m->m_type == MT_SONAME) {
 		nam = m;
 		m = m->m_next;
@@ -2465,8 +2549,6 @@ nfsrv_wakenfsd(slp)
 		SLIST_REMOVE_HEAD(&nfsd_idle_head, nfsd_idle);
 		simple_unlock(&nfsd_slock);
 
-		KASSERT(nd->nfsd_flag & NFSD_WAITING);
-		nd->nfsd_flag &= ~NFSD_WAITING;
 		if (nd->nfsd_slp)
 			panic("nfsd wakeup");
 		slp->ns_sref++;
@@ -2478,5 +2560,46 @@ nfsrv_wakenfsd(slp)
 	nfsd_head_flag |= NFSD_CHECKSLP;
 	TAILQ_INSERT_TAIL(&nfssvc_sockpending, slp, ns_pending);
 	simple_unlock(&nfsd_slock);
+}
+
+int
+nfsdsock_sendreply(struct nfssvc_sock *slp, struct nfsrv_descript *nd)
+{
+	int error;
+
+	if (nd->nd_mrep != NULL) {
+		m_freem(nd->nd_mrep);
+		nd->nd_mrep = NULL;
+	}
+
+	simple_lock(&slp->ns_lock);
+	if ((slp->ns_flag & SLP_SENDING) != 0) {
+		SIMPLEQ_INSERT_TAIL(&slp->ns_sendq, nd, nd_sendq);
+		simple_unlock(&slp->ns_lock);
+		return 0;
+	}
+	KASSERT(SIMPLEQ_EMPTY(&slp->ns_sendq));
+	slp->ns_flag |= SLP_SENDING;
+	simple_unlock(&slp->ns_lock);
+
+again:
+	error = nfs_send(slp->ns_so, nd->nd_nam2, nd->nd_mreq, NULL, curlwp);
+	if (nd->nd_nam2) {
+		m_free(nd->nd_nam2);
+	}
+	pool_put(&nfs_srvdesc_pool, nd);
+
+	simple_lock(&slp->ns_lock);
+	KASSERT((slp->ns_flag & SLP_SENDING) != 0); 
+	nd = SIMPLEQ_FIRST(&slp->ns_sendq);
+	if (nd != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&slp->ns_sendq, nd_sendq);
+		simple_unlock(&slp->ns_lock);
+		goto again;
+	}
+	slp->ns_flag &= ~SLP_SENDING; 
+	simple_unlock(&slp->ns_lock);
+
+	return error;
 }
 #endif /* NFSSERVER */

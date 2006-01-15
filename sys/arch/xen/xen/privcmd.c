@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.9 2005/12/24 23:24:07 perry Exp $ */
+/* $NetBSD: privcmd.c,v 1.9.2.1 2006/01/15 10:02:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,9 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.9 2005/12/24 23:24:07 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.9.2.1 2006/01/15 10:02:47 yamt Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,14 +83,14 @@ privcmd_ioctl(void *v)
 			: "=a" (error) : "0" (ap->a_data) : "memory" );
 		error = -error;
 		break;
-#if 1 /* COMPAT_xxx */
+#if defined(COMPAT_30)
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
 		{
 		extern int initdom_ctrlif_domcontroller_port;
 		error = initdom_ctrlif_domcontroller_port;
 		}
 		break;
-#endif
+#endif /* defined(COMPAT_30) */
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN:
 		{
 		extern int initdom_ctrlif_domcontroller_port;

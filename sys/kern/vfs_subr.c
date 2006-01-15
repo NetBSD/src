@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.258 2005/12/27 04:06:46 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.258.2.1 2006/01/15 10:02:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.258 2005/12/27 04:06:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.258.2.1 2006/01/15 10:02:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1103,11 +1103,14 @@ loop:
 		 * What we're interested to know here is if someone else has
 		 * removed this vnode from the device hash list while we were
 		 * waiting.  This can only happen if vclean() did it, and
-		 * this requires the vnode to be locked.  Therefore, we use
-		 * LK_SLEEPFAIL and retry.
+		 * this requires the vnode to be locked.
 		 */
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK | LK_SLEEPFAIL))
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 			goto loop;
+		if (vp->v_specinfo == NULL) {
+			vput(vp);
+			goto loop;
+		}
 		simple_lock(&spechash_slock);
 		break;
 	}

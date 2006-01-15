@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.104 2005/12/28 08:13:24 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.104.2.1 2006/01/15 10:02:57 yamt Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.104 2005/12/28 08:13:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.104.2.1 2006/01/15 10:02:57 yamt Exp $");
 
 #include "ppp.h"
 
@@ -1140,7 +1140,7 @@ ppp_dequeue(struct ppp_softc *sc)
     } else {
 	sc->sc_nfastq = 0;
 	IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
-	if (m != NULL) {
+	if (m == NULL) {
 	    IF_DEQUEUE(&sc->sc_fastq, m);
 	    if (m != NULL)
 		sc->sc_nfastq++;

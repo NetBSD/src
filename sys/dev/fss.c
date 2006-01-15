@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.18 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: fss.c,v 1.18.2.1 2006/01/15 10:02:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.18 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.18.2.1 2006/01/15 10:02:47 yamt Exp $");
 
 #include "fss.h"
 
@@ -824,24 +824,19 @@ fss_cluster_iodone(struct buf *bp)
 	int s;
 	struct fss_cache *scp = bp->b_private;
 
+	KASSERT(bp->b_vp == NULL);
+
 	FSS_LOCK(scp->fc_softc, s);
 
-	if (bp->b_flags & B_EINTR)
-		fss_error(scp->fc_softc, "fs read interrupted");
 	if (bp->b_flags & B_ERROR)
 		fss_error(scp->fc_softc, "fs read error %d", bp->b_error);
-
-	if (bp->b_vp != NULL)
-		brelvp(bp);
 
 	if (--scp->fc_xfercount == 0)
 		wakeup(&scp->fc_data);
 
 	FSS_UNLOCK(scp->fc_softc, s);
 
-	s = splbio();
-	pool_put(&bufpool, bp);
-	splx(s);
+	putiobuf(bp);
 }
 
 /*
@@ -908,17 +903,13 @@ restart:
 		if (len > MAXPHYS)
 			len = MAXPHYS;
 
-		s = splbio();
-		bp = pool_get(&bufpool, PR_WAITOK);
-		splx(s);
-
-		BUF_INIT(bp);
+		bp = getiobuf();
 		bp->b_flags = B_READ|B_CALL;
 		bp->b_bcount = len;
 		bp->b_bufsize = bp->b_bcount;
 		bp->b_error = 0;
 		bp->b_data = addr;
-		bp->b_blkno = bp->b_rawblkno = dblk;
+		bp->b_blkno = dblk;
 		bp->b_proc = NULL;
 		bp->b_dev = sc->sc_bdev;
 		bp->b_vp = NULLVP;
@@ -1036,9 +1027,7 @@ fss_bs_thread(void *arg)
 
 	scl = sc->sc_cache+sc->sc_cache_size;
 
-	s = splbio();
-	nbp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
+	nbp = getiobuf();
 
 	nfreed = nio = 1;		/* Dont sleep the first time */
 
@@ -1055,9 +1044,7 @@ fss_bs_thread(void *arg)
 
 			FSS_UNLOCK(sc, s);
 
-			s = splbio();
-			pool_put(&bufpool, nbp);
-			splx(s);
+			putiobuf(nbp);
 #ifdef FSS_STATISTICS
 			if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
 				printf("fss%d: cow called %" PRId64 " times,"
@@ -1175,7 +1162,7 @@ fss_bs_thread(void *arg)
 		nbp->b_bufsize = bp->b_bcount;
 		nbp->b_error = 0;
 		nbp->b_data = bp->b_data;
-		nbp->b_blkno = nbp->b_rawblkno = bp->b_blkno;
+		nbp->b_blkno = bp->b_blkno;
 		nbp->b_proc = bp->b_proc;
 		nbp->b_dev = sc->sc_bdev;
 		nbp->b_vp = NULLVP;

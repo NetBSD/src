@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.64 2005/12/08 05:10:39 soren Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.64.2.1 2006/01/15 10:02:48 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.61 2005/12/08 03:16:43 jonathan Exp
+ *	NetBSD: miidevs,v 1.62 2006/01/04 21:42:51 xtraeme Exp
  */
 
 /*-
@@ -106,7 +106,7 @@
 #define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
 
 #define	MII_OUI_xxREALTEK	0x000732	/* Realtek */
-
+#define	MII_OUI_yyREALTEK	0x000004	/* Realtek */
 /*
  * List of known models.  Grouped by oui.
  */
@@ -275,6 +275,8 @@
 #define	MII_STR_xxQUALSEMI_QS6612	"QS6612 10/100 media interface"
 
 /* RealTek PHYs */
+#define	MII_MODEL_yyREALTEK_RTL8201L	0x0020
+#define	MII_STR_yyREALTEK_RTL8201L	"RTL8201L 10/100 media interface"
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
 #define	MII_STR_xxREALTEK_RTL8169S	"RTL8169S/8110S 1000BASE-T media interface"
 #define	MII_MODEL_REALTEK_RTL8169S	0x0011

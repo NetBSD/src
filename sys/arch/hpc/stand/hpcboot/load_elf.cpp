@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.14 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.14.2.1 2006/01/15 10:02:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ ElfLoader::memorySize()
 		DPRINTF((TEXT(" = 0x%x]"), symblk_sz));
 	}
 
-	DPRINTF((TEXT(" = 0x%x byte\n"), sz));
+	DPRINTF((TEXT(" = 0x%x bytes\n"), sz));
 	return sz;
 }
 
@@ -154,7 +154,7 @@ ElfLoader::load()
 			size_t memsz = ph->p_memsz;
 			kv = ph->p_vaddr;
 			off_t fileofs = ph->p_offset;
-			DPRINTF((TEXT("[%d] vaddr 0x%08x file size 0x%x mem size 0x%x\n"),
+			DPRINTF((TEXT("seg[%d] vaddr 0x%08x file size 0x%x mem size 0x%x\n"),
 			    i, kv, filesz, memsz));
 			_load_segment(kv, memsz, fileofs, filesz);
 			kv += ROUND4(memsz);
@@ -249,8 +249,8 @@ ElfLoader::symbol_block_size()
 	    ROUND4(_sym_blk.shsym->sh_size);
 	_sym_blk.enable = TRUE;
 
-	DPRINTF((TEXT("+[(symbol block: header %d symbol %d string %d byte)"),
-	    _sym_blk.header_size,_sym_blk.shsym->sh_size,
+	DPRINTF((TEXT("+[ksyms: header 0x%x, symtab 0x%x, strtab 0x%x"),
+	    _sym_blk.header_size, _sym_blk.shsym->sh_size,
 	    _sym_blk.shstr->sh_size));
 
 	// return total amount of symbol block
@@ -265,6 +265,8 @@ ElfLoader::load_symbol_block(vaddr_t kv)
 
 	if (!_sym_blk.enable)
 		return;
+
+	DPRINTF((TEXT("ksyms\n")));
 
 	// load header
 	_load_memory(kv, _sym_blk.header_size, _sym_blk.header);

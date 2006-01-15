@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.24 2005/12/26 19:23:59 perry Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.24.2.1 2006/01/15 10:02:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.24 2005/12/26 19:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.24.2.1 2006/01/15 10:02:38 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
+#include "opt_powernow_k7.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -880,6 +881,10 @@ amd_family6_probe(struct cpu_info *ci)
 		ci->ci_feature_flags |= descs[3];
 	}
 
+#ifdef POWERNOW_K7
+	pnowk7_init(ci);
+#endif
+
 	if (*cpu_brand_string == '\0')
 		return;
 	
@@ -1429,5 +1434,4 @@ identifycpu(struct cpu_info *ci)
 			    cpuname);
 	}
 #endif /* ENHANCED_SPEEDSTEP */
-
 }

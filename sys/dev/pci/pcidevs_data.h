@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.751 2005/12/29 11:07:30 silke Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.751.2.1 2006/01/15 10:02:49 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.751 2005/12/29 05:44:51 jonathan Exp
+ *	NetBSD: pcidevs,v 1.756 2006/01/10 20:30:47 cdi Exp
  */
 
 /*
@@ -913,7 +913,7 @@ static const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA,
-	    "Nvidia",
+	    "NVIDIA",
 	},
 	{
 	    PCI_VENDOR_EMULEX,
@@ -5836,6 +5836,10 @@ static const struct pci_product pci_products[] = {
 	    "82801FB 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_5,
+	    "PRO/100 VE (LOM) Network Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI,
 	    "i82547GI Gigabit Ethernet",
 	},
@@ -7764,6 +7768,10 @@ static const struct pci_product pci_products[] = {
 	    "nForce4 Serial ATA 2",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_NET,
+	    "nForce4 Ethernet",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_AC,
 	    "nForce4 AC-97",
 	},
@@ -8110,6 +8118,42 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_700XGL,
 	    "Quadro4 700XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_PCIB,
+	    "nForce430 PCI-ISA bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SMBUS,
+	    "nForce430 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_ATA133,
+	    "nForce430 ATA133 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SATA1,
+	    "nForce430 Serial SATA Controller 1",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SATA2,
+	    "nForce430 Serial SATA Controller 2",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_NET,
+	    "nForce430 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_AC,
+	    "nForce430 AC-97",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_OHCI,
+	    "nForce430 USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_EHCI,
+	    "nForce430 USB2 Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4800,
@@ -10165,7 +10209,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231,
-	    "VT8231 IDE Controller",
+	    "VT8231 PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231_PWR,
@@ -10684,4 +10728,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2087;
+const int pci_nproducts = 2098;

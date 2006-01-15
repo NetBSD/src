@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.58 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: stand.h,v 1.58.2.1 2006/01/15 10:02:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -248,7 +248,7 @@ int	open(const char *, int);
 int	close(int);
 void	closeall(void);
 ssize_t	read(int, void *, size_t);
-ssize_t	write(int, void *, size_t);
+ssize_t	write(int, const void *, size_t);
 off_t	lseek(int, off_t, int);
 int	ioctl(int, u_long, char *);
 int	stat(const char *, struct stat *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.26 2005/11/18 16:40:08 skrll Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.26.2.1 2006/01/15 10:03:04 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.26 2005/11/18 16:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.26.2.1 2006/01/15 10:03:04 yamt Exp $");
 #endif
 
 /*
@@ -905,10 +905,12 @@ ieee80211_ioctl_getkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 static int
 ieee80211_ioctl_getchanlist(struct ieee80211com *ic, struct ieee80211req *ireq)
 {
+	size_t len = ireq->i_len;
 
-	if (sizeof(ic->ic_chan_active) > ireq->i_len)
-		ireq->i_len = sizeof(ic->ic_chan_active);
-	return copyout(&ic->ic_chan_active, ireq->i_data, ireq->i_len);
+	if (sizeof(ic->ic_chan_active) < len) {
+		len = sizeof(ic->ic_chan_active);
+	}
+	return copyout(&ic->ic_chan_active, ireq->i_data, len);
 }
 
 static int
@@ -1027,7 +1029,7 @@ ieee80211_ioctl_getscanresults(struct ieee80211com *ic, struct ieee80211req *ire
 {
 	union {
 		struct ieee80211req_scan_result res;
-		char data[512];		/* XXX shrink? */
+		char data[sizeof(struct ieee80211req_scan_result) + IEEE80211_NWID_LEN + 256 * 2];
 	} u;
 	struct ieee80211req_scan_result *sr = &u.res;
 	struct ieee80211_node_table *nt;

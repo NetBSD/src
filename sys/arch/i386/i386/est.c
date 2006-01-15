@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.12 2005/12/26 19:23:59 perry Exp $	*/
+/*	$NetBSD: est.c,v 1.12.2.1 2006/01/15 10:02:38 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.12 2005/12/26 19:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.12.2.1 2006/01/15 10:02:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,6 +307,18 @@ static const struct fq_info pentium_m_n765[] = {
 	{  600,  988 }
 };
 
+/* Intel Pentium M processor 770 2.13 GHz */
+static const struct fq_info pentium_m_n770[] = {
+	{ 2130, 1551 },
+	{ 1800, 1429 },
+	{ 1600, 1356 },
+	{ 1400, 1180 },
+	{ 1200, 1132 },
+	{ 1000, 1084 },
+	{  800, 1036 },
+	{  600, 988 }
+};
+
 struct fqlist {
 	const char *brand_tag;
 	size_t tablec;
@@ -340,9 +352,7 @@ static const struct fqlist pentium_m_dothan[] = {
 	ENTRY("1.80", pentium_m_n745),
 	ENTRY("2.00", pentium_m_n755),
 	ENTRY("2.10", pentium_m_n765),
-	ENTRY("1.00", pentium_m_n723),
-	ENTRY("1.10", pentium_m_n733),
-	ENTRY("1.40", pentium_m_n738),
+	ENTRY("2.13", pentium_m_n770),
 };
 #undef ENTRY
 

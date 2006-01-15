@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.7 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.7.2.1 2006/01/15 10:03:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -74,8 +74,8 @@ static doff_t ufsdirhash_getprev(struct direct *dp, doff_t offset,
 	   int dirblksiz);
 static int ufsdirhash_recycle(int wanted);
 
-POOL_INIT(ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0, "ufsdirhash",
-    &pool_allocator_nointr);
+static POOL_INIT(ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
+    "ufsdirhash", &pool_allocator_nointr);
 
 #define DIRHASHLIST_LOCK()		do { } while (0)
 #define DIRHASHLIST_UNLOCK()		do { } while (0)
@@ -194,11 +194,15 @@ ufsdirhash_build(struct inode *ip)
 	bmask = VFSTOUFS(vp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
 	pos = 0;
 	while (pos < ip->i_size) {
+		if ((curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		    != 0) {
+			preempt(1);
+		}
 		/* If necessary, get the next directory block. */
 		if ((pos & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			if (UFS_BLKATOFF(vp, (off_t)pos, NULL, &bp) != 0)
+			if (ufs_blkatoff(vp, (off_t)pos, NULL, &bp) != 0)
 				goto fail;
 		}
 
@@ -393,7 +397,7 @@ restart:
 			if (bp != NULL)
 				brelse(bp);
 			blkoff = offset & ~bmask;
-			if (UFS_BLKATOFF(vp, (off_t)blkoff, NULL, &bp) != 0)
+			if (ufs_blkatoff(vp, (off_t)blkoff, NULL, &bp) != 0)
 				return (EJUSTRETURN);
 		}
 		dp = (struct direct *)(bp->b_data + (offset & bmask));
@@ -502,7 +506,7 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 	    dh->dh_blkfree[dirblock] >= howmany(slotneeded, DIRALIGN));
 	DIRHASH_UNLOCK(dh);
 	pos = dirblock * dirblksiz;
-	error = UFS_BLKATOFF(ip->i_vnode, (off_t)pos, (void *)&dp, &bp);
+	error = ufs_blkatoff(ip->i_vnode, (off_t)pos, (void *)&dp, &bp);
 	if (error)
 		return (-1);
 	/* Find the first entry with free space. */

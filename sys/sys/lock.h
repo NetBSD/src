@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.62 2005/12/27 04:06:46 chs Exp $	*/
+/*	$NetBSD: lock.h,v 1.62.2.1 2006/01/15 10:03:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ struct lock {
  *	lock. Only one exclusive lock may exist at a time, except that
  *	a process holding an exclusive lock may get additional exclusive
  *	locks if it explicitly sets the LK_CANRECURSE flag in the lock
- *	request, or if the LK_CANRECUSE flag was set when the lock was
+ *	request, or if the LK_CANRECURSE flag was set when the lock was
  *	initialized.
  *   LK_UPGRADE - the process must hold a shared lock that it wants to
  *	have upgraded to an exclusive lock. Other processes may get

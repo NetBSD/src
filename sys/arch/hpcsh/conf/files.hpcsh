@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.42 2005/12/11 12:17:36 christos Exp $
+#	$NetBSD: files.hpcsh,v 1.42.2.1 2006/01/15 10:02:37 yamt Exp $
 #
 maxpartitions 8
 
@@ -6,8 +6,6 @@ maxusers 2 16 64
 
 defflag debug_hpcsh.h	BUS_SPACE_DEBUG
 			PFCKBD_DEBUG
-			HD64461VIDEO_DEBUG
-			HD64461PCMCIA_DEBUG			
 
 defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
 
@@ -20,10 +18,10 @@ file	arch/hpcsh/hpcsh/clock_machdep.c
 
 file	dev/kloader.c
 file	arch/hpcsh/hpcsh/kloader_machdep.c
-defflag	debug_kloader.h			KLOADER_DEBUG
+defflag debug_kloader.h			KLOADER_DEBUG
 defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
 
-device mainbus { [id = -1] }
+device	mainbus { [id = -1] }
 
 #
 # H/PC Platform common files.
@@ -36,13 +34,12 @@ include "dev/hpc/files.hpcfb"
 
 include "arch/hpc/conf/files.debug"
 file	arch/hpcsh/hpcsh/debug.c
-#
+
 # power management
-#
 include "dev/hpc/apm/files.apm"
-device hpcapm: apmdevif
-attach hpcapm at mainbus
-file	dev/hpc/hpcapm.c		hpcapm
+device	hpcapm: apmdevif
+attach	hpcapm at mainbus
+file	dev/hpc/hpcapm.c			hpcapm
 
 
 #
@@ -56,7 +53,7 @@ include "dev/scsipi/files.scsipi"
 include "dev/ata/files.ata"
 
 # Memory Disk for install floppy
-file dev/md_root.c				memory_disk_hooks
+file	dev/md_root.c				memory_disk_hooks
 
 #
 # System bus types
@@ -64,8 +61,8 @@ file dev/md_root.c				memory_disk_hooks
 attach	mainbus at root
 file	arch/hpcsh/hpcsh/mainbus.c		mainbus
 
-device cpu
-attach cpu at mainbus
+device	cpu
+attach	cpu at mainbus
 file	arch/sh3/sh3/cpu.c			cpu
 
 include	"arch/sh3/conf/files.shb"
@@ -84,7 +81,7 @@ include "dev/hpc/files.hpctp"
 device	j6x0tp: hpctpanel, wsmousedev, wskbddev
 attach	j6x0tp at adc
 file	arch/hpcsh/dev/j6x0tp.c			j6x0tp
-defflag	opt_j6x0tp.h		J6X0TP_DEBUG
+defflag opt_j6x0tp.h		J6X0TP_DEBUG
 				J6X0TP_WSMOUSE_EXCLUSIVE
 defparam opt_j6x0tp.h		J6X0TP_SETTINGS_ICON_KEYSYM
 				J6X0TP_PGUP_ICON_KEYSYM
@@ -98,7 +95,7 @@ file	arch/hpcsh/dev/psh3lcd.c		psh3lcd
 device	psh3tp: hpctpanel, wsmousedev
 attach	psh3tp at adc
 file	arch/hpcsh/dev/psh3tp.c			psh3tp
-defflag	opt_psh3tp.h		PSH3TP_DEBUG
+defflag opt_psh3tp.h		PSH3TP_DEBUG
 
 device	pfckbd: hpckbdif
 attach	pfckbd at mainbus
@@ -115,6 +112,8 @@ file	arch/hpcsh/dev/hd64461/hd64461_machdep.c	hd64461if
 device	hd64461pcmcia: pcmciabus
 attach	hd64461pcmcia at hd64461if
 file	arch/hpcsh/dev/hd64461/hd64461pcmcia.c	hd64461pcmcia
+defflag opt_hd64461pcmcia.h	HD64461PCMCIA_DEBUG
+				HD64461PCMCIA_REORDER_ATTACH
 
 attach	com at hd64461if with hd64461uart
 file	arch/hpcsh/dev/hd64461/hd64461uart.c	hd64461uart	needs-flag
@@ -123,6 +122,8 @@ device	hd64461video: hpcfbif
 attach	hd64461video at hd64461if
 file	arch/hpcsh/dev/hd64461/hd64461video.c	hd64461video	needs-flag
 file	dev/hpc/video_subr.c			hd64461video
+defflag opt_hd64461video.h	HD64461VIDEO_DEBUG
+				HD64461VIDEO_HWACCEL
 
 #
 # HD64465
@@ -152,7 +153,7 @@ file	arch/hpcsh/dev/hd6446x/hd6446xintc.c	hd64461if | hd64465if
 #
 # Machine-independent PCMCIA drivers
 #
-device	fdc {drive = -1}	# files.pcmcia requires.
+device	fdc {drive = -1}	# XXX: required by files.pcmcia
 include "dev/pcmcia/files.pcmcia"
 
 include "arch/hpcsh/conf/majors.hpcsh"

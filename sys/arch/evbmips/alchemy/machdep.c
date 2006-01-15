@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.21 2005/12/24 22:45:34 perry Exp $ */
+/* $NetBSD: machdep.c,v 1.21.2.1 2006/01/15 10:02:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.2.1 2006/01/15 10:02:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -234,7 +234,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	if (aucomcnrate == 0) {
 		panic("pb1000: The `modetty0' YAMON variable not set. "
 		    "Either set it to the speed of the console and try again, "
-		    or build a kernel with the `CONSPEED' option.");
+		    "or build a kernel with the `CONSPEED' option.");
 	}
 #endif /* CONSPEED */
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.12 2005/12/11 12:19:48 christos Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.12.2.1 2006/01/15 10:02:47 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -43,7 +43,6 @@
 #include <machine/hypervisor.h>
 #include <machine/xen.h>
 #include <machine/evtchn.h>
-#include <machine/ctrl_if.h>
 #include <machine/xen_shm.h>
 
 /*

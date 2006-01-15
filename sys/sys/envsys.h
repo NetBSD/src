@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.8 2005/12/26 18:41:36 perry Exp $ */
+/* $NetBSD: envsys.h,v 1.8.2.1 2006/01/15 10:03:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ enum envsys_units {
 };
 
 #ifdef ENVSYSUNITNAMES
-static const char *envsysunitnames[] = {
+static const char * const envsysunitnames[] = {
     "degC", "RPM", "VAC", "V", "Ohms", "W",
     "A", "Wh", "Ah", "bool", "integer", "Unk"
 };

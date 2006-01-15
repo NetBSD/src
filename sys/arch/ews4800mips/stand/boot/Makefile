@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2005/12/30 06:00:01 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2006/01/15 10:02:37 yamt Exp $
 
 NOMAN		=
 
@@ -19,7 +19,7 @@ COFFHDRFIX	= ${.OBJDIR}/coffhdrfix
 
 PROG		= boot
 BOOT_KERNEL	= boot_kernel
-FILES		+= ${BOOT_KERNEL}.gz	# XXX hack to install this
+FILES		+= ${PROG}.coff ${BOOT_KERNEL}.gz # XXX hack to install these
 SRCS		= start.S boot.c prompt.c delay.c cmd.c loader.c
 SRCS		+= bfs_subr.o disk.c diskutil.c
 SRCS		+= devopen.c datafs.c bootfs.c ustarfs.c
@@ -70,9 +70,9 @@ CPPFLAGS	+= -D__daddr_t=int32_t
 #CPPFLAGS	+= -DRPC_DEBUG -DRARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 
 CLEANFILES	+= ${BINKERNEL_DUMMY_O} ${BINKERNEL_O}
-CLEANFILES	+= ${PROG} ${PROG}.elf ${PROG}.tmp ${PROG}.dis
+CLEANFILES	+= ${PROG} ${PROG}.elf ${PROG}.coff ${PROG}.tmp ${PROG}.dis
 CLEANFILES	+= ${COFFHDRFIX}
-CLEANFILES	+= ${BOOT_KERNEL} ${BOOT_KERNEL}.coff ${BOOT_KERNEL}.tmp
+CLEANFILES	+= ${BOOT_KERNEL} ${BOOT_KERNEL}.elf ${BOOT_KERNEL}.tmp
 CLEANFILES	+= ${BOOT_KERNEL}.gz ${BOOT_KERNEL}.gz.tmp
 CLEANFILES	+= machine mips
 
@@ -111,23 +111,26 @@ ${BINKERNEL_O}: ${BINKERNEL_C}
 	${COMPILE.c} -DKERNEL_SIZE=${BINKERNEL_SIZE} ${BINKERNEL_C} \
 	    -o ${.TARGET}
 
-all realall: ${BOOT_KERNEL}.gz
+all realall: ${PROG}.coff ${BOOT_KERNEL}.gz
 
 ${PROG}: ${BINKERNEL_DUMMY_O} ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -S -o ${PROG}.elf ${OBJS} ${LIBS} ${BINKERNEL_DUMMY_O}
 	${OBJDUMP} -h ${PROG}.elf
-	${OBJDUMP} -m mips:4000 -d ${PROG}.elf > ${PROG}.dis
+#	${OBJDUMP} -m mips:4000 -d ${PROG}.elf > ${PROG}.dis
 	mv ${PROG}.elf ${PROG}
 	ls -al ${PROG}
 
 .include <bsd.prog.mk>
 
-${BOOT_KERNEL}.gz: ${BINKERNEL_O} ${OBJS} ${LIBS} coffhdrfix
+${PROG}.coff:	${PROG}
+	${ELF2ECOFF} ${PROG} ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET}
+	
+${BOOT_KERNEL}.gz: ${BINKERNEL_O} ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -o ${BOOT_KERNEL}.elf ${OBJS} ${LIBS} \
 	    ${BINKERNEL_O}
-	${OBJDUMP} -h ${BOOT_KERNEL}.elf
-	${ELF2ECOFF} ${BOOT_KERNEL}.elf ${BOOT_KERNEL}.coff
-	mv ${BOOT_KERNEL}.coff ${BOOT_KERNEL}
+	mv ${BOOT_KERNEL}.elf ${BOOT_KERNEL}
+	${OBJDUMP} -h ${BOOT_KERNEL}
 	gzip -9c ${BOOT_KERNEL} > ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
-	ls -al ${BOOT_KERNEL}.gz
+	ls -al ${.TARGET}

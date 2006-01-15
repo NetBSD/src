@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.39 2005/12/15 13:45:32 yamt Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.39.2.1 2006/01/15 10:02:47 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.39 2005/12/15 13:45:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.39.2.1 2006/01/15 10:02:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -122,6 +122,59 @@ int xennet_debug = 0x0;
 static void xennet_hex_dump(unsigned char *, size_t, char *, int);
 #endif
 
+union xennet_bufarray {
+	struct {
+		struct mbuf *xbtx_m;
+	} xb_tx;
+	struct {
+		vaddr_t xbrx_va;
+		paddr_t xbrx_pa;
+		struct xennet_softc *xbrx_sc;
+	} xb_rx;
+	int xb_next;
+};
+
+struct xennet_softc {
+	struct device		sc_dev;		/* base device glue */
+	struct ethercom		sc_ethercom;	/* Ethernet common part */
+
+	int			sc_ifno;
+
+	uint8_t			sc_enaddr[6];
+
+#ifdef mediacode
+	struct ifmedia		sc_media;
+#endif
+
+	/* What is the status of our connection to the remote backend? */
+#define BEST_CLOSED       0
+#define BEST_DISCONNECTED 1
+#define BEST_CONNECTED    2
+	unsigned int		sc_backend_state;
+
+	unsigned int		sc_evtchn;
+
+	void			*sc_softintr;
+
+	netif_tx_interface_t	*sc_tx;
+	netif_rx_interface_t	*sc_rx;
+	struct vm_page		*sc_pg_tx;
+	struct vm_page		*sc_pg_rx;
+
+	uint32_t		sc_tx_entries;
+	uint32_t		sc_tx_resp_cons;
+
+	uint32_t		sc_rx_resp_cons;
+	uint32_t		sc_rx_bufs_to_notify;
+
+	union xennet_bufarray	sc_tx_bufa[NETIF_TX_RING_SIZE];
+	union xennet_bufarray	sc_rx_bufa[NETIF_RX_RING_SIZE];
+
+#if NRND > 0
+	rndsource_element_t	sc_rnd_source;
+#endif
+};
+
 int xennet_match (struct device *, struct cfdata *, void *);
 void xennet_attach (struct device *, struct device *, void *);
 static void xennet_ctrlif_rx(ctrl_msg_t *, unsigned long);
@@ -140,6 +193,9 @@ void xennet_softstart(void *);
 static int xennet_mediachange (struct ifnet *);
 static void xennet_mediastatus(struct ifnet *, struct ifmediareq *);
 #endif
+void xennet_start(struct ifnet *);
+int  xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
+void xennet_watchdog(struct ifnet *ifp);
 
 CFATTACH_DECL(xennet, sizeof(struct xennet_softc),
     xennet_match, xennet_attach, NULL, NULL);
