@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ppp.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-ppp.c,v 1.6 2006/01/15 16:12:53 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ppp.c,v 1.89.2.3 2004/03/24 03:32:43 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-ppp.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-ppp.c,v 1.6 2006/01/15 16:12:53 elad Exp $");
 #endif
 #endif
 
@@ -449,6 +449,11 @@ handle_ctrl_proto(u_int proto, const u_char *pptr, int length)
 				pfunc = NULL;
 				break;
 			}
+
+			/* bail if protocol was unknown */
+			if (pfunc == NULL)
+				break;
+
 			if ((j = (*pfunc)(tptr, len)) == 0)
 				break;
 			x -= j;
