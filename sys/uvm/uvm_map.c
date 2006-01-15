@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.207 2006/01/08 09:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.208 2006/01/15 08:31:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.207 2006/01/08 09:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.208 2006/01/15 08:31:31 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -130,6 +130,11 @@ UVMMAP_EVCNT_DEFINE(knomerge)
 UVMMAP_EVCNT_DEFINE(map_call)
 UVMMAP_EVCNT_DEFINE(mlk_call)
 UVMMAP_EVCNT_DEFINE(mlk_hint)
+
+UVMMAP_EVCNT_DEFINE(uke_alloc)
+UVMMAP_EVCNT_DEFINE(uke_free)
+UVMMAP_EVCNT_DEFINE(ukh_alloc)
+UVMMAP_EVCNT_DEFINE(ukh_free)
 
 const char vmmapbsy[] = "vmmapbsy";
 
@@ -4041,9 +4046,6 @@ uvmspace_fork(struct vmspace *vm1)
  * in-kernel map entry allocation.
  */
 
-int ukh_alloc, ukh_free;
-int uke_alloc, uke_free;
-
 struct uvm_kmapent_hdr {
 	LIST_ENTRY(uvm_kmapent_hdr) ukh_listq;
 	int ukh_nused;
@@ -4133,7 +4135,7 @@ uvm_kmapent_alloc(struct vm_map *map, int flags)
 	KDASSERT(kernel_map != NULL);
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
-	uke_alloc++;
+	UVMMAP_EVCNT_INCR(uke_alloc);
 	entry = NULL;
 again:
 	/*
@@ -4213,7 +4215,7 @@ again:
 
 	entry = &ukh->ukh_entries[1];
 	entry->flags = UVM_MAP_KERNEL;
-	ukh_alloc++;
+	UVMMAP_EVCNT_INCR(ukh_alloc);
 	return entry;
 }
 
@@ -4233,7 +4235,7 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	struct vm_map_entry *deadentry;
 	int s;
 
-	uke_free++;
+	UVMMAP_EVCNT_INCR(uke_free);
 	ukh = UVM_KHDR_FIND(entry);
 	map = ukh->ukh_map;
 
@@ -4293,7 +4295,7 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	vm_map_unlock(map);
 	pg = PHYS_TO_VM_PAGE(pa);
 	uvm_pagefree(pg);
-	ukh_free++;
+	UVMMAP_EVCNT_INCR(ukh_free);
 }
 
 /*
