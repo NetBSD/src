@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.19 2006/01/12 18:06:25 garbled Exp $	*/
+/*	$NetBSD: lpc.c,v 1.20 2006/01/15 13:17:15 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.19 2006/01/12 18:06:25 garbled Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.20 2006/01/15 13:17:15 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ main(int argc, char *argv[])
 	openlog("lpd", 0, LOG_LPR);
 
 	if (--argc > 0) {
-		*argv++;
+		argv++;
 		exit(!parse(*argv, argv, argc));
 	}
 	fromatty = isatty(fileno(stdin));
