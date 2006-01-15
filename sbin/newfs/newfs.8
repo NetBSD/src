@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.67 2005/12/27 14:49:28 hubertf Exp $
+.\"	$NetBSD: newfs.8,v 1.68 2006/01/15 19:49:25 dsl Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd December 27, 2005
+.Dd January 15, 2006
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -55,6 +55,7 @@
 .Op Fl s Ar size
 .Op Fl T Ar disk-type
 .Op Fl v Ar volname
+.Op Fl V Ar verbose
 .Ar special
 .Sh DESCRIPTION
 .Nm
@@ -255,6 +256,27 @@ instead of trying to get the information from the disk label.
 .It Fl v Ar volname
 This specifies that an Apple UFS filesystem should be created
 with the given volume name.
+.It Fl V Ar verbose
+This controls the amount of information written to stdout:
+.Bl -tag -width 3n -offset indent -compact
+.It 0
+No output
+.It 1
+Overall size and cylinder group details.
+.It 2
+A progress bar (dots ending at right hand margin).
+.It 3
+The first few super-block backup sector numbers are displayed before the
+progress bar.
+.It 4
+All the super-block backup sector numbers are displayed (no progress bar).
+.El
+The default is 3.
+If
+.Fl N
+is specifed
+.Nm
+stops before outputting the progress bar.
 .It Fl Z
 Pre-zeros the file system image created with
 .Fl F .

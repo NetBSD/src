@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.87 2005/11/28 22:35:06 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.88 2006/01/15 19:49:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.87 2005/11/28 22:35:06 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.88 2006/01/15 19:49:25 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,6 +188,7 @@ int main(int, char *[]);
 int	mfs;			/* run as the memory based filesystem */
 int	Nflag;			/* run without writing file system */
 int	Oflag = 1;		/* format as an 4.3BSD file system */
+int	verbosity;		/* amount of printf() output */
 int64_t	fssize;			/* file system size */
 int	sectorsize;		/* bytes/sector */
 int	fsize = 0;		/* fragment size */
@@ -241,6 +242,7 @@ main(int argc, char *argv[])
 	cp = NULL;
 	fsi = fso = -1;
 	Fflag = Iflag = Zflag = 0;
+	verbosity = -1;
 	if (strstr(getprogname(), "mfs")) {
 		mfs = 1;
 	} else {
@@ -253,8 +255,8 @@ main(int argc, char *argv[])
 	}
 
 	opstring = mfs ?
-	    "NT:a:b:d:e:f:g:h:i:m:n:o:p:s:u:" :
-	    "B:FINO:S:T:Za:b:d:e:f:g:h:i:l:m:n:o:p:r:s:u:v:";
+	    "NT:V:a:b:d:e:f:g:h:i:m:n:o:p:s:u:" :
+	    "B:FINO:S:T:V:Za:b:d:e:f:g:h:i:l:m:n:o:r:s:v:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -277,19 +279,28 @@ main(int argc, char *argv[])
 			break;
 		case 'N':
 			Nflag = 1;
+			if (verbosity == -1)
+				verbosity = 3;
 			break;
 		case 'O':
 			Oflag = strsuftoi64("format", optarg, 0, 2, NULL);
 			break;
 		case 'S':
+			/* non-512 byte sectors almost certainly don't work. */
 			sectorsize = strsuftoi64("sector size",
-			    optarg, 1, INT_MAX, NULL);
+			    optarg, 512, 65536, NULL);
+			if (sectorsize & (sectorsize - 1))
+				errx(1, "sector size `%s' is not a power of 2.",
+				    optarg);
 			break;
 #ifdef COMPAT
 		case 'T':
 			disktype = optarg;
 			break;
 #endif
+		case 'V':
+			verbosity = strsuftoi64("verbose", optarg, 0, 4, NULL);
+			break;
 		case 'Z':
 			Zflag = 1;
 			break;
@@ -353,21 +364,17 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'p':
-			if (mfs) {
-				if ((mfsmode = strtol(optarg, NULL, 8)) <= 0)
-					errx(1, "bad mode `%s'", optarg);
-			} else
-				errx(1, "unknown option 'p'");
+			/* mfs only */
+			if ((mfsmode = strtol(optarg, NULL, 8)) <= 0)
+				errx(1, "bad mode `%s'", optarg);
 			break;
 		case 's':
 			fssize = strsuftoi64("file system size",
 			    optarg, INT64_MIN, INT64_MAX, &byte_sized);
 			break;
 		case 'u':
-			if (mfs)
-				mfsuid = mfs_user(optarg);
-			else
-				errx(1, "deprecated option 'u'");
+			/* mfs only */
+			mfsuid = mfs_user(optarg);
 			break;
 		case 'v':
 			appleufs_volname = optarg;
@@ -383,6 +390,10 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (verbosity == -1)
+		/* Default to not showing CG info if mfs */
+		verbosity = mfs ? 0 : 3;
 
 #ifdef MFS
 	/* This is enough to get through the correct kernel code paths */
@@ -539,9 +550,10 @@ main(int argc, char *argv[])
 			err(1, "can't malloc buffer of %d",
 			bufsize);
 		bufrem = fssize * sectorsize;
-		printf(
-    "Creating file system image in `%s', size %lld bytes, in %d byte chunks.\n",
-		    special, (long long)bufrem, bufsize);
+		if (verbosity > 0)
+			printf( "Creating file system image in `%s', "
+			    "size %lld bytes, in %d byte chunks.\n",
+			    special, (long long)bufrem, bufsize);
 		while (bufrem > 0) {
 			i = write(fso, buf, MIN(bufsize, bufrem));
 			if (i == -1)
