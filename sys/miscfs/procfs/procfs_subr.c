@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.67 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.67.2.1 2006/01/15 11:06:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.67 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.67.2.1 2006/01/15 11:06:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ procfs_rw(v)
 	if (uio->uio_rw == UIO_WRITE && p == initproc && securelevel > -1)
 		return EPERM;
 
-	curl = uio->uio_lwp;
+	curl = curlwp;
 
 	/* XXX NJWLWP
 	 * The entire procfs interface needs work to be useful to
