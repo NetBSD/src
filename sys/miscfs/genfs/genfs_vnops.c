@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.120 2006/01/11 00:46:54 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.121 2006/01/16 19:45:00 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.120 2006/01/11 00:46:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.121 2006/01/16 19:45:00 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -464,7 +464,8 @@ genfs_getpages(void *v)
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x/%x count %d",
 	    vp, ap->a_offset >> 32, ap->a_offset, *ap->a_count);
 
-	KASSERT(vp->v_type == VREG || vp->v_type == VBLK);
+	KASSERT(vp->v_type == VREG || vp->v_type == VDIR ||
+	    vp->v_type == VLNK || vp->v_type == VBLK);
 
 	/* XXXUBC temp limit */
 	if (*ap->a_count > MAX_READ_PAGES) {
@@ -502,7 +503,7 @@ genfs_getpages(void *v)
 	/* uobj is locked */
 
 	if ((flags & PGO_NOTIMESTAMP) == 0 &&
-	    (vp->v_type == VREG ||
+	    (vp->v_type != VBLK ||
 	    (vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)) {
 		int updflags = 0;
 
@@ -543,7 +544,7 @@ genfs_getpages(void *v)
 	 * leave space in the page array for a whole block.
 	 */
 
-	if (vp->v_type == VREG) {
+	if (vp->v_type != VBLK) {
 		fs_bshift = vp->v_mount->mnt_fs_bshift;
 		dev_bshift = vp->v_mount->mnt_dev_bshift;
 	} else {
@@ -1362,7 +1363,7 @@ genfs_putpages(void *v)
 	}
 
 	if (modified && (vp->v_flag & VWRITEMAPDIRTY) != 0 &&
-	    (vp->v_type == VREG ||
+	    (vp->v_type != VBLK ||
 	    (vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)) {
 		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
 	}
@@ -1426,7 +1427,7 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	    vp, pgs, npages, flags);
 
 	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_WRITE);
-	if (vp->v_type == VREG) {
+	if (vp->v_type != VBLK) {
 		fs_bshift = vp->v_mount->mnt_fs_bshift;
 		dev_bshift = vp->v_mount->mnt_dev_bshift;
 	} else {
