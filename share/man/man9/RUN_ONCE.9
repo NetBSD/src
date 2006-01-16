@@ -1,4 +1,4 @@
-.\"	$NetBSD: RUN_ONCE.9,v 1.3 2006/01/16 21:46:30 yamt Exp $
+.\"	$NetBSD: RUN_ONCE.9,v 1.4 2006/01/16 23:58:43 wiz Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -46,13 +46,13 @@
 .Fn RUN_ONCE
 provides a functionality similar to
 .Fn pthread_once 3 .
-It ensures that successful execution of
+It ensures that, for a given
+.Fa control ,
 .Fn init_func
-is exactly once for given
-.Fa control .
-If and only if
+is executed (successfully) exactly once.
+It is considered as a successful execution if and only if
 .Fn init_func
-returned 0, it's considered as a successul execution.
+returned 0.
 .Pp
 .Fn RUN_ONCE
 can sleep if it's called concurrently.
