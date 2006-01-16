@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.9 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.10 2006/01/16 22:59:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -204,5 +204,19 @@
 #define AGP_I855_GCC1_GMS_STOLEN_8M	0x30
 #define AGP_I855_GCC1_GMS_STOLEN_16M	0x40
 #define AGP_I855_GCC1_GMS_STOLEN_32M	0x50
+
+/*
+ * Config registers for 915G/915GM
+ */
+#define AGP_I915_MMADR			0x10
+#define AGP_I915_GMADR			0x18
+#define AGP_I915_GTTADR			0x1c
+#define AGP_I915_GCC1			0x52
+#define 	AGP_I915_GCC1_GMS		0x70
+#define 	AGP_I915_GCC1_GMS_STOLEN_0M	0x00
+#define 	AGP_I915_GCC1_GMS_STOLEN_1M	0x10
+#define 	AGP_I915_GCC1_GMS_STOLEN_8M	0x30
+#define AGP_I915_MSAC			0x62
+#define 	AGP_I915_MSAC_APER_128M		0x02
 
 #endif /* !_PCI_AGPREG_H_ */

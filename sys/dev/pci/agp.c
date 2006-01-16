@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.36 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: agp.c,v 1.37 2006/01/16 22:59:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.36 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.37 2006/01/16 22:59:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,10 @@ const struct agp_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82855GM_MCH,
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82865_HB,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82915G_HB,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82915GM_HB,
 	  NULL,			agp_i810_attach },
 #endif
 
@@ -287,13 +291,13 @@ CFATTACH_DECL(agp, sizeof(struct agp_softc),
     agpmatch, agpattach, NULL, NULL);
 
 int
-agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc)
+agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc, int reg)
 {
 	/*
 	 * Find the aperture. Don't map it (yet), this would
 	 * eat KVA.
 	 */
-	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, AGP_APBASE,
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, reg,
 	    PCI_MAPREG_TYPE_MEM, &sc->as_apaddr, &sc->as_apsize,
 	    &sc->as_apflags) != 0)
 		return ENXIO;
