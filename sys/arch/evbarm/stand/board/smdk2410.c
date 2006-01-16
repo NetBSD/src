@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410.c,v 1.3 2005/12/11 12:17:09 christos Exp $ */
+/* $NetBSD: smdk2410.c,v 1.4 2006/01/16 19:34:53 he Exp $ */
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -57,9 +57,9 @@ mem_init(void)
 	start = S3C2410_SDRAM_START;
 	size = SDRAM_SIZE;
 
-	heap = (start + size) - HEAP_SIZE;
+	heap = (start + size) - BOARD_HEAP_SIZE;
 
 	printf(">> RAM 0x%x - 0x%x, heap at 0x%x\n",
 	    start, (start + size) - 1, heap);
-	setheap((void *)heap, (void *)(heap + HEAP_SIZE - 1));
+	setheap((void *)heap, (void *)(heap + BOARD_HEAP_SIZE - 1));
 }
