@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.751 2006/01/07 14:19:51 peter Exp $
+#	$NetBSD: files,v 1.752 2006/01/16 22:49:23 cube Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1087,7 +1087,7 @@ defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
 defpseudo stf:		ifnet
-defpseudo tap { }:	ifnet, ether, bpf_filter
+defpseudo tap { }:	ifnet, ether, arp, bpf_filter
 
 defpseudo sequencer
 defpseudo clockctl
