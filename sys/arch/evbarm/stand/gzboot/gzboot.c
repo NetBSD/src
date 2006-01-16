@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.9 2005/12/11 12:17:10 christos Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.10 2006/01/16 19:34:53 he Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
-#include <lib/libz/zlib.h>
+#include <lib/libz/libz.h>
 
 #include "board.h"
 #include "gzboot.h"
