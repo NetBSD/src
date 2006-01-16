@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.13 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.14 2006/01/16 22:59:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.13 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.14 2006/01/16 22:59:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ agp_amd_attach(struct device *parent, struct device *self, void *aux)
 		return error;
 	}
 
-	if (agp_map_aperture(pa, sc) != 0) {
+	if (agp_map_aperture(pa, sc, AGP_APBASE) != 0) {
 		aprint_error(": can't map aperture\n");
 		agp_generic_detach(sc);
 		free(asc, M_AGP);
