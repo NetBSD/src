@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.842 2006/01/04 19:14:55 xtraeme Exp $
+#	$NetBSD: mi,v 1.843 2006/01/16 22:32:27 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5259,6 +5259,8 @@
 ./usr/share/man/cat9/fuword.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getblk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/geteblk.0			comp-sys-catman		.cat
+./usr/share/man/cat9/getiobuf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/getiobuf_nowait.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/gsignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/hardclock.0		comp-sys-catman		.cat
@@ -5546,6 +5548,7 @@
 ./usr/share/man/cat9/propdb_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/properties.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/psignal.0			comp-sys-catman		.cat
+./usr/share/man/cat9/putiobuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/radio.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ras.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ras_fork.0			comp-sys-catman		.cat
@@ -9193,6 +9196,8 @@
 ./usr/share/man/man9/fuword.9			comp-sys-man		.man
 ./usr/share/man/man9/getblk.9			comp-sys-man		.man
 ./usr/share/man/man9/geteblk.9			comp-sys-man		.man
+./usr/share/man/man9/getiobuf.9			comp-sys-man		.man
+./usr/share/man/man9/getiobuf_nowait.9		comp-sys-man		.man
 ./usr/share/man/man9/getnewvnode.9		comp-sys-man		.man
 ./usr/share/man/man9/gsignal.9			comp-sys-man		.man
 ./usr/share/man/man9/hardclock.9		comp-sys-man		.man
@@ -9480,6 +9485,7 @@
 ./usr/share/man/man9/propdb_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/properties.9		comp-sys-man		.man
 ./usr/share/man/man9/psignal.9			comp-sys-man		.man
+./usr/share/man/man9/putiobuf.9			comp-sys-man		.man
 ./usr/share/man/man9/radio.9			comp-sys-man		.man
 ./usr/share/man/man9/ras.9			comp-sys-man		.man
 ./usr/share/man/man9/ras_fork.9			comp-sys-man		.man
