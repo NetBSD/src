@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.20 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.21 2006/01/16 20:30:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.20 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.21 2006/01/16 20:30:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,7 @@ wdc_pioc_attach(parent, self, aux)
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
+	sc->sc_channel.ch_ndrive = 2;
 
 	wdc_init_shadow_regs(&sc->sc_channel);
 

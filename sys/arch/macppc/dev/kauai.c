@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.18 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: kauai.c,v 1.19 2006/01/16 20:30:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.18 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19 2006/01/16 20:30:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,6 +194,7 @@ kauai_attach(parent, self, aux)
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_queue;
+	chp->ch_ndrive = 2;
 	wdc_init_shadow_regs(chp);
 
 	wdcattach(chp);
