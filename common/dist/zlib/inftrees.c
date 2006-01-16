@@ -1,4 +1,4 @@
-/*	$NetBSD: inftrees.c,v 1.1.1.1 2006/01/14 20:10:31 christos Exp $	*/
+/*	$NetBSD: inftrees.c,v 1.2 2006/01/16 03:23:10 christos Exp $	*/
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-2005 Mark Adler
@@ -41,7 +41,7 @@ unsigned short FAR *work;
 {
     unsigned len;               /* a code's length in bits */
     unsigned sym;               /* index of code symbols */
-    unsigned min, max;          /* minimum and maximum code lengths */
+    unsigned mmin, mmax;        /* minimum and maximum code lengths */
     unsigned root;              /* number of index bits for root table */
     unsigned curr;              /* number of index bits for current table */
     unsigned drop;              /* code bits to drop for sub-table */
@@ -113,10 +113,10 @@ unsigned short FAR *work;
 
     /* bound code lengths, force root to be within code lengths */
     root = *bits;
-    for (max = MAXBITS; max >= 1; max--)
-        if (count[max] != 0) break;
-    if (root > max) root = max;
-    if (max == 0) {                     /* no symbols to code at all */
+    for (mmax = MAXBITS; mmax >= 1; mmax--)
+        if (count[mmax] != 0) break;
+    if (root > mmax) root = mmax;
+    if (mmax == 0) {                     /* no symbols to code at all */
         this.op = (unsigned char)64;    /* invalid code marker */
         this.bits = (unsigned char)1;
         this.val = (unsigned short)0;
@@ -125,9 +125,9 @@ unsigned short FAR *work;
         *bits = 1;
         return 0;     /* no symbols, but wait for decoding to report error */
     }
-    for (min = 1; min <= MAXBITS; min++)
-        if (count[min] != 0) break;
-    if (root < min) root = min;
+    for (mmin = 1; mmin <= MAXBITS; mmin++)
+        if (count[mmin] != 0) break;
+    if (root < mmin) root = mmin;
 
     /* check for an over-subscribed or incomplete set of lengths */
     left = 1;
@@ -136,7 +136,7 @@ unsigned short FAR *work;
         left -= count[len];
         if (left < 0) return -1;        /* over-subscribed */
     }
-    if (left > 0 && (type == CODES || max != 1))
+    if (left > 0 && (type == CODES || mmax != 1))
         return -1;                      /* incomplete set */
 
     /* generate offsets into symbol table for each length for sorting */
@@ -175,7 +175,7 @@ unsigned short FAR *work;
        This assumes that when type == LENS, bits == 9.
 
        sym increments through all symbols, and the loop terminates when
-       all codes of length max, i.e. all codes, have been processed.  This
+       all codes of length mmax, i.e. all codes, have been processed.  This
        routine permits incomplete codes, so another loop after this one fills
        in the rest of the decoding tables with invalid code markers.
      */
@@ -202,7 +202,7 @@ unsigned short FAR *work;
     /* initialize state for loop */
     huff = 0;                   /* starting code */
     sym = 0;                    /* starting code symbol */
-    len = min;                  /* starting code length */
+    len = mmin;                  /* starting code length */
     next = *table;              /* current table to fill in */
     curr = root;                /* current table index bits */
     drop = 0;                   /* current bits to drop from code for index */
@@ -234,7 +234,7 @@ unsigned short FAR *work;
         /* replicate for those indices with low len bits equal to huff */
         incr = 1U << (len - drop);
         fill = 1U << curr;
-        min = fill;                 /* save offset to next table */
+        mmin = fill;                 /* save offset to next table */
         do {
             fill -= incr;
             next[(huff >> drop) + fill] = this;
@@ -254,7 +254,7 @@ unsigned short FAR *work;
         /* go to next symbol, update count, len */
         sym++;
         if (--(count[len]) == 0) {
-            if (len == max) break;
+            if (len == mmax) break;
             len = lens[work[sym]];
         }
 
@@ -265,12 +265,12 @@ unsigned short FAR *work;
                 drop = root;
 
             /* increment past last table */
-            next += min;            /* here min is 1 << curr */
+            next += mmin;            /* here mmin is 1 << curr */
 
             /* determine length of next table */
             curr = len - drop;
             left = (int)(1 << curr);
-            while (curr + drop < max) {
+            while (curr + drop < mmax) {
                 left -= count[curr + drop];
                 if (left <= 0) break;
                 curr++;
