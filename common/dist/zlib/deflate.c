@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.1.1.1 2006/01/14 20:10:26 christos Exp $	*/
+/*	$NetBSD: deflate.c,v 1.2 2006/01/16 17:02:29 christos Exp $	*/
 
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2005 Jean-loup Gailly.
@@ -95,7 +95,7 @@ local uInt longest_match  OF((deflate_state *s, IPos cur_match));
 #endif
 local uInt longest_match_fast OF((deflate_state *s, IPos cur_match));
 
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
 local  void check_match OF((deflate_state *s, IPos start, IPos match,
                             int length));
 #endif
@@ -1227,7 +1227,7 @@ local uInt longest_match_fast(s, cur_match)
     return (uInt)len <= s->lookahead ? (uInt)len : s->lookahead;
 }
 
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
 /* ===========================================================================
  * Check that the match at match_start is indeed a match.
  */
@@ -1253,7 +1253,7 @@ local void check_match(s, start, match, length)
 }
 #else
 #  define check_match(s, start, match, length)
-#endif /* DEBUG */
+#endif /* ZLIB_DEBUG */
 
 /* ===========================================================================
  * Fill the window when the lookahead becomes insufficient.
