@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.140 2006/01/15 20:41:00 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.141 2006/01/16 21:47:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -638,7 +638,6 @@ extract_file(distinfo *dist, int update, int verbose, char *path)
 		tarstats.nnotfound++;
 
 		msg_display(MSG_notarfile, path);
-		/* process_menu(MENU_noyes, deconst(MSG_notarfile_ok)); */
 		process_menu(MENU_ok, NULL);
 		return SET_RETRY;
 	}
@@ -669,7 +668,6 @@ extract_file(distinfo *dist, int update, int verbose, char *path)
 	if (rval != 0) {
 		tarstats.nerror++;
 		msg_display(MSG_tarerror, path);
-		/* process_menu(MENU_noyes, NULL); */
 		process_menu(MENU_ok, NULL);
 		return SET_RETRY;
 	}
@@ -1287,8 +1285,7 @@ int
 check_lfs_progs(void)
 {
 
-	return (access("/sbin/dump_lfs", X_OK) == 0 &&
-		access("/sbin/fsck_lfs", X_OK) == 0 &&
+	return (access("/sbin/fsck_lfs", X_OK) == 0 &&
 		access("/sbin/mount_lfs", X_OK) == 0 &&
 		access("/sbin/newfs_lfs", X_OK) == 0);
 }
