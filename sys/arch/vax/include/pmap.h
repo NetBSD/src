@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.63 2005/12/24 23:24:07 perry Exp $	   */
+/*	$NetBSD: pmap.h,v 1.64 2006/01/16 14:45:49 is Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -199,6 +199,15 @@ boolean_t pmap_clear_reference_long(struct pv_entry *);
 boolean_t pmap_is_modified_long(struct pv_entry *);
 void pmap_page_protect_long(struct pv_entry *, vm_prot_t);
 void pmap_protect_long(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
+
+inline static boolean_t
+pmap_is_referenced(struct vm_page *pg)
+{
+	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+	boolean_t rv = (pv->pv_attr & PG_V) != 0;
+
+	return rv;
+}
 
 inline static boolean_t
 pmap_clear_reference(struct vm_page *pg)
