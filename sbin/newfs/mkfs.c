@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.98 2006/01/15 19:49:25 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.99 2006/01/16 21:34:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.98 2006/01/15 19:49:25 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.99 2006/01/16 21:34:41 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -639,7 +639,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	else
 		max_cols = 80;
 	if (Nflag && verbosity == 3)
-		/* Leave space to add " ..." after onbe row of numbers */
+		/* Leave space to add " ..." after one row of numbers */
 		max_cols -= 4;
 #define BASE 0x10000	/* For some fixed-point maths */
 	col = 0;

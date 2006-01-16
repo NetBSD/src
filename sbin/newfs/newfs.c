@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.88 2006/01/15 19:49:25 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.89 2006/01/16 21:34:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.88 2006/01/15 19:49:25 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.89 2006/01/16 21:34:41 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,7 +286,7 @@ main(int argc, char *argv[])
 			Oflag = strsuftoi64("format", optarg, 0, 2, NULL);
 			break;
 		case 'S':
-			/* non-512 byte sectors almost certainly don't work. */
+			/* XXX: non-512 byte sectors almost certainly don't work. */
 			sectorsize = strsuftoi64("sector size",
 			    optarg, 512, 65536, NULL);
 			if (sectorsize & (sectorsize - 1))
@@ -863,6 +863,7 @@ struct help_strings {
 #ifdef COMPAT
 	{ NEWFS,	"-T disktype\tdisk type" },
 #endif
+	{ BOTH,		"-V verbose\toutput verbosity: 0 ==> none, 4 ==> max" },
 	{ NEWFS,	"-Z \t\tpre-zero the image file" },
 	{ BOTH,		"-a maxcontig\tmaximum contiguous blocks" },
 	{ BOTH,		"-b bsize\tblock size" },
