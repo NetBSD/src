@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.17 2005/12/11 12:23:28 christos Exp $	*/
+/*	$NetBSD: hcide.c,v 1.18 2006/01/16 20:30:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.17 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.18 2006/01/16 20:30:19 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -102,6 +102,7 @@ hcide_attach(struct device *parent, struct device *self, void *aux)
 		wdr->cmd_iot = pa->pa_mod_t;
 		wdr->ctl_iot = pa->pa_mod_t;
 		ch->ch_queue = &sc->sc_chq[i];
+		ch->ch_ndrive = 2;
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + hcide_cmdoffsets[i], 0, 8,
 		    &wdr->cmd_baseioh);

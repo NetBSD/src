@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.19 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: hptide.c,v 1.20 2006/01/16 20:30:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.19 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.20 2006/01/16 20:30:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,7 @@ hpt_setup_channel(struct ata_channel *chp)
 	}
 
 	/* Per drive settings */
-	for (drive = 0; drive < 2; drive++) {
+	for (drive = 0; drive < chp->ch_ndrive; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
 		if ((drvp->drive_flags & DRIVE) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.102 2006/01/11 13:34:33 christos Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.103 2006/01/16 20:30:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.102 2006/01/11 13:34:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.103 2006/01/16 20:30:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -98,66 +98,69 @@ static int wdc_pcmcia_detach(struct device *, int);
 CFATTACH_DECL(wdc_pcmcia, sizeof(struct wdc_pcmcia_softc),
     wdc_pcmcia_match, wdc_pcmcia_attach, wdc_pcmcia_detach, wdcactivate);
 
-static const struct pcmcia_product wdc_pcmcia_products[] = {
-	{ PCMCIA_VENDOR_DIGITAL,
+static const struct wdc_pcmcia_product {
+	struct pcmcia_product wdc_product;
+	int wdc_ndrive;
+} wdc_pcmcia_products[] = {
+	{ { PCMCIA_VENDOR_DIGITAL,
 	  PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
-	  {NULL, "Digital Mobile Media CD-ROM", NULL, NULL} },
+	  {NULL, "Digital Mobile Media CD-ROM", NULL, NULL} }, 2 },
 
-	{ PCMCIA_VENDOR_IBM,
+	{ { PCMCIA_VENDOR_IBM,
 	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
-	  {NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL} },
+	  {NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL} }, 2 },
 
 	/* The TEAC IDE/Card II is used on the Sony Vaio */
-	{ PCMCIA_VENDOR_TEAC,
+	{ { PCMCIA_VENDOR_TEAC,
 	  PCMCIA_PRODUCT_TEAC_IDECARDII,
-	  PCMCIA_CIS_TEAC_IDECARDII },
+	  PCMCIA_CIS_TEAC_IDECARDII }, 2 },
 
 	/*
 	 * A fujitsu rebranded panasonic drive that reports
 	 * itself as function "scsi", disk interface 0
 	 */
-	{ PCMCIA_VENDOR_PANASONIC,
+	{ { PCMCIA_VENDOR_PANASONIC,
 	  PCMCIA_PRODUCT_PANASONIC_KXLC005,
-	  PCMCIA_CIS_PANASONIC_KXLC005 },
+	  PCMCIA_CIS_PANASONIC_KXLC005 }, 2 },
 
-	{ PCMCIA_VENDOR_SANDISK,
+	{ { PCMCIA_VENDOR_SANDISK,
 	  PCMCIA_PRODUCT_SANDISK_SDCFB,
-	  PCMCIA_CIS_SANDISK_SDCFB },
+	  PCMCIA_CIS_SANDISK_SDCFB }, 1 },
 
 	/*
 	 * EXP IDE/ATAPI DVD Card use with some DVD players.
 	 * Does not have a vendor ID or product ID.
 	 */
-	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-	  PCMCIA_CIS_EXP_EXPMULTIMEDIA },
+	{ { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_EXP_EXPMULTIMEDIA }, 2 },
 
 	/* Mobile Dock 2, neither vendor ID nor product ID */
-	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-	  {"SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL} },
+	{ { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  {"SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL} }, 2 },
 
 	/* Toshiba Portege 3110 CD, neither vendor ID nor product ID */
-	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-	  {"FREECOM", "PCCARD-IDE", NULL, NULL} },
+	{ { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  {"FREECOM", "PCCARD-IDE", NULL, NULL} }, 2 },
 
 	/* Random CD-ROM, (badged AMACOM), neither vendor ID nor product ID */
-	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-	  {"PCMCIA", "CD-ROM", NULL, NULL} },
+	{ { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  {"PCMCIA", "CD-ROM", NULL, NULL} }, 2 },
 
 	/* IO DATA CBIDE2, with neither vendor ID nor product ID */
-	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-	  PCMCIA_CIS_IODATA_CBIDE2 },
+	{ { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_IODATA_CBIDE2 }, 2 },
 
 	/* TOSHIBA PA2673U(IODATA_CBIDE2 OEM), */
 	/*  with neither vendor ID nor product ID */
-	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-	  PCMCIA_CIS_TOSHIBA_CBIDE2 },
+	{ { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_TOSHIBA_CBIDE2 }, 2 },
 
 	/*
 	 * Novac PCMCIA-IDE Card for HD530P IDE Box,
 	 * with neither vendor ID nor product ID
 	 */
-	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-	  {"PCMCIA", "PnPIDE", NULL, NULL} },
+	{ { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  {"PCMCIA", "PnPIDE", NULL, NULL} }, 2 },
 };
 static const size_t wdc_pcmcia_nproducts =
     sizeof(wdc_pcmcia_products) / sizeof(wdc_pcmcia_products[0]);
@@ -210,6 +213,7 @@ wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct wdc_regs *wdr;
+	const struct wdc_pcmcia_product *wdcp;
 	bus_size_t offset;
 	int i;
 	int error;
@@ -295,6 +299,9 @@ wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
+	wdcp = pcmcia_product_lookup(pa, wdc_pcmcia_products,
+	    wdc_pcmcia_nproducts, sizeof(wdc_pcmcia_products[0]), NULL);
+	sc->ata_channel.ch_ndrive = wdcp->wdc_ndrive;
 	wdc_init_shadow_regs(&sc->ata_channel);
 
 	error = wdc_pcmcia_enable(self, 1);

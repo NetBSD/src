@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.26 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.27 2006/01/16 20:30:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.26 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.27 2006/01/16 20:30:18 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,6 +147,7 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
+	sc->sc_channel.ch_ndrive = 2;
 
 	wdc_init_shadow_regs(&sc->sc_channel);
 
