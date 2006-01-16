@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.259 2005/12/31 14:05:01 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.260 2006/01/16 21:44:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.259 2005/12/31 14:05:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.260 2006/01/16 21:44:46 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -172,11 +172,9 @@ MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 /*
  * Local declarations.
  */
-void insmntque(struct vnode *, struct mount *);
-int getdevvp(dev_t, struct vnode **, enum vtype);
-
-void vclean(struct vnode *, int, struct lwp *);
-
+static void insmntque(struct vnode *, struct mount *);
+static int getdevvp(dev_t, struct vnode **, enum vtype);
+static void vclean(struct vnode *, int, struct lwp *);
 static struct vnode *getcleanvnode(struct lwp *);
 
 #ifdef DEBUG
@@ -634,7 +632,7 @@ ungetnewvnode(struct vnode *vp)
 /*
  * Move a vnode from one mount queue to another.
  */
-void
+static void
 insmntque(struct vnode *vp, struct mount *mp)
 {
 
@@ -1040,7 +1038,7 @@ cdevvp(dev_t dev, struct vnode **vpp)
  * Used by bdevvp (block device) for root file system etc.,
  * and by cdevvp (character device) for console and kernfs.
  */
-int
+static int
 getdevvp(dev_t dev, struct vnode **vpp, enum vtype type)
 {
 	struct vnode *vp;
@@ -1480,7 +1478,7 @@ loop:
 /*
  * Disassociate the underlying file system from a vnode.
  */
-void
+static void
 vclean(struct vnode *vp, int flags, struct lwp *l)
 {
 	struct mount *mp;
