@@ -1,4 +1,4 @@
-/*	$NetBSD: zutil.c,v 1.1.1.1 2006/01/14 20:10:34 christos Exp $	*/
+/*	$NetBSD: zutil.c,v 1.2 2006/01/16 17:02:29 christos Exp $	*/
 
 /* zutil.c -- target dependent utility functions for the compression library
  * Copyright (C) 1995-2005 Jean-loup Gailly.
@@ -60,7 +60,7 @@ uLong ZEXPORT zlibCompileFlags()
     case 8:     flags += 2 << 6;        break;
     default:    flags += 3 << 6;
     }
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
     flags += 1 << 8;
 #endif
 #if defined(ASMV) || defined(ASMINF)
@@ -114,7 +114,7 @@ uLong ZEXPORT zlibCompileFlags()
     return flags;
 }
 
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
 
 #  ifndef verbose
 #    define verbose 0

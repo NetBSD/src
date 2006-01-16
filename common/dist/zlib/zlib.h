@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.h,v 1.1.1.1 2006/01/14 20:10:42 christos Exp $	*/
+/*	$NetBSD: zlib.h,v 1.2 2006/01/16 17:02:29 christos Exp $	*/
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.2.3, July 18th, 2005
@@ -966,7 +966,7 @@ ZEXTERN uLong ZEXPORT zlibCompileFlags OF((void));
      7.6: size of z_off_t
 
     Compiler, assembler, and debug options:
-     8: DEBUG
+     8: ZLIB_DEBUG
      9: ASMV or ASMINF -- use ASM code
      10: ZLIB_WINAPI -- exported functions use the WINAPI calling convention
      11: 0 (reserved)
