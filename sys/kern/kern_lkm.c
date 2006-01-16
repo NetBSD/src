@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.88 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.89 2006/01/16 21:45:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.88 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.89 2006/01/16 21:45:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -132,7 +132,7 @@ const struct cdevsw lkm_cdevsw = {
 
 static ONCE_DECL(lkm_init_once);
 
-static void
+static int
 lkm_init(void)
 {
 	/*
@@ -141,6 +141,8 @@ lkm_init(void)
 	 */
 	if (lkm_map == NULL)
 		lkm_map = kernel_map;
+
+	return 0;
 }
 
 /*ARGSUSED*/

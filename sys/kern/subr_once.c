@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_once.c,v 1.2 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: subr_once.c,v 1.3 2006/01/16 21:45:38 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,16 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.2 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.3 2006/01/16 21:45:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/once.h>
 
-void
-_run_once(once_t *o, void (*fn)(void))
+int
+_run_once(once_t *o, int (*fn)(void))
 {
+	int error = 0;
 
 	simple_lock(&o->o_lock);
 	while ((o->o_flags & ONCE_RUNNING) != 0) {
@@ -48,11 +49,15 @@ _run_once(once_t *o, void (*fn)(void))
 	o->o_flags |= ONCE_RUNNING;
 	simple_unlock(&o->o_lock);
 
-	(*fn)();
+	error = (*fn)();
 
 	simple_lock(&o->o_lock);
-	o->o_flags = ONCE_DONE;
+	if (error == 0) {
+		o->o_flags = ONCE_DONE;
+	}
 	wakeup(o);
 done:
 	simple_unlock(&o->o_lock);
+
+	return error;
 }

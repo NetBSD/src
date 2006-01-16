@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.11 2005/11/25 16:16:46 thorpej Exp $ */
+/*	$NetBSD: crypto.c,v 1.12 2006/01/16 21:45:38 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.11 2005/11/25 16:16:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.12 2006/01/16 21:45:38 yamt Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -178,7 +178,7 @@ SYSCTL_STRUCT(_kern, OID_AUTO, crypto_stats, CTLFLAG_RW, &cryptostats,
 	    cryptostats, "Crypto system statistics");
 #endif /* __FreeBSD__ */
 
-static void
+static int
 crypto_init0(void)
 {
 #ifdef __FreeBSD__
@@ -197,7 +197,7 @@ crypto_init0(void)
 	    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
 	if (crypto_drivers == NULL) {
 		printf("crypto_init: cannot malloc driver table\n");
-		return;
+		return 0;
 	}
 	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 
@@ -214,6 +214,7 @@ crypto_init0(void)
 	/* defer thread creation until after boot */
 	kthread_create( deferred_crypto_thread, NULL);
 #endif
+	return 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.156 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.157 2006/01/16 21:45:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.156 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.157 2006/01/16 21:45:38 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1550,7 +1550,7 @@ nfs_invaldircache(vp, flags)
  * Called once before VFS init to initialize shared and
  * server-specific data structures.
  */
-static void
+static int
 nfs_init0(void)
 {
 	nfsrtt.pos = 0;
@@ -1607,6 +1607,7 @@ nfs_init0(void)
 	/* Initialize the iod structures */
 	nfs_iodinit();
 #endif
+	return 0;
 }
 
 void
