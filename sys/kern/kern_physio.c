@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.71 2006/01/04 10:13:05 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.72 2006/01/16 21:45:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.71 2006/01/04 10:13:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.72 2006/01/16 21:45:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,16 +244,17 @@ physio_wait(struct buf *bp, int n, const char *wchan)
 	return error;
 }
 
-static void
+static int
 physio_init(void)
 {
+	int error;
 
 	KASSERT(physio_workqueue == NULL);
 
-	if (workqueue_create(&physio_workqueue, "physiod",
-	    physio_done, NULL, PRIBIO, 0/* IPL_BIO notyet */, 0)) {
-		panic("physiod create");
-	}
+	error = workqueue_create(&physio_workqueue, "physiod",
+	    physio_done, NULL, PRIBIO, 0/* IPL_BIO notyet */, 0);
+
+	return error;
 }
 
 #define	PHYSIO_CONCURRENCY	16	/* XXX tune */
@@ -272,13 +273,16 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	int i, s;
-	int error = 0;
+	int error;
 	int error2;
 	struct buf *bp = NULL;
 	struct buf *mbp;
 	int concurrency = PHYSIO_CONCURRENCY - 1;
 
-	RUN_ONCE(&physio_initialized, physio_init);
+	error = RUN_ONCE(&physio_initialized, physio_init);
+	if (__predict_false(error != 0)) {
+		return error;
+	}
 
 	DPRINTF(("%s: called: off=%" PRIu64 ", resid=%zu\n",
 	    __func__, uio->uio_offset, uio->uio_resid));
