@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.50 2006/01/15 20:41:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.51 2006/01/16 21:47:56 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -654,9 +654,6 @@ wypakowywanego pliku ?
 
 message notarfile
 {Pakiet %s nie istnieje.}
-
-message notarfile_ok
-{Kontynuowac rozpakowywanie pakietow?}
 
 message endtarok
 {Wszystkie wybrane pakiety dystrybucji zostaly rozpakowane.}

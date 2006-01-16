@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.140 2006/01/15 20:41:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.141 2006/01/16 21:47:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -662,9 +662,6 @@ each file is extracted?
 
 message notarfile
 {Release set %s does not exist.}
-
-message notarfile_ok
-{Continue extracting sets?}
 
 message endtarok
 {All selected distribution sets unpacked successfully.}

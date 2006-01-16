@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.10 2006/01/15 20:41:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.11 2006/01/16 21:47:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -675,9 +675,6 @@ extrayendo cada uno de los ficheros?
 
 message notarfile
 {El conjunto %s no existe.}
-
-message notarfile_ok
-{¿Continuar extrayendo conjuntos?}
 
 message endtarok
 {Todos los conjuntos de distribución han sido desempaquetados

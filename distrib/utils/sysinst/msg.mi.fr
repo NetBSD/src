@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.89 2006/01/15 20:41:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.90 2006/01/16 21:47:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -682,9 +682,6 @@ voir pendant qu'ils seront extraits ?
 
 message notarfile
 {Le composant %s n'existe pas.}
-
-message notarfile_ok
-{Voulez-vous continuer à extraire les composants ?}
 
 message endtarok
 {Tous les fichiers sont extraits. Veuillez appuyer sur <entrée> pour continuer.}
