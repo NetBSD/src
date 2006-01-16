@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.231 2005/11/16 23:39:08 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.232 2006/01/16 20:30:19 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.231 2005/11/16 23:39:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.232 2006/01/16 20:30:19 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -223,7 +223,7 @@ wdc_drvprobe(struct ata_channel *chp)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	u_int8_t st0 = 0, st1 = 0;
-	int i, error, s;
+	int i, j, error, s;
 
 	if (wdcprobe1(chp, 0) == 0) {
 		/* No drives, abort the attach here. */
@@ -275,7 +275,7 @@ wdc_drvprobe(struct ata_channel *chp)
 	/* Wait a bit, some devices are weird just after a reset. */
 	delay(5000);
 
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < chp->ch_ndrive; i++) {
 		/* XXX This should be done by other code. */
 		chp->ch_drive[i].chnl_softc = chp;
 		chp->ch_drive[i].drive = i;
@@ -321,9 +321,8 @@ wdc_drvprobe(struct ata_channel *chp)
 		if (error == CMD_OK) {
 			/* If IDENTIFY succeeded, this is not an OLD ctrl */
 			s = splbio();
-			/* XXXJRT ch_ndrive */
-			chp->ch_drive[0].drive_flags &= ~DRIVE_OLD;
-			chp->ch_drive[1].drive_flags &= ~DRIVE_OLD;
+			for (j = 0; j < chp->ch_ndrive; j++)
+				chp->ch_drive[j].drive_flags &= ~DRIVE_OLD;
 			splx(s);
 		} else {
 			s = splbio();
@@ -383,11 +382,9 @@ wdc_drvprobe(struct ata_channel *chp)
 				splx(s);
 			} else {
 				s = splbio();
-				/* XXXJRT ch_ndrive */
-				chp->ch_drive[0].drive_flags &=
-				    ~(DRIVE_ATA | DRIVE_ATAPI);
-				chp->ch_drive[1].drive_flags &=
-				    ~(DRIVE_ATA | DRIVE_ATAPI);
+				for (j = 0; j < chp->ch_ndrive; j++)
+					chp->ch_drive[j].drive_flags &=
+					    ~(DRIVE_ATA | DRIVE_ATAPI);
 				splx(s);
 			}
 		}
@@ -638,7 +635,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 	 * be something here assume it's ATA or OLD.  Ghost will be killed
 	 * later in attach routine.
 	 */
-	for (drive = 0; drive < 2; drive++) {
+	for (drive = 0; drive < chp->ch_ndrive; drive++) {
 		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
 		if (wdc->select)
@@ -683,11 +680,7 @@ wdcattach(struct ata_channel *chp)
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 
-	/*
-	 * Start out assuming 2 drives.  This may change as we probe
-	 * drives.
-	 */
-	chp->ch_ndrive = 2;
+	KASSERT(chp->ch_ndrive > 0 && chp->ch_ndrive < 3);
 
 	/* default data transfer methods */
 	if (wdc->datain_pio == NULL)
