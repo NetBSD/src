@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.20 2005/12/11 12:17:47 christos Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.21 2006/01/16 20:30:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.20 2005/12/11 12:17:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.21 2006/01/16 20:30:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,7 @@ pciide_pnpbios_attach(parent, self, aux)
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue = malloc(sizeof(struct ata_queue),
 					  M_DEVBUF, M_NOWAIT);
+	cp->ata_channel.ch_ndrive = 2;
 	if (cp->ata_channel.ch_queue == NULL) {
 		printf("%s: unable to allocate memory for command queue\n",
 			self->dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.4 2005/12/04 17:39:03 christos Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.5 2006/01/16 20:30:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -285,6 +285,7 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ata_channel.ch_queue =
 		    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+		cp->ata_channel.ch_ndrive = 2;
 		if (cp->ata_channel.ch_queue == NULL) {
 			aprint_error("%s channel %d: "
 			    "can't allocate memory for command queue\n",
