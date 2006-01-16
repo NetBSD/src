@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.11 2005/12/04 19:15:21 christos Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.12 2006/01/16 21:45:38 yamt Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.11 2005/12/04 19:15:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.12 2006/01/16 21:45:38 yamt Exp $");
 #endif
 
 /*
@@ -76,7 +76,7 @@ typedef void (*ieee80211_setup_func)(void);
 
 __link_set_decl(ieee80211_funcs, ieee80211_setup_func);
 
-static void
+static int
 ieee80211_init0(void)
 {
 	ieee80211_setup_func * const *ieee80211_setup, f;
@@ -85,6 +85,8 @@ ieee80211_init0(void)
 		f = (void*)*ieee80211_setup;
 		(*f)();
 	}
+
+	return 0;
 }
 
 void
