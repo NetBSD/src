@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.585 2006/01/11 00:06:38 kleink Exp $
+# $NetBSD: mi,v 1.586 2006/01/17 06:58:28 thorpej Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -98,6 +98,8 @@
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libdes.so.6				base-obsolete		obsolete
 ./lib/libdes.so.6.0				base-obsolete		obsolete
+./libdata					base-sys-root
+./libdata/firmware				base-sys-root
 ./libexec					base-sys-root
 ./mnt						base-sys-root
 ./rescue					base-sys-root
@@ -840,6 +842,7 @@
 ./usr/lib/runemodule/libUTF8.so.3		base-obsolete		obsolete
 ./usr/lib/runemodule/libUTF8.so.3.0		base-obsolete		obsolete
 ./usr/libdata					base-sys-usr
+./usr/libdata/firmware				base-sys-usr
 ./usr/libdata/lint				base-c-usr
 ./usr/libexec					base-sys-usr
 ./usr/libexec/atrun				base-cron-bin

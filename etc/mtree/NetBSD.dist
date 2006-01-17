@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.293 2006/01/06 16:59:20 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.294 2006/01/17 06:58:29 thorpej Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -48,6 +48,8 @@
 ./etc/systrace
 ./etc/uucp
 ./lib
+./libdata
+./libdata/firmware
 ./libexec
 ./mnt
 ./rescue
@@ -304,6 +306,7 @@
 ./usr/lib/i18n
 ./usr/lib/security
 ./usr/libdata
+./usr/libdata/firmware
 ./usr/libdata/lint
 ./usr/libexec
 ./usr/libexec/ching
