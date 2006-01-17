@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.188 2006/01/16 22:32:07 yamt Exp $
+#       $NetBSD: Makefile,v 1.189 2006/01/17 17:29:28 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -15,7 +15,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	delay.9 disk.9 disklabel.9 dofileread.9 \
 	dopowerhooks.9 do_setresuid.9 doshutdownhooks.9 driver.9 \
 	errno.9 ethersubr.9 evcnt.9 extattr.9 extent.9 \
-	fetch.9 file.9 filedesc.9 fork1.9 fsetown.9 \
+	fetch.9 file.9 filedesc.9 firmload.9 fork1.9 fsetown.9 \
 	getiobuf.9 \
 	hash.9 hardclock.9 humanize_number.9 hz.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
@@ -212,6 +212,12 @@ MLINKS+=filedesc.9 falloc.9 \
 	filedesc.9 fdremove.9 \
 	filedesc.9 fdshare.9 \
 	filedesc.9 fdunshare.9
+MLINKS+=firmload.9 firmware_open.9 \
+	firmload.9 firmware_close.9 \
+	firmload.9 firmware_get_size.9 \
+	firmload.9 firmware_read.9 \
+	firmload.9 firmware_malloc.9 \
+	firmload.9 firmware_free.9
 MLINKS+=fsetown.9 fgetown.9 \
 	fsetown.9 fownsignal.9
 MLINKS+=getiobuf.9 getiobuf_nowait.9 \
