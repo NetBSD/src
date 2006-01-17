@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.48 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: sbc.c,v 1.49 2006/01/17 16:41:29 chs Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.48 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.49 2006/01/17 16:41:29 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -246,6 +246,7 @@ sbc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	volatile u_int32_t *long_data = (u_int32_t *)sc->sc_drq_addr;
 	volatile u_int8_t *byte_data = (u_int8_t *)sc->sc_nodrq_addr;
+	label_t faultbuf;
 	int resid, s;
 
 	if (datalen < ncr_sc->sc_min_dma_len ||
@@ -261,9 +262,21 @@ sbc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 	*ncr_sc->sci_mode |= SCI_MODE_DMA;
 	*ncr_sc->sci_irecv = 0;
 
+	resid = datalen;
+
+	/*
+	 * Setup for a possible bus error caused by SCSI controller
+	 * switching out of DATA OUT before we're done with the
+	 * current transfer.  (See comment before sbc_drq_intr().)
+	 */
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
+		goto interrupt;
+	}
+
 #define R4	*((u_int32_t *)data)++ = *long_data
 #define R1	*((u_int8_t *)data)++ = *byte_data
-	for (resid = datalen; resid >= 128; resid -= 128) {
+	for (; resid >= 128; resid -= 128) {
 		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		R4; R4; R4; R4; R4; R4; R4; R4;
@@ -281,6 +294,7 @@ sbc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 #undef R1
 
 interrupt:
+	nofault = NULL;
 	SCI_CLR_INTR(ncr_sc);
 	*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
 	*ncr_sc->sci_icmd = 0;
