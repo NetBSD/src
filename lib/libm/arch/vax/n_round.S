@@ -38,4 +38,5 @@
 
 ENTRY(round, 0)
 	cvtrdl 4(%ap),%r0
+	cvtld %r0,%r0
 	ret
