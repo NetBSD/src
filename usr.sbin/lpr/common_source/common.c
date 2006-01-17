@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.29 2006/01/04 15:32:50 garbled Exp $	*/
+/*	$NetBSD: common.c,v 1.30 2006/01/17 18:38:12 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.29 2006/01/04 15:32:50 garbled Exp $");
+__RCSID("$NetBSD: common.c,v 1.30 2006/01/17 18:38:12 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -439,7 +439,7 @@ ckqueue(char *cap)
 	struct dirent *d;
 	DIR *dirp;
 	const char *spooldir;
-	char *sd;
+	char *sd = NULL;
 	int rv = 0;
 
 	spooldir = cgetstr(cap, "sd", &sd) == -1 ? _PATH_DEFSPOOL : sd;
