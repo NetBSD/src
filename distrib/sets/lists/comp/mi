@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.843 2006/01/16 22:32:27 yamt Exp $
+#	$NetBSD: mi,v 1.844 2006/01/17 17:29:28 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5246,6 +5246,13 @@
 ./usr/share/man/cat9/fgetown.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/file.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/filedesc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/firmload.0			comp-sys-catman		.cat
+./usr/share/man/cat9/firmware_open.0		comp-sys-catman		.cat
+./usr/share/man/cat9/firmware_close.0		comp-sys-catman		.cat
+./usr/share/man/cat9/firmware_get_size.0	comp-sys-catman		.cat
+./usr/share/man/cat9/firmware_read.0		comp-sys-catman		.cat
+./usr/share/man/cat9/firmware_malloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/firmware_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fork1.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/format_bytes.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fownsignal.0		comp-sys-catman		.cat
@@ -9183,6 +9190,13 @@
 ./usr/share/man/man9/fgetown.9			comp-sys-man		.man
 ./usr/share/man/man9/file.9			comp-sys-man		.man
 ./usr/share/man/man9/filedesc.9			comp-sys-man		.man
+./usr/share/man/man9/firmload.9			comp-sys-man		.man
+./usr/share/man/man9/firmware_open.9		comp-sys-man		.man
+./usr/share/man/man9/firmware_close.9		comp-sys-man		.man
+./usr/share/man/man9/firmware_get_size.9	comp-sys-man		.man
+./usr/share/man/man9/firmware_read.9		comp-sys-man		.man
+./usr/share/man/man9/firmware_malloc.9		comp-sys-man		.man
+./usr/share/man/man9/firmware_free.9		comp-sys-man		.man
 ./usr/share/man/man9/fork1.9			comp-sys-man		.man
 ./usr/share/man/man9/format_bytes.9		comp-sys-man		.man
 ./usr/share/man/man9/fownsignal.9		comp-sys-man		.man
