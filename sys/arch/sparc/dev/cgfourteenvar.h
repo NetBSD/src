@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.5 2005/11/16 00:49:03 uwe Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.6 2006/01/17 04:22:09 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -32,7 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
+struct sbus_reg {
+	uint32_t	sbr_slot;
+	uint32_t	sbr_offset;
+	uint32_t	sbr_size;
+};
 /*
  * Layout of cg14 hardware colormap
  */
@@ -57,8 +61,8 @@ struct cg14_cursor {		/* cg14 hardware cursor status */
 	struct	fbcurpos cc_pos;	/* position */
 	struct	fbcurpos cc_hot;	/* hot-spot */
 	struct	fbcurpos cc_size;	/* size of mask & image fields */
-	u_int	cc_eplane[32];		/* enable plane */
-	u_int	cc_cplane[32];		/* color plane */
+	uint	cc_eplane[32];		/* enable plane */
+	uint	cc_cplane[32];		/* color plane */
 	union	cg14cursor_cmap cc_color; /* cursor colormap */
 };
 
@@ -68,17 +72,20 @@ struct cg14_cursor {		/* cg14 hardware cursor status */
 struct cgfourteen_softc {
 	struct device	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
+#ifdef RASTERCONSOLE
+	struct fbdevice	sc_rcfb;	/* sc_fb variant for rcons */
+#endif
 	bus_space_tag_t	sc_bustag;
-	struct openprom_addr sc_physadr[2]; /* phys addrs of h/w */
+	struct sbus_reg	sc_physadr[2];	/* phys addrs of h/w */
 #define CG14_CTL_IDX	0
 #define CG14_PXL_IDX	1
 
 	union	cg14cmap sc_cmap;	/* current colormap */
 	struct	cg14_cursor sc_cursor;	/* Hardware cursor state */
 	union 	cg14cmap sc_saveclut; 	/* a place to stash PROM state */
-	uint8_t		sc_savexlut[256];
-	uint8_t		sc_savectl;
-	uint8_t		sc_savehwc;
+	uint8_t	sc_savexlut[256];
+	uint8_t	sc_savectl;
+	uint8_t	sc_savehwc;
 
 	struct	cg14ctl  *sc_ctl; 	/* various registers */
 	struct	cg14curs *sc_hwc;
@@ -87,5 +94,5 @@ struct cgfourteen_softc {
 	struct 	cg14clut *sc_clut1;
 	struct	cg14clut *sc_clut2;
 	struct	cg14clut *sc_clut3;
-	u_int	*sc_clutincr;
+	uint	*sc_clutincr;
 };
