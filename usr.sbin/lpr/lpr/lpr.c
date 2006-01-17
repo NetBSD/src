@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.33 2006/01/17 19:11:13 garbled Exp $	*/
+/*	$NetBSD: lpr.c,v 1.34 2006/01/17 19:41:49 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.33 2006/01/17 19:11:13 garbled Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.34 2006/01/17 19:41:49 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -428,7 +428,7 @@ static void
 copy(int f, const char *n)
 {
 	int fd, i, nr, nc;
-	char buf[MAXPATHLEN];
+	char buf[BUFSIZ];
 
 	if (format == 'p')
 		card('T', title ? title : n);
