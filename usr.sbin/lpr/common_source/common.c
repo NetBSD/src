@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.30 2006/01/17 18:38:12 garbled Exp $	*/
+/*	$NetBSD: common.c,v 1.31 2006/01/17 19:11:12 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.30 2006/01/17 18:38:12 garbled Exp $");
+__RCSID("$NetBSD: common.c,v 1.31 2006/01/17 19:11:12 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ const char	*MS;		/* stty flags to set if lp is a tty */
 long		 MX;		/* maximum number of blocks to copy */
 const char	*NF;		/* name of ditroff filter (per job) */
 const char	*OF;		/* name of output filter (created once) */
-const char	*PF;		/* name of vrast filter (per job) */
+const char	*PF;		/* name of postscript filter (per job) */
 long		 PL;		/* page length */
 long		 PW;		/* page width */
 long		 PX;		/* page width in pixels */
@@ -105,7 +105,7 @@ long		 SH;		/* suppress header page */
 const char	*ST;		/* status file name */
 const char	*TF;		/* name of troff filter (per job) */
 const char	*TR;		/* trailer string to be output when Q empties */
-const char	*VF;		/* name of vplot filter (per job) */
+const char	*VF;		/* name of vplot/vrast filter (per job) */
 long		 XC;		/* flags to clear for local mode */
 long		 XS;		/* flags to set for local mode */
 
