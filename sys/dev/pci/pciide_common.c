@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.29 2006/01/04 22:10:10 bouyer Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.30 2006/01/17 00:40:49 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.29 2006/01/04 22:10:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.30 2006/01/17 00:40:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -791,6 +791,7 @@ pciide_chansetup(sc, channel, interface)
 		sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
 		return 0;
 	}
+	cp->ata_channel.ch_ndrive = 2;
 	aprint_normal("%s: %s channel %s to %s mode\n",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name,
 	    (interface & PCIIDE_INTERFACE_SETTABLE(channel)) ?
