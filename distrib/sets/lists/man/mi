@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.846 2006/01/13 23:32:26 peter Exp $
+# $NetBSD: mi,v 1.847 2006/01/17 19:08:28 jmmv Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1286,7 +1286,7 @@
 ./usr/share/man/cat4/sysbeep.0			man-sys-catman		.cat
 ./usr/share/man/cat4/systrace.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tap.0			man-sys-catman		.cat
-./usr/share/man/cat4/tb.0			man-sys-catman		.cat
+./usr/share/man/cat4/tb.0			man-obsolete		obsolete
 ./usr/share/man/cat4/tc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tcds.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tcic.0			man-sys-catman		.cat
@@ -3581,7 +3581,7 @@
 ./usr/share/man/man4/sysbeep.4			man-sys-man		.man
 ./usr/share/man/man4/systrace.4			man-sys-man		.man
 ./usr/share/man/man4/tap.4			man-sys-man		.man
-./usr/share/man/man4/tb.4			man-sys-man		.man
+./usr/share/man/man4/tb.4			man-obsolete		obsolete
 ./usr/share/man/man4/tc.4			man-sys-man		.man
 ./usr/share/man/man4/tcds.4			man-sys-man		.man
 ./usr/share/man/man4/tcic.4			man-sys-man		.man
