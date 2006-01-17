@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenreg.h,v 1.2 2005/11/16 00:49:03 uwe Exp $ */
+/*	$NetBSD: cgfourteenreg.h,v 1.3 2006/01/17 04:22:09 christos Exp $ */
 
 /*
  * Copyright (c) 1996
