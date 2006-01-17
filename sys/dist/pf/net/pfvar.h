@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.10 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.11 2006/01/17 12:24:53 peter Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.213 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -43,6 +43,8 @@
 #ifdef __OpenBSD__
 #include <net/route.h>
 #include <netinet/ip_ipsp.h>
+#else
+#include <netinet/in.h>
 #endif
 #include <netinet/tcp_fsm.h>
 
