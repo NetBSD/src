@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.45 2006/01/17 19:11:13 garbled Exp $	*/
+/*	$NetBSD: printjob.c,v 1.46 2006/01/17 19:12:17 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.45 2006/01/17 19:11:13 garbled Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.46 2006/01/17 19:12:17 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -369,6 +369,7 @@ printit(char *file)
 	 *		g -- "file name" plot(1G) file to print
 	 *		v -- "file name" plain raster file to print
 	 *		c -- "file name" cifplot file to print
+	 *		o -- "file name" postscript file to print
 	 *		1 -- "R font file" for troff
 	 *		2 -- "I font file" for troff
 	 *		3 -- "B font file" for troff
