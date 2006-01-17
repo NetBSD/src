@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.32 2005/11/28 03:26:07 christos Exp $	*/
+/*	$NetBSD: lpr.c,v 1.33 2006/01/17 19:11:13 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.32 2005/11/28 03:26:07 christos Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.33 2006/01/17 19:11:13 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 
 	errs = 0;
 	while ((c = getopt(argc, argv,
-	    ":#:1:2:3:4:C:J:P:RT:U:cdfghi:lmnpqrstvw:")) != -1) {
+	    ":#:1:2:3:4:C:J:P:RT:U:cdfghi:lmnopqrstvw:")) != -1) {
 		switch (c) {
 
 		case '#':		/* n copies */
@@ -199,6 +199,7 @@ main(int argc, char *argv[])
 		case 'd':		/* print tex output (dvi files) */
 		case 'g':		/* print graph(1G) output */
 		case 'l':		/* literal output */
+		case 'o':		/* print postscript output */
 		case 'n':		/* print ditroff output */
 		case 'p':		/* print using ``pr'' */
 		case 't':		/* print troff output (cat files) */
@@ -755,7 +756,7 @@ usage(void)
 	fprintf(stderr, 
 	    "Usage: %s [-Pprinter] [-#num] [-C class] [-J job] [-T title] "
 	    "[-U user]\n"
-	    "%s [-i[numcols]] [-1234 font] [-wnum] [-cdfghlmnpqRrstv] "
+	    "%s [-i[numcols]] [-1234 font] [-wnum] [-cdfghlmnopqRrstv] "
 	    "[name ...]\n", getprogname(), getprogname());
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.44 2006/01/04 15:32:50 garbled Exp $	*/
+/*	$NetBSD: printjob.c,v 1.45 2006/01/17 19:11:13 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.44 2006/01/04 15:32:50 garbled Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.45 2006/01/17 19:11:13 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -598,6 +598,23 @@ print(int format, char *file)
 		av[3] = indent;
 		n = 4;
 		break;
+	case 'o':	/* print a postscript file */
+		if (PF == NULL) {
+			/* if PF is not set, handle it like an 'l' */
+			prog = IF;
+			av[1] = "-c";
+			av[2] = width;
+			av[3] = length;
+			av[4] = indent;
+			n = 5;
+			break;
+		} else {
+			prog = PF;
+			av[1] = pxwidth;
+			av[2] = pxlength;
+			n = 3;
+			break;
+		}
 	case 'l':	/* like 'f' but pass control characters */
 		prog = IF;
 		av[1] = "-c";
@@ -1253,6 +1270,7 @@ init(void)
 	GF = cgetstr(bp, "gf", &s) == -1 ? NULL : s;
 	VF = cgetstr(bp, "vf", &s) == -1 ? NULL : s;
 	CF = cgetstr(bp, "cf", &s) == -1 ? NULL : s;
+	PF = cgetstr(bp, "pf", &s) == -1 ? NULL : s;
 	TR = cgetstr(bp, "tr", &s) == -1 ? NULL : s;
 
 	RS = (cgetcap(bp, "rs", ':') != NULL);
