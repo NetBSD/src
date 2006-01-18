@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.31 2006/01/17 19:11:12 garbled Exp $	*/
+/*	$NetBSD: common.c,v 1.32 2006/01/18 19:11:25 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.31 2006/01/17 19:11:12 garbled Exp $");
+__RCSID("$NetBSD: common.c,v 1.32 2006/01/18 19:11:25 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -458,5 +458,5 @@ out:
 		closedir(dirp);
 	if (spooldir != sd)
 		free(sd);
-	return (0);
+	return (rv);
 }
