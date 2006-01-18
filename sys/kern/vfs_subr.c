@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.260 2006/01/16 21:44:46 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.261 2006/01/18 14:26:55 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.260 2006/01/16 21:44:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.261 2006/01/18 14:26:55 reinoud Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2063,6 +2063,8 @@ vfs_mountedon(struct vnode *vp)
 	struct vnode *vq;
 	int error = 0;
 
+	if (vp->v_type != VBLK)
+		return ENOTBLK;
 	if (vp->v_specmountpoint != NULL)
 		return (EBUSY);
 	if (vp->v_flag & VALIASED) {
