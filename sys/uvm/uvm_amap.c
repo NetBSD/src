@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.68 2005/12/24 20:45:10 perry Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.69 2006/01/18 17:03:36 chs Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.68 2005/12/24 20:45:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.69 2006/01/18 17:03:36 chs Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -250,11 +250,11 @@ amap_alloc(vaddr_t sz, vaddr_t padsz, int waitf)
 	AMAP_B2SLOT(padslots, padsz);
 
 	amap = amap_alloc1(slots, padslots, waitf);
-	if (amap)
+	if (amap) {
 		memset(amap->am_anon, 0,
 		    amap->am_maxslot * sizeof(struct vm_anon *));
-
-	amap_list_insert(amap);
+		amap_list_insert(amap);
+	}
 
 	UVMHIST_LOG(maphist,"<- done, amap = 0x%x, sz=%d", amap, sz, 0, 0);
 	return(amap);
