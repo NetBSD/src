@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.1 2001/02/09 18:35:33 uch Exp $	*/
+/*	$NetBSD: alloc.c,v 1.2 2006/01/18 01:05:02 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -35,12 +35,12 @@
  * SUCH DAMAGE.
  *
  */
-#include <stand.h>
 
-void * malloc(size_t size);
+#include <malloc.h>
+#include "stand.h"
 
 void *
-alloc(unsigned size)
+alloc(unsigned int size)
 {
 	return malloc(size);
 }
