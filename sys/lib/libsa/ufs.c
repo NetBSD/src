@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.46 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: ufs.c,v 1.47 2006/01/18 02:52:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -132,7 +132,7 @@ struct fs {
 #define ufs_dinode	ufs1_dinode
 #endif
 #ifndef indp_t
-#define indp_t		uint32_t
+#define indp_t		int32_t
 #endif
 typedef uint32_t	ino32_t;
 #ifndef FSBTODB
