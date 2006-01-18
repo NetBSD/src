@@ -1,7 +1,7 @@
-#	$NetBSD: install.md,v 1.24 2005/12/07 18:25:43 mhitch Exp $
+#	$NetBSD: install.md,v 1.25 2006/01/18 13:39:05 is Exp $
 #
 #
-# Copyright (c) 1996 The NetBSD Foundation, Inc.
+# Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -127,6 +127,10 @@ md_native_fsopts() {
 }
 
 md_prep_disklabel() {
+}
+
+md_view_labels_possible=1
+md_view_labels() {
 	_DKDEVS=`md_get_diskdevs`
 	echo "If you like, you can now examine the labels of your disks."
 	echo ""
