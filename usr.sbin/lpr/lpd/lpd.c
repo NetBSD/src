@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.53 2005/12/02 11:33:39 yamt Exp $	*/
+/*	$NetBSD: lpd.c,v 1.54 2006/01/18 23:17:38 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.53 2005/12/02 11:33:39 yamt Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.54 2006/01/18 23:17:38 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,7 +334,7 @@ main(int argc, char **argv)
 		
 		switch (fork()) {
 		case 0:
-			signal(SIGCHLD, SIG_IGN);
+			signal(SIGCHLD, SIG_DFL);
 			signal(SIGHUP, SIG_IGN);
 			signal(SIGINT, SIG_IGN);
 			signal(SIGQUIT, SIG_IGN);
