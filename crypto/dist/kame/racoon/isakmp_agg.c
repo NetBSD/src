@@ -32,7 +32,7 @@
 /* Aggressive Exchange (Aggressive Mode) */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isakmp_agg.c,v 1.2.2.1 2004/06/17 12:38:10 tron Exp $");
+__RCSID("$NetBSD: isakmp_agg.c,v 1.2.2.1.2.1 2006/01/19 21:39:38 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -342,7 +342,11 @@ agg_i2recv(iph1, msg)
 	}
 
 	/* payload existency check */
-	/* XXX to be checked each authentication method. */
+	if (iph1->dhpub_p == NULL || iph1->nonce_p == NULL) {
+		plog(LLV_ERROR, LOCATION, iph1->remote,
+			"few isakmp message received.\n");
+		goto end;
+	}	
 
 	/* verify identifier */
 	if (ipsecdoi_checkid1(iph1) != 0) {
@@ -674,7 +678,11 @@ agg_r1recv(iph1, msg)
 	}
 
 	/* payload existency check */
-	/* XXX to be checked each authentication method. */
+	if (iph1->dhpub_p == NULL || iph1->nonce_p == NULL) {
+		plog(LLV_ERROR, LOCATION, iph1->remote,
+			"few isakmp message received.\n");
+		goto end;
+	}
 
 	/* verify identifier */
 	if (ipsecdoi_checkid1(iph1) != 0) {
