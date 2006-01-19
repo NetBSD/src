@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.34 2006/01/09 13:30:22 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.35 2006/01/19 21:39:56 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -481,4 +481,9 @@ sys/net/if_bridge.c				1.35
 
 	Make sure we initialize all structs to 0.
 	[christos, ticket #10219]
+
+crypto/dist/kame/racoon/isakmp_agg.c		patch
+
+	Fix denial of service vulnerabilityin racoon(8).
+	[adrianp, ticket #10224]
 
