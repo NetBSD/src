@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.19 2006/01/19 20:15:31 garbled Exp $	*/
+/*	$NetBSD: wump.c,v 1.20 2006/01/19 21:20:35 garbled Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.19 2006/01/19 20:15:31 garbled Exp $");
+__RCSID("$NetBSD: wump.c,v 1.20 2006/01/19 21:20:35 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -643,7 +643,7 @@ initialize_things_in_cave()
 	for (i = 0; i < pit_num; ++i) {
 		do {
 			loc = (random() % room_num) + 1;
-		} while (cave[loc].has_a_pit && cave[loc].has_a_bat);
+		} while (cave[loc].has_a_pit || cave[loc].has_a_bat);
 		cave[loc].has_a_pit = 1;
 #ifdef DEBUG
 		if (debug)
@@ -657,10 +657,14 @@ initialize_things_in_cave()
 		(void)printf("<wumpus in room %d>\n", loc);
 #endif
 
+	i = 0;
 	do {
 		player_loc = (random() % room_num) + 1;
-	} while (player_loc == wumpus_loc || (level == HARD ?
-	    (link_num / room_num < 0.4 ? wump_nearby() : 0) : 0));
+		i++;
+	} while (player_loc == wumpus_loc || cave[player_loc].has_a_pit ||
+	    cave[player_loc].has_a_bat || (level == HARD ?
+	        (link_num / room_num < 0.4 ? wump_nearby() : 0) : 0) ||
+	    (i > 100 && player_loc != wumpus_loc));
 }
 
 int
