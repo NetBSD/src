@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.46 2006/01/17 19:12:17 garbled Exp $	*/
+/*	$NetBSD: printjob.c,v 1.47 2006/01/19 19:17:59 garbled Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.46 2006/01/17 19:12:17 garbled Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.47 2006/01/19 19:17:59 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -870,7 +870,9 @@ sendfile(int type, char *file)
 	char buf[BUFSIZ];
 	int sizerr, resp;
 	extern int rflag;
+	char *save_file;
 
+	save_file = file;
 	if (type == '\3' && rflag && (OF || IF)) {
 		int	save_pfd = pfd;
 
@@ -905,7 +907,7 @@ sendfile(int type, char *file)
 		return(ACCESS);
 
 	amt = snprintf(buf, sizeof(buf), "%c%lld %s\n", type,
-	    (long long)stb.st_size, file);
+	    (long long)stb.st_size, save_file);
 	for (i = 0; ; i++) {
 		if (write(pfd, buf, amt) != amt ||
 		    (resp = response()) < 0 || resp == '\1') {
