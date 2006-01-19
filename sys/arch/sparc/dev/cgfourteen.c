@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.43 2006/01/19 09:32:37 he Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.44 2006/01/19 15:09:57 he Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -165,6 +165,7 @@ cgfourteenmatch(struct device *parent, struct cfdata *cf, void *aux)
  */
 #define COLOUR_OFFSET (256*1024)
 
+#ifdef RASTERCONSOLE
 static void cg14_set_rcons_luts(struct cgfourteen_softc *sc)
 {
 	int i;
@@ -174,6 +175,7 @@ static void cg14_set_rcons_luts(struct cgfourteen_softc *sc)
 	sc->sc_clut2->clut_lut[0] = 0x00ffffff;
 	sc->sc_clut2->clut_lut[255] = 0;
 }
+#endif /* RASTERCONSOLE */
 
 /*
  * Attach a display.  We need to notice if it is the console, too.
