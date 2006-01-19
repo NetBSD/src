@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.18 2005/03/21 18:45:18 jwise Exp $	*/
+/*	$NetBSD: wump.c,v 1.19 2006/01/19 20:15:31 garbled Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.18 2005/03/21 18:45:18 jwise Exp $");
+__RCSID("$NetBSD: wump.c,v 1.19 2006/01/19 20:15:31 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,6 +232,7 @@ quiver holds %d custom super anti-evil Wumpus arrows.  Good luck.\n",
 	    plural(pit_num), arrow_num);
 
 	for (;;) {
+		clear_things_in_cave();
 		initialize_things_in_cave();
 		arrows_left = arrow_num;
 		do {
@@ -239,16 +240,14 @@ quiver holds %d custom super anti-evil Wumpus arrows.  Good luck.\n",
 			(void)printf("Move or shoot? (m-s) ");
 			(void)fflush(stdout);
 			if (!fgets(answer, sizeof(answer), stdin)) {
-				e=1;
+				e=2;
 				break;
 			}
 		} while (!(e = take_action()));
 
-		if (e || !getans("\nCare to play another game? (y-n) "))
+		if (e == 2 || !getans("\nCare to play another game? (y-n) "))
 			exit(0);
-		if (getans("In the same cave? (y-n) "))
-			clear_things_in_cave();
-		else
+		if (getans("In the same cave? (y-n) ") == 0)
 			cave_init();
 	}
 	/* NOTREACHED */
@@ -508,7 +507,7 @@ The arrow is weakly shot and can go no further!\n");
 		/* each time you shoot, it's more likely the wumpus moves */
 		static int lastchance = 2;
 
-		if (random() % level == EASY ? 12 : 9 < (lastchance += 2)) {
+		if (random() % (level == EASY ? 12 : 9) < (lastchance += 2)) {
 			move_wump();
 			if (wumpus_loc == player_loc)
 				wump_kill();
