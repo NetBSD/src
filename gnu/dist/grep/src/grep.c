@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.10 2003/02/13 07:48:12 wiz Exp $	*/
+/*	$NetBSD: grep.c,v 1.11 2006/01/19 17:50:33 wiz Exp $	*/
 
 /* grep.c - main driver file for grep.
    Copyright 1992, 1997-1999, 2000 Free Software Foundation, Inc.
@@ -204,7 +204,7 @@ context_length_arg (char const *str, int *out)
 	 && 0 <= (*out = value)
 	 && *out == value))
     {
-      error (2, 0, "%s: %s\n", str, _("invalid context length argument"));
+      error (2, 0, "%s: %s", str, _("invalid context length argument"));
     }
 }
 
@@ -998,7 +998,7 @@ grepdir (char const *dir, struct stats const *stats)
 	  && ancestor->stat.st_dev == stats->stat.st_dev)
 	{
 	  if (!suppress_errors)
-	    error (0, 0, _("warning: %s: %s\n"), dir,
+	    error (0, 0, _("warning: %s: %s"), dir,
 		   _("recursive directory loop"));
 	  return 1;
 	}
