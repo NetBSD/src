@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.86 2006/01/19 00:00:27 uwe Exp $
+.\"	$NetBSD: ddb.4,v 1.87 2006/01/19 00:12:21 uwe Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -542,7 +542,7 @@ Reboot, using the optionally supplied boot
 which is a bitmask supporting the same values as for
 .Xr reboot 2 .
 Some of the more useful flags:
-.Bl -column "Value" "RB_AUTOBOOT" "Description"
+.Bl -column "Value" "RB_POWERDOWN" "Description"
 .It Sy "Value" Ta Sy "Name" Ta Sy "Description"
 .It 0x1 Ta RB_ASKNAME Ta Ask for file name to reboot from
 .It 0x2 Ta RB_SINGLE Ta Reboot to single user mode
