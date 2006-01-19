@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.85 2005/12/01 18:07:18 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.86 2006/01/19 00:00:27 uwe Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1182,13 +1182,17 @@ If supported by an object format dependent routine,
 .Xo
 .Oo Ar filename : Oc
 .Ar function
-.Oo : Ar "line number" Oc ,
+.Oo : Ar line\ number Oc ,
 .Xc
+.Sm on
+.Sm off
 .Xo
 .Oo Ar filename : Oc
 .Ar variable ,
 .Xc
+.Sm on
 and
+.Sm off
 .Xo
 .Ar filename
 .Oo : Ar "line number" Oc ,
@@ -1196,7 +1200,7 @@ and
 .Sm on
 can be accepted as a symbol.
 The symbol may be prefixed with
-.Ar symbol_table_name : :
+.Ar symbol_table_name\^ : :
 (e.g.,
 .Li emulator::mach_msg_trap )
 to specify other than kernel symbols.
@@ -1225,7 +1229,7 @@ this is only changed by the
 or
 .Ic write
 commands.
-.It Cm \&"
+.It Cm \&" \"" XXX: emacs highlighting
 last address explicitly specified.
 .It Cm $ Ns Ar name
 register name or variable.
@@ -1233,8 +1237,9 @@ It is translated to the value of it.
 It may be followed by a
 .Sq \&:
 and modifiers as described above.
-.It Cm a
-multiple of right-hand side.
+.It Cm #
+a binary operator which rounds up the left hand side to the next
+multiple of right hand side.
 .It Cm * Ns Ar expr
 expression indirection.
 It may be followed by a
