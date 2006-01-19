@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.14 2005/02/06 20:50:34 dsl Exp $	*/
+/*	$NetBSD: cmp.c,v 1.15 2006/01/19 20:44:57 garbled Exp $	*/
 
 /*
  * Copyright (c) 1987, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cmp.c,v 1.14 2005/02/06 20:50:34 dsl Exp $");
+__RCSID("$NetBSD: cmp.c,v 1.15 2006/01/19 20:44:57 garbled Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: cmp.c,v 1.14 2005/02/06 20:50:34 dsl Exp $");
 #include <sys/stat.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,7 +65,7 @@ int
 main(int argc, char *argv[])
 {
 	struct stat sb1, sb2;
-	off_t skip1, skip2;
+	off_t skip1 = 0, skip2 = 0;
 	int ch, fd1, fd2, special;
 	char *file1, *file2;
 
@@ -117,8 +118,20 @@ main(int argc, char *argv[])
 		exit(ERR_EXIT);
 	}
 
-	skip1 = argc > 2 ? strtoq(argv[2], NULL, 10) : 0;
-	skip2 = argc == 4 ? strtoq(argv[3], NULL, 10) : 0;
+	if (argc > 2) {
+		char *ep;
+
+		errno = 0;
+		skip1 = strtoq(argv[2], &ep, 0);
+		if (errno || ep == argv[2])
+			usage();
+
+		if (argc == 4) {
+			skip2 = strtoq(argv[3], &ep, 0);
+			if (errno || ep == argv[3])
+				usage();
+		}
+	}
 
 	if (!special) {
 		if (fstat(fd1, &sb1))
