@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.161 2005/11/29 23:06:45 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.162 2006/01/20 22:03:23 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -131,6 +131,8 @@ ${NOERR}: ${ASMDEPS}
 ${PSEUDONOERR}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' >${.TARGET}
+	# add an _Exit alias to _exit
+	printf 'STRONG_ALIAS(${.PREFIX:S/e/E/},${.PREFIX})\n' >>${.TARGET}
 
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
