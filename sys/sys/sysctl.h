@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.145 2005/12/28 19:09:30 perry Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.146 2006/01/20 23:36:44 uwe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -980,13 +980,13 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 		__CONCAT(___,name)(clog); }			\
 	__link_set_add_text(sysctl_funcs, name);		\
 	static void __CONCAT(___,name)(struct sysctllog **clog)
-#else /* SYSCTL_DEBUG_SETUP */
+#else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	__link_set_add_text(sysctl_funcs, name);		\
 	void name(struct sysctllog **clog)
-#endif /* SYSCTL_DEBUG_SETUP */
+#endif /* !SYSCTL_DEBUG_SETUP */
 
-#else /* _LKM */
+#else /* !_LKM */
 
 #define SYSCTL_SETUP_PROTO(name)
 #ifdef SYSCTL_DEBUG_SETUP
@@ -997,15 +997,15 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 		__CONCAT(___,name)(clog); }			\
 	__link_set_add_text(sysctl_funcs, name);		\
 	static void __CONCAT(___,name)(struct sysctllog **clog)
-#else /* SYSCTL_DEBUG_SETUP */
+#else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	static void name(struct sysctllog **);			\
 	__link_set_add_text(sysctl_funcs, name);		\
 	static void name(struct sysctllog **clog)
-#endif /* SYSCTL_DEBUG_SETUP */
+#endif /* !SYSCTL_DEBUG_SETUP */
 typedef void (*sysctl_setup_func)(struct sysctllog **);
 
-#endif /* _LKM */
+#endif /* !_LKM */
 
 /*
  * Internal sysctl function calling convention:
