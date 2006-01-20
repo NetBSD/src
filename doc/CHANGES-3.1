@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.17 2006/01/20 22:31:47 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.18 2006/01/20 22:58:28 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -342,6 +342,20 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.193
 
 	We need to mark used spares as failed if they encounter IO errors.
 	[oster, ticket #1114]
+
+sys/arch/xen/i386/pmap.c			1.14
+sys/arch/xen/include/pmap.h			1.5
+sys/arch/xen/xen/privcmd.c			1.6
+sys/arch/xen/xen/xbdback.c			1.15
+sys/arch/xen/xen/xennetback.c			1.12 via patch
+
+	Add a vm_prot_t parameter to pmap_remap_pages(), and use it for
+	the new PTE instead to always trying PG_RW and falling back to
+	PG_RO if this fails.  Use uvm_map_checkprot() in IOCTL_PRIVCMD_MMAP
+	and IOCTL_PRIVCMD_MMAP_BATCH to compute the appropriate
+	vm_prot_t for pmap_remap_pages().  Thanks to Jed Davis for
+	pointing out uvm_map_checkprot().
+	[bouyer, ticket #1104]
 
 sys/dev/ic/ninjascsi32.c			1.6
 
