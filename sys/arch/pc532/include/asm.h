@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.18 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.19 2006/01/20 22:02:40 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -217,6 +217,12 @@
 
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak _C_LABEL(alias);						\
+	_C_LABEL(alias) = _C_LABEL(sym)
+/*
+ * STRONG_ALIAS: create a strong alias.
+ */
+#define STRONG_ALIAS(alias,sym)						\
+	.globl _C_LABEL(alias);						\
 	_C_LABEL(alias) = _C_LABEL(sym)
 
 #ifdef __STDC__
