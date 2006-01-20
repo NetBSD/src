@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.27 2004/01/06 13:29:55 wiz Exp $	*/
+/*	$NetBSD: apmd.c,v 1.28 2006/01/20 00:21:35 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -320,8 +320,8 @@ main(int argc, char *argv[])
     const char *sockname = sockfile;
     char *user, *group;
     char *scratch;
-    uid_t uid = 0;
-    gid_t gid = 0;
+    uid_t uid = 2; /* operator */
+    gid_t gid = 5; /* operator */
     struct passwd *pw;
     struct group *gr;
 
