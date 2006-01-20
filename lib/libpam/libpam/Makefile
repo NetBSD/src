@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2005/03/03 22:40:49 he Exp $
+# $NetBSD: Makefile,v 1.6 2006/01/20 16:52:55 christos Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -152,9 +152,21 @@ CLEANFILES+= openpam_static.o openpam_static_modules.o
 STOBJS+= openpam_static_modules.o
 
 # Static module support.  These go ONLY in the static libpam.a
-STATIC_MODULES=	pam_chroot pam_deny pam_echo pam_exec pam_group pam_guest \
-		pam_lastlog pam_nologin pam_permit pam_rhosts pam_rootok \
-		pam_securetty pam_self pam_unix
+STATIC_MODULES=	pam_chroot pam_deny pam_echo pam_exec pam_ftpusers pam_group \
+    pam_guest pam_lastlog pam_login_access pam_nologin pam_permit pam_radius \
+    pam_rhosts pam_rootok pam_securetty pam_self pam_unix
+
+.if (${MKKERBEROS} != "no")
+STATIC_MODULES+= pam_afslog pam_krb5 pam_ksu
+.endif
+
+.if (${MKSKEY} != "no")
+STATIC_MODULES+= pam_skey
+.endif
+
+.if (${MKCRYPTO} != "no")
+STATIC_MODULES+= pam_ssh
+.endif
  
 MODULE_DIR=../modules
 .for MOD in ${STATIC_MODULES}
