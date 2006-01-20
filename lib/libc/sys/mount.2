@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.2,v 1.32.2.1 2005/12/29 00:57:08 riz Exp $
+.\"	$NetBSD: mount.2,v 1.32.2.2 2006/01/20 20:48:42 riz Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mount.2	8.3 (Berkeley) 5/24/95
 .\"
-.Dd June 22, 2005
+.Dd November 7, 1999
 .Dt MOUNT 2
 .Os
 .Sh NAME
@@ -76,16 +76,6 @@ The following
 may be specified to
 suppress default semantics which affect file system access.
 .Bl -tag -width MNT_SYNCHRONOUS
-.It Dv MNT_MAGICLINKS
-Expand special strings
-.Po
-beginning with
-.Dq @
-.Pc
-when traversing symbolic links.
-See
-.Xr symlink 7
-for a list of supported strings.
 .It Dv MNT_RDONLY
 The file system should be treated as read-only;
 Even the super-user may not write on it.

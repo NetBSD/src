@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.40.4.1 2005/12/29 00:57:09 riz Exp $
+#	$NetBSD: newvers.sh,v 1.40.4.2 2006/01/20 20:48:41 riz Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,6 @@ const char ostype[] = "${ost}";
 const char osrelease[] = "${osr}";
 const char sccs[] = "@(#)${fullversion}";
 const char version[] = "${fullversion}";
-const char kernel_ident[] = "${id}";
 const char copyright[] =
 ${copyright}
 "\n";

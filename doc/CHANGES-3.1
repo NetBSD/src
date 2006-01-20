@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.15 2006/01/11 17:19:36 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.16 2006/01/20 20:48:42 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -13,43 +13,6 @@ sys/sys/param.h					patch
 doc/README.files				patch
 
 	Update for release and new CHANGES-3.1 file.
-
-include/mntopts.h				1.6
-lib/libc/sys/mount.2				1.33
-sbin/mount/mount.8				1.47
-share/man/man4/options.4			1.280 via patch
-share/man/man7/symlink.7			1.7
-sys/conf/files					1.720
-sys/conf/newvers.sh				1.41
-sys/kern/init_main.c				1.248 via patch
-sys/kern/vfs_lookup.c				1.61
-sys/kern/vfs_syscalls.c				1.223
-sys/sys/fstypes.h				1.4
-sys/sys/systm.h					1.179
-
-	Implement expansion of special "magic" strings in symlinks into
-	system-specific values.  Submitted by Chris Demetriou in Nov 1995 (!)
-	in PR kern/1781, modified only slighly by me.
-	This is enabled on a per-mount basis with the MNT_MAGICLINKS mount
-	flag.  It can be enabled at mountroot() time by building the kernel
-	with the ROOTFS_MAGICLINKS option.
-	[thorpej, ticket #490]
-
-sys/kern/vfs_lookup.c				1.63
-
-	A few tweaks to magic symlinks:
-	- Add a @{var} syntax in addition to @var.  This allows for  
-	patterns like
-	@{ostype}-@{osrelease}-@{machine_arch}.
-	- Add a @emul variable that expands to the process's emulation name
-	(e.g. "netbsd", "netbsd32", "linux", etc.)
-	[thorpej, ticket #559]
-
-share/man/man7/symlink.7			1.9
-
-	Document the new @emul magic symlink var as well as the new @{var}  
-	syntax.
-	[thorpej, ticket #560]
 
 usr.sbin/pkg_install/add/perform.c		1.115
 
