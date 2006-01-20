@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.3 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: kloader.h,v 1.4 2006/01/20 02:47:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -73,10 +73,10 @@ struct kloader_ops {
  * new kernel is primary loaded into discrete pages.
  */
 struct kloader_page_tag {
-	u_int32_t next;
-	u_int32_t src;
-	u_int32_t dst;
-	u_int32_t sz;
+	uint32_t next;
+	uint32_t src;
+	uint32_t dst;
+	uint32_t sz;
 } __attribute__((__packed__, __aligned__(4)));
 
 #define KLOADER_KERNELARGS_MAX		256
