@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.47 2006/01/19 19:17:59 garbled Exp $	*/
+/*	$NetBSD: printjob.c,v 1.48 2006/01/20 17:30:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.47 2006/01/19 19:17:59 garbled Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.48 2006/01/20 17:30:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ static void	init(void);
 static void	setup_ofilter(int);
 static void	close_ofilter(void);
 static void	openpr(void);
-static void	opennet(char *);
+static void	opennet(void);
 static void	opentty(void);
 static void	openrem(void);
 static int	print(int, char *);
@@ -1359,11 +1359,9 @@ close_ofilter(void)
 static void
 openpr(void)
 {
-	char *cp;
-
 	if (!remote && *LP) {
-		if ((cp = strchr(LP, '@')))
-			opennet(cp);
+		if (strchr(LP, '@') != NULL)
+			opennet();
 		else
 			opentty();
 	} else if (remote) {
@@ -1385,24 +1383,14 @@ openpr(void)
  * or to a terminal server on the net
  */
 static void
-opennet(char *cp)
+opennet(void)
 {
 	int i;
-	int resp, port;
-	char save_ch;
-
-	save_ch = *cp;
-	*cp = '\0';
-	port = atoi(LP);
-	if (port <= 0) {
-		syslog(LOG_ERR, "%s: bad port number: %s", printer, LP);
-		exit(1);
-	}
-	*cp++ = save_ch;
+	int resp;
 
 	for (i = 1; ; i = i < 256 ? i << 1 : i) {
 		resp = -1;
-		pfd = getport(cp, port);
+		pfd = getport(LP);
 		if (pfd < 0 && errno == ECONNREFUSED)
 			resp = 1;
 		else if (pfd >= 0) {
@@ -1422,7 +1410,7 @@ opennet(char *cp)
 		}
 		sleep(i);
 	}
-	pstatus("sending to %s port %d", cp, port);
+	pstatus("sending to %s", LP);
 }
 
 /*
@@ -1461,14 +1449,10 @@ openrem(void)
 {
 	int i, n;
 	int resp;
-	char *rmhost;
 
 	for (i = 1; ; i = i < 256 ? i << 1 : i) {
 		resp = -1;
-		if ((rmhost = strchr(RM, '@')))
-			pfd = getport(rmhost+1, atoi(RM));
-		else
-			pfd = getport(RM, 0);
+		pfd = getport(RM);
 		if (pfd >= 0) {
 			n = snprintf(line, sizeof(line), "\2%s\n", RP);
 			if (write(pfd, line, n) == n &&

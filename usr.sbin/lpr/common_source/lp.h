@@ -1,4 +1,4 @@
-/*	$NetBSD: lp.h,v 1.20 2006/01/17 19:11:12 garbled Exp $	*/
+/*	$NetBSD: lp.h,v 1.21 2006/01/20 17:30:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -108,7 +108,8 @@ void     dump(const char *, const char *, int);
 void	 fatal(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 int	 getline(FILE *);
-int	 getport(const char *, int);
+const char *gethost(const char *);
+int	 getport(const char *);
 int	 getq(struct queue *(*[]));
 void     header(void);
 void     inform(const char *);
