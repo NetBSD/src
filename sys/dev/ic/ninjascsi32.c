@@ -1,7 +1,7 @@
-/*	$NetBSD: ninjascsi32.c,v 1.2.6.2 2004/11/11 23:13:53 he Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.2.6.3 2006/01/20 22:20:50 tron Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.2.6.2 2004/11/11 23:13:53 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.2.6.3 2006/01/20 22:20:50 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -526,6 +526,7 @@ njsc32_init_cmds(struct njsc32_softc *sc)
 	if (i > 0)
 		return i;
 
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap_cmdpg);
 fail3:	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap_cmdpg);
 fail2:	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_cmdpg,
 	    sizeof(struct njsc32_dma_page));
@@ -2525,6 +2526,8 @@ njsc32_intr(void *arg)
 
 		if (auto_phase &
 		    (NJSC32_XPHASE_DATA_IN | NJSC32_XPHASE_DATA_OUT)) {
+			u_int32_t sackcnt, cntoffset;
+
 #ifdef NJSC32_TRACE
 			if (auto_phase & NJSC32_XPHASE_DATA_IN)
 				PRINTC(cmd, ("njsc32_intr: data in done\n"));
@@ -2594,8 +2597,22 @@ njsc32_intr(void *arg)
 			 * data has been transferred, and current pointer
 			 * is changed
 			 */
-			njsc32_set_cur_ptr(cmd, cmd->c_dp_cur +
-			    njsc32_read_4(sc, NJSC32_REG_SACK_CNT));
+			sackcnt = njsc32_read_4(sc, NJSC32_REG_SACK_CNT);
+
+			/*
+			 * The controller returns extra ACK count
+			 * if the DMA buffer is not 4byte aligned.
+			 */
+			cntoffset = le32toh(cmd->c_sgt[0].sg_addr) & 3;
+#ifdef NJSC32_DEBUG
+			if (cntoffset != 0) {
+				printf("sackcnt %u, cntoffset %u\n",
+				    sackcnt, cntoffset);
+			}
+#endif
+			/* advance SCSI pointer */
+			njsc32_set_cur_ptr(cmd,
+			    cmd->c_dp_cur + sackcnt - cntoffset);
 		}
 
 		if (auto_phase & NJSC32_XPHASE_MSGOUT) {
