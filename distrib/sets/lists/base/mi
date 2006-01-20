@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.586 2006/01/17 06:58:28 thorpej Exp $
+# $NetBSD: mi,v 1.587 2006/01/20 08:38:59 garbled Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -868,6 +868,7 @@
 ./usr/libexec/locate.updatedb			base-sysutil-bin
 ./usr/libexec/lpr				base-lpr-usr
 ./usr/libexec/lpr/lpf				base-lpr-bin
+./usr/libexec/lpr/pjlfilter			base-lpr-bin
 ./usr/libexec/mail.local			base-mail-bin
 ./usr/libexec/makekey				base-crypto-bin
 ./usr/libexec/makewhatis			base-man-bin
