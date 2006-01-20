@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.22 2006/01/04 15:32:50 garbled Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.23 2006/01/20 17:30:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rmjob.c,v 1.22 2006/01/04 15:32:50 garbled Exp $");
+__RCSID("$NetBSD: rmjob.c,v 1.23 2006/01/20 17:30:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -297,7 +297,7 @@ isowner(const char *owner, const char *file)
 void
 rmremote(void)
 {
-	char *cp, *s, *rmhost;
+	char *cp, *s;
 	int i, rem;
 	size_t len;
 
@@ -339,10 +339,7 @@ rmremote(void)
 	cp[0] = '\n';
 	cp[1] = '\0';
 
-	if ((rmhost = strchr(RM, '@')))
-		rem = getport(rmhost+1, atoi(RM));
-	else
-		rem = getport(RM, 0);
+	rem = getport(RM);
 	if (rem < 0) {
 		if (from != host)
 			printf("%s: ", host);
