@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.12 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.13 2006/01/20 03:55:55 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.12 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.13 2006/01/20 03:55:55 uwe Exp $");
 
 #include "debug_kloader.h"
 
@@ -50,64 +50,25 @@ __KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.12 2005/12/24 23:24:00 perry E
 
 #include <machine/kloader.h>
 
-/* 
- * 2nd-bootloader. Make sure that PIC and its size is lower than page size.
- */
-#define KLOADER_HPCSH_BOOT(cpu, product)				\
-void									\
-kloader_hpcsh ## cpu ## _boot(struct kloader_bootinfo *kbi,		\
-    struct kloader_page_tag *p)						\
-{									\
-	int tmp = 0;	/* XXX: -Wuninitialized */			\
-									\
-	/* Disable interrupt. block exception. */			\
-	__asm volatile(						\
-		"stc	sr, %1;"					\
-		"or	%0, %1;"					\
-		"ldc	%1, sr" : : "r"(0x500000f0), "r"(tmp));		\
-									\
-	/* Now I run on P1, TLB flush. and disable. */			\
-	SH ## cpu ## _TLB_DISABLE;					\
-									\
-	do {								\
-		u_int32_t *dst =(u_int32_t *)p->dst;			\
-		u_int32_t *src =(u_int32_t *)p->src;			\
-		u_int32_t sz = p->sz / sizeof (int);			\
-		while (sz--)						\
-			*dst++ = *src++;				\
-	} while ((p = (struct kloader_page_tag *)p->next) != 0);	\
-									\
-	SH ## product ## _CACHE_FLUSH();				\
-									\
-	/* jump to kernel entry. */					\
-	__asm volatile(						\
-		"mov	%0, r4;"					\
-		"mov	%1, r5;"					\
-		"jmp	@%3;"						\
-		"mov	%2, r6;"					\
-		: :							\
-		"r"(kbi->argc),						\
-		"r"(kbi->argv),						\
-		"r"(&kbi->bootinfo),					\
-		"r"(kbi->entry));					\
-	/* NOTREACHED */						\
-}
+/* make gcc believe __attribute__((__noreturn__)) claim */
+#define KLOADER_NORETURN for (;;) continue
 
-kloader_jumpfunc_t kloader_hpcsh_jump;
-kloader_bootfunc_t kloader_hpcsh3_boot;
-kloader_bootfunc_t kloader_hpcsh4_boot;
+kloader_jumpfunc_t kloader_hpcsh_jump __attribute__((__noreturn__));
+kloader_bootfunc_t kloader_hpcsh3_boot __attribute__((__noreturn__));
+kloader_bootfunc_t kloader_hpcsh4_boot __attribute__((__noreturn__));
 
 struct kloader_ops kloader_hpcsh_ops = {
 	.jump = kloader_hpcsh_jump,
-	.boot = 0
+	.boot = NULL
 };
+
 
 void
 kloader_reboot_setup(const char *filename)
 {
 
-	kloader_hpcsh_ops.boot =
-	    CPU_IS_SH3 ? kloader_hpcsh3_boot : kloader_hpcsh4_boot;
+	kloader_hpcsh_ops.boot = CPU_IS_SH3 ? kloader_hpcsh3_boot
+					    : kloader_hpcsh4_boot;
 
 	__kloader_reboot_setup(&kloader_hpcsh_ops, filename);
 }
@@ -117,20 +78,72 @@ kloader_hpcsh_jump(kloader_bootfunc_t func, vaddr_t sp,
     struct kloader_bootinfo *info, struct kloader_page_tag *tag)
 {
 
-	sh_icache_sync_all();	/* also flush d-cache */
+	sh_icache_sync_all();	/* also flushes d-cache */
 
 	__asm volatile(
 	    	"mov	%0, r4;"
 		"mov	%1, r5;"
 		"jmp	@%2;"
-		"mov	%3, sp"
+		" mov	%3, sp"
 		: : "r"(info), "r"(tag), "r"(func), "r"(sp));
+
 	/* NOTREACHED */
+	KLOADER_NORETURN;
+}
+
+/*
+ * 2nd-stage bootloader.  Fetches new kernel out of the page tags
+ * chain and copies it to its intended location in memory.  Make sure
+ * this function is position independent and fits into a single page.
+ */
+#define KLOADER_HPCSH_BOOT(cpu, product)				\
+void									\
+kloader_hpcsh ## cpu ## _boot(struct kloader_bootinfo *kbi,		\
+    struct kloader_page_tag *p)						\
+{									\
+	int tmp;							\
+									\
+	/* Disable interrupts, block exceptions. */			\
+	__asm volatile(							\
+		"stc	sr, %0;"					\
+		"or	%1, %0;"					\
+		"ldc	%0, sr"						\
+		: "=r"(tmp)						\
+		: "r"(PSL_MD | PSL_BL | PSL_IMASK));			\
+									\
+	/* We run on P1, flush and disable TLB. */			\
+	SH ## cpu ## _TLB_DISABLE;					\
+									\
+	do {								\
+		uint32_t *dst = (uint32_t *)p->dst;			\
+		uint32_t *src = (uint32_t *)p->src;			\
+		uint32_t sz = p->sz / sizeof (uint32_t);		\
+		while (sz--)						\
+			*dst++ = *src++;				\
+	} while ((p = (struct kloader_page_tag *)p->next) != 0);	\
+									\
+	SH ## product ## _CACHE_FLUSH();				\
+									\
+	/* Jump to the kernel entry point. */				\
+	__asm volatile(							\
+		"mov	%0, r4;"					\
+		"mov	%1, r5;"					\
+		"jmp	@%3;"						\
+		" mov	%2, r6;"					\
+		: :							\
+		"r"(kbi->argc),						\
+		"r"(kbi->argv),						\
+		"r"(&kbi->bootinfo),					\
+		"r"(kbi->entry));					\
+									\
+	/* NOTREACHED */						\
+	KLOADER_NORETURN;						\
 }
 
 #ifdef SH3
 KLOADER_HPCSH_BOOT(3, 7709A)
 #endif 
+
 #ifdef SH4
 KLOADER_HPCSH_BOOT(4, 7750)
 #endif
