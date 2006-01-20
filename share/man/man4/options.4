@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.268.2.5 2005/12/29 00:57:09 riz Exp $
+.\"	$NetBSD: options.4,v 1.268.2.6 2006/01/20 20:48:41 riz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -856,21 +856,6 @@ file system to work.
 .El
 .Ss File System Options
 .Bl -ohang
-.It Cd options ROOTFS_MAGICLINKS
-Enables the expansion of special strings
-.Po
-beginning with
-.Dq @
-.Pc
-when traversing symbolic links on the root file system.
-See
-.Xr symlink 7
-for a list of supported strings.
-Note that this option only controls the enabling of this feature when
-the root file system is first mounted by the kernel at boot-up.
-This feature can still be manipulated with the
-.Xr mount 8
-command regardless of the setting of this option.
 .It Cd options NFSSERVER
 Include the server side of the
 .Em NFS
