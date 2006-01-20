@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.32 2006/01/18 19:11:25 garbled Exp $	*/
+/*	$NetBSD: common.c,v 1.33 2006/01/20 17:30:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.32 2006/01/18 19:11:25 garbled Exp $");
+__RCSID("$NetBSD: common.c,v 1.33 2006/01/20 17:30:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,34 +116,47 @@ extern uid_t	uid, euid;
 
 static int compar(const void *, const void *);
 
+const char *
+gethost(const char *hname)
+{
+	const char *p = strchr(hname, '@');
+	return p ? ++p : hname;
+}
+
 /*
- * Create a TCP connection to host "rhost" at port "rport".
- * If rport == 0, then use the printer service port.
- * Most of this code comes from rcmd.c.
+ * Create a TCP connection to host "rhost". If "rhost" is of the
+ * form port@host, use the specified port. Otherwise use the
+ * default printer port. Most of this code comes from rcmd.c.
  */
 int
-getport(const char *rhost, int rport)
+getport(const char *rhost)
 {
 	struct addrinfo hints, *res, *r;
 	u_int timo = 1;
 	int s, lport = IPPORT_RESERVED - 1;
 	int error;
 	int refuse, trial;
-	char pbuf[NI_MAXSERV];
+	char hbuf[NI_MAXSERV], *ptr;
+	const char *port = "printer";
+	const char *hostname = rhost;
 
 	/*
 	 * Get the host address and port number to connect to.
 	 */
 	if (rhost == NULL)
 		fatal("no remote host to connect to");
-	memset(&hints, 0, sizeof(hints));
+	(void)strlcpy(hbuf, rhost, sizeof(hbuf));
+	for (ptr = hbuf; *ptr; ptr++) 
+		if (*ptr == '@') {
+			*ptr++ = '\0';
+			port = hbuf;
+			hostname = ptr;
+			break;
+		}
+	(void)memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	if (rport)
-		snprintf(pbuf, sizeof(pbuf), "%d", rport);
-	else
-		snprintf(pbuf, sizeof(pbuf), "printer");
-	error = getaddrinfo(rhost, pbuf, &hints, &res);
+	error = getaddrinfo(hostname, port, &hints, &res);
 	if (error)
 		fatal("printer/tcp: %s", gai_strerror(error));
 
@@ -308,7 +321,6 @@ const char *
 checkremote(void)
 {
 	char lname[NI_MAXHOST], rname[NI_MAXHOST];
-	const char *rmhost;
 	struct addrinfo hints, *res, *res0;
 	static char errbuf[128];
 	int error;
@@ -338,11 +350,7 @@ checkremote(void)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	res = NULL;
-	if ((rmhost = strchr(RM, '@')))
-		rmhost++;
-	else
-		rmhost = RM;
-	error = getaddrinfo(rmhost, NULL, &hints, &res0);
+	error = getaddrinfo(gethost(RM), NULL, &hints, &res0);
 	if (error) {
 		(void)snprintf(errbuf, sizeof(errbuf),
 		    "unable to resolve remote machine %s: %s",
