@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_afslog.c,v 1.1 2005/09/21 14:19:08 tsarna Exp $	*/
+/*	$NetBSD: pam_afslog.c,v 1.2 2006/01/20 16:51:15 christos Exp $	*/
 
 /*-
  * Copyright 2005 Tyler C. Sarna <tsarna@netbsd.org>
@@ -30,11 +30,13 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: pam_afslog.c,v 1.1 2005/09/21 14:19:08 tsarna Exp $");
+__RCSID("$NetBSD: pam_afslog.c,v 1.2 2006/01/20 16:51:15 christos Exp $");
 
 #include <krb5/krb5.h>
 #include <krb5/kafs.h>
 
+#define PAM_SM_AUTH
+#define PAM_SM_CRED
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <security/pam_mod_misc.h>
