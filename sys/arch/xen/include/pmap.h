@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.2.1 2006/01/20 21:14:47 riz Exp $	*/
 /*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -359,7 +359,7 @@ int		pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, vm_prot_t,
 		    int);
 boolean_t	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
 int		pmap_remap_pages(struct pmap *, vaddr_t, paddr_t, int,
-		    int, int);
+		    vm_prot_t, int, int);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.4.2.6 2005/05/27 23:05:44 riz Exp $      */
+/*      $NetBSD: xennetback.c,v 1.4.2.7 2006/01/20 21:14:47 riz Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -315,12 +315,13 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		xneti->xni_ma_rxring = req->rx_shmem_frame << PAGE_SHIFT;
 		xneti->xni_ma_txring = req->tx_shmem_frame << PAGE_SHIFT;
 		error = pmap_remap_pages(pmap_kernel(), ring_rxaddr,
-		   xneti->xni_ma_rxring, 1, PMAP_WIRED | PMAP_CANFAIL,
-		   req->domid);
+		   xneti->xni_ma_rxring, 1, VM_PROT_READ | VM_PROT_WRITE,
+		   PMAP_WIRED | PMAP_CANFAIL, req->domid);
 		if (error == 0)
 			error = pmap_remap_pages(pmap_kernel(), ring_txaddr,
-			   xneti->xni_ma_txring, 1, PMAP_WIRED | PMAP_CANFAIL,
-			   req->domid);
+			   xneti->xni_ma_txring, 1,
+			   VM_PROT_READ | VM_PROT_WRITE,
+			   PMAP_WIRED | PMAP_CANFAIL, req->domid);
 		if (error) {
 			uvm_km_free(kernel_map, ring_rxaddr, PAGE_SIZE);
 			uvm_km_free(kernel_map, ring_txaddr, PAGE_SIZE);

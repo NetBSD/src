@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.2.2.3 2005/09/14 22:24:38 tron Exp $ */
+/* $NetBSD: privcmd.c,v 1.2.2.4 2006/01/20 21:14:47 riz Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.2.2.3 2005/09/14 22:24:38 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.2.2.4 2006/01/20 21:14:47 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,7 @@ privcmd_ioctl(void *v)
 		privcmd_mmap_entry_t mentry;
 		vaddr_t va;
 		u_long ma;
+		vm_prot_t prot;
 		//printf("IOCTL_PRIVCMD_MMAP: %d entries\n", mcmd->num);
 
 		pmap_t pmap = vm_map_pmap(&ap->a_p->p_vmspace->vm_map);
@@ -121,14 +122,29 @@ privcmd_ioctl(void *v)
 #endif
 			va = mentry.va & ~PAGE_MASK;
 			ma = mentry.mfn <<  PGSHIFT; /* XXX ??? */
+			vm_map_lock_read(&ap->a_p->p_vmspace->vm_map);
+			if (uvm_map_checkprot(&ap->a_p->p_vmspace->vm_map,
+			    va, va + (mentry.npages << PGSHIFT) - 1,
+			    VM_PROT_WRITE))
+				prot = VM_PROT_READ | VM_PROT_WRITE;
+			else if (uvm_map_checkprot(&ap->a_p->p_vmspace->vm_map,
+			    va, va + (mentry.npages << PGSHIFT) - 1,
+			    VM_PROT_READ))
+				prot = VM_PROT_READ;
+			else {
+				printf("uvm_map_checkprot 0x%lx -> 0x%lx "
+				    "failed\n",
+				    va, va + (mentry.npages << PGSHIFT) - 1);
+				vm_map_unlock_read(&ap->a_p->p_vmspace->vm_map);
+				return EINVAL;
+			}
+			vm_map_unlock_read(&ap->a_p->p_vmspace->vm_map);
+
 			for (j = 0; j < mentry.npages; j++) {
 				//printf("remap va 0x%lx to 0x%lx\n", va, ma);
-#if 0
-				if (!pmap_extract(pmap, va, NULL))
-					return EINVAL; /* XXX */
-#endif
 				if ((error = pmap_remap_pages(pmap, va, ma, 1,
-				    PMAP_WIRED | PMAP_CANFAIL, mcmd->dom)))
+				    prot, PMAP_WIRED | PMAP_CANFAIL,
+				    mcmd->dom)))
 					return error;
 				va += PAGE_SIZE;
 				ma += PAGE_SIZE;
@@ -143,6 +159,7 @@ privcmd_ioctl(void *v)
 		vaddr_t va0, va;
 		u_long mfn, ma;
 		struct vm_map *vmm;
+		vm_prot_t prot;
 		pmap_t pmap;
 
 		vmm = &ap->a_p->p_vmspace->vm_map;
@@ -155,6 +172,24 @@ privcmd_ioctl(void *v)
 			return EINVAL;
 		
 		//printf("mmapbatch: va0=%lx num=%d dom=%d\n", va0, pmb->num, pmb->dom);
+		vm_map_lock_read(vmm);
+		if (uvm_map_checkprot(vmm,
+		    va0, va0 + (pmb->num << PGSHIFT) - 1,
+		    VM_PROT_WRITE))
+			prot = VM_PROT_READ | VM_PROT_WRITE;
+		else if (uvm_map_checkprot(vmm,
+		    va0, va0 + (pmb->num << PGSHIFT) - 1,
+		    VM_PROT_READ))
+			prot = VM_PROT_READ;
+		else {
+			printf("uvm_map_checkprot2 0x%lx -> 0x%lx "
+			    "failed\n",
+			    va0, va0 + (pmb->num << PGSHIFT) - 1);
+			vm_map_unlock_read(vmm);
+			return EINVAL;
+		}
+		vm_map_unlock_read(vmm);
+
 		for(i = 0; i < pmb->num; ++i) {
 			va = va0 + (i * PAGE_SIZE);
 			error = copyin(&pmb->arr[i], &mfn, sizeof(mfn));
@@ -167,7 +202,7 @@ privcmd_ioctl(void *v)
 			 * these into fewer hypercalls.
 			 */
 			//printf("mmapbatch: va=%lx ma=%lx dom=%d\n", va, ma, pmb->dom);
-			error = pmap_remap_pages(pmap, va, ma, 1,
+			error = pmap_remap_pages(pmap, va, ma, 1, prot,
 			    PMAP_WIRED | PMAP_CANFAIL, pmb->dom);
 			if (error != 0) {
 				printf("mmapbatch: remap error %d!\n", error);
