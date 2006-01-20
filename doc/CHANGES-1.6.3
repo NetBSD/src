@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.174 2006/01/20 22:22:08 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.175 2006/01/20 22:27:20 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2140,4 +2140,9 @@ sys/dev/ic/ninjascsi32.c			1.6
 	- Fix diagnostic panic for unaligned DMA buffer.
 	- Fix error cleanup path in attach.
 	[itohy, ticket #5991]
+
+dist/am-utils/libamu/mount_fs.c			patch
+
+	Backout changes made for ticket #624. This fixes PR bin/27287.
+	[bouyer, ticket #5994]
 
