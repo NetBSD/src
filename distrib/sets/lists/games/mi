@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37 2005/07/01 03:32:49 snj Exp $
+# $NetBSD: mi,v 1.38 2006/01/20 11:23:51 elad Exp $
 ./etc/mtree/set.games				games-sys-root
 ./usr/games/adventure				games-games-bin
 ./usr/games/arithmetic				games-games-bin
@@ -68,6 +68,8 @@
 ./usr/games/pom					games-games-bin
 ./usr/games/ppt					games-games-bin
 ./usr/games/primes				games-utils-bin
+./usr/games/qsafe				games-utils-bin
+./usr/games/qsieve				games-utils-bin
 ./usr/games/quiz				games-games-bin
 ./usr/games/rain				games-games-bin
 ./usr/games/random				games-utils-bin
@@ -217,6 +219,8 @@
 ./usr/share/man/cat6/pom.0			games-games-catman	.cat
 ./usr/share/man/cat6/ppt.0			games-games-catman	.cat
 ./usr/share/man/cat6/primes.0			games-utils-catman	.cat
+./usr/share/man/cat6/qsafe.0			games-utils-catman	.cat
+./usr/share/man/cat6/qsieve.0			games-utils-catman	.cat
 ./usr/share/man/cat6/quiz.0			games-games-catman	.cat
 ./usr/share/man/cat6/rain.0			games-games-catman	.cat
 ./usr/share/man/cat6/random.0			games-utils-catman	.cat
@@ -269,6 +273,8 @@
 ./usr/share/man/man6/pom.6			games-games-man		.man
 ./usr/share/man/man6/ppt.6			games-games-man		.man
 ./usr/share/man/man6/primes.6			games-utils-man		.man
+./usr/share/man/man6/qsafe.6			games-utils-man		.man
+./usr/share/man/man6/qsieve.6			games-utils-man		.man
 ./usr/share/man/man6/quiz.6			games-games-man		.man
 ./usr/share/man/man6/rain.6			games-games-man		.man
 ./usr/share/man/man6/random.6			games-utils-man		.man
