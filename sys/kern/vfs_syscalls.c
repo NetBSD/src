@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.217.2.8 2005/12/29 00:57:09 riz Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.217.2.9 2006/01/20 20:48:41 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.217.2.8 2005/12/29 00:57:09 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.217.2.9 2006/01/20 20:48:41 riz Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -336,13 +336,12 @@ sys_mount(l, v, retval)
 		mp->mnt_flag &=
 		  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-		    MNT_MAGICLINKS);
+		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
 		mp->mnt_flag |= SCARG(uap, flags) &
 		   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-		    MNT_IGNORE | MNT_MAGICLINKS);
+		    MNT_IGNORE);
 	}
 	/*
 	 * Mount the filesystem.
