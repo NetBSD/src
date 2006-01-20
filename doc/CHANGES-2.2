@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.35 2006/01/19 21:39:56 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.36 2006/01/20 22:19:51 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -486,4 +486,10 @@ crypto/dist/kame/racoon/isakmp_agg.c		patch
 
 	Fix denial of service vulnerabilityin racoon(8).
 	[adrianp, ticket #10224]
+
+sys/dev/ic/ninjascsi32.c			1.6
+
+	- Fix diagnostic panic for unaligned DMA buffer.
+	- Fix error cleanup path in attach.
+	[itohy, ticket #10222]
 
