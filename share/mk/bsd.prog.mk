@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.207 2005/04/09 13:00:53 dsl Exp $
+#	$NetBSD: bsd.prog.mk,v 1.208 2006/01/20 16:54:11 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -75,8 +75,21 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 
 # PAM applications, if linked statically, need more libraries
 .if (${MKPIC} == "no")
-PAM_STATIC_LDADD= -lcrypt -lrpcsvc -lutil
-PAM_STATIC_DPADD= ${LIBCRYPT} ${LIBRPCSVC} ${LIBUTIL}
+.if (${MKCRYPTO} != "no")
+PAM_STATIC_LDADD+= -lssh
+PAM_STATIC_DPADD+= ${LIBSSH}
+.endif
+.if (${MKKERBEROS} != "no")
+PAM_STATIC_LDADD+= -lkafs -lkrb -lkrb5 -lasn1 -lroken -lcom_err -lcrypto
+PAM_STATIC_DPADD+= ${LIBKAFS} ${LIBKRB} ${LIBKRB5} ${LIBASN1} ${LIBROKEN} \
+	${LIBCOM_ERR} ${LIBCRYPTO}
+.endif
+.if (${MKSKEY} != "no")
+PAM_STATIC_LDADD+= -lskey
+PAM_STATIC_DPADD+= ${LIBSKEY}
+.endif
+PAM_STATIC_LDADD+= -lradius -lcrypt -lrpcsvc -lutil
+PAM_STATIC_DPADD+= ${LIBRADIUS} ${LIBCRYPT} ${LIBRPCSVC} ${LIBUTIL}
 .else
 PAM_STATIC_LDADD=
 PAM_STATIC_DPADD=
