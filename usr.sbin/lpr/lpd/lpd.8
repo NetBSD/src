@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpd.8,v 1.31 2003/08/07 11:25:27 agc Exp $
+.\"	$NetBSD: lpd.8,v 1.32 2006/01/20 08:51:40 garbled Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -251,7 +251,7 @@ output (cat phototypesetter commands).
 Ditroff File.
 The file contains device independent troff
 output.
-.It r
+.It d
 DVI File.
 The file contains
 .Tn Tex l
@@ -267,6 +267,8 @@ The file contains data produced by
 .Ic cifplot .
 .It v
 The file contains a raster image.
+.It o
+The file contains postscript data.
 .It r
 The file contains text data with
 FORTRAN carriage control characters.
