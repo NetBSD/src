@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.80 2005/10/09 15:15:36 wiz Exp $
+.\"	$NetBSD: pci.4,v 1.81 2006/01/20 21:57:25 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -74,7 +74,7 @@ Consult your system's
 for additional information.
 .Sh OPTIONS
 .Bl -tag -width PCI_ADDR_FIXUP -offset 3n
-.It Nm PCI_ADDR_FIXUP
+.It Dv PCI_ADDR_FIXUP
 Fixup PCI I/O and memory addresses.
 .Pp
 Some i386 and amd64 BIOS implementations don't allocate I/O space and
@@ -89,7 +89,7 @@ instead of relying upon the BIOS to do so.
 If necessary space is already correctly assigned to the devices,
 this option leaves the space as is.
 .Pp
-.It Nm PCI_BUS_FIXUP
+.It Dv PCI_BUS_FIXUP
 Fixup PCI bus numbering; needed for many
 .Xr cardbus 4
 bridges.
@@ -120,7 +120,7 @@ PCI buses and CardBuses.
 Since this option renumbers all PCI buses and CardBuses,
 all bus numbers of subordinate buses become different
 when this option is enabled.
-.It Nm PCI_INTR_FIXUP
+.It Dv PCI_INTR_FIXUP
 Fixup PCI interrupt routing via PCIBIOS or ACPI.
 .Pp
 Some i386 and amd64 BIOS implementations don't assign an interrupt for
@@ -131,6 +131,7 @@ of relying upon the BIOS to do so.
 .Pp
 If a valid interrupt has already been assigned to a device, this
 option leaves the interrupt as is.
+.El
 .Sh HARDWARE
 .Nx
 includes machine-independent
@@ -394,9 +395,9 @@ controllers, including the Cirrus Logic GD6729.
 PCI
 .Dq universal
 communications cards, containing
-.Nm com
+.Xr com 4
 and
-.Nm lpt
+.Xr lpt 4
 communications ports.
 .It uhci
 USB UHCI host controllers.
