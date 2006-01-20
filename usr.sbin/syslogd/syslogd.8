@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.37 2004/11/19 18:48:29 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.38 2006/01/20 21:48:41 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 18, 2004
+.Dd January 20, 2006
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -208,6 +208,7 @@ decimal number in angle braces, for example,
 This priority code should map into the priorities defined in the
 include file
 .Aq Pa sys/syslog.h .
+See RFC 3164 for detailed description of the message format.
 .Pp
 Messages from the local kernel that are not tagged with a priority code
 receive the default facility
@@ -238,6 +239,12 @@ The kernel log device.
 .Xr services 5 ,
 .Xr syslog.conf 5 ,
 .Xr newsyslog 8
+.Rs
+.%R RFC
+.%N 3164
+.%D August 2001
+.%T The BSD syslog Protocol
+.Re
 .Sh HISTORY
 The
 .Nm
