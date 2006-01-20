@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.15 2002/09/17 15:28:28 uwe Exp $ */
+/*	$NetBSD: asm.h,v 1.16 2006/01/20 22:02:40 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -173,6 +173,12 @@
 	.weak alias;							\
 	alias = sym
 #endif
+/*
+ * STRONG_ALIAS: create a strong alias.
+ */
+#define STRONG_ALIAS(alias,sym)						\
+	.globl alias;							\
+	alias = sym
 
 /*
  * WARN_REFERENCES: create a warning if the specified symbol is referenced.
