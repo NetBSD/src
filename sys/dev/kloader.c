@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.8 2006/01/02 20:51:09 uwe Exp $	*/
+/*	$NetBSD: kloader.c,v 1.9 2006/01/20 02:47:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.8 2006/01/02 20:51:09 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.9 2006/01/20 02:47:30 uwe Exp $");
 
 #include "debug_kloader.h"
 
@@ -699,7 +699,7 @@ kloader_pagetag_dump()
 		print = FALSE;
 		if (i < n)
 			print = TRUE;
-		if ((u_int32_t)p & 3) {
+		if ((uint32_t)p & 3) {
 			printf("tag alignment error\n");
 			break;
 		}
