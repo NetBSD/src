@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.32 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.33 2006/01/21 00:15:36 rpaulo Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -619,6 +619,7 @@ struct	in6_multi;
 void	icmp6_init(void);
 void	icmp6_paramerror(struct mbuf *, int);
 void	icmp6_error(struct mbuf *, int, int, int);
+void	icmp6_error2(struct mbuf *, int, int, int, struct ifnet *);
 int	icmp6_input(struct mbuf **, int *, int);
 void	icmp6_fasttimo(void);
 void	icmp6_reflect(struct mbuf *, size_t);

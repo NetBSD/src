@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.94 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.95 2006/01/21 00:15:36 rpaulo Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.94 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.95 2006/01/21 00:15:36 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.94 2005/12/11 12:25:02 christos Exp $");
 #include <netinet6/mld6_var.h>
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/in6_ifattach.h>
+#include <netinet6/scope6_var.h>
 
 #include <net/net_osdep.h>
 
@@ -343,7 +344,7 @@ in6_control(so, cmd, data, ifp, p)
 	struct	in6_ifaddr *ia = NULL;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
 	struct sockaddr_in6 *sa6;
-	int privileged;
+	int error, privileged;
 
 	privileged = 0;
 	if (p && !suser(p->p_ucred, &p->p_acflag))
@@ -440,22 +441,12 @@ in6_control(so, cmd, data, ifp, p)
 		break;
 	}
 	if (sa6 && sa6->sin6_family == AF_INET6) {
-		if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr)) {
-			if (sa6->sin6_addr.s6_addr16[1] == 0) {
-				/* link ID is not embedded by the user */
-				sa6->sin6_addr.s6_addr16[1] =
-				    htons(ifp->if_index);
-			} else if (sa6->sin6_addr.s6_addr16[1] !=
-			    htons(ifp->if_index)) {
-				return (EINVAL);	/* link ID contradicts */
-			}
-			if (sa6->sin6_scope_id) {
-				if (sa6->sin6_scope_id !=
-				    (u_int32_t)ifp->if_index)
-					return (EINVAL);
-				sa6->sin6_scope_id = 0; /* XXX: good way? */
-			}
-		}
+		if (sa6->sin6_scope_id != 0)
+			error = sa6_embedscope(sa6, 0);
+		else
+			error = in6_setscope(&sa6->sin6_addr, ifp, NULL);
+		if (error != 0)
+			return (error);
 		ia = in6ifa_ifpwithaddr(ifp, &sa6->sin6_addr);
 	} else
 		ia = NULL;
@@ -531,6 +522,8 @@ in6_control(so, cmd, data, ifp, p)
 
 	case SIOCGIFADDR_IN6:
 		ifr->ifr_addr = ia->ia_addr;
+		if ((error = sa6_recoverscope(&ifr->ifr_addr)) != 0)
+			return (error);
 		break;
 
 	case SIOCGIFDSTADDR_IN6:
@@ -541,6 +534,8 @@ in6_control(so, cmd, data, ifp, p)
 		 * an error?
 		 */
 		ifr->ifr_dstaddr = ia->ia_dstaddr;
+		if ((error = sa6_recoverscope(&ifr->ifr_dstaddr)) != 0)
+			return (error);
 		break;
 
 	case SIOCGIFNETMASK_IN6:
@@ -626,7 +621,7 @@ in6_control(so, cmd, data, ifp, p)
 
 	case SIOCAIFADDR_IN6:
 	{
-		int i, error = 0;
+		int i;
 		struct nd_prefix pr0, *pr;
 
 		/* reject read-only flags */
@@ -843,20 +838,22 @@ in6_update_ifa(ifp, ifra, ia)
 	dst6 = ifra->ifra_dstaddr;
 	if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) != 0 &&
 	    (dst6.sin6_family == AF_INET6)) {
-		/* link-local index check: should be a separate function? */
-		if (IN6_IS_ADDR_LINKLOCAL(&dst6.sin6_addr)) {
-			if (dst6.sin6_addr.s6_addr16[1] == 0) {
-				/*
-				 * interface ID is not embedded by
-				 * the user
-				 */
-				dst6.sin6_addr.s6_addr16[1] =
-				    htons(ifp->if_index);
-			} else if (dst6.sin6_addr.s6_addr16[1] !=
-			    htons(ifp->if_index)) {
-				return (EINVAL);	/* ifid contradicts */
-			}
-		}
+		struct in6_addr in6_tmp;
+		u_int32_t zoneid;
+
+		in6_tmp = dst6.sin6_addr;
+		if (in6_setscope(&in6_tmp, ifp, &zoneid))
+			return (EINVAL); /* XXX: should be impossible */
+
+		if (dst6.sin6_scope_id != 0) {
+			if (dst6.sin6_scope_id != zoneid)
+				return (EINVAL);
+		} else		/* user omit to specify the ID. */
+			dst6.sin6_scope_id = zoneid;
+
+		/* convert into the internal form */
+		if (sa6_embedscope(&dst6, 0))
+			return (EINVAL); /* XXX: should be impossible */
 	}
 	/*
 	 * The destination address can be specified only for a p2p or a
@@ -1025,6 +1022,7 @@ in6_update_ifa(ifp, ifra, ia)
 	 * configure address flags.
 	 */
 	ia->ia6_flags = ifra->ifra_flags;
+	ia->ia6_flags &= ~IN6_IFF_DUPLICATED;	/* safety */
 	/*
 	 * backward compatibility - if IN6_IFF_DEPRECATED is set from the
 	 * userland, make it deprecated.
@@ -1033,14 +1031,17 @@ in6_update_ifa(ifp, ifra, ia)
 		ia->ia6_lifetime.ia6t_pltime = 0;
 		ia->ia6_lifetime.ia6t_preferred = time.tv_sec;
 	}
+
 	/*
-	 * Make the address tentative before joining multicast addresses,
-	 * so that corresponding MLD responses would not have a tentative
-	 * source address.
+	 * Perform DAD, if needed.
+	 * XXX It may be of use, if we can administratively
+	 * disable DAD.
 	 */
-	ia->ia6_flags &= ~IN6_IFF_DUPLICATED;	/* safety */
-	if (hostIsNew && in6if_do_dad(ifp))
+	if (in6if_do_dad(ifp) && hostIsNew &&
+	    (ifra->ifra_flags & IN6_IFF_NODAD) == 0) {
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
+		nd6_dad_start((struct ifaddr *)ia, NULL);
+	}
 
 	/*
 	 * We are done if we have simply modified an existing address.
@@ -1056,30 +1057,27 @@ in6_update_ifa(ifp, ifra, ia)
 	/* join necessary multiast groups */
 	if ((ifp->if_flags & IFF_MULTICAST) != 0) {
 		struct sockaddr_in6 mltaddr, mltmask;
-#ifndef SCOPEDROUTING
-		u_int32_t zoneid = 0;
-#endif
+		struct in6_addr llsol;
 
 		/* join solicited multicast addr for new host id */
-		struct sockaddr_in6 llsol;
-
-		bzero(&llsol, sizeof(llsol));
-		llsol.sin6_family = AF_INET6;
-		llsol.sin6_len = sizeof(llsol);
-		llsol.sin6_addr.s6_addr16[0] = htons(0xff02);
-		llsol.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-		llsol.sin6_addr.s6_addr32[1] = 0;
-		llsol.sin6_addr.s6_addr32[2] = htonl(1);
-		llsol.sin6_addr.s6_addr32[3] =
-		    ifra->ifra_addr.sin6_addr.s6_addr32[3];
-		llsol.sin6_addr.s6_addr8[12] = 0xff;
-		imm = in6_joingroup(ifp, &llsol.sin6_addr, &error);
+		bzero(&llsol, sizeof(struct in6_addr));
+		llsol.s6_addr16[0] = htons(0xff02);
+		llsol.s6_addr32[1] = 0;
+		llsol.s6_addr32[2] = htonl(1);
+		llsol.s6_addr32[3] = ifra->ifra_addr.sin6_addr.s6_addr32[3];
+		llsol.s6_addr8[12] = 0xff;
+		if ((error = in6_setscope(&llsol, ifp, NULL)) != 0) {
+			/* XXX: should not happen */
+			log(LOG_ERR, "in6_update_ifa: "
+			    "in6_setscope failed\n");
+			goto cleanup;
+		}
+		imm = in6_joingroup(ifp, &llsol, &error);
 		if (!imm) {
 			nd6log((LOG_ERR,
 			    "in6_update_ifa: addmulti "
 			    "failed for %s on %s (errno=%d)\n",
-			    ip6_sprintf(&llsol.sin6_addr),
-			    if_name(ifp), error));
+			    ip6_sprintf(&llsol), if_name(ifp), error));
 			goto cleanup;
 		}
 		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
@@ -1096,7 +1094,9 @@ in6_update_ifa(ifp, ifra, ia)
 		mltaddr.sin6_len = sizeof(struct sockaddr_in6);
 		mltaddr.sin6_family = AF_INET6;
 		mltaddr.sin6_addr = in6addr_linklocal_allnodes;
-		mltaddr.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+		if ((error = in6_setscope(&mltaddr.sin6_addr, ifp, NULL)) !=
+		    0)
+			goto cleanup; /* XXX: should not fail */
 
 		/*
 		 * XXX: do we really need this automatic routes?
@@ -1108,7 +1108,6 @@ in6_update_ifa(ifp, ifra, ia)
 		if (rt) {
 			/*
 			 * 32bit came from "mltmask"
-			 * XXX: only works in !SCOPEDROUTING case.
 			 */
 			if (memcmp(&mltaddr.sin6_addr,
 			    &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
@@ -1136,9 +1135,6 @@ in6_update_ifa(ifp, ifra, ia)
 		} else {
 			RTFREE(rt);
 		}
-#ifndef SCOPEDROUTING
-		mltaddr.sin6_scope_id = zoneid;	/* XXX */
-#endif
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
 		if (!imm) {
 			nd6log((LOG_WARNING,
@@ -1167,63 +1163,54 @@ in6_update_ifa(ifp, ifra, ia)
 			}
 		}
 
-		if (ifp->if_flags & IFF_LOOPBACK) {
-			/*
-			 * join node-local all-nodes address, on loopback.
-			 * (ff01::1%ifN, and ff01::%ifN/32)
-			 */
-			mltaddr.sin6_addr = in6addr_nodelocal_allnodes;
 
-			/* XXX: again, do we really need the route? */
-			rt = rtalloc1((struct sockaddr *)&mltaddr, 0);
-			if (rt) {
-				/* 32bit came from "mltmask" */
-				if (memcmp(&mltaddr.sin6_addr,
-				    &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
-				    32 / 8)) {
-					RTFREE(rt);
-					rt = NULL;
-				}
-			}
-			if (!rt) {
-				struct rt_addrinfo info;
+		/*
+		 * join interface-local all-nodes address.
+		 * (ff01::1%ifN, and ff01::%ifN/32)
+		 */
+		mltaddr.sin6_addr = in6addr_nodelocal_allnodes;
+		if ((error = in6_setscope(&mltaddr.sin6_addr, ifp, NULL))
+		    != 0) 
+			goto cleanup; /* XXX: should not fail */
 
-				bzero(&info, sizeof(info));
-				info.rti_info[RTAX_DST] = (struct sockaddr *)&mltaddr;
-				info.rti_info[RTAX_GATEWAY] =
-				    (struct sockaddr *)&ia->ia_addr;
-				info.rti_info[RTAX_NETMASK] =
-				    (struct sockaddr *)&mltmask;
-				info.rti_info[RTAX_IFA] =
-				    (struct sockaddr *)&ia->ia_addr;
-				info.rti_flags = RTF_UP | RTF_CLONING;
-				error = rtrequest1(RTM_ADD, &info, NULL);
-				if (error)
-					goto cleanup;
-			} else {
+		/* XXX: again, do we really need the route? */
+		rt = rtalloc1((struct sockaddr *)&mltaddr, 0);
+		if (rt) {
+			/* 32bit came from "mltmask" */
+			if (memcmp(&mltaddr.sin6_addr,
+			    &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
+			    32 / 8)) {
 				RTFREE(rt);
+				rt = NULL;
 			}
-			imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
-			if (!imm) {
-				nd6log((LOG_WARNING, "in6_update_ifa: "
-				    "addmulti failed for %s on %s (errno=%d)\n",
-				    ip6_sprintf(&mltaddr.sin6_addr),
-				    if_name(ifp), error));
-				goto cleanup;
-			}
-			LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 		}
-	}
+		if (!rt) {
+			struct rt_addrinfo info;
 
-	/*
-	 * Perform DAD, if needed.
-	 * XXX It may be of use, if we can administratively
-	 * disable DAD.
-	 */
-	if (hostIsNew && in6if_do_dad(ifp) &&
-	    (ifra->ifra_flags & IN6_IFF_NODAD) == 0)
-	{
-		nd6_dad_start((struct ifaddr *)ia, NULL);
+			bzero(&info, sizeof(info));
+			info.rti_info[RTAX_DST] = (struct sockaddr *)&mltaddr;
+			info.rti_info[RTAX_GATEWAY] =
+			    (struct sockaddr *)&ia->ia_addr;
+			info.rti_info[RTAX_NETMASK] =
+			    (struct sockaddr *)&mltmask;
+			info.rti_info[RTAX_IFA] =
+			    (struct sockaddr *)&ia->ia_addr;
+			info.rti_flags = RTF_UP | RTF_CLONING;
+			error = rtrequest1(RTM_ADD, &info, NULL);
+			if (error)
+				goto cleanup;
+		} else {
+			RTFREE(rt);
+		}
+		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
+		if (!imm) {
+			nd6log((LOG_WARNING, "in6_update_ifa: "
+			    "addmulti failed for %s on %s (errno=%d)\n",
+			    ip6_sprintf(&mltaddr.sin6_addr),
+			    if_name(ifp), error));
+			goto cleanup;
+		}
+		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 	}
 
 	return (error);
@@ -1558,7 +1545,13 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 			if (!cmp)
 				break;
 
+			/*
+			 * XXX: this is adhoc, but is necessary to allow
+			 * a user to specify fe80::/64 (not /10) for a
+			 * link-local address.
+			 */
 			bcopy(IFA_IN6(ifa), &candidate, sizeof(candidate));
+			in6_clearscope(&candidate);
 			candidate.s6_addr32[0] &= mask.s6_addr32[0];
 			candidate.s6_addr32[1] &= mask.s6_addr32[1];
 			candidate.s6_addr32[2] &= mask.s6_addr32[2];
@@ -1571,11 +1564,22 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 		ia = ifa2ia6(ifa);
 
 		if (cmd == SIOCGLIFADDR) {
+			int error;
+
 			/* fill in the if_laddrreq structure */
 			bcopy(&ia->ia_addr, &iflr->addr, ia->ia_addr.sin6_len);
+			error = sa6_recoverscope(
+			    (struct sockaddr_in6 *)&iflr->addr);
+			if (error != 0)
+				return (error);
+
 			if ((ifp->if_flags & IFF_POINTOPOINT) != 0) {
 				bcopy(&ia->ia_dstaddr, &iflr->dstaddr,
 				    ia->ia_dstaddr.sin6_len);
+				error = sa6_recoverscope(
+				    (struct sockaddr_in6 *)&iflr->dstaddr);
+				if (error != 0)
+					return (error);
 			} else
 				bzero(&iflr->dstaddr, sizeof(iflr->dstaddr));
 
@@ -2097,81 +2101,6 @@ in6_localaddr(in6)
 	return (0);
 }
 
-/*
- * Get a scope of the address. Node-local, link-local, site-local or global.
- */
-int
-in6_addrscope (addr)
-struct in6_addr *addr;
-{
-	int scope;
-
-	if (addr->s6_addr8[0] == 0xfe) {
-		scope = addr->s6_addr8[1] & 0xc0;
-
-		switch (scope) {
-		case 0x80:
-			return IPV6_ADDR_SCOPE_LINKLOCAL;
-		case 0xc0:
-			return IPV6_ADDR_SCOPE_SITELOCAL;
-		default:
-			return IPV6_ADDR_SCOPE_GLOBAL; /* just in case */
-		}
-	}
-
-
-	if (addr->s6_addr8[0] == 0xff) {
-		scope = addr->s6_addr8[1] & 0x0f;
-
-		/*
-		 * due to other scope such as reserved,
-		 * return scope doesn't work.
-		 */
-		switch (scope) {
-		case IPV6_ADDR_SCOPE_NODELOCAL:
-			return IPV6_ADDR_SCOPE_NODELOCAL;
-		case IPV6_ADDR_SCOPE_LINKLOCAL:
-			return IPV6_ADDR_SCOPE_LINKLOCAL;
-		case IPV6_ADDR_SCOPE_SITELOCAL:
-			return IPV6_ADDR_SCOPE_SITELOCAL;
-		default:
-			return IPV6_ADDR_SCOPE_GLOBAL;
-		}
-	}
-
-	if (bcmp(&in6addr_loopback, addr, sizeof(*addr) - 1) == 0) {
-		if (addr->s6_addr8[15] == 1) /* loopback */
-			return IPV6_ADDR_SCOPE_NODELOCAL;
-		if (addr->s6_addr8[15] == 0) /* unspecified */
-			return IPV6_ADDR_SCOPE_LINKLOCAL;
-	}
-
-	return IPV6_ADDR_SCOPE_GLOBAL;
-}
-
-int
-in6_addr2scopeid(ifp, addr)
-	struct ifnet *ifp;	/* must not be NULL */
-	struct in6_addr *addr;	/* must not be NULL */
-{
-	int scope = in6_addrscope(addr);
-
-	switch (scope) {
-	case IPV6_ADDR_SCOPE_NODELOCAL:
-		return (-1);	/* XXX: is this an appropriate value? */
-
-	case IPV6_ADDR_SCOPE_LINKLOCAL:
-		/* XXX: we do not distinguish between a link and an I/F. */
-		return (ifp->if_index);
-
-	case IPV6_ADDR_SCOPE_SITELOCAL:
-		return (0);	/* XXX: invalid. */
-
-	default:
-		return (0);	/* XXX: treat as global. */
-	}
-}
-
 int
 in6_is_addr_deprecated(sa6)
 	struct sockaddr_in6 *sa6;
@@ -2267,255 +2196,6 @@ in6_prefixlen2mask(maskp, len)
 		maskp->s6_addr[i] = 0xff;
 	if (bitlen)
 		maskp->s6_addr[bytelen] = maskarray[bitlen - 1];
-}
-
-/*
- * return the best address out of the same scope
- */
-struct in6_ifaddr *
-in6_ifawithscope(oifp, dst)
-	struct ifnet *oifp;
-	struct in6_addr *dst;
-{
-	int dst_scope =	in6_addrscope(dst), src_scope, best_scope = 0;
-	int blen = -1;
-	struct ifaddr *ifa;
-	struct ifnet *ifp;
-	struct in6_ifaddr *ifa_best = NULL;
-
-	if (oifp == NULL) {
-		printf("in6_ifawithscope: output interface is not specified\n");
-		return (NULL);
-	}
-
-	/*
-	 * We search for all addresses on all interfaces from the beginning.
-	 * Comparing an interface with the outgoing interface will be done
-	 * only at the final stage of tiebreaking.
-	 */
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
-	{
-		/*
-		 * We can never take an address that breaks the scope zone
-		 * of the destination.
-		 */
-		if (in6_addr2scopeid(ifp, dst) != in6_addr2scopeid(oifp, dst))
-			continue;
-
-		for (ifa = ifp->if_addrlist.tqh_first; ifa;
-		     ifa = ifa->ifa_list.tqe_next)
-		{
-			int tlen = -1, dscopecmp, bscopecmp, matchcmp;
-
-			if (ifa->ifa_addr->sa_family != AF_INET6)
-				continue;
-
-			src_scope = in6_addrscope(IFA_IN6(ifa));
-
-#ifdef ADDRSELECT_DEBUG		/* should be removed after stabilization */
-			dscopecmp = IN6_ARE_SCOPE_CMP(src_scope, dst_scope);
-			printf("in6_ifawithscope: dst=%s bestaddr=%s, "
-			       "newaddr=%s, scope=%x, dcmp=%d, bcmp=%d, "
-			       "matchlen=%d, flgs=%x\n",
-			       ip6_sprintf(dst),
-			       ifa_best ? ip6_sprintf(&ifa_best->ia_addr.sin6_addr) : "none",
-			       ip6_sprintf(IFA_IN6(ifa)), src_scope,
-			       dscopecmp,
-			       ifa_best ? IN6_ARE_SCOPE_CMP(src_scope, best_scope) : -1,
-			       in6_matchlen(IFA_IN6(ifa), dst),
-			       ((struct in6_ifaddr *)ifa)->ia6_flags);
-#endif
-
-			/*
-			 * Don't use an address before completing DAD
-			 * nor a duplicated address.
-			 */
-			if (((struct in6_ifaddr *)ifa)->ia6_flags &
-			    IN6_IFF_NOTREADY)
-				continue;
-
-			/* XXX: is there any case to allow anycasts? */
-			if (((struct in6_ifaddr *)ifa)->ia6_flags &
-			    IN6_IFF_ANYCAST)
-				continue;
-
-			if (((struct in6_ifaddr *)ifa)->ia6_flags &
-			    IN6_IFF_DETACHED)
-				continue;
-
-			/*
-			 * If this is the first address we find,
-			 * keep it anyway.
-			 */
-			if (ifa_best == NULL)
-				goto replace;
-
-			/*
-			 * ifa_best is never NULL beyond this line except
-			 * within the block labeled "replace".
-			 */
-
-			/*
-			 * If ifa_best has a smaller scope than dst and
-			 * the current address has a larger one than
-			 * (or equal to) dst, always replace ifa_best.
-			 * Also, if the current address has a smaller scope
-			 * than dst, ignore it unless ifa_best also has a
-			 * smaller scope.
-			 */
-			if (IN6_ARE_SCOPE_CMP(best_scope, dst_scope) < 0 &&
-			    IN6_ARE_SCOPE_CMP(src_scope, dst_scope) >= 0)
-				goto replace;
-			if (IN6_ARE_SCOPE_CMP(src_scope, dst_scope) < 0 &&
-			    IN6_ARE_SCOPE_CMP(best_scope, dst_scope) >= 0)
-				continue;
-
-			/*
-			 * A deprecated address SHOULD NOT be used in new
-			 * communications if an alternate (non-deprecated)
-			 * address is available and has sufficient scope.
-			 * RFC 2462, Section 5.5.4.
-			 */
-			if (((struct in6_ifaddr *)ifa)->ia6_flags &
-			    IN6_IFF_DEPRECATED) {
-				/*
-				 * Ignore any deprecated addresses if
-				 * specified by configuration.
-				 */
-				if (!ip6_use_deprecated)
-					continue;
-
-				/*
-				 * If we have already found a non-deprecated
-				 * candidate, just ignore deprecated addresses.
-				 */
-				if ((ifa_best->ia6_flags & IN6_IFF_DEPRECATED)
-				    == 0)
-					continue;
-			}
-
-			/*
-			 * A non-deprecated address is always preferred
-			 * to a deprecated one regardless of scopes and
-			 * address matching.
-			 */
-			if ((ifa_best->ia6_flags & IN6_IFF_DEPRECATED) &&
-			    (((struct in6_ifaddr *)ifa)->ia6_flags &
-			     IN6_IFF_DEPRECATED) == 0)
-				goto replace;
-
-			/*
-			 * At this point, we have two cases:
-			 * 1. we are looking at a non-deprecated address,
-			 *    and ifa_best is also non-deprecated.
-			 * 2. we are looking at a deprecated address,
-			 *    and ifa_best is also deprecated.
-			 * Also, we do not have to consider a case where
-			 * the scope of if_best is larger(smaller) than dst and
-			 * the scope of the current address is smaller(larger)
-			 * than dst. Such a case has already been covered.
-			 * Tiebreaking is done according to the following
-			 * items:
-			 * - the scope comparison between the address and
-			 *   dst (dscopecmp)
-			 * - the scope comparison between the address and
-			 *   ifa_best (bscopecmp)
-			 * - if the address match dst longer than ifa_best
-			 *   (matchcmp)
-			 * - if the address is on the outgoing I/F (outI/F)
-			 *
-			 * Roughly speaking, the selection policy is
-			 * - the most important item is scope. The same scope
-			 *   is best. Then search for a larger scope.
-			 *   Smaller scopes are the last resort.
-			 * - A deprecated address is chosen only when we have
-			 *   no address that has an enough scope, but is
-			 *   prefered to any addresses of smaller scopes.
-			 * - Longest address match against dst is considered
-			 *   only for addresses that has the same scope of dst.
-			 * - If there is no other reasons to choose one,
-			 *   addresses on the outgoing I/F are preferred.
-			 *
-			 * The precise decision table is as follows:
-			 * dscopecmp bscopecmp matchcmp outI/F | replace?
-			 *    !equal     equal      N/A    Yes |      Yes (1)
-			 *    !equal     equal      N/A     No |       No (2)
-			 *    larger    larger      N/A    N/A |       No (3)
-			 *    larger   smaller      N/A    N/A |      Yes (4)
-			 *   smaller    larger      N/A    N/A |      Yes (5)
-			 *   smaller   smaller      N/A    N/A |       No (6)
-			 *     equal   smaller      N/A    N/A |      Yes (7)
-			 *     equal    larger       (already done)
-			 *     equal     equal   larger    N/A |      Yes (8)
-			 *     equal     equal  smaller    N/A |       No (9)
-			 *     equal     equal    equal    Yes |      Yes (a)
-			 *     eaual     eqaul    equal     No |       No (b)
-			 */
-			dscopecmp = IN6_ARE_SCOPE_CMP(src_scope, dst_scope);
-			bscopecmp = IN6_ARE_SCOPE_CMP(src_scope, best_scope);
-
-			if (dscopecmp && bscopecmp == 0) {
-				if (oifp == ifp) /* (1) */
-					goto replace;
-				continue; /* (2) */
-			}
-			if (dscopecmp > 0) {
-				if (bscopecmp > 0) /* (3) */
-					continue;
-				goto replace; /* (4) */
-			}
-			if (dscopecmp < 0) {
-				if (bscopecmp > 0) /* (5) */
-					goto replace;
-				continue; /* (6) */
-			}
-
-			/* now dscopecmp must be 0 */
-			if (bscopecmp < 0)
-				goto replace; /* (7) */
-
-			/*
-			 * At last both dscopecmp and bscopecmp must be 0.
-			 * We need address matching against dst for
-			 * tiebreaking.
-			 */
-			tlen = in6_matchlen(IFA_IN6(ifa), dst);
-			matchcmp = tlen - blen;
-			if (matchcmp > 0) /* (8) */
-				goto replace;
-			if (matchcmp < 0) /* (9) */
-				continue;
-			if (oifp == ifp) /* (a) */
-				goto replace;
-			continue; /* (b) */
-
-		  replace:
-			ifa_best = (struct in6_ifaddr *)ifa;
-			blen = tlen >= 0 ? tlen :
-				in6_matchlen(IFA_IN6(ifa), dst);
-			best_scope = in6_addrscope(&ifa_best->ia_addr.sin6_addr);
-		}
-	}
-
-	/* count statistics for future improvements */
-	if (ifa_best == NULL)
-		ip6stat.ip6s_sources_none++;
-	else {
-		if (oifp == ifa_best->ia_ifp)
-			ip6stat.ip6s_sources_sameif[best_scope]++;
-		else
-			ip6stat.ip6s_sources_otherif[best_scope]++;
-
-		if (best_scope == dst_scope)
-			ip6stat.ip6s_sources_samescope[best_scope]++;
-		else
-			ip6stat.ip6s_sources_otherscope[best_scope]++;
-
-		if ((ifa_best->ia6_flags & IN6_IFF_DEPRECATED) != 0)
-			ip6stat.ip6s_sources_deprecated[best_scope]++;
-	}
-
-	return (ifa_best);
 }
 
 /*
@@ -2706,6 +2386,7 @@ in6_domifattach(ifp)
 	bzero(ext->icmp6_ifstat, sizeof(*ext->icmp6_ifstat));
 
 	ext->nd_ifinfo = nd6_ifattach(ifp);
+	ext->scope6_id = scope6_ifattach(ifp);
 	return ext;
 }
 
@@ -2719,5 +2400,6 @@ in6_domifdetach(ifp, aux)
 	nd6_ifdetach(ext->nd_ifinfo);
 	free(ext->in6_ifstat, M_IFADDR);
 	free(ext->icmp6_ifstat, M_IFADDR);
+	scope6_ifdetach(ext->scope6_id);
 	free(ext, M_IFADDR);
 }
