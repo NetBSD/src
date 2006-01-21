@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.147 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.148 2006/01/21 13:34:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.147 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.148 2006/01/21 13:34:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -594,6 +594,9 @@ linux_to_bsd_mmap_args(cma, uap)
 	SCARG(cma, pad) = 0;
 }
 
+#define	LINUX_MREMAP_MAYMOVE	1
+#define	LINUX_MREMAP_FIXED	2
+
 int
 linux_sys_mremap(l, v, retval)
 	struct lwp *l;
@@ -606,44 +609,43 @@ linux_sys_mremap(l, v, retval)
 		syscallarg(size_t) new_size;
 		syscallarg(u_long) flags;
 	} */ *uap = v;
-	struct sys_munmap_args mua;
-	size_t old_size, new_size;
+
+	struct proc *p;
+	struct vm_map *map;
+	vaddr_t oldva;
+	vaddr_t newva;
+	size_t oldsize;
+	size_t newsize;
+	int flags;
+	int uvmflags;
 	int error;
 
-	old_size = round_page(SCARG(uap, old_size));
-	new_size = round_page(SCARG(uap, new_size));
-
-	/*
-	 * Growing mapped region.
-	 */
-	if (new_size > old_size) {
-		/*
-		 * XXX Implement me.  What we probably want to do is
-		 * XXX dig out the guts of the old mapping, mmap that
-		 * XXX object again with the new size, then munmap
-		 * XXX the old mapping.
-		 */
-		*retval = 0;
-		return (ENOMEM);
+	flags = SCARG(uap, flags);
+	oldva = (vaddr_t)SCARG(uap, old_address);
+	oldsize = round_page(SCARG(uap, old_size));
+	newsize = round_page(SCARG(uap, new_size));
+	if ((flags & LINUX_MREMAP_FIXED) != 0) {
+#if 0 /* notyet */
+		newva = SCARG(uap, new_address);
+		uvmflags = UVM_MREMAP_FIXED;
+#else /* notyet */
+		error = EOPNOTSUPP;
+		goto done;
+#endif /* notyet */
+	} else if ((flags & LINUX_MREMAP_MAYMOVE) != 0) {
+		uvmflags = 0;
+	} else {
+		newva = oldva;
+		uvmflags = UVM_MREMAP_FIXED;
 	}
+	p = l->l_proc;
+	map = &p->p_vmspace->vm_map;
+	error = uvm_mremap(map, oldva, oldsize, map, &newva, newsize, p,
+	    uvmflags);
 
-	/*
-	 * Shrinking mapped region.
-	 */
-	if (new_size < old_size) {
-		SCARG(&mua, addr) = (caddr_t)SCARG(uap, old_address) +
-		    new_size;
-		SCARG(&mua, len) = old_size - new_size;
-		error = sys_munmap(l, &mua, retval);
-		*retval = error ? 0 : (register_t)SCARG(uap, old_address);
-		return (error);
-	}
-
-	/*
-	 * No change.
-	 */
-	*retval = (register_t)SCARG(uap, old_address);
-	return (0);
+done:
+	*retval = (error != 0) ? 0 : (register_t)newva;
+	return error;
 }
 
 int

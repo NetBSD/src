@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.209 2006/01/21 13:10:41 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.210 2006/01/21 13:34:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.209 2006/01/21 13:10:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.210 2006/01/21 13:34:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2088,7 +2088,8 @@ int
 uvm_map_reserve(struct vm_map *map, vsize_t size,
     vaddr_t offset	/* hint for pmap_prefer */,
     vsize_t align	/* alignment hint */,
-    vaddr_t *raddr	/* IN:hint, OUT: reserved VA */)
+    vaddr_t *raddr	/* IN:hint, OUT: reserved VA */,
+    uvm_flag_t flags	/* UVM_FLAG_FIXED or 0 */)
 {
 	UVMHIST_FUNC("uvm_map_reserve"); UVMHIST_CALLED(maphist);
 
@@ -2096,8 +2097,6 @@ uvm_map_reserve(struct vm_map *map, vsize_t size,
 	    map,size,offset,raddr);
 
 	size = round_page(size);
-	if (*raddr < vm_map_min(map))
-		*raddr = vm_map_min(map);		/* hint */
 
 	/*
 	 * reserve some virtual space.
@@ -2105,7 +2104,7 @@ uvm_map_reserve(struct vm_map *map, vsize_t size,
 
 	if (uvm_map(map, raddr, size, NULL, offset, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	    UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != 0) {
+	    UVM_ADV_RANDOM, UVM_FLAG_NOMERGE|flags)) != 0) {
 	    UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);
 		return (FALSE);
 	}
@@ -2145,6 +2144,9 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 * check to make sure we have a proper blank entry
 	 */
 
+	if (end < oldent->end && !VM_MAP_USE_KMAPENT(map)) {
+		UVM_MAP_CLIP_END(map, oldent, end, NULL);
+	}
 	if (oldent->start != start || oldent->end != end ||
 	    oldent->object.uvm_obj != NULL || oldent->aref.ar_amap != NULL) {
 		return (FALSE);
@@ -2290,11 +2292,15 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	 * step 1: reserve space in the target map for the extracted area
 	 */
 
-	dstaddr = vm_map_min(dstmap);
-	if (uvm_map_reserve(dstmap, len, start, 0, &dstaddr) == FALSE)
-		return (ENOMEM);
-	*dstaddrp = dstaddr;	/* pass address back to caller */
-	UVMHIST_LOG(maphist, "  dstaddr=0x%x", dstaddr,0,0,0);
+	if ((flags & UVM_EXTRACT_RESERVED) == 0) {
+		dstaddr = vm_map_min(dstmap);
+		if (!uvm_map_reserve(dstmap, len, start, 0, &dstaddr, 0))
+			return (ENOMEM);
+		*dstaddrp = dstaddr;	/* pass address back to caller */
+		UVMHIST_LOG(maphist, "  dstaddr=0x%x", dstaddr,0,0,0);
+	} else {
+		dstaddr = *dstaddrp;
+	}
 
 	/*
 	 * step 2: setup for the extraction process loop by init'ing the
@@ -2569,7 +2575,9 @@ bad2:			/* src already unlocked */
 	uvm_tree_sanity(srcmap, "map_extract src err leave");
 	uvm_tree_sanity(dstmap, "map_extract dst err leave");
 
-	uvm_unmap(dstmap, dstaddr, dstaddr+len);   /* ??? */
+	if ((flags & UVM_EXTRACT_RESERVED) == 0) {
+		uvm_unmap(dstmap, dstaddr, dstaddr+len);   /* ??? */
+	}
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.49 2005/12/24 20:45:10 perry Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.50 2006/01/21 13:34:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -102,10 +102,11 @@
 /*
  * extract flags
  */
-#define UVM_EXTRACT_REMOVE	0x1	/* remove mapping from old map */
-#define UVM_EXTRACT_CONTIG	0x2	/* try to keep it contig */
-#define UVM_EXTRACT_QREF	0x4	/* use quick refs */
-#define UVM_EXTRACT_FIXPROT	0x8	/* set prot to maxprot as we go */
+#define UVM_EXTRACT_REMOVE	0x01	/* remove mapping from old map */
+#define UVM_EXTRACT_CONTIG	0x02	/* try to keep it contig */
+#define UVM_EXTRACT_QREF	0x04	/* use quick refs */
+#define UVM_EXTRACT_FIXPROT	0x08	/* set prot to maxprot as we go */
+#define UVM_EXTRACT_RESERVED	0x10	/* caller did uvm_map_reserve() */
 
 #endif /* _KERNEL */
 
@@ -342,7 +343,7 @@ void		uvm_map_reference(struct vm_map *);
 int		uvm_map_replace(struct vm_map *, vaddr_t, vaddr_t,
 		    struct vm_map_entry *, int);
 int		uvm_map_reserve(struct vm_map *, vsize_t, vaddr_t, vsize_t,
-		    vaddr_t *);
+		    vaddr_t *, uvm_flag_t);
 void		uvm_map_setup(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_setup_kernel(struct vm_map_kernel *,
 		    vaddr_t, vaddr_t, int);
