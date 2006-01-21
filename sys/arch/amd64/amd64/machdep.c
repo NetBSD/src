@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2005/12/30 13:37:57 jmmv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2006/01/21 09:54:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2005/12/30 13:37:57 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2006/01/21 09:54:53 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1462,10 +1462,10 @@ init_x86_64(first_avail)
 	 */
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE32_SEL), 0,
-	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
+	    x86_btop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUDATA32_SEL), 0,
-	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1, 0);
+	    x86_btop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMRWA, SEL_UPL, 1, 1, 0);
 
 	/*
 	 * 32 bit LDT entries.
