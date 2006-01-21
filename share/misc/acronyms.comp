@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.62 2006/01/13 16:50:31 elad Exp $
+$NetBSD: acronyms.comp,v 1.63 2006/01/21 13:49:35 elad Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -76,6 +76,7 @@ DMA	direct memory access
 DNS	domain name system
 DOS	denial of service
 DPCM	differential pulse code modulation
+DPD	dead peer detection
 DPI	dots per inch
 DRAM	dynamic random access memory
 DSL	digital subscriber line
