@@ -1,4 +1,4 @@
-.\"	$NetBSD: printcap.5,v 1.21 2006/01/20 08:46:48 garbled Exp $
+.\"	$NetBSD: printcap.5,v 1.22 2006/01/21 23:36:31 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)printcap.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd March 15, 2003
+.Dd January 20, 2006
 .Dt PRINTCAP 5
 .Os
 .Sh NAME
@@ -102,7 +102,7 @@ blocks), zero = unlimited
 .It "of	str" Ta Dv NULL Ta No "name of output filtering program"
 .It "pc	num	200	price per foot or page in hundredths of cents"
 .It "pf	str" Ta Dv NULL Ta No "filter for printing"
-.Tn postscript
+.Tn PostScript
 files
 .It "pl	num	66	page length (in lines)"
 .It "pw	num	132	page width (in characters)"
@@ -164,7 +164,7 @@ c	cf	cifplot
 d	df	DVI (tex)
 g	gf	plot(3)
 n	nf	ditroff
-o	pf	postscript
+o	pf	PostScript
 f	rf	Fortran
 t	tf	troff
 v	vf	raster image
