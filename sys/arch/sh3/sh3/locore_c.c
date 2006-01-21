@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.10 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.11 2006/01/21 03:57:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.10 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.11 2006/01/21 03:57:48 uwe Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -140,8 +140,8 @@ int want_resched;
 #define	SCHED_LOCK_IDLE()	sched_lock_idle()
 #define	SCHED_UNLOCK_IDLE()	sched_unlock_idle()
 #else
-#define	SCHED_LOCK_IDLE()	((void)0)
-#define	SCHED_UNLOCK_IDLE()	((void)0)
+#define	SCHED_LOCK_IDLE()	do {} while (/* CONSTCOND */ 0)
+#define	SCHED_UNLOCK_IDLE()	do {} while (/* CONSTCOND */ 0)
 #endif
 
 
