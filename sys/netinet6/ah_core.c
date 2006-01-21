@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.38 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.39 2006/01/21 00:15:36 rpaulo Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.38 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.39 2006/01/21 00:15:36 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.38 2005/12/11 12:25:02 christos Exp $"
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
+#include <netinet6/scope6_var.h>
 #endif
 
 #include <netinet6/ipsec.h>
@@ -1446,10 +1447,8 @@ ah6_calccksum(m, ahdat, len, algo, sav)
 			ip6copy.ip6_vfc &= ~IPV6_VERSION_MASK;
 			ip6copy.ip6_vfc |= IPV6_VERSION;
 			ip6copy.ip6_hlim = 0;
-			if (IN6_IS_ADDR_LINKLOCAL(&ip6copy.ip6_src))
-				ip6copy.ip6_src.s6_addr16[1] = 0x0000;
-			if (IN6_IS_ADDR_LINKLOCAL(&ip6copy.ip6_dst))
-				ip6copy.ip6_dst.s6_addr16[1] = 0x0000;
+			in6_clearscope(&ip6copy.ip6_src); /* XXX */
+			in6_clearscope(&ip6copy.ip6_dst); /* XXX */
 			(algo->update)(&algos, (u_int8_t *)&ip6copy,
 				       sizeof(struct ip6_hdr));
 		} else {

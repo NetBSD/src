@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.86 2005/12/11 12:24:51 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.87 2006/01/21 00:15:35 rpaulo Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.86 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.87 2006/01/21 00:15:35 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -78,6 +78,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.86 2005/12/11 12:24:51 christos Ex
 #include <netinet/tcp.h>
 #endif
 #include <net/ethertypes.h>
+
+#ifdef INET6
+#include <netinet6/scope6_var.h>
+#endif
 
 #ifdef IPX
 #include <netipx/ipx.h>
@@ -3370,7 +3374,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 			nohisaddr = IN6_IS_ADDR_UNSPECIFIED(&desiredaddr);
 
 			desiredaddr.s6_addr16[0] = htons(0xfe80);
-			desiredaddr.s6_addr16[1] = htons(sp->pp_if.if_index);
+			(void)in6_setscope(&desiredaddr, &sp->pp_if, NULL);
 
 			if (!collision && !nohisaddr) {
 				/* no collision, hisaddr known - Conf-Ack */
@@ -3513,7 +3517,7 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				break;
 			memset(&suggestaddr, 0, sizeof(suggestaddr));
 			suggestaddr.s6_addr16[0] = htons(0xfe80);
-			suggestaddr.s6_addr16[1] = htons(sp->pp_if.if_index);
+			(void)in6_setscope(&suggestaddr, &sp->pp_if, NULL);
 			bcopy(&p[2], &suggestaddr.s6_addr[8], 8);
 
 			sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);

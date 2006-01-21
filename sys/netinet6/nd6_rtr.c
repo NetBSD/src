@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.53 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.54 2006/01/21 00:15:37 rpaulo Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.53 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.54 2006/01/21 00:15:37 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.53 2005/12/11 12:25:02 christos Exp $"
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+#include <netinet6/scope6_var.h>
 
 #include <net/net_osdep.h>
 
@@ -1791,7 +1792,7 @@ in6_init_address_ltimes(struct nd_prefix *new, struct in6_addrlifetime *lt6)
 void
 rt6_flush(gateway, ifp)
 	struct in6_addr *gateway;
-	struct ifnet *ifp;
+	struct ifnet *ifp;	/* unused */
 {
 	struct radix_node_head *rnh = rt_tables[AF_INET6];
 	int s = splsoftnet();
@@ -1801,8 +1802,6 @@ rt6_flush(gateway, ifp)
 		splx(s);
 		return;
 	}
-	/* XXX: hack for KAME's link-local address kludge */
-	gateway->s6_addr16[1] = htons(ifp->if_index);
 
 	rnh->rnh_walktree(rnh, rt6_deleteroute, (void *)gateway);
 	splx(s);
@@ -1860,6 +1859,13 @@ nd6_setdefaultiface(ifindex)
 			nd6_defifp = ifindex2ifnet[nd6_defifindex];
 		} else
 			nd6_defifp = NULL;
+
+		/*
+		 * Our current implementation assumes one-to-one maping between
+		 * interfaces and links, so it would be natural to use the
+		 * default interface as the default link.
+		 */
+		scope6_setdefault(nd6_defifp);
 	}
 
 	return (error);
