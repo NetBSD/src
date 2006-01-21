@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.69 2006/01/18 17:03:36 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.70 2006/01/21 13:13:07 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.69 2006/01/18 17:03:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.70 2006/01/21 13:13:07 yamt Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -737,6 +737,8 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 	UVMHIST_FUNC("amap_copy"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, waitf=%d)",
 		    map, entry, waitf, 0);
+
+	KASSERT(map != kernel_map);	/* we use nointr pool */
 
 	/*
 	 * is there a map to copy?   if not, create one from scratch.
