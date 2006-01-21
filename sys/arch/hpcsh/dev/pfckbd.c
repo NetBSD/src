@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.17 2006/01/21 22:55:34 uwe Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.18 2006/01/21 23:16:57 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.17 2006/01/21 22:55:34 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.18 2006/01/21 23:16:57 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -192,9 +192,10 @@ pfckbd_input(struct hpckbd_if *hpckbd, uint16_t *buf, uint16_t data,
     int column)
 {
 	int row, type, val;
-	uint16_t edge, mask;
+	unsigned int edge, mask;
 
-	if ((edge = (data ^ buf[column]))) {
+	edge = data ^ buf[column];
+	if (edge) {
 		buf[column] = data;
 
 		for (row = 0, mask = 1; row < 16; row++, mask <<= 1) {
