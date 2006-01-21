@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.208 2006/01/15 08:31:31 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.209 2006/01/21 13:10:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.208 2006/01/15 08:31:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.209 2006/01/21 13:10:41 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2233,7 +2233,7 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 	uvm_tree_sanity(map, "map_replace leave");
 
 	/*
-	 * now we can free the old blank entry, unlock the map and return.
+	 * now we can free the old blank entry and return.
 	 */
 
 	uvm_mapent_free(oldent);
