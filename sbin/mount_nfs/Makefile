@@ -1,11 +1,23 @@
-#	$NetBSD: Makefile,v 1.17 2005/06/27 01:00:06 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2006/01/21 10:32:23 dsl Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
 
 PROG=	mount_nfs
-SRCS=	mount_nfs.c getnfsargs.c
+SRCS=	mount_nfs.c
 MAN=	mount_nfs.8
+
+.ifndef SMALLPROG
+SRCS+=	getnfsargs.c
+.else
+SRCS+=	udp_xfer.c
+SRCS+=  rpc.c net.c
+SRCS+=	getnfsargs_small.c
+
+.PATH: ${NETBSDSRCDIR}/sys/lib/libsa
+CPPFLAGS+= -I${.CURDIR}  -I${NETBSDSRCDIR}/sys/lib/libsa
+CPPFLAGS+= -DNO_PMAP_CACHE
+.endif
 
 CPPFLAGS+= -DNFS
 
