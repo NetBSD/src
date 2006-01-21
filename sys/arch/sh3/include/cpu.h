@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2006/01/21 03:52:42 uwe Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -219,7 +219,7 @@ extern int want_resched;		/* need_resched() was called */
 #ifdef _KERNEL
 void sh_cpu_init(int, int);
 void sh_startup(void);
-void cpu_reset(void);		/* Soft reset */
+void cpu_reset(void) __attribute__((__noreturn__)); /* soft reset */
 void _cpu_spin(uint32_t);	/* for delay loop. */
 void delay(int);
 struct pcb;
