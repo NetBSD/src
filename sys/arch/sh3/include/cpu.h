@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2006/01/21 03:42:29 uwe Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 2006/01/21 03:52:42 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -154,25 +154,31 @@ extern int want_resched;		/* need_resched() was called */
 #define	SH3_PHYS_TO_P1SEG(x)	((uint32_t)(x) | SH3_P1SEG_BASE)
 #define	SH3_PHYS_TO_P2SEG(x)	((uint32_t)(x) | SH3_P2SEG_BASE)
 #define	SH3_P1SEG_TO_P2SEG(x)	((uint32_t)(x) | 0x20000000)
+#define	SH3_P2SEG_TO_P1SEG(x)	((uint32_t)(x) & ~0x20000000)
 
-/* run on P2 */
-#define	RUN_P2								\
-do {									\
-	uint32_t p;							\
-	p = (uint32_t)&&P2;						\
-	goto *(uint32_t *)(p | 0x20000000);				\
- P2:	(void)0;							\
-} while (/*CONSTCOND*/0)
+#ifndef __lint__
 
-/* run on P1 */
-#define	RUN_P1								\
-do {									\
-	uint32_t p;							\
-	p = (uint32_t)&&P1;						\
-	__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop");		\
-	goto *(uint32_t *)(p & ~0x20000000);				\
- P1:	(void)0;							\
-} while (/*CONSTCOND*/0)
+/* switch from P1 to P2 */
+#define	RUN_P2 do {							\
+		void *p;						\
+		p = &&P2;						\
+		goto *(void *)SH3_P1SEG_TO_P2SEG(p);			\
+	    P2:	(void)0;						\
+	} while (0)
+
+/* switch from P2 to P1 */
+#define	RUN_P1 do {							\
+		void *p;						\
+		p = &&P1;						\
+		__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop");	\
+		goto *(void *)SH3_P2SEG_TO_P1SEG(p);			\
+	    P1:	(void)0;						\
+	} while (0)
+
+#else  /* __lint__ */
+#define	RUN_P2	do {} while (/* CONSTCOND */ 0)
+#define	RUN_P1	do {} while (/* CONSTCOND */ 0)
+#endif
 
 #if defined(SH4)
 /* SH4 Processor Version Register */
