@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.98 2006/01/04 10:13:06 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.99 2006/01/21 18:57:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.98 2006/01/04 10:13:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.99 2006/01/21 18:57:45 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -710,7 +710,7 @@ uvm_swap_stats_locked(int cmd, struct swapent *sep, int sec, register_t *retval)
 			 * with NetBSD 1.3.
 			 */
 			sdp->swd_ose.ose_inuse =
-			    btodb((u_int64_t)sdp->swd_npginuse <<
+			    btodb((uint64_t)sdp->swd_npginuse <<
 			    PAGE_SHIFT);
 			(void)memcpy(sep, &sdp->swd_ose,
 			    sizeof(struct oswapent));
@@ -837,7 +837,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	 */
 
 	sdp->swd_ose.ose_nblks = nblocks;
-	npages = dbtob((u_int64_t)nblocks) >> PAGE_SHIFT;
+	npages = dbtob((uint64_t)nblocks) >> PAGE_SHIFT;
 
 	/*
 	 * for block special files, we want to make sure that leave
@@ -1069,7 +1069,7 @@ swstrategy(struct buf *bp)
 	 */
 
 	pageno -= sdp->swd_drumoffset;	/* page # on swapdev */
-	bn = btodb((u_int64_t)pageno << PAGE_SHIFT); /* convert to diskblock */
+	bn = btodb((uint64_t)pageno << PAGE_SHIFT); /* convert to diskblock */
 
 	UVMHIST_LOG(pdhist, "  %s: mapoff=%x bn=%x bcount=%ld",
 		((bp->b_flags & B_READ) == 0) ? "write" : "read",
@@ -1190,7 +1190,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 	error = 0;
 	bp->b_resid = bp->b_bcount;	/* nothing transfered yet! */
 	addr = bp->b_data;		/* current position in buffer */
-	byteoff = dbtob((u_int64_t)bn);
+	byteoff = dbtob((uint64_t)bn);
 
 	for (resid = bp->b_resid; resid; resid -= sz) {
 		struct vndbuf	*nbp;
@@ -1639,7 +1639,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * convert starting drum slot to block number
 	 */
 
-	startblk = btodb((u_int64_t)startslot << PAGE_SHIFT);
+	startblk = btodb((uint64_t)startslot << PAGE_SHIFT);
 
 	/*
 	 * first, map the pages into the kernel.
