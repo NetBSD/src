@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.16 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.17 2006/01/21 22:55:34 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.16 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.17 2006/01/21 22:55:34 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -232,7 +232,7 @@ void
 pfckbd_callout_unknown(void *arg)
 {
 
-	printf("%s: unknown keyboard switch\n", __FUNCTION__);
+	printf("%s: unknown keyboard switch\n", __func__);
 }
 
 /* HP Jornada680/690, HP620LX */
