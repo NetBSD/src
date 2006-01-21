@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.12 2006/01/21 01:51:47 uwe Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.13 2006/01/21 02:09:06 uwe Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2006/01/21 01:51:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2006/01/21 02:09:06 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1363,13 +1363,9 @@ f_a0(uint16_t *code, char *buf)
 {
 	int	disp;
 
-	if (*code & 0x0800) {	/* sign = '-' */
-		disp = 0xfffff000;
-		disp |= (*code & 0x0fff);
-	}
-	else {			/* sign = '+' */
-		disp = (*code & 0x0fff);
-	}
+	disp = (*code & 0x0fff);
+	if (disp & 0x0800)	/* negative displacement? */
+		disp |= 0xfffff000; /* sign extend */
 	disp *= 2;
 
 	sprintf(buf, "bra     %d(0x%x)", disp, disp);
@@ -1380,13 +1376,9 @@ f_b0(uint16_t *code, char *buf)
 {
 	int	disp;
 
-	if (*code & 0x0800) {	/* sign = '-' */
-		disp = 0xfffff000;
-		disp |= (*code & 0x0fff);
-	}
-	else {			/* sign = '+' */
-		disp = (*code & 0x0fff);
-	}
+	disp = (*code & 0x0fff);
+	if (disp & 0x0800)	/* negative displacement? */
+		disp |= 0xfffff000; /* sign extend */
 	disp *= 2;
 
 	sprintf(buf, "bsr     %d(0x%x)", disp, disp);
