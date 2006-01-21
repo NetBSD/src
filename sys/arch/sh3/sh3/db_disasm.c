@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11 2006/01/21 01:48:36 uwe Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.12 2006/01/21 01:51:47 uwe Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11 2006/01/21 01:48:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2006/01/21 01:51:47 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,8 @@ f_08(uint16_t *code, char *buf)
 	type = (*code & 0x00c0) >> 6;
 	md   = (*code & 0x0030) >> 4;
 
-	if (n1 != 0)	return;
+	if (n1 != 0)
+		return;
 
 	switch (type) {
 	case 0:
@@ -337,12 +338,14 @@ f_09(uint16_t *code, char *buf)
 
 	switch (fx) {
 	case 0:
-		if (rn != 0)	return;
+		if (rn != 0)
+			return;
 		sprintf(buf, "nop");
 		break;
 
 	case 1:
-		if (rn != 0)	return;
+		if (rn != 0)
+			return;
 		sprintf(buf, "div0u");
 		break;
 
@@ -398,7 +401,8 @@ f_0b(uint16_t *code, char *buf)
 	int	n1, fx;
 
 	n1 = (*code & 0x0f00) >> 8;
-	if (n1 != 0)	return;
+	if (n1 != 0)
+		return;
 
 	fx = (*code & 0x00f0) >> 4;
 	switch (fx) {
