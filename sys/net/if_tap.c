@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.6.2.1 2005/06/10 15:52:56 tron Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.6.2.2 2006/01/21 05:40:24 snj Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.6.2.1 2005/06/10 15:52:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.6.2.2 2006/01/21 05:40:24 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -253,7 +253,7 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	struct tap_softc *sc = (struct tap_softc *)self;
 	struct ifnet *ifp;
 	u_int8_t enaddr[ETHER_ADDR_LEN] =
-	    { 0xf0, 0x0b, 0xa4, 0xff, 0xff, 0xff };
+	    { 0xf2, 0x0b, 0xa4, 0xff, 0xff, 0xff };
 	char enaddrstr[18];
 	uint32_t ui;
 	int error;
