@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.64 2006/01/21 15:05:24 elad Exp $
+$NetBSD: acronyms.comp,v 1.65 2006/01/21 15:19:20 elad Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -254,6 +254,7 @@ RTS	request to send
 RTT	round time trip
 S/PDIF	sony/phillips digital interface
 SACD	super audio compact disc
+SAD	security association database
 SAM	serial access memory
 SASI	shugart associates system interface (predecessor to SCSI)
 SATA	serial advanced technology attachment
@@ -268,6 +269,7 @@ SMART	self-monitoring analysis and reporting technology
 SMP	symmetric multiprocessing
 SMTP	simple mail transfer protocol
 SNMP	simple network management protocol
+SPD	security policy database
 SPD	serial presence detect
 SRAM	static random access memory
 SSFDC	solid state floppy disc card
