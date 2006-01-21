@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.101 2006/01/04 21:31:55 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.102 2006/01/21 19:18:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.101 2006/01/04 21:31:55 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.102 2006/01/21 19:18:37 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.101 2006/01/04 21:31:55 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.102 2006/01/21 19:18:37 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -963,7 +963,7 @@ JobClose(Job *job)
 static void
 JobFinish(Job *job, int *status)
 {
-    Boolean 	 done;
+    Boolean 	 done, return_job_token;
 
     if ((WIFEXITED(*status) &&
 	 (((WEXITSTATUS(*status) != 0) && !(job->flags & JOB_IGNERR)))) ||
@@ -1182,15 +1182,16 @@ JobFinish(Job *job, int *status)
 	done = TRUE;
     }
 
+    return_job_token = FALSE;
+
     if (done) {
 	Trace_Log(JOBEND, job);
 	if (!compatMake && !(job->flags & JOB_SPECIAL)) {
 	    if ((*status != 0) ||
-	        (aborting == ABORT_ERROR) ||
-	        (aborting == ABORT_INTERRUPT))
-		Job_TokenReturn();
+		    (aborting == ABORT_ERROR) ||
+		    (aborting == ABORT_INTERRUPT))
+		return_job_token = TRUE;
 	}
-	
     }
 
     if (done &&
@@ -1211,7 +1212,7 @@ JobFinish(Job *job, int *status)
 	}
 	job->node->made = MADE;
 	if (!(job->flags & JOB_SPECIAL))
-	    Job_TokenReturn();
+	    return_job_token = TRUE;
 	Make_Update(job->node);
 	free(job);
     } else if (*status != 0) {
@@ -1231,6 +1232,9 @@ JobFinish(Job *job, int *status)
 	 */
 	aborting = ABORT_ERROR;
     }
+
+    if (return_job_token)
+	Job_TokenReturn();
 
     if ((aborting == ABORT_ERROR) && Job_Empty()) {
 	/*
@@ -2842,20 +2846,18 @@ static void JobSigReset(void)
 Boolean
 Job_Empty(void)
 {
-    if (nJobs == 0) {
-	if (!Lst_IsEmpty(stoppedJobs) && !aborting) {
-	    /*
-	     * The job table is obviously not full if it has no jobs in
-	     * it...Try and restart the stopped jobs.
-	     */
-	    JobRestartJobs();
-	    return(FALSE);
-	} else {
-	    return(TRUE);
-	}
-    } else {
-	return(FALSE);
-    }
+    if (nJobs != 0)
+	return FALSE;
+
+    if (Lst_IsEmpty(stoppedJobs) || aborting)
+	return TRUE;
+
+    /*
+     * The job table is obviously not full if it has no jobs in
+     * it...Try and restart the stopped jobs.
+     */
+    JobRestartJobs();
+    return FALSE;
 }
 
 /*-
@@ -3612,7 +3614,7 @@ Job_TokenReturn(void)
     jobTokensRunning--;
     if (jobTokensRunning < 0)
 	Punt("token botch");
-    if (jobTokensRunning)
+    if (jobTokensRunning || JOB_TOKENS[aborting] != '+')
 	JobTokenAdd();
 }
 
@@ -3645,18 +3647,12 @@ Job_TokenWithdraw(void)
 		getpid(), aborting, jobTokensRunning);
 
     if (aborting)
-	    return FALSE;
+	return FALSE;
 
-    if (jobTokensRunning == 0) {
-	if (DEBUG(JOB))
-	    printf("first one's free\n");
-	jobTokensRunning++;
-	return TRUE;
-    }
     count = read(job_pipe[0], &tok, 1);
     if (count == 0)
 	Fatal("eof on job pipe!");
-    else if (count < 0) {
+    if (count < 0 && jobTokensRunning != 0) {
 	if (errno != EAGAIN) {
 	    Fatal("job pipe read: %s", strerror(errno));
 	}
@@ -3665,17 +3661,22 @@ Job_TokenWithdraw(void)
 	wantToken = TRUE;
 	return FALSE;
     }
-    if (tok != '+') {
+
+    if (count == 1 && tok != '+') {
 	/* Remove any other job tokens */
 	if (DEBUG(JOB))
-	    printf("(%d) abort token %c\n", getpid(), tok);
+	    printf("(%d) aborted by token %c\n", getpid(), tok);
 	while (read(job_pipe[0], &tok1, 1) == 1)
 	    continue;
 	/* And put the stopper back */
 	write(job_pipe[1], &tok, 1);
-	aborting = ABORT_ERROR;
-	return FALSE;
+	Fatal("A failure has been detected in another branch of the parallel make");
     }
+
+    if (count == 1 && jobTokensRunning == 0)
+	/* We didn't want the token really */
+	write(job_pipe[1], &tok, 1);
+
     jobTokensRunning++;
     if (DEBUG(JOB))
 	printf("(%d) withdrew token\n", getpid());
