@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2005/01/20 16:39:23 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.15 2006/01/21 10:34:32 dsl Exp $
 #	@(#)Makefile	8.4 (Berkeley) 6/22/95
 
 .include <bsd.own.mk>
@@ -10,5 +10,9 @@ MAN=	umount.8
 MOUNT=	${NETBSDSRCDIR}/sbin/mount
 CPPFLAGS+= -I${MOUNT}
 .PATH:	${MOUNT}
+
+.ifdef SMALLPROG
+CPPFLAGS+= -DSMALL
+.endif
 
 .include <bsd.prog.mk>
