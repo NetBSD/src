@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.63 2006/01/21 13:49:35 elad Exp $
+$NetBSD: acronyms.comp,v 1.64 2006/01/21 15:05:24 elad Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -212,6 +212,7 @@ PDU	protocol data unit
 PDP	page descriptor page
 PER	packed encoding rules
 PERL	practical extraction [and] report language
+PFS	perfect forward secrecy
 PGP	pretty good privacy
 PIC	programmable interrupt controller
 PID	process id
