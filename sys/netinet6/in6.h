@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.50 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: in6.h,v 1.51 2006/01/21 00:15:36 rpaulo Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -278,6 +278,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 
 #ifdef _KERNEL	/* XXX nonstandard */
 #define IPV6_ADDR_SCOPE_NODELOCAL	0x01
+#define IPV6_ADDR_SCOPE_INTFACELOCAL	0x01
 #define IPV6_ADDR_SCOPE_LINKLOCAL	0x02
 #define IPV6_ADDR_SCOPE_SITELOCAL	0x05
 #define IPV6_ADDR_SCOPE_ORGLOCAL	0x08	/* just used in this file */
@@ -317,6 +318,9 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IN6_IS_ADDR_MC_NODELOCAL(a)	\
 	(IN6_IS_ADDR_MULTICAST(a) &&	\
 	 (IPV6_ADDR_MC_SCOPE(a) == IPV6_ADDR_SCOPE_NODELOCAL))
+#define IN6_IS_ADDR_MC_INTFACELOCAL(a)	\
+	(IN6_IS_ADDR_MULTICAST(a) &&	\
+	 (IPV6_ADDR_MC_SCOPE(a) == IPV6_ADDR_SCOPE_INTFACELOCAL))
 #define IN6_IS_ADDR_MC_LINKLOCAL(a)	\
 	(IN6_IS_ADDR_MULTICAST(a) &&	\
 	 (IPV6_ADDR_MC_SCOPE(a) == IPV6_ADDR_SCOPE_LINKLOCAL))
@@ -537,7 +541,9 @@ struct in6_pktinfo {
 #define IPV6CTL_ANONPORTMAX	29	/* maximum ephemeral port */
 #define IPV6CTL_LOWPORTMIN	30	/* minimum reserved port */
 #define IPV6CTL_LOWPORTMAX	31	/* maximum reserved port */
-/* 32 to 40: resrved */
+/* 32 to 38: reserved */
+#define IPV6CTL_USE_DEFAULTZONE	39	/* use default scope zone */
+/* 40: reserved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
 #define IPV6CTL_IFQ		42	/* ip6intrq node */
 /* New entries should be added here from current IPV6CTL_MAXID value. */
@@ -652,9 +658,12 @@ int	in6_cksum __P((struct mbuf *, u_int8_t, u_int32_t, u_int32_t));
 void	in6_delayed_cksum __P((struct mbuf *));
 int	in6_localaddr __P((struct in6_addr *));
 int	in6_addrscope __P((struct in6_addr *));
-struct	in6_ifaddr *in6_ifawithscope __P((struct ifnet *, struct in6_addr *));
 struct	in6_ifaddr *in6_ifawithifp __P((struct ifnet *, struct in6_addr *));
 extern void in6_if_up __P((struct ifnet *));
+#ifndef __FreeBSD__
+extern int in6_src_sysctl __P((void *, size_t *, void *, size_t));
+#endif
+extern void addrsel_policy_init __P((void));
 extern	u_char	ip6_protox[];
 
 #define	satosin6(sa)	((struct sockaddr_in6 *)(sa))

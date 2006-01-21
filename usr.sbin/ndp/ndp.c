@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.32 2004/05/24 03:51:04 itojun Exp $	*/
+/*	$NetBSD: ndp.c,v 1.33 2006/01/21 00:15:35 rpaulo Exp $	*/
 /*	$KAME: ndp.c,v 1.104 2003/06/27 07:48:39 itojun Exp $	*/
 
 /*
@@ -1274,21 +1274,6 @@ plist()
 		p6.sin6_len = sizeof(p6);
 		p6.sin6_addr = PR.prefix;
 #endif
-
-		/*
-		 * copy link index to sin6_scope_id field.
-		 * XXX: KAME specific.
-		 */
-		if (IN6_IS_ADDR_LINKLOCAL(&p6.sin6_addr)) {
-			u_int16_t linkid;
-
-			memcpy(&linkid, &p6.sin6_addr.s6_addr[2],
-			    sizeof(linkid));
-			linkid = ntohs(linkid);
-			p6.sin6_scope_id = linkid;
-			p6.sin6_addr.s6_addr[2] = 0;
-			p6.sin6_addr.s6_addr[3] = 0;
-		}
 
 		niflags = NI_NUMERICHOST;
 		if (getnameinfo((struct sockaddr *)&p6,

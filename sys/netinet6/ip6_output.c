@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.93 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.94 2006/01/21 00:15:36 rpaulo Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.93 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94 2006/01/21 00:15:36 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.93 2005/12/11 12:25:02 christos Exp
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
 #include <netinet6/ip6protosw.h>
+#include <netinet6/scope6_var.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -156,13 +157,16 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
 	struct mbuf *m = m0;
 	int hlen, tlen, len, off;
 	struct route_in6 ip6route;
-	struct sockaddr_in6 *dst;
+	struct rtentry *rt = NULL;
+	struct sockaddr_in6 *dst, src_sa, dst_sa;
 	int error = 0;
+	struct in6_ifaddr *ia = NULL;
 	u_long mtu;
 	int alwaysfrag, dontfrag;
 	u_int32_t optlen = 0, plen = 0, unfragpartlen = 0;
 	struct ip6_exthdrs exthdrs;
-	struct in6_addr finaldst;
+	struct in6_addr finaldst, src0, dst0;
+	u_int32_t zone;
 	struct route_in6 *ro_pmtu = NULL;
 	int hdrsplit = 0;
 	int needipsec = 0;
@@ -435,6 +439,7 @@ skip_ipsec2:;
 		struct ip6_rthdr *rh;
 		struct ip6_rthdr0 *rh0;
 		struct in6_addr *addr;
+		struct sockaddr_in6 sa;
 
 		rh = (struct ip6_rthdr *)(mtod(exthdrs.ip6e_rthdr,
 		    struct ip6_rthdr *));
@@ -443,10 +448,32 @@ skip_ipsec2:;
 		case IPV6_RTHDR_TYPE_0:
 			 rh0 = (struct ip6_rthdr0 *)rh;
 			 addr = (struct in6_addr *)(rh0 + 1);
-			 ip6->ip6_dst = addr[0];
+
+			 /*
+			  * construct a sockaddr_in6 form of
+			  * the first hop.
+			  *
+			  * XXX: we may not have enough
+			  * information about its scope zone;
+			  * there is no standard API to pass
+			  * the information from the
+			  * application.
+			  */
+			 bzero(&sa, sizeof(sa));
+			 sa.sin6_family = AF_INET6;
+			 sa.sin6_len = sizeof(sa);
+			 sa.sin6_addr = addr[0];
+			 if ((error = sa6_embedscope(&sa,
+			     ip6_use_defzone)) != 0) {
+				 goto bad;
+			 }
+			 ip6->ip6_dst = sa.sin6_addr;
 			 (void)memmove(&addr[0], &addr[1],
-			     sizeof(struct in6_addr) * (rh0->ip6r0_segleft - 1));
+			     sizeof(struct in6_addr) *
+			     (rh0->ip6r0_segleft - 1));
 			 addr[rh0->ip6r0_segleft - 1] = finaldst;
+			 /* XXX */
+			 in6_clearscope(addr + rh0->ip6r0_segleft - 1);
 			 break;
 		default:	/* is it possible? */
 			 error = EINVAL;
@@ -481,23 +508,35 @@ skip_ipsec2:;
 	if (opt && opt->ip6po_rthdr)
 		ro = &opt->ip6po_route;
 	dst = (struct sockaddr_in6 *)&ro->ro_dst;
-	/*
-	 * If there is a cached route,
-	 * check that it is to the same destination
-	 * and is still up. If not, free it and try again.
+
+#ifdef notyet	     /* this will be available with the RFC3542 support */
+ 	/*
+	 * if specified, try to fill in the traffic class field.
+	 * do not override if a non-zero value is already set.
+	 * we check the diffserv field and the ecn field separately.
 	 */
-	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	    dst->sin6_family != AF_INET6 ||
-	    !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &ip6->ip6_dst))) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *)0;
+	if (opt && opt->ip6po_tclass >= 0) {
+		int mask = 0;
+
+		if ((ip6->ip6_flow & htonl(0xfc << 20)) == 0)
+			mask |= 0xfc;
+		if ((ip6->ip6_flow & htonl(0x03 << 20)) == 0)
+			mask |= 0x03;
+		if (mask != 0)
+			ip6->ip6_flow |= htonl((opt->ip6po_tclass & mask) << 20);
 	}
-	if (ro->ro_rt == 0) {
-		bzero(dst, sizeof(*dst));
-		dst->sin6_family = AF_INET6;
-		dst->sin6_len = sizeof(struct sockaddr_in6);
-		dst->sin6_addr = ip6->ip6_dst;
+#endif
+
+	/* fill in or override the hop limit field, if necessary. */
+	if (opt && opt->ip6po_hlim != -1)
+		ip6->ip6_hlim = opt->ip6po_hlim & 0xff;
+	else if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
+		if (im6o != NULL)
+			ip6->ip6_hlim = im6o->im6o_multicast_hlim;
+		else
+			ip6->ip6_hlim = ip6_defmcasthlim;
 	}
+
 #ifdef IPSEC
 	if (needipsec && needipsectun) {
 		struct ipsec_output_state state;
@@ -549,139 +588,126 @@ skip_ipsec2:;
 	}
 #endif /* IPSEC */
 
-	if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
-		/* Unicast */
+	/* adjust pointer */
+	ip6 = mtod(m, struct ip6_hdr *);
 
-#define ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
-#define sin6tosa(sin6)	((struct sockaddr *)(sin6))
-		/* xxx
-		 * interface selection comes here
-		 * if an interface is specified from an upper layer,
-		 * ifp must point it.
-		 */
-		if (ro->ro_rt == 0) {
-			/*
-			 * non-bsdi always clone routes, if parent is
-			 * PRF_CLONING.
-			 */
-			rtalloc((struct route *)ro);
-		}
-		if (ro->ro_rt == 0) {
+	bzero(&dst_sa, sizeof(dst_sa));
+	dst_sa.sin6_family = AF_INET6;
+	dst_sa.sin6_len = sizeof(dst_sa);
+	dst_sa.sin6_addr = ip6->ip6_dst;
+	if ((error = in6_selectroute(&dst_sa, opt, im6o, ro, &ifp, &rt, 0))
+	    != 0) {
+		switch (error) {
+		case EHOSTUNREACH:
 			ip6stat.ip6s_noroute++;
-			error = EHOSTUNREACH;
-			/* XXX in6_ifstat_inc(ifp, ifs6_out_discard); */
-			goto bad;
+			break;
+		case EADDRNOTAVAIL:
+		default:
+			break; /* XXX statistics? */
 		}
-		ifp = ro->ro_rt->rt_ifp;
-		ro->ro_rt->rt_use++;
-		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
-		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
-
-		in6_ifstat_inc(ifp, ifs6_out_request);
-
+		if (ifp != NULL)
+			in6_ifstat_inc(ifp, ifs6_out_discard);
+		goto bad;
+	}
+	if (rt == NULL) {
 		/*
-		 * Check if the outgoing interface conflicts with
-		 * the interface specified by ifi6_ifindex (if specified).
-		 * Note that loopback interface is always okay.
-		 * (this may happen when we are sending a packet to one of
-		 *  our own addresses.)
+		 * If in6_selectroute() does not return a route entry,
+		 * dst may not have been updated.
 		 */
-		if (opt && opt->ip6po_pktinfo &&
-		    opt->ip6po_pktinfo->ipi6_ifindex) {
-			if (!(ifp->if_flags & IFF_LOOPBACK) &&
-			    ifp->if_index != opt->ip6po_pktinfo->ipi6_ifindex) {
-				ip6stat.ip6s_noroute++;
-				in6_ifstat_inc(ifp, ifs6_out_discard);
-				error = EHOSTUNREACH;
-				goto bad;
-			}
-		}
+		*dst = dst_sa;	/* XXX */
+	}
 
-		if (opt && opt->ip6po_hlim != -1)
-			ip6->ip6_hlim = opt->ip6po_hlim & 0xff;
-	} else {
-		/* Multicast */
+	/*
+	 * then rt (for unicast) and ifp must be non-NULL valid values.
+	 */
+	if ((flags & IPV6_FORWARDING) == 0) {
+		/* XXX: the FORWARDING flag can be set for mrouting. */
+		in6_ifstat_inc(ifp, ifs6_out_request);
+	}
+	if (rt != NULL) {
+		ia = (struct in6_ifaddr *)(rt->rt_ifa);
+		rt->rt_use++;
+	}
+
+	/*
+	 * The outgoing interface must be in the zone of source and
+	 * destination addresses.  We should use ia_ifp to support the
+	 * case of sending packets to an address of our own.
+	 */
+	if (ia != NULL && ia->ia_ifp)
+		origifp = ia->ia_ifp;
+	else
+		origifp = ifp;
+
+	src0 = ip6->ip6_src;
+	if (in6_setscope(&src0, origifp, &zone))
+		goto badscope;
+	bzero(&src_sa, sizeof(src_sa));
+	src_sa.sin6_family = AF_INET6;
+	src_sa.sin6_len = sizeof(src_sa);
+	src_sa.sin6_addr = ip6->ip6_src;
+	if (sa6_recoverscope(&src_sa) || zone != src_sa.sin6_scope_id)
+		goto badscope;
+
+	dst0 = ip6->ip6_dst;
+	if (in6_setscope(&dst0, origifp, &zone))
+		goto badscope;
+	/* re-initialize to be sure */
+	bzero(&dst_sa, sizeof(dst_sa));
+	dst_sa.sin6_family = AF_INET6;
+	dst_sa.sin6_len = sizeof(dst_sa);
+	dst_sa.sin6_addr = ip6->ip6_dst;
+	if (sa6_recoverscope(&dst_sa) || zone != dst_sa.sin6_scope_id)
+		goto badscope;
+
+	/* scope check is done. */
+	goto routefound;
+
+  badscope:
+	ip6stat.ip6s_badscope++;
+	in6_ifstat_inc(origifp, ifs6_out_discard);
+	if (error == 0)
+		error = EHOSTUNREACH; /* XXX */
+	goto bad;
+
+  routefound:
+	if (rt && !IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
+#ifdef notyet	     /* this will be available with the RFC3542 support */
+		if (opt && opt->ip6po_nextroute.ro_rt) {
+			/*
+			 * The nexthop is explicitly specified by the
+			 * application.  We assume the next hop is an IPv6
+			 * address.
+			 */
+			dst = (struct sockaddr_in6 *)opt->ip6po_nexthop;
+		} else
+#endif
+			if ((rt->rt_flags & RTF_GATEWAY))
+				dst = (struct sockaddr_in6 *)rt->rt_gateway;
+	}
+
+	/*
+	 * XXXXXX: original code follows:
+	 */
+	if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
+		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
+	else {
 		struct	in6_multi *in6m;
 
 		m->m_flags = (m->m_flags & ~M_BCAST) | M_MCAST;
 
-		/*
-		 * See if the caller provided any multicast options
-		 */
-		ifp = NULL;
-		if (im6o != NULL) {
-			ip6->ip6_hlim = im6o->im6o_multicast_hlim;
-			if (im6o->im6o_multicast_ifp != NULL)
-				ifp = im6o->im6o_multicast_ifp;
-		} else
-			ip6->ip6_hlim = ip6_defmcasthlim;
-
-		/*
-		 * See if the caller provided the outgoing interface
-		 * as an ancillary data.
-		 * Boundary check for ifindex is assumed to be already done.
-		 */
-		if (opt && opt->ip6po_pktinfo && opt->ip6po_pktinfo->ipi6_ifindex)
-			ifp = ifindex2ifnet[opt->ip6po_pktinfo->ipi6_ifindex];
-
-		/*
-		 * If the destination is a node-local scope multicast,
-		 * the packet should be loop-backed only.
-		 */
-		if (IN6_IS_ADDR_MC_NODELOCAL(&ip6->ip6_dst)) {
-			/*
-			 * If the outgoing interface is already specified,
-			 * it should be a loopback interface.
-			 */
-			if (ifp && (ifp->if_flags & IFF_LOOPBACK) == 0) {
-				ip6stat.ip6s_badscope++;
-				error = ENETUNREACH; /* XXX: better error? */
-				/* XXX correct ifp? */
-				in6_ifstat_inc(ifp, ifs6_out_discard);
-				goto bad;
-			} else
-				ifp = lo0ifp;
-		}
-
-		if (opt && opt->ip6po_hlim != -1)
-			ip6->ip6_hlim = opt->ip6po_hlim & 0xff;
-
-		/*
-		 * If caller did not provide an interface lookup a
-		 * default in the routing table.  This is either a
-		 * default for the speicfied group (i.e. a host
-		 * route), or a multicast default (a route for the
-		 * ``net'' ff00::/8).
-		 */
-		if (ifp == NULL) {
-			if (ro->ro_rt == 0) {
-				ro->ro_rt = rtalloc1((struct sockaddr *)
-				    &ro->ro_dst, 0);
-			}
-			if (ro->ro_rt == 0) {
-				ip6stat.ip6s_noroute++;
-				error = EHOSTUNREACH;
-				/* XXX in6_ifstat_inc(ifp, ifs6_out_discard) */
-				goto bad;
-			}
-			ifp = ro->ro_rt->rt_ifp;
-			ro->ro_rt->rt_use++;
-		}
-
-		if ((flags & IPV6_FORWARDING) == 0)
-			in6_ifstat_inc(ifp, ifs6_out_request);
 		in6_ifstat_inc(ifp, ifs6_out_mcast);
 
 		/*
 		 * Confirm that the outgoing interface supports multicast.
 		 */
-		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+		if (!(ifp->if_flags & IFF_MULTICAST)) {
 			ip6stat.ip6s_noroute++;
 			in6_ifstat_inc(ifp, ifs6_out_discard);
 			error = ENETUNREACH;
 			goto bad;
 		}
+
 		IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
 		if (in6m != NULL &&
 		   (im6o == NULL || im6o->im6o_multicast_loop)) {
@@ -719,7 +745,8 @@ skip_ipsec2:;
 		 * loop back a copy if this host actually belongs to the
 		 * destination group on the loopback interface.
 		 */
-		if (ip6->ip6_hlim == 0 || (ifp->if_flags & IFF_LOOPBACK)) {
+		if (ip6->ip6_hlim == 0 || (ifp->if_flags & IFF_LOOPBACK) ||
+		    IN6_IS_ADDR_MC_INTFACELOCAL(&ip6->ip6_dst)) {
 			m_freem(m);
 			goto done;
 		}
@@ -750,48 +777,12 @@ skip_ipsec2:;
 			mtu = IPV6_MMTU;
 	}
 
-	/* Fake scoped addresses */
-	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
-		/*
-		 * If source or destination address is a scoped address, and
-		 * the packet is going to be sent to a loopback interface,
-		 * we should keep the original interface.
-		 */
-
-		/*
-		 * XXX: this is a very experimental and temporary solution.
-		 * We eventually have sockaddr_in6 and use the sin6_scope_id
-		 * field of the structure here.
-		 * We rely on the consistency between two scope zone ids
-		 * of source add destination, which should already be assured
-		 * Larger scopes than link will be supported in the near
-		 * future.
-		 */
-		origifp = NULL;
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-			origifp = ifindex2ifnet[ntohs(ip6->ip6_src.s6_addr16[1])];
-		else if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-			origifp = ifindex2ifnet[ntohs(ip6->ip6_dst.s6_addr16[1])];
-		/*
-		 * XXX: origifp can be NULL even in those two cases above.
-		 * For example, if we remove the (only) link-local address
-		 * from the loopback interface, and try to send a link-local
-		 * address without link-id information.  Then the source
-		 * address is ::1, and the destination address is the
-		 * link-local address with its s6_addr16[1] being zero.
-		 * What is worse, if the packet goes to the loopback interface
-		 * by a default rejected route, the null pointer would be
-		 * passed to looutput, and the kernel would hang.
-		 * The following last resort would prevent such disaster.
-		 */
-		if (origifp == NULL)
-			origifp = ifp;
-	} else
-		origifp = ifp;
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-		ip6->ip6_src.s6_addr16[1] = 0;
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-		ip6->ip6_dst.s6_addr16[1] = 0;
+	/*
+	 * clear embedded scope identifiers if necessary.
+	 * in6_clearscope will touch the addresses only when necessary.
+	 */
+	in6_clearscope(&ip6->ip6_src);
+	in6_clearscope(&ip6->ip6_dst);
 
 	/*
 	 * If the outgoing packet contains a hop-by-hop options header,
@@ -1845,7 +1836,6 @@ ip6_setmoptions(optname, im6op, m)
 	struct ifnet *ifp;
 	struct ip6_moptions *im6o = *im6op;
 	struct route_in6 ro;
-	struct sockaddr_in6 *dst;
 	struct in6_multi_mship *imm;
 	struct proc *p = curproc;	/* XXX */
 
@@ -1957,11 +1947,34 @@ ip6_setmoptions(optname, im6op, m)
 		}
 
 		/*
-		 * If the interface is specified, validate it.
 		 * If no interface was explicitly specified, choose an
 		 * appropriate one according to the given multicast address.
 		 */
-		if (mreq->ipv6mr_interface != 0) {
+		if (mreq->ipv6mr_interface == 0) {
+			struct sockaddr_in6 *dst;
+
+			/*
+			 * Look up the routing table for the
+			 * address, and choose the outgoing interface.
+			 *   XXX: is it a good approach?
+			 */
+			ro.ro_rt = NULL;
+			dst = (struct sockaddr_in6 *)&ro.ro_dst;
+			bzero(dst, sizeof(*dst));
+			dst->sin6_family = AF_INET6;
+			dst->sin6_len = sizeof(*dst);
+			dst->sin6_addr = mreq->ipv6mr_multiaddr;
+			rtalloc((struct route *)&ro);
+			if (ro.ro_rt == NULL) {
+				error = EADDRNOTAVAIL;
+				break;
+			}
+			ifp = ro.ro_rt->rt_ifp;
+			rtfree(ro.ro_rt);
+		} else {
+			/*
+			 * If the interface is specified, validate it.
+			 */
 			if (mreq->ipv6mr_interface < 0 ||
 			    if_indexlim <= mreq->ipv6mr_interface ||
 			    !ifindex2ifnet[mreq->ipv6mr_interface]) {
@@ -1969,31 +1982,6 @@ ip6_setmoptions(optname, im6op, m)
 				break;
 			}
 			ifp = ifindex2ifnet[mreq->ipv6mr_interface];
-		} else {
-			/*
-			 * If the multicast address is in node-local scope,
-			 * the interface should be a loopback interface.
-			 * Otherwise, look up the routing table for the
-			 * address, and choose the outgoing interface.
-			 *   XXX: is it a good approach?
-			 */
-			if (IN6_IS_ADDR_MC_NODELOCAL(&mreq->ipv6mr_multiaddr)) {
-				ifp = lo0ifp;
-			} else {
-				ro.ro_rt = NULL;
-				dst = (struct sockaddr_in6 *)&ro.ro_dst;
-				bzero(dst, sizeof(*dst));
-				dst->sin6_len = sizeof(struct sockaddr_in6);
-				dst->sin6_family = AF_INET6;
-				dst->sin6_addr = mreq->ipv6mr_multiaddr;
-				rtalloc((struct route *)&ro);
-				if (ro.ro_rt == NULL) {
-					error = EADDRNOTAVAIL;
-					break;
-				}
-				ifp = ro.ro_rt->rt_ifp;
-				rtfree(ro.ro_rt);
-			}
 		}
 
 		/*
@@ -2004,14 +1992,12 @@ ip6_setmoptions(optname, im6op, m)
 			error = EADDRNOTAVAIL;
 			break;
 		}
-		/*
-		 * Put interface index into the multicast address,
-		 * if the address has link-local scope.
-		 */
-		if (IN6_IS_ADDR_MC_LINKLOCAL(&mreq->ipv6mr_multiaddr)) {
-			mreq->ipv6mr_multiaddr.s6_addr16[1] =
-			    htons(ifp->if_index);
+
+		if (in6_setscope(&mreq->ipv6mr_multiaddr, ifp, NULL)) {
+			error = EADDRNOTAVAIL; /* XXX: should not happen */
+			break;
 		}
+
 		/*
 		 * See if the membership already exists.
 		 */
@@ -2045,16 +2031,7 @@ ip6_setmoptions(optname, im6op, m)
 			break;
 		}
 		mreq = mtod(m, struct ipv6_mreq *);
-		if (IN6_IS_ADDR_UNSPECIFIED(&mreq->ipv6mr_multiaddr)) {
-			if (suser(p->p_ucred, &p->p_acflag))
-			{
-				error = EACCES;
-				break;
-			}
-		} else if (!IN6_IS_ADDR_MULTICAST(&mreq->ipv6mr_multiaddr)) {
-			error = EINVAL;
-			break;
-		}
+
 		/*
 		 * If an interface address was specified, get a pointer
 		 * to its ifnet structure.
@@ -2069,14 +2046,47 @@ ip6_setmoptions(optname, im6op, m)
 			ifp = ifindex2ifnet[mreq->ipv6mr_interface];
 		} else
 			ifp = NULL;
-		/*
-		 * Put interface index into the multicast address,
-		 * if the address has link-local scope.
-		 */
-		if (IN6_IS_ADDR_MC_LINKLOCAL(&mreq->ipv6mr_multiaddr)) {
-			mreq->ipv6mr_multiaddr.s6_addr16[1] =
-			    htons(mreq->ipv6mr_interface);
+
+		/* Fill in the scope zone ID */
+		if (ifp) {
+			if (in6_setscope(&mreq->ipv6mr_multiaddr, ifp, NULL)) {
+				/* XXX: should not happen */
+				error = EADDRNOTAVAIL;
+				break;
+			}
+		} else if (mreq->ipv6mr_interface != 0) {
+			/*
+			 * XXX: This case would happens when the (positive)
+			 * index is in the valid range, but the corresponding
+			 * interface has been detached dynamically.  The above
+			 * check probably avoids such case to happen here, but
+			 * we check it explicitly for safety.
+			 */
+			error = EADDRNOTAVAIL;
+			break;	    
+		} else {	/* ipv6mr_interface == 0 */
+			struct sockaddr_in6 sa6_mc;
+
+			/*
+			 * The API spec says as follows:
+			 *  If the interface index is specified as 0, the
+			 *  system may choose a multicast group membership to
+			 *  drop by matching the multicast address only.
+			 * On the other hand, we cannot disambiguate the scope
+			 * zone unless an interface is provided.  Thus, we
+			 * check if there's ambiguity with the default scope
+			 * zone as the last resort.
+			 */
+			bzero(&sa6_mc, sizeof(sa6_mc));
+			sa6_mc.sin6_family = AF_INET6;
+			sa6_mc.sin6_len = sizeof(sa6_mc);
+			sa6_mc.sin6_addr = mreq->ipv6mr_multiaddr;
+			error = sa6_embedscope(&sa6_mc, ip6_use_defzone);
+			if (error != 0)
+				break;
+			mreq->ipv6mr_multiaddr = sa6_mc.sin6_addr;
 		}
+
 		/*
 		 * Find the membership in the membership list.
 		 */
@@ -2224,17 +2234,24 @@ ip6_setpktoptions(control, opt, priv)
 			if (cm->cmsg_len != CMSG_LEN(sizeof(struct in6_pktinfo)))
 				return (EINVAL);
 			opt->ip6po_pktinfo = (struct in6_pktinfo *)CMSG_DATA(cm);
-			if (opt->ip6po_pktinfo->ipi6_ifindex &&
-			    IN6_IS_ADDR_LINKLOCAL(&opt->ip6po_pktinfo->ipi6_addr))
-				opt->ip6po_pktinfo->ipi6_addr.s6_addr16[1] =
-					htons(opt->ip6po_pktinfo->ipi6_ifindex);
-
 			if (opt->ip6po_pktinfo->ipi6_ifindex >= if_indexlim ||
 			    opt->ip6po_pktinfo->ipi6_ifindex < 0)
 				return (ENXIO);
 			if (opt->ip6po_pktinfo->ipi6_ifindex > 0 &&
 			    !ifindex2ifnet[opt->ip6po_pktinfo->ipi6_ifindex])
 				return (ENXIO);
+
+			if (opt->ip6po_pktinfo->ipi6_ifindex) {
+				struct ifnet *ifp;
+				int error;
+
+				/* ipi6_ifindex must be valid here */
+				ifp = ifindex2ifnet[opt->ip6po_pktinfo->ipi6_ifindex];
+				error = in6_setscope(&opt->ip6po_pktinfo->ipi6_addr,
+				    ifp, NULL);
+				if (error != 0)
+					return (error);
+			}
 
 			/*
 			 * Check if the requested source address is indeed a
@@ -2412,10 +2429,12 @@ ip6_mloopback(ifp, m, dst)
 #endif
 
 	ip6 = mtod(copym, struct ip6_hdr *);
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-		ip6->ip6_src.s6_addr16[1] = 0;
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-		ip6->ip6_dst.s6_addr16[1] = 0;
+	/*
+	 * clear embedded scope identifiers if necessary.
+	 * in6_clearscope will touch the addresses only when necessary.
+	 */
+	in6_clearscope(&ip6->ip6_src);
+	in6_clearscope(&ip6->ip6_dst);
 
 	(void)looutput(ifp, copym, (struct sockaddr *)dst, NULL);
 }

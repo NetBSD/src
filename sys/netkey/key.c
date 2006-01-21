@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.137 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.138 2006/01/21 00:15:36 rpaulo Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.137 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.138 2006/01/21 00:15:36 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.137 2005/12/11 12:25:16 christos Exp $");
 #include <netinet6/esp.h>
 #endif
 #include <netinet6/ipcomp.h>
+#include <netinet6/scope6_var.h>
 
 #ifdef KERNFS
 #include <miscfs/kernfs/kernfs.h>
@@ -823,12 +824,8 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 #ifdef IPSEC_NAT_T
 			sin6.sin6_port = sport;
 #endif
-			if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
-				/* kame fake scopeid */
-				sin6.sin6_scope_id =
-				    ntohs(sin6.sin6_addr.s6_addr16[1]);
-				sin6.sin6_addr.s6_addr16[1] = 0;
-			}
+			if (sa6_recoverscope(&sin6))
+				continue;
 			if (key_sockaddrcmp((struct sockaddr*)&sin6,
 			    (struct sockaddr *)&sav->sah->saidx.src,
 			    chkport) != 0)
@@ -868,12 +865,8 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 #ifdef IPSEC_NAT_T
 			sin6.sin6_port = dport;
 #endif
-			if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
-				/* kame fake scopeid */
-				sin6.sin6_scope_id =
-				    ntohs(sin6.sin6_addr.s6_addr16[1]);
-				sin6.sin6_addr.s6_addr16[1] = 0;
-			}
+			if (sa6_recoverscope(&sin6))
+				continue;
 			if (key_sockaddrcmp((struct sockaddr*)&sin6,
 			    (struct sockaddr *)&sav->sah->saidx.dst,
 			    chkport) != 0)
@@ -4254,6 +4247,9 @@ key_ismyaddr6(sin6)
 	struct in6_ifaddr *ia;
 	struct in6_multi *in6m;
 
+	if (sa6_embedscope(sin6, 0) != 0)
+		return 0;
+
 	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
 		if (key_sockaddrcmp((struct sockaddr *)&sin6,
 		    (struct sockaddr *)&ia->ia_addr, 0) == 0)
@@ -7579,6 +7575,9 @@ key_parse(m, so)
 	u_int orglen;
 	int error;
 	int target;
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+#endif
 
 	/* sanity check */
 	if (m == NULL || so == NULL)
@@ -7767,6 +7766,19 @@ key_parse(m, so)
 				error = EINVAL;
 				goto senderror;
 			}
+#ifdef INET6
+			/*
+			 * Check validity of the scope zone ID of the
+			 * addresses, and embed the zone ID into the address
+			 * if necessary.
+			 */
+			sin6 = (struct sockaddr_in6 *)PFKEY_ADDR_SADDR(src0);
+			if ((error = sa6_embedscope(sin6, 0)) != 0)
+				goto senderror;
+			sin6 = (struct sockaddr_in6 *)PFKEY_ADDR_SADDR(dst0);
+			if ((error = sa6_embedscope(sin6, 0)) != 0)
+				goto senderror;
+#endif
 			break;
 		default:
 			ipseclog((LOG_DEBUG,
