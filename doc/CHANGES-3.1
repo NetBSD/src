@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.18 2006/01/20 22:58:28 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.19 2006/01/21 06:43:28 snj Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -362,4 +362,60 @@ sys/dev/ic/ninjascsi32.c			1.6
 	- Fix diagnostic panic for unaligned DMA buffer.
 	- Fix error cleanup path in attach.
 	[itohy, ticket #1117]
+
+lib/libcurses/touchwin.c			1.21
+
+	Don't crash if asked to touch more lines than there are in a window.
+	[jdc, ticket #1108]
+
+sys/net/if_tap.c				1.7
+share/man/man4/tap.4				1.5
+
+	Set bit 0x2 of the first byte of the generated MAC address, to
+	indicate it is a locally administered address.  Pointed out by
+	Ignatios Souvatzis.
+	[cube, ticket #1113]
+
+sys/arch/i386/conf/GENERIC_LAPTOP		1.166
+
+	Add commented out entries for BRIDGE_IPF, pf(4) and pflog(4) matching
+	the entries in "GENERIC".
+	[tron, ticket #1116]
+
+lib/libwrap/hosts_access.c			1.18
+
+	Use ntohl(host_address) so that RBL lookups work on little-endian hosts.
+	Tested on alpha, i386 and sparc64.  Fixes PR#30402.
+	[jdc, ticket #1118]
+
+sys/dev/pci/pccbb.c				1.127
+
+	Use aprint_debug() instead of printf() for obvious debug statement.
+	[uwe, ticket #1120]
+
+sys/arch/hpcsh/hpcsh/autoconf.c			1.17
+
+	#include "opt_md.h" as this file uses MEMORY_DISK_* options.
+	[uwe, ticket #1121]
+
+sys/conf/files					1.752
+
+	tap(4) depends on arp:  it is an Ethernet interface, after all.
+	Solves PR#32548 by Pawel Chwalowski.
+	[cube, ticket #1122]
+
+sys/dev/pci/pcidevs				1.739
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/pdcsata.c				1.4
+
+	PR#32238: Ryo Shimizu: Add support for Promise SATA300TX4 SATA
+	Controller (PDC40718)
+	[simonb, ticket #1126]
+
+sys/compat/ossaudio/ossaudio.c			1.48
+
+	Fix problem in ioctl() handling in OSS audio emulation which caused
+	unintentional changes of the audio settings e.g. when running "kphone".
+	[tron, ticket #1127]
 
