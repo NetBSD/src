@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.9 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.10 2006/01/21 01:45:34 uwe Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.10 2006/01/21 01:45:34 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,62 +39,62 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9 2005/12/11 12:19:00 christos Exp $
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
-static	void	get_opcode(u_short *, char *);
-static	void	get_ascii(u_char *, u_char *);
-static	void	f_02(u_short *, u_char *);
-static	void	f_03(u_short *, u_char *);
-static	void	f_04(u_short *, u_char *);
-static	void	f_08(u_short *, u_char *);
-static	void	f_09(u_short *, u_char *);
-static	void	f_0a(u_short *, u_char *);
-static	void	f_0b(u_short *, u_char *);
-static	void	f_0c(u_short *, u_char *);
-static	void	f_10(u_short *, u_char *);
-static	void	f_20(u_short *, u_char *);
-static	void	f_24(u_short *, u_char *);
-static	void	f_28(u_short *, u_char *);
-static	void	f_2c(u_short *, u_char *);
-static	void	f_30(u_short *, u_char *);
-static	void	f_34(u_short *, u_char *);
-static	void	f_38(u_short *, u_char *);
-static	void	f_3c(u_short *, u_char *);
-static	void	f_40(u_short *, u_char *);
-static	void	f_41(u_short *, u_char *);
-static	void	f_42(u_short *, u_char *);
-static	void	f_43(u_short *, u_char *);
-static	void	f_44(u_short *, u_char *);
-static	void	f_45(u_short *, u_char *);
-static	void	f_46(u_short *, u_char *);
-static	void	f_47(u_short *, u_char *);
-static	void	f_48(u_short *, u_char *);
-static	void	f_49(u_short *, u_char *);
-static	void	f_4a(u_short *, u_char *);
-static	void	f_4b(u_short *, u_char *);
-static	void	f_4c(u_short *, u_char *);
-static	void	f_4d(u_short *, u_char *);
-static	void	f_4e(u_short *, u_char *);
-static	void	f_4f(u_short *, u_char *);
-static	void	f_50(u_short *, u_char *);
-static	void	f_60(u_short *, u_char *);
-static	void	f_64(u_short *, u_char *);
-static	void	f_68(u_short *, u_char *);
-static	void	f_6c(u_short *, u_char *);
-static	void	f_70(u_short *, u_char *);
-static	void	f_80(u_short *, u_char *);
-static	void	f_90(u_short *, u_char *);
-static	void	f_a0(u_short *, u_char *);
-static	void	f_b0(u_short *, u_char *);
-static	void	f_c0(u_short *, u_char *);
-static	void	f_d0(u_short *, u_char *);
-static	void	f_e0(u_short *, u_char *);
-static	void	f_f0(u_short *, u_char *);
-static	void	f_f4(u_short *, u_char *);
-static	void	f_f8(u_short *, u_char *);
-static	void	f_fc(u_short *, u_char *);
-static	void	f_fd(u_short *, u_char *);
-static	void	f_fe(u_short *, u_char *);
+static	void	get_opcode(uint16_t *, char *);
+static	void	get_ascii(unsigned char *, char *);
+static	void	f_02(uint16_t *, char *);
+static	void	f_03(uint16_t *, char *);
+static	void	f_04(uint16_t *, char *);
+static	void	f_08(uint16_t *, char *);
+static	void	f_09(uint16_t *, char *);
+static	void	f_0a(uint16_t *, char *);
+static	void	f_0b(uint16_t *, char *);
+static	void	f_0c(uint16_t *, char *);
+static	void	f_10(uint16_t *, char *);
+static	void	f_20(uint16_t *, char *);
+static	void	f_24(uint16_t *, char *);
+static	void	f_28(uint16_t *, char *);
+static	void	f_2c(uint16_t *, char *);
+static	void	f_30(uint16_t *, char *);
+static	void	f_34(uint16_t *, char *);
+static	void	f_38(uint16_t *, char *);
+static	void	f_3c(uint16_t *, char *);
+static	void	f_40(uint16_t *, char *);
+static	void	f_41(uint16_t *, char *);
+static	void	f_42(uint16_t *, char *);
+static	void	f_43(uint16_t *, char *);
+static	void	f_44(uint16_t *, char *);
+static	void	f_45(uint16_t *, char *);
+static	void	f_46(uint16_t *, char *);
+static	void	f_47(uint16_t *, char *);
+static	void	f_48(uint16_t *, char *);
+static	void	f_49(uint16_t *, char *);
+static	void	f_4a(uint16_t *, char *);
+static	void	f_4b(uint16_t *, char *);
+static	void	f_4c(uint16_t *, char *);
+static	void	f_4d(uint16_t *, char *);
+static	void	f_4e(uint16_t *, char *);
+static	void	f_4f(uint16_t *, char *);
+static	void	f_50(uint16_t *, char *);
+static	void	f_60(uint16_t *, char *);
+static	void	f_64(uint16_t *, char *);
+static	void	f_68(uint16_t *, char *);
+static	void	f_6c(uint16_t *, char *);
+static	void	f_70(uint16_t *, char *);
+static	void	f_80(uint16_t *, char *);
+static	void	f_90(uint16_t *, char *);
+static	void	f_a0(uint16_t *, char *);
+static	void	f_b0(uint16_t *, char *);
+static	void	f_c0(uint16_t *, char *);
+static	void	f_d0(uint16_t *, char *);
+static	void	f_e0(uint16_t *, char *);
+static	void	f_f0(uint16_t *, char *);
+static	void	f_f4(uint16_t *, char *);
+static	void	f_f8(uint16_t *, char *);
+static	void	f_fc(uint16_t *, char *);
+static	void	f_fd(uint16_t *, char *);
+static	void	f_fe(uint16_t *, char *);
 
-typedef	void (*rasm_t)(u_short *, u_char *);
+typedef	void (*rasm_t)(uint16_t *, char *);
 static	rasm_t	f[16][16] = {
 	{ /* [0][0-7] */	NULL, NULL, f_02, f_03, f_04, f_04, f_04, f_04,
 	  /* [0][8-f] */	f_08, f_09, f_0a, f_0b, f_0c, f_0c, f_0c, f_0c },
@@ -147,17 +147,17 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 }
 
 static	void
-get_ascii(u_char *cp, u_char *str)
+get_ascii(unsigned char *cp, char *str)
 {
 
-	*str++ = (0x20 <= *cp && *cp <= 0x7f) ? *cp : '.';
+	*str++ = (0x20 <= *cp && *cp < 0x7f) ? *cp : '.';
 	cp++;
-	*str++ = (0x20 <= *cp && *cp <= 0x7f) ? *cp : '.';
+	*str++ = (0x20 <= *cp && *cp < 0x7f) ? *cp : '.';
 	*str = '\0';
 }
 
 static	void
-get_opcode(u_short *sp, char *buf)
+get_opcode(uint16_t *sp, char *buf)
 {
 	int	n0, n3;
 
@@ -172,7 +172,7 @@ get_opcode(u_short *sp, char *buf)
 }
 
 static	void
-f_02(u_short *code, u_char *buf)
+f_02(uint16_t *code, char *buf)
 {
 	int	rn, type, md;
 
@@ -221,7 +221,7 @@ f_02(u_short *code, u_char *buf)
 }
 
 static	void
-f_03(u_short *code, u_char *buf)
+f_03(uint16_t *code, char *buf)
 {
 	int	rn, type, md;
 
@@ -254,7 +254,7 @@ f_03(u_short *code, u_char *buf)
 
 
 static	void
-f_04(u_short *code, u_char *buf)
+f_04(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -282,7 +282,7 @@ f_04(u_short *code, u_char *buf)
 }
 
 static	void
-f_08(u_short *code, u_char *buf)
+f_08(uint16_t *code, char *buf)
 {
 	int	n1, type, md;
 
@@ -328,7 +328,7 @@ f_08(u_short *code, u_char *buf)
 }
 
 static	void
-f_09(u_short *code, u_char *buf)
+f_09(uint16_t *code, char *buf)
 {
 	int	rn, fx;
 
@@ -353,7 +353,7 @@ f_09(u_short *code, u_char *buf)
 }
 
 static	void
-f_0a(u_short *code, u_char *buf)
+f_0a(uint16_t *code, char *buf)
 {
 	int	rn, type, md;
 
@@ -393,7 +393,7 @@ f_0a(u_short *code, u_char *buf)
 }
 
 static	void
-f_0b(u_short *code, u_char *buf)
+f_0b(uint16_t *code, char *buf)
 {
 	int	n1, fx;
 
@@ -417,7 +417,7 @@ f_0b(u_short *code, u_char *buf)
 }
 
 static	void
-f_0c(u_short *code, u_char *buf)
+f_0c(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -445,7 +445,7 @@ f_0c(u_short *code, u_char *buf)
 }
 
 static	void
-f_10(u_short *code, u_char *buf)
+f_10(uint16_t *code, char *buf)
 {
 	int	rn, rm, disp;
 
@@ -458,7 +458,7 @@ f_10(u_short *code, u_char *buf)
 }
 
 static	void
-f_20(u_short *code, u_char *buf)
+f_20(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -483,7 +483,7 @@ f_20(u_short *code, u_char *buf)
 
 
 static	void
-f_24(u_short *code, u_char *buf)
+f_24(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -511,7 +511,7 @@ f_24(u_short *code, u_char *buf)
 }
 
 static	void
-f_28(u_short *code, u_char *buf)
+f_28(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -540,7 +540,7 @@ f_28(u_short *code, u_char *buf)
 
 
 static	void
-f_2c(u_short *code, u_char *buf)
+f_2c(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -568,7 +568,7 @@ f_2c(u_short *code, u_char *buf)
 }
 
 static	void
-f_30(u_short *code, u_char *buf)
+f_30(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -593,7 +593,7 @@ f_30(u_short *code, u_char *buf)
 
 
 static	void
-f_34(u_short *code, u_char *buf)
+f_34(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -621,7 +621,7 @@ f_34(u_short *code, u_char *buf)
 }
 
 static	void
-f_38(u_short *code, u_char *buf)
+f_38(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -646,7 +646,7 @@ f_38(u_short *code, u_char *buf)
 
 
 static	void
-f_3c(u_short *code, u_char *buf)
+f_3c(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -675,7 +675,7 @@ f_3c(u_short *code, u_char *buf)
 
 
 static	void
-f_40(u_short *code, u_char *buf)
+f_40(uint16_t *code, char *buf)
 {
 	int	rn, fx;
 
@@ -698,7 +698,7 @@ f_40(u_short *code, u_char *buf)
 }
 
 static	void
-f_41(u_short *code, u_char *buf)
+f_41(uint16_t *code, char *buf)
 {
 	int	rn, fx;
 
@@ -722,7 +722,7 @@ f_41(u_short *code, u_char *buf)
 
 
 static	void
-f_42(u_short *code, u_char *buf)
+f_42(uint16_t *code, char *buf)
 {
 	int	rn, type, md;
 
@@ -762,7 +762,7 @@ f_42(u_short *code, u_char *buf)
 }
 
 static	void
-f_43(u_short *code, u_char *buf)
+f_43(uint16_t *code, char *buf)
 {
 	int	rn, type, md;
 
@@ -810,7 +810,7 @@ f_43(u_short *code, u_char *buf)
 }
 
 static	void
-f_44(u_short *code, u_char *buf)
+f_44(uint16_t *code, char *buf)
 {
 	int	rn, fx;
 
@@ -829,7 +829,7 @@ f_44(u_short *code, u_char *buf)
 }
 
 static	void
-f_45(u_short *code, u_char *buf)
+f_45(uint16_t *code, char *buf)
 {
 	int	rn, fx;
 
@@ -852,7 +852,7 @@ f_45(u_short *code, u_char *buf)
 }
 
 static	void
-f_46(u_short *code, u_char *buf)
+f_46(uint16_t *code, char *buf)
 {
 	int	rm, type, md;
 
@@ -892,7 +892,7 @@ f_46(u_short *code, u_char *buf)
 }
 
 static	void
-f_47(u_short *code, u_char *buf)
+f_47(uint16_t *code, char *buf)
 {
 	int	rm, type, md;
 
@@ -940,7 +940,7 @@ f_47(u_short *code, u_char *buf)
 }
 
 static	void
-f_48(u_short *code, u_char *buf)
+f_48(uint16_t *code, char *buf)
 {
 	int	rn, fx;
 
@@ -963,7 +963,7 @@ f_48(u_short *code, u_char *buf)
 }
 
 static	void
-f_49(u_short *code, u_char *buf)
+f_49(uint16_t *code, char *buf)
 {
 	int	rn, fx;
 
@@ -986,7 +986,7 @@ f_49(u_short *code, u_char *buf)
 }
 
 static	void
-f_4a(u_short *code, u_char *buf)
+f_4a(uint16_t *code, char *buf)
 {
 	int	rm, type, md;
 
@@ -1026,7 +1026,7 @@ f_4a(u_short *code, u_char *buf)
 }
 
 static	void
-f_4b(u_short *code, u_char *buf)
+f_4b(uint16_t *code, char *buf)
 {
 	int	rm, fx;
 
@@ -1049,7 +1049,7 @@ f_4b(u_short *code, u_char *buf)
 }
 
 static	void
-f_4c(u_short *code, u_char *buf)
+f_4c(uint16_t *code, char *buf)
 {
 	int	rn, rm;
 
@@ -1059,7 +1059,7 @@ f_4c(u_short *code, u_char *buf)
 }
 
 static	void
-f_4d(u_short *code, u_char *buf)
+f_4d(uint16_t *code, char *buf)
 {
 	int	rn, rm;
 
@@ -1069,7 +1069,7 @@ f_4d(u_short *code, u_char *buf)
 }
 
 static	void
-f_4e(u_short *code, u_char *buf)
+f_4e(uint16_t *code, char *buf)
 {
 	int	rm, type, md;
 
@@ -1117,7 +1117,7 @@ f_4e(u_short *code, u_char *buf)
 }
 
 static	void
-f_4f(u_short *code, u_char *buf)
+f_4f(uint16_t *code, char *buf)
 {
 	int	rn, rm;
 
@@ -1127,7 +1127,7 @@ f_4f(u_short *code, u_char *buf)
 }
 
 static	void
-f_50(u_short *code, u_char *buf)
+f_50(uint16_t *code, char *buf)
 {
 	int	rn, rm, disp;
 
@@ -1140,7 +1140,7 @@ f_50(u_short *code, u_char *buf)
 }
 
 static	void
-f_60(u_short *code, u_char *buf)
+f_60(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -1168,7 +1168,7 @@ f_60(u_short *code, u_char *buf)
 }
 
 static	void
-f_64(u_short *code, u_char *buf)
+f_64(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -1196,7 +1196,7 @@ f_64(u_short *code, u_char *buf)
 }
 
 static	void
-f_68(u_short *code, u_char *buf)
+f_68(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -1224,7 +1224,7 @@ f_68(u_short *code, u_char *buf)
 }
 
 static	void
-f_6c(u_short *code, u_char *buf)
+f_6c(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -1252,7 +1252,7 @@ f_6c(u_short *code, u_char *buf)
 }
 
 static	void
-f_70(u_short *code, u_char *buf)
+f_70(uint16_t *code, char *buf)
 {
 	int	rn, imm;
 
@@ -1263,7 +1263,7 @@ f_70(u_short *code, u_char *buf)
 }
 
 static	void
-f_80(u_short *code, u_char *buf)
+f_80(uint16_t *code, char *buf)
 {
 	int	type, md, rn, disp;
 
@@ -1343,7 +1343,7 @@ f_80(u_short *code, u_char *buf)
 }
 
 static	void
-f_90(u_short *code, u_char *buf)
+f_90(uint16_t *code, char *buf)
 {
 	int	rn, disp;
 
@@ -1355,7 +1355,7 @@ f_90(u_short *code, u_char *buf)
 }
 
 static	void
-f_a0(u_short *code, u_char *buf)
+f_a0(uint16_t *code, char *buf)
 {
 	int	disp;
 
@@ -1372,7 +1372,7 @@ f_a0(u_short *code, u_char *buf)
 }
 
 static	void
-f_b0(u_short *code, u_char *buf)
+f_b0(uint16_t *code, char *buf)
 {
 	int	disp;
 
@@ -1389,7 +1389,7 @@ f_b0(u_short *code, u_char *buf)
 }
 
 static	void
-f_c0(u_short *code, u_char *buf)
+f_c0(uint16_t *code, char *buf)
 {
 	int	type, md, imm;
 
@@ -1487,7 +1487,7 @@ f_c0(u_short *code, u_char *buf)
 
 
 static	void
-f_d0(u_short *code, u_char *buf)
+f_d0(uint16_t *code, char *buf)
 {
 	int	rn, disp;
 
@@ -1499,7 +1499,7 @@ f_d0(u_short *code, u_char *buf)
 }
 
 static	void
-f_e0(u_short *code, u_char *buf)
+f_e0(uint16_t *code, char *buf)
 {
 	int	rn, imm;
 
@@ -1510,7 +1510,7 @@ f_e0(u_short *code, u_char *buf)
 }
 
 static	void
-f_f0(u_short *code, u_char *buf)
+f_f0(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -1538,7 +1538,7 @@ f_f0(u_short *code, u_char *buf)
 }
 
 static	void
-f_f4(u_short *code, u_char *buf)
+f_f4(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -1566,7 +1566,7 @@ f_f4(u_short *code, u_char *buf)
 }
 
 static	void
-f_f8(u_short *code, u_char *buf)
+f_f8(uint16_t *code, char *buf)
 {
 	int	rn, rm, md;
 
@@ -1594,7 +1594,7 @@ f_f8(u_short *code, u_char *buf)
 }
 
 static	void
-f_fc(u_short *code, u_char *buf)
+f_fc(uint16_t *code, char *buf)
 {
 	int	rn, rm;
 
@@ -1605,7 +1605,7 @@ f_fc(u_short *code, u_char *buf)
 }
 
 static	void
-f_fd(u_short *code, u_char *buf)
+f_fd(uint16_t *code, char *buf)
 {
 	int	rn, type, md;
 
@@ -1662,7 +1662,7 @@ f_fd(u_short *code, u_char *buf)
 }
 
 static	void
-f_fe(u_short *code, u_char *buf)
+f_fe(uint16_t *code, char *buf)
 {
 	int	rn, rm;
 
