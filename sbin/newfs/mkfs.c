@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.99 2006/01/16 21:34:41 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.100 2006/01/21 12:32:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.99 2006/01/16 21:34:41 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.100 2006/01/21 12:32:14 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -364,7 +364,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		 * 1 fragment per inode - useful for /dev.
 		 */
 		fragsperinodeblk = MAX(numfrags(&sblock,
-					density * INOPB(&sblock)), 1);
+					(uint64_t)density * INOPB(&sblock)), 1);
 		inodeblks = (sblock.fs_size - sblock.fs_iblkno) /	
 			(sblock.fs_frag + fragsperinodeblk);
 	}
