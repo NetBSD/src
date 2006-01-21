@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.57 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.58 2006/01/21 04:26:56 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.57 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.58 2006/01/21 04:26:56 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -478,12 +478,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int onstack;
 
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* handled by sendsig_sigcontext */
-	case 1:		/* handled by sendsig_sigcontext */
+	case 0:		/* FALLTHROUGH */ /* handled by sendsig_sigcontext */
+	case 1:		/* FALLTHROUGH */ /* handled by sendsig_sigcontext */
 	default:	/* unknown version */
 		printf("sendsig_siginfo: bad version %d\n",
 		       ps->sa_sigdesc[sig].sd_vers);
 		sigexit(l, SIGILL);
+		/* NOTREACHED */
 	case 2:
 		break;
 	}
@@ -745,8 +746,8 @@ cpu_reset()
 	_cpu_exception_suspend();
 	_reg_write_4(SH_(EXPEVT), EXPEVT_RESET_MANUAL);
 
-	goto *(u_int32_t *)0xa0000000;
+#ifndef __lint__
+	goto *(void *)0xa0000000;
+#endif
 	/* NOTREACHED */
-	while (1)
-		;
 }
