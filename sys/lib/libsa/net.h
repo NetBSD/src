@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.16 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.17 2006/01/21 10:06:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -43,7 +43,7 @@
 #define __IPADDR(x)	htonl((u_int32_t)(x))
 #endif
 
-#include "iodesc.h"
+#include <iodesc.h>
 
 #define BA { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }
 
