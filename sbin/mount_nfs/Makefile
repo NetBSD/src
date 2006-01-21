@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2006/01/21 10:32:23 dsl Exp $
+#	$NetBSD: Makefile,v 1.19 2006/01/21 10:55:56 yamt Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ MAN=	mount_nfs.8
 SRCS+=	getnfsargs.c
 .else
 SRCS+=	udp_xfer.c
-SRCS+=  rpc.c net.c
+SRCS+=	rpc.c net.c
 SRCS+=	getnfsargs_small.c
 
 .PATH: ${NETBSDSRCDIR}/sys/lib/libsa
