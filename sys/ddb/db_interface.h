@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.16 2005/12/01 13:21:05 yamt Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.17 2006/01/21 01:11:43 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -69,6 +69,6 @@ void		db_show_arptab(db_expr_t, int, db_expr_t, const char *);
  * This is used in several places to determine which printf format
  * string is appropriate for displaying a variable of type db_expr_t.
  */
-#define	DB_EXPR_T_IS_QUAD	(sizeof(db_expr_t) > sizeof(long))
+#define	DB_EXPR_T_IS_QUAD (/* CONSTCOND */ sizeof(db_expr_t) > sizeof(long))
 
 #endif /* _DDB_DB_INTERFACE_H_ */
