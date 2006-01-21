@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 2006/01/21 03:42:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -149,37 +149,37 @@ extern int want_resched;		/* need_resched() was called */
 #define	SH3_P4SEG_BASE	0xe0000000	/* peripheral space */
 #define	SH3_P4SEG_END	0xffffffff
 
-#define	SH3_P1SEG_TO_PHYS(x)	((u_int32_t)(x) & SH3_PHYS_MASK)
-#define	SH3_P2SEG_TO_PHYS(x)	((u_int32_t)(x) & SH3_PHYS_MASK)
-#define	SH3_PHYS_TO_P1SEG(x)	((u_int32_t)(x) | SH3_P1SEG_BASE)
-#define	SH3_PHYS_TO_P2SEG(x)	((u_int32_t)(x) | SH3_P2SEG_BASE)
-#define	SH3_P1SEG_TO_P2SEG(x)	((u_int32_t)(x) | 0x20000000)
+#define	SH3_P1SEG_TO_PHYS(x)	((uint32_t)(x) & SH3_PHYS_MASK)
+#define	SH3_P2SEG_TO_PHYS(x)	((uint32_t)(x) & SH3_PHYS_MASK)
+#define	SH3_PHYS_TO_P1SEG(x)	((uint32_t)(x) | SH3_P1SEG_BASE)
+#define	SH3_PHYS_TO_P2SEG(x)	((uint32_t)(x) | SH3_P2SEG_BASE)
+#define	SH3_P1SEG_TO_P2SEG(x)	((uint32_t)(x) | 0x20000000)
 
 /* run on P2 */
 #define	RUN_P2								\
 do {									\
-	u_int32_t p;							\
-	p = (u_int32_t)&&P2;						\
-	goto *(u_int32_t *)(p | 0x20000000);				\
+	uint32_t p;							\
+	p = (uint32_t)&&P2;						\
+	goto *(uint32_t *)(p | 0x20000000);				\
  P2:	(void)0;							\
 } while (/*CONSTCOND*/0)
 
 /* run on P1 */
 #define	RUN_P1								\
 do {									\
-	u_int32_t p;							\
-	p = (u_int32_t)&&P1;						\
-	__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop");	\
-	goto *(u_int32_t *)(p & ~0x20000000);				\
+	uint32_t p;							\
+	p = (uint32_t)&&P1;						\
+	__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop");		\
+	goto *(uint32_t *)(p & ~0x20000000);				\
  P1:	(void)0;							\
 } while (/*CONSTCOND*/0)
 
 #if defined(SH4)
 /* SH4 Processor Version Register */
 #define	SH4_PVR_ADDR	0xff000030	/* P4  address */
-#define	SH4_PVR		(*(volatile unsigned int *) SH4_PVR_ADDR)
+#define	SH4_PVR		(*(volatile uint32_t *) SH4_PVR_ADDR)
 #define	SH4_PRR_ADDR	0xff000044	/* P4  address */
-#define	SH4_PRR		(*(volatile unsigned int *) SH4_PRR_ADDR)
+#define	SH4_PRR		(*(volatile uint32_t *) SH4_PRR_ADDR)
 
 #define	SH4_PVR_MASK	0xffffff00
 #define	SH4_PVR_SH7750	0x04020500	/* SH7750  */
@@ -214,11 +214,10 @@ do {									\
 void sh_cpu_init(int, int);
 void sh_startup(void);
 void cpu_reset(void);		/* Soft reset */
-void _cpu_spin(u_int32_t);	/* for delay loop. */
+void _cpu_spin(uint32_t);	/* for delay loop. */
 void delay(int);
 struct pcb;
 void savectx(struct pcb *);
 void dumpsys(void);
 #endif /* _KERNEL */
 #endif /* !_SH3_CPU_H_ */
-
