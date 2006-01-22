@@ -427,6 +427,7 @@ extern int debug;
 #define DEBUG_ERROR	0x1000
 #define	DEBUG_GRAPH3	0x10000
 #define DEBUG_SCRIPT	0x20000
+#define DEBUG_PARSE	0x40000
 
 #define CONCAT(a,b)	a##b
 
