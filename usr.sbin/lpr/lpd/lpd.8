@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpd.8,v 1.32 2006/01/20 08:51:40 garbled Exp $
+.\"	$NetBSD: lpd.8,v 1.33 2006/01/22 21:31:17 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)lpd.8	8.3 (Berkeley) 4/19/94
 .\"
-.Dd October 3, 2000
+.Dd January 20, 2006
 .Dt LPD 8
 .Os
 .Sh NAME
@@ -75,7 +75,8 @@ option, followed by a
 .Ar bind-address
 specifies that
 .Nm
-should listen on that address instead of INADDR_ANY. Multiple
+should listen on that address instead of INADDR_ANY.
+Multiple
 .Fl b
 options are permitted, allowing a list of addresses to be specified.
 Use of this option silently overrides the
@@ -90,7 +91,8 @@ The
 option turns on the
 .Dv SO_DEBUG
 .Xr socket 2
-option.  See
+option.
+See
 .Xr setsockopt 2
 for more details.
 .It Fl l
@@ -107,7 +109,8 @@ flag sets
 .Ar maxchild
 as the maximum number of child processes that
 .Nm
-will spawn.  The default is 32.
+will spawn.
+The default is 32.
 .It Fl r
 The
 .Fl r
@@ -116,7 +119,8 @@ flag allows the
 and
 .Dq if
 filters to be used if specified for a remote
-printer.  Traditionally,
+printer.
+Traditionally,
 .Nm
 would not use filters for remote printers.
 .It Fl s
@@ -139,10 +143,10 @@ The
 .Fl w
 flag sets
 .Ar maxwait
-as the wait time (in seconds) for dead remote server detection.  If
-no response is returned from a connected server within this period,
-the connection is closed and a message logged.  The default is
-120 seconds.
+as the wait time (in seconds) for dead remote server detection.
+If no response is returned from a connected server within this period,
+the connection is closed and a message logged.
+The default is 120 seconds.
 .It Fl W
 The
 .Fl W
@@ -268,7 +272,7 @@ The file contains data produced by
 .It v
 The file contains a raster image.
 .It o
-The file contains postscript data.
+The file contains PostScript data.
 .It r
 The file contains text data with
 FORTRAN carriage control characters.
