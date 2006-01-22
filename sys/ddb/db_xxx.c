@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.35 2006/01/22 00:47:50 uwe Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.36 2006/01/22 00:50:51 uwe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.35 2006/01/22 00:47:50 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.36 2006/01/22 00:50:51 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 		mode = strchr("mawln", modif[0]);
 
 	if (mode == NULL || *mode == 'm') {
-		db_printf("usage: show all procs [/a] [/n] [/w]\n");
+		db_printf("usage: show all procs [/a] [/l] [/n] [/w]\n");
 		db_printf("\t/a == show process address info\n");
 		db_printf("\t/l == show LWP info\n");
 		db_printf("\t/n == show normal process info [default]\n");
