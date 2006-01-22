@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.232 2006/01/16 20:30:19 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.233 2006/01/22 16:44:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.232 2006/01/16 20:30:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.233 2006/01/22 16:44:45 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -802,6 +802,11 @@ wdcintr(void *arg)
 #ifdef DIAGNOSTIC
 	if (xfer == NULL)
 		panic("wdcintr: no xfer");
+	if (xfer->c_chp != chp) {
+		printf("channel %d expected %d\n", xfer->c_chp->ch_channel,
+		    chp->ch_channel);
+		panic("wdcintr: wrong channel");
+	}
 #endif
 	if (chp->ch_flags & ATACH_DMA_WAIT) {
 		wdc->dma_status =
@@ -978,6 +983,7 @@ wdc_do_reset(struct ata_channel *chp, int poll)
 	    WDCTL_4BIT | WDCTL_IDS);
 	delay(10);	/* 400ns delay */
 	if (poll != RESET_SLEEP) {
+		/* ACK interrupt in case there is one pending left */
 		if (wdc->irqack)
 			wdc->irqack(chp);
 		splx(s);
@@ -1451,7 +1457,7 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		wdc->datain_pio(chp, drive_flags, data, bcount);
 		/* at this point the drive should be in its initial state */
 		ata_c->flags |= AT_XFDONE;
-		/* XXX should read status register here ? */
+		goto again;
 	} else if (ata_c->flags & AT_WRITE) {
 		if ((chp->ch_status & WDCS_DRQ) == 0) {
 			ata_c->flags |= AT_TIMEOU;
@@ -1481,9 +1487,9 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	struct ata_command *ata_c = xfer->c_cmd;
 
-	ATADEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
-	    atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive),
-	    DEBUG_FUNCS);
+	ATADEBUG_PRINT(("__wdccommand_done %s:%d:%d flags 0x%x\n",
+	    atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive,
+	    ata_c->flags), DEBUG_FUNCS);
 
 
 	if (chp->ch_status & WDCS_DWF)
