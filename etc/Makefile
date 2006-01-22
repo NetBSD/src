@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.317 2006/01/04 15:27:12 apb Exp $
+#	$NetBSD: Makefile,v 1.318 2006/01/22 20:19:52 dsl Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -41,6 +41,9 @@
 .include <bsd.kernobj.mk>	# For KERNSRCDIR, KERNOBJDIR, ...
 .include <bsd.endian.mk>	# For TARGET_ENDIANNESS
 
+# XXX: .WAIT doesn't work the way this makefile needs it to.
+# So until that is fixed.
+.NOTPARALLEL:
 
 .MAKEOVERRIDES+=	USETOOLS
 
