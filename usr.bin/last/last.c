@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.28 2006/01/22 15:24:38 martin Exp $	*/
+/*	$NetBSD: last.c,v 1.29 2006/01/22 15:47:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.28 2006/01/22 15:24:38 martin Exp $");
+__RCSID("$NetBSD: last.c,v 1.29 2006/01/22 15:47:10 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -169,13 +169,12 @@ main(int argc, char *argv[])
 				p = argv[optind - 1];
 				if (p[0] == '-' && p[1] == ch && !p[2])
 					maxrec = atol(++p);
-				else {
-					if (optind >= argc)
-						usage();
+				else if (optind < argc)
 					maxrec = atol(argv[optind] + 1);
-				}
+				else
+					usage();
 				if (!maxrec)
-					exit(0);
+					return 0;
 			}
 			break;
 		case 'f':
