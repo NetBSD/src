@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.60.16.1 2006/01/22 10:56:31 tron Exp $	*/
+/*	$NetBSD: ums.c,v 1.60.16.2 2006/01/22 10:57:02 tron Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.60.16.1 2006/01/22 10:56:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.60.16.2 2006/01/22 10:57:02 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,11 +193,11 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Try to guess the Z activator: first check Z, then WHEEL. */
 	wheel = 0;
-	if (hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
-	       uha->reportid, hid_input, &sc->sc_loc_z, &flags) ||
-	    (wheel = hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP,
+	if ((wheel = hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP,
 						       HUG_WHEEL),
-	       uha->reportid, hid_input, &sc->sc_loc_z, &flags))) {
+	       uha->reportid, hid_input, &sc->sc_loc_z, &flags)) ||
+	    hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
+	       uha->reportid, hid_input, &sc->sc_loc_z, &flags)) {
 		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
 			sc->sc_loc_z.size = 0;	/* Bad Z coord, ignore it */
 		} else {
