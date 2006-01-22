@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.72 2005/12/11 12:21:14 christos Exp $      */
+/*      $NetBSD: ata.c,v 1.73 2006/01/22 16:40:56 bouyer Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.72 2005/12/11 12:21:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.73 2006/01/22 16:40:56 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -585,12 +585,12 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	if (drvp->drive_flags & DRIVE_ATA) {
 		ata_c.r_command = WDCC_IDENTIFY;
 		ata_c.r_st_bmask = WDCS_DRDY;
-		ata_c.r_st_pmask = 0;
+		ata_c.r_st_pmask = WDCS_DRQ;
 		ata_c.timeout = 3000; /* 3s */
 	} else if (drvp->drive_flags & DRIVE_ATAPI) {
 		ata_c.r_command = ATAPI_IDENTIFY_DEVICE;
 		ata_c.r_st_bmask = 0;
-		ata_c.r_st_pmask = 0;
+		ata_c.r_st_pmask = WDCS_DRQ;
 		ata_c.timeout = 10000; /* 10s */
 	} else {
 		ATADEBUG_PRINT(("ata_get_parms: no disks\n"),
