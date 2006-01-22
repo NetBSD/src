@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3.6.2 2006/01/22 10:18:42 tron Exp $	*/
+/*	$NetBSD: __clone.S,v 1.3.6.3 2006/01/22 10:26:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -74,9 +74,7 @@ ENTRY(__clone)
 inval:
 	mov	#EINVAL, r0
 err:
-	mov.l	.L_cerror, r1
-2:	JUMP	r1
-	 nop
+	JUMP_CERROR
 	/* NOTREACHED */
 
 3:	rts
@@ -87,5 +85,4 @@ err:
 
 .L_got:		PIC_GOT_DATUM
 .L__exit:	CALL_DATUM(_C_LABEL(_exit), 1b)
-.L_cerror:	CALL_DATUM_LOCAL(cerror, 2b)
 	SET_ENTRY_SIZE(__clone)

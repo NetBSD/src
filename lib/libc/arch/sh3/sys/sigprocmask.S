@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.6 2003/08/07 16:42:21 agc Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.6.6.1 2006/01/22 10:26:33 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigprocmask.S,v 1.6 2003/08/07 16:42:21 agc Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.6.6.1 2006/01/22 10:26:33 tron Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -65,21 +65,10 @@ out:
 	rts
 	nop
 err:
-	mov.l	Lcerror, r1
-#ifdef PIC
-	braf	r1
-#else
-	jmp	@r1
-#endif
-	nop
-3:	
+	JUMP_CERROR
 
 	.align	2
 LSYS_sigprocmask13:
 	.long	SYS_compat_13_sigprocmask13
-Lcerror:
-#ifdef PIC
-	.long	cerror-3b
-#else
-	.long	cerror
-#endif
+
+	SET_ENTRY_SIZE(sigprocmask)

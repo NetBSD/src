@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.5 2003/08/07 16:42:21 agc Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.5.6.1 2006/01/22 10:26:33 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigsuspend.S,v 1.5 2003/08/07 16:42:21 agc Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.5.6.1 2006/01/22 10:26:33 tron Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -52,21 +52,10 @@ ENTRY(sigsuspend)
 	rts
 	nop
 err:
-	mov.l	Lcerror, r1
-#ifdef PIC
-	braf	r1
-#else
-	jmp	@r1
-#endif
-	nop
-1:
+	JUMP_CERROR
 
 	.align	2
 LSYS_sigsuspend13:
 	.long	SYS_compat_13_sigsuspend13
-Lcerror:
-#ifdef PIC
-	.long	cerror-1b
-#else
-	.long	cerror
-#endif
+
+	SET_ENTRY_SIZE(sigsuspend)

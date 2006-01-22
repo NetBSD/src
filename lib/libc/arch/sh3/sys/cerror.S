@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.7.2.1 2006/01/22 10:19:09 tron Exp $	*/
+/*	$NetBSD: cerror.S,v 1.7.2.2 2006/01/22 10:26:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: cerror.S,v 1.7.2.1 2006/01/22 10:19:09 tron Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.7.2.2 2006/01/22 10:26:32 tron Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -49,15 +49,14 @@
 	.align	2
 cerror:
 	mov.l	.L___errno, r1
-	mov.l	r0, @-sp	! save error code
 	PIC_PROLOGUE(.L_got)
 	sts.l   pr, @-sp
 1:	CALL	r1
-	 nop
+	 mov.l	r4, @-sp	! save error code
+	mov.l	@sp+, r4
 	lds.l   @sp+, pr
 	PIC_EPILOGUE
-	mov.l	@sp+, r2	! restore error code
-	mov.l	r2, @r0
+	mov.l	r4, @r0
 	mov	#-1, r1
 	rts
 	 mov	#-1, r0
@@ -75,13 +74,12 @@ cerror:
 	.align	2
 cerror:
 #ifdef PIC
-	mov	r0, r2
 	mova	L_GOT, r0
 	mov.l	L_GOT, r1
 	add	r0, r1
 	mov.l	L_errno, r0
 	mov.l	@(r0, r1), r1
-	mov.l	r2, @r1
+	mov.l	r4, @r1
 #else
 	mov.l	L_errno, r1
 	mov.l	r0, @r1
