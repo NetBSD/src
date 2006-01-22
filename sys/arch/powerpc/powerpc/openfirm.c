@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.16 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.17 2006/01/22 22:53:56 ross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.16 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.17 2006/01/22 22:53:56 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,6 +499,7 @@ OF_write(int handle, const void *addr, int len)
 		l = min(PAGE_SIZE, len);
 		ofbcopy(p, OF_buf, l);
 		args.len = l;
+		args.actual = l;	/* work around a PIBS bug */
 		if (openfirmware(&args) == -1)
 			return -1;
 		l = args.actual;
