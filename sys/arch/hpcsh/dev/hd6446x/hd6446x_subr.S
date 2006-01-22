@@ -1,4 +1,4 @@
-/*	$NetBSD: hd6446x_subr.S,v 1.4 2006/01/22 05:14:02 uwe Exp $	*/
+/*	$NetBSD: hd6446x_subr.S,v 1.5 2006/01/22 05:16:58 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,6 +72,8 @@ NENTRY(hd6446x_intr_raise)
 2:	.long	_C_LABEL(hd6446x_imask)
 3:	.long	HD6446X_NIMR
 
+	SET_ENTRY_SIZE(hd6446x_intr_raise)
+
 
 /*
  * LINTSTUB: Func: int hd6446x_intr_resume(int s)
@@ -100,3 +102,5 @@ NENTRY(hd6446x_intr_resume)
 	.align	2
 2:	.long	_C_LABEL(hd6446x_imask)
 3:	.long	HD6446X_NIMR
+
+	SET_ENTRY_SIZE(hd6446x_intr_resume)
