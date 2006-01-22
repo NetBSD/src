@@ -1,4 +1,4 @@
-/*	$NetBSD: hd6446x_subr.S,v 1.3 2005/12/18 21:25:55 uwe Exp $	*/
+/*	$NetBSD: hd6446x_subr.S,v 1.4 2006/01/22 05:14:02 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <hpcsh/dev/hd6446x/hd6446xintcreg.h>
 
 /*
- * int hd6446x_intr_raise(int s):
+ * LINTSTUB: Func: int hd6446x_intr_raise(int s)
  *	raise SR.IMASK and HD6446x ICU interrupt mask to 's'.
  *	if current SR.IMASK is greater equal 's',nothing to do.
  *	Returns previous SR.IMASK.
@@ -74,7 +74,7 @@ NENTRY(hd6446x_intr_raise)
 
 
 /*
- * int hd6446x_intr_resume(int s):
+ * LINTSTUB: Func: int hd6446x_intr_resume(int s)
  *	Set SR.IMASK and HD6446x interrupt mask register to
  *	's' interrupt level. Returns previous SR.IMASK.
  */
