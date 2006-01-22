@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.60.16.1 2006/01/22 10:56:31 tron Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.60.16.1 2006/01/22 10:56:31 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ int	umsdebug = 0;
 #define PS2MBUTMASK	x04
 #define PS2BUTMASK 0x0f
 
-#define MAX_BUTTONS	7	/* must not exceed size of sc_buttons */
+#define MAX_BUTTONS	31	/* must not exceed size of sc_buttons */
 
 struct ums_softc {
 	struct uhidev sc_hdev;
