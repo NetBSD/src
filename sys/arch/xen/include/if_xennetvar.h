@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennetvar.h,v 1.4.2.3 2005/06/18 10:48:48 tron Exp $	*/
+/*	$NetBSD: if_xennetvar.h,v 1.4.2.4 2006/01/22 10:42:58 tron Exp $	*/
 
 /*
  *
@@ -49,15 +49,6 @@ union xennet_bufarray {
 	int xb_next;
 };
 
-struct xennet_txbuf {
-	SLIST_ENTRY(xennet_txbuf)	xt_next;
-	struct xennet_softc		*xt_sc;
-	paddr_t				xt_pa;
-	u_char				xt_buf[0];
-};
-#define	TXBUF_PER_PAGE 2
-#define	TXBUF_BUFSIZE	(PAGE_SIZE / TXBUF_PER_PAGE) - sizeof(struct xennet_txbuf)
-
 struct xennet_softc {
 	struct device		sc_dev;		/* base device glue */
 	struct ethercom		sc_ethercom;	/* Ethernet common part */
@@ -91,8 +82,6 @@ struct xennet_softc {
 
 	union xennet_bufarray	sc_tx_bufa[NETIF_TX_RING_SIZE];
 	union xennet_bufarray	sc_rx_bufa[NETIF_RX_RING_SIZE];
-
-	SLIST_HEAD(, xennet_txbuf)	sc_tx_bufs;
 
 #if NRND > 0
 	rndsource_element_t	sc_rnd_source;
