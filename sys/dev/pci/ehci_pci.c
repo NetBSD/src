@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.17.2.1 2005/12/07 19:15:05 riz Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.17.2.2 2006/01/22 13:52:51 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.17.2.1 2005/12/07 19:15:05 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.17.2.2 2006/01/22 13:52:51 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.17.2.1 2005/12/07 19:15:05 riz Exp $"
 
 #include <machine/bus.h>
 
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/usb_pci.h>
 
@@ -174,6 +175,10 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	else
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
+
+	/* Enable workaround for dropped interrupts as required */
+	if (sc->sc.sc_id_vendor == PCI_VENDOR_VIATECH)
+		sc->sc.sc_flags |= EHCIF_DROPPED_INTR_WORKAROUND;
 
 	/*
 	 * Find companion controllers.  According to the spec they always
