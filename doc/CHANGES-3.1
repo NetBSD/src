@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.20 2006/01/22 11:47:32 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.21 2006/01/22 13:54:39 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -467,4 +467,12 @@ sys/dev/usb/ums.c				1.61-1.62
 	- Look for a wheel before looking for a Z dir. This makes Apple's
 	  Mightymouse work.
 	[uwe, ticket #1119]
+
+sys/dev/pci/ehci_pci.c				1.22
+sys/dev/usb/ehci.c				1.108
+sys/dev/usb/ehcivar.h				1.23
+
+	Add a workaround for VIA EHCI controllers to prevent unrecoverable
+	umass(4) stalls.
+	[xtraeme, ticket #1123]
 
