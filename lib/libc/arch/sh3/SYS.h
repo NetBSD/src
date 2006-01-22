@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.6 2003/08/07 16:42:18 agc Exp $
+ *	$NetBSD: SYS.h,v 1.6.6.1 2006/01/22 10:17:46 tron Exp $
  */
 
 #include <machine/asm.h>
@@ -42,7 +42,7 @@
 		.long	0xc380;	/* trapa #0x80 */	\
 		nop;					\
 		bra	904f;				\
-		nop;					\
+		 nop;					\
 		.align	2;				\
 	903:	.long	(SYS_ ## x);			\
 	904:
@@ -52,7 +52,7 @@
 		trapa	#0x80;				\
 		nop;					\
 		bra	904f;				\
-		nop;					\
+		 nop;					\
 		.align	2;				\
 	903:	.long	(SYS_/**/x);			\
 	904:
@@ -67,7 +67,7 @@
 		.text;					\
 	911:	mov.l	912f, r3;			\
 		braf	r3;				\
-		nop;					\
+		 nop;					\
 		.align	2;				\
 	912:	.long	cerror-(911b+6);		\
 		_SYSCALL_NOERROR(x,y);			\
@@ -78,7 +78,7 @@
 		.text;					\
 	911:	mov.l	912f, r3;			\
 		jmp	@r3;				\
-		nop;					\
+		 nop;					\
 		.align	2;				\
 	912:	.long	cerror;				\
 		_SYSCALL_NOERROR(x,y);			\
@@ -95,12 +95,12 @@
 #define PSEUDO_NOERROR(x,y)				\
 		_SYSCALL_NOERROR(x,y);			\
 		rts;					\
-		nop
+		 nop
 
 #define PSEUDO(x,y)					\
 		_SYSCALL(x,y);				\
 		rts;					\
-		nop
+		 nop
 
 #define RSYSCALL_NOERROR(x)				\
 		PSEUDO_NOERROR(x,x)
@@ -110,11 +110,11 @@
 
 #ifdef WEAK_ALIAS
 #define	WSYSCALL(weak,strong)				\
-	WEAK_ALIAS(weak,strong);			\
-	PSEUDO(strong,weak)
+		WEAK_ALIAS(weak,strong);		\
+		PSEUDO(strong,weak)
 #else
 #define	WSYSCALL(weak,strong)				\
-	PSEUDO(weak,weak)
+		PSEUDO(weak,weak)
 #endif
 
 	.globl	cerror
