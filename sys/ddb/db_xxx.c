@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.36 2006/01/22 00:50:51 uwe Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.37 2006/01/22 01:08:50 uwe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.36 2006/01/22 00:50:51 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.37 2006/01/22 01:08:50 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,7 +299,7 @@ db_show_sched_qs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 	{
 		first = 1;
 		ph = &sched_qs[i];
-		for (l = ph->ph_link; l != (struct lwp *)ph; l = l->l_forw) {
+		for (l = ph->ph_link; l != (void *)ph; l = l->l_forw) {
 			if (first) {
 				db_printf("%c%d",
 				    (sched_whichqs & RQMASK(i))
