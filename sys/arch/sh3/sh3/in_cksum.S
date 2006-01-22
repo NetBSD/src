@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.4 2001/10/16 02:07:46 msaitoh Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.5 2006/01/22 06:08:51 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -87,7 +87,12 @@
 	sub	reg_tmp0,reg_mlen
 
 
-
+/*
+ * LINTSTUB: include <sys/param.h>
+ * LINTSTUB: include <sys/mbuf.h>
+ *
+ * LINTSTUB: Func: int in_cksum(struct mbuf *m, int len);
+ */
 ENTRY(in_cksum)
 	sts.l	pr,@-r15
 
@@ -277,4 +282,3 @@ cksum128_tail:
 	mov	#0,reg_tmp0
 	rts
 	addc	reg_tmp0,reg_sum
-
