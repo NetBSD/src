@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.6.6.2 2006/01/22 10:26:32 tron Exp $
+ *	$NetBSD: SYS.h,v 1.6.6.3 2006/01/22 10:27:45 tron Exp $
  */
 
 #include <machine/asm.h>
@@ -40,7 +40,6 @@
 #define SYSTRAP(x)					\
 		mov.l	903f, r0;			\
 		.long	0xc380;	/* trapa #0x80 */	\
-		nop;					\
 		bra	904f;				\
 		 nop;					\
 		.align	2;				\
@@ -50,7 +49,6 @@
 #define SYSTRAP(x)					\
 		mov.l	903f, r0;			\
 		trapa	#0x80;				\
-		nop;					\
 		bra	904f;				\
 		 nop;					\
 		.align	2;				\
@@ -92,8 +90,7 @@
 		.text;					\
 	911:	JUMP_CERROR;				\
 		_SYSCALL_NOERROR(x,y);			\
-		bf	911b;				\
-		nop
+		bf	911b
 
 #define SYSCALL_NOERROR(x)				\
 		_SYSCALL_NOERROR(x,x)
