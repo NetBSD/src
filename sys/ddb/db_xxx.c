@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.34 2005/12/03 22:47:25 he Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.35 2006/01/22 00:47:50 uwe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.34 2005/12/03 22:47:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.35 2006/01/22 00:47:50 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 				continue;
 			}
 			l = LIST_FIRST(&p->p_lwps);
-			db_printf("%c%-10d", " >"[cp == p], p->p_pid);
+			db_printf("%c%-10d", (cp == p ? '>' : ' '), p->p_pid);
 
 			switch (*mode) {
 
@@ -180,7 +180,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 			case 'l':
 				 while (l != NULL) {
 					db_printf("%c%4d %d %#9x %18p %18p %s\n",
-					    " >"[cl == l], l->l_lid,
+					    (cl == l ? '>' : ' '), l->l_lid,
 					    l->l_stat, l->l_flag, l,
 					    l->l_addr,
 					    (l->l_wchan && l->l_wmesg) ?
