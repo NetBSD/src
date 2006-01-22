@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3.6.1 2006/01/22 10:18:17 tron Exp $	*/
+/*	$NetBSD: __clone.S,v 1.3.6.2 2006/01/22 10:18:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -59,8 +59,16 @@ ENTRY(__clone)
 	 mov	r7, r4
 
 	mov.l	.L__exit, r1
+#ifdef PIC
+	mov	r0, r4
+	mov.l	.L_got, r12	/* PIC_PROLOGUE_NOSAVE(.L_got) */
+	mova	.L_got, r0	/*  expanded to fill the delay slot */
 1:	JUMP	r1
+	 add	r0, r12
+#else
+	JUMP	r1
 	 mov	r0, r4
+#endif
 	/* NOTREACHED */
 
 inval:
@@ -75,9 +83,9 @@ err:
 	 nop
 
 	.align	2
-.L_SYS___clone:
-	.long	SYS___clone
-.L__exit:
-	CALL_DATUM_LOCAL(_C_LABEL(_exit), 1b)
-.L_cerror:
-	CALL_DATUM_LOCAL(cerror, 2b)
+.L_SYS___clone:	.long	SYS___clone
+
+.L_got:		PIC_GOT_DATUM
+.L__exit:	CALL_DATUM(_C_LABEL(_exit), 1b)
+.L_cerror:	CALL_DATUM_LOCAL(cerror, 2b)
+	SET_ENTRY_SIZE(__clone)
