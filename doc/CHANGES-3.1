@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.19 2006/01/21 06:43:28 snj Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.20 2006/01/22 11:47:32 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -418,4 +418,53 @@ sys/compat/ossaudio/ossaudio.c			1.48
 	Fix problem in ioctl() handling in OSS audio emulation which caused
 	unintentional changes of the audio settings e.g. when running "kphone".
 	[tron, ticket #1127]
+
+lib/libc/arch/sh3/gen/__setjmp14.S		patch
+lib/libc/arch/sh3/gen/__sigsetjmp14.S		patch
+lib/libc/arch/sh3/gen/setjmp.S			patch
+lib/libc/arch/sh3/gen/sigsetjmp.S		patch
+
+	Use PLT for PIC calls to avoids text relocs in the shared library.
+	[uwe, ticket #1100]
+
+lib/libc/arch/sh3/SYS.h				1.7-1.9
+lib/libc/arch/sh3/sys/__clone.S			1.4-1.6
+lib/libc/arch/sh3/sys/brk.S			1.10
+lib/libc/arch/sh3/sys/cerror.S			1.8-1.10
+lib/libc/arch/sh3/sys/fork.S			1.9
+lib/libc/arch/sh3/sys/ptrace.S			1.7
+lib/libc/arch/sh3/sys/sbrk.S			1.9
+lib/libc/arch/sh3/sys/sigprocmask.S		patch
+lib/libc/arch/sh3/sys/sigsuspend.S		patch
+
+	Eliminate text relocations in libc.so.
+	[uwe, ticket #1101]
+
+lib/libc/arch/sh3/sys/__vfork14.S		1.6
+lib/libc/arch/sh3/sys/Ovfork.S			patch
+
+	Use JUMP_CERROR instead of messing with errno directly.
+	Simplify.
+	[uwe, ticket #1102]
+
+lib/libc/arch/sh3/sys/ptrace.S			1.8
+
+	Provide _REENTRANT version of errno = 0;
+	[uwe, ticket #1103]
+
+sys/arch/xen/include/if_xennetvar.h		1.8
+sys/arch/xen/xen/if_xennet.c			1.33-1.35 via patch
+
+	- Use MCLGET() instead of local list of buffers.
+	- Garbage-collect struct xennet_txbuf usage.
+	- Don't allocate cluster mbufs unless needed.
+	- Remove no longer used macros.
+	[bouyer, ticket #1105]
+
+sys/dev/usb/ums.c				1.61-1.62
+
+	- Support more than 7 buttons for USB mice. This fixes PR kern/30248.
+	- Look for a wheel before looking for a Z dir. This makes Apple's
+	  Mightymouse work.
+	[uwe, ticket #1119]
 
