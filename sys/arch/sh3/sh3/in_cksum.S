@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.5 2006/01/22 06:08:51 uwe Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.6 2006/01/22 06:25:25 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -147,9 +147,8 @@ mbuf_loop:
 	bf	1f
 
 do_cksum128:
-	mova	cksum128,reg_tmp0
-	jsr	@reg_tmp0
-	nop
+	bsr	cksum128
+	 nop
 
 	mov	#127,reg_tmp0
 	cmp/hi	reg_tmp0,reg_mlen
@@ -157,9 +156,8 @@ do_cksum128:
 1:
 
 
-	mova	cksum128mod,reg_tmp0
-	jsr	@reg_tmp0
-	nop
+	bsr	cksum128mod
+	 nop
 
 	REDUCE
 
@@ -221,6 +219,8 @@ XLprintf:
 	.align 2
 message_out_of_data:
 	.asciz "cksum: out of data (%d byte short)\n"
+
+	SET_ENTRY_SIZE(in_cksum)
 
 
 	.align	2
