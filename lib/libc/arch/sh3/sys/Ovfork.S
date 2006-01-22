@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.5 2003/08/07 16:42:20 agc Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.5.6.1 2006/01/22 10:36:37 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,10 +36,13 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: Ovfork.S,v 1.5 2003/08/07 16:42:20 agc Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.5.6.1 2006/01/22 10:36:37 tron Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
+
+WARN_REFERENCES(vfork, \
+    "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
 
 /*
  * pid = vfork();
@@ -49,36 +52,15 @@
  *
  */
 ENTRY(vfork)
-	sts	pr, r2		/* my rta into r2 */
-	mov.l	LSYS_vfork, r0
+	mov	#SYS_vfork, r0
 	trapa	#0x80
 	bf	err
-	add	#0xff, r1
-	and	r1, r0
-	jmp	@r2
-	nop
-err:
-#ifdef PIC
-	mov	r0, r2
-	mova	L_GOT, r0
-	mov.l	L_GOT, r1
-	add	r0, r1
-	mov.l	L_errno, r0
-	mov.l	@(r0, r1), r1
-	mov.l	r2, @r1
-#else
-	mov.l	L_errno, r1
-	mov.l	r0, @r1
-#endif
-	mov	#0xff, r0
-	jmp	@r2
-	nop
 
-	.align	2
-LSYS_vfork:	.long	SYS_vfork
-#ifdef PIC
-L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
-L_errno:	.long	_C_LABEL(errno)@GOT
-#else
-L_errno:	.long	_C_LABEL(errno)
-#endif
+	add	#0xff, r1	/* from 1 to 0 in child, 0 to -1 in parent */
+	rts
+	 and	r1, r0		/* 0 in child, child pid in parent */
+
+err:
+	JUMP_CERROR
+
+	SET_ENTRY_SIZE(vfork)
