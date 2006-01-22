@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.102 2006/01/21 19:18:37 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.103 2006/01/22 19:54:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.102 2006/01/21 19:18:37 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.103 2006/01/22 19:54:55 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.102 2006/01/21 19:18:37 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.103 2006/01/22 19:54:55 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -178,6 +178,12 @@ static int    	aborting = 0;	    /* why is the make aborting? */
 #define ABORT_INTERRUPT	2   	    /* Because it was interrupted */
 #define ABORT_WAIT	3   	    /* Waiting for jobs to finish */
 #define JOB_TOKENS	"+EI+"	    /* Token to requeue for each abort state */
+
+/*
+ * this tracks the number of tokens currently "out" to build jobs.
+ */
+int jobTokensRunning = 0;
+int not_parallel = 0;		    /* set if .NOT_PARALLEL */
 
 /*
  * XXX: Avoid SunOS bug... FILENO() is fp->_file, and file
@@ -3596,10 +3602,6 @@ Job_ServerStart(int maxproc)
 	JobTokenAdd();
 }
 
-/*
- * this tracks the number of tokens currently "out" to build jobs.
- */
-int jobTokensRunning = 0;
 /*-
  *-----------------------------------------------------------------------
  * Job_TokenReturn --
@@ -3646,7 +3648,7 @@ Job_TokenWithdraw(void)
 	printf("Job_TokenWithdraw(%d): aborting %d, running %d\n",
 		getpid(), aborting, jobTokensRunning);
 
-    if (aborting)
+    if (aborting || (jobTokensRunning && not_parallel))
 	return FALSE;
 
     count = read(job_pipe[0], &tok, 1);

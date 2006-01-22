@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.107 2005/12/24 20:52:20 perry Exp $	*/
+/*	$NetBSD: parse.c,v 1.108 2006/01/22 19:54:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.107 2005/12/24 20:52:20 perry Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.108 2006/01/22 19:54:55 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.107 2005/12/24 20:52:20 perry Exp $");
+__RCSID("$NetBSD: parse.c,v 1.108 2006/01/22 19:54:55 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -617,6 +617,9 @@ ParseAddDep(ClientData pp, ClientData sp)
     GNode *p = (GNode *)pp;
     GNode *s = (GNode *)sp;
 
+    if (DEBUG(PARSE))
+	printf("ParseAddDep: %p(%s):%d %p(%s):%d\n",
+		p, p->name, p->order, s, s->name, s->order);
     if (p->order < s->order) {
 	/*
 	 * XXX: This can cause loops, and loops can cause unmade targets,
@@ -697,6 +700,9 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
     } else {
 	ParseLinkSrc((ClientData)tn, (ClientData)gn);
     }
+    if (DEBUG(PARSE))
+	printf("ParseDoSpecialSrc: set %p(%s):%d (was %d)\n",
+		gn, gn->name, waiting, gn->order);
     gn->order = waiting;
     (void)Lst_AtEnd(ss->allsrc, (ClientData)gn);
     if (waiting) {
@@ -818,6 +824,9 @@ ParseDoSrc(int tOp, char *src, Lst allsrc, Boolean resolve)
 	break;
     }
 
+    if (DEBUG(PARSE))
+	printf("ParseDoSrc: set %p(%s):%d (was %d)\n",
+		gn, gn->name, waiting, gn->order);
     gn->order = waiting;
     (void)Lst_AtEnd(allsrc, (ClientData)gn);
     if (waiting) {
@@ -1099,10 +1108,8 @@ ParseDoDependency(char *line)
 			DEFAULT = gn;
 			break;
 		    case NotParallel:
-		    {
-			maxJobs = 1;
+			not_parallel = 1;
 			break;
-		    }
 		    case SingleShell:
 			compatMake = TRUE;
 			break;

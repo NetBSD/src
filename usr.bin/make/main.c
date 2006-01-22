@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.117 2006/01/04 21:31:55 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.118 2006/01/22 19:54:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.117 2006/01/04 21:31:55 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.118 2006/01/22 19:54:55 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.117 2006/01/04 21:31:55 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.118 2006/01/22 19:54:55 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -299,6 +299,7 @@ rearg:
 			    (void)fprintf(stderr,
 				"%s: warning -- J descriptors were closed!\n",
 				progname);
+			    exit(2);
 #endif
 			    job_pipe[0] = -1;
 			    job_pipe[1] = -1;
@@ -397,6 +398,9 @@ rearg:
 					break;
 				case 'n':
 					debug |= DEBUG_SCRIPT;
+					break;
+				case 'p':
+					debug |= DEBUG_PARSE;
 					break;
 				case 's':
 					debug |= DEBUG_SUFF;
