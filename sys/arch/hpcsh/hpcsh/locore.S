@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.10 2006/01/23 00:07:43 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,13 @@
 #include <sh3/asm.h>
 
 /*
- * void start(int argc, char *argv[], struct bootinfo *bi)
- *    __attribute__((__noreturn__)):
+ * LINTSTUB: include <sys/types.h>
+ * LINTSTUB: include <dev/kloader.h>
+ *
+ * LINTSTUB: Var: char kernel_text[1];
+ *
+ * LINTSTUB: Func: void start(int argc, char *argv[], struct bootinfo *bi)
+ *				__attribute__((__noreturn__))
  *	Kernel entry point. setup bootstrap stack pointer.
  *	Don't pollute r4, r5, r6, since these are passed down to
  *	machine_startup().
