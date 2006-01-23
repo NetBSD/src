@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.18 2006/01/15 22:09:52 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.19 2006/01/23 20:19:08 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -381,14 +381,14 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		}
 		xneti->xni_ma_rxring = req->rx_shmem_frame << PAGE_SHIFT;
 		xneti->xni_ma_txring = req->tx_shmem_frame << PAGE_SHIFT;
-		error = pmap_remap_pages(pmap_kernel(), ring_rxaddr,
-		   xneti->xni_ma_rxring, 1, VM_PROT_READ | VM_PROT_WRITE,
+		error = pmap_enter_ma(pmap_kernel(), ring_rxaddr,
+		   xneti->xni_ma_rxring, 0, VM_PROT_READ | VM_PROT_WRITE,
 		   PMAP_WIRED | PMAP_CANFAIL, req->domid);
 		if (error) {
 			goto fail_1;
 		}
-		error = pmap_remap_pages(pmap_kernel(), ring_txaddr,
-		   xneti->xni_ma_txring, 1, VM_PROT_READ | VM_PROT_WRITE,
+		error = pmap_enter_ma(pmap_kernel(), ring_txaddr,
+		   xneti->xni_ma_txring, 0, VM_PROT_READ | VM_PROT_WRITE,
 		   PMAP_WIRED | PMAP_CANFAIL, req->domid);
 		if (error) {
 			pmap_remove(pmap_kernel(), ring_rxaddr,
