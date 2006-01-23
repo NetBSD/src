@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.22 2006/01/23 00:31:54 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.23 2006/01/23 00:36:04 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.22 2006/01/23 00:31:54 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.23 2006/01/23 00:36:04 uwe Exp $")
 
 
 	.text
@@ -191,7 +191,7 @@ ENTRY(cpu_switchto)
  *	Just fall-through to the switch_exit below.
  */
 ENTRY(cpu_exit)
-	mov.l	.L_switch_exit.lwp_exit2, r5	/* exit_func to call */
+	mov.l	.L_switch_exit_lwp_exit2, r5	/* exit_func to call */
 	/* FALLTHROUGH */
 
 /*
@@ -202,8 +202,8 @@ ENTRY(cpu_exit)
  *	middle of cpu_switch to find and switch to a new lwp.
  */
 ALTENTRY(switch_exit)
-	mov.l	.L_switch_exit.lwp0_pcb, r1
-	mov.l	.L_switch_exit.curpcb, r0
+	mov.l	.L_switch_exit_lwp0_pcb, r1
+	mov.l	.L_switch_exit_curpcb, r0
 	mov.l	@r1, r1
 	mov.l	r1, @r0			/* curpcb = lwp0.l_md.md_pcb */
 
@@ -227,11 +227,11 @@ ALTENTRY(switch_exit)
 	 mov	#0, r4		/* no "previous" lwp */
 
 	.align 2
-.L_switch_exit.lwp_exit2:
+.L_switch_exit_lwp_exit2:
 	.long	_C_LABEL(lwp_exit2)
-.L_switch_exit.lwp0_pcb:
+.L_switch_exit_lwp0_pcb:
 	.long	_C_LABEL(lwp0) + L_MD_PCB
-.L_switch_exit.curpcb:
+.L_switch_exit_curpcb:
 	.long	_C_LABEL(curpcb)
 
 
