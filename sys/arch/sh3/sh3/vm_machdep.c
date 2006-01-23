@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.50 2006/01/23 21:39:15 uwe Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.51 2006/01/23 23:07:19 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50 2006/01/23 21:39:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 2006/01/23 23:07:19 uwe Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -139,6 +139,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	/* Copy flags */
 	l2->l_md.md_flags = l1->l_md.md_flags;
 
+	pcb = NULL;		/* XXXGCC: -Wuninitialized */
 #ifdef SH3
 	/*
 	 * Convert frame pointer top to P1. because SH3 can't make
@@ -233,6 +234,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct switchframe *sf;
 	vaddr_t fptop, spbase;
 
+	pcb = NULL;		/* XXXGCC: -Wuninitialized */
 #ifdef SH3
 	/*
 	 * Convert frame pointer top to P1. because SH3 can't make
