@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.10 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: locore.h,v 1.11 2006/01/23 22:32:50 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,17 +34,17 @@
  */
 
 #if defined(SH3) && defined(SH4)
-#define	MOV(x, r)	mov.l _L./**/x, r; mov.l @r, r
-#define	REG_SYMBOL(x)	_L./**/x:	.long	_C_LABEL(__sh_/**/x)
-#define	FUNC_SYMBOL(x)	_L./**/x:	.long	_C_LABEL(__sh_/**/x)
+#define	MOV(x, r)	mov.l .L_/**/x, r; mov.l @r, r
+#define	REG_SYMBOL(x)	.L_/**/x:	.long	_C_LABEL(__sh_/**/x)
+#define	FUNC_SYMBOL(x)	.L_/**/x:	.long	_C_LABEL(__sh_/**/x)
 #elif defined(SH3)
-#define	MOV(x, r)	mov.l _L./**/x, r
-#define	REG_SYMBOL(x)	_L./**/x:	.long	SH3_/**/x
-#define	FUNC_SYMBOL(x)	_L./**/x:	.long	_C_LABEL(sh3_/**/x)
+#define	MOV(x, r)	mov.l .L_/**/x, r
+#define	REG_SYMBOL(x)	.L_/**/x:	.long	SH3_/**/x
+#define	FUNC_SYMBOL(x)	.L_/**/x:	.long	_C_LABEL(sh3_/**/x)
 #elif defined(SH4)
-#define	MOV(x, r)	mov.l _L./**/x, r
-#define	REG_SYMBOL(x)	_L./**/x:	.long	SH4_/**/x
-#define	FUNC_SYMBOL(x)	_L./**/x:	.long	_C_LABEL(sh4_/**/x)
+#define	MOV(x, r)	mov.l .L_/**/x, r
+#define	REG_SYMBOL(x)	.L_/**/x:	.long	SH4_/**/x
+#define	FUNC_SYMBOL(x)	.L_/**/x:	.long	_C_LABEL(sh4_/**/x)
 #endif /* SH3 && SH4 */
 
 /*
