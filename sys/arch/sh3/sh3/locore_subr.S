@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.25 2006/01/23 03:17:17 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.26 2006/01/23 22:06:44 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.25 2006/01/23 03:17:17 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.26 2006/01/23 22:06:44 uwe Exp $")
 
 
 /*
@@ -262,6 +262,7 @@ NENTRY(sh3_switch_resume)
 	rts
 	 nop
 	.align	2
+.L_UPTE:		.long	L_MD_UPTE
 .L_curupte:		.long	_C_LABEL(curupte)
 	SET_ENTRY_SIZE(sh3_switch_resume)
 #endif /* SH3 */
@@ -274,7 +275,7 @@ NENTRY(sh3_switch_resume)
  *	TLB multiple hit.
  */
 NENTRY(sh4_switch_resume)
-	mov.l	.L_UPTE,r0
+	mov.l	.L_UPTE__sh4, r0
 	add	r0,	r4	/* l->l_md.md_upte */
 	mov	#UPAGES,r3
 	mov	#1,	r2
@@ -328,14 +329,14 @@ NENTRY(sh4_switch_resume)
 2:	rts			/* mova target must be 4byte alignment */
 	 nop
 	.align	2
+.L_UPTE__sh4:		.long	L_MD_UPTE
 .L_4_PTEH:		.long	SH4_PTEH
 .L_4_UTLB_AA_A:		.long	(SH4_UTLB_AA | SH4_UTLB_A)
 .L_4_ITLB_AA:		.long	SH4_ITLB_AA
 .L_VPN_MASK:		.long	0xfffff000
 .L_P2BASE:		.long	0xa0000000
-#endif /* SH4 */
-.L_UPTE:		.long	(L_MD_UPTE)
 	SET_ENTRY_SIZE(sh4_switch_resume)
+#endif /* SH4 */
 
 
 /*
