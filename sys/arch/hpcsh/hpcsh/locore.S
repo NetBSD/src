@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 2006/01/23 00:07:43 uwe Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 2006/01/23 00:17:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,12 +49,14 @@
  */
 NENTRY(start)
 ALTENTRY(kernel_text)
-	mov.l	_L.machine_startup, r0
-	mov.l	_L.bootstrap_stack, r1
+	mov.l	.L_machine_startup, r0
+	mov.l	.L_bootstrap_stack, r1
 	jmp	@r0
 	 mov	r1, sp
 	/* NOTREACHED */
 
 	.align	2
-_L.machine_startup:	.long	_C_LABEL(machine_startup)
-_L.bootstrap_stack:	.long	_C_LABEL(start)
+.L_machine_startup:	.long	_C_LABEL(machine_startup)
+.L_bootstrap_stack:	.long	_C_LABEL(start)
+
+	SET_ENTRY_SIZE(start)
