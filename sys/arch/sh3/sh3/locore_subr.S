@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.24 2006/01/23 01:33:53 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.25 2006/01/23 03:17:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.24 2006/01/23 01:33:53 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.25 2006/01/23 03:17:17 uwe Exp $")
 
 
 /*
@@ -704,7 +704,7 @@ ENTRY(copyoutstr)
 
 5:
 	bra	4b
-	 mov	#EFAULT, r0
+	 mov	#EFAULT, r3
 
 	.align 2
 .L_copyoutstr_onfault:
@@ -778,7 +778,7 @@ ENTRY(copyinstr)
 
 5:
 	bra	4b
-	 mov	#EFAULT, r0
+	 mov	#EFAULT, r3
 
 	.align 2
 .L_copyinstr_onfault:
