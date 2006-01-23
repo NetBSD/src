@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.26 2006/01/23 22:06:44 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.27 2006/01/23 22:14:59 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,12 +46,13 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.26 2006/01/23 22:06:44 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.27 2006/01/23 22:14:59 uwe Exp $")
 
 
 /*
  * LINTSTUB: include <sys/types.h>
  * LINTSTUB: include <sys/lwp.h>
+ * LINTSTUB: include <sh3/locore.h>
  */
 
 	.text
