@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.50 2006/01/23 21:39:15 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50 2006/01/23 21:39:15 uwe Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -169,7 +169,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	if (SH_HAS_VIRTUAL_ALIAS)
 		sh_dcache_wbinv_range((vaddr_t)l2->l_addr, USPACE);
 	spbase = P1ADDR(spbase);
-#else /* P1_STACK */
+#else /* !P1_STACK */
 	/* Prepare u-area PTEs */
 #ifdef SH3
 	if (CPU_IS_SH3)
@@ -179,7 +179,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	if (CPU_IS_SH4)
 		sh4_switch_setup(l2);
 #endif
-#endif /* P1_STACK */
+#endif /* !P1_STACK */
 
 #ifdef KSTACK_DEBUG
 	/* Fill magic number for tracking */
@@ -263,7 +263,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	if (SH_HAS_VIRTUAL_ALIAS)
 		sh_dcache_wbinv_range((vaddr_t)l->l_addr, USPACE);
 	spbase = P1ADDR(spbase);
-#else /* P1_STACK */
+#else /* !P1_STACK */
 	/* Prepare u-area PTEs */
 #ifdef SH3
 	if (CPU_IS_SH3)
@@ -273,7 +273,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	if (CPU_IS_SH4)
 		sh4_switch_setup(l);
 #endif
-#endif /* P1_STACK */
+#endif /* !P1_STACK */
 
 #ifdef KSTACK_DEBUG
 	/* Fill magic number for tracking */
