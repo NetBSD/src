@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.21 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.22 2006/01/23 00:31:54 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.21 2005/12/11 12:19:00 christos Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.22 2006/01/23 00:31:54 uwe Exp $")
 
 
 	.text
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.21 2005/12/11 12:19:00 christos Ex
  */
 ENTRY(cpu_switch)
 	/* Save current lwp's context to switchframe */
-	mov.l	_L.SF,	r0
+	mov.l	.L_SF,	r0
 	mov.l	@(r0, r4), r1
 	add	#SF_SIZE, r1
 	stc.l	r7_bank,@-r1
@@ -73,9 +73,9 @@ ENTRY(cpu_switch)
 	mov.l	r14,	@-r1
 	mov.l	r15,	@-r1
 
-_L.find_and_switch:
+.L_find_and_switch:
 	/* Search next lwp. cpu_switch_search may or may not sleep. */
-	mov.l	_L.cpu_switch_search, r0
+	mov.l	.L_cpu_switch_search, r0
 	jsr	@r0
 	 mov	r4,	r8	/* save old lwp */
 
@@ -84,9 +84,9 @@ _L.find_and_switch:
 	bt/s	1f
 	 mov	r0,	r4	/* new lwp */
 
-_L.doswitch:
+.L_doswitch:
 	/* Setup kernel stack */
-	mov.l	_L.SF,	r0
+	mov.l	.L_SF,	r0
 	mov.l	@(r0, r4), r1		/* switch frame */
 	mov.l	@(SF_R7_BANK, r1), r0	/* stack top */
 	mov.l	@(SF_R6_BANK, r1), r2	/* current frame */
@@ -115,7 +115,7 @@ _L.doswitch:
 
 	/* Restore new lwp's context from switchframe */
 	/* NOTE: r2 has return value! */
-2:	mov.l	_L.SF,	r0
+2:	mov.l	.L_SF,	r0
 	mov.l	@(r0, r4), r1
 	add	#4,	r1		/* r15 already restored */
 	mov.l	@r1+,	r14
@@ -133,8 +133,8 @@ _L.doswitch:
 	rts
 	 mov	r2, r0
 	.align	2
-_L.SF:			.long	(L_MD_PCB)
-_L.cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
+.L_SF:			.long	(L_MD_PCB)
+.L_cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
 FUNC_SYMBOL(switch_resume)
 
 /*
@@ -143,7 +143,7 @@ FUNC_SYMBOL(switch_resume)
  */
 ENTRY(cpu_switchto)
 	/* Save current lwp's context to switchframe. */
-	mov.l	_L.SFp,	r0
+	mov.l	.L_SFp,	r0
 	mov.l	@(r0, r4), r1
 	add	#SF_SIZE, r1
 	stc.l	r7_bank,@-r1
@@ -163,12 +163,12 @@ ENTRY(cpu_switchto)
 	 * curlwp = NULL;
 	 * XXX Is this necessary?  We know we won't go idle.
 	 */
-	mov.l	_L.curlwp, r0
+	mov.l	.L_curlwp, r0
 	mov	#0, r1
 	mov.l	r1, @r0
 
 	/* old and new lwps are already in r4, r5 */
-	mov.l	_L.cpu_switch_prepare, r0
+	mov.l	.L_cpu_switch_prepare, r0
 	jsr	@r0
 	 nop
 
@@ -177,13 +177,13 @@ ENTRY(cpu_switchto)
 	 * of cpu_switch(), and let it do the work to restore the
 	 * incoming LWP's context.
 	 */
-	bra	_L.doswitch
+	bra	.L_doswitch
 	 mov	r0, r4
 
 	.align	2
-_L.SFp:			.long	(L_MD_PCB)
-_L.curlwp:		.long	_C_LABEL(curlwp)
-_L.cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
+.L_SFp:			.long	(L_MD_PCB)
+.L_curlwp:		.long	_C_LABEL(curlwp)
+.L_cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
 
 
 /*
@@ -191,7 +191,7 @@ _L.cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
  *	Just fall-through to the switch_exit below.
  */
 ENTRY(cpu_exit)
-	mov.l	_L.switch_exit.lwp_exit2, r5	/* exit_func to call */
+	mov.l	.L_switch_exit.lwp_exit2, r5	/* exit_func to call */
 	/* FALLTHROUGH */
 
 /*
@@ -202,8 +202,8 @@ ENTRY(cpu_exit)
  *	middle of cpu_switch to find and switch to a new lwp.
  */
 ALTENTRY(switch_exit)
-	mov.l	_L.switch_exit.lwp0_pcb, r1
-	mov.l	_L.switch_exit.curpcb, r0
+	mov.l	.L_switch_exit.lwp0_pcb, r1
+	mov.l	.L_switch_exit.curpcb, r0
 	mov.l	@r1, r1
 	mov.l	r1, @r0			/* curpcb = lwp0.l_md.md_pcb */
 
@@ -223,15 +223,15 @@ ALTENTRY(switch_exit)
 	 nop			/* lwp is already in r4 */
 
 	/* proceed to cpu_switch */
-	bra	_L.find_and_switch
+	bra	.L_find_and_switch
 	 mov	#0, r4		/* no "previous" lwp */
 
 	.align 2
-_L.switch_exit.lwp_exit2:
+.L_switch_exit.lwp_exit2:
 	.long	_C_LABEL(lwp_exit2)
-_L.switch_exit.lwp0_pcb:
+.L_switch_exit.lwp0_pcb:
 	.long	_C_LABEL(lwp0) + L_MD_PCB
-_L.switch_exit.curpcb:
+.L_switch_exit.curpcb:
 	.long	_C_LABEL(curpcb)
 
 
@@ -248,14 +248,14 @@ _L.switch_exit.curpcb:
  *	hard reset. (never can access kernel stack).
  */
 NENTRY(sh3_switch_resume)
-	mov.l	_L.UPTE, r0
+	mov.l	.L_UPTE, r0
 	add	r4,	r0
-	mov.l	_L.curupte, r1
+	mov.l	.L_curupte, r1
 	mov.l	r0,	@r1
 	rts
 	 nop
 	.align	2
-_L.curupte:		.long	_C_LABEL(curupte)
+.L_curupte:		.long	_C_LABEL(curupte)
 #endif /* SH3 */
 
 #ifdef SH4
@@ -265,7 +265,7 @@ _L.curupte:		.long	_C_LABEL(curupte)
  *	TLB multiple hit.
  */
 NENTRY(sh4_switch_resume)
-	mov.l	_L.UPTE,r0
+	mov.l	.L_UPTE,r0
 	add	r0,	r4	/* l->l_md.md_upte */
 	mov	#UPAGES,r3
 	mov	#1,	r2
@@ -275,16 +275,16 @@ NENTRY(sh4_switch_resume)
 
 	/* Save old ASID and set ASID to zero */
 	xor	r0,	r0
-	mov.l	_L.4_PTEH, r1
+	mov.l	.L_4_PTEH, r1
 	mov.l	@r1,	r7
 	mov.l	r0,	@r1
 
-	mov.l	_L.VPN_MASK, r6
-	mov.l	_L.4_UTLB_AA_A, r5
+	mov.l	.L_VPN_MASK, r6
+	mov.l	.L_4_UTLB_AA_A, r5
 
 	/* TLB address array must be accessed via P2. Setup jump address. */
 	mova	1f,	r0
-	mov.l	_L.P2BASE, r1
+	mov.l	.L_P2BASE, r1
 	or	r1,	r0
 	jmp	@r0		/* run P2 */
 	 nop
@@ -310,7 +310,7 @@ NENTRY(sh4_switch_resume)
 	 add	#1,	r2
 
 	/* restore ASID */
-	mov.l	_L.4_PTEH, r0
+	mov.l	.L_4_PTEH, r0
 	mov.l	r7,	@r0
 	mova	2f,	r0
 	jmp	@r0		/* run P1 */
@@ -319,13 +319,13 @@ NENTRY(sh4_switch_resume)
 2:	rts			/* mova target must be 4byte alignment */
 	 nop
 	.align	2
-_L.4_PTEH:		.long	SH4_PTEH
-_L.4_UTLB_AA_A:		.long	(SH4_UTLB_AA | SH4_UTLB_A)
-_L.4_ITLB_AA:		.long	SH4_ITLB_AA
-_L.VPN_MASK:		.long	0xfffff000
-_L.P2BASE:		.long	0xa0000000
+.L_4_PTEH:		.long	SH4_PTEH
+.L_4_UTLB_AA_A:		.long	(SH4_UTLB_AA | SH4_UTLB_A)
+.L_4_ITLB_AA:		.long	SH4_ITLB_AA
+.L_VPN_MASK:		.long	0xfffff000
+.L_P2BASE:		.long	0xa0000000
 #endif /* SH4 */
-_L.UPTE:		.long	(L_MD_UPTE)
+.L_UPTE:		.long	(L_MD_UPTE)
 
 /*
  * int _cpu_intr_raise(int s):
@@ -466,13 +466,13 @@ NENTRY(proc_trampoline)
  */
 NENTRY(sigcode)
 	mov	r15, r4			/* get pointer to sigcontext */
-	mov.l	_L.SYS___sigreturn14, r0
+	mov.l	.L_SYS___sigreturn14, r0
 	trapa	#0x80			/* and call sigreturn() */
-	mov.l	_L.SYS_exit, r0
+	mov.l	.L_SYS_exit, r0
 	trapa	#0x80			/* exit if sigreturn fails */
 	.align	2
-_L.SYS___sigreturn14:	.long	SYS_compat_16___sigreturn14
-_L.SYS_exit:		.long	SYS_exit
+.L_SYS___sigreturn14:	.long	SYS_compat_16___sigreturn14
+.L_SYS_exit:		.long	SYS_exit
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 #endif /* COMPAT_16 */
@@ -514,21 +514,21 @@ ENTRY(copyout)
 	add	r6,	r2
 	cmp/hs	r5,	r2		/* bomb if uaddr+len wraps */
 	bf	2f
-	mov.l	_Lcopyout.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_copyout_VM_MAXUSER_ADDRESS, r1
 	cmp/hi	r1,	r2		/* bomb if uaddr isn't in user space */
 	bt	2f
 
-	mov.l	_Lcopyout.curpcb, r1	/* set fault hander */
+	mov.l	.L_copyout_curpcb, r1	/* set fault hander */
 	mov.l	@r1,	r2
-	mov.l	_Lcopyout.onfault, r1
+	mov.l	.L_copyout_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov.l	_Lcopyout.memcpy, r1
+	mov.l	.L_copyout_memcpy, r1
 	jsr	@r1			/* memcpy(uaddr, kaddr, len) */
 	 mov	r3,	r5
 
 	mov	#0,	r0
 1:
-	mov.l	_Lcopyout.curpcb, r1	/* clear fault handler */
+	mov.l	.L_copyout_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -543,13 +543,13 @@ ENTRY(copyout)
 	 mov	#EFAULT, r0
 
 	.align 2
-_Lcopyout.onfault:
+.L_copyout_onfault:
 	.long	3b
-_Lcopyout.VM_MAXUSER_ADDRESS:
+.L_copyout_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS
-_Lcopyout.curpcb:
+.L_copyout_curpcb:
 	.long	_C_LABEL(curpcb)
-_Lcopyout.memcpy:
+.L_copyout_memcpy:
 	.long	_C_LABEL(memcpy)
 
 /*
@@ -568,21 +568,21 @@ ENTRY(copyin)
 	add	r6,	r2
 	cmp/hs	r3,	r2		/* bomb if uaddr+len wraps */
 	bf	2f
-	mov.l	_Lcopyin.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_copyin_VM_MAXUSER_ADDRESS, r1
 	cmp/hi	r1,	r2		/* bomb if uaddr isn't in user space */
 	bt	2f
 
-	mov.l	_Lcopyin.curpcb, r1	/* set fault hander */
+	mov.l	.L_copyin_curpcb, r1	/* set fault hander */
 	mov.l	@r1,	r2
-	mov.l	_Lcopyin.onfault, r1
+	mov.l	.L_copyin_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov.l	_Lcopyin.memcpy, r1
+	mov.l	.L_copyin_memcpy, r1
 	jsr	@r1			/* memcpy(kaddr, uaddr, len) */
 	 mov	r3,	r5
 
 	mov	#0,	r0
 1:
-	mov.l	_Lcopyin.curpcb, r1	/* clear fault hander */
+	mov.l	.L_copyin_curpcb, r1	/* clear fault hander */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -597,13 +597,13 @@ ENTRY(copyin)
 	 mov	#EFAULT, r0
 
 	.align 2
-_Lcopyin.onfault:
+.L_copyin_onfault:
 	.long	3b
-_Lcopyin.VM_MAXUSER_ADDRESS:
+.L_copyin_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS
-_Lcopyin.curpcb:
+.L_copyin_curpcb:
 	.long	_C_LABEL(curpcb)
-_Lcopyin.memcpy:
+.L_copyin_memcpy:
 	.long	_C_LABEL(memcpy)
 
 /*
@@ -618,11 +618,11 @@ ENTRY(copyoutstr)
 
 	mov	#EFAULT, r3		/* assume there was a problem */
 	mov	r4,	r8
-	mov.l	_Lcopyoutstr.curpcb, r1	/* set fault handler */
+	mov.l	.L_copyoutstr_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
-	mov.l	_Lcopyoutstr.onfault, r1
+	mov.l	.L_copyoutstr_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov.l	_Lcopyoutstr.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_copyoutstr_VM_MAXUSER_ADDRESS, r1
 	mov	r1,	r0
 	sub	r5,	r0
 	cmp/hi	r6,	r0		/* don't beyond user space */
@@ -645,7 +645,7 @@ ENTRY(copyoutstr)
 	add	#-1,	r0
 	cmp/eq	#-1,	r0
 	bf	1b
-	mov.l	_Lcopyoutstr.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_copyoutstr_VM_MAXUSER_ADDRESS, r1
 	cmp/hs	r1,	r5
 	bt	3f
 	mov	#ENAMETOOLONG, r3
@@ -657,7 +657,7 @@ ENTRY(copyoutstr)
 	sub	r8,	r1
 	mov.l	r1,	@r7
 4:
-	mov.l	_Lcopyoutstr.curpcb, r1	/* clear fault handler */
+	mov.l	.L_copyoutstr_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -671,11 +671,11 @@ ENTRY(copyoutstr)
 	 mov	#EFAULT, r0
 
 	.align 2
-_Lcopyoutstr.onfault:
+.L_copyoutstr_onfault:
 	.long	5b
-_Lcopyoutstr.VM_MAXUSER_ADDRESS:
+.L_copyoutstr_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS
-_Lcopyoutstr.curpcb:
+.L_copyoutstr_curpcb:
 	.long	_C_LABEL(curpcb)
 
 /*
@@ -689,12 +689,12 @@ ENTRY(copyinstr)
 	mov.l	r8,	@-r15
 	mov	#EFAULT, r3		/* assume there was a problem */
 	mov	r4,	r8
-	mov.l	_Lcopyinstr.curpcb, r1	/* set fault handler */
+	mov.l	.L_copyinstr_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
-	mov.l	_Lcopyinstr.onfault, r1
+	mov.l	.L_copyinstr_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 
-	mov.l	_Lcopyinstr.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_copyinstr_VM_MAXUSER_ADDRESS, r1
 	mov	r1,	r0
 	sub	r5,	r0
 	cmp/hi	r6,	r0		/* don't beyond user space */
@@ -717,7 +717,7 @@ ENTRY(copyinstr)
 	add	#-1,	r0
 	cmp/eq	#-1,	r0
 	bf	1b
-	mov.l	_Lcopyinstr.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_copyinstr_VM_MAXUSER_ADDRESS, r1
 	cmp/hs	r1,	r5
 	bt	3f
 	mov	#ENAMETOOLONG, r3
@@ -729,7 +729,7 @@ ENTRY(copyinstr)
 	sub	r8,	r1
 	mov.l	r1,	@r7
 4:
-	mov.l	_Lcopyinstr.curpcb, r1	/* clear fault handler */
+	mov.l	.L_copyinstr_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -743,11 +743,11 @@ ENTRY(copyinstr)
 	 mov	#EFAULT, r0
 
 	.align 2
-_Lcopyinstr.onfault:
+.L_copyinstr_onfault:
 	.long	5b
-_Lcopyinstr.VM_MAXUSER_ADDRESS:
+.L_copyinstr_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS
-_Lcopyinstr.curpcb:
+.L_copyinstr_curpcb:
 	.long	_C_LABEL(curpcb)
 
 /*
@@ -755,17 +755,17 @@ _Lcopyinstr.curpcb:
  * Fetch an int from the user's address space.
  */
 ENTRY(fuword)
-	mov.l	_Lfuword.VM_MAXUSER_ADDRESS,	r1
+	mov.l	.L_fuword_VM_MAXUSER_ADDRESS, r1
 	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
 	bt/s	2f
 	 mov	#-1,	r0
-	mov.l	_Lfuword.curpcb, r1	/* set fault handler */
+	mov.l	.L_fuword_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
-	mov.l	_Lfuword.onfault, r1
+	mov.l	.L_fuword_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.l	@r4,	r0		/* fetch the value */
 1:
-	mov.l	_Lfuword.curpcb, r1	/* clear fault handler */
+	mov.l	.L_fuword_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -778,11 +778,11 @@ ENTRY(fuword)
 	 mov	#-1,	r0
 
 	.align 2
-_Lfuword.onfault:
+.L_fuword_onfault:
 	.long	3b
-_Lfuword.VM_MAXUSER_ADDRESS:
+.L_fuword_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS - 4 /*sizeof(long)*/
-_Lfuword.curpcb:
+.L_fuword_curpcb:
 	.long	_C_LABEL(curpcb)
 
 /*
@@ -790,18 +790,18 @@ _Lfuword.curpcb:
  * Fetch a short from the user's address space.
  */
 ENTRY(fusword)
-	mov.l	_Lfusword.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_fusword_VM_MAXUSER_ADDRESS, r1
 	cmp/hi	r1,	r4		/* bomb if uaddr isn't user space */
 	bt/s	2f
 	 mov	#-1,	r0
-	mov.l	_Lfusword.curpcb, r1	/* set fault handler */
+	mov.l	.L_fusword_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
-	mov.l	_Lfusword.onfault, r1
+	mov.l	.L_fusword_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.w	@r4,	r1		/* fetch the value */
 	exts.w	r1,	r0
 1:
-	mov.l	_Lfusword.curpcb, r1	/* clear fault handler */
+	mov.l	.L_fusword_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -814,11 +814,11 @@ ENTRY(fusword)
 	 mov	#-1,	r0
 
 	.align 2
-_Lfusword.onfault:
+.L_fusword_onfault:
 	.long	3b
-_Lfusword.VM_MAXUSER_ADDRESS:
+.L_fusword_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
-_Lfusword.curpcb:
+.L_fusword_curpcb:
 	.long	_C_LABEL(curpcb)
 
 /*
@@ -827,20 +827,20 @@ _Lfusword.curpcb:
  * interrupt.
  */
 ENTRY(fuswintr)
-	mov.l	_Lfuswintr.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_fuswintr_VM_MAXUSER_ADDRESS, r1
 	cmp/hi	r1,	r4		/* bomb if uaddr isn't user space */
 	bt/s	2f
 	 mov	#-1,	r0
-	mov.l	_Lfuswintr.curpcb, r1	/* set fault handler */
+	mov.l	.L_fuswintr_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
-	mov.l	_Lfuswintr.onfault, r1
+	mov.l	.L_fuswintr_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov	#1,	r1		/* set faultbail */
 	mov.l	r1,	@(PCB_FAULTBAIL,r2)
 	mov.w	@r4,	r1		/* fetch the value */
 	exts.w	r1,	r0
 1:
-	mov.l	_Lfuswintr.curpcb, r1	/* clear fault handler and faultbail */
+	mov.l	.L_fuswintr_curpcb, r1	/* clear fault handler and faultbail */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -854,11 +854,11 @@ ENTRY(fuswintr)
 	 mov	#-1,	r0
 
 	.align 2
-_Lfuswintr.onfault:
+.L_fuswintr_onfault:
 	.long	3b
-_Lfuswintr.VM_MAXUSER_ADDRESS:
+.L_fuswintr_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
-_Lfuswintr.curpcb:
+.L_fuswintr_curpcb:
 	.long	_C_LABEL(curpcb)
 
 /*
@@ -866,18 +866,18 @@ _Lfuswintr.curpcb:
  * Fetch a byte from the user's address space.
  */
 ENTRY(fubyte)
-	mov.l	_Lfubyte.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_fubyte_VM_MAXUSER_ADDRESS, r1
 	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
 	bt/s	2f
 	 mov	#-1,	r0
-	mov.l	_Lfubyte.curpcb, r1	/* set fault handler */
+	mov.l	.L_fubyte_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
-	mov.l	_Lfubyte.onfault, r1
+	mov.l	.L_fubyte_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.b	@r4,	r1		/* fetch the value */
 	exts.b	r1,	r0
 1:
-	mov.l	_Lfubyte.curpcb, r1		/* clear fault handler */
+	mov.l	.L_fubyte_curpcb, r1		/* clear fault handler */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -890,11 +890,11 @@ ENTRY(fubyte)
 	 mov	#-1,	r0
 
 	.align 2
-_Lfubyte.onfault:
+.L_fubyte_onfault:
 	.long	3b
-_Lfubyte.VM_MAXUSER_ADDRESS:
+.L_fubyte_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS - 1 /*sizeof(char)*/
-_Lfubyte.curpcb:
+.L_fubyte_curpcb:
 	.long	_C_LABEL(curpcb)
 
 /*
@@ -902,18 +902,18 @@ _Lfubyte.curpcb:
  * Store an int in the user's address space.
  */
 ENTRY(suword)
-	mov.l	_Lsuword.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_suword_VM_MAXUSER_ADDRESS, r1
 	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
 	bt/s	2f
 	 mov	#-1,	r0
-	mov.l	_Lsuword.curpcb, r1	/* set fault handler */
+	mov.l	.L_suword_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
-	mov.l	_Lsuword.onfault, r1
+	mov.l	.L_suword_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.l	r5,	@r4		/* store the value */
 	mov	#0,	r0
 1:
-	mov.l	_Lsuword.curpcb, r1	/* clear fault handler */
+	mov.l	.L_suword_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -926,11 +926,11 @@ ENTRY(suword)
 	 mov	#-1,	r0
 
 	.align 2
-_Lsuword.onfault:
+.L_suword_onfault:
 	.long	3b
-_Lsuword.VM_MAXUSER_ADDRESS:
+.L_suword_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS - 4 /*sizeof(long)*/
-_Lsuword.curpcb:
+.L_suword_curpcb:
 	.long	_C_LABEL(curpcb)
 
 /*
@@ -938,18 +938,18 @@ _Lsuword.curpcb:
  * Store a short in the user's address space.
  */
 ENTRY(susword)
-	mov.l	_Lsusword.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_susword_VM_MAXUSER_ADDRESS, r1
 	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
 	bt/s	2f
 	 mov	#-1,	r0
-	mov.l	_Lsusword.curpcb, r1	/* set fault handler */
+	mov.l	.L_susword_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
-	mov.l	_Lsusword.onfault, r1
+	mov.l	.L_susword_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.w	r5,	@r4		/* store the value */
 	mov	#0,	r0
 1:
-	mov.l	_Lsusword.curpcb, r1	/* clear fault handler */
+	mov.l	.L_susword_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -962,11 +962,11 @@ ENTRY(susword)
 	 mov	#-1,	r0
 
 	.align 2
-_Lsusword.onfault:
+.L_susword_onfault:
 	.long	3b
-_Lsusword.VM_MAXUSER_ADDRESS:
+.L_susword_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
-_Lsusword.curpcb:
+.L_susword_curpcb:
 	.long	_C_LABEL(curpcb)
 
 /*
@@ -975,20 +975,20 @@ _Lsusword.curpcb:
  * interrupt.
  */
 ENTRY(suswintr)
-	mov.l	_Lsuswintr.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_suswintr_VM_MAXUSER_ADDRESS, r1
 	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
 	bt/s	2f
 	 mov	#-1,	r0
-	mov.l	_Lsuswintr.curpcb, r1	/* set fault handler */
+	mov.l	.L_suswintr_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
-	mov.l	_Lsuswintr.onfault, r1
+	mov.l	.L_suswintr_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov	#1,	r1		/* set faultbail */
 	mov.l	r1,	@(PCB_FAULTBAIL,r2)
 	mov.w	r5,	@r4		/* store the value */
 	mov	#0,	r0
 1:
-	mov.l	_Lsuswintr.curpcb, r1	/* clear fault handler and faultbail */
+	mov.l	.L_suswintr_curpcb, r1	/* clear fault handler and faultbail */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -1002,11 +1002,11 @@ ENTRY(suswintr)
 	 mov	#-1,	r0
 
 	.align 2
-_Lsuswintr.onfault:
+.L_suswintr_onfault:
 	.long	3b
-_Lsuswintr.VM_MAXUSER_ADDRESS:
+.L_suswintr_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
-_Lsuswintr.curpcb:
+.L_suswintr_curpcb:
 	.long	_C_LABEL(curpcb)
 
 /*
@@ -1014,18 +1014,18 @@ _Lsuswintr.curpcb:
  * Store a byte in the user's address space.
  */
 ENTRY(subyte)
-	mov.l	_Lsubyte.VM_MAXUSER_ADDRESS, r1
+	mov.l	.L_subyte_VM_MAXUSER_ADDRESS, r1
 	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
 	bt/s	2f
 	 mov	#-1,	r0
-	mov.l	_Lsubyte.curpcb, r1	/* set fault handler */
+	mov.l	.L_subyte_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
-	mov.l	_Lsubyte.onfault, r1
+	mov.l	.L_subyte_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.b	r5,	@r4		/* store the value */
 	mov	#0,	r0
 1:
-	mov.l	_Lsubyte.curpcb, r1	/* clear fault handler */
+	mov.l	.L_subyte_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -1038,11 +1038,11 @@ ENTRY(subyte)
 	 mov	#-1,	r0
 
 	.align 2
-_Lsubyte.onfault:
+.L_subyte_onfault:
 	.long	3b
-_Lsubyte.VM_MAXUSER_ADDRESS:
+.L_subyte_VM_MAXUSER_ADDRESS:
 	.long	VM_MAXUSER_ADDRESS - 1 /*sizeof(char)*/
-_Lsubyte.curpcb:
+.L_subyte_curpcb:
 	.long	_C_LABEL(curpcb)
 
 /*
@@ -1055,18 +1055,18 @@ ENTRY(kcopy)
 	mov	r15,	r14
 
 	mov	r4,	r3
-	mov.l	_Lkcopy.curpcb, r1
+	mov.l	.L_kcopy_curpcb, r1
 	mov.l	@r1,	r2
 	mov.l	@(PCB_ONFAULT,r2) ,r8	/* save old fault handler */
-	mov.l	_Lkcopy.onfault, r1
+	mov.l	.L_kcopy_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2) /* set fault handler */
-	mov.l	_Lkcopy.memcpy, r1
+	mov.l	.L_kcopy_memcpy, r1
 	mov	r5,	r4
 	jsr	@r1			/* memcpy(dst, src, len) */
 	 mov	r3,	r5
 	mov	#0,	r0
 1:
-	mov.l	_Lkcopy.curpcb, r1	/* restore fault handler */
+	mov.l	.L_kcopy_curpcb, r1	/* restore fault handler */
 	mov.l	@r1,	r2
 	mov.l	r8,	@(PCB_ONFAULT,r2)
 
@@ -1081,11 +1081,11 @@ ENTRY(kcopy)
 	 mov	#EFAULT, r0
 
 	.align 2
-_Lkcopy.onfault:
+.L_kcopy_onfault:
 	.long	2b
-_Lkcopy.curpcb:
+.L_kcopy_curpcb:
 	.long	_C_LABEL(curpcb)
-_Lkcopy.memcpy:
+.L_kcopy_memcpy:
 	.long	_C_LABEL(memcpy)
 
 #if defined(DDB) || defined(KGDB)
