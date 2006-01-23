@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.h,v 1.5 2002/05/09 12:27:04 uch Exp $	*/
+/*	$NetBSD: mmu.h,v 1.6 2006/01/23 22:04:04 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ void sh4_tlb_update(int, vaddr_t, u_int32_t);
 #define	sh_tlb_invalidate_addr(a, va)	(*__sh_tlb_invalidate_addr)(a, va)
 #define	sh_tlb_invalidate_asid(a)	(*__sh_tlb_invalidate_asid)(a)
 #define	sh_tlb_invalidate_all()		(*__sh_tlb_invalidate_all)()
-#define	sh_tlb_update(a, pte)		(*__sh_tlb_update)(a, pte)
+#define	sh_tlb_update(a, va, pte)	(*__sh_tlb_update)(a, va, pte)
 #elif defined(SH3)
 #define	sh_tlb_invalidate_addr(a, va)	sh3_tlb_invalidate_addr(a, va)
 #define	sh_tlb_invalidate_asid(a)	sh3_tlb_invalidate_asid(a)
