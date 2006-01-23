@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.23 2006/01/23 00:36:04 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.24 2006/01/23 01:33:53 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,13 +46,18 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.23 2006/01/23 00:36:04 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.24 2006/01/23 01:33:53 uwe Exp $")
 
+
+/*
+ * LINTSTUB: include <sys/types.h>
+ * LINTSTUB: include <sys/lwp.h>
+ */
 
 	.text
 	.align 5	/* align cache line size (32B) */
 /*
- * void cpu_switch(struct lwp *)
+ * LINTSTUB: Func: int cpu_switch(struct lwp *l, struct lwp *XXX_IGNORED)
  *	Find a runnable lwp and switch to it.  Wait if necessary.
  */
 ENTRY(cpu_switch)
@@ -137,8 +142,10 @@ ENTRY(cpu_switch)
 .L_cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
 FUNC_SYMBOL(switch_resume)
 
+
+
 /*
- * void cpu_switchto(struct lwp *current, struct lwp *next)
+ * LINTSTUB: Func: void cpu_switchto(struct lwp *current, struct lwp *next)
  *	Switch to the specified next LWP.
  */
 ENTRY(cpu_switchto)
@@ -187,7 +194,7 @@ ENTRY(cpu_switchto)
 
 
 /*
- * void cpu_exit(struct lwp *l)
+ * LINTSTUB: Func: void cpu_exit(struct lwp *l)
  *	Just fall-through to the switch_exit below.
  */
 ENTRY(cpu_exit)
@@ -195,7 +202,7 @@ ENTRY(cpu_exit)
 	/* FALLTHROUGH */
 
 /*
- * switch_exit(struct lwp *l, void (*exit_func)(struct lwp *))
+ * LINTSTUB: Func: void switch_exit(struct lwp *l, void (*exit_func)(struct lwp *))
  *	Called only from cpu_exit(l).  Before we call exit_func to
  *	free lwp's resources (including kernel stack) we need to
  *	switch to the lwp0's kernel stack.  Then we jump into the
@@ -237,7 +244,7 @@ ALTENTRY(switch_exit)
 
 #ifdef SH3
 /*
- * void sh3_switch_resume(sturct lwp *l)
+ * LINTSTUB: Func: void sh3_switch_resume(struct lwp *l)
  *	Set current u-area PTE array to curupte.
  *	No need to flush any entries. it is depended on u-area mapping is
  *	wired, and its mapping never cause modified/reference fault.
@@ -256,11 +263,13 @@ NENTRY(sh3_switch_resume)
 	 nop
 	.align	2
 .L_curupte:		.long	_C_LABEL(curupte)
+	SET_ENTRY_SIZE(sh3_switch_resume)
 #endif /* SH3 */
+
 
 #ifdef SH4
 /*
- * void sh4_switch_resume(sturct lwp *l)
+ * LINTSTUB: Func: void sh4_switch_resume(struct lwp *l)
  *	Wire u-area. invalidate TLB entry for kernel stack to prevent
  *	TLB multiple hit.
  */
@@ -326,9 +335,11 @@ NENTRY(sh4_switch_resume)
 .L_P2BASE:		.long	0xa0000000
 #endif /* SH4 */
 .L_UPTE:		.long	(L_MD_UPTE)
+	SET_ENTRY_SIZE(sh4_switch_resume)
+
 
 /*
- * int _cpu_intr_raise(int s):
+ * LINTSTUB: Func: int _cpu_intr_raise(int s)
  *	raise SR.IMASK to 's'. if current SR.IMASK is greater equal 's',
  *	nothing to do. returns previous SR.IMASK.
  */
@@ -346,9 +357,11 @@ NENTRY(_cpu_intr_raise)
 	ldc	r4,	sr	/* SR = r4 (don't move to delay slot) */
 1:	rts
 	 nop	/* return (SR & 0xf0) */
+	SET_ENTRY_SIZE(_cpu_intr_raise)
+
 
 /*
- * int _cpu_intr_suspend(void):
+ * LINTSTUB: Func: int _cpu_intr_suspend(void)
  *	Mask all external interrupt. Returns previous SR.IMASK.
  */
 NENTRY(_cpu_intr_suspend)
@@ -360,9 +373,12 @@ NENTRY(_cpu_intr_suspend)
 	ldc	r2,	sr	/* SR = r2 */
 	rts
 	 and	r1,	r0	/* r0 = SR & 0x000000f0 */
+	SET_ENTRY_SIZE(_cpu_intr_suspend)
+
+
 
 /*
- * int _cpu_intr_resume(int s):
+ * LINTSTUB: Func: int _cpu_intr_resume(int s)
  *	Set 's' to SR.IMASK. Returns previous SR.IMASK.
  */
 NENTRY(_cpu_intr_resume)
@@ -375,9 +391,11 @@ NENTRY(_cpu_intr_resume)
 	ldc	r4,	sr	/* SR = r0 (don't move to delay slot) */
 	rts
 	 and	r2,	r0	/* return (SR & 0xf0) */
+	SET_ENTRY_SIZE(_cpu_intr_resume)
+
 
 /*
- * uint32_t _cpu_exception_suspend(void):
+ * LINTSTUB: Func: int _cpu_exception_suspend(void)
  *	Block exception (SR.BL). if external interrupt raise, pending interrupt.
  *	if exception occur, jump to 0xa0000000 (hard reset).
  */
@@ -391,9 +409,11 @@ NENTRY(_cpu_exception_suspend)
 	ldc	r2,	sr	/* SR = r2 */
 	rts
 	 and	r1,	r0	/* r0 &= 0x10000000 */
+	SET_ENTRY_SIZE(_cpu_exception_suspend)
+
 
 /*
- * void _cpu_exception_resume(uint32_t s):
+ * LINTSTUB: Func: void _cpu_exception_resume(int s)
  *	restore 's' exception mask. (SR.BL)
  */
 NENTRY(_cpu_exception_resume)
@@ -407,10 +427,12 @@ NENTRY(_cpu_exception_resume)
 	ldc	r0,	sr	/* SR = r0 (don't move to delay slot) */
 	rts
 	 nop
+	SET_ENTRY_SIZE(_cpu_exception_resume)
+
 
 /*
- * void _cpu_spin(uint32_t count)
- *	loop 'count' * 10 cycle.
+ * LINTSTUB: Func: void _cpu_spin(uint32_t count)
+ *	Loop for 'count' * 10 cycles.
  * [...]
  * add    IF ID EX MA WB
  * nop       IF ID EX MA WB
@@ -439,6 +461,8 @@ NENTRY(_cpu_spin)
 	bt	1b		/* 8, 9, 10 */
 	rts
 	 nop
+	SET_ENTRY_SIZE(_cpu_spin)
+
 
 /*
  * proc_trapmpoline:
@@ -450,15 +474,16 @@ NENTRY(proc_trampoline)
 	 mov	r11,	r4
 	__EXCEPTION_RETURN
 	/* NOTREACHED */
+	SET_ENTRY_SIZE(proc_trampoline)
+
 
 #ifdef COMPAT_16
 /*
- * sigcode:
+ * LINTSTUB: Var: char sigcode[1]
  *	Signal trampoline. copied to top of user stack.
  *
- *	The kernel arranges for the signal handler to be invoked
- *	directly.  This trampoline is used only to perform the
- *	return.
+ *	The kernel arranges for the signal handler to be invoked directly.
+ *	This trampoline is used only to perform the return.
  *
  *	On entry, the stack looks like this:
  *
@@ -470,15 +495,20 @@ NENTRY(sigcode)
 	trapa	#0x80			/* and call sigreturn() */
 	mov.l	.L_SYS_exit, r0
 	trapa	#0x80			/* exit if sigreturn fails */
+	/* NOTREACHED */
+
 	.align	2
 .L_SYS___sigreturn14:	.long	SYS_compat_16___sigreturn14
 .L_SYS_exit:		.long	SYS_exit
-	.globl	_C_LABEL(esigcode)
+
+/* LINTSTUB: Var: char esigcode[1] */
+.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
+	SET_ENTRY_SIZE(sigcode)
 #endif /* COMPAT_16 */
 
 /*
- * void savectx(struct pcb *pcb):
+ * LINTSTUB: Func: void savectx(struct pcb *pcb)
  *	save struct switchframe.
  */
 ENTRY(savectx)
@@ -497,10 +527,12 @@ ENTRY(savectx)
 	mov.l	r15,	@-r4
 	rts
 	 nop
+	SET_ENTRY_SIZE(savectx)
+
 
 /*
- * copyout(caddr_t kaddr, caddr_t uaddr, size_t len);
- * Copy len bytes into the user's address space.
+ * LINTSTUB: Func: int copyout(const void *ksrc, void *udst, size_t len)
+ *	Copy len bytes into the user address space.
  */
 ENTRY(copyout)
 	mov.l	r14,	@-r15
@@ -551,10 +583,12 @@ ENTRY(copyout)
 	.long	_C_LABEL(curpcb)
 .L_copyout_memcpy:
 	.long	_C_LABEL(memcpy)
+	SET_ENTRY_SIZE(copyout)
+
 
 /*
- * copyin(caddr_t uaddr, caddr_t kaddr, size_t len);
- * Copy len bytes from the user's address space.
+ * LINTSTUB: Func: int copyin(const void *usrc, void *kdst, size_t len)
+ *	Copy len bytes from the user address space.
  */
 ENTRY(copyin)
 	mov.l	r14,	@-r15
@@ -605,13 +639,15 @@ ENTRY(copyin)
 	.long	_C_LABEL(curpcb)
 .L_copyin_memcpy:
 	.long	_C_LABEL(memcpy)
+	SET_ENTRY_SIZE(copyin)
+
 
 /*
- * copyoutstr(caddr_t kaddr, caddr_t uaddr, size_t maxlen, size_t *lencopied);
- * Copy a NUL-terminated string, at most maxlen characters long, into the
- * user's address space.  Return the number of characters copied (including the
- * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
- * return 0 or EFAULT.
+ * LINTSTUB: Func: int copyoutstr(const void *ksrc, void *udst, size_t maxlen, size_t *lencopied)
+ *	Copy a NUL-terminated string, at most maxlen characters long,
+ *	into the user address space.  Return the number of characters
+ *	copied (including the NUL) in *lencopied.  If the string is
+ *	too long, return ENAMETOOLONG; else return 0 or EFAULT.
  */
 ENTRY(copyoutstr)
 	mov.l	r8,	@-r15
@@ -677,13 +713,15 @@ ENTRY(copyoutstr)
 	.long	VM_MAXUSER_ADDRESS
 .L_copyoutstr_curpcb:
 	.long	_C_LABEL(curpcb)
+	SET_ENTRY_SIZE(copyoutstr)
+
 
 /*
- * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
- * Copy a NUL-terminated string, at most maxlen characters long, from the
- * user's address space.  Return the number of characters copied (including the
- * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
- * return 0 or EFAULT.
+ * LINTSTUB: Func: int copyinstr(const void *src, void *dst, size_t maxlen, size_t *lencopied)
+ *	Copy a NUL-terminated string, at most maxlen characters long,
+ *	from the user address space.  Return the number of characters
+ *	copied (including the NUL) in *lencopied.  If the string is
+ *	too long, return ENAMETOOLONG; else return 0 or EFAULT.
  */
 ENTRY(copyinstr)
 	mov.l	r8,	@-r15
@@ -749,10 +787,13 @@ ENTRY(copyinstr)
 	.long	VM_MAXUSER_ADDRESS
 .L_copyinstr_curpcb:
 	.long	_C_LABEL(curpcb)
+	SET_ENTRY_SIZE(copyinstr)
+
+
 
 /*
- * fuword(caddr_t uaddr);
- * Fetch an int from the user's address space.
+ * LINTSTUB: Func: long	fuword(const void *uaddr)
+ *	Fetch an int from the user address space.
  */
 ENTRY(fuword)
 	mov.l	.L_fuword_VM_MAXUSER_ADDRESS, r1
@@ -784,10 +825,12 @@ ENTRY(fuword)
 	.long	VM_MAXUSER_ADDRESS - 4 /*sizeof(long)*/
 .L_fuword_curpcb:
 	.long	_C_LABEL(curpcb)
+	SET_ENTRY_SIZE(fuword)
+
 
 /*
- * fusword(caddr_t uaddr);
- * Fetch a short from the user's address space.
+ * LINTSTUB: Func: int fusword(const void *uaddr)
+ *	Fetch a short from the user address space.
  */
 ENTRY(fusword)
 	mov.l	.L_fusword_VM_MAXUSER_ADDRESS, r1
@@ -820,11 +863,13 @@ ENTRY(fusword)
 	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
 .L_fusword_curpcb:
 	.long	_C_LABEL(curpcb)
+	SET_ENTRY_SIZE(fusword)
+
 
 /*
- * fuswintr(caddr_t uaddr);
- * Fetch a short from the user's address space.  Can be called during an
- * interrupt.
+ * LINTSTUB: Func: int fuswintr(const void *uaddr)
+ *	Fetch a short from the user address space.
+ *	Can be called during an interrupt.
  */
 ENTRY(fuswintr)
 	mov.l	.L_fuswintr_VM_MAXUSER_ADDRESS, r1
@@ -860,10 +905,12 @@ ENTRY(fuswintr)
 	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
 .L_fuswintr_curpcb:
 	.long	_C_LABEL(curpcb)
+	SET_ENTRY_SIZE(fuswintr)
+
 
 /*
- * fubyte(caddr_t uaddr);
- * Fetch a byte from the user's address space.
+ * LINTSTUB: Func: int fubyte(const void *uaddr)
+ *	Fetch a byte from the user address space.
  */
 ENTRY(fubyte)
 	mov.l	.L_fubyte_VM_MAXUSER_ADDRESS, r1
@@ -896,10 +943,12 @@ ENTRY(fubyte)
 	.long	VM_MAXUSER_ADDRESS - 1 /*sizeof(char)*/
 .L_fubyte_curpcb:
 	.long	_C_LABEL(curpcb)
+	SET_ENTRY_SIZE(fubyte)
+
 
 /*
- * suword(caddr_t uaddr, int x);
- * Store an int in the user's address space.
+ * LINTSTUB: Func: int suword(void *uaddr, long x)
+ *	Store an int in the user address space.
  */
 ENTRY(suword)
 	mov.l	.L_suword_VM_MAXUSER_ADDRESS, r1
@@ -932,10 +981,12 @@ ENTRY(suword)
 	.long	VM_MAXUSER_ADDRESS - 4 /*sizeof(long)*/
 .L_suword_curpcb:
 	.long	_C_LABEL(curpcb)
+	SET_ENTRY_SIZE(suword)
+
 
 /*
- * susword(void *uaddr, short x);
- * Store a short in the user's address space.
+ * LINTSTUB: Func: int susword(void *uaddr, short x)
+ *	Store a short in the user address space.
  */
 ENTRY(susword)
 	mov.l	.L_susword_VM_MAXUSER_ADDRESS, r1
@@ -968,11 +1019,13 @@ ENTRY(susword)
 	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
 .L_susword_curpcb:
 	.long	_C_LABEL(curpcb)
+	SET_ENTRY_SIZE(susword)
+
 
 /*
- * suswintr(caddr_t uaddr, short x);
- * Store a short in the user's address space.  Can be called during an
- * interrupt.
+ * LINTSTUB: Func: int suswintr(void *uaddr, short x)
+ *	Store a short in the user address space.
+ *	Can be called during an interrupt.
  */
 ENTRY(suswintr)
 	mov.l	.L_suswintr_VM_MAXUSER_ADDRESS, r1
@@ -1008,10 +1061,12 @@ ENTRY(suswintr)
 	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
 .L_suswintr_curpcb:
 	.long	_C_LABEL(curpcb)
+	SET_ENTRY_SIZE(suswintr)
+
 
 /*
- * subyte(caddr_t uaddr, char x);
- * Store a byte in the user's address space.
+ * LINTSTUB: Func: int subyte(void *uaddr, int x);
+ *	Store a byte in the user address space.
  */
 ENTRY(subyte)
 	mov.l	.L_subyte_VM_MAXUSER_ADDRESS, r1
@@ -1044,9 +1099,11 @@ ENTRY(subyte)
 	.long	VM_MAXUSER_ADDRESS - 1 /*sizeof(char)*/
 .L_subyte_curpcb:
 	.long	_C_LABEL(curpcb)
+	SET_ENTRY_SIZE(subyte)
+
 
 /*
- * kcopy(const void *src, void *dst, size_t len)
+ * LINTSTUB: Func: int kcopy(const void *src, void *dst, size_t len)
  */
 ENTRY(kcopy)
 	mov.l	r8,	@-r15
@@ -1087,10 +1144,13 @@ ENTRY(kcopy)
 	.long	_C_LABEL(curpcb)
 .L_kcopy_memcpy:
 	.long	_C_LABEL(memcpy)
+	SET_ENTRY_SIZE(kcopy)
+
 
 #if defined(DDB) || defined(KGDB)
+
 /*
- * int setjmp(label_t *):
+ * LINTSTUB: Func: int setjmp(label_t *jmpbuf)
  */
 ENTRY(setjmp)
 	add	#4*9,	r4
@@ -1105,8 +1165,10 @@ ENTRY(setjmp)
 	sts.l	pr,	@-r4
 	rts
 	 xor	r0, r0
+	SET_ENTRY_SIZE(setjmp)
+
 /*
- * void longjmp(label_t *):
+ * LINTSTUB: Func: void longjmp(label_t *jmpbuf)
  */
 ENTRY(longjmp)
 	lds.l	@r4+,	pr
@@ -1120,4 +1182,6 @@ ENTRY(longjmp)
 	mov.l	@r4+,	r8
 	rts
 	 nop
+	SET_ENTRY_SIZE(longjmp)
+
 #endif /* DDB || KGDB */
