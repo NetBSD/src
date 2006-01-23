@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.27 2006/01/23 22:14:59 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.27 2006/01/23 22:14:59 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $")
 
 
 /*
@@ -257,11 +257,10 @@ ALTENTRY(switch_exit)
  */
 NENTRY(sh3_switch_resume)
 	mov.l	.L_UPTE, r0
-	add	r4,	r0
 	mov.l	.L_curupte, r1
-	mov.l	r0,	@r1
+	add	r4,	r0	/* l->l_md.md_upte */
 	rts
-	 nop
+	 mov.l	r0,	@r1
 	.align	2
 .L_UPTE:		.long	L_MD_UPTE
 .L_curupte:		.long	_C_LABEL(curupte)
@@ -526,9 +525,8 @@ ENTRY(savectx)
 	mov.l	r12,	@-r4
 	mov.l	r13,	@-r4
 	mov.l	r14,	@-r4
-	mov.l	r15,	@-r4
 	rts
-	 nop
+	 mov.l	r15,	@-r4
 	SET_ENTRY_SIZE(savectx)
 
 
@@ -1183,7 +1181,7 @@ ENTRY(longjmp)
 	mov.l	@r4+,	r9
 	mov.l	@r4+,	r8
 	rts
-	 nop
+	 mov	#1, r0		/* return 1 from setjmp */
 	SET_ENTRY_SIZE(longjmp)
 
 #endif /* DDB || KGDB */
