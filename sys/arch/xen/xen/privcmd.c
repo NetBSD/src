@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.11 2006/01/15 22:09:52 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.12 2006/01/23 20:19:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.11 2006/01/15 22:09:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.12 2006/01/23 20:19:08 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -146,10 +146,12 @@ privcmd_ioctl(void *v)
 
 			for (j = 0; j < mentry.npages; j++) {
 				//printf("remap va 0x%lx to 0x%lx\n", va, ma);
-				if ((error = pmap_remap_pages(pmap, va, ma, 1,
+				error = pmap_enter_ma(pmap, va, ma, 0,
 				    prot, PMAP_WIRED | PMAP_CANFAIL,
-				    mcmd->dom)))
+				    mcmd->dom);
+				if (error != 0) {
 					return error;
+				}
 				va += PAGE_SIZE;
 				ma += PAGE_SIZE;
 			}
@@ -206,7 +208,7 @@ privcmd_ioctl(void *v)
 			 * these into fewer hypercalls.
 			 */
 			//printf("mmapbatch: va=%lx ma=%lx dom=%d\n", va, ma, pmb->dom);
-			error = pmap_remap_pages(pmap, va, ma, 1, prot,
+			error = pmap_enter_ma(pmap, va, ma, 0, prot,
 			    PMAP_WIRED | PMAP_CANFAIL, pmb->dom);
 			if (error != 0) {
 				printf("mmapbatch: remap error %d!\n", error);

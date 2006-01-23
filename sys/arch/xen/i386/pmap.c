@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2005/12/24 20:07:48 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2006/01/23 20:19:08 yamt Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2005/12/24 20:07:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2006/01/23 20:19:08 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -881,6 +881,25 @@ pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t *mapte, pt_entry_t npte)
 	splx(s);
 
 	return opte;
+}
+
+static inline int
+pte_atomic_update_ma_domid(pt_entry_t *pte, pt_entry_t npte, pt_entry_t *opte,
+    int domid)
+{
+	pt_entry_t *maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
+	int error;
+
+	if (domid == DOMID_SELF) {
+		*opte = pte_atomic_update_ma(pte, maptp, npte);
+		error = 0;
+	} else {
+		/* XXX */
+		*opte = PTE_GET_MA(pte);
+		error = xpq_update_foreign(maptp, npte, domid);
+	}
+
+	return error;
 }
 
 inline static pt_entry_t
@@ -3535,20 +3554,9 @@ pmap_collect(pmap)
  * defined as macro in pmap.h
  */
 
-/*
- * pmap_enter: enter a mapping into a pmap
- *
- * => must be done "now" ... no lazy-evaluation
- * => we set pmap => pv_head locking
- */
-
 int
-pmap_enter(pmap, va, pa, prot, flags)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	int flags;
+pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
+    vm_prot_t prot, int flags, int domid)
 {
 	pt_entry_t *ptes, opte, npte;
 	struct vm_page *ptp, *pg;
@@ -3557,42 +3565,32 @@ pmap_enter(pmap, va, pa, prot, flags)
 	struct pv_entry *pve = NULL; /* XXX gcc */
 	int error;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
-	pt_entry_t *maptp;
+	int resid_delta = 0;
+	int wired_delta = 0;
 
-	XENPRINTK(("pmap_enter(%p, %p, %p, %08x, %08x)\n",
-	    pmap, (void *)va, (void *)pa, prot, flags));
+	XENPRINTK(("%s(%p, %p, %p, %08x, %08x)\n",
+	    __func__, pmap, (void *)va, (void *)pa, prot, flags));
 
+	KASSERT(domid == DOMID_SELF || pa == 0);
 	KASSERT(pmap_initialized);
 
 #ifdef DIAGNOSTIC
 	/* sanity check: totally out of range? */
 	if (va >= VM_MAX_KERNEL_ADDRESS)
-		panic("pmap_enter: too big");
+		panic("%s: too big", __func__);
 
 	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
-		panic("pmap_enter: trying to map over PDP/APDP!");
+		panic("%s: trying to map over PDP/APDP!", __func__);
 
 	/* sanity check: kernel PTPs should already have been pre-allocated */
 	if (va >= VM_MIN_KERNEL_ADDRESS &&
 	    !pmap_valid_entry(pmap->pm_pdir[pdei(va)]))
-		panic("pmap_enter: missing kernel PTP!");
+		panic("%s: missing kernel PTP!", __func__);
 #endif
 
-	npte = protection_codes[prot] | PG_V;
-
-	if (pa >= pmap_pa_start && pa < pmap_pa_end)
-		npte |= xpmap_ptom(pa);
-	else {
-		XENPRINTF(("pmap_enter: va %08lx outside pa range %08lx\n",
-		    va, pa));
-		npte |= pa;
-	}
-
-	/* XENPRINTK(("npte %p\n", npte)); */
-
+	npte = protection_codes[prot] | PG_V | ma;
 	if (wired)
 	        npte |= PG_W;
-
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)
@@ -3618,7 +3616,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 				error = ENOMEM;
 				goto out;
 			}
-			panic("pmap_enter: get ptp failed");
+			panic("%s: get ptp failed", __func__);
 		}
 	}
 
@@ -3627,37 +3625,40 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * on SMP the PTE might gain PG_U and PG_M flags
 	 * before we zap it later
 	 */
-	opte = pte_get(&ptes[x86_btop(va)]);		/* old PTE */
+	opte = pte_get_ma(&ptes[x86_btop(va)]);		/* old PTE */
 	XENPRINTK(("npte %p opte %p ptes %p idx %03x\n", 
 		      (void *)npte, (void *)opte, ptes, x86_btop(va)));
 
 	/*
 	 * is there currently a valid mapping at our VA and does it
-	 * map to the same PA as the one we want to map ?
+	 * map to the same MA as the one we want to map ?
 	 */
 
-	if (pmap_valid_entry(opte) && ((opte & PG_FRAME) == pa)) {
+	if (pmap_valid_entry(opte) && ((opte & PG_FRAME) == ma)) {
 
 		/*
 		 * first, calculate pm_stats updates.  resident count will not
 		 * change since we are replacing/changing a valid mapping.
 		 * wired count might change...
 		 */
-		pmap->pm_stats.wired_count +=
-		    ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
+		wired_delta = ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
 
 		npte |= (opte & PG_PVLIST);
 
 		XENPRINTK(("pmap update opte == pa"));
 		/* zap! */
-		maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
-		opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp, npte);
+		error = pte_atomic_update_ma_domid(&ptes[x86_btop(va)], npte,
+		    &opte, domid);
+		if (error) {
+			goto out;
+		}
 
 		/*
 		 * Might be cached in the TLB as being writable
 		 * if this is on the PVLIST, sync R/M bit
 		 */
 		if (opte & PG_PVLIST) {
+			KASSERT(domid == DOMID_SELF);
 			pg = PHYS_TO_VM_PAGE(pa);
 #ifdef DIAGNOSTIC
 			if (pg == NULL)
@@ -3675,7 +3676,11 @@ pmap_enter(pmap, va, pa, prot, flags)
 		goto shootdown_now;
 	}
 
-	pg = PHYS_TO_VM_PAGE(pa);
+	if (domid == DOMID_SELF) {
+		pg = PHYS_TO_VM_PAGE(pa);
+	} else {
+		pg = NULL;
+	}
 	XENPRINTK(("pg %p from %p, init %d\n", pg, (void *)pa,
 		      pmap_initialized));
 	if (pg != NULL) {
@@ -3705,7 +3710,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (pmap_valid_entry(opte)) {
 
 		/*
-		 * changing PAs: we must remove the old one first
+		 * changing MAs: we must remove the old one first
 		 */
 
 		/*
@@ -3713,16 +3718,16 @@ pmap_enter(pmap, va, pa, prot, flags)
 		 * change since we are replacing/changing a valid mapping.
 		 * wired count might change...
 		 */
-		pmap->pm_stats.wired_count +=
-		    ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
+		wired_delta = ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
 
 		if (opte & PG_PVLIST) {
-			pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
+			paddr_t opa = xpmap_mtop(opte & PG_FRAME);
+			pg = PHYS_TO_VM_PAGE(opa);
 #ifdef DIAGNOSTIC
 			if (pg == NULL)
-				panic("pmap_enter: PG_PVLIST mapping with "
-				      "unmanaged page "
-				      "pa = 0x%lx (0x%lx)", pa, atop(pa));
+				panic("%s: PG_PVLIST mapping with "
+				      "unmanaged page pa = 0x%lx (0x%lx)",
+				      __func__, pa, atop(pa));
 #endif
 			mdpg = &pg->mdpage;
 			old_pvh = &mdpg->mp_pvhead;
@@ -3732,10 +3737,11 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 			XENPRINTK(("pmap change pa"));
 			/* zap! */
-			maptp = (pt_entry_t *)vtomach(
-				(vaddr_t)&ptes[x86_btop(va)]);
-			opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp,
-						    npte);
+			error = pte_atomic_update_ma_domid(&ptes[x86_btop(va)],
+			    npte, &opte, domid);
+			if (error) {
+				goto out;
+			}
 
 			pve = pmap_remove_pv(old_pvh, pmap, va);
 			KASSERT(pve != 0);
@@ -3751,11 +3757,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 			goto shootdown_test;
 		}
 	} else {	/* opte not valid */
-		pmap->pm_stats.resident_count++;
+		resid_delta = 1;
 		if (wired) 
-			pmap->pm_stats.wired_count++;
-		if (ptp)
-			ptp->wire_count++;
+			wired_delta = 1;
 	}
 
 	if (new_pvh) {
@@ -3765,456 +3769,13 @@ pmap_enter(pmap, va, pa, prot, flags)
 	}
 
 	XENPRINTK(("pmap initial setup\n"));
-	maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
-	opte = pte_atomic_update_ma(&ptes[x86_btop(va)],
-	    maptp, npte); /* zap! */
-
-shootdown_test:
-	/* Update page attributes if needed */
-	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
-#if defined(MULTIPROCESSOR)
-		int32_t cpumask = 0;
-#endif
-shootdown_now:
-#if defined(MULTIPROCESSOR)
-		pmap_tlb_shootdown(pmap, va, opte, &cpumask);
-		pmap_tlb_shootnow(cpumask);
-#else
-		/* Don't bother deferring in the single CPU case. */
-		if (pmap_is_curpmap(pmap))
-			pmap_update_pg(va);
-#endif
-	}
-
-	error = 0;
-
-out:
-	pmap_unmap_ptes(pmap);
-	PMAP_MAP_TO_HEAD_UNLOCK();
-
-	XENPRINTK(("pmap_enter: %d\n", error));
-	return error;
-}
-
-/*
- * pmap_enter_ma: enter a mapping into a pmap
- *
- * => must be done "now" ... no lazy-evaluation
- * => we set pmap => pv_head locking
- */
-
-int
-pmap_enter_ma(pmap, va, pa, prot, flags)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	int flags;
-{
-	pt_entry_t *ptes, opte, npte;
-	pt_entry_t *maptp;
-	struct vm_page *ptp, *pg;
-	struct vm_page_md *mdpg;
-	struct pv_head *old_pvh;
-	struct pv_entry *pve = NULL; /* XXX gcc */
-	int error;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
-
-	XENPRINTK(("pmap_enter_ma(%p, %p, %p, %08x, %08x)\n",
-	    pmap, (void *)va, (void *)pa, prot, flags));
-
-#ifdef DIAGNOSTIC
-	/* sanity check: totally out of range? */
-	if (va >= VM_MAX_KERNEL_ADDRESS)
-		panic("pmap_enter: too big");
-
-	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
-		panic("pmap_enter: trying to map over PDP/APDP!");
-
-	/* sanity check: kernel PTPs should already have been pre-allocated */
-	if (va >= VM_MIN_KERNEL_ADDRESS &&
-	    !pmap_valid_entry(pmap->pm_pdir[pdei(va)]))
-		panic("pmap_enter: missing kernel PTP!");
-#endif
-
-	npte = pa | protection_codes[prot] | PG_V;
-	/* XENPRINTK(("npte %p\n", npte)); */
-
-	if (wired)
-	        npte |= PG_W;
-
-	if (va < VM_MAXUSER_ADDRESS)
-		npte |= PG_u;
-	else if (va < VM_MAX_ADDRESS)
-		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
-	if (pmap == pmap_kernel())
-		npte |= pmap_pg_g;
-	if (flags & VM_PROT_ALL) {
-		npte |= PG_U;
-		if (flags & VM_PROT_WRITE)
-			npte |= PG_M;
-	}
-
-	/* get lock */
-	PMAP_MAP_TO_HEAD_LOCK();
-
-	ptes = pmap_map_ptes(pmap);		/* locks pmap */
-	if (pmap == pmap_kernel()) {
-		ptp = NULL;
-	} else {
-		ptp = pmap_get_ptp(pmap, pdei(va));
-		if (ptp == NULL) {
-			if (flags & PMAP_CANFAIL) {
-				error = ENOMEM;
-				goto out;
-			}
-			panic("pmap_enter: get ptp failed");
-		}
-	}
-
-	/*
-	 * Get first view on old PTE 
-	 * on SMP the PTE might gain PG_U and PG_M flags
-	 * before we zap it later
-	 */
-	opte = pte_get_ma(&ptes[x86_btop(va)]);		/* old PTE */
-	XENPRINTK(("npte %p opte %p ptes %p idx %03x\n", 
-		      (void *)npte, (void *)opte, ptes, x86_btop(va)));
-	XENPRINTF(("pmap_enter_ma pa %08lx va %08lx opte %08x npte %08x "
-	    "wired %d count %ld\n", pa, va, opte, npte, wired,
-	    pmap->pm_stats.wired_count));
-
-	/*
-	 * is there currently a valid mapping at our VA and does it
-	 * map to the same MA as the one we want to map ?
-	 */
-
-	if (pmap_valid_entry(opte) && ((opte & PG_FRAME) == pa)) {
-
-		/*
-		 * first, calculate pm_stats updates.  resident count will not
-		 * change since we are replacing/changing a valid mapping.
-		 * wired count might change...
-		 */
-		pmap->pm_stats.wired_count +=
-		    ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
-
-		XENPRINTK(("pmap update opte == pa"));
-		/* zap! */
-		maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
-		opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp, npte);
-
-		/*
-		 * Might be cached in the TLB as being writable
-		 * if this is on the PVLIST, sync R/M bit
-		 */
-		KDASSERT((opte & PG_PVLIST) == 0);
-		goto shootdown_now;
-	}
-
-	/* 
-	 * no managed mapping for pages mapped through pmap_enter_ma.
-	 */
-
-	/*
-	 * is there currently a valid mapping at our VA?
-	 */
-
-	if (pmap_valid_entry(opte)) {
-
-		/*
-		 * changing PAs: we must remove the old one first
-		 */
-
-		/*
-		 * first, calculate pm_stats updates.  resident count will not
-		 * change since we are replacing/changing a valid mapping.
-		 * wired count might change...
-		 */
-		pmap->pm_stats.wired_count +=
-		    ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
-
-		if (opte & PG_PVLIST) {
-			opte = xpmap_mtop(opte);
-			KDASSERT((opte & PG_FRAME) != (KERNTEXTOFF - KERNBASE));
-
-			pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
-#ifdef DIAGNOSTIC
-			if (pg == NULL)
-				panic("pmap_enter: PG_PVLIST mapping with "
-				      "unmanaged page "
-				      "pa = 0x%lx (0x%lx)", pa, atop(pa));
-#endif
-			mdpg = &pg->mdpage;
-			old_pvh = &mdpg->mp_pvhead;
-
-			/* NULL new_pvh since page will not be managed */
-			pmap_lock_pvhs(old_pvh, NULL);
-
-			XENPRINTK(("pmap change pa"));
-			/* zap! */
-			maptp = (pt_entry_t *)vtomach(
-				(vaddr_t)&ptes[x86_btop(va)]);
-			opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp,
-						    npte);
-
-			pve = pmap_remove_pv(old_pvh, pmap, va);
-			KASSERT(pve != 0);
-			mdpg->mp_attrs |= opte;
-
-			pmap_free_pv(pmap, pve);
-			simple_unlock(&old_pvh->pvh_lock);
-
-			goto shootdown_test;
-		}
-	} else {	/* opte not valid */
-		pmap->pm_stats.resident_count++;
-		if (wired) 
-			pmap->pm_stats.wired_count++;
-		if (ptp)
-			ptp->wire_count++;
-	}
-
-	XENPRINTK(("pmap initial setup"));
-	maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
-	opte = pte_atomic_update_ma(&ptes[x86_btop(va)],
-	    maptp, npte); /* zap! */
-
-shootdown_test:
-	/* Update page attributes if needed */
-	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
-#if defined(MULTIPROCESSOR)
-		int32_t cpumask = 0;
-#endif
-shootdown_now:
-#if defined(MULTIPROCESSOR)
-		pmap_tlb_shootdown(pmap, va, opte, &cpumask);
-		pmap_tlb_shootnow(cpumask);
-#else
-		/* Don't bother deferring in the single CPU case. */
-		if (pmap_is_curpmap(pmap))
-			pmap_update_pg(va);
-#endif
-	}
-
-	error = 0;
-
-out:
-	pmap_unmap_ptes(pmap);
-	PMAP_MAP_TO_HEAD_UNLOCK();
-
-	XENPRINTK(("pmap_enter: %d\n", error));
-	return error;
-}
-
-/*
- * pmap_remap_pages: change an existing mapping to new machine pages
- *
- * => must be done "now" ... no lazy-evaluation
- * => we set pmap => pv_head locking
- */
-
-int
-pmap_remap_pages(pmap, va, pa, npages, prot, flags, dom)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t pa;
-	int npages;
-	vm_prot_t prot;
-	int flags;
-	int dom;
-{
-	pt_entry_t *ptes, opte, npte;
-	pt_entry_t *maptp;
-	struct vm_page *ptp, *pg;
-	struct vm_page_md *mdpg;
-	struct pv_head *old_pvh;
-	struct pv_entry *pve = NULL; /* XXX gcc */
-	int error, dptpwire;
-
-	dptpwire = 0;
-
-	XENPRINTK(("pmap_remap_pages(%p, %p, %p, %d, %08x, %d)\n",
-	    pmap, (void *)va, (void *)pa, npages, flags, dom));
-	//printf("pmap_remap_pages(%p, %p, %p, %d, %08x, %d)\n", pmap, (void *)va, (void *)pa, npages, flags, dom);
-
-	if (npages != 1)
-		panic("pmap_remap_pages: not yet");
-
-#ifdef DIAGNOSTIC
-	/* sanity check: totally out of range? */
-	if (va >= VM_MAX_KERNEL_ADDRESS)
-		panic("pmap_remap_pages: too big");
-
-	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
-		panic("pmap_remap_pages: trying to map over PDP/APDP!");
-
-	/* sanity check: kernel PTPs should already have been pre-allocated */
-	if (va >= VM_MIN_KERNEL_ADDRESS &&
-	    !pmap_valid_entry(pmap->pm_pdir[pdei(va)]))
-		panic("pmap_remap_pages: missing kernel PTP!");
-#endif
-
-	npte = pa | PG_V;
-	/* XENPRINTK(("npte %p\n", npte)); */
-	//printf("npte 0x%x\n", npte);
-
-	/* it is always a wired mapping */
-	npte |= PG_W;
-
-	if (va < VM_MAXUSER_ADDRESS)
-		npte |= PG_u;
-	else if (va < VM_MAX_ADDRESS)
-		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
-	if (pmap == pmap_kernel())
-		npte |= pmap_pg_g;
-	if (flags & VM_PROT_ALL) {
-		npte |= PG_U;
-		if (flags & VM_PROT_WRITE)
-			npte |= PG_M;
-	}
-
-	/* get lock */
-	PMAP_MAP_TO_HEAD_LOCK();
-
-	ptes = pmap_map_ptes(pmap);		/* locks pmap */
-	if (pmap == pmap_kernel()) {
-		ptp = NULL;
-	} else {
-		ptp = pmap_get_ptp(pmap, pdei(va));
-		if (ptp == NULL) {
-			if (flags & PMAP_CANFAIL) {
-				error = ENOMEM;
-				goto out;
-			}
-			panic("pmap_remap_pages: get ptp failed");
-		}
-	}
-
-	/*
-	 * Get first view on old PTE 
-	 * on SMP the PTE might gain PG_U and PG_M flags
-	 * before we zap it later
-	 */
-	opte = pte_get_ma(&ptes[x86_btop(va)]);		/* old PTE */
-	XENPRINTK(("npte %p opte %p ptes %p idx %03x\n", 
-		      (void *)npte, (void *)opte, ptes, x86_btop(va)));
-	XENPRINTF(("pmap_remap_pages pa %08lx va %08lx opte %08x npte %08x "
-	    "count %ld\n", pa, va, opte, npte,
-	    pmap->pm_stats.wired_count));
-	//printf("npte %p opte %p ptes %p idx %03x\n", (void *)npte, (void *)opte, ptes, x86_btop(va));
-	//printf("pmap_remap_pages pa %08lx va %08lx opte %08x npte %08x count %ld\n", pa, va, opte, npte, pmap->pm_stats.wired_count);
-
-	if (prot & VM_PROT_WRITE)
-		npte |= (PG_M | PG_RW);
-	else 
-		npte |= PG_RO;
-
-	/*
-	 * is there currently a valid mapping at our VA and does it
-	 * map to the same MA as the one we want to map ?
-	 */
-	if (pmap_valid_entry(opte) && ((opte & PG_FRAME) == pa)) {
-		/*
-		 * first, calculate pm_stats updates.  resident count will not
-		 * change since we are replacing/changing a valid mapping.
-		 * wired count might change...
-		 */
-		pmap->pm_stats.wired_count += 1 - ((opte & PG_W) ? 1 : 0);
-
-		//printf("pmap_remap_pages opte == pa");
-		/* zap! */
-		maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
-		error = xpq_update_foreign(maptp, npte, dom);
-
-		/*
-		 * The protection bits should not have changed
-		 */
-		if ((npte & PG_RW)
-		     || ((opte & (PG_M | PG_RW)) != (PG_M | PG_RW)))
-			panic("pmap_remap_pages protection changed\n");
-		/*
-		 * Might be cached in the TLB as being writable
-		 * if this is on the PVLIST, sync R/M bit
-		 */
-		KDASSERT((opte & PG_PVLIST) == 0);
-		goto shootdown_now;
-	}
-		
-	/* 
-	 * no managed mapping for pages mapped through pmap_remap_pages.
-	 */
-
-	/*
-	 * is there currently a valid mapping at our VA?
-	 */
-
-	if (pmap_valid_entry(opte)) {
-		/*
-		 * changing PAs: we must remove the old one first
-		 */
-
-		/*
-		 * first, calculate pm_stats updates.  resident count will not
-		 * change since we are replacing/changing a valid mapping.
-		 * wired count might change...
-		 */
-		pmap->pm_stats.wired_count += 1 - ((opte & PG_W) ? 1 : 0);
-
-		if (opte & PG_PVLIST) {
-			opte = xpmap_mtop(opte);
-			KDASSERT((opte & PG_FRAME) != (KERNTEXTOFF - KERNBASE));
-
-			pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
-#ifdef DIAGNOSTIC
-			if (pg == NULL)
-				panic("pmap_remap_pages: PG_PVLIST mapping with "
-				      "unmanaged page "
-				      "pa = 0x%lx (0x%lx)", pa, atop(pa));
-#endif
-			mdpg = &pg->mdpage;
-			old_pvh = &mdpg->mp_pvhead;
-
-			/* NULL new_pvh since page will not be managed */
-			pmap_lock_pvhs(old_pvh, NULL);
-
-			//printf("pmap change pa");
-			/* zap! */
-			opte = pte_get_ma(&ptes[x86_btop(va)]);
-			maptp = (pt_entry_t *)vtomach(
-				(vaddr_t)&ptes[x86_btop(va)]);
-			error = xpq_update_foreign(maptp, npte, dom);
-
-			pve = pmap_remove_pv(old_pvh, pmap, va);
-			KASSERT(pve != 0);
-			mdpg->mp_attrs |= opte;
-
-			pmap_free_pv(pmap, pve);
-			simple_unlock(&old_pvh->pvh_lock);
-
-			goto shootdown_test;
-		}
-	} else {
-		pmap->pm_stats.resident_count++;
-		pmap->pm_stats.wired_count++;
-		if (ptp) {
-			dptpwire = 1;
-			ptp->wire_count++;
-		}
-	}
-
-	//printf("pmap initial setup");
-	maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
-	error = xpq_update_foreign(maptp, npte, dom);
+	/* zap! */
+	error = pte_atomic_update_ma_domid(&ptes[x86_btop(va)], npte,
+	    &opte, domid);
 	if (error) {
-		printf("pmap_remap_pages: xpq_update_foreign failed va=%lx"
-		    " npte=%lx error=%d dptpwire=%d\n",
-		    va, (unsigned long)npte, error, dptpwire);
-		ptp->wire_count -= dptpwire;
-		/* XXX fix other stats? */
 		goto out;
 	}
-	
+
 shootdown_test:
 	/* Update page attributes if needed */
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
@@ -4232,12 +3793,48 @@ shootdown_now:
 #endif
 	}
 
+	error = 0;
+
 out:
+	if (error == 0) {
+		if (wired_delta) {
+			KASSERT(wired_delta == 1 || wired_delta == -1);
+			pmap->pm_stats.wired_count += wired_delta;
+		}
+		if (resid_delta) {
+			KASSERT(resid_delta == 1);
+			pmap->pm_stats.resident_count += resid_delta;
+			if (ptp) {
+				ptp->wire_count += resid_delta;
+			}
+		}
+	}
 	pmap_unmap_ptes(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 
-	//printf("pmap_remap_pages: %d\n", error);
+	XENPRINTK(("%s: %d\n", __func__, error));
 	return error;
+}
+
+/*
+ * pmap_enter: enter a mapping into a pmap
+ *
+ * => must be done "now" ... no lazy-evaluation
+ * => we set pmap => pv_head locking
+ */
+
+int
+pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+{
+	paddr_t ma;
+
+	if (__predict_false(pa < pmap_pa_start || pmap_pa_end <= pa)) {
+		ma = pa; /* XXX hack */
+	} else {
+		ma = xpmap_ptom(pa);
+	}
+
+	return pmap_enter_ma(pmap, va, ma, pa, prot, flags, DOMID_SELF);
 }
 
 /*
