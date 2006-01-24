@@ -1,7 +1,7 @@
-/* $NetBSD: printf.s,v 1.6 2001/03/02 16:43:26 mhitch Exp $ */
+/* $NetBSD: printf.s,v 1.7 2006/01/24 19:56:27 is Exp $ */
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -58,7 +58,7 @@ ENTRY_NOPROFILE(printf)
 	jsr	%a6@(-0x20a)
 	movml	%sp@+, #0x4c00
 	rts
-#if 0
+
 Lstorech:
 	movb	%d0, %a3@+
 	rts
@@ -73,4 +73,17 @@ ENTRY_NOPROFILE(sprintf)
 	jsr	%a6@(-0x20a)
 	movml	%sp@+, #0x4c00
 	rts
-#endif
+
+/*
+ * XXX cheating - at least for now.
+ */
+ENTRY_NOPROFILE(snprintf)
+	movml	#0x0032,%sp@-
+	movl	%sp@(16),%a3
+	lea	%pc@(Lstorech:w),%a2
+	lea	%sp@(28),%a1
+	movl	%sp@(24),%a0
+	movl	%pc@(_C_LABEL(SysBase):w),%a6
+	jsr	%a6@(-0x20a)
+	movml	%sp@+, #0x4c00
+	rts
