@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.51 2005/04/18 19:39:45 kleink Exp $	*/
+/*	$NetBSD: netdb.h,v 1.52 2006/01/24 17:08:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -140,7 +140,7 @@ struct	hostent {
 	int	h_addrtype;	/* host address type */
 	int	h_length;	/* length of address */
 	char	**h_addr_list;	/* list of addresses from name server */
-#define	h_addr	h_addr_list[0]	/* address, for backward compatiblity */
+#define	h_addr	h_addr_list[0]	/* address, for backward compatibility */
 };
 
 /*
@@ -216,7 +216,7 @@ struct addrinfo {
 #define	NETDB_SUCCESS	0	/* no problem */
 #endif
 #define	HOST_NOT_FOUND	1 /* Authoritative Answer Host not found */
-#define	TRY_AGAIN	2 /* Non-Authoritive Host not found, or SERVERFAIL */
+#define	TRY_AGAIN	2 /* Non-Authoritative Host not found, or SERVERFAIL */
 #define	NO_RECOVERY	3 /* Non recoverable errors, FORMERR, REFUSED, NOTIMP */
 #define	NO_DATA		4 /* Valid name, no data record of requested type */
 #if defined(_NETBSD_SOURCE)
