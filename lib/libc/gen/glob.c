@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.14 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.15 2006/01/24 17:24:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.14 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.15 2006/01/24 17:24:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -107,7 +107,7 @@ __RCSID("$NetBSD: glob.c,v 1.14 2005/11/29 03:11:59 christos Exp $");
 #define	SLASH		'/'
 #define	COMMA		','
 
-#ifndef DEBUG
+#ifndef USE_8BIT_CHARS
 
 #define	M_QUOTE		0x8000
 #define	M_PROTECT	0x4000
@@ -118,10 +118,10 @@ typedef u_short Char;
 
 #else
 
-#define	M_QUOTE		0x80
-#define	M_PROTECT	0x40
-#define	M_MASK		0xff
-#define	M_ASCII		0x7f
+#define	M_QUOTE		(Char)0x80
+#define	M_PROTECT	(Char)0x40
+#define	M_MASK		(Char)0xff
+#define	M_ASCII		(Char)0x7f
 
 typedef char Char;
 
