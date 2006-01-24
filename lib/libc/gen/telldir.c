@@ -1,4 +1,4 @@
-/*	$NetBSD: telldir.c,v 1.15 2003/08/07 16:42:58 agc Exp $	*/
+/*	$NetBSD: telldir.c,v 1.16 2006/01/24 14:00:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: telldir.c,v 1.15 2003/08/07 16:42:58 agc Exp $");
+__RCSID("$NetBSD: telldir.c,v 1.16 2006/01/24 14:00:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,20 +77,31 @@ struct ddloc {
 static long	dd_loccnt;	/* Index of entry for sequential readdir's */
 static struct	ddloc *dd_hash[NDIRHASH];   /* Hash list heads for ddlocs */
 
+long __telldir(const DIR *dirp);
+
+long
+telldir(const DIR *dirp)
+{
+	long rv;
+#ifdef _REENTRANT
+	if (__isthreaded) {
+		mutex_lock((mutex_t *)dirp->dd_lock);
+		rv = __telldir(dirp);
+		mutex_unlock((mutex_t *)dirp->dd_lock);
+	} else
+#endif
+		rv = __telldir(dirp);
+	return rv;
+}
+
 /*
  * return a pointer into a directory
  */
 long
-telldir(dirp)
-	const DIR *dirp;
+__telldir(const DIR *dirp)
 {
 	long idx;
 	struct ddloc *lp;
-
-#ifdef _REENTRANT
-	if (__isthreaded)
-		mutex_lock((mutex_t *)dirp->dd_lock);
-#endif
 
 	if ((lp = (struct ddloc *)malloc(sizeof(struct ddloc))) == NULL)
 		return (-1);
@@ -100,10 +111,6 @@ telldir(dirp)
 	lp->loc_loc = dirp->dd_loc;
 	lp->loc_next = dd_hash[LOCHASH(idx)];
 	dd_hash[LOCHASH(idx)] = lp;
-#ifdef _REENTRANT
-	if (__isthreaded)
-		mutex_unlock((mutex_t *)dirp->dd_lock);
-#endif
 	return (idx);
 }
 
@@ -138,7 +145,7 @@ __seekdir(dirp, loc)
 	dirp->dd_seek = lp->loc_seek;
 	dirp->dd_loc = 0;
 	while (dirp->dd_loc < lp->loc_loc) {
-		dp = readdir(dirp);
+		dp = __readdir(dirp);
 		if (dp == NULL)
 			break;
 	}
