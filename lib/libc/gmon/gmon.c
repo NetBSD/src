@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.23 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.24 2006/01/24 17:30:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.23 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.24 2006/01/24 17:30:51 christos Exp $");
 #endif
 #endif
 
@@ -445,7 +445,7 @@ _mcleanup()
 	}
 	len = snprintf(buf2, sizeof buf2, "[mcleanup1] kcount 0x%x ssiz %d\n",
 	    p->kcount, p->kcountsize);
-	write(log, buf2, len);
+	(void)write(log, buf2, (size_t)len);
 #endif
 #ifdef _REENTRANT
 	_m_gmon_merge();
@@ -472,7 +472,7 @@ _mcleanup()
 			"[mcleanup2] frompc 0x%x selfpc 0x%x count %d\n" ,
 				frompc, p->tos[toindex].selfpc,
 				p->tos[toindex].count);
-			write(log, buf2, len);
+			(void)write(log, buf2, (size_t)len);
 #endif
 			rawarc.raw_frompc = frompc;
 			rawarc.raw_selfpc = p->tos[toindex].selfpc;
