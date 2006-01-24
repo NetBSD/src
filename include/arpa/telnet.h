@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.h,v 1.11 2005/02/19 21:57:19 christos Exp $	*/
+/*	$NetBSD: telnet.h,v 1.12 2006/01/24 17:13:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -146,6 +146,8 @@ const char *telopts[NTELOPTS+1] = {
 	"KERMIT",
 	0
 };
+#else
+extern const char *telopts[NTELOPTS+1];
 #endif
 
 /* sub-option qualifiers */
