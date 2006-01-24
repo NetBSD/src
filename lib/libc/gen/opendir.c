@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.29 2006/01/24 14:00:57 christos Exp $	*/
+/*	$NetBSD: opendir.c,v 1.30 2006/01/24 19:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.29 2006/01/24 14:00:57 christos Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.30 2006/01/24 19:33:10 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include "reentrant.h"
+#include "extern.h"
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -303,7 +304,7 @@ retry:
 		mutex_init((mutex_t *)dirp->dd_lock, NULL);
 	}
 #endif
-	dirp->dd_rewind = __telldir(dirp);
+	dirp->dd_rewind = _telldir_unlocked(dirp);
 	return (dirp);
 error:
 	serrno = errno;
