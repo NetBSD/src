@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.233 2006/01/22 16:44:45 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.234 2006/01/24 21:43:26 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.233 2006/01/22 16:44:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.234 2006/01/24 21:43:26 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1457,7 +1457,10 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		wdc->datain_pio(chp, drive_flags, data, bcount);
 		/* at this point the drive should be in its initial state */
 		ata_c->flags |= AT_XFDONE;
-		goto again;
+		/*
+		 * XXX checking the status register again here cause some
+		 * hardware to timeout.
+		 */
 	} else if (ata_c->flags & AT_WRITE) {
 		if ((chp->ch_status & WDCS_DRQ) == 0) {
 			ata_c->flags |= AT_TIMEOU;
