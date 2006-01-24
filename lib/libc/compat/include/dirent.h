@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.2 2005/09/14 20:20:15 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.3 2006/01/24 14:01:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -50,6 +50,9 @@ struct dirent12 *readdir(DIR *);
 struct dirent *__readdir30(DIR *);
 
 #if defined(_NETBSD_SOURCE)
+
+struct dirent12 *__readdir(DIR *);
+struct dirent *____readdir30(DIR *);
 
 DIR *__opendir2(const char *, int);
 DIR *__opendir230(const char *, int);
