@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.82 2005/12/01 13:21:05 yamt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.83 2006/01/24 13:02:57 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.82 2005/12/01 13:21:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.83 2006/01/24 13:02:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.82 2005/12/01 13:21:05 yamt Exp $")
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/mbuf.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -120,6 +121,7 @@ static void	db_sync_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_uvmexp_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_vnode_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_mbuf_print_cmd(db_expr_t, int, db_expr_t, const char *);
 
 /*
  * 'show' commands
@@ -143,6 +145,7 @@ static const struct db_command db_show_cmds[] = {
 	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "mount",	db_mount_print_cmd,	0,	NULL },
+	{ "mbuf",	db_mbuf_print_cmd,	0,	NULL },
 	{ "ncache",	db_namecache_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "page",	db_page_print_cmd,	0,	NULL },
@@ -618,6 +621,15 @@ db_mount_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *m
 		full = TRUE;
 
 	vfs_mount_print((struct mount *)(intptr_t) addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+static void
+db_mbuf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    const char *modif)
+{
+
+	m_print((const struct mbuf *)(intptr_t) addr, modif, db_printf);
 }
 
 /*ARGSUSED*/
