@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.587 2006/01/20 08:38:59 garbled Exp $
+# $NetBSD: mi,v 1.588 2006/01/24 19:13:46 elad Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -561,6 +561,8 @@
 ./usr/bin/progress				base-util-bin
 ./usr/bin/purgestat				base-mailwrapper-bin
 ./usr/bin/pwhash				base-util-bin
+./usr/bin/qsafe					base-util-bin
+./usr/bin/qsieve				base-util-bin
 ./usr/bin/qsubst				base-util-bin
 ./usr/bin/quota					base-util-bin
 ./usr/bin/radioctl				base-audio-bin

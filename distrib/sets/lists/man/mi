@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.847 2006/01/17 19:08:28 jmmv Exp $
+# $NetBSD: mi,v 1.848 2006/01/24 19:13:46 elad Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -352,6 +352,8 @@
 ./usr/share/man/cat1/pushd.0			man-util-catman		.cat
 ./usr/share/man/cat1/pwd.0			man-util-catman		.cat
 ./usr/share/man/cat1/pwhash.0			man-util-catman		.cat
+./usr/share/man/cat1/qsafe.0			man-util-catman		.cat
+./usr/share/man/cat1/qsieve.0			man-util-catman		.cat
 ./usr/share/man/cat1/qsubst.0			man-util-catman		.cat
 ./usr/share/man/cat1/quota.0			man-util-catman		.cat
 ./usr/share/man/cat1/radioctl.0			man-audio-catman	.cat
@@ -2645,6 +2647,8 @@
 ./usr/share/man/man1/pushd.1			man-util-man		.man
 ./usr/share/man/man1/pwd.1			man-util-man		.man
 ./usr/share/man/man1/pwhash.1			man-util-man		.man
+./usr/share/man/man1/qsafe.1			man-util-man		.man
+./usr/share/man/man1/qsieve.1			man-util-man		.man
 ./usr/share/man/man1/qsubst.1			man-util-man		.man
 ./usr/share/man/man1/quota.1			man-util-man		.man
 ./usr/share/man/man1/radioctl.1			man-audio-man		.man
