@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.19 2005/11/11 21:09:50 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.20 2006/01/24 18:35:18 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.19 2005/11/11 21:09:50 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.20 2006/01/24 18:35:18 dsl Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -231,7 +231,7 @@ i386_setboot(ib_params *params)
 
 	magic = *(uint32_t *)(bootstrapbuf + 512 * 2 + 4);
 	if (magic != htole32(X86_BOOT_MAGIC_1)) {
-		warnx("Invalid magic in stage1 boostrap %x != %x",
+		warnx("Invalid magic in stage1 bootstrap %x != %x",
 			magic, htole32(X86_BOOT_MAGIC_1));
 		goto done;
 	}
