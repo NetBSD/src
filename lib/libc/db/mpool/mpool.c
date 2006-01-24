@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.c,v 1.14 2003/08/07 16:42:44 agc Exp $	*/
+/*	$NetBSD: mpool.c,v 1.15 2006/01/24 17:37:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mpool.c	8.5 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: mpool.c,v 1.14 2003/08/07 16:42:44 agc Exp $");
+__RCSID("$NetBSD: mpool.c,v 1.15 2006/01/24 17:37:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -350,9 +350,10 @@ mpool_bkt(mp)
 			CIRCLEQ_REMOVE(head, bp, hq);
 			CIRCLEQ_REMOVE(&mp->lqh, bp, q);
 #ifdef DEBUG
-			{ void *spage;
-				spage = bp->page;
-				memset(bp, 0xff, sizeof(BKT) + mp->pagesize);
+			{
+				void *spage = bp->page;
+				(void)memset(bp, 0xff,
+				    (size_t)(sizeof(BKT) + mp->pagesize));
 				bp->page = spage;
 			}
 #endif
@@ -365,7 +366,7 @@ new:	if ((bp = (BKT *)malloc((size_t)(sizeof(BKT) + mp->pagesize))) == NULL)
 	++mp->pagealloc;
 #endif
 #if defined(DEBUG) || defined(PURIFY)
-	memset(bp, 0xff, sizeof(BKT) + mp->pagesize);
+	(void)memset(bp, 0xff, (size_t)(sizeof(BKT) + mp->pagesize));
 #endif
 	bp->page = (char *)(void *)bp + sizeof(BKT);
 	++mp->curcache;
