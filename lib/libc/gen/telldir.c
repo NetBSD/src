@@ -1,4 +1,4 @@
-/*	$NetBSD: telldir.c,v 1.16 2006/01/24 14:00:57 christos Exp $	*/
+/*	$NetBSD: telldir.c,v 1.17 2006/01/24 19:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: telldir.c,v 1.16 2006/01/24 14:00:57 christos Exp $");
+__RCSID("$NetBSD: telldir.c,v 1.17 2006/01/24 19:33:10 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include "reentrant.h"
+#include "extern.h"
 #include <sys/param.h>
 
 #include <assert.h>
@@ -77,8 +78,6 @@ struct ddloc {
 static long	dd_loccnt;	/* Index of entry for sequential readdir's */
 static struct	ddloc *dd_hash[NDIRHASH];   /* Hash list heads for ddlocs */
 
-long __telldir(const DIR *dirp);
-
 long
 telldir(const DIR *dirp)
 {
@@ -86,11 +85,11 @@ telldir(const DIR *dirp)
 #ifdef _REENTRANT
 	if (__isthreaded) {
 		mutex_lock((mutex_t *)dirp->dd_lock);
-		rv = __telldir(dirp);
+		rv = _telldir_unlocked(dirp);
 		mutex_unlock((mutex_t *)dirp->dd_lock);
 	} else
 #endif
-		rv = __telldir(dirp);
+		rv = _telldir_unlocked(dirp);
 	return rv;
 }
 
@@ -98,7 +97,7 @@ telldir(const DIR *dirp)
  * return a pointer into a directory
  */
 long
-__telldir(const DIR *dirp)
+_telldir_unlocked(const DIR *dirp)
 {
 	long idx;
 	struct ddloc *lp;
@@ -119,9 +118,7 @@ __telldir(const DIR *dirp)
  * Only values returned by "telldir" should be passed to seekdir.
  */
 void
-__seekdir(dirp, loc)
-	DIR *dirp;
-	long loc;
+_seekdir_unlocked(DIR *dirp, long loc)
 {
 	struct ddloc *lp;
 	struct ddloc **prevlp;
@@ -145,7 +142,7 @@ __seekdir(dirp, loc)
 	dirp->dd_seek = lp->loc_seek;
 	dirp->dd_loc = 0;
 	while (dirp->dd_loc < lp->loc_loc) {
-		dp = __readdir(dirp);
+		dp = _readdir_unlocked(dirp);
 		if (dp == NULL)
 			break;
 	}

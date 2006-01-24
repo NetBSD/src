@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 2003/09/27 03:14:59 matt Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 2006/01/24 19:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -43,4 +43,12 @@ int __sysctl __P((int *, unsigned int, void *, size_t *, void *, size_t));
 struct sigaction;
 int __sigaction_sigtramp __P((int, const struct sigaction *,
     struct sigaction *, const void *, int));
+
+struct _dirdesc;
+void _seekdir_unlocked(struct _dirdesc *, long);
+long _telldir_unlocked(const struct _dirdesc *);
+#ifndef __LIBC12_SOURCE__
+struct dirent;
+struct dirent *_readdir_unlocked(struct _dirdesc *) __RENAME(___readdir_unlocked30);
+#endif
 __END_DECLS
