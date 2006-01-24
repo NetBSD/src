@@ -1,4 +1,4 @@
-/*	$NetBSD: closedir.c,v 1.13 2003/08/07 16:42:46 agc Exp $	*/
+/*	$NetBSD: closedir.c,v 1.14 2006/01/24 19:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)closedir.c	8.1 (Berkeley) 6/10/93";
 #else
-__RCSID("$NetBSD: closedir.c,v 1.13 2003/08/07 16:42:46 agc Exp $");
+__RCSID("$NetBSD: closedir.c,v 1.14 2006/01/24 19:33:10 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include "reentrant.h"
+#include "extern.h"
 #include <sys/types.h>
 
 #include <assert.h>
@@ -67,7 +68,7 @@ closedir(dirp)
 	if (__isthreaded)
 		mutex_lock((mutex_t *)dirp->dd_lock);
 #endif
-	__seekdir(dirp, dirp->dd_rewind);	/* free seekdir storage */
+	_seekdir_unlocked(dirp, dirp->dd_rewind);/* free seekdir storage */
 	fd = dirp->dd_fd;
 	dirp->dd_fd = -1;
 	dirp->dd_loc = 0;
