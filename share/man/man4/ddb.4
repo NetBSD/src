@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.89 2006/01/21 23:40:30 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.90 2006/01/24 13:03:33 yamt Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd January 19, 2006
+.Dd January 24, 2006
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -666,6 +666,15 @@ Print the mount structure at
 If
 .Cm /f
 is specified, the complete vnode list is printed.
+.It Xo
+.Ic show mbuf Ns Op Cm /c
+.Ar address
+.Xc
+Print the mbuf structure at
+.Ar address .
+If
+.Cm /c
+is specified, the mbufs in the chain are followed.
 .It Ic show ncache Ar address
 Dump the namecache list associated with vnode at
 .Ar address .
