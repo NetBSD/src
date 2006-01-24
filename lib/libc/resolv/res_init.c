@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.6 2005/09/15 23:33:41 tsarna Exp $	*/
+/*	$NetBSD: res_init.c,v 1.7 2006/01/24 17:39:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.9.2.5.4.2 2004/03/16 12:34:18 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.6 2005/09/15 23:33:41 tsarna Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.7 2006/01/24 17:39:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -121,7 +121,9 @@ __weak_alias(res_setservers,__res_setservers)
 #include "res_private.h"
 
 /* Options.  Should all be left alone. */
+#ifndef DEBUG
 #define DEBUG
+#endif
 
 static void res_setoptions __P((res_state, const char *, const char *));
 
