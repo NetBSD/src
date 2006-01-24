@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.16 2003/08/07 16:42:43 agc Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.17 2006/01/24 17:35:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #else
-__RCSID("$NetBSD: hash_page.c,v 1.16 2003/08/07 16:42:43 agc Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.17 2006/01/24 17:35:33 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -857,8 +857,7 @@ __free_ovflpage(hashp, obufp)
 	 * that has already had overflow pages allocated off it, and we
 	 * failed to read it from the file.
 	 */
-	if (!freep)
-		assert(0);
+	assert(freep != NULL);
 #endif
 	CLRBIT(freep, free_bit);
 #ifdef DEBUG2
