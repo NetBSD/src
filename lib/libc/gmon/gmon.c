@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.24 2006/01/24 17:30:51 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.25 2006/01/24 17:33:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.24 2006/01/24 17:30:51 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.25 2006/01/24 17:33:44 christos Exp $");
 #endif
 #endif
 
@@ -380,7 +380,7 @@ _mcleanup()
 	const char *proffile;
 	char  buf[PATH_MAX];
 #ifdef DEBUG
-	int log, len;
+	int logfd, len;
 	char buf2[200];
 #endif
 
@@ -438,14 +438,14 @@ _mcleanup()
 		return;
 	}
 #ifdef DEBUG
-	log = open("gmon.log", O_CREAT|O_TRUNC|O_WRONLY, 0664);
-	if (log < 0) {
+	logfd = open("gmon.log", O_CREAT|O_TRUNC|O_WRONLY, 0664);
+	if (logfd < 0) {
 		warn("mcount: Cannot open `gmon.log'");
 		return;
 	}
-	len = snprintf(buf2, sizeof buf2, "[mcleanup1] kcount 0x%x ssiz %d\n",
+	len = snprintf(buf2, sizeof buf2, "[mcleanup1] kcount %p ssiz %lu\n",
 	    p->kcount, p->kcountsize);
-	(void)write(log, buf2, (size_t)len);
+	(void)write(logfd, buf2, (size_t)len);
 #endif
 #ifdef _REENTRANT
 	_m_gmon_merge();
@@ -469,10 +469,10 @@ _mcleanup()
 		     toindex = p->tos[toindex].link) {
 #ifdef DEBUG
 			len = snprintf(buf2, sizeof buf2,
-			"[mcleanup2] frompc 0x%x selfpc 0x%x count %d\n" ,
-				frompc, p->tos[toindex].selfpc,
-				p->tos[toindex].count);
-			(void)write(log, buf2, (size_t)len);
+			"[mcleanup2] frompc 0x%lx selfpc 0x%lx count %lu\n" ,
+				(u_long)frompc, (u_long)p->tos[toindex].selfpc,
+				(u_long)p->tos[toindex].count);
+			(void)write(logfd, buf2, (size_t)len);
 #endif
 			rawarc.raw_frompc = frompc;
 			rawarc.raw_selfpc = p->tos[toindex].selfpc;
