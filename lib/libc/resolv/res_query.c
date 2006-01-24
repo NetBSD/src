@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.6 2004/09/25 05:33:01 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.7 2006/01/24 17:41:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_query.c,v 1.2.2.3.4.2 2004/03/16 12:34:19 marka Exp";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.6 2004/09/25 05:33:01 christos Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.7 2006/01/24 17:41:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,7 +108,9 @@ __weak_alias(res_hostalias,__res_hostalias)
 #endif
 
 /* Options.  Leave them on. */
+#ifndef DEBUG
 #define DEBUG
+#endif
 
 #if PACKETSZ > 1024
 #define MAXPACKET	PACKETSZ
