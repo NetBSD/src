@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.67 2005/09/15 23:33:41 tsarna Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.68 2006/01/24 17:29:33 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.67 2005/09/15 23:33:41 tsarna Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.68 2006/01/24 17:29:33 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,7 +133,7 @@ typedef union {
 } align;
 
 #ifdef DEBUG
-static void dprintf(char *, res_state *, ...)
+static void dprintf(const char *, res_state, ...)
 	__attribute__((__format__(__printf__, 1, 3)));
 #endif
 static struct hostent *getanswer(const querybuf *, int, const char *, int,
@@ -174,7 +174,7 @@ static const ns_src default_dns_files[] = {
 
 #ifdef DEBUG
 static void
-dprintf(char *msg, res_state res, ...)
+dprintf(const char *msg, res_state res, ...)
 {
 	_DIAGASSERT(msg != NULL);
 
@@ -182,7 +182,7 @@ dprintf(char *msg, res_state res, ...)
 		int save = errno;
 		va_list ap;
 
-		va_start (ap, msg);
+		va_start (ap, res);
 		vprintf(msg, ap);
 		va_end (ap);
 		
