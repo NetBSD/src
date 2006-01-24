@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2006/01/02 22:10:31 is Exp $
+#	$NetBSD: Makefile,v 1.37 2006/01/24 20:02:03 is Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -28,11 +28,14 @@ BINDIR=/usr/mdec
 COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
 COBJS+=  lseek.o open.o read.o close.o dev.o errno.o
 COBJS+=  ufs.o ustarfs.o panic.o vers.o files.o
-COBJS+=  divdi3.o moddi3.o qdivrem.o snprintf.o
+COBJS+=  divdi3.o moddi3.o qdivrem.o
+#snprintf.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
-SOBJS += strlen.o memcmp.o strerror.o sprintf.o subr_prf.o
+SOBJS += strlen.o memcmp.o strerror.o
 SOBJS += libstubs.o memcmp.o memmove.o memset.o strncmp.o
+
+#sprintf.o subr_prf.o
 
 OBJS=	$(SOBJS) $(COBJS)
 
