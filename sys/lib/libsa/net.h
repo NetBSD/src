@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.18 2006/01/22 16:05:42 dsl Exp $	*/
+/*	$NetBSD: net.h,v 1.19 2006/01/24 17:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -106,9 +106,8 @@ ssize_t	sendrecv __P((struct iodesc *,
 			void *, size_t));
 
 /* Utilities: */
-char	*ether_sprintf __P((u_char *));
-int	in_cksum __P((void *, int));
-int	in_cksum __P((void *, int));
+char	*ether_sprintf __P((const u_char *));
+int	ip_cksum __P((const void *, size_t));
 
 /* Machine-dependent functions: */
 time_t	getsecs __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.4 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: udp.c,v 1.5 2006/01/24 17:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -99,7 +99,7 @@ sendudp(d, pkt, len)
 	ip->ip_ttl = IPDEFTTL;			/* char */
 	ip->ip_src = d->myip;
 	ip->ip_dst = d->destip;
-	ip->ip_sum = in_cksum(ip, sizeof(*ip));	 /* short, but special */
+	ip->ip_sum = ip_cksum(ip, sizeof(*ip));	 /* short, but special */
 
 	uh->uh_sport = d->myport;
 	uh->uh_dport = d->destport;
@@ -115,7 +115,7 @@ sendudp(d, pkt, len)
 		ui = (struct udpiphdr *)ip;
 		bzero(ui->ui_x1, sizeof(ui->ui_x1));
 		ui->ui_len = uh->uh_ulen;
-		uh->uh_sum = in_cksum(ui, len);
+		uh->uh_sum = ip_cksum(ui, len);
 		*ip = tip;
 	}
 #endif
@@ -195,7 +195,7 @@ readudp(d, pkt, len, tleft)
 
 	hlen = ip->ip_hl << 2;
 	if (hlen < sizeof(*ip) ||
-	    in_cksum(ip, hlen) != 0) {
+	    ip_cksum(ip, hlen) != 0) {
 #ifdef NET_DEBUG
 		if (debug)
 			printf("readudp: short hdr or bad cksum.\n");
@@ -251,7 +251,7 @@ readudp(d, pkt, len, tleft)
 		ui = (struct udpiphdr *)ip;
 		bzero(ui->ui_x1, sizeof(ui->ui_x1));
 		ui->ui_len = uh->uh_ulen;
-		if (in_cksum(ui, n) != 0) {
+		if (ip_cksum(ui, n) != 0) {
 #ifdef NET_DEBUG
 			if (debug)
 				printf("readudp: bad cksum\n");
