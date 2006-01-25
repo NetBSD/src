@@ -1,4 +1,4 @@
-/* $NetBSD: qnan.c,v 1.1.1.1 2006/01/25 15:18:49 kleink Exp $ */
+/* $NetBSD: qnan.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -54,12 +54,12 @@ SOFTWARE.
 typedef unsigned Long Ulong;
 
 #undef HAVE_IEEE
-#ifdef IEEE_8087
+#ifdef IEEE_LITTLE_ENDIAN
 #define _0 1
 #define _1 0
 #define HAVE_IEEE
 #endif
-#ifdef IEEE_MC68k
+#ifdef IEEE_BIG_ENDIAN
 #define _0 0
 #define _1 1
 #define HAVE_IEEE

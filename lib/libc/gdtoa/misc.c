@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.1.1.1 2006/01/25 15:18:48 kleink Exp $ */
+/* $NetBSD: misc.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -68,7 +68,7 @@ Balloc
 		len = (sizeof(Bigint) + (x-1)*sizeof(ULong) + sizeof(double) - 1)
 			/sizeof(double);
 		if (pmem_next - private_mem + len <= PRIVATE_mem) {
-			rv = (Bigint*)pmem_next;
+			rv = (Bigint*)(void *)pmem_next;
 			pmem_next += len;
 			}
 		else
@@ -106,8 +106,8 @@ lo0bits
 	(ULong *y)
 #endif
 {
-	register int k;
-	register ULong x = *y;
+	int k;
+	ULong x = *y;
 
 	if (x & 7) {
 		if (x & 1)
@@ -174,6 +174,7 @@ multadd
 #ifdef ULLong
 		y = *x * (ULLong)m + carry;
 		carry = y >> 32;
+		/* LINTED conversion */
 		*x++ = y & 0xffffffffUL;
 #else
 #ifdef Pack_32
@@ -197,6 +198,7 @@ multadd
 			Bfree(b);
 			b = b1;
 			}
+		/* LINTED conversion */
 		b->x[wds++] = carry;
 		b->wds = wds;
 		}
@@ -206,12 +208,12 @@ multadd
  int
 hi0bits_D2A
 #ifdef KR_headers
-	(x) register ULong x;
+	(x) ULong x;
 #else
-	(register ULong x)
+	(ULong x)
 #endif
 {
-	register int k = 0;
+	int k = 0;
 
 	if (!(x & 0xffff0000)) {
 		k = 16;
@@ -302,9 +304,11 @@ mult
 			do {
 				z = *x++ * (ULLong)y + *xc + carry;
 				carry = z >> 32;
+				/* LINTED conversion */
 				*xc++ = z & 0xffffffffUL;
 				}
 				while(x < xae);
+			/* LINTED conversion */
 			*xc = carry;
 			}
 		}
@@ -375,12 +379,12 @@ pow5mult
 {
 	Bigint *b1, *p5, *p51;
 	int i;
-	static int p05[3] = { 5, 25, 125 };
+	CONST static int p05[3] = { 5, 25, 125 };
 
 	if ( (i = k & 3) !=0)
 		b = multadd(b, p05[i-1], 0);
 
-	if (!(k >>= 2))
+	if (!(k = (unsigned int)k >> 2))
 		return b;
 	if ((p5 = p5s) == 0) {
 		/* first time */
@@ -402,7 +406,7 @@ pow5mult
 			Bfree(b);
 			b = b1;
 			}
-		if (!(k >>= 1))
+		if (!(k = (unsigned int)k >> 1))
 			break;
 		if ((p51 = p5->next) == 0) {
 #ifdef MULTIPLE_THREADS
@@ -434,7 +438,7 @@ lshift
 	Bigint *b1;
 	ULong *x, *x1, *xe, z;
 
-	n = k >> kshift;
+	n = (unsigned int)k >> kshift;
 	k1 = b->k;
 	n1 = n + b->wds + 1;
 	for(i = b->maxwds; n1 > i; i <<= 1)
@@ -559,12 +563,14 @@ diff
 	do {
 		y = (ULLong)*xa++ - *xb++ - borrow;
 		borrow = y >> 32 & 1UL;
+		/* LINTED conversion */
 		*xc++ = y & 0xffffffffUL;
 		}
 		while(xb < xbe);
 	while(xa < xae) {
 		y = *xa++ - borrow;
 		borrow = y >> 32 & 1UL;
+		/* LINTED conversion */
 		*xc++ = y & 0xffffffffUL;
 		}
 #else
@@ -632,16 +638,16 @@ b2d
 	*e = 32 - k;
 #ifdef Pack_32
 	if (k < Ebits) {
-		d0 = Exp_1 | y >> Ebits - k;
+		d0 = Exp_1 | y >> (Ebits - k);
 		w = xa > xa0 ? *--xa : 0;
-		d1 = y << (32-Ebits) + k | w >> Ebits - k;
+		d1 = y << ((32-Ebits) + k) | w >> (Ebits - k);
 		goto ret_d;
 		}
 	z = xa > xa0 ? *--xa : 0;
 	if (k -= Ebits) {
-		d0 = Exp_1 | y << k | z >> 32 - k;
+		d0 = Exp_1 | y << k | z >> (32 - k);
 		y = xa > xa0 ? *--xa : 0;
-		d1 = z << k | y >> 32 - k;
+		d1 = z << k | y >> (32 - k);
 		}
 	else {
 		d0 = Exp_1 | y;
@@ -717,7 +723,7 @@ d2b
 #ifdef Pack_32
 	if ( (y = d1) !=0) {
 		if ( (k = lo0bits(&y)) !=0) {
-			x[0] = y | z << 32 - k;
+			x[0] = y | z << (32 - k);
 			z >>= k;
 			}
 		else
@@ -843,7 +849,7 @@ strcp_D2A(a, b) char *a; char *b;
 strcp_D2A(char *a, CONST char *b)
 #endif
 {
-	while(*a = *b++)
+	while((*a = *b++))
 		a++;
 	return a;
 	}
@@ -857,8 +863,8 @@ memcpy_D2A(a, b, len) Char *a; Char *b; size_t len;
 memcpy_D2A(void *a1, void *b1, size_t len)
 #endif
 {
-	register char *a = (char*)a1, *ae = a + len;
-	register char *b = (char*)b1, *a0 = a;
+	char *a = (char*)a1, *ae = a + len;
+	char *b = (char*)b1, *a0 = a;
 	while(a < ae)
 		*a++ = *b++;
 	return a0;

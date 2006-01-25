@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.1.1.1 2006/01/25 15:18:48 kleink Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -81,9 +81,9 @@ THIS SOFTWARE.
  */
 
 /*
- * #define IEEE_8087 for IEEE-arithmetic machines where the least
+ * #define IEEE_LITTLE_ENDIAN for IEEE-arithmetic machines where the least
  *	significant byte has the lowest address.
- * #define IEEE_MC68k for IEEE-arithmetic machines where the most
+ * #define IEEE_BIG_ENDIAN for IEEE-arithmetic machines where the most
  *	significant byte has the lowest address.
  * #define Long int on machines with 32-bit ints and 64-bit longs.
  * #define Sudden_Underflow for IEEE-format machines without gradual
@@ -167,6 +167,18 @@ THIS SOFTWARE.
  * #define USE_LOCALE to use the current locale's decimal_point value.
  */
 
+/* #define IEEE_{BIG,LITTLE}_ENDIAN in ${ARCHDIR}/gdtoa/arith.h */
+
+#include <stdint.h>
+#define Long    int32_t
+#define ULong  uint32_t
+#define LLong   int64_t
+#define ULLong uint64_t
+
+#define INFNAN_CHECK
+#define MULTIPLE_THREADS
+#define USE_LOCALE
+
 #ifndef GDTOAIMP_H_INCLUDED
 #define GDTOAIMP_H_INCLUDED
 #include "gdtoa.h"
@@ -194,10 +206,10 @@ extern Char *MALLOC ANSI((size_t));
 
 #undef IEEE_Arith
 #undef Avoid_Underflow
-#ifdef IEEE_MC68k
+#ifdef IEEE_BIG_ENDIAN
 #define IEEE_Arith
 #endif
-#ifdef IEEE_8087
+#ifdef IEEE_LITTLE_ENDIAN
 #define IEEE_Arith
 #endif
 
@@ -250,23 +262,21 @@ extern Char *MALLOC ANSI((size_t));
 #define n_bigtens 2
 #endif
 
-#ifndef __MATH_H__
 #include "math.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if defined(IEEE_8087) + defined(IEEE_MC68k) + defined(VAX) + defined(IBM) != 1
-Exactly one of IEEE_8087, IEEE_MC68k, VAX, or IBM should be defined.
+#if defined(IEEE_LITTLE_ENDIAN) + defined(IEEE_BIG_ENDIAN) + defined(VAX) + defined(IBM) != 1
+Exactly one of IEEE_LITTLE_ENDIAN, IEEE_BIG_ENDIAN, VAX, or IBM should be defined.
 #endif
 
 typedef union { double d; ULong L[2]; } U;
 
 #ifdef YES_ALIAS
 #define dval(x) x
-#ifdef IEEE_8087
+#ifdef IEEE_LITTLE_ENDIAN
 #define word0(x) ((ULong *)&x)[1]
 #define word1(x) ((ULong *)&x)[0]
 #else
@@ -274,26 +284,30 @@ typedef union { double d; ULong L[2]; } U;
 #define word1(x) ((ULong *)&x)[1]
 #endif
 #else /* !YES_ALIAS */
-#ifdef IEEE_8087
-#define word0(x) ((U*)&x)->L[1]
-#define word1(x) ((U*)&x)->L[0]
+#ifdef IEEE_LITTLE_ENDIAN
+#define word0(x) ( /* LINTED */ (U*)&x)->L[1]
+#define word1(x) ( /* LINTED */ (U*)&x)->L[0]
 #else
-#define word0(x) ((U*)&x)->L[0]
-#define word1(x) ((U*)&x)->L[1]
+#define word0(x) ( /* LINTED */ (U*)&x)->L[0]
+#define word1(x) ( /* LINTED */ (U*)&x)->L[1]
 #endif
-#define dval(x) ((U*)&x)->d
+#define dval(x) ( /* LINTED */ (U*)&x)->d
 #endif /* YES_ALIAS */
 
 /* The following definition of Storeinc is appropriate for MIPS processors.
  * An alternative that might be better on some machines is
  * #define Storeinc(a,b,c) (*a++ = b << 16 | c & 0xffff)
  */
-#if defined(IEEE_8087) + defined(VAX)
-#define Storeinc(a,b,c) (((unsigned short *)a)[1] = (unsigned short)b, \
-((unsigned short *)a)[0] = (unsigned short)c, a++)
+#if defined(IEEE_LITTLE_ENDIAN) + defined(VAX)
+#define Storeinc(a,b,c) \
+ (((unsigned short *)(void *)a)[1] = (unsigned short)b, \
+  ((unsigned short *)(void *)a)[0] = (unsigned short)c, \
+  a++)
 #else
-#define Storeinc(a,b,c) (((unsigned short *)a)[0] = (unsigned short)b, \
-((unsigned short *)a)[1] = (unsigned short)c, a++)
+#define Storeinc(a,b,c) \
+ (((unsigned short *)(void *)a)[0] = (unsigned short)b, \
+  ((unsigned short *)(void *)a)[1] = (unsigned short)c, \
+  a++)
 #endif
 
 /* #define P DBL_MANT_DIG */
@@ -454,6 +468,21 @@ extern double rnd_prod(double, double), rnd_quot(double, double);
 #ifndef MULTIPLE_THREADS
 #define ACQUIRE_DTOA_LOCK(n)	/*nothing*/
 #define FREE_DTOA_LOCK(n)	/*nothing*/
+#else
+#include "reentrant.h"
+
+extern mutex_t __gdtoa_locks[2];
+
+#define ACQUIRE_DTOA_LOCK(n)	\
+	do {							\
+		if (__isthreaded)				\
+			mutex_lock(&__gdtoa_locks[n]);		\
+	} while (/* CONSTCOND */ 0)
+#define FREE_DTOA_LOCK(n)	\
+	do {							\
+		if (__isthreaded)				\
+			mutex_unlock(&__gdtoa_locks[n]);	\
+	} while (/* CONSTCOND */ 0)
 #endif
 
 #define Kmax 15
@@ -477,51 +506,54 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
 #define Bcopy(x,y) memcpy(&x->sign,&y->sign,y->wds*sizeof(ULong) + 2*sizeof(int))
 #endif /* NO_STRING_H */
 
-#define Balloc Balloc_D2A
-#define Bfree Bfree_D2A
-#define ULtoQ ULtoQ_D2A
-#define ULtof ULtof_D2A
-#define ULtod ULtod_D2A
-#define ULtodd ULtodd_D2A
-#define ULtox ULtox_D2A
-#define ULtoxL ULtoxL_D2A
-#define any_on any_on_D2A
-#define b2d b2d_D2A
-#define bigtens bigtens_D2A
-#define cmp cmp_D2A
-#define copybits copybits_D2A
-#define d2b d2b_D2A
-#define decrement decrement_D2A
-#define diff diff_D2A
-#define dtoa_result dtoa_result_D2A
-#define g__fmt g__fmt_D2A
-#define gethex gethex_D2A
-#define hexdig hexdig_D2A
-#define hexnan hexnan_D2A
-#define hi0bits(x) hi0bits_D2A((ULong)(x))
-#define i2b i2b_D2A
-#define increment increment_D2A
-#define lo0bits lo0bits_D2A
-#define lshift lshift_D2A
-#define match match_D2A
-#define mult mult_D2A
-#define multadd multadd_D2A
-#define nrv_alloc nrv_alloc_D2A
-#define pow5mult pow5mult_D2A
-#define quorem quorem_D2A
-#define ratio ratio_D2A
-#define rshift rshift_D2A
-#define rv_alloc rv_alloc_D2A
-#define s2b s2b_D2A
-#define set_ones set_ones_D2A
-#define strcp strcp_D2A
-#define strtoIg strtoIg_D2A
-#define sum sum_D2A
-#define tens tens_D2A
-#define tinytens tinytens_D2A
-#define tinytens tinytens_D2A
-#define trailz trailz_D2A
-#define ulp ulp_D2A
+#define Balloc		__Balloc_D2A
+#define Bfree		__Bfree_D2A
+#define ULtoQ		__ULtoQ_D2A
+#define ULtof		__ULtof_D2A
+#define ULtod		__ULtod_D2A
+#define ULtodd		__ULtodd_D2A
+#define ULtox		__ULtox_D2A
+#define ULtoxL		__ULtoxL_D2A
+#define any_on 		__any_on_D2A
+#define b2d 		__b2d_D2A
+#define bigtens 	__bigtens_D2A
+#define cmp 		__cmp_D2A
+#define copybits 	__copybits_D2A
+#define d2b 		__d2b_D2A
+#define decrement 	__decrement_D2A
+#define diff 		__diff_D2A
+#define dtoa_result 	__dtoa_result_D2A
+#define g__fmt 		__g__fmt_D2A
+#define gethex 		__gethex_D2A
+#define hexdig 		__hexdig_D2A
+#define hexdig_init_D2A	__hexdig_init_D2A
+#define hexnan		__hexnan_D2A
+#define hi0bits		__hi0bits_D2A
+#define hi0bits_D2A	__hi0bits_D2A
+#define i2b		__i2b_D2A
+#define increment	__increment_D2A
+#define lo0bits		__lo0bits_D2A
+#define lshift		__lshift_D2A
+#define match		__match_D2A
+#define mult		__mult_D2A
+#define multadd		__multadd_D2A
+#define nrv_alloc	__nrv_alloc_D2A
+#define pow5mult	__pow5mult_D2A
+#define quorem		__quorem_D2A
+#define ratio		__ratio_D2A
+#define rshift		__rshift_D2A
+#define rv_alloc	__rv_alloc_D2A
+#define s2b		__s2b_D2A
+#define set_ones	__set_ones_D2A
+#define strcp		__strcp_D2A
+#define strcp_D2A	__strcp_D2A
+#define strtoIg		__strtoIg_D2A
+#define sum		__sum_D2A
+#define tens		__tens_D2A
+#define tinytens	__tinytens_D2A
+#define tinytens	__tinytens_D2A
+#define trailz		__trailz_D2A
+#define ulp		__ulp_D2A
 
  extern char *dtoa_result;
  extern CONST double bigtens[], tens[], tinytens[];
@@ -553,10 +585,10 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern Bigint *increment ANSI((Bigint*));
  extern int lo0bits ANSI((ULong*));
  extern Bigint *lshift ANSI((Bigint*, int));
- extern int match ANSI((CONST char**, char*));
+ extern int match ANSI((CONST char**, CONST char*));
  extern Bigint *mult ANSI((Bigint*, Bigint*));
  extern Bigint *multadd ANSI((Bigint*, int, int));
- extern char *nrv_alloc ANSI((char*, char **, int));
+ extern char *nrv_alloc ANSI((CONST char*, char **, int));
  extern Bigint *pow5mult ANSI((Bigint*, int));
  extern int quorem ANSI((Bigint*, Bigint*));
  extern double ratio ANSI((Bigint*, Bigint*));
@@ -584,7 +616,7 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  * (On HP Series 700/800 machines, -DNAN_WORD0=0x7ff40000 works.)
  */
 #ifdef IEEE_Arith
-#ifdef IEEE_MC68k
+#ifdef IEEE_BIG_ENDIAN
 #define _0 0
 #define _1 1
 #ifndef NAN_WORD0

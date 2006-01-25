@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.1.1.1 2006/01/25 15:18:51 kleink Exp $ */
+/* $NetBSD: strtod.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -77,7 +77,8 @@ strtod
 	double aadj, aadj1, adj, rv, rv0;
 	Long L;
 	ULong y, z;
-	Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
+	Bigint *bb, *bb1, *bd0;
+	Bigint *bd = NULL, *bs = NULL, *delta = NULL; /* pacify gcc */
 #ifdef SET_INEXACT
 	int inexact, oldinexact;
 #endif
@@ -90,11 +91,11 @@ strtod
 	for(s = s00;;s++) switch(*s) {
 		case '-':
 			sign = 1;
-			/* no break */
+			/* FALLTHROUGH */
 		case '+':
 			if (*++s)
 				goto break2;
-			/* no break */
+			/* FALLTHROUGH */
 		case 0:
 			goto ret0;
 		case '\t':
@@ -112,7 +113,7 @@ strtod
 #ifndef NO_HEX_FP
 		{
 		static FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
-		Long exp;
+		Long expt;
 		ULong bits[2];
 		switch(s[1]) {
 		  case 'x':
@@ -128,10 +129,11 @@ strtod
 #else
 #define fpi1 fpi
 #endif
-			switch((i = gethex(&s, &fpi1, &exp, &bb, sign)) & STRTOG_Retmask) {
+			switch((i = gethex(&s, &fpi1, &expt, &bb, sign)) & STRTOG_Retmask) {
 			  case STRTOG_NoNumber:
 				s = s00;
 				sign = 0;
+				/* FALLTHROUGH */
 			  case STRTOG_Zero:
 				break;
 			  default:
@@ -139,7 +141,7 @@ strtod
 					copybits(bits, fpi.nbits, bb);
 					Bfree(bb);
 					}
-				ULtod(((U*)&rv)->L, bits, exp, i);
+				ULtod((/* LINTED */(U*)&rv)->L, bits, expt, i);
 			  }}
 			goto ret;
 		  }
@@ -206,6 +208,7 @@ strtod
 		switch(c = *++s) {
 			case '-':
 				esign = 1;
+				/* FALLTHROUGH */
 			case '+':
 				c = *++s;
 			}
@@ -432,8 +435,8 @@ strtod
 					goto retfree;
 				goto ret;
 				}
-			e1 >>= 4;
-			for(j = 0; e1 > 1; j++, e1 >>= 1)
+			e1 = (unsigned int)e1 >> 4;
+			for(j = 0; e1 > 1; j++, e1 = (unsigned int)e1 >> 1)
 				if (e1 & 1)
 					dval(rv) *= bigtens[j];
 		/* The last multiplication could overflow. */
@@ -462,7 +465,7 @@ strtod
 #ifdef Avoid_Underflow
 			if (e1 & Scale_Bit)
 				scale = 2*P;
-			for(j = 0; e1 > 0; j++, e1 >>= 1)
+			for(j = 0; e1 > 0; j++, e1 = (unsigned int)e1 >> 1)
 				if (e1 & 1)
 					dval(rv) *= tinytens[j];
 			if (scale && (j = 2*P + 1 - ((word0(rv) & Exp_mask)
@@ -473,7 +476,7 @@ strtod
 					if (j >= 53)
 					 word0(rv) = (P+2)*Exp_msk1;
 					else
-					 word0(rv) &= 0xffffffff << j-32;
+					 word0(rv) &= 0xffffffff << (j-32);
 					}
 				else
 					word1(rv) &= 0xffffffff << j;
@@ -862,7 +865,7 @@ strtod
 #ifdef Avoid_Underflow
 			if (scale && y <= 2*P*Exp_msk1) {
 				if (aadj <= 0x7fffffff) {
-					if ((z = aadj) <= 0)
+					if ((z = aadj) == 0)
 						z = 1;
 					aadj = z;
 					aadj1 = dsign ? aadj : -aadj;
@@ -978,7 +981,7 @@ strtod
 	Bfree(delta);
  ret:
 	if (se)
-		*se = (char *)s;
+		*se = __UNCONST(s);
 	return sign ? -dval(rv) : dval(rv);
 	}
 

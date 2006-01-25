@@ -1,4 +1,4 @@
-/* $NetBSD: hexnan.c,v 1.1.1.1 2006/01/25 15:18:48 kleink Exp $ */
+/* $NetBSD: hexnan.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -66,14 +66,14 @@ hexnan( CONST char **sp, FPI *fpi, ULong *x0)
 	if (!hexdig['0'])
 		hexdig_init_D2A();
 	nbits = fpi->nbits;
-	x = x0 + (nbits >> kshift);
+	x = x0 + ((unsigned int)nbits >> kshift);
 	if (nbits & kmask)
 		x++;
 	*--x = 0;
 	x1 = xe = x;
 	havedig = hd0 = i = 0;
 	s = *sp;
-	while(c = *(CONST unsigned char*)++s) {
+	while((c = *(CONST unsigned char*)++s) != 0) {
 		if (!(h = hexdig[c])) {
 			if (c <= ' ') {
 				if (hd0 < havedig) {
@@ -103,7 +103,7 @@ hexnan( CONST char **sp, FPI *fpi, ULong *x0)
 			i = 1;
 			*--x = 0;
 			}
-		*x = (*x << 4) | h & 0xf;
+		*x = (*x << 4) | (h & 0xf);
 		}
 	if (!havedig)
 		return STRTOG_NaN;

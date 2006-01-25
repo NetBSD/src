@@ -1,4 +1,4 @@
-/* $NetBSD: gethex.c,v 1.1.1.1 2006/01/25 15:18:48 kleink Exp $ */
+/* $NetBSD: gethex.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -39,10 +39,10 @@ THIS SOFTWARE.
 
  int
 #ifdef KR_headers
-gethex(sp, fpi, exp, bp, sign)
-	CONST char **sp; FPI *fpi; Long *exp; Bigint **bp; int sign;
+gethex(sp, fpi, expt, bp, sign)
+	CONST char **sp; FPI *fpi; Long *expt; Bigint **bp; int sign;
 #else
-gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
+gethex( CONST char **sp, FPI *fpi, Long *expt, Bigint **bp, int sign)
 #endif
 {
 	Bigint *b;
@@ -99,7 +99,7 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 		switch(*++s) {
 		  case '-':
 			esign = 1;
-			/* no break */
+			/* FALLTHROUGH */
 		  case '+':
 			s++;
 		  }
@@ -114,11 +114,11 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 			e1 = -e1;
 		e += e1;
 	  }
-	*sp = (char*)s;
+	*sp = __UNCONST(s);
 	if (zret)
 		return havedig ? STRTOG_Zero : STRTOG_NoNumber;
 	n = s1 - s0 - 1;
-	for(k = 0; n > 7; n >>= 1)
+	for(k = 0; n > 7; n = (unsigned int)n >> 1)
 		k++;
 	b = Balloc(k);
 	x = b->x;
@@ -146,7 +146,7 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 		if (any_on(b,n)) {
 			lostbits = 1;
 			k = n - 1;
-			if (x[k>>kshift] & 1 << (k & kmask)) {
+			if (x[(unsigned int)k>>kshift] & 1 << (k & kmask)) {
 				lostbits = 2;
 				if (k > 1 && any_on(b,k-1))
 					lostbits = 3;
@@ -184,7 +184,7 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 			  case FPI_Round_down:
 				if (sign) {
  one_bit:
-					*exp = fpi->emin;
+					*expt = fpi->emin;
 					x[0] = b->wds = 1;
 					*bp = b;
 					return STRTOG_Denormal | STRTOG_Inexhi
@@ -200,7 +200,7 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 			lostbits = 1;
 		else if (k > 0)
 			lostbits = any_on(b,k);
-		if (x[k>>kshift] & 1 << (k & kmask))
+		if (x[(unsigned int)k>>kshift] & 1 << (k & kmask))
 			lostbits |= 2;
 		nbits -= n;
 		rshift(b,n);
@@ -213,7 +213,7 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 			break;
 		  case FPI_Round_near:
 			if (lostbits & 2
-			 && (lostbits & 1) | x[0] & 1)
+			 && (lostbits & 1) | (x[0] & 1))
 				up = 1;
 			break;
 		  case FPI_Round_up:
@@ -228,12 +228,12 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 			x = b->x;
 			if (irv == STRTOG_Denormal) {
 				if (nbits == fpi->nbits - 1
-				 && x[nbits >> kshift] & 1 << (nbits & kmask))
+				 && x[(unsigned int)nbits >> kshift] & 1 << (nbits & kmask))
 					irv =  STRTOG_Normal;
 				}
 			else if (b->wds > k
-			 || (n = nbits & kmask) !=0
-			     && hi0bits(x[k-1]) < 32-n) {
+			 || ((n = nbits & kmask) !=0
+			     && hi0bits(x[k-1]) < 32-n)) {
 				rshift(b,1);
 				if (++e > fpi->emax)
 					goto ovfl;
@@ -244,6 +244,6 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 			irv |= STRTOG_Inexlo;
 		}
 	*bp = b;
-	*exp = e;
+	*expt = e;
 	return irv;
 	}

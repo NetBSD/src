@@ -1,4 +1,4 @@
-/* $NetBSD: smisc.c,v 1.1.1.1 2006/01/25 15:18:49 kleink Exp $ */
+/* $NetBSD: smisc.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -113,9 +113,9 @@ ratio
  int
 match
 #ifdef KR_headers
-	(sp, t) char **sp, *t;
+	(sp, t) CONST char **sp, *t;
 #else
-	(CONST char **sp, char *t)
+	(CONST char **sp, CONST char *t)
 #endif
 {
 	int c, d;
@@ -144,7 +144,7 @@ copybits(ULong *c, int n, Bigint *b)
 	int nw, nw1;
 #endif
 
-	ce = c + ((n-1) >> kshift) + 1;
+	ce = c + ((unsigned int)(n-1) >> kshift) + 1;
 	x = b->x;
 #ifdef Pack_32
 	xe = x + b->wds;
@@ -174,7 +174,7 @@ any_on(Bigint *b, int k)
 
 	x = b->x;
 	nwds = b->wds;
-	n = k >> kshift;
+	n = (unsigned int)k >> kshift;
 	if (n > nwds)
 		n = nwds;
 	else if (n < nwds && (k &= kmask)) {

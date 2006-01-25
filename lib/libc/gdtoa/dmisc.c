@@ -1,4 +1,4 @@
-/* $NetBSD: dmisc.c,v 1.1.1.1 2006/01/25 15:18:40 kleink Exp $ */
+/* $NetBSD: dmisc.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -51,20 +51,20 @@ rv_alloc(int i)
 		sizeof(Bigint) - sizeof(ULong) - sizeof(int) + j <= i;
 		j <<= 1)
 			k++;
-	r = (int*)Balloc(k);
+	r = (int*)(void*)Balloc(k);
 	*r = k;
 	return
 #ifndef MULTIPLE_THREADS
 	dtoa_result =
 #endif
-		(char *)(r+1);
+		(char *)(void *)(r+1);
 	}
 
  char *
 #ifdef KR_headers
-nrv_alloc(s, rve, n) char *s, **rve; int n;
+nrv_alloc(s, rve, n) CONST char *s; char **rve; int n;
 #else
-nrv_alloc(char *s, char **rve, int n)
+nrv_alloc(CONST char *s, char **rve, int n)
 #endif
 {
 	char *rv, *t;
@@ -90,8 +90,8 @@ freedtoa(s) char *s;
 freedtoa(char *s)
 #endif
 {
-	Bigint *b = (Bigint *)((int *)s - 1);
-	b->maxwds = 1 << (b->k = *(int*)b);
+	Bigint *b = (Bigint *)(void *)((int *)(void *)s - 1);
+	b->maxwds = 1 << (b->k = *(int*)(void*)b);
 	Bfree(b);
 #ifndef MULTIPLE_THREADS
 	if (s == dtoa_result)
@@ -141,8 +141,10 @@ quorem
 #ifdef ULLong
 			ys = *sx++ * (ULLong)q + carry;
 			carry = ys >> 32;
+			/* LINTED conversion */
 			y = *bx - (ys & 0xffffffffUL) - borrow;
 			borrow = y >> 32 & 1UL;
+			/* LINTED conversion */
 			*bx++ = y & 0xffffffffUL;
 #else
 #ifdef Pack_32
@@ -182,8 +184,10 @@ quorem
 #ifdef ULLong
 			ys = *sx++ + carry;
 			carry = ys >> 32;
+			/* LINTED conversion */
 			y = *bx - (ys & 0xffffffffUL) - borrow;
 			borrow = y >> 32 & 1UL;
+			/* LINTED conversion */
 			*bx++ = y & 0xffffffffUL;
 #else
 #ifdef Pack_32

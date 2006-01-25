@@ -1,4 +1,4 @@
-/* $NetBSD: strtord.c,v 1.1.1.1 2006/01/25 15:18:54 kleink Exp $ */
+/* $NetBSD: strtord.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -35,9 +35,9 @@ THIS SOFTWARE.
 
  void
 #ifdef KR_headers
-ULtod(L, bits, exp, k) ULong *L; ULong *bits; Long exp; int k;
+ULtod(L, bits, expt, k) ULong *L; ULong *bits; Long expt; int k;
 #else
-ULtod(ULong *L, ULong *bits, Long exp, int k)
+ULtod(ULong *L, ULong *bits, Long expt, int k)
 #endif
 {
 	switch(k & STRTOG_Retmask) {
@@ -54,7 +54,7 @@ ULtod(ULong *L, ULong *bits, Long exp, int k)
 	  case STRTOG_Normal:
 	  case STRTOG_NaNbits:
 		L[_1] = bits[0];
-		L[_0] = (bits[1] & ~0x100000) | ((exp + 0x3ff + 52) << 20);
+		L[_0] = (bits[1] & ~0x100000) | ((expt + 0x3ff + 52) << 20);
 		break;
 
 	  case STRTOG_Infinite:
@@ -62,9 +62,11 @@ ULtod(ULong *L, ULong *bits, Long exp, int k)
 		L[_1] = 0;
 		break;
 
+#ifdef d_QNAN0
 	  case STRTOG_NaN:
 		L[0] = d_QNAN0;
 		L[1] = d_QNAN1;
+#endif
 	  }
 	if (k & STRTOG_Neg)
 		L[_0] |= 0x80000000L;
@@ -80,7 +82,7 @@ strtord(CONST char *s, char **sp, int rounding, double *d)
 	static FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
 	FPI *fpi, fpi1;
 	ULong bits[2];
-	Long exp;
+	Long expt;
 	int k;
 
 	fpi = &fpi0;
@@ -89,7 +91,7 @@ strtord(CONST char *s, char **sp, int rounding, double *d)
 		fpi1.rounding = rounding;
 		fpi = &fpi1;
 		}
-	k = strtodg(s, sp, fpi, &exp, bits);
-	ULtod((ULong*)d, bits, exp, k);
+	k = strtodg(s, sp, fpi, &expt, bits);
+	ULtod((/* LINTED */(U*)d)->L, bits, expt, k);
 	return k;
 	}

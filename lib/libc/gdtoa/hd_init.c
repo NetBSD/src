@@ -1,4 +1,4 @@
-/* $NetBSD: hd_init.c,v 1.1.1.1 2006/01/25 15:18:48 kleink Exp $ */
+/* $NetBSD: hd_init.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -37,9 +37,9 @@ THIS SOFTWARE.
 
  static void
 #ifdef KR_headers
-htinit(h, s, inc) unsigned char *h; unsigned char *s; int inc;
+htinit(h, s, inc) unsigned char *h; CONST unsigned char *s; int inc;
 #else
-htinit(unsigned char *h, unsigned char *s, int inc)
+htinit(unsigned char *h, CONST unsigned char *s, int inc)
 #endif
 {
 	int i, j;
@@ -50,7 +50,7 @@ htinit(unsigned char *h, unsigned char *s, int inc)
  void
 hexdig_init_D2A(Void)
 {
-#define USC (unsigned char *)
+#define USC (CONST unsigned char *)
 	htinit(hexdig, USC "0123456789", 0x10);
 	htinit(hexdig, USC "abcdef", 0x10 + 10);
 	htinit(hexdig, USC "ABCDEF", 0x10 + 10);
