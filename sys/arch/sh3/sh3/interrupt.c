@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.17 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.17 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -52,17 +52,21 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.17 2005/12/11 12:19:00 christos Exp 
 #include <sh3/tmureg.h>
 #include <machine/intr.h>
 
-void intc_intr_priority(int, int);
-struct intc_intrhand *intc_alloc_ih(void);
-void intc_free_ih(struct intc_intrhand *);
-int intc_unknown_intr(void *);
-void intpri_intr_enable(int);
-void intpri_intr_disable(int);
-void netintr(void);
-void tmu1_oneshot(void);
-int tmu1_intr(void *);
-void tmu2_oneshot(void);
-int tmu2_intr(void *);
+static void intc_intr_priority(int, int);
+static struct intc_intrhand *intc_alloc_ih(void);
+static void intc_free_ih(struct intc_intrhand *);
+static int intc_unknown_intr(void *);
+
+#ifdef SH4
+static void intpri_intr_enable(int);
+static void intpri_intr_disable(int);
+#endif
+
+static void netintr(void);
+static void tmu1_oneshot(void);
+static int tmu1_intr(void *);
+static void tmu2_oneshot(void);
+static int tmu2_intr(void *);
 
 /*
  * EVTCODE to intc_intrhand mapper.
@@ -82,10 +86,11 @@ struct sh_soft_intrhand *softnet_intrhand;
  * SH INTC support.
  */
 void
-intc_init()
+intc_init(void)
 {
 
 	switch (cpu_product) {
+#ifdef SH3
 	case CPU_PRODUCT_7709:
 	case CPU_PRODUCT_7709A:
 		_reg_write_2(SH7709_IPRC, 0);
@@ -98,7 +103,9 @@ intc_init()
 		_reg_write_2(SH3_IPRA, 0);
 		_reg_write_2(SH3_IPRB, 0);
 		break;
+#endif /* SH3 */
 
+#ifdef SH4
 	case CPU_PRODUCT_7751:
 	case CPU_PRODUCT_7751R: 
 		_reg_write_4(SH4_INTPRI00, 0);
@@ -113,6 +120,7 @@ intc_init()
 		_reg_write_2(SH4_IPRB, 0);
 		_reg_write_2(SH4_IPRC, 0);
 		break;
+#endif /* SH4 */
 	}
 }
 
@@ -168,7 +176,7 @@ intc_intr_disable(int evtcode)
 		intc_intr_priority(evtcode, 0);
 		break;
 
-#if defined(SH4)
+#ifdef SH4
 	case SH4_INTEVT_PCISERR:
 	case SH4_INTEVT_PCIDMA3:
 	case SH4_INTEVT_PCIDMA2:
@@ -199,7 +207,7 @@ intc_intr_enable(int evtcode)
 		intc_intr_priority(evtcode, (ih->ih_level >> 4));
 		break;
 
-#if defined(SH4)
+#ifdef SH4
 	case SH4_INTEVT_PCISERR:
 	case SH4_INTEVT_PCIDMA3:
 	case SH4_INTEVT_PCIDMA2:
@@ -222,7 +230,7 @@ intc_intr_enable(int evtcode)
  *	SH7708, SH7708S, SH7708R, SH7750, SH7750S ... evtcode is INTEVT
  *	SH7709, SH7709A				  ... evtcode is INTEVT2
  */
-void
+static void
 intc_intr_priority(int evtcode, int level)
 {
 	volatile uint16_t *iprreg;
@@ -271,6 +279,7 @@ intc_intr_priority(int evtcode, int level)
 		break;
 	}
 
+#ifdef SH3
 	if (CPU_IS_SH3) {
 		switch (evtcode) {
 		case SH7709_INTEVT2_IRQ3:
@@ -319,7 +328,11 @@ intc_intr_priority(int evtcode, int level)
 			SH7709_IPR(E, 0);
 			break;
 		}
-	} else {
+	}
+#endif /* SH3 */
+
+#ifdef SH4
+	if (CPU_IS_SH4) {
 		switch (evtcode) {
 		case SH4_INTEVT_SCIF_ERI:
 		case SH4_INTEVT_SCIF_RXI:
@@ -344,6 +357,7 @@ intc_intr_priority(int evtcode, int level)
 			break;
 		}
 	}
+#endif /* SH4 */
 
 	/*
 	 * XXX: This function gets called even for interrupts that
@@ -360,8 +374,8 @@ intc_intr_priority(int evtcode, int level)
 /*
  * Interrupt handler holder allocater.
  */
-struct intc_intrhand *
-intc_alloc_ih()
+static struct intc_intrhand *
+intc_alloc_ih(void)
 {
 	/* #0 is reserved for unregistered interrupt. */
 	struct intc_intrhand *ih = &__intc_intrhand[1];
@@ -377,7 +391,7 @@ intc_alloc_ih()
 	return (NULL);
 }
 
-void
+static void
 intc_free_ih(struct intc_intrhand *ih)
 {
 
@@ -385,7 +399,7 @@ intc_free_ih(struct intc_intrhand *ih)
 }
 
 /* Place-holder for debugging */
-int
+static int
 intc_unknown_intr(void *arg)
 {
 
@@ -398,6 +412,8 @@ intc_unknown_intr(void *arg)
 	/* NOTREACHED */
 	return (0);
 }
+
+#ifdef SH4 /* SH7751 support */
 
 /*
  * INTPRIxx
@@ -457,7 +473,7 @@ intpri_intr_priority(int evtcode, int level)
 	_reg_write_4(iprreg, r);
 }
 
-void
+static void
 intpri_intr_enable(int evtcode)
 {
 	volatile uint32_t *iprreg;
@@ -506,7 +522,7 @@ intpri_intr_enable(int evtcode)
 	_reg_write_4(iprreg, bit);
 }
 
-void
+static void
 intpri_intr_disable(int evtcode)
 {
 	volatile uint32_t *iprreg;
@@ -554,12 +570,13 @@ intpri_intr_disable(int evtcode)
 
 	_reg_write_4(iprreg, bit);
 }
+#endif /* SH4 */
 
 /*
  * Software interrupt support
  */
 void
-softintr_init()
+softintr_init(void)
 {
 	static const char *softintr_names[] = IPL_SOFTNAMES;
 	struct sh_soft_intr *asi;
@@ -672,8 +689,8 @@ softintr_disestablish(void *arg)
 /*
  * Software (low priority) network interrupt. i.e. softnet().
  */
-void
-netintr()
+static void
+netintr(void)
 {
 #define	DONETISR(bit, fn)						\
 	do {								\
@@ -695,8 +712,8 @@ netintr()
 /*
  * Software interrupt is simulated with TMU one-shot timer.
  */
-void
-tmu1_oneshot()
+static void
+tmu1_oneshot(void)
 {
 
 	_reg_bclr_1(SH_(TSTR), TSTR_STR1);
@@ -704,7 +721,7 @@ tmu1_oneshot()
 	_reg_bset_1(SH_(TSTR), TSTR_STR1);
 }
 
-int
+static int
 tmu1_intr(void *arg)
 {
 
@@ -717,8 +734,8 @@ tmu1_intr(void *arg)
 	return (0);
 }
 
-void
-tmu2_oneshot()
+static void
+tmu2_oneshot(void)
 {
 
 	_reg_bclr_1(SH_(TSTR), TSTR_STR2);
@@ -726,7 +743,7 @@ tmu2_oneshot()
 	_reg_bset_1(SH_(TSTR), TSTR_STR2);
 }
 
-int
+static int
 tmu2_intr(void *arg)
 {
 
