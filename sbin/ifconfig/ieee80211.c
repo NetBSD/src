@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.3 2005/09/15 23:35:15 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.4 2006/01/25 16:08:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.3 2005/09/15 23:35:15 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.4 2006/01/25 16:08:49 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -365,8 +365,8 @@ ieee80211_status(void)
 			    nwkey.i_key[0].i_keydat[1] == ':')
 				nwkey_verbose = 1;
 			else if (nwkey.i_key[0].i_keylen >= 7 &&
-			    strncasecmp("persist", nwkey.i_key[0].i_keydat, 7)
-			    == 0)
+			    strncasecmp("persist",
+			    (const char *)nwkey.i_key[0].i_keydat, 7) == 0)
 				nwkey_verbose = 1;
 		}
 		if (nwkey_verbose)
