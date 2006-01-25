@@ -1,4 +1,4 @@
-/* $NetBSD: makefile,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+# $NetBSD: makefile,v 1.3 2006/01/25 16:40:57 kleink Exp $
 
 # /****************************************************************
 # Copyright (C) 1998 by Lucent Technologies
@@ -27,8 +27,8 @@
 
 .SUFFIXES: .c .o
 CC = cc
-CFLAGS = -g -I../include -I../arch/x86_64/gdtoa -D_REENTRANT
-.PATH: ../arch/x86_64/gdtoa
+CFLAGS = -g -DINFNAN_CHECK
+
 .c.o:
 	$(CC) -c $(CFLAGS) $*.c
 
