@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.60 2006/01/25 18:26:59 christos Exp $	*/
+/*	$NetBSD: stand.h,v 1.61 2006/01/25 22:44:37 uwe Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -219,8 +219,8 @@ int	(devopen)(struct open_file *, const char *, char **);
 #ifdef HEAP_VARIABLE
 void	setheap(void *, void *);
 #endif
-void	*alloc(unsigned int);
-void	dealloc(void *, unsigned int);
+void	*alloc(size_t);
+void	dealloc(void *, size_t);
 struct	disklabel;
 char	*getdisklabel(const char *, struct disklabel *);
 int	dkcksum(const struct disklabel *);
