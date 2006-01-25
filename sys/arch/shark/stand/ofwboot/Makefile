@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2005/12/11 12:19:05 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2006/01/25 23:43:42 uwe Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -35,9 +35,12 @@ CLEANFILES+=	vers.c
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR}/../../.. -I${S}
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h arm ] || ln -s ${S}/arch/arm/include arm
+.endif
+
 .NOPATH: machine arm
 CLEANFILES+= machine arm
 
