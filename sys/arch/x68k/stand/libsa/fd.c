@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2 2001/10/15 16:13:40 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.3 2006/01/25 18:28:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -58,7 +58,7 @@ fdopen (struct open_file *f, int id, int part)
 	error = fd_check_format (id, 0, &sc->fmt);
 	if (error < 0) {
 		IOCS_B_DRVCHK((0x90 + id) << 8, 3); /* unlock */
-		free(sc, sizeof (struct fd_softc));
+		dealloc(sc, sizeof (struct fd_softc));
 		return -error;
 	}
 
@@ -79,7 +79,7 @@ fdclose (struct open_file *f)
 	struct fd_softc *sc = f->f_devdata;
 
 	IOCS_B_DRVCHK((0x90 + sc->unit) << 8, 3);
-	free (sc, sizeof (struct fd_softc));
+	dealloc (sc, sizeof (struct fd_softc));
 	return 0;
 }
 
