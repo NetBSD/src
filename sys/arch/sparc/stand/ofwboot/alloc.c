@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.1 2000/08/20 14:58:37 mrg Exp $	*/
+/*	$NetBSD: alloc.c,v 1.2 2006/01/25 18:28:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -91,8 +91,7 @@ LIST_HEAD(, ml) allocatedlist = LIST_HEAD_INITIALIZER(allocatedlist);
 #define	OVERHEAD	ALIGN(sizeof (struct ml))	/* shorthand */
 
 void *
-alloc(size)
-	unsigned size;
+alloc(size_t size)
 {
 	struct ml *f, *bestf;
 	unsigned bestsize = 0xffffffff;	/* greater than any real size */
@@ -100,7 +99,7 @@ alloc(size)
 	int failed;
 
 #ifdef ALLOC_TRACE
-	printf("alloc(%u)", size);
+	printf("alloc(%zu)", size);
 #endif
 
 	/*
@@ -111,7 +110,7 @@ alloc(size)
 
 #ifdef ALLOC_FIRST_FIT
 	/* scan freelist */
-	for (f = freelist.lh_first; f != NULL && f->size < size;
+	for (f = freelist.lh_first; f != NULL && (size_t)f->size < size;
 	    f = f->list.le_next)
 		/* noop */ ;
 	bestf = f;
@@ -120,8 +119,8 @@ alloc(size)
 	/* scan freelist */
 	f = freelist.lh_first;
 	while (f != NULL) {
-		if (f->size >= size) {
-			if (f->size == size)	/* exact match */
+		if ((size_t)f->size >= size) {
+			if ((size_t)f->size == size)	/* exact match */
 				goto found;
 
 			if (f->size < bestsize) {
@@ -143,12 +142,12 @@ alloc(size)
 		 * to page size, and record the chunk size.
 		 */
 		size = roundup(size, NBPG);
-		help = OF_claim(0, size, NBPG);
+		help = OF_claim(0, (unsigned)size, NBPG);
 		if (help == (char *)-1)
 			panic("alloc: out of memory");
 
 		f = (struct ml *)help;
-		f->size = size;
+		f->size = (unsigned)size;
 #ifdef ALLOC_TRACE
 		printf("=%lx (new chunk size %u)\n",
 		    (u_long)(help + OVERHEAD), f->size);
@@ -173,18 +172,16 @@ alloc(size)
 }
 
 void
-free(ptr, size)
-	void *ptr;
-	unsigned size;	/* only for consistenct check */
+dealloc(void *ptr, size_t size)	/* only for consistenct check */
 {
 	register struct ml *a = (struct ml *)((char*)ptr - OVERHEAD);
 
 #ifdef ALLOC_TRACE
-	printf("free(%lx, %u) (origsize %u)\n", (u_long)ptr, size, a->size);
+	printf("dealloc(%lx, %zu) (origsize %u)\n", (u_long)ptr, size, a->size);
 #endif
 #ifdef DEBUG
-	if (size > a->size)
-		printf("free %u bytes @%lx, should be <=%u\n",
+	if (size > (size_t)a->size)
+		printf("dealloc %zu bytes @%lx, should be <=%u\n",
 		    size, (u_long)ptr, a->size);
 #endif
 

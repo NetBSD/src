@@ -1,4 +1,4 @@
-/*	$NetBSD: bootfs.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: bootfs.c,v 1.2 2006/01/25 18:28:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -71,14 +71,14 @@ bfs_open(const char *name, struct open_file *f)
 	memset(file, 0, sizeof *file);
 
 	if (bfs_init(&file->bfs) != 0) {
-		free(file, sizeof *file);
+		dealloc(file, sizeof *file);
 		return -2;
 	}
 
 	if (!bfs_file_lookup(file->bfs, name, &file->start, &file->end,
 	    &file->size)) {
 		bfs_fini(file->bfs);
-		free(file, sizeof *file);
+		dealloc(file, sizeof *file);
 		return -3;
 	}
 
