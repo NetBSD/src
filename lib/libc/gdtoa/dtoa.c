@@ -1,4 +1,4 @@
-/* $NetBSD: dtoa.c,v 1.1.1.1 2006/01/25 15:18:41 kleink Exp $ */
+/* $NetBSD: dtoa.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -118,15 +118,17 @@ dtoa
 		to hold the suppressed trailing zeros.
 	*/
 
-	int bbits, b2, b5, be, dig, i, ieps, ilim, ilim0, ilim1,
-		j, j1, k, k0, k_check, leftright, m2, m5, s2, s5,
+	int bbits, b2, b5, be, dig, i, ieps, ilim0,
+		j, jj1, k, k0, k_check, leftright, m2, m5, s2, s5,
 		spec_case, try_quick;
+	int ilim = 0, ilim1 = 0; /* pacify gcc */
 	Long L;
 #ifndef Sudden_Underflow
 	int denorm;
 	ULong x;
 #endif
-	Bigint *b, *b1, *delta, *mlo, *mhi, *S;
+	Bigint *b, *b1, *delta, *mhi, *S;
+	Bigint *mlo = NULL; /* pacify gcc */
 	double d2, ds, eps;
 	char *s, *s0;
 #ifdef Honor_FLT_ROUNDS
@@ -237,8 +239,8 @@ dtoa
 		/* d is denormalized */
 
 		i = bbits + be + (Bias + (P-1) - 1);
-		x = i > 32  ? word0(d) << 64 - i | word1(d) >> i - 32
-			    : word1(d) << 32 - i;
+		x = i > 32  ? word0(d) << (64 - i) | word1(d) >> (i - 32)
+			    : word1(d) << (32 - i);
 		dval(d2) = x;
 		word0(d2) -= 31*Exp_msk1; /* adjust exponent */
 		i -= (Bias + (P-1) - 1) + 1;
@@ -299,7 +301,7 @@ dtoa
 			break;
 		case 2:
 			leftright = 0;
-			/* no break */
+			/* FALLTHROUGH */
 		case 4:
 			if (ndigits <= 0)
 				ndigits = 1;
@@ -307,7 +309,7 @@ dtoa
 			break;
 		case 3:
 			leftright = 0;
-			/* no break */
+			/* FALLTHROUGH */
 		case 5:
 			i = ndigits + k + 1;
 			ilim = i;
@@ -333,23 +335,23 @@ dtoa
 		ieps = 2; /* conservative */
 		if (k > 0) {
 			ds = tens[k&0xf];
-			j = k >> 4;
+			j = (unsigned int)k >> 4;
 			if (j & Bletch) {
 				/* prevent overflows */
 				j &= Bletch - 1;
 				dval(d) /= bigtens[n_bigtens-1];
 				ieps++;
 				}
-			for(; j; j >>= 1, i++)
+			for(; j; j = (unsigned int)j >> 1, i++)
 				if (j & 1) {
 					ieps++;
 					ds *= bigtens[i];
 					}
 			dval(d) /= ds;
 			}
-		else if (( j1 = -k )!=0) {
-			dval(d) *= tens[j1 & 0xf];
-			for(j = j1 >> 4; j; j >>= 1, i++)
+		else if (( jj1 = -k )!=0) {
+			dval(d) *= tens[jj1 & 0xf];
+			for(j = jj1 >> 4; j; j >>= 1, i++)
 				if (j & 1) {
 					ieps++;
 					dval(d) *= bigtens[i];
@@ -461,7 +463,7 @@ dtoa
 				  }
 #endif
 				dval(d) += dval(d);
-				if (dval(d) > ds || dval(d) == ds && L & 1) {
+				if (dval(d) > ds || (dval(d) == ds && L & 1)) {
  bump_up:
 					while(*--s == '9')
 						if (s == s0) {
@@ -611,10 +613,10 @@ dtoa
 			 */
 			j = cmp(b, mlo);
 			delta = diff(S, mhi);
-			j1 = delta->sign ? 1 : cmp(b, delta);
+			jj1 = delta->sign ? 1 : cmp(b, delta);
 			Bfree(delta);
 #ifndef ROUND_BIASED
-			if (j1 == 0 && mode != 1 && !(word1(d) & 1)
+			if (jj1 == 0 && mode != 1 && !(word1(d) & 1)
 #ifdef Honor_FLT_ROUNDS
 				&& rounding >= 1
 #endif
@@ -631,11 +633,11 @@ dtoa
 				goto ret;
 				}
 #endif
-			if (j < 0 || j == 0 && mode != 1
+			if (j < 0 || (j == 0 && mode != 1
 #ifndef ROUND_BIASED
 							&& !(word1(d) & 1)
 #endif
-					) {
+					)) {
 				if (!b->x[0] && b->wds <= 1) {
 #ifdef SET_INEXACT
 					inexact = 0;
@@ -649,10 +651,10 @@ dtoa
 				  case 2: goto keep_dig;
 				  }
 #endif /*Honor_FLT_ROUNDS*/
-				if (j1 > 0) {
+				if (jj1 > 0) {
 					b = lshift(b, 1);
-					j1 = cmp(b, S);
-					if ((j1 > 0 || j1 == 0 && dig & 1)
+					jj1 = cmp(b, S);
+					if ((jj1 > 0 || (jj1 == 0 && dig & 1))
 					&& dig++ == '9')
 						goto round_9_up;
 					}
@@ -660,7 +662,7 @@ dtoa
 				*s++ = dig;
 				goto ret;
 				}
-			if (j1 > 0) {
+			if (jj1 > 0) {
 #ifdef Honor_FLT_ROUNDS
 				if (!rounding)
 					goto accept_dig;
@@ -712,7 +714,7 @@ dtoa
 #endif
 	b = lshift(b, 1);
 	j = cmp(b, S);
-	if (j > 0 || j == 0 && dig & 1) {
+	if (j > 0 || (j == 0 && dig & 1)) {
  roundoff:
 		while(*--s == '9')
 			if (s == s0) {
@@ -723,7 +725,9 @@ dtoa
 		++*s++;
 		}
 	else {
+#ifdef Honor_FLT_ROUNDS
  trimzeros:
+#endif
 		while(*--s == '0');
 		s++;
 		}

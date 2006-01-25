@@ -1,4 +1,4 @@
-/* $NetBSD: ulp.c,v 1.1.1.1 2006/01/25 15:18:55 kleink Exp $ */
+/* $NetBSD: ulp.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -56,7 +56,7 @@ ulp
 #ifndef Sudden_Underflow
 		}
 	else {
-		L = -L >> Exp_shift;
+		L = (unsigned int)-L >> Exp_shift;
 		if (L < Exp_shift) {
 			word0(a) = 0x80000 >> L;
 			word1(a) = 0;
@@ -64,7 +64,7 @@ ulp
 		else {
 			word0(a) = 0;
 			L -= Exp_shift;
-			word1(a) = L >= 31 ? 1 : 1 << 31 - L;
+			word1(a) = L >= 31 ? 1 : 1 << (31 - L);
 			}
 		}
 #endif

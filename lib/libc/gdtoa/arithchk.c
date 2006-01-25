@@ -1,4 +1,4 @@
-/* $NetBSD: arithchk.c,v 1.1.1.1 2006/01/25 15:18:40 kleink Exp $ */
+/* $NetBSD: arithchk.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 Copyright (C) 1997, 1998 Lucent Technologies
@@ -36,11 +36,11 @@ Akind {
 	} Akind;
 
  static Akind
-IEEE_8087	= { "IEEE_8087", 1 },
-IEEE_MC68k	= { "IEEE_MC68k", 2 },
-IBM		= { "IBM", 3 },
-VAX		= { "VAX", 4 },
-CRAY		= { "CRAY", 5};
+IEEE_LITTLE_ENDIAN	= { "IEEE_LITTLE_ENDIAN", 1 },
+IEEE_BIG_ENDIAN		= { "IEEE_BIG_ENDIAN", 2 },
+IBM			= { "IBM", 3 },
+VAX			= { "VAX", 4 },
+CRAY			= { "CRAY", 5};
 
  static Akind *
 Lcheck()
@@ -59,9 +59,9 @@ Lcheck()
 	u.L[0] = u.L[1] = 0;
 	u.d = 1e13;
 	if (u.L[0] == 1117925532 && u.L[1] == -448790528)
-		return &IEEE_MC68k;
+		return &IEEE_BIG_ENDIAN;
 	if (u.L[1] == 1117925532 && u.L[0] == -448790528)
-		return &IEEE_8087;
+		return &IEEE_LITTLE_ENDIAN;
 	if (u.L[0] == -2065213935 && u.L[1] == 10752)
 		return &VAX;
 	if (u.L[0] == 1267827943 && u.L[1] == 704643072)
@@ -86,9 +86,9 @@ icheck()
 	u.L[0] = u.L[1] = 0;
 	u.d = 1e13;
 	if (u.L[0] == 1117925532 && u.L[1] == -448790528)
-		return &IEEE_MC68k;
+		return &IEEE_BIG_ENDIAN;
 	if (u.L[1] == 1117925532 && u.L[0] == -448790528)
-		return &IEEE_8087;
+		return &IEEE_LITTLE_ENDIAN;
 	if (u.L[0] == -2065213935 && u.L[1] == 10752)
 		return &VAX;
 	if (u.L[0] == 1267827943 && u.L[1] == 704643072)
