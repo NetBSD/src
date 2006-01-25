@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.47 2006/01/18 02:52:22 uwe Exp $	*/
+/*	$NetBSD: ufs.c,v 1.48 2006/01/25 18:27:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -751,9 +751,9 @@ ufs_close(struct open_file *f)
 		return (0);
 
 	if (fp->f_buf)
-		free(fp->f_buf, fp->f_fs->fs_bsize);
-	free(fp->f_fs, SBLOCKSIZE);
-	free(fp, sizeof(struct file));
+		dealloc(fp->f_buf, fp->f_fs->fs_bsize);
+	dealloc(fp->f_fs, SBLOCKSIZE);
+	dealloc(fp, sizeof(struct file));
 	return (0);
 }
 

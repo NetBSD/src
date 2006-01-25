@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.19 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.20 2006/01/25 18:27:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -174,7 +174,7 @@ cd9660_open(const char *path, struct open_file *f)
 	psize = isonum_733(vd->path_table_size);
 
 	if (psize > ISO_DEFAULT_BLOCK_SIZE) {
-		free(buf, ISO_DEFAULT_BLOCK_SIZE);
+		dealloc(buf, ISO_DEFAULT_BLOCK_SIZE);
 		buf = alloc(buf_size = roundup(psize, ISO_DEFAULT_BLOCK_SIZE));
 	}
 
@@ -272,14 +272,14 @@ cd9660_open(const char *path, struct open_file *f)
 	fp->off = 0;
 	fp->bno = isonum_733(dp->extent);
 	fp->size = isonum_733(dp->size);
-	free(buf, buf_size);
+	dealloc(buf, buf_size);
 
 	return 0;
 
 out:
 	if (fp)
-		free(fp, sizeof(struct file));
-	free(buf, buf_size);
+		dealloc(fp, sizeof(struct file));
+	dealloc(buf, buf_size);
 
 	return rc;
 }
@@ -291,7 +291,7 @@ cd9660_close(struct open_file *f)
 	struct file *fp = (struct file *)f->f_fsdata;
 
 	f->f_fsdata = 0;
-	free(fp, sizeof *fp);
+	dealloc(fp, sizeof *fp);
 
 	return 0;
 }
