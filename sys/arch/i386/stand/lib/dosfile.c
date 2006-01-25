@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.11 2005/12/11 12:17:48 christos Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.12 2006/01/25 18:28:26 christos Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -89,7 +89,7 @@ dos_open(path, f)
 #ifdef DEBUG
 		printf("DOS error %d\n", doserrno);
 #endif
-		free(df, sizeof(*df));
+		dealloc(df, sizeof(*df));
 		return (dos2errno());
 	}
 	f->f_fsdata = (void *) df;
@@ -171,7 +171,7 @@ dos_close(f)
 	dosclose(df->doshandle);
 
 	if (df)
-		free(df, sizeof(*df));
+		dealloc(df, sizeof(*df));
 	return (0);
 }
 
