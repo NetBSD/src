@@ -160,6 +160,9 @@
 /* Defined when PRIu64 is missing or broken */
 /* #undef NEED_PRI_MACRO */
 
+/* Defined when only the numeric part of the OS version should be used */
+/* #undef NUMERIC_VERSION_ONLY */
+
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "grant@NetBSD.org"
 
