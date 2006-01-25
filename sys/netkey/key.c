@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.138 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: key.c,v 1.139 2006/01/25 15:12:05 rpaulo Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.138 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.139 2006/01/25 15:12:05 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.138 2006/01/21 00:15:36 rpaulo Exp $");
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/scope6_var.h>
 #endif /* INET6 */
 
 #ifdef INET
@@ -91,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.138 2006/01/21 00:15:36 rpaulo Exp $");
 #include <netinet6/esp.h>
 #endif
 #include <netinet6/ipcomp.h>
-#include <netinet6/scope6_var.h>
 
 #ifdef KERNFS
 #include <miscfs/kernfs/kernfs.h>
@@ -756,7 +756,9 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 	struct secasvar *sav, *match;
 	u_int stateidx, state, tmpidx, matchidx;
 	struct sockaddr_in sin;
+#ifdef INET6
 	struct sockaddr_in6 sin6;
+#endif
 	int s;
 	int chkport = 0;
 
@@ -815,6 +817,7 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 				continue;
 
 			break;
+#ifdef INET6
 		case AF_INET6:
 			bzero(&sin6, sizeof(sin6));
 			sin6.sin6_family = AF_INET6;
@@ -831,6 +834,7 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 			    chkport) != 0)
 				continue;
 			break;
+#endif
 		default:
 			ipseclog((LOG_DEBUG, "key_allocsa: "
 			    "unknown address family=%d.\n",
@@ -856,6 +860,7 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 				continue;
 
 			break;
+#ifdef INET6
 		case AF_INET6:
 			bzero(&sin6, sizeof(sin6));
 			sin6.sin6_family = AF_INET6;
@@ -872,6 +877,7 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 			    chkport) != 0)
 				continue;
 			break;
+#endif
 		default:
 			ipseclog((LOG_DEBUG, "key_allocsa: "
 			    "unknown address family=%d.\n", family));
