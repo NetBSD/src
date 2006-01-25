@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.28 2005/08/31 02:58:30 ginsbach Exp $	*/
+/*	$NetBSD: show.c,v 1.29 2006/01/25 16:29:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.28 2005/08/31 02:58:30 ginsbach Exp $");
+__RCSID("$NetBSD: show.c,v 1.29 2006/01/25 16:29:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -381,6 +381,8 @@ p_flags(int f)
 	for (flags = name; p->b_mask; p++)
 		if (p->b_mask & f)
 			*flags++ = p->b_val;
+		else if (Sflag)
+			*flags++ = ' ';
 	*flags = '\0';
 	printf("%-6.6s ", name);
 }

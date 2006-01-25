@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.94 2006/01/25 16:19:50 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.95 2006/01/25 16:29:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.94 2006/01/25 16:19:50 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.95 2006/01/25 16:29:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ union	sockunion {
 
 int	pid, rtm_addrs;
 int	sock;
-int	forcehost, forcenet, doflush, nflag, af, qflag, tflag;
+int	forcehost, forcenet, doflush, nflag, af, qflag, tflag, Sflag;
 int	iflag, verbose, aflen = sizeof(struct sockaddr_in);
 int	locking, lockrest, debugonly, shortoutput;
 struct	rt_metrics rt_metrics;
@@ -137,7 +137,7 @@ usage(const char *cp)
 	if (cp)
 		warnx("botched keyword: %s", cp);
 	(void)fprintf(stderr,
-	    "Usage: %s [ -fnqvs ] cmd [[ -<qualifers> ] args ]\n",
+	    "Usage: %s [ -fnqsSv ] cmd [[ -<qualifers> ] args ]\n",
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 	if (argc < 2)
 		usage(NULL);
 
-	while ((ch = getopt(argc, argv, "dfnqstv")) != -1)
+	while ((ch = getopt(argc, argv, "dfnqsStv")) != -1)
 		switch (ch) {
 		case 'd':
 			debugonly = 1;
@@ -174,6 +174,9 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			shortoutput = 1;
+			break;
+		case 'S':
+			Sflag = 1;
 			break;
 		case 't':
 			tflag = 1;
