@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.59 2006/01/13 22:32:10 christos Exp $	*/
+/*	$NetBSD: stand.h,v 1.60 2006/01/25 18:26:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -220,24 +220,30 @@ int	(devopen)(struct open_file *, const char *, char **);
 void	setheap(void *, void *);
 #endif
 void	*alloc(unsigned int);
-void	free(void *, unsigned int);
+void	dealloc(void *, unsigned int);
 struct	disklabel;
 char	*getdisklabel(const char *, struct disklabel *);
 int	dkcksum(const struct disklabel *);
 
-void	printf(const char *, ...);
-int	sprintf(char *, const char *, ...);
-int	snprintf(char *, size_t, const char *, ...);
-void	vprintf(const char *, _BSD_VA_LIST_);
-int	vsprintf(char *, const char *, _BSD_VA_LIST_);
-int	vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_);
+void	printf(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
+int	sprintf(char *, const char *, ...)
+    __attribute__((__format__(__printf__, 2, 3)));
+int	snprintf(char *, size_t, const char *, ...)
+    __attribute__((__format__(__printf__, 3, 4)));
+void	vprintf(const char *, _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__, 1, 0)));
+int	vsprintf(char *, const char *, _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__, 2, 0)));
+int	vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__, 3, 0)));
 void	twiddle(void);
 void	gets(char *);
 int	getfile(char *prompt, int mode);
 char	*strerror(int);
-__dead void	exit(int) __attribute__((noreturn));
-__dead void	panic(const char *, ...) __attribute__((noreturn));
-__dead void	_rtt(void) __attribute__((noreturn));
+__dead void	exit(int) __attribute__((__noreturn__));
+__dead void	panic(const char *, ...) __attribute__((__noreturn__));
+__dead void	_rtt(void) __attribute__((__noreturn__));
 void	(bcopy)(const void *, void *, size_t);
 void	*memcpy(void *, const void *, size_t);
 void	*memmove(void *, const void *, size_t);
