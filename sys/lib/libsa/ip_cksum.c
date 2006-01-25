@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_cksum.c,v 1.1 2006/01/24 17:07:19 christos Exp $	*/
+/*	$NetBSD: ip_cksum.c,v 1.2 2006/01/25 13:46:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -64,9 +64,9 @@
  * In particular, it should not be this one.
  */
 int
-ip_cksum(const void *p, size_t len)
+ip_cksum(const void *p, size_t llen)
 {
-	int sum = 0, oddbyte = 0, v = 0;
+	int sum = 0, oddbyte = 0, v = 0, len = (int)llen;
 	const u_char *cp = p;
 
 	/* we assume < 2^16 bytes being summed */
