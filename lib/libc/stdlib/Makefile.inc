@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.62 2006/01/20 22:02:07 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.63 2006/01/25 15:43:01 kleink Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -13,7 +13,7 @@ SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
 	malloc.c merge.c mrand48.c \
 	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c pty.c \
 	radixsort.c rand.c rand_r.c random.c remque.c \
-	seed48.c setenv.c srand48.c strsuftoll.c strtod.c \
+	seed48.c setenv.c srand48.c strsuftoll.c \
 	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \
 	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c \
 	unsetenv.c strfmon.c
