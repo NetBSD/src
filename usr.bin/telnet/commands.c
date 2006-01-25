@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.61 2005/04/03 02:43:57 atatat Exp $	*/
+/*	$NetBSD: commands.c,v 1.62 2006/01/25 04:20:54 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.61 2005/04/03 02:43:57 atatat Exp $");
+__RCSID("$NetBSD: commands.c,v 1.62 2006/01/25 04:20:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -452,8 +452,7 @@ send_wontcmd(char *name)
 int
 send_tncmd(void	(*func)(int, int), char	*cmd, char *name)
 {
-    char **cpp;
-    extern char *telopts[];
+    const char **cpp;
     int val = 0;
 
     if (isprefix(name, "?")) {
@@ -476,7 +475,7 @@ send_tncmd(void	(*func)(int, int), char	*cmd, char *name)
 	printf("\n");
 	return 0;
     }
-    cpp = (char **)genget(name, telopts, sizeof(char *));
+    cpp = (const char **)genget(name, (char **)telopts, sizeof(char *));
     if (Ambiguous(cpp)) {
 	fprintf(stderr,"'%s': ambiguous argument ('send %s ?' for help).\n",
 					name, cmd);
