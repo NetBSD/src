@@ -1,4 +1,4 @@
-/* $NetBSD: gmisc.c,v 1.1.1.1 2006/01/25 15:18:48 kleink Exp $ */
+/* $NetBSD: gmisc.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -44,7 +44,7 @@ rshift(Bigint *b, int k)
 	int n;
 
 	x = x1 = b->x;
-	n = k >> kshift;
+	n = (unsigned int)k >> kshift;
 	if (n < b->wds) {
 		xe = x + b->wds;
 		x += n;

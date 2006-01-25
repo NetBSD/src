@@ -1,4 +1,4 @@
-/* $NetBSD: strtorx.c,v 1.1.1.1 2006/01/25 15:18:55 kleink Exp $ */
+/* $NetBSD: strtorx.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -36,16 +36,16 @@ THIS SOFTWARE.
 #undef _0
 #undef _1
 
-/* one or the other of IEEE_MC68k or IEEE_8087 should be #defined */
+/* one or the other of IEEE_BIG_ENDIAN or IEEE_LITTLE_ENDIAN should be #defined */
 
-#ifdef IEEE_MC68k
+#ifdef IEEE_BIG_ENDIAN
 #define _0 0
 #define _1 1
 #define _2 2
 #define _3 3
 #define _4 4
 #endif
-#ifdef IEEE_8087
+#ifdef IEEE_LITTLE_ENDIAN
 #define _0 4
 #define _1 3
 #define _2 2

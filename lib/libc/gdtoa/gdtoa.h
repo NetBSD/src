@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.h,v 1.1.1.1 2006/01/25 15:18:46 kleink Exp $ */
+/* $NetBSD: gdtoa.h,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
 
 /****************************************************************
 
@@ -103,6 +103,10 @@ enum {	/* FPI.rounding values: same as FLT_ROUNDS */
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define	dtoa		__dtoa
+#define	freedtoa	__freedtoa
+#define	strtord		__strtord_D2A
 
 extern char* dtoa  ANSI((double d, int mode, int ndigits, int *decpt,
 			int *sign, char **rve));
