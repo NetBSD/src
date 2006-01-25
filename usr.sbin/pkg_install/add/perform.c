@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.115 2005/12/08 19:26:28 dillo Exp $	*/
+/*	$NetBSD: perform.c,v 1.116 2006/01/25 00:17:34 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.115 2005/12/08 19:26:28 dillo Exp $");
+__RCSID("$NetBSD: perform.c,v 1.116 2006/01/25 00:17:34 joerg Exp $");
 #endif
 #endif
 
@@ -102,6 +102,17 @@ enum {
 	Warning,
 	Fatal
 };
+
+static void
+normalise_platform(struct utsname *host_name)
+{
+#ifdef NUMERIC_VERSION_ONLY
+	size_t span;
+
+	span = strspn(host_name->release, "0123456789.");
+	host_name->release[span] = '\0';
+#endif
+}
 
 /* Read package build information */
 static int
@@ -408,6 +419,8 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 		}
 	} else {
 		int	status = Good;
+
+		normalise_platform(&host_uname);
 
 		/* check that we have read some values from buildinfo */
 		if (buildinfo[BI_OPSYS] == NULL) {
