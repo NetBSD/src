@@ -1,6 +1,4 @@
-# $NetBSD: shl.elf,v 1.9 2006/01/25 15:05:26 tsutsui Exp $
-./usr/X11R6/lib/X11/locale/lib
-./usr/X11R6/lib/X11/locale/lib/common
+# $NetBSD: shl.elf,v 1.10 2006/01/25 15:22:54 tsutsui Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so
@@ -20,11 +18,14 @@
 ./usr/X11R6/lib/libGLU.so
 ./usr/X11R6/lib/libGLU.so.1
 ./usr/X11R6/lib/libGLw.so
-./usr/X11R6/lib/libGLw.so.1.0
+./usr/X11R6/lib/libGLw.so.1
+./usr/X11R6/lib/libICE.so
 ./usr/X11R6/lib/libICE.so.6
 ./usr/X11R6/lib/libOSMesa.so
 ./usr/X11R6/lib/libOSMesa.so.4
+./usr/X11R6/lib/libSM.so
 ./usr/X11R6/lib/libSM.so.6
+./usr/X11R6/lib/libX11.so
 ./usr/X11R6/lib/libX11.so.6
 ./usr/X11R6/lib/libXRes.so
 ./usr/X11R6/lib/libXRes.so.1
@@ -32,12 +33,14 @@
 ./usr/X11R6/lib/libXTrap.so.6
 ./usr/X11R6/lib/libXau.so
 ./usr/X11R6/lib/libXau.so.6
+./usr/X11R6/lib/libXaw.so
 ./usr/X11R6/lib/libXaw.so.6
 ./usr/X11R6/lib/libXaw.so.7
 ./usr/X11R6/lib/libXcursor.so
 ./usr/X11R6/lib/libXcursor.so.1
 ./usr/X11R6/lib/libXdmcp.so
 ./usr/X11R6/lib/libXdmcp.so.6
+./usr/X11R6/lib/libXext.so
 ./usr/X11R6/lib/libXext.so.6
 ./usr/X11R6/lib/libXfont.so
 ./usr/X11R6/lib/libXfont.so.1
@@ -45,14 +48,16 @@
 ./usr/X11R6/lib/libXfontcache.so.1
 ./usr/X11R6/lib/libXft.so
 ./usr/X11R6/lib/libXft.so.1
-./usr/X11R6/lib/libXft.so.1.1
 ./usr/X11R6/lib/libXft.so.2
+./usr/X11R6/lib/libXi.so
 ./usr/X11R6/lib/libXi.so.6
 ./usr/X11R6/lib/libXinerama.so
 ./usr/X11R6/lib/libXinerama.so.1
+./usr/X11R6/lib/libXmu.so
 ./usr/X11R6/lib/libXmu.so.6
 ./usr/X11R6/lib/libXmuu.so
 ./usr/X11R6/lib/libXmuu.so.1
+./usr/X11R6/lib/libXp.so
 ./usr/X11R6/lib/libXp.so.6
 ./usr/X11R6/lib/libXpm.so
 ./usr/X11R6/lib/libXpm.so.4
@@ -62,7 +67,9 @@
 ./usr/X11R6/lib/libXrender.so.1
 ./usr/X11R6/lib/libXss.so
 ./usr/X11R6/lib/libXss.so.1
+./usr/X11R6/lib/libXt.so
 ./usr/X11R6/lib/libXt.so.6
+./usr/X11R6/lib/libXtst.so
 ./usr/X11R6/lib/libXtst.so.6
 ./usr/X11R6/lib/libXv.so
 ./usr/X11R6/lib/libXv.so.1
@@ -72,6 +79,8 @@
 ./usr/X11R6/lib/libXxf86misc.so.1
 ./usr/X11R6/lib/libXxf86vm.so
 ./usr/X11R6/lib/libXxf86vm.so.1
+./usr/X11R6/lib/libdmx.so
+./usr/X11R6/lib/libdmx.so.1
 ./usr/X11R6/lib/libdps.so
 ./usr/X11R6/lib/libdps.so.1
 ./usr/X11R6/lib/libdpstk.so
@@ -91,6 +100,7 @@
 ./usr/X11R6/lib/libfreetype.so.7
 ./usr/X11R6/lib/libfreetype.so.8
 ./usr/X11R6/lib/libfreetype.so.9
+./usr/X11R6/lib/liboldX.so
 ./usr/X11R6/lib/liboldX.so.6
 ./usr/X11R6/lib/libpsres.so
 ./usr/X11R6/lib/libpsres.so.1
