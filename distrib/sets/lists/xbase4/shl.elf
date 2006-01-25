@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.8 2005/03/18 20:45:42 tron Exp $
+# $NetBSD: shl.elf,v 1.9 2006/01/25 15:05:26 tsutsui Exp $
 ./usr/X11R6/lib/X11/locale/lib
 ./usr/X11R6/lib/X11/locale/lib/common
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so
@@ -30,10 +30,14 @@
 ./usr/X11R6/lib/libXRes.so.1
 ./usr/X11R6/lib/libXTrap.so
 ./usr/X11R6/lib/libXTrap.so.6
+./usr/X11R6/lib/libXau.so
+./usr/X11R6/lib/libXau.so.6
 ./usr/X11R6/lib/libXaw.so.6
 ./usr/X11R6/lib/libXaw.so.7
 ./usr/X11R6/lib/libXcursor.so
 ./usr/X11R6/lib/libXcursor.so.1
+./usr/X11R6/lib/libXdmcp.so
+./usr/X11R6/lib/libXdmcp.so.6
 ./usr/X11R6/lib/libXext.so.6
 ./usr/X11R6/lib/libXfont.so
 ./usr/X11R6/lib/libXfont.so.1
