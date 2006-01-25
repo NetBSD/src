@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.2 2002/11/28 05:38:41 chs Exp $	*/
+/*	$NetBSD: ct.c,v 1.3 2006/01/25 18:28:26 christos Exp $	*/
 
 /*	$OpenBSD: ct.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -99,7 +99,7 @@ ctopen(struct open_file *f, ...)
 int
 ctclose(struct open_file *f)
 {
-	free(f->f_devdata, sizeof(struct hppa_dev));
+	dealloc(f->f_devdata, sizeof(struct hppa_dev));
 	f->f_devdata = NULL;
 	return 0;
 }

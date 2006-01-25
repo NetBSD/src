@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.2 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.3 2006/01/25 18:28:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 				    strerror(errno)))
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
-#define FREE(a, b)		free(a, b)
+#define DEALLOC(a, b)		dealloc(a, b)
 #define OKMAGIC(a)		((a) == OMAGIC)
 
 #endif	/* _ARC_LOADFILE_MACHDEP_H_ */

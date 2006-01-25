@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.10 2006/01/16 19:34:53 he Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.11 2006/01/25 18:28:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -376,7 +376,7 @@ gzcopy(void *dst, const void *src, size_t srclen)
 	/* Skip the Gzip header. */
 	if (check_header(&state)) {
 		inflateEnd(&state.stream);
-		free(state.inbuf, Z_BUFSIZE);
+		dealloc(state.inbuf, Z_BUFSIZE);
 		_rtt();
 	}
 
@@ -388,5 +388,5 @@ gzcopy(void *dst, const void *src, size_t srclen)
 
 	/* All done! */
 	inflateEnd(&state.stream);
-	free(state.inbuf, Z_BUFSIZE);
+	dealloc(state.inbuf, Z_BUFSIZE);
 }

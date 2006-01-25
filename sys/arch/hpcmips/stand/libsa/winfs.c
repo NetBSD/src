@@ -1,4 +1,4 @@
-/*	$NetBSD: winfs.c,v 1.2 2000/01/16 03:07:27 takemura Exp $	*/
+/*	$NetBSD: winfs.c,v 1.3 2006/01/25 18:28:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -67,7 +67,7 @@ win_open(path, f)
 				    OPEN_EXISTING, 0, NULL);
 	if (fsdata->hDevice == INVALID_HANDLE_VALUE) {
 		win_printf(TEXT("can't open %s.\n"), wpath);
-		free(fsdata, sizeof(*fsdata));
+		dealloc(fsdata, sizeof(*fsdata));
 		return (EIO);	/* XXX, We shuld check GetLastError(). */
 	}
 
@@ -86,7 +86,7 @@ win_close(f)
 	if (fsdata->hDevice != INVALID_HANDLE_VALUE) {
 		CloseHandle(fsdata->hDevice);
 	}
-	free(fsdata, sizeof(*fsdata));
+	dealloc(fsdata, sizeof(*fsdata));
 
 	return (0);
 }

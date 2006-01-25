@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_hppa.c,v 1.6 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: dev_hppa.c,v 1.7 2006/01/25 18:28:26 christos Exp $	*/
 
 /*	$OpenBSD: dev_hppa.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -125,7 +125,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 			f->f_dev = &devsw[dp->dev_type];
 			return 0;
 		}
-		free (hpd, 0);
+		dealloc (hpd, 0);
 		f->f_devdata = NULL;
 	}
 

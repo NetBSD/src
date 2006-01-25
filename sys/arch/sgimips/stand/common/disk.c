@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.8 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: disk.c,v 1.9 2006/01/25 18:28:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -160,7 +160,7 @@ diskopen(struct open_file *f, ...)
 	if (error || cnt != DEV_BSIZE) {
 		printf("%s: can't read disklabel, errno = %d\n",
 		    device, error);
-		free(sc, sizeof(struct disk_softc));
+		dealloc(sc, sizeof(struct disk_softc));
 		return ENXIO;
 	}
 	msg = getdisklabel(buf, lp);
@@ -185,7 +185,7 @@ diskopen(struct open_file *f, ...)
 	if (part >= lp->d_npartitions ||
 	    lp->d_partitions[part].p_fstype == FS_UNUSED ||
 	    lp->d_partitions[part].p_size == 0) {
-		free(sc, sizeof(struct disk_softc));
+		dealloc(sc, sizeof(struct disk_softc));
 		return ENXIO;
 	}
 #endif
@@ -198,7 +198,7 @@ diskclose(struct open_file *f)
 {
 
 	(*ARCBIOS->Close)(((struct disk_softc *)(f->f_devdata))->sc_fd);
-	free(f->f_devdata, sizeof(struct disk_softc));
+	dealloc(f->f_devdata, sizeof(struct disk_softc));
 	f->f_devdata = NULL;
 	return 0;
 }

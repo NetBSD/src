@@ -1,4 +1,4 @@
-/*	$NetBSD: elfXX_exec.c,v 1.7 2005/12/11 12:19:08 christos Exp $	*/
+/*	$NetBSD: elfXX_exec.c,v 1.8 2006/01/25 18:28:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Eduardo Horvath.  All rights reserved.
@@ -167,7 +167,7 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	elf->e_phnum = 0;
 	bcopy(elf, addr, sizeof(CAT3(Elf,ELFSIZE,_Ehdr)));
 	bcopy(shp, addr + sizeof(CAT3(Elf,ELFSIZE,_Ehdr)), ssize);
-	free(shp, ssize);
+	dealloc(shp, ssize);
 	*ssymp = addr;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.6 2002/12/22 13:50:36 wiz Exp $	*/
+/*	$NetBSD: elf.c,v 1.7 2006/01/25 18:28:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -346,8 +346,8 @@ scanfile(int fd, caddr_t *start, caddr_t *end, caddr_t *entry, int load)
 	}
 #endif /* LOAD_DEBUG_INFO */
 
-	if (phtbl) free(phtbl, sizeof(*phtbl) * elf->e_phnum);
-	if (shtbl) free(shtbl, sizeof(*shtbl) * elf->e_shnum);
+	if (phtbl) dealloc(phtbl, sizeof(*phtbl) * elf->e_phnum);
+	if (shtbl) dealloc(shtbl, sizeof(*shtbl) * elf->e_shnum);
 
 	if (start) *start = min_addr;
 	if (end) *end = max_addr;
@@ -355,7 +355,7 @@ scanfile(int fd, caddr_t *start, caddr_t *end, caddr_t *entry, int load)
 	return (0);
 
  error_cleanup:
-	if (phtbl) free(phtbl, sizeof(*phtbl) * elf->e_phnum);
-	if (shtbl) free(shtbl, sizeof(*shtbl) * elf->e_shnum);
+	if (phtbl) dealloc(phtbl, sizeof(*phtbl) * elf->e_phnum);
+	if (shtbl) dealloc(shtbl, sizeof(*shtbl) * elf->e_shnum);
 	return (-1);
 }
