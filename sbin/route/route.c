@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.93 2005/08/31 02:58:30 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.94 2006/01/25 16:19:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.93 2005/08/31 02:58:30 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.94 2006/01/25 16:19:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ static void mask_addr(void);
 static void print_rtmsg(struct rt_msghdr *, int);
 static void pmsg_common(struct rt_msghdr *);
 static void pmsg_addrs(char *, int);
-static void bprintf(FILE *, int, u_char *);
+static void bprintf(FILE *, int, const char *);
 static void sodump(sup, const char *);
 static void sockaddr(char *, struct sockaddr *);
 
@@ -1678,13 +1678,13 @@ const char *msgtypes[] = {
 	0,
 };
 
-char metricnames[] =
+const char metricnames[] =
 "\011pksent\010rttvar\7rtt\6ssthresh\5sendpipe\4recvpipe\3expire\2hopcount\1mtu";
-char routeflags[] =
+const char routeflags[] =
 "\1UP\2GATEWAY\3HOST\4REJECT\5DYNAMIC\6MODIFIED\7DONE\010MASK_PRESENT\011CLONING\012XRESOLVE\013LLINFO\014STATIC\015BLACKHOLE\016CLONED\017PROTO2\020PROTO1";
-char ifnetflags[] =
+const char ifnetflags[] =
 "\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5PTP\6NOTRAILERS\7RUNNING\010NOARP\011PPROMISC\012ALLMULTI\013OACTIVE\014SIMPLEX\015LINK0\016LINK1\017LINK2\020MULTICAST";
-char addrnames[] =
+const char addrnames[] =
 "\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD";
 
 
@@ -2016,10 +2016,11 @@ pmsg_addrs(char *cp, int addrs)
 }
 
 static void
-bprintf(FILE *fp, int b, u_char *s)
+bprintf(FILE *fp, int b, const char *f)
 {
 	int i;
 	int gotsome = 0;
+	const uint8_t *s = (const uint8_t *)f;
 
 	if (b == 0)
 		return;
