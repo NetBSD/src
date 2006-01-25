@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.s,v 1.7 2001/03/02 16:43:26 mhitch Exp $	*/
+/*	$NetBSD: bcopy.s,v 1.8 2006/01/25 13:12:33 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 	.text
 	.even
 
+ENTRY_NOPROFILE(memmove)
 ENTRY_NOPROFILE(memcpy)
 	movel %sp@(4),%a0
 	movel %sp@(8),%a1
