@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.13 2005/07/28 16:26:29 christos Exp $	*/
+/*	$NetBSD: strerror.c,v 1.14 2006/01/26 11:13:42 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -34,10 +34,11 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: strerror.c,v 1.13 2005/07/28 16:26:29 christos Exp $");
+__RCSID("$NetBSD: strerror.c,v 1.14 2006/01/26 11:13:42 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
