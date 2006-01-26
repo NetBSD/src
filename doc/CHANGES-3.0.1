@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.9 2006/01/11 17:20:06 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.10 2006/01/26 21:32:33 jdc Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -97,4 +97,20 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.193
 
 	We need to mark used spares as failed if they encounter IO errors.
 	[oster, ticket #1114]
+
+sys/dev/ic/wdc.c				1.231
+
+	After a reset don't wait for drives to come ready if there's no
+	drives.  Fix a 30s hang after resume. Problem reported and fix
+	tested by Brian de Alwis.
+	[bouyer, ticket #1125]
+
+lib/libc/rpc/xdr_rec.c				1.26
+
+	John Kohl: xdr_rec.c missing a bugfix for an improper security
+	check.  The correct way to check for a zero record length is to
+	check for it without the LAST_FRAG marker in it, since it's legal
+	to send a LAST_FRAG marker with 0 bytes of data.  PR#32572
+
+	[christos, ticket #1128]
 
