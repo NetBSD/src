@@ -1,4 +1,4 @@
-/*	$NetBSD: perror.c,v 1.23 2005/07/28 16:26:29 christos Exp $	*/
+/*	$NetBSD: perror.c,v 1.24 2006/01/26 11:13:42 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)perror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: perror.c,v 1.23 2005/07/28 16:26:29 christos Exp $");
+__RCSID("$NetBSD: perror.c,v 1.24 2006/01/26 11:13:42 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
