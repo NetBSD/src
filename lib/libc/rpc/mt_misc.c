@@ -1,4 +1,4 @@
-/*	$NetBSD: mt_misc.c,v 1.4 2004/05/28 14:39:07 christos Exp $	*/
+/*	$NetBSD: mt_misc.c,v 1.5 2006/01/26 12:37:11 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,9 +45,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: mt_misc.c,v 1.4 2004/05/28 14:39:07 christos Exp $");
+__RCSID("$NetBSD: mt_misc.c,v 1.5 2006/01/26 12:37:11 kleink Exp $");
 #endif
 
+#include	"namespace.h"
 #include	"reentrant.h"
 #include	<rpc/rpc.h>
 #include	<sys/time.h>

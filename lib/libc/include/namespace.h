@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.109 2005/09/26 02:12:24 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.110 2006/01/26 12:37:11 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -718,6 +718,28 @@
 #define dlerror			__dlerror
 #define dladdr			__dladdr
 #define fmtcheck		__fmtcheck
+
+/* rpc locks */
+#define authdes_lock		__rpc_authdes_lock
+#define authnone_lock		__rpc_authnone_lock
+#define authsvc_lock		__rpc_authsvc_lock
+#define clnt_fd_lock		__rpc_clnt_fd_lock
+#define clntraw_lock		__rpc_clntraw_lock
+#define dname_lock		__rpc_dname_lock
+#define dupreq_lock		__rpc_dupreq_lock
+#define keyserv_lock		__rpc_keyserv_lock
+#define libnsl_trace_lock	__rpc_libnsl_trace_lock
+#define loopnconf_lock		__rpc_loopnconf_lock
+#define ops_lock		__rpc_ops_lock
+#define portnum_lock		__rpc_portnum_lock
+#define proglst_lock		__rpc_proglst_lock
+#define rpcbaddr_cache_lock	__rpc_rpcbaddr_cache_lock
+#define rpcsoc_lock		__rpc_rpcsoc_lock
+#define svc_fd_lock		__rpc_svc_fd_lock
+#define svc_lock		__rpc_svc_lock
+#define svcraw_lock		__rpc_svcraw_lock
+#define xprtlist_lock		__rpc_xprtlist_lock
+
 #define __learn_tree		___learn_tree
 #endif /* __weak_alias */
 #endif /* !__lint__ */
