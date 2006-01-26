@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.300 2006/01/09 17:58:49 tsutsui Exp $
+.\"	$NetBSD: main,v 1.301 2006/01/26 00:56:39 gdamore Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1210,6 +1210,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Chuck Cranor Ta Mt chuck@NetBSD.org
 .It Ta Alistair Crooks Ta Mt agc@NetBSD.org
 .It Ta Aidan Cully Ta Mt aidan@NetBSD.org
+.It Ta Garrett D'Amore Ta Mt gdamore@NetBSD.org
 .It Ta Johan Danielsson Ta Mt joda@NetBSD.org
 .It Ta John Darrow Ta Mt jdarrow@NetBSD.org
 .It Ta Jed Davis Ta Mt jld@NetBSD.org
