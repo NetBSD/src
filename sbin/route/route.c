@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.95 2006/01/25 16:29:10 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.96 2006/01/26 11:35:09 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.95 2006/01/25 16:29:10 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.96 2006/01/26 11:35:09 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -703,8 +703,14 @@ netname(struct sockaddr *sa, struct sockaddr *nm)
 #else /* XXX */
 			if (nml == 0)
 				strlcpy(line, inet_ntoa(in), sizeof(line));
-			else
-				snprintf(line, sizeof(line), "%s/%d", inet_ntoa(in), nml);
+			else if (nml < 0) {
+				snprintf(line, sizeof(line), "%s&%s", 
+				    inet_ntoa(in),
+				    netmask_string(nm, nml, AF_INET));
+			} else {
+				snprintf(line, sizeof(line), "%s/%d",
+				    inet_ntoa(in), nml);
+			}
 #endif /* XXX */
 		}
 		break;
