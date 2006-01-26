@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.27 2005/11/15 18:39:46 dsl Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.28 2006/01/26 18:59:18 rpaulo Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -148,35 +148,35 @@ struct	in6pcb {
 #define sotoin6pcb(so)	((struct in6pcb *)(so)->so_pcb)
 
 #ifdef _KERNEL
-void	in6_losing __P((struct in6pcb *));
-void	in6_pcbinit __P((struct inpcbtable *, int, int));
-int	in6_pcballoc __P((struct socket *, void *));
-int	in6_pcbbind __P((void *, struct mbuf *, struct proc *));
-int	in6_pcbconnect __P((void *, struct mbuf *, struct proc *));
-void	in6_pcbdetach __P((struct in6pcb *));
-void	in6_pcbdisconnect __P((struct in6pcb *));
-struct	in6pcb *in6_pcblookup_port __P((struct inpcbtable *, struct in6_addr *,
-	u_int, int));
-int	in6_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
+void	in6_losing(struct in6pcb *);
+void	in6_pcbinit(struct inpcbtable *, int, int);
+int	in6_pcballoc(struct socket *, void *);
+int	in6_pcbbind(void *, struct mbuf *, struct proc *);
+int	in6_pcbconnect(void *, struct mbuf *, struct proc *);
+void	in6_pcbdetach(struct in6pcb *);
+void	in6_pcbdisconnect(struct in6pcb *);
+struct	in6pcb *in6_pcblookup_port(struct inpcbtable *, struct in6_addr *,
+	u_int, int);
+int	in6_pcbnotify(struct inpcbtable *, struct sockaddr *,
 	u_int, const struct sockaddr *, u_int, int, void *,
-	void (*)(struct in6pcb *, int)));
-void	in6_pcbpurgeif0 __P((struct inpcbtable *, struct ifnet *));
-void	in6_pcbpurgeif __P((struct inpcbtable *, struct ifnet *));
-void	in6_pcbstate __P((struct in6pcb *, int));
-void	in6_rtchange __P((struct in6pcb *, int));
-void	in6_setpeeraddr __P((struct in6pcb *, struct mbuf *));
-void	in6_setsockaddr __P((struct in6pcb *, struct mbuf *));
+	void (*)(struct in6pcb *, int));
+void	in6_pcbpurgeif0(struct inpcbtable *, struct ifnet *);
+void	in6_pcbpurgeif(struct inpcbtable *, struct ifnet *);
+void	in6_pcbstate(struct in6pcb *, int);
+void	in6_rtchange(struct in6pcb *, int);
+void	in6_setpeeraddr(struct in6pcb *, struct mbuf *);
+void	in6_setsockaddr(struct in6pcb *, struct mbuf *);
 
 /* in in6_src.c */
-int	in6_selecthlim __P((struct in6pcb *, struct ifnet *));
-int	in6_pcbsetport __P((struct in6_addr *, struct in6pcb *, struct proc *));
+int	in6_selecthlim(struct in6pcb *, struct ifnet *);
+int	in6_pcbsetport(struct in6_addr *, struct in6pcb *, struct proc *);
 
 extern struct rtentry *
-	in6_pcbrtentry __P((struct in6pcb *));
-extern struct in6pcb *in6_pcblookup_connect __P((struct inpcbtable *,
-	struct in6_addr *, u_int, const struct in6_addr *, u_int, int));
-extern struct in6pcb *in6_pcblookup_bind __P((struct inpcbtable *,
-	struct in6_addr *, u_int, int));
+	in6_pcbrtentry(struct in6pcb *);
+extern struct in6pcb *in6_pcblookup_connect(struct inpcbtable *,
+	struct in6_addr *, u_int, const struct in6_addr *, u_int, int);
+extern struct in6pcb *in6_pcblookup_bind(struct inpcbtable *,
+	struct in6_addr *, u_int, int);
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IN6_PCB_H_ */
