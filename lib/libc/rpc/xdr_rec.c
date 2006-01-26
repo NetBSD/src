@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.24.6.1 2005/11/21 20:15:20 tron Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.24.6.1.2.1 2006/01/26 21:30:52 jdc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.24.6.1 2005/11/21 20:15:20 tron Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.24.6.1.2.1 2006/01/26 21:30:52 jdc Exp $");
 #endif
 #endif
 
@@ -735,7 +735,7 @@ set_input_fragment(rstrm)
 	 * but we don't have any way to be certain that they aren't
 	 * what the client actually intended to send us.
 	 */
-	if ((header & (~LAST_FRAG)) == 0)
+	if (header == 0)
 		return(FALSE);
 	rstrm->fbtbc = header & (~LAST_FRAG);
 	return (TRUE);
