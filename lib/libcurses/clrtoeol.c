@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.19 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.20 2006/01/26 07:26:37 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.19 2006/01/15 11:43:54 jdc Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.20 2006/01/26 07:26:37 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -82,7 +82,7 @@ wclrtoeol(WINDOW *win)
 	minx = -1;
 	maxx = &win->lines[y]->line[x];
 	if (__using_color && win != curscr)
-		attr = __default_color;
+		attr = win->battr & __COLOR;
 	else
 		attr = 0;
 	for (sp = maxx; sp < end; sp++)
