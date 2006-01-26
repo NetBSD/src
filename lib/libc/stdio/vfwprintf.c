@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.5 2005/12/02 14:45:24 yamt Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.6 2006/01/26 10:40:12 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.24 2005/04/16 22:36:51 das Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.5 2005/12/02 14:45:24 yamt Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.6 2006/01/26 10:40:12 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1661,7 +1661,7 @@ __grow_type_table (int nextarg, enum typeid **typetable, int *tablesize)
 	if (oldsize == STATIC_ARG_TBL_SIZE) {
 		if ((newtable = malloc(newsize * sizeof(enum typeid))) == NULL)
 			abort();			/* XXX handle better */
-		bcopy(oldtable, newtable, oldsize * sizeof(enum typeid));
+		memcpy(newtable, oldtable, oldsize * sizeof(enum typeid));
 	} else {
 		newtable = realloc(oldtable, newsize * sizeof(enum typeid));
 		if (newtable == NULL)
