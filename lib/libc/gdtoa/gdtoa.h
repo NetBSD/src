@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.h,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: gdtoa.h,v 1.3 2006/01/26 11:17:38 kleink Exp $ */
 
 /****************************************************************
 
@@ -106,6 +106,7 @@ extern "C" {
 
 #define	dtoa		__dtoa
 #define	freedtoa	__freedtoa
+#define	strtodg		__strtodg_D2A
 #define	strtord		__strtord_D2A
 
 extern char* dtoa  ANSI((double d, int mode, int ndigits, int *decpt,
