@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.102 2006/01/14 22:00:52 agc Exp $ */
+/* $NetBSD: user.c,v 1.103 2006/01/26 17:24:52 jmmv Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.102 2006/01/14 22:00:52 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.103 2006/01/26 17:24:52 jmmv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1733,7 +1733,7 @@ usermgmt_usage(const char *prog)
 		    "[-c comment] [-d home-dir] [-e expiry-time]\n"
 		    "\t[-f inactive-time] [-G secondary-group] "
 		    "[-g gid | name | =uid]\n"
-		    "\t[-k skeletondir] [-L login-class] [-p password]"
+		    "\t[-k skeletondir] [-L login-class] [-p password] "
 		    "[-r lowuid..highuid]\n"
 		    "\t[-s shell] [-u uid] user\n",
 		    prog);
