@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.16 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.17 2006/01/26 07:26:37 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.16 2006/01/15 11:43:54 jdc Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.17 2006/01/26 07:26:37 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -77,7 +77,7 @@ wclrtobot(WINDOW *win)
 		startx = win->curx;
 	}
 	if (__using_color && win != curscr)
-		attr = __default_color;
+		attr = win->battr & __COLOR;
 	else
 		attr = 0;
 	for (y = starty; y < win->maxy; y++) {

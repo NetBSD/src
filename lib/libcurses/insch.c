@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.18 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: insch.c,v 1.19 2006/01/26 07:26:37 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.18 2006/01/15 11:43:54 jdc Exp $");
+__RCSID("$NetBSD: insch.c,v 1.19 2006/01/26 07:26:37 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -92,7 +92,7 @@ winsch(WINDOW *win, chtype ch)
 	attr_t attr;
 
 	if (__using_color)
-		attr = __default_color;
+		attr = win->battr & __COLOR;
 	else
 		attr = 0;
 	end = &win->lines[win->cury]->line[win->curx];
