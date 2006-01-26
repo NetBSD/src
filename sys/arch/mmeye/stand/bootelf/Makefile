@@ -1,13 +1,14 @@
-#	$NetBSD: Makefile,v 1.10 2002/08/27 08:53:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2006/01/26 22:39:08 he Exp $
 
 PROG=	bootelf
-SRCS=	boot.c byteorder.c loadfile.c loadfile_elf32.c
+SRCS=	alloc.c boot.c byteorder.c loadfile.c loadfile_elf32.c
 NOMAN=	# defined
 
 LIBSA=	${.CURDIR}/../../../../lib/libsa
 
 .PATH: ${LIBSA}
 
+CFLAGS+= -D_STANDALONE -ffreestanding
 CPPFLAGS+= -I${LIBSA} -I${.OBJDIR}
 LDSTATIC= -static
 
