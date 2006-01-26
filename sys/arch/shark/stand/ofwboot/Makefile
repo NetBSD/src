@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.8 2006/01/25 23:43:42 uwe Exp $
+#	$NetBSD: Makefile,v 1.9 2006/01/26 23:26:20 uwe Exp $
 
 S=		${.CURDIR}/../../../..
 
 WARNS=		3
 PROG=		ofwboot
 SRCS=		srt0.S Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
-CFLAGS+=	-Wno-main
+CFLAGS+=	-ffreestanding -Wno-main
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-DSUPPORT_DHCP -I${.CURDIR}
 CPPFLAGS+=	-D_STANDALONE
-DBG=		-Os -ffreestanding
+DBG=		-Os
 
 SRCS+=		byteorder.c
 .PATH:		${S}/lib/libsa
