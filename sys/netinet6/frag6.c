@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.28 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: frag6.c,v 1.29 2006/01/26 20:30:13 rpaulo Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.28 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.29 2006/01/26 20:30:13 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.28 2005/12/24 20:45:09 perry Exp $");
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
-#include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 
