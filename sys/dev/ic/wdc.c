@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.220.2.8 2005/09/13 21:37:46 tron Exp $ */
+/*	$NetBSD: wdc.c,v 1.220.2.8.2.1 2006/01/26 21:21:12 jdc Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.220.2.8 2005/09/13 21:37:46 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.220.2.8.2.1 2006/01/26 21:21:12 jdc Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1053,6 +1053,10 @@ __wdcwait_reset(struct ata_channel *chp, int drv_mask, int poll)
 			/* no master */
 			if ((drv_mask & 0x02) != 0 && (st1 & WDCS_BSY) == 0) {
 				/* No master, slave is ready, it's done */
+				goto end;
+			}
+			if ((drv_mask & 0x02) == 0) {
+				/* No master, no slave: it's done */
 				goto end;
 			}
 		} else if ((drv_mask & 0x02) == 0) {
