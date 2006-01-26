@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.757 2006/01/16 22:59:36 christos Exp $
+$NetBSD: pcidevs,v 1.758 2006/01/26 20:53:19 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2501,6 +2501,9 @@ product PROMISE PDC20620	0x6620	PDC20620 dual Ultra/133 IDE controller
 product PROMISE PDC20621	0x6621	PDC20621 dual Ultra/133 IDE controller
 product PROMISE PDC40718	0x3d17	PDC40718 SATA/300 IDE controller
 product PROMISE PDC40719	0x3515	PDC40719 SATA/300 IDE controller
+product PROMISE PDC20571	0x3571	PDC20571 SATA/150 IDE controller
+product PROMISE PDC20575	0x3d75	PDC20575 SATA/150 IDE controller
+product PROMISE PDC20579	0x3574	PDC20579 SATA/150 IDE controller
 
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
