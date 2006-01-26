@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.19 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.20 2006/01/26 20:07:34 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.19 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.20 2006/01/26 20:07:34 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -483,7 +483,8 @@ tmpfs_setattr(void *v)
 		error = tmpfs_chsize(vp, vap->va_size, cred, l->l_proc);
 
 	if (error == 0 && (vap->va_uid != VNOVAL || vap->va_gid != VNOVAL))
-		error = tmpfs_chown(vp, vap->va_uid, vap->va_gid, cred, l->l_proc);
+		error = tmpfs_chown(vp, vap->va_uid, vap->va_gid, cred,
+		    l->l_proc);
 
 	if (error == 0 && (vap->va_mode != VNOVAL))
 		error = tmpfs_chmod(vp, vap->va_mode, cred, l->l_proc);
