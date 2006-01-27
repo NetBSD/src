@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 2005/12/11 12:19:08 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 2006/01/27 04:34:38 uwe Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -68,7 +68,7 @@
  * Boot device is derived from ROM provided information, or if there is none,
  * this list is used in sequence, to find a kernel.
  */
-char *kernels[] = {
+const char *kernels[] = {
 	"netbsd ",
 	"netbsd.gz ",
 	"netbsd.old ",
@@ -85,7 +85,7 @@ char *kernels[] = {
 	NULL
 };
 
-char *kernelname;
+const char *kernelname;
 char bootdev[128];
 char bootfile[128];
 int boothowto;
