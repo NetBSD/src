@@ -1,4 +1,4 @@
-/*	$NetBSD: gzio.c,v 1.1.1.1 2006/01/14 20:10:29 christos Exp $	*/
+/*	$NetBSD: gzio.c,v 1.2 2006/01/27 00:45:27 christos Exp $	*/
 
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2005 Jean-loup Gailly.
@@ -100,7 +100,7 @@ local gzFile gz_open (path, mode, fd)
     int err;
     int level = Z_DEFAULT_COMPRESSION; /* compression level */
     int strategy = Z_DEFAULT_STRATEGY; /* compression strategy */
-    char *p = (char*)mode;
+    const char *p = mode;
     gz_stream *s;
     char fmode[80]; /* copy of mode, without the compression level */
     char *m = fmode;
@@ -302,7 +302,8 @@ local void check_header(s)
     if (len < 2) {
         if (len) s->inbuf[0] = s->stream.next_in[0];
         errno = 0;
-        len = (uInt)fread(s->inbuf + len, 1, Z_BUFSIZE >> len, s->file);
+        len = (uInt)fread(s->inbuf + len, 1, (size_t)(Z_BUFSIZE >> len),
+	    s->file);
         if (len == 0 && ferror(s->file)) s->z_err = Z_ERRNO;
         s->stream.avail_in += len;
         s->stream.next_in = s->inbuf;
@@ -567,7 +568,7 @@ int ZEXPORT gzwrite (file, buf, len)
 
     if (s == NULL || s->mode != 'w') return Z_STREAM_ERROR;
 
-    s->stream.next_in = (Bytef*)buf;
+    s->stream.next_in = __UNCONST(buf);
     s->stream.avail_in = len;
 
     while (s->stream.avail_in != 0) {
@@ -696,7 +697,7 @@ int ZEXPORT gzputs(file, s)
     gzFile file;
     const char *s;
 {
-    return gzwrite(file, (char*)s, (unsigned)strlen(s));
+    return gzwrite(file, __UNCONST(s), (unsigned)strlen(s));
 }
 
 
@@ -990,7 +991,7 @@ const char * ZEXPORT gzerror (file, errnum)
     gzFile file;
     int *errnum;
 {
-    char *m;
+    const char *m;
     gz_stream *s = (gz_stream*)file;
 
     if (s == NULL) {
@@ -1000,13 +1001,13 @@ const char * ZEXPORT gzerror (file, errnum)
     *errnum = s->z_err;
     if (*errnum == Z_OK) return (const char*)"";
 
-    m = (char*)(*errnum == Z_ERRNO ? zstrerror(errno) : s->stream.msg);
+    m = *errnum == Z_ERRNO ? zstrerror(errno) : s->stream.msg;
 
-    if (m == NULL || *m == '\0') m = (char*)ERR_MSG(s->z_err);
+    if (m == NULL || *m == '\0') m = ERR_MSG(s->z_err);
 
     TRYFREE(s->msg);
     s->msg = (char*)ALLOC(strlen(s->path) + strlen(m) + 3);
-    if (s->msg == Z_NULL) return (const char*)ERR_MSG(Z_MEM_ERROR);
+    if (s->msg == Z_NULL) return ERR_MSG(Z_MEM_ERROR);
     strcpy(s->msg, s->path);
     strcat(s->msg, ": ");
     strcat(s->msg, m);
