@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.420 2005/12/07 10:17:53 augustss Exp $
+$NetBSD: usbdevs,v 1.421 2006/01/27 06:11:58 dogcow Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -362,6 +362,7 @@ vendor MEDIAGEAR	0x0a48	MediaGear
 vendor BROADCOM		0x0a5c	Broadcom
 vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
+vendor ZYDAS		0x0ace	Zydas Technology Corporation
 vendor NEODIO		0x0aec	Neodio
 vendor VODAFONE		0x0af0	Vodafone
 vendor ASUSTEK		0x0b05	ASUSTeK Computer
@@ -1946,6 +1947,9 @@ product ZINWELL ZWXG261		0x0260	ZWX-G261
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
+
+/* Zydas Technology Corporation products */
+product ZYDAS ZD1211		0x1211	ZD1211 WLAN abg
 
 /* ZyXEL Communication Co. products */
 product ZYXEL OMNI56K		0x1500	Omni 56K Plus
