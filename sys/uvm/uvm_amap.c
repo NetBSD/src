@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.53.4.1 2005/03/16 12:11:12 tron Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.53.4.2 2006/01/27 22:19:10 tron Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.53.4.1 2005/03/16 12:11:12 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.53.4.2 2006/01/27 22:19:10 tron Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -920,7 +920,6 @@ amap_cow_now(map, entry)
 
 ReStart:
 	amap_lock(amap);
-
 	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
 
 		/*
@@ -930,89 +929,99 @@ ReStart:
 		slot = amap->am_slots[lcv];
 		anon = amap->am_anon[slot];
 		simple_lock(&anon->an_lock);
-		pg = anon->u.an_page;
 
 		/*
-		 * page must be resident since parent is wired
+		 * If the anon has only one ref, we must have already copied it.
+		 * This can happen if we needed to sleep waiting for memory
+		 * in a previous run through this loop.  The new page might
+		 * even have been paged out, since the new page is not wired.
 		 */
 
-		if (pg == NULL)
-		    panic("amap_cow_now: non-resident wired page in anon %p",
-			anon);
-
-		/*
-		 * if the anon ref count is one and the page is not loaned,
-		 * then we are safe (the child has exclusive access to the
-		 * page).  if the page is loaned, then it must already be
-		 * mapped read-only.
-		 *
-		 * we only need to get involved when these are not true.
-		 * [note: if loan_count == 0, then the anon must own the page]
-		 */
-
-		if (anon->an_ref > 1 && pg->loan_count == 0) {
-
-			/*
-			 * if the page is busy then we have to unlock, wait for
-			 * it and then restart.
-			 */
-			if (pg->flags & PG_BUSY) {
-				pg->flags |= PG_WANTED;
-				amap_unlock(amap);
-				UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, FALSE,
-				    "cownow", 0);
-				goto ReStart;
-			}
-
-			/*
-			 * ok, time to do a copy-on-write to a new anon
-			 */
-			nanon = uvm_analloc();
-			if (nanon) {
-				/* nanon is locked! */
-				npg = uvm_pagealloc(NULL, 0, nanon, 0);
-			} else
-				npg = NULL;	/* XXX: quiet gcc warning */
-
-			if (nanon == NULL || npg == NULL) {
-				/* out of memory */
-				/*
-				 * XXXCDC: we should cause fork to fail, but
-				 * we can't ...
-				 */
-				if (nanon) {
-					nanon->an_ref--;
-					simple_unlock(&nanon->an_lock);
-					uvm_anfree(nanon);
-				}
-				simple_unlock(&anon->an_lock);
-				amap_unlock(amap);
-				uvm_wait("cownowpage");
-				goto ReStart;
-			}
-
-			/*
-			 * got it... now we can copy the data and replace anon
-			 * with our new one...
-			 */
-
-			uvm_pagecopy(pg, npg);		/* old -> new */
-			anon->an_ref--;			/* can't drop to zero */
-			amap->am_anon[slot] = nanon;	/* replace */
-
-			/*
-			 * drop PG_BUSY on new page ... since we have had it's
-			 * owner locked the whole time it can't be
-			 * PG_RELEASED | PG_WANTED.
-			 */
-
-			uvm_lock_pageq();
-			uvm_pageactivate(npg);
-			uvm_unlock_pageq();
-			npg->flags &= ~(PG_BUSY|PG_FAKE);
-			UVM_PAGE_OWN(npg, NULL);
-			simple_unlock(&nanon->an_lock);
+		if (anon->an_ref == 1) {
+			KASSERT(anon->u.an_page != NULL ||
+				anon->an_swslot != 0);
+			simple_unlock(&anon->an_lock);
+			continue;
 		}
+
+		/*
+		 * The old page must be resident since the parent is wired.
+		 */
+
+		pg = anon->u.an_page;
+		KASSERT(pg != NULL);
+		KASSERT(pg->wire_count > 0);
+
+		/*
+		 * If the page is loaned then it must already be mapped
+		 * read-only and we don't need to copy it.
+		 */
+
+		if (pg->loan_count != 0) {
+			simple_unlock(&anon->an_lock);
+			continue;
+		}
+		KASSERT(pg->uanon == anon && pg->uobject == NULL);
+
+		/*
+		 * if the page is busy then we have to unlock, wait for
+		 * it and then restart.
+		 */
+
+		if (pg->flags & PG_BUSY) {
+			pg->flags |= PG_WANTED;
+			amap_unlock(amap);
+			UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, FALSE,
+			    "cownow", 0);
+			goto ReStart;
+		}
+
+		/*
+		 * ok, time to do a copy-on-write to a new anon
+		 */
+
+		nanon = uvm_analloc();
+		if (nanon) {
+			npg = uvm_pagealloc(NULL, 0, nanon, 0);
+		} else
+			npg = NULL;	/* XXX: quiet gcc warning */
+		if (nanon == NULL || npg == NULL) {
+
+			/*
+			 * XXXCDC: we should cause fork to fail, but we can't.
+			 */
+
+			if (nanon) {
+				nanon->an_ref--;
+				simple_unlock(&nanon->an_lock);
+				uvm_anfree(nanon);
+			}
+			simple_unlock(&anon->an_lock);
+			amap_unlock(amap);
+			uvm_wait("cownowpage");
+			goto ReStart;
+		}
+
+		/*
+		 * got it... now we can copy the data and replace anon
+		 * with our new one...
+		 */
+
+		uvm_pagecopy(pg, npg);		/* old -> new */
+		anon->an_ref--;			/* can't drop to zero */
+		amap->am_anon[slot] = nanon;	/* replace */
+
+		/*
+		 * drop PG_BUSY on new page ... since we have had its owner
+		 * locked the whole time it can't be PG_RELEASED or PG_WANTED.
+		 */
+
+		uvm_lock_pageq();
+		uvm_pageactivate(npg);
+		uvm_unlock_pageq();
+		npg->flags &= ~(PG_BUSY|PG_FAKE);
+		UVM_PAGE_OWN(npg, NULL);
+		simple_unlock(&nanon->an_lock);
 		simple_unlock(&anon->an_lock);
 	}
 	amap_unlock(amap);
