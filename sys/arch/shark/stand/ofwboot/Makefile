@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2006/01/26 23:26:20 uwe Exp $
+#	$NetBSD: Makefile,v 1.10 2006/01/27 01:57:29 uwe Exp $
 
 S=		${.CURDIR}/../../../..
 
-WARNS=		3
+WARNS=		4
 PROG=		ofwboot
 SRCS=		srt0.S Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
 CFLAGS+=	-ffreestanding -Wno-main
