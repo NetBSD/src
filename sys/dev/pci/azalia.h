@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.4.2.5 2006/01/27 22:30:25 tron Exp $	*/
+/*	$NetBSD: azalia.h,v 1.4.2.6 2006/01/27 22:36:34 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -506,6 +506,10 @@ typedef struct {
 #define MI_TARGET_ADC		0x105
 #define MI_TARGET_VOLUME	0x106
 } mixer_item_t;
+
+#define VALID_WIDGET_NID(nid, codec)	(nid == (codec)->audiofunc || \
+					 (nid >= (codec)->wstart &&   \
+					  nid < (codec)->wend))
 
 typedef struct {
 	int nconv;
