@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.7 2006/01/27 03:48:15 uwe Exp $	*/
+/*	$NetBSD: net.c,v 1.8 2006/01/27 03:58:27 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -60,7 +60,9 @@
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/bootp.h>
 #include <lib/libsa/net.h>
+#include <lib/libsa/nfs.h>
 
 #include <lib/libkern/libkern.h>
 
