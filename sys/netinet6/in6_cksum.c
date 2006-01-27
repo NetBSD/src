@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.18 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.19 2006/01/27 20:08:11 rpaulo Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.18 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.19 2006/01/27 20:08:11 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -147,7 +147,6 @@ in6_cksum(m, nxt, off, len)
 	in6 = ip6->ip6_src;
 	in6_clearscope(&in6);
 	w = (u_int16_t *)&in6;
-	sum += w[0];
 	sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3];
 	sum += w[4]; sum += w[5]; sum += w[6]; sum += w[7];
 
