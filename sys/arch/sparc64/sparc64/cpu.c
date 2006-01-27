@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: cpu.c,v 1.44 2006/01/27 18:37:49 cdi Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44 2006/01/27 18:37:49 cdi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ volatile cpuset_t cpus_active;/* set of active cpus */
 struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
 
 static struct cpu_info *alloc_cpuinfo(u_int);
-void mp_main(void);
 
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -338,54 +337,20 @@ cpu_attach(parent, dev, aux)
 }
 
 #if defined(MULTIPROCESSOR)
+vaddr_t cpu_spinup_trampoline;
+
+u_long dump_rtf_info = 0;
+
 /*
  * Start secondary processors in motion.
  */
-extern vaddr_t ktext;
-extern paddr_t ktextp;
-extern vaddr_t ektext;
-extern vaddr_t kdata;
-extern paddr_t kdatap;
-extern vaddr_t ekdata;
-
-extern void cpu_mp_startup_end(void *);
-
 void
 cpu_boot_secondary_processors()
 {
-	int pstate;
+	int i, pstate;
 	struct cpu_info *ci;
-	int i;
-	vaddr_t mp_start;
-	int     mp_start_size;
 
 	sparc64_ipi_init();
-
-	cpu_args->cb_ktext = ktext;
-	cpu_args->cb_ktextp = ktextp;
-	cpu_args->cb_ektext = ektext;
-
-	cpu_args->cb_kdata = kdata;
-	cpu_args->cb_kdatap = kdatap;
-	cpu_args->cb_ekdata = ekdata;
-
-	mp_start = ((vaddr_t)cpu_args + sizeof(*cpu_args)+ 0x0f) & ~0x0f;
-	mp_start_size = (vaddr_t)cpu_mp_startup_end - (vaddr_t)cpu_mp_startup;
-	memcpy((void *)mp_start, cpu_mp_startup, mp_start_size);
-
-	mp_start_size = mp_start_size >> 3;
-	for (i = 0; i < mp_start_size; i++)
-		flush(mp_start + (i << 3));
-
-#ifdef DEBUG
-	printf("cpu_args @ %p\n", cpu_args);
-	printf("ktext %lx, ktextp %lx, ektext %lx\n",
-	       cpu_args->cb_ktext, cpu_args->cb_ktextp,cpu_args->cb_ektext);
-	printf("kdata %lx, kdatap %lx, ekdata %lx\n",
-	       cpu_args->cb_kdata, cpu_args->cb_kdatap, cpu_args->cb_ekdata);
-	printf("mp_start %lx, mp_start_size 0x%x\n",
-	       mp_start, mp_start_size);
-#endif
 
 	printf("cpu0: booting secondary processors:\n");
 
@@ -408,7 +373,8 @@ cpu_boot_secondary_processors()
 		pstate = getpstate();
 		setpstate(PSTATE_KERN);
 
-		prom_startcpu(ci->ci_node, (void *)mp_start, 0);
+		printf("mp_tramp: %p\n", (void*)cpu_spinup_trampoline);
+		prom_startcpu(ci->ci_node, (void *)cpu_spinup_trampoline, 0);
 
 		for (i = 0; i < 2000; i++) {
 			membar_sync();
@@ -429,10 +395,21 @@ cpu_boot_secondary_processors()
 }
 
 void
-mp_main()
+cpu_hatch()
 {
+	int i;
+	char *v = (char*)CPUINFO_VA;
 
+	for (i = 0; i < 4*PAGE_SIZE; i += sizeof(long))
+		flush(v + i);
+
+	dump_rtf_info = 1;
+
+	printf("cpu%d fired up.\n", cpu_number());
 	CPUSET_ADD(cpus_active, cpu_number());
+	for (i = 0; i < 5000000; i++)
+		;
+	printf("cpu%d enters idle loop.\n", cpu_number());
 	membar_sync();
 	spl0();
 }
