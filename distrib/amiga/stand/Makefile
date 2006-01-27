@@ -1,10 +1,10 @@
-#       $NetBSD: Makefile,v 1.1 2004/06/16 02:31:27 mhitch Exp $
+#       $NetBSD: Makefile,v 1.1.4.1 2006/01/27 22:43:39 tron Exp $
 #
 
 MISC_FILES=	runbootblock.README
-UUDECODE_FILES=	device-streams.tar.gz loadbsd loadbsd-2.14 loadbsd-2.14.gz \
-		loadbsd-2.16.gz loadbsd.gz rdbinfo rdbinfo.gz runbootblock \
-		xstreamtodev.gz
+UUDECODE_FILES=	device-streams.tar.gz \
+		loadbsd loadbsd-2.14 loadbsd-2.16 \
+		rdbinfo runbootblock xstreamtodev
 
 .include <bsd.files.mk>
 .include <bsd.hostprog.mk>
