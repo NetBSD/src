@@ -1,7 +1,7 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.20 2000/11/17 17:36:39 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.20.12.1 2006/01/27 22:45:49 tron Exp $
 #
-# Copyright (c) 1996 The NetBSD Foundation, Inc.
+# Copyright (c) 1996-2000,2006 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -63,6 +63,9 @@ MODE="upgrade"
 # optional:
 #	md_upgrade_prep_needed	- variable: set if you md_prepare_upgrade()
 #	md_prepare_upgrade	- any machine dependent preparations
+#	md_view_labels_possible	- variable: md_view_labels defined
+#	md_view_labels		- peek at preexisting disk labels, to 
+#				  better identify disks
 
 # we need to make sure .'s below work if this directory is not in $PATH
 # dirname may not be available but expr is
@@ -150,6 +153,8 @@ ls -l /dev > /dev/null 2>&1
 # This might make an MFS mount on /tmp, or it may
 # just re-mount the root with read-write enabled.
 md_makerootwritable
+
+test "$md_view_labels_possible" && md_view_labels
 
 while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
