@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.4.2.4 2005/12/29 19:37:20 riz Exp $	*/
+/*	$NetBSD: azalia.h,v 1.4.2.5 2006/01/27 22:30:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -490,6 +490,7 @@ typedef struct {
 		} volume;
 	} d;
 } widget_t;
+#define	WIDGET_CHANNELS(w)	((w)->widgetcap & COP_AWCAP_STEREO ? 2 : 1)
 
 typedef struct {
 	mixer_devinfo_t devinfo;
