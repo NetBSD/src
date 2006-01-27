@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.4.2.5 2006/01/27 22:31:41 tron Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.4.2.6 2006/01/27 22:32:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.5 2006/01/27 22:31:41 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.6 2006/01/27 22:32:15 tron Exp $");
 
 #include <sys/null.h>
 #include <sys/systm.h>
@@ -77,6 +77,11 @@ azalia_codec_init_vtbl(codec_t *this, uint32_t vid)
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
 		this->init_dacgroup = stac9221_init_dacgroup;
+		break;
+	case 0x83847683:
+		this->name = "Sigmatel STAC9221D";
+		this->init_dacgroup = stac9221_init_dacgroup;
+		break;
 	default:
 		this->name = NULL;
 		this->init_dacgroup = azalia_codec_init_dacgroup;
@@ -406,7 +411,7 @@ alc882_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 }
 
 /* ----------------------------------------------------------------
- * Sigmatel STAC9221
+ * Sigmatel STAC9221 and STAC9221D
  * ---------------------------------------------------------------- */
 
 static int
