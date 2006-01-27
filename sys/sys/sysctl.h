@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.146 2006/01/20 23:36:44 uwe Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.147 2006/01/27 03:14:56 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -898,20 +898,6 @@ struct kinfo_file {
 	{ "mach", CTLTYPE_NODE }, \
 }
 
-/*
- * CTL_SECURITY definitions.
- */
-#define	SECURITY_CURTAIN	1
-#define	SECURITY_MAXID		2
-
-#define	CTL_SECURITY_NAMES { \
-	{ 0, 0 }, \
-	{ "curtain", CTLTYPE_INT }, \
-}
-
-/* XXX this should not be here */
-extern int security_curtain;
-
 #ifdef _KERNEL
 
 #if defined(_KERNEL_OPT)
@@ -920,6 +906,9 @@ extern int security_curtain;
 
 /* Root node of the kernel sysctl tree */
 extern struct sysctlnode sysctl_root;
+
+/* XXX this should not be here */
+extern int security_curtain;
 
 /*
  * A log of nodes created by a setup function or set of setup
