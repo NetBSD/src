@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.20 2006/01/27 03:11:33 uwe Exp $	*/
+/*	$NetBSD: boot.c,v 1.21 2006/01/27 04:53:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -156,6 +156,8 @@ chain(boot_entry_t entry, char *args, void *ssym, void *esym)
 {
 	extern char end[];
 	int l;
+
+	freeall();
 
 	/*
 	 * Stash pointer to end of symbol table after the argument
