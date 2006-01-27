@@ -1,4 +1,4 @@
-/*	$NetBSD: inffast.c,v 1.2 2006/01/14 20:26:05 christos Exp $	*/
+/*	$NetBSD: inffast.c,v 1.3 2006/01/27 00:45:27 christos Exp $	*/
 
 /* inffast.c -- fast decoding
  * Copyright (C) 1995-2004 Mark Adler
@@ -189,7 +189,7 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
                 if (dist > op) {                /* see if copy from window */
                     op = dist - op;             /* distance back in window */
                     if (op > whave) {
-                        strm->msg = (char *)"invalid distance too far back";
+                        strm->msg = __UNCONST("invalid distance too far back");
                         state->mode = BAD;
                         break;
                     }
@@ -265,7 +265,7 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
                 goto dodist;
             }
             else {
-                strm->msg = (char *)"invalid distance code";
+                strm->msg = __UNCONST("invalid distance code");
                 state->mode = BAD;
                 break;
             }
@@ -280,7 +280,7 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
             break;
         }
         else {
-            strm->msg = (char *)"invalid literal/length code";
+            strm->msg = __UNCONST("invalid literal/length code");
             state->mode = BAD;
             break;
         }

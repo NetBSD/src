@@ -1,4 +1,4 @@
-/*	$NetBSD: zutil.h,v 1.3 2006/01/16 17:02:29 christos Exp $	*/
+/*	$NetBSD: zutil.h,v 1.4 2006/01/27 00:45:27 christos Exp $	*/
 
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-2005 Jean-loup Gailly.
@@ -65,7 +65,7 @@ extern const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #define ERR_MSG(err) z_errmsg[Z_NEED_DICT-(err)]
 
 #define ERR_RETURN(strm,err) \
-  return (strm->msg = (char*)ERR_MSG(err), (err))
+  return (strm->msg = __UNCONST(ERR_MSG(err)), (err))
 /* To be used only when the state is known to be valid */
 
         /* common constants */
