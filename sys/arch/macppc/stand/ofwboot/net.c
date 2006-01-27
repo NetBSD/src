@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.6 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.7 2006/01/27 03:48:15 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -115,6 +115,7 @@ net_close(struct of_dev *op)
 			netif_of_close(netdev_sock);
 			netdev_sock = -1;
 		}
+	return 0;
 }
 
 static int
