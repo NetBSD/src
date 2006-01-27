@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2006/01/22 09:17:14 dsl Exp $
+#	$NetBSD: Makefile,v 1.17 2006/01/27 04:29:02 uwe Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -77,20 +77,14 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@([ -h machine ] || ln -s ${S}/arch/sparc64/include machine)
+	@([ -h sparc64 ] || ln -s ${S}/arch/sparc64/include sparc64)
+	@([ -h sparc ] || ln -s ${S}/arch/sparc/include sparc)
 .NOPATH: machine sparc64 sparc
-${SRCS}: machine sparc64 sparc
-
-machine:
-	rm -f machine
-	ln -s sparc64 machine
-
-sparc64:
-	rm -f sparc64
-	ln -s ${.CURDIR}/../../../sparc64/include sparc64
-
-sparc:
-	rm -f sparc
-	ln -s ${.CURDIR}/../../../sparc/include sparc
+.endif
+CLEANFILES+= machine sparc64 sparc
 
 cleandir distclean: cleanlibdir
 
