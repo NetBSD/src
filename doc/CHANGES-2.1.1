@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.22 2006/01/19 21:39:17 tron Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.23 2006/01/27 22:20:48 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -229,4 +229,10 @@ crypto/dist/kame/racoon/isakmp_agg.c		patch
 
 	Fix denial of service vulnerabilityin racoon(8).
 	[adrianp, ticket #10224]
+
+sys/uvm/uvm_amap.c				1.66 via patch
+
+	Prevent occasional panics on machines which are low on memory.
+	This fixes PR kern/25392, port-sparc/30257 and kern/31924.
+	[chs, ticket #10230]
 
