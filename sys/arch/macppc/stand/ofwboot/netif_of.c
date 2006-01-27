@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.10 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.11 2006/01/27 04:01:04 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -70,8 +70,6 @@ int
 netif_of_open(struct of_dev *op)
 {
 	struct iodesc *io;
-	int fd, error;
-	char addr[32];
 
 #ifdef	NETIF_DEBUG
 	printf("netif_open...");
