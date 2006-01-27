@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.14 2006/01/27 01:53:13 uwe Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.15 2006/01/27 02:28:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -138,7 +138,7 @@ reswitch:	switch (ch = *fmt++) {
 			put('0');
 			put('x');
 			lflag = 1;
-			/* fall through */
+			/* FALLTHROUGH */
 		case 'x':
 			ul = lflag ?
 			    va_arg(ap, u_long) : va_arg(ap, u_int);
