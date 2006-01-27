@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.18 2005/12/24 22:50:07 perry Exp $	*/
+/*	$NetBSD: Locore.c,v 1.19 2006/01/27 02:54:15 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -134,7 +134,7 @@ __dead void
 OF_exit(void)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 	} args = {
@@ -148,13 +148,13 @@ OF_exit(void)
 }
 
 int
-OF_finddevice(char *name)
+OF_finddevice(const char *name)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
-		char *device;
+		const char *device;
 		int phandle;
 	} args = {
 		"finddevice",
@@ -172,7 +172,7 @@ int
 OF_instance_to_package(int ihandle)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int ihandle;
@@ -190,14 +190,14 @@ OF_instance_to_package(int ihandle)
 }
 
 int
-OF_getprop(int handle, char *prop, void *buf, int buflen)
+OF_getprop(int handle, const char *prop, void *buf, int buflen)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int phandle;
-		char *prop;
+		const char *prop;
 		void *buf;
 		int buflen;
 		int size;
@@ -221,7 +221,7 @@ int
 OF_setprop(int handle, char *prop, void *buf, int len)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int phandle;
@@ -249,7 +249,7 @@ int
 OF_open(char *dname)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		char *dname;
@@ -281,7 +281,7 @@ void
 OF_close(int handle)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int handle;
@@ -302,7 +302,7 @@ int
 OF_write(int handle, void *addr, int len)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int ihandle;
@@ -339,7 +339,7 @@ int
 OF_read(int handle, void *addr, int len)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int ihandle;
@@ -376,7 +376,7 @@ int
 OF_seek(int handle, u_quad_t pos)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int handle;
@@ -411,7 +411,7 @@ void *
 OF_claim(void *virt, u_int size, u_int align)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		void *virt;
@@ -446,7 +446,7 @@ void
 OF_release(void *virt, u_int size)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		void *virt;
@@ -469,7 +469,7 @@ int
 OF_milliseconds(void)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int ms;
@@ -488,7 +488,7 @@ void
 OF_chain(void *virt, u_int size, void (*entry)(), void *arg, u_int len)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		void *virt;
@@ -528,7 +528,7 @@ OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
 {
 	va_list ap;
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		char *method;
