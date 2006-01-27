@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.13 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.14 2006/01/27 01:53:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,6 +37,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#include <sys/stdint.h>		/* XXX: for intptr_t */
 #include <machine/stdarg.h>
 
 #include "stand.h"
@@ -94,6 +95,16 @@ kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 reswitch:	switch (ch = *fmt++) {
 		case 'l':
 			lflag = 1;
+			goto reswitch;
+		case 't':
+#if 0 /* XXX: abuse intptr_t until the situation with ptrdiff_t is clear */
+			lflag = (sizeof(ptrdiff_t) == sizeof(long));
+#else
+			lflag = (sizeof(intptr_t) == sizeof(long));
+#endif
+			goto reswitch;
+		case 'z':
+			lflag = (sizeof(size_t) == sizeof(unsigned long));
 			goto reswitch;
 		case 'c':
 			ch = va_arg(ap, int);
