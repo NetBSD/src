@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.4 2006/01/25 18:28:28 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.5 2006/01/27 01:03:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -152,9 +152,10 @@ alloc(size_t size)
 	    f = f->list.le_next)
 		/* noop */ ;
 	bestf = f;
-	failed = (bestf == (struct fl *)0);
+	failed = (bestf == NULL);
 #else
 	/* scan freelist */
+	bestf = NULL;		/* XXXGCC: -Wuninitialized */
 	f = freelist.lh_first;
 	while (f != NULL) {
 		if ((size_t)f->size >= size) {
