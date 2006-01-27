@@ -1,4 +1,4 @@
-/*	$NetBSD: trees.c,v 1.2 2006/01/16 17:02:29 christos Exp $	*/
+/*	$NetBSD: trees.c,v 1.3 2006/01/27 00:45:27 christos Exp $	*/
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-2005 Jean-loup Gailly
@@ -988,7 +988,8 @@ void _tr_flush_block(s, buf, stored_len, eof)
     } else if (s->strategy == Z_FIXED || static_lenb == opt_lenb) {
 #endif
         send_bits(s, (STATIC_TREES<<1)+eof, 3);
-        compress_block(s, (ct_data *)static_ltree, (ct_data *)static_dtree);
+        compress_block(s, (ct_data *)__UNCONST(static_ltree),
+	    (ct_data *)__UNCONST(static_dtree));
 #ifdef ZLIB_DEBUG
         s->compressed_len += 3 + s->static_len;
 #endif

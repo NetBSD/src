@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.1.1.1 2006/01/14 20:10:24 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.2 2006/01/27 00:45:27 christos Exp $	*/
 
 /* compress.c -- compress a memory buffer
  * Copyright (C) 1995-2003 Jean-loup Gailly.
@@ -31,7 +31,7 @@ int ZEXPORT compress2 (dest, destLen, source, sourceLen, level)
     z_stream stream;
     int err;
 
-    stream.next_in = (Bytef*)source;
+    stream.next_in = __UNCONST(source);
     stream.avail_in = (uInt)sourceLen;
 #ifdef MAXSEG_64K
     /* Check for source > 64K on 16-bit machine: */
