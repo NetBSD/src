@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.5 2006/01/27 02:54:15 uwe Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.6 2006/01/27 03:07:31 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,9 +44,9 @@ int OF_finddevice(const char *);
 int OF_instance_to_package(int);
 int OF_getprop(int, const char *, void *, int);
 #ifdef	__notyet__
-int OF_setprop(int, char *, void *, int);
+int OF_setprop(int, const char *, void *, int);
 #endif
-int OF_open(char *);
+int OF_open(const char *);
 void OF_close(int);
 int OF_write(int, void *, int);
 int OF_read(int, void *, int);
@@ -55,4 +55,4 @@ void *OF_claim(void *, u_int, u_int);
 void OF_release(void *, u_int);
 int OF_milliseconds(void);
 void OF_chain(void *, u_int, boot_entry_t, void *, u_int);
-int OF_call_method(char *, int, int, int, ...);
+int OF_call_method(const char *, int, int, int, ...);

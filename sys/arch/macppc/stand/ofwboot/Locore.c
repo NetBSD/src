@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.20 2006/01/27 02:58:50 uwe Exp $	*/
+/*	$NetBSD: Locore.c,v 1.21 2006/01/27 03:07:31 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -218,14 +218,14 @@ OF_getprop(int handle, const char *prop, void *buf, int buflen)
 
 #ifdef	__notyet__	/* Has a bug on FirePower */
 int
-OF_setprop(int handle, char *prop, void *buf, int len)
+OF_setprop(int handle, const char *prop, void *buf, int len)
 {
 	static struct {
 		const char *name;
 		int nargs;
 		int nreturns;
 		int phandle;
-		char *prop;
+		const char *prop;
 		void *buf;
 		int len;
 		int size;
@@ -246,13 +246,13 @@ OF_setprop(int handle, char *prop, void *buf, int len)
 #endif
 
 int
-OF_open(char *dname)
+OF_open(const char *dname)
 {
 	static struct {
 		const char *name;
 		int nargs;
 		int nreturns;
-		char *dname;
+		const char *dname;
 		int handle;
 	} args = {
 		"open",
@@ -524,14 +524,14 @@ OF_chain(void *virt, u_int size, boot_entry_t entry, void *arg, u_int len)
 #endif
 
 int
-OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
+OF_call_method(const char *method, int ihandle, int nargs, int nreturns, ...)
 {
 	va_list ap;
 	static struct {
 		const char *name;
 		int nargs;
 		int nreturns;
-		char *method;
+		const char *method;
 		int ihandle;
 		int args_n_results[12];
 	} args = {
