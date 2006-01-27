@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.26 2006/01/25 18:27:23 christos Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.27 2006/01/27 01:11:27 uwe Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -188,6 +188,7 @@ static int
 ustarfs_cylinder_read(f, seek2, forcelabel)
 	struct open_file *f;
 	ustoffs seek2;
+	int forcelabel;
 {
 	int i, e;
 
@@ -203,6 +204,7 @@ static int
 real_fs_cylinder_read(f, seek2, forcelabel)
 	struct open_file *f;
 	ustoffs seek2;
+	int forcelabel;
 {
 	int i;
 	int e = 0;	/* XXX work around gcc warning */
