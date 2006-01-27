@@ -1,7 +1,7 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.22 2000/04/11 08:26:34 pk Exp $
+#	$NetBSD: install.sh,v 1.22.16.1 2006/01/27 22:45:49 tron Exp $
 #
-# Copyright (c) 1996 The NetBSD Foundation, Inc.
+# Copyright (c) 1996,1997,1999,2000,2006 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -64,6 +64,11 @@ MODE="install"
 #	md_native_fsopts()	- native filesystem options for disk installs
 #	md_makerootwritable()	- make root writable (at least /tmp)
 
+# The following are optional:
+#	md_view_labels_possible	- variable: md_view_labels defined
+#	md_view_labels		- peek at preexisting disk labels, to 
+#				  better identify disks
+
 # we need to make sure .'s below work if this directory is not in $PATH
 # dirname may not be available but expr is
 Mydir=`expr $0 : '^\(.*\)/[^/]*$'`
@@ -113,6 +118,8 @@ md_makerootwritable
 # Install the shadowed disktab file; lets us write to it for temporary
 # purposes without mounting the miniroot read-write.
 cp /etc/disktab.shadow /tmp/disktab.shadow
+
+test "$md_view_labels_possible" && md_view_labels
 
 while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
