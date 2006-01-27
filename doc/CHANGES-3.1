@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.22 2006/01/26 21:32:08 jdc Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.23 2006/01/27 23:11:13 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -494,4 +494,49 @@ lib/libc/rpc/xdr_rec.c				1.26
 	to send a LAST_FRAG marker with 0 bytes of data.  PR#32572
 
 	[christos, ticket #1128]
+
+sys/dev/pci/azalia.c				1.17-1.19
+sys/dev/pci/azalia.h				1.5-1.6
+sys/dev/pci/azalia_codec.c			1.5-1.7
+
+	- Code cleanup.
+	- Various bug fixes including PR port-i386/32485.
+	- Support for 8ch playback with STAC9221D codec.
+	[kent, ticket #1124]
+
+distrib/amiga/stand/Makefile			1.2
+distrib/amiga/stand/loadbsd-2.14.gz.uue		delete
+distrib/amiga/stand/loadbsd-2.16.gz.uue		delete
+distrib/amiga/stand/loadbsd-2.16.uue		1.1
+distrib/amiga/stand/rdbinfo.gz.uue		delete
+distrib/amiga/stand/xstreamtodev.gz.uue		delete
+
+	Only provide uncompressed tools, so that they can be run directly
+	from CD-ROM, and buggy CD-ROM file systems aren't confused by two
+	tools with the same prefix.
+	[is, ticket #1129]
+
+distrib/amiga/miniroot/install.md		1.25
+distrib/miniroot/install.sh			1.23
+distrib/miniroot/upgrade.sh			1.21
+
+	Don't ask for the root device before the user had a chance to
+	identify how it's called under NetBSD.
+	[is, ticket #1130]
+
+sys/arch/i386/pnpbios/pciide_pnpbios.c		1.22 via patch
+
+	Update pciide at pnpbios to work with the last changes to wdc(4),
+	especially the deferral of drive probe. This fixes PR kern/23192.
+	[bouyer, ticket #1131]
+
+sys/dev/ata/wd.c				1.318
+
+	Fix support for 1 and 2TB disks (tested under qemu).
+	[abs, ticket #1132]
+
+sys/arch/i386/i386/est.c			1.15
+
+	PR port-i386/32606: Add support for the Pentium M 710.
+	[xtraeme, ticket #1134]
 
