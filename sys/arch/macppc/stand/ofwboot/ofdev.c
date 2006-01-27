@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.16 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.17 2006/01/27 03:43:54 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,7 @@
  */
 
 #include "ofdev.h"
+#include "openfirm.h"
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -49,6 +50,7 @@
 #include <lib/libsa/ustarfs.h>
 
 #include "hfs.h"
+#include "net.h"
 
 extern char bootdev[];
 
@@ -66,7 +68,7 @@ filename(char *str, char *ppart)
 	for (cp = str; *cp; lp = cp) {
 		/* For each component of the path name... */
 		while (*++cp && *cp != '/')
-			;
+			continue;
 		savec = *cp;
 		*cp = 0;
 		/* ...look whether there is a device with this name */
@@ -81,12 +83,12 @@ filename(char *str, char *ppart)
 				/* search for arguments */
 				for (cp = lp;
 				    --cp >= str && *cp != '/' && *cp != ':';)
-					;
+					continue;
 				if (cp >= str && *cp == ':') {
 					/* found arguments */
 					for (cp = lp;
 					    *--cp != ':' && *cp != ',';)
-						;
+						continue;
 					if (*++cp >= 'a' &&
 					    *cp <= 'a' + MAXPARTITIONS)
 						*ppart = *cp;
@@ -144,10 +146,11 @@ devclose(struct open_file *of)
 	OF_call_method("dma-free", op->handle, 2, 0, op->dmabuf, MAXPHYS);
 	OF_close(op->handle);
 	op->handle = -1;
+	return 0;
 }
 
 static struct devsw devsw[1] = {
-	"OpenFirmware", strategy, devopen_dummy, devclose, noioctl
+	{ "OpenFirmware", strategy, devopen_dummy, devclose, noioctl }
 };
 int ndevs = sizeof devsw / sizeof devsw[0];
 
@@ -182,14 +185,14 @@ static int
 search_label(struct of_dev *devp, u_long off, u_char *buf, struct disklabel *lp,
 	     u_long off0)
 {
-	size_t read;
+	size_t nread;
 	struct mbr_partition *p;
 	int i;
 	u_long poff;
 	static int recursion;
 
-	if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
-	    || read != DEV_BSIZE)
+	if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &nread)
+	    || nread != DEV_BSIZE)
 		return ERDLAB;
 
 	if (*(u_int16_t *)&buf[MBR_MAGIC_OFFSET] != sa_htole16(MBR_MAGIC))
@@ -208,15 +211,15 @@ search_label(struct of_dev *devp, u_long off, u_char *buf, struct disklabel *lp,
 		    ) {
 			poff = get_long(&p->mbrp_start) + off0;
 			if (strategy(devp, F_READ, poff + 1,
-				     DEV_BSIZE, buf, &read) == 0
-			    && read == DEV_BSIZE) {
+				     DEV_BSIZE, buf, &nread) == 0
+			    && nread == DEV_BSIZE) {
 				if (!getdisklabel(buf, lp)) {
 					recursion--;
 					return 0;
 				}
 			}
-			if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
-			    || read != DEV_BSIZE) {
+			if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &nread)
+			    || nread != DEV_BSIZE) {
 				recursion--;
 				return ERDLAB;
 			}
@@ -226,8 +229,8 @@ search_label(struct of_dev *devp, u_long off, u_char *buf, struct disklabel *lp,
 				recursion--;
 				return 0;
 			}
-			if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
-			    || read != DEV_BSIZE) {
+			if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &nread)
+			    || nread != DEV_BSIZE) {
 				recursion--;
 				return ERDLAB;
 			}
@@ -246,7 +249,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	char buf[DEV_BSIZE];
 	struct disklabel label;
 	int handle, part;
-	size_t read;
+	size_t nread;
 	int error = 0;
 
 	if (ofdev.handle != -1)
@@ -300,8 +303,8 @@ devopen(struct open_file *of, const char *name, char **file)
 		ofdev.bsize = DEV_BSIZE;
 		/* First try to find a disklabel without MBR partitions */
 		if (strategy(&ofdev, F_READ,
-			     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
-		    || read != DEV_BSIZE
+			     LABELSECTOR, DEV_BSIZE, buf, &nread) != 0
+		    || nread != DEV_BSIZE
 		    || getdisklabel(buf, &label)) {
 			/* Else try MBR partitions */
 			error = search_label(&ofdev, 0, buf, &label, 0);
@@ -338,7 +341,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		of->f_devdata = &ofdev;
 		file_system[0] = file_system_nfs;
 		nfsys = 1;
-		if (error = net_open(&ofdev))
+		if ((error = net_open(&ofdev)))
 			goto bad;
 		return 0;
 	}
