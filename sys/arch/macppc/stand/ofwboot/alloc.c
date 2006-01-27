@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.8 2006/01/27 02:39:07 uwe Exp $	*/
+/*	$NetBSD: alloc.c,v 1.9 2006/01/27 04:51:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -230,10 +230,10 @@ dealloc(void *ptr, size_t size)
 	LIST_INSERT_HEAD(&freelist, a, list);
 }
 
-#ifdef __notyet__
 void
 freeall(void)
 {
+#ifdef __notyet__
 	struct ml *m;
 
 	/* Release chunks on freelist... */
@@ -247,5 +247,5 @@ freeall(void)
 		LIST_REMOVE(m, list);
 		OF_release(m, m->size);
 	}
-}
 #endif /* __notyet__ */
+}
