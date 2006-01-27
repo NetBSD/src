@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.10 2006/01/26 21:32:33 jdc Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.11 2006/01/27 23:09:28 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -113,4 +113,23 @@ lib/libc/rpc/xdr_rec.c				1.26
 	to send a LAST_FRAG marker with 0 bytes of data.  PR#32572
 
 	[christos, ticket #1128]
+
+distrib/amiga/miniroot/install.md		1.25
+distrib/miniroot/install.sh			1.23
+distrib/miniroot/upgrade.sh			1.21
+
+	Don't ask for the root device before the user had a chance to
+	identify how it's called under NetBSD.
+	[is, ticket #1130]
+
+sys/arch/i386/pnpbios/pciide_pnpbios.c		1.22 via patch
+
+	Update pciide at pnpbios to work with the last changes to wdc(4),
+	especially the deferral of drive probe. This fixes PR kern/23192.
+	[bouyer, ticket #1131]
+
+sys/dev/ata/wd.c				1.318
+
+	Fix support for 1 and 2TB disks (tested under qemu).
+	[abs, ticket #1132]
 
