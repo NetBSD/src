@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.563 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.564 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -168,3 +168,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[christos 20060114]
 	firmload: Add an API for loading firmware images used by hardware
 		devices.  [thorpej 20060116]
+	evbmips: Add support for Alchemy Au1550 processors and DBAu1550 board.
+		[gdamore 20060127]
