@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.10 2005/12/11 12:19:08 christos Exp $
+$NetBSD: version,v 1.11 2006/01/27 18:31:12 cdi Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -12,3 +12,4 @@ is taken as the current.
 1.6:	Allow hyphen in kernel names
 1.7:	Fix size calculation for symbol table
 1.8:	Fix booting from obscure partition bootstrings (e.g. "boot disk:e disk:e/netbsd")
+1.9:	Load kernel into permanently mapped memory, pass mappings to the kernel.

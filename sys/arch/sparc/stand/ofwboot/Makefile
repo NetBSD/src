@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2006/01/27 04:29:02 uwe Exp $
+#	$NetBSD: Makefile,v 1.18 2006/01/27 18:31:11 cdi Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -11,6 +11,7 @@ WARNS=		0
 
 PROG?=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
+SRCS+=		bootinfo.c loadfile_machdep.c promlib.c prf.c
 .PATH:		${S}/arch/sparc64/sparc64
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
@@ -23,10 +24,11 @@ COPTS+=		-ffreestanding
 CWARNFLAGS+=	-Wno-main
 CFLAGS+=	${COPTS} ${CEXTRAFLAGS}
 CPPFLAGS+=	-D_STANDALONE -DSUN4U
-CPPFLAGS+=	-DBOOT_ELF32 -DBOOT_ELF64
+CPPFLAGS+=	-DBOOT_ELF32 -DBOOT_ELF64 -DBOOT_AOUT
 CPPFLAGS+=	-DNETBOOT
 CPPFLAGS+=	-DSUPPORT_DHCP
 #CPPFLAGS+=	-DNETIF_DEBUG 
+#CPPFLAGS+=	-D_DEBUG
 
 LINKS+=		${BINDIR}/ofwboot ${BINDIR}/ofwboot.net
 
@@ -42,14 +44,11 @@ NEWVERSWHAT=	"OpenFirmware Boot"
 # We may get address conflicts with other bootloaders, say
 # Sun's ufsboot, so we'll pick a reasonably empty address.
 #
-RELOC=		800000
+RELOC=		100000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c sparc64 sparc machine
-
 CPPFLAGS+=	-I${CURDIR}/../../.. -I${CURDIR}/../../../.. -I${CURDIR} -I.
-CPPFLAGS+=	-I${CURDIR}/../../../../lib/libsa
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 
 #
@@ -73,7 +72,7 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes
+SAMISCMAKEFLAGS= SA_USE_LOADFILE=yes SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
@@ -93,6 +92,8 @@ cleanlibdir:
 
 vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
+
+CLEANFILES+= vers.c
 
 .if CROSS
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
@@ -125,4 +126,4 @@ srt0.o: srt0.s
 	${NORMAL_S}
 
 # Explicit dependency for this.
-boot.o: boot.c elfXX_exec.c
+boot.o: boot.c
