@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.23 2005/12/11 12:19:10 christos Exp $ */
+/*	$NetBSD: autoconf.h,v 1.24 2006/01/27 18:37:49 cdi Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -157,6 +157,8 @@ struct	device *parsedisk __P((char *, int, int, dev_t *));
 void	mountroot_hook_establish __P((void (*) __P((struct device *)),
 				      struct device *));
 
-void	bootstrap __P((int));
+/* Kernel initialization routine. */
+void	bootstrap(void *, void *, void *, void *, void *);
+
 struct device *getdevunit __P((const char *, int));
 int	romgetcursoraddr __P((int **, int **));

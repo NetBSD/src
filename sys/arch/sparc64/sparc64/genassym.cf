@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.39 2005/12/11 12:19:14 christos Exp $
+#	$NetBSD: genassym.cf,v 1.40 2006/01/27 18:37:49 cdi Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -301,3 +301,8 @@ endif
 # TLB IPI handler arguments.
 define	ITA_VADDR	offsetof(struct ipi_tlb_args, ita_vaddr)
 define	ITA_CTX		offsetof(struct ipi_tlb_args, ita_ctx)
+
+# pte_t structure.
+define	TTE_VPN		offsetof(pte_t, tag)
+define	TTE_DATA	offsetof(pte_t, data)
+define	PTE_SIZE	sizeof(pte_t)
