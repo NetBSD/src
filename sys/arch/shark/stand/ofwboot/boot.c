@@ -1,5 +1,5 @@
 #define	DEBUG
-/*	$NetBSD: boot.c,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2006/01/27 01:55:34 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ prom2boot(char *dev)
 {
 	char *cp, *ocp;
 	
-	ocp = cp;
+	ocp = dev;
 	cp = dev + strlen(dev) - 1;
 	for (; cp >= ocp; cp--) {
 		if (*cp == ':') {
@@ -177,7 +177,7 @@ chain(void (*entry)(int (*)(void *), void *, u_int), char *args, void *ssym,
 	l += sizeof(esym);
 	DPRINTF("args + l -> %p\n", args + l);
 
-	DPRINTF("Calling OF_chain(%p, %p, %p, %p, %u)\n",
+	DPRINTF("Calling OF_chain(%p, %tx, %p, %p, %u)\n",
 	    (void *)RELOC, end - (char *)RELOC, entry, args, l);
 	OF_chain((void *)RELOC, end - (char *)RELOC, entry, args, l);
 	panic("chain");
