@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.22 2005/12/24 22:45:40 perry Exp $ */
+/* $NetBSD: bootxx.c,v 1.23 2006/01/27 07:33:47 he Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -371,7 +371,7 @@ static char *top = (char*)end;
 
 void *
 alloc(size)
-        unsigned size;
+        size_t size;
 {
 	void *ut = top;
 	top += size;
@@ -379,9 +379,9 @@ alloc(size)
 }
 
 void
-free(ptr, size)
+dealloc(ptr, size)
         void *ptr;
-        unsigned size;
+        size_t size;
 {
 }
 
