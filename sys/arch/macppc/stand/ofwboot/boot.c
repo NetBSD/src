@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.19 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.20 2006/01/27 03:11:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -89,6 +89,9 @@
 #include "ofdev.h"
 #include "openfirm.h"
 
+extern void __syncicache(void *, size_t); /* in libkern */
+
+
 #ifdef DEBUG
 # define DPRINTF printf
 #else
@@ -99,8 +102,8 @@ char bootdev[128];
 char bootfile[128];
 int boothowto;
 
-static ofw_version = 0;
-static char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.macppc", NULL };
+static int ofw_version = 0;
+static const char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.macppc", NULL };
 
 static void
 prom2boot(char *dev)
