@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.5 2006/01/27 01:03:10 uwe Exp $	*/
+/*	$NetBSD: alloc.c,v 1.6 2006/01/27 02:26:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -213,7 +213,7 @@ alloc(size_t size)
 }
 
 void
-dealloc(void *ptr, size_t size)	/* only for consistenct check */
+dealloc(void *ptr, size_t size)
 {
 	register struct ml *a = (struct ml *)((char*)ptr - OVERHEAD);
 
