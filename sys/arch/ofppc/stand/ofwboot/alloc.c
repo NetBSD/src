@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.6 2006/01/25 18:28:27 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.7 2006/01/27 04:18:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ LIST_HEAD(, ml) allocatedlist = LIST_HEAD_INITIALIZER(allocatedlist);
 void *
 alloc(size_t size)
 {
-	struct ml *f, *bestf = NULL;
+	struct ml *f, *bestf;
 #ifndef ALLOC_FIRST_FIT
 	unsigned bestsize = 0xffffffff;	/* greater than any real size */
 #endif
@@ -152,9 +152,10 @@ alloc(size_t size)
 	    f = f->list.le_next)
 		/* noop */ ;
 	bestf = f;
-	failed = (bestf == (struct fl *)0);
+	failed = (bestf == NULL);
 #else
 	/* scan freelist */
+	bestf = NULL;		/* XXXGCC: -Wuninitialized */
 	f = freelist.lh_first;
 	while (f != NULL) {
 		if ((size_t)f->size >= size) {
@@ -180,7 +181,7 @@ alloc(size_t size)
 		 * to page size, and record the chunk size.
 		 */
 		size = roundup(size, NBPG);
-		help = OF_claim(0, (unsigned)size, NBPG);
+		help = OF_claim(NULL, (unsigned)size, NBPG);
 		if (help == (char *)-1)
 			panic("alloc: out of memory");
 
@@ -188,7 +189,7 @@ alloc(size_t size)
 		f->size = (unsigned)size;
 #ifdef ALLOC_TRACE
 		printf("=%lx (new chunk size %u)\n",
-		    (u_long)(help + OVERHEAD), f->f_size);
+		    (u_long)(help + OVERHEAD), f->size);
 #endif
 		goto out;
 	}
