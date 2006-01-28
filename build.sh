@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.144 2006/01/08 11:03:40 dsl Exp $
+#	$NetBSD: build.sh,v 1.145 2006/01/28 21:34:07 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -862,7 +862,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.144 2006/01/08 11:03:40 dsl Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.145 2006/01/28 21:34:07 apb Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -1035,7 +1035,7 @@ main()
 			statusmsg "Successful make ${op}"
 			;;
 
-		obj|build|distribution|release|sourcesets|syspkgs|params)
+		obj|build|distribution|iso-image|release|sourcesets|syspkgs|params)
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
