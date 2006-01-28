@@ -118,7 +118,7 @@ fi
 
 echo >&2 "${prog}: checking for cyclic dependencies"
 
-tsort_errors="$( ${TSORT} < "${SCRATCH}/alldeps" 2>&1 >/dev/null )"
+tsort_errors="$(${TSORT} < "${SCRATCH}/alldeps" 2>&1 >/dev/null)"
 
 if [ -n "${tsort_errors}" ]; then
 	# Errors from tsort are usually to do with cyclic dependencies.

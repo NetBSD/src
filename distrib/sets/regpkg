@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.13 2006/01/28 18:42:23 apb Exp $
+# $NetBSD: regpkg,v 1.14 2006/01/28 19:01:23 apb Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -91,7 +91,7 @@ ERRWARNNOTE="${ERROR}"	# may be changed by "-u" (update) command line flag
 # All temporary files will go in ${SCRATCH}, which will be deleted on
 # exit.
 #
-SCRATCH="$( ${MKTEMP} -d "/var/tmp/${0##*/}.XXXXXX" )"
+SCRATCH="$(${MKTEMP} -d "/var/tmp/${0##*/}.XXXXXX")"
 if [ $? -ne 0 -o \! -d "${SCRATCH}" ]; then
 	echo >&2 "${prog}: Could not create scratch directory."
 	bomb
@@ -104,7 +104,7 @@ fi
 es=0
 cleanup_must_delete_binpkgfile=false
 cleanup_must_delete_dbsubdir=false
-cleanup ()
+cleanup()
 {
 	trap - 0
 	#echo "${prog}: cleanup start"
@@ -142,12 +142,12 @@ etcdir=""
 SYSPKG_DB_TOPDIR=""
 pkgset=""
 pkg=""
-parse_args ()
+parse_args()
 {
 	while [ $# -gt 2 ]; do
 		case "$1" in
-		-q)	quiet=true ; verbose=false ;;
-		-v)	verbose=true ; quiet=false
+		-q)	quiet=true; verbose=false ;;
+		-v)	verbose=true; quiet=false
 			verbosity=$(( ${verbosity} + 1 ))
 			;;
 		-f)	force=true ;;
@@ -156,13 +156,13 @@ parse_args ()
 		-c)	# The -c option is ignored.  The BUILD_INFO_CACHE
 			# environment variable is used instead.
 			;;
-		-d)	DESTDIR="$2" ; shift ;;
+		-d)	DESTDIR="$2"; shift ;;
 		-d*)	DESTDIR="${1#-?}" ;;
-		-t)	binpkgdir="$2" ; shift ;;
+		-t)	binpkgdir="$2"; shift ;;
 		-t*)	binpkgdir="${1#-?}" ;;
-		-M)	metalog="$2" ; shift ;;
+		-M)	metalog="$2"; shift ;;
 		-M*)	metalog="${1#-?}" ;;
-		-N)	etcdir="$2" ; shift ;;
+		-N)	etcdir="$2"; shift ;;
 		-N*)	etcdir="${1#-?}" ;;
 		*)	break ;;
 		esac
@@ -211,9 +211,9 @@ parse_args ()
 # The result is stored in the file ${PLIST}.
 #
 PLIST="${SCRATCH}/PLIST"
-make_PLIST ()
+make_PLIST()
 {
-	if ${verbose} ; then
+	if ${verbose}; then
 		echo "Making PLIST for \"${pkg}\" package (part of ${pkgset} set)"
 	fi
 	prefix="${DESTDIR:-/}"
@@ -221,7 +221,7 @@ make_PLIST ()
 	${HOST_SH} "${rundir}/makeplist" -p "${prefix}" -I "${realprefix}" \
 		"${pkgset}" "${pkg}" \
 		>"${PLIST}" 2>"${SCRATCH}/makeplist-errors"
-	if ${EGREP} -v '^DEBUG:' "${SCRATCH}/makeplist-errors" ; then
+	if ${EGREP} -v '^DEBUG:' "${SCRATCH}/makeplist-errors"; then
 		# "find" invoked from makeplist sometimes reports
 		# errors about missing files or directories, and
 		# makeplist ignores the errors.  Catch them here.
@@ -244,14 +244,14 @@ make_PLIST ()
 # The result is stored in the variable ${allfiles}.
 #
 allfiles=''
-init_allfiles ()
+init_allfiles()
 {
 	[ -f "${PLIST}" ] || make_PLIST
-	allfiles="$( ${AWK} '
+	allfiles="$(${AWK} '
 		BEGIN { destdir = "'"${DESTDIR%/}"'" }
 		/^@cwd/ { prefix = $2; next }
 		/^@dirrm/ { next }
-		{ printf("%s%s%s\n", destdir, prefix, $0) }' "${PLIST}" )"
+		{ printf("%s%s%s\n", destdir, prefix, $0) }' "${PLIST}")"
 }
 
 #
@@ -260,13 +260,13 @@ init_allfiles ()
 # The result is stored in the variable ${newestfile}.
 #
 newestfile=''
-init_newestfile ()
+init_newestfile()
 {
 	[ -s "${allfiles}" ] || init_allfiles
 	# We assume no shell special characters in ${allfiles},
 	# and spaces only between file names, not inside file names.
 	# This should be safe, because it has no no user-specified parts.
-	newestfile="$( ${LS} -1dt ${allfiles} | ${SED} '1q' )"
+	newestfile="$(${LS} -1dt ${allfiles} | ${SED} '1q')"
 }
 
 #
@@ -283,7 +283,7 @@ init_newestfile ()
 # get_newest_date() - get date from rcsid or mtime, return it in ${newest},
 #		and set ${method}.
 #
-get_osvers ()
+get_osvers()
 {
 	if [ -f ../../sys/conf/osrelease.sh ]; then
 		osvers="$(${HOST_SH} ../../sys/conf/osrelease.sh)"
@@ -294,10 +294,10 @@ get_osvers ()
 	fi
 	#echo "${osvers}"
 }
-get_tinyvers ()
+get_tinyvers()
 {
-	tinyvers="$( ${AWK} '$1 ~ '/"${pkg}"/' { print $2 }' \
-			"${rundir}/versions" )"
+	tinyvers="$(${AWK} '$1 ~ '/"${pkg}"/' { print $2 }' \
+			"${rundir}/versions")"
 	case "${tinyvers}" in
 	"")	tinyvers=0
 		;;
@@ -314,7 +314,7 @@ get_newest_rcsid_date()
 	newest=0
 	case "${allfiles}" in
 	"")	;;
-	*)	newest="$( ${IDENT} ${allfiles} 2>/dev/null | ${AWK} '
+	*)	newest="$(${IDENT} ${allfiles} 2>/dev/null | ${AWK} '
 			BEGIN { last = 0 }
 			$2 == "crt0.c,v" { next }
 			NF == 8 && \
@@ -325,19 +325,19 @@ get_newest_rcsid_date()
 			$4 ~ /^[0-9][0-9][0-9][0-9][0-9]*\/[0-9][0-9]\/[0-9][0-9]$/ \
 				{ t = $4; gsub("/", "", t);
 				  if (t > last) last = t; }
-			END { print last }' )"
+			END { print last }')"
 		method=ident
 		;;
 	esac
 	#echo "${newest}"
 }
-get_newest_mtime_date ()
+get_newest_mtime_date()
 {
 	[ -s "${newestfile}" ] || init_newestfile
 
 	# We could simplify the awk program to take advantage of the
 	# fact thet it should have exactly one line of input.
-	newest="$( ${ENV_CMD} TZ=UTC LOCALE=C ${LS} -lT "${newestfile}" \
+	newest="$(${ENV_CMD} TZ=UTC LOCALE=C ${LS} -lT "${newestfile}" \
 		| ${AWK} '
 		BEGIN { newest = 0 }
 		{
@@ -361,10 +361,10 @@ get_newest_mtime_date ()
 			#t = sprintf("%s.%4.4s", t, $8);
 			if (t > newest) newest = t;
 		}
-		END { print newest }' )"
+		END { print newest }')"
 	#echo "${newest}"
 }
-get_newest_date ()
+get_newest_date()
 {
 	get_newest_rcsid_date
 	case "${newest}" in
@@ -388,11 +388,11 @@ get_newest_date ()
 #
 method=''
 t=''
-choose_version_number ()
+choose_version_number()
 {
-	get_osvers ; m1="${method}"
+	get_osvers; m1="${method}"
 	get_tinyvers # does not set ${method}
-	get_newest_date ; m2="${method}"
+	get_newest_date; m2="${method}"
 	t="${osvers}.${tinyvers}.${newest}"
 	method="${m1}.${m2}"
 
@@ -406,12 +406,12 @@ choose_version_number ()
 # init_db_opts() sets the dbfile, dbtype and db_opts variables,
 # used for accessing the pkgdb.byfile.db database.
 #
-init_db_opts ()
+init_db_opts()
 {
 	dbfile="${SYSPKG_DB_TOPDIR}/pkgdb.byfile.db"
 	dbtype="btree"
 	db_opts=''
-	: ${TARGET_ENDIANNESS:="$( arch_to_endian "${MACHINE_ARCH}" )"}
+	: ${TARGET_ENDIANNESS:="$(arch_to_endian "${MACHINE_ARCH}")"}
 	case "${TARGET_ENDIANNESS}" in
 	4321)	db_opts="${db_opts} -E B" # big-endian
 		;;
@@ -422,7 +422,7 @@ init_db_opts ()
 		echo >&2 "${NOTE}Using host endianness"
 		;;
 	esac
-	if ${update} || ${force} ; then
+	if ${update} || ${force}; then
 		# overwriting an existing entry is not an error
 		db_opts="${db_opts} -R"
 	fi
@@ -436,7 +436,7 @@ init_db_opts ()
 # print_dir_exec_lines outputs an "@exec install" line for each
 # directory in ${PLIST}
 #
-print_dir_exec_lines ()
+print_dir_exec_lines()
 {
 	local dir uname gname mode
 	local dot_slash_dir
@@ -444,7 +444,7 @@ print_dir_exec_lines ()
 	local word line
 	${AWK} '/^@dirrm/ { print $2 }' <"${PLIST}" | \
 	${SORT} | \
-	while read dir ; do
+	while read dir; do
 		# Sanitise the name. ${dir} could be an absolute or
 		# relative name, with or without a leading "./".
 		# ${dot_slash_dir} always has a leading "./" (except when
@@ -461,13 +461,13 @@ print_dir_exec_lines ()
 		# Get the directory's owner, group, and mode
 		# from the live file system, or let it be overridden
 		# by the metalog.
-		eval "$( ${STAT} -f 'uname=%Su gname=%Sg mode=%#OLp' \
-				"${DESTDIR}/${dot_slash_dir}" )"
+		eval "$(${STAT} -f 'uname=%Su gname=%Sg mode=%#OLp' \
+				"${DESTDIR}/${dot_slash_dir}")"
 		if [ -n "${metalog}" ]; then
-			line="$( echo "${dot_slash_dir}" | \
+			line="$(echo "${dot_slash_dir}" | \
 				${AWK} -f "${rundir}/join.awk" \
-					/dev/stdin "${metalog}" )"
-			for word in ${line} ; do
+					/dev/stdin "${metalog}")"
+			for word in ${line}; do
 				case "${word}" in
 				uname=*|gname=*|mode=*)	eval "${word}" ;;
 				esac
@@ -494,7 +494,7 @@ EOF
 # This involves creating the subdirectory ${SYSPKG_DB_SUBDIR}
 # and populating it with several files.
 #
-register_syspkg ()
+register_syspkg()
 {
 	cleanup_must_delete_dbsubdir=true
 	[ -n "${SYSPKG_DB_SUBDIR}" ] || bomb
@@ -528,7 +528,7 @@ register_syspkg ()
 	# its exact version number in a "@blddep" line.
 	#
 	${AWK} '$1 ~ '/"${pkg}"/' { print $2 }' "${rundir}/deps" | ${SORT} | \
-	while read depname ; do
+	while read depname; do
 		# ${pkgdepglob} is a shell glob pattern that should match
 		# any version of a pkg.  ${pkgdep} uses the special syntax
 		# for pkg dependencies, and is not usable as a shell
@@ -536,8 +536,8 @@ register_syspkg ()
 		pkgdepglob="${depname}-[0-9]*"
 		pkgdep="${depname}${depversion}"
 		echo "@pkgdep ${pkgdep}"
-		blddep="$( cd "${SYSPKG_DB_TOPDIR}" && echo ${pkgdepglob} \
-			|| bomb )"
+		blddep="$(cd "${SYSPKG_DB_TOPDIR}" && echo ${pkgdepglob} \
+			|| bomb)"
 		case "${blddep}" in
 		*\*)	# pkgdepglob did not match anything
 			echo >&2 "${WARNING}${pkg} depends on '${pkgdep}' but there is no matching syspkg in ${SYSPKG_DB_TOPDIR}"
@@ -566,9 +566,9 @@ register_syspkg ()
 	done >>"${PLIST}"
 
 	# create the comment (should be one line)
-	comment="$( ${AWK} '$1 ~ '/"${pkg}"/' \
+	comment="$(${AWK} '$1 ~ '/"${pkg}"/' \
 			{ print substr($0, length($1) + 2) }' \
-			"${rundir}/comments" )"
+			"${rundir}/comments")"
 	case "${comment}" in
 	"")	echo >&2 "${WARNING}no comment for \"${pkg}\" (using placeholder)"
 		comment="System package for ${pkg}"
@@ -581,9 +581,9 @@ register_syspkg ()
 	echo "${comment}" > "${SYSPKG_DB_SUBDIR}/+COMMENT"
 
 	# create the description (could be multiple lines)
-	descr="$( ${AWK} '$1 ~ '/"${pkg}"/' {
+	descr="$(${AWK} '$1 ~ '/"${pkg}"/' {
 			print substr($0, length($1) + 2) }' \
-			"${rundir}/descrs" )"
+			"${rundir}/descrs")"
 	case "${descr}" in
 	"")	echo >&2 "${WARNING}no description for \"${pkg}\" (re-using comment)" 2>&1
 		descr="${comment}"
@@ -617,9 +617,9 @@ EOF
 
 	# test for attributes
 	args=""
-	attrs="$( ${AWK} '$1 ~ '/"${pkg}"/' { \
+	attrs="$(${AWK} '$1 ~ '/"${pkg}"/' { \
 			print substr($0, length($1) + 2) }' \
-		"${rundir}/attrs" )"
+		"${rundir}/attrs")"
 	for a in "${attrs}"; do
 		case "${attrs}" in
 		"")	;;
@@ -635,11 +635,11 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.13 2006/01/28 18:42:23 apb Exp $'
-		utcdate="$( ${ENV_CMD} TZ=UTC LOCALE=C \
-			${DATE} '+%Y-%m-%d %H:%M' )"
+		rcsid='$NetBSD: regpkg,v 1.14 2006/01/28 19:01:23 apb Exp $'
+		utcdate="$(${ENV_CMD} TZ=UTC LOCALE=C \
+			${DATE} '+%Y-%m-%d %H:%M')"
 		user="${USER:-root}"
-		host="$( ${HOSTNAME} )"
+		host="$(${HOSTNAME})"
 		echo "@name ${pkg}-${t}"
 		echo "@comment Packaged at ${utcdate} UTC by ${user}@${host}"
 		echo "@comment Packaged using ${prog} ${rcsid}"
@@ -652,7 +652,7 @@ EOF
 		# ${DESTDIR}/var/db/syspkg/*/+CONTENTS".
 		${EGREP} '^(@pkgdep|@blddep)' "${PLIST}" || true
 		# Now do the remainder of the file.
-		while read line ; do
+		while read line; do
 			case "${line}" in
 			@pkgdep*|@blddep*)
 				# already handled by grep above
@@ -678,7 +678,7 @@ EOF
 				file="${DESTDIR}${line}"
 				if [ -f "${file}" -a -r "${file}" ];
 				then
-					md5sum="$( ${CKSUM} -n -m "${file}" \
+					md5sum="$(${CKSUM} -n -m "${file}" \
 						   | ${AWK} '{print $1}'
 						)"
 					echo "@comment MD5:${md5sum}"
@@ -717,9 +717,9 @@ EOF
 		| ${DB} -w ${db_opts} -F "${tab}" -f - "${dbtype}" "${dbfile}"
 	}
 
-	if ${verbose} ; then
+	if ${verbose}; then
 		echo "Registered ${pkg}-${t} in ${SYSPKG_DB_TOPDIR}"
-	elif ! ${quiet} ; then
+	elif ! ${quiet}; then
 		echo "Registered ${pkg}-${t}"
 	fi
 
@@ -731,7 +731,7 @@ EOF
 #
 # The output file is ${binpkgdir}/${pkg}-${t}.tgz.
 #
-create_syspkg_tgz ()
+create_syspkg_tgz()
 {
 	#
 	# pkg_create does not understand metalog files, so we have to
@@ -804,9 +804,9 @@ create_syspkg_tgz ()
 		#
 		# Ignores @cwd lines.  This should be safe, given how
 		# makeplist works.
-		${AWK} '/^@dirrm \.\//	{print $2 " type=dir" ; next}
+		${AWK} '/^@dirrm \.\//	{print $2 " type=dir"; next}
 			/^@dirrm \.$/	{print ". type=dir"; next}
-			/^@dirrm/	{print "./" $2 " type=dir" ; next}
+			/^@dirrm/	{print "./" $2 " type=dir"; next}
 			/^@/		{next}
 			/^\.\//		{print $0; next}
 			/./		{print "./" $0; next}' \
@@ -895,9 +895,9 @@ EOM
 	${GZIP_CMD} -9 <"${tarball_uncompressed}" >"${binpkgfile}" || bomb
 
 	# (Extra space is to make message line up with "Registered" message.)
-	if ${verbose} ; then
+	if ${verbose}; then
 		echo "  Packaged ${binpkgfile}"
-	elif ! ${quiet} ; then
+	elif ! ${quiet}; then
 		echo "  Packaged ${binpkgfile##*/}"
 	fi
 
@@ -911,7 +911,7 @@ EOM
 # If SYSPKG_DB_SUBDIR already exists, that might be an error, depending
 # on ${force} and ${update} flags.
 #
-do_register_syspkg ()
+do_register_syspkg()
 {
 	# Check that necessary variables are defined
 	[ -n "${SYSPKG_DB_TOPDIR}" ] || bomb
@@ -921,7 +921,7 @@ do_register_syspkg ()
 	[ -d "${SYSPKG_DB_TOPDIR}" ] || mkdir -p "${SYSPKG_DB_TOPDIR}" || bomb
 
 	# A function to delete db entries referring to any version of ${pkg}
-	delete_old_db_entries ()
+	delete_old_db_entries()
 	{
 		init_db_opts # sets dbfile, dbtype, and db_opts
 		dblist="${SCRATCH}/dblist"
@@ -932,11 +932,11 @@ do_register_syspkg ()
 	}
 
 	# A function to delete any old version of ${pkg}
-	delete_old_pkg ()
+	delete_old_pkg()
 	{
 		pattern="${pkg}-[0-9]*"
-		matches="$( cd "${SYSPKG_DB_TOPDIR}" && echo ${pattern} \
-			|| bomb )"
+		matches="$(cd "${SYSPKG_DB_TOPDIR}" && echo ${pattern} \
+			|| bomb)"
 		echo >&2 "${NOTE}deleting old pkg (${matches})"
 		cleanup_must_delete_dbsubdir=true
 		delete_old_db_entries
@@ -945,7 +945,7 @@ do_register_syspkg ()
 
 	# Check whether another version of ${pkg} is already registered.
 	pattern="${pkg}-[0-9]*"
-	matches="$( cd "${SYSPKG_DB_TOPDIR}" && echo ${pattern} || bomb )"
+	matches="$(cd "${SYSPKG_DB_TOPDIR}" && echo ${pattern} || bomb)"
 	case "${matches}" in
 	*\*)		;;	# wildcard did not match anything
 	"${pkg}-${t}")	;;	# exact match
@@ -973,8 +973,8 @@ do_register_syspkg ()
 			#
 			[ -n "${newestfile}" ] || init_newestfile
 			if [ -n "${newestfile}" ]; then
-				case "$( ${FIND} "${SYSPKG_DB_SUBDIR}" -type f \
-					! -newer "${newestfile}" -print )" \
+				case "$(${FIND} "${SYSPKG_DB_SUBDIR}" -type f \
+					! -newer "${newestfile}" -print)" \
 				in
 				"")	;;
 				*)
@@ -1004,11 +1004,11 @@ do_register_syspkg ()
 # If binpkgfile already exists, that might be an error, depending on
 # ${force} and ${update} flags.
 #
-do_create_syspkg_tgz ()
+do_create_syspkg_tgz()
 {
 	[ -n "${binpkgfile}" ] || bomb
 
-	delete_and_recreate ()
+	delete_and_recreate()
 	{
 		echo >&2 "${ERRWARNNOTE}deleting and re-creating ${pkg}-${t}.tgz"
 		rm -f "${binpkgfile}"
@@ -1017,7 +1017,7 @@ do_create_syspkg_tgz ()
 
 	# Check whether another version of ${pkg} already exists.
 	pattern="${pkg}-[0-9]*"
-	matches="$( cd "${binpkgdir}" && echo ${pattern} || bomb )"
+	matches="$(cd "${binpkgdir}" && echo ${pattern} || bomb)"
 	case "${matches}" in
 	*\*)	;;	# wildcard did not match anything
 	"${pkg}-${t}.tgz") ;;	# exact match
@@ -1048,8 +1048,8 @@ do_create_syspkg_tgz ()
 			# than ${binpkgfile}, then do nothing.
 			# Else delete and re-create the tgz.
 			#
-			case "$( ${FIND} "${SYSPKG_DB_SUBDIR}" -type f \
-				-newer "${binpkgfile}" -print )" \
+			case "$(${FIND} "${SYSPKG_DB_SUBDIR}" -type f \
+				-newer "${binpkgfile}" -print)" \
 			in
 			"")	;;
 			*)	delete_and_recreate ;;

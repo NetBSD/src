@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.28 2006/01/04 13:35:55 apb Exp $
+# $NetBSD: makeobsolete,v 1.29 2006/01/28 19:01:23 apb Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -59,7 +59,7 @@ if [ -n "$1" ]; then
 	lists="$*"
 fi
 
-if [ ! -d "${target}" ] ; then
+if [ ! -d "${target}" ]; then
 	echo "target directory [${target}] doesn't exist"
 	exit 1
 fi
