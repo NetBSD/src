@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.12 2006/01/08 10:25:33 apb Exp $
+# $NetBSD: regpkg,v 1.13 2006/01/28 18:42:23 apb Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -64,8 +64,6 @@ prog="${0##*/}"
 toppid=$$
 rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 . "${rundir}/sets.subr"
-
-: ${TARGET_ENDIANNESS:="$( arch_to_endian "${MACHINE_ARCH}" )"}
 
 bomb()
 {
@@ -405,6 +403,36 @@ choose_version_number ()
 }
 
 #
+# init_db_opts() sets the dbfile, dbtype and db_opts variables,
+# used for accessing the pkgdb.byfile.db database.
+#
+init_db_opts ()
+{
+	dbfile="${SYSPKG_DB_TOPDIR}/pkgdb.byfile.db"
+	dbtype="btree"
+	db_opts=''
+	: ${TARGET_ENDIANNESS:="$( arch_to_endian "${MACHINE_ARCH}" )"}
+	case "${TARGET_ENDIANNESS}" in
+	4321)	db_opts="${db_opts} -E B" # big-endian
+		;;
+	1234)	db_opts="${db_opts} -E L" # little-endian
+		;;
+	*)
+		echo >&2 "${WARNING}Unknown or unsupported target endianness"
+		echo >&2 "${NOTE}Using host endianness"
+		;;
+	esac
+	if ${update} || ${force} ; then
+		# overwriting an existing entry is not an error
+		db_opts="${db_opts} -R"
+	fi
+	if [ ${verbosity} -lt 2 ]; then
+		# don't print all the keys added to the database
+		db_opts="${db_opts} -q"
+	fi
+}
+
+#
 # print_dir_exec_lines outputs an "@exec install" line for each
 # directory in ${PLIST}
 #
@@ -607,7 +635,7 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.12 2006/01/08 10:25:33 apb Exp $'
+		rcsid='$NetBSD: regpkg,v 1.13 2006/01/28 18:42:23 apb Exp $'
 		utcdate="$( ${ENV_CMD} TZ=UTC LOCALE=C \
 			${DATE} '+%Y-%m-%d %H:%M' )"
 		user="${USER:-root}"
@@ -664,27 +692,7 @@ EOF
 	#  Update ${SYSPKG_DB_TOPDIR}/pkgdb.byfile.db.
 	#
 	{
-		dbfile="${SYSPKG_DB_TOPDIR}/pkgdb.byfile.db"
-		dbtype="btree"
-		db_opts=''
-		case "${TARGET_ENDIANNESS}" in
-		4321)	db_opts="${db_opts} -E B" # big-endian
-			;;
-		1234)	db_opts="${db_opts} -E L" # little-endian
-			;;
-		*)
-			echo >&2 "${WARNING}Unknown or unsupported target endianness"
-			echo >&2 "${NOTE}Using host endianness"
-			;;
-		esac
-		if ${update} || ${force} ; then
-			# overwriting an existing entry is not an error
-			db_opts="${db_opts} -R"
-		fi
-		if [ ${verbosity} -lt 2 ]; then
-			# don't print all the keys added to the database
-			db_opts="${db_opts} -q"
-		fi
+		init_db_opts # sets dbfile, dbtype, and db_opts
 
 		# Transform ${PLIST} into a form to be used as keys in
 		# ${dbfile}.  The results look like absolute paths,
@@ -912,13 +920,27 @@ do_register_syspkg ()
 	# Create SYSPKG_DB_TOPDIR if necessary
 	[ -d "${SYSPKG_DB_TOPDIR}" ] || mkdir -p "${SYSPKG_DB_TOPDIR}" || bomb
 
-	# A function to delete and re-register a syspkg
-	delete_and_reregister ()
+	# A function to delete db entries referring to any version of ${pkg}
+	delete_old_db_entries ()
 	{
-		echo >&2 "${ERRWARNNOTE}deleting and re-registering ${pkg}-${t}"
+		init_db_opts # sets dbfile, dbtype, and db_opts
+		dblist="${SCRATCH}/dblist"
+		${DB} ${db_opts} -O "${tab}" "${dbtype}" "${dbfile}" \
+		| ${AWK} -F "${tab}" '$2 ~ /^'"${pkg}"'-[0-9]/ { print $1 }' \
+			>"${dblist}"
+		${DB} -d ${db_opts} -f "${dblist}" "${dbtype}" "${dbfile}"
+	}
+
+	# A function to delete any old version of ${pkg}
+	delete_old_pkg ()
+	{
+		pattern="${pkg}-[0-9]*"
+		matches="$( cd "${SYSPKG_DB_TOPDIR}" && echo ${pattern} \
+			|| bomb )"
+		echo >&2 "${NOTE}deleting old pkg (${matches})"
 		cleanup_must_delete_dbsubdir=true
-		rm -rf "${SYSPKG_DB_SUBDIR}"
-		register_syspkg
+		delete_old_db_entries
+		( cd "${SYSPKG_DB_TOPDIR}" && rm -rf ${matches} )
 	}
 
 	# Check whether another version of ${pkg} is already registered.
@@ -927,8 +949,11 @@ do_register_syspkg ()
 	case "${matches}" in
 	*\*)		;;	# wildcard did not match anything
 	"${pkg}-${t}")	;;	# exact match
-	*)	echo >&2 "${ERRWARN}another version of ${pkg} is already registered in ${SYSPKG_DB_TOPDIR} (while creating ${pkg}-${t})"
-		${force} || bomb
+	*)	echo >&2 "${ERRWARNNOTE}another version of ${pkg} is already registered"
+		${verbose} && echo >&2 "	in ${SYSPKG_DB_TOPDIR}"
+		${verbose} && echo >&2 "	(while registering ${pkg}-${t})"
+		${force} || ${update} || bomb
+		delete_old_pkg
 		;;
 	esac
 
@@ -938,7 +963,8 @@ do_register_syspkg ()
 		echo >&2 "${ERRWARNNOTE}${pkg}-${t} is already registered"
 		${verbose} && echo >&2 "	in ${SYSPKG_DB_TOPDIR}"
 		if ${force}; then
-			delete_and_reregister
+			delete_old_pkg
+			register_syspkg
 		elif ${update}; then
 			#
 			# If all files in SYSPKG_DB_SUBDIR are newer
@@ -951,13 +977,17 @@ do_register_syspkg ()
 					! -newer "${newestfile}" -print )" \
 				in
 				"")	;;
-				*)	delete_and_reregister ;;
+				*)
+					echo >&2 "${NOTE}some files are newer but pkg version is unchanged"
+					delete_old_pkg
+					register_syspkg
+					;;
 				esac
 
 			else
 				# No files in the pkg?  (This could happen
 				# if a pkg contains only directories.)
-				# Do nothing.
+				# Do nothing (keep the already-registered pkg).
 			fi
 		else
 			bomb
@@ -991,8 +1021,17 @@ do_create_syspkg_tgz ()
 	case "${matches}" in
 	*\*)	;;	# wildcard did not match anything
 	"${pkg}-${t}.tgz") ;;	# exact match
-	*)	echo >&2 "${ERRWARN}another version of ${pkg} already exists in ${binpkgdir} (while creating ${pkg}-${t}.tgz)"
-		${force} || bomb
+	*)	echo >&2 "${ERRWARNNOTE}another version of ${pkg} binary pkg already exists"
+		${verbose} && echo >&2 "	in ${binpkgdir}"
+		${verbose} && echo >&2 "	(while creating ${pkg}-${t}.tgz)"
+		# If neither force nor update, this is a fatal error.
+		# If force but not update, then leave old .tgz in place.
+		# If update, then delete the old .tgz.
+		${force} || ${update} || bomb
+		if ${update}; then
+			echo >&2 "${NOTE}deleting old binary pkg (${matches})"
+			( cd "${binpkgdir}" && rm -f ${matches} || bomb )
+		fi
 		;;
 	esac
 
