@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.101 2006/01/28 07:23:37 darrenr Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.102 2006/01/28 14:37:31 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.101 2006/01/28 07:23:37 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.102 2006/01/28 14:37:31 darrenr Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -226,7 +226,7 @@ panic(const char *fmt, ...)
 #ifdef DDB
 	if (db_onpanic == 1)
 		Debugger();
-	else {
+	else if (db_onpanic >= 0) {
 		static int intrace = 0;
 
 		if (intrace == 0) {
