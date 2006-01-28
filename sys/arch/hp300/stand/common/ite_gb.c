@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_gb.c,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: ite_gb.c,v 1.6 2006/01/28 12:00:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -147,7 +147,7 @@ gbox_init(struct ite_data *ip)
 }
 
 void
-gbox_putc(struct ite_data *ip, int dy, int dx, int c, int mode)
+gbox_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
 {
 
 	gbox_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -189,7 +189,7 @@ gbox_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 			RR_COPY)
 
 void
-gbox_scroll(struct ite_data *ip, int sy, int dir, int sx, int count)
+gbox_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
 {
 	struct gboxfb *regbase = (void *)ip->regbase;
 	int height, dy, i;
@@ -206,8 +206,8 @@ gbox_scroll(struct ite_data *ip, int sy, int dir, int sx, int count)
 }
 
 void
-gbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int mask,
-    int h, int w)
+gbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
+    int w, int mask)
 {
 	struct gboxfb *regbase = (void *)ip->regbase;
 	int src, dest;
