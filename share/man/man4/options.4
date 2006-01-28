@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.303 2006/01/28 08:23:28 darrenr Exp $
+.\"	$NetBSD: options.4,v 1.304 2006/01/28 11:54:48 bouyer Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 31, 2005
+.Dd January 28, 2006
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -536,6 +536,12 @@ Note that this sets the value of the
 variable which may be changed at run time -- see
 .Xr sysctl 8
 for details.
+.It Cd options DDB_COMMANDONENTER=string
+This option specify commands which will be executed on each entry to DDB.
+This sets the default value of the
+.Em ddb.commandonenter
+.Xr sysctl 3
+variable which may be changed at run time.
 .It Cd options DDB_BREAK_CHAR=integer
 This option overrides using break to enter the kernel debugger
 on the serial console.
