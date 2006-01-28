@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.17 2006/01/27 03:43:54 uwe Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.18 2006/01/28 01:23:16 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,7 +43,10 @@
 
 #include <netinet/in.h>
 
+#include <lib/libkern/libkern.h>
+
 #include <lib/libsa/stand.h>
+#include <lib/libsa/byteorder.h>
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/nfs.h>
 #include <lib/libsa/ufs.h>
