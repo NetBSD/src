@@ -1,4 +1,4 @@
-/*	$NetBSD: fseek.c,v 1.21 2005/03/04 16:25:20 dsl Exp $	*/
+/*	$NetBSD: fseek.c,v 1.21.2.1 2006/01/28 10:21:38 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,12 +34,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseek.c,v 1.21 2005/03/04 16:25:20 dsl Exp $");
+__RCSID("$NetBSD: fseek.c,v 1.21.2.1 2006/01/28 10:21:38 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "namespace.h"
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
