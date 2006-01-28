@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.318 2006/01/22 20:19:52 dsl Exp $
+#	$NetBSD: Makefile,v 1.319 2006/01/28 21:37:11 apb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -409,8 +409,8 @@ release snapshot: .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
 #
 CDROM_NAME_ADD?=
 CDROM.image=${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom/netbsd-${MACHINE}${CDROM_NAME_ADD}.iso
-CDROM.dir=	cdrom.dir
-CDROM.pathlist=	cdrom.pathlist
+CDROM.dir=	${.OBJDIR}/cdrom.dir
+CDROM.pathlist=	${.OBJDIR}/cdrom.pathlist
 
 iso-image: .PHONY check_DESTDIR check_RELEASEDIR .WAIT iso-image-md-post
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom '*.iso'
