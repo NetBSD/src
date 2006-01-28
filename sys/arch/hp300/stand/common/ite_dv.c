@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_dv.c,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: ite_dv.c,v 1.6 2006/01/28 12:00:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -171,7 +171,7 @@ dvbox_init(struct ite_data *ip)
 }
 
 void
-dvbox_putc(struct ite_data *ip, int dy, int dx, int c, int mode)
+dvbox_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
 {
 
 	dvbox_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -203,7 +203,7 @@ dvbox_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 }
 
 void
-dvbox_scroll(struct ite_data *ip, int sy, int count, int dir, int sx)
+dvbox_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
 {
 	int dy = sy - count;
 	int height = ip->rows - sy;
