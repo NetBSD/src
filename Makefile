@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.242 2006/01/21 19:01:15 dsl Exp $
+#	$NetBSD: Makefile,v 1.243 2006/01/28 21:34:08 apb Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -61,6 +61,10 @@
 #	Populate ${RELEASEDIR}/source/sets from ${NETBSDSRCDIR}
 #   syspkgs:
 #	Populate ${RELEASEDIR}/${MACHINE}/binary/syspkgs from ${DESTDIR}
+#   iso-image:
+#	Create CD-ROM image in RELEASEDIR/MACHINE/installation.
+#	RELEASEDIR must already have been populated by `make release'
+#	or equivalent.
 #
 # Targets invoked by `make build,' in order:
 #   cleandir:        cleans the tree.
@@ -302,6 +306,15 @@ ${tgt}: .PHONY .MAKE
 release snapshot: .PHONY .MAKE
 	${MAKEDIRTARGET} . distribution
 	${MAKEDIRTARGET} etc release DISTRIBUTION_DONE=1
+	@echo   "make ${.TARGET} started at:  ${START_TIME}"
+	@printf "make ${.TARGET} finished at: " && date
+
+#
+# Create a CD-ROM image.
+#
+
+iso-image: .PHONY
+	${MAKEDIRTARGET} etc iso-image
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
 
