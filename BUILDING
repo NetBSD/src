@@ -490,6 +490,13 @@ BUILDING
                    described by release(7).  This requires that RELEASEDIR be
                    set (see above).
 
+     iso-image     Create a CD-ROM image in
+                   RELEASEDIR/MACHINE/installation/cdrom.  RELEASEDIR must
+                   already have been populated by ``make release'' or equiva-
+                   lent.  This requires the mkisofs(1) utility, which is not
+                   part of NetBSD, but which can be installed from
+                   pkgsrc/sysutils/cdrecord.
+
      regression-tests
                    Can only be run after building the regression tests in the
                    directory ``regress''.  Runs the compiled regression tests
@@ -555,6 +562,8 @@ BUILDING
      sourcesets    Perform ``make sourcesets''.
 
      syspkgs       Perform ``make syspkgs''.
+
+     iso-image     Perform ``make iso-image''.
 
      The following command line options alter the behaviour of the build.sh
      operations described above:
@@ -706,7 +715,7 @@ OBSOLETE VARIABLES
                  TOOLCHAIN_MISSING=yes.
 
 SEE ALSO
-     make(1), hier(7), release(7)
+     make(1), hier(7), release(7), pkgsrc/sysutils/cdrecord
 
 HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as

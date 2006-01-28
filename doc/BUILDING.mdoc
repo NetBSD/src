@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.41 2006/01/12 21:22:30 wiz Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.42 2006/01/28 21:34:08 apb Exp $
 .\"
 .\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -901,6 +901,19 @@ This requires that
 .Sy RELEASEDIR
 be set (see above).
 .
+.It iso-image
+Create a CD-ROM image in
+.Sy RELEASEDIR/MACHINE Ns Pa /installation/cdrom .
+RELEASEDIR must already have been populated by
+.Dq make release
+or equivalent.
+This requires the
+.Xr mkisofs 1
+utility, which is not part of
+.Nx ,
+but which can be installed from
+.Pa pkgsrc/sysutils/cdrecord .
+.
 .It Sy regression-tests
 Can only be run after building the regression tests in the directory
 .Dq regress .
@@ -1048,6 +1061,10 @@ Perform
 .It Sy syspkgs
 Perform
 .Dq make syspkgs .
+.
+.It Sy iso-image
+Perform
+.Dq make iso-image .
 .
 .El
 .
@@ -1383,7 +1400,8 @@ To disable, use
 .Sh SEE ALSO
 .Xr make 1 ,
 .Xr hier 7 ,
-.Xr release 7
+.Xr release 7 ,
+.Pa pkgsrc/sysutils/cdrecord
 .
 .Sh HISTORY
 .
