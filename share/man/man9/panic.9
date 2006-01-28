@@ -1,4 +1,4 @@
-.\"     $NetBSD: panic.9,v 1.15 2003/04/16 13:35:31 wiz Exp $
+.\"     $NetBSD: panic.9,v 1.16 2006/01/28 08:38:10 darrenr Exp $
 .\"
 .\" Copyright (c) 1996 Michael Graff.
 .\" All rights reserved.
@@ -61,12 +61,15 @@ If a kernel debugger is installed, control is passed to it after the
 message is printed.
 If the kernel debugger is
 .Xr ddb 4 ,
-control is only passed if the value of the
-.Em ddb.onpanic
-.Xr sysctl 3
-is
-.Dq 1 ,
-otherwise, a
+control may be passed to it, depending on the value of
+.Em ddb.onpanic .
+See
+.Xr options 4
+for more details on setting
+.Em ddb.onpanic .
+If control is not passed through to
+.Xr ddb 4 ,
+a
 .Xr ddb 4 Ns -specific
 function is used to print the kernel stack trace, and then control returns
 to
