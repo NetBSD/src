@@ -1,6 +1,6 @@
-.\" $NetBSD: amdpm.4,v 1.3 2003/01/19 21:25:39 atatat Exp $
+.\" $NetBSD: amdpm.4,v 1.4 2006/01/28 23:31:24 kleink Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,18 +34,19 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 2, 2002
+.Dd January 29, 2006
 .Dt AMDPM 4
 .Os
 .Sh NAME
 .Nm amdpm
-.Nd AMD768 Power Management Controller
+.Nd AMD768 Power Management Controller and AMD8111 System Management Controller
 .Sh SYNOPSIS
 .Cd "amdpm* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-provides support for the AMD768 Power Management Controller.
+provides support for the AMD768 Power Management Controller,
+and for the AMD8111 System Management Controller.
 .Sh SEE ALSO
 .Xr pci 4 ,
 .Xr rnd 4
