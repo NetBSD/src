@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.5 2005/01/26 12:59:06 fvdl Exp $ */
+/* $NetBSD: auixp.c,v 1.5.4.1 2006/01/28 10:17:08 tron Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.5 2005/01/26 12:59:06 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.5.4.1 2006/01/28 10:17:08 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -878,7 +878,7 @@ auixp_halt_input(void *hdl)
 
 	co = (struct auixp_codec *) hdl;
 	sc = co->sc;
-	dma = sc->sc_output_dma;
+	dma = sc->sc_input_dma;
 	auixp_disable_dma(sc, dma);
 
 	dma->running = 0;
