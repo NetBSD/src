@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.151 2006/01/14 00:00:03 rpaulo Exp $
+$NetBSD: acronyms,v 1.152 2006/01/28 16:19:19 jschauma Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -219,6 +219,7 @@ TINC	there is no cabal
 TLA	three letter acronym
 TMA	too many abbreviations
 TMI	too much information
+TMTOWTDI	there's more than one way to do it
 TNF	The NetBSD Foundation
 TOEFL	test of english as a foreign language
 TPTB	the powers that be
