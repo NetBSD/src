@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.23 2006/01/27 23:11:13 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.24 2006/01/28 10:24:54 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -539,4 +539,28 @@ sys/arch/i386/i386/est.c			1.15
 
 	PR port-i386/32606: Add support for the Pentium M 710.
 	[xtraeme, ticket #1134]
+
+sys/dev/pci/auixp.c				1.11
+
+Duh! If askes to halt the input dont halt the output instead. This also
+fixes the timeout on draining when closing.
+[reinoud, ticket #1138]
+
+sys/dist/pf/net/pf_norm.c			1.11
+
+	Fix a bug in the fragment cache which could cause kernel panics.
+	[peter, ticket #1139]
+
+lib/libc/stdio/fseek.c				1.22
+
+	Must include "namespace.h" for fseeko()'s internal name.
+	[kleink, ticket #1140]
+
+lib/libc/include/namespace.h			1.110
+lib/libc/rpc/mt_misc.c				1.5
+
+	Need to give the various rpc locks private names (prefixing them with
+	__rpc_).  Rather than scattering changes around the 3rd-party RPC
+	code, place them in namespace.h.
+	[kleink, ticket #1142]
 
