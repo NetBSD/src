@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.60 2006/01/08 10:10:03 apb Exp $
+# $NetBSD: maketars,v 1.61 2006/01/28 19:01:23 apb Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -162,7 +162,7 @@ for setname in ${lists}; do
 	out="${setname}.tgz"
 	if [ -n "${installdir}" ]; then
 		echo "Copying set ${setname}"
-		( cd "${dest}" ; \
+		( cd "${dest}"; \
 		    ${PAX} -O -rwpe -d -N"${etcdir}" ${metalog:+-M} \
 			"${installdir}" < "${setlistdir}/set.${setname}" )
 	else
@@ -173,7 +173,7 @@ for setname in ${lists}; do
 		fi
 		echo "Creating ${out}"
 		rm -f "${tars}/${out}"
-		( cd "${dest}" ; \
+		( cd "${dest}"; \
 		    ${PAX} -O -w -d -z -N"${etcdir}" ${metalog:+-M} \
 			< "${setlistdir}/set.${setname}" ) \
 			> "${tars}/${out}.tmp" &&
@@ -181,7 +181,7 @@ for setname in ${lists}; do
 	fi
 	es=$((${es} + $?))
 done
-if [ ${es} -gt 255 ] ; then
+if [ ${es} -gt 255 ]; then
 	es=255
 fi
 exit ${es}
