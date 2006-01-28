@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.94 2005/07/05 15:35:06 wiz Exp $
+#	$NetBSD: termcap.src,v 1.95 2006/01/28 17:38:14 jdc Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -932,7 +932,7 @@ x68k|x68k-ite|NetBSD/x68k ITE:\
 # These are micro-minimal and probably need to be redone for real
 # after the manner of the pcvt entries.
 wsvt25|NetBSD wscons in 25 line DEC VT220 mode:\
-	:Co#16:NC#32:pa#256:it#8:ms:ut:\
+	:Co#8:pa#64:it#8:ms:ut:\
 	:@7=\E[8~:is=\E[r\E[25;1H:\
 	:k1=\E[11~:k2=\E[12~:k3=\E[13~:k4=\E[14~:k5=\E[15~:k6=\E[17~:\
 	:k7=\E[18~:k8=\E[19~:k9=\E[20~:k;=\E[21~:kh=\E[7~:F1=\E[23~:F2=\E[24~:\
