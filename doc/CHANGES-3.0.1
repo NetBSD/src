@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.11 2006/01/27 23:09:28 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.12 2006/01/28 10:23:55 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -132,4 +132,9 @@ sys/dev/ata/wd.c				1.318
 
 	Fix support for 1 and 2TB disks (tested under qemu).
 	[abs, ticket #1132]
+
+sys/dist/pf/net/pf_norm.c			1.11
+
+	Fix a bug in the fragment cache which could cause kernel panics.
+	[peter, ticket #1139]
 
