@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.304 2006/01/28 11:54:48 bouyer Exp $
+.\"	$NetBSD: options.4,v 1.305 2006/01/28 14:37:31 darrenr Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -527,9 +527,22 @@ for details.
 If this is non-zero, enable history editing in the kernel debugger
 and set the size of the history to this value.
 .It Cd options DDB_ONPANIC
-If set to non-zero, DDB will be entered upon kernel panic.
-The default if not specified is "1".  If set to "2" the kernel will
+The default if not specified is 
+.Dq 1
+- just enter into DDB.
+If set to 
+.Dq 2
+the kernel will
 attempt to print out a stack trace before entering into DDB.
+If set to 
+.Dq 0
+the kernel will attempt to print out a stack trace
+and reboot the system.
+If set to 
+.Dq -1
+then neither a stack trace is printed or DDB entered -
+it is as if DDB were not compiled into the kernel.
+If st to
 Note that this sets the value of the
 .Em ddb.onpanic
 .Xr sysctl 3
