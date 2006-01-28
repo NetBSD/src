@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.11 2005/12/10 23:21:38 elad Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.12 2006/01/28 01:49:58 rpaulo Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -79,7 +79,12 @@
  *		of BSDI (the change is not merged - yet).
  *
  * - privileged process
- *	NetBSD, FreeBSD 3
+ *	NetBSD
+ *		struct lwp *l;
+ *		if (l->l_proc && 
+ *		    !suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
+ *			privileged;
+ *	FreeBSD 3
  *		struct proc *p;
  *		if (p && !suser(p->p_ucred, &p->p_acflag))
  *			privileged;
