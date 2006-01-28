@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkgset,v 1.7 2006/01/08 10:25:33 apb Exp $
+# $NetBSD: regpkgset,v 1.8 2006/01/28 19:01:23 apb Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -55,7 +55,7 @@ toppid=$$
 rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 . "${rundir}/sets.subr"
 
-: ${TARGET_ENDIANNESS:="$( arch_to_endian "${MACHINE_ARCH}" )"}
+: ${TARGET_ENDIANNESS:="$(arch_to_endian "${MACHINE_ARCH}")"}
 export TARGET_ENDIANNESS
 
 bomb()
@@ -72,7 +72,7 @@ nl='
 # cleanup() deletes temporary files.
 #
 es=0
-cleanup ()
+cleanup()
 {
 	trap - 0
 	[ x"${BUILD_INFO_CACHE}" != x ] && rm -f "${BUILD_INFO_CACHE}"
@@ -98,21 +98,21 @@ while [ $# -gt 1 ]; do
 	# XXX: ${all_options} doesn't correctly handle args with
 	# embedded shell special characters.
 	case "$1" in
-	-q)	quiet=true ; verbose=false ;;
-	-v)	verbose=true ; quiet=false ;;
+	-q)	quiet=true; verbose=false ;;
+	-v)	verbose=true; quiet=false ;;
 	-f)	force=true ;;
 	-m)	allowmissing=true ;;
 	-u)	update=true ;;
 	-c)	cache=true ;;
-	-d)	DESTDIR="$2" ; all_options="${all_options} $1" ; shift ;;
+	-d)	DESTDIR="$2"; all_options="${all_options} $1"; shift ;;
 	-d*)	DESTDIR="${1#-?}" ;;
-	-t)	pkgdir="$2" ; all_options="${all_options} $1" ; shift ;;
+	-t)	pkgdir="$2"; all_options="${all_options} $1"; shift ;;
 	-t*)	pkgdir="${1#-?}" ;;
-	-M)	metalog="$2" ; all_options="${all_options} $1" ; shift ;;
+	-M)	metalog="$2"; all_options="${all_options} $1"; shift ;;
 	-M*)	metalog="${1#-?}" ;;
-	-N)	etcdir="$2" ; all_options="${all_options} $1" ; shift ;;
+	-N)	etcdir="$2"; all_options="${all_options} $1"; shift ;;
 	-N*)	etcdir="${1#-?}" ;;
-	-*)	echo "Usage: regpkgset [options] set ..." ; bomb ;;
+	-*)	echo "Usage: regpkgset [options] set ..."; bomb ;;
 	*)	break ;;
 	esac
 	all_options="${all_options} $1"
@@ -130,7 +130,7 @@ all)	list="base comp etc games man misc text" ;;
 *)	list="$*" ;;
 esac
 
-if ${cache} ; then
+if ${cache}; then
 	BUILD_INFO_CACHE="$(${MKTEMP} "/var/tmp/${prog}-BUILD_INFO.XXXXXX")"
 	export BUILD_INFO_CACHE
 	{
@@ -162,12 +162,12 @@ fi
 # order.  If there were any pkgs for which we failed to find dependency
 # information, handle them at the end.
 #
-pkgs="$( for pkgset in ${list}; do
+pkgs="$(for pkgset in ${list}; do
 		${HOST_SH} "${rundir}/listpkgs" "${pkgset}" || bomb
-	 done )"
-tsort_input="$( ${AWK} '{print $2 " " $1}' <"${rundir}/deps" || bomb )"
-tsort_output="$( echo "${tsort_input}" | ${TSORT} || bomb )"
-for pkg in ${tsort_output} ; do
+	 done)"
+tsort_input="$(${AWK} '{print $2 " " $1}' <"${rundir}/deps" || bomb)"
+tsort_output="$(echo "${tsort_input}" | ${TSORT} || bomb)"
+for pkg in ${tsort_output}; do
 	case "${nl}${pkgs}${nl}" in
 	*"${nl}${pkg}${nl}"*)
 		# We want this pkg.
@@ -181,7 +181,7 @@ for pkg in ${tsort_output} ; do
 		;;
 	esac
 done
-for pkg in ${pkgs} ; do
+for pkg in ${pkgs}; do
 	case "${nl}${tsort_output}${nl}" in
 	*"${nl}${pkg}${nl}"*)
 		# pkg was in the tsort output, so it would have been

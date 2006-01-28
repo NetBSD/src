@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.31 2006/01/06 18:07:56 apb Exp $
+#	$NetBSD: checkflist,v 1.32 2006/01/28 19:01:23 apb Exp $
 #
 # Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
@@ -19,7 +19,7 @@ es=0
 cleanup()
 {
 	/bin/rm -rf "${SDIR}"
-	if [ ${es} -gt 255 ] ; then
+	if [ ${es} -gt 255 ]; then
 		es=255
 	fi
 	exit ${es}
