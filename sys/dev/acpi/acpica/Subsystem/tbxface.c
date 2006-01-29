@@ -2,7 +2,7 @@
  *
  * Module Name: tbxface - Public interfaces to the ACPI subsystem
  *                         ACPI table oriented interfaces
- *              xRevision: 67 $
+ *              xRevision: 1.72 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbxface.c,v 1.12 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbxface.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
 
 #define __TBXFACE_C__
 
@@ -159,7 +159,7 @@ AcpiLoadTables (
                     &RsdpAddress);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("AcpiLoadTables: Could not get RSDP, %s\n",
+        ACPI_REPORT_ERROR (("Could not get RSDP, %s\n",
             AcpiFormatException (Status)));
         goto ErrorExit;
     }
@@ -171,7 +171,7 @@ AcpiLoadTables (
     Status = AcpiTbVerifyRsdp (&RsdpAddress);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("AcpiLoadTables: RSDP Failed validation: %s\n",
+        ACPI_REPORT_ERROR (("RSDP Failed validation: %s\n",
             AcpiFormatException (Status)));
         goto ErrorExit;
     }
@@ -181,7 +181,7 @@ AcpiLoadTables (
     Status = AcpiTbGetTableRsdt ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("AcpiLoadTables: Could not load RSDT: %s\n",
+        ACPI_REPORT_ERROR (("Could not load RSDT: %s\n",
             AcpiFormatException (Status)));
         goto ErrorExit;
     }
@@ -192,7 +192,7 @@ AcpiLoadTables (
     if (ACPI_FAILURE (Status))
     {
         ACPI_REPORT_ERROR ((
-            "AcpiLoadTables: Error getting required tables (DSDT/FADT/FACS): %s\n",
+            "Could not get all required tables (DSDT/FADT/FACS): %s\n",
             AcpiFormatException (Status)));
         goto ErrorExit;
     }
@@ -204,7 +204,7 @@ AcpiLoadTables (
     Status = AcpiNsLoadNamespace ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("AcpiLoadTables: Could not load namespace: %s\n",
+        ACPI_REPORT_ERROR (("Could not load namespace: %s\n",
             AcpiFormatException (Status)));
         goto ErrorExit;
     }
@@ -213,8 +213,8 @@ AcpiLoadTables (
 
 
 ErrorExit:
-    ACPI_REPORT_ERROR (("AcpiLoadTables: Could not load tables: %s\n",
-                    AcpiFormatException (Status)));
+    ACPI_REPORT_ERROR (("Could not load tables: %s\n",
+        AcpiFormatException (Status)));
 
     return_ACPI_STATUS (Status);
 }
@@ -264,11 +264,26 @@ AcpiLoadTable (
         return_ACPI_STATUS (Status);
     }
 
+    /* Check signature for a valid table type */
+
+    Status = AcpiTbRecognizeTable (&TableInfo, ACPI_TABLE_ALL);
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
+
     /* Install the new table into the local data structures */
 
     Status = AcpiTbInstallTable (&TableInfo);
     if (ACPI_FAILURE (Status))
     {
+        if (Status == AE_ALREADY_EXISTS)
+        {
+            /* Table already exists, no error */
+
+            Status = AE_OK;
+        }
+
         /* Free table allocated by AcpiTbGetTableBody */
 
         AcpiTbDeleteSingleTable (&TableInfo);
@@ -347,8 +362,8 @@ AcpiUnloadTable (
          * "Scope" operator.  Thus, we need to track ownership by an ID, not
          * simply a position within the hierarchy
          */
-        AcpiNsDeleteNamespaceByOwner (TableDesc->TableId);
-
+        AcpiNsDeleteNamespaceByOwner (TableDesc->OwnerId);
+        AcpiUtReleaseOwnerId (&TableDesc->OwnerId);
         TableDesc = TableDesc->Next;
     }
 

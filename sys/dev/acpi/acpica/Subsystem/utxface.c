@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utxface - External interfaces for "global" ACPI functions
- *              xRevision: 110 $
+ *              xRevision: 1.115 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,15 +116,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utxface.c,v 1.13 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utxface.c,v 1.14 2006/01/29 03:05:48 kochi Exp $");
 
 #define __UTXFACE_C__
 
 #include "acpi.h"
 #include "acevents.h"
 #include "acnamesp.h"
-#include "acparser.h"
-#include "acdispat.h"
 #include "acdebug.h"
 
 #define _COMPONENT          ACPI_UTILITIES
@@ -156,20 +154,19 @@ AcpiInitializeSubsystem (
 
     ACPI_DEBUG_EXEC (AcpiUtInitStackPtrTrace ());
 
-
-    /* Initialize all globals used by the subsystem */
-
-    AcpiUtInitGlobals ();
-
     /* Initialize the OS-Dependent layer */
 
     Status = AcpiOsInitialize ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("OSD failed to initialize, %s\n",
+        ACPI_REPORT_ERROR (("OSL failed to initialize, %s\n",
             AcpiFormatException (Status)));
         return_ACPI_STATUS (Status);
     }
+
+    /* Initialize all globals used by the subsystem */
+
+    AcpiUtInitGlobals ();
 
     /* Create the default mutex objects */
 
@@ -251,7 +248,7 @@ AcpiEnableSubsystem (
         Status = AcpiEnable ();
         if (ACPI_FAILURE (Status))
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "AcpiEnable failed.\n"));
+            ACPI_REPORT_WARNING (("AcpiEnable failed\n"));
             return_ACPI_STATUS (Status);
         }
     }
@@ -276,10 +273,14 @@ AcpiEnableSubsystem (
     /*
      * Initialize ACPI Event handling (Fixed and General Purpose)
      *
-     * NOTE: We must have the hardware AND events initialized before we can
-     * execute ANY control methods SAFELY.  Any control method can require
-     * ACPI hardware support, so the hardware MUST be initialized before
-     * execution!
+     * Note1: We must have the hardware and events initialized before we can
+     * execute any control methods safely. Any control method can require
+     * ACPI hardware support, so the hardware must be fully initialized before
+     * any method execution!
+     *
+     * Note2: Fixed events are initialized and enabled here. GPEs are
+     * initialized, but cannot be enabled until after the hardware is
+     * completely initialized (SCI and GlobalLock activated)
      */
     if (!(Flags & ACPI_NO_EVENT_INIT))
     {
@@ -293,8 +294,10 @@ AcpiEnableSubsystem (
         }
     }
 
-    /* Install the SCI handler and Global Lock handler */
-
+    /*
+     * Install the SCI handler and Global Lock handler. This completes the
+     * hardware initialization.
+     */
     if (!(Flags & ACPI_NO_HANDLER_INIT))
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
@@ -307,8 +310,29 @@ AcpiEnableSubsystem (
         }
     }
 
+    /*
+     * Complete the GPE initialization for the GPE blocks defined in the FADT
+     * (GPE block 0 and 1).
+     *
+     * Note1: This is where the _PRW methods are executed for the GPEs. These
+     * methods can only be executed after the SCI and Global Lock handlers are
+     * installed and initialized.
+     *
+     * Note2: Currently, there seems to be no need to run the _REG methods
+     * before execution of the _PRW methods and enabling of the GPEs.
+     */
+    if (!(Flags & ACPI_NO_EVENT_INIT))
+    {
+        Status = AcpiEvInstallFadtGpes ();
+        if (ACPI_FAILURE (Status))
+        {
+            return (Status);
+        }
+    }
+
     return_ACPI_STATUS (Status);
 }
+
 
 /*******************************************************************************
  *
@@ -336,9 +360,9 @@ AcpiInitializeObjects (
     /*
      * Run all _REG methods
      *
-     * NOTE: Any objects accessed
-     * by the _REG methods will be automatically initialized, even if they
-     * contain executable AML (see call to AcpiNsInitializeObjects below).
+     * Note: Any objects accessed by the _REG methods will be automatically
+     * initialized, even if they contain executable AML (see the call to
+     * AcpiNsInitializeObjects below).
      */
     if (!(Flags & ACPI_NO_ADDRESS_SPACE_INIT))
     {
@@ -353,9 +377,9 @@ AcpiInitializeObjects (
     }
 
     /*
-     * Initialize the objects that remain uninitialized.  This
-     * runs the executable AML that may be part of the declaration of these
-     * objects: OperationRegions, BufferFields, Buffers, and Packages.
+     * Initialize the objects that remain uninitialized. This runs the
+     * executable AML that may be part of the declaration of these objects:
+     * OperationRegions, BufferFields, Buffers, and Packages.
      */
     if (!(Flags & ACPI_NO_OBJECT_INIT))
     {
@@ -370,8 +394,8 @@ AcpiInitializeObjects (
     }
 
     /*
-     * Initialize all device objects in the namespace
-     * This runs the _STA and _INI methods.
+     * Initialize all device objects in the namespace. This runs the device
+     * _STA and _INI methods.
      */
     if (!(Flags & ACPI_NO_DEVICE_INIT))
     {
@@ -625,13 +649,9 @@ AcpiPurgeCachedObjects (
 {
     ACPI_FUNCTION_TRACE ("AcpiPurgeCachedObjects");
 
-
-#ifdef ACPI_ENABLE_OBJECT_CACHE
-    AcpiUtDeleteGenericStateCache ();
-    AcpiUtDeleteObjectCache ();
-    AcpiDsDeleteWalkStateCache ();
-    AcpiPsDeleteParseCache ();
-#endif
-
+    (void) AcpiOsPurgeCache (AcpiGbl_StateCache);
+    (void) AcpiOsPurgeCache (AcpiGbl_OperandCache);
+    (void) AcpiOsPurgeCache (AcpiGbl_PsNodeCache);
+    (void) AcpiOsPurgeCache (AcpiGbl_PsNodeExtCache);
     return_ACPI_STATUS (AE_OK);
 }

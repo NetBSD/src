@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exutils - interpreter/scanner utilities
- *              xRevision: 116 $
+ *              xRevision: 1.120 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exutils.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exutils.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
 
 #define __EXUTILS_C__
 
@@ -308,13 +308,13 @@ AcpiExAcquireGlobalLock (
         }
         else
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Could not acquire Global Lock, %s\n",
                 AcpiFormatException (Status)));
         }
     }
 
-    return_VALUE (Locked);
+    return_UINT8 (Locked);
 }
 
 
@@ -391,7 +391,7 @@ AcpiExDigitsNeeded (
 
     if (Value == 0)
     {
-        return_VALUE (1);
+        return_UINT32 (1);
     }
 
     CurrentValue = Value;
@@ -405,7 +405,7 @@ AcpiExDigitsNeeded (
         NumDigits++;
     }
 
-    return_VALUE (NumDigits);
+    return_UINT32 (NumDigits);
 }
 
 
@@ -457,7 +457,7 @@ AcpiExEisaIdToString (
  *
  * RETURN:      None, string
  *
- * DESCRIPTOIN: Convert a number to string representation. Assumes string
+ * DESCRIPTION: Convert a number to string representation. Assumes string
  *              buffer is large enough to hold the string.
  *
  ******************************************************************************/
