@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.20 2005/12/26 19:23:59 perry Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.21 2006/01/29 03:12:40 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.20 2005/12/26 19:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21 2006/01/29 03:12:40 kochi Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -149,8 +149,8 @@ enter_s4_with_bios(void)
 	ef = read_eflags();
 	disable_intr();
 
-	AcpiHwDisableAllGpes(ACPI_ISR);
-	AcpiHwEnableAllWakeupGpes(ACPI_ISR);
+	AcpiHwDisableAllGpes();
+	AcpiHwEnableAllWakeupGpes();
 
 	/* flush caches */
 
@@ -169,8 +169,8 @@ enter_s4_with_bios(void)
 			break;
 	} while (!ret);
 
-	AcpiHwDisableAllGpes(ACPI_NOT_ISR);
-	AcpiHwEnableAllRuntimeGpes(ACPI_NOT_ISR);
+	AcpiHwDisableAllGpes();
+	AcpiHwEnableAllRuntimeGpes();
 
 	write_eflags(ef);
 
