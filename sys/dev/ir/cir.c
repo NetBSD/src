@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.10 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: cir.c,v 1.11 2006/01/29 11:35:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.10 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.11 2006/01/29 11:35:11 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,9 +243,9 @@ cirpoll(dev_t dev, int events, struct proc *p)
 
 	sc = device_lookup(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
-		return (ENXIO);
+		return (POLLERR);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
-		return (EIO);
+		return (POLLERR);
 
 	revents = 0;
 	s = splir();
