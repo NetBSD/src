@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.37 2006/01/25 16:29:10 christos Exp $
+.\"	$NetBSD: route.8,v 1.38 2006/01/29 22:11:10 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd manually manipulate the routing tables
 .Sh SYNOPSIS
 .Nm
-.Op Fl fnqsSv
+.Op Fl fnqSsv
 .Ar command
 .Oo
 .Op Ar modifiers
@@ -88,14 +88,14 @@ may require correct operation of the network; thus it may be expedient
 to forgo this, especially when attempting to repair networking operations).
 .It Fl q
 Suppress all output from commands that manipulate the routing table.
+.It Fl S
+Print a space when a flag is missing so that flags are vertically aligned
+instead of printing the flags that are set as a contiguous string.
 .It Fl s
 (short) Suppresses all output from a
 .Cm get
 command except for the actual gateway that will be used.
 How the gateway is printed depends on the type of route being looked up.
-.It Fl S
-Print a space when a flag is missing so that flags are vertically aligned
-instead of printing the flags that are set as a contiguous string.
 .It Fl v
 (verbose) Print additional details.
 .El
