@@ -1,4 +1,4 @@
-.\"     $NetBSD: filedesc.9,v 1.7 2006/01/29 03:09:19 rpaulo Exp $
+.\"     $NetBSD: filedesc.9,v 1.8 2006/01/29 16:12:57 rpaulo Exp $
 .\"
 .\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .In sys/file.h
 .In sys/filedesc.h
 .Ft int
-.Fn falloc "struct lwp *l" "struct file **resultfp" "int *resultfd"
+.Fn falloc "struct proc *p" "struct file **resultfp" "int *resultfd"
 .Ft struct file *
 .Fn fd_getfile "struct filedesc *fdp" "int fd"
 .Ft int
@@ -68,7 +68,7 @@
 .Ft int
 .Fn fdalloc "struct lwp *l" "int want" "int *result"
 .Ft int
-.Fn fdavail "struct lwp *l" "int n"
+.Fn fdavail "struct proc *p" "int n"
 .Ft int
 .Fn fdcheckstd "struct lwp *l"
 .Ft void
@@ -76,19 +76,19 @@
 .Ft void
 .Fn fdcloseexec "struct lwp *l"
 .Ft struct filedesc *
-.Fn fdcopy "struct lwp *l"
+.Fn fdcopy "struct proc *p"
 .Ft void
-.Fn fdexpand "struct lwp *l"
+.Fn fdexpand "struct proc *p"
 .Ft void
 .Fn fdfree "struct lwp *l"
 .Ft struct filedesc *
-.Fn fdinit "struct lwp *l"
+.Fn fdinit "struct proc  *p"
 .Ft int
 .Fn fdrelease "struct lwp *l" "int fd"
 .Ft void
 .Fn fdremove "struct filedesc *fdp" "int fd"
 .Ft void
-.Fn fdshare "struct lwp *l1" "struct lwp *l2"
+.Fn fdshare "struct proc *p1" "struct proc *p2"
 .Ft void
 .Fn fdunshare "struct lwp *l"
 .Sh DESCRIPTION
@@ -140,10 +140,10 @@ The following functions are high-level interface routines to access
 the file descriptor table for a process and its file entries.
 .Pp
 .Bl -tag -width compact
-.It Fn falloc "l" "*resultfp" "*resultfd"
+.It Fn falloc "p" "*resultfp" "*resultfd"
 Create a new open file entry and allocate a file descriptor for
-lwp
-.Fa l .
+process
+.Fa p .
 This operation is performed by invoking
 .Fn fdalloc
 to allocate the new file descriptor.
@@ -228,9 +228,9 @@ This operation is performed by invoking
 for the process and invoking
 .Fn fdrelease
 on the appropriate file descriptor.
-.It Fn fdcopy "l"
-Copy the file descriptor table from lwp
-.Fa l
+.It Fn fdcopy "p"
+Copy the file descriptor table from process
+.Fa p
 and return a pointer to the copy.
 The returned file descriptor is guaranteed to have a reference count of one.
 All file descriptor state is maintained.
@@ -245,10 +245,10 @@ Decrement the reference count on the file descriptor table for lwp
 .Fa l
 and release the file descriptor table if the reference count drops to
 zero.
-.It Fn fdinit "l"
+.It Fn fdinit "p"
 Create a file descriptor table using the same current and root
-directories of lwp
-.Fa l .
+directories of proc
+.Fa p .
 The returned file descriptor table is guaranteed to have a reference
 count of one.
 .It Fn fdrelease "l" "fd"
@@ -263,13 +263,13 @@ Unconditionally remove the file descriptor
 .Fa fd
 from file descriptor table
 .Fa fdp .
-.It Fn fdshare "l1" "l2"
-Share the file descriptor table belonging to lwp
-.Fa l1
-with lwp
-.Fa l2 .
-Lwp
-.Fa l2
+.It Fn fdshare "p1" "p2"
+Share the file descriptor table belonging to process
+.Fa p1
+with process
+.Fa p2 .
+Process
+.Fa p2
 is assumed not to have a file descriptor table already allocated.
 The reference count on the file descriptor table is incremented.
 This function is used by
