@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.54 2006/01/11 21:16:51 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.55 2006/01/29 17:52:38 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.54 2006/01/11 21:16:51 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.55 2006/01/29 17:52:38 christos Exp $");
 #endif
 #endif
 
@@ -152,7 +152,7 @@ static struct termios inittermios; /* Initial TTY termios */
 static struct winsize wsinfo;	/* Initial window size info */
 
 static int loop_slave = -1;
-static int loop_master;
+static int loop_master = -1;
 static char loop_name[20];
 
 static unsigned char inbuf[512]; /* buffer for chars read from loopback */
