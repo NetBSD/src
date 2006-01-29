@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psloop - Main AML parse loop
- *              $Revision: 1.8 $
+ *              xRevision: 1.8 $
  *
  *****************************************************************************/
 
@@ -123,6 +123,9 @@
  * fairly compact by parsing based on a list of AML opcode
  * templates in AmlOpInfo[]
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD$");
 
 #include "acpi.h"
 #include "acparser.h"
