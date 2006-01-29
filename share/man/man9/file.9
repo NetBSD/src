@@ -1,6 +1,6 @@
-.\"     $NetBSD: file.9,v 1.7 2005/12/20 19:53:15 rpaulo Exp $
+.\"     $NetBSD: file.9,v 1.8 2006/01/29 03:09:19 rpaulo Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2005
+.Dd January 29, 2006
 .Dt FILE 9
 .Os
 .Sh NAME
@@ -213,15 +213,15 @@ own offset in the file, the offset cannot be stored in the per-object
 data structure.
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn closef "fp" "p"
+.It Fn closef "fp" "l"
 The internal form of
 .Xr close 2
 which decrements the reference count on file entry
 .Fa fp .
 The
 .Fn closef
-function  release all locks on the file owned by process
-.Fa p ,
+function  release all locks on the file owned by lwp
+.Fa l ,
 decrements the reference count on the file entry, and invokes
 .Fn ffree
 to free the file entry.
@@ -237,7 +237,7 @@ FIF_WANTCLOSE and FIF_LARVAL flags are not set in
 .It Fn FILE_USE "fp"
 Increment the reference count on file entry
 .Fa fp .
-.It Fn FILE_UNUSE "fp" "p"
+.It Fn FILE_UNUSE "fp" "l"
 Decrement the reference count on file entry
 .Fa fp .
 If the FIF_WANTCLOSE
