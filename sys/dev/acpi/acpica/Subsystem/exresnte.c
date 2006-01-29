@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exresnte - AML Interpreter object resolution
- *              xRevision: 68 $
+ *              xRevision: 1.70 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exresnte.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exresnte.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
 
 #define __EXRESNTE_C__
 
@@ -209,7 +209,7 @@ AcpiExResolveNodeToValue (
 
     if (!SourceDesc)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "No object attached to node %p\n",
+        ACPI_REPORT_ERROR (("No object attached to node %p\n",
             Node));
         return_ACPI_STATUS (AE_AML_NO_OPERAND);
     }
@@ -224,7 +224,7 @@ AcpiExResolveNodeToValue (
 
         if (ACPI_GET_OBJECT_TYPE (SourceDesc) != ACPI_TYPE_PACKAGE)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Object not a Package, type %s\n",
+            ACPI_REPORT_ERROR (("Object not a Package, type %s\n",
                 AcpiUtGetObjectTypeName (SourceDesc)));
             return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
         }
@@ -244,7 +244,7 @@ AcpiExResolveNodeToValue (
 
         if (ACPI_GET_OBJECT_TYPE (SourceDesc) != ACPI_TYPE_BUFFER)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Object not a Buffer, type %s\n",
+            ACPI_REPORT_ERROR (("Object not a Buffer, type %s\n",
                 AcpiUtGetObjectTypeName (SourceDesc)));
             return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
         }
@@ -264,7 +264,7 @@ AcpiExResolveNodeToValue (
 
         if (ACPI_GET_OBJECT_TYPE (SourceDesc) != ACPI_TYPE_STRING)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Object not a String, type %s\n",
+            ACPI_REPORT_ERROR (("Object not a String, type %s\n",
                 AcpiUtGetObjectTypeName (SourceDesc)));
             return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
         }
@@ -280,7 +280,7 @@ AcpiExResolveNodeToValue (
 
         if (ACPI_GET_OBJECT_TYPE (SourceDesc) != ACPI_TYPE_INTEGER)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Object not a Integer, type %s\n",
+            ACPI_REPORT_ERROR (("Object not a Integer, type %s\n",
                 AcpiUtGetObjectTypeName (SourceDesc)));
             return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
         }
@@ -324,9 +324,8 @@ AcpiExResolveNodeToValue (
 
     case ACPI_TYPE_ANY:
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-            "Untyped entry %p, no attached object!\n",
-            Node));
+        ACPI_REPORT_ERROR ((
+            "Untyped entry %p, no attached object!\n", Node));
 
         return_ACPI_STATUS (AE_AML_OPERAND_TYPE);  /* Cannot be AE_TYPE */
 
@@ -347,7 +346,7 @@ AcpiExResolveNodeToValue (
         default:
             /* No named references are allowed here */
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Unsupported Reference opcode %X (%s)\n",
                 SourceDesc->Reference.Opcode,
                 AcpiPsGetOpcodeName (SourceDesc->Reference.Opcode)));
@@ -361,7 +360,7 @@ AcpiExResolveNodeToValue (
 
         /* Default case is for unknown types */
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Node %p - Unknown object type %X\n",
             Node, EntryType));
 

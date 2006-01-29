@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbinstal - ACPI table installation and removal
- *              xRevision: 78 $
+ *              xRevision: 1.81 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.13 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.14 2006/01/29 03:05:47 kochi Exp $");
 
 #define __TBINSTAL_C__
 
@@ -206,9 +206,7 @@ AcpiTbMatchSignature (
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Load and validate all tables other than the RSDT.  The RSDT must
- *              already be loaded and validated.
- *              Install the table into the global data structs.
+ * DESCRIPTION: Install the table into the global data structures.
  *
  ******************************************************************************/
 
@@ -218,6 +216,7 @@ AcpiTbInstallTable (
 {
     ACPI_STATUS             Status;
 
+
     ACPI_FUNCTION_TRACE ("TbInstallTable");
 
 
@@ -226,9 +225,19 @@ AcpiTbInstallTable (
     Status = AcpiUtAcquireMutex (ACPI_MTX_TABLES);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not acquire table mutex for [%4.4s], %s\n",
-            TableInfo->Pointer->Signature, AcpiFormatException (Status)));
+        ACPI_REPORT_ERROR (("Could not acquire table mutex, %s\n",
+            AcpiFormatException (Status)));
         return_ACPI_STATUS (Status);
+    }
+
+    /*
+     * Ignore a table that is already installed. For example, some BIOS
+     * ASL code will repeatedly attempt to load the same SSDT.
+     */
+    Status = AcpiTbIsTableInstalled (TableInfo);
+    if (ACPI_FAILURE (Status))
+    {
+        goto UnlockAndExit;
     }
 
     /* Install the table into the global data structure */
@@ -236,13 +245,15 @@ AcpiTbInstallTable (
     Status = AcpiTbInitTableDescriptor (TableInfo->Type, TableInfo);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not install ACPI table [%4.4s], %s\n",
+        ACPI_REPORT_ERROR (("Could not install table [%4.4s], %s\n",
             TableInfo->Pointer->Signature, AcpiFormatException (Status)));
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "%s located at %p\n",
         AcpiGbl_TableData[TableInfo->Type].Name, TableInfo->Pointer));
 
+
+UnlockAndExit:
     (void) AcpiUtReleaseMutex (ACPI_MTX_TABLES);
     return_ACPI_STATUS (Status);
 }
@@ -338,6 +349,7 @@ AcpiTbInitTableDescriptor (
 {
     ACPI_TABLE_LIST         *ListHead;
     ACPI_TABLE_DESC         *TableDesc;
+    ACPI_STATUS             Status;
 
 
     ACPI_FUNCTION_TRACE_U32 ("TbInitTableDescriptor", TableType);
@@ -349,6 +361,14 @@ AcpiTbInitTableDescriptor (
     if (!TableDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
+    }
+
+    /* Get a new owner ID for the table */
+
+    Status = AcpiUtAllocateOwnerId (&TableDesc->OwnerId);
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
     }
 
     /* Install the table into the global data structure */
@@ -420,8 +440,6 @@ AcpiTbInitTableDescriptor (
     TableDesc->AmlStart             = (UINT8 *) (TableDesc->Pointer + 1),
     TableDesc->AmlLength            = (UINT32) (TableDesc->Length -
                                         (UINT32) sizeof (ACPI_TABLE_HEADER));
-    TableDesc->TableId              = AcpiUtAllocateOwnerId (
-                                        ACPI_OWNER_TYPE_TABLE);
     TableDesc->LoadedIntoNamespace  = FALSE;
 
     /*
@@ -435,7 +453,7 @@ AcpiTbInitTableDescriptor (
 
     /* Return Data */
 
-    TableInfo->TableId          = TableDesc->TableId;
+    TableInfo->OwnerId          = TableDesc->OwnerId;
     TableInfo->InstalledDesc    = TableDesc;
 
     return_ACPI_STATUS (AE_OK);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmbuffer - AML disassembler, buffer and string support
- *              xRevision: 17 $
+ *              xRevision: 1.20 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmbuffer.c,v 1.7 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmbuffer.c,v 1.8 2006/01/29 03:05:47 kochi Exp $");
 
 #include "acpi.h"
 #include "acdisasm.h"
@@ -224,7 +224,7 @@ AcpiDmByteList (
     {
     case ACPI_DASM_RESOURCE:
 
-        AcpiDmResourceDescriptor (Info, ByteData, ByteCount);
+        AcpiDmResourceTemplate (Info, ByteData, ByteCount);
         break;
 
     case ACPI_DASM_STRING:
@@ -432,7 +432,7 @@ AcpiDmUnicode (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiIsEisaId
+ * FUNCTION:    AcpiDmIsEisaId
  *
  * PARAMETERS:  Op              - Op to be examined
  *
@@ -443,7 +443,7 @@ AcpiDmUnicode (
  ******************************************************************************/
 
 void
-AcpiIsEisaId (
+AcpiDmIsEisaId (
     ACPI_PARSE_OBJECT       *Op)
 {
     UINT32                  Name;

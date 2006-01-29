@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utinit - Common ACPI subsystem initialization
- *              xRevision: 122 $
+ *              xRevision: 1.125 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utinit.c,v 1.13 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utinit.c,v 1.14 2006/01/29 03:05:48 kochi Exp $");
 
 #define __UTINIT_C__
 
@@ -160,8 +160,8 @@ AcpiUtFadtRegisterError (
     ACPI_SIZE               Offset)
 {
 
-    ACPI_REPORT_WARNING (
-        ("Invalid FADT value %s=%X at offset %X FADT=%p\n",
+    ACPI_REPORT_WARNING ((
+        "Invalid FADT value %s=%X at offset %X FADT=%p\n",
         RegisterName, Value, (UINT32) Offset, AcpiGbl_FADT));
 }
 
@@ -329,7 +329,7 @@ AcpiUtSubsystemShutdown (
 
     if (AcpiGbl_Shutdown)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "ACPI Subsystem is already terminated\n"));
         return_VOID;
     }
@@ -338,7 +338,7 @@ AcpiUtSubsystemShutdown (
 
     AcpiGbl_Shutdown = TRUE;
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-        "Shutting down ACPI Subsystem...\n"));
+        "Shutting down ACPI Subsystem\n"));
 
     /* Close the AcpiEvent Handling */
 
@@ -354,7 +354,7 @@ AcpiUtSubsystemShutdown (
 
     /* Purge the local caches */
 
-    (void) AcpiPurgeCachedObjects ();
+    (void) AcpiUtDeleteCaches ();
 
     /* Debug only - display leftover memory allocation, if any */
 

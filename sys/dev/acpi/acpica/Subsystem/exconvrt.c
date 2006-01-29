@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exconvrt - Object conversion routines
- *              xRevision: 66 $
+ *              xRevision: 1.70 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.14 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.15 2006/01/29 03:05:47 kochi Exp $");
 
 #define __EXCONVRT_C__
 
@@ -461,7 +461,7 @@ AcpiExConvertToAscii (
 
         /* HexLength: 2 ascii hex chars per data byte */
 
-        HexLength = ACPI_MUL_2 (DataWidth);
+        HexLength = (ACPI_NATIVE_UINT) ACPI_MUL_2 (DataWidth);
         for (i = 0, j = (HexLength-1); i < HexLength; i++, j--)
         {
             /* Get one hex digit, most significant digits first */
@@ -635,18 +635,10 @@ AcpiExConvertToString (
         }
 
         /*
-         * Perform the conversion.
+         * Create a new string object and string buffer
          * (-1 because of extra separator included in StringLength from above)
          */
-        StringLength--;
-        if (StringLength > ACPI_MAX_STRING_CONVERSION)  /* ACPI limit */
-        {
-            return_ACPI_STATUS (AE_AML_STRING_LIMIT);
-        }
-
-        /* Create a new string object and string buffer */
-
-        ReturnDesc = AcpiUtCreateStringObject ((ACPI_SIZE) StringLength);
+        ReturnDesc = AcpiUtCreateStringObject ((ACPI_SIZE) (StringLength - 1));
         if (!ReturnDesc)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
@@ -801,13 +793,10 @@ AcpiExConvertToTargetType (
 
 
     default:
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-            "Unknown Target type ID 0x%X Op %s DestType %s\n",
+        ACPI_REPORT_ERROR ((
+            "Unknown Target type ID 0x%X AmlOpcode %X DestType %s\n",
             GET_CURRENT_ARG_TYPE (WalkState->OpInfo->RuntimeArgs),
-            WalkState->OpInfo->Name, AcpiUtGetTypeName (DestinationType)));
-
-        ACPI_REPORT_ERROR (("Bad Target Type (ARGI): %X\n",
-            GET_CURRENT_ARG_TYPE (WalkState->OpInfo->RuntimeArgs)))
+            WalkState->Opcode, AcpiUtGetTypeName (DestinationType)));
         Status = AE_AML_INTERNAL;
     }
 
