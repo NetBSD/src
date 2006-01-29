@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.34 2006/01/17 19:41:49 garbled Exp $	*/
+/*	$NetBSD: lpr.c,v 1.35 2006/01/29 18:55:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.34 2006/01/17 19:41:49 garbled Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.35 2006/01/29 18:55:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -475,7 +475,7 @@ linked(const char *file)
 
 	if (*file != '/') {
 		/* XXX: 2 and file for "/file" */
-		if (getcwd(buf, BUFSIZ - 2 - strlen(file)) == NULL)
+		if (getcwd(buf, sizeof(buf) - 2 - strlen(file)) == NULL)
 			return(NULL);
 		while (file[0] == '.') {
 			switch (file[1]) {
@@ -510,7 +510,7 @@ card(int c, const char *p2)
 {
 	char buf[BUFSIZ];
 	char *p1 = buf;
-	int len = 2;
+	size_t len = 2;
 
 	if (strlen(p2) > BUFSIZ - 2)
 		errx(1, "Internal error:  String longer than %d", BUFSIZ);
@@ -521,7 +521,8 @@ card(int c, const char *p2)
 		len++;
 	}
 	*p1++ = '\n';
-	write(tfd, buf, len);
+	if (write(tfd, buf, len) != (ssize_t)len)
+		warn("Control file write error");
 }
 
 /*
@@ -690,9 +691,9 @@ mktemps(void)
 {
 	int len, fd, n;
 	char *cp;
-	char buf[BUFSIZ];
+	char buf[MAXPATHLEN];
 
-	(void)snprintf(buf, BUFSIZ, "%s/.seq", SD);
+	(void)snprintf(buf, sizeof(buf), "%s/.seq", SD);
 	seteuid(euid);
 	if ((fd = open(buf, O_RDWR|O_CREAT, 0661)) < 0)
 		err(1, "cannot create %s\n", buf);
@@ -715,7 +716,7 @@ mktemps(void)
 	inchar = strlen(SD) + 3;
 	n = (n + 1) % 1000;
 	(void)lseek(fd, (off_t)0, 0);
-	snprintf(buf, BUFSIZ, "%03d\n", n);
+	(void)snprintf(buf, sizeof(buf), "%03d\n", n);
 	(void)write(fd, buf, strlen(buf));
 	(void)close(fd);	/* unlocks as well */
 }
