@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utdelete - object deletion and reference count utilities
- *              xRevision: 105 $
+ *              xRevision: 1.109 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.14 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.15 2006/01/29 03:05:48 kochi Exp $");
 
 #define __UTDELETE_C__
 
@@ -485,7 +485,7 @@ AcpiUtUpdateRefCount (
 
     default:
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unknown action (%X)\n", Action));
+        ACPI_REPORT_ERROR (("Unknown action (%X)\n", Action));
         break;
     }
 
@@ -496,8 +496,8 @@ AcpiUtUpdateRefCount (
     if (Count > ACPI_MAX_REFERENCE_COUNT)
     {
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_WARN,
-            "**** Warning **** Large Reference Count (%X) in object %p\n\n",
+        ACPI_REPORT_WARNING ((
+            "Large Reference Count (%X) in object %p\n\n",
             Count, Object));
     }
 
@@ -532,38 +532,26 @@ AcpiUtUpdateObjectReference (
     ACPI_OPERAND_OBJECT     *Object,
     UINT16                  Action)
 {
-    ACPI_STATUS             Status;
-    UINT32                  i;
-    ACPI_GENERIC_STATE       *StateList = NULL;
-    ACPI_GENERIC_STATE       *State;
+    ACPI_STATUS             Status = AE_OK;
+    ACPI_GENERIC_STATE      *StateList = NULL;
+    ACPI_OPERAND_OBJECT     *NextObject = NULL;
+    ACPI_GENERIC_STATE      *State;
+    ACPI_NATIVE_UINT        i;
 
 
     ACPI_FUNCTION_TRACE_PTR ("UtUpdateObjectReference", Object);
 
 
-    /* Ignore a null object ptr */
-
-    if (!Object)
+    while (Object)
     {
-        return_ACPI_STATUS (AE_OK);
-    }
+        /* Make sure that this isn't a namespace handle */
 
-    /* Make sure that this isn't a namespace handle */
-
-    if (ACPI_GET_DESCRIPTOR_TYPE (Object) == ACPI_DESC_TYPE_NAMED)
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS,
-            "Object %p is NS handle\n", Object));
-        return_ACPI_STATUS (AE_OK);
-    }
-
-    State = AcpiUtCreateUpdateState (Object, Action);
-
-    while (State)
-    {
-        Object = State->Update.Object;
-        Action = State->Update.Value;
-        AcpiUtDeleteGenericState (State);
+        if (ACPI_GET_DESCRIPTOR_TYPE (Object) == ACPI_DESC_TYPE_NAMED)
+        {
+            ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS,
+                "Object %p is NS handle\n", Object));
+            return_ACPI_STATUS (AE_OK);
+        }
 
         /*
          * All sub-objects must have their reference count incremented also.
@@ -577,12 +565,10 @@ AcpiUtUpdateObjectReference (
             AcpiUtUpdateRefCount (Object->Device.DeviceNotify, Action);
             break;
 
-
         case ACPI_TYPE_PACKAGE:
-
             /*
-             * We must update all the sub-objects of the package
-             * (Each of whom may have their own sub-objects, etc.
+             * We must update all the sub-objects of the package,
+             * each of whom may have their own sub-objects.
              */
             for (i = 0; i < Object->Package.Count; i++)
             {
@@ -600,38 +586,19 @@ AcpiUtUpdateObjectReference (
             }
             break;
 
-
         case ACPI_TYPE_BUFFER_FIELD:
 
-            Status = AcpiUtCreateUpdateStateAndPush (
-                        Object->BufferField.BufferObj, Action, &StateList);
-            if (ACPI_FAILURE (Status))
-            {
-                goto ErrorExit;
-            }
+            NextObject = Object->BufferField.BufferObj;
             break;
-
 
         case ACPI_TYPE_LOCAL_REGION_FIELD:
 
-            Status = AcpiUtCreateUpdateStateAndPush (
-                        Object->Field.RegionObj, Action, &StateList);
-            if (ACPI_FAILURE (Status))
-            {
-                goto ErrorExit;
-            }
-           break;
-
+            NextObject = Object->Field.RegionObj;
+            break;
 
         case ACPI_TYPE_LOCAL_BANK_FIELD:
 
-            Status = AcpiUtCreateUpdateStateAndPush (
-                        Object->BankField.BankObj, Action, &StateList);
-            if (ACPI_FAILURE (Status))
-            {
-                goto ErrorExit;
-            }
-
+            NextObject = Object->BankField.BankObj;
             Status = AcpiUtCreateUpdateStateAndPush (
                         Object->BankField.RegionObj, Action, &StateList);
             if (ACPI_FAILURE (Status))
@@ -640,16 +607,9 @@ AcpiUtUpdateObjectReference (
             }
             break;
 
-
         case ACPI_TYPE_LOCAL_INDEX_FIELD:
 
-            Status = AcpiUtCreateUpdateStateAndPush (
-                        Object->IndexField.IndexObj, Action, &StateList);
-            if (ACPI_FAILURE (Status))
-            {
-                goto ErrorExit;
-            }
-
+            NextObject = Object->IndexField.IndexObj;
             Status = AcpiUtCreateUpdateStateAndPush (
                         Object->IndexField.DataObj, Action, &StateList);
             if (ACPI_FAILURE (Status))
@@ -658,30 +618,20 @@ AcpiUtUpdateObjectReference (
             }
             break;
 
-
         case ACPI_TYPE_LOCAL_REFERENCE:
-
             /*
              * The target of an Index (a package, string, or buffer) must track
              * changes to the ref count of the index.
              */
             if (Object->Reference.Opcode == AML_INDEX_OP)
             {
-                Status = AcpiUtCreateUpdateStateAndPush (
-                            Object->Reference.Object, Action, &StateList);
-                if (ACPI_FAILURE (Status))
-                {
-                    goto ErrorExit;
-                }
+                NextObject = Object->Reference.Object;
             }
             break;
 
-
         case ACPI_TYPE_REGION:
         default:
-
-            /* No subobjects */
-            break;
+            break;/* No subobjects */
         }
 
         /*
@@ -690,14 +640,24 @@ AcpiUtUpdateObjectReference (
          * main object to be deleted.
          */
         AcpiUtUpdateRefCount (Object, Action);
+        Object = NULL;
 
         /* Move on to the next object to be updated */
 
-        State = AcpiUtPopGenericState (&StateList);
+        if (NextObject)
+        {
+            Object = NextObject;
+            NextObject = NULL;
+        }
+        else if (StateList)
+        {
+            State = AcpiUtPopGenericState (&StateList);
+            Object = State->Update.Object;
+            AcpiUtDeleteGenericState (State);
+        }
     }
 
     return_ACPI_STATUS (AE_OK);
-
 
 ErrorExit:
 
