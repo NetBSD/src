@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.79 2005/12/13 23:27:31 cube Exp $	*/
+/*	$NetBSD: acpi.c,v 1.80 2006/01/29 03:12:22 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.79 2005/12/13 23:27:31 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.80 2006/01/29 03:12:22 kochi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1143,11 +1143,11 @@ acpi_get_intr(ACPI_HANDLE handle)
 	rv = acpi_get(handle, &ret, AcpiGetCurrentResources);
 	if (ACPI_FAILURE(rv))
 		return intr;
-	for (res = ret.Pointer; res->Id != ACPI_RSTYPE_END_TAG;
+	for (res = ret.Pointer; res->Type != ACPI_RESOURCE_TYPE_END_DEPENDENT;
 	     res = ACPI_NEXT_RESOURCE(res)) {
-		if (res->Id == ACPI_RSTYPE_IRQ) {
+		if (res->Type == ACPI_RESOURCE_TYPE_IRQ) {
 			irq = (ACPI_RESOURCE_IRQ *)&res->Data;
-			if (irq->NumberOfInterrupts == 1)
+			if (irq->InterruptCount == 1)
 				intr = irq->Interrupts[0];
 			break;
 		}
@@ -1316,32 +1316,32 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 	bufn.Pointer = resn = malloc(bufn.Length, M_ACPI, M_WAITOK);
 	resp = bufp.Pointer;
 	resc = bufc.Pointer;
-	while (resc->Id != ACPI_RSTYPE_END_TAG &&
-	       resp->Id != ACPI_RSTYPE_END_TAG) {
-		while (resc->Id != resp->Id && resp->Id != ACPI_RSTYPE_END_TAG)
+	while (resc->Type != ACPI_RESOURCE_TYPE_END_DEPENDENT &&
+	       resp->Type != ACPI_RESOURCE_TYPE_END_DEPENDENT) {
+		while (resc->Type != resp->Type && resp->Type != ACPI_RESOURCE_TYPE_END_DEPENDENT)
 			resp = ACPI_NEXT_RESOURCE(resp);
-		if (resp->Id == ACPI_RSTYPE_END_TAG)
+		if (resp->Type == ACPI_RESOURCE_TYPE_END_DEPENDENT)
 			break;
 		/* Found identical Id */
-		resn->Id = resc->Id;
-		switch (resc->Id) {
-		case ACPI_RSTYPE_IRQ:
+		resn->Type = resc->Type;
+		switch (resc->Type) {
+		case ACPI_RESOURCE_TYPE_IRQ:
 			memcpy(&resn->Data, &resp->Data,
 			       sizeof(ACPI_RESOURCE_IRQ));
 			irq = (ACPI_RESOURCE_IRQ *)&resn->Data;
 			irq->Interrupts[0] =
 			    ((ACPI_RESOURCE_IRQ *)&resp->Data)->
-			        Interrupts[irq->NumberOfInterrupts-1];
-			irq->NumberOfInterrupts = 1;
-			resn->Length = ACPI_SIZEOF_RESOURCE(ACPI_RESOURCE_IRQ);
+			        Interrupts[irq->InterruptCount-1];
+			irq->InterruptCount = 1;
+			resn->Length = ACPI_RS_SIZE(ACPI_RESOURCE_IRQ);
 			break;
-		case ACPI_RSTYPE_IO:
+		case ACPI_RESOURCE_TYPE_IO:
 			memcpy(&resn->Data, &resp->Data,
 			       sizeof(ACPI_RESOURCE_IO));
 			resn->Length = resp->Length;
 			break;
 		default:
-			printf("acpi_allocate_resources: res=%d\n", resc->Id);
+			printf("acpi_allocate_resources: res=%d\n", resc->Type);
 			rv = AE_BAD_DATA;
 			goto out2;
 		}
@@ -1349,20 +1349,20 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 		resn = ACPI_NEXT_RESOURCE(resn);
 		delta = (UINT8 *)resn - (UINT8 *)bufn.Pointer;
 		if (delta >=
-		    bufn.Length-ACPI_SIZEOF_RESOURCE(ACPI_RESOURCE_DATA)) {
+		    bufn.Length-ACPI_RS_SIZE(ACPI_RESOURCE_DATA)) {
 			bufn.Length *= 2;
 			bufn.Pointer = realloc(bufn.Pointer, bufn.Length,
 					       M_ACPI, M_WAITOK);
 			resn = (ACPI_RESOURCE *)((UINT8 *)bufn.Pointer + delta);
 		}
 	}
-	if (resc->Id != ACPI_RSTYPE_END_TAG) {
+	if (resc->Type != ACPI_RESOURCE_TYPE_END_DEPENDENT) {
 		printf("acpi_allocate_resources: resc not exhausted\n");
 		rv = AE_BAD_DATA;
 		goto out3;
 	}
 
-	resn->Id = ACPI_RSTYPE_END_TAG;
+	resn->Type = ACPI_RESOURCE_TYPE_END_DEPENDENT;
 	rv = AcpiSetCurrentResources(handle, &bufn);
 	if (ACPI_FAILURE(rv)) {
 		printf("acpi_allocate_resources: AcpiSetCurrentResources %s\n",
