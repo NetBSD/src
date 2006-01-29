@@ -1,4 +1,4 @@
-.\"     $NetBSD: filedesc.9,v 1.8 2006/01/29 16:12:57 rpaulo Exp $
+.\"     $NetBSD: filedesc.9,v 1.9 2006/01/29 18:08:54 kleink Exp $
 .\"
 .\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@
 .Ft int
 .Fn dupfdopen "struct lwp *l" "int indx" "int dfd" "int mode" "int error"
 .Ft int
-.Fn fdalloc "struct lwp *l" "int want" "int *result"
+.Fn fdalloc "struct proc *p" "int want" "int *result"
 .Ft int
 .Fn fdavail "struct proc *p" "int n"
 .Ft int
@@ -82,7 +82,7 @@
 .Ft void
 .Fn fdfree "struct lwp *l"
 .Ft struct filedesc *
-.Fn fdinit "struct proc  *p"
+.Fn fdinit "struct proc *p"
 .Ft int
 .Fn fdrelease "struct lwp *l" "int fd"
 .Ft void
@@ -147,8 +147,8 @@ process
 This operation is performed by invoking
 .Fn fdalloc
 to allocate the new file descriptor.
-The credential on the file entry are inherited from lwp
-.Fa l .
+The credential on the file entry are inherited from process
+.Fa p .
 The
 .Fn falloc
 function is responsible for expanding the file descriptor table when
@@ -181,22 +181,22 @@ The following functions operate on the file descriptor table for a
 process.
 .Pp
 .Bl -tag -width compact
-.It Fn fdalloc "l" "want" "*result"
+.It Fn fdalloc "p" "want" "*result"
 Allocate a file descriptor
 .Fa want
- for lwp
-.Fa l .
+ for process
+.Fa p .
 The resultant file descriptor is returned in
 .Fa *result .
 The
 .Fn fdalloc
 function returns zero on success, otherwise an appropriate error is
 returned.
-.It Fn fdavail "l" "n"
+.It Fn fdavail "p" "n"
 Check to see whether
 .Fa n
-file descriptors are available to lwp
-.Fa l .
+file descriptors are available to process
+.Fa p .
 Returns zero on success, or 1 on failure.
 .It Fn fdcheckstd "l"
 Check the standard file descriptors 0, 1, 2 and ensure they are
@@ -236,9 +236,9 @@ The returned file descriptor is guaranteed to have a reference count of one.
 All file descriptor state is maintained.
 The reference counts on each file entry referenced by the file
 descriptor table is incremented accordingly.
-.It Fn fdexpand "l"
-Expand the file descriptor table for lwp
-.Fa l
+.It Fn fdexpand "p"
+Expand the file descriptor table for process
+.Fa p
 by allocating memory for additional file descriptors.
 .It Fn fdfree "l"
 Decrement the reference count on the file descriptor table for lwp
@@ -247,7 +247,7 @@ and release the file descriptor table if the reference count drops to
 zero.
 .It Fn fdinit "p"
 Create a file descriptor table using the same current and root
-directories of proc
+directories of process
 .Fa p .
 The returned file descriptor table is guaranteed to have a reference
 count of one.
