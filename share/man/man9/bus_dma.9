@@ -1,6 +1,6 @@
-.\" $NetBSD: bus_dma.9,v 1.34 2005/12/20 19:53:14 rpaulo Exp $
+.\" $NetBSD: bus_dma.9,v 1.35 2006/01/29 02:26:27 rpaulo Exp $
 .\"
-.\" Copyright (c) 1996, 1997, 1998, 2001, 2005 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2005
+.Dd January 29, 2006
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
@@ -252,13 +252,13 @@ The DMA handle with which to map the transfer.
 The buffer to be used for the DMA transfer.
 .It Fa buflen
 The size of the buffer.
-.It Fa p
+.It Fa l
 Used to indicate the address space in which the buffer is located.
 If
 .Dv NULL ,
 the buffer is assumed to be in kernel space.
-Otherwise, the buffer is assumed to be in process
-.Fa p Ns 's
+Otherwise, the buffer is assumed to be in lwp
+.Fa l Ns 's
 address space.
 .It Fa flags
 are defined as follows:
