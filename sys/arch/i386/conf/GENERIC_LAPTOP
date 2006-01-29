@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.166 2006/01/12 11:45:25 tron Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.167 2006/01/29 11:32:01 augustss Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.166 $"
+#ident 		"GENERIC-$Revision: 1.167 $"
 
 maxusers	32		# estimated number of users
 
@@ -644,7 +644,9 @@ ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ohci*	at cardbus? function ?	# Open Host Controller
+ehci*	at cardbus? function ?		# Enhanced Host Controller
+ohci*	at cardbus? function ?		# Open Host Controller
+uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 
 # USB bus support
 usb*	at ehci?
