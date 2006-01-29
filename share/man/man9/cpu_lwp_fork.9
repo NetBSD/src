@@ -1,6 +1,6 @@
-.\"     $NetBSD: cpu_lwp_fork.9,v 1.1 2005/12/20 19:53:15 rpaulo Exp $
+.\"     $NetBSD: cpu_lwp_fork.9,v 1.2 2006/01/29 03:09:19 rpaulo Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2005
+.Dd January 29, 2006
 .Dt CPU_LWP_FORK 9
 .Os
 .Sh NAME
@@ -53,11 +53,11 @@
 .Fn cpu_lwp_fork
 is the machine-dependent portion of
 .Fn fork1
-which finishes a fork operation, with child process
-.Fa p2
+which finishes a fork operation, with child lwp
+.Fa l2
 nearly set up.
 It copies and updates the PCB and trap frame from the parent
-.Fa p1 ,
+.Fa l1 ,
 making the child ready to run.
 .Pp
 .Fn cpu_lwp_fork
@@ -91,7 +91,7 @@ If a user process is being created,
 will pass
 .Fn child_return
 and
-.Fa p2
+.Fa l2
 to
 .Fn cpu_lwp_fork
 as
