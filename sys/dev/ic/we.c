@@ -1,4 +1,4 @@
-/*	$NetBSD: we.c,v 1.9 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: we.c,v 1.10 2006/01/29 21:42:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.9 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.10 2006/01/29 21:42:42 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: we.c,v 1.9 2005/12/24 20:27:30 perry Exp $");
 #include <net/if_ether.h>
 
 #include <machine/bus.h>
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isareg.h>

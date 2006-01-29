@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.8 2003/01/18 13:29:25 jdolecek Exp $ */
+/* $NetBSD: if_eh.c,v 1.9 2006/01/29 21:42:41 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.8 2003/01/18 13:29:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.9 2006/01/29 21:42:41 dsl Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.8 2003/01/18 13:29:25 jdolecek Exp $");
 
 #include <net/if_ether.h>
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include <machine/bus.h>
 #include <machine/bus.h>
 #include <machine/irq.h>
@@ -85,10 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.8 2003/01/18 13:29:25 jdolecek Exp $");
 #include <dev/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>
 #include <arch/acorn26/podulebus/if_ehreg.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h>
-#endif
 
 #define EH_MEDIA_2	0
 #define EH_MEDIA_T	1
