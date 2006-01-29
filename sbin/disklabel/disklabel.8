@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.57 2005/06/19 17:24:20 wiz Exp $
+.\"	$NetBSD: disklabel.8,v 1.58 2006/01/29 00:04:26 dsl Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,175 +32,159 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd June 17, 2005
+.Dd January 29 2006
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
 .Nm disklabel
 .Nd read and write disk pack label
 .Sh SYNOPSIS
+.\" disklabel: read label
 .Nm
-.Op Fl CFrt
+.Op Fl ACDFrtv
 .Ar disk
+.\" disklabel -e: read/modify/write using $EDITOR
+.Nm
+.Fl e
+.Op Fl CDFIrv
+.Ar disk
+.\" disklabel -i: read/modify/write using builtin commands
+.Nm
+.Fl i
+.Op Fl DFIrv
+.Ar disk
+.\" disklabel -R: write from edited output
+.Nm
+.Fl R
+.Op Fl DFrv
+.Ar disk Ar protofile
+.\" disklabel -w: write from disctab entry
 .Nm
 .Fl w
-.Op Fl \&Fr
+.Op Fl DFrv
 .Op Fl f Ar disktab
 .Ar disk Ar disktype
 .Oo Ar packid Oc
-.Nm
-.Fl e
-.Op Fl CFIr
-.Ar disk
-.Nm
-.Fl i
-.\" .Op Fl Fr - except Fr is treated as a macro :-(
-.Op Fl FIr
-.Ar disk
-.Nm
-.Fl R
-.Op Fl \&Fr
-.Ar disk Ar protofile
+.\" disklabel -NW: disallow/allow writes to the label sector
 .Nm
 .Op Fl NW
 .Ar disk
 .Sh DESCRIPTION
 .Nm
 can be used to install, examine or modify the label on a disk drive or pack.
-When writing the label, it can be used
-to change the drive identification,
-the disk partitions on the drive,
-or to replace a damaged label.
-.Pp
-There are several forms of the command that read (display), install, or edit
-the label on a disk.
-Each form has an additional option,
-.Fl r ,
-which causes the label to be read from or written to the disk directly,
-rather than going through the system's in-core copy of the label.
-This option may allow a label to be installed on a disk
-without kernel support for a label, such as when labels are first installed
-on a system; it must be used when first installing a label on a disk.
-Any special effects of the
-.Fl r
-flag are described with the affected commands.
+When writing the label, it can be used to change the drive identification,
+the disk partitions on the drive, or to replace a damaged label.
 .Pp
 The
-.Fl F
-option indicates that
-.Nm
-should treat
-.Ar disk
-as if it is a regular file, instead of as if it is a block device,
-for the purposes of reading and writing a disklabel.
-.Pp
-The
-.Fl I
-option is similar to the
-.Fl r
-option but provides defaults instead of failing with
-an error, if there is no existing disklabel on the disk.
-.Pp
-The first form of the command (read) is used to examine the label on the named
-disk drive (e.g.,
-.Pa sd0
-or
-.Pa /dev/rsd0c ) .
-It will display all of the parameters associated with the drive
-and its partition layout.
-Unless the
-.Fl r
-flag is given,
-the kernel's in-core copy of the label is displayed;
-if the disk has no label, or the partition types on the disk are incorrect,
-the kernel may have constructed or modified the label.
-If the
-.Fl r
-flag is given, the label from the raw disk will be displayed rather
-than the in-core label.
-If the
-.Fl t
-flag is given, then the label will be formatted as a
-.Xr disktab 5
-entry.
-.Pp
-The second form of the command, with the
-.Fl w
-flag, is used to write a standard label on the designated drive.
-The required arguments to
-.Nm
-are the drive to be labelled (e.g.,
-.Pa sd0 ) ,
-and the drive type as described in the
-.Xr disktab 5
-file.
-The drive parameters and partitions are taken from that file.
-If different disks of the same physical type are to have different
-partitions, it will be necessary to have separate disktab entries
-describing each, or to edit the label after installation as described below.
-The optional argument is a pack identification string,
-up to 16 characters long.
-The pack id must be quoted if it contains blanks.
-If the disk does not already have a label, the
-.Fl r
-flag must be used.
-In either case, the kernel's in-core label is replaced.
-.Pp
-An alternate
-.Xr disktab 5
-file may be specified with the
-.Fl f Ar disktab
-option.
-.Pp
-An existing disk label may be edited by using the
-.Fl e
-flag.
-The label is formatted and then supplied to an editor for changes.
-If no editor is specified in an
-.Ev EDITOR
-environment variable,
+.Fl e , i , R , w, N ,
+and
+.Fl W
+options determine the basic operation, if none are specified the label
+is displayed.
+.Bl -tag -width flag
+.It Fl e
+Edit the existing label (using $EDITOR) and write it back to the disk.
+If $EDITOR is undefined, then 
 .Xr vi 1
 is used.
-When the editor terminates, the formatted label is reread
-and used to rewrite the disk label.
+.It Fl i
+Interactively update the existing label and write it back to the disk.
+.It Fl R
+Write (restore) a label by reading it from
+.Ar protofile .
+The file should be in the same format as the default output.
+.It Fl w
+Write a standard label for the specified
+.Ar disktype .
+See
+.Xr disktab 5 .
+.It Fl N
+Disallow writes to the disk sector that contains the label.
+This is the default state.
+.It Fl W
+Allow writes to the disk sector that contains the label.
+This state may not persist if no programs have the disk open.
+.El
 .Pp
-Labels can also created interactively using the
-.Fl i
-flag.
-.Pp
-The
-.Fl C
-flag causes the partition offset and size values to be displayed in
-.Aq cylinder/track/sector
-format.
-Note that, regardless of whether
-.Fl C
-was specified, this format is always accepted by
+The majority of the rest of the options affect more than one form of the
+command:
+.Bl -tag -width flag
+.It Fl A
+Read all labels from the disk, including ones deleted with
 .Nm
-on input with either the
+.Fl D .
+Implies
+.Fl r .
+.It Fl C
+Output the partition offset and size values in <cylinder/head/sector> format.
+Note this format is always on input with either the
 .Fl e
 or
 .Fl R
 flag.
+.It Fl D
+Delete all existing labels (by 1's complimenting the magic number) before
+writing any labels to their default location.
+Implies
+.Fl r .
+If
+.Fl D
+is specified without a request to write the label, then existing labels are
+just deleted.
+.It Fl F
+Treat
+.Ar disk
+as a regular file.
+This suppresses all ioctl() calls, and is the default if
+.Ar disk
+is a regular file.
+.Ar disk
+is always opened using
+.Xr opendisk 5
+even if
+.Fl F
+is specified.
+Implies
+.Fl r .
+.It Fl I
+If a label cannot be read from
+.Ar disk
+request the default one from the kernel.
+Implies
+.Fl r .
+.It Fl f Ar disktab
+Specify the name of a file to use instead of
+.Ar /etc/disktab .
+.It Fl r
+Read/write the disk directly rather than using ioctl() requests on the kernel.
+When writing a label, the kernel will be told about the label before the
+label is written and asked to write afterwards.
+This is the historic behaviour and can be supressed by specifying
+.Fl F .
+.It Fl t
+Format the output as a
+.Xr disktab 5
+entry.
+.It Fl v
+Be verbose about the operations being done, in particular the disk sectors
+being read and written.
+Specifying
+.Fl v
+more than once will increase the verbosity.
+.El
 .Pp
-With the
-.Fl R
-flag,
+On systems that expect to have disks with mbr partitions (see
+.Xr fdisk 8 )
 .Nm
-is capable of restoring a disk label that was formatted
-in a prior operation and saved in an ascii file.
-The prototype file used to create the label should be in the same format
-as that produced when reading or editing a label.
-Comments are delimited by
-.Ar \&#
-and newline.
+will find, and update if requested, labels in the first 8k of type
+169 (NetBSD) mbr labels and within the first 8k of the physical disk.
+On other systems 
+.Nm
+will only look at the start of the disk.
+The offset at which the labels are written is also system dependant.
 .Pp
-The
-.Fl NW
-flags for
 .Nm
-explicitly disallow and
-allow, respectively, writing of the pack label area on the selected disk.
+will detect byteswapped labels, but currently cannot display them.
 .Pp
 Previous versions of
 .Nm
@@ -288,6 +272,7 @@ while shrinking the
 .Dq a
 partition.
 .Sh SEE ALSO
+.Xr opendisk 3 ,
 .Xr disklabel 5 ,
 .Xr disktab 5 ,
 .Xr dkctl 8 ,
