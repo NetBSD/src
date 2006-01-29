@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.95 2005/10/07 23:57:10 uwe Exp $ */
+/*	$NetBSD: fdisk.c,v 1.96 2006/01/29 12:55:16 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.95 2005/10/07 23:57:10 uwe Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.96 2006/01/29 12:55:16 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -77,6 +77,9 @@ __RCSID("$NetBSD: fdisk.c,v 1.95 2005/10/07 23:57:10 uwe Exp $");
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
 #define	DEFAULT_BOOTDIR		"/usr/mdec"
+
+#define	LE_MBR_MAGIC		htole16(MBR_MAGIC)
+#define	LE_MBR_BS_MAGIC		htole16(MBR_BS_MAGIC)
 
 #if defined(__i386__) || defined(__x86_64__)
 #if !HAVE_NBTOOL_CONFIG_H
@@ -559,8 +562,7 @@ print_s0(int which)
 			}
 		}
 #ifdef BOOTSEL
-		if (!sh_flag &&
-		    le16toh(mboot.mbr_bootsel_magic) == MBR_BS_MAGIC) {
+		if (!sh_flag && mboot.mbr_bootsel_magic == LE_MBR_BS_MAGIC) {
 			int tmo;
 
 			printf("Bootselector ");
@@ -672,7 +674,7 @@ print_mbr_partition(struct mbr_sector *boot, int part,
 
 	printf("%s (sysid %d)\n", get_type(partp->mbrp_type), partp->mbrp_type);
 #ifdef BOOTSEL
-	if (le16toh(boot->mbr_bootsel_magic) == MBR_BS_MAGIC &&
+	if (boot->mbr_bootsel_magic == LE_MBR_BS_MAGIC &&
 	    boot->mbr_bootsel.mbrbs_nametab[part][0])
 		printf("%*s    bootmenu: %s\n", indent, "",
 		    boot->mbr_bootsel.mbrbs_nametab[part]);
@@ -777,7 +779,7 @@ read_boot(const char *name, void *buf, size_t len, int err_exit)
 	/*
 	 * Do some sanity checking here
 	 */
-	if (le16toh(((struct mbr_sector *)buf)->mbr_magic) != MBR_MAGIC) {
+	if (((struct mbr_sector *)buf)->mbr_magic != LE_MBR_MAGIC) {
 		warnx("%s: invalid magic", boot_path);
 		goto fail;
 	}
@@ -805,8 +807,8 @@ init_sector0(int zappart)
 			sizeof bootcode, 1);
 #endif
 #ifdef BOOTSEL
-	if (le16toh(mboot.mbr_bootsel_magic) == MBR_BS_MAGIC 
-	    && le16toh(bootcode[0].mbr_bootsel_magic) == MBR_BS_MAGIC)
+	if (mboot.mbr_bootsel_magic == LE_MBR_BS_MAGIC
+	    && bootcode[0].mbr_bootsel_magic == LE_MBR_BS_MAGIC)
 		copy_size = MBR_BS_OFFSET;
 #endif
 
@@ -814,7 +816,7 @@ init_sector0(int zappart)
 		boot_installed = 1;
 		memcpy(&mboot, bootcode, copy_size);
 	}
-	mboot.mbr_magic = htole16(MBR_MAGIC);
+	mboot.mbr_magic = LE_MBR_MAGIC;
 	
 	if (!zappart)
 		return;
@@ -983,7 +985,7 @@ get_default_boot(void)
 	unsigned int id;
 	int p;
 
-	if (le16toh(mboot.mbr_bootsel_magic) != MBR_BS_MAGIC)
+	if (mboot.mbr_bootsel_magic != LE_MBR_BS_MAGIC)
 		/* default to first active partition */
 		return DEFAULT_ACTIVE;
 
@@ -1025,7 +1027,7 @@ set_default_boot(daddr_t default_ptn)
 	int p;
 	int key = SCAN_1;
 
-	if (le16toh(mboot.mbr_bootsel_magic) != MBR_BS_MAGIC)
+	if (mboot.mbr_bootsel_magic != LE_MBR_BS_MAGIC)
 		/* sanity */
 		return;
 
@@ -1085,7 +1087,7 @@ install_bootsel(int needed)
 	for (p = 0; p < MBR_PART_COUNT; p++) {
 		if (mboot.mbr_parts[p].mbrp_type == 0)
 			continue;
-		if (le16toh(mboot.mbr_bootsel_magic) != MBR_BS_MAGIC)
+		if (mboot.mbr_bootsel_magic != LE_MBR_BS_MAGIC)
 			break;
 		if (mbs->mbrbs_nametab[p][0] == 0)
 			continue;
@@ -1095,7 +1097,7 @@ install_bootsel(int needed)
 	}
 
 	for (p = 0; p < ext.num_ptn; p++) {
-		if (le16toh(ext.ptn[p].mbr_bootsel_magic) != MBR_BS_MAGIC)
+		if (ext.ptn[p].mbr_bootsel_magic != LE_MBR_BS_MAGIC)
 			continue;
 		if (ext.ptn[p].mbr_parts[0].mbrp_type == 0)
 			continue;
@@ -1109,7 +1111,7 @@ install_bootsel(int needed)
 
 	/* Is the installed code good enough ? */
 	if (!i_flag && (needed == 0 ||
-	    (le16toh(mboot.mbr_bootsel_magic) == MBR_BS_MAGIC
+	    (mboot.mbr_bootsel_magic == LE_MBR_BS_MAGIC
 	    && (mbs->mbrbs_flags & needed) == needed))) {
 		/* yes - just set flags */
 		mbs->mbrbs_flags |= ext13;
@@ -1131,7 +1133,7 @@ install_bootsel(int needed)
 	/* Were we told a specific file ? (which we have already read) */
 	/* If so check that it supports what we need. */
 	if (bootsize != 0 && needed != 0
-	    && (le16toh(bootcode[0].mbr_bootsel_magic) != MBR_BS_MAGIC
+	    && (bootcode[0].mbr_bootsel_magic != LE_MBR_BS_MAGIC
 	    || ((bootcode[0].mbr_bootsel.mbrbs_flags & needed) != needed))) {
 		/* No it doesn't... */
 		if (f_flag)
@@ -1171,7 +1173,7 @@ install_bootsel(int needed)
 
 	init_sector0(0);
 
-	if (le16toh(mboot.mbr_bootsel_magic) == MBR_BS_MAGIC)
+	if (mboot.mbr_bootsel_magic == LE_MBR_BS_MAGIC)
 		mbs->mbrbs_flags = bootcode[0].mbr_bootsel.mbrbs_flags | ext13;
 }
 
@@ -1439,7 +1441,7 @@ add_ext_ptn(daddr_t start, daddr_t size)
 	memmove(&ext.ptn[part + 1], &ext.ptn[part],
 		(ext.num_ptn - part) * sizeof ext.ptn[0]);
 	memset(&ext.ptn[part], 0, sizeof ext.ptn[0]);
-	ext.ptn[part].mbr_magic = htole16(MBR_MAGIC);
+	ext.ptn[part].mbr_magic = LE_MBR_MAGIC;
 	/* we will be 'part' */
 	if (part == 0) {
 		/* link us to 'next' */
@@ -1512,7 +1514,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 			ext.ptn = calloc(1, sizeof ext.ptn[0]);
 			if (ext.ptn == NULL)
 				err(1, "Malloc failed");
-			ext.ptn[0].mbr_magic = htole16(MBR_MAGIC);
+			ext.ptn[0].mbr_magic = LE_MBR_MAGIC;
 			ext.ptn_id = part;
 			ext.base = start;
 			ext.limit = start + size;
@@ -1679,8 +1681,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 	if (bootmenu != NULL)
 		strlcpy(tmp_bootmenu, bootmenu, bootmenu_len);
 	else
-		if (boot != NULL &&
-		    le16toh(boot->mbr_bootsel_magic) == MBR_BS_MAGIC)
+		if (boot != NULL && boot->mbr_bootsel_magic == LE_MBR_BS_MAGIC)
 			strlcpy(tmp_bootmenu,
 				boot->mbr_bootsel.mbrbs_nametab[upart],
 				bootmenu_len);
@@ -1868,7 +1869,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		if (start == 0 && size == 0)
 			memset(partp, 0, sizeof *partp);
 #ifdef BOOTSEL
-		if (le16toh(boot->mbr_bootsel_magic) == MBR_BS_MAGIC)
+		if (boot->mbr_bootsel_magic == LE_MBR_BS_MAGIC)
 			memset(boot->mbr_bootsel.mbrbs_nametab[upart], 0,
 				sizeof boot->mbr_bootsel.mbrbs_nametab[0]);
 #endif
@@ -1903,19 +1904,19 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		    &partp->mbrp_ecyl, &partp->mbrp_ehd, &partp->mbrp_esect);
 #ifdef BOOTSEL
 	if (extended) {
-		boot->mbr_bootsel_magic = htole16(MBR_BS_MAGIC);
+		boot->mbr_bootsel_magic = LE_MBR_BS_MAGIC;
 		strncpy(boot->mbr_bootsel.mbrbs_nametab[upart], tmp_bootmenu,
 			bootmenu_len);
 	} else {
 		/* We need to bootselect code installed in order to have
 		 * somewhere to safely write the menu tag.
 		 */
-		if (le16toh(boot->mbr_bootsel_magic) != MBR_BS_MAGIC) {
+		if (boot->mbr_bootsel_magic != LE_MBR_BS_MAGIC) {
 			if (yesno("The bootselect code is not installed, "
 					    "do you want to install it now?"))
 				install_bootsel(MBR_BS_ACTIVE);
 		}
-		if (le16toh(boot->mbr_bootsel_magic) == MBR_BS_MAGIC) {
+		if (boot->mbr_bootsel_magic == LE_MBR_BS_MAGIC) {
 			strncpy(boot->mbr_bootsel.mbrbs_nametab[upart],
 				tmp_bootmenu, bootmenu_len);
 		}
@@ -2293,14 +2294,14 @@ read_s0(daddr_t offset, struct mbr_sector *boot)
 		warn("Can't read %s partition table", tabletype);
 		return -1;
 	}
-	if (le16toh(boot->mbr_magic) != MBR_MAGIC) {
+	if (boot->mbr_magic != LE_MBR_MAGIC) {
 		warnx("%s partition table invalid, "
 		    "no magic in sector %"PRIdaddr, tabletype, offset);
 		return -1;
 
 	}
 #ifdef BOOTSEL
-	if (le16toh(boot->mbr_bootsel_magic) == MBR_BS_MAGIC) {
+	if (boot->mbr_bootsel_magic == LE_MBR_BS_MAGIC) {
 		/* mbr_bootsel in new location */
 		if (validate_bootsel(&boot->mbr_bootsel)) {
 			warnx("removing corrupt bootsel information");
@@ -2308,7 +2309,7 @@ read_s0(daddr_t offset, struct mbr_sector *boot)
 		}
 		return 0;
 	}
-	if (le16toh(boot->mbr_bootsel_magic) != MBR_MAGIC)
+	if (boot->mbr_bootsel_magic != LE_MBR_MAGIC)
 		return 0;
 
 	/* mbr_bootsel in old location */
@@ -2337,7 +2338,7 @@ read_s0(daddr_t offset, struct mbr_sector *boot)
 			id = DEFAULT_ACTIVE;
 		boot->mbr_bootsel.mbrbs_defkey = id;
 	}
-	boot->mbr_bootsel_magic = htole16(MBR_BS_MAGIC);
+	boot->mbr_bootsel_magic = LE_MBR_BS_MAGIC;
 		/* highlight that new bootsel code is necessary */
 	boot->mbr_bootsel.mbrbs_flags &= ~MBR_BS_NEWMBR;
 #endif /* BOOTSEL */
