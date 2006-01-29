@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.14 2006/01/29 21:42:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #ifndef _SH3_BUS_H_
 #define	_SH3_BUS_H_
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 
 #define	__BUS_SPACE_HAS_STREAM_METHODS
 

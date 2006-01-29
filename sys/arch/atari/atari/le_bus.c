@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.10 2005/12/24 23:23:59 perry Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.11 2006/01/29 21:42:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.10 2005/12/24 23:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.11 2006/01/29 21:42:41 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include <machine/cpu.h>
 #include <machine/bus.h>
 

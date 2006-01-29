@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20 2006/01/29 21:42:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20 2006/01/29 21:42:41 dsl Exp $");
 
 #include "opt_mbr.h"
 
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2005/12/11 12:19:00 christos Exp $
 #include <sys/disk.h>
 #include <sys/syslog.h>
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 
 int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
 		    MBR_PTYPE_FAT16B, MBR_PTYPE_FAT32,
