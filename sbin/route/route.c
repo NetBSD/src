@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.96 2006/01/26 11:35:09 is Exp $	*/
+/*	$NetBSD: route.c,v 1.97 2006/01/29 22:11:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.96 2006/01/26 11:35:09 is Exp $");
+__RCSID("$NetBSD: route.c,v 1.97 2006/01/29 22:11:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ usage(const char *cp)
 	if (cp)
 		warnx("botched keyword: %s", cp);
 	(void)fprintf(stderr,
-	    "Usage: %s [ -fnqsSv ] cmd [[ -<qualifers> ] args ]\n",
+	    "Usage: %s [ -fnqSsv ] cmd [[ -<qualifers> ] args ]\n",
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 	if (argc < 2)
 		usage(NULL);
 
-	while ((ch = getopt(argc, argv, "dfnqsStv")) != -1)
+	while ((ch = getopt(argc, argv, "dfnqSstv")) != -1)
 		switch (ch) {
 		case 'd':
 			debugonly = 1;
@@ -172,11 +172,11 @@ main(int argc, char **argv)
 		case 'q':
 			qflag = 1;
 			break;
-		case 's':
-			shortoutput = 1;
-			break;
 		case 'S':
 			Sflag = 1;
+			break;
+		case 's':
+			shortoutput = 1;
 			break;
 		case 't':
 			tflag = 1;
