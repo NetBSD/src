@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.27 2006/01/16 20:30:18 bouyer Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.28 2006/01/29 21:42:41 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.27 2006/01/16 20:30:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.28 2006/01/29 21:42:41 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.27 2006/01/16 20:30:18 bouyer Exp $"
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/custom.h>

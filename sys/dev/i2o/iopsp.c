@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.20 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.21 2006/01/29 21:42:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.20 2005/12/11 12:21:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.21 2006/01/29 21:42:42 dsl Exp $");
 
 #include "opt_i2o.h"
 
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.20 2005/12/11 12:21:23 christos Exp $");
 #include <sys/scsiio.h>
 #include <sys/lock.h>
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include <machine/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
