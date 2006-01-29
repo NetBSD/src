@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpica,v 1.10 2005/12/11 12:21:02 christos Exp $
+#	$NetBSD: files.acpica,v 1.11 2006/01/29 03:11:49 kochi Exp $
 
 file	dev/acpi/acpica/Osd/OsdEnvironment.c		acpi
 file	dev/acpi/acpica/Osd/OsdHardware.c		acpi
@@ -108,6 +108,7 @@ file	dev/acpi/acpica/Subsystem/nsxfobj.c		acpi
 
 # interpreter/parser/
 file	dev/acpi/acpica/Subsystem/psargs.c		acpi
+file	dev/acpi/acpica/Subsystem/psloop.c		acpi
 file	dev/acpi/acpica/Subsystem/psopcode.c		acpi
 file	dev/acpi/acpica/Subsystem/psparse.c		acpi
 file	dev/acpi/acpica/Subsystem/psscope.c		acpi
@@ -121,6 +122,7 @@ file	dev/acpi/acpica/Subsystem/rsaddr.c		acpi
 file	dev/acpi/acpica/Subsystem/rscalc.c		acpi
 file	dev/acpi/acpica/Subsystem/rscreate.c		acpi
 file	dev/acpi/acpica/Subsystem/rsdump.c		acpi
+file	dev/acpi/acpica/Subsystem/rsinfo.c		acpi
 file	dev/acpi/acpica/Subsystem/rsio.c		acpi
 file	dev/acpi/acpica/Subsystem/rsirq.c		acpi
 file	dev/acpi/acpica/Subsystem/rslist.c		acpi
@@ -141,6 +143,7 @@ file	dev/acpi/acpica/Subsystem/tbxfroot.c		acpi
 
 # utilities/
 file	dev/acpi/acpica/Subsystem/utalloc.c		acpi
+file	dev/acpi/acpica/Subsystem/utcache.c		acpi
 file	dev/acpi/acpica/Subsystem/utcopy.c		acpi
 file	dev/acpi/acpica/Subsystem/utdebug.c		acpi
 file	dev/acpi/acpica/Subsystem/utdelete.c		acpi
@@ -149,6 +152,9 @@ file	dev/acpi/acpica/Subsystem/utglobal.c		acpi
 file	dev/acpi/acpica/Subsystem/utinit.c		acpi
 file	dev/acpi/acpica/Subsystem/utmath.c		acpi
 file	dev/acpi/acpica/Subsystem/utmisc.c		acpi
+file	dev/acpi/acpica/Subsystem/utmutex.c		acpi
 file	dev/acpi/acpica/Subsystem/utobject.c		acpi
+file	dev/acpi/acpica/Subsystem/utresrc.c		acpi
+file	dev/acpi/acpica/Subsystem/utstate.c		acpi
 file	dev/acpi/acpica/Subsystem/utxface.c		acpi
 
