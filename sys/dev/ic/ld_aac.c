@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.9 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.10 2006/01/29 09:48:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.9 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.10 2006/01/29 09:48:09 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -186,9 +186,9 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 		sge->SgAddress = htole32(xfer->dm_segs[i].ds_addr);
 		sge->SgByteCount = htole32(xfer->dm_segs[i].ds_len);
 		AAC_DPRINTF(AAC_D_IO,
-		    ("#%d va %p pa %lx len %x\n", i, data,
+		    ("#%d va %p pa %lx len %lx\n", i, data,
 		    (u_long)xfer->dm_segs[i].ds_addr,
-		    xfer->dm_segs[i].ds_len));
+		    (u_long)xfer->dm_segs[i].ds_len));
 	}
 
 	size += xfer->dm_nsegs * sizeof(struct aac_sg_entry);
