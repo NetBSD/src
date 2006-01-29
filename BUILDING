@@ -495,7 +495,7 @@ BUILDING
                    already have been populated by ``make release'' or equiva-
                    lent.  This requires the mkisofs(1) utility, which is not
                    part of NetBSD, but which can be installed from
-                   pkgsrc/sysutils/cdrecord.
+                   pkgsrc/sysutils/cdrtools.
 
      regression-tests
                    Can only be run after building the regression tests in the
@@ -715,7 +715,7 @@ OBSOLETE VARIABLES
                  TOOLCHAIN_MISSING=yes.
 
 SEE ALSO
-     make(1), hier(7), release(7), pkgsrc/sysutils/cdrecord
+     make(1), hier(7), release(7), pkgsrc/sysutils/cdrtools
 
 HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as

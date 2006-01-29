@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.319 2006/01/28 21:37:11 apb Exp $
+#	$NetBSD: Makefile,v 1.320 2006/01/29 14:03:59 apb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -54,7 +54,7 @@ MAKESUMS=	CKSUM=${CKSUM:Q} ${HOST_SH} ${NETBSDSRCDIR}/distrib/sets/makesums
 DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 
 # Flags for creating ISO CDROM image
-# mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrecord
+# mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrtools
 # Note: At least mkisofs 2.0 should be used.
 #
 MKISOFS?=	mkisofs
@@ -433,7 +433,7 @@ iso-image-setup: .PHONY check_RELEASEDIR
 iso-image-mi: .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
 		iso-image-setup .WAIT iso-image-md-pre
 	@if ! ${MKISOFS} --version; then \
-		echo "install pkgsrc/sysutils/cdrecord and run 'make iso-image'." ; \
+		echo "install pkgsrc/sysutils/cdrtools and run 'make iso-image'." ; \
 		false; \
 	fi
 	${MKISOFS} ${MKISOFS_FLAGS} -graft-points -path-list ${CDROM.pathlist} \
