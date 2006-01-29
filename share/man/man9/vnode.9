@@ -1,6 +1,6 @@
-.\"     $NetBSD: vnode.9,v 1.29 2005/12/20 19:53:15 rpaulo Exp $
+.\"     $NetBSD: vnode.9,v 1.30 2006/01/29 03:09:19 rpaulo Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2005
+.Dd January 29, 2006
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -642,7 +642,7 @@ This function is needed for
 .Xr VFS_VGET 9
 which may need to push back a vnode in case of a locking race
 condition.
-.It Fn vrecycle "vp" "inter_lkp" "p"
+.It Fn vrecycle "vp" "inter_lkp" "l"
 Recycle the unused vnode
 .Fa vp
 to the front of the freelist.
@@ -728,11 +728,11 @@ will sleep until
 is zero and
 .Em vp-\*[Gt]v_dirtyblkhd
 is empty.
-.It Fn vinvalbuf "vp" "flags" "cred" "p" "slpflag" "slptimeo"
+.It Fn vinvalbuf "vp" "flags" "cred" "l" "slpflag" "slptimeo"
 Flush out and invalidate all buffers associated with locked vnode
 .Fa vp .
 The argument
-.Fa p
+.Fa l
 and
 .Fa cred
 specified the calling process and its credentials.

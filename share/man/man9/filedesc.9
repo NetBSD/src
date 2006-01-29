@@ -1,6 +1,6 @@
-.\"     $NetBSD: filedesc.9,v 1.6 2005/12/20 19:53:15 rpaulo Exp $
+.\"     $NetBSD: filedesc.9,v 1.7 2006/01/29 03:09:19 rpaulo Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2005
+.Dd January 29, 2006
 .Dt FILEDESC 9
 .Os
 .Sh NAME
@@ -140,15 +140,15 @@ The following functions are high-level interface routines to access
 the file descriptor table for a process and its file entries.
 .Pp
 .Bl -tag -width compact
-.It Fn falloc "p" "*resultfp" "*resultfd"
+.It Fn falloc "l" "*resultfp" "*resultfd"
 Create a new open file entry and allocate a file descriptor for
-process
-.Fa p .
+lwp
+.Fa l .
 This operation is performed by invoking
 .Fn fdalloc
 to allocate the new file descriptor.
-The credential on the file entry are inherited from process
-.Fa p .
+The credential on the file entry are inherited from lwp
+.Fa l .
 The
 .Fn falloc
 function is responsible for expanding the file descriptor table when
@@ -170,35 +170,35 @@ in the file descriptor table
 The file entry is returned if it is valid and useable, otherwise
 .Dv NULL
 is returned.
-.It Fn dupfdopen "p" "indx" "dfd" "mode" "error"
+.It Fn dupfdopen "l" "indx" "dfd" "mode" "error"
 Duplicate file descriptor
 .Fa dfd
-for process
-.Fa p .
+for lwp
+.Fa l .
 .El
 .Pp
 The following functions operate on the file descriptor table for a
 process.
 .Pp
 .Bl -tag -width compact
-.It Fn fdalloc "p" "want" "*result"
+.It Fn fdalloc "l" "want" "*result"
 Allocate a file descriptor
 .Fa want
- for process
-.Fa p .
+ for lwp
+.Fa l .
 The resultant file descriptor is returned in
 .Fa *result .
 The
 .Fn fdalloc
 function returns zero on success, otherwise an appropriate error is
 returned.
-.It Fn fdavail "p" "n"
+.It Fn fdavail "l" "n"
 Check to see whether
 .Fa n
-file descriptors are available to process
-.Fa p .
+file descriptors are available to lwp
+.Fa l .
 Returns zero on success, or 1 on failure.
-.It Fn fdcheckstd "p"
+.It Fn fdcheckstd "l"
 Check the standard file descriptors 0, 1, 2 and ensure they are
 referencing valid file descriptors.
 If they are not, create references to
@@ -209,16 +209,16 @@ significance in the Standard C Library and it is unsafe for
 and
 .Xr setgid 2
 processes to be started with these file descriptors closed.
-.It Fn fdclear "p"
-Clear the descriptor table for process
-.Fa p .
+.It Fn fdclear "l"
+Clear the descriptor table for lwp
+.Fa l .
 This operation is performed by invoking
 .Fn fdinit
 to initialise a new file descriptor table to replace the old file
 descriptor table and invoking
 .Fn fdfree
 to release the old one.
-.It Fn fdcloseexec "p"
+.It Fn fdcloseexec "l"
 Close any files for process
 .Fa p
 that are marked
@@ -228,34 +228,34 @@ This operation is performed by invoking
 for the process and invoking
 .Fn fdrelease
 on the appropriate file descriptor.
-.It Fn fdcopy "p"
-Copy the file descriptor table from process
-.Fa p
+.It Fn fdcopy "l"
+Copy the file descriptor table from lwp
+.Fa l
 and return a pointer to the copy.
 The returned file descriptor is guaranteed to have a reference count of one.
 All file descriptor state is maintained.
 The reference counts on each file entry referenced by the file
 descriptor table is incremented accordingly.
-.It Fn fdexpand "p"
-Expand the file descriptor table for process
-.Fa p
+.It Fn fdexpand "l"
+Expand the file descriptor table for lwp
+.Fa l
 by allocating memory for additional file descriptors.
-.It Fn fdfree "p"
-Decrement the reference count on the file descriptor table for process
-.Fa p
+.It Fn fdfree "l"
+Decrement the reference count on the file descriptor table for lwp
+.Fa l
 and release the file descriptor table if the reference count drops to
 zero.
-.It Fn fdinit "p"
+.It Fn fdinit "l"
 Create a file descriptor table using the same current and root
-directories of process
-.Fa p .
+directories of lwp
+.Fa l .
 The returned file descriptor table is guaranteed to have a reference
 count of one.
-.It Fn fdrelease "p" "fd"
+.It Fn fdrelease "l" "fd"
 Remove file descriptor
 .Fa fd
-from the file descriptor table of process
-.Fa p .
+from the file descriptor table of lwp
+.Fa l .
 The operation is performed by invoking
 .Fn closef .
 .It Fn fdremove "fdp" "fd"
@@ -263,20 +263,20 @@ Unconditionally remove the file descriptor
 .Fa fd
 from file descriptor table
 .Fa fdp .
-.It Fn fdshare "p1" "p2"
-Share the file descriptor table belonging to process
-.Fa p1
-with process
-.Fa p2 .
-Process
-.Fa p2
+.It Fn fdshare "l1" "l2"
+Share the file descriptor table belonging to lwp
+.Fa l1
+with lwp
+.Fa l2 .
+Lwp
+.Fa l2
 is assumed not to have a file descriptor table already allocated.
 The reference count on the file descriptor table is incremented.
 This function is used by
 .Xr fork1 9 .
-.It Fn fdunshare "p"
-Ensure that process
-.Fa p
+.It Fn fdunshare "l"
+Ensure that lwp
+.Fa l
 does not share its file descriptor table.
 If its file descriptor table has more than one reference, the file
 descriptor table is copied by invoking
