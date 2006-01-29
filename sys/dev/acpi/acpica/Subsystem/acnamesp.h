@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnamesp.h - Namespace subcomponent prototypes and defines
- *       xRevision: 140 $
+ *       xRevision: 1.144 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -197,7 +197,7 @@ AcpiNsParseTable (
 
 ACPI_STATUS
 AcpiNsOneCompleteParse (
-    UINT32                  PassNumber,
+    UINT8                   PassNumber,
     ACPI_TABLE_DESC         *TableDesc);
 
 
@@ -236,7 +236,7 @@ AcpiNsDeleteNamespaceSubtree (
 
 void
 AcpiNsDeleteNamespaceByOwner (
-    UINT16                  TableId);
+    ACPI_OWNER_ID           OwnerId);
 
 void
 AcpiNsDetachObject (
@@ -289,7 +289,7 @@ AcpiNsDumpObjects (
     ACPI_OBJECT_TYPE        Type,
     UINT8                   DisplayType,
     UINT32                  MaxDepth,
-    UINT32                  OwnderId,
+    ACPI_OWNER_ID           OwnerId,
     ACPI_HANDLE             StartHandle);
 
 
@@ -430,7 +430,6 @@ void
 AcpiNsReportError (
     const char              *ModuleName,
     UINT32                  LineNumber,
-    UINT32                  ComponentId,
     const char              *InternalName,
     ACPI_STATUS             LookupStatus);
 
@@ -438,7 +437,6 @@ void
 AcpiNsReportMethodError (
     const char              *ModuleName,
     UINT32                  LineNumber,
-    UINT32                  ComponentId,
     const char              *Message,
     ACPI_NAMESPACE_NODE     *Node,
     const char              *Path,

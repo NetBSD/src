@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsnames - Name manipulation and search
- *              xRevision: 90 $
+ *              xRevision: 1.93 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.12 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
 
 #define __NSNAMES_C__
 
@@ -161,7 +161,7 @@ AcpiNsBuildExternalPath (
     ACPI_NAMESPACE_NODE     *ParentNode;
 
 
-    ACPI_FUNCTION_NAME ("NsBuildExternalPath");
+    ACPI_FUNCTION_ENTRY ();
 
 
     /* Special case for root */
@@ -200,7 +200,7 @@ AcpiNsBuildExternalPath (
 
     if (Index != 0)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Could not construct pathname; index=%X, size=%X, Path=%s\n",
             (UINT32) Index, (UINT32) Size, &NameBuffer[Size]));
     }
@@ -244,7 +244,7 @@ AcpiNsGetExternalPathname (
     NameBuffer = ACPI_MEM_CALLOCATE (Size);
     if (!NameBuffer)
     {
-        ACPI_REPORT_ERROR (("NsGetTablePathname: allocation failure\n"));
+        ACPI_REPORT_ERROR (("Allocation failure\n"));
         return_PTR (NULL);
     }
 
@@ -350,7 +350,7 @@ AcpiNsHandleToPathname (
 
     AcpiNsBuildExternalPath (Node, RequiredSize, Buffer->Pointer);
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "%s [%X] \n",
+    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "%s [%X]\n",
         (char *) Buffer->Pointer, (UINT32) RequiredSize));
     return_ACPI_STATUS (AE_OK);
 }

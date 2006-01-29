@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsobject - Dispatcher object management routines
- *              xRevision: 123 $
+ *              xRevision: 1.128 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
 
 #define __DSOBJECT_C__
 
@@ -128,6 +128,8 @@ __KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.12 2005/12/11 12:21:02 christos Exp $
 
 #define _COMPONENT          ACPI_DISPATCHER
         ACPI_MODULE_NAME    ("dsobject")
+
+/* Local prototypes */
 
 static ACPI_STATUS
 AcpiDsBuildInternalObject (
@@ -169,28 +171,52 @@ AcpiDsBuildInternalObject (
     if (Op->Common.AmlOpcode == AML_INT_NAMEPATH_OP)
     {
         /*
-         * This is an named object reference.  If this name was
+         * This is a named object reference. If this name was
          * previously looked up in the namespace, it was stored in this op.
          * Otherwise, go ahead and look it up now
          */
         if (!Op->Common.Node)
         {
             Status = AcpiNsLookup (WalkState->ScopeInfo,
-                            Op->Common.Value.String,
-                            ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
-                            ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE,
-                            NULL,
-                            (ACPI_NAMESPACE_NODE **) &(Op->Common.Node));
-
+                        Op->Common.Value.String,
+                        ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
+                        ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE, NULL,
+                        ACPI_CAST_INDIRECT_PTR (ACPI_NAMESPACE_NODE, &(Op->Common.Node)));
             if (ACPI_FAILURE (Status))
             {
-                ACPI_REPORT_NSERROR (Op->Common.Value.String, Status);
+                /* Check if we are resolving a named reference within a package */
+
+                if ((Status == AE_NOT_FOUND) && (AcpiGbl_EnableInterpreterSlack) &&
+
+                    ((Op->Common.Parent->Common.AmlOpcode == AML_PACKAGE_OP) ||
+                     (Op->Common.Parent->Common.AmlOpcode == AML_VAR_PACKAGE_OP)))
+                {
+                    /*
+                     * We didn't find the target and we are populating elements
+                     * of a package - ignore if slack enabled. Some ASL code
+                     * contains dangling invalid references in packages and
+                     * expects that no exception will be issued. Leave the
+                     * element as a null element. It cannot be used, but it
+                     * can be overwritten by subsequent ASL code - this is
+                     * typically the case.
+                     */
+                    ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
+                        "Ignoring unresolved reference in package [%4.4s]\n",
+                        WalkState->ScopeInfo->Scope.Node->Name.Ascii));
+
+                    return_ACPI_STATUS (AE_OK);
+                }
+                else
+                {
+                    ACPI_REPORT_NSERROR (Op->Common.Value.String, Status);
+                }
+
                 return_ACPI_STATUS (Status);
             }
         }
     }
 
-    /* Create and init the internal ACPI object */
+    /* Create and init a new internal ACPI object */
 
     ObjDesc = AcpiUtCreateInternalObject (
                 (AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode))->ObjectType);
@@ -244,15 +270,13 @@ AcpiDsBuildInternalBufferObj (
     ACPI_FUNCTION_TRACE ("DsBuildInternalBufferObj");
 
 
+    /*
+     * If we are evaluating a Named buffer object "Name (xxxx, Buffer)".
+     * The buffer object already exists (from the NS node), otherwise it must
+     * be created.
+     */
     ObjDesc = *ObjDescPtr;
-    if (ObjDesc)
-    {
-        /*
-         * We are evaluating a Named buffer object "Name (xxxx, Buffer)".
-         * The buffer object already exists (from the NS node)
-         */
-    }
-    else
+    if (!ObjDesc)
     {
         /* Create a new buffer object */
 
@@ -276,7 +300,7 @@ AcpiDsBuildInternalBufferObj (
     {
         if (ByteList->Common.AmlOpcode != AML_INT_BYTELIST_OP)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Expecting bytelist, got AML opcode %X in op %p\n",
                 ByteList->Common.AmlOpcode, ByteList));
 
@@ -359,7 +383,7 @@ AcpiDsBuildInternalPackageObj (
     ACPI_OPERAND_OBJECT     *ObjDesc = NULL;
     UINT32                  PackageListLength;
     ACPI_STATUS             Status = AE_OK;
-    UINT32                  i;
+    ACPI_NATIVE_UINT        i;
 
 
     ACPI_FUNCTION_TRACE ("DsBuildInternalPackageObj");
@@ -368,21 +392,18 @@ AcpiDsBuildInternalPackageObj (
     /* Find the parent of a possibly nested package */
 
     Parent = Op->Common.Parent;
-    while ((Parent->Common.AmlOpcode == AML_PACKAGE_OP)     ||
+    while ((Parent->Common.AmlOpcode == AML_PACKAGE_OP) ||
            (Parent->Common.AmlOpcode == AML_VAR_PACKAGE_OP))
     {
         Parent = Parent->Common.Parent;
     }
 
+    /*
+     * If we are evaluating a Named package object "Name (xxxx, Package)",
+     * the package object already exists, otherwise it must be created.
+     */
     ObjDesc = *ObjDescPtr;
-    if (ObjDesc)
-    {
-        /*
-         * We are evaluating a Named package object "Name (xxxx, Package)".
-         * Get the existing package object from the NS node
-         */
-    }
-    else
+    if (!ObjDesc)
     {
         ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_PACKAGE);
         *ObjDescPtr = ObjDesc;
@@ -398,12 +419,10 @@ AcpiDsBuildInternalPackageObj (
 
     /* Count the number of items in the package list */
 
-    PackageListLength = 0;
     Arg = Op->Common.Value.Arg;
     Arg = Arg->Common.Next;
-    while (Arg)
+    for (PackageListLength = 0; Arg; PackageListLength++)
     {
-        PackageListLength++;
         Arg = Arg->Common.Next;
     }
 
@@ -422,7 +441,7 @@ AcpiDsBuildInternalPackageObj (
      * that the list is always null terminated.
      */
     ObjDesc->Package.Elements = ACPI_MEM_CALLOCATE (
-                ((ACPI_SIZE) ObjDesc->Package.Count + 1) * sizeof (void *));
+        ((ACPI_SIZE) ObjDesc->Package.Count + 1) * sizeof (void *));
 
     if (!ObjDesc->Package.Elements)
     {
@@ -431,12 +450,11 @@ AcpiDsBuildInternalPackageObj (
     }
 
     /*
-     * Now init the elements of the package
+     * Initialize all elements of the package
      */
-    i = 0;
     Arg = Op->Common.Value.Arg;
     Arg = Arg->Common.Next;
-    while (Arg)
+    for (i = 0; Arg; i++)
     {
         if (Arg->Common.AmlOpcode == AML_INT_RETURN_VALUE_OP)
         {
@@ -450,8 +468,6 @@ AcpiDsBuildInternalPackageObj (
             Status = AcpiDsBuildInternalObject (WalkState, Arg,
                         &ObjDesc->Package.Elements[i]);
         }
-
-        i++;
         Arg = Arg->Common.Next;
     }
 
@@ -645,7 +661,7 @@ AcpiDsInitObjectFromOp (
 
             default:
 
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                ACPI_REPORT_ERROR ((
                     "Unknown constant opcode %X\n", Opcode));
                 Status = AE_AML_OPERAND_TYPE;
                 break;
@@ -656,11 +672,14 @@ AcpiDsInitObjectFromOp (
         case AML_TYPE_LITERAL:
 
             ObjDesc->Integer.Value = Op->Common.Value.Integer;
+#ifndef ACPI_NO_METHOD_EXECUTION
+            AcpiExTruncateFor32bitTable (ObjDesc);
+#endif
             break;
 
 
         default:
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unknown Integer type %X\n",
+            ACPI_REPORT_ERROR (("Unknown Integer type %X\n",
                 OpInfo->Type));
             Status = AE_AML_OPERAND_TYPE;
             break;
@@ -737,7 +756,7 @@ AcpiDsInitObjectFromOp (
 
     default:
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unimplemented data type: %X\n",
+        ACPI_REPORT_ERROR (("Unimplemented data type: %X\n",
             ACPI_GET_OBJECT_TYPE (ObjDesc)));
 
         Status = AE_AML_OPERAND_TYPE;

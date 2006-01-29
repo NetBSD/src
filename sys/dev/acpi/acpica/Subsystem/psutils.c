@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psutils - Parser miscellaneous utilities (Parser only)
- *              xRevision: 63 $
+ *              xRevision: 1.67 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psutils.c,v 1.12 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psutils.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -235,13 +235,13 @@ AcpiPsAllocOp (
     {
         /* The generic op (default) is by far the most common (16 to 1) */
 
-        Op = AcpiUtAcquireFromCache (ACPI_MEM_LIST_PSNODE);
+        Op = AcpiOsAcquireObject (AcpiGbl_PsNodeCache);
     }
     else
     {
         /* Extended parseop */
 
-        Op = AcpiUtAcquireFromCache (ACPI_MEM_LIST_PSNODE_EXT);
+        Op = AcpiOsAcquireObject (AcpiGbl_PsNodeExtCache);
     }
 
     /* Initialize the Op */
@@ -283,40 +283,13 @@ AcpiPsFreeOp (
 
     if (Op->Common.Flags & ACPI_PARSEOP_GENERIC)
     {
-        AcpiUtReleaseToCache (ACPI_MEM_LIST_PSNODE, Op);
+        (void) AcpiOsReleaseObject (AcpiGbl_PsNodeCache, Op);
     }
     else
     {
-        AcpiUtReleaseToCache (ACPI_MEM_LIST_PSNODE_EXT, Op);
+        (void) AcpiOsReleaseObject (AcpiGbl_PsNodeExtCache, Op);
     }
 }
-
-
-#ifdef ACPI_ENABLE_OBJECT_CACHE
-/*******************************************************************************
- *
- * FUNCTION:    AcpiPsDeleteParseCache
- *
- * PARAMETERS:  None
- *
- * RETURN:      None
- *
- * DESCRIPTION: Free all objects that are on the parse cache list.
- *
- ******************************************************************************/
-
-void
-AcpiPsDeleteParseCache (
-    void)
-{
-    ACPI_FUNCTION_TRACE ("PsDeleteParseCache");
-
-
-    AcpiUtDeleteGenericCache (ACPI_MEM_LIST_PSNODE);
-    AcpiUtDeleteGenericCache (ACPI_MEM_LIST_PSNODE_EXT);
-    return_VOID;
-}
-#endif
 
 
 /*******************************************************************************

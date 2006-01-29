@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbgetall - Get all required ACPI tables
- *              xRevision: 13 $
+ *              xRevision: 1.15 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbgetall.c,v 1.8 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbgetall.c,v 1.9 2006/01/29 03:05:47 kochi Exp $");
 
 #define __TBGETALL_C__
 
@@ -407,7 +407,9 @@ AcpiTbGetRequiredTables (
     ACPI_DEBUG_PRINT ((ACPI_DB_TABLES,
         "Hex dump of entire DSDT, size %d (0x%X), Integer width = %d\n",
         AcpiGbl_DSDT->Length, AcpiGbl_DSDT->Length, AcpiGbl_IntegerBitWidth));
-    ACPI_DUMP_BUFFER ((UINT8 *) AcpiGbl_DSDT, AcpiGbl_DSDT->Length);
+
+    ACPI_DUMP_BUFFER (ACPI_CAST_PTR (UINT8, AcpiGbl_DSDT),
+        AcpiGbl_DSDT->Length);
 
     /* Always delete the RSDP mapping, we are done with it */
 

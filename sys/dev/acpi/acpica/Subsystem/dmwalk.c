@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmwalk - AML disassembly tree walk
- *              xRevision: 18 $
+ *              xRevision: 1.25 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmwalk.c,v 1.7 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmwalk.c,v 1.8 2006/01/29 03:05:47 kochi Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -131,7 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: dmwalk.c,v 1.7 2005/12/11 12:21:02 christos Exp $");
         ACPI_MODULE_NAME    ("dmwalk")
 
 
-#define DB_FULL_OP_INFO     "%5.5X #%4.4hX "
+#define DB_FULL_OP_INFO     "[%4.4s] @%5.5X #%4.4X:  "
 
 /* Local prototypes */
 
@@ -190,8 +190,8 @@ AcpiDmDisassemble (
     }
 
     Info.Level = 0;
+    Info.WalkState = WalkState;
     AcpiDmWalkParseTree (Op, AcpiDmDescendingOp, AcpiDmAscendingOp, &Info);
-
     return;
 }
 
@@ -480,8 +480,13 @@ AcpiDmDescendingOp (
     {
         /* In verbose mode, print the AML offset, opcode and depth count */
 
-        VERBOSE_PRINT ((DB_FULL_OP_INFO, (UINT32) Op->Common.AmlOffset,
-                    Op->Common.AmlOpcode));
+        if (Info->WalkState)
+        {
+            VERBOSE_PRINT ((DB_FULL_OP_INFO,
+                (Info->WalkState->MethodNode ?
+                    Info->WalkState->MethodNode->Name.Ascii : "   "),
+                Op->Common.AmlOffset, (UINT32) Op->Common.AmlOpcode));
+        }
 
         if (Op->Common.AmlOpcode == AML_SCOPE_OP)
         {
@@ -601,7 +606,7 @@ AcpiDmDescendingOp (
 
                 /* Check for _HID and related EISAID() */
 
-                AcpiIsEisaId (Op);
+                AcpiDmIsEisaId (Op);
                 AcpiOsPrintf (", ");
                 break;
 

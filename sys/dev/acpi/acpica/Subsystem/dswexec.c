@@ -2,7 +2,7 @@
  *
  * Module Name: dswexec - Dispatcher method execution callbacks;
  *                        dispatch to interpreter.
- *              xRevision: 120 $
+ *              xRevision: 1.124 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswexec.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dswexec.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
 
 #define __DSWEXEC_C__
 
@@ -184,7 +184,7 @@ AcpiDsGetPredicateValue (
         Status = AcpiDsResultPop (&ObjDesc, WalkState);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Could not get result from predicate evaluation, %s\n",
                 AcpiFormatException (Status)));
 
@@ -210,7 +210,7 @@ AcpiDsGetPredicateValue (
 
     if (!ObjDesc)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "No predicate ObjDesc=%p State=%p\n",
             ObjDesc, WalkState));
 
@@ -229,7 +229,7 @@ AcpiDsGetPredicateValue (
 
     if (ACPI_GET_OBJECT_TYPE (LocalObjDesc) != ACPI_TYPE_INTEGER)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Bad predicate (not an integer) ObjDesc=%p State=%p Type=%X\n",
             ObjDesc, WalkState, ACPI_GET_OBJECT_TYPE (ObjDesc)));
 
@@ -418,12 +418,14 @@ AcpiDsExecBeginOp (
 
     case AML_CLASS_EXECUTE:
     case AML_CLASS_CREATE:
-
         /*
          * Most operators with arguments.
          * Start a new result/operand state
          */
-        Status = AcpiDsResultStackPush (WalkState);
+        if (WalkState->Opcode != AML_CREATE_FIELD_OP)
+        {
+            Status = AcpiDsResultStackPush (WalkState);
+        }
         break;
 
 
@@ -472,7 +474,7 @@ AcpiDsExecEndOp (
 
     if (OpClass == AML_CLASS_UNKNOWN)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unknown opcode %X\n", Op->Common.AmlOpcode));
+        ACPI_REPORT_ERROR (("Unknown opcode %X\n", Op->Common.AmlOpcode));
         return_ACPI_STATUS (AE_NOT_IMPLEMENTED);
     }
 
@@ -562,7 +564,7 @@ AcpiDsExecEndOp (
             }
             else
             {
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                ACPI_REPORT_ERROR ((
                     "[%s]: Could not resolve operands, %s\n",
                     AcpiPsGetOpcodeName (WalkState->Opcode),
                     AcpiFormatException (Status)));
@@ -784,7 +786,7 @@ AcpiDsExecEndOp (
 
         case AML_TYPE_UNDEFINED:
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Undefined opcode type Op=%p\n", Op));
             return_ACPI_STATUS (AE_NOT_IMPLEMENTED);
 
@@ -799,7 +801,7 @@ AcpiDsExecEndOp (
 
         default:
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Unimplemented opcode, class=%X type=%X Opcode=%X Op=%p\n",
                 OpClass, OpType, Op->Common.AmlOpcode, Op));
 
@@ -832,19 +834,6 @@ AcpiDsExecEndOp (
 
 Cleanup:
 
-    /* Invoke exception handler on error */
-
-    if (ACPI_FAILURE (Status) &&
-        AcpiGbl_ExceptionHandler &&
-        !(Status & AE_CODE_CONTROL))
-    {
-        AcpiExExitInterpreter ();
-        Status = AcpiGbl_ExceptionHandler (Status,
-                    WalkState->MethodNode->Name.Integer, WalkState->Opcode,
-                    WalkState->AmlOffset, NULL);
-        (void) AcpiExEnterInterpreter ();
-    }
-
     if (WalkState->ResultObj)
     {
         /* Break to debugger to display result */
@@ -868,20 +857,16 @@ Cleanup:
     }
 #endif
 
-    /* Always clear the object stack */
-
-    WalkState->NumOperands = 0;
-
-#ifdef ACPI_DISASSEMBLER
-
-    /* On error, display method locals/args */
+    /* Invoke exception handler on error */
 
     if (ACPI_FAILURE (Status))
     {
-        AcpiDmDumpMethodInfo (Status, WalkState, Op);
+        Status = AcpiDsMethodError (Status, WalkState);
     }
-#endif
 
+    /* Always clear the object stack */
+
+    WalkState->NumOperands = 0;
     return_ACPI_STATUS (Status);
 }
 

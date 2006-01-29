@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exregion - ACPI default OpRegion (address space) handlers
- *              xRevision: 90 $
+ *              xRevision: 1.94 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
 
 #define __EXREGION_C__
 
@@ -161,7 +161,7 @@ AcpiExSystemMemorySpaceHandler (
     ACPI_MEM_SPACE_CONTEXT  *MemInfo = RegionContext;
     UINT32                  Length;
     ACPI_SIZE               WindowSize;
-#ifndef ACPI_MISALIGNED_TRANSFERS
+#ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED
     UINT32                  Remainder;
 #endif
 
@@ -189,12 +189,12 @@ AcpiExSystemMemorySpaceHandler (
         break;
 
     default:
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Invalid SystemMemory width %d\n",
+        ACPI_REPORT_ERROR (("Invalid SystemMemory width %d\n",
             BitWidth));
         return_ACPI_STATUS (AE_AML_OPERAND_VALUE);
     }
 
-#ifndef ACPI_MISALIGNED_TRANSFERS
+#ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED
     /*
      * Hardware does not support non-aligned data transfers, we must verify
      * the request.
@@ -246,7 +246,7 @@ AcpiExSystemMemorySpaceHandler (
                                     (void **) &MemInfo->MappedLogicalAddress);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Could not map memory at %8.8X%8.8X, size %X\n",
                 ACPI_FORMAT_UINT64 (Address), (UINT32) WindowSize));
             MemInfo->MappedLength = 0;
@@ -288,20 +288,20 @@ AcpiExSystemMemorySpaceHandler (
         switch (BitWidth)
         {
         case 8:
-            *Value = (ACPI_INTEGER) *((UINT8 *) LogicalAddrPtr);
+            *Value = (ACPI_INTEGER) ACPI_GET8 (LogicalAddrPtr);
             break;
 
         case 16:
-            *Value = (ACPI_INTEGER) *((UINT16 *) LogicalAddrPtr);
+            *Value = (ACPI_INTEGER) ACPI_GET16 (LogicalAddrPtr);
             break;
 
         case 32:
-            *Value = (ACPI_INTEGER) *((UINT32 *) LogicalAddrPtr);
+            *Value = (ACPI_INTEGER) ACPI_GET32 (LogicalAddrPtr);
             break;
 
 #if ACPI_MACHINE_WIDTH != 16
         case 64:
-            *Value = (ACPI_INTEGER) *((UINT64 *) LogicalAddrPtr);
+            *Value = (ACPI_INTEGER) ACPI_GET64 (LogicalAddrPtr);
             break;
 #endif
         default:
@@ -315,20 +315,20 @@ AcpiExSystemMemorySpaceHandler (
         switch (BitWidth)
         {
         case 8:
-            *(UINT8 *) LogicalAddrPtr = (UINT8) *Value;
+            ACPI_SET8 (LogicalAddrPtr) = (UINT8) *Value;
             break;
 
         case 16:
-            *(UINT16 *) LogicalAddrPtr = (UINT16) *Value;
+            ACPI_SET16 (LogicalAddrPtr) = (UINT16) *Value;
             break;
 
         case 32:
-            *(UINT32 *) LogicalAddrPtr = (UINT32) *Value;
+            ACPI_SET32 ( LogicalAddrPtr) = (UINT32) *Value;
             break;
 
 #if ACPI_MACHINE_WIDTH != 16
         case 64:
-            *(UINT64 *) LogicalAddrPtr = (UINT64) *Value;
+            ACPI_SET64 (LogicalAddrPtr) = (UINT64) *Value;
             break;
 #endif
 

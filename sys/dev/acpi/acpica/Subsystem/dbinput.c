@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbinput - user front-end to the AML debugger
- *              xRevision: 107 $
+ *              xRevision: 1.113 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.14 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.15 2006/01/29 03:05:47 kochi Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -164,6 +164,7 @@ enum AcpiExDebuggerCommands
     CMD_ARGS,
     CMD_ARGUMENTS,
     CMD_BREAKPOINT,
+    CMD_BUSINFO,
     CMD_CALL,
     CMD_CLOSE,
     CMD_DEBUG,
@@ -208,6 +209,7 @@ enum AcpiExDebuggerCommands
     CMD_TABLES,
     CMD_TERMINATE,
     CMD_THREADS,
+    CMD_TRACE,
     CMD_TREE,
     CMD_TYPE,
     CMD_UNLOAD
@@ -223,6 +225,7 @@ static const COMMAND_INFO       AcpiGbl_DbCommands[] =
     {"ARGS",         0},
     {"ARGUMENTS",    0},
     {"BREAKPOINT",   1},
+    {"BUSINFO",      0},
     {"CALL",         0},
     {"CLOSE",        0},
     {"DEBUG",        1},
@@ -267,6 +270,7 @@ static const COMMAND_INFO       AcpiGbl_DbCommands[] =
     {"TABLES",       0},
     {"TERMINATE",    0},
     {"THREADS",      3},
+    {"TRACE",        1},
     {"TREE",         0},
     {"TYPE",         1},
     {"UNLOAD",       1},
@@ -290,6 +294,8 @@ static void
 AcpiDbDisplayHelp (
     char                    *HelpType)
 {
+
+    AcpiUtStrupr (HelpType);
 
     /* No parameter, just give the overview */
 
@@ -345,23 +351,24 @@ AcpiDbDisplayHelp (
 
     case 'N':
         AcpiOsPrintf ("\nNamespace Access Commands\n\n");
+        AcpiOsPrintf ("Businfo                             Display system bus info\n");
         AcpiOsPrintf ("Disassemble <Method>                Disassemble a control method\n");
         AcpiOsPrintf ("Event <F|G> <Value>                 Generate AcpiEvent (Fixed/GPE)\n");
-        AcpiOsPrintf ("Find <Name>   (? is wildcard)       Find ACPI name(s) with wildcards\n");
+        AcpiOsPrintf ("Find <AcpiName>  (? is wildcard)    Find ACPI name(s) with wildcards\n");
         AcpiOsPrintf ("Gpe <GpeNum> <GpeBlock>             Simulate a GPE\n");
         AcpiOsPrintf ("Gpes                                Display info on all GPEs\n");
         AcpiOsPrintf ("Integrity                           Validate namespace integrity\n");
-        AcpiOsPrintf ("Method                              Display list of loaded control methods\n");
-        AcpiOsPrintf ("Namespace [<Addr>|<Path>] [Depth]   Display loaded namespace tree/subtree\n");
-        AcpiOsPrintf ("Notify <NamePath> <Value>           Send a notification\n");
+        AcpiOsPrintf ("Methods                             Display list of loaded control methods\n");
+        AcpiOsPrintf ("Namespace [Object] [Depth]          Display loaded namespace tree/subtree\n");
+        AcpiOsPrintf ("Notify <Object> <Value>             Send a notification on Object\n");
         AcpiOsPrintf ("Objects <ObjectType>                Display all objects of the given type\n");
         AcpiOsPrintf ("Owner <OwnerId> [Depth]             Display loaded namespace by object owner\n");
         AcpiOsPrintf ("Prefix [<NamePath>]                 Set or Get current execution prefix\n");
         AcpiOsPrintf ("References <Addr>                   Find all references to object at addr\n");
-        AcpiOsPrintf ("Resources xxx                       Get and display resources\n");
+        AcpiOsPrintf ("Resources <Device>                  Get and display Device resources\n");
+        AcpiOsPrintf ("Set N <NamedObject> <Value>         Set value for named integer\n");
         AcpiOsPrintf ("Sleep <SleepState>                  Simulate sleep/wake sequence\n");
         AcpiOsPrintf ("Terminate                           Delete namespace and all internal objects\n");
-        AcpiOsPrintf ("Thread <Threads><Loops><NamePath>   Spawn threads to execute method(s)\n");
         AcpiOsPrintf ("Type <Object>                       Display object type\n");
         return;
 
@@ -380,6 +387,8 @@ AcpiDbDisplayHelp (
         AcpiOsPrintf ("Results                             Display method result stack\n");
         AcpiOsPrintf ("Set <A|L> <#> <Value>               Set method data (Arguments/Locals)\n");
         AcpiOsPrintf ("Stop                                Terminate control method\n");
+        AcpiOsPrintf ("Thread <Threads><Loops><NamePath>   Spawn threads to execute method(s)\n");
+        AcpiOsPrintf ("Trace <method name>                 Trace method execution\n");
         AcpiOsPrintf ("Tree                                Display control method calling tree\n");
         AcpiOsPrintf ("<Enter>                             Single step next AML opcode (over calls)\n");
         return;
@@ -488,7 +497,6 @@ AcpiDbGetLine (
 
 
     ACPI_STRCPY (AcpiGbl_DbParsedBuf, InputBuffer);
-    AcpiUtStrupr (AcpiGbl_DbParsedBuf);
 
     This = AcpiGbl_DbParsedBuf;
     for (i = 0; i < ACPI_DEBUGGER_MAX_ARGS; i++)
@@ -634,6 +642,10 @@ AcpiDbCommandDispatch (
         AcpiDbSetMethodBreakpoint (AcpiGbl_DbArgs[1], WalkState, Op);
         break;
 
+    case CMD_BUSINFO:
+        AcpiDbGetBusInfo ();
+        break;
+
     case CMD_CALL:
         AcpiDbSetMethodCallBreakpoint (Op);
         Status = AE_OK;
@@ -648,7 +660,7 @@ AcpiDbCommandDispatch (
         break;
 
     case CMD_DISASSEMBLE:
-        AcpiDbDisassembleMethod (AcpiGbl_DbArgs[1]);
+        (void) AcpiDbDisassembleMethod (AcpiGbl_DbArgs[1]);
         break;
 
     case CMD_DUMP:
@@ -854,6 +866,10 @@ AcpiDbCommandDispatch (
     case CMD_THREADS:
         AcpiDbCreateExecutionThreads (AcpiGbl_DbArgs[1], AcpiGbl_DbArgs[2],
             AcpiGbl_DbArgs[3]);
+        break;
+
+    case CMD_TRACE:
+        AcpiDebugTrace (AcpiGbl_DbArgs[1],0,0,1);
         break;
 
     case CMD_TREE:

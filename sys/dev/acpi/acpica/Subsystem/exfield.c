@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exfield - ACPI AML (p-code) execution - field manipulation
- *              xRevision: 123 $
+ *              xRevision: 1.125 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
 
 #define __EXFIELD_C__
 
@@ -165,6 +165,10 @@ AcpiExReadDataFromField (
     if (!ObjDesc)
     {
         return_ACPI_STATUS (AE_AML_NO_OPERAND);
+    }
+    if (!RetBufferDesc)
+    {
+        return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
     if (ACPI_GET_OBJECT_TYPE (ObjDesc) == ACPI_TYPE_BUFFER_FIELD)
@@ -271,7 +275,7 @@ Exit:
     {
         AcpiUtRemoveReference (BufferDesc);
     }
-    else if (RetBufferDesc)
+    else
     {
         *RetBufferDesc = BufferDesc;
     }
