@@ -1,10 +1,9 @@
-
-/******************************************************************************
+/*******************************************************************************
  *
- * Module Name: exsystem - Interface to OS services
- *              $Revision: 1.1.1.10 $
+ * Module Name: utmutex - local mutex support
+ *              $Revision: 1.5 $
  *
- *****************************************************************************/
+ ******************************************************************************/
 
 /******************************************************************************
  *
@@ -115,350 +114,360 @@
  *
  *****************************************************************************/
 
-#define __EXSYSTEM_C__
+
+#define __UTMUTEX_C__
 
 #include "acpi.h"
-#include "acinterp.h"
-#include "acevents.h"
 
-#define _COMPONENT          ACPI_EXECUTER
-        ACPI_MODULE_NAME    ("exsystem")
+#define _COMPONENT          ACPI_UTILITIES
+        ACPI_MODULE_NAME    ("utmutex")
+
+/* Local prototypes */
+
+static ACPI_STATUS
+AcpiUtCreateMutex (
+    ACPI_MUTEX_HANDLE       MutexId);
+
+static ACPI_STATUS
+AcpiUtDeleteMutex (
+    ACPI_MUTEX_HANDLE       MutexId);
 
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiExSystemWaitSemaphore
+ * FUNCTION:    AcpiUtMutexInitialize
  *
- * PARAMETERS:  Semaphore       - Semaphore to wait on
- *              Timeout         - Max time to wait
+ * PARAMETERS:  None.
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Implements a semaphore wait with a check to see if the
- *              semaphore is available immediately.  If it is not, the
- *              interpreter is released.
+ * DESCRIPTION: Create the system mutex objects.
  *
  ******************************************************************************/
 
 ACPI_STATUS
-AcpiExSystemWaitSemaphore (
-    ACPI_HANDLE             Semaphore,
-    UINT16                  Timeout)
+AcpiUtMutexInitialize (
+    void)
 {
-    ACPI_STATUS             Status;
-    ACPI_STATUS             Status2;
-
-
-    ACPI_FUNCTION_TRACE ("ExSystemWaitSemaphore");
-
-
-    Status = AcpiOsWaitSemaphore (Semaphore, 1, 0);
-    if (ACPI_SUCCESS (Status))
-    {
-        return_ACPI_STATUS (Status);
-    }
-
-    if (Status == AE_TIME)
-    {
-        /* We must wait, so unlock the interpreter */
-
-        AcpiExExitInterpreter ();
-
-        Status = AcpiOsWaitSemaphore (Semaphore, 1, Timeout);
-
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-            "*** Thread awake after blocking, %s\n",
-            AcpiFormatException (Status)));
-
-        /* Reacquire the interpreter */
-
-        Status2 = AcpiExEnterInterpreter ();
-        if (ACPI_FAILURE (Status2))
-        {
-            /* Report fatal error, could not acquire interpreter */
-
-            return_ACPI_STATUS (Status2);
-        }
-    }
-
-    return_ACPI_STATUS (Status);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExSystemDoStall
- *
- * PARAMETERS:  HowLong         - The amount of time to stall,
- *                                in microseconds
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Suspend running thread for specified amount of time.
- *              Note: ACPI specification requires that Stall() does not
- *              relinquish the processor, and delays longer than 100 usec
- *              should use Sleep() instead.  We allow stalls up to 255 usec
- *              for compatibility with other interpreters and existing BIOSs.
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiExSystemDoStall (
-    UINT32                  HowLong)
-{
-    ACPI_STATUS             Status = AE_OK;
-
-
-    ACPI_FUNCTION_ENTRY ();
-
-
-    if (HowLong > 255) /* 255 microseconds */
-    {
-        /*
-         * Longer than 255 usec, this is an error
-         *
-         * (ACPI specifies 100 usec as max, but this gives some slack in
-         * order to support existing BIOSs)
-         */
-        ACPI_REPORT_ERROR (("Time parameter is too large (%d)\n",
-            HowLong));
-        Status = AE_AML_OPERAND_VALUE;
-    }
-    else
-    {
-        AcpiOsStall (HowLong);
-    }
-
-    return (Status);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExSystemDoSuspend
- *
- * PARAMETERS:  HowLong         - The amount of time to suspend,
- *                                in milliseconds
- *
- * RETURN:      None
- *
- * DESCRIPTION: Suspend running thread for specified amount of time.
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiExSystemDoSuspend (
-    ACPI_INTEGER            HowLong)
-{
+    UINT32                  i;
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_ENTRY ();
-
-
-    /* Since this thread will sleep, we must release the interpreter */
-
-    AcpiExExitInterpreter ();
-
-    AcpiOsSleep (HowLong);
-
-    /* And now we must get the interpreter again */
-
-    Status = AcpiExEnterInterpreter ();
-    return (Status);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExSystemAcquireMutex
- *
- * PARAMETERS:  TimeDesc        - The 'time to delay' object descriptor
- *              ObjDesc         - The object descriptor for this op
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Provides an access point to perform synchronization operations
- *              within the AML.  This function will cause a lock to be generated
- *              for the Mutex pointed to by ObjDesc.
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiExSystemAcquireMutex (
-    ACPI_OPERAND_OBJECT     *TimeDesc,
-    ACPI_OPERAND_OBJECT     *ObjDesc)
-{
-    ACPI_STATUS             Status = AE_OK;
-
-
-    ACPI_FUNCTION_TRACE_PTR ("ExSystemAcquireMutex", ObjDesc);
-
-
-    if (!ObjDesc)
-    {
-        return_ACPI_STATUS (AE_BAD_PARAMETER);
-    }
-
-    /* Support for the _GL_ Mutex object -- go get the global lock */
-
-    if (ObjDesc->Mutex.Semaphore == AcpiGbl_GlobalLockSemaphore)
-    {
-        Status = AcpiEvAcquireGlobalLock ((UINT16) TimeDesc->Integer.Value);
-        return_ACPI_STATUS (Status);
-    }
-
-    Status = AcpiExSystemWaitSemaphore (ObjDesc->Mutex.Semaphore,
-                (UINT16) TimeDesc->Integer.Value);
-    return_ACPI_STATUS (Status);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExSystemReleaseMutex
- *
- * PARAMETERS:  ObjDesc         - The object descriptor for this op
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Provides an access point to perform synchronization operations
- *              within the AML.  This operation is a request to release a
- *              previously acquired Mutex.  If the Mutex variable is set then
- *              it will be decremented.
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiExSystemReleaseMutex (
-    ACPI_OPERAND_OBJECT     *ObjDesc)
-{
-    ACPI_STATUS             Status = AE_OK;
-
-
-    ACPI_FUNCTION_TRACE ("ExSystemReleaseMutex");
-
-
-    if (!ObjDesc)
-    {
-        return_ACPI_STATUS (AE_BAD_PARAMETER);
-    }
-
-    /* Support for the _GL_ Mutex object -- release the global lock */
-
-    if (ObjDesc->Mutex.Semaphore == AcpiGbl_GlobalLockSemaphore)
-    {
-        Status = AcpiEvReleaseGlobalLock ();
-        return_ACPI_STATUS (Status);
-    }
-
-    Status = AcpiOsSignalSemaphore (ObjDesc->Mutex.Semaphore, 1);
-    return_ACPI_STATUS (Status);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExSystemSignalEvent
- *
- * PARAMETERS:  ObjDesc         - The object descriptor for this op
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Provides an access point to perform synchronization operations
- *              within the AML.
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiExSystemSignalEvent (
-    ACPI_OPERAND_OBJECT     *ObjDesc)
-{
-    ACPI_STATUS             Status = AE_OK;
-
-
-    ACPI_FUNCTION_TRACE ("ExSystemSignalEvent");
-
-
-    if (ObjDesc)
-    {
-        Status = AcpiOsSignalSemaphore (ObjDesc->Event.Semaphore, 1);
-    }
-
-    return_ACPI_STATUS (Status);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExSystemWaitEvent
- *
- * PARAMETERS:  TimeDesc        - The 'time to delay' object descriptor
- *              ObjDesc         - The object descriptor for this op
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Provides an access point to perform synchronization operations
- *              within the AML.  This operation is a request to wait for an
- *              event.
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiExSystemWaitEvent (
-    ACPI_OPERAND_OBJECT     *TimeDesc,
-    ACPI_OPERAND_OBJECT     *ObjDesc)
-{
-    ACPI_STATUS             Status = AE_OK;
-
-
-    ACPI_FUNCTION_TRACE ("ExSystemWaitEvent");
-
-
-    if (ObjDesc)
-    {
-        Status = AcpiExSystemWaitSemaphore (ObjDesc->Event.Semaphore,
-                    (UINT16) TimeDesc->Integer.Value);
-    }
-
-    return_ACPI_STATUS (Status);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExSystemResetEvent
- *
- * PARAMETERS:  ObjDesc         - The object descriptor for this op
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Reset an event to a known state.
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiExSystemResetEvent (
-    ACPI_OPERAND_OBJECT     *ObjDesc)
-{
-    ACPI_STATUS             Status = AE_OK;
-    void                    *TempSemaphore;
-
-
-    ACPI_FUNCTION_ENTRY ();
+    ACPI_FUNCTION_TRACE ("UtMutexInitialize");
 
 
     /*
-     * We are going to simply delete the existing semaphore and
-     * create a new one!
+     * Create each of the predefined mutex objects
      */
-    Status = AcpiOsCreateSemaphore (ACPI_NO_UNIT_LIMIT, 0, &TempSemaphore);
+    for (i = 0; i < NUM_MUTEX; i++)
+    {
+        Status = AcpiUtCreateMutex (i);
+        if (ACPI_FAILURE (Status))
+        {
+            return_ACPI_STATUS (Status);
+        }
+    }
+
+    Status = AcpiOsCreateLock (&AcpiGbl_GpeLock);
+    return_ACPI_STATUS (Status);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtMutexTerminate
+ *
+ * PARAMETERS:  None.
+ *
+ * RETURN:      None.
+ *
+ * DESCRIPTION: Delete all of the system mutex objects.
+ *
+ ******************************************************************************/
+
+void
+AcpiUtMutexTerminate (
+    void)
+{
+    UINT32                  i;
+
+
+    ACPI_FUNCTION_TRACE ("UtMutexTerminate");
+
+
+    /*
+     * Delete each predefined mutex object
+     */
+    for (i = 0; i < NUM_MUTEX; i++)
+    {
+        (void) AcpiUtDeleteMutex (i);
+    }
+
+    AcpiOsDeleteLock (AcpiGbl_GpeLock);
+    return_VOID;
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtCreateMutex
+ *
+ * PARAMETERS:  MutexID         - ID of the mutex to be created
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Create a mutex object.
+ *
+ ******************************************************************************/
+
+static ACPI_STATUS
+AcpiUtCreateMutex (
+    ACPI_MUTEX_HANDLE       MutexId)
+{
+    ACPI_STATUS             Status = AE_OK;
+
+
+    ACPI_FUNCTION_TRACE_U32 ("UtCreateMutex", MutexId);
+
+
+    if (MutexId > MAX_MUTEX)
+    {
+        return_ACPI_STATUS (AE_BAD_PARAMETER);
+    }
+
+    if (!AcpiGbl_MutexInfo[MutexId].Mutex)
+    {
+        Status = AcpiOsCreateSemaphore (1, 1,
+                        &AcpiGbl_MutexInfo[MutexId].Mutex);
+        AcpiGbl_MutexInfo[MutexId].ThreadId = ACPI_MUTEX_NOT_ACQUIRED;
+        AcpiGbl_MutexInfo[MutexId].UseCount = 0;
+    }
+
+    return_ACPI_STATUS (Status);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtDeleteMutex
+ *
+ * PARAMETERS:  MutexID         - ID of the mutex to be deleted
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Delete a mutex object.
+ *
+ ******************************************************************************/
+
+static ACPI_STATUS
+AcpiUtDeleteMutex (
+    ACPI_MUTEX_HANDLE       MutexId)
+{
+    ACPI_STATUS             Status;
+
+
+    ACPI_FUNCTION_TRACE_U32 ("UtDeleteMutex", MutexId);
+
+
+    if (MutexId > MAX_MUTEX)
+    {
+        return_ACPI_STATUS (AE_BAD_PARAMETER);
+    }
+
+    Status = AcpiOsDeleteSemaphore (AcpiGbl_MutexInfo[MutexId].Mutex);
+
+    AcpiGbl_MutexInfo[MutexId].Mutex = NULL;
+    AcpiGbl_MutexInfo[MutexId].ThreadId = ACPI_MUTEX_NOT_ACQUIRED;
+
+    return_ACPI_STATUS (Status);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtAcquireMutex
+ *
+ * PARAMETERS:  MutexID         - ID of the mutex to be acquired
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Acquire a mutex object.
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiUtAcquireMutex (
+    ACPI_MUTEX_HANDLE       MutexId)
+{
+    ACPI_STATUS             Status;
+    UINT32                  ThisThreadId;
+
+
+    ACPI_FUNCTION_NAME ("UtAcquireMutex");
+
+
+    if (MutexId > MAX_MUTEX)
+    {
+        return (AE_BAD_PARAMETER);
+    }
+
+    ThisThreadId = AcpiOsGetThreadId ();
+
+#ifdef ACPI_MUTEX_DEBUG
+    {
+        UINT32                  i;
+        /*
+         * Mutex debug code, for internal debugging only.
+         *
+         * Deadlock prevention.  Check if this thread owns any mutexes of value
+         * greater than or equal to this one.  If so, the thread has violated
+         * the mutex ordering rule.  This indicates a coding error somewhere in
+         * the ACPI subsystem code.
+         */
+        for (i = MutexId; i < MAX_MUTEX; i++)
+        {
+            if (AcpiGbl_MutexInfo[i].ThreadId == ThisThreadId)
+            {
+                if (i == MutexId)
+                {
+                    ACPI_REPORT_ERROR ((
+                        "Mutex [%s] already acquired by this thread [%X]\n",
+                        AcpiUtGetMutexName (MutexId), ThisThreadId));
+
+                    return (AE_ALREADY_ACQUIRED);
+                }
+
+                ACPI_REPORT_ERROR ((
+                    "Invalid acquire order: Thread %X owns [%s], wants [%s]\n",
+                    ThisThreadId, AcpiUtGetMutexName (i),
+                    AcpiUtGetMutexName (MutexId)));
+
+                return (AE_ACQUIRE_DEADLOCK);
+            }
+        }
+    }
+#endif
+
+    ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX,
+        "Thread %X attempting to acquire Mutex [%s]\n",
+        ThisThreadId, AcpiUtGetMutexName (MutexId)));
+
+    Status = AcpiOsWaitSemaphore (AcpiGbl_MutexInfo[MutexId].Mutex,
+                                    1, ACPI_WAIT_FOREVER);
     if (ACPI_SUCCESS (Status))
     {
-        (void) AcpiOsDeleteSemaphore (ObjDesc->Event.Semaphore);
-        ObjDesc->Event.Semaphore = TempSemaphore;
+        ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX, "Thread %X acquired Mutex [%s]\n",
+            ThisThreadId, AcpiUtGetMutexName (MutexId)));
+
+        AcpiGbl_MutexInfo[MutexId].UseCount++;
+        AcpiGbl_MutexInfo[MutexId].ThreadId = ThisThreadId;
+    }
+    else
+    {
+        ACPI_REPORT_ERROR ((
+            "Thread %X could not acquire Mutex [%X] %s\n",
+            ThisThreadId, MutexId,
+            AcpiFormatException (Status)));
     }
 
     return (Status);
 }
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtReleaseMutex
+ *
+ * PARAMETERS:  MutexID         - ID of the mutex to be released
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Release a mutex object.
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiUtReleaseMutex (
+    ACPI_MUTEX_HANDLE       MutexId)
+{
+    ACPI_STATUS             Status;
+    UINT32                  ThisThreadId;
+
+
+    ACPI_FUNCTION_NAME ("UtReleaseMutex");
+
+
+    ThisThreadId = AcpiOsGetThreadId ();
+    ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX,
+        "Thread %X releasing Mutex [%s]\n", ThisThreadId,
+        AcpiUtGetMutexName (MutexId)));
+
+    if (MutexId > MAX_MUTEX)
+    {
+        return (AE_BAD_PARAMETER);
+    }
+
+    /*
+     * Mutex must be acquired in order to release it!
+     */
+    if (AcpiGbl_MutexInfo[MutexId].ThreadId == ACPI_MUTEX_NOT_ACQUIRED)
+    {
+        ACPI_REPORT_ERROR ((
+            "Mutex [%X] is not acquired, cannot release\n", MutexId));
+
+        return (AE_NOT_ACQUIRED);
+    }
+
+#ifdef ACPI_MUTEX_DEBUG
+    {
+        UINT32                  i;
+        /*
+         * Mutex debug code, for internal debugging only.
+         *
+         * Deadlock prevention.  Check if this thread owns any mutexes of value
+         * greater than this one.  If so, the thread has violated the mutex
+         * ordering rule.  This indicates a coding error somewhere in
+         * the ACPI subsystem code.
+         */
+        for (i = MutexId; i < MAX_MUTEX; i++)
+        {
+            if (AcpiGbl_MutexInfo[i].ThreadId == ThisThreadId)
+            {
+                if (i == MutexId)
+                {
+                    continue;
+                }
+
+                ACPI_REPORT_ERROR ((
+                    "Invalid release order: owns [%s], releasing [%s]\n",
+                    AcpiUtGetMutexName (i), AcpiUtGetMutexName (MutexId)));
+
+                return (AE_RELEASE_DEADLOCK);
+            }
+        }
+    }
+#endif
+
+    /* Mark unlocked FIRST */
+
+    AcpiGbl_MutexInfo[MutexId].ThreadId = ACPI_MUTEX_NOT_ACQUIRED;
+
+    Status = AcpiOsSignalSemaphore (AcpiGbl_MutexInfo[MutexId].Mutex, 1);
+
+    if (ACPI_FAILURE (Status))
+    {
+        ACPI_REPORT_ERROR ((
+            "Thread %X could not release Mutex [%X] %s\n",
+            ThisThreadId, MutexId,
+            AcpiFormatException (Status)));
+    }
+    else
+    {
+        ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX, "Thread %X released Mutex [%s]\n",
+            ThisThreadId, AcpiUtGetMutexName (MutexId)));
+    }
+
+    return (Status);
+}
+
 

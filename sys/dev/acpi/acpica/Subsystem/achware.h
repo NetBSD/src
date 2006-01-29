@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: achware.h -- hardware specific interfaces
- *       $Revision: 1.1.1.8 $
+ *       $Revision: 1.1.1.9 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -214,15 +214,15 @@ AcpiHwGetGpeStatus (
 
 ACPI_STATUS
 AcpiHwDisableAllGpes (
-    UINT32                  Flags);
+    void);
 
 ACPI_STATUS
 AcpiHwEnableAllRuntimeGpes (
-    UINT32                  Flags);
+    void);
 
 ACPI_STATUS
 AcpiHwEnableAllWakeupGpes (
-    UINT32                  Flags);
+    void);
 
 ACPI_STATUS
 AcpiHwEnableRuntimeGpeBlock (

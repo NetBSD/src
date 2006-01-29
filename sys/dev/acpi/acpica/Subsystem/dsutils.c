@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dsutils - Dispatcher utilities
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -272,8 +272,8 @@ AcpiDsIsResultUsed (
 
     if (!Op)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Null Op\n"));
-        return_VALUE (TRUE);
+        ACPI_REPORT_ERROR (("Null Op\n"));
+        return_UINT8 (TRUE);
     }
 
     /*
@@ -303,7 +303,7 @@ AcpiDsIsResultUsed (
         ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
             "At Method level, result of [%s] not used\n",
             AcpiPsGetOpcodeName (Op->Common.AmlOpcode)));
-        return_VALUE (FALSE);
+        return_UINT8 (FALSE);
     }
 
     /* Get info on the parent. The RootOp is AML_SCOPE */
@@ -311,9 +311,9 @@ AcpiDsIsResultUsed (
     ParentInfo = AcpiPsGetOpcodeInfo (Op->Common.Parent->Common.AmlOpcode);
     if (ParentInfo->Class == AML_CLASS_UNKNOWN)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-            "Unknown parent opcode. Op=%p\n", Op));
-        return_VALUE (FALSE);
+        ACPI_REPORT_ERROR ((
+            "Unknown parent opcode Op=%p\n", Op));
+        return_UINT8 (FALSE);
     }
 
     /*
@@ -402,7 +402,7 @@ ResultUsed:
         AcpiPsGetOpcodeName (Op->Common.AmlOpcode),
         AcpiPsGetOpcodeName (Op->Common.Parent->Common.AmlOpcode), Op));
 
-    return_VALUE (TRUE);
+    return_UINT8 (TRUE);
 
 
 ResultNotUsed:
@@ -411,7 +411,7 @@ ResultNotUsed:
         AcpiPsGetOpcodeName (Op->Common.AmlOpcode),
         AcpiPsGetOpcodeName (Op->Common.Parent->Common.AmlOpcode), Op));
 
-    return_VALUE (FALSE);
+    return_UINT8 (FALSE);
 }
 
 
@@ -447,7 +447,7 @@ AcpiDsDeleteResultIfNotUsed (
 
     if (!Op)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Null Op\n"));
+        ACPI_REPORT_ERROR (("Null Op\n"));
         return_VOID;
     }
 
@@ -744,7 +744,7 @@ AcpiDsCreateOperand (
         if (OpInfo->Flags & AML_HAS_RETVAL)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
-                "Argument previously created, already stacked \n"));
+                "Argument previously created, already stacked\n"));
 
             ACPI_DEBUGGER_EXEC (AcpiDbDisplayArgumentObject (
                 WalkState->Operands [WalkState->NumOperands - 1], WalkState));
@@ -760,7 +760,7 @@ AcpiDsCreateOperand (
                  * Only error is underflow, and this indicates
                  * a missing or null operand!
                  */
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                ACPI_REPORT_ERROR ((
                     "Missing or null operand, %s\n",
                     AcpiFormatException (Status)));
                 return_ACPI_STATUS (Status);
@@ -861,7 +861,7 @@ Cleanup:
      */
     (void) AcpiDsObjStackPopAndDelete (ArgCount, WalkState);
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "While creating Arg %d - %s\n",
+    ACPI_REPORT_ERROR (("While creating Arg %d - %s\n",
         (ArgCount + 1), AcpiFormatException (Status)));
     return_ACPI_STATUS (Status);
 }

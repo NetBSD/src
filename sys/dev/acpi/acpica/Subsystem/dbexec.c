@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbexec - debugger control method execution
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -153,6 +153,12 @@ AcpiDbExecutionWalk (
     void                    *Context,
     void                    **ReturnValue);
 
+#ifdef ACPI_DBG_TRACK_ALLOCATIONS
+static UINT32
+AcpiDbGetCacheInfo (
+    ACPI_MEMORY_LIST        *Cache);
+#endif
+
 
 /*******************************************************************************
  *
@@ -276,6 +282,16 @@ AcpiDbExecuteSetup (
 }
 
 
+#ifdef ACPI_DBG_TRACK_ALLOCATIONS
+static UINT32
+AcpiDbGetCacheInfo (
+    ACPI_MEMORY_LIST        *Cache)
+{
+
+    return (Cache->TotalAllocated - Cache->TotalFreed - Cache->CurrentDepth);
+}
+#endif
+
 /*******************************************************************************
  *
  * FUNCTION:    AcpiDbGetOutstandingAllocations
@@ -297,15 +313,11 @@ AcpiDbGetOutstandingAllocations (
     UINT32                  Outstanding = 0;
 
 #ifdef ACPI_DBG_TRACK_ALLOCATIONS
-    UINT32                  i;
 
-
-    for (i = ACPI_MEM_LIST_FIRST_CACHE_LIST; i < ACPI_NUM_MEM_LISTS; i++)
-    {
-        Outstanding += (AcpiGbl_MemoryLists[i].TotalAllocated -
-                        AcpiGbl_MemoryLists[i].TotalFreed -
-                        AcpiGbl_MemoryLists[i].CacheDepth);
-    }
+    Outstanding += AcpiDbGetCacheInfo (AcpiGbl_StateCache);
+    Outstanding += AcpiDbGetCacheInfo (AcpiGbl_PsNodeCache);
+    Outstanding += AcpiDbGetCacheInfo (AcpiGbl_PsNodeExtCache);
+    Outstanding += AcpiDbGetCacheInfo (AcpiGbl_OperandCache);
 #endif
 
     return (Outstanding);
@@ -387,6 +399,7 @@ AcpiDbExecute (
 {
     ACPI_STATUS             Status;
     ACPI_BUFFER             ReturnObj;
+    char                    *NameString;
 
 
 #ifdef ACPI_DEBUG_OUTPUT
@@ -407,7 +420,15 @@ AcpiDbExecute (
     }
     else
     {
-        AcpiGbl_DbMethodInfo.Name = Name;
+        NameString = ACPI_MEM_ALLOCATE (ACPI_STRLEN (Name) + 1);
+        if (!NameString)
+        {
+            return;
+        }
+
+        ACPI_STRCPY (NameString, Name);
+        AcpiUtStrupr (NameString);
+        AcpiGbl_DbMethodInfo.Name = NameString;
         AcpiGbl_DbMethodInfo.Args = Args;
         AcpiGbl_DbMethodInfo.Flags = Flags;
 
@@ -416,13 +437,14 @@ AcpiDbExecute (
 
         AcpiDbExecuteSetup (&AcpiGbl_DbMethodInfo);
         Status = AcpiDbExecuteMethod (&AcpiGbl_DbMethodInfo, &ReturnObj);
+        ACPI_MEM_FREE (NameString);
     }
 
     /*
      * Allow any handlers in separate threads to complete.
      * (Such as Notify handlers invoked from AML executed above).
      */
-    AcpiOsSleep (10);
+    AcpiOsSleep ((ACPI_INTEGER) 10);
 
 
 #ifdef ACPI_DEBUG_OUTPUT
@@ -454,7 +476,7 @@ AcpiDbExecute (
             AcpiOsPrintf ("Execution of %s returned object %p Buflen %X\n",
                 AcpiGbl_DbMethodInfo.Pathname, ReturnObj.Pointer,
                 (UINT32) ReturnObj.Length);
-            AcpiDbDumpObject (ReturnObj.Pointer, 1);
+            AcpiDbDumpExternalObject (ReturnObj.Pointer, 1);
         }
         else
         {
@@ -492,13 +514,6 @@ AcpiDbMethodThread (
 
     for (i = 0; i < Info->NumLoops; i++)
     {
-#if 0
-       if (i == 0xEFDC)
-        {
-            AcpiDbgLevel = 0x00FFFFFF;
-        }
-#endif
-
         Status = AcpiDbExecuteMethod (Info, &ReturnObj);
         if (ACPI_FAILURE (Status))
         {
@@ -520,7 +535,7 @@ AcpiDbMethodThread (
         {
             AcpiOsPrintf ("Execution of %s returned object %p Buflen %X\n",
                 Info->Pathname, ReturnObj.Pointer, (UINT32) ReturnObj.Length);
-            AcpiDbDumpObject (ReturnObj.Pointer, 1);
+            AcpiDbDumpExternalObject (ReturnObj.Pointer, 1);
         }
 #endif
     }
@@ -530,7 +545,8 @@ AcpiDbMethodThread (
     Status = AcpiOsSignalSemaphore (Info->ThreadGate, 1);
     if (ACPI_FAILURE (Status))
     {
-        AcpiOsPrintf ("Could not signal debugger semaphore\n");
+        AcpiOsPrintf ("Could not signal debugger thread sync semaphore, %s\n",
+            AcpiFormatException (Status));
     }
 }
 

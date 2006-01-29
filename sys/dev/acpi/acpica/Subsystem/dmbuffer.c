@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmbuffer - AML disassembler, buffer and string support
- *              $Revision: 1.1.1.7 $
+ *              $Revision: 1.1.1.8 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -221,7 +221,7 @@ AcpiDmByteList (
     {
     case ACPI_DASM_RESOURCE:
 
-        AcpiDmResourceDescriptor (Info, ByteData, ByteCount);
+        AcpiDmResourceTemplate (Info, ByteData, ByteCount);
         break;
 
     case ACPI_DASM_STRING:
@@ -429,7 +429,7 @@ AcpiDmUnicode (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiIsEisaId
+ * FUNCTION:    AcpiDmIsEisaId
  *
  * PARAMETERS:  Op              - Op to be examined
  *
@@ -440,7 +440,7 @@ AcpiDmUnicode (
  ******************************************************************************/
 
 void
-AcpiIsEisaId (
+AcpiDmIsEisaId (
     ACPI_PARSE_OBJECT       *Op)
 {
     UINT32                  Name;

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exprep - ACPI AML (p-code) execution - field prep utilities
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -361,10 +361,10 @@ AcpiExDecodeFieldAccess (
     default:
         /* Invalid field access type */
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Unknown field access type %X\n",
             Access));
-        return_VALUE (0);
+        return_UINT32 (0);
     }
 
     if (ACPI_GET_OBJECT_TYPE (ObjDesc) == ACPI_TYPE_BUFFER_FIELD)
@@ -378,7 +378,7 @@ AcpiExDecodeFieldAccess (
     }
 
     *ReturnByteAlignment = ByteAlignment;
-    return_VALUE (BitLength);
+    return_UINT32 (BitLength);
 }
 
 
@@ -524,14 +524,14 @@ AcpiExPrepFieldValue (
     {
         if (!Info->RegionNode)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Null RegionNode\n"));
+            ACPI_REPORT_ERROR (("Null RegionNode\n"));
             return_ACPI_STATUS (AE_AML_NO_OPERAND);
         }
 
         Type = AcpiNsGetType (Info->RegionNode);
         if (Type != ACPI_TYPE_REGION)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Needed Region, found type %X (%s)\n",
                 Type, AcpiUtGetTypeName (Type)));
 

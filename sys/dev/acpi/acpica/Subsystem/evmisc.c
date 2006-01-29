@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evmisc - Miscellaneous event manager support functions
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -506,6 +506,9 @@ AcpiEvInitGlobalLockHandler (
      */
     if (Status == AE_NO_HARDWARE_RESPONSE)
     {
+        ACPI_REPORT_ERROR ((
+            "No response from Global Lock hardware, disabling lock\n"));
+
         AcpiGbl_GlobalLockPresent = FALSE;
         Status = AE_OK;
     }
@@ -613,7 +616,7 @@ AcpiEvReleaseGlobalLock (
 
     if (!AcpiGbl_GlobalLockThreadCount)
     {
-        ACPI_REPORT_WARNING((
+        ACPI_REPORT_WARNING ((
             "Cannot release HW Global Lock, it has not been acquired\n"));
         return_ACPI_STATUS (AE_NOT_ACQUIRED);
     }
@@ -686,28 +689,28 @@ AcpiEvTerminate (
             Status = AcpiDisableEvent ((UINT32) i, 0);
             if (ACPI_FAILURE (Status))
             {
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                ACPI_REPORT_ERROR ((
                     "Could not disable fixed event %d\n", (UINT32) i));
             }
         }
 
         /* Disable all GPEs in all GPE blocks */
 
-        Status = AcpiEvWalkGpeList (AcpiHwDisableGpeBlock, ACPI_NOT_ISR);
+        Status = AcpiEvWalkGpeList (AcpiHwDisableGpeBlock);
 
         /* Remove SCI handler */
 
         Status = AcpiEvRemoveSciHandler ();
         if (ACPI_FAILURE(Status))
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Could not remove SCI handler\n"));
         }
     }
 
     /* Deallocate all handler objects installed within GPE info structs */
 
-    Status = AcpiEvWalkGpeList (AcpiEvDeleteGpeHandlers, ACPI_NOT_ISR);
+    Status = AcpiEvWalkGpeList (AcpiEvDeleteGpeHandlers);
 
     /* Return to original mode if necessary */
 
@@ -716,7 +719,7 @@ AcpiEvTerminate (
         Status = AcpiDisable ();
         if (ACPI_FAILURE (Status))
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "AcpiDisable failed\n"));
+            ACPI_REPORT_WARNING (("AcpiDisable failed\n"));
         }
     }
     return_VOID;

@@ -2,7 +2,7 @@
  *
  * Module Name: dbfileio - Debugger file I/O commands.  These can't usually
  *              be used when running the debugger in Ring 0 (Kernel mode)
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  ******************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -135,7 +135,12 @@
 FILE                        *AcpiGbl_DebugFile = NULL;
 #endif
 
+
+#ifdef ACPI_DEBUGGER
+
 /* Local prototypes */
+
+#ifdef ACPI_APPLICATION
 
 static ACPI_STATUS
 AcpiDbCheckTextModeCorruption (
@@ -146,9 +151,8 @@ AcpiDbCheckTextModeCorruption (
 static ACPI_STATUS
 AeLocalLoadTable (
     ACPI_TABLE_HEADER       *TablePtr);
+#endif
 
-
-#ifdef ACPI_DEBUGGER
 /*******************************************************************************
  *
  * FUNCTION:    AcpiDbCloseDebugFile
@@ -217,7 +221,6 @@ AcpiDbOpenDebugFile (
 
 
 #ifdef ACPI_APPLICATION
-
 /*******************************************************************************
  *
  * FUNCTION:    AcpiDbCheckTextModeCorruption
@@ -315,7 +318,7 @@ AcpiDbReadTable (
 
 
     fseek (fp, 0, SEEK_END);
-    FileSize = ftell (fp);
+    FileSize = (UINT32) ftell (fp);
     fseek (fp, 0, SEEK_SET);
 
     /* Read the table header */
@@ -449,6 +452,13 @@ AeLocalLoadTable (
     Status = AcpiTbInstallTable (&TableInfo);
     if (ACPI_FAILURE (Status))
     {
+        if (Status == AE_ALREADY_EXISTS)
+        {
+            /* Table already exists, no error */
+
+            Status = AE_OK;
+        }
+
         /* Free table allocated by AcpiTbGetTable */
 
         AcpiTbDeleteSingleTable (&TableInfo);

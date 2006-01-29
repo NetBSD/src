@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acdebug.h - ACPI/AML debugger
- *       $Revision: 1.1.1.9 $
+ *       $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -187,6 +187,10 @@ AcpiDbSetMethodBreakpoint (
 void
 AcpiDbSetMethodCallBreakpoint (
     ACPI_PARSE_OBJECT       *Op);
+
+void
+AcpiDbGetBusInfo (
+    void);
 
 void
 AcpiDbDisassembleAml (
@@ -407,7 +411,7 @@ AcpiDbSetOutputDestination (
     UINT32                  Where);
 
 void
-AcpiDbDumpObject (
+AcpiDbDumpExternalObject (
     ACPI_OBJECT             *ObjDesc,
     UINT32                  Level);
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsaccess - Top-level functions for accessing ACPI namespace
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -196,7 +196,7 @@ AcpiNsRootInitialize (
 
         if (ACPI_FAILURE (Status) || (!NewNode)) /* Must be on same line for code converter */
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Could not create predefined name %s, %s\n",
                 InitVal->Name, AcpiFormatException (Status)));
         }
@@ -211,7 +211,7 @@ AcpiNsRootInitialize (
             Status = AcpiOsPredefinedOverride (InitVal, &Val);
             if (ACPI_FAILURE (Status))
             {
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                ACPI_REPORT_ERROR ((
                     "Could not override predefined %s\n",
                     InitVal->Name));
             }
@@ -243,18 +243,19 @@ AcpiNsRootInitialize (
                 ObjDesc->Method.ParamCount = (UINT8) ACPI_TO_INTEGER (Val);
                 ObjDesc->Common.Flags |= AOPOBJ_DATA_VALID;
 
-#if defined (_ACPI_ASL_COMPILER) || defined (_ACPI_DUMP_APP)
+#if defined (ACPI_ASL_COMPILER)
 
-                /*
-                 * iASL Compiler cheats by putting parameter count
-                 * in the OwnerID
-                 */
-                NewNode->OwnerId = ObjDesc->Method.ParamCount;
+                /* Save the parameter count for the iASL compiler */
+
+                NewNode->Value = ObjDesc->Method.ParamCount;
 #else
                 /* Mark this as a very SPECIAL method */
 
                 ObjDesc->Method.MethodFlags = AML_METHOD_INTERNAL_ONLY;
+
+#ifndef ACPI_DUMP_APP
                 ObjDesc->Method.Implementation = AcpiUtOsiImplementation;
+#endif
 #endif
                 break;
 
@@ -433,8 +434,8 @@ AcpiNsLookup (
         PrefixNode = ScopeInfo->Scope.Node;
         if (ACPI_GET_DESCRIPTOR_TYPE (PrefixNode) != ACPI_DESC_TYPE_NAMED)
         {
-            ACPI_REPORT_ERROR (("NsLookup: %p is not a namespace node [%s]\n",
-                    PrefixNode, AcpiUtGetDescriptorName (PrefixNode)));
+            ACPI_REPORT_ERROR (("%p is not a namespace node [%s]\n",
+                PrefixNode, AcpiUtGetDescriptorName (PrefixNode)));
             return_ACPI_STATUS (AE_AML_INTERNAL);
         }
 
@@ -461,9 +462,9 @@ AcpiNsLookup (
     {
         /* A Null NamePath is allowed and refers to the root */
 
-        NumSegments  = 0;
-        ThisNode     = AcpiGbl_RootNode;
-        Path     = "";
+        NumSegments = 0;
+        ThisNode = AcpiGbl_RootNode;
+        Path = "";
 
         ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
             "Null Pathname (Zero segments), Flags=%X\n", Flags));
@@ -600,7 +601,7 @@ AcpiNsLookup (
             Path++;
 
             ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
-                "Multi Pathname (%d Segments, Flags=%X) \n",
+                "Multi Pathname (%d Segments, Flags=%X)\n",
                 NumSegments, Flags));
             break;
 
@@ -695,19 +696,20 @@ AcpiNsLookup (
          *
          * Then we have a type mismatch.  Just warn and ignore it.
          */
-        if ((NumSegments        == 0)                               &&
-            (TypeToCheckFor     != ACPI_TYPE_ANY)                   &&
-            (TypeToCheckFor     != ACPI_TYPE_LOCAL_ALIAS)           &&
-            (TypeToCheckFor     != ACPI_TYPE_LOCAL_METHOD_ALIAS)    &&
-            (TypeToCheckFor     != ACPI_TYPE_LOCAL_SCOPE)           &&
-            (ThisNode->Type     != ACPI_TYPE_ANY)                   &&
-            (ThisNode->Type     != TypeToCheckFor))
+        if ((NumSegments == 0)                                  &&
+            (TypeToCheckFor != ACPI_TYPE_ANY)                   &&
+            (TypeToCheckFor != ACPI_TYPE_LOCAL_ALIAS)           &&
+            (TypeToCheckFor != ACPI_TYPE_LOCAL_METHOD_ALIAS)    &&
+            (TypeToCheckFor != ACPI_TYPE_LOCAL_SCOPE)           &&
+            (ThisNode->Type != ACPI_TYPE_ANY)                   &&
+            (ThisNode->Type != TypeToCheckFor))
         {
             /* Complain about a type mismatch */
 
-            ACPI_REPORT_WARNING (
-                ("NsLookup: Type mismatch on %4.4s (%s), searching for (%s)\n",
-                (char *) &SimpleName, AcpiUtGetTypeName (ThisNode->Type),
+            ACPI_REPORT_WARNING ((
+                "NsLookup: Type mismatch on %4.4s (%s), searching for (%s)\n",
+                ACPI_CAST_PTR (char, &SimpleName),
+                AcpiUtGetTypeName (ThisNode->Type),
                 AcpiUtGetTypeName (TypeToCheckFor)));
         }
 

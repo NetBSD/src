@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evxface - External interfaces for ACPI events
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -41,7 +41,7 @@
  * 3. Conditions
  *
  * 3.1. Redistribution of Source with Rights to Further Distribute Source.
- * Redistribution of source code of any substantial prton of the Covered
+ * Redistribution of source code of any substantial portion of the Covered
  * Code or modification with rights to further distribute source must include
  * the above Copyright Notice, the above License, this list of Conditions,
  * and the following Disclaimer and Export Compliance provision.  In addition,
@@ -230,7 +230,7 @@ AcpiInstallFixedEventHandler (
     Status = AcpiEnableEvent (Event, 0);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "Could not enable fixed event.\n"));
+        ACPI_REPORT_WARNING (("Could not enable fixed event %X\n", Event));
 
         /* Remove the handler */
 
@@ -298,12 +298,12 @@ AcpiRemoveFixedEventHandler (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_WARN,
-            "Could not write to fixed event enable register.\n"));
+        ACPI_REPORT_WARNING ((
+            "Could not write to fixed event enable register %X\n", Event));
     }
     else
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Disabled fixed event %X.\n", Event));
+        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Disabled fixed event %X\n", Event));
     }
 
     (void) AcpiUtReleaseMutex (ACPI_MTX_EVENTS);
@@ -559,7 +559,7 @@ AcpiRemoveNotifyHandler (
     if (Device == ACPI_ROOT_OBJECT)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-            "Removing notify handler for ROOT object.\n"));
+            "Removing notify handler for namespace root object\n"));
 
         if (((HandlerType & ACPI_SYSTEM_NOTIFY) &&
               !AcpiGbl_SystemNotify.Handler)        ||
@@ -677,6 +677,7 @@ AcpiInstallGpeHandler (
     ACPI_GPE_EVENT_INFO     *GpeEventInfo;
     ACPI_HANDLER_INFO       *Handler;
     ACPI_STATUS             Status;
+    ACPI_NATIVE_UINT        Flags;
 
 
     ACPI_FUNCTION_TRACE ("AcpiInstallGpeHandler");
@@ -735,7 +736,7 @@ AcpiInstallGpeHandler (
 
     /* Install the handler */
 
-    AcpiOsAcquireLock (AcpiGbl_GpeLock, ACPI_NOT_ISR);
+    Flags = AcpiOsAcquireLock (AcpiGbl_GpeLock);
     GpeEventInfo->Dispatch.Handler = Handler;
 
     /* Setup up dispatch flags to indicate handler (vs. method) */
@@ -743,7 +744,7 @@ AcpiInstallGpeHandler (
     GpeEventInfo->Flags &= ~(ACPI_GPE_XRUPT_TYPE_MASK | ACPI_GPE_DISPATCH_MASK);  /* Clear bits */
     GpeEventInfo->Flags |= (UINT8) (Type | ACPI_GPE_DISPATCH_HANDLER);
 
-    AcpiOsReleaseLock (AcpiGbl_GpeLock, ACPI_NOT_ISR);
+    AcpiOsReleaseLock (AcpiGbl_GpeLock, Flags);
 
 
 UnlockAndExit:
@@ -776,6 +777,7 @@ AcpiRemoveGpeHandler (
     ACPI_GPE_EVENT_INFO     *GpeEventInfo;
     ACPI_HANDLER_INFO       *Handler;
     ACPI_STATUS             Status;
+    ACPI_NATIVE_UINT        Flags;
 
 
     ACPI_FUNCTION_TRACE ("AcpiRemoveGpeHandler");
@@ -829,7 +831,7 @@ AcpiRemoveGpeHandler (
 
     /* Remove the handler */
 
-    AcpiOsAcquireLock (AcpiGbl_GpeLock, ACPI_NOT_ISR);
+    Flags = AcpiOsAcquireLock (AcpiGbl_GpeLock);
     Handler = GpeEventInfo->Dispatch.Handler;
 
     /* Restore Method node (if any), set dispatch flags */
@@ -840,7 +842,7 @@ AcpiRemoveGpeHandler (
     {
         GpeEventInfo->Flags |= ACPI_GPE_DISPATCH_METHOD;
     }
-    AcpiOsReleaseLock (AcpiGbl_GpeLock, ACPI_NOT_ISR);
+    AcpiOsReleaseLock (AcpiGbl_GpeLock, Flags);
 
     /* Now we can free the handler object */
 

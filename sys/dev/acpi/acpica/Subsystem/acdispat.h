@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acdispat.h - dispatcher (parser to interpreter interface)
- *       $Revision: 1.1.1.8 $
+ *       $Revision: 1.1.1.9 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -309,7 +309,7 @@ AcpiDsMethodDataInit (
  */
 ACPI_STATUS
 AcpiDsParseMethod (
-    ACPI_HANDLE             ObjHandle);
+    ACPI_NAMESPACE_NODE     *Node);
 
 ACPI_STATUS
 AcpiDsCallControlMethod (
@@ -322,7 +322,7 @@ AcpiDsRestartControlMethod (
     ACPI_WALK_STATE         *WalkState,
     ACPI_OPERAND_OBJECT     *ReturnDesc);
 
-ACPI_STATUS
+void
 AcpiDsTerminateControlMethod (
     ACPI_WALK_STATE         *WalkState);
 
@@ -332,6 +332,10 @@ AcpiDsBeginMethodExecution (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     ACPI_NAMESPACE_NODE     *CallingMethodNode);
 
+ACPI_STATUS
+AcpiDsMethodError (
+    ACPI_STATUS             Status,
+    ACPI_WALK_STATE         *WalkState);
 
 /*
  * dsinit
@@ -464,7 +468,7 @@ AcpiDsInitAmlWalk (
     UINT8                   *AmlStart,
     UINT32                  AmlLength,
     ACPI_PARAMETER_INFO     *Info,
-    UINT32                  PassNumber);
+    UINT8                   PassNumber);
 
 ACPI_STATUS
 AcpiDsObjStackPopAndDelete (
@@ -520,11 +524,5 @@ ACPI_STATUS
 AcpiDsResultPopFromBottom (
     ACPI_OPERAND_OBJECT     **Object,
     ACPI_WALK_STATE         *WalkState);
-
-#ifdef ACPI_ENABLE_OBJECT_CACHE
-void
-AcpiDsDeleteWalkStateCache (
-    void);
-#endif
 
 #endif /* _ACDISPAT_H_ */

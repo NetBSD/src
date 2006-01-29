@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbconvrt - ACPI Table conversion utilities
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -167,7 +167,9 @@ AcpiTbGetTableCount (
     ACPI_FUNCTION_ENTRY ();
 
 
-    if (RSDP->Revision < 2)
+    /* RSDT pointers are 32 bits, XSDT pointers are 64 bits */
+
+    if (AcpiGbl_RootTableType == ACPI_TABLE_TYPE_RSDT)
     {
         PointerSize = sizeof (UINT32);
     }
@@ -232,7 +234,9 @@ AcpiTbConvertToXsdt (
 
     for (i = 0; i < AcpiGbl_RsdtTableCount; i++)
     {
-        if (AcpiGbl_RSDP->Revision < 2)
+        /* RSDT pointers are 32 bits, XSDT pointers are 64 bits */
+
+        if (AcpiGbl_RootTableType == ACPI_TABLE_TYPE_RSDT)
         {
             ACPI_STORE_ADDRESS (NewTable->TableOffsetEntry[i],
                 (ACPI_CAST_PTR (RSDT_DESCRIPTOR_REV1,
@@ -621,16 +625,18 @@ AcpiTbConvertTableFadt (
 
     /* Install the new table */
 
-    TableDesc->Pointer      = ACPI_CAST_PTR (ACPI_TABLE_HEADER, AcpiGbl_FADT);
-    TableDesc->Allocation   = ACPI_MEM_ALLOCATED;
-    TableDesc->Length       = sizeof (FADT_DESCRIPTOR_REV2);
+    TableDesc->Pointer    = ACPI_CAST_PTR (ACPI_TABLE_HEADER, AcpiGbl_FADT);
+    TableDesc->Allocation = ACPI_MEM_ALLOCATED;
+    TableDesc->Length     = sizeof (FADT_DESCRIPTOR_REV2);
 
     /* Dump the entire FADT */
 
     ACPI_DEBUG_PRINT ((ACPI_DB_TABLES,
         "Hex dump of common internal FADT, size %d (%X)\n",
         AcpiGbl_FADT->Length, AcpiGbl_FADT->Length));
-    ACPI_DUMP_BUFFER ((UINT8 *) (AcpiGbl_FADT), AcpiGbl_FADT->Length);
+
+    ACPI_DUMP_BUFFER (ACPI_CAST_PTR (UINT8, AcpiGbl_FADT),
+        AcpiGbl_FADT->Length);
 
     return_ACPI_STATUS (AE_OK);
 }

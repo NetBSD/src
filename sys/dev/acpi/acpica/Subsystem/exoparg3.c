@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
- *              $Revision: 1.1.1.8 $
+ *              $Revision: 1.1.1.9 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -206,8 +206,8 @@ AcpiExOpcode_3A_0T_0R (
 
     default:
 
-        ACPI_REPORT_ERROR (("AcpiExOpcode_3A_0T_0R: Unknown opcode %X\n",
-                WalkState->Opcode));
+        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
+            WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         goto Cleanup;
     }
@@ -237,7 +237,7 @@ AcpiExOpcode_3A_1T_1R (
 {
     ACPI_OPERAND_OBJECT     **Operand = &WalkState->Operands[0];
     ACPI_OPERAND_OBJECT     *ReturnDesc = NULL;
-    char                    *Buffer;
+    char                    *Buffer = NULL;
     ACPI_STATUS             Status = AE_OK;
     ACPI_INTEGER            Index;
     ACPI_SIZE               Length;
@@ -272,19 +272,26 @@ AcpiExOpcode_3A_1T_1R (
          * If the index is beyond the length of the String/Buffer, or if the
          * requested length is zero, return a zero-length String/Buffer
          */
-        if ((Index < Operand[0]->String.Length) &&
-            (Length > 0))
+        if (Index >= Operand[0]->String.Length)
         {
-            /* Truncate request if larger than the actual String/Buffer */
+            Length = 0;
+        }
 
-            if ((Index + Length) >
-                Operand[0]->String.Length)
-            {
-                Length = (ACPI_SIZE) Operand[0]->String.Length - 
-                            (ACPI_SIZE) Index;
-            }
+        /* Truncate request if larger than the actual String/Buffer */
 
-            /* Allocate a new buffer for the String/Buffer */
+        else if ((Index + Length) > Operand[0]->String.Length)
+        {
+            Length = (ACPI_SIZE) Operand[0]->String.Length -
+                        (ACPI_SIZE) Index;
+        }
+
+        /* Strings always have a sub-pointer, not so for buffers */
+
+        switch (ACPI_GET_OBJECT_TYPE (Operand[0]))
+        {
+        case ACPI_TYPE_STRING:
+
+            /* Always allocate a new buffer for the String */
 
             Buffer = ACPI_MEM_CALLOCATE ((ACPI_SIZE) Length + 1);
             if (!Buffer)
@@ -292,17 +299,43 @@ AcpiExOpcode_3A_1T_1R (
                 Status = AE_NO_MEMORY;
                 goto Cleanup;
             }
+            break;
 
-            /* Copy the portion requested */
+        case ACPI_TYPE_BUFFER:
+
+            /* If the requested length is zero, don't allocate a buffer */
+
+            if (Length > 0)
+            {
+                /* Allocate a new buffer for the Buffer */
+
+                Buffer = ACPI_MEM_CALLOCATE (Length);
+                if (!Buffer)
+                {
+                    Status = AE_NO_MEMORY;
+                    goto Cleanup;
+                }
+            }
+            break;
+
+        default:                        /* Should not happen */
+
+            Status = AE_AML_OPERAND_TYPE;
+            goto Cleanup;
+        }
+
+        if (Buffer)
+        {
+            /* We have a buffer, copy the portion requested */
 
             ACPI_MEMCPY (Buffer, Operand[0]->String.Pointer + Index,
                          Length);
-
-            /* Set the length of the new String/Buffer */
-
-            ReturnDesc->String.Pointer = Buffer;
-            ReturnDesc->String.Length = (UINT32) Length;
         }
+
+        /* Set the length of the new String/Buffer */
+
+        ReturnDesc->String.Pointer = Buffer;
+        ReturnDesc->String.Length = (UINT32) Length;
 
         /* Mark buffer initialized */
 
@@ -312,8 +345,8 @@ AcpiExOpcode_3A_1T_1R (
 
     default:
 
-        ACPI_REPORT_ERROR (("AcpiExOpcode_3A_0T_0R: Unknown opcode %X\n",
-                WalkState->Opcode));
+        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
+            WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         goto Cleanup;
     }
@@ -326,14 +359,14 @@ Cleanup:
 
     /* Delete return object on error */
 
-    if (ACPI_FAILURE (Status))
+    if (ACPI_FAILURE (Status) || WalkState->ResultObj)
     {
         AcpiUtRemoveReference (ReturnDesc);
     }
 
     /* Set the return object and exit */
 
-    if (!WalkState->ResultObj)
+    else
     {
         WalkState->ResultObj = ReturnDesc;
     }

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
- * Module Name: psscope - Parser scope stack management routines
- *              $Revision: 1.1.1.8 $
+ * Module Name: utcache - local cache allocation routines
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -114,261 +114,305 @@
  *
  *****************************************************************************/
 
+#define __UTCACHE_C__
 
 #include "acpi.h"
-#include "acparser.h"
 
-#define _COMPONENT          ACPI_PARSER
-        ACPI_MODULE_NAME    ("psscope")
+#define _COMPONENT          ACPI_UTILITIES
+        ACPI_MODULE_NAME    ("utcache")
 
 
+#ifdef ACPI_USE_LOCAL_CACHE
 /*******************************************************************************
  *
- * FUNCTION:    AcpiPsGetParentScope
+ * FUNCTION:    AcpiOsCreateCache
  *
- * PARAMETERS:  ParserState         - Current parser state object
- *
- * RETURN:      Pointer to an Op object
- *
- * DESCRIPTION: Get parent of current op being parsed
- *
- ******************************************************************************/
-
-ACPI_PARSE_OBJECT *
-AcpiPsGetParentScope (
-    ACPI_PARSE_STATE        *ParserState)
-{
-
-    return (ParserState->Scope->ParseScope.Op);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiPsHasCompletedScope
- *
- * PARAMETERS:  ParserState         - Current parser state object
- *
- * RETURN:      Boolean, TRUE = scope completed.
- *
- * DESCRIPTION: Is parsing of current argument complete?  Determined by
- *              1) AML pointer is at or beyond the end of the scope
- *              2) The scope argument count has reached zero.
- *
- ******************************************************************************/
-
-BOOLEAN
-AcpiPsHasCompletedScope (
-    ACPI_PARSE_STATE        *ParserState)
-{
-
-    return ((BOOLEAN)
-            ((ParserState->Aml >= ParserState->Scope->ParseScope.ArgEnd ||
-             !ParserState->Scope->ParseScope.ArgCount)));
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiPsInitScope
- *
- * PARAMETERS:  ParserState         - Current parser state object
- *              Root                - the Root Node of this new scope
+ * PARAMETERS:  CacheName       - Ascii name for the cache
+ *              ObjectSize      - Size of each cached object
+ *              MaxDepth        - Maximum depth of the cache (in objects)
+ *              ReturnCache     - Where the new cache object is returned
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Allocate and init a new scope object
+ * DESCRIPTION: Create a cache object
  *
  ******************************************************************************/
 
 ACPI_STATUS
-AcpiPsInitScope (
-    ACPI_PARSE_STATE        *ParserState,
-    ACPI_PARSE_OBJECT       *RootOp)
+AcpiOsCreateCache (
+    char                    *CacheName,
+    UINT16                  ObjectSize,
+    UINT16                  MaxDepth,
+    ACPI_MEMORY_LIST        **ReturnCache)
 {
-    ACPI_GENERIC_STATE      *Scope;
+    ACPI_MEMORY_LIST        *Cache;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("PsInitScope", RootOp);
+    ACPI_FUNCTION_ENTRY ();
 
 
-    Scope = AcpiUtCreateGenericState ();
-    if (!Scope)
+    if (!CacheName || !ReturnCache || (ObjectSize < 16))
     {
-        return_ACPI_STATUS (AE_NO_MEMORY);
+        return (AE_BAD_PARAMETER);
     }
 
-    Scope->Common.DataType      = ACPI_DESC_TYPE_STATE_RPSCOPE;
-    Scope->ParseScope.Op        = RootOp;
-    Scope->ParseScope.ArgCount  = ACPI_VAR_ARGS;
-    Scope->ParseScope.ArgEnd    = ParserState->AmlEnd;
-    Scope->ParseScope.PkgEnd    = ParserState->AmlEnd;
+    /* Create the cache object */
 
-    ParserState->Scope          = Scope;
-    ParserState->StartOp        = RootOp;
+    Cache = AcpiOsAllocate (sizeof (ACPI_MEMORY_LIST));
+    if (!Cache)
+    {
+        return (AE_NO_MEMORY);
+    }
 
-    return_ACPI_STATUS (AE_OK);
+    /* Populate the cache object and return it */
+
+    ACPI_MEMSET (Cache, 0, sizeof (ACPI_MEMORY_LIST));
+    Cache->LinkOffset = 8;
+    Cache->ListName   = CacheName;
+    Cache->ObjectSize = ObjectSize;
+    Cache->MaxDepth   = MaxDepth;
+
+    *ReturnCache = Cache;
+    return (AE_OK);
 }
 
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiPsPushScope
+ * FUNCTION:    AcpiOsPurgeCache
  *
- * PARAMETERS:  ParserState         - Current parser state object
- *              Op                  - Current op to be pushed
- *              RemainingArgs       - List of args remaining
- *              ArgCount            - Fixed or variable number of args
+ * PARAMETERS:  Cache           - Handle to cache object
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Push current op to begin parsing its argument
+ * DESCRIPTION: Free all objects within the requested cache.
  *
  ******************************************************************************/
 
 ACPI_STATUS
-AcpiPsPushScope (
-    ACPI_PARSE_STATE        *ParserState,
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  RemainingArgs,
-    UINT32                  ArgCount)
+AcpiOsPurgeCache (
+    ACPI_MEMORY_LIST        *Cache)
 {
-    ACPI_GENERIC_STATE      *Scope;
+    char                    *Next;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("PsPushScope", Op);
+    ACPI_FUNCTION_ENTRY ();
 
 
-    Scope = AcpiUtCreateGenericState ();
-    if (!Scope)
+    if (!Cache)
     {
-        return_ACPI_STATUS (AE_NO_MEMORY);
+        return (AE_BAD_PARAMETER);
     }
 
-    Scope->Common.DataType     = ACPI_DESC_TYPE_STATE_PSCOPE;
-    Scope->ParseScope.Op       = Op;
-    Scope->ParseScope.ArgList  = RemainingArgs;
-    Scope->ParseScope.ArgCount = ArgCount;
-    Scope->ParseScope.PkgEnd   = ParserState->PkgEnd;
+    /* Walk the list of objects in this cache */
 
-    /* Push onto scope stack */
-
-    AcpiUtPushGenericState (&ParserState->Scope, Scope);
-
-    if (ArgCount == ACPI_VAR_ARGS)
+    while (Cache->ListHead)
     {
-        /* Multiple arguments */
+        /* Delete and unlink one cached state object */
 
-        Scope->ParseScope.ArgEnd = ParserState->PkgEnd;
-    }
-    else
-    {
-        /* Single argument */
+        Next = *(ACPI_CAST_INDIRECT_PTR (char,
+                    &(((char *) Cache->ListHead)[Cache->LinkOffset])));
+        ACPI_MEM_FREE (Cache->ListHead);
 
-        Scope->ParseScope.ArgEnd = ACPI_TO_POINTER (ACPI_MAX_PTR);
+        Cache->ListHead = Next;
+        Cache->CurrentDepth--;
     }
 
-    return_ACPI_STATUS (AE_OK);
+    return (AE_OK);
 }
 
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiPsPopScope
+ * FUNCTION:    AcpiOsDeleteCache
  *
- * PARAMETERS:  ParserState         - Current parser state object
- *              Op                  - Where the popped op is returned
- *              ArgList             - Where the popped "next argument" is
- *                                    returned
- *              ArgCount            - Count of objects in ArgList
+ * PARAMETERS:  Cache           - Handle to cache object
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Return to parsing a previous op
+ * DESCRIPTION: Free all objects within the requested cache and delete the
+ *              cache object.
  *
  ******************************************************************************/
 
-void
-AcpiPsPopScope (
-    ACPI_PARSE_STATE        *ParserState,
-    ACPI_PARSE_OBJECT       **Op,
-    UINT32                  *ArgList,
-    UINT32                  *ArgCount)
+ACPI_STATUS
+AcpiOsDeleteCache (
+    ACPI_MEMORY_LIST        *Cache)
 {
-    ACPI_GENERIC_STATE      *Scope = ParserState->Scope;
+    ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE ("PsPopScope");
+    ACPI_FUNCTION_ENTRY ();
 
 
-    /* Only pop the scope if there is in fact a next scope */
+   /* Purge all objects in the cache */
 
-    if (Scope->Common.Next)
+    Status = AcpiOsPurgeCache (Cache);
+    if (ACPI_FAILURE (Status))
     {
-        Scope = AcpiUtPopGenericState (&ParserState->Scope);
-
-        /* return to parsing previous op */
-
-        *Op                 = Scope->ParseScope.Op;
-        *ArgList            = Scope->ParseScope.ArgList;
-        *ArgCount           = Scope->ParseScope.ArgCount;
-        ParserState->PkgEnd = Scope->ParseScope.PkgEnd;
-
-        /* All done with this scope state structure */
-
-        AcpiUtDeleteGenericState (Scope);
-    }
-    else
-    {
-        /* empty parse stack, prepare to fetch next opcode */
-
-        *Op       = NULL;
-        *ArgList  = 0;
-        *ArgCount = 0;
+        return (Status);
     }
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
-        "Popped Op %p Args %X\n", *Op, *ArgCount));
-    return_VOID;
+    /* Now we can delete the cache object */
+
+    AcpiOsFree (Cache);
+    return (AE_OK);
 }
 
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiPsCleanupScope
+ * FUNCTION:    AcpiOsReleaseObject
  *
- * PARAMETERS:  ParserState         - Current parser state object
+ * PARAMETERS:  Cache       - Handle to cache object
+ *              Object      - The object to be released
  *
  * RETURN:      None
  *
- * DESCRIPTION: Destroy available list, remaining stack levels, and return
- *              root scope
+ * DESCRIPTION: Release an object to the specified cache.  If cache is full,
+ *              the object is deleted.
  *
  ******************************************************************************/
 
-void
-AcpiPsCleanupScope (
-    ACPI_PARSE_STATE        *ParserState)
+ACPI_STATUS
+AcpiOsReleaseObject (
+    ACPI_MEMORY_LIST        *Cache,
+    void                    *Object)
 {
-    ACPI_GENERIC_STATE      *Scope;
+    ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("PsCleanupScope", ParserState);
+    ACPI_FUNCTION_ENTRY ();
 
 
-    if (!ParserState)
+    if (!Cache || !Object)
     {
-        return_VOID;
+        return (AE_BAD_PARAMETER);
     }
 
-    /* Delete anything on the scope stack */
+    /* If cache is full, just free this object */
 
-    while (ParserState->Scope)
+    if (Cache->CurrentDepth >= Cache->MaxDepth)
     {
-        Scope = AcpiUtPopGenericState (&ParserState->Scope);
-        AcpiUtDeleteGenericState (Scope);
+        ACPI_MEM_FREE (Object);
+        ACPI_MEM_TRACKING (Cache->TotalFreed++);
     }
 
-    return_VOID;
+    /* Otherwise put this object back into the cache */
+
+    else
+    {
+        Status = AcpiUtAcquireMutex (ACPI_MTX_CACHES);
+        if (ACPI_FAILURE (Status))
+        {
+            return (Status);
+        }
+
+        /* Mark the object as cached */
+
+        ACPI_MEMSET (Object, 0xCA, Cache->ObjectSize);
+        ACPI_SET_DESCRIPTOR_TYPE (Object, ACPI_DESC_TYPE_CACHED);
+
+        /* Put the object at the head of the cache list */
+
+        * (ACPI_CAST_INDIRECT_PTR (char,
+            &(((char *) Object)[Cache->LinkOffset]))) = Cache->ListHead;
+        Cache->ListHead = Object;
+        Cache->CurrentDepth++;
+
+        (void) AcpiUtReleaseMutex (ACPI_MTX_CACHES);
+    }
+
+    return (AE_OK);
 }
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiOsAcquireObject
+ *
+ * PARAMETERS:  Cache           - Handle to cache object
+ *
+ * RETURN:      the acquired object.  NULL on error
+ *
+ * DESCRIPTION: Get an object from the specified cache.  If cache is empty,
+ *              the object is allocated.
+ *
+ ******************************************************************************/
+
+void *
+AcpiOsAcquireObject (
+    ACPI_MEMORY_LIST        *Cache)
+{
+    ACPI_STATUS             Status;
+    void                    *Object;
+
+
+    ACPI_FUNCTION_NAME ("OsAcquireObject");
+
+
+    if (!Cache)
+    {
+        return (NULL);
+    }
+
+    Status = AcpiUtAcquireMutex (ACPI_MTX_CACHES);
+    if (ACPI_FAILURE (Status))
+    {
+        return (NULL);
+    }
+
+    ACPI_MEM_TRACKING (Cache->Requests++);
+
+    /* Check the cache first */
+
+    if (Cache->ListHead)
+    {
+        /* There is an object available, use it */
+
+        Object = Cache->ListHead;
+        Cache->ListHead = *(ACPI_CAST_INDIRECT_PTR (char,
+                                &(((char *) Object)[Cache->LinkOffset])));
+
+        Cache->CurrentDepth--;
+
+        ACPI_MEM_TRACKING (Cache->Hits++);
+        ACPI_MEM_TRACKING (ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+            "Object %p from %s cache\n", Object, Cache->ListName)));
+
+        Status = AcpiUtReleaseMutex (ACPI_MTX_CACHES);
+        if (ACPI_FAILURE (Status))
+        {
+            return (NULL);
+        }
+
+        /* Clear (zero) the previously used Object */
+
+        ACPI_MEMSET (Object, 0, Cache->ObjectSize);
+    }
+    else
+    {
+        /* The cache is empty, create a new object */
+
+        ACPI_MEM_TRACKING (Cache->TotalAllocated++);
+
+        /* Avoid deadlock with ACPI_MEM_CALLOCATE */
+
+        Status = AcpiUtReleaseMutex (ACPI_MTX_CACHES);
+        if (ACPI_FAILURE (Status))
+        {
+            return (NULL);
+        }
+
+        Object = ACPI_MEM_CALLOCATE (Cache->ObjectSize);
+        if (!Object)
+        {
+            return (NULL);
+        }
+    }
+
+    return (Object);
+}
+#endif /* ACPI_USE_LOCAL_CACHE */
+
 

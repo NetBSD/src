@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Name: hwsleep.c - ACPI Hardware Sleep/Wake Interface
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -290,7 +290,7 @@ AcpiEnterSleepStatePrep (
     Status = AcpiEvaluateObject (NULL, METHOD_NAME__SST, &ArgList, NULL);
     if (ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
     {
-         ACPI_REPORT_ERROR (("Method _SST failed, %s\n",
+        ACPI_REPORT_ERROR (("Method _SST failed, %s\n",
             AcpiFormatException (Status)));
     }
 
@@ -369,14 +369,14 @@ AcpiEnterSleepState (
      * 1) Disable/Clear all GPEs
      * 2) Enable all wakeup GPEs
      */
-    Status = AcpiHwDisableAllGpes (ACPI_ISR);
+    Status = AcpiHwDisableAllGpes ();
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
     AcpiGbl_SystemAwakeAndRunning = FALSE;
 
-    Status = AcpiHwEnableAllWakeupGpes (ACPI_ISR);
+    Status = AcpiHwEnableAllWakeupGpes ();
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -531,14 +531,14 @@ AcpiEnterSleepStateS4bios (
      * 1) Disable/Clear all GPEs
      * 2) Enable all wakeup GPEs
      */
-    Status = AcpiHwDisableAllGpes (ACPI_ISR);
+    Status = AcpiHwDisableAllGpes ();
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
     AcpiGbl_SystemAwakeAndRunning = FALSE;
 
-    Status = AcpiHwEnableAllWakeupGpes (ACPI_ISR);
+    Status = AcpiHwEnableAllWakeupGpes ();
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -671,14 +671,14 @@ AcpiLeaveSleepState (
      * 1) Disable/Clear all GPEs
      * 2) Enable all runtime GPEs
      */
-    Status = AcpiHwDisableAllGpes (ACPI_NOT_ISR);
+    Status = AcpiHwDisableAllGpes ();
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
     AcpiGbl_SystemAwakeAndRunning = TRUE;
 
-    Status = AcpiHwEnableAllRuntimeGpes (ACPI_NOT_ISR);
+    Status = AcpiHwEnableAllRuntimeGpes ();
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);

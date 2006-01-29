@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acenv.h - Generation environment specific items
- *       $Revision: 1.1.1.9 $
+ *       $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -122,35 +122,39 @@
  * Configuration for ACPI tools and utilities
  */
 
-#ifdef _ACPI_DUMP_APP
+#ifdef ACPI_LIBRARY
+#define ACPI_USE_LOCAL_CACHE
+#endif
+
+#ifdef ACPI_DUMP_APP
 #ifndef MSDOS
 #define ACPI_DEBUG_OUTPUT
 #endif
 #define ACPI_APPLICATION
 #define ACPI_DISASSEMBLER
 #define ACPI_NO_METHOD_EXECUTION
-#define ACPI_USE_SYSTEM_CLIBRARY
-#define ACPI_ENABLE_OBJECT_CACHE
 #endif
 
-#ifdef _ACPI_EXEC_APP
+#ifdef ACPI_EXEC_APP
 #undef DEBUGGER_THREADING
 #define DEBUGGER_THREADING      DEBUGGER_SINGLE_THREADED
 #define ACPI_DEBUG_OUTPUT
 #define ACPI_APPLICATION
 #define ACPI_DEBUGGER
 #define ACPI_DISASSEMBLER
-#define ACPI_USE_SYSTEM_CLIBRARY
-#define ACPI_ENABLE_OBJECT_CACHE
+#define ACPI_MUTEX_DEBUG
 #endif
 
-#ifdef _ACPI_ASL_COMPILER
+#ifdef ACPI_ASL_COMPILER
 #define ACPI_DEBUG_OUTPUT
 #define ACPI_APPLICATION
 #define ACPI_DISASSEMBLER
 #define ACPI_CONSTANT_EVAL_ONLY
+#endif
+
+#ifdef ACPI_APPLICATION
 #define ACPI_USE_SYSTEM_CLIBRARY
-#define ACPI_ENABLE_OBJECT_CACHE
+#define ACPI_USE_LOCAL_CACHE
 #endif
 
 /*
@@ -278,6 +282,8 @@
  *
  *****************************************************************************/
 
+#define ACPI_IS_ASCII(c)  ((c) < 0x80)
+
 #ifdef ACPI_USE_SYSTEM_CLIBRARY
 /*
  * Use the standard C library headers.
@@ -307,19 +313,18 @@
 #define ACPI_STRCAT(d,s)        (void) strcat((d), (s))
 #define ACPI_STRNCAT(d,s,n)     strncat((d), (s), (ACPI_SIZE)(n))
 #define ACPI_STRTOUL(d,s,n)     strtoul((d), (s), (ACPI_SIZE)(n))
-#define ACPI_MEMCMP(s1,s2,n)    memcmp((s1), (s2), (ACPI_SIZE)(n))
+#define ACPI_MEMCMP(s1,s2,n)    memcmp((const char *)(s1), (const char *)(s2), (ACPI_SIZE)(n))
 #define ACPI_MEMCPY(d,s,n)      (void) memcpy((d), (s), (ACPI_SIZE)(n))
 #define ACPI_MEMSET(d,s,n)      (void) memset((d), (s), (ACPI_SIZE)(n))
 
-#define ACPI_TOUPPER            toupper
-#define ACPI_TOLOWER            tolower
-#define ACPI_IS_XDIGIT          isxdigit
-#define ACPI_IS_DIGIT           isdigit
-#define ACPI_IS_SPACE           isspace
-#define ACPI_IS_UPPER           isupper
-#define ACPI_IS_PRINT           isprint
-#define ACPI_IS_ALPHA           isalpha
-#define ACPI_IS_ASCII           isascii
+#define ACPI_TOUPPER(i)         toupper((int) (i))
+#define ACPI_TOLOWER(i)         tolower((int) (i))
+#define ACPI_IS_XDIGIT(i)       isxdigit((int) (i))
+#define ACPI_IS_DIGIT(i)        isdigit((int) (i))
+#define ACPI_IS_SPACE(i)        isspace((int) (i))
+#define ACPI_IS_UPPER(i)        isupper((int) (i))
+#define ACPI_IS_PRINT(i)        isprint((int) (i))
+#define ACPI_IS_ALPHA(i)        isalpha((int) (i))
 
 #else
 
@@ -370,7 +375,7 @@ typedef char *va_list;
 #define ACPI_STRCAT(d,s)        (void) AcpiUtStrcat ((d), (s))
 #define ACPI_STRNCAT(d,s,n)     AcpiUtStrncat ((d), (s), (ACPI_SIZE)(n))
 #define ACPI_STRTOUL(d,s,n)     AcpiUtStrtoul ((d), (s), (ACPI_SIZE)(n))
-#define ACPI_MEMCMP(s1,s2,n)    AcpiUtMemcmp((s1), (s2), (ACPI_SIZE)(n))
+#define ACPI_MEMCMP(s1,s2,n)    AcpiUtMemcmp((const char *)(s1), (const char *)(s2), (ACPI_SIZE)(n))
 #define ACPI_MEMCPY(d,s,n)      (void) AcpiUtMemcpy ((d), (s), (ACPI_SIZE)(n))
 #define ACPI_MEMSET(d,v,n)      (void) AcpiUtMemset ((d), (v), (ACPI_SIZE)(n))
 #define ACPI_TOUPPER            AcpiUtToUpper

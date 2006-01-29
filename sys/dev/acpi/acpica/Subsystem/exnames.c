@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exnames - interpreter/scanner name load/execute
- *              $Revision: 1.1.1.8 $
+ *              $Revision: 1.1.1.9 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -189,7 +189,7 @@ AcpiExAllocateNameString (
     if (!NameString)
     {
         ACPI_REPORT_ERROR ((
-            "ExAllocateNameString: Could not allocate size %d\n", SizeNeeded));
+            "Could not allocate size %d\n", SizeNeeded));
         return_PTR (NULL);
     }
 
@@ -271,7 +271,7 @@ AcpiExNameSegment (
 
     if ('0' <= CharBuf[0] && CharBuf[0] <= '9')
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "leading digit: %c\n", CharBuf[0]));
+        ACPI_REPORT_ERROR (("Invalid leading digit: %c\n", CharBuf[0]));
         return_ACPI_STATUS (AE_CTRL_PENDING);
     }
 
@@ -298,12 +298,12 @@ AcpiExNameSegment (
         {
             ACPI_STRCAT (NameString, CharBuf);
             ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
-                "Appended to - %s \n", NameString));
+                "Appended to - %s\n", NameString));
         }
         else
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
-                "No Name string - %s \n", CharBuf));
+                "No Name string - %s\n", CharBuf));
         }
     }
     else if (Index == 0)
@@ -324,12 +324,12 @@ AcpiExNameSegment (
          * the required 4
          */
         Status = AE_AML_BAD_NAME;
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Bad character %02x in name, at %p\n",
             *AmlAddress, AmlAddress));
     }
 
-    *InAmlAddress = (UINT8 *) AmlAddress;
+    *InAmlAddress = ACPI_CAST_PTR (UINT8, AmlAddress);
     return_ACPI_STATUS (Status);
 }
 
@@ -537,9 +537,18 @@ AcpiExGetNameString (
     {
         /* Ran out of segments after processing a prefix */
 
-        ACPI_REPORT_ERROR (
-            ("ExDoName: Malformed Name at %p\n", NameString));
+        ACPI_REPORT_ERROR ((
+            "Malformed Name at %p\n", NameString));
         Status = AE_AML_BAD_NAME;
+    }
+
+    if (ACPI_FAILURE (Status))
+    {
+        if (NameString)
+        {
+            ACPI_MEM_FREE (NameString);
+        }
+        return_ACPI_STATUS (Status);
     }
 
     *OutNameString = NameString;

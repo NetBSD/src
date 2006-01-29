@@ -2,7 +2,7 @@
  *
  * Module Name: nsxfeval - Public interfaces to the ACPI subsystem
  *                         ACPI Object evaluation interfaces
- *              $Revision: 1.1.1.7 $
+ *              $Revision: 1.1.1.8 $
  *
  ******************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -194,9 +194,7 @@ AcpiEvaluateObjectTyped (
     {
         /* Error because caller specifically asked for a return value */
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-            "No return value\n"));
-
+        ACPI_REPORT_ERROR (("No return value\n"));
         return_ACPI_STATUS (AE_NULL_OBJECT);
     }
 
@@ -209,7 +207,7 @@ AcpiEvaluateObjectTyped (
 
     /* Return object type does not match requested type */
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+    ACPI_REPORT_ERROR ((
         "Incorrect return type [%s] requested [%s]\n",
         AcpiUtGetTypeName (((ACPI_OBJECT *) ReturnBuffer->Pointer)->Type),
         AcpiUtGetTypeName (ReturnType)));
@@ -329,12 +327,12 @@ AcpiEvaluateObject (
          */
         if (!Pathname)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Both Handle and Pathname are NULL\n"));
         }
         else
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Handle is NULL and Pathname is relative\n"));
         }
 
@@ -508,7 +506,7 @@ AcpiWalkNamespace (
 
     /* Parameter validation */
 
-    if ((Type > ACPI_TYPE_EXTERNAL_MAX) ||
+    if ((Type > ACPI_TYPE_LOCAL_MAX) ||
         (!MaxDepth)                     ||
         (!UserFunction))
     {
@@ -592,9 +590,9 @@ AcpiNsGetDeviceCallback (
         return (AE_CTRL_DEPTH);
     }
 
-    if (!(Flags & 0x01))
+    if (!(Flags & ACPI_STA_DEVICE_PRESENT))
     {
-        /* Don't return at the device or children of the device if not there */
+        /* Don't examine children of the device if not present */
 
         return (AE_CTRL_DEPTH);
     }

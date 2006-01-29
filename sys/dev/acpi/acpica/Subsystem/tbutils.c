@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbutils - Table manipulation utilities
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -135,6 +135,75 @@ AcpiTbHandleToObject (
 
 /*******************************************************************************
  *
+ * FUNCTION:    AcpiTbIsTableInstalled
+ *
+ * PARAMETERS:  NewTableDesc        - Descriptor for new table being installed
+ *
+ * RETURN:      Status - AE_ALREADY_EXISTS if the table is already installed
+ *
+ * DESCRIPTION: Determine if an ACPI table is already installed
+ *
+ * MUTEX:       Table data structures should be locked
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiTbIsTableInstalled (
+    ACPI_TABLE_DESC         *NewTableDesc)
+{
+    ACPI_TABLE_DESC         *TableDesc;
+
+
+    ACPI_FUNCTION_TRACE ("TbIsTableInstalled");
+
+
+    /* Get the list descriptor and first table descriptor */
+
+    TableDesc = AcpiGbl_TableLists[NewTableDesc->Type].Next;
+
+    /* Examine all installed tables of this type */
+
+    while (TableDesc)
+    {
+        /*
+         * If the table lengths match, perform a full bytewise compare. This
+         * means that we will allow tables with duplicate OemTableId(s), as
+         * long as the tables are different in some way.
+         *
+         * Checking if the table has been loaded into the namespace means that
+         * we don't check for duplicate tables during the initial installation
+         * of tables within the RSDT/XSDT.
+         */
+        if ((TableDesc->LoadedIntoNamespace) &&
+            (TableDesc->Pointer->Length == NewTableDesc->Pointer->Length) &&
+            (!ACPI_MEMCMP (TableDesc->Pointer, NewTableDesc->Pointer,
+                NewTableDesc->Pointer->Length)))
+        {
+            /* Match: this table is already installed */
+
+            ACPI_DEBUG_PRINT ((ACPI_DB_TABLES,
+                "Table [%4.4s] already installed: Rev %X OemTableId [%8.8s]\n",
+                NewTableDesc->Pointer->Signature,
+                NewTableDesc->Pointer->Revision,
+                NewTableDesc->Pointer->OemTableId));
+
+            NewTableDesc->OwnerId       = TableDesc->OwnerId;
+            NewTableDesc->InstalledDesc = TableDesc;
+
+            return_ACPI_STATUS (AE_ALREADY_EXISTS);
+        }
+
+        /* Get next table on the list */
+
+        TableDesc = TableDesc->Next;
+    }
+
+    return_ACPI_STATUS (AE_OK);
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    AcpiTbValidateTableHeader
  *
  * PARAMETERS:  TableHeader         - Logical pointer to the table
@@ -160,14 +229,14 @@ AcpiTbValidateTableHeader (
     ACPI_NAME               Signature;
 
 
-    ACPI_FUNCTION_NAME ("TbValidateTableHeader");
+    ACPI_FUNCTION_ENTRY ();
 
 
     /* Verify that this is a valid address */
 
     if (!AcpiOsReadable (TableHeader, sizeof (ACPI_TABLE_HEADER)))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Cannot read table header at %p\n", TableHeader));
 
         return (AE_BAD_ADDRESS);
@@ -178,12 +247,12 @@ AcpiTbValidateTableHeader (
     ACPI_MOVE_32_TO_32 (&Signature, TableHeader->Signature);
     if (!AcpiUtValidAcpiName (Signature))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Table signature at %p [%p] has invalid characters\n",
             TableHeader, &Signature));
 
         ACPI_REPORT_WARNING (("Invalid table signature found: [%4.4s]\n",
-            (char *) &Signature));
+            ACPI_CAST_PTR (char, &Signature)));
 
         ACPI_DUMP_BUFFER (TableHeader, sizeof (ACPI_TABLE_HEADER));
         return (AE_BAD_SIGNATURE);
@@ -193,7 +262,7 @@ AcpiTbValidateTableHeader (
 
     if (TableHeader->Length < sizeof (ACPI_TABLE_HEADER))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Invalid length in table header %p name %4.4s\n",
             TableHeader, (char *) &Signature));
 
@@ -234,7 +303,7 @@ AcpiTbVerifyTableChecksum (
 
     /* Compute the checksum on the table */
 
-    Checksum = AcpiTbChecksum (TableHeader, TableHeader->Length);
+    Checksum = AcpiTbGenerateChecksum (TableHeader, TableHeader->Length);
 
     /* Return the appropriate exception */
 
@@ -253,7 +322,7 @@ AcpiTbVerifyTableChecksum (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiTbChecksum
+ * FUNCTION:    AcpiTbGenerateChecksum
  *
  * PARAMETERS:  Buffer              - Buffer to checksum
  *              Length              - Size of the buffer
@@ -265,27 +334,27 @@ AcpiTbVerifyTableChecksum (
  ******************************************************************************/
 
 UINT8
-AcpiTbChecksum (
+AcpiTbGenerateChecksum (
     void                    *Buffer,
     UINT32                  Length)
 {
-    const UINT8             *limit;
-    const UINT8             *rover;
-    UINT8                   sum = 0;
+    UINT8                   *EndBuffer;
+    UINT8                   *Rover;
+    UINT8                   Sum = 0;
 
 
     if (Buffer && Length)
     {
         /*  Buffer and Length are valid   */
 
-        limit = (UINT8 *) Buffer + Length;
+        EndBuffer = ACPI_ADD_PTR (UINT8, Buffer, Length);
 
-        for (rover = Buffer; rover < limit; rover++)
+        for (Rover = Buffer; Rover < EndBuffer; Rover++)
         {
-            sum = (UINT8) (sum + *rover);
+            Sum = (UINT8) (Sum + *Rover);
         }
     }
-    return (sum);
+    return (Sum);
 }
 
 
@@ -330,7 +399,7 @@ AcpiTbHandleToObject (
         }
     }
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "TableId=%X does not exist\n", TableId));
+    ACPI_REPORT_ERROR (("TableId=%X does not exist\n", TableId));
     return (AE_BAD_PARAMETER);
 }
 #endif

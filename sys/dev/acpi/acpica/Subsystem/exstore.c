@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exstore - AML Interpreter object store support
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -230,7 +230,7 @@ AcpiExDoDebugObject (
 
     case ACPI_TYPE_BUFFER:
 
-        ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "[0x%.2X]",
+        ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "[0x%.2X]\n",
             (UINT32) SourceDesc->Buffer.Length));
         ACPI_DUMP_BUFFER (SourceDesc->Buffer.Pointer,
             (SourceDesc->Buffer.Length < 32) ? SourceDesc->Buffer.Length : 32);
@@ -341,7 +341,7 @@ AcpiExStore (
 
     if (!SourceDesc || !DestDesc)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Null parameter\n"));
+        ACPI_REPORT_ERROR (("Null parameter\n"));
         return_ACPI_STATUS (AE_AML_NO_OPERAND);
     }
 
@@ -382,7 +382,7 @@ AcpiExStore (
 
         /* Destination is not a Reference object */
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Target is not a Reference or Constant object - %s [%p]\n",
             AcpiUtGetObjectTypeName (DestDesc), DestDesc));
 
@@ -449,7 +449,7 @@ AcpiExStore (
 
     default:
 
-        ACPI_REPORT_ERROR (("ExStore: Unknown Reference opcode %X\n",
+        ACPI_REPORT_ERROR (("Unknown Reference opcode %X\n",
             RefDesc->Reference.Opcode));
         ACPI_DUMP_ENTRY (RefDesc, ACPI_LV_ERROR);
 
@@ -591,7 +591,7 @@ AcpiExStoreObjectToIndex (
 
             /* All other types are invalid */
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Source must be Integer/Buffer/String type, not %s\n",
                 AcpiUtGetObjectTypeName (SourceDesc)));
             return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
@@ -604,7 +604,7 @@ AcpiExStoreObjectToIndex (
 
 
     default:
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Target is not a Package or BufferField\n"));
         Status = AE_AML_OPERAND_TYPE;
         break;
@@ -677,7 +677,7 @@ AcpiExStoreObjectToNode (
 
     /* If no implicit conversion, drop into the default case below */
 
-    if (!ImplicitConversion)
+    if ((!ImplicitConversion) || (WalkState->Opcode == AML_COPY_OP))
     {
         /* Force execution of default (no implicit conversion) */
 
@@ -741,7 +741,7 @@ AcpiExStoreObjectToNode (
     default:
 
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-            "Storing %s (%p) directly into node (%p), no implicit conversion\n",
+            "Storing %s (%p) directly into node (%p) with no implicit conversion\n",
             AcpiUtGetObjectTypeName (SourceDesc), SourceDesc, Node));
 
         /* No conversions for all other types.  Just attach the source object */

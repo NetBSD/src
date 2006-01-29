@@ -1,9 +1,9 @@
-/******************************************************************************
+/*******************************************************************************
  *
- * Module Name: psscope - Parser scope stack management routines
- *              $Revision: 1.1.1.8 $
+ * Module Name: utstate - state object support procedures
+ *              $Revision: 1.3 $
  *
- *****************************************************************************/
+ ******************************************************************************/
 
 /******************************************************************************
  *
@@ -115,260 +115,343 @@
  *****************************************************************************/
 
 
+#define __UTSTATE_C__
+
 #include "acpi.h"
-#include "acparser.h"
 
-#define _COMPONENT          ACPI_PARSER
-        ACPI_MODULE_NAME    ("psscope")
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiPsGetParentScope
- *
- * PARAMETERS:  ParserState         - Current parser state object
- *
- * RETURN:      Pointer to an Op object
- *
- * DESCRIPTION: Get parent of current op being parsed
- *
- ******************************************************************************/
-
-ACPI_PARSE_OBJECT *
-AcpiPsGetParentScope (
-    ACPI_PARSE_STATE        *ParserState)
-{
-
-    return (ParserState->Scope->ParseScope.Op);
-}
+#define _COMPONENT          ACPI_UTILITIES
+        ACPI_MODULE_NAME    ("utstate")
 
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiPsHasCompletedScope
+ * FUNCTION:    AcpiUtCreatePkgStateAndPush
  *
- * PARAMETERS:  ParserState         - Current parser state object
- *
- * RETURN:      Boolean, TRUE = scope completed.
- *
- * DESCRIPTION: Is parsing of current argument complete?  Determined by
- *              1) AML pointer is at or beyond the end of the scope
- *              2) The scope argument count has reached zero.
- *
- ******************************************************************************/
-
-BOOLEAN
-AcpiPsHasCompletedScope (
-    ACPI_PARSE_STATE        *ParserState)
-{
-
-    return ((BOOLEAN)
-            ((ParserState->Aml >= ParserState->Scope->ParseScope.ArgEnd ||
-             !ParserState->Scope->ParseScope.ArgCount)));
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiPsInitScope
- *
- * PARAMETERS:  ParserState         - Current parser state object
- *              Root                - the Root Node of this new scope
+ * PARAMETERS:  Object          - Object to be added to the new state
+ *              Action          - Increment/Decrement
+ *              StateList       - List the state will be added to
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Allocate and init a new scope object
+ * DESCRIPTION: Create a new state and push it
  *
  ******************************************************************************/
 
 ACPI_STATUS
-AcpiPsInitScope (
-    ACPI_PARSE_STATE        *ParserState,
-    ACPI_PARSE_OBJECT       *RootOp)
+AcpiUtCreatePkgStateAndPush (
+    void                    *InternalObject,
+    void                    *ExternalObject,
+    UINT16                  Index,
+    ACPI_GENERIC_STATE      **StateList)
 {
-    ACPI_GENERIC_STATE      *Scope;
+    ACPI_GENERIC_STATE       *State;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("PsInitScope", RootOp);
+    ACPI_FUNCTION_ENTRY ();
 
 
-    Scope = AcpiUtCreateGenericState ();
-    if (!Scope)
+    State = AcpiUtCreatePkgState (InternalObject, ExternalObject, Index);
+    if (!State)
     {
-        return_ACPI_STATUS (AE_NO_MEMORY);
+        return (AE_NO_MEMORY);
     }
 
-    Scope->Common.DataType      = ACPI_DESC_TYPE_STATE_RPSCOPE;
-    Scope->ParseScope.Op        = RootOp;
-    Scope->ParseScope.ArgCount  = ACPI_VAR_ARGS;
-    Scope->ParseScope.ArgEnd    = ParserState->AmlEnd;
-    Scope->ParseScope.PkgEnd    = ParserState->AmlEnd;
-
-    ParserState->Scope          = Scope;
-    ParserState->StartOp        = RootOp;
-
-    return_ACPI_STATUS (AE_OK);
+    AcpiUtPushGenericState (StateList, State);
+    return (AE_OK);
 }
 
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiPsPushScope
+ * FUNCTION:    AcpiUtPushGenericState
  *
- * PARAMETERS:  ParserState         - Current parser state object
- *              Op                  - Current op to be pushed
- *              RemainingArgs       - List of args remaining
- *              ArgCount            - Fixed or variable number of args
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Push current op to begin parsing its argument
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiPsPushScope (
-    ACPI_PARSE_STATE        *ParserState,
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  RemainingArgs,
-    UINT32                  ArgCount)
-{
-    ACPI_GENERIC_STATE      *Scope;
-
-
-    ACPI_FUNCTION_TRACE_PTR ("PsPushScope", Op);
-
-
-    Scope = AcpiUtCreateGenericState ();
-    if (!Scope)
-    {
-        return_ACPI_STATUS (AE_NO_MEMORY);
-    }
-
-    Scope->Common.DataType     = ACPI_DESC_TYPE_STATE_PSCOPE;
-    Scope->ParseScope.Op       = Op;
-    Scope->ParseScope.ArgList  = RemainingArgs;
-    Scope->ParseScope.ArgCount = ArgCount;
-    Scope->ParseScope.PkgEnd   = ParserState->PkgEnd;
-
-    /* Push onto scope stack */
-
-    AcpiUtPushGenericState (&ParserState->Scope, Scope);
-
-    if (ArgCount == ACPI_VAR_ARGS)
-    {
-        /* Multiple arguments */
-
-        Scope->ParseScope.ArgEnd = ParserState->PkgEnd;
-    }
-    else
-    {
-        /* Single argument */
-
-        Scope->ParseScope.ArgEnd = ACPI_TO_POINTER (ACPI_MAX_PTR);
-    }
-
-    return_ACPI_STATUS (AE_OK);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiPsPopScope
- *
- * PARAMETERS:  ParserState         - Current parser state object
- *              Op                  - Where the popped op is returned
- *              ArgList             - Where the popped "next argument" is
- *                                    returned
- *              ArgCount            - Count of objects in ArgList
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Return to parsing a previous op
- *
- ******************************************************************************/
-
-void
-AcpiPsPopScope (
-    ACPI_PARSE_STATE        *ParserState,
-    ACPI_PARSE_OBJECT       **Op,
-    UINT32                  *ArgList,
-    UINT32                  *ArgCount)
-{
-    ACPI_GENERIC_STATE      *Scope = ParserState->Scope;
-
-
-    ACPI_FUNCTION_TRACE ("PsPopScope");
-
-
-    /* Only pop the scope if there is in fact a next scope */
-
-    if (Scope->Common.Next)
-    {
-        Scope = AcpiUtPopGenericState (&ParserState->Scope);
-
-        /* return to parsing previous op */
-
-        *Op                 = Scope->ParseScope.Op;
-        *ArgList            = Scope->ParseScope.ArgList;
-        *ArgCount           = Scope->ParseScope.ArgCount;
-        ParserState->PkgEnd = Scope->ParseScope.PkgEnd;
-
-        /* All done with this scope state structure */
-
-        AcpiUtDeleteGenericState (Scope);
-    }
-    else
-    {
-        /* empty parse stack, prepare to fetch next opcode */
-
-        *Op       = NULL;
-        *ArgList  = 0;
-        *ArgCount = 0;
-    }
-
-    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
-        "Popped Op %p Args %X\n", *Op, *ArgCount));
-    return_VOID;
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiPsCleanupScope
- *
- * PARAMETERS:  ParserState         - Current parser state object
+ * PARAMETERS:  ListHead            - Head of the state stack
+ *              State               - State object to push
  *
  * RETURN:      None
  *
- * DESCRIPTION: Destroy available list, remaining stack levels, and return
- *              root scope
+ * DESCRIPTION: Push a state object onto a state stack
  *
  ******************************************************************************/
 
 void
-AcpiPsCleanupScope (
-    ACPI_PARSE_STATE        *ParserState)
+AcpiUtPushGenericState (
+    ACPI_GENERIC_STATE      **ListHead,
+    ACPI_GENERIC_STATE      *State)
 {
-    ACPI_GENERIC_STATE      *Scope;
+    ACPI_FUNCTION_TRACE ("UtPushGenericState");
 
 
-    ACPI_FUNCTION_TRACE_PTR ("PsCleanupScope", ParserState);
+    /* Push the state object onto the front of the list (stack) */
 
-
-    if (!ParserState)
-    {
-        return_VOID;
-    }
-
-    /* Delete anything on the scope stack */
-
-    while (ParserState->Scope)
-    {
-        Scope = AcpiUtPopGenericState (&ParserState->Scope);
-        AcpiUtDeleteGenericState (Scope);
-    }
+    State->Common.Next = *ListHead;
+    *ListHead = State;
 
     return_VOID;
 }
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtPopGenericState
+ *
+ * PARAMETERS:  ListHead            - Head of the state stack
+ *
+ * RETURN:      The popped state object
+ *
+ * DESCRIPTION: Pop a state object from a state stack
+ *
+ ******************************************************************************/
+
+ACPI_GENERIC_STATE *
+AcpiUtPopGenericState (
+    ACPI_GENERIC_STATE      **ListHead)
+{
+    ACPI_GENERIC_STATE      *State;
+
+
+    ACPI_FUNCTION_TRACE ("UtPopGenericState");
+
+
+    /* Remove the state object at the head of the list (stack) */
+
+    State = *ListHead;
+    if (State)
+    {
+        /* Update the list head */
+
+        *ListHead = State->Common.Next;
+    }
+
+    return_PTR (State);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtCreateGenericState
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      The new state object. NULL on failure.
+ *
+ * DESCRIPTION: Create a generic state object.  Attempt to obtain one from
+ *              the global state cache;  If none available, create a new one.
+ *
+ ******************************************************************************/
+
+ACPI_GENERIC_STATE *
+AcpiUtCreateGenericState (
+    void)
+{
+    ACPI_GENERIC_STATE      *State;
+
+
+    ACPI_FUNCTION_ENTRY ();
+
+
+    State = AcpiOsAcquireObject (AcpiGbl_StateCache);
+    if (State)
+    {
+        /* Initialize */
+        State->Common.DataType = ACPI_DESC_TYPE_STATE;
+    }
+
+    return (State);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtCreateThreadState
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      New Thread State. NULL on failure
+ *
+ * DESCRIPTION: Create a "Thread State" - a flavor of the generic state used
+ *              to track per-thread info during method execution
+ *
+ ******************************************************************************/
+
+ACPI_THREAD_STATE *
+AcpiUtCreateThreadState (
+    void)
+{
+    ACPI_GENERIC_STATE      *State;
+
+
+    ACPI_FUNCTION_TRACE ("UtCreateThreadState");
+
+
+    /* Create the generic state object */
+
+    State = AcpiUtCreateGenericState ();
+    if (!State)
+    {
+        return_PTR (NULL);
+    }
+
+    /* Init fields specific to the update struct */
+
+    State->Common.DataType = ACPI_DESC_TYPE_STATE_THREAD;
+    State->Thread.ThreadId = AcpiOsGetThreadId ();
+
+    return_PTR ((ACPI_THREAD_STATE *) State);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtCreateUpdateState
+ *
+ * PARAMETERS:  Object          - Initial Object to be installed in the state
+ *              Action          - Update action to be performed
+ *
+ * RETURN:      New state object, null on failure
+ *
+ * DESCRIPTION: Create an "Update State" - a flavor of the generic state used
+ *              to update reference counts and delete complex objects such
+ *              as packages.
+ *
+ ******************************************************************************/
+
+ACPI_GENERIC_STATE *
+AcpiUtCreateUpdateState (
+    ACPI_OPERAND_OBJECT     *Object,
+    UINT16                  Action)
+{
+    ACPI_GENERIC_STATE      *State;
+
+
+    ACPI_FUNCTION_TRACE_PTR ("UtCreateUpdateState", Object);
+
+
+    /* Create the generic state object */
+
+    State = AcpiUtCreateGenericState ();
+    if (!State)
+    {
+        return_PTR (NULL);
+    }
+
+    /* Init fields specific to the update struct */
+
+    State->Common.DataType = ACPI_DESC_TYPE_STATE_UPDATE;
+    State->Update.Object = Object;
+    State->Update.Value  = Action;
+
+    return_PTR (State);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtCreatePkgState
+ *
+ * PARAMETERS:  Object          - Initial Object to be installed in the state
+ *              Action          - Update action to be performed
+ *
+ * RETURN:      New state object, null on failure
+ *
+ * DESCRIPTION: Create a "Package State"
+ *
+ ******************************************************************************/
+
+ACPI_GENERIC_STATE *
+AcpiUtCreatePkgState (
+    void                    *InternalObject,
+    void                    *ExternalObject,
+    UINT16                  Index)
+{
+    ACPI_GENERIC_STATE      *State;
+
+
+    ACPI_FUNCTION_TRACE_PTR ("UtCreatePkgState", InternalObject);
+
+
+    /* Create the generic state object */
+
+    State = AcpiUtCreateGenericState ();
+    if (!State)
+    {
+        return_PTR (NULL);
+    }
+
+    /* Init fields specific to the update struct */
+
+    State->Common.DataType  = ACPI_DESC_TYPE_STATE_PACKAGE;
+    State->Pkg.SourceObject = (ACPI_OPERAND_OBJECT *) InternalObject;
+    State->Pkg.DestObject   = ExternalObject;
+    State->Pkg.Index        = Index;
+    State->Pkg.NumPackages  = 1;
+
+    return_PTR (State);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtCreateControlState
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      New state object, null on failure
+ *
+ * DESCRIPTION: Create a "Control State" - a flavor of the generic state used
+ *              to support nested IF/WHILE constructs in the AML.
+ *
+ ******************************************************************************/
+
+ACPI_GENERIC_STATE *
+AcpiUtCreateControlState (
+    void)
+{
+    ACPI_GENERIC_STATE      *State;
+
+
+    ACPI_FUNCTION_TRACE ("UtCreateControlState");
+
+
+    /* Create the generic state object */
+
+    State = AcpiUtCreateGenericState ();
+    if (!State)
+    {
+        return_PTR (NULL);
+    }
+
+    /* Init fields specific to the control struct */
+
+    State->Common.DataType  = ACPI_DESC_TYPE_STATE_CONTROL;
+    State->Common.State     = ACPI_CONTROL_CONDITIONAL_EXECUTING;
+
+    return_PTR (State);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtDeleteGenericState
+ *
+ * PARAMETERS:  State               - The state object to be deleted
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Put a state object back into the global state cache.  The object
+ *              is not actually freed at this time.
+ *
+ ******************************************************************************/
+
+void
+AcpiUtDeleteGenericState (
+    ACPI_GENERIC_STATE      *State)
+{
+    ACPI_FUNCTION_TRACE ("UtDeleteGenericState");
+
+
+    (void) AcpiOsReleaseObject (AcpiGbl_StateCache, State);
+    return_VOID;
+}
+
 

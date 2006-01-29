@@ -3,7 +3,7 @@
  *
  * Module Name: exstoren - AML Interpreter object store support,
  *                        Store to Node (namespace object)
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -11,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -204,7 +204,7 @@ AcpiExResolveObject (
         {
             /* Conversion successful but still not a valid type */
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Cannot assign type %s to %s (must be type Int/Str/Buf)\n",
                 AcpiUtGetObjectTypeName (SourceDesc),
                 AcpiUtGetTypeName (TargetType)));
@@ -349,10 +349,6 @@ AcpiExStoreObjectToObject (
 
     case ACPI_TYPE_BUFFER:
 
-        /*
-         * Note: There is different store behavior depending on the original
-         * source type
-         */
         Status = AcpiExStoreBufferToBuffer (ActualSrcDesc, DestDesc);
         break;
 
@@ -366,7 +362,7 @@ AcpiExStoreObjectToObject (
         /*
          * All other types come here.
          */
-        ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "Store into type %s not implemented\n",
+        ACPI_REPORT_WARNING (("Store into type %s not implemented\n",
             AcpiUtGetObjectTypeName (DestDesc)));
 
         Status = AE_NOT_IMPLEMENTED;
