@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utcache - local cache allocation routines
- *              $Revision: 1.3 $
+ *              xRevision: 1.3 $
  *
  *****************************************************************************/
 
@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD$");
+
 #define __UTCACHE_C__
 
 #include "acpi.h"
@@ -140,7 +143,7 @@
 
 ACPI_STATUS
 AcpiOsCreateCache (
-    char                    *CacheName,
+    const char              *CacheName,
     UINT16                  ObjectSize,
     UINT16                  MaxDepth,
     ACPI_MEMORY_LIST        **ReturnCache)
