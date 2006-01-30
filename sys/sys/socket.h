@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.75 2005/03/09 19:02:22 tron Exp $	*/
+/*	$NetBSD: socket.h,v 1.75.2.1 2006/01/30 13:13:55 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -494,7 +494,7 @@ struct cmsghdr {
 	(((__caddr_t)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len) + \
 			    __CMSG_ALIGN(sizeof(struct cmsghdr)) > \
 	    (((__caddr_t)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
-	    (struct cmsghdr *)NULL : \
+	    (struct cmsghdr *)0 : \
 	    (struct cmsghdr *)((__caddr_t)(cmsg) + \
 	        __CMSG_ALIGN((cmsg)->cmsg_len)))
 
@@ -505,7 +505,7 @@ struct cmsghdr {
 #define	CMSG_FIRSTHDR(mhdr) \
 	((mhdr)->msg_controllen >= sizeof(struct cmsghdr) ? \
 	 (struct cmsghdr *)(mhdr)->msg_control : \
-	 (struct cmsghdr *)NULL)
+	 (struct cmsghdr *)0)
 
 #define CMSG_SPACE(l)	(__CMSG_ALIGN(sizeof(struct cmsghdr)) + __CMSG_ALIGN(l))
 #define CMSG_LEN(l)	(__CMSG_ALIGN(sizeof(struct cmsghdr)) + (l))
