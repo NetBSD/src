@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.20 2006/01/24 18:35:18 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.21 2006/01/30 21:15:37 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.20 2006/01/24 18:35:18 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.21 2006/01/30 21:15:37 dsl Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -341,6 +341,7 @@ i386_editboot(ib_params *params)
 
 	/*
 	 * Read in the existing bootstrap.
+	 * Look in any of the first 4 sectors.
 	 */
 
 	bpp = NULL;
@@ -354,14 +355,18 @@ i386_editboot(ib_params *params)
 			goto done;
 		}
 
-		magic = *(uint32_t *)(buf + 4) | 0xf;
-		if (magic != htole32(X86_BOOT_MAGIC_1 | 0xf))
+		/* Magic number is 4 bytes in (to allow for a jmps) */
+		/* Also allow any of the magic numbers. */
+		magic = le32toh(*(uint32_t *)(buf + 4)) | 0xf;
+		if (magic != (X86_BOOT_MAGIC_1 | 0xf))
 			continue;
+
+		/* The parameters are just after the magic number */
 		bpp = (void *)(buf + 8);
 		break;
 	}
 	if (bpp == NULL) {
-		warnx("Invalid magic in stage1 boostrap");
+		warnx("Invalid magic in existing bootstrap");
 		goto done;
 	}
 
