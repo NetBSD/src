@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.24 2006/01/28 10:24:54 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.25 2006/01/30 13:24:56 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -563,4 +563,25 @@ lib/libc/rpc/mt_misc.c				1.5
 	__rpc_).  Rather than scattering changes around the 3rd-party RPC
 	code, place them in namespace.h.
 	[kleink, ticket #1142]
+
+sys/sys/socket.h				1.78
+
+	Since NULL isn't necessarily available, change CMSG_*() to use the
+	integer constant expression directly instead.
+	[kleink, ticket #1143]
+
+share/termcap/termcap.src			1.95
+
+	Wscons terminals only have 8 colours and don't need an NC entry.
+	Fixes PR misc/32135 by Pavel Cahyna.
+	[jdc, ticket #1144]
+
+sys/arch/hp300/stand/common/ite_dv.c		1.6
+sys/arch/hp300/stand/common/ite_gb.c		1.6
+sys/arch/hp300/stand/common/ite_hy.c		1.6
+sys/arch/hp300/stand/common/ite_rb.c		1.6
+sys/arch/hp300/stand/common/ite_tc.c		1.6
+
+	Fix bootloader so it doesn't print garbage to the bitmap console.
+	[tsutsui, ticket #1145]
 
