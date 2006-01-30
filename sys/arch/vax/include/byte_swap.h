@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.9 2005/12/28 18:40:13 perry Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.10 2006/01/30 22:46:36 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -33,11 +33,15 @@
 
 #ifndef _VAX_BYTE_SWAP_H_
 #define _VAX_BYTE_SWAP_H_
+#ifdef __GNUC__
+#include <sys/types.h>
+__BEGIN_DECLS
 
 #include <sys/types.h>
 
+#define	__BYTE_SWAP_U32_VARIABLE __byte_swap_u32_variable
 static __inline uint32_t __attribute__((__unused__))
-__byte_swap_long_variable(uint32_t x)
+__byte_swap_u32_variable(uint32_t x)
 {
 	uint32_t y;
 
@@ -53,14 +57,14 @@ __byte_swap_long_variable(uint32_t x)
 	return (y);
 }
 
+#define	__BYTE_SWAP_U16_VARIABLE __byte_swap_u16_variable
 static __inline uint16_t __attribute__((__unused__))
-__byte_swap_word_variable(uint16_t x)
+__byte_swap_u16_variable(uint16_t x)
 {
 
 	return (x << 8 | x >> 8);
 }
 
-#define __byte_swap_long(x)     __byte_swap_long_variable(x)
-#define __byte_swap_word(x)     __byte_swap_word_variable(x)
-
+__END_DECLS
+#endif
 #endif /* _VAX_BYTE_SWAP_H_ */
