@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.27 2005/07/18 00:21:58 rpaulo Exp $
+.\" $NetBSD: wsdisplay.4,v 1.28 2006/01/30 17:25:39 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -50,6 +50,7 @@
 .Cd "wsdisplay0 at smg0"
 (VAXstation small monochrome display)
 .Cd "wsdisplay* at ... kbdmux N"
+.Pp
 .Cd options WSDISPLAY_BORDER_COLOR=WSCOL_XXX
 .Cd options WSDISPLAY_CHARFUNCS
 .Cd options WSDISPLAY_CUSTOM_BORDER
@@ -476,7 +477,7 @@ and
 .Va kernel_attrs
 variables are a combination of
 .Va WSATTR_*
-bits, and specify the attribues used to draw messages.
+bits, and specify the attributes used to draw messages.
 The
 .Va default_bg ,
 .Va default_fg ,
@@ -553,7 +554,7 @@ Status device.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr ega 4 ,
+.\" .Xr ega 4 ,
 .Xr pcdisplay 4 ,
 .Xr tty 4 ,
 .Xr vga 4 ,
