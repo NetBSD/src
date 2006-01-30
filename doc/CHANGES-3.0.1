@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.12 2006/01/28 10:23:55 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.13 2006/01/30 13:24:35 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -137,4 +137,13 @@ sys/dist/pf/net/pf_norm.c			1.11
 
 	Fix a bug in the fragment cache which could cause kernel panics.
 	[peter, ticket #1139]
+
+sys/arch/hp300/stand/common/ite_dv.c		1.6
+sys/arch/hp300/stand/common/ite_gb.c		1.6
+sys/arch/hp300/stand/common/ite_hy.c		1.6
+sys/arch/hp300/stand/common/ite_rb.c		1.6
+sys/arch/hp300/stand/common/ite_tc.c		1.6
+
+	Fix bootloader so it doesn't print garbage to the bitmap console.
+	[tsutsui, ticket #1145]
 
