@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tc.c,v 1.4 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: ite_tc.c,v 1.4.12.1 2006/01/30 13:18:03 tron Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -148,7 +148,7 @@ topcat_init(struct ite_data *ip)
 }
 
 void
-topcat_putc(struct ite_data *ip, int dy, int dx, int c, int mode)
+topcat_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
 {
 
 	topcat_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -180,7 +180,7 @@ topcat_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 }
 
 void
-topcat_scroll(struct ite_data *ip, int sy, int count, int dir, int sx)
+topcat_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
 {
 	int dy = sy - count;
 	int height = ip->rows - sy;
