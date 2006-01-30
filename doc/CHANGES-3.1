@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.25 2006/01/30 13:24:56 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.26 2006/01/30 22:44:57 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -584,4 +584,23 @@ sys/arch/hp300/stand/common/ite_tc.c		1.6
 
 	Fix bootloader so it doesn't print garbage to the bitmap console.
 	[tsutsui, ticket #1145]
+
+sys/arch/mac68k/dev/sbc.c			1.49
+
+	Add fault-protection in sbc_pdma_in() like in all the other PDMA
+	functions. This fixes PR port-mac68k/9679.
+	[chs, ticket #1146]
+
+sys/arch/sparc/include/param.h			1.64
+
+	Increase NKMEMPAGES_MAX_DEFAULT to 32 MB. This is needed on sun4m
+	machines with 512 MB of RAM, and it doesn't seem to cause any
+	problems on sun4c.
+	[chs, ticket #1147]
+
+sys/dev/rcons/rcons_subr.c			1.16
+
+	Avoid watchdog reset caused by output of certain characters on the
+	console. This fixes PR port-sparc/29948.
+	[chs, ticket #1148]
 
