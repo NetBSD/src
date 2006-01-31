@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.116 2005/06/29 02:31:19 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.117 2006/01/31 20:01:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.116 2005/06/29 02:31:19 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.117 2006/01/31 20:01:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1046,7 +1046,7 @@ setgate(int argc, char *argv[])
 			gatemode = 0;
 		else {
 			if (argc == 3)
-				gateport = xstrdup(argv[2]);
+				gateport = ftp_strdup(argv[2]);
 			(void)strlcpy(gsbuf, argv[1], sizeof(gsbuf));
 			gateserver = gsbuf;
 			gatemode = 1;
@@ -1332,7 +1332,7 @@ ls(int argc, char *argv[])
 		if (EMPTYSTRING(p))
 			p = DEFAULTPAGER;
 		len = strlen(p) + 2;
-		locfile = xmalloc(len);
+		locfile = ftp_malloc(len);
 		locfile[0] = '|';
 		(void)strlcpy(locfile + 1, p, len - 1);
 		freelocfile = 1;
@@ -2534,7 +2534,7 @@ lpage(int argc, char *argv[])
 	if (EMPTYSTRING(p))
 		p = DEFAULTPAGER;
 	len = strlen(p) + strlen(locfile) + 2;
-	pager = xmalloc(len);
+	pager = ftp_malloc(len);
 	(void)strlcpy(pager, p,		len);
 	(void)strlcat(pager, " ",	len);
 	(void)strlcat(pager, locfile,	len);
@@ -2564,7 +2564,7 @@ page(int argc, char *argv[])
 	if (EMPTYSTRING(p))
 		p = DEFAULTPAGER;
 	len = strlen(p) + 2;
-	pager = xmalloc(len);
+	pager = ftp_malloc(len);
 	pager[0] = '|';
 	(void)strlcpy(pager + 1, p, len - 1);
 
@@ -2646,7 +2646,7 @@ setoption(int argc, char *argv[])
 			return;
 		}
 		FREEPTR(o->value);
-		o->value = xstrdup(argv[2]);
+		o->value = ftp_strdup(argv[2]);
 		if (verbose)
 			fprintf(ttyout, "Setting `%s' to `%s'.\n",
 			    o->name, o->value);
