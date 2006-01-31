@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.25 2006/01/04 23:38:27 xtraeme Exp $
+# $NetBSD: XEN0,v 1.26 2006/01/31 13:52:16 gdt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -653,7 +653,7 @@ pseudo-device	fss		4	# file system snapshot device
 # options 	VINUMDEBUG
 
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd		32	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter
