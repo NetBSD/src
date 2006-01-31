@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.41 2005/03/16 02:04:51 xtraeme Exp $ */
+/*	$NetBSD: arp.c,v 1.42 2006/01/31 17:47:04 christos Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.41 2005/03/16 02:04:51 xtraeme Exp $");
+__RCSID("$NetBSD: arp.c,v 1.42 2006/01/31 17:47:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -335,7 +335,7 @@ delete(const char *host, const char *info)
 	sina = &sin_m;
 	rtm = &m_rtmsg.m_rtm;
 
-	if (info && strncmp(info, "pro", 3) )
+	if (info && strncmp(info, "pub", 3) == 0)
 		export_only = 1;
 	getsocket();
 	sin_m = blank_sin;		/* struct copy */
@@ -546,7 +546,7 @@ usage(void)
 	progname = getprogname();
 	(void)fprintf(stderr, "usage: %s [-n] hostname\n", progname);
 	(void)fprintf(stderr, "usage: %s [-nv] -a\n", progname);
-	(void)fprintf(stderr, "usage: %s [-v] -d [-a|hostname]\n", progname);
+	(void)fprintf(stderr, "usage: %s [-v] -d [-a|hostname [pub]]\n", progname);
 	(void)fprintf(stderr,
 	    "usage: %s -s hostname ether_addr [temp] [pub]\n", progname);
 	(void)fprintf(stderr, "usage: %s -f filename\n", progname);
