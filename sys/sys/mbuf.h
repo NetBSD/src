@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.120 2006/01/24 13:02:57 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.121 2006/01/31 17:48:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -945,7 +945,7 @@ m_ext_free(struct mbuf *m, boolean_t dofree)
 	if (MCLISREFERENCED(m)) {
 		_MCLDEREFERENCE(m);
 	} else if (m->m_flags & M_CLUSTER) {
-		pool_cache_put_paddr(m->m_ext.ext_arg,
+		pool_cache_put_paddr((struct pool_cache *)m->m_ext.ext_arg,
 		    m->m_ext.ext_buf, m->m_ext.ext_paddr);
 	} else if (m->m_ext.ext_free) {
 		(*m->m_ext.ext_free)(dofree ? m : NULL, m->m_ext.ext_buf,
