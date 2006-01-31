@@ -1,7 +1,7 @@
-/* $NetBSD: alloc.s,v 1.8 2001/03/11 20:10:04 mhitch Exp $ */
+/* $NetBSD: alloc.s,v 1.9 2006/01/31 14:58:28 is Exp $ */
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,16 +47,17 @@ ENTRY_NOPROFILE(alloc)
 	movl	%pc@(_C_LABEL(SysBase):w),%a6
 	movl	%sp@(8),%d0
 	movl	#0x50001,%d1	| MEMF_CLEAR|MEMF_REVERSE|MEMF_PUBLIC for now.
-	jsr	%a6@(-0x2ac)	| AllocVec
+	jsr	%a6@(-0xc6)	| AllocMem
 	movl	%sp@+,%a6
 	movl	%d0,%a0		| Comply with ELF ABI
 	rts
 
-ENTRY_NOPROFILE(free)
+ENTRY_NOPROFILE(dealloc)
 	movl	%a6,%sp@-
 	movl	%pc@(_C_LABEL(SysBase):w),%a6
 	movl	%sp@(8),%a1
-	jsr	%a6@(-0x2b2)	| FreeVec
+	movl	%sp@(12),%d0
+	jsr	%a6@(-0xd2)	| FreeMem
 	movl	%sp@+,%a6
 	rts
 
