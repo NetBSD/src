@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.36 2005/12/11 12:24:57 christos Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.37 2006/01/31 17:19:39 elad Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.36 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.37 2006/01/31 17:19:39 elad Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -270,7 +270,7 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 
 /*
  * input routine for IPPRPOTO_MOBILE
- * This is a little bit diffrent from the other modes, as the
+ * This is a little bit different from the other modes, as the
  * encapsulating header was not prepended, but instead inserted
  * between IP header and payload
  */
