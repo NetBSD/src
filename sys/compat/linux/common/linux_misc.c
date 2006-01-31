@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.148 2006/01/21 13:34:15 yamt Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.149 2006/01/31 14:02:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.148 2006/01/21 13:34:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.149 2006/01/31 14:02:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,15 @@ linux_sys_mremap(l, v, retval)
 	oldva = (vaddr_t)SCARG(uap, old_address);
 	oldsize = round_page(SCARG(uap, old_size));
 	newsize = round_page(SCARG(uap, new_size));
+	if ((flags & ~(LINUX_MREMAP_FIXED|LINUX_MREMAP_MAYMOVE)) != 0) {
+		error = EINVAL;
+		goto done;
+	}
 	if ((flags & LINUX_MREMAP_FIXED) != 0) {
+		if ((flags & LINUX_MREMAP_MAYMOVE) == 0) {
+			error = EINVAL;
+			goto done;
+		}
 #if 0 /* notyet */
 		newva = SCARG(uap, new_address);
 		uvmflags = UVM_MREMAP_FIXED;
