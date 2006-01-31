@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2005/11/20 19:28:23 ross Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2006/01/31 17:36:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2005/11/20 19:28:23 ross Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2006/01/31 17:36:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,8 @@ int	trace;
 int	verbose;
 int	tsize=0;
 int	tout=0;
-int	def_blksize=SEGSIZE;
-int	blksize=SEGSIZE;
+size_t	def_blksize=SEGSIZE;
+size_t	blksize=SEGSIZE;
 int	connected;
 char	mode[32];
 char	line[LBUFLEN];
@@ -215,7 +215,7 @@ setpeer0(host, port)
 	const char *cause = "unknown";
 
 	if (connected) {
-		close(f);
+		(void)close(f);
 		f = -1;
 	}
 	connected = 0;
@@ -245,7 +245,8 @@ setpeer0(host, port)
 		memset(&ss, 0, sizeof(ss));
 		ss.ss_family = res->ai_family;
 		ss.ss_len = res->ai_addrlen;
-		if (bind(f, (struct sockaddr *)&ss, ss.ss_len) < 0) {
+		if (bind(f, (struct sockaddr *)(void *)&ss,
+		    (socklen_t)ss.ss_len) < 0) {
 			cause = "bind";
 			close(f);
 			f = -1;
@@ -296,7 +297,7 @@ setpeer(argc, argv)
 	if (argc < 2) {
 		strcpy(line, "Connect ");
 		printf("(to) ");
-		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
+		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -360,6 +361,7 @@ modecmd(argc, argv)
 }
 
 void
+/*ARGSUSED*/
 setbinary(argc, argv)
 	int argc;
 	char *argv[];
@@ -369,6 +371,7 @@ setbinary(argc, argv)
 }
 
 void
+/*ARGSUSED*/
 setascii(argc, argv)
 	int argc;
 	char *argv[];
@@ -402,7 +405,7 @@ put(argc, argv)
 	if (argc < 2) {
 		strcpy(line, "send ");
 		printf("(file) ");
-		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
+		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -488,7 +491,7 @@ get(argc, argv)
 	if (argc < 2) {
 		strcpy(line, "get ");
 		printf("(files) ");
-		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
+		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -564,7 +567,7 @@ setblksize(argc, argv)
 	if (argc < 2) {
 		strcpy(line, "blksize ");
 		printf("(blksize) ");
-		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
+		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -580,8 +583,8 @@ setblksize(argc, argv)
 		blksize = t;
 }
 
-int	def_rexmtval = TIMEOUT;
-int	rexmtval = TIMEOUT;
+unsigned int	def_rexmtval = TIMEOUT;
+unsigned int	rexmtval = TIMEOUT;
 
 void
 setrexmt(argc, argv)
@@ -593,7 +596,7 @@ setrexmt(argc, argv)
 	if (argc < 2) {
 		strcpy(line, "Rexmt-timeout ");
 		printf("(value) ");
-		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
+		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -621,7 +624,7 @@ settimeout(argc, argv)
 	if (argc < 2) {
 		strcpy(line, "Maximum-timeout ");
 		printf("(value) ");
-		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
+		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -638,6 +641,7 @@ settimeout(argc, argv)
 }
 
 void
+/*ARGSUSED*/
 status(argc, argv)
 	int argc;
 	char *argv[];
@@ -653,6 +657,7 @@ status(argc, argv)
 }
 
 void
+/*ARGSUSED*/
 intr(dummy)
 	int dummy;
 {
@@ -770,6 +775,7 @@ makeargv()
 }
 
 void
+/*ARGSUSED*/
 quit(argc, argv)
 	int argc;
 	char *argv[];
@@ -808,6 +814,7 @@ help(argc, argv)
 }
 
 void
+/*ARGSUSED*/
 settrace(argc, argv)
 	int argc;
 	char **argv;
@@ -817,6 +824,7 @@ settrace(argc, argv)
 }
 
 void
+/*ARGSUSED*/
 setverbose(argc, argv)
 	int argc;
 	char **argv;
@@ -826,6 +834,7 @@ setverbose(argc, argv)
 }
 
 void
+/*ARGSUSED*/
 settsize(argc, argv)
 	int argc;
 	char **argv;
@@ -835,6 +844,7 @@ settsize(argc, argv)
 }
 
 void
+/*ARGSUSED*/
 settimeoutopt(argc, argv)
 	int argc;
 	char **argv;
