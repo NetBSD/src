@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.106 2006/01/31 14:05:47 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.107 2006/01/31 14:11:25 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.106 2006/01/31 14:05:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.107 2006/01/31 14:11:25 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -570,7 +570,6 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 	} else if (uobjpage != PGO_DONTCARE) {
 		/* object-backed COW */
 		opg = uobjpage;
-		KASSERT(opg->uobject == ufi->entry->object.uvm_obj);
 	} else {
 		/* ZFOD */
 		opg = NULL;
@@ -1071,6 +1070,7 @@ ReFault:
 				if (curpg == NULL || curpg == PGO_DONTCARE) {
 					continue;
 				}
+				KASSERT(curpg->uobject == uobj);
 
 				/*
 				 * if center page is resident and not
@@ -1513,6 +1513,7 @@ Case2:
 		locked = uvmfault_relock(&ufi);
 		if (locked && amap)
 			amap_lock(amap);
+		uobj = uobjpage->uobject;
 		simple_lock(&uobj->vmobjlock);
 
 		/* locked(locked): maps(read), amap(if !null), uobj, uobjpage */
@@ -1576,6 +1577,7 @@ Case2:
 	 *  - at this point uobjpage could be PG_WANTED (handle later)
 	 */
 
+	KASSERT(uobj == NULL || uobj == uobjpage->uobject);
 	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
 	    (uobjpage->flags & PG_CLEAN) != 0);
 	if (promote == FALSE) {
