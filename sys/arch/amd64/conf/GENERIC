@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.80 2006/01/31 09:32:21 kochi Exp $
+# $NetBSD: GENERIC,v 1.81 2006/01/31 16:39:47 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.80 $"
+#ident 		"GENERIC-$Revision: 1.81 $"
 
 maxusers	32		# estimated number of users
 
@@ -521,6 +521,7 @@ mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
@@ -699,6 +700,10 @@ ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
+
+# USB 802.11 adapters
+atu*	at uhub? port ?		# Atmel at76c50x 802.11b
+ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
