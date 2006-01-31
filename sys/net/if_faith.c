@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.33 2006/01/31 17:15:20 christos Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.34 2006/01/31 22:27:15 rpaulo Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -36,11 +36,11 @@
  */
 
 /*
- * Loopback interface driver for protocol testing and timing.
+ * IPv6-to-IPv4 TCP relay capturing interface
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.33 2006/01/31 17:15:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.34 2006/01/31 22:27:15 rpaulo Exp $");
 
 #include "opt_inet.h"
 
