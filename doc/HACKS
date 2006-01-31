@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.52 2005/12/13 05:56:23 jmc Exp $
+# $NetBSD: HACKS,v 1.53 2006/01/31 10:57:43 scw Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -398,6 +398,15 @@ port	sh5
 	cdate	Thu May 25 23:05:20 UTC 2005
 	who	he
 	file	sys/lkm/net/bsdcomp/Makefile : 1.3
+	descr
+		Gcc3 for sh5 gets an ICE compiling this at -O2,
+		"could not split insn".  Drop to -O1 for sh5.
+	kcah
+
+	hack	gcc 3.3.3 nb3 on sh5 - ICE compiling strtod.c
+	cdate	Tue Jan 31 10:51:52 GMT 2006
+	who	scw
+	file	lib/libc/gdtoa/Makefile.inc : 1.2
 	descr
 		Gcc3 for sh5 gets an ICE compiling this at -O2,
 		"could not split insn".  Drop to -O1 for sh5.
