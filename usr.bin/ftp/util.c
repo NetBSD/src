@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.132 2006/01/31 20:01:23 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.133 2006/01/31 20:05:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.132 2006/01/31 20:01:23 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.133 2006/01/31 20:05:36 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -202,7 +202,7 @@ getremoteinfo(void)
 	int overbose, i;
 
 	overbose = verbose;
-	if (debug == 0)
+	if (ftp_debug == 0)
 		verbose = -1;
 
 			/* determine remote system type */
@@ -269,7 +269,7 @@ getremoteinfo(void)
 	} else
 		features[FEAT_FEAT] = 0;
 #ifndef NO_DEBUG
-	if (debug) {
+	if (ftp_debug) {
 #define DEBUG_FEAT(x) fprintf(ttyout, "features[" #x "] = %d\n", features[(x)])
 		DEBUG_FEAT(FEAT_FEAT);
 		DEBUG_FEAT(FEAT_MDTM);
@@ -658,7 +658,7 @@ remotesize(const char *file, int noisy)
 
 	overbose = verbose;
 	size = -1;
-	if (debug == 0)
+	if (ftp_debug == 0)
 		verbose = -1;
 	if (! features[FEAT_SIZE]) {
 		if (noisy)
@@ -680,7 +680,7 @@ remotesize(const char *file, int noisy)
 	} else {
 		if (r == ERROR && code == 500 && features[FEAT_SIZE] == -1)
 			features[FEAT_SIZE] = 0;
-		if (noisy && debug == 0) {
+		if (noisy && ftp_debug == 0) {
 			fputs(reply_string, ttyout);
 			putc('\n', ttyout);
 		}
@@ -702,7 +702,7 @@ remotemodtime(const char *file, int noisy)
 	overbose = verbose;
 	ocode = code;
 	rtime = -1;
-	if (debug == 0)
+	if (ftp_debug == 0)
 		verbose = -1;
 	if (! features[FEAT_MDTM]) {
 		if (noisy)
@@ -763,7 +763,7 @@ remotemodtime(const char *file, int noisy)
 		timebuf.tm_isdst = -1;
 		rtime = timegm(&timebuf);
 		if (rtime == -1) {
-			if (noisy || debug != 0)
+			if (noisy || ftp_debug != 0)
 				goto bad_parse_time;
 			else
 				goto cleanup_parse_time;
@@ -772,7 +772,7 @@ remotemodtime(const char *file, int noisy)
 	} else {
 		if (r == ERROR && code == 500 && features[FEAT_MDTM] == -1)
 			features[FEAT_MDTM] = 0;
-		if (noisy && debug == 0) {
+		if (noisy && ftp_debug == 0) {
 			fputs(reply_string, ttyout);
 			putc('\n', ttyout);
 		}
@@ -807,7 +807,7 @@ updateremotecwd(void)
 
 	overbose = verbose;
 	ocode = code;
-	if (debug == 0)
+	if (ftp_debug == 0)
 		verbose = -1;
 	if (command("PWD") != COMPLETE)
 		goto badremotecwd;
