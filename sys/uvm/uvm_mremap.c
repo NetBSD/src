@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.2 2006/01/23 07:53:01 yamt Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.3 2006/01/31 14:03:53 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.2 2006/01/23 07:53:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.3 2006/01/31 14:03:53 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -104,12 +104,9 @@ done:
  */
 
 int
-uvm_mremap(struct vm_map *oldmap,
-    vaddr_t oldva, vsize_t oldsize,
-    struct vm_map *newmap,
-    vaddr_t *newvap, vsize_t newsize,
-    struct proc *newproc,
-    int flags)
+uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
+    struct vm_map *newmap, vaddr_t *newvap, vsize_t newsize,
+    struct proc *newproc, int flags)
 {
 	vaddr_t dstva;
 	vsize_t movesize;
@@ -167,7 +164,7 @@ uvm_mremap(struct vm_map *oldmap,
 	if (!fixed) {
 		KASSERT(&newproc->p_vmspace->vm_map == newmap);
 		newva = newproc->p_emul->e_vm_default_addr(newproc,
-		     (vaddr_t)newproc->p_vmspace->vm_daddr, newsize);
+		    (vaddr_t)newproc->p_vmspace->vm_daddr, newsize);
 	}
 	dstva = newva;
 	if (!uvm_map_reserve(newmap, newsize, oldva, 0, &dstva, 
