@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.80 2006/01/29 03:12:22 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.81 2006/01/31 09:30:06 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.80 2006/01/29 03:12:22 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.81 2006/01/31 09:30:06 kochi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -160,7 +160,6 @@ static uint64_t acpi_root_pointer;	/* found as hw.acpi.root */
  * Prototypes.
  */
 static void		acpi_shutdown(void *);
-static ACPI_STATUS	acpi_disable(struct acpi_softc *sc);
 static void		acpi_build_tree(struct acpi_softc *);
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
 
@@ -399,15 +398,10 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 static void
 acpi_shutdown(void *arg)
 {
-	struct acpi_softc *sc = arg;
-	ACPI_STATUS rv;
-
-	rv = acpi_disable(sc);
-	if (ACPI_FAILURE(rv))
-		printf("%s: WARNING: unable to disable ACPI: %s\n",
-		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
+	/* nothing */
 }
 
+#if 0
 /*
  * acpi_disable:
  *
@@ -418,15 +412,14 @@ acpi_disable(struct acpi_softc *sc)
 {
 	ACPI_STATUS rv = AE_OK;
 
-#ifdef ACPI_DISABLE_ON_POWEROFF
 	if (acpi_active) {
 		rv = AcpiDisable();
 		if (ACPI_SUCCESS(rv))
 			acpi_active = 0;
 	}
-#endif
 	return rv;
 }
+#endif
 
 struct acpi_make_devnode_state {
 	struct acpi_softc *softc;
