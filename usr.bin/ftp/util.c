@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.131 2005/06/29 05:00:30 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.132 2006/01/31 20:01:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.131 2005/06/29 05:00:30 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.132 2006/01/31 20:01:23 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -385,9 +385,9 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 	aflag = rval = 0;
 	user = pass = acct = NULL;
 	if (luser)
-		user = xstrdup(luser);
+		user = ftp_strdup(luser);
 	if (lpass)
-		pass = xstrdup(lpass);
+		pass = ftp_strdup(lpass);
 
 	DPRINTF("ftp_login: user `%s' pass `%s' host `%s'\n",
 	    user ? user : "<null>", pass ? pass : "<null>",
@@ -398,9 +398,9 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 	 */
 	if (anonftp) {
 		FREEPTR(user);
-		user = xstrdup("anonymous");	/* as per RFC 1635 */
+		user = ftp_strdup("anonymous");	/* as per RFC 1635 */
 		FREEPTR(pass);
-		pass = xstrdup(getoptionvalue("anonpass"));
+		pass = ftp_strdup(getoptionvalue("anonpass"));
 	}
 
 	if (ruserpass(host, &user, &pass, &acct) < 0) {
@@ -420,9 +420,9 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 			code = -1;
 			goto cleanup_ftp_login;
 		} else if (nlen == 0) {
-			user = xstrdup(localname);
+			user = ftp_strdup(localname);
 		} else {
-			user = xstrdup(tmp);
+			user = ftp_strdup(tmp);
 		}
 	}
 
@@ -431,7 +431,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 		size_t len;
 
 		len = strlen(user) + 1 + strlen(host) + 1;
-		nuser = xmalloc(len);
+		nuser = ftp_malloc(len);
 		(void)strlcpy(nuser, user, len);
 		(void)strlcat(nuser, "@",  len);
 		(void)strlcat(nuser, host, len);
@@ -443,7 +443,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 	if (n == CONTINUE) {
 		if (pass == NULL) {
 			p = getpass("Password: ");
-			pass = xstrdup(p);
+			pass = ftp_strdup(p);
 			memset(p, 0, strlen(p));
 		}
 		n = command("PASS %s", pass);
@@ -453,7 +453,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 		aflag++;
 		if (acct == NULL) {
 			p = getpass("Account: ");
-			acct = xstrdup(p);
+			acct = ftp_strdup(p);
 			memset(p, 0, strlen(p));
 		}
 		if (acct[0] == '\0') {
@@ -469,7 +469,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 		goto cleanup_ftp_login;
 	}
 	rval = 1;
-	username = xstrdup(user);
+	username = ftp_strdup(user);
 	if (proxy)
 		goto cleanup_ftp_login;
 
@@ -633,7 +633,7 @@ globulize(const char *pattern)
 	char *p;
 
 	if (!doglob)
-		return (xstrdup(pattern));
+		return (ftp_strdup(pattern));
 
 	flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 	memset(&gl, 0, sizeof(gl));
@@ -642,7 +642,7 @@ globulize(const char *pattern)
 		globfree(&gl);
 		return (NULL);
 	}
-	p = xstrdup(gl.gl_pathv[0]);
+	p = ftp_strdup(gl.gl_pathv[0]);
 	globfree(&gl);
 	return (p);
 }
@@ -1210,7 +1210,7 @@ parseport(const char *port, int defport)
 	long	 nport;
 	char	*p, *ep;
 
-	p = xstrdup(port);
+	p = ftp_strdup(port);
 	nport = strtol(p, &ep, 10);
 	if (*ep != '\0' && ep == p) {
 		struct servent	*svp;
@@ -1318,7 +1318,7 @@ getline(FILE *stream, char *buf, size_t buflen, const char **errormsg)
  * Returns -1 upon failure (with errno set to the problem), or 0 on success.
  */
 int
-xconnect(int sock, const struct sockaddr *name, socklen_t namelen)
+ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen)
 {
 	int		flags, rv, timeout, error;
 	socklen_t	slen;
@@ -1359,7 +1359,7 @@ xconnect(int sock, const struct sockaddr *name, socklen_t namelen)
 				timeout = INFTIM;
 			}
 			pfd[0].revents = 0;
-			rv = xpoll(pfd, 1, timeout);
+			rv = ftp_poll(pfd, 1, timeout);
 						/* loop until poll ! EINTR */
 		} while (rv == -1 && errno == EINTR);
 
@@ -1394,7 +1394,7 @@ xconnect(int sock, const struct sockaddr *name, socklen_t namelen)
  * Internal version of listen(2); sets socket buffer sizes first.
  */
 int
-xlisten(int sock, int backlog)
+ftp_listen(int sock, int backlog)
 {
 
 	setupsockbufsize(sock);
@@ -1406,7 +1406,7 @@ xlisten(int sock, int backlog)
  * on platforms without the former.
  */
 int
-xpoll(struct pollfd *fds, int nfds, int timeout)
+ftp_poll(struct pollfd *fds, int nfds, int timeout)
 {
 	return poll(fds, nfds, timeout);
 }
@@ -1415,7 +1415,7 @@ xpoll(struct pollfd *fds, int nfds, int timeout)
  * malloc() with inbuilt error checking
  */
 void *
-xmalloc(size_t size)
+ftp_malloc(size_t size)
 {
 	void *p;
 
@@ -1429,7 +1429,7 @@ xmalloc(size_t size)
  * sl_init() with inbuilt error checking
  */
 StringList *
-xsl_init(void)
+ftp_sl_init(void)
 {
 	StringList *p;
 
@@ -1443,7 +1443,7 @@ xsl_init(void)
  * sl_add() with inbuilt error checking
  */
 void
-xsl_add(StringList *sl, char *i)
+ftp_sl_add(StringList *sl, char *i)
 {
 
 	if (sl_add(sl, i) == -1)
@@ -1454,12 +1454,12 @@ xsl_add(StringList *sl, char *i)
  * strdup() with inbuilt error checking
  */
 char *
-xstrdup(const char *str)
+ftp_strdup(const char *str)
 {
 	char *s;
 
 	if (str == NULL)
-		errx(1, "xstrdup() called with NULL argument");
+		errx(1, "ftp_strdup() called with NULL argument");
 	s = strdup(str);
 	if (s == NULL)
 		err(1, "Unable to allocate memory for string copy");
