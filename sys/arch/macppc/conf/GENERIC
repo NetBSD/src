@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.220 2006/01/04 23:38:27 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.221 2006/01/31 16:38:58 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.220 $"
+#ident 		"GENERIC-$Revision: 1.221 $"
 
 maxusers	32
 
@@ -232,6 +232,7 @@ lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
@@ -359,6 +360,7 @@ wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? function ?	# 3Com 3C575TX
 tlp*	at cardbus? function ?	# DECchip 21143
+ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
 rtk*	at cardbus? function ?	# Realtek 8129/8139
 rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
 
@@ -446,6 +448,10 @@ ucom*	at ukyopon? portno ?
 uscanner* at uhub? port ?				# USB scanners
 uyap* at uhub? port ?					# Y@P firmware loader
 ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
+
+# USB 802.11 adapters
+atu*	at uhub? port ?		# Atmel at76c50x 802.11b
+ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
