@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.167 2006/01/29 11:32:01 augustss Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.168 2006/01/31 09:31:01 kochi Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.167 $"
+#ident 		"GENERIC-$Revision: 1.168 $"
 
 maxusers	32		# estimated number of users
 
@@ -263,7 +263,6 @@ acpi0 		at mainbus0
 
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
-#options 	ACPI_DISABLE_ON_POWEROFF	# disable acpi on power off
 
 # ACPI devices
 #acpiacad* 	at acpi?		# ACPI AC Adapter

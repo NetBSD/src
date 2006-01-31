@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.719 2006/01/29 11:32:01 augustss Exp $
+# $NetBSD: GENERIC,v 1.720 2006/01/31 09:31:01 kochi Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.719 $"
+#ident 		"GENERIC-$Revision: 1.720 $"
 
 maxusers	32		# estimated number of users
 
@@ -323,7 +323,6 @@ cpu* at mainbus?
 
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
-#options 	ACPI_DISABLE_ON_POWEROFF	# disable acpi on power off
 
 # ACPI devices
 #acpiacad* 	at acpi?		# ACPI AC Adapter
