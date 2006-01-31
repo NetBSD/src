@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.144 2005/10/03 04:45:52 yamt Exp $
+$NetBSD: UPDATING,v 1.145 2006/01/31 22:54:22 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,13 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20060131:
+	the protocol between the sparc64 bootloader (ofwboot) and
+	the kernel was changed. Before installing a new kernel,
+	you need to update ofwboot. After a full build, just copy
+	/usr/mdec/ofwboot to /, or do a rebuild of
+	src/sys/arch/sparc/stand/ofwboot and install the result to /.
 
 20050917:
 	arch/*/conf/std.* was changed to include conf/std, which
