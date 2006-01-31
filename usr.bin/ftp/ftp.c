@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.136 2006/01/31 20:01:23 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.137 2006/01/31 20:05:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.136 2006/01/31 20:01:23 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.137 2006/01/31 20:05:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -346,7 +346,7 @@ command(const char *fmt, ...)
 	sigfunc oldsigint;
 
 #ifndef NO_DEBUG
-	if (debug) {
+	if (ftp_debug) {
 		fputs("---> ", ttyout);
 		va_start(ap, fmt);
 		if (strncmp("PASS ", fmt, 5) == 0)
@@ -1277,7 +1277,7 @@ initconn(void)
 
 #ifdef INET6
 #ifndef NO_DEBUG
-	if (myctladdr.su_family == AF_INET6 && debug &&
+	if (myctladdr.su_family == AF_INET6 && ftp_debug &&
 	    (IN6_IS_ADDR_LINKLOCAL(&myctladdr.si_su.su_sin6.sin6_addr) ||
 	     IN6_IS_ADDR_SITELOCAL(&myctladdr.si_su.su_sin6.sin6_addr))) {
 		warnx("use of scoped address can be troublesome");

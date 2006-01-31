@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.112 2005/07/06 11:21:26 wiz Exp $
+.\" 	$NetBSD: ftp.1,v 1.113 2006/01/31 20:05:36 christos Exp $
 .\"
 .\" Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -455,10 +455,10 @@ when an ascii type transfer is made, these linefeeds may be
 distinguished from a record delimiter only when
 .Ic \&cr
 is off.
-.It Ic debug Op Ar debug-value
+.It Ic ftp_debug Op Ar ftp_debug-value
 Toggle debugging mode.
 If an optional
-.Ar debug-value
+.Ar ftp_debug-value
 is specified it is used to set the debugging level.
 When debugging is on,
 .Nm

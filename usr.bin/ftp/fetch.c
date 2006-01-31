@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.166 2006/01/31 20:01:23 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.167 2006/01/31 20:05:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.166 2006/01/31 20:01:23 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.167 2006/01/31 20:05:36 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -900,7 +900,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					goto improper;
 
 #ifndef NO_DEBUG
-				if (debug) {
+				if (ftp_debug) {
 					fprintf(ttyout, "parsed range as: ");
 					if (rangestart == -1)
 						fprintf(ttyout, "*");
@@ -937,7 +937,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					if (*t == '\0')
 						mtime = timegm(&parsed);
 #ifndef NO_DEBUG
-					if (debug && mtime != -1) {
+					if (ftp_debug && mtime != -1) {
 						fprintf(ttyout,
 						    "parsed date as: %s",
 						    ctime(&mtime));
