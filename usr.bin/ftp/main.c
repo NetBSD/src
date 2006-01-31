@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.100 2006/01/31 20:01:23 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.101 2006/01/31 20:05:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.100 2006/01/31 20:01:23 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.101 2006/01/31 20:05:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,7 +312,7 @@ main(int argc, char *argv[])
 
 		case 'd':
 			options |= SO_DEBUG;
-			debug++;
+			ftp_debug++;
 			break;
 
 		case 'e':
