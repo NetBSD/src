@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpsubs.h,v 1.4 2003/08/07 11:16:14 agc Exp $	*/
+/*	$NetBSD: tftpsubs.h,v 1.5 2006/01/31 17:36:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -36,10 +36,10 @@
  * server.
  */
 struct tftphdr *r_init __P((void));
-void	read_ahead __P((FILE *, int, int));
-int	readit __P((FILE *, struct tftphdr **, int, int));
+void	read_ahead __P((FILE *, size_t, int));
+int	readit __P((FILE *, struct tftphdr **, size_t, int));
 
-int	synchnet __P((int, int));
+int	synchnet __P((int, size_t));
 
 struct tftphdr *w_init __P((void));
 int	write_behind __P((FILE *, int));
