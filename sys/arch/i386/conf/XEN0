@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.26 2006/01/31 13:52:16 gdt Exp $
+# $NetBSD: XEN0,v 1.27 2006/01/31 16:42:10 xtraeme Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -274,6 +274,7 @@ mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
@@ -520,8 +521,9 @@ kue*    at uhub? port ?         # Kawasaki LSI KL5KUSB101B based adapters
 udav*   at uhub? port ?         # Davicom DM9601 based adapters
 url*    at uhub? port ?         # Realtek RTL8150L based adapters
 
-# USB 802.11b adapters
+# USB 802.11 adapters
 atu*    at uhub? port ?         # Atmel AT76C50XX based adapters
+ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*    at uhub? port ?
