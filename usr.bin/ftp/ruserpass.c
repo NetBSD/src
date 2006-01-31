@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.30 2005/06/10 00:18:47 lukem Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.31 2006/01/31 20:01:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.30 2005/06/10 00:18:47 lukem Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.31 2006/01/31 20:01:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 		case LOGIN:
 			if (token()) {
 				if (*aname == NULL)
-					*aname = xstrdup(tokval);
+					*aname = ftp_strdup(tokval);
 				else {
 					if (strcmp(*aname, tokval))
 						goto next;
@@ -155,7 +155,7 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 				goto bad;
 			}
 			if (token() && *apass == NULL)
-				*apass = xstrdup(tokval);
+				*apass = ftp_strdup(tokval);
 			break;
 		case ACCOUNT:
 			if (fstat(fileno(cfile), &stb) >= 0
@@ -165,7 +165,7 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 				goto bad;
 			}
 			if (token() && *aacct == NULL)
-				*aacct = xstrdup(tokval);
+				*aacct = ftp_strdup(tokval);
 			break;
 		case MACDEF:
 			if (proxy) {

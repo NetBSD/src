@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.135 2005/06/29 02:31:19 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.136 2006/01/31 20:01:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.135 2005/06/29 02:31:19 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.136 2006/01/31 20:01:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,7 @@ hookup(char *host, char *port)
 			cause = "socket";
 			continue;
 		}
-		error = xconnect(s, res->ai_addr, res->ai_addrlen);
+		error = ftp_connect(s, res->ai_addr, res->ai_addrlen);
 		if (error) {
 			/* this "if" clause is to prevent print warning twice */
 			if (res->ai_next) {
@@ -549,7 +549,7 @@ empty(FILE *cin, FILE *din, int sec)
 		pfd[nfd++].events = POLLIN;
 	}
 
-	if ((nr = xpoll(pfd, nfd, sec * 1000)) <= 0)
+	if ((nr = ftp_poll(pfd, nfd, sec * 1000)) <= 0)
 		return nr;
 
 	nr = 0;
@@ -717,7 +717,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		if (buf)
 			(void)free(buf);
 		bufsize = sndbuf_size;
-		buf = xmalloc(bufsize);
+		buf = ftp_malloc(bufsize);
 	}
 
 	progressmeter(-1);
@@ -1045,7 +1045,7 @@ recvrequest(const char *cmd, const char *local, const char *remote,
 		if (buf)
 			(void)free(buf);
 		bufsize = rcvbuf_size;
-		buf = xmalloc(bufsize);
+		buf = ftp_malloc(bufsize);
 	}
 
 	progressmeter(-1);
@@ -1511,7 +1511,7 @@ initconn(void)
 		} else
 			goto bad;
 
-		while (xconnect(data, (struct sockaddr *)&data_addr.si_su,
+		while (ftp_connect(data, (struct sockaddr *)&data_addr.si_su,
 			    data_addr.su_len) < 0) {
 			if (activefallback) {
 				(void)close(data);
@@ -1574,7 +1574,7 @@ initconn(void)
 		goto bad;
 	}
 	data_addr.su_len = len;
-	if (xlisten(data, 1) < 0)
+	if (ftp_listen(data, 1) < 0)
 		warn("listen");
 
 	if (sendport) {
@@ -1709,7 +1709,7 @@ dataconn(const char *lmode)
 		timeout = td.tv_sec * 1000 + td.tv_usec/1000;
 		if (timeout < 0)
 			timeout = 0;
-		rv = xpoll(pfd, 1, timeout);
+		rv = ftp_poll(pfd, 1, timeout);
 	} while (rv == -1 && errno == EINTR);	/* loop until poll ! EINTR */
 	if (rv == -1) {
 		warn("poll waiting before accept");
