@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.8,v 1.18 2004/11/25 01:41:51 atatat Exp $
+.\"	$NetBSD: arp.8,v 1.19 2006/01/31 17:47:04 christos Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)arp.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd April 27, 1995
+.Dd January 31, 2006
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -76,7 +76,15 @@ A super-user may delete an entry for the host called
 .Ar hostname
 with the
 .Fl d
-flag.  If used with
+flag. 
+If the
+.Cm pub
+keyword is specified, only the
+.Dq published
+.Tn ARP
+entry
+for this host will be deleted.
+If used with
 .Fl a
 instead of a
 .Ar hostname ,
