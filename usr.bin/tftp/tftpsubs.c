@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpsubs.c,v 1.8 2003/08/07 11:16:14 agc Exp $	*/
+/*	$NetBSD: tftpsubs.c,v 1.9 2006/01/31 17:36:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftpsubs.c,v 1.8 2003/08/07 11:16:14 agc Exp $");
+__RCSID("$NetBSD: tftpsubs.c,v 1.9 2006/01/31 17:36:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ rw_init(x)			/* init for either read-ahead or write-behind */
 	current = 0;
 	bfs[1].counter = BF_FREE;
 	nextone = x;                    /* ahead or behind? */
-	return (struct tftphdr *)bfs[0].buf;
+	return (struct tftphdr *)(void *)bfs[0].buf;
 }
 
 /* Have emptied current buffer by sending to net and getting ack.
@@ -111,7 +111,7 @@ int
 readit(file, dpp, amt, convert)
 	FILE *file;                     /* file opened for read */
 	struct tftphdr **dpp;
-	int amt;
+	size_t amt;
 	int convert;                    /* if true, convert to ascii */
 {
 	struct bf *b;
@@ -123,7 +123,7 @@ readit(file, dpp, amt, convert)
 	if (b->counter == BF_FREE)      /* if it's empty */
 		read_ahead(file, amt, convert);      /* fill it */
 /*      assert(b->counter != BF_FREE);*//* check */
-	*dpp = (struct tftphdr *)b->buf;        /* set caller's ptr */
+	*dpp = (struct tftphdr *)(void *)b->buf;        /* set caller's ptr */
 	return b->counter;
 }
 
@@ -134,7 +134,7 @@ readit(file, dpp, amt, convert)
 void
 read_ahead(file, amt, convert)
 	FILE *file;                     /* file opened for read */
-	int amt;			/* number of bytes to read */
+	size_t amt;			/* number of bytes to read */
 	int convert;                    /* if true, convert to ascii */
 {
 	int i;
@@ -148,7 +148,7 @@ read_ahead(file, amt, convert)
 		return;
 	nextone = !nextone;             /* "incr" next buffer ptr */
 
-	dp = (struct tftphdr *)b->buf;
+	dp = (struct tftphdr *)(void *)b->buf;
 
 	if (convert == 0) {
 		b->counter = read(fileno(file), dp->th_data, amt);
@@ -190,9 +190,10 @@ writeit(file, dpp, ct, convert)
 	bfs[current].counter = ct;      /* set size of data to write */
 	current = !current;             /* switch to other buffer */
 	if (bfs[current].counter != BF_FREE)     /* if not free */
-		(void)write_behind(file, convert); /* flush it */
+		if (write_behind(file, convert) == -1) /* flush it */
+			return -1;
 	bfs[current].counter = BF_ALLOC;        /* mark as alloc'd */
-	*dpp =  (struct tftphdr *)bfs[current].buf;
+	*dpp =  (struct tftphdr *)(void *)bfs[current].buf;
 	return ct;                      /* this is a lie of course */
 }
 
@@ -221,14 +222,14 @@ write_behind(file, convert)
 
 	count = b->counter;             /* remember byte count */
 	b->counter = BF_FREE;           /* reset flag */
-	dp = (struct tftphdr *)b->buf;
+	dp = (struct tftphdr *)(void *)b->buf;
 	nextone = !nextone;             /* incr for next time */
 	buf = dp->th_data;
 
 	if (count <= 0) return -1;      /* nak logic? */
 
 	if (convert == 0)
-		return write(fileno(file), buf, count);
+		return write(fileno(file), buf, (size_t)count);
 
 	p = buf;
 	ct = count;
@@ -236,13 +237,14 @@ write_behind(file, convert)
 	    c = *p++;                   /* pick up a character */
 	    if (prevchar == '\r') {     /* if prev char was cr */
 		if (c == '\n')          /* if have cr,lf then just */
-		   fseek(file, -1, 1);  /* smash lf on top of the cr */
+		   fseeko(file, (off_t)-1, 1);  /* smash lf on top of the cr */
 		else
 		   if (c == '\0')       /* if have cr,nul then */
 			goto skipit;    /* just skip over the putc */
 		/* else just fall through and allow it */
 	    }
-	    putc(c, file);
+	    if (putc(c, file) == EOF)
+		return -1;
 skipit:
 	    prevchar = c;
 	}
@@ -262,22 +264,23 @@ skipit:
  */
 
 int
+/*ARGSUSED*/
 synchnet(f, bsize)
 	int	f;		/* socket to flush */
-	int	bsize;		/* size of buffer to sync */
+	size_t	bsize;		/* size of buffer to sync */
 {
 	int i, j = 0;
 	char rbuf[PKTSIZE];
 	struct sockaddr_storage from;
-	int fromlen;
+	socklen_t fromlen;
 
-	while (1) {
+	for (;;) {
 		(void) ioctl(f, FIONREAD, &i);
 		if (i) {
 			j++;
 			fromlen = sizeof from;
 			(void) recvfrom(f, rbuf, sizeof (rbuf), 0,
-				(struct sockaddr *)&from, &fromlen);
+				(struct sockaddr *)(void *)&from, &fromlen);
 		} else {
 			return(j);
 		}

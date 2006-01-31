@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.22 2005/11/20 19:28:23 ross Exp $	*/
+/*	$NetBSD: tftp.c,v 1.23 2006/01/31 17:36:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.22 2005/11/20 19:28:23 ross Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.23 2006/01/31 17:36:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,14 +149,14 @@ sendfile(fd, name, mode)
 	struct sockaddr_storage from;
 	struct stat sbuf;
 	off_t filesize=0;
-	int fromlen;
+	socklen_t fromlen;
 	FILE *file;
 	struct sockaddr_storage peer;
 	struct sockaddr_storage serv;	/* valid server port number */
 
 	startclock();		/* start stat's clock */
 	dp = r_init();		/* reset fillbuf/read-ahead code */
-	ap = (struct tftphdr *)ackbuf;
+	ap = (struct tftphdr *)(void *)ackbuf;
 	if (tsize) {
 		if (fstat(fd, &sbuf) == 0) {
 			filesize = sbuf.st_size;
@@ -168,7 +168,7 @@ sendfile(fd, name, mode)
 	convert = !strcmp(mode, "netascii");
 	block = 0;
 	amount = 0;
-	memcpy(&peer, &peeraddr, peeraddr.ss_len);
+	memcpy(&peer, &peeraddr, (size_t)peeraddr.ss_len);
 	memset(&serv, 0, sizeof(serv));
 
 	signal(SIGALRM, timer);
@@ -179,7 +179,7 @@ sendfile(fd, name, mode)
 		/*	size = read(fd, dp->th_data, SEGSIZE);	 */
 			size = readit(file, &dp, blksize, convert);
 			if (size < 0) {
-				nak(errno + 100, (struct sockaddr *)&peer);
+				nak(errno + 100, (struct sockaddr *)(void *)&peer);
 				break;
 			}
 			dp->th_opcode = htons((u_short)DATA);
@@ -190,8 +190,8 @@ sendfile(fd, name, mode)
 send_data:
 		if (trace)
 			tpacket("sent", dp, size + 4);
-		n = sendto(f, dp, size + 4, 0,
-		    (struct sockaddr *)&peer, peer.ss_len);
+		n = sendto(f, dp, (socklen_t)(size + 4), 0,
+		    (struct sockaddr *)(void *)&peer, (socklen_t)peer.ss_len);
 		if (n != size + 4) {
 			warn("sendto");
 			goto abort;
@@ -203,7 +203,7 @@ send_data:
 			do {
 				fromlen = sizeof(from);
 				n = recvfrom(f, ackbuf, sizeof(ackbuf), 0,
-				    (struct sockaddr *)&from, &fromlen);
+				    (struct sockaddr *)(void *)&from, &fromlen);
 			} while (n <= 0);
 			alarm(0);
 			if (n < 0) {
@@ -212,8 +212,8 @@ send_data:
 			}
 			if (!serv.ss_family)
 				serv = from;
-			else if (!cmpport((struct sockaddr *)&serv,
-			    (struct sockaddr *)&from)) {
+			else if (!cmpport((struct sockaddr *)(void *)&serv,
+			    (struct sockaddr *)(void *)&from)) {
 				warn("server port mismatch");
 				goto abort;
 			}
@@ -292,7 +292,8 @@ recvfile(fd, name, mode)
 	volatile int size, firsttrip;
 	volatile unsigned long amount;
 	struct sockaddr_storage from;
-	int fromlen, readlen;
+	socklen_t fromlen;
+	size_t readlen;
 	FILE *file;
 	volatile int convert;		/* true if converting crlf -> lf */
 	struct sockaddr_storage peer;
@@ -300,19 +301,19 @@ recvfile(fd, name, mode)
 
 	startclock();
 	dp = w_init();
-	ap = (struct tftphdr *)ackbuf;
+	ap = (struct tftphdr *)(void *)ackbuf;
 	file = fdopen(fd, "w");
 	convert = !strcmp(mode, "netascii");
 	block = 1;
 	firsttrip = 1;
 	amount = 0;
-	memcpy(&peer, &peeraddr, peeraddr.ss_len);
+	memcpy(&peer, &peeraddr, (size_t)peeraddr.ss_len);
 	memset(&serv, 0, sizeof(serv));
 
 	signal(SIGALRM, timer);
 	do {
 		if (firsttrip) {
-			size = makerequest(RRQ, name, ap, mode, 0);
+			size = makerequest(RRQ, name, ap, mode, (off_t)0);
 			readlen = PKTSIZE;
 			firsttrip = 0;
 		} else {
@@ -327,19 +328,21 @@ recvfile(fd, name, mode)
 send_ack:
 		if (trace)
 			tpacket("sent", ap, size);
-		if (sendto(f, ackbuf, size, 0, (struct sockaddr *)&peer,
-		    peer.ss_len) != size) {
+		if (sendto(f, ackbuf, (socklen_t)size, 0,
+		    (struct sockaddr *)(void *)&peer,
+		    (socklen_t)peer.ss_len) != size) {
 			alarm(0);
 			warn("sendto");
 			goto abort;
 		}
-		write_behind(file, convert);
+		if (write_behind(file, convert) == -1)
+			goto abort;
 		for ( ; ; ) {
 			alarm(rexmtval);
 			do  {
 				fromlen = sizeof(from);
 				n = recvfrom(f, dp, readlen, 0,
-				    (struct sockaddr *)&from, &fromlen);
+				    (struct sockaddr *)(void *)&from, &fromlen);
 			} while (n <= 0);
 			alarm(0);
 			if (n < 0) {
@@ -348,8 +351,8 @@ send_ack:
 			}
 			if (!serv.ss_family)
 				serv = from;
-			else if (!cmpport((struct sockaddr *)&serv,
-			    (struct sockaddr *)&from)) {
+			else if (!cmpport((struct sockaddr *)(void *)&serv,
+			    (struct sockaddr *)(void *)&from)) {
 				warn("server port mismatch");
 				goto abort;
 			}
@@ -402,7 +405,7 @@ send_ack:
 	/*	size = write(fd, dp->th_data, n - 4); */
 		size = writeit(file, &dp, n - 4, convert);
 		if (size < 0) {
-			nak(errno + 100, (struct sockaddr *)&peer);
+			nak(errno + 100, (struct sockaddr *)(void *)&peer);
 			break;
 		}
 		amount += size;
@@ -410,9 +413,15 @@ send_ack:
 abort:						/* ok to ack, since user */
 	ap->th_opcode = htons((u_short)ACK);	/* has seen err msg */
 	ap->th_block = htons((u_short)block);
-	(void) sendto(f, ackbuf, 4, 0, (struct sockaddr *)&peer,
-	    peer.ss_len);
-	write_behind(file, convert);		/* flush last buffer */
+	(void) sendto(f, ackbuf, 4, 0, (struct sockaddr *)(void *)&peer,
+	    (socklen_t)peer.ss_len);
+	/*
+	 * flush last buffer
+	 * We do not check for failure because last buffer
+	 * can be empty, thus returning an error.
+	 * XXX maybe we should fix 'write_behind' instead.
+	 */
+	(void)write_behind(file, convert);
 	fclose(file);
 	stopclock();
 	if (amount > 0)
@@ -465,7 +474,7 @@ makerequest(request, name, tp, mode, filesize)
 		cp += strlen(cp);
 		*cp++ = '\0';
 	}
-	return (cp - (char *)tp);
+	return (cp - (char *)(void *)tp);
 }
 
 const struct errmsg {
@@ -500,7 +509,7 @@ nak(error, peer)
 	int length;
 	size_t msglen;
 
-	tp = (struct tftphdr *)ackbuf;
+	tp = (struct tftphdr *)(void *)ackbuf;
 	tp->th_opcode = htons((u_short)ERROR);
 	msglen = sizeof(ackbuf) - (&tp->th_msg[0] - ackbuf);
 	for (pe = errmsgs; pe->e_code >= 0; pe++)
@@ -517,7 +526,7 @@ nak(error, peer)
 	msglen = &tp->th_msg[length + 1] - ackbuf;
 	if (trace)
 		tpacket("sent", tp, (int)msglen);
-	if (sendto(f, ackbuf, msglen, 0, peer, peer->sa_len) != msglen)
+	if (sendto(f, ackbuf, msglen, 0, peer, (socklen_t)peer->sa_len) != msglen)
 		warn("nak");
 }
 
@@ -643,6 +652,7 @@ printstats(direction, amount)
 }
 
 static void
+/*ARGSUSED*/
 timer(sig)
 	int sig;
 {
@@ -662,9 +672,9 @@ cmpport(sa, sb)
 {
 	char a[NI_MAXSERV], b[NI_MAXSERV];
 
-	if (getnameinfo(sa, sa->sa_len, NULL, 0, a, sizeof(a), NI_NUMERICSERV))
+	if (getnameinfo(sa, (socklen_t)sa->sa_len, NULL, 0, a, sizeof(a), NI_NUMERICSERV))
 		return 0;
-	if (getnameinfo(sb, sb->sa_len, NULL, 0, b, sizeof(b), NI_NUMERICSERV))
+	if (getnameinfo(sb, (socklen_t)sb->sa_len, NULL, 0, b, sizeof(b), NI_NUMERICSERV))
 		return 0;
 	if (strcmp(a, b) != 0)
 		return 0;
