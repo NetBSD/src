@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.32 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.33 2006/01/31 17:15:20 christos Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.32 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.33 2006/01/31 17:15:20 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -290,6 +290,7 @@ faithioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
+#ifdef INET6
 /*
  * XXX could be slow
  * XXX could be layer violation to call sys/net from sys/netinet6
@@ -318,3 +319,4 @@ faithprefix(struct in6_addr *in6)
 		RTFREE(rt);
 	return ret;
 }
+#endif
