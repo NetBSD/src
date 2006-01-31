@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.72 2005/06/29 02:31:19 christos Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.73 2006/01/31 20:05:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ GLOBAL	int	sendport;	/* use PORT/LPRT cmd for each data connection */
 GLOBAL	int	connected;	/* 1 = connected to server, -1 = logged in */
 GLOBAL	int	interactive;	/* interactively prompt on m* cmds */
 GLOBAL	int	confirmrest;	/* confirm rest of current m* cmd */
-GLOBAL	int	debug;		/* debugging level */
+GLOBAL	int	ftp_debug;		/* debugging level */
 GLOBAL	int	bell;		/* ring bell on cmd completion */
 GLOBAL	int	doglob;		/* glob local file names */
 GLOBAL	int	autologin;	/* establish user account on connection */
@@ -340,8 +340,8 @@ extern	struct option	optiontab[];
 #define DPRINTF(...)
 #define DWARN(...)
 #else
-#define DPRINTF(...)	if (debug) (void)fprintf(ttyout, __VA_ARGS__)
-#define DWARN(...) if (debug) warn(__VA_ARGS__)
+#define DPRINTF(...)	if (ftp_debug) (void)fprintf(ttyout, __VA_ARGS__)
+#define DWARN(...) if (ftp_debug) warn(__VA_ARGS__)
 #endif
 
 #ifdef NO_USAGE

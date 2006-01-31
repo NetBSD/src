@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.117 2006/01/31 20:01:23 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.118 2006/01/31 20:05:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.117 2006/01/31 20:01:23 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.118 2006/01/31 20:05:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -264,7 +264,7 @@ changetype(int newtype, int show)
 		newtype = TYPE_I;
 	if (newtype == curtype)
 		return;
-	if (debug == 0 && show == 0)
+	if (ftp_debug == 0 && show == 0)
 		verbose = 0;
 	for (p = types; p->t_name; p++)
 		if (newtype == p->t_type)
@@ -1099,9 +1099,9 @@ setdebug(int argc, char *argv[])
 		return;
 	} else if (argc == 2) {
 		if (strcasecmp(argv[1], "on") == 0)
-			debug = 1;
+			ftp_debug = 1;
 		else if (strcasecmp(argv[1], "off") == 0)
-			debug = 0;
+			ftp_debug = 0;
 		else {
 			int val;
 
@@ -1112,16 +1112,16 @@ setdebug(int argc, char *argv[])
 				code = -1;
 				return;
 			}
-			debug = val;
+			ftp_debug = val;
 		}
 	} else
-		debug = !debug;
-	if (debug)
+		ftp_debug = !ftp_debug;
+	if (ftp_debug)
 		options |= SO_DEBUG;
 	else
 		options &= ~SO_DEBUG;
-	fprintf(ttyout, "Debugging %s (debug=%d).\n", onoff(debug), debug);
-	code = debug > 0;
+	fprintf(ttyout, "Debugging %s (ftp_debug=%d).\n", onoff(ftp_debug), ftp_debug);
+	code = ftp_debug > 0;
 }
 
 /*
@@ -1436,7 +1436,7 @@ shell(int argc, char *argv[])
 		else
 			namep++;
 		(void)strlcpy(shellnam, namep, sizeof(shellnam));
-		if (debug) {
+		if (ftp_debug) {
 			fputs(shell, ttyout);
 			putc('\n', ttyout);
 		}
