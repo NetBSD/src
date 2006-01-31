@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.168 2006/01/27 18:37:50 cdi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.169 2006/01/31 20:18:40 nakayama Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.168 2006/01/27 18:37:50 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169 2006/01/31 20:18:40 nakayama Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -607,7 +607,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	ktext   = kernelstart;
 	ktextp  = pmap_kextract(ktext);
 	ektext  = roundup((vaddr_t)&etext, PAGE_SIZE_4M);
-	ektextp = pmap_kextract(ektext);
+	ektextp = roundup(pmap_kextract((vaddr_t)&etext), PAGE_SIZE_4M);
 
 	kdata   = (vaddr_t)data_start;
 	kdatap  = pmap_kextract(kdata);
