@@ -1,8 +1,8 @@
-#	$NetBSD: files.acpi,v 1.34 2006/01/05 16:56:54 rpaulo Exp $
+#	$NetBSD: files.acpi,v 1.35 2006/01/31 09:30:06 kochi Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
-defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV ACPI_DISABLE_ON_POWEROFF ACPI_DSDT_OVERRIDE
+defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV ACPI_DSDT_OVERRIDE
 defparam opt_acpi.h	ACPI_DSDT_FILE
 
 device	acpi { }: sysmon_power, sysmon_taskq
