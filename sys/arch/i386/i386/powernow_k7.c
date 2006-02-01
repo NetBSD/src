@@ -1,4 +1,4 @@
-/* $NetBSD: powernow_k7.c,v 1.4.2.2 2006/01/15 10:02:38 yamt Exp $ */
+/* $NetBSD: powernow_k7.c,v 1.4.2.3 2006/02/01 14:51:28 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -32,7 +32,7 @@
 /* Sysctl related code was adapted from NetBSD's i386/est.c for compatibility */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.4.2.2 2006/01/15 10:02:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.4.2.3 2006/02/01 14:51:28 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,19 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.4.2.2 2006/01/15 10:02:38 yamt Exp
 #include <machine/isa_machdep.h>
 
 #define BIOS_START 	0xe0000
-#define BIOS_END	0x20000
-#define BIOS_LEN	BIOS_END - BIOS_START
+#define BIOS_LEN	0x20000
 
 #define MSR_K7_CTL	0xC0010041
 #define CTL_SET_FID	0x0000000000010000ULL
 #define CTL_SET_VID	0x0000000000020000ULL
 
 #define cpufreq(x)	fsb * fid_codes[x] / 10
-
-/* pnowk7_init() already declared on i386/include/cpu.h */
-#if defined(_LKM)
-void pnowk7_destroy(void);
-#endif
 
 struct psb_s {
 	char signature[10];  	/* AMDK7PNOW! */
@@ -87,6 +81,29 @@ struct freq_table_s {
 	struct state_s *state;
 };
 
+/*
+ * CPUID Extended function 8000_0007h.
+ * 
+ * Reference documentation:
+ *
+ * - AMD Processor Recognition Application Note. December 2005.
+ *   Section 2.4. Advanced Power Management Features.
+ *
+ */
+
+struct powernow_extflags {
+	int mask;
+	const char *name;
+} pnow_extflag[] = {
+	{ 0x01, "TS" },		/* Thermal Sensor */
+	{ 0x02, "FID" },	/* Frequency ID Control */
+	{ 0x04, "VID" },	/* Voltage ID Control */
+	{ 0x08, "TTP" },	/* Thermal Trip */
+	{ 0x10, "TM" },		/* Thermal Control */
+	{ 0x20, "STC" },	/* Software Thermal Control */
+	{ 0, NULL }
+};
+
 /* Taken from powernow-k7.c/Linux by Dave Jones */
 static int fid_codes[32] = {
 	110, 115, 120, 125, 50, 55, 60, 65,
@@ -96,16 +113,17 @@ static int fid_codes[32] = {
 };
 
 /* Static variables */
-static unsigned int fsb;
-static unsigned int cur_freq;
-static unsigned int ttime;
-static unsigned int n_states;
-static struct freq_table_s *freq_table;
-static int powernow_node_target, powernow_node_current;
-static char *freq_names;
-static size_t freq_names_len;
+static struct		freq_table_s *freq_table;
+static struct		sysctllog *sysctllog;
+static unsigned int	fsb;
+static unsigned int	cur_freq;
+static unsigned int	ttime;
+static unsigned int	n_states;
+static int		powernow_node_target, powernow_node_current;
+static char		*freq_names;
+static size_t		freq_names_len;
+
 #if defined(_LKM)
-static struct sysctllog *sysctllog;
 #define SYSCTLLOG	&sysctllog
 #else
 #define SYSCTLLOG	NULL
@@ -115,6 +133,8 @@ static struct sysctllog *sysctllog;
 struct state_s *pnowk7_getstates(cpuid_t cpuid);
 int pnowk7_setstate(unsigned int freq);
 static int powernow_sysctl_helper(SYSCTLFN_PROTO);
+uint8_t pnowk7_probe(struct cpu_info *);
+void pnowk7_destroy(void);
 
 static int
 powernow_sysctl_helper(SYSCTLFN_ARGS)
@@ -154,8 +174,8 @@ powernow_sysctl_helper(SYSCTLFN_ARGS)
 struct state_s *
 pnowk7_getstates(cpuid_t cpuid)
 {
-	unsigned int i, j;
-	char *ptr;
+	uint8_t *p;
+	int maxpst;
 	
 	struct psb_s *psb;
 	struct pst_s *pst;
@@ -165,12 +185,11 @@ pnowk7_getstates(cpuid_t cpuid)
 	 * range for the pst tables; 16 byte blocks
 	 */	
 
-	ptr = (char *)ISA_HOLE_VADDR(BIOS_START);
-
-	for (i = 0; i < BIOS_LEN; i += 16, ptr += 16) {
-		if (memcmp(ptr, "AMDK7PNOW!", 10) == 0) {	
-			psb = (struct psb_s *) ptr;
-			ptr += sizeof(struct psb_s);			
+	for (p = (uint8_t *)ISA_HOLE_VADDR(BIOS_START);
+	    p < (uint8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p+= 16) {
+		if (memcmp(p, "AMDK7PNOW!", 10) == 0) {	
+			psb = (struct psb_s *) p;
+			p += sizeof(struct psb_s);			
 
 			ttime = psb->ttime;
 			
@@ -179,41 +198,38 @@ pnowk7_getstates(cpuid_t cpuid)
 				return 0;
 
 			/* Find the right PST */
-			for (j = 0; j < psb->n_pst; j++) {
-				pst = (struct pst_s *) ptr;
-				ptr += sizeof(struct pst_s);
+			for (maxpst = 0; maxpst < 200; maxpst++) {
+				pst = (struct pst_s *) p;
+				p += sizeof(struct pst_s);
 
 				/* Use the first PST with matching CPUID */
 				if ((cpuid == pst->cpuid) ||
 				    (cpuid == (pst->cpuid - 0x100))) {
-				/* 
-				 * XXX
-				 * some braindead BIOS seems to expect
-				 * signature 0x780 from Athlon. Let's try to
-				 * subtract 0x100 from the BIOS supplied values
-				 * to fix.
-				 */
-					/*
-					 * XXX
-					 * I need more info on this.
-					 * For now, let's just ignore it
-					 */
-					if ((cpuid & 0xFF) == 0x60)
+					switch(pst->cpuid) {
+					case 0x760:
+					case 0x761:
+					case 0x762:
+					case 0x770:
+					case 0x771:
+					case 0x780:
+					case 0x781:
+					case 0x7a0:
+						break;
+					default:
 						return 0;
+					}
 
 					fsb = pst->fsb;
 					n_states = pst->n_states;
-					return (struct state_s *) ptr;
+					return (struct state_s *) p;
 				} else
-					ptr += sizeof(struct state_s) * 
-						    pst->n_states;
+					p += sizeof(struct state_s) +
+					    (2 * pst->n_states);
 			}
-			
 			/* aprint_normal("No match was found for your CPUID\n"); */
 			return 0;
 		}
 	}
-
 	/* aprint_normal("Power state table not found\n"); */
 	return 0;
 }
@@ -222,8 +238,8 @@ int
 pnowk7_setstate(unsigned int freq)
 {
 	unsigned int i;
-	u_int32_t sgtc, vid, fid;
-	u_int64_t ctl;
+	uint32_t sgtc, vid, fid;
+	uint64_t ctl;
 
 	vid = fid = 0;	
 
@@ -267,49 +283,67 @@ pnowk7_setstate(unsigned int freq)
 	return 0;
 }
 
+uint8_t
+pnowk7_probe(struct cpu_info *ci)
+{
+	uint32_t lfunc, descs[4];
+	unsigned int i;
+	char *cpuname;
+
+	ci = curcpu();
+	cpuname = ci->ci_dev->dv_xname;
+
+	CPUID(0x80000000, lfunc, descs[1], descs[2], descs[3]);
+
+	if (lfunc >= 0x80000007) {
+		CPUID(0x80000007, descs[0], descs[1], descs[2], descs[3]);
+		if (descs[3] & 0x06) {
+			aprint_normal("%s: AMD PowerNow! Technology.\n",
+			    cpuname);
+			aprint_normal("%s: AMD features:", cpuname);
+			for (i = 0; pnow_extflag[i].name != NULL; i++) {
+				if (descs[3] & pnow_extflag[i].mask)
+					aprint_normal(" %s",
+					    pnow_extflag[i].name);
+			}
+			aprint_normal("\n");
+			if ((ci->ci_signature & 0xF00) == 0x600)
+				return 1; /* found */
+		}
+	}
+
+	return 0; /* not compatible */
+}
+
+
 void
 pnowk7_init(struct cpu_info *ci)
 {
 	const struct sysctlnode *node, *pnownode, *freqnode;
 	struct state_s *s;
-	uint32_t lfunc, descs[4];
-	int rc;
 	unsigned int i;
+	int rc;
 	char *cpuname;
 	size_t len;
 
 	len = freq_names_len = 0;
 	s = NULL;
 
-	CPUID(0x80000000, lfunc, descs[1], descs[2], descs[3]);
+	if (pnowk7_probe(ci) == 0)
+		return;
 
-	ci = curcpu();
-	if (lfunc >= 0x80000007) {
-		CPUID(0x80000007, descs[0], descs[1], descs[2], descs[3]);
-		if ((descs[3] & 0x06)) {
-			if ((ci->ci_signature & 0xF00) == 0x600)
-				s = pnowk7_getstates(ci->ci_signature);
-			else
-				return; /* not supported */
-		} else
-			return; /* not supported */
-	} else
-		return; /* not supported */
-
+	s = pnowk7_getstates(ci->ci_signature);
 	cpuname = ci->ci_dev->dv_xname;
 
-	if (s == 0) {
-		/* aprint_normal("AMD PowerNow not supported\n"); */
-		return;
-	}
-
 	freq_names_len =  n_states * (sizeof("9999 ")-1) + 1;
-	freq_names = malloc(freq_names_len, M_SYSCTLDATA, M_NOWAIT | M_ZERO);
+	freq_names = malloc(freq_names_len, M_SYSCTLDATA, M_WAITOK);
+
 	if (freq_names == NULL)
 		panic("pnowk7_init: freq_names alloc not possible");
 
 	freq_table = malloc(sizeof(struct freq_table_s) * n_states, M_TEMP,
-	    M_NOWAIT | M_ZERO);
+	    M_WAITOK);
+
 	if (freq_table == NULL)
 		panic("pnowk7_init: freq_table alloc not possible");
 	
@@ -326,38 +360,51 @@ pnowk7_init(struct cpu_info *ci)
 
 	/* Create sysctl machdep.powernow.frequency. */
         if ((rc = sysctl_createv(SYSCTLLOG, 0, NULL, &node,
-            CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
-            NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL)) != 0)
+            CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE,"machdep", NULL,
+            NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL)) != 0)
                 goto err;
 
         if ((rc = sysctl_createv(SYSCTLLOG, 0, &node, &pnownode,
-            0, CTLTYPE_NODE, "powernow", NULL,
-            NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+            0,
+	    CTLTYPE_NODE, "powernow", NULL,
+            NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
                 goto err;
 
          if ((rc = sysctl_createv(SYSCTLLOG, 0, &pnownode, &freqnode,
-            0, CTLTYPE_NODE, "frequency", NULL,
-            NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+            0,
+	    CTLTYPE_NODE, "frequency", NULL,
+            NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
                 goto err;
 
         if ((rc = sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
-            CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
-            powernow_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+            CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "target", NULL,
+            powernow_sysctl_helper, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
                 goto err;
+
         powernow_node_target = node->sysctl_num;
 
         if ((rc = sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
-            0, CTLTYPE_INT, "current", NULL,
-            powernow_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+            0,
+	    CTLTYPE_INT, "current", NULL,
+            powernow_sysctl_helper, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
                 goto err;
+
         powernow_node_current = node->sysctl_num;
 
         if ((rc = sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
-            0, CTLTYPE_STRING, "available", NULL,
-            NULL, 0, freq_names, freq_names_len, CTL_CREATE, CTL_EOL)) != 0)
+            0,
+	    CTLTYPE_STRING, "available", NULL,
+            NULL, 0, freq_names, freq_names_len,
+	    CTL_CREATE, CTL_EOL)) != 0)
                 goto err;
 
-	aprint_normal("%s: AMD PowerNow! Technology supported\n", cpuname);
 	aprint_normal("%s: available frequencies (Mhz): %s\n",
 	    cpuname, freq_names);
         aprint_normal("%s: current frequency (Mhz): %d\n", cpuname, cur_freq);
@@ -365,19 +412,19 @@ pnowk7_init(struct cpu_info *ci)
 	return;
 
   err:
-	free(freq_names, M_SYSCTLDATA);
-	free(freq_table, M_TEMP);
+	pnowk7_destroy();	/* free resources */
 	aprint_normal("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
 
-#if defined(_LKM)
 void
 pnowk7_destroy(void)
 {
 	sysctl_teardown(&sysctllog);
-	if (freq_names != NULL && freq_table != NULL) {
+#if defined(_LKM)
+	if (freq_names != NULL)
 		free(freq_names, M_SYSCTLDATA);
+
+	if (freq_table != NULL)	
 		free(freq_table, M_TEMP);
-	}
-}
 #endif
+}

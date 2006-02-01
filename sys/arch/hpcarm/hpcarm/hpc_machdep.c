@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.75 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.75.2.1 2006/02/01 14:51:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.75 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.75.2.1 2006/02/01 14:51:27 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.75 2005/12/11 12:17:33 christos Ex
 #include <sys/msgbuf.h>
 #include <sys/exec.h>
 #include <sys/ksyms.h>
+#include <sys/boot_flag.h>
 
 #include <dev/cons.h>
 
@@ -344,16 +345,11 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	    PAGE_SIZE * 8;
 
 	/* parse kernel args */
+	boothowto = 0;
 	boot_file[0] = '\0';
 	strncpy(booted_kernel_storage, *argv, sizeof(booted_kernel_storage));
 	for (argc--, argv++; argc; argc--, argv++)
-		switch(**argv) {
-		case 'a':
-			boothowto |= RB_ASKNAME;
-			break;
-		case 's':
-			boothowto |= RB_SINGLE;
-			break;
+		switch (**argv) {
 		case 'b':
 			/* boot device: -b=sd0 etc. */
 #ifdef NFS
@@ -367,6 +363,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 #endif /* NFS */
 			break;
 		default:
+			BOOT_FLAG(**argv, boothowto);
 			break;
 		}
 		

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.6.2.1 2006/02/01 14:51:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -185,19 +185,9 @@ extern struct sh_cache_ops sh_cache_ops;
 void sh_cache_init(void);
 void sh_cache_information(void);
 
-#if defined(SH3) && defined(SH4)
-#define	SH_HAS_VIRTUAL_ALIAS	CPU_IS_SH4
 #define	SH_HAS_UNIFIED_CACHE	CPU_IS_SH3
+#define	SH_HAS_VIRTUAL_ALIAS	CPU_IS_SH4
 #define	SH_HAS_WRITEBACK_CACHE	(!sh_cache_write_through)
-#elif defined(SH3)
-#define	SH_HAS_VIRTUAL_ALIAS	0
-#define	SH_HAS_UNIFIED_CACHE	1
-#define	SH_HAS_WRITEBACK_CACHE	(!sh_cache_write_through)
-#elif defined(SH4)
-#define	SH_HAS_VIRTUAL_ALIAS	1
-#define	SH_HAS_UNIFIED_CACHE	0
-#define	SH_HAS_WRITEBACK_CACHE	(!sh_cache_write_through)
-#endif
 
 #endif /* _KERNEL */
 #endif /* _SH3_CACHE_H_ */

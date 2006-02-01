@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.22 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: simide.c,v 1.22.2.1 2006/02/01 14:51:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.22 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.22.2.1 2006/02/01 14:51:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,6 +261,7 @@ simide_attach(parent, self, aux)
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ch_queue = &scp->sc_chqueue;
+		cp->ch_ndrive = 2;
 		wdr->cmd_iot = wdr->ctl_iot = &sc->sc_tag;
 		iobase = pa->pa_podule->mod_base;
 		if (bus_space_map(wdr->cmd_iot, iobase +

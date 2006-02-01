@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2005/12/11 12:19:08 christos Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2006/02/01 14:51:37 yamt Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -11,6 +11,7 @@ WARNS=		0
 
 PROG?=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
+SRCS+=		bootinfo.c loadfile_machdep.c promlib.c prf.c
 .PATH:		${S}/arch/sparc64/sparc64
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
@@ -23,10 +24,11 @@ COPTS+=		-ffreestanding
 CWARNFLAGS+=	-Wno-main
 CFLAGS+=	${COPTS} ${CEXTRAFLAGS}
 CPPFLAGS+=	-D_STANDALONE -DSUN4U
-CPPFLAGS+=	-DBOOT_ELF32 -DBOOT_ELF64
+CPPFLAGS+=	-DBOOT_ELF32 -DBOOT_ELF64 -DBOOT_AOUT
 CPPFLAGS+=	-DNETBOOT
 CPPFLAGS+=	-DSUPPORT_DHCP
 #CPPFLAGS+=	-DNETIF_DEBUG 
+#CPPFLAGS+=	-D_DEBUG
 
 LINKS+=		${BINDIR}/ofwboot ${BINDIR}/ofwboot.net
 
@@ -42,11 +44,9 @@ NEWVERSWHAT=	"OpenFirmware Boot"
 # We may get address conflicts with other bootloaders, say
 # Sun's ufsboot, so we'll pick a reasonably empty address.
 #
-RELOC=		800000
+RELOC=		100000
 
 ENTRY=		_start
-
-CLEANFILES+=	vers.c sparc64 sparc machine
 
 CPPFLAGS+=	-I${CURDIR}/../../.. -I${CURDIR}/../../../.. -I${CURDIR} -I.
 CPPFLAGS+=	-DRELOC=0x${RELOC}
@@ -72,24 +72,18 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes
+SAMISCMAKEFLAGS= SA_USE_LOADFILE=yes SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@([ -h machine ] || ln -s ${S}/arch/sparc64/include machine)
+	@([ -h sparc64 ] || ln -s ${S}/arch/sparc64/include sparc64)
+	@([ -h sparc ] || ln -s ${S}/arch/sparc/include sparc)
 .NOPATH: machine sparc64 sparc
-${SRCS}: machine sparc64 sparc
-
-machine:
-	rm -f machine
-	ln -s sparc64 machine
-
-sparc64:
-	rm -f sparc64
-	ln -s ${.CURDIR}/../../../sparc64/include sparc64
-
-sparc:
-	rm -f sparc
-	ln -s ${.CURDIR}/../../../sparc/include sparc
+.endif
+CLEANFILES+= machine sparc64 sparc
 
 cleandir distclean: cleanlibdir
 
@@ -98,6 +92,8 @@ cleanlibdir:
 
 vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
+
+CLEANFILES+= vers.c
 
 .if CROSS
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
@@ -130,4 +126,4 @@ srt0.o: srt0.s
 	${NORMAL_S}
 
 # Explicit dependency for this.
-boot.o: boot.c elfXX_exec.c
+boot.o: boot.c

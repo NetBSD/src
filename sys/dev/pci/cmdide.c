@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.21 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.21.2.1 2006/02/01 14:52:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.21 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.21.2.1 2006/02/01 14:52:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,7 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
 		    return;
 	}
+	cp->ata_channel.ch_ndrive = 2;
 
 	aprint_normal("%s: %s channel %s to %s mode\n",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name,

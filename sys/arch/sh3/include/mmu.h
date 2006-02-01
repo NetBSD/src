@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.h,v 1.5 2002/05/09 12:27:04 uch Exp $	*/
+/*	$NetBSD: mmu.h,v 1.5.40.1 2006/02/01 14:51:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,9 +42,9 @@
 /*
  * Initialize routines.
  *	sh_mmu_init		Assign function vector. Don't access hardware.
- *				Call as possible as first.
+ *				Call as early as possible.
  *	sh_mmu_start		Reset TLB entry, set default ASID, and start to
- *				translate address.
+ *				translate addresses.
  *				Call after exception vector was installed.
  *
  * TLB access ops.
@@ -59,44 +59,56 @@
 
 void sh_mmu_init(void);
 void sh_mmu_information(void);
-
-extern void (*__sh_mmu_start)(void);
-void sh3_mmu_start(void);
-void sh4_mmu_start(void);
-#define	sh_mmu_start()			(*__sh_mmu_start)()
-
-/*
- * TLB access ops.
- */
-extern void (*__sh_tlb_invalidate_addr)(int, vaddr_t);
-extern void (*__sh_tlb_invalidate_asid)(int);
-extern void (*__sh_tlb_invalidate_all)(void);
-extern void (*__sh_tlb_update)(int, vaddr_t, u_int32_t);
 void sh_tlb_set_asid(int);
+
+#ifdef SH3
+void sh3_mmu_start(void);
 void sh3_tlb_invalidate_addr(int, vaddr_t);
 void sh3_tlb_invalidate_asid(int);
 void sh3_tlb_invalidate_all(void);
 void sh3_tlb_update(int, vaddr_t, u_int32_t);
+#endif
+
+#ifdef SH4
+void sh4_mmu_start(void);
 void sh4_tlb_invalidate_addr(int, vaddr_t);
 void sh4_tlb_invalidate_asid(int);
 void sh4_tlb_invalidate_all(void);
 void sh4_tlb_update(int, vaddr_t, u_int32_t);
+#endif
+
 
 #if defined(SH3) && defined(SH4)
+extern u_int32_t __sh_PTEH;
+
+extern void (*__sh_mmu_start)(void);
+extern void (*__sh_tlb_invalidate_addr)(int, vaddr_t);
+extern void (*__sh_tlb_invalidate_asid)(int);
+extern void (*__sh_tlb_invalidate_all)(void);
+extern void (*__sh_tlb_update)(int, vaddr_t, u_int32_t);
+
+#define	sh_mmu_start()			(*__sh_mmu_start)()
 #define	sh_tlb_invalidate_addr(a, va)	(*__sh_tlb_invalidate_addr)(a, va)
 #define	sh_tlb_invalidate_asid(a)	(*__sh_tlb_invalidate_asid)(a)
 #define	sh_tlb_invalidate_all()		(*__sh_tlb_invalidate_all)()
-#define	sh_tlb_update(a, pte)		(*__sh_tlb_update)(a, pte)
+#define	sh_tlb_update(a, va, pte)	(*__sh_tlb_update)(a, va, pte)
+
 #elif defined(SH3)
+
+#define	sh_mmu_start()			sh3_mmu_start()
 #define	sh_tlb_invalidate_addr(a, va)	sh3_tlb_invalidate_addr(a, va)
 #define	sh_tlb_invalidate_asid(a)	sh3_tlb_invalidate_asid(a)
 #define	sh_tlb_invalidate_all()		sh3_tlb_invalidate_all()
 #define	sh_tlb_update(a, va, pte)	sh3_tlb_update(a, va, pte)
+
 #elif defined(SH4)
+
+#define	sh_mmu_start()			sh4_mmu_start()
 #define	sh_tlb_invalidate_addr(a, va)	sh4_tlb_invalidate_addr(a, va)
 #define	sh_tlb_invalidate_asid(a)	sh4_tlb_invalidate_asid(a)
 #define	sh_tlb_invalidate_all()		sh4_tlb_invalidate_all()
 #define	sh_tlb_update(a, va, pte)	sh4_tlb_update(a, va, pte)
+
 #endif
 
 #endif /* !_SH3_MMU_H_ */

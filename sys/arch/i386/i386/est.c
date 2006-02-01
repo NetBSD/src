@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.12.2.1 2006/01/15 10:02:38 yamt Exp $	*/
+/*	$NetBSD: est.c,v 1.12.2.2 2006/02/01 14:51:28 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.12.2.1 2006/01/15 10:02:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.12.2.2 2006/02/01 14:51:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +243,15 @@ static const struct fq_info pentium_m_n758[] = {
 };
 #endif
 
+/* Intel Pentium M processor 710 1.4 Ghz */
+static const struct fq_info pentium_m_n710[] = {
+	{ 1400, 1340 },
+	{ 1200, 1228 },
+	{ 1000, 1148 },
+	{  800, 1068 },
+	{  600,  998 }
+};
+
 /* Intel Pentium M processor 715 1.5 GHz */
 static const struct fq_info pentium_m_n715[] = {
 	{ 1500, 1340 },
@@ -346,6 +355,7 @@ static const struct fqlist pentium_m_dothan[] = {
 #if 0
 	ENTRY("1.50", pentium_m_n758),
 #endif
+	ENTRY("1.40", pentium_m_n710),
 	ENTRY("1.50", pentium_m_n715),
 	ENTRY("1.60", pentium_m_n725),
 	ENTRY("1.70", pentium_m_n735),

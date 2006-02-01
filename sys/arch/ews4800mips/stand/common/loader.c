@@ -1,4 +1,4 @@
-/*	$NetBSD: loader.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: loader.c,v 1.1.2.1 2006/02/01 14:51:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ cmd_jump(int argc, char *argp[], int interactive)
 	else
 		__asm volatile("move %0, $29" : "=r"(sp)); /* current stack */
 
-	printf("jump to %p. sp=%p Y/N\n", addr, sp);
+	printf("jump to 0x%08x. sp=0x%08x Y/N\n", addr, sp);
 	if (prompt_yesno(interactive)) {
 		__asm volatile(
 			".set noreorder;"
@@ -147,7 +147,7 @@ cmd_boot_ux(int argc, char *argp[], int interactive)
 		printf("load iopboot failed.\n");
 		return 1;
 	}
-	printf("start=%x entry=%x nsym=%x sym=%x end=%x\n",
+	printf("start=%lx entry=%lx nsym=%lx sym=%lx end=%lx\n",
 	    marks[MARK_START], marks[MARK_ENTRY], marks[MARK_NSYM],
 	    marks[MARK_SYM], marks[MARK_END]);
 
@@ -198,7 +198,7 @@ cmd_boot(int argc, char *argp[], int interactive)
 		printf("load file failed.\n");
 		return 1;
 	}
-	printf("start=%x entry=%x nsym=%x sym=%x end=%x\n",
+	printf("start=%lx entry=%lx nsym=%lx sym=%lx end=%lx\n",
 	    marks[MARK_START], marks[MARK_ENTRY], marks[MARK_NSYM],
 	    marks[MARK_SYM], marks[MARK_END]);
 

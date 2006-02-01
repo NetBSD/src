@@ -1,4 +1,4 @@
-/*	$NetBSD: dest6.c,v 1.12 2003/05/14 06:47:39 itojun Exp $	*/
+/*	$NetBSD: dest6.c,v 1.12.30.1 2006/02/01 14:52:41 yamt Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.12 2003/05/14 06:47:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.12.30.1 2006/02/01 14:52:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.12 2003/05/14 06:47:39 itojun Exp $");
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
-#include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 

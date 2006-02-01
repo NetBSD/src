@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.19 2005/12/11 12:18:03 christos Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.19.2.1 2006/02/01 14:51:29 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.19 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.19.2.1 2006/02/01 14:51:29 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -228,6 +228,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_chqueue;
+	chp->ch_ndrive = 2;
 
 	printf("\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.1.2.1 2006/02/01 14:51:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 				    strerror(errno)))
 #define	PROGRESS(a)		(void) printf a
 #define	ALLOC(a)		alloc(a)
-#define	FREE(a, b)		free(a, b)
+#define	DEALLOC(a, b)		dealloc(a, b)
 #define	OKMAGIC(a)		((a) == OMAGIC)
 
 #endif /* !_EWS4800MIPS_LOADFILE_MACHDEP_H_ */

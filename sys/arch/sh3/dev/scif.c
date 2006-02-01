@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.42 2005/12/11 12:18:58 christos Exp $ */
+/*	$NetBSD: scif.c,v 1.42.2.1 2006/02/01 14:51:31 yamt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.42 2005/12/11 12:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.42.2.1 2006/02/01 14:51:31 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -418,7 +418,7 @@ scif_getc(void)
 {
 	unsigned char c, err_c;
 #ifdef SH4
-	unsigned short err_c2;
+	unsigned short err_c2 = 0; /* XXXGCC: -Wuninitialized */
 #endif
 
 	for (;;) {

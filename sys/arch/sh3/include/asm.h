@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.19.2.1 2006/01/15 10:02:38 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.19.2.2 2006/02/01 14:51:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -219,6 +219,13 @@
 	.weak _C_LABEL(alias);						\
 	_C_LABEL(alias) = _C_LABEL(sym)
 #endif
+
+/*
+ * STRONG_ALIAS: create a strong alias.
+ */
+#define STRONG_ALIAS(alias,sym)						\
+	.globl _C_LABEL(alias);						\
+	_C_LABEL(alias) = _C_LABEL(sym)
 
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning._sym; .ascii _msg; .previous

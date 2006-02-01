@@ -1,4 +1,4 @@
-/* $NetBSD: va-sh.h,v 1.5 2002/04/28 17:10:37 uch Exp $ */
+/* $NetBSD: va-sh.h,v 1.5.40.1 2006/02/01 14:51:32 yamt Exp $ */
 
 /* This is just like the default gvarargs.h
    except for differences described below.  */
@@ -8,7 +8,7 @@
 #ifndef __GNUC_VA_LIST
 #define	__GNUC_VA_LIST
 
-#include <machine/endian.h>
+#include <sys/endian.h>
 
 #ifdef __SH3E__
 

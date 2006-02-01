@@ -1,4 +1,6 @@
-/*	$NetBSD: types.h,v 1.2 2002/09/22 08:30:57 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.2.34.1 2006/02/01 14:51:26 yamt Exp $	*/
+
+#define	_MIPS_PADDR_T_64BIT
 
 #include <mips/types.h>
 

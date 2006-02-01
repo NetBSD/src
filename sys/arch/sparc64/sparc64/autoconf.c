@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.106 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: autoconf.c,v 1.106.2.1 2006/02/01 14:51:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.106 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.106.2.1 2006/02/01 14:51:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.106 2005/12/24 20:07:37 perry Exp $")
 #include <machine/sparc64.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
+#include <machine/bootinfo.h>
 #include <sparc64/sparc64/timerreg.h>
 
 #include <dev/ata/atavar.h>
@@ -119,6 +120,7 @@ struct evcnt intr_evcnts[] = {
 };
 
 int printspl = 0;
+void *bootinfo = 0;
 
 #ifdef KGDB
 extern	int kgdb_debug_panic;
@@ -139,6 +141,12 @@ struct	bootpath bootpath[8];
 int	nbootpath;
 static	void bootpath_build __P((void));
 static	void bootpath_print __P((struct bootpath *));
+
+/*
+ * Kernel 4MB mappings.
+ */
+struct tlb_entry *kernel_tlbs;
+int kernel_tlb_slots;
 
 /* Global interrupt mappings for all device types.  Match against the OBP
  * 'device_type' property. 
@@ -229,40 +237,107 @@ get_ncpus()
 }
 
 /*
+ * lookup_bootinfo:
+ * Look up information in bootinfo of boot loader.
+ */
+void *
+lookup_bootinfo(type)
+	int type;
+{
+	struct btinfo_common *bt;
+	char *help = bootinfo;
+
+	/* Check for a bootinfo record first. */
+	if (help == NULL)
+		return (NULL);
+
+	do {
+		bt = (struct btinfo_common *)help;
+		if (bt->type == type)
+			return ((void *)help);
+		help += bt->next;
+	} while (bt->next != 0 &&
+		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	return (NULL);
+}
+
+/*
  * locore.s code calls bootstrap() just before calling main().
  *
  * What we try to do is as follows:
+ * - Initialize PROM and the console
+ * - Read in part of information provided by a bootloader and find out
+ *   kernel load and end addresses
+ * - Initialize ksyms
+ * - Find out number of active CPUs
+ * - Finalize the bootstrap by calling pmap_bootstrap() 
  *
- * 1) We will try to re-allocate the old message buffer.
- *
- * 2) We will then get the list of the total and available
- *	physical memory and available virtual memory from the
- *	prom.
- *
- * 3) We will pass the list to pmap_bootstrap to manage them.
- *
- * We will try to run out of the prom until we get to cpu_init().
+ * We will try to run out of the prom until we get out of pmap_bootstrap().
  */
 void
-bootstrap(nctx)
-	int nctx;
+bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 {
-	extern int end;	/* End of kernel */
-#if (NKSYMS || defined(DDB) || defined(LKM))
-	extern void *ssym, *esym;
-#endif
-#if !defined(__arch64__) && defined(DDB)
-	/* Assembly glue for the PROM */
-	extern void OF_sym2val32 __P((void *));
-	extern void OF_val2sym32 __P((void *));
-#endif
+	void *bi;
+	long bmagic;
+
+	struct btinfo_symtab *bi_sym;
+	struct btinfo_count *bi_count;
+	struct btinfo_kernend *bi_kend;
+	struct btinfo_tlb *bi_tlb;
+
+	extern void *romtba;
+	extern void* get_romtba(void);
+	extern void  OF_val2sym32(void *);
+	extern void OF_sym2val32(void *);
+
+	/* Save OpenFrimware entry point */
+	romp   = ofw;
+	romtba = get_romtba();
 
 	prom_init();
 
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
+
+	printf("sparc64_init(%p, %p, %p, %p, %p)\n", o0, bootargs, bootsize,
+			o3, ofw);
+
+	/* Extract bootinfo pointer */
+	if ((long)bootsize >= (4 * sizeof(u_int64_t))) {
+		/* Loaded by 64-bit bootloader */
+		bi = (void*)(u_long)(((u_int64_t*)bootargs)[3]);
+		bmagic = (long)(((u_int64_t*)bootargs)[0]);
+	} else if ((long)bootsize >= (4 * sizeof(u_int32_t))) {
+		/* Loaded by 32-bit bootloader */
+		bi = (void*)(u_long)(((u_int32_t*)bootargs)[3]);
+		bmagic = (long)(((u_int32_t*)bootargs)[0]);
+	} else {
+		printf("Bad bootinfo size.\n"
+				"This kernel requires NetBSD boot loader.\n");
+		panic("sparc64_init.");
+	}
+
+	printf("sparc64_init: bmagic=%lx, bi=%p\n", bmagic, bi);
+
+	/* Read in the information provided by NetBSD boot loader */
+	if (SPARC_MACHINE_OPENFIRMWARE != bmagic) {
+		printf("No bootinfo information.\n"
+				"This kernel requires NetBSD boot loader.\n");
+		panic("sparc64_init.");
+	}
+
+	bootinfo = (void*)(u_long)((u_int64_t*)bi)[1];
+	LOOKUP_BOOTINFO(bi_kend, BTINFO_KERNEND);
+
+	if (bi_kend->addr == (vaddr_t)0) {
+		panic("Kernel end address is not found in bootinfo.\n");
+	}
+
 #if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); 
+	LOOKUP_BOOTINFO(bi_sym, BTINFO_SYMTAB);
+	ksyms_init(bi_sym->nsym, (int *)(u_long)bi_sym->ssym,
+			(int *)(u_long)bi_sym->esym);
 #ifdef DDB
 #ifdef __arch64__
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
@@ -273,8 +348,13 @@ bootstrap(nctx)
 #endif
 #endif
 
+	LOOKUP_BOOTINFO(bi_count, BTINFO_DTLB_SLOTS);
+	kernel_tlb_slots = bi_count->count;
+	LOOKUP_BOOTINFO(bi_tlb, BTINFO_DTLB);
+	kernel_tlbs = &bi_tlb->tlb[0];
+
 	get_ncpus();
-	pmap_bootstrap(KERNBASE, (u_long)&end, nctx);
+	pmap_bootstrap(KERNBASE, bi_kend->addr);
 }
 
 /*

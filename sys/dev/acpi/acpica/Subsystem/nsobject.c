@@ -2,7 +2,7 @@
  *
  * Module Name: nsobject - Utilities for objects attached to namespace
  *                         table entries
- *              xRevision: 93 $
+ *              xRevision: 1.95 $
  *
  ******************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.12 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.12.2.1 2006/02/01 14:51:50 yamt Exp $");
 
 #define __NSOBJECT_C__
 
@@ -171,7 +171,7 @@ AcpiNsAttachObject (
     {
         /* Invalid handle */
 
-        ACPI_REPORT_ERROR (("NsAttachObject: Null NamedObj handle\n"));
+        ACPI_REPORT_ERROR (("Null NamedObj handle\n"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -180,7 +180,7 @@ AcpiNsAttachObject (
         /* Null object */
 
         ACPI_REPORT_ERROR ((
-            "NsAttachObject: Null object, but type not ACPI_TYPE_ANY\n"));
+            "Null object, but type not ACPI_TYPE_ANY\n"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -188,8 +188,8 @@ AcpiNsAttachObject (
     {
         /* Not a name handle */
 
-        ACPI_REPORT_ERROR (("NsAttachObject: Invalid handle %p [%s]\n",
-                Node, AcpiUtGetDescriptorName (Node)));
+        ACPI_REPORT_ERROR (("Invalid handle %p [%s]\n",
+            Node, AcpiUtGetDescriptorName (Node)));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -361,7 +361,7 @@ AcpiNsGetAttachedObject (
 
     if (!Node)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "Null Node ptr\n"));
+        ACPI_REPORT_WARNING (("Null Node ptr\n"));
         return_PTR (NULL);
     }
 

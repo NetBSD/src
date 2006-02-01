@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: cpu.h,v 1.50.2.1 2006/02/01 14:51:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,11 +109,19 @@ struct cpu_info {
 
 	/* Most important fields first */
 	struct lwp		*ci_curlwp;
-	struct cpu_data		ci_data;	/* MI per-cpu data */
 	struct pcb		*ci_cpcb;
 	struct cpu_info		*ci_next;
 
 	struct lwp		*ci_fplwp;
+
+	void			*ci_eintstack;
+	struct pcb		*ci_idle_u;
+
+	/* Spinning up the CPU */
+	void			(*ci_spinup) __P((void));
+	void			*ci_initstack;
+	paddr_t			ci_paddr;
+
 	int			ci_number;
 	int			ci_upaid;
 	int			ci_cpuid;
@@ -123,11 +131,6 @@ struct cpu_info {
 	 */
 	struct cc_microtime_state ci_cc;
 
-	/* Spinning up the CPU */
-	void			(*ci_spinup) __P((void));
-	void			*ci_initstack;
-	paddr_t			ci_paddr;
-
 	/* CPU PROM information. */
 	u_int			ci_node;
 
@@ -135,8 +138,7 @@ struct cpu_info {
 	int			ci_want_ast;
 	int			ci_want_resched;
 
-	void			*ci_eintstack;
-	struct pcb		*ci_idle_u;
+	struct cpu_data		ci_data;	/* MI per-cpu data */
 };
 
 #define CPUF_PRIMARY	1
@@ -191,7 +193,15 @@ extern struct cpu_info *cpus;
 void cpu_proc_fork(struct proc *, struct proc *);
 
 #if defined(MULTIPROCESSOR)
-void	cpu_mp_startup __P((void));
+extern vaddr_t cpu_spinup_trampoline;
+
+extern  char   *mp_tramp_code;
+extern  u_long  mp_tramp_code_len;
+extern  u_long  mp_tramp_tlb_slots;
+extern  u_long  mp_tramp_func;
+extern  u_long  mp_tramp_ci;
+
+void	cpu_hatch __P((void));
 void	cpu_boot_secondary_processors __P((void));
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.1 2000/08/20 14:58:42 mrg Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.1.56.1 2006/02/01 14:51:37 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,10 @@
 #include <sys/types.h>
 #include <machine/openfirm.h>
 
+#ifndef PROM_MAX_PATH
+#define PROM_MAX_PATH	128
+#endif
+
 #if 0
 u_int OF_finddevice __P((char *name));
 u_int OF_instance_to_package __P((u_int ihandle));
@@ -49,10 +53,13 @@ u_int OF_open __P((char *dname));
 void OF_close __P((u_int handle));
 int OF_write __P((u_int handle, void *addr, int len));
 int OF_read __P((u_int handle, void *addr, int len));
-int OF_seek __P((u_int handle, u_int64_t pos));
+int OF_seek __P((u_int handle, uint64_t pos));
 #endif
-void *OF_claim __P((void *virt, u_int size, u_int align));
-void OF_release __P((void *virt, u_int size));
-int OF_milliseconds __P((void));
-void OF_chain __P((void *addr, u_int size, void (*entry)(), void *parm, u_int parmlen));
-
+void*	OF_claim(void *, u_int, u_int);
+void	OF_release(void *, u_int);
+int	OF_milliseconds(void);
+void	OF_chain(void *, u_int, void (*)(), void *, u_int);
+int	OF_peer(int);
+int	OF_child(int);
+paddr_t	OF_alloc_phys(int, int);
+void	OF_initialize(void);

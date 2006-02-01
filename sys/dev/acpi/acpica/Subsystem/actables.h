@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: actables.h - ACPI table management
- *       xRevision: 50 $
+ *       xRevision: 1.54 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -242,16 +242,24 @@ ACPI_STATUS
 AcpiTbGetTableRsdt (
     void);
 
+ACPI_STATUS
+AcpiTbValidateRsdp (
+    RSDP_DESCRIPTOR         *Rsdp);
+
 
 /*
  * tbutils - common table utilities
  */
 ACPI_STATUS
+AcpiTbIsTableInstalled (
+    ACPI_TABLE_DESC         *NewTableDesc);
+
+ACPI_STATUS
 AcpiTbVerifyTableChecksum (
     ACPI_TABLE_HEADER       *TableHeader);
 
 UINT8
-AcpiTbChecksum (
+AcpiTbGenerateChecksum (
     void                    *Buffer,
     UINT32                  Length);
 

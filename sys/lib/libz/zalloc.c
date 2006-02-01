@@ -1,4 +1,4 @@
-/* $NetBSD: zalloc.c,v 1.3 1999/11/13 21:35:06 thorpej Exp $ */
+/* $NetBSD: zalloc.c,v 1.3.56.1 2006/02/01 14:52:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,5 +65,5 @@ zcfree(opaque, ptr)
 	voidpf opaque;
 	voidpf ptr;
 {
-	free(ptr, 0);	/* XXX: size not known */
+	dealloc(ptr, 0);	/* XXX: size not known */
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.17 2005/12/11 12:19:50 christos Exp $      */
+/*      $NetBSD: xennetback.c,v 1.17.2.1 2006/02/01 14:51:48 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -29,6 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "opt_xen.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,7 +64,10 @@
 #include <machine/evtchn.h>
 #include <machine/ctrl_if.h>
 
+#ifdef XEN3
+#else
 #include <machine/xen-public/io/domain_controller.h>
+#endif
 
 #include <uvm/uvm.h>
 
@@ -376,14 +381,14 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		}
 		xneti->xni_ma_rxring = req->rx_shmem_frame << PAGE_SHIFT;
 		xneti->xni_ma_txring = req->tx_shmem_frame << PAGE_SHIFT;
-		error = pmap_remap_pages(pmap_kernel(), ring_rxaddr,
-		   xneti->xni_ma_rxring, 1, VM_PROT_READ | VM_PROT_WRITE,
+		error = pmap_enter_ma(pmap_kernel(), ring_rxaddr,
+		   xneti->xni_ma_rxring, 0, VM_PROT_READ | VM_PROT_WRITE,
 		   PMAP_WIRED | PMAP_CANFAIL, req->domid);
 		if (error) {
 			goto fail_1;
 		}
-		error = pmap_remap_pages(pmap_kernel(), ring_txaddr,
-		   xneti->xni_ma_txring, 1, VM_PROT_READ | VM_PROT_WRITE,
+		error = pmap_enter_ma(pmap_kernel(), ring_txaddr,
+		   xneti->xni_ma_txring, 0, VM_PROT_READ | VM_PROT_WRITE,
 		   PMAP_WIRED | PMAP_CANFAIL, req->domid);
 		if (error) {
 			pmap_remove(pmap_kernel(), ring_rxaddr,

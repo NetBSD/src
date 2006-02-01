@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.10 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.10.2.1 2006/02/01 14:52:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -170,7 +170,7 @@ int agpbusprint(void *, const char *);
  */
 void agp_flush_cache(void);
 int agp_find_caps(pci_chipset_tag_t, pcitag_t);
-int agp_map_aperture(struct pci_attach_args *, struct agp_softc *);
+int agp_map_aperture(struct pci_attach_args *, struct agp_softc *, int);
 struct agp_gatt *agp_alloc_gatt(struct agp_softc *);
 void agp_free_gatt(struct agp_softc *, struct agp_gatt *);
 int agp_generic_attach(struct agp_softc *);

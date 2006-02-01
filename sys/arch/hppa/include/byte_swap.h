@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.5 2005/12/28 18:40:13 perry Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.5.2.1 2006/02/01 14:51:27 yamt Exp $	*/
 
 /*	$OpenBSD: endian.h,v 1.7 2001/06/29 20:28:54 mickey Exp $	*/
 
@@ -35,11 +35,15 @@
 #ifndef _HPPA_BYTE_SWAP_H_
 #define	_HPPA_BYTE_SWAP_H_
 
-static __inline u_int16_t __byte_swap_word __P((u_int16_t));
-static __inline u_int32_t __byte_swap_long __P((u_int32_t));
+#ifdef __GNUC__
+#include <sys/types.h>
+__BEGIN_DECLS
 
-static __inline u_int32_t
-__byte_swap_long(u_int32_t x)
+
+#define	__BYTE_SWAP_U32_VARIABLE __byte_swap_u32_variable
+static __inline uint32_t __byte_swap_u32_variable(uint32_t);
+static __inline uint32_t
+__byte_swap_u32_variable(uint32_t x)
 {
 	register in_addr_t __swap32md_x;	\
 						\
@@ -61,8 +65,10 @@ __byte_swap_long(u_int32_t x)
  */
 #define	__swap16md(x)	__swap16gen(x)
 #else
-static __inline u_int16_t
-__byte_swap_word(u_int16_t x)
+#define	__BYTE_SWAP_U16_VARIABLE __byte_swap_u16_variable
+static __inline uint16_t __byte_swap_u16_variable(uint16_t);
+static __inline uint16_t
+__byte_swap_u16_variable(uint16_t x)
 {
 	register in_port_t __swap16md_x;				\
 									\
@@ -71,6 +77,9 @@ __byte_swap_word(u_int16_t x)
 	       : "=&r" (__swap16md_x) : "r" (x));			\
 	return(__swap16md_x);
 }
+#endif
+
+__END_DECLS
 #endif
 
 #endif /* !_HPPA_BYTE_SWAP_H_ */

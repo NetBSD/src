@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_ali.c,v 1.8 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: agp_ali.c,v 1.8.2.1 2006/02/01 14:52:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.8 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.8.2.1 2006/02/01 14:52:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,7 +93,7 @@ agp_ali_attach(struct device *parent, struct device *self, void *aux)
 	sc->as_chipc = asc;
 	sc->as_methods = &agp_ali_methods;
 
-	if (agp_map_aperture(pa, sc) != 0) {
+	if (agp_map_aperture(pa, sc, AGP_APBASE) != 0) {
 		aprint_error(": failed to map aperture\n");
 		free(asc, M_AGP);
 		return ENXIO;

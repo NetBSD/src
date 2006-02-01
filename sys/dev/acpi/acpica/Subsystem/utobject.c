@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utobject - ACPI object create/delete/size/cache routines
- *              xRevision: 95 $
+ *              xRevision: 1.100 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.15 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.15.2.1 2006/02/01 14:51:51 yamt Exp $");
 
 #define __UTOBJECT_C__
 
@@ -273,7 +273,7 @@ AcpiUtCreateBufferObject (
         Buffer = ACPI_MEM_CALLOCATE (BufferSize);
         if (!Buffer)
         {
-            ACPI_REPORT_ERROR (("CreateBuffer: could not allocate size %X\n",
+            ACPI_REPORT_ERROR (("Could not allocate size %X\n",
                 (UINT32) BufferSize));
             AcpiUtRemoveReference (BufferDesc);
             return_PTR (NULL);
@@ -332,7 +332,7 @@ AcpiUtCreateStringObject (
     String = ACPI_MEM_CALLOCATE (StringSize + 1);
     if (!String)
     {
-        ACPI_REPORT_ERROR (("CreateString: could not allocate size %X\n",
+        ACPI_REPORT_ERROR (("Could not allocate size %X\n",
             (UINT32) StringSize));
         AcpiUtRemoveReference (StringDesc);
         return_PTR (NULL);
@@ -425,11 +425,11 @@ AcpiUtAllocateObjectDescDbg (
     ACPI_FUNCTION_TRACE ("UtAllocateObjectDescDbg");
 
 
-    Object = AcpiUtAcquireFromCache (ACPI_MEM_LIST_OPERAND);
+    Object = AcpiOsAcquireObject (AcpiGbl_OperandCache);
     if (!Object)
     {
-        _ACPI_REPORT_ERROR (ModuleName, LineNumber, ComponentId,
-                        ("Could not allocate an object descriptor\n"));
+        _ACPI_REPORT_ERROR (ModuleName, LineNumber,
+            ("Could not allocate an object descriptor\n"));
 
         return_PTR (NULL);
     }
@@ -468,43 +468,15 @@ AcpiUtDeleteObjectDesc (
 
     if (ACPI_GET_DESCRIPTOR_TYPE (Object) != ACPI_DESC_TYPE_OPERAND)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-                "%p is not an ACPI Operand object [%s]\n", Object,
-                AcpiUtGetDescriptorName (Object)));
+        ACPI_REPORT_ERROR ((
+            "%p is not an ACPI Operand object [%s]\n", Object,
+            AcpiUtGetDescriptorName (Object)));
         return_VOID;
     }
 
-    AcpiUtReleaseToCache (ACPI_MEM_LIST_OPERAND, Object);
-
+    (void) AcpiOsReleaseObject (AcpiGbl_OperandCache, Object);
     return_VOID;
 }
-
-
-#ifdef ACPI_ENABLE_OBJECT_CACHE
-/*******************************************************************************
- *
- * FUNCTION:    AcpiUtDeleteObjectCache
- *
- * PARAMETERS:  None
- *
- * RETURN:      None
- *
- * DESCRIPTION: Purge the global state object cache.  Used during subsystem
- *              termination.
- *
- ******************************************************************************/
-
-void
-AcpiUtDeleteObjectCache (
-    void)
-{
-    ACPI_FUNCTION_TRACE ("UtDeleteObjectCache");
-
-
-    AcpiUtDeleteGenericCache (ACPI_MEM_LIST_OPERAND);
-    return_VOID;
-}
-#endif
 
 
 /*******************************************************************************
@@ -609,7 +581,7 @@ AcpiUtGetSimpleObjectSize (
              * Notably, Locals and Args are not supported, but this may be
              * required eventually.
              */
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Unsupported Reference opcode=%X in object %p\n",
                 InternalObject->Reference.Opcode, InternalObject));
             Status = AE_TYPE;
@@ -620,7 +592,7 @@ AcpiUtGetSimpleObjectSize (
 
     default:
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unsupported type=%X in object %p\n",
+        ACPI_REPORT_ERROR (("Unsupported type=%X in object %p\n",
             ACPI_GET_OBJECT_TYPE (InternalObject), InternalObject));
         Status = AE_TYPE;
         break;

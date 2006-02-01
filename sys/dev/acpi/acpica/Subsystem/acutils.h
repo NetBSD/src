@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acutils.h -- prototypes for the common (subsystem-wide) procedures
- *       xRevision: 172 $
+ *       xRevision: 1.186 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -118,6 +118,39 @@
 #define _ACUTILS_H
 
 
+extern const UINT8                      AcpiGbl_ResourceAmlSizes[];
+
+/* Strings used by the disassembler and debugger resource dump routines */
+
+#if defined(ACPI_DISASSEMBLER) || defined (ACPI_DEBUGGER)
+
+extern const char                       *AcpiGbl_BMDecode[2];
+extern const char                       *AcpiGbl_ConfigDecode[4];
+extern const char                       *AcpiGbl_ConsumeDecode[2];
+extern const char                       *AcpiGbl_DECDecode[2];
+extern const char                       *AcpiGbl_HEDecode[2];
+extern const char                       *AcpiGbl_IoDecode[2];
+extern const char                       *AcpiGbl_LLDecode[2];
+extern const char                       *AcpiGbl_MaxDecode[2];
+extern const char                       *AcpiGbl_MEMDecode[4];
+extern const char                       *AcpiGbl_MinDecode[2];
+extern const char                       *AcpiGbl_MTPDecode[4];
+extern const char                       *AcpiGbl_RNGDecode[4];
+extern const char                       *AcpiGbl_RWDecode[2];
+extern const char                       *AcpiGbl_SHRDecode[2];
+extern const char                       *AcpiGbl_SIZDecode[4];
+extern const char                       *AcpiGbl_TRSDecode[2];
+extern const char                       *AcpiGbl_TTPDecode[2];
+extern const char                       *AcpiGbl_TYPDecode[4];
+#endif
+
+/* Types for Resource descriptor entries */
+
+#define ACPI_INVALID_RESOURCE           0
+#define ACPI_FIXED_LENGTH               1
+#define ACPI_VARIABLE_LENGTH            2
+#define ACPI_SMALL_VARIABLE_LENGTH      3
+
 typedef
 ACPI_STATUS (*ACPI_PKG_CALLBACK) (
     UINT8                   ObjectType,
@@ -193,10 +226,6 @@ AcpiUtHexToAsciiChar (
 BOOLEAN
 AcpiUtValidObjectType (
     ACPI_OBJECT_TYPE        Type);
-
-ACPI_OWNER_ID
-AcpiUtAllocateOwnerId (
-    UINT32                  IdType);
 
 
 /*
@@ -314,7 +343,6 @@ extern const UINT8 _acpi_ctype[];
 #define ACPI_IS_LOWER(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_LO))
 #define ACPI_IS_PRINT(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_LO | _ACPI_UP | _ACPI_DI | _ACPI_SP | _ACPI_PU))
 #define ACPI_IS_ALPHA(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_LO | _ACPI_UP))
-#define ACPI_IS_ASCII(c)  ((c) < 0x80)
 
 #endif /* ACPI_USE_SYSTEM_CLIBRARY */
 
@@ -380,66 +408,79 @@ AcpiUtTrackStackPtr (
 void
 AcpiUtTrace (
     UINT32                  LineNumber,
-    ACPI_DEBUG_PRINT_INFO   *DbgInfo);
+    const char              *FunctionName,
+    const char              *ModuleName,
+    UINT32                  ComponentId);
 
 void
 AcpiUtTracePtr (
     UINT32                  LineNumber,
-    ACPI_DEBUG_PRINT_INFO   *DbgInfo,
+    const char              *FunctionName,
+    const char              *ModuleName,
+    UINT32                  ComponentId,
     const void              *Pointer);
 
 void
 AcpiUtTraceU32 (
     UINT32                  LineNumber,
-    ACPI_DEBUG_PRINT_INFO   *DbgInfo,
+    const char              *FunctionName,
+    const char              *ModuleName,
+    UINT32                  ComponentId,
     UINT32                  Integer);
 
 void
 AcpiUtTraceStr (
     UINT32                  LineNumber,
-    ACPI_DEBUG_PRINT_INFO   *DbgInfo,
+    const char              *FunctionName,
+    const char              *ModuleName,
+    UINT32                  ComponentId,
     const char              *String);
 
 void
 AcpiUtExit (
     UINT32                  LineNumber,
-    ACPI_DEBUG_PRINT_INFO   *DbgInfo);
+    const char              *FunctionName,
+    const char              *ModuleName,
+    UINT32                  ComponentId);
 
 void
 AcpiUtStatusExit (
     UINT32                  LineNumber,
-    ACPI_DEBUG_PRINT_INFO   *DbgInfo,
+    const char              *FunctionName,
+    const char              *ModuleName,
+    UINT32                  ComponentId,
     ACPI_STATUS             Status);
 
 void
 AcpiUtValueExit (
     UINT32                  LineNumber,
-    ACPI_DEBUG_PRINT_INFO   *DbgInfo,
+    const char              *FunctionName,
+    const char              *ModuleName,
+    UINT32                  ComponentId,
     ACPI_INTEGER            Value);
 
 void
 AcpiUtPtrExit (
     UINT32                  LineNumber,
-    ACPI_DEBUG_PRINT_INFO   *DbgInfo,
+    const char              *FunctionName,
+    const char              *ModuleName,
+    UINT32                  ComponentId,
     UINT8                   *Ptr);
+
+void
+AcpiUtReportError (
+    const char             *ModuleName,
+    UINT32                  LineNumber);
 
 void
 AcpiUtReportInfo (
     const char              *ModuleName,
-    UINT32                  LineNumber,
-    UINT32                  ComponentId);
-
-void
-AcpiUtReportError (
-    const char              *ModuleName,
-    UINT32                  LineNumber,
-    UINT32                  ComponentId);
+    UINT32                  LineNumber);
 
 void
 AcpiUtReportWarning (
     const char              *ModuleName,
-    UINT32                  LineNumber,
-    UINT32                  ComponentId);
+    UINT32                  LineNumber);
 
 void
 AcpiUtDumpBuffer (
@@ -452,7 +493,9 @@ void ACPI_INTERNAL_VAR_XFACE
 AcpiUtDebugPrint (
     UINT32                  RequestedDebugLevel,
     UINT32                  LineNumber,
-    ACPI_DEBUG_PRINT_INFO   *DbgInfo,
+    const char              *FunctionName,
+    const char              *ModuleName,
+    UINT32                  ComponentId,
     const char              *Format,
     ...) ACPI_PRINTF_LIKE_FUNC;
 
@@ -460,7 +503,9 @@ void ACPI_INTERNAL_VAR_XFACE
 AcpiUtDebugPrintRaw (
     UINT32                  RequestedDebugLevel,
     UINT32                  LineNumber,
-    ACPI_DEBUG_PRINT_INFO   *DbgInfo,
+    const char              *FunctionName,
+    const char              *ModuleName,
+    UINT32                  ComponentId,
     const char              *Format,
     ...) ACPI_PRINTF_LIKE_FUNC;
 
@@ -551,8 +596,8 @@ AcpiUtAllocateObjectDescDbg (
     UINT32                  LineNumber,
     UINT32                  ComponentId);
 
-#define AcpiUtCreateInternalObject(t)   AcpiUtCreateInternalObjectDbg (_THIS_MODULE,__LINE__,_COMPONENT,t)
-#define AcpiUtAllocateObjectDesc()      AcpiUtAllocateObjectDescDbg (_THIS_MODULE,__LINE__,_COMPONENT)
+#define AcpiUtCreateInternalObject(t)   AcpiUtCreateInternalObjectDbg (_AcpiModuleName,__LINE__,_COMPONENT,t)
+#define AcpiUtAllocateObjectDesc()      AcpiUtAllocateObjectDescDbg (_AcpiModuleName,__LINE__,_COMPONENT)
 
 void
 AcpiUtDeleteObjectDesc (
@@ -629,16 +674,6 @@ void
 AcpiUtDeleteGenericState (
     ACPI_GENERIC_STATE      *State);
 
-#ifdef ACPI_ENABLE_OBJECT_CACHE
-void
-AcpiUtDeleteGenericStateCache (
-    void);
-
-void
-AcpiUtDeleteObjectCache (
-    void);
-#endif
-
 
 /*
  * utmath
@@ -661,13 +696,21 @@ AcpiUtShortDivide (
  * utmisc
  */
 ACPI_STATUS
+AcpiUtAllocateOwnerId (
+    ACPI_OWNER_ID           *OwnerId);
+
+void
+AcpiUtReleaseOwnerId (
+    ACPI_OWNER_ID           *OwnerId);
+
+ACPI_STATUS
 AcpiUtWalkPackageTree (
     ACPI_OPERAND_OBJECT     *SourceObject,
     void                    *TargetObject,
     ACPI_PKG_CALLBACK       WalkCallback,
     void                    *Context);
 
-char *
+void
 AcpiUtStrupr (
     char                    *SrcString);
 
@@ -695,24 +738,30 @@ AcpiUtStrtoul64 (
 #define ACPI_ANY_BASE        0
 
 ACPI_STATUS
-AcpiUtMutexInitialize (
-    void);
+AcpiUtValidateResource (
+    void                    *Aml,
+    UINT8                   *ReturnIndex);
 
-void
-AcpiUtMutexTerminate (
-    void);
+UINT32
+AcpiUtGetDescriptorLength (
+    void                    *Aml);
+
+UINT16
+AcpiUtGetResourceLength (
+    void                    *Aml);
+
+UINT8
+AcpiUtGetResourceHeaderLength (
+    void                    *Aml);
+
+UINT8
+AcpiUtGetResourceType (
+    void                    *Aml);
 
 ACPI_STATUS
-AcpiUtAcquireMutex (
-    ACPI_MUTEX_HANDLE       MutexId);
-
-ACPI_STATUS
-AcpiUtReleaseMutex (
-    ACPI_MUTEX_HANDLE       MutexId);
-
-UINT8 *
 AcpiUtGetResourceEndTag (
-    ACPI_OPERAND_OBJECT     *ObjDesc);
+    ACPI_OPERAND_OBJECT     *ObjDesc,
+    UINT8                   **EndTag);
 
 UINT8
 AcpiUtGenerateChecksum (
@@ -738,22 +787,35 @@ AcpiUtDisplayInitPathname (
 
 
 /*
+ * utmutex - mutex support
+ */
+ACPI_STATUS
+AcpiUtMutexInitialize (
+    void);
+
+void
+AcpiUtMutexTerminate (
+    void);
+
+ACPI_STATUS
+AcpiUtAcquireMutex (
+    ACPI_MUTEX_HANDLE       MutexId);
+
+ACPI_STATUS
+AcpiUtReleaseMutex (
+    ACPI_MUTEX_HANDLE       MutexId);
+
+
+/*
  * utalloc - memory allocation and object caching
  */
-void *
-AcpiUtAcquireFromCache (
-    UINT32                  ListId);
+ACPI_STATUS
+AcpiUtCreateCaches (
+    void);
 
-void
-AcpiUtReleaseToCache (
-    UINT32                  ListId,
-    void                    *Object);
-
-#ifdef ACPI_ENABLE_OBJECT_CACHE
-void
-AcpiUtDeleteGenericCache (
-    UINT32                  ListId);
-#endif
+ACPI_STATUS
+AcpiUtDeleteCaches (
+    void);
 
 ACPI_STATUS
 AcpiUtValidateBuffer (

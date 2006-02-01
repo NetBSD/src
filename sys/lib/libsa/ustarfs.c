@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.25 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.25.2.1 2006/02/01 14:52:36 yamt Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -188,6 +188,7 @@ static int
 ustarfs_cylinder_read(f, seek2, forcelabel)
 	struct open_file *f;
 	ustoffs seek2;
+	int forcelabel;
 {
 	int i, e;
 
@@ -203,6 +204,7 @@ static int
 real_fs_cylinder_read(f, seek2, forcelabel)
 	struct open_file *f;
 	ustoffs seek2;
+	int forcelabel;
 {
 	int i;
 	int e = 0;	/* XXX work around gcc warning */
@@ -447,7 +449,7 @@ ustarfs_open(path, f)
 			offset += 512 - filesize;
 	}
 	if (e) {
-		free(ustf, sizeof *ustf);
+		dealloc(ustf, sizeof *ustf);
 		f->f_fsdata = 0;
 	}
 	return e;
@@ -535,7 +537,7 @@ ustarfs_read(f, start, size, resid)
 	}
 	if (resid)
 		*resid = size;
-	free(space512, 512);
+	dealloc(space512, 512);
 	return e;
 }
 
@@ -568,7 +570,7 @@ ustarfs_close(f)
 {
 	if (f == NULL || f->f_fsdata == NULL)
 		return EINVAL;
-	free(f->f_fsdata, sizeof(ust_active_t));
+	dealloc(f->f_fsdata, sizeof(ust_active_t));
 	f->f_fsdata = 0;
 	return 0;
 }

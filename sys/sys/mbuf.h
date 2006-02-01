@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.118 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.118.2.1 2006/02/01 14:52:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -181,6 +181,10 @@ struct	pkthdr {
 						 * is not yet 1s-complemented.
 						 */
 
+#define M_CSUM_BITS \
+    "\20\1TCPv4\2UDPv4\3TCP_UDP_BAD\4DATA\5TCPv6\6UDPv6\7IPv4\10IPv4_BAD" \
+    "\11TSOv4\38NO_PSEUDOHDR"
+
 /*
  * Macros for manipulating csum_data on outgoing packets.  These are
  * used to pass information down from the L4/L3 to the L2.
@@ -322,6 +326,11 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 
 /* for source-level compatibility */
 #define	M_CLUSTER	M_EXT_CLUSTER
+
+#define M_FLAGS_BITS \
+    "\20\1EXT\2PKTHDR\3EOR\4PROTO1\5AUTHIPHDR\6DECRYPTED\7LOOP\10AUTHIPDGM" \
+    "\11BCAST\12MCASE\13CANFASTFWD\14ANYCAST6\15LINK0\16LINK1\17LINK2\20LINK3" \
+    "\30EXT_CLUSTER\31EXT_PAGES\32EXT_ROMAP\33EXT_RW"
 
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD|M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP|M_AUTHIPDGM)
@@ -903,6 +912,8 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define	PACKET_TAG_PF_TRANSLATE_LOCALHOST	24 /* translated to localhost */
 #define	PACKET_TAG_IPSEC_NAT_T_PORTS		25 /* two uint16_t */
 
+#define	PACKET_TAG_INET6			26 /* IPv6 info */
+
 /*
  * Return the number of bytes in the mbuf chain, m.
  */
@@ -934,7 +945,7 @@ m_ext_free(struct mbuf *m, boolean_t dofree)
 	if (MCLISREFERENCED(m)) {
 		_MCLDEREFERENCE(m);
 	} else if (m->m_flags & M_CLUSTER) {
-		pool_cache_put_paddr(m->m_ext.ext_arg,
+		pool_cache_put_paddr((struct pool_cache *)m->m_ext.ext_arg,
 		    m->m_ext.ext_buf, m->m_ext.ext_paddr);
 	} else if (m->m_ext.ext_free) {
 		(*m->m_ext.ext_free)(dofree ? m : NULL, m->m_ext.ext_buf,
@@ -947,6 +958,7 @@ m_ext_free(struct mbuf *m, boolean_t dofree)
 		pool_cache_put(&mbpool_cache, m);
 }
 
+void m_print(const struct mbuf *, const char *, void (*)(const char *, ...));
 
 #endif /* _KERNEL */
 #endif /* !_SYS_MBUF_H_ */

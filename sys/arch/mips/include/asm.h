@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.36 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.36.2.1 2006/02/01 14:51:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,6 +106,12 @@
  */
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
+	alias = sym
+/*
+ * STRONG_ALIAS: create a strong alias.
+ */
+#define STRONG_ALIAS(alias,sym)						\
+	.globl alias;							\
 	alias = sym
 
 /*

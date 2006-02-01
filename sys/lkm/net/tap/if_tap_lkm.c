@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap_lkm.c,v 1.3 2005/12/11 12:24:49 christos Exp $	*/
+/*	$NetBSD: if_tap_lkm.c,v 1.3.2.1 2006/02/01 14:52:37 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2005 The NetBSD Foundation.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap_lkm.c,v 1.3 2005/12/11 12:24:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap_lkm.c,v 1.3.2.1 2006/02/01 14:52:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ static int	tap_lkmunload(struct lkm_table *, int);
 
 void		tapattach(int);
 int		tapdetach(void);
+int		tap_clone_destroyer(struct device *);
 SYSCTL_SETUP_PROTO(sysctl_tap_setup);
 
 extern struct cfattach tap_ca;
@@ -172,11 +173,8 @@ tap_lkmunload(struct lkm_table *lkmtp, int cmd)
 
 	for (i = 0; i < tap_cd.cd_ndevs; i++)
 		if (tap_cd.cd_devs[i] != NULL &&
-		    (error = config_detach(tap_cd.cd_devs[i], 0)) != 0) {
-			aprint_error("%s: unable to detach instance\n",
-			    ((struct device *)tap_cd.cd_devs[i])->dv_xname);
+		    (error = tap_clone_destroyer(tap_cd.cd_devs[i])) != 0)
 			return error;
-		}
 
 	sysctl_teardown(&tap_log);
 

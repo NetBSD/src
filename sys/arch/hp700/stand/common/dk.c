@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.7 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: dk.c,v 1.7.2.1 2006/02/01 14:51:27 yamt Exp $	*/
 
 /*	$OpenBSD: dk.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -119,7 +119,7 @@ dkopen(struct open_file *f, ...)
 int
 dkclose(struct open_file *f)
 {
-	free(f->f_devdata, sizeof(struct hppa_dev));
+	dealloc(f->f_devdata, sizeof(struct hppa_dev));
 	f->f_devdata = NULL;
 	return 0;
 }

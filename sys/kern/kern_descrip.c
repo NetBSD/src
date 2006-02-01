@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.139 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.139.2.1 2006/02/01 14:52:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.139 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.139.2.1 2006/02/01 14:52:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -991,7 +991,9 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	if (nfiles >= maxfiles) {
 		tablefull("file", "increase kern.maxfiles or MAXFILES");
 		simple_unlock(&filelist_slock);
+		simple_lock(&p->p_fd->fd_slock);
 		fd_unused(p->p_fd, i);
+		simple_unlock(&p->p_fd->fd_slock);
 		pool_put(&file_pool, fp);
 		return (ENFILE);
 	}

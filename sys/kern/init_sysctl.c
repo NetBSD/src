@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.59.2.1 2005/12/31 11:14:01 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.59.2.2 2006/02/01 14:52:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.59.2.1 2005/12/31 11:14:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.59.2.2 2006/02/01 14:52:20 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1021,13 +1021,21 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 
 SYSCTL_SETUP(sysctl_security_setup, "sysctl security subtree setup")
 {
-	sysctl_createv(clog, 0, NULL, NULL,
+	const struct sysctlnode *rnode = NULL;
+
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "security", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_SECURITY, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "curtain",
 		       SYSCTL_DESCR("Curtain information about objects"
 				    " to users not owning them."),
 		       NULL, 0, &security_curtain, 0,
-		       CTL_SECURITY, SECURITY_CURTAIN, CTL_EOL);
+		       CTL_CREATE, CTL_EOL);
 }
 
 /*

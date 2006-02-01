@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dsmthdat - control method arguments and local variables
- *              xRevision: 84 $
+ *              xRevision: 1.87 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.13 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.13.2.1 2006/02/01 14:51:49 yamt Exp $");
 
 #define __DSMTHDAT_C__
 
@@ -367,7 +367,7 @@ AcpiDsMethodDataGetNode (
 
         if (Index > ACPI_METHOD_MAX_LOCAL)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Local index %d is invalid (max %d)\n",
                 Index, ACPI_METHOD_MAX_LOCAL));
             return_ACPI_STATUS (AE_AML_INVALID_INDEX);
@@ -382,7 +382,7 @@ AcpiDsMethodDataGetNode (
 
         if (Index > ACPI_METHOD_MAX_ARG)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Arg index %d is invalid (max %d)\n",
                 Index, ACPI_METHOD_MAX_ARG));
             return_ACPI_STATUS (AE_AML_INVALID_INDEX);
@@ -394,7 +394,7 @@ AcpiDsMethodDataGetNode (
         break;
 
     default:
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Opcode %d is invalid\n", Opcode));
+        ACPI_REPORT_ERROR (("Opcode %d is invalid\n", Opcode));
         return_ACPI_STATUS (AE_AML_BAD_OPCODE);
     }
 
@@ -495,7 +495,7 @@ AcpiDsMethodDataGetValue (
 
     if (!DestDesc)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Null object descriptor pointer\n"));
+        ACPI_REPORT_ERROR (("Null object descriptor pointer\n"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -543,7 +543,7 @@ AcpiDsMethodDataGetValue (
         {
         case AML_ARG_OP:
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Uninitialized Arg[%d] at node %p\n",
                 Index, Node));
 
@@ -551,14 +551,14 @@ AcpiDsMethodDataGetValue (
 
         case AML_LOCAL_OP:
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Uninitialized Local[%d] at node %p\n",
                 Index, Node));
 
             return_ACPI_STATUS (AE_AML_UNINITIALIZED_LOCAL);
 
         default:
-            ACPI_REPORT_ERROR (("Not Arg/Local opcode: %X\n", Opcode));
+            ACPI_REPORT_ERROR (("Not a Arg/Local opcode: %X\n", Opcode));
             return_ACPI_STATUS (AE_AML_INTERNAL);
         }
     }
@@ -738,23 +738,11 @@ AcpiDsStoreObjectToLocal (
         if (Opcode == AML_ARG_OP)
         {
             /*
-             * Make sure that the object is the correct type.  This may be
-             * overkill, butit is here because references were NS nodes in
-             *  the past.  Now they are operand objects of type Reference.
-             */
-            if (ACPI_GET_DESCRIPTOR_TYPE (CurrentObjDesc) != ACPI_DESC_TYPE_OPERAND)
-            {
-                ACPI_REPORT_ERROR ((
-                    "Invalid descriptor type while storing to method arg: [%s]\n",
-                    AcpiUtGetDescriptorName (CurrentObjDesc)));
-                return_ACPI_STATUS (AE_AML_INTERNAL);
-            }
-
-            /*
              * If we have a valid reference object that came from RefOf(),
              * do the indirect store
              */
-            if ((CurrentObjDesc->Common.Type == ACPI_TYPE_LOCAL_REFERENCE) &&
+            if ((ACPI_GET_DESCRIPTOR_TYPE (CurrentObjDesc) == ACPI_DESC_TYPE_OPERAND) &&
+                (CurrentObjDesc->Common.Type == ACPI_TYPE_LOCAL_REFERENCE) &&
                 (CurrentObjDesc->Reference.Opcode == AML_REF_OF_OP))
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,

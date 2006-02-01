@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.59 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: idesc.c,v 1.59.2.1 2006/02/01 14:51:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.59 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.59.2.1 2006/02/01 14:51:25 yamt Exp $");
 
 /*
  * A4000 IDE interface, emulating a SCSI controller
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.59 2005/12/11 12:16:28 christos Exp $");
 #endif
 #include <amiga/dev/zbusvar.h>
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 
 #include "atapibus.h"
 #include "idesc.h"

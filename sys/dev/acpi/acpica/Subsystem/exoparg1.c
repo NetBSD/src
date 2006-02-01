@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg1 - AML execution - opcodes with 1 argument
- *              xRevision: 167 $
+ *              xRevision: 1.174 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg1.c,v 1.11 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exoparg1.c,v 1.11.2.1 2006/02/01 14:51:50 yamt Exp $");
 
 #define __EXOPARG1_C__
 
@@ -192,13 +192,14 @@ AcpiExOpcode_0A_0T_1R (
             Status = AE_NO_MEMORY;
             goto Cleanup;
         }
-
+#if ACPI_MACHINE_WIDTH != 16
         ReturnDesc->Integer.Value = AcpiOsGetTimer ();
+#endif
         break;
 
     default:                /*  Unknown opcode  */
 
-        ACPI_REPORT_ERROR (("AcpiExOpcode_0A_0T_1R: Unknown opcode %X\n",
+        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
             WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         break;
@@ -206,16 +207,17 @@ AcpiExOpcode_0A_0T_1R (
 
 Cleanup:
 
-    if (!WalkState->ResultObj)
-    {
-        WalkState->ResultObj = ReturnDesc;
-    }
-
     /* Delete return object on error */
 
-    if (ACPI_FAILURE (Status))
+    if ((ACPI_FAILURE (Status)) || WalkState->ResultObj)
     {
         AcpiUtRemoveReference (ReturnDesc);
+    }
+    else
+    {
+        /* Save the return value */
+
+        WalkState->ResultObj = ReturnDesc;
     }
 
     return_ACPI_STATUS (Status);
@@ -289,7 +291,7 @@ AcpiExOpcode_1A_0T_0R (
 
     default:                /*  Unknown opcode  */
 
-        ACPI_REPORT_ERROR (("AcpiExOpcode_1A_0T_0R: Unknown opcode %X\n",
+        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
             WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         break;
@@ -335,7 +337,7 @@ AcpiExOpcode_1A_1T_0R (
 
     default:                        /* Unknown opcode */
 
-        ACPI_REPORT_ERROR (("AcpiExOpcode_1A_1T_0R: Unknown opcode %X\n",
+        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
             WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         goto Cleanup;
@@ -469,7 +471,7 @@ AcpiExOpcode_1A_1T_1R (
 
                 if (Temp32 > 9)
                 {
-                    ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                    ACPI_REPORT_ERROR ((
                         "BCD digit too large (not decimal): 0x%X\n",
                         Temp32));
 
@@ -516,7 +518,7 @@ AcpiExOpcode_1A_1T_1R (
 
             if (Digit > 0)
             {
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                ACPI_REPORT_ERROR ((
                     "Integer too large to convert to BCD: %8.8X%8.8X\n",
                     ACPI_FORMAT_UINT64 (Operand[0]->Integer.Value)));
                 Status = AE_AML_NUMERIC_OVERFLOW;
@@ -658,7 +660,7 @@ AcpiExOpcode_1A_1T_1R (
 
         /* These are two obsolete opcodes */
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "%s is obsolete and not implemented\n",
             AcpiPsGetOpcodeName (WalkState->Opcode)));
         Status = AE_SUPPORT;
@@ -667,7 +669,7 @@ AcpiExOpcode_1A_1T_1R (
 
     default:                        /* Unknown opcode */
 
-        ACPI_REPORT_ERROR (("AcpiExOpcode_1A_1T_1R: Unknown opcode %X\n",
+        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
             WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         goto Cleanup;
@@ -787,7 +789,7 @@ AcpiExOpcode_1A_0T_1R (
         Status = AcpiExResolveOperands (AML_LNOT_OP, &TempDesc, WalkState);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "%s: bad operand(s) %s\n",
+            ACPI_REPORT_ERROR (("%s: bad operand(s) %s\n",
                 AcpiPsGetOpcodeName (WalkState->Opcode),
                 AcpiFormatException(Status)));
 
@@ -892,8 +894,8 @@ AcpiExOpcode_1A_0T_1R (
             break;
 
         default:
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-                "SizeOf - Operand is not Buf/Int/Str/Pkg - found type %s\n",
+            ACPI_REPORT_ERROR ((
+                "Operand is not Buf/Int/Str/Pkg - found type %s\n",
                 AcpiUtGetTypeName (Type)));
             Status = AE_AML_OPERAND_TYPE;
             goto Cleanup;
@@ -1025,6 +1027,7 @@ AcpiExOpcode_1A_0T_1R (
              */
             ReturnDesc = AcpiNsGetAttachedObject (
                             (ACPI_NAMESPACE_NODE *) Operand[0]);
+            AcpiUtAddReference (ReturnDesc);
         }
         else
         {
@@ -1078,27 +1081,17 @@ AcpiExOpcode_1A_0T_1R (
                      * add another reference to the referenced object, however.
                      */
                     ReturnDesc = *(Operand[0]->Reference.Where);
-                    if (!ReturnDesc)
+                    if (ReturnDesc)
                     {
-                        /*
-                         * We can't return a NULL dereferenced value.  This is
-                         * an uninitialized package element and is thus a
-                         * severe error.
-                         */
-                        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-                            "NULL package element obj %p\n",
-                            Operand[0]));
-                        Status = AE_AML_UNINITIALIZED_ELEMENT;
-                        goto Cleanup;
+                        AcpiUtAddReference (ReturnDesc);
                     }
 
-                    AcpiUtAddReference (ReturnDesc);
                     break;
 
 
                 default:
 
-                    ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                    ACPI_REPORT_ERROR ((
                         "Unknown Index TargetType %X in obj %p\n",
                         Operand[0]->Reference.TargetType, Operand[0]));
                     Status = AE_AML_OPERAND_TYPE;
@@ -1126,7 +1119,7 @@ AcpiExOpcode_1A_0T_1R (
 
 
             default:
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                ACPI_REPORT_ERROR ((
                     "Unknown opcode in ref(%p) - %X\n",
                     Operand[0], Operand[0]->Reference.Opcode));
 
@@ -1139,7 +1132,7 @@ AcpiExOpcode_1A_0T_1R (
 
     default:
 
-        ACPI_REPORT_ERROR (("AcpiExOpcode_1A_0T_1R: Unknown opcode %X\n",
+        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
             WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         goto Cleanup;

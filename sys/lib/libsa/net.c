@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.29 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.29.2.1 2006/02/01 14:52:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -55,7 +55,18 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
+#ifdef _STANDALONE
 #include "stand.h"
+#define delay()
+#else
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+#define panic printf
+#define delay() usleep(100000)
+#define getsecs() time(NULL)
+#endif
+
 #include "net.h"
 
 /*
@@ -98,9 +109,6 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 				return -1;
 			}
 			cc = (*sproc)(d, sbuf, ssize);
-			if (cc != -1 && (size_t)cc < ssize)
-				panic("sendrecv: short write! (%d < %d)",
-				    cc, ssize);
 
 			tleft = tmo;
 			tmo <<= 1;
@@ -109,10 +117,14 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 
 			if (cc == -1) {
 				/* Error on transmit; wait before retrying */
-				while ((getsecs() - t) < tmo);
+				while ((getsecs() - t) < tmo)
+					delay();
 				tleft = 0;
 				continue;
 			}
+			if (cc < ssize)
+				panic("sendrecv: short write! (%zd < %zd)",
+				    cc, ssize);
 
 			tlast = t;
 		}

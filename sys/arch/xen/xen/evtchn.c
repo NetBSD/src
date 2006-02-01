@@ -1,4 +1,34 @@
-/*	$NetBSD: evtchn.c,v 1.17 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.17.2.1 2006/02/01 14:51:48 yamt Exp $	*/
+
+/*
+ * Copyright (c) 2006 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 
 /*
  *
@@ -34,7 +64,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.17 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.17.2.1 2006/02/01 14:51:48 yamt Exp $");
+
+#include "opt_xen.h"
+#include "isa.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,12 +84,10 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.17 2005/12/11 12:19:50 christos Exp $")
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
+#ifndef XEN3
 #include <machine/ctrl_if.h>
+#endif
 #include <machine/xenfunc.h>
-
-#include "opt_xen.h"
-#include "isa.h"
-#include "pci.h"
 
 /*
  * This lock protects updates to the following mapping and reference-count
@@ -85,10 +117,12 @@ physdev_op_t physdev_op_notify = {
 #endif
 
 int debug_port;
-static int xen_debug_handler(void *);
+int xen_debug_handler(void *);
+#ifndef XEN3
 static int xen_misdirect_handler(void *);
+#endif
 
-/* #define IRQ_DEBUG -1 */
+// #define IRQ_DEBUG 4
 
 void
 events_default_setup()
@@ -128,6 +162,7 @@ init_events()
 	    "debugev");
 	hypervisor_enable_event(evtch);
 
+#ifndef XEN3
 	evtch = bind_virq_to_evtch(VIRQ_MISDIRECT);
 	aprint_verbose("misdirect virtual interrupt using event channel %d\n",
 	    evtch);
@@ -138,6 +173,7 @@ init_events()
 	/* This needs to be done early, but after the IRQ subsystem is
 	 * alive. */
 	ctrl_if_init();
+#endif
 
 	enable_intr();		/* at long last... */
 }
@@ -250,6 +286,9 @@ bind_virq_to_evtch(int virq)
 	if (evtchn == -1) {
 		op.cmd = EVTCHNOP_bind_virq;
 		op.u.bind_virq.virq = virq;
+#ifdef XEN3
+		op.u.bind_virq.vcpu = 0;
+#endif
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to bind virtual IRQ %d\n", virq);
 		evtchn = op.u.bind_virq.port;
@@ -279,7 +318,9 @@ unbind_virq_from_evtch(int virq)
 	evtch_bindcount[evtchn]--;
 	if (evtch_bindcount[evtchn] == 0) {
 		op.cmd = EVTCHNOP_close;
+#ifndef XEN3
 		op.u.close.dom = DOMID_SELF;
+#endif
 		op.u.close.port = evtchn;
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to unbind virtual IRQ %d\n", virq);
@@ -340,7 +381,9 @@ unbind_pirq_from_evtch(int pirq)
 	evtch_bindcount[evtchn]--;
 	if (evtch_bindcount[evtchn] == 0) {
 		op.cmd = EVTCHNOP_close;
+#ifndef XEN3
 		op.u.close.dom = DOMID_SELF;
+#endif
 		op.u.close.port = evtchn;
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to unbind physical IRQ %d\n", pirq);
@@ -561,30 +604,48 @@ hypervisor_enable_event(unsigned int evtch)
 #endif /* NPCI > 0 || NISA > 0 */
 }
 
-static int
+int
 xen_debug_handler(void *arg)
 {
 	struct cpu_info *ci = curcpu();
 	int i;
+	int ci_ilevel = ci->ci_ilevel;
+	int ci_ipending = ci->ci_ipending;
+	int ci_idepth = ci->ci_idepth;
+	u_long upcall_pending =
+	    HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_pending;
+	u_long upcall_mask =
+	    HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask;
+	u_long pending_sel = HYPERVISOR_shared_info->evtchn_pending_sel;
+	unsigned long evtchn_mask[sizeof(unsigned long) * 8];
+	unsigned long evtchn_pending[sizeof(unsigned long) * 8];
+
+	u_long p;
+
+	p = (u_long)&HYPERVISOR_shared_info->evtchn_mask[0];
+	memcpy(evtchn_mask, (void *)p, sizeof(evtchn_mask));
+	p = (u_long)&HYPERVISOR_shared_info->evtchn_pending[0];
+	memcpy(evtchn_pending, (void *)p, sizeof(evtchn_pending));
+
+	__insn_barrier();
 	printf("debug event\n");
 	printf("ci_ilevel 0x%x ci_ipending 0x%x ci_idepth %d\n",
-	    ci->ci_ilevel, ci->ci_ipending, ci->ci_idepth);
-	printf("evtchn_upcall_pending %d evtchn_upcall_mask %d"
-	    " evtchn_pending_sel 0x%x\n",
-		HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_pending,
-		HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask, 
-		HYPERVISOR_shared_info->evtchn_pending_sel);
+	    ci_ilevel, ci_ipending, ci_idepth);
+	printf("evtchn_upcall_pending %ld evtchn_upcall_mask %ld"
+	    " evtchn_pending_sel 0x%lx\n",
+		upcall_pending, upcall_mask, pending_sel);
 	printf("evtchn_mask");
 	for (i = 0 ; i < 32; i++)
-		printf(" %x", HYPERVISOR_shared_info->evtchn_mask[i]);
+		printf(" %lx", (u_long)evtchn_mask[i]);
 	printf("\n");
 	printf("evtchn_pending");
 	for (i = 0 ; i < 32; i++)
-		printf(" %x", HYPERVISOR_shared_info->evtchn_pending[i]);
+		printf(" %lx", (u_long)evtchn_pending[i]);
 	printf("\n");
 	return 0;
 }
 
+#ifndef XEN3
 static int
 xen_misdirect_handler(void *arg)
 {
@@ -594,3 +655,4 @@ xen_misdirect_handler(void *arg)
 #endif
 	return 0;
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.40 2005/12/10 23:39:56 elad Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.40.2.1 2006/02/01 14:52:41 yamt Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ struct in6_ifextra {
 	struct in6_ifstat *in6_ifstat;
 	struct icmp6_ifstat *icmp6_ifstat;
 	struct nd_ifinfo *nd_ifinfo;
+	struct scope6_id *scope6_id;
 };
 
 struct	in6_ifaddr {
@@ -118,6 +119,15 @@ struct	in6_ifaddr {
 
 	/* multicast addresses joined from the kernel */
 	LIST_HEAD(, in6_multi_mship) ia6_memberships;
+};
+
+/* control structure to manage address selection policy */
+struct in6_addrpolicy {
+	struct sockaddr_in6 addr; /* prefix address */
+	struct sockaddr_in6 addrmask; /* prefix mask */
+	int preced;		/* precedence */
+	int label;		/* matching label */
+	u_quad_t use;		/* statistics */
 };
 
 /*
@@ -426,6 +436,8 @@ struct	in6_rrenumreq {
 				      struct sioc_sg_req6) /* get s,g pkt cnt */
 #define SIOCGETMIFCNT_IN6	_IOWR('u', 107, \
 				      struct sioc_mif_req6) /* get pkt cnt per if */
+#define SIOCAADDRCTL_POLICY	_IOW('u', 108, struct in6_addrpolicy)
+#define SIOCDADDRCTL_POLICY	_IOW('u', 109, struct in6_addrpolicy)
 
 #define IN6_IFF_ANYCAST		0x01	/* anycast address */
 #define IN6_IFF_TENTATIVE	0x02	/* tentative address */
@@ -594,19 +606,14 @@ void	in6_purgemkludge __P((struct ifnet *));
 struct in6_ifaddr *in6ifa_ifpforlinklocal __P((struct ifnet *, int));
 struct in6_ifaddr *in6ifa_ifpwithaddr __P((struct ifnet *, struct in6_addr *));
 char	*ip6_sprintf __P((const struct in6_addr *));
-int	in6_addr2scopeid __P((struct ifnet *, struct in6_addr *));
 int	in6_matchlen __P((struct in6_addr *, struct in6_addr *));
 int	in6_are_prefix_equal __P((struct in6_addr *, struct in6_addr *, int));
 void	in6_prefixlen2mask __P((struct in6_addr *, int));
 void	in6_purgeprefix __P((struct ifnet *));
 
+int in6_src_ioctl __P((u_long, caddr_t));
 int	in6_is_addr_deprecated __P((struct sockaddr_in6 *));
 struct in6pcb;
-int in6_embedscope __P((struct in6_addr *, const struct sockaddr_in6 *,
-	struct in6pcb *, struct ifnet **));
-int in6_recoverscope __P((struct sockaddr_in6 *, const struct in6_addr *,
-	struct ifnet *));
-void in6_clearscope __P((struct in6_addr *));
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IN6_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.34 2005/12/03 22:47:25 he Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.34.2.1 2006/02/01 14:51:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.34 2005/12/03 22:47:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.34.2.1 2006/02/01 14:51:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 		mode = strchr("mawln", modif[0]);
 
 	if (mode == NULL || *mode == 'm') {
-		db_printf("usage: show all procs [/a] [/n] [/w]\n");
+		db_printf("usage: show all procs [/a] [/l] [/n] [/w]\n");
 		db_printf("\t/a == show process address info\n");
 		db_printf("\t/l == show LWP info\n");
 		db_printf("\t/n == show normal process info [default]\n");
@@ -167,7 +167,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 				continue;
 			}
 			l = LIST_FIRST(&p->p_lwps);
-			db_printf("%c%-10d", " >"[cp == p], p->p_pid);
+			db_printf("%c%-10d", (cp == p ? '>' : ' '), p->p_pid);
 
 			switch (*mode) {
 
@@ -180,7 +180,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 			case 'l':
 				 while (l != NULL) {
 					db_printf("%c%4d %d %#9x %18p %18p %s\n",
-					    " >"[cl == l], l->l_lid,
+					    (cl == l ? '>' : ' '), l->l_lid,
 					    l->l_stat, l->l_flag, l,
 					    l->l_addr,
 					    (l->l_wchan && l->l_wmesg) ?
@@ -299,7 +299,7 @@ db_show_sched_qs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 	{
 		first = 1;
 		ph = &sched_qs[i];
-		for (l = ph->ph_link; l != (struct lwp *)ph; l = l->l_forw) {
+		for (l = ph->ph_link; l != (void *)ph; l = l->l_forw) {
 			if (first) {
 				db_printf("%c%d",
 				    (sched_whichqs & RQMASK(i))

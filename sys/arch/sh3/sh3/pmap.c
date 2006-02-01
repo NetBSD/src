@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51.2.1 2006/02/01 14:51:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51.2.1 2006/02/01 14:51:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	return (__pmap_kve);
  error:
 	panic("pmap_growkernel: out of memory.");
+	/* NOTREACHED */
 }
 
 void
@@ -626,6 +627,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		switch (prot) {
 		default:
 			panic("pmap_protect: invalid protection mode %x", prot);
+			/* NOTREACHED */
 		case VM_PROT_READ:
 			/* FALLTHROUGH */
 		case VM_PROT_READ | VM_PROT_EXECUTE:
@@ -1003,6 +1005,7 @@ __pmap_asid_alloc()
 	}
 
 	panic("No ASID allocated.");
+	/* NOTREACHED */
 }
 
 /*

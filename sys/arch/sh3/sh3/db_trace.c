@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.18 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.18.2.1 2006/02/01 14:51:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.18 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.18.2.1 2006/02/01 14:51:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.18 2005/12/24 22:45:36 perry Exp $");
 #ifdef TRACE_DEBUG
 # define DPRINTF printf
 #else
-# define DPRINTF while (0) printf
+# define DPRINTF while (/* CONSTCOND */ 0) printf
 #endif
 
 extern char start[], etext[];

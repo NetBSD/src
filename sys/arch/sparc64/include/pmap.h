@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34 2005/12/11 12:19:10 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34.2.1 2006/02/01 14:51:37 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -173,7 +173,7 @@ int pmap_count_wired __P((struct pmap *));
 
 void pmap_activate_pmap(struct pmap *);
 void pmap_update(struct pmap *);
-void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
+void pmap_bootstrap __P((u_long, u_long));
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
 #define	PMAP_PREFER(pa, va, sz, td)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT))))
 
@@ -193,6 +193,10 @@ void		pmap_kprotect(vaddr_t, vm_prot_t);
 /* SPARC64 specific */
 int	ctx_alloc __P((struct pmap *));
 void	ctx_free __P((struct pmap *));
+
+/* Installed physical memory, as discovered during bootstrap. */
+extern int phys_installed_size;
+extern struct mem_region *phys_installed;
 
 #endif	/* _KERNEL */
 

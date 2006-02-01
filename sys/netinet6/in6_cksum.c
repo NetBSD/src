@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.17 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.17.2.1 2006/02/01 14:52:41 yamt Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
@@ -62,13 +62,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.17 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.17.2.1 2006/02/01 14:52:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 #include <netinet/in.h>
 #include <netinet/ip6.h>
+#include <netinet6/scope6_var.h>
 
 #include <net/net_osdep.h>
 
@@ -100,6 +101,7 @@ in6_cksum(m, nxt, off, len)
 	int mlen = 0;
 	int byte_swapped = 0;
 	struct ip6_hdr *ip6;
+	struct in6_addr in6;
 	union {
 		u_int16_t phs[4];
 		struct {
@@ -137,18 +139,24 @@ in6_cksum(m, nxt, off, len)
 	uph.ph.ph_len = htonl(len);
 	uph.ph.ph_nxt = nxt;
 
-	/* IPv6 source address */
-	sum += w[0];
-	if (!IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-		sum += w[1];
-	sum += w[2]; sum += w[3]; sum += w[4]; sum += w[5];
-	sum += w[6]; sum += w[7];
+	/*
+	 * IPv6 source address
+	 * XXX: we'd like to avoid copying the address, but we can't due to
+	 * the possibly embedded scope zone ID.
+	 */
+	in6 = ip6->ip6_src;
+	in6_clearscope(&in6);
+	w = (u_int16_t *)&in6;
+	sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3];
+	sum += w[4]; sum += w[5]; sum += w[6]; sum += w[7];
+
 	/* IPv6 destination address */
-	sum += w[8];
-	if (!IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-		sum += w[9];
-	sum += w[10]; sum += w[11]; sum += w[12]; sum += w[13];
-	sum += w[14]; sum += w[15];
+	in6 = ip6->ip6_dst;
+	in6_clearscope(&in6);
+	w = (u_int16_t *)&in6;
+	sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3];
+	sum += w[4]; sum += w[5]; sum += w[6]; sum += w[7];
+
 	/* Payload length and upper layer identifier */
 	sum += uph.phs[0];  sum += uph.phs[1];
 	sum += uph.phs[2];  sum += uph.phs[3];

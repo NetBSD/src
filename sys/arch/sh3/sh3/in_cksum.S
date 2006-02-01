@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.4 2001/10/16 02:07:46 msaitoh Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.4.48.1 2006/02/01 14:51:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -87,7 +87,12 @@
 	sub	reg_tmp0,reg_mlen
 
 
-
+/*
+ * LINTSTUB: include <sys/param.h>
+ * LINTSTUB: include <sys/mbuf.h>
+ *
+ * LINTSTUB: Func: int in_cksum(struct mbuf *m, int len);
+ */
 ENTRY(in_cksum)
 	sts.l	pr,@-r15
 
@@ -142,9 +147,8 @@ mbuf_loop:
 	bf	1f
 
 do_cksum128:
-	mova	cksum128,reg_tmp0
-	jsr	@reg_tmp0
-	nop
+	bsr	cksum128
+	 nop
 
 	mov	#127,reg_tmp0
 	cmp/hi	reg_tmp0,reg_mlen
@@ -152,9 +156,8 @@ do_cksum128:
 1:
 
 
-	mova	cksum128mod,reg_tmp0
-	jsr	@reg_tmp0
-	nop
+	bsr	cksum128mod
+	 nop
 
 	REDUCE
 
@@ -217,6 +220,8 @@ XLprintf:
 message_out_of_data:
 	.asciz "cksum: out of data (%d byte short)\n"
 
+	SET_ENTRY_SIZE(in_cksum)
+
 
 	.align	2
 cksum128mod:
@@ -277,4 +282,3 @@ cksum128_tail:
 	mov	#0,reg_tmp0
 	rts
 	addc	reg_tmp0,reg_sum
-

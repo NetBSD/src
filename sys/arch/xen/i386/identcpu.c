@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.8 2005/12/24 20:07:48 perry Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.8.2.1 2006/02/01 14:51:42 yamt Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.8 2005/12/24 20:07:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.8.2.1 2006/02/01 14:51:42 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -1159,9 +1159,21 @@ identifycpu(struct cpu_info *ci)
 	ci->ci_cpu_class = class;
 
 	if (ci->ci_feature_flags & CPUID_TSC) {
+#ifdef XEN3
+		const volatile vcpu_time_info_t *tinfo =
+		    &HYPERVISOR_shared_info->vcpu_info[0].time;
+		uint64_t freq = 1000000000ULL << 32;
+		freq = freq / (uint64_t)tinfo->tsc_to_system_mul;
+		if ( tinfo->tsc_shift < 0 )
+			freq = freq << -tinfo->tsc_shift;
+		else
+			freq = freq >> tinfo->tsc_shift;
+		ci->ci_tsc_freq = freq;
+#else
 		/* XXX this needs to read the shared_info of the CPU
 		 * being probed.. */
 		ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
+#endif /* XEN3 */
 #ifndef NO_TSC_TIME
 		microtime_func = cc_microtime;
 #endif

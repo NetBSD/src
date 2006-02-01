@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.9.2.1 2006/02/01 14:51:32 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -106,7 +106,7 @@
 #ifndef _SH5_BUS_H_
 #define	_SH5_BUS_H_
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 
 #ifndef __BUS_SPACE_COMPAT_OLDDEFS
 #define	__BUS_SPACE_COMPAT_OLDDEFS

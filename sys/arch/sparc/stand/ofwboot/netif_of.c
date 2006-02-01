@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.2 2003/03/13 12:02:54 hannken Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.2.30.1 2006/02/01 14:51:37 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -52,8 +52,9 @@
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
 
+#include <machine/promlib.h>
+
 #include "ofdev.h"
-#include "openfirm.h"
 
 static struct netif netif_of;
 
@@ -95,7 +96,7 @@ netif_open(machdep_hint)
 	io->io_netif = &netif_of;
 	
 	/* Put our ethernet address in io->myea */
-	OF_getprop(OF_instance_to_package(op->handle),
+	_prom_getprop(prom_instance_to_package(op->handle),
 		   "mac-address", io->myea, sizeof io->myea);
 
 #ifdef	NETIF_DEBUG
@@ -171,7 +172,7 @@ netif_put(desc, pkt, len)
 #endif
 	}
 
-	rv = OF_write(op->handle, pkt, sendlen);
+	rv = prom_write(op->handle, pkt, sendlen);
 
 #ifdef	NETIF_DEBUG
 	printf("netif_put: xmit returned %d\n", rv);
@@ -203,12 +204,12 @@ netif_get(desc, pkt, maxlen, timo)
 #endif
 
 	tmo_ms = timo * 1000;
-	tick0 = OF_milliseconds();
+	tick0 = prom_ticks();
 
 	do {
-		len = OF_read(op->handle, pkt, maxlen);
+		len = prom_read(op->handle, pkt, maxlen);
 	} while ((len == -2 || len == 0) &&
-		 (OF_milliseconds() - tick0 < tmo_ms));
+		 (prom_ticks() - tick0 < tmo_ms));
 
 #ifdef	NETIF_DEBUG
 	printf("netif_get: received len=%d\n", len);
@@ -236,5 +237,5 @@ netif_get(desc, pkt, maxlen, timo)
 time_t
 getsecs()
 {
-	return OF_milliseconds() / 1000;
+	return prom_ticks() / 1000;
 }

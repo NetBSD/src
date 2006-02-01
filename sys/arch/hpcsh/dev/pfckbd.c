@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.16 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.16.2.1 2006/02/01 14:51:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.16 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.16.2.1 2006/02/01 14:51:27 yamt Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -192,9 +192,10 @@ pfckbd_input(struct hpckbd_if *hpckbd, uint16_t *buf, uint16_t data,
     int column)
 {
 	int row, type, val;
-	uint16_t edge, mask;
+	unsigned int edge, mask;
 
-	if ((edge = (data ^ buf[column]))) {
+	edge = data ^ buf[column];
+	if (edge) {
 		buf[column] = data;
 
 		for (row = 0, mask = 1; row < 16; row++, mask <<= 1) {
@@ -232,7 +233,7 @@ void
 pfckbd_callout_unknown(void *arg)
 {
 
-	printf("%s: unknown keyboard switch\n", __FUNCTION__);
+	printf("%s: unknown keyboard switch\n", __func__);
 }
 
 /* HP Jornada680/690, HP620LX */

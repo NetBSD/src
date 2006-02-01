@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.25 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.25.2.1 2006/02/01 14:51:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -151,7 +151,7 @@ alloc_biosdisk(int biosdev)
 #ifdef DISK_DEBUG
 		printf("no geometry information\n");
 #endif
-		free(d, sizeof(*d));
+		dealloc(d, sizeof(*d));
 		return NULL;
 	}
 	return d;
@@ -318,7 +318,7 @@ biosdisk_findpartition(int biosdev, u_int sector)
 		}
 	}
 
-	free(d, sizeof(*d));
+	dealloc(d, sizeof(*d));
 	return partition;
 #endif /* NO_DISKLABEL */
 }
@@ -411,7 +411,7 @@ nolabel:
 out:
         va_end(ap);
 	if (error)
-		free(d, sizeof(struct biosdisk));
+		dealloc(d, sizeof(struct biosdisk));
 	return error;
 }
 
@@ -425,7 +425,7 @@ biosdisk_close(struct open_file *f)
 	if (d->ll.type == BIOSDISK_TYPE_FD)
 		delay(3000000);	/* 2s is enough on all PCs I found */
 
-	free(d, sizeof(struct biosdisk));
+	dealloc(d, sizeof(struct biosdisk));
 	f->f_devdata = NULL;
 	return 0;
 }

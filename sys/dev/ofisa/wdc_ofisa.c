@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.26 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.26.2.1 2006/02/01 14:52:08 yamt Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.26 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.26.2.1 2006/02/01 14:52:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -160,6 +160,7 @@ wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
+	sc->sc_channel.ch_ndrive = 2;
 
 	wdc_init_shadow_regs(&sc->sc_channel);
 

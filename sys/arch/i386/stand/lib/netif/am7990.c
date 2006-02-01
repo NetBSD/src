@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.4 2001/07/07 22:57:58 perry Exp $	*/
+/*	$NetBSD: am7990.c,v 1.4.52.1 2006/02/01 14:51:28 yamt Exp $	*/
 
 /* mostly from netbsd:sys/arch/i386/netboot/ne2100.c
  memory allocation now 1 chunk, added deallocation
@@ -161,7 +161,7 @@ void EtherStop()
 {
     am7990_stop();
 
-    free(dmamem, sizeof(initblock_t) +
+    dealloc(dmamem, sizeof(initblock_t) +
 	 sizeof(tmde_t) + NRCVRING * sizeof(rmde_t) + 4);
 }
 

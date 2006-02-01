@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.9 2005/12/11 12:19:08 christos Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.9.2.1 2006/02/01 14:51:37 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,6 +50,8 @@
 #include <dev/sun/disklabel.h>
 #include <dev/raidframe/raidframevar.h>
 
+#include <machine/promlib.h>
+
 #include "ofdev.h"
 
 extern char bootdev[];
@@ -80,9 +82,9 @@ filename(str, ppart)
 		savec = *cp;
 		*cp = 0;
 		/* ...look whether there is a device with this name */
-		dhandle = OF_finddevice(str);
+		dhandle = prom_finddevice(str);
 #ifdef NOTDEF_DEBUG
-		printf("filename: OF_finddevice(%s) returned %x\n",
+		printf("filename: prom_finddevice(%s) returned %x\n",
 		       str, dhandle);
 #endif
 		*cp = savec;
@@ -117,7 +119,7 @@ filename(str, ppart)
 			printf("filename: found %s\n",lp);
 #endif
 			return lp;
-		} else if (OF_getprop(dhandle, "device_type", devtype, sizeof devtype) < 0)
+		} else if (_prom_getprop(dhandle, "device_type", devtype, sizeof devtype) < 0)
 			devtype[0] = 0;
 	}
 #ifdef NOTDEF_DEBUG
@@ -156,12 +158,12 @@ strategy(devdata, rw, blk, size, buf, rsize)
 #ifdef NON_DEBUG
 		printf("strategy: seeking to %lx\n", (long)pos);
 #endif
-		if (OF_seek(dev->handle, pos) < 0)
+		if (prom_seek(dev->handle, pos) < 0)
 			break;
 #ifdef NON_DEBUG
 		printf("strategy: reading %lx at %p\n", (long)size, buf);
 #endif
-		n = OF_read(dev->handle, buf, size);
+		n = prom_read(dev->handle, buf, size);
 		if (n == -2)
 			continue;
 		if (n < 0)
@@ -182,7 +184,7 @@ devclose(of)
 	if (op->type == OFDEV_NET)
 		net_close(op);
 #endif
-	OF_close(op->handle);
+	prom_close(op->handle);
 	op->handle = -1;
 }
 
@@ -428,18 +430,18 @@ devopen(of, name, file)
 #ifdef NOTDEF_DEBUG
 	printf("devopen: trying %s\n", fname);
 #endif
-	if ((handle = OF_finddevice(fname)) == -1)
+	if ((handle = prom_finddevice(fname)) == -1)
 		return ENOENT;
 #ifdef NOTDEF_DEBUG
 	printf("devopen: found %s\n", fname);
 #endif
-	if (OF_getprop(handle, "name", buf, sizeof buf) < 0)
+	if (_prom_getprop(handle, "name", buf, sizeof buf) < 0)
 		return ENXIO;
 #ifdef NOTDEF_DEBUG
 	printf("devopen: %s is called %s\n", fname, buf);
 #endif
 	floppyboot = !strcmp(buf, "floppy");
-	if (OF_getprop(handle, "device_type", buf, sizeof buf) < 0)
+	if (_prom_getprop(handle, "device_type", buf, sizeof buf) < 0)
 		return ENXIO;
 #ifdef NOTDEF_DEBUG
 	printf("devopen: %s is a %s device\n", fname, buf);
@@ -447,7 +449,7 @@ devopen(of, name, file)
 #ifdef NOTDEF_DEBUG
 	printf("devopen: opening %s\n", fname);
 #endif
-	if ((handle = OF_open(fname)) == -1) {
+	if ((handle = prom_open(fname)) == -1) {
 #ifdef NOTDEF_DEBUG
 		printf("devopen: open of %s failed\n", fname);
 #endif
@@ -533,7 +535,7 @@ bad:
 #ifdef NOTDEF_DEBUG
 	printf("devopen: error %d, cannot open device\n", error);
 #endif
-	OF_close(handle);
+	prom_close(handle);
 	ofdev.handle = -1;
 	return error;
 }

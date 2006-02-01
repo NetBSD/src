@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.148.2.1 2006/01/15 10:02:56 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.148.2.2 2006/02/01 14:52:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.148.2.1 2006/01/15 10:02:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.148.2.2 2006/02/01 14:52:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1787,16 +1787,27 @@ nestiobuf_iodone(struct buf *bp)
 {
 	struct buf *mbp = bp->b_private;
 	int error;
-	int donebytes = bp->b_bcount; /* XXX ignore b_resid */
+	int donebytes;
 
-	KASSERT(bp->b_bufsize == bp->b_bcount);
+	KASSERT(bp->b_bcount <= bp->b_bufsize);
 	KASSERT(mbp != bp);
+
+	error = 0;
 	if ((bp->b_flags & B_ERROR) != 0) {
-		error = bp->b_error;
-	} else {
-		KASSERT(bp->b_resid == 0);
-		error = 0;
+		error = EIO;
+		/* check if an error code was returned */
+		if (bp->b_error)
+			error = bp->b_error;
+	} else if ((bp->b_bcount < bp->b_bufsize) || (bp->b_resid > 0)) {
+		/*
+		 * Not all got transfered, raise an error. We have no way to
+		 * propagate these conditions to mbp.
+		 */
+		error = EIO;
 	}
+
+	donebytes = bp->b_bufsize; /* ignore b_resid ! */
+
 	putiobuf(bp);
 	nestiobuf_done(mbp, donebytes, error);
 }
@@ -1822,9 +1833,7 @@ nestiobuf_setup(struct buf *mbp, struct buf *bp, int offset, size_t size)
 	bp->b_iodone = nestiobuf_iodone;
 	bp->b_data = mbp->b_data + offset;
 	bp->b_resid = bp->b_bcount = size;
-#if defined(DIAGNOSTIC)
 	bp->b_bufsize = bp->b_bcount;
-#endif /* defined(DIAGNOSTIC) */
 	bp->b_private = mbp;
 	BIO_COPYPRIO(bp, mbp);
 	if (!b_read && vp != NULL) {

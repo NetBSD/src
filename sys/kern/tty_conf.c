@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.49 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.49.2.1 2006/02/01 14:52:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.49 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.49.2.1 2006/02/01 14:52:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ ttyerrpoll(struct tty *tp, int events, struct lwp *l)
 
 static ONCE_DECL(ttyldisc_init_once);
 
-static void
+static int
 ttyldisc_init(void)
 {
 
@@ -187,6 +187,8 @@ ttyldisc_init(void)
 		panic("ttyldisc_init: termios_disc");
 	if (ttyldisc_attach(&ntty_disc) != 0)
 		panic("ttyldisc_init: ntty_disc");
+
+	return 0;
 }
 
 static struct linesw *

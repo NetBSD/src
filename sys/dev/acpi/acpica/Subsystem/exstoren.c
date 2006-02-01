@@ -3,7 +3,7 @@
  *
  * Module Name: exstoren - AML Interpreter object store support,
  *                        Store to Node (namespace object)
- *              xRevision: 63 $
+ *              xRevision: 1.66 $
  *
  *****************************************************************************/
 
@@ -11,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.12.2.1 2006/02/01 14:51:50 yamt Exp $");
 
 #define __EXSTOREN_C__
 
@@ -207,7 +207,7 @@ AcpiExResolveObject (
         {
             /* Conversion successful but still not a valid type */
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Cannot assign type %s to %s (must be type Int/Str/Buf)\n",
                 AcpiUtGetObjectTypeName (SourceDesc),
                 AcpiUtGetTypeName (TargetType)));
@@ -352,10 +352,6 @@ AcpiExStoreObjectToObject (
 
     case ACPI_TYPE_BUFFER:
 
-        /*
-         * Note: There is different store behavior depending on the original
-         * source type
-         */
         Status = AcpiExStoreBufferToBuffer (ActualSrcDesc, DestDesc);
         break;
 
@@ -369,7 +365,7 @@ AcpiExStoreObjectToObject (
         /*
          * All other types come here.
          */
-        ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "Store into type %s not implemented\n",
+        ACPI_REPORT_WARNING (("Store into type %s not implemented\n",
             AcpiUtGetObjectTypeName (DestDesc)));
 
         Status = AE_NOT_IMPLEMENTED;

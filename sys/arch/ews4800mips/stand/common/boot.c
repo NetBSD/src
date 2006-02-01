@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.1.2.1 2006/02/01 14:51:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -323,8 +323,7 @@ set_device_capability(void)
 	    DEVICE_CAPABILITY.network_enabled ? 'x' : '_',
 	    kernel_binary_size ? 'x' : '_');
 
-	printf("booted from %s IPL",
-	    devname[DEVICE_CAPABILITY.booted_device], booted_unit);
+	printf("booted from %s IPL", devname[DEVICE_CAPABILITY.booted_device]);
 	if ((DEVICE_CAPABILITY.booted_device == NVSRAM_BOOTDEV_NETWORK) ||
 	    (DEVICE_CAPABILITY.booted_device == NVSRAM_BOOTDEV_NETWORK_T_AND_D))
 	{

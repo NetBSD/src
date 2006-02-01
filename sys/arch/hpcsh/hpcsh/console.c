@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.12 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: console.c,v 1.12.2.1 2006/02/01 14:51:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.12 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.12.2.1 2006/02/01 14:51:27 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "biconsdev.h"
@@ -90,16 +90,16 @@ cons_decl(hd64461video_);
 #if NWSKBD > 0
 #include <dev/wscons/wskbdvar.h>
 #define hd64461video_cngetc	wskbd_cngetc
-#else /* NWSKBD > 0 */
+#else  /* NWSKBD == 0 */
 int
 hd64461video_cngetc(dev_t dev)
 {
 	printf("no input method. reboot me.\n");
-	while (1)
-		;
+	for (;;)
+		continue;
 	/* NOTREACHED */
 }
-#endif /* NWSKBD > 0 */
+#endif /* NWSKBD == 0 */
 #define hd64461video_cnputc	wsdisplay_cnputc
 #define	hd64461video_cnpollc	nullcnpollc
 #endif /* NHD64461VIDEO > 0 */
@@ -120,8 +120,9 @@ struct consdev constab[] = {
 #if NHD64465UART > 0
 	cons_init(hd64465uart),
 #endif
-	{ 0 } /* terminator */
+	{ NULL }		/* terminator */
 };
+
 #define CN_ENABLE(x)	set_console(x ## cninit, x ## cnprobe)
 
 static int initialized;

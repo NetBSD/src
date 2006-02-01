@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.21 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.21.2.1 2006/02/01 14:51:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.21 2005/12/11 12:18:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.21.2.1 2006/02/01 14:51:31 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -170,6 +170,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
+	sc->sc_channel.ch_ndrive = 2;
 
 	wdcattach(&sc->sc_channel);
 }

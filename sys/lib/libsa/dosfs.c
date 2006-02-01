@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.9 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.9.2.1 2006/02/01 14:52:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -193,8 +193,8 @@ static int
 dosunmount(DOS_FS * fs)
 {
 	if (fs->buf)
-		free(fs->buf, SECSIZ);
-	free(fs, sizeof(DOS_FS));
+		dealloc(fs->buf, SECSIZ);
+	dealloc(fs, sizeof(DOS_FS));
 	return (0);
 }
 
@@ -351,7 +351,7 @@ dosfs_close(struct open_file * fd)
 	DOS_FS *fs = f->fs;
 
 	f->fs->links--;
-	free(f, sizeof(DOS_FILE));
+	dealloc(f, sizeof(DOS_FILE));
 	dos_unmount(fs);
 	return 0;
 }
@@ -558,7 +558,7 @@ lookup(DOS_FS * fs, u_int clus, const char *name, const struct direntry ** dep)
 	}
 	err = ENOENT;
  out:
-	free(dir, sizeof(DOS_DIR) * DEPSEC);
+	dealloc(dir, sizeof(DOS_DIR) * DEPSEC);
 	dir = NULL;
  out2:
 	return (err);

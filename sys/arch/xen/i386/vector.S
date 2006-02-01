@@ -1,5 +1,36 @@
-/*	$NetBSD: vector.S,v 1.14 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: vector.S,v 1.14.2.1 2006/02/01 14:51:42 yamt Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
+
+/*
+ * Copyright (c) 2006 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -191,26 +222,6 @@ IDTVEC(resume_/**/name/**/num)						\
 	STI(%eax)							;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 
-#if 0
-#ifdef DOM0OPS
-#define hypervisor_asm_unmask(num)			\
-	movl	irq_to_evtchn + (num) * 4,%ecx		;\
-	movl	HYPERVISOR_shared_info,%eax		;\
-	lock						;\
-	btrl	%ecx,EVENTS_MASK(%eax)			;\
-	movl	%ebx, %ecx				;\
-	movl	$physdev_op_notify, %ebx		;\
-	movl	$__HYPERVISOR_physdev_op, %eax		;\
-	int	$0x82					;\
-	movl	%ecx, %ebx
-#else
-#define hypervisor_asm_unmask(num)			\
-	movl	irq_to_evtchn + (num) * 4,%ecx		;\
-	movl	HYPERVISOR_shared_info,%eax		;\
-	lock						;\
-	btrl	%ecx,EVENTS_MASK(%eax)
-#endif
-#else
 # Just unmasking the event isn't enouth, we also need to
 # reassert the event pending bit if needed. For now just call
 # the C function doing it, maybe rewrite in inline assembly ?
@@ -218,7 +229,6 @@ IDTVEC(resume_/**/name/**/num)						\
 	pushl $num					;\
 	call _C_LABEL(hypervisor_enable_ipl)		;\
 	addl	$4,%esp
-#endif
 
 XENINTRSTUB(xenev,0,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,1,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
@@ -447,22 +457,9 @@ IDTVEC(trap0c)
 	TRAP(T_STKFLT)
 IDTVEC(trap0d)
 	TRAP(T_PROTFLT)
-#ifndef XEN
+#ifdef XEN3
 IDTVEC(trap0e)
-#ifndef I586_CPU
 	TRAP(T_PAGEFLT)
-#else
-	pushl	$T_PAGEFLT
-	INTRENTRY
-	testb	$PGEX_U,TF_ERR(%esp)
-	jnz	calltrap
-	movl	%cr2,%eax
-	subl	_C_LABEL(pentium_idt),%eax
-	cmpl	$(6*8),%eax
-	jne	calltrap
-	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
-	jmp	calltrap
-#endif
 #endif
 
 IDTVEC(intrspurious)
@@ -628,6 +625,7 @@ calltrap:
 	call	_C_LABEL(pmap_load)
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 
+#ifndef XEN3
 /* LINTSTUB: Ignore */
 IDTVEC(trap0e)
 	INTRENTRY
@@ -691,6 +689,7 @@ trap0e_checkast:
 9:	STI(%eax)
 	call	_C_LABEL(pmap_load)
 	jmp	trap0e_checkast		/* re-check ASTs */
+#endif /* !XEN3 */
 
 #ifdef IPKDB
 /* LINTSTUB: Ignore */
@@ -833,16 +832,17 @@ NENTRY(hypervisor_callback)
         push %esp
         call do_hypervisor_callback
         add  $8,%esp
-        movl HYPERVISOR_shared_info,%esi
         xorl %eax,%eax
         movb TF_CS(%esp),%cl
         test $CHK_UPL,%cl		# slow return to ring 2 or 3
         je   safesti
         movl CPUVAR(ILEVEL),%ebx
         jmp  doreti_checkast
-safesti:XEN_UNBLOCK_EVENTS(%esi)	# reenable event callbacks
+safesti:
+	movl HYPERVISOR_shared_info,%esi
+	XEN_UNBLOCK_EVENTS(%esi)	# reenable event callbacks
 scrit:  /**** START OF CRITICAL REGION ****/
-        testb $1,evtchn_upcall_pending(%esi)
+        XEN_TEST_PENDING(%esi)
         jnz  14f			# process more events if necessary...
         INTRFASTEXIT
 critiret:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.16.2.1 2006/01/15 10:02:56 yamt Exp $	*/
+/*	$NetBSD: cread.c,v 1.16.2.2 2006/02/01 14:52:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -105,7 +105,7 @@ zcfree (opaque, ptr)
 	void *opaque;
 	void *ptr;
 {
-	free(ptr, 0); /* XXX works only with modified allocator */
+	dealloc(ptr, 0); /* XXX works only with modified allocator */
 }
 
 void
@@ -259,7 +259,7 @@ open(fname, mode)
 
 errout:
 	if (s != 0)
-		free(s, sizeof(struct sd));
+		dealloc(s, sizeof(struct sd));
 	oclose(fd);
 	return (-1);
 }
@@ -286,8 +286,8 @@ close(fd)
 
 	inflateEnd(&(s->stream));
 
-	free(s->inbuf, Z_BUFSIZE);
-	free(s, sizeof(struct sd));
+	dealloc(s->inbuf, Z_BUFSIZE);
+	dealloc(s, sizeof(struct sd));
 
 	return (oclose(fd));
 }

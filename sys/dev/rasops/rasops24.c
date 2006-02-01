@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.21 2005/12/11 12:23:43 christos Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.21.2.1 2006/02/01 14:52:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.21 2005/12/11 12:23:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.21.2.1 2006/02/01 14:52:20 yamt Exp $");
 
 #include "opt_rasops.h"
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.21 2005/12/11 12:23:43 christos Exp $
 #include <sys/time.h>
 
 #include <machine/endian.h>
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>

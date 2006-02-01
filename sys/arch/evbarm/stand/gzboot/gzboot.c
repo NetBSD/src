@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.9 2005/12/11 12:17:10 christos Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.9.2.1 2006/02/01 14:51:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
-#include <lib/libz/zlib.h>
+#include <lib/libz/libz.h>
 
 #include "board.h"
 #include "gzboot.h"
@@ -376,7 +376,7 @@ gzcopy(void *dst, const void *src, size_t srclen)
 	/* Skip the Gzip header. */
 	if (check_header(&state)) {
 		inflateEnd(&state.stream);
-		free(state.inbuf, Z_BUFSIZE);
+		dealloc(state.inbuf, Z_BUFSIZE);
 		_rtt();
 	}
 
@@ -388,5 +388,5 @@ gzcopy(void *dst, const void *src, size_t srclen)
 
 	/* All done! */
 	inflateEnd(&state.stream);
-	free(state.inbuf, Z_BUFSIZE);
+	dealloc(state.inbuf, Z_BUFSIZE);
 }

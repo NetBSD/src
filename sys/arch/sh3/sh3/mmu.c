@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.11.2.1 2006/01/15 10:02:39 yamt Exp $	*/
+/*	$NetBSD: mmu.c,v 1.11.2.2 2006/02/01 14:51:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.11.2.1 2006/01/15 10:02:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.11.2.2 2006/02/01 14:51:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,23 +46,24 @@ __KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.11.2.1 2006/01/15 10:02:39 yamt Exp $");
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-/* Start MMU. call after exception vector is setuped. */
+#if defined(SH3) && defined(SH4)
 void (*__sh_mmu_start)(void);
-
-/* TLB access ops. */
 void (*__sh_tlb_invalidate_addr)(int, vaddr_t);
 void (*__sh_tlb_invalidate_asid)(int);
 void (*__sh_tlb_invalidate_all)(void);
 void (*__sh_tlb_update)(int, vaddr_t, u_int32_t);
+#endif /* SH3 && SH4 */
+
 
 void
-sh_mmu_init()
+sh_mmu_init(void)
 {
+
 	/*
-	 * Asign function hook. but if only defined SH3 or SH4, they are called
-	 * directly. see sh3/mmu.h
+	 * Assign function hooks but only if both SH3 and SH4 are defined.
+	 * They are called directly otherwise.  See <sh3/mmu.h>.
 	 */
-#ifdef SH3
+#if defined(SH3) && defined(SH4)
 	if (CPU_IS_SH3) {
 		__sh_mmu_start = sh3_mmu_start;
 		__sh_tlb_invalidate_addr = sh3_tlb_invalidate_addr;
@@ -70,20 +71,18 @@ sh_mmu_init()
 		__sh_tlb_invalidate_all = sh3_tlb_invalidate_all;
 		__sh_tlb_update = sh3_tlb_update;
 	}
-#endif
-#ifdef SH4
-	if (CPU_IS_SH4) {
+	else if (CPU_IS_SH4) {
 		__sh_mmu_start = sh4_mmu_start;
 		__sh_tlb_invalidate_addr = sh4_tlb_invalidate_addr;
 		__sh_tlb_invalidate_asid = sh4_tlb_invalidate_asid;
 		__sh_tlb_invalidate_all = sh4_tlb_invalidate_all;
 		__sh_tlb_update = sh4_tlb_update;
 	}
-#endif
+#endif /* SH3 && SH4 */
 }
 
 void
-sh_mmu_information()
+sh_mmu_information(void)
 {
 	u_int32_t r;
 #ifdef SH3

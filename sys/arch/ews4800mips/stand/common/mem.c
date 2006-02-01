@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.2.1 2006/02/01 14:51:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ cmd_mem(int argc, char *argp[], int interactive)
 
 		if (bfs_init(&bfs) != 0) {
 			printf("no BFS partition.\n");
-			free(p, size);
+			dealloc(p, size);
 			return 1;
 		}
 	}

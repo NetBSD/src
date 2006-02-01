@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1 2002/03/24 15:47:04 bjh21 Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.1.42.1 2006/02/01 14:51:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 				    strerror(errno)))
 #define	PROGRESS(a)		(void) printf a
 #define	ALLOC(a)		alloc(a)
-#define	FREE(a, b)		free(a, b)
+#define	DEALLOC(a, b)		dealloc(a, b)
 /* OKMAGIC is only for a.out. */
 
 extern ssize_t boot26_read(int, void *, size_t);
@@ -73,7 +73,7 @@ extern void *boot26_memset(void *, int, size_t);
 #define	WARN(a)			warn a
 #define	PROGRESS(a)		/* nothing */
 #define	ALLOC(a)		malloc(a)
-#define	FREE(a, b)		free(a)
+#define	DEALLOC(a, b)		free(a)
 #define	OKMAGIC(a)		((a) == OMAGIC)
 
 ssize_t vread __P((int, u_long, u_long *, size_t));

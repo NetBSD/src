@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2005/12/27 12:29:05 he Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2006/02/01 14:51:29 yamt Exp $
 
 LIB=sa
 
@@ -6,7 +6,7 @@ LIB=sa
 DIR_SA=$S/lib/libsa
 DIR_KERN=$S/lib/libkern
 
-SRC_net= nfs.c rpc.c net.c ether.c arp.c in_cksum.c netif.c \
+SRC_net= nfs.c rpc.c net.c ether.c arp.c ip_cksum.c netif.c \
 	 bootparam.c rarp.c dev_net.c bootp.c
 
 

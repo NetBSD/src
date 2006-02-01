@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmresrcs.c - "Small" Resource Descriptor disassembly
- *              xRevision: 6 $
+ *              xRevision: 1.12 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmresrcs.c,v 1.7 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmresrcs.c,v 1.7.2.1 2006/02/01 14:51:49 yamt Exp $");
 
 #include "acpi.h"
 #include "acdisasm.h"
@@ -138,13 +138,13 @@ __KERNEL_RCSID(0, "$NetBSD: dmresrcs.c,v 1.7 2005/12/11 12:21:02 christos Exp $"
  *
  * RETURN:      None
  *
- * DESCRIPTION: Decode a IRQ descriptor
+ * DESCRIPTION: Decode a IRQ descriptor, either Irq() or IrqNoFlags()
  *
  ******************************************************************************/
 
 void
 AcpiDmIrqDescriptor (
-    ASL_IRQ_FORMAT_DESC     *Resource,
+    AML_RESOURCE            *Resource,
     UINT32                  Length,
     UINT32                  Level)
 {
@@ -153,15 +153,19 @@ AcpiDmIrqDescriptor (
     AcpiOsPrintf ("%s (",
         AcpiGbl_IrqDecode [Length & 1]);
 
+    /* Decode flags byte if present */
+
     if (Length & 1)
     {
         AcpiOsPrintf ("%s, %s, %s",
-            AcpiGbl_HEDecode [Resource->Flags & 1],
-            AcpiGbl_LLDecode [(Resource->Flags >> 3) & 1],
-            AcpiGbl_SHRDecode [(Resource->Flags >> 4) & 1]);
+            AcpiGbl_HEDecode [Resource->Irq.Flags & 1],
+            AcpiGbl_LLDecode [(Resource->Irq.Flags >> 3) & 1],
+            AcpiGbl_SHRDecode [(Resource->Irq.Flags >> 4) & 1]);
     }
+    AcpiOsPrintf (")\n");
 
-    AcpiDmBitList (Resource->IrqMask);
+    AcpiDmIndent (Level + 1);
+    AcpiDmBitList (Resource->Irq.IrqMask);
 }
 
 
@@ -181,18 +185,19 @@ AcpiDmIrqDescriptor (
 
 void
 AcpiDmDmaDescriptor (
-    ASL_DMA_FORMAT_DESC     *Resource,
+    AML_RESOURCE            *Resource,
     UINT32                  Length,
     UINT32                  Level)
 {
 
     AcpiDmIndent (Level);
-    AcpiOsPrintf ("DMA (%s, %s, %s",
-            AcpiGbl_TYPDecode [(Resource->Flags >> 5) & 3],
-            AcpiGbl_BMDecode  [(Resource->Flags >> 2) & 1],
-            AcpiGbl_SIZDecode [(Resource->Flags >> 0) & 3]);
+    AcpiOsPrintf ("DMA (%s, %s, %s)\n",
+            AcpiGbl_TYPDecode [(Resource->Dma.Flags >> 5) & 3],
+            AcpiGbl_BMDecode  [(Resource->Dma.Flags >> 2) & 1],
+            AcpiGbl_SIZDecode [(Resource->Dma.Flags >> 0) & 3]);
 
-    AcpiDmBitList (Resource->DmaChannelMask);
+    AcpiDmIndent (Level + 1);
+    AcpiDmBitList (Resource->Dma.DmaChannelMask);
 }
 
 
@@ -212,18 +217,29 @@ AcpiDmDmaDescriptor (
 
 void
 AcpiDmIoDescriptor (
-    ASL_IO_PORT_DESC        *Resource,
+    AML_RESOURCE            *Resource,
     UINT32                  Length,
     UINT32                  Level)
 {
 
     AcpiDmIndent (Level);
-    AcpiOsPrintf ("IO (%s, 0x%4.4X, 0x%4.4X, 0x%2.2X, 0x%2.2X)\n",
-        AcpiGbl_IoDecode [(Resource->Information & 1)],
-        (UINT32) Resource->AddressMin,
-        (UINT32) Resource->AddressMax,
-        (UINT32) Resource->Alignment,
-        (UINT32) Resource->Length);
+    AcpiOsPrintf ("IO (%s,\n",
+        AcpiGbl_IoDecode [(Resource->Io.Flags & 1)]);
+
+    AcpiDmIndent (Level + 1);
+    AcpiDmDumpInteger16 (Resource->Io.Minimum, "Address Range Minimum");
+
+    AcpiDmIndent (Level + 1);
+    AcpiDmDumpInteger16 (Resource->Io.Maximum, "Address Range Maximum");
+
+    AcpiDmIndent (Level + 1);
+    AcpiDmDumpInteger8 (Resource->Io.Alignment, "Address Alignment");
+
+    AcpiDmIndent (Level + 1);
+    AcpiDmDumpInteger8 (Resource->Io.AddressLength, "Address Length");
+
+    AcpiDmIndent (Level + 1);
+    AcpiOsPrintf (")\n");
 }
 
 
@@ -243,15 +259,22 @@ AcpiDmIoDescriptor (
 
 void
 AcpiDmFixedIoDescriptor (
-    ASL_FIXED_IO_PORT_DESC  *Resource,
+    AML_RESOURCE            *Resource,
     UINT32                  Length,
     UINT32                  Level)
 {
 
     AcpiDmIndent (Level);
-    AcpiOsPrintf ("FixedIO (0x%4.4X, 0x%2.2X)\n",
-        (UINT32) Resource->BaseAddress,
-        (UINT32) Resource->Length);
+    AcpiOsPrintf ("FixedIO (\n");
+
+    AcpiDmIndent (Level + 1);
+    AcpiDmDumpInteger16 (Resource->FixedIo.Address, "Address Base");
+
+    AcpiDmIndent (Level + 1);
+    AcpiDmDumpInteger8 (Resource->FixedIo.AddressLength, "Address Length");
+
+    AcpiDmIndent (Level + 1);
+    AcpiOsPrintf (")\n");
 }
 
 
@@ -271,7 +294,7 @@ AcpiDmFixedIoDescriptor (
 
 void
 AcpiDmStartDependentDescriptor (
-    ASL_START_DEPENDENT_DESC *Resource,
+    AML_RESOURCE            *Resource,
     UINT32                  Length,
     UINT32                  Level)
 {
@@ -281,8 +304,8 @@ AcpiDmStartDependentDescriptor (
     if (Length & 1)
     {
         AcpiOsPrintf ("StartDependentFn (0x%2.2X, 0x%2.2X)\n",
-            (UINT32) Resource->Flags & 3,
-            (UINT32) (Resource->Flags >> 2) & 3);
+            (UINT32) Resource->StartDpf.Flags & 3,
+            (UINT32) (Resource->StartDpf.Flags >> 2) & 3);
     }
     else
     {
@@ -310,7 +333,7 @@ AcpiDmStartDependentDescriptor (
 
 void
 AcpiDmEndDependentDescriptor (
-    ASL_START_DEPENDENT_DESC *Resource,
+    AML_RESOURCE            *Resource,
     UINT32                  Length,
     UINT32                  Level)
 {
@@ -338,18 +361,15 @@ AcpiDmEndDependentDescriptor (
 
 void
 AcpiDmVendorSmallDescriptor (
-    ASL_SMALL_VENDOR_DESC   *Resource,
+    AML_RESOURCE            *Resource,
     UINT32                  Length,
     UINT32                  Level)
 {
 
-    AcpiDmIndent (Level);
-    AcpiOsPrintf ("VendorShort () {");
-
-    AcpiDmDisasmByteList (0, (UINT8 *) Resource->VendorDefined, Length);
-    AcpiOsPrintf ("}\n");
+    AcpiDmVendorCommon ("Short ()",
+        ACPI_ADD_PTR (UINT8, Resource, sizeof (AML_RESOURCE_SMALL_HEADER)),
+        Length, Level);
 }
 
 #endif
-
 

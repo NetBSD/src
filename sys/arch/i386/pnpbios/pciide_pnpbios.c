@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.20 2005/12/11 12:17:47 christos Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.20.2.1 2006/02/01 14:51:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.20 2005/12/11 12:17:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.20.2.1 2006/02/01 14:51:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.20 2005/12/11 12:17:47 christos
 
 static int	pciide_pnpbios_match(struct device *, struct cfdata *, void *);
 static void	pciide_pnpbios_attach(struct device *, struct device *, void *);
-void		pciide_pnpbios_setup_channel(struct ata_channel *);
 
 extern void	pciide_channel_dma_setup(struct pciide_channel *);
 extern int	pciide_dma_init(void *, int, int, void *, size_t, int);
@@ -91,48 +90,35 @@ pciide_pnpbios_attach(parent, self, aux)
 	struct wdc_regs *wdr;
 	bus_space_tag_t compat_iot;
 	bus_space_handle_t cmd_baseioh, ctl_ioh;
-	int i;
+	int i, drive, size;
+	u_int8_t idedma_ctl;
 
-	printf("\n");
+	aprint_naive(": disk controller\n");
+	aprint_normal("\n");
 	pnpbios_print_devres(self, aa);
 
-	printf("%s: Toshiba Extended IDE Controller\n", self->dv_xname);
+	aprint_normal("%s: Toshiba Extended IDE Controller\n", self->dv_xname);
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 2, &sc->sc_dma_iot,
 	    &sc->sc_dma_ioh) != 0) {
-		printf("%s: unable to map DMA registers\n", self->dv_xname);
+		aprint_error("%s: unable to map DMA registers\n",
+		    self->dv_xname);
 		return;
 	}
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &compat_iot,
 	    &cmd_baseioh) != 0) {
-		printf("%s: unable to map command registers\n", self->dv_xname);
+		aprint_error("%s: unable to map command registers\n",
+		    self->dv_xname);
 		return;
 	}
 	if (pnpbios_io_map(aa->pbt, aa->resc, 1, &compat_iot,
 	    &ctl_ioh) != 0) {
-		printf("%s: unable to map control register\n", self->dv_xname);
+		aprint_error("%s: unable to map control register\n",
+		    self->dv_xname);
 		return;
 	}
 
 	sc->sc_dmat = &pci_bus_dma_tag;
-
-	sc->sc_dma_ok = 1;
-	sc->sc_wdcdev.dma_arg = sc;
-	sc->sc_wdcdev.dma_init = pciide_dma_init;
-	sc->sc_wdcdev.dma_start = pciide_dma_start;
-	sc->sc_wdcdev.dma_finish = pciide_dma_finish;
-	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
-	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
-	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
-        sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
-        sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;		/* XXX */
-        sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;	/* XXX */
-#if 0 /* XXX */
-	sc->sc_wdcdev.set_modes = pciide_pnpbios_setup_channel;
-#endif
-
-	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	cp = &sc->pciide_channels[0];
 	sc->wdc_chanarray[0] = &cp->ata_channel;
@@ -140,11 +126,41 @@ pciide_pnpbios_attach(parent, self, aux)
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue = malloc(sizeof(struct ata_queue),
 					  M_DEVBUF, M_NOWAIT);
+	cp->ata_channel.ch_ndrive = 2;
 	if (cp->ata_channel.ch_queue == NULL) {
-		printf("%s: unable to allocate memory for command queue\n",
-			self->dv_xname);
+		aprint_error("%s: unable to allocate memory for command "
+		    "queue\n", self->dv_xname);
 		return;
 	}
+
+	sc->sc_dma_ok = 1;
+	for (i = 0; i < IDEDMA_NREGS; i++) {
+		size = 4;
+		if (size > (IDEDMA_SCH_OFFSET - i))
+			size = IDEDMA_SCH_OFFSET - i;
+		if (bus_space_subregion(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    i, size, &cp->dma_iohs[i]) != 0) {
+			aprint_error("%s: can't subregion offset %d "
+			    "size %lu", self->dv_xname, i, (u_long)size);
+			return;
+		}
+	}
+	sc->sc_dma_maxsegsz = IDEDMA_BYTE_COUNT_MAX;
+	sc->sc_dma_boundary = IDEDMA_BYTE_COUNT_ALIGN;
+	sc->sc_wdcdev.dma_arg = sc;
+	sc->sc_wdcdev.dma_init = pciide_dma_init;
+	sc->sc_wdcdev.dma_start = pciide_dma_start;
+	sc->sc_wdcdev.dma_finish = pciide_dma_finish;
+	sc->sc_wdcdev.irqack = pciide_irqack;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 0;		/* XXX */
+	sc->sc_wdcdev.sc_atac.atac_udma_cap = 0;	/* XXX */
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	wdc_cp = &cp->ata_channel;
 	wdr = CHAN_TO_WDC_REGS(wdc_cp);
@@ -154,8 +170,8 @@ pciide_pnpbios_attach(parent, self, aux)
 	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i,
 		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
-			    printf("%s: unable to subregion control register\n",
-				self->dv_xname);
+			    aprint_error("%s: unable to subregion control "
+				"register\n", self->dv_xname);
 			    return;
 		}
 	}
@@ -170,13 +186,31 @@ pciide_pnpbios_attach(parent, self, aux)
 					pciide_compat_intr, cp);
 
 	wdcattach(wdc_cp);
-}
 
-void
-pciide_pnpbios_setup_channel(chp)
-	struct ata_channel *chp;
-{
-	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
-
-	pciide_channel_dma_setup(cp);
+	idedma_ctl = 0;
+	for (drive = 0; drive < cp->ata_channel.ch_ndrive; drive++) {
+		/*
+		 * we have not probed the drives yet,
+		 * allocate ressources for all of them.
+		 */
+		if (pciide_dma_table_setup(sc, 0, drive) != 0) {
+			/* Abort DMA setup */
+			aprint_error(
+			    "%s:%d:%d: can't allocate DMA maps, "
+			    "using PIO transfers\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			    0, drive);
+			sc->sc_dma_ok = 0;
+			sc->sc_wdcdev.sc_atac.atac_cap &= ~ATAC_CAP_DMA;
+			sc->sc_wdcdev.irqack = NULL;
+			idedma_ctl = 0;
+			break;
+		}
+		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+	}
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot,
+		    cp->dma_iohs[IDEDMA_CTL], 0, idedma_ctl);
+	}
 }

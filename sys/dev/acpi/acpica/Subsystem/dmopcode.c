@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmopcode - AML disassembler, specific AML opcodes
- *              xRevision: 89 $
+ *              xRevision: 1.92 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.8 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.8.2.1 2006/02/01 14:51:49 yamt Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -349,7 +349,8 @@ AcpiDmMatchKeyword (
     }
     else
     {
-        AcpiOsPrintf ("%s", AcpiGbl_MatchOps[(ACPI_SIZE) Op->Common.Value.Integer]);
+        AcpiOsPrintf ("%s", ACPI_CAST_CONST_PTR (char,
+            AcpiGbl_MatchOps[(ACPI_SIZE) Op->Common.Value.Integer]));
     }
 }
 
@@ -483,7 +484,7 @@ AcpiDmDisassembleOneOp (
          * types of buffers, we have to closely look at the data in the
          * buffer to determine the type.
          */
-        if (AcpiDmIsResourceDescriptor (Op))
+        if (AcpiDmIsResourceTemplate (Op))
         {
             Op->Common.DisasmOpcode = ACPI_DASM_RESOURCE;
             AcpiOsPrintf ("ResourceTemplate");

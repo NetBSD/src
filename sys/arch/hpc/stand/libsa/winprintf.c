@@ -1,4 +1,4 @@
-/*	$NetBSD: winprintf.c,v 1.3 2005/12/11 12:17:30 christos Exp $	*/
+/*	$NetBSD: winprintf.c,v 1.3.2.1 2006/02/01 14:51:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -35,8 +35,7 @@
  * SUCH DAMAGE.
  *
  */
-#include <windows.h>
-#include <stand.h>
+#include <winbase.h>
 
 int
 win_printf(LPWSTR lpszFmt, ...)
@@ -52,14 +51,4 @@ win_printf(LPWSTR lpszFmt, ...)
 		OutputDebugStringW(buffer);
 	}
 	return count;
-}
-
-
-/*
- *  printf() uses this.
- */
-void
-putchar(int c)
-{
-  win_printf(TEXT("%C"), c);
 }

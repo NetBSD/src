@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_machdep.h,v 1.1 2003/05/01 07:02:00 igy Exp $ */
+/* $NetBSD: loadfile_machdep.h,v 1.1.30.1 2006/02/01 14:51:27 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 				    strerror(errno)))
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
-#define FREE(a, b)		free(a, b)
+#define DEALLOC(a, b)		dealloc(a, b)
 #define OKMAGIC(a)		Error! hpcmips supports ELF only!
 
 #define	vpbcopy bcopy

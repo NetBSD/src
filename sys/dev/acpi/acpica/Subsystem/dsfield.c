@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsfield - Dispatcher field routines
- *              xRevision: 78 $
+ *              xRevision: 1.80 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsfield.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsfield.c,v 1.12.2.1 2006/02/01 14:51:49 yamt Exp $");
 
 #define __DSFIELD_C__
 
@@ -406,7 +406,7 @@ AcpiDsGetFieldNames (
             {
                 ACPI_REPORT_ERROR ((
                     "Field [%4.4s] bit offset too large (> 0xFFFFFFFF)\n",
-                    (char *) &Info->FieldNode->Name));
+                    ACPI_CAST_PTR (char, &Info->FieldNode->Name)));
                 return_ACPI_STATUS (AE_SUPPORT);
             }
 
@@ -416,7 +416,7 @@ AcpiDsGetFieldNames (
 
         default:
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Invalid opcode in field list: %X\n",
                 Arg->Common.AmlOpcode));
             return_ACPI_STATUS (AE_AML_BAD_OPCODE);

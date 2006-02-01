@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.39.2.1 2006/01/15 10:02:47 yamt Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.39.2.2 2006/02/01 14:51:48 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.39.2.1 2006/01/15 10:02:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.39.2.2 2006/02/01 14:51:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -1072,7 +1072,7 @@ xennet_softstart(void *arg)
 		}
 
 		if (m->m_pkthdr.len != m->m_len ||
-		    (pa ^ (pa + m->m_pkthdr.len)) & PG_FRAME) {
+		    (pa ^ (pa + m->m_pkthdr.len - 1)) & PG_FRAME) {
 
 			MGETHDR(new_m, M_DONTWAIT, MT_DATA);
 			if (__predict_false(new_m == NULL)) {
@@ -1108,7 +1108,7 @@ xennet_softstart(void *arg)
 		} else
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 
-		KASSERT(((pa ^ (pa + m->m_pkthdr.len)) & PG_FRAME) == 0);
+		KASSERT(((pa ^ (pa + m->m_pkthdr.len -  1)) & PG_FRAME) == 0);
 
 		bufid = get_bufarray_entry(sc->sc_tx_bufa);
 		KASSERT(bufid < NETIF_TX_RING_SIZE);

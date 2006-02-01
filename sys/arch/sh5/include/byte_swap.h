@@ -1,4 +1,4 @@
-/*      $NetBSD: byte_swap.h,v 1.4 2005/12/28 18:40:13 perry Exp $	*/
+/*      $NetBSD: byte_swap.h,v 1.4.2.1 2006/02/01 14:51:32 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,13 +39,14 @@
 #define	_SH5_BYTESWAP_H_
 
 #include <sys/types.h>
+#ifdef __GNUC__
+#include <sys/types.h>
+__BEGIN_DECLS
 
-static __inline u_int16_t _sh5_bswap16(u_int16_t);
-static __inline u_int32_t _sh5_bswap32(u_int32_t);
-static __inline u_int64_t _sh5_bswap64(u_int64_t);
 
-static __inline u_int16_t
-_sh5_bswap16(u_int16_t x)
+#define	__BYTE_SWAP_U16_VARIABLE __byte_swap_u16_variable
+static __inline uint16_t
+__byte_swap_u16_variable(uint16_t x)
 {
 
 	__asm volatile("byterev %0, %0; shlri %0, 32, %0; shlri.l %0, 16, %0"
@@ -54,8 +55,9 @@ _sh5_bswap16(u_int16_t x)
 	return (x);
 }
 
-static __inline u_int32_t
-_sh5_bswap32(u_int32_t x)
+#define	__BYTE_SWAP_U32_VARIABLE __byte_swap_u32_variable
+static __inline uint32_t
+__byte_swap_u32_variable(uint32_t x)
 {
 
 	__asm volatile("byterev %0, %0; shlri %0, 32, %0; add.l %0, r63, %0"
@@ -64,13 +66,17 @@ _sh5_bswap32(u_int32_t x)
 	return (x);
 }
 
-static __inline u_int64_t
-_sh5_bswap64(u_int64_t x)
+#define	__BYTE_SWAP_U64_VARIABLE __byte_swap_u64_variable
+static __inline uint64_t
+__byte_swap_u64_variable(uint64_t x)
 {
 
 	__asm volatile("byterev %0, %0" : "+r"(x));
 
 	return (x);
 }
+
+__END_DECLS
+#endif
 
 #endif /* _SH5_BYTESWAP_H_ */

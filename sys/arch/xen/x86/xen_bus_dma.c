@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.5 2005/12/24 23:24:07 perry Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.5.2.1 2006/02/01 14:51:48 yamt Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.5 2005/12/24 23:24:07 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.5.2.1 2006/02/01 14:51:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,9 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	struct vm_page *pg, *pgnext;
 	struct pglist freelist;
 	int s, error;
+#ifdef XEN3
+	struct xen_memory_reservation res;
+#endif
 
 	TAILQ_INIT(&freelist);
 
@@ -102,20 +105,46 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		mfn = xpmap_ptom(pa) >> PAGE_SHIFT;
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = INVALID_P2M_ENTRY;
+#ifdef XEN3
+		res.extent_start = &mfn;
+		res.nr_extents = 1;
+		res.extent_order = 0;
+		res.domid = DOMID_SELF;
+		if (HYPERVISOR_memory_op(XENMEM_decrease_reservation, &res)
+		    < 0) {
+			printf("xen_alloc_contig: XENMEM_decrease_reservation "
+			    "failed!\n");
+			return ENOMEM;
+		}
+#else
 		if (HYPERVISOR_dom_mem_op(MEMOP_decrease_reservation,
 		    &mfn, 1, 0) != 1) {
 			printf("xen_alloc_contig: MEMOP_decrease_reservation "
 			    "failed!\n");
 			return ENOMEM;
 		}
+#endif
 	}
 	/* Get the new contiguous memory extent */
+#ifdef XEN3
+	res.extent_start = &mfn;
+	res.nr_extents = 1;
+	res.extent_order = order;
+	res.address_bits = 31;
+	res.domid = DOMID_SELF;
+	if (HYPERVISOR_memory_op(XENMEM_increase_reservation, &res) < 0) {
+		printf("xen_alloc_contig: XENMEM_increase_reservation "
+		    "failed!\n");
+		return ENOMEM;
+	}
+#else
 	if (HYPERVISOR_dom_mem_op(MEMOP_increase_reservation,
 	    &mfn, 1, order) != 1) {
 		printf("xen_alloc_contig: MEMOP_increase_reservation "
 		    "failed!\n");
 		return ENOMEM;
 	}
+#endif
 	s = splvm();
 	/* Map the new extent in place of the old pages */
 	for (pg = mlistp->tqh_first, i = 0; pg != NULL; pg = pgnext, i++) {
