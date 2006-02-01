@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_vnd.c,v 1.5 2006/02/01 03:15:33 cube Exp $	*/
+/*	$NetBSD: lkminit_vnd.c,v 1.6 2006/02/01 05:05:22 cube Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.5 2006/02/01 03:15:33 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.6 2006/02/01 05:05:22 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -47,7 +47,7 @@ extern struct cfattach vnd_ca;
 extern const struct bdevsw vnd_bdevsw;
 extern const struct cdevsw vnd_cdevsw;
 extern void vndattach (int);
-extern int vnddetach (void);
+extern int vnd_destroy (struct device *);
 
 static int vnd_lkm(struct lkm_table *lkmtp, int cmd);
 int vnd_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
@@ -71,11 +71,8 @@ vnd_lkm(struct lkm_table *lkmtp, int cmd)
 	} else if (cmd == LKM_E_UNLOAD) {
 		for (i = 0; i < vnd_cd.cd_ndevs; i++)
 			if (vnd_cd.cd_devs[i] != NULL &&
-			    (error = config_detach(vnd_cd.cd_devs[i], 0)) != 0) {
-				aprint_error("%s: unable to detach instance\n",
-				    ((struct device *)vnd_cd.cd_devs[i])->dv_xname);
-				return error;
-			}
+			    (error = vnd_destroy(vnd_cd.cd_devs[i])) != 0)
+				return 0;
 
 		if ((error = config_cfattach_detach(vnd_cd.cd_name,
 		    &vnd_ca)) != 0) {

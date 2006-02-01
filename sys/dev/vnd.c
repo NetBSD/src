@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.132 2006/02/01 04:30:10 cube Exp $	*/
+/*	$NetBSD: vnd.c,v 1.133 2006/02/01 05:05:22 cube Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.132 2006/02/01 04:30:10 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.133 2006/02/01 05:05:22 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -243,6 +243,7 @@ CFATTACH_DECL(vnd, sizeof(struct vnd_softc),
 extern struct cfdriver vnd_cd;
 
 static struct vnd_softc	*vnd_spawn(int);
+int	vnd_destroy(struct device *);
 
 void
 vndattach(int num)
@@ -299,6 +300,18 @@ vnd_spawn(int unit)
 	cf->cf_fstate = FSTATE_STAR;
 
 	return (struct vnd_softc *)config_attach_pseudo(cf);
+}
+
+int
+vnd_destroy(struct device *dev)
+{
+	int error;
+
+	error = config_detach(dev, 0);
+	if (error)
+		return error;
+	free(dev->dv_cfdata, M_DEVBUF);
+	return 0;
 }
 
 static int
@@ -1120,7 +1133,7 @@ unlock_and_exit:
 
 		/* Detatch the disk. */
 		pseudo_disk_detach(&vnd->sc_dkdev);
-		if ((error = config_detach((struct device *)vnd, 0)) != 0) {
+		if ((error = vnd_destroy((struct device *)vnd)) != 0) {
 			aprint_error("%s: unable to detach instance\n",
 			    vnd->sc_dev.dv_xname);
 			return error;
