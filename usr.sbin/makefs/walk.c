@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.18 2005/08/19 02:09:50 christos Exp $	*/
+/*	$NetBSD: walk.c,v 1.19 2006/02/01 22:19:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.18 2005/08/19 02:09:50 christos Exp $");
+__RCSID("$NetBSD: walk.c,v 1.19 2006/02/01 22:19:34 dyoung Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -90,6 +90,7 @@ __RCSID("$NetBSD: walk.c,v 1.18 2005/08/19 02:09:50 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "makefs.h"
 #include "mtree.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.h,v 1.3 2005/10/30 03:10:28 dyoung Exp $	*/
+/*	$NetBSD: iso9660_rrip.h,v 1.4 2006/02/01 22:19:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -42,7 +42,7 @@
 /* For writing must use ISO_RRIP_EXTREF structure */
 
 #include "makefs.h"
-#include "cd9660/cd9660_rrip.h"
+#include <cd9660_rrip.h>
 #include "cd9660.h"
 #include <sys/queue.h>
 

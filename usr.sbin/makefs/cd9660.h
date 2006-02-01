@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.9 2005/10/31 08:29:19 dyoung Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.10 2006/02/01 22:19:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -53,8 +53,8 @@
 #include <sys/param.h>
 
 #include "makefs.h"
-#include "cd9660/iso.h"
-#include "cd9660/iso_rrip.h"
+#include "iso.h"
+#include "iso_rrip.h"
 #include "cd9660/cd9660_eltorito.h"
 
 #ifdef DEBUG
