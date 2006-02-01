@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.73 2005/12/11 12:19:09 christos Exp $ */
+/*	$NetBSD: sbus.c,v 1.74 2006/02/01 20:21:38 martin Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.73 2005/12/11 12:19:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.74 2006/02/01 20:21:38 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -286,7 +286,7 @@ sbus_attach(parent, self, aux)
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
 	intr_establish(ipl, ih);
-	*(ih->ih_map) |= INTMAP_V;
+	*(ih->ih_map) |= INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT);
 	
 	/*
 	 * Note: the stupid SBUS IOMMU ignores the high bits of an address, so a
@@ -667,7 +667,8 @@ sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 				intrptr = (int64_t *)&sc->sc_sysio->scsi_clr_int;
 				ih->ih_clr = &intrptr[i];
 				/* Enable the interrupt */
-				imap |= INTMAP_V;
+				imap |= INTMAP_V
+				    |(CPU_UPAID << INTMAP_TID_SHIFT);
 				/* XXXX */
 				*(ih->ih_map) = imap;
 			} else
