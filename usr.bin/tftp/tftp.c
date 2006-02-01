@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.23 2006/01/31 17:36:56 christos Exp $	*/
+/*	$NetBSD: tftp.c,v 1.24 2006/02/01 20:26:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.23 2006/01/31 17:36:56 christos Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.24 2006/02/01 20:26:28 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -470,7 +470,7 @@ makerequest(request, name, tp, mode, filesize)
 		strcpy(cp, "blksize");
 		cp += strlen(cp);
 		*cp++ = '\0';
-		sprintf(cp, "%d", blksize);
+		sprintf(cp, "%zd", blksize);
 		cp += strlen(cp);
 		*cp++ = '\0';
 	}
