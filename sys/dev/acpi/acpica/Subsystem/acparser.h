@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: acparser.h - AML Parser subcomponent prototypes and defines
- *       xRevision: 73 $
+ *       xRevision: 1.78 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -136,6 +136,7 @@
 #define ACPI_PARSE_MODE_MASK            0x0030
 
 #define ACPI_PARSE_DEFERRED_OP          0x0100
+#define ACPI_PARSE_DISASSEMBLE          0x0200
 
 
 /******************************************************************************
@@ -149,12 +150,7 @@
  * psxface - Parser external interfaces
  */
 ACPI_STATUS
-AcpiPsxLoadTable (
-    UINT8                   *PcodeAddr,
-    UINT32                  PcodeLength);
-
-ACPI_STATUS
-AcpiPsxExecute (
+AcpiPsExecuteMethod (
     ACPI_PARAMETER_INFO     *Info);
 
 
@@ -230,6 +226,25 @@ AcpiPsGetOpcodeSize (
 UINT16
 AcpiPsPeekOpcode (
     ACPI_PARSE_STATE        *state);
+
+ACPI_STATUS
+AcpiPsCompleteThisOp (
+    ACPI_WALK_STATE         *WalkState,
+    ACPI_PARSE_OBJECT       *Op);
+
+ACPI_STATUS
+AcpiPsNextParseState (
+    ACPI_WALK_STATE         *WalkState,
+    ACPI_PARSE_OBJECT       *Op,
+    ACPI_STATUS             CallbackStatus);
+
+
+/*
+ * psloop - main parse loop
+ */
+ACPI_STATUS
+AcpiPsParseLoop (
+    ACPI_WALK_STATE         *WalkState);
 
 
 /*
@@ -359,12 +374,6 @@ void
 AcpiPsSetName(
     ACPI_PARSE_OBJECT       *op,
     UINT32                  name);
-
-#ifdef ACPI_ENABLE_OBJECT_CACHE
-void
-AcpiPsDeleteParseCache (
-    void);
-#endif
 
 
 /*

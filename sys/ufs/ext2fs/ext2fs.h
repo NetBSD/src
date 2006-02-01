@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.20 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.20.2.1 2006/02/01 14:52:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -67,7 +67,7 @@
 #ifndef _UFS_EXT2FS_EXT2FS_H_
 #define _UFS_EXT2FS_EXT2FS_H_
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 
 /*
  * Each disk drive contains some number of file systems.

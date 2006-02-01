@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.2 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.2.2.1 2006/02/01 14:51:30 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -83,6 +83,12 @@
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym) .weak alias ;  alias = sym
 #endif
+/*
+ * STRONG_ALIAS: create a strong alias.
+ */
+#define STRONG_ALIAS(alias,sym)						\
+	.globl alias;							\
+	alias = sym
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\

@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.18 2005/12/11 12:19:50 christos Exp $ */
+/* $NetBSD: hypervisor.c,v 1.18.2.1 2006/02/01 14:51:48 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.18 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.18.2.1 2006/02/01 14:51:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,9 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.18 2005/12/11 12:19:50 christos Exp
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
+#ifndef XEN3
 #include <machine/ctrl_if.h>
+#endif
 
 #ifdef DOM0OPS
 #include <sys/dirent.h>
@@ -150,7 +152,9 @@ struct  x86_isa_chipset x86_isa_chipset;
 #endif
 
 /* shutdown/reboot message stuff */
+#ifndef XEN3
 static void hypervisor_shutdown_handler(ctrl_msg_t *, unsigned long);
+#endif
 static struct sysmon_pswitch hysw_shutdown = {
 	.smpsw_type = PSWITCH_TYPE_POWER,
 	.smpsw_name = "hypervisor",
@@ -189,8 +193,10 @@ hypervisor_attach(parent, self, aux)
 #if defined(DOM0OPS) && NISA > 0
 	struct isabus_attach_args iba;
 #endif
+#ifndef XEN3
 	physdev_op_t physdev_op;
 	int i, j, busnum;
+#endif
 #endif
 	union hypervisor_attach_cookie hac;
 
@@ -215,7 +221,16 @@ hypervisor_attach(parent, self, aux)
 	config_found_ia(self, "xendevbus", &hac.hac_xennpx, hypervisor_print);
 #endif
 #if NPCI > 0
-
+#ifdef XEN3
+	pba.pba_iot = X86_BUS_SPACE_IO;
+	pba.pba_memt = X86_BUS_SPACE_MEM;
+	pba.pba_dmat = &pci_bus_dma_tag;
+	pba.pba_dmat64 = 0;
+	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
+	pba.pba_bridgetag = NULL;
+	pba.pba_bus = 0;
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
+#else
 	physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
 	if ((i = HYPERVISOR_physdev_op(&physdev_op)) < 0) {
 		printf("hypervisor: PHYSDEVOP_PCI_PROBE_ROOT_BUSES failed with status %d\n", i);
@@ -251,6 +266,7 @@ hypervisor_attach(parent, self, aux)
 			}
 		} 
 	}
+#endif /* XEN3 */
 #if defined(DOM0OPS) && NISA > 0
 	if (isa_has_been_seen == 0) {
 		iba._iba_busname = "isa";
@@ -261,24 +277,28 @@ hypervisor_attach(parent, self, aux)
 		config_found_ia(self, "isabus", &iba, isabusprint);
 	}
 #endif
-#endif
+#endif /* NPCI */
 
 #ifdef DOM0OPS
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		xenkernfs_init();
 		xenprivcmd_init();
 		xen_shm_init();
+#ifndef XEN3
 		xbdback_init();
 		xennetback_init();
+#endif
 	}
 #endif
 	if (sysmon_pswitch_register(&hysw_reboot) != 0 ||
 	    sysmon_pswitch_register(&hysw_shutdown) != 0)
 		printf("%s: unable to register with sysmon\n",
 		    self->dv_xname);
+#ifndef XEN3
 	else 
 		ctrl_if_register_receiver(CMSG_SHUTDOWN,
 		    hypervisor_shutdown_handler, CALLBACK_IN_BLOCKING_CONTEXT);
+#endif
 }
 
 static int
@@ -311,6 +331,7 @@ xenkernfs_init()
 }
 #endif
 
+#ifndef XEN3
 /* handler for the shutdown messages */
 static void
 hypervisor_shutdown_handler(ctrl_msg_t *msg, unsigned long id)
@@ -327,3 +348,4 @@ hypervisor_shutdown_handler(ctrl_msg_t *msg, unsigned long id)
 		    msg->type);
 	}
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.19 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.19.2.1 2006/02/01 14:52:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.19 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.19.2.1 2006/02/01 14:52:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -710,6 +710,7 @@ dmoverioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	splx(s);
 
 	memset(ds, 0, sizeof(*ds));
+	simple_lock_init(&ds->ds_slock);
 	TAILQ_INIT(&ds->ds_pending);
 	TAILQ_INIT(&ds->ds_complete);
 

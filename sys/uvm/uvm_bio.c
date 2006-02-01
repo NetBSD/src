@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.42 2005/11/29 22:52:03 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.42.2.1 2006/02/01 14:52:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.42 2005/11/29 22:52:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.42.2.1 2006/02/01 14:52:48 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -294,8 +294,6 @@ again:
 	eva = ufi->orig_rvaddr + (npages << PAGE_SHIFT);
 
 	UVMHIST_LOG(ubchist, "va 0x%lx eva 0x%lx", va, eva, 0, 0);
-	simple_lock(&uobj->vmobjlock);
-	uvm_lock_pageq();
 	for (i = 0; va < eva; i++, va += PAGE_SIZE) {
 		boolean_t rdonly;
 		vm_prot_t mask;
@@ -319,12 +317,18 @@ again:
 		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
+
+		uobj = pg->uobject;
+		simple_lock(&uobj->vmobjlock);
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
 		KASSERT((pg->flags & PG_FAKE) == 0);
 		if (pg->flags & PG_RELEASED) {
+			uvm_lock_pageq();
 			uvm_pagefree(pg);
+			uvm_unlock_pageq();
+			simple_unlock(&uobj->vmobjlock);
 			continue;
 		}
 		if (pg->loan_count != 0) {
@@ -337,9 +341,7 @@ again:
 				prot &= ~VM_PROT_WRITE;
 
 			if (prot & VM_PROT_WRITE) {
-				uvm_unlock_pageq();
 				pg = uvm_loanbreak(pg);
-				uvm_lock_pageq();
 				if (pg == NULL)
 					continue; /* will re-fault */
 			}
@@ -359,12 +361,13 @@ again:
 		mask = rdonly ? ~VM_PROT_WRITE : VM_PROT_ALL;
 		pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
 		    prot & mask, access_type & mask);
+		uvm_lock_pageq();
 		uvm_pageactivate(pg);
+		uvm_unlock_pageq();
 		pg->flags &= ~(PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
+		simple_unlock(&uobj->vmobjlock);
 	}
-	uvm_unlock_pageq();
-	simple_unlock(&uobj->vmobjlock);
 	pmap_update(ufi->orig_map->pmap);
 	return 0;
 }

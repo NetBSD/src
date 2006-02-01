@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.12 2005/12/11 12:24:46 christos Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.12.2.1 2006/02/01 14:52:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -348,7 +348,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 				maxp = pos;
 		}
 	}
-	FREE(phdr, sz);
+	DEALLOC(phdr, sz);
 
 	/*
 	 * Copy the ELF and section headers.
@@ -435,7 +435,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 			if (first == 0)
 				PROGRESS(("]"));
 		}
-		FREE(shp, sz);
+		DEALLOC(shp, sz);
 	}
 
 	/*
@@ -467,10 +467,10 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 	marks[MARK_END] = LOADADDR(maxp);
 	return 0;
 freephdr:
-	FREE(phdr, sz);
+	DEALLOC(phdr, sz);
 	return 1;
 freeshp:
-	FREE(shp, sz);
+	DEALLOC(shp, sz);
 	return 1;
 }
 

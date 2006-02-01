@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $	*/
+/*	$NetBSD: bfs.c,v 1.1.2.1 2006/02/01 14:52:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.1.2.1 2006/02/01 14:52:20 yamt Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -57,7 +57,7 @@ MALLOC_DEFINE(M_BFS, "sysvbfs core", "sysvbfs internal structures");
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 #define	__MALLOC(s, t, f)	alloc(s)
-#define	__FREE(a, s, t)		free(a, s)
+#define	__FREE(a, s, t)		dealloc(a, s)
 #else
 #include "local.h"
 #define	__MALLOC(s, t, f)	malloc(s)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rb.c,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: ite_rb.c,v 1.5.2.1 2006/02/01 14:51:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -162,7 +162,7 @@ rbox_init(struct ite_data *ip)
 }
 
 void
-rbox_putc(struct ite_data *ip, int dy, int dx, int c, int mode)
+rbox_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
 {
 
 	rbox_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -194,7 +194,7 @@ rbox_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 }
 
 void
-rbox_scroll(struct ite_data *ip, int sy, int count, int dir, int sx)
+rbox_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
 {
 	int dy = sy - count;
 	int height = ip->rows - sy;

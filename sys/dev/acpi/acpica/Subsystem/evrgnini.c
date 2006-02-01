@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evrgnini- ACPI AddressSpace (OpRegion) init
- *              xRevision: 76 $
+ *              xRevision: 1.79 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evrgnini.c,v 1.13 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evrgnini.c,v 1.13.2.1 2006/02/01 14:51:50 yamt Exp $");
 
 #define __EVRGNINI_C__
 
@@ -307,10 +307,14 @@ AcpiEvPciConfigRegionSetup (
             Status = AcpiUtExecute_HID (PciRootNode, &ObjectHID);
             if (ACPI_SUCCESS (Status))
             {
-                /* Got a valid _HID, check if this is a PCI root */
-
+                /*
+                 * Got a valid _HID string, check if this is a PCI root.
+                 * New for ACPI 3.0: check for a PCI Express root also.
+                 */
                 if (!(ACPI_STRNCMP (ObjectHID.Value, PCI_ROOT_HID_STRING,
-                                    sizeof (PCI_ROOT_HID_STRING))))
+                                    sizeof (PCI_ROOT_HID_STRING))           ||
+                    !(ACPI_STRNCMP (ObjectHID.Value, PCI_EXPRESS_ROOT_HID_STRING,
+                                    sizeof (PCI_EXPRESS_ROOT_HID_STRING)))))
                 {
                     /* Install a handler for this PCI root bridge */
 

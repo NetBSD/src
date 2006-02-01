@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.183 2005/12/11 12:19:15 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.183.2.1 2006/02/01 14:51:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183 2005/12/11 12:19:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183.2.1 2006/02/01 14:51:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -757,10 +757,9 @@ dumpsys()
 	register int psize;
 	daddr_t blkno;
 	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
-	int error = 0;
+	int j, error = 0;
 	unsigned long todo;
 	register struct mem_region *mp;
-	extern struct mem_region *mem;
 
 	/* copy registers to memory */
 	snapshot(curpcb);
@@ -803,10 +802,11 @@ dumpsys()
 	blkno += pmap_dumpsize();
 
 	/* calculate total size of dump */
-	for (todo = 0, mp = mem; mp->size; mp++)
-		todo += mp->size;
+	for (todo = 0, j = 0; j < phys_installed_size; j++)
+		todo += phys_installed[j].size;
 
-	for (mp = mem; mp->size; mp++) {
+	for (mp = &phys_installed[0], j = 0; j < phys_installed_size;
+			j++, mp = &phys_installed[j]) {
 		unsigned i = 0, n;
 		paddr_t maddr = mp->start;
 

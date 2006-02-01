@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.20 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: dtide.c,v 1.20.2.1 2006/02/01 14:52:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.20 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.20.2.1 2006/02/01 14:52:20 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -107,6 +107,7 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 		wdr->cmd_iot = bst;
 		wdr->ctl_iot = bst;
 		ch->ch_queue = &sc->sc_chq[i];
+		ch->ch_ndrive = 2;
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + dtide_cmdoffsets[i], 0, 8,
 		    &wdr->cmd_baseioh);

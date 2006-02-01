@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2005/12/11 12:24:46 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.18.2.1 2006/02/01 14:52:36 yamt Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -29,6 +29,8 @@ SALIB_PROF=	${SADST}/libsa.po
 SALIB=		${SADST}/libsa.a
 SALIB_PROF=	${SADST}/libsa_p.a
 .endif
+ZLIBSRCDIR:=	${.PARSEDIR}/../../../common/dist/zlib
+SAMISCCPPFLAGS+=-I${ZLIBSRCDIR}
 
 SAMAKE= \
 	cd ${SADST} && ${MAKE} -f ${SADIR:Q}/Makefile \

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_blist.c,v 1.8 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: subr_blist.c,v 1.8.2.1 2006/02/01 14:52:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.8 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.8.2.1 2006/02/01 14:52:20 yamt Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp $");
 #endif
@@ -811,6 +811,9 @@ blst_meta_fill(
 		return nblks;
 	}
 
+	if (count > radix)
+		panic("blist_meta_fill: allocation too large");
+
 	if (scan->u.bmu_avail == radix) {
 		radix /= BLIST_META_RADIX;
 
@@ -831,9 +834,6 @@ blst_meta_fill(
 	} else {
 		radix /= BLIST_META_RADIX;
 	}
-
-	if (count > radix)
-		panic("blist_meta_fill: allocation too large");
 
 	i = (allocBlk - blk) / radix;
 	blk += i * radix;

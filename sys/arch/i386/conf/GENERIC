@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.714.2.1 2006/01/15 10:02:37 yamt Exp $
+# $NetBSD: GENERIC,v 1.714.2.2 2006/02/01 14:51:28 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.714.2.1 $"
+#ident 		"GENERIC-$Revision: 1.714.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -323,7 +323,6 @@ cpu* at mainbus?
 
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
-#options 	ACPI_DISABLE_ON_POWEROFF	# disable acpi on power off
 
 # ACPI devices
 #acpiacad* 	at acpi?		# ACPI AC Adapter
@@ -935,6 +934,7 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 # CardBus USB controllers
 #ehci*	at cardbus? function ?	# Enhanced Host Controller
 #ohci*	at cardbus? function ?	# Open Host Controller
+#uhci*	at cardbus? function ?	# Universal Host Controller (Intel)
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
@@ -1005,8 +1005,9 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-# USB 802.11b adapters
+# USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
+ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?

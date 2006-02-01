@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.47 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.47.2.1 2006/02/01 14:52:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.47 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.47.2.1 2006/02/01 14:52:08 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.47 2005/12/11 12:21:28 christos Exp $")
 
 #include <net/if_ether.h>
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include <machine/bus.h>
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
@@ -93,10 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.47 2005/12/11 12:21:28 christos Exp $")
 #include <dev/ic/ne2000var.h>
 
 #include <dev/ic/ax88190reg.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h>
-#endif
 
 int	ne2000_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
 int	ne2000_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);

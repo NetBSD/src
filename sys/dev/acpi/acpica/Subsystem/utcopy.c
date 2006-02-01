@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utcopy - Internal to external object translation utilities
- *              xRevision: 120 $
+ *              xRevision: 1.125 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utcopy.c,v 1.14 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utcopy.c,v 1.14.2.1 2006/02/01 14:51:51 yamt Exp $");
 
 #define __UTCOPY_C__
 
@@ -507,9 +507,9 @@ AcpiUtCopyIobjectToEobject (
          * Build a simple object (no nested objects)
          */
         Status = AcpiUtCopyIsimpleToEsimple (InternalObject,
-                    (ACPI_OBJECT *) RetBuffer->Pointer,
-                    ((UINT8 *) RetBuffer->Pointer +
-                    ACPI_ROUND_UP_TO_NATIVE_WORD (sizeof (ACPI_OBJECT))),
+                    ACPI_CAST_PTR (ACPI_OBJECT, RetBuffer->Pointer),
+                    ACPI_ADD_PTR (UINT8, RetBuffer->Pointer,
+                        ACPI_ROUND_UP_TO_NATIVE_WORD (sizeof (ACPI_OBJECT))),
                     &RetBuffer->Length);
         /*
          * build simple does not include the object size in the length
@@ -729,7 +729,7 @@ AcpiUtCopyEobjectToIobject (
         /*
          * Packages as external input to control methods are not supported,
          */
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Packages as parameters not implemented!\n"));
 
         return_ACPI_STATUS (AE_NOT_IMPLEMENTED);
@@ -785,56 +785,45 @@ AcpiUtCopySimpleObject (
     DestDesc->Common.ReferenceCount = ReferenceCount;
     DestDesc->Common.NextObject = NextObject;
 
+    /* New object is not static, regardless of source */
+
+    DestDesc->Common.Flags &= ~AOPOBJ_STATIC_POINTER;
+
     /* Handle the objects with extra data */
 
     switch (ACPI_GET_OBJECT_TYPE (DestDesc))
     {
     case ACPI_TYPE_BUFFER:
-
-        DestDesc->Buffer.Node = NULL;
-        DestDesc->Common.Flags = SourceDesc->Common.Flags;
-
         /*
          * Allocate and copy the actual buffer if and only if:
          * 1) There is a valid buffer pointer
-         * 2) The buffer is not static (not in an ACPI table) (in this case,
-         *    the actual pointer was already copied above)
+         * 2) The buffer has a length > 0
          */
         if ((SourceDesc->Buffer.Pointer) &&
-            (!(SourceDesc->Common.Flags & AOPOBJ_STATIC_POINTER)))
+            (SourceDesc->Buffer.Length))
         {
-            DestDesc->Buffer.Pointer = NULL;
-
-            /* Create an actual buffer only if length > 0 */
-
-            if (SourceDesc->Buffer.Length)
+            DestDesc->Buffer.Pointer =
+                ACPI_MEM_ALLOCATE (SourceDesc->Buffer.Length);
+            if (!DestDesc->Buffer.Pointer)
             {
-                DestDesc->Buffer.Pointer =
-                    ACPI_MEM_ALLOCATE (SourceDesc->Buffer.Length);
-                if (!DestDesc->Buffer.Pointer)
-                {
-                    return (AE_NO_MEMORY);
-                }
-
-                /* Copy the actual buffer data */
-
-                ACPI_MEMCPY (DestDesc->Buffer.Pointer,
-                        SourceDesc->Buffer.Pointer,
-                        SourceDesc->Buffer.Length);
+                return (AE_NO_MEMORY);
             }
+
+            /* Copy the actual buffer data */
+
+            ACPI_MEMCPY (DestDesc->Buffer.Pointer,
+                    SourceDesc->Buffer.Pointer,
+                    SourceDesc->Buffer.Length);
         }
         break;
 
     case ACPI_TYPE_STRING:
-
         /*
          * Allocate and copy the actual string if and only if:
          * 1) There is a valid string pointer
-         * 2) The string is not static (not in an ACPI table) (in this case,
-         *    the actual pointer was already copied above)
+         * (Pointer to a NULL string is allowed)
          */
-        if ((SourceDesc->String.Pointer) &&
-            (!(SourceDesc->Common.Flags & AOPOBJ_STATIC_POINTER)))
+        if (SourceDesc->String.Pointer)
         {
             DestDesc->String.Pointer =
                 ACPI_MEM_ALLOCATE ((ACPI_SIZE) SourceDesc->String.Length + 1);
@@ -842,6 +831,8 @@ AcpiUtCopySimpleObject (
             {
                 return (AE_NO_MEMORY);
             }
+
+            /* Copy the actual string data */
 
             ACPI_MEMCPY (DestDesc->String.Pointer, SourceDesc->String.Pointer,
                          (ACPI_SIZE) SourceDesc->String.Length + 1);
@@ -1021,8 +1012,7 @@ AcpiUtCopyIpackageToIpackage (
                                     sizeof (void *));
     if (!DestObj->Package.Elements)
     {
-        ACPI_REPORT_ERROR (
-            ("AmlBuildCopyInternalPackageObject: Package allocation failure\n"));
+        ACPI_REPORT_ERROR (("Package allocation failure\n"));
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
@@ -1031,7 +1021,7 @@ AcpiUtCopyIpackageToIpackage (
      * This handles nested packages of arbitrary depth.
      */
     Status = AcpiUtWalkPackageTree (SourceObj, DestObj,
-                            AcpiUtCopyIelementToIelement, WalkState);
+                AcpiUtCopyIelementToIelement, WalkState);
     if (ACPI_FAILURE (Status))
     {
         /* On failure, delete the destination package object */

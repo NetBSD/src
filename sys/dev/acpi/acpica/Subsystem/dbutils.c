@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbutils - AML debugger utilities
- *              xRevision: 73 $
+ *              xRevision: 1.79 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,14 +116,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.13 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.13.2.1 2006/02/01 14:51:49 yamt Exp $");
 
 #include "acpi.h"
-#include "acparser.h"
-#include "amlcode.h"
 #include "acnamesp.h"
 #include "acdebug.h"
-#include "acdispat.h"
 #include "acdisasm.h"
 
 
@@ -218,7 +215,7 @@ AcpiDbSetOutputDestination (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiDbDumpObject
+ * FUNCTION:    AcpiDbDumpExternalObject
  *
  * PARAMETERS:  ObjDesc         - External ACPI object to dump
  *              Level           - Nesting level.
@@ -230,7 +227,7 @@ AcpiDbSetOutputDestination (
  ******************************************************************************/
 
 void
-AcpiDbDumpObject (
+AcpiDbDumpExternalObject (
     ACPI_OBJECT             *ObjDesc,
     UINT32                  Level)
 {
@@ -252,7 +249,7 @@ AcpiDbDumpObject (
     {
     case ACPI_TYPE_ANY:
 
-        AcpiOsPrintf ("[Object Reference] = ", ObjDesc->Reference.Handle);
+        AcpiOsPrintf ("[Object Reference] = %p", ObjDesc->Reference.Handle);
         AcpiDmDisplayInternalObject (ObjDesc->Reference.Handle, NULL);
         break;
 
@@ -266,7 +263,7 @@ AcpiDbDumpObject (
 
     case ACPI_TYPE_STRING:
 
-        AcpiOsPrintf ("[String]  Value: ");
+        AcpiOsPrintf ("[String] Length %.2X = ", ObjDesc->String.Length);
         for (i = 0; i < ObjDesc->String.Length; i++)
         {
             AcpiOsPrintf ("%c", ObjDesc->String.Pointer[i]);
@@ -280,7 +277,7 @@ AcpiDbDumpObject (
         AcpiOsPrintf ("[Buffer] Length %.2X = ", ObjDesc->Buffer.Length);
         if (ObjDesc->Buffer.Length)
         {
-            AcpiUtDumpBuffer ((UINT8 *) ObjDesc->Buffer.Pointer,
+            AcpiUtDumpBuffer (ACPI_CAST_PTR (UINT8, ObjDesc->Buffer.Pointer),
                     ObjDesc->Buffer.Length, DB_DWORD_DISPLAY, _COMPONENT);
         }
         else
@@ -292,19 +289,19 @@ AcpiDbDumpObject (
 
     case ACPI_TYPE_PACKAGE:
 
-        AcpiOsPrintf ("[Package]  Contains %d Elements: \n",
+        AcpiOsPrintf ("[Package] Contains %d Elements:\n",
                 ObjDesc->Package.Count);
 
         for (i = 0; i < ObjDesc->Package.Count; i++)
         {
-            AcpiDbDumpObject (&ObjDesc->Package.Elements[i], Level+1);
+            AcpiDbDumpExternalObject (&ObjDesc->Package.Elements[i], Level+1);
         }
         break;
 
 
     case ACPI_TYPE_LOCAL_REFERENCE:
 
-        AcpiOsPrintf ("[Object Reference] = ", ObjDesc->Reference.Handle);
+        AcpiOsPrintf ("[Object Reference] = %p", ObjDesc->Reference.Handle);
         AcpiDmDisplayInternalObject (ObjDesc->Reference.Handle, NULL);
         break;
 
@@ -323,7 +320,7 @@ AcpiDbDumpObject (
 
     default:
 
-        AcpiOsPrintf ("[Unknown Type] %X \n", ObjDesc->Type);
+        AcpiOsPrintf ("[Unknown Type] %X\n", ObjDesc->Type);
         break;
     }
 }

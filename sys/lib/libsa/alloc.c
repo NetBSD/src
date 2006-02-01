@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.20 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.20.2.1 2006/02/01 14:52:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -161,7 +161,7 @@ static char *top = (char*)HEAP_START;
 #endif /* HEAP_VARIABLE */
 
 void *
-alloc(u_int size)
+alloc(size_t size)
 {
 	struct fl **f = &freelist, **bestf = NULL;
 #ifndef ALLOC_FIRST_FIT
@@ -171,19 +171,19 @@ alloc(u_int size)
 	int failed;
 
 #ifdef ALLOC_TRACE
-	printf("alloc(%u)", size);
+	printf("alloc(%zu)", size);
 #endif
 
 #ifdef ALLOC_FIRST_FIT
-	while (*f != (struct fl *)0 && (*f)->size < size)
+	while (*f != (struct fl *)0 && (size_t)(*f)->size < size)
 		f = &((*f)->next);
 	bestf = f;
 	failed = (*bestf == (struct fl *)0);
 #else
 	/* scan freelist */
 	while (*f) {
-		if ((*f)->size >= size) {
-			if ((*f)->size == size) /* exact match */
+		if ((size_t)(*f)->size >= size) {
+			if ((size_t)(*f)->size == size) /* exact match */
 				goto found;
 
 			if ((*f)->size < bestsize) {
@@ -212,7 +212,7 @@ alloc(u_int size)
 		top += ALIGN(sizeof(unsigned)) + ALIGN(size);
 #ifdef HEAP_LIMIT
 		if (top > (char*)HEAP_LIMIT)
-		        panic("heap full (0x%lx+%u)", help, size);
+		        panic("heap full (0x%lx+%zu)", help, size);
 #endif
 		*(unsigned *)(void *)help = (unsigned)ALIGN(size);
 #ifdef ALLOC_TRACE
@@ -239,24 +239,24 @@ found:
 
 void
 /*ARGSUSED*/
-free(void *ptr, u_int size)
+dealloc(void *ptr, size_t size)
 {
 	struct fl *f =
 	    (struct fl *)(void *)((char*)(void *)ptr - ALIGN(sizeof(unsigned)));
 #ifdef ALLOC_TRACE
-	printf("free(%lx, %u) (origsize %u)\n", (u_long)ptr, size, f->size);
+	printf("dealloc(%lx, %zu) (origsize %u)\n", (u_long)ptr, size, f->size);
 #endif
 #ifdef DEBUG
-        if (size > f->size)
-	        printf("free %u bytes @%lx, should be <=%u\n",
+        if (size > (size_t)f->size)
+	        printf("dealloc %u bytes @%lx, should be <=%u\n",
 		    size, (u_long)ptr, f->size);
 
 	if (ptr < (void *)HEAP_START)
-		printf("free: %lx before start of heap.\n", (u_long)ptr);
+		printf("dealloc: %lx before start of heap.\n", (u_long)ptr);
 
 #ifdef HEAP_LIMIT
 	if (ptr > (void *)HEAP_LIMIT)
-		printf("free: %lx beyond end of heap.\n", (u_long)ptr);
+		printf("dealloc: %lx beyond end of heap.\n", (u_long)ptr);
 #endif
 #endif /* DEBUG */
 	/* put into freelist */

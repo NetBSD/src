@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.104 2005/12/26 18:45:27 perry Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.104.2.1 2006/02/01 14:52:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,9 +69,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.104 2005/12/26 18:45:27 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.104.2.1 2006/02/01 14:52:20 yamt Exp $");
 
 #include "opt_mbuftrace.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1377,3 +1378,63 @@ m_getptr(struct mbuf *m, int loc, int *off)
 
 	return (NULL);
 }
+
+#if defined(DDB)
+void
+m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
+{
+	char ch;
+	boolean_t opt_c = FALSE;
+	char buf[512];
+
+	while ((ch = *(modif++)) != '\0') {
+		switch (ch) {
+		case 'c':
+			opt_c = TRUE;
+			break;
+		}
+	}
+
+nextchain:
+	(*pr)("MBUF %p\n", m);
+	bitmask_snprintf(m->m_flags, M_FLAGS_BITS, buf, sizeof(buf));
+	(*pr)("  data=%p, len=%d, type=%d, flags=0x%s\n",
+	    m->m_data, m->m_len, m->m_type, buf);
+	(*pr)("  owner=%p, next=%p, nextpkt=%p\n", m->m_owner, m->m_next,
+	    m->m_nextpkt);
+	(*pr)("  leadingspace=%u, trailingspace=%u, readonly=%u\n",
+	    (int)M_LEADINGSPACE(m), (int)M_TRAILINGSPACE(m),
+	    (int)M_READONLY(m));
+	if ((m->m_flags & M_PKTHDR) != 0) {
+		bitmask_snprintf(m->m_pkthdr.csum_flags, M_CSUM_BITS, buf,
+		    sizeof(buf));
+		(*pr)("  pktlen=%d, rcvif=%p, csum_flags=0x%s, csum_data=0x%"
+		    PRIx32 ", segsz=%u\n",
+		    m->m_pkthdr.len, m->m_pkthdr.rcvif,
+		    buf, m->m_pkthdr.csum_data, m->m_pkthdr.segsz);
+	}
+	if ((m->m_flags & M_EXT)) {
+		(*pr)("  shared=%u, ext_buf=%p, ext_size=%zd, "
+		    "ext_free=%p, ext_arg=%p\n",
+		    (int)MCLISREFERENCED(m),
+		    m->m_ext.ext_buf, m->m_ext.ext_size,
+		    m->m_ext.ext_free, m->m_ext.ext_arg);
+	}
+	if ((~m->m_flags & (M_EXT|M_EXT_PAGES)) == 0) {
+		int i;
+
+		(*pr)("  pages:");
+		for (i = 0; i < m->m_ext.ext_size; i += PAGE_SIZE) {
+			(*pr)(" %p", m->m_ext.ext_pgs[i]);
+		}
+		(*pr)("\n");
+	}
+
+	if (opt_c) {
+		m = m->m_next;
+		if (m != NULL) {
+			goto nextchain;
+		}
+	}
+}
+#endif /* defined(DDB) */

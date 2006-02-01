@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.6 2005/12/11 12:19:08 christos Exp $	*/
+/*	$NetBSD: Locore.c,v 1.6.2.1 2006/02/01 14:51:37 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,21 +36,26 @@
 
 #include <machine/cpu.h>
 
-vaddr_t OF_claim_virt __P((vaddr_t vaddr, int len));
-vaddr_t OF_alloc_virt __P((int len, int align));
-int OF_free_virt __P((vaddr_t vaddr, int len));
-int OF_unmap_virt __P((vaddr_t vaddr, int len));
-vaddr_t OF_map_phys __P((paddr_t paddr, off_t size, vaddr_t vaddr, int mode));
-paddr_t OF_alloc_phys __P((int len, int align));
-paddr_t OF_claim_phys __P((paddr_t phys, int len));
-int OF_free_phys __P((paddr_t paddr, int len));
+vaddr_t	OF_claim_virt(vaddr_t, int);
+vaddr_t	OF_alloc_virt(int, int);
+int	OF_free_virt(vaddr_t, int);
+int	OF_unmap_virt(vaddr_t, int);
+vaddr_t	OF_map_phys(paddr_t, off_t, vaddr_t, int);
+paddr_t	OF_alloc_phys(int, int);
+paddr_t	OF_claim_phys(paddr_t, int);
+int	OF_free_phys(paddr_t, int);
 
 extern int openfirmware(void *);
 
-void setup __P((void));
 
 __dead void
-_rtt()
+_rtt(void)
+{
+	OF_exit();
+}
+
+void __attribute__((__noreturn__))
+OF_exit(void) 
 {
 	struct {
 		cell_t name;
@@ -62,7 +67,10 @@ _rtt()
 	args.nargs = 0;
 	args.nreturns = 0;
 	openfirmware(&args);
-	while (1);			/* just in case */
+
+	printf("OF_exit failed");
+	for(;;)
+		;
 }
 
 void
@@ -344,65 +352,60 @@ OF_milliseconds()
 	return args.ms;
 }
 
-void
-OF_chain(virt, size, entry, arg, len)
-	void *virt;
-	u_int size;
-	void (*entry)();
-	void *arg;
-	u_int len;
+int
+OF_peer(int phandle)
 {
-	extern int64_t romp;
-	extern int debug;
 	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
-		cell_t virt;
-		cell_t size;
-		cell_t entry;
-		cell_t arg;
-		cell_t len;
+		cell_t phandle;
+		cell_t sibling;
 	} args;
 
-	args.name = ADR2CELL("chain");
-	args.nargs = 5;
-	args.nreturns = 0;
-	args.virt = ADR2CELL(virt);
-	args.size = size;
-	args.entry = ADR2CELL(entry);
-	args.arg = ADR2CELL(arg);
-	args.len = len;
-	openfirmware(&args);
-	if (debug) {
-		printf("OF_chain: prom returned!\n");
-
-		/* OK, firmware failed us.  Try calling prog directly */
-		printf("Calling entry(%p, %p, %x, %lx, %lx)\n", entry, arg, len,
-			(unsigned long)romp, (unsigned long)romp);
-	}
-	entry(0, arg, len, (unsigned long)romp, (unsigned long)romp);
-	panic("OF_chain: kernel returned!");
-	__asm("ta 2" : :);
+	args.name = ADR2CELL("peer");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
+	if (openfirmware(&args) == -1)
+		return 0;
+	return args.sibling;
 }
 
-static u_int stdin;
-static u_int stdout;
+int
+OF_child(int phandle)
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t child;
+	} args;
+
+	args.name = ADR2CELL("child");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
+	if (openfirmware(&args) == -1)
+		return 0;
+	return args.child;
+}
+
 static u_int mmuh = -1;
 static u_int memh = -1;
 
 void
-setup()
+OF_initialize(void)
 {
 	u_int chosen;
-	
-	if ((chosen = OF_finddevice("/chosen")) == -1)
-		_rtt();
-	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) != sizeof(stdin)
-	    || OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) != sizeof(stdout)
-	    || OF_getprop(chosen, "mmu", &mmuh, sizeof(mmuh)) != sizeof(mmuh)
+
+	if ( (chosen = OF_finddevice("/chosen")) == -1) {
+		OF_exit();
+	}
+	if (OF_getprop(chosen, "mmu", &mmuh, sizeof(mmuh)) != sizeof(mmuh)
 	    || OF_getprop(chosen, "memory", &memh, sizeof(memh)) != sizeof(memh))
-		_rtt();
+		OF_exit();
 }
 
 /*
@@ -814,28 +817,4 @@ OF_claim(virt, size, align)
 	}
 	return (void *)virt;
 #endif
-}
-
-
-void
-putchar(c)
-	int c;
-{
-	char ch = c;
-
-	if (c == '\n')
-		putchar('\r');
-	OF_write(stdout, &ch, 1);
-}
-
-int
-getchar()
-{
-	unsigned char ch = '\0';
-	int l;
-
-	while ((l = OF_read(stdin, &ch, 1)) != 1)
-		if (l != -2 && l != 0)
-			return -1;
-	return ch;
 }

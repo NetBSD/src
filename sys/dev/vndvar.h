@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.18 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.18.2.1 2006/02/01 14:51:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ struct ucred;
  * A vnode disk's state information.
  */
 struct vnd_softc {
-	int		 sc_unit;	/* logical unit number */
+	struct device    sc_dev;
 	int		 sc_flags;	/* flags */
 	size_t		 sc_size;	/* size of vnd */
 	struct vnode	*sc_vp;		/* vnode */
@@ -157,7 +157,6 @@ struct vnd_softc {
 	int		 sc_maxactive;	/* max # of active requests */
 	struct bufq_state *sc_tab;	/* transfer queue */
 	int		 sc_active;	/* number of active transfers */
-	char		 sc_xname[8];	/* XXX external name */
 	struct disk	 sc_dkdev;	/* generic disk device info */
 	struct vndgeom	 sc_geom;	/* virtual geometry */
 	struct pool	 sc_vxpool;	/* vndxfer pool */

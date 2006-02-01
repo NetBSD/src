@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.15 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.15.2.1 2006/02/01 14:51:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.15 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.15.2.1 2006/02/01 14:51:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -119,7 +119,7 @@ ofcattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ofcopen(dev_t dev, int flag, int mode, struct proc *p)
+ofcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ofcons_softc *sc;
 	int unit = minor(dev);
@@ -144,7 +144,7 @@ ofcopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ofcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag))
+	} else if ((tp->t_state&TS_XCLUDE) && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 	
@@ -152,7 +152,7 @@ ofcopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-ofcclose(dev_t dev, int flag, int mode, struct proc *p)
+ofcclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -181,24 +181,24 @@ ofcwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-ofcpoll(dev_t dev, int events, struct proc *p)
+ofcpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-ofcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ofcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	int error;
 	
-	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) != EPASSTHROUGH)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l)) != EPASSTHROUGH)
 		return error;
-	return ttioctl(tp, cmd, data, flag, p);
+	return ttioctl(tp, cmd, data, flag, l);
 }
 
 struct tty *

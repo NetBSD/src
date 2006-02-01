@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet6,v 1.3 2005/12/11 12:25:02 christos Exp $
+#	$NetBSD: files.netinet6,v 1.3.2.1 2006/02/01 14:52:41 yamt Exp $
 
 # NOTE: netinet/files.netinet must be included before this one!
 
@@ -22,6 +22,7 @@ file	netinet6/nd6_nbr.c		inet6
 file	netinet6/nd6_rtr.c		inet6
 file	netinet6/raw_ip6.c		inet6
 file	netinet6/route6.c		inet6
+file	netinet6/scope6.c		inet6
 
 file	netinet6/udp6_output.c		inet6
 file	netinet6/udp6_usrreq.c		inet6

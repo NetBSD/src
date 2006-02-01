@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.72 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.72.2.1 2006/02/01 14:52:42 yamt Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.72 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.72.2.1 2006/02/01 14:52:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.72 2005/12/11 12:25:02 christos Ex
 #endif
 
 /*
- * UDP protocol inplementation.
+ * UDP protocol implementation.
  * Per RFC 768, August, 1980.
  */
 

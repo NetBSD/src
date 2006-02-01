@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nswalk - Functions for walking the ACPI namespace
- *              xRevision: 39 $
+ *              xRevision: 1.40 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nswalk.c,v 1.12 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nswalk.c,v 1.12.2.1 2006/02/01 14:51:50 yamt Exp $");
 
 #define __NSWALK_C__
 

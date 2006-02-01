@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.61 2005/12/25 18:46:27 rpaulo Exp $	*/
+/*	$NetBSD: mem.c,v 1.61.2.1 2006/02/01 14:51:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.61 2005/12/25 18:46:27 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.61.2.1 2006/02/01 14:51:28 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -109,6 +109,7 @@ const struct cdevsw mem_cdevsw = {
 	nostop, notty, nopoll, mmmmap, nokqfilter,
 };
 
+static int check_pa_acc(paddr_t, vm_prot_t);
 
 /*ARGSUSED*/
 int
@@ -169,6 +170,10 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
+			error = check_pa_acc(uio->uio_offset, prot);
+			if (error) {
+				break;
+			}
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, PMAP_WIRED|prot);
 			pmap_update(pmap_kernel());
@@ -223,7 +228,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
-	struct proc *p = curproc;	/* XXX */
 
 	/*
 	 * /dev/mem is the only one that makes sense through this
@@ -234,9 +238,42 @@ mmmmap(dev_t dev, off_t off, int prot)
 	 * pager in mmap().
 	 */
 	if (minor(dev) != DEV_MEM)
-		return (-1);
+		return -1;
 
-	if ((u_int)off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
-		return (-1);
-	return (x86_btop((u_int)off));
+	if (check_pa_acc(off, prot) != 0) {
+		return -1;
+	}
+
+	return x86_btop(off);
+}
+
+/* ---------------------------------------- */
+
+#include <sys/kcore.h>
+
+/*
+ * check_pa_acc: check if given pa is accessible.
+ */
+
+static int
+check_pa_acc(paddr_t pa, vm_prot_t prot)
+{
+	extern phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
+	extern int mem_cluster_cnt;
+	int i;
+
+	if (securelevel <= 0) {
+		return 0;
+	}
+
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		const phys_ram_seg_t *seg = &mem_clusters[i];
+		paddr_t start = seg->start;
+
+		if (start <= pa && pa - start <= seg->size) {
+			return 0;
+		}
+	}
+
+	return EPERM;
 }

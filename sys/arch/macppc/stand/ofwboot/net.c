@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.6 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.6.2.1 2006/02/01 14:51:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -60,7 +60,9 @@
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/bootp.h>
 #include <lib/libsa/net.h>
+#include <lib/libsa/nfs.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -115,6 +117,7 @@ net_close(struct of_dev *op)
 			netif_of_close(netdev_sock);
 			netdev_sock = -1;
 		}
+	return 0;
 }
 
 static int

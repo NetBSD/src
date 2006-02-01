@@ -1,4 +1,4 @@
-/*	$NetBSD: devreg.h,v 1.4 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: devreg.h,v 1.4.2.1 2006/02/01 14:51:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,27 +42,27 @@
 /*
  * Access method
  */
-#define	_reg_read_1(a)		(*(volatile u_int8_t *)((vaddr_t)(a)))
-#define	_reg_read_2(a)		(*(volatile u_int16_t *)((vaddr_t)(a)))
-#define	_reg_read_4(a)		(*(volatile u_int32_t *)((vaddr_t)(a)))
+#define	_reg_read_1(a)		(*(volatile uint8_t *)((vaddr_t)(a)))
+#define	_reg_read_2(a)		(*(volatile uint16_t *)((vaddr_t)(a)))
+#define	_reg_read_4(a)		(*(volatile uint32_t *)((vaddr_t)(a)))
 #define	_reg_write_1(a, v)						\
-	(*(volatile u_int8_t *)(a)  = (u_int8_t)(v))
+	(*(volatile uint8_t *)(a)  = (uint8_t)(v))
 #define	_reg_write_2(a, v)						\
-	(*(volatile u_int16_t *)(a) = (u_int16_t)(v))
+	(*(volatile uint16_t *)(a) = (uint16_t)(v))
 #define	_reg_write_4(a, v)						\
-	(*(volatile u_int32_t *)(a) = (u_int32_t)(v))
+	(*(volatile uint32_t *)(a) = (uint32_t)(v))
 #define	_reg_bset_1(a, v)						\
-	(*(volatile u_int8_t *)(a)  |= (u_int8_t)(v))
+	(*(volatile uint8_t *)(a)  |= (uint8_t)(v))
 #define	_reg_bset_2(a, v)						\
-	(*(volatile u_int16_t *)(a) |= (u_int16_t)(v))
+	(*(volatile uint16_t *)(a) |= (uint16_t)(v))
 #define	_reg_bset_4(a, v)						\
-	(*(volatile u_int32_t *)(a) |= (u_int32_t)(v))
+	(*(volatile uint32_t *)(a) |= (uint32_t)(v))
 #define	_reg_bclr_1(a, v)						\
-	(*(volatile u_int8_t *)(a)  &= (u_int8_t)~(v))
+	(*(volatile uint8_t *)(a)  &= ~(uint8_t)(v))
 #define	_reg_bclr_2(a, v)						\
-	(*(volatile u_int16_t *)(a) &= (u_int16_t)~(v))
+	(*(volatile uint16_t *)(a) &= ~(uint16_t)(v))
 #define	_reg_bclr_4(a, v)						\
-	(*(volatile u_int32_t *)(a) &= (u_int32_t)~(v))
+	(*(volatile uint32_t *)(a) &= ~(uint32_t)(v))
 
 /*
  * Register address.

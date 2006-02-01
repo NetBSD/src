@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.16 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.16.2.1 2006/02/01 14:52:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -43,7 +43,11 @@
 #define __IPADDR(x)	htonl((u_int32_t)(x))
 #endif
 
-#include "iodesc.h"
+#ifdef _STANDALONE
+#include <lib/libsa/iodesc.h>
+#else
+#include <iodesc.h>
+#endif
 
 #define BA { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }
 
@@ -102,9 +106,8 @@ ssize_t	sendrecv __P((struct iodesc *,
 			void *, size_t));
 
 /* Utilities: */
-char	*ether_sprintf __P((u_char *));
-int	in_cksum __P((void *, int));
-int	in_cksum __P((void *, int));
+char	*ether_sprintf __P((const u_char *));
+int	ip_cksum __P((const void *, size_t));
 
 /* Machine-dependent functions: */
 time_t	getsecs __P((void));

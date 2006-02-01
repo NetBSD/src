@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.10 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.10.2.1 2006/02/01 14:51:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.10 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.10.2.1 2006/02/01 14:51:32 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -140,8 +140,8 @@ int want_resched;
 #define	SCHED_LOCK_IDLE()	sched_lock_idle()
 #define	SCHED_UNLOCK_IDLE()	sched_unlock_idle()
 #else
-#define	SCHED_LOCK_IDLE()	((void)0)
-#define	SCHED_UNLOCK_IDLE()	((void)0)
+#define	SCHED_LOCK_IDLE()	do {} while (/* CONSTCOND */ 0)
+#define	SCHED_UNLOCK_IDLE()	do {} while (/* CONSTCOND */ 0)
 #endif
 
 
@@ -218,6 +218,8 @@ idle()
 	splsched();
 }
 
+#ifndef P1_STACK
+#ifdef SH3
 /*
  * void sh3_switch_setup(struct lwp *l):
  *	prepare kernel stack PTE table. TLB miss handler check these.
@@ -240,7 +242,9 @@ sh3_switch_setup(struct lwp *l)
 		md_upte->data = (*pte & PG_HW_BITS) | PG_D | PG_V;
 	}
 }
+#endif /* SH3 */
 
+#ifdef SH4
 /*
  * void sh4_switch_setup(struct lwp *l):
  *	prepare kernel stack PTE table. sh4_switch_resume wired this PTE.
@@ -270,6 +274,8 @@ sh4_switch_setup(struct lwp *l)
 		md_upte++;
 	}
 }
+#endif /* SH4 */
+#endif /* !P1_STACK */
 
 /*
  * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);

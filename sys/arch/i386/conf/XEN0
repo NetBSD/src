@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.24.2.1 2006/01/15 10:02:38 yamt Exp $
+# $NetBSD: XEN0,v 1.24.2.2 2006/02/01 14:51:28 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -274,6 +274,7 @@ mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
@@ -520,8 +521,9 @@ kue*    at uhub? port ?         # Kawasaki LSI KL5KUSB101B based adapters
 udav*   at uhub? port ?         # Davicom DM9601 based adapters
 url*    at uhub? port ?         # Realtek RTL8150L based adapters
 
-# USB 802.11b adapters
+# USB 802.11 adapters
 atu*    at uhub? port ?         # Atmel AT76C50XX based adapters
+ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*    at uhub? port ?
@@ -653,7 +655,7 @@ pseudo-device	fss		4	# file system snapshot device
 # options 	VINUMDEBUG
 
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd		32	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter

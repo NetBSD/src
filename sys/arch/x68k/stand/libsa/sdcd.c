@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.5 2002/01/07 04:00:30 minoura Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.5.46.1 2006/02/01 14:51:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -266,7 +266,7 @@ sdopen (struct open_file *f, int id, int part)
 int
 sdclose (struct open_file *f)
 {
-	free (f->f_devdata, sizeof (struct sdcd_softc));
+	dealloc (f->f_devdata, sizeof (struct sdcd_softc));
 	return 0;
 }
 
@@ -337,7 +337,7 @@ cdopen (struct open_file *f, int id, int part)
 int
 cdclose (struct open_file *f)
 {
-	free (f->f_devdata, sizeof (struct sdcd_softc));
+	dealloc (f->f_devdata, sizeof (struct sdcd_softc));
 	return 0;
 }
 

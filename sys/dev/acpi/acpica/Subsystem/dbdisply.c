@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbdisply - debug display commands
- *              xRevision: 111 $
+ *              xRevision: 1.114 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbdisply.c,v 1.14 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbdisply.c,v 1.14.2.1 2006/02/01 14:51:49 yamt Exp $");
 
 #include "acpi.h"
 #include "amlcode.h"
@@ -390,7 +390,7 @@ DumpNode:
 
     AcpiUtDumpBuffer ((void *) Node, sizeof (ACPI_NAMESPACE_NODE),
         Display, ACPI_UINT32_MAX);
-    AcpiExDumpNode (Node, 1);
+    AcpiExDumpNamespaceNode (Node, 1);
 
     ObjDesc = AcpiNsGetAttachedObject (Node);
     if (ObjDesc)
@@ -848,7 +848,7 @@ AcpiDbDisplayGpes (
             AcpiOsPrintf ("\nBlock %d - Info %p  DeviceNode %p [%s]\n",
                 Block, GpeBlock, GpeBlock->Node, Buffer);
 
-            AcpiOsPrintf ("    Registers:    %u (%u GPEs) \n",
+            AcpiOsPrintf ("    Registers:    %u (%u GPEs)\n",
                 GpeBlock->RegisterCount,
                 ACPI_MUL_8 (GpeBlock->RegisterCount));
 

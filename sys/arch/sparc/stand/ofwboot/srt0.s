@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.2 2002/10/30 01:46:09 petrov Exp $	*/
+/*	$NetBSD: srt0.s,v 1.2.34.1 2006/02/01 14:51:37 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,15 @@
 #include <machine/param.h>
 #include <machine/frame.h>
 #include <machine/asm.h>
+#include <machine/ctlreg.h>
+
+
+#ifdef _LP64
+#define	LDPTR		ldx
+#else
+#define	LDPTR		lduw
+#endif
+
 
 	.register %g2,#ignore
 	.register %g3,#ignore
@@ -45,9 +54,6 @@
 	.globl	_esym
 	.data
 _esym:	.word	0			/* end of symbol table */
-	.globl	_C_LABEL(romp)
-	.align	8
-_C_LABEL(romp):	.xword	0		/* openfirmware entry point */
 
 /*
  * Startup entry
@@ -57,14 +63,6 @@ _C_LABEL(romp):	.xword	0		/* openfirmware entry point */
 	_C_LABEL(kernel_text) = _start
 _start:
 	nop			! For some reason this is needed to fixup the text section
-	
-	/*
-	 * Step 1: Save rom entry pointer  -- NOTE this probably needs to change
-	 */
-	
-	mov	%o4, %g7	! save prom vector pointer
-	set	_C_LABEL(romp), %g1
-	stx	%o4, [%g1]	! It's initialized data, I hope
 
 	/*
 	 * Start by creating a stack for ourselves.
@@ -92,9 +90,7 @@ _start:
 	andn	%g1, 0x7, %g1
 	save	%g1, %g0, %sp
 #endif
-	
-!	mov	%i0, %i4		! Apparenty we get our CIF in i0
-	
+
 	/*
 	 * Set the psr into a known state:
 	 * Set supervisor mode, interrupt level >= 13, traps enabled
@@ -105,18 +101,14 @@ _start:
 	clr	%g4		! Point %g4 to start of data segment
 				! only problem is that apparently the
 				! start of the data segment is 0
-	
+
 	/*
-	 * XXXXXXXX Need to determine what params are passed
+	 * void
+	 * main(void *openfirmware)
 	 */
-	call	_C_LABEL(setup)
-	 nop
-	mov	%i1, %o1		
 	call	_C_LABEL(main)
-	 mov	%i2, %o0
-	call	_C_LABEL(exit)
-	 nop
-	call	_C_LABEL(_rtt)
+	 mov	%i4, %o0
+	call	_C_LABEL(OF_exit)
 	 nop
 
 /*
@@ -151,7 +143,7 @@ _C_LABEL(openfirmware):
 	bz,pt	%icc, 1f
 	 sethi	%hi(_C_LABEL(romp)), %o1
 	
-	ldx	[%o1+%lo(_C_LABEL(romp))], %o4		! v9 stack, just load the addr and callit
+	LDPTR	[%o1+%lo(_C_LABEL(romp))], %o4		! v9 stack, just load the addr and callit
 	save	%sp, -CC64FSZ, %sp
 	mov	%i0, %o0				! Copy over our parameter
 	mov	%g1, %l1
@@ -180,7 +172,7 @@ _C_LABEL(openfirmware):
 	add	%sp, -BIAS, %sp
 	sethi	%hi(_C_LABEL(romp)), %o1
 	rdpr	%pstate, %l0
-	ldx	[%o1+%lo(_C_LABEL(romp))], %o1		! Do the actual call
+	LDPTR	[%o1+%lo(_C_LABEL(romp))], %o1		! Do the actual call
 	srl	%sp, 0, %sp
 	mov	%i0, %o0
 	mov	%g1, %l1
@@ -202,6 +194,119 @@ _C_LABEL(openfirmware):
 	mov	%l7, %g7
 	ret
 	 restore	%o0, %g0, %o0
+
+/*
+ * vaddr_t
+ * itlb_va_to_pa(vaddr_t)
+ *
+ * Find out if there is a mapping in iTLB for a given virtual address,
+ * return -1 if there is none.
+ */
+	.align	8
+	.globl	_C_LABEL(itlb_va_to_pa)
+_C_LABEL(itlb_va_to_pa):
+	clr	%o1
+0:	ldxa	[%o1] ASI_IMMU_TLB_TAG, %o2
+	cmp	%o2, %o0
+	bne,a	%xcc, 1f
+	 nop
+	/* return PA of matching entry */
+	ldxa	[%o1] ASI_IMMU_TLB_DATA, %o0
+	sllx	%o0, 23, %o0
+	srlx	%o0, PGSHIFT+23, %o0
+	sllx	%o0, PGSHIFT, %o0
+	retl
+	 mov	%o0, %o1
+1:	cmp	%o1, 63<<3
+	blu	%xcc, 0b
+	 add	%o1, 8, %o1
+	clr	%o0
+	retl
+	 not	%o0
+
+/*
+ * vaddr_t
+ * dtlb_va_to_pa(vaddr_t)
+ *
+ * Find out if there is a mapping in dTLB for a given virtual address,
+ * return -1 if there is none.
+ */
+	.align	8
+	.globl	_C_LABEL(dtlb_va_to_pa)
+_C_LABEL(dtlb_va_to_pa):
+	clr	%o1
+0:	ldxa	[%o1] ASI_DMMU_TLB_TAG, %o2
+	cmp	%o2, %o0
+	bne,a	%xcc, 1f
+	 nop
+	/* return PA of matching entry */
+	ldxa	[%o1] ASI_DMMU_TLB_DATA, %o0
+	sllx	%o0, 23, %o0
+	srlx	%o0, PGSHIFT+23, %o0
+	sllx	%o0, PGSHIFT, %o0
+	retl
+	 mov	%o0, %o1
+1:	cmp	%o1, 63<<3
+	blu	%xcc, 0b
+	 add	%o1, 8, %o1
+	clr	%o0
+	retl
+	 not	%o0
+
+/*
+ * void
+ * itlb_enter(vaddr_t vpn, u_int32_t data_hi, u_int32_t data_lo)
+ *
+ * Insert new mapping into iTLB. Data tag is passed in two different
+ * registers so that it works even with 32-bit compilers.
+ */
+	.align	8
+	.globl	_C_LABEL(itlb_enter)
+_C_LABEL(itlb_enter):
+	sllx	%o1, 32, %o1
+	or	%o1, %o2, %o1
+	rdpr	%pstate, %o4
+	wrpr	%o4, PSTATE_IE, %pstate
+	mov	TLB_TAG_ACCESS, %o3
+	stxa	%o0, [%o3] ASI_IMMU
+	stxa	%o1, [%g0] ASI_IMMU_DATA_IN
+	membar	#Sync
+	retl
+	 wrpr	%o4, 0, %pstate
+
+/*
+ * void
+ * dtlb_enter(vaddr_t vpn, u_int32_t data_hi, u_int32_t data_lo)
+ *
+ * Insert new mapping into dTLB. Data tag is passed in two different
+ * registers so that it works even with 32-bit compilers.
+ */
+	.align	8
+	.globl	_C_LABEL(dtlb_enter)
+_C_LABEL(dtlb_enter):
+	sllx	%o1, 32, %o1
+	or	%o1, %o2, %o1
+	rdpr	%pstate, %o4
+	wrpr	%o4, PSTATE_IE, %pstate
+	mov	TLB_TAG_ACCESS, %o3
+	stxa	%o0, [%o3] ASI_DMMU
+	stxa	%o1, [%g0] ASI_DMMU_DATA_IN
+	membar	#Sync
+	retl
+	 wrpr	%o4, 0, %pstate
+
+/*
+ * u_int
+ * get_cpuid(void);
+ *
+ * Return UPA identifier for the CPU we're running on.
+ */
+	.align	8
+	.globl	_C_LABEL(get_cpuid)
+_C_LABEL(get_cpuid):
+	UPA_GET_MID(%o0)
+	retl
+	 nop
 
 #if 0
 	.data

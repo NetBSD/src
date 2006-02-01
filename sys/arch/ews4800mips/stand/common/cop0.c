@@ -1,4 +1,4 @@
-/*	$NetBSD: cop0.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: cop0.c,v 1.1.2.1 2006/02/01 14:51:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -110,8 +110,8 @@ cmd_tlb(int argc, char *argp[], int interactive)
 		if (i < 0 || i >= NTLB)
 			return 1;
 		e = &entry[i];
-		printf("[%d] size:%s vaddr:%p paddr:%p+%p mask:%p\n",
-		    i, e->page_size, e->vpn << 12,
+		printf("[%d] size:%s vaddr:0x%08x paddr:0x%08x+0x%08x "
+		    "mask:0x%08x\n", i, e->page_size, e->vpn << 12,
 		    e->pfn0 << 12, e->pfn1 << 12, e->page_mask);
 		printf("[%x, %x, %x, %x]\n",
 		    e->PageMask, e->EntryHi, e->EntryLo0, e->EntryLo1);

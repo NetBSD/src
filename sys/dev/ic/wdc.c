@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.231 2005/11/16 23:39:08 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.231.2.1 2006/02/01 14:52:08 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.231 2005/11/16 23:39:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.231.2.1 2006/02/01 14:52:08 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -223,7 +223,7 @@ wdc_drvprobe(struct ata_channel *chp)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	u_int8_t st0 = 0, st1 = 0;
-	int i, error, s;
+	int i, j, error, s;
 
 	if (wdcprobe1(chp, 0) == 0) {
 		/* No drives, abort the attach here. */
@@ -275,7 +275,7 @@ wdc_drvprobe(struct ata_channel *chp)
 	/* Wait a bit, some devices are weird just after a reset. */
 	delay(5000);
 
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < chp->ch_ndrive; i++) {
 		/* XXX This should be done by other code. */
 		chp->ch_drive[i].chnl_softc = chp;
 		chp->ch_drive[i].drive = i;
@@ -321,9 +321,8 @@ wdc_drvprobe(struct ata_channel *chp)
 		if (error == CMD_OK) {
 			/* If IDENTIFY succeeded, this is not an OLD ctrl */
 			s = splbio();
-			/* XXXJRT ch_ndrive */
-			chp->ch_drive[0].drive_flags &= ~DRIVE_OLD;
-			chp->ch_drive[1].drive_flags &= ~DRIVE_OLD;
+			for (j = 0; j < chp->ch_ndrive; j++)
+				chp->ch_drive[j].drive_flags &= ~DRIVE_OLD;
 			splx(s);
 		} else {
 			s = splbio();
@@ -383,11 +382,9 @@ wdc_drvprobe(struct ata_channel *chp)
 				splx(s);
 			} else {
 				s = splbio();
-				/* XXXJRT ch_ndrive */
-				chp->ch_drive[0].drive_flags &=
-				    ~(DRIVE_ATA | DRIVE_ATAPI);
-				chp->ch_drive[1].drive_flags &=
-				    ~(DRIVE_ATA | DRIVE_ATAPI);
+				for (j = 0; j < chp->ch_ndrive; j++)
+					chp->ch_drive[j].drive_flags &=
+					    ~(DRIVE_ATA | DRIVE_ATAPI);
 				splx(s);
 			}
 		}
@@ -638,7 +635,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 	 * be something here assume it's ATA or OLD.  Ghost will be killed
 	 * later in attach routine.
 	 */
-	for (drive = 0; drive < 2; drive++) {
+	for (drive = 0; drive < chp->ch_ndrive; drive++) {
 		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
 		if (wdc->select)
@@ -683,11 +680,7 @@ wdcattach(struct ata_channel *chp)
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 
-	/*
-	 * Start out assuming 2 drives.  This may change as we probe
-	 * drives.
-	 */
-	chp->ch_ndrive = 2;
+	KASSERT(chp->ch_ndrive > 0 && chp->ch_ndrive < 3);
 
 	/* default data transfer methods */
 	if (wdc->datain_pio == NULL)
@@ -809,6 +802,11 @@ wdcintr(void *arg)
 #ifdef DIAGNOSTIC
 	if (xfer == NULL)
 		panic("wdcintr: no xfer");
+	if (xfer->c_chp != chp) {
+		printf("channel %d expected %d\n", xfer->c_chp->ch_channel,
+		    chp->ch_channel);
+		panic("wdcintr: wrong channel");
+	}
 #endif
 	if (chp->ch_flags & ATACH_DMA_WAIT) {
 		wdc->dma_status =
@@ -985,6 +983,7 @@ wdc_do_reset(struct ata_channel *chp, int poll)
 	    WDCTL_4BIT | WDCTL_IDS);
 	delay(10);	/* 400ns delay */
 	if (poll != RESET_SLEEP) {
+		/* ACK interrupt in case there is one pending left */
 		if (wdc->irqack)
 			wdc->irqack(chp);
 		splx(s);
@@ -1458,7 +1457,10 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		wdc->datain_pio(chp, drive_flags, data, bcount);
 		/* at this point the drive should be in its initial state */
 		ata_c->flags |= AT_XFDONE;
-		/* XXX should read status register here ? */
+		/*
+		 * XXX checking the status register again here cause some
+		 * hardware to timeout.
+		 */
 	} else if (ata_c->flags & AT_WRITE) {
 		if ((chp->ch_status & WDCS_DRQ) == 0) {
 			ata_c->flags |= AT_TIMEOU;
@@ -1488,9 +1490,9 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	struct ata_command *ata_c = xfer->c_cmd;
 
-	ATADEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
-	    atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive),
-	    DEBUG_FUNCS);
+	ATADEBUG_PRINT(("__wdccommand_done %s:%d:%d flags 0x%x\n",
+	    atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive,
+	    ata_c->flags), DEBUG_FUNCS);
 
 
 	if (chp->ch_status & WDCS_DWF)

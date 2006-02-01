@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exmutex - ASL Mutex Acquire/Release functions
- *              xRevision: 28 $
+ *              xRevision: 1.30 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.15 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.15.2.1 2006/02/01 14:51:50 yamt Exp $");
 
 #define __EXMUTEX_C__
 
@@ -349,7 +349,7 @@ AcpiExReleaseMutex (
     if (!ObjDesc->Mutex.OwnerThread)
     {
         ACPI_REPORT_ERROR (("Cannot release Mutex [%4.4s], not acquired\n",
-                AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
+            AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_MUTEX_NOT_ACQUIRED);
     }
 
@@ -358,7 +358,7 @@ AcpiExReleaseMutex (
     if (!WalkState->Thread)
     {
         ACPI_REPORT_ERROR (("Cannot release Mutex [%4.4s], null thread info\n",
-                AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
+            AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_INTERNAL);
     }
 

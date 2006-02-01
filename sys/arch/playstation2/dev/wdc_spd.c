@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.21 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.21.2.1 2006/02/01 14:51:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.21 2005/12/24 23:24:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.21.2.1 2006/02/01 14:51:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,6 +218,7 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 	ch->ch_channel = 0;
 	ch->ch_atac = &sc->sc_wdcdev.sc_atac;
 	ch->ch_queue = &sc->sc_chqueue;
+	ch->ch_ndrive = 2;
 
 	__wdc_spd_bus_space(ch);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.11 2005/12/11 12:17:49 christos Exp $	*/
+/*	$NetBSD: nfs.c,v 1.11.2.1 2006/02/01 14:51:28 yamt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -468,18 +468,18 @@ nfs_open(path, f)
 			cp = namebuf;
 			if (*cp == '/') {
 				if (currfd != &nfs_root_node)
-					free(currfd, sizeof(*currfd));
+					dealloc(currfd, sizeof(*currfd));
 				currfd = &nfs_root_node;
 			}
 
-			free(newfd, sizeof(*newfd));
+			dealloc(newfd, sizeof(*newfd));
 			newfd = 0;
 
 			continue;
 		}
 
 		if (currfd != &nfs_root_node)
-			free(currfd, sizeof(*currfd));
+			dealloc(currfd, sizeof(*currfd));
 		currfd = newfd;
 		newfd = 0;
 	}
@@ -488,7 +488,7 @@ nfs_open(path, f)
 
 out:
 	if (newfd)
-		free(newfd, sizeof(*newfd));
+		dealloc(newfd, sizeof(*newfd));
 #else
         /* allocate file system specific data structure */
         currfd = alloc(sizeof(*currfd));
@@ -519,7 +519,7 @@ out:
 #ifndef NFS_NOSYMLINK
 	if (currfd != &nfs_root_node)
 #endif
-		free(currfd, sizeof(*currfd));
+		dealloc(currfd, sizeof(*currfd));
 
 	return (error);
 }
@@ -536,7 +536,7 @@ nfs_close(f)
 #endif
 
 	if (fp)
-		free(fp, sizeof(struct nfs_iodesc));
+		dealloc(fp, sizeof(struct nfs_iodesc));
 	f->f_fsdata = (void *)0;
 
 	return (0);

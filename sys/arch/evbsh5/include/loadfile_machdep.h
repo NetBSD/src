@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1 2003/03/13 13:44:21 scw Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.1.30.1 2006/02/01 14:51:26 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -55,12 +55,12 @@
 				    strerror(errno)))
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
-#define FREE(a, b)		free(a, b)
+#define DEALLOC(a, b)		dealloc(a, b)
 #else
 #define WARN(a)			warn a
 #define PROGRESS(a)		/* nothing */
 #define ALLOC(a)		malloc(a)
-#define FREE(a, b)		free(a)
+#define DEALLOC(a, b)		free(a)
 #endif
 
 #endif /* __EVBSH5_LOADFILE_MACHDEP_H */

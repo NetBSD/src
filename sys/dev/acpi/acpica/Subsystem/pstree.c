@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: pstree - Parser op tree manipulation/traversal/search
- *              xRevision: 46 $
+ *              xRevision: 1.48 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pstree.c,v 1.12 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pstree.c,v 1.12.2.1 2006/02/01 14:51:50 yamt Exp $");
 
 #define __PSTREE_C__
 
@@ -230,7 +230,7 @@ AcpiPsAppendArg (
     {
         /* Invalid opcode */
 
-        ACPI_REPORT_ERROR (("PsAppendArg: Invalid AML Opcode: 0x%2.2X\n",
+        ACPI_REPORT_ERROR (("Invalid AML Opcode: 0x%2.2X\n",
             Op->Common.AmlOpcode));
         return;
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: once.h,v 1.2 2005/12/03 17:10:46 christos Exp $	*/
+/*	$NetBSD: once.h,v 1.2.2.1 2006/02/01 14:52:48 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@ typedef struct {
 #define	ONCE_DONE	2
 } once_t;
 
-void _run_once(once_t *, void (*)(void));
+int _run_once(once_t *, int (*)(void));
 
 #define	ONCE_DECL(o) \
 	once_t (o) = { \
@@ -47,10 +47,6 @@ void _run_once(once_t *, void (*)(void));
 	};
 
 #define	RUN_ONCE(o, fn) \
-	do { \
-		if (__predict_false(((o)->o_flags & ONCE_DONE) == 0)) { \
-			_run_once((o), (fn)); \
-		} \
-	} while (0 /* CONSTCOND */)
+    (__predict_true(((o)->o_flags & ONCE_DONE) != 0) ? 0 : _run_once((o), (fn)))
 
 #endif /* _SYS_ONCE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.15.2.1 2006/02/01 14:51:48 yamt Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15.2.1 2006/02/01 14:51:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,9 @@ static int xen_timer_handler(void *, struct intrframe *);
 /* These are peridically updated in shared_info, and then copied here. */
 volatile static uint64_t shadow_tsc_stamp;
 volatile static uint64_t shadow_system_time;
+#ifndef XEN3
 volatile static unsigned long shadow_time_version;
+#endif
 volatile static struct timeval shadow_tv;
 
 static int timeset;
@@ -72,6 +74,27 @@ static uint64_t processed_system_time;
 static void
 get_time_values_from_xen(void)
 {
+#ifdef XEN3
+	volatile struct vcpu_time_info *t =
+	    &HYPERVISOR_shared_info->vcpu_info[0].time;
+	uint32_t tversion;
+	do {
+		tversion = t->version;
+		__insn_barrier();
+		shadow_tsc_stamp = t->tsc_timestamp;
+		shadow_system_time = t->system_time;
+		__insn_barrier();
+	} while ((t->version & 1) || (tversion != t->version));
+	do {
+		tversion = HYPERVISOR_shared_info->wc_version;
+		__insn_barrier();
+		shadow_tv.tv_sec = HYPERVISOR_shared_info->wc_sec;
+		shadow_tv.tv_usec = HYPERVISOR_shared_info->wc_nsec;
+		__insn_barrier();
+	} while ((HYPERVISOR_shared_info->wc_version & 1) ||
+	    (tversion != HYPERVISOR_shared_info->wc_version));
+	shadow_tv.tv_usec = shadow_tv.tv_usec / 1000;
+#else /* XEN3 */
 	do {
 		shadow_time_version = HYPERVISOR_shared_info->time_version2;
 		__insn_barrier();
@@ -81,6 +104,7 @@ get_time_values_from_xen(void)
 		shadow_system_time = HYPERVISOR_shared_info->system_time;
 		__insn_barrier();
 	} while (shadow_time_version != HYPERVISOR_shared_info->time_version1);
+#endif
 }
 
 static uint64_t
@@ -167,7 +191,11 @@ resettodr()
 
 		op.cmd = DOM0_SETTIME;
 		op.u.settime.secs	 = time.tv_sec - rtc_offset * 60;
+#ifdef XEN3
+		op.u.settime.nsecs	 = time.tv_usec * 1000;
+#else
 		op.u.settime.usecs	 = time.tv_usec;
+#endif
 		op.u.settime.system_time = shadow_system_time;
 		HYPERVISOR_dom0_op(&op);
 

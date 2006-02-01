@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.4 2005/12/04 17:39:03 christos Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.4.2.1 2006/02/01 14:52:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -44,6 +44,7 @@
 
 #define PDC203xx_NCHANNELS 4
 #define PDC40718_NCHANNELS 4
+#define PDC20575_NCHANNELS 3
 
 #define PDC203xx_BAR_IDEREGS 0x1c /* BAR where the IDE registers are mapped */
 
@@ -117,6 +118,21 @@ static const struct pciide_product_desc pciide_pdcsata_products[] =  {
 	  "Promise PDC40719 SATA300 controller",
 	  pdcsata_chip_map,
 	},
+	{ PCI_PRODUCT_PROMISE_PDC20571,
+	  0,
+	  "Promise PDC20571 SATA150 controller",
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20575,
+	  0,
+	  "Promise PDC20575 SATA150 controller",
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20579,
+	  0,
+	  "Promise PDC20579 SATA150 controller",
+	  pdcsata_chip_map,
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -184,6 +200,9 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	case PCI_PRODUCT_PROMISE_PDC40718:
 	case PCI_PRODUCT_PROMISE_PDC40719:
+	case PCI_PRODUCT_PROMISE_PDC20571:
+	case PCI_PRODUCT_PROMISE_PDC20575:
+	case PCI_PRODUCT_PROMISE_PDC20579:
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 		    intrhandle, IPL_BIO, pdc205xx_pci_intr, sc);
 		break;
@@ -258,8 +277,18 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	case PCI_PRODUCT_PROMISE_PDC40718:
 	case PCI_PRODUCT_PROMISE_PDC40719:
+	case PCI_PRODUCT_PROMISE_PDC20571:
 		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60, 0x00ff00ff);
 		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC40718_NCHANNELS;
+
+		sc->sc_wdcdev.reset = pdc205xx_do_reset;
+		sc->sc_wdcdev.sc_atac.atac_probe = pdc205xx_drv_probe;
+
+		break;
+	case PCI_PRODUCT_PROMISE_PDC20575:
+	case PCI_PRODUCT_PROMISE_PDC20579:
+		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60, 0x00ff00ff);
+		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC20575_NCHANNELS;
 
 		sc->sc_wdcdev.reset = pdc205xx_do_reset;
 		sc->sc_wdcdev.sc_atac.atac_probe = pdc205xx_drv_probe;
@@ -285,6 +314,7 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ata_channel.ch_queue =
 		    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+		cp->ata_channel.ch_ndrive = 2;
 		if (cp->ata_channel.ch_queue == NULL) {
 			aprint_error("%s channel %d: "
 			    "can't allocate memory for command queue\n",

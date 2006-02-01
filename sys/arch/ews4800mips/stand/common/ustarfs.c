@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.1.2.1 2006/02/01 14:51:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ ustarfs_load(const char *file, void **addrp, size_t *sizep)
 
 	if (!__block_read_n(*addrp, block, sz >> DEV_BSHIFT)) {
 		printf("%s: can't load file.\n", __FUNCTION__);
-		free(*addrp, sz);
+		dealloc(*addrp, sz);
 		return FALSE;
 	}
 
