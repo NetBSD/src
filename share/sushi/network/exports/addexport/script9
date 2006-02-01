@@ -1,9 +1,0 @@
-#!/bin/sh
-# $NetBSD: script9,v 1.1 2001/04/25 03:43:28 garbled Exp $
-
-NETWORK=`grep "^$1 " /etc/exports | grep -- '-mask' | sed -e 's/.*-mask \([a-zA-Z0-9.:%/]*\) *.*/\1/'`
-if [ -z "$NETWORK" ]; then
-	echo " "
-else
-	echo $NETWORK
-fi
