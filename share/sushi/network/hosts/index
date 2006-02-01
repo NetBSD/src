@@ -1,7 +1,0 @@
-# $NetBSD: index,v 1.2 2005/02/22 16:53:11 peter Exp $
-addhost		addhost		Add an IPv4 host entry
-addv6host	addv6host	Add an IPv6 host entry
-modhost		modhost		Modify an IPv4 host entry
-modv6host	modv6host	Modify an IPv6 host entry
-delhost		delhost		Delete host entries
-
