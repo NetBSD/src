@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.11 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.12 2006/02/01 05:51:58 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.11 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.12 2006/02/01 05:51:58 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -222,7 +222,7 @@ struct if_clone tap_cloners = IF_CLONE_INITIALIZER("tap",
 
 /* Helper functionis shared by the two cloning code paths */
 static struct tap_softc *	tap_clone_creator(int);
-static int	tap_clone_destroyer(struct device *);
+int	tap_clone_destroyer(struct device *);
 
 void
 tapattach(int n)
@@ -614,7 +614,7 @@ tap_clone_destroy(struct ifnet *ifp)
 	return tap_clone_destroyer((struct device *)ifp->if_softc);
 }
 
-static int
+int
 tap_clone_destroyer(struct device *dev)
 {
 	struct cfdata *cf = dev->dv_cfdata;
