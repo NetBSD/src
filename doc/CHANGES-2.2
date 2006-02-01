@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.38 2006/01/30 14:49:44 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.39 2006/02/01 20:51:47 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -504,4 +504,10 @@ sys/sys/socket.h				1.78
 	Since NULL isn't necessarily available, change CMSG_*() to use the
 	integer constant expression directly instead.
 	[kleink, ticket #10233]
+
+sys/net/if_pppoe.c				1.64
+
+	Make sure error messages (received from the access concentrator) are
+	zero terminated.
+	[martin, ticket #10239]
 
