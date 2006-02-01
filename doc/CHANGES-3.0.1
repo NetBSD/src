@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.13 2006/01/30 13:24:35 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.14 2006/02/01 20:50:12 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -146,4 +146,9 @@ sys/arch/hp300/stand/common/ite_tc.c		1.6
 
 	Fix bootloader so it doesn't print garbage to the bitmap console.
 	[tsutsui, ticket #1145]
+
+sys/arch/xen/xen/if_xennet.c			1.41 via patch
+
+	Fix off-by-one error.
+	[bouyer, ticket #1154]
 
