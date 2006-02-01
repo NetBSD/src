@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.24.2.1 2006/01/05 22:17:39 riz Exp $	*/
+/*	$NetBSD: viaide.c,v 1.24.2.2 2006/02/01 20:33:00 tron Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -340,6 +340,7 @@ unknown:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_ATA133:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_250_ATA133:
 		case PCI_PRODUCT_NVIDIA_NFORCE4_ATA133:
+		case PCI_PRODUCT_NVIDIA_NFORCE430_ATA133:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		}
