@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.61 2006/01/15 10:13:20 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.62 2006/02/01 00:55:11 rpaulo Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -857,6 +857,16 @@ Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys
 Notes:		
 
+
+Branch:		rpaulo-netinet-merge-pcb
+Description:	merge in6pcb with inpcb
+Status:		Active
+Start Date:	Wed Feb 01 2006
+End Date:	
+Base Tag:	rpaulo-netinet-merge-pcb-base
+Maintainer:	Rui Paulo <rpaulo@NetBSD.org>
+Scope:		src/sys
+Notes:
 
 # Other:
 
