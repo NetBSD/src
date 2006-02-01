@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.75 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: psycho.c,v 1.76 2006/02/01 20:21:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.75 2005/12/11 12:19:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.76 2006/02/01 20:21:38 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -675,7 +675,7 @@ psycho_set_intr(sc, ipl, handler, mapper, clearer)
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
 	intr_establish(ipl, ih);
-	*(ih->ih_map) |= INTMAP_V;
+	*(ih->ih_map) |= INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT);
 }
 
 /*
@@ -1355,7 +1355,7 @@ found:
 			(unsigned long long)imap));
 
 		/* Enable the interrupt */
-		imap |= INTMAP_V;
+		imap |= INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT);
 		DPRINTF(PDB_INTR, ("; addr of intrmapptr = %p", intrmapptr));
 		DPRINTF(PDB_INTR, ("; writing intrmap = %016qx\n",
 			(unsigned long long)imap));
