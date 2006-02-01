@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.565 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.566 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -171,3 +171,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	evbmips: Add support for Alchemy Au1550 processors and DBAu1550 board.
 		[gdamore 20060127]
 	acpi(4): Import ACPI-CA 20060113 [kochi 20060129]
+	vnd(4):	Remove compile-time limit on the number of vnd(4) devices.  Now
+		devices are automatically created when they are configured.
+		[cube 20060201]
