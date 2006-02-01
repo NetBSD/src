@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.83 2005/03/03 22:19:47 ginsbach Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.84 2006/02/01 14:20:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.83 2005/03/03 22:19:47 ginsbach Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.84 2006/02/01 14:20:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1376,7 +1376,7 @@ getline(char *s, int n, FILE *iop)
 		*cs++ = tmpline[c];
 		if (tmpline[c] == '\n') {
 			*cs++ = '\0';
-			if (debug)
+			if (ftpd_debug)
 				syslog(LOG_DEBUG, "command: %s", s);
 			tmpline[0] = '\0';
 			return(s);
@@ -1424,7 +1424,7 @@ getline(char *s, int n, FILE *iop)
 	if (c == EOF && cs == s)
 		return (NULL);
 	*cs++ = '\0';
-	if (debug) {
+	if (ftpd_debug) {
 		if ((curclass.type != CLASS_GUEST &&
 		    strncasecmp(s, "PASS ", 5) == 0) ||
 		    strncasecmp(s, "ACCT ", 5) == 0) {
@@ -1576,7 +1576,7 @@ yylex(void)
 		 */
 		if (n > 1 && cmdp[cpos] == '\n') {
 			cmdp[cpos] = '\0';
-			yylval.s = xstrdup(cp);
+			yylval.s = ftpd_strdup(cp);
 			cmdp[cpos] = '\n';
 			state = ARGS;
 			return (STRING);

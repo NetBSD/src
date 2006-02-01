@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.170 2005/11/24 23:47:23 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.171 2006/02/01 14:20:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.170 2005/11/24 23:47:23 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.171 2006/02/01 14:20:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -297,7 +297,7 @@ main(int argc, char *argv[])
 	sa_family_t	af = AF_UNSPEC;
 
 	connections = 1;
-	debug = 0;
+	ftpd_debug = 0;
 	logging = 0;
 	pdata = -1;
 	Dflag = 0;
@@ -354,7 +354,7 @@ main(int argc, char *argv[])
 
 		case 'd':
 		case 'v':		/* deprecated */
-			debug = 1;
+			ftpd_debug = 1;
 			break;
 
 		case 'e':
@@ -428,7 +428,7 @@ main(int argc, char *argv[])
 			if (EMPTYSTR(optarg) || strcmp(optarg, "-") == 0)
 				version = NULL;
 			else
-				version = xstrdup(optarg);
+				version = ftpd_strdup(optarg);
 			break;
 
 		case 'w':
@@ -753,7 +753,7 @@ static void
 lostconn(int signo)
 {
 
-	if (debug)
+	if (ftpd_debug)
 		syslog(LOG_DEBUG, "lost connection");
 	dologout(1);
 }
@@ -776,7 +776,7 @@ static void
 sigquit(int signo)
 {
 
-	if (debug)
+	if (ftpd_debug)
 		syslog(LOG_DEBUG, "got signal %d", signo);
 	dologout(1);
 }
@@ -811,11 +811,11 @@ sgetpwnam(const char *name)
 		free((char *)save.pw_shell);
 	}
 	save = *p;
-	save.pw_name = xstrdup(p->pw_name);
-	save.pw_passwd = xstrdup(p->pw_passwd);
-	save.pw_gecos = xstrdup(p->pw_gecos);
-	save.pw_dir = xstrdup(p->pw_dir);
-	save.pw_shell = xstrdup(p->pw_shell);
+	save.pw_name = ftpd_strdup(p->pw_name);
+	save.pw_passwd = ftpd_strdup(p->pw_passwd);
+	save.pw_gecos = ftpd_strdup(p->pw_gecos);
+	save.pw_dir = ftpd_strdup(p->pw_dir);
+	save.pw_shell = ftpd_strdup(p->pw_shell);
 	return (&save);
 }
 
@@ -922,13 +922,13 @@ user(const char *name)
 	if (class == NULL) {
 		switch (curclass.type) {
 		case CLASS_GUEST:
-			class = xstrdup("guest");
+			class = ftpd_strdup("guest");
 			break;
 		case CLASS_CHROOT:
-			class = xstrdup("chroot");
+			class = ftpd_strdup("chroot");
 			break;
 		case CLASS_REAL:
-			class = xstrdup("real");
+			class = ftpd_strdup("real");
 			break;
 		default:
 			syslog(LOG_ERR, "unknown curclass.type %d; aborting",
@@ -1131,7 +1131,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 		else
 			retval = !def;
 		if (!EMPTYSTR(class) && retclass != NULL)
-			*retclass = xstrdup(class);
+			*retclass = ftpd_strdup(class);
 		free(buf);
 		break;
 	}
@@ -1310,7 +1310,7 @@ pass(const char *passwd)
 			char *p;
 			int r;
 
-			p = xstrdup(passwd);
+			p = ftpd_strdup(passwd);
 			r = skey_passcheck(pw->pw_name, p);
 			free(p);
 			if (r != -1) {
@@ -1578,7 +1578,7 @@ pass(const char *passwd)
 			    remotehost, passwd,
 			    curclass.classname, CURCLASSTYPE);
 			/* store guest password reply into pw_passwd */
-		REASSIGN(pw->pw_passwd, xstrdup(passwd));
+		REASSIGN(pw->pw_passwd, ftpd_strdup(passwd));
 		for (p = pw->pw_passwd; *p; p++)
 			if (!isgraph((unsigned char)*p))
 				*p = '_';
@@ -2125,7 +2125,7 @@ send_data_with_mmap(int filefd, int netfd, const struct stat *st, int isdata)
 
 	winsize = curclass.mmapsize;
 	filesize = st->st_size;
-	if (debug)
+	if (ftpd_debug)
 		syslog(LOG_INFO, "mmapsize = %ld, writesize = %ld",
 		    (long)winsize, (long)curclass.writesize);
 	if (winsize == 0)
@@ -2771,7 +2771,7 @@ reply(int n, const char *fmt, ...)
 	va_end(ap);
 	cprintf(stdout, "%s\r\n", msg);
 	(void)fflush(stdout);
-	if (debug)
+	if (ftpd_debug)
 		syslog(LOG_DEBUG, "<--- %s", msg);
 }
 
@@ -3154,7 +3154,7 @@ extended_port(const char *arg)
 	int i;
 	unsigned long proto;
 
-	tmp = xstrdup(arg);
+	tmp = ftpd_strdup(arg);
 	p = tmp;
 	delim = p[0];
 	p++;
@@ -3334,7 +3334,7 @@ send_file_list(const char *whichf)
 		}
 		dirlist = gl.gl_pathv;
 	} else {
-		notglob = xstrdup(whichf);
+		notglob = ftpd_strdup(whichf);
 		onefile[0] = notglob;
 		dirlist = onefile;
 		simple = 1;
@@ -3617,7 +3617,7 @@ checkpassword(const struct passwd *pwent, const char *password)
 }
 
 char *
-xstrdup(const char *s)
+ftpd_strdup(const char *s)
 {
 	char *new = strdup(s);
 

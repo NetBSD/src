@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.54 2005/08/24 15:51:41 ginsbach Exp $	*/
+/*	$NetBSD: extern.h,v 1.55 2006/02/01 14:20:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -174,7 +174,7 @@ void	statfilecmd(const char *);
 void	statxfer(void);
 void	store(const char *, const char *, int);
 void	user(const char *);
-char   *xstrdup(const char *);
+char   *ftpd_strdup(const char *);
 void	yyerror(char *);
 
 #ifdef SUPPORT_UTMP
@@ -318,7 +318,7 @@ GLOBAL	struct sockinet	his_addr;
 GLOBAL	struct sockinet	pasv_addr;
 GLOBAL	int		connections;
 GLOBAL	struct ftpclass	curclass;
-GLOBAL	int		debug;
+GLOBAL	int		ftpd_debug;
 GLOBAL	char		*emailaddr;
 GLOBAL	int		form;
 GLOBAL	int		gidcount;	/* number of entries in gidlist[] */
