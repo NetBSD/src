@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.145 2005/12/28 19:09:30 perry Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.145.2.1 2006/02/01 14:52:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -898,20 +898,6 @@ struct kinfo_file {
 	{ "mach", CTLTYPE_NODE }, \
 }
 
-/*
- * CTL_SECURITY definitions.
- */
-#define	SECURITY_CURTAIN	1
-#define	SECURITY_MAXID		2
-
-#define	CTL_SECURITY_NAMES { \
-	{ 0, 0 }, \
-	{ "curtain", CTLTYPE_INT }, \
-}
-
-/* XXX this should not be here */
-extern int security_curtain;
-
 #ifdef _KERNEL
 
 #if defined(_KERNEL_OPT)
@@ -920,6 +906,9 @@ extern int security_curtain;
 
 /* Root node of the kernel sysctl tree */
 extern struct sysctlnode sysctl_root;
+
+/* XXX this should not be here */
+extern int security_curtain;
 
 /*
  * A log of nodes created by a setup function or set of setup
@@ -980,13 +969,13 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 		__CONCAT(___,name)(clog); }			\
 	__link_set_add_text(sysctl_funcs, name);		\
 	static void __CONCAT(___,name)(struct sysctllog **clog)
-#else /* SYSCTL_DEBUG_SETUP */
+#else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	__link_set_add_text(sysctl_funcs, name);		\
 	void name(struct sysctllog **clog)
-#endif /* SYSCTL_DEBUG_SETUP */
+#endif /* !SYSCTL_DEBUG_SETUP */
 
-#else /* _LKM */
+#else /* !_LKM */
 
 #define SYSCTL_SETUP_PROTO(name)
 #ifdef SYSCTL_DEBUG_SETUP
@@ -997,15 +986,15 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 		__CONCAT(___,name)(clog); }			\
 	__link_set_add_text(sysctl_funcs, name);		\
 	static void __CONCAT(___,name)(struct sysctllog **clog)
-#else /* SYSCTL_DEBUG_SETUP */
+#else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	static void name(struct sysctllog **);			\
 	__link_set_add_text(sysctl_funcs, name);		\
 	static void name(struct sysctllog **clog)
-#endif /* SYSCTL_DEBUG_SETUP */
+#endif /* !SYSCTL_DEBUG_SETUP */
 typedef void (*sysctl_setup_func)(struct sysctllog **);
 
-#endif /* _LKM */
+#endif /* !_LKM */
 
 /*
  * Internal sysctl function calling convention:

@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.20 2005/12/27 17:21:34 perry Exp $	*/
+/*	$NetBSD: endian.h,v 1.20.2.1 2006/02/01 14:52:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -77,6 +77,8 @@ __END_DECLS
 
 #include <machine/endian_machdep.h>
 
+#include <machine/bswap.h>
+
 /*
  * Define the order of 32-bit words in 64-bit words.
  */
@@ -120,6 +122,11 @@ __END_DECLS
 
 #else	/* LITTLE_ENDIAN || !defined(__lint__) */
 
+#define	ntohl(x)	((uint32_t)bswap32((uint32_t)(x)))
+#define	ntohs(x)	((uint16_t)bswap16((uint16_t)(x)))
+#define	htonl(x)	((uint32_t)bswap32((uint32_t)(x)))
+#define	htons(x)	((uint16_t)bswap16((uint16_t)(x)))
+
 #define	NTOHL(x)	(x) = ntohl((uint32_t)(x))
 #define	NTOHS(x)	(x) = ntohs((uint16_t)(x))
 #define	HTONL(x)	(x) = htonl((uint32_t)(x))
@@ -129,8 +136,6 @@ __END_DECLS
 /*
  * Macros to convert to a specific endianness.
  */
-
-#include <machine/bswap.h>
 
 #if BYTE_ORDER == BIG_ENDIAN
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.32 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.32.2.1 2006/02/01 14:52:37 yamt Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -36,11 +36,11 @@
  */
 
 /*
- * Loopback interface driver for protocol testing and timing.
+ * IPv6-to-IPv4 TCP relay capturing interface
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.32 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.32.2.1 2006/02/01 14:52:37 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -290,6 +290,7 @@ faithioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
+#ifdef INET6
 /*
  * XXX could be slow
  * XXX could be layer violation to call sys/net from sys/netinet6
@@ -318,3 +319,4 @@ faithprefix(struct in6_addr *in6)
 		RTFREE(rt);
 	return ret;
 }
+#endif

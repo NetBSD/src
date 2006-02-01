@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.3 2002/08/30 10:50:06 scw Exp $	*/
+/*      $NetBSD: bswap.h,v 1.3.36.1 2006/02/01 14:51:32 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,16 +38,9 @@
 #ifndef _SH5_BSWAP_H_
 #define	_SH5_BSWAP_H_
 
+#include <sh5/byte_swap.h>
+
 #define __BSWAP_RENAME
 #include <sys/bswap.h>
-
-#ifdef __GNUC__
-
-#include <sh5/byte_swap.h>
-#define	bswap16(x)	_sh5_bswap16(x)
-#define	bswap32(x)	_sh5_bswap32(x)
-#define	bswap64(x)	_sh5_bswap64(x)
-
-#endif /* __GNUC__ */
 
 #endif /* _SH5_BSWAP_H_ */

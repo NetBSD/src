@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.42 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.42.2.1 2006/02/01 14:51:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.42 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.42.2.1 2006/02/01 14:51:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,6 +220,7 @@ wdc_obio_attach(parent, self, aux)
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_chqueue;
+	chp->ch_ndrive = 2;
 
 	wdc_init_shadow_regs(chp);
 

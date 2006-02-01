@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.68 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.68.2.1 2006/02/01 14:52:42 yamt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.68 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.68.2.1 2006/02/01 14:52:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -150,6 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.68 2005/12/11 12:25:02 christos Exp
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_mroute.h>
+#include <netinet6/scope6_var.h>
 #include <netinet6/pim6.h>
 #include <netinet6/pim6_var.h>
 #include <netinet6/nd6.h>
@@ -1376,6 +1377,9 @@ ip6_mdq(m, ifp, rt)
 	mifi_t mifi, iif;
 	struct mif6 *mifp;
 	int plen = m->m_pkthdr.len;
+	struct in6_addr src0, dst0; /* copies for local work */
+	u_int32_t iszone, idzone, oszone, odzone;
+	int error = 0;
 
 /*
  * Macro to send packet on mif.  Since RSVP packets don't get counted on
@@ -1502,11 +1506,17 @@ ip6_mdq(m, ifp, rt)
 	 * For each mif, forward a copy of the packet if there are group
 	 * members downstream on the interface.
 	 */
+	src0 = ip6->ip6_src;
+	dst0 = ip6->ip6_dst;
+	if ((error = in6_setscope(&src0, ifp, &iszone)) != 0 ||
+	    (error = in6_setscope(&dst0, ifp, &idzone)) != 0) {
+		ip6stat.ip6s_badscope++;
+		return (error);
+	}
 	for (mifp = mif6table, mifi = 0; mifi < nummifs; mifp++, mifi++)
 		if (IF_ISSET(mifi, &rt->mf6c_ifset)) {
 			if (mif6table[mifi].m6_ifp == NULL)
 				continue;
-#ifdef notyet
 			/*
 			 * check if the outgoing packet is going to break
 			 * a scope boundary.
@@ -1515,17 +1525,16 @@ ip6_mdq(m, ifp, rt)
 			 */
 			if ((mif6table[rt->mf6c_parent].m6_flags &
 			     MIFF_REGISTER) == 0 &&
-			    (mif6table[mifi].m6_flags & MIFF_REGISTER) == 0 &&
-			    (in6_addr2scopeid(ifp, &ip6->ip6_dst) !=
-			     in6_addr2scopeid(mif6table[mifi].m6_ifp,
-					      &ip6->ip6_dst) ||
-			     in6_addr2scopeid(ifp, &ip6->ip6_src) !=
-			     in6_addr2scopeid(mif6table[mifi].m6_ifp,
-					      &ip6->ip6_src))) {
-				ip6stat.ip6s_badscope++;
-				continue;
+			    (mif6table[mifi].m6_flags & MIFF_REGISTER) == 0) {
+				if (in6_setscope(&src0, mif6table[mifi].m6_ifp,
+				    &oszone) ||
+				    in6_setscope(&dst0, mif6table[mifi].m6_ifp,
+				    &odzone) ||
+				    iszone != oszone || idzone != odzone) {
+					ip6stat.ip6s_badscope++;
+					continue;
+				}
 			}
-#endif
 
 			mifp->m6_pkt_out++;
 			mifp->m6_bytes_out += plen;

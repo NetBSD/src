@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.12 2005/12/11 12:24:46 christos Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.12.2.1 2006/02/01 14:52:36 yamt Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -149,7 +149,7 @@ ufs_ls(const char *path)
 			memcpy(p, path, size);
 			p[size] = 0;
 			fd = open(p, 0);
-			free(p, size + 1);
+			dealloc(p, size + 1);
 		} else {
 			fd = open("", 0);
 			fname = path;
@@ -221,7 +221,7 @@ ufs_ls(const char *path)
 			printf("%d: %s (%s)\n",
 				n->e_ino, n->e_name, typestr[n->e_type]);
 			names = n->e_next;
-			free(n, 0);
+			dealloc(n, 0);
 		} while (names);
 	} else {
 		printf( "%s not found\n", path );

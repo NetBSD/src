@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.24 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: rpc.c,v 1.24.2.1 2006/02/01 14:52:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -55,13 +55,15 @@
 
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
+#include "stand.h"
 #else
 #include <string.h>
+#include <errno.h>
+#include <stdio.h>
 #endif
 
 #include "rpcv2.h"
 
-#include "stand.h"
 #include "net.h"
 #include "rpc.h"
 
@@ -102,7 +104,6 @@ struct rpc_reply {
 
 /* Local forwards */
 static	ssize_t recvrpc __P((struct iodesc *, void *, size_t, time_t));
-static	int rpc_getport __P((struct iodesc *, n_long, n_long));
 
 int rpc_xid;
 int rpc_port = 0x400;	/* predecrement */
@@ -315,6 +316,11 @@ rpc_fromaddr(pkt, addr, port)
 	*port = hhdr->uh_sport;
 }
 
+#ifdef NO_PMAP_CACHE
+#define rpc_pmap_getcache(addr, prog, vers) (-1)
+#define rpc_pmap_putcache(addr, prog, vers, port)
+#else
+
 /*
  * RPC Portmapper cache
  */
@@ -374,7 +380,7 @@ rpc_pmap_putcache(addr, prog, vers, port)
 	pl->vers = vers;
 	pl->port = port;
 }
-
+#endif
 
 /*
  * Request a port number from the port mapper.

@@ -1,7 +1,7 @@
-/*	$NetBSD: elf2bb.c,v 1.11 2005/12/11 12:16:36 christos Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.11.2.1 2006/02/01 14:51:25 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -206,7 +206,14 @@ main(int argc, char *argv[])
 	dprintf(("%d relocs\n", trsz/12));
 
 	if (sumsize == 0) {
-		bbsize = (tsz + dsz + bsz + 511) & ~511;
+		/*
+		 * XXX overly cautious, but this guarantees that 16bit
+		 * pc offsets and our relocs always work.
+		 */
+		bbsize = 32768;
+		if (bbsize < (tsz + dsz + bsz)) {
+			err(1, "%s: too big.", argv[0]);
+		}
 		sumsize = bbsize / 512;
 	}
 

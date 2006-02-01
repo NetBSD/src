@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.110 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.110.2.1 2006/02/01 14:52:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.110 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.110.2.1 2006/02/01 14:52:20 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1033,6 +1033,7 @@ pool_get(struct pool *pp, int flags)
 	}
 
 	pp->pr_nget++;
+	pr_leave(pp);
 
 	/*
 	 * If we have a low water mark and we are now below that low
@@ -1046,7 +1047,6 @@ pool_get(struct pool *pp, int flags)
 		 */
 	}
 
-	pr_leave(pp);
 	simple_unlock(&pp->pr_slock);
 	return (v);
 }

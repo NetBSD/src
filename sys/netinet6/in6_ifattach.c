@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.62 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.62.2.1 2006/02/01 14:52:41 yamt Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.62 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.62.2.1 2006/02/01 14:52:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.62 2005/12/11 12:25:02 christos E
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet6/ip6_mroute.h>
+#include <netinet6/scope6_var.h>
 
 #include <net/net_osdep.h>
 
@@ -345,8 +346,7 @@ in6_ifattach_linklocal(ifp, altifp)
 
 	ifra.ifra_addr.sin6_family = AF_INET6;
 	ifra.ifra_addr.sin6_len = sizeof(struct sockaddr_in6);
-	ifra.ifra_addr.sin6_addr.s6_addr16[0] = htons(0xfe80);
-	ifra.ifra_addr.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+	ifra.ifra_addr.sin6_addr.s6_addr32[0] = htonl(0xfe800000);
 	ifra.ifra_addr.sin6_addr.s6_addr32[1] = 0;
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
 		ifra.ifra_addr.sin6_addr.s6_addr32[2] = 0;
@@ -358,14 +358,12 @@ in6_ifattach_linklocal(ifp, altifp)
 			return (-1);
 		}
 	}
+	if (in6_setscope(&ifra.ifra_addr.sin6_addr, ifp, NULL))
+		return (-1);
 
 	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
 	ifra.ifra_prefixmask.sin6_family = AF_INET6;
 	ifra.ifra_prefixmask.sin6_addr = in6mask64;
-#ifdef SCOPEDROUTING
-	/* take into account the sin6_scope_id field for routing */
-	ifra.ifra_prefixmask.sin6_scope_id = 0xffffffff;
-#endif
 	/* link-local addresses should NEVER expire. */
 	ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 	ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
@@ -555,10 +553,11 @@ in6_nigroup(ifp, name, namelen, sa6)
 	sa6->sin6_family = AF_INET6;
 	sa6->sin6_len = sizeof(*sa6);
 	sa6->sin6_addr.s6_addr16[0] = htons(0xff02);
-	sa6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	sa6->sin6_addr.s6_addr8[11] = 2;
 	bcopy(digest, &sa6->sin6_addr.s6_addr32[3],
 	    sizeof(sa6->sin6_addr.s6_addr32[3]));
+	if (in6_setscope(&sa6->sin6_addr, ifp, NULL))
+		return (-1); /* XXX: should not fail */
 
 	return 0;
 }
@@ -671,7 +670,6 @@ in6_ifdetach(ifp)
 	struct ifaddr *ifa, *next;
 	struct rtentry *rt;
 	short rtflags;
-	struct sockaddr_in6 sin6;
 	struct in6_multi_mship *imm;
 
 	/* remove ip6_mrouter stuff */
@@ -755,17 +753,4 @@ in6_ifdetach(ifp)
 	 * (Or can we just delay calling nd6_purge until at this point?)
 	 */
 	nd6_purge(ifp);
-
-	/* remove route to link-local allnodes multicast (ff02::1) */
-	bzero(&sin6, sizeof(sin6));
-	sin6.sin6_len = sizeof(struct sockaddr_in6);
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_addr = in6addr_linklocal_allnodes;
-	sin6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-	rt = rtalloc1((struct sockaddr *)&sin6, 0);
-	if (rt && rt->rt_ifp == ifp) {
-		rtrequest(RTM_DELETE, (struct sockaddr *)rt_key(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
-		rtfree(rt);
-	}
 }

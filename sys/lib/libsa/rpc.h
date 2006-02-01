@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.8 1996/09/26 23:22:03 cgd Exp $	*/
+/*	$NetBSD: rpc.h,v 1.8.90.1 2006/02/01 14:52:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -54,6 +54,7 @@ ssize_t	rpc_call __P((struct iodesc *, n_long, n_long, n_long,
 void	rpc_fromaddr __P((void *, struct in_addr *, u_short *));
 int	rpc_pmap_getcache __P((struct in_addr, u_int, u_int));
 void	rpc_pmap_putcache __P((struct in_addr, u_int, u_int, int));
+int	rpc_getport __P((struct iodesc *, n_long, n_long));
 
 extern int rpc_port;	/* decrement before bind */
 

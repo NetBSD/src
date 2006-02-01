@@ -1,4 +1,4 @@
-/*	$NetBSD: rside.c,v 1.7 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: rside.c,v 1.7.2.1 2006/02/01 14:51:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.7 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.7.2.1 2006/02/01 14:51:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,7 @@ rside_attach(struct device *parent, struct device *self, void *aux)
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ch_queue = &scp->rc_chqueue;
+		cp->ch_ndrive = 2;
 		wdr->cmd_iot = wdr->ctl_iot = &sc->sc_tag;
 		if (bus_space_map(wdr->cmd_iot,
 		    rside_info[channel].drive_registers,

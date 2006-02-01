@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.125.2.2 2006/01/15 10:02:47 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.125.2.3 2006/02/01 14:51:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.125.2.2 2006/01/15 10:02:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.125.2.3 2006/02/01 14:51:48 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -189,15 +189,11 @@ struct vndxfer {
 #define VND_GETXFER(vnd)	pool_get(&(vnd)->sc_vxpool, PR_WAITOK)
 #define VND_PUTXFER(vnd, vx)	pool_put(&(vnd)->sc_vxpool, (vx))
 
-struct vnd_softc *vnd_softc;
-int numvnd = 0;
-
 #define VNDLABELDEV(dev) \
     (MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
 
 /* called by main() at boot time (XXX: and the LKM driver) */
 void	vndattach(int);
-int	vnddetach(void);
 
 static void	vndclear(struct vnd_softc *, int);
 static int	vndsetcred(struct vnd_softc *, struct ucred *);
@@ -208,7 +204,7 @@ static void	vndshutdown(void);
 #endif
 
 static void	vndgetdefaultlabel(struct vnd_softc *, struct disklabel *);
-static void	vndgetdisklabel(dev_t);
+static void	vndgetdisklabel(dev_t, struct vnd_softc *);
 
 static int	vndlock(struct vnd_softc *);
 static void	vndunlock(struct vnd_softc *);
@@ -238,56 +234,84 @@ const struct cdevsw vnd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-static int vndattached;
+static int	vnd_match(struct device *, struct cfdata *, void *);
+static void	vnd_attach(struct device *, struct device *, void *);
+static int	vnd_detach(struct device *, int);
+
+CFATTACH_DECL(vnd, sizeof(struct vnd_softc),
+    vnd_match, vnd_attach, vnd_detach, NULL);
+extern struct cfdriver vnd_cd;
+
+static struct vnd_softc	*vnd_spawn(int);
+int	vnd_destroy(struct device *);
 
 void
 vndattach(int num)
 {
-	int i;
-	char *mem;
+	int error;
 
-	if (vndattached)
-		return;
-	vndattached = 1;
-	if (num <= 0)
-		return;
-	i = num * sizeof(struct vnd_softc);
-	mem = malloc(i, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (mem == NULL) {
-		printf("WARNING: no memory for vnode disks\n");
-		return;
-	}
-	vnd_softc = (struct vnd_softc *)mem;
-	numvnd = num;
+	error = config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
+	if (error)
+		aprint_error("%s: unable to register cfattach\n",
+		    vnd_cd.cd_name);
+}
 
-	for (i = 0; i < numvnd; i++) {
-		vnd_softc[i].sc_unit = i;
-		vnd_softc[i].sc_comp_offsets = NULL;
-		vnd_softc[i].sc_comp_buff = NULL;
-		vnd_softc[i].sc_comp_decombuf = NULL;
-		bufq_alloc(&vnd_softc[i].sc_tab,
-		    "disksort", BUFQ_SORT_RAWBLOCK);
-		pseudo_disk_init(&vnd_softc[i].sc_dkdev);
-	}
+static int
+vnd_match(struct device *self, struct cfdata *cfdata, void *aux)
+{
+	return 1;
+}
+
+static void
+vnd_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct vnd_softc *sc = (struct vnd_softc *)self;
+
+	sc->sc_comp_offsets = NULL;
+	sc->sc_comp_buff = NULL;
+	sc->sc_comp_decombuf = NULL;
+	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
+	pseudo_disk_init(&sc->sc_dkdev);
+
+	aprint_normal("%s: vnode disk driver\n", self->dv_xname);
+}
+
+static int
+vnd_detach(struct device *self, int flags)
+{
+	struct vnd_softc *sc = (struct vnd_softc *)self;
+	if (sc->sc_flags & VNF_INITED)
+		return EBUSY;
+
+	bufq_free(sc->sc_tab);
+
+	return 0;
+}
+
+static struct vnd_softc *
+vnd_spawn(int unit)
+{
+	struct cfdata *cf;
+
+	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+	cf->cf_name = vnd_cd.cd_name;
+	cf->cf_atname = vnd_cd.cd_name;
+	cf->cf_unit = unit;
+	cf->cf_fstate = FSTATE_STAR;
+
+	return (struct vnd_softc *)config_attach_pseudo(cf);
 }
 
 int
-vnddetach(void)
+vnd_destroy(struct device *dev)
 {
-	int i;
+	int error;
 
-	/* First check we aren't in use. */
-	for (i = 0; i < numvnd; i++)
-		if (vnd_softc[i].sc_flags & VNF_INITED)
-			return (EBUSY);
-
-	for (i = 0; i < numvnd; i++)
-		bufq_free(vnd_softc[i].sc_tab);
-
-	free(vnd_softc, M_DEVBUF);
-	vndattached = 0;
-
-	return (0);
+	error = config_detach(dev, 0);
+	if (error)
+		return error;
+	free(dev->dv_cfdata, M_DEVBUF);
+	return 0;
 }
 
 static int
@@ -302,9 +326,12 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
-	if (unit >= numvnd)
-		return (ENXIO);
-	sc = &vnd_softc[unit];
+	sc = device_lookup(&vnd_cd, unit);
+	if (sc == NULL) {
+		sc = vnd_spawn(unit);
+		if (sc == NULL)
+			return ENOMEM;
+	}
 
 	if ((error = vndlock(sc)) != 0)
 		return (error);
@@ -322,7 +349,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	 */
 	if ((sc->sc_flags & (VNF_INITED|VNF_VLABEL)) == VNF_INITED &&
 	    sc->sc_dkdev.dk_openmask == 0)
-		vndgetdisklabel(dev);
+		vndgetdisklabel(dev, sc);
 
 	/* Check that the partitions exists. */
 	if (part != RAW_PART) {
@@ -363,10 +390,9 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
-
-	if (unit >= numvnd)
-		return (ENXIO);
-	sc = &vnd_softc[unit];
+	sc = device_lookup(&vnd_cd, unit);
+	if (sc == NULL)
+		return ENXIO;
 
 	if ((error = vndlock(sc)) != 0)
 		return (error);
@@ -397,7 +423,8 @@ static void
 vndstrategy(struct buf *bp)
 {
 	int unit = vndunit(bp->b_dev);
-	struct vnd_softc *vnd = &vnd_softc[unit];
+	struct vnd_softc *vnd =
+	    (struct vnd_softc *)device_lookup(&vnd_cd, unit);
 	struct disklabel *lp = vnd->sc_dkdev.dk_label;
 	daddr_t blkno;
 	int s = splbio();
@@ -692,9 +719,9 @@ vndread(dev_t dev, struct uio *uio, int flags)
 		printf("vndread(0x%x, %p)\n", dev, uio);
 #endif
 
-	if (unit >= numvnd)
-		return (ENXIO);
-	sc = &vnd_softc[unit];
+	sc = device_lookup(&vnd_cd, unit);
+	if (sc == NULL)
+		return ENXIO;
 
 	if ((sc->sc_flags & VNF_INITED) == 0)
 		return (ENXIO);
@@ -714,9 +741,9 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 		printf("vndwrite(0x%x, %p)\n", dev, uio);
 #endif
 
-	if (unit >= numvnd)
-		return (ENXIO);
-	sc = &vnd_softc[unit];
+	sc = device_lookup(&vnd_cd, unit);
+	if (sc == NULL)
+		return ENXIO;
 
 	if ((sc->sc_flags & VNF_INITED) == 0)
 		return (ENXIO);
@@ -731,12 +758,18 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 
 	if (*un == -1)
 		*un = unit;
-	if (*un >= numvnd)
-		return ENXIO;
 	if (*un < 0)
 		return EINVAL;
 
-	vnd = &vnd_softc[*un];
+	vnd = device_lookup(&vnd_cd, *un);
+	if (vnd == NULL)
+		/*
+		 * vnconfig(8) has weird expectations to list the
+		 * devices.
+		 * It will stop as soon as it gets ENXIO, but
+		 * will continue if it gets something else...
+		 */
+		return (*un >= vnd_cd.cd_ndevs) ? ENXIO : -1;
 
 	if ((vnd->sc_flags & VNF_INITED) == 0)
 		return -1;
@@ -766,10 +799,13 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		printf("vndioctl(0x%x, 0x%lx, %p, 0x%x, %p): unit %d\n",
 		    dev, cmd, data, flag, p, unit);
 #endif
-	if (unit >= numvnd)
-		return (ENXIO);
-
-	vnd = &vnd_softc[unit];
+	vnd = device_lookup(&vnd_cd, unit);
+	if (vnd == NULL &&
+#ifdef COMPAT_30
+	    cmd != VNDIOOCGET &&
+#endif
+	    cmd != VNDIOCGET)
+		return ENXIO;
 	vio = (struct vnd_ioctl *)data;
 
 	/* Must be open for writes for these commands... */
@@ -1004,17 +1040,13 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if ((error = vndsetcred(vnd, p->p_ucred)) != 0)
 			goto close_and_exit;
 
-		memset(vnd->sc_xname, 0, sizeof(vnd->sc_xname)); /* XXX */
-		snprintf(vnd->sc_xname, sizeof(vnd->sc_xname), "vnd%d", unit);
-
-
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
 
 		/* create the kernel thread, wait for it to be up */
 		error = kthread_create1(vndthread, vnd, &vnd->sc_kthread,
-		    vnd->sc_xname);
+		    vnd->sc_dev.dv_xname);
 		if (error)
 			goto close_and_exit;
 		while ((vnd->sc_flags & VNF_KTHREAD) == 0) {
@@ -1031,7 +1063,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 #endif
 
 		/* Attach the disk. */
-		vnd->sc_dkdev.dk_name = vnd->sc_xname;
+		vnd->sc_dkdev.dk_name = vnd->sc_dev.dv_xname;
 		pseudo_disk_attach(&vnd->sc_dkdev);
 
 		/* Initialize the xfer and buffer pools. */
@@ -1039,7 +1071,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		    0, 0, "vndxpl", NULL);
 
 		/* Try and read the disklabel. */
-		vndgetdisklabel(dev);
+		vndgetdisklabel(dev, vnd);
 
 		vndunlock(vnd);
 
@@ -1101,6 +1133,11 @@ unlock_and_exit:
 
 		/* Detatch the disk. */
 		pseudo_disk_detach(&vnd->sc_dkdev);
+		if ((error = vnd_destroy((struct device *)vnd)) != 0) {
+			aprint_error("%s: unable to detach instance\n",
+			    vnd->sc_dev.dv_xname);
+			return error;
+		}
 
 		break;
 
@@ -1338,7 +1375,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(vnd->sc_unit, i);
+		mn = DISKMINOR(vnd->sc_dev.dv_unit, i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		if (mn != myminor) /* XXX avoid to kill own vnode */
 			vdevgone(cmaj, mn, mn, VCHR);
@@ -1394,9 +1431,9 @@ vndsize(dev_t dev)
 	int size;
 
 	unit = vndunit(dev);
-	if (unit >= numvnd)
-		return (-1);
-	sc = &vnd_softc[unit];
+	sc = (struct vnd_softc *)device_lookup(&vnd_cd, unit);
+	if (sc == NULL)
+		return -1;
 
 	if ((sc->sc_flags & VNF_INITED) == 0)
 		return (-1);
@@ -1465,9 +1502,8 @@ vndgetdefaultlabel(struct vnd_softc *sc, struct disklabel *lp)
  * Read the disklabel from a vnd.  If one is not present, create a fake one.
  */
 static void
-vndgetdisklabel(dev_t dev)
+vndgetdisklabel(dev_t dev, struct vnd_softc *sc)
 {
-	struct vnd_softc *sc = &vnd_softc[vndunit(dev)];
 	const char *errstring;
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	struct cpu_disklabel *clp = sc->sc_dkdev.dk_cpulabel;
@@ -1486,7 +1522,7 @@ vndgetdisklabel(dev_t dev)
 		 * Lack of disklabel is common, but we print the warning
 		 * anyway, since it might contain other useful information.
 		 */
-		printf("%s: %s\n", sc->sc_xname, errstring);
+		printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);
 
 		/*
 		 * For historical reasons, if there's no disklabel
@@ -1558,7 +1594,8 @@ compstrategy(struct buf *bp, off_t bn)
 {
 	int error;
 	int unit = vndunit(bp->b_dev);
-	struct vnd_softc *vnd = &vnd_softc[unit];
+	struct vnd_softc *vnd =
+	    (struct vnd_softc *)device_lookup(&vnd_cd, unit);
 	u_int32_t comp_block;
 	struct uio auio;
 	caddr_t addr;
@@ -1566,8 +1603,7 @@ compstrategy(struct buf *bp, off_t bn)
 
 	/* set up constants for data move */
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = bp->b_flags & B_PHYS ? UIO_USERSPACE : UIO_SYSSPACE;
-	auio.uio_lwp = LIST_FIRST(&bp->b_proc->p_lwps);
+	auio.uio_segflg = UIO_SYSSPACE;
 
 	/* read, and transfer the data */
 	addr = bp->b_data;
@@ -1614,7 +1650,7 @@ compstrategy(struct buf *bp, off_t bn)
 			if (error != Z_STREAM_END) {
 				if (vnd->sc_comp_stream.msg)
 					printf("%s: compressed file, %s\n",
-					    vnd->sc_xname,
+					    vnd->sc_dev.dv_xname,
 					    vnd->sc_comp_stream.msg);
 				bp->b_error = EBADMSG;
 				bp->b_flags |= B_ERROR;

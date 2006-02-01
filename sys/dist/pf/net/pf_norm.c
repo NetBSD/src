@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.10 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.10.2.1 2006/02/01 14:52:20 yamt Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.97 2004/09/21 16:59:12 aaron Exp $ */
 
 /*
@@ -728,7 +728,7 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment **frag, int mff,
 			} else {
 				hosed++;
 			}
-		} else {
+		} else if (frp == NULL) {
 			/* There is a gap between fragments */
 			DPFPRINTF(("fragcache[%d]: gap %d %d-%d (%d-%d)\n",
 			    h->ip_id, -aftercut, off, max, fra->fr_off,

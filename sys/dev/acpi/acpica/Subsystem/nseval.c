@@ -2,7 +2,7 @@
  *
  * Module Name: nseval - Object evaluation interfaces -- includes control
  *                       method lookup and execution.
- *              xRevision: 133 $
+ *              xRevision: 1.136 $
  *
  ******************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.14 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.14.2.1 2006/02/01 14:51:50 yamt Exp $");
 
 #define __NSEVAL_C__
 
@@ -461,6 +461,7 @@ AcpiNsEvaluateByHandle (
  *
  * PARAMETERS:  Info            - Method info block, contains:
  *                  Node            - Method Node to execute
+ *                  ObjDesc         - Method object
  *                  Parameters      - List of parameters to pass to the method,
  *                                    terminated by NULL. Params itself may be
  *                                    NULL if no parameters are being passed.
@@ -483,7 +484,6 @@ AcpiNsExecuteControlMethod (
     ACPI_PARAMETER_INFO     *Info)
 {
     ACPI_STATUS             Status;
-    ACPI_OPERAND_OBJECT     *ObjDesc;
 
 
     ACPI_FUNCTION_TRACE ("NsExecuteControlMethod");
@@ -491,10 +491,10 @@ AcpiNsExecuteControlMethod (
 
     /* Verify that there is a method associated with this object */
 
-    ObjDesc = AcpiNsGetAttachedObject (Info->Node);
-    if (!ObjDesc)
+    Info->ObjDesc = AcpiNsGetAttachedObject (Info->Node);
+    if (!Info->ObjDesc)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "No attached method object\n"));
+        ACPI_REPORT_ERROR (("No attached method object\n"));
 
         (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
         return_ACPI_STATUS (AE_NULL_OBJECT);
@@ -504,7 +504,7 @@ AcpiNsExecuteControlMethod (
         ACPI_LV_INFO, _COMPONENT);
 
     ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Method at AML address %p Length %X\n",
-        ObjDesc->Method.AmlStart + 1, ObjDesc->Method.AmlLength - 1));
+        Info->ObjDesc->Method.AmlStart + 1, Info->ObjDesc->Method.AmlLength - 1));
 
     /*
      * Unlock the namespace before execution.  This allows namespace access
@@ -529,7 +529,7 @@ AcpiNsExecuteControlMethod (
         return_ACPI_STATUS (Status);
     }
 
-    Status = AcpiPsxExecute (Info);
+    Status = AcpiPsExecuteMethod (Info);
     AcpiExExitInterpreter ();
 
     return_ACPI_STATUS (Status);

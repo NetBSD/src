@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.2 2000/01/16 03:07:22 takemura Exp $	*/
+/*	$NetBSD: alloc.c,v 1.2.56.1 2006/02/01 14:51:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -40,8 +40,7 @@
 void * malloc(size_t size);
 
 void *
-alloc(size)
-	unsigned size;
+alloc(size_t size);
 {
 	return malloc(size);
 }

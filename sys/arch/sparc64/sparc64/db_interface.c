@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.83 2005/12/24 22:45:39 perry Exp $ */
+/*	$NetBSD: db_interface.c,v 1.83.2.1 2006/02/01 14:51:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.83 2005/12/24 22:45:39 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.83.2.1 2006/02/01 14:51:37 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -414,8 +414,7 @@ db_write_bytes(addr, size, data)
 	register const char	*data;
 {
 	register char	*dst;
-	extern vaddr_t ktext;
-	extern paddr_t ktextp;
+	extern paddr_t pmap_kextract(vaddr_t va);
 
 	dst = (char *)addr;
 	while (size-- > 0) {
@@ -424,7 +423,7 @@ db_write_bytes(addr, size, data)
 		else if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) &&
 			 (dst < (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
 			/* Read Only mapping -- need to do a bypass access */
-			stba((u_long)dst - ktext + ktextp, ASI_PHYS_CACHED, *data);
+			stba(pmap_kextract((vaddr_t)dst), ASI_PHYS_CACHED, *data);
 		else
 			subyte(dst, *data);
 		dst++, data++;

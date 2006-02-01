@@ -1,7 +1,7 @@
 /******************************************************************************
  *
- * Module Name: utalloc - local cache and memory allocation routines
- *              xRevision: 144 $
+ * Module Name: utalloc - local memory allocation routines
+ *              xRevision: 1.153 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.14 2005/12/11 12:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.14.2.1 2006/02/01 14:51:51 yamt Exp $");
 
 #define __UTALLOC_C__
 
@@ -124,18 +124,16 @@ __KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.14 2005/12/11 12:21:03 christos Exp $"
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utalloc")
 
-#ifdef ACPI_DBG_TRACK_ALLOCATIONS
-
 /* Local prototypes */
+
+#ifdef ACPI_DBG_TRACK_ALLOCATIONS
 
 static ACPI_DEBUG_MEM_BLOCK *
 AcpiUtFindAllocation (
-    UINT32                  ListId,
     void                    *Allocation);
 
 static ACPI_STATUS
 AcpiUtTrackAllocation (
-    UINT32                  ListId,
     ACPI_DEBUG_MEM_BLOCK    *Address,
     ACPI_SIZE               Size,
     UINT8                   AllocType,
@@ -145,214 +143,122 @@ AcpiUtTrackAllocation (
 
 static ACPI_STATUS
 AcpiUtRemoveAllocation (
-    UINT32                  ListId,
     ACPI_DEBUG_MEM_BLOCK    *Address,
     UINT32                  Component,
     const char              *Module,
     UINT32                  Line);
 
-#endif /* ACPI_DBG_TRACK_ALLOCATIONS */
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiUtReleaseToCache
- *
- * PARAMETERS:  ListId              - Memory list/cache ID
- *              Object              - The object to be released
- *
- * RETURN:      None
- *
- * DESCRIPTION: Release an object to the specified cache.  If cache is full,
- *              the object is deleted.
- *
- ******************************************************************************/
-
-void
-AcpiUtReleaseToCache (
-    UINT32                  ListId,
-    void                    *Object)
-{
-    ACPI_MEMORY_LIST        *CacheInfo;
-
-
-    ACPI_FUNCTION_ENTRY ();
-
-
-    CacheInfo = &AcpiGbl_MemoryLists[ListId];
-
-#ifdef ACPI_ENABLE_OBJECT_CACHE
-
-    /* If walk cache is full, just free this wallkstate object */
-
-    if (CacheInfo->CacheDepth >= CacheInfo->MaxCacheDepth)
-    {
-        ACPI_MEM_FREE (Object);
-        ACPI_MEM_TRACKING (CacheInfo->TotalFreed++);
-    }
-
-    /* Otherwise put this object back into the cache */
-
-    else
-    {
-        if (ACPI_FAILURE (AcpiUtAcquireMutex (ACPI_MTX_CACHES)))
-        {
-            return;
-        }
-
-        /* Mark the object as cached */
-
-        ACPI_MEMSET (Object, 0xCA, CacheInfo->ObjectSize);
-        ACPI_SET_DESCRIPTOR_TYPE (Object, ACPI_DESC_TYPE_CACHED);
-
-        /* Put the object at the head of the cache list */
-
-        * (ACPI_CAST_INDIRECT_PTR (char,
-            &(((char *) Object)[CacheInfo->LinkOffset]))) = CacheInfo->ListHead;
-        CacheInfo->ListHead = Object;
-        CacheInfo->CacheDepth++;
-
-        (void) AcpiUtReleaseMutex (ACPI_MTX_CACHES);
-    }
-
-#else
-
-    /* Object cache is disabled; just free the object */
-
-    ACPI_MEM_FREE (Object);
-    ACPI_MEM_TRACKING (CacheInfo->TotalFreed++);
+static ACPI_STATUS
+AcpiUtCreateList (
+    const char              *ListName,
+    UINT16                  ObjectSize,
+    ACPI_MEMORY_LIST        **ReturnCache);
 #endif
-}
 
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiUtAcquireFromCache
+ * FUNCTION:    AcpiUtCreateCaches
  *
- * PARAMETERS:  ListId              - Memory list ID
+ * PARAMETERS:  None
  *
- * RETURN:      A requested object.  NULL if the object could not be
- *              allocated.
+ * RETURN:      Status
  *
- * DESCRIPTION: Get an object from the specified cache.  If cache is empty,
- *              the object is allocated.
+ * DESCRIPTION: Create all local caches
  *
  ******************************************************************************/
 
-void *
-AcpiUtAcquireFromCache (
-    UINT32                  ListId)
+ACPI_STATUS
+AcpiUtCreateCaches (
+    void)
 {
-    ACPI_MEMORY_LIST        *CacheInfo;
-    void                    *Object;
+    ACPI_STATUS             Status;
 
-
-    ACPI_FUNCTION_NAME ("UtAcquireFromCache");
-
-
-    CacheInfo = &AcpiGbl_MemoryLists[ListId];
-
-#ifdef ACPI_ENABLE_OBJECT_CACHE
-
-    if (ACPI_FAILURE (AcpiUtAcquireMutex (ACPI_MTX_CACHES)))
-    {
-        return (NULL);
-    }
-
-    ACPI_MEM_TRACKING (CacheInfo->CacheRequests++);
-
-    /* Check the cache first */
-
-    if (CacheInfo->ListHead)
-    {
-        /* There is an object available, use it */
-
-        Object = CacheInfo->ListHead;
-        CacheInfo->ListHead = *(ACPI_CAST_INDIRECT_PTR (char,
-                                &(((char *) Object)[CacheInfo->LinkOffset])));
-
-        ACPI_MEM_TRACKING (CacheInfo->CacheHits++);
-        CacheInfo->CacheDepth--;
 
 #ifdef ACPI_DBG_TRACK_ALLOCATIONS
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Object %p from %s\n",
-            Object, AcpiGbl_MemoryLists[ListId].ListName));
-#endif
 
-        if (ACPI_FAILURE (AcpiUtReleaseMutex (ACPI_MTX_CACHES)))
-        {
-            return (NULL);
-        }
+    /* Memory allocation lists */
 
-        /* Clear (zero) the previously used Object */
-
-        ACPI_MEMSET (Object, 0, CacheInfo->ObjectSize);
-    }
-
-    else
+    Status = AcpiUtCreateList ("Acpi-Global", 0,
+                &AcpiGbl_GlobalList);
+    if (ACPI_FAILURE (Status))
     {
-        /* The cache is empty, create a new object */
-
-        /* Avoid deadlock with ACPI_MEM_CALLOCATE */
-
-        if (ACPI_FAILURE (AcpiUtReleaseMutex (ACPI_MTX_CACHES)))
-        {
-            return (NULL);
-        }
-
-        Object = ACPI_MEM_CALLOCATE (CacheInfo->ObjectSize);
-        ACPI_MEM_TRACKING (CacheInfo->TotalAllocated++);
+        return (Status);
     }
 
-#else
-
-    /* Object cache is disabled; just allocate the object */
-
-    Object = ACPI_MEM_CALLOCATE (CacheInfo->ObjectSize);
-    ACPI_MEM_TRACKING (CacheInfo->TotalAllocated++);
+    Status = AcpiUtCreateList ("Acpi-Namespace", sizeof (ACPI_NAMESPACE_NODE),
+                &AcpiGbl_NsNodeList);
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
 #endif
 
-    return (Object);
+    /* Object Caches, for frequently used objects */
+
+    Status = AcpiOsCreateCache ("Acpi-State", sizeof (ACPI_GENERIC_STATE),
+                ACPI_MAX_STATE_CACHE_DEPTH, &AcpiGbl_StateCache);
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
+
+    Status = AcpiOsCreateCache ("Acpi-Parse", sizeof (ACPI_PARSE_OBJ_COMMON),
+                ACPI_MAX_PARSE_CACHE_DEPTH, &AcpiGbl_PsNodeCache);
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
+
+    Status = AcpiOsCreateCache ("Acpi-ParseExt", sizeof (ACPI_PARSE_OBJ_NAMED),
+                ACPI_MAX_EXTPARSE_CACHE_DEPTH, &AcpiGbl_PsNodeExtCache);
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
+
+    Status = AcpiOsCreateCache ("Acpi-Operand", sizeof (ACPI_OPERAND_OBJECT),
+                ACPI_MAX_OBJECT_CACHE_DEPTH, &AcpiGbl_OperandCache);
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
+
+    return (AE_OK);
 }
 
 
-#ifdef ACPI_ENABLE_OBJECT_CACHE
 /*******************************************************************************
  *
- * FUNCTION:    AcpiUtDeleteGenericCache
+ * FUNCTION:    AcpiUtDeleteCaches
  *
- * PARAMETERS:  ListId          - Memory list ID
+ * PARAMETERS:  None
  *
- * RETURN:      None
+ * RETURN:      Status
  *
- * DESCRIPTION: Free all objects within the requested cache.
+ * DESCRIPTION: Purge and delete all local caches
  *
  ******************************************************************************/
 
-void
-AcpiUtDeleteGenericCache (
-    UINT32                  ListId)
+ACPI_STATUS
+AcpiUtDeleteCaches (
+    void)
 {
-    ACPI_MEMORY_LIST        *CacheInfo;
-    char                    *Next;
 
+    (void) AcpiOsDeleteCache (AcpiGbl_StateCache);
+    AcpiGbl_StateCache = NULL;
 
-    ACPI_FUNCTION_ENTRY ();
+    (void) AcpiOsDeleteCache (AcpiGbl_OperandCache);
+    AcpiGbl_OperandCache = NULL;
 
+    (void) AcpiOsDeleteCache (AcpiGbl_PsNodeCache);
+    AcpiGbl_PsNodeCache = NULL;
 
-    CacheInfo = &AcpiGbl_MemoryLists[ListId];
-    while (CacheInfo->ListHead)
-    {
-        /* Delete one cached state object */
+    (void) AcpiOsDeleteCache (AcpiGbl_PsNodeExtCache);
+    AcpiGbl_PsNodeExtCache = NULL;
 
-        Next = *(ACPI_CAST_INDIRECT_PTR (char,
-                    &(((char *) CacheInfo->ListHead)[CacheInfo->LinkOffset])));
-        ACPI_MEM_FREE (CacheInfo->ListHead);
-
-        CacheInfo->ListHead = Next;
-        CacheInfo->CacheDepth--;
-    }
+    return (AE_OK);
 }
-#endif
 
 
 /*******************************************************************************
@@ -512,8 +418,8 @@ AcpiUtAllocate (
 
     if (!Size)
     {
-        _ACPI_REPORT_ERROR (Module, Line, Component,
-                ("UtAllocate: Attempt to allocate zero bytes\n"));
+        _ACPI_REPORT_ERROR (Module, Line,
+            ("UtAllocate: Attempt to allocate zero bytes, allocating 1 byte\n"));
         Size = 1;
     }
 
@@ -522,8 +428,8 @@ AcpiUtAllocate (
     {
         /* Report allocation error */
 
-        _ACPI_REPORT_ERROR (Module, Line, Component,
-                ("UtAllocate: Could not allocate size %X\n", (UINT32) Size));
+        _ACPI_REPORT_ERROR (Module, Line,
+            ("UtAllocate: Could not allocate size %X\n", (UINT32) Size));
 
         return_PTR (NULL);
     }
@@ -564,9 +470,9 @@ AcpiUtCallocate (
 
     if (!Size)
     {
-        _ACPI_REPORT_ERROR (Module, Line, Component,
-                ("UtCallocate: Attempt to allocate zero bytes\n"));
-        return_PTR (NULL);
+        _ACPI_REPORT_ERROR (Module, Line,
+            ("UtCallocate: Attempt to allocate zero bytes, allocating 1 byte\n"));
+        Size = 1;
     }
 
     Allocation = AcpiOsAllocate (Size);
@@ -574,8 +480,8 @@ AcpiUtCallocate (
     {
         /* Report allocation error */
 
-        _ACPI_REPORT_ERROR (Module, Line, Component,
-                ("UtCallocate: Could not allocate size %X\n", (UINT32) Size));
+        _ACPI_REPORT_ERROR (Module, Line,
+            ("UtCallocate: Could not allocate size %X\n", (UINT32) Size));
         return_PTR (NULL);
     }
 
@@ -597,6 +503,44 @@ AcpiUtCallocate (
  * AcpiUtTrackAllocation to add an element to the list; deletion
  * occurs in the body of AcpiUtFree.
  */
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtCreateList
+ *
+ * PARAMETERS:  CacheName       - Ascii name for the cache
+ *              ObjectSize      - Size of each cached object
+ *              ReturnCache     - Where the new cache object is returned
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Create a local memory list for tracking purposed
+ *
+ ******************************************************************************/
+
+static ACPI_STATUS
+AcpiUtCreateList (
+    const char              *ListName,
+    UINT16                  ObjectSize,
+    ACPI_MEMORY_LIST        **ReturnCache)
+{
+    ACPI_MEMORY_LIST        *Cache;
+
+
+    Cache = AcpiOsAllocate (sizeof (ACPI_MEMORY_LIST));
+    if (!Cache)
+    {
+        return (AE_NO_MEMORY);
+    }
+
+    ACPI_MEMSET (Cache, 0, sizeof (ACPI_MEMORY_LIST));
+
+    Cache->ListName   = ListName;
+    Cache->ObjectSize = ObjectSize;
+
+    *ReturnCache = Cache;
+    return (AE_OK);
+}
 
 
 /*******************************************************************************
@@ -632,7 +576,7 @@ AcpiUtAllocateAndTrack (
         return (NULL);
     }
 
-    Status = AcpiUtTrackAllocation (ACPI_MEM_LIST_GLOBAL, Allocation, Size,
+    Status = AcpiUtTrackAllocation (Allocation, Size,
                     ACPI_MEM_MALLOC, Component, Module, Line);
     if (ACPI_FAILURE (Status))
     {
@@ -640,8 +584,8 @@ AcpiUtAllocateAndTrack (
         return (NULL);
     }
 
-    AcpiGbl_MemoryLists[ACPI_MEM_LIST_GLOBAL].TotalAllocated++;
-    AcpiGbl_MemoryLists[ACPI_MEM_LIST_GLOBAL].CurrentTotalSize += (UINT32) Size;
+    AcpiGbl_GlobalList->TotalAllocated++;
+    AcpiGbl_GlobalList->CurrentTotalSize += (UINT32) Size;
 
     return ((void *) &Allocation->UserSpace);
 }
@@ -679,21 +623,21 @@ AcpiUtCallocateAndTrack (
     {
         /* Report allocation error */
 
-        _ACPI_REPORT_ERROR (Module, Line, Component,
-                ("UtCallocate: Could not allocate size %X\n", (UINT32) Size));
+        _ACPI_REPORT_ERROR (Module, Line,
+            ("UtCallocate: Could not allocate size %X\n", (UINT32) Size));
         return (NULL);
     }
 
-    Status = AcpiUtTrackAllocation (ACPI_MEM_LIST_GLOBAL, Allocation, Size,
-                        ACPI_MEM_CALLOC, Component, Module, Line);
+    Status = AcpiUtTrackAllocation (Allocation, Size,
+                ACPI_MEM_CALLOC, Component, Module, Line);
     if (ACPI_FAILURE (Status))
     {
         AcpiOsFree (Allocation);
         return (NULL);
     }
 
-    AcpiGbl_MemoryLists[ACPI_MEM_LIST_GLOBAL].TotalAllocated++;
-    AcpiGbl_MemoryLists[ACPI_MEM_LIST_GLOBAL].CurrentTotalSize += (UINT32) Size;
+    AcpiGbl_GlobalList->TotalAllocated++;
+    AcpiGbl_GlobalList->CurrentTotalSize += (UINT32) Size;
 
     return ((void *) &Allocation->UserSpace);
 }
@@ -730,7 +674,7 @@ AcpiUtFreeAndTrack (
 
     if (NULL == Allocation)
     {
-        _ACPI_REPORT_ERROR (Module, Line, Component,
+        _ACPI_REPORT_ERROR (Module, Line,
             ("AcpiUtFree: Attempt to delete a NULL address\n"));
 
         return_VOID;
@@ -739,14 +683,14 @@ AcpiUtFreeAndTrack (
     DebugBlock = ACPI_CAST_PTR (ACPI_DEBUG_MEM_BLOCK,
                     (((char *) Allocation) - sizeof (ACPI_DEBUG_MEM_HEADER)));
 
-    AcpiGbl_MemoryLists[ACPI_MEM_LIST_GLOBAL].TotalFreed++;
-    AcpiGbl_MemoryLists[ACPI_MEM_LIST_GLOBAL].CurrentTotalSize -= DebugBlock->Size;
+    AcpiGbl_GlobalList->TotalFreed++;
+    AcpiGbl_GlobalList->CurrentTotalSize -= DebugBlock->Size;
 
-    Status = AcpiUtRemoveAllocation (ACPI_MEM_LIST_GLOBAL, DebugBlock,
+    Status = AcpiUtRemoveAllocation (DebugBlock,
                     Component, Module, Line);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not free memory, %s\n",
+        ACPI_REPORT_ERROR (("Could not free memory, %s\n",
             AcpiFormatException (Status)));
     }
 
@@ -762,8 +706,7 @@ AcpiUtFreeAndTrack (
  *
  * FUNCTION:    AcpiUtFindAllocation
  *
- * PARAMETERS:  ListId                  - Memory list to search
- *              Allocation              - Address of allocated memory
+ * PARAMETERS:  Allocation              - Address of allocated memory
  *
  * RETURN:      A list element if found; NULL otherwise.
  *
@@ -773,7 +716,6 @@ AcpiUtFreeAndTrack (
 
 static ACPI_DEBUG_MEM_BLOCK *
 AcpiUtFindAllocation (
-    UINT32                  ListId,
     void                    *Allocation)
 {
     ACPI_DEBUG_MEM_BLOCK    *Element;
@@ -782,12 +724,7 @@ AcpiUtFindAllocation (
     ACPI_FUNCTION_ENTRY ();
 
 
-    if (ListId > ACPI_MEM_LIST_MAX)
-    {
-        return (NULL);
-    }
-
-    Element = AcpiGbl_MemoryLists[ListId].ListHead;
+    Element = AcpiGbl_GlobalList->ListHead;
 
     /* Search for the address. */
 
@@ -809,8 +746,7 @@ AcpiUtFindAllocation (
  *
  * FUNCTION:    AcpiUtTrackAllocation
  *
- * PARAMETERS:  ListId              - Memory list to search
- *              Allocation          - Address of allocated memory
+ * PARAMETERS:  Allocation          - Address of allocated memory
  *              Size                - Size of the allocation
  *              AllocType           - MEM_MALLOC or MEM_CALLOC
  *              Component           - Component type of caller
@@ -825,7 +761,6 @@ AcpiUtFindAllocation (
 
 static ACPI_STATUS
 AcpiUtTrackAllocation (
-    UINT32                  ListId,
     ACPI_DEBUG_MEM_BLOCK    *Allocation,
     ACPI_SIZE               Size,
     UINT8                   AllocType,
@@ -841,12 +776,7 @@ AcpiUtTrackAllocation (
     ACPI_FUNCTION_TRACE_PTR ("UtTrackAllocation", Allocation);
 
 
-    if (ListId > ACPI_MEM_LIST_MAX)
-    {
-        return_ACPI_STATUS (AE_BAD_PARAMETER);
-    }
-
-    MemList = &AcpiGbl_MemoryLists[ListId];
+    MemList = AcpiGbl_GlobalList;
     Status = AcpiUtAcquireMutex (ACPI_MTX_MEMORY);
     if (ACPI_FAILURE (Status))
     {
@@ -857,15 +787,14 @@ AcpiUtTrackAllocation (
      * Search list for this address to make sure it is not already on the list.
      * This will catch several kinds of problems.
      */
-
-    Element = AcpiUtFindAllocation (ListId, Allocation);
+    Element = AcpiUtFindAllocation (Allocation);
     if (Element)
     {
         ACPI_REPORT_ERROR ((
             "UtTrackAllocation: Allocation already present in list! (%p)\n",
             Allocation));
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Element %p Address %p\n",
+        ACPI_REPORT_ERROR (("Element %p Address %p\n",
             Element, Allocation));
 
         goto UnlockAndExit;
@@ -904,8 +833,7 @@ UnlockAndExit:
  *
  * FUNCTION:    AcpiUtRemoveAllocation
  *
- * PARAMETERS:  ListId              - Memory list to search
- *              Allocation          - Address of allocated memory
+ * PARAMETERS:  Allocation          - Address of allocated memory
  *              Component           - Component type of caller
  *              Module              - Source file name of caller
  *              Line                - Line number of caller
@@ -918,7 +846,6 @@ UnlockAndExit:
 
 static ACPI_STATUS
 AcpiUtRemoveAllocation (
-    UINT32                  ListId,
     ACPI_DEBUG_MEM_BLOCK    *Allocation,
     UINT32                  Component,
     const char              *Module,
@@ -931,17 +858,12 @@ AcpiUtRemoveAllocation (
     ACPI_FUNCTION_TRACE ("UtRemoveAllocation");
 
 
-    if (ListId > ACPI_MEM_LIST_MAX)
-    {
-        return_ACPI_STATUS (AE_BAD_PARAMETER);
-    }
-
-    MemList = &AcpiGbl_MemoryLists[ListId];
+    MemList = AcpiGbl_GlobalList;
     if (NULL == MemList->ListHead)
     {
         /* No allocations! */
 
-        _ACPI_REPORT_ERROR (Module, Line, Component,
+        _ACPI_REPORT_ERROR (Module, Line,
             ("UtRemoveAllocation: Empty allocation list, nothing to free!\n"));
 
         return_ACPI_STATUS (AE_OK);
@@ -1075,7 +997,7 @@ AcpiUtDumpAllocations (
         return;
     }
 
-    Element = AcpiGbl_MemoryLists[0].ListHead;
+    Element = AcpiGbl_GlobalList->ListHead;
     while (Element)
     {
         if ((Element->Component & Component) &&
@@ -1127,12 +1049,12 @@ AcpiUtDumpAllocations (
 
     if (!NumOutstanding)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-            "No outstanding allocations.\n"));
+        ACPI_REPORT_INFO ((
+            "No outstanding allocations\n"));
     }
     else
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "%d(%X) Outstanding allocations\n",
             NumOutstanding, NumOutstanding));
     }

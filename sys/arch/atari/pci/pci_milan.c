@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.6 2005/12/11 12:16:59 christos Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.6.2.1 2006/02/01 14:51:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.6 2005/12/11 12:16:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.6.2.1 2006/02/01 14:51:26 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.6 2005/12/11 12:16:59 christos Exp $
 #include <dev/isa/isavar.h>		/* isa_intr_{dis}establish */
 #include <dev/isa/isareg.h>		/* isa_intr_{dis}establish */
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include <machine/isa_machdep.h>	/* isa_intr_{dis}establish */
 
 #include <atari/pci/pci_vga.h>

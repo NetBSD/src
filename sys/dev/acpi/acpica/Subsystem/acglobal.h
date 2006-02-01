@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acglobal.h - Declarations for global variables
- *       xRevision: 164 $
+ *       xRevision: 1.175 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -155,6 +155,14 @@ extern      UINT32                      AcpiDbgLayer;
 
 extern      UINT32                      AcpiGbl_NestingLevel;
 
+/* Support for dynamic control method tracing mechanism */
+
+ACPI_EXTERN UINT32                      AcpiGbl_OriginalDbgLevel;
+ACPI_EXTERN UINT32                      AcpiGbl_OriginalDbgLayer;
+ACPI_EXTERN ACPI_NAME                   AcpiGbl_TraceMethodName;
+ACPI_EXTERN UINT32                      AcpiGbl_TraceDbgLevel;
+ACPI_EXTERN UINT32                      AcpiGbl_TraceDbgLayer;
+ACPI_EXTERN UINT32                      AcpiGbl_TraceFlags;
 
 /*****************************************************************************
  *
@@ -165,17 +173,22 @@ extern      UINT32                      AcpiGbl_NestingLevel;
 /*
  * Enable "slack" in the AML interpreter?  Default is FALSE, and the
  * interpreter strictly follows the ACPI specification.  Setting to TRUE
- * allows the interpreter to forgive certain bad AML constructs.  Currently:
+ * allows the interpreter to ignore certain errors and/or bad AML constructs.
+ *
+ * Currently, these features are enabled by this flag:
+ *
  * 1) Allow "implicit return" of last value in a control method
- * 2) Allow access beyond end of operation region
+ * 2) Allow access beyond the end of an operation region
  * 3) Allow access to uninitialized locals/args (auto-init to integer 0)
  * 4) Allow ANY object type to be a source operand for the Store() operator
+ * 5) Allow unresolved references (invalid target name) in package objects
  */
 #ifdef ACPICA_PEDANTIC
 ACPI_EXTERN UINT8       ACPI_INIT_GLOBAL (AcpiGbl_EnableInterpreterSlack, FALSE);
 #else
 ACPI_EXTERN UINT8       ACPI_INIT_GLOBAL (AcpiGbl_EnableInterpreterSlack, TRUE);
 #endif
+
 
 /*
  * Automatically serialize ALL control methods? Default is FALSE, meaning
@@ -228,6 +241,13 @@ ACPI_EXTERN ACPI_COMMON_FACS            AcpiGbl_CommonFACS;
  */
 
 
+/* The root table can be either an RSDT or an XSDT */
+
+ACPI_EXTERN UINT8                       AcpiGbl_RootTableType;
+#define     ACPI_TABLE_TYPE_RSDT        'R'
+#define     ACPI_TABLE_TYPE_XSDT        'X'
+
+
 /*
  * Handle both ACPI 1.0 and ACPI 2.0 Integer widths:
  * If we are executing a method that exists in a 32-bit ACPI table,
@@ -257,8 +277,23 @@ ACPI_EXTERN ACPI_MUTEX_INFO             AcpiGbl_MutexInfo[NUM_MUTEX];
  *
  ****************************************************************************/
 
+#ifdef ACPI_DBG_TRACK_ALLOCATIONS
 
-ACPI_EXTERN ACPI_MEMORY_LIST            AcpiGbl_MemoryLists[ACPI_NUM_MEM_LISTS];
+/* Lists for tracking memory allocations */
+
+ACPI_EXTERN ACPI_MEMORY_LIST           *AcpiGbl_GlobalList;
+ACPI_EXTERN ACPI_MEMORY_LIST           *AcpiGbl_NsNodeList;
+#endif
+
+/* Object caches */
+
+ACPI_EXTERN ACPI_CACHE_T               *AcpiGbl_StateCache;
+ACPI_EXTERN ACPI_CACHE_T               *AcpiGbl_PsNodeCache;
+ACPI_EXTERN ACPI_CACHE_T               *AcpiGbl_PsNodeExtCache;
+ACPI_EXTERN ACPI_CACHE_T               *AcpiGbl_OperandCache;
+
+/* Global handlers */
+
 ACPI_EXTERN ACPI_OBJECT_NOTIFY_HANDLER  AcpiGbl_DeviceNotify;
 ACPI_EXTERN ACPI_OBJECT_NOTIFY_HANDLER  AcpiGbl_SystemNotify;
 ACPI_EXTERN ACPI_EXCEPTION_HANDLER      AcpiGbl_ExceptionHandler;
@@ -266,15 +301,18 @@ ACPI_EXTERN ACPI_INIT_HANDLER           AcpiGbl_InitHandler;
 ACPI_EXTERN ACPI_WALK_STATE            *AcpiGbl_BreakpointWalk;
 ACPI_EXTERN ACPI_HANDLE                 AcpiGbl_GlobalLockSemaphore;
 
+/* Misc */
+
 ACPI_EXTERN UINT32                      AcpiGbl_GlobalLockThreadCount;
 ACPI_EXTERN UINT32                      AcpiGbl_OriginalMode;
 ACPI_EXTERN UINT32                      AcpiGbl_RsdpOriginalLocation;
 ACPI_EXTERN UINT32                      AcpiGbl_NsLookupCount;
 ACPI_EXTERN UINT32                      AcpiGbl_PsFindCount;
+ACPI_EXTERN UINT32                      AcpiGbl_OwnerIdMask[ACPI_NUM_OWNERID_MASKS];
 ACPI_EXTERN UINT16                      AcpiGbl_Pm1EnableRegisterSave;
-ACPI_EXTERN UINT16                      AcpiGbl_NextTableOwnerId;
-ACPI_EXTERN UINT16                      AcpiGbl_NextMethodOwnerId;
 ACPI_EXTERN UINT16                      AcpiGbl_GlobalLockHandle;
+ACPI_EXTERN UINT8                       AcpiGbl_LastOwnerIdIndex;
+ACPI_EXTERN UINT8                       AcpiGbl_NextOwnerIdOffset;
 ACPI_EXTERN UINT8                       AcpiGbl_DebuggerConfiguration;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_GlobalLockAcquired;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_StepToNextCall;

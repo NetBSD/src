@@ -2,7 +2,7 @@
  *
  * Module Name: dsopcode - Dispatcher Op Region support and handling of
  *                         "control" opcodes
- *              xRevision: 102 $
+ *              xRevision: 1.105 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsopcode.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsopcode.c,v 1.12.2.1 2006/02/01 14:51:49 yamt Exp $");
 
 #define __DSOPCODE_C__
 
@@ -198,7 +198,8 @@ AcpiDsExecuteArguments (
     WalkState = AcpiDsCreateWalkState (0, NULL, NULL, NULL);
     if (!WalkState)
     {
-        return_ACPI_STATUS (AE_NO_MEMORY);
+        Status = AE_NO_MEMORY;
+        goto Cleanup;
     }
 
     Status = AcpiDsInitAmlWalk (WalkState, Op, NULL, AmlStart,
@@ -206,7 +207,7 @@ AcpiDsExecuteArguments (
     if (ACPI_FAILURE (Status))
     {
         AcpiDsDeleteWalkState (WalkState);
-        return_ACPI_STATUS (Status);
+        goto Cleanup;
     }
 
     /* Mark this parse as a deferred opcode */
@@ -219,8 +220,7 @@ AcpiDsExecuteArguments (
     Status = AcpiPsParseAml (WalkState);
     if (ACPI_FAILURE (Status))
     {
-        AcpiPsDeleteParseTree (Op);
-        return_ACPI_STATUS (Status);
+        goto Cleanup;
     }
 
     /* Get and init the Op created above */
@@ -243,7 +243,8 @@ AcpiDsExecuteArguments (
     WalkState = AcpiDsCreateWalkState (0, NULL, NULL, NULL);
     if (!WalkState)
     {
-        return_ACPI_STATUS (AE_NO_MEMORY);
+        Status = AE_NO_MEMORY;
+        goto Cleanup;
     }
 
     /* Execute the opcode and arguments */
@@ -253,13 +254,15 @@ AcpiDsExecuteArguments (
     if (ACPI_FAILURE (Status))
     {
         AcpiDsDeleteWalkState (WalkState);
-        return_ACPI_STATUS (Status);
+        goto Cleanup;
     }
 
     /* Mark this execution as a deferred opcode */
 
     WalkState->DeferredNode = Node;
     Status = AcpiPsParseAml (WalkState);
+
+Cleanup:
     AcpiPsDeleteParseTree (Op);
     return_ACPI_STATUS (Status);
 }
@@ -347,7 +350,7 @@ AcpiDsGetBufferArguments (
     if (!Node)
     {
         ACPI_REPORT_ERROR ((
-                "No pointer back to NS node in buffer obj %p\n", ObjDesc));
+            "No pointer back to NS node in buffer obj %p\n", ObjDesc));
         return_ACPI_STATUS (AE_AML_INTERNAL);
     }
 
@@ -396,7 +399,7 @@ AcpiDsGetPackageArguments (
     if (!Node)
     {
         ACPI_REPORT_ERROR ((
-                "No pointer back to NS node in package %p\n", ObjDesc));
+            "No pointer back to NS node in package %p\n", ObjDesc));
         return_ACPI_STATUS (AE_AML_INTERNAL);
     }
 
@@ -532,7 +535,7 @@ AcpiDsInitBufferField (
 
     if (ACPI_GET_OBJECT_TYPE (BufferDesc) != ACPI_TYPE_BUFFER)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Target of Create Field is not a Buffer object - %s\n",
             AcpiUtGetObjectTypeName (BufferDesc)));
 
@@ -547,10 +550,10 @@ AcpiDsInitBufferField (
      */
     if (ACPI_GET_DESCRIPTOR_TYPE (ResultDesc) != ACPI_DESC_TYPE_NAMED)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-                "(%s) destination not a NS Node [%s]\n",
-                AcpiPsGetOpcodeName (AmlOpcode),
-                AcpiUtGetDescriptorName (ResultDesc)));
+        ACPI_REPORT_ERROR ((
+            "(%s) destination not a NS Node [%s]\n",
+            AcpiPsGetOpcodeName (AmlOpcode),
+            AcpiUtGetDescriptorName (ResultDesc)));
 
         Status = AE_AML_OPERAND_TYPE;
         goto Cleanup;
@@ -575,7 +578,7 @@ AcpiDsInitBufferField (
 
         if (BitCount == 0)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+            ACPI_REPORT_ERROR ((
                 "Attempt to CreateField of length 0\n"));
             Status = AE_AML_OPERAND_VALUE;
             goto Cleanup;
@@ -629,7 +632,7 @@ AcpiDsInitBufferField (
 
     default:
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Unknown field creation opcode %02x\n",
             AmlOpcode));
         Status = AE_AML_BAD_OPCODE;
@@ -641,12 +644,12 @@ AcpiDsInitBufferField (
     if ((BitOffset + BitCount) >
         (8 * (UINT32) BufferDesc->Buffer.Length))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+        ACPI_REPORT_ERROR ((
             "Field [%4.4s] size %d exceeds Buffer [%4.4s] size %d (bits)\n",
-             AcpiUtGetNodeName (ResultDesc),
-             BitOffset + BitCount,
-             AcpiUtGetNodeName (BufferDesc->Buffer.Node),
-             8 * (UINT32) BufferDesc->Buffer.Length));
+            AcpiUtGetNodeName (ResultDesc),
+            BitOffset + BitCount,
+            AcpiUtGetNodeName (BufferDesc->Buffer.Node),
+            8 * (UINT32) BufferDesc->Buffer.Length));
         Status = AE_AML_BUFFER_LIMIT;
         goto Cleanup;
     }
@@ -763,7 +766,7 @@ AcpiDsEvalBufferFieldOperands (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "(%s) bad operand(s) (%X)\n",
+        ACPI_REPORT_ERROR (("(%s) bad operand(s) (%X)\n",
             AcpiPsGetOpcodeName (Op->Common.AmlOpcode), Status));
 
         return_ACPI_STATUS (Status);
@@ -1305,7 +1308,7 @@ AcpiDsExecEndControlOp (
 
     default:
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unknown control opcode=%X Op=%p\n",
+        ACPI_REPORT_ERROR (("Unknown control opcode=%X Op=%p\n",
             Op->Common.AmlOpcode, Op));
 
         Status = AE_AML_BAD_OPCODE;

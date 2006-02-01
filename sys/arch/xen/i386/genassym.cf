@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 2005/12/11 12:19:48 christos Exp $
+#	$NetBSD: genassym.cf,v 1.5.2.1 2006/02/01 14:51:42 yamt Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -102,6 +102,12 @@ include <machine/pmap.h>
 include <machine/vmparam.h>
 include <machine/intr.h>
 include <machine/types.h>
+
+ifdef XEN3
+include <machine/xen3-public/sched.h>
+else
+include <machine/xen-public/xen.h>
+endif
 
 ifdef COMPAT_SVR4
 include <compat/svr4/svr4_ucontext.h>
@@ -305,3 +311,23 @@ define	X86_SOFTINTR_SOFTNET	X86_SOFTINTR_SOFTNET
 define	X86_SOFTINTR_SOFTCLOCK	X86_SOFTINTR_SOFTCLOCK
 
 define	PSL_MBO			PSL_MBO
+
+ifdef XEN3
+define START_INFO_SHARED_INFO	offsetof(struct start_info, shared_info)
+define START_INFO_FLAGS		offsetof(struct start_info, flags)
+define START_INFO_CONSOLE_MFN	offsetof(struct start_info, console_mfn)
+else
+define START_INFO_SHARED_INFO	offsetof(start_info_t, shared_info)
+endif
+define SIF_INITDOMAIN		SIF_INITDOMAIN
+
+ifdef XEN3
+define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info, vcpu_data[0].evtchn_upcall_pending)
+define EVTCHN_UPCALL_MASK	offsetof(struct shared_info, vcpu_data[0].evtchn_upcall_mask)
+else
+define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info_st, vcpu_data[0].evtchn_upcall_pending)
+define EVTCHN_UPCALL_MASK	offsetof(struct shared_info_st, vcpu_data[0].evtchn_upcall_mask)
+endif
+
+define HYPERVISOR_sched_op	__HYPERVISOR_sched_op
+define SCHEDOP_yield		SCHEDOP_yield

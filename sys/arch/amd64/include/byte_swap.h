@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.3 2005/12/28 18:40:13 perry Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.3.2.1 2006/02/01 14:51:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,48 +43,29 @@
 #ifndef _AMD64_BYTE_SWAP_H_
 #define	_AMD64_BYTE_SWAP_H_
 
+#ifdef  __GNUC__
 #include <sys/types.h>
+__BEGIN_DECLS
 
-static __inline u_int32_t __byte_swap_long_variable(u_int32_t);
-static __inline u_int16_t __byte_swap_word_variable(u_int16_t);
-
-static __inline u_int32_t
-__byte_swap_long_variable(u_int32_t x)
+#define	__BYTE_SWAP_U32_VARIABLE __byte_swap_u32_variable
+static __inline uint32_t __byte_swap_u32_variable(uint32_t);
+static __inline uint32_t
+__byte_swap_u32_variable(uint32_t x)
 {
 	__asm volatile ( "bswap %1" : "=r" (x) : "0" (x));
 	return (x);
 }
 
-static __inline u_int16_t
-__byte_swap_word_variable(u_int16_t x)
+#define	__BYTE_SWAP_U16_VARIABLE __byte_swap_u16_variable
+static __inline uint16_t __byte_swap_u16_variable(uint16_t);
+static __inline uint16_t
+__byte_swap_u16_variable(uint16_t x)
 {
 	__asm volatile ("rorw $8, %w1" : "=r" (x) : "0" (x)); 
 	return (x);
 }
 
-
-#ifdef __OPTIMIZE__
-
-#define	__byte_swap_long_constant(x) \
-	((((x) & 0xff000000) >> 24) | \
-	 (((x) & 0x00ff0000) >>  8) | \
-	 (((x) & 0x0000ff00) <<  8) | \
-	 (((x) & 0x000000ff) << 24))
-#define	__byte_swap_word_constant(x) \
-	((((x) & 0xff00) >> 8) | \
-	 (((x) & 0x00ff) << 8))
-#define	__byte_swap_long(x) \
-	(__builtin_constant_p((x)) ? \
-	 __byte_swap_long_constant(x) : __byte_swap_long_variable(x))
-#define	__byte_swap_word(x) \
-	(__builtin_constant_p((x)) ? \
-	 __byte_swap_word_constant(x) : __byte_swap_word_variable(x))
-
-#else /* __OPTIMIZE__ */
-
-#define	__byte_swap_long(x)	__byte_swap_long_variable(x)
-#define	__byte_swap_word(x)	__byte_swap_word_variable(x)
-
-#endif /* __OPTIMIZE__ */
+__END_DECLS
+#endif
 
 #endif /* !_AMD64_BYTE_SWAP_H_ */

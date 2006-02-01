@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.26 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.26.2.1 2006/02/01 14:51:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.26 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.26.2.1 2006/02/01 14:51:26 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.26 2005/12/11 12:16:54 christos Exp $")
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/iomap.h>
@@ -218,6 +218,7 @@ wdc_mb_attach(parent, self, aux)
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
+	sc->sc_channel.ch_ndrive = 2;
 
 	/*
 	 * Setup & enable disk related interrupts.

@@ -1,12 +1,17 @@
-#	$NetBSD: Makefile,v 1.35.2.1 2006/01/15 10:02:36 yamt Exp $
+#	$NetBSD: Makefile,v 1.35.2.2 2006/02/01 14:51:25 yamt Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
 ### what we need:
 
+#XX# lines replace similar lines, or are added, in case we want to
+#XX# compile LIBZ ourselves to save a few bytes (think TXLT)
+
+#XX#DIR_LIBZ =	${DIR_TOP}/../common/dist/zlib
+
 DIR_TOP=	${.CURDIR}/../../../../..
 DIR_SA = 	${DIR_TOP}/lib/libsa
-DIR_LIBZ =	${DIR_TOP}/lib/libz
+DIR_LIBZ=
 DIR_KERN=	${DIR_TOP}/lib/libkern
 DIR_KERN_MD=	${DIR_TOP}/lib/libkern/arch/$(MACHINE_ARCH)
 DIR_LIBC=	${DIR_TOP}/../common/lib/libc
@@ -16,6 +21,14 @@ DIR_LIBC=	${DIR_TOP}/../common/lib/libc
 	${DIR_LIBC}/inet ${DIR_LIBC}/arch/m68k/inet \
 	${DIR_LIBC}/quad ${DIR_LIBC}/arch/m68k/quad \
 	${DIR_LIBC}/string ${DIR_LIBC}/arch/m68k/string
+
+### find out what to use for libz
+
+S=	${DIR_TOP}	# ????
+Z_AS= library
+ZMISCCPPFLAGS=-DDYNAMIC_CRC_TABLE -DNOBYFOUR -UBYFOUR 
+.include "${DIR_TOP}/lib/libz/Makefile.inc"
+LIBZ= ${ZLIB}
 
 # prefer our assembler versions over assembler, and assembler over C:
 
@@ -28,19 +41,22 @@ BINDIR=/usr/mdec
 COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
 COBJS+=  lseek.o open.o read.o close.o dev.o errno.o
 COBJS+=  ufs.o ustarfs.o panic.o vers.o files.o
-COBJS+=  divdi3.o moddi3.o qdivrem.o snprintf.o
+COBJS+=  divdi3.o moddi3.o qdivrem.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
-SOBJS += strlen.o memcmp.o strerror.o sprintf.o subr_prf.o
-SOBJS += libstubs.o memcmp.o memmove.o memset.o strncmp.o
+SOBJS += strlen.o memcmp.o memset.o strerror.o strncmp.o
+SOBJS += libstubs.o
 
 OBJS=	$(SOBJS) $(COBJS)
 
-DEFS = -D_STANDALONE -DINSECURE
+#XX#DEFS = -D_STANDALONE -DINSECURE -DDYNAMIC_CRC_TABLE -DNOBYFOUR -UBYFOUR 
+DEFS = -D_STANDALONE -DINSECURE 
 DEFS += -D__INTERNAL_LIBSA_CREAD
 SOBJS += cread.o
-SOBJS += crc32.o inflate.o infblock.o infcodes.o inftrees.o # XXX need libz!!!
-SOBJS += inffast.o infutil.o
+
+#XX#SOBJS += adler32.o crc32.o inflate.o trees.o \
+#XX#       zutil.o infback.o inftrees.o inffast.o
+
 #DEFS += -DBOOT_ELF32 -DBOOT_AOUT
 SOBJS += loadfile.o loadfile_aout.o loadfile_elf32.o
 
@@ -79,7 +95,7 @@ CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 boot.amiga: x.out
 	${RELOC2BB} -S x.out $@ || ${NM} -u x.out
 
-x.out: xxstart.o libboot.a
+x.out: xxstart.o libboot.a ${LIBZ}
 	${LD} ${LDFLAGS} -r -dc -e _start -o $@ $>
 	${SIZE} $@
 	${NM} -u $@

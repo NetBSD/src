@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.18 2005/12/24 22:50:07 perry Exp $	*/
+/*	$NetBSD: Locore.c,v 1.18.2.1 2006/02/01 14:51:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,10 +40,11 @@
 
 static int (*openfirmware)(void *);
 
-static void startup(void *, int, int (*)(void *), char *, int);
+static void startup(void *, int, int (*)(void *), char *, int)
+		__attribute__((__used__));
 static void setup(void);
 
-static int stack[8192/4 + 4];
+static int stack[8192/4 + 4] __attribute__((__used__));
 
 #ifdef XCOFF_GLUE
 __asm(
@@ -52,7 +53,7 @@ __asm(
 "_entry:			\n"
 "	.long	_start,0,0	\n"
 );
-#endif
+#endif /* XCOFF_GLUE */
 
 __asm(
 "	.text			\n"
@@ -122,7 +123,6 @@ openfirmware(void *arg)
 static void
 startup(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 {
-	extern char etext[], _end[], _edata[];
 
 	openfirmware = openfirm;
 	setup();
@@ -134,7 +134,7 @@ __dead void
 OF_exit(void)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 	} args = {
@@ -148,13 +148,13 @@ OF_exit(void)
 }
 
 int
-OF_finddevice(char *name)
+OF_finddevice(const char *name)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
-		char *device;
+		const char *device;
 		int phandle;
 	} args = {
 		"finddevice",
@@ -172,7 +172,7 @@ int
 OF_instance_to_package(int ihandle)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int ihandle;
@@ -190,14 +190,14 @@ OF_instance_to_package(int ihandle)
 }
 
 int
-OF_getprop(int handle, char *prop, void *buf, int buflen)
+OF_getprop(int handle, const char *prop, void *buf, int buflen)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int phandle;
-		char *prop;
+		const char *prop;
 		void *buf;
 		int buflen;
 		int size;
@@ -218,14 +218,14 @@ OF_getprop(int handle, char *prop, void *buf, int buflen)
 
 #ifdef	__notyet__	/* Has a bug on FirePower */
 int
-OF_setprop(int handle, char *prop, void *buf, int len)
+OF_setprop(int handle, const char *prop, void *buf, int len)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int phandle;
-		char *prop;
+		const char *prop;
 		void *buf;
 		int len;
 		int size;
@@ -246,13 +246,13 @@ OF_setprop(int handle, char *prop, void *buf, int len)
 #endif
 
 int
-OF_open(char *dname)
+OF_open(const char *dname)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
-		char *dname;
+		const char *dname;
 		int handle;
 	} args = {
 		"open",
@@ -281,7 +281,7 @@ void
 OF_close(int handle)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int handle;
@@ -302,7 +302,7 @@ int
 OF_write(int handle, void *addr, int len)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int ihandle;
@@ -339,7 +339,7 @@ int
 OF_read(int handle, void *addr, int len)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int ihandle;
@@ -376,7 +376,7 @@ int
 OF_seek(int handle, u_quad_t pos)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int handle;
@@ -411,7 +411,7 @@ void *
 OF_claim(void *virt, u_int size, u_int align)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		void *virt;
@@ -446,7 +446,7 @@ void
 OF_release(void *virt, u_int size)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		void *virt;
@@ -469,7 +469,7 @@ int
 OF_milliseconds(void)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		int ms;
@@ -488,7 +488,7 @@ void
 OF_chain(void *virt, u_int size, void (*entry)(), void *arg, u_int len)
 {
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		void *virt;
@@ -524,14 +524,14 @@ OF_chain(void *virt, u_int size, boot_entry_t entry, void *arg, u_int len)
 #endif
 
 int
-OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
+OF_call_method(const char *method, int ihandle, int nargs, int nreturns, ...)
 {
 	va_list ap;
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
-		char *method;
+		const char *method;
 		int ihandle;
 		int args_n_results[12];
 	} args = {

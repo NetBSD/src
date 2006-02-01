@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.46 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: ufs.c,v 1.46.2.1 2006/02/01 14:52:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -132,7 +132,7 @@ struct fs {
 #define ufs_dinode	ufs1_dinode
 #endif
 #ifndef indp_t
-#define indp_t		uint32_t
+#define indp_t		int32_t
 #endif
 typedef uint32_t	ino32_t;
 #ifndef FSBTODB
@@ -751,9 +751,9 @@ ufs_close(struct open_file *f)
 		return (0);
 
 	if (fp->f_buf)
-		free(fp->f_buf, fp->f_fs->fs_bsize);
-	free(fp->f_fs, SBLOCKSIZE);
-	free(fp, sizeof(struct file));
+		dealloc(fp->f_buf, fp->f_fs->fs_bsize);
+	dealloc(fp->f_fs, SBLOCKSIZE);
+	dealloc(fp, sizeof(struct file));
 	return (0);
 }
 

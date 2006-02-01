@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.38 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: nfs.c,v 1.38.2.1 2006/02/01 14:52:36 yamt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -499,18 +499,18 @@ nfs_open(path, f)
 			cp = namebuf;
 			if (*cp == '/') {
 				if (currfd != &nfs_root_node)
-					free(currfd, sizeof(*currfd));
+					dealloc(currfd, sizeof(*currfd));
 				currfd = &nfs_root_node;
 			}
 
-			free(newfd, sizeof(*newfd));
+			dealloc(newfd, sizeof(*newfd));
 			newfd = 0;
 
 			continue;
 		}
 
 		if (currfd != &nfs_root_node)
-			free(currfd, sizeof(*currfd));
+			dealloc(currfd, sizeof(*currfd));
 		currfd = newfd;
 		newfd = 0;
 	}
@@ -546,9 +546,9 @@ out:
 		    path, strerror(error));
 #endif
 	if (currfd != &nfs_root_node)
-		free(currfd, sizeof(*currfd));
+		dealloc(currfd, sizeof(*currfd));
 	if (newfd)
-		free(newfd, sizeof(*newfd));
+		dealloc(newfd, sizeof(*newfd));
 
 	return (error);
 }
@@ -565,7 +565,7 @@ nfs_close(f)
 #endif
 
 	if (fp)
-		free(fp, sizeof(struct nfs_iodesc));
+		dealloc(fp, sizeof(struct nfs_iodesc));
 	f->f_fsdata = (void *)0;
 
 	return (0);

@@ -1,4 +1,4 @@
-#	$NetBSD: genlintstub.awk,v 1.9 2005/12/11 12:24:29 christos Exp $
+#	$NetBSD: genlintstub.awk,v 1.9.2.1 2006/02/01 14:52:20 yamt Exp $
 #
 # Copyright 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -43,8 +43,9 @@
 # This is used as an indicator that the file contains no stubs at
 # all. It generates a /* LINTED */ comment to quiet lint.
 #
-# /* LINTSTUB: Func: type function(args) */
+# /* LINTSTUB: Func: type function(args); */
 # type must be void, int or long. A return is faked up for ints and longs.
+# Semicolon is optional.
 #
 # /* LINTSTUB: Var: type variable, variable; */
 # This is often appropriate for assembly bits that the rest of the
@@ -64,87 +65,132 @@
 # haven't just forgotten to put a stub in for something and you are
 # *deliberately* ignoring it.
 
-BEGIN	{
-		printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
-		printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
-		printf "/* This file was automatically generated. */\n";
-		printf "/* see genlintstub.awk for details.       */\n";
-		printf "/* This file was automatically generated. */\n";
-		printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
-		printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
-		printf "\n\n";
-	}
+# LINTSTUBs are also accepted inside multiline comments, e.g.
+#
+# /*
+#  * LINTSTUB: include <foo>
+#  * LINTSTUB: include "bar"
+#  */
+#
+# /*
+#  * LINTSTUB: Func: type function(args)
+#  *    Some descriptive comment about the function.
+#  */
 
-/^\/\* LINTSTUB: Empty.*\*\/[ \t]*$/ {
-		printf "/* LINTED (empty translation unit) */\n";
+BEGIN {
+	printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
+	printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
+	printf "/* This file was automatically generated. */\n";
+	printf "/* see genlintstub.awk for details.       */\n";
+	printf "/* This file was automatically generated. */\n";
+	printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
+	printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
+	printf "\n\n";
+
+	nerrors = 0;
+}
+
+function error(msg) {
+	printf "ERROR:%d: %s: \"%s\"\n", NR, msg, $0 > "/dev/stderr";
+	++nerrors;
+}
+
+END {
+	if (nerrors > 0)
+		exit 1;
+}
+
+
+# Check if $i contains semicolon or "*/" comment terminator.  If it
+# does, strip them and the rest of the word away and return 1 to
+# signal that no more words on the line are to be processed.
+
+function process_word(i) {
+	if ($i ~ /;/) {
+		sub(";.*$", "", $i);
+		return 1;
+	}
+	else if ($i ~ /\*\//) {
+		sub("\\*\\/.*$", "", $i);
+		return 1;
+	}
+	else if (i == NF)
+		return 1;
+	else
+		return 0;
+}
+
+
+/^[\/ ]\* LINTSTUB: Func:/ {
+	if (NF < 5) {
+		error("bad 'Func' declaration");
 		next;
 	}
-
-/^\/\* LINTSTUB: Func:.*\)[ \t]*[;]?[ \t]+\*\/[ \t]*$/ {
-		if (($4 == "int") || ($4 == "long"))
-			retflag = 1;
-		else if ($4 == "void")
-			retflag = 0;
-		else {
-			printf "ERROR: %s: type is not int or void\n", $4 > "/dev/stderr";
-			exit 1;
+	if (($4 == "int") || ($4 == "long"))
+		retflag = 1;
+	else if ($4 == "void")
+		retflag = 0;
+	else {
+		error("type is not int, long or void");
+		next;
+	}
+	printf "/* ARGSUSED */\n%s", $4;
+	for (i = 5; i <= NF; ++i) {
+		if (process_word(i)) {
+			printf " %s\n", $i;
+			break;
 		}
-		print "/* ARGSUSED */";
-		for (i = 4; i < NF; i++) {
-			if (i != (NF - 1))
-				printf "%s ", $i;
-			else {
-				sub(";$", "", $i);
-				printf "%s\n", $i;
-			}
+		else
+			printf " %s", $i;
+	}
+	print "{";
+	if (retflag)
+		print "\treturn(0);";
+	print "}\n";
+	next;
+}
+
+/^[\/ ]\* LINTSTUB: Var:/ {
+	if (NF < 4) {
+		error("bad 'Var' declaration");
+		next;
+	}
+	for (i = 4; i <= NF; ++i) {
+		if (process_word(i)) {
+			printf " %s;\n", $i;
+			break;
 		}
-		print "{";
-		if (retflag)
-			print "\treturn(0);"
-		print "}\n";
+		else
+			printf " %s", $i;
+	}
+	next;
+}
+
+/^[\/ ]\* LINTSTUB: include[ \t]+/ {
+	if (NF < 4) {
+		error("bad 'include' directive");
 		next;
 	}
+	sub("\\*\\/.*$", "", $4);
+	printf "#include %s\n", $4;
+	next;
+}
 
-/^\/\* LINTSTUB: Func:/ {
-	  printf "ERROR: bad function declaration: %s\n", $0 > "/dev/stderr";
-	  exit 1;
-	}
+/^[\/ ]\* LINTSTUB: Empty($|[^_0-9A-Za-z])/ {
+	printf "/* LINTED (empty translation unit) */\n";
+	next;
+}
 
-/^\/\* LINTSTUB: Var:.*[ \t]+\*\/[ \t]*$/ {
-		for (i = 4; i < NF; i++) {
-			if (i != (NF - 1))
-				printf "%s ", $i;
-			else {
-				gsub(";$", "", $i);
-				printf "%s;\n\n", $i;
-			}
-		}
-		next;
-	}
+/^[\/ ]\* LINTSTUB: Ignore($|[^_0-9A-Za-z])/ {
+	next;
+}
 
-/^\/\* LINTSTUB: Var:/ {
-	  printf "ERROR: bad variable declaration: %s\n", $0 > "/dev/stderr";
-	  exit 1;
-	}
+/^[\/ ]\* LINTSTUBS:/ {
+	error("LINTSTUB, not LINTSTUBS");
+	next;
+}
 
-/^\/\* LINTSTUB: include[ \t]+.*\*\/[ \t]*$/ {
-		printf "#include %s\n", $4;
-		next;
-	}
-
-/^\/\* LINTSTUB: Ignore.*\*\/[ \t]*$/ { next; }
-
-/^\/\* LINTSTUB: Ignore/ {
-	  printf "ERROR: bad ignore declaration: %s\n", $0 > "/dev/stderr";
-	  exit 1;
-	}
-
-/^\/\* LINTSTUBS:/ {
-	  printf "ERROR: LINTSTUB, not LINTSTUBS: %s\n", $0 > "/dev/stderr";
-	  exit 1;
-	}
-
-/^\/\* LINTSTUB:/ {
-	  printf "ERROR: bad declaration: %s\n", $0 > "/dev/stderr";
-	  exit 1;
-	}
+/^[\/ ]\* LINTSTUB:/ {
+	error("unrecognized");
+	next;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.6 2000/03/31 19:55:09 castor Exp $	*/
+/*	$NetBSD: ip_cksum.c,v 1.2.4.2 2006/02/01 14:52:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -64,12 +64,10 @@
  * In particular, it should not be this one.
  */
 int
-in_cksum(p, len)
-	void *p;
-	int len;
+ip_cksum(const void *p, size_t llen)
 {
-	int sum = 0, oddbyte = 0, v = 0;
-	u_char *cp = p;
+	int sum = 0, oddbyte = 0, v = 0, len = (int)llen;
+	const u_char *cp = p;
 
 	/* we assume < 2^16 bytes being summed */
 	while (len > 0) {
@@ -79,7 +77,7 @@ in_cksum(p, len)
 		}
 		if (((long)cp & 1) == 0) {
 			while ((len -= 2) >= 0) {
-				sum += *(u_short *)cp;
+				sum += *(const u_short *)cp;
 				cp += 2;
 			}
 		} else {

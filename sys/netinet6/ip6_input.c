@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.80 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.80.2.1 2006/02/01 14:52:41 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.80 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.80.2.1 2006/02/01 14:52:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.80 2005/12/11 12:25:02 christos Exp 
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet/icmp6.h>
+#include <netinet6/scope6_var.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
 
@@ -139,6 +140,7 @@ struct pfil_head inet6_pfil_hook;
 struct ip6stat ip6stat;
 
 static void ip6_init2 __P((void *));
+static struct m_tag *ip6_setdstifaddr __P((struct mbuf *, struct in6_ifaddr *));
 
 static int ip6_hopopts_input __P((u_int32_t *, u_int32_t *, struct mbuf **, int *));
 static struct mbuf *ip6_pullexthdr __P((struct mbuf *, size_t, int));
@@ -164,6 +166,8 @@ ip6_init()
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip6_protox[pr->pr_protocol] = pr - inet6sw;
 	ip6intrq.ifq_maxlen = ip6qmaxlen;
+	scope6_init();
+	addrsel_policy_init();
 	nd6_init();
 	frag6_init();
 
@@ -233,6 +237,11 @@ ip6_input(m)
 #endif
 
 	/*
+	 * make sure we don't have onion peering information into m_tag.
+	 */
+	ip6_delaux(m);
+
+	/*
 	 * mbuf statistics
 	 */
 	if (m->m_flags & M_EXT) {
@@ -260,7 +269,7 @@ ip6_input(m)
 	/*
 	 * If the IPv6 header is not aligned, slurp it up into a new
 	 * mbuf with space for link headers, in the event we forward
-	 * it.  OTherwise, if it is aligned, make sure the entire base
+	 * it.  Otherwise, if it is aligned, make sure the entire base
 	 * IPv6 header is in the first mbuf of the chain.
 	 */
 	if (IP6_HDR_ALIGNED_P(mtod(m, caddr_t)) == 0) {
@@ -375,61 +384,24 @@ ip6_input(m)
 	}
 #endif
 
-	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
-	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) {
-		if (m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) {
-			ours = 1;
-			deliverifp = m->m_pkthdr.rcvif;
-			goto hbhcheck;
-		} else {
-			ip6stat.ip6s_badscope++;
-			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
-			goto bad;
-		}
-	}
-
-	/* drop packets if interface ID portion is already filled */
-	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src) &&
-		    ip6->ip6_src.s6_addr16[1]) {
-			ip6stat.ip6s_badscope++;
-			goto bad;
-		}
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst) &&
-		    ip6->ip6_dst.s6_addr16[1]) {
-			ip6stat.ip6s_badscope++;
-			goto bad;
-		}
-	}
-
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-		ip6->ip6_src.s6_addr16[1]
-			= htons(m->m_pkthdr.rcvif->if_index);
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-		ip6->ip6_dst.s6_addr16[1]
-			= htons(m->m_pkthdr.rcvif->if_index);
-
 	/*
-	 * We use rt->rt_ifp to determine if the address is ours or not.
-	 * If rt_ifp is lo0, the address is ours.
-	 * The problem here is, rt->rt_ifp for fe80::%lo0/64 is set to lo0,
-	 * so any address under fe80::%lo0/64 will be mistakenly considered
-	 * local.  The special case is supplied to handle the case properly
-	 * by actually looking at interface addresses
-	 * (using in6ifa_ifpwithaddr).
+	 * Disambiguate address scope zones (if there is ambiguity).
+	 * We first make sure that the original source or destination address
+	 * is not in our internal form for scoped addresses.  Such addresses
+	 * are not necessarily invalid spec-wise, but we cannot accept them due
+	 * to the usage conflict.
+	 * in6_setscope() then also checks and rejects the cases where src or
+	 * dst are the loopback address and the receiving interface
+	 * is not loopback. 
 	 */
-	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) != 0 &&
-	    IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst)) {
-		if (!in6ifa_ifpwithaddr(m->m_pkthdr.rcvif, &ip6->ip6_dst)) {
-			icmp6_error(m, ICMP6_DST_UNREACH,
-			    ICMP6_DST_UNREACH_ADDR, 0);
-			/* m is already freed */
-			return;
-		}
-
-		ours = 1;
-		deliverifp = m->m_pkthdr.rcvif;
-		goto hbhcheck;
+	if (in6_clearscope(&ip6->ip6_src) || in6_clearscope(&ip6->ip6_dst)) {
+		ip6stat.ip6s_badscope++; /* XXX */
+		goto bad;
+	}
+	if (in6_setscope(&ip6->ip6_src, m->m_pkthdr.rcvif, NULL) ||
+	    in6_setscope(&ip6->ip6_dst, m->m_pkthdr.rcvif, NULL)) {
+		ip6stat.ip6s_badscope++;
+		goto bad;
 	}
 
 	/*
@@ -582,6 +554,27 @@ ip6_input(m)
 	}
 
   hbhcheck:
+	/*
+	 * record address information into m_tag, if we don't have one yet.
+	 * note that we are unable to record it, if the address is not listed
+	 * as our interface address (e.g. multicast addresses, addresses
+	 * within FAITH prefixes and such).
+	 */
+	if (deliverifp && !ip6_getdstifaddr(m)) {
+		struct in6_ifaddr *ia6;
+
+		ia6 = in6_ifawithifp(deliverifp, &ip6->ip6_dst);
+		if (ia6) {
+			if (!ip6_setdstifaddr(m, ia6)) {
+				/*
+				 * XXX maybe we should drop the packet here,
+				 * as we could not provide enough information
+				 * to the upper layers.
+				 */
+			}
+		}
+	}
+
 	/*
 	 * Process Hop-by-Hop options header if it's contained.
 	 * m may be modified in ip6_hopopts_input().
@@ -750,6 +743,35 @@ ip6_input(m)
 	return;
  bad:
 	m_freem(m);
+}
+
+/*
+ * set/grab in6_ifaddr correspond to IPv6 destination address.
+ */
+static struct m_tag *
+ip6_setdstifaddr(m, ia6)
+	struct mbuf *m;
+	struct in6_ifaddr *ia6;
+{
+	struct m_tag *mtag;
+
+	mtag = ip6_addaux(m);
+	if (mtag)
+		((struct ip6aux *)(mtag + 1))->ip6a_dstia6 = ia6;
+	return mtag;	/* NULL if failed to set */
+}
+
+struct in6_ifaddr *
+ip6_getdstifaddr(m)
+	struct mbuf *m;
+{
+	struct m_tag *mtag;
+
+	mtag = ip6_findaux(m);
+	if (mtag)
+		return ((struct ip6aux *)(mtag + 1))->ip6a_dstia6;
+	else
+		return NULL;
 }
 
 /*
@@ -1025,8 +1047,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	if ((in6p->in6p_flags & IN6P_PKTINFO) != 0) {
 		struct in6_pktinfo pi6;
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
-		if (IN6_IS_SCOPE_LINKLOCAL(&pi6.ipi6_addr))
-			pi6.ipi6_addr.s6_addr16[1] = 0;
+		in6_clearscope(&pi6.ipi6_addr);	/* XXX */
 		pi6.ipi6_ifindex = (m && m->m_pkthdr.rcvif)
 					? m->m_pkthdr.rcvif->if_index
 					: 0;
@@ -1405,6 +1426,45 @@ ip6_lasthdr(m, off, proto, nxtp)
 	}
 }
 
+struct m_tag *
+ip6_addaux(m)
+	struct mbuf *m;
+{
+	struct m_tag *mtag;
+
+	mtag = m_tag_find(m, PACKET_TAG_INET6, NULL);
+	if (!mtag) {
+		mtag = m_tag_get(PACKET_TAG_INET6, sizeof(struct ip6aux),
+		    M_NOWAIT);
+		if (mtag) {
+			m_tag_prepend(m, mtag);
+			bzero(mtag + 1, sizeof(struct ip6aux));
+		}
+	}
+	return mtag;
+}
+
+struct m_tag *
+ip6_findaux(m)
+	struct mbuf *m;
+{
+	struct m_tag *mtag;
+
+	mtag = m_tag_find(m, PACKET_TAG_INET6, NULL);
+	return mtag;
+}
+
+void
+ip6_delaux(m)
+	struct mbuf *m;
+{
+	struct m_tag *mtag;
+
+	mtag = m_tag_find(m, PACKET_TAG_INET6, NULL);
+	if (mtag)
+		m_tag_delete(m, mtag);
+}
+
 /*
  * System control for IP6
  */
@@ -1648,4 +1708,11 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 		       NULL, 0, &ip6stat, sizeof(ip6stat),
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_STATS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "use_defaultzone",
+		       SYSCTL_DESCR("Whether to use the default scope zones"),
+		       NULL, 0, &ip6_use_defzone, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_USE_DEFAULTZONE, CTL_EOL);
 }

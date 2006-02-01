@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.23 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: rapide.c,v 1.23.2.1 2006/02/01 14:51:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.23 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.23.2.1 2006/02/01 14:51:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,6 +263,7 @@ rapide_attach(parent, self, aux)
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ch_queue = &rcp->rc_chqueue;
+		cp->ch_ndrive = 2;
 		wdr->cmd_iot = iot;
 		wdr->ctl_iot = iot;
 		wdr->data32iot = iot;

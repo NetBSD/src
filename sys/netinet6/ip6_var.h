@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.34 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.34.2.1 2006/02/01 14:52:42 yamt Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -197,6 +197,16 @@ struct	ip6stat {
 };
 
 #ifdef _KERNEL
+/*
+ * Auxiliary attributes of incoming IPv6 packets, which is initialized when we
+ * come into ip6_input().
+ * XXX do not make it a kitchen sink!
+ */
+struct ip6aux {
+	/* ip6.ip6_dst */
+	struct in6_ifaddr *ip6a_dstia6;	/* my ifaddr that matches ip6_dst */
+};
+
 /* flags passed to ip6_output as last parameter */
 #define	IPV6_UNSPECSRC		0x01	/* allow :: as the source address */
 #define	IPV6_FORWARDING		0x02	/* most of IPv6 header exists */
@@ -241,6 +251,9 @@ extern int   ip6_anonportmax;		/* maximum ephemeral port */
 extern int   ip6_lowportmin;		/* minimum reserved port */
 extern int   ip6_lowportmax;		/* maximum reserved port */
 
+extern int	ip6_use_defzone; /* whether to use the default scope zone
+				    when unspecified */
+
 struct in6pcb;
 
 int	icmp6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
@@ -248,11 +261,17 @@ int	icmp6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 void	ip6_init __P((void));
 void	ip6intr __P((void));
 void	ip6_input __P((struct mbuf *));
+struct in6_ifaddr *ip6_getdstifaddr __P((struct mbuf *));
 void	ip6_freemoptions __P((struct ip6_moptions *));
 int	ip6_unknown_opt __P((u_int8_t *, struct mbuf *, int));
 u_int8_t *ip6_get_prevhdr __P((struct mbuf *, int));
 int	ip6_nexthdr __P((struct mbuf *, int, int, int *));
 int	ip6_lasthdr __P((struct mbuf *, int, int, int *));
+
+struct m_tag *ip6_addaux __P((struct mbuf *));
+struct m_tag *ip6_findaux __P((struct mbuf *));
+void	ip6_delaux __P((struct mbuf *));
+
 int	ip6_mforward __P((struct ip6_hdr *, struct ifnet *, struct mbuf *));
 int	ip6_process_hopopts __P((struct mbuf *, u_int8_t *, int, u_int32_t *,
 				 u_int32_t *));
@@ -292,7 +311,10 @@ int	none_input __P((struct mbuf **, int *, int));
 
 struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
 	struct ip6_pktopts *, struct ip6_moptions *, struct route_in6 *,
-	struct in6_addr *, int *));
+	struct in6_addr *, struct ifnet **, int *));
+int in6_selectroute __P((struct sockaddr_in6 *, struct ip6_pktopts *,
+	struct ip6_moptions *, struct route_in6 *, struct ifnet **,
+	struct rtentry **, int));
 
 u_int32_t ip6_randomid __P((void));
 u_int32_t ip6_randomflowlabel __P((void));

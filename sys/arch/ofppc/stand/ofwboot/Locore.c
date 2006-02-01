@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.13 2005/12/24 22:50:08 perry Exp $	*/
+/*	$NetBSD: Locore.c,v 1.13.2.1 2006/02/01 14:51:30 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,9 +40,11 @@
 static int (*openfirmware_entry)(void *);
 static int openfirmware(void *);
 
+static void startup(void *, int, int (*)(void *), char *, int)
+		__attribute__((__used__));
 static void setup(void);
 
-static int stack[8192/4 + 4];
+static int stack[8192/4 + 4] __attribute__((__used__));
 
 __asm(
 "	.text					\n"

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.11 2005/12/11 12:19:08 christos Exp $	*/
+/*	$NetBSD: dvma.c,v 1.11.2.1 2006/02/01 14:51:37 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
@@ -147,5 +147,5 @@ dvma_free(dvma, len)
 
 	mem = dvma_mapout(dvma, len);
 	if (mem != NULL)
-		free(mem, len);
+		dealloc(mem, len);
 }

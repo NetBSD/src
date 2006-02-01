@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.9.2.1 2006/01/15 10:02:47 yamt Exp $ */
+/* $NetBSD: privcmd.c,v 1.9.2.2 2006/02/01 14:51:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.9.2.1 2006/01/15 10:02:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.9.2.2 2006/02/01 14:51:48 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -83,6 +83,7 @@ privcmd_ioctl(void *v)
 			: "=a" (error) : "0" (ap->a_data) : "memory" );
 		error = -error;
 		break;
+#ifndef XEN3
 #if defined(COMPAT_30)
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
 		{
@@ -98,6 +99,7 @@ privcmd_ioctl(void *v)
 		}
 		error = 0;
 		break;
+#endif /* XEN3 */
 	case IOCTL_PRIVCMD_MMAP:
 	{
 		int i, j;
@@ -144,10 +146,12 @@ privcmd_ioctl(void *v)
 
 			for (j = 0; j < mentry.npages; j++) {
 				//printf("remap va 0x%lx to 0x%lx\n", va, ma);
-				if ((error = pmap_remap_pages(pmap, va, ma, 1,
+				error = pmap_enter_ma(pmap, va, ma, 0,
 				    prot, PMAP_WIRED | PMAP_CANFAIL,
-				    mcmd->dom)))
+				    mcmd->dom);
+				if (error != 0) {
 					return error;
+				}
 				va += PAGE_SIZE;
 				ma += PAGE_SIZE;
 			}
@@ -204,7 +208,7 @@ privcmd_ioctl(void *v)
 			 * these into fewer hypercalls.
 			 */
 			//printf("mmapbatch: va=%lx ma=%lx dom=%d\n", va, ma, pmb->dom);
-			error = pmap_remap_pages(pmap, va, ma, 1, prot,
+			error = pmap_enter_ma(pmap, va, ma, 0, prot,
 			    PMAP_WIRED | PMAP_CANFAIL, pmb->dom);
 			if (error != 0) {
 				printf("mmapbatch: remap error %d!\n", error);
@@ -214,6 +218,7 @@ privcmd_ioctl(void *v)
 		}
 		break;
 	}
+#ifndef XEN3
 	case IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN:
 		{
 		unsigned long *mfn_start = ap->a_data;
@@ -221,6 +226,7 @@ privcmd_ioctl(void *v)
 		error = 0;
 		}
 		break;
+#endif /* !XEN3 */
 	default:
 		error = EINVAL;
 	}

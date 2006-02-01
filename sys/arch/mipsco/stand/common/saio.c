@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.c,v 1.7 2005/12/11 12:18:16 christos Exp $	*/
+/*	$NetBSD: saio.c,v 1.7.2.1 2006/02/01 14:51:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,7 +210,7 @@ saioopen(struct open_file *f, ...)
 	}
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
 	bad:
-		free(sc, sizeof(struct saio_softc));
+		dealloc(sc, sizeof(struct saio_softc));
 		return (ENXIO);
 	}
 	return (0);
@@ -223,7 +223,7 @@ saioclose(f)
 {
 
 	prom_close(((struct saio_softc *)f->f_devdata)->sc_fd);
-	free(f->f_devdata, sizeof(struct saio_softc));
+	dealloc(f->f_devdata, sizeof(struct saio_softc));
 	f->f_devdata = (void *)0;
 	return (0);
 }

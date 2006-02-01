@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.103 2005/12/24 20:45:10 perry Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.103.2.1 2006/02/01 14:52:48 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.103 2005/12/24 20:45:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.103.2.1 2006/02/01 14:52:48 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -536,6 +536,142 @@ released:
 }
 
 /*
+ * uvmfault_promote: promote data to a new anon.  used for 1B and 2B.
+ *
+ *	1. allocate an anon and a page.
+ *	2. fill its contents.
+ *	3. put it into amap.
+ *
+ * => if we fail (result != 0) we unlock everything.
+ * => on success, return a new locked anon via 'nanon'.
+ *    (*nanon)->an_page will be a resident, locked, dirty page.
+ */
+
+static int
+uvmfault_promote(struct uvm_faultinfo *ufi,
+    struct vm_anon *oanon,
+    struct vm_page *uobjpage,
+    struct vm_anon **nanon, /* OUT: allocated anon */
+    struct vm_anon **spare)
+{
+	struct vm_amap *amap = ufi->entry->aref.ar_amap;
+	struct uvm_object *uobj;
+	struct vm_anon *anon;
+	struct vm_page *pg;
+	struct vm_page *opg;
+	int error;
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
+	if (oanon) {
+		/* anon COW */
+		opg = oanon->an_page;
+		KASSERT(opg != NULL);
+		KASSERT(opg->uobject == NULL || opg->loan_count > 0);
+	} else if (uobjpage != PGO_DONTCARE) {
+		/* object-backed COW */
+		opg = uobjpage;
+	} else {
+		/* ZFOD */
+		opg = NULL;
+	}
+	if (opg != NULL) {
+		uobj = opg->uobject;
+	} else {
+		uobj = NULL;
+	}
+
+	KASSERT(amap != NULL);
+	KASSERT(uobjpage != NULL);
+	KASSERT(uobjpage == PGO_DONTCARE || (uobjpage->flags & PG_BUSY) != 0);
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	LOCK_ASSERT(oanon == NULL || simple_lock_held(&oanon->an_lock));
+	LOCK_ASSERT(uobj == NULL || simple_lock_held(&uobj->vmobjlock));
+	LOCK_ASSERT(*spare == NULL || !simple_lock_held(&(*spare)->an_lock));
+
+	if (*spare != NULL) {
+		anon = *spare;
+		*spare = NULL;
+		simple_lock(&anon->an_lock);
+	} else if (ufi->map != kernel_map) {
+		anon = uvm_analloc();
+	} else {
+		UVMHIST_LOG(maphist, "kernel_map, unlock and retry", 0,0,0,0);
+
+		/*
+		 * we can't allocate anons with kernel_map locked.
+		 */
+
+		uvm_page_unbusy(&uobjpage, 1);
+		uvmfault_unlockall(ufi, amap, uobj, oanon);
+
+		*spare = uvm_analloc();
+		if (*spare == NULL) {
+			goto nomem;
+		}
+		simple_unlock(&(*spare)->an_lock);
+		error = ERESTART;
+		goto done;
+	}
+	if (anon) {
+
+		/*
+		 * The new anon is locked.
+		 *
+		 * if opg == NULL, we want a zero'd, dirty page,
+		 * so have uvm_pagealloc() do that for us.
+		 */
+
+		pg = uvm_pagealloc(NULL, 0, anon,
+		    (opg == NULL) ? UVM_PGA_ZERO : 0);
+	} else {
+		pg = NULL;
+	}
+
+	/*
+	 * out of memory resources?
+	 */
+
+	if (pg == NULL) {
+		/* save anon for the next try. */
+		if (anon != NULL) {
+			simple_unlock(&anon->an_lock);
+			*spare = anon;
+		}
+
+		/* unlock and fail ... */
+		uvm_page_unbusy(&uobjpage, 1);
+		uvmfault_unlockall(ufi, amap, uobj, oanon);
+nomem:
+		if (!uvm_reclaimable()) {
+			UVMHIST_LOG(maphist, "out of VM", 0,0,0,0);
+			uvmexp.fltnoanon++;
+			error = ENOMEM;
+			goto done;
+		}
+
+		UVMHIST_LOG(maphist, "out of RAM, waiting for more", 0,0,0,0);
+		uvmexp.fltnoram++;
+		uvm_wait("flt_noram5");
+		error = ERESTART;
+		goto done;
+	}
+
+	/* copy page [pg now dirty] */
+	if (opg) {
+		uvm_pagecopy(opg, pg);
+	}
+
+	amap_add(&ufi->entry->aref, ufi->orig_rvaddr - ufi->entry->start, anon,
+	    oanon != NULL);
+
+	*nanon = anon;
+	error = 0;
+done:
+	return error;
+}
+
+
+/*
  *   F A U L T   -   m a i n   e n t r y   p o i n t
  */
 
@@ -567,13 +703,14 @@ uvm_fault(struct vm_map *orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons, *anon, *oanon;
+	struct vm_anon *anon_spare;
 	struct vm_page *pages[UVM_MAXRANGE], *pg, *uobjpage;
 	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, ft=%d, at=%d)",
 	      orig_map, vaddr, fault_type, access_type);
 
-	anon = NULL;
+	anon = anon_spare = NULL;
 	pg = NULL;
 
 	uvmexp.faults++;	/* XXX: locking? */
@@ -604,7 +741,8 @@ ReFault:
 
 	if (uvmfault_lookup(&ufi, FALSE) == FALSE) {
 		UVMHIST_LOG(maphist, "<- no mapping @ 0x%x", vaddr, 0,0,0);
-		return (EFAULT);
+		error = EFAULT;
+		goto done;
 	}
 	/* locked: maps(read) */
 
@@ -629,7 +767,8 @@ ReFault:
 		    "<- protection failure (prot=0x%x, access=0x%x)",
 		    ufi.entry->protection, access_type, 0, 0);
 		uvmfault_unlockmaps(&ufi, FALSE);
-		return EACCES;
+		error = EACCES;
+		goto done;
 	}
 
 	/*
@@ -692,7 +831,8 @@ ReFault:
 	if (amap == NULL && uobj == NULL) {
 		uvmfault_unlockmaps(&ufi, FALSE);
 		UVMHIST_LOG(maphist,"<- no backing store, no overlay",0,0,0,0);
-		return (EFAULT);
+		error = EFAULT;
+		goto done;
 	}
 
 	/*
@@ -886,7 +1026,7 @@ ReFault:
 		/*
 		 * object fault routine responsible for pmap_update().
 		 */
-		return error;
+		goto done;
 	}
 
 	/*
@@ -930,6 +1070,7 @@ ReFault:
 				if (curpg == NULL || curpg == PGO_DONTCARE) {
 					continue;
 				}
+				KASSERT(curpg->uobject == uobj);
 
 				/*
 				 * if center page is resident and not
@@ -1064,7 +1205,7 @@ ReFault:
 		goto ReFault;
 
 	default:
-		return error;
+		goto done;
 	}
 
 	/*
@@ -1180,41 +1321,24 @@ ReFault:
 		UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
 		uvmexp.flt_acow++;
 		oanon = anon;		/* oanon = old, locked anon */
-		anon = uvm_analloc();
-		if (anon) {
-			/* new anon is locked! */
-			pg = uvm_pagealloc(NULL, 0, anon, 0);
-		}
 
-		/* check for out of RAM */
-		if (anon == NULL || pg == NULL) {
-			if (anon) {
-				anon->an_ref--;
-				simple_unlock(&anon->an_lock);
-				uvm_anfree(anon);
-			}
-			uvmfault_unlockall(&ufi, amap, uobj, oanon);
-			if (!uvm_reclaimable()) {
-				UVMHIST_LOG(maphist,
-				    "<- failed.  out of VM",0,0,0,0);
-				uvmexp.fltnoanon++;
-				return ENOMEM;
-			}
-
-			uvmexp.fltnoram++;
-			uvm_wait("flt_noram3");	/* out of RAM, wait for more */
+		error = uvmfault_promote(&ufi, oanon, PGO_DONTCARE,
+		    &anon, &anon_spare);
+		switch (error) {
+		case 0:
+			break;
+		case ERESTART:
 			goto ReFault;
+		default:
+			goto done;
 		}
 
-		/* got all resources, replace anon with nanon */
-		uvm_pagecopy(oanon->an_page, pg);
+		pg = anon->an_page;
 		uvm_lock_pageq();
 		uvm_pageactivate(pg);
-		pg->flags &= ~(PG_BUSY|PG_FAKE);
 		uvm_unlock_pageq();
+		pg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
-		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
-		    anon, TRUE);
 
 		/* deref: can not drop to zero here by defn! */
 		oanon->an_ref--;
@@ -1262,7 +1386,8 @@ ReFault:
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */
-			return ENOMEM;
+			error = ENOMEM;
+			goto done;
 		}
 		/* XXX instrumentation */
 		uvm_wait("flt_pmfail1");
@@ -1299,7 +1424,8 @@ ReFault:
 		simple_unlock(&anon->an_lock);
 	uvmfault_unlockall(&ufi, amap, uobj, oanon);
 	pmap_update(ufi.orig_map->pmap);
-	return 0;
+	error = 0;
+	goto done;
 
 Case2:
 	/*
@@ -1370,7 +1496,7 @@ Case2:
 
 			UVMHIST_LOG(maphist, "<- pgo_get failed (code %d)",
 			    error, 0,0,0);
-			return error;
+			goto done;
 		}
 
 		/* locked: uobjpage */
@@ -1387,6 +1513,7 @@ Case2:
 		locked = uvmfault_relock(&ufi);
 		if (locked && amap)
 			amap_lock(amap);
+		uobj = uobjpage->uobject;
 		simple_lock(&uobj->vmobjlock);
 
 		/* locked(locked): maps(read), amap(if !null), uobj, uobjpage */
@@ -1450,6 +1577,7 @@ Case2:
 	 *  - at this point uobjpage could be PG_WANTED (handle later)
 	 */
 
+	KASSERT(uobj == NULL || uobj == uobjpage->uobject);
 	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
 	    (uobjpage->flags & PG_CLEAN) != 0);
 	if (promote == FALSE) {
@@ -1522,62 +1650,18 @@ Case2:
 		if (amap == NULL)
 			panic("uvm_fault: want to promote data, but no anon");
 #endif
-
-		anon = uvm_analloc();
-		if (anon) {
-
-			/*
-			 * The new anon is locked.
-			 *
-			 * In `Fill in data...' below, if
-			 * uobjpage == PGO_DONTCARE, we want
-			 * a zero'd, dirty page, so have
-			 * uvm_pagealloc() do that for us.
-			 */
-
-			pg = uvm_pagealloc(NULL, 0, anon,
-			    (uobjpage == PGO_DONTCARE) ? UVM_PGA_ZERO : 0);
-		}
-
-		/*
-		 * out of memory resources?
-		 */
-
-		if (anon == NULL || pg == NULL) {
-			if (anon != NULL) {
-				anon->an_ref--;
-				simple_unlock(&anon->an_lock);
-				uvm_anfree(anon);
-			}
-
-			/*
-			 * arg!  must unbusy our page and fail or sleep.
-			 */
-
-			if (uobjpage != PGO_DONTCARE) {
-				if (uobjpage->flags & PG_WANTED)
-					/* still holding object lock */
-					wakeup(uobjpage);
-
-				uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
-				UVM_PAGE_OWN(uobjpage, NULL);
-			}
-
-			/* unlock and fail ... */
-			uvmfault_unlockall(&ufi, amap, uobj, NULL);
-			if (!uvm_reclaimable()) {
-				UVMHIST_LOG(maphist, "  promote: out of VM",
-				    0,0,0,0);
-				uvmexp.fltnoanon++;
-				return ENOMEM;
-			}
-
-			UVMHIST_LOG(maphist, "  out of RAM, waiting for more",
-			    0,0,0,0);
-			uvmexp.fltnoram++;
-			uvm_wait("flt_noram5");
+		error = uvmfault_promote(&ufi, NULL, uobjpage,
+		    &anon, &anon_spare);
+		switch (error) {
+		case 0:
+			break;
+		case ERESTART:
 			goto ReFault;
+		default:
+			goto done;
 		}
+
+		pg = anon->an_page;
 
 		/*
 		 * fill in the data
@@ -1585,8 +1669,6 @@ Case2:
 
 		if (uobjpage != PGO_DONTCARE) {
 			uvmexp.flt_prcopy++;
-			/* copy page [pg now dirty] */
-			uvm_pagecopy(uobjpage, pg);
 
 			/*
 			 * promote to shared amap?  make sure all sharing
@@ -1622,15 +1704,13 @@ Case2:
 			uvmexp.flt_przero++;
 
 			/*
-			 * Page is zero'd and marked dirty by uvm_pagealloc()
-			 * above.
+			 * Page is zero'd and marked dirty by
+			 * uvmfault_promote().
 			 */
 
 			UVMHIST_LOG(maphist,"  zero fill anon/page 0x%x/0%x",
 			    anon, pg, 0, 0);
 		}
-		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
-		    anon, FALSE);
 	}
 
 	/*
@@ -1678,7 +1758,8 @@ Case2:
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */
-			return ENOMEM;
+			error = ENOMEM;
+			goto done;
 		}
 		/* XXX instrumentation */
 		uvm_wait("flt_pmfail2");
@@ -1717,7 +1798,13 @@ Case2:
 	uvmfault_unlockall(&ufi, amap, uobj, anon);
 	pmap_update(ufi.orig_map->pmap);
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
-	return 0;
+	error = 0;
+done:
+	if (anon_spare != NULL) {
+		anon_spare->an_ref--;
+		uvm_anfree(anon_spare);
+	}
+	return error;
 }
 
 /*
