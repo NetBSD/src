@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.26 2006/01/30 22:44:57 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.27 2006/02/01 20:46:35 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -603,4 +603,30 @@ sys/dev/rcons/rcons_subr.c			1.16
 	Avoid watchdog reset caused by output of certain characters on the
 	console. This fixes PR port-sparc/29948.
 	[chs, ticket #1148]
+
+sys/dev/pci/viaide.c				1.28
+
+	The NVidia nForce430 IDE Controller supports Ultra-DMA Mode 6,
+	enable it.
+	[xtraeme, ticket #1149]
+
+libexec/ld.elf_so/rtld.c			1.109
+
+	Fix a bug that showed up when debugging dynamically linked programs.
+	References from GDB to "printf" and various other functions would
+	find the versions in the dynamic linker itself, rather than the
+	versions in the program's libc. This fixes PR toolchain/32074.
+	[christos, ticket #1150]
+
+sys/arch/i386/conf/XEN0				1.26
+
+	Change number of vnd to 32 from 4, since many users of XEN0 will need
+	more.
+	[gdt, ticket #1151]
+
+sys/net/if_pppoe.c				1.64
+
+	Make sure error messages (received from the access concentrator) are
+	zero terminated.
+	[martin, ticket #1152]
 
