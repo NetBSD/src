@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.19 2006/01/22 10:41:59 tron Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.20 2006/02/01 20:45:34 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.19 2006/01/22 10:41:59 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.20 2006/02/01 20:45:34 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -989,7 +989,7 @@ xennet_start(struct ifnet *ifp)
 		}
 
 		if (m->m_pkthdr.len != m->m_len ||
-		    (pa ^ (pa + m->m_pkthdr.len)) & PG_FRAME) {
+		    (pa ^ (pa + m->m_pkthdr.len - 1)) & PG_FRAME) {
 
 			MGETHDR(new_m, M_DONTWAIT, MT_DATA);
 			if (new_m == NULL) {
@@ -1024,7 +1024,7 @@ xennet_start(struct ifnet *ifp)
 		} else
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 
-		KASSERT(((pa ^ (pa + m->m_pkthdr.len)) & PG_FRAME) == 0);
+		KASSERT(((pa ^ (pa + m->m_pkthdr.len -  1)) & PG_FRAME) == 0);
 
 		bufid = get_bufarray_entry(sc->sc_tx_bufa);
 		KASSERT(bufid < NETIF_TX_RING_SIZE);
