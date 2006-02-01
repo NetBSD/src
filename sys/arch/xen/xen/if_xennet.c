@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.15 2005/08/28 09:52:56 tron Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.15.2.1 2006/02/01 20:48:28 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.15 2005/08/28 09:52:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.15.2.1 2006/02/01 20:48:28 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -1036,7 +1036,7 @@ xennet_start(struct ifnet *ifp)
 		}
 
 		if (m->m_pkthdr.len != m->m_len ||
-		    (pa ^ (pa + m->m_pkthdr.len)) & PG_FRAME) {
+		    (pa ^ (pa + m->m_pkthdr.len - 1)) & PG_FRAME) {
 			txbuf = SLIST_FIRST(&sc->sc_tx_bufs);
 			if (txbuf == NULL) {
 				// printf("xennet: no tx bufs\n");
