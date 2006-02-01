@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.131 2006/02/01 03:15:33 cube Exp $	*/
+/*	$NetBSD: vnd.c,v 1.132 2006/02/01 04:30:10 cube Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.131 2006/02/01 03:15:33 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.132 2006/02/01 04:30:10 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -281,6 +281,9 @@ vnd_detach(struct device *self, int flags)
 	struct vnd_softc *sc = (struct vnd_softc *)self;
 	if (sc->sc_flags & VNF_INITED)
 		return EBUSY;
+
+	bufq_free(sc->sc_tab);
+
 	return 0;
 }
 
