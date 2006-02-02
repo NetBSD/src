@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.133 2006/02/01 05:05:22 cube Exp $	*/
+/*	$NetBSD: vnd.c,v 1.134 2006/02/02 06:56:30 cube Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.133 2006/02/01 05:05:22 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.134 2006/02/02 06:56:30 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -413,6 +413,15 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
 
 	vndunlock(sc);
+
+	if ((sc->sc_flags & VNF_INITED) == 0) {
+		if ((error = vnd_destroy((struct device *)sc)) != 0) {
+			aprint_error("%s: unable to detach instance\n",
+			    sc->sc_dev.dv_xname);
+			return error;
+		}
+	}
+
 	return (0);
 }
 
@@ -1133,12 +1142,6 @@ unlock_and_exit:
 
 		/* Detatch the disk. */
 		pseudo_disk_detach(&vnd->sc_dkdev);
-		if ((error = vnd_destroy((struct device *)vnd)) != 0) {
-			aprint_error("%s: unable to detach instance\n",
-			    vnd->sc_dev.dv_xname);
-			return error;
-		}
-
 		break;
 
 #ifdef COMPAT_30
