@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.134 2006/02/02 06:56:30 cube Exp $	*/
+/*	$NetBSD: vnd.c,v 1.135 2006/02/02 06:57:35 cube Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.134 2006/02/02 06:56:30 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.135 2006/02/02 06:57:35 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -426,7 +426,7 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 /*
- * Qeue the request, and wakeup the kernel thread to handle it.
+ * Queue the request, and wakeup the kernel thread to handle it.
  */
 static void
 vndstrategy(struct buf *bp)
