@@ -1,4 +1,4 @@
-/* $NetBSD: fattr.h,v 1.3 2005/03/03 21:15:26 dsl Exp $ */
+/* $NetBSD: fattr.h,v 1.4 2006/02/02 23:42:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+int a_num(const char *, const char *);
 gid_t a_gid(const char *);
 uid_t a_uid(const char *);
 mode_t a_mask(const char *);
