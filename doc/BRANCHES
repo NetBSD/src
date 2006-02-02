@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.62 2006/02/01 00:55:11 rpaulo Exp $
+#	$NetBSD: BRANCHES,v 1.63 2006/02/02 00:14:15 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -852,7 +852,7 @@ Description:	uio_lwp/uio_segflg -> uio_vmspace
 Status:		Active
 Start Date:	Mon Dec 31 2005
 End Date:	
-Base Tag:	yamt-uio_vmspace-base2
+Base Tag:	yamt-uio_vmspace-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys
 Notes:		
