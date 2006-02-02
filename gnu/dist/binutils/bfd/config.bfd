@@ -1108,20 +1108,20 @@ case "${targ}" in
 #ifdef BFD64
   sh5le-*-netbsd*)
     targ_defvec=bfd_elf32_sh64lnbsd_vec
-    targ_selvecs="bfd_elf32_sh64nbsd_vec bfd_elf64_sh64lnbsd_vec bfd_elf64_sh64nbsd_vec"
+    targ_selvecs="bfd_elf32_sh64nbsd_vec bfd_elf64_sh64lnbsd_vec bfd_elf64_sh64nbsd_vec bfd_elf32_shnbsd_vec bfd_elf32_shlnbsd_vec"
     ;;
   sh5-*-netbsd*)
     targ_defvec=bfd_elf32_sh64nbsd_vec
-    targ_selvecs="bfd_elf32_sh64lnbsd_vec bfd_elf64_sh64lnbsd_vec bfd_elf64_sh64nbsd_vec"
+    targ_selvecs="bfd_elf32_sh64lnbsd_vec bfd_elf64_sh64lnbsd_vec bfd_elf64_sh64nbsd_vec bfd_elf32_shnbsd_vec bfd_elf32_shlnbsd_vec"
     ;;
 
   sh64le-*-netbsd*)
     targ_defvec=bfd_elf64_sh64lnbsd_vec
-    targ_selvecs="bfd_elf64_sh64nbsd_vec bfd_elf32_sh64lnbsd_vec bfd_elf32_sh64nbsd_vec"
+    targ_selvecs="bfd_elf64_sh64nbsd_vec bfd_elf32_sh64lnbsd_vec bfd_elf32_sh64nbsd_vec bfd_elf32_shnbsd_vec bfd_elf32_shlnbsd_vec"
     ;;
   sh64-*-netbsd*)
     targ_defvec=bfd_elf64_sh64nbsd_vec
-    targ_selvecs="bfd_elf64_sh64lnbsd_vec bfd_elf32_sh64lnbsd_vec bfd_elf32_sh64nbsd_vec"
+    targ_selvecs="bfd_elf64_sh64lnbsd_vec bfd_elf32_sh64lnbsd_vec bfd_elf32_sh64nbsd_vec bfd_elf32_shnbsd_vec bfd_elf32_shlnbsd_vec"
     ;;
 #endif
 
