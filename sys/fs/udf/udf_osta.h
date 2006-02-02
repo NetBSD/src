@@ -1,12 +1,12 @@
-/* $NetBSD: udf_osta.h,v 1.1 2006/02/02 15:19:16 reinoud Exp $ */
+/* $NetBSD: udf_osta.h,v 1.2 2006/02/02 16:14:26 reinoud Exp $ */
 
 /*
  * Prototypes for the OSTA functions
  */
 
 
-#ifndef _OSTA_H_
-#define _OSTA_H_
+#ifndef _FS_UDF_OSTA_H_
+#define _FS_UDF_OSTA_H_
 
 
 #include <sys/types.h>
@@ -37,5 +37,5 @@ int UDFTransName(unicode_t *, unicode_t *, int);
 int UnicodeLength(unicode_t *string);
 
 
-#endif /* _OSTA_H_ */
+#endif /* _FS_UDF_OSTA_H_ */
 
