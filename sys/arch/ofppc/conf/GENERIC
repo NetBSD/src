@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.87 2005/12/09 23:34:03 elad Exp $
+# $NetBSD: GENERIC,v 1.88 2006/02/02 21:32:09 reinoud Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.87 $"
+#ident 		"GENERIC-$Revision: 1.88 $"
 
 maxusers	32
 
@@ -95,6 +95,7 @@ file-system 	UNION		# union file system
 file-system 	NTFS		# Windows NT file system
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
