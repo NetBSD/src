@@ -1,4 +1,15 @@
+2005-06-08  Tomas Hurka  <tom@hukatronic.cz>
+
+	PR991
+	* config/tc-m68k.c (m68k_ip): Test for insn compatiblity using a
+	temporary copy of the operands array so that changes can be safely
+	backed out if the insn does not match.
+	(m68k_compare_opcode): Shortcut the test when the parameters are
+	the same.  Return 1 if the names match but the second opcode is
+	further on in the array than the first.
+ 
 2005-06-12  Daniel Jacobowitz  <dan@codesourcery.com>
+ 	PR 994
 
 	Backport from mainline:
 	2005-06-01  Maciej W. Rozycki  <macro@linux-mips.org>
