@@ -1,5 +1,5 @@
 /* xSYM symbol-file support for BFD.
-   Copyright 1999, 2000, 2001, 2002, 2003
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -27,6 +27,7 @@
 #define bfd_sym_bfd_free_cached_info _bfd_generic_bfd_free_cached_info
 #define bfd_sym_new_section_hook _bfd_generic_new_section_hook
 #define bfd_sym_bfd_is_local_label_name bfd_generic_is_local_label_name
+#define bfd_sym_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define bfd_sym_get_lineno _bfd_nosymbols_get_lineno
 #define bfd_sym_find_nearest_line _bfd_nosymbols_find_nearest_line
 #define bfd_sym_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
@@ -42,7 +43,10 @@
 #define bfd_sym_bfd_relax_section bfd_generic_relax_section
 #define bfd_sym_bfd_gc_sections bfd_generic_gc_sections
 #define bfd_sym_bfd_merge_sections bfd_generic_merge_sections
+#define bfd_sym_bfd_is_group_section bfd_generic_is_group_section
 #define bfd_sym_bfd_discard_group bfd_generic_discard_group
+#define bfd_sym_section_already_linked \
+  _bfd_generic_section_already_linked
 #define bfd_sym_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define bfd_sym_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define bfd_sym_bfd_link_add_symbols _bfd_generic_link_add_symbols
@@ -51,21 +55,20 @@
 #define bfd_sym_bfd_link_split_section _bfd_generic_link_split_section
 #define bfd_sym_get_section_contents_in_window  _bfd_generic_get_section_contents_in_window
 
-static int pstrcmp PARAMS ((unsigned char *, unsigned char *));
 static unsigned long compute_offset
   PARAMS ((unsigned long, unsigned long, unsigned long, unsigned long));
 
 extern const bfd_target sym_vec;
 
 static int
-pstrcmp (a, b)
-     unsigned char *a;
-     unsigned char *b;
+pstrcmp (const char *as, const char *bs)
 {
+  const unsigned char *a = (const unsigned char *) as;
+  const unsigned char *b = (const unsigned char *) bs;
   unsigned char clen;
   int ret;
 
-  clen = (a[0] > b[0]) ? a[0] : b[0];
+  clen = (a[0] > b[0]) ? b[0] : a[0];
   ret = memcmp (a + 1, b + 1, clen);
   if (ret != 0)
     return ret;
@@ -75,7 +78,7 @@ pstrcmp (a, b)
   else if (a[0] < b[0])
     return -1;
   else
-    return 0;
+    return 1;
 }
 
 static unsigned long
@@ -251,7 +254,7 @@ bfd_sym_read_version (abfd, version)
      bfd *abfd;
      bfd_sym_version *version;
 {
-  unsigned char version_string[32];
+  char version_string[32];
   long ret;
 
   ret = bfd_bread (version_string, sizeof (version_string), abfd);
@@ -460,7 +463,9 @@ bfd_sym_parse_contained_variables_table_entry_v32 (buf, len, entry)
 	}
       else if (entry->entry.la_size <= BFD_SYM_CVTE_SCA)
 	{
+#if BFD_SYM_CVTE_SCA > 0
 	  memcpy (&entry->entry.address.lastruct.la, buf + 10, BFD_SYM_CVTE_SCA);
+#endif
 	  entry->entry.address.lastruct.la_kind = buf[23];
 	}
       else if (entry->entry.la_size == BFD_SYM_CVTE_BIG_LA)
@@ -1201,12 +1206,12 @@ bfd_sym_symbol_name (abfd, index)
   sdata = abfd->tdata.sym_data;
 
   if (index == 0)
-    return "";
+    return (const unsigned char *) "";
 
   index *= 2;
   if ((index / sdata->header.dshb_page_size)
       > sdata->header.dshb_nte.dti_page_count)
-    return "\009[INVALID]";
+    return (const unsigned char *) "\09[INVALID]";
 
   return (const unsigned char *) sdata->name_table + index;
 }
@@ -1219,7 +1224,7 @@ bfd_sym_module_name (abfd, index)
   bfd_sym_modules_table_entry entry;
 
   if (bfd_sym_fetch_modules_table_entry (abfd, &entry, index) < 0)
-    return "\011[INVALID]";
+    return (const unsigned char *) "\09[INVALID]";
 
   return bfd_sym_symbol_name (abfd, entry.mte_nte_index);
 }
@@ -1363,21 +1368,6 @@ bfd_sym_print_modules_table_entry (abfd, f, entry)
     fprintf (f, ", child %lu", entry->mte_cmte_index);
   else
     fprintf (f, ", no child");
-
-#if 0
-  {
-    MTE bfd_sym_modules_table_entry pentry;
-
-    ret = bfd_sym_fetch_modules_table_entry (abfd, &pentry, entry->mte_parent);
-    if (ret < 0)
-      fprintf (f, " parent MTE %lu [INVALID]\n", entry->mte_parent);
-    else
-      fprintf (f, " parent MTE %lu \"%.*s\"\n",
-	       entry->mte_parent,
-	       bfd_sym_symbol_name (abfd, pentry.mte_nte_index)[0],
-	       &bfd_sym_symbol_name (abfd, pentry.mte_nte_index)[1]);
-  }
-#endif
 }
 
 void
@@ -1736,26 +1726,28 @@ bfd_sym_print_type_information (abfd, f, buf, len, offset, offsetptr)
 
     case 3:
       {
-	unsigned long value;
+	long value;
 
 	fprintf (f, "scalar (0x%x) of ", type);
 	bfd_sym_print_type_information (abfd, f, buf, len, offset, &offset);
 	bfd_sym_fetch_long (buf, len, offset, &offset, &value);
-	fprintf (f, " (%lu)", value);
+	fprintf (f, " (%lu)", (unsigned long) value);
 	break;
       }
 
     case 5:
       {
-	unsigned long lower, upper, nelem;
-	unsigned long i;
+	long lower, upper, nelem;
+	int i;
 
 	fprintf (f, "enumeration (0x%x) of ", type);
 	bfd_sym_print_type_information (abfd, f, buf, len, offset, &offset);
 	bfd_sym_fetch_long (buf, len, offset, &offset, &lower);
 	bfd_sym_fetch_long (buf, len, offset, &offset, &upper);
 	bfd_sym_fetch_long (buf, len, offset, &offset, &nelem);
-	fprintf (f, " from %lu to %lu with %lu elements: ", lower, upper, nelem);
+	fprintf (f, " from %lu to %lu with %lu elements: ",
+		 (unsigned long) lower, (unsigned long) upper,
+		 (unsigned long) nelem);
 
 	for (i = 0; i < nelem; i++)
 	  {
@@ -2345,7 +2337,7 @@ bfd_sym_scan (abfd, version, mdata)
 
   bfdsec->vma = 0;
   bfdsec->lma = 0;
-  bfdsec->_raw_size = 0;
+  bfdsec->size = 0;
   bfdsec->filepos = 0;
   bfdsec->alignment_power = 0;
 

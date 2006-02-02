@@ -1,5 +1,5 @@
 /* dw2gencfi.c - Support for generating Dwarf2 CFI information.
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2005 Free Software Foundation, Inc.
    Contributed by Michal Ludvig <mludvig@suse.cz>
 
    This file is part of GAS, the GNU Assembler.
@@ -25,7 +25,7 @@
 
 /* We re-use DWARF2_LINE_MIN_INSN_LENGTH for the code alignment field
    of the CIE.  Default to 1 if not otherwise specified.  */
-#ifndef DWARF2_LINE_MIN_INSN_LENGTH
+#ifndef  DWARF2_LINE_MIN_INSN_LENGTH
 # define DWARF2_LINE_MIN_INSN_LENGTH 1
 #endif
 
@@ -33,10 +33,10 @@
    provide the following definitions.  Otherwise provide them to 
    allow compilation to continue.  */
 #ifndef TARGET_USE_CFIPOP
-# ifndef DWARF2_DEFAULT_RETURN_COLUMN
+# ifndef  DWARF2_DEFAULT_RETURN_COLUMN
 #  define DWARF2_DEFAULT_RETURN_COLUMN 0
 # endif
-# ifndef DWARF2_CIE_DATA_ALIGNMENT
+# ifndef  DWARF2_CIE_DATA_ALIGNMENT
 #  define DWARF2_CIE_DATA_ALIGNMENT 1
 # endif
 #endif
@@ -341,6 +341,8 @@ cfi_add_CFA_restore_state (void)
       cfa_save_stack = p->next;
       free (p);
     }
+  else
+    as_bad (_("CFI state restore without previous remember"));
 }
 
 
@@ -605,6 +607,7 @@ dot_cfi_startproc (int ignored ATTRIBUTE_UNUSED)
     }
   demand_empty_rest_of_line ();
 
+  cur_cfa_offset = 0;
   if (!simple)
     tc_cfi_frame_initial_instructions ();
 }
@@ -726,7 +729,7 @@ output_cfi_insn (struct cfi_insn_data *insn)
 	{
 	  out_one (DW_CFA_def_cfa_sf);
 	  out_uleb128 (insn->u.ri.reg);
-	  out_uleb128 (offset);
+	  out_sleb128 (offset / DWARF2_CIE_DATA_ALIGNMENT);
 	}
       else
 	{
@@ -748,7 +751,7 @@ output_cfi_insn (struct cfi_insn_data *insn)
       if (offset < 0)
 	{
 	  out_one (DW_CFA_def_cfa_offset_sf);
-	  out_sleb128 (offset);
+	  out_sleb128 (offset / DWARF2_CIE_DATA_ALIGNMENT);
 	}
       else
 	{
@@ -836,17 +839,20 @@ output_cie (struct cie_entry *cie)
   exp.X_op_symbol = after_size_address;
   exp.X_add_number = 0;
 
-  emit_expr (&exp, 4);				/* Length */
+  emit_expr (&exp, 4);				/* Length.  */
   symbol_set_value_now (after_size_address);
-  out_four (0);					/* CIE id */
-  out_one (DW_CIE_VERSION);			/* Version */
-  out_one ('z');				/* Augmentation */
+  out_four (0);					/* CIE id.  */
+  out_one (DW_CIE_VERSION);			/* Version.  */
+  out_one ('z');				/* Augmentation.  */
   out_one ('R');
   out_one (0);
-  out_uleb128 (DWARF2_LINE_MIN_INSN_LENGTH);	/* Code alignment */
-  out_sleb128 (DWARF2_CIE_DATA_ALIGNMENT);	/* Data alignment */
-  out_one (cie->return_column);			/* Return column */
-  out_uleb128 (1);				/* Augmentation size */
+  out_uleb128 (DWARF2_LINE_MIN_INSN_LENGTH);	/* Code alignment.  */
+  out_sleb128 (DWARF2_CIE_DATA_ALIGNMENT);	/* Data alignment.  */
+  if (DW_CIE_VERSION == 1)			/* Return column.  */
+    out_one (cie->return_column);
+  else
+    out_uleb128 (cie->return_column);
+  out_uleb128 (1);				/* Augmentation size.  */
 #if defined DIFF_EXPR_OK || defined tc_cfi_emit_pcrel_expr
   out_one (DW_EH_PE_pcrel | DW_EH_PE_sdata4);
 #else
@@ -857,7 +863,7 @@ output_cie (struct cie_entry *cie)
     for (i = cie->first; i != cie->last; i = i->next)
       output_cfi_insn (i);
 
-  frag_align (2, 0, 0);
+  frag_align (2, DW_CFA_nop, 0);
   symbol_set_value_now (end_address);
 }
 
@@ -875,39 +881,39 @@ output_fde (struct fde_entry *fde, struct cie_entry *cie,
   exp.X_add_symbol = end_address;
   exp.X_op_symbol = after_size_address;
   exp.X_add_number = 0;
-  emit_expr (&exp, 4);				/* Length */
+  emit_expr (&exp, 4);				/* Length.  */
   symbol_set_value_now (after_size_address);
 
   exp.X_add_symbol = after_size_address;
   exp.X_op_symbol = cie->start_address;
-  emit_expr (&exp, 4);				/* CIE offset */
+  emit_expr (&exp, 4);				/* CIE offset.  */
 
 #ifdef DIFF_EXPR_OK  
   exp.X_add_symbol = fde->start_address;
   exp.X_op_symbol = symbol_temp_new_now ();
-  emit_expr (&exp, 4);				/* Code offset */
+  emit_expr (&exp, 4);				/* Code offset.  */
 #else
   exp.X_op = O_symbol;
   exp.X_add_symbol = fde->start_address;
   exp.X_op_symbol = NULL;
 #ifdef tc_cfi_emit_pcrel_expr
-  tc_cfi_emit_pcrel_expr (&exp, 4);		/* Code offset */
+  tc_cfi_emit_pcrel_expr (&exp, 4);		/* Code offset.  */
 #else
-  emit_expr (&exp, 4);				/* Code offset */
+  emit_expr (&exp, 4);				/* Code offset.  */
 #endif
   exp.X_op = O_subtract;
 #endif
 
   exp.X_add_symbol = fde->end_address;
-  exp.X_op_symbol = fde->start_address;		/* Code length */
+  exp.X_op_symbol = fde->start_address;		/* Code length.  */
   emit_expr (&exp, 4);
 
-  out_uleb128 (0);				/* Augmentation size */
+  out_uleb128 (0);				/* Augmentation size.  */
 
   for (; first; first = first->next)
     output_cfi_insn (first);
 
-  frag_align (align, 0, 0);
+  frag_align (align, DW_CFA_nop, 0);
   symbol_set_value_now (end_address);
 }
 
@@ -930,8 +936,9 @@ select_cie_for_fde (struct fde_entry *fde, struct cfi_insn_data **pfirst)
 	  switch (i->insn)
 	    {
 	    case DW_CFA_advance_loc:
-	      /* We reached the first advance in the FDE, but did not
-		 reach the end of the CIE list.  */
+	    case DW_CFA_remember_state:
+	      /* We reached the first advance/remember in the FDE,
+		 but did not reach the end of the CIE list.  */
 	      goto fail;
 
 	    case DW_CFA_offset:
@@ -972,8 +979,13 @@ select_cie_for_fde (struct fde_entry *fde, struct cfi_insn_data **pfirst)
 	}
 
       /* Success if we reached the end of the CIE list, and we've either
-	 run out of FDE entries or we've encountered an advance.  */
-      if (i == cie->last && (!j || j->insn == DW_CFA_advance_loc))
+	 run out of FDE entries or we've encountered an advance,
+	 remember, or escape.  */
+      if (i == cie->last
+	  && (!j
+	      || j->insn == DW_CFA_advance_loc
+	      || j->insn == DW_CFA_remember_state
+	      || j->insn == CFI_escape))
 	{
 	  *pfirst = j;
 	  return cie;
@@ -989,7 +1001,9 @@ select_cie_for_fde (struct fde_entry *fde, struct cfi_insn_data **pfirst)
   cie->first = fde->data;
 
   for (i = cie->first; i ; i = i->next)
-    if (i->insn == DW_CFA_advance_loc)
+    if (i->insn == DW_CFA_advance_loc
+	|| i->insn == DW_CFA_remember_state
+	|| i->insn == CFI_escape)
       break;
 
   cie->last = i;
