@@ -3683,11 +3683,12 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
 
 	  /* If this is a hidden symbol, or if it is not version
 	     1, we append the version name to the symbol name.
-	     However, we do not modify a non-hidden absolute
-	     symbol, because it might be the version symbol
-	     itself.  FIXME: What if it isn't?  */
+	     However, we do not modify a non-hidden absolute symbol
+	     if it is not a function, because it might be the version
+	     symbol itself.  FIXME: What if it isn't?  */
 	  if ((iver.vs_vers & VERSYM_HIDDEN) != 0
-	      || (vernum > 1 && ! bfd_is_abs_section (sec)))
+	      || (vernum > 1 && (! bfd_is_abs_section (sec)
+				 || ELF_ST_TYPE (isym->st_info) == STT_FUNC)))
 	    {
 	      const char *verstr;
 	      size_t namelen, verlen, newlen;
