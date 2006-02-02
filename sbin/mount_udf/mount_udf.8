@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_udf.8,v 1.2 2006/02/02 16:11:25 reinoud Exp $
+.\" $NetBSD: mount_udf.8,v 1.3 2006/02/02 16:45:06 reinoud Exp $
 .\"
 .\" Copyright (c) 2005 Reinoud Zandijk
 .\" All rights reserved.
@@ -92,7 +92,9 @@ user nobody.
 .Xr mount 2 ,
 .Xr unmount 8 ,
 .Xr fstab 5 ,
-.Xr mount 8 .
+.Xr mount 8 ,
+.Xr vnd 4 ,
+.Xr vnconfig 8 .
 .Sh NOTES
 UDF is a file system defined by the OSTA standardisation group and is tailored
 for data interchange on optical discs (like CDs and DVDs) between different
@@ -110,6 +112,16 @@ DirectCD/Drag2Disc read fine. Both open and closed media are supported so
 there is no need to close discs or close sessions.
 .Pp
 All current UDF versions upto version 2.60 are supported.
+.Pp
+Harddisc partitions and
+.Xr vnd 4
+devices may also be mounted. Note when mounting a
+.Xr vnd 4
+device it might be nessisary to specify the file image sector size in the
+.Pa geomspec
+when creating the
+.Xr vnd 4
+device or the disc sector size will be used.
 .Sh BUGS
 Due to lack of test media version 2.50 and 2.60 are prepared though not
 implemented and tested yet.
