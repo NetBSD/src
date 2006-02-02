@@ -1,6 +1,6 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 1991, 1993, 1994, 1997, 1999, 2000, 2001, 2002, 2003
-#   Free Software Foundation, Inc.
+#   Copyright 1991, 1993, 1994, 1997, 1999, 2000, 2001, 2002, 2003, 2004,
+#   2005 Free Software Foundation, Inc.
 #
 # This file is part of GLD, the Gnu Linker.
 #
@@ -52,12 +52,12 @@ hppaelf_after_parse (void)
 {
   if (link_info.relocatable)
     lang_add_unique (".text");
-#if 0 /* Enable this once we split millicode stuff from libgcc.  */
-  else
-    lang_add_input_file ("milli",
-			 lang_input_file_is_l_enum,
-			 NULL);
-#endif
+
+  /* Enable this once we split millicode stuff from libgcc:
+     lang_add_input_file ("milli",
+     			  lang_input_file_is_l_enum,
+			  NULL);
+  */
 }
 
 /* This is called before the input files are opened.  We create a new
@@ -88,6 +88,7 @@ hppaelf_create_output_section_statements (void)
       return;
     }
 
+  stub_file->the_bfd->flags |= BFD_LINKER_CREATED;
   ldlang_add_file (stub_file);
 }
 
@@ -241,6 +242,7 @@ build_section_lists (lang_statement_union_type *statement)
 {
   if (statement->header.type == lang_input_section_enum
       && !statement->input_section.ifile->just_syms_flag
+      && (statement->input_section.section->flags & SEC_EXCLUDE) == 0
       && statement->input_section.section->output_section != NULL
       && statement->input_section.section->output_section->owner == output_bfd)
     {
