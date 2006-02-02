@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.48 2005/06/21 22:29:53 lha Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.49 2006/02/02 18:31:12 he Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.48 2005/06/21 22:29:53 lha Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.49 2006/02/02 18:31:12 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ char	ptyibuf2[BUFSIZ];
 int	hostinfo = 1;			/* do we print login banner? */
 
 
-int debug = 0;
+static int debug = 0;
 int keepalive = 1;
 char *gettyname = "default";
 char *progname;
