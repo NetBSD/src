@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.759 2006/01/26 20:54:19 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.760 2006/02/02 01:40:19 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.758 2006/01/26 20:53:19 bouyer Exp
+ *	NetBSD: pcidevs,v 1.759 2006/02/02 01:39:53 christos Exp
  */
 
 /*
@@ -1298,7 +1298,7 @@
 #define	PCI_PRODUCT_CMDTECH_3512	0x3512		/* SiI3512 SATALink */
 #define	PCI_PRODUCT_CMDTECH_3114	0x3114		/* SiI3114 SATALink */
 #define	PCI_PRODUCT_CMDTECH_3124	0x3124		/* SiI3124 SATALink */
-#define	PCI_PRODUCT_CMDTECH_3132	0x3124		/* SiI3132 SATALink */
+#define	PCI_PRODUCT_CMDTECH_3132	0x3132		/* SiI3132 SATALink */
 
 /* C-Media products */
 #define	PCI_PRODUCT_CMEDIA_CMI8338A	0x0100		/* CMI8338A PCI Audio Device */
