@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.62 2006/01/25 04:20:54 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.63 2006/02/02 19:33:12 he Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.62 2006/01/25 04:20:54 christos Exp $");
+__RCSID("$NetBSD: commands.c,v 1.63 2006/02/02 19:33:12 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -536,7 +536,7 @@ static int
 togdebug(int n)
 {
     if (net > 0 &&
-	(SetSockOpt(net, SOL_SOCKET, SO_DEBUG, debug)) < 0) {
+	(SetSockOpt(net, SOL_SOCKET, SO_DEBUG, telnet_debug)) < 0) {
 	    perror("setsockopt (SO_DEBUG)");
     }
     return 1;
@@ -757,7 +757,7 @@ static struct togglelist Togglelist[] = {
     { "debug",
 	"debugging",
 	    togdebug,
-		&debug,
+		&telnet_debug,
 		    "turn on socket level debugging" },
     { "netdata",
 	"printing of hexadecimal network data (debugging)",
@@ -2323,7 +2323,7 @@ tn(int argc, char *argv[])
 	    continue;
 	}
 
-	if (debug && SetSockOpt(net, SOL_SOCKET, SO_DEBUG, 1) < 0) {
+	if (telnet_debug && SetSockOpt(net, SOL_SOCKET, SO_DEBUG, 1) < 0) {
 	    perror("setsockopt (SO_DEBUG)");
 	}
 	if (hostp[0] == '@' || hostp[0] == '!') {
