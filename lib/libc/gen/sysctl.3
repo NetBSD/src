@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.164 2006/01/14 15:40:49 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.165 2006/02/02 19:56:32 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd January 14, 2006
+.Dd February 2, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1961,13 +1961,9 @@ for more details.
 .Sh CTL_SECURITY
 The security level contains various security-related settings for
 the system. Available settings are detailed below.
-.Bl -column "SECURITY_CURTAIN" "integerXXX" -offset indent
-.It Sy Second level name	Type	Changeable
-.It SECURITY_CURTAIN	integer	yes
-.El
 .Pp
 .Bl -tag -width "123456"
-.It Li SECURITY_CURTAIN
+.It Li security.curtain
 If non-zero, will filter return objects according to the user-id
 requesting information about them, preventing from users any
 access to objects they don't own.
@@ -1982,6 +1978,29 @@ and
 .Dv PF_UNIX
 PCBs), and
 .Xr w 1 .
+.It Li security.setid_core
+Settings related to set-id processes coredumps.
+By default, set-id processes do not dump core in situations where
+other processes would.
+The settings in this node allows an administrator to change this
+behavior.
+.Pp
+.Bl -tag -width "123456"
+.It Li security.setid_core.dump
+If non-zero, set-id processes will dump core.
+.It Li security.setid_core.group
+The group-id for the set-id processes' coredump.
+.It Li security.setid_core.mode
+The mode for the set-id processes' coredump.
+See
+.Xr chmod 1 .
+.It Li security.setid_core.owner
+The user-id that will be used as the owner of the set-id processes'
+coredump.
+.It Li security.setid_core.path
+The path to which set-id processes' coredumps will be saved to.
+Same syntax as kern.defcorename.
+.El
 .El
 .Sh CTL_VENDOR
 The "vendor" toplevel name is reserved to be used by vendors who wish to
