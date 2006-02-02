@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.16 2005/12/11 12:25:20 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.16.2.1 2006/02/02 14:45:12 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.16 2005/12/11 12:25:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.16.2.1 2006/02/02 14:45:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,10 +341,9 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	bzero(&cse->uio, sizeof(cse->uio));
 	cse->uio.uio_iovcnt = 1;
 	cse->uio.uio_resid = 0;
-	cse->uio.uio_segflg = UIO_SYSSPACE;
 	cse->uio.uio_rw = UIO_WRITE;
-	cse->uio.uio_lwp = NULL;
 	cse->uio.uio_iov = cse->iovec;
+	UIO_SETUP_SYSSPACE(&cse->uio);
 	bzero(&cse->iovec, sizeof(cse->iovec));
 	cse->uio.uio_iov[0].iov_len = cop->len;
 	cse->uio.uio_iov[0].iov_base = malloc(cop->len, M_XDATA, M_WAITOK);
