@@ -1,5 +1,6 @@
 /* Disassemble WDC 65816 instructions.
-   Copyright 1995, 1998, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1995, 1998, 2000, 2001, 2002, 2005
+   Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -27,7 +28,7 @@ static fprintf_ftype fpr;
 static void *stream;
 static struct disassemble_info *local_info;
 
-static void print_operand PARAMS ((int, char *, unsigned int *));
+static void print_operand PARAMS ((int, char *, int *));
 
 #if 0
 static char *lname[] = { "r0","r1","r2","r3","r4","r5","r6","r7","s0" };
@@ -45,7 +46,7 @@ static void
 print_operand (lookup, format, args)
      int lookup;
      char *format;
-     unsigned int *args;
+     int *args;
 {
   int val;
   int c;

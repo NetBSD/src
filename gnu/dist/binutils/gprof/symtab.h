@@ -1,6 +1,6 @@
 /* symtab.h
 
-   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -111,12 +111,12 @@ Sym_Table;
 
 extern Sym_Table symtab;	/* The symbol table.  */
 
-extern void sym_init        PARAMS ((Sym *));
-extern void symtab_finalize PARAMS ((Sym_Table *));
+extern void sym_init        (Sym *);
+extern void symtab_finalize (Sym_Table *);
 #ifdef DEBUG
-extern Sym *dbg_sym_lookup  PARAMS ((Sym_Table *, bfd_vma));
+extern Sym *dbg_sym_lookup  (Sym_Table *, bfd_vma);
 #endif
-extern Sym *sym_lookup      PARAMS ((Sym_Table *, bfd_vma));
-extern void find_call       PARAMS ((Sym *, bfd_vma, bfd_vma));
+extern Sym *sym_lookup      (Sym_Table *, bfd_vma);
+extern void find_call       (Sym *, bfd_vma, bfd_vma);
 
 #endif /* symtab_h */

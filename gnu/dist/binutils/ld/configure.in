@@ -119,7 +119,7 @@ AC_SUBST(HOSTING_LIBS)
 AC_SUBST(NATIVE_LIB_DIRS)
 
 AC_CHECK_HEADERS(string.h strings.h stdlib.h unistd.h)
-AC_CHECK_FUNCS(sbrk realpath)
+AC_CHECK_FUNCS(sbrk realpath glob)
 AC_HEADER_DIRENT
 
 BFD_BINARY_FOPEN
@@ -169,7 +169,7 @@ do
     all_targets=true
   else
     # Canonicalize the secondary target names.
-    result=`$ac_config_sub $targ_alias 2>/dev/null`
+    result=`${CONFIG_SHELL-/bin/sh} $ac_config_sub $targ_alias 2>/dev/null`
     if test -n "$result"; then
 	targ=$result
     else
@@ -256,6 +256,11 @@ case "$target_vendor" in
   hp) EXTRA_SHLIB_EXTENSION=".sl" ;;
   *)  EXTRA_SHLIB_EXTENSION= ;;
 esac
+
+case "$target_os" in
+  lynxos) EXTRA_SHLIB_EXTENSION=".a" ;;
+esac
+
 if test x${EXTRA_SHLIB_EXTENSION} != x ; then
   AC_DEFINE_UNQUOTED(EXTRA_SHLIB_EXTENSION, "$EXTRA_SHLIB_EXTENSION",
    [Additional extension a shared object might have.])

@@ -1,3 +1,4 @@
+# as: -xnone
 # objdump: -d --disassemble-zeroes
 # name: ia64 opc-f
 

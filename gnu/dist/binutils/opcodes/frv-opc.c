@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright 1996-2005 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -44,6 +44,8 @@ static int find_major_in_vliw
   PARAMS ((FRV_VLIW *, CGEN_ATTR_VALUE_TYPE));
 static int fr400_check_insn_major_constraints
   PARAMS ((FRV_VLIW *, CGEN_ATTR_VALUE_TYPE));
+static int fr450_check_insn_major_constraints
+  PARAMS ((FRV_VLIW *, CGEN_ATTR_VALUE_TYPE));
 static int fr500_check_insn_major_constraints
   PARAMS ((FRV_VLIW *, CGEN_ATTR_VALUE_TYPE));
 static int fr550_check_insn_major_constraints
@@ -58,6 +60,10 @@ frv_is_branch_major (CGEN_ATTR_VALUE_TYPE major, unsigned long mach)
     {
     case bfd_mach_fr400:
       if (major >= FR400_MAJOR_B_1 && major <= FR400_MAJOR_B_6)
+	return 1; /* is a branch */
+      break;
+    case bfd_mach_fr450:
+      if (major >= FR450_MAJOR_B_1 && major <= FR450_MAJOR_B_6)
 	return 1; /* is a branch */
       break;
     default:
@@ -75,6 +81,7 @@ frv_is_float_major (CGEN_ATTR_VALUE_TYPE major, unsigned long mach)
   switch (mach)
     {
     case bfd_mach_fr400:
+    case bfd_mach_fr450:
       return 0; /* No float insns */
     default:
       if (major >= FR500_MAJOR_F_1 && major <= FR500_MAJOR_F_8)
@@ -94,6 +101,10 @@ frv_is_media_major (CGEN_ATTR_VALUE_TYPE major, unsigned long mach)
       if (major >= FR400_MAJOR_M_1 && major <= FR400_MAJOR_M_2)
 	return 1; /* is a media insn */
       break;
+    case bfd_mach_fr450:
+      if (major >= FR450_MAJOR_M_1 && major <= FR450_MAJOR_M_6)
+	return 1; /* is a media insn */
+      break;
     default:
       if (major >= FR500_MAJOR_M_1 && major <= FR500_MAJOR_M_8)
 	return 1; /* is a media insn */
@@ -109,6 +120,9 @@ frv_is_branch_insn (const CGEN_INSN *insn)
   if (frv_is_branch_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR400_MAJOR),
 			   bfd_mach_fr400))
     return 1;
+  if (frv_is_branch_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR450_MAJOR),
+			   bfd_mach_fr450))
+    return 1;
   if (frv_is_branch_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR500_MAJOR),
 			   bfd_mach_fr500))
     return 1;
@@ -122,6 +136,9 @@ frv_is_float_insn (const CGEN_INSN *insn)
   if (frv_is_float_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR400_MAJOR),
 			  bfd_mach_fr400))
     return 1;
+  if (frv_is_float_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR450_MAJOR),
+			  bfd_mach_fr450))
+    return 1;
   if (frv_is_float_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR500_MAJOR),
 			  bfd_mach_fr500))
     return 1;
@@ -134,6 +151,9 @@ frv_is_media_insn (const CGEN_INSN *insn)
 {
   if (frv_is_media_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR400_MAJOR),
 			  bfd_mach_fr400))
+    return 1;
+  if (frv_is_media_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR450_MAJOR),
+			  bfd_mach_fr450))
     return 1;
   if (frv_is_media_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR500_MAJOR),
 			  bfd_mach_fr500))
@@ -245,6 +265,42 @@ static CGEN_ATTR_VALUE_TYPE fr400_unit_mapping[] =
 /* SCAN     */     UNIT_I0,  /* scan                only in I0  unit.  */
 /* DCPL     */     UNIT_C,   /* dcpl                only in C   unit.  */
 /* MDUALACC */     UNIT_FM0, /* media dual acc insn only in FM0 unit.  */
+/* MDCUTSSI */     UNIT_FM0, /* mdcutssi            only in FM0 unit.  */
+/* MCLRACC-1*/     UNIT_FM0  /* mclracc,A==1   insn only in FM0 unit.  */
+};
+
+/* Some insns are assigned specialized implementation units which map to
+   different actual implementation units on different machines.  These
+   tables perform that mapping.  */
+static CGEN_ATTR_VALUE_TYPE fr450_unit_mapping[] =
+{
+/* unit in insn    actual unit */
+/* NIL      */     UNIT_NIL,
+/* I0       */     UNIT_I0,
+/* I1       */     UNIT_I1,
+/* I01      */     UNIT_I01, 
+/* I2       */     UNIT_NIL, /* no I2 or I3 unit */
+/* I3       */     UNIT_NIL,
+/* IALL     */     UNIT_I01, /* only I0 and I1 units */
+/* FM0      */     UNIT_FM0,
+/* FM1      */     UNIT_FM1,
+/* FM01     */     UNIT_FM01,
+/* FM2      */     UNIT_NIL, /* no F2 or M2 units */
+/* FM3      */     UNIT_NIL, /* no F3 or M3 units */
+/* FMALL    */     UNIT_FM01,/* Only F0,F1,M0,M1 units */
+/* FMLOW    */     UNIT_FM0, /* Only F0,M0 units */
+/* B0       */     UNIT_B0,  /* branches only in B0 unit.  */
+/* B1       */     UNIT_B0,
+/* B01      */     UNIT_B0,
+/* C        */     UNIT_C,
+/* MULT-DIV */     UNIT_I0,  /* multiply and divide only in I0  unit.  */
+/* IACC     */     UNIT_I01, /* iacc multiply       in I0 or I1 unit.  */
+/* LOAD     */     UNIT_I0,  /* load                only in I0  unit.  */
+/* STORE    */     UNIT_I0,  /* store               only in I0  unit.  */
+/* SCAN     */     UNIT_I0,  /* scan                only in I0  unit.  */
+/* DCPL     */     UNIT_I0,  /* dcpl                only in I0  unit.  */
+/* MDUALACC */     UNIT_FM0, /* media dual acc insn only in FM0 unit.  */
+/* MDCUTSSI */     UNIT_FM01, /* mdcutssi           in FM0 or FM1.  */
 /* MCLRACC-1*/     UNIT_FM0  /* mclracc,A==1   insn only in FM0 unit.  */
 };
 
@@ -276,6 +332,7 @@ static CGEN_ATTR_VALUE_TYPE fr500_unit_mapping[] =
 /* SCAN     */     UNIT_I01, /* scan                in I0 or I1 unit.  */
 /* DCPL     */     UNIT_C,   /* dcpl                only in C unit.  */
 /* MDUALACC */     UNIT_FM0, /* media dual acc insn only in FM0 unit.  */
+/* MDCUTSSI */     UNIT_FM0, /* mdcutssi            only in FM0 unit.  */
 /* MCLRACC-1*/     UNIT_FM01 /* mclracc,A==1 in FM0 or FM1 unit.  */
 };
 
@@ -307,6 +364,7 @@ static CGEN_ATTR_VALUE_TYPE fr550_unit_mapping[] =
 /* SCAN     */     UNIT_IALL, /* scan                in any integer unit. */
 /* DCPL     */     UNIT_I0,   /* dcpl                only in I0 unit.     */
 /* MDUALACC */     UNIT_FMALL,/* media dual acc insn in all media units   */
+/* MDCUTSSI */     UNIT_FM01, /* mdcutssi            in FM0 or FM1 unit.  */
 /* MCLRACC-1*/     UNIT_FM01  /* mclracc,A==1 in FM0 or FM1 unit.         */
 };
 
@@ -323,6 +381,10 @@ frv_vliw_reset (FRV_VLIW *vliw, unsigned long mach, unsigned long elf_flags)
     case bfd_mach_fr400:
       vliw->current_vliw = fr400_allowed_vliw;
       vliw->unit_mapping = fr400_unit_mapping;
+      break;
+    case bfd_mach_fr450:
+      vliw->current_vliw = fr400_allowed_vliw;
+      vliw->unit_mapping = fr450_unit_mapping;
       break;
     case bfd_mach_fr550:
       vliw->current_vliw = fr550_allowed_vliw;
@@ -453,10 +515,49 @@ fr400_check_insn_major_constraints (
     case FR400_MAJOR_M_2:
       return ! find_major_in_vliw (vliw, FR400_MAJOR_M_1)
 	&&   ! find_major_in_vliw (vliw, FR400_MAJOR_M_2);
+    case FR400_MAJOR_M_1:
+      return !find_major_in_vliw (vliw, FR400_MAJOR_M_2);
     default:
       break;
     }
   return 1;
+}
+
+static int
+fr450_check_insn_major_constraints (
+  FRV_VLIW *vliw, CGEN_ATTR_VALUE_TYPE major
+)
+{
+  CGEN_ATTR_VALUE_TYPE other_major;
+
+  /* Our caller guarantees there's at least one other instruction.  */
+  other_major = CGEN_INSN_ATTR_VALUE (vliw->insn[0], CGEN_INSN_FR450_MAJOR);
+
+  /* (M4, M5) and (M4, M6) are allowed.  */
+  if (other_major == FR450_MAJOR_M_4)
+    if (major == FR450_MAJOR_M_5 || major == FR450_MAJOR_M_6)
+      return 1;
+
+  /* Otherwise, instructions in even-numbered media categories cannot be
+     executed in parallel with other media instructions.  */
+  switch (major)
+    {
+    case FR450_MAJOR_M_2:
+    case FR450_MAJOR_M_4:
+    case FR450_MAJOR_M_6:
+      return !(other_major >= FR450_MAJOR_M_1
+	       && other_major <= FR450_MAJOR_M_6);
+
+    case FR450_MAJOR_M_1:
+    case FR450_MAJOR_M_3:
+    case FR450_MAJOR_M_5:
+      return !(other_major == FR450_MAJOR_M_2
+	       || other_major == FR450_MAJOR_M_4
+	       || other_major == FR450_MAJOR_M_6);
+
+    default:
+      return 1;
+    }
 }
 
 static int
@@ -696,6 +797,9 @@ check_insn_major_constraints (
     case bfd_mach_fr400:
       rc = fr400_check_insn_major_constraints (vliw, major);
       break;
+    case bfd_mach_fr450:
+      rc = fr450_check_insn_major_constraints (vliw, major);
+      break;
     case bfd_mach_fr550:
       rc = fr550_check_insn_major_constraints (vliw, major, insn);
       break;
@@ -735,6 +839,9 @@ frv_vliw_add_insn (FRV_VLIW *vliw, const CGEN_INSN *insn)
     {
     case bfd_mach_fr400:
       major = CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR400_MAJOR);
+      break;
+    case bfd_mach_fr450:
+      major = CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR450_MAJOR);
       break;
     case bfd_mach_fr550:
       major = CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR550_MAJOR);
@@ -805,599 +912,611 @@ static unsigned int dis_hash_insn PARAMS ((const char *, CGEN_INSN_INT));
 #else
 #define F(f) & frv_cgen_ifld_table[FRV_/**/f]
 #endif
-static const CGEN_IFMT ifmt_empty = {
+static const CGEN_IFMT ifmt_empty ATTRIBUTE_UNUSED = {
   0, 0, 0x0, { { 0 } }
 };
 
-static const CGEN_IFMT ifmt_add = {
+static const CGEN_IFMT ifmt_add ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_ICCI_1_NULL) }, { F (F_OPE2) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_not = {
+static const CGEN_IFMT ifmt_not ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_ICCI_1_NULL) }, { F (F_OPE2) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_smul = {
+static const CGEN_IFMT ifmt_smul ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_ICCI_1_NULL) }, { F (F_OPE2) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_smu = {
+static const CGEN_IFMT ifmt_smu ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0fc0, { { F (F_PACK) }, { F (F_RD_NULL) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_slass = {
+static const CGEN_IFMT ifmt_slass ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_scutss = {
+static const CGEN_IFMT ifmt_scutss ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cadd = {
+static const CGEN_IFMT ifmt_cadd ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cnot = {
+static const CGEN_IFMT ifmt_cnot ATTRIBUTE_UNUSED = {
   32, 32, 0x1fff0c0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_csmul = {
+static const CGEN_IFMT ifmt_csmul ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_addcc = {
+static const CGEN_IFMT ifmt_addcc ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc03c0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_ICCI_1) }, { F (F_OPE2) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_smulcc = {
+static const CGEN_IFMT ifmt_smulcc ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc03c0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_ICCI_1) }, { F (F_OPE2) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_addi = {
+static const CGEN_IFMT ifmt_addi ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0000, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_smuli = {
+static const CGEN_IFMT ifmt_smuli ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0000, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_addicc = {
+static const CGEN_IFMT ifmt_addicc ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0000, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_ICCI_1) }, { F (F_S10) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_smulicc = {
+static const CGEN_IFMT ifmt_smulicc ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0000, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_ICCI_1) }, { F (F_S10) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmpb = {
+static const CGEN_IFMT ifmt_cmpb ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc03c0, { { F (F_PACK) }, { F (F_GRK_NULL) }, { F (F_OP) }, { F (F_GRI) }, { F (F_ICCI_1) }, { F (F_OPE2) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_setlo = {
+static const CGEN_IFMT ifmt_setlo ATTRIBUTE_UNUSED = {
   32, 32, 0x1ff0000, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_MISC_NULL_4) }, { F (F_U16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_sethi = {
+static const CGEN_IFMT ifmt_sethi ATTRIBUTE_UNUSED = {
   32, 32, 0x1ff0000, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_MISC_NULL_4) }, { F (F_U16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_setlos = {
+static const CGEN_IFMT ifmt_setlos ATTRIBUTE_UNUSED = {
   32, 32, 0x1ff0000, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_MISC_NULL_4) }, { F (F_S16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldbf = {
+static const CGEN_IFMT ifmt_ldbf ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldc = {
+static const CGEN_IFMT ifmt_ldc ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_CPRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldd = {
+static const CGEN_IFMT ifmt_ldd ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_lddf = {
+static const CGEN_IFMT ifmt_lddf ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_lddc = {
+static const CGEN_IFMT ifmt_lddc ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_CPRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldsbi = {
+static const CGEN_IFMT ifmt_ldsbi ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0000, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldbfi = {
+static const CGEN_IFMT ifmt_ldbfi ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0000, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_lddi = {
+static const CGEN_IFMT ifmt_lddi ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0000, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_lddfi = {
+static const CGEN_IFMT ifmt_lddfi ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0000, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cldbf = {
+static const CGEN_IFMT ifmt_cldbf ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_clddf = {
+static const CGEN_IFMT ifmt_clddf ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_movgf = {
+static const CGEN_IFMT ifmt_movgf ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmovgf = {
+static const CGEN_IFMT ifmt_cmovgf ATTRIBUTE_UNUSED = {
   32, 32, 0x1fff0c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_movgs = {
+static const CGEN_IFMT ifmt_movgs ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_OP) }, { F (F_SPR) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_bra = {
+static const CGEN_IFMT ifmt_bra ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0000, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_LABEL16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_bno = {
+static const CGEN_IFMT ifmt_bno ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffcffff, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_LABEL16_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_beq = {
+static const CGEN_IFMT ifmt_beq ATTRIBUTE_UNUSED = {
   32, 32, 0x79fc0000, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2) }, { F (F_OP) }, { F (F_HINT) }, { F (F_LABEL16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fbra = {
+static const CGEN_IFMT ifmt_fbra ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0000, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_LABEL16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fbno = {
+static const CGEN_IFMT ifmt_fbno ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffcffff, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_LABEL16_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fbne = {
+static const CGEN_IFMT ifmt_fbne ATTRIBUTE_UNUSED = {
   32, 32, 0x79fc0000, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2) }, { F (F_OP) }, { F (F_HINT) }, { F (F_LABEL16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_bctrlr = {
+static const CGEN_IFMT ifmt_bctrlr ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffcefff, { { F (F_PACK) }, { F (F_COND_NULL) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_bralr = {
+static const CGEN_IFMT ifmt_bralr ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffcffff, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND_NULL) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_bnolr = {
+static const CGEN_IFMT ifmt_bnolr ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffcffff, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND_NULL) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_beqlr = {
+static const CGEN_IFMT ifmt_beqlr ATTRIBUTE_UNUSED = {
   32, 32, 0x79fcffff, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND_NULL) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fbralr = {
+static const CGEN_IFMT ifmt_fbralr ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffcffff, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND_NULL) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fbnolr = {
+static const CGEN_IFMT ifmt_fbnolr ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffcffff, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND_NULL) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fbeqlr = {
+static const CGEN_IFMT ifmt_fbeqlr ATTRIBUTE_UNUSED = {
   32, 32, 0x79fcffff, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND_NULL) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_bcralr = {
+static const CGEN_IFMT ifmt_bcralr ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffcefff, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_bceqlr = {
+static const CGEN_IFMT ifmt_bceqlr ATTRIBUTE_UNUSED = {
   32, 32, 0x79fcefff, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fcbralr = {
+static const CGEN_IFMT ifmt_fcbralr ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffcefff, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fcbeqlr = {
+static const CGEN_IFMT ifmt_fcbeqlr ATTRIBUTE_UNUSED = {
   32, 32, 0x79fcefff, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_jmpl = {
+static const CGEN_IFMT ifmt_jmpl ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0fc0, { { F (F_PACK) }, { F (F_MISC_NULL_1) }, { F (F_LI_OFF) }, { F (F_OP) }, { F (F_GRI) }, { F (F_MISC_NULL_2) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_calll = {
+static const CGEN_IFMT ifmt_calll ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0fc0, { { F (F_PACK) }, { F (F_MISC_NULL_1) }, { F (F_LI_ON) }, { F (F_OP) }, { F (F_GRI) }, { F (F_MISC_NULL_2) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_jmpil = {
+static const CGEN_IFMT ifmt_jmpil ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0000, { { F (F_PACK) }, { F (F_MISC_NULL_1) }, { F (F_LI_OFF) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_callil = {
+static const CGEN_IFMT ifmt_callil ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0000, { { F (F_PACK) }, { F (F_MISC_NULL_1) }, { F (F_LI_ON) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_call = {
+static const CGEN_IFMT ifmt_call ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0000, { { F (F_PACK) }, { F (F_OP) }, { F (F_LABEL24) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_rett = {
+static const CGEN_IFMT ifmt_rett ATTRIBUTE_UNUSED = {
   32, 32, 0x7dffffff, { { F (F_PACK) }, { F (F_MISC_NULL_1) }, { F (F_DEBUG) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_rei = {
+static const CGEN_IFMT ifmt_rei ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0fff, { { F (F_PACK) }, { F (F_RD_NULL) }, { F (F_OP) }, { F (F_EIR) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_tra = {
+static const CGEN_IFMT ifmt_tra ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0fc0, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_GRI) }, { F (F_MISC_NULL_3) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_tno = {
+static const CGEN_IFMT ifmt_tno ATTRIBUTE_UNUSED = {
   32, 32, 0x7fffffff, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_GRI_NULL) }, { F (F_MISC_NULL_3) }, { F (F_OPE4) }, { F (F_GRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_teq = {
+static const CGEN_IFMT ifmt_teq ATTRIBUTE_UNUSED = {
   32, 32, 0x79fc0fc0, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2) }, { F (F_OP) }, { F (F_GRI) }, { F (F_MISC_NULL_3) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ftra = {
+static const CGEN_IFMT ifmt_ftra ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0fc0, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2_NULL) }, { F (F_OP) }, { F (F_GRI) }, { F (F_MISC_NULL_3) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ftno = {
+static const CGEN_IFMT ifmt_ftno ATTRIBUTE_UNUSED = {
   32, 32, 0x7fffffff, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2_NULL) }, { F (F_OP) }, { F (F_GRI_NULL) }, { F (F_MISC_NULL_3) }, { F (F_OPE4) }, { F (F_GRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ftne = {
+static const CGEN_IFMT ifmt_ftne ATTRIBUTE_UNUSED = {
   32, 32, 0x79fc0fc0, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2) }, { F (F_OP) }, { F (F_GRI) }, { F (F_MISC_NULL_3) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_tira = {
+static const CGEN_IFMT ifmt_tira ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0000, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_tino = {
+static const CGEN_IFMT ifmt_tino ATTRIBUTE_UNUSED = {
   32, 32, 0x7fffffff, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_GRI_NULL) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_tieq = {
+static const CGEN_IFMT ifmt_tieq ATTRIBUTE_UNUSED = {
   32, 32, 0x79fc0000, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ftira = {
+static const CGEN_IFMT ifmt_ftira ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0000, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ftino = {
+static const CGEN_IFMT ifmt_ftino ATTRIBUTE_UNUSED = {
   32, 32, 0x7fffffff, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2_NULL) }, { F (F_OP) }, { F (F_GRI_NULL) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ftine = {
+static const CGEN_IFMT ifmt_ftine ATTRIBUTE_UNUSED = {
   32, 32, 0x79fc0000, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_FCCI_2) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_break = {
+static const CGEN_IFMT ifmt_break ATTRIBUTE_UNUSED = {
   32, 32, 0x7fffffff, { { F (F_PACK) }, { F (F_RD_NULL) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_MISC_NULL_3) }, { F (F_OPE4) }, { F (F_GRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_andcr = {
+static const CGEN_IFMT ifmt_andcr ATTRIBUTE_UNUSED = {
   32, 32, 0x71ff8ff8, { { F (F_PACK) }, { F (F_MISC_NULL_6) }, { F (F_CRK) }, { F (F_OP) }, { F (F_MISC_NULL_7) }, { F (F_CRI) }, { F (F_OPE1) }, { F (F_MISC_NULL_8) }, { F (F_CRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_notcr = {
+static const CGEN_IFMT ifmt_notcr ATTRIBUTE_UNUSED = {
   32, 32, 0x71fffff8, { { F (F_PACK) }, { F (F_MISC_NULL_6) }, { F (F_CRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_MISC_NULL_8) }, { F (F_CRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ckra = {
+static const CGEN_IFMT ifmt_ckra ATTRIBUTE_UNUSED = {
   32, 32, 0x79ffffff, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_CRJ_INT) }, { F (F_OP) }, { F (F_MISC_NULL_5) }, { F (F_ICCI_3_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ckeq = {
+static const CGEN_IFMT ifmt_ckeq ATTRIBUTE_UNUSED = {
   32, 32, 0x79fffffc, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_CRJ_INT) }, { F (F_OP) }, { F (F_MISC_NULL_5) }, { F (F_ICCI_3) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fckra = {
+static const CGEN_IFMT ifmt_fckra ATTRIBUTE_UNUSED = {
   32, 32, 0x79fffffc, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_CRJ_FLOAT) }, { F (F_OP) }, { F (F_MISC_NULL_5) }, { F (F_FCCI_3) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cckra = {
+static const CGEN_IFMT ifmt_cckra ATTRIBUTE_UNUSED = {
   32, 32, 0x79fff0ff, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_CRJ_INT) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_MISC_NULL_9) }, { F (F_ICCI_3_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cckeq = {
+static const CGEN_IFMT ifmt_cckeq ATTRIBUTE_UNUSED = {
   32, 32, 0x79fff0fc, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_CRJ_INT) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_MISC_NULL_9) }, { F (F_ICCI_3) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cfckra = {
+static const CGEN_IFMT ifmt_cfckra ATTRIBUTE_UNUSED = {
   32, 32, 0x79fff0ff, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_CRJ_FLOAT) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_MISC_NULL_9) }, { F (F_FCCI_3_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cfckne = {
+static const CGEN_IFMT ifmt_cfckne ATTRIBUTE_UNUSED = {
   32, 32, 0x79fff0fc, { { F (F_PACK) }, { F (F_FLT_CC) }, { F (F_CRJ_FLOAT) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_MISC_NULL_9) }, { F (F_FCCI_3) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cjmpl = {
+static const CGEN_IFMT ifmt_cjmpl ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc00c0, { { F (F_PACK) }, { F (F_MISC_NULL_1) }, { F (F_LI_OFF) }, { F (F_OP) }, { F (F_GRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ccalll = {
+static const CGEN_IFMT ifmt_ccalll ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc00c0, { { F (F_PACK) }, { F (F_MISC_NULL_1) }, { F (F_LI_ON) }, { F (F_OP) }, { F (F_GRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_icei = {
+static const CGEN_IFMT ifmt_icei ATTRIBUTE_UNUSED = {
   32, 32, 0x7dfc0fc0, { { F (F_PACK) }, { F (F_MISC_NULL_1) }, { F (F_AE) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_icpl = {
+static const CGEN_IFMT ifmt_icpl ATTRIBUTE_UNUSED = {
   32, 32, 0x7dfc0fc0, { { F (F_PACK) }, { F (F_MISC_NULL_1) }, { F (F_LOCK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_icul = {
+static const CGEN_IFMT ifmt_icul ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0fff, { { F (F_PACK) }, { F (F_RD_NULL) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_GRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_bar = {
+static const CGEN_IFMT ifmt_bar ATTRIBUTE_UNUSED = {
   32, 32, 0x7fffffff, { { F (F_PACK) }, { F (F_RD_NULL) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_GRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cop1 = {
+static const CGEN_IFMT ifmt_lrai ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc0fc7, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_LRAE) }, { F (F_LRAD) }, { F (F_LRAS) }, { F (F_LRA_NULL) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_tlbpr ATTRIBUTE_UNUSED = {
+  32, 32, 0x61fc0fc0, { { F (F_PACK) }, { F (F_TLBPR_NULL) }, { F (F_TLBPROPX) }, { F (F_TLBPRL) }, { F (F_OP) }, { F (F_GRI) }, { F (F_OPE1) }, { F (F_GRJ) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_cop1 ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0000, { { F (F_PACK) }, { F (F_CPRK) }, { F (F_OP) }, { F (F_CPRI) }, { F (F_S6_1) }, { F (F_CPRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_clrgr = {
+static const CGEN_IFMT ifmt_clrgr ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffff, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_GRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_clrfr = {
+static const CGEN_IFMT ifmt_clrfr ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffff, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_GRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fitos = {
+static const CGEN_IFMT ifmt_fitos ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fstoi = {
+static const CGEN_IFMT ifmt_fstoi ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fitod = {
+static const CGEN_IFMT ifmt_fitod ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fdtoi = {
+static const CGEN_IFMT ifmt_fdtoi ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cfitos = {
+static const CGEN_IFMT ifmt_cfitos ATTRIBUTE_UNUSED = {
   32, 32, 0x1fff0c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cfstoi = {
+static const CGEN_IFMT ifmt_cfstoi ATTRIBUTE_UNUSED = {
   32, 32, 0x1fff0c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fmovs = {
+static const CGEN_IFMT ifmt_fmovs ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fmovd = {
+static const CGEN_IFMT ifmt_fmovd ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cfmovs = {
+static const CGEN_IFMT ifmt_cfmovs ATTRIBUTE_UNUSED = {
   32, 32, 0x1fff0c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fadds = {
+static const CGEN_IFMT ifmt_fadds ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_faddd = {
+static const CGEN_IFMT ifmt_faddd ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cfadds = {
+static const CGEN_IFMT ifmt_cfadds ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fcmps = {
+static const CGEN_IFMT ifmt_fcmps ATTRIBUTE_UNUSED = {
   32, 32, 0x79fc0fc0, { { F (F_PACK) }, { F (F_COND_NULL) }, { F (F_FCCI_2) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fcmpd = {
+static const CGEN_IFMT ifmt_fcmpd ATTRIBUTE_UNUSED = {
   32, 32, 0x79fc0fc0, { { F (F_PACK) }, { F (F_COND_NULL) }, { F (F_FCCI_2) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cfcmps = {
+static const CGEN_IFMT ifmt_cfcmps ATTRIBUTE_UNUSED = {
   32, 32, 0x79fc00c0, { { F (F_PACK) }, { F (F_COND_NULL) }, { F (F_FCCI_2) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mhsetlos = {
+static const CGEN_IFMT ifmt_mhsetlos ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_OPE1) }, { F (F_U12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mhsethis = {
+static const CGEN_IFMT ifmt_mhsethis ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_OPE1) }, { F (F_U12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mhdsets = {
+static const CGEN_IFMT ifmt_mhdsets ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_OPE1) }, { F (F_U12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mhsetloh = {
+static const CGEN_IFMT ifmt_mhsetloh ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffe0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI_NULL) }, { F (F_OPE1) }, { F (F_MISC_NULL_11) }, { F (F_S5) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mhsethih = {
+static const CGEN_IFMT ifmt_mhsethih ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffe0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI_NULL) }, { F (F_OPE1) }, { F (F_MISC_NULL_11) }, { F (F_S5) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mhdseth = {
+static const CGEN_IFMT ifmt_mhdseth ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffe0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI_NULL) }, { F (F_OPE1) }, { F (F_MISC_NULL_11) }, { F (F_S5) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mand = {
+static const CGEN_IFMT ifmt_mand ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmand = {
+static const CGEN_IFMT ifmt_cmand ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mnot = {
+static const CGEN_IFMT ifmt_mnot ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmnot = {
+static const CGEN_IFMT ifmt_cmnot ATTRIBUTE_UNUSED = {
   32, 32, 0x1fff0c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_RS_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mrotli = {
+static const CGEN_IFMT ifmt_mrotli ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_U6) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mcut = {
+static const CGEN_IFMT ifmt_mcut ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_ACC40SI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mcuti = {
+static const CGEN_IFMT ifmt_mcuti ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_ACC40SI) }, { F (F_OPE1) }, { F (F_S6) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mdcutssi = {
+static const CGEN_IFMT ifmt_mdcutssi ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_ACC40SI) }, { F (F_OPE1) }, { F (F_S6) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mdrotli = {
+static const CGEN_IFMT ifmt_mdrotli ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_S6) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mqsaths = {
+static const CGEN_IFMT ifmt_mqsaths ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mcmpsh = {
+static const CGEN_IFMT ifmt_mcmpsh ATTRIBUTE_UNUSED = {
   32, 32, 0x79fc0fc0, { { F (F_PACK) }, { F (F_COND_NULL) }, { F (F_FCCK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mabshs = {
+static const CGEN_IFMT ifmt_mabshs ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI_NULL) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmqaddhss = {
+static const CGEN_IFMT ifmt_cmqaddhss ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_maddaccs = {
-  32, 32, 0x1fc0fff, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_ACC40SI) }, { F (F_OPE1) }, { F (F_ACCJ_NULL) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_mmulhs = {
-  32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmmulhs = {
-  32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_mqmulhs = {
-  32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmqmulhs = {
-  32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_mmachu = {
-  32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_ACC40UK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmmachu = {
-  32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_ACC40UK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_mqmachu = {
-  32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_ACC40UK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmqmachu = {
-  32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_ACC40UK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmexpdhw = {
-  32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_U6) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_mexpdhd = {
+static const CGEN_IFMT ifmt_mqsllhi ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_U6) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmexpdhd = {
+static const CGEN_IFMT ifmt_maddaccs ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc0fff, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_ACC40SI) }, { F (F_OPE1) }, { F (F_ACCJ_NULL) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mmulhs ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_cmmulhs ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mqmulhs ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_cmqmulhs ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mmachu ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_ACC40UK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_cmmachu ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_ACC40UK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mqmachu ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_ACC40UK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_cmqmachu ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_ACC40UK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_cmexpdhw ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_U6) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_munpackh = {
+static const CGEN_IFMT ifmt_mexpdhd ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc0fc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_U6) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_cmexpdhd ATTRIBUTE_UNUSED = {
+  32, 32, 0x1fc00c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_U6) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_munpackh ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fff, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mdunpackh = {
+static const CGEN_IFMT ifmt_mdunpackh ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fff, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mbtoh = {
+static const CGEN_IFMT ifmt_mbtoh ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI_NULL) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmbtoh = {
+static const CGEN_IFMT ifmt_cmbtoh ATTRIBUTE_UNUSED = {
   32, 32, 0x1fff0c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mhtob = {
+static const CGEN_IFMT ifmt_mhtob ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffc0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI_NULL) }, { F (F_OPE1) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmhtob = {
+static const CGEN_IFMT ifmt_cmhtob ATTRIBUTE_UNUSED = {
   32, 32, 0x1fff0c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmbtohe = {
+static const CGEN_IFMT ifmt_cmbtohe ATTRIBUTE_UNUSED = {
   32, 32, 0x1fff0c0, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_FRI_NULL) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_FRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mnop = {
+static const CGEN_IFMT ifmt_mnop ATTRIBUTE_UNUSED = {
   32, 32, 0x7fffffff, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_A) }, { F (F_MISC_NULL_10) }, { F (F_OPE1) }, { F (F_FRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mclracc_0 = {
+static const CGEN_IFMT ifmt_mclracc_0 ATTRIBUTE_UNUSED = {
   32, 32, 0x1ffffff, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_A) }, { F (F_MISC_NULL_10) }, { F (F_OPE1) }, { F (F_FRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mrdacc = {
+static const CGEN_IFMT ifmt_mrdacc ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fff, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_ACC40SI) }, { F (F_OPE1) }, { F (F_FRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mrdaccg = {
+static const CGEN_IFMT ifmt_mrdaccg ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fff, { { F (F_PACK) }, { F (F_FRK) }, { F (F_OP) }, { F (F_ACCGI) }, { F (F_OPE1) }, { F (F_FRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mwtacc = {
+static const CGEN_IFMT ifmt_mwtacc ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fff, { { F (F_PACK) }, { F (F_ACC40SK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mwtaccg = {
+static const CGEN_IFMT ifmt_mwtaccg ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fff, { { F (F_PACK) }, { F (F_ACCGK) }, { F (F_OP) }, { F (F_FRI) }, { F (F_OPE1) }, { F (F_FRJ_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_fnop = {
+static const CGEN_IFMT ifmt_fnop ATTRIBUTE_UNUSED = {
   32, 32, 0x7fffffff, { { F (F_PACK) }, { F (F_RD_NULL) }, { F (F_OP) }, { F (F_FRI_NULL) }, { F (F_OPE1) }, { F (F_FRJ_NULL) }, { 0 } }
 };
 
@@ -2006,10 +2125,10 @@ static const CGEN_OPCODE frv_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, OP (PACK), ' ', '@', '(', OP (GRI), ',', OP (GRJ), ')', ',', OP (GRK), 0 } },
     & ifmt_slass, { 0x800c0 }
   },
-/* ld$pack @($GRi,$GRj),$GRk */
+/* ld$pack $ldann($GRi,$GRj),$GRk */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', '@', '(', OP (GRI), ',', OP (GRJ), ')', ',', OP (GRK), 0 } },
+    { { MNEM, OP (PACK), ' ', OP (LDANN), '(', OP (GRI), ',', OP (GRJ), ')', ',', OP (GRK), 0 } },
     & ifmt_slass, { 0x80100 }
   },
 /* ldbf$pack @($GRi,$GRj),$FRintk */
@@ -2084,10 +2203,10 @@ static const CGEN_OPCODE frv_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, OP (PACK), ' ', '@', '(', OP (GRI), ',', OP (GRJ), ')', ',', OP (FRINTK), 0 } },
     & ifmt_ldbf, { 0x80a80 }
   },
-/* ldd$pack @($GRi,$GRj),$GRdoublek */
+/* ldd$pack $lddann($GRi,$GRj),$GRdoublek */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', '@', '(', OP (GRI), ',', OP (GRJ), ')', ',', OP (GRDOUBLEK), 0 } },
+    { { MNEM, OP (PACK), ' ', OP (LDDANN), '(', OP (GRI), ',', OP (GRJ), ')', ',', OP (GRDOUBLEK), 0 } },
     & ifmt_ldd, { 0x80140 }
   },
 /* lddf$pack @($GRi,$GRj),$FRdoublek */
@@ -2486,42 +2605,6 @@ static const CGEN_OPCODE frv_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, OP (PACK), ' ', OP (CPRK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
     & ifmt_ldc, { 0xc0940 }
   },
-/* rstb$pack $GRk,@($GRi,$GRj) */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', OP (GRK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
-    & ifmt_slass, { 0xc0800 }
-  },
-/* rsth$pack $GRk,@($GRi,$GRj) */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', OP (GRK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
-    & ifmt_slass, { 0xc0840 }
-  },
-/* rst$pack $GRk,@($GRi,$GRj) */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', OP (GRK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
-    & ifmt_slass, { 0xc0880 }
-  },
-/* rstbf$pack $FRintk,@($GRi,$GRj) */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', OP (FRINTK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
-    & ifmt_ldbf, { 0xc0a00 }
-  },
-/* rsthf$pack $FRintk,@($GRi,$GRj) */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', OP (FRINTK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
-    & ifmt_ldbf, { 0xc0a40 }
-  },
-/* rstf$pack $FRintk,@($GRi,$GRj) */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', OP (FRINTK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
-    & ifmt_ldbf, { 0xc0a80 }
-  },
 /* std$pack $GRdoublek,@($GRi,$GRj) */
   {
     { 0, 0, 0, 0 },
@@ -2540,18 +2623,6 @@ static const CGEN_OPCODE frv_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, OP (PACK), ' ', OP (CPRDOUBLEK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
     & ifmt_lddc, { 0xc0980 }
   },
-/* rstd$pack $GRdoublek,@($GRi,$GRj) */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', OP (GRDOUBLEK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
-    & ifmt_ldd, { 0xc08c0 }
-  },
-/* rstdf$pack $FRdoublek,@($GRi,$GRj) */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', OP (FRDOUBLEK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
-    & ifmt_lddf, { 0xc0ac0 }
-  },
 /* stq$pack $GRk,@($GRi,$GRj) */
   {
     { 0, 0, 0, 0 },
@@ -2569,18 +2640,6 @@ static const CGEN_OPCODE frv_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, OP (PACK), ' ', OP (CPRK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
     & ifmt_ldc, { 0xc09c0 }
-  },
-/* rstq$pack $GRk,@($GRi,$GRj) */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', OP (GRK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
-    & ifmt_slass, { 0xc0900 }
-  },
-/* rstqf$pack $FRintk,@($GRi,$GRj) */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', OP (FRINTK), ',', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
-    & ifmt_ldbf, { 0xc0b00 }
   },
 /* stbu$pack $GRk,@($GRi,$GRj) */
   {
@@ -3632,10 +3691,10 @@ static const CGEN_OPCODE frv_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, OP (PACK), ' ', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
     & ifmt_jmpl, { 0x300000 }
   },
-/* calll$pack @($GRi,$GRj) */
+/* calll$pack $callann($GRi,$GRj) */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (PACK), ' ', '@', '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
+    { { MNEM, OP (PACK), ' ', OP (CALLANN), '(', OP (GRI), ',', OP (GRJ), ')', 0 } },
     & ifmt_calll, { 0x2300000 }
   },
 /* jmpil$pack @($GRi,$s12) */
@@ -4616,6 +4675,24 @@ static const CGEN_OPCODE frv_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, OP (PACK), 0 } },
     & ifmt_bar, { 0xc0fc0 }
   },
+/* lrai$pack $GRi,$GRk,$LRAE,$LRAD,$LRAS */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, OP (PACK), ' ', OP (GRI), ',', OP (GRK), ',', OP (LRAE), ',', OP (LRAD), ',', OP (LRAS), 0 } },
+    & ifmt_lrai, { 0xc0800 }
+  },
+/* lrad$pack $GRi,$GRk,$LRAE,$LRAD,$LRAS */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, OP (PACK), ' ', OP (GRI), ',', OP (GRK), ',', OP (LRAE), ',', OP (LRAD), ',', OP (LRAS), 0 } },
+    & ifmt_lrai, { 0xc0840 }
+  },
+/* tlbpr$pack $GRi,$GRj,$TLBPRopx,$TLBPRL */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, OP (PACK), ' ', OP (GRI), ',', OP (GRJ), ',', OP (TLBPROPX), ',', OP (TLBPRL), 0 } },
+    & ifmt_tlbpr, { 0xc0900 }
+  },
 /* cop1$pack $s6_1,$CPRi,$CPRj,$CPRk */
   {
     { 0, 0, 0, 0 },
@@ -5498,6 +5575,30 @@ static const CGEN_OPCODE frv_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, OP (PACK), ' ', OP (FRINTIEVEN), ',', OP (FRINTJEVEN), ',', OP (FRINTKEVEN), ',', OP (CCI), ',', OP (COND), 0 } },
     & ifmt_cmqaddhss, { 0x1cc00c0 }
   },
+/* mqlclrhs$pack $FRintieven,$FRintjeven,$FRintkeven */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, OP (PACK), ' ', OP (FRINTIEVEN), ',', OP (FRINTJEVEN), ',', OP (FRINTKEVEN), 0 } },
+    & ifmt_mqsaths, { 0x1e00400 }
+  },
+/* mqlmths$pack $FRintieven,$FRintjeven,$FRintkeven */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, OP (PACK), ' ', OP (FRINTIEVEN), ',', OP (FRINTJEVEN), ',', OP (FRINTKEVEN), 0 } },
+    & ifmt_mqsaths, { 0x1e00500 }
+  },
+/* mqsllhi$pack $FRintieven,$u6,$FRintkeven */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, OP (PACK), ' ', OP (FRINTIEVEN), ',', OP (U6), ',', OP (FRINTKEVEN), 0 } },
+    & ifmt_mqsllhi, { 0x1e00440 }
+  },
+/* mqsrahi$pack $FRintieven,$u6,$FRintkeven */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, OP (PACK), ' ', OP (FRINTIEVEN), ',', OP (U6), ',', OP (FRINTKEVEN), 0 } },
+    & ifmt_mqsllhi, { 0x1e004c0 }
+  },
 /* maddaccs$pack $ACC40Si,$ACC40Sk */
   {
     { 0, 0, 0, 0 },
@@ -5914,31 +6015,31 @@ static const CGEN_OPCODE frv_cgen_insn_opcode_table[MAX_INSNS] =
 #else
 #define F(f) & frv_cgen_ifld_table[FRV_/**/f]
 #endif
-static const CGEN_IFMT ifmt_nop = {
+static const CGEN_IFMT ifmt_nop ATTRIBUTE_UNUSED = {
   32, 32, 0x7fffffff, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ret = {
+static const CGEN_IFMT ifmt_ret ATTRIBUTE_UNUSED = {
   32, 32, 0x7fffffff, { { F (F_PACK) }, { F (F_INT_CC) }, { F (F_ICCI_2_NULL) }, { F (F_OP) }, { F (F_HINT) }, { F (F_OPE3) }, { F (F_CCOND_NULL) }, { F (F_S12_NULL) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmp = {
+static const CGEN_IFMT ifmt_cmp ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc03c0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_ICCI_1) }, { F (F_OPE2) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmpi = {
+static const CGEN_IFMT ifmt_cmpi ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc0000, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_ICCI_1) }, { F (F_S10) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ccmp = {
+static const CGEN_IFMT ifmt_ccmp ATTRIBUTE_UNUSED = {
   32, 32, 0x7ffc00c0, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mov = {
+static const CGEN_IFMT ifmt_mov ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc0fff, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_D12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_cmov = {
+static const CGEN_IFMT ifmt_cmov ATTRIBUTE_UNUSED = {
   32, 32, 0x1fc00ff, { { F (F_PACK) }, { F (F_GRK) }, { F (F_OP) }, { F (F_GRI) }, { F (F_CCI) }, { F (F_COND) }, { F (F_OPE4) }, { F (F_GRJ) }, { 0 } }
 };
 
@@ -5966,37 +6067,37 @@ static const CGEN_IBASE frv_cgen_macro_insn_table[] =
 /* nop$pack */
   {
     -1, "nop", "nop", 32,
-    { 0|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
+    { 0|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR450_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
   },
 /* ret$pack */
   {
     -1, "ret", "ret", 32,
-    { 0|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_NONE } }
+    { 0|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_B01, FR400_MAJOR_B_3, FR450_MAJOR_B_3, FR500_MAJOR_B_3, FR550_MAJOR_NONE } }
   },
 /* cmp$pack $GRi,$GRj,$ICCi_1 */
   {
     -1, "cmp", "cmp", 32,
-    { 0|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
+    { 0|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR450_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
   },
 /* cmpi$pack $GRi,$s10,$ICCi_1 */
   {
     -1, "cmpi", "cmpi", 32,
-    { 0|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
+    { 0|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR450_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
   },
 /* ccmp$pack $GRi,$GRj,$CCi,$cond */
   {
     -1, "ccmp", "ccmp", 32,
-    { 0|A(CONDITIONAL)|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
+    { 0|A(CONDITIONAL)|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR450_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
   },
 /* mov$pack $GRi,$GRk */
   {
     -1, "mov", "mov", 32,
-    { 0|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
+    { 0|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR450_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
   },
 /* cmov$pack $GRi,$GRk,$CCi,$cond */
   {
     -1, "cmov", "cmov", 32,
-    { 0|A(CONDITIONAL)|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
+    { 0|A(CONDITIONAL)|A(NO_DIS)|A(ALIAS), { (1<<MACH_BASE), UNIT_IALL, FR400_MAJOR_I_1, FR450_MAJOR_I_1, FR500_MAJOR_I_1, FR550_MAJOR_NONE } }
   },
 };
 

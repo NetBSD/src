@@ -152,15 +152,15 @@ SECTIONS
   ${RELOCATING+PROVIDE (end = .);}
 
   /* Read-only sections in ROM.  */
-  .int_vec     ${RELOCATING-0} : { *(.int_vec)	} > ROM
+  .int_vec     ${RELOCATING-0} : { *(.int_vec)	} ${RELOCATING+> ROM}
 
-  .rodata ${RELOCATING-0} : { *(.rodata) ${RELOCATING+*(.rodata.*)} ${RELOCATING+*(.gnu.linkonce.r.*)} } > ROM
+  .rodata ${RELOCATING-0} : { *(.rodata) ${RELOCATING+*(.rodata.*)} ${RELOCATING+*(.gnu.linkonce.r.*)} } ${RELOCATING+> ROM}
   ${RELOCATING+${CTOR}}
   ${RELOCATING+${DTOR}}
-  .jcr : { KEEP (*(.jcr)) } > ROM
-  .eh_frame : { KEEP (*(.eh_frame)) } > ROM
-  .gcc_except_table : { *(.gcc_except_table) } > ROM
-  .plt : { *(.plt) } > ROM
+  .jcr : { KEEP (*(.jcr)) } ${RELOCATING+> ROM}
+  .eh_frame : { KEEP (*(.eh_frame)) } ${RELOCATING+> ROM}
+  .gcc_except_table : { *(.gcc_except_table) } ${RELOCATING+> ROM}
+  .plt : { *(.plt) } ${RELOCATING+> ROM}
 
   .text    ${RELOCATING-0} :
   {
@@ -172,19 +172,19 @@ SECTIONS
     *(.gnu.warning)
     ${RELOCATING+*(.gnu.linkonce.t.*)}
     ${RELOCATING+${OTHER_TEXT_SECTIONS}}
-  } > ROM =${NOP-0}
+  } ${RELOCATING+> ROM =${NOP-0}}
   .init        ${RELOCATING-0} : 
   { 
     ${RELOCATING+${INIT_START}}
     KEEP (*(.init))
     ${RELOCATING+${INIT_END}}
-  } > ROM =${NOP-0}
+  } ${RELOCATING+> ROM =${NOP-0}}
   .fini    ${RELOCATING-0} :
   {
     ${RELOCATING+${FINI_START}}
     KEEP (*(.fini))
     ${RELOCATING+${FINI_END}}
-  } > ROM =${NOP-0}
+  } ${RELOCATING+> ROM =${NOP-0}}
   ${RELOCATING+PROVIDE (__etext = .);}
   ${RELOCATING+PROVIDE (_etext = .);}
   ${RELOCATING+PROVIDE (etext = .);}

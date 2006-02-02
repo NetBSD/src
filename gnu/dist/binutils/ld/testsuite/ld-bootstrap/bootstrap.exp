@@ -1,5 +1,5 @@
 # Expect script for LD Bootstrap Tests
-#   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001
+#   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2004
 #   Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
@@ -137,7 +137,13 @@ foreach flags {"" "strip" "--static" "--traditional-format"
     send_log "compare (tail of) tmpdir/ld2 tmpdir/ld3\n"
     verbose  "compare (tail of) tmpdir/ld2 tmpdir/ld3"
     if {[istarget "*-*-pe"]
-	|| [istarget "*-*-wince"]} {
+	|| [istarget "*-*-wince"]
+	|| [istarget "*-*-cygwin*"]
+	|| [istarget "*-*-winnt*"]
+	|| [istarget "*-*-mingw32*"]
+	|| [istarget "*-*-interix*"]
+	|| [istarget "*-*-beospe*"]
+	|| [istarget "*-*-netbsdpe*"]} {
         # Trim off the date present in PE binaries by only looking
         #   at the ends of the files
         # Although this works, a way to set the date would be better.

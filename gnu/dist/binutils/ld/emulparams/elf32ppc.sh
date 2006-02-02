@@ -15,7 +15,7 @@ MACHINE=
 BSS_PLT=
 EXECUTABLE_SYMBOLS='PROVIDE (__stack = 0); PROVIDE (___stack = 0);'
 OTHER_BSS_END_SYMBOLS='__end = .;'
-OTHER_READWRITE_SECTIONS="
+OTHER_RELRO_SECTIONS="
   .fixup        ${RELOCATING-0} : { *(.fixup) }
   .got1         ${RELOCATING-0} : { *(.got1) }
   .got2         ${RELOCATING-0} : { *(.got2) }

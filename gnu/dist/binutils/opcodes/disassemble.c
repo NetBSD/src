@@ -1,20 +1,20 @@
 /* Select disassembly routine for specified architecture.
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
-   Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+   2004, 2005 Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "sysdep.h"
 #include "dis-asm.h"
@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define ARCH_arm
 #define ARCH_avr
 #define ARCH_cris
+#define ARCH_crx
 #define ARCH_d10v
 #define ARCH_d30v
 #define ARCH_dlx
@@ -44,6 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define ARCH_m68hc11
 #define ARCH_m68hc12
 #define ARCH_m88k
+#define ARCH_maxq
 #define ARCH_mcore
 #define ARCH_mips
 #define ARCH_mmix
@@ -123,6 +125,11 @@ disassembler (abfd)
       disassemble = cris_get_disassembler (abfd);
       break;
 #endif
+#ifdef ARCH_crx
+    case bfd_arch_crx:
+      disassemble = print_insn_crx;
+      break;
+#endif
 #ifdef ARCH_d10v
     case bfd_arch_d10v:
       disassemble = print_insn_d10v;
@@ -146,7 +153,8 @@ disassembler (abfd)
 	disassemble = print_insn_h8300h;
       else if (bfd_get_mach (abfd) == bfd_mach_h8300s
 	       || bfd_get_mach (abfd) == bfd_mach_h8300sn
-	       || bfd_get_mach (abfd) == bfd_mach_h8300sx)
+	       || bfd_get_mach (abfd) == bfd_mach_h8300sx
+	       || bfd_get_mach (abfd) == bfd_mach_h8300sxn)
 	disassemble = print_insn_h8300s;
       else
 	disassemble = print_insn_h8300;
@@ -218,6 +226,11 @@ disassembler (abfd)
 #ifdef ARCH_m88k
     case bfd_arch_m88k:
       disassemble = print_insn_m88k;
+      break;
+#endif
+#ifdef ARCH_maxq
+    case bfd_arch_maxq:
+      disassemble = print_insn_maxq_little;
       break;
 #endif
 #ifdef ARCH_msp430
@@ -410,6 +423,15 @@ disassemble_init_for_target (struct disassemble_info * info)
     case bfd_arch_arm:
       info->symbol_is_valid = arm_symbol_is_valid;
       break;
+#endif
+#ifdef ARCH_ia64
+    case bfd_arch_ia64:
+      info->skip_zeroes = 16;
+      break;
+#endif
+#ifdef ARCH_tic4x
+    case bfd_arch_tic4x:
+      info->skip_zeroes = 32;
 #endif
     default:
       break;

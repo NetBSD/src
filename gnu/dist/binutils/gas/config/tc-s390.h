@@ -1,5 +1,5 @@
 /* tc-s390.h -- Header file for tc-s390.c.
-   Copyright 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
    Written by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of GAS, the GNU Assembler.

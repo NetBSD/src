@@ -1,5 +1,5 @@
 /* tc-xstormy16.c -- Assembler for the Sanyo XSTORMY16.
-   Copyright 2000, 2001, 2002, 2003 Free Software Foundation.
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -206,13 +206,29 @@ xstormy16_cons_fix_new (f, where, nbytes, exp)
 
   if (exp->X_op == O_fptr_symbol)
     {
-      if (nbytes != 2)
+      switch (nbytes)
 	{
+ 	case 4:
+ 	  /* This can happen when gcc is generating debug output.
+ 	     For example it can create a stab with the address of
+ 	     a function:
+ 	     
+ 	     	.stabs	"foo:F(0,21)",36,0,0,@fptr(foo)
+ 
+ 	     Since this does not involve switching code pages, we
+ 	     just allow the reloc to be generated without any
+ 	     @fptr behaviour.  */
+ 	  exp->X_op = O_symbol;
+ 	  code = BFD_RELOC_32;
+ 	  break;
+ 	case 2:
+ 	  exp->X_op = O_symbol;
+ 	  code = BFD_RELOC_XSTORMY16_FPTR16;
+ 	  break;
+ 	default:
 	  as_bad ("unsupported fptr fixup size %d", nbytes);
 	  return;
 	}
-      exp->X_op = O_symbol;
-      code = BFD_RELOC_XSTORMY16_FPTR16;
     }
   else if (nbytes == 1)
     code = BFD_RELOC_8;
@@ -328,10 +344,10 @@ md_pcrel_from_section (fixP, sec)
      fixS * fixP;
      segT   sec;
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
-      && (! S_IS_DEFINED (fixP->fx_addsy)
-	  || S_GET_SEGMENT (fixP->fx_addsy) != sec)
-          || xstormy16_force_relocation (fixP))
+  if ((fixP->fx_addsy != (symbolS *) NULL
+       && (! S_IS_DEFINED (fixP->fx_addsy)
+	   || S_GET_SEGMENT (fixP->fx_addsy) != sec))
+      || xstormy16_force_relocation (fixP))
     /* The symbol is undefined,
        or it is defined but not in this section,
        or the relocation will be relative to this symbol not the section symbol.	 
@@ -501,17 +517,19 @@ xstormy16_md_apply_fix3 (fixP, valueP, seg)
 #if CGEN_INT_INSN_P
 	  {
 	    CGEN_INSN_INT insn_value =
-	      cgen_get_insn_value (cd, where, CGEN_INSN_BITSIZE (insn));
+	      cgen_get_insn_value (cd, (unsigned char *) where,
+				   CGEN_INSN_BITSIZE (insn));
 
 	    /* ??? 0 is passed for `pc'.  */
 	    errmsg = CGEN_CPU_INSERT_OPERAND (cd) (cd, opindex, fields,
 						   &insn_value, (bfd_vma) 0);
-	    cgen_put_insn_value (cd, where, CGEN_INSN_BITSIZE (insn),
-				 insn_value);
+	    cgen_put_insn_value (cd, (unsigned char *) where,
+				 CGEN_INSN_BITSIZE (insn), insn_value);
 	  }
 #else
 	  /* ??? 0 is passed for `pc'.  */
-	  errmsg = CGEN_CPU_INSERT_OPERAND (cd) (cd, opindex, fields, where,
+	  errmsg = CGEN_CPU_INSERT_OPERAND (cd) (cd, opindex, fields,
+						 (unsigned char *) where,
 						 (bfd_vma) 0);
 #endif
 	  if (errmsg)

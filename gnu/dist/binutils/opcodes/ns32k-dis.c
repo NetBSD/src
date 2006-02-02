@@ -1,5 +1,5 @@
 /* Print National Semiconductor 32000 instructions.
-   Copyright 1986, 1988, 1991, 1992, 1994, 1998, 2001, 2002
+   Copyright 1986, 1988, 1991, 1992, 1994, 1998, 2001, 2002, 2005
    Free Software Foundation, Inc.
 
 This file is part of opcodes library.
@@ -33,12 +33,12 @@ static disassemble_info *dis_info;
 /*
  * Hacks to get it to compile <= READ THESE AS FIXES NEEDED
  */
-#define INVALID_FLOAT(val, size) invalid_float((char *)val, size)
+#define INVALID_FLOAT(val, size) invalid_float((bfd_byte *)val, size)
 
 static int print_insn_arg
-  PARAMS ((int, int, int *, char *, bfd_vma, char *, int));
-static int get_displacement PARAMS ((char *, int *));
-static int invalid_float PARAMS ((char *, int));
+  PARAMS ((int, int, int *, bfd_byte *, bfd_vma, char *, int));
+static int get_displacement PARAMS ((bfd_byte *, int *));
+static int invalid_float PARAMS ((bfd_byte *, int));
 static long int read_memory_integer PARAMS ((unsigned char *, int));
 static int fetch_data PARAMS ((struct disassemble_info *, bfd_byte *));
 struct ns32k_option;
@@ -46,7 +46,7 @@ static void optlist PARAMS ((int, const struct ns32k_option *, char *));
 static void list_search PARAMS ((int, const struct ns32k_option *, char *));
 static int bit_extract PARAMS ((bfd_byte *, int, int));
 static int bit_extract_simple PARAMS ((bfd_byte *, int, int));
-static void bit_copy PARAMS ((char *, int, int, char *));
+static void bit_copy PARAMS ((bfd_byte *, int, int, char *));
 static int sign_extend PARAMS ((int, int));
 static void flip_bytes PARAMS ((char *, int));
 
@@ -340,7 +340,7 @@ bit_extract_simple (buffer, offset, count)
 
 static void
 bit_copy (buffer, offset, count, to)
-     char *buffer;
+     bfd_byte *buffer;
      int offset;
      int count;
      char *to;
@@ -551,7 +551,7 @@ static int
 print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
      int d;
      int ioffset, *aoffsetp;
-     char *buffer;
+     bfd_byte *buffer;
      bfd_vma addr;
      char *result;
      int index_offset;
@@ -827,7 +827,7 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
 
 static int
 get_displacement (buffer, aoffsetp)
-     char *buffer;
+     bfd_byte *buffer;
      int *aoffsetp;
 {
   int Ivalue;
@@ -861,7 +861,7 @@ get_displacement (buffer, aoffsetp)
 #if 1 /* a version that should work on ns32k f's&d's on any machine */
 static int
 invalid_float (p, len)
-     register char *p;
+     register bfd_byte *p;
      register int len;
 {
   register int val;

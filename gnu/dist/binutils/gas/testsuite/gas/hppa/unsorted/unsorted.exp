@@ -1,4 +1,5 @@
-# Copyright (C) 1993, 1997 Free Software Foundation, Inc.
+# Copyright (C) 1993, 1997, 1999, 2000, 2002, 2004
+# Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -197,7 +198,7 @@ proc do_import_test {} {
 proc do_common_test {} {
     # linux has a different .comm syntax
     if [istarget hppa*-*-linux*] then {
-	return;
+	return
     }
 
     set testname "common.s: Test for bug in .comm handling (part2)"

@@ -3,6 +3,8 @@
 #	NOP - four byte opcode for no-op (defaults to 0)
 #	NO_SMALL_DATA - no .sbss/.sbss2/.sdata/.sdata2 sections if not
 #		empty.
+#	SMALL_DATA_CTOR - .ctors contains small data.
+#	SMALL_DATA_DTOR - .dtors contains small data.
 #	DATA_ADDR - if end-of-text-plus-one-page isn't right for data start
 #	INITIAL_READONLY_SECTIONS - at start of text segment
 #	OTHER_READONLY_SECTIONS - other than .text .init .rodata ...
@@ -10,10 +12,15 @@
 #	OTHER_TEXT_SECTIONS - these get put in .text when relocating
 #	OTHER_READWRITE_SECTIONS - other than .data .bss .ctors .sdata ...
 #		(e.g., .PARISC.global)
+#	OTHER_RELRO_SECTIONS - other than .data.rel.ro ...
+#		(e.g. PPC32 .fixup, .got[12])
 #	OTHER_BSS_SECTIONS - other than .bss .sbss ...
 #	OTHER_SECTIONS - at the end
 #	EXECUTABLE_SYMBOLS - symbols that must be defined for an
 #		executable (e.g., _DYNAMIC_LINK)
+#       TEXT_START_ADDR - the first byte of the text segment, after any
+#               headers.
+#       TEXT_BASE_ADDRESS - the first byte of the text segment.
 #	TEXT_START_SYMBOLS - symbols that appear at the start of the
 #		.text section.
 #	DATA_START_SYMBOLS - symbols that appear at the start of the
@@ -24,6 +31,7 @@
 #	OTHER_BSS_SYMBOLS - symbols that appear at the start of the
 #		.bss section besides __bss_start.
 #	DATA_PLT - .plt should be in data segment, not text segment.
+#	PLT_BEFORE_GOT - .plt just before .got when .plt is in data segement.
 #	BSS_PLT - .plt should be in bss segment
 #	TEXT_DYNAMIC - .dynamic in text segment, not data segment.
 #	EMBEDDED - whether this is for an embedded system. 
@@ -37,6 +45,10 @@
 # 	combination of .fini sections.
 #	STACK_ADDR - start of a .stack section.
 #	OTHER_END_SYMBOLS - symbols to place right at the end of the script.
+#	SEPARATE_GOTPLT - if set, .got.plt should be separate output section,
+#		so that .got can be in the RELRO area.  It should be set to
+#		the number of bytes in the beginning of .got.plt which can be
+#		in the RELRO area as well.
 #
 # When adding sections, do note that the names of some sections are used
 # when specifying the start address of the next.
@@ -74,23 +86,41 @@ test -z "${ALIGNMENT}" && ALIGNMENT="${ELFSIZE} / 8"
 test "$LD_FLAG" = "N" && DATA_ADDR=.
 test -n "$CREATE_SHLIB$CREATE_PIE" && test -n "$SHLIB_DATA_ADDR" && COMMONPAGESIZE=""
 test -z "$CREATE_SHLIB$CREATE_PIE" && test -n "$DATA_ADDR" && COMMONPAGESIZE=""
+test -n "$RELRO_NOW" && unset SEPARATE_GOTPLT
 DATA_SEGMENT_ALIGN="ALIGN(${SEGMENT_SIZE}) + (. & (${MAXPAGESIZE} - 1))"
+DATA_SEGMENT_RELRO_END=""
+DATA_SEGMENT_RELRO_GOTPLT_END=""
 DATA_SEGMENT_END=""
 if test -n "${COMMONPAGESIZE}"; then
   DATA_SEGMENT_ALIGN="ALIGN (${SEGMENT_SIZE}) - ((${MAXPAGESIZE} - .) & (${MAXPAGESIZE} - 1)); . = DATA_SEGMENT_ALIGN (${MAXPAGESIZE}, ${COMMONPAGESIZE})"
   DATA_SEGMENT_END=". = DATA_SEGMENT_END (.);"
+  if test -n "${SEPARATE_GOTPLT}"; then
+    DATA_SEGMENT_RELRO_GOTPLT_END=". = DATA_SEGMENT_RELRO_END (${SEPARATE_GOTPLT}, .);"
+  else
+    DATA_SEGMENT_RELRO_END=". = DATA_SEGMENT_RELRO_END (0, .);"
+  fi
 fi
 INTERP=".interp       ${RELOCATING-0} : { *(.interp) }"
 PLT=".plt          ${RELOCATING-0} : { *(.plt) }"
-test -z "$GOT" && GOT=".got          ${RELOCATING-0} : { *(.got.plt) *(.got) }"
+if test -z "$GOT"; then
+  if test -z "$SEPARATE_GOTPLT"; then
+    GOT=".got          ${RELOCATING-0} : { *(.got.plt) *(.got) }"
+  else
+    GOT=".got          ${RELOCATING-0} : { *(.got) }"
+    GOTPLT="${RELOCATING+${DATA_SEGMENT_RELRO_GOTPLT_END}}
+  .got.plt      ${RELOCATING-0} : { *(.got.plt) }"
+  fi
+fi
 DYNAMIC=".dynamic      ${RELOCATING-0} : { *(.dynamic) }"
 RODATA=".rodata       ${RELOCATING-0} : { *(.rodata${RELOCATING+ .rodata.* .gnu.linkonce.r.*}) }"
+DATARELRO=".data.rel.ro : { *(.data.rel.ro.local) *(.data.rel.ro*) }"
 STACKNOTE="/DISCARD/ : { *(.note.GNU-stack) }"
 if test -z "${NO_SMALL_DATA}"; then
   SBSS=".sbss         ${RELOCATING-0} :
   {
     ${RELOCATING+PROVIDE (__sbss_start = .);}
     ${RELOCATING+PROVIDE (___sbss_start = .);}
+    ${CREATE_SHLIB+*(.sbss2 .sbss2.* .gnu.linkonce.sb2.*)}
     *(.dynsbss)
     *(.sbss${RELOCATING+ .sbss.* .gnu.linkonce.sb.*})
     *(.scommon)
@@ -104,6 +134,7 @@ if test -z "${NO_SMALL_DATA}"; then
   .sdata        ${RELOCATING-0} : 
   {
     ${RELOCATING+${SDATA_START_SYMBOLS}}
+    ${CREATE_SHLIB+*(.sdata2 .sdata2.* .gnu.linkonce.s2.*)}
     *(.sdata${RELOCATING+ .sdata.* .gnu.linkonce.s.*})
   }"
   SDATA2=".sdata2       ${RELOCATING-0} : { *(.sdata2${RELOCATING+ .sdata2.* .gnu.linkonce.s2.*}) }"
@@ -115,7 +146,10 @@ if test -z "${NO_SMALL_DATA}"; then
   .rela.sdata2  ${RELOCATING-0} : { *(.rela.sdata2${RELOCATING+ .rela.sdata2.* .rela.gnu.linkonce.s2.*}) }"
   REL_SBSS2=".rel.sbss2    ${RELOCATING-0} : { *(.rel.sbss2${RELOCATING+ .rel.sbss2.* .rel.gnu.linkonce.sb2.*}) }
   .rela.sbss2   ${RELOCATING-0} : { *(.rela.sbss2${RELOCATING+ .rela.sbss2.* .rela.gnu.linkonce.sb2.*}) }"
+else
+  NO_SMALL_DATA=" "
 fi
+test -n "$SEPARATE_GOTPLT" && SEPARATE_GOTPLT=" "
 CTOR=".ctors        ${CONSTRUCTING-0} : 
   {
     ${CONSTRUCTING+${CTOR_START}}
@@ -211,6 +245,8 @@ eval $COMBRELOCCAT <<EOF
   .rel.rodata   ${RELOCATING-0} : { *(.rel.rodata${RELOCATING+ .rel.rodata.* .rel.gnu.linkonce.r.*}) }
   .rela.rodata  ${RELOCATING-0} : { *(.rela.rodata${RELOCATING+ .rela.rodata.* .rela.gnu.linkonce.r.*}) }
   ${OTHER_READONLY_RELOC_SECTIONS}
+  .rel.data.rel.ro ${RELOCATING-0} : { *(.rel.data.rel.ro${RELOCATING+*}) }
+  .rela.data.rel.ro ${RELOCATING-0} : { *(.rel.data.rel.ro${RELOCATING+*}) }
   .rel.data     ${RELOCATING-0} : { *(.rel.data${RELOCATING+ .rel.data.* .rel.gnu.linkonce.d.*}) }
   .rela.data    ${RELOCATING-0} : { *(.rela.data${RELOCATING+ .rela.data.* .rela.gnu.linkonce.d.*}) }
   .rel.tdata	${RELOCATING-0} : { *(.rel.tdata${RELOCATING+ .rel.tdata.* .rel.gnu.linkonce.td.*}) }
@@ -264,6 +300,7 @@ cat <<EOF
   {
     ${RELOCATING+${TEXT_START_SYMBOLS}}
     *(.text .stub${RELOCATING+ .text.* .gnu.linkonce.t.*})
+    KEEP (*(.text.*personality*))
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
     ${RELOCATING+${OTHER_TEXT_SECTIONS}}
@@ -283,6 +320,8 @@ cat <<EOF
   ${CREATE_SHLIB-${SBSS2}}
   ${OTHER_READONLY_SECTIONS}
   .eh_frame_hdr : { *(.eh_frame_hdr) }
+  .eh_frame     ${RELOCATING-0} : ONLY_IF_RO { KEEP (*(.eh_frame)) }
+  .gcc_except_table ${RELOCATING-0} : ONLY_IF_RO { KEEP (*(.gcc_except_table)) *(.gcc_except_table.*) }
 
   /* Adjust the address for the data segment.  We want to adjust up to
      the same address within the page on the next page up.  */
@@ -290,46 +329,62 @@ cat <<EOF
   ${CREATE_SHLIB+${RELOCATING+. = ${SHLIB_DATA_ADDR-${DATA_SEGMENT_ALIGN}};}}
   ${CREATE_PIE+${RELOCATING+. = ${SHLIB_DATA_ADDR-${DATA_SEGMENT_ALIGN}};}}
 
+  /* Exception handling  */
+  .eh_frame     ${RELOCATING-0} : ONLY_IF_RW { KEEP (*(.eh_frame)) }
+  .gcc_except_table ${RELOCATING-0} : ONLY_IF_RW { KEEP (*(.gcc_except_table)) *(.gcc_except_table.*) }
+
+  /* Thread Local Storage sections  */
+  .tdata	${RELOCATING-0} : { *(.tdata${RELOCATING+ .tdata.* .gnu.linkonce.td.*}) }
+  .tbss		${RELOCATING-0} : { *(.tbss${RELOCATING+ .tbss.* .gnu.linkonce.tb.*})${RELOCATING+ *(.tcommon)} }
+
   /* Ensure the __preinit_array_start label is properly aligned.  We
      could instead move the label definition inside the section, but
      the linker would then create the section even if it turns out to
      be empty, which isn't pretty.  */
   ${RELOCATING+. = ALIGN(${ALIGNMENT});}
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__preinit_array_start = .);}}
-  .preinit_array   ${RELOCATING-0} : { *(.preinit_array) }
+  .preinit_array   ${RELOCATING-0} : { KEEP (*(.preinit_array)) }
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__preinit_array_end = .);}}
 
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__init_array_start = .);}}
-  .init_array   ${RELOCATING-0} : { *(.init_array) }
+  .init_array   ${RELOCATING-0} : { KEEP (*(.init_array)) }
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__init_array_end = .);}}
 
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__fini_array_start = .);}}
-  .fini_array   ${RELOCATING-0} : { *(.fini_array) }
+  .fini_array   ${RELOCATING-0} : { KEEP (*(.fini_array)) }
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__fini_array_end = .);}}
+
+  ${SMALL_DATA_CTOR-${RELOCATING+${CTOR}}}
+  ${SMALL_DATA_DTOR-${RELOCATING+${DTOR}}}
+  .jcr          ${RELOCATING-0} : { KEEP (*(.jcr)) }
+
+  ${RELOCATING+${DATARELRO}}
+  ${OTHER_RELRO_SECTIONS}
+  ${TEXT_DYNAMIC-${DYNAMIC}}
+  ${NO_SMALL_DATA+${RELRO_NOW+${GOT}}}
+  ${NO_SMALL_DATA+${RELRO_NOW-${SEPARATE_GOTPLT+${GOT}}}}
+  ${NO_SMALL_DATA+${RELRO_NOW-${SEPARATE_GOTPLT+${GOTPLT}}}}
+  ${RELOCATING+${DATA_SEGMENT_RELRO_END}}
+  ${NO_SMALL_DATA+${RELRO_NOW-${SEPARATE_GOTPLT-${GOT}}}}
+
+  ${DATA_PLT+${PLT_BEFORE_GOT-${PLT}}}
 
   .data         ${RELOCATING-0} :
   {
     ${RELOCATING+${DATA_START_SYMBOLS}}
     *(.data${RELOCATING+ .data.* .gnu.linkonce.d.*})
+    KEEP (*(.gnu.linkonce.d.*personality*))
     ${CONSTRUCTING+SORT(CONSTRUCTORS)}
   }
   .data1        ${RELOCATING-0} : { *(.data1) }
-  .tdata	${RELOCATING-0} : { *(.tdata${RELOCATING+ .tdata.* .gnu.linkonce.td.*}) }
-  .tbss		${RELOCATING-0} : { *(.tbss${RELOCATING+ .tbss.* .gnu.linkonce.tb.*})${RELOCATING+ *(.tcommon)} }
-  .eh_frame     ${RELOCATING-0} : { KEEP (*(.eh_frame)) }
-  .gcc_except_table ${RELOCATING-0} : { *(.gcc_except_table) }
   ${WRITABLE_RODATA+${RODATA}}
   ${OTHER_READWRITE_SECTIONS}
-  ${TEXT_DYNAMIC-${DYNAMIC}}
-  ${RELOCATING+${CTOR}}
-  ${RELOCATING+${DTOR}}
-  .jcr          ${RELOCATING-0} : { KEEP (*(.jcr)) }
-  ${DATA_PLT+${PLT}}
+  ${SMALL_DATA_CTOR+${RELOCATING+${CTOR}}}
+  ${SMALL_DATA_DTOR+${RELOCATING+${DTOR}}}
+  ${DATA_PLT+${PLT_BEFORE_GOT+${PLT}}}
   ${RELOCATING+${OTHER_GOT_SYMBOLS}}
-  ${GOT}
+  ${NO_SMALL_DATA-${GOT}}
   ${OTHER_GOT_SECTIONS}
-  ${CREATE_SHLIB+${SDATA2}}
-  ${CREATE_SHLIB+${SBSS2}}
   ${SDATA}
   ${OTHER_SDATA_SECTIONS}
   ${RELOCATING+_edata = .;}

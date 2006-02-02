@@ -1,5 +1,5 @@
-# Copyright (C) 1993, 1994, 1997, 1998, 1999, 2000, 2001, 2002, 2003
-# Free Software Foundation, Inc.
+# Copyright (C) 1993, 1994, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+# 2004, 2005 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ proc gas_run { prog as_opts redir } {
     catch "exec $srcdir/lib/run $AS $ASFLAGS $as_opts $srcdir/$subdir/$prog $redir" comp_output
     set comp_output [prune_warnings $comp_output]
     verbose "output was $comp_output"
-    return [list $comp_output ""];
+    return [list $comp_output ""]
 }
 
 proc all_ones { args } {
@@ -197,6 +197,7 @@ proc is_elf_format {} {
 	 && ![istarget *-*-irix5*] \
 	 && ![istarget *-*-irix6*] \
 	 && ![istarget *-*-netbsd*] \
+	 && ![istarget *-*-openbsd*] \
 	 && ![istarget *-*-solaris2*] } {
 	return 0
     }
@@ -217,6 +218,18 @@ proc is_elf_format {} {
 	     || [istarget ns32k-*-netbsd*]) } {
     	return 0
     }
+
+    if { [istarget arm-*-openbsd*] \
+	 || [istarget i386-*-openbsd\[0-2\].*] \
+	 || [istarget i386-*-openbsd3.\[0-3\]] \
+	 || [istarget m68*-*-openbsd*] \
+	 || [istarget ns32k-*-openbsd*] \
+	 || [istarget sparc-*-openbsd\[0-2\].*] \
+	 || [istarget sparc-*-openbsd3.\[0-1\]] \
+	 || [istarget vax-*-openbsd*] } {
+	return 0
+    }
+
     return 1
 }
 
@@ -284,6 +297,10 @@ proc is_elf_format {} {
 #	to pass.  The PROG, objdump, nm and objcopy options have no
 #	meaning and need not supplied if this is present.
 #
+#   warning: REGEX
+#	Expect a gas warning matching REGEX.  It is an error to issue
+#	both "error" and "warning".
+#
 # Each option may occur at most once.
 #
 # After the option lines come regexp lines.  `run_dump_test' calls
@@ -320,6 +337,7 @@ proc run_dump_test { name {extra_options {}} } {
     set opts(source) {}
     set opts(stderr) {}
     set opts(error) {}
+    set opts(warning) {}
 
     foreach i $opt_array {
 	set opt_name [lindex $i 0]
@@ -353,49 +371,48 @@ proc run_dump_test { name {extra_options {}} } {
 	append opts($opt_name) $opt_val
     }
 
-    if {$opts(PROG) != ""} {
-	switch -- $opts(PROG) {
-	    objdump
-		{ set program objdump }
-	    nm
-		{ set program nm }
-	    objcopy
-		{ set program objcopy }
-	    readelf
-		{ set program readelf }
-	    default
-		{ perror "unrecognized program option $opts(PROG) in $file.d"
-		  unresolved $subdir/$name
-		  return }
-	}
-    } elseif { $opts(error) != "" } {
-	# It's meaningless to require an output-testing method when we
-	# expect an error.  For simplicity, we fake an arbitrary method.
-	set program "nm"
-    } else {
-	# Guess which program to run, by seeing which option was specified.
-	set program ""
-	foreach p {objdump objcopy nm readelf} {
-	    if {$opts($p) != ""} {
-		if {$program != ""} {
-		    perror "ambiguous dump program in $file.d"
+    if { (($opts(warning) != "") && ($opts(error) != "")) \
+	 || (($opts(warning) != "") && ($opts(stderr) != "")) } {
+	perror "$testname: bad mix of stderr, error and warning test-directives"
+	return
+    }
+
+    set program ""
+    # It's meaningless to require an output-testing method when we
+    # expect an error.
+    if { $opts(error) == "" } {
+	if {$opts(PROG) != ""} {
+	    switch -- $opts(PROG) {
+		objdump	{ set program objdump }
+		nm	{ set program nm }
+		objcopy	{ set program objcopy }
+		readelf	{ set program readelf }
+		default	{
+		    perror "unrecognized program option $opts(PROG) in $file.d"
 		    unresolved $subdir/$name
-		    return
-		} else {
-		    set program $p
+		    return }
+	    }
+	} else {
+	    # Guess which program to run, by seeing which option was specified.
+	    foreach p {objdump objcopy nm readelf} {
+		if {$opts($p) != ""} {
+		    if {$program != ""} {
+			perror "ambiguous dump program in $file.d"
+			unresolved $subdir/$name
+			return
+		    } else {
+			set program $p
+		    }
 		}
 	    }
 	}
-	if {$program == ""} {
+	if { $program == "" && $opts(warning) == "" } {
 	    perror "dump program unspecified in $file.d"
 	    unresolved $subdir/$name
 	    return
 	}
     }
 
-    set progopts1 $opts($program)
-    eval set progopts \$[string toupper $program]FLAGS
-    eval set binary \$[string toupper $program]
     if { $opts(name) == "" } {
 	set testname "$subdir/$name"
     } else {
@@ -408,24 +425,48 @@ proc run_dump_test { name {extra_options {}} } {
 	set sourcefile $srcdir/$subdir/$opts(source)
     }
 
-    send_log "$AS $ASFLAGS $opts(as) -o dump.o $sourcefile\n"
-    catch "exec $srcdir/lib/run $AS $ASFLAGS $opts(as) -o dump.o $sourcefile" comp_output
+    set cmd "$srcdir/lib/run $AS $ASFLAGS $opts(as) -o dump.o $sourcefile"
+    send_log "$cmd\n"
+    set cmdret [catch "exec $cmd" comp_output]
     set comp_output [prune_warnings $comp_output]
 
-    if { ![string match "" $comp_output] || $opts(stderr) != "" } then {
+    set expmsg $opts(error)
+    if { $opts(warning) != "" } {
+	set expmsg $opts(warning)
+    }
+    if { $cmdret != 0 || $comp_output != "" || $expmsg != "" } then {
+	# If the executed program writes to stderr and stderr is not
+	# redirected, exec *always* returns failure, regardless of the
+	# program exit code.  Thankfully, we can retrieve the true
+	# return status from a special variable.  Redirection would
+	# cause a tcl-specific message to be appended, and we'd rather
+	# not deal with that if we can help it.
+	global errorCode
+	if { $cmdret != 0 && [lindex $errorCode 0] == "NONE" } {
+	    set cmdret 0
+	}
+
+	set exitstat "succeeded"
+	if { $cmdret != 0 } { set exitstat "failed" }
+
 	if { $opts(stderr) == "" }  then {
 	    send_log "$comp_output\n"
 	    verbose "$comp_output" 3
 
-	    if { $opts(error) != "" } {
-		verbose -log "failed with: <$comp_output>, expected: <$opts(error)>"
-		if [regexp $opts(error) $comp_output] {
+	    if { [regexp $expmsg $comp_output] \
+		    && (($cmdret == 0) == ($opts(warning) != "")) } {
+		# We have the expected output from gas.
+		# Return if there's nothing more to do.
+		if { $opts(error) != "" || $program == "" } {
 		    pass $testname
 		    return
 		}
+	    } else {
+		verbose -log "$exitstat with: <$comp_output>, expected: <$expmsg>"
+
+		fail $testname
+		return
 	    }
-	    fail $testname
-	    return
 	} else {
 	    catch {write_file dump.stderr "$comp_output"} write_output
 	    if ![string match "" $write_output] then {
@@ -441,7 +482,7 @@ proc run_dump_test { name {extra_options {}} } {
 	    verbose "wrote pruned stderr to dump.stderr" 3
 	    if { [regexp_diff "dump.stderr" "$stderrfile"] } then {
 		if { $opts(error) != "" } {
-		    verbose -log "failed with: <$comp_output>, expected: <$opts(error)>"
+		    verbose -log "$exitstat with: <$comp_output>, expected: <$opts(error)>"
 		    if [regexp $opts(error) $comp_output] {
 			pass $testname
 			return
@@ -453,6 +494,13 @@ proc run_dump_test { name {extra_options {}} } {
 	    }
 	}
     }
+
+    if { $program == "" } {
+	return
+    }
+    set progopts1 $opts($program)
+    eval set progopts \$[string toupper $program]FLAGS
+    eval set binary \$[string toupper $program]
 
     if { [which $binary] == 0 } {
 	untested $testname

@@ -4,7 +4,7 @@
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 - the resultant file is machine generated, cgen-dis.in isn't
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2005
 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and GDB, the GNU debugger.
@@ -43,17 +43,17 @@ along with this program; if not, write to the Free Software Foundation, Inc.,
 static void print_normal
   (CGEN_CPU_DESC, void *, long, unsigned int, bfd_vma, int);
 static void print_address
-  (CGEN_CPU_DESC, void *, bfd_vma, unsigned int, bfd_vma, int);
+  (CGEN_CPU_DESC, void *, bfd_vma, unsigned int, bfd_vma, int) ATTRIBUTE_UNUSED;
 static void print_keyword
-  (CGEN_CPU_DESC, void *, CGEN_KEYWORD *, long, unsigned int);
+  (CGEN_CPU_DESC, void *, CGEN_KEYWORD *, long, unsigned int) ATTRIBUTE_UNUSED;
 static void print_insn_normal
   (CGEN_CPU_DESC, void *, const CGEN_INSN *, CGEN_FIELDS *, bfd_vma, int);
 static int print_insn
-  (CGEN_CPU_DESC, bfd_vma,  disassemble_info *, char *, unsigned);
+  (CGEN_CPU_DESC, bfd_vma,  disassemble_info *, bfd_byte *, unsigned);
 static int default_print_insn
-  (CGEN_CPU_DESC, bfd_vma, disassemble_info *);
+  (CGEN_CPU_DESC, bfd_vma, disassemble_info *) ATTRIBUTE_UNUSED;
 static int read_insn
-  (CGEN_CPU_DESC, bfd_vma, disassemble_info *, char *, int, CGEN_EXTRACT_INFO *,
+  (CGEN_CPU_DESC, bfd_vma, disassemble_info *, bfd_byte *, int, CGEN_EXTRACT_INFO *,
    unsigned long *);
 
 /* -- disassembler routines inserted here */
@@ -65,6 +65,19 @@ static void print_hi
   PARAMS ((CGEN_CPU_DESC, PTR, long, unsigned, bfd_vma, int));
 static void print_lo
   PARAMS ((CGEN_CPU_DESC, PTR, long, unsigned, bfd_vma, int));
+
+static void
+print_at (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+	  PTR dis_info,
+	  long reloc_ann ATTRIBUTE_UNUSED,
+	  long value ATTRIBUTE_UNUSED,
+	  bfd_vma pc ATTRIBUTE_UNUSED,
+	  int length ATTRIBUTE_UNUSED
+	  )
+{
+  disassemble_info *info = (disassemble_info *) dis_info;
+  (*info->fprintf_func) (info->stream, "@");
+}  
 
 static void
 print_spr (cd, dis_info, names, regno, attrs)
@@ -289,8 +302,26 @@ frv_cgen_print_operand (cd, opindex, xinfo, fields, attrs, pc, length)
     case FRV_OPERAND_LI :
       print_normal (cd, info, fields->f_LI, 0, pc, length);
       break;
+    case FRV_OPERAND_LRAD :
+      print_normal (cd, info, fields->f_LRAD, 0, pc, length);
+      break;
+    case FRV_OPERAND_LRAE :
+      print_normal (cd, info, fields->f_LRAE, 0, pc, length);
+      break;
+    case FRV_OPERAND_LRAS :
+      print_normal (cd, info, fields->f_LRAS, 0, pc, length);
+      break;
+    case FRV_OPERAND_TLBPRL :
+      print_normal (cd, info, fields->f_TLBPRL, 0, pc, length);
+      break;
+    case FRV_OPERAND_TLBPROPX :
+      print_normal (cd, info, fields->f_TLBPRopx, 0, pc, length);
+      break;
     case FRV_OPERAND_AE :
       print_normal (cd, info, fields->f_ae, 0|(1<<CGEN_OPERAND_HASH_PREFIX), pc, length);
+      break;
+    case FRV_OPERAND_CALLANN :
+      print_at (cd, info, fields->f_reloc_ann, 0, pc, length);
       break;
     case FRV_OPERAND_CCOND :
       print_normal (cd, info, fields->f_ccond, 0|(1<<CGEN_OPERAND_HASH_PREFIX), pc, length);
@@ -321,6 +352,12 @@ frv_cgen_print_operand (cd, opindex, xinfo, fields, attrs, pc, length)
       break;
     case FRV_OPERAND_LABEL24 :
       print_address (cd, info, fields->f_label24, 0|(1<<CGEN_OPERAND_PCREL_ADDR)|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
+      break;
+    case FRV_OPERAND_LDANN :
+      print_at (cd, info, fields->f_reloc_ann, 0, pc, length);
+      break;
+    case FRV_OPERAND_LDDANN :
+      print_at (cd, info, fields->f_reloc_ann, 0, pc, length);
       break;
     case FRV_OPERAND_LOCK :
       print_normal (cd, info, fields->f_lock, 0|(1<<CGEN_OPERAND_HASH_PREFIX), pc, length);
@@ -512,7 +549,7 @@ static int
 read_insn (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 	   bfd_vma pc,
 	   disassemble_info *info,
-	   char *buf,
+	   bfd_byte *buf,
 	   int buflen,
 	   CGEN_EXTRACT_INFO *ex_info,
 	   unsigned long *insn_value)
@@ -542,7 +579,7 @@ static int
 print_insn (CGEN_CPU_DESC cd,
 	    bfd_vma pc,
 	    disassemble_info *info,
-	    char *buf,
+	    bfd_byte *buf,
 	    unsigned int buflen)
 {
   CGEN_INSN_INT insn_value;
@@ -566,7 +603,7 @@ print_insn (CGEN_CPU_DESC cd,
   /* The instructions are stored in hash lists.
      Pick the first one and keep trying until we find the right one.  */
 
-  insn_list = CGEN_DIS_LOOKUP_INSN (cd, buf, insn_value);
+  insn_list = CGEN_DIS_LOOKUP_INSN (cd, (char *) buf, insn_value);
   while (insn_list != NULL)
     {
       const CGEN_INSN *insn = insn_list->insn;
@@ -650,7 +687,7 @@ print_insn (CGEN_CPU_DESC cd,
 static int
 default_print_insn (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
 {
-  char buf[CGEN_MAX_INSN_SIZE];
+  bfd_byte buf[CGEN_MAX_INSN_SIZE];
   int buflen;
   int status;
 

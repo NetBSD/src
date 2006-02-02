@@ -1,7 +1,7 @@
 #! /bin/sh
 # CGEN generic assembler support code.
 #
-#  Copyright 2001 Free Software Foundation, Inc.
+#  Copyright 2000, 2003, 2005 Free Software Foundation, Inc.
 #
 #   This file is part of the GNU Binutils and GDB, the GNU debugger.
 #
@@ -47,7 +47,7 @@ set -e
 
 action=$1
 srcdir=$2
-cgen=$3
+cgen="$3"
 cgendir=$4
 cgenflags=$5
 arch=$6
@@ -93,7 +93,7 @@ opcodes)
 	rm -f tmp-dis.c tmp-dis.in1
 
 	# Run CGEN.
-	${cgen} -s ${cgendir}/cgen-opc.scm \
+	${cgen} ${cgendir}/cgen-opc.scm \
 		-s ${cgendir} \
 		${cgenflags} \
 		-f "${options}" \

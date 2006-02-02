@@ -1,5 +1,5 @@
 /* tc-sh64.c -- Assemble code for the SuperH SH SHcompact and SHmedia.
-   Copyright 2000, 2001, 2002, 2003 Free Software Foundation.
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -691,7 +691,7 @@ shmedia_md_apply_fix3 (fixS *fixP, valueT *valp)
   if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
     {
       /* Emit error for an out-of-range value.  */
-      shmedia_check_limits (valp, fixP->fx_r_type, fixP);
+      shmedia_check_limits ((offsetT *) valp, fixP->fx_r_type, fixP);
 
       switch (fixP->fx_r_type)
 	{
@@ -737,6 +737,11 @@ shmedia_md_apply_fix3 (fixS *fixP, valueT *valp)
 	case BFD_RELOC_SH_IMMS10BY4:
 	  md_number_to_chars (buf,
 			      insn | ((val & (0x3ff << 2)) << (10 - 2)), 4);
+	  break;
+
+	case BFD_RELOC_SH_IMMS10BY8:
+	  md_number_to_chars (buf,
+			      insn | ((val & (0x3ff << 3)) << (10 - 3)), 4);
 	  break;
 
 	case BFD_RELOC_SH_SHMEDIA_CODE:
@@ -2672,7 +2677,10 @@ shmedia_build_Mytes (shmedia_opcode_info *opcode,
 
 	    /* Don't allow complex expressions here.  */
 	    if (opjp->immediate.X_op_symbol != NULL)
-	      return 0;
+	      {
+		as_bad(_("invalid operand: expression in PT target"));
+		return 0;
+	      }
 
 	    if (opjp->reloctype == BFD_RELOC_32_PLT_PCREL)
 	      init = max = min = SH64PCRELPLT;
@@ -2709,7 +2717,10 @@ shmedia_build_Mytes (shmedia_opcode_info *opcode,
 
 	    /* Don't allow complex expressions here.  */
 	    if (opjp->immediate.X_op_symbol != NULL)
-	      return 0;
+	      {
+		as_bad(_("invalid operand: expression in PT target"));
+		return 0;
+	      }
 
 	    if (opjp->reloctype == BFD_RELOC_32_PLT_PCREL)
 	      init = max = min = SH64PCRELPLT;

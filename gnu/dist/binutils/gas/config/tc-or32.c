@@ -1,5 +1,5 @@
 /* Assembly backend for the OpenRISC 1000.
-   Copyright (C) 2002 Free Software Foundation, Inc.
+   Copyright (C) 2002, 2003, 2005 Free Software Foundation, Inc.
    Contributed by Damjan Lampret <lampret@opencores.org>.
    Modified bu Johan Rydberg, <johan.rydberg@netinsight.se>.
    Based upon a29k port.
@@ -581,10 +581,6 @@ machine_ip (str)
           if (*s == '(')
             {
               operand->X_op = O_constant;
-#if 0
-              operand->X_add_number = 0; /* ??? if enabled load/store offsets
-					    are zero.  */
-#endif
             }
           else if (*s == ')')
             s += 1;
@@ -796,10 +792,6 @@ machine_ip (str)
           if (*s == '(')
             {
               operand->X_op = O_constant;
-#if 0
-              operand->X_add_number = 0; /* ??? if enabled load/store offsets
-					    are zero.  */
-#endif
             }
           else if (*s == ')')
             s += 1;
@@ -1002,20 +994,7 @@ md_apply_fix3 (fixP, val, seg)
 
     case BFD_RELOC_32_GOT_PCREL:  /* 0000XXXX pattern in a word.  */
       if (!fixP->fx_done)
-        {
-          /* The linker tries to support both AMD and old GNU style
-             R_IREL relocs.  That means that if the addend is exactly
-             the negative of the address within the section, the
-             linker will not handle it correctly.  */
-#if 0
-          if (fixP->fx_pcrel
-              && t_val != 0
-              && t_val == - (fixP->fx_frag->fr_address + fixP->fx_where))
-            as_bad_where
-              (fixP->fx_file, fixP->fx_line,
-               _("the linker will not handle this relocation correctly (1)"));
-#endif
-        }
+        ;
       else if (fixP->fx_pcrel)
         {
           long v = t_val >> 28;
@@ -1124,23 +1103,13 @@ md_apply_fix3 (fixP, valP, seg)
              R_IREL relocs.  That means that if the addend is exactly
              the negative of the address within the section, the
              linker will not handle it correctly.  */
-#if 0
-          if (fixP->fx_pcrel
-              && val != 0
-              && val == - (fixP->fx_frag->fr_address + fixP->fx_where))
-            as_bad_where
-              (fixP->fx_file, fixP->fx_line,
-               _("the linker will not handle this relocation correctly (1)"));
-#endif
         }
       else if (fixP->fx_pcrel)
         {
           long v = val >> 28;
-#if 1
           if (v != 0 && v != -1)
             as_bad_where (fixP->fx_file, fixP->fx_line,
                           _("call/jmp target out of range (2)"));
-#endif
         }
       else
         /* This case was supposed to be handled in machine_ip.  */

@@ -1,6 +1,6 @@
 /* Print Motorola 68k instructions.
    Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2002, 2003
+   1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify
@@ -46,18 +46,31 @@ static int
 print_insn_arg PARAMS ((const char *, unsigned char *, unsigned char *,
 			bfd_vma, disassemble_info *));
 
-const char * const fpcr_names[] = {
+static bfd_boolean m68k_valid_ea (char code, int val);
+
+const char * const fpcr_names[] =
+{
     "", "%fpiar", "%fpsr", "%fpiar/%fpsr", "%fpcr",
     "%fpiar/%fpcr", "%fpsr/%fpcr", "%fpiar/%fpsr/%fpcr"
 };
 
-static char *const reg_names[] = {
+static char *const reg_names[] =
+{
     "%d0", "%d1", "%d2", "%d3", "%d4", "%d5", "%d6", "%d7",
     "%a0", "%a1", "%a2", "%a3", "%a4", "%a5", "%fp", "%sp",
     "%ps", "%pc"
 };
 
-/* Sign-extend an (unsigned char). */
+/* Name of register halves for MAC/EMAC.
+   Seperate from reg_names since 'spu', 'fpl' look weird.  */
+static char *const reg_half_names[] =
+{
+    "%d0", "%d1", "%d2", "%d3", "%d4", "%d5", "%d6", "%d7",
+    "%a0", "%a1", "%a2", "%a3", "%a4", "%a5", "%a6", "%a7",
+    "%ps", "%pc"
+};
+
+/* Sign-extend an (unsigned char).  */
 #if __STDC__ == 1
 #define COERCE_SIGNED_CHAR(ch) ((signed char) (ch))
 #else
@@ -169,178 +182,21 @@ dummy_print_address (vma, info)
 {
 }
 
-/* Print the m68k instruction at address MEMADDR in debugged memory,
-   on INFO->STREAM.  Returns length of the instruction, in bytes.  */
+/* Try to match the current instruction to best and if so, return the
+   number of bytes consumed from the instruction stream, else zero.  */
 
-int
-print_insn_m68k (memaddr, info)
-     bfd_vma memaddr;
-     disassemble_info *info;
+static int
+match_insn_m68k (bfd_vma memaddr, disassemble_info * info,
+		 const struct m68k_opcode * best, struct private * priv)
 {
-  register int i;
-  register unsigned char *p;
   unsigned char *save_p;
-  register const char *d;
-  register unsigned long bestmask;
-  const struct m68k_opcode *best;
-  unsigned int arch_mask;
-  struct private priv;
-  bfd_byte *buffer = priv.the_buffer;
+  unsigned char *p;
+  const char *d;
+
+  bfd_byte *buffer = priv->the_buffer;
   fprintf_ftype save_printer = info->fprintf_func;
-  void (*save_print_address) PARAMS ((bfd_vma, struct disassemble_info *))
+  void (* save_print_address) (bfd_vma, struct disassemble_info *)
     = info->print_address_func;
-  int major_opcode;
-  static int numopcodes[16];
-  static const struct m68k_opcode **opcodes[16];
-
-  if (!opcodes[0])
-    {
-      /* Speed up the matching by sorting the opcode table on the upper
-	 four bits of the opcode.  */
-      const struct m68k_opcode **opc_pointer[16];
-
-      /* First count how many opcodes are in each of the sixteen buckets.  */
-      for (i = 0; i < m68k_numopcodes; i++)
-	numopcodes[(m68k_opcodes[i].opcode >> 28) & 15]++;
-
-      /* Then create a sorted table of pointers that point into the
-	 unsorted table.  */
-      opc_pointer[0] = ((const struct m68k_opcode **)
-			xmalloc (sizeof (struct m68k_opcode *)
-				 * m68k_numopcodes));
-      opcodes[0] = opc_pointer[0];
-      for (i = 1; i < 16; i++)
-	{
-	  opc_pointer[i] = opc_pointer[i - 1] + numopcodes[i - 1];
-	  opcodes[i] = opc_pointer[i];
-	}
-
-      for (i = 0; i < m68k_numopcodes; i++)
-	*opc_pointer[(m68k_opcodes[i].opcode >> 28) & 15]++ = &m68k_opcodes[i];
-
-    }
-
-  info->private_data = (PTR) &priv;
-  /* Tell objdump to use two bytes per chunk and six bytes per line for
-     displaying raw data.  */
-  info->bytes_per_chunk = 2;
-  info->bytes_per_line = 6;
-  info->display_endian = BFD_ENDIAN_BIG;
-  priv.max_fetched = priv.the_buffer;
-  priv.insn_start = memaddr;
-  if (setjmp (priv.bailout) != 0)
-    /* Error return.  */
-    return -1;
-
-  best = NULL;
-  switch (info->mach)
-    {
-    default:
-    case 0:
-      arch_mask = (unsigned int) -1;
-      break;
-    case bfd_mach_m68000:
-      arch_mask = m68000;
-      break;
-    case bfd_mach_m68008:
-      arch_mask = m68008;
-      break;
-    case bfd_mach_m68010:
-      arch_mask = m68010;
-      break;
-    case bfd_mach_m68020:
-      arch_mask = m68020;
-      break;
-    case bfd_mach_m68030:
-      arch_mask = m68030;
-      break;
-    case bfd_mach_m68040:
-      arch_mask = m68040;
-      break;
-    case bfd_mach_m68060:
-      arch_mask = m68060;
-      break;
-    case bfd_mach_mcf5200:
-      arch_mask = mcf5200;
-      break;
-    case bfd_mach_mcf528x:
-      arch_mask = mcf528x;
-      break;
-    case bfd_mach_mcf5206e:
-      arch_mask = mcf5206e;
-      break;
-    case bfd_mach_mcf5307:
-      arch_mask = mcf5307;
-      break;
-    case bfd_mach_mcf5407:
-      arch_mask = mcf5407;
-      break;
-    }
-
-  arch_mask |= m68881 | m68851;
-
-  bestmask = 0;
-  FETCH_DATA (info, buffer + 2);
-  major_opcode = (buffer[0] >> 4) & 15;
-  for (i = 0; i < numopcodes[major_opcode]; i++)
-    {
-      const struct m68k_opcode *opc = opcodes[major_opcode][i];
-      unsigned long opcode = opc->opcode;
-      unsigned long match = opc->match;
-
-      if (((0xff & buffer[0] & (match >> 24)) == (0xff & (opcode >> 24)))
-	  && ((0xff & buffer[1] & (match >> 16)) == (0xff & (opcode >> 16)))
-	  /* Only fetch the next two bytes if we need to.  */
-	  && (((0xffff & match) == 0)
-	      ||
-	      (FETCH_DATA (info, buffer + 4)
-	       && ((0xff & buffer[2] & (match >> 8)) == (0xff & (opcode >> 8)))
-	       && ((0xff & buffer[3] & match) == (0xff & opcode)))
-	      )
-	  && (opc->arch & arch_mask) != 0)
-	{
-	  /* Don't use for printout the variants of divul and divsl
-	     that have the same register number in two places.
-	     The more general variants will match instead.  */
-	  for (d = opc->args; *d; d += 2)
-	    if (d[1] == 'D')
-	      break;
-
-	  /* Don't use for printout the variants of most floating
-	     point coprocessor instructions which use the same
-	     register number in two places, as above. */
-	  if (*d == '\0')
-	    for (d = opc->args; *d; d += 2)
-	      if (d[1] == 't')
-		break;
-
-	  /* Don't match fmovel with more than one register; wait for
-             fmoveml.  */
-	  if (*d == '\0')
-	    {
-	      for (d = opc->args; *d; d += 2)
-		{
-		  if (d[0] == 's' && d[1] == '8')
-		    {
-		      int val;
-
-		      val = fetch_arg (buffer, d[1], 3, info);
-		      if ((val & (val - 1)) != 0)
-			break;
-		    }
-		}
-	    }
-
-	  if (*d == '\0' && match > bestmask)
-	    {
-	      best = opc;
-	      bestmask = match;
-	    }
-	}
-    }
-
-  if (best == NULL)
-    goto invalid;
 
   /* Point at first word of argument data,
      and at descriptor for first argument.  */
@@ -352,8 +208,8 @@ print_insn_m68k (memaddr, info)
      or 3rd words of the instruction.  */
   for (d = best->args; *d; d += 2)
     {
-      /* I don't think it is necessary to be checking d[0] here; I suspect
-	 all this could be moved to the case statement below.  */
+      /* I don't think it is necessary to be checking d[0] here;
+	 I suspect all this could be moved to the case statement below.  */
       if (d[0] == '#')
 	{
 	  if (d[1] == 'l' && p - buffer < 6)
@@ -361,8 +217,10 @@ print_insn_m68k (memaddr, info)
 	  else if (p - buffer < 4 && d[1] != 'C' && d[1] != '8')
 	    p = buffer + 4;
 	}
+
       if ((d[0] == 'L' || d[0] == 'l') && d[1] == 'w' && p - buffer < 4)
 	p = buffer + 4;
+
       switch (d[1])
 	{
 	case '1':
@@ -412,77 +270,248 @@ print_insn_m68k (memaddr, info)
 
   d = best->args;
 
-  /* We scan the operands twice.  The first time we don't print anything,
-     but look for errors. */
-
   save_p = p;
   info->print_address_func = dummy_print_address;
   info->fprintf_func = (fprintf_ftype) dummy_printer;
+
+  /* We scan the operands twice.  The first time we don't print anything,
+     but look for errors. */
   for (; *d; d += 2)
     {
       int eaten = print_insn_arg (d, buffer, p, memaddr + (p - buffer), info);
+
       if (eaten >= 0)
 	p += eaten;
       else if (eaten == -1)
-	goto invalid;
+	{
+	  info->fprintf_func = save_printer;
+	  info->print_address_func = save_print_address;
+	  return 0;
+	}
       else
 	{
-	  (*info->fprintf_func) (info->stream,
-				 /* xgettext:c-format */
-				 _("<internal error in opcode table: %s %s>\n"),
-				 best->name,
-				 best->args);
-	  goto invalid;
+	  info->fprintf_func (info->stream,
+			      /* xgettext:c-format */
+			      _("<internal error in opcode table: %s %s>\n"),
+			      best->name,  best->args);
+	  info->fprintf_func = save_printer;
+	  info->print_address_func = save_print_address;
+	  return 2;
 	}
-
     }
+
   p = save_p;
   info->fprintf_func = save_printer;
   info->print_address_func = save_print_address;
 
   d = best->args;
 
-  (*info->fprintf_func) (info->stream, "%s", best->name);
+  info->fprintf_func (info->stream, "%s", best->name);
 
   if (*d)
-    (*info->fprintf_func) (info->stream, " ");
+    info->fprintf_func (info->stream, " ");
 
   while (*d)
     {
       p += print_insn_arg (d, buffer, p, memaddr + (p - buffer), info);
       d += 2;
-      if (*d && *(d - 2) != 'I' && *d != 'k')
-	(*info->fprintf_func) (info->stream, ",");
-    }
-  return p - buffer;
 
- invalid:
+      if (*d && *(d - 2) != 'I' && *d != 'k')
+	info->fprintf_func (info->stream, ",");
+    }
+
+  return p - buffer;
+}
+
+/* Print the m68k instruction at address MEMADDR in debugged memory,
+   on INFO->STREAM.  Returns length of the instruction, in bytes.  */
+
+int
+print_insn_m68k (memaddr, info)
+     bfd_vma memaddr;
+     disassemble_info *info;
+{
+  int i;
+  const char *d;
+  unsigned int arch_mask;
+  struct private priv;
+  bfd_byte *buffer = priv.the_buffer;
+  int major_opcode;
+  static int numopcodes[16];
+  static const struct m68k_opcode **opcodes[16];
+  int val;
+
+  if (!opcodes[0])
+    {
+      /* Speed up the matching by sorting the opcode
+	 table on the upper four bits of the opcode.  */
+      const struct m68k_opcode **opc_pointer[16];
+
+      /* First count how many opcodes are in each of the sixteen buckets.  */
+      for (i = 0; i < m68k_numopcodes; i++)
+	numopcodes[(m68k_opcodes[i].opcode >> 28) & 15]++;
+
+      /* Then create a sorted table of pointers
+	 that point into the unsorted table.  */
+      opc_pointer[0] = xmalloc (sizeof (struct m68k_opcode *)
+				* m68k_numopcodes);
+      opcodes[0] = opc_pointer[0];
+
+      for (i = 1; i < 16; i++)
+	{
+	  opc_pointer[i] = opc_pointer[i - 1] + numopcodes[i - 1];
+	  opcodes[i] = opc_pointer[i];
+	}
+
+      for (i = 0; i < m68k_numopcodes; i++)
+	*opc_pointer[(m68k_opcodes[i].opcode >> 28) & 15]++ = &m68k_opcodes[i];
+    }
+
+  info->private_data = (PTR) &priv;
+  /* Tell objdump to use two bytes per chunk
+     and six bytes per line for displaying raw data.  */
+  info->bytes_per_chunk = 2;
+  info->bytes_per_line = 6;
+  info->display_endian = BFD_ENDIAN_BIG;
+  priv.max_fetched = priv.the_buffer;
+  priv.insn_start = memaddr;
+
+  if (setjmp (priv.bailout) != 0)
+    /* Error return.  */
+    return -1;
+
+  switch (info->mach)
+    {
+    default:
+    case 0:
+      arch_mask = (unsigned int) -1;
+      break;
+    case bfd_mach_m68000:
+      arch_mask = m68000|m68881|m68851;
+      break;
+    case bfd_mach_m68008:
+      arch_mask = m68008|m68881|m68851;
+      break;
+    case bfd_mach_m68010:
+      arch_mask = m68010|m68881|m68851;
+      break;
+    case bfd_mach_m68020:
+      arch_mask = m68020|m68881|m68851;
+      break;
+    case bfd_mach_m68030:
+      arch_mask = m68030|m68881|m68851;
+      break;
+    case bfd_mach_m68040:
+      arch_mask = m68040|m68881|m68851;
+      break;
+    case bfd_mach_m68060:
+      arch_mask = m68060|m68881|m68851;
+      break;
+    case bfd_mach_mcf5200:
+      arch_mask = mcfisa_a;
+      break;
+    case bfd_mach_mcf521x:
+    case bfd_mach_mcf528x:
+      arch_mask = mcfisa_a|mcfhwdiv|mcfisa_aa|mcfusp|mcfemac;
+      break;
+    case bfd_mach_mcf5206e:
+      arch_mask = mcfisa_a|mcfhwdiv|mcfmac;
+      break;
+    case bfd_mach_mcf5249:
+      arch_mask = mcfisa_a|mcfhwdiv|mcfemac;
+      break;
+    case bfd_mach_mcf5307:
+      arch_mask = mcfisa_a|mcfhwdiv|mcfmac;
+      break;
+    case bfd_mach_mcf5407:
+      arch_mask = mcfisa_a|mcfhwdiv|mcfisa_b|mcfmac;
+      break;
+    case bfd_mach_mcf547x:
+    case bfd_mach_mcf548x:
+    case bfd_mach_mcfv4e:
+      arch_mask = mcfisa_a|mcfhwdiv|mcfisa_b|mcfusp|cfloat|mcfemac;
+      break;
+    }
+
+  FETCH_DATA (info, buffer + 2);
+  major_opcode = (buffer[0] >> 4) & 15;
+
+  for (i = 0; i < numopcodes[major_opcode]; i++)
+    {
+      const struct m68k_opcode *opc = opcodes[major_opcode][i];
+      unsigned long opcode = opc->opcode;
+      unsigned long match = opc->match;
+
+      if (((0xff & buffer[0] & (match >> 24)) == (0xff & (opcode >> 24)))
+	  && ((0xff & buffer[1] & (match >> 16)) == (0xff & (opcode >> 16)))
+	  /* Only fetch the next two bytes if we need to.  */
+	  && (((0xffff & match) == 0)
+	      ||
+	      (FETCH_DATA (info, buffer + 4)
+	       && ((0xff & buffer[2] & (match >> 8)) == (0xff & (opcode >> 8)))
+	       && ((0xff & buffer[3] & match) == (0xff & opcode)))
+	      )
+	  && (opc->arch & arch_mask) != 0)
+	{
+	  /* Don't use for printout the variants of divul and divsl
+	     that have the same register number in two places.
+	     The more general variants will match instead.  */
+	  for (d = opc->args; *d; d += 2)
+	    if (d[1] == 'D')
+	      break;
+
+	  /* Don't use for printout the variants of most floating
+	     point coprocessor instructions which use the same
+	     register number in two places, as above.  */
+	  if (*d == '\0')
+	    for (d = opc->args; *d; d += 2)
+	      if (d[1] == 't')
+		break;
+
+	  /* Don't match fmovel with more than one register;
+	     wait for fmoveml.  */
+	  if (*d == '\0')
+	    {
+	      for (d = opc->args; *d; d += 2)
+		{
+		  if (d[0] == 's' && d[1] == '8')
+		    {
+		      val = fetch_arg (buffer, d[1], 3, info);
+		      if ((val & (val - 1)) != 0)
+			break;
+		    }
+		}
+	    }
+
+	  if (*d == '\0')
+	    if ((val = match_insn_m68k (memaddr, info, opc, & priv)))
+	      return val;
+	}
+    }
+
   /* Handle undefined instructions.  */
-  info->fprintf_func = save_printer;
-  info->print_address_func = save_print_address;
-  (*info->fprintf_func) (info->stream, "0%o",
-			 (buffer[0] << 8) + buffer[1]);
+  info->fprintf_func (info->stream, "0%o", (buffer[0] << 8) + buffer[1]);
   return 2;
 }
 
 /* Returns number of bytes "eaten" by the operand, or
    return -1 if an invalid operand was found, or -2 if
-   an opcode tabe error was found. */
+   an opcode tabe error was found.  */
 
 static int
 print_insn_arg (d, buffer, p0, addr, info)
      const char *d;
      unsigned char *buffer;
      unsigned char *p0;
-     bfd_vma addr;		/* PC for this arg to be relative to */
+     bfd_vma addr;		/* PC for this arg to be relative to.  */
      disassemble_info *info;
 {
-  register int val = 0;
-  register int place = d[1];
-  register unsigned char *p = p0;
+  int val = 0;
+  int place = d[1];
+  unsigned char *p = p0;
   int regno;
-  register const char *regname;
-  register unsigned char *p1;
+  const char *regname;
+  unsigned char *p1;
   double flval;
   int flt_p;
   bfd_signed_vma disp;
@@ -490,7 +519,7 @@ print_insn_arg (d, buffer, p0, addr, info)
 
   switch (*d)
     {
-    case 'c':		/* cache identifier */
+    case 'c':		/* Cache identifier.  */
       {
         static char *const cacheFieldName[] = { "nc", "dc", "ic", "bc" };
         val = fetch_arg (buffer, place, 2, info);
@@ -498,7 +527,7 @@ print_insn_arg (d, buffer, p0, addr, info)
         break;
       }
 
-    case 'a':		/* address register indirect only. Cf. case '+'. */
+    case 'a':		/* Address register indirect only. Cf. case '+'.  */
       {
         (*info->fprintf_func)
 	  (info->stream,
@@ -507,7 +536,7 @@ print_insn_arg (d, buffer, p0, addr, info)
         break;
       }
 
-    case '_':		/* 32-bit absolute address for move16. */
+    case '_':		/* 32-bit absolute address for move16.  */
       {
         uval = NEXTULONG (p);
 	(*info->print_address_func) (uval, info);
@@ -736,6 +765,26 @@ print_insn_arg (d, buffer, p0, addr, info)
 			     fpcr_names[fetch_arg (buffer, place, 3, info)]);
       break;
 
+    case 'e':
+      val = fetch_arg(buffer, place, 2, info);
+      (*info->fprintf_func) (info->stream, "%%acc%d", val);
+      break;
+
+    case 'g':
+      val = fetch_arg(buffer, place, 1, info);
+      (*info->fprintf_func) (info->stream, "%%accext%s", val==0 ? "01" : "23");
+      break;
+      
+    case 'i':
+      val = fetch_arg(buffer, place, 2, info);
+      if (val == 1)
+	(*info->fprintf_func) (info->stream, "<<");
+      else if (val == 3)
+	(*info->fprintf_func) (info->stream, ">>");
+      else
+	return -1;
+      break;
+
     case 'I':
       /* Get coprocessor ID... */
       val = fetch_arg (buffer, 'd', 3, info);
@@ -744,6 +793,7 @@ print_insn_arg (d, buffer, p0, addr, info)
 	(*info->fprintf_func) (info->stream, "(cpid=%d) ", val);
       break;
 
+    case '4':
     case '*':
     case '~':
     case '%':
@@ -774,6 +824,10 @@ print_insn_arg (d, buffer, p0, addr, info)
 	}
       else
 	val = fetch_arg (buffer, 's', 6, info);
+
+      /* If the <ea> is invalid for *d, then reject this match.  */
+      if (!m68k_valid_ea (*d, val))
+	return -1;
 
       /* Get register number assuming address register.  */
       regno = (val & 7) + 8;
@@ -880,6 +934,16 @@ print_insn_arg (d, buffer, p0, addr, info)
 	    default:
 	      return -1;
 	    }
+	}
+
+      /* If place is '/', then this is the case of the mask bit for
+	 mac/emac loads. Now that the arg has been printed, grab the
+	 mask bit and if set, add a '&' to the arg.  */
+      if (place == '/')
+	{
+	  val = fetch_arg (buffer, place, 1, info);
+	  if (val)
+	    info->fprintf_func (info->stream, "&");
 	}
       break;
 
@@ -1048,7 +1112,7 @@ print_insn_arg (d, buffer, p0, addr, info)
 	    reg &= 0xf;
 	  }
 	(*info->fprintf_func) (info->stream, "%s%s",
-			       reg_names[reg],
+			       reg_half_names[reg],
 			       is_upper ? "u" : "l");
       }
       break;
@@ -1058,6 +1122,106 @@ print_insn_arg (d, buffer, p0, addr, info)
     }
 
   return p - p0;
+}
+
+/* Check if an EA is valid for a particular code.  This is required
+   for the EMAC instructions since the type of source address determines
+   if it is a EMAC-load instruciton if the EA is mode 2-5, otherwise it
+   is a non-load EMAC instruction and the bits mean register Ry.
+   A similar case exists for the movem instructions where the register
+   mask is interpreted differently for different EAs.  */
+
+static bfd_boolean
+m68k_valid_ea (char code, int val)
+{
+  int mode, mask;
+#define M(n0,n1,n2,n3,n4,n5,n6,n70,n71,n72,n73,n74) \
+  (n0 | n1 << 1 | n2 << 2 | n3 << 3 | n4 << 4 | n5 << 5 | n6 << 6 \
+   | n70 << 7 | n71 << 8 | n72 << 9 | n73 << 10 | n74 << 11)
+
+  switch (code)
+    {
+    case '*':
+      mask = M (1,1,1,1,1,1,1,1,1,1,1,1);
+      break;
+    case '~':
+      mask = M (0,0,1,1,1,1,1,1,1,0,0,0);
+      break;
+    case '%':
+      mask = M (1,1,1,1,1,1,1,1,1,0,0,0);
+      break;
+    case ';':
+      mask = M (1,0,1,1,1,1,1,1,1,1,1,1);
+      break;
+    case '@':
+      mask = M (1,0,1,1,1,1,1,1,1,1,1,0);
+      break;
+    case '!':
+      mask = M (0,0,1,0,0,1,1,1,1,1,1,0);
+      break;
+    case '&':
+      mask = M (0,0,1,0,0,1,1,1,1,0,0,0);
+      break;
+    case '$':
+      mask = M (1,0,1,1,1,1,1,1,1,0,0,0);
+      break;
+    case '?':
+      mask = M (1,0,1,0,0,1,1,1,1,0,0,0);
+      break;
+    case '/':
+      mask = M (1,0,1,0,0,1,1,1,1,1,1,0);
+      break;
+    case '|':
+      mask = M (0,0,1,0,0,1,1,1,1,1,1,0);
+      break;
+    case '>':
+      mask = M (0,0,1,0,1,1,1,1,1,0,0,0);
+      break;
+    case '<':
+      mask = M (0,0,1,1,0,1,1,1,1,1,1,0);
+      break;
+    case 'm':
+      mask = M (1,1,1,1,1,0,0,0,0,0,0,0);
+      break;
+    case 'n':
+      mask = M (0,0,0,0,0,1,0,0,0,1,0,0);
+      break;
+    case 'o':
+      mask = M (0,0,0,0,0,0,1,1,1,0,1,1);
+      break;
+    case 'p':
+      mask = M (1,1,1,1,1,1,0,0,0,0,0,0);
+      break;
+    case 'q':
+      mask = M (1,0,1,1,1,1,0,0,0,0,0,0);
+      break;
+    case 'v':
+      mask = M (1,0,1,1,1,1,0,1,1,0,0,0);
+      break;
+    case 'b':
+      mask = M (1,0,1,1,1,1,0,0,0,1,0,0);
+      break;
+    case 'w':
+      mask = M (0,0,1,1,1,1,0,0,0,1,0,0);
+      break;
+    case 'y':
+      mask = M (0,0,1,0,0,1,0,0,0,0,0,0);
+      break;
+    case 'z':
+      mask = M (0,0,1,0,0,1,0,0,0,1,0,0);
+      break;
+    case '4':
+      mask = M (0,0,1,1,1,1,0,0,0,0,0,0);
+      break;
+    default:
+      abort ();
+    }
+#undef M
+
+  mode = (val >> 3) & 7;
+  if (mode == 7)
+    mode += val & 7;
+  return (mask & (1 << mode)) != 0;
 }
 
 /* Fetch BITS bits from a position in the instruction specified by CODE.
@@ -1072,9 +1236,38 @@ fetch_arg (buffer, code, bits, info)
      int bits;
      disassemble_info *info;
 {
-  register int val = 0;
+  int val = 0;
+
   switch (code)
     {
+    case '/': /* MAC/EMAC mask bit.  */
+      val = buffer[3] >> 5;
+      break;
+
+    case 'G': /* EMAC ACC load.  */
+      val = ((buffer[3] >> 3) & 0x2) | ((~buffer[1] >> 7) & 0x1);
+      break;
+
+    case 'H': /* EMAC ACC !load.  */
+      val = ((buffer[3] >> 3) & 0x2) | ((buffer[1] >> 7) & 0x1);
+      break;
+
+    case ']': /* EMAC ACCEXT bit.  */
+      val = buffer[0] >> 2;
+      break;
+
+    case 'I': /* MAC/EMAC scale factor.  */
+      val = buffer[2] >> 1;
+      break;
+
+    case 'F': /* EMAC ACCx.  */
+      val = buffer[0] >> 1;
+      break;
+
+    case 'f':
+      val = buffer[1];
+      break;
+
     case 's':
       val = buffer[1];
       break;
@@ -1171,11 +1364,11 @@ fetch_arg (buffer, code, bits, info)
       break;
 
     case 'M':
-      val = buffer[1] | (buffer[3] & 0x40 ? 0x10 : 0);
+      val = (buffer[1] & 0xf) | (buffer[3] & 0x40 ? 0x10 : 0);
       break;
 
     case 'N':
-      val = buffer[3] | (buffer[3] & 0x40 ? 0x10 : 0);
+      val = (buffer[3] & 0xf) | (buffer[3] & 0x40 ? 0x10 : 0);
       break;
 
     case 'h':
@@ -1222,7 +1415,7 @@ print_indexed (basereg, p, addr, info)
      bfd_vma addr;
      disassemble_info *info;
 {
-  register int word;
+  int word;
   static char *const scales[] = { "", ":2", ":4", ":8" };
   bfd_vma base_disp;
   bfd_vma outer_disp;
