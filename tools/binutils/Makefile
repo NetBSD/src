@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2005/01/14 07:46:56 skrll Exp $
+#	$NetBSD: Makefile,v 1.10 2006/02/02 22:03:54 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -43,15 +43,8 @@ native-binutils: .native/.configure_done
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM}) && \
 		(cd .native && ${MAKE} configure-host) && \
-		(cd .native/bfd && ${MAKE} bfd.h) && \
-		(cd .native/ld && ${MAKE} ldemul-list.h) && \
-		(cd .native && \
-			${MAKE} configure-target-libiberty \
-			CC_FOR_TARGET=${CC:Q}' '${CCADDFLAGS:Q} \
-			CXX_FOR_TARGET=${CXX:Q}' '${CCADDFLAGS:Q} \
-			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include) && \
-		(cd .native/${MACHINE_GNU_PLATFORM}/libiberty && \
-			${MAKE} needed-list)
+		(cd .native/bfd && ${MAKE} bfd.h bfdver.h) && \
+		(cd .native/ld && ${MAKE} ldemul-list.h)
 	@touch $@
 
 clean: clean.native
