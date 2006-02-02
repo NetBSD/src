@@ -7526,12 +7526,12 @@ elf_reloc_link_order (bfd *output_bfd,
     irel[0].r_info = ELF32_R_INFO (indx, howto->type);
   else
 #ifdef BFD64
-    {
-      bfd_uint64_t indx64 = indx;
-      irel[0].r_info = ELF64_R_INFO (indx64, howto->type);
-    }
+          {
+            bfd_uint64_t indx64 = indx;
+            irel[0].r_info = ELF64_R_INFO (indx64, howto->type);
+          }
 #else
-    BFD_FAIL();
+          BFD_FAIL();
 #endif
 
   rel_hdr = &elf_section_data (output_section)->rel_hdr;
