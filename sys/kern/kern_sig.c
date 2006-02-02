@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.213 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.214 2006/02/02 17:48:51 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.213 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.214 2006/02/02 17:48:51 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.213 2005/12/24 19:12:23 perry Exp $")
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/exec.h>
+#include <sys/sysctl.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -2101,9 +2102,10 @@ coredump(struct lwp *l, const char *pattern)
 	cred = p->p_cred->pc_ucred;
 
 	/*
-	 * Make sure the process has not set-id, to prevent data leaks.
+	 * Make sure the process has not set-id, to prevent data leaks,
+	 * unless it was specifically requested to allow set-id coredumps.
 	 */
-	if (p->p_flag & P_SUGID)
+	if ((p->p_flag & P_SUGID) && !security_setidcore_dump)
 		return (EPERM);
 
 	/*
@@ -2125,6 +2127,9 @@ restart:
 	if (vp->v_mount == NULL ||
 	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
 		return (EPERM);
+
+	if (p->p_flag & P_SUGID && security_setidcore_dump)
+		pattern = security_setidcore_path;
 
 	if (pattern == NULL)
 		pattern = p->p_limit->pl_corename;
@@ -2155,6 +2160,13 @@ restart:
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
+
+	if (p->p_flag & P_SUGID && security_setidcore_dump) {
+		vattr.va_uid = security_setidcore_owner;
+		vattr.va_gid = security_setidcore_group;
+		vattr.va_mode = security_setidcore_mode;
+	}
+
 	VOP_LEASE(vp, l, cred, LEASE_WRITE);
 	VOP_SETATTR(vp, &vattr, cred, l);
 	p->p_acflag |= ACORE;
