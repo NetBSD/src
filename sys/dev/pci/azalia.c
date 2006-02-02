@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.7.2.12 2005/08/14 21:44:31 riz Exp $	*/
+/*	$NetBSD: azalia.c,v 1.7.2.12.2.1 2006/02/02 16:02:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.12 2005/08/14 21:44:31 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.12.2.1 2006/02/02 16:02:42 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -576,6 +576,10 @@ typedef struct {
 #define MI_TARGET_ADC		0x105
 #define MI_TARGET_VOLUME	0x106
 } mixer_item_t;
+
+#define VALID_WIDGET_NID(nid, codec)	(nid == (codec)->audiofunc || \
+					 (nid >= (codec)->wstart &&   \
+					  nid < (codec)->wend))
 
 typedef struct {
 	int nconv;
@@ -1486,6 +1490,10 @@ azalia_codec_init(codec_t *this)
 	    COP_AMPCAP_NUMSTEPS(result), COP_AMPCAP_OFFSET(result)));
 #endif
 
+	strlcpy(this->w[CORB_NID_ROOT].name, "root",
+	    sizeof(this->w[CORB_NID_ROOT].name));
+	strlcpy(this->w[this->audiofunc].name, "hdaudio",
+	    sizeof(this->w[this->audiofunc].name));
 	FOR_EACH_WIDGET(this, i) {
 		err = azalia_widget_init(&this->w[i], this, i);
 		if (err)
@@ -1941,7 +1949,7 @@ azalia_mixer_init(codec_t *this)
 	 */
 	mixer_item_t *m;
 	int nadcs;
-	int err, i, j;
+	int err, i, j, k;
 
 	nadcs = 0;
 	this->maxmixers = 10;
@@ -2023,13 +2031,16 @@ azalia_mixer_init(codec_t *this)
 			d->next = AUDIO_MIXER_LAST;
 			d->prev = AUDIO_MIXER_LAST;
 			m->target = MI_TARGET_CONNLIST;
-			for (j = 0; j < w->nconnections && j < 32; j++) {
-				d->un.e.member[j].ord = j;
-				strlcpy(d->un.e.member[j].label.name,
+			for (j = 0, k = 0; j < w->nconnections && k < 32; j++) {
+				if (!VALID_WIDGET_NID(w->connections[j], this))
+					continue;
+				d->un.e.member[k].ord = k;
+				strlcpy(d->un.e.member[k].label.name,
 				    this->w[w->connections[j]].name,
 				    MAX_AUDIO_DEV_LEN);
+				k++;
 			}
-			d->un.e.num_mem = j;
+			d->un.e.num_mem = k;
 			this->nmixers++;
 		}
 
@@ -2098,6 +2109,8 @@ azalia_mixer_init(codec_t *this)
 		    w->inamp_cap & COP_AMPCAP_MUTE) {
 			for (j = 0; j < w->nconnections; j++) {
 				MIXER_REG_PROLOG;
+				if (!VALID_WIDGET_NID(w->connections[j], this))
+					continue;
 				snprintf(d->label.name, sizeof(d->label.name),
 				    "%s.%s.mute", w->name,
 				    this->w[w->connections[j]].name);
@@ -2127,6 +2140,8 @@ azalia_mixer_init(codec_t *this)
 		    && COP_AMPCAP_NUMSTEPS(w->inamp_cap)) {
 			for (j = 0; j < w->nconnections; j++) {
 				MIXER_REG_PROLOG;
+				if (!VALID_WIDGET_NID(w->connections[j], this))
+					continue;
 				snprintf(d->label.name, sizeof(d->label.name),
 				    "%s.%s", w->name,
 				    this->w[w->connections[j]].name);
@@ -2418,11 +2433,18 @@ azalia_mixer_get(const codec_t *this, mixer_ctrl_t *mc)
 
 	/* selection */
 	else if (m->target == MI_TARGET_CONNLIST) {
+		int i;
 		err = this->comresp(this, m->nid,
 		    CORB_GET_CONNECTION_SELECT_CONTROL, 0, &result);
 		if (err)
 			return err;
-		mc->un.ord = CORB_CSC_INDEX(result);
+		result = CORB_CSC_INDEX(result);
+		mc->un.ord = -1;
+		for (i = 0; i <= result; i++) {
+			if (!VALID_WIDGET_NID(this->w[m->nid].connections[i], this))
+				continue;
+			mc->un.ord++;
+		}
 	}
 
 	/* pin I/O */
@@ -2641,10 +2663,18 @@ azalia_mixer_set(codec_t *this, const mixer_ctrl_t *mc)
 
 	/* selection */
 	else if (m->target == MI_TARGET_CONNLIST) {
-		if (mc->un.ord >= this->w[m->nid].nconnections)
+		int i;
+		for (i = 0, value = 0; i < this->w[m->nid].nconnections; i++) {
+			if (!VALID_WIDGET_NID(this->w[m->nid].connections[i], this))
+				continue;
+			if (value == mc->un.ord)
+				break;
+			value++;
+		}
+		if (i >= this->w[m->nid].nconnections)
 			return EINVAL;
 		err = this->comresp(this, m->nid,
-		    CORB_SET_CONNECTION_SELECT_CONTROL, mc->un.ord, &result);
+		    CORB_SET_CONNECTION_SELECT_CONTROL, i, &result);
 		if (err)
 			return err;
 	}
@@ -3038,31 +3068,35 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 	length = COP_CLL_LENGTH(result);
 	if (length == 0)
 		return 0;
+	DPRINTF(("%s: CLE=0x%x\n", __func__, result));
 	this->nconnections = length;
-	this->connections = malloc(sizeof(nid_t) * length, M_DEVBUF, M_NOWAIT);
+	this->connections = malloc(sizeof(nid_t) * (length + 3),
+	    M_DEVBUF, M_NOWAIT);
 	if (this->connections == NULL) {
 		aprint_error("%s: out of memory\n", XNAME(codec->az));
 		return ENOMEM;
 	}
 	if (longform) {
-		for (i = 0; i < length; i += 2) {
+		for (i = 0; i < length;) {
 			err = codec->comresp(codec, this->nid,
 			    CORB_GET_CONNECTION_LIST_ENTRY, i, &result);
 			if (err)
 				return err;
-			this->connections[i] = CORB_CLE_LONG_0(result);
-			this->connections[i+1] = CORB_CLE_LONG_1(result);
+			DPRINTF(("%s: long[%d]=0x%x\n", __func__, i, result));
+			this->connections[i++] = CORB_CLE_LONG_0(result);
+			this->connections[i++] = CORB_CLE_LONG_1(result);
 		}
 	} else {
-		for (i = 0; i < length; i += 4) {
+		for (i = 0; i < length;) {
 			err = codec->comresp(codec, this->nid,
 			    CORB_GET_CONNECTION_LIST_ENTRY, i, &result);
 			if (err)
 				return err;
-			this->connections[i] = CORB_CLE_SHORT_0(result);
-			this->connections[i+1] = CORB_CLE_SHORT_1(result);
-			this->connections[i+2] = CORB_CLE_SHORT_2(result);
-			this->connections[i+3] = CORB_CLE_SHORT_3(result);
+			DPRINTF(("%s: short[%d]=0x%x\n", __func__, i, result));
+			this->connections[i++] = CORB_CLE_SHORT_0(result);
+			this->connections[i++] = CORB_CLE_SHORT_1(result);
+			this->connections[i++] = CORB_CLE_SHORT_2(result);
+			this->connections[i++] = CORB_CLE_SHORT_3(result);
 		}
 	}
 	if (length > 0) {
@@ -3077,7 +3111,6 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 			return err;
 		this->selected = CORB_CSC_INDEX(result);
 		DPRINTF(("; selected=0x%x\n", this->connections[result]));
-
 	}
 	return 0;
 }
