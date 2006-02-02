@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.141 2006/01/14 11:52:20 elad Exp $
+.\"	$NetBSD: sysctl.8,v 1.142 2006/02/02 18:00:07 elad Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -530,6 +530,12 @@ privilege can change the value.
 .It proc.\*[Lt]pid\*[Gt].stopexec	int	yes
 .It proc.\*[Lt]pid\*[Gt].stopfork	int	yes
 .It security.curtain	integer	yes
+.It security.setid_core	node	not applicable
+.It security.setid_core.dump	integer	yes
+.It security.setid_core.group	integer	yes
+.It security.setid_core.mode	integer	yes
+.It security.setid_core.owner	integer	yes
+.It security.setid_core.path	string	yes
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
 .It user.bc_scale_max	integer	no
