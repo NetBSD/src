@@ -1,6 +1,6 @@
 /* Support for the generic parts of COFF, for BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003
+   2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -131,7 +131,7 @@ make_a_section_from_file (abfd, hdr, target_index)
 
   return_section->vma = hdr->s_vaddr;
   return_section->lma = hdr->s_paddr;
-  return_section->_raw_size = hdr->s_size;
+  return_section->size = hdr->s_size;
   return_section->filepos = hdr->s_scnptr;
   return_section->rel_filepos = hdr->s_relptr;
   return_section->reloc_count = hdr->s_nreloc;
@@ -1127,28 +1127,9 @@ coff_write_native_symbol (abfd, symbol, written, string_size_p,
       count++;
       while (lineno[count].line_number != 0)
 	{
-#if 0
-	  /* 13 april 92. sac
-	     I've been told this, but still need proof:
-	     > The second bug is also in `bfd/coffcode.h'.  This bug
-	     > causes the linker to screw up the pc-relocations for
-	     > all the line numbers in COFF code.  This bug isn't only
-	     > specific to A29K implementations, but affects all
-	     > systems using COFF format binaries.  Note that in COFF
-	     > object files, the line number core offsets output by
-	     > the assembler are relative to the start of each
-	     > procedure, not to the start of the .text section.  This
-	     > patch relocates the line numbers relative to the
-	     > `native->u.syment.n_value' instead of the section
-	     > virtual address.
-	     > modular!olson@cs.arizona.edu (Jon Olson)
-	   */
-	  lineno[count].u.offset += native->u.syment.n_value;
-#else
 	  lineno[count].u.offset +=
 	    (symbol->symbol.section->output_section->vma
 	     + symbol->symbol.section->output_offset);
-#endif
 	  count++;
 	}
       symbol->done_lineno = TRUE;
@@ -1174,7 +1155,7 @@ coff_write_symbols (abfd)
   bfd_size_type debug_string_size;
   unsigned int i;
   unsigned int limit = bfd_get_symcount (abfd);
-  bfd_signed_vma written = 0;
+  bfd_vma written = 0;
   asymbol **p;
 
   string_size = 0;
@@ -1344,7 +1325,7 @@ coff_write_symbols (abfd)
 	      || (debug_string_section != (asection *) NULL
 		  && (BFD_ALIGN (debug_string_size,
 				 1 << debug_string_section->alignment_power)
-		      == bfd_section_size (abfd, debug_string_section))));
+		      == debug_string_section->size)));
 
   return TRUE;
 }
@@ -1417,59 +1398,6 @@ coff_get_lineno (ignore_abfd, symbol)
   return coffsymbol (symbol)->lineno;
 }
 
-#if 0
-
-/* This is only called from coff_add_missing_symbols, which has been
-   disabled.  */
-
-asymbol *
-coff_section_symbol (abfd, name)
-     bfd *abfd;
-     char *name;
-{
-  asection *sec = bfd_make_section_old_way (abfd, name);
-  asymbol *sym;
-  combined_entry_type *csym;
-
-  sym = sec->symbol;
-  csym = coff_symbol_from (abfd, sym)->native;
-  /* Make sure back-end COFF stuff is there.  */
-  if (csym == 0)
-    {
-      struct foo
-	{
-	  coff_symbol_type sym;
-	  /* @@FIXME This shouldn't use a fixed size!!  */
-	  combined_entry_type e[10];
-	};
-      struct foo *f;
-
-      f = (struct foo *) bfd_zalloc (abfd, (bfd_size_type) sizeof (*f));
-      if (!f)
-	{
-	  bfd_set_error (bfd_error_no_error);
-	  return NULL;
-	}
-      coff_symbol_from (abfd, sym)->native = csym = f->e;
-    }
-  csym[0].u.syment.n_sclass = C_STAT;
-  csym[0].u.syment.n_numaux = 1;
-/*  SF_SET_STATICS (sym);       @@ ??? */
-  csym[1].u.auxent.x_scn.x_scnlen = sec->_raw_size;
-  csym[1].u.auxent.x_scn.x_nreloc = sec->reloc_count;
-  csym[1].u.auxent.x_scn.x_nlinno = sec->lineno_count;
-
-  if (sec->output_section == NULL)
-    {
-      sec->output_section = sec;
-      sec->output_offset = 0;
-    }
-
-  return sym;
-}
-
-#endif /* 0 */
-
 /* This function transforms the offsets into the symbol table into
    pointers to syments.  */
 
@@ -1537,7 +1465,7 @@ build_debug_section (abfd)
       return NULL;
     }
 
-  sec_size = bfd_get_section_size_before_reloc (sect);
+  sec_size = sect->size;
   debug_section = (PTR) bfd_alloc (abfd, sec_size);
   if (debug_section == NULL)
     return NULL;
@@ -1663,8 +1591,7 @@ _bfd_coff_read_string_table (abfd)
   if (strsize < STRING_SIZE_SIZE)
     {
       (*_bfd_error_handler)
-	(_("%s: bad string table size %lu"), bfd_archive_filename (abfd),
-	 (unsigned long) strsize);
+	(_("%B: bad string table size %lu"), abfd, (unsigned long) strsize);
       bfd_set_error (bfd_error_bad_value);
       return NULL;
     }
@@ -2495,4 +2422,14 @@ bfd_coff_set_symbol_class (abfd, symbol, class)
     }
 
   return TRUE;
+}
+
+struct coff_comdat_info *
+bfd_coff_get_comdat_section (bfd *abfd, struct bfd_section *sec)
+{
+  if (bfd_get_flavour (abfd) == bfd_target_coff_flavour
+      && coff_section_data (abfd, sec) != NULL)
+    return coff_section_data (abfd, sec)->comdat;
+  else
+    return NULL;
 }

@@ -1,5 +1,5 @@
 /* Generic ECOFF swapping routines, for BFD.
-   Copyright 1992, 1993, 1994, 1995, 1996, 2000, 2001, 2002
+   Copyright 1992, 1993, 1994, 1995, 1996, 2000, 2001, 2002, 2004
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -324,8 +324,6 @@ ecoff_swap_fdr_out (abfd, intern_copy, ext_ptr)
 #endif
 }
 
-#ifndef MPW_C
-
 /* Swap in the procedure descriptor record.  */
 
 static void
@@ -453,78 +451,6 @@ ecoff_swap_pdr_out (abfd, intern_copy, ext_ptr)
     abort ();
 #endif
 }
-
-#else /* MPW_C */
-/* Same routines, but with ECOFF_64 code removed, so ^&%$#&! MPW C doesn't
-   corrupt itself and then freak out.  */
-/* Swap in the procedure descriptor record.  */
-
-static void
-ecoff_swap_pdr_in (abfd, ext_copy, intern)
-     bfd *abfd;
-     PTR ext_copy;
-     PDR *intern;
-{
-  struct pdr_ext ext[1];
-
-  *ext = *(struct pdr_ext *) ext_copy;
-
-  intern->adr           = ECOFF_GET_OFF (abfd, ext->p_adr);
-  intern->isym          = H_GET_32 (abfd, ext->p_isym);
-  intern->iline         = H_GET_32 (abfd, ext->p_iline);
-  intern->regmask       = H_GET_32 (abfd, ext->p_regmask);
-  intern->regoffset     = H_GET_S32 (abfd, ext->p_regoffset);
-  intern->iopt          = H_GET_S32 (abfd, ext->p_iopt);
-  intern->fregmask      = H_GET_32 (abfd, ext->p_fregmask);
-  intern->fregoffset    = H_GET_S32 (abfd, ext->p_fregoffset);
-  intern->frameoffset   = H_GET_S32 (abfd, ext->p_frameoffset);
-  intern->framereg      = H_GET_16 (abfd, ext->p_framereg);
-  intern->pcreg         = H_GET_16 (abfd, ext->p_pcreg);
-  intern->lnLow         = H_GET_32 (abfd, ext->p_lnLow);
-  intern->lnHigh        = H_GET_32 (abfd, ext->p_lnHigh);
-  intern->cbLineOffset  = ECOFF_GET_OFF (abfd, ext->p_cbLineOffset);
-
-#ifdef TEST
-  if (memcmp ((char *)ext, (char *)intern, sizeof (*intern)) != 0)
-    abort ();
-#endif
-}
-
-/* Swap out the procedure descriptor record.  */
-
-static void
-ecoff_swap_pdr_out (abfd, intern_copy, ext_ptr)
-     bfd *abfd;
-     const PDR *intern_copy;
-     PTR ext_ptr;
-{
-  struct pdr_ext *ext = (struct pdr_ext *) ext_ptr;
-  PDR intern[1];
-
-  /* Make it reasonable to do in-place.  */
-  *intern = *intern_copy;
-
-  ECOFF_PUT_OFF (abfd, intern->adr,          ext->p_adr);
-  H_PUT_32      (abfd, intern->isym,         ext->p_isym);
-  H_PUT_32      (abfd, intern->iline,        ext->p_iline);
-  H_PUT_32      (abfd, intern->regmask,      ext->p_regmask);
-  H_PUT_32      (abfd, intern->regoffset,    ext->p_regoffset);
-  H_PUT_32      (abfd, intern->iopt,         ext->p_iopt);
-  H_PUT_32      (abfd, intern->fregmask,     ext->p_fregmask);
-  H_PUT_32      (abfd, intern->fregoffset,   ext->p_fregoffset);
-  H_PUT_32      (abfd, intern->frameoffset,  ext->p_frameoffset);
-  H_PUT_16      (abfd, intern->framereg,     ext->p_framereg);
-  H_PUT_16      (abfd, intern->pcreg,        ext->p_pcreg);
-  H_PUT_32      (abfd, intern->lnLow,        ext->p_lnLow);
-  H_PUT_32      (abfd, intern->lnHigh,       ext->p_lnHigh);
-  ECOFF_PUT_OFF (abfd, intern->cbLineOffset, ext->p_cbLineOffset);
-
-#ifdef TEST
-  if (memcmp ((char *)ext, (char *)intern, sizeof (*intern)) != 0)
-    abort ();
-#endif
-}
-#endif /* MPW_C */
 
 /* Swap in a symbol record.  */
 

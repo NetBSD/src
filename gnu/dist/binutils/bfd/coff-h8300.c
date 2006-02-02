@@ -1,6 +1,6 @@
 /* BFD back-end for Renesas H8/300 COFF binaries.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004
+   2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
@@ -397,11 +397,7 @@ reloc_processing (arelent *relent, struct internal_reloc *reloc,
     relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
 
   relent->addend = reloc->r_offset;
-
   relent->address -= section->vma;
-#if 0
-  relent->section = 0;
-#endif
 }
 
 static bfd_boolean
@@ -685,7 +681,8 @@ h8300_reloc16_extra_cases (bfd *abfd, struct bfd_link_info *link_info,
       if (gap < -128 || gap > 126)
 	{
 	  if (! ((*link_info->callbacks->reloc_overflow)
-		 (link_info, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+		 (link_info, NULL,
+		  bfd_asymbol_name (*reloc->sym_ptr_ptr),
 		  reloc->howto->name, reloc->addend, input_section->owner,
 		  input_section, reloc->address)))
 	    abort ();
@@ -716,7 +713,8 @@ h8300_reloc16_extra_cases (bfd *abfd, struct bfd_link_info *link_info,
       if (gap > 32766 || gap < -32768)
 	{
 	  if (! ((*link_info->callbacks->reloc_overflow)
-		 (link_info, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+		 (link_info, NULL,
+		  bfd_asymbol_name (*reloc->sym_ptr_ptr),
 		  reloc->howto->name, reloc->addend, input_section->owner,
 		  input_section, reloc->address)))
 	    abort ();
@@ -805,7 +803,8 @@ h8300_reloc16_extra_cases (bfd *abfd, struct bfd_link_info *link_info,
       else
 	{
 	  if (! ((*link_info->callbacks->reloc_overflow)
-		 (link_info, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+		 (link_info, NULL,
+		  bfd_asymbol_name (*reloc->sym_ptr_ptr),
 		  reloc->howto->name, reloc->addend, input_section->owner,
 		  input_section, reloc->address)))
 	    abort ();
@@ -828,7 +827,8 @@ h8300_reloc16_extra_cases (bfd *abfd, struct bfd_link_info *link_info,
       if (gap < -128 || gap > 126)
 	{
 	  if (! ((*link_info->callbacks->reloc_overflow)
-		 (link_info, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+		 (link_info, NULL,
+		  bfd_asymbol_name (*reloc->sym_ptr_ptr),
 		  reloc->howto->name, reloc->addend, input_section->owner,
 		  input_section, reloc->address)))
 	    abort ();
@@ -874,7 +874,8 @@ h8300_reloc16_extra_cases (bfd *abfd, struct bfd_link_info *link_info,
       if (gap < -128 || gap > 126)
 	{
 	  if (! ((*link_info->callbacks->reloc_overflow)
-		 (link_info, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+		 (link_info, NULL,
+		  bfd_asymbol_name (*reloc->sym_ptr_ptr),
 		  reloc->howto->name, reloc->addend, input_section->owner,
 		  input_section, reloc->address)))
 	    abort ();
@@ -1073,7 +1074,8 @@ h8300_reloc16_extra_cases (bfd *abfd, struct bfd_link_info *link_info,
       if (gap < -128 || gap > 126)
 	{
 	  if (! ((*link_info->callbacks->reloc_overflow)
-		 (link_info, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+		 (link_info, NULL,
+		  bfd_asymbol_name (*reloc->sym_ptr_ptr),
 		  reloc->howto->name, reloc->addend, input_section->owner,
 		  input_section, reloc->address)))
 	    abort ();
@@ -1155,7 +1157,8 @@ h8300_reloc16_extra_cases (bfd *abfd, struct bfd_link_info *link_info,
 	    else
 	      {
 		if (! ((*link_info->callbacks->reloc_overflow)
-		       (link_info, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+		       (link_info, NULL,
+			bfd_asymbol_name (*reloc->sym_ptr_ptr),
 			reloc->howto->name, reloc->addend, input_section->owner,
 			input_section, reloc->address)))
 		  abort ();
@@ -1172,14 +1175,12 @@ h8300_reloc16_extra_cases (bfd *abfd, struct bfd_link_info *link_info,
 	name = symbol->name;
 	if (symbol->flags & BSF_LOCAL)
 	  {
-	    char *new_name = bfd_malloc ((bfd_size_type) strlen (name) + 9);
+	    char *new_name = bfd_malloc ((bfd_size_type) strlen (name) + 10);
 
 	    if (new_name == NULL)
 	      abort ();
 
-	    strcpy (new_name, name);
-	    sprintf (new_name + strlen (name), "_%08x",
-		     (int) symbol->section);
+	    sprintf (new_name, "%s_%08x", name, symbol->section->id);
 	    name = new_name;
 	  }
 
@@ -1231,7 +1232,7 @@ h8300_reloc16_extra_cases (bfd *abfd, struct bfd_link_info *link_info,
 				  vectors_sec->output_section,
 				  vectors_sec->contents,
 				  (file_ptr) vectors_sec->output_offset,
-				  vectors_sec->_raw_size);
+				  vectors_sec->size);
 	break;
       }
 
@@ -1362,13 +1363,11 @@ h8300_bfd_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 		{
 		  char *new_name;
 
-		  new_name = bfd_malloc ((bfd_size_type) strlen (name) + 9);
+		  new_name = bfd_malloc ((bfd_size_type) strlen (name) + 10);
 		  if (new_name == NULL)
 		    abort ();
 
-		  strcpy (new_name, name);
-		  sprintf (new_name + strlen (name), "_%08x",
-			   (int) symbol->section);
+		  sprintf (new_name, "%s_%08x", name, symbol->section->id);
 		  name = new_name;
 		}
 
@@ -1394,11 +1393,11 @@ h8300_bfd_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 		    case bfd_mach_h8300:
 		    case bfd_mach_h8300hn:
 		    case bfd_mach_h8300sn:
-		      htab->vectors_sec->_raw_size += 2;
+		      htab->vectors_sec->size += 2;
 		      break;
 		    case bfd_mach_h8300h:
 		    case bfd_mach_h8300s:
-		      htab->vectors_sec->_raw_size += 4;
+		      htab->vectors_sec->size += 4;
 		      break;
 		    default:
 		      abort ();
@@ -1414,14 +1413,14 @@ h8300_bfd_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
   /* Now actually allocate some space for the function vector.  It's
      wasteful to do this more than once, but this is easier.  */
   sec = htab->vectors_sec;
-  if (sec->_raw_size != 0)
+  if (sec->size != 0)
     {
       /* Free the old contents.  */
       if (sec->contents)
 	free (sec->contents);
 
       /* Allocate new contents.  */
-      sec->contents = bfd_malloc (sec->_raw_size);
+      sec->contents = bfd_malloc (sec->size);
     }
 
   return TRUE;

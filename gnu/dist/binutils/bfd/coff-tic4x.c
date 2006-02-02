@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C4X coff binaries.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2002, 2003
+   Copyright 1996, 1997, 1998, 1999, 2000, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
    Contributed by Michael Hayes (m.hayes@elec.canterbury.ac.nz)
@@ -68,6 +68,10 @@ ticoff_bfd_is_local_label_name (abfd, name)
    The COFF1 and COFF0 vectors use custom _bad_format_hook procs
    instead of setting BADMAG.  */
 #define BADMAG(x) COFF2_BADMAG(x)
+
+#undef coff_rtype_to_howto
+#define coff_rtype_to_howto coff_tic4x_rtype_to_howto
+
 #include "coffcode.h"
 
 static bfd_reloc_status_type
@@ -171,9 +175,6 @@ tic4x_lookup_howto (internal, dst)
 			 (unsigned int) dst->r_type);
   abort();
 }
-
-#undef coff_rtype_to_howto
-#define coff_rtype_to_howto coff_tic4x_rtype_to_howto
 
 static reloc_howto_type *
 coff_tic4x_rtype_to_howto (abfd, sec, rel, h, sym, addendp)

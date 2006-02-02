@@ -1,5 +1,5 @@
 %{
-/* Copyright 2001, 2003 Free Software Foundation, Inc.
+/* Copyright 2001, 2003, 2005 Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
 
@@ -18,14 +18,26 @@ along with GLD; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
+#include "config.h"
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
+#endif
 #include "sysinfo.h"
 char *word;
 int number;
 int unit;
 
+#define YY_NO_UNPUT
+
 #ifndef yywrap
 static int yywrap (void) { return 1; }
 #endif
+
+extern int yylex (void);
 %}
 %%
 "(" { return '(';}
@@ -37,9 +49,9 @@ static int yywrap (void) { return 1; }
 "\t" { ; }
 "\n" { ; }
 "\""[^\"]*"\"" {
-yylval.s = malloc(strlen (yytext));
-strcpy(yylval.s, yytext+1);
-yylval.s[strlen(yylval.s)-1] = 0;
+	yylval.s = malloc (yyleng - 1);
+	memcpy (yylval.s, yytext + 1, yyleng - 2);
+	yylval.s[yyleng - 2] = '\0';
         return NAME;
 	}
 

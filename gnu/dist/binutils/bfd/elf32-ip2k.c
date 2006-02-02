@@ -1,5 +1,6 @@
 /* Ubicom IP2xxx specific support for 32-bit ELF
-   Copyright 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -105,15 +106,6 @@ static const struct ip2k_opcode ip2k_jmp_opcode[] =
 
 #define IS_JMP_OPCODE(code) \
   ip2k_is_opcode (code, ip2k_jmp_opcode)
-
-static const struct ip2k_opcode ip2k_call_opcode[] =
-{
-  {0xC000, 0xE000},	/* call */
-  {0x0000, 0x0000},
-};
-
-#define IS_CALL_OPCODE(code) \
-  ip2k_is_opcode (code, ip2k_call_opcode)
 
 static const struct ip2k_opcode ip2k_snc_opcode[] =
 {
@@ -503,7 +495,7 @@ ip2k_is_switch_table_128 (abfd, sec, addr, contents)
   int index = 0;
   
   /* Check current page-jmp.  */
-  if (addr + 4 > sec->_cooked_size)
+  if (addr + 4 > sec->size)
     return -1;
 
   ip2k_get_mem (abfd, contents + addr, 4, code);
@@ -550,7 +542,7 @@ ip2k_relax_switch_table_128 (abfd, sec, irel, again, misc)
   addr = irel->r_offset;
   while (1)
     {
-      if (addr + 4 > sec->_cooked_size)
+      if (addr + 4 > sec->size)
 	break;
 
       ip2k_get_mem (abfd, misc->contents + addr, 4, code);
@@ -656,7 +648,7 @@ ip2k_is_switch_table_256 (abfd, sec, addr, contents)
   int index = 0;
   
   /* Check current page-jmp.  */
-  if (addr + 4 > sec->_cooked_size)
+  if (addr + 4 > sec->size)
     return -1;
 
   ip2k_get_mem (abfd, contents + addr, 4, code);
@@ -718,7 +710,7 @@ ip2k_relax_switch_table_256 (abfd, sec, irel, again, misc)
 
   while (1)
     {
-      if (addr + 4 > sec->_cooked_size)
+      if (addr + 4 > sec->size)
 	break;
 
       ip2k_get_mem (abfd, misc->contents + addr, 4, code);
@@ -840,11 +832,6 @@ ip2k_elf_relax_section (abfd, sec, link_info, again)
       || (sec->flags & SEC_CODE) == 0)
     return TRUE;
 
-  /* If this is the first time we have been called
-      for this section, initialise the cooked size.  */
-  if (sec->_cooked_size == 0)
-    sec->_cooked_size = sec->_raw_size;
-
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
   internal_relocs = _bfd_elf_link_read_relocs (abfd, sec, NULL,
@@ -875,12 +862,7 @@ ip2k_elf_relax_section (abfd, sec, link_info, again)
       else
 	{
 	  /* Go get them off disk.  */
-	  contents = (bfd_byte *) bfd_malloc (sec->_raw_size);
-	  if (contents == NULL)
-	    goto error_return;
-
-	  if (! bfd_get_section_contents (abfd, sec, contents,
-					  (file_ptr) 0, sec->_raw_size))
+	  if (!bfd_malloc_and_get_section (abfd, sec, &contents))
 	    goto error_return;
 	}
     }
@@ -917,8 +899,8 @@ ip2k_elf_relax_section (abfd, sec, link_info, again)
 	  search_addr = 0xFFFFFFFF;
 	}
 
-      if ((BASEADDR (sec) + sec->_cooked_size < search_addr)
-	  && (BASEADDR (sec) + sec->_cooked_size > page_end))
+      if ((BASEADDR (sec) + sec->size < search_addr)
+	  && (BASEADDR (sec) + sec->size > page_end))
 	{
 	  if (BASEADDR (sec) <= page_end)
 	    search_addr = page_end + 1;
@@ -940,7 +922,7 @@ ip2k_elf_relax_section (abfd, sec, link_info, again)
 	}
 
       /* Only process sections in range.  */
-      if ((BASEADDR (sec) + sec->_cooked_size >= page_start)
+      if ((BASEADDR (sec) + sec->size >= page_start)
 	  && (BASEADDR (sec) <= page_end))
 	{
           if (!ip2k_elf_relax_section_page (abfd, sec, &changed, &misc, page_start, page_end))
@@ -1137,6 +1119,7 @@ adjust_all_relocations (abfd, sec, addr, endaddr, count, noadj)
   if (stab)
     {
       bfd_byte *stabcontents, *stabend, *stabp;
+      bfd_size_type stab_size = stab->rawsize ? stab->rawsize : stab->size;
 
       irelbase = elf_section_data (stab)->relocs;
       irelend = irelbase + stab->reloc_count;
@@ -1146,19 +1129,18 @@ adjust_all_relocations (abfd, sec, addr, endaddr, count, noadj)
 	stabcontents = elf_section_data (stab)->this_hdr.contents;
       else
 	{
-	  stabcontents = (bfd_byte *) bfd_alloc (abfd, stab->_raw_size);
-	  if (stabcontents == NULL)
-	    return;
-
-	  if (! bfd_get_section_contents (abfd, stab, stabcontents,
-					  (file_ptr) 0, stab->_raw_size))
-	    return;
+	  if (!bfd_malloc_and_get_section (abfd, stab, &stabcontents))
+	    {
+	      if (stabcontents != NULL)
+		free (stabcontents);
+	      return;
+	    }
 
 	  /* We need to remember this.  */
 	  elf_section_data (stab)->this_hdr.contents = stabcontents;
 	}
 
-      stabend = stabcontents + stab->_raw_size;
+      stabend = stabcontents + stab_size;
 
       for (irel = irelbase; irel < irelend; irel++)
 	{
@@ -1308,13 +1290,13 @@ ip2k_elf_relax_delete_bytes (abfd, sec, addr, count)
      int count;
 {
   bfd_byte *contents = elf_section_data (sec)->this_hdr.contents;
-  bfd_vma endaddr = sec->_cooked_size;
+  bfd_vma endaddr = sec->size;
 
   /* Actually delete the bytes.  */
   memmove (contents + addr, contents + addr + count,
 	   endaddr - addr - count);
 
-  sec->_cooked_size -= count;
+  sec->size -= count;
 
   adjust_all_relocations (abfd, sec, addr + count, endaddr, -count, 0);
   return TRUE;
@@ -1555,8 +1537,8 @@ ip2k_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	    {
 	    case bfd_reloc_overflow:
 	      r = info->callbacks->reloc_overflow
-		(info, name, howto->name, (bfd_vma) 0,
-		 input_bfd, input_section, rel->r_offset);
+		(info, (h ? &h->root : NULL), name, howto->name,
+		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
@@ -1608,12 +1590,6 @@ ip2k_elf_gc_mark_hook (sec, info, rel, h, sym)
     {
       switch (ELF32_R_TYPE (rel->r_info))
       {
-#if 0
-      case R_IP2K_GNU_VTINHERIT:
-      case R_IP2K_GNU_VTENTRY:
-        break;
-#endif
-
       default:
         switch (h->root.type)
           {

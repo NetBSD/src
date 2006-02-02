@@ -1,5 +1,5 @@
 /* BFD backend for CRIS a.out binaries.
-   Copyright 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson.
 
@@ -248,10 +248,10 @@ MY(swap_ext_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
 
   if (r_type > 2)
     {
-      (*_bfd_error_handler) (_("%s: Invalid relocation type imported: %d"),
-			     bfd_archive_filename (abfd), r_type);
+      (*_bfd_error_handler) (_("%B: Invalid relocation type imported: %d"),
+			     abfd, r_type);
 
-      bfd_set_error(bfd_error_wrong_format);
+      bfd_set_error (bfd_error_wrong_format);
     }
 
   cache_ptr->howto =  howto_table_ext + r_type;
@@ -259,8 +259,7 @@ MY(swap_ext_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
   if (r_extern && r_index > symcount)
     {
       (*_bfd_error_handler)
-        (_("%s: Bad relocation record imported: %d"),
-         bfd_archive_filename (abfd), r_index);
+        (_("%B: Bad relocation record imported: %d"), abfd, r_index);
 
       bfd_set_error (bfd_error_wrong_format);
 

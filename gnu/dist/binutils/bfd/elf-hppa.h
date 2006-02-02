@@ -1042,16 +1042,12 @@ static bfd_boolean elf_hppa_sort_unwind (bfd *abfd)
   if (s != NULL)
     {
       bfd_size_type size;
-      char *contents;
+      bfd_byte *contents;
 
-      size = s->_raw_size;
-      contents = bfd_malloc (size);
-      if (contents == NULL)
+      if (!bfd_malloc_and_get_section (abfd, s, &contents))
 	return FALSE;
 
-      if (! bfd_get_section_contents (abfd, s, contents, (file_ptr) 0, size))
-	return FALSE;
-
+      size = s->size;
       qsort (contents, (size_t) (size / 16), 16, hppa_unwind_entry_compare);
 
       if (! bfd_set_section_contents (abfd, s, contents, (file_ptr) 0, size))
@@ -1119,11 +1115,11 @@ elf_hppa_unmark_useless_dynamic_symbols (struct elf_link_hash_entry *h,
   if (! info->relocatable
       && info->unresolved_syms_in_shared_libs != RM_IGNORE
       && h->root.type == bfd_link_hash_undefined
-      && (h->elf_link_hash_flags & ELF_LINK_HASH_REF_DYNAMIC) != 0
-      && (h->elf_link_hash_flags & ELF_LINK_HASH_REF_REGULAR) == 0)
+      && h->ref_dynamic
+      && !h->ref_regular)
     {
-      h->elf_link_hash_flags &= ~ELF_LINK_HASH_REF_DYNAMIC;
-      h->elf_link_hash_flags |= 0x8000;
+      h->ref_dynamic = 0;
+      h->pointer_equality_needed = 1;
     }
 
   return TRUE;
@@ -1153,12 +1149,12 @@ elf_hppa_remark_useless_dynamic_symbols (struct elf_link_hash_entry *h,
   if (! info->relocatable
       && info->unresolved_syms_in_shared_libs != RM_IGNORE
       && h->root.type == bfd_link_hash_undefined
-      && (h->elf_link_hash_flags & ELF_LINK_HASH_REF_DYNAMIC) == 0
-      && (h->elf_link_hash_flags & ELF_LINK_HASH_REF_REGULAR) == 0
-      && (h->elf_link_hash_flags & 0x8000) != 0)
+      && !h->ref_dynamic
+      && !h->ref_regular
+      && h->pointer_equality_needed)
     {
-      h->elf_link_hash_flags |= ELF_LINK_HASH_REF_DYNAMIC;
-      h->elf_link_hash_flags &= ~0x8000;
+      h->ref_dynamic = 1;
+      h->pointer_equality_needed = 0;
     }
 
   return TRUE;
@@ -1342,7 +1338,6 @@ elf_hppa_relocate_section (bfd *output_bfd,
       asection *sym_sec;
       bfd_vma relocation;
       bfd_reloc_status_type r;
-      const char *sym_name;
       const char *dyn_name;
       char *dynh_buf = NULL;
       size_t dynh_buflen = 0;
@@ -1403,9 +1398,8 @@ elf_hppa_relocate_section (bfd *output_bfd,
 	      if (sym_sec->output_section == NULL && dyn_h == NULL)
 		{
 		  (*_bfd_error_handler)
-		    (_("%s: warning: unresolvable relocation against symbol `%s' from %s section"),
-		     bfd_archive_filename (input_bfd), h->root.root.string,
-		     bfd_get_section_name (input_bfd, input_section));
+		    (_("%B(%A): warning: unresolvable relocation against symbol `%s'"),
+		     input_bfd, input_section, h->root.root.string);
 		  relocation = 0;
 		}
 	      else if (sym_sec->output_section)
@@ -1430,9 +1424,8 @@ elf_hppa_relocate_section (bfd *output_bfd,
 	      if (dyn_h == NULL)
 		{
 		  (*_bfd_error_handler)
-		    (_("%s: warning: unresolvable relocation against symbol `%s' from %s section"),
-		     bfd_archive_filename (input_bfd), h->root.root.string,
-		     bfd_get_section_name (input_bfd, input_section));
+		    (_("%B(%A): warning: unresolvable relocation against symbol `%s'"),
+		     input_bfd, input_section, h->root.root.string);
 		}
 	      relocation = 0;
 	    }
@@ -1446,9 +1439,8 @@ elf_hppa_relocate_section (bfd *output_bfd,
 	      if (dyn_h == NULL)
 		{
 		  (*_bfd_error_handler)
-		    (_("%s: warning: unresolvable relocation against symbol `%s' from %s section"),
-		     bfd_archive_filename (input_bfd), h->root.root.string,
-		     bfd_get_section_name (input_bfd, input_section));
+		    (_("%B(%A): warning: unresolvable relocation against symbol `%s'"),
+		     input_bfd, input_section, h->root.root.string);
 		}
 	      relocation = 0;
 	    }
@@ -1470,19 +1462,6 @@ elf_hppa_relocate_section (bfd *output_bfd,
 	    }
 	}
 
-      if (h != NULL)
-	sym_name = h->root.root.string;
-      else
-	{
-	  sym_name = bfd_elf_string_from_elf_section (input_bfd,
-						      symtab_hdr->sh_link,
-						      sym->st_name);
-	  if (sym_name == NULL)
-	    return FALSE;
-	  if (*sym_name == '\0')
-	    sym_name = bfd_section_name (input_bfd, sym_sec);
-	}
-
       r = elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 					input_section, contents,
 					relocation, info, sym_sec,
@@ -1496,9 +1475,25 @@ elf_hppa_relocate_section (bfd *output_bfd,
 	      abort ();
 	    case bfd_reloc_overflow:
 	      {
+		const char *sym_name;
+		
+		if (h != NULL)
+		  sym_name = NULL;
+		else
+		  {
+		    sym_name = bfd_elf_string_from_elf_section (input_bfd,
+								symtab_hdr->sh_link,
+								sym->st_name);
+		    if (sym_name == NULL)
+		      return FALSE;
+		    if (*sym_name == '\0')
+		      sym_name = bfd_section_name (input_bfd, sym_sec);
+		  }
+
 		if (!((*info->callbacks->reloc_overflow)
-		      (info, sym_name, howto->name, (bfd_vma) 0,
-			input_bfd, input_section, rel->r_offset)))
+		      (info, (h ? &h->root : NULL), sym_name,
+		       howto->name, (bfd_vma) 0, input_bfd,
+		       input_section, rel->r_offset)))
 		  return FALSE;
 	      }
 	      break;

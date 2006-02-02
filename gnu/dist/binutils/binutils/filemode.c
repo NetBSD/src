@@ -1,5 +1,5 @@
 /* filemode.c -- make a string describing file modes
-   Copyright 1985, 1990, 1991, 1994, 1995, 1997, 2003
+   Copyright 1985, 1990, 1991, 1994, 1995, 1997, 1999, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -58,18 +58,6 @@ static void setst (unsigned long, char *);
 	(will be retained in swap space after execution), '-'
 	otherwise.
 	'T' if the file is sticky but not executable.  */
-
-#if 0
-
-/* This is not used; only mode_string is used.  */
-
-void
-filemodestring (struct stat *statp, char *str)
-{
-  mode_string ((unsigned long) statp->st_mode, str);
-}
-
-#endif
 
 /* Get definitions for the file permission bits.  */
 

@@ -1,5 +1,85 @@
 -*- text -*-
 
+* Binutils-2.16 will be the last release for a number of targets due to
+  lack of maintenance (of course, if maintainers step up, then this list
+  will change!).  The targets are:
+
+    a29k-*-*
+    d10v-*-*
+    d30v-*-*
+    dlx-*-*
+    h8300-*-coff
+    h8300-*-rtems*
+    h8500-*-coff
+    h8500-*-rtems*
+    i370-*-*
+    i960-*-*
+    i960-*-bout
+    i960-*-coff
+    i960-*-nindy*
+    i960-*-rtems*
+    i960-*-vxworks*
+    i960-*-vxworks5.*
+    i960-*-vxworks5.0
+    m68k-*-coff
+    m68k-*-hpux*
+    m68k-*-linux*aout*
+    m68k-*-rtemscoff*
+    m68k-*-sunos*
+    m68k-*-sysv*
+    m68k-*-vxworks*
+    m68k-apollo-*
+    m68k-apple-aux*
+    m68k-bull-sysv3*
+    m68k-ericsson-ose
+    m68k-motorola-sysv*
+    m88k-*-*					(*)
+    mn10200-*-*
+    openrisc-*-*
+    or32-*-*
+    or32-*-coff
+    pj*-*-*
+    sh-*-coff*
+    sh-*-rtemscoff*
+    tic80-*-*
+    vax-*-bsd*					(*)
+    vax-*-netbsd* excluding vax-*-netbsdelf	(*)
+    vax-*-ultrix*				(*)
+    w65-*-*
+    xscale-*-coff
+    *-*-linux*aout*
+    *-*-linux*oldld
+
+    (*) bfd and opcodes support will be kept.
+
+* Add "-g/--section-groups" to readelf to display section groups.
+
+* objcopy recognizes two new options --strip-unneeded-symbol and
+  --strip-unneeded-symbols, namely for use together with the wildcard
+  matching the original --strip-symbol/--strip-symbols provided, but
+  retaining any symbols matching but needed by relocations.
+
+* readelf can now display address ranges from .debug_range sections.  This
+  happens automatically when a DW_AT_range attribute is encountered.  The
+  command line switch --debug-dump=Ranges (or -wR) can also be used to display
+  the contents of the .debug_range section.
+
+* nm and objdump now have a switch "--special-syms" to enable the displaying of
+  symbols which the target considers to be special.  By default these symbols
+  are no longer displayed.  Currently the only special symbols are the Mapping
+  symbols used by the ARM port to mark transitions between text and data and
+  between ARM and THUMB code.
+
+* dlltool has a switch "--ext-prefix-alias <prefix>" to generate additional
+  import and export symbols with <preifx> prepended to them.
+
+Changes in 2.15:
+
+* objcopy for MIPS targets now accepts "-M no-aliases" as an option to the
+  disassembler to print the "raw" mips instruction mnemonic instead of some
+  pseudo instruction name.  I.E. print "daddu" or "or" instead of "move",
+  "sll" instead of "nop", etc.
+
 * objcopy and strip can now take wildcard patterns in symbol names specified on
   the command line provided that the --wildcard switch is used to enable them.
 

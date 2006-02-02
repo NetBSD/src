@@ -350,8 +350,8 @@ mcore_elf_unsupported_reloc (abfd, reloc_entry, symbol, data, input_section,
 {
   BFD_ASSERT (reloc_entry->howto != (reloc_howto_type *)0);
 
-  _bfd_error_handler (_("%s: Relocation %s (%d) is not currently supported.\n"),
-		      bfd_archive_filename (abfd),
+  _bfd_error_handler (_("%B: Relocation %s (%d) is not currently supported.\n"),
+		      abfd,
 		      reloc_entry->howto->name,
 		      reloc_entry->howto->type);
 
@@ -406,12 +406,12 @@ mcore_elf_relocate_section (output_bfd, info, input_bfd, input_section,
   bfd_boolean ret = TRUE;
 
 #ifdef DEBUG
-  fprintf (stderr,
-	   "mcore_elf_relocate_section called for %s section %s, %ld relocations%s\n",
-	   bfd_archive_filename (input_bfd),
-	   bfd_section_name(input_bfd, input_section),
-	   (long) input_section->reloc_count,
-	   (info->relocatable) ? " (relocatable)" : "");
+  _bfd_error_handler
+    ("mcore_elf_relocate_section called for %B section %A, %ld relocations%s",
+     input_bfd,
+     input_section,
+     (long) input_section->reloc_count,
+     (info->relocatable) ? " (relocatable)" : "");
 #endif
 
   if (info->relocatable)
@@ -438,9 +438,8 @@ mcore_elf_relocate_section (output_bfd, info, input_bfd, input_section,
       if ((unsigned) r_type >= (unsigned) R_MCORE_max
 	  || ! mcore_elf_howto_table [(int)r_type])
 	{
-	  _bfd_error_handler (_("%s: Unknown relocation type %d\n"),
-			      bfd_archive_filename (input_bfd),
-			      (int) r_type);
+	  _bfd_error_handler (_("%B: Unknown relocation type %d\n"),
+			      input_bfd, (int) r_type);
 
 	  bfd_set_error (bfd_error_bad_value);
 	  ret = FALSE;
@@ -453,8 +452,8 @@ mcore_elf_relocate_section (output_bfd, info, input_bfd, input_section,
       /* Complain about known relocation that are not yet supported.  */
       if (howto->special_function == mcore_elf_unsupported_reloc)
 	{
-	  _bfd_error_handler (_("%s: Relocation %s (%d) is not currently supported.\n"),
-			      bfd_archive_filename (input_bfd),
+	  _bfd_error_handler (_("%B: Relocation %s (%d) is not currently supported.\n"),
+			      input_bfd,
 			      howto->name,
 			      (int)r_type);
 
@@ -521,7 +520,7 @@ mcore_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		const char * name;
 
 		if (h != NULL)
-		  name = h->root.root.string;
+		  name = NULL;
 		else
 		  {
 		    name = bfd_elf_string_from_elf_section
@@ -535,8 +534,8 @@ mcore_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		  }
 
 		(*info->callbacks->reloc_overflow)
-		  (info, name, howto->name, (bfd_vma) 0, input_bfd, input_section,
-		   offset);
+		  (info, (h ? &h->root : NULL), name, howto->name,
+		   (bfd_vma) 0, input_bfd, input_section, offset);
 	      }
 	      break;
 	    }

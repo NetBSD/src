@@ -1,5 +1,5 @@
 /* resres.c: read_res_file and write_res_file implementation for windres.
-   Copyright 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2001, 2002 Free Software Foundation, Inc.
    Written by Anders Norlander <anorland@hem2.passagen.se>.
 
    This file is part of GNU Binutils.

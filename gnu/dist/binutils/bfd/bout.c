@@ -1,6 +1,6 @@
 /* BFD back-end for Intel 960 b.out binaries.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003
+   2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -200,7 +200,7 @@ b_out_callback (abfd)
   obj_datasec (abfd)->lma = obj_datasec (abfd)->vma;
 
   /* And reload the sizes, since the aout module zaps them.  */
-  obj_textsec (abfd)->_raw_size = execp->a_text;
+  obj_textsec (abfd)->size = execp->a_text;
 
   bss_start = execp->a_dload + execp->a_data; /* BSS = end of data section */
   obj_bsssec (abfd)->vma = align_power (bss_start, execp->a_balign);
@@ -294,15 +294,13 @@ b_out_write_object_contents (abfd)
 
   exec_hdr (abfd)->a_info = BMAGIC;
 
-  exec_hdr (abfd)->a_text = obj_textsec (abfd)->_raw_size;
-  exec_hdr (abfd)->a_data = obj_datasec (abfd)->_raw_size;
-  exec_hdr (abfd)->a_bss = obj_bsssec (abfd)->_raw_size;
-  exec_hdr (abfd)->a_syms = bfd_get_symcount (abfd) * sizeof (struct nlist);
+  exec_hdr (abfd)->a_text = obj_textsec (abfd)->size;
+  exec_hdr (abfd)->a_data = obj_datasec (abfd)->size;
+  exec_hdr (abfd)->a_bss = obj_bsssec (abfd)->size;
+  exec_hdr (abfd)->a_syms = bfd_get_symcount (abfd) * 12;
   exec_hdr (abfd)->a_entry = bfd_get_start_address (abfd);
-  exec_hdr (abfd)->a_trsize = ((obj_textsec (abfd)->reloc_count) *
-                               sizeof (struct relocation_info));
-  exec_hdr (abfd)->a_drsize = ((obj_datasec (abfd)->reloc_count) *
-                               sizeof (struct relocation_info));
+  exec_hdr (abfd)->a_trsize = (obj_textsec (abfd)->reloc_count) * 8;
+  exec_hdr (abfd)->a_drsize = (obj_datasec (abfd)->reloc_count) * 8;
 
   exec_hdr (abfd)->a_talign = obj_textsec (abfd)->alignment_power;
   exec_hdr (abfd)->a_dalign = obj_datasec (abfd)->alignment_power;
@@ -993,9 +991,9 @@ b_out_set_section_contents (abfd, section, location, offset, count)
       if (! aout_32_make_sections (abfd))
 	return FALSE;
 
-      obj_textsec (abfd)->filepos = sizeof (struct internal_exec);
+      obj_textsec (abfd)->filepos = sizeof (struct external_exec);
       obj_datasec(abfd)->filepos = obj_textsec(abfd)->filepos
-	+  obj_textsec (abfd)->_raw_size;
+	+  obj_textsec (abfd)->size;
     }
 
   /* Regardless, once we know what we're doing, we might as well get going.  */
@@ -1044,7 +1042,7 @@ b_out_sizeof_headers (ignore_abfd, ignore)
      bfd *ignore_abfd ATTRIBUTE_UNUSED;
      bfd_boolean ignore ATTRIBUTE_UNUSED;
 {
-  return sizeof (struct internal_exec);
+  return sizeof (struct external_exec);
 }
 
 
@@ -1285,7 +1283,7 @@ b_out_bfd_relax_section (abfd, i, link_info, again)
 	    }
 	}
     }
-  input_section->_cooked_size = input_section->_raw_size - shrink;
+  input_section->size -= shrink;
 
   if (reloc_vector != NULL)
     free (reloc_vector);
@@ -1328,14 +1326,12 @@ b_out_bfd_get_relocated_section_contents (output_bfd, link_info, link_order,
   if (reloc_vector == NULL && reloc_size != 0)
     goto error_return;
 
-  input_section->reloc_done = 1;
-
   /* Read in the section.  */
   BFD_ASSERT (bfd_get_section_contents (input_bfd,
 					input_section,
 					data,
 					(bfd_vma) 0,
-					input_section->_raw_size));
+					input_section->size));
 
   reloc_count = bfd_canonicalize_reloc (input_bfd,
 					input_section,
@@ -1404,7 +1400,7 @@ b_out_bfd_get_relocated_section_contents (output_bfd, link_info, link_order,
 		case ALIGNDONE:
 		  BFD_ASSERT (reloc->addend >= src_address);
 		  BFD_ASSERT ((bfd_vma) reloc->addend
-			      <= input_section->_raw_size);
+			      <= input_section->size);
 		  src_address = reloc->addend;
 		  dst_address = ((dst_address + reloc->howto->size)
 				 & ~reloc->howto->size);
@@ -1487,7 +1483,10 @@ b_out_bfd_get_relocated_section_contents (output_bfd, link_info, link_order,
 #define b_out_bfd_link_split_section  _bfd_generic_link_split_section
 #define b_out_bfd_gc_sections  bfd_generic_gc_sections
 #define b_out_bfd_merge_sections  bfd_generic_merge_sections
+#define b_out_bfd_is_group_section bfd_generic_is_group_section
 #define b_out_bfd_discard_group bfd_generic_discard_group
+#define b_out_section_already_linked \
+  _bfd_generic_section_already_linked
 
 #define aout_32_get_section_contents_in_window \
   _bfd_generic_get_section_contents_in_window

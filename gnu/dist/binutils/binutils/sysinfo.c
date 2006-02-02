@@ -32,7 +32,10 @@ char *loop [] = {"","n","m","/*BAD*/"};
 char *names[] = {" ","[n]","[n][m]"};
 char *pnames[]= {"","*","**"};
 
-#line 43 "sysinfo.y"
+static int yyerror (char *s);
+extern int yylex (void);
+
+#line 46 "sysinfo.y"
 #ifndef YYSTYPE
 typedef union {
  int i;
@@ -112,9 +115,9 @@ static const short yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined. */
 static const short yyrline[] =
 {
-       0,    57,    57,    95,    96,    99,    99,   177,   179,   180,
-     181,   184,   184,   231,   231,   257,   257,   365,   367,   370,
-     375,   381,   383,   386,   387,   389,   390
+       0,    60,    60,    98,    99,   102,   102,   180,   182,   183,
+     184,   187,   187,   234,   234,   260,   260,   368,   370,   373,
+     378,   384,   386,   389,   390,   392,   393
 };
 #endif
 
@@ -203,7 +206,7 @@ static const short yycheck[] =
        6,     0,     0,     8,     8,     6,    -1,     4
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/share/bison-1.35/bison.simple"
+#line 3 "/usr/share/bison/bison.simple"
 
 /* Skeleton output parser for bison,
 
@@ -491,6 +494,7 @@ yystrlen (yystr)
 
 # ifndef yystpcpy
 #  if defined (__GLIBC__) && defined (_STRING_H) && defined (_GNU_SOURCE)
+#   include <string.h>
 #   define yystpcpy stpcpy
 #  else
 /* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
@@ -516,7 +520,7 @@ yystpcpy (yydest, yysrc)
 # endif
 #endif
 
-#line 315 "/usr/share/bison-1.35/bison.simple"
+#line 316 "/usr/share/bison/bison.simple"
 
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
@@ -910,7 +914,7 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 57 "sysinfo.y"
+#line 60 "sysinfo.y"
 {
   switch (writecode)
     {
@@ -935,7 +939,7 @@ case 1:
  }
     break;
 case 2:
-#line 79 "sysinfo.y"
+#line 82 "sysinfo.y"
 {
   switch (writecode) {
   case 'i':
@@ -950,7 +954,7 @@ case 2:
 }
     break;
 case 5:
-#line 101 "sysinfo.y"
+#line 104 "sysinfo.y"
 {
 	it = yyvsp[-1].s; code = yyvsp[0].i;
 	switch (writecode) 
@@ -970,7 +974,7 @@ case 5:
 	    printf("void sysroff_swap_%s_in(ptr)\n",yyvsp[-1].s);
 	    printf("struct IT_%s *ptr;\n", it);
 	    printf("{\n");
-	    printf("char raw[255];\n");
+	    printf("unsigned char raw[255];\n");
 	    printf("\tint idx = 0 ;\n");
 	    printf("\tint size;\n");
 	    printf("memset(raw,0,255);\n");	
@@ -982,7 +986,7 @@ case 5:
 	    printf("FILE * file;\n");
 	    printf("struct IT_%s *ptr;\n", it);
 	    printf("{\n");
-	    printf("\tchar raw[255];\n");
+	    printf("\tunsigned char raw[255];\n");
 	    printf("\tint idx = 16 ;\n");
 	    printf("\tmemset (raw, 0, 255);\n");
 	    printf("\tcode = IT_%s_CODE;\n", it);
@@ -1008,7 +1012,7 @@ case 5:
       }
     break;
 case 6:
-#line 158 "sysinfo.y"
+#line 161 "sysinfo.y"
 {
   switch (writecode) {
   case 'd': 
@@ -1026,7 +1030,7 @@ case 6:
 }
     break;
 case 11:
-#line 185 "sysinfo.y"
+#line 188 "sysinfo.y"
 {
 	  rdepth++;
 	  switch (writecode) 
@@ -1056,7 +1060,7 @@ case 11:
 	}
     break;
 case 12:
-#line 215 "sysinfo.y"
+#line 218 "sysinfo.y"
 {
 	  repeat = oldrepeat;
 	  oldrepeat =0;
@@ -1072,7 +1076,7 @@ case 12:
 	}
     break;
 case 13:
-#line 232 "sysinfo.y"
+#line 235 "sysinfo.y"
 {
 	  switch (writecode) 
 	    {
@@ -1086,7 +1090,7 @@ case 13:
 	}
     break;
 case 14:
-#line 245 "sysinfo.y"
+#line 248 "sysinfo.y"
 {
 	  switch (writecode)
 	    {
@@ -1099,11 +1103,11 @@ case 14:
 	}
     break;
 case 15:
-#line 259 "sysinfo.y"
+#line 262 "sysinfo.y"
 {name = yyvsp[0].s; }
     break;
 case 16:
-#line 261 "sysinfo.y"
+#line 264 "sysinfo.y"
 {
 	  char *desc = yyvsp[-8].s;
 	  char *type = yyvsp[-6].s;
@@ -1206,31 +1210,31 @@ char *ptr = pnames[rdepth];
 	}
     break;
 case 17:
-#line 366 "sysinfo.y"
+#line 369 "sysinfo.y"
 { yyval.s = yyvsp[0].s; }
     break;
 case 18:
-#line 367 "sysinfo.y"
+#line 370 "sysinfo.y"
 { yyval.s = "INT";}
     break;
 case 19:
-#line 372 "sysinfo.y"
+#line 375 "sysinfo.y"
 { yyval.s = yyvsp[-1].s; }
     break;
 case 20:
-#line 377 "sysinfo.y"
+#line 380 "sysinfo.y"
 { yyval.i = yyvsp[-1].i * yyvsp[0].i; }
     break;
 case 21:
-#line 382 "sysinfo.y"
+#line 385 "sysinfo.y"
 { yyval.s = yyvsp[-1].s; }
     break;
 case 22:
-#line 383 "sysinfo.y"
+#line 386 "sysinfo.y"
 { yyval.s = "dummy";}
     break;
 case 26:
-#line 391 "sysinfo.y"
+#line 394 "sysinfo.y"
 { 
 	  switch (writecode) 
 	    {
@@ -1244,7 +1248,7 @@ case 26:
     break;
 }
 
-#line 705 "/usr/share/bison-1.35/bison.simple"
+#line 706 "/usr/share/bison/bison.simple"
 
 
   yyvsp -= yylen;
@@ -1475,7 +1479,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 406 "sysinfo.y"
+#line 409 "sysinfo.y"
 
 /* four modes
 
@@ -1504,7 +1508,7 @@ if (writecode == 'd')
 return 0;
 }
 
-int
+static int
 yyerror (char *s)
 {
   fprintf(stderr, "%s\n" , s);

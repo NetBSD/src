@@ -128,7 +128,7 @@
 .\" ========================================================================
 .\"
 .IX Title "C++FILT 1"
-.TH C++FILT 1 "2004-04-09" "binutils-2.14.91" "GNU Development Tools"
+.TH C++FILT 1 "2005-04-20" "binutils-2.15.97" "GNU Development Tools"
 .SH "NAME"
 cxxfilt \- Demangle C++ and Java symbols.
 .SH "SYNOPSIS"
@@ -259,14 +259,14 @@ Print the version number of \fBc++filt\fR and exit.
 .IX Header "FOOTNOTES"
 .IP "1." 4
 MS-DOS does not allow \f(CW\*(C`+\*(C'\fR characters in file names, so on
-MS-DOS this program is named \fBcxxfilt\fR.
+MS-DOS this program is named \fB\s-1CXXFILT\s0\fR.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000,
-2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.1

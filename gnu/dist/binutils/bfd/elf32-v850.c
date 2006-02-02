@@ -1,5 +1,5 @@
 /* V850-specific support for 32-bit ELF
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -533,6 +533,21 @@ static reloc_howto_type v850_elf_howto_table[] =
 	 0xffffffff,			/* src_mask */
 	 0xffffffff,			/* dst_mask */
 	 FALSE),			/* pcrel_offset */
+
+  /* An ld.bu version of R_V850_LO16.  */
+  HOWTO (R_V850_LO16_SPLIT_OFFSET,	/* type */
+	 0,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long) */
+	 16,				/* bitsize */
+	 FALSE,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 v850_elf_reloc,		/* special_function */
+	 "R_V850_LO16_SPLIT_OFFSET",	/* name */
+	 FALSE,				/* partial_inplace */
+	 0xfffe0020,			/* src_mask */
+	 0xfffe0020,			/* dst_mask */
+	 FALSE),			/* pcrel_offset */
 };
 
 /* Map BFD reloc types to V850 ELF reloc types.  */
@@ -567,6 +582,7 @@ static const struct v850_elf_reloc_map v850_elf_reloc_map[] =
   { BFD_RELOC_V850_TDA_16_16_OFFSET,       R_V850_TDA_16_16_OFFSET       },
   { BFD_RELOC_V850_TDA_4_5_OFFSET,         R_V850_TDA_4_5_OFFSET         },
   { BFD_RELOC_V850_TDA_4_4_OFFSET,         R_V850_TDA_4_4_OFFSET         },
+  { BFD_RELOC_V850_LO16_SPLIT_OFFSET,      R_V850_LO16_SPLIT_OFFSET      },
   { BFD_RELOC_V850_SDA_16_16_SPLIT_OFFSET, R_V850_SDA_16_16_SPLIT_OFFSET },
   { BFD_RELOC_V850_ZDA_16_16_SPLIT_OFFSET, R_V850_ZDA_16_16_SPLIT_OFFSET },
   { BFD_RELOC_V850_CALLT_6_7_OFFSET,       R_V850_CALLT_6_7_OFFSET       },
@@ -656,9 +672,8 @@ v850_elf_check_relocs (abfd, info, sec, relocs)
     return TRUE;
 
 #ifdef DEBUG
-  fprintf (stderr, "v850_elf_check_relocs called for section %s in %s\n",
-	   bfd_get_section_name (abfd, sec),
-	   bfd_archive_filename (abfd));
+  _bfd_error_handler ("v850_elf_check_relocs called for section %A in %B",
+		      sec, abfd);
 #endif
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -688,6 +703,7 @@ v850_elf_check_relocs (abfd, info, sec, relocs)
 	case R_V850_HI16_S:
 	case R_V850_HI16:
 	case R_V850_LO16:
+	case R_V850_LO16_SPLIT_OFFSET:
 	case R_V850_ABS32:
 	case R_V850_REL32:
 	case R_V850_16:
@@ -903,6 +919,187 @@ find_remembered_hi16s_reloc (addend, already_found)
   return addr;
 }
 
+/* Calculate the final operand value for a R_V850_LO16 or
+   R_V850_LO16_SPLIT_OFFSET.  *INSN is the current operand value and
+   ADDEND is the sum of the relocation symbol and offset.  Store the
+   operand value in *INSN and return true on success.
+
+   The assembler has already done some of this: If the value stored in
+   the instruction has its 15th bit set, (counting from zero) then the
+   assembler will have added 1 to the value stored in the associated
+   HI16S reloc.  So for example, these relocations:
+
+       movhi hi( fred ), r0, r1
+       movea lo( fred ), r1, r1
+
+   will store 0 in the value fields for the MOVHI and MOVEA instructions
+   and addend will be the address of fred, but for these instructions:
+
+       movhi hi( fred + 0x123456), r0, r1
+       movea lo( fred + 0x123456), r1, r1
+
+   the value stored in the MOVHI instruction will be 0x12 and the value
+   stored in the MOVEA instruction will be 0x3456.  If however the
+   instructions were:
+
+       movhi hi( fred + 0x10ffff), r0, r1
+       movea lo( fred + 0x10ffff), r1, r1
+
+   then the value stored in the MOVHI instruction would be 0x11 (not
+   0x10) and the value stored in the MOVEA instruction would be 0xffff.
+   Thus (assuming for the moment that the addend is 0), at run time the
+   MOVHI instruction loads 0x110000 into r1, then the MOVEA instruction
+   adds 0xffffffff (sign extension!) producing 0x10ffff.  Similarly if
+   the instructions were:
+
+       movhi hi( fred - 1), r0, r1
+       movea lo( fred - 1), r1, r1
+
+   then 0 is stored in the MOVHI instruction and -1 is stored in the
+   MOVEA instruction.
+
+   Overflow can occur if the addition of the value stored in the
+   instruction plus the addend sets the 15th bit when before it was clear.
+   This is because the 15th bit will be sign extended into the high part,
+   thus reducing its value by one, but since the 15th bit was originally
+   clear, the assembler will not have added 1 to the previous HI16S reloc
+   to compensate for this effect.  For example:
+
+      movhi hi( fred + 0x123456), r0, r1
+      movea lo( fred + 0x123456), r1, r1
+
+   The value stored in HI16S reloc is 0x12, the value stored in the LO16
+   reloc is 0x3456.  If we assume that the address of fred is 0x00007000
+   then the relocations become:
+
+     HI16S: 0x0012 + (0x00007000 >> 16)    = 0x12
+     LO16:  0x3456 + (0x00007000 & 0xffff) = 0xa456
+
+   but when the instructions are executed, the MOVEA instruction's value
+   is signed extended, so the sum becomes:
+
+	0x00120000
+      + 0xffffa456
+      ------------
+	0x0011a456    but 'fred + 0x123456' = 0x0012a456
+
+   Note that if the 15th bit was set in the value stored in the LO16
+   reloc, then we do not have to do anything:
+
+      movhi hi( fred + 0x10ffff), r0, r1
+      movea lo( fred + 0x10ffff), r1, r1
+
+      HI16S:  0x0011 + (0x00007000 >> 16)    = 0x11
+      LO16:   0xffff + (0x00007000 & 0xffff) = 0x6fff
+
+	0x00110000
+      + 0x00006fff
+      ------------
+	0x00116fff  = fred + 0x10ffff = 0x7000 + 0x10ffff
+
+   Overflow can also occur if the computation carries into the 16th bit
+   and it also results in the 15th bit having the same value as the 15th
+   bit of the original value.   What happens is that the HI16S reloc
+   will have already examined the 15th bit of the original value and
+   added 1 to the high part if the bit is set.  This compensates for the
+   sign extension of 15th bit of the result of the computation.  But now
+   there is a carry into the 16th bit, and this has not been allowed for.
+
+   So, for example if fred is at address 0xf000:
+
+     movhi hi( fred + 0xffff), r0, r1    [bit 15 of the offset is set]
+     movea lo( fred + 0xffff), r1, r1
+
+     HI16S: 0x0001 + (0x0000f000 >> 16)    = 0x0001
+     LO16:  0xffff + (0x0000f000 & 0xffff) = 0xefff   (carry into bit 16 is lost)
+
+       0x00010000
+     + 0xffffefff
+     ------------
+       0x0000efff   but 'fred + 0xffff' = 0x0001efff
+
+   Similarly, if the 15th bit remains clear, but overflow occurs into
+   the 16th bit then (assuming the address of fred is 0xf000):
+
+     movhi hi( fred + 0x7000), r0, r1    [bit 15 of the offset is clear]
+     movea lo( fred + 0x7000), r1, r1
+
+     HI16S: 0x0000 + (0x0000f000 >> 16)    = 0x0000
+     LO16:  0x7000 + (0x0000f000 & 0xffff) = 0x6fff  (carry into bit 16 is lost)
+
+       0x00000000
+     + 0x00006fff
+     ------------
+       0x00006fff   but 'fred + 0x7000' = 0x00016fff
+
+   Note - there is no need to change anything if a carry occurs, and the
+   15th bit changes its value from being set to being clear, as the HI16S
+   reloc will have already added in 1 to the high part for us:
+
+     movhi hi( fred + 0xffff), r0, r1     [bit 15 of the offset is set]
+     movea lo( fred + 0xffff), r1, r1
+
+     HI16S: 0x0001 + (0x00007000 >> 16)
+     LO16:  0xffff + (0x00007000 & 0xffff) = 0x6fff  (carry into bit 16 is lost)
+
+       0x00010000
+     + 0x00006fff   (bit 15 not set, so the top half is zero)
+     ------------
+       0x00016fff   which is right (assuming that fred is at 0x7000)
+
+   but if the 15th bit goes from being clear to being set, then we must
+   once again handle overflow:
+
+     movhi hi( fred + 0x7000), r0, r1     [bit 15 of the offset is clear]
+     movea lo( fred + 0x7000), r1, r1
+
+     HI16S: 0x0000 + (0x0000ffff >> 16)
+     LO16:  0x7000 + (0x0000ffff & 0xffff) = 0x6fff  (carry into bit 16)
+
+       0x00000000
+     + 0x00006fff   (bit 15 not set, so the top half is zero)
+     ------------
+       0x00006fff   which is wrong (assuming that fred is at 0xffff).  */
+
+static bfd_boolean
+v850_elf_perform_lo16_relocation (bfd *abfd, unsigned long *insn,
+				  unsigned long addend)
+{
+#define BIT15_SET(x) ((x) & 0x8000)
+#define OVERFLOWS(a,i) ((((a) & 0xffff) + (i)) > 0xffff)
+  if ((BIT15_SET (*insn + addend) && ! BIT15_SET (addend))
+      || (OVERFLOWS (addend, *insn)
+	  && ((! BIT15_SET (*insn)) || (BIT15_SET (addend)))))
+    {
+      bfd_boolean already_updated;
+      bfd_byte *hi16s_address = find_remembered_hi16s_reloc
+	(addend, & already_updated);
+
+      /* Amend the matching HI16_S relocation.  */
+      if (hi16s_address != NULL)
+	{
+	  if (! already_updated)
+	    {
+	      unsigned long hi_insn = bfd_get_16 (abfd, hi16s_address);
+	      hi_insn += 1;
+	      bfd_put_16 (abfd, hi_insn, hi16s_address);
+	    }
+	}
+      else
+	{
+	  fprintf (stderr, _("FAILED to find previous HI16 reloc\n"));
+	  return FALSE;
+	}
+    }
+#undef OVERFLOWS
+#undef BIT15_SET
+
+  /* Do not complain if value has top bit set, as this has been
+     anticipated.  */
+  *insn = (*insn + addend) & 0xffff;
+  return TRUE;
+}
+
 /* FIXME:  The code here probably ought to be removed and the code in reloc.c
    allowed to do its stuff instead.  At least for most of the relocs, anyway.  */
 
@@ -914,6 +1111,7 @@ v850_elf_perform_relocation (abfd, r_type, addend, address)
      bfd_byte *address;
 {
   unsigned long insn;
+  unsigned long result;
   bfd_signed_vma saddend = (bfd_signed_vma) addend;
 
   switch (r_type)
@@ -973,183 +1171,10 @@ v850_elf_perform_relocation (abfd, r_type, addend, address)
       break;
 
     case R_V850_LO16:
-      /* Calculate the sum of the value stored in the instruction and the
-	 addend and check for overflow from the low 16 bits into the high
-	 16 bits.  The assembler has already done some of this:  If the
-	 value stored in the instruction has its 15th bit set, (counting
-	 from zero) then the assembler will have added 1 to the value
-	 stored in the associated HI16S reloc.  So for example, these
-	 relocations:
-
-	     movhi hi( fred ), r0, r1
-	     movea lo( fred ), r1, r1
-
-	 will store 0 in the value fields for the MOVHI and MOVEA instructions
-	 and addend will be the address of fred, but for these instructions:
-
-	     movhi hi( fred + 0x123456), r0, r1
-	     movea lo( fred + 0x123456), r1, r1
-
-	 the value stored in the MOVHI instruction will be 0x12 and the value
-	 stored in the MOVEA instruction will be 0x3456.  If however the
-	 instructions were:
-
-	     movhi hi( fred + 0x10ffff), r0, r1
-	     movea lo( fred + 0x10ffff), r1, r1
-
-	 then the value stored in the MOVHI instruction would be 0x11 (not
-	 0x10) and the value stored in the MOVEA instruction would be 0xffff.
-	 Thus (assuming for the moment that the addend is 0), at run time the
-	 MOVHI instruction loads 0x110000 into r1, then the MOVEA instruction
-	 adds 0xffffffff (sign extension!) producing 0x10ffff.  Similarly if
-	 the instructions were:
-
-	     movhi hi( fred - 1), r0, r1
-	     movea lo( fred - 1), r1, r1
-
-	 then 0 is stored in the MOVHI instruction and -1 is stored in the
-	 MOVEA instruction.
-
-	 Overflow can occur if the addition of the value stored in the
-	 instruction plus the addend sets the 15th bit when before it was clear.
-	 This is because the 15th bit will be sign extended into the high part,
-	 thus reducing its value by one, but since the 15th bit was originally
-	 clear, the assembler will not have added 1 to the previous HI16S reloc
-	 to compensate for this effect.  For example:
-
-	    movhi hi( fred + 0x123456), r0, r1
-	    movea lo( fred + 0x123456), r1, r1
-
-	 The value stored in HI16S reloc is 0x12, the value stored in the LO16
-	 reloc is 0x3456.  If we assume that the address of fred is 0x00007000
-	 then the relocations become:
-
-	   HI16S: 0x0012 + (0x00007000 >> 16)    = 0x12
-	   LO16:  0x3456 + (0x00007000 & 0xffff) = 0xa456
-
-	 but when the instructions are executed, the MOVEA instruction's value
-	 is signed extended, so the sum becomes:
-
-	      0x00120000
-	    + 0xffffa456
-	    ------------
-	      0x0011a456    but 'fred + 0x123456' = 0x0012a456
-
-	 Note that if the 15th bit was set in the value stored in the LO16
-	 reloc, then we do not have to do anything:
-
-	    movhi hi( fred + 0x10ffff), r0, r1
-	    movea lo( fred + 0x10ffff), r1, r1
-
-	    HI16S:  0x0011 + (0x00007000 >> 16)    = 0x11
-	    LO16:   0xffff + (0x00007000 & 0xffff) = 0x6fff
-
-	      0x00110000
-	    + 0x00006fff
-	    ------------
-	      0x00116fff  = fred + 0x10ffff = 0x7000 + 0x10ffff
-
-	 Overflow can also occur if the computation carries into the 16th bit
-	 and it also results in the 15th bit having the same value as the 15th
-	 bit of the original value.   What happens is that the HI16S reloc
-	 will have already examined the 15th bit of the original value and
-	 added 1 to the high part if the bit is set.  This compensates for the
-	 sign extension of 15th bit of the result of the computation.  But now
-	 there is a carry into the 16th bit, and this has not been allowed for.
-
-	 So, for example if fred is at address 0xf000:
-
-	   movhi hi( fred + 0xffff), r0, r1    [bit 15 of the offset is set]
-	   movea lo( fred + 0xffff), r1, r1
-
-	   HI16S: 0x0001 + (0x0000f000 >> 16)    = 0x0001
-	   LO16:  0xffff + (0x0000f000 & 0xffff) = 0xefff   (carry into bit 16 is lost)
-
-	     0x00010000
-	   + 0xffffefff
-	   ------------
-	     0x0000efff   but 'fred + 0xffff' = 0x0001efff
-
-	 Similarly, if the 15th bit remains clear, but overflow occurs into
-	 the 16th bit then (assuming the address of fred is 0xf000):
-
-	   movhi hi( fred + 0x7000), r0, r1    [bit 15 of the offset is clear]
-	   movea lo( fred + 0x7000), r1, r1
-
-	   HI16S: 0x0000 + (0x0000f000 >> 16)    = 0x0000
-	   LO16:  0x7000 + (0x0000f000 & 0xffff) = 0x6fff  (carry into bit 16 is lost)
-
-	     0x00000000
-	   + 0x00006fff
-	   ------------
-	     0x00006fff   but 'fred + 0x7000' = 0x00016fff
-
-	 Note - there is no need to change anything if a carry occurs, and the
-	 15th bit changes its value from being set to being clear, as the HI16S
-	 reloc will have already added in 1 to the high part for us:
-
-	   movhi hi( fred + 0xffff), r0, r1     [bit 15 of the offset is set]
-	   movea lo( fred + 0xffff), r1, r1
-
-	   HI16S: 0x0001 + (0x00007000 >> 16)
-	   LO16:  0xffff + (0x00007000 & 0xffff) = 0x6fff  (carry into bit 16 is lost)
-
-	     0x00010000
-	   + 0x00006fff   (bit 15 not set, so the top half is zero)
-	   ------------
-	     0x00016fff   which is right (assuming that fred is at 0x7000)
-
-	 but if the 15th bit goes from being clear to being set, then we must
-	 once again handle overflow:
-
-	   movhi hi( fred + 0x7000), r0, r1     [bit 15 of the offset is clear]
-	   movea lo( fred + 0x7000), r1, r1
-
-	   HI16S: 0x0000 + (0x0000ffff >> 16)
-	   LO16:  0x7000 + (0x0000ffff & 0xffff) = 0x6fff  (carry into bit 16)
-
-	     0x00000000
-	   + 0x00006fff   (bit 15 not set, so the top half is zero)
-	   ------------
-	     0x00006fff   which is wrong (assuming that fred is at 0xffff).  */
-      {
-	long result;
-
-	insn   = bfd_get_16 (abfd, address);
-	result = insn + addend;
-
-#define BIT15_SET(x) ((x) & 0x8000)
-#define OVERFLOWS(a,i) ((((a) & 0xffff) + (i)) > 0xffff)
-
-	if ((BIT15_SET (result) && ! BIT15_SET (addend))
-	    || (OVERFLOWS (addend, insn)
-		&& ((! BIT15_SET (insn)) || (BIT15_SET (addend)))))
-	  {
-	    bfd_boolean already_updated;
-	    bfd_byte *hi16s_address = find_remembered_hi16s_reloc
-	      (addend, & already_updated);
-
-	    /* Amend the matching HI16_S relocation.  */
-	    if (hi16s_address != NULL)
-	      {
-		if (! already_updated)
-		  {
-		    insn = bfd_get_16 (abfd, hi16s_address);
-		    insn += 1;
-		    bfd_put_16 (abfd, (bfd_vma) insn, hi16s_address);
-		  }
-	      }
-	    else
-	      {
-		fprintf (stderr, _("FAILED to find previous HI16 reloc\n"));
-		return bfd_reloc_overflow;
-	      }
-	  }
-
-	/* Do not complain if value has top bit set, as this has been anticipated.  */
-	insn = result & 0xffff;
-	break;
-      }
+      insn = bfd_get_16 (abfd, address);
+      if (! v850_elf_perform_lo16_relocation (abfd, &insn, addend))
+	return bfd_reloc_overflow;
+      break;
 
     case R_V850_8:
       addend += (char) bfd_get_8 (abfd, address);
@@ -1279,6 +1304,17 @@ v850_elf_perform_relocation (abfd, r_type, addend, address)
       insn |= addend;
       break;
 
+    case R_V850_LO16_SPLIT_OFFSET:
+      insn = bfd_get_32 (abfd, address);
+      result = ((insn & 0xfffe0000) >> 16) | ((insn & 0x20) >> 5);
+      if (! v850_elf_perform_lo16_relocation (abfd, &result, addend))
+	return bfd_reloc_overflow;
+      insn = (((result << 16) & 0xfffe0000)
+	      | ((result << 5) & 0x20)
+	      | (insn & ~0xfffe0020));
+      bfd_put_32 (abfd, insn, address);
+      return bfd_reloc_ok;
+
     case R_V850_ZDA_16_16_SPLIT_OFFSET:
     case R_V850_SDA_16_16_SPLIT_OFFSET:
       insn = bfd_get_32 (abfd, address);
@@ -1359,7 +1395,7 @@ v850_elf_reloc (abfd, reloc, symbol, data, isection, obfd, err)
   /* We handle final linking of some relocs ourselves.  */
 
   /* Is the address of the relocation really within the section?  */
-  if (reloc->address > isection->_cooked_size)
+  if (reloc->address > bfd_get_section_limit (abfd, isection))
     return bfd_reloc_outofrange;
 
   /* Work out which section the relocation is targeted at and the
@@ -1379,30 +1415,6 @@ v850_elf_reloc (abfd, reloc, symbol, data, isection, obfd, err)
   relocation += symbol->section->output_offset;
   relocation += reloc->addend;
 
-#if 0 /* Since this reloc is going to be processed later on, we should
-	 not make it pc-relative here.  To test this, try assembling and
-	 linking this program:
-
-	 	.text
-		.globl _start
-		nop
-	_start:
-        	jr foo
-
-	        .section ".foo","ax"
-		nop
-	foo:
-        	nop      */
-  if (reloc->howto->pc_relative)
-    {
-      /* Here the variable relocation holds the final address of the
-	 symbol we are relocating against, plus any addend.  */
-      relocation -= isection->output_section->vma + isection->output_offset;
-
-      /* Deal with pcrel_offset.  */
-      relocation -= reloc->address;
-    }
-#endif
   reloc->addend = relocation;
   return bfd_reloc_ok;
 }
@@ -1493,6 +1505,7 @@ v850_elf_final_link_relocate (howto, input_bfd, output_bfd,
     case R_V850_HI16_S:
     case R_V850_HI16:
     case R_V850_LO16:
+    case R_V850_LO16_SPLIT_OFFSET:
     case R_V850_16:
     case R_V850_ABS32:
     case R_V850_8:
@@ -1682,17 +1695,6 @@ v850_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	  sym = local_syms + r_symndx;
 	  sec = local_sections[r_symndx];
 	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
-#if 0
-	  {
-	    char * name;
-
-	    name = bfd_elf_string_from_elf_section (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	    name = (name == NULL) ? "<none>" : name;
-	    fprintf (stderr, "local: sec: %s, sym: %s (%d), value: %x + %x + %x addend %x\n",
-		     sec->name, name, sym->st_name,
-		     sec->output_section->vma, sec->output_offset, sym->st_value, rel->r_addend);
-	  }
-#endif
 	}
       else
 	{
@@ -1730,8 +1732,9 @@ v850_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	    {
 	    case bfd_reloc_overflow:
 	      if (! ((*info->callbacks->reloc_overflow)
-		     (info, name, howto->name, (bfd_vma) 0,
-		      input_bfd, input_section, rel->r_offset)))
+		     (info, (h ? &h->root : NULL), name, howto->name,
+		      (bfd_vma) 0, input_bfd, input_section,
+		      rel->r_offset)))
 		return FALSE;
 	      break;
 
@@ -1948,8 +1951,8 @@ v850_elf_merge_private_bfd_data (ibfd, obfd)
 	  return TRUE;
 	}
 
-      _bfd_error_handler (_("%s: Architecture mismatch with previous modules"),
-			  bfd_archive_filename (ibfd));
+      _bfd_error_handler (_("%B: Architecture mismatch with previous modules"),
+			  ibfd);
     }
 
   return TRUE;
@@ -2515,11 +2518,6 @@ v850_elf_relax_section (abfd, sec, link_info, again)
       || sec->reloc_count == 0)
     return TRUE;
 
-  /* If this is the first time we have been called
-     for this section, initialize the cooked size.  */
-  if (sec->_cooked_size == 0)
-    sec->_cooked_size = sec->_raw_size;
-
   symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
 
   internal_relocs = (_bfd_elf_link_read_relocs
@@ -2530,9 +2528,9 @@ v850_elf_relax_section (abfd, sec, link_info, again)
 
   irelend = internal_relocs + sec->reloc_count;
 
-  while (addr < sec->_cooked_size)
+  while (addr < sec->size)
     {
-      toaddr = sec->_cooked_size;
+      toaddr = sec->size;
 
       for (irel = internal_relocs; irel < irelend; irel ++)
 	if (ELF32_R_TYPE (irel->r_info) == (int) R_V850_ALIGN
@@ -2606,12 +2604,7 @@ v850_elf_relax_section (abfd, sec, link_info, again)
 		contents = elf_section_data (sec)->this_hdr.contents;
 	      else
 		{
-		  contents = (bfd_byte *) bfd_malloc (sec->_raw_size);
-		  if (contents == NULL)
-		    goto error_return;
-
-		  if (! bfd_get_section_contents (abfd, sec, contents,
-						  (file_ptr) 0, sec->_raw_size))
+		  if (!bfd_malloc_and_get_section (abfd, sec, &contents))
 		    goto error_return;
 		}
 	    }
@@ -2633,7 +2626,7 @@ v850_elf_relax_section (abfd, sec, link_info, again)
 	  if (ELF32_R_TYPE (irel->r_info) == (int) R_V850_LONGCALL)
 	    {
 	      /* Check code for -mlong-calls output. */
-	      if (laddr + 16 <= (bfd_vma) sec->_raw_size)
+	      if (laddr + 16 <= (bfd_vma) sec->size)
 		{
 		  insn[0] = bfd_get_16 (abfd, contents + laddr);
 		  insn[1] = bfd_get_16 (abfd, contents + laddr + 4);
@@ -2862,7 +2855,7 @@ v850_elf_relax_section (abfd, sec, link_info, again)
 	  else if (ELF32_R_TYPE (irel->r_info) == (int) R_V850_LONGJUMP)
 	    {
 	      /* Check code for -mlong-jumps output.  */
-	      if (laddr + 10 <= (bfd_vma) sec->_raw_size)
+	      if (laddr + 10 <= (bfd_vma) sec->size)
 		{
 		  insn[0] = bfd_get_16 (abfd, contents + laddr);
 		  insn[1] = bfd_get_16 (abfd, contents + laddr + 4);
@@ -3104,10 +3097,10 @@ v850_elf_relax_section (abfd, sec, link_info, again)
 #ifdef DEBUG_RELAX
       fprintf (stderr, "relax pad %d shorten %d -> %d\n",
 	       align_pad_size,
-	       sec->_cooked_size,
-	       sec->_cooked_size - align_pad_size);
+	       sec->size,
+	       sec->size - align_pad_size);
 #endif
-      sec->_cooked_size -= align_pad_size;
+      sec->size -= align_pad_size;
     }
 
  finish:

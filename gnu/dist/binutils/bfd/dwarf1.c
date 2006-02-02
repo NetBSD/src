@@ -1,5 +1,5 @@
 /* DWARF 1 find nearest line (_bfd_dwarf1_find_nearest_line).
-   Copyright 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
 
 Written by Gavin Romig-Koch of Cygnus Solutions (gavin@cygnus.com).
 
@@ -285,14 +285,14 @@ parse_line_table (stash, aUnit)
       if (! msec)
 	return FALSE;
 
-      size = bfd_get_section_size_before_reloc (msec);
+      size = msec->rawsize ? msec->rawsize : msec->size;
       stash->line_section = (char *) bfd_alloc (stash->abfd, size);
 
       if (! stash->line_section)
 	return FALSE;
 
       if (! bfd_get_section_contents (stash->abfd, msec, stash->line_section,
-				      (bfd_vma) 0, size))
+				      0, size))
 	{
 	  stash->line_section = 0;
 	  return FALSE;
@@ -502,14 +502,14 @@ _bfd_dwarf1_find_nearest_line (abfd, section, symbols, offset,
 	  return FALSE;
 	}
 
-      size = bfd_get_section_size_before_reloc (msec);
+      size = msec->rawsize ? msec->rawsize : msec->size;
       stash->debug_section = (char *) bfd_alloc (abfd, size);
 
       if (! stash->debug_section)
 	return FALSE;
 
       if (! bfd_get_section_contents (abfd, msec, stash->debug_section,
-				      (bfd_vma) 0, size))
+				      0, size))
 	{
 	  stash->debug_section = 0;
 	  return FALSE;

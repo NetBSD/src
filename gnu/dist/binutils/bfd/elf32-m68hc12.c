@@ -1,5 +1,5 @@
 /* Motorola 68HC12-specific support for 32-bit ELF
-   Copyright 1999, 2000, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2002, 2003, 2004 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
    (Heavily copied from the D10V port by Martin Hunt (hunt@cygnus.com))
 
@@ -443,8 +443,8 @@ m68hc12_elf_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
   stub_sec = stub_entry->stub_sec;
 
   /* Make a note of the offset within the stubs for this entry.  */
-  stub_entry->stub_offset = stub_sec->_raw_size;
-  stub_sec->_raw_size += 7;
+  stub_entry->stub_offset = stub_sec->size;
+  stub_sec->size += 7;
   loc = stub_sec->contents + stub_entry->stub_offset;
 
   stub_bfd = stub_sec->owner;
@@ -486,7 +486,7 @@ m68hc12_elf_size_one_stub (struct bfd_hash_entry *gen_entry,
   /* Massage our args to the form they really have.  */
   stub_entry = (struct elf32_m68hc11_stub_hash_entry *) gen_entry;
 
-  stub_entry->stub_sec->_raw_size += 7;
+  stub_entry->stub_sec->size += 7;
   return TRUE;
 }
 

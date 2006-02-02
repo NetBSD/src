@@ -80,9 +80,8 @@ elf64_generic_link_add_symbols (abfd, info)
 	Elf_Internal_Ehdr *ehdrp;
 
 	ehdrp = elf_elfheader (abfd);
-	(*_bfd_error_handler) (_("%s: Relocations in generic ELF (EM: %d)"),
-			       bfd_archive_filename (abfd),
-			       ehdrp->e_machine);
+	(*_bfd_error_handler) (_("%B: Relocations in generic ELF (EM: %d)"),
+			       abfd, ehdrp->e_machine);
 
 	bfd_set_error (bfd_error_wrong_format);
 	return FALSE;

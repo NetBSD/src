@@ -1,5 +1,5 @@
 /* BFD back-end for raw ARM a.out binaries.
-   Copyright 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 
@@ -410,11 +410,6 @@ MY_swap_std_reloc_out (abfd, g, natptr)
       r_length = 3;
       r_pcrel = 1;
     }
-
-#if 0
-  /* For a standard reloc, the addend is in the object file.  */
-  r_addend = g->addend + (*(g->sym_ptr_ptr))->section->output_section->vma;
-#endif
 
   /* name was clobbered by aout_write_syms to be symbol index */
 

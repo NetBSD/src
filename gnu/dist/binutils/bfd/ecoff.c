@@ -1,6 +1,6 @@
 /* Generic ECOFF (Extended-COFF) routines.
    Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
-   2002, 2003 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -74,29 +74,26 @@ static unsigned int ecoff_armap_hash
   PARAMS ((const char *, unsigned int *, unsigned int, unsigned int));
 
 /* This stuff is somewhat copied from coffcode.h.  */
-
 static asection bfd_debug_section =
 {
-  /* name,   id,  index, next, flags, user_set_vma, reloc_done,    */
-  "*DEBUG*", 0,   0,     NULL, 0,     0,            0,
+  /* name,      id,  index, next, flags, user_set_vma,             */
+     "*DEBUG*", 0,   0,     NULL, 0,     0,
   /* linker_mark, linker_has_input, gc_mark, segment_mark,         */
      0,           0,                0,       0,
-  /* sec_info_type, use_rela_p, has_tls_reloc,                     */
-     0,		    0,		0,
-  /* need_finalize_relax, has_gp_reloc,                            */
+  /* sec_info_type, use_rela_p, has_tls_reloc, has_gp_reloc,       */
+     0,		    0,		0,	       0,
+  /* need_finalize_relax, reloc_done,                              */
      0,			  0,
-  /* flag13, flag14, flag15, flag16, flag20, flag24,               */
-     0,      0,      0,      0,      0,	     0,
-  /* vma, lma, _cooked_size, _raw_size,                            */
-     0,   0,   0,            0,
+  /* vma, lma, size, rawsize,                                      */
+     0,   0,   0,    0,
   /* output_offset, output_section, alignment_power,               */
      0,             NULL,           0,
   /* relocation, orelocation, reloc_count, filepos, rel_filepos,   */
      NULL,       NULL,        0,           0,       0,
   /* line_filepos, userdata, contents, lineno, lineno_count,       */
      0,            NULL,     NULL,     NULL,   0,
-  /* entsize, comdat, kept_section, moving_line_filepos,           */
-     0,       NULL,   NULL,         0,
+  /* entsize, kept_section, moving_line_filepos,	           */
+     0,       NULL,         0,
   /* target_index, used_by_bfd, constructor_chain, owner,          */
      0,            NULL,        NULL,              NULL,
   /* symbol,                                                       */
@@ -865,73 +862,6 @@ ecoff_set_symbol_info (abfd, ecoff_sym, asym, ext, weak)
 	case N_SETD:
 	case N_SETB:
 	  {
-	    /* This code is no longer needed.  It used to be used to
-	       make the linker handle set symbols, but they are now
-	       handled in the add_symbols routine instead.  */
-#if 0
-	    const char *name;
-	    asection *section;
-	    arelent_chain *reloc_chain;
-	    unsigned int bitsize;
-	    bfd_size_type amt;
-
-	    /* Get a section with the same name as the symbol (usually
-	       __CTOR_LIST__ or __DTOR_LIST__).  FIXME: gcc uses the
-	       name ___CTOR_LIST (three underscores).  We need
-	       __CTOR_LIST (two underscores), since ECOFF doesn't use
-	       a leading underscore.  This should be handled by gcc,
-	       but instead we do it here.  Actually, this should all
-	       be done differently anyhow.  */
-	    name = bfd_asymbol_name (asym);
-	    if (name[0] == '_' && name[1] == '_' && name[2] == '_')
-	      {
-		++name;
-		asym->name = name;
-	      }
-	    section = bfd_get_section_by_name (abfd, name);
-	    if (section == (asection *) NULL)
-	      {
-		char *copy;
-
-		amt = strlen (name) + 1;
-		copy = (char *) bfd_alloc (abfd, amt);
-		if (!copy)
-		  return FALSE;
-		strcpy (copy, name);
-		section = bfd_make_section (abfd, copy);
-	      }
-
-	    /* Build a reloc pointing to this constructor.  */
-	    amt = sizeof (arelent_chain);
-	    reloc_chain = (arelent_chain *) bfd_alloc (abfd, amt);
-	    if (!reloc_chain)
-	      return FALSE;
-	    reloc_chain->relent.sym_ptr_ptr =
-	      bfd_get_section (asym)->symbol_ptr_ptr;
-	    reloc_chain->relent.address = section->_raw_size;
-	    reloc_chain->relent.addend = asym->value;
-	    reloc_chain->relent.howto =
-	      ecoff_backend (abfd)->constructor_reloc;
-
-	    /* Set up the constructor section to hold the reloc.  */
-	    section->flags = SEC_CONSTRUCTOR;
-	    ++section->reloc_count;
-
-	    /* Constructor sections must be rounded to a boundary
-	       based on the bitsize.  These are not real sections--
-	       they are handled specially by the linker--so the ECOFF
-	       16 byte alignment restriction does not apply.  */
-	    bitsize = ecoff_backend (abfd)->constructor_bitsize;
-	    section->alignment_power = 1;
-	    while ((1 << section->alignment_power) < bitsize / 8)
-	      ++section->alignment_power;
-
-	    reloc_chain->next = section->constructor_chain;
-	    section->constructor_chain = reloc_chain;
-	    section->_raw_size += bitsize / 8;
-
-#endif /* 0 */
-
 	    /* Mark the symbol as a constructor.  */
 	    asym->flags |= BSF_CONSTRUCTOR;
 	  }
@@ -2118,7 +2048,7 @@ ecoff_compute_section_file_positions (abfd)
 	 really in the section.  Each entry is 8 bytes.  We store this
 	 away in line_filepos before increasing the section size.  */
       if (strcmp (current->name, _PDATA) == 0)
-	current->line_filepos = current->_raw_size / 8;
+	current->line_filepos = current->size / 8;
 
       alignment_power = current->alignment_power;
 
@@ -2179,16 +2109,16 @@ ecoff_compute_section_file_positions (abfd)
       if ((current->flags & (SEC_HAS_CONTENTS | SEC_LOAD)) != 0)
 	current->filepos = file_sofar;
 
-      sofar += current->_raw_size;
+      sofar += current->size;
       if ((current->flags & SEC_HAS_CONTENTS) != 0)
-	file_sofar += current->_raw_size;
+	file_sofar += current->size;
 
       /* Make sure that this section is of the right size too.  */
       old_sofar = sofar;
       sofar = BFD_ALIGN (sofar, 1 << alignment_power);
       if ((current->flags & SEC_HAS_CONTENTS) != 0)
 	file_sofar = BFD_ALIGN (file_sofar, 1 << alignment_power);
-      current->_raw_size += sofar - old_sofar;
+      current->size += sofar - old_sofar;
     }
 
   free (sorted_hdrs);
@@ -2550,7 +2480,7 @@ _bfd_ecoff_write_object_contents (abfd)
 	section.s_vaddr = vma;
 
       section.s_paddr = current->lma;
-      section.s_size = bfd_get_section_size_before_reloc (current);
+      section.s_size = current->size;
 
       /* If this section is unloadable then the scnptr will be 0.  */
       if ((current->flags & (SEC_LOAD | SEC_HAS_CONTENTS)) == 0)
@@ -2601,7 +2531,7 @@ _bfd_ecoff_write_object_contents (abfd)
 	  || (section.s_flags & STYP_ECOFF_FINI) != 0
 	  || section.s_flags == STYP_RCONST)
 	{
-	  text_size += bfd_get_section_size_before_reloc (current);
+	  text_size += current->size;
 	  if (! set_text_start || text_start > vma)
 	    {
 	      text_start = vma;
@@ -2617,7 +2547,7 @@ _bfd_ecoff_write_object_contents (abfd)
 	       || section.s_flags == STYP_XDATA
 	       || (section.s_flags & STYP_GOT) != 0)
 	{
-	  data_size += bfd_get_section_size_before_reloc (current);
+	  data_size += current->size;
 	  if (! set_data_start || data_start > vma)
 	    {
 	      data_start = vma;
@@ -2626,7 +2556,7 @@ _bfd_ecoff_write_object_contents (abfd)
 	}
       else if ((section.s_flags & STYP_BSS) != 0
 	       || (section.s_flags & STYP_SBSS) != 0)
-	bss_size += bfd_get_section_size_before_reloc (current);
+	bss_size += current->size;
       else if (section.s_flags == 0
 	       || (section.s_flags & STYP_ECOFF_LIB) != 0
 	       || section.s_flags == STYP_COMMENT)
@@ -3195,14 +3125,10 @@ _bfd_ecoff_write_armap (abfd, elength, map, orl_count, stridx)
      armap.  */
   hdr.ar_uid[0] = '0';
   hdr.ar_gid[0] = '0';
-#if 0
-  hdr.ar_mode[0] = '0';
-#else
   /* Building gcc ends up extracting the armap as a file - twice.  */
   hdr.ar_mode[0] = '6';
   hdr.ar_mode[1] = '4';
   hdr.ar_mode[2] = '4';
-#endif
 
   sprintf (hdr.ar_size, "%-10d", (int) mapsize);
 
@@ -3364,14 +3290,10 @@ _bfd_ecoff_archive_p (abfd)
 	  if (bfd_check_format (first, bfd_object)
 	      && first->xvec != abfd->xvec)
 	    {
-#if 0
 	      /* We ought to close `first' here, but we can't, because
 		 we have no way to remove it from the archive cache.
-		 It's close to impossible to figure out when we can
+		 It's almost impossible to figure out when we can
 		 release bfd_ardata.  FIXME.  */
-	      (void) bfd_close (first);
-	      bfd_release (abfd, bfd_ardata (abfd));
-#endif
 	      bfd_set_error (bfd_error_wrong_object_format);
 	      bfd_ardata (abfd) = tdata_hold;
 	      return NULL;
@@ -3566,9 +3488,9 @@ ecoff_link_add_archive_symbols (abfd, info)
 	     entry if it is the tail, because that would lose any
 	     entries we add to the list later on.  */
 	  if (*pundef != info->hash->undefs_tail)
-	    *pundef = (*pundef)->und_next;
+	    *pundef = (*pundef)->u.undef.next;
 	  else
-	    pundef = &(*pundef)->und_next;
+	    pundef = &(*pundef)->u.undef.next;
 	  continue;
 	}
 
@@ -3578,7 +3500,7 @@ ecoff_link_add_archive_symbols (abfd, info)
 	 other object format.  */
       if (h->type != bfd_link_hash_undefined)
 	{
-	  pundef = &(*pundef)->und_next;
+	  pundef = &(*pundef)->u.undef.next;
 	  continue;
 	}
 
@@ -3590,7 +3512,7 @@ ecoff_link_add_archive_symbols (abfd, info)
       if (file_offset == 0)
 	{
 	  /* Nothing in this slot.  */
-	  pundef = &(*pundef)->und_next;
+	  pundef = &(*pundef)->u.undef.next;
 	  continue;
 	}
 
@@ -3621,7 +3543,7 @@ ecoff_link_add_archive_symbols (abfd, info)
 
 	  if (! found)
 	    {
-	      pundef = &(*pundef)->und_next;
+	      pundef = &(*pundef)->u.undef.next;
 	      continue;
 	    }
 
@@ -3643,7 +3565,7 @@ ecoff_link_add_archive_symbols (abfd, info)
       if (! ecoff_link_add_object_symbols (element, info))
 	return FALSE;
 
-      pundef = &(*pundef)->und_next;
+      pundef = &(*pundef)->u.undef.next;
     }
 
   return TRUE;
@@ -4526,14 +4448,10 @@ ecoff_indirect_link_order (output_bfd, info, output_section, link_order)
 {
   asection *input_section;
   bfd *input_bfd;
-  struct ecoff_section_tdata *section_tdata;
-  bfd_size_type raw_size;
-  bfd_size_type cooked_size;
   bfd_byte *contents = NULL;
   bfd_size_type external_reloc_size;
   bfd_size_type external_relocs_size;
   PTR external_relocs = NULL;
-  bfd_size_type amt;
 
   BFD_ASSERT ((output_section->flags & SEC_HAS_CONTENTS) != 0);
 
@@ -4542,57 +4460,28 @@ ecoff_indirect_link_order (output_bfd, info, output_section, link_order)
 
   input_section = link_order->u.indirect.section;
   input_bfd = input_section->owner;
-  section_tdata = ecoff_section_data (input_bfd, input_section);
-
-  raw_size = input_section->_raw_size;
-  cooked_size = input_section->_cooked_size;
-  if (cooked_size == 0)
-    cooked_size = raw_size;
 
   BFD_ASSERT (input_section->output_section == output_section);
   BFD_ASSERT (input_section->output_offset == link_order->offset);
-  BFD_ASSERT (cooked_size == link_order->size);
+  BFD_ASSERT (input_section->size == link_order->size);
 
-  /* Get the section contents.  We allocate memory for the larger of
-     the size before relocating and the size after relocating.  */
-  amt = raw_size >= cooked_size ? raw_size : cooked_size;
-  contents = (bfd_byte *) bfd_malloc (amt);
-  if (contents == NULL && amt != 0)
+  /* Get the section contents.  */
+  if (!bfd_malloc_and_get_section (input_bfd, input_section, &contents))
     goto error_return;
-
-  /* If we are relaxing, the contents may have already been read into
-     memory, in which case we copy them into our new buffer.  We don't
-     simply reuse the old buffer in case cooked_size > raw_size.  */
-  if (section_tdata != (struct ecoff_section_tdata *) NULL
-      && section_tdata->contents != (bfd_byte *) NULL)
-    memcpy (contents, section_tdata->contents, (size_t) raw_size);
-  else
-    {
-      if (! bfd_get_section_contents (input_bfd, input_section,
-				      (PTR) contents,
-				      (file_ptr) 0, raw_size))
-	goto error_return;
-    }
 
   /* Get the relocs.  If we are relaxing MIPS code, they will already
      have been read in.  Otherwise, we read them in now.  */
   external_reloc_size = ecoff_backend (input_bfd)->external_reloc_size;
   external_relocs_size = external_reloc_size * input_section->reloc_count;
 
-  if (section_tdata != (struct ecoff_section_tdata *) NULL
-      && section_tdata->external_relocs != NULL)
-    external_relocs = section_tdata->external_relocs;
-  else
-    {
-      external_relocs = (PTR) bfd_malloc (external_relocs_size);
-      if (external_relocs == NULL && external_relocs_size != 0)
-	goto error_return;
+  external_relocs = (PTR) bfd_malloc (external_relocs_size);
+  if (external_relocs == NULL && external_relocs_size != 0)
+    goto error_return;
 
-      if (bfd_seek (input_bfd, input_section->rel_filepos, SEEK_SET) != 0
-	  || (bfd_bread (external_relocs, external_relocs_size, input_bfd)
-	      != external_relocs_size))
-	goto error_return;
-    }
+  if (bfd_seek (input_bfd, input_section->rel_filepos, SEEK_SET) != 0
+      || (bfd_bread (external_relocs, external_relocs_size, input_bfd)
+	  != external_relocs_size))
+    goto error_return;
 
   /* Relocate the section contents.  */
   if (! ((*ecoff_backend (input_bfd)->relocate_section)
@@ -4603,9 +4492,9 @@ ecoff_indirect_link_order (output_bfd, info, output_section, link_order)
   /* Write out the relocated section.  */
   if (! bfd_set_section_contents (output_bfd,
 				  output_section,
-				  (PTR) contents,
-				  (file_ptr) input_section->output_offset,
-				  cooked_size))
+				  contents,
+				  input_section->output_offset,
+				  input_section->size))
     goto error_return;
 
   /* If we are producing relocatable output, the relocs were
@@ -4625,14 +4514,14 @@ ecoff_indirect_link_order (output_bfd, info, output_section, link_order)
 
   if (contents != NULL)
     free (contents);
-  if (external_relocs != NULL && section_tdata == NULL)
+  if (external_relocs != NULL)
     free (external_relocs);
   return TRUE;
 
  error_return:
   if (contents != NULL)
     free (contents);
-  if (external_relocs != NULL && section_tdata == NULL)
+  if (external_relocs != NULL)
     free (external_relocs);
   return FALSE;
 }
@@ -4733,7 +4622,7 @@ ecoff_reloc_link_order (output_bfd, info, output_section, link_order)
 	  abort ();
 	case bfd_reloc_overflow:
 	  if (! ((*info->callbacks->reloc_overflow)
-		 (info,
+		 (info, NULL,
 		  (link_order->type == bfd_section_reloc_link_order
 		   ? bfd_section_name (output_bfd, section)
 		   : link_order->u.reloc.p->u.name),

@@ -64,7 +64,7 @@ AC_PROG_CC
 AC_PROG_YACC
 AM_PROG_LEX
 
-ALL_LINGUAS="fr tr ja es sv da zh_CN ru"
+ALL_LINGUAS="fr tr ja es sv da zh_CN ru ro"
 CY_GNU_GETTEXT
 
 AM_MAINTAINER_MODE
@@ -118,10 +118,27 @@ AC_MSG_RESULT($bu_cv_have_fopen64)
 if test "$bu_cv_have_fopen64" != no; then
   AC_DEFINE([HAVE_FOPEN64], 1,
 	    [Is fopen64 available?])
-  if test "$bu_cv_have_fopen64" = "need -D_LARGEFILE64_SOURCE"; then
-    AC_DEFINE([_LARGEFILE64_SOURCE], 1,
-	      [Enable LFS])
-  fi
+fi
+AC_MSG_CHECKING([for stat64])
+AC_CACHE_VAL(bu_cv_have_stat64,
+[AC_TRY_LINK([#include <sys/stat.h>], [struct stat64 st; stat64 ("/tmp/foo", &st);],
+bu_cv_have_stat64=yes,
+[saved_CPPFLAGS=$CPPFLAGS
+ CPPFLAGS="$CPPFLAGS -D_LARGEFILE64_SOURCE"
+ AC_TRY_LINK([#include <sys/stat.h>], [struct stat64 st; stat64 ("/tmp/foo", &st);],
+bu_cv_have_stat64="need -D_LARGEFILE64_SOURCE",
+bu_cv_have_stat64=no)
+ CPPFLAGS=$saved_CPPFLAGS])])
+AC_MSG_RESULT($bu_cv_have_stat64)
+if test "$bu_cv_have_stat64" != no; then
+  AC_DEFINE([HAVE_STAT64], 1,
+	    [Is stat64 available?])
+fi
+if test "$bu_cv_have_fopen64" = "need -D_LARGEFILE64_SOURCE" \
+   || test "$bu_cv_have_stat64" = "need -D_LARGEFILE64_SOURCE"; then
+  AC_DEFINE([_LARGEFILE64_SOURCE], 1,
+	    [Enable LFS])
+  CPPFLAGS="$CPPFLAGS -D_LARGEFILE64_SOURCE"
 fi
 
 # Some systems have frexp only in -lm, not in -lc.
@@ -292,12 +309,6 @@ changequote([,])dnl
 	mcore-*-elf)
   	  BUILD_DLLTOOL='$(DLLTOOL_PROG)$(EXEEXT)'
 	  DLLTOOL_DEFS="$DLLTOOL_DEFS -DDLLTOOL_MCORE_ELF"
-	  ;;
-        c4x-*-* | tic4x-*-*)
-          OBJDUMP_DEFS="$OBJDUMP_DEFS -DSKIP_ZEROES=32"
-          ;;
-	ia64-*-*)
-	  OBJDUMP_DEFS="$OBJDUMP_DEFS -DSKIP_ZEROES=16"
 	  ;;
 	esac
     fi

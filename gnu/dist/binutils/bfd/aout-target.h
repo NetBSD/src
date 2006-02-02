@@ -1,6 +1,6 @@
 /* Define a target vector and some small routines for a variant of a.out.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003
+   2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -46,7 +46,7 @@ MY(callback) (abfd)
   unsigned long arch_align;
 
   /* Calculate the file positions of the parts of a newly read aout header */
-  obj_textsec (abfd)->_raw_size = N_TXTSIZE(*execp);
+  obj_textsec (abfd)->size = N_TXTSIZE(*execp);
 
   /* The virtual memory addresses of the sections */
   obj_textsec (abfd)->vma = N_TXTADDR(*execp);
@@ -110,12 +110,12 @@ MY(callback) (abfd)
      of the section.  */
   arch_align_power = bfd_get_arch_info (abfd)->section_align_power;
   arch_align = 1 << arch_align_power;
-  if ((BFD_ALIGN (obj_textsec (abfd)->_raw_size, arch_align)
-       == obj_textsec (abfd)->_raw_size)
-      && (BFD_ALIGN (obj_datasec (abfd)->_raw_size, arch_align)
-	  == obj_datasec (abfd)->_raw_size)
-      && (BFD_ALIGN (obj_bsssec (abfd)->_raw_size, arch_align)
-	  == obj_bsssec (abfd)->_raw_size))
+  if ((BFD_ALIGN (obj_textsec (abfd)->size, arch_align)
+       == obj_textsec (abfd)->size)
+      && (BFD_ALIGN (obj_datasec (abfd)->size, arch_align)
+	  == obj_datasec (abfd)->size)
+      && (BFD_ALIGN (obj_bsssec (abfd)->size, arch_align)
+	  == obj_bsssec (abfd)->size))
     {
       obj_textsec (abfd)->alignment_power = arch_align_power;
       obj_datasec (abfd)->alignment_power = arch_align_power;
@@ -124,11 +124,6 @@ MY(callback) (abfd)
 
   /* Don't set sizes now -- can't be sure until we know arch & mach.
      Sizes get set in set_sizes callback, later.  */
-#if 0
-  adata(abfd).page_size = TARGET_PAGE_SIZE;
-  adata(abfd).segment_size = SEGMENT_SIZE;
-  adata(abfd).exec_bytes_size = EXEC_BYTES_SIZE;
-#endif
 
   return abfd->xvec;
 }
@@ -207,16 +202,9 @@ static bfd_boolean
 MY(mkobject) (abfd)
      bfd *abfd;
 {
-  if (! NAME(aout,mkobject) (abfd))
-    return FALSE;
-#if 0 /* Sizes get set in set_sizes callback, later, after we know
-	 the architecture and machine.  */
-  adata(abfd).page_size = TARGET_PAGE_SIZE;
-  adata(abfd).segment_size = SEGMENT_SIZE;
-  adata(abfd).exec_bytes_size = EXEC_BYTES_SIZE;
-#endif
-  return TRUE;
+  return NAME (aout, mkobject (abfd));
 }
+
 #define MY_mkobject MY(mkobject)
 #endif
 
@@ -513,8 +501,15 @@ MY_bfd_final_link (abfd, info)
 #ifndef MY_bfd_merge_sections
 #define MY_bfd_merge_sections bfd_generic_merge_sections
 #endif
+#ifndef MY_bfd_is_group_section
+#define MY_bfd_is_group_section bfd_generic_is_group_section
+#endif
 #ifndef MY_bfd_discard_group
 #define MY_bfd_discard_group bfd_generic_discard_group
+#endif
+#ifndef MY_section_already_linked
+#define MY_section_already_linked \
+  _bfd_generic_section_already_linked
 #endif
 #ifndef MY_bfd_reloc_type_lookup
 #define MY_bfd_reloc_type_lookup NAME(aout,reloc_type_lookup)
@@ -556,6 +551,10 @@ MY_bfd_final_link (abfd, info)
 #define MY_bfd_copy_private_symbol_data _bfd_generic_bfd_copy_private_symbol_data
 #endif
 
+#ifndef MY_bfd_copy_private_header_data
+#define MY_bfd_copy_private_header_data _bfd_generic_bfd_copy_private_header_data
+#endif
+
 #ifndef MY_bfd_print_private_bfd_data
 #define MY_bfd_print_private_bfd_data _bfd_generic_bfd_print_private_bfd_data
 #endif
@@ -566,6 +565,10 @@ MY_bfd_final_link (abfd, info)
 
 #ifndef MY_bfd_is_local_label_name
 #define MY_bfd_is_local_label_name bfd_generic_is_local_label_name
+#endif
+
+#ifndef MY_bfd_is_target_special_symbol
+#define MY_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #endif
 
 #ifndef MY_bfd_free_cached_info
@@ -583,6 +586,10 @@ MY_bfd_final_link (abfd, info)
 #ifndef MY_canonicalize_dynamic_symtab
 #define MY_canonicalize_dynamic_symtab \
   _bfd_nodynamic_canonicalize_dynamic_symtab
+#endif
+#ifndef MY_get_synthetic_symtab
+#define MY_get_synthetic_symtab \
+  _bfd_nodynamic_get_synthetic_symtab
 #endif
 #ifndef MY_get_dynamic_reloc_upper_bound
 #define MY_get_dynamic_reloc_upper_bound \

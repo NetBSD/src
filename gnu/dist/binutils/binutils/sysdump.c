@@ -1,5 +1,5 @@
 /* Sysroff object format dumper.
-   Copyright 1994, 1995, 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1994, 1995, 1998, 1999, 2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -55,10 +55,10 @@ static void module (void);
 static void show_usage (FILE *, int);
 
 extern char *getCHARS (unsigned char *, int *, int, int);
-extern int fillup (char *);
+extern int fillup (unsigned char *);
 extern barray getBARRAY (unsigned char *, int *, int, int);
 extern int getINT (unsigned char *, int *, int, int);
-extern int getBITS (char *, int *, int, int);
+extern int getBITS (unsigned char *, int *, int, int);
 extern void sysroff_swap_tr_in (void);
 extern void sysroff_print_tr_out (void);
 extern int main (int, char **);
@@ -121,7 +121,7 @@ dh (unsigned char *ptr, int size)
 }
 
 int
-fillup (char *ptr)
+fillup (unsigned char *ptr)
 {
   int size;
   int sum;
@@ -198,7 +198,7 @@ getINT (unsigned char *ptr, int *idx, int size, int max)
 }
 
 int
-getBITS (char *ptr, int *idx, int size, int max)
+getBITS (unsigned char *ptr, int *idx, int size, int max)
 {
   int byte = *idx / 8;
   int bit = *idx % 8;
@@ -265,7 +265,7 @@ pbarray (barray *y)
 void
 sysroff_swap_tr_in (void)
 {
-  char raw[255];
+  unsigned char raw[255];
 
   memset (raw, 0, 255);
   fillup (raw);
@@ -515,48 +515,6 @@ opt (int x)
   return getone (x);
 }
 
-#if 0
-
-/* This is no longer used.  */
-
-static void
-unit_info_list (void)
-{
-  while (opt (IT_un_CODE))
-    {
-      getone (IT_us_CODE);
-
-      while (getone (IT_sc_CODE))
-	getone (IT_ss_CODE);
-
-      while (getone (IT_er_CODE))
-	;
-
-      while (getone (IT_ed_CODE))
-	;
-    }
-}
-
-#endif
-
-#if 0
-
-/* This is no longer used.  */
-
-static void
-object_body_list (void)
-{
-  while (getone (IT_sh_CODE))
-    {
-      while (getone (IT_ob_CODE))
-	;
-      while (getone (IT_rl_CODE))
-	;
-    }
-}
-
-#endif
-
 static void
 must (int x)
 {
@@ -649,45 +607,6 @@ derived_type (void)
   tab (-1, "");
 }
 
-#if 0
-
-/* This is no longer used.  */
-
-static void
-program_structure (void)
-{
-  tab (1, "PROGRAM STRUCTURE");
-  while (opt (IT_dps_CODE))
-    {
-      must (IT_dso_CODE);
-      opt (IT_dss_CODE);
-      dump_symbol_info ();
-      must (IT_dps_CODE);
-    }
-  tab (-1, "");
-}
-
-#endif
-
-#if 0
-
-/* This is no longer used.  */
-
-static void
-debug_list (void)
-{
-  tab (1, "DEBUG LIST");
-
-  must (IT_du_CODE);
-  opt (IT_dus_CODE);
-  program_structure ();
-  must (IT_dln_CODE);
-
-  tab (-1, "");
-}
-
-#endif
-
 static void
 module (void)
 {
@@ -705,17 +624,6 @@ module (void)
     }
   while (getone (c) && c != IT_tr_CODE);
 
-#if 0
-  must (IT_cs_CODE);
-  must (IT_hd_CODE);
-  opt (IT_hs_CODE);
-
-  unit_info_list ();
-  object_body_list ();
-  debug_list ();
-
-  must (IT_tr_CODE);
-#endif
   tab (-1, "");
 
   c = getc (file);
