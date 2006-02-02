@@ -1,5 +1,5 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
-   Copyright 2001, 2002
+   Copyright 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Tom Rix
    Contributed by Redhat.
@@ -125,7 +125,7 @@ xcoff64_core_p (abfd)
     return return_value;
 
   sec->flags = SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS;
-  sec->_raw_size = core.c_size;
+  sec->size = core.c_size;
   sec->vma = core.c_stackorg;
   sec->filepos = core.c_stack;
 
@@ -135,7 +135,7 @@ xcoff64_core_p (abfd)
     return return_value;
 
   sec->flags = SEC_HAS_CONTENTS | SEC_IN_MEMORY;
-  sec->_raw_size = sizeof (struct __context64);
+  sec->size = sizeof (struct __context64);
   sec->vma = 0;
   sec->filepos = 0;
   sec->contents = (bfd_byte *)&new_core_hdr->c_flt.r64;
@@ -149,7 +149,7 @@ xcoff64_core_p (abfd)
     return return_value;
 
   sec->flags = SEC_HAS_CONTENTS;
-  sec->_raw_size = core.c_lsize;
+  sec->size = core.c_lsize;
   sec->vma = 0;
   sec->filepos = core.c_loader;
 
@@ -163,7 +163,7 @@ xcoff64_core_p (abfd)
     return return_value;
 
   sec->flags = SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS;
-  sec->_raw_size = core.c_datasize;
+  sec->size = core.c_datasize;
   sec->vma = core.c_dataorg;
   sec->filepos = core.c_data;
 
@@ -186,7 +186,7 @@ xcoff64_core_p (abfd)
 	    return return_value;
 
 	  sec->flags = SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS;
-	  sec->_raw_size = ldinfo.ldinfo_datasize;
+	  sec->size = ldinfo.ldinfo_datasize;
 	  sec->vma = ldinfo.ldinfo_dataorg;
 	  sec->filepos = ldinfo.ldinfo_core;
 	}
@@ -214,7 +214,7 @@ xcoff64_core_p (abfd)
 	    return return_value;
 
 	  sec->flags = SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS;
-	  sec->_raw_size = vminfo.vminfo_size;
+	  sec->size = vminfo.vminfo_size;
 	  sec->vma = vminfo.vminfo_addr;
 	  sec->filepos = vminfo.vminfo_offset;
 	}

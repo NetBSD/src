@@ -166,6 +166,9 @@
 /* Is fopen64 available? */
 #undef HAVE_FOPEN64
 
+/* Is stat64 available? */
+#undef HAVE_STAT64
+
 /* Enable LFS */
 #undef _LARGEFILE64_SOURCE
 

@@ -1,5 +1,5 @@
 /* BFD back-end for WDC 65816 COFF binaries.
-   Copyright 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2003
+   Copyright 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
@@ -324,7 +324,8 @@ w65_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
 	if (gap < -128 || gap > 127)
 	  {
 	    if (! ((*link_info->callbacks->reloc_overflow)
-		   (link_info, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+		   (link_info, NULL,
+		    bfd_asymbol_name (*reloc->sym_ptr_ptr),
 		    reloc->howto->name, reloc->addend, input_section->owner,
 		    input_section, reloc->address)))
 	      abort ();
@@ -348,7 +349,8 @@ w65_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
 	if ((gap & 0xf0000) != (dot & 0xf0000))
 	  {
 	    if (! ((*link_info->callbacks->reloc_overflow)
-		   (link_info, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+		   (link_info, NULL,
+		    bfd_asymbol_name (*reloc->sym_ptr_ptr),
 		    reloc->howto->name, reloc->addend, input_section->owner,
 		    input_section, reloc->address)))
 	      abort ();

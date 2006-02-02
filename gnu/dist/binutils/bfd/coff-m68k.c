@@ -1,6 +1,6 @@
 /* BFD back-end for Motorola 68000 COFF binaries.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
-   2000, 2001, 2002, 2003
+   2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -510,7 +510,7 @@ bfd_m68k_coff_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
 		  (irel->r_vaddr - datasec->vma + datasec->output_offset), p);
       memset (p + 4, 0, 8);
       if (targetsec != NULL)
-	strncpy (p + 4, targetsec->output_section->name, 8);
+	strncpy ((char *) p + 4, targetsec->output_section->name, 8);
     }
 
   return TRUE;
