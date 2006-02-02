@@ -29,9 +29,6 @@
 /* Define to `long' if <sys/types.h> doesn't define.  */
 /* #undef off_t */
 
-/* Define if you need to in order for stat and other things to work.  */
-/* #undef _POSIX_SOURCE */
-
 /* Define to `unsigned' if <sys/types.h> doesn't define.  */
 /* #undef size_t */
 
@@ -67,6 +64,9 @@
 
 /* Define if you have the getpagesize function.  */
 #define HAVE_GETPAGESIZE 1
+
+/* Define if you have the glob function.  */
+#define HAVE_GLOB 1
 
 /* Define if you have the munmap function.  */
 #define HAVE_MUNMAP 1
@@ -144,7 +144,7 @@
 #define PACKAGE "ld"
 
 /* Version number of package */
-#define VERSION "2.15"
+#define VERSION "2.16.1"
 
 /* Define if you have the stpcpy function */
 /* #undef HAVE_STPCPY */
@@ -152,11 +152,11 @@
 /* Define if your locale.h file contains LC_MESSAGES. */
 #define HAVE_LC_MESSAGES 1
 
-/* Define to 1 if NLS is requested */
-#define ENABLE_NLS 1
-
 /* Define as 1 if you have gettext and don't want to use GNU gettext. */
 /* #undef HAVE_GETTEXT */
+
+/* Define to 1 if NLS is requested */
+#define ENABLE_NLS 1
 
 /* Use b modifier when opening binary files? */
 /* #undef USE_BINARY_FOPEN */
