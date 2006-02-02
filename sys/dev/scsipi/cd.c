@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.237 2006/01/07 07:18:06 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.238 2006/02/02 14:48:02 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -6,6 +6,9 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Charles M. Hannum.
+ *
+ * MMC discinfo/trackinfo contributed to the NetBSD Foundation by Reinoud
+ * Zandijk.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.237 2006/01/07 07:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.238 2006/02/02 14:48:02 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -160,6 +163,9 @@ static int	cdmatch(struct device *, struct cfdata *, void *);
 static void	cdattach(struct device *, struct device *, void *);
 static int	cdactivate(struct device *, enum devact);
 static int	cddetach(struct device *, int);
+
+static int	mmc_getdiscinfo(struct scsipi_periph *, struct mmc_discinfo *);
+static int	mmc_gettrackinfo(struct scsipi_periph *, struct mmc_trackinfo *);
 
 CFATTACH_DECL(cd, sizeof(struct cd_softc), cdmatch, cdattach, cddetach,
     cdactivate);
@@ -1080,6 +1086,7 @@ lba2msf(u_long lba, u_char *m, u_char *s, u_char *f)
 	*s = tmp / CD_FRAMES;
 	*f = tmp % CD_FRAMES;
 }
+#endif /* XXX Not used */
 
 /*
  * Convert an hour:minute:second:frame address to a logical block adres. In
@@ -1094,7 +1101,6 @@ hmsf2lba(uint8_t h, uint8_t m, uint8_t s, uint8_t f)
 	return (((((uint32_t) h * 60 + m) * CD_SECS) + s) * CD_FRAMES + f)
 		- CD_BLOCK_OFFSET;
 }
-#endif /* XXX Not used */
 
 static int
 cdreadmsaddr(struct cd_softc *cd, int *addr)
@@ -1512,6 +1518,17 @@ bad:
 	case DVD_READ_STRUCT:
 		/* GPCMD_READ_DVD_STRUCTURE command */
 		return (dvd_read_struct(cd, (dvd_struct *)addr));
+	case MMCGETDISCINFO:
+		/*
+		 * GET_CONFIGURATION, READ_DISCINFO, READ_TRACKINFO,
+		 * (READ_TOCf2, READ_CD_CAPACITY and GET_CONFIGURATION) commands
+		 */
+
+		return mmc_getdiscinfo(periph, (struct mmc_discinfo *) addr);
+	case MMCGETTRACKINFO:
+		/* READ TOCf2, READ_CD_CAPACITY and READ_TRACKINFO commands */
+
+		return mmc_gettrackinfo(periph, (struct mmc_trackinfo *) addr);
 	default:
 		if (part != RAW_PART)
 			return (ENOTTY);
@@ -2541,5 +2558,776 @@ printf("cd_setblksize: trying to change bsize, but blk_desc is correct\n");
 
 	return (cd_mode_select(cd, SMS_PF, &data, sizeof(data.blk_desc), 0,
 	    big));
+}
+
+
+static int
+mmc_profile2class(uint16_t mmc_profile)
+{
+	switch (mmc_profile) {
+	case 0x01 : /* SCSI discs */
+	case 0x02 :
+		/* this can't happen really, cd.c wouldn't have matched */
+		return MMC_CLASS_DISC;
+	case 0x03 : /* Magneto Optical with sector erase */
+	case 0x04 : /* Magneto Optical write once        */
+	case 0x05 : /* Advance Storage Magneto Optical   */
+		return MMC_CLASS_MO;
+	case 0x00 : /* Unknown MMC profile, can also be CD-ROM */
+	case 0x08 : /* CD-ROM  */
+	case 0x09 : /* CD-R    */
+	case 0x0a : /* CD-RW   */
+		return MMC_CLASS_CD;
+	case 0x10 : /* DVD-ROM */
+	case 0x11 : /* DVD-R   */
+	case 0x12 : /* DVD-RAM */
+	case 0x13 : /* DVD-RW restricted overwrite */
+	case 0x14 : /* DVD-RW sequential */
+	case 0x1a : /* DVD+RW  */
+	case 0x1b : /* DVD+R   */
+	case 0x2b : /* DVD+R Dual layer */
+		return MMC_CLASS_DVD;
+	case 0x40 : /* BD-ROM  */
+	case 0x41 : /* BD-R Sequential recording (SRM) */
+	case 0x42 : /* BD-R Ramdom Recording (RRM) */
+	case 0x43 : /* BD-RE */
+		return MMC_CLASS_BD;
+	};
+	return MMC_CLASS_UNKN;
+}
+
+
+/*
+ * Drive/media combination is reflected in a series of features that can
+ * either be current or dormant. We try to make sense out of them to create a
+ * set of easy to use flags that abstract the device/media capabilities.
+ */
+
+static void
+mmc_process_feature(struct mmc_discinfo *mmc_discinfo,
+		    uint16_t feature, int cur, uint8_t *rpos)
+{
+	uint64_t flags;
+
+	if (cur == 1) {
+		flags = mmc_discinfo->mmc_cur;
+	} else {
+		flags = mmc_discinfo->mmc_cap;
+	};
+
+	switch (feature) {
+	case 0x0010 :	/* random readable feature */
+		mmc_discinfo->sector_size =  rpos[3] | (rpos[2] << 8) |
+					    (rpos[1] << 16) | (rpos[0] << 24);
+		mmc_discinfo->blockingnr  =  rpos[5] | (rpos[4] << 8);
+		if (mmc_discinfo->blockingnr > 1)
+			flags |= MMC_CAP_PACKET;
+
+		/* RW error page */
+		break;
+	case 0x0020 :	/* random writable feature */
+		flags |= MMC_CAP_RECORDABLE;
+		flags |= MMC_CAP_REWRITABLE;
+		break;
+	case 0x0021 :	/* incremental streaming write feature */
+		flags |= MMC_CAP_RECORDABLE;
+		flags |= MMC_CAP_SEQUENTIAL;
+		if (cur) {
+			mmc_discinfo->link_block_penalty = rpos[4];
+		};
+		if (rpos[2] & 1)
+			flags |= MMC_CAP_ZEROLINKBLK;
+		break;
+	case 0x0022 : 	/* (obsolete) erase support feature */
+		flags |= MMC_CAP_RECORDABLE;
+		flags |= MMC_CAP_ERASABLE;
+		break;
+	case 0x0023 :	/* formatting media support feature */
+		flags |= MMC_CAP_RECORDABLE;
+		flags |= MMC_CAP_FORMATTABLE;
+		break;
+	case 0x0025 : 	/* write once */
+		flags |= MMC_CAP_RECORDABLE;
+		break;
+	case 0x0026 :	/* restricted overwrite feature */
+		flags |= MMC_CAP_RECORDABLE;
+		flags |= MMC_CAP_REWRITABLE;
+		flags |= MMC_CAP_STRICTOVERWRITE;
+		break;
+	case 0x0028 :	/* MRW formatted media support feature */
+		flags |= MMC_CAP_MRW;
+		break;
+	case 0x002c :	/* regid restricted overwrite feature */
+		flags |= MMC_CAP_RECORDABLE;
+		flags |= MMC_CAP_REWRITABLE;
+		flags |= MMC_CAP_STRICTOVERWRITE;
+		if (rpos[0] & 1) /* blank bit */
+			flags |= MMC_CAP_BLANKABLE;
+		break;
+	case 0x002d :	/* track at once recording feature */
+		flags |= MMC_CAP_RECORDABLE;
+		flags |= MMC_CAP_SEQUENTIAL;
+		break;
+	case 0x002f :	/* DVD-R/-RW write feature */
+		flags |= MMC_CAP_RECORDABLE;
+		if (rpos[0] & 2) /* DVD-RW bit */
+			flags |= MMC_CAP_BLANKABLE;
+		break;
+	case 0x0038 :	/* BD-R SRM with pseudo overwrite */
+		flags |= MMC_CAP_PSEUDOOVERWRITE;
+		break;
+	default :
+		/* ignore */
+		break;
+	};
+
+	if (cur == 1) {
+		mmc_discinfo->mmc_cur = flags;
+	} else {
+		mmc_discinfo->mmc_cap = flags;
+	};
+}
+
+static int
+mmc_getdiscinfo_cdrom(struct scsipi_periph *periph,
+		      struct mmc_discinfo *mmc_discinfo)
+{
+	struct scsipi_read_toc      gtoc_cmd;
+	struct scsipi_toc_header   *toc_hdr;
+	struct scsipi_toc_msinfo   *toc_msinfo;
+	uint32_t buffer_len = 1024, req_size;
+	uint8_t  buffer[buffer_len];
+	int error, flags;
+
+	/*
+	 * Fabricate mmc_discinfo for CD-ROM. Some values are really `dont
+	 * care' but others might be of interest to programs.
+	 */
+
+	mmc_discinfo->disc_state	 = MMC_STATE_FULL;
+	mmc_discinfo->last_session_state = MMC_STATE_FULL;
+	mmc_discinfo->bg_format_state    = MMC_BGFSTATE_COMPLETED;
+	mmc_discinfo->link_block_penalty = 7;	/* not relevant */
+
+	/* get number of sessions and first tracknr in last session */
+	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
+	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	gtoc_cmd.opcode      = READ_TOC;
+	gtoc_cmd.addr_mode   = CD_MSF;		/* not relevant        */
+	gtoc_cmd.resp_format = CD_TOC_MSINFO;	/* multisession info   */
+	gtoc_cmd.from_track  = 0;		/* reserved, must be 0 */
+	req_size = sizeof(*toc_hdr) + sizeof(*toc_msinfo);
+	_lto2b(req_size, gtoc_cmd.data_len);
+
+	error = scsipi_command(periph,
+		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
+		(void *)buffer,    req_size,
+		CDRETRIES, 30000, NULL, flags);
+	if (error)
+		return error;
+	toc_hdr    = (struct scsipi_toc_header *)  buffer;
+	toc_msinfo = (struct scsipi_toc_msinfo *) (buffer + 4);
+	mmc_discinfo->num_sessions = toc_hdr->last - toc_hdr->first + 1;
+	mmc_discinfo->first_track  = toc_hdr->first;
+	mmc_discinfo->first_track_last_session = toc_msinfo->tracknr;
+
+	/* get last track of last session */
+	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
+	gtoc_cmd.resp_format  = CD_TOC_FORM;	/* formatted toc */
+	req_size = sizeof(*toc_hdr);
+	_lto2b(req_size, gtoc_cmd.data_len);
+
+	error = scsipi_command(periph,
+		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
+		(void *)buffer,    req_size,
+		CDRETRIES, 30000, NULL, flags);
+	if (error)
+		return error;
+	toc_hdr    = (struct scsipi_toc_header *) buffer;
+	mmc_discinfo->last_track_last_session = toc_hdr->last;
+	mmc_discinfo->num_tracks = toc_hdr->last - toc_hdr->first + 1;
+
+	/* TODO how to handle disc_barcode and disc_id */
+	/* done */
+
+	return 0;
+}
+
+static int
+mmc_getdiscinfo_dvdrom(struct scsipi_periph *periph,
+		       struct mmc_discinfo *mmc_discinfo)
+{
+	struct scsipi_read_toc   gtoc_cmd;
+	struct scsipi_toc_header toc_hdr;
+	uint32_t req_size;
+	int error, flags;
+
+	/*
+	 * Fabricate mmc_discinfo for DVD-ROM. Some values are really `dont
+	 * care' but others might be of interest to programs.
+	 */
+
+	mmc_discinfo->disc_state	 = MMC_STATE_FULL;
+	mmc_discinfo->last_session_state = MMC_STATE_FULL;
+	mmc_discinfo->bg_format_state    = MMC_BGFSTATE_COMPLETED;
+	mmc_discinfo->link_block_penalty = 16;	/* not relevant */
+
+	/* get number of sessions and first tracknr in last session */
+	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
+	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	gtoc_cmd.opcode      = READ_TOC;
+	gtoc_cmd.addr_mode   = 0;		/* LBA                 */
+	gtoc_cmd.resp_format = CD_TOC_FORM;	/* multisession info   */
+	gtoc_cmd.from_track  = 1;		/* first track         */
+	req_size = sizeof(toc_hdr);
+	_lto2b(req_size, gtoc_cmd.data_len);
+
+	error = scsipi_command(periph,
+		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
+		(void *)&toc_hdr,  req_size,
+		CDRETRIES, 30000, NULL, flags);
+	if (error)
+		return error;
+
+	/* DVD-ROM squashes the track/session space */
+	mmc_discinfo->num_sessions = toc_hdr.last - toc_hdr.first + 1;
+	mmc_discinfo->num_tracks   = mmc_discinfo->num_sessions;
+	mmc_discinfo->first_track  = toc_hdr.first;
+	mmc_discinfo->first_track_last_session = toc_hdr.last;
+	mmc_discinfo->last_track_last_session  = toc_hdr.last;
+
+	/* TODO how to handle disc_barcode and disc_id */
+	/* done */
+	return 0;
+}
+
+static int
+mmc_getdiscinfo(struct scsipi_periph *periph,
+		struct mmc_discinfo *mmc_discinfo)
+{
+	struct scsipi_get_configuration   gc_cmd;
+	struct scsipi_get_conf_data      *gc;
+	struct scsipi_get_conf_feature   *gcf;
+	struct scsipi_read_discinfo       di_cmd;
+	struct scsipi_read_discinfo_data  di;
+	uint32_t buffer_len = 1024, feat_tbl_len, pos;
+	u_long   last_lba;
+	uint8_t  buffer[buffer_len], *fpos;
+	int feature, last_feature, features_len, feature_cur, feature_len;
+	int lsb, msb, error, flags;
+
+	feat_tbl_len = buffer_len;
+
+	/* initialise structure */
+	memset(mmc_discinfo, 0, sizeof(struct mmc_discinfo));
+	mmc_discinfo->mmc_profile = 0x00;	/* unknown */
+	mmc_discinfo->mmc_class   = MMC_CLASS_UNKN;
+	mmc_discinfo->mmc_cur     = 0;
+	mmc_discinfo->mmc_cap     = 0;
+	mmc_discinfo->blockingnr  = 1;	/* not relevant if non packet write */
+	mmc_discinfo->link_block_penalty = 0;
+
+	/* determine mmc profile and class */
+	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
+	memset(&gc_cmd, 0, sizeof(gc_cmd));
+	gc_cmd.opcode = GET_CONFIGURATION;
+	_lto2b(GET_CONF_NO_FEATURES_LEN, gc_cmd.data_len);
+
+	gc = (struct scsipi_get_conf_data *) buffer;
+
+	error = scsipi_command(periph,
+		(void *)&gc_cmd, sizeof(gc_cmd),
+		(void *) gc,     GET_CONF_NO_FEATURES_LEN,
+		CDRETRIES, 30000, NULL, flags);
+	if (error)
+		return error;
+
+	mmc_discinfo->mmc_profile = _2btol(gc->mmc_profile);
+	mmc_discinfo->mmc_class = mmc_profile2class(mmc_discinfo->mmc_profile);
+
+	/* assume 2048 sector size unless told otherwise */
+	mmc_discinfo->sector_size = 2048;
+	error = read_cd_capacity(periph, &mmc_discinfo->sector_size, &last_lba);
+	if (error)
+		return error;
+
+	mmc_discinfo->last_possible_lba = (uint32_t) last_lba;
+
+	/* Read in all features to determine device capabilities */
+	last_feature = feature = 0;
+	do {
+		/* determine mmc profile and class */
+		flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
+		memset(&gc_cmd, 0, sizeof(gc_cmd));
+		gc_cmd.opcode = GET_CONFIGURATION;
+		_lto2b(last_feature, gc_cmd.start_at_feature);
+		_lto2b(feat_tbl_len, gc_cmd.data_len);
+
+		error = scsipi_command(periph,
+			(void *)&gc_cmd, sizeof(gc_cmd),
+			(void *) gc,     feat_tbl_len,
+			CDRETRIES, 30000, NULL, flags);
+		if (error) {
+			/* ieeek... break out of loop... i dunno what to do */
+			break;
+		};
+
+		features_len = _4btol(gc->data_len);
+
+		pos  = 0;
+		fpos = &gc->feature_desc[0];
+		while (pos < features_len - 4) {
+			gcf = (struct scsipi_get_conf_feature *) fpos;
+
+			feature     = _2btol(gcf->featurecode);
+			feature_cur = gcf->flags & 1;
+			feature_len = gcf->additional_length;
+
+			mmc_process_feature(mmc_discinfo,
+					    feature, feature_cur,
+					    gcf->feature_dependent);
+
+			last_feature = MAX(last_feature, feature);
+			assert((feature_len & 3) == 0);
+
+			pos  += 4 + feature_len;
+			fpos += 4 + feature_len;
+		};
+		/* unlikely to ever grow past our 1kb buffer */
+	} while (features_len >= 0xffff);
+
+#ifdef DEBUG
+	printf("CD mmc %d, mmc_cur 0x%"PRIx64", mmc_cap 0x%"PRIx64"\n",
+		mmc_discinfo->mmc_profile,
+	 	mmc_discinfo->mmc_cur, mmc_discinfo->mmc_cap);
+#endif
+
+	/* read in disc state and number of sessions and tracks */
+	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
+	memset(&di_cmd, 0, sizeof(di_cmd));
+	di_cmd.opcode = READ_DISCINFO;
+	di_cmd.data_len[1] = READ_DISCINFO_BIGSIZE;
+
+	error = scsipi_command(periph,
+		(void *)&di_cmd, sizeof(di_cmd),
+		(void *)&di,     READ_DISCINFO_BIGSIZE,
+		CDRETRIES, 30000, NULL, flags);
+
+	if (error) {
+		/* discinfo call failed, emulate for cd-rom/dvd-rom */
+		if (mmc_discinfo->mmc_profile == 0x08) /* CD-ROM */
+			return mmc_getdiscinfo_cdrom(periph, mmc_discinfo);
+		if (mmc_discinfo->mmc_profile == 0x10) /* DVD-ROM */
+			return mmc_getdiscinfo_dvdrom(periph, mmc_discinfo);
+		/* CD/DVD drive is violating specs */
+		return EIO;
+	};
+
+	/* call went OK */
+	mmc_discinfo->disc_state         =  di.disc_state & 3;
+	mmc_discinfo->last_session_state = (di.disc_state >> 2) & 3;
+	mmc_discinfo->bg_format_state    = (di.disc_state2 & 3);
+
+	lsb = di.num_sessions_lsb;
+	msb = di.num_sessions_msb;
+	mmc_discinfo->num_sessions = lsb | (msb << 8);
+
+	mmc_discinfo->first_track = di.first_track;
+	lsb = di.first_track_last_session_lsb;
+	msb = di.first_track_last_session_msb;
+	mmc_discinfo->first_track_last_session = lsb | (msb << 8);
+	lsb = di.last_track_last_session_lsb;
+	msb = di.last_track_last_session_msb;
+	mmc_discinfo->last_track_last_session  = lsb | (msb << 8);
+
+	mmc_discinfo->num_tracks = mmc_discinfo->last_track_last_session -
+		mmc_discinfo->first_track + 1;
+
+	/* set misc. flags and parameters from this disc info */
+	if (di.disc_state  &  16)
+		mmc_discinfo->mmc_cur |= MMC_CAP_BLANKABLE;
+
+	if (di.disc_state2 & 128) {
+		mmc_discinfo->disc_id = _4btol(di.discid);
+		mmc_discinfo->disc_flags |= MMC_DFLAGS_DISCIDVALID;
+	};
+	if (di.disc_state2 &  64) {
+		mmc_discinfo->disc_barcode = _8btol(di.disc_bar_code);
+		mmc_discinfo->disc_flags |= MMC_DFLAGS_BARCODEVALID;
+	};
+	if (di.disc_state2 &  32)
+		mmc_discinfo->disc_flags |= MMC_DFLAGS_UNRESTRICTED;
+
+	if (di.disc_state2 &  16) {
+		mmc_discinfo->application_code = di.application_code;
+		mmc_discinfo->disc_flags |= MMC_DFLAGS_APPCODEVALID;
+	};
+
+	/* done */
+
+	return 0;
+}
+
+static int
+mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
+		       struct mmc_trackinfo *trackinfo)
+{
+	struct scsipi_read_toc            gtoc_cmd;
+	struct scsipi_toc_header         *toc_hdr;
+	struct scsipi_toc_rawtoc         *rawtoc;
+	uint32_t track_start, track_end, track_size;
+	uint32_t last_recorded, next_writable;
+	uint32_t lba, next_track_start, lead_out;
+	uint32_t buffer_size = 2*1024;	/* worst case TOC estimate */
+	uint8_t buffer[buffer_size];
+	uint8_t track_sessionnr, last_tracknr, sessionnr, adr, tno, point;
+	uint8_t tmin, tsec, tframe, pmin, psec, pframe;
+	int size, req_size;
+	int error, flags;
+
+	/*
+	 * Emulate read trackinfo for CD-ROM using the raw-TOC.
+	 *
+	 * Not all information is present and this presents a problem.  Track
+	 * starts are known for each track but other values are deducted.
+	 *
+	 * For a complete overview of `magic' values used here, see the
+	 * SCSI/ATAPI MMC documentation. Note that the `magic' values have no
+	 * names, they are specified as numbers.
+	 */
+
+	/* get raw toc to process, first header to check size */
+	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
+	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	gtoc_cmd.opcode      = READ_TOC;
+	gtoc_cmd.addr_mode   = CD_MSF;		/* not relevant     */
+	gtoc_cmd.resp_format = CD_TOC_RAW;	/* raw toc          */
+	gtoc_cmd.from_track  = 1;		/* first session    */
+	req_size = sizeof(*toc_hdr);
+	_lto2b(req_size, gtoc_cmd.data_len);
+
+	error = scsipi_command(periph,
+		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
+		(void *)buffer,    req_size,
+		CDRETRIES, 30000, NULL, flags);
+	if (error)
+		return error;
+	toc_hdr = (struct scsipi_toc_header *) buffer;
+	if (_2btol(toc_hdr->length) > buffer_size - 2) {
+		printf("incease buffersize in mmc_readtrackinfo\n");
+		return EIO;
+	};
+
+	/* read in complete raw toc */
+	req_size = _2btol(toc_hdr->length);
+	_lto2b(req_size, gtoc_cmd.data_len);
+
+	error = scsipi_command(periph,
+		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
+		(void *)buffer,    req_size,
+		CDRETRIES, 30000, NULL, flags);
+	if (error)
+		return error;
+
+	toc_hdr = (struct scsipi_toc_header *) buffer;
+	rawtoc  = (struct scsipi_toc_rawtoc *) (buffer + 4);
+
+	track_start      = 0;
+	track_end        = 0;
+	track_size       = 0;
+	last_recorded    = 0;
+	next_writable    = 0;
+	flags            = 0;
+
+	last_tracknr     = 1;
+	next_track_start = 0;
+	track_sessionnr  = MAXTRACK;	/* by definition */
+	lead_out         = 0;
+
+	size = req_size - sizeof(struct scsipi_toc_header) + 1;
+	while (size > 0) {
+		/* get track start and session end */
+		tno       = rawtoc->tno;
+		sessionnr = rawtoc->sessionnr;
+		adr       = rawtoc->adrcontrol >> 4;
+		point     = rawtoc->point;
+		tmin      = rawtoc->min;
+		tsec      = rawtoc->sec;
+		tframe    = rawtoc->frame;
+		pmin      = rawtoc->pmin;
+		psec      = rawtoc->psec;
+		pframe    = rawtoc->pframe;
+
+		if (tno == 0 && sessionnr && adr == 1) {
+			lba = hmsf2lba(0, pmin, psec, pframe);
+			if (point == trackinfo->tracknr) {
+				track_start = lba;
+				track_sessionnr = sessionnr;
+			};
+			if (point == trackinfo->tracknr + 1) {
+				/* estimate size */
+				track_size = lba - track_start;
+				next_track_start = lba;
+			};
+			if (point == 0xa2) {
+				lead_out = lba;
+			};
+			if (point <= 0x63) {
+				/* CD's ok, DVD are glued */
+				last_tracknr = point;
+			};
+			if (sessionnr == track_sessionnr) {
+				last_recorded = lead_out;
+			};
+		};
+		if (tno == 0 && sessionnr && adr == 5) {
+			lba = hmsf2lba(0, tmin, tsec, tframe);
+			if (sessionnr == track_sessionnr) {
+				next_writable = lba;
+			};
+		};
+
+		rawtoc++;
+		size -= sizeof(struct scsipi_toc_rawtoc);
+	};
+
+	/* process found values; some voodoo */
+	/* if no tracksize tracknr is the last of the disc */
+	if ((track_size == 0) && last_recorded) {
+		track_size = last_recorded - track_start;
+	};
+	/* if last_recorded < tracksize, tracksize is overestimated */
+	if (last_recorded) {
+		if (last_recorded - track_start <= track_size) {
+			track_size = last_recorded - track_start;
+			flags |= MMC_TRACKINFO_LRA_VALID;
+		};
+	};
+	/* check if its a the last track of the sector */
+	if (next_writable) {
+		if (next_track_start > next_writable)
+			flags |= MMC_TRACKINFO_NWA_VALID;
+	};
+
+	/* no flag set -> no values */
+	if ((flags & MMC_TRACKINFO_LRA_VALID) == 0)
+		last_recorded = 0;
+	if ((flags & MMC_TRACKINFO_NWA_VALID) == 0)
+		next_writable = 0;
+
+	/* fill in */
+	/* trackinfo->tracknr preserved */
+	trackinfo->sessionnr  = track_sessionnr;
+	trackinfo->track_mode = 7;	/* data, incremental  */
+	trackinfo->data_mode  = 8;	/* 2048 bytes mode1   */
+
+	trackinfo->flags = flags;
+	trackinfo->track_start   = track_start;
+	trackinfo->next_writable = next_writable;
+	trackinfo->free_blocks   = 0;
+	trackinfo->packet_size   = 1;
+	trackinfo->track_size    = track_size;
+	trackinfo->last_recorded = last_recorded;
+
+	return 0;
+}
+
+static int
+mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph, 
+			struct mmc_trackinfo *trackinfo)
+{
+	struct scsipi_read_toc            gtoc_cmd;
+	struct scsipi_toc_header         *toc_hdr;
+	struct scsipi_toc_formatted      *toc;
+	uint32_t tracknr, track_start, track_size;
+	uint32_t lba, lead_out;
+	uint32_t buffer_size = 2*1024;	/* worst case TOC estimate */
+	uint8_t buffer[buffer_size];
+	uint8_t last_tracknr;
+	int size, req_size;
+	int error, flags;
+
+	/*
+	 * Emulate read trackinfo for DVD-ROM. We can't use the raw-TOC as the
+	 * CD-ROM emulation uses since the specification tells us that no such
+	 * thing is defined for DVD's. The reason for this is due to the large
+	 * number of tracks and that would clash with the `magic' values. This
+	 * suxs.
+	 *
+	 * Not all information is present and this presents a problem.
+	 * Track starts are known for each track but other values are
+	 * deducted.
+	 */
+
+	/* get formatted toc to process, first header to check size */
+	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
+	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	gtoc_cmd.opcode      = READ_TOC;
+	gtoc_cmd.addr_mode   = 0;		/* lba's please     */
+	gtoc_cmd.resp_format = CD_TOC_FORM;	/* formatted toc    */
+	gtoc_cmd.from_track  = 1;		/* first track      */
+	req_size = sizeof(*toc_hdr);
+	_lto2b(req_size, gtoc_cmd.data_len);
+
+	error = scsipi_command(periph,
+		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
+		(void *)buffer,    req_size,
+		CDRETRIES, 30000, NULL, flags);
+	if (error)
+		return error;
+	toc_hdr = (struct scsipi_toc_header *) buffer;
+	if (_2btol(toc_hdr->length) > buffer_size - 2) {
+		printf("incease buffersize in mmc_readtrackinfo\n");
+		return EIO;
+	};
+
+	/* read in complete formatted toc */
+	req_size = _2btol(toc_hdr->length);
+	_lto2b(req_size, gtoc_cmd.data_len);
+
+	error = scsipi_command(periph,
+		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
+		(void *)buffer,    req_size,
+		CDRETRIES, 30000, NULL, flags);
+	if (error)
+		return error;
+
+	toc_hdr = (struct scsipi_toc_header *)     buffer;
+	toc     = (struct scsipi_toc_formatted *) (buffer + 4);
+
+	/* as in read disc info, all sessions are converted to tracks      */
+	/* track 1..  -> offsets, sizes can be (rougly) estimated (16 ECC) */
+	/* last track -> we got the size from the lead-out                 */
+
+	tracknr      = 0;
+	last_tracknr = toc_hdr->last;
+	track_start  = 0;
+	track_size   = 0;
+	lead_out     = 0;
+
+	size = req_size - sizeof(struct scsipi_toc_header) + 1;
+	while (size > 0) {
+		/* remember, DVD-ROM: tracknr == sessionnr */
+		lba     = _4btol(toc->msf_lba);
+		tracknr = toc->tracknr;
+		if (trackinfo->tracknr == tracknr) {
+			track_start = lba;
+		};
+		if (trackinfo->tracknr == tracknr+1) {
+			track_size  = lba - track_start;
+			track_size -= 16;	/* link block ? */
+		};
+		if (tracknr == 0xAA) {
+			lead_out = lba;
+		};
+		toc++;
+		size -= sizeof(struct scsipi_toc_formatted);
+	};
+	if (trackinfo->tracknr == last_tracknr) {
+		track_size = lead_out - track_start;
+	};
+
+	/* fill in */
+	/* trackinfo->tracknr preserved */
+	trackinfo->sessionnr  = trackinfo->tracknr;
+	trackinfo->track_mode = 0;	/* unknown */
+	trackinfo->data_mode  = 8;	/* 2048 bytes mode1   */
+
+	trackinfo->flags         = 0;
+	trackinfo->track_start   = track_start;
+	trackinfo->next_writable = 0;
+	trackinfo->free_blocks   = 0;
+	trackinfo->packet_size   = 16;	/* standard length 16 blocks ECC */
+	trackinfo->track_size    = track_size;
+	trackinfo->last_recorded = 0;
+
+	return 0;
+}
+
+static int
+mmc_gettrackinfo(struct scsipi_periph *periph, 
+		 struct mmc_trackinfo *trackinfo)
+{
+	struct scsipi_read_trackinfo      ti_cmd;
+	struct scsipi_read_trackinfo_data ti;
+	struct scsipi_get_configuration   gc_cmd;
+	struct scsipi_get_conf_data       gc;
+	int error, flags;
+	int mmc_profile;
+
+	/* set up SCSI call with track number from trackinfo.tracknr */
+	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
+	memset(&ti_cmd, 0, sizeof(ti_cmd));
+	ti_cmd.opcode    = READ_TRACKINFO;
+	ti_cmd.addr_type = READ_TRACKINFO_ADDR_TRACK;
+	ti_cmd.data_len[1] = READ_TRACKINFO_RETURNSIZE;
+
+	/* trackinfo.tracknr contains number of tracks to query */
+	_lto4b(trackinfo->tracknr, ti_cmd.address);
+	error = scsipi_command(periph,
+		(void *)&ti_cmd, sizeof(ti_cmd),
+		(void *)&ti,     READ_TRACKINFO_RETURNSIZE,
+		CDRETRIES, 30000, NULL, flags);
+
+	if (error) {
+		/* trackinfo call failed, emulate for cd-rom/dvd-rom */
+		/* first determine mmc profile */
+		flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
+		memset(&gc_cmd, 0, sizeof(gc_cmd));
+		gc_cmd.opcode = GET_CONFIGURATION;
+		_lto2b(GET_CONF_NO_FEATURES_LEN, gc_cmd.data_len);
+
+		error = scsipi_command(periph,
+			(void *)&gc_cmd, sizeof(gc_cmd),
+			(void *)&gc,     GET_CONF_NO_FEATURES_LEN,
+			CDRETRIES, 30000, NULL, flags);
+		if (error)
+			return error;
+		mmc_profile = _2btol(gc.mmc_profile);
+
+		/* choose emulation */
+		if (mmc_profile == 0x08) /* CD-ROM */
+			return mmc_gettrackinfo_cdrom(periph, trackinfo);
+		if (mmc_profile == 0x10) /* DVD-ROM */
+			return mmc_gettrackinfo_dvdrom(periph, trackinfo);
+		/* CD/DVD drive is violating specs */
+		return EIO;
+	};
+
+	/* (re)initialise structure */
+	memset(trackinfo, 0, sizeof(struct mmc_trackinfo));
+
+	trackinfo->tracknr    = ti.track_lsb   | (ti.track_msb   << 8);
+	trackinfo->sessionnr  = ti.session_lsb | (ti.session_msb << 8);
+	trackinfo->track_mode = ti.track_info_1 & 0xf;
+	trackinfo->data_mode  = ti.track_info_2 & 0xf;
+
+	flags = 0;
+	if (ti.track_info_1 & 0x10)
+		flags |= MMC_TRACKINFO_COPY;
+	if (ti.track_info_1 & 0x20)
+		flags |= MMC_TRACKINFO_DAMAGED;
+	if (ti.track_info_2 & 0x10)
+		flags |= MMC_TRACKINFO_FIXED_PACKET;
+	if (ti.track_info_2 & 0x20)
+		flags |= MMC_TRACKINFO_INCREMENTAL;
+	if (ti.track_info_2 & 0x40)
+		flags |= MMC_TRACKINFO_BLANK;
+	if (ti.track_info_2 & 0x80)
+		flags |= MMC_TRACKINFO_RESERVED;
+	if (ti.data_valid   & 0x01)
+		flags |= MMC_TRACKINFO_NWA_VALID;
+	if (ti.data_valid   & 0x02)
+		flags |= MMC_TRACKINFO_LRA_VALID;
+
+	trackinfo->flags = flags;
+	trackinfo->track_start    = _4btol(ti.track_start);
+	trackinfo->next_writable  = _4btol(ti.next_writable);
+	trackinfo->free_blocks    = _4btol(ti.free_blocks);
+	trackinfo->packet_size    = _4btol(ti.packet_size);
+	trackinfo->track_size     = _4btol(ti.track_size);
+	trackinfo->last_recorded  = _4btol(ti.last_recorded);
+
+	return 0;
 }
 
