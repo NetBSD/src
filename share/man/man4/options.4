@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.305 2006/01/28 14:37:31 darrenr Exp $
+.\"	$NetBSD: options.4,v 1.306 2006/02/02 16:33:54 reinoud Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -839,6 +839,14 @@ visible as files, and signals may be sent to processes by writing to
 files in the procfs namespace.
 See
 .Xr mount_procfs 8
+for details.
+.It Cd file-system UDF
+.Bq Em EXPERIMENTAL
+Includes code for the UDF file system commenly found on CD and DVD media but
+also more and more on USB sticks. Useful primarily if you have a CD or a DVD
+drive be it a read-only or a rewritable device. Currently only read-access.
+See
+.Xr mount_udf 8
 for details.
 .It Cd file-system UMAPFS
 Includes a loopback file system in which user and group IDs may be
@@ -2628,6 +2636,7 @@ bolded
 .Xr mount_null 8 ,
 .Xr mount_portal 8 ,
 .Xr mount_procfs 8 ,
+.Xr mount_udf 8 ,
 .Xr mount_umap 8 ,
 .Xr mount_union 8 ,
 .Xr mrouted 8 ,
