@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.14 2006/02/01 20:50:12 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.15 2006/02/02 16:05:37 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -151,4 +151,10 @@ sys/arch/xen/xen/if_xennet.c			1.41 via patch
 
 	Fix off-by-one error.
 	[bouyer, ticket #1154]
+
+sys/dev/pci/azalia.c	 			1.19 via patch
+
+	Don't crash when a connection list has invalid NIDs.
+	This fixes PR kern/32485.
+	[kent, ticket #1124]
 
