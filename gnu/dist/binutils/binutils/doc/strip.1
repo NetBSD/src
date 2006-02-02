@@ -128,7 +128,7 @@
 .\" ========================================================================
 .\"
 .IX Title "STRIP 1"
-.TH STRIP 1 "2004-12-08" "binutils-2.15" "GNU Development Tools"
+.TH STRIP 1 "2005-04-20" "binutils-2.15.97" "GNU Development Tools"
 .SH "NAME"
 strip \- Discard symbols from object files.
 .SH "SYNOPSIS"
@@ -260,7 +260,7 @@ point (!) then the sense of the switch is reversed for that symbol.
 For example:
 .Sp
 .Vb 1
-\&          -w -K !foo -K fo*
+\&          \-w \-K !foo \-K fo*
 .Ve
 .Sp
 would cause strip to only keep symbols that start with the letters
@@ -353,8 +353,8 @@ archives, \fBstrip \-v\fR lists all members of the archive.
 the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000,
-2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.1

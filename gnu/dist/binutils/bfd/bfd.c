@@ -1,6 +1,6 @@
 /* Generic BFD library interface and support routines.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003
+   2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -45,14 +45,10 @@ CODE_FRAGMENT
 .  {* A pointer to the target jump table.  *}
 .  const struct bfd_target *xvec;
 .
-.  {* To avoid dragging too many header files into every file that
-.     includes `<<bfd.h>>', IOSTREAM has been declared as a "char *",
-.     and MTIME as a "long".  Their correct types, to which they
-.     are cast when used, are "FILE *" and "time_t".    The iostream
-.     is the result of an fopen on the filename.  However, if the
-.     BFD_IN_MEMORY flag is set, then iostream is actually a pointer
-.     to a bfd_in_memory struct.  *}
+.  {* The IOSTREAM, and corresponding IO vector that provide access
+.     to the file backing the BFD.  *}
 .  void *iostream;
+.  const struct bfd_iovec *iovec;
 .
 .  {* Is the file descriptor being cached?  That is, can it be closed as
 .     needed, and re-opened when accessed later?  *}
@@ -136,6 +132,9 @@ CODE_FRAGMENT
 .
 .  {* Pointer to structure which contains architecture information.  *}
 .  const struct bfd_arch_info *arch_info;
+.
+.  {* Flag set if symbols from this BFD should not be exported.  *}
+.  bfd_boolean no_export;
 .
 .  {* Stuff only useful for archives.  *}
 .  void *arelt_data;
@@ -410,23 +409,152 @@ CODE_FRAGMENT
 
 static const char *_bfd_error_program_name;
 
-/* This is the default routine to handle BFD error messages.  */
+/* This is the default routine to handle BFD error messages.
+   Like fprintf (stderr, ...), but also handles some extra format specifiers.
 
-static void
-_bfd_default_error_handler (const char *s, ...)
+   %A section name from section.  For group components, print group name too.
+   %B file name from bfd.  For archive components, prints archive too.
+ */
+
+void
+_bfd_default_error_handler (const char *fmt, ...)
 {
-  va_list p;
+  va_list ap;
+  char *bufp;
+  const char *new_fmt, *p;
+  size_t avail = 1000;
+  char buf[1000];
 
   if (_bfd_error_program_name != NULL)
     fprintf (stderr, "%s: ", _bfd_error_program_name);
   else
     fprintf (stderr, "BFD: ");
 
-  va_start (p, s);
-  vfprintf (stderr, s, p);
-  va_end (p);
+  va_start (ap, fmt);
+  new_fmt = fmt;
+  bufp = buf;
 
-  fprintf (stderr, "\n");
+  /* Reserve enough space for the existing format string.  */
+  avail -= strlen (fmt) + 1;
+  if (avail > 1000)
+    abort ();
+
+  p = fmt;
+  while (1)
+    {
+      char *q;
+      size_t len, extra, trim;
+
+      p = strchr (p, '%');
+      if (p == NULL || p[1] == '\0')
+	{
+	  if (new_fmt == buf)
+	    {
+	      len = strlen (fmt);
+	      memcpy (bufp, fmt, len + 1);
+	    }
+	  break;
+	}
+
+      if (p[1] == 'A' || p[1] == 'B')
+	{
+	  len = p - fmt;
+	  memcpy (bufp, fmt, len);
+	  bufp += len;
+	  fmt = p + 2;
+	  new_fmt = buf;
+
+	  /* If we run out of space, tough, you lose your ridiculously
+	     long file or section name.  It's not safe to try to alloc
+	     memory here;  We might be printing an out of memory message.  */
+	  if (avail == 0)
+	    {
+	      *bufp++ = '*';
+	      *bufp++ = '*';
+	      *bufp = '\0';
+	    }
+	  else
+	    {
+	      if (p[1] == 'B')
+		{
+		  bfd *abfd = va_arg (ap, bfd *);
+		  if (abfd->my_archive)
+		    snprintf (bufp, avail, "%s(%s)",
+			      abfd->my_archive->filename, abfd->filename);
+		  else
+		    snprintf (bufp, avail, "%s", abfd->filename);
+		}
+	      else
+		{
+		  asection *sec = va_arg (ap, asection *);
+		  bfd *abfd = sec->owner;
+		  const char *group = NULL;
+		  struct coff_comdat_info *ci;
+
+		  if (abfd != NULL
+		      && bfd_get_flavour (abfd) == bfd_target_elf_flavour
+		      && elf_next_in_group (sec) != NULL
+		      && (sec->flags & SEC_GROUP) == 0)
+		    group = elf_group_name (sec);
+		  else if (abfd != NULL
+			   && bfd_get_flavour (abfd) == bfd_target_coff_flavour
+			   && (ci = bfd_coff_get_comdat_section (sec->owner,
+								 sec)) != NULL)
+		    group = ci->name;
+		  if (group != NULL)
+		    snprintf (bufp, avail, "%s[%s]", sec->name, group);
+		  else
+		    snprintf (bufp, avail, "%s", sec->name);
+		}
+	      len = strlen (bufp);
+	      avail = avail - len + 2;
+
+	      /* We need to replace any '%' we printed by "%%".
+		 First count how many.  */
+	      q = bufp;
+	      bufp += len;
+	      extra = 0;
+	      while ((q = strchr (q, '%')) != NULL)
+		{
+		  ++q;
+		  ++extra;
+		}
+
+	      /* If there isn't room, trim off the end of the string.  */
+	      q = bufp;
+	      bufp += extra;
+	      if (extra > avail)
+		{
+		  trim = extra - avail;
+		  bufp -= trim;
+		  do
+		    {
+		      if (*--q == '%')
+			--extra;
+		    }
+		  while (--trim != 0);
+		  *q = '\0';
+		  avail = extra;
+		}
+	      avail -= extra;
+
+	      /* Now double all '%' chars, shuffling the string as we go.  */
+	      while (extra != 0)
+		{
+		  while ((q[extra] = *q) != '%')
+		    --q;
+		  q[--extra] = '%';
+		  --q;
+		}
+	    }
+	}
+      p = p + 2;
+    }
+
+  vfprintf (stderr, new_fmt, ap);
+  va_end (ap);
+
+  putc ('\n', stderr);
 }
 
 /* This is a function pointer to the routine which should handle BFD
@@ -494,56 +622,6 @@ bfd_error_handler_type
 bfd_get_error_handler (void)
 {
   return _bfd_error_handler;
-}
-
-/*
-FUNCTION
-	bfd_archive_filename
-
-SYNOPSIS
-	const char *bfd_archive_filename (bfd *);
-
-DESCRIPTION
-	For a BFD that is a component of an archive, returns a string
-	with both the archive name and file name.  For other BFDs, just
-	returns the file name.
-*/
-
-const char *
-bfd_archive_filename (bfd *abfd)
-{
-  if (abfd == NULL)
-    return _("<unknown>");
-  
-  if (abfd->my_archive)
-    {
-      static size_t curr = 0;
-      static char *buf;
-      size_t needed;
-
-      needed = (strlen (bfd_get_filename (abfd->my_archive))
-		+ strlen (bfd_get_filename (abfd)) + 3);
-      if (needed > curr)
-	{
-	  if (curr)
-	    free (buf);
-	  curr = needed + (needed >> 1);
-	  buf = bfd_malloc (curr);
-	  /* If we can't malloc, fail safe by returning just the file
-	     name. This function is only used when building error
-	     messages.  */
-	  if (!buf)
-	    {
-	      curr = 0;
-	      return bfd_get_filename (abfd);
-	    }
-	}
-      sprintf (buf, "%s(%s)", bfd_get_filename (abfd->my_archive),
-	       bfd_get_filename (abfd));
-      return buf;
-    }
-  else
-    return bfd_get_filename (abfd);
 }
 
 /*
@@ -769,12 +847,14 @@ bfd_get_sign_extend_vma (bfd *abfd)
 
   name = bfd_get_target (abfd);
 
-  /* Return a proper value for DJGPP COFF (an x86 COFF variant).
+  /* Return a proper value for DJGPP & PE COFF (x86 COFF variants).
      This function is required for DWARF2 support, but there is
      no place to store this information in the COFF back end.
      Should enough other COFF targets add support for DWARF2,
      a place will have to be found.  Until then, this hack will do.  */
-  if (strncmp (name, "coff-go32", sizeof ("coff-go32") - 1) == 0)
+  if (strncmp (name, "coff-go32", sizeof ("coff-go32") - 1) == 0
+      || strcmp (name, "pe-i386") == 0
+      || strcmp (name, "pei-i386") == 0)
     return 1;
 
   bfd_set_error (bfd_error_wrong_format);
@@ -984,6 +1064,29 @@ bfd_scan_vma (const char *string, const char **end, int base)
 
 /*
 FUNCTION
+	bfd_copy_private_header_data
+
+SYNOPSIS
+	bfd_boolean bfd_copy_private_header_data (bfd *ibfd, bfd *obfd);
+
+DESCRIPTION
+	Copy private BFD header information from the BFD @var{ibfd} to the
+	the BFD @var{obfd}.  This copies information that may require
+	sections to exist, but does not require symbol tables.  Return
+	<<true>> on success, <<false>> on error.
+	Possible error returns are:
+
+	o <<bfd_error_no_memory>> -
+	Not enough memory exists to create private data for @var{obfd}.
+
+.#define bfd_copy_private_header_data(ibfd, obfd) \
+.     BFD_SEND (obfd, _bfd_copy_private_header_data, \
+.		(ibfd, obfd))
+
+*/
+
+/*
+FUNCTION
 	bfd_copy_private_bfd_data
 
 SYNOPSIS
@@ -1085,6 +1188,9 @@ DESCRIPTION
 .#define bfd_merge_sections(abfd, link_info) \
 .	BFD_SEND (abfd, _bfd_merge_sections, (abfd, link_info))
 .
+.#define bfd_is_group_section(abfd, sec) \
+.	BFD_SEND (abfd, _bfd_is_group_section, (abfd, sec))
+.
 .#define bfd_discard_group(abfd, sec) \
 .	BFD_SEND (abfd, _bfd_discard_group, (abfd, sec))
 .
@@ -1097,7 +1203,7 @@ DESCRIPTION
 .#define bfd_link_add_symbols(abfd, info) \
 .	BFD_SEND (abfd, _bfd_link_add_symbols, (abfd, info))
 .
-.#define bfd_link_just_syms(sec, info) \
+.#define bfd_link_just_syms(abfd, sec, info) \
 .	BFD_SEND (abfd, _bfd_link_just_syms, (sec, info))
 .
 .#define bfd_final_link(abfd, info) \
@@ -1114,6 +1220,10 @@ DESCRIPTION
 .
 .#define bfd_canonicalize_dynamic_symtab(abfd, asymbols) \
 .	BFD_SEND (abfd, _bfd_canonicalize_dynamic_symtab, (abfd, asymbols))
+.
+.#define bfd_get_synthetic_symtab(abfd, count, syms, dyncount, dynsyms, ret) \
+.	BFD_SEND (abfd, _bfd_get_synthetic_symtab, (abfd, count, syms, \
+.						    dyncount, dynsyms, ret))
 .
 .#define bfd_get_dynamic_reloc_upper_bound(abfd) \
 .	BFD_SEND (abfd, _bfd_get_dynamic_reloc_upper_bound, (abfd))

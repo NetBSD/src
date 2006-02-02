@@ -128,7 +128,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OBJDUMP 1"
-.TH OBJDUMP 1 "2004-12-08" "binutils-2.15" "GNU Development Tools"
+.TH OBJDUMP 1 "2005-04-20" "binutils-2.15.97" "GNU Development Tools"
 .SH "NAME"
 objdump \- display information from object files.
 .SH "SYNOPSIS"
@@ -165,6 +165,7 @@ objdump [\fB\-a\fR|\fB\-\-archive\-headers\fR]
         [\fB\-\-prefix\-addresses\fR]
         [\fB\-\-[no\-]show\-raw\-insn\fR]
         [\fB\-\-adjust\-vma=\fR\fIoffset\fR]
+        [\fB\-\-special\-syms\fR]
         [\fB\-V\fR|\fB\-\-version\fR]
         [\fB\-H\fR|\fB\-\-help\fR]
         \fIobjfile\fR...
@@ -214,7 +215,7 @@ automatically recognize many formats.
 For example,
 .Sp
 .Vb 1
-\&        objdump -b oasys -m vax -h fu.o
+\&        objdump \-b oasys \-m vax \-h fu.o
 .Ve
 .Sp
 displays summary information from the section headers (\fB\-h\fR) of
@@ -403,11 +404,17 @@ For \s-1PPC\s0, \fBbooke\fR, \fBbooke32\fR and \fBbooke64\fR select
 disassembly of BookE instructions.  \fB32\fR and \fB64\fR select
 PowerPC and PowerPC64 disassembly, respectively.
 .Sp
-For \s-1MIPS\s0, this option controls the printing of register names in
-disassembled instructions.  Multiple selections from the
-following may be specified as a comma separated string, and invalid
-options are ignored:
+For \s-1MIPS\s0, this option controls the printing of instruction mneumonic
+names and register names in disassembled instructions.  Multiple
+selections from the following may be specified as a comma separated
+string, and invalid options are ignored:
 .RS 4
+.ie n .IP """no\-aliases""" 4
+.el .IP "\f(CWno\-aliases\fR" 4
+.IX Item "no-aliases"
+Print the 'raw' instruction mneumonic instead of some pseudo
+instruction mneumonic.  I.E. print 'daddu' or 'or' instead of 'move',
+\&'sll' instead of 'nop', etc.
 .ie n .IP """gpr\-names=\f(CI\s-1ABI\s0\f(CW""" 4
 .el .IP "\f(CWgpr\-names=\f(CI\s-1ABI\s0\f(CW\fR" 4
 .IX Item "gpr-names=ABI"
@@ -543,6 +550,11 @@ Print the dynamic symbol table entries of the file.  This is only
 meaningful for dynamic objects, such as certain types of shared
 libraries.  This is similar to the information provided by the \fBnm\fR
 program when given the \fB\-D\fR (\fB\-\-dynamic\fR) option.
+.IP "\fB\-\-special\-syms\fR" 4
+.IX Item "--special-syms"
+When displaying symbols include those which the target considers to be
+special in some way and which would not normally be of interest to the
+user.
 .IP "\fB\-V\fR" 4
 .IX Item "-V"
 .PD 0
@@ -558,7 +570,7 @@ Print the version number of \fBobjdump\fR and exit.
 .PD
 Display all available header information, including the symbol table and
 relocation entries.  Using \fB\-x\fR is equivalent to specifying all of
-\&\fB\-a \-f \-h \-r \-t\fR.
+\&\fB\-a \-f \-h \-p \-r \-t\fR.
 .IP "\fB\-w\fR" 4
 .IX Item "-w"
 .PD 0
@@ -581,8 +593,8 @@ any other data.
 \&\fInm\fR\|(1), \fIreadelf\fR\|(1), and the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000,
-2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.1
