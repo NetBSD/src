@@ -1,6 +1,6 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
-   2001, 2002
+   2001, 2002, 2004
    Free Software Foundation, Inc.
    FIXME: Can someone provide a transliteration of this name into ASCII?
    Using the following chars caused a compiler warning on HIUX (so I replaced
@@ -277,11 +277,11 @@ read_hdr (bfd *abfd, CoreHdr *core)
 }
 
 static asection *
-make_bfd_asection (abfd, name, flags, _raw_size, vma, filepos)
+make_bfd_asection (abfd, name, flags, size, vma, filepos)
      bfd *abfd;
      const char *name;
      flagword flags;
-     bfd_size_type _raw_size;
+     bfd_size_type size;
      bfd_vma vma;
      file_ptr filepos;
 {
@@ -292,7 +292,7 @@ make_bfd_asection (abfd, name, flags, _raw_size, vma, filepos)
     return NULL;
 
   asect->flags = flags;
-  asect->_raw_size = _raw_size;
+  asect->size = size;
   asect->vma = vma;
   asect->filepos = filepos;
   asect->alignment_power = 8;

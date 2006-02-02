@@ -1,5 +1,6 @@
 /* hash.h -- header file for gas hash table routines
-   Copyright 1987, 1992, 1993, 1995, 1999 Free Software Foundation, Inc.
+   Copyright 1987, 1992, 1993, 1995, 1999, 2003
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

@@ -1,6 +1,6 @@
 /* as.h - global header file
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003
+   1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -23,19 +23,18 @@
 #ifndef GAS
 #define GAS 1
 /* I think this stuff is largely out of date.  xoxorich.
- *
- * CAPITALISED names are #defined.
- * "lowercaseH" is #defined if "lowercase.h" has been #include-d.
- * "lowercaseT" is a typedef of "lowercase" objects.
- * "lowercaseP" is type "pointer to object of type 'lowercase'".
- * "lowercaseS" is typedef struct ... lowercaseS.
- *
- * #define DEBUG to enable all the "know" assertion tests.
- * #define SUSPECT when debugging hash code.
- * #define COMMON as "extern" for all modules except one, where you #define
- *	COMMON as "".
- * If TEST is #defined, then we are testing a module: #define COMMON as "".
- */
+ 
+   CAPITALISED names are #defined.
+   "lowercaseH" is #defined if "lowercase.h" has been #include-d.
+   "lowercaseT" is a typedef of "lowercase" objects.
+   "lowercaseP" is type "pointer to object of type 'lowercase'".
+   "lowercaseS" is typedef struct ... lowercaseS.
+  
+   #define DEBUG to enable all the "know" assertion tests.
+   #define SUSPECT when debugging hash code.
+   #define COMMON as "extern" for all modules except one, where you #define
+  	COMMON as "".
+   If TEST is #defined, then we are testing a module: #define COMMON as "".  */
 
 #include "config.h"
 #include "bin-bugs.h"
@@ -105,26 +104,10 @@ extern void *alloca ();
 #if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 6)
 #define __PRETTY_FUNCTION__  ((char*)0)
 #endif
-#if 0
-
-/* Handle lossage with assert.h.  */
-#ifndef BROKEN_ASSERT
-#include <assert.h>
-#else /* BROKEN_ASSERT */
-#ifndef NDEBUG
-#define assert(p) ((p) ? 0 : (as_assert (__FILE__, __LINE__, __PRETTY_FUNCTION__), 0))
-#else
-#define assert(p) ((p), 0)
-#endif
-#endif /* BROKEN_ASSERT */
-
-#else
-
-#define assert(P) ((P) ? 0 : (as_assert (__FILE__, __LINE__, __PRETTY_FUNCTION__), 0))
+#define assert(P) \
+  ((void) ((P) ? 0 : (as_assert (__FILE__, __LINE__, __PRETTY_FUNCTION__), 0)))
 #undef abort
 #define abort()		as_abort (__FILE__, __LINE__, __PRETTY_FUNCTION__)
-
-#endif
 
 /* Now GNU header files...  */
 #include "ansidecl.h"
@@ -137,7 +120,7 @@ extern void *alloca ();
 #include "progress.h"
 
 /* This doesn't get taken care of anywhere.  */
-#ifndef __MWERKS__  /* Metrowerks C chokes on the "defined (inline)" */
+#ifndef __MWERKS__  /* Metrowerks C chokes on the "defined (inline)"  */
 #if !defined (__GNUC__) && !defined (inline)
 #define inline
 #endif
@@ -235,19 +218,19 @@ typedef addressT valueT;
 
 #ifndef COMMON
 #ifdef TEST
-#define COMMON			/* declare our COMMONs storage here.  */
+#define COMMON			/* Declare our COMMONs storage here.  */
 #else
-#define COMMON extern		/* our commons live elsewhere */
+#define COMMON extern		/* Our commons live elsewhere.  */
 #endif
 #endif
 /* COMMON now defined */
 
 #ifdef DEBUG
 #ifndef know
-#define know(p) assert(p)	/* Verify our assumptions! */
+#define know(p) assert(p)	/* Verify our assumptions!  */
 #endif /* not yet defined */
 #else
-#define know(p)			/* know() checks are no-op.ed */
+#define know(p)			/* know() checks are no-op.ed  */
 #endif
 
 /* input_scrub.c */
@@ -277,31 +260,32 @@ typedef addressT valueT;
 #define SEG_LIST SEG_TEXT,SEG_DATA,SEG_BSS
 #endif
 
-typedef enum _segT {
+typedef enum _segT
+{
   SEG_ABSOLUTE = 0,
   SEG_LIST,
   SEG_UNKNOWN,
   SEG_GOOF,			/* Only happens if AS has a logic error.  */
-  /* Invented so we don't crash printing */
-  /* error message involving weird segment.  */
+  /* Invented so we don't crash printing
+     error message involving weird segment.  */
   SEG_EXPR,			/* Intermediate expression values.  */
   SEG_DEBUG,			/* Debug segment */
-  SEG_NTV,			/* Transfert vector preload segment */
-  SEG_PTV,			/* Transfert vector postload segment */
-  SEG_REGISTER			/* Mythical: a register-valued expression */
+  SEG_NTV,			/* Transfert vector preload segment.  */
+  SEG_PTV,			/* Transfert vector postload segment.  */
+  SEG_REGISTER			/* Mythical: a register-valued expression.  */
 } segT;
 
 #define SEG_MAXIMUM_ORDINAL (SEG_REGISTER)
 #else
 typedef asection *segT;
-#define SEG_NORMAL(SEG)		((SEG) != absolute_section	\
+#define SEG_NORMAL(SEG)		(   (SEG) != absolute_section	\
 				 && (SEG) != undefined_section	\
 				 && (SEG) != reg_section	\
 				 && (SEG) != expr_section)
 #endif
 typedef int subsegT;
 
-/* What subseg we are accessing now? */
+/* What subseg we are accessing now?  */
 COMMON subsegT now_subseg;
 
 /* Segment our instructions emit to.  */
@@ -334,13 +318,16 @@ extern segT text_section, data_section, bss_section;
 #define undefined_section	SEG_UNKNOWN
 #endif
 
-/* relax() */
 
-enum _relax_state {
+enum _relax_state
+{
+  /* Dummy frag used by listing code.  */
+  rs_dummy = 0,
+
   /* Variable chars to be repeated fr_offset times.
      Fr_symbol unused. Used with fr_offset == 0 for a
      constant length frag.  */
-  rs_fill = 1,
+  rs_fill,
 
   /* Align.  The fr_offset field holds the power of 2 to which to
      align.  The fr_var field holds the number of characters in the
@@ -368,7 +355,7 @@ enum _relax_state {
   rs_broken_word,
 #endif
 
-  /* machine-specific relaxable (or similarly alterable) instruction */
+  /* Machine specific relaxable (or similarly alterable) instruction.  */
   rs_machine_dependent,
 
   /* .space directive with expression operand that needs to be computed
@@ -397,8 +384,24 @@ typedef unsigned int relax_substateT;
 /* Enough bits for address, but still an integer type.
    Could be a problem, cross-assembling for 64-bit machines.  */
 typedef addressT relax_addressT;
+
+struct relax_type
+{
+  /* Forward reach. Signed number. > 0.  */
+  offsetT rlx_forward;
+  /* Backward reach. Signed number. < 0.  */
+  offsetT rlx_backward;
+
+  /* Bytes length of this address.  */
+  unsigned char rlx_length;
+
+  /* Next longer relax-state.  0 means there is no 'next' relax-state.  */
+  relax_substateT rlx_more;
+};
+
+typedef struct relax_type relax_typeS;
 
-/* main program "as.c" (command arguments etc) */
+/* main program "as.c" (command arguments etc).  */
 
 COMMON unsigned char flag_no_comments; /* -f */
 COMMON unsigned char flag_debug; /* -D */
@@ -466,7 +469,8 @@ extern int listing;
    This is especially relevant to DWARF2, since the compiler may emit line
    number directives that the assembler resolves.  */
 
-enum debug_info_type {
+enum debug_info_type
+{
   DEBUG_UNSPECIFIED,
   DEBUG_NONE,
   DEBUG_STABS,
@@ -488,7 +492,8 @@ extern int verbose;
    increase malloc calls for monitoring memory allocation.  */
 extern int chunksize;
 
-struct _pseudo_type {
+struct _pseudo_type
+{
   /* assembler mnemonic, lower case, no '.' */
   const char *poc_name;
   /* Do the work */
@@ -553,54 +558,52 @@ PRINTF_LIKE (as_warn);
 PRINTF_WHERE_LIKE (as_bad_where);
 PRINTF_WHERE_LIKE (as_warn_where);
 
-void as_assert (const char *, int, const char *);
-void as_abort (const char *, int, const char *) ATTRIBUTE_NORETURN;
-
-void fprint_value (FILE *file, addressT value);
-void sprint_value (char *buf, addressT value);
-
-int had_errors (void);
-int had_warnings (void);
-
-void print_version_id (void);
-char *app_push (void);
-char *atof_ieee (char *str, int what_kind, LITTLENUM_TYPE * words);
-char *input_scrub_include_file (char *filename, char *position);
-extern void input_scrub_insert_line (const char *line);
-extern void input_scrub_insert_file (char *path);
-char *input_scrub_new_file (char *filename);
-char *input_scrub_next_buffer (char **bufp);
-int do_scrub_chars (int (*get) (char *, int), char *to, int tolen);
-int gen_to_words (LITTLENUM_TYPE * words, int precision,
-			  long exponent_bits);
-int had_err (void);
-int ignore_input (void);
-void cond_finish_check (int);
-void cond_exit_macro (int);
-int seen_at_least_1_file (void);
-void app_pop (char *arg);
-void as_howmuch (FILE * stream);
-void as_perror (const char *gripe, const char *filename);
-void as_where (char **namep, unsigned int *linep);
-void bump_line_counters (void);
-void do_scrub_begin (int);
-void input_scrub_begin (void);
-void input_scrub_close (void);
-void input_scrub_end (void);
-int new_logical_line (char *fname, int line_number);
-void subsegs_begin (void);
-void subseg_change (segT seg, int subseg);
-segT subseg_new (const char *name, subsegT subseg);
-segT subseg_force_new (const char *name, subsegT subseg);
-void subseg_set (segT seg, subsegT subseg);
+void   as_assert (const char *, int, const char *);
+void   as_abort (const char *, int, const char *) ATTRIBUTE_NORETURN;
+void   fprint_value (FILE *, addressT);
+void   sprint_value (char *, addressT);
+int    had_errors (void);
+int    had_warnings (void);
+void   as_warn_value_out_of_range (char *, offsetT, offsetT, offsetT, char *, unsigned);
+void   as_bad_value_out_of_range (char *, offsetT, offsetT, offsetT, char *, unsigned);
+void   print_version_id (void);
+char * app_push (void);
+char * atof_ieee (char *, int, LITTLENUM_TYPE *);
+char * input_scrub_include_file (char *, char *);
+void   input_scrub_insert_line (const char *);
+void   input_scrub_insert_file (char *);
+char * input_scrub_new_file (char *);
+char * input_scrub_next_buffer (char **bufp);
+int    do_scrub_chars (int (*get) (char *, int), char *, int);
+int    gen_to_words (LITTLENUM_TYPE *, int, long);
+int    had_err (void);
+int    ignore_input (void);
+void   cond_finish_check (int);
+void   cond_exit_macro (int);
+int    seen_at_least_1_file (void);
+void   app_pop (char *);
+void   as_howmuch (FILE *);
+void   as_perror (const char *, const char *);
+void   as_where (char **, unsigned int *);
+void   bump_line_counters (void);
+void   do_scrub_begin (int);
+void   input_scrub_begin (void);
+void   input_scrub_close (void);
+void   input_scrub_end (void);
+int    new_logical_line (char *, int);
+void   subsegs_begin (void);
+void   subseg_change (segT, int);
+segT   subseg_new (const char *, subsegT);
+segT   subseg_force_new (const char *, subsegT);
+void   subseg_set (segT, subsegT);
+int    subseg_text_p (segT);
+int    seg_not_empty_p (segT);
+void   start_dependencies (char *);
+void   register_dependency (char *);
+void   print_dependencies (void);
 #ifdef BFD_ASSEMBLER
-segT subseg_get (const char *, int);
+segT   subseg_get (const char *, int);
 #endif
-int subseg_text_p (segT);
-
-void start_dependencies (char *);
-void register_dependency (char *);
-void print_dependencies (void);
 
 struct expressionS;
 struct fix;
@@ -617,12 +620,11 @@ int check_eh_frame (struct expressionS *, unsigned int *);
 int eh_frame_estimate_size_before_relax (fragS *);
 int eh_frame_relax_frag (fragS *);
 void eh_frame_convert_frag (fragS *);
-
 int generic_force_reloc (struct fix *);
 
 #include "expr.h"		/* Before targ-*.h */
 
-/* this one starts the chain of target dependant headers */
+/* This one starts the chain of target dependant headers.  */
 #include "targ-env.h"
 
 #ifdef OBJ_MAYBE_ELF
@@ -657,9 +659,9 @@ COMMON int flag_m68k_mri;
 #endif
 
 #ifdef WARN_COMMENTS
-COMMON int warn_comment;
-COMMON unsigned int found_comment;
-COMMON char *found_comment_file;
+COMMON int           warn_comment;
+COMMON unsigned int  found_comment;
+COMMON char *        found_comment_file;
 #endif
 
 #ifndef NUMBERS_WITH_SUFFIX

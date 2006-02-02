@@ -1,6 +1,6 @@
 /* BFD back-end for RISC iX (Acorn, arm) binaries.
-   Copyright 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002
-   Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2004,
+   2005 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -331,11 +331,6 @@ riscix_swap_std_reloc_out (abfd, g, natptr)
   if (r_length == 3)
     r_pcrel = r_pcrel ? 0 : 1;
 
-#if 0
-  /* For a standard reloc, the addend is in the object file.  */
-  r_addend = g->addend + (*(g->sym_ptr_ptr))->section->output_section->vma;
-#endif
-
   /* name was clobbered by aout_write_syms to be symbol index */
 
   /* If this relocation is relative to a symbol then set the
@@ -577,8 +572,8 @@ riscix_some_aout_object_p (abfd, execp, callback_to_real_object_p)
   if (! NAME(aout,make_sections) (abfd))
     return NULL;
 
-  obj_datasec (abfd)->_raw_size = execp->a_data;
-  obj_bsssec (abfd)->_raw_size = execp->a_bss;
+  obj_datasec (abfd)->size = execp->a_data;
+  obj_bsssec (abfd)->size = execp->a_bss;
 
   obj_textsec (abfd)->flags =
     (execp->a_trsize != 0
@@ -619,7 +614,7 @@ riscix_some_aout_object_p (abfd, execp, callback_to_real_object_p)
      At some point we should probably break down and stat the file and
      declare it executable if (one of) its 'x' bits are on...  */
   if ((execp->a_entry >= obj_textsec(abfd)->vma) &&
-      (execp->a_entry < obj_textsec(abfd)->vma + obj_textsec(abfd)->_raw_size))
+      (execp->a_entry < obj_textsec(abfd)->vma + obj_textsec(abfd)->size))
     abfd->flags |= EXEC_P;
 #endif /* MACH */
   if (result)

@@ -1,5 +1,5 @@
 /* tc-d10v.c -- Assembler code for the Mitsubishi D10V
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -1313,8 +1313,8 @@ do_assemble (str, opcode)
      char *str;
      struct d10v_opcode **opcode;
 {
-  unsigned char *op_start, *save;
-  unsigned char *op_end;
+  unsigned char *op_start, *op_end;
+  char *save;
   char name[20];
   int nlen = 0;
   expressionS myops[6];
@@ -1325,10 +1325,8 @@ do_assemble (str, opcode)
     str++;
 
   /* Find the opcode end.  */
-  for (op_start = op_end = (unsigned char *) (str);
-       *op_end
-       && nlen < 20
-       && !is_end_of_line[*op_end] && *op_end != ' ';
+  for (op_start = op_end = (unsigned char *) str;
+       *op_end && nlen < 20 && !is_end_of_line[*op_end] && *op_end != ' ';
        op_end++)
     {
       name[nlen] = TOLOWER (op_start[nlen]);
@@ -1345,7 +1343,7 @@ do_assemble (str, opcode)
     as_fatal (_("unknown opcode: %s"), name);
 
   save = input_line_pointer;
-  input_line_pointer = op_end;
+  input_line_pointer = (char *) op_end;
   *opcode = find_opcode (*opcode, myops);
   if (*opcode == 0)
     return -1;

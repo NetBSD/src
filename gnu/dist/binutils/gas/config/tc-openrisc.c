@@ -1,5 +1,5 @@
 /* tc-openrisc.c -- Assembler for the OpenRISC family.
-   Copyright 2001, 2002, 2003 Free Software Foundation.
+   Copyright 2001, 2002, 2003, 2005 Free Software Foundation.
    Contributed by Johan Rydberg, jrydberg@opencores.org
 
    This file is part of GAS, the GNU Assembler.
@@ -145,14 +145,6 @@ md_assemble (str)
   gas_cgen_finish_insn (insn.insn, insn.buffer,
 			CGEN_FIELDS_BITSIZE (& insn.fields), 1, NULL);
 
-#if 0 /* Currently disabled  */
-  /* Warn about invalid insns in delay slots.  */
-  if (last_insn_had_delay_slot
-      && CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_NOT_IN_DELAY_SLOT))
-    as_warn (_("Instruction %s not allowed in a delay slot."),
-	     CGEN_INSN_NAME (insn.insn));
-#endif
-
   last_insn_had_delay_slot
     = CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_DELAY_SLOT);
 }
@@ -218,49 +210,6 @@ const relax_typeS md_relax_table[] =
   /* Same thing, but with leading nop for alignment.  */
   {0x2000000 - 1 - 2, -0x2000000 - 2, 4, 0 }
 };
-
-long
-openrisc_relax_frag (segment, fragP, stretch)
-     segT    segment;
-     fragS * fragP;
-     long    stretch;
-{
-  /* Address of branch insn.  */
-  long address = fragP->fr_address + fragP->fr_fix - 2;
-  long growth = 0;
-
-  /* Keep 32 bit insns aligned on 32 bit boundaries.  */
-  if (fragP->fr_subtype == 2)
-    {
-      if ((address & 3) != 0)
-	{
-	  fragP->fr_subtype = 3;
-	  growth = 2;
-	}
-    }
-  else if (fragP->fr_subtype == 3)
-    {
-      if ((address & 3) == 0)
-	{
-	  fragP->fr_subtype = 2;
-	  growth = -2;
-	}
-    }
-  else
-    {
-      growth = relax_frag (segment, fragP, stretch);
-
-      /* Long jump on odd halfword boundary?  */
-      if (fragP->fr_subtype == 2 && (address & 3) != 0)
-	{
-	  fragP->fr_subtype = 3;
-	  growth += 2;
-	}
-    }
-
-  return growth;
-}
-
 
 /* Return an initial guess of the length by which a fragment must grow to
    hold a branch to reach its destination.

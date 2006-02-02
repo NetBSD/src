@@ -1,6 +1,7 @@
 \input texinfo.tex
 @setfilename bfd.info
-@c Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1997, 2000, 2003
+@c Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1997, 2000,
+@c 2001, 2002, 2003
 @c Free Software Foundation, Inc.
 @c 
 @tex

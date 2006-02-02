@@ -1,6 +1,6 @@
 /* symbols.c -symbol table-
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003
+   1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -59,6 +59,11 @@ symbolS abs_symbol;
 #define LOCAL_LABEL_CHAR	'\002'
 
 struct obstack notes;
+#ifdef USE_UNIQUE
+/* The name of an external symbol which is
+   used to make weak PE symbol names unique.  */
+const char * an_external_name;
+#endif
 
 static char *save_symbol_name (const char *);
 static void fb_label_init (void);
@@ -298,9 +303,6 @@ colon (/* Just seen "x:" - rattle symbols & frags.  */
       int possible_bytes;
       fragS *frag_tmp;
       char *frag_opcode;
-
-      extern const int md_short_jump_size;
-      extern const int md_long_jump_size;
 
       if (now_seg == absolute_section)
 	{
@@ -992,7 +994,11 @@ resolve_symbol_value (symbolS *symp)
 	     relocation to detect this case, and convert the
 	     relocation to be against the symbol to which this symbol
 	     is equated.  */
-	  if (! S_IS_DEFINED (add_symbol) || S_IS_COMMON (add_symbol))
+	  if (! S_IS_DEFINED (add_symbol)
+#if defined (OBJ_COFF) && defined (TE_PE) && (defined(BFD_ASSEMBLER) || defined(S_IS_WEAK))
+	      || S_IS_WEAK (add_symbol)
+#endif
+	      || S_IS_COMMON (add_symbol))
 	    {
 	      if (finalize_syms)
 		{
@@ -1555,7 +1561,11 @@ fb_label_name (long n,	/* We just saw "n:", "nf" or "nb" : n a number.  */
   char symbol_name_temporary[20];	/* Build up a number, BACKWARDS.  */
 
   know (n >= 0);
-  know (augend == 0 || augend == 1);
+#ifdef TC_MMIX
+  know ((unsigned long) augend <= 2 /* See mmix_fb_label.  */);
+#else
+  know ((unsigned long) augend <= 1);
+#endif
   p = symbol_name_build;
 #ifdef LOCAL_LABEL_PREFIX
   *p++ = LOCAL_LABEL_PREFIX;
@@ -1812,7 +1822,9 @@ S_IS_LOCAL (symbolS *s)
     return 1;
 
   if (flag_strip_local_absolute
-      && (flags & BSF_GLOBAL) == 0
+      /* Keep BSF_FILE symbols in order to allow debuggers to identify
+	 the source file even when the object file is stripped.  */
+      && (flags & (BSF_GLOBAL | BSF_FILE)) == 0
       && bfd_get_section (s->bsym) == absolute_section)
     return 1;
 
@@ -1906,6 +1918,11 @@ S_SET_EXTERNAL (symbolS *s)
     }
   s->bsym->flags |= BSF_GLOBAL;
   s->bsym->flags &= ~(BSF_LOCAL | BSF_WEAK);
+
+#ifdef USE_UNIQUE
+  if (! an_external_name && S_GET_NAME(s)[0] != '.')
+    an_external_name = S_GET_NAME (s);
+#endif
 }
 
 void
@@ -1950,7 +1967,7 @@ S_SET_THREAD_LOCAL (symbolS *s)
 }
 
 void
-S_SET_NAME (symbolS *s, char *name)
+S_SET_NAME (symbolS *s, const char *name)
 {
   if (LOCAL_SYMBOL_CHECK (s))
     {
@@ -2003,6 +2020,19 @@ symbol_set_value_expression (symbolS *s, const expressionS *exp)
   if (LOCAL_SYMBOL_CHECK (s))
     s = local_symbol_convert ((struct local_symbol *) s);
   s->sy_value = *exp;
+}
+
+/* Return a pointer to the X_add_number component of a symbol.  */
+
+offsetT *
+symbol_X_add_number (symbolS *s)
+{
+#ifdef BFD_ASSEMBLER
+  if (LOCAL_SYMBOL_CHECK (s))
+    return (offsetT *) &((struct local_symbol *) s)->lsy_value;
+#endif
+
+  return &s->sy_value.X_add_number;
 }
 
 /* Set the value of SYM to the current position in the current segment.  */
@@ -2226,6 +2256,9 @@ symbol_equated_reloc_p (symbolS *s)
      resolve_symbol_value to flag expression syms that have been
      equated.  */
   return (s->sy_value.X_op == O_symbol
+#if defined (OBJ_COFF) && defined (TE_PE) && (defined(BFD_ASSEMBLER) || defined(S_IS_WEAK))
+	  && ! S_IS_WEAK (s)
+#endif
 	  && ((s->sy_resolved && s->sy_value.X_op_symbol != NULL)
 	      || ! S_IS_DEFINED (s)
 	      || S_IS_COMMON (s)));
@@ -2260,7 +2293,16 @@ symbol_set_bfdsym (symbolS *s, asymbol *bsym)
 {
   if (LOCAL_SYMBOL_CHECK (s))
     s = local_symbol_convert ((struct local_symbol *) s);
-  s->bsym = bsym;
+  /* Usually, it is harmless to reset a symbol to a BFD section
+     symbol. For example, obj_elf_change_section sets the BFD symbol
+     of an old symbol with the newly created section symbol. But when
+     we have multiple sections with the same name, the newly created
+     section may have the same name as an old section. We check if the
+     old symbol has been already marked as a section symbol before
+     resetting it.  */
+  if ((s->bsym->flags & BSF_SECTION_SYM) == 0)
+    s->bsym = bsym;
+  /* else XXX - What do we do now ?  */
 }
 
 #endif /* BFD_ASSEMBLER */
@@ -2344,16 +2386,6 @@ int indent_level;
 /* Maximum indent level.
    Available for modification inside a gdb session.  */
 int max_indent_level = 8;
-
-#if 0
-
-static void
-indent (void)
-{
-  printf ("%*s", indent_level * 4, "");
-}
-
-#endif
 
 void
 print_symbol_value_1 (FILE *file, symbolS *sym)

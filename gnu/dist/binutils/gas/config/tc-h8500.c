@@ -1,5 +1,5 @@
 /* tc-h8500.c -- Assemble code for the Renesas H8/500
-   Copyright 1993, 1994, 1995, 1998, 2000, 2001, 2002, 2003
+   Copyright 1993, 1994, 1995, 1998, 2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -155,7 +155,7 @@ static expressionS absolute;	/* absolute expression */
 typedef struct
 {
   int type;
-  int reg;
+  unsigned int reg;
   expressionS exp;
   int page;
 }
@@ -164,13 +164,13 @@ h8500_operand_info;
 
 /* Try to parse a reg name.  Return the number of chars consumed.  */
 
-static int parse_reg PARAMS ((char *, int *, int *));
+static int parse_reg PARAMS ((char *, int *, unsigned int *));
 
 static int
 parse_reg (src, mode, reg)
      char *src;
      int *mode;
-     int *reg;
+     unsigned int *reg;
 {
   char *end;
   int len;
@@ -372,9 +372,9 @@ parse_reglist (src, op)
      h8500_operand_info *op;
 {
   int mode;
-  int rn;
+  unsigned int rn;
   int mask = 0;
-  int rm;
+  unsigned int rm;
   int idx = 1;			/* skip ( */
 
   while (src[idx] && src[idx] != ')')
@@ -1576,10 +1576,6 @@ tc_reloc_mangle (fix_ptr, intr, base)
       dot = segment_info[S_GET_SEGMENT (symbol_ptr)].dot;
       if (dot)
 	{
-#if 0
-	  intr->r_offset -=
-	    segment_info[S_GET_SEGMENT (symbol_ptr)].scnhdr.s_paddr;
-#endif
 	  intr->r_offset += S_GET_VALUE (symbol_ptr);
 	  intr->r_symndx = dot->sy_number;
 	}

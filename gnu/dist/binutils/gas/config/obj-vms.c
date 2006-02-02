@@ -1,6 +1,6 @@
 /* vms.c -- Write out a VAX/VMS object file
    Copyright 1987, 1988, 1992, 1993, 1994, 1995, 1997, 1998, 2000, 2001,
-   2002, 2003
+   2002, 2003, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -403,16 +403,6 @@ vms_check_for_special_label (symbolS *symbolP)
 
       if (!strcmp (sym_name, "__vax_g_doubles"))
 	vax_g_doubles = 1;
-#if 0	/* not necessary */
-      else if (!strcmp (sym_name, "__vax_d_doubles"))
-	vax_g_doubles = 0;
-#endif
-#if 0	/* These are potential alternatives to tc-vax.c's md_parse_options().  */
-      else if (!strcmp (sym_name, "gcc_compiled."))
-	flag_one = 1;
-      else if (!strcmp (sym_name, "__gnu_language_cplusplus"))
-	flag_hash_long_names = 1;
-#endif
     }
 }
 
@@ -839,15 +829,6 @@ VMS_TBT_Routine_End (int Max_Size, symbolS *sp)
 	    Size = sym_value;
 
 	  /* Dummy labels like "gcc_compiled." should no longer reach here.  */
-#if 0
-	  else
-	    /* Check if gcc_compiled. has size of zero.  */
-	    if (sym_value == sp_value &&
-		sp != symbolP &&
-		(!strcmp (S_GET_NAME (sp), "gcc_compiled.") ||
-		 !strcmp (S_GET_NAME (sp), "gcc2_compiled.")))
-	      Size = sym_value;
-#endif
 	}
     }
   if (Size == 0x7fffffff)
@@ -1338,41 +1319,6 @@ find_symbol (int dbx_type)
     return spnt;
   return find_symbol (spnt->type2);
 }
-
-#if 0		/* obsolete */
-/* This routine puts info into either Local or Asuffix, depending on the sign
-   of size.  The reason is that it is easier to build the variable descriptor
-   backwards, while the array descriptor is best built forwards.  In the end
-   they get put together, if there is not a struct/union/enum along the way.  */
-
-static void
-push (int value, int size1)
-{
-  if (size1 < 0)
-    {
-      size1 = -size1;
-      if (Lpnt < size1)
-	{
-	  overflow = 1;
-	  Lpnt = 1;
-	  return;
-	}
-      Lpnt -= size1;
-      md_number_to_chars (&Local[Lpnt + 1], value, size1);
-    }
-  else
-    {
-      if (Apoint + size1 >= MAX_DEBUG_RECORD)
-	{
-	  overflow = 1;
-	  Apoint = MAX_DEBUG_RECORD - 1;
-	  return;
-	}
-      md_number_to_chars (&Asuffix[Apoint], value, size1);
-      Apoint += size1;
-    }
-}
-#endif
 
 static void
 fpush (int value, int size)
@@ -3019,11 +2965,6 @@ VMS_Case_Hack_Symbol (const char *In, char *Out)
 
   new_name = Out;		/* Save this for later.  */
 
-#if 0
-  if ((In[0] == '_') && (In[1] == '$') && (In[2] == '_'))
-    destructor = 1;
-#endif
-
   /* We may need to truncate the symbol, save the hash for later.  */
   result = (strlen (In) > 23) ? hash_string (In) : 0;
   /* Is there a Psect Attribute to skip?  */
@@ -3043,10 +2984,6 @@ VMS_Case_Hack_Symbol (const char *In, char *Out)
     }
 
   old_name = In;
-#if 0
-  if (strlen (In) > 31 && flag_hash_long_names)
-    as_tsktsk ("Symbol name truncated: %s\n", In);
-#endif
   /* Do the case conversion.  */
   /* Maximum of 23 chars */
   i = 23;
@@ -4288,26 +4225,6 @@ global_symbol_directory (unsigned text_siz, unsigned data_siz)
   struct VMS_Symbol *vsp;
   int Globalref, define_as_global_symbol;
 
-#if 0
-  /* The g++ compiler does not write out external references to
-     vtables correctly.  Check for this and holler if we see it
-     happening.  If that compiler bug is ever fixed we can remove
-     this.
-
-     (Jun'95: gcc 2.7.0's cc1plus still exhibits this behavior.)
-
-     This was reportedly fixed as of June 2, 1998.   */
-
-  for (sp = symbol_rootP; sp; sp = symbol_next (sp))
-    if (S_GET_RAW_TYPE (sp) == N_UNDF && IS_GXX_VTABLE (sp))
-      {
-	S_SET_TYPE (sp, N_UNDF | N_EXT);
-	S_SET_OTHER (sp, 1);
-	as_warn (_("g++ wrote an extern reference to `%s' as a routine.\nI will fix it, but I hope that it was note really a routine."),
-		 S_GET_NAME (sp));
-      }
-#endif
-
   /* Now scan the symbols and emit the appropriate GSD records.  */
   for (sp = symbol_rootP; sp; sp = symbol_next (sp))
     {
@@ -4550,10 +4467,6 @@ local_symbols_DST (symbolS *s0P, symbolS *Current_Routine)
 
   for (s1P = Current_Routine; s1P; s1P = symbol_next (s1P))
     {
-#if 0		/* redundant; RAW_TYPE != N_FUN suffices */
-      if (!S_IS_DEBUG (s1P))
-	continue;
-#endif
       if (S_GET_RAW_TYPE (s1P) != N_FUN)
 	continue;
       pnt0 = s0P_name;

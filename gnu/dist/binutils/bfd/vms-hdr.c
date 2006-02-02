@@ -1,6 +1,6 @@
 /* vms-hdr.c -- BFD back-end for VMS/VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
    HDR record handling functions
@@ -225,7 +225,8 @@ get_vms_time_string ()
   pnt[10] = 0;
   pnt[16] = 0;
   pnt[24] = 0;
-  sprintf (tbuf, "%2s-%3s-%s %s", pnt + 8, pnt + 4, pnt + 20, pnt + 11);
+  sprintf ((char *) tbuf, "%2s-%3s-%s %s",
+	   pnt + 8, pnt + 4, pnt + 20, pnt + 11);
 #else
 #include <starlet.h>
   struct

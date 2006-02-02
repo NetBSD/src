@@ -1,6 +1,6 @@
 /* BFD backend for hp-ux 9000/300
-   Copyright 1990, 1991, 1993, 1994, 1995, 1997, 2000, 2001, 2002, 2003
-   Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1993, 1994, 1995, 1997, 1999, 2000, 2001, 2002,
+   2003, 2004 Free Software Foundation, Inc.
    Written by Glenn Engel.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -232,7 +232,7 @@ MY (callback) (abfd)
   struct internal_exec *execp = exec_hdr (abfd);
 
   /* Calculate the file positions of the parts of a newly read aout header */
-  obj_textsec (abfd)->_raw_size = N_TXTSIZE (*execp);
+  obj_textsec (abfd)->size = N_TXTSIZE (*execp);
 
   /* The virtual memory addresses of the sections */
   obj_textsec (abfd)->vma = N_TXTADDR (*execp);
