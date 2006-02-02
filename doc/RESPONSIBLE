@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.60 2005/11/23 18:11:16 manu Exp $
+#	$NetBSD: RESPONSIBLE,v 1.61 2006/02/02 16:05:16 reinoud Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -96,7 +96,7 @@ isdn		martin
 mca		jdolecek
 net80211	dyoung
 podulebus	bjh21
-scsi		mycroft, bouyer, thorpej
+scsi		mycroft, bouyer, thorpej, reinoud
 raid(hard)	ad
 raidframe	oster
 usb		mycroft, augustss
@@ -140,6 +140,7 @@ msdosfs		jdolecek
 nfs		fvdl
 ntfs		jdolecek
 smbfs		jdolecek
+udf		reinoud
 ufs		fvdl, mycroft
 ufs2		fvdl
 
