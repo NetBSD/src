@@ -52,9 +52,9 @@ static const char * parse_insn_normal
 #define CGEN_VERBOSE_ASSEMBLER_ERRORS
 
 static const char * parse_hi16
-  PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
+  PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
 static const char * parse_lo16
-  PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
+  PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
 
 long
 openrisc_sign_extend_16bit (value)
@@ -70,7 +70,7 @@ parse_hi16 (cd, strp, opindex, valuep)
      CGEN_CPU_DESC cd;
      const char **strp;
      int opindex;
-     unsigned long *valuep;
+     long *valuep;
 {
   const char *errmsg;
   enum cgen_parse_operand_result result_type;
@@ -84,13 +84,7 @@ parse_hi16 (cd, strp, opindex, valuep)
       bfd_vma value;
 
       *strp += 3;
-#if 0
-      errmsg = cgen_parse_signed_integer (cd, strp, opindex, valuep);
-      if (errmsg != NULL)
-        fprintf (stderr, "parse_hi: %s\n", errmsg);
-      if (errmsg != NULL)
-#endif
-        errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_HI16,
+      errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_HI16,
                                      &result_type, &value);
       if (**strp != ')')
         return _("missing `)'");
@@ -106,12 +100,14 @@ parse_hi16 (cd, strp, opindex, valuep)
       if (**strp == '-')
 	{
 	  long value;
+
 	  errmsg = cgen_parse_signed_integer (cd, strp, opindex, &value);
 	  ret = value;
 	}
       else
 	{
 	  unsigned long value;
+
 	  errmsg = cgen_parse_unsigned_integer (cd, strp, opindex, &value);
 	  ret = value;
 	}
@@ -128,7 +124,7 @@ parse_lo16 (cd, strp, opindex, valuep)
      CGEN_CPU_DESC cd;
      const char **strp;
      int opindex;
-     unsigned long *valuep;
+     long *valuep;
 {
   const char *errmsg;
   enum cgen_parse_operand_result result_type;
@@ -142,15 +138,8 @@ parse_lo16 (cd, strp, opindex, valuep)
       bfd_vma value;
 
       *strp += 3;
-#if 0 
-      errmsg = cgen_parse_signed_integer (cd, strp, opindex, valuep);
-      if (errmsg != NULL)
-        fprintf (stderr, "parse_lo: %s\n", errmsg);
-
-      if (errmsg != NULL)
-#endif
-        errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_LO16,
-                                     &result_type, &value);
+      errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_LO16,
+				   &result_type, &value);
       if (**strp != ')')
         return _("missing `)'");
 
@@ -162,12 +151,14 @@ parse_lo16 (cd, strp, opindex, valuep)
       if (**strp == '-')
 	{
 	  long value;
+
 	  errmsg = cgen_parse_signed_integer (cd, strp, opindex, &value);
 	  ret = value;
 	}
       else
 	{
 	  unsigned long value;
+
 	  errmsg = cgen_parse_unsigned_integer (cd, strp, opindex, &value);
 	  ret = value;
 	}
@@ -223,16 +214,16 @@ openrisc_cgen_parse_operand (cd, opindex, strp, fields)
       }
       break;
     case OPENRISC_OPERAND_HI16 :
-      errmsg = parse_hi16 (cd, strp, OPENRISC_OPERAND_HI16, &fields->f_simm16);
+      errmsg = parse_hi16 (cd, strp, OPENRISC_OPERAND_HI16, (long *) (& fields->f_simm16));
       break;
     case OPENRISC_OPERAND_LO16 :
-      errmsg = parse_lo16 (cd, strp, OPENRISC_OPERAND_LO16, &fields->f_lo16);
+      errmsg = parse_lo16 (cd, strp, OPENRISC_OPERAND_LO16, (long *) (& fields->f_lo16));
       break;
     case OPENRISC_OPERAND_OP_F_23 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, OPENRISC_OPERAND_OP_F_23, &fields->f_op4);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, OPENRISC_OPERAND_OP_F_23, (unsigned long *) (& fields->f_op4));
       break;
     case OPENRISC_OPERAND_OP_F_3 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, OPENRISC_OPERAND_OP_F_3, &fields->f_op5);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, OPENRISC_OPERAND_OP_F_3, (unsigned long *) (& fields->f_op5));
       break;
     case OPENRISC_OPERAND_RA :
       errmsg = cgen_parse_keyword (cd, strp, & openrisc_cgen_opval_h_gr, & fields->f_r2);
@@ -244,16 +235,16 @@ openrisc_cgen_parse_operand (cd, opindex, strp, fields)
       errmsg = cgen_parse_keyword (cd, strp, & openrisc_cgen_opval_h_gr, & fields->f_r1);
       break;
     case OPENRISC_OPERAND_SIMM_16 :
-      errmsg = cgen_parse_signed_integer (cd, strp, OPENRISC_OPERAND_SIMM_16, &fields->f_simm16);
+      errmsg = cgen_parse_signed_integer (cd, strp, OPENRISC_OPERAND_SIMM_16, (long *) (& fields->f_simm16));
       break;
     case OPENRISC_OPERAND_UI16NC :
-      errmsg = parse_lo16 (cd, strp, OPENRISC_OPERAND_UI16NC, &fields->f_i16nc);
+      errmsg = parse_lo16 (cd, strp, OPENRISC_OPERAND_UI16NC, (long *) (& fields->f_i16nc));
       break;
     case OPENRISC_OPERAND_UIMM_16 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, OPENRISC_OPERAND_UIMM_16, &fields->f_uimm16);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, OPENRISC_OPERAND_UIMM_16, (unsigned long *) (& fields->f_uimm16));
       break;
     case OPENRISC_OPERAND_UIMM_5 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, OPENRISC_OPERAND_UIMM_5, &fields->f_uimm5);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, OPENRISC_OPERAND_UIMM_5, (unsigned long *) (& fields->f_uimm5));
       break;
 
     default :

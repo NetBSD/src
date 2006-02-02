@@ -1,5 +1,6 @@
 /* tc-vax.c - vax-specific -
-   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001, 2002, 2003
+   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001, 2002,
+   2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -27,6 +28,10 @@
 
 #ifdef OBJ_ELF
 #include "elf/vax.h"
+#endif
+
+#if defined (OBJ_AOUT) && !defined (BFD_ASSEMBLER) && defined (TE_NetBSD)
+#include <netinet/in.h>
 #endif
 
 /* These chars start a comment anywhere in a source file (except inside
@@ -662,7 +667,8 @@ md_assemble (instruction_string)
   /* Remember where it is, in case we want to modify the op-code later.  */
   opcode_low_byteP = frag_more (v.vit_opcode_nbytes);
   memcpy (opcode_low_byteP, v.vit_opcode, v.vit_opcode_nbytes);
-  opcode_as_number = md_chars_to_number (opcode_as_chars = v.vit_opcode, 4);
+  opcode_as_chars = v.vit_opcode;
+  opcode_as_number = md_chars_to_number ((unsigned char *) opcode_as_chars, 4);
   for (operandP = v.vit_operand,
        expP = exp_of_operand,
        segP = seg_of_operand,
@@ -3214,8 +3220,8 @@ mumble (text, value)
 
 /* end: vip_op.c */
 
-const int md_short_jump_size = 3;
-const int md_long_jump_size = 6;
+int md_short_jump_size = 3;
+int md_long_jump_size = 6;
 const int md_reloc_size = 8;	/* Size of relocation record */
 
 void
@@ -3407,7 +3413,7 @@ tc_headers_hook(headers)
 {
 #ifdef TE_NetBSD
   N_SET_INFO(headers->header, OMAGIC, M_VAX4K_NETBSD, 0);
-  headers->header.a_info = htonl(headers->header.a_info);
+  headers->header.a_info = htonl (headers->header.a_info);
 #endif
 }
 #endif /* !BFD_ASSEMBLER */

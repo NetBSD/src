@@ -83,7 +83,7 @@ parse_mem8 (cd, strp, opindex, valuep)
 	return _("Bad register name");
     }
   else if (cgen_parse_keyword (cd, strp, & xstormy16_cgen_opval_gr_names, 
-			       valuep) == NULL)
+			       (long *) valuep) == NULL)
     return _("Label conflicts with register name");
   else if (strncasecmp (*strp, "rx,", 3) == 0
 	   || strncasecmp (*strp, "rxl,", 3) == 0
@@ -225,7 +225,7 @@ xstormy16_cgen_parse_operand (cd, opindex, strp, fields)
       errmsg = cgen_parse_keyword (cd, strp, & xstormy16_cgen_opval_gr_names, & fields->f_Rs);
       break;
     case XSTORMY16_OPERAND_ABS24 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_ABS24, &fields->f_abs24);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_ABS24, (unsigned long *) (& fields->f_abs24));
       break;
     case XSTORMY16_OPERAND_BCOND2 :
       errmsg = cgen_parse_keyword (cd, strp, & xstormy16_cgen_opval_h_branchcond, & fields->f_op2);
@@ -234,46 +234,46 @@ xstormy16_cgen_parse_operand (cd, opindex, strp, fields)
       errmsg = cgen_parse_keyword (cd, strp, & xstormy16_cgen_opval_h_branchcond, & fields->f_op5);
       break;
     case XSTORMY16_OPERAND_HMEM8 :
-      errmsg = parse_mem8 (cd, strp, XSTORMY16_OPERAND_HMEM8, &fields->f_hmem8);
+      errmsg = parse_mem8 (cd, strp, XSTORMY16_OPERAND_HMEM8, (unsigned long *) (& fields->f_hmem8));
       break;
     case XSTORMY16_OPERAND_IMM12 :
-      errmsg = cgen_parse_signed_integer (cd, strp, XSTORMY16_OPERAND_IMM12, &fields->f_imm12);
+      errmsg = cgen_parse_signed_integer (cd, strp, XSTORMY16_OPERAND_IMM12, (long *) (& fields->f_imm12));
       break;
     case XSTORMY16_OPERAND_IMM16 :
-      errmsg = parse_immediate16 (cd, strp, XSTORMY16_OPERAND_IMM16, &fields->f_imm16);
+      errmsg = parse_immediate16 (cd, strp, XSTORMY16_OPERAND_IMM16, (unsigned long *) (& fields->f_imm16));
       break;
     case XSTORMY16_OPERAND_IMM2 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_IMM2, &fields->f_imm2);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_IMM2, (unsigned long *) (& fields->f_imm2));
       break;
     case XSTORMY16_OPERAND_IMM3 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_IMM3, &fields->f_imm3);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_IMM3, (unsigned long *) (& fields->f_imm3));
       break;
     case XSTORMY16_OPERAND_IMM3B :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_IMM3B, &fields->f_imm3b);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_IMM3B, (unsigned long *) (& fields->f_imm3b));
       break;
     case XSTORMY16_OPERAND_IMM4 :
-      errmsg = parse_small_immediate (cd, strp, XSTORMY16_OPERAND_IMM4, &fields->f_imm4);
+      errmsg = parse_small_immediate (cd, strp, XSTORMY16_OPERAND_IMM4, (unsigned long *) (& fields->f_imm4));
       break;
     case XSTORMY16_OPERAND_IMM8 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_IMM8, &fields->f_imm8);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_IMM8, (unsigned long *) (& fields->f_imm8));
       break;
     case XSTORMY16_OPERAND_IMM8SMALL :
-      errmsg = parse_small_immediate (cd, strp, XSTORMY16_OPERAND_IMM8SMALL, &fields->f_imm8);
+      errmsg = parse_small_immediate (cd, strp, XSTORMY16_OPERAND_IMM8SMALL, (unsigned long *) (& fields->f_imm8));
       break;
     case XSTORMY16_OPERAND_LMEM8 :
-      errmsg = parse_mem8 (cd, strp, XSTORMY16_OPERAND_LMEM8, &fields->f_lmem8);
+      errmsg = parse_mem8 (cd, strp, XSTORMY16_OPERAND_LMEM8, (unsigned long *) (& fields->f_lmem8));
       break;
     case XSTORMY16_OPERAND_REL12 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_REL12, &fields->f_rel12);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_REL12, (unsigned long *) (& fields->f_rel12));
       break;
     case XSTORMY16_OPERAND_REL12A :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_REL12A, &fields->f_rel12a);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_REL12A, (unsigned long *) (& fields->f_rel12a));
       break;
     case XSTORMY16_OPERAND_REL8_2 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_REL8_2, &fields->f_rel8_2);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_REL8_2, (unsigned long *) (& fields->f_rel8_2));
       break;
     case XSTORMY16_OPERAND_REL8_4 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_REL8_4, &fields->f_rel8_4);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, XSTORMY16_OPERAND_REL8_4, (unsigned long *) (& fields->f_rel8_4));
       break;
     case XSTORMY16_OPERAND_WS2 :
       errmsg = cgen_parse_keyword (cd, strp, & xstormy16_cgen_opval_h_wordsize, & fields->f_op2m);

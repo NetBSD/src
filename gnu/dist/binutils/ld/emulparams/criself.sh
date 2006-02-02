@@ -53,12 +53,9 @@ INIT_START='
  . = ALIGN(2);
  ___init__start = .;
  PROVIDE (___do_global_ctors = .);
- SHORT (0xe1fc); /* push srp */
- SHORT (0xbe7e);
 '
 
 INIT_END='
- SHORT (0x0d3e); /* jump [sp+] */
  PROVIDE (__init__end = .);
  PROVIDE (___init__end = .);
 '
@@ -67,12 +64,9 @@ FINI_START='
  . = ALIGN (2);
  ___fini__start = .;
  PROVIDE (___do_global_dtors = .);
- SHORT (0xe1fc); /* push srp */
- SHORT (0xbe7e);
 '
 
 FINI_END='
- SHORT (0x0d3e); /* jump [sp+] */
  PROVIDE (__fini__end = .);
  ___fini__end = .;
 '

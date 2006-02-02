@@ -1,3 +1,4 @@
+#as: -xnone
 #objdump: -dr
 #name: ia64 tls
 

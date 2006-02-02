@@ -1,6 +1,6 @@
 %{ /* deffilep.y - parser for .def files */
 
-/*   Copyright 1995, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+/*   Copyright 1995, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005
      Free Software Foundation, Inc.
 
      This file is part of GNU Binutils.
@@ -83,8 +83,7 @@ static void def_exports (const char *, const char *, int, int);
 static void def_heapsize (int, int);
 static void def_import (const char *, const char *, const char *, const char *,
 			int);
-static void def_library (const char *, int);
-static void def_name (const char *, int);
+static void def_image_name (const char *, int, int);
 static void def_section (const char *, int);
 static void def_section_alt (const char *, const char *);
 static void def_stacksize (int, int);
@@ -122,8 +121,8 @@ start: start command
 	;
 
 command: 
-		NAME opt_name opt_base { def_name ($2, $3); }
-	|	LIBRARY opt_name opt_base { def_library ($2, $3); }
+		NAME opt_name opt_base { def_image_name ($2, $3, 0); }
+	|	LIBRARY opt_name opt_base { def_image_name ($2, $3, 1); }
 	|	DESCRIPTION ID { def_description ($2);}
 	|	STACKSIZE NUMBER opt_number { def_stacksize ($2, $3);}
 	|	HEAPSIZE NUMBER opt_number { def_heapsize ($2, $3);}
@@ -647,23 +646,17 @@ def_file_add_directive (def_file *my_def, const char *param, int len)
 /* Parser Callbacks.  */
 
 static void
-def_name (const char *name, int base)
+def_image_name (const char *name, int base, int is_dll)
 {
+  const char* image_name = lbasename (name);
+  if (image_name != name)
+    einfo ("%s:%d: Warning: path components stripped from %s, '%s'\n",
+	  def_filename, linenumber, is_dll ? "LIBRARY" : "NAME", name);
   if (def->name)
     free (def->name);
-  def->name = xstrdup (name);
+  def->name = xstrdup (image_name);
   def->base_address = base;
-  def->is_dll = 0;
-}
-
-static void
-def_library (const char *name, int base)
-{
-  if (def->name)
-    free (def->name);
-  def->name = xstrdup (name);
-  def->base_address = base;
-  def->is_dll = 1;
+  def->is_dll = is_dll;
 }
 
 static void

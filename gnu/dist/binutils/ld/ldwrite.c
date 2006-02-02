@@ -1,6 +1,6 @@
 /* ldwrite.c -- write out the linked file
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2002, 2003
-   Free Software Foundation, Inc.
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2002,
+   2003, 2004, 2005 Free Software Foundation, Inc.
    Written by Steve Chamberlain sac@cygnus.com
 
 This file is part of GLD, the Gnu Linker.
@@ -220,7 +220,8 @@ build_link_order (lang_statement_union_type *statement)
     case lang_input_section_enum:
       /* Create a new link_order in the output section with this
 	 attached */
-      if (!statement->input_section.ifile->just_syms_flag)
+      if (!statement->input_section.ifile->just_syms_flag
+	  && (statement->input_section.section->flags & SEC_EXCLUDE) == 0)
 	{
 	  asection *i = statement->input_section.section;
 	  asection *output_section = i->output_section;
@@ -241,7 +242,7 @@ build_link_order (lang_statement_union_type *statement)
 		     is going to be output, we'll change it into a
 		     fill.  */
 		  link_order->type = bfd_data_link_order;
-		  link_order->u.data.contents = "";
+		  link_order->u.data.contents = (unsigned char *) "";
 		  link_order->u.data.size = 1;
 		}
 	      else
@@ -250,10 +251,7 @@ build_link_order (lang_statement_union_type *statement)
 		  link_order->u.indirect.section = i;
 		  ASSERT (i->output_section == output_section);
 		}
-	      if (i->_cooked_size)
-		link_order->size = i->_cooked_size;
-	      else
-		link_order->size = bfd_get_section_size_before_reloc (i);
+	      link_order->size = i->size;
 	      link_order->offset = i->output_offset;
 	    }
 	}
@@ -367,8 +365,7 @@ clone_section (bfd *abfd, asection *s, const char *name, int *count)
   n->vma = s->vma;
   n->user_set_vma = s->user_set_vma;
   n->lma = s->lma;
-  n->_cooked_size = 0;
-  n->_raw_size = 0;
+  n->size = 0;
   n->output_offset = s->output_offset;
   n->output_section = n;
   n->orelocation = 0;
@@ -382,7 +379,7 @@ static void
 ds (asection *s)
 {
   struct bfd_link_order *l = s->link_order_head;
-  printf ("vma %x size %x\n", s->vma, s->_raw_size);
+  printf ("vma %x size %x\n", s->vma, s->size);
   while (l)
     {
       if (l->type == bfd_indirect_link_order)
@@ -468,10 +465,7 @@ split_sections (bfd *abfd, struct bfd_link_info *info)
 	      if (info->relocatable)
 		thisrelocs = sec->reloc_count;
 
-	      if (sec->_cooked_size != 0)
-		thissize = sec->_cooked_size;
-	      else
-		thissize = sec->_raw_size;
+	      thissize = sec->size;
 
 	    }
 	  else if (info->relocatable
@@ -506,13 +500,8 @@ split_sections (bfd *abfd, struct bfd_link_info *info)
 	      dump ("before snip", cursor, n);
 
 	      shift_offset = p->offset;
-	      if (cursor->_cooked_size != 0)
-		{
-		  n->_cooked_size = cursor->_cooked_size - shift_offset;
-		  cursor->_cooked_size = shift_offset;
-		}
-	      n->_raw_size = cursor->_raw_size - shift_offset;
-	      cursor->_raw_size = shift_offset;
+	      n->size = cursor->size - shift_offset;
+	      cursor->size = shift_offset;
 
 	      vma += shift_offset;
 	      n->lma = n->vma = vma;

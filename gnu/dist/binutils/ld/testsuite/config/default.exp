@@ -1,5 +1,5 @@
 # Basic expect script for LD Regression Tests
-#   Copyright 1993, 1994, 1995, 1997, 1998, 1999
+#   Copyright 1993, 1994, 1995, 1997, 1998, 1999, 2001, 2003
 #   Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
@@ -70,10 +70,28 @@ if {![file isdirectory tmpdir/ld]} then {
 set gcc_ld_flag "-B[pwd]/tmpdir/ld/"
 
 # load the linker path
-load_lib tmpdir/libpath.exp
+if {[file exists tmpdir/libpath.exp]} {
+    load_lib tmpdir/libpath.exp
 
-foreach dir $libpath {
-    set gcc_ld_flag "$gcc_ld_flag -L$dir"
+    foreach dir $libpath {
+	set gcc_ld_flag "$gcc_ld_flag -L$dir"
+    }
+}
+
+# "CC=$(CC_FOR_TARGET)", and other similar parameters.  But, if the
+# user invokes runtest directly (as when testing an installed linker),
+# these flags may not be set.
+if {![info exists CC]} {
+    set CC [find_gcc]
+}
+if {![info exists CFLAGS]} {
+    set CFLAGS "-g -O2"
+}
+if {![info exists CXX]} {
+    set CXX [find_g++]
+}
+if {![info exists CXXFLAGS]} {
+    set CXXFLAGS ""
 }
 
 # The mips64-*-linux-gnu compiler defaults to the N32 ABI after

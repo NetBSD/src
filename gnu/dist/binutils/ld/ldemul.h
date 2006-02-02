@@ -1,5 +1,6 @@
 /* ld-emul.h - Linker emulation header file
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2002, 2003
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001,
+   2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GLD, the Gnu Linker.
@@ -16,6 +17,9 @@
 
 #ifndef LDEMUL_H
 #define LDEMUL_H
+
+/* Forward declaration for ldemul_add_options() and others.  */
+struct option;
 
 extern void ldemul_hll
   (char *);

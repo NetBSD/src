@@ -145,7 +145,6 @@ SECTIONS
   } ${RELOCATING+ > data}
 
   .eeprom ${RELOCATING-0}:
-	${RELOCATING+AT (ADDR (.text) + SIZEOF (.text) + SIZEOF (.data))}
   {
     *(.eeprom*)
     ${RELOCATING+ __eeprom_end = . ; }

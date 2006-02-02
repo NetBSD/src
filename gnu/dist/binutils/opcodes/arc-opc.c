@@ -1,5 +1,5 @@
 /* Opcode table for the ARC.
-   Copyright 1994, 1995, 1997, 1998, 2000, 2001
+   Copyright 1994, 1995, 1997, 1998, 2000, 2001, 2002, 2004
    Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
@@ -938,6 +938,7 @@ insert_base (insn, operand, mods, reg, value, errmsg)
       shimm_p = 1;
       shimm = value;
       ls_operand[LS_BASE] = OP_SHIMM;
+      ls_operand[LS_OFFSET] = OP_SHIMM;
     }
   else
     {

@@ -1,5 +1,5 @@
 /* tc-pdp11.c - pdp11-specific -
-   Copyright 2001, 2002 Free Software Foundation, Inc.
+   Copyright 2001, 2002, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -199,6 +199,7 @@ md_apply_fix3 (fixP, valP, seg)
     case BFD_RELOC_PDP11_DISP_6_PCREL:
       mask = 0x003f;
       shift = 1;
+      val = -val;
       break;
     default:
       BAD_CASE (fixP->fx_r_type);
@@ -365,30 +366,6 @@ parse_expression (char *str, struct pdp11_code *operand)
 
   operand->reloc.pc_rel = 0;
 
-#if 0
-  /* FIXME: what follows is broken badly.  You can't deal with differences
-     in radix conventions this way, because of symbolic constants, constant
-     expressions made up of pieces of differing radix, etc.  The only
-     choices are to change ../expr.c to know about pdp11 conventions, or
-     to accept the fact that gas will use consistent conventions that differ
-     from those of traditional pdp11 assemblers.  For now, I've
-     chosen the latter.   paul koning, 12/23/2001
-  */
-  if (operand->reloc.exp.X_op == O_constant)
-    {
-      if (*str == '.')
-	str++;
-      else
-	{
-	  /* FIXME: buffer overflow! */
-	  char buf[100];
-	  char *end;
-
-	  sprintf (buf, "%ld", operand->reloc.exp.X_add_number);
-	  operand->reloc.exp.X_add_number = strtol (buf, &end, 8);
-	}
-    }
-#endif
   return str;
 }
 
@@ -640,31 +617,7 @@ md_assemble (instruction_string)
   *p = c;
   if (op == 0)
     {
-#if 0
-      op1.error = NULL;
-      op1.additional = FALSE;
-      op1.reloc.type = BFD_RELOC_NONE;
-      op1.code = 0;
-      op1.word = 0;
-      str = parse_expression (str, &op1);
-      if (op1.error)
-	{
-	  as_bad (op1.error);
-	  return;
-	}
-
-      {
-	char *to = frag_more (2);
-
-	md_number_to_chars (to, op1.code, 2);
-	if (insn.reloc.type != BFD_RELOC_NONE)
-	  fix_new_exp (frag_now, to - frag_now->fr_literal, 2,
-		       &insn.reloc.exp, insn.reloc.pc_rel, insn.reloc.type);
-      }
-#else
       as_bad (_("Unknown instruction '%s'"), str);
-#endif
-
       return;
     }
 
@@ -1019,8 +972,8 @@ md_convert_frag (headers, seg, fragP)
 {
 }
 
-const int md_short_jump_size = 2;
-const int md_long_jump_size = 4;
+int md_short_jump_size = 2;
+int md_long_jump_size = 4;
 
 void
 md_create_short_jump (ptr, from_addr, to_addr, frag, to_symbol)
@@ -1346,8 +1299,6 @@ md_parse_option (c, arg)
     default:
       break;
     }
-
-  as_bad ("unrecognized option `-%c%s'", c, arg ? arg : "");
 
   return 0;
 }

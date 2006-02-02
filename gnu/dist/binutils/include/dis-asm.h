@@ -1,6 +1,7 @@
 /* Interface between the opcode library and its callers.
 
-   Copyright 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
    
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -159,6 +160,18 @@ typedef struct disassemble_info {
      Normally one, but some DSPs have byte sizes of 16 or 32 bits.  */
   unsigned int octets_per_byte;
 
+  /* The number of zeroes we want to see at the end of a section before we
+     start skipping them.  */
+  unsigned int skip_zeroes;
+
+  /* The number of zeroes to skip at the end of a section.  If the number
+     of zeroes at the end is between SKIP_ZEROES_AT_END and SKIP_ZEROES,
+     they will be disassembled.  If there are fewer than
+     SKIP_ZEROES_AT_END, they will be skipped.  This is a heuristic
+     attempt to avoid disassembling zeroes inserted by section
+     alignment.  */
+  unsigned int skip_zeroes_at_end;
+
   /* Results from instruction decoders.  Not all decoders yet support
      this information.  This info is set each time an instruction is
      decoded, and is only valid for the last such instruction.
@@ -218,12 +231,15 @@ extern int print_insn_i960		(bfd_vma, disassemble_info *);
 extern int print_insn_ip2k		(bfd_vma, disassemble_info *);
 extern int print_insn_m32r		(bfd_vma, disassemble_info *);
 extern int print_insn_m88k		(bfd_vma, disassemble_info *);
+extern int print_insn_maxq_little	(bfd_vma, disassemble_info *);
+extern int print_insn_maxq_big		(bfd_vma, disassemble_info *);
 extern int print_insn_mcore		(bfd_vma, disassemble_info *);
 extern int print_insn_mmix		(bfd_vma, disassemble_info *);
 extern int print_insn_mn10200		(bfd_vma, disassemble_info *);
 extern int print_insn_mn10300		(bfd_vma, disassemble_info *);
 extern int print_insn_msp430		(bfd_vma, disassemble_info *);
 extern int print_insn_ns32k		(bfd_vma, disassemble_info *);
+extern int print_insn_crx               (bfd_vma, disassemble_info *);
 extern int print_insn_openrisc		(bfd_vma, disassemble_info *);
 extern int print_insn_big_or32		(bfd_vma, disassemble_info *);
 extern int print_insn_little_or32	(bfd_vma, disassemble_info *);

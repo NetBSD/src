@@ -1,6 +1,6 @@
 /* tc-sparc.c -- Assemble for the SPARC
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004
+   1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
@@ -133,7 +133,7 @@ int sparc_cie_data_alignment;
 /* Handle of the OPCODE hash table.  */
 static struct hash_control *op_hash;
 
-static int log2 PARAMS ((int));
+static int mylog2 PARAMS ((int));
 static void s_data1 PARAMS ((void));
 static void s_seg PARAMS ((int));
 static void s_proc PARAMS ((int));
@@ -2231,7 +2231,7 @@ sparc_ip (str, pinsn)
 	      {
 		char *s1;
 		char *op_arg = NULL;
-		expressionS op_exp;
+		static expressionS op_exp;
 		bfd_reloc_code_real_type old_reloc = the_insn.reloc;
 
 		/* Check for %hi, etc.  */
@@ -3012,7 +3012,41 @@ md_apply_fix3 (fixP, valP, segment)
 #ifdef OBJ_ELF
   /* SPARC ELF relocations don't use an addend in the data field.  */
   if (fixP->fx_addsy != NULL)
-    return;
+    {
+      switch (fixP->fx_r_type)
+	{
+	case BFD_RELOC_SPARC_TLS_GD_HI22:
+	case BFD_RELOC_SPARC_TLS_GD_LO10:
+	case BFD_RELOC_SPARC_TLS_GD_ADD:
+	case BFD_RELOC_SPARC_TLS_GD_CALL:
+	case BFD_RELOC_SPARC_TLS_LDM_HI22:
+	case BFD_RELOC_SPARC_TLS_LDM_LO10:
+	case BFD_RELOC_SPARC_TLS_LDM_ADD:
+	case BFD_RELOC_SPARC_TLS_LDM_CALL:
+	case BFD_RELOC_SPARC_TLS_LDO_HIX22:
+	case BFD_RELOC_SPARC_TLS_LDO_LOX10:
+	case BFD_RELOC_SPARC_TLS_LDO_ADD:
+	case BFD_RELOC_SPARC_TLS_IE_HI22:
+	case BFD_RELOC_SPARC_TLS_IE_LO10:
+	case BFD_RELOC_SPARC_TLS_IE_LD:
+	case BFD_RELOC_SPARC_TLS_IE_LDX:
+	case BFD_RELOC_SPARC_TLS_IE_ADD:
+	case BFD_RELOC_SPARC_TLS_LE_HIX22:
+	case BFD_RELOC_SPARC_TLS_LE_LOX10:
+	case BFD_RELOC_SPARC_TLS_DTPMOD32:
+	case BFD_RELOC_SPARC_TLS_DTPMOD64:
+	case BFD_RELOC_SPARC_TLS_DTPOFF32:
+	case BFD_RELOC_SPARC_TLS_DTPOFF64:
+	case BFD_RELOC_SPARC_TLS_TPOFF32:
+	case BFD_RELOC_SPARC_TLS_TPOFF64:
+	  S_SET_THREAD_LOCAL (fixP->fx_addsy);
+
+	default:
+	  break;
+	}
+
+      return;
+    }
 #endif
 
   /* This is a hack.  There should be a better way to
@@ -3603,7 +3637,7 @@ md_pcrel_from (fixP)
    of two.  */
 
 static int
-log2 (value)
+mylog2 (value)
      int value;
 {
   int shift;
@@ -3705,7 +3739,7 @@ s_reserve (ignore)
 
       if (align != 0)
 	{
-	  temp = log2 (align);
+	  temp = mylog2 (align);
 	  if (temp < 0)
 	    {
 	      as_bad (_("alignment not a power of 2"));
@@ -3843,7 +3877,7 @@ s_common (ignore)
       if (temp > max_alignment)
 	{
 	  temp = max_alignment;
-	  as_warn (_("alignment too large; assuming %d"), temp);
+	  as_warn (_("alignment too large; assuming %ld"), (long) temp);
 	}
 #endif
 
@@ -3868,7 +3902,7 @@ s_common (ignore)
 	  if (temp == 0)
 	    align = 0;
 	  else
-	    align = log2 (temp);
+	    align = mylog2 (temp);
 
 	  if (align < 0)
 	    {
@@ -4191,7 +4225,7 @@ sparc_cons_align (nbytes)
   if (sparc_no_align_cons)
     return;
 
-  nalign = log2 (nbytes);
+  nalign = mylog2 (nbytes);
   if (nalign == 0)
     return;
 

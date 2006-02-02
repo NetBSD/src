@@ -1,6 +1,6 @@
 # Test NOCROSSREFS in a linker script.
 # By Ian Lance Taylor, Cygnus Support.
-#   Copyright 2001
+#   Copyright 2000, 2001, 2002, 2003, 2004
 #   Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
@@ -53,6 +53,9 @@ if [istarget sh64*-*-elf] {
     # This is what gcc passes to ld by default.
     set flags "-mshelf32"
 }
+
+# IA64 has both ordered and unordered sections in an input file.
+setup_xfail ia64-*-*
 
 verbose -log "$ld $flags -o tmpdir/cross1 -T $srcdir/$subdir/cross1.t tmpdir/cross1.o tmpdir/cross2.o"
 
