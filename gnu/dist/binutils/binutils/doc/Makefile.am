@@ -38,6 +38,7 @@ NetBSD_DISABLED_config.text:
 	rm -f asconfig.texi
 	rm -f config.texi
 	echo '@set VERSION $(VERSION)' > config.texi
+	echo "@set UPDATED `date "+%B %Y"`" >> config.texi
 
 binutils_TEXI = $(srcdir)/binutils.texi
 
