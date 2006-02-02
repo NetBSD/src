@@ -1,5 +1,6 @@
 /* SuperH SH64-specific support for 32-bit ELF
-   Copyright 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -89,6 +90,7 @@ static void sh64_find_section_for_address
 #define elf_backend_final_write_processing 	sh64_elf_final_write_processing
 #define elf_backend_section_from_shdr		sh64_backend_section_from_shdr
 #define elf_backend_special_sections		sh64_elf_special_sections
+#define elf_backend_section_flags		sh64_elf_section_flags
 
 #define bfd_elf32_new_section_hook		sh64_elf_new_section_hook
 
@@ -105,6 +107,7 @@ static void sh64_find_section_for_address
 
 #define GOT_BIAS (-((long)-32768))
 #define INCLUDE_SHMEDIA
+#define SH_TARGET_ALREADY_DEFINED
 #include "elf32-sh.c"
 
 /* Tack some extra info on struct bfd_elf_section_data.  */
@@ -149,7 +152,6 @@ static bfd_boolean
 sh64_elf_set_mach_from_flags (bfd *abfd)
 {
   flagword flags = elf_elfheader (abfd)->e_flags;
-  asection *cranges;
 
   switch (flags & EF_SH_MACH_MASK)
     {
@@ -164,17 +166,18 @@ sh64_elf_set_mach_from_flags (bfd *abfd)
       return FALSE;
     }
 
-  /* We also need to set SEC_DEBUGGING on an incoming .cranges section.
-     We could have used elf_backend_section_flags if it had given us the
-     section name; the bfd_section member in the header argument is not
-     set at the point of the call.  FIXME: Find out whether that is by
-     undocumented design or a bug.  */
-  cranges = bfd_get_section_by_name (abfd, SH64_CRANGES_SECTION_NAME);
-  if (cranges != NULL
-      && ! bfd_set_section_flags (abfd, cranges,
-				  bfd_get_section_flags (abfd, cranges)
-				  | SEC_DEBUGGING))
+  return TRUE;
+}
+
+static bfd_boolean
+sh64_elf_section_flags (flagword *flags,
+			const Elf_Internal_Shdr *hdr)
+{
+  if (hdr->bfd_section == NULL)
     return FALSE;
+
+  if (strcmp (hdr->bfd_section->name, SH64_CRANGES_SECTION_NAME) == 0)
+    *flags |= SEC_DEBUGGING;
 
   return TRUE;
 }
@@ -423,7 +426,7 @@ sh64_elf_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 	    }
 
 	  h = (struct elf_link_hash_entry *) bh;
-	  h->elf_link_hash_flags &=~ ELF_LINK_NON_ELF;
+	  h->non_elf = 0;
 	  h->type = STT_DATALABEL;
 	}
       else
@@ -586,9 +589,9 @@ shmedia_prepare_reloc (struct bfd_link_info *info, bfd *abfd,
   if (dropped != 0)
     {
       (*_bfd_error_handler)
-	(_("%s: error: unaligned relocation type %d at %08x reloc %08x\n"),
-	 bfd_get_filename (input_section->owner), ELF32_R_TYPE (rel->r_info),
-	 (unsigned)rel->r_offset, (unsigned)relocation);
+	(_("%B: error: unaligned relocation type %d at %08x reloc %p\n"),
+	 input_section->owner, ELF32_R_TYPE (rel->r_info),
+	 (unsigned) rel->r_offset, relocation);
       return FALSE;
     }
 
@@ -604,6 +607,7 @@ sh64_find_section_for_address (bfd *abfd ATTRIBUTE_UNUSED,
 {
   bfd_vma vma;
   bfd_size_type size;
+
   struct sh64_find_section_vma_data *fsec_datap
     = (struct sh64_find_section_vma_data *) data;
 
@@ -619,11 +623,7 @@ sh64_find_section_for_address (bfd *abfd ATTRIBUTE_UNUSED,
   if (fsec_datap->addr < vma)
     return;
 
-  /* FIXME: section->reloc_done isn't set properly; a generic buglet
-     preventing us from using bfd_get_section_size_after_reloc.  */
-  size
-    = section->_cooked_size ? section->_cooked_size : section->_raw_size;
-
+  size = section->size;
   if (fsec_datap->addr >= vma + size)
     return;
 
@@ -654,9 +654,7 @@ sh64_elf_final_write_processing (bfd *abfd,
 	  = sh64_elf_section_data (cranges)->sh64_info->cranges_growth) != 0)
     {
       bfd_vma incoming_cranges_size
-	= ((cranges->_cooked_size != 0
-	    ? cranges->_cooked_size : cranges->_raw_size)
-	   - ld_generated_cranges_size);
+	= cranges->size - ld_generated_cranges_size;
 
       if (! bfd_set_section_contents (abfd, cranges,
 				      cranges->contents
@@ -699,9 +697,7 @@ sh64_elf_final_write_processing (bfd *abfd,
       /* If we have a .cranges section, sort the entries.  */
       if (cranges != NULL)
 	{
-	  bfd_size_type cranges_size
-	    = (cranges->_cooked_size != 0
-	       ? cranges->_cooked_size : cranges->_raw_size);
+	  bfd_size_type cranges_size = cranges->size;
 
 	  /* We know we always have these in memory at this time.  */
 	  BFD_ASSERT (cranges->contents != NULL);

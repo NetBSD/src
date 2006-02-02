@@ -1,5 +1,5 @@
 /* coffgrok.c
-   Copyright 1994, 1995, 1997, 1998, 2000, 2001, 2002, 2003
+   Copyright 1994, 1995, 1997, 1998, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
@@ -156,7 +156,7 @@ do_sections_p1 (struct coff_ofile *head)
       if (strcmp (section->name, ".bss") == 0)
 	head->sections[i].data = 1;
       head->sections[i].address = section->lma;
-      head->sections[i].size = section->_raw_size;
+      head->sections[i].size = bfd_get_section_size (section);
       head->sections[i].number = idx;
       head->sections[i].nrelocs = section->reloc_count;
       head->sections[i].relocs =

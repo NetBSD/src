@@ -122,7 +122,7 @@ aix386_core_file_p (abfd)
     goto loser;
 
   core_regsec (abfd)->flags = SEC_HAS_CONTENTS;
-  core_regsec (abfd)->_raw_size = sizeof (core->cd_regs);
+  core_regsec (abfd)->size = sizeof (core->cd_regs);
   core_regsec (abfd)->vma = (bfd_vma) -1;
 
   /* We'll access the regs afresh in the core file, like any section.  */
@@ -135,7 +135,7 @@ aix386_core_file_p (abfd)
     goto loser;
 
   core_reg2sec (abfd)->flags = SEC_HAS_CONTENTS;
-  core_reg2sec (abfd)->_raw_size = sizeof (core->cd_fpregs);
+  core_reg2sec (abfd)->size = sizeof (core->cd_fpregs);
   core_reg2sec (abfd)->vma = (bfd_vma) -1;
   core_reg2sec (abfd)->filepos =
     (file_ptr) offsetof (struct corehdr, cd_fpregs);
@@ -180,7 +180,7 @@ aix386_core_file_p (abfd)
 	goto loser;
 
       core_section (abfd, n)->flags = flags;
-      core_section (abfd, n)->_raw_size = core->cd_segs[i].cs_len;
+      core_section (abfd, n)->size = core->cd_segs[i].cs_len;
       core_section (abfd, n)->vma       = core->cd_segs[i].cs_address;
       core_section (abfd, n)->filepos   = core->cd_segs[i].cs_offset;
       core_section (abfd, n)->alignment_power = 2;

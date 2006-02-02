@@ -1,6 +1,6 @@
 /* BFD back-end for binary objects.
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
-   Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+   2004 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -99,7 +99,7 @@ binary_object_p (abfd)
     return NULL;
   sec->flags = SEC_ALLOC | SEC_LOAD | SEC_DATA | SEC_HAS_CONTENTS;
   sec->vma = 0;
-  sec->_raw_size = statbuf.st_size;
+  sec->size = statbuf.st_size;
   sec->filepos = 0;
 
   abfd->tdata.any = (PTR) sec;
@@ -200,7 +200,7 @@ binary_canonicalize_symtab (abfd, alocation)
   /* End symbol.  */
   syms[1].the_bfd = abfd;
   syms[1].name = mangle_name (abfd, "end");
-  syms[1].value = sec->_raw_size;
+  syms[1].value = sec->size;
   syms[1].flags = BSF_GLOBAL;
   syms[1].section = sec;
   syms[1].udata.p = NULL;
@@ -208,7 +208,7 @@ binary_canonicalize_symtab (abfd, alocation)
   /* Size symbol.  */
   syms[2].the_bfd = abfd;
   syms[2].name = mangle_name (abfd, "size");
-  syms[2].value = sec->_raw_size;
+  syms[2].value = sec->size;
   syms[2].flags = BSF_GLOBAL;
   syms[2].section = bfd_abs_section_ptr;
   syms[2].udata.p = NULL;
@@ -234,6 +234,7 @@ binary_get_symbol_info (ignore_abfd, symbol, ret)
   bfd_symbol_info (symbol, ret);
 }
 
+#define binary_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define binary_bfd_is_local_label_name bfd_generic_is_local_label_name
 #define binary_get_lineno _bfd_nosymbols_get_lineno
 #define binary_find_nearest_line _bfd_nosymbols_find_nearest_line
@@ -278,7 +279,7 @@ binary_set_section_contents (abfd, sec, data, offset, size)
 	if (((s->flags
 	      & (SEC_HAS_CONTENTS | SEC_LOAD | SEC_ALLOC | SEC_NEVER_LOAD))
 	     == (SEC_HAS_CONTENTS | SEC_LOAD | SEC_ALLOC))
-	    && (s->_raw_size > 0)
+	    && (s->size > 0)
 	    && (! found_low || s->lma < low))
 	  {
 	    low = s->lma;
@@ -294,7 +295,7 @@ binary_set_section_contents (abfd, sec, data, offset, size)
 	  if ((s->flags
 	       & (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_NEVER_LOAD))
 	      != (SEC_HAS_CONTENTS | SEC_ALLOC)
-	      || (s->_raw_size == 0))
+	      || (s->size == 0))
 	    continue;
 
 	  /* If attempting to generate a binary file from a bfd with
@@ -339,7 +340,10 @@ binary_sizeof_headers (abfd, exec)
 #define binary_bfd_relax_section bfd_generic_relax_section
 #define binary_bfd_gc_sections bfd_generic_gc_sections
 #define binary_bfd_merge_sections bfd_generic_merge_sections
+#define binary_bfd_is_group_section bfd_generic_is_group_section
 #define binary_bfd_discard_group bfd_generic_discard_group
+#define binary_section_already_linked \
+  _bfd_generic_section_already_linked
 #define binary_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define binary_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define binary_bfd_link_just_syms _bfd_generic_link_just_syms

@@ -1,6 +1,6 @@
 /* BFD semi-generic back-end for a.out binaries.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
-   2001, 2002, 2003
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+   2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -541,8 +541,8 @@ NAME(aout,some_aout_object_p) (abfd, execp, callback_to_real_object_p)
   if (! NAME(aout,make_sections) (abfd))
     goto error_ret;
 
-  obj_datasec (abfd)->_raw_size = execp->a_data;
-  obj_bsssec (abfd)->_raw_size = execp->a_bss;
+  obj_datasec (abfd)->size = execp->a_data;
+  obj_bsssec (abfd)->size = execp->a_bss;
 
   obj_textsec (abfd)->flags =
     (execp->a_trsize != 0
@@ -568,7 +568,6 @@ NAME(aout,some_aout_object_p) (abfd, execp, callback_to_real_object_p)
   struct exec *execp = exec_hdr (abfd);
 
   obj_textsec (abfd)->size = N_TXTSIZE (*execp);
-  obj_textsec (abfd)->raw_size = N_TXTSIZE (*execp);
   /* Data and bss are already filled in since they're so standard.  */
 
   /* The virtual memory addresses of the sections.  */
@@ -632,7 +631,7 @@ NAME(aout,some_aout_object_p) (abfd, execp, callback_to_real_object_p)
   if (execp->a_entry != 0
       || (execp->a_entry >= obj_textsec (abfd)->vma
 	  && execp->a_entry < (obj_textsec (abfd)->vma
-			       + obj_textsec (abfd)->_raw_size)))
+			       + obj_textsec (abfd)->size)))
     abfd->flags |= EXEC_P;
 #ifdef STAT_FOR_EXEC
   else
@@ -655,14 +654,7 @@ NAME(aout,some_aout_object_p) (abfd, execp, callback_to_real_object_p)
 #endif /* STAT_FOR_EXEC */
 
   if (result)
-    {
-#if 0 /* These should be set correctly anyways.  */
-      abfd->sections = obj_textsec (abfd);
-      obj_textsec (abfd)->next = obj_datasec (abfd);
-      obj_datasec (abfd)->next = obj_bsssec (abfd);
-#endif
-      return result;
-    }
+    return result;
 
  error_ret:
   bfd_release (abfd, rawptr);
@@ -794,6 +786,7 @@ NAME(aout,machine_type) (arch, machine, unknown)
 	case bfd_mach_mips4600:
 	case bfd_mach_mips4650:
 	case bfd_mach_mips8000:
+	case bfd_mach_mips9000:
 	case bfd_mach_mips10000:
 	case bfd_mach_mips12000:
 	case bfd_mach_mips16:
@@ -829,6 +822,10 @@ NAME(aout,machine_type) (arch, machine, unknown)
     case bfd_arch_cris:
       if (machine == 0 || machine == 255)
 	arch_flags = M_CRIS;
+      break;
+
+    case bfd_arch_m88k:
+      *unknown = FALSE;
       break;
 
     default:
@@ -907,16 +904,13 @@ adjust_o_magic (abfd, execp)
   else
     vma = obj_textsec (abfd)->vma;
 
-  pos += obj_textsec (abfd)->_raw_size;
-  vma += obj_textsec (abfd)->_raw_size;
+  pos += obj_textsec (abfd)->size;
+  vma += obj_textsec (abfd)->size;
 
   /* Data.  */
   if (!obj_datasec (abfd)->user_set_vma)
     {
-#if 0	    /* ?? Does alignment in the file image really matter?  */
-      pad = align_power (vma, obj_datasec (abfd)->alignment_power) - vma;
-#endif
-      obj_textsec (abfd)->_raw_size += pad;
+      obj_textsec (abfd)->size += pad;
       pos += pad;
       vma += pad;
       obj_datasec (abfd)->vma = vma;
@@ -924,16 +918,13 @@ adjust_o_magic (abfd, execp)
   else
     vma = obj_datasec (abfd)->vma;
   obj_datasec (abfd)->filepos = pos;
-  pos += obj_datasec (abfd)->_raw_size;
-  vma += obj_datasec (abfd)->_raw_size;
+  pos += obj_datasec (abfd)->size;
+  vma += obj_datasec (abfd)->size;
 
   /* BSS.  */
   if (!obj_bsssec (abfd)->user_set_vma)
     {
-#if 0
-      pad = align_power (vma, obj_bsssec (abfd)->alignment_power) - vma;
-#endif
-      obj_datasec (abfd)->_raw_size += pad;
+      obj_datasec (abfd)->size += pad;
       pos += pad;
       vma += pad;
       obj_bsssec (abfd)->vma = vma;
@@ -946,16 +937,16 @@ adjust_o_magic (abfd, execp)
       pad = obj_bsssec (abfd)->vma - vma;
       if (pad > 0)
 	{
-	  obj_datasec (abfd)->_raw_size += pad;
+	  obj_datasec (abfd)->size += pad;
 	  pos += pad;
 	}
     }
   obj_bsssec (abfd)->filepos = pos;
 
   /* Fix up the exec header.  */
-  execp->a_text = obj_textsec (abfd)->_raw_size;
-  execp->a_data = obj_datasec (abfd)->_raw_size;
-  execp->a_bss = obj_bsssec (abfd)->_raw_size;
+  execp->a_text = obj_textsec (abfd)->size;
+  execp->a_data = obj_datasec (abfd)->size;
+  execp->a_bss = obj_bsssec (abfd)->size;
   N_SET_MAGIC (*execp, OMAGIC);
 }
 
@@ -1005,7 +996,7 @@ adjust_z_magic (abfd, execp)
   /* Find start of data.  */
   if (ztih)
     {
-      text_end = obj_textsec (abfd)->filepos + obj_textsec (abfd)->_raw_size;
+      text_end = obj_textsec (abfd)->filepos + obj_textsec (abfd)->size;
       text_pad += BFD_ALIGN (text_end, adata (abfd).page_size) - text_end;
     }
   else
@@ -1013,18 +1004,18 @@ adjust_z_magic (abfd, execp)
       /* Note that if page_size == zmagic_disk_block_size, then
 	 filepos == page_size, and this case is the same as the ztih
 	 case.  */
-      text_end = obj_textsec (abfd)->_raw_size;
+      text_end = obj_textsec (abfd)->size;
       text_pad += BFD_ALIGN (text_end, adata (abfd).page_size) - text_end;
       text_end += obj_textsec (abfd)->filepos;
     }
-  obj_textsec (abfd)->_raw_size += text_pad;
+  obj_textsec (abfd)->size += text_pad;
   text_end += text_pad;
 
   /* Data.  */
   if (!obj_datasec (abfd)->user_set_vma)
     {
       bfd_vma vma;
-      vma = obj_textsec (abfd)->vma + obj_textsec (abfd)->_raw_size;
+      vma = obj_textsec (abfd)->vma + obj_textsec (abfd)->size;
       obj_datasec (abfd)->vma = BFD_ALIGN (vma, adata (abfd).segment_size);
     }
   if (abdp && abdp->zmagic_mapped_contiguous)
@@ -1032,17 +1023,17 @@ adjust_z_magic (abfd, execp)
       asection * text = obj_textsec (abfd);
       asection * data = obj_datasec (abfd);
 
-      text_pad = data->vma - (text->vma + text->_raw_size);
+      text_pad = data->vma - (text->vma + text->size);
       /* Only pad the text section if the data
 	 section is going to be placed after it.  */
       if (text_pad > 0)
-	text->_raw_size += text_pad;
+	text->size += text_pad;
     }
   obj_datasec (abfd)->filepos = (obj_textsec (abfd)->filepos
-				 + obj_textsec (abfd)->_raw_size);
+				 + obj_textsec (abfd)->size);
 
   /* Fix up exec header while we're at it.  */
-  execp->a_text = obj_textsec (abfd)->_raw_size;
+  execp->a_text = obj_textsec (abfd)->size;
   if (ztih && (!abdp || (abdp && !abdp->exec_header_not_counted)))
     execp->a_text += adata (abfd).exec_bytes_size;
   if (obj_aout_subformat (abfd) == q_magic_format)
@@ -1051,17 +1042,17 @@ adjust_z_magic (abfd, execp)
     N_SET_MAGIC (*execp, ZMAGIC);
 
   /* Spec says data section should be rounded up to page boundary.  */
-  obj_datasec (abfd)->_raw_size
-    = align_power (obj_datasec (abfd)->_raw_size,
+  obj_datasec (abfd)->size
+    = align_power (obj_datasec (abfd)->size,
 		   obj_bsssec (abfd)->alignment_power);
-  execp->a_data = BFD_ALIGN (obj_datasec (abfd)->_raw_size,
+  execp->a_data = BFD_ALIGN (obj_datasec (abfd)->size,
 			     adata (abfd).page_size);
-  data_pad = execp->a_data - obj_datasec (abfd)->_raw_size;
+  data_pad = execp->a_data - obj_datasec (abfd)->size;
 
   /* BSS.  */
   if (!obj_bsssec (abfd)->user_set_vma)
     obj_bsssec (abfd)->vma = (obj_datasec (abfd)->vma
-			      + obj_datasec (abfd)->_raw_size);
+			      + obj_datasec (abfd)->size);
   /* If the BSS immediately follows the data section and extra space
      in the page is left after the data section, fudge data
      in the header so that the bss section looks smaller by that
@@ -1070,11 +1061,11 @@ adjust_z_magic (abfd, execp)
      could have explicitly set the BSS vma to immediately follow
      the data section.)  */
   if (align_power (obj_bsssec (abfd)->vma, obj_bsssec (abfd)->alignment_power)
-      == obj_datasec (abfd)->vma + obj_datasec (abfd)->_raw_size)
-    execp->a_bss = (data_pad > obj_bsssec (abfd)->_raw_size
-		    ? 0 : obj_bsssec (abfd)->_raw_size - data_pad);
+      == obj_datasec (abfd)->vma + obj_datasec (abfd)->size)
+    execp->a_bss = (data_pad > obj_bsssec (abfd)->size
+		    ? 0 : obj_bsssec (abfd)->size - data_pad);
   else
-    execp->a_bss = obj_bsssec (abfd)->_raw_size;
+    execp->a_bss = obj_bsssec (abfd)->size;
 }
 
 static void
@@ -1092,8 +1083,8 @@ adjust_n_magic (abfd, execp)
     obj_textsec (abfd)->vma = vma;
   else
     vma = obj_textsec (abfd)->vma;
-  pos += obj_textsec (abfd)->_raw_size;
-  vma += obj_textsec (abfd)->_raw_size;
+  pos += obj_textsec (abfd)->size;
+  vma += obj_textsec (abfd)->size;
 
   /* Data.  */
   obj_datasec (abfd)->filepos = pos;
@@ -1102,10 +1093,10 @@ adjust_n_magic (abfd, execp)
   vma = obj_datasec (abfd)->vma;
 
   /* Since BSS follows data immediately, see if it needs alignment.  */
-  vma += obj_datasec (abfd)->_raw_size;
+  vma += obj_datasec (abfd)->size;
   pad = align_power (vma, obj_bsssec (abfd)->alignment_power) - vma;
-  obj_datasec (abfd)->_raw_size += pad;
-  pos += obj_datasec (abfd)->_raw_size;
+  obj_datasec (abfd)->size += pad;
+  pos += obj_datasec (abfd)->size;
 
   /* BSS.  */
   if (!obj_bsssec (abfd)->user_set_vma)
@@ -1114,9 +1105,9 @@ adjust_n_magic (abfd, execp)
     vma = obj_bsssec (abfd)->vma;
 
   /* Fix up exec header.  */
-  execp->a_text = obj_textsec (abfd)->_raw_size;
-  execp->a_data = obj_datasec (abfd)->_raw_size;
-  execp->a_bss = obj_bsssec (abfd)->_raw_size;
+  execp->a_text = obj_textsec (abfd)->size;
+  execp->a_data = obj_datasec (abfd)->size;
+  execp->a_bss = obj_bsssec (abfd)->size;
   N_SET_MAGIC (*execp, NMAGIC);
 }
 
@@ -1134,11 +1125,11 @@ NAME(aout,adjust_sizes_and_vmas) (abfd, text_size, text_end)
   if (adata (abfd).magic != undecided_magic)
     return TRUE;
 
-  obj_textsec (abfd)->_raw_size =
-    align_power (obj_textsec (abfd)->_raw_size,
+  obj_textsec (abfd)->size =
+    align_power (obj_textsec (abfd)->size,
 		 obj_textsec (abfd)->alignment_power);
 
-  *text_size = obj_textsec (abfd)->_raw_size;
+  *text_size = obj_textsec (abfd)->size;
   /* Rule (heuristic) for when to pad to a new page.  Note that there
      are (at least) two ways demand-paged (ZMAGIC) files have been
      handled.  Most Berkeley-based systems start the text segment at
@@ -1176,11 +1167,11 @@ NAME(aout,adjust_sizes_and_vmas) (abfd, text_size, text_end)
 		}
 	      str;
 	    }),
-	   obj_textsec (abfd)->vma, obj_textsec (abfd)->_raw_size,
+	   obj_textsec (abfd)->vma, obj_textsec (abfd)->size,
 	   	obj_textsec (abfd)->alignment_power,
-	   obj_datasec (abfd)->vma, obj_datasec (abfd)->_raw_size,
+	   obj_datasec (abfd)->vma, obj_datasec (abfd)->size,
 	   	obj_datasec (abfd)->alignment_power,
-	   obj_bsssec (abfd)->vma, obj_bsssec (abfd)->_raw_size,
+	   obj_bsssec (abfd)->vma, obj_bsssec (abfd)->size,
 	   	obj_bsssec (abfd)->alignment_power);
 #endif
 #endif
@@ -1202,11 +1193,11 @@ NAME(aout,adjust_sizes_and_vmas) (abfd, text_size, text_end)
 
 #ifdef BFD_AOUT_DEBUG
   fprintf (stderr, "       text=<%x,%x,%x> data=<%x,%x,%x> bss=<%x,%x>\n",
-	   obj_textsec (abfd)->vma, obj_textsec (abfd)->_raw_size,
+	   obj_textsec (abfd)->vma, obj_textsec (abfd)->size,
 	   	obj_textsec (abfd)->filepos,
-	   obj_datasec (abfd)->vma, obj_datasec (abfd)->_raw_size,
+	   obj_datasec (abfd)->vma, obj_datasec (abfd)->size,
 	   	obj_datasec (abfd)->filepos,
-	   obj_bsssec (abfd)->vma, obj_bsssec (abfd)->_raw_size);
+	   obj_bsssec (abfd)->vma, obj_bsssec (abfd)->size);
 #endif
 
   return TRUE;
@@ -1505,88 +1496,6 @@ translate_from_native_sym_flags (abfd, cache_ptr)
 	/* This code is no longer needed.  It used to be used to make
            the linker handle set symbols, but they are now handled in
            the add_symbols routine instead.  */
-#if 0
-	asection *section;
-	arelent_chain *reloc;
-	asection *into_section;
-	bfd_size_type amt;
-
-	/* This is a set symbol.  The name of the symbol is the name
-	   of the set (e.g., __CTOR_LIST__).  The value of the symbol
-	   is the value to add to the set.  We create a section with
-	   the same name as the symbol, and add a reloc to insert the
-	   appropriate value into the section.
-
-	   This action is actually obsolete; it used to make the
-	   linker do the right thing, but the linker no longer uses
-	   this function.  */
-
-	section = bfd_get_section_by_name (abfd, cache_ptr->symbol.name);
-	if (section == NULL)
-	  {
-	    char *copy;
-
-	    amt = strlen (cache_ptr->symbol.name) + 1;
-	    copy = bfd_alloc (abfd, amt);
-	    if (copy == NULL)
-	      return FALSE;
-
-	    strcpy (copy, cache_ptr->symbol.name);
-	    section = bfd_make_section (abfd, copy);
-	    if (section == NULL)
-	      return FALSE;
-	  }
-
-	amt = sizeof (arelent_chain);
-	reloc = (arelent_chain *) bfd_alloc (abfd, amt);
-	if (reloc == NULL)
-	  return FALSE;
-
-	/* Build a relocation entry for the constructor.  */
-	switch (cache_ptr->type & N_TYPE)
-	  {
-	  case N_SETA:
-	    into_section = bfd_abs_section_ptr;
-	    cache_ptr->type = N_ABS;
-	    break;
-	  case N_SETT:
-	    into_section = obj_textsec (abfd);
-	    cache_ptr->type = N_TEXT;
-	    break;
-	  case N_SETD:
-	    into_section = obj_datasec (abfd);
-	    cache_ptr->type = N_DATA;
-	    break;
-	  case N_SETB:
-	    into_section = obj_bsssec (abfd);
-	    cache_ptr->type = N_BSS;
-	    break;
-	  }
-
-	/* Build a relocation pointing into the constructor section
-	   pointing at the symbol in the set vector specified.  */
-	reloc->relent.addend = cache_ptr->symbol.value;
-	cache_ptr->symbol.section = into_section;
-	reloc->relent.sym_ptr_ptr = into_section->symbol_ptr_ptr;
-
-	/* We modify the symbol to belong to a section depending upon
-	   the name of the symbol, and add to the size of the section
-	   to contain a pointer to the symbol. Build a reloc entry to
-	   relocate to this symbol attached to this section.  */
-	section->flags = SEC_CONSTRUCTOR | SEC_RELOC;
-
-	section->reloc_count++;
-	section->alignment_power = 2;
-
-	reloc->next = section->constructor_chain;
-	section->constructor_chain = reloc;
-	reloc->relent.address = section->_raw_size;
-	section->_raw_size += BYTES_IN_WORD;
-
-	reloc->relent.howto = CTOR_TABLE_RELOC_HOWTO (abfd);
-
-#endif /* 0 */
-
 	switch (cache_ptr->type & N_TYPE)
 	  {
 	  case N_SETA:
@@ -2072,11 +1981,6 @@ NAME(aout,swap_std_reloc_out) (abfd, g, natptr)
   r_baserel = (g->howto->type & 8) != 0;
   r_jmptable = (g->howto->type & 16) != 0;
   r_relative = (g->howto->type & 32) != 0;
-
-#if 0
-  /* For a standard reloc, the addend is in the object file.  */
-  r_addend = g->addend + (*(g->sym_ptr_ptr))->section->output_section->vma;
-#endif
 
   /* Name was clobbered by aout_write_syms to be symbol index.  */
 
@@ -2844,7 +2748,7 @@ NAME(aout,find_nearest_line)
 	      /* Look ahead to next symbol to check if that too is an N_SO.  */
 	      p++;
 	      if (*p == NULL)
-		break;
+		goto done;
 	      q = (aout_symbol_type *) (*p);
 	      if (q->type != (int)N_SO)
 		goto next;
@@ -3526,8 +3430,9 @@ aout_link_add_symbols (abfd, info)
 	  break;
 	case N_WARNING:
 	  /* A warning symbol.  The next symbol is the one to warn
-	     about.  */
-	  BFD_ASSERT (p + 1 < pend);
+	     about.  If there is no next symbol, just look away.  */
+	  if (p + 1 >= pend)
+	    return TRUE;
 	  ++p;
 	  string = name;
 	  name = strings + GET_WORD (abfd, p->e_strx);
@@ -3784,10 +3689,10 @@ NAME(aout,final_link) (abfd, info, callback)
 
       if (bfd_get_flavour (sub) == bfd_target_aout_flavour)
 	{
-	  sz = bfd_section_size (sub, obj_textsec (sub));
+	  sz = obj_textsec (sub)->size;
 	  if (sz > max_contents_size)
 	    max_contents_size = sz;
-	  sz = bfd_section_size (sub, obj_datasec (sub));
+	  sz = obj_datasec (sub)->size;
 	  if (sz > max_contents_size)
 	    max_contents_size = sz;
 
@@ -4742,7 +4647,7 @@ aout_link_input_section (finfo, input_bfd, input_section, reloff_ptr,
   PTR relocs;
 
   /* Get the section contents.  */
-  input_size = bfd_section_size (input_bfd, input_section);
+  input_size = input_section->size;
   if (! bfd_get_section_contents (input_bfd, input_section,
 				  (PTR) finfo->contents,
 				  (file_ptr) 0, input_size))
@@ -5155,7 +5060,7 @@ aout_link_input_section_std (finfo, input_bfd, input_section, relocs,
 		const char *name;
 
 		if (h != NULL)
-		  name = h->root.root.string;
+		  name = NULL;
 		else if (r_extern)
 		  name = strings + GET_WORD (input_bfd,
 					     syms[r_index].e_strx);
@@ -5167,8 +5072,9 @@ aout_link_input_section_std (finfo, input_bfd, input_section, relocs,
 		    name = bfd_section_name (input_bfd, s);
 		  }
 		if (! ((*finfo->info->callbacks->reloc_overflow)
-		       (finfo->info, name, howto->name,
-			(bfd_vma) 0, input_bfd, input_section, r_addr)))
+		       (finfo->info, (h ? &h->root : NULL), name,
+			howto->name, (bfd_vma) 0, input_bfd,
+			input_section, r_addr)))
 		  return FALSE;
 	      }
 	      break;
@@ -5566,7 +5472,7 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
 		    const char *name;
 
 		    if (h != NULL)
-		      name = h->root.root.string;
+		      name = NULL;
 		    else if (r_extern
 			     || r_type == (unsigned int) RELOC_BASE10
 			     || r_type == (unsigned int) RELOC_BASE13
@@ -5581,7 +5487,8 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
 			name = bfd_section_name (input_bfd, s);
 		      }
 		    if (! ((*finfo->info->callbacks->reloc_overflow)
-			   (finfo->info, name, howto_table_ext[r_type].name,
+			   (finfo->info, (h ? &h->root : NULL), name,
+			    howto_table_ext[r_type].name,
 			    r_addend, input_bfd, input_section, r_addr)))
 		      return FALSE;
 		  }
@@ -5750,7 +5657,7 @@ aout_link_reloc_link_order (finfo, o, p)
 	      abort ();
 	    case bfd_reloc_overflow:
 	      if (! ((*finfo->info->callbacks->reloc_overflow)
-		     (finfo->info,
+		     (finfo->info, NULL,
 		      (p->type == bfd_section_reloc_link_order
 		       ? bfd_section_name (finfo->output_bfd,
 					   pr->u.section)

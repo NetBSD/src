@@ -1,6 +1,6 @@
 /* objdump.c -- dump information about an object file.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003
+   2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -102,6 +102,7 @@ static bfd_vma start_address = (bfd_vma) -1; /* --start-address */
 static bfd_vma stop_address = (bfd_vma) -1;  /* --stop-address */
 static int dump_debugging;		/* --debugging */
 static int dump_debugging_tags;		/* --debugging-tags */
+static int dump_special_syms = 0;	/* --special-syms */
 static bfd_vma adjust_section_vma = 0;	/* --adjust-vma */
 static int file_start_context = 0;      /* --file-start-context */
 
@@ -127,6 +128,9 @@ struct objdump_disasm_info
   arelent **         dynrelbuf;
   long               dynrelcount;
   disassembler_ftype disassemble_fn;
+#ifdef DISASSEMBLER_NEEDS_RELOCS
+  arelent *          reloc;
+#endif
 };
 
 /* Architecture to disassemble for, or default if NULL.  */
@@ -152,6 +156,10 @@ static long sorted_symcount = 0;
 
 /* The dynamic symbol table.  */
 static asymbol **dynsyms;
+
+/* The synthetic symbol table.  */
+static asymbol *synthsyms;
+static long synthcount = 0;
 
 /* Number of symbols in `dynsyms'.  */
 static long dynsymcount = 0;
@@ -213,6 +221,7 @@ usage (FILE *stream, int status)
       --prefix-addresses         Print complete address alongside disassembly\n\
       --[no-]show-raw-insn       Display hex alongside symbolic disassembly\n\
       --adjust-vma=OFFSET        Add OFFSET to all displayed section addresses\n\
+      --special-syms             Include special symbols in symbol dumps\n\
 \n"));
       list_supported_targets (program_name, stream);
       list_supported_architectures (program_name, stream);
@@ -264,6 +273,7 @@ static struct option long_options[]=
   {"section-headers", no_argument, NULL, 'h'},
   {"show-raw-insn", no_argument, &show_raw_insn, 1},
   {"source", no_argument, NULL, 'S'},
+  {"special-syms", no_argument, &dump_special_syms, 1},
   {"include", required_argument, NULL, 'I'},
   {"stabs", no_argument, NULL, 'G'},
   {"start-address", required_argument, NULL, OPTION_START_ADDRESS},
@@ -283,7 +293,7 @@ nonfatal (const char *msg)
 }
 
 static void
-dump_section_header (bfd *abfd ATTRIBUTE_UNUSED, asection *section,
+dump_section_header (bfd *abfd, asection *section,
 		     void *ignored ATTRIBUTE_UNUSED)
 {
   char *comma = "";
@@ -317,16 +327,20 @@ dump_section_header (bfd *abfd ATTRIBUTE_UNUSED, asection *section,
   PF (SEC_NEVER_LOAD, "NEVER_LOAD");
   PF (SEC_EXCLUDE, "EXCLUDE");
   PF (SEC_SORT_ENTRIES, "SORT_ENTRIES");
-  PF (SEC_BLOCK, "BLOCK");
-  PF (SEC_CLINK, "CLINK");
+  if (bfd_get_arch (abfd) == bfd_arch_tic54x)
+    {
+      PF (SEC_TIC54X_BLOCK, "BLOCK");
+      PF (SEC_TIC54X_CLINK, "CLINK");
+    }
   PF (SEC_SMALL_DATA, "SMALL_DATA");
-  PF (SEC_SHARED, "SHARED");
-  PF (SEC_ARCH_BIT_0, "ARCH_BIT_0");
+  if (bfd_get_flavour (abfd) == bfd_target_coff_flavour)
+    PF (SEC_COFF_SHARED, "SHARED");
   PF (SEC_THREAD_LOCAL, "THREAD_LOCAL");
 
   if ((section->flags & SEC_LINK_ONCE) != 0)
     {
       const char *ls;
+      struct coff_comdat_info *comdat;
 
       switch (section->flags & SEC_LINK_DUPLICATES)
 	{
@@ -347,9 +361,9 @@ dump_section_header (bfd *abfd ATTRIBUTE_UNUSED, asection *section,
 	}
       printf ("%s%s", comma, ls);
 
-      if (section->comdat != NULL)
-	printf (" (COMDAT %s %ld)", section->comdat->name,
-		section->comdat->symbol);
+      comdat = bfd_coff_get_comdat_section (abfd, section);
+      if (comdat != NULL)
+	printf (" (COMDAT %s %ld)", comdat->name, comdat->symbol);
 
       comma = ", ";
     }
@@ -450,7 +464,7 @@ remove_useless_symbols (asymbol **symbols, long count)
 
       if (sym->name == NULL || sym->name[0] == '\0')
 	continue;
-      if (sym->flags & (BSF_DEBUGGING))
+      if (sym->flags & (BSF_DEBUGGING | BSF_SECTION_SYM))
 	continue;
       if (bfd_is_und_section (sym->section)
 	  || bfd_is_com_section (sym->section))
@@ -841,6 +855,9 @@ objdump_print_addr (bfd_vma vma,
 {
   struct objdump_disasm_info *aux;
   asymbol *sym;
+#ifdef DISASSEMBLER_NEEDS_RELOCS
+  bfd_boolean skip_find = FALSE;
+#endif
 
   if (sorted_symcount < 1)
     {
@@ -850,7 +867,25 @@ objdump_print_addr (bfd_vma vma,
     }
 
   aux = (struct objdump_disasm_info *) info->application_data;
-  sym = find_symbol_for_address (vma, info, NULL);
+
+#ifdef DISASSEMBLER_NEEDS_RELOCS
+  if (aux->reloc != NULL
+      && aux->reloc->sym_ptr_ptr != NULL
+      && * aux->reloc->sym_ptr_ptr != NULL)
+    {
+      sym = * aux->reloc->sym_ptr_ptr;
+
+      /* Adjust the vma to the reloc.  */
+      vma += bfd_asymbol_value (sym);
+
+      if (bfd_is_und_section (bfd_get_section (sym)))
+	skip_find = TRUE;
+    }
+
+  if (!skip_find)
+#endif
+    sym = find_symbol_for_address (vma, info, NULL);
+
   objdump_print_addr_with_sym (aux->abfd, aux->sec, sym, vma, info,
 			       skip_zeroes);
 }
@@ -1142,8 +1177,8 @@ show_line (bfd *abfd, asection *section, bfd_vma addr_offset)
 typedef struct
 {
   char *buffer;
-  size_t size;
-  char *current;
+  size_t pos;
+  size_t alloc;
 } SFILE;
 
 /* sprintf to a "stream".  */
@@ -1151,39 +1186,25 @@ typedef struct
 static int
 objdump_sprintf (SFILE *f, const char *format, ...)
 {
-  char *buf;
   size_t n;
   va_list args;
 
-  va_start (args, format);
-
-  vasprintf (&buf, format, args);
-
-  if (buf == NULL)
+  while (1)
     {
+      size_t space = f->alloc - f->pos;
+  
+      va_start (args, format);
+      n = vsnprintf (f->buffer + f->pos, space, format, args);
       va_end (args);
-      fatal (_("Out of virtual memory"));
+
+      if (space > n)
+	break;
+      
+      f->alloc = (f->alloc + n) * 2;
+      f->buffer = xrealloc (f->buffer, f->alloc);
     }
-
-  n = strlen (buf);
-
-  while ((size_t) ((f->buffer + f->size) - f->current) < n + 1)
-    {
-      size_t curroff;
-
-      curroff = f->current - f->buffer;
-      f->size *= 2;
-      f->buffer = xrealloc (f->buffer, f->size);
-      f->current = f->buffer + curroff;
-    }
-
-  memcpy (f->current, buf, n);
-  f->current += n;
-  f->current[0] = '\0';
-
-  free (buf);
-
-  va_end (args);
+  f->pos += n;
+  
   return n;
 }
 
@@ -1208,9 +1229,7 @@ process_section_p (asection * section)
 /* The number of zeroes we want to see before we start skipping them.
    The number is arbitrarily chosen.  */
 
-#ifndef SKIP_ZEROES
-#define SKIP_ZEROES (8)
-#endif
+#define DEFAULT_SKIP_ZEROES 8
 
 /* The number of zeroes to skip at the end of a section.  If the
    number of zeroes at the end is between SKIP_ZEROES_AT_END and
@@ -1219,9 +1238,7 @@ process_section_p (asection * section)
    attempt to avoid disassembling zeroes inserted by section
    alignment.  */
 
-#ifndef SKIP_ZEROES_AT_END
-#define SKIP_ZEROES_AT_END (3)
-#endif
+#define DEFAULT_SKIP_ZEROES_AT_END 3
 
 /* Disassemble some data in memory between given values.  */
 
@@ -1242,11 +1259,19 @@ disassemble_bytes (struct disassemble_info * info,
   bfd_boolean done_dot;
   int skip_addr_chars;
   bfd_vma addr_offset;
-  int opb = info->octets_per_byte;
+  unsigned int opb = info->octets_per_byte;
+  unsigned int skip_zeroes = info->skip_zeroes;
+  unsigned int skip_zeroes_at_end = info->skip_zeroes_at_end;
+  int octets = opb;
+  SFILE sfile;
 
   aux = (struct objdump_disasm_info *) info->application_data;
   section = aux->sec;
 
+  sfile.alloc = 120;
+  sfile.buffer = xmalloc (sfile.alloc);
+  sfile.pos = 0;
+  
   if (insns)
     octets_per_line = 4;
   else
@@ -1282,8 +1307,14 @@ disassemble_bytes (struct disassemble_info * info,
   while (addr_offset < stop_offset)
     {
       bfd_vma z;
-      int octets = 0;
       bfd_boolean need_nl = FALSE;
+#ifdef DISASSEMBLER_NEEDS_RELOCS
+      int previous_octets;
+
+      /* Remember the length of the previous instruction.  */
+      previous_octets = octets;
+#endif
+      octets = 0;
 
       /* If we see more than SKIP_ZEROES octets of zeroes, we just
 	 print `...'.  */
@@ -1293,9 +1324,9 @@ disassemble_bytes (struct disassemble_info * info,
       if (! disassemble_zeroes
 	  && (info->insn_info_valid == 0
 	      || info->branch_delay_insns == 0)
-	  && (z - addr_offset * opb >= SKIP_ZEROES
+	  && (z - addr_offset * opb >= skip_zeroes
 	      || (z == stop_offset * opb &&
-		  z - addr_offset * opb < SKIP_ZEROES_AT_END)))
+		  z - addr_offset * opb < skip_zeroes_at_end)))
 	{
 	  printf ("\t...\n");
 
@@ -1311,7 +1342,6 @@ disassemble_bytes (struct disassemble_info * info,
       else
 	{
 	  char buf[50];
-	  SFILE sfile;
 	  int bpc = 0;
 	  int pb = 0;
 
@@ -1344,26 +1374,45 @@ disassemble_bytes (struct disassemble_info * info,
 
 	  if (insns)
 	    {
-	      sfile.size = 120;
-	      sfile.buffer = xmalloc (sfile.size);
-	      sfile.current = sfile.buffer;
+	      sfile.pos = 0;
 	      info->fprintf_func = (fprintf_ftype) objdump_sprintf;
 	      info->stream = (FILE *) &sfile;
 	      info->bytes_per_line = 0;
 	      info->bytes_per_chunk = 0;
+	      info->flags = 0;
 
 #ifdef DISASSEMBLER_NEEDS_RELOCS
-	      /* FIXME: This is wrong.  It tests the number of octets
-		 in the last instruction, not the current one.  */
-	      if (*relppp < relppend
-		  && (**relppp)->address >= rel_offset + addr_offset
-		  && ((**relppp)->address
-		      < rel_offset + addr_offset + octets / opb))
-		info->flags = INSN_HAS_RELOC;
-	      else
-#endif
-		info->flags = 0;
+	      if (*relppp < relppend)
+		{
+		  bfd_signed_vma distance_to_rel;
 
+		  distance_to_rel = (**relppp)->address
+		    - (rel_offset + addr_offset);
+
+		  /* Check to see if the current reloc is associated with
+		     the instruction that we are about to disassemble.  */
+		  if (distance_to_rel == 0
+		      /* FIXME: This is wrong.  We are trying to catch
+			 relocs that are addressed part way through the
+			 current instruction, as might happen with a packed
+			 VLIW instruction.  Unfortunately we do not know the
+			 length of the current instruction since we have not
+			 disassembled it yet.  Instead we take a guess based
+			 upon the length of the previous instruction.  The
+			 proper solution is to have a new target-specific
+			 disassembler function which just returns the length
+			 of an instruction at a given address without trying
+			 to display its disassembly. */
+		      || (distance_to_rel > 0
+			  && distance_to_rel < (bfd_signed_vma) (previous_octets/ opb)))
+		    {
+		      info->flags = INSN_HAS_RELOC;
+		      aux->reloc = **relppp;
+		    }
+		  else
+		    aux->reloc = NULL;
+		}
+#endif
 	      octets = (*disassemble_fn) (section->vma + addr_offset, info);
 	      info->fprintf_func = (fprintf_ftype) fprintf;
 	      info->stream = stdout;
@@ -1371,9 +1420,8 @@ disassemble_bytes (struct disassemble_info * info,
 		octets_per_line = info->bytes_per_line;
 	      if (octets < 0)
 		{
-		  if (sfile.current != sfile.buffer)
+		  if (sfile.pos)
 		    printf ("%s\n", sfile.buffer);
-		  free (sfile.buffer);
 		  break;
 		}
 	    }
@@ -1415,6 +1463,7 @@ disassemble_bytes (struct disassemble_info * info,
 	      for (j = addr_offset * opb; j < addr_offset * opb + pb; j += bpc)
 		{
 		  int k;
+
 		  if (bpc > 1 && info->display_endian == BFD_ENDIAN_LITTLE)
 		    {
 		      for (k = bpc - 1; k >= 0; k--)
@@ -1447,11 +1496,8 @@ disassemble_bytes (struct disassemble_info * info,
 
 	  if (! insns)
 	    printf ("%s", buf);
-	  else
-	    {
-	      printf ("%s", sfile.buffer);
-	      free (sfile.buffer);
-	    }
+	  else if (sfile.pos)
+	    printf ("%s", sfile.buffer);
 
 	  if (prefix_addresses
 	      ? show_raw_insn > 0
@@ -1558,6 +1604,8 @@ disassemble_bytes (struct disassemble_info * info,
 
       addr_offset += octets / opb;
     }
+
+  free (sfile.buffer);
 }
 
 static void
@@ -1582,13 +1630,14 @@ disassemble_section (bfd *abfd, asection *section, void *info)
      code are not normally disassembled.  */
   if (! disassemble_all
       && only == NULL
-      && (section->flags & SEC_CODE) == 0)
+      && ((section->flags & (SEC_CODE | SEC_HAS_CONTENTS))
+	  != (SEC_CODE | SEC_HAS_CONTENTS)))
     return;
 
   if (! process_section_p (section))
     return;
 
-  datasize = bfd_get_section_size_before_reloc (section);
+  datasize = bfd_get_section_size (section);
   if (datasize == 0)
     return;
 
@@ -1789,6 +1838,7 @@ disassemble_data (bfd *abfd)
 {
   struct disassemble_info disasm_info;
   struct objdump_disasm_info aux;
+  long i;
 
   print_files = NULL;
   prev_functionname = NULL;
@@ -1796,10 +1846,18 @@ disassemble_data (bfd *abfd)
 
   /* We make a copy of syms to sort.  We don't want to sort syms
      because that will screw up the relocs.  */
-  sorted_syms = xmalloc (symcount * sizeof (asymbol *));
-  memcpy (sorted_syms, syms, symcount * sizeof (asymbol *));
+  sorted_symcount = symcount ? symcount : dynsymcount;
+  sorted_syms = xmalloc ((sorted_symcount + synthcount) * sizeof (asymbol *));
+  memcpy (sorted_syms, symcount ? syms : dynsyms,
+	  sorted_symcount * sizeof (asymbol *));
 
-  sorted_symcount = remove_useless_symbols (sorted_syms, symcount);
+  sorted_symcount = remove_useless_symbols (sorted_syms, sorted_symcount);
+
+  for (i = 0; i < synthcount; ++i)
+    {
+      sorted_syms[sorted_symcount] = synthsyms + i;
+      ++sorted_symcount;
+    }
 
   /* Sort the symbols into section and symbol order.  */
   qsort (sorted_syms, sorted_symcount, sizeof (asymbol *), compare_symbols);
@@ -1811,6 +1869,9 @@ disassemble_data (bfd *abfd)
   aux.require_sec = FALSE;
   aux.dynrelbuf = NULL;
   aux.dynrelcount = 0;
+#ifdef DISASSEMBLER_NEEDS_RELOCS
+  aux.reloc = NULL;
+#endif
 
   disasm_info.print_address_func = objdump_print_address;
   disasm_info.symbol_at_address_func = objdump_symbol_at_address;
@@ -1850,6 +1911,8 @@ disassemble_data (bfd *abfd)
   disasm_info.mach = bfd_get_mach (abfd);
   disasm_info.disassembler_options = disassembler_options;
   disasm_info.octets_per_byte = bfd_octets_per_byte (abfd);
+  disasm_info.skip_zeroes = DEFAULT_SKIP_ZEROES;
+  disasm_info.skip_zeroes_at_end = DEFAULT_SKIP_ZEROES_AT_END;
 
   if (bfd_big_endian (abfd))
     disasm_info.display_endian = disasm_info.endian = BFD_ENDIAN_BIG;
@@ -2048,7 +2111,8 @@ find_stabs_section (bfd *abfd, asection *section, void *names)
       
       if (strtab)
 	{
-	  stabs = read_section_stabs (abfd, section->name, &stab_size);
+	  stabs = (bfd_byte *) read_section_stabs (abfd, section->name,
+						   &stab_size);
 	  if (stabs)
 	    print_section_stabs (abfd, section->name, &sought->string_offset);
 	}
@@ -2275,13 +2339,15 @@ dump_symbols (bfd *abfd ATTRIBUTE_UNUSED, bfd_boolean dynamic)
       bfd *cur_bfd;
 
       if (*current == NULL)
-	printf (_("no information for the %ld'th symbol"), count);
+	printf (_("no information for symbol number %ld\n"), count);
 
       else if ((cur_bfd = bfd_asymbol_bfd (*current)) == NULL)
-	printf (_("could not determine the type of the %ld'th symbol"),
+	printf (_("could not determine the type of symbol number %ld\n"),
 		count);
 
-      else
+      else if (process_section_p ((* current)->section)
+	       && (dump_special_syms
+		   || !bfd_is_target_special_symbol (cur_bfd, *current)))
 	{
 	  const char *name = (*current)->name;
 
@@ -2302,9 +2368,8 @@ dump_symbols (bfd *abfd ATTRIBUTE_UNUSED, bfd_boolean dynamic)
 	  else
 	    bfd_print_symbol (cur_bfd, stdout, *current,
 			      bfd_print_symbol_all);
+	  printf ("\n");
 	}
-
-      printf ("\n");
       current++;
     }
   printf ("\n\n");
@@ -2559,8 +2624,16 @@ dump_bfd (bfd *abfd)
 
   if (dump_symtab || dump_reloc_info || disassemble || dump_debugging)
     syms = slurp_symtab (abfd);
-  if (dump_dynamic_symtab || dump_dynamic_reloc_info)
+  if (dump_dynamic_symtab || dump_dynamic_reloc_info
+      || (disassemble && bfd_get_dynamic_symtab_upper_bound (abfd) > 0))
     dynsyms = slurp_dynamic_symtab (abfd);
+  if (disassemble)
+    {
+      synthcount = bfd_get_synthetic_symtab (abfd, symcount, syms,
+					     dynsymcount, dynsyms, &synthsyms);
+      if (synthcount < 0)
+	synthcount = 0;
+    }
 
   if (dump_symtab)
     dump_symbols (abfd, FALSE);
@@ -2605,6 +2678,16 @@ dump_bfd (bfd *abfd)
       free (dynsyms);
       dynsyms = NULL;
     }
+
+  if (synthsyms)
+    {
+      free (synthsyms);
+      synthsyms = NULL;
+    }
+
+  symcount = 0;
+  dynsymcount = 0;
+  synthcount = 0;
 }
 
 static void

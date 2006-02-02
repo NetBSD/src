@@ -26,7 +26,7 @@
 
 /* arparse.y - Stange script language parser */
 
-/*   Copyright 1992, 1993, 1995, 1997, 1999, 2003
+/*   Copyright 1992, 1993, 1995, 1997, 1999, 2002, 2003
      Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
@@ -246,7 +246,7 @@ static const short yycheck[] =
       41,     5,     5,     0,     0,    -1,    36
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/share/bison-1.35/bison.simple"
+#line 3 "/usr/share/bison/bison.simple"
 
 /* Skeleton output parser for bison,
 
@@ -534,6 +534,7 @@ yystrlen (yystr)
 
 # ifndef yystpcpy
 #  if defined (__GLIBC__) && defined (_STRING_H) && defined (_GNU_SOURCE)
+#   include <string.h>
 #   define yystpcpy stpcpy
 #  else
 /* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
@@ -559,7 +560,7 @@ yystpcpy (yydest, yysrc)
 # endif
 #endif
 
-#line 315 "/usr/share/bison-1.35/bison.simple"
+#line 316 "/usr/share/bison/bison.simple"
 
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
@@ -1046,7 +1047,7 @@ case 41:
     break;
 }
 
-#line 705 "/usr/share/bison-1.35/bison.simple"
+#line 706 "/usr/share/bison/bison.simple"
 
 
   yyvsp -= yylen;
