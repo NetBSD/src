@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.19 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: ad.sh3,v 1.20 2006/02/02 08:17:35 skrll Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh3				comp-c-include
 ./usr/include/sh3/ansi.h			comp-c-include
@@ -6,6 +6,7 @@
 ./usr/include/sh3/asm.h				comp-c-include
 ./usr/include/sh3/bswap.h			comp-c-include
 ./usr/include/sh3/bus.h				comp-c-include
+./usr/include/sh3/byte_swap.h			comp-c-include
 ./usr/include/sh3/cdefs.h			comp-c-include
 ./usr/include/sh3/coff_machdep.h		comp-c-include
 ./usr/include/sh3/cpu.h				comp-c-include
