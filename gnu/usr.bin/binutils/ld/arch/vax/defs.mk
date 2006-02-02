@@ -4,7 +4,7 @@
 G_DEFS=-DHAVE_CONFIG_H -I. -I${GNUHOSTDIST}/ld -I.
 G_EMUL=elf32vax
 G_EMULATION_OFILES=eelf32vax.o evaxnbsd.o
-G_INCLUDES=-D_GNU_SOURCE -I. -I${GNUHOSTDIST}/ld -I../bfd -I${GNUHOSTDIST}/ld/../bfd -I${GNUHOSTDIST}/ld/../include -I${GNUHOSTDIST}/ld/../intl -I../intl  -B/var/obj/vax/usr/src/destdir.vax/usr/lib/ -DLOCALEDIR="\"/usr/local/share/locale\""
+G_INCLUDES=-D_GNU_SOURCE -I. -I${GNUHOSTDIST}/ld -I../bfd -I${GNUHOSTDIST}/ld/../bfd -I${GNUHOSTDIST}/ld/../include -I${GNUHOSTDIST}/ld/../intl -I../intl  -B/usr/obj/vax/home/nick/work/netbsd/src-binutils/destdir.vax/usr/lib/ -DLOCALEDIR="\"/usr/local/share/locale\""
 G_OFILES=ldgram.o ldlex.o lexsup.o ldlang.o mri.o ldctor.o ldmain.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o eelf32vax.o evaxnbsd.o 
 G_STRINGIFY=astring.sed
 G_TEXINFOS=ld.texinfo
