@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.20 2005/12/09 23:34:02 elad Exp $
+#	$NetBSD: GENERIC,v 1.21 2006/02/02 21:32:09 reinoud Exp $
 #
 #
 
@@ -38,6 +38,7 @@ file-system 	NFS		# Network File System client
 #file-system 	MSDOSFS		# MS-DOS file system
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independant support

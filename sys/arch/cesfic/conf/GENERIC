@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.39 2005/12/09 23:34:01 elad Exp $
+# $NetBSD: GENERIC,v 1.40 2006/02/02 21:32:08 reinoud Exp $
 #
 # GENERIC machine description file
 # 
@@ -78,6 +78,7 @@ file-system 	NFS		# Network filesystem client
 #file-system 	MFS		# Memory-based filesystem
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # Filesystem options
 options 	FIFO		# POSIX fifo support (in all filesystems)

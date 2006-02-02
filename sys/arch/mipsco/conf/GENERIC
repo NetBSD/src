@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.55 2005/12/09 23:34:02 elad Exp $
+# $NetBSD: GENERIC,v 1.56 2006/02/02 21:32:09 reinoud Exp $
 #
 # GENERIC machine description file
 # 
@@ -93,6 +93,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 #
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas

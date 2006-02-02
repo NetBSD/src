@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.282 $"
+#ident 		"GENERIC-$Revision: 1.283 $"
 
 maxusers 32
 
@@ -80,6 +80,7 @@ file-system	KERNFS		# Kernel variable file system (/kern)
 file-system	PROCFS		# Process file system (/proc)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# UFS quotas

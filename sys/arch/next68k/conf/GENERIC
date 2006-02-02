@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2005/12/09 23:34:02 elad Exp $
+# $NetBSD: GENERIC,v 1.99 2006/02/02 21:32:09 reinoud Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -114,6 +114,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas

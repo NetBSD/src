@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.4 2006/01/08 13:13:36 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.5 2006/02/02 21:32:08 reinoud Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.4 $"
+#ident		"GENERIC-$Revision: 1.5 $"
 
 maxusers	16
 
@@ -113,6 +113,7 @@ file-system	UNION		# union file system
 file-system	SYSVBFS		# System V boot filesystem.
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# UFS quotas

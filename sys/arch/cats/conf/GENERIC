@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2005/12/20 05:35:27 thorpej Exp $
+# $NetBSD: GENERIC,v 1.99 2006/02/02 21:32:08 reinoud Exp $
 #
 # GENERIC machine description file
 # 
@@ -73,6 +73,7 @@ file-system	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcode (below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
