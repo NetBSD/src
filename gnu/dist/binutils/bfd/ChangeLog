@@ -1,4 +1,13 @@
-2005-05-02  Daniel Jacobowitz  <dan@codesourcery.com>
+2005-07-16  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	PR ld/1021
+	PR ld/1031
+	* elflink.c (elf_link_add_object_symbols): Also append the version
+	name to non-hidden absolute symbols that are functions.
+
+ 2005-06-12  Daniel Jacobowitz  <dan@codesourcery.com>
+ 
+ 	* Makefile.am: Clear RELEASE.
 
 	* Makefile.am: Set RELEASE.
 	* configure.in: Bump version to 2.16.1.
