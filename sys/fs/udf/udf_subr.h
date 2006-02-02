@@ -1,4 +1,4 @@
-/* $NetBSD $ */
+/* $NetBSD: udf_subr.h,v 1.2 2006/02/02 15:38:35 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
