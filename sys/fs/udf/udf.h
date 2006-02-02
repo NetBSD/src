@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.3 2006/02/02 15:52:23 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.4 2006/02/02 21:58:40 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -33,6 +33,8 @@
  * 
  */
 
+#ifndef _FS_UDF_UDF_H_
+#define _FS_UDF_UDF_H_
 
 #include <sys/queue.h>
 #include <sys/uio.h>
@@ -41,10 +43,6 @@
 #include "ecma167-udf.h"
 #include <sys/cdio.h>
 #include <miscfs/genfs/genfs_node.h>
-
-#ifndef _FS_UDF_UDF_H_
-#define _FS_UDF_UDF_H_
-
 
 /* TODO make `udf_verbose' set by sysctl */
 /* debug section */
@@ -250,4 +248,3 @@ struct udf_node {
 };
 
 #endif /* !_FS_UDF_UDF_H_ */
-
