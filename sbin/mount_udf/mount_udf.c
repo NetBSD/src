@@ -1,4 +1,4 @@
-/* $NetBSD: mount_udf.c,v 1.3 2006/02/02 16:25:46 xtraeme Exp $ */
+/* $NetBSD: mount_udf.c,v 1.4 2006/02/02 23:41:43 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_udf.c,v 1.3 2006/02/02 16:25:46 xtraeme Exp $");
+__RCSID("$NetBSD: mount_udf.c,v 1.4 2006/02/02 23:41:43 christos Exp $");
 #endif /* not lint */
 
 
@@ -79,21 +79,21 @@ static const struct mntopt mopts[] = {
 
 /* prototypes */
 int		mount_udf(int argc, char **argv);
-static void	usage(void);
+static void	usage(void) __attribute__((__noreturn__));
 
 
 /* code */
 
 static void
-usage()
+usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-g gid] [-o options] [-s session] "
-			"[-t gmtoff] [-u uid] special node\n", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-g gid] [-o options] [-s session] "
+	    "[-t gmtoff] [-u uid] special node\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
 
-/* copied from mount_msdos; is it nessisary still? */
+/* copied from mount_msdos; is it necessary still? */
 #ifndef MOUNT_NOMAIN
 int
 main(int argc, char **argv)
@@ -109,8 +109,6 @@ mount_udf(int argc, char **argv)
 {
 	struct udf_args args;
 	struct tm *tm;
-	struct passwd *passwd;
-	struct group  *group;
 	time_t	 now;
 	uid_t	 anon_uid, nobody_uid;
 	gid_t	 anon_gid, nobody_gid;
@@ -122,25 +120,14 @@ mount_udf(int argc, char **argv)
 	setprogname(argv[0]);
 
 	/* initialise */
-	memset(&args, 0, sizeof(args));
-	args.version = UDFMNT_VERSION;
+	(void)memset(&args, 0, sizeof(args));
 
 	set_gmtoff = mntflags = 0;
 	sector_size = 0;
 
 	/* get nobody */
-	anon_uid = anon_gid = (uid_t)0;	/* shutup gcc  */
-	passwd = getpwnam("nobody");
-	group  = getgrnam("nobody");
-
-	if (passwd && group) {
-		anon_uid = passwd->pw_uid;
-		anon_gid = group->gr_gid;
-	} else
-		errx(EXIT_FAILURE, "mount_udf: failed to get nobody:nobody\n");
-
-	nobody_uid = anon_uid;
-	nobody_gid = anon_gid;
+	nobody_uid = anon_uid = a_uid("nobody");
+	nobody_gid = anon_gid = a_gid("nobody");
 
 	/* NEVER EVER allow nobody_uid:nobody_gid to be 0:0 */
 	assert(nobody_uid != 0);
@@ -155,33 +142,22 @@ mount_udf(int argc, char **argv)
 #endif
 		case 'g' :
 			/* convert groupname or numeric equiv. */
-			group = getgrnam(optarg);
-			if (group == NULL)
-				group  = getgrgid((gid_t) atoi(optarg));
-			if (group == NULL)
-				usage();
-
-			anon_gid = group->gr_gid;
+			anon_gid = a_gid(optarg);
 			break;
 		case 'u' :
 			/* convert username or numeric equiv. */
-			passwd = getpwnam(optarg);
-			if (passwd == NULL)
-				passwd = getpwuid((uid_t) atoi(optarg));
-			if (passwd == NULL)
-				usage();
-
-			anon_uid = passwd->pw_uid;
+			anon_uid = a_uid(optarg);
 			break;
 		case 'o' :
 			/* process generic mount options */
-			getmntopts(optarg, mopts, &mntflags, 0);
+			if (getmntopts(optarg, mopts, &mntflags, 0) == NULL)
+				err(EXIT_FAILURE, NULL);
 			break;
 		case 's' :
-			args.sessionnr = atoi(optarg);
+			args.sessionnr = a_num(optarg, "session number");
 			break;
 		case 't' :
-			args.gmtoff = atoi(optarg);
+			args.gmtoff = a_num(optarg, "gmtoff");
 			set_gmtoff  = 1;
 			break;
 		default  :
@@ -195,7 +171,7 @@ mount_udf(int argc, char **argv)
 
 	if (!set_gmtoff) {
 		/* use user's time zone as default */
-		time(&now);
+		(void)time(&now);
 		tm = localtime(&now);
 		args.gmtoff = tm->tm_gmtoff;
 	}
@@ -203,6 +179,8 @@ mount_udf(int argc, char **argv)
 	/* get device and directory specifier */
 	dev = argv[optind];
 	dir = argv[optind + 1];
+
+	args.version = UDFMNT_VERSION;
 	args.fspec = dev;
 	args.anon_uid    = anon_uid;
 	args.anon_gid    = anon_gid;
@@ -211,17 +189,17 @@ mount_udf(int argc, char **argv)
 	args.sector_size = sector_size;		/* invalid */
 
 	/* mount it! :) */
-	if (mount(MOUNT_UDF, dir, mntflags, &args) < 0)
-		err(1, "%s on %s", dev, dir);
+	if (mount(MOUNT_UDF, dir, mntflags, &args) == -1)
+		err(EXIT_FAILURE, "Cannot mount %s on %s", dev, dir);
 
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];
 
-		snprintb(buf, sizeof(buf), UDFMNT_BITS, args.udfmflags);
-		printf("gmtoffset=%d, sessionnr=%d, flags=%s\n",
-			args.gmtoff, args.sessionnr, buf);
+		(void)snprintb(buf, sizeof(buf), UDFMNT_BITS,
+		    (uint64_t)args.udfmflags);
+		(void)printf("gmtoffset=%d, sessionnr=%d, flags=%s\n",
+		    args.gmtoff, args.sessionnr, buf);
 	}
 
-	exit(EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }
-
