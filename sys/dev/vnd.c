@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.125.2.3 2006/02/01 14:51:48 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.125.2.4 2006/02/02 14:44:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.125.2.3 2006/02/01 14:51:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.125.2.4 2006/02/02 14:44:35 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1603,7 +1603,7 @@ compstrategy(struct buf *bp, off_t bn)
 
 	/* set up constants for data move */
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
+	UIO_SETUP_SYSSPACE(&auio);
 
 	/* read, and transfer the data */
 	addr = bp->b_data;
