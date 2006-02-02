@@ -1,6 +1,6 @@
 /* tc-hppa.h -- Header file for the PA
    Copyright 1989, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003 Free Software Foundation, Inc.
+   2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -55,10 +55,14 @@
 #endif
 #else /* TARGET_ARCH_SIZE == 32 */
 #include "bfd/elf32-hppa.h"
-#if defined (TE_LINUX) || defined (TE_NetBSD)
+#if defined (TE_LINUX)
 #define TARGET_FORMAT "elf32-hppa-linux"
 #else
+#if defined (TE_NetBSD)
+#define TARGET_FORMAT "elf32-hppa-netbsd"
+#else
 #define TARGET_FORMAT "elf32-hppa"
+#endif
 #endif
 #endif
 #endif
@@ -115,15 +119,9 @@ extern const char	hppa_symbol_chars[];
   parse_cons_expression_hppa (EXP)
 #define TC_CONS_FIX_NEW cons_fix_new_hppa
 
-/* On the PA, an equal sign often appears as a condition or nullification
-   completer in an instruction.  This can be detected by checking the
-   previous character, if the character is a comma, then the equal is
-   being used as part of an instruction.  */
-#define TC_EQUAL_IN_INSN(C, PTR)	((C) == ',')
-
-/* Similarly for an exclamation point.  It is used in FP comparison
-   instructions and as an end of line marker.  When used in an instruction
-   it will always follow a comma.  */
+/* On the PA, an exclamation point can appear in an instruction.  It is
+   used in FP comparison instructions and as an end of line marker.
+   When used in an instruction it will always follow a comma.  */
 #define TC_EOL_IN_INSN(PTR)	(*(PTR) == '!' && (PTR)[-1] == ',')
 
 int hppa_fix_adjustable PARAMS((struct fix *));

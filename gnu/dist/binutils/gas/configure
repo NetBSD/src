@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE LN_S RANLIB ac_ct_RANLIB LIBTOOL WARN_CFLAGS GDBINIT cgen_cpu_prefix extra_objects target_cpu_type obj_format te_file install_tooldir atof BFDLIB OPCODES_LIB BFDVER_H ALL_OBJ_DEPS YACC LEX LEXLIB LEX_OUTPUT_ROOT CPP EGREP ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT USE_INCLUDED_LIBINTL CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB INCLUDE_LOCALE_H GT_NO GT_YES MKINSTALLDIRS l MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT LIBM LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE LN_S RANLIB ac_ct_RANLIB LIBTOOL WARN_CFLAGS GDBINIT cgen_cpu_prefix extra_objects target_cpu_type obj_format te_file install_tooldir atof BFDLIB OPCODES_LIB BFDVER_H ALL_OBJ_DEPS YACC LEX LEXLIB LEX_OUTPUT_ROOT CPP EGREP ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT USE_INCLUDED_LIBINTL CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB INCLUDE_LOCALE_H GT_NO GT_YES MKINSTALLDIRS l MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT LIBM LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -971,7 +971,7 @@ esac
     else
       echo "$as_me: WARNING: no configuration information is in $ac_dir" >&2
     fi
-    cd "$ac_popdir"
+    cd $ac_popdir
   done
 fi
 
@@ -1994,7 +1994,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -2052,7 +2053,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -2168,7 +2170,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -2222,7 +2225,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -2267,7 +2271,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -2311,7 +2316,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -2389,7 +2395,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -2443,7 +2450,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -2477,7 +2485,7 @@ fi
 
 
 BFD_VERSION=`sed -n -e 's/^.._INIT_AUTOMAKE.*,[ 	]*\([^ 	]*\)[ 	]*).*/\1/p' < ${srcdir}/../bfd/configure.in`
-am__api_version="1.8"
+am__api_version="1.9"
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
 # incompatible versions:
@@ -2629,13 +2637,21 @@ echo "$as_me: WARNING: \`missing' script is too old or missing" >&2;}
 fi
 
 if mkdir -p --version . >/dev/null 2>&1 && test ! -d ./--version; then
-  # Keeping the `.' argument allows $(mkdir_p) to be used without
-  # argument.  Indeed, we sometimes output rules like
+  # We used to keeping the `.' as first argument, in order to
+  # allow $(mkdir_p) to be used without argument.  As in
   #   $(mkdir_p) $(somedir)
-  # where $(somedir) is conditionally defined.
-  # (`test -n '$(somedir)' && $(mkdir_p) $(somedir)' is a more
-  # expensive solution, as it forces Make to start a sub-shell.)
-  mkdir_p='mkdir -p -- .'
+  # where $(somedir) is conditionally defined.  However this is wrong
+  # for two reasons:
+  #  1. if the package is installed by a user who cannot write `.'
+  #     make install will fail,
+  #  2. the above comment should most certainly read
+  #     $(mkdir_p) $(DESTDIR)$(somedir)
+  #     so it does not work when $(somedir) is undefined and
+  #     $(DESTDIR) is not.
+  #  To support the latter case, we have to write
+  #     test -z "$(somedir)" || $(mkdir_p) $(DESTDIR)$(somedir),
+  #  so the `.' trick is pointless.
+  mkdir_p='mkdir -p --'
 else
   # On NextStep and OpenStep, the `mkdir' command does not
   # recognize any option.  It will interpret all options as
@@ -2844,9 +2860,6 @@ AUTOHEADER=${AUTOHEADER-"${am_missing_run}autoheader"}
 
 MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 
-
-AMTAR=${AMTAR-"${am_missing_run}tar"}
-
 install_sh=${install_sh-"$am_aux_dir/install-sh"}
 
 # Installed binaries are usually stripped using `strip' when the user
@@ -2939,6 +2952,13 @@ INSTALL_STRIP_PROGRAM="\${SHELL} \$(install_sh) -c -s"
 
 # We need awk for the "check" target.  The system "awk" is bad on
 # some platforms.
+# Always define AMTAR for backward compatibility.
+
+AMTAR=${AMTAR-"${am_missing_run}tar"}
+
+am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
+
+
 
 
 depcc="$CC"   am_compiler_list=
@@ -3332,7 +3352,7 @@ darwin* | rhapsody*)
   esac
   ;;
 
-freebsd* )
+freebsd* | kfreebsd*-gnu)
   if echo __ELF__ | $CC -E - | grep __ELF__ > /dev/null; then
     case $host_cpu in
     i*86 )
@@ -3400,7 +3420,7 @@ linux-gnu*)
   lt_cv_file_magic_test_file=`echo /lib/libc.so* /lib/libc-*.so`
   ;;
 
-netbsd*)
+netbsd* | knetbsd*-gnu)
   if echo __ELF__ | $CC -E - | grep __ELF__ > /dev/null; then
     lt_cv_deplibs_check_method='match_pattern /lib[^/\.]+\.so\.[0-9]+\.[0-9]+$'
   else
@@ -3791,7 +3811,7 @@ test x"$pic_mode" = xno && libtool_flags="$libtool_flags --prefer-non-pic"
 case $host in
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 3794 "configure"' > conftest.$ac_ext
+  echo '#line 3814 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -3887,7 +3907,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -4108,6 +4129,238 @@ case "${host}" in
 esac
 
 
+#We need this for the host.  BOUT header is in host order.
+echo "$as_me:$LINENO: checking whether byte ordering is bigendian" >&5
+echo $ECHO_N "checking whether byte ordering is bigendian... $ECHO_C" >&6
+if test "${ac_cv_c_bigendian+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  # See if sys/param.h defines the BYTE_ORDER macro.
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+#include <sys/param.h>
+
+int
+main ()
+{
+#if !BYTE_ORDER || !BIG_ENDIAN || !LITTLE_ENDIAN
+ bogus endian macros
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  # It does; now see whether it defined to BIG_ENDIAN or not.
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+#include <sys/param.h>
+
+int
+main ()
+{
+#if BYTE_ORDER != BIG_ENDIAN
+ not big endian
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_bigendian=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_c_bigendian=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+# It does not; compile a test program.
+if test "$cross_compiling" = yes; then
+  # try to guess the endianness by grepping values into an object file
+  ac_cv_c_bigendian=unknown
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+short ascii_mm[] = { 0x4249, 0x4765, 0x6E44, 0x6961, 0x6E53, 0x7953, 0 };
+short ascii_ii[] = { 0x694C, 0x5454, 0x656C, 0x6E45, 0x6944, 0x6E61, 0 };
+void _ascii () { char *s = (char *) ascii_mm; s = (char *) ascii_ii; }
+short ebcdic_ii[] = { 0x89D3, 0xE3E3, 0x8593, 0x95C5, 0x89C4, 0x9581, 0 };
+short ebcdic_mm[] = { 0xC2C9, 0xC785, 0x95C4, 0x8981, 0x95E2, 0xA8E2, 0 };
+void _ebcdic () { char *s = (char *) ebcdic_mm; s = (char *) ebcdic_ii; }
+int
+main ()
+{
+ _ascii (); _ebcdic ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  if grep BIGenDianSyS conftest.$ac_objext >/dev/null ; then
+  ac_cv_c_bigendian=yes
+fi
+if grep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
+  if test "$ac_cv_c_bigendian" = unknown; then
+    ac_cv_c_bigendian=no
+  else
+    # finding both strings is unlikely to happen, but who knows?
+    ac_cv_c_bigendian=unknown
+  fi
+fi
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+int
+main ()
+{
+  /* Are we little or big endian?  From Harbison&Steele.  */
+  union
+  {
+    long l;
+    char c[sizeof (long)];
+  } u;
+  u.l = 1;
+  exit (u.c[sizeof (long) - 1] == 1);
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_bigendian=no
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+ac_cv_c_bigendian=yes
+fi
+rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_c_bigendian" >&5
+echo "${ECHO_T}$ac_cv_c_bigendian" >&6
+case $ac_cv_c_bigendian in
+  yes)
+
+cat >>confdefs.h <<\_ACEOF
+#define WORDS_BIGENDIAN 1
+_ACEOF
+ ;;
+  no)
+     ;;
+  *)
+    { { echo "$as_me:$LINENO: error: unknown endianness
+presetting ac_cv_c_bigendian=no (or yes) will help" >&5
+echo "$as_me: error: unknown endianness
+presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+
 te_file=generic
 
 # Makefile target for installing gas in $(tooldir)/bin.
@@ -4148,55 +4401,17 @@ emulations=""
 
 for this_target in $target $canon_targets ; do
 
-    eval `echo $this_target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/cpu=\1 vendor=\2 os=\3/'`
+    targ=${this_target}
+    . ${srcdir}/configure.tgt
 
-    # check for architecture variants
-    arch=
-    endian=
-    case ${cpu} in
-      am33_2.0)		cpu_type=mn10300 endian=little ;;
-      alpha*)		cpu_type=alpha ;;
-      arm*b|xscale*b|strongarm*b) cpu_type=arm endian=big ;;
-      arm*|xscale*|strongarm*)    cpu_type=arm endian=little ;;
-      c4x*)		cpu_type=tic4x ;;
-      hppa*)		cpu_type=hppa ;;
-      i[3-7]86)		cpu_type=i386 arch=i386;;
-      x86_64)		cpu_type=i386 arch=x86_64;;
-      ia64)		cpu_type=ia64 ;;
-      ip2k)             cpu_type=ip2k endian=big ;;
-      iq2000)           cpu_type=iq2000 endian=big ;;
-      m6811|m6812|m68hc12) cpu_type=m68hc11 ;;
-      m680[012346]0)	cpu_type=m68k ;;
-      m68008)		cpu_type=m68k ;;
-      m683??)		cpu_type=m68k ;;
-      m5200)		cpu_type=m68k ;;
-      m8*)		cpu_type=m88k ;;
-      mips*el)		cpu_type=mips endian=little ;;
-      mips*)		cpu_type=mips endian=big ;;
-      or32*)		cpu_type=or32 endian=big ;;
-      pjl*)		cpu_type=pj endian=little ;;
-      pj*)		cpu_type=pj endian=big ;;
-      powerpc*le*)	cpu_type=ppc endian=little ;;
-      powerpc*)		cpu_type=ppc endian=big ;;
-      rs6000*)		cpu_type=ppc ;;
-      s390x*)		cpu_type=s390 arch=s390x ;;
-      s390*)		cpu_type=s390 arch=s390 ;;
-      sh5*)		cpu_type=sh64 endian=big ;;
-      sh5le*)		cpu_type=sh64 endian=little ;;
-      sh64*)            cpu_type=sh64 endian=big ;;
-      sh64le*)		cpu_type=sh64 endian=little ;;
-      sh*le)		cpu_type=sh endian=little ;;
-      sh*)		cpu_type=sh endian=big ;;
-      sparclite*)	cpu_type=sparc arch=sparclite ;;
-      sparclet*)	cpu_type=sparc arch=sparclet ;;
-      sparc64*)		cpu_type=sparc arch=v9-64 ;;
-      sparc86x*)	cpu_type=sparc arch=sparc86x  ;;
-      sparc*)		cpu_type=sparc arch=sparclite ;; # ??? See tc-sparc.c.
-      v850*)		cpu_type=v850 ;;
-      xtensa*)		cpu_type=xtensa arch=xtensa ;;
-      m32r)             cpu_type=m32r target_cpu=m32r endian=big ;;
-      m32rle)           cpu_type=m32r target_cpu=m32r endian=little ;;
-      *)		cpu_type=${cpu} ;;
+    case ${target_cpu} in
+      crisv32)
+
+cat >>confdefs.h <<_ACEOF
+#define DEFAULT_CRIS_ARCH $arch
+_ACEOF
+
+	;;
     esac
 
     if test ${this_target} = $target ; then
@@ -4205,371 +4420,78 @@ for this_target in $target $canon_targets ; do
       continue
     fi
 
-    generic_target=${cpu_type}-$vendor-$os
-    dev=no
-    bfd_gas=no
-    em=generic
-
-    # assign object format
+    generic_target=${cpu_type}-${target_vendor}-${target_os}
     case ${generic_target} in
-      a29k-*-coff)			fmt=coff ;;
-      a29k-amd-udi)			fmt=coff ;;
-      a29k-amd-ebmon)			fmt=coff ;;
-      a29k-nyu-sym1)			fmt=coff ;;
-      a29k-*-rtems*)			fmt=coff ;;
-      a29k-*-vxworks*)			fmt=coff ;;
-
-      alpha*-*-*vms*)			fmt=evax ;;
-      alpha*-*-netware*)		fmt=ecoff ;;
-      alpha*-*-osf*)			fmt=ecoff ;;
-      alpha*-*-linuxecoff*)		fmt=ecoff ;;
-      alpha*-*-linux-gnu*)		fmt=elf em=linux ;;
-      alpha*-*-netbsd*)			fmt=elf em=nbsd ;;
-      alpha*-*-openbsd*)		fmt=elf em=obsd ;;
-
-      # cpu_type for am33_2.0 is set to mn10300
-      mn10300-*-linux*)			fmt=elf bfd_gas=yes em=linux ;;
-
-      arc-*-elf*)			fmt=elf ;;
-
-      arm-*-aout)			fmt=aout ;;
-      arm-*-coff | thumb-*-coff)	fmt=coff ;;
-      arm-*-rtems* | thumb-*-rtems*)	fmt=elf ;;
-      arm-*-elf | thumb-*-elf)		fmt=elf ;;
-      arm-*-kaos*)			fmt=elf ;;
-      arm*-*-conix*)			fmt=elf ;;
-      arm-*-linux*aout*)		fmt=aout em=linux ;;
-      arm*-*-linux-gnu*)		fmt=elf  em=linux ;;
-      arm*-*-uclinux*)			fmt=elf  em=linux ;;
-      arm-*-netbsdelf*)                 fmt=elf  em=nbsd ;;
-      arm-*-*n*bsd*)			fmt=aout em=nbsd ;;
-      arm-**-nto*)			fmt=elf ;;
-      arm-*-oabi | thumb-*-oabi)	fmt=elf ;;
-      arm-epoc-pe | thumb-epoc-pe)	fmt=coff em=epoc-pe ;;
-      arm-wince-pe | arm-*-wince)       fmt=coff em=wince-pe ;;
-      arm-*-pe | thumb-*-pe)		fmt=coff em=pe ;;
-      arm-*-riscix*)			fmt=aout em=riscix ;;
-
-      avr-*-*)				fmt=elf ;;
-
-      cris-*-linux-gnu*)		fmt=multi bfd_gas=yes em=linux ;;
-      cris-*-*)				fmt=multi bfd_gas=yes ;;
-
-      d10v-*-*)				fmt=elf ;;
-      d30v-*-*)				fmt=elf ;;
-      dlx-*-*)				fmt=elf ;;
-
-      fr30-*-*)				fmt=elf ;;
-      frv-*-*linux*)			fmt=elf em=linux;;
-      frv-*-*)				fmt=elf ;;
-
-      hppa-*-linux*)	case ${cpu} in
-			    hppa*64*)	fmt=elf em=hppalinux64;;
-			    hppa*)	fmt=elf em=linux;;
-			esac ;;
-      hppa-*-*elf*)			fmt=elf em=hppa ;;
-      hppa-*-lites*)			fmt=elf em=hppa ;;
-      hppa-*-netbsd*)			fmt=elf em=nbsd ;;
-      hppa-*-openbsd*)			fmt=elf em=hppa ;;
-      hppa-*-osf*)			fmt=som em=hppa ;;
-      hppa-*-rtems*)			fmt=elf em=hppa ;;
-      hppa-*-hpux11*)	case ${cpu} in
-			    hppa*64*)	fmt=elf em=hppa64 ;;
-			    hppa*)	fmt=som em=hppa ;;
-			esac ;;
-      hppa-*-hpux*)			fmt=som em=hppa ;;
-      hppa-*-mpeix*)			fmt=som em=hppa ;;
-      hppa-*-bsd*)			fmt=som em=hppa ;;
-      hppa-*-hiux*)			fmt=som em=hppa ;;
-
-      h8300-*-rtems*)			fmt=coff ;;
-      h8300-*-coff)			fmt=coff ;;
-      h8300-*-elf)			fmt=elf ;;
-      h8500-*-rtems*)			fmt=coff ;;
-      h8500-*-coff)			fmt=coff ;;
-
-      i370-*-elf* | i370-*-linux*)	fmt=elf ;;
-      i386-ibm-aix*)			fmt=coff em=i386aix ;;
-      i386-sequent-bsd*)		fmt=aout em=dynix ;;
-      i386-*-beospe*)			fmt=coff em=pe ;;
-      i386-*-beos*)			fmt=elf ;;
-      i386-*-coff)			fmt=coff ;;
-      i386-*-elf)			fmt=elf ;;
-      i386-*-kaos*)			fmt=elf ;;
-      i386-*-bsd*)			fmt=aout em=386bsd ;;
-      i386-*-netbsd0.8)			fmt=aout em=386bsd ;;
-      i386-*-netbsdpe*)			fmt=coff em=pe ;;
-      i386-*-netbsd*-gnu* | \
-      i386-*-knetbsd*-gnu | \
-      i386-*-netbsdelf*)		fmt=elf em=nbsd ;;
-      i386-*-*n*bsd*)	case ${cpu} in
-			    x86_64)	fmt=elf em=nbsd ;;
-			    *)		fmt=aout em=nbsd ;;
-			esac ;;
-      i386-*-linux*aout*)		fmt=aout em=linux ;;
-      i386-*-linux*oldld)		fmt=aout em=linux ;;
-      i386-*-linux*coff*)		fmt=coff em=linux ;;
-      i386-*-linux-gnu*)		fmt=elf em=linux ;;
-      x86_64-*-linux-gnu*)		fmt=elf em=linux ;;
-      i386-*-lynxos*)			fmt=coff em=lynx ;;
-      i386-*-sysv[45]*)			fmt=elf ;;
-      i386-*-solaris*)			fmt=elf ;;
-      i386-*-freebsdaout*)		fmt=aout em=386bsd ;;
-      i386-*-freebsd[12].*)		fmt=aout em=386bsd ;;
-      i386-*-freebsd[12])		fmt=aout em=386bsd ;;
-      i386-*-freebsd* | i386-*-kfreebsd*-gnu)
-					fmt=elf em=freebsd ;;
-      i386-*-sysv*)			fmt=coff ;;
-      i386-*-sco3.2v5*coff)		fmt=coff ;;
-      i386-*-isc*)			fmt=coff ;;
-      i386-*-sco3.2v5*)			fmt=elf
-	  if test ${this_target} = $target; then
+      i386-*-sco3.2v5*)
+	if test ${this_target} = $target; then
 
 cat >>confdefs.h <<\_ACEOF
 #define SCO_ELF 1
 _ACEOF
 
-	  fi ;;
-      i386-*-sco3.2*)			fmt=coff ;;
-      i386-*-vsta)			fmt=aout ;;
+	fi
+	;;
+
       i386-*-msdosdjgpp* \
       | i386-*-go32* \
-      | i386-go32-rtems*)		fmt=coff em=go32
+      | i386-go32-rtems*)
 
 cat >>confdefs.h <<\_ACEOF
 #define STRICTCOFF 1
 _ACEOF
- ;;
-      i386-*-rtemself*)			fmt=elf ;;
-      i386-*-rtemscoff*)		fmt=coff ;;
-      i386-*-rtems*)			fmt=elf ;;
-      i386-*-gnu*)			fmt=elf ;;
-      i386-*-mach*)			fmt=aout em=mach ;;
-      i386-*-msdos*)			fmt=aout ;;
-      i386-*-moss*)			fmt=elf ;;
-      i386-*-pe)			fmt=coff em=pe ;;
-      i386-*-cygwin*)			fmt=coff em=pe ;;
-      i386-*-interix*)			fmt=coff em=interix ;;
-      i386-*-mingw32*)			fmt=coff em=pe ;;
-      i386-*-nto-qnx*)			fmt=elf ;;
-      i386-*-*nt*)			fmt=coff em=pe ;;
-      i386-*-chaos)			fmt=elf ;;
 
-      i860-*-*)				fmt=elf endian=little
-		{ echo "$as_me:$LINENO: WARNING: GAS support for ${generic_target} is preliminary and a work in progress" >&5
-echo "$as_me: WARNING: GAS support for ${generic_target} is preliminary and a work in progress" >&2;} ;;
-      i960-*-bout)			fmt=bout ;;
-      i960-*-coff)			fmt=coff em=ic960 ;;
-      i960-*-rtems*)			fmt=coff em=ic960 ;;
-      i960-*-nindy*)			fmt=bout ;;
-      i960-*-vxworks5.0)		fmt=bout ;;
-      i960-*-vxworks5.*)		fmt=coff em=ic960 ;;
-      i960-*-vxworks*)			fmt=bout ;;
-      i960-*-elf*)			fmt=elf ;;
+	;;
 
-      ia64-*-elf*)			fmt=elf ;;
-      ia64-*-aix*)			fmt=elf em=ia64aix ;;
-      ia64-*-linux-gnu*)		fmt=elf em=linux ;;
-      ia64-*-hpux*)			fmt=elf em=hpux ;;
-      ia64-*-netbsd*)			fmt=elf em=nbsd ;;
+      i860-*-*)
+	{ echo "$as_me:$LINENO: WARNING: GAS support for ${generic_target} is preliminary and a work in progress" >&5
+echo "$as_me: WARNING: GAS support for ${generic_target} is preliminary and a work in progress" >&2;}
+	;;
 
-      ip2k-*-*)				fmt=elf ;;
-
-      iq2000-*-elf)         		fmt=elf bfd_gas=yes ;;
-
-      m32r-*-elf*)			fmt=elf ;;
-      m32r-*-linux*)			fmt=elf em=linux;;
-
-      m68hc11-*-* | m6811-*-*)		fmt=elf ;;
-      m68hc12-*-* | m6812-*-*)		fmt=elf ;;
-
-      m68k-*-vxworks*)			fmt=aout em=sun3 ;;
-      m68k-ericsson-ose)		fmt=aout em=sun3 ;;
-      m68k-*-sunos*)			fmt=aout em=sun3 ;;
-      m68k-motorola-sysv*)		fmt=coff em=delta ;;
-      m68k-bull-sysv3*)			fmt=coff em=dpx2 ;;
-      m68k-apollo-*)			fmt=coff em=apollo ;;
-      m68k-*-elf*)			fmt=elf ;;
-      m68k-*-sysv4*)			fmt=elf em=svr4 ;;
-      m68k-*-sysv*)			fmt=coff ;;
-      m68k-*-coff | m68k-*-rtemscoff*)	fmt=coff ;;
-      m68k-*-rtems*)			fmt=elf ;;
-      m68k-*-hpux*)			fmt=hp300 em=hp300 ;;
-      m68k-*-linux*aout*)		fmt=aout em=linux ;;
-      m68k-*-linux-gnu*)		fmt=elf em=linux ;;
-      m68k-*-uclinux*)			fmt=elf ;;
-      m68k-*-gnu*)			fmt=elf ;;
-      m68k-*-lynxos*)			fmt=coff em=lynx ;;
-      m68k-*-netbsdelf*)		fmt=elf em=nbsd ;;
-      m68k-*-netbsd*)			fmt=aout em=nbsd bfd_gas=yes ;;
-      m68k-*-openbsd*)			fmt=aout em=nbsd bfd_gas=yes ;;
-      m68k-apple-aux*)			fmt=coff em=aux ;;
-      m68k-*-psos*)			fmt=elf em=psos;;
-
-      m88k-motorola-sysv3*)		fmt=coff em=delt88 ;;
-      m88k-*-coff*)			fmt=coff ;;
-
-      mcore-*-elf)			fmt=elf ;;
-      mcore-*-pe)			fmt=coff em=pe bfd_gas=yes ;;
-
-      # don't change em like *-*-bsd does
-      mips-dec-openbsd*)		fmt=elf endian=little ;;
-      mips-sony-bsd*)			fmt=ecoff ;;
+      mips-sony-bsd*)
+	;;
       mips-*-bsd*)
-	    { { echo "$as_me:$LINENO: error: Unknown vendor for mips-bsd configuration." >&5
+	{ { echo "$as_me:$LINENO: error: Unknown vendor for mips-bsd configuration." >&5
 echo "$as_me: error: Unknown vendor for mips-bsd configuration." >&2;}
-   { (exit 1); exit 1; }; } ;;
-      mips-*-ultrix*)			fmt=ecoff endian=little ;;
-      mips-*-osf*)			fmt=ecoff endian=little ;;
-      mips-*-ecoff*)			fmt=ecoff ;;
-      mips-*-pe*)			fmt=coff endian=little em=pe ;;
-      mips-*-irix6*)			fmt=elf em=irix ;;
-      mips-*-irix5*)			fmt=elf em=irix ;;
-      mips-*-irix*)			fmt=ecoff em=irix ;;
-      mips-*-lnews*)			fmt=ecoff em=lnews ;;
-      mips-*-riscos*)			fmt=ecoff ;;
-      mips*-*-linux*)			fmt=elf em=tmips ;;
-      mips-*-sysv4*MP* | mips-*-gnu*)	fmt=elf em=tmips ;;
-      mips-*-sysv*)			fmt=ecoff ;;
-      mips-*-elf* | mips-*-rtems*)	fmt=elf ;;
-      mips-*-netbsd*)			fmt=elf ;;
-      mips-*-openbsd*)			fmt=elf ;;
+   { (exit 1); exit 1; }; }
+	;;
 
-      mmix-*-*)				fmt=elf ;;
-      mn10200-*-*)			fmt=elf ;;
-      mn10300-*-*)			fmt=elf ;;
-      msp430-*-*)			fmt=elf ;;
-      openrisc-*-*)			fmt=elf ;;
-      or32-*-rtems*)			fmt=elf ;;
-      or32-*-coff)			fmt=coff ;;
-      or32-*-elf)			fmt=elf ;;
-      pj*)				fmt=elf ;;
-
-      ppc-*-pe | ppc-*-cygwin*)		fmt=coff em=pe ;;
-      ppc-*-winnt*)			fmt=coff em=pe ;;
-      ppc-*-aix5.[01])			fmt=coff em=aix5 ;;
-      ppc-*-aix5.*)			fmt=coff em=aix5
+      ppc-*-aix5.*)
 
 cat >>confdefs.h <<\_ACEOF
 #define AIX_WEAK_SUPPORT 1
 _ACEOF
 
-      ;;
-      ppc-*-aix*)			fmt=coff ;;
-      ppc-*-beos*)			fmt=coff ;;
-      ppc-*-*n*bsd* | ppc-*-elf*)	fmt=elf ;;
-      ppc-*-eabi* | ppc-*-sysv4*)	fmt=elf ;;
-      ppc-*-linux-gnu*)			fmt=elf em=linux
-	    case "$endian" in
-		big)  ;;
-		*)    { { echo "$as_me:$LINENO: error: GNU/Linux must be configured big endian" >&5
+	;;
+      ppc-*-linux-gnu*)
+	case "$endian" in
+	  big)  ;;
+	  *)    { { echo "$as_me:$LINENO: error: GNU/Linux must be configured big endian" >&5
 echo "$as_me: error: GNU/Linux must be configured big endian" >&2;}
    { (exit 1); exit 1; }; } ;;
-	    esac ;;
-      ppc-*-solaris*)			fmt=elf
-	    if test ${this_target} = $target; then
+	esac
+	;;
+      ppc-*-solaris*)
+	if test ${this_target} = $target; then
 
 cat >>confdefs.h <<\_ACEOF
 #define TARGET_SOLARIS_COMMENT 1
 _ACEOF
 
-	    fi
-	    if test x${endian} = xbig; then
-		{ { echo "$as_me:$LINENO: error: Solaris must be configured little endian" >&5
+	fi
+	if test x${endian} = xbig; then
+	  { { echo "$as_me:$LINENO: error: Solaris must be configured little endian" >&5
 echo "$as_me: error: Solaris must be configured little endian" >&2;}
    { (exit 1); exit 1; }; }
-	    fi ;;
-      ppc-*-rtems*)			fmt=elf ;;
-      ppc-*-macos* | ppc-*-mpw*)	fmt=coff em=macos ;;
-      ppc-*-netware*)			fmt=elf em=ppcnw ;;
-      ppc-**-nto*)			fmt=elf ;;
-      ppc-*-kaos*)			fmt=elf ;;
+	fi
+	;;
 
-      s390x-*-linux-gnu*)		fmt=elf em=linux ;;
-      s390-*-linux-gnu*)		fmt=elf em=linux ;;
+      sh*-*-symbianelf*)
 
-      sh*-*-linux*)			fmt=elf em=linux
-	    case ${cpu} in
-		sh*eb)	endian=big ;;
-		*)	endian=little ;;
-	    esac ;;
-      sh5*-*-netbsd*)			fmt=elf em=nbsd ;;
-      sh64*-*-netbsd*)			fmt=elf em=nbsd ;;
-      sh*-*-netbsdelf*)			fmt=elf em=nbsd ;;
-      sh-*-elf*)			fmt=elf ;;
-      sh-*-coff*)			fmt=coff ;;
-      sh-*-nto*)			fmt=elf ;;
-      sh-*-pe*)				fmt=coff em=pe bfd_gas=yes endian=little ;;
-      sh-*-rtemscoff*)			fmt=coff ;;
-      sh-*-rtems*)			fmt=elf ;;
-      sh-*-kaos*)			fmt=elf ;;
-      shle*-*-kaos*)			fmt=elf ;;
-      sh64-*-elf*)			fmt=elf ;;
+cat >>confdefs.h <<\_ACEOF
+#define TARGET_SYMBIAN 1
+_ACEOF
 
-      ns32k-pc532-mach*)		fmt=aout em=pc532mach ;;
-      ns32k-pc532-ux*)			fmt=aout em=pc532mach ;;
-      ns32k-pc532-lites*)		fmt=aout em=nbsd532 ;;
-      ns32k-*-*n*bsd*)			fmt=aout em=nbsd532 ;;
-
-      sparc-*-rtemsaout*)		fmt=aout ;;
-      sparc-*-rtemself*)		fmt=elf ;;
-      sparc-*-rtems*)			fmt=elf ;;
-      sparc-*-sunos4*)			fmt=aout em=sun3 ;;
-      sparc-*-aout | sparc*-*-vxworks*)	fmt=aout em=sparcaout ;;
-      sparc-*-coff)			fmt=coff ;;
-      sparc-*-linux*aout*)		fmt=aout em=linux ;;
-      sparc-*-linux-gnu*)		fmt=elf em=linux ;;
-      sparc-*-lynxos*)			fmt=coff em=lynx ;;
-      sparc-fujitsu-none)		fmt=aout ;;
-      sparc-*-elf)			fmt=elf ;;
-      sparc-*-sysv4*)			fmt=elf ;;
-      sparc-*-solaris*)			fmt=elf ;;
-      sparc-*-netbsdelf*)		fmt=elf em=nbsd ;;
-      sparc-*-*n*bsd*)	case ${cpu} in
-			    sparc64)	fmt=elf em=nbsd ;;
-			    *)		fmt=aout em=nbsd ;;
-			esac ;;
-      strongarm-*-coff)			fmt=coff ;;
-      strongarm-*-elf)			fmt=elf ;;
-      strongarm-*-kaos*)		fmt=elf ;;
-      xscale-*-coff)			fmt=coff ;;
-      xscale-*-elf)			fmt=elf ;;
-
-      tic30-*-*aout*)			fmt=aout bfd_gas=yes ;;
-      tic30-*-*coff*)			fmt=coff bfd_gas=yes ;;
-      tic4x-*-* | c4x-*-*)              fmt=coff bfd_gas=yes ;;
-      tic54x-*-* | c54x*-*-*)		fmt=coff bfd_gas=yes need_libm=yes;;
-      tic80-*-*)			fmt=coff ;;
-
-      v850-*-*)				fmt=elf ;;
-      v850e-*-*)			fmt=elf ;;
-      v850ea-*-*)			fmt=elf ;;
-
-      vax-*-netbsdelf*)			fmt=elf em=nbsd ;;
-      vax-*-netbsd*)			fmt=aout em=nbsd ;;
-      vax-*-bsd* | vax-*-ultrix*)	fmt=aout ;;
-      vax-*-linux-gnu*)			fmt=elf em=linux bfd_gas=yes ;;
-      vax-*-vms)			fmt=vms ;;
-
-      w65-*-*)				fmt=coff ;;
-
-      xstormy16-*-*)			fmt=elf ;;
-
-      xtensa-*-*)			fmt=elf ;;
-
-      z8k-*-coff | z8k-*-sim)		fmt=coff ;;
-
-      *-*-aout | *-*-scout)		fmt=aout ;;
-      *-*-freebsd* | *-*-kfreebsd*-gnu)	fmt=elf em=freebsd ;;
-      *-*-nindy*)			fmt=bout ;;
-      *-*-bsd*)				fmt=aout em=sun3 ;;
-      *-*-generic)			fmt=generic ;;
-      *-*-xray | *-*-hms)		fmt=coff ;;
-      *-*-sim)				fmt=coff ;;
-      *-*-elf | *-*-sysv4* | *-*-solaris*) fmt=elf dev=yes ;;
-      *-*-aros*)			fmt=elf em=linux bfd_gas=yes ;;
-      *-*-vxworks | *-*-windiss)	fmt=elf ;;
-      *-*-netware)			fmt=elf ;;
+	;;
     esac
 
     if test ${this_target} = $target ; then
@@ -4587,13 +4509,6 @@ _ACEOF
 
       fi
     fi
-
-    case ${cpu_type}-${fmt} in
-	alpha*-* | arm-* | i386-* | ia64*-* | mips-* | ns32k-* \
-		| pdp11-* | ppc-* | sparc-* | strongarm-* | xscale-* \
-		| *-elf | *-ecoff | *-som)
-	    bfd_gas=yes ;;
-    esac
 
 # Other random stuff.
 
@@ -5540,7 +5455,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -5598,7 +5514,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -5714,7 +5631,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -5768,7 +5686,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -5813,7 +5732,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -5857,7 +5777,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -6019,7 +5940,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -6085,7 +6007,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -6174,7 +6097,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -6577,7 +6501,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -6784,7 +6709,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -6844,7 +6770,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -6923,7 +6850,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -6988,7 +6916,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -7053,7 +6982,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -7117,7 +7047,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -7198,7 +7129,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -7339,7 +7271,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -7477,7 +7410,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -7661,7 +7595,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -7912,7 +7847,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -8106,7 +8042,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -8209,7 +8146,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -8280,7 +8218,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -8328,11 +8267,6 @@ echo "${ECHO_T}$USE_NLS" >&6
     USE_INCLUDED_LIBINTL=no
 
         if test "$USE_NLS" = "yes"; then
-
-cat >>confdefs.h <<\_ACEOF
-#define ENABLE_NLS 1
-_ACEOF
-
       echo "$as_me:$LINENO: checking whether included gettext is requested" >&5
 echo $ECHO_N "checking whether included gettext is requested... $ECHO_C" >&6
 
@@ -8350,7 +8284,7 @@ echo "${ECHO_T}$nls_cv_force_use_gnu_gettext" >&6
       if test "$nls_cv_force_use_gnu_gettext" != "yes"; then
                         		nls_cv_header_intl=
 	nls_cv_header_libgt=
-	CATOBJEXT=NONE
+	CATOBJEXT=
 
 	if test "${ac_cv_header_libintl_h+set}" = set; then
   echo "$as_me:$LINENO: checking for libintl.h" >&5
@@ -8382,7 +8316,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -8518,7 +8453,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -8582,7 +8518,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -8637,7 +8574,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -8777,7 +8715,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -8910,7 +8849,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -8942,8 +8882,10 @@ fi
 
 
 
-        if test "$CATOBJEXT" = "NONE"; then
-	  	  	  nls_cv_use_gnu_gettext=yes
+        if test x"$CATOBJEXT" = x && test -d $srcdir/../intl; then
+	  # Neither gettext nor catgets in included in the C library.
+	  # Fall back on GNU gettext library (assuming it is present).
+	  nls_cv_use_gnu_gettext=yes
         fi
       fi
 
@@ -9114,6 +9056,13 @@ echo "${ECHO_T}found xgettext programs is not GNU xgettext; ignore it" >&6
 
 
 
+    if test "x$CATOBJEXT" != "x"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define ENABLE_NLS 1
+_ACEOF
+
+    fi
 
 
    if test "x$CATOBJEXT" != "x"; then
@@ -9178,7 +9127,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -9399,7 +9349,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -9563,7 +9514,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -9644,7 +9596,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -9785,7 +9738,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -9917,7 +9871,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10030,7 +9985,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10133,7 +10089,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10213,7 +10170,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10274,7 +10232,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10337,7 +10296,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10414,7 +10374,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10500,7 +10461,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10566,7 +10528,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10632,7 +10595,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10698,7 +10662,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10764,7 +10729,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -10837,7 +10803,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -11560,7 +11527,6 @@ s,@AUTOCONF@,$AUTOCONF,;t t
 s,@AUTOMAKE@,$AUTOMAKE,;t t
 s,@AUTOHEADER@,$AUTOHEADER,;t t
 s,@MAKEINFO@,$MAKEINFO,;t t
-s,@AMTAR@,$AMTAR,;t t
 s,@install_sh@,$install_sh,;t t
 s,@STRIP@,$STRIP,;t t
 s,@ac_ct_STRIP@,$ac_ct_STRIP,;t t
@@ -11569,6 +11535,9 @@ s,@mkdir_p@,$mkdir_p,;t t
 s,@AWK@,$AWK,;t t
 s,@SET_MAKE@,$SET_MAKE,;t t
 s,@am__leading_dot@,$am__leading_dot,;t t
+s,@AMTAR@,$AMTAR,;t t
+s,@am__tar@,$am__tar,;t t
+s,@am__untar@,$am__untar,;t t
 s,@DEPDIR@,$DEPDIR,;t t
 s,@am__include@,$am__include,;t t
 s,@am__quote@,$am__quote,;t t
@@ -11794,6 +11763,11 @@ esac
   *) ac_INSTALL=$ac_top_builddir$INSTALL ;;
   esac
 
+  if test x"$ac_file" != x-; then
+    { echo "$as_me:$LINENO: creating $ac_file" >&5
+echo "$as_me: creating $ac_file" >&6;}
+    rm -f "$ac_file"
+  fi
   # Let's still pretend it is `configure' which instantiates (i.e., don't
   # use $as_me), people would be surprised to read:
   #    /* config.h.  Generated by config.status.  */
@@ -11832,12 +11806,6 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
 	 fi;;
       esac
     done` || { (exit 1); exit 1; }
-
-  if test x"$ac_file" != x-; then
-    { echo "$as_me:$LINENO: creating $ac_file" >&5
-echo "$as_me: creating $ac_file" >&6;}
-    rm -f "$ac_file"
-  fi
 _ACEOF
 cat >>$CONFIG_STATUS <<_ACEOF
   sed "$ac_vpsub
@@ -12251,27 +12219,21 @@ echo X"$mf" |
   else
     continue
   fi
-  grep '^DEP_FILES *= *[^ #]' < "$mf" > /dev/null || continue
-  # Extract the definition of DEP_FILES from the Makefile without
-  # running `make'.
+  # Extract the definition of DEPDIR, am__include, and am__quote
+  # from the Makefile without running `make'.
   DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
   test -z "$DEPDIR" && continue
+  am__include=`sed -n 's/^am__include = //p' < "$mf"`
+  test -z "am__include" && continue
+  am__quote=`sed -n 's/^am__quote = //p' < "$mf"`
   # When using ansi2knr, U may be empty or an underscore; expand it
   U=`sed -n 's/^U = //p' < "$mf"`
-  test -d "$dirpart/$DEPDIR" || mkdir "$dirpart/$DEPDIR"
-  # We invoke sed twice because it is the simplest approach to
-  # changing $(DEPDIR) to its actual value in the expansion.
-  for file in `sed -n '
-    /^DEP_FILES = .*\\\\$/ {
-      s/^DEP_FILES = //
-      :loop
-	s/\\\\$//
-	p
-	n
-	/\\\\$/ b loop
-      p
-    }
-    /^DEP_FILES = / s/^DEP_FILES = //p' < "$mf" | \
+  # Find all dependency output files, they are included files with
+  # $(DEPDIR) in their names.  We invoke sed twice because it is the
+  # simplest approach to changing $(DEPDIR) to its actual value in the
+  # expansion.
+  for file in `sed -n "
+    s/^$am__include $am__quote\(.*(DEPDIR).*\)$am__quote"'$/\1/p' <"$mf" | \
        sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g' -e 's/\$U/'"$U"'/g'`; do
     # Make sure the directory exists.
     test -f "$dirpart/$file" && continue

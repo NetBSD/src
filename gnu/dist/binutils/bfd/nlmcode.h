@@ -1,5 +1,5 @@
 /* NLM (NetWare Loadable Module) executable support for BFD.
-   Copyright 1993, 1994, 1995, 1998, 2000, 2001, 2002, 2003
+   Copyright 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, using ELF support as the
@@ -236,7 +236,7 @@ add_bfd_section (abfd, name, offset, size, flags)
     return FALSE;
 
   newsect->vma = 0;		/* NLM's are relocatable.  */
-  newsect->_raw_size = size;
+  newsect->size = size;
   newsect->filepos = offset;
   newsect->flags = flags;
   newsect->alignment_power = bfd_log2 ((bfd_vma) 0);	/* FIXME */
@@ -630,7 +630,7 @@ nlm_swap_auxiliary_headers_in (abfd)
 		  newsec = bfd_make_section_anyway (abfd, name);
 		  if (newsec == (asection *) NULL)
 		    return FALSE;
-		  newsec->_raw_size = size;
+		  newsec->size = size;
 		  if (filepos != 0)
 		    {
 		      newsec->filepos = filepos;
@@ -1437,12 +1437,12 @@ nlm_compute_section_file_positions (abfd)
     {
       flagword f;
 
-      sec->_raw_size = BFD_ALIGN (sec->_raw_size, 1 << sec->alignment_power);
+      sec->size = BFD_ALIGN (sec->size, 1 << sec->alignment_power);
 
       f = bfd_get_section_flags (abfd, sec);
       if (f & SEC_CODE)
 	{
-	  text += sec->_raw_size;
+	  text += sec->size;
 	  if (bfd_get_section_vma (abfd, sec) < text_low)
 	    text_low = bfd_get_section_vma (abfd, sec);
 	  if (sec->alignment_power > text_align)
@@ -1450,7 +1450,7 @@ nlm_compute_section_file_positions (abfd)
 	}
       else if (f & SEC_DATA)
 	{
-	  data += sec->_raw_size;
+	  data += sec->size;
 	  if (bfd_get_section_vma (abfd, sec) < data_low)
 	    data_low = bfd_get_section_vma (abfd, sec);
 	  if (sec->alignment_power > data_align)
@@ -1462,7 +1462,7 @@ nlm_compute_section_file_positions (abfd)
 	    other_align = sec->alignment_power;
 	}
       else if (f & SEC_ALLOC)
-	bss += sec->_raw_size;
+	bss += sec->size;
     }
 
   nlm_set_text_low (abfd, text_low);
@@ -1498,17 +1498,17 @@ nlm_compute_section_file_positions (abfd)
       if (f & SEC_CODE)
 	{
 	  sec->filepos = text_ptr;
-	  text_ptr += sec->_raw_size;
+	  text_ptr += sec->size;
 	}
       else if (f & SEC_DATA)
 	{
 	  sec->filepos = data_ptr;
-	  data_ptr += sec->_raw_size;
+	  data_ptr += sec->size;
 	}
       else if (f & SEC_HAS_CONTENTS)
 	{
 	  sec->filepos = other_ptr;
-	  other_ptr += sec->_raw_size;
+	  other_ptr += sec->size;
 	}
     }
 
@@ -1539,7 +1539,7 @@ nlm_compute_section_file_positions (abfd)
 	     symbol (which is the old value of the symbol).  */
 	  sym->section = bss_sec;
 	  size = sym->value;
-	  sym->value = bss_sec->_raw_size + add;
+	  sym->value = bss_sec->size + add;
 	  add += size;
 	  add = BFD_ALIGN (add, 1 << bss_sec->alignment_power);
 	}
@@ -1552,7 +1552,7 @@ nlm_compute_section_file_positions (abfd)
 	      abort ();
 	    }
 	  nlm_fixed_header (abfd)->uninitializedDataSize += add;
-	  bss_sec->_raw_size += add;
+	  bss_sec->size += add;
 	}
     }
 
@@ -1692,7 +1692,7 @@ nlm_write_object_contents (abfd)
 
   /* A weak check on whether the section file positions were
      reasonable.  */
-  if (bfd_tell (abfd) > (ufile_ptr) nlm_fixed_header (abfd)->codeImageOffset)
+  if (bfd_tell (abfd) > nlm_fixed_header (abfd)->codeImageOffset)
     {
       bfd_set_error (bfd_error_invalid_operation);
       goto error_return;

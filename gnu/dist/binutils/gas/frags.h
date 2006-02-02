@@ -1,6 +1,6 @@
 /* frags.h - Header file for the frag concept.
-   Copyright 1987, 1992, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001
-   Free Software Foundation, Inc.
+   Copyright 1987, 1992, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001,
+   2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -74,6 +74,11 @@ struct frag {
      fr_address has been adjusted.  */
   unsigned int relax_marker:1;
 
+  /* Used to ensure that all insns are emitted on proper address
+     boundaries.  */
+  unsigned int has_code:1;
+  unsigned int insn_addr:6;
+
   /* What state is my tail in? */
   relax_stateT fr_type;
   relax_substateT fr_subtype;
@@ -114,22 +119,8 @@ COMMON fragS zero_address_frag;
 /* For local common (N_BSS segment) fixups.  */
 COMMON fragS bss_address_frag;
 
-#if 0
-/* A macro to speed up appending exactly 1 char to current frag.  */
-/* JF changed < 1 to <= 1 to avoid a race condition.  */
-#define FRAG_APPEND_1_CHAR(datum)			\
-{							\
-  if (obstack_room (&frags) <= 1)			\
-    {							\
-      frag_wane (frag_now);				\
-      frag_new (0);					\
-    }							\
-  obstack_1grow (&frags, datum);			\
-}
-#else
 extern void frag_append_1_char (int);
 #define FRAG_APPEND_1_CHAR(X) frag_append_1_char (X)
-#endif
 
 void frag_init (void);
 fragS *frag_alloc (struct obstack *);

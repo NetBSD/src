@@ -108,9 +108,9 @@ ptrace_unix_core_file_p (abfd)
   core_datasec (abfd)->flags = SEC_ALLOC + SEC_LOAD + SEC_HAS_CONTENTS;
   core_regsec (abfd)->flags = SEC_HAS_CONTENTS;
 
-  core_datasec (abfd)->_raw_size =  u.pt_dsize;
-  core_stacksec (abfd)->_raw_size = u.pt_ssize;
-  core_regsec (abfd)->_raw_size = sizeof (u);
+  core_datasec (abfd)->size =  u.pt_dsize;
+  core_stacksec (abfd)->size = u.pt_ssize;
+  core_regsec (abfd)->size = sizeof (u);
 
   core_datasec (abfd)->vma = u.pt_o_data_start;
   core_stacksec (abfd)->vma = USRSTACK - u.pt_ssize;

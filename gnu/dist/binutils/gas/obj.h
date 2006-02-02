@@ -1,8 +1,8 @@
 /* obj.h - defines the object dependent hooks for all object
    format backends.
 
-   Copyright 1987, 1990, 1991, 1992, 1993, 1995, 1996, 1997, 1999, 2000, 2002
-   Free Software Foundation, Inc.
+   Copyright 1987, 1990, 1991, 1992, 1993, 1995, 1996, 1997, 1999, 2000,
+   2002, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -51,7 +51,7 @@ struct format_ops {
   unsigned dfl_leading_underscore : 1;
   unsigned emit_section_symbols : 1;
   void (*begin) (void);
-  void (*app_file) (const char *);
+  void (*app_file) (const char *, int);
   void (*frob_symbol) (symbolS *, int *);
   void (*frob_file) (void);
   void (*frob_file_before_adjust) (void);

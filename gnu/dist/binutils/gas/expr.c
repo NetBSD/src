@@ -1,6 +1,6 @@
 /* expr.c -operands, expressions-
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002
+   1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -609,10 +609,6 @@ integer_constant (int radix, expressionS *expressionP)
       else
 	{
 	  expressionP->X_op = O_constant;
-#ifdef TARGET_WORD_SIZE
-	  /* Sign extend NUMBER.  */
-	  number |= (-(number >> (TARGET_WORD_SIZE - 1))) << (TARGET_WORD_SIZE - 1);
-#endif
 	  expressionP->X_add_number = number;
 	  input_line_pointer--;	/* Restore following character.  */
 	}			/* Really just a number.  */
@@ -981,12 +977,7 @@ operand (expressionS *expressionP)
       /* expression () will pass trailing whitespace.  */
       if ((c == '(' && *input_line_pointer != ')')
 	  || (c == '[' && *input_line_pointer != ']'))
-	{
-#ifdef RELAX_PAREN_GROUPING
-	  if (c != '(')
-#endif
-	    as_bad (_("missing '%c'"), c == '(' ? ')' : ']');
-	}
+	as_bad (_("missing '%c'"), c == '(' ? ')' : ']');
       else
 	input_line_pointer++;
       SKIP_WHITESPACE ();
@@ -1021,8 +1012,9 @@ operand (expressionS *expressionP)
       break;
 
     case '+':
-      /* Do not accept ++e as +(+e) */
-      if (*input_line_pointer == '+')
+      /* Do not accept ++e as +(+e).
+	 Disabled, since the preprocessor removes whitespace.  */
+      if (0 && *input_line_pointer == '+')
 	goto target_op;
       (void) operand (expressionP);
       break;
@@ -1041,8 +1033,9 @@ operand (expressionS *expressionP)
     case '!':
     case '-':
       {
-        /* Do not accept --e as -(-e) */
-	if (c == '-' && *input_line_pointer == '-')
+        /* Do not accept --e as -(-e)
+	   Disabled, since the preprocessor removes whitespace.  */
+	if (0 && c == '-' && *input_line_pointer == '-')
 	  goto target_op;
 	
 	operand (expressionP);
@@ -1073,6 +1066,35 @@ operand (expressionS *expressionP)
 	      generic_floating_point_number.sign = '-';
 	    else
 	      generic_floating_point_number.sign = 'N';
+	  }
+	else if (expressionP->X_op == O_big
+		 && expressionP->X_add_number > 0)
+	  {
+	    int i;
+
+	    if (c == '~' || c == '-')
+	      {
+		for (i = 0; i < expressionP->X_add_number; ++i)
+		  generic_bignum[i] = ~generic_bignum[i];
+		if (c == '-')
+		  for (i = 0; i < expressionP->X_add_number; ++i)
+		    {
+		      generic_bignum[i] += 1;
+		      if (generic_bignum[i])
+			break;
+		    }
+	      }
+	    else if (c == '!')
+	      {
+		int nonzero = 0;
+		for (i = 0; i < expressionP->X_add_number; ++i)
+		  {
+		    if (generic_bignum[i])
+		      nonzero = 1;
+		    generic_bignum[i] = 0;
+		  }
+		generic_bignum[0] = nonzero;
+	      }
 	  }
 	else if (expressionP->X_op != O_illegal
 		 && expressionP->X_op != O_absent)
@@ -1551,8 +1573,9 @@ operator (int *num_chars)
 
     case '+':
     case '-':
-      /* Do not allow a++b and a--b to be a + (+b) and a - (-b) */
-      if (input_line_pointer[1] != c)
+      /* Do not allow a++b and a--b to be a + (+b) and a - (-b)
+	 Disabled, since the preprocessor removes whitespace.  */
+      if (1 || input_line_pointer[1] != c)
 	return op_encoding[c];
       return O_illegal;
 
@@ -1684,7 +1707,7 @@ expr (int rankarg,		/* Larger # is higher rank.  */
       know (op_right == O_illegal
 	    || op_rank[(int) op_right] <= op_rank[(int) op_left]);
       know ((int) op_left >= (int) O_multiply
-	    && (int) op_left <= (int) O_logical_or);
+	    && (int) op_left <= (int) O_index);
 
       /* input_line_pointer->after right-hand quantity.  */
       /* left-hand quantity in resultP.  */

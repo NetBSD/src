@@ -1,6 +1,6 @@
 /* HP PA-RISC SOM object file format:  definitions internal to BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001,
-   2002, 2003 Free Software Foundation, Inc.
+   2002, 2003, 2004 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -27,7 +27,7 @@
 
 #include "libhppa.h"
 
-/* Enable PA2.0 if available */
+/* We want reloc.h to provide PA 2.0 defines.  */
 #define PA_2_0
 
 #include <a.out.h>
@@ -143,6 +143,35 @@ struct som_data_struct
     struct somdata a;
   };
 
+struct som_subspace_dictionary_record
+  {
+    int space_index;
+    unsigned int access_control_bits : 7;
+    unsigned int memory_resident : 1;
+    unsigned int dup_common : 1;
+    unsigned int is_common : 1;
+    unsigned int is_loadable : 1;
+    unsigned int quadrant : 2;
+    unsigned int initially_frozen : 1;
+    unsigned int is_first : 1;
+    unsigned int code_only : 1;
+    unsigned int sort_key : 8;
+    unsigned int replicate_init	: 1;
+    unsigned int continuation : 1;
+    unsigned int is_tspecific : 1;
+    unsigned int is_comdat : 1;
+    unsigned int reserved : 4;
+    int file_loc_init_value;
+    unsigned int initialization_length;
+    unsigned int subspace_start;
+    unsigned int subspace_length;
+    unsigned int reserved2 : 5;   
+    unsigned int alignment :27;
+    union name_pt name;
+    int fixup_request_index;
+    unsigned int fixup_request_quantity;
+  };
+
 /* Substructure of som_section_data_struct used to hold information
    which can't be represented by the generic BFD section structure,
    but which must be copied during objcopy or strip.  */
@@ -155,6 +184,9 @@ struct som_copyable_section_data_struct
     unsigned int is_defined : 1;
     unsigned int is_private : 1;
     unsigned int quadrant : 2;
+    unsigned int is_comdat : 1;
+    unsigned int is_common : 1;
+    unsigned int dup_common : 1;
 
     /* For subspaces, this points to the section which represents the
        space in which the subspace is contained.  For spaces it points
@@ -184,7 +216,7 @@ struct som_section_data_struct
     unsigned int reloc_size;
     char *reloc_stream;
     struct space_dictionary_record *space_dict;
-    struct subspace_dictionary_record *subspace_dict;
+    struct som_subspace_dictionary_record *subspace_dict;
   };
 
 #define somdata(bfd)			((bfd)->tdata.som_data->a)
@@ -231,7 +263,7 @@ struct som_section_data_struct
 bfd_boolean bfd_som_set_section_attributes
   PARAMS ((asection *, int, int, unsigned int, int));
 bfd_boolean bfd_som_set_subsection_attributes
-  PARAMS ((asection *, asection *, int, unsigned int, int));
+  PARAMS ((asection *, asection *, int, unsigned int, int, int, int, int));
 void bfd_som_set_symbol_type PARAMS ((asymbol *, unsigned int));
 bfd_boolean bfd_som_attach_aux_hdr PARAMS ((bfd *, int, char *));
 int ** hppa_som_gen_reloc_type

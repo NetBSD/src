@@ -1,5 +1,5 @@
 /* atof_tahoe.c - turn a string into a Tahoe floating point number
-   Copyright 1987, 1993, 2000 Free Software Foundation, Inc.
+   Copyright 1987, 1993, 2000, 2003 Free Software Foundation, Inc.
 
 /* This is really a simplified version of atof_vax.c. I glommed it wholesale
    and then shaved it down. I don't even know how it works. (Don't you find
