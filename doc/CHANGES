@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.568 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.569 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -176,3 +176,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[cube 20060201]
 	fs/udf: added UDF file system support for optical media and block
 		devices like harddisc partions and vnd's.
+		[reinoud 20060202]
+
