@@ -1,5 +1,6 @@
 /* tc-w65.c -- Assemble code for the W65816
-   Copyright 1995, 1998, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1995, 1998, 2000, 2001, 2002, 2005
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -63,10 +64,6 @@ const pseudo_typeS md_pseudo_table[] = {
   {"longi", s_longa, 1},
   {0, 0, 0}
 };
-
-#if 0
-int md_reloc_size;
-#endif
 
 const char EXP_CHARS[] = "eE";
 
@@ -898,7 +895,7 @@ md_convert_frag (headers, seg, fragP)
 		       fragP->fr_offset);
       int disp = targ_addr - next_inst;
 
-      md_number_to_chars (buffer + inst_size, disp, disp_size);
+      md_number_to_chars ((char *) buffer + inst_size, disp, disp_size);
       fragP->fr_fix += disp_size + inst_size;
       fragP->fr_var = 0;
     }

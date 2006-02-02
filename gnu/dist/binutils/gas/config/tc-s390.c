@@ -1,5 +1,6 @@
 /* tc-s390.c -- Assemble for the S390
-   Copyright 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -312,8 +313,8 @@ static flagword s390_flags = 0;
 symbolS *GOT_symbol;		/* Pre-defined "_GLOBAL_OFFSET_TABLE_" */
 
 #ifndef WORKING_DOT_WORD
-const int md_short_jump_size = 4;
-const int md_long_jump_size = 4;
+int md_short_jump_size = 4;
+int md_long_jump_size = 4;
 #endif
 
 const char *md_shortopts = "A:m:kVQ:";
@@ -601,21 +602,15 @@ s390_insert_operand (insn, operand, val, file, line)
       /* Check for underflow / overflow.  */
       if (uval < min || uval > max)
 	{
-	  const char *err =
-	    "operand out of range (%s not between %ld and %ld)";
-	  char buf[100];
-
 	  if (operand->flags & S390_OPERAND_LENGTH)
 	    {
 	      uval++;
 	      min++;
 	      max++;
 	    }
-	  sprint_value (buf, uval);
-	  if (file == (char *) NULL)
-	    as_bad (err, buf, (int) min, (int) max);
-	  else
-	    as_bad_where (file, line, err, buf, (int) min, (int) max);
+
+	  as_bad_value_out_of_range (_("operand"), uval, (offsetT) min, (offsetT) max, file, line);
+
 	  return;
 	}
     }
@@ -1602,15 +1597,12 @@ s390_insn (ignore)
   if (exp.X_op == O_constant)
     {
       if (   (   opformat->oplen == 6
-	      && exp.X_add_number >= 0
 	      && (addressT) exp.X_add_number < (1ULL << 48))
 	  || (   opformat->oplen == 4
-	      && exp.X_add_number >= 0
 	      && (addressT) exp.X_add_number < (1ULL << 32))
 	  || (   opformat->oplen == 2
-	      && exp.X_add_number >= 0
 	      && (addressT) exp.X_add_number < (1ULL << 16)))
-	md_number_to_chars (insn, exp.X_add_number, opformat->oplen);
+	md_number_to_chars ((char *) insn, exp.X_add_number, opformat->oplen);
       else
 	as_bad (_("Invalid .insn format\n"));
     }
@@ -1620,9 +1612,9 @@ s390_insn (ignore)
 	  && opformat->oplen == 6
 	  && generic_bignum[3] == 0)
 	{
-	  md_number_to_chars (insn, generic_bignum[2], 2);
-	  md_number_to_chars (&insn[2], generic_bignum[1], 2);
-	  md_number_to_chars (&insn[4], generic_bignum[0], 2);
+	  md_number_to_chars ((char *) insn, generic_bignum[2], 2);
+	  md_number_to_chars ((char *) &insn[2], generic_bignum[1], 2);
+	  md_number_to_chars ((char *) &insn[4], generic_bignum[0], 2);
 	}
       else
 	as_bad (_("Invalid .insn format\n"));
@@ -2000,8 +1992,8 @@ md_apply_fix3 (fixP, valP, seg)
       if (fixP->fx_done)
 	{
 	  /* Insert the fully resolved operand value.  */
-	  s390_insert_operand (where, operand, (offsetT) value,
-			       fixP->fx_file, fixP->fx_line);
+	  s390_insert_operand ((unsigned char *) where, operand,
+			       (offsetT) value, fixP->fx_file, fixP->fx_line);
 	  return;
 	}
 
@@ -2223,10 +2215,12 @@ md_apply_fix3 (fixP, valP, seg)
 	case BFD_RELOC_390_TLS_DTPMOD:
 	case BFD_RELOC_390_TLS_DTPOFF:
 	case BFD_RELOC_390_TLS_TPOFF:
+	  S_SET_THREAD_LOCAL (fixP->fx_addsy);
 	  /* Fully resolved at link time.  */
 	  break;
 	case BFD_RELOC_390_TLS_IEENT:
 	  /* Fully resolved at link time.  */
+	  S_SET_THREAD_LOCAL (fixP->fx_addsy);
 	  value += 2;
 	  break;
 

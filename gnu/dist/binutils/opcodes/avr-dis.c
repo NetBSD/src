@@ -1,5 +1,5 @@
 /* Disassemble AVR instructions.
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2002, 2004 Free Software Foundation, Inc.
 
    Contributed by Denis Chertykov <denisc@overta.ru>
 
@@ -42,20 +42,15 @@ const struct avr_opcodes_s avr_opcodes[] =
   {NULL, NULL, NULL, 0, 0, 0}
 };
 
-static int avr_operand PARAMS ((unsigned int, unsigned int,
-				unsigned int, int, char *, char *, int));
+static int avr_operand (unsigned int, unsigned int, unsigned int, int,
+                        char *, char *, int, int *, bfd_vma *);
 
 static int
-avr_operand (insn, insn2, pc, constraint, buf, comment, regs)
-     unsigned int insn;
-     unsigned int insn2;
-     unsigned int pc;
-     int constraint;
-     char *buf;
-     char *comment;
-     int regs;
+avr_operand (unsigned int insn, unsigned int insn2, unsigned int pc, int constraint,
+             char *buf, char *comment, int regs, int *sym, bfd_vma *sym_addr)
 {
   int ok = 1;
+  *sym = 0;
 
   switch (constraint)
     {
@@ -145,15 +140,18 @@ avr_operand (insn, insn2, pc, constraint, buf, comment, regs)
       break;
       
     case 'h':
-      sprintf (buf, "0x%x",
-	       ((((insn & 1) | ((insn & 0x1f0) >> 3)) << 16) | insn2) * 2);
+      *sym = 1;
+      *sym_addr = ((((insn & 1) | ((insn & 0x1f0) >> 3)) << 16) | insn2) * 2;
+      sprintf (buf, "0x");
       break;
       
     case 'L':
       {
 	int rel_addr = (((insn & 0xfff) ^ 0x800) - 0x800) * 2;
 	sprintf (buf, ".%+-8d", rel_addr);
-	sprintf (comment, "0x%x", pc + 2 + rel_addr);
+        *sym = 1;
+        *sym_addr = pc + 2 + rel_addr;
+	sprintf (comment, "0x");
       }
       break;
 
@@ -161,7 +159,9 @@ avr_operand (insn, insn2, pc, constraint, buf, comment, regs)
       {
 	int rel_addr = ((((insn >> 3) & 0x7f) ^ 0x40) - 0x40) * 2;
 	sprintf (buf, ".%+-8d", rel_addr);
-	sprintf (comment, "0x%x", pc + 2 + rel_addr);
+        *sym = 1;
+        *sym_addr = pc + 2 + rel_addr;
+	sprintf (comment, "0x");
       }
       break;
 
@@ -265,6 +265,8 @@ print_insn_avr(addr, info)
   int cmd_len = 2;
   int ok = 0;
   char op1[20], op2[20], comment1[40], comment2[40];
+  int sym_op1 = 0, sym_op2 = 0;
+  bfd_vma sym_addr1, sym_addr2;
 
   if (!initialized)
     {
@@ -336,11 +338,11 @@ print_insn_avr(addr, info)
 	{
 	  int regs = REGISTER_P (*op);
 
-	  ok = avr_operand (insn, insn2, addr, *op, op1, comment1, 0);
+	  ok = avr_operand (insn, insn2, addr, *op, op1, comment1, 0, &sym_op1, &sym_addr1);
 
 	  if (ok && *(++op) == ',')
 	    ok = avr_operand (insn, insn2, addr, *(++op), op2,
-			      *comment1 ? comment2 : comment1, regs);
+			      *comment1 ? comment2 : comment1, regs, &sym_op2, &sym_addr2);
 	}
     }
 
@@ -356,7 +358,7 @@ print_insn_avr(addr, info)
   (*prin) (stream, "%s", ok ? opcode->name : ".word");
 
   if (*op1)
-    (*prin) (stream, "\t%s", op1);
+      (*prin) (stream, "\t%s", op1);
 
   if (*op2)
     (*prin) (stream, ", %s", op2);
@@ -364,8 +366,14 @@ print_insn_avr(addr, info)
   if (*comment1)
     (*prin) (stream, "\t; %s", comment1);
 
+  if (sym_op1)
+    info->print_address_func (sym_addr1, info);
+
   if (*comment2)
     (*prin) (stream, " %s", comment2);
+
+  if (sym_op2)
+    info->print_address_func (sym_addr2, info);
 
   return cmd_len;
 }

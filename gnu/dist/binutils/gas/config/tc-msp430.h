@@ -1,5 +1,5 @@
 /* This file is tc-msp430.h
-   Copyright (C) 2002 Free Software Foundation, Inc.
+   Copyright (C) 2002, 2004 Free Software Foundation, Inc.
 
    Contributed by Dmitry Diky <diwil@mail.ru>
 
@@ -93,7 +93,7 @@
      of a PC relative instruction is the next instruction, so this
      macro would return the length of an instruction.  */
 
-extern long md_pcrel_from_section PARAMS ((struct fix *, segT));
+extern long md_pcrel_from_section (struct fix *, segT);
 
 #define LISTING_WORD_SIZE 2
 /*   The number of bytes to put into a word in a listing.  This affects
@@ -112,3 +112,7 @@ extern long md_pcrel_from_section PARAMS ((struct fix *, segT));
      should do nothing.  Some targets define a `.bss' directive that is
      also affected by this macro.  The default definition will set
      P2VAR to the truncated power of two of sizes up to eight bytes.  */
+
+#define md_relax_frag(SEG, FRAGP, STRETCH)             \
+   msp430_relax_frag (SEG, FRAGP, STRETCH)
+extern long msp430_relax_frag (segT, fragS *, long);

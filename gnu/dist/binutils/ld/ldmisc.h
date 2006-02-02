@@ -1,5 +1,5 @@
 /* ldmisc.h -
-   Copyright 1991, 1992, 1993, 1994, 1996, 1997, 2001, 2003
+   Copyright 1991, 1992, 1993, 1994, 1996, 1997, 2001, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GLD, the Gnu Linker.
@@ -22,7 +22,6 @@
 #ifndef LDMISC_H
 #define LDMISC_H
 
-extern bfd_boolean error_handler (int, const char *, ...);
 extern void einfo (const char *, ...);
 extern void minfo (const char *, ...);
 extern void info_msg (const char *, ...);

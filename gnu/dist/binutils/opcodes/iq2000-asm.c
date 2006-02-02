@@ -48,16 +48,22 @@ static const char * parse_insn_normal
 /* -- assembler routines inserted here.  */
 
 /* -- asm.c */
-static const char * parse_mimm PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
+
+#include "safe-ctype.h"
+
+static int iq2000_cgen_isa_register PARAMS ((const char **));
+static const char * parse_jtargq10 PARAMS ((CGEN_CPU_DESC, const char **, int, int, enum cgen_parse_operand_result *, bfd_vma *));
+static const char * parse_mimm PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
 static const char * parse_imm  PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
 static const char * parse_hi16 PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
-static const char * parse_lo16 PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
+static const char * parse_lo16 PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
+static const char * parse_mlo16 PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
 
 /* Special check to ensure that instruction exists for given machine */
 int
 iq2000_cgen_insn_supported (cd, insn)
      CGEN_CPU_DESC cd;
-     CGEN_INSN *insn;
+     const CGEN_INSN *insn;
 {
   int machs = cd->machs;
 
@@ -88,7 +94,7 @@ static int iq2000_cgen_isa_register (strp)
             return 1;
         }
     }
-  if (**strp == '%' && tolower((*strp)[1]) != 'l' && tolower((*strp)[1]) != 'h')
+  if (**strp == '%' && TOLOWER((*strp)[1]) != 'l' && TOLOWER((*strp)[1]) != 'h')
     return 1;
   return 0;
 }
@@ -100,12 +106,11 @@ parse_mimm (cd, strp, opindex, valuep)
      CGEN_CPU_DESC cd;
      const char **strp;
      int opindex;
-     long *valuep;
+     unsigned long *valuep;
 {
   const char *errmsg;
-  long value;
 
-  /* Verify this isn't a register */
+  /* Verify this isn't a register.  */
   if (iq2000_cgen_isa_register (strp))
     errmsg = _("immediate value cannot be register");
   else
@@ -116,7 +121,8 @@ parse_mimm (cd, strp, opindex, valuep)
       if (errmsg == NULL)
 	{
 	  long x = (-value) & 0xFFFF0000;
-	  if (x != 0 && x != 0xFFFF0000)
+
+	  if (x != 0 && x != (long) 0xFFFF0000)
 	    errmsg = _("immediate value out of range");
 	  else
 	    *valuep = (-value & 0xFFFF);
@@ -135,7 +141,6 @@ parse_imm (cd, strp, opindex, valuep)
      unsigned long *valuep;
 {
   const char *errmsg;
-  long value;
 
   if (iq2000_cgen_isa_register (strp))
     errmsg = _("immediate value cannot be register");
@@ -147,7 +152,7 @@ parse_imm (cd, strp, opindex, valuep)
       if (errmsg == NULL)
 	{
 	  long x = value & 0xFFFF0000;
-	  if (x != 0 && x != 0xFFFF0000)
+	  if (x != 0 && x != (long) 0xFFFF0000)
 	    errmsg = _("immediate value out of range");
 	  else
 	    *valuep = (value & 0xFFFF);
@@ -163,9 +168,9 @@ parse_jtargq10 (cd, strp, opindex, reloc, type_addr, valuep)
      CGEN_CPU_DESC cd;
      const char **strp;
      int opindex;
-     int reloc;
-     enum cgen_parse_operand_result *type_addr;
-     unsigned long *valuep;
+     int reloc ATTRIBUTE_UNUSED;
+     enum cgen_parse_operand_result *type_addr ATTRIBUTE_UNUSED;
+     bfd_vma *valuep;
 {
   const char *errmsg;
   bfd_vma value;
@@ -175,7 +180,7 @@ parse_jtargq10 (cd, strp, opindex, reloc, type_addr, valuep)
 			       &result_type, &value);
   if (errmsg == NULL && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
     {
-      /* check value is within 23-bits (remembering that 2-bit shift right will occur) */
+      /* Check value is within 23-bits (remembering that 2-bit shift right will occur).  */
       if (value > 0x7fffff)
         return _("21-bit offset out of range");
     }
@@ -257,7 +262,7 @@ parse_lo16 (cd, strp, opindex, valuep)
      CGEN_CPU_DESC cd;
      const char **strp;
      int opindex;
-     long *valuep;
+     unsigned long *valuep;
 {
   if (strncasecmp (*strp, "%lo(", 4) == 0)
     {
@@ -290,7 +295,7 @@ parse_mlo16 (cd, strp, opindex, valuep)
      CGEN_CPU_DESC cd;
      const char **strp;
      int opindex;
-     long *valuep;
+     unsigned long *valuep;
 {
   if (strncasecmp (*strp, "%lo(", 4) == 0)
     {
@@ -345,6 +350,9 @@ iq2000_cgen_parse_operand (cd, opindex, strp, fields)
 
   switch (opindex)
     {
+    case IQ2000_OPERAND__INDEX :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND__INDEX, (unsigned long *) (& fields->f_index));
+      break;
     case IQ2000_OPERAND_BASE :
       errmsg = cgen_parse_keyword (cd, strp, & iq2000_cgen_opval_gr_names, & fields->f_rs);
       break;
@@ -356,43 +364,40 @@ iq2000_cgen_parse_operand (cd, opindex, strp, fields)
       }
       break;
     case IQ2000_OPERAND_BITNUM :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_BITNUM, &fields->f_rt);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_BITNUM, (unsigned long *) (& fields->f_rt));
       break;
     case IQ2000_OPERAND_BYTECOUNT :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_BYTECOUNT, &fields->f_bytecount);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_BYTECOUNT, (unsigned long *) (& fields->f_bytecount));
       break;
     case IQ2000_OPERAND_CAM_Y :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CAM_Y, &fields->f_cam_y);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CAM_Y, (unsigned long *) (& fields->f_cam_y));
       break;
     case IQ2000_OPERAND_CAM_Z :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CAM_Z, &fields->f_cam_z);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CAM_Z, (unsigned long *) (& fields->f_cam_z));
       break;
     case IQ2000_OPERAND_CM_3FUNC :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CM_3FUNC, &fields->f_cm_3func);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CM_3FUNC, (unsigned long *) (& fields->f_cm_3func));
       break;
     case IQ2000_OPERAND_CM_3Z :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CM_3Z, &fields->f_cm_3z);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CM_3Z, (unsigned long *) (& fields->f_cm_3z));
       break;
     case IQ2000_OPERAND_CM_4FUNC :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CM_4FUNC, &fields->f_cm_4func);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CM_4FUNC, (unsigned long *) (& fields->f_cm_4func));
       break;
     case IQ2000_OPERAND_CM_4Z :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CM_4Z, &fields->f_cm_4z);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_CM_4Z, (unsigned long *) (& fields->f_cm_4z));
       break;
     case IQ2000_OPERAND_COUNT :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_COUNT, &fields->f_count);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_COUNT, (unsigned long *) (& fields->f_count));
       break;
     case IQ2000_OPERAND_EXECODE :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_EXECODE, &fields->f_excode);
-      break;
-    case IQ2000_OPERAND_F_INDEX :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_F_INDEX, &fields->f_index);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_EXECODE, (unsigned long *) (& fields->f_excode));
       break;
     case IQ2000_OPERAND_HI16 :
-      errmsg = parse_hi16 (cd, strp, IQ2000_OPERAND_HI16, &fields->f_imm);
+      errmsg = parse_hi16 (cd, strp, IQ2000_OPERAND_HI16, (unsigned long *) (& fields->f_imm));
       break;
     case IQ2000_OPERAND_IMM :
-      errmsg = parse_imm (cd, strp, IQ2000_OPERAND_IMM, &fields->f_imm);
+      errmsg = parse_imm (cd, strp, IQ2000_OPERAND_IMM, (unsigned long *) (& fields->f_imm));
       break;
     case IQ2000_OPERAND_JMPTARG :
       {
@@ -403,28 +408,29 @@ iq2000_cgen_parse_operand (cd, opindex, strp, fields)
       break;
     case IQ2000_OPERAND_JMPTARGQ10 :
       {
-        bfd_vma value;
+        bfd_vma value = 0;
+
         errmsg = parse_jtargq10 (cd, strp, IQ2000_OPERAND_JMPTARGQ10, 0, NULL,  & value);
         fields->f_jtargq10 = value;
       }
       break;
     case IQ2000_OPERAND_LO16 :
-      errmsg = parse_lo16 (cd, strp, IQ2000_OPERAND_LO16, &fields->f_imm);
+      errmsg = parse_lo16 (cd, strp, IQ2000_OPERAND_LO16, (unsigned long *) (& fields->f_imm));
       break;
     case IQ2000_OPERAND_MASK :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_MASK, &fields->f_mask);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_MASK, (unsigned long *) (& fields->f_mask));
       break;
     case IQ2000_OPERAND_MASKL :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_MASKL, &fields->f_maskl);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_MASKL, (unsigned long *) (& fields->f_maskl));
       break;
     case IQ2000_OPERAND_MASKQ10 :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_MASKQ10, &fields->f_maskq10);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_MASKQ10, (unsigned long *) (& fields->f_maskq10));
       break;
     case IQ2000_OPERAND_MASKR :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_MASKR, &fields->f_rs);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_MASKR, (unsigned long *) (& fields->f_rs));
       break;
     case IQ2000_OPERAND_MLO16 :
-      errmsg = parse_mlo16 (cd, strp, IQ2000_OPERAND_MLO16, &fields->f_imm);
+      errmsg = parse_mlo16 (cd, strp, IQ2000_OPERAND_MLO16, (unsigned long *) (& fields->f_imm));
       break;
     case IQ2000_OPERAND_OFFSET :
       {
@@ -452,7 +458,7 @@ iq2000_cgen_parse_operand (cd, opindex, strp, fields)
       errmsg = cgen_parse_keyword (cd, strp, & iq2000_cgen_opval_gr_names, & fields->f_rt_rs);
       break;
     case IQ2000_OPERAND_SHAMT :
-      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_SHAMT, &fields->f_shamt);
+      errmsg = cgen_parse_unsigned_integer (cd, strp, IQ2000_OPERAND_SHAMT, (unsigned long *) (& fields->f_shamt));
       break;
 
     default :

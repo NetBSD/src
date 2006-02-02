@@ -1,5 +1,5 @@
 # Test handling of weak undefined symbols
-#   Copyright 2001
+#   Copyright 2001, 2002, 2004
 #   Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
@@ -29,13 +29,21 @@ if { ![istarget *-*-sysv4*] \
      && ![istarget *-*-linux*] \
      && ![istarget *-*-irix5*] \
      && ![istarget *-*-irix6*] \
+     && ![is_pecoff_format] \
      && ![istarget *-*-solaris2*] } then {
+    unsupported $testname
     return
 }
 
 if { [istarget *-*-linux*aout*] \
      || [istarget *-*-linux*oldld*] } {
+    unsupported $testname
     return
+}
+
+# Weak symbols are broken for non-i386 PE targets.
+if {! [istarget i?86-*-*]} {
+    setup_xfail *-*-pe*
 }
 
 if {! [ld_assemble $as $srcdir/$subdir/weak-undef.s tmpdir/weak-undef.o]} then {

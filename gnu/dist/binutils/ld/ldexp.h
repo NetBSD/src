@@ -95,11 +95,29 @@ extern struct exp_data_seg {
   enum {
     exp_dataseg_none,
     exp_dataseg_align_seen,
+    exp_dataseg_relro_seen,
     exp_dataseg_end_seen,
+    exp_dataseg_relro_adjust,
     exp_dataseg_adjust
   } phase;
-  bfd_vma base, end, pagesize;
+  bfd_vma base, min_base, relro_end, end, pagesize, maxpagesize;
 } exp_data_seg;
+
+/* A maps from a segment name to a base address.  */
+typedef struct segment_struct {
+  /* The next segment in the linked list.  */
+  struct segment_struct *next;
+  /* The name of the sgement.  */
+  const char *name;
+  /* The base address for the segment.  */
+  bfd_vma value;
+  /* True if a SEGMENT_START directive corresponding to this segment
+     has been seen.  */
+  bfd_boolean used;
+} segment_type;
+
+/* The segments specified by the user on the command-line.  */
+extern segment_type *segments;
 
 typedef struct _fill_type fill_type;
 

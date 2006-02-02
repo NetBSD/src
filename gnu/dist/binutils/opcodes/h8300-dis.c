@@ -1,20 +1,20 @@
 /* Disassemble h8300 instructions.
-   Copyright 1993, 1994, 1996, 1998, 2000, 2001, 2002, 2003
+   Copyright 1993, 1994, 1996, 1998, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define DEFINE_TABLE
 
@@ -640,14 +640,6 @@ bfd_h8_disassemble (addr, info, mach)
 		}
 	      else if (looking_for == (op_type) E)
 		{
-		  int i;
-
-		  for (i = 0; i < qi->length; i++)
-		    outfn (stream, "%02x ", data[i]);
-
-		  for (; i < 6; i++)
-		    outfn (stream, "   ");
-
 		  outfn (stream, "%s\t", q->name);
 
 		  /* Gross.  Disgusting.  */
@@ -716,6 +708,17 @@ bfd_h8_disassemble (addr, info, mach)
 		    int hadone = 0;
 		    int nargs;
 
+		    /* Special case handling for the adds and subs instructions
+		       since in H8 mode thay can only take the r0-r7 registers but
+		       in other (higher) modes they can take the er0-er7 registers
+		       as well.  */
+		    if (strcmp (qi->opcode->name, "adds") == 0
+			|| strcmp (qi->opcode->name, "subs") == 0)
+		      {
+			outfn (stream, "#%d,%s", cst[0], pregnames[regno[1] & 0x7]);
+			return qi->length;
+		      }
+
 		    for (nargs = 0; 
 			 nargs < 3 && args[nargs] != (op_type) E; 
 			 nargs++)
@@ -750,9 +753,7 @@ bfd_h8_disassemble (addr, info, mach)
     }
 
   /* Fell off the end.  */
-  outfn (stream, "%02x %02x        .word\tH'%x,H'%x",
-	   data[0], data[1],
-	   data[0], data[1]);
+  outfn (stream, ".word\tH'%x,H'%x", data[0], data[1]);
   return 2;
 }
 
