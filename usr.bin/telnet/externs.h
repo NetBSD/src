@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.33 2005/02/06 20:39:35 dsl Exp $	*/
+/*	$NetBSD: externs.h,v 1.34 2006/02/02 19:33:12 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -95,7 +95,7 @@ extern int
     apitrace,		/* Trace API transactions */
 #endif	/* defined(TN3270) */
     termdata,		/* Print out terminal data flow */
-    debug,		/* Debug level */
+    telnet_debug,	/* Debug level */
     doaddrlookup,	/* do a reverse address lookup? */
     clienteof;		/* Client received EOF */
 

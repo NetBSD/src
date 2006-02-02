@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.30 2005/03/29 12:18:28 drochner Exp $	*/
+/*	$NetBSD: telnet.c,v 1.31 2006/02/02 19:33:12 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.30 2005/03/29 12:18:28 drochner Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.31 2006/02/02 19:33:12 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ int
 	showoptions,
 	In3270,		/* Are we in 3270 mode? */
 	ISend,		/* trying to send network data in */
-	debug = 0,
+	telnet_debug = 0,
 	crmod,
 	netdata,	/* Print out network data flow */
 	crlf,		/* Should '\r' be mapped to <CR><LF> (or <CR><NUL>)? */

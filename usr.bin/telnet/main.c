@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2004/01/05 23:35:41 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2006/02/02 19:33:12 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2004/01/05 23:35:41 jmmv Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2006/02/02 19:33:12 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,7 +205,7 @@ main(int argc, char *argv[])
 			skiprc = 1;
 			break;
 		case 'd':
-			debug = 1;
+			telnet_debug = 1;
 			break;
 		case 'e':
 			set_escape_char(optarg);
