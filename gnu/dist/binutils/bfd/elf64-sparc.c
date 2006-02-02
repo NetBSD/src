@@ -2797,8 +2797,13 @@ sparc64_elf_finish_dynamic_symbol (output_bfd, info, h, sym)
       rela.r_offset += (splt->output_section->vma + splt->output_offset);
       rela.r_info = ELF64_R_INFO (h->dynindx, R_SPARC_JMP_SLOT);
 
+      /* Adjust for the first 4 reserved elements in the .plt section
+	 when setting the offset in the .rela.plt section.
+	 Sun forgot to read their own ABI and copied elf32-sparc behaviour,
+	 thus .plt[4] has corresponding .rela.plt[0] and so on.  */
+
       loc = srela->contents;
-      loc += h->plt.offset * sizeof (Elf64_External_Rela);
+      loc += (h->plt.offset - 4) * sizeof (Elf64_External_Rela);
       bfd_elf64_swap_reloca_out (output_bfd, &rela, loc);
 
       if (!h->def_regular)
