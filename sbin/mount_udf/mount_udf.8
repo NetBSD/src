@@ -1,0 +1,118 @@
+.\" $NetBSD: mount_udf.8,v 1.1 2006/02/02 15:21:29 reinoud Exp $
+.\"
+.\" Copyright (c) 2005 Reinoud Zandijk
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"          This product includes software developed for the
+.\"          NetBSD Project.  See http://www.NetBSD.org/ for
+.\"          information about NetBSD.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
+.\"
+.Dd January 26, 2006
+.Dt MOUNT_UDF 8
+.Os
+.Sh NAME
+.Nm mount_udf
+.Nd mount an UDF file system
+.Sh SYNOPSIS
+.Nm
+.\".Op Fl c
+.Op Fl g Ar gid
+.Op Fl o Ar options
+.Op Fl t Ar gmtoff
+.Op Fl u Ar uid
+.Pa special
+.Pa node
+.Sh DESCRIPTION
+The
+.Nm
+command attaches the UDF file system residing on the specified
+.Pa special
+device node on the location indicated with
+.Pa node .
+.Pp
+Anonymous files stored on the UDF disc will be represented and saved in the
+specified uid:gid pair. If unspecified it will default to nobody:nobody. Both
+uid and gid can be either specified with their names as with their numerical
+equivalents.
+.Bl -tag -width XXXoptions
+.\" -c flag specifies closure of CD/DVD session after dismount (writing)
+.It Fl g Ar gid
+Set the group of anonymous files on the file system. The default group is the
+nobody group.
+.It Fl o Ar options
+Use the specified mount
+.Ar options
+as specified in
+.Xr mount 8 .
+.It Fl s Ar session
+Select the session
+.Ar session
+to be mounted instead of the default last one. Positive
+.Ar session
+values indicate an absolute session number. Negative
+.Ar session
+values are relative to the last lession found on the disc.
+Note that this option only makes sense when mounting sequential recordable
+media like CD-R and DVD*R.
+.It Fl t Ar gmtoff
+Set the time zone offset (in seconds) from UTC to
+.Ar gmtoff .
+with positive values indicating east of the Prime Meridian.
+If not set, the user's current time zone will be used.
+.It Fl u Ar uid
+Set the owner of anonymous files on the file system. The default owner is the
+user nobody.
+.El
+.Sh SEE ALSO
+.Xr mount 2 ,
+.Xr unmount 8 ,
+.Xr fstab 5 ,
+.Xr mount 8 .
+.Sh NOTES
+UDF is a file system defined by the OSTA standardisation group and is tailored
+for data interchange on optical discs (like CDs and DVDs) between different
+operating systems. Its also more and more common on other media like Compact
+Flash (CF) cards.
+.Pp
+Currently only read access is supported to all media types that CD/DVD type
+drives can recognize including DVD-RAM and BlueRay drives. Write access is
+planned and in preparation.
+.Pp
+Implemented and tested media types are CD-ROM, CD-R, CD-RW, CD-MRW, DVD-ROM,
+DVD*R, DVD*RW, DVD+MRW but the same code can also read DVD-RAM, HD-DVD and
+BluRay discs. Discs created and written by UDFclient, Nero's InCD and Roxio's
+DirectCD/Drag2Disc read fine. Both open and closed media are supported so
+there is no need to close discs or close sessions.
+.Pp
+Support for harddisc partitions and optionally for files (like using vnd) is
+not implemented yet.
+.Pp
+All current UDF versions upto version 2.60 are supported.
+.Sh BUGS
+Due to lack of test media version 2.50 and 2.60 are prepared though not
+implemented and tested yet.
