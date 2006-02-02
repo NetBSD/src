@@ -62,12 +62,12 @@ CPU_DOCS = \
 
 gasver.texi: Makefile
 	@echo "NOT REBUILDING $@"
-NetBSD_DISABLED_gasver.texi:
+NetBSD_DISABLED_gasver.texi: $(srcdir)/../../bfd/configure
 	rm -f $@
-	echo '@set VERSION $(VERSION)' > $@
+	eval `grep '^ *VERSION=' $(srcdir)/../../bfd/configure`; \
+	  echo "@set VERSION $$VERSION" > $@
 
-as.info: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
-	@echo "NOT REBUILDING $@"
+$(srcdir)/as.info: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
 as.dvi: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
 	@echo "NOT REBUILDING $@"
 
@@ -79,9 +79,7 @@ install-data-local: install-info
 
 noinst_TEXINFOS = internals.texi
 
-DISTCLEANFILES = asconfig.texi
-
-MAINTAINERCLEANFILES = gasver.texi
+MAINTAINERCLEANFILES = asconfig.texi gasver.texi
 
 BASEDIR = $(srcdir)/../..
 BFDDIR = $(BASEDIR)/bfd
@@ -91,7 +89,7 @@ CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/configure.in
 # Maintenance
 
 # We need it for the taz target in ../../Makefile.in.
-info: $(MANS)
+info-local: $(MANS)
 
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
