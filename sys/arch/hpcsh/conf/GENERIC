@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.63 2006/01/03 01:47:37 uwe Exp $
+# $NetBSD: GENERIC,v 1.64 2006/02/02 21:32:09 reinoud Exp $
 #
 # GENERIC machine description file
 #
@@ -132,6 +132,7 @@ file-system 	PROCFS		# /proc
 #file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independent support

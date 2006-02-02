@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.65 2005/12/20 05:35:27 thorpej Exp $
+# 	$NetBSD: GENERIC,v 1.66 2006/02/02 21:32:08 reinoud Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.65 $"
+#ident		"GENERIC-$Revision: 1.66 $"
 
 # estimated number of users
 maxusers	32
@@ -66,6 +66,7 @@ file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# UFS quotas

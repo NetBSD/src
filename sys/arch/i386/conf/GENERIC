@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.721 2006/01/31 16:42:09 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.722 2006/02/02 21:32:09 reinoud Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.721 $"
+#ident 		"GENERIC-$Revision: 1.722 $"
 
 maxusers	32		# estimated number of users
 
@@ -167,6 +167,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/ptm support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
