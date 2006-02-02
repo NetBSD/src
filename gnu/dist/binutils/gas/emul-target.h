@@ -1,5 +1,5 @@
 /* emul-target.h.  Default values for struct emulation defined in emul.h
-   Copyright 2001 Free Software Foundation, Inc.
+   Copyright 1995 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

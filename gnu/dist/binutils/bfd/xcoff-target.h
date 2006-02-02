@@ -1,5 +1,5 @@
 /* Common definitions for backends based on IBM RS/6000 "XCOFF64" files.
-   Copyright 2000, 2001, 2002
+   Copyright 2000, 2001, 2002, 2004
    Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
@@ -43,6 +43,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define coff_mkobject _bfd_xcoff_mkobject
 #define coff_bfd_copy_private_bfd_data _bfd_xcoff_copy_private_bfd_data
 #define coff_bfd_is_local_label_name _bfd_xcoff_is_local_label_name
+#define coff_bfd_is_target_special_symbol  ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define coff_bfd_reloc_type_lookup _bfd_xcoff_reloc_type_lookup
 #define coff_relocate_section _bfd_ppc_xcoff_relocate_section
 
@@ -99,6 +100,8 @@ extern int lynx_core_file_failing_signal PARAMS ((bfd *abfd));
 #define _bfd_xcoff_bfd_gc_sections coff_bfd_gc_sections
 #define _bfd_xcoff_bfd_merge_sections coff_bfd_merge_sections
 #define _bfd_xcoff_bfd_discard_group bfd_generic_discard_group
+#define _bfd_xcoff_section_already_linked \
+  _bfd_generic_section_already_linked
 #define _bfd_xcoff_bfd_link_split_section coff_bfd_link_split_section
 
 /* XCOFF archives do not have anything which corresponds to an

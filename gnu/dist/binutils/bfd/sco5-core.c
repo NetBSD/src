@@ -52,11 +52,11 @@ bfd_boolean sco5_core_file_matches_executable_p
 static void swap_abort PARAMS ((void));
 
 static asection *
-make_bfd_asection (abfd, name, flags, _raw_size, vma, filepos)
+make_bfd_asection (abfd, name, flags, size, vma, filepos)
      bfd *abfd;
      const char *name;
      flagword flags;
-     bfd_size_type _raw_size;
+     bfd_size_type size;
      bfd_vma vma;
      file_ptr filepos;
 {
@@ -66,7 +66,7 @@ make_bfd_asection (abfd, name, flags, _raw_size, vma, filepos)
   if (!asect)
     return NULL;
   asect->flags = flags;
-  asect->_raw_size = _raw_size;
+  asect->size = size;
   asect->vma = vma;
   asect->filepos = filepos;
   asect->alignment_power = 2;
@@ -123,13 +123,12 @@ sco5_core_file_p (abfd)
   char *secname;
   flagword flags;
 
-  /* Read coreoffsets region at end of core (see core(FP)) */
+  /* Read coreoffsets region at end of core (see core(FP)).  */
 
   {
     FILE *stream = bfd_cache_lookup (abfd);
     struct stat statbuf;
-    if (stream == NULL)
-      return NULL;
+
     if (fstat (fileno (stream), &statbuf) < 0)
       {
 	bfd_set_error (bfd_error_system_call);

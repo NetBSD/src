@@ -1,5 +1,5 @@
 /* PEF support for BFD.
-   Copyright 1999, 2000, 2001, 2002, 2003
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -37,6 +37,7 @@
 #define bfd_pef_bfd_free_cached_info                _bfd_generic_bfd_free_cached_info
 #define bfd_pef_new_section_hook                    _bfd_generic_new_section_hook
 #define bfd_pef_bfd_is_local_label_name             bfd_generic_is_local_label_name
+#define bfd_pef_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define bfd_pef_get_lineno                          _bfd_nosymbols_get_lineno
 #define bfd_pef_find_nearest_line                   _bfd_nosymbols_find_nearest_line
 #define bfd_pef_bfd_make_debug_symbol               _bfd_nosymbols_bfd_make_debug_symbol
@@ -52,7 +53,9 @@
 #define bfd_pef_bfd_relax_section                   bfd_generic_relax_section
 #define bfd_pef_bfd_gc_sections                     bfd_generic_gc_sections
 #define bfd_pef_bfd_merge_sections                  bfd_generic_merge_sections
+#define bfd_pef_bfd_is_group_section		    bfd_generic_is_group_section
 #define bfd_pef_bfd_discard_group                   bfd_generic_discard_group
+#define bfd_pef_section_already_linked	    _bfd_generic_section_already_linked
 #define bfd_pef_bfd_link_hash_table_create          _bfd_generic_link_hash_table_create
 #define bfd_pef_bfd_link_hash_table_free            _bfd_generic_link_hash_table_free
 #define bfd_pef_bfd_link_add_symbols                _bfd_generic_link_add_symbols
@@ -103,7 +106,7 @@ bfd_pef_print_symbol (abfd, afile, symbol, how)
       fprintf (file, " %-5s %s", symbol->section->name, symbol->name);
       if (strncmp (symbol->name, "__traceback_", strlen ("__traceback_")) == 0)
 	{
-	  char *buf = alloca (symbol->udata.i);
+	  unsigned char *buf = alloca (symbol->udata.i);
 	  size_t offset = symbol->value + 4;
 	  size_t len = symbol->udata.i;
 	  int ret;
@@ -329,7 +332,7 @@ bfd_pef_make_bfd_section (abfd, section)
 
   bfdsec->vma = section->default_address + section->container_offset;
   bfdsec->lma = section->default_address + section->container_offset;
-  bfdsec->_raw_size = section->container_length;
+  bfdsec->size = section->container_length;
   bfdsec->filepos = section->container_offset;
   bfdsec->alignment_power = section->alignment;
 
@@ -471,7 +474,7 @@ bfd_pef_print_loader_section (abfd, file)
   if (loadersec == NULL)
     return -1;
 
-  loaderlen = bfd_section_size (abfd, loadersec);
+  loaderlen = loadersec->size;
   loaderbuf = (unsigned char *) bfd_malloc (loaderlen);
   if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) < 0)
     {
@@ -516,7 +519,7 @@ bfd_pef_scan_start_address (abfd)
   if (loadersec == NULL)
     goto end;
 
-  loaderlen = bfd_section_size (abfd, loadersec);
+  loaderlen = loadersec->size;
   loaderbuf = (unsigned char *) bfd_malloc (loaderlen);
   if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) < 0)
     goto error;
@@ -597,13 +600,7 @@ bfd_pef_scan (abfd, header, mdata)
     }
 
   if (bfd_pef_scan_start_address (abfd) < 0)
-    {
-#if 0
-      fprintf (stderr, "bfd_pef_scan: unable to scan start address: %s\n",
-	       bfd_errmsg (bfd_get_error ()));
-      return -1;
-#endif
-    }
+    return -1;
 
   abfd->tdata.pef_data = mdata;
 
@@ -887,7 +884,8 @@ static int bfd_pef_parse_function_stubs (abfd, codesec, codebuf, codelen,
 	  goto error;
 
 	max = loaderlen - (header.loader_strings_offset + imports[index].name);
-	symname = loaderbuf + header.loader_strings_offset + imports[index].name;
+	symname = (char *) loaderbuf;
+	symname += header.loader_strings_offset + imports[index].name;
 	namelen = 0;
 	for (s = symname; s < (symname + max); s++)
 	  {
@@ -959,7 +957,7 @@ static long bfd_pef_parse_symbols (abfd, csym)
   codesec = bfd_get_section_by_name (abfd, "code");
   if (codesec != NULL)
     {
-      codelen = bfd_section_size (abfd, codesec);
+      codelen = codesec->size;
       codebuf = (unsigned char *) bfd_malloc (codelen);
       if (bfd_seek (abfd, codesec->filepos, SEEK_SET) < 0)
 	goto end;
@@ -970,7 +968,7 @@ static long bfd_pef_parse_symbols (abfd, csym)
   loadersec = bfd_get_section_by_name (abfd, "loader");
   if (loadersec != NULL)
     {
-      loaderlen = bfd_section_size (abfd, loadersec);
+      loaderlen = loadersec->size;
       loaderbuf = (unsigned char *) bfd_malloc (loaderlen);
       if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) < 0)
 	goto end;
@@ -981,7 +979,7 @@ static long bfd_pef_parse_symbols (abfd, csym)
   count = 0;
   if (codesec != NULL)
     {
-      unsigned long ncount = 0;
+      long ncount = 0;
       bfd_pef_parse_traceback_tables (abfd, codesec, codebuf, codelen,
 				      &ncount, csym);
       count += ncount;

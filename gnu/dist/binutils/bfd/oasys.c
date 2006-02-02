@@ -1,6 +1,6 @@
 /* BFD back-end for oasys objects.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001,
-   2002, 2003 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support, <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -507,7 +507,7 @@ oasys_object_p (abfd)
 		BFD_FAIL ();
 	      }
 
-	    s->_raw_size = H_GET_32 (abfd, record.section.value);
+	    s->size = H_GET_32 (abfd, record.section.value);
 	    s->vma = H_GET_32 (abfd, record.section.vma);
 	    s->flags = 0;
 	    had_usefull = TRUE;
@@ -657,7 +657,7 @@ oasys_slurp_section_data (abfd)
 
 	    if (! per->initialized)
 	      {
-		per->data = (bfd_byte *) bfd_zalloc (abfd, section->_raw_size);
+		per->data = (bfd_byte *) bfd_zalloc (abfd, section->size);
 		if (!per->data)
 		  return FALSE;
 		per->reloc_tail_ptr
@@ -738,14 +738,6 @@ oasys_slurp_section_data (abfd)
 				  r->symbol = 0;
 				  /* Work out the howto */
 				  abort ();
-#if 0
-				  r->relent.section =
-				    data->sections[reloc &
-						   RELOCATION_SECT_BITS];
-
-				  r->relent.addend = -
-				    r->relent.section->vma;
-#endif
 				  r->relent.address = dst_ptr - dst_base_ptr;
 				  r->relent.howto = &howto_table[reloc >> 6];
 				  r->relent.sym_ptr_ptr = (asymbol **) NULL;
@@ -781,10 +773,6 @@ oasys_slurp_section_data (abfd)
 				  /* Work out the howto */
 				  abort ();
 
-#if 0
-				  r->relent.section = (asection
-						       *) NULL;
-#endif
 				  r->relent.addend = 0;
 				  r->relent.address = dst_ptr - dst_base_ptr;
 				  r->relent.howto = &howto_table[reloc >> 6];
@@ -890,13 +878,6 @@ oasys_canonicalize_reloc (ignore_abfd, section, relptr, symbols)
   while (src != (oasys_reloc_type *) NULL)
     {
       abort ();
-
-#if 0
-      if (src->relent.section == (asection *) NULL)
-	{
-	  src->relent.sym_ptr_ptr = symbols + src->symbol;
-	}
-#endif
 
       *relptr++ = &src->relent;
       src = src->next;
@@ -1055,7 +1036,7 @@ oasys_write_sections (abfd)
 	  return FALSE;
 	}
       out.relb = RELOCATION_TYPE_REL | s->target_index;
-      H_PUT_32 (abfd, s->_cooked_size, out.value);
+      H_PUT_32 (abfd, s->size, out.value);
       H_PUT_32 (abfd, s->vma, out.vma);
 
       if (! oasys_write_record (abfd,
@@ -1159,7 +1140,7 @@ oasys_write_data (abfd)
 	  current_byte_index = 0;
 	  processed_data.relb = s->target_index | RELOCATION_TYPE_REL;
 
-	  while (current_byte_index < s->_cooked_size)
+	  while (current_byte_index < s->size)
 	    {
 	      /* Scan forwards by eight bytes or however much is left and see if
 	       there are any relocations going on */
@@ -1180,7 +1161,7 @@ oasys_write_data (abfd)
  	       1 modification byte + 2 data = 8 bytes total).  That's where
  	       the magic number 8 comes from.
  	    */
-	      while (current_byte_index < s->_raw_size && dst <=
+	      while (current_byte_index < s->size && dst <=
 		     &processed_data.data[sizeof (processed_data.data) - 8])
 		{
 
@@ -1228,20 +1209,9 @@ oasys_write_data (abfd)
 			    }
 
 			  /* Is this a section relative relocation, or a symbol
-		       relative relocation ? */
+			     relative relocation ? */
 			  abort ();
 
-#if 0
-			  if (r->section != (asection *) NULL)
-			    {
-			      /* The relent has a section attached, so it must be section
-			     relative */
-			      rel_byte |= RELOCATION_TYPE_REL;
-			      rel_byte |= r->section->output_section->target_index;
-			      *dst++ = rel_byte;
-			    }
-			  else
-#endif
 			    {
 			      asymbol *sym = *(r->sym_ptr_ptr);
 
@@ -1355,7 +1325,7 @@ oasys_set_section_contents (abfd, section, location, offset, count)
       if (oasys_per_section (section)->data == (bfd_byte *) NULL)
 	{
 	  oasys_per_section (section)->data =
-	    (bfd_byte *) (bfd_alloc (abfd, section->_cooked_size));
+	    (bfd_byte *) (bfd_alloc (abfd, section->size));
 	  if (!oasys_per_section (section)->data)
 	    return FALSE;
 	}
@@ -1489,6 +1459,7 @@ oasys_sizeof_headers (abfd, exec)
 #define oasys_update_armap_timestamp bfd_true
 
 #define oasys_bfd_is_local_label_name bfd_generic_is_local_label_name
+#define oasys_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define oasys_get_lineno _bfd_nosymbols_get_lineno
 #define oasys_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
 #define oasys_read_minisymbols _bfd_generic_read_minisymbols
@@ -1506,7 +1477,10 @@ oasys_sizeof_headers (abfd, exec)
 #define oasys_bfd_relax_section bfd_generic_relax_section
 #define oasys_bfd_gc_sections bfd_generic_gc_sections
 #define oasys_bfd_merge_sections bfd_generic_merge_sections
+#define oasys_bfd_is_group_section bfd_generic_is_group_section
 #define oasys_bfd_discard_group bfd_generic_discard_group
+#define oasys_section_already_linked \
+  _bfd_generic_section_already_linked
 #define oasys_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define oasys_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define oasys_bfd_link_add_symbols _bfd_generic_link_add_symbols

@@ -1,5 +1,5 @@
 /* tc-ldx.c -- Assemble for the DLX
-   Copyright 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -24,9 +24,6 @@
 #include "as.h"
 #include "tc-dlx.h"
 #include "opcode/dlx.h"
-#if 0
-#include "elf/dlx.h"
-#endif
 
 /* Make it easier to clone this machine desc into another one.  */
 #define	machine_opcode      dlx_opcode
@@ -140,41 +137,6 @@ insert_sreg (regname, regnum)
 static void
 define_some_regs ()
 {
-#if 0
-  /* Hardware representation.  */
-  insert_sreg ("r0",    0);
-  insert_sreg ("r1",    1);
-  insert_sreg ("r2",    2);
-  insert_sreg ("r3",    3);
-  insert_sreg ("r4",    4);
-  insert_sreg ("r5",    5);
-  insert_sreg ("r6",    6);
-  insert_sreg ("r7",    7);
-  insert_sreg ("r8",    8);
-  insert_sreg ("r9",    9);
-  insert_sreg ("r10",   10);
-  insert_sreg ("r11",   11);
-  insert_sreg ("r12",   12);
-  insert_sreg ("r13",   13);
-  insert_sreg ("r14",   14);
-  insert_sreg ("r15",   15);
-  insert_sreg ("r16",   16);
-  insert_sreg ("r17",   17);
-  insert_sreg ("r18",   18);
-  insert_sreg ("r19",   19);
-  insert_sreg ("r20",   20);
-  insert_sreg ("r21",   21);
-  insert_sreg ("r22",   22);
-  insert_sreg ("r23",   23);
-  insert_sreg ("r24",   24);
-  insert_sreg ("r25",   25);
-  insert_sreg ("r26",   26);
-  insert_sreg ("r27",   27);
-  insert_sreg ("r28",   28);
-  insert_sreg ("r29",   29);
-  insert_sreg ("r30",   30);
-  insert_sreg ("r31",   31);
-#endif
   /* Software representation.  */
   insert_sreg ("zero",  0);
   insert_sreg ("at",    1);
@@ -1010,21 +972,18 @@ machine_ip (str)
 	  /* Type 'a' Register.  */
 	case 'a':
 	  /* A general register at bits 21-25, rs1.  */
-	  know (operand->X_op != O_register);
 	  reg_shift = 21;
 	  goto general_reg;
 
 	  /* Type 'b' Register.  */
 	case 'b':
 	  /* A general register at bits 16-20, rs2/rd.  */
-	  know (operand->X_op != O_register);
 	  reg_shift = 16;
 	  goto general_reg;
 
 	  /* Type 'c' Register.  */
 	case 'c':
 	  /* A general register at bits 11-15, rd.  */
-	  know (operand->X_op != O_register);
 	  reg_shift = 11;
 
 	general_reg:
@@ -1172,9 +1131,6 @@ md_apply_fix3 (fixP, valP, seg)
 {
   long val = *valP;
   char *place = fixP->fx_where + fixP->fx_frag->fr_literal;
-
-  know (fixP->fx_size == 4);
-  know (fixP->fx_r_type < NO_RELOC);
 
   switch (fixP->fx_r_type)
     {
@@ -1337,33 +1293,6 @@ md_operand (expressionP)
     }
 
   return;
-#if 0
-  else if (input_line_pointer[0] == '$'
-	   && ISDIGIT ((unsigned char) input_line_pointer[1]))
-    {
-      long lab;
-      char *name;
-      symbolS *sym;
-
-      /* This is a local label.  */
-      ++input_line_pointer;
-      lab = (long) get_absolute_expression ();
-      if (dollar_label_defined (lab))
-	{
-	  name = dollar_label_name (lab, 0);
-	  sym = symbol_find (name);
-	}
-      else
-	{
-	  name = dollar_label_name (lab, 1);
-	  sym = symbol_find_or_make (name);
-	}
-
-      expressionP->X_op = O_symbol;
-      expressionP->X_add_symbol = sym;
-      expressionP->X_add_number = 0;
-    }
-#endif
 }
 
 /* Round up a section size to the appropriate boundary.  */
@@ -1387,30 +1316,6 @@ md_pcrel_from (fixP)
 {
   return 4 + fixP->fx_where + fixP->fx_frag->fr_address;
 }
-
-/* From cgen.c:  */
-
-#if 0
-static short
-tc_bfd_fix2rtype (fixP)
-     fixS* fixP;
-{
-#if 0
-  if (fixP->fx_bsr)
-    abort ();
-#endif
-
-  if (fixP->fx_pcrel == 0 && fixP->fx_size == 4)
-    return BFD_RELOC_32;
-
-  if (fixP->fx_pcrel != 0 && fixP->fx_size == 4)
-    return BFD_RELOC_26_PCREL;
-
-  abort ();
-
-  return 0;
-}
-#endif
 
 /* Translate internal representation of relocation info to BFD target
    format.

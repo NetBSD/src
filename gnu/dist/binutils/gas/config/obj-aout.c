@@ -1,6 +1,6 @@
 /* a.out object file format
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000,
-   2001, 2002 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -265,36 +265,39 @@ obj_emit_relocations (where, fixP, segment_address_in_file)
 
 #ifndef obj_header_append
 /* Aout file generation & utilities */
+
+/* An AOUT header on disk is laid out in target byte order.  */
+
 void
 obj_header_append (where, headers)
      char **where;
      object_headers *headers;
 {
+  char *p;
+
   tc_headers_hook (headers);
 
-#ifdef CROSS_COMPILE
-  md_number_to_chars (*where, headers->header.a_info, sizeof (headers->header.a_info));
-  *where += sizeof (headers->header.a_info);
-  md_number_to_chars (*where, headers->header.a_text, sizeof (headers->header.a_text));
-  *where += sizeof (headers->header.a_text);
-  md_number_to_chars (*where, headers->header.a_data, sizeof (headers->header.a_data));
-  *where += sizeof (headers->header.a_data);
-  md_number_to_chars (*where, headers->header.a_bss, sizeof (headers->header.a_bss));
-  *where += sizeof (headers->header.a_bss);
-  md_number_to_chars (*where, headers->header.a_syms, sizeof (headers->header.a_syms));
-  *where += sizeof (headers->header.a_syms);
-  md_number_to_chars (*where, headers->header.a_entry, sizeof (headers->header.a_entry));
-  *where += sizeof (headers->header.a_entry);
-  md_number_to_chars (*where, headers->header.a_trsize, sizeof (headers->header.a_trsize));
-  *where += sizeof (headers->header.a_trsize);
-  md_number_to_chars (*where, headers->header.a_drsize, sizeof (headers->header.a_drsize));
-  *where += sizeof (headers->header.a_drsize);
+#ifdef __A_OUT_GNU_H__
+#define SIZEOF_HEADER(PIECE) (sizeof (((struct exec_bytes *) 0)->PIECE))
+#else
+#define SIZEOF_HEADER(PIECE) 4
+#endif
+#define DO(PIECE) \
+  md_number_to_chars (p, headers->header.PIECE, SIZEOF_HEADER (PIECE)); \
+  p += SIZEOF_HEADER (PIECE);
 
-#else /* CROSS_COMPILE */
-
-  append (where, (char *) &headers->header, sizeof (headers->header));
-#endif /* CROSS_COMPILE */
-
+  p = *where;
+  DO (a_info);
+  DO (a_text);
+  DO (a_data);
+  DO (a_bss);
+  DO (a_syms);
+  DO (a_entry);
+  DO (a_trsize);
+  DO (a_drsize);
+  *where = p;
+#undef DO
+#undef SIZEOF_HEADER
 }
 #endif /* ! defined (obj_header_append) */
 
@@ -303,11 +306,17 @@ obj_symbol_to_chars (where, symbolP)
      char **where;
      symbolS *symbolP;
 {
-  md_number_to_chars ((char *) &(S_GET_OFFSET (symbolP)), S_GET_OFFSET (symbolP), sizeof (S_GET_OFFSET (symbolP)));
-  md_number_to_chars ((char *) &(S_GET_DESC (symbolP)), S_GET_DESC (symbolP), sizeof (S_GET_DESC (symbolP)));
-  md_number_to_chars ((char *) &(symbolP->sy_symbol.n_value), S_GET_VALUE (symbolP), sizeof (symbolP->sy_symbol.n_value));
-
-  append (where, (char *) &symbolP->sy_symbol, sizeof (obj_symbol_type));
+  char *p = *where;
+  md_number_to_chars (p, S_GET_OFFSET (symbolP), 4);
+  p += 4;
+  /* Can't use S_GET_TYPE here as it masks.  */
+  *p++ = symbolP->sy_symbol.n_type;
+  *p++ = symbolP->sy_symbol.n_other;
+  md_number_to_chars (p, S_GET_DESC (symbolP), 2);
+  p += 2;
+  md_number_to_chars (p, S_GET_VALUE (symbolP), 4);
+  p += 4;
+  *where = p;
 }
 
 void
@@ -419,17 +428,9 @@ obj_aout_type (ignore)
 	{
 	  ++input_line_pointer;
 	  if (strncmp (input_line_pointer, "object", 6) == 0)
-#ifdef BFD_ASSEMBLER
-	    aout_symbol (symbol_get_bfdsym (sym))->other = 1;
-#else
-	  S_SET_OTHER (sym, 1);
-#endif
+	    S_SET_OTHER (sym, 1);
 	  else if (strncmp (input_line_pointer, "function", 8) == 0)
-#ifdef BFD_ASSEMBLER
-	    aout_symbol (symbol_get_bfdsym (sym))->other = 2;
-#else
-	  S_SET_OTHER (sym, 2);
-#endif
+	    S_SET_OTHER (sym, 2);
 	}
     }
 
@@ -546,18 +547,13 @@ obj_emit_strings (where)
 {
   symbolS *symbolP;
 
-#ifdef CROSS_COMPILE
-  /* Gotta do md_ byte-ordering stuff for string_byte_count first - KWK */
-  md_number_to_chars (*where, string_byte_count, sizeof (string_byte_count));
-  *where += sizeof (string_byte_count);
-#else /* CROSS_COMPILE */
-  append (where, (char *) &string_byte_count, (unsigned long) sizeof (string_byte_count));
-#endif /* CROSS_COMPILE */
+  md_number_to_chars (*where, string_byte_count, 4);
+  *where += 4;
 
   for (symbolP = symbol_rootP; symbolP; symbolP = symbol_next (symbolP))
     {
       if (S_GET_NAME (symbolP))
-	append (&next_object_file_charP, S_GET_NAME (symbolP),
+	append (where, S_GET_NAME (symbolP),
 		(unsigned long) (strlen (S_GET_NAME (symbolP)) + 1));
     }				/* walk symbol chain */
 }

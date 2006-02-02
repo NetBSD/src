@@ -1,6 +1,6 @@
 /* coff object file format
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2002, 2003
+   1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GAS.
@@ -115,6 +115,11 @@
 #define TARGET_FORMAT "coff-h8500"
 #endif
 
+#ifdef TC_MAXQ20
+#include "coff/maxq.h"
+#define TARGET_FORMAT "coff-maxq"
+#endif
+
 #ifdef TC_SH
 
 #ifdef TE_PE
@@ -180,14 +185,19 @@
 #endif
 #endif
 
+#ifdef TE_PE
+/* PE weak symbols need USE_UNIQUE.  */
+#define USE_UNIQUE 1
+#endif
+
 /* Targets may also set this.  Also, if BFD_ASSEMBLER is defined, this
    will already have been defined.  */
-#undef SYMBOLS_NEED_BACKPOINTERS
+#undef  SYMBOLS_NEED_BACKPOINTERS
 #define SYMBOLS_NEED_BACKPOINTERS 1
 
 #ifndef OBJ_COFF_MAX_AUXENTRIES
 #define OBJ_COFF_MAX_AUXENTRIES 1
-#endif /* OBJ_COFF_MAX_AUXENTRIES */
+#endif
 
 extern void coff_obj_symbol_new_hook PARAMS ((symbolS *));
 #define obj_symbol_new_hook coff_obj_symbol_new_hook
@@ -386,8 +396,8 @@ extern int coff_n_line_nos;
 #define obj_emit_lineno(WHERE,LINE,FILE_START)	abort ()
 extern void coff_add_linesym PARAMS ((symbolS *));
 
-void c_dot_file_symbol PARAMS ((const char *filename));
-#define obj_app_file c_dot_file_symbol
+void c_dot_file_symbol PARAMS ((const char *, int));
+#define obj_app_file(name, app) c_dot_file_symbol (name, app)
 
 extern void coff_frob_symbol PARAMS ((symbolS *, int *));
 extern void coff_adjust_symtab PARAMS ((void));
@@ -829,8 +839,8 @@ extern segT obj_coff_add_segment PARAMS ((const char *));
 
 extern void obj_coff_section PARAMS ((int));
 
-extern void c_dot_file_symbol PARAMS ((char *filename));
-#define obj_app_file c_dot_file_symbol
+extern void c_dot_file_symbol PARAMS ((const char *, int));
+#define obj_app_file(name, app) c_dot_file_symbol (name, app)
 extern void obj_extra_stuff PARAMS ((object_headers * headers));
 
 extern segT s_get_segment PARAMS ((symbolS *ptr));

@@ -1,5 +1,6 @@
 /* tc-a29k.c -- Assemble for the AMD 29000.
-   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001, 2002
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001,
+   2002, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -787,10 +788,10 @@ md_number_to_chars (buf, val, n)
 void
 md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     valueT * valP;
+     valueT *valP;
      segT seg ATTRIBUTE_UNUSED;
 {
-  long val = *valP;
+  valueT val = *valP;
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   fixP->fx_addnumber = val;	/* Remember value for emit_reloc.  */
@@ -864,9 +865,7 @@ md_apply_fix3 (fixP, valP, seg)
 	}
       else if (fixP->fx_pcrel)
 	{
-	  long v = val >> 17;
-
-	  if (v != 0 && v != -1)
+	  if (val + 0x20000 > 0x3ffff)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  "call/jmp target out of range");
 	}
@@ -944,63 +943,6 @@ md_estimate_size_before_relax (fragP, segtype)
   as_fatal (_("a29k_estimate_size_before_relax\n"));
   return 0;
 }
-
-#if 0
-/* for debugging only */
-static void
-print_insn (insn)
-     struct machine_it *insn;
-{
-  char *Reloc[] =
-  {
-    "RELOC_8",
-    "RELOC_16",
-    "RELOC_32",
-    "RELOC_DISP8",
-    "RELOC_DISP16",
-    "RELOC_DISP32",
-    "RELOC_WDISP30",
-    "RELOC_WDISP22",
-    "RELOC_HI22",
-    "RELOC_22",
-    "RELOC_13",
-    "RELOC_LO10",
-    "RELOC_SFA_BASE",
-    "RELOC_SFA_OFF13",
-    "RELOC_BASE10",
-    "RELOC_BASE13",
-    "RELOC_BASE22",
-    "RELOC_PC10",
-    "RELOC_PC22",
-    "RELOC_JMP_TBL",
-    "RELOC_SEGOFF16",
-    "RELOC_GLOB_DAT",
-    "RELOC_JMP_SLOT",
-    "RELOC_RELATIVE",
-    "NO_RELOC"
-  };
-
-  if (insn->error)
-    {
-      fprintf (stderr, "ERROR: %s\n");
-    }
-  fprintf (stderr, "opcode=0x%08x\n", insn->opcode);
-  fprintf (stderr, "reloc = %s\n", Reloc[insn->reloc]);
-  fprintf (stderr, "exp =  {\n");
-  fprintf (stderr, "\t\tX_add_symbol = %s\n",
-	   insn->exp.X_add_symbol ?
-	   (S_GET_NAME (insn->exp.X_add_symbol) ?
-	    S_GET_NAME (insn->exp.X_add_symbol) : "???") : "0");
-  fprintf (stderr, "\t\tX_op_symbol = %s\n",
-	   insn->exp.X_op_symbol ?
-	   (S_GET_NAME (insn->exp.X_op_symbol) ?
-	    S_GET_NAME (insn->exp.X_op_symbol) : "???") : "0");
-  fprintf (stderr, "\t\tX_add_number = %d\n",
-	   insn->exp.X_add_number);
-  fprintf (stderr, "}\n");
-}
-
-#endif
 
 /* Translate internal representation of relocation info to target format.
 

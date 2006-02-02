@@ -1,5 +1,41 @@
 -*- text -*-
 
+* Redefinition of macros now results in an error.
+
+* New command line option -mhint.b=[ok|warning|error] for IA64 targets.
+
+* New command line option -munwind-check=[warning|error] for IA64
+  targets.
+
+* The IA64 port now uses automatic dependency violation removal as its default
+  mode.
+
+* Port to MAXQ processor contributed by HCL Tech.
+
+* Added support for generating unwind tables for ARM ELF targets.
+
+* Add a -g command line option to generate debug information in the target's
+  preferred debug format.
+
+* Support for the crx-elf target added.
+
+* Support for the sh-symbianelf target added.
+
+* Added a pseudo-op (.secrel32) to generate 32 bit section relative relocations
+  on pe[i]-i386; required for this target's DWARF 2 support.
+
+* Support for Motorola MCF521x/5249/547x/548x added.
+
+* Support for ColdFire EMAC instructions added and Motorola syntax for MAC/EMAC
+  instrucitons.
+
+* New command line option -mno-shared for MIPS ELF targets.
+
+* New command line option --alternate and pseudo-ops .altmacro and .noaltmacro
+  added to enter (and leave) alternate macro syntax mode.
+
+Changes in 2.15:
+
 * The MIPS -membedded-pic option (Embedded-PIC code generation) is
   deprecated and will be removed in a future release.
 

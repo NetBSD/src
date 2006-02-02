@@ -1,6 +1,6 @@
 /* Support for the generic parts of PE/PEI; the common executable parts.
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
-   Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
+   2005 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -138,24 +138,6 @@ _bfd_XXi_swap_sym_in (abfd, ext1, in1)
     {
       in->n_value = 0x0;
 
-#if 0
-      /* FIXME: This is clearly wrong.  The problem seems to be that
-         undefined C_SECTION symbols appear in the first object of a
-         MS generated .lib file, and the symbols are not defined
-         anywhere.  */
-      in->n_scnum = 1;
-
-      /* I have tried setting the class to 3 and using the following
-	 to set the section number.  This will put the address of the
-	 pointer to the string kernel32.dll at addresses 0 and 0x10
-	 off start of idata section which is not correct.  */
-#if 0
-      if (strcmp (in->_n._n_name, ".idata$4") == 0)
-	in->n_scnum = 3;
-      else
-	in->n_scnum = 2;
-#endif
-#else
       /* Create synthetic empty sections as needed.  DJ */
       if (in->n_scnum == 0)
 	{
@@ -189,8 +171,7 @@ _bfd_XXi_swap_sym_in (abfd, ext1, in1)
 
 	  sec->vma = 0;
 	  sec->lma = 0;
-	  sec->_cooked_size = 0;
-	  sec->_raw_size = 0;
+	  sec->size = 0;
 	  sec->filepos = 0;
 	  sec->rel_filepos = 0;
 	  sec->reloc_count = 0;
@@ -198,7 +179,6 @@ _bfd_XXi_swap_sym_in (abfd, ext1, in1)
 	  sec->lineno_count = 0;
 	  sec->userdata = NULL;
 	  sec->next = (asection *) NULL;
-	  sec->flags = 0;
 	  sec->alignment_power = 2;
 	  sec->flags = SEC_HAS_CONTENTS | SEC_ALLOC | SEC_DATA | SEC_LOAD;
 
@@ -207,7 +187,6 @@ _bfd_XXi_swap_sym_in (abfd, ext1, in1)
 	  in->n_scnum = unused_section_number;
 	}
       in->n_sclass = C_STAT;
-#endif
     }
 #endif
 
@@ -658,14 +637,19 @@ _bfd_XXi_swap_aouthdr_out (abfd, in, out)
 
   {
     asection *sec;
+    bfd_vma hsize = 0;
     bfd_vma dsize = 0;
-    bfd_vma isize = SA(abfd->sections->filepos);
+    bfd_vma isize = 0;
     bfd_vma tsize = 0;
 
     for (sec = abfd->sections; sec; sec = sec->next)
       {
-	int rounded = FA(sec->_raw_size);
+	int rounded = FA(sec->size);
 
+	/* The first non-zero section filepos is the header size.
+	   Sections without contents will have a filepos of 0.  */
+	if (hsize == 0)
+	  hsize = sec->filepos;
 	if (sec->flags & SEC_DATA)
 	  dsize += rounded;
 	if (sec->flags & SEC_CODE)
@@ -682,10 +666,10 @@ _bfd_XXi_swap_aouthdr_out (abfd, in, out)
 
     aouthdr_in->dsize = dsize;
     aouthdr_in->tsize = tsize;
-    extra->SizeOfImage = isize;
+    extra->SizeOfHeaders = hsize;
+    extra->SizeOfImage = SA(hsize) + isize;
   }
 
-  extra->SizeOfHeaders = abfd->sections->filepos;
   H_PUT_16 (abfd, aouthdr_in->magic, aouthdr_out->standard.magic);
 
 #define LINKER_VERSION 256 /* That is, 2.56 */
@@ -983,7 +967,6 @@ _bfd_XXi_swap_scnhdr_out (abfd, in, out)
       };
 
     pe_required_section_flags * p;
-    int flags = scnhdr_int->s_flags;
 
     /* We have defaulted to adding the IMAGE_SCN_MEM_WRITE flag, but now
        we know exactly what this specific section wants so we remove it
@@ -998,12 +981,12 @@ _bfd_XXi_swap_scnhdr_out (abfd, in, out)
 	{
 	  if (strcmp (scnhdr_int->s_name, ".text")
 	      || (bfd_get_file_flags (abfd) & WP_TEXT))
-	    flags &= ~IMAGE_SCN_MEM_WRITE;
-	  flags |= p->must_have;
+	    scnhdr_int->s_flags &= ~IMAGE_SCN_MEM_WRITE;
+	  scnhdr_int->s_flags |= p->must_have;
 	  break;
 	}
 
-    H_PUT_32 (abfd, flags, scnhdr_ext->s_flags);
+    H_PUT_32 (abfd, scnhdr_int->s_flags, scnhdr_ext->s_flags);
   }
 
   if (coff_data (abfd)->link_info
@@ -1048,14 +1031,6 @@ _bfd_XXi_swap_scnhdr_out (abfd, in, out)
 	  H_PUT_16 (abfd, 0xffff, scnhdr_ext->s_nreloc);
 	  scnhdr_int->s_flags |= IMAGE_SCN_LNK_NRELOC_OVFL;
 	  H_PUT_32 (abfd, scnhdr_int->s_flags, scnhdr_ext->s_flags);
-#if 0
-	  (*_bfd_error_handler) (_("%s: reloc overflow 1: 0x%lx > 0xffff"),
-				 bfd_get_filename (abfd),
-				 scnhdr_int->s_nreloc);
-	  bfd_set_error (bfd_error_file_truncated);
-	  H_PUT_16 (abfd, 0xffff, scnhdr_ext->s_nreloc);
-	  ret = 0;
-#endif
 	}
     }
   return ret;
@@ -1106,7 +1081,6 @@ pe_print_idata (abfd, vfile)
   bfd_size_type datasize = 0;
   bfd_size_type dataoff;
   bfd_size_type i;
-  bfd_size_type amt;
   int onaline = 20;
 
   pe_data_type *pe = pe_data (abfd);
@@ -1124,7 +1098,7 @@ pe_print_idata (abfd, vfile)
 	return TRUE;
 
       addr = section->vma;
-      datasize = bfd_section_size (abfd, section);
+      datasize = section->size;
       if (datasize == 0)
 	return TRUE;
     }
@@ -1133,7 +1107,7 @@ pe_print_idata (abfd, vfile)
       addr += extra->ImageBase;
       for (section = abfd->sections; section != NULL; section = section->next)
 	{
-	  datasize = bfd_section_size (abfd, section);
+	  datasize = section->size;
 	  if (addr >= section->vma && addr < section->vma + datasize)
 	    break;
 	}
@@ -1153,7 +1127,7 @@ pe_print_idata (abfd, vfile)
   datasize -= dataoff;
 
 #ifdef POWERPC_LE_PE
-  if (rel_section != 0 && bfd_section_size (abfd, rel_section) != 0)
+  if (rel_section != 0 && rel_section->size != 0)
     {
       /* The toc address can be found by taking the starting address,
 	 which on the PPC locates a function descriptor. The
@@ -1165,16 +1139,15 @@ pe_print_idata (abfd, vfile)
       bfd_vma loadable_toc_address;
       bfd_vma toc_address;
       bfd_vma start_address;
-      bfd_byte *data = 0;
+      bfd_byte *data;
       int offset;
 
-      amt = bfd_section_size (abfd, rel_section);
-      data = (bfd_byte *) bfd_malloc (amt);
-      if (data == NULL && amt != 0)
-	return FALSE;
-
-      bfd_get_section_contents (abfd, rel_section, (PTR) data, (bfd_vma) 0,
-				amt);
+      if (!bfd_malloc_and_get_section (abfd, rel_section, &data))
+	{
+	  if (data != NULL)
+	    free (data);
+	  return FALSE;
+	}
 
       offset = abfd->start_address - rel_section->vma;
 
@@ -1188,6 +1161,8 @@ pe_print_idata (abfd, vfile)
       fprintf (file,
 	       _("\tcode-base %08lx toc (loadable/actual) %08lx/%08lx\n"),
 	       start_address, loadable_toc_address, toc_address);
+      if (data != NULL)
+	free (data);
     }
   else
     {
@@ -1204,14 +1179,13 @@ pe_print_idata (abfd, vfile)
  vma:            Hint    Time      Forward  DLL       First\n\
                  Table   Stamp     Chain    Name      Thunk\n"));
 
-  amt = dataoff + datasize;
-  data = (bfd_byte *) bfd_malloc (amt);
-  if (data == NULL)
-    return FALSE;
-
   /* Read the whole section.  Some of the fields might be before dataoff.  */
-  if (! bfd_get_section_contents (abfd, section, (PTR) data, (bfd_vma) 0, amt))
-    return FALSE;
+  if (!bfd_malloc_and_get_section (abfd, section, &data))
+    {
+      if (data != NULL)
+	free (data);
+      return FALSE;
+    }
 
   adj = section->vma - extra->ImageBase;
 
@@ -1229,11 +1203,6 @@ pe_print_idata (abfd, vfile)
 
       /* Print (i + extra->DataDirectory[1].VirtualAddress).  */
       fprintf (file, " %08lx\t", (unsigned long) (i + adj + dataoff));
-#if 0
-      if (i + 20 > datasize)
-	/* Check stuff.  */
-	;
-#endif
       hint_addr = bfd_get_32 (abfd, data + i + dataoff);
       time_stamp = bfd_get_32 (abfd, data + i + 4 + dataoff);
       forward_chain = bfd_get_32 (abfd, data + i + 8 + dataoff);
@@ -1278,7 +1247,7 @@ pe_print_idata (abfd, vfile)
 		   ft_section != NULL;
 		   ft_section = ft_section->next)
 		{
-		  ft_datasize = bfd_section_size (abfd, ft_section);
+		  ft_datasize = ft_section->size;
 		  if (ft_addr >= ft_section->vma
 		      && ft_addr < ft_section->vma + ft_datasize)
 		    break;
@@ -1408,7 +1377,7 @@ pe_print_edata (abfd, vfile)
 	return TRUE;
 
       addr = section->vma;
-      datasize = bfd_section_size (abfd, section);
+      datasize = section->size;
       if (datasize == 0)
 	return TRUE;
     }
@@ -1418,7 +1387,7 @@ pe_print_edata (abfd, vfile)
 
       for (section = abfd->sections; section != NULL; section = section->next)
 	{
-	  datasize = bfd_section_size (abfd, section);
+	  datasize = section->size;
 
 	  if (addr >= section->vma && addr < section->vma + datasize)
 	    break;
@@ -1629,16 +1598,16 @@ pe_print_pdata (abfd, vfile)
      \t\tAddress  Address  Handler  Data     Address    Mask\n"));
 #endif
 
-  datasize = bfd_section_size (abfd, section);
+  datasize = section->size;
   if (datasize == 0)
     return TRUE;
 
-  data = (bfd_byte *) bfd_malloc (datasize);
-  if (data == NULL && datasize != 0)
-    return FALSE;
-
-  bfd_get_section_contents (abfd, section, (PTR) data, (bfd_vma) 0,
-			    datasize);
+  if (!bfd_malloc_and_get_section (abfd, section, &data))
+    {
+      if (data != NULL)
+	free (data);
+      return FALSE;
+    }
 
   start = 0;
 
@@ -1748,23 +1717,23 @@ pe_print_reloc (abfd, vfile)
   if (section == NULL)
     return TRUE;
 
-  if (bfd_section_size (abfd, section) == 0)
+  if (section->size == 0)
     return TRUE;
 
   fprintf (file,
 	   _("\n\nPE File Base Relocations (interpreted .reloc section contents)\n"));
 
-  datasize = bfd_section_size (abfd, section);
-  data = (bfd_byte *) bfd_malloc (datasize);
-  if (data == NULL && datasize != 0)
-    return FALSE;
-
-  bfd_get_section_contents (abfd, section, (PTR) data, (bfd_vma) 0,
-			    datasize);
+  datasize = section->size;
+  if (!bfd_malloc_and_get_section (abfd, section, &data))
+    {
+      if (data != NULL)
+	free (data);
+      return FALSE;
+    }
 
   start = 0;
 
-  stop = bfd_section_size (abfd, section);
+  stop = section->size;
 
   for (i = start; i < stop;)
     {
@@ -1838,16 +1807,17 @@ _bfd_XX_print_private_bfd_data_common (abfd, vfile)
   fprintf (file, _("\nCharacteristics 0x%x\n"), pe->real_flags);
 #undef PF
 #define PF(x, y) if (pe->real_flags & x) { fprintf (file, "\t%s\n", y); }
-  PF (F_RELFLG, "relocations stripped");
-  PF (F_EXEC, "executable");
-  PF (F_LNNO, "line numbers stripped");
-  PF (F_LSYMS, "symbols stripped");
-  PF (0x80, "little endian");
-  PF (F_AR32WR, "32 bit words");
-  PF (0x200, "debugging information removed");
-  PF (0x1000, "system file");
-  PF (F_DLL, "DLL");
-  PF (0x8000, "big endian");
+  PF (IMAGE_FILE_RELOCS_STRIPPED, "relocations stripped");
+  PF (IMAGE_FILE_EXECUTABLE_IMAGE, "executable");
+  PF (IMAGE_FILE_LINE_NUMS_STRIPPED, "line numbers stripped");
+  PF (IMAGE_FILE_LOCAL_SYMS_STRIPPED, "symbols stripped");
+  PF (IMAGE_FILE_LARGE_ADDRESS_AWARE, "large address aware");
+  PF (IMAGE_FILE_BYTES_REVERSED_LO, "little endian");
+  PF (IMAGE_FILE_32BIT_MACHINE, "32 bit words");
+  PF (IMAGE_FILE_DEBUG_STRIPPED, "debugging information removed");
+  PF (IMAGE_FILE_SYSTEM, "system file");
+  PF (IMAGE_FILE_DLL, "DLL");
+  PF (IMAGE_FILE_BYTES_REVERSED_HI, "big endian");
 #undef PF
 
   /* ctime implies '\n'.  */
@@ -2008,14 +1978,6 @@ _bfd_XX_get_symbol_info (abfd, symbol, ret)
      symbol_info *ret;
 {
   coff_get_symbol_info (abfd, symbol, ret);
-#if 0 /* This code no longer appears to be necessary.
-	 ImageBase has already been added in by coff_swap_scnhdr_in.  */
-  if (pe_data (abfd) != NULL
-      && ((symbol->flags & BSF_DEBUGGING) == 0
-	  || (symbol->flags & BSF_DEBUGGING_RELOC) != 0)
-      && ! bfd_is_abs_section (symbol->section))
-    ret->value += pe_data (abfd)->pe_opthdr.ImageBase;
-#endif
 }
 
 /* Handle the .idata section and other things that need symbol table

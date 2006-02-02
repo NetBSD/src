@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright 1999, 2000, 2001, 2002, 2003
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -44,6 +44,8 @@
 #define bfd_mach_o_new_section_hook _bfd_generic_new_section_hook
 #define bfd_mach_o_get_section_contents_in_window _bfd_generic_get_section_contents_in_window
 #define bfd_mach_o_bfd_is_local_label_name _bfd_nosymbols_bfd_is_local_label_name
+#define bfd_mach_o_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define bfd_mach_o_bfd_is_local_label_name _bfd_nosymbols_bfd_is_local_label_name
 #define bfd_mach_o_get_lineno _bfd_nosymbols_get_lineno
 #define bfd_mach_o_find_nearest_line _bfd_nosymbols_find_nearest_line
 #define bfd_mach_o_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
@@ -68,7 +70,11 @@
 #define bfd_mach_o_set_section_contents _bfd_generic_set_section_contents
 #define bfd_mach_o_bfd_gc_sections bfd_generic_gc_sections
 #define bfd_mach_o_bfd_merge_sections bfd_generic_merge_sections
+#define bfd_mach_o_bfd_is_group_section bfd_generic_is_group_section
 #define bfd_mach_o_bfd_discard_group bfd_generic_discard_group
+#define bfd_mach_o_section_already_linked \
+  _bfd_generic_section_already_linked
+#define bfd_mach_o_bfd_copy_private_header_data _bfd_generic_bfd_copy_private_header_data
 
 static bfd_boolean bfd_mach_o_bfd_copy_private_symbol_data
   PARAMS ((bfd *, asymbol *, bfd *, asymbol *));
@@ -373,41 +379,6 @@ bfd_mach_o_write_contents (abfd)
   for (s = abfd->sections; s != (asection *) NULL; s = s->next)
     ;
 
-#if 0
-  for (i = 0; i < mdata->header.ncmds; i++)
-    {
-      bfd_mach_o_load_command *cur = &mdata->commands[i];
-      if (cur->type != BFD_MACH_O_LC_SEGMENT)
-	break;
-
-      {
-	bfd_mach_o_segment_command *seg = &cur->command.segment;
-	char buf[1024];
-	bfd_vma nbytes = seg->filesize;
-	bfd_vma curoff = seg->fileoff;
-
-	while (nbytes > 0)
-	  {
-	    bfd_vma thisread = nbytes;
-
-	    if (thisread > 1024)
-	      thisread = 1024;
-
-	    bfd_seek (abfd, curoff, SEEK_SET);
-	    if (bfd_bread ((PTR) buf, thisread, abfd) != thisread)
-	      return FALSE;
-
-	    bfd_seek (abfd, curoff, SEEK_SET);
-	    if (bfd_bwrite ((PTR) buf, thisread, abfd) != thisread)
-	      return FALSE;
-
-	    nbytes -= thisread;
-	    curoff += thisread;
-	  }
-      }
-  }
-#endif
-
   /* Now write header information.  */
   if (bfd_mach_o_write_header (abfd, &mdata->header) != 0)
     return FALSE;
@@ -582,7 +553,7 @@ bfd_mach_o_make_bfd_section (abfd, section)
 
   bfdsec->vma = section->addr;
   bfdsec->lma = section->addr;
-  bfdsec->_raw_size = section->size;
+  bfdsec->size = section->size;
   bfdsec->filepos = section->offset;
   bfdsec->alignment_power = section->align;
 
@@ -672,21 +643,6 @@ bfd_mach_o_scan_write_symtab_symbols (abfd, command)
       short ndesc = 0;
 
       s = &sym->symbols[i];
-
-      /* Don't set this from the symbol information; use stored values.  */
-#if 0
-      if (s->flags & BSF_GLOBAL)
-	ntype |= N_EXT;
-      if (s->flags & BSF_DEBUGGING)
-	ntype |= N_STAB;
-
-      if (s->section == bfd_und_section_ptr)
-	ntype |= N_UNDF;
-      else if (s->section == bfd_abs_section_ptr)
-	ntype |= N_ABS;
-      else
-	ntype |= N_SECT;
-#endif
 
       /* Instead just set from the stored values.  */
       ntype = (s->udata.i >> 24) & 0xff;
@@ -842,7 +798,7 @@ bfd_mach_o_scan_read_symtab_strtab (abfd, sym)
 	  bfd_set_error (bfd_error_file_truncated);
 	  return -1;
 	}
-      sym->strtab = b->buffer + sym->stroff;
+      sym->strtab = (char *) b->buffer + sym->stroff;
       return 0;
     }
 
@@ -1030,7 +986,7 @@ bfd_mach_o_scan_read_dylinker (abfd, command)
 
   bfdsec->vma = 0;
   bfdsec->lma = 0;
-  bfdsec->_raw_size = command->len - 8;
+  bfdsec->size = command->len - 8;
   bfdsec->filepos = command->offset + 8;
   bfdsec->alignment_power = 0;
   bfdsec->flags = SEC_HAS_CONTENTS;
@@ -1088,7 +1044,7 @@ bfd_mach_o_scan_read_dylib (abfd, command)
 
   bfdsec->vma = 0;
   bfdsec->lma = 0;
-  bfdsec->_raw_size = command->len - 8;
+  bfdsec->size = command->len - 8;
   bfdsec->filepos = command->offset + 8;
   bfdsec->alignment_power = 0;
   bfdsec->flags = SEC_HAS_CONTENTS;
@@ -1211,7 +1167,7 @@ bfd_mach_o_scan_read_thread (abfd, command)
 
       bfdsec->vma = 0;
       bfdsec->lma = 0;
-      bfdsec->_raw_size = cmd->flavours[i].size;
+      bfdsec->size = cmd->flavours[i].size;
       bfdsec->filepos = cmd->flavours[i].offset;
       bfdsec->alignment_power = 0x0;
       bfdsec->flags = SEC_HAS_CONTENTS;
@@ -1318,7 +1274,7 @@ bfd_mach_o_scan_read_symtab (abfd, command)
 
   bfdsec->vma = 0;
   bfdsec->lma = 0;
-  bfdsec->_raw_size = seg->nsyms * 12;
+  bfdsec->size = seg->nsyms * 12;
   bfdsec->filepos = seg->symoff;
   bfdsec->alignment_power = 0;
   bfdsec->flags = SEC_HAS_CONTENTS;
@@ -1337,7 +1293,7 @@ bfd_mach_o_scan_read_symtab (abfd, command)
 
   bfdsec->vma = 0;
   bfdsec->lma = 0;
-  bfdsec->_raw_size = seg->strsize;
+  bfdsec->size = seg->strsize;
   bfdsec->filepos = seg->stroff;
   bfdsec->alignment_power = 0;
   bfdsec->flags = SEC_HAS_CONTENTS;
@@ -1388,7 +1344,7 @@ bfd_mach_o_scan_read_segment (abfd, command)
 
   bfdsec->vma = seg->vmaddr;
   bfdsec->lma = seg->vmaddr;
-  bfdsec->_raw_size = seg->filesize;
+  bfdsec->size = seg->filesize;
   bfdsec->filepos = seg->fileoff;
   bfdsec->alignment_power = 0x0;
   bfdsec->flags = SEC_HAS_CONTENTS | SEC_LOAD | SEC_ALLOC | SEC_CODE;
@@ -1701,17 +1657,9 @@ bfd_mach_o_scan (abfd, header, mdata)
     }
 
   if (bfd_mach_o_scan_start_address (abfd) < 0)
-    {
-#if 0
-      fprintf (stderr, "bfd_mach_o_scan: unable to scan start address: %s\n",
-	       bfd_errmsg (bfd_get_error ()));
-      abfd->tdata.mach_o_data = NULL;
-      return -1;
-#endif
-    }
+    return -1;
 
   bfd_mach_o_flatten_sections (abfd);
-
   return 0;
 }
 
@@ -2172,7 +2120,7 @@ bfd_mach_o_core_file_failing_command (abfd)
   if (ret < 0)
     return NULL;
 
-  return buf;
+  return (char *) buf;
 }
 
 int

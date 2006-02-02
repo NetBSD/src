@@ -51,6 +51,11 @@ enum bfd_architecture
 #define bfd_mach_mcf5307  11
 #define bfd_mach_mcf5407  12
 #define bfd_mach_mcf528x  13
+#define bfd_mach_mcfv4e   14
+#define bfd_mach_mcf521x   15
+#define bfd_mach_mcf5249   16
+#define bfd_mach_mcf547x   17
+#define bfd_mach_mcf548x   18
   bfd_arch_vax,       /* DEC Vax */
   bfd_arch_i960,      /* Intel 960 */
     /* The order of the following is important.
@@ -89,6 +94,9 @@ enum bfd_architecture
 #define bfd_mach_sparc_v9_p(mach) \
   ((mach) >= bfd_mach_sparc_v8plus && (mach) <= bfd_mach_sparc_v9b \
    && (mach) != bfd_mach_sparc_sparclite_le)
+/* Nonzero if MACH is a 64 bit sparc architecture.  */
+#define bfd_mach_sparc_64bit_p(mach) \
+  ((mach) >= bfd_mach_sparc_v9 && (mach) != bfd_mach_sparc_v8plusb)
   bfd_arch_mips,      /* MIPS Rxxxx */
 #define bfd_mach_mips3000              3000
 #define bfd_mach_mips3900              3900
@@ -107,6 +115,7 @@ enum bfd_architecture
 #define bfd_mach_mips6000              6000
 #define bfd_mach_mips7000              7000
 #define bfd_mach_mips8000              8000
+#define bfd_mach_mips9000              9000
 #define bfd_mach_mips10000             10000
 #define bfd_mach_mips12000             12000
 #define bfd_mach_mips16                16
@@ -190,12 +199,20 @@ enum bfd_architecture
 #define bfd_mach_sh            1
 #define bfd_mach_sh2        0x20
 #define bfd_mach_sh_dsp     0x2d
+#define bfd_mach_sh2a       0x2a
+#define bfd_mach_sh2a_nofpu 0x2b
+#define bfd_mach_sh2a_nofpu_or_sh4_nommu_nofpu 0x2a1
+#define bfd_mach_sh2a_nofpu_or_sh3_nommu 0x2a2
+#define bfd_mach_sh2a_or_sh4  0x2a3
+#define bfd_mach_sh2a_or_sh3e 0x2a4
 #define bfd_mach_sh2e       0x2e
 #define bfd_mach_sh3        0x30
+#define bfd_mach_sh3_nommu  0x31
 #define bfd_mach_sh3_dsp    0x3d
 #define bfd_mach_sh3e       0x3e
 #define bfd_mach_sh4        0x40
 #define bfd_mach_sh4_nofpu  0x41
+#define bfd_mach_sh4_nommu_nofpu  0x42
 #define bfd_mach_sh4a       0x4a
 #define bfd_mach_sh4a_nofpu 0x4b
 #define bfd_mach_sh4al_dsp  0x4d
@@ -251,6 +268,7 @@ enum bfd_architecture
 #define bfd_mach_frvsimple     2
 #define bfd_mach_fr300         300
 #define bfd_mach_fr400         400
+#define bfd_mach_fr450         450
 #define bfd_mach_frvtomcat     499     /* fr500 prototype */
 #define bfd_mach_fr500         500
 #define bfd_mach_fr550         550
@@ -271,7 +289,14 @@ enum bfd_architecture
 #define bfd_mach_avr3          3
 #define bfd_mach_avr4          4
 #define bfd_mach_avr5          5
+  bfd_arch_cr16c,       /* National Semiconductor CompactRISC. */
+#define bfd_mach_cr16c         1
+  bfd_arch_crx,       /*  National Semiconductor CRX.  */
+#define bfd_mach_crx           1
   bfd_arch_cris,      /* Axis CRIS */
+#define bfd_mach_cris_v0_v10   255
+#define bfd_mach_cris_v32      32
+#define bfd_mach_cris_v10_v32  1032
   bfd_arch_s390,      /* IBM s390 */
 #define bfd_mach_s390_31       31
 #define bfd_mach_s390_64       64
@@ -296,6 +321,9 @@ enum bfd_architecture
 #define bfd_mach_msp44          44
   bfd_arch_xtensa,    /* Tensilica's Xtensa cores.  */
 #define bfd_mach_xtensa        1
+   bfd_arch_maxq,     /* Dallas MAXQ 10/20 */
+#define bfd_mach_maxq10    10
+#define bfd_mach_maxq20    20
   bfd_arch_last
   @};
 @end example

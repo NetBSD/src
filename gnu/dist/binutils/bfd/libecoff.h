@@ -1,5 +1,5 @@
 /* BFD ECOFF object file private structure.
-   Copyright 1993, 1994, 1995, 1996, 1999, 2001, 2002, 2003
+   Copyright 1993, 1994, 1995, 1996, 1999, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
@@ -176,41 +176,13 @@ typedef struct ecoff_symbol_struct
 #define ecoff_get_sym_index(symbol) ((symbol)->udata.i)
 #define ecoff_set_sym_index(symbol, idx) ((symbol)->udata.i = (idx))
 
-/* When generating MIPS embedded PIC code, the linker relaxes the code
-   to turn PC relative branches into longer code sequences when the PC
-   relative branch is out of range.  This involves reading the relocs
-   in bfd_relax_section as well as in bfd_final_link, and requires the
-   code to keep track of which relocs have been expanded.  A pointer
-   to this structure is put in the used_by_bfd pointer of a section to
-   keep track of this information.  The user_by_bfd pointer will be
-   NULL if the information was not needed.  */
+/* A pointer to this structure is put in the used_by_bfd pointer of
+   a section to keep track of any per-section data.
+   The user_by_bfd pointer will be NULL if the information was not
+   needed.  */
 
 struct ecoff_section_tdata
 {
-  /* The unswapped relocs for this section.  These are stored in
-     memory so the input file does not have to be read twice.  */
-  PTR external_relocs;
-
-  /* The contents of the section.  These bytes may or may not be saved
-     in memory, but if it is this is a pointer to them.  */
-  bfd_byte *contents;
-
-  /* Offset adjustments for PC relative branches.  A number other than
-     1 is an addend for a PC relative branch, or a switch table entry
-     which is the difference of two .text locations; this addend
-     arises because the branch or difference crosses one or more
-     branches which were expanded into a larger code sequence.  A 1
-     means that this branch was itself expanded into a larger code
-     sequence.  1 is not a possible offset, since all offsets must be
-     multiples of the instruction size, which is 4; also, the only
-     relocs with non-zero offsets will be PC relative branches or
-     switch table entries within the same object file.  If this field
-     is NULL, no branches were expanded and no offsets are required.
-     Otherwise there are as many entries as there are relocs in the
-     section, and the entry for any reloc that is not PC relative is
-     zero.  */
-  long *offsets;
-
   /* When producing an executable (i.e., final, non-relocatable link)
      on the Alpha, we may need to use multiple global pointer values
      to span the entire .lita section.  In essence, we allow each
@@ -277,6 +249,9 @@ extern bfd_boolean _bfd_ecoff_bfd_copy_private_bfd_data
 #define _bfd_ecoff_bfd_copy_private_symbol_data \
   _bfd_generic_bfd_copy_private_symbol_data
 
+#define _bfd_ecoff_bfd_copy_private_header_data \
+  _bfd_generic_bfd_copy_private_header_data
+
 #define _bfd_ecoff_bfd_print_private_bfd_data \
   _bfd_generic_bfd_print_private_bfd_data
 
@@ -297,6 +272,8 @@ extern bfd_boolean _bfd_ecoff_write_armap
 #define _bfd_ecoff_get_elt_at_index _bfd_generic_get_elt_at_index
 #define _bfd_ecoff_generic_stat_arch_elt bfd_generic_stat_arch_elt
 #define _bfd_ecoff_update_armap_timestamp bfd_true
+#define _bfd_ecoff_bfd_is_target_special_symbol  \
+  ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 
 extern long _bfd_ecoff_get_symtab_upper_bound PARAMS ((bfd *abfd));
 extern long _bfd_ecoff_canonicalize_symtab PARAMS ((bfd *abfd, asymbol **alocation));

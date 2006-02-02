@@ -1,6 +1,6 @@
 /* vms.c -- BFD back-end for VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    Written by Klaus K"ampf (kkaempf@rmi.de)
@@ -154,6 +154,7 @@ static long vms_get_dynamic_symtab_upper_bound
   PARAMS ((bfd *abfd));
 static long vms_canonicalize_dynamic_symtab
   PARAMS ((bfd *abfd, asymbol **symbols));
+#define vms_get_synthetic_symtab _bfd_nodynamic_get_synthetic_symtab
 static long vms_get_dynamic_reloc_upper_bound
   PARAMS ((bfd *abfd));
 static long vms_canonicalize_dynamic_reloc
@@ -163,9 +164,15 @@ static bfd_boolean vms_bfd_merge_private_bfd_data
 static bfd_boolean vms_bfd_set_private_flags
   PARAMS ((bfd *abfd, flagword flags));
 
+#define vms_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define vms_make_empty_symbol _bfd_generic_make_empty_symbol
 #define vms_bfd_link_just_syms _bfd_generic_link_just_syms
+#define vms_bfd_is_group_section bfd_generic_is_group_section
 #define vms_bfd_discard_group bfd_generic_discard_group
+#define vms_section_already_linked \
+  _bfd_generic_section_already_linked
+#define vms_bfd_copy_private_header_data \
+  _bfd_generic_bfd_copy_private_header_data
 
 /*===========================================================================*/
 
@@ -358,10 +365,10 @@ fill_section_ptr (entry, sections)
 
   /* fill forward references (these contain section number, not section ptr).  */
 
-  if ((unsigned int) sec < priv_section_count)
+  if ((unsigned int) (size_t) sec < priv_section_count)
     {
-      sec = ((vms_symbol_entry *)entry)->symbol->section =
-	((asection **)sections)[(int)sec];
+      sec = ((vms_symbol_entry *) entry)->symbol->section =
+	((asection **) sections)[(unsigned int) (size_t) sec];
     }
 
   if (strcmp (sym->name, sec->name) == 0)
@@ -1666,7 +1673,7 @@ vms_set_section_contents (abfd, section, location, offset, count)
 #if VMS_DEBUG
   vms_debug (1, "vms_set_section_contents(%p, sec %s, loc %p, off %ld, count %d)\n",
 					abfd, section->name, location, (long int)offset, (int)count);
-  vms_debug (2, "secraw %d, seccooked %d\n", (int)section->_raw_size, (int)section->_cooked_size);
+  vms_debug (2, "size %d\n", (int) section->size);
 #endif
   return _bfd_save_vms_section(abfd, section, location, offset, count);
 }

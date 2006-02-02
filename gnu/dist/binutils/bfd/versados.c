@@ -1,5 +1,5 @@
 /* BFD back-end for VERSAdos-E objects.
-   Copyright 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
@@ -320,7 +320,7 @@ process_esd (abfd, esd, pass)
 	case ESD_STD_REL_SEC:
 	case ESD_SHRT_REL_SEC:
 	  {
-	    sec->_raw_size = get_4 (&ptr);
+	    sec->size = get_4 (&ptr);
 	    sec->flags |= SEC_ALLOC;
 	  }
 	  break;
@@ -457,7 +457,7 @@ process_otr (abfd, otr, pass)
 			  EDATA (abfd, otr->esdid - 1).section->relocation + rn;
 			  n->address = dst_idx;
 
-			  n->sym_ptr_ptr = (asymbol **) esdid;
+			  n->sym_ptr_ptr = (asymbol **) (size_t) esdid;
 			  n->addend = 0;
 			  n->howto = versados_howto_table + ((j & 1) * 2) + (sizeinwords - 1);
 			}
@@ -470,7 +470,7 @@ process_otr (abfd, otr, pass)
       else
 	{
 	  need_contents = 1;
-	  if (dst_idx < esdid->section->_raw_size)
+	  if (dst_idx < esdid->section->size)
 	    if (pass == 2)
 	      {
 		/* absolute code, comes in 16 bit lumps */
@@ -485,7 +485,7 @@ process_otr (abfd, otr, pass)
 
   if (!contents && need_contents)
     {
-      bfd_size_type size = esdid->section->_raw_size;
+      bfd_size_type size = esdid->section->size;
       esdid->contents = (unsigned char *) bfd_alloc (abfd, size);
     }
 }
@@ -819,7 +819,7 @@ versados_canonicalize_reloc (abfd, section, relptr, symbols)
       /* translate from indexes to symptr ptrs */
       for (count = 0; count < section->reloc_count; count++)
 	{
-	  int esdid = (int) src[count].sym_ptr_ptr;
+	  int esdid = (int) (size_t) src[count].sym_ptr_ptr;
 
 	  if (esdid == 0)
 	    {
@@ -855,6 +855,8 @@ versados_canonicalize_reloc (abfd, section, relptr, symbols)
 #define versados_bfd_free_cached_info _bfd_generic_bfd_free_cached_info
 #define versados_new_section_hook _bfd_generic_new_section_hook
 
+#define versados_bfd_is_target_special_symbol \
+  ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define versados_bfd_is_local_label_name bfd_generic_is_local_label_name
 #define versados_get_lineno _bfd_nosymbols_get_lineno
 #define versados_find_nearest_line _bfd_nosymbols_find_nearest_line
@@ -872,7 +874,10 @@ versados_canonicalize_reloc (abfd, section, relptr, symbols)
 #define versados_bfd_relax_section bfd_generic_relax_section
 #define versados_bfd_gc_sections bfd_generic_gc_sections
 #define versados_bfd_merge_sections bfd_generic_merge_sections
+#define versados_bfd_is_group_section bfd_generic_is_group_section
 #define versados_bfd_discard_group bfd_generic_discard_group
+#define versados_section_already_linked \
+  _bfd_generic_section_already_linked
 #define versados_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define versados_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define versados_bfd_link_add_symbols _bfd_generic_link_add_symbols

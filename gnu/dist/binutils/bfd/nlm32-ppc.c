@@ -1,5 +1,5 @@
 /* Support for 32-bit PowerPC NLM (NetWare Loadable Module)
-   Copyright 1994, 1995, 2000, 2001, 2002, 2003
+   Copyright 1994, 1995, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -621,7 +621,7 @@ nlm_powerpc_read_reloc (abfd, sym, secp, rel)
   else if (l_rsecnm == 1)
     {
       *secp = data_sec;
-      l_vaddr -= bfd_section_size (abfd, code_sec);
+      l_vaddr -= code_sec->size;
     }
   else
     {
@@ -858,7 +858,7 @@ nlm_powerpc_write_reloc (abfd, sec, rel, indx)
   else if (sec == data_sec)
     {
       l_rsecnm = 1;
-      address += bfd_section_size (abfd, code_sec);
+      address += code_sec->size;
     }
   else
     {

@@ -1,6 +1,6 @@
 /* output-file.c -  Deal with the output file
-   Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2001, 2003
-   Free Software Foundation, Inc.
+   Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2001,
+   2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -48,7 +48,10 @@ output_file_create (char *name)
 
   else if (!(stdoutput = bfd_openw (name, TARGET_FORMAT)))
     {
-      as_perror (_("FATAL: can't create %s"), name);
+      if (bfd_get_error () == bfd_error_invalid_target)
+	as_perror (_("Selected target format '%s' unknown"), TARGET_FORMAT);
+      else
+	as_perror (_("FATAL: can't create %s"), name);
       exit (EXIT_FAILURE);
     }
 

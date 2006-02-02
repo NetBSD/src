@@ -1,6 +1,6 @@
 /* tc-alpha.c - Processor-specific code for the DEC Alpha AXP CPU.
    Copyright 1989, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
    Contributed by Carnegie Mellon University, 1993.
    Written by Alessandro Forin, based on earlier gas-1.38 target CPU files.
    Modified by Ken Raeburn for gas-2.x and ECOFF support.
@@ -308,12 +308,8 @@ const char EXP_CHARS[] = "eE";
 
 /* Characters which mean that a number is a floating point constant,
    as in 0d1.0.  */
-#if 0
-const char FLT_CHARS[] = "dD";
-#else
 /* XXX: Do all of these really get used on the alpha??  */
 char FLT_CHARS[] = "rRsSfFdDxXpP";
-#endif
 
 #ifdef OBJ_EVAX
 const char *md_shortopts = "Fm:g+1h:HG:";
@@ -657,18 +653,6 @@ static const struct alpha_macro alpha_macros[] =
     { MACRO_IR, MACRO_EXP, MACRO_EOA } },
   { "ldiq",	emit_lda, NULL,
     { MACRO_IR, MACRO_EXP, MACRO_EOA } },
-#if 0
-  { "ldif"	emit_ldiq, NULL,
-    { MACRO_FPR, MACRO_EXP, MACRO_EOA } },
-  { "ldid"	emit_ldiq, NULL,
-    { MACRO_FPR, MACRO_EXP, MACRO_EOA } },
-  { "ldig"	emit_ldiq, NULL,
-    { MACRO_FPR, MACRO_EXP, MACRO_EOA } },
-  { "ldis"	emit_ldiq, NULL,
-    { MACRO_FPR, MACRO_EXP, MACRO_EOA } },
-  { "ldit"	emit_ldiq, NULL,
-    { MACRO_FPR, MACRO_EXP, MACRO_EOA } },
-#endif
 
   { "stl",	emit_loadstore, "stl",
     { MACRO_IR, MACRO_EXP, MACRO_OPIR, MACRO_EOA } },
@@ -701,14 +685,6 @@ static const struct alpha_macro alpha_macros[] =
     { MACRO_IR, MACRO_EXP, MACRO_OPIR, MACRO_EOA } },
 
 /* Arithmetic macros */
-#if 0
-  { "absl"	emit_absl, 1, { IR } },
-  { "absl"	emit_absl, 2, { IR, IR } },
-  { "absl"	emit_absl, 2, { EXP, IR } },
-  { "absq"	emit_absq, 1, { IR } },
-  { "absq"	emit_absq, 2, { IR, IR } },
-  { "absq"	emit_absq, 2, { EXP, IR } },
-#endif
 
   { "sextb",	emit_sextX, (PTR) 0,
     { MACRO_IR, MACRO_IR, MACRO_EOA,
@@ -2373,17 +2349,7 @@ insert_operand (insn, operand, val, file, line)
 	}
 
       if (val < min || val > max)
-	{
-	  const char *err =
-	    _("operand out of range (%s not between %d and %d)");
-	  char buf[sizeof (val) * 3 + 2];
-
-	  sprint_value (buf, val);
-	  if (file)
-	    as_warn_where (file, line, err, buf, min, max);
-	  else
-	    as_warn (err, buf, min, max);
-	}
+	as_warn_value_out_of_range (_("operand"), val, min, max, file, line);
     }
 
   if (operand->insert)
@@ -5476,15 +5442,6 @@ static void
 s_alpha_base (ignore)
      int ignore ATTRIBUTE_UNUSED;
 {
-#if 0
-  if (first_32bit_quadrant)
-    {
-      /* not fatal, but it might not work in the end */
-      as_warn (_("File overrides no-base-register option."));
-      first_32bit_quadrant = 0;
-    }
-#endif
-
   SKIP_WHITESPACE ();
   if (*input_line_pointer == '$')
     {				/* $rNN form */
@@ -5821,12 +5778,6 @@ select_gp_value ()
 
   /* Select the smallest VMA of these existing sections.  */
   maybe_set_gp (alpha_lita_section);
-#if 0
-  /* These were disabled before -- should we use them?  */
-  maybe_set_gp (sdata);
-  maybe_set_gp (lit8_sec);
-  maybe_set_gp (lit4_sec);
-#endif
 
 /* @@ Will a simple 0x8000 work here?  If not, why not?  */
 #define GP_ADJUSTMENT	(0x8000 - 0x10)

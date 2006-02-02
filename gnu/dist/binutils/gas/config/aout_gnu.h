@@ -1,6 +1,6 @@
 /* This file is aout_gnu.h
 
-   Copyright 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 2000
+   Copyright 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 2000, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.

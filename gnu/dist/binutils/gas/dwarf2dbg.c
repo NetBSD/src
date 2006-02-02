@@ -1,5 +1,6 @@
 /* dwarf2dbg.c - DWARF2 debug support
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -1349,21 +1350,28 @@ out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg)
   symbol_set_value_now (info_end);
 }
 
+/* Finish the dwarf2 debug sections.  We emit .debug.line if there
+   were any .file/.loc directives, or --gdwarf2 was given, or if the
+   file has a non-empty .debug_info section.  If we emit .debug_line,
+   and the .debug_info section is empty, we also emit .debug_info,
+   .debug_aranges and .debug_abbrev.  ALL_SEGS will be non-null if
+   there were any .file/.loc directives, or --gdwarf2 was given and
+   there were any located instructions emitted.  */
+
 void
 dwarf2_finish (void)
 {
   segT line_seg;
   struct line_seg *s;
+  segT info_seg;
+  int emit_other_sections = 0;
 
-  /* We don't need to do anything unless:
-     - Some debug information was recorded via .file/.loc
-     - or, we are generating DWARF2 information ourself (--gdwarf2)
-     - or, there is a user-provided .debug_info section which could
-       reference the file table in the .debug_line section we generate
-       below.  */
-  if (all_segs == NULL
-      && debug_type != DEBUG_DWARF2
-      && bfd_get_section_by_name (stdoutput, ".debug_info") == NULL)
+  info_seg = bfd_get_section_by_name (stdoutput, ".debug_info");
+  emit_other_sections = info_seg == NULL || !seg_not_empty_p (info_seg);
+
+  if (!all_segs && emit_other_sections)
+    /* There is no line information and no non-empty .debug_info
+       section.  */
     return;
 
   /* Calculate the size of an address for the target machine.  */
@@ -1371,7 +1379,7 @@ dwarf2_finish (void)
 
   /* Create and switch to the line number section.  */
   line_seg = subseg_new (".debug_line", 0);
-  bfd_set_section_flags (stdoutput, line_seg, SEC_READONLY);
+  bfd_set_section_flags (stdoutput, line_seg, SEC_READONLY | SEC_DEBUGGING);
 
   /* For each subsection, chain the debug entries together.  */
   for (s = all_segs; s; s = s->next)
@@ -1388,21 +1396,26 @@ dwarf2_finish (void)
 
   out_debug_line (line_seg);
 
-  /* If this is assembler generated line info, we need .debug_info
-     and .debug_abbrev sections as well.  */
-  if (all_segs != NULL && debug_type == DEBUG_DWARF2)
+  /* If this is assembler generated line info, and there is no
+     debug_info already, we need .debug_info and .debug_abbrev
+     sections as well.  */
+  if (emit_other_sections)
     {
       segT abbrev_seg;
-      segT info_seg;
       segT aranges_seg;
 
+      assert (all_segs);
+      
       info_seg = subseg_new (".debug_info", 0);
       abbrev_seg = subseg_new (".debug_abbrev", 0);
       aranges_seg = subseg_new (".debug_aranges", 0);
 
-      bfd_set_section_flags (stdoutput, info_seg, SEC_READONLY);
-      bfd_set_section_flags (stdoutput, abbrev_seg, SEC_READONLY);
-      bfd_set_section_flags (stdoutput, aranges_seg, SEC_READONLY);
+      bfd_set_section_flags (stdoutput, info_seg,
+			     SEC_READONLY | SEC_DEBUGGING);
+      bfd_set_section_flags (stdoutput, abbrev_seg,
+			     SEC_READONLY | SEC_DEBUGGING);
+      bfd_set_section_flags (stdoutput, aranges_seg,
+			     SEC_READONLY | SEC_DEBUGGING);
 
       record_alignment (aranges_seg, ffs (2 * sizeof_address) - 1);
 

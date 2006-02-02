@@ -1,6 +1,6 @@
 /* BFD backend for Extended Tektronix Hex Format  objects.
-   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003
-   Free Software Foundation, Inc.
+   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002,
+   2003, 2004 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -429,7 +429,7 @@ first_phase (abfd, type, src)
 	    case '1':		/* section range */
 	      src++;
 	      section->vma = getvalue (&src);
-	      section->_raw_size = getvalue (&src) - section->vma;
+	      section->size = getvalue (&src) - section->vma;
 	      section->flags = SEC_HAS_CONTENTS | SEC_LOAD | SEC_ALLOC;
 	      break;
 	    case '0':
@@ -688,7 +688,7 @@ tekhex_set_section_contents (abfd, section, locationp, offset, bytes_to_do)
 	  if (s->flags & SEC_LOAD)
 	    {
 	      for (vma = s->vma & ~(bfd_vma) CHUNK_MASK;
-		   vma < s->vma + s->_raw_size;
+		   vma < s->vma + s->size;
 		   vma += CHUNK_MASK)
 		find_chunk (abfd, vma);
 	    }
@@ -862,7 +862,7 @@ tekhex_write_object_contents (abfd)
       writesym (&dst, s->name);
       *dst++ = '1';
       writevalue (&dst, s->vma);
-      writevalue (&dst, s->vma + s->_raw_size);
+      writevalue (&dst, s->vma + s->size);
       out (abfd, '3', buffer, dst);
     }
 
@@ -989,6 +989,7 @@ tekhex_print_symbol (abfd, filep, symbol, how)
 #define tekhex_bfd_free_cached_info _bfd_generic_bfd_free_cached_info
 #define tekhex_new_section_hook _bfd_generic_new_section_hook
 
+#define tekhex_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define tekhex_bfd_is_local_label_name bfd_generic_is_local_label_name
 #define tekhex_get_lineno _bfd_nosymbols_get_lineno
 #define tekhex_find_nearest_line _bfd_nosymbols_find_nearest_line
@@ -1001,7 +1002,10 @@ tekhex_print_symbol (abfd, filep, symbol, how)
 #define tekhex_bfd_relax_section bfd_generic_relax_section
 #define tekhex_bfd_gc_sections bfd_generic_gc_sections
 #define tekhex_bfd_merge_sections bfd_generic_merge_sections
+#define tekhex_bfd_is_group_section bfd_generic_is_group_section
 #define tekhex_bfd_discard_group bfd_generic_discard_group
+#define tekhex_section_already_linked \
+  _bfd_generic_section_already_linked
 #define tekhex_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define tekhex_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define tekhex_bfd_link_add_symbols _bfd_generic_link_add_symbols

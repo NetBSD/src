@@ -1,6 +1,6 @@
 /* tc-h8300.c -- Assemble code for the Renesas H8/300
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
-   2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -978,7 +978,8 @@ get_mova_operands (char *op_end, struct h8_op *operand)
 static void
 get_rtsl_operands (char *ptr, struct h8_op *operand)
 {
-  int mode, num, num2, len, type = 0;
+  int mode, len, type = 0;
+  unsigned int num, num2;
 
   ptr++;
   if (*ptr == '(')
@@ -1004,7 +1005,7 @@ get_rtsl_operands (char *ptr, struct h8_op *operand)
       ptr += len;
       /* CONST_xxx are used as placeholders in the opcode table.  */
       num = num2 - num;
-      if (num < 0 || num > 3)
+      if (num > 3)
 	{
 	  as_bad (_("invalid register list"));
 	  return;
@@ -1192,15 +1193,6 @@ get_specific (const struct h8_instruction *instruction,
 		      x &= ~SIZE;
 		      x |= x_size = L_32;
 		    }
-
-#if 0 /* ??? */
-		  /* Promote an L8 to L_16 if it makes us match.  */
-		  if ((op_mode == ABS || op_mode == DISP) && x_size == L_8)
-		    {
-		      if (op_size == L_16)
-			x_size = L_16;
-		    }
-#endif
 
 		  if (((x_size == L_16 && op_size == L_16U)
 		       || (x_size == L_8 && op_size == L_8U)

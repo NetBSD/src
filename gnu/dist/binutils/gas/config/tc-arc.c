@@ -1,5 +1,5 @@
 /* tc-arc.c -- Assembler for the ARC
-   Copyright 1994, 1995, 1997, 1999, 2000, 2001, 2002
+   Copyright 1994, 1995, 1997, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
@@ -328,17 +328,7 @@ arc_insert_operand (insn, operand, mods, reg, val, file, line)
 	test = val;
 
       if (test < (offsetT) min || test > (offsetT) max)
-	{
-	  const char *err =
-	    "operand out of range (%s not between %ld and %ld)";
-	  char buf[100];
-
-	  sprint_value (buf, test);
-	  if (file == (char *) NULL)
-	    as_warn (err, buf, min, max);
-	  else
-	    as_warn_where (file, line, err, buf, min, max);
-	}
+	as_warn_value_out_of_range (_("operand"), test, (offsetT) min, (offsetT) max, file, line);
     }
 
   if (operand->insert)
@@ -446,15 +436,7 @@ md_assemble (str)
 	  /* Non operand chars must match exactly.  */
 	  if (*syn != '%' || *++syn == '%')
 	    {
-	      /* Handle '+' specially as we want to allow "ld r0,[sp-4]".  */
-	      /* ??? The syntax has changed to [sp,-4].  */
-	      if (0 && *syn == '+' && *str == '-')
-		{
-		  /* Skip over syn's +, but leave str's - alone.
-		     That makes the case identical to "ld r0,[sp+-4]".  */
-		  ++syn;
-		}
-	      else if (*str == *syn)
+	     if (*str == *syn)
 		{
 		  if (*syn == ' ')
 		    past_opcode_p = 1;
@@ -578,7 +560,7 @@ md_assemble (str)
 					       NULL);
 		  else
 		    insn |= suf->value << operand->shift;
-
+		  suffix = suf;
 		  str = t;
 		  found = 1;
 		}
@@ -1131,7 +1113,7 @@ static void
 arc_extinst (ignore)
      int ignore ATTRIBUTE_UNUSED;
 {
-  unsigned char syntax[129];
+  char syntax[129];
   char *name;
   char *p;
   char c;
@@ -1655,50 +1637,52 @@ md_operand (expressionP)
 {
   char *p = input_line_pointer;
 
-  if (*p == '%')
-    if (strncmp (p, "%st(", 4) == 0)
-      {
-	input_line_pointer += 4;
-	expression (expressionP);
-	if (*input_line_pointer != ')')
-	  {
-	    as_bad ("missing ')' in %%-op");
-	    return;
-	  }
-	++input_line_pointer;
-	arc_code_symbol (expressionP);
-      }
-    else
-      {
-	/* It could be a register.  */
-	int i, l;
-	struct arc_ext_operand_value *ext_oper = arc_ext_operands;
-	p++;
+  if (*p != '%')
+    return;
 
-	while (ext_oper)
-	  {
-	    l = strlen (ext_oper->operand.name);
-	    if (!strncmp (p, ext_oper->operand.name, l) && !ISALNUM (*(p + l)))
-	      {
-		input_line_pointer += l + 1;
-		expressionP->X_op = O_register;
-		expressionP->X_add_number = (int) &ext_oper->operand;
-		return;
-	      }
-	    ext_oper = ext_oper->next;
-	  }
-	for (i = 0; i < arc_reg_names_count; i++)
-	  {
-	    l = strlen (arc_reg_names[i].name);
-	    if (!strncmp (p, arc_reg_names[i].name, l) && !ISALNUM (*(p + l)))
-	      {
-		input_line_pointer += l + 1;
-		expressionP->X_op = O_register;
-		expressionP->X_add_number = (int) &arc_reg_names[i];
-		break;
-	      }
-	  }
-      }
+  if (strncmp (p, "%st(", 4) == 0)
+    {
+      input_line_pointer += 4;
+      expression (expressionP);
+      if (*input_line_pointer != ')')
+	{
+	  as_bad ("missing ')' in %%-op");
+	  return;
+	}
+      ++input_line_pointer;
+      arc_code_symbol (expressionP);
+    }
+  else
+    {
+      /* It could be a register.  */
+      int i, l;
+      struct arc_ext_operand_value *ext_oper = arc_ext_operands;
+      p++;
+
+      while (ext_oper)
+	{
+	  l = strlen (ext_oper->operand.name);
+	  if (!strncmp (p, ext_oper->operand.name, l) && !ISALNUM (*(p + l)))
+	    {
+	      input_line_pointer += l + 1;
+	      expressionP->X_op = O_register;
+	      expressionP->X_add_number = (int) &ext_oper->operand;
+	      return;
+	    }
+	  ext_oper = ext_oper->next;
+	}
+      for (i = 0; i < arc_reg_names_count; i++)
+	{
+	  l = strlen (arc_reg_names[i].name);
+	  if (!strncmp (p, arc_reg_names[i].name, l) && !ISALNUM (*(p + l)))
+	    {
+	      input_line_pointer += l + 1;
+	      expressionP->X_op = O_register;
+	      expressionP->X_add_number = (int) &arc_reg_names[i];
+	      break;
+	    }
+	}
+    }
 }
 
 /* We have no need to default values of symbols.
@@ -1855,9 +1839,6 @@ md_apply_fix3 (fixP, valP, seg)
      valueT * valP;
      segT seg;
 {
-#if 0
-  char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
-#endif
   valueT value = * valP;
 
   if (fixP->fx_addsy == (symbolS *) NULL)
@@ -1956,12 +1937,6 @@ md_apply_fix3 (fixP, valP, seg)
 	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
 			      value, 4);
 	  break;
-#if 0
-	case BFD_RELOC_64:
-	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-			      value, 8);
-	  break;
-#endif
 	case BFD_RELOC_ARC_B26:
 	  /* If !fixP->fx_done then `value' is an implicit addend.
 	     We must shift it right by 2 in this case as well because the
@@ -1988,8 +1963,9 @@ tc_gen_reloc (section, fixP)
   arelent *reloc;
 
   reloc = (arelent *) xmalloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
 
-  reloc->sym_ptr_ptr = &fixP->fx_addsy->bsym;
+  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   reloc->address = fixP->fx_frag->fr_address + fixP->fx_where;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixP->fx_r_type);
   if (reloc->howto == (reloc_howto_type *) NULL)

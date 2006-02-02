@@ -1,6 +1,6 @@
 /* Assorted BFD support routines, only used internally.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004
+   2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -692,10 +692,12 @@ _bfd_generic_get_section_contents (bfd *abfd,
 				   file_ptr offset,
 				   bfd_size_type count)
 {
+  bfd_size_type sz;
   if (count == 0)
     return TRUE;
 
-  if (offset + count > section->_raw_size)
+  sz = section->rawsize ? section->rawsize : section->size;
+  if (offset + count > sz)
     {
       bfd_set_error (bfd_error_invalid_operation);
       return FALSE;
@@ -717,6 +719,8 @@ _bfd_generic_get_section_contents_in_window
    bfd_size_type count ATTRIBUTE_UNUSED)
 {
 #ifdef USE_MMAP
+  bfd_size_type sz;
+
   if (count == 0)
     return TRUE;
   if (abfd->xvec->_bfd_get_section_contents
@@ -744,7 +748,8 @@ _bfd_generic_get_section_contents_in_window
       w->data = w->i->data;
       return bfd_get_section_contents (abfd, section, w->data, offset, count);
     }
-  if (offset + count > section->_raw_size
+  sz = section->rawsize ? section->rawsize : section->size;
+  if (offset + count > sz
       || ! bfd_get_file_window (abfd, section->filepos + offset, count, w,
 				TRUE))
     return FALSE;
@@ -818,11 +823,11 @@ _bfd_generic_verify_endian_match (bfd *ibfd, bfd *obfd)
       const char *msg;
 
       if (bfd_big_endian (ibfd))
-	msg = _("%s: compiled for a big endian system and target is little endian");
+	msg = _("%B: compiled for a big endian system and target is little endian");
       else
-	msg = _("%s: compiled for a little endian system and target is big endian");
+	msg = _("%B: compiled for a little endian system and target is big endian");
 
-      (*_bfd_error_handler) (msg, bfd_archive_filename (ibfd));
+      (*_bfd_error_handler) (msg, ibfd);
 
       bfd_set_error (bfd_error_wrong_format);
       return FALSE;
@@ -854,4 +859,62 @@ warn_deprecated (const char *what,
 	fprintf (stderr, _("Deprecated %s called\n"), what);
       mask |= ~(size_t) func;
     }
+}
+
+/* Helper function for reading uleb128 encoded data.  */
+
+bfd_vma
+read_unsigned_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
+		      bfd_byte *buf,
+		      unsigned int *bytes_read_ptr)
+{
+  bfd_vma result;
+  unsigned int num_read;
+  unsigned int shift;
+  unsigned char byte;
+
+  result = 0;
+  shift = 0;
+  num_read = 0;
+  do
+    {
+      byte = bfd_get_8 (abfd, buf);
+      buf++;
+      num_read++;
+      result |= (((bfd_vma) byte & 0x7f) << shift);
+      shift += 7;
+    }
+  while (byte & 0x80);
+  *bytes_read_ptr = num_read;
+  return result;
+}
+
+/* Helper function for reading sleb128 encoded data.  */
+
+bfd_signed_vma
+read_signed_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
+		    bfd_byte *buf,
+		    unsigned int *bytes_read_ptr)
+{
+  bfd_vma result;
+  unsigned int shift;
+  unsigned int num_read;
+  unsigned char byte;
+
+  result = 0;
+  shift = 0;
+  num_read = 0;
+  do
+    {
+      byte = bfd_get_8 (abfd, buf);
+      buf ++;
+      num_read ++;
+      result |= (((bfd_vma) byte & 0x7f) << shift);
+      shift += 7;
+    }
+  while (byte & 0x80);
+  if (shift < 8 * sizeof (result) && (byte & 0x40))
+    result |= (((bfd_vma) -1) << shift);
+  *bytes_read_ptr = num_read;
+  return result;
 }

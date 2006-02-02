@@ -1,28 +1,29 @@
 /* hash.c -- hash table routines for BFD
-   Copyright 1993, 1994, 1995, 1997, 1999, 2001, 2002, 2003
+   Copyright 1993, 1994, 1995, 1997, 1999, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
 
-This file is part of BFD, the Binary File Descriptor library.
+   This file is part of BFD, the Binary File Descriptor library.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
 #include "objalloc.h"
+#include "libiberty.h"
 
 /*
 SECTION
@@ -86,6 +87,10 @@ SUBSECTION
 	Use <<bfd_hash_table_free>> to free up all the memory that has
 	been allocated for a hash table.  This will not free up the
 	<<struct bfd_hash_table>> itself, which you must provide.
+
+@findex bfd_hash_set_default_size
+	Use <<bfd_hash_set_default_size>> to set the default size of
+	hash table to use.
 
 INODE
 Looking Up or Entering a String, Traversing a Hash Table, Creating and Freeing a Hash Table, Hash Tables
@@ -295,7 +300,8 @@ SUBSUBSECTION
 */
 
 /* The default number of entries to use when creating a hash table.  */
-#define DEFAULT_SIZE (4051)
+#define DEFAULT_SIZE 4051
+static size_t bfd_default_hash_table_size = DEFAULT_SIZE;
 
 /* Create a new hash table, given a number of entries.  */
 
@@ -339,7 +345,7 @@ bfd_hash_table_init (table, newfunc)
 						struct bfd_hash_table *,
 						const char *));
 {
-  return bfd_hash_table_init_n (table, newfunc, DEFAULT_SIZE);
+  return bfd_hash_table_init_n (table, newfunc, bfd_default_hash_table_size);
 }
 
 /* Free a hash table.  */
@@ -493,6 +499,24 @@ bfd_hash_traverse (table, func, info)
 	    return;
 	}
     }
+}
+
+void
+bfd_hash_set_default_size (bfd_size_type hash_size)
+{
+  /* Extend this prime list if you want more granularity of hash table size.  */
+  static const bfd_size_type hash_size_primes[] =
+    {
+      1021, 4051, 8599, 16699
+    };
+  size_t index;
+
+  /* Work out best prime number near the hash_size.  */
+  for (index = 0; index < ARRAY_SIZE (hash_size_primes) - 1; ++index)
+    if (hash_size <= hash_size_primes[index])
+      break;
+
+  bfd_default_hash_table_size = hash_size_primes[index];
 }
 
 /* A few different object file formats (a.out, COFF, ELF) use a string

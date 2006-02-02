@@ -1,5 +1,6 @@
 /* tc-mcore.c -- Assemble code for M*Core
-   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2005
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -42,7 +43,7 @@ static void   mcore_cons PARAMS ((int));
 static void   mcore_float_cons PARAMS ((int));
 static void   mcore_stringer PARAMS ((int));
 static void   mcore_fill   PARAMS ((int));
-static int    log2 PARAMS ((unsigned int));
+static int    mylog2 PARAMS ((unsigned int));
 static char * parse_reg    PARAMS ((char *, unsigned *));
 static char * parse_creg   PARAMS ((char *, unsigned *));
 static char * parse_exp    PARAMS ((char *, expressionS *));
@@ -412,7 +413,7 @@ md_begin ()
 
 /* Get a log2(val).  */
 static int
-log2 (val)
+mylog2 (val)
     unsigned int val;
 {
     int log = -1;
@@ -1146,7 +1147,7 @@ md_assemble (str)
 	  op_end = parse_imm (op_end + 1, & reg, 1, 1 << 31);
 	  /* Further restrict the immediate to a power of two.  */
 	  if ((reg & (reg - 1)) == 0)
-	    reg = log2 (reg);
+	    reg = mylog2 (reg);
 	  else
 	    {
 	      reg = 0;
@@ -1203,7 +1204,7 @@ md_assemble (str)
 
 	  /* Further restrict the immediate to a power of two.  */
 	  if ((reg & (reg - 1)) == 0)
-	    reg = log2 (reg);
+	    reg = mylog2 (reg);
 	  else
 	    {
 	      reg = 0;
@@ -1844,10 +1845,10 @@ md_convert_frag (abfd, sec, fragP)
      segT sec ATTRIBUTE_UNUSED;
      register fragS * fragP;
 {
-  unsigned char * buffer;
+  char *buffer;
   int targ_addr = S_GET_VALUE (fragP->fr_symbol) + fragP->fr_offset;
 
-  buffer = (unsigned char *) (fragP->fr_fix + fragP->fr_literal);
+  buffer = fragP->fr_fix + fragP->fr_literal;
 
   switch (fragP->fr_subtype)
     {

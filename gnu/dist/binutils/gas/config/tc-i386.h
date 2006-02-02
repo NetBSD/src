@@ -33,13 +33,9 @@ struct fix;
 
 #define TARGET_BYTES_BIG_ENDIAN	0
 
-#ifdef TE_LYNX
-#define TARGET_FORMAT		"coff-i386-lynx"
-#endif
-
 #define TARGET_ARCH		bfd_arch_i386
 #define TARGET_MACH		(i386_mach ())
-extern unsigned long i386_mach PARAMS ((void));
+extern unsigned long i386_mach (void);
 
 #ifdef TE_FreeBSD
 #define AOUT_TARGET_FORMAT	"a.out-i386-freebsd"
@@ -145,18 +141,6 @@ extern const char extra_symbol_chars[];
 
 #define END_OF_INSN '\0'
 
-/* Intel Syntax */
-/* Values 0-4 map onto scale factor */
-#define BYTE_PTR     0
-#define WORD_PTR     1
-#define DWORD_PTR    2
-#define QWORD_PTR    3
-#define XWORD_PTR    4
-#define SHORT        5
-#define OFFSET_FLAT  6
-#define FLAT         7
-#define NONE_FOUND   8
-
 typedef struct
 {
   /* instruction name sans width suffix ("mov" for movl insns) */
@@ -190,18 +174,20 @@ typedef struct
 #define CpuAthlon	0x200	/* AMD Athlon or better required*/
 #define CpuSledgehammer 0x400	/* Sledgehammer or better required */
 #define CpuMMX		0x800	/* MMX support required */
-#define CpuSSE	       0x1000	/* Streaming SIMD extensions required */
-#define CpuSSE2	       0x2000	/* Streaming SIMD extensions 2 required */
-#define Cpu3dnow       0x4000	/* 3dnow! support required */
-#define CpuPNI	       0x8000	/* Prescott New Instructions required */
-#define CpuPadLock    0x10000	/* VIA PadLock required */
+#define CpuMMX2	       0x1000	/* extended MMX support (with SSE or 3DNow!Ext) required */
+#define CpuSSE	       0x2000	/* Streaming SIMD extensions required */
+#define CpuSSE2	       0x4000	/* Streaming SIMD extensions 2 required */
+#define Cpu3dnow       0x8000	/* 3dnow! support required */
+#define Cpu3dnowA     0x10000	/* 3dnow!Extensions support required */
+#define CpuPNI	      0x20000	/* Prescott New Instructions required */
+#define CpuPadLock    0x40000	/* VIA PadLock required */
 
   /* These flags are set by gas depending on the flag_code.  */
 #define Cpu64	     0x4000000   /* 64bit support required  */
 #define CpuNo64      0x8000000   /* Not supported in the 64bit mode  */
 
   /* The default value for unknown CPUs - enable all features to avoid problems.  */
-#define CpuUnknownFlags (Cpu086|Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuP4|CpuSledgehammer|CpuMMX|CpuSSE|CpuSSE2|CpuPNI|Cpu3dnow|CpuK6|CpuAthlon|CpuPadLock)
+#define CpuUnknownFlags (Cpu086|Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuP4|CpuSledgehammer|CpuMMX|CpuMMX2|CpuSSE|CpuSSE2|CpuPNI|Cpu3dnow|Cpu3dnowA|CpuK6|CpuAthlon|CpuPadLock)
 
   /* the bits in opcode_modifier are used to generate the final opcode from
      the base_opcode.  These bits also are used to detect alternate forms of
@@ -408,6 +394,12 @@ extern void x86_cons_fix_new
   PARAMS ((fragS *, unsigned int, unsigned int, expressionS *));
 #endif
 
+#ifdef TE_PE
+#define TC_CONS_FIX_NEW(FRAG,OFF,LEN,EXP) x86_pe_cons_fix_new(FRAG, OFF, LEN, EXP)
+extern void x86_pe_cons_fix_new
+  PARAMS ((fragS *, unsigned int, unsigned int, expressionS *));
+#endif
+
 #define DIFF_EXPR_OK    /* foo-. gets turned into PC relative relocs */
 
 #define NO_RELOC BFD_RELOC_NONE
@@ -499,5 +491,17 @@ extern int tc_x86_regname_to_dw2regnum PARAMS ((const char *regname));
 
 #define tc_cfi_frame_initial_instructions tc_x86_frame_initial_instructions
 extern void tc_x86_frame_initial_instructions PARAMS ((void));
+
+#define md_elf_section_type(str,len) i386_elf_section_type (str, len)
+extern int i386_elf_section_type PARAMS ((const char *, size_t len));
+
+#ifdef TE_PE
+
+#define O_secrel O_md1
+
+#define TC_DWARF2_EMIT_OFFSET  tc_pe_dwarf2_emit_offset
+void tc_pe_dwarf2_emit_offset (symbolS *, unsigned int);
+
+#endif /* TE_PE */
 
 #endif /* TC_I386 */

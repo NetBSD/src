@@ -1,5 +1,5 @@
 /* tc-frv.h -- Header file for tc-frv.c.
-   Copyright 2002 Free Software Foundation, Inc.
+   Copyright 2002, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -109,7 +109,7 @@ extern void frv_frob_file	PARAMS ((void));
     {									\
       valueT count = ((FRAGP)->fr_next->fr_address			\
 		      - ((FRAGP)->fr_address + (FRAGP)->fr_fix));	\
-      unsigned char *dest = (FRAGP)->fr_literal + (FRAGP)->fr_fix;	\
+      char *dest = (FRAGP)->fr_literal + (FRAGP)->fr_fix;		\
       if ((count & 3) != 0)						\
 	{								\
 	  memset (dest, 0, (count & 3));				\

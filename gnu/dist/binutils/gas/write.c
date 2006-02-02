@@ -1,6 +1,6 @@
 /* write.c - emit .o file
    Copyright 1986, 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2002, 2003
+   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -95,11 +95,6 @@
 
 #ifndef	MD_PCREL_FROM_SECTION
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from (FIX)
-#endif
-
-#ifndef WORKING_DOT_WORD
-extern const int md_short_jump_size;
-extern const int md_long_jump_size;
 #endif
 
 /* Used to control final evaluation of expressions.  */
@@ -616,6 +611,9 @@ cvt_frag_to_fill (object_headers *headersP, segT sec, fragS *fragP)
       BAD_CASE (fragP->fr_type);
       break;
     }
+#ifdef md_frag_check
+  md_frag_check (fragP);
+#endif
 }
 
 #endif /* defined (BFD_ASSEMBLER) || !defined (BFD)  */
@@ -944,12 +942,12 @@ write_relocs (bfd *abfd, asection *sec, PTR xxx ATTRIBUTE_UNUSED)
 	  continue;
 	}
 
-#if 0
-      /* This test is triggered inappropriately for the SH.  */
-      if (fixp->fx_where + fixp->fx_size
-	  > fixp->fx_frag->fr_fix + fixp->fx_frag->fr_offset)
-	abort ();
-#endif
+      /*
+	This test is triggered inappropriately for the SH:
+         if (fixp->fx_where + fixp->fx_size
+	     > fixp->fx_frag->fr_fix + fixp->fx_frag->fr_offset)
+	     abort ();
+      */
 
       s = bfd_install_relocation (stdoutput, reloc,
 				  fixp->fx_frag->fr_literal,
@@ -1571,11 +1569,11 @@ write_object_file (void)
      Count the number of string-table chars we will emit.
      Put this info into the headers as appropriate.  */
   know (zero_address_frag.fr_address == 0);
-  string_byte_count = sizeof (string_byte_count);
+  string_byte_count = 4;
 
   obj_crawl_symbol_chain (&headers);
 
-  if (string_byte_count == sizeof (string_byte_count))
+  if (string_byte_count == 4)
     string_byte_count = 0;
 
   H_SET_STRING_SIZE (&headers, string_byte_count);
@@ -1884,11 +1882,21 @@ write_object_file (void)
   if (symbol_rootP)
     {
       symbolS *symp;
+      bfd_boolean skip_next_symbol = FALSE;
 
       for (symp = symbol_rootP; symp; symp = symbol_next (symp))
 	{
 	  int punt = 0;
 	  const char *name;
+
+	  if (skip_next_symbol)
+	    {
+	      /* Don't do anything besides moving the value of the
+		 symbol from the GAS value-field to the BFD value-field.  */
+	      symbol_get_bfdsym (symp)->value = S_GET_VALUE (symp);
+	      skip_next_symbol = FALSE;
+	      continue;
+	    }
 
 	  if (symbol_mri_common_p (symp))
 	    {
@@ -1919,6 +1927,9 @@ write_object_file (void)
              symbols.  */
 	  if (symbol_equated_reloc_p (symp))
 	    {
+	      if (S_IS_COMMON (symp))
+		as_bad (_("`%s' can't be equated to common symbol"),
+			S_GET_NAME (symp));
 	      symbol_remove (symp, &symbol_rootP, &symbol_lastP);
 	      continue;
 	    }
@@ -1928,13 +1939,6 @@ write_object_file (void)
 	  if (S_IS_DEFINED (symp) == 0
 	      && S_GET_VALUE (symp) != 0)
 	    S_SET_SEGMENT (symp, bfd_com_section_ptr);
-#if 0
-	  printf ("symbol `%s'\n\t@%x: value=%d flags=%x seg=%s\n",
-		  S_GET_NAME (symp), symp,
-		  S_GET_VALUE (symp),
-		  symbol_get_bfdsym (symp)->flags,
-		  segment_name (S_GET_SEGMENT (symp)));
-#endif
 
 #ifdef obj_frob_symbol
 	  obj_frob_symbol (symp, punt);
@@ -1978,6 +1982,12 @@ write_object_file (void)
 	  /* Set the value into the BFD symbol.  Up til now the value
 	     has only been kept in the gas symbolS struct.  */
 	  symbol_get_bfdsym (symp)->value = S_GET_VALUE (symp);
+
+	  /* A warning construct is a warning symbol followed by the
+	     symbol warned about.  Don't let anything object-format or
+	     target-specific muck with it; it's ready for output.  */
+	  if (symbol_get_bfdsym (symp)->flags & BSF_WARNING)
+	    skip_next_symbol = TRUE;
 	}
     }
 
@@ -2082,14 +2092,10 @@ relax_frag (segT segment, fragS *fragP, long stretch)
 #ifdef TC_PCREL_ADJUST
   /* Currently only the ns32k family needs this.  */
   aim += TC_PCREL_ADJUST (fragP);
-/* #else */
-  /* This machine doesn't want to use pcrel_adjust.
-     In that case, pcrel_adjust should be zero.  */
-#if 0
-  assert (fragP->fr_targ.ns32k.pcrel_adjust == 0);
 #endif
-#endif
-#ifdef md_prepare_relax_scan /* formerly called M68K_AIM_KLUDGE  */
+
+#ifdef md_prepare_relax_scan
+  /* Formerly called M68K_AIM_KLUDGE.  */
   md_prepare_relax_scan (fragP, address, aim, this_state, this_type);
 #endif
 
@@ -2389,7 +2395,9 @@ relax_segment (struct frag *segment_frag_root, segT segment)
                          into the section.  Here it is assumed that the
                          section's VMA is zero, and can omit subtracting it
                          from the symbol's value to get the address offset.  */
-                      know (S_GET_SECTION (symbolP)->vma == 0);
+#ifdef BFD_ASSEMBLER
+                      know (S_GET_SEGMENT (symbolP)->vma == 0);
+#endif
 		      target += S_GET_VALUE (symbolP) * OCTETS_PER_BYTE;
 		    }
 
@@ -2409,7 +2417,7 @@ relax_segment (struct frag *segment_frag_root, segT segment)
 		      fragP->fr_type = rs_align;
 		      fragP->fr_subtype = 0;
 		      fragP->fr_offset = 0;
-		      fragP->fr_fix = after - address;
+		      fragP->fr_fix = after - was_address;
 		      growth = stretch;
 		    }
 
@@ -2577,7 +2585,6 @@ fixup_segment (fixS *fixP, segT this_segment)
       if (fixP->fx_addsy != NULL
 	  && symbol_mri_common_p (fixP->fx_addsy))
 	{
-	  know (fixP->fx_addsy->sy_value.X_op == O_symbol);
 	  add_number += S_GET_VALUE (fixP->fx_addsy);
 	  fixP->fx_offset = add_number;
 	  fixP->fx_addsy

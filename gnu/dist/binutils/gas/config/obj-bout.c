@@ -1,6 +1,6 @@
 /* b.out object file format
-   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1996, 2000, 2001, 2002
-   Free Software Foundation, Inc.
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1996, 2000, 2001, 2002,
+   2003, 2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -105,7 +105,7 @@ obj_emit_relocations (where, fixP, segment_address_in_file)
 	  fixP->fx_addsy = sym;
 
 	  tc_bout_fix_to_chars (*where, fixP, segment_address_in_file);
-	  *where += sizeof (struct relocation_info);
+	  *where += md_reloc_size;
 	}			/* if there's a symbol  */
     }				/* for each fixup  */
 }
@@ -120,6 +120,7 @@ obj_header_append (where, headers)
      object_headers *headers;
 {
   /* Always leave in host byte order.  */
+  char *p;
 
   headers->header.a_talign = section_alignment[SEG_TEXT];
 
@@ -138,38 +139,32 @@ obj_header_append (where, headers)
 
   headers->header.a_relaxable = linkrelax;
 
-#ifdef CROSS_COMPILE
-  md_number_to_chars (*where, headers->header.a_magic, sizeof (headers->header.a_magic));
-  *where += sizeof (headers->header.a_magic);
-  md_number_to_chars (*where, headers->header.a_text, sizeof (headers->header.a_text));
-  *where += sizeof (headers->header.a_text);
-  md_number_to_chars (*where, headers->header.a_data, sizeof (headers->header.a_data));
-  *where += sizeof (headers->header.a_data);
-  md_number_to_chars (*where, headers->header.a_bss, sizeof (headers->header.a_bss));
-  *where += sizeof (headers->header.a_bss);
-  md_number_to_chars (*where, headers->header.a_syms, sizeof (headers->header.a_syms));
-  *where += sizeof (headers->header.a_syms);
-  md_number_to_chars (*where, headers->header.a_entry, sizeof (headers->header.a_entry));
-  *where += sizeof (headers->header.a_entry);
-  md_number_to_chars (*where, headers->header.a_trsize, sizeof (headers->header.a_trsize));
-  *where += sizeof (headers->header.a_trsize);
-  md_number_to_chars (*where, headers->header.a_drsize, sizeof (headers->header.a_drsize));
-  *where += sizeof (headers->header.a_drsize);
-  md_number_to_chars (*where, headers->header.a_tload, sizeof (headers->header.a_tload));
-  *where += sizeof (headers->header.a_tload);
-  md_number_to_chars (*where, headers->header.a_dload, sizeof (headers->header.a_dload));
-  *where += sizeof (headers->header.a_dload);
-  md_number_to_chars (*where, headers->header.a_talign, sizeof (headers->header.a_talign));
-  *where += sizeof (headers->header.a_talign);
-  md_number_to_chars (*where, headers->header.a_dalign, sizeof (headers->header.a_dalign));
-  *where += sizeof (headers->header.a_dalign);
-  md_number_to_chars (*where, headers->header.a_balign, sizeof (headers->header.a_balign));
-  *where += sizeof (headers->header.a_balign);
-  md_number_to_chars (*where, headers->header.a_relaxable, sizeof (headers->header.a_relaxable));
-  *where += sizeof (headers->header.a_relaxable);
-#else /* ! CROSS_COMPILE */
-  append (where, (char *) &headers->header, sizeof (headers->header));
-#endif /* ! CROSS_COMPILE */
+  p = *where;
+  host_number_to_chars (p, headers->header.a_magic, 4);
+  p += 4;
+  host_number_to_chars (p, headers->header.a_text, 4);
+  p += 4;
+  host_number_to_chars (p, headers->header.a_data, 4);
+  p += 4;
+  host_number_to_chars (p, headers->header.a_bss, 4);
+  p += 4;
+  host_number_to_chars (p, headers->header.a_syms, 4);
+  p += 4;
+  host_number_to_chars (p, headers->header.a_entry, 4);
+  p += 4;
+  host_number_to_chars (p, headers->header.a_trsize, 4);
+  p += 4;
+  host_number_to_chars (p, headers->header.a_drsize, 4);
+  p += 4;
+  host_number_to_chars (p, headers->header.a_tload, 4);
+  p += 4;
+  host_number_to_chars (p, headers->header.a_dload, 4);
+  p += 4;
+  *p++ = headers->header.a_talign;
+  *p++ = headers->header.a_dalign;
+  *p++ = headers->header.a_balign;
+  *p++ = headers->header.a_relaxable;
+  *where = p;
 }
 
 void
@@ -177,19 +172,17 @@ obj_symbol_to_chars (where, symbolP)
      char **where;
      symbolS *symbolP;
 {
-  md_number_to_chars ((char *) &(S_GET_OFFSET (symbolP)),
-		      S_GET_OFFSET (symbolP),
-		      sizeof (S_GET_OFFSET (symbolP)));
-
-  md_number_to_chars ((char *) &(S_GET_DESC (symbolP)),
-		      S_GET_DESC (symbolP),
-		      sizeof (S_GET_DESC (symbolP)));
-
-  md_number_to_chars ((char *) &symbolP->sy_symbol.n_value,
-		      S_GET_VALUE (symbolP),
-		      sizeof (symbolP->sy_symbol.n_value));
-
-  append (where, (char *) &symbolP->sy_symbol, sizeof (obj_symbol_type));
+  char *p = *where;
+  host_number_to_chars (p, S_GET_OFFSET (symbolP), 4);
+  p += 4;
+  /* Can't use S_GET_TYPE here as it masks.  */
+  *p++ = symbolP->sy_symbol.n_type;
+  *p++ = symbolP->sy_symbol.n_other;
+  host_number_to_chars (p, S_GET_DESC (symbolP), 2);
+  p += 2;
+  host_number_to_chars (p, S_GET_VALUE (symbolP), 4);
+  p += 4;
+  *where = p;
 }
 
 void
@@ -336,14 +329,8 @@ obj_emit_strings (where)
 {
   symbolS *symbolP;
 
-#ifdef CROSS_COMPILE
-  /* Gotta do md_ byte-ordering stuff for string_byte_count first - KWK */
-  md_number_to_chars (*where, string_byte_count, sizeof (string_byte_count));
-  *where += sizeof (string_byte_count);
-#else /* CROSS_COMPILE */
-  append (where, (char *) &string_byte_count,
-	  (unsigned long) sizeof (string_byte_count));
-#endif /* CROSS_COMPILE */
+  md_number_to_chars (*where, string_byte_count, 4);
+  *where += 4;
 
   for (symbolP = symbol_rootP; symbolP; symbolP = symbol_next (symbolP))
     {

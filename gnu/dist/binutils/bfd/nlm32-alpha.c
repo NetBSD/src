@@ -1,5 +1,5 @@
 /* Support for 32-bit Alpha NLM (NetWare Loadable Module)
-   Copyright 1993, 1994, 2000, 2001, 2002, 2003
+   Copyright 1993, 1994, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
@@ -490,7 +490,7 @@ nlm_alpha_read_reloc (abfd, sym, secp, rel)
      or .data section.  R_NW_RELOC relocs don't really have a section,
      so we put them in .text.  */
   if (r_type == ALPHA_R_NW_RELOC
-      || r_vaddr < bfd_section_size (abfd, code_sec))
+      || r_vaddr < code_sec->size)
     {
       *secp = code_sec;
       rel->address = r_vaddr;
@@ -498,7 +498,7 @@ nlm_alpha_read_reloc (abfd, sym, secp, rel)
   else
     {
       *secp = data_sec;
-      rel->address = r_vaddr - bfd_section_size (abfd, code_sec);
+      rel->address = r_vaddr - code_sec->size;
     }
 
   /* We must adjust the addend based on the type.  */
@@ -689,9 +689,7 @@ nlm_alpha_write_import (abfd, sec, rel)
     {
       r_vaddr = bfd_get_section_vma (abfd, sec) + rel->address;
       if ((sec->flags & SEC_CODE) == 0)
-	r_vaddr += bfd_section_size (abfd,
-				     bfd_get_section_by_name (abfd,
-							      NLM_CODE_NAME));
+	r_vaddr += bfd_get_section_by_name (abfd, NLM_CODE_NAME) -> size;
       if (bfd_is_und_section (bfd_get_section (sym)))
 	{
 	  r_extern = 1;
@@ -791,7 +789,7 @@ nlm_alpha_set_public_section (abfd, sym)
 
   code_sec = bfd_get_section_by_name (abfd, NLM_CODE_NAME);
   data_sec = bfd_get_section_by_name (abfd, NLM_INITIALIZED_DATA_NAME);
-  if (sym->symbol.value < bfd_section_size (abfd, code_sec))
+  if (sym->symbol.value < code_sec->size)
     {
       sym->symbol.section = code_sec;
       sym->symbol.flags |= BSF_FUNCTION;
@@ -799,9 +797,9 @@ nlm_alpha_set_public_section (abfd, sym)
   else
     {
       sym->symbol.section = data_sec;
-      sym->symbol.value -= bfd_section_size (abfd, code_sec);
+      sym->symbol.value -= code_sec->size;
       /* The data segment had better be aligned.  */
-      BFD_ASSERT ((bfd_section_size (abfd, code_sec) & 0xf) == 0);
+      BFD_ASSERT ((code_sec->size & 0xf) == 0);
     }
   return TRUE;
 }

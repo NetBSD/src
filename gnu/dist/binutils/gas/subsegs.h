@@ -1,5 +1,5 @@
 /* subsegs.h -> subsegs.c
-   Copyright 1987, 1992, 1993, 1994, 1995, 1996, 1998, 2000
+   Copyright 1987, 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2003, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -139,14 +139,7 @@ extern segment_info_type segment_info[];
 extern frchainS *data0_frchainP;
 extern frchainS *bss0_frchainP;
 
-/* Dummy so stuff can compile.  Should never be used.  */
-struct seg_info_trash {
-  struct {
-    unsigned stab_string_size : 1;
-  } stabu;
-  unsigned hadone : 1;
-};
-#define seg_info(S)	(abort (), (struct seg_info_trash *) 0)
+#define seg_info(S)	(abort (), (segment_info_type *) 0)
 
 #endif
 
