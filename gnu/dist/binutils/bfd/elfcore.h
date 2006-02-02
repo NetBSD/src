@@ -1,5 +1,5 @@
 /* ELF core file support for BFD.
-   Copyright 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003
+   Copyright 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -207,12 +207,19 @@ elf_core_file_p (bfd *abfd)
   /* Set the machine architecture.  Do this before processing the
      program headers since we need to know the architecture type
      when processing the notes of some systems' core files.  */
-  if (! bfd_default_set_arch_mach (abfd, ebd->arch, 0))
-    {
+  if (! bfd_default_set_arch_mach (abfd, ebd->arch, 0)
       /* It's OK if this fails for the generic target.  */
-      if (ebd->elf_machine_code != EM_NONE)
-	goto fail;
-    }
+      && ebd->elf_machine_code != EM_NONE)
+    goto fail;
+
+  /* Let the backend double check the format and override global
+     information.  We do this before processing the program headers
+     to allow the correct machine (as opposed to just the default
+     machine) to be set, making it possible for grok_prstatus and
+     grok_psinfo to rely on the mach setting.  */
+  if (ebd->elf_backend_object_p != NULL
+      && ! ebd->elf_backend_object_p (abfd))
+    goto wrong;
 
   /* Process each program header.  */
   for (phindex = 0; phindex < i_ehdrp->e_phnum; ++phindex)
@@ -221,12 +228,6 @@ elf_core_file_p (bfd *abfd)
 
   /* Save the entry point from the ELF header.  */
   bfd_get_start_address (abfd) = i_ehdrp->e_entry;
-
-  /* Let the backend double check the format and override global
-     information.  */
-  if (ebd->elf_backend_object_p
-      && (! (*ebd->elf_backend_object_p) (abfd)))
-    goto wrong;
 
   bfd_preserve_finish (abfd, &preserve);
   return abfd->xvec;

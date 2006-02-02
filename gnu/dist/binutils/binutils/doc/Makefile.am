@@ -35,6 +35,7 @@ info_TEXINFOS = binutils.texi
 config.texi: Makefile
 	rm -f config.texi
 	echo '@set VERSION $(VERSION)' > config.texi
+	echo "@set UPDATED `date "+%B %Y"`" >> config.texi
 
 binutils_TEXI = $(srcdir)/binutils.texi
 

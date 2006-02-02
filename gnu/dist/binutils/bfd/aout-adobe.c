@@ -1,6 +1,6 @@
 /* BFD back-end for a.out.adobe binaries.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
-   2002, 2003
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000,
+   2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Cygnus Support.  Based on bout.c.
 
@@ -201,8 +201,8 @@ aout_adobe_callback (abfd)
 
 	default:
 	  (*_bfd_error_handler)
-	    (_("%s: Unknown section type in a.out.adobe file: %x\n"),
-	     bfd_archive_filename (abfd), ext->e_type[0]);
+	    (_("%B: Unknown section type in a.out.adobe file: %x\n"),
+	     abfd, ext->e_type[0]);
 	  goto no_more_sections;
 	}
 
@@ -235,10 +235,9 @@ aout_adobe_callback (abfd)
       /* Now set the section's attributes.  */
       bfd_set_section_flags (abfd, sect, flags);
       /* Assumed big-endian.  */
-      sect->_raw_size = ((ext->e_size[0] << 8)
-			 | ext->e_size[1] << 8
-			 | ext->e_size[2]);
-      sect->_cooked_size = sect->_raw_size;
+      sect->size = ((ext->e_size[0] << 8)
+		    | ext->e_size[1] << 8
+		    | ext->e_size[2]);
       sect->vma = H_GET_32 (abfd, ext->e_virtbase);
       sect->filepos = H_GET_32 (abfd, ext->e_filebase);
       /* FIXME XXX alignment?  */
@@ -324,19 +323,19 @@ aout_adobe_write_object_contents (abfd)
     {
       if (sect->flags & SEC_CODE)
 	{
-	  exec_hdr (abfd)->a_text += sect->_raw_size;
+	  exec_hdr (abfd)->a_text += sect->size;
 	  exec_hdr (abfd)->a_trsize += sect->reloc_count *
 	    sizeof (struct reloc_std_external);
 	}
       else if (sect->flags & SEC_DATA)
 	{
-	  exec_hdr (abfd)->a_data += sect->_raw_size;
+	  exec_hdr (abfd)->a_data += sect->size;
 	  exec_hdr (abfd)->a_drsize += sect->reloc_count *
 	    sizeof (struct reloc_std_external);
 	}
       else if (sect->flags & SEC_ALLOC && !(sect->flags & SEC_LOAD))
 	{
-	  exec_hdr (abfd)->a_bss += sect->_raw_size;
+	  exec_hdr (abfd)->a_bss += sect->size;
 	}
     }
 
@@ -435,7 +434,7 @@ aout_adobe_set_section_contents (abfd, section, location, offset, count)
 	    {
 	      sect->filepos = section_start;
 	      /* FIXME:  Round to alignment.  */
-	      section_start += sect->_raw_size;
+	      section_start += sect->size;
 	    }
 	}
 
@@ -445,7 +444,7 @@ aout_adobe_set_section_contents (abfd, section, location, offset, count)
 	    {
 	      sect->filepos = section_start;
 	      /* FIXME:  Round to alignment.  */
-	      section_start += sect->_raw_size;
+	      section_start += sect->size;
 	    }
 	}
 
@@ -456,7 +455,7 @@ aout_adobe_set_section_contents (abfd, section, location, offset, count)
 	    {
 	      sect->filepos = section_start;
 	      /* FIXME:  Round to alignment.  */
-	      section_start += sect->_raw_size;
+	      section_start += sect->size;
 	    }
 	}
     }
@@ -517,7 +516,10 @@ aout_adobe_sizeof_headers (ignore_abfd, ignore)
 #define aout_32_bfd_relax_section       bfd_generic_relax_section
 #define aout_32_bfd_gc_sections         bfd_generic_gc_sections
 #define aout_32_bfd_merge_sections	bfd_generic_merge_sections
+#define aout_32_bfd_is_group_section	bfd_generic_is_group_section
 #define aout_32_bfd_discard_group	bfd_generic_discard_group
+#define aout_32_section_already_linked \
+  _bfd_generic_section_already_linked
 #define aout_32_bfd_link_hash_table_create \
   _bfd_generic_link_hash_table_create
 #define aout_32_bfd_link_hash_table_free \

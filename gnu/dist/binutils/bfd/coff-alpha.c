@@ -1,6 +1,6 @@
 /* BFD back-end for ALPHA Extended-Coff files.
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
-   Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+   2003, 2004, 2005 Free Software Foundation, Inc.
    Modified from coff-mips.c by Steve Chamberlain <sac@cygnus.com> and
    Ian Lance Taylor <ian@cygnus.com>.
 
@@ -462,8 +462,8 @@ alpha_ecoff_object_p (abfd)
 	  bfd_size_type size;
 
 	  size = sec->line_filepos * 8;
-	  BFD_ASSERT (size == bfd_section_size (abfd, sec)
-		      || size + 8 == bfd_section_size (abfd, sec));
+	  BFD_ASSERT (size == sec->size
+		      || size + 8 == sec->size);
 	  if (! bfd_set_section_size (abfd, sec, size))
 	    return NULL;
 	}
@@ -668,7 +668,7 @@ alpha_adjust_reloc_in (abfd, intern, rptr)
     case ALPHA_R_OP_STORE:
       /* The STORE reloc needs the size and offset fields.  We store
 	 them in the addend.  */
-      BFD_ASSERT (intern->r_offset <= 256 && intern->r_size <= 256);
+      BFD_ASSERT (intern->r_offset <= 256);
       rptr->addend = (intern->r_offset << 8) + intern->r_size;
       break;
 
@@ -768,6 +768,7 @@ alpha_ecoff_get_relocated_section_contents (abfd, link_info, link_order,
   long reloc_count;
   bfd *output_bfd = relocatable ? abfd : (bfd *) NULL;
   bfd_vma gp;
+  bfd_size_type sz;
   bfd_boolean gp_undefined;
   bfd_vma stack[RELOC_STACKSIZE];
   int tos = 0;
@@ -778,13 +779,9 @@ alpha_ecoff_get_relocated_section_contents (abfd, link_info, link_order,
   if (reloc_vector == NULL && reloc_size != 0)
     goto error_return;
 
-  if (! bfd_get_section_contents (input_bfd, input_section, data,
-				  (file_ptr) 0, input_section->_raw_size))
+  sz = input_section->rawsize ? input_section->rawsize : input_section->size;
+  if (! bfd_get_section_contents (input_bfd, input_section, data, 0, sz))
     goto error_return;
-
-  /* The section size is not going to change.  */
-  input_section->_cooked_size = input_section->_raw_size;
-  input_section->reloc_done = TRUE;
 
   reloc_count = bfd_canonicalize_reloc (input_bfd, input_section,
 					reloc_vector, symbols);
@@ -1148,7 +1145,8 @@ alpha_ecoff_get_relocated_section_contents (abfd, link_info, link_order,
 	      break;
 	    case bfd_reloc_overflow:
 	      if (! ((*link_info->callbacks->reloc_overflow)
-		     (link_info, bfd_asymbol_name (*rel->sym_ptr_ptr),
+		     (link_info, NULL,
+		      bfd_asymbol_name (*rel->sym_ptr_ptr),
 		      rel->howto->name, rel->addend, input_bfd,
 		      input_section, rel->address)))
 		goto error_return;
@@ -1223,23 +1221,6 @@ alpha_bfd_reloc_type_lookup (abfd, code)
     case BFD_RELOC_64_PCREL:
       alpha_type = ALPHA_R_SREL64;
       break;
-#if 0
-    case ???:
-      alpha_type = ALPHA_R_OP_PUSH;
-      break;
-    case ???:
-      alpha_type = ALPHA_R_OP_STORE;
-      break;
-    case ???:
-      alpha_type = ALPHA_R_OP_PSUB;
-      break;
-    case ???:
-      alpha_type = ALPHA_R_OP_PRSHIFT;
-      break;
-    case ???:
-      alpha_type = ALPHA_R_GPVALUE;
-      break;
-#endif
     default:
       return (reloc_howto_type *) NULL;
     }
@@ -1455,7 +1436,7 @@ alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 	  amt = sizeof (struct ecoff_section_tdata);
 	  lita_sec_data = ((struct ecoff_section_tdata *)
 			   bfd_zalloc (input_bfd, amt));
-	  ecoff_section_data (input_bfd, lita_sec) = lita_sec_data;
+	  lita_sec->used_by_bfd = lita_sec_data;
 	}
 
       if (lita_sec_data->gp != 0)
@@ -1470,9 +1451,7 @@ alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 	  bfd_size_type lita_size;
 
 	  lita_vma = lita_sec->output_offset + lita_sec->output_section->vma;
-	  lita_size = lita_sec->_cooked_size;
-	  if (lita_size == 0)
-	    lita_size = lita_sec->_raw_size;
+	  lita_size = lita_sec->size;
 
 	  if (gp == 0
 	      || lita_vma <  gp - 0x8000
@@ -1965,7 +1944,8 @@ alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 		      name = bfd_section_name (input_bfd,
 					       symndx_to_section[r_symndx]);
 		    if (! ((*info->callbacks->reloc_overflow)
-			   (info, name, alpha_howto_table[r_type].name,
+			   (info, NULL, name,
+			    alpha_howto_table[r_type].name,
 			    (bfd_vma) 0, input_bfd, input_section,
 			    r_vaddr - input_section->vma)))
 		      return FALSE;
@@ -2359,7 +2339,10 @@ static const struct ecoff_backend_data alpha_ecoff_backend_data =
 #define _bfd_ecoff_bfd_relax_section bfd_generic_relax_section
 #define _bfd_ecoff_bfd_gc_sections bfd_generic_gc_sections
 #define _bfd_ecoff_bfd_merge_sections bfd_generic_merge_sections
+#define _bfd_ecoff_bfd_is_group_section bfd_generic_is_group_section
 #define _bfd_ecoff_bfd_discard_group bfd_generic_discard_group
+#define _bfd_ecoff_section_already_linked \
+  _bfd_generic_section_already_linked
 
 const bfd_target ecoffalpha_little_vec =
 {

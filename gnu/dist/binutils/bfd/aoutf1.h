@@ -1,6 +1,6 @@
 /* A.out "format 1" file handling code for BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
-   2001, 2002, 2003
+   2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -701,10 +701,10 @@ sunos4_core_file_p (abfd)
   core_regsec (abfd)->flags = SEC_HAS_CONTENTS;
   core_reg2sec (abfd)->flags = SEC_HAS_CONTENTS;
 
-  core_stacksec (abfd)->_raw_size = core->c_ssize;
-  core_datasec (abfd)->_raw_size = core->c_dsize;
-  core_regsec (abfd)->_raw_size = core->c_regs_size;
-  core_reg2sec (abfd)->_raw_size = core->fp_stuff_size;
+  core_stacksec (abfd)->size = core->c_ssize;
+  core_datasec (abfd)->size = core->c_dsize;
+  core_regsec (abfd)->size = core->c_regs_size;
+  core_reg2sec (abfd)->size = core->fp_stuff_size;
 
   core_stacksec (abfd)->vma = (core->c_stacktop - core->c_ssize);
   core_datasec (abfd)->vma = core->c_data_addr;

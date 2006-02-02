@@ -128,7 +128,7 @@
 .\" ========================================================================
 .\"
 .IX Title "READELF 1"
-.TH READELF 1 "2004-04-09" "binutils-2.14.91" "GNU Development Tools"
+.TH READELF 1 "2005-04-20" "binutils-2.15.97" "GNU Development Tools"
 .SH "NAME"
 readelf \- Displays information about ELF files.
 .SH "SYNOPSIS"
@@ -137,6 +137,7 @@ readelf [\fB\-a\fR|\fB\-\-all\fR]
         [\fB\-h\fR|\fB\-\-file\-header\fR]
         [\fB\-l\fR|\fB\-\-program\-headers\fR|\fB\-\-segments\fR]
         [\fB\-S\fR|\fB\-\-section\-headers\fR|\fB\-\-sections\fR]
+        [\fB\-g\fR|\fB\-\-section\-groups\fR]
         [\fB\-e\fR|\fB\-\-headers\fR]
         [\fB\-s\fR|\fB\-\-syms\fR|\fB\-\-symbols\fR]
         [\fB\-n\fR|\fB\-\-notes\fR]
@@ -147,8 +148,8 @@ readelf [\fB\-a\fR|\fB\-\-all\fR]
         [\fB\-A\fR|\fB\-\-arch\-specific\fR]
         [\fB\-D\fR|\fB\-\-use\-dynamic\fR]
         [\fB\-x\fR <number>|\fB\-\-hex\-dump=\fR<number>]
-        [\fB\-w[liaprmfFso]\fR|
-         \fB\-\-debug\-dump\fR[=line,=info,=abbrev,=pubnames,=ranges,=macro,=frames,=frames\-interp,=str,=loc]]
+        [\fB\-w[liaprmfFsoR]\fR|
+         \fB\-\-debug\-dump\fR[=line,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames\-interp,=str,=loc,=Ranges]]
         [\fB\-I\fR|\fB\-histogram\fR]
         [\fB\-v\fR|\fB\-\-version\fR]
         [\fB\-W\fR|\fB\-\-wide\fR]
@@ -209,6 +210,14 @@ has any.
 .PD
 Displays the information contained in the file's section headers, if it
 has any.
+.IP "\fB\-g\fR" 4
+.IX Item "-g"
+.PD 0
+.IP "\fB\-\-section\-groups\fR" 4
+.IX Item "--section-groups"
+.PD
+Displays the information contained in the file's section groups, if it
+has any.
 .IP "\fB\-s\fR" 4
 .IX Item "-s"
 .PD 0
@@ -231,7 +240,7 @@ Display all the headers in the file.  Equivalent to \fB\-h \-l \-S\fR.
 .IP "\fB\-\-notes\fR" 4
 .IX Item "--notes"
 .PD
-Displays the contents of the \s-1NOTE\s0 segment, if it exists.
+Displays the contents of the \s-1NOTE\s0 segments and/or sections, if any.
 .IP "\fB\-r\fR" 4
 .IX Item "-r"
 .PD 0
@@ -239,14 +248,6 @@ Displays the contents of the \s-1NOTE\s0 segment, if it exists.
 .IX Item "--relocs"
 .PD
 Displays the contents of the file's relocation section, if it has one.
-.IP "\fB\-u\fR" 4
-.IX Item "-u"
-.PD 0
-.IP "\fB\-\-unwind\fR" 4
-.IX Item "--unwind"
-.PD
-Displays the contents of the file's unwind section, if it has one.  Only
-the unwind sections for \s-1IA64\s0 \s-1ELF\s0 files are currently supported.
 .IP "\fB\-u\fR" 4
 .IX Item "-u"
 .PD 0
@@ -294,11 +295,11 @@ symbols section.
 .IX Item "--hex-dump=<number>"
 .PD
 Displays the contents of the indicated section as a hexadecimal dump.
-.IP "\fB\-w[liaprmfFso]\fR" 4
-.IX Item "-w[liaprmfFso]"
+.IP "\fB\-w[liaprmfFsoR]\fR" 4
+.IX Item "-w[liaprmfFsoR]"
 .PD 0
-.IP "\fB\-\-debug\-dump[=line,=info,=abbrev,=pubnames,=ranges,=macro,=frames,=frames\-interp,=str,=loc]\fR" 4
-.IX Item "--debug-dump[=line,=info,=abbrev,=pubnames,=ranges,=macro,=frames,=frames-interp,=str,=loc]"
+.IP "\fB\-\-debug\-dump[=line,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames\-interp,=str,=loc,=Ranges]\fR" 4
+.IX Item "--debug-dump[=line,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames-interp,=str,=loc,=Ranges]"
 .PD
 Displays the contents of the debug sections in the file, if any are
 present.  If one of the optional letters or words follows the switch
@@ -341,8 +342,8 @@ Display the command line options understood by \fBreadelf\fR.
 \&\fIobjdump\fR\|(1), and the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000,
-2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.1
