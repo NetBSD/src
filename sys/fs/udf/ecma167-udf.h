@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.1 2006/02/02 15:19:15 reinoud Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.2 2006/02/02 16:14:26 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006 Reinoud Zandijk <reinoud@netbsd.org>
@@ -40,8 +40,8 @@
  */
 
 
-#ifndef _ECMA167_UDF_H_
-#define _ECMA167_UDF_H_
+#ifndef _FS_UDF_ECMA167_UDF_H_
+#define _FS_UDF_ECMA167_UDF_H_
 
 
 /*
@@ -794,5 +794,5 @@ union dscrptr {
 #define	GETICBLEN(ad_type, icb)	((struct ad_type *)(icb))->len
 
 
-#endif /* !_ECMA167_UDF_H_ */
+#endif /* !_FS_UDF_ECMA167_UDF_H_ */
 
