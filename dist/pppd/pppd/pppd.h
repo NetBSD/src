@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: pppd.h,v 1.4 2006/02/02 20:18:44 christos Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -273,6 +273,7 @@ extern struct notifier *fork_notifier;	/* we are a new child process */
  * Variables set by command-line options.
  */
 
+#define	debug	pppd_debug
 extern int	debug;		/* Debug flag */
 extern int	kdebugflag;	/* Tell kernel to print debug messages */
 extern int	default_device;	/* Using /dev/tty or equivalent */
