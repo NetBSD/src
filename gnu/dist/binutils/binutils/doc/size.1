@@ -128,7 +128,7 @@
 .\" ========================================================================
 .\"
 .IX Title "SIZE 1"
-.TH SIZE 1 "2004-12-08" "binutils-2.15" "GNU Development Tools"
+.TH SIZE 1 "2005-04-20" "binutils-2.15.97" "GNU Development Tools"
 .SH "NAME"
 size \- list section sizes and total size.
 .SH "SYNOPSIS"
@@ -169,7 +169,7 @@ Here is an example of the Berkeley (default) format of output from
 \&\fBsize\fR: 
 .Sp
 .Vb 4
-\&        $ size --format=Berkeley ranlib size
+\&        $ size \-\-format=Berkeley ranlib size
 \&        text    data    bss     dec     hex     filename
 \&        294880  81920   11592   388392  5ed28   ranlib
 \&        294880  81920   11888   388688  5ee50   size
@@ -178,7 +178,7 @@ Here is an example of the Berkeley (default) format of output from
 This is the same data, but displayed closer to System V conventions:
 .Sp
 .Vb 7
-\&        $ size --format=SysV ranlib size
+\&        $ size \-\-format=SysV ranlib size
 \&        ranlib  :
 \&        section         size         addr
 \&        .text         294880         8192       
@@ -239,8 +239,8 @@ Display the version number of \fBsize\fR.
 \&\fIar\fR\|(1), \fIobjdump\fR\|(1), \fIreadelf\fR\|(1), and the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000,
-2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.1

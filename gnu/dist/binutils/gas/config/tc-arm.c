@@ -1,5 +1,6 @@
 /* tc-arm.c -- Assemble for the ARM
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+   2004, 2005
    Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
@@ -36,86 +37,53 @@
 #include "symbols.h"
 #include "listing.h"
 
+#include "opcode/arm.h"
+
 #ifdef OBJ_ELF
 #include "elf/arm.h"
 #include "dwarf2dbg.h"
+#include "dw2gencfi.h"
 #endif
 
-/* XXX Set this to 1 after the next binutils release */
+/* XXX Set this to 1 after the next binutils release.  */
 #define WARN_DEPRECATED 0
 
-/* The following bitmasks control CPU extensions:  */
-#define ARM_EXT_V1	 0x00000001	/* All processors (core set).  */
-#define ARM_EXT_V2	 0x00000002	/* Multiply instructions.  */
-#define ARM_EXT_V2S	 0x00000004	/* SWP instructions.       */
-#define ARM_EXT_V3	 0x00000008	/* MSR MRS.                */
-#define ARM_EXT_V3M	 0x00000010	/* Allow long multiplies.  */
-#define ARM_EXT_V4	 0x00000020	/* Allow half word loads.  */
-#define ARM_EXT_V4T	 0x00000040	/* Thumb v1.               */
-#define ARM_EXT_V5	 0x00000080	/* Allow CLZ, etc.         */
-#define ARM_EXT_V5T	 0x00000100	/* Thumb v2.               */
-#define ARM_EXT_V5ExP	 0x00000200	/* DSP core set.           */
-#define ARM_EXT_V5E	 0x00000400	/* DSP Double transfers.   */
-#define ARM_EXT_V5J	 0x00000800	/* Jazelle extension.	   */
-#define ARM_EXT_V6       0x00001000     /* ARM V6.                 */
+#ifdef OBJ_ELF
+/* Must be at least the size of the largest unwind opcode (currently two).  */
+#define ARM_OPCODE_CHUNK_SIZE 8
 
-/* Co-processor space extensions.  */
-#define ARM_CEXT_XSCALE   0x00800000	/* Allow MIA etc.          */
-#define ARM_CEXT_MAVERICK 0x00400000	/* Use Cirrus/DSP coprocessor.  */
-#define ARM_CEXT_IWMMXT   0x00200000    /* Intel Wireless MMX technology coprocessor.   */
+/* This structure holds the unwinding state.  */
 
-/* Architectures are the sum of the base and extensions.  The ARM ARM (rev E)
-   defines the following: ARMv3, ARMv3M, ARMv4xM, ARMv4, ARMv4TxM, ARMv4T,
-   ARMv5xM, ARMv5, ARMv5TxM, ARMv5T, ARMv5TExP, ARMv5TE.  To these we add
-   three more to cover cores prior to ARM6.  Finally, there are cores which
-   implement further extensions in the co-processor space.  */
-#define ARM_ARCH_V1			  ARM_EXT_V1
-#define ARM_ARCH_V2	(ARM_ARCH_V1	| ARM_EXT_V2)
-#define ARM_ARCH_V2S	(ARM_ARCH_V2	| ARM_EXT_V2S)
-#define ARM_ARCH_V3	(ARM_ARCH_V2S	| ARM_EXT_V3)
-#define ARM_ARCH_V3M	(ARM_ARCH_V3	| ARM_EXT_V3M)
-#define ARM_ARCH_V4xM	(ARM_ARCH_V3	| ARM_EXT_V4)
-#define ARM_ARCH_V4	(ARM_ARCH_V3M	| ARM_EXT_V4)
-#define ARM_ARCH_V4TxM	(ARM_ARCH_V4xM	| ARM_EXT_V4T)
-#define ARM_ARCH_V4T	(ARM_ARCH_V4	| ARM_EXT_V4T)
-#define ARM_ARCH_V5xM	(ARM_ARCH_V4xM	| ARM_EXT_V5)
-#define ARM_ARCH_V5	(ARM_ARCH_V4	| ARM_EXT_V5)
-#define ARM_ARCH_V5TxM	(ARM_ARCH_V5xM	| ARM_EXT_V4T | ARM_EXT_V5T)
-#define ARM_ARCH_V5T	(ARM_ARCH_V5	| ARM_EXT_V4T | ARM_EXT_V5T)
-#define ARM_ARCH_V5TExP	(ARM_ARCH_V5T	| ARM_EXT_V5ExP)
-#define ARM_ARCH_V5TE	(ARM_ARCH_V5TExP | ARM_EXT_V5E)
-#define ARM_ARCH_V5TEJ	(ARM_ARCH_V5TE	| ARM_EXT_V5J)
-#define ARM_ARCH_V6     (ARM_ARCH_V5TEJ | ARM_EXT_V6)
+static struct
+{
+  symbolS *       proc_start;
+  symbolS *       table_entry;
+  symbolS *       personality_routine;
+  int             personality_index;
+  /* The segment containing the function.  */
+  segT            saved_seg;
+  subsegT         saved_subseg;
+  /* Opcodes generated from this function.  */
+  unsigned char * opcodes;
+  int             opcode_count;
+  int             opcode_alloc;
+  /* The number of bytes pushed to the stack.  */
+  offsetT         frame_size;
+  /* We don't add stack adjustment opcodes immediately so that we can merge
+     multiple adjustments.  We can also omit the final adjustment
+     when using a frame pointer.  */
+  offsetT         pending_offset;
+  /* These two fields are set by both unwind_movsp and unwind_setfp.  They
+     hold the reg+offset to use when restoring sp from a frame pointer.  */
+  offsetT         fp_offset;
+  int             fp_reg;
+  /* Nonzero if an unwind_setfp directive has been seen.  */
+  unsigned        fp_used:1;
+  /* Nonzero if the last opcode restores sp from fp_reg.  */
+  unsigned        sp_restored:1;
+} unwind;
 
-/* Processors with specific extensions in the co-processor space.  */
-#define ARM_ARCH_XSCALE	(ARM_ARCH_V5TE	| ARM_CEXT_XSCALE)
-#define ARM_ARCH_IWMMXT	(ARM_ARCH_XSCALE | ARM_CEXT_IWMMXT)
-
-/* Some useful combinations:  */
-#define ARM_ANY		0x0000ffff	/* Any basic core.  */
-#define ARM_ALL		0x00ffffff	/* Any core + co-processor */
-#define CPROC_ANY	0x00ff0000	/* Any co-processor */
-#define FPU_ANY		0xff000000	/* Note this is ~ARM_ALL.  */
-
-
-#define FPU_FPA_EXT_V1	 0x80000000	/* Base FPA instruction set.  */
-#define FPU_FPA_EXT_V2	 0x40000000	/* LFM/SFM.		      */
-#define FPU_VFP_EXT_NONE 0x20000000	/* Use VFP word-ordering.     */
-#define FPU_VFP_EXT_V1xD 0x10000000	/* Base VFP instruction set.  */
-#define FPU_VFP_EXT_V1	 0x08000000	/* Double-precision insns.    */
-#define FPU_VFP_EXT_V2	 0x04000000	/* ARM10E VFPr1.	      */
-#define FPU_MAVERICK	 0x02000000	/* Cirrus Maverick.	      */
-#define FPU_NONE	 0
-
-#define FPU_ARCH_FPE	 FPU_FPA_EXT_V1
-#define FPU_ARCH_FPA	(FPU_ARCH_FPE | FPU_FPA_EXT_V2)
-
-#define FPU_ARCH_VFP       FPU_VFP_EXT_NONE
-#define FPU_ARCH_VFP_V1xD (FPU_VFP_EXT_V1xD | FPU_VFP_EXT_NONE)
-#define FPU_ARCH_VFP_V1   (FPU_ARCH_VFP_V1xD | FPU_VFP_EXT_V1)
-#define FPU_ARCH_VFP_V2	  (FPU_ARCH_VFP_V1 | FPU_VFP_EXT_V2)
-
-#define FPU_ARCH_MAVERICK  FPU_MAVERICK
+#endif /* OBJ_ELF */
 
 enum arm_float_abi
 {
@@ -148,29 +116,28 @@ enum arm_float_abi
 #endif
 #endif
 
-#ifdef TE_LINUX
-#define FPU_DEFAULT FPU_ARCH_FPA
-#endif
-
-#ifdef TE_NetBSD
-#ifdef OBJ_ELF
-#define FPU_DEFAULT FPU_ARCH_VFP	/* Soft-float, but VFP order.  */
-#else
-/* Legacy a.out format.  */
-#define FPU_DEFAULT FPU_ARCH_FPA	/* Soft-float, but FPA order.  */
-#endif
-#endif
-
-/* For backwards compatibility we default to the FPA.  */
 #ifndef FPU_DEFAULT
-#define FPU_DEFAULT FPU_ARCH_FPA
-#endif
+# ifdef TE_LINUX
+#  define FPU_DEFAULT FPU_ARCH_FPA
+# elif defined (TE_NetBSD)
+#  ifdef OBJ_ELF
+#   define FPU_DEFAULT FPU_ARCH_VFP	/* Soft-float, but VFP order.  */
+#  else
+    /* Legacy a.out format.  */
+#   define FPU_DEFAULT FPU_ARCH_FPA	/* Soft-float, but FPA order.  */
+#  endif
+# elif defined (TE_VXWORKS)
+#  define FPU_DEFAULT FPU_ARCH_VFP	/* Soft-float, VFP order.  */
+# else
+   /* For backwards compatibility, default to FPA.  */
+#  define FPU_DEFAULT FPU_ARCH_FPA
+# endif
+#endif /* ifndef FPU_DEFAULT */
 
 #define streq(a, b)           (strcmp (a, b) == 0)
 #define skip_whitespace(str)  while (*(str) == ' ') ++(str)
 
 static unsigned long cpu_variant;
-static int target_oabi = 0;
 
 /* Flags stored in private area of BFD structure.  */
 static int uses_apcs_26      = FALSE;
@@ -191,6 +158,9 @@ static int march_cpu_opt = -1;
 static int march_fpu_opt = -1;
 static int mfpu_opt = -1;
 static int mfloat_abi_opt = -1;
+#ifdef OBJ_ELF
+static int meabi_flags = EF_ARM_EABI_UNKNOWN;
+#endif
 
 /* This array holds the chars that always start a comment.  If the
    pre-processor is disabled, these aren't very useful.  */
@@ -777,10 +747,10 @@ static const struct reg_entry mav_dspsc_table[] =
 
 struct reg_map
 {
-  const struct reg_entry *names;
-  int max_regno;
-  struct hash_control *htab;
-  const char *expected;
+  const struct reg_entry * names;
+  int                      max_regno;
+  struct hash_control *    htab;
+  const char *             expected;
 };
 
 struct reg_map all_reg_maps[] =
@@ -821,288 +791,6 @@ enum arm_reg_type
   REG_TYPE_MAX = 13
 };
 
-/* Functions called by parser.  */
-/* ARM instructions.  */
-static void do_arit		PARAMS ((char *));
-static void do_cmp		PARAMS ((char *));
-static void do_mov		PARAMS ((char *));
-static void do_ldst		PARAMS ((char *));
-static void do_ldstt		PARAMS ((char *));
-static void do_ldmstm		PARAMS ((char *));
-static void do_branch		PARAMS ((char *));
-static void do_swi		PARAMS ((char *));
-
-/* Pseudo Op codes.  */
-static void do_adr		PARAMS ((char *));
-static void do_adrl		PARAMS ((char *));
-static void do_empty		PARAMS ((char *));
-
-/* ARM v2.  */
-static void do_mul		PARAMS ((char *));
-static void do_mla		PARAMS ((char *));
-
-/* ARM v2S.  */
-static void do_swap		PARAMS ((char *));
-
-/* ARM v3.  */
-static void do_msr		PARAMS ((char *));
-static void do_mrs		PARAMS ((char *));
-
-/* ARM v3M.  */
-static void do_mull		PARAMS ((char *));
-
-/* ARM v4.  */
-static void do_ldstv4		PARAMS ((char *));
-
-/* ARM v4T.  */
-static void do_bx               PARAMS ((char *));
-
-/* ARM v5T.  */
-static void do_blx		PARAMS ((char *));
-static void do_bkpt		PARAMS ((char *));
-static void do_clz		PARAMS ((char *));
-static void do_lstc2		PARAMS ((char *));
-static void do_cdp2		PARAMS ((char *));
-static void do_co_reg2		PARAMS ((char *));
-
-/* ARM v5TExP.  */
-static void do_smla		PARAMS ((char *));
-static void do_smlal		PARAMS ((char *));
-static void do_smul		PARAMS ((char *));
-static void do_qadd		PARAMS ((char *));
-
-/* ARM v5TE.  */
-static void do_pld		PARAMS ((char *));
-static void do_ldrd		PARAMS ((char *));
-static void do_co_reg2c		PARAMS ((char *));
-
-/* ARM v5TEJ.  */
-static void do_bxj		PARAMS ((char *));
-
-/* ARM V6. */
-static void do_cps              PARAMS ((char *));
-static void do_cpsi             PARAMS ((char *));
-static void do_ldrex            PARAMS ((char *));
-static void do_pkhbt            PARAMS ((char *));
-static void do_pkhtb            PARAMS ((char *));
-static void do_qadd16           PARAMS ((char *));
-static void do_rev              PARAMS ((char *));
-static void do_rfe              PARAMS ((char *));
-static void do_sxtah            PARAMS ((char *));
-static void do_sxth             PARAMS ((char *));
-static void do_setend           PARAMS ((char *));
-static void do_smlad            PARAMS ((char *));
-static void do_smlald           PARAMS ((char *));
-static void do_smmul            PARAMS ((char *));
-static void do_ssat             PARAMS ((char *));
-static void do_usat             PARAMS ((char *));
-static void do_srs              PARAMS ((char *));
-static void do_ssat16           PARAMS ((char *));
-static void do_usat16           PARAMS ((char *));
-static void do_strex            PARAMS ((char *));
-static void do_umaal            PARAMS ((char *));
-
-static void do_cps_mode         PARAMS ((char **));
-static void do_cps_flags        PARAMS ((char **, int));
-static int do_endian_specifier  PARAMS ((char *));
-static void do_pkh_core         PARAMS ((char *, int));
-static void do_sat              PARAMS ((char **, int));
-static void do_sat16            PARAMS ((char **, int));
-
-/* Coprocessor Instructions.  */
-static void do_cdp		PARAMS ((char *));
-static void do_lstc		PARAMS ((char *));
-static void do_co_reg		PARAMS ((char *));
-
-/* FPA instructions.  */
-static void do_fpa_ctrl		PARAMS ((char *));
-static void do_fpa_ldst		PARAMS ((char *));
-static void do_fpa_ldmstm	PARAMS ((char *));
-static void do_fpa_dyadic	PARAMS ((char *));
-static void do_fpa_monadic	PARAMS ((char *));
-static void do_fpa_cmp		PARAMS ((char *));
-static void do_fpa_from_reg	PARAMS ((char *));
-static void do_fpa_to_reg	PARAMS ((char *));
-
-/* VFP instructions.  */
-static void do_vfp_sp_monadic	PARAMS ((char *));
-static void do_vfp_dp_monadic	PARAMS ((char *));
-static void do_vfp_sp_dyadic	PARAMS ((char *));
-static void do_vfp_dp_dyadic	PARAMS ((char *));
-static void do_vfp_reg_from_sp  PARAMS ((char *));
-static void do_vfp_sp_from_reg  PARAMS ((char *));
-static void do_vfp_reg2_from_sp2 PARAMS ((char *));
-static void do_vfp_sp2_from_reg2 PARAMS ((char *));
-static void do_vfp_reg_from_dp  PARAMS ((char *));
-static void do_vfp_reg2_from_dp PARAMS ((char *));
-static void do_vfp_dp_from_reg  PARAMS ((char *));
-static void do_vfp_dp_from_reg2 PARAMS ((char *));
-static void do_vfp_reg_from_ctrl PARAMS ((char *));
-static void do_vfp_ctrl_from_reg PARAMS ((char *));
-static void do_vfp_sp_ldst	PARAMS ((char *));
-static void do_vfp_dp_ldst	PARAMS ((char *));
-static void do_vfp_sp_ldstmia	PARAMS ((char *));
-static void do_vfp_sp_ldstmdb	PARAMS ((char *));
-static void do_vfp_dp_ldstmia	PARAMS ((char *));
-static void do_vfp_dp_ldstmdb	PARAMS ((char *));
-static void do_vfp_xp_ldstmia	PARAMS ((char *));
-static void do_vfp_xp_ldstmdb	PARAMS ((char *));
-static void do_vfp_sp_compare_z	PARAMS ((char *));
-static void do_vfp_dp_compare_z	PARAMS ((char *));
-static void do_vfp_dp_sp_cvt	PARAMS ((char *));
-static void do_vfp_sp_dp_cvt	PARAMS ((char *));
-
-/* XScale.  */
-static void do_xsc_mia		PARAMS ((char *));
-static void do_xsc_mar		PARAMS ((char *));
-static void do_xsc_mra		PARAMS ((char *));
-
-/* Maverick.  */
-static void do_mav_binops	PARAMS ((char *, int, enum arm_reg_type,
-					 enum arm_reg_type));
-static void do_mav_binops_1a	PARAMS ((char *));
-static void do_mav_binops_1b	PARAMS ((char *));
-static void do_mav_binops_1c	PARAMS ((char *));
-static void do_mav_binops_1d	PARAMS ((char *));
-static void do_mav_binops_1e	PARAMS ((char *));
-static void do_mav_binops_1f	PARAMS ((char *));
-static void do_mav_binops_1g	PARAMS ((char *));
-static void do_mav_binops_1h	PARAMS ((char *));
-static void do_mav_binops_1i	PARAMS ((char *));
-static void do_mav_binops_1j	PARAMS ((char *));
-static void do_mav_binops_1k	PARAMS ((char *));
-static void do_mav_binops_1l	PARAMS ((char *));
-static void do_mav_binops_1m	PARAMS ((char *));
-static void do_mav_binops_1n	PARAMS ((char *));
-static void do_mav_binops_1o	PARAMS ((char *));
-static void do_mav_binops_2a	PARAMS ((char *));
-static void do_mav_binops_2b	PARAMS ((char *));
-static void do_mav_binops_2c	PARAMS ((char *));
-static void do_mav_binops_3a	PARAMS ((char *));
-static void do_mav_binops_3b	PARAMS ((char *));
-static void do_mav_binops_3c	PARAMS ((char *));
-static void do_mav_binops_3d	PARAMS ((char *));
-static void do_mav_triple	PARAMS ((char *, int, enum arm_reg_type,
-					 enum arm_reg_type,
-					 enum arm_reg_type));
-static void do_mav_triple_4a	PARAMS ((char *));
-static void do_mav_triple_4b	PARAMS ((char *));
-static void do_mav_triple_5a	PARAMS ((char *));
-static void do_mav_triple_5b	PARAMS ((char *));
-static void do_mav_triple_5c	PARAMS ((char *));
-static void do_mav_triple_5d	PARAMS ((char *));
-static void do_mav_triple_5e	PARAMS ((char *));
-static void do_mav_triple_5f	PARAMS ((char *));
-static void do_mav_triple_5g	PARAMS ((char *));
-static void do_mav_triple_5h	PARAMS ((char *));
-static void do_mav_quad		PARAMS ((char *, int, enum arm_reg_type,
-					 enum arm_reg_type,
-					 enum arm_reg_type,
-					 enum arm_reg_type));
-static void do_mav_quad_6a	PARAMS ((char *));
-static void do_mav_quad_6b	PARAMS ((char *));
-static void do_mav_dspsc_1	PARAMS ((char *));
-static void do_mav_dspsc_2	PARAMS ((char *));
-static void do_mav_shift	PARAMS ((char *, enum arm_reg_type,
-					 enum arm_reg_type));
-static void do_mav_shift_1	PARAMS ((char *));
-static void do_mav_shift_2	PARAMS ((char *));
-static void do_mav_ldst		PARAMS ((char *, enum arm_reg_type));
-static void do_mav_ldst_1	PARAMS ((char *));
-static void do_mav_ldst_2	PARAMS ((char *));
-static void do_mav_ldst_3	PARAMS ((char *));
-static void do_mav_ldst_4	PARAMS ((char *));
-
-static int mav_reg_required_here	PARAMS ((char **, int,
-						 enum arm_reg_type));
-static int mav_parse_offset	PARAMS ((char **, int *));
-
-static void fix_new_arm		PARAMS ((fragS *, int, short, expressionS *,
-					 int, int));
-static int arm_reg_parse	PARAMS ((char **, struct hash_control *));
-static enum arm_reg_type arm_reg_parse_any PARAMS ((char *));
-static const struct asm_psr * arm_psr_parse PARAMS ((char **));
-static void symbol_locate	PARAMS ((symbolS *, const char *, segT, valueT,
-					 fragS *));
-static int add_to_lit_pool	PARAMS ((void));
-static unsigned validate_immediate PARAMS ((unsigned));
-static unsigned validate_immediate_twopart PARAMS ((unsigned int,
-						    unsigned int *));
-static int validate_offset_imm	PARAMS ((unsigned int, int));
-static void opcode_select	PARAMS ((int));
-static void end_of_line		PARAMS ((char *));
-static int reg_required_here	PARAMS ((char **, int));
-static int psr_required_here	PARAMS ((char **));
-static int co_proc_number	PARAMS ((char **));
-static int cp_opc_expr		PARAMS ((char **, int, int));
-static int cp_reg_required_here	PARAMS ((char **, int));
-static int fp_reg_required_here	PARAMS ((char **, int));
-static int vfp_sp_reg_required_here PARAMS ((char **, enum vfp_sp_reg_pos));
-static int vfp_dp_reg_required_here PARAMS ((char **, enum vfp_dp_reg_pos));
-static void vfp_sp_ldstm	PARAMS ((char *, enum vfp_ldstm_type));
-static void vfp_dp_ldstm	PARAMS ((char *, enum vfp_ldstm_type));
-static long vfp_sp_reg_list	PARAMS ((char **, enum vfp_sp_reg_pos));
-static long vfp_dp_reg_list	PARAMS ((char **));
-static int vfp_psr_required_here PARAMS ((char **str));
-static const struct vfp_reg *vfp_psr_parse PARAMS ((char **str));
-static int cp_address_offset	PARAMS ((char **));
-static int cp_address_required_here	PARAMS ((char **, int));
-static int my_get_float_expression	PARAMS ((char **));
-static int skip_past_comma	PARAMS ((char **));
-static int walk_no_bignums	PARAMS ((symbolS *));
-static int negate_data_op	PARAMS ((unsigned long *, unsigned long));
-static int data_op2		PARAMS ((char **));
-static int fp_op2		PARAMS ((char **));
-static long reg_list		PARAMS ((char **));
-static void thumb_load_store	PARAMS ((char *, int, int));
-static int decode_shift		PARAMS ((char **, int));
-static int ldst_extend		PARAMS ((char **));
-static int ldst_extend_v4		PARAMS ((char **));
-static void thumb_add_sub	PARAMS ((char *, int));
-static void insert_reg		PARAMS ((const struct reg_entry *,
-					 struct hash_control *));
-static void thumb_shift		PARAMS ((char *, int));
-static void thumb_mov_compare	PARAMS ((char *, int));
-static void build_arm_ops_hsh	PARAMS ((void));
-static void set_constant_flonums	PARAMS ((void));
-static valueT md_chars_to_number	PARAMS ((char *, int));
-static void build_reg_hsh	PARAMS ((struct reg_map *));
-static void insert_reg_alias	PARAMS ((char *, int, struct hash_control *));
-static int create_register_alias	PARAMS ((char *, char *));
-static void output_inst		PARAMS ((const char *));
-static int accum0_required_here PARAMS ((char **));
-static int ld_mode_required_here PARAMS ((char **));
-static void do_branch25         PARAMS ((char *));
-static symbolS * find_real_start PARAMS ((symbolS *));
-#ifdef OBJ_ELF
-static bfd_reloc_code_real_type	arm_parse_reloc PARAMS ((void));
-#endif
-
-static int wreg_required_here   PARAMS ((char **, int, enum wreg_type));
-static void do_iwmmxt_byte_addr PARAMS ((char *));
-static void do_iwmmxt_tandc     PARAMS ((char *));
-static void do_iwmmxt_tbcst     PARAMS ((char *));
-static void do_iwmmxt_textrc    PARAMS ((char *));
-static void do_iwmmxt_textrm    PARAMS ((char *));
-static void do_iwmmxt_tinsr     PARAMS ((char *));
-static void do_iwmmxt_tmcr      PARAMS ((char *));
-static void do_iwmmxt_tmcrr     PARAMS ((char *));
-static void do_iwmmxt_tmia      PARAMS ((char *));
-static void do_iwmmxt_tmovmsk   PARAMS ((char *));
-static void do_iwmmxt_tmrc      PARAMS ((char *));
-static void do_iwmmxt_tmrrc     PARAMS ((char *));
-static void do_iwmmxt_torc      PARAMS ((char *));
-static void do_iwmmxt_waligni   PARAMS ((char *));
-static void do_iwmmxt_wmov      PARAMS ((char *));
-static void do_iwmmxt_word_addr PARAMS ((char *));
-static void do_iwmmxt_wrwr      PARAMS ((char *));
-static void do_iwmmxt_wrwrwcg   PARAMS ((char *));
-static void do_iwmmxt_wrwrwr    PARAMS ((char *));
-static void do_iwmmxt_wshufh    PARAMS ((char *));
-static void do_iwmmxt_wzero     PARAMS ((char *));
-static int cp_byte_address_offset         PARAMS ((char **));
-static int cp_byte_address_required_here  PARAMS ((char **));
-
 /* ARM instructions take 4bytes in the object file, Thumb instructions
    take 2:  */
 #define INSN_SIZE       4
@@ -1141,9 +829,8891 @@ struct asm_opcode
   unsigned long variant;
 
   /* Function to call to parse args.  */
-  void (* parms) PARAMS ((char *));
+  void (* parms) (char *);
 };
 
+/* Defines for various bits that we will want to toggle.  */
+#define INST_IMMEDIATE	0x02000000
+#define OFFSET_REG	0x02000000
+#define HWOFFSET_IMM    0x00400000
+#define SHIFT_BY_REG	0x00000010
+#define PRE_INDEX	0x01000000
+#define INDEX_UP	0x00800000
+#define WRITE_BACK	0x00200000
+#define LDM_TYPE_2_OR_3	0x00400000
+
+#define LITERAL_MASK	0xf000f000
+#define OPCODE_MASK	0xfe1fffff
+#define V4_STR_BIT	0x00000020
+
+#define DATA_OP_SHIFT	21
+
+/* Codes to distinguish the arithmetic instructions.  */
+#define OPCODE_AND	0
+#define OPCODE_EOR	1
+#define OPCODE_SUB	2
+#define OPCODE_RSB	3
+#define OPCODE_ADD	4
+#define OPCODE_ADC	5
+#define OPCODE_SBC	6
+#define OPCODE_RSC	7
+#define OPCODE_TST	8
+#define OPCODE_TEQ	9
+#define OPCODE_CMP	10
+#define OPCODE_CMN	11
+#define OPCODE_ORR	12
+#define OPCODE_MOV	13
+#define OPCODE_BIC	14
+#define OPCODE_MVN	15
+
+#define T_OPCODE_MUL 0x4340
+#define T_OPCODE_TST 0x4200
+#define T_OPCODE_CMN 0x42c0
+#define T_OPCODE_NEG 0x4240
+#define T_OPCODE_MVN 0x43c0
+
+#define T_OPCODE_ADD_R3	0x1800
+#define T_OPCODE_SUB_R3 0x1a00
+#define T_OPCODE_ADD_HI 0x4400
+#define T_OPCODE_ADD_ST 0xb000
+#define T_OPCODE_SUB_ST 0xb080
+#define T_OPCODE_ADD_SP 0xa800
+#define T_OPCODE_ADD_PC 0xa000
+#define T_OPCODE_ADD_I8 0x3000
+#define T_OPCODE_SUB_I8 0x3800
+#define T_OPCODE_ADD_I3 0x1c00
+#define T_OPCODE_SUB_I3 0x1e00
+
+#define T_OPCODE_ASR_R	0x4100
+#define T_OPCODE_LSL_R	0x4080
+#define T_OPCODE_LSR_R  0x40c0
+#define T_OPCODE_ASR_I	0x1000
+#define T_OPCODE_LSL_I	0x0000
+#define T_OPCODE_LSR_I	0x0800
+
+#define T_OPCODE_MOV_I8	0x2000
+#define T_OPCODE_CMP_I8 0x2800
+#define T_OPCODE_CMP_LR 0x4280
+#define T_OPCODE_MOV_HR 0x4600
+#define T_OPCODE_CMP_HR 0x4500
+
+#define T_OPCODE_LDR_PC 0x4800
+#define T_OPCODE_LDR_SP 0x9800
+#define T_OPCODE_STR_SP 0x9000
+#define T_OPCODE_LDR_IW 0x6800
+#define T_OPCODE_STR_IW 0x6000
+#define T_OPCODE_LDR_IH 0x8800
+#define T_OPCODE_STR_IH 0x8000
+#define T_OPCODE_LDR_IB 0x7800
+#define T_OPCODE_STR_IB 0x7000
+#define T_OPCODE_LDR_RW 0x5800
+#define T_OPCODE_STR_RW 0x5000
+#define T_OPCODE_LDR_RH 0x5a00
+#define T_OPCODE_STR_RH 0x5200
+#define T_OPCODE_LDR_RB 0x5c00
+#define T_OPCODE_STR_RB 0x5400
+
+#define T_OPCODE_PUSH	0xb400
+#define T_OPCODE_POP	0xbc00
+
+#define T_OPCODE_BRANCH 0xe7fe
+
+#define THUMB_SIZE	2	/* Size of thumb instruction.  */
+#define THUMB_REG_LO	0x1
+#define THUMB_REG_HI	0x2
+#define THUMB_REG_ANY	0x3
+
+#define THUMB_H1	0x0080
+#define THUMB_H2	0x0040
+
+#define THUMB_ASR 0
+#define THUMB_LSL 1
+#define THUMB_LSR 2
+
+#define THUMB_MOVE 0
+#define THUMB_COMPARE 1
+#define THUMB_CPY 2
+
+#define THUMB_LOAD 0
+#define THUMB_STORE 1
+
+#define THUMB_PP_PC_LR 0x0100
+
+/* These three are used for immediate shifts, do not alter.  */
+#define THUMB_WORD 2
+#define THUMB_HALFWORD 1
+#define THUMB_BYTE 0
+
+struct thumb_opcode
+{
+  /* Basic string to match.  */
+  const char * template;
+
+  /* Basic instruction code.  */
+  unsigned long value;
+
+  int size;
+
+  /* Which CPU variants this exists for.  */
+  unsigned long variant;
+
+  /* Function to call to parse args.  */
+  void (* parms) (char *);
+};
+
+#define BAD_ARGS 	_("bad arguments to instruction")
+#define BAD_PC 		_("r15 not allowed here")
+#define BAD_COND 	_("instruction is not conditional")
+#define ERR_NO_ACCUM	_("acc0 expected")
+
+static struct hash_control * arm_ops_hsh   = NULL;
+static struct hash_control * arm_tops_hsh  = NULL;
+static struct hash_control * arm_cond_hsh  = NULL;
+static struct hash_control * arm_shift_hsh = NULL;
+static struct hash_control * arm_psr_hsh   = NULL;
+
+/* Stuff needed to resolve the label ambiguity
+   As:
+     ...
+     label:   <insn>
+   may differ from:
+     ...
+     label:
+              <insn>
+*/
+
+symbolS *  last_label_seen;
+static int label_is_thumb_function_name = FALSE;
+
+/* Literal Pool stuff.  */
+
+#define MAX_LITERAL_POOL_SIZE 1024
+
+/* Literal pool structure.  Held on a per-section
+   and per-sub-section basis.  */
+
+typedef struct literal_pool
+{
+  expressionS    literals [MAX_LITERAL_POOL_SIZE];
+  unsigned int   next_free_entry;
+  unsigned int   id;
+  symbolS *      symbol;
+  segT           section;
+  subsegT        sub_section;
+  struct literal_pool * next;
+} literal_pool;
+
+/* Pointer to a linked list of literal pools.  */
+literal_pool * list_of_pools = NULL;
+
+static literal_pool *
+find_literal_pool (void)
+{
+  literal_pool * pool;
+
+  for (pool = list_of_pools; pool != NULL; pool = pool->next)
+    {
+      if (pool->section == now_seg
+	  && pool->sub_section == now_subseg)
+	break;
+    }
+
+  return pool;
+}
+
+static literal_pool *
+find_or_make_literal_pool (void)
+{
+  /* Next literal pool ID number.  */
+  static unsigned int latest_pool_num = 1;
+  literal_pool *      pool;
+
+  pool = find_literal_pool ();
+
+  if (pool == NULL)
+    {
+      /* Create a new pool.  */
+      pool = xmalloc (sizeof (* pool));
+      if (! pool)
+	return NULL;
+
+      pool->next_free_entry = 0;
+      pool->section         = now_seg;
+      pool->sub_section     = now_subseg;
+      pool->next            = list_of_pools;
+      pool->symbol          = NULL;
+
+      /* Add it to the list.  */
+      list_of_pools = pool;
+    }
+
+  /* New pools, and emptied pools, will have a NULL symbol.  */
+  if (pool->symbol == NULL)
+    {
+      pool->symbol = symbol_create (FAKE_LABEL_NAME, undefined_section,
+				    (valueT) 0, &zero_address_frag);
+      pool->id = latest_pool_num ++;
+    }
+
+  /* Done.  */
+  return pool;
+}
+
+/* Add the literal in the global 'inst'
+   structure to the relevent literal pool.  */
+
+static int
+add_to_lit_pool (void)
+{
+  literal_pool * pool;
+  unsigned int entry;
+
+  pool = find_or_make_literal_pool ();
+
+  /* Check if this literal value is already in the pool.  */
+  for (entry = 0; entry < pool->next_free_entry; entry ++)
+    {
+      if ((pool->literals[entry].X_op == inst.reloc.exp.X_op)
+	  && (inst.reloc.exp.X_op == O_constant)
+	  && (pool->literals[entry].X_add_number
+	      == inst.reloc.exp.X_add_number)
+	  && (pool->literals[entry].X_unsigned
+	      == inst.reloc.exp.X_unsigned))
+	break;
+
+      if ((pool->literals[entry].X_op == inst.reloc.exp.X_op)
+          && (inst.reloc.exp.X_op == O_symbol)
+          && (pool->literals[entry].X_add_number
+	      == inst.reloc.exp.X_add_number)
+          && (pool->literals[entry].X_add_symbol
+	      == inst.reloc.exp.X_add_symbol)
+          && (pool->literals[entry].X_op_symbol
+	      == inst.reloc.exp.X_op_symbol))
+        break;
+    }
+
+  /* Do we need to create a new entry?  */
+  if (entry == pool->next_free_entry)
+    {
+      if (entry >= MAX_LITERAL_POOL_SIZE)
+	{
+	  inst.error = _("literal pool overflow");
+	  return FAIL;
+	}
+
+      pool->literals[entry] = inst.reloc.exp;
+      pool->next_free_entry += 1;
+    }
+
+  inst.reloc.exp.X_op         = O_symbol;
+  inst.reloc.exp.X_add_number = ((int) entry) * 4 - 8;
+  inst.reloc.exp.X_add_symbol = pool->symbol;
+
+  return SUCCESS;
+}
+
+/* Can't use symbol_new here, so have to create a symbol and then at
+   a later date assign it a value. Thats what these functions do.  */
+
+static void
+symbol_locate (symbolS *    symbolP,
+	       const char * name,	/* It is copied, the caller can modify.  */
+	       segT         segment,	/* Segment identifier (SEG_<something>).  */
+	       valueT       valu,	/* Symbol value.  */
+	       fragS *      frag)	/* Associated fragment.  */
+{
+  unsigned int name_length;
+  char * preserved_copy_of_name;
+
+  name_length = strlen (name) + 1;   /* +1 for \0.  */
+  obstack_grow (&notes, name, name_length);
+  preserved_copy_of_name = obstack_finish (&notes);
+#ifdef STRIP_UNDERSCORE
+  if (preserved_copy_of_name[0] == '_')
+    preserved_copy_of_name++;
+#endif
+
+#ifdef tc_canonicalize_symbol_name
+  preserved_copy_of_name =
+    tc_canonicalize_symbol_name (preserved_copy_of_name);
+#endif
+
+  S_SET_NAME (symbolP, preserved_copy_of_name);
+
+  S_SET_SEGMENT (symbolP, segment);
+  S_SET_VALUE (symbolP, valu);
+  symbol_clear_list_pointers (symbolP);
+
+  symbol_set_frag (symbolP, frag);
+
+  /* Link to end of symbol chain.  */
+  {
+    extern int symbol_table_frozen;
+
+    if (symbol_table_frozen)
+      abort ();
+  }
+
+  symbol_append (symbolP, symbol_lastP, & symbol_rootP, & symbol_lastP);
+
+  obj_symbol_new_hook (symbolP);
+
+#ifdef tc_symbol_new_hook
+  tc_symbol_new_hook (symbolP);
+#endif
+
+#ifdef DEBUG_SYMS
+  verify_symbol_chain (symbol_rootP, symbol_lastP);
+#endif /* DEBUG_SYMS  */
+}
+
+/* Check that an immediate is valid.
+   If so, convert it to the right format.  */
+
+static unsigned int
+validate_immediate (unsigned int val)
+{
+  unsigned int a;
+  unsigned int i;
+
+#define rotate_left(v, n) (v << n | v >> (32 - n))
+
+  for (i = 0; i < 32; i += 2)
+    if ((a = rotate_left (val, i)) <= 0xff)
+      return a | (i << 7); /* 12-bit pack: [shift-cnt,const].  */
+
+  return FAIL;
+}
+
+/* Check to see if an immediate can be computed as two separate immediate
+   values, added together.  We already know that this value cannot be
+   computed by just one ARM instruction.  */
+
+static unsigned int
+validate_immediate_twopart (unsigned int   val,
+			    unsigned int * highpart)
+{
+  unsigned int a;
+  unsigned int i;
+
+  for (i = 0; i < 32; i += 2)
+    if (((a = rotate_left (val, i)) & 0xff) != 0)
+      {
+	if (a & 0xff00)
+	  {
+	    if (a & ~ 0xffff)
+	      continue;
+	    * highpart = (a  >> 8) | ((i + 24) << 7);
+	  }
+	else if (a & 0xff0000)
+	  {
+	    if (a & 0xff000000)
+	      continue;
+	    * highpart = (a >> 16) | ((i + 16) << 7);
+	  }
+	else
+	  {
+	    assert (a & 0xff000000);
+	    * highpart = (a >> 24) | ((i + 8) << 7);
+	  }
+
+	return (a & 0xff) | (i << 7);
+      }
+
+  return FAIL;
+}
+
+static int
+validate_offset_imm (unsigned int val, int hwse)
+{
+  if ((hwse && val > 255) || val > 4095)
+    return FAIL;
+  return val;
+}
+
+
+#ifdef OBJ_ELF
+/* This code is to handle mapping symbols as defined in the ARM ELF spec.
+   (This text is taken from version B-02 of the spec):
+
+      4.4.7 Mapping and tagging symbols
+
+      A section of an ARM ELF file can contain a mixture of ARM code,
+      Thumb code, and data.  There are inline transitions between code
+      and data at literal pool boundaries. There can also be inline
+      transitions between ARM code and Thumb code, for example in
+      ARM-Thumb inter-working veneers.  Linkers, machine-level
+      debuggers, profiling tools, and disassembly tools need to map
+      images accurately. For example, setting an ARM breakpoint on a
+      Thumb location, or in a literal pool, can crash the program
+      being debugged, ruining the debugging session.
+
+      ARM ELF entities are mapped (see section 4.4.7.1 below) and
+      tagged (see section 4.4.7.2 below) using local symbols (with
+      binding STB_LOCAL).  To assist consumers, mapping and tagging
+      symbols should be collated first in the symbol table, before
+      other symbols with binding STB_LOCAL.
+
+      To allow properly collated mapping and tagging symbols to be
+      skipped by consumers that have no interest in them, the first
+      such symbol should have the name $m and its st_value field equal
+      to the total number of mapping and tagging symbols (including
+      the $m) in the symbol table.
+
+      4.4.7.1 Mapping symbols
+
+      $a    Labels the first byte of a sequence of ARM instructions.
+            Its type is STT_FUNC.
+
+      $d    Labels the first byte of a sequence of data items.
+            Its type is STT_OBJECT.
+
+      $t    Labels the first byte of a sequence of Thumb instructions.
+            Its type is STT_FUNC.
+
+      This list of mapping symbols may be extended in the future.
+
+      Section-relative mapping symbols
+
+      Mapping symbols defined in a section define a sequence of
+      half-open address intervals that cover the address range of the
+      section. Each interval starts at the address defined by a
+      mapping symbol, and continues up to, but not including, the
+      address defined by the next (in address order) mapping symbol or
+      the end of the section. A corollary is that there must be a
+      mapping symbol defined at the beginning of each section.
+      Consumers can ignore the size of a section-relative mapping
+      symbol. Producers can set it to 0.
+
+      Absolute mapping symbols
+
+      Because of the need to crystallize a Thumb address with the
+      Thumb-bit set, absolute symbol of type STT_FUNC (symbols of type
+      STT_FUNC defined in section SHN_ABS) need to be mapped with $a
+      or $t.
+
+      The extent of a mapping symbol defined in SHN_ABS is [st_value,
+      st_value + st_size), or [st_value, st_value + 1) if st_size = 0,
+      where [x, y) denotes the half-open address range from x,
+      inclusive, to y, exclusive.
+
+      In the absence of a mapping symbol, a consumer can interpret a
+      function symbol with an odd value as the Thumb code address
+      obtained by clearing the least significant bit of the
+      value. This interpretation is deprecated, and it may not work in
+      the future.
+
+   Note - the Tagging symbols ($b, $f, $p $m) have been dropped from
+   the EABI (which is still under development), so they are not
+   implemented here.  */
+
+static enum mstate mapstate = MAP_UNDEFINED;
+
+static void
+mapping_state (enum mstate state)
+{
+  symbolS * symbolP;
+  const char * symname;
+  int type;
+
+  if (mapstate == state)
+    /* The mapping symbol has already been emitted.
+       There is nothing else to do.  */
+    return;
+
+  mapstate = state;
+
+  switch (state)
+    {
+    case MAP_DATA:
+      symname = "$d";
+      type = BSF_OBJECT;
+      break;
+    case MAP_ARM:
+      symname = "$a";
+      type = BSF_FUNCTION;
+      break;
+    case MAP_THUMB:
+      symname = "$t";
+      type = BSF_FUNCTION;
+      break;
+    case MAP_UNDEFINED:
+      return;
+    default:
+      abort ();
+    }
+
+  seg_info (now_seg)->tc_segment_info_data = state;
+
+  symbolP = symbol_new (symname, now_seg, (valueT) frag_now_fix (), frag_now);
+  symbol_table_insert (symbolP);
+  symbol_get_bfdsym (symbolP)->flags |= type | BSF_LOCAL;
+
+  switch (state)
+    {
+    case MAP_ARM:
+      THUMB_SET_FUNC (symbolP, 0);
+      ARM_SET_THUMB (symbolP, 0);
+      ARM_SET_INTERWORK (symbolP, support_interwork);
+      break;
+
+    case MAP_THUMB:
+      THUMB_SET_FUNC (symbolP, 1);
+      ARM_SET_THUMB (symbolP, 1);
+      ARM_SET_INTERWORK (symbolP, support_interwork);
+      break;
+
+    case MAP_DATA:
+    default:
+      return;
+    }
+}
+
+/* When we change sections we need to issue a new mapping symbol.  */
+
+void
+arm_elf_change_section (void)
+{
+  flagword flags;
+
+  /* Link an unlinked unwind index table section to the .text section.  */
+  if (elf_section_type (now_seg) == SHT_ARM_EXIDX
+      && elf_linked_to_section (now_seg) == NULL)
+    elf_linked_to_section (now_seg) = text_section;
+
+  if (!SEG_NORMAL (now_seg))
+    return;
+
+  flags = bfd_get_section_flags (stdoutput, now_seg);
+
+  /* We can ignore sections that only contain debug info.  */
+  if ((flags & SEC_ALLOC) == 0)
+    return;
+
+  mapstate = seg_info (now_seg)->tc_segment_info_data;
+}
+
+int
+arm_elf_section_type (const char * str, size_t len)
+{
+  if (len == 5 && strncmp (str, "exidx", 5) == 0)
+    return SHT_ARM_EXIDX;
+
+  return -1;
+}
+#else
+#define mapping_state(a)
+#endif /* OBJ_ELF */
+
+/* arm_reg_parse () := if it looks like a register, return its token and
+   advance the pointer.  */
+
+static int
+arm_reg_parse (char ** ccp, struct hash_control * htab)
+{
+  char * start = * ccp;
+  char   c;
+  char * p;
+  struct reg_entry * reg;
+
+#ifdef REGISTER_PREFIX
+  if (*start != REGISTER_PREFIX)
+    return FAIL;
+  p = start + 1;
+#else
+  p = start;
+#ifdef OPTIONAL_REGISTER_PREFIX
+  if (*p == OPTIONAL_REGISTER_PREFIX)
+    p++, start++;
+#endif
+#endif
+  if (!ISALPHA (*p) || !is_name_beginner (*p))
+    return FAIL;
+
+  c = *p++;
+  while (ISALPHA (c) || ISDIGIT (c) || c == '_')
+    c = *p++;
+
+  *--p = 0;
+  reg = (struct reg_entry *) hash_find (htab, start);
+  *p = c;
+
+  if (reg)
+    {
+      *ccp = p;
+      return reg->number;
+    }
+
+  return FAIL;
+}
+
+/* Search for the following register name in each of the possible reg name
+   tables.  Return the classification if found, or REG_TYPE_MAX if not
+   present.  */
+
+static enum arm_reg_type
+arm_reg_parse_any (char *cp)
+{
+  int i;
+
+  for (i = (int) REG_TYPE_FIRST; i < (int) REG_TYPE_MAX; i++)
+    if (arm_reg_parse (&cp, all_reg_maps[i].htab) != FAIL)
+      return (enum arm_reg_type) i;
+
+  return REG_TYPE_MAX;
+}
+
+static void
+opcode_select (int width)
+{
+  switch (width)
+    {
+    case 16:
+      if (! thumb_mode)
+	{
+	  if (! (cpu_variant & ARM_EXT_V4T))
+	    as_bad (_("selected processor does not support THUMB opcodes"));
+
+	  thumb_mode = 1;
+	  /* No need to force the alignment, since we will have been
+             coming from ARM mode, which is word-aligned.  */
+	  record_alignment (now_seg, 1);
+	}
+      mapping_state (MAP_THUMB);
+      break;
+
+    case 32:
+      if (thumb_mode)
+	{
+	  if ((cpu_variant & ARM_ALL) == ARM_EXT_V4T)
+	    as_bad (_("selected processor does not support ARM opcodes"));
+
+	  thumb_mode = 0;
+
+	  if (!need_pass_2)
+	    frag_align (2, 0, 0);
+
+	  record_alignment (now_seg, 1);
+	}
+      mapping_state (MAP_ARM);
+      break;
+
+    default:
+      as_bad (_("invalid instruction size selected (%d)"), width);
+    }
+}
+
+static void
+s_req (int a ATTRIBUTE_UNUSED)
+{
+  as_bad (_("invalid syntax for .req directive"));
+}
+
+/* The .unreq directive deletes an alias which was previously defined
+   by .req.  For example:
+
+       my_alias .req r11
+       .unreq my_alias    */
+
+static void
+s_unreq (int a ATTRIBUTE_UNUSED)
+{
+  char * name;
+  char saved_char;
+
+  skip_whitespace (input_line_pointer);
+  name = input_line_pointer;
+
+  while (*input_line_pointer != 0
+	 && *input_line_pointer != ' '
+	 && *input_line_pointer != '\n')
+    ++input_line_pointer;
+
+  saved_char = *input_line_pointer;
+  *input_line_pointer = 0;
+
+  if (*name)
+    {
+      enum arm_reg_type req_type = arm_reg_parse_any (name);
+
+      if (req_type != REG_TYPE_MAX)
+	{
+	  char *temp_name = name;
+	  int req_no = arm_reg_parse (&temp_name, all_reg_maps[req_type].htab);
+
+	  if (req_no != FAIL)
+	    {
+	      struct reg_entry *req_entry;
+
+	      /* Check to see if this alias is a builtin one.  */
+	      req_entry = hash_delete (all_reg_maps[req_type].htab, name);
+
+	      if (!req_entry)
+		as_bad (_("unreq: missing hash entry for \"%s\""), name);
+	      else if (req_entry->builtin)
+		/* FIXME: We are deleting a built in register alias which
+		   points to a const data structure, so we only need to
+		   free up the memory used by the key in the hash table.
+		   Unfortunately we have not recorded this value, so this
+		   is a memory leak.  */
+		  /* FIXME: Should we issue a warning message ?  */
+		;
+	      else
+		{
+		  /* Deleting a user defined alias.  We need to free the
+		     key and the value, but fortunately the key is the same
+		     as the value->name field.  */
+		  free ((char *) req_entry->name);
+		  free (req_entry);
+		}
+	    }
+          else
+            as_bad (_(".unreq: unrecognized symbol \"%s\""), name);
+	}
+      else
+        as_bad (_(".unreq: unrecognized symbol \"%s\""), name);
+    }
+  else
+    as_bad (_("invalid syntax for .unreq directive"));
+
+  *input_line_pointer = saved_char;
+  demand_empty_rest_of_line ();
+}
+
+static void
+s_bss (int ignore ATTRIBUTE_UNUSED)
+{
+  /* We don't support putting frags in the BSS segment, we fake it by
+     marking in_bss, then looking at s_skip for clues.  */
+  subseg_set (bss_section, 0);
+  demand_empty_rest_of_line ();
+  mapping_state (MAP_DATA);
+}
+
+static void
+s_even (int ignore ATTRIBUTE_UNUSED)
+{
+  /* Never make frag if expect extra pass.  */
+  if (!need_pass_2)
+    frag_align (1, 0, 0);
+
+  record_alignment (now_seg, 1);
+
+  demand_empty_rest_of_line ();
+}
+
+static void
+s_ltorg (int ignored ATTRIBUTE_UNUSED)
+{
+  unsigned int entry;
+  literal_pool * pool;
+  char sym_name[20];
+
+  pool = find_literal_pool ();
+  if (pool == NULL
+      || pool->symbol == NULL
+      || pool->next_free_entry == 0)
+    return;
+
+  mapping_state (MAP_DATA);
+
+  /* Align pool as you have word accesses.
+     Only make a frag if we have to.  */
+  if (!need_pass_2)
+    frag_align (2, 0, 0);
+
+  record_alignment (now_seg, 2);
+
+  sprintf (sym_name, "$$lit_\002%x", pool->id);
+
+  symbol_locate (pool->symbol, sym_name, now_seg,
+		 (valueT) frag_now_fix (), frag_now);
+  symbol_table_insert (pool->symbol);
+
+  ARM_SET_THUMB (pool->symbol, thumb_mode);
+
+#if defined OBJ_COFF || defined OBJ_ELF
+  ARM_SET_INTERWORK (pool->symbol, support_interwork);
+#endif
+
+  for (entry = 0; entry < pool->next_free_entry; entry ++)
+    /* First output the expression in the instruction to the pool.  */
+    emit_expr (&(pool->literals[entry]), 4); /* .word  */
+
+  /* Mark the pool as empty.  */
+  pool->next_free_entry = 0;
+  pool->symbol = NULL;
+}
+
+/* Same as s_align_ptwo but align 0 => align 2.  */
+
+static void
+s_align (int unused ATTRIBUTE_UNUSED)
+{
+  int temp;
+  long temp_fill;
+  long max_alignment = 15;
+
+  temp = get_absolute_expression ();
+  if (temp > max_alignment)
+    as_bad (_("alignment too large: %d assumed"), temp = max_alignment);
+  else if (temp < 0)
+    {
+      as_bad (_("alignment negative. 0 assumed."));
+      temp = 0;
+    }
+
+  if (*input_line_pointer == ',')
+    {
+      input_line_pointer++;
+      temp_fill = get_absolute_expression ();
+    }
+  else
+    temp_fill = 0;
+
+  if (!temp)
+    temp = 2;
+
+  /* Only make a frag if we HAVE to.  */
+  if (temp && !need_pass_2)
+    frag_align (temp, (int) temp_fill, 0);
+  demand_empty_rest_of_line ();
+
+  record_alignment (now_seg, temp);
+}
+
+static void
+s_force_thumb (int ignore ATTRIBUTE_UNUSED)
+{
+  /* If we are not already in thumb mode go into it, EVEN if
+     the target processor does not support thumb instructions.
+     This is used by gcc/config/arm/lib1funcs.asm for example
+     to compile interworking support functions even if the
+     target processor should not support interworking.  */
+  if (! thumb_mode)
+    {
+      thumb_mode = 2;
+
+      record_alignment (now_seg, 1);
+    }
+
+  demand_empty_rest_of_line ();
+}
+
+static void
+s_thumb_func (int ignore ATTRIBUTE_UNUSED)
+{
+  if (! thumb_mode)
+    opcode_select (16);
+
+  /* The following label is the name/address of the start of a Thumb function.
+     We need to know this for the interworking support.  */
+  label_is_thumb_function_name = TRUE;
+
+  demand_empty_rest_of_line ();
+}
+
+/* Perform a .set directive, but also mark the alias as
+   being a thumb function.  */
+
+static void
+s_thumb_set (int equiv)
+{
+  /* XXX the following is a duplicate of the code for s_set() in read.c
+     We cannot just call that code as we need to get at the symbol that
+     is created.  */
+  char *    name;
+  char      delim;
+  char *    end_name;
+  symbolS * symbolP;
+
+  /* Especial apologies for the random logic:
+     This just grew, and could be parsed much more simply!
+     Dean - in haste.  */
+  name      = input_line_pointer;
+  delim     = get_symbol_end ();
+  end_name  = input_line_pointer;
+  *end_name = delim;
+
+  SKIP_WHITESPACE ();
+
+  if (*input_line_pointer != ',')
+    {
+      *end_name = 0;
+      as_bad (_("expected comma after name \"%s\""), name);
+      *end_name = delim;
+      ignore_rest_of_line ();
+      return;
+    }
+
+  input_line_pointer++;
+  *end_name = 0;
+
+  if (name[0] == '.' && name[1] == '\0')
+    {
+      /* XXX - this should not happen to .thumb_set.  */
+      abort ();
+    }
+
+  if ((symbolP = symbol_find (name)) == NULL
+      && (symbolP = md_undefined_symbol (name)) == NULL)
+    {
+#ifndef NO_LISTING
+      /* When doing symbol listings, play games with dummy fragments living
+	 outside the normal fragment chain to record the file and line info
+         for this symbol.  */
+      if (listing & LISTING_SYMBOLS)
+	{
+	  extern struct list_info_struct * listing_tail;
+	  fragS * dummy_frag = xmalloc (sizeof (fragS));
+
+	  memset (dummy_frag, 0, sizeof (fragS));
+	  dummy_frag->fr_type = rs_fill;
+	  dummy_frag->line = listing_tail;
+	  symbolP = symbol_new (name, undefined_section, 0, dummy_frag);
+	  dummy_frag->fr_symbol = symbolP;
+	}
+      else
+#endif
+	symbolP = symbol_new (name, undefined_section, 0, &zero_address_frag);
+
+#ifdef OBJ_COFF
+      /* "set" symbols are local unless otherwise specified.  */
+      SF_SET_LOCAL (symbolP);
+#endif /* OBJ_COFF  */
+    }				/* Make a new symbol.  */
+
+  symbol_table_insert (symbolP);
+
+  * end_name = delim;
+
+  if (equiv
+      && S_IS_DEFINED (symbolP)
+      && S_GET_SEGMENT (symbolP) != reg_section)
+    as_bad (_("symbol `%s' already defined"), S_GET_NAME (symbolP));
+
+  pseudo_set (symbolP);
+
+  demand_empty_rest_of_line ();
+
+  /* XXX Now we come to the Thumb specific bit of code.  */
+
+  THUMB_SET_FUNC (symbolP, 1);
+  ARM_SET_THUMB (symbolP, 1);
+#if defined OBJ_ELF || defined OBJ_COFF
+  ARM_SET_INTERWORK (symbolP, support_interwork);
+#endif
+}
+
+static void
+s_arm (int ignore ATTRIBUTE_UNUSED)
+{
+  opcode_select (32);
+  demand_empty_rest_of_line ();
+}
+
+static void
+s_thumb (int ignore ATTRIBUTE_UNUSED)
+{
+  opcode_select (16);
+  demand_empty_rest_of_line ();
+}
+
+static void
+s_code (int unused ATTRIBUTE_UNUSED)
+{
+  int temp;
+
+  temp = get_absolute_expression ();
+  switch (temp)
+    {
+    case 16:
+    case 32:
+      opcode_select (temp);
+      break;
+
+    default:
+      as_bad (_("invalid operand to .code directive (%d) (expecting 16 or 32)"), temp);
+    }
+}
+
+static void
+end_of_line (char * str)
+{
+  skip_whitespace (str);
+
+  if (*str != '\0' && !inst.error)
+    inst.error = _("garbage following instruction");
+}
+
+static int
+skip_past_comma (char ** str)
+{
+  char * p = * str, c;
+  int comma = 0;
+
+  while ((c = *p) == ' ' || c == ',')
+    {
+      p++;
+      if (c == ',' && comma++)
+	return FAIL;
+    }
+
+  if (c == '\0')
+    return FAIL;
+
+  *str = p;
+  return comma ? SUCCESS : FAIL;
+}
+
+/* Return TRUE if anything in the expression is a bignum.  */
+
+static int
+walk_no_bignums (symbolS * sp)
+{
+  if (symbol_get_value_expression (sp)->X_op == O_big)
+    return 1;
+
+  if (symbol_get_value_expression (sp)->X_add_symbol)
+    {
+      return (walk_no_bignums (symbol_get_value_expression (sp)->X_add_symbol)
+	      || (symbol_get_value_expression (sp)->X_op_symbol
+		  && walk_no_bignums (symbol_get_value_expression (sp)->X_op_symbol)));
+    }
+
+  return 0;
+}
+
+static int in_my_get_expression = 0;
+
+static int
+my_get_expression (expressionS * ep, char ** str)
+{
+  char * save_in;
+  segT   seg;
+
+  save_in = input_line_pointer;
+  input_line_pointer = *str;
+  in_my_get_expression = 1;
+  seg = expression (ep);
+  in_my_get_expression = 0;
+
+  if (ep->X_op == O_illegal)
+    {
+      /* We found a bad expression in md_operand().  */
+      *str = input_line_pointer;
+      input_line_pointer = save_in;
+      return 1;
+    }
+
+#ifdef OBJ_AOUT
+  if (seg != absolute_section
+      && seg != text_section
+      && seg != data_section
+      && seg != bss_section
+      && seg != undefined_section)
+    {
+      inst.error = _("bad_segment");
+      *str = input_line_pointer;
+      input_line_pointer = save_in;
+      return 1;
+    }
+#endif
+
+  /* Get rid of any bignums now, so that we don't generate an error for which
+     we can't establish a line number later on.  Big numbers are never valid
+     in instructions, which is where this routine is always called.  */
+  if (ep->X_op == O_big
+      || (ep->X_add_symbol
+	  && (walk_no_bignums (ep->X_add_symbol)
+	      || (ep->X_op_symbol
+		  && walk_no_bignums (ep->X_op_symbol)))))
+    {
+      inst.error = _("invalid constant");
+      *str = input_line_pointer;
+      input_line_pointer = save_in;
+      return 1;
+    }
+
+  *str = input_line_pointer;
+  input_line_pointer = save_in;
+  return 0;
+}
+
+/* A standard register must be given at this point.
+   SHIFT is the place to put it in inst.instruction.
+   Restores input start point on error.
+   Returns the reg#, or FAIL.  */
+
+static int
+reg_required_here (char ** str, int shift)
+{
+  static char buff [128]; /* XXX  */
+  int         reg;
+  char *      start = * str;
+
+  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_RN].htab)) != FAIL)
+    {
+      if (shift >= 0)
+	inst.instruction |= reg << shift;
+      return reg;
+    }
+
+  /* Restore the start point, we may have got a reg of the wrong class.  */
+  *str = start;
+
+  /* In the few cases where we might be able to accept something else
+     this error can be overridden.  */
+  sprintf (buff, _("register expected, not '%.100s'"), start);
+  inst.error = buff;
+
+  return FAIL;
+}
+
+/* A Intel Wireless MMX technology register
+   must be given at this point.
+   Shift is the place to put it in inst.instruction.
+   Restores input start point on err.
+   Returns the reg#, or FAIL.  */
+
+static int
+wreg_required_here (char ** str,
+		    int shift,
+		    enum wreg_type reg_type)
+{
+  static char buff [128];
+  int    reg;
+  char * start = *str;
+
+  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_IWMMXT].htab)) != FAIL)
+    {
+      if (wr_register (reg)
+	  && (reg_type == IWMMXT_REG_WR || reg_type == IWMMXT_REG_WR_OR_WC))
+        {
+          if (shift >= 0)
+            inst.instruction |= (reg ^ WR_PREFIX) << shift;
+          return reg;
+        }
+      else if (wc_register (reg)
+	       && (reg_type == IWMMXT_REG_WC || reg_type == IWMMXT_REG_WR_OR_WC))
+        {
+          if (shift >= 0)
+            inst.instruction |= (reg ^ WC_PREFIX) << shift;
+          return reg;
+        }
+      else if ((wcg_register (reg) && reg_type == IWMMXT_REG_WCG))
+        {
+          if (shift >= 0)
+            inst.instruction |= ((reg ^ WC_PREFIX) - 8) << shift;
+          return reg;
+        }
+    }
+
+  /* Restore the start point, we may have got a reg of the wrong class.  */
+  *str = start;
+
+  /* In the few cases where we might be able to accept
+     something else this error can be overridden.  */
+  sprintf (buff, _("Intel Wireless MMX technology register expected, not '%.100s'"), start);
+  inst.error = buff;
+
+  return FAIL;
+}
+
+static const struct asm_psr *
+arm_psr_parse (char ** ccp)
+{
+  char * start = * ccp;
+  char   c;
+  char * p;
+  const struct asm_psr * psr;
+
+  p = start;
+
+  /* Skip to the end of the next word in the input stream.  */
+  do
+    {
+      c = *p++;
+    }
+  while (ISALPHA (c) || c == '_');
+
+  /* Terminate the word.  */
+  *--p = 0;
+
+  /* CPSR's and SPSR's can now be lowercase.  This is just a convenience
+     feature for ease of use and backwards compatibility.  */
+  if (!strncmp (start, "cpsr", 4))
+    strncpy (start, "CPSR", 4);
+  else if (!strncmp (start, "spsr", 4))
+    strncpy (start, "SPSR", 4);
+
+  /* Now locate the word in the psr hash table.  */
+  psr = (const struct asm_psr *) hash_find (arm_psr_hsh, start);
+
+  /* Restore the input stream.  */
+  *p = c;
+
+  /* If we found a valid match, advance the
+     stream pointer past the end of the word.  */
+  *ccp = p;
+
+  return psr;
+}
+
+/* Parse the input looking for a PSR flag.  */
+
+static int
+psr_required_here (char ** str)
+{
+  char * start = * str;
+  const struct asm_psr * psr;
+
+  psr = arm_psr_parse (str);
+
+  if (psr)
+    {
+      /* If this is the SPSR that is being modified, set the R bit.  */
+      if (! psr->cpsr)
+	inst.instruction |= SPSR_BIT;
+
+      /* Set the psr flags in the MSR instruction.  */
+      inst.instruction |= psr->field << PSR_SHIFT;
+
+      return SUCCESS;
+    }
+
+  /* In the few cases where we might be able to accept
+     something else this error can be overridden.  */
+  inst.error = _("flag for {c}psr instruction expected");
+
+  /* Restore the start point.  */
+  *str = start;
+  return FAIL;
+}
+
+static int
+co_proc_number (char ** str)
+{
+  int processor, pchar;
+  char *start;
+
+  skip_whitespace (*str);
+  start = *str;
+
+  /* The data sheet seems to imply that just a number on its own is valid
+     here, but the RISC iX assembler seems to accept a prefix 'p'.  We will
+     accept either.  */
+  if ((processor = arm_reg_parse (str, all_reg_maps[REG_TYPE_CP].htab))
+      == FAIL)
+    {
+      *str = start;
+
+      pchar = *(*str)++;
+      if (pchar >= '0' && pchar <= '9')
+	{
+	  processor = pchar - '0';
+	  if (**str >= '0' && **str <= '9')
+	    {
+	      processor = processor * 10 + *(*str)++ - '0';
+	      if (processor > 15)
+		{
+		  inst.error = _("illegal co-processor number");
+		  return FAIL;
+		}
+	    }
+	}
+      else
+	{
+	  inst.error = all_reg_maps[REG_TYPE_CP].expected;
+	  return FAIL;
+	}
+    }
+
+  inst.instruction |= processor << 8;
+  return SUCCESS;
+}
+
+static int
+cp_opc_expr (char ** str, int where, int length)
+{
+  expressionS expr;
+
+  skip_whitespace (* str);
+
+  memset (&expr, '\0', sizeof (expr));
+
+  if (my_get_expression (&expr, str))
+    return FAIL;
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("bad or missing expression");
+      return FAIL;
+    }
+
+  if ((expr.X_add_number & ((1 << length) - 1)) != expr.X_add_number)
+    {
+      inst.error = _("immediate co-processor expression too large");
+      return FAIL;
+    }
+
+  inst.instruction |= expr.X_add_number << where;
+  return SUCCESS;
+}
+
+static int
+cp_reg_required_here (char ** str, int where)
+{
+  int    reg;
+  char * start = *str;
+
+  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_CN].htab)) != FAIL)
+    {
+      inst.instruction |= reg << where;
+      return reg;
+    }
+
+  /* In the few cases where we might be able to accept something else
+     this error can be overridden.  */
+  inst.error = all_reg_maps[REG_TYPE_CN].expected;
+
+  /* Restore the start point.  */
+  *str = start;
+  return FAIL;
+}
+
+static int
+fp_reg_required_here (char ** str, int where)
+{
+  int    reg;
+  char * start = * str;
+
+  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_FN].htab)) != FAIL)
+    {
+      inst.instruction |= reg << where;
+      return reg;
+    }
+
+  /* In the few cases where we might be able to accept something else
+     this error can be overridden.  */
+  inst.error = all_reg_maps[REG_TYPE_FN].expected;
+
+  /* Restore the start point.  */
+  *str = start;
+  return FAIL;
+}
+
+static int
+cp_address_offset (char ** str)
+{
+  int offset;
+
+  skip_whitespace (* str);
+
+  if (! is_immediate_prefix (**str))
+    {
+      inst.error = _("immediate expression expected");
+      return FAIL;
+    }
+
+  (*str)++;
+
+  if (my_get_expression (& inst.reloc.exp, str))
+    return FAIL;
+
+  if (inst.reloc.exp.X_op == O_constant)
+    {
+      offset = inst.reloc.exp.X_add_number;
+
+      if (offset & 3)
+	{
+	  inst.error = _("co-processor address must be word aligned");
+	  return FAIL;
+	}
+
+      if (offset > 1023 || offset < -1023)
+	{
+	  inst.error = _("offset too large");
+	  return FAIL;
+	}
+
+      if (offset >= 0)
+	inst.instruction |= INDEX_UP;
+      else
+	offset = -offset;
+
+      inst.instruction |= offset >> 2;
+    }
+  else
+    inst.reloc.type = BFD_RELOC_ARM_CP_OFF_IMM;
+
+  return SUCCESS;
+}
+
+static int
+cp_address_required_here (char ** str, int wb_ok)
+{
+  char * p = * str;
+  int    pre_inc = 0;
+  int    write_back = 0;
+
+  if (*p == '[')
+    {
+      int reg;
+
+      p++;
+      skip_whitespace (p);
+
+      if ((reg = reg_required_here (& p, 16)) == FAIL)
+	return FAIL;
+
+      skip_whitespace (p);
+
+      if (*p == ']')
+	{
+	  p++;
+
+	  skip_whitespace (p);
+
+	  if (*p == '\0')
+	    {
+	      /* As an extension to the official ARM syntax we allow:
+		   [Rn]
+	         as a short hand for:
+		   [Rn,#0]  */
+	      inst.instruction |= PRE_INDEX | INDEX_UP;
+	      *str = p;
+	      return SUCCESS;
+	    }
+
+	  if (skip_past_comma (& p) == FAIL)
+	    {
+	      inst.error = _("comma expected after closing square bracket");
+	      return FAIL;
+	    }
+
+	  skip_whitespace (p);
+
+	  if (*p == '#')
+	    {
+	      if (wb_ok)
+		{
+		  /* [Rn], #expr  */
+		  write_back = WRITE_BACK;
+
+		  if (reg == REG_PC)
+		    {
+		      inst.error = _("pc may not be used in post-increment");
+		      return FAIL;
+		    }
+
+		  if (cp_address_offset (& p) == FAIL)
+		    return FAIL;
+		}
+	      else
+		pre_inc = PRE_INDEX | INDEX_UP;
+	    }
+	  else if (*p == '{')
+	    {
+	      int option;
+
+	      /* [Rn], {<expr>}  */
+	      p++;
+
+	      skip_whitespace (p);
+
+	      if (my_get_expression (& inst.reloc.exp, & p))
+		return FAIL;
+
+	      if (inst.reloc.exp.X_op == O_constant)
+		{
+		  option = inst.reloc.exp.X_add_number;
+
+		  if (option > 255 || option < 0)
+		    {
+		      inst.error = _("'option' field too large");
+		      return FAIL;
+		    }
+
+		  skip_whitespace (p);
+
+		  if (*p != '}')
+		    {
+		      inst.error = _("'}' expected at end of 'option' field");
+		      return FAIL;
+		    }
+		  else
+		    {
+		      p++;
+		      inst.instruction |= option;
+		      inst.instruction |= INDEX_UP;
+		    }
+		}
+	      else
+		{
+		  inst.error = _("non-constant expressions for 'option' field not supported");
+		  return FAIL;
+		}
+	    }
+	  else
+	    {
+	      inst.error = _("# or { expected after comma");
+	      return FAIL;
+	    }
+	}
+      else
+	{
+	  /* '['Rn, #expr']'[!]  */
+
+	  if (skip_past_comma (& p) == FAIL)
+	    {
+	      inst.error = _("pre-indexed expression expected");
+	      return FAIL;
+	    }
+
+	  pre_inc = PRE_INDEX;
+
+	  if (cp_address_offset (& p) == FAIL)
+	    return FAIL;
+
+	  skip_whitespace (p);
+
+	  if (*p++ != ']')
+	    {
+	      inst.error = _("missing ]");
+	      return FAIL;
+	    }
+
+	  skip_whitespace (p);
+
+	  if (wb_ok && *p == '!')
+	    {
+	      if (reg == REG_PC)
+		{
+		  inst.error = _("pc may not be used with write-back");
+		  return FAIL;
+		}
+
+	      p++;
+	      write_back = WRITE_BACK;
+	    }
+	}
+    }
+  else
+    {
+      if (my_get_expression (&inst.reloc.exp, &p))
+	return FAIL;
+
+      inst.reloc.type = BFD_RELOC_ARM_CP_OFF_IMM;
+      inst.reloc.exp.X_add_number -= 8;  /* PC rel adjust.  */
+      inst.reloc.pc_rel = 1;
+      inst.instruction |= (REG_PC << 16);
+      pre_inc = PRE_INDEX;
+    }
+
+  inst.instruction |= write_back | pre_inc;
+  *str = p;
+  return SUCCESS;
+}
+
+static int
+cp_byte_address_offset (char ** str)
+{
+  int offset;
+
+  skip_whitespace (* str);
+
+  if (! is_immediate_prefix (**str))
+    {
+      inst.error = _("immediate expression expected");
+      return FAIL;
+    }
+
+  (*str)++;
+
+  if (my_get_expression (& inst.reloc.exp, str))
+    return FAIL;
+
+  if (inst.reloc.exp.X_op == O_constant)
+    {
+      offset = inst.reloc.exp.X_add_number;
+
+      if (offset > 255 || offset < -255)
+        {
+          inst.error = _("offset too large");
+          return FAIL;
+        }
+
+      if (offset >= 0)
+        inst.instruction |= INDEX_UP;
+      else
+        offset = -offset;
+
+      inst.instruction |= offset;
+    }
+  else
+    inst.reloc.type = BFD_RELOC_ARM_CP_OFF_IMM_S2;
+
+  return SUCCESS;
+}
+
+static int
+cp_byte_address_required_here (char ** str)
+{
+  char * p = * str;
+  int    pre_inc = 0;
+  int    write_back = 0;
+
+  if (*p == '[')
+    {
+      int reg;
+
+      p++;
+      skip_whitespace (p);
+
+      if ((reg = reg_required_here (& p, 16)) == FAIL)
+        return FAIL;
+
+      skip_whitespace (p);
+
+      if (*p == ']')
+        {
+          p++;
+
+          if (skip_past_comma (& p) == SUCCESS)
+            {
+              /* [Rn], #expr */
+              write_back = WRITE_BACK;
+
+              if (reg == REG_PC)
+                {
+                  inst.error = _("pc may not be used in post-increment");
+                  return FAIL;
+                }
+
+              if (cp_byte_address_offset (& p) == FAIL)
+                return FAIL;
+            }
+          else
+            pre_inc = PRE_INDEX | INDEX_UP;
+        }
+      else
+        {
+          /* '['Rn, #expr']'[!] */
+
+          if (skip_past_comma (& p) == FAIL)
+            {
+              inst.error = _("pre-indexed expression expected");
+              return FAIL;
+            }
+
+          pre_inc = PRE_INDEX;
+
+          if (cp_byte_address_offset (& p) == FAIL)
+            return FAIL;
+
+          skip_whitespace (p);
+
+          if (*p++ != ']')
+            {
+              inst.error = _("missing ]");
+              return FAIL;
+            }
+
+          skip_whitespace (p);
+
+          if (*p == '!')
+            {
+              if (reg == REG_PC)
+                {
+                  inst.error = _("pc may not be used with write-back");
+                  return FAIL;
+                }
+
+              p++;
+              write_back = WRITE_BACK;
+            }
+        }
+    }
+  else
+    {
+      if (my_get_expression (&inst.reloc.exp, &p))
+        return FAIL;
+
+      inst.reloc.type = BFD_RELOC_ARM_CP_OFF_IMM_S2;
+      inst.reloc.exp.X_add_number -= 8;  /* PC rel adjust.  */
+      inst.reloc.pc_rel = 1;
+      inst.instruction |= (REG_PC << 16);
+      pre_inc = PRE_INDEX;
+    }
+
+  inst.instruction |= write_back | pre_inc;
+  *str = p;
+  return SUCCESS;
+}
+
+static void
+do_nop (char * str)
+{
+  skip_whitespace (str);
+  if (*str == '{')
+    {
+      str++;
+
+      if (my_get_expression (&inst.reloc.exp, &str))
+	inst.reloc.exp.X_op = O_illegal;
+      else
+	{
+	  skip_whitespace (str);
+	  if (*str == '}')
+	    str++;
+	  else
+	    inst.reloc.exp.X_op = O_illegal;
+	}
+
+      if (inst.reloc.exp.X_op != O_constant
+	  || inst.reloc.exp.X_add_number > 255
+	  || inst.reloc.exp.X_add_number < 0)
+	{
+	  inst.error = _("Invalid NOP hint");
+	  return;
+	}
+
+      /* Arcitectural NOP hints are CPSR sets with no bits selected.  */
+      inst.instruction &= 0xf0000000;
+      inst.instruction |= 0x0320f000 + inst.reloc.exp.X_add_number;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_empty (char * str)
+{
+  /* Do nothing really.  */
+  end_of_line (str);
+}
+
+static void
+do_mrs (char * str)
+{
+  int skip = 0;
+
+  /* Only one syntax.  */
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL)
+    {
+      inst.error = _("comma expected after register name");
+      return;
+    }
+
+  skip_whitespace (str);
+
+  if (   streq (str, "CPSR")
+      || streq (str, "SPSR")
+	 /* Lower case versions for backwards compatibility.  */
+      || streq (str, "cpsr")
+      || streq (str, "spsr"))
+    skip = 4;
+
+  /* This is for backwards compatibility with older toolchains.  */
+  else if (   streq (str, "cpsr_all")
+	   || streq (str, "spsr_all"))
+    skip = 8;
+  else
+    {
+      inst.error = _("CPSR or SPSR expected");
+      return;
+    }
+
+  if (* str == 's' || * str == 'S')
+    inst.instruction |= SPSR_BIT;
+  str += skip;
+
+  end_of_line (str);
+}
+
+/* Two possible forms:
+      "{C|S}PSR_<field>, Rm",
+      "{C|S}PSR_f, #expression".  */
+
+static void
+do_msr (char * str)
+{
+  skip_whitespace (str);
+
+  if (psr_required_here (& str) == FAIL)
+    return;
+
+  if (skip_past_comma (& str) == FAIL)
+    {
+      inst.error = _("comma missing after psr flags");
+      return;
+    }
+
+  skip_whitespace (str);
+
+  if (reg_required_here (& str, 0) != FAIL)
+    {
+      inst.error = NULL;
+      end_of_line (str);
+      return;
+    }
+
+  if (! is_immediate_prefix (* str))
+    {
+      inst.error =
+	_("only a register or immediate value can follow a psr flag");
+      return;
+    }
+
+  str ++;
+  inst.error = NULL;
+
+  if (my_get_expression (& inst.reloc.exp, & str))
+    {
+      inst.error =
+	_("only a register or immediate value can follow a psr flag");
+      return;
+    }
+
+  inst.instruction |= INST_IMMEDIATE;
+
+  if (inst.reloc.exp.X_add_symbol)
+    {
+      inst.reloc.type = BFD_RELOC_ARM_IMMEDIATE;
+      inst.reloc.pc_rel = 0;
+    }
+  else
+    {
+      unsigned value = validate_immediate (inst.reloc.exp.X_add_number);
+
+      if (value == (unsigned) FAIL)
+	{
+	  inst.error = _("invalid constant");
+	  return;
+	}
+
+      inst.instruction |= value;
+    }
+
+  inst.error = NULL;
+  end_of_line (str);
+}
+
+/* Long Multiply Parser
+   UMULL RdLo, RdHi, Rm, Rs
+   SMULL RdLo, RdHi, Rm, Rs
+   UMLAL RdLo, RdHi, Rm, Rs
+   SMLAL RdLo, RdHi, Rm, Rs.  */
+
+static void
+do_mull (char * str)
+{
+  int rdlo, rdhi, rm, rs;
+
+  /* Only one format "rdlo, rdhi, rm, rs".  */
+  skip_whitespace (str);
+
+  if ((rdlo = reg_required_here (&str, 12)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || (rdhi = reg_required_here (&str, 16)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* rdhi, rdlo and rm must all be different.  */
+  if (rdlo == rdhi || rdlo == rm || rdhi == rm)
+    as_tsktsk (_("rdhi, rdlo and rm must all be different"));
+
+  if (skip_past_comma (&str) == FAIL
+      || (rs = reg_required_here (&str, 8)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (rdhi == REG_PC || rdhi == REG_PC || rdhi == REG_PC || rdhi == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_mul (char * str)
+{
+  int rd, rm;
+
+  /* Only one format "rd, rm, rs".  */
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (&str, 16)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (rd == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  if (rm == rd)
+    as_tsktsk (_("rd and rm should be different in mul"));
+
+  if (skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 8)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_mla (char * str)
+{
+  int rd, rm;
+
+  /* Only one format "rd, rm, rs, rn".  */
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (&str, 16)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (rd == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  if (rm == rd)
+    as_tsktsk (_("rd and rm should be different in mla"));
+
+  if (skip_past_comma (&str) == FAIL
+      || (rd = reg_required_here (&str, 8)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 12)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (rd == REG_PC || rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* Expects *str -> the characters "acc0", possibly with leading blanks.
+   Advances *str to the next non-alphanumeric.
+   Returns 0, or else FAIL (in which case sets inst.error).
+
+  (In a future XScale, there may be accumulators other than zero.
+  At that time this routine and its callers can be upgraded to suit.)  */
+
+static int
+accum0_required_here (char ** str)
+{
+  static char buff [128];	/* Note the address is taken.  Hence, static.  */
+  char * p = * str;
+  char   c;
+  int result = 0;		/* The accum number.  */
+
+  skip_whitespace (p);
+
+  *str = p;			/* Advance caller's string pointer too.  */
+  c = *p++;
+  while (ISALNUM (c))
+    c = *p++;
+
+  *--p = 0;			/* Aap nul into input buffer at non-alnum.  */
+
+  if (! ( streq (*str, "acc0") || streq (*str, "ACC0")))
+    {
+      sprintf (buff, _("acc0 expected, not '%.100s'"), *str);
+      inst.error = buff;
+      result = FAIL;
+    }
+
+  *p = c;			/* Unzap.  */
+  *str = p;			/* Caller's string pointer to after match.  */
+  return result;
+}
+
+static int
+ldst_extend_v4 (char ** str)
+{
+  int add = INDEX_UP;
+
+  switch (**str)
+    {
+    case '#':
+    case '$':
+      (*str)++;
+      if (my_get_expression (& inst.reloc.exp, str))
+	return FAIL;
+
+      if (inst.reloc.exp.X_op == O_constant)
+	{
+	  int value = inst.reloc.exp.X_add_number;
+
+	  if (value < -255 || value > 255)
+	    {
+	      inst.error = _("address offset too large");
+	      return FAIL;
+	    }
+
+	  if (value < 0)
+	    {
+	      value = -value;
+	      add = 0;
+	    }
+
+	  /* Halfword and signextension instructions have the
+             immediate value split across bits 11..8 and bits 3..0.  */
+	  inst.instruction |= (add | HWOFFSET_IMM
+			       | ((value >> 4) << 8) | (value & 0xF));
+	}
+      else
+	{
+	  inst.instruction |= HWOFFSET_IMM;
+	  inst.reloc.type = BFD_RELOC_ARM_OFFSET_IMM8;
+	  inst.reloc.pc_rel = 0;
+	}
+      return SUCCESS;
+
+    case '-':
+      add = 0;
+      /* Fall through.  */
+
+    case '+':
+      (*str)++;
+      /* Fall through.  */
+
+    default:
+      if (reg_required_here (str, 0) == FAIL)
+	return FAIL;
+
+      inst.instruction |= add;
+      return SUCCESS;
+    }
+}
+
+/* Expects **str -> after a comma. May be leading blanks.
+   Advances *str, recognizing a load  mode, and setting inst.instruction.
+   Returns rn, or else FAIL (in which case may set inst.error
+   and not advance str)
+
+   Note: doesn't know Rd, so no err checks that require such knowledge.  */
+
+static int
+ld_mode_required_here (char ** string)
+{
+  char * str = * string;
+  int    rn;
+  int    pre_inc = 0;
+
+  skip_whitespace (str);
+
+  if (* str == '[')
+    {
+      str++;
+
+      skip_whitespace (str);
+
+      if ((rn = reg_required_here (& str, 16)) == FAIL)
+	return FAIL;
+
+      skip_whitespace (str);
+
+      if (* str == ']')
+	{
+	  str ++;
+
+	  if (skip_past_comma (& str) == SUCCESS)
+	    {
+	      /* [Rn],... (post inc) */
+	      if (ldst_extend_v4 (&str) == FAIL)
+		return FAIL;
+	    }
+	  else 	      /* [Rn] */
+	    {
+	      skip_whitespace (str);
+
+	      if (* str == '!')
+		{
+		  str ++;
+		  inst.instruction |= WRITE_BACK;
+		}
+
+	      inst.instruction |= INDEX_UP | HWOFFSET_IMM;
+	      pre_inc = 1;
+	    }
+	}
+      else	  /* [Rn,...] */
+	{
+	  if (skip_past_comma (& str) == FAIL)
+	    {
+	      inst.error = _("pre-indexed expression expected");
+	      return FAIL;
+	    }
+
+	  pre_inc = 1;
+
+	  if (ldst_extend_v4 (&str) == FAIL)
+	    return FAIL;
+
+	  skip_whitespace (str);
+
+	  if (* str ++ != ']')
+	    {
+	      inst.error = _("missing ]");
+	      return FAIL;
+	    }
+
+	  skip_whitespace (str);
+
+	  if (* str == '!')
+	    {
+	      str ++;
+	      inst.instruction |= WRITE_BACK;
+	    }
+	}
+    }
+  else if (* str == '=')	/* ldr's "r,=label" syntax */
+    /* We should never reach here, because <text> = <expression> is
+       caught gas/read.c read_a_source_file() as a .set operation.  */
+    return FAIL;
+  else				/* PC +- 8 bit immediate offset.  */
+    {
+      if (my_get_expression (& inst.reloc.exp, & str))
+	return FAIL;
+
+      inst.instruction            |= HWOFFSET_IMM;	/* The I bit.  */
+      inst.reloc.type              = BFD_RELOC_ARM_OFFSET_IMM8;
+      inst.reloc.exp.X_add_number -= 8;  		/* PC rel adjust.  */
+      inst.reloc.pc_rel            = 1;
+      inst.instruction            |= (REG_PC << 16);
+
+      rn = REG_PC;
+      pre_inc = 1;
+    }
+
+  inst.instruction |= (pre_inc ? PRE_INDEX : 0);
+  * string = str;
+
+  return rn;
+}
+
+/* ARM V5E (El Segundo) signed-multiply-accumulate (argument parse)
+   SMLAxy{cond} Rd,Rm,Rs,Rn
+   SMLAWy{cond} Rd,Rm,Rs,Rn
+   Error if any register is R15.  */
+
+static void
+do_smla (char * str)
+{
+  int rd, rm, rs, rn;
+
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (& str, 16)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rm = reg_required_here (& str, 0)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rs = reg_required_here (& str, 8)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rn = reg_required_here (& str, 12)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  else if (rd == REG_PC || rm == REG_PC || rs == REG_PC || rn == REG_PC)
+    inst.error = BAD_PC;
+
+  else
+    end_of_line (str);
+}
+
+/* ARM V5E (El Segundo) signed-multiply-accumulate-long (argument parse)
+   SMLALxy{cond} Rdlo,Rdhi,Rm,Rs
+   Error if any register is R15.
+   Warning if Rdlo == Rdhi.  */
+
+static void
+do_smlal (char * str)
+{
+  int rdlo, rdhi, rm, rs;
+
+  skip_whitespace (str);
+
+  if ((rdlo = reg_required_here (& str, 12)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rdhi = reg_required_here (& str, 16)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rm = reg_required_here (& str, 0)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rs = reg_required_here (& str, 8)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (rdlo == REG_PC || rdhi == REG_PC || rm == REG_PC || rs == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  if (rdlo == rdhi)
+    as_tsktsk (_("rdhi and rdlo must be different"));
+
+  end_of_line (str);
+}
+
+/* ARM V5E (El Segundo) signed-multiply (argument parse)
+   SMULxy{cond} Rd,Rm,Rs
+   Error if any register is R15.  */
+
+static void
+do_smul (char * str)
+{
+  int rd, rm, rs;
+
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (& str, 16)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rm = reg_required_here (& str, 0)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rs = reg_required_here (& str, 8)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  else if (rd == REG_PC || rm == REG_PC || rs == REG_PC)
+    inst.error = BAD_PC;
+
+  else
+    end_of_line (str);
+}
+
+/* ARM V5E (El Segundo) saturating-add/subtract (argument parse)
+   Q[D]{ADD,SUB}{cond} Rd,Rm,Rn
+   Error if any register is R15.  */
+
+static void
+do_qadd (char * str)
+{
+  int rd, rm, rn;
+
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (& str, 12)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rm = reg_required_here (& str, 0)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rn = reg_required_here (& str, 16)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  else if (rd == REG_PC || rm == REG_PC || rn == REG_PC)
+    inst.error = BAD_PC;
+
+  else
+    end_of_line (str);
+}
+
+/* ARM V5E (el Segundo)
+   MCRRcc <coproc>, <opcode>, <Rd>, <Rn>, <CRm>.
+   MRRCcc <coproc>, <opcode>, <Rd>, <Rn>, <CRm>.
+
+   These are equivalent to the XScale instructions MAR and MRA,
+   respectively, when coproc == 0, opcode == 0, and CRm == 0.
+
+   Result unpredicatable if Rd or Rn is R15.  */
+
+static void
+do_co_reg2c (char * str)
+{
+  int rd, rn;
+
+  skip_whitespace (str);
+
+  if (co_proc_number (& str) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || cp_opc_expr (& str, 4, 4) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || (rd = reg_required_here (& str, 12)) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || (rn = reg_required_here (& str, 16)) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* Unpredictable result if rd or rn is R15.  */
+  if (rd == REG_PC || rn == REG_PC)
+    as_tsktsk
+      (_("Warning: instruction unpredictable when using r15"));
+
+  if (skip_past_comma (& str) == FAIL
+      || cp_reg_required_here (& str, 0) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* ARM V5 count-leading-zeroes instruction (argument parse)
+     CLZ{<cond>} <Rd>, <Rm>
+     Condition defaults to COND_ALWAYS.
+     Error if Rd or Rm are R15.  */
+
+static void
+do_clz (char * str)
+{
+  int rd, rm;
+
+  skip_whitespace (str);
+
+  if (((rd = reg_required_here (& str, 12)) == FAIL)
+      || (skip_past_comma (& str) == FAIL)
+      || ((rm = reg_required_here (& str, 0)) == FAIL))
+    inst.error = BAD_ARGS;
+
+  else if (rd == REG_PC || rm == REG_PC )
+    inst.error = BAD_PC;
+
+  else
+    end_of_line (str);
+}
+
+/* ARM V5 (argument parse)
+     LDC2{L} <coproc>, <CRd>, <addressing mode>
+     STC2{L} <coproc>, <CRd>, <addressing mode>
+     Instruction is not conditional, and has 0xf in the condition field.
+     Otherwise, it's the same as LDC/STC.  */
+
+static void
+do_lstc2 (char * str)
+{
+  skip_whitespace (str);
+
+  if (co_proc_number (& str) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+    }
+  else if (skip_past_comma (& str) == FAIL
+	   || cp_reg_required_here (& str, 12) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+    }
+  else if (skip_past_comma (& str) == FAIL
+	   || cp_address_required_here (&str, CP_WB_OK) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+    }
+  else
+    end_of_line (str);
+}
+
+/* ARM V5 (argument parse)
+     CDP2 <coproc>, <opcode_1>, <CRd>, <CRn>, <CRm>, <opcode_2>
+     Instruction is not conditional, and has 0xf in the condition field.
+     Otherwise, it's the same as CDP.  */
+
+static void
+do_cdp2 (char * str)
+{
+  skip_whitespace (str);
+
+  if (co_proc_number (& str) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || cp_opc_expr (& str, 20,4) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || cp_reg_required_here (& str, 12) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || cp_reg_required_here (& str, 16) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || cp_reg_required_here (& str, 0) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == SUCCESS)
+    {
+      if (cp_opc_expr (& str, 5, 3) == FAIL)
+	{
+	  if (!inst.error)
+	    inst.error = BAD_ARGS;
+	  return;
+	}
+    }
+
+  end_of_line (str);
+}
+
+/* ARM V5 (argument parse)
+     MCR2 <coproc>, <opcode_1>, <Rd>, <CRn>, <CRm>, <opcode_2>
+     MRC2 <coproc>, <opcode_1>, <Rd>, <CRn>, <CRm>, <opcode_2>
+     Instruction is not conditional, and has 0xf in the condition field.
+     Otherwise, it's the same as MCR/MRC.  */
+
+static void
+do_co_reg2 (char * str)
+{
+  skip_whitespace (str);
+
+  if (co_proc_number (& str) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || cp_opc_expr (& str, 21, 3) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || reg_required_here (& str, 12) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || cp_reg_required_here (& str, 16) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || cp_reg_required_here (& str, 0) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == SUCCESS)
+    {
+      if (cp_opc_expr (& str, 5, 3) == FAIL)
+	{
+	  if (!inst.error)
+	    inst.error = BAD_ARGS;
+	  return;
+	}
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_bx (char * str)
+{
+  int reg;
+
+  skip_whitespace (str);
+
+  if ((reg = reg_required_here (&str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* Note - it is not illegal to do a "bx pc".  Useless, but not illegal.  */
+  if (reg == REG_PC)
+    as_tsktsk (_("use of r15 in bx in ARM mode is not really useful"));
+
+  end_of_line (str);
+}
+
+/* ARM v5TEJ.  Jump to Jazelle code.  */
+
+static void
+do_bxj (char * str)
+{
+  int reg;
+
+  skip_whitespace (str);
+
+  if ((reg = reg_required_here (&str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* Note - it is not illegal to do a "bxj pc".  Useless, but not illegal.  */
+  if (reg == REG_PC)
+    as_tsktsk (_("use of r15 in bxj is not really useful"));
+
+  end_of_line (str);
+}
+
+/* ARM V6 umaal (argument parse).  */
+
+static void
+do_umaal (char * str)
+{
+  int rdlo, rdhi, rm, rs;
+
+  skip_whitespace (str);
+  if ((rdlo = reg_required_here (& str, 12)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rdhi = reg_required_here (& str, 16)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rm = reg_required_here (& str, 0)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rs = reg_required_here (& str, 8)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (rdlo == REG_PC || rdhi == REG_PC || rm == REG_PC || rs == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* ARM V6 strex (argument parse).  */
+
+static void
+do_strex (char * str)
+{
+  int rd, rm, rn;
+
+  /* Parse Rd, Rm,.  */
+  skip_whitespace (str);
+  if ((rd = reg_required_here (& str, 12)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rm = reg_required_here (& str, 0)) == FAIL
+      || skip_past_comma (& str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  if (rd == REG_PC || rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+  if (rd == rm)
+    {
+      inst.error = _("Rd equal to Rm or Rn yields unpredictable results");
+      return;
+    }
+
+  /* Skip past '['.  */
+  if ((strlen (str) >= 1)
+      && strncmp (str, "[", 1) == 0)
+    str += 1;
+
+  skip_whitespace (str);
+
+  /* Parse Rn.  */
+  if ((rn = reg_required_here (& str, 16)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  else if (rn == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+  if (rd == rn)
+    {
+      inst.error = _("Rd equal to Rm or Rn yields unpredictable results");
+      return;
+    }
+  skip_whitespace (str);
+
+  /* Skip past ']'.  */
+  if ((strlen (str) >= 1)
+      && strncmp (str, "]", 1) == 0)
+    str += 1;
+
+  end_of_line (str);
+}
+
+/* KIND indicates what kind of shifts are accepted.  */
+
+static int
+decode_shift (char ** str, int kind)
+{
+  const struct asm_shift_name * shift;
+  char * p;
+  char   c;
+
+  skip_whitespace (* str);
+
+  for (p = * str; ISALPHA (* p); p ++)
+    ;
+
+  if (p == * str)
+    {
+      inst.error = _("shift expression expected");
+      return FAIL;
+    }
+
+  c = * p;
+  * p = '\0';
+  shift = (const struct asm_shift_name *) hash_find (arm_shift_hsh, * str);
+  * p = c;
+
+  if (shift == NULL)
+    {
+      inst.error = _("shift expression expected");
+      return FAIL;
+    }
+
+  assert (shift->properties->index == shift_properties[shift->properties->index].index);
+
+  if (kind == SHIFT_LSL_OR_ASR_IMMEDIATE
+      && shift->properties->index != SHIFT_LSL
+      && shift->properties->index != SHIFT_ASR)
+    {
+      inst.error = _("'LSL' or 'ASR' required");
+      return FAIL;
+    }
+  else if (kind == SHIFT_LSL_IMMEDIATE
+	   && shift->properties->index != SHIFT_LSL)
+    {
+      inst.error = _("'LSL' required");
+      return FAIL;
+    }
+  else if (kind == SHIFT_ASR_IMMEDIATE
+	   && shift->properties->index != SHIFT_ASR)
+    {
+      inst.error = _("'ASR' required");
+      return FAIL;
+    }
+
+  if (shift->properties->index == SHIFT_RRX)
+    {
+      * str = p;
+      inst.instruction |= shift->properties->bit_field;
+      return SUCCESS;
+    }
+
+  skip_whitespace (p);
+
+  if (kind == NO_SHIFT_RESTRICT && reg_required_here (& p, 8) != FAIL)
+    {
+      inst.instruction |= shift->properties->bit_field | SHIFT_BY_REG;
+      * str = p;
+      return SUCCESS;
+    }
+  else if (! is_immediate_prefix (* p))
+    {
+      inst.error = (NO_SHIFT_RESTRICT
+		    ? _("shift requires register or #expression")
+		    : _("shift requires #expression"));
+      * str = p;
+      return FAIL;
+    }
+
+  inst.error = NULL;
+  p ++;
+
+  if (my_get_expression (& inst.reloc.exp, & p))
+    return FAIL;
+
+  /* Validate some simple #expressions.  */
+  if (inst.reloc.exp.X_op == O_constant)
+    {
+      unsigned num = inst.reloc.exp.X_add_number;
+
+      /* Reject operations greater than 32.  */
+      if (num > 32
+	  /* Reject a shift of 0 unless the mode allows it.  */
+	  || (num == 0 && shift->properties->allows_0 == 0)
+	  /* Reject a shift of 32 unless the mode allows it.  */
+	  || (num == 32 && shift->properties->allows_32 == 0)
+	  )
+	{
+	  /* As a special case we allow a shift of zero for
+	     modes that do not support it to be recoded as an
+	     logical shift left of zero (ie nothing).  We warn
+	     about this though.  */
+	  if (num == 0)
+	    {
+	      as_warn (_("shift of 0 ignored."));
+	      shift = & shift_names[0];
+	      assert (shift->properties->index == SHIFT_LSL);
+	    }
+	  else
+	    {
+	      inst.error = _("invalid immediate shift");
+	      return FAIL;
+	    }
+	}
+
+      /* Shifts of 32 are encoded as 0, for those shifts that
+	 support it.  */
+      if (num == 32)
+	num = 0;
+
+      inst.instruction |= (num << 7) | shift->properties->bit_field;
+    }
+  else
+    {
+      inst.reloc.type   = BFD_RELOC_ARM_SHIFT_IMM;
+      inst.reloc.pc_rel = 0;
+      inst.instruction |= shift->properties->bit_field;
+    }
+
+  * str = p;
+  return SUCCESS;
+}
+
+static void
+do_sat (char ** str, int bias)
+{
+  int rd, rm;
+  expressionS expr;
+
+  skip_whitespace (*str);
+
+  /* Parse <Rd>, field.  */
+  if ((rd = reg_required_here (str, 12)) == FAIL
+      || skip_past_comma (str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  if (rd == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  /* Parse #<immed>,  field.  */
+  if (is_immediate_prefix (**str))
+    (*str)++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+  if (my_get_expression (&expr, str))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return;
+    }
+  if (expr.X_add_number + bias < 0
+      || expr.X_add_number + bias > 31)
+    {
+      inst.error = _("immediate value out of range");
+      return;
+    }
+  inst.instruction |= (expr.X_add_number + bias) << 16;
+  if (skip_past_comma (str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* Parse <Rm> field.  */
+  if ((rm = reg_required_here (str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  if (rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  if (skip_past_comma (str) == SUCCESS)
+    decode_shift (str, SHIFT_LSL_OR_ASR_IMMEDIATE);
+}
+
+/* ARM V6 ssat (argument parse).  */
+
+static void
+do_ssat (char * str)
+{
+  do_sat (&str, /*bias=*/-1);
+  end_of_line (str);
+}
+
+/* ARM V6 usat (argument parse).  */
+
+static void
+do_usat (char * str)
+{
+  do_sat (&str, /*bias=*/0);
+  end_of_line (str);
+}
+
+static void
+do_sat16 (char ** str, int bias)
+{
+  int rd, rm;
+  expressionS expr;
+
+  skip_whitespace (*str);
+
+  /* Parse the <Rd> field.  */
+  if ((rd = reg_required_here (str, 12)) == FAIL
+      || skip_past_comma (str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  if (rd == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  /* Parse #<immed>, field.  */
+  if (is_immediate_prefix (**str))
+    (*str)++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+  if (my_get_expression (&expr, str))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return;
+    }
+  if (expr.X_add_number + bias < 0
+      || expr.X_add_number + bias > 15)
+    {
+      inst.error = _("immediate value out of range");
+      return;
+    }
+  inst.instruction |= (expr.X_add_number + bias) << 16;
+  if (skip_past_comma (str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* Parse <Rm> field.  */
+  if ((rm = reg_required_here (str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  if (rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+}
+
+/* ARM V6 ssat16 (argument parse).  */
+
+static void
+do_ssat16 (char * str)
+{
+  do_sat16 (&str, /*bias=*/-1);
+  end_of_line (str);
+}
+
+static void
+do_usat16 (char * str)
+{
+  do_sat16 (&str, /*bias=*/0);
+  end_of_line (str);
+}
+
+static void
+do_cps_mode (char ** str)
+{
+  expressionS expr;
+
+  skip_whitespace (*str);
+
+  if (! is_immediate_prefix (**str))
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+
+  (*str)++; /* Strip off the immediate signifier.  */
+  if (my_get_expression (&expr, str))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return;
+    }
+
+  /* The mode is a 5 bit field.  Valid values are 0-31.  */
+  if (((unsigned) expr.X_add_number) > 31
+      || (inst.reloc.exp.X_add_number) < 0)
+    {
+      inst.error = _("invalid constant");
+      return;
+    }
+
+  inst.instruction |= expr.X_add_number;
+}
+
+/* ARM V6 srs (argument parse).  */
+
+static void
+do_srs (char * str)
+{
+  char *exclam;
+  skip_whitespace (str);
+  exclam = strchr (str, '!');
+  if (exclam)
+    *exclam = '\0';
+  do_cps_mode (&str);
+  if (exclam)
+    *exclam = '!';
+  if (*str == '!')
+    {
+      inst.instruction |= WRITE_BACK;
+      str++;
+    }
+  end_of_line (str);
+}
+
+/* ARM V6 SMMUL (argument parse).  */
+
+static void
+do_smmul (char * str)
+{
+  int rd, rm, rs;
+
+  skip_whitespace (str);
+  if ((rd = reg_required_here (&str, 16)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rs = reg_required_here (&str, 8)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (   rd == REG_PC
+      || rm == REG_PC
+      || rs == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* ARM V6 SMLALD (argument parse).  */
+
+static void
+do_smlald (char * str)
+{
+  int rdlo, rdhi, rm, rs;
+
+  skip_whitespace (str);
+  if ((rdlo = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rdhi = reg_required_here (&str, 16)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rs = reg_required_here (&str, 8)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (   rdlo == REG_PC
+      || rdhi == REG_PC
+      || rm == REG_PC
+      || rs == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* ARM V6 SMLAD (argument parse).  Signed multiply accumulate dual.
+   smlad{x}{<cond>} Rd, Rm, Rs, Rn */
+
+static void
+do_smlad (char * str)
+{
+  int rd, rm, rs, rn;
+
+  skip_whitespace (str);
+  if ((rd = reg_required_here (&str, 16)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rs = reg_required_here (&str, 8)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rn = reg_required_here (&str, 12)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (   rd == REG_PC
+      || rn == REG_PC
+      || rs == REG_PC
+      || rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* Returns true if the endian-specifier indicates big-endianness.  */
+
+static int
+do_endian_specifier (char * str)
+{
+  int big_endian = 0;
+
+  skip_whitespace (str);
+  if (strlen (str) < 2)
+    inst.error = _("missing endian specifier");
+  else if (strncasecmp (str, "BE", 2) == 0)
+    {
+      str += 2;
+      big_endian = 1;
+    }
+  else if (strncasecmp (str, "LE", 2) == 0)
+    str += 2;
+  else
+    inst.error = _("valid endian specifiers are be or le");
+
+  end_of_line (str);
+
+  return big_endian;
+}
+
+/* ARM V6 SETEND (argument parse).  Sets the E bit in the CPSR while
+   preserving the other bits.
+
+   setend <endian_specifier>, where <endian_specifier> is either
+   BE or LE.  */
+
+static void
+do_setend (char * str)
+{
+  if (do_endian_specifier (str))
+    inst.instruction |= 0x200;
+}
+
+/* ARM V6 SXTH.
+
+   SXTH {<cond>} <Rd>, <Rm>{, <rotation>}
+   Condition defaults to COND_ALWAYS.
+   Error if any register uses R15.  */
+
+static void
+do_sxth (char * str)
+{
+  int rd, rm;
+  expressionS expr;
+  int rotation_clear_mask = 0xfffff3ff;
+  int rotation_eight_mask = 0x00000400;
+  int rotation_sixteen_mask = 0x00000800;
+  int rotation_twenty_four_mask = 0x00000c00;
+
+  skip_whitespace (str);
+  if ((rd = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  else if (rd == REG_PC || rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  /* Zero out the rotation field.  */
+  inst.instruction &= rotation_clear_mask;
+
+  /* Check for lack of optional rotation field.  */
+  if (skip_past_comma (&str) == FAIL)
+    {
+      end_of_line (str);
+      return;
+    }
+
+  /* Move past 'ROR'.  */
+  skip_whitespace (str);
+  if (strncasecmp (str, "ROR", 3) == 0)
+    str += 3;
+  else
+    {
+      inst.error = _("missing rotation field after comma");
+      return;
+    }
+
+  /* Get the immediate constant.  */
+  skip_whitespace (str);
+  if (is_immediate_prefix (* str))
+    str++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+
+  if (my_get_expression (&expr, &str))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return;
+    }
+
+  switch (expr.X_add_number)
+    {
+    case 0:
+      /* Rotation field has already been zeroed.  */
+      break;
+    case 8:
+      inst.instruction |= rotation_eight_mask;
+      break;
+
+    case 16:
+      inst.instruction |= rotation_sixteen_mask;
+      break;
+
+    case 24:
+      inst.instruction |= rotation_twenty_four_mask;
+      break;
+
+    default:
+      inst.error = _("rotation can be 8, 16, 24 or 0 when field is ommited");
+      break;
+    }
+
+  end_of_line (str);
+}
+
+/* ARM V6 SXTAH extracts a 16-bit value from a register, sign
+   extends it to 32-bits, and adds the result to a value in another
+   register.  You can specify a rotation by 0, 8, 16, or 24 bits
+   before extracting the 16-bit value.
+   SXTAH{<cond>} <Rd>, <Rn>, <Rm>{, <rotation>}
+   Condition defaults to COND_ALWAYS.
+   Error if any register uses R15.  */
+
+static void
+do_sxtah (char * str)
+{
+  int rd, rn, rm;
+  expressionS expr;
+  int rotation_clear_mask = 0xfffff3ff;
+  int rotation_eight_mask = 0x00000400;
+  int rotation_sixteen_mask = 0x00000800;
+  int rotation_twenty_four_mask = 0x00000c00;
+
+  skip_whitespace (str);
+  if ((rd = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rn = reg_required_here (&str, 16)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  else if (rd == REG_PC || rn == REG_PC || rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  /* Zero out the rotation field.  */
+  inst.instruction &= rotation_clear_mask;
+
+  /* Check for lack of optional rotation field.  */
+  if (skip_past_comma (&str) == FAIL)
+    {
+      end_of_line (str);
+      return;
+    }
+
+  /* Move past 'ROR'.  */
+  skip_whitespace (str);
+  if (strncasecmp (str, "ROR", 3) == 0)
+    str += 3;
+  else
+    {
+      inst.error = _("missing rotation field after comma");
+      return;
+    }
+
+  /* Get the immediate constant.  */
+  skip_whitespace (str);
+  if (is_immediate_prefix (* str))
+    str++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+
+  if (my_get_expression (&expr, &str))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return;
+    }
+
+  switch (expr.X_add_number)
+    {
+    case 0:
+      /* Rotation field has already been zeroed.  */
+      break;
+
+    case 8:
+      inst.instruction |= rotation_eight_mask;
+      break;
+
+    case 16:
+      inst.instruction |= rotation_sixteen_mask;
+      break;
+
+    case 24:
+      inst.instruction |= rotation_twenty_four_mask;
+      break;
+
+    default:
+      inst.error = _("rotation can be 8, 16, 24 or 0 when field is ommited");
+      break;
+    }
+
+  end_of_line (str);
+}
+
+
+/* ARM V6 RFE (Return from Exception) loads the PC and CPSR from the
+   word at the specified address and the following word
+   respectively.
+   Unconditionally executed.
+   Error if Rn is R15.  */
+
+static void
+do_rfe (char * str)
+{
+  int rn;
+
+  skip_whitespace (str);
+
+  if ((rn = reg_required_here (&str, 16)) == FAIL)
+    return;
+
+  if (rn == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  skip_whitespace (str);
+
+  if (*str == '!')
+    {
+      inst.instruction |= WRITE_BACK;
+      str++;
+    }
+  end_of_line (str);
+}
+
+/* ARM V6 REV (Byte Reverse Word) reverses the byte order in a 32-bit
+   register (argument parse).
+   REV{<cond>} Rd, Rm.
+   Condition defaults to COND_ALWAYS.
+   Error if Rd or Rm are R15.  */
+
+static void
+do_rev (char * str)
+{
+  int rd, rm;
+
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  else if (rd == REG_PC || rm == REG_PC)
+    inst.error = BAD_PC;
+
+  else
+    end_of_line (str);
+}
+
+/* ARM V6 Perform Two Sixteen Bit Integer Additions. (argument parse).
+   QADD16{<cond>} <Rd>, <Rn>, <Rm>
+   Condition defaults to COND_ALWAYS.
+   Error if Rd, Rn or Rm are R15.  */
+
+static void
+do_qadd16 (char * str)
+{
+  int rd, rm, rn;
+
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rn = reg_required_here (&str, 16)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  else if (rd == REG_PC || rm == REG_PC || rn == REG_PC)
+    inst.error = BAD_PC;
+
+  else
+    end_of_line (str);
+}
+
+static void
+do_pkh_core (char * str, int shift)
+{
+  int rd, rn, rm;
+
+  skip_whitespace (str);
+  if (((rd = reg_required_here (&str, 12)) == FAIL)
+      || (skip_past_comma (&str) == FAIL)
+      || ((rn = reg_required_here (&str, 16)) == FAIL)
+      || (skip_past_comma (&str) == FAIL)
+      || ((rm = reg_required_here (&str, 0)) == FAIL))
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  else if (rd == REG_PC || rn == REG_PC || rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  /* Check for optional shift immediate constant.  */
+  if (skip_past_comma (&str) == FAIL)
+    {
+      if (shift == SHIFT_ASR_IMMEDIATE)
+	{
+	  /* If the shift specifier is ommited, turn the instruction
+	     into pkhbt rd, rm, rn.  First, switch the instruction
+	     code, and clear the rn and rm fields.  */
+	  inst.instruction &= 0xfff0f010;
+	  /* Now, re-encode the registers.  */
+	  inst.instruction |= (rm << 16) | rn;
+	}
+      return;
+    }
+
+  decode_shift (&str, shift);
+}
+
+/* ARM V6 Pack Halfword Bottom Top instruction (argument parse).
+   PKHBT {<cond>} <Rd>, <Rn>, <Rm> {, LSL #<shift_imm>}
+   Condition defaults to COND_ALWAYS.
+   Error if Rd, Rn or Rm are R15.  */
+
+static void
+do_pkhbt (char * str)
+{
+  do_pkh_core (str, SHIFT_LSL_IMMEDIATE);
+}
+
+/* ARM V6 PKHTB (Argument Parse).  */
+
+static void
+do_pkhtb (char * str)
+{
+  do_pkh_core (str, SHIFT_ASR_IMMEDIATE);
+}
+
+/* ARM V6 Load Register Exclusive instruction (argument parse).
+   LDREX{,B,D,H}{<cond>} <Rd, [<Rn>]
+   Condition defaults to COND_ALWAYS.
+   Error if Rd or Rn are R15.
+   See ARMARMv6 A4.1.27: LDREX.  */
+
+static void
+do_ldrex (char * str)
+{
+  int rd, rn;
+
+  skip_whitespace (str);
+
+  /* Parse Rd.  */
+  if (((rd = reg_required_here (&str, 12)) == FAIL)
+      || (skip_past_comma (&str) == FAIL))
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  else if (rd == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+  skip_whitespace (str);
+
+  /* Skip past '['.  */
+  if ((strlen (str) >= 1)
+      &&strncmp (str, "[", 1) == 0)
+    str += 1;
+  skip_whitespace (str);
+
+  /* Parse Rn.  */
+  if ((rn = reg_required_here (&str, 16)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  else if (rn == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+  skip_whitespace (str);
+
+  /* Skip past ']'.  */
+  if ((strlen (str) >= 1)
+      && strncmp (str, "]", 1) == 0)
+    str += 1;
+
+  end_of_line (str);
+}
+
+/* ARM V6 change processor state instruction (argument parse)
+      CPS, CPSIE, CSPID .  */
+
+static void
+do_cps (char * str)
+{
+  do_cps_mode (&str);
+  end_of_line (str);
+}
+
+static void
+do_cps_flags (char ** str, int thumb_p)
+{
+  struct cps_flag
+  {
+    char character;
+    unsigned long arm_value;
+    unsigned long thumb_value;
+  };
+  static struct cps_flag flag_table[] =
+  {
+    {'a', 0x100, 0x4 },
+    {'i', 0x080, 0x2 },
+    {'f', 0x040, 0x1 }
+  };
+
+  int saw_a_flag = 0;
+
+  skip_whitespace (*str);
+
+  /* Get the a, f and i flags.  */
+  while (**str && **str != ',')
+    {
+      struct cps_flag *p;
+      struct cps_flag *q = flag_table + sizeof (flag_table)/sizeof (*p);
+
+      for (p = flag_table; p < q; ++p)
+	if (strncasecmp (*str, &p->character, 1) == 0)
+	  {
+	    inst.instruction |= (thumb_p ? p->thumb_value : p->arm_value);
+	    saw_a_flag = 1;
+	    break;
+	  }
+      if (p == q)
+	{
+	  inst.error = _("unrecognized flag");
+	  return;
+	}
+      (*str)++;
+    }
+
+  if (!saw_a_flag)
+    inst.error = _("no 'a', 'i', or 'f' flags for 'cps'");
+}
+
+static void
+do_cpsi (char * str)
+{
+  do_cps_flags (&str, /*thumb_p=*/0);
+
+  if (skip_past_comma (&str) == SUCCESS)
+    {
+      skip_whitespace (str);
+      do_cps_mode (&str);
+    }
+  end_of_line (str);
+}
+
+/* THUMB V5 breakpoint instruction (argument parse)
+	BKPT <immed_8>.  */
+
+static void
+do_t_bkpt (char * str)
+{
+  expressionS expr;
+  unsigned long number;
+
+  skip_whitespace (str);
+
+  /* Allow optional leading '#'.  */
+  if (is_immediate_prefix (*str))
+    str ++;
+
+  memset (& expr, '\0', sizeof (expr));
+  if (my_get_expression (& expr, & str)
+      || (expr.X_op != O_constant
+	  /* As a convenience we allow 'bkpt' without an operand.  */
+	  && expr.X_op != O_absent))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+
+  number = expr.X_add_number;
+
+  /* Check it fits an 8 bit unsigned.  */
+  if (number != (number & 0xff))
+    {
+      inst.error = _("immediate value out of range");
+      return;
+    }
+
+  inst.instruction |= number;
+
+  end_of_line (str);
+}
+
+#ifdef OBJ_ELF
+static bfd_reloc_code_real_type
+arm_parse_reloc (void)
+{
+  char         id [16];
+  char *       ip;
+  unsigned int i;
+  static struct
+  {
+    char * str;
+    int    len;
+    bfd_reloc_code_real_type reloc;
+  }
+  reloc_map[] =
+  {
+#define MAP(str,reloc) { str, sizeof (str) - 1, reloc }
+    MAP ("(got)",    BFD_RELOC_ARM_GOT32),
+    MAP ("(gotoff)", BFD_RELOC_ARM_GOTOFF),
+    /* ScottB: Jan 30, 1998 - Added support for parsing "var(PLT)"
+       branch instructions generated by GCC for PLT relocs.  */
+    MAP ("(plt)",    BFD_RELOC_ARM_PLT32),
+    MAP ("(target1)", BFD_RELOC_ARM_TARGET1),
+    MAP ("(sbrel)", BFD_RELOC_ARM_SBREL32),
+    MAP ("(target2)", BFD_RELOC_ARM_TARGET2),
+    { NULL, 0,         BFD_RELOC_UNUSED }
+#undef MAP
+  };
+
+  for (i = 0, ip = input_line_pointer;
+       i < sizeof (id) && (ISALNUM (*ip) || ISPUNCT (*ip));
+       i++, ip++)
+    id[i] = TOLOWER (*ip);
+
+  for (i = 0; reloc_map[i].str; i++)
+    if (strncmp (id, reloc_map[i].str, reloc_map[i].len) == 0)
+      break;
+
+  input_line_pointer += reloc_map[i].len;
+
+  return reloc_map[i].reloc;
+}
+#endif
+
+/* ARM V5 branch-link-exchange (argument parse) for BLX(1) only.
+   Expects inst.instruction is set for BLX(1).
+   Note: this is cloned from do_branch, and the reloc changed to be a
+	new one that can cope with setting one extra bit (the H bit).  */
+
+static void
+do_branch25 (char * str)
+{
+  if (my_get_expression (& inst.reloc.exp, & str))
+    return;
+
+#ifdef OBJ_ELF
+  {
+    char * save_in;
+
+    /* ScottB: February 5, 1998 */
+    /* Check to see of PLT32 reloc required for the instruction.  */
+
+    /* arm_parse_reloc() works on input_line_pointer.
+       We actually want to parse the operands to the branch instruction
+       passed in 'str'.  Save the input pointer and restore it later.  */
+    save_in = input_line_pointer;
+    input_line_pointer = str;
+
+    if (inst.reloc.exp.X_op == O_symbol
+	&& *str == '('
+	&& arm_parse_reloc () == BFD_RELOC_ARM_PLT32)
+      {
+	inst.reloc.type   = BFD_RELOC_ARM_PLT32;
+	inst.reloc.pc_rel = 0;
+	/* Modify str to point to after parsed operands, otherwise
+	   end_of_line() will complain about the (PLT) left in str.  */
+	str = input_line_pointer;
+      }
+    else
+      {
+	inst.reloc.type   = BFD_RELOC_ARM_PCREL_BLX;
+	inst.reloc.pc_rel = 1;
+      }
+
+    input_line_pointer = save_in;
+  }
+#else
+  inst.reloc.type   = BFD_RELOC_ARM_PCREL_BLX;
+  inst.reloc.pc_rel = 1;
+#endif /* OBJ_ELF */
+
+  end_of_line (str);
+}
+
+/* ARM V5 branch-link-exchange instruction (argument parse)
+     BLX <target_addr>		ie BLX(1)
+     BLX{<condition>} <Rm>	ie BLX(2)
+   Unfortunately, there are two different opcodes for this mnemonic.
+   So, the insns[].value is not used, and the code here zaps values
+	into inst.instruction.
+   Also, the <target_addr> can be 25 bits, hence has its own reloc.  */
+
+static void
+do_blx (char * str)
+{
+  char * mystr = str;
+  int rm;
+
+  skip_whitespace (mystr);
+  rm = reg_required_here (& mystr, 0);
+
+  /* The above may set inst.error.  Ignore his opinion.  */
+  inst.error = 0;
+
+  if (rm != FAIL)
+    {
+      /* Arg is a register.
+	 Use the condition code our caller put in inst.instruction.
+	 Pass ourselves off as a BX with a funny opcode.  */
+      inst.instruction |= 0x012fff30;
+      do_bx (str);
+    }
+  else
+    {
+      /* This must be is BLX <target address>, no condition allowed.  */
+      if (inst.instruction != COND_ALWAYS)
+	{
+	  inst.error = BAD_COND;
+	  return;
+	}
+
+      inst.instruction = 0xfafffffe;
+
+      /* Process like a B/BL, but with a different reloc.
+	 Note that B/BL expecte fffffe, not 0, offset in the opcode table.  */
+      do_branch25 (str);
+    }
+}
+
+/* ARM V5 Thumb BLX (argument parse)
+	BLX <target_addr>	which is BLX(1)
+	BLX <Rm>		which is BLX(2)
+   Unfortunately, there are two different opcodes for this mnemonic.
+   So, the tinsns[].value is not used, and the code here zaps values
+	into inst.instruction.	*/
+
+static void
+do_t_blx (char * str)
+{
+  char * mystr = str;
+  int rm;
+
+  skip_whitespace (mystr);
+  inst.instruction = 0x4780;
+
+  /* Note that this call is to the ARM register recognizer.  BLX(2)
+     uses the ARM register space, not the Thumb one, so a call to
+     thumb_reg() would be wrong.  */
+  rm = reg_required_here (& mystr, 3);
+  inst.error = 0;
+
+  if (rm != FAIL)
+    {
+      /* It's BLX(2).  The .instruction was zapped with rm & is final.  */
+      inst.size = 2;
+    }
+  else
+    {
+      /* No ARM register.  This must be BLX(1).  Change the .instruction.  */
+      inst.instruction = 0xf7ffeffe;
+      inst.size = 4;
+
+      if (my_get_expression (& inst.reloc.exp, & mystr))
+	return;
+
+      inst.reloc.type   = BFD_RELOC_THUMB_PCREL_BLX;
+      inst.reloc.pc_rel = 1;
+    }
+
+  end_of_line (mystr);
+}
+
+/* ARM V5 breakpoint instruction (argument parse)
+     BKPT <16 bit unsigned immediate>
+     Instruction is not conditional.
+	The bit pattern given in insns[] has the COND_ALWAYS condition,
+	and it is an error if the caller tried to override that.  */
+
+static void
+do_bkpt (char * str)
+{
+  expressionS expr;
+  unsigned long number;
+
+  skip_whitespace (str);
+
+  /* Allow optional leading '#'.  */
+  if (is_immediate_prefix (* str))
+    str++;
+
+  memset (& expr, '\0', sizeof (expr));
+
+  if (my_get_expression (& expr, & str)
+      || (expr.X_op != O_constant
+	  /* As a convenience we allow 'bkpt' without an operand.  */
+	  && expr.X_op != O_absent))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+
+  number = expr.X_add_number;
+
+  /* Check it fits a 16 bit unsigned.  */
+  if (number != (number & 0xffff))
+    {
+      inst.error = _("immediate value out of range");
+      return;
+    }
+
+  /* Top 12 of 16 bits to bits 19:8.  */
+  inst.instruction |= (number & 0xfff0) << 4;
+
+  /* Bottom 4 of 16 bits to bits 3:0.  */
+  inst.instruction |= number & 0xf;
+
+  end_of_line (str);
+}
+
+/* THUMB CPS instruction (argument parse).  */
+
+static void
+do_t_cps (char * str)
+{
+  do_cps_flags (&str, /*thumb_p=*/1);
+  end_of_line (str);
+}
+
+/* Parse and validate that a register is of the right form, this saves
+   repeated checking of this information in many similar cases.
+   Unlike the 32-bit case we do not insert the register into the opcode
+   here, since the position is often unknown until the full instruction
+   has been parsed.  */
+
+static int
+thumb_reg (char ** strp, int hi_lo)
+{
+  int reg;
+
+  if ((reg = reg_required_here (strp, -1)) == FAIL)
+    return FAIL;
+
+  switch (hi_lo)
+    {
+    case THUMB_REG_LO:
+      if (reg > 7)
+	{
+	  inst.error = _("lo register required");
+	  return FAIL;
+	}
+      break;
+
+    case THUMB_REG_HI:
+      if (reg < 8)
+	{
+	  inst.error = _("hi register required");
+	  return FAIL;
+	}
+      break;
+
+    default:
+      break;
+    }
+
+  return reg;
+}
+
+static void
+thumb_mov_compare (char * str, int move)
+{
+  int Rd, Rs = FAIL;
+
+  skip_whitespace (str);
+
+  if ((Rd = thumb_reg (&str, THUMB_REG_ANY)) == FAIL
+      || skip_past_comma (&str) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (move != THUMB_CPY && is_immediate_prefix (*str))
+    {
+      str++;
+      if (my_get_expression (&inst.reloc.exp, &str))
+	return;
+    }
+  else if ((Rs = thumb_reg (&str, THUMB_REG_ANY)) == FAIL)
+    return;
+
+  if (Rs != FAIL)
+    {
+      if (move != THUMB_CPY && Rs < 8 && Rd < 8)
+	{
+	  if (move == THUMB_MOVE)
+	    /* A move of two lowregs is encoded as ADD Rd, Rs, #0
+	       since a MOV instruction produces unpredictable results.  */
+	    inst.instruction = T_OPCODE_ADD_I3;
+	  else
+	    inst.instruction = T_OPCODE_CMP_LR;
+	  inst.instruction |= Rd | (Rs << 3);
+	}
+      else
+	{
+	  if (move == THUMB_MOVE)
+	    inst.instruction = T_OPCODE_MOV_HR;
+	  else if (move != THUMB_CPY)
+	    inst.instruction = T_OPCODE_CMP_HR;
+
+	  if (Rd > 7)
+	    inst.instruction |= THUMB_H1;
+
+	  if (Rs > 7)
+	    inst.instruction |= THUMB_H2;
+
+	  inst.instruction |= (Rd & 7) | ((Rs & 7) << 3);
+	}
+    }
+  else
+    {
+      if (Rd > 7)
+	{
+	  inst.error = _("only lo regs allowed with immediate");
+	  return;
+	}
+
+      if (move == THUMB_MOVE)
+	inst.instruction = T_OPCODE_MOV_I8;
+      else
+	inst.instruction = T_OPCODE_CMP_I8;
+
+      inst.instruction |= Rd << 8;
+
+      if (inst.reloc.exp.X_op != O_constant)
+	inst.reloc.type = BFD_RELOC_ARM_THUMB_IMM;
+      else
+	{
+	  unsigned value = inst.reloc.exp.X_add_number;
+
+	  if (value > 255)
+	    {
+	      inst.error = _("invalid immediate");
+	      return;
+	    }
+
+	  inst.instruction |= value;
+	}
+    }
+
+  end_of_line (str);
+}
+
+/* THUMB CPY instruction (argument parse).  */
+
+static void
+do_t_cpy (char * str)
+{
+  thumb_mov_compare (str, THUMB_CPY);
+}
+
+/* THUMB SETEND instruction (argument parse).  */
+
+static void
+do_t_setend (char * str)
+{
+  if (do_endian_specifier (str))
+    inst.instruction |= 0x8;
+}
+
+/* Parse INSN_TYPE insn STR having a possible IMMEDIATE_SIZE immediate.  */
+
+static unsigned long
+check_iwmmxt_insn (char * str,
+		   enum iwmmxt_insn_type insn_type,
+		   int immediate_size)
+{
+  int reg = 0;
+  const char *  inst_error;
+  expressionS expr;
+  unsigned long number;
+
+  inst_error = inst.error;
+  if (!inst.error)
+    inst.error = BAD_ARGS;
+  skip_whitespace (str);
+
+  switch (insn_type)
+    {
+    case check_rd:
+      if ((reg = reg_required_here (&str, 12)) == FAIL)
+	return FAIL;
+      break;
+
+    case check_wr:
+       if ((wreg_required_here (&str, 0, IWMMXT_REG_WR)) == FAIL)
+	 return FAIL;
+       break;
+
+    case check_wrwr:
+      if ((wreg_required_here (&str, 12, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL))
+	return FAIL;
+      break;
+
+    case check_wrwrwr:
+      if ((wreg_required_here (&str, 12, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 0, IWMMXT_REG_WR) == FAIL))
+	return FAIL;
+      break;
+
+    case check_wrwrwcg:
+      if ((wreg_required_here (&str, 12, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 0, IWMMXT_REG_WCG) == FAIL))
+	return FAIL;
+      break;
+
+    case check_tbcst:
+      if ((wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || reg_required_here (&str, 12) == FAIL))
+	return FAIL;
+      break;
+
+    case check_tmovmsk:
+      if ((reg_required_here (&str, 12) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL))
+	return FAIL;
+      break;
+
+    case check_tmia:
+      if ((wreg_required_here (&str, 5, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || reg_required_here (&str, 0) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || reg_required_here (&str, 12) == FAIL))
+	return FAIL;
+      break;
+
+    case check_tmcrr:
+      if ((wreg_required_here (&str, 0, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || reg_required_here (&str, 12) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || reg_required_here (&str, 16) == FAIL))
+	return FAIL;
+      break;
+
+    case check_tmrrc:
+      if ((reg_required_here (&str, 12) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || reg_required_here (&str, 16) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 0, IWMMXT_REG_WR) == FAIL))
+	return FAIL;
+      break;
+
+    case check_tmcr:
+      if ((wreg_required_here (&str, 16, IWMMXT_REG_WC) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || reg_required_here (&str, 12) == FAIL))
+	return FAIL;
+      break;
+
+    case check_tmrc:
+      if ((reg_required_here (&str, 12) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 16, IWMMXT_REG_WC) == FAIL))
+	return FAIL;
+      break;
+
+    case check_tinsr:
+      if ((wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || reg_required_here (&str, 12) == FAIL
+	   || skip_past_comma (&str) == FAIL))
+	return FAIL;
+      break;
+
+    case check_textrc:
+      if ((reg_required_here (&str, 12) == FAIL
+	   || skip_past_comma (&str) == FAIL))
+	return FAIL;
+      break;
+
+    case check_waligni:
+      if ((wreg_required_here (&str, 12, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 0, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL))
+	return FAIL;
+      break;
+
+    case check_textrm:
+      if ((reg_required_here (&str, 12) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL))
+	return FAIL;
+      break;
+
+    case check_wshufh:
+      if ((wreg_required_here (&str, 12, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL
+	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
+	   || skip_past_comma (&str) == FAIL))
+	return FAIL;
+      break;
+    }
+
+  if (immediate_size == 0)
+    {
+      end_of_line (str);
+      inst.error = inst_error;
+      return reg;
+    }
+  else
+    {
+      skip_whitespace (str);
+
+      /* Allow optional leading '#'.  */
+      if (is_immediate_prefix (* str))
+        str++;
+
+      memset (& expr, '\0', sizeof (expr));
+
+      if (my_get_expression (& expr, & str) || (expr.X_op != O_constant))
+        {
+          inst.error = _("bad or missing expression");
+          return FAIL;
+        }
+
+      number = expr.X_add_number;
+
+      if (number != (number & immediate_size))
+        {
+          inst.error = _("immediate value out of range");
+          return FAIL;
+        }
+      end_of_line (str);
+      inst.error = inst_error;
+      return number;
+    }
+}
+
+static void
+do_iwmmxt_byte_addr (char * str)
+{
+  int op = (inst.instruction & 0x300) >> 8;
+  int reg;
+
+  inst.instruction &= ~0x300;
+  inst.instruction |= (op & 1) << 22 | (op & 2) << 7;
+
+  skip_whitespace (str);
+
+  if ((reg = wreg_required_here (&str, 12, IWMMXT_REG_WR_OR_WC)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || cp_byte_address_required_here (&str) == FAIL)
+    {
+      if (! inst.error)
+        inst.error = BAD_ARGS;
+    }
+  else
+    end_of_line (str);
+
+  if (wc_register (reg))
+    {
+      as_bad (_("non-word size not supported with control register"));
+      inst.instruction |=  0xf0000100;
+      inst.instruction &= ~0x00400000;
+    }
+}
+
+static void
+do_iwmmxt_tandc (char * str)
+{
+  int reg;
+
+  reg = check_iwmmxt_insn (str, check_rd, 0);
+
+  if (reg != REG_PC && !inst.error)
+    inst.error = _("only r15 allowed here");
+}
+
+static void
+do_iwmmxt_tbcst (char * str)
+{
+  check_iwmmxt_insn (str, check_tbcst, 0);
+}
+
+static void
+do_iwmmxt_textrc (char * str)
+{
+  unsigned long number;
+
+  if ((number = check_iwmmxt_insn (str, check_textrc, 7)) == (unsigned long) FAIL)
+    return;
+
+  inst.instruction |= number & 0x7;
+}
+
+static void
+do_iwmmxt_textrm (char * str)
+{
+  unsigned long number;
+
+  if ((number = check_iwmmxt_insn (str, check_textrm, 7)) == (unsigned long) FAIL)
+    return;
+
+  inst.instruction |= number & 0x7;
+}
+
+static void
+do_iwmmxt_tinsr (char * str)
+{
+  unsigned long number;
+
+  if ((number = check_iwmmxt_insn (str, check_tinsr, 7)) == (unsigned long) FAIL)
+    return;
+
+  inst.instruction |= number & 0x7;
+}
+
+static void
+do_iwmmxt_tmcr (char * str)
+{
+  check_iwmmxt_insn (str, check_tmcr, 0);
+}
+
+static void
+do_iwmmxt_tmcrr (char * str)
+{
+  check_iwmmxt_insn (str, check_tmcrr, 0);
+}
+
+static void
+do_iwmmxt_tmia (char * str)
+{
+  check_iwmmxt_insn (str, check_tmia, 0);
+}
+
+static void
+do_iwmmxt_tmovmsk (char * str)
+{
+  check_iwmmxt_insn (str, check_tmovmsk, 0);
+}
+
+static void
+do_iwmmxt_tmrc (char * str)
+{
+  check_iwmmxt_insn (str, check_tmrc, 0);
+}
+
+static void
+do_iwmmxt_tmrrc (char * str)
+{
+  check_iwmmxt_insn (str, check_tmrrc, 0);
+}
+
+static void
+do_iwmmxt_torc (char * str)
+{
+  check_iwmmxt_insn (str, check_rd, 0);
+}
+
+static void
+do_iwmmxt_waligni (char * str)
+{
+  unsigned long number;
+
+  if ((number = check_iwmmxt_insn (str, check_waligni, 7)) == (unsigned long) FAIL)
+    return;
+
+  inst.instruction |= ((number & 0x7) << 20);
+}
+
+static void
+do_iwmmxt_wmov (char * str)
+{
+  if (check_iwmmxt_insn (str, check_wrwr, 0) == (unsigned long) FAIL)
+    return;
+
+  inst.instruction |= ((inst.instruction >> 16) & 0xf);
+}
+
+static void
+do_iwmmxt_word_addr (char * str)
+{
+  int op = (inst.instruction & 0x300) >> 8;
+  int reg;
+
+  inst.instruction &= ~0x300;
+  inst.instruction |= (op & 1) << 22 | (op & 2) << 7;
+
+  skip_whitespace (str);
+
+  if ((reg = wreg_required_here (&str, 12, IWMMXT_REG_WR_OR_WC)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || cp_address_required_here (& str, CP_WB_OK) == FAIL)
+    {
+      if (! inst.error)
+        inst.error = BAD_ARGS;
+    }
+  else
+    end_of_line (str);
+
+  if (wc_register (reg))
+    {
+      if ((inst.instruction & COND_MASK) != COND_ALWAYS)
+	as_bad (_("conditional execution not supported with control register"));
+      if (op != 2)
+	as_bad (_("non-word size not supported with control register"));
+      inst.instruction |=  0xf0000100;
+      inst.instruction &= ~0x00400000;
+    }
+}
+
+static void
+do_iwmmxt_wrwr (char * str)
+{
+  check_iwmmxt_insn (str, check_wrwr, 0);
+}
+
+static void
+do_iwmmxt_wrwrwcg (char * str)
+{
+  check_iwmmxt_insn (str, check_wrwrwcg, 0);
+}
+
+static void
+do_iwmmxt_wrwrwr (char * str)
+{
+  check_iwmmxt_insn (str, check_wrwrwr, 0);
+}
+
+static void
+do_iwmmxt_wshufh (char * str)
+{
+  unsigned long number;
+
+  if ((number = check_iwmmxt_insn (str, check_wshufh, 0xff)) == (unsigned long) FAIL)
+    return;
+
+  inst.instruction |= ((number & 0xf0) << 16) | (number & 0xf);
+}
+
+static void
+do_iwmmxt_wzero (char * str)
+{
+  if (check_iwmmxt_insn (str, check_wr, 0) == (unsigned long) FAIL)
+    return;
+
+  inst.instruction |= ((inst.instruction & 0xf) << 12) | ((inst.instruction & 0xf) << 16);
+}
+
+/* Xscale multiply-accumulate (argument parse)
+     MIAcc   acc0,Rm,Rs
+     MIAPHcc acc0,Rm,Rs
+     MIAxycc acc0,Rm,Rs.  */
+
+static void
+do_xsc_mia (char * str)
+{
+  int rs;
+  int rm;
+
+  if (accum0_required_here (& str) == FAIL)
+    inst.error = ERR_NO_ACCUM;
+
+  else if (skip_past_comma (& str) == FAIL
+	   || (rm = reg_required_here (& str, 0)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  else if (skip_past_comma (& str) == FAIL
+	   || (rs = reg_required_here (& str, 12)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  /* inst.instruction has now been zapped with both rm and rs.  */
+  else if (rm == REG_PC || rs == REG_PC)
+    inst.error = BAD_PC;	/* Undefined result if rm or rs is R15.  */
+
+  else
+    end_of_line (str);
+}
+
+/* Xscale move-accumulator-register (argument parse)
+
+     MARcc   acc0,RdLo,RdHi.  */
+
+static void
+do_xsc_mar (char * str)
+{
+  int rdlo, rdhi;
+
+  if (accum0_required_here (& str) == FAIL)
+    inst.error = ERR_NO_ACCUM;
+
+  else if (skip_past_comma (& str) == FAIL
+	   || (rdlo = reg_required_here (& str, 12)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  else if (skip_past_comma (& str) == FAIL
+	   || (rdhi = reg_required_here (& str, 16)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  /* inst.instruction has now been zapped with both rdlo and rdhi.  */
+  else if (rdlo == REG_PC || rdhi == REG_PC)
+    inst.error = BAD_PC;	/* Undefined result if rdlo or rdhi is R15.  */
+
+  else
+    end_of_line (str);
+}
+
+/* Xscale move-register-accumulator (argument parse)
+
+     MRAcc   RdLo,RdHi,acc0.  */
+
+static void
+do_xsc_mra (char * str)
+{
+  int rdlo;
+  int rdhi;
+
+  skip_whitespace (str);
+
+  if ((rdlo = reg_required_here (& str, 12)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  else if (skip_past_comma (& str) == FAIL
+	   || (rdhi = reg_required_here (& str, 16)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  else if  (skip_past_comma (& str) == FAIL
+	    || accum0_required_here (& str) == FAIL)
+    inst.error = ERR_NO_ACCUM;
+
+  /* inst.instruction has now been zapped with both rdlo and rdhi.  */
+  else if (rdlo == rdhi)
+    inst.error = BAD_ARGS;	/* Undefined result if 2 writes to same reg.  */
+
+  else if (rdlo == REG_PC || rdhi == REG_PC)
+    inst.error = BAD_PC;	/* Undefined result if rdlo or rdhi is R15.  */
+  else
+    end_of_line (str);
+}
+
+static int
+ldst_extend (char ** str)
+{
+  int add = INDEX_UP;
+
+  switch (**str)
+    {
+    case '#':
+    case '$':
+      (*str)++;
+      if (my_get_expression (& inst.reloc.exp, str))
+	return FAIL;
+
+      if (inst.reloc.exp.X_op == O_constant)
+	{
+	  int value = inst.reloc.exp.X_add_number;
+
+	  if (value < -4095 || value > 4095)
+	    {
+	      inst.error = _("address offset too large");
+	      return FAIL;
+	    }
+
+	  if (value < 0)
+	    {
+	      value = -value;
+	      add = 0;
+	    }
+
+	  inst.instruction |= add | value;
+	}
+      else
+	{
+	  inst.reloc.type = BFD_RELOC_ARM_OFFSET_IMM;
+	  inst.reloc.pc_rel = 0;
+	}
+      return SUCCESS;
+
+    case '-':
+      add = 0;
+      /* Fall through.  */
+
+    case '+':
+      (*str)++;
+      /* Fall through.  */
+
+    default:
+      if (reg_required_here (str, 0) == FAIL)
+	return FAIL;
+
+      inst.instruction |= add | OFFSET_REG;
+      if (skip_past_comma (str) == SUCCESS)
+	return decode_shift (str, SHIFT_IMMEDIATE);
+
+      return SUCCESS;
+    }
+}
+
+/* ARMv5TE: Preload-Cache
+
+    PLD <addr_mode>
+
+  Syntactically, like LDR with B=1, W=0, L=1.  */
+
+static void
+do_pld (char * str)
+{
+  int rd;
+
+  skip_whitespace (str);
+
+  if (* str != '[')
+    {
+      inst.error = _("'[' expected after PLD mnemonic");
+      return;
+    }
+
+  ++str;
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (& str, 16)) == FAIL)
+    return;
+
+  skip_whitespace (str);
+
+  if (*str == ']')
+    {
+      /* [Rn], ... ?  */
+      ++str;
+      skip_whitespace (str);
+
+      /* Post-indexed addressing is not allowed with PLD.  */
+      if (skip_past_comma (&str) == SUCCESS)
+	{
+	  inst.error
+	    = _("post-indexed expression used in preload instruction");
+	  return;
+	}
+      else if (*str == '!') /* [Rn]! */
+	{
+	  inst.error = _("writeback used in preload instruction");
+	  ++str;
+	}
+      else /* [Rn] */
+	inst.instruction |= INDEX_UP | PRE_INDEX;
+    }
+  else /* [Rn, ...] */
+    {
+      if (skip_past_comma (& str) == FAIL)
+	{
+	  inst.error = _("pre-indexed expression expected");
+	  return;
+	}
+
+      if (ldst_extend (&str) == FAIL)
+	return;
+
+      skip_whitespace (str);
+
+      if (* str != ']')
+	{
+	  inst.error = _("missing ]");
+	  return;
+	}
+
+      ++ str;
+      skip_whitespace (str);
+
+      if (* str == '!') /* [Rn]! */
+	{
+	  inst.error = _("writeback used in preload instruction");
+	  ++ str;
+	}
+
+      inst.instruction |= PRE_INDEX;
+    }
+
+  end_of_line (str);
+}
+
+/* ARMv5TE load-consecutive (argument parse)
+   Mode is like LDRH.
+
+     LDRccD R, mode
+     STRccD R, mode.  */
+
+static void
+do_ldrd (char * str)
+{
+  int rd;
+  int rn;
+
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (& str, 12)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL
+      || (rn = ld_mode_required_here (& str)) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* inst.instruction has now been zapped with Rd and the addressing mode.  */
+  if (rd & 1)		/* Unpredictable result if Rd is odd.  */
+    {
+      inst.error = _("destination register must be even");
+      return;
+    }
+
+  if (rd == REG_LR)
+    {
+      inst.error = _("r14 not allowed here");
+      return;
+    }
+
+  if (((rd == rn) || (rd + 1 == rn))
+      && ((inst.instruction & WRITE_BACK)
+	  || (!(inst.instruction & PRE_INDEX))))
+    as_warn (_("pre/post-indexing used when modified address register is destination"));
+
+  /* For an index-register load, the index register must not overlap the
+     destination (even if not write-back).  */
+  if ((inst.instruction & V4_STR_BIT) == 0
+      && (inst.instruction & HWOFFSET_IMM) == 0)
+    {
+      int rm = inst.instruction & 0x0000000f;
+
+      if (rm == rd || (rm == rd + 1))
+	as_warn (_("ldrd destination registers must not overlap index register"));
+    }
+
+  end_of_line (str);
+}
+
+/* Returns the index into fp_values of a floating point number,
+   or -1 if not in the table.  */
+
+static int
+my_get_float_expression (char ** str)
+{
+  LITTLENUM_TYPE words[MAX_LITTLENUMS];
+  char *         save_in;
+  expressionS    exp;
+  int            i;
+  int            j;
+
+  memset (words, 0, MAX_LITTLENUMS * sizeof (LITTLENUM_TYPE));
+
+  /* Look for a raw floating point number.  */
+  if ((save_in = atof_ieee (*str, 'x', words)) != NULL
+      && is_end_of_line[(unsigned char) *save_in])
+    {
+      for (i = 0; i < NUM_FLOAT_VALS; i++)
+	{
+	  for (j = 0; j < MAX_LITTLENUMS; j++)
+	    {
+	      if (words[j] != fp_values[i][j])
+		break;
+	    }
+
+	  if (j == MAX_LITTLENUMS)
+	    {
+	      *str = save_in;
+	      return i;
+	    }
+	}
+    }
+
+  /* Try and parse a more complex expression, this will probably fail
+     unless the code uses a floating point prefix (eg "0f").  */
+  save_in = input_line_pointer;
+  input_line_pointer = *str;
+  if (expression (&exp) == absolute_section
+      && exp.X_op == O_big
+      && exp.X_add_number < 0)
+    {
+      /* FIXME: 5 = X_PRECISION, should be #define'd where we can use it.
+	 Ditto for 15.  */
+      if (gen_to_words (words, 5, (long) 15) == 0)
+	{
+	  for (i = 0; i < NUM_FLOAT_VALS; i++)
+	    {
+	      for (j = 0; j < MAX_LITTLENUMS; j++)
+		{
+		  if (words[j] != fp_values[i][j])
+		    break;
+		}
+
+	      if (j == MAX_LITTLENUMS)
+		{
+		  *str = input_line_pointer;
+		  input_line_pointer = save_in;
+		  return i;
+		}
+	    }
+	}
+    }
+
+  *str = input_line_pointer;
+  input_line_pointer = save_in;
+  return -1;
+}
+
+/* We handle all bad expressions here, so that we can report the faulty
+   instruction in the error message.  */
+void
+md_operand (expressionS * expr)
+{
+  if (in_my_get_expression)
+    {
+      expr->X_op = O_illegal;
+      if (inst.error == NULL)
+	inst.error = _("bad expression");
+    }
+}
+
+/* Do those data_ops which can take a negative immediate constant
+   by altering the instruction.  A bit of a hack really.
+        MOV <-> MVN
+        AND <-> BIC
+        ADC <-> SBC
+        by inverting the second operand, and
+        ADD <-> SUB
+        CMP <-> CMN
+        by negating the second operand.  */
+
+static int
+negate_data_op (unsigned long * instruction,
+		unsigned long   value)
+{
+  int op, new_inst;
+  unsigned long negated, inverted;
+
+  negated = validate_immediate (-value);
+  inverted = validate_immediate (~value);
+
+  op = (*instruction >> DATA_OP_SHIFT) & 0xf;
+  switch (op)
+    {
+      /* First negates.  */
+    case OPCODE_SUB:             /* ADD <-> SUB  */
+      new_inst = OPCODE_ADD;
+      value = negated;
+      break;
+
+    case OPCODE_ADD:
+      new_inst = OPCODE_SUB;
+      value = negated;
+      break;
+
+    case OPCODE_CMP:             /* CMP <-> CMN  */
+      new_inst = OPCODE_CMN;
+      value = negated;
+      break;
+
+    case OPCODE_CMN:
+      new_inst = OPCODE_CMP;
+      value = negated;
+      break;
+
+      /* Now Inverted ops.  */
+    case OPCODE_MOV:             /* MOV <-> MVN  */
+      new_inst = OPCODE_MVN;
+      value = inverted;
+      break;
+
+    case OPCODE_MVN:
+      new_inst = OPCODE_MOV;
+      value = inverted;
+      break;
+
+    case OPCODE_AND:             /* AND <-> BIC  */
+      new_inst = OPCODE_BIC;
+      value = inverted;
+      break;
+
+    case OPCODE_BIC:
+      new_inst = OPCODE_AND;
+      value = inverted;
+      break;
+
+    case OPCODE_ADC:              /* ADC <-> SBC  */
+      new_inst = OPCODE_SBC;
+      value = inverted;
+      break;
+
+    case OPCODE_SBC:
+      new_inst = OPCODE_ADC;
+      value = inverted;
+      break;
+
+      /* We cannot do anything.  */
+    default:
+      return FAIL;
+    }
+
+  if (value == (unsigned) FAIL)
+    return FAIL;
+
+  *instruction &= OPCODE_MASK;
+  *instruction |= new_inst << DATA_OP_SHIFT;
+  return value;
+}
+
+static int
+data_op2 (char ** str)
+{
+  int value;
+  expressionS expr;
+
+  skip_whitespace (* str);
+
+  if (reg_required_here (str, 0) != FAIL)
+    {
+      if (skip_past_comma (str) == SUCCESS)
+	/* Shift operation on register.  */
+	return decode_shift (str, NO_SHIFT_RESTRICT);
+
+      return SUCCESS;
+    }
+  else
+    {
+      /* Immediate expression.  */
+      if (is_immediate_prefix (**str))
+	{
+	  (*str)++;
+	  inst.error = NULL;
+
+	  if (my_get_expression (&inst.reloc.exp, str))
+	    return FAIL;
+
+	  if (inst.reloc.exp.X_add_symbol)
+	    {
+	      inst.reloc.type = BFD_RELOC_ARM_IMMEDIATE;
+	      inst.reloc.pc_rel = 0;
+	    }
+	  else
+	    {
+	      if (skip_past_comma (str) == SUCCESS)
+		{
+		  /* #x, y -- ie explicit rotation by Y.  */
+		  if (my_get_expression (&expr, str))
+		    return FAIL;
+
+		  if (expr.X_op != O_constant)
+		    {
+		      inst.error = _("constant expression expected");
+		      return FAIL;
+		    }
+
+		  /* Rotate must be a multiple of 2.  */
+		  if (((unsigned) expr.X_add_number) > 30
+		      || (expr.X_add_number & 1) != 0
+		      || ((unsigned) inst.reloc.exp.X_add_number) > 255)
+		    {
+		      inst.error = _("invalid constant");
+		      return FAIL;
+		    }
+		  inst.instruction |= INST_IMMEDIATE;
+		  inst.instruction |= inst.reloc.exp.X_add_number;
+		  inst.instruction |= expr.X_add_number << 7;
+		  return SUCCESS;
+		}
+
+	      /* Implicit rotation, select a suitable one.  */
+	      value = validate_immediate (inst.reloc.exp.X_add_number);
+
+	      if (value == FAIL)
+		{
+		  /* Can't be done.  Perhaps the code reads something like
+		     "add Rd, Rn, #-n", where "sub Rd, Rn, #n" would be OK.  */
+		  if ((value = negate_data_op (&inst.instruction,
+					       inst.reloc.exp.X_add_number))
+		      == FAIL)
+		    {
+		      inst.error = _("invalid constant");
+		      return FAIL;
+		    }
+		}
+
+	      inst.instruction |= value;
+	    }
+
+	  inst.instruction |= INST_IMMEDIATE;
+	  return SUCCESS;
+	}
+
+      (*str)++;
+      inst.error = _("register or shift expression expected");
+      return FAIL;
+    }
+}
+
+static int
+fp_op2 (char ** str)
+{
+  skip_whitespace (* str);
+
+  if (fp_reg_required_here (str, 0) != FAIL)
+    return SUCCESS;
+  else
+    {
+      /* Immediate expression.  */
+      if (*((*str)++) == '#')
+	{
+	  int i;
+
+	  inst.error = NULL;
+
+	  skip_whitespace (* str);
+
+	  /* First try and match exact strings, this is to guarantee
+	     that some formats will work even for cross assembly.  */
+
+	  for (i = 0; fp_const[i]; i++)
+	    {
+	      if (strncmp (*str, fp_const[i], strlen (fp_const[i])) == 0)
+		{
+		  char *start = *str;
+
+		  *str += strlen (fp_const[i]);
+		  if (is_end_of_line[(unsigned char) **str])
+		    {
+		      inst.instruction |= i + 8;
+		      return SUCCESS;
+		    }
+		  *str = start;
+		}
+	    }
+
+	  /* Just because we didn't get a match doesn't mean that the
+	     constant isn't valid, just that it is in a format that we
+	     don't automatically recognize.  Try parsing it with
+	     the standard expression routines.  */
+	  if ((i = my_get_float_expression (str)) >= 0)
+	    {
+	      inst.instruction |= i + 8;
+	      return SUCCESS;
+	    }
+
+	  inst.error = _("invalid floating point immediate expression");
+	  return FAIL;
+	}
+      inst.error =
+	_("floating point register or immediate expression expected");
+      return FAIL;
+    }
+}
+
+static void
+do_arit (char * str)
+{
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 16) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || data_op2 (&str) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_adr (char * str)
+{
+  /* This is a pseudo-op of the form "adr rd, label" to be converted
+     into a relative address of the form "add rd, pc, #label-.-8".  */
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || my_get_expression (&inst.reloc.exp, &str))
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* Frag hacking will turn this into a sub instruction if the offset turns
+     out to be negative.  */
+  inst.reloc.type = BFD_RELOC_ARM_IMMEDIATE;
+#ifndef TE_WINCE
+  inst.reloc.exp.X_add_number -= 8; /* PC relative adjust.  */
+#endif
+  inst.reloc.pc_rel = 1;
+
+  end_of_line (str);
+}
+
+static void
+do_adrl (char * str)
+{
+  /* This is a pseudo-op of the form "adrl rd, label" to be converted
+     into a relative address of the form:
+     add rd, pc, #low(label-.-8)"
+     add rd, rd, #high(label-.-8)"  */
+
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || my_get_expression (&inst.reloc.exp, &str))
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+
+      return;
+    }
+
+  end_of_line (str);
+  /* Frag hacking will turn this into a sub instruction if the offset turns
+     out to be negative.  */
+  inst.reloc.type              = BFD_RELOC_ARM_ADRL_IMMEDIATE;
+#ifndef TE_WINCE
+  inst.reloc.exp.X_add_number -= 8; /* PC relative adjust  */
+#endif
+  inst.reloc.pc_rel            = 1;
+  inst.size                    = INSN_SIZE * 2;
+}
+
+static void
+do_cmp (char * str)
+{
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 16) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || data_op2 (&str) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_mov (char * str)
+{
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || data_op2 (&str) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_ldst (char * str)
+{
+  int pre_inc = 0;
+  int conflict_reg;
+  int value;
+
+  skip_whitespace (str);
+
+  if ((conflict_reg = reg_required_here (&str, 12)) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL)
+    {
+      inst.error = _("address expected");
+      return;
+    }
+
+  if (*str == '[')
+    {
+      int reg;
+
+      str++;
+
+      skip_whitespace (str);
+
+      if ((reg = reg_required_here (&str, 16)) == FAIL)
+	return;
+
+      /* Conflicts can occur on stores as well as loads.  */
+      conflict_reg = (conflict_reg == reg);
+
+      skip_whitespace (str);
+
+      if (*str == ']')
+	{
+	  str ++;
+
+	  if (skip_past_comma (&str) == SUCCESS)
+	    {
+	      /* [Rn],... (post inc)  */
+	      if (ldst_extend (&str) == FAIL)
+		return;
+	      if (conflict_reg)
+		as_warn (_("%s register same as write-back base"),
+			 ((inst.instruction & LOAD_BIT)
+			  ? _("destination") : _("source")));
+	    }
+	  else
+	    {
+	      /* [Rn]  */
+	      skip_whitespace (str);
+
+	      if (*str == '!')
+		{
+		  if (conflict_reg)
+		    as_warn (_("%s register same as write-back base"),
+			     ((inst.instruction & LOAD_BIT)
+			      ? _("destination") : _("source")));
+		  str++;
+		  inst.instruction |= WRITE_BACK;
+		}
+
+	      inst.instruction |= INDEX_UP;
+	      pre_inc = 1;
+	    }
+	}
+      else
+	{
+	  /* [Rn,...]  */
+	  if (skip_past_comma (&str) == FAIL)
+	    {
+	      inst.error = _("pre-indexed expression expected");
+	      return;
+	    }
+
+	  pre_inc = 1;
+	  if (ldst_extend (&str) == FAIL)
+	    return;
+
+	  skip_whitespace (str);
+
+	  if (*str++ != ']')
+	    {
+	      inst.error = _("missing ]");
+	      return;
+	    }
+
+	  skip_whitespace (str);
+
+	  if (*str == '!')
+	    {
+	      if (conflict_reg)
+		as_warn (_("%s register same as write-back base"),
+			 ((inst.instruction & LOAD_BIT)
+			  ? _("destination") : _("source")));
+	      str++;
+	      inst.instruction |= WRITE_BACK;
+	    }
+	}
+    }
+  else if (*str == '=')
+    {
+      if ((inst.instruction & LOAD_BIT) == 0)
+	{
+	  inst.error = _("invalid pseudo operation");
+	  return;
+	}
+
+      /* Parse an "ldr Rd, =expr" instruction; this is another pseudo op.  */
+      str++;
+
+      skip_whitespace (str);
+
+      if (my_get_expression (&inst.reloc.exp, &str))
+	return;
+
+      if (inst.reloc.exp.X_op != O_constant
+	  && inst.reloc.exp.X_op != O_symbol)
+	{
+	  inst.error = _("constant expression expected");
+	  return;
+	}
+
+      if (inst.reloc.exp.X_op == O_constant)
+	{
+	  value = validate_immediate (inst.reloc.exp.X_add_number);
+
+	  if (value != FAIL)
+	    {
+	      /* This can be done with a mov instruction.  */
+	      inst.instruction &= LITERAL_MASK;
+	      inst.instruction |= (INST_IMMEDIATE
+				   | (OPCODE_MOV << DATA_OP_SHIFT));
+	      inst.instruction |= value & 0xfff;
+	      end_of_line (str);
+	      return;
+	    }
+
+	  value = validate_immediate (~inst.reloc.exp.X_add_number);
+
+	  if (value != FAIL)
+	    {
+	      /* This can be done with a mvn instruction.  */
+	      inst.instruction &= LITERAL_MASK;
+	      inst.instruction |= (INST_IMMEDIATE
+				   | (OPCODE_MVN << DATA_OP_SHIFT));
+	      inst.instruction |= value & 0xfff;
+	      end_of_line (str);
+	      return;
+	    }
+	}
+
+      /* Insert into literal pool.  */
+      if (add_to_lit_pool () == FAIL)
+	{
+	  if (!inst.error)
+	    inst.error = _("literal pool insertion failed");
+	  return;
+	}
+
+      /* Change the instruction exp to point to the pool.  */
+      inst.reloc.type = BFD_RELOC_ARM_LITERAL;
+      inst.reloc.pc_rel = 1;
+      inst.instruction |= (REG_PC << 16);
+      pre_inc = 1;
+    }
+  else
+    {
+      if (my_get_expression (&inst.reloc.exp, &str))
+	return;
+
+      inst.reloc.type = BFD_RELOC_ARM_OFFSET_IMM;
+#ifndef TE_WINCE
+      /* PC rel adjust.  */
+      inst.reloc.exp.X_add_number -= 8;
+#endif
+      inst.reloc.pc_rel = 1;
+      inst.instruction |= (REG_PC << 16);
+      pre_inc = 1;
+    }
+
+  inst.instruction |= (pre_inc ? PRE_INDEX : 0);
+  end_of_line (str);
+}
+
+static void
+do_ldstt (char * str)
+{
+  int conflict_reg;
+
+  skip_whitespace (str);
+
+  if ((conflict_reg = reg_required_here (& str, 12)) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL)
+    {
+      inst.error = _("address expected");
+      return;
+    }
+
+  if (*str == '[')
+    {
+      int reg;
+
+      str++;
+
+      skip_whitespace (str);
+
+      if ((reg = reg_required_here (&str, 16)) == FAIL)
+	return;
+
+      /* ldrt/strt always use post-indexed addressing, so if the base is
+	 the same as Rd, we warn.  */
+      if (conflict_reg == reg)
+	as_warn (_("%s register same as write-back base"),
+		 ((inst.instruction & LOAD_BIT)
+		  ? _("destination") : _("source")));
+
+      skip_whitespace (str);
+
+      if (*str == ']')
+	{
+	  str ++;
+
+	  if (skip_past_comma (&str) == SUCCESS)
+	    {
+	      /* [Rn],... (post inc)  */
+	      if (ldst_extend (&str) == FAIL)
+		return;
+	    }
+	  else
+	    {
+	      /* [Rn]  */
+	      skip_whitespace (str);
+
+	      /* Skip a write-back '!'.  */
+	      if (*str == '!')
+		str++;
+
+	      inst.instruction |= INDEX_UP;
+	    }
+	}
+      else
+	{
+	  inst.error = _("post-indexed expression expected");
+	  return;
+	}
+    }
+  else
+    {
+      inst.error = _("post-indexed expression expected");
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* Halfword and signed-byte load/store operations.  */
+
+static void
+do_ldstv4 (char * str)
+{
+  int pre_inc = 0;
+  int conflict_reg;
+  int value;
+
+  skip_whitespace (str);
+
+  if ((conflict_reg = reg_required_here (& str, 12)) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (& str) == FAIL)
+    {
+      inst.error = _("address expected");
+      return;
+    }
+
+  if (*str == '[')
+    {
+      int reg;
+
+      str++;
+
+      skip_whitespace (str);
+
+      if ((reg = reg_required_here (&str, 16)) == FAIL)
+	return;
+
+      /* Conflicts can occur on stores as well as loads.  */
+      conflict_reg = (conflict_reg == reg);
+
+      skip_whitespace (str);
+
+      if (*str == ']')
+	{
+	  str ++;
+
+	  if (skip_past_comma (&str) == SUCCESS)
+	    {
+	      /* [Rn],... (post inc)  */
+	      if (ldst_extend_v4 (&str) == FAIL)
+		return;
+	      if (conflict_reg)
+		as_warn (_("%s register same as write-back base"),
+			 ((inst.instruction & LOAD_BIT)
+			  ? _("destination") : _("source")));
+	    }
+	  else
+	    {
+	      /* [Rn]  */
+	      inst.instruction |= HWOFFSET_IMM;
+
+	      skip_whitespace (str);
+
+	      if (*str == '!')
+		{
+		  if (conflict_reg)
+		    as_warn (_("%s register same as write-back base"),
+			     ((inst.instruction & LOAD_BIT)
+			      ? _("destination") : _("source")));
+		  str++;
+		  inst.instruction |= WRITE_BACK;
+		}
+
+	      inst.instruction |= INDEX_UP;
+	      pre_inc = 1;
+	    }
+	}
+      else
+	{
+	  /* [Rn,...]  */
+	  if (skip_past_comma (&str) == FAIL)
+	    {
+	      inst.error = _("pre-indexed expression expected");
+	      return;
+	    }
+
+	  pre_inc = 1;
+	  if (ldst_extend_v4 (&str) == FAIL)
+	    return;
+
+	  skip_whitespace (str);
+
+	  if (*str++ != ']')
+	    {
+	      inst.error = _("missing ]");
+	      return;
+	    }
+
+	  skip_whitespace (str);
+
+	  if (*str == '!')
+	    {
+	      if (conflict_reg)
+		as_warn (_("%s register same as write-back base"),
+			 ((inst.instruction & LOAD_BIT)
+			  ? _("destination") : _("source")));
+	      str++;
+	      inst.instruction |= WRITE_BACK;
+	    }
+	}
+    }
+  else if (*str == '=')
+    {
+      if ((inst.instruction & LOAD_BIT) == 0)
+	{
+	  inst.error = _("invalid pseudo operation");
+	  return;
+	}
+
+      /* XXX Does this work correctly for half-word/byte ops?  */
+      /* Parse an "ldr Rd, =expr" instruction; this is another pseudo op.  */
+      str++;
+
+      skip_whitespace (str);
+
+      if (my_get_expression (&inst.reloc.exp, &str))
+	return;
+
+      if (inst.reloc.exp.X_op != O_constant
+	  && inst.reloc.exp.X_op != O_symbol)
+	{
+	  inst.error = _("constant expression expected");
+	  return;
+	}
+
+      if (inst.reloc.exp.X_op == O_constant)
+	{
+	  value = validate_immediate (inst.reloc.exp.X_add_number);
+
+	  if (value != FAIL)
+	    {
+	      /* This can be done with a mov instruction.  */
+	      inst.instruction &= LITERAL_MASK;
+	      inst.instruction |= INST_IMMEDIATE | (OPCODE_MOV << DATA_OP_SHIFT);
+	      inst.instruction |= value & 0xfff;
+	      end_of_line (str);
+	      return;
+	    }
+
+	  value = validate_immediate (~ inst.reloc.exp.X_add_number);
+
+	  if (value != FAIL)
+	    {
+	      /* This can be done with a mvn instruction.  */
+	      inst.instruction &= LITERAL_MASK;
+	      inst.instruction |= INST_IMMEDIATE | (OPCODE_MVN << DATA_OP_SHIFT);
+	      inst.instruction |= value & 0xfff;
+	      end_of_line (str);
+	      return;
+	    }
+	}
+
+      /* Insert into literal pool.  */
+      if (add_to_lit_pool () == FAIL)
+	{
+	  if (!inst.error)
+	    inst.error = _("literal pool insertion failed");
+	  return;
+	}
+
+      /* Change the instruction exp to point to the pool.  */
+      inst.instruction |= HWOFFSET_IMM;
+      inst.reloc.type = BFD_RELOC_ARM_HWLITERAL;
+      inst.reloc.pc_rel = 1;
+      inst.instruction |= (REG_PC << 16);
+      pre_inc = 1;
+    }
+  else
+    {
+      if (my_get_expression (&inst.reloc.exp, &str))
+	return;
+
+      inst.instruction |= HWOFFSET_IMM;
+      inst.reloc.type = BFD_RELOC_ARM_OFFSET_IMM8;
+#ifndef TE_WINCE
+      /* PC rel adjust.  */
+      inst.reloc.exp.X_add_number -= 8;
+#endif
+      inst.reloc.pc_rel = 1;
+      inst.instruction |= (REG_PC << 16);
+      pre_inc = 1;
+    }
+
+  inst.instruction |= (pre_inc ? PRE_INDEX : 0);
+  end_of_line (str);
+}
+
+static long
+reg_list (char ** strp)
+{
+  char * str = * strp;
+  long   range = 0;
+  int    another_range;
+
+  /* We come back here if we get ranges concatenated by '+' or '|'.  */
+  do
+    {
+      another_range = 0;
+
+      if (*str == '{')
+	{
+	  int in_range = 0;
+	  int cur_reg = -1;
+
+	  str++;
+	  do
+	    {
+	      int reg;
+
+	      skip_whitespace (str);
+
+	      if ((reg = reg_required_here (& str, -1)) == FAIL)
+		return FAIL;
+
+	      if (in_range)
+		{
+		  int i;
+
+		  if (reg <= cur_reg)
+		    {
+		      inst.error = _("bad range in register list");
+		      return FAIL;
+		    }
+
+		  for (i = cur_reg + 1; i < reg; i++)
+		    {
+		      if (range & (1 << i))
+			as_tsktsk
+			  (_("Warning: duplicated register (r%d) in register list"),
+			   i);
+		      else
+			range |= 1 << i;
+		    }
+		  in_range = 0;
+		}
+
+	      if (range & (1 << reg))
+		as_tsktsk (_("Warning: duplicated register (r%d) in register list"),
+			   reg);
+	      else if (reg <= cur_reg)
+		as_tsktsk (_("Warning: register range not in ascending order"));
+
+	      range |= 1 << reg;
+	      cur_reg = reg;
+	    }
+	  while (skip_past_comma (&str) != FAIL
+		 || (in_range = 1, *str++ == '-'));
+	  str--;
+	  skip_whitespace (str);
+
+	  if (*str++ != '}')
+	    {
+	      inst.error = _("missing `}'");
+	      return FAIL;
+	    }
+	}
+      else
+	{
+	  expressionS expr;
+
+	  if (my_get_expression (&expr, &str))
+	    return FAIL;
+
+	  if (expr.X_op == O_constant)
+	    {
+	      if (expr.X_add_number
+		  != (expr.X_add_number & 0x0000ffff))
+		{
+		  inst.error = _("invalid register mask");
+		  return FAIL;
+		}
+
+	      if ((range & expr.X_add_number) != 0)
+		{
+		  int regno = range & expr.X_add_number;
+
+		  regno &= -regno;
+		  regno = (1 << regno) - 1;
+		  as_tsktsk
+		    (_("Warning: duplicated register (r%d) in register list"),
+		     regno);
+		}
+
+	      range |= expr.X_add_number;
+	    }
+	  else
+	    {
+	      if (inst.reloc.type != 0)
+		{
+		  inst.error = _("expression too complex");
+		  return FAIL;
+		}
+
+	      memcpy (&inst.reloc.exp, &expr, sizeof (expressionS));
+	      inst.reloc.type = BFD_RELOC_ARM_MULTI;
+	      inst.reloc.pc_rel = 0;
+	    }
+	}
+
+      skip_whitespace (str);
+
+      if (*str == '|' || *str == '+')
+	{
+	  str++;
+	  another_range = 1;
+	}
+    }
+  while (another_range);
+
+  *strp = str;
+  return range;
+}
+
+static void
+do_ldmstm (char * str)
+{
+  int base_reg;
+  long range;
+
+  skip_whitespace (str);
+
+  if ((base_reg = reg_required_here (&str, 16)) == FAIL)
+    return;
+
+  if (base_reg == REG_PC)
+    {
+      inst.error = _("r15 not allowed as base register");
+      return;
+    }
+
+  skip_whitespace (str);
+
+  if (*str == '!')
+    {
+      inst.instruction |= WRITE_BACK;
+      str++;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || (range = reg_list (&str)) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (*str == '^')
+    {
+      str++;
+      inst.instruction |= LDM_TYPE_2_OR_3;
+    }
+
+  if (inst.instruction & WRITE_BACK)
+    {
+      /* Check for unpredictable uses of writeback.  */
+      if (inst.instruction & LOAD_BIT)
+	{
+	  /* Not allowed in LDM type 2.  */
+	  if ((inst.instruction & LDM_TYPE_2_OR_3)
+	      && ((range & (1 << REG_PC)) == 0))
+	    as_warn (_("writeback of base register is UNPREDICTABLE"));
+	  /* Only allowed if base reg not in list for other types.  */
+	  else if (range & (1 << base_reg))
+	    as_warn (_("writeback of base register when in register list is UNPREDICTABLE"));
+	}
+      else /* STM.  */
+	{
+	  /* Not allowed for type 2.  */
+	  if (inst.instruction & LDM_TYPE_2_OR_3)
+	    as_warn (_("writeback of base register is UNPREDICTABLE"));
+	  /* Only allowed if base reg not in list, or first in list.  */
+	  else if ((range & (1 << base_reg))
+		   && (range & ((1 << base_reg) - 1)))
+	    as_warn (_("if writeback register is in list, it must be the lowest reg in the list"));
+	}
+    }
+
+  inst.instruction |= range;
+  end_of_line (str);
+}
+
+static void
+do_smi (char * str)
+{
+  skip_whitespace (str);
+
+  /* Allow optional leading '#'.  */
+  if (is_immediate_prefix (*str))
+    str++;
+
+  if (my_get_expression (& inst.reloc.exp, & str))
+    return;
+
+  inst.reloc.type = BFD_RELOC_ARM_SMI;
+  inst.reloc.pc_rel = 0;
+  end_of_line (str);
+}
+
+static void
+do_swi (char * str)
+{
+  skip_whitespace (str);
+
+  /* Allow optional leading '#'.  */
+  if (is_immediate_prefix (*str))
+    str++;
+
+  if (my_get_expression (& inst.reloc.exp, & str))
+    return;
+
+  inst.reloc.type = BFD_RELOC_ARM_SWI;
+  inst.reloc.pc_rel = 0;
+  end_of_line (str);
+}
+
+static void
+do_swap (char * str)
+{
+  int reg;
+
+  skip_whitespace (str);
+
+  if ((reg = reg_required_here (&str, 12)) == FAIL)
+    return;
+
+  if (reg == REG_PC)
+    {
+      inst.error = _("r15 not allowed in swap");
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || (reg = reg_required_here (&str, 0)) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (reg == REG_PC)
+    {
+      inst.error = _("r15 not allowed in swap");
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || *str++ != '[')
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  skip_whitespace (str);
+
+  if ((reg = reg_required_here (&str, 16)) == FAIL)
+    return;
+
+  if (reg == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  skip_whitespace (str);
+
+  if (*str++ != ']')
+    {
+      inst.error = _("missing ]");
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_branch (char * str)
+{
+  if (my_get_expression (&inst.reloc.exp, &str))
+    return;
+
+#ifdef OBJ_ELF
+  {
+    char * save_in;
+
+    /* ScottB: February 5, 1998 - Check to see of PLT32 reloc
+       required for the instruction.  */
+
+    /* arm_parse_reloc () works on input_line_pointer.
+       We actually want to parse the operands to the branch instruction
+       passed in 'str'.  Save the input pointer and restore it later.  */
+    save_in = input_line_pointer;
+    input_line_pointer = str;
+    if (inst.reloc.exp.X_op == O_symbol
+	&& *str == '('
+	&& arm_parse_reloc () == BFD_RELOC_ARM_PLT32)
+      {
+	inst.reloc.type   = BFD_RELOC_ARM_PLT32;
+	inst.reloc.pc_rel = 0;
+	/* Modify str to point to after parsed operands, otherwise
+	   end_of_line() will complain about the (PLT) left in str.  */
+	str = input_line_pointer;
+      }
+    else
+      {
+	inst.reloc.type   = BFD_RELOC_ARM_PCREL_BRANCH;
+	inst.reloc.pc_rel = 1;
+      }
+    input_line_pointer = save_in;
+  }
+#else
+  inst.reloc.type   = BFD_RELOC_ARM_PCREL_BRANCH;
+  inst.reloc.pc_rel = 1;
+#endif /* OBJ_ELF  */
+
+  end_of_line (str);
+}
+
+static void
+do_cdp (char * str)
+{
+  /* Co-processor data operation.
+     Format: CDP{cond} CP#,<expr>,CRd,CRn,CRm{,<expr>}  */
+  skip_whitespace (str);
+
+  if (co_proc_number (&str) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_opc_expr (&str, 20,4) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_reg_required_here (&str, 12) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_reg_required_here (&str, 16) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_reg_required_here (&str, 0) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == SUCCESS)
+    {
+      if (cp_opc_expr (&str, 5, 3) == FAIL)
+	{
+	  if (!inst.error)
+	    inst.error = BAD_ARGS;
+	  return;
+	}
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_lstc (char * str)
+{
+  /* Co-processor register load/store.
+     Format: <LDC|STC{cond}[L] CP#,CRd,<address>  */
+
+  skip_whitespace (str);
+
+  if (co_proc_number (&str) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_reg_required_here (&str, 12) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_address_required_here (&str, CP_WB_OK) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_co_reg (char * str)
+{
+  /* Co-processor register transfer.
+     Format: <MCR|MRC>{cond} CP#,<expr1>,Rd,CRn,CRm{,<expr2>}  */
+
+  skip_whitespace (str);
+
+  if (co_proc_number (&str) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_opc_expr (&str, 21, 3) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 12) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_reg_required_here (&str, 16) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_reg_required_here (&str, 0) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == SUCCESS)
+    {
+      if (cp_opc_expr (&str, 5, 3) == FAIL)
+	{
+	  if (!inst.error)
+	    inst.error = BAD_ARGS;
+	  return;
+	}
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_fpa_ctrl (char * str)
+{
+  /* FP control registers.
+     Format: <WFS|RFS|WFC|RFC>{cond} Rn  */
+
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_fpa_ldst (char * str)
+{
+  skip_whitespace (str);
+
+  if (fp_reg_required_here (&str, 12) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_address_required_here (&str, CP_WB_OK) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_fpa_ldmstm (char * str)
+{
+  int num_regs;
+
+  skip_whitespace (str);
+
+  if (fp_reg_required_here (&str, 12) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* Get Number of registers to transfer.  */
+  if (skip_past_comma (&str) == FAIL
+      || my_get_expression (&inst.reloc.exp, &str))
+    {
+      if (! inst.error)
+	inst.error = _("constant expression expected");
+      return;
+    }
+
+  if (inst.reloc.exp.X_op != O_constant)
+    {
+      inst.error = _("constant value required for number of registers");
+      return;
+    }
+
+  num_regs = inst.reloc.exp.X_add_number;
+
+  if (num_regs < 1 || num_regs > 4)
+    {
+      inst.error = _("number of registers must be in the range [1:4]");
+      return;
+    }
+
+  switch (num_regs)
+    {
+    case 1:
+      inst.instruction |= CP_T_X;
+      break;
+    case 2:
+      inst.instruction |= CP_T_Y;
+      break;
+    case 3:
+      inst.instruction |= CP_T_Y | CP_T_X;
+      break;
+    case 4:
+      break;
+    default:
+      abort ();
+    }
+
+  if (inst.instruction & (CP_T_Pre | CP_T_UD)) /* ea/fd format.  */
+    {
+      int reg;
+      int write_back;
+      int offset;
+
+      /* The instruction specified "ea" or "fd", so we can only accept
+	 [Rn]{!}.  The instruction does not really support stacking or
+	 unstacking, so we have to emulate these by setting appropriate
+	 bits and offsets.  */
+      if (skip_past_comma (&str) == FAIL
+	  || *str != '[')
+	{
+	  if (! inst.error)
+	    inst.error = BAD_ARGS;
+	  return;
+	}
+
+      str++;
+      skip_whitespace (str);
+
+      if ((reg = reg_required_here (&str, 16)) == FAIL)
+	return;
+
+      skip_whitespace (str);
+
+      if (*str != ']')
+	{
+	  inst.error = BAD_ARGS;
+	  return;
+	}
+
+      str++;
+      if (*str == '!')
+	{
+	  write_back = 1;
+	  str++;
+	  if (reg == REG_PC)
+	    {
+	      inst.error =
+		_("r15 not allowed as base register with write-back");
+	      return;
+	    }
+	}
+      else
+	write_back = 0;
+
+      if (inst.instruction & CP_T_Pre)
+	{
+	  /* Pre-decrement.  */
+	  offset = 3 * num_regs;
+	  if (write_back)
+	    inst.instruction |= CP_T_WB;
+	}
+      else
+	{
+	  /* Post-increment.  */
+	  if (write_back)
+	    {
+	      inst.instruction |= CP_T_WB;
+	      offset = 3 * num_regs;
+	    }
+	  else
+	    {
+	      /* No write-back, so convert this into a standard pre-increment
+		 instruction -- aesthetically more pleasing.  */
+	      inst.instruction |= CP_T_Pre | CP_T_UD;
+	      offset = 0;
+	    }
+	}
+
+      inst.instruction |= offset;
+    }
+  else if (skip_past_comma (&str) == FAIL
+	   || cp_address_required_here (&str, CP_WB_OK) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_fpa_dyadic (char * str)
+{
+  skip_whitespace (str);
+
+  if (fp_reg_required_here (&str, 12) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || fp_reg_required_here (&str, 16) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || fp_op2 (&str) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_fpa_monadic (char * str)
+{
+  skip_whitespace (str);
+
+  if (fp_reg_required_here (&str, 12) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || fp_op2 (&str) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_fpa_cmp (char * str)
+{
+  skip_whitespace (str);
+
+  if (fp_reg_required_here (&str, 16) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || fp_op2 (&str) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_fpa_from_reg (char * str)
+{
+  skip_whitespace (str);
+
+  if (fp_reg_required_here (&str, 16) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 12) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_fpa_to_reg (char * str)
+{
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || fp_reg_required_here (&str, 0) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* Encode a VFP SP register number.  */
+
+static void
+vfp_sp_encode_reg (int reg, enum vfp_sp_reg_pos pos)
+{
+  switch (pos)
+    {
+    case VFP_REG_Sd:
+      inst.instruction |= ((reg >> 1) << 12) | ((reg & 1) << 22);
+      break;
+
+    case VFP_REG_Sn:
+      inst.instruction |= ((reg >> 1) << 16) | ((reg & 1) << 7);
+      break;
+
+    case VFP_REG_Sm:
+      inst.instruction |= ((reg >> 1) << 0) | ((reg & 1) << 5);
+      break;
+
+    default:
+      abort ();
+    }
+}
+
+static int
+vfp_sp_reg_required_here (char ** str,
+			  enum vfp_sp_reg_pos pos)
+{
+  int    reg;
+  char * start = *str;
+
+  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_SN].htab)) != FAIL)
+    {
+      vfp_sp_encode_reg (reg, pos);
+      return reg;
+    }
+
+  /* In the few cases where we might be able to accept something else
+     this error can be overridden.  */
+  inst.error = _(all_reg_maps[REG_TYPE_SN].expected);
+
+  /* Restore the start point.  */
+  *str = start;
+  return FAIL;
+}
+
+static int
+vfp_dp_reg_required_here (char ** str,
+			  enum vfp_dp_reg_pos pos)
+{
+  int    reg;
+  char * start = *str;
+
+  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_DN].htab)) != FAIL)
+    {
+      switch (pos)
+	{
+	case VFP_REG_Dd:
+	  inst.instruction |= reg << 12;
+	  break;
+
+	case VFP_REG_Dn:
+	  inst.instruction |= reg << 16;
+	  break;
+
+	case VFP_REG_Dm:
+	  inst.instruction |= reg << 0;
+	  break;
+
+	default:
+	  abort ();
+	}
+      return reg;
+    }
+
+  /* In the few cases where we might be able to accept something else
+     this error can be overridden.  */
+  inst.error = _(all_reg_maps[REG_TYPE_DN].expected);
+
+  /* Restore the start point.  */
+  *str = start;
+  return FAIL;
+}
+
+static void
+do_vfp_sp_monadic (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_sp_reg_required_here (&str, VFP_REG_Sd) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || vfp_sp_reg_required_here (&str, VFP_REG_Sm) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_dp_monadic (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_dp_reg_required_here (&str, VFP_REG_Dd) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || vfp_dp_reg_required_here (&str, VFP_REG_Dm) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_sp_dyadic (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_sp_reg_required_here (&str, VFP_REG_Sd) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || vfp_sp_reg_required_here (&str, VFP_REG_Sn) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || vfp_sp_reg_required_here (&str, VFP_REG_Sm) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_dp_dyadic (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_dp_reg_required_here (&str, VFP_REG_Dd) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || vfp_dp_reg_required_here (&str, VFP_REG_Dn) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || vfp_dp_reg_required_here (&str, VFP_REG_Dm) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_reg_from_sp (char * str)
+{
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || vfp_sp_reg_required_here (&str, VFP_REG_Sn) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* Parse a VFP register list.  If the string is invalid return FAIL.
+   Otherwise return the number of registers, and set PBASE to the first
+   register.  Double precision registers are matched if DP is nonzero.  */
+
+static int
+vfp_parse_reg_list (char **str, int *pbase, int dp)
+{
+  int base_reg;
+  int new_base;
+  int regtype;
+  int max_regs;
+  int count = 0;
+  int warned = 0;
+  unsigned long mask = 0;
+  int i;
+
+  if (**str != '{')
+    return FAIL;
+
+  (*str)++;
+  skip_whitespace (*str);
+
+  if (dp)
+    {
+      regtype = REG_TYPE_DN;
+      max_regs = 16;
+    }
+  else
+    {
+      regtype = REG_TYPE_SN;
+      max_regs = 32;
+    }
+
+  base_reg = max_regs;
+
+  do
+    {
+      new_base = arm_reg_parse (str, all_reg_maps[regtype].htab);
+      if (new_base == FAIL)
+	{
+	  inst.error = _(all_reg_maps[regtype].expected);
+	  return FAIL;
+	}
+
+      if (new_base < base_reg)
+	base_reg = new_base;
+
+      if (mask & (1 << new_base))
+	{
+	  inst.error = _("invalid register list");
+	  return FAIL;
+	}
+
+      if ((mask >> new_base) != 0 && ! warned)
+	{
+	  as_tsktsk (_("register list not in ascending order"));
+	  warned = 1;
+	}
+
+      mask |= 1 << new_base;
+      count++;
+
+      skip_whitespace (*str);
+
+      if (**str == '-') /* We have the start of a range expression */
+	{
+	  int high_range;
+
+	  (*str)++;
+
+	  if ((high_range
+	       = arm_reg_parse (str, all_reg_maps[regtype].htab))
+	      == FAIL)
+	    {
+	      inst.error = _(all_reg_maps[regtype].expected);
+	      return FAIL;
+	    }
+
+	  if (high_range <= new_base)
+	    {
+	      inst.error = _("register range not in ascending order");
+	      return FAIL;
+	    }
+
+	  for (new_base++; new_base <= high_range; new_base++)
+	    {
+	      if (mask & (1 << new_base))
+		{
+		  inst.error = _("invalid register list");
+		  return FAIL;
+		}
+
+	      mask |= 1 << new_base;
+	      count++;
+	    }
+	}
+    }
+  while (skip_past_comma (str) != FAIL);
+
+  (*str)++;
+
+  /* Sanity check -- should have raised a parse error above.  */
+  if (count == 0 || count > max_regs)
+    abort ();
+
+  *pbase = base_reg;
+
+  /* Final test -- the registers must be consecutive.  */
+  mask >>= base_reg;
+  for (i = 0; i < count; i++)
+    {
+      if ((mask & (1u << i)) == 0)
+	{
+	  inst.error = _("non-contiguous register range");
+	  return FAIL;
+	}
+    }
+
+  return count;
+}
+
+static void
+do_vfp_reg2_from_sp2 (char * str)
+{
+  int reg;
+
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 16) == FAIL
+      || skip_past_comma (&str) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* We require exactly two consecutive SP registers.  */
+  if (vfp_parse_reg_list (&str, &reg, 0) != 2)
+    {
+      if (! inst.error)
+	inst.error = _("only two consecutive VFP SP registers allowed here");
+    }
+  vfp_sp_encode_reg (reg, VFP_REG_Sm);
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_sp_from_reg (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_sp_reg_required_here (&str, VFP_REG_Sn) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 12) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_sp2_from_reg2 (char * str)
+{
+  int reg;
+
+  skip_whitespace (str);
+
+  /* We require exactly two consecutive SP registers.  */
+  if (vfp_parse_reg_list (&str, &reg, 0) != 2)
+    {
+      if (! inst.error)
+	inst.error = _("only two consecutive VFP SP registers allowed here");
+    }
+  vfp_sp_encode_reg (reg, VFP_REG_Sm);
+
+  if (skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 12) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 16) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_reg_from_dp (char * str)
+{
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || vfp_dp_reg_required_here (&str, VFP_REG_Dn) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_reg2_from_dp (char * str)
+{
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 16) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || vfp_dp_reg_required_here (&str, VFP_REG_Dm) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_dp_from_reg (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_dp_reg_required_here (&str, VFP_REG_Dn) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 12) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_dp_from_reg2 (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_dp_reg_required_here (&str, VFP_REG_Dm) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 12) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 16) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static const struct vfp_reg *
+vfp_psr_parse (char ** str)
+{
+  char *start = *str;
+  char  c;
+  char *p;
+  const struct vfp_reg *vreg;
+
+  p = start;
+
+  /* Find the end of the current token.  */
+  do
+    {
+      c = *p++;
+    }
+  while (ISALPHA (c));
+
+  /* Mark it.  */
+  *--p = 0;
+
+  for (vreg = vfp_regs + 0;
+       vreg < vfp_regs + sizeof (vfp_regs) / sizeof (struct vfp_reg);
+       vreg++)
+    {
+      if (streq (start, vreg->name))
+	{
+	  *p = c;
+	  *str = p;
+	  return vreg;
+	}
+    }
+
+  *p = c;
+  return NULL;
+}
+
+static int
+vfp_psr_required_here (char ** str)
+{
+  char *start = *str;
+  const struct vfp_reg *vreg;
+
+  vreg = vfp_psr_parse (str);
+
+  if (vreg)
+    {
+      inst.instruction |= vreg->regno;
+      return SUCCESS;
+    }
+
+  inst.error = _("VFP system register expected");
+
+  *str = start;
+  return FAIL;
+}
+
+static void
+do_vfp_reg_from_ctrl (char * str)
+{
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 12) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || vfp_psr_required_here (&str) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_ctrl_from_reg (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_psr_required_here (&str) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 12) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_sp_ldst (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_sp_reg_required_here (&str, VFP_REG_Sd) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_address_required_here (&str, CP_NO_WB) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_dp_ldst (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_dp_reg_required_here (&str, VFP_REG_Dd) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || cp_address_required_here (&str, CP_NO_WB) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+
+static void
+vfp_sp_ldstm (char * str, enum vfp_ldstm_type ldstm_type)
+{
+  int count;
+  int reg;
+
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 16) == FAIL)
+    return;
+
+  skip_whitespace (str);
+
+  if (*str == '!')
+    {
+      inst.instruction |= WRITE_BACK;
+      str++;
+    }
+  else if (ldstm_type != VFP_LDSTMIA)
+    {
+      inst.error = _("this addressing mode requires base-register writeback");
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || (count = vfp_parse_reg_list (&str, &reg, 0)) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+  vfp_sp_encode_reg (reg, VFP_REG_Sd);
+
+  inst.instruction |= count;
+  end_of_line (str);
+}
+
+static void
+vfp_dp_ldstm (char * str, enum vfp_ldstm_type ldstm_type)
+{
+  int count;
+  int reg;
+
+  skip_whitespace (str);
+
+  if (reg_required_here (&str, 16) == FAIL)
+    return;
+
+  skip_whitespace (str);
+
+  if (*str == '!')
+    {
+      inst.instruction |= WRITE_BACK;
+      str++;
+    }
+  else if (ldstm_type != VFP_LDSTMIA && ldstm_type != VFP_LDSTMIAX)
+    {
+      inst.error = _("this addressing mode requires base-register writeback");
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || (count = vfp_parse_reg_list (&str, &reg, 1)) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  count <<= 1;
+  if (ldstm_type == VFP_LDSTMIAX || ldstm_type == VFP_LDSTMDBX)
+    count += 1;
+
+  inst.instruction |= (reg << 12) | count;
+  end_of_line (str);
+}
+
+static void
+do_vfp_sp_ldstmia (char * str)
+{
+  vfp_sp_ldstm (str, VFP_LDSTMIA);
+}
+
+static void
+do_vfp_sp_ldstmdb (char * str)
+{
+  vfp_sp_ldstm (str, VFP_LDSTMDB);
+}
+
+static void
+do_vfp_dp_ldstmia (char * str)
+{
+  vfp_dp_ldstm (str, VFP_LDSTMIA);
+}
+
+static void
+do_vfp_dp_ldstmdb (char * str)
+{
+  vfp_dp_ldstm (str, VFP_LDSTMDB);
+}
+
+static void
+do_vfp_xp_ldstmia (char *str)
+{
+  vfp_dp_ldstm (str, VFP_LDSTMIAX);
+}
+
+static void
+do_vfp_xp_ldstmdb (char * str)
+{
+  vfp_dp_ldstm (str, VFP_LDSTMDBX);
+}
+
+static void
+do_vfp_sp_compare_z (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_sp_reg_required_here (&str, VFP_REG_Sd) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_dp_compare_z (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_dp_reg_required_here (&str, VFP_REG_Dd) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_dp_sp_cvt (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_dp_reg_required_here (&str, VFP_REG_Dd) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || vfp_sp_reg_required_here (&str, VFP_REG_Sm) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+static void
+do_vfp_sp_dp_cvt (char * str)
+{
+  skip_whitespace (str);
+
+  if (vfp_sp_reg_required_here (&str, VFP_REG_Sd) == FAIL)
+    return;
+
+  if (skip_past_comma (&str) == FAIL
+      || vfp_dp_reg_required_here (&str, VFP_REG_Dm) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* Thumb specific routines.  */
+
+/* Parse an add or subtract instruction, SUBTRACT is non-zero if the opcode
+   was SUB.  */
+
+static void
+thumb_add_sub (char * str, int subtract)
+{
+  int Rd, Rs, Rn = FAIL;
+
+  skip_whitespace (str);
+
+  if ((Rd = thumb_reg (&str, THUMB_REG_ANY)) == FAIL
+      || skip_past_comma (&str) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (is_immediate_prefix (*str))
+    {
+      Rs = Rd;
+      str++;
+      if (my_get_expression (&inst.reloc.exp, &str))
+	return;
+    }
+  else
+    {
+      if ((Rs = thumb_reg (&str, THUMB_REG_ANY)) == FAIL)
+	return;
+
+      if (skip_past_comma (&str) == FAIL)
+	{
+	  /* Two operand format, shuffle the registers
+	     and pretend there are 3.  */
+	  Rn = Rs;
+	  Rs = Rd;
+	}
+      else if (is_immediate_prefix (*str))
+	{
+	  str++;
+	  if (my_get_expression (&inst.reloc.exp, &str))
+	    return;
+	}
+      else if ((Rn = thumb_reg (&str, THUMB_REG_ANY)) == FAIL)
+	return;
+    }
+
+  /* We now have Rd and Rs set to registers, and Rn set to a register or FAIL;
+     for the latter case, EXPR contains the immediate that was found.  */
+  if (Rn != FAIL)
+    {
+      /* All register format.  */
+      if (Rd > 7 || Rs > 7 || Rn > 7)
+	{
+	  if (Rs != Rd)
+	    {
+	      inst.error = _("dest and source1 must be the same register");
+	      return;
+	    }
+
+	  /* Can't do this for SUB.  */
+	  if (subtract)
+	    {
+	      inst.error = _("subtract valid only on lo regs");
+	      return;
+	    }
+
+	  inst.instruction = (T_OPCODE_ADD_HI
+			      | (Rd > 7 ? THUMB_H1 : 0)
+			      | (Rn > 7 ? THUMB_H2 : 0));
+	  inst.instruction |= (Rd & 7) | ((Rn & 7) << 3);
+	}
+      else
+	{
+	  inst.instruction = subtract ? T_OPCODE_SUB_R3 : T_OPCODE_ADD_R3;
+	  inst.instruction |= Rd | (Rs << 3) | (Rn << 6);
+	}
+    }
+  else
+    {
+      /* Immediate expression, now things start to get nasty.  */
+
+      /* First deal with HI regs, only very restricted cases allowed:
+	 Adjusting SP, and using PC or SP to get an address.  */
+      if ((Rd > 7 && (Rd != REG_SP || Rs != REG_SP))
+	  || (Rs > 7 && Rs != REG_SP && Rs != REG_PC))
+	{
+	  inst.error = _("invalid Hi register with immediate");
+	  return;
+	}
+
+      if (inst.reloc.exp.X_op != O_constant)
+	{
+	  /* Value isn't known yet, all we can do is store all the fragments
+	     we know about in the instruction and let the reloc hacking
+	     work it all out.  */
+	  inst.instruction = (subtract ? 0x8000 : 0) | (Rd << 4) | Rs;
+	  inst.reloc.type = BFD_RELOC_ARM_THUMB_ADD;
+	}
+      else
+	{
+	  int offset = inst.reloc.exp.X_add_number;
+
+	  if (subtract)
+	    offset = - offset;
+
+	  if (offset < 0)
+	    {
+	      offset = - offset;
+	      subtract = 1;
+
+	      /* Quick check, in case offset is MIN_INT.  */
+	      if (offset < 0)
+		{
+		  inst.error = _("immediate value out of range");
+		  return;
+		}
+	    }
+	  /* Note - you cannot convert a subtract of 0 into an
+	     add of 0 because the carry flag is set differently.  */
+	  else if (offset > 0)
+	    subtract = 0;
+
+	  if (Rd == REG_SP)
+	    {
+	      if (offset & ~0x1fc)
+		{
+		  inst.error = _("invalid immediate value for stack adjust");
+		  return;
+		}
+	      inst.instruction = subtract ? T_OPCODE_SUB_ST : T_OPCODE_ADD_ST;
+	      inst.instruction |= offset >> 2;
+	    }
+	  else if (Rs == REG_PC || Rs == REG_SP)
+	    {
+	      if (subtract
+		  || (offset & ~0x3fc))
+		{
+		  inst.error = _("invalid immediate for address calculation");
+		  return;
+		}
+	      inst.instruction = (Rs == REG_PC ? T_OPCODE_ADD_PC
+				  : T_OPCODE_ADD_SP);
+	      inst.instruction |= (Rd << 8) | (offset >> 2);
+	    }
+	  else if (Rs == Rd)
+	    {
+	      if (offset & ~0xff)
+		{
+		  inst.error = _("immediate value out of range");
+		  return;
+		}
+	      inst.instruction = subtract ? T_OPCODE_SUB_I8 : T_OPCODE_ADD_I8;
+	      inst.instruction |= (Rd << 8) | offset;
+	    }
+	  else
+	    {
+	      if (offset & ~0x7)
+		{
+		  inst.error = _("immediate value out of range");
+		  return;
+		}
+	      inst.instruction = subtract ? T_OPCODE_SUB_I3 : T_OPCODE_ADD_I3;
+	      inst.instruction |= Rd | (Rs << 3) | (offset << 6);
+	    }
+	}
+    }
+
+  end_of_line (str);
+}
+
+static void
+thumb_shift (char * str, int shift)
+{
+  int Rd, Rs, Rn = FAIL;
+
+  skip_whitespace (str);
+
+  if ((Rd = thumb_reg (&str, THUMB_REG_LO)) == FAIL
+      || skip_past_comma (&str) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (is_immediate_prefix (*str))
+    {
+      /* Two operand immediate format, set Rs to Rd.  */
+      Rs = Rd;
+      str ++;
+      if (my_get_expression (&inst.reloc.exp, &str))
+	return;
+    }
+  else
+    {
+      if ((Rs = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
+	return;
+
+      if (skip_past_comma (&str) == FAIL)
+	{
+	  /* Two operand format, shuffle the registers
+	     and pretend there are 3.  */
+	  Rn = Rs;
+	  Rs = Rd;
+	}
+      else if (is_immediate_prefix (*str))
+	{
+	  str++;
+	  if (my_get_expression (&inst.reloc.exp, &str))
+	    return;
+	}
+      else if ((Rn = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
+	return;
+    }
+
+  /* We now have Rd and Rs set to registers, and Rn set to a register or FAIL;
+     for the latter case, EXPR contains the immediate that was found.  */
+
+  if (Rn != FAIL)
+    {
+      if (Rs != Rd)
+	{
+	  inst.error = _("source1 and dest must be same register");
+	  return;
+	}
+
+      switch (shift)
+	{
+	case THUMB_ASR: inst.instruction = T_OPCODE_ASR_R; break;
+	case THUMB_LSL: inst.instruction = T_OPCODE_LSL_R; break;
+	case THUMB_LSR: inst.instruction = T_OPCODE_LSR_R; break;
+	}
+
+      inst.instruction |= Rd | (Rn << 3);
+    }
+  else
+    {
+      switch (shift)
+	{
+	case THUMB_ASR: inst.instruction = T_OPCODE_ASR_I; break;
+	case THUMB_LSL: inst.instruction = T_OPCODE_LSL_I; break;
+	case THUMB_LSR: inst.instruction = T_OPCODE_LSR_I; break;
+	}
+
+      if (inst.reloc.exp.X_op != O_constant)
+	{
+	  /* Value isn't known yet, create a dummy reloc and let reloc
+	     hacking fix it up.  */
+	  inst.reloc.type = BFD_RELOC_ARM_THUMB_SHIFT;
+	}
+      else
+	{
+	  unsigned shift_value = inst.reloc.exp.X_add_number;
+
+	  if (shift_value > 32 || (shift_value == 32 && shift == THUMB_LSL))
+	    {
+	      inst.error = _("invalid immediate for shift");
+	      return;
+	    }
+
+	  /* Shifts of zero are handled by converting to LSL.  */
+	  if (shift_value == 0)
+	    inst.instruction = T_OPCODE_LSL_I;
+
+	  /* Shifts of 32 are encoded as a shift of zero.  */
+	  if (shift_value == 32)
+	    shift_value = 0;
+
+	  inst.instruction |= shift_value << 6;
+	}
+
+      inst.instruction |= Rd | (Rs << 3);
+    }
+
+  end_of_line (str);
+}
+
+static void
+thumb_load_store (char * str, int load_store, int size)
+{
+  int Rd, Rb, Ro = FAIL;
+
+  skip_whitespace (str);
+
+  if ((Rd = thumb_reg (&str, THUMB_REG_LO)) == FAIL
+      || skip_past_comma (&str) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (*str == '[')
+    {
+      str++;
+      if ((Rb = thumb_reg (&str, THUMB_REG_ANY)) == FAIL)
+	return;
+
+      if (skip_past_comma (&str) != FAIL)
+	{
+	  if (is_immediate_prefix (*str))
+	    {
+	      str++;
+	      if (my_get_expression (&inst.reloc.exp, &str))
+		return;
+	    }
+	  else if ((Ro = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
+	    return;
+	}
+      else
+	{
+	  inst.reloc.exp.X_op = O_constant;
+	  inst.reloc.exp.X_add_number = 0;
+	}
+
+      if (*str != ']')
+	{
+	  inst.error = _("expected ']'");
+	  return;
+	}
+      str++;
+    }
+  else if (*str == '=')
+    {
+      if (load_store != THUMB_LOAD)
+	{
+	  inst.error = _("invalid pseudo operation");
+	  return;
+	}
+
+      /* Parse an "ldr Rd, =expr" instruction; this is another pseudo op.  */
+      str++;
+
+      skip_whitespace (str);
+
+      if (my_get_expression (& inst.reloc.exp, & str))
+	return;
+
+      end_of_line (str);
+
+      if (   inst.reloc.exp.X_op != O_constant
+	  && inst.reloc.exp.X_op != O_symbol)
+	{
+	  inst.error = "Constant expression expected";
+	  return;
+	}
+
+      if (inst.reloc.exp.X_op == O_constant
+	  && ((inst.reloc.exp.X_add_number & ~0xFF) == 0))
+	{
+	  /* This can be done with a mov instruction.  */
+
+	  inst.instruction  = T_OPCODE_MOV_I8 | (Rd << 8);
+	  inst.instruction |= inst.reloc.exp.X_add_number;
+	  return;
+	}
+
+      /* Insert into literal pool.  */
+      if (add_to_lit_pool () == FAIL)
+	{
+	  if (!inst.error)
+	    inst.error = "literal pool insertion failed";
+	  return;
+	}
+
+      inst.reloc.type   = BFD_RELOC_ARM_THUMB_OFFSET;
+      inst.reloc.pc_rel = 1;
+      inst.instruction  = T_OPCODE_LDR_PC | (Rd << 8);
+      /* Adjust ARM pipeline offset to Thumb.  */
+      inst.reloc.exp.X_add_number += 4;
+
+      return;
+    }
+  else
+    {
+      if (my_get_expression (&inst.reloc.exp, &str))
+	return;
+
+      inst.instruction = T_OPCODE_LDR_PC | (Rd << 8);
+      inst.reloc.pc_rel = 1;
+      inst.reloc.exp.X_add_number -= 4; /* Pipeline offset.  */
+      inst.reloc.type = BFD_RELOC_ARM_THUMB_OFFSET;
+      end_of_line (str);
+      return;
+    }
+
+  if (Rb == REG_PC || Rb == REG_SP)
+    {
+      if (size != THUMB_WORD)
+	{
+	  inst.error = _("byte or halfword not valid for base register");
+	  return;
+	}
+      else if (Rb == REG_PC && load_store != THUMB_LOAD)
+	{
+	  inst.error = _("r15 based store not allowed");
+	  return;
+	}
+      else if (Ro != FAIL)
+	{
+	  inst.error = _("invalid base register for register offset");
+	  return;
+	}
+
+      if (Rb == REG_PC)
+	inst.instruction = T_OPCODE_LDR_PC;
+      else if (load_store == THUMB_LOAD)
+	inst.instruction = T_OPCODE_LDR_SP;
+      else
+	inst.instruction = T_OPCODE_STR_SP;
+
+      inst.instruction |= Rd << 8;
+      if (inst.reloc.exp.X_op == O_constant)
+	{
+	  unsigned offset = inst.reloc.exp.X_add_number;
+
+	  if (offset & ~0x3fc)
+	    {
+	      inst.error = _("invalid offset");
+	      return;
+	    }
+
+	  inst.instruction |= offset >> 2;
+	}
+      else
+	inst.reloc.type = BFD_RELOC_ARM_THUMB_OFFSET;
+    }
+  else if (Rb > 7)
+    {
+      inst.error = _("invalid base register in load/store");
+      return;
+    }
+  else if (Ro == FAIL)
+    {
+      /* Immediate offset.  */
+      if (size == THUMB_WORD)
+	inst.instruction = (load_store == THUMB_LOAD
+			    ? T_OPCODE_LDR_IW : T_OPCODE_STR_IW);
+      else if (size == THUMB_HALFWORD)
+	inst.instruction = (load_store == THUMB_LOAD
+			    ? T_OPCODE_LDR_IH : T_OPCODE_STR_IH);
+      else
+	inst.instruction = (load_store == THUMB_LOAD
+			    ? T_OPCODE_LDR_IB : T_OPCODE_STR_IB);
+
+      inst.instruction |= Rd | (Rb << 3);
+
+      if (inst.reloc.exp.X_op == O_constant)
+	{
+	  unsigned offset = inst.reloc.exp.X_add_number;
+
+	  if (offset & ~(0x1f << size))
+	    {
+	      inst.error = _("invalid offset");
+	      return;
+	    }
+	  inst.instruction |= (offset >> size) << 6;
+	}
+      else
+	inst.reloc.type = BFD_RELOC_ARM_THUMB_OFFSET;
+    }
+  else
+    {
+      /* Register offset.  */
+      if (size == THUMB_WORD)
+	inst.instruction = (load_store == THUMB_LOAD
+			    ? T_OPCODE_LDR_RW : T_OPCODE_STR_RW);
+      else if (size == THUMB_HALFWORD)
+	inst.instruction = (load_store == THUMB_LOAD
+			    ? T_OPCODE_LDR_RH : T_OPCODE_STR_RH);
+      else
+	inst.instruction = (load_store == THUMB_LOAD
+			    ? T_OPCODE_LDR_RB : T_OPCODE_STR_RB);
+
+      inst.instruction |= Rd | (Rb << 3) | (Ro << 6);
+    }
+
+  end_of_line (str);
+}
+
+/* A register must be given at this point.
+
+   Shift is the place to put it in inst.instruction.
+
+   Restores input start point on err.
+   Returns the reg#, or FAIL.  */
+
+static int
+mav_reg_required_here (char ** str, int shift, enum arm_reg_type regtype)
+{
+  int   reg;
+  char *start = *str;
+
+  if ((reg = arm_reg_parse (str, all_reg_maps[regtype].htab)) != FAIL)
+    {
+      if (shift >= 0)
+	inst.instruction |= reg << shift;
+
+      return reg;
+    }
+
+  /* Restore the start point.  */
+  *str = start;
+
+  /* Try generic coprocessor name if applicable.  */
+  if (regtype == REG_TYPE_MVF ||
+      regtype == REG_TYPE_MVD ||
+      regtype == REG_TYPE_MVFX ||
+      regtype == REG_TYPE_MVDX)
+    {
+      if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_CN].htab)) != FAIL)
+	{
+	  if (shift >= 0)
+	    inst.instruction |= reg << shift;
+
+	  return reg;
+	}
+
+      /* Restore the start point.  */
+      *str = start;
+    }
+
+  /* In the few cases where we might be able to accept something else
+     this error can be overridden.  */
+  inst.error = _(all_reg_maps[regtype].expected);
+
+  return FAIL;
+}
+
+/* Cirrus Maverick Instructions.  */
+
+/* Isnsn like "foo X,Y".  */
+
+static void
+do_mav_binops (char * str,
+	       int mode,
+	       enum arm_reg_type reg0,
+	       enum arm_reg_type reg1)
+{
+  int shift0, shift1;
+
+  shift0 = mode & 0xff;
+  shift1 = (mode >> 8) & 0xff;
+
+  skip_whitespace (str);
+
+  if (mav_reg_required_here (&str, shift0, reg0) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || mav_reg_required_here (&str, shift1, reg1) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+    }
+  else
+    end_of_line (str);
+}
+
+/* Isnsn like "foo X,Y,Z".  */
+
+static void
+do_mav_triple (char * str,
+	       int mode,
+	       enum arm_reg_type reg0,
+	       enum arm_reg_type reg1,
+	       enum arm_reg_type reg2)
+{
+  int shift0, shift1, shift2;
+
+  shift0 = mode & 0xff;
+  shift1 = (mode >> 8) & 0xff;
+  shift2 = (mode >> 16) & 0xff;
+
+  skip_whitespace (str);
+
+  if (mav_reg_required_here (&str, shift0, reg0) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || mav_reg_required_here (&str, shift1, reg1) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || mav_reg_required_here (&str, shift2, reg2) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+    }
+  else
+    end_of_line (str);
+}
+
+/* Wrapper functions.  */
+
+static void
+do_mav_binops_1a (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_RN, REG_TYPE_MVF);
+}
+
+static void
+do_mav_binops_1b (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_RN, REG_TYPE_MVD);
+}
+
+static void
+do_mav_binops_1c (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_RN, REG_TYPE_MVDX);
+}
+
+static void
+do_mav_binops_1d (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVF, REG_TYPE_MVF);
+}
+
+static void
+do_mav_binops_1e (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVD, REG_TYPE_MVD);
+}
+
+static void
+do_mav_binops_1f (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVD, REG_TYPE_MVF);
+}
+
+static void
+do_mav_binops_1g (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVF, REG_TYPE_MVD);
+}
+
+static void
+do_mav_binops_1h (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVF, REG_TYPE_MVFX);
+}
+
+static void
+do_mav_binops_1i (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVD, REG_TYPE_MVFX);
+}
+
+static void
+do_mav_binops_1j (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVF, REG_TYPE_MVDX);
+}
+
+static void
+do_mav_binops_1k (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVD, REG_TYPE_MVDX);
+}
+
+static void
+do_mav_binops_1l (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVFX, REG_TYPE_MVF);
+}
+
+static void
+do_mav_binops_1m (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVFX, REG_TYPE_MVD);
+}
+
+static void
+do_mav_binops_1n (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVFX, REG_TYPE_MVFX);
+}
+
+static void
+do_mav_binops_1o (char * str)
+{
+  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVDX, REG_TYPE_MVDX);
+}
+
+static void
+do_mav_binops_2a (char * str)
+{
+  do_mav_binops (str, MAV_MODE2, REG_TYPE_MVF, REG_TYPE_RN);
+}
+
+static void
+do_mav_binops_2b (char * str)
+{
+  do_mav_binops (str, MAV_MODE2, REG_TYPE_MVD, REG_TYPE_RN);
+}
+
+static void
+do_mav_binops_2c (char * str)
+{
+  do_mav_binops (str, MAV_MODE2, REG_TYPE_MVDX, REG_TYPE_RN);
+}
+
+static void
+do_mav_binops_3a (char * str)
+{
+  do_mav_binops (str, MAV_MODE3, REG_TYPE_MVAX, REG_TYPE_MVFX);
+}
+
+static void
+do_mav_binops_3b (char * str)
+{
+  do_mav_binops (str, MAV_MODE3, REG_TYPE_MVFX, REG_TYPE_MVAX);
+}
+
+static void
+do_mav_binops_3c (char * str)
+{
+  do_mav_binops (str, MAV_MODE3, REG_TYPE_MVAX, REG_TYPE_MVDX);
+}
+
+static void
+do_mav_binops_3d (char * str)
+{
+  do_mav_binops (str, MAV_MODE3, REG_TYPE_MVDX, REG_TYPE_MVAX);
+}
+
+static void
+do_mav_triple_4a (char * str)
+{
+  do_mav_triple (str, MAV_MODE4, REG_TYPE_MVFX, REG_TYPE_MVFX, REG_TYPE_RN);
+}
+
+static void
+do_mav_triple_4b (char * str)
+{
+  do_mav_triple (str, MAV_MODE4, REG_TYPE_MVDX, REG_TYPE_MVDX, REG_TYPE_RN);
+}
+
+static void
+do_mav_triple_5a (char * str)
+{
+  do_mav_triple (str, MAV_MODE5, REG_TYPE_RN, REG_TYPE_MVF, REG_TYPE_MVF);
+}
+
+static void
+do_mav_triple_5b (char * str)
+{
+  do_mav_triple (str, MAV_MODE5, REG_TYPE_RN, REG_TYPE_MVD, REG_TYPE_MVD);
+}
+
+static void
+do_mav_triple_5c (char * str)
+{
+  do_mav_triple (str, MAV_MODE5, REG_TYPE_RN, REG_TYPE_MVFX, REG_TYPE_MVFX);
+}
+
+static void
+do_mav_triple_5d (char * str)
+{
+  do_mav_triple (str, MAV_MODE5, REG_TYPE_RN, REG_TYPE_MVDX, REG_TYPE_MVDX);
+}
+
+static void
+do_mav_triple_5e (char * str)
+{
+  do_mav_triple (str, MAV_MODE5, REG_TYPE_MVF, REG_TYPE_MVF, REG_TYPE_MVF);
+}
+
+static void
+do_mav_triple_5f (char * str)
+{
+  do_mav_triple (str, MAV_MODE5, REG_TYPE_MVD, REG_TYPE_MVD, REG_TYPE_MVD);
+}
+
+static void
+do_mav_triple_5g (char * str)
+{
+  do_mav_triple (str, MAV_MODE5, REG_TYPE_MVFX, REG_TYPE_MVFX, REG_TYPE_MVFX);
+}
+
+static void
+do_mav_triple_5h (char * str)
+{
+  do_mav_triple (str, MAV_MODE5, REG_TYPE_MVDX, REG_TYPE_MVDX, REG_TYPE_MVDX);
+}
+
+/* Isnsn like "foo W,X,Y,Z".
+    where W=MVAX[0:3] and X,Y,Z=MVFX[0:15].  */
+
+static void
+do_mav_quad (char * str,
+	     int mode,
+	     enum arm_reg_type reg0,
+	     enum arm_reg_type reg1,
+	     enum arm_reg_type reg2,
+	     enum arm_reg_type reg3)
+{
+  int shift0, shift1, shift2, shift3;
+
+  shift0= mode & 0xff;
+  shift1 = (mode >> 8) & 0xff;
+  shift2 = (mode >> 16) & 0xff;
+  shift3 = (mode >> 24) & 0xff;
+
+  skip_whitespace (str);
+
+  if (mav_reg_required_here (&str, shift0, reg0) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || mav_reg_required_here (&str, shift1, reg1) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || mav_reg_required_here (&str, shift2, reg2) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || mav_reg_required_here (&str, shift3, reg3) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+    }
+  else
+    end_of_line (str);
+}
+
+static void
+do_mav_quad_6a (char * str)
+{
+  do_mav_quad (str, MAV_MODE6, REG_TYPE_MVAX, REG_TYPE_MVFX, REG_TYPE_MVFX,
+	       REG_TYPE_MVFX);
+}
+
+static void
+do_mav_quad_6b (char * str)
+{
+  do_mav_quad (str, MAV_MODE6, REG_TYPE_MVAX, REG_TYPE_MVAX, REG_TYPE_MVFX,
+	       REG_TYPE_MVFX);
+}
+
+/* cfmvsc32<cond> DSPSC,MVDX[15:0].  */
+static void
+do_mav_dspsc_1 (char * str)
+{
+  skip_whitespace (str);
+
+  /* cfmvsc32.  */
+  if (mav_reg_required_here (&str, -1, REG_TYPE_DSPSC) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || mav_reg_required_here (&str, 12, REG_TYPE_MVDX) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* cfmv32sc<cond> MVDX[15:0],DSPSC.  */
+static void
+do_mav_dspsc_2 (char * str)
+{
+  skip_whitespace (str);
+
+  /* cfmv32sc.  */
+  if (mav_reg_required_here (&str, 12, REG_TYPE_MVDX) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || mav_reg_required_here (&str, -1, REG_TYPE_DSPSC) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* Maverick shift immediate instructions.
+   cfsh32<cond> MVFX[15:0],MVFX[15:0],Shift[6:0].
+   cfsh64<cond> MVDX[15:0],MVDX[15:0],Shift[6:0].  */
+
+static void
+do_mav_shift (char * str,
+	      enum arm_reg_type reg0,
+	      enum arm_reg_type reg1)
+{
+  int error;
+  int imm, neg = 0;
+
+  skip_whitespace (str);
+
+  error = 0;
+
+  if (mav_reg_required_here (&str, 12, reg0) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || mav_reg_required_here (&str, 16, reg1) == FAIL
+      || skip_past_comma  (&str) == FAIL)
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* Calculate the immediate operand.
+     The operand is a 7bit signed number.  */
+  skip_whitespace (str);
+
+  if (*str == '#')
+    ++str;
+
+  if (!ISDIGIT (*str) && *str != '-')
+    {
+      inst.error = _("expecting immediate, 7bit operand");
+      return;
+    }
+
+  if (*str == '-')
+    {
+      neg = 1;
+      ++str;
+    }
+
+  for (imm = 0; *str && ISDIGIT (*str); ++str)
+    imm = imm * 10 + *str - '0';
+
+  if (imm > 64)
+    {
+      inst.error = _("immediate out of range");
+      return;
+    }
+
+  /* Make negative imm's into 7bit signed numbers.  */
+  if (neg)
+    {
+      imm = -imm;
+      imm &= 0x0000007f;
+    }
+
+  /* Bits 0-3 of the insn should have bits 0-3 of the immediate.
+     Bits 5-7 of the insn should have bits 4-6 of the immediate.
+     Bit 4 should be 0.  */
+  imm = (imm & 0xf) | ((imm & 0x70) << 1);
+
+  inst.instruction |= imm;
+  end_of_line (str);
+}
+
+static void
+do_mav_shift_1 (char * str)
+{
+  do_mav_shift (str, REG_TYPE_MVFX, REG_TYPE_MVFX);
+}
+
+static void
+do_mav_shift_2 (char * str)
+{
+  do_mav_shift (str, REG_TYPE_MVDX, REG_TYPE_MVDX);
+}
+
+static int
+mav_parse_offset (char ** str, int * negative)
+{
+  char * p = *str;
+  int offset;
+
+  *negative = 0;
+
+  skip_whitespace (p);
+
+  if (*p == '#')
+    ++p;
+
+  if (*p == '-')
+    {
+      *negative = 1;
+      ++p;
+    }
+
+  if (!ISDIGIT (*p))
+    {
+      inst.error = _("offset expected");
+      return 0;
+    }
+
+  for (offset = 0; *p && ISDIGIT (*p); ++p)
+    offset = offset * 10 + *p - '0';
+
+  if (offset > 0x3fc)
+    {
+      inst.error = _("offset out of range");
+      return 0;
+    }
+  if (offset & 0x3)
+    {
+      inst.error = _("offset not a multiple of 4");
+      return 0;
+    }
+
+  *str = p;
+
+  return *negative ? -offset : offset;
+}
+
+/* Maverick load/store instructions.
+  <insn><cond> CRd,[Rn,<offset>]{!}.
+  <insn><cond> CRd,[Rn],<offset>.  */
+
+static void
+do_mav_ldst (char * str, enum arm_reg_type reg0)
+{
+  int offset, negative;
+
+  skip_whitespace (str);
+
+  if (mav_reg_required_here (&str, 12, reg0) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || *str++ != '['
+      || reg_required_here (&str, 16) == FAIL)
+    goto fail_ldst;
+
+  if (skip_past_comma (&str) == SUCCESS)
+    {
+      /* You are here: "<offset>]{!}".  */
+      inst.instruction |= PRE_INDEX;
+
+      offset = mav_parse_offset (&str, &negative);
+
+      if (inst.error)
+	return;
+
+      if (*str++ != ']')
+	{
+	  inst.error = _("missing ]");
+	  return;
+	}
+
+      if (*str == '!')
+	{
+	  inst.instruction |= WRITE_BACK;
+	  ++str;
+	}
+    }
+  else
+    {
+      /* You are here: "], <offset>".  */
+      if (*str++ != ']')
+	{
+	  inst.error = _("missing ]");
+	  return;
+	}
+
+      if (skip_past_comma (&str) == FAIL
+	  || (offset = mav_parse_offset (&str, &negative), inst.error))
+	goto fail_ldst;
+
+      inst.instruction |= CP_T_WB; /* Post indexed, set bit W.  */
+    }
+
+  if (negative)
+    offset = -offset;
+  else
+    inst.instruction |= CP_T_UD; /* Positive, so set bit U.  */
+
+  inst.instruction |= offset >> 2;
+  end_of_line (str);
+  return;
+
+fail_ldst:
+  if (!inst.error)
+     inst.error = BAD_ARGS;
+}
+
+static void
+do_mav_ldst_1 (char * str)
+{
+  do_mav_ldst (str, REG_TYPE_MVF);
+}
+
+static void
+do_mav_ldst_2 (char * str)
+{
+  do_mav_ldst (str, REG_TYPE_MVD);
+}
+
+static void
+do_mav_ldst_3 (char * str)
+{
+  do_mav_ldst (str, REG_TYPE_MVFX);
+}
+
+static void
+do_mav_ldst_4 (char * str)
+{
+  do_mav_ldst (str, REG_TYPE_MVDX);
+}
+
+static void
+do_t_nop (char * str)
+{
+  /* Do nothing.  */
+  end_of_line (str);
+}
+
+/* Handle the Format 4 instructions that do not have equivalents in other
+   formats.  That is, ADC, AND, EOR, SBC, ROR, TST, NEG, CMN, ORR, MUL,
+   BIC and MVN.  */
+
+static void
+do_t_arit (char * str)
+{
+  int Rd, Rs, Rn;
+
+  skip_whitespace (str);
+
+  if ((Rd = thumb_reg (&str, THUMB_REG_LO)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (Rs = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (skip_past_comma (&str) != FAIL)
+    {
+      /* Three operand format not allowed for TST, CMN, NEG and MVN.
+	 (It isn't allowed for CMP either, but that isn't handled by this
+	 function.)  */
+      if (inst.instruction == T_OPCODE_TST
+	  || inst.instruction == T_OPCODE_CMN
+	  || inst.instruction == T_OPCODE_NEG
+	  || inst.instruction == T_OPCODE_MVN)
+	{
+	  inst.error = BAD_ARGS;
+	  return;
+	}
+
+      if ((Rn = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
+	return;
+
+      if (Rs != Rd)
+	{
+	  inst.error = _("dest and source1 must be the same register");
+	  return;
+	}
+      Rs = Rn;
+    }
+
+  if (inst.instruction == T_OPCODE_MUL
+      && Rs == Rd)
+    as_tsktsk (_("Rs and Rd must be different in MUL"));
+
+  inst.instruction |= Rd | (Rs << 3);
+  end_of_line (str);
+}
+
+static void
+do_t_add (char * str)
+{
+  thumb_add_sub (str, 0);
+}
+
+static void
+do_t_asr (char * str)
+{
+  thumb_shift (str, THUMB_ASR);
+}
+
+static void
+do_t_branch9 (char * str)
+{
+  if (my_get_expression (&inst.reloc.exp, &str))
+    return;
+  inst.reloc.type = BFD_RELOC_THUMB_PCREL_BRANCH9;
+  inst.reloc.pc_rel = 1;
+  end_of_line (str);
+}
+
+static void
+do_t_branch12 (char * str)
+{
+  if (my_get_expression (&inst.reloc.exp, &str))
+    return;
+  inst.reloc.type = BFD_RELOC_THUMB_PCREL_BRANCH12;
+  inst.reloc.pc_rel = 1;
+  end_of_line (str);
+}
+
+/* Find the real, Thumb encoded start of a Thumb function.  */
+
+static symbolS *
+find_real_start (symbolS * symbolP)
+{
+  char *       real_start;
+  const char * name = S_GET_NAME (symbolP);
+  symbolS *    new_target;
+
+  /* This definition must agree with the one in gcc/config/arm/thumb.c.  */
+#define STUB_NAME ".real_start_of"
+
+  if (name == NULL)
+    abort ();
+
+  /* Names that start with '.' are local labels, not function entry points.
+     The compiler may generate BL instructions to these labels because it
+     needs to perform a branch to a far away location.  */
+  if (name[0] == '.')
+    return symbolP;
+
+  real_start = malloc (strlen (name) + strlen (STUB_NAME) + 1);
+  sprintf (real_start, "%s%s", STUB_NAME, name);
+
+  new_target = symbol_find (real_start);
+
+  if (new_target == NULL)
+    {
+      as_warn ("Failed to find real start of function: %s\n", name);
+      new_target = symbolP;
+    }
+
+  free (real_start);
+
+  return new_target;
+}
+
+static void
+do_t_branch23 (char * str)
+{
+  if (my_get_expression (& inst.reloc.exp, & str))
+    return;
+
+  inst.reloc.type   = BFD_RELOC_THUMB_PCREL_BRANCH23;
+  inst.reloc.pc_rel = 1;
+  end_of_line (str);
+
+  /* If the destination of the branch is a defined symbol which does not have
+     the THUMB_FUNC attribute, then we must be calling a function which has
+     the (interfacearm) attribute.  We look for the Thumb entry point to that
+     function and change the branch to refer to that function instead.  */
+  if (   inst.reloc.exp.X_op == O_symbol
+      && inst.reloc.exp.X_add_symbol != NULL
+      && S_IS_DEFINED (inst.reloc.exp.X_add_symbol)
+      && ! THUMB_IS_FUNC (inst.reloc.exp.X_add_symbol))
+    inst.reloc.exp.X_add_symbol =
+      find_real_start (inst.reloc.exp.X_add_symbol);
+}
+
+static void
+do_t_bx (char * str)
+{
+  int reg;
+
+  skip_whitespace (str);
+
+  if ((reg = thumb_reg (&str, THUMB_REG_ANY)) == FAIL)
+    return;
+
+  /* This sets THUMB_H2 from the top bit of reg.  */
+  inst.instruction |= reg << 3;
+
+  /* ??? FIXME: Should add a hacky reloc here if reg is REG_PC.  The reloc
+     should cause the alignment to be checked once it is known.  This is
+     because BX PC only works if the instruction is word aligned.  */
+
+  end_of_line (str);
+}
+
+static void
+do_t_compare (char * str)
+{
+  thumb_mov_compare (str, THUMB_COMPARE);
+}
+
+static void
+do_t_ldmstm (char * str)
+{
+  int Rb;
+  long range;
+
+  skip_whitespace (str);
+
+  if ((Rb = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
+    return;
+
+  if (*str != '!')
+    as_warn (_("inserted missing '!': load/store multiple always writes back base register"));
+  else
+    str++;
+
+  if (skip_past_comma (&str) == FAIL
+      || (range = reg_list (&str)) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (inst.reloc.type != BFD_RELOC_UNUSED)
+    {
+      /* This really doesn't seem worth it.  */
+      inst.reloc.type = BFD_RELOC_UNUSED;
+      inst.error = _("expression too complex");
+      return;
+    }
+
+  if (range & ~0xff)
+    {
+      inst.error = _("only lo-regs valid in load/store multiple");
+      return;
+    }
+
+  inst.instruction |= (Rb << 8) | range;
+  end_of_line (str);
+}
+
+static void
+do_t_ldr (char * str)
+{
+  thumb_load_store (str, THUMB_LOAD, THUMB_WORD);
+}
+
+static void
+do_t_ldrb (char * str)
+{
+  thumb_load_store (str, THUMB_LOAD, THUMB_BYTE);
+}
+
+static void
+do_t_ldrh (char * str)
+{
+  thumb_load_store (str, THUMB_LOAD, THUMB_HALFWORD);
+}
+
+static void
+do_t_lds (char * str)
+{
+  int Rd, Rb, Ro;
+
+  skip_whitespace (str);
+
+  if ((Rd = thumb_reg (&str, THUMB_REG_LO)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || *str++ != '['
+      || (Rb = thumb_reg (&str, THUMB_REG_LO)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (Ro = thumb_reg (&str, THUMB_REG_LO)) == FAIL
+      || *str++ != ']')
+    {
+      if (! inst.error)
+	inst.error = _("syntax: ldrs[b] Rd, [Rb, Ro]");
+      return;
+    }
+
+  inst.instruction |= Rd | (Rb << 3) | (Ro << 6);
+  end_of_line (str);
+}
+
+static void
+do_t_lsl (char * str)
+{
+  thumb_shift (str, THUMB_LSL);
+}
+
+static void
+do_t_lsr (char * str)
+{
+  thumb_shift (str, THUMB_LSR);
+}
+
+static void
+do_t_mov (char * str)
+{
+  thumb_mov_compare (str, THUMB_MOVE);
+}
+
+static void
+do_t_push_pop (char * str)
+{
+  long range;
+
+  skip_whitespace (str);
+
+  if ((range = reg_list (&str)) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (inst.reloc.type != BFD_RELOC_UNUSED)
+    {
+      /* This really doesn't seem worth it.  */
+      inst.reloc.type = BFD_RELOC_UNUSED;
+      inst.error = _("expression too complex");
+      return;
+    }
+
+  if (range & ~0xff)
+    {
+      if ((inst.instruction == T_OPCODE_PUSH
+	   && (range & ~0xff) == 1 << REG_LR)
+	  || (inst.instruction == T_OPCODE_POP
+	      && (range & ~0xff) == 1 << REG_PC))
+	{
+	  inst.instruction |= THUMB_PP_PC_LR;
+	  range &= 0xff;
+	}
+      else
+	{
+	  inst.error = _("invalid register list to push/pop instruction");
+	  return;
+	}
+    }
+
+  inst.instruction |= range;
+  end_of_line (str);
+}
+
+static void
+do_t_str (char * str)
+{
+  thumb_load_store (str, THUMB_STORE, THUMB_WORD);
+}
+
+static void
+do_t_strb (char * str)
+{
+  thumb_load_store (str, THUMB_STORE, THUMB_BYTE);
+}
+
+static void
+do_t_strh (char * str)
+{
+  thumb_load_store (str, THUMB_STORE, THUMB_HALFWORD);
+}
+
+static void
+do_t_sub (char * str)
+{
+  thumb_add_sub (str, 1);
+}
+
+static void
+do_t_swi (char * str)
+{
+  skip_whitespace (str);
+
+  if (my_get_expression (&inst.reloc.exp, &str))
+    return;
+
+  inst.reloc.type = BFD_RELOC_ARM_SWI;
+  end_of_line (str);
+}
+
+static void
+do_t_adr (char * str)
+{
+  int reg;
+
+  /* This is a pseudo-op of the form "adr rd, label" to be converted
+     into a relative address of the form "add rd, pc, #label-.-4".  */
+  skip_whitespace (str);
+
+  /* Store Rd in temporary location inside instruction.  */
+  if ((reg = reg_required_here (&str, 4)) == FAIL
+      || (reg > 7)  /* For Thumb reg must be r0..r7.  */
+      || skip_past_comma (&str) == FAIL
+      || my_get_expression (&inst.reloc.exp, &str))
+    {
+      if (!inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  inst.reloc.type = BFD_RELOC_ARM_THUMB_ADD;
+  inst.reloc.exp.X_add_number -= 4; /* PC relative adjust.  */
+  inst.reloc.pc_rel = 1;
+  inst.instruction |= REG_PC; /* Rd is already placed into the instruction.  */
+
+  end_of_line (str);
+}
+
+static void
+insert_reg (const struct reg_entry * r,
+	    struct hash_control * htab)
+{
+  int    len  = strlen (r->name) + 2;
+  char * buf  = xmalloc (len);
+  char * buf2 = xmalloc (len);
+  int    i    = 0;
+
+#ifdef REGISTER_PREFIX
+  buf[i++] = REGISTER_PREFIX;
+#endif
+
+  strcpy (buf + i, r->name);
+
+  for (i = 0; buf[i]; i++)
+    buf2[i] = TOUPPER (buf[i]);
+
+  buf2[i] = '\0';
+
+  hash_insert (htab, buf,  (PTR) r);
+  hash_insert (htab, buf2, (PTR) r);
+}
+
+static void
+build_reg_hsh (struct reg_map * map)
+{
+  const struct reg_entry *r;
+
+  if ((map->htab = hash_new ()) == NULL)
+    as_fatal (_("virtual memory exhausted"));
+
+  for (r = map->names; r->name != NULL; r++)
+    insert_reg (r, map->htab);
+}
+
+static void
+insert_reg_alias (char * str,
+		  int regnum,
+		  struct hash_control *htab)
+{
+  const char * error;
+  struct reg_entry * new = xmalloc (sizeof (struct reg_entry));
+  const char * name = xmalloc (strlen (str) + 1);
+
+  strcpy ((char *) name, str);
+
+  new->name = name;
+  new->number = regnum;
+  new->builtin = FALSE;
+
+  error = hash_insert (htab, name, (PTR) new);
+  if (error)
+    {
+      as_bad (_("failed to create an alias for %s, reason: %s"),
+	    str, error);
+      free ((char *) name);
+      free (new);
+    }
+}
+
+/* Look for the .req directive.  This is of the form:
+
+   	new_register_name .req existing_register_name
+
+   If we find one, or if it looks sufficiently like one that we want to
+   handle any error here, return non-zero.  Otherwise return zero.  */
+
+static int
+create_register_alias (char * newname, char * p)
+{
+  char * q;
+  char c;
+
+  q = p;
+  skip_whitespace (q);
+
+  c = *p;
+  *p = '\0';
+
+  if (*q && !strncmp (q, ".req ", 5))
+    {
+      char *copy_of_str;
+      char *r;
+
+#ifndef IGNORE_OPCODE_CASE
+      newname = original_case_string;
+#endif
+      copy_of_str = newname;
+
+      q += 4;
+      skip_whitespace (q);
+
+      for (r = q; *r != '\0'; r++)
+	if (*r == ' ')
+	  break;
+
+      if (r != q)
+	{
+	  enum arm_reg_type new_type, old_type;
+	  int old_regno;
+	  char d = *r;
+
+	  *r = '\0';
+	  old_type = arm_reg_parse_any (q);
+	  *r = d;
+
+	  new_type = arm_reg_parse_any (newname);
+
+	  if (new_type == REG_TYPE_MAX)
+	    {
+	      if (old_type != REG_TYPE_MAX)
+		{
+		  old_regno = arm_reg_parse (&q, all_reg_maps[old_type].htab);
+		  insert_reg_alias (newname, old_regno,
+				    all_reg_maps[old_type].htab);
+		}
+	      else
+		as_warn (_("register '%s' does not exist\n"), q);
+	    }
+	  else if (old_type == REG_TYPE_MAX)
+	    {
+	      as_warn (_("ignoring redefinition of register alias '%s' to non-existant register '%s'"),
+		       copy_of_str, q);
+	    }
+	  else
+	    {
+	      /* Do not warn about redefinitions to the same alias.  */
+	      if (new_type != old_type
+		  || (arm_reg_parse (&q, all_reg_maps[old_type].htab)
+		      != arm_reg_parse (&q, all_reg_maps[new_type].htab)))
+		as_warn (_("ignoring redefinition of register alias '%s'"),
+			 copy_of_str);
+
+	    }
+	}
+      else
+	as_warn (_("ignoring incomplete .req pseuso op"));
+
+      *p = c;
+      return 1;
+    }
+
+  *p = c;
+  return 0;
+}
+
+static void
+set_constant_flonums (void)
+{
+  int i;
+
+  for (i = 0; i < NUM_FLOAT_VALS; i++)
+    if (atof_ieee ((char *) fp_const[i], 'x', fp_values[i]) == NULL)
+      abort ();
+}
+
+
 static const struct asm_opcode insns[] =
 {
   /* Core ARM Instructions.  */
@@ -1226,7 +9796,7 @@ static const struct asm_opcode insns[] =
   /* Pseudo ops.  */
   {"adr",        0xe28f0000, 3,  ARM_EXT_V1,       do_adr},
   {"adrl",       0xe28f0000, 3,  ARM_EXT_V1,       do_adrl},
-  {"nop",        0xe1a00000, 3,  ARM_EXT_V1,       do_empty},
+  {"nop",        0xe1a00000, 3,  ARM_EXT_V1,       do_nop},
 
   /* ARM 2 multiplies.  */
   {"mul",        0xe0000090, 3,  ARM_EXT_V2,       do_mul},
@@ -1427,6 +9997,22 @@ static const struct asm_opcode insns[] =
   { "usada8",    0xe7800010, 6,  ARM_EXT_V6,       do_smlad},
   { "usat",      0xe6e00010, 4,  ARM_EXT_V6,       do_usat},
   { "usat16",    0xe6e00f30, 6,  ARM_EXT_V6,       do_usat16},
+
+  /*  ARM V6K.  */
+  { "clrex",     0xf57ff01f, 0,  ARM_EXT_V6K,      do_empty},
+  { "ldrexb",    0xe1d00f9f, 6,  ARM_EXT_V6K,      do_ldrex},
+  { "ldrexd",    0xe1b00f9f, 6,  ARM_EXT_V6K,      do_ldrex},
+  { "ldrexh",    0xe1f00f9f, 6,  ARM_EXT_V6K,      do_ldrex},
+  { "sev",       0xe320f004, 3,  ARM_EXT_V6K,      do_empty},
+  { "strexb",    0xe1c00f90, 6,  ARM_EXT_V6K,      do_strex},
+  { "strexd",    0xe1a00f90, 6,  ARM_EXT_V6K,      do_strex},
+  { "strexh",    0xe1e00f90, 6,  ARM_EXT_V6K,      do_strex},
+  { "wfe",       0xe320f002, 3,  ARM_EXT_V6K,      do_empty},
+  { "wfi",       0xe320f003, 3,  ARM_EXT_V6K,      do_empty},
+  { "yield",     0xe320f001, 5,  ARM_EXT_V6K,      do_empty},
+
+  /*  ARM V6Z.  */
+  { "smi",       0xe1600070, 3,  ARM_EXT_V6Z,      do_smi},
 
   /* Core FPA instruction set (V1).  */
   {"wfs",        0xee200110, 3,  FPU_FPA_EXT_V1,   do_fpa_ctrl},
@@ -2237,172 +10823,56 @@ static const struct asm_opcode insns[] =
   {"cfmsuba32",  0xee300600, 9,  ARM_CEXT_MAVERICK, do_mav_quad_6b},
 };
 
-/* Defines for various bits that we will want to toggle.  */
-#define INST_IMMEDIATE	0x02000000
-#define OFFSET_REG	0x02000000
-#define HWOFFSET_IMM    0x00400000
-#define SHIFT_BY_REG	0x00000010
-#define PRE_INDEX	0x01000000
-#define INDEX_UP	0x00800000
-#define WRITE_BACK	0x00200000
-#define LDM_TYPE_2_OR_3	0x00400000
+/* Iterate over the base tables to create the instruction patterns.  */
 
-#define LITERAL_MASK	0xf000f000
-#define OPCODE_MASK	0xfe1fffff
-#define V4_STR_BIT	0x00000020
-
-#define DATA_OP_SHIFT	21
-
-/* Codes to distinguish the arithmetic instructions.  */
-#define OPCODE_AND	0
-#define OPCODE_EOR	1
-#define OPCODE_SUB	2
-#define OPCODE_RSB	3
-#define OPCODE_ADD	4
-#define OPCODE_ADC	5
-#define OPCODE_SBC	6
-#define OPCODE_RSC	7
-#define OPCODE_TST	8
-#define OPCODE_TEQ	9
-#define OPCODE_CMP	10
-#define OPCODE_CMN	11
-#define OPCODE_ORR	12
-#define OPCODE_MOV	13
-#define OPCODE_BIC	14
-#define OPCODE_MVN	15
-
-/* Thumb v1 (ARMv4T).  */
-static void do_t_nop		PARAMS ((char *));
-static void do_t_arit		PARAMS ((char *));
-static void do_t_add		PARAMS ((char *));
-static void do_t_asr		PARAMS ((char *));
-static void do_t_branch9	PARAMS ((char *));
-static void do_t_branch12	PARAMS ((char *));
-static void do_t_branch23	PARAMS ((char *));
-static void do_t_bx		PARAMS ((char *));
-static void do_t_compare	PARAMS ((char *));
-static void do_t_ldmstm		PARAMS ((char *));
-static void do_t_ldr		PARAMS ((char *));
-static void do_t_ldrb		PARAMS ((char *));
-static void do_t_ldrh		PARAMS ((char *));
-static void do_t_lds		PARAMS ((char *));
-static void do_t_lsl		PARAMS ((char *));
-static void do_t_lsr		PARAMS ((char *));
-static void do_t_mov		PARAMS ((char *));
-static void do_t_push_pop	PARAMS ((char *));
-static void do_t_str		PARAMS ((char *));
-static void do_t_strb		PARAMS ((char *));
-static void do_t_strh		PARAMS ((char *));
-static void do_t_sub		PARAMS ((char *));
-static void do_t_swi		PARAMS ((char *));
-static void do_t_adr		PARAMS ((char *));
-
-/* Thumb v2 (ARMv5T).  */
-static void do_t_blx		PARAMS ((char *));
-static void do_t_bkpt		PARAMS ((char *));
-
-/* ARM V6.  */
-static void do_t_cps            PARAMS ((char *));
-static void do_t_cpy            PARAMS ((char *));
-static void do_t_setend         PARAMS ((char *));;
-
-#define T_OPCODE_MUL 0x4340
-#define T_OPCODE_TST 0x4200
-#define T_OPCODE_CMN 0x42c0
-#define T_OPCODE_NEG 0x4240
-#define T_OPCODE_MVN 0x43c0
-
-#define T_OPCODE_ADD_R3	0x1800
-#define T_OPCODE_SUB_R3 0x1a00
-#define T_OPCODE_ADD_HI 0x4400
-#define T_OPCODE_ADD_ST 0xb000
-#define T_OPCODE_SUB_ST 0xb080
-#define T_OPCODE_ADD_SP 0xa800
-#define T_OPCODE_ADD_PC 0xa000
-#define T_OPCODE_ADD_I8 0x3000
-#define T_OPCODE_SUB_I8 0x3800
-#define T_OPCODE_ADD_I3 0x1c00
-#define T_OPCODE_SUB_I3 0x1e00
-
-#define T_OPCODE_ASR_R	0x4100
-#define T_OPCODE_LSL_R	0x4080
-#define T_OPCODE_LSR_R  0x40c0
-#define T_OPCODE_ASR_I	0x1000
-#define T_OPCODE_LSL_I	0x0000
-#define T_OPCODE_LSR_I	0x0800
-
-#define T_OPCODE_MOV_I8	0x2000
-#define T_OPCODE_CMP_I8 0x2800
-#define T_OPCODE_CMP_LR 0x4280
-#define T_OPCODE_MOV_HR 0x4600
-#define T_OPCODE_CMP_HR 0x4500
-
-#define T_OPCODE_LDR_PC 0x4800
-#define T_OPCODE_LDR_SP 0x9800
-#define T_OPCODE_STR_SP 0x9000
-#define T_OPCODE_LDR_IW 0x6800
-#define T_OPCODE_STR_IW 0x6000
-#define T_OPCODE_LDR_IH 0x8800
-#define T_OPCODE_STR_IH 0x8000
-#define T_OPCODE_LDR_IB 0x7800
-#define T_OPCODE_STR_IB 0x7000
-#define T_OPCODE_LDR_RW 0x5800
-#define T_OPCODE_STR_RW 0x5000
-#define T_OPCODE_LDR_RH 0x5a00
-#define T_OPCODE_STR_RH 0x5200
-#define T_OPCODE_LDR_RB 0x5c00
-#define T_OPCODE_STR_RB 0x5400
-
-#define T_OPCODE_PUSH	0xb400
-#define T_OPCODE_POP	0xbc00
-
-#define T_OPCODE_BRANCH 0xe7fe
-
-static int thumb_reg		PARAMS ((char ** str, int hi_lo));
-
-#define THUMB_SIZE	2	/* Size of thumb instruction.  */
-#define THUMB_REG_LO	0x1
-#define THUMB_REG_HI	0x2
-#define THUMB_REG_ANY	0x3
-
-#define THUMB_H1	0x0080
-#define THUMB_H2	0x0040
-
-#define THUMB_ASR 0
-#define THUMB_LSL 1
-#define THUMB_LSR 2
-
-#define THUMB_MOVE 0
-#define THUMB_COMPARE 1
-#define THUMB_CPY 2
-
-#define THUMB_LOAD 0
-#define THUMB_STORE 1
-
-#define THUMB_PP_PC_LR 0x0100
-
-/* These three are used for immediate shifts, do not alter.  */
-#define THUMB_WORD 2
-#define THUMB_HALFWORD 1
-#define THUMB_BYTE 0
-
-struct thumb_opcode
+static void
+build_arm_ops_hsh (void)
 {
-  /* Basic string to match.  */
-  const char * template;
+  unsigned int i;
+  unsigned int j;
+  static struct obstack insn_obstack;
 
-  /* Basic instruction code.  */
-  unsigned long value;
+  obstack_begin (&insn_obstack, 4000);
 
-  int size;
+  for (i = 0; i < sizeof (insns) / sizeof (struct asm_opcode); i++)
+    {
+      const struct asm_opcode *insn = insns + i;
 
-  /* Which CPU variants this exists for.  */
-  unsigned long variant;
+      if (insn->cond_offset != 0)
+	{
+	  /* Insn supports conditional execution.  Build the varaints
+	     and insert them in the hash table.  */
+	  for (j = 0; j < sizeof (conds) / sizeof (struct asm_cond); j++)
+	    {
+	      unsigned len = strlen (insn->template);
+	      struct asm_opcode *new;
+	      char *template;
 
-  /* Function to call to parse args.  */
-  void (* parms) PARAMS ((char *));
-};
+	      new = obstack_alloc (&insn_obstack, sizeof (struct asm_opcode));
+	      /* All condition codes are two characters.  */
+	      template = obstack_alloc (&insn_obstack, len + 3);
 
+	      strncpy (template, insn->template, insn->cond_offset);
+	      strcpy (template + insn->cond_offset, conds[j].template);
+	      if (len > insn->cond_offset)
+		strcpy (template + insn->cond_offset + 2,
+			insn->template + insn->cond_offset);
+	      new->template = template;
+	      new->cond_offset = 0;
+	      new->variant = insn->variant;
+	      new->parms = insn->parms;
+	      new->value = (insn->value & ~COND_MASK) | conds[j].value;
+
+	      hash_insert (arm_ops_hsh, new->template, (PTR) new);
+	    }
+	}
+      /* Finally, insert the unconditional insn in the table directly;
+	 no need to build a copy.  */
+      hash_insert (arm_ops_hsh, insn->template, (PTR) insn);
+    }
+}
+
+
 static const struct thumb_opcode tinsns[] =
 {
   /* Thumb v1 (ARMv4T).  */
@@ -2482,9124 +10952,8 @@ static const struct thumb_opcode tinsns[] =
   {"uxtb",	0xb2c0,		2,	ARM_EXT_V6,  do_t_arit},
 };
 
-#define BAD_ARGS 	_("bad arguments to instruction")
-#define BAD_PC 		_("r15 not allowed here")
-#define BAD_COND 	_("instruction is not conditional")
-#define ERR_NO_ACCUM	_("acc0 expected")
-
-static struct hash_control * arm_ops_hsh   = NULL;
-static struct hash_control * arm_tops_hsh  = NULL;
-static struct hash_control * arm_cond_hsh  = NULL;
-static struct hash_control * arm_shift_hsh = NULL;
-static struct hash_control * arm_psr_hsh   = NULL;
-
-/* This table describes all the machine specific pseudo-ops the assembler
-   has to support.  The fields are:
-     pseudo-op name without dot
-     function to call to execute this pseudo-op
-     Integer arg to pass to the function.  */
-
-static void s_req PARAMS ((int));
-static void s_unreq PARAMS ((int));
-static void s_align PARAMS ((int));
-static void s_bss PARAMS ((int));
-static void s_even PARAMS ((int));
-static void s_ltorg PARAMS ((int));
-static void s_arm PARAMS ((int));
-static void s_thumb PARAMS ((int));
-static void s_code PARAMS ((int));
-static void s_force_thumb PARAMS ((int));
-static void s_thumb_func PARAMS ((int));
-static void s_thumb_set PARAMS ((int));
-#ifdef OBJ_ELF
-static void s_arm_elf_cons PARAMS ((int));
-#endif
-
-static int my_get_expression PARAMS ((expressionS *, char **));
-
-const pseudo_typeS md_pseudo_table[] =
-{
-  /* Never called because '.req' does not start a line.  */
-  { "req",         s_req,         0 },
-  { "unreq",       s_unreq,       0 },
-  { "bss",         s_bss,         0 },
-  { "align",       s_align,       0 },
-  { "arm",         s_arm,         0 },
-  { "thumb",       s_thumb,       0 },
-  { "code",        s_code,        0 },
-  { "force_thumb", s_force_thumb, 0 },
-  { "thumb_func",  s_thumb_func,  0 },
-  { "thumb_set",   s_thumb_set,   0 },
-  { "even",        s_even,        0 },
-  { "ltorg",       s_ltorg,       0 },
-  { "pool",        s_ltorg,       0 },
-#ifdef OBJ_ELF
-  { "word",        s_arm_elf_cons, 4 },
-  { "long",        s_arm_elf_cons, 4 },
-#else
-  { "word",        cons, 4},
-#endif
-  { "extend",      float_cons, 'x' },
-  { "ldouble",     float_cons, 'x' },
-  { "packed",      float_cons, 'p' },
-  { 0, 0, 0 }
-};
-
-/* Other internal functions.  */
-static int arm_parse_extension PARAMS ((char *, int *));
-static int arm_parse_cpu PARAMS ((char *));
-static int arm_parse_arch PARAMS ((char *));
-static int arm_parse_fpu PARAMS ((char *));
-static int arm_parse_float_abi PARAMS ((char *));
-#if 0 /* Suppressed - for now.  */
-#if defined OBJ_COFF || defined OBJ_ELF
-static void arm_add_note PARAMS ((const char *, const char *, unsigned int));
-#endif
-#endif
-
-/* Stuff needed to resolve the label ambiguity
-   As:
-     ...
-     label:   <insn>
-   may differ from:
-     ...
-     label:
-              <insn>
-*/
-
-symbolS *  last_label_seen;
-static int label_is_thumb_function_name = FALSE;
-
-/* Literal Pool stuff.  */
-
-#define MAX_LITERAL_POOL_SIZE 1024
-
-/* Literal pool structure.  Held on a per-section
-   and per-sub-section basis.  */
-typedef struct literal_pool
-{
-  expressionS    literals [MAX_LITERAL_POOL_SIZE];
-  unsigned int   next_free_entry;
-  unsigned int   id;
-  symbolS *      symbol;
-  segT           section;
-  subsegT        sub_section;
-  struct literal_pool * next;
-} literal_pool;
-
-/* Pointer to a linked list of literal pools.  */
-literal_pool * list_of_pools = NULL;
-
-static literal_pool * find_literal_pool PARAMS ((void));
-static literal_pool * find_or_make_literal_pool PARAMS ((void));
-
-static literal_pool *
-find_literal_pool ()
-{
-  literal_pool * pool;
-
-  for (pool = list_of_pools; pool != NULL; pool = pool->next)
-    {
-      if (pool->section == now_seg
-	  && pool->sub_section == now_subseg)
-	break;
-    }
-
-  return pool;
-}
-
-static literal_pool *
-find_or_make_literal_pool ()
-{
-  /* Next literal pool ID number.  */
-  static unsigned int latest_pool_num = 1;
-  literal_pool *      pool;
-
-  pool = find_literal_pool ();
-
-  if (pool == NULL)
-    {
-      /* Create a new pool.  */
-      pool = (literal_pool *) xmalloc (sizeof (* pool));
-      if (! pool)
-	return NULL;
-
-      pool->next_free_entry = 0;
-      pool->section         = now_seg;
-      pool->sub_section     = now_subseg;
-      pool->next            = list_of_pools;
-      pool->symbol          = NULL;
-
-      /* Add it to the list.  */
-      list_of_pools = pool;
-    }
-
-  /* New pools, and emptied pools, will have a NULL symbol.  */
-  if (pool->symbol == NULL)
-    {
-      pool->symbol = symbol_create (FAKE_LABEL_NAME, undefined_section,
-				    (valueT) 0, &zero_address_frag);
-      pool->id = latest_pool_num ++;
-    }
-
-  /* Done.  */
-  return pool;
-}
-
-/* Add the literal in the global 'inst'
-   structure to the relevent literal pool.  */
-static int
-add_to_lit_pool ()
-{
-  literal_pool * pool;
-  unsigned int entry;
-
-  pool = find_or_make_literal_pool ();
-
-  /* Check if this literal value is already in the pool.  */
-  for (entry = 0; entry < pool->next_free_entry; entry ++)
-    {
-      if ((pool->literals[entry].X_op == inst.reloc.exp.X_op)
-	  && (inst.reloc.exp.X_op == O_constant)
-	  && (pool->literals[entry].X_add_number
-	      == inst.reloc.exp.X_add_number)
-	  && (pool->literals[entry].X_unsigned
-	      == inst.reloc.exp.X_unsigned))
-	break;
-
-      if ((pool->literals[entry].X_op == inst.reloc.exp.X_op)
-          && (inst.reloc.exp.X_op == O_symbol)
-          && (pool->literals[entry].X_add_number
-	      == inst.reloc.exp.X_add_number)
-          && (pool->literals[entry].X_add_symbol
-	      == inst.reloc.exp.X_add_symbol)
-          && (pool->literals[entry].X_op_symbol
-	      == inst.reloc.exp.X_op_symbol))
-        break;
-    }
-
-  /* Do we need to create a new entry?  */
-  if (entry == pool->next_free_entry)
-    {
-      if (entry >= MAX_LITERAL_POOL_SIZE)
-	{
-	  inst.error = _("literal pool overflow");
-	  return FAIL;
-	}
-
-      pool->literals[entry] = inst.reloc.exp;
-      pool->next_free_entry += 1;
-    }
-
-  inst.reloc.exp.X_op         = O_symbol;
-  inst.reloc.exp.X_add_number = ((int) entry) * 4 - 8;
-  inst.reloc.exp.X_add_symbol = pool->symbol;
-
-  return SUCCESS;
-}
-
-/* Can't use symbol_new here, so have to create a symbol and then at
-   a later date assign it a value. Thats what these functions do.  */
-
-static void
-symbol_locate (symbolP, name, segment, valu, frag)
-     symbolS *    symbolP;
-     const char * name;		/* It is copied, the caller can modify.  */
-     segT         segment;	/* Segment identifier (SEG_<something>).  */
-     valueT       valu;		/* Symbol value.  */
-     fragS *      frag;		/* Associated fragment.  */
-{
-  unsigned int name_length;
-  char * preserved_copy_of_name;
-
-  name_length = strlen (name) + 1;   /* +1 for \0.  */
-  obstack_grow (&notes, name, name_length);
-  preserved_copy_of_name = obstack_finish (&notes);
-#ifdef STRIP_UNDERSCORE
-  if (preserved_copy_of_name[0] == '_')
-    preserved_copy_of_name++;
-#endif
-
-#ifdef tc_canonicalize_symbol_name
-  preserved_copy_of_name =
-    tc_canonicalize_symbol_name (preserved_copy_of_name);
-#endif
-
-  S_SET_NAME (symbolP, preserved_copy_of_name);
-
-  S_SET_SEGMENT (symbolP, segment);
-  S_SET_VALUE (symbolP, valu);
-  symbol_clear_list_pointers (symbolP);
-
-  symbol_set_frag (symbolP, frag);
-
-  /* Link to end of symbol chain.  */
-  {
-    extern int symbol_table_frozen;
-    if (symbol_table_frozen)
-      abort ();
-  }
-
-  symbol_append (symbolP, symbol_lastP, & symbol_rootP, & symbol_lastP);
-
-  obj_symbol_new_hook (symbolP);
-
-#ifdef tc_symbol_new_hook
-  tc_symbol_new_hook (symbolP);
-#endif
-
-#ifdef DEBUG_SYMS
-  verify_symbol_chain (symbol_rootP, symbol_lastP);
-#endif /* DEBUG_SYMS  */
-}
-
-/* Check that an immediate is valid.
-   If so, convert it to the right format.  */
-
-static unsigned int
-validate_immediate (val)
-     unsigned int val;
-{
-  unsigned int a;
-  unsigned int i;
-
-#define rotate_left(v, n) (v << n | v >> (32 - n))
-
-  for (i = 0; i < 32; i += 2)
-    if ((a = rotate_left (val, i)) <= 0xff)
-      return a | (i << 7); /* 12-bit pack: [shift-cnt,const].  */
-
-  return FAIL;
-}
-
-/* Check to see if an immediate can be computed as two separate immediate
-   values, added together.  We already know that this value cannot be
-   computed by just one ARM instruction.  */
-
-static unsigned int
-validate_immediate_twopart (val, highpart)
-     unsigned int   val;
-     unsigned int * highpart;
-{
-  unsigned int a;
-  unsigned int i;
-
-  for (i = 0; i < 32; i += 2)
-    if (((a = rotate_left (val, i)) & 0xff) != 0)
-      {
-	if (a & 0xff00)
-	  {
-	    if (a & ~ 0xffff)
-	      continue;
-	    * highpart = (a  >> 8) | ((i + 24) << 7);
-	  }
-	else if (a & 0xff0000)
-	  {
-	    if (a & 0xff000000)
-	      continue;
-	    * highpart = (a >> 16) | ((i + 16) << 7);
-	  }
-	else
-	  {
-	    assert (a & 0xff000000);
-	    * highpart = (a >> 24) | ((i + 8) << 7);
-	  }
-
-	return (a & 0xff) | (i << 7);
-      }
-
-  return FAIL;
-}
-
-static int
-validate_offset_imm (val, hwse)
-     unsigned int val;
-     int hwse;
-{
-  if ((hwse && val > 255) || val > 4095)
-    return FAIL;
-  return val;
-}
-
-
-#ifdef OBJ_ELF
-/* This code is to handle mapping symbols as defined in the ARM ELF spec.
-   (This text is taken from version B-02 of the spec):
-
-      4.4.7 Mapping and tagging symbols
-
-      A section of an ARM ELF file can contain a mixture of ARM code,
-      Thumb code, and data.  There are inline transitions between code
-      and data at literal pool boundaries. There can also be inline
-      transitions between ARM code and Thumb code, for example in
-      ARM-Thumb inter-working veneers.  Linkers, machine-level
-      debuggers, profiling tools, and disassembly tools need to map
-      images accurately. For example, setting an ARM breakpoint on a
-      Thumb location, or in a literal pool, can crash the program
-      being debugged, ruining the debugging session.
-
-      ARM ELF entities are mapped (see section 4.4.7.1 below) and
-      tagged (see section 4.4.7.2 below) using local symbols (with
-      binding STB_LOCAL).  To assist consumers, mapping and tagging
-      symbols should be collated first in the symbol table, before
-      other symbols with binding STB_LOCAL.
-
-      To allow properly collated mapping and tagging symbols to be
-      skipped by consumers that have no interest in them, the first
-      such symbol should have the name $m and its st_value field equal
-      to the total number of mapping and tagging symbols (including
-      the $m) in the symbol table.
-
-      4.4.7.1 Mapping symbols
-
-      $a    Labels the first byte of a sequence of ARM instructions.
-            Its type is STT_FUNC.
-
-      $d    Labels the first byte of a sequence of data items.
-            Its type is STT_OBJECT.
-
-      $t    Labels the first byte of a sequence of Thumb instructions.
-            Its type is STT_FUNC.
-
-      This list of mapping symbols may be extended in the future.
-
-      Section-relative mapping symbols
-
-      Mapping symbols defined in a section define a sequence of
-      half-open address intervals that cover the address range of the
-      section. Each interval starts at the address defined by a
-      mapping symbol, and continues up to, but not including, the
-      address defined by the next (in address order) mapping symbol or
-      the end of the section. A corollary is that there must be a
-      mapping symbol defined at the beginning of each section.
-      Consumers can ignore the size of a section-relative mapping
-      symbol. Producers can set it to 0.
-
-      Absolute mapping symbols
-
-      Because of the need to crystallize a Thumb address with the
-      Thumb-bit set, absolute symbol of type STT_FUNC (symbols of type
-      STT_FUNC defined in section SHN_ABS) need to be mapped with $a
-      or $t.
-
-      The extent of a mapping symbol defined in SHN_ABS is [st_value,
-      st_value + st_size), or [st_value, st_value + 1) if st_size = 0,
-      where [x, y) denotes the half-open address range from x,
-      inclusive, to y, exclusive.
-
-      In the absence of a mapping symbol, a consumer can interpret a
-      function symbol with an odd value as the Thumb code address
-      obtained by clearing the least significant bit of the
-      value. This interpretation is deprecated, and it may not work in
-      the future.
-
-   Note - the Tagging symbols ($b, $f, $p $m) have been dropped from
-   the EABI (which is still under development), so they are not
-   implemented here.  */
-
-static enum mstate mapstate = MAP_UNDEFINED;
-
-static void
-mapping_state (enum mstate state)
-{
-  symbolS * symbolP;
-  const char * symname;
-  int type;
-
-  if (mapstate == state)
-    /* The mapping symbol has already been emitted.
-       There is nothing else to do.  */
-    return;
-
-  mapstate = state;
-
-  switch (state)
-    {
-    case MAP_DATA:
-      symname = "$d";
-      type = BSF_OBJECT;
-      break;
-    case MAP_ARM:
-      symname = "$a";
-      type = BSF_FUNCTION;
-      break;
-    case MAP_THUMB:
-      symname = "$t";
-      type = BSF_FUNCTION;
-      break;
-    case MAP_UNDEFINED:
-      return;     
-    default:
-      abort ();
-    }
-
-  seg_info (now_seg)->tc_segment_info_data = state;
-
-  symbolP = symbol_new (symname, now_seg, (valueT) frag_now_fix (), frag_now);
-  symbol_table_insert (symbolP);
-  symbol_get_bfdsym (symbolP)->flags |= type | BSF_LOCAL;
-  
-  switch (state)
-    {
-    case MAP_ARM:
-      THUMB_SET_FUNC (symbolP, 0);
-      ARM_SET_THUMB (symbolP, 0);
-      ARM_SET_INTERWORK (symbolP, support_interwork);
-      break;
-      
-    case MAP_THUMB:
-      THUMB_SET_FUNC (symbolP, 1);
-      ARM_SET_THUMB (symbolP, 1);
-      ARM_SET_INTERWORK (symbolP, support_interwork);
-      break;
-      
-    case MAP_DATA:
-    default:
-      return;
-    }
-}
-
-/* When we change sections we need to issue a new mapping symbol.  */
-
 void
-arm_elf_change_section (void)
-{
-  flagword flags;
-
-  if (!SEG_NORMAL (now_seg))
-    return;
-
-  flags = bfd_get_section_flags (stdoutput, now_seg);
-
-  /* We can ignore sections that only contain debug info.  */
-  if ((flags & SEC_ALLOC) == 0)
-    return;
-
-  mapstate = seg_info (now_seg)->tc_segment_info_data;
-}
-#else
-#define mapping_state(a)
-#endif /* OBJ_ELF */
-
-
-static void
-s_req (a)
-     int a ATTRIBUTE_UNUSED;
-{
-  as_bad (_("invalid syntax for .req directive"));
-}
-
-/* The .unreq directive deletes an alias which was previously defined
-   by .req.  For example:
-
-       my_alias .req r11
-       .unreq my_alias    */
-
-static void
-s_unreq (int a ATTRIBUTE_UNUSED)
-{
-  char *name;
-  char saved_char;
-
-  skip_whitespace (input_line_pointer);
-  name = input_line_pointer;
-
-  while (*input_line_pointer != 0
-	 && *input_line_pointer != ' '
-	 && *input_line_pointer != '\n')
-    ++input_line_pointer;
-
-  saved_char = *input_line_pointer;
-  *input_line_pointer = 0;
-
-  if (*name)
-    {
-      enum arm_reg_type req_type = arm_reg_parse_any (name);
-
-      if (req_type != REG_TYPE_MAX)
-	{
-	  char *temp_name = name;
-	  int req_no = arm_reg_parse (&temp_name, all_reg_maps[req_type].htab);
-
-	  if (req_no != FAIL)
-	    {
-	      struct reg_entry *req_entry;
-
-	      /* Check to see if this alias is a builtin one.  */
-	      req_entry = hash_delete (all_reg_maps[req_type].htab, name);
-
-	      if (!req_entry)
-		as_bad (_("unreq: missing hash entry for \"%s\""), name);
-	      else if (req_entry->builtin)
-		/* FIXME: We are deleting a built in register alias which
-		   points to a const data structure, so we only need to
-		   free up the memory used by the key in the hash table.
-		   Unfortunately we have not recorded this value, so this
-		   is a memory leak.  */
-		  /* FIXME: Should we issue a warning message ?  */
-		;
-	      else
-		{
-		  /* Deleting a user defined alias.  We need to free the
-		     key and the value, but fortunately the key is the same
-		     as the value->name field.  */
-		  free ((char *) req_entry->name);
-		  free (req_entry);
-		}
-	    }
-          else
-            as_bad (_(".unreq: unrecognized symbol \"%s\""), name);
-	}
-      else
-        as_bad (_(".unreq: unrecognized symbol \"%s\""), name);
-    }
-  else
-    as_bad (_("invalid syntax for .unreq directive"));
-
-  *input_line_pointer = saved_char;
-  demand_empty_rest_of_line ();
-}
-
-static void
-s_bss (ignore)
-     int ignore ATTRIBUTE_UNUSED;
-{
-  /* We don't support putting frags in the BSS segment, we fake it by
-     marking in_bss, then looking at s_skip for clues.  */
-  subseg_set (bss_section, 0);
-  demand_empty_rest_of_line ();
-  mapping_state (MAP_DATA);
-}
-
-static void
-s_even (ignore)
-     int ignore ATTRIBUTE_UNUSED;
-{
-  /* Never make frag if expect extra pass.  */
-  if (!need_pass_2)
-    frag_align (1, 0, 0);
-
-  record_alignment (now_seg, 1);
-
-  demand_empty_rest_of_line ();
-}
-
-static void
-s_ltorg (ignored)
-     int ignored ATTRIBUTE_UNUSED;
-{
-  unsigned int entry;
-  literal_pool * pool;
-  char sym_name[20];
-
-  pool = find_literal_pool ();
-  if (pool == NULL
-      || pool->symbol == NULL
-      || pool->next_free_entry == 0)
-    return;
-
-  mapping_state (MAP_DATA);
-
-  /* Align pool as you have word accesses.
-     Only make a frag if we have to.  */
-  if (!need_pass_2)
-    frag_align (2, 0, 0);
-
-  record_alignment (now_seg, 2);
-
-  sprintf (sym_name, "$$lit_\002%x", pool->id);
-
-  symbol_locate (pool->symbol, sym_name, now_seg,
-		 (valueT) frag_now_fix (), frag_now);
-  symbol_table_insert (pool->symbol);
-
-  ARM_SET_THUMB (pool->symbol, thumb_mode);
-
-#if defined OBJ_COFF || defined OBJ_ELF
-  ARM_SET_INTERWORK (pool->symbol, support_interwork);
-#endif
-
-  for (entry = 0; entry < pool->next_free_entry; entry ++)
-    /* First output the expression in the instruction to the pool.  */
-    emit_expr (&(pool->literals[entry]), 4); /* .word  */
-
-  /* Mark the pool as empty.  */
-  pool->next_free_entry = 0;
-  pool->symbol = NULL;
-}
-
-/* Same as s_align_ptwo but align 0 => align 2.  */
-
-static void
-s_align (unused)
-     int unused ATTRIBUTE_UNUSED;
-{
-  register int temp;
-  register long temp_fill;
-  long max_alignment = 15;
-
-  temp = get_absolute_expression ();
-  if (temp > max_alignment)
-    as_bad (_("alignment too large: %d assumed"), temp = max_alignment);
-  else if (temp < 0)
-    {
-      as_bad (_("alignment negative. 0 assumed."));
-      temp = 0;
-    }
-
-  if (*input_line_pointer == ',')
-    {
-      input_line_pointer++;
-      temp_fill = get_absolute_expression ();
-    }
-  else
-    temp_fill = 0;
-
-  if (!temp)
-    temp = 2;
-
-  /* Only make a frag if we HAVE to.  */
-  if (temp && !need_pass_2)
-    frag_align (temp, (int) temp_fill, 0);
-  demand_empty_rest_of_line ();
-
-  record_alignment (now_seg, temp);
-}
-
-static void
-s_force_thumb (ignore)
-     int ignore ATTRIBUTE_UNUSED;
-{
-  /* If we are not already in thumb mode go into it, EVEN if
-     the target processor does not support thumb instructions.
-     This is used by gcc/config/arm/lib1funcs.asm for example
-     to compile interworking support functions even if the
-     target processor should not support interworking.  */
-  if (! thumb_mode)
-    {
-      thumb_mode = 2;
-
-      record_alignment (now_seg, 1);
-    }
-
-  demand_empty_rest_of_line ();
-}
-
-static void
-s_thumb_func (ignore)
-     int ignore ATTRIBUTE_UNUSED;
-{
-  if (! thumb_mode)
-    opcode_select (16);
-
-  /* The following label is the name/address of the start of a Thumb function.
-     We need to know this for the interworking support.  */
-  label_is_thumb_function_name = TRUE;
-
-  demand_empty_rest_of_line ();
-}
-
-/* Perform a .set directive, but also mark the alias as
-   being a thumb function.  */
-
-static void
-s_thumb_set (equiv)
-     int equiv;
-{
-  /* XXX the following is a duplicate of the code for s_set() in read.c
-     We cannot just call that code as we need to get at the symbol that
-     is created.  */
-  register char *    name;
-  register char      delim;
-  register char *    end_name;
-  register symbolS * symbolP;
-
-  /* Especial apologies for the random logic:
-     This just grew, and could be parsed much more simply!
-     Dean - in haste.  */
-  name      = input_line_pointer;
-  delim     = get_symbol_end ();
-  end_name  = input_line_pointer;
-  *end_name = delim;
-
-  SKIP_WHITESPACE ();
-
-  if (*input_line_pointer != ',')
-    {
-      *end_name = 0;
-      as_bad (_("expected comma after name \"%s\""), name);
-      *end_name = delim;
-      ignore_rest_of_line ();
-      return;
-    }
-
-  input_line_pointer++;
-  *end_name = 0;
-
-  if (name[0] == '.' && name[1] == '\0')
-    {
-      /* XXX - this should not happen to .thumb_set.  */
-      abort ();
-    }
-
-  if ((symbolP = symbol_find (name)) == NULL
-      && (symbolP = md_undefined_symbol (name)) == NULL)
-    {
-#ifndef NO_LISTING
-      /* When doing symbol listings, play games with dummy fragments living
-	 outside the normal fragment chain to record the file and line info
-         for this symbol.  */
-      if (listing & LISTING_SYMBOLS)
-	{
-	  extern struct list_info_struct * listing_tail;
-	  fragS * dummy_frag = (fragS *) xmalloc (sizeof (fragS));
-
-	  memset (dummy_frag, 0, sizeof (fragS));
-	  dummy_frag->fr_type = rs_fill;
-	  dummy_frag->line = listing_tail;
-	  symbolP = symbol_new (name, undefined_section, 0, dummy_frag);
-	  dummy_frag->fr_symbol = symbolP;
-	}
-      else
-#endif
-	symbolP = symbol_new (name, undefined_section, 0, &zero_address_frag);
-
-#ifdef OBJ_COFF
-      /* "set" symbols are local unless otherwise specified.  */
-      SF_SET_LOCAL (symbolP);
-#endif /* OBJ_COFF  */
-    }				/* Make a new symbol.  */
-
-  symbol_table_insert (symbolP);
-
-  * end_name = delim;
-
-  if (equiv
-      && S_IS_DEFINED (symbolP)
-      && S_GET_SEGMENT (symbolP) != reg_section)
-    as_bad (_("symbol `%s' already defined"), S_GET_NAME (symbolP));
-
-  pseudo_set (symbolP);
-
-  demand_empty_rest_of_line ();
-
-  /* XXX Now we come to the Thumb specific bit of code.  */
-
-  THUMB_SET_FUNC (symbolP, 1);
-  ARM_SET_THUMB (symbolP, 1);
-#if defined OBJ_ELF || defined OBJ_COFF
-  ARM_SET_INTERWORK (symbolP, support_interwork);
-#endif
-}
-
-static void
-opcode_select (width)
-     int width;
-{
-  switch (width)
-    {
-    case 16:
-      if (! thumb_mode)
-	{
-	  if (! (cpu_variant & ARM_EXT_V4T))
-	    as_bad (_("selected processor does not support THUMB opcodes"));
-
-	  thumb_mode = 1;
-	  /* No need to force the alignment, since we will have been
-             coming from ARM mode, which is word-aligned.  */
-	  record_alignment (now_seg, 1);
-	}
-      mapping_state (MAP_THUMB);
-      break;
-
-    case 32:
-      if (thumb_mode)
-	{
-	  if ((cpu_variant & ARM_ALL) == ARM_EXT_V4T)
-	    as_bad (_("selected processor does not support ARM opcodes"));
-
-	  thumb_mode = 0;
-
-	  if (!need_pass_2)
-	    frag_align (2, 0, 0);
-
-	  record_alignment (now_seg, 1);
-	}
-      mapping_state (MAP_ARM);
-      break;
-
-    default:
-      as_bad (_("invalid instruction size selected (%d)"), width);
-    }
-}
-
-static void
-s_arm (ignore)
-     int ignore ATTRIBUTE_UNUSED;
-{
-  opcode_select (32);
-  demand_empty_rest_of_line ();
-}
-
-static void
-s_thumb (ignore)
-     int ignore ATTRIBUTE_UNUSED;
-{
-  opcode_select (16);
-  demand_empty_rest_of_line ();
-}
-
-static void
-s_code (unused)
-     int unused ATTRIBUTE_UNUSED;
-{
-  register int temp;
-
-  temp = get_absolute_expression ();
-  switch (temp)
-    {
-    case 16:
-    case 32:
-      opcode_select (temp);
-      break;
-
-    default:
-      as_bad (_("invalid operand to .code directive (%d) (expecting 16 or 32)"), temp);
-    }
-}
-
-static void
-end_of_line (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (*str != '\0' && !inst.error)
-    inst.error = _("garbage following instruction");
-}
-
-static int
-skip_past_comma (str)
-     char ** str;
-{
-  char * p = * str, c;
-  int comma = 0;
-
-  while ((c = *p) == ' ' || c == ',')
-    {
-      p++;
-      if (c == ',' && comma++)
-	return FAIL;
-    }
-
-  if (c == '\0')
-    return FAIL;
-
-  *str = p;
-  return comma ? SUCCESS : FAIL;
-}
-
-/* A standard register must be given at this point.
-   SHIFT is the place to put it in inst.instruction.
-   Restores input start point on error.
-   Returns the reg#, or FAIL.  */
-
-static int
-reg_required_here (str, shift)
-     char ** str;
-     int     shift;
-{
-  static char buff [128]; /* XXX  */
-  int         reg;
-  char *      start = * str;
-
-  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_RN].htab)) != FAIL)
-    {
-      if (shift >= 0)
-	inst.instruction |= reg << shift;
-      return reg;
-    }
-
-  /* Restore the start point, we may have got a reg of the wrong class.  */
-  *str = start;
-
-  /* In the few cases where we might be able to accept something else
-     this error can be overridden.  */
-  sprintf (buff, _("register expected, not '%.100s'"), start);
-  inst.error = buff;
-
-  return FAIL;
-}
-
-/* A Intel Wireless MMX technology register
-   must be given at this point.
-   Shift is the place to put it in inst.instruction.
-   Restores input start point on err.
-   Returns the reg#, or FAIL.  */
-
-static int
-wreg_required_here (str, shift, reg_type)
-     char ** str;
-     int     shift;
-     enum wreg_type reg_type;
-{
-  static char buff [128];
-  int    reg;
-  char * start = *str;
-
-  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_IWMMXT].htab)) != FAIL)
-    {
-      if (wr_register (reg)
-	  && (reg_type == IWMMXT_REG_WR || reg_type == IWMMXT_REG_WR_OR_WC))
-        {
-          if (shift >= 0)
-            inst.instruction |= (reg ^ WR_PREFIX) << shift;
-          return reg;
-        }
-      else if (wc_register (reg)
-	       && (reg_type == IWMMXT_REG_WC || reg_type == IWMMXT_REG_WR_OR_WC))
-        {
-          if (shift >= 0)
-            inst.instruction |= (reg ^ WC_PREFIX) << shift;
-          return reg;
-        }
-      else if ((wcg_register (reg) && reg_type == IWMMXT_REG_WCG))
-        {
-          if (shift >= 0)
-            inst.instruction |= ((reg ^ WC_PREFIX) - 8) << shift;
-          return reg;
-        }
-    }
-
-  /* Restore the start point, we may have got a reg of the wrong class.  */
-  *str = start;
-
-  /* In the few cases where we might be able to accept
-     something else this error can be overridden.  */
-  sprintf (buff, _("Intel Wireless MMX technology register expected, not '%.100s'"), start);
-  inst.error = buff;
-
-  return FAIL;
-}
-
-static const struct asm_psr *
-arm_psr_parse (ccp)
-     register char ** ccp;
-{
-  char * start = * ccp;
-  char   c;
-  char * p;
-  const struct asm_psr * psr;
-
-  p = start;
-
-  /* Skip to the end of the next word in the input stream.  */
-  do
-    {
-      c = *p++;
-    }
-  while (ISALPHA (c) || c == '_');
-
-  /* Terminate the word.  */
-  *--p = 0;
-
-  /* CPSR's and SPSR's can now be lowercase.  This is just a convenience
-     feature for ease of use and backwards compatibility.  */
-  if (!strncmp (start, "cpsr", 4))
-    strncpy (start, "CPSR", 4);
-  else if (!strncmp (start, "spsr", 4))
-    strncpy (start, "SPSR", 4);
-
-  /* Now locate the word in the psr hash table.  */
-  psr = (const struct asm_psr *) hash_find (arm_psr_hsh, start);
-
-  /* Restore the input stream.  */
-  *p = c;
-
-  /* If we found a valid match, advance the
-     stream pointer past the end of the word.  */
-  *ccp = p;
-
-  return psr;
-}
-
-/* Parse the input looking for a PSR flag.  */
-
-static int
-psr_required_here (str)
-     char ** str;
-{
-  char * start = * str;
-  const struct asm_psr * psr;
-
-  psr = arm_psr_parse (str);
-
-  if (psr)
-    {
-      /* If this is the SPSR that is being modified, set the R bit.  */
-      if (! psr->cpsr)
-	inst.instruction |= SPSR_BIT;
-
-      /* Set the psr flags in the MSR instruction.  */
-      inst.instruction |= psr->field << PSR_SHIFT;
-
-      return SUCCESS;
-    }
-
-  /* In the few cases where we might be able to accept
-     something else this error can be overridden.  */
-  inst.error = _("flag for {c}psr instruction expected");
-
-  /* Restore the start point.  */
-  *str = start;
-  return FAIL;
-}
-
-static int
-co_proc_number (str)
-     char **str;
-{
-  int processor, pchar;
-  char *start;
-
-  skip_whitespace (*str);
-  start = *str;
-
-  /* The data sheet seems to imply that just a number on its own is valid
-     here, but the RISC iX assembler seems to accept a prefix 'p'.  We will
-     accept either.  */
-  if ((processor = arm_reg_parse (str, all_reg_maps[REG_TYPE_CP].htab))
-      == FAIL)
-    {
-      *str = start;
-
-      pchar = *(*str)++;
-      if (pchar >= '0' && pchar <= '9')
-	{
-	  processor = pchar - '0';
-	  if (**str >= '0' && **str <= '9')
-	    {
-	      processor = processor * 10 + *(*str)++ - '0';
-	      if (processor > 15)
-		{
-		  inst.error = _("illegal co-processor number");
-		  return FAIL;
-		}
-	    }
-	}
-      else
-	{
-	  inst.error = _("bad or missing co-processor number");
-	  return FAIL;
-	}
-    }
-
-  inst.instruction |= processor << 8;
-  return SUCCESS;
-}
-
-static int
-cp_opc_expr (str, where, length)
-     char ** str;
-     int where;
-     int length;
-{
-  expressionS expr;
-
-  skip_whitespace (* str);
-
-  memset (&expr, '\0', sizeof (expr));
-
-  if (my_get_expression (&expr, str))
-    return FAIL;
-  if (expr.X_op != O_constant)
-    {
-      inst.error = _("bad or missing expression");
-      return FAIL;
-    }
-
-  if ((expr.X_add_number & ((1 << length) - 1)) != expr.X_add_number)
-    {
-      inst.error = _("immediate co-processor expression too large");
-      return FAIL;
-    }
-
-  inst.instruction |= expr.X_add_number << where;
-  return SUCCESS;
-}
-
-static int
-cp_reg_required_here (str, where)
-     char ** str;
-     int     where;
-{
-  int    reg;
-  char * start = *str;
-
-  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_CN].htab)) != FAIL)
-    {
-      inst.instruction |= reg << where;
-      return reg;
-    }
-
-  /* In the few cases where we might be able to accept something else
-     this error can be overridden.  */
-  inst.error = _("co-processor register expected");
-
-  /* Restore the start point.  */
-  *str = start;
-  return FAIL;
-}
-
-static int
-fp_reg_required_here (str, where)
-     char ** str;
-     int     where;
-{
-  int    reg;
-  char * start = * str;
-
-  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_FN].htab)) != FAIL)
-    {
-      inst.instruction |= reg << where;
-      return reg;
-    }
-
-  /* In the few cases where we might be able to accept something else
-     this error can be overridden.  */
-  inst.error = _("floating point register expected");
-
-  /* Restore the start point.  */
-  *str = start;
-  return FAIL;
-}
-
-static int
-cp_address_offset (str)
-     char ** str;
-{
-  int offset;
-
-  skip_whitespace (* str);
-
-  if (! is_immediate_prefix (**str))
-    {
-      inst.error = _("immediate expression expected");
-      return FAIL;
-    }
-
-  (*str)++;
-
-  if (my_get_expression (& inst.reloc.exp, str))
-    return FAIL;
-
-  if (inst.reloc.exp.X_op == O_constant)
-    {
-      offset = inst.reloc.exp.X_add_number;
-
-      if (offset & 3)
-	{
-	  inst.error = _("co-processor address must be word aligned");
-	  return FAIL;
-	}
-
-      if (offset > 1023 || offset < -1023)
-	{
-	  inst.error = _("offset too large");
-	  return FAIL;
-	}
-
-      if (offset >= 0)
-	inst.instruction |= INDEX_UP;
-      else
-	offset = -offset;
-
-      inst.instruction |= offset >> 2;
-    }
-  else
-    inst.reloc.type = BFD_RELOC_ARM_CP_OFF_IMM;
-
-  return SUCCESS;
-}
-
-static int
-cp_address_required_here (str, wb_ok)
-     char ** str;
-     int wb_ok;
-{
-  char * p = * str;
-  int    pre_inc = 0;
-  int    write_back = 0;
-
-  if (*p == '[')
-    {
-      int reg;
-
-      p++;
-      skip_whitespace (p);
-
-      if ((reg = reg_required_here (& p, 16)) == FAIL)
-	return FAIL;
-
-      skip_whitespace (p);
-
-      if (*p == ']')
-	{
-	  p++;
-
-	  skip_whitespace (p);
-
-	  if (*p == '\0')
-	    {
-	      /* As an extension to the official ARM syntax we allow:
-		 
-		   [Rn]
-		   
-	         as a short hand for:
-
-		   [Rn,#0]  */
-	      inst.instruction |= PRE_INDEX | INDEX_UP;
-	      *str = p;
-	      return SUCCESS;
-	    }
-	  
-	  if (skip_past_comma (& p) == FAIL)
-	    {
-	      inst.error = _("comma expected after closing square bracket");
-	      return FAIL;
-	    }
-
-	  skip_whitespace (p);
-
-	  if (*p == '#')
-	    {
-	      if (wb_ok)
-		{
-		  /* [Rn], #expr  */
-		  write_back = WRITE_BACK;
-
-		  if (reg == REG_PC)
-		    {
-		      inst.error = _("pc may not be used in post-increment");
-		      return FAIL;
-		    }
-
-		  if (cp_address_offset (& p) == FAIL)
-		    return FAIL;
-		}
-	      else
-		pre_inc = PRE_INDEX | INDEX_UP;
-	    }
-	  else if (*p == '{')
-	    {
-	      int option;
-
-	      /* [Rn], {<expr>}  */
-	      p++;
-
-	      skip_whitespace (p);
-
-	      if (my_get_expression (& inst.reloc.exp, & p))
-		return FAIL;
-
-	      if (inst.reloc.exp.X_op == O_constant)
-		{
-		  option = inst.reloc.exp.X_add_number;
-
-		  if (option > 255 || option < 0)
-		    {
-		      inst.error = _("'option' field too large");
-		      return FAIL;
-		    }
-
-		  skip_whitespace (p);
-
-		  if (*p != '}')
-		    {
-		      inst.error = _("'}' expected at end of 'option' field");
-		      return FAIL;
-		    }
-		  else
-		    {
-		      p++;
-		      inst.instruction |= option;
-		      inst.instruction |= INDEX_UP;
-		    }
-		}
-	      else
-		{
-		  inst.error = _("non-constant expressions for 'option' field not supported");
-		  return FAIL;
-		}
-	    }
-	  else
-	    {
-	      inst.error = _("# or { expected after comma");
-	      return FAIL;	      
-	    }
-	}
-      else
-	{
-	  /* '['Rn, #expr']'[!]  */
-
-	  if (skip_past_comma (& p) == FAIL)
-	    {
-	      inst.error = _("pre-indexed expression expected");
-	      return FAIL;
-	    }
-
-	  pre_inc = PRE_INDEX;
-
-	  if (cp_address_offset (& p) == FAIL)
-	    return FAIL;
-
-	  skip_whitespace (p);
-
-	  if (*p++ != ']')
-	    {
-	      inst.error = _("missing ]");
-	      return FAIL;
-	    }
-
-	  skip_whitespace (p);
-
-	  if (wb_ok && *p == '!')
-	    {
-	      if (reg == REG_PC)
-		{
-		  inst.error = _("pc may not be used with write-back");
-		  return FAIL;
-		}
-
-	      p++;
-	      write_back = WRITE_BACK;
-	    }
-	}
-    }
-  else
-    {
-      if (my_get_expression (&inst.reloc.exp, &p))
-	return FAIL;
-
-      inst.reloc.type = BFD_RELOC_ARM_CP_OFF_IMM;
-      inst.reloc.exp.X_add_number -= 8;  /* PC rel adjust.  */
-      inst.reloc.pc_rel = 1;
-      inst.instruction |= (REG_PC << 16);
-      pre_inc = PRE_INDEX;
-    }
-
-  inst.instruction |= write_back | pre_inc;
-  *str = p;
-  return SUCCESS;
-}
-
-static int
-cp_byte_address_offset (str)
-     char ** str;
-{
-  int offset;
-
-  skip_whitespace (* str);
-
-  if (! is_immediate_prefix (**str))
-    {
-      inst.error = _("immediate expression expected");
-      return FAIL;
-    }
-
-  (*str)++;
-  
-  if (my_get_expression (& inst.reloc.exp, str))
-    return FAIL;
-  
-  if (inst.reloc.exp.X_op == O_constant)
-    {
-      offset = inst.reloc.exp.X_add_number;
-      
-      if (offset > 255 || offset < -255)
-        {
-          inst.error = _("offset too large");
-          return FAIL;
-        }
-
-      if (offset >= 0)
-        inst.instruction |= INDEX_UP;
-      else
-        offset = -offset;
-
-      inst.instruction |= offset;
-    }
-  else
-    inst.reloc.type = BFD_RELOC_ARM_CP_OFF_IMM_S2;
-
-  return SUCCESS;
-}
-
-static int
-cp_byte_address_required_here (str)
-     char ** str;
-{
-  char * p = * str;
-  int    pre_inc = 0;
-  int    write_back = 0;
-
-  if (*p == '[')
-    {
-      int reg;
-
-      p++;
-      skip_whitespace (p);
-
-      if ((reg = reg_required_here (& p, 16)) == FAIL)
-        return FAIL;
-
-      skip_whitespace (p);
-
-      if (*p == ']')
-        {
-          p++;
-          
-          if (skip_past_comma (& p) == SUCCESS)
-            {
-              /* [Rn], #expr */
-              write_back = WRITE_BACK;
-              
-              if (reg == REG_PC)
-                {
-                  inst.error = _("pc may not be used in post-increment");
-                  return FAIL;
-                }
-
-              if (cp_byte_address_offset (& p) == FAIL)
-                return FAIL;
-            }
-          else
-            pre_inc = PRE_INDEX | INDEX_UP;
-        }
-      else
-        {
-          /* '['Rn, #expr']'[!] */
-
-          if (skip_past_comma (& p) == FAIL)
-            {
-              inst.error = _("pre-indexed expression expected");
-              return FAIL;
-            }
-
-          pre_inc = PRE_INDEX;
-          
-          if (cp_byte_address_offset (& p) == FAIL)
-            return FAIL;
-
-          skip_whitespace (p);
-
-          if (*p++ != ']')
-            {
-              inst.error = _("missing ]");
-              return FAIL;
-            }
-
-          skip_whitespace (p);
-
-          if (*p == '!')
-            {
-              if (reg == REG_PC)
-                {
-                  inst.error = _("pc may not be used with write-back");
-                  return FAIL;
-                }
-
-              p++;
-              write_back = WRITE_BACK;
-            }
-        }
-    }
-  else
-    {
-      if (my_get_expression (&inst.reloc.exp, &p))
-        return FAIL;
-
-      inst.reloc.type = BFD_RELOC_ARM_CP_OFF_IMM_S2;
-      inst.reloc.exp.X_add_number -= 8;  /* PC rel adjust.  */
-      inst.reloc.pc_rel = 1;
-      inst.instruction |= (REG_PC << 16);
-      pre_inc = PRE_INDEX;
-    }
-
-  inst.instruction |= write_back | pre_inc;
-  *str = p;
-  return SUCCESS;
-}
-
-static void
-do_empty (str)
-     char * str;
-{
-  /* Do nothing really.  */
-  end_of_line (str);
-}
-
-static void
-do_mrs (str)
-     char *str;
-{
-  int skip = 0;
-
-  /* Only one syntax.  */
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL)
-    {
-      inst.error = _("comma expected after register name");
-      return;
-    }
-
-  skip_whitespace (str);
-
-  if (   strcmp (str, "CPSR") == 0
-      || strcmp (str, "SPSR") == 0
-	 /* Lower case versions for backwards compatibility.  */
-      || strcmp (str, "cpsr") == 0
-      || strcmp (str, "spsr") == 0)
-    skip = 4;
-
-  /* This is for backwards compatibility with older toolchains.  */
-  else if (   strcmp (str, "cpsr_all") == 0
-	   || strcmp (str, "spsr_all") == 0)
-    skip = 8;
-  else
-    {
-      inst.error = _("CPSR or SPSR expected");
-      return;
-    }
-
-  if (* str == 's' || * str == 'S')
-    inst.instruction |= SPSR_BIT;
-  str += skip;
-
-  end_of_line (str);
-}
-
-/* Two possible forms:
-      "{C|S}PSR_<field>, Rm",
-      "{C|S}PSR_f, #expression".  */
-
-static void
-do_msr (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  if (psr_required_here (& str) == FAIL)
-    return;
-
-  if (skip_past_comma (& str) == FAIL)
-    {
-      inst.error = _("comma missing after psr flags");
-      return;
-    }
-
-  skip_whitespace (str);
-
-  if (reg_required_here (& str, 0) != FAIL)
-    {
-      inst.error = NULL;
-      end_of_line (str);
-      return;
-    }
-
-  if (! is_immediate_prefix (* str))
-    {
-      inst.error =
-	_("only a register or immediate value can follow a psr flag");
-      return;
-    }
-
-  str ++;
-  inst.error = NULL;
-
-  if (my_get_expression (& inst.reloc.exp, & str))
-    {
-      inst.error =
-	_("only a register or immediate value can follow a psr flag");
-      return;
-    }
-
-#if 0  /* The first edition of the ARM architecture manual stated that
-	  writing anything other than the flags with an immediate operation
-	  had UNPREDICTABLE effects.  This constraint was removed in the
-	  second edition of the specification.  */
-  if ((cpu_variant & ARM_EXT_V5) != ARM_EXT_V5
-      && inst.instruction & ((PSR_c | PSR_x | PSR_s) << PSR_SHIFT))
-    {
-      inst.error = _("immediate value cannot be used to set this field");
-      return;
-    }
-#endif
-
-  inst.instruction |= INST_IMMEDIATE;
-
-  if (inst.reloc.exp.X_add_symbol)
-    {
-      inst.reloc.type = BFD_RELOC_ARM_IMMEDIATE;
-      inst.reloc.pc_rel = 0;
-    }
-  else
-    {
-      unsigned value = validate_immediate (inst.reloc.exp.X_add_number);
-
-      if (value == (unsigned) FAIL)
-	{
-	  inst.error = _("invalid constant");
-	  return;
-	}
-
-      inst.instruction |= value;
-    }
-
-  inst.error = NULL;
-  end_of_line (str);
-}
-
-/* Long Multiply Parser
-   UMULL RdLo, RdHi, Rm, Rs
-   SMULL RdLo, RdHi, Rm, Rs
-   UMLAL RdLo, RdHi, Rm, Rs
-   SMLAL RdLo, RdHi, Rm, Rs.  */
-
-static void
-do_mull (str)
-     char * str;
-{
-  int rdlo, rdhi, rm, rs;
-
-  /* Only one format "rdlo, rdhi, rm, rs".  */
-  skip_whitespace (str);
-
-  if ((rdlo = reg_required_here (&str, 12)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || (rdhi = reg_required_here (&str, 16)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 0)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  /* rdhi, rdlo and rm must all be different.  */
-  if (rdlo == rdhi || rdlo == rm || rdhi == rm)
-    as_tsktsk (_("rdhi, rdlo and rm must all be different"));
-
-  if (skip_past_comma (&str) == FAIL
-      || (rs = reg_required_here (&str, 8)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (rdhi == REG_PC || rdhi == REG_PC || rdhi == REG_PC || rdhi == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_mul (str)
-     char * str;
-{
-  int rd, rm;
-
-  /* Only one format "rd, rm, rs".  */
-  skip_whitespace (str);
-
-  if ((rd = reg_required_here (&str, 16)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (rd == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 0)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (rm == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  if (rm == rd)
-    as_tsktsk (_("rd and rm should be different in mul"));
-
-  if (skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 8)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (rm == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_mla (str)
-     char * str;
-{
-  int rd, rm;
-
-  /* Only one format "rd, rm, rs, rn".  */
-  skip_whitespace (str);
-
-  if ((rd = reg_required_here (&str, 16)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (rd == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 0)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (rm == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  if (rm == rd)
-    as_tsktsk (_("rd and rm should be different in mla"));
-
-  if (skip_past_comma (&str) == FAIL
-      || (rd = reg_required_here (&str, 8)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 12)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (rd == REG_PC || rm == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-/* Expects *str -> the characters "acc0", possibly with leading blanks.
-   Advances *str to the next non-alphanumeric.
-   Returns 0, or else FAIL (in which case sets inst.error).
-
-  (In a future XScale, there may be accumulators other than zero.
-  At that time this routine and its callers can be upgraded to suit.)  */
-
-static int
-accum0_required_here (str)
-     char ** str;
-{
-  static char buff [128];	/* Note the address is taken.  Hence, static.  */
-  char * p = * str;
-  char   c;
-  int result = 0;		/* The accum number.  */
-
-  skip_whitespace (p);
-
-  *str = p;			/* Advance caller's string pointer too.  */
-  c = *p++;
-  while (ISALNUM (c))
-    c = *p++;
-
-  *--p = 0;			/* Aap nul into input buffer at non-alnum.  */
-
-  if (! ( streq (*str, "acc0") || streq (*str, "ACC0")))
-    {
-      sprintf (buff, _("acc0 expected, not '%.100s'"), *str);
-      inst.error = buff;
-      result = FAIL;
-    }
-
-  *p = c;			/* Unzap.  */
-  *str = p;			/* Caller's string pointer to after match.  */
-  return result;
-}
-
-/* Expects **str -> after a comma. May be leading blanks.
-   Advances *str, recognizing a load  mode, and setting inst.instruction.
-   Returns rn, or else FAIL (in which case may set inst.error
-   and not advance str)
-
-   Note: doesn't know Rd, so no err checks that require such knowledge.  */
-
-static int
-ld_mode_required_here (string)
-     char ** string;
-{
-  char * str = * string;
-  int    rn;
-  int    pre_inc = 0;
-
-  skip_whitespace (str);
-
-  if (* str == '[')
-    {
-      str++;
-
-      skip_whitespace (str);
-
-      if ((rn = reg_required_here (& str, 16)) == FAIL)
-	return FAIL;
-
-      skip_whitespace (str);
-
-      if (* str == ']')
-	{
-	  str ++;
-
-	  if (skip_past_comma (& str) == SUCCESS)
-	    {
-	      /* [Rn],... (post inc) */
-	      if (ldst_extend_v4 (&str) == FAIL)
-		return FAIL;
-	    }
-	  else 	      /* [Rn] */
-	    {
-	      skip_whitespace (str);
-
-	      if (* str == '!')
-		{
-		  str ++;
-		  inst.instruction |= WRITE_BACK;
-		}
-
-	      inst.instruction |= INDEX_UP | HWOFFSET_IMM;
-	      pre_inc = 1;
-	    }
-	}
-      else	  /* [Rn,...] */
-	{
-	  if (skip_past_comma (& str) == FAIL)
-	    {
-	      inst.error = _("pre-indexed expression expected");
-	      return FAIL;
-	    }
-
-	  pre_inc = 1;
-
-	  if (ldst_extend_v4 (&str) == FAIL)
-	    return FAIL;
-
-	  skip_whitespace (str);
-
-	  if (* str ++ != ']')
-	    {
-	      inst.error = _("missing ]");
-	      return FAIL;
-	    }
-
-	  skip_whitespace (str);
-
-	  if (* str == '!')
-	    {
-	      str ++;
-	      inst.instruction |= WRITE_BACK;
-	    }
-	}
-    }
-  else if (* str == '=')	/* ldr's "r,=label" syntax */
-    /* We should never reach here, because <text> = <expression> is
-       caught gas/read.c read_a_source_file() as a .set operation.  */
-    return FAIL;
-  else				/* PC +- 8 bit immediate offset.  */
-    {
-      if (my_get_expression (& inst.reloc.exp, & str))
-	return FAIL;
-
-      inst.instruction            |= HWOFFSET_IMM;	/* The I bit.  */
-      inst.reloc.type              = BFD_RELOC_ARM_OFFSET_IMM8;
-      inst.reloc.exp.X_add_number -= 8;  		/* PC rel adjust.  */
-      inst.reloc.pc_rel            = 1;
-      inst.instruction            |= (REG_PC << 16);
-
-      rn = REG_PC;
-      pre_inc = 1;
-    }
-
-  inst.instruction |= (pre_inc ? PRE_INDEX : 0);
-  * string = str;
-
-  return rn;
-}
-
-/* ARM V5E (El Segundo) signed-multiply-accumulate (argument parse)
-   SMLAxy{cond} Rd,Rm,Rs,Rn
-   SMLAWy{cond} Rd,Rm,Rs,Rn
-   Error if any register is R15.  */
-
-static void
-do_smla (str)
-     char *        str;
-{
-  int rd, rm, rs, rn;
-
-  skip_whitespace (str);
-
-  if ((rd = reg_required_here (& str, 16)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rm = reg_required_here (& str, 0)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rs = reg_required_here (& str, 8)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rn = reg_required_here (& str, 12)) == FAIL)
-    inst.error = BAD_ARGS;
-
-  else if (rd == REG_PC || rm == REG_PC || rs == REG_PC || rn == REG_PC)
-    inst.error = BAD_PC;
-
-  else
-    end_of_line (str);
-}
-
-/* ARM V5E (El Segundo) signed-multiply-accumulate-long (argument parse)
-   SMLALxy{cond} Rdlo,Rdhi,Rm,Rs
-   Error if any register is R15.
-   Warning if Rdlo == Rdhi.  */
-
-static void
-do_smlal (str)
-     char *        str;
-{
-  int rdlo, rdhi, rm, rs;
-
-  skip_whitespace (str);
-
-  if ((rdlo = reg_required_here (& str, 12)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rdhi = reg_required_here (& str, 16)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rm = reg_required_here (& str, 0)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rs = reg_required_here (& str, 8)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (rdlo == REG_PC || rdhi == REG_PC || rm == REG_PC || rs == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  if (rdlo == rdhi)
-    as_tsktsk (_("rdhi and rdlo must be different"));
-
-  end_of_line (str);
-}
-
-/* ARM V5E (El Segundo) signed-multiply (argument parse)
-   SMULxy{cond} Rd,Rm,Rs
-   Error if any register is R15.  */
-
-static void
-do_smul (str)
-     char *        str;
-{
-  int rd, rm, rs;
-
-  skip_whitespace (str);
-
-  if ((rd = reg_required_here (& str, 16)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rm = reg_required_here (& str, 0)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rs = reg_required_here (& str, 8)) == FAIL)
-    inst.error = BAD_ARGS;
-
-  else if (rd == REG_PC || rm == REG_PC || rs == REG_PC)
-    inst.error = BAD_PC;
-
-  else
-    end_of_line (str);
-}
-
-/* ARM V5E (El Segundo) saturating-add/subtract (argument parse)
-   Q[D]{ADD,SUB}{cond} Rd,Rm,Rn
-   Error if any register is R15.  */
-
-static void
-do_qadd (str)
-     char *        str;
-{
-  int rd, rm, rn;
-
-  skip_whitespace (str);
-
-  if ((rd = reg_required_here (& str, 12)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rm = reg_required_here (& str, 0)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rn = reg_required_here (& str, 16)) == FAIL)
-    inst.error = BAD_ARGS;
-
-  else if (rd == REG_PC || rm == REG_PC || rn == REG_PC)
-    inst.error = BAD_PC;
-
-  else
-    end_of_line (str);
-}
-
-/* ARM V5E (el Segundo)
-   MCRRcc <coproc>, <opcode>, <Rd>, <Rn>, <CRm>.
-   MRRCcc <coproc>, <opcode>, <Rd>, <Rn>, <CRm>.
-
-   These are equivalent to the XScale instructions MAR and MRA,
-   respectively, when coproc == 0, opcode == 0, and CRm == 0.
-
-   Result unpredicatable if Rd or Rn is R15.  */
-
-static void
-do_co_reg2c (str)
-     char *        str;
-{
-  int rd, rn;
-
-  skip_whitespace (str);
-
-  if (co_proc_number (& str) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || cp_opc_expr (& str, 4, 4) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || (rd = reg_required_here (& str, 12)) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || (rn = reg_required_here (& str, 16)) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  /* Unpredictable result if rd or rn is R15.  */
-  if (rd == REG_PC || rn == REG_PC)
-    as_tsktsk
-      (_("Warning: instruction unpredictable when using r15"));
-
-  if (skip_past_comma (& str) == FAIL
-      || cp_reg_required_here (& str, 0) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-/* ARM V5 count-leading-zeroes instruction (argument parse)
-     CLZ{<cond>} <Rd>, <Rm>
-     Condition defaults to COND_ALWAYS.
-     Error if Rd or Rm are R15.  */
-
-static void
-do_clz (str)
-     char *        str;
-{
-  int rd, rm;
-
-  skip_whitespace (str);
-
-  if (((rd = reg_required_here (& str, 12)) == FAIL)
-      || (skip_past_comma (& str) == FAIL)
-      || ((rm = reg_required_here (& str, 0)) == FAIL))
-    inst.error = BAD_ARGS;
-
-  else if (rd == REG_PC || rm == REG_PC )
-    inst.error = BAD_PC;
-
-  else
-    end_of_line (str);
-}
-
-/* ARM V5 (argument parse)
-     LDC2{L} <coproc>, <CRd>, <addressing mode>
-     STC2{L} <coproc>, <CRd>, <addressing mode>
-     Instruction is not conditional, and has 0xf in the condition field.
-     Otherwise, it's the same as LDC/STC.  */
-
-static void
-do_lstc2 (str)
-     char *        str;
-{
-  skip_whitespace (str);
-
-  if (co_proc_number (& str) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-    }
-  else if (skip_past_comma (& str) == FAIL
-	   || cp_reg_required_here (& str, 12) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-    }
-  else if (skip_past_comma (& str) == FAIL
-	   || cp_address_required_here (&str, CP_WB_OK) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-    }
-  else
-    end_of_line (str);
-}
-
-/* ARM V5 (argument parse)
-     CDP2 <coproc>, <opcode_1>, <CRd>, <CRn>, <CRm>, <opcode_2>
-     Instruction is not conditional, and has 0xf in the condition field.
-     Otherwise, it's the same as CDP.  */
-
-static void
-do_cdp2 (str)
-     char *        str;
-{
-  skip_whitespace (str);
-
-  if (co_proc_number (& str) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || cp_opc_expr (& str, 20,4) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || cp_reg_required_here (& str, 12) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || cp_reg_required_here (& str, 16) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || cp_reg_required_here (& str, 0) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == SUCCESS)
-    {
-      if (cp_opc_expr (& str, 5, 3) == FAIL)
-	{
-	  if (!inst.error)
-	    inst.error = BAD_ARGS;
-	  return;
-	}
-    }
-
-  end_of_line (str);
-}
-
-/* ARM V5 (argument parse)
-     MCR2 <coproc>, <opcode_1>, <Rd>, <CRn>, <CRm>, <opcode_2>
-     MRC2 <coproc>, <opcode_1>, <Rd>, <CRn>, <CRm>, <opcode_2>
-     Instruction is not conditional, and has 0xf in the condition field.
-     Otherwise, it's the same as MCR/MRC.  */
-
-static void
-do_co_reg2 (str)
-     char *        str;
-{
-  skip_whitespace (str);
-
-  if (co_proc_number (& str) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || cp_opc_expr (& str, 21, 3) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || reg_required_here (& str, 12) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || cp_reg_required_here (& str, 16) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || cp_reg_required_here (& str, 0) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == SUCCESS)
-    {
-      if (cp_opc_expr (& str, 5, 3) == FAIL)
-	{
-	  if (!inst.error)
-	    inst.error = BAD_ARGS;
-	  return;
-	}
-    }
-
-  end_of_line (str);
-}
-
-/* ARM v5TEJ.  Jump to Jazelle code.  */
-static void
-do_bxj (str)
-     char * str;
-{
-  int reg;
-
-  skip_whitespace (str);
-
-  if ((reg = reg_required_here (&str, 0)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  /* Note - it is not illegal to do a "bxj pc".  Useless, but not illegal.  */
-  if (reg == REG_PC)
-    as_tsktsk (_("use of r15 in bxj is not really useful"));
-
-  end_of_line (str);
-}
-
-/* ARM V6 umaal (argument parse). */
-
-static void
-do_umaal (str)
-     char *str;
-{
-
-  int rdlo, rdhi, rm, rs;
-
-  skip_whitespace (str);
-  if ((rdlo = reg_required_here (& str, 12)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rdhi = reg_required_here (& str, 16)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rm = reg_required_here (& str, 0)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rs = reg_required_here (& str, 8)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;      
-    }
-
-  if (rdlo == REG_PC || rdhi == REG_PC || rm == REG_PC || rs == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-/* ARM V6 strex (argument parse). */
-
-static void 
-do_strex (str)
-     char *str;
-{
-  int rd, rm, rn;
-
-  /* Parse Rd, Rm,. */
-  skip_whitespace (str);
-  if ((rd = reg_required_here (& str, 12)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || (rm = reg_required_here (& str, 0)) == FAIL
-      || skip_past_comma (& str) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-  if (rd == REG_PC || rm == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-  if (rd == rm)
-    {
-      inst.error = _("Rd equal to Rm or Rn yields unpredictable results");
-      return;
-    }
-
-  /* Skip past '['. */
-  if ((strlen (str) >= 1) 
-      && strncmp (str, "[", 1) == 0)
-    str+=1;
-  skip_whitespace (str);  
-
-  /* Parse Rn. */
-  if ((rn = reg_required_here (& str, 16)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-  else if (rn == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-  if (rd == rn)
-    {
-      inst.error = _("Rd equal to Rm or Rn yields unpredictable results");
-      return;
-    }
-  skip_whitespace (str);  
-
-  /* Skip past ']'. */
-  if ((strlen (str) >= 1) 
-      && strncmp (str, "]", 1) == 0)
-    str+=1;
-  
-  end_of_line (str);
-}
-
-/* ARM V6 ssat (argument parse). */
-
-static void
-do_ssat (str)
-     char* str;
-{
-  do_sat (&str, /*bias=*/-1);
-  end_of_line (str);
-}
-
-/* ARM V6 usat (argument parse). */
-
-static void
-do_usat (str)
-     char* str;
-{
-  do_sat (&str, /*bias=*/0);
-  end_of_line (str);
-}
-
-static void
-do_sat (str, bias)
-     char **str;
-     int    bias;
-{
-  int rd, rm;
-  expressionS expr;
-
-  skip_whitespace (*str);
-  
-  /* Parse <Rd>, field. */
-  if ((rd = reg_required_here (str, 12)) == FAIL
-      || skip_past_comma (str) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-  if (rd == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  /* Parse #<immed>,  field. */
-  if (is_immediate_prefix (**str))
-    (*str)++;
-  else
-    {
-      inst.error = _("immediate expression expected");
-      return;
-    }
-  if (my_get_expression (&expr, str))
-    {
-      inst.error = _("bad expression");
-      return;
-    }
-  if (expr.X_op != O_constant)
-    {
-      inst.error = _("constant expression expected");
-      return;
-    }
-  if (expr.X_add_number + bias < 0
-      || expr.X_add_number + bias > 31)
-    {
-      inst.error = _("immediate value out of range");
-      return;
-    }
-  inst.instruction |= (expr.X_add_number + bias) << 16;
-  if (skip_past_comma (str) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  /* Parse <Rm> field. */
-  if ((rm = reg_required_here (str, 0)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-  if (rm == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  if (skip_past_comma (str) == SUCCESS)
-    decode_shift (str, SHIFT_LSL_OR_ASR_IMMEDIATE);
-}
-
-/* ARM V6 ssat16 (argument parse). */
-
-static void
-do_ssat16 (str)
-     char *str;
-{
-  do_sat16 (&str, /*bias=*/-1);
-  end_of_line (str);
-}
-
-static void
-do_usat16 (str)
-     char *str;
-{
-  do_sat16 (&str, /*bias=*/0);
-  end_of_line (str);
-}
-
-static void
-do_sat16 (str, bias)
-     char **str;
-     int bias;
-{
-  int rd, rm;
-  expressionS expr;
-
-  skip_whitespace (*str);
-
-  /* Parse the <Rd> field. */
-  if ((rd = reg_required_here (str, 12)) == FAIL
-      || skip_past_comma (str) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-  if (rd == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  /* Parse #<immed>, field. */
-  if (is_immediate_prefix (**str))
-    (*str)++;
-  else
-    {
-      inst.error = _("immediate expression expected");
-      return;
-    }
-  if (my_get_expression (&expr, str))
-    {
-      inst.error = _("bad expression");
-      return;
-    }
-  if (expr.X_op != O_constant)
-    {
-      inst.error = _("constant expression expected");
-      return;
-    }
-  if (expr.X_add_number + bias < 0
-      || expr.X_add_number + bias > 15)
-    {
-      inst.error = _("immediate value out of range");
-      return;
-    }
-  inst.instruction |= (expr.X_add_number + bias) << 16;
-  if (skip_past_comma (str) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  /* Parse <Rm> field. */
-  if ((rm = reg_required_here (str, 0)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-  if (rm == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-}
-
-/* ARM V6 srs (argument parse). */
-
-static void
-do_srs (str)
-     char* str;
-{
-  char *exclam;
-  skip_whitespace (str);
-  exclam = strchr (str, '!');
-  if (exclam)
-    *exclam = '\0';
-  do_cps_mode (&str);
-  if (exclam)
-    *exclam = '!';
-  if (*str == '!') 
-    {
-      inst.instruction |= WRITE_BACK;
-      str++;
-    }
-  end_of_line (str);
-}
-
-/* ARM V6 SMMUL (argument parse). */
-
-static void
-do_smmul (str)
-     char* str;
-{
-  int rd, rm, rs;
-  
-  skip_whitespace (str);
-  if ((rd = reg_required_here (&str, 16)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 0)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rs = reg_required_here (&str, 8)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (rd == REG_PC 
-      || rm == REG_PC
-      || rs == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  end_of_line (str);
-  
-}
-
-/* ARM V6 SMLALD (argument parse). */
-
-static void
-do_smlald (str)
-    char* str;
-{
-  int rdlo, rdhi, rm, rs;
-  skip_whitespace (str);
-  if ((rdlo = reg_required_here (&str, 12)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rdhi = reg_required_here (&str, 16)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 0)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rs = reg_required_here (&str, 8)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (rdlo == REG_PC 
-      || rdhi == REG_PC 
-      || rm == REG_PC
-      || rs == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-/* ARM V6 SMLAD (argument parse).  Signed multiply accumulate dual. 
-   smlad{x}{<cond>} Rd, Rm, Rs, Rn */
-
-static void 
-do_smlad (str)
-     char *str;
-{
-  int rd, rm, rs, rn;
-  
-  skip_whitespace (str);
-  if ((rd = reg_required_here (&str, 16)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 0)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rs = reg_required_here (&str, 8)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rn = reg_required_here (&str, 12)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-  
-  if (rd == REG_PC 
-      || rn == REG_PC 
-      || rs == REG_PC
-      || rm == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  end_of_line (str);
-} 
-
-/* ARM V6 SETEND (argument parse).  Sets the E bit in the CPSR while
-   preserving the other bits.
-
-   setend <endian_specifier>, where <endian_specifier> is either 
-   BE or LE. */
-
-static void 
-do_setend (str)
-     char *str;
-{
-  if (do_endian_specifier (str))
-    inst.instruction |= 0x200;
-}
-
-/* Returns true if the endian-specifier indicates big-endianness.  */
-
-static int
-do_endian_specifier (str)
-     char *str;
-{
-  int big_endian = 0;
-
-  skip_whitespace (str);
-  if (strlen (str) < 2)
-    inst.error = _("missing endian specifier");
-  else if (strncasecmp (str, "BE", 2) == 0)
-    {
-      str += 2;
-      big_endian = 1;
-    }
-  else if (strncasecmp (str, "LE", 2) == 0)
-    str += 2;
-  else
-    inst.error = _("valid endian specifiers are be or le");
-
-  end_of_line (str);
-
-  return big_endian;
-}
-
-/* ARM V6 SXTH.
-
-   SXTH {<cond>} <Rd>, <Rm>{, <rotation>}
-   Condition defaults to COND_ALWAYS.
-   Error if any register uses R15. */
-
-static void 
-do_sxth (str)
-     char *str;
-{
-  int rd, rm;
-  expressionS expr;
-  int rotation_clear_mask = 0xfffff3ff;
-  int rotation_eight_mask = 0x00000400;
-  int rotation_sixteen_mask = 0x00000800;
-  int rotation_twenty_four_mask = 0x00000c00;
-  
-  skip_whitespace (str);
-  if ((rd = reg_required_here (&str, 12)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 0)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  else if (rd == REG_PC || rm == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-  
-  /* Zero out the rotation field. */
-  inst.instruction &= rotation_clear_mask;
-  
-  /* Check for lack of optional rotation field. */
-  if (skip_past_comma (&str) == FAIL)
-    {
-      end_of_line (str);
-      return;
-    }
-  
-  /* Move past 'ROR'. */
-  skip_whitespace (str);
-  if (strncasecmp (str, "ROR", 3) == 0)
-    str+=3;
-  else
-    {
-      inst.error = _("missing rotation field after comma");
-      return;
-    }
-  
-  /* Get the immediate constant. */
-  skip_whitespace (str);
-  if (is_immediate_prefix (* str))
-    str++;
-  else
-    {
-      inst.error = _("immediate expression expected");
-      return;
-    }
-  
-  if (my_get_expression (&expr, &str))
-    {
-      inst.error = _("bad expression");
-      return;
-    }
-
-  if (expr.X_op != O_constant)
-    {
-      inst.error = _("constant expression expected");
-      return;
-    }
-  
-  switch (expr.X_add_number) 
-    {
-    case 0:
-      /* Rotation field has already been zeroed. */
-      break;
-    case 8:
-      inst.instruction |= rotation_eight_mask;
-      break;
-
-    case 16:
-      inst.instruction |= rotation_sixteen_mask;
-      break;
-      
-    case 24:
-      inst.instruction |= rotation_twenty_four_mask;
-      break;
-
-    default:
-      inst.error = _("rotation can be 8, 16, 24 or 0 when field is ommited");
-      break;
-    }
-
-  end_of_line (str);
-  
-}
-
-/* ARM V6 SXTAH extracts a 16-bit value from a register, sign
-   extends it to 32-bits, and adds the result to a value in another
-   register.  You can specify a rotation by 0, 8, 16, or 24 bits
-   before extracting the 16-bit value.
-   SXTAH{<cond>} <Rd>, <Rn>, <Rm>{, <rotation>}
-   Condition defaults to COND_ALWAYS.
-   Error if any register uses R15. */
-
-static void 
-do_sxtah (str)
-     char *str;
-{
-  int rd, rn, rm;
-  expressionS expr;
-  int rotation_clear_mask = 0xfffff3ff;
-  int rotation_eight_mask = 0x00000400;
-  int rotation_sixteen_mask = 0x00000800;
-  int rotation_twenty_four_mask = 0x00000c00;
-  
-  skip_whitespace (str);
-  if ((rd = reg_required_here (&str, 12)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rn = reg_required_here (&str, 16)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 0)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  else if (rd == REG_PC || rn == REG_PC || rm == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-  
-  /* Zero out the rotation field. */
-  inst.instruction &= rotation_clear_mask;
-  
-  /* Check for lack of optional rotation field. */
-  if (skip_past_comma (&str) == FAIL)
-    {
-      end_of_line (str);
-      return;
-    }
-  
-  /* Move past 'ROR'. */
-  skip_whitespace (str);
-  if (strncasecmp (str, "ROR", 3) == 0)
-    str+=3;
-  else
-    {
-      inst.error = _("missing rotation field after comma");
-      return;
-    }
-  
-  /* Get the immediate constant. */
-  skip_whitespace (str);
-  if (is_immediate_prefix (* str))
-    str++;
-  else
-    {
-      inst.error = _("immediate expression expected");
-      return;
-    }
-  
-  if (my_get_expression (&expr, &str))
-    {
-      inst.error = _("bad expression");
-      return;
-    }
-
-  if (expr.X_op != O_constant)
-    {
-      inst.error = _("constant expression expected");
-      return;
-    }
-  
-  switch (expr.X_add_number) 
-    {
-    case 0:
-      /* Rotation field has already been zeroed. */
-      break;
-
-    case 8:
-      inst.instruction |= rotation_eight_mask;
-      break;
-
-    case 16:
-      inst.instruction |= rotation_sixteen_mask;
-      break;
-      
-    case 24:
-      inst.instruction |= rotation_twenty_four_mask;
-      break;
-
-    default:
-      inst.error = _("rotation can be 8, 16, 24 or 0 when field is ommited");
-      break;
-    }
-
-  end_of_line (str);
-  
-}
-   
-
-/* ARM V6 RFE (Return from Exception) loads the PC and CPSR from the
-   word at the specified address and the following word
-   respectively. 
-   Unconditionally executed.
-   Error if Rn is R15.   
-*/
-
-static void
-do_rfe (str)
-     char *str;
-{
-  int rn;
-
-  skip_whitespace (str);
-  
-  if ((rn = reg_required_here (&str, 16)) == FAIL)
-    return;
-
-  if (rn == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  skip_whitespace (str);
-  
-  if (*str == '!')
-    {
-      inst.instruction |= WRITE_BACK;
-      str++;
-    }
-  end_of_line (str);
-}
-
-/* ARM V6 REV (Byte Reverse Word) reverses the byte order in a 32-bit
-   register (argument parse).
-   REV{<cond>} Rd, Rm.
-   Condition defaults to COND_ALWAYS.
-   Error if Rd or Rm are R15. */ 
-
-static void
-do_rev (str)
-     char* str;
-{
-  int rd, rm;
-
-  skip_whitespace (str);
-
-  if ((rd = reg_required_here (&str, 12)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 0)) == FAIL)
-    inst.error = BAD_ARGS;
-
-  else if (rd == REG_PC || rm == REG_PC)
-    inst.error = BAD_PC;
-
-  else
-    end_of_line (str);
-}
-
-/* ARM V6 Perform Two Sixteen Bit Integer Additions. (argument parse).
-   QADD16{<cond>} <Rd>, <Rn>, <Rm>  
-   Condition defaults to COND_ALWAYS.
-   Error if Rd, Rn or Rm are R15.  */
-
-static void
-do_qadd16 (str) 
-     char* str;
-{
-  int rd, rm, rn;
-
-  skip_whitespace (str);
-
-  if ((rd = reg_required_here (&str, 12)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rn = reg_required_here (&str, 16)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (rm = reg_required_here (&str, 0)) == FAIL)
-    inst.error = BAD_ARGS;
-
-  else if (rd == REG_PC || rm == REG_PC || rn == REG_PC)
-    inst.error = BAD_PC;
-
-  else
-    end_of_line (str);
-}
-
-/* ARM V6 Pack Halfword Bottom Top instruction (argument parse).
-   PKHBT {<cond>} <Rd>, <Rn>, <Rm> {, LSL #<shift_imm>} 
-   Condition defaults to COND_ALWAYS.
-   Error if Rd, Rn or Rm are R15.  */
-
-static void 
-do_pkhbt (str)
-     char* str;
-{
-  do_pkh_core (str, SHIFT_LSL_IMMEDIATE);
-}
-
-/* ARM V6 PKHTB (Argument Parse). */
-
-static void 
-do_pkhtb (str)
-     char* str;
-{
-  do_pkh_core (str, SHIFT_ASR_IMMEDIATE);
-}
-
-static void
-do_pkh_core (str, shift)
-     char* str;
-     int shift;
-{
-  int rd, rn, rm;
-
-  skip_whitespace (str);
-  if (((rd = reg_required_here (&str, 12)) == FAIL)
-      || (skip_past_comma (&str) == FAIL)
-      || ((rn = reg_required_here (&str, 16)) == FAIL)
-      || (skip_past_comma (&str) == FAIL)
-      || ((rm = reg_required_here (&str, 0)) == FAIL))
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  else if (rd == REG_PC || rn == REG_PC || rm == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  /* Check for optional shift immediate constant. */
-  if (skip_past_comma (&str) == FAIL) 
-    {
-      if (shift == SHIFT_ASR_IMMEDIATE)
-	{
-	  /* If the shift specifier is ommited, turn the instruction
-	     into pkhbt rd, rm, rn.  First, switch the instruction
-	     code, and clear the rn and rm fields.  */
-	  inst.instruction &= 0xfff0f010;
-	  /* Now, re-encode the registers.  */
-	  inst.instruction |= (rm << 16) | rn;
-	}
-      return;
-    }
-
-  decode_shift (&str, shift);
-}
-
-/* ARM V6 Load Register Exclusive instruction (argument parse).
-   LDREX{<cond>} <Rd, [<Rn>]
-   Condition defaults to COND_ALWAYS.
-   Error if Rd or Rn are R15. 
-   See ARMARMv6 A4.1.27: LDREX. */
-
-
-static void
-do_ldrex (str)
-     char * str;
-{
-  int rd, rn;
-
-  skip_whitespace (str);
-
-  /* Parse Rd. */
-  if (((rd = reg_required_here (&str, 12)) == FAIL)
-      || (skip_past_comma (&str) == FAIL))
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-  else if (rd == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-  skip_whitespace (str);  
-
-  /* Skip past '['. */
-  if ((strlen (str) >= 1) 
-      &&strncmp (str, "[", 1) == 0)
-    str+=1;
-  skip_whitespace (str);  
-
-  /* Parse Rn. */
-  if ((rn = reg_required_here (&str, 16)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-  else if (rn == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-  skip_whitespace (str);  
-
-  /* Skip past ']'. */
-  if ((strlen (str) >= 1) 
-      && strncmp (str, "]", 1) == 0)
-    str+=1;
-  
-  end_of_line (str);
-}
-
-/* ARM V6 change processor state instruction (argument parse)
-      CPS, CPSIE, CSPID . */
-
-static void
-do_cps (str)
-     char * str;
-{
-  do_cps_mode (&str);
-  end_of_line (str);
-}
-
-static void
-do_cpsi (str)
-     char * str;
-{
-  do_cps_flags (&str, /*thumb_p=*/0);
-
-  if (skip_past_comma (&str) == SUCCESS)
-    {
-      skip_whitespace (str);
-      do_cps_mode (&str);
-    }
-  end_of_line (str);
-}
-
-static void
-do_cps_mode (str)
-     char **str;
-{
-  expressionS expr;
-
-  skip_whitespace (*str);
-
-  if (! is_immediate_prefix (**str))
-    {
-      inst.error = _("immediate expression expected");
-      return;
-    }
-
-  (*str)++; /* Strip off the immediate signifier. */
-  if (my_get_expression (&expr, str))
-    {
-      inst.error = _("bad expression");
-      return;
-    }
-
-  if (expr.X_op != O_constant)
-    {
-      inst.error = _("constant expression expected");
-      return;
-    }
-  
-  /* The mode is a 5 bit field.  Valid values are 0-31. */
-  if (((unsigned) expr.X_add_number) > 31
-      || (inst.reloc.exp.X_add_number) < 0)
-    {
-      inst.error = _("invalid constant");
-      return;
-    }
-  
-  inst.instruction |= expr.X_add_number;
-}
-
-static void
-do_cps_flags (str, thumb_p)
-     char **str;
-     int    thumb_p;
-{
-  struct cps_flag { 
-    char character;
-    unsigned long arm_value;
-    unsigned long thumb_value;
-  };
-  static struct cps_flag flag_table[] = {
-    {'a', 0x100, 0x4 },
-    {'i', 0x080, 0x2 },
-    {'f', 0x040, 0x1 }
-  };
-
-  int saw_a_flag = 0;
-
-  skip_whitespace (*str);
-
-  /* Get the a, f and i flags. */
-  while (**str && **str != ',')
-    {
-      struct cps_flag *p;
-      struct cps_flag *q = flag_table + sizeof (flag_table)/sizeof (*p);
-      for (p = flag_table; p < q; ++p)
-	if (strncasecmp (*str, &p->character, 1) == 0)
-	  {
-	    inst.instruction |= (thumb_p ? p->thumb_value : p->arm_value);
-	    saw_a_flag = 1;
-	    break;
-	  }
-      if (p == q)
-	{
-	  inst.error = _("unrecognized flag");
-	  return;
-	}
-      (*str)++;
-    }
-  if (!saw_a_flag) 
-    inst.error = _("no 'a', 'i', or 'f' flags for 'cps'");
-}
-
-/* THUMB V5 breakpoint instruction (argument parse)
-	BKPT <immed_8>.  */
-
-static void
-do_t_bkpt (str)
-     char * str;
-{
-  expressionS expr;
-  unsigned long number;
-
-  skip_whitespace (str);
-
-  /* Allow optional leading '#'.  */
-  if (is_immediate_prefix (*str))
-    str ++;
-
-  memset (& expr, '\0', sizeof (expr));
-  if (my_get_expression (& expr, & str)
-      || (expr.X_op != O_constant
-	  /* As a convenience we allow 'bkpt' without an operand.  */
-	  && expr.X_op != O_absent))
-    {
-      inst.error = _("bad expression");
-      return;
-    }
-
-  number = expr.X_add_number;
-
-  /* Check it fits an 8 bit unsigned.  */
-  if (number != (number & 0xff))
-    {
-      inst.error = _("immediate value out of range");
-      return;
-    }
-
-  inst.instruction |= number;
-
-  end_of_line (str);
-}
-
-/* ARM V5 branch-link-exchange (argument parse) for BLX(1) only.
-   Expects inst.instruction is set for BLX(1).
-   Note: this is cloned from do_branch, and the reloc changed to be a
-	new one that can cope with setting one extra bit (the H bit).  */
-
-static void
-do_branch25 (str)
-     char *        str;
-{
-  if (my_get_expression (& inst.reloc.exp, & str))
-    return;
-
-#ifdef OBJ_ELF
-  {
-    char * save_in;
-
-    /* ScottB: February 5, 1998 */
-    /* Check to see of PLT32 reloc required for the instruction.  */
-
-    /* arm_parse_reloc() works on input_line_pointer.
-       We actually want to parse the operands to the branch instruction
-       passed in 'str'.  Save the input pointer and restore it later.  */
-    save_in = input_line_pointer;
-    input_line_pointer = str;
-
-    if (inst.reloc.exp.X_op == O_symbol
-	&& *str == '('
-	&& arm_parse_reloc () == BFD_RELOC_ARM_PLT32)
-      {
-	inst.reloc.type   = BFD_RELOC_ARM_PLT32;
-	inst.reloc.pc_rel = 0;
-	/* Modify str to point to after parsed operands, otherwise
-	   end_of_line() will complain about the (PLT) left in str.  */
-	str = input_line_pointer;
-      }
-    else
-      {
-	inst.reloc.type   = BFD_RELOC_ARM_PCREL_BLX;
-	inst.reloc.pc_rel = 1;
-      }
-
-    input_line_pointer = save_in;
-  }
-#else
-  inst.reloc.type   = BFD_RELOC_ARM_PCREL_BLX;
-  inst.reloc.pc_rel = 1;
-#endif /* OBJ_ELF */
-
-  end_of_line (str);
-}
-
-/* ARM V5 branch-link-exchange instruction (argument parse)
-     BLX <target_addr>		ie BLX(1)
-     BLX{<condition>} <Rm>	ie BLX(2)
-   Unfortunately, there are two different opcodes for this mnemonic.
-   So, the insns[].value is not used, and the code here zaps values
-	into inst.instruction.
-   Also, the <target_addr> can be 25 bits, hence has its own reloc.  */
-
-static void
-do_blx (str)
-     char *        str;
-{
-  char * mystr = str;
-  int rm;
-
-  skip_whitespace (mystr);
-  rm = reg_required_here (& mystr, 0);
-
-  /* The above may set inst.error.  Ignore his opinion.  */
-  inst.error = 0;
-
-  if (rm != FAIL)
-    {
-      /* Arg is a register.
-	 Use the condition code our caller put in inst.instruction.
-	 Pass ourselves off as a BX with a funny opcode.  */
-      inst.instruction |= 0x012fff30;
-      do_bx (str);
-    }
-  else
-    {
-      /* This must be is BLX <target address>, no condition allowed.  */
-      if (inst.instruction != COND_ALWAYS)
-	{
-	  inst.error = BAD_COND;
-	  return;
-	}
-
-      inst.instruction = 0xfafffffe;
-
-      /* Process like a B/BL, but with a different reloc.
-	 Note that B/BL expecte fffffe, not 0, offset in the opcode table.  */
-      do_branch25 (str);
-    }
-}
-
-/* ARM V5 Thumb BLX (argument parse)
-	BLX <target_addr>	which is BLX(1)
-	BLX <Rm>		which is BLX(2)
-   Unfortunately, there are two different opcodes for this mnemonic.
-   So, the tinsns[].value is not used, and the code here zaps values
-	into inst.instruction.	*/
-
-static void
-do_t_blx (str)
-     char * str;
-{
-  char * mystr = str;
-  int rm;
-
-  skip_whitespace (mystr);
-  inst.instruction = 0x4780;
-
-  /* Note that this call is to the ARM register recognizer.  BLX(2)
-     uses the ARM register space, not the Thumb one, so a call to
-     thumb_reg() would be wrong.  */
-  rm = reg_required_here (& mystr, 3);
-  inst.error = 0;
-
-  if (rm != FAIL)
-    {
-      /* It's BLX(2).  The .instruction was zapped with rm & is final.  */
-      inst.size = 2;
-    }
-  else
-    {
-      /* No ARM register.  This must be BLX(1).  Change the .instruction.  */
-      inst.instruction = 0xf7ffeffe;
-      inst.size = 4;
-
-      if (my_get_expression (& inst.reloc.exp, & mystr))
-	return;
-
-      inst.reloc.type   = BFD_RELOC_THUMB_PCREL_BLX;
-      inst.reloc.pc_rel = 1;
-    }
-
-  end_of_line (mystr);
-}
-
-/* ARM V5 breakpoint instruction (argument parse)
-     BKPT <16 bit unsigned immediate>
-     Instruction is not conditional.
-	The bit pattern given in insns[] has the COND_ALWAYS condition,
-	and it is an error if the caller tried to override that.  */
-
-static void
-do_bkpt (str)
-     char *        str;
-{
-  expressionS expr;
-  unsigned long number;
-
-  skip_whitespace (str);
-
-  /* Allow optional leading '#'.  */
-  if (is_immediate_prefix (* str))
-    str++;
-
-  memset (& expr, '\0', sizeof (expr));
-
-  if (my_get_expression (& expr, & str)
-      || (expr.X_op != O_constant
-	  /* As a convenience we allow 'bkpt' without an operand.  */
-	  && expr.X_op != O_absent))
-    {
-      inst.error = _("bad expression");
-      return;
-    }
-
-  number = expr.X_add_number;
-
-  /* Check it fits a 16 bit unsigned.  */
-  if (number != (number & 0xffff))
-    {
-      inst.error = _("immediate value out of range");
-      return;
-    }
-
-  /* Top 12 of 16 bits to bits 19:8.  */
-  inst.instruction |= (number & 0xfff0) << 4;
-
-  /* Bottom 4 of 16 bits to bits 3:0.  */
-  inst.instruction |= number & 0xf;
-
-  end_of_line (str);
-}
-
-/* THUMB CPS instruction (argument parse).  */
-
-static void
-do_t_cps (str)
-     char *str;
-{
-  do_cps_flags (&str, /*thumb_p=*/1);
-  end_of_line (str);
-}
-
-/* THUMB CPY instruction (argument parse).  */
-
-static void
-do_t_cpy (str)
-     char *str;
-{
-  thumb_mov_compare (str, THUMB_CPY);
-}
-
-/* THUMB SETEND instruction (argument parse).  */
-
-static void
-do_t_setend (str)
-     char *str;
-{
-  if (do_endian_specifier (str))
-    inst.instruction |= 0x8;
-}
-
-static unsigned long check_iwmmxt_insn PARAMS ((char *, enum iwmmxt_insn_type, int));
-
-/* Parse INSN_TYPE insn STR having a possible IMMEDIATE_SIZE immediate.  */
-
-static unsigned long
-check_iwmmxt_insn (str, insn_type, immediate_size)
-     char * str;
-     enum iwmmxt_insn_type insn_type;
-     int immediate_size;
-{
-  int reg = 0;
-  const char *  inst_error;
-  expressionS expr;
-  unsigned long number;
-
-  inst_error = inst.error;
-  if (!inst.error)
-    inst.error = BAD_ARGS;
-  skip_whitespace (str);
-
-  switch (insn_type)
-    {
-    case check_rd:
-      if ((reg = reg_required_here (&str, 12)) == FAIL)
-	return FAIL;
-      break;
-      
-    case check_wr:
-       if ((wreg_required_here (&str, 0, IWMMXT_REG_WR)) == FAIL)
-	 return FAIL;
-       break;
-       
-    case check_wrwr:
-      if ((wreg_required_here (&str, 12, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_wrwrwr:
-      if ((wreg_required_here (&str, 12, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 0, IWMMXT_REG_WR) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_wrwrwcg:
-      if ((wreg_required_here (&str, 12, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 0, IWMMXT_REG_WCG) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_tbcst:
-      if ((wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || reg_required_here (&str, 12) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_tmovmsk:
-      if ((reg_required_here (&str, 12) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_tmia:
-      if ((wreg_required_here (&str, 5, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || reg_required_here (&str, 0) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || reg_required_here (&str, 12) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_tmcrr:
-      if ((wreg_required_here (&str, 0, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || reg_required_here (&str, 12) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || reg_required_here (&str, 16) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_tmrrc:
-      if ((reg_required_here (&str, 12) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || reg_required_here (&str, 16) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 0, IWMMXT_REG_WR) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_tmcr:
-      if ((wreg_required_here (&str, 16, IWMMXT_REG_WC) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || reg_required_here (&str, 12) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_tmrc:
-      if ((reg_required_here (&str, 12) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 16, IWMMXT_REG_WC) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_tinsr:
-      if ((wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || reg_required_here (&str, 12) == FAIL
-	   || skip_past_comma (&str) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_textrc:
-      if ((reg_required_here (&str, 12) == FAIL
-	   || skip_past_comma (&str) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_waligni:
-      if ((wreg_required_here (&str, 12, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 0, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_textrm:
-      if ((reg_required_here (&str, 12) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL))
-	return FAIL;
-      break;
-      
-    case check_wshufh:
-      if ((wreg_required_here (&str, 12, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL
-	   || wreg_required_here (&str, 16, IWMMXT_REG_WR) == FAIL
-	   || skip_past_comma (&str) == FAIL))
-	return FAIL;
-      break;
-    }
-  
-  if (immediate_size == 0)
-    {
-      end_of_line (str);
-      inst.error = inst_error;
-      return reg;
-    }
-  else
-    {
-      skip_whitespace (str);      
-  
-      /* Allow optional leading '#'. */
-      if (is_immediate_prefix (* str))
-        str++;
-
-      memset (& expr, '\0', sizeof (expr));
-  
-      if (my_get_expression (& expr, & str) || (expr.X_op != O_constant))
-        {
-          inst.error = _("bad or missing expression");
-          return FAIL;
-        }
-  
-      number = expr.X_add_number;
-  
-      if (number != (number & immediate_size))
-        {
-          inst.error = _("immediate value out of range");
-          return FAIL;
-        }
-      end_of_line (str);
-      inst.error = inst_error;
-      return number;
-    }
-}
-
-static void
-do_iwmmxt_byte_addr (str)
-     char * str;
-{
-  int op = (inst.instruction & 0x300) >> 8;
-  int reg;
-
-  inst.instruction &= ~0x300;
-  inst.instruction |= (op & 1) << 22 | (op & 2) << 7;  
-
-  skip_whitespace (str);
-
-  if ((reg = wreg_required_here (&str, 12, IWMMXT_REG_WR_OR_WC)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || cp_byte_address_required_here (&str) == FAIL)
-    {
-      if (! inst.error)
-        inst.error = BAD_ARGS;
-    }
-  else
-    end_of_line (str);
-
-  if (wc_register (reg))
-    {
-      as_bad (_("non-word size not supported with control register"));
-      inst.instruction |=  0xf0000100;
-      inst.instruction &= ~0x00400000;
-    }
-}
-
-static void
-do_iwmmxt_tandc (str)
-     char * str;
-{
-  int reg;
-
-  reg = check_iwmmxt_insn (str, check_rd, 0);
-
-  if (reg != REG_PC && !inst.error)
-    inst.error = _("only r15 allowed here");
-}
-
-static void
-do_iwmmxt_tbcst (str)
-     char * str;
-{
-  check_iwmmxt_insn (str, check_tbcst, 0);
-}
-
-static void
-do_iwmmxt_textrc (str)
-     char * str;
-{
-  unsigned long number;
-
-  if ((number = check_iwmmxt_insn (str, check_textrc, 7)) == (unsigned long) FAIL)
-    return;
-
-  inst.instruction |= number & 0x7;
-}
-
-static void
-do_iwmmxt_textrm (str)
-     char * str;
-{
-  unsigned long number;
-
-  if ((number = check_iwmmxt_insn (str, check_textrm, 7)) == (unsigned long) FAIL)
-    return;
-
-  inst.instruction |= number & 0x7;
-}
-
-static void
-do_iwmmxt_tinsr (str)
-     char * str;
-{
-  unsigned long number;
-
-  if ((number = check_iwmmxt_insn (str, check_tinsr, 7)) == (unsigned long) FAIL)
-    return;
-
-  inst.instruction |= number & 0x7;
-}
-
-static void
-do_iwmmxt_tmcr (str)
-     char * str;
-{
-  check_iwmmxt_insn (str, check_tmcr, 0);
-}
-
-static void
-do_iwmmxt_tmcrr (str)
-     char * str;
-{
-  check_iwmmxt_insn (str, check_tmcrr, 0);
-}
-
-static void
-do_iwmmxt_tmia (str)
-     char * str;
-{
-  check_iwmmxt_insn (str, check_tmia, 0);
-}
-
-static void
-do_iwmmxt_tmovmsk (str)
-     char * str;
-{
-  check_iwmmxt_insn (str, check_tmovmsk, 0);
-}
-
-static void
-do_iwmmxt_tmrc (str)
-     char * str;
-{
-  check_iwmmxt_insn (str, check_tmrc, 0);
-}
-
-static void
-do_iwmmxt_tmrrc (str)
-     char * str;
-{
-  check_iwmmxt_insn (str, check_tmrrc, 0);
-}
-
-static void
-do_iwmmxt_torc (str)
-     char * str;
-{
-  check_iwmmxt_insn (str, check_rd, 0);
-}
-
-static void
-do_iwmmxt_waligni (str)
-     char * str;
-{
-  unsigned long number;
-
-  if ((number = check_iwmmxt_insn (str, check_waligni, 7)) == (unsigned long) FAIL)
-    return;
-
-  inst.instruction |= ((number & 0x7) << 20);
-}
-
-static void
-do_iwmmxt_wmov (str)
-     char * str;
-{
-  if (check_iwmmxt_insn (str, check_wrwr, 0) == (unsigned long) FAIL)
-    return;
-  
-  inst.instruction |= ((inst.instruction >> 16) & 0xf);
-}
-
-static void
-do_iwmmxt_word_addr (str)
-     char * str;
-{
-  int op = (inst.instruction & 0x300) >> 8;
-  int reg;
-
-  inst.instruction &= ~0x300;
-  inst.instruction |= (op & 1) << 22 | (op & 2) << 7;  
-
-  skip_whitespace (str);
-
-  if ((reg = wreg_required_here (&str, 12, IWMMXT_REG_WR_OR_WC)) == FAIL
-      || skip_past_comma (& str) == FAIL
-      || cp_address_required_here (& str, CP_WB_OK) == FAIL)
-    {
-      if (! inst.error)
-        inst.error = BAD_ARGS;
-    }
-  else
-    end_of_line (str);
-
-  if (wc_register (reg))
-    {
-      if ((inst.instruction & COND_MASK) != COND_ALWAYS)
-	as_bad (_("conditional execution not supported with control register"));
-      if (op != 2)
-	as_bad (_("non-word size not supported with control register"));
-      inst.instruction |=  0xf0000100;
-      inst.instruction &= ~0x00400000;
-    }
-}
-
-static void
-do_iwmmxt_wrwr (str)
-     char * str;
-{
-  check_iwmmxt_insn (str, check_wrwr, 0);
-}
-
-static void
-do_iwmmxt_wrwrwcg (str)
-     char * str;
-{
-  check_iwmmxt_insn (str, check_wrwrwcg, 0);
-}
-
-static void
-do_iwmmxt_wrwrwr (str)
-     char * str;
-{
-  check_iwmmxt_insn (str, check_wrwrwr, 0);
-}
-
-static void
-do_iwmmxt_wshufh (str)
-     char * str;
-{
-  unsigned long number;
-
-  if ((number = check_iwmmxt_insn (str, check_wshufh, 0xff)) == (unsigned long) FAIL)
-    return;
-
-  inst.instruction |= ((number & 0xf0) << 16) | (number & 0xf);
-}
-
-static void
-do_iwmmxt_wzero (str)
-     char * str;
-{
-  if (check_iwmmxt_insn (str, check_wr, 0) == (unsigned long) FAIL)
-    return;
-
-  inst.instruction |= ((inst.instruction & 0xf) << 12) | ((inst.instruction & 0xf) << 16);
-}
-
-/* Xscale multiply-accumulate (argument parse)
-     MIAcc   acc0,Rm,Rs
-     MIAPHcc acc0,Rm,Rs
-     MIAxycc acc0,Rm,Rs.  */
-
-static void
-do_xsc_mia (str)
-     char * str;
-{
-  int rs;
-  int rm;
-
-  if (accum0_required_here (& str) == FAIL)
-    inst.error = ERR_NO_ACCUM;
-
-  else if (skip_past_comma (& str) == FAIL
-	   || (rm = reg_required_here (& str, 0)) == FAIL)
-    inst.error = BAD_ARGS;
-
-  else if (skip_past_comma (& str) == FAIL
-	   || (rs = reg_required_here (& str, 12)) == FAIL)
-    inst.error = BAD_ARGS;
-
-  /* inst.instruction has now been zapped with both rm and rs.  */
-  else if (rm == REG_PC || rs == REG_PC)
-    inst.error = BAD_PC;	/* Undefined result if rm or rs is R15.  */
-
-  else
-    end_of_line (str);
-}
-
-/* Xscale move-accumulator-register (argument parse)
-
-     MARcc   acc0,RdLo,RdHi.  */
-
-static void
-do_xsc_mar (str)
-     char * str;
-{
-  int rdlo, rdhi;
-
-  if (accum0_required_here (& str) == FAIL)
-    inst.error = ERR_NO_ACCUM;
-
-  else if (skip_past_comma (& str) == FAIL
-	   || (rdlo = reg_required_here (& str, 12)) == FAIL)
-    inst.error = BAD_ARGS;
-
-  else if (skip_past_comma (& str) == FAIL
-	   || (rdhi = reg_required_here (& str, 16)) == FAIL)
-    inst.error = BAD_ARGS;
-
-  /* inst.instruction has now been zapped with both rdlo and rdhi.  */
-  else if (rdlo == REG_PC || rdhi == REG_PC)
-    inst.error = BAD_PC;	/* Undefined result if rdlo or rdhi is R15.  */
-
-  else
-    end_of_line (str);
-}
-
-/* Xscale move-register-accumulator (argument parse)
-
-     MRAcc   RdLo,RdHi,acc0.  */
-
-static void
-do_xsc_mra (str)
-     char * str;
-{
-  int rdlo;
-  int rdhi;
-
-  skip_whitespace (str);
-
-  if ((rdlo = reg_required_here (& str, 12)) == FAIL)
-    inst.error = BAD_ARGS;
-
-  else if (skip_past_comma (& str) == FAIL
-	   || (rdhi = reg_required_here (& str, 16)) == FAIL)
-    inst.error = BAD_ARGS;
-
-  else if  (skip_past_comma (& str) == FAIL
-	    || accum0_required_here (& str) == FAIL)
-    inst.error = ERR_NO_ACCUM;
-
-  /* inst.instruction has now been zapped with both rdlo and rdhi.  */
-  else if (rdlo == rdhi)
-    inst.error = BAD_ARGS;	/* Undefined result if 2 writes to same reg.  */
-
-  else if (rdlo == REG_PC || rdhi == REG_PC)
-    inst.error = BAD_PC;	/* Undefined result if rdlo or rdhi is R15.  */
-  else
-    end_of_line (str);
-}
-
-/* ARMv5TE: Preload-Cache
-
-    PLD <addr_mode>
-
-  Syntactically, like LDR with B=1, W=0, L=1.  */
-
-static void
-do_pld (str)
-     char * str;
-{
-  int rd;
-
-  skip_whitespace (str);
-
-  if (* str != '[')
-    {
-      inst.error = _("'[' expected after PLD mnemonic");
-      return;
-    }
-
-  ++str;
-  skip_whitespace (str);
-
-  if ((rd = reg_required_here (& str, 16)) == FAIL)
-    return;
-
-  skip_whitespace (str);
-
-  if (*str == ']')
-    {
-      /* [Rn], ... ?  */
-      ++str;
-      skip_whitespace (str);
-
-      /* Post-indexed addressing is not allowed with PLD.  */
-      if (skip_past_comma (&str) == SUCCESS)
-	{
-	  inst.error
-	    = _("post-indexed expression used in preload instruction");
-	  return;
-	}
-      else if (*str == '!') /* [Rn]! */
-	{
-	  inst.error = _("writeback used in preload instruction");
-	  ++str;
-	}
-      else /* [Rn] */
-	inst.instruction |= INDEX_UP | PRE_INDEX;
-    }
-  else /* [Rn, ...] */
-    {
-      if (skip_past_comma (& str) == FAIL)
-	{
-	  inst.error = _("pre-indexed expression expected");
-	  return;
-	}
-
-      if (ldst_extend (&str) == FAIL)
-	return;
-
-      skip_whitespace (str);
-
-      if (* str != ']')
-	{
-	  inst.error = _("missing ]");
-	  return;
-	}
-
-      ++ str;
-      skip_whitespace (str);
-
-      if (* str == '!') /* [Rn]! */
-	{
-	  inst.error = _("writeback used in preload instruction");
-	  ++ str;
-	}
-
-      inst.instruction |= PRE_INDEX;
-    }
-
-  end_of_line (str);
-}
-
-/* ARMv5TE load-consecutive (argument parse)
-   Mode is like LDRH.
-
-     LDRccD R, mode
-     STRccD R, mode.  */
-
-static void
-do_ldrd (str)
-     char * str;
-{
-  int rd;
-  int rn;
-
-  skip_whitespace (str);
-
-  if ((rd = reg_required_here (& str, 12)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL
-      || (rn = ld_mode_required_here (& str)) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  /* inst.instruction has now been zapped with Rd and the addressing mode.  */
-  if (rd & 1)		/* Unpredictable result if Rd is odd.  */
-    {
-      inst.error = _("destination register must be even");
-      return;
-    }
-
-  if (rd == REG_LR)
-    {
-      inst.error = _("r14 not allowed here");
-      return;
-    }
-
-  if (((rd == rn) || (rd + 1 == rn))
-      && ((inst.instruction & WRITE_BACK)
-	  || (!(inst.instruction & PRE_INDEX))))
-    as_warn (_("pre/post-indexing used when modified address register is destination"));
-
-  /* For an index-register load, the index register must not overlap the
-     destination (even if not write-back).  */
-  if ((inst.instruction & V4_STR_BIT) == 0
-      && (inst.instruction & HWOFFSET_IMM) == 0)
-    {
-      int rm = inst.instruction & 0x0000000f;
-
-      if (rm == rd || (rm == rd + 1))
-	as_warn (_("ldrd destination registers must not overlap index register"));
-    }
-
-  end_of_line (str);
-}
-
-/* Returns the index into fp_values of a floating point number,
-   or -1 if not in the table.  */
-
-static int
-my_get_float_expression (str)
-     char ** str;
-{
-  LITTLENUM_TYPE words[MAX_LITTLENUMS];
-  char *         save_in;
-  expressionS    exp;
-  int            i;
-  int            j;
-
-  memset (words, 0, MAX_LITTLENUMS * sizeof (LITTLENUM_TYPE));
-
-  /* Look for a raw floating point number.  */
-  if ((save_in = atof_ieee (*str, 'x', words)) != NULL
-      && is_end_of_line[(unsigned char) *save_in])
-    {
-      for (i = 0; i < NUM_FLOAT_VALS; i++)
-	{
-	  for (j = 0; j < MAX_LITTLENUMS; j++)
-	    {
-	      if (words[j] != fp_values[i][j])
-		break;
-	    }
-
-	  if (j == MAX_LITTLENUMS)
-	    {
-	      *str = save_in;
-	      return i;
-	    }
-	}
-    }
-
-  /* Try and parse a more complex expression, this will probably fail
-     unless the code uses a floating point prefix (eg "0f").  */
-  save_in = input_line_pointer;
-  input_line_pointer = *str;
-  if (expression (&exp) == absolute_section
-      && exp.X_op == O_big
-      && exp.X_add_number < 0)
-    {
-      /* FIXME: 5 = X_PRECISION, should be #define'd where we can use it.
-	 Ditto for 15.  */
-      if (gen_to_words (words, 5, (long) 15) == 0)
-	{
-	  for (i = 0; i < NUM_FLOAT_VALS; i++)
-	    {
-	      for (j = 0; j < MAX_LITTLENUMS; j++)
-		{
-		  if (words[j] != fp_values[i][j])
-		    break;
-		}
-
-	      if (j == MAX_LITTLENUMS)
-		{
-		  *str = input_line_pointer;
-		  input_line_pointer = save_in;
-		  return i;
-		}
-	    }
-	}
-    }
-
-  *str = input_line_pointer;
-  input_line_pointer = save_in;
-  return -1;
-}
-
-/* Return TRUE if anything in the expression is a bignum.  */
-
-static int
-walk_no_bignums (sp)
-     symbolS * sp;
-{
-  if (symbol_get_value_expression (sp)->X_op == O_big)
-    return 1;
-
-  if (symbol_get_value_expression (sp)->X_add_symbol)
-    {
-      return (walk_no_bignums (symbol_get_value_expression (sp)->X_add_symbol)
-	      || (symbol_get_value_expression (sp)->X_op_symbol
-		  && walk_no_bignums (symbol_get_value_expression (sp)->X_op_symbol)));
-    }
-
-  return 0;
-}
-
-static int in_my_get_expression = 0;
-
-static int
-my_get_expression (ep, str)
-     expressionS * ep;
-     char ** str;
-{
-  char * save_in;
-  segT   seg;
-
-  save_in = input_line_pointer;
-  input_line_pointer = *str;
-  in_my_get_expression = 1;
-  seg = expression (ep);
-  in_my_get_expression = 0;
-
-  if (ep->X_op == O_illegal)
-    {
-      /* We found a bad expression in md_operand().  */
-      *str = input_line_pointer;
-      input_line_pointer = save_in;
-      return 1;
-    }
-
-#ifdef OBJ_AOUT
-  if (seg != absolute_section
-      && seg != text_section
-      && seg != data_section
-      && seg != bss_section
-      && seg != undefined_section)
-    {
-      inst.error = _("bad_segment");
-      *str = input_line_pointer;
-      input_line_pointer = save_in;
-      return 1;
-    }
-#endif
-
-  /* Get rid of any bignums now, so that we don't generate an error for which
-     we can't establish a line number later on.  Big numbers are never valid
-     in instructions, which is where this routine is always called.  */
-  if (ep->X_op == O_big
-      || (ep->X_add_symbol
-	  && (walk_no_bignums (ep->X_add_symbol)
-	      || (ep->X_op_symbol
-		  && walk_no_bignums (ep->X_op_symbol)))))
-    {
-      inst.error = _("invalid constant");
-      *str = input_line_pointer;
-      input_line_pointer = save_in;
-      return 1;
-    }
-
-  *str = input_line_pointer;
-  input_line_pointer = save_in;
-  return 0;
-}
-
-/* We handle all bad expressions here, so that we can report the faulty
-   instruction in the error message.  */
-void
-md_operand (expr)
-     expressionS *expr;
-{
-  if (in_my_get_expression)
-    {
-      expr->X_op = O_illegal;
-      if (inst.error == NULL)
-	inst.error = _("bad expression");
-    }
-}
-
-/* KIND indicates what kind of shifts are accepted.  */
-
-static int
-decode_shift (str, kind)
-     char ** str;
-     int     kind;
-{
-  const struct asm_shift_name * shift;
-  char * p;
-  char   c;
-
-  skip_whitespace (* str);
-
-  for (p = * str; ISALPHA (* p); p ++)
-    ;
-
-  if (p == * str)
-    {
-      inst.error = _("shift expression expected");
-      return FAIL;
-    }
-
-  c = * p;
-  * p = '\0';
-  shift = (const struct asm_shift_name *) hash_find (arm_shift_hsh, * str);
-  * p = c;
-
-  if (shift == NULL)
-    {
-      inst.error = _("shift expression expected");
-      return FAIL;
-    }
-
-  assert (shift->properties->index == shift_properties[shift->properties->index].index);
-
-  if (kind == SHIFT_LSL_OR_ASR_IMMEDIATE
-      && shift->properties->index != SHIFT_LSL
-      && shift->properties->index != SHIFT_ASR)
-    {
-      inst.error = _("'LSL' or 'ASR' required");
-      return FAIL;
-    }
-  else if (kind == SHIFT_LSL_IMMEDIATE
-	   && shift->properties->index != SHIFT_LSL)
-    {
-      inst.error = _("'LSL' required");
-      return FAIL;
-    }
-  else if (kind == SHIFT_ASR_IMMEDIATE
-	   && shift->properties->index != SHIFT_ASR)
-    {
-      inst.error = _("'ASR' required");
-      return FAIL;
-    }
-    
-  if (shift->properties->index == SHIFT_RRX)
-    {
-      * str = p;
-      inst.instruction |= shift->properties->bit_field;
-      return SUCCESS;
-    }
-
-  skip_whitespace (p);
-
-  if (kind == NO_SHIFT_RESTRICT && reg_required_here (& p, 8) != FAIL)
-    {
-      inst.instruction |= shift->properties->bit_field | SHIFT_BY_REG;
-      * str = p;
-      return SUCCESS;
-    }
-  else if (! is_immediate_prefix (* p))
-    {
-      inst.error = (NO_SHIFT_RESTRICT
-		    ? _("shift requires register or #expression")
-		    : _("shift requires #expression"));
-      * str = p;
-      return FAIL;
-    }
-
-  inst.error = NULL;
-  p ++;
-
-  if (my_get_expression (& inst.reloc.exp, & p))
-    return FAIL;
-
-  /* Validate some simple #expressions.  */
-  if (inst.reloc.exp.X_op == O_constant)
-    {
-      unsigned num = inst.reloc.exp.X_add_number;
-
-      /* Reject operations greater than 32.  */
-      if (num > 32
-	  /* Reject a shift of 0 unless the mode allows it.  */
-	  || (num == 0 && shift->properties->allows_0 == 0)
-	  /* Reject a shift of 32 unless the mode allows it.  */
-	  || (num == 32 && shift->properties->allows_32 == 0)
-	  )
-	{
-	  /* As a special case we allow a shift of zero for
-	     modes that do not support it to be recoded as an
-	     logical shift left of zero (ie nothing).  We warn
-	     about this though.  */
-	  if (num == 0)
-	    {
-	      as_warn (_("shift of 0 ignored."));
-	      shift = & shift_names[0];
-	      assert (shift->properties->index == SHIFT_LSL);
-	    }
-	  else
-	    {
-	      inst.error = _("invalid immediate shift");
-	      return FAIL;
-	    }
-	}
-
-      /* Shifts of 32 are encoded as 0, for those shifts that
-	 support it.  */
-      if (num == 32)
-	num = 0;
-
-      inst.instruction |= (num << 7) | shift->properties->bit_field;
-    }
-  else
-    {
-      inst.reloc.type   = BFD_RELOC_ARM_SHIFT_IMM;
-      inst.reloc.pc_rel = 0;
-      inst.instruction |= shift->properties->bit_field;
-    }
-
-  * str = p;
-  return SUCCESS;
-}
-
-/* Do those data_ops which can take a negative immediate constant
-   by altering the instruction.  A bit of a hack really.
-        MOV <-> MVN
-        AND <-> BIC
-        ADC <-> SBC
-        by inverting the second operand, and
-        ADD <-> SUB
-        CMP <-> CMN
-        by negating the second operand.  */
-
-static int
-negate_data_op (instruction, value)
-     unsigned long * instruction;
-     unsigned long   value;
-{
-  int op, new_inst;
-  unsigned long negated, inverted;
-
-  negated = validate_immediate (-value);
-  inverted = validate_immediate (~value);
-
-  op = (*instruction >> DATA_OP_SHIFT) & 0xf;
-  switch (op)
-    {
-      /* First negates.  */
-    case OPCODE_SUB:             /* ADD <-> SUB  */
-      new_inst = OPCODE_ADD;
-      value = negated;
-      break;
-
-    case OPCODE_ADD:
-      new_inst = OPCODE_SUB;
-      value = negated;
-      break;
-
-    case OPCODE_CMP:             /* CMP <-> CMN  */
-      new_inst = OPCODE_CMN;
-      value = negated;
-      break;
-
-    case OPCODE_CMN:
-      new_inst = OPCODE_CMP;
-      value = negated;
-      break;
-
-      /* Now Inverted ops.  */
-    case OPCODE_MOV:             /* MOV <-> MVN  */
-      new_inst = OPCODE_MVN;
-      value = inverted;
-      break;
-
-    case OPCODE_MVN:
-      new_inst = OPCODE_MOV;
-      value = inverted;
-      break;
-
-    case OPCODE_AND:             /* AND <-> BIC  */
-      new_inst = OPCODE_BIC;
-      value = inverted;
-      break;
-
-    case OPCODE_BIC:
-      new_inst = OPCODE_AND;
-      value = inverted;
-      break;
-
-    case OPCODE_ADC:              /* ADC <-> SBC  */
-      new_inst = OPCODE_SBC;
-      value = inverted;
-      break;
-
-    case OPCODE_SBC:
-      new_inst = OPCODE_ADC;
-      value = inverted;
-      break;
-
-      /* We cannot do anything.  */
-    default:
-      return FAIL;
-    }
-
-  if (value == (unsigned) FAIL)
-    return FAIL;
-
-  *instruction &= OPCODE_MASK;
-  *instruction |= new_inst << DATA_OP_SHIFT;
-  return value;
-}
-
-static int
-data_op2 (str)
-     char ** str;
-{
-  int value;
-  expressionS expr;
-
-  skip_whitespace (* str);
-
-  if (reg_required_here (str, 0) != FAIL)
-    {
-      if (skip_past_comma (str) == SUCCESS)
-	/* Shift operation on register.  */
-	return decode_shift (str, NO_SHIFT_RESTRICT);
-
-      return SUCCESS;
-    }
-  else
-    {
-      /* Immediate expression.  */
-      if (is_immediate_prefix (**str))
-	{
-	  (*str)++;
-	  inst.error = NULL;
-
-	  if (my_get_expression (&inst.reloc.exp, str))
-	    return FAIL;
-
-	  if (inst.reloc.exp.X_add_symbol)
-	    {
-	      inst.reloc.type = BFD_RELOC_ARM_IMMEDIATE;
-	      inst.reloc.pc_rel = 0;
-	    }
-	  else
-	    {
-	      if (skip_past_comma (str) == SUCCESS)
-		{
-		  /* #x, y -- ie explicit rotation by Y.  */
-		  if (my_get_expression (&expr, str))
-		    return FAIL;
-
-		  if (expr.X_op != O_constant)
-		    {
-		      inst.error = _("constant expression expected");
-		      return FAIL;
-		    }
-
-		  /* Rotate must be a multiple of 2.  */
-		  if (((unsigned) expr.X_add_number) > 30
-		      || (expr.X_add_number & 1) != 0
-		      || ((unsigned) inst.reloc.exp.X_add_number) > 255)
-		    {
-		      inst.error = _("invalid constant");
-		      return FAIL;
-		    }
-		  inst.instruction |= INST_IMMEDIATE;
-		  inst.instruction |= inst.reloc.exp.X_add_number;
-		  inst.instruction |= expr.X_add_number << 7;
-		  return SUCCESS;
-		}
-
-	      /* Implicit rotation, select a suitable one.  */
-	      value = validate_immediate (inst.reloc.exp.X_add_number);
-
-	      if (value == FAIL)
-		{
-		  /* Can't be done.  Perhaps the code reads something like
-		     "add Rd, Rn, #-n", where "sub Rd, Rn, #n" would be OK.  */
-		  if ((value = negate_data_op (&inst.instruction,
-					       inst.reloc.exp.X_add_number))
-		      == FAIL)
-		    {
-		      inst.error = _("invalid constant");
-		      return FAIL;
-		    }
-		}
-
-	      inst.instruction |= value;
-	    }
-
-	  inst.instruction |= INST_IMMEDIATE;
-	  return SUCCESS;
-	}
-
-      (*str)++;
-      inst.error = _("register or shift expression expected");
-      return FAIL;
-    }
-}
-
-static int
-fp_op2 (str)
-     char ** str;
-{
-  skip_whitespace (* str);
-
-  if (fp_reg_required_here (str, 0) != FAIL)
-    return SUCCESS;
-  else
-    {
-      /* Immediate expression.  */
-      if (*((*str)++) == '#')
-	{
-	  int i;
-
-	  inst.error = NULL;
-
-	  skip_whitespace (* str);
-
-	  /* First try and match exact strings, this is to guarantee
-	     that some formats will work even for cross assembly.  */
-
-	  for (i = 0; fp_const[i]; i++)
-	    {
-	      if (strncmp (*str, fp_const[i], strlen (fp_const[i])) == 0)
-		{
-		  char *start = *str;
-
-		  *str += strlen (fp_const[i]);
-		  if (is_end_of_line[(unsigned char) **str])
-		    {
-		      inst.instruction |= i + 8;
-		      return SUCCESS;
-		    }
-		  *str = start;
-		}
-	    }
-
-	  /* Just because we didn't get a match doesn't mean that the
-	     constant isn't valid, just that it is in a format that we
-	     don't automatically recognize.  Try parsing it with
-	     the standard expression routines.  */
-	  if ((i = my_get_float_expression (str)) >= 0)
-	    {
-	      inst.instruction |= i + 8;
-	      return SUCCESS;
-	    }
-
-	  inst.error = _("invalid floating point immediate expression");
-	  return FAIL;
-	}
-      inst.error =
-	_("floating point register or immediate expression expected");
-      return FAIL;
-    }
-}
-
-static void
-do_arit (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 16) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || data_op2 (&str) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_adr (str)
-     char * str;
-{
-  /* This is a pseudo-op of the form "adr rd, label" to be converted
-     into a relative address of the form "add rd, pc, #label-.-8".  */
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || my_get_expression (&inst.reloc.exp, &str))
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  /* Frag hacking will turn this into a sub instruction if the offset turns
-     out to be negative.  */
-  inst.reloc.type = BFD_RELOC_ARM_IMMEDIATE;
-#ifndef TE_WINCE
-  inst.reloc.exp.X_add_number -= 8; /* PC relative adjust.  */
-#endif
-  inst.reloc.pc_rel = 1;
-
-  end_of_line (str);
-}
-
-static void
-do_adrl (str)
-     char * str;
-{
-  /* This is a pseudo-op of the form "adrl rd, label" to be converted
-     into a relative address of the form:
-     add rd, pc, #low(label-.-8)"
-     add rd, rd, #high(label-.-8)"  */
-
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || my_get_expression (&inst.reloc.exp, &str))
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-
-      return;
-    }
-
-  end_of_line (str);
-  /* Frag hacking will turn this into a sub instruction if the offset turns
-     out to be negative.  */
-  inst.reloc.type              = BFD_RELOC_ARM_ADRL_IMMEDIATE;
-#ifndef TE_WINCE  
-  inst.reloc.exp.X_add_number -= 8; /* PC relative adjust  */
-#endif
-  inst.reloc.pc_rel            = 1;
-  inst.size                    = INSN_SIZE * 2;
-}
-
-static void
-do_cmp (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 16) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || data_op2 (&str) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_mov (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || data_op2 (&str) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static int
-ldst_extend (str)
-     char ** str;
-{
-  int add = INDEX_UP;
-
-  switch (**str)
-    {
-    case '#':
-    case '$':
-      (*str)++;
-      if (my_get_expression (& inst.reloc.exp, str))
-	return FAIL;
-
-      if (inst.reloc.exp.X_op == O_constant)
-	{
-	  int value = inst.reloc.exp.X_add_number;
-
-	  if (value < -4095 || value > 4095)
-	    {
-	      inst.error = _("address offset too large");
-	      return FAIL;
-	    }
-
-	  if (value < 0)
-	    {
-	      value = -value;
-	      add = 0;
-	    }
-
-	  inst.instruction |= add | value;
-	}
-      else
-	{
-	  inst.reloc.type = BFD_RELOC_ARM_OFFSET_IMM;
-	  inst.reloc.pc_rel = 0;
-	}
-      return SUCCESS;
-
-    case '-':
-      add = 0;
-      /* Fall through.  */
-
-    case '+':
-      (*str)++;
-      /* Fall through.  */
-
-    default:
-      if (reg_required_here (str, 0) == FAIL)
-	return FAIL;
-
-      inst.instruction |= add | OFFSET_REG;
-      if (skip_past_comma (str) == SUCCESS)
-	return decode_shift (str, SHIFT_IMMEDIATE);
-
-      return SUCCESS;
-    }
-}
-
-static void
-do_ldst (str)
-     char *        str;
-{
-  int pre_inc = 0;
-  int conflict_reg;
-  int value;
-
-  skip_whitespace (str);
-
-  if ((conflict_reg = reg_required_here (&str, 12)) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL)
-    {
-      inst.error = _("address expected");
-      return;
-    }
-
-  if (*str == '[')
-    {
-      int reg;
-
-      str++;
-
-      skip_whitespace (str);
-
-      if ((reg = reg_required_here (&str, 16)) == FAIL)
-	return;
-
-      /* Conflicts can occur on stores as well as loads.  */
-      conflict_reg = (conflict_reg == reg);
-
-      skip_whitespace (str);
-
-      if (*str == ']')
-	{
-	  str ++;
-
-	  if (skip_past_comma (&str) == SUCCESS)
-	    {
-	      /* [Rn],... (post inc)  */
-	      if (ldst_extend (&str) == FAIL)
-		return;
-	      if (conflict_reg)
-		as_warn (_("%s register same as write-back base"),
-			 ((inst.instruction & LOAD_BIT)
-			  ? _("destination") : _("source")));
-	    }
-	  else
-	    {
-	      /* [Rn]  */
-	      skip_whitespace (str);
-
-	      if (*str == '!')
-		{
-		  if (conflict_reg)
-		    as_warn (_("%s register same as write-back base"),
-			     ((inst.instruction & LOAD_BIT)
-			      ? _("destination") : _("source")));
-		  str++;
-		  inst.instruction |= WRITE_BACK;
-		}
-
-	      inst.instruction |= INDEX_UP;
-	      pre_inc = 1;
-	    }
-	}
-      else
-	{
-	  /* [Rn,...]  */
-	  if (skip_past_comma (&str) == FAIL)
-	    {
-	      inst.error = _("pre-indexed expression expected");
-	      return;
-	    }
-
-	  pre_inc = 1;
-	  if (ldst_extend (&str) == FAIL)
-	    return;
-
-	  skip_whitespace (str);
-
-	  if (*str++ != ']')
-	    {
-	      inst.error = _("missing ]");
-	      return;
-	    }
-
-	  skip_whitespace (str);
-
-	  if (*str == '!')
-	    {
-	      if (conflict_reg)
-		as_warn (_("%s register same as write-back base"),
-			 ((inst.instruction & LOAD_BIT)
-			  ? _("destination") : _("source")));
-	      str++;
-	      inst.instruction |= WRITE_BACK;
-	    }
-	}
-    }
-  else if (*str == '=')
-    {
-      if ((inst.instruction & LOAD_BIT) == 0)
-	{
-	  inst.error = _("invalid pseudo operation");
-	  return;
-	}
-
-      /* Parse an "ldr Rd, =expr" instruction; this is another pseudo op.  */
-      str++;
-
-      skip_whitespace (str);
-
-      if (my_get_expression (&inst.reloc.exp, &str))
-	return;
-
-      if (inst.reloc.exp.X_op != O_constant
-	  && inst.reloc.exp.X_op != O_symbol)
-	{
-	  inst.error = _("constant expression expected");
-	  return;
-	}
-
-      if (inst.reloc.exp.X_op == O_constant)
-	{
-	  value = validate_immediate (inst.reloc.exp.X_add_number);
-
-	  if (value != FAIL)
-	    {
-	      /* This can be done with a mov instruction.  */
-	      inst.instruction &= LITERAL_MASK;
-	      inst.instruction |= (INST_IMMEDIATE
-				   | (OPCODE_MOV << DATA_OP_SHIFT));
-	      inst.instruction |= value & 0xfff;
-	      end_of_line (str);
-	      return;
-	    }
-
-	  value = validate_immediate (~inst.reloc.exp.X_add_number);
-
-	  if (value != FAIL)
-	    {
-	      /* This can be done with a mvn instruction.  */
-	      inst.instruction &= LITERAL_MASK;
-	      inst.instruction |= (INST_IMMEDIATE
-				   | (OPCODE_MVN << DATA_OP_SHIFT));
-	      inst.instruction |= value & 0xfff;
-	      end_of_line (str);
-	      return;
-	    }
-	}
-
-      /* Insert into literal pool.  */
-      if (add_to_lit_pool () == FAIL)
-	{
-	  if (!inst.error)
-	    inst.error = _("literal pool insertion failed");
-	  return;
-	}
-
-      /* Change the instruction exp to point to the pool.  */
-      inst.reloc.type = BFD_RELOC_ARM_LITERAL;
-      inst.reloc.pc_rel = 1;
-      inst.instruction |= (REG_PC << 16);
-      pre_inc = 1;
-    }
-  else
-    {
-      if (my_get_expression (&inst.reloc.exp, &str))
-	return;
-
-      inst.reloc.type = BFD_RELOC_ARM_OFFSET_IMM;
-#ifndef TE_WINCE
-      /* PC rel adjust.  */
-      inst.reloc.exp.X_add_number -= 8;
-#endif
-      inst.reloc.pc_rel = 1;
-      inst.instruction |= (REG_PC << 16);
-      pre_inc = 1;
-    }
-
-  inst.instruction |= (pre_inc ? PRE_INDEX : 0);
-  end_of_line (str);
-}
-
-static void
-do_ldstt (str)
-     char *        str;
-{
-  int conflict_reg;
-
-  skip_whitespace (str);
-
-  if ((conflict_reg = reg_required_here (& str, 12)) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL)
-    {
-      inst.error = _("address expected");
-      return;
-    }
-
-  if (*str == '[')
-    {
-      int reg;
-
-      str++;
-
-      skip_whitespace (str);
-
-      if ((reg = reg_required_here (&str, 16)) == FAIL)
-	return;
-
-      /* ldrt/strt always use post-indexed addressing, so if the base is
-	 the same as Rd, we warn.  */
-      if (conflict_reg == reg)
-	as_warn (_("%s register same as write-back base"),
-		 ((inst.instruction & LOAD_BIT)
-		  ? _("destination") : _("source")));
-
-      skip_whitespace (str);
-
-      if (*str == ']')
-	{
-	  str ++;
-
-	  if (skip_past_comma (&str) == SUCCESS)
-	    {
-	      /* [Rn],... (post inc)  */
-	      if (ldst_extend (&str) == FAIL)
-		return;
-	    }
-	  else
-	    {
-	      /* [Rn]  */
-	      skip_whitespace (str);
-
-	      /* Skip a write-back '!'.  */
-	      if (*str == '!')
-		str++;
-
-	      inst.instruction |= INDEX_UP;
-	    }
-	}
-      else
-	{
-	  inst.error = _("post-indexed expression expected");
-	  return;
-	}
-    }
-  else
-    {
-      inst.error = _("post-indexed expression expected");
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static int
-ldst_extend_v4 (str)
-     char ** str;
-{
-  int add = INDEX_UP;
-
-  switch (**str)
-    {
-    case '#':
-    case '$':
-      (*str)++;
-      if (my_get_expression (& inst.reloc.exp, str))
-	return FAIL;
-
-      if (inst.reloc.exp.X_op == O_constant)
-	{
-	  int value = inst.reloc.exp.X_add_number;
-
-	  if (value < -255 || value > 255)
-	    {
-	      inst.error = _("address offset too large");
-	      return FAIL;
-	    }
-
-	  if (value < 0)
-	    {
-	      value = -value;
-	      add = 0;
-	    }
-
-	  /* Halfword and signextension instructions have the
-             immediate value split across bits 11..8 and bits 3..0.  */
-	  inst.instruction |= (add | HWOFFSET_IMM
-			       | ((value >> 4) << 8) | (value & 0xF));
-	}
-      else
-	{
-	  inst.instruction |= HWOFFSET_IMM;
-	  inst.reloc.type = BFD_RELOC_ARM_OFFSET_IMM8;
-	  inst.reloc.pc_rel = 0;
-	}
-      return SUCCESS;
-
-    case '-':
-      add = 0;
-      /* Fall through.  */
-
-    case '+':
-      (*str)++;
-      /* Fall through.  */
-
-    default:
-      if (reg_required_here (str, 0) == FAIL)
-	return FAIL;
-
-      inst.instruction |= add;
-      return SUCCESS;
-    }
-}
-
-/* Halfword and signed-byte load/store operations.  */
-static void
-do_ldstv4 (str)
-     char *        str;
-{
-  int pre_inc = 0;
-  int conflict_reg;
-  int value;
-
-  skip_whitespace (str);
-
-  if ((conflict_reg = reg_required_here (& str, 12)) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (& str) == FAIL)
-    {
-      inst.error = _("address expected");
-      return;
-    }
-
-  if (*str == '[')
-    {
-      int reg;
-
-      str++;
-
-      skip_whitespace (str);
-
-      if ((reg = reg_required_here (&str, 16)) == FAIL)
-	return;
-
-      /* Conflicts can occur on stores as well as loads.  */
-      conflict_reg = (conflict_reg == reg);
-
-      skip_whitespace (str);
-
-      if (*str == ']')
-	{
-	  str ++;
-
-	  if (skip_past_comma (&str) == SUCCESS)
-	    {
-	      /* [Rn],... (post inc)  */
-	      if (ldst_extend_v4 (&str) == FAIL)
-		return;
-	      if (conflict_reg)
-		as_warn (_("%s register same as write-back base"),
-			 ((inst.instruction & LOAD_BIT)
-			  ? _("destination") : _("source")));
-	    }
-	  else
-	    {
-	      /* [Rn]  */
-	      inst.instruction |= HWOFFSET_IMM;
-
-	      skip_whitespace (str);
-
-	      if (*str == '!')
-		{
-		  if (conflict_reg)
-		    as_warn (_("%s register same as write-back base"),
-			     ((inst.instruction & LOAD_BIT)
-			      ? _("destination") : _("source")));
-		  str++;
-		  inst.instruction |= WRITE_BACK;
-		}
-
-	      inst.instruction |= INDEX_UP;
-	      pre_inc = 1;
-	    }
-	}
-      else
-	{
-	  /* [Rn,...]  */
-	  if (skip_past_comma (&str) == FAIL)
-	    {
-	      inst.error = _("pre-indexed expression expected");
-	      return;
-	    }
-
-	  pre_inc = 1;
-	  if (ldst_extend_v4 (&str) == FAIL)
-	    return;
-
-	  skip_whitespace (str);
-
-	  if (*str++ != ']')
-	    {
-	      inst.error = _("missing ]");
-	      return;
-	    }
-
-	  skip_whitespace (str);
-
-	  if (*str == '!')
-	    {
-	      if (conflict_reg)
-		as_warn (_("%s register same as write-back base"),
-			 ((inst.instruction & LOAD_BIT)
-			  ? _("destination") : _("source")));
-	      str++;
-	      inst.instruction |= WRITE_BACK;
-	    }
-	}
-    }
-  else if (*str == '=')
-    {
-      if ((inst.instruction & LOAD_BIT) == 0)
-	{
-	  inst.error = _("invalid pseudo operation");
-	  return;
-	}
-
-      /* XXX Does this work correctly for half-word/byte ops?  */
-      /* Parse an "ldr Rd, =expr" instruction; this is another pseudo op.  */
-      str++;
-
-      skip_whitespace (str);
-
-      if (my_get_expression (&inst.reloc.exp, &str))
-	return;
-
-      if (inst.reloc.exp.X_op != O_constant
-	  && inst.reloc.exp.X_op != O_symbol)
-	{
-	  inst.error = _("constant expression expected");
-	  return;
-	}
-
-      if (inst.reloc.exp.X_op == O_constant)
-	{
-	  value = validate_immediate (inst.reloc.exp.X_add_number);
-
-	  if (value != FAIL)
-	    {
-	      /* This can be done with a mov instruction.  */
-	      inst.instruction &= LITERAL_MASK;
-	      inst.instruction |= INST_IMMEDIATE | (OPCODE_MOV << DATA_OP_SHIFT);
-	      inst.instruction |= value & 0xfff;
-	      end_of_line (str);
-	      return;
-	    }
-
-	  value = validate_immediate (~ inst.reloc.exp.X_add_number);
-
-	  if (value != FAIL)
-	    {
-	      /* This can be done with a mvn instruction.  */
-	      inst.instruction &= LITERAL_MASK;
-	      inst.instruction |= INST_IMMEDIATE | (OPCODE_MVN << DATA_OP_SHIFT);
-	      inst.instruction |= value & 0xfff;
-	      end_of_line (str);
-	      return;
-	    }
-	}
-
-      /* Insert into literal pool.  */
-      if (add_to_lit_pool () == FAIL)
-	{
-	  if (!inst.error)
-	    inst.error = _("literal pool insertion failed");
-	  return;
-	}
-
-      /* Change the instruction exp to point to the pool.  */
-      inst.instruction |= HWOFFSET_IMM;
-      inst.reloc.type = BFD_RELOC_ARM_HWLITERAL;
-      inst.reloc.pc_rel = 1;
-      inst.instruction |= (REG_PC << 16);
-      pre_inc = 1;
-    }
-  else
-    {
-      if (my_get_expression (&inst.reloc.exp, &str))
-	return;
-
-      inst.instruction |= HWOFFSET_IMM;
-      inst.reloc.type = BFD_RELOC_ARM_OFFSET_IMM8;
-#ifndef TE_WINCE
-      /* PC rel adjust.  */
-      inst.reloc.exp.X_add_number -= 8;
-#endif
-      inst.reloc.pc_rel = 1;
-      inst.instruction |= (REG_PC << 16);
-      pre_inc = 1;
-    }
-
-  inst.instruction |= (pre_inc ? PRE_INDEX : 0);
-  end_of_line (str);
-}
-
-static long
-reg_list (strp)
-     char ** strp;
-{
-  char * str = * strp;
-  long   range = 0;
-  int    another_range;
-
-  /* We come back here if we get ranges concatenated by '+' or '|'.  */
-  do
-    {
-      another_range = 0;
-
-      if (*str == '{')
-	{
-	  int in_range = 0;
-	  int cur_reg = -1;
-
-	  str++;
-	  do
-	    {
-	      int reg;
-
-	      skip_whitespace (str);
-
-	      if ((reg = reg_required_here (& str, -1)) == FAIL)
-		return FAIL;
-
-	      if (in_range)
-		{
-		  int i;
-
-		  if (reg <= cur_reg)
-		    {
-		      inst.error = _("bad range in register list");
-		      return FAIL;
-		    }
-
-		  for (i = cur_reg + 1; i < reg; i++)
-		    {
-		      if (range & (1 << i))
-			as_tsktsk
-			  (_("Warning: duplicated register (r%d) in register list"),
-			   i);
-		      else
-			range |= 1 << i;
-		    }
-		  in_range = 0;
-		}
-
-	      if (range & (1 << reg))
-		as_tsktsk (_("Warning: duplicated register (r%d) in register list"),
-			   reg);
-	      else if (reg <= cur_reg)
-		as_tsktsk (_("Warning: register range not in ascending order"));
-
-	      range |= 1 << reg;
-	      cur_reg = reg;
-	    }
-	  while (skip_past_comma (&str) != FAIL
-		 || (in_range = 1, *str++ == '-'));
-	  str--;
-	  skip_whitespace (str);
-
-	  if (*str++ != '}')
-	    {
-	      inst.error = _("missing `}'");
-	      return FAIL;
-	    }
-	}
-      else
-	{
-	  expressionS expr;
-
-	  if (my_get_expression (&expr, &str))
-	    return FAIL;
-
-	  if (expr.X_op == O_constant)
-	    {
-	      if (expr.X_add_number
-		  != (expr.X_add_number & 0x0000ffff))
-		{
-		  inst.error = _("invalid register mask");
-		  return FAIL;
-		}
-
-	      if ((range & expr.X_add_number) != 0)
-		{
-		  int regno = range & expr.X_add_number;
-
-		  regno &= -regno;
-		  regno = (1 << regno) - 1;
-		  as_tsktsk
-		    (_("Warning: duplicated register (r%d) in register list"),
-		     regno);
-		}
-
-	      range |= expr.X_add_number;
-	    }
-	  else
-	    {
-	      if (inst.reloc.type != 0)
-		{
-		  inst.error = _("expression too complex");
-		  return FAIL;
-		}
-
-	      memcpy (&inst.reloc.exp, &expr, sizeof (expressionS));
-	      inst.reloc.type = BFD_RELOC_ARM_MULTI;
-	      inst.reloc.pc_rel = 0;
-	    }
-	}
-
-      skip_whitespace (str);
-
-      if (*str == '|' || *str == '+')
-	{
-	  str++;
-	  another_range = 1;
-	}
-    }
-  while (another_range);
-
-  *strp = str;
-  return range;
-}
-
-static void
-do_ldmstm (str)
-     char * str;
-{
-  int base_reg;
-  long range;
-
-  skip_whitespace (str);
-
-  if ((base_reg = reg_required_here (&str, 16)) == FAIL)
-    return;
-
-  if (base_reg == REG_PC)
-    {
-      inst.error = _("r15 not allowed as base register");
-      return;
-    }
-
-  skip_whitespace (str);
-
-  if (*str == '!')
-    {
-      inst.instruction |= WRITE_BACK;
-      str++;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || (range = reg_list (&str)) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (*str == '^')
-    {
-      str++;
-      inst.instruction |= LDM_TYPE_2_OR_3;
-    }
-
-  if (inst.instruction & WRITE_BACK)
-    {
-      /* Check for unpredictable uses of writeback.  */
-      if (inst.instruction & LOAD_BIT)
-	{
-	  /* Not allowed in LDM type 2.  */
-	  if ((inst.instruction & LDM_TYPE_2_OR_3)
-	      && ((range & (1 << REG_PC)) == 0))
-	    as_warn (_("writeback of base register is UNPREDICTABLE"));
-	  /* Only allowed if base reg not in list for other types.  */
-	  else if (range & (1 << base_reg))
-	    as_warn (_("writeback of base register when in register list is UNPREDICTABLE"));
-	}
-      else /* STM.  */
-	{
-	  /* Not allowed for type 2.  */
-	  if (inst.instruction & LDM_TYPE_2_OR_3)
-	    as_warn (_("writeback of base register is UNPREDICTABLE"));
-	  /* Only allowed if base reg not in list, or first in list.  */
-	  else if ((range & (1 << base_reg))
-		   && (range & ((1 << base_reg) - 1)))
-	    as_warn (_("if writeback register is in list, it must be the lowest reg in the list"));
-	}
-    }
-
-  inst.instruction |= range;
-  end_of_line (str);
-}
-
-static void
-do_swi (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  /* Allow optional leading '#'.  */
-  if (is_immediate_prefix (*str))
-    str++;
-
-  if (my_get_expression (& inst.reloc.exp, & str))
-    return;
-
-  inst.reloc.type = BFD_RELOC_ARM_SWI;
-  inst.reloc.pc_rel = 0;
-  end_of_line (str);
-}
-
-static void
-do_swap (str)
-     char * str;
-{
-  int reg;
-
-  skip_whitespace (str);
-
-  if ((reg = reg_required_here (&str, 12)) == FAIL)
-    return;
-
-  if (reg == REG_PC)
-    {
-      inst.error = _("r15 not allowed in swap");
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || (reg = reg_required_here (&str, 0)) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (reg == REG_PC)
-    {
-      inst.error = _("r15 not allowed in swap");
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || *str++ != '[')
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  skip_whitespace (str);
-
-  if ((reg = reg_required_here (&str, 16)) == FAIL)
-    return;
-
-  if (reg == REG_PC)
-    {
-      inst.error = BAD_PC;
-      return;
-    }
-
-  skip_whitespace (str);
-
-  if (*str++ != ']')
-    {
-      inst.error = _("missing ]");
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_branch (str)
-     char * str;
-{
-  if (my_get_expression (&inst.reloc.exp, &str))
-    return;
-
-#ifdef OBJ_ELF
-  {
-    char * save_in;
-
-    /* ScottB: February 5, 1998 - Check to see of PLT32 reloc
-       required for the instruction.  */
-
-    /* arm_parse_reloc () works on input_line_pointer.
-       We actually want to parse the operands to the branch instruction
-       passed in 'str'.  Save the input pointer and restore it later.  */
-    save_in = input_line_pointer;
-    input_line_pointer = str;
-    if (inst.reloc.exp.X_op == O_symbol
-	&& *str == '('
-	&& arm_parse_reloc () == BFD_RELOC_ARM_PLT32)
-      {
-	inst.reloc.type   = BFD_RELOC_ARM_PLT32;
-	inst.reloc.pc_rel = 0;
-	/* Modify str to point to after parsed operands, otherwise
-	   end_of_line() will complain about the (PLT) left in str.  */
-	str = input_line_pointer;
-      }
-    else
-      {
-	inst.reloc.type   = BFD_RELOC_ARM_PCREL_BRANCH;
-	inst.reloc.pc_rel = 1;
-      }
-    input_line_pointer = save_in;
-  }
-#else
-  inst.reloc.type   = BFD_RELOC_ARM_PCREL_BRANCH;
-  inst.reloc.pc_rel = 1;
-#endif /* OBJ_ELF  */
-
-  end_of_line (str);
-}
-
-static void
-do_bx (str)
-     char * str;
-{
-  int reg;
-
-  skip_whitespace (str);
-
-  if ((reg = reg_required_here (&str, 0)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  /* Note - it is not illegal to do a "bx pc".  Useless, but not illegal.  */
-  if (reg == REG_PC)
-    as_tsktsk (_("use of r15 in bx in ARM mode is not really useful"));
-
-  end_of_line (str);
-}
-
-static void
-do_cdp (str)
-     char * str;
-{
-  /* Co-processor data operation.
-     Format: CDP{cond} CP#,<expr>,CRd,CRn,CRm{,<expr>}  */
-  skip_whitespace (str);
-
-  if (co_proc_number (&str) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_opc_expr (&str, 20,4) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_reg_required_here (&str, 12) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_reg_required_here (&str, 16) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_reg_required_here (&str, 0) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == SUCCESS)
-    {
-      if (cp_opc_expr (&str, 5, 3) == FAIL)
-	{
-	  if (!inst.error)
-	    inst.error = BAD_ARGS;
-	  return;
-	}
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_lstc (str)
-     char * str;
-{
-  /* Co-processor register load/store.
-     Format: <LDC|STC{cond}[L] CP#,CRd,<address>  */
-
-  skip_whitespace (str);
-
-  if (co_proc_number (&str) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_reg_required_here (&str, 12) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_address_required_here (&str, CP_WB_OK) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_co_reg (str)
-     char * str;
-{
-  /* Co-processor register transfer.
-     Format: <MCR|MRC>{cond} CP#,<expr1>,Rd,CRn,CRm{,<expr2>}  */
-
-  skip_whitespace (str);
-
-  if (co_proc_number (&str) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_opc_expr (&str, 21, 3) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 12) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_reg_required_here (&str, 16) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_reg_required_here (&str, 0) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == SUCCESS)
-    {
-      if (cp_opc_expr (&str, 5, 3) == FAIL)
-	{
-	  if (!inst.error)
-	    inst.error = BAD_ARGS;
-	  return;
-	}
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_fpa_ctrl (str)
-     char * str;
-{
-  /* FP control registers.
-     Format: <WFS|RFS|WFC|RFC>{cond} Rn  */
-
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_fpa_ldst (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  if (fp_reg_required_here (&str, 12) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_address_required_here (&str, CP_WB_OK) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_fpa_ldmstm (str)
-     char * str;
-{
-  int num_regs;
-
-  skip_whitespace (str);
-
-  if (fp_reg_required_here (&str, 12) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  /* Get Number of registers to transfer.  */
-  if (skip_past_comma (&str) == FAIL
-      || my_get_expression (&inst.reloc.exp, &str))
-    {
-      if (! inst.error)
-	inst.error = _("constant expression expected");
-      return;
-    }
-
-  if (inst.reloc.exp.X_op != O_constant)
-    {
-      inst.error = _("constant value required for number of registers");
-      return;
-    }
-
-  num_regs = inst.reloc.exp.X_add_number;
-
-  if (num_regs < 1 || num_regs > 4)
-    {
-      inst.error = _("number of registers must be in the range [1:4]");
-      return;
-    }
-
-  switch (num_regs)
-    {
-    case 1:
-      inst.instruction |= CP_T_X;
-      break;
-    case 2:
-      inst.instruction |= CP_T_Y;
-      break;
-    case 3:
-      inst.instruction |= CP_T_Y | CP_T_X;
-      break;
-    case 4:
-      break;
-    default:
-      abort ();
-    }
-
-  if (inst.instruction & (CP_T_Pre | CP_T_UD)) /* ea/fd format.  */
-    {
-      int reg;
-      int write_back;
-      int offset;
-
-      /* The instruction specified "ea" or "fd", so we can only accept
-	 [Rn]{!}.  The instruction does not really support stacking or
-	 unstacking, so we have to emulate these by setting appropriate
-	 bits and offsets.  */
-      if (skip_past_comma (&str) == FAIL
-	  || *str != '[')
-	{
-	  if (! inst.error)
-	    inst.error = BAD_ARGS;
-	  return;
-	}
-
-      str++;
-      skip_whitespace (str);
-
-      if ((reg = reg_required_here (&str, 16)) == FAIL)
-	return;
-
-      skip_whitespace (str);
-
-      if (*str != ']')
-	{
-	  inst.error = BAD_ARGS;
-	  return;
-	}
-
-      str++;
-      if (*str == '!')
-	{
-	  write_back = 1;
-	  str++;
-	  if (reg == REG_PC)
-	    {
-	      inst.error =
-		_("r15 not allowed as base register with write-back");
-	      return;
-	    }
-	}
-      else
-	write_back = 0;
-
-      if (inst.instruction & CP_T_Pre)
-	{
-	  /* Pre-decrement.  */
-	  offset = 3 * num_regs;
-	  if (write_back)
-	    inst.instruction |= CP_T_WB;
-	}
-      else
-	{
-	  /* Post-increment.  */
-	  if (write_back)
-	    {
-	      inst.instruction |= CP_T_WB;
-	      offset = 3 * num_regs;
-	    }
-	  else
-	    {
-	      /* No write-back, so convert this into a standard pre-increment
-		 instruction -- aesthetically more pleasing.  */
-	      inst.instruction |= CP_T_Pre | CP_T_UD;
-	      offset = 0;
-	    }
-	}
-
-      inst.instruction |= offset;
-    }
-  else if (skip_past_comma (&str) == FAIL
-	   || cp_address_required_here (&str, CP_WB_OK) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_fpa_dyadic (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  if (fp_reg_required_here (&str, 12) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || fp_reg_required_here (&str, 16) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || fp_op2 (&str) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_fpa_monadic (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  if (fp_reg_required_here (&str, 12) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || fp_op2 (&str) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_fpa_cmp (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  if (fp_reg_required_here (&str, 16) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || fp_op2 (&str) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_fpa_from_reg (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  if (fp_reg_required_here (&str, 16) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 12) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_fpa_to_reg (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || fp_reg_required_here (&str, 0) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static int
-vfp_sp_reg_required_here (str, pos)
-     char **str;
-     enum vfp_sp_reg_pos pos;
-{
-  int    reg;
-  char *start = *str;
-
-  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_SN].htab)) != FAIL)
-    {
-      switch (pos)
-	{
-	case VFP_REG_Sd:
-	  inst.instruction |= ((reg >> 1) << 12) | ((reg & 1) << 22);
-	  break;
-
-	case VFP_REG_Sn:
-	  inst.instruction |= ((reg >> 1) << 16) | ((reg & 1) << 7);
-	  break;
-
-	case VFP_REG_Sm:
-	  inst.instruction |= ((reg >> 1) << 0) | ((reg & 1) << 5);
-	  break;
-
-	default:
-	  abort ();
-	}
-      return reg;
-    }
-
-  /* In the few cases where we might be able to accept something else
-     this error can be overridden.  */
-  inst.error = _(all_reg_maps[REG_TYPE_SN].expected);
-
-  /* Restore the start point.  */
-  *str = start;
-  return FAIL;
-}
-
-static int
-vfp_dp_reg_required_here (str, pos)
-     char **str;
-     enum vfp_dp_reg_pos pos;
-{
-  int   reg;
-  char *start = *str;
-
-  if ((reg = arm_reg_parse (str, all_reg_maps[REG_TYPE_DN].htab)) != FAIL)
-    {
-      switch (pos)
-	{
-	case VFP_REG_Dd:
-	  inst.instruction |= reg << 12;
-	  break;
-
-	case VFP_REG_Dn:
-	  inst.instruction |= reg << 16;
-	  break;
-
-	case VFP_REG_Dm:
-	  inst.instruction |= reg << 0;
-	  break;
-
-	default:
-	  abort ();
-	}
-      return reg;
-    }
-
-  /* In the few cases where we might be able to accept something else
-     this error can be overridden.  */
-  inst.error = _(all_reg_maps[REG_TYPE_DN].expected);
-
-  /* Restore the start point.  */
-  *str = start;
-  return FAIL;
-}
-
-static void
-do_vfp_sp_monadic (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_sp_reg_required_here (&str, VFP_REG_Sd) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || vfp_sp_reg_required_here (&str, VFP_REG_Sm) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_dp_monadic (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_dp_reg_required_here (&str, VFP_REG_Dd) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || vfp_dp_reg_required_here (&str, VFP_REG_Dm) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_sp_dyadic (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_sp_reg_required_here (&str, VFP_REG_Sd) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || vfp_sp_reg_required_here (&str, VFP_REG_Sn) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || vfp_sp_reg_required_here (&str, VFP_REG_Sm) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_dp_dyadic (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_dp_reg_required_here (&str, VFP_REG_Dd) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || vfp_dp_reg_required_here (&str, VFP_REG_Dn) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || vfp_dp_reg_required_here (&str, VFP_REG_Dm) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_reg_from_sp (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || vfp_sp_reg_required_here (&str, VFP_REG_Sn) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_reg2_from_sp2 (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 16) == FAIL
-      || skip_past_comma (&str) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  /* We require exactly two consecutive SP registers.  */
-  if (vfp_sp_reg_list (&str, VFP_REG_Sm) != 2)
-    {
-      if (! inst.error)
-	inst.error = _("only two consecutive VFP SP registers allowed here");
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_sp_from_reg (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_sp_reg_required_here (&str, VFP_REG_Sn) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 12) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_sp2_from_reg2 (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  /* We require exactly two consecutive SP registers.  */
-  if (vfp_sp_reg_list (&str, VFP_REG_Sm) != 2)
-    {
-      if (! inst.error)
-	inst.error = _("only two consecutive VFP SP registers allowed here");
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 12) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 16) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_reg_from_dp (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || vfp_dp_reg_required_here (&str, VFP_REG_Dn) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_reg2_from_dp (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 16) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || vfp_dp_reg_required_here (&str, VFP_REG_Dm) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_dp_from_reg (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_dp_reg_required_here (&str, VFP_REG_Dn) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 12) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_dp_from_reg2 (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_dp_reg_required_here (&str, VFP_REG_Dm) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 12) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 16) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static const struct vfp_reg *
-vfp_psr_parse (str)
-     char **str;
-{
-  char *start = *str;
-  char  c;
-  char *p;
-  const struct vfp_reg *vreg;
-
-  p = start;
-
-  /* Find the end of the current token.  */
-  do
-    {
-      c = *p++;
-    }
-  while (ISALPHA (c));
-
-  /* Mark it.  */
-  *--p = 0;
-
-  for (vreg = vfp_regs + 0;
-       vreg < vfp_regs + sizeof (vfp_regs) / sizeof (struct vfp_reg);
-       vreg++)
-    {
-      if (strcmp (start, vreg->name) == 0)
-	{
-	  *p = c;
-	  *str = p;
-	  return vreg;
-	}
-    }
-
-  *p = c;
-  return NULL;
-}
-
-static int
-vfp_psr_required_here (str)
-     char **str;
-{
-  char *start = *str;
-  const struct vfp_reg *vreg;
-
-  vreg = vfp_psr_parse (str);
-
-  if (vreg)
-    {
-      inst.instruction |= vreg->regno;
-      return SUCCESS;
-    }
-
-  inst.error = _("VFP system register expected");
-
-  *str = start;
-  return FAIL;
-}
-
-static void
-do_vfp_reg_from_ctrl (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 12) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || vfp_psr_required_here (&str) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_ctrl_from_reg (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_psr_required_here (&str) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 12) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_sp_ldst (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_sp_reg_required_here (&str, VFP_REG_Sd) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_address_required_here (&str, CP_NO_WB) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_dp_ldst (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_dp_reg_required_here (&str, VFP_REG_Dd) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || cp_address_required_here (&str, CP_NO_WB) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-/* Parse and encode a VFP SP register list, storing the initial
-   register in position POS and returning the range as the result.  If
-   the string is invalid return FAIL (an invalid range).  */
-static long
-vfp_sp_reg_list (str, pos)
-     char **str;
-     enum vfp_sp_reg_pos pos;
-{
-  long range = 0;
-  int base_reg = 0;
-  int new_base;
-  long base_bits = 0;
-  int count = 0;
-  long tempinst;
-  unsigned long mask = 0;
-  int warned = 0;
-
-  if (**str != '{')
-    return FAIL;
-
-  (*str)++;
-  skip_whitespace (*str);
-
-  tempinst = inst.instruction;
-
-  do
-    {
-      inst.instruction = 0;
-
-      if ((new_base = vfp_sp_reg_required_here (str, pos)) == FAIL)
-	return FAIL;
-
-      if (count == 0 || base_reg > new_base)
-	{
-	  base_reg = new_base;
-	  base_bits = inst.instruction;
-	}
-
-      if (mask & (1 << new_base))
-	{
-	  inst.error = _("invalid register list");
-	  return FAIL;
-	}
-
-      if ((mask >> new_base) != 0 && ! warned)
-	{
-	  as_tsktsk (_("register list not in ascending order"));
-	  warned = 1;
-	}
-
-      mask |= 1 << new_base;
-      count++;
-
-      skip_whitespace (*str);
-
-      if (**str == '-') /* We have the start of a range expression */
-	{
-	  int high_range;
-
-	  (*str)++;
-
-	  if ((high_range
-	       = arm_reg_parse (str, all_reg_maps[REG_TYPE_SN].htab))
-	      == FAIL)
-	    {
-	      inst.error = _(all_reg_maps[REG_TYPE_SN].expected);
-	      return FAIL;
-	    }
-
-	  if (high_range <= new_base)
-	    {
-	      inst.error = _("register range not in ascending order");
-	      return FAIL;
-	    }
-
-	  for (new_base++; new_base <= high_range; new_base++)
-	    {
-	      if (mask & (1 << new_base))
-		{
-		  inst.error = _("invalid register list");
-		  return FAIL;
-		}
-
-	      mask |= 1 << new_base;
-	      count++;
-	    }
-	}
-    }
-  while (skip_past_comma (str) != FAIL);
-
-  if (**str != '}')
-    {
-      inst.error = _("invalid register list");
-      return FAIL;
-    }
-
-  (*str)++;
-
-  range = count;
-
-  /* Sanity check -- should have raised a parse error above.  */
-  if (count == 0 || count > 32)
-    abort ();
-
-  /* Final test -- the registers must be consecutive.  */
-  while (count--)
-    {
-      if ((mask & (1 << base_reg++)) == 0)
-	{
-	  inst.error = _("non-contiguous register range");
-	  return FAIL;
-	}
-    }
-
-  inst.instruction = tempinst | base_bits;
-  return range;
-}
-
-static long
-vfp_dp_reg_list (str)
-     char **str;
-{
-  long range = 0;
-  int base_reg = 0;
-  int new_base;
-  int count = 0;
-  long tempinst;
-  unsigned long mask = 0;
-  int warned = 0;
-
-  if (**str != '{')
-    return FAIL;
-
-  (*str)++;
-  skip_whitespace (*str);
-
-  tempinst = inst.instruction;
-
-  do
-    {
-      inst.instruction = 0;
-
-      if ((new_base = vfp_dp_reg_required_here (str, VFP_REG_Dd)) == FAIL)
-	return FAIL;
-
-      if (count == 0 || base_reg > new_base)
-	{
-	  base_reg = new_base;
-	  range = inst.instruction;
-	}
-
-      if (mask & (1 << new_base))
-	{
-	  inst.error = _("invalid register list");
-	  return FAIL;
-	}
-
-      if ((mask >> new_base) != 0 && ! warned)
-	{
-	  as_tsktsk (_("register list not in ascending order"));
-	  warned = 1;
-	}
-
-      mask |= 1 << new_base;
-      count++;
-
-      skip_whitespace (*str);
-
-      if (**str == '-') /* We have the start of a range expression */
-	{
-	  int high_range;
-
-	  (*str)++;
-
-	  if ((high_range
-	       = arm_reg_parse (str, all_reg_maps[REG_TYPE_DN].htab))
-	      == FAIL)
-	    {
-	      inst.error = _(all_reg_maps[REG_TYPE_DN].expected);
-	      return FAIL;
-	    }
-
-	  if (high_range <= new_base)
-	    {
-	      inst.error = _("register range not in ascending order");
-	      return FAIL;
-	    }
-
-	  for (new_base++; new_base <= high_range; new_base++)
-	    {
-	      if (mask & (1 << new_base))
-		{
-		  inst.error = _("invalid register list");
-		  return FAIL;
-		}
-
-	      mask |= 1 << new_base;
-	      count++;
-	    }
-	}
-    }
-  while (skip_past_comma (str) != FAIL);
-
-  if (**str != '}')
-    {
-      inst.error = _("invalid register list");
-      return FAIL;
-    }
-
-  (*str)++;
-
-  range |= 2 * count;
-
-  /* Sanity check -- should have raised a parse error above.  */
-  if (count == 0 || count > 16)
-    abort ();
-
-  /* Final test -- the registers must be consecutive.  */
-  while (count--)
-    {
-      if ((mask & (1 << base_reg++)) == 0)
-	{
-	  inst.error = _("non-contiguous register range");
-	  return FAIL;
-	}
-    }
-
-  inst.instruction = tempinst;
-  return range;
-}
-
-static void
-vfp_sp_ldstm (str, ldstm_type)
-     char *str;
-     enum vfp_ldstm_type ldstm_type;
-{
-  long range;
-
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 16) == FAIL)
-    return;
-
-  skip_whitespace (str);
-
-  if (*str == '!')
-    {
-      inst.instruction |= WRITE_BACK;
-      str++;
-    }
-  else if (ldstm_type != VFP_LDSTMIA)
-    {
-      inst.error = _("this addressing mode requires base-register writeback");
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || (range = vfp_sp_reg_list (&str, VFP_REG_Sd)) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  inst.instruction |= range;
-  end_of_line (str);
-}
-
-static void
-vfp_dp_ldstm (str, ldstm_type)
-     char *str;
-     enum vfp_ldstm_type ldstm_type;
-{
-  long range;
-
-  skip_whitespace (str);
-
-  if (reg_required_here (&str, 16) == FAIL)
-    return;
-
-  skip_whitespace (str);
-
-  if (*str == '!')
-    {
-      inst.instruction |= WRITE_BACK;
-      str++;
-    }
-  else if (ldstm_type != VFP_LDSTMIA && ldstm_type != VFP_LDSTMIAX)
-    {
-      inst.error = _("this addressing mode requires base-register writeback");
-      return;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || (range = vfp_dp_reg_list (&str)) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (ldstm_type == VFP_LDSTMIAX || ldstm_type == VFP_LDSTMDBX)
-    range += 1;
-
-  inst.instruction |= range;
-  end_of_line (str);
-}
-
-static void
-do_vfp_sp_ldstmia (str)
-     char *str;
-{
-  vfp_sp_ldstm (str, VFP_LDSTMIA);
-}
-
-static void
-do_vfp_sp_ldstmdb (str)
-     char *str;
-{
-  vfp_sp_ldstm (str, VFP_LDSTMDB);
-}
-
-static void
-do_vfp_dp_ldstmia (str)
-     char *str;
-{
-  vfp_dp_ldstm (str, VFP_LDSTMIA);
-}
-
-static void
-do_vfp_dp_ldstmdb (str)
-     char *str;
-{
-  vfp_dp_ldstm (str, VFP_LDSTMDB);
-}
-
-static void
-do_vfp_xp_ldstmia (str)
-     char *str;
-{
-  vfp_dp_ldstm (str, VFP_LDSTMIAX);
-}
-
-static void
-do_vfp_xp_ldstmdb (str)
-     char *str;
-{
-  vfp_dp_ldstm (str, VFP_LDSTMDBX);
-}
-
-static void
-do_vfp_sp_compare_z (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_sp_reg_required_here (&str, VFP_REG_Sd) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_dp_compare_z (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_dp_reg_required_here (&str, VFP_REG_Dd) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_dp_sp_cvt (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_dp_reg_required_here (&str, VFP_REG_Dd) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || vfp_sp_reg_required_here (&str, VFP_REG_Sm) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_vfp_sp_dp_cvt (str)
-     char *str;
-{
-  skip_whitespace (str);
-
-  if (vfp_sp_reg_required_here (&str, VFP_REG_Sd) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
-      || vfp_dp_reg_required_here (&str, VFP_REG_Dm) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  end_of_line (str);
-}
-
-/* Thumb specific routines.  */
-
-/* Parse and validate that a register is of the right form, this saves
-   repeated checking of this information in many similar cases.
-   Unlike the 32-bit case we do not insert the register into the opcode
-   here, since the position is often unknown until the full instruction
-   has been parsed.  */
-
-static int
-thumb_reg (strp, hi_lo)
-     char ** strp;
-     int     hi_lo;
-{
-  int reg;
-
-  if ((reg = reg_required_here (strp, -1)) == FAIL)
-    return FAIL;
-
-  switch (hi_lo)
-    {
-    case THUMB_REG_LO:
-      if (reg > 7)
-	{
-	  inst.error = _("lo register required");
-	  return FAIL;
-	}
-      break;
-
-    case THUMB_REG_HI:
-      if (reg < 8)
-	{
-	  inst.error = _("hi register required");
-	  return FAIL;
-	}
-      break;
-
-    default:
-      break;
-    }
-
-  return reg;
-}
-
-/* Parse an add or subtract instruction, SUBTRACT is non-zero if the opcode
-   was SUB.  */
-
-static void
-thumb_add_sub (str, subtract)
-     char * str;
-     int    subtract;
-{
-  int Rd, Rs, Rn = FAIL;
-
-  skip_whitespace (str);
-
-  if ((Rd = thumb_reg (&str, THUMB_REG_ANY)) == FAIL
-      || skip_past_comma (&str) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (is_immediate_prefix (*str))
-    {
-      Rs = Rd;
-      str++;
-      if (my_get_expression (&inst.reloc.exp, &str))
-	return;
-    }
-  else
-    {
-      if ((Rs = thumb_reg (&str, THUMB_REG_ANY)) == FAIL)
-	return;
-
-      if (skip_past_comma (&str) == FAIL)
-	{
-	  /* Two operand format, shuffle the registers
-	     and pretend there are 3.  */
-	  Rn = Rs;
-	  Rs = Rd;
-	}
-      else if (is_immediate_prefix (*str))
-	{
-	  str++;
-	  if (my_get_expression (&inst.reloc.exp, &str))
-	    return;
-	}
-      else if ((Rn = thumb_reg (&str, THUMB_REG_ANY)) == FAIL)
-	return;
-    }
-
-  /* We now have Rd and Rs set to registers, and Rn set to a register or FAIL;
-     for the latter case, EXPR contains the immediate that was found.  */
-  if (Rn != FAIL)
-    {
-      /* All register format.  */
-      if (Rd > 7 || Rs > 7 || Rn > 7)
-	{
-	  if (Rs != Rd)
-	    {
-	      inst.error = _("dest and source1 must be the same register");
-	      return;
-	    }
-
-	  /* Can't do this for SUB.  */
-	  if (subtract)
-	    {
-	      inst.error = _("subtract valid only on lo regs");
-	      return;
-	    }
-
-	  inst.instruction = (T_OPCODE_ADD_HI
-			      | (Rd > 7 ? THUMB_H1 : 0)
-			      | (Rn > 7 ? THUMB_H2 : 0));
-	  inst.instruction |= (Rd & 7) | ((Rn & 7) << 3);
-	}
-      else
-	{
-	  inst.instruction = subtract ? T_OPCODE_SUB_R3 : T_OPCODE_ADD_R3;
-	  inst.instruction |= Rd | (Rs << 3) | (Rn << 6);
-	}
-    }
-  else
-    {
-      /* Immediate expression, now things start to get nasty.  */
-
-      /* First deal with HI regs, only very restricted cases allowed:
-	 Adjusting SP, and using PC or SP to get an address.  */
-      if ((Rd > 7 && (Rd != REG_SP || Rs != REG_SP))
-	  || (Rs > 7 && Rs != REG_SP && Rs != REG_PC))
-	{
-	  inst.error = _("invalid Hi register with immediate");
-	  return;
-	}
-
-      if (inst.reloc.exp.X_op != O_constant)
-	{
-	  /* Value isn't known yet, all we can do is store all the fragments
-	     we know about in the instruction and let the reloc hacking
-	     work it all out.  */
-	  inst.instruction = (subtract ? 0x8000 : 0) | (Rd << 4) | Rs;
-	  inst.reloc.type = BFD_RELOC_ARM_THUMB_ADD;
-	}
-      else
-	{
-	  int offset = inst.reloc.exp.X_add_number;
-
-	  if (subtract)
-	    offset = - offset;
-
-	  if (offset < 0)
-	    {
-	      offset = - offset;
-	      subtract = 1;
-
-	      /* Quick check, in case offset is MIN_INT.  */
-	      if (offset < 0)
-		{
-		  inst.error = _("immediate value out of range");
-		  return;
-		}
-	    }
-	  /* Note - you cannot convert a subtract of 0 into an
-	     add of 0 because the carry flag is set differently.  */
-	  else if (offset > 0)
-	    subtract = 0;
-
-	  if (Rd == REG_SP)
-	    {
-	      if (offset & ~0x1fc)
-		{
-		  inst.error = _("invalid immediate value for stack adjust");
-		  return;
-		}
-	      inst.instruction = subtract ? T_OPCODE_SUB_ST : T_OPCODE_ADD_ST;
-	      inst.instruction |= offset >> 2;
-	    }
-	  else if (Rs == REG_PC || Rs == REG_SP)
-	    {
-	      if (subtract
-		  || (offset & ~0x3fc))
-		{
-		  inst.error = _("invalid immediate for address calculation");
-		  return;
-		}
-	      inst.instruction = (Rs == REG_PC ? T_OPCODE_ADD_PC
-				  : T_OPCODE_ADD_SP);
-	      inst.instruction |= (Rd << 8) | (offset >> 2);
-	    }
-	  else if (Rs == Rd)
-	    {
-	      if (offset & ~0xff)
-		{
-		  inst.error = _("immediate value out of range");
-		  return;
-		}
-	      inst.instruction = subtract ? T_OPCODE_SUB_I8 : T_OPCODE_ADD_I8;
-	      inst.instruction |= (Rd << 8) | offset;
-	    }
-	  else
-	    {
-	      if (offset & ~0x7)
-		{
-		  inst.error = _("immediate value out of range");
-		  return;
-		}
-	      inst.instruction = subtract ? T_OPCODE_SUB_I3 : T_OPCODE_ADD_I3;
-	      inst.instruction |= Rd | (Rs << 3) | (offset << 6);
-	    }
-	}
-    }
-
-  end_of_line (str);
-}
-
-static void
-thumb_shift (str, shift)
-     char * str;
-     int    shift;
-{
-  int Rd, Rs, Rn = FAIL;
-
-  skip_whitespace (str);
-
-  if ((Rd = thumb_reg (&str, THUMB_REG_LO)) == FAIL
-      || skip_past_comma (&str) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (is_immediate_prefix (*str))
-    {
-      /* Two operand immediate format, set Rs to Rd.  */
-      Rs = Rd;
-      str ++;
-      if (my_get_expression (&inst.reloc.exp, &str))
-	return;
-    }
-  else
-    {
-      if ((Rs = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
-	return;
-
-      if (skip_past_comma (&str) == FAIL)
-	{
-	  /* Two operand format, shuffle the registers
-	     and pretend there are 3.  */
-	  Rn = Rs;
-	  Rs = Rd;
-	}
-      else if (is_immediate_prefix (*str))
-	{
-	  str++;
-	  if (my_get_expression (&inst.reloc.exp, &str))
-	    return;
-	}
-      else if ((Rn = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
-	return;
-    }
-
-  /* We now have Rd and Rs set to registers, and Rn set to a register or FAIL;
-     for the latter case, EXPR contains the immediate that was found.  */
-
-  if (Rn != FAIL)
-    {
-      if (Rs != Rd)
-	{
-	  inst.error = _("source1 and dest must be same register");
-	  return;
-	}
-
-      switch (shift)
-	{
-	case THUMB_ASR: inst.instruction = T_OPCODE_ASR_R; break;
-	case THUMB_LSL: inst.instruction = T_OPCODE_LSL_R; break;
-	case THUMB_LSR: inst.instruction = T_OPCODE_LSR_R; break;
-	}
-
-      inst.instruction |= Rd | (Rn << 3);
-    }
-  else
-    {
-      switch (shift)
-	{
-	case THUMB_ASR: inst.instruction = T_OPCODE_ASR_I; break;
-	case THUMB_LSL: inst.instruction = T_OPCODE_LSL_I; break;
-	case THUMB_LSR: inst.instruction = T_OPCODE_LSR_I; break;
-	}
-
-      if (inst.reloc.exp.X_op != O_constant)
-	{
-	  /* Value isn't known yet, create a dummy reloc and let reloc
-	     hacking fix it up.  */
-	  inst.reloc.type = BFD_RELOC_ARM_THUMB_SHIFT;
-	}
-      else
-	{
-	  unsigned shift_value = inst.reloc.exp.X_add_number;
-
-	  if (shift_value > 32 || (shift_value == 32 && shift == THUMB_LSL))
-	    {
-	      inst.error = _("invalid immediate for shift");
-	      return;
-	    }
-
-	  /* Shifts of zero are handled by converting to LSL.  */
-	  if (shift_value == 0)
-	    inst.instruction = T_OPCODE_LSL_I;
-
-	  /* Shifts of 32 are encoded as a shift of zero.  */
-	  if (shift_value == 32)
-	    shift_value = 0;
-
-	  inst.instruction |= shift_value << 6;
-	}
-
-      inst.instruction |= Rd | (Rs << 3);
-    }
-
-  end_of_line (str);
-}
-
-static void
-thumb_mov_compare (str, move)
-     char * str;
-     int    move;
-{
-  int Rd, Rs = FAIL;
-
-  skip_whitespace (str);
-
-  if ((Rd = thumb_reg (&str, THUMB_REG_ANY)) == FAIL
-      || skip_past_comma (&str) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (move != THUMB_CPY && is_immediate_prefix (*str))
-    {
-      str++;
-      if (my_get_expression (&inst.reloc.exp, &str))
-	return;
-    }
-  else if ((Rs = thumb_reg (&str, THUMB_REG_ANY)) == FAIL)
-    return;
-
-  if (Rs != FAIL)
-    {
-      if (move != THUMB_CPY && Rs < 8 && Rd < 8)
-	{
-	  if (move == THUMB_MOVE)
-	    /* A move of two lowregs is encoded as ADD Rd, Rs, #0
-	       since a MOV instruction produces unpredictable results.  */
-	    inst.instruction = T_OPCODE_ADD_I3;
-	  else
-	    inst.instruction = T_OPCODE_CMP_LR;
-	  inst.instruction |= Rd | (Rs << 3);
-	}
-      else
-	{
-	  if (move == THUMB_MOVE)
-	    inst.instruction = T_OPCODE_MOV_HR;
-	  else if (move != THUMB_CPY)
-	    inst.instruction = T_OPCODE_CMP_HR;
-
-	  if (Rd > 7)
-	    inst.instruction |= THUMB_H1;
-
-	  if (Rs > 7)
-	    inst.instruction |= THUMB_H2;
-
-	  inst.instruction |= (Rd & 7) | ((Rs & 7) << 3);
-	}
-    }
-  else
-    {
-      if (Rd > 7)
-	{
-	  inst.error = _("only lo regs allowed with immediate");
-	  return;
-	}
-
-      if (move == THUMB_MOVE)
-	inst.instruction = T_OPCODE_MOV_I8;
-      else
-	inst.instruction = T_OPCODE_CMP_I8;
-
-      inst.instruction |= Rd << 8;
-
-      if (inst.reloc.exp.X_op != O_constant)
-	inst.reloc.type = BFD_RELOC_ARM_THUMB_IMM;
-      else
-	{
-	  unsigned value = inst.reloc.exp.X_add_number;
-
-	  if (value > 255)
-	    {
-	      inst.error = _("invalid immediate");
-	      return;
-	    }
-
-	  inst.instruction |= value;
-	}
-    }
-
-  end_of_line (str);
-}
-
-static void
-thumb_load_store (str, load_store, size)
-     char * str;
-     int    load_store;
-     int    size;
-{
-  int Rd, Rb, Ro = FAIL;
-
-  skip_whitespace (str);
-
-  if ((Rd = thumb_reg (&str, THUMB_REG_LO)) == FAIL
-      || skip_past_comma (&str) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (*str == '[')
-    {
-      str++;
-      if ((Rb = thumb_reg (&str, THUMB_REG_ANY)) == FAIL)
-	return;
-
-      if (skip_past_comma (&str) != FAIL)
-	{
-	  if (is_immediate_prefix (*str))
-	    {
-	      str++;
-	      if (my_get_expression (&inst.reloc.exp, &str))
-		return;
-	    }
-	  else if ((Ro = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
-	    return;
-	}
-      else
-	{
-	  inst.reloc.exp.X_op = O_constant;
-	  inst.reloc.exp.X_add_number = 0;
-	}
-
-      if (*str != ']')
-	{
-	  inst.error = _("expected ']'");
-	  return;
-	}
-      str++;
-    }
-  else if (*str == '=')
-    {
-      if (load_store != THUMB_LOAD)
-	{
-	  inst.error = _("invalid pseudo operation");
-	  return;
-	}
-
-      /* Parse an "ldr Rd, =expr" instruction; this is another pseudo op.  */
-      str++;
-
-      skip_whitespace (str);
-
-      if (my_get_expression (& inst.reloc.exp, & str))
-	return;
-
-      end_of_line (str);
-
-      if (   inst.reloc.exp.X_op != O_constant
-	  && inst.reloc.exp.X_op != O_symbol)
-	{
-	  inst.error = "Constant expression expected";
-	  return;
-	}
-
-      if (inst.reloc.exp.X_op == O_constant
-	  && ((inst.reloc.exp.X_add_number & ~0xFF) == 0))
-	{
-	  /* This can be done with a mov instruction.  */
-
-	  inst.instruction  = T_OPCODE_MOV_I8 | (Rd << 8);
-	  inst.instruction |= inst.reloc.exp.X_add_number;
-	  return;
-	}
-
-      /* Insert into literal pool.  */
-      if (add_to_lit_pool () == FAIL)
-	{
-	  if (!inst.error)
-	    inst.error = "literal pool insertion failed";
-	  return;
-	}
-
-      inst.reloc.type   = BFD_RELOC_ARM_THUMB_OFFSET;
-      inst.reloc.pc_rel = 1;
-      inst.instruction  = T_OPCODE_LDR_PC | (Rd << 8);
-      /* Adjust ARM pipeline offset to Thumb.  */
-      inst.reloc.exp.X_add_number += 4;
-
-      return;
-    }
-  else
-    {
-      if (my_get_expression (&inst.reloc.exp, &str))
-	return;
-
-      inst.instruction = T_OPCODE_LDR_PC | (Rd << 8);
-      inst.reloc.pc_rel = 1;
-      inst.reloc.exp.X_add_number -= 4; /* Pipeline offset.  */
-      inst.reloc.type = BFD_RELOC_ARM_THUMB_OFFSET;
-      end_of_line (str);
-      return;
-    }
-
-  if (Rb == REG_PC || Rb == REG_SP)
-    {
-      if (size != THUMB_WORD)
-	{
-	  inst.error = _("byte or halfword not valid for base register");
-	  return;
-	}
-      else if (Rb == REG_PC && load_store != THUMB_LOAD)
-	{
-	  inst.error = _("r15 based store not allowed");
-	  return;
-	}
-      else if (Ro != FAIL)
-	{
-	  inst.error = _("invalid base register for register offset");
-	  return;
-	}
-
-      if (Rb == REG_PC)
-	inst.instruction = T_OPCODE_LDR_PC;
-      else if (load_store == THUMB_LOAD)
-	inst.instruction = T_OPCODE_LDR_SP;
-      else
-	inst.instruction = T_OPCODE_STR_SP;
-
-      inst.instruction |= Rd << 8;
-      if (inst.reloc.exp.X_op == O_constant)
-	{
-	  unsigned offset = inst.reloc.exp.X_add_number;
-
-	  if (offset & ~0x3fc)
-	    {
-	      inst.error = _("invalid offset");
-	      return;
-	    }
-
-	  inst.instruction |= offset >> 2;
-	}
-      else
-	inst.reloc.type = BFD_RELOC_ARM_THUMB_OFFSET;
-    }
-  else if (Rb > 7)
-    {
-      inst.error = _("invalid base register in load/store");
-      return;
-    }
-  else if (Ro == FAIL)
-    {
-      /* Immediate offset.  */
-      if (size == THUMB_WORD)
-	inst.instruction = (load_store == THUMB_LOAD
-			    ? T_OPCODE_LDR_IW : T_OPCODE_STR_IW);
-      else if (size == THUMB_HALFWORD)
-	inst.instruction = (load_store == THUMB_LOAD
-			    ? T_OPCODE_LDR_IH : T_OPCODE_STR_IH);
-      else
-	inst.instruction = (load_store == THUMB_LOAD
-			    ? T_OPCODE_LDR_IB : T_OPCODE_STR_IB);
-
-      inst.instruction |= Rd | (Rb << 3);
-
-      if (inst.reloc.exp.X_op == O_constant)
-	{
-	  unsigned offset = inst.reloc.exp.X_add_number;
-
-	  if (offset & ~(0x1f << size))
-	    {
-	      inst.error = _("invalid offset");
-	      return;
-	    }
-	  inst.instruction |= (offset >> size) << 6;
-	}
-      else
-	inst.reloc.type = BFD_RELOC_ARM_THUMB_OFFSET;
-    }
-  else
-    {
-      /* Register offset.  */
-      if (size == THUMB_WORD)
-	inst.instruction = (load_store == THUMB_LOAD
-			    ? T_OPCODE_LDR_RW : T_OPCODE_STR_RW);
-      else if (size == THUMB_HALFWORD)
-	inst.instruction = (load_store == THUMB_LOAD
-			    ? T_OPCODE_LDR_RH : T_OPCODE_STR_RH);
-      else
-	inst.instruction = (load_store == THUMB_LOAD
-			    ? T_OPCODE_LDR_RB : T_OPCODE_STR_RB);
-
-      inst.instruction |= Rd | (Rb << 3) | (Ro << 6);
-    }
-
-  end_of_line (str);
-}
-
-/* A register must be given at this point.
-
-   Shift is the place to put it in inst.instruction.
-
-   Restores input start point on err.
-   Returns the reg#, or FAIL.  */
-
-static int
-mav_reg_required_here (str, shift, regtype)
-     char ** str;
-     int shift;
-     enum arm_reg_type regtype;
-{
-  int   reg;
-  char *start = *str;
-
-  if ((reg = arm_reg_parse (str, all_reg_maps[regtype].htab)) != FAIL)
-    {
-      if (shift >= 0)
-	inst.instruction |= reg << shift;
-
-      return reg;
-    }
-
-  /* Restore the start point.  */
-  *str = start;
-
-  /* In the few cases where we might be able to accept something else
-     this error can be overridden.  */
-  inst.error = _(all_reg_maps[regtype].expected);
-
-  return FAIL;
-}
-
-/* Cirrus Maverick Instructions.  */
-
-/* Wrapper functions.  */
-
-static void
-do_mav_binops_1a (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_RN, REG_TYPE_MVF);
-}
-
-static void
-do_mav_binops_1b (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_RN, REG_TYPE_MVD);
-}
-
-static void
-do_mav_binops_1c (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_RN, REG_TYPE_MVDX);
-}
-
-static void
-do_mav_binops_1d (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVF, REG_TYPE_MVF);
-}
-
-static void
-do_mav_binops_1e (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVD, REG_TYPE_MVD);
-}
-
-static void
-do_mav_binops_1f (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVD, REG_TYPE_MVF);
-}
-
-static void
-do_mav_binops_1g (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVF, REG_TYPE_MVD);
-}
-
-static void
-do_mav_binops_1h (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVF, REG_TYPE_MVFX);
-}
-
-static void
-do_mav_binops_1i (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVD, REG_TYPE_MVFX);
-}
-
-static void
-do_mav_binops_1j (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVF, REG_TYPE_MVDX);
-}
-
-static void
-do_mav_binops_1k (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVD, REG_TYPE_MVDX);
-}
-
-static void
-do_mav_binops_1l (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVFX, REG_TYPE_MVF);
-}
-
-static void
-do_mav_binops_1m (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVFX, REG_TYPE_MVD);
-}
-
-static void
-do_mav_binops_1n (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVFX, REG_TYPE_MVFX);
-}
-
-static void
-do_mav_binops_1o (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE1, REG_TYPE_MVDX, REG_TYPE_MVDX);
-}
-
-static void
-do_mav_binops_2a (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE2, REG_TYPE_MVF, REG_TYPE_RN);
-}
-
-static void
-do_mav_binops_2b (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE2, REG_TYPE_MVD, REG_TYPE_RN);
-}
-
-static void
-do_mav_binops_2c (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE2, REG_TYPE_MVDX, REG_TYPE_RN);
-}
-
-static void
-do_mav_binops_3a (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE3, REG_TYPE_MVAX, REG_TYPE_MVFX);
-}
-
-static void
-do_mav_binops_3b (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE3, REG_TYPE_MVFX, REG_TYPE_MVAX);
-}
-
-static void
-do_mav_binops_3c (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE3, REG_TYPE_MVAX, REG_TYPE_MVDX);
-}
-
-static void
-do_mav_binops_3d (str)
-     char * str;
-{
-  do_mav_binops (str, MAV_MODE3, REG_TYPE_MVDX, REG_TYPE_MVAX);
-}
-
-static void
-do_mav_triple_4a (str)
-     char * str;
-{
-  do_mav_triple (str, MAV_MODE4, REG_TYPE_MVFX, REG_TYPE_MVFX, REG_TYPE_RN);
-}
-
-static void
-do_mav_triple_4b (str)
-     char * str;
-{
-  do_mav_triple (str, MAV_MODE4, REG_TYPE_MVDX, REG_TYPE_MVDX, REG_TYPE_RN);
-}
-
-static void
-do_mav_triple_5a (str)
-     char * str;
-{
-  do_mav_triple (str, MAV_MODE5, REG_TYPE_RN, REG_TYPE_MVF, REG_TYPE_MVF);
-}
-
-static void
-do_mav_triple_5b (str)
-     char * str;
-{
-  do_mav_triple (str, MAV_MODE5, REG_TYPE_RN, REG_TYPE_MVD, REG_TYPE_MVD);
-}
-
-static void
-do_mav_triple_5c (str)
-     char * str;
-{
-  do_mav_triple (str, MAV_MODE5, REG_TYPE_RN, REG_TYPE_MVFX, REG_TYPE_MVFX);
-}
-
-static void
-do_mav_triple_5d (str)
-     char * str;
-{
-  do_mav_triple (str, MAV_MODE5, REG_TYPE_RN, REG_TYPE_MVDX, REG_TYPE_MVDX);
-}
-
-static void
-do_mav_triple_5e (str)
-     char * str;
-{
-  do_mav_triple (str, MAV_MODE5, REG_TYPE_MVF, REG_TYPE_MVF, REG_TYPE_MVF);
-}
-
-static void
-do_mav_triple_5f (str)
-     char * str;
-{
-  do_mav_triple (str, MAV_MODE5, REG_TYPE_MVD, REG_TYPE_MVD, REG_TYPE_MVD);
-}
-
-static void
-do_mav_triple_5g (str)
-     char * str;
-{
-  do_mav_triple (str, MAV_MODE5, REG_TYPE_MVFX, REG_TYPE_MVFX, REG_TYPE_MVFX);
-}
-
-static void
-do_mav_triple_5h (str)
-     char * str;
-{
-  do_mav_triple (str, MAV_MODE5, REG_TYPE_MVDX, REG_TYPE_MVDX, REG_TYPE_MVDX);
-}
-
-static void
-do_mav_quad_6a (str)
-     char * str;
-{
-  do_mav_quad (str, MAV_MODE6, REG_TYPE_MVAX, REG_TYPE_MVFX, REG_TYPE_MVFX,
-	     REG_TYPE_MVFX);
-}
-
-static void
-do_mav_quad_6b (str)
-     char * str;
-{
-  do_mav_quad (str, MAV_MODE6, REG_TYPE_MVAX, REG_TYPE_MVAX, REG_TYPE_MVFX,
-	     REG_TYPE_MVFX);
-}
-
-/* cfmvsc32<cond> DSPSC,MVDX[15:0].  */
-static void
-do_mav_dspsc_1 (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  /* cfmvsc32.  */
-  if (mav_reg_required_here (&str, -1, REG_TYPE_DSPSC) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || mav_reg_required_here (&str, 12, REG_TYPE_MVDX) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-
-      return;
-    }
-
-  end_of_line (str);
-}
-
-/* cfmv32sc<cond> MVDX[15:0],DSPSC.  */
-static void
-do_mav_dspsc_2 (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  /* cfmv32sc.  */
-  if (mav_reg_required_here (&str, 12, REG_TYPE_MVDX) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || mav_reg_required_here (&str, -1, REG_TYPE_DSPSC) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-
-      return;
-    }
-
-  end_of_line (str);
-}
-
-static void
-do_mav_shift_1 (str)
-     char * str;
-{
-  do_mav_shift (str, REG_TYPE_MVFX, REG_TYPE_MVFX);
-}
-
-static void
-do_mav_shift_2 (str)
-     char * str;
-{
-  do_mav_shift (str, REG_TYPE_MVDX, REG_TYPE_MVDX);
-}
-
-static void
-do_mav_ldst_1 (str)
-     char * str;
-{
-  do_mav_ldst (str, REG_TYPE_MVF);
-}
-
-static void
-do_mav_ldst_2 (str)
-     char * str;
-{
-  do_mav_ldst (str, REG_TYPE_MVD);
-}
-
-static void
-do_mav_ldst_3 (str)
-     char * str;
-{
-  do_mav_ldst (str, REG_TYPE_MVFX);
-}
-
-static void
-do_mav_ldst_4 (str)
-     char * str;
-{
-  do_mav_ldst (str, REG_TYPE_MVDX);
-}
-
-/* Isnsn like "foo X,Y".  */
-
-static void
-do_mav_binops (str, mode, reg0, reg1)
-     char * str;
-     int mode;
-     enum arm_reg_type reg0;
-     enum arm_reg_type reg1;
-{
-  int shift0, shift1;
-
-  shift0 = mode & 0xff;
-  shift1 = (mode >> 8) & 0xff;
-
-  skip_whitespace (str);
-
-  if (mav_reg_required_here (&str, shift0, reg0) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || mav_reg_required_here (&str, shift1, reg1) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-    }
-  else
-    end_of_line (str);
-}
-
-/* Isnsn like "foo X,Y,Z".  */
-
-static void
-do_mav_triple (str, mode, reg0, reg1, reg2)
-     char * str;
-     int mode;
-     enum arm_reg_type reg0;
-     enum arm_reg_type reg1;
-     enum arm_reg_type reg2;
-{
-  int shift0, shift1, shift2;
-
-  shift0 = mode & 0xff;
-  shift1 = (mode >> 8) & 0xff;
-  shift2 = (mode >> 16) & 0xff;
-
-  skip_whitespace (str);
-
-  if (mav_reg_required_here (&str, shift0, reg0) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || mav_reg_required_here (&str, shift1, reg1) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || mav_reg_required_here (&str, shift2, reg2) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-    }
-  else
-    end_of_line (str);
-}
-
-/* Isnsn like "foo W,X,Y,Z".
-    where W=MVAX[0:3] and X,Y,Z=MVFX[0:15].  */
-
-static void
-do_mav_quad (str, mode, reg0, reg1, reg2, reg3)
-     char * str;
-     int mode;
-     enum arm_reg_type reg0;
-     enum arm_reg_type reg1;
-     enum arm_reg_type reg2;
-     enum arm_reg_type reg3;
-{
-  int shift0, shift1, shift2, shift3;
-
-  shift0= mode & 0xff;
-  shift1 = (mode >> 8) & 0xff;
-  shift2 = (mode >> 16) & 0xff;
-  shift3 = (mode >> 24) & 0xff;
-
-  skip_whitespace (str);
-
-  if (mav_reg_required_here (&str, shift0, reg0) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || mav_reg_required_here (&str, shift1, reg1) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || mav_reg_required_here (&str, shift2, reg2) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || mav_reg_required_here (&str, shift3, reg3) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-    }
-  else
-    end_of_line (str);
-}
-
-/* Maverick shift immediate instructions.
-   cfsh32<cond> MVFX[15:0],MVFX[15:0],Shift[6:0].
-   cfsh64<cond> MVDX[15:0],MVDX[15:0],Shift[6:0].  */
-
-static void
-do_mav_shift (str, reg0, reg1)
-     char * str;
-     enum arm_reg_type reg0;
-     enum arm_reg_type reg1;
-{
-  int error;
-  int imm, neg = 0;
-
-  skip_whitespace (str);
-
-  error = 0;
-
-  if (mav_reg_required_here (&str, 12, reg0) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || mav_reg_required_here (&str, 16, reg1) == FAIL
-      || skip_past_comma  (&str) == FAIL)
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  /* Calculate the immediate operand.
-     The operand is a 7bit signed number.  */
-  skip_whitespace (str);
-
-  if (*str == '#')
-    ++str;
-
-  if (!ISDIGIT (*str) && *str != '-')
-    {
-      inst.error = _("expecting immediate, 7bit operand");
-      return;
-    }
-
-  if (*str == '-')
-    {
-      neg = 1;
-      ++str;
-    }
-
-  for (imm = 0; *str && ISDIGIT (*str); ++str)
-    imm = imm * 10 + *str - '0';
-
-  if (imm > 64)
-    {
-      inst.error = _("immediate out of range");
-      return;
-    }
-
-  /* Make negative imm's into 7bit signed numbers.  */
-  if (neg)
-    {
-      imm = -imm;
-      imm &= 0x0000007f;
-    }
-
-  /* Bits 0-3 of the insn should have bits 0-3 of the immediate.
-     Bits 5-7 of the insn should have bits 4-6 of the immediate.
-     Bit 4 should be 0.  */
-  imm = (imm & 0xf) | ((imm & 0x70) << 1);
-
-  inst.instruction |= imm;
-  end_of_line (str);
-}
-
-static int
-mav_parse_offset (str, negative)
-     char ** str;
-     int *negative;
-{
-  char * p = *str;
-  int offset;
-
-  *negative = 0;
-
-  skip_whitespace (p);
-
-  if (*p == '#')
-    ++p;
-
-  if (*p == '-')
-    {
-      *negative = 1;
-      ++p;
-    }
-
-  if (!ISDIGIT (*p))
-    {
-      inst.error = _("offset expected");
-      return 0;
-    }
-
-  for (offset = 0; *p && ISDIGIT (*p); ++p)
-    offset = offset * 10 + *p - '0';
-
-  if (offset > 0xff)
-    {
-      inst.error = _("offset out of range");
-      return 0;
-    }
-
-  *str = p;
-
-  return *negative ? -offset : offset;
-}
-
-/* Maverick load/store instructions.
-  <insn><cond> CRd,[Rn,<offset>]{!}.
-  <insn><cond> CRd,[Rn],<offset>.  */
-
-static void
-do_mav_ldst (str, reg0)
-     char * str;
-     enum arm_reg_type reg0;
-{
-  int offset, negative;
-
-  skip_whitespace (str);
-
-  if (mav_reg_required_here (&str, 12, reg0) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || *str++ != '['
-      || reg_required_here (&str, 16) == FAIL)
-    goto fail_ldst;
-
-  if (skip_past_comma (&str) == SUCCESS)
-    {
-      /* You are here: "<offset>]{!}".  */
-      inst.instruction |= PRE_INDEX;
-
-      offset = mav_parse_offset (&str, &negative);
-
-      if (inst.error)
-	return;
-
-      if (*str++ != ']')
-	{
-	  inst.error = _("missing ]");
-	  return;
-	}
-
-      if (*str == '!')
-	{
-	  inst.instruction |= WRITE_BACK;
-	  ++str;
-	}
-    }
-  else
-    {
-      /* You are here: "], <offset>".  */
-      if (*str++ != ']')
-	{
-	  inst.error = _("missing ]");
-	  return;
-	}
-
-      if (skip_past_comma (&str) == FAIL
-	  || (offset = mav_parse_offset (&str, &negative), inst.error))
-	goto fail_ldst;
-
-      inst.instruction |= CP_T_WB; /* Post indexed, set bit W.  */
-    }
-
-  if (negative)
-    offset = -offset;
-  else
-    inst.instruction |= CP_T_UD; /* Positive, so set bit U.  */
-
-  inst.instruction |= offset >> 2;
-  end_of_line (str);
-  return;
-
-fail_ldst:
-  if (!inst.error)
-     inst.error = BAD_ARGS;
-}
-
-static void
-do_t_nop (str)
-     char * str;
-{
-  /* Do nothing.  */
-  end_of_line (str);
-}
-
-/* Handle the Format 4 instructions that do not have equivalents in other
-   formats.  That is, ADC, AND, EOR, SBC, ROR, TST, NEG, CMN, ORR, MUL,
-   BIC and MVN.  */
-
-static void
-do_t_arit (str)
-     char * str;
-{
-  int Rd, Rs, Rn;
-
-  skip_whitespace (str);
-
-  if ((Rd = thumb_reg (&str, THUMB_REG_LO)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (Rs = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
-    {
-      inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (skip_past_comma (&str) != FAIL)
-    {
-      /* Three operand format not allowed for TST, CMN, NEG and MVN.
-	 (It isn't allowed for CMP either, but that isn't handled by this
-	 function.)  */
-      if (inst.instruction == T_OPCODE_TST
-	  || inst.instruction == T_OPCODE_CMN
-	  || inst.instruction == T_OPCODE_NEG
-	  || inst.instruction == T_OPCODE_MVN)
-	{
-	  inst.error = BAD_ARGS;
-	  return;
-	}
-
-      if ((Rn = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
-	return;
-
-      if (Rs != Rd)
-	{
-	  inst.error = _("dest and source1 must be the same register");
-	  return;
-	}
-      Rs = Rn;
-    }
-
-  if (inst.instruction == T_OPCODE_MUL
-      && Rs == Rd)
-    as_tsktsk (_("Rs and Rd must be different in MUL"));
-
-  inst.instruction |= Rd | (Rs << 3);
-  end_of_line (str);
-}
-
-static void
-do_t_add (str)
-     char * str;
-{
-  thumb_add_sub (str, 0);
-}
-
-static void
-do_t_asr (str)
-     char * str;
-{
-  thumb_shift (str, THUMB_ASR);
-}
-
-static void
-do_t_branch9 (str)
-     char * str;
-{
-  if (my_get_expression (&inst.reloc.exp, &str))
-    return;
-  inst.reloc.type = BFD_RELOC_THUMB_PCREL_BRANCH9;
-  inst.reloc.pc_rel = 1;
-  end_of_line (str);
-}
-
-static void
-do_t_branch12 (str)
-     char * str;
-{
-  if (my_get_expression (&inst.reloc.exp, &str))
-    return;
-  inst.reloc.type = BFD_RELOC_THUMB_PCREL_BRANCH12;
-  inst.reloc.pc_rel = 1;
-  end_of_line (str);
-}
-
-/* Find the real, Thumb encoded start of a Thumb function.  */
-
-static symbolS *
-find_real_start (symbolP)
-     symbolS * symbolP;
-{
-  char *       real_start;
-  const char * name = S_GET_NAME (symbolP);
-  symbolS *    new_target;
-
-  /* This definition must agree with the one in gcc/config/arm/thumb.c.  */
-#define STUB_NAME ".real_start_of"
-
-  if (name == NULL)
-    abort ();
-
-  /* Names that start with '.' are local labels, not function entry points.
-     The compiler may generate BL instructions to these labels because it
-     needs to perform a branch to a far away location.  */
-  if (name[0] == '.')
-    return symbolP;
-
-  real_start = malloc (strlen (name) + strlen (STUB_NAME) + 1);
-  sprintf (real_start, "%s%s", STUB_NAME, name);
-
-  new_target = symbol_find (real_start);
-
-  if (new_target == NULL)
-    {
-      as_warn ("Failed to find real start of function: %s\n", name);
-      new_target = symbolP;
-    }
-
-  free (real_start);
-
-  return new_target;
-}
-
-static void
-do_t_branch23 (str)
-     char * str;
-{
-  if (my_get_expression (& inst.reloc.exp, & str))
-    return;
-
-  inst.reloc.type   = BFD_RELOC_THUMB_PCREL_BRANCH23;
-  inst.reloc.pc_rel = 1;
-  end_of_line (str);
-
-  /* If the destination of the branch is a defined symbol which does not have
-     the THUMB_FUNC attribute, then we must be calling a function which has
-     the (interfacearm) attribute.  We look for the Thumb entry point to that
-     function and change the branch to refer to that function instead.  */
-  if (   inst.reloc.exp.X_op == O_symbol
-      && inst.reloc.exp.X_add_symbol != NULL
-      && S_IS_DEFINED (inst.reloc.exp.X_add_symbol)
-      && ! THUMB_IS_FUNC (inst.reloc.exp.X_add_symbol))
-    inst.reloc.exp.X_add_symbol =
-      find_real_start (inst.reloc.exp.X_add_symbol);
-}
-
-static void
-do_t_bx (str)
-     char * str;
-{
-  int reg;
-
-  skip_whitespace (str);
-
-  if ((reg = thumb_reg (&str, THUMB_REG_ANY)) == FAIL)
-    return;
-
-  /* This sets THUMB_H2 from the top bit of reg.  */
-  inst.instruction |= reg << 3;
-
-  /* ??? FIXME: Should add a hacky reloc here if reg is REG_PC.  The reloc
-     should cause the alignment to be checked once it is known.  This is
-     because BX PC only works if the instruction is word aligned.  */
-
-  end_of_line (str);
-}
-
-static void
-do_t_compare (str)
-     char * str;
-{
-  thumb_mov_compare (str, THUMB_COMPARE);
-}
-
-static void
-do_t_ldmstm (str)
-     char * str;
-{
-  int Rb;
-  long range;
-
-  skip_whitespace (str);
-
-  if ((Rb = thumb_reg (&str, THUMB_REG_LO)) == FAIL)
-    return;
-
-  if (*str != '!')
-    as_warn (_("inserted missing '!': load/store multiple always writes back base register"));
-  else
-    str++;
-
-  if (skip_past_comma (&str) == FAIL
-      || (range = reg_list (&str)) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (inst.reloc.type != BFD_RELOC_NONE)
-    {
-      /* This really doesn't seem worth it.  */
-      inst.reloc.type = BFD_RELOC_NONE;
-      inst.error = _("expression too complex");
-      return;
-    }
-
-  if (range & ~0xff)
-    {
-      inst.error = _("only lo-regs valid in load/store multiple");
-      return;
-    }
-
-  inst.instruction |= (Rb << 8) | range;
-  end_of_line (str);
-}
-
-static void
-do_t_ldr (str)
-     char * str;
-{
-  thumb_load_store (str, THUMB_LOAD, THUMB_WORD);
-}
-
-static void
-do_t_ldrb (str)
-     char * str;
-{
-  thumb_load_store (str, THUMB_LOAD, THUMB_BYTE);
-}
-
-static void
-do_t_ldrh (str)
-     char * str;
-{
-  thumb_load_store (str, THUMB_LOAD, THUMB_HALFWORD);
-}
-
-static void
-do_t_lds (str)
-     char * str;
-{
-  int Rd, Rb, Ro;
-
-  skip_whitespace (str);
-
-  if ((Rd = thumb_reg (&str, THUMB_REG_LO)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || *str++ != '['
-      || (Rb = thumb_reg (&str, THUMB_REG_LO)) == FAIL
-      || skip_past_comma (&str) == FAIL
-      || (Ro = thumb_reg (&str, THUMB_REG_LO)) == FAIL
-      || *str++ != ']')
-    {
-      if (! inst.error)
-	inst.error = _("syntax: ldrs[b] Rd, [Rb, Ro]");
-      return;
-    }
-
-  inst.instruction |= Rd | (Rb << 3) | (Ro << 6);
-  end_of_line (str);
-}
-
-static void
-do_t_lsl (str)
-     char * str;
-{
-  thumb_shift (str, THUMB_LSL);
-}
-
-static void
-do_t_lsr (str)
-     char * str;
-{
-  thumb_shift (str, THUMB_LSR);
-}
-
-static void
-do_t_mov (str)
-     char * str;
-{
-  thumb_mov_compare (str, THUMB_MOVE);
-}
-
-static void
-do_t_push_pop (str)
-     char * str;
-{
-  long range;
-
-  skip_whitespace (str);
-
-  if ((range = reg_list (&str)) == FAIL)
-    {
-      if (! inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  if (inst.reloc.type != BFD_RELOC_NONE)
-    {
-      /* This really doesn't seem worth it.  */
-      inst.reloc.type = BFD_RELOC_NONE;
-      inst.error = _("expression too complex");
-      return;
-    }
-
-  if (range & ~0xff)
-    {
-      if ((inst.instruction == T_OPCODE_PUSH
-	   && (range & ~0xff) == 1 << REG_LR)
-	  || (inst.instruction == T_OPCODE_POP
-	      && (range & ~0xff) == 1 << REG_PC))
-	{
-	  inst.instruction |= THUMB_PP_PC_LR;
-	  range &= 0xff;
-	}
-      else
-	{
-	  inst.error = _("invalid register list to push/pop instruction");
-	  return;
-	}
-    }
-
-  inst.instruction |= range;
-  end_of_line (str);
-}
-
-static void
-do_t_str (str)
-     char * str;
-{
-  thumb_load_store (str, THUMB_STORE, THUMB_WORD);
-}
-
-static void
-do_t_strb (str)
-     char * str;
-{
-  thumb_load_store (str, THUMB_STORE, THUMB_BYTE);
-}
-
-static void
-do_t_strh (str)
-     char * str;
-{
-  thumb_load_store (str, THUMB_STORE, THUMB_HALFWORD);
-}
-
-static void
-do_t_sub (str)
-     char * str;
-{
-  thumb_add_sub (str, 1);
-}
-
-static void
-do_t_swi (str)
-     char * str;
-{
-  skip_whitespace (str);
-
-  if (my_get_expression (&inst.reloc.exp, &str))
-    return;
-
-  inst.reloc.type = BFD_RELOC_ARM_SWI;
-  end_of_line (str);
-}
-
-static void
-do_t_adr (str)
-     char * str;
-{
-  int reg;
-
-  /* This is a pseudo-op of the form "adr rd, label" to be converted
-     into a relative address of the form "add rd, pc, #label-.-4".  */
-  skip_whitespace (str);
-
-  /* Store Rd in temporary location inside instruction.  */
-  if ((reg = reg_required_here (&str, 4)) == FAIL
-      || (reg > 7)  /* For Thumb reg must be r0..r7.  */
-      || skip_past_comma (&str) == FAIL
-      || my_get_expression (&inst.reloc.exp, &str))
-    {
-      if (!inst.error)
-	inst.error = BAD_ARGS;
-      return;
-    }
-
-  inst.reloc.type = BFD_RELOC_ARM_THUMB_ADD;
-  inst.reloc.exp.X_add_number -= 4; /* PC relative adjust.  */
-  inst.reloc.pc_rel = 1;
-  inst.instruction |= REG_PC; /* Rd is already placed into the instruction.  */
-
-  end_of_line (str);
-}
-
-static void
-insert_reg (r, htab)
-     const struct reg_entry *r;
-     struct hash_control *htab;
-{
-  int    len  = strlen (r->name) + 2;
-  char * buf  = (char *) xmalloc (len);
-  char * buf2 = (char *) xmalloc (len);
-  int    i    = 0;
-
-#ifdef REGISTER_PREFIX
-  buf[i++] = REGISTER_PREFIX;
-#endif
-
-  strcpy (buf + i, r->name);
-
-  for (i = 0; buf[i]; i++)
-    buf2[i] = TOUPPER (buf[i]);
-
-  buf2[i] = '\0';
-
-  hash_insert (htab, buf,  (PTR) r);
-  hash_insert (htab, buf2, (PTR) r);
-}
-
-static void
-build_reg_hsh (map)
-     struct reg_map *map;
-{
-  const struct reg_entry *r;
-
-  if ((map->htab = hash_new ()) == NULL)
-    as_fatal (_("virtual memory exhausted"));
-
-  for (r = map->names; r->name != NULL; r++)
-    insert_reg (r, map->htab);
-}
-
-static void
-insert_reg_alias (str, regnum, htab)
-     char *str;
-     int regnum;
-     struct hash_control *htab;
-{
-  const char *error;
-  struct reg_entry *new = xmalloc (sizeof (struct reg_entry));
-  const char *name = xmalloc (strlen (str) + 1);
-  
-  strcpy ((char *) name, str);
-  
-  new->name = name;
-  new->number = regnum;
-  new->builtin = FALSE;
-
-  error = hash_insert (htab, name, (PTR) new);
-  if (error)
-    {
-      as_bad (_("failed to create an alias for %s, reason: %s"),
-	    str, error);
-      free ((char *) name);
-      free (new);
-    }
-}
-
-/* Look for the .req directive.  This is of the form:
-
-   	new_register_name .req existing_register_name
-
-   If we find one, or if it looks sufficiently like one that we want to
-   handle any error here, return non-zero.  Otherwise return zero.  */
-static int
-create_register_alias (newname, p)
-     char *newname;
-     char *p;
-{
-  char *q;
-  char c;
-
-  q = p;
-  skip_whitespace (q);
-
-  c = *p;
-  *p = '\0';
-
-  if (*q && !strncmp (q, ".req ", 5))
-    {
-      char *copy_of_str;
-      char *r;
-
-#ifdef IGNORE_OPCODE_CASE
-      newname = original_case_string;
-#endif
-      copy_of_str = newname;
-
-      q += 4;
-      skip_whitespace (q);
-
-      for (r = q; *r != '\0'; r++)
-	if (*r == ' ')
-	  break;
-
-      if (r != q)
-	{
-	  enum arm_reg_type new_type, old_type;
-	  int old_regno;
-	  char d = *r;
-
-	  *r = '\0';
-	  old_type = arm_reg_parse_any (q);
-	  *r = d;
-
-	  new_type = arm_reg_parse_any (newname);
-
-	  if (new_type == REG_TYPE_MAX)
-	    {
-	      if (old_type != REG_TYPE_MAX)
-		{
-		  old_regno = arm_reg_parse (&q, all_reg_maps[old_type].htab);
-		  insert_reg_alias (newname, old_regno,
-				    all_reg_maps[old_type].htab);
-		}
-	      else
-		as_warn (_("register '%s' does not exist\n"), q);
-	    }
-	  else if (old_type == REG_TYPE_MAX)
-	    {
-	      as_warn (_("ignoring redefinition of register alias '%s' to non-existant register '%s'"),
-		       copy_of_str, q);
-	    }
-	  else
-	    {
-	      /* Do not warn about redefinitions to the same alias.  */
-	      if (new_type != old_type
-		  || (arm_reg_parse (&q, all_reg_maps[old_type].htab)
-		      != arm_reg_parse (&q, all_reg_maps[new_type].htab)))
-		as_warn (_("ignoring redefinition of register alias '%s'"),
-			 copy_of_str);
-
-	    }
-	}
-      else
-	as_warn (_("ignoring incomplete .req pseuso op"));
-
-      *p = c;
-      return 1;
-    }
-  
-  *p = c;
-  return 0;
-}
-
-static void
-set_constant_flonums ()
-{
-  int i;
-
-  for (i = 0; i < NUM_FLOAT_VALS; i++)
-    if (atof_ieee ((char *) fp_const[i], 'x', fp_values[i]) == NULL)
-      abort ();
-}
-
-/* Iterate over the base tables to create the instruction patterns.  */
-static void
-build_arm_ops_hsh ()
-{
-  unsigned int i;
-  unsigned int j;
-  static struct obstack insn_obstack;
-
-  obstack_begin (&insn_obstack, 4000);
-
-  for (i = 0; i < sizeof (insns) / sizeof (struct asm_opcode); i++)
-    {
-      const struct asm_opcode *insn = insns + i;
-
-      if (insn->cond_offset != 0)
-	{
-	  /* Insn supports conditional execution.  Build the varaints
-	     and insert them in the hash table.  */
-	  for (j = 0; j < sizeof (conds) / sizeof (struct asm_cond); j++)
-	    {
-	      unsigned len = strlen (insn->template);
-	      struct asm_opcode *new;
-	      char *template;
-
-	      new = obstack_alloc (&insn_obstack, sizeof (struct asm_opcode));
-	      /* All condition codes are two characters.  */
-	      template = obstack_alloc (&insn_obstack, len + 3);
-
-	      strncpy (template, insn->template, insn->cond_offset);
-	      strcpy (template + insn->cond_offset, conds[j].template);
-	      if (len > insn->cond_offset)
-		strcpy (template + insn->cond_offset + 2,
-			insn->template + insn->cond_offset);
-	      new->template = template;
-	      new->cond_offset = 0;
-	      new->variant = insn->variant;
-	      new->parms = insn->parms;
-	      new->value = (insn->value & ~COND_MASK) | conds[j].value;
-
-	      hash_insert (arm_ops_hsh, new->template, (PTR) new);
-	    }
-	}
-      /* Finally, insert the unconditional insn in the table directly;
-	 no need to build a copy.  */
-      hash_insert (arm_ops_hsh, insn->template, (PTR) insn);
-    }
-}
-
-#if 0 /* Suppressed - for now.  */
-#if defined OBJ_ELF || defined OBJ_COFF
-
-#ifdef OBJ_ELF
-#define arm_Note Elf_External_Note
-#else
-typedef struct
-{
-  unsigned char	namesz[4];	/* Size of entry's owner string.  */
-  unsigned char	descsz[4];	/* Size of the note descriptor.  */
-  unsigned char	type[4];	/* Interpretation of the descriptor.  */
-  char		name[1];	/* Start of the name+desc data.  */
-} arm_Note;
-#endif
-
-/* The description is kept to a fix sized in order to make updating
-   it and merging it easier.  */
-#define ARM_NOTE_DESCRIPTION_LENGTH	8
-
-static void
-arm_add_note (name, description, type)
-     const char * name;
-     const char * description;
-     unsigned int type;
-{
-  arm_Note     note ATTRIBUTE_UNUSED;
-  char *       p;
-  unsigned int name_len;
-
-  name_len = (strlen (name) + 1 + 3) & ~3;
-  
-  p = frag_more (sizeof (note.namesz));
-  md_number_to_chars (p, (valueT) name_len, sizeof (note.namesz));
-
-  p = frag_more (sizeof (note.descsz));
-  md_number_to_chars (p, (valueT) ARM_NOTE_DESCRIPTION_LENGTH, sizeof (note.descsz));
-
-  p = frag_more (sizeof (note.type));
-  md_number_to_chars (p, (valueT) type, sizeof (note.type));
-
-  p = frag_more (name_len);
-  strcpy (p, name);
-
-  p = frag_more (ARM_NOTE_DESCRIPTION_LENGTH);
-  strncpy (p, description, ARM_NOTE_DESCRIPTION_LENGTH);
-  frag_align (2, 0, 0);
-}
-#endif
-#endif
-
-void
-md_begin ()
+md_begin (void)
 {
   unsigned mach;
   unsigned int i;
@@ -11649,7 +11003,7 @@ md_begin ()
     }
   else if (mfpu_opt == -1)
     {
-#if !(defined (TE_LINUX) || defined (TE_NetBSD))
+#if !(defined (TE_LINUX) || defined (TE_NetBSD) || defined (TE_VXWORKS)) 
       /* Some environments specify a default FPU.  If they don't, infer it
 	 from the processor.  */
       if (mcpu_fpu_opt != -1)
@@ -11680,36 +11034,52 @@ md_begin ()
   {
     unsigned int flags = 0;
 
-    /* Set the flags in the private structure.  */
-    if (uses_apcs_26)      flags |= F_APCS26;
-    if (support_interwork) flags |= F_INTERWORK;
-    if (uses_apcs_float)   flags |= F_APCS_FLOAT;
-    if (pic_code)          flags |= F_PIC;
-    if ((cpu_variant & FPU_ANY) == FPU_NONE
-	 || (cpu_variant & FPU_ANY) == FPU_ARCH_VFP) /* VFP layout only.  */
-      {
-	flags |= F_SOFT_FLOAT;
-      }
-    switch (mfloat_abi_opt)
-      {
-      case ARM_FLOAT_ABI_SOFT:
-      case ARM_FLOAT_ABI_SOFTFP:
-	flags |= F_SOFT_FLOAT;
-	break;
+#if defined OBJ_ELF
+    flags = meabi_flags;
 
-      case ARM_FLOAT_ABI_HARD:
-	if (flags & F_SOFT_FLOAT)
-	  as_bad (_("hard-float conflicts with specified fpu"));
-	break;
-      }
-    /* Using VFP conventions (even if soft-float).  */
-    if (cpu_variant & FPU_VFP_EXT_NONE) flags |= F_VFP_FLOAT;
+    switch (meabi_flags)
+      {
+      case EF_ARM_EABI_UNKNOWN:
+#endif
+	/* Set the flags in the private structure.  */
+	if (uses_apcs_26)      flags |= F_APCS26;
+	if (support_interwork) flags |= F_INTERWORK;
+	if (uses_apcs_float)   flags |= F_APCS_FLOAT;
+	if (pic_code)          flags |= F_PIC;
+	if ((cpu_variant & FPU_ANY) == FPU_NONE
+	     || (cpu_variant & FPU_ANY) == FPU_ARCH_VFP) /* VFP layout only.  */
+	  flags |= F_SOFT_FLOAT;
+
+	switch (mfloat_abi_opt)
+	  {
+	  case ARM_FLOAT_ABI_SOFT:
+	  case ARM_FLOAT_ABI_SOFTFP:
+	    flags |= F_SOFT_FLOAT;
+	    break;
+
+	  case ARM_FLOAT_ABI_HARD:
+	    if (flags & F_SOFT_FLOAT)
+	      as_bad (_("hard-float conflicts with specified fpu"));
+	    break;
+	  }
+
+	/* Using VFP conventions (even if soft-float).  */
+	if (cpu_variant & FPU_VFP_EXT_NONE)
+	  flags |= F_VFP_FLOAT;
 
 #if defined OBJ_ELF
-    if (cpu_variant & FPU_ARCH_MAVERICK)
-	flags |= EF_ARM_MAVERICK_FLOAT;
-#endif
+	if (cpu_variant & FPU_ARCH_MAVERICK)
+	    flags |= EF_ARM_MAVERICK_FLOAT;
+	break;
 
+      case EF_ARM_EABI_VER4:
+	/* No additional flags to set.  */
+	break;
+
+      default:
+	abort ();
+      }
+#endif
     bfd_set_private_flags (stdoutput, flags);
 
     /* We have run out flags in the COFF header to encode the
@@ -11778,62 +11148,6 @@ md_begin ()
   else if (cpu_variant & ARM_EXT_V3M)
     mach = bfd_mach_arm_3M;
 
-#if 0 /* Suppressed - for now.  */
-#if defined (OBJ_ELF) || defined (OBJ_COFF)
-
-  /* Create a .note section to fully identify this arm binary.  */
-
-#define NOTE_ARCH_STRING 	"arch: "
-
-#if defined OBJ_COFF && ! defined NT_VERSION
-#define NT_VERSION  1
-#define NT_ARCH     2
-#endif
-  
-  {
-    segT current_seg = now_seg;
-    subsegT current_subseg = now_subseg;
-    asection * arm_arch;
-    const char * arch_string;
-
-    arm_arch = bfd_make_section_old_way (stdoutput, ARM_NOTE_SECTION);
-
-#ifdef OBJ_COFF
-    bfd_set_section_flags (stdoutput, arm_arch,
-			   SEC_DATA | SEC_ALLOC | SEC_LOAD | SEC_LINK_ONCE \
-			   | SEC_HAS_CONTENTS);
-#else
-    bfd_set_section_flags (stdoutput, arm_arch,
-			   SEC_READONLY | SEC_HAS_CONTENTS);
-#endif
-    arm_arch->output_section = arm_arch;
-    subseg_set (arm_arch, 0);
-
-    switch (mach)
-      {
-      default:
-      case bfd_mach_arm_unknown: arch_string = "unknown"; break;
-      case bfd_mach_arm_2:       arch_string = "armv2"; break;
-      case bfd_mach_arm_2a:      arch_string = "armv2a"; break;
-      case bfd_mach_arm_3:       arch_string = "armv3"; break;
-      case bfd_mach_arm_3M:      arch_string = "armv3M"; break;
-      case bfd_mach_arm_4:       arch_string = "armv4"; break;
-      case bfd_mach_arm_4T:      arch_string = "armv4t"; break;
-      case bfd_mach_arm_5:       arch_string = "armv5"; break;
-      case bfd_mach_arm_5T:      arch_string = "armv5t"; break;
-      case bfd_mach_arm_5TE:     arch_string = "armv5te"; break;
-      case bfd_mach_arm_XScale:  arch_string = "XScale"; break;
-      case bfd_mach_arm_ep9312:  arch_string = "ep9312"; break;
-      case bfd_mach_arm_iWMMXt:  arch_string = "iWMMXt"; break;	
-      }
-
-    arm_add_note (NOTE_ARCH_STRING, arch_string, NT_ARCH);
-
-    subseg_set (current_seg, current_subseg);
-  }
-#endif
-#endif /* Suppressed code.  */
-  
   bfd_set_arch_mach (stdoutput, TARGET_ARCH, mach);
 }
 
@@ -11845,10 +11159,7 @@ md_begin ()
    LITTLENUMS (shorts, here at least).  */
 
 void
-md_number_to_chars (buf, val, n)
-     char * buf;
-     valueT val;
-     int    n;
+md_number_to_chars (char * buf, valueT val, int n)
 {
   if (target_big_endian)
     number_to_chars_bigendian (buf, val, n);
@@ -11857,9 +11168,7 @@ md_number_to_chars (buf, val, n)
 }
 
 static valueT
-md_chars_to_number (buf, n)
-     char * buf;
-     int    n;
+md_chars_to_number (char * buf, int n)
 {
   valueT result = 0;
   unsigned char * where = (unsigned char *) buf;
@@ -11899,10 +11208,7 @@ md_chars_to_number (buf, n)
    ??? The format of 12 byte floats is uncertain according to gcc's arm.h.  */
 
 char *
-md_atof (type, litP, sizeP)
-     char   type;
-     char * litP;
-     int *  sizeP;
+md_atof (int type, char * litP, int * sizeP)
 {
   int prec;
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
@@ -11979,8 +11285,7 @@ md_atof (type, litP, sizeP)
    themselves.  */
 
 long
-md_pcrel_from (fixP)
-     fixS * fixP;
+md_pcrel_from (fixS * fixP)
 {
   if (fixP->fx_addsy
       && S_GET_SEGMENT (fixP->fx_addsy) == undefined_section
@@ -12007,9 +11312,8 @@ md_pcrel_from (fixP)
 /* Round up a section size to the appropriate boundary.  */
 
 valueT
-md_section_align (segment, size)
-     segT   segment ATTRIBUTE_UNUSED;
-     valueT size;
+md_section_align (segT   segment ATTRIBUTE_UNUSED,
+		  valueT size)
 {
 #ifdef OBJ_ELF
   return size;
@@ -12023,8 +11327,7 @@ md_section_align (segment, size)
    Otherwise we have no need to default values of symbols.  */
 
 symbolS *
-md_undefined_symbol (name)
-     char * name ATTRIBUTE_UNUSED;
+md_undefined_symbol (char * name ATTRIBUTE_UNUSED)
 {
 #ifdef OBJ_ELF
   if (name[0] == '_' && name[1] == 'G'
@@ -12046,71 +11349,10 @@ md_undefined_symbol (name)
   return 0;
 }
 
-/* arm_reg_parse () := if it looks like a register, return its token and
-   advance the pointer.  */
-
-static int
-arm_reg_parse (ccp, htab)
-     register char ** ccp;
-     struct hash_control *htab;
-{
-  char * start = * ccp;
-  char   c;
-  char * p;
-  struct reg_entry * reg;
-
-#ifdef REGISTER_PREFIX
-  if (*start != REGISTER_PREFIX)
-    return FAIL;
-  p = start + 1;
-#else
-  p = start;
-#ifdef OPTIONAL_REGISTER_PREFIX
-  if (*p == OPTIONAL_REGISTER_PREFIX)
-    p++, start++;
-#endif
-#endif
-  if (!ISALPHA (*p) || !is_name_beginner (*p))
-    return FAIL;
-
-  c = *p++;
-  while (ISALPHA (c) || ISDIGIT (c) || c == '_')
-    c = *p++;
-
-  *--p = 0;
-  reg = (struct reg_entry *) hash_find (htab, start);
-  *p = c;
-
-  if (reg)
-    {
-      *ccp = p;
-      return reg->number;
-    }
-
-  return FAIL;
-}
-
-/* Search for the following register name in each of the possible reg name
-   tables.  Return the classification if found, or REG_TYPE_MAX if not
-   present.  */
-static enum arm_reg_type
-arm_reg_parse_any (cp)
-     char *cp;
-{
-  int i;
-
-  for (i = (int) REG_TYPE_FIRST; i < (int) REG_TYPE_MAX; i++)
-    if (arm_reg_parse (&cp, all_reg_maps[i].htab) != FAIL)
-      return (enum arm_reg_type) i;
-
-  return REG_TYPE_MAX;
-}
-
 void
-md_apply_fix3 (fixP, valP, seg)
-     fixS *   fixP;
-     valueT * valP;
-     segT     seg;
+md_apply_fix3 (fixS *   fixP,
+	       valueT * valP,
+	       segT     seg)
 {
   offsetT        value = * valP;
   offsetT        newval;
@@ -12120,17 +11362,10 @@ md_apply_fix3 (fixP, valP, seg)
   char *         buf = fixP->fx_where + fixP->fx_frag->fr_literal;
   arm_fix_data * arm_data = (arm_fix_data *) fixP->tc_fix_data;
 
-  assert (fixP->fx_r_type < BFD_RELOC_UNUSED);
+  assert (fixP->fx_r_type <= BFD_RELOC_UNUSED);
 
   /* Note whether this will delete the relocation.  */
-#if 0
-  /* Patch from REarnshaw to JDavis (disabled for the moment, since it
-     doesn't work fully.)  */
-  if ((fixP->fx_addsy == 0 || symbol_constant_p (fixP->fx_addsy))
-      && !fixP->fx_pcrel)
-#else
   if (fixP->fx_addsy == 0 && !fixP->fx_pcrel)
-#endif
     fixP->fx_done = 1;
 
   /* If this symbol is in a different section then we need to leave it for
@@ -12141,15 +11376,7 @@ md_apply_fix3 (fixP, valP, seg)
       if (fixP->fx_addsy != NULL
 	  && S_IS_DEFINED (fixP->fx_addsy)
 	  && S_GET_SEGMENT (fixP->fx_addsy) != seg)
-	{
-	  if (target_oabi
-	      && (fixP->fx_r_type == BFD_RELOC_ARM_PCREL_BRANCH
-		  || fixP->fx_r_type == BFD_RELOC_ARM_PCREL_BLX
-		  ))
-	    value = 0;
-	  else
-	    value += md_pcrel_from (fixP);
-	}
+	value += md_pcrel_from (fixP);
     }
 
   /* Remember value for emit_reloc.  */
@@ -12157,7 +11384,26 @@ md_apply_fix3 (fixP, valP, seg)
 
   switch (fixP->fx_r_type)
     {
+    case BFD_RELOC_NONE:
+      /* This will need to go in the object file.  */
+      fixP->fx_done = 0;
+      break;
+  
     case BFD_RELOC_ARM_IMMEDIATE:
+      /* We claim that this fixup has been processed here,
+	 even if in fact we generate an error because we do
+	 not have a reloc for it, so tc_gen_reloc will reject it.  */
+      fixP->fx_done = 1;
+
+      if (fixP->fx_addsy
+	  && ! S_IS_DEFINED (fixP->fx_addsy))
+	{
+	  as_bad_where (fixP->fx_file, fixP->fx_line,
+			_("undefined symbol %s used as an immediate value"),
+			S_GET_NAME (fixP->fx_addsy));
+	  break;
+	}
+
       newimm = validate_immediate (value);
       temp = md_chars_to_number (buf, INSN_SIZE);
 
@@ -12174,7 +11420,6 @@ md_apply_fix3 (fixP, valP, seg)
 
       newimm |= (temp & 0xfffff000);
       md_number_to_chars (buf, (valueT) newimm, INSN_SIZE);
-      fixP->fx_done = 1;
       break;
 
     case BFD_RELOC_ARM_ADRL_IMMEDIATE:
@@ -12310,6 +11555,15 @@ md_apply_fix3 (fixP, valP, seg)
       md_number_to_chars (buf, newval, INSN_SIZE);
       break;
 
+    case BFD_RELOC_ARM_SMI:
+      if (((unsigned long) value) > 0xffff)
+	as_bad_where (fixP->fx_file, fixP->fx_line,
+		      _("invalid smi expression"));
+      newval = md_chars_to_number (buf, INSN_SIZE) & 0xfff000f0;
+      newval |= (value & 0xf) | ((value & 0xfff0) << 4);
+      md_number_to_chars (buf, newval, INSN_SIZE);
+      break;
+
     case BFD_RELOC_ARM_SWI:
       if (arm_data->thumb_mode)
 	{
@@ -12346,8 +11600,7 @@ md_apply_fix3 (fixP, valP, seg)
 #define SEXT24(x)	((((x) & 0xffffff) ^ (~ 0x7fffff)) + 0x800000)
 
 #ifdef OBJ_ELF
-      if (! target_oabi)
-	value = fixP->fx_offset;
+      value = fixP->fx_offset;
 #endif
 
       /* We are going to store value (shifted right by two) in the
@@ -12365,11 +11618,9 @@ md_apply_fix3 (fixP, valP, seg)
 	     branch instruction itself, then we can compute the relocation for
 	     ourselves and not have to bother the linker with it.
 
-	     FIXME: The tests for OBJ_ELF and ! target_oabi are only here
-	     because I have not worked out how to do this for OBJ_COFF or
-	     target_oabi.  */
-	  if (! target_oabi
-	      && fixP->fx_addsy != NULL
+	     FIXME: The test for OBJ_ELF is only here because I have not
+	     worked out how to do this for OBJ_COFF.  */
+	  if (fixP->fx_addsy != NULL
 	      && S_IS_DEFINED (fixP->fx_addsy)
 	      && S_GET_SEGMENT (fixP->fx_addsy) == seg)
 	    {
@@ -12398,7 +11649,18 @@ md_apply_fix3 (fixP, valP, seg)
 	as_bad_where (fixP->fx_file, fixP->fx_line,
 		      _("out of range branch"));
 
-      newval = (value & 0x00ffffff) | (newval & 0xff000000);
+      if (seg->use_rela_p && !fixP->fx_done)
+	{
+	  /* Must unshift the value before storing it in the addend.  */
+	  value <<= 2;
+#ifdef OBJ_ELF
+	  fixP->fx_offset = value;
+#endif
+	  fixP->fx_addnumber = value;
+	  newval = newval & 0xff000000;
+	}
+      else
+	  newval = (value & 0x00ffffff) | (newval & 0xff000000);
       md_number_to_chars (buf, newval, INSN_SIZE);
       break;
 
@@ -12408,13 +11670,26 @@ md_apply_fix3 (fixP, valP, seg)
 	newval = md_chars_to_number (buf, INSN_SIZE);
 
 #ifdef OBJ_ELF
-	if (! target_oabi)
-	  value = fixP->fx_offset;
+	value = fixP->fx_offset;
 #endif
 	hbit   = (value >> 1) & 1;
 	value  = (value >> 2) & 0x00ffffff;
 	value  = (value + (newval & 0x00ffffff)) & 0x00ffffff;
-	newval = value | (newval & 0xfe000000) | (hbit << 24);
+
+	if (seg->use_rela_p && !fixP->fx_done)
+	  {
+	    /* Must sign-extend and unshift the value before storing
+	       it in the addend.  */
+	    value = SEXT24 (value);
+	    value = (value << 2) | hbit;
+#ifdef OBJ_ELF
+	    fixP->fx_offset = value;
+#endif
+	    fixP->fx_addnumber = value;
+	    newval = newval & 0xfe000000;
+	  }
+	else
+	  newval = value | (newval & 0xfe000000) | (hbit << 24);
 	md_number_to_chars (buf, newval, INSN_SIZE);
       }
       break;
@@ -12430,7 +11705,16 @@ md_apply_fix3 (fixP, valP, seg)
 	if ((value & ~0xff) && ((value & ~0xff) != ~0xff))
 	  as_bad_where (fixP->fx_file, fixP->fx_line,
 			_("branch out of range"));
-	newval = (newval & 0xff00) | ((value & 0x1ff) >> 1);
+	if (seg->use_rela_p && !fixP->fx_done)
+	  {
+#ifdef OBJ_ELF
+	    fixP->fx_offset = value;
+#endif
+	    fixP->fx_addnumber = value;
+	    newval = newval & 0xff00;
+	  }
+	else
+	  newval = (newval & 0xff00) | ((value & 0x1ff) >> 1);
       }
       md_number_to_chars (buf, newval, THUMB_SIZE);
       break;
@@ -12446,7 +11730,16 @@ md_apply_fix3 (fixP, valP, seg)
 	if ((value & ~0x7ff) && ((value & ~0x7ff) != ~0x7ff))
 	  as_bad_where (fixP->fx_file, fixP->fx_line,
 			_("branch out of range"));
-	newval = (newval & 0xf800) | ((value & 0xfff) >> 1);
+	if (seg->use_rela_p && !fixP->fx_done)
+	  {
+#ifdef OBJ_ELF
+	    fixP->fx_offset = value;
+#endif
+	    fixP->fx_addnumber = value;
+	    newval = newval & 0xf800;
+	  }
+	else
+	  newval = (newval & 0xf800) | ((value & 0xfff) >> 1);
       }
       md_number_to_chars (buf, newval, THUMB_SIZE);
       break;
@@ -12471,24 +11764,39 @@ md_apply_fix3 (fixP, valP, seg)
 	  as_bad_where (fixP->fx_file, fixP->fx_line,
 			_("branch with link out of range"));
 
-	newval  = (newval  & 0xf800) | ((value & 0x7fffff) >> 12);
-	newval2 = (newval2 & 0xf800) | ((value & 0xfff) >> 1);
 	if (fixP->fx_r_type == BFD_RELOC_THUMB_PCREL_BLX)
 	  /* For a BLX instruction, make sure that the relocation is rounded up
 	     to a word boundary.  This follows the semantics of the instruction
 	     which specifies that bit 1 of the target address will come from bit
 	     1 of the base address.  */
-	  newval2 = (newval2 + 1) & ~ 1;
+	  value = (value + 1) & ~ 1;
+
+	if (seg->use_rela_p && !fixP->fx_done)
+	  {
+#ifdef OBJ_ELF
+	    fixP->fx_offset = value;
+#endif
+	    fixP->fx_addnumber = value;
+	    newval = newval & 0xf800;
+	    newval2 = newval2 & 0xf800;
+	  }
+	else
+	  {
+	    newval  = (newval  & 0xf800) | ((value & 0x7fffff) >> 12);
+	    newval2 = (newval2 & 0xf800) | ((value & 0xfff) >> 1);
+	  }
 	md_number_to_chars (buf, newval, THUMB_SIZE);
 	md_number_to_chars (buf + THUMB_SIZE, newval2, THUMB_SIZE);
       }
       break;
 
     case BFD_RELOC_8:
+      if (seg->use_rela_p && !fixP->fx_done)
+	break;
       if (fixP->fx_done || fixP->fx_pcrel)
 	md_number_to_chars (buf, value, 1);
 #ifdef OBJ_ELF
-      else if (!target_oabi)
+      else
 	{
 	  value = fixP->fx_offset;
 	  md_number_to_chars (buf, value, 1);
@@ -12497,10 +11805,12 @@ md_apply_fix3 (fixP, valP, seg)
       break;
 
     case BFD_RELOC_16:
+      if (seg->use_rela_p && !fixP->fx_done)
+	break;
       if (fixP->fx_done || fixP->fx_pcrel)
 	md_number_to_chars (buf, value, 2);
 #ifdef OBJ_ELF
-      else if (!target_oabi)
+      else
 	{
 	  value = fixP->fx_offset;
 	  md_number_to_chars (buf, value, 2);
@@ -12511,16 +11821,25 @@ md_apply_fix3 (fixP, valP, seg)
 #ifdef OBJ_ELF
     case BFD_RELOC_ARM_GOT32:
     case BFD_RELOC_ARM_GOTOFF:
+    case BFD_RELOC_ARM_TARGET2:
+      if (seg->use_rela_p && !fixP->fx_done)
+	break;
       md_number_to_chars (buf, 0, 4);
       break;
 #endif
 
     case BFD_RELOC_RVA:
     case BFD_RELOC_32:
+    case BFD_RELOC_ARM_TARGET1:
+    case BFD_RELOC_ARM_ROSEGREL32:
+    case BFD_RELOC_ARM_SBREL32:
+    case BFD_RELOC_32_PCREL:
+      if (seg->use_rela_p && !fixP->fx_done)
+	break;
       if (fixP->fx_done || fixP->fx_pcrel)
 	md_number_to_chars (buf, value, 4);
 #ifdef OBJ_ELF
-      else if (!target_oabi)
+      else
 	{
 	  value = fixP->fx_offset;
 	  md_number_to_chars (buf, value, 4);
@@ -12529,6 +11848,20 @@ md_apply_fix3 (fixP, valP, seg)
       break;
 
 #ifdef OBJ_ELF
+    case BFD_RELOC_ARM_PREL31:
+      if (fixP->fx_done || fixP->fx_pcrel)
+	{
+	  newval = md_chars_to_number (buf, 4) & 0x80000000;
+	  if ((value ^ (value >> 1)) & 0x40000000)
+	    {
+	      as_bad_where (fixP->fx_file, fixP->fx_line,
+			    _("rel31 relocation overflow"));
+	    }
+	  newval |= value & 0x7fffffff;
+	  md_number_to_chars (buf, newval, 4);
+	}
+      break;
+
     case BFD_RELOC_ARM_PLT32:
       /* It appears the instruction is fully prepared at this point.  */
       break;
@@ -12723,7 +12056,7 @@ md_apply_fix3 (fixP, valP, seg)
       fixP->fx_done = 0;
       return;
 
-    case BFD_RELOC_NONE:
+    case BFD_RELOC_UNUSED:
     default:
       as_bad_where (fixP->fx_file, fixP->fx_line,
 		    _("bad relocation fixup type (%d)"), fixP->fx_r_type);
@@ -12734,16 +12067,15 @@ md_apply_fix3 (fixP, valP, seg)
    format.  */
 
 arelent *
-tc_gen_reloc (section, fixp)
-     asection * section ATTRIBUTE_UNUSED;
-     fixS * fixp;
+tc_gen_reloc (asection * section ATTRIBUTE_UNUSED,
+	      fixS *     fixp)
 {
   arelent * reloc;
   bfd_reloc_code_real_type code;
 
-  reloc = (arelent *) xmalloc (sizeof (arelent));
+  reloc = xmalloc (sizeof (arelent));
 
-  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
@@ -12780,6 +12112,7 @@ tc_gen_reloc (section, fixp)
 	  break;
 	}
 
+    case BFD_RELOC_NONE:
     case BFD_RELOC_ARM_PCREL_BRANCH:
     case BFD_RELOC_ARM_PCREL_BLX:
     case BFD_RELOC_RVA:
@@ -12804,6 +12137,11 @@ tc_gen_reloc (section, fixp)
     case BFD_RELOC_ARM_GOT32:
     case BFD_RELOC_ARM_GOTOFF:
     case BFD_RELOC_ARM_PLT32:
+    case BFD_RELOC_ARM_TARGET1:
+    case BFD_RELOC_ARM_ROSEGREL32:
+    case BFD_RELOC_ARM_SBREL32:
+    case BFD_RELOC_ARM_PREL31:
+    case BFD_RELOC_ARM_TARGET2:
       code = fixp->fx_r_type;
       break;
 #endif
@@ -12839,8 +12177,10 @@ tc_gen_reloc (section, fixp)
 
 	switch (fixp->fx_r_type)
 	  {
+	  case BFD_RELOC_NONE:		   type = "NONE";         break;
 	  case BFD_RELOC_ARM_OFFSET_IMM8:  type = "OFFSET_IMM8";  break;
 	  case BFD_RELOC_ARM_SHIFT_IMM:    type = "SHIFT_IMM";    break;
+	  case BFD_RELOC_ARM_SMI:          type = "SMI";          break;
 	  case BFD_RELOC_ARM_SWI:          type = "SWI";          break;
 	  case BFD_RELOC_ARM_MULTI:        type = "MULTI";        break;
 	  case BFD_RELOC_ARM_CP_OFF_IMM:   type = "CP_OFF_IMM";   break;
@@ -12886,17 +12226,55 @@ tc_gen_reloc (section, fixp)
 }
 
 int
-md_estimate_size_before_relax (fragP, segtype)
-     fragS * fragP ATTRIBUTE_UNUSED;
-     segT    segtype ATTRIBUTE_UNUSED;
+md_estimate_size_before_relax (fragS * fragP ATTRIBUTE_UNUSED,
+			       segT    segtype ATTRIBUTE_UNUSED)
 {
   as_fatal (_("md_estimate_size_before_relax\n"));
   return 1;
 }
 
+/* We need to be able to fix up arbitrary expressions in some statements.
+   This is so that we can handle symbols that are an arbitrary distance from
+   the pc.  The most common cases are of the form ((+/-sym -/+ . - 8) & mask),
+   which returns part of an address in a form which will be valid for
+   a data instruction.  We do this by pushing the expression into a symbol
+   in the expr_section, and creating a fix for that.  */
+
 static void
-output_inst (str)
-     const char *str;
+fix_new_arm (fragS *       frag,
+	     int           where,
+	     short int     size,
+	     expressionS * exp,
+	     int           pc_rel,
+	     int           reloc)
+{
+  fixS *           new_fix;
+  arm_fix_data *   arm_data;
+
+  switch (exp->X_op)
+    {
+    case O_constant:
+    case O_symbol:
+    case O_add:
+    case O_subtract:
+      new_fix = fix_new_exp (frag, where, size, exp, pc_rel, reloc);
+      break;
+
+    default:
+      new_fix = fix_new (frag, where, size, make_expr_symbol (exp), 0,
+			 pc_rel, reloc);
+      break;
+    }
+
+  /* Mark whether the fix is to a THUMB instruction, or an ARM
+     instruction.  */
+  arm_data = obstack_alloc (& notes, sizeof (arm_fix_data));
+  new_fix->tc_fix_data = (PTR) arm_data;
+  arm_data->thumb_mode = thumb_mode;
+}
+
+static void
+output_inst (const char * str)
 {
   char * to = NULL;
 
@@ -12923,7 +12301,7 @@ output_inst (str)
   else
     md_number_to_chars (to, inst.instruction, inst.size);
 
-  if (inst.reloc.type != BFD_RELOC_NONE)
+  if (inst.reloc.type != BFD_RELOC_UNUSED)
     fix_new_arm (frag_now, to - frag_now->fr_literal,
 		 inst.size, & inst.reloc.exp, inst.reloc.pc_rel,
 		 inst.reloc.type);
@@ -12934,18 +12312,11 @@ output_inst (str)
 }
 
 void
-md_assemble (str)
-     char * str;
+md_assemble (char * str)
 {
   char  c;
   char *p;
   char *start;
-
-  /* Align the instruction.
-     This may not be the right thing to do but ...  */
-#if 0
-  arm_align (2, 0);
-#endif
 
   /* Align the previous label if needed.  */
   if (last_label_seen != NULL)
@@ -12956,7 +12327,7 @@ md_assemble (str)
     }
 
   memset (&inst, '\0', sizeof (inst));
-  inst.reloc.type = BFD_RELOC_NONE;
+  inst.reloc.type = BFD_RELOC_UNUSED;
 
   skip_whitespace (str);
 
@@ -12993,7 +12364,7 @@ md_assemble (str)
 	  mapping_state (MAP_THUMB);
 	  inst.instruction = opcode->value;
 	  inst.size = opcode->size;
-	  (*opcode->parms) (p);
+	  opcode->parms (p);
 	  output_inst (str);
 	  return;
 	}
@@ -13019,7 +12390,7 @@ md_assemble (str)
           mapping_state (MAP_ARM);
 	  inst.instruction = opcode->value;
 	  inst.size = INSN_SIZE;
-	  (*opcode->parms) (p);
+	  opcode->parms (p);
 	  output_inst (str);
 	  return;
 	}
@@ -13135,7 +12506,6 @@ struct arm_option_table arm_opts[] =
   {"mthumb", N_("assemble Thumb code"),    &thumb_mode,  1, NULL},
   {"mthumb-interwork", N_("support ARM/Thumb interworking"),
    &support_interwork, 1, NULL},
-  {"moabi",  N_("use old ABI (ELF only)"), &target_oabi, 1, NULL},
   {"mapcs-32", N_("code uses 32-bit program counter"), &uses_apcs_26, 0, NULL},
   {"mapcs-26", N_("code uses 26-bit program counter"), &uses_apcs_26, 1, NULL},
   {"mapcs-float", N_("floating point args are in fp regs"), &uses_apcs_float,
@@ -13143,7 +12513,7 @@ struct arm_option_table arm_opts[] =
   {"mapcs-reentrant", N_("re-entrant code"), &pic_code, 1, NULL},
   {"matpcs", N_("code is ATPCS conformant"), &atpcs, 1, NULL},
   {"mbig-endian", N_("assemble for big-endian"), &target_big_endian, 1, NULL},
-  {"mlittle-endian", N_("assemble for little-endian"), &target_big_endian, 1,
+  {"mlittle-endian", N_("assemble for little-endian"), &target_big_endian, 0,
    NULL},
 
   /* These are recognized by the assembler, but have no affect on code.  */
@@ -13304,6 +12674,7 @@ static struct arm_cpu_option_table arm_cpus[] =
   {"arm7500fe",		ARM_ARCH_V3,	 FPU_ARCH_FPA},
   {"arm7t",		ARM_ARCH_V4T,	 FPU_ARCH_FPA},
   {"arm7tdmi",		ARM_ARCH_V4T,	 FPU_ARCH_FPA},
+  {"arm7tdmi-s",	ARM_ARCH_V4T,	 FPU_ARCH_FPA},
   {"arm8",		ARM_ARCH_V4,	 FPU_ARCH_FPA},
   {"arm810",		ARM_ARCH_V4,	 FPU_ARCH_FPA},
   {"strongarm",		ARM_ARCH_V4,	 FPU_ARCH_FPA},
@@ -13323,6 +12694,7 @@ static struct arm_cpu_option_table arm_cpus[] =
   {"arm9e",		ARM_ARCH_V5TE,   FPU_ARCH_VFP_V2},
   {"arm926ej",		ARM_ARCH_V5TEJ,	 FPU_ARCH_VFP_V2},
   {"arm926ejs",		ARM_ARCH_V5TEJ,	 FPU_ARCH_VFP_V2},
+  {"arm926ej-s",	ARM_ARCH_V5TEJ,	 FPU_ARCH_VFP_V2},
   {"arm946e-r0",	ARM_ARCH_V5TExP, FPU_ARCH_VFP_V2},
   {"arm946e",		ARM_ARCH_V5TE,   FPU_ARCH_VFP_V2},
   {"arm966e-r0",	ARM_ARCH_V5TExP, FPU_ARCH_VFP_V2},
@@ -13332,9 +12704,16 @@ static struct arm_cpu_option_table arm_cpus[] =
   {"arm1020",		ARM_ARCH_V5TE,	 FPU_ARCH_VFP_V2},
   {"arm1020t",		ARM_ARCH_V5T,	 FPU_ARCH_VFP_V1},
   {"arm1020e",		ARM_ARCH_V5TE,	 FPU_ARCH_VFP_V2},
-  {"arm1026ejs",	ARM_ARCH_V5TE,	 FPU_ARCH_VFP_V2},
+  {"arm1026ejs",	ARM_ARCH_V5TEJ,	 FPU_ARCH_VFP_V2},
+  {"arm1026ej-s",	ARM_ARCH_V5TEJ,	 FPU_ARCH_VFP_V2},
   {"arm1136js",		ARM_ARCH_V6,     FPU_NONE},
+  {"arm1136j-s",	ARM_ARCH_V6,     FPU_NONE},
   {"arm1136jfs",	ARM_ARCH_V6,     FPU_ARCH_VFP_V2},
+  {"arm1136jf-s",	ARM_ARCH_V6,     FPU_ARCH_VFP_V2},
+  {"mpcore",		ARM_ARCH_V6K,    FPU_ARCH_VFP_V2},
+  {"mpcorenovfp",	ARM_ARCH_V6K,    FPU_NONE},
+  {"arm1176jz-s",	ARM_ARCH_V6ZK,   FPU_NONE},
+  {"arm1176jzf-s",	ARM_ARCH_V6ZK,   FPU_ARCH_VFP_V2},
   /* ??? XSCALE is really an architecture.  */
   {"xscale",		ARM_ARCH_XSCALE, FPU_ARCH_VFP_V2},
   /* ??? iwmmxt is not a processor.  */
@@ -13375,6 +12754,9 @@ static struct arm_arch_option_table arm_archs[] =
   {"armv5tej",		ARM_ARCH_V5TEJ,  FPU_ARCH_VFP},
   {"armv6",             ARM_ARCH_V6,     FPU_ARCH_VFP},
   {"armv6j",            ARM_ARCH_V6,     FPU_ARCH_VFP},
+  {"armv6k",            ARM_ARCH_V6K,    FPU_ARCH_VFP},
+  {"armv6z",            ARM_ARCH_V6Z,    FPU_ARCH_VFP},
+  {"armv6zk",           ARM_ARCH_V6ZK,   FPU_ARCH_VFP},
   {"xscale",		ARM_ARCH_XSCALE, FPU_ARCH_VFP},
   {"iwmmxt",		ARM_ARCH_IWMMXT, FPU_ARCH_VFP},
   {NULL, 0, 0}
@@ -13423,6 +12805,7 @@ static struct arm_fpu_option_table arm_fpus[] =
   {"arm1020t",		FPU_ARCH_VFP_V1},
   {"arm1020e",		FPU_ARCH_VFP_V2},
   {"arm1136jfs",	FPU_ARCH_VFP_V2},
+  {"arm1136jf-s",	FPU_ARCH_VFP_V2},
   {"maverick",		FPU_ARCH_MAVERICK},
   {NULL, 0}
 };
@@ -13441,23 +12824,37 @@ static struct arm_float_abi_option_table arm_float_abis[] =
   {NULL, 0}
 };
 
+struct arm_eabi_option_table
+{
+  char *name;
+  unsigned int value;
+};
+
+#ifdef OBJ_ELF
+/* We only know how to output GNU and ver 4 (AAELF) formats.  */
+static struct arm_eabi_option_table arm_eabis[] =
+{
+  {"gnu",	EF_ARM_EABI_UNKNOWN},
+  {"4",		EF_ARM_EABI_VER4},
+  {NULL, 0}
+};
+#endif
+
 struct arm_long_option_table
 {
-  char *option;		/* Substring to match.  */
-  char *help;		/* Help information.  */
-  int (*func) PARAMS ((char *subopt));	/* Function to decode sub-option.  */
-  char *deprecated;	/* If non-null, print this message.  */
+  char * option;		/* Substring to match.  */
+  char * help;			/* Help information.  */
+  int (* func) (char * subopt);	/* Function to decode sub-option.  */
+  char * deprecated;		/* If non-null, print this message.  */
 };
 
 static int
-arm_parse_extension (str, opt_p)
-     char *str;
-     int *opt_p;
+arm_parse_extension (char * str, int * opt_p)
 {
   while (str != NULL && *str != 0)
     {
-      struct arm_arch_extension_table *opt;
-      char *ext;
+      struct arm_arch_extension_table * opt;
+      char * ext;
       int optlen;
 
       if (*str != '+')
@@ -13500,11 +12897,10 @@ arm_parse_extension (str, opt_p)
 }
 
 static int
-arm_parse_cpu (str)
-     char *str;
+arm_parse_cpu (char * str)
 {
-  struct arm_cpu_option_table *opt;
-  char *ext = strchr (str, '+');
+  struct arm_cpu_option_table * opt;
+  char * ext = strchr (str, '+');
   int optlen;
 
   if (ext != NULL)
@@ -13535,8 +12931,7 @@ arm_parse_cpu (str)
 }
 
 static int
-arm_parse_arch (str)
-     char *str;
+arm_parse_arch (char * str)
 {
   struct arm_arch_option_table *opt;
   char *ext = strchr (str, '+');
@@ -13555,7 +12950,7 @@ arm_parse_arch (str)
 
 
   for (opt = arm_archs; opt->name != NULL; opt++)
-    if (strcmp (opt->name, str) == 0)
+    if (streq (opt->name, str))
       {
 	march_cpu_opt = opt->value;
 	march_fpu_opt = opt->default_fpu;
@@ -13571,13 +12966,12 @@ arm_parse_arch (str)
 }
 
 static int
-arm_parse_fpu (str)
-     char *str;
+arm_parse_fpu (char * str)
 {
-  struct arm_fpu_option_table *opt;
+  struct arm_fpu_option_table * opt;
 
   for (opt = arm_fpus; opt->name != NULL; opt++)
-    if (strcmp (opt->name, str) == 0)
+    if (streq (opt->name, str))
       {
 	mfpu_opt = opt->value;
 	return 1;
@@ -13588,13 +12982,12 @@ arm_parse_fpu (str)
 }
 
 static int
-arm_parse_float_abi (str)
-     char * str;
+arm_parse_float_abi (char * str)
 {
-  struct arm_float_abi_option_table *opt;
+  struct arm_float_abi_option_table * opt;
 
   for (opt = arm_float_abis; opt->name != NULL; opt++)
-    if (strcmp (opt->name, str) == 0)
+    if (streq (opt->name, str))
       {
 	mfloat_abi_opt = opt->value;
 	return 1;
@@ -13603,6 +12996,23 @@ arm_parse_float_abi (str)
   as_bad (_("unknown floating point abi `%s'\n"), str);
   return 0;
 }
+
+#ifdef OBJ_ELF
+static int
+arm_parse_eabi (char * str)
+{
+  struct arm_eabi_option_table *opt;
+
+  for (opt = arm_eabis; opt->name != NULL; opt++)
+    if (streq (opt->name, str))
+      {
+	meabi_flags = opt->value;
+	return 1;
+      }
+  as_bad (_("unknown EABI `%s'\n"), str);
+  return 0;
+}
+#endif
 
 struct arm_long_option_table arm_long_opts[] =
 {
@@ -13614,13 +13024,15 @@ struct arm_long_option_table arm_long_opts[] =
    arm_parse_fpu, NULL},
   {"mfloat-abi=", N_("<abi>\t  assemble for floating point ABI <abi>"),
    arm_parse_float_abi, NULL},
+#ifdef OBJ_ELF
+  {"meabi=", N_("<ver>\t  assemble for eabi version <ver>"),
+   arm_parse_eabi, NULL},
+#endif
   {NULL, NULL, 0, NULL}
 };
 
 int
-md_parse_option (c, arg)
-     int    c;
-     char * arg;
+md_parse_option (int c, char * arg)
 {
   struct arm_option_table *opt;
   struct arm_long_option_table *lopt;
@@ -13649,7 +13061,7 @@ md_parse_option (c, arg)
 	{
 	  if (c == opt->option[0]
 	      && ((arg == NULL && opt->option[1] == 0)
-		  || strcmp (arg, opt->option + 1) == 0))
+		  || streq (arg, opt->option + 1)))
 	    {
 #if WARN_DEPRECATED
 	      /* If the option is deprecated, tell the user.  */
@@ -13681,11 +13093,10 @@ md_parse_option (c, arg)
 #endif
 
 	      /* Call the sup-option parser.  */
-	      return (*lopt->func)(arg + strlen (lopt->option) - 1);
+	      return lopt->func (arg + strlen (lopt->option) - 1);
 	    }
 	}
 
-      as_bad (_("unrecognized option `-%c%s'"), c, arg ? arg : "");
       return 0;
     }
 
@@ -13693,8 +13104,7 @@ md_parse_option (c, arg)
 }
 
 void
-md_show_usage (fp)
-     FILE * fp;
+md_show_usage (FILE * fp)
 {
   struct arm_option_table *opt;
   struct arm_long_option_table *lopt;
@@ -13720,55 +13130,13 @@ md_show_usage (fp)
 #endif
 }
 
-/* We need to be able to fix up arbitrary expressions in some statements.
-   This is so that we can handle symbols that are an arbitrary distance from
-   the pc.  The most common cases are of the form ((+/-sym -/+ . - 8) & mask),
-   which returns part of an address in a form which will be valid for
-   a data instruction.  We do this by pushing the expression into a symbol
-   in the expr_section, and creating a fix for that.  */
-
-static void
-fix_new_arm (frag, where, size, exp, pc_rel, reloc)
-     fragS *       frag;
-     int           where;
-     short int     size;
-     expressionS * exp;
-     int           pc_rel;
-     int           reloc;
-{
-  fixS *           new_fix;
-  arm_fix_data *   arm_data;
-
-  switch (exp->X_op)
-    {
-    case O_constant:
-    case O_symbol:
-    case O_add:
-    case O_subtract:
-      new_fix = fix_new_exp (frag, where, size, exp, pc_rel, reloc);
-      break;
-
-    default:
-      new_fix = fix_new (frag, where, size, make_expr_symbol (exp), 0,
-			 pc_rel, reloc);
-      break;
-    }
-
-  /* Mark whether the fix is to a THUMB instruction, or an ARM
-     instruction.  */
-  arm_data = (arm_fix_data *) obstack_alloc (& notes, sizeof (arm_fix_data));
-  new_fix->tc_fix_data = (PTR) arm_data;
-  arm_data->thumb_mode = thumb_mode;
-}
-
 /* This fix_new is called by cons via TC_CONS_FIX_NEW.  */
 
 void
-cons_fix_new_arm (frag, where, size, exp)
-     fragS *       frag;
-     int           where;
-     int           size;
-     expressionS * exp;
+cons_fix_new_arm (fragS *       frag,
+		  int           where,
+		  int           size,
+		  expressionS * exp)
 {
   bfd_reloc_code_real_type type;
   int pcrel = 0;
@@ -13800,7 +13168,7 @@ cons_fix_new_arm (frag, where, size, exp)
    references are made to a null symbol pointer.  */
 
 void
-arm_cleanup ()
+arm_cleanup (void)
 {
   literal_pool * pool;
 
@@ -13816,14 +13184,13 @@ arm_cleanup ()
 }
 
 void
-arm_start_line_hook ()
+arm_start_line_hook (void)
 {
   last_label_seen = NULL;
 }
 
 void
-arm_frob_label (sym)
-     symbolS * sym;
+arm_frob_label (symbolS * sym)
 {
   last_label_seen = sym;
 
@@ -13881,7 +13248,7 @@ arm_frob_label (sym)
    ARM ones.  */
 
 void
-arm_adjust_symtab ()
+arm_adjust_symtab (void)
 {
 #ifdef OBJ_COFF
   symbolS * sym;
@@ -13951,7 +13318,7 @@ arm_adjust_symtab ()
 }
 
 int
-arm_data_in_code ()
+arm_data_in_code (void)
 {
   if (thumb_mode && ! strncmp (input_line_pointer + 1, "data:", 5))
     {
@@ -13965,8 +13332,7 @@ arm_data_in_code ()
 }
 
 char *
-arm_canonicalize_symbol_name (name)
-     char * name;
+arm_canonicalize_symbol_name (char * name)
 {
   int len;
 
@@ -13979,8 +13345,7 @@ arm_canonicalize_symbol_name (name)
 
 #if defined OBJ_COFF || defined OBJ_ELF
 void
-arm_validate_fix (fixP)
-     fixS * fixP;
+arm_validate_fix (fixS * fixP)
 {
   /* If the destination of the branch is a defined symbol which does not have
      the THUMB_FUNC attribute, then we must be calling a function which has
@@ -13997,8 +13362,7 @@ arm_validate_fix (fixP)
 #endif
 
 int
-arm_force_relocation (fixp)
-     struct fix * fixp;
+arm_force_relocation (struct fix * fixp)
 {
 #if defined (OBJ_COFF) && defined (TE_PE)
   if (fixp->fx_r_type == BFD_RELOC_RVA)
@@ -14029,8 +13393,7 @@ arm_force_relocation (fixp)
    it is adjustable.  */
 
 bfd_boolean
-arm_fix_adjustable (fixP)
-   fixS * fixP;
+arm_fix_adjustable (fixS * fixP)
 {
   if (fixP->fx_r_type == BFD_RELOC_ARM_ADRL_IMMEDIATE)
     return 1;
@@ -14053,8 +13416,7 @@ arm_fix_adjustable (fixP)
    they reside in Thumb code), but at the moment they will not.  */
 
 bfd_boolean
-arm_fix_adjustable (fixP)
-   fixS * fixP;
+arm_fix_adjustable (fixS * fixP)
 {
   if (fixP->fx_addsy == NULL)
     return 1;
@@ -14071,80 +13433,41 @@ arm_fix_adjustable (fixP)
   /* Don't allow symbols to be discarded on GOT related relocs.  */
   if (fixP->fx_r_type == BFD_RELOC_ARM_PLT32
       || fixP->fx_r_type == BFD_RELOC_ARM_GOT32
-      || fixP->fx_r_type == BFD_RELOC_ARM_GOTOFF)
+      || fixP->fx_r_type == BFD_RELOC_ARM_GOTOFF
+      || fixP->fx_r_type == BFD_RELOC_ARM_TARGET2)
     return 0;
 
   return 1;
 }
 
 const char *
-elf32_arm_target_format ()
+elf32_arm_target_format (void)
 {
+#ifdef TE_SYMBIAN
+  return (target_big_endian
+	  ? "elf32-bigarm-symbian"
+	  : "elf32-littlearm-symbian");
+#elif defined (TE_VXWORKS)
+  return (target_big_endian
+	  ? "elf32-bigarm-vxworks"
+	  : "elf32-littlearm-vxworks");
+#else
   if (target_big_endian)
-    {
-      if (target_oabi)
-	return "elf32-bigarm-oabi";
-      else
-	return "elf32-bigarm";
-    }
+    return "elf32-bigarm";
   else
-    {
-      if (target_oabi)
-	return "elf32-littlearm-oabi";
-      else
-	return "elf32-littlearm";
-    }
+    return "elf32-littlearm";
+#endif
 }
 
 void
-armelf_frob_symbol (symp, puntp)
-     symbolS * symp;
-     int *     puntp;
+armelf_frob_symbol (symbolS * symp,
+		    int *     puntp)
 {
   elf_frob_symbol (symp, puntp);
 }
 
-static bfd_reloc_code_real_type
-arm_parse_reloc ()
-{
-  char         id [16];
-  char *       ip;
-  unsigned int i;
-  static struct
-  {
-    char * str;
-    int    len;
-    bfd_reloc_code_real_type reloc;
-  }
-  reloc_map[] =
-  {
-#define MAP(str,reloc) { str, sizeof (str) - 1, reloc }
-    MAP ("(got)",    BFD_RELOC_ARM_GOT32),
-    MAP ("(gotoff)", BFD_RELOC_ARM_GOTOFF),
-    /* ScottB: Jan 30, 1998 - Added support for parsing "var(PLT)"
-       branch instructions generated by GCC for PLT relocs.  */
-    MAP ("(plt)",    BFD_RELOC_ARM_PLT32),
-    { NULL, 0,         BFD_RELOC_UNUSED }
-#undef MAP
-  };
-
-  for (i = 0, ip = input_line_pointer;
-       i < sizeof (id) && (ISALNUM (*ip) || ISPUNCT (*ip));
-       i++, ip++)
-    id[i] = TOLOWER (*ip);
-
-  for (i = 0; reloc_map[i].str; i++)
-    if (strncmp (id, reloc_map[i].str, reloc_map[i].len) == 0)
-      break;
-
-  input_line_pointer += reloc_map[i].len;
-
-  return reloc_map[i].reloc;
-}
-
 static void
-s_arm_elf_cons (nbytes)
-     int nbytes;
+s_arm_elf_cons (int nbytes)
 {
   expressionS exp;
 
@@ -14181,7 +13504,7 @@ s_arm_elf_cons (nbytes)
 		    howto->name, nbytes);
 	  else
 	    {
-	      register char *p = frag_more ((int) nbytes);
+	      char *p = frag_more ((int) nbytes);
 	      int offset = nbytes - size;
 
 	      fix_new_exp (frag_now, p - frag_now->fr_literal + offset, size,
@@ -14198,14 +13521,1197 @@ s_arm_elf_cons (nbytes)
   demand_empty_rest_of_line ();
 }
 
+
+/* Parse a .rel31 directive.  */
+
+static void
+s_arm_rel31 (int ignored ATTRIBUTE_UNUSED)
+{
+  expressionS exp;
+  char *p;
+  valueT highbit;
+
+  SKIP_WHITESPACE ();
+
+  highbit = 0;
+  if (*input_line_pointer == '1')
+    highbit = 0x80000000;
+  else if (*input_line_pointer != '0')
+    as_bad (_("expected 0 or 1"));
+
+  input_line_pointer++;
+  SKIP_WHITESPACE ();
+  if (*input_line_pointer != ',')
+    as_bad (_("missing comma"));
+  input_line_pointer++;
+
+#ifdef md_flush_pending_output
+  md_flush_pending_output ();
+#endif
+
+#ifdef md_cons_align
+  md_cons_align (4);
+#endif
+
+  mapping_state (MAP_DATA);
+
+  expression (&exp);
+
+  p = frag_more (4);
+  md_number_to_chars (p, highbit, 4);
+  fix_new_arm (frag_now, p - frag_now->fr_literal, 4, &exp, 1,
+	       BFD_RELOC_ARM_PREL31);
+
+  demand_empty_rest_of_line ();
+}
+
+/* Code to deal with unwinding tables.  */
+
+static void add_unwind_adjustsp (offsetT);
+
+/* Switch to section NAME and create section if necessary.  It's
+   rather ugly that we have to manipulate input_line_pointer but I
+   don't see any other way to accomplish the same thing without
+   changing obj-elf.c (which may be the Right Thing, in the end).
+   Copied from tc-ia64.c.  */
+
+static void
+set_section (char *name)
+{
+  char *saved_input_line_pointer;
+
+  saved_input_line_pointer = input_line_pointer;
+  input_line_pointer = name;
+  obj_elf_section (0);
+  input_line_pointer = saved_input_line_pointer;
+}
+
+/* Cenerate and deferred unwind frame offset.  */
+
+static void
+flush_pending_unwind (void)
+{
+  offsetT offset;
+
+  offset = unwind.pending_offset;
+  unwind.pending_offset = 0;
+  if (offset != 0)
+    add_unwind_adjustsp (offset);
+}
+
+/* Add an opcode to this list for this function.  Two-byte opcodes should
+   be passed as op[0] << 8 | op[1].  The list of opcodes is built in reverse
+   order.  */
+
+static void
+add_unwind_opcode (valueT op, int length)
+{
+  /* Add any deferred stack adjustment.  */
+  if (unwind.pending_offset)
+    flush_pending_unwind ();
+
+  unwind.sp_restored = 0;
+
+  if (unwind.opcode_count + length > unwind.opcode_alloc)
+    {
+      unwind.opcode_alloc += ARM_OPCODE_CHUNK_SIZE;
+      if (unwind.opcodes)
+	unwind.opcodes = xrealloc (unwind.opcodes,
+				   unwind.opcode_alloc);
+      else
+	unwind.opcodes = xmalloc (unwind.opcode_alloc);
+    }
+  while (length > 0)
+    {
+      length--;
+      unwind.opcodes[unwind.opcode_count] = op & 0xff;
+      op >>= 8;
+      unwind.opcode_count++;
+    }
+}
+
+/* Add unwind opcodes to adjust the stack pointer.  */
+
+static void
+add_unwind_adjustsp (offsetT offset)
+{
+  valueT op;
+
+  if (offset > 0x200)
+    {
+      /* We need at most 5 bytes to hold a 32-bit value in a uleb128.  */
+      char bytes[5];
+      int n;
+      valueT o;
+
+      /* Long form: 0xb2, uleb128.  */
+      /* This might not fit in a word so add the individual bytes,
+	 remembering the list is built in reverse order.  */
+      o = (valueT) ((offset - 0x204) >> 2);
+      if (o == 0)
+	add_unwind_opcode (0, 1);
+
+      /* Calculate the uleb128 encoding of the offset.  */
+      n = 0;
+      while (o)
+	{
+	  bytes[n] = o & 0x7f;
+	  o >>= 7;
+	  if (o)
+	    bytes[n] |= 0x80;
+	  n++;
+	}
+      /* Add the insn.  */
+      for (; n; n--)
+	add_unwind_opcode (bytes[n - 1], 1);
+      add_unwind_opcode (0xb2, 1);
+    }
+  else if (offset > 0x100)
+    {
+      /* Two short opcodes.  */
+      add_unwind_opcode (0x3f, 1);
+      op = (offset - 0x104) >> 2;
+      add_unwind_opcode (op, 1);
+    }
+  else if (offset > 0)
+    {
+      /* Short opcode.  */
+      op = (offset - 4) >> 2;
+      add_unwind_opcode (op, 1);
+    }
+  else if (offset < 0)
+    {
+      offset = -offset;
+      while (offset > 0x100)
+	{
+	  add_unwind_opcode (0x7f, 1);
+	  offset -= 0x100;
+	}
+      op = ((offset - 4) >> 2) | 0x40;
+      add_unwind_opcode (op, 1);
+    }
+}
+
+/* Finish the list of unwind opcodes for this function.  */
+static void
+finish_unwind_opcodes (void)
+{
+  valueT op;
+
+  if (unwind.fp_used)
+    {
+      /* Adjust sp as neccessary.  */
+      unwind.pending_offset += unwind.fp_offset - unwind.frame_size;
+      flush_pending_unwind ();
+
+      /* After restoring sp from the frame pointer.  */
+      op = 0x90 | unwind.fp_reg;
+      add_unwind_opcode (op, 1);
+    }
+  else
+    flush_pending_unwind ();
+}
+
+
+/* Start an exception table entry.  If idx is nonzero this is an index table
+   entry.  */
+
+static void
+start_unwind_section (const segT text_seg, int idx)
+{
+  const char * text_name;
+  const char * prefix;
+  const char * prefix_once;
+  size_t prefix_len;
+  size_t text_len;
+  char * sec_name;
+  size_t sec_name_len;
+
+  if (idx)
+    {
+      prefix = ELF_STRING_ARM_unwind;
+      prefix_once = ELF_STRING_ARM_unwind_once;
+    }
+  else
+    {
+      prefix = ELF_STRING_ARM_unwind_info;
+      prefix_once = ELF_STRING_ARM_unwind_info_once;
+    }
+
+  text_name = segment_name (text_seg);
+  if (streq (text_name, ".text"))
+    text_name = "";
+
+  if (strncmp (text_name, ".gnu.linkonce.t.",
+	       strlen (".gnu.linkonce.t.")) == 0)
+    {
+      prefix = prefix_once;
+      text_name += strlen (".gnu.linkonce.t.");
+    }
+
+  prefix_len = strlen (prefix);
+  text_len = strlen (text_name);
+  sec_name_len = prefix_len + text_len;
+  sec_name = alloca (sec_name_len + 1);
+  memcpy (sec_name, prefix, prefix_len);
+  memcpy (sec_name + prefix_len, text_name, text_len);
+  sec_name[prefix_len + text_len] = '\0';
+
+  /* Handle COMDAT group.  */
+  if (prefix != prefix_once && (text_seg->flags & SEC_LINK_ONCE) != 0)
+    {
+      char *section;
+      size_t len, group_name_len;
+      const char *group_name = elf_group_name (text_seg);
+
+      if (group_name == NULL)
+        {
+          as_bad ("Group section `%s' has no group signature",
+                  segment_name (text_seg));
+          ignore_rest_of_line ();
+          return;
+        }
+      /* We have to construct a fake section directive.  */
+      group_name_len = strlen (group_name);
+      if (idx)
+	prefix_len = 13;
+      else
+	prefix_len = 16;
+
+      len = (sec_name_len
+             + prefix_len             /* ,"aG",%sectiontype,  */
+             + group_name_len         /* ,group_name  */
+             + 7);                    /* ,comdat  */
+
+      section = alloca (len + 1);
+      memcpy (section, sec_name, sec_name_len);
+      if (idx)
+	  memcpy (section + sec_name_len, ",\"aG\",%exidx,", 13);
+      else
+	  memcpy (section + sec_name_len, ",\"aG\",%progbits,", 16);
+      memcpy (section + sec_name_len + prefix_len, group_name, group_name_len);
+      memcpy (section + len - 7, ",comdat", 7);
+      section [len] = '\0';
+      set_section (section);
+    }
+  else
+    {
+      set_section (sec_name);
+      bfd_set_section_flags (stdoutput, now_seg,
+			     SEC_LOAD | SEC_ALLOC | SEC_READONLY);
+    }
+
+  /* Set the setion link for index tables.  */
+  if (idx)
+    elf_linked_to_section (now_seg) = text_seg;
+}
+
+
+/* Start an unwind table entry.  HAVE_DATA is nonzero if we have additional
+   personality routine data.  Returns zero, or the index table value for
+   and inline entry.  */
+
+static valueT
+create_unwind_entry (int have_data)
+{
+  int size;
+  addressT where;
+  char *ptr;
+  /* The current word of data.  */
+  valueT data;
+  /* The number of bytes left in this word.  */
+  int n;
+
+  finish_unwind_opcodes ();
+
+  /* Remember the current text section.  */
+  unwind.saved_seg = now_seg;
+  unwind.saved_subseg = now_subseg;
+
+  start_unwind_section (now_seg, 0);
+
+  if (unwind.personality_routine == NULL)
+    {
+      if (unwind.personality_index == -2)
+	{
+	  if (have_data)
+	    as_bad (_("handerdata in cantunwind frame"));
+	  return 1; /* EXIDX_CANTUNWIND.  */
+	}
+
+      /* Use a default personality routine if none is specified.  */
+      if (unwind.personality_index == -1)
+	{
+	  if (unwind.opcode_count > 3)
+	    unwind.personality_index = 1;
+	  else
+	    unwind.personality_index = 0;
+	}
+
+      /* Space for the personality routine entry.  */
+      if (unwind.personality_index == 0)
+	{
+	  if (unwind.opcode_count > 3)
+	    as_bad (_("too many unwind opcodes for personality routine 0"));
+
+	  if (!have_data)
+	    {
+	      /* All the data is inline in the index table.  */
+	      data = 0x80;
+	      n = 3;
+	      while (unwind.opcode_count > 0)
+		{
+		  unwind.opcode_count--;
+		  data = (data << 8) | unwind.opcodes[unwind.opcode_count];
+		  n--;
+		}
+
+	      /* Pad with "finish" opcodes.  */
+	      while (n--)
+		data = (data << 8) | 0xb0;
+
+	      return data;
+	    }
+	  size = 0;
+	}
+      else
+	/* We get two opcodes "free" in the first word.  */
+	size = unwind.opcode_count - 2;
+    }
+  else
+    /* An extra byte is required for the opcode count.  */
+    size = unwind.opcode_count + 1;
+
+  size = (size + 3) >> 2;
+  if (size > 0xff)
+    as_bad (_("too many unwind opcodes"));
+
+  frag_align (2, 0, 0);
+  record_alignment (now_seg, 2);
+  unwind.table_entry = expr_build_dot ();
+
+  /* Allocate the table entry.  */
+  ptr = frag_more ((size << 2) + 4);
+  where = frag_now_fix () - ((size << 2) + 4);
+
+  switch (unwind.personality_index)
+    {
+    case -1:
+      /* ??? Should this be a PLT generating relocation?  */
+      /* Custom personality routine.  */
+      fix_new (frag_now, where, 4, unwind.personality_routine, 0, 1,
+	       BFD_RELOC_ARM_PREL31);
+
+      /* Indicate dependency to linker.  */
+        {
+          char *name = "__aeabi_unwind_cpp_pr0";
+	  symbolS *pr = symbol_find_or_make (name);
+	  fix_new (frag_now, where, 4, pr, 0, 1, BFD_RELOC_NONE);
+	}
+
+      where += 4;
+      ptr += 4;
+
+      /* Set the first byte to the number of additional words.  */
+      data = size - 1;
+      n = 3;
+      break;
+
+    /* ABI defined personality routines.  */
+    case 0:
+      /* Three opcodes bytes are packed into the first word.  */
+      data = 0x80;
+      n = 3;
+      goto emit_reloc;
+
+    case 1:
+    case 2:
+      /* The size and first two opcode bytes go in the first word.  */
+      data = ((0x80 + unwind.personality_index) << 8) | size;
+      n = 2;
+      goto emit_reloc;
+
+    emit_reloc:
+      {
+	/* Indicate dependency to linker.  */
+	char *name[] = { "__aeabi_unwind_cpp_pr0",
+	                 "__aeabi_unwind_cpp_pr1",
+			 "__aeabi_unwind_cpp_pr2" };
+	symbolS *pr = symbol_find_or_make (name[unwind.personality_index]);
+	fix_new (frag_now, where, 4, pr, 0, 1, BFD_RELOC_NONE);
+      }
+      break;
+
+    default:
+      /* Should never happen.  */
+      abort ();
+    }
+
+  /* Pack the opcodes into words (MSB first), reversing the list at the same
+     time.  */
+  while (unwind.opcode_count > 0)
+    {
+      if (n == 0)
+	{
+	  md_number_to_chars (ptr, data, 4);
+	  ptr += 4;
+	  n = 4;
+	  data = 0;
+	}
+      unwind.opcode_count--;
+      n--;
+      data = (data << 8) | unwind.opcodes[unwind.opcode_count];
+    }
+
+  /* Finish off the last word.  */
+  if (n < 4)
+    {
+      /* Pad with "finish" opcodes.  */
+      while (n--)
+	data = (data << 8) | 0xb0;
+
+      md_number_to_chars (ptr, data, 4);
+    }
+
+  if (!have_data)
+    {
+      /* Add an empty descriptor if there is no user-specified data.   */
+      ptr = frag_more (4);
+      md_number_to_chars (ptr, 0, 4);
+    }
+
+  return 0;
+}
+
+
+/* Parse an unwind_fnstart directive.  Simply records the current location.  */
+
+static void
+s_arm_unwind_fnstart (int ignored ATTRIBUTE_UNUSED)
+{
+  demand_empty_rest_of_line ();
+  /* Mark the start of the function.  */
+  unwind.proc_start = expr_build_dot ();
+
+  /* Reset the rest of the unwind info.  */
+  unwind.opcode_count = 0;
+  unwind.table_entry = NULL;
+  unwind.personality_routine = NULL;
+  unwind.personality_index = -1;
+  unwind.frame_size = 0;
+  unwind.fp_offset = 0;
+  unwind.fp_reg = 13;
+  unwind.fp_used = 0;
+  unwind.sp_restored = 0;
+}
+
+
+/* Parse a handlerdata directive.  Creates the exception handling table entry
+   for the function.  */
+
+static void
+s_arm_unwind_handlerdata (int ignored ATTRIBUTE_UNUSED)
+{
+  demand_empty_rest_of_line ();
+  if (unwind.table_entry)
+    as_bad (_("dupicate .handlerdata directive"));
+
+  create_unwind_entry (1);
+}
+
+/* Parse an unwind_fnend directive.  Generates the index table entry.  */
+
+static void
+s_arm_unwind_fnend (int ignored ATTRIBUTE_UNUSED)
+{
+  long where;
+  char *ptr;
+  valueT val;
+
+  demand_empty_rest_of_line ();
+
+  /* Add eh table entry.  */
+  if (unwind.table_entry == NULL)
+    val = create_unwind_entry (0);
+  else
+    val = 0;
+
+  /* Add index table entry.  This is two words.  */
+  start_unwind_section (unwind.saved_seg, 1);
+  frag_align (2, 0, 0);
+  record_alignment (now_seg, 2);
+
+  ptr = frag_more (8);
+  where = frag_now_fix () - 8;
+
+  /* Self relative offset of the function start.  */
+  fix_new (frag_now, where, 4, unwind.proc_start, 0, 1,
+	   BFD_RELOC_ARM_PREL31);
+
+  if (val)
+    /* Inline exception table entry.  */
+    md_number_to_chars (ptr + 4, val, 4);
+  else
+    /* Self relative offset of the table entry.  */
+    fix_new (frag_now, where + 4, 4, unwind.table_entry, 0, 1,
+	     BFD_RELOC_ARM_PREL31);
+
+  /* Restore the original section.  */
+  subseg_set (unwind.saved_seg, unwind.saved_subseg);
+}
+
+
+/* Parse an unwind_cantunwind directive.  */
+
+static void
+s_arm_unwind_cantunwind (int ignored ATTRIBUTE_UNUSED)
+{
+  demand_empty_rest_of_line ();
+  if (unwind.personality_routine || unwind.personality_index != -1)
+    as_bad (_("personality routine specified for cantunwind frame"));
+
+  unwind.personality_index = -2;
+}
+
+
+/* Parse a personalityindex directive.  */
+
+static void
+s_arm_unwind_personalityindex (int ignored ATTRIBUTE_UNUSED)
+{
+  expressionS exp;
+
+  if (unwind.personality_routine || unwind.personality_index != -1)
+    as_bad (_("duplicate .personalityindex directive"));
+
+  SKIP_WHITESPACE ();
+
+  expression (&exp);
+
+  if (exp.X_op != O_constant
+      || exp.X_add_number < 0 || exp.X_add_number > 15)
+    {
+      as_bad (_("bad personality routine number"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  unwind.personality_index = exp.X_add_number;
+
+  demand_empty_rest_of_line ();
+}
+
+
+/* Parse a personality directive.  */
+
+static void
+s_arm_unwind_personality (int ignored ATTRIBUTE_UNUSED)
+{
+  char *name, *p, c;
+
+  if (unwind.personality_routine || unwind.personality_index != -1)
+    as_bad (_("duplicate .personality directive"));
+
+  SKIP_WHITESPACE ();
+  name = input_line_pointer;
+  c = get_symbol_end ();
+  p = input_line_pointer;
+  unwind.personality_routine = symbol_find_or_make (name);
+  *p = c;
+  SKIP_WHITESPACE ();
+  demand_empty_rest_of_line ();
+}
+
+
+/* Parse a directive saving core registers.  */
+
+static void
+s_arm_unwind_save_core (void)
+{
+  valueT op;
+  long range;
+  int n;
+
+  SKIP_WHITESPACE ();
+  range = reg_list (&input_line_pointer);
+  if (range == FAIL)
+    {
+      as_bad (_("expected register list"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  demand_empty_rest_of_line ();
+
+  /* Turn .unwind_movsp ip followed by .unwind_save {..., ip, ...}
+     into .unwind_save {..., sp...}.  We aren't bothered about the value of
+     ip because it is clobbered by calls.  */
+  if (unwind.sp_restored && unwind.fp_reg == 12
+      && (range & 0x3000) == 0x1000)
+    {
+      unwind.opcode_count--;
+      unwind.sp_restored = 0;
+      range = (range | 0x2000) & ~0x1000;
+      unwind.pending_offset = 0;
+    }
+
+  /* See if we can use the short opcodes.  These pop a block of upto 8
+     registers starting with r4, plus maybe r14.  */
+  for (n = 0; n < 8; n++)
+    {
+      /* Break at the first non-saved register.  */
+      if ((range & (1 << (n + 4))) == 0)
+	break;
+    }
+  /* See if there are any other bits set.  */
+  if (n == 0 || (range & (0xfff0 << n) & 0xbff0) != 0)
+    {
+      /* Use the long form.  */
+      op = 0x8000 | ((range >> 4) & 0xfff);
+      add_unwind_opcode (op, 2);
+    }
+  else
+    {
+      /* Use the short form.  */
+      if (range & 0x4000)
+	op = 0xa8; /* Pop r14.  */
+      else
+	op = 0xa0; /* Do not pop r14.  */
+      op |= (n - 1);
+      add_unwind_opcode (op, 1);
+    }
+
+  /* Pop r0-r3.  */
+  if (range & 0xf)
+    {
+      op = 0xb100 | (range & 0xf);
+      add_unwind_opcode (op, 2);
+    }
+
+  /* Record the number of bytes pushed.  */
+  for (n = 0; n < 16; n++)
+    {
+      if (range & (1 << n))
+	unwind.frame_size += 4;
+    }
+}
+
+
+/* Parse a directive saving FPA registers.  */
+
+static void
+s_arm_unwind_save_fpa (int reg)
+{
+  expressionS exp;
+  int num_regs;
+  valueT op;
+
+  /* Get Number of registers to transfer.  */
+  if (skip_past_comma (&input_line_pointer) != FAIL)
+    expression (&exp);
+  else
+    exp.X_op = O_illegal;
+
+  if (exp.X_op != O_constant)
+    {
+      as_bad (_("expected , <constant>"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  num_regs = exp.X_add_number;
+
+  if (num_regs < 1 || num_regs > 4)
+    {
+      as_bad (_("number of registers must be in the range [1:4]"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  demand_empty_rest_of_line ();
+
+  if (reg == 4)
+    {
+      /* Short form.  */
+      op = 0xb4 | (num_regs - 1);
+      add_unwind_opcode (op, 1);
+    }
+  else
+    {
+      /* Long form.  */
+      op = 0xc800 | (reg << 4) | (num_regs - 1);
+      add_unwind_opcode (op, 2);
+    }
+  unwind.frame_size += num_regs * 12;
+}
+
+
+/* Parse a directive saving VFP registers.  */
+
+static void
+s_arm_unwind_save_vfp (void)
+{
+  int count;
+  int reg;
+  valueT op;
+
+  count = vfp_parse_reg_list (&input_line_pointer, &reg, 1);
+  if (count == FAIL)
+    {
+      as_bad (_("expected register list"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  demand_empty_rest_of_line ();
+
+  if (reg == 8)
+    {
+      /* Short form.  */
+      op = 0xb8 | (count - 1);
+      add_unwind_opcode (op, 1);
+    }
+  else
+    {
+      /* Long form.  */
+      op = 0xb300 | (reg << 4) | (count - 1);
+      add_unwind_opcode (op, 2);
+    }
+  unwind.frame_size += count * 8 + 4;
+}
+
+
+/* Parse a directive saving iWMMXt registers.  */
+
+static void
+s_arm_unwind_save_wmmx (void)
+{
+  int reg;
+  int hi_reg;
+  int i;
+  unsigned wcg_mask;
+  unsigned wr_mask;
+  valueT op;
+
+  if (*input_line_pointer == '{')
+    input_line_pointer++;
+
+  wcg_mask = 0;
+  wr_mask = 0;
+  do
+    {
+      reg = arm_reg_parse (&input_line_pointer,
+			   all_reg_maps[REG_TYPE_IWMMXT].htab);
+
+      if (wr_register (reg))
+	{
+	  i = reg & ~WR_PREFIX;
+	  if (wr_mask >> i)
+	    as_tsktsk (_("register list not in ascending order"));
+	  wr_mask |= 1 << i;
+	}
+      else if (wcg_register (reg))
+	{
+	  i = (reg & ~WC_PREFIX) - 8;
+	  if (wcg_mask >> i)
+	    as_tsktsk (_("register list not in ascending order"));
+	  wcg_mask |= 1 << i;
+	}
+      else
+	{
+	  as_bad (_("expected wr or wcgr"));
+	  goto error;
+	}
+
+      SKIP_WHITESPACE ();
+      if (*input_line_pointer == '-')
+	{
+	  hi_reg = arm_reg_parse (&input_line_pointer,
+				  all_reg_maps[REG_TYPE_IWMMXT].htab);
+	  if (wr_register (reg) && wr_register (hi_reg))
+	    {
+	      for (; reg < hi_reg; reg++)
+		wr_mask |= 1 << (reg & ~WR_PREFIX);
+	    }
+	  else if (wcg_register (reg) && wcg_register (hi_reg))
+	    {
+	      for (; reg < hi_reg; reg++)
+		wcg_mask |= 1 << ((reg & ~WC_PREFIX) - 8);
+	    }
+	  else
+	    {
+	      as_bad (_("bad register range"));
+	      goto error;
+	    }
+	}
+    }
+  while (skip_past_comma (&input_line_pointer) != FAIL);
+
+  SKIP_WHITESPACE ();
+  if (*input_line_pointer == '}')
+    input_line_pointer++;
+
+  demand_empty_rest_of_line ();
+
+  if (wr_mask && wcg_mask)
+    {
+      as_bad (_("inconsistent register types"));
+      goto error;
+    }
+
+  /* Generate any deferred opcodes becuuse we're going to be looking at
+     the list.  */
+  flush_pending_unwind ();
+
+  if (wcg_mask)
+    {
+      for (i = 0; i < 16; i++)
+	{
+	  if (wcg_mask & (1 << i))
+	    unwind.frame_size += 4;
+	}
+      op = 0xc700 | wcg_mask;
+      add_unwind_opcode (op, 2);
+    }
+  else
+    {
+      for (i = 0; i < 16; i++)
+	{
+	  if (wr_mask & (1 << i))
+	    unwind.frame_size += 8;
+	}
+      /* Attempt to combine with a previous opcode.  We do this because gcc
+	 likes to output separate unwind directives for a single block of
+	 registers.  */
+      if (unwind.opcode_count > 0)
+	{
+	  i = unwind.opcodes[unwind.opcode_count - 1];
+	  if ((i & 0xf8) == 0xc0)
+	    {
+	      i &= 7;
+	      /* Only merge if the blocks are contiguous.  */
+	      if (i < 6)
+		{
+		  if ((wr_mask & 0xfe00) == (1 << 9))
+		    {
+		      wr_mask |= ((1 << (i + 11)) - 1) & 0xfc00;
+		      unwind.opcode_count--;
+		    }
+		}
+	      else if (i == 6 && unwind.opcode_count >= 2)
+		{
+		  i = unwind.opcodes[unwind.opcode_count - 2];
+		  reg = i >> 4;
+		  i &= 0xf;
+
+		  op = 0xffff << (reg - 1);
+		  if (reg > 0
+		      || ((wr_mask & op) == (1u << (reg - 1))))
+		    {
+		      op = (1 << (reg + i + 1)) - 1;
+		      op &= ~((1 << reg) - 1);
+		      wr_mask |= op;
+		      unwind.opcode_count -= 2;
+		    }
+		}
+	    }
+	}
+
+      hi_reg = 15;
+      /* We want to generate opcodes in the order the registers have been
+	 saved, ie. descending order.  */
+      for (reg = 15; reg >= -1; reg--)
+	{
+	  /* Save registers in blocks.  */
+	  if (reg < 0
+	      || !(wr_mask & (1 << reg)))
+	    {
+	      /* We found an unsaved reg.  Generate opcodes to save the
+		 preceeding block.  */
+	      if (reg != hi_reg)
+		{
+		  if (reg == 9)
+		    {
+		      /* Short form.  */
+		      op = 0xc0 | (hi_reg - 10);
+		      add_unwind_opcode (op, 1);
+		    }
+		  else
+		    {
+		      /* Long form.  */
+		      op = 0xc600 | ((reg + 1) << 4) | ((hi_reg - reg) - 1);
+		      add_unwind_opcode (op, 2);
+		    }
+		}
+	      hi_reg = reg - 1;
+	    }
+	}
+    }
+  return;
+error:
+  ignore_rest_of_line ();
+}
+
+
+/* Parse an unwind_save directive.  */
+
+static void
+s_arm_unwind_save (int ignored ATTRIBUTE_UNUSED)
+{
+  char *saved_ptr;
+  int reg;
+
+  /* Figure out what sort of save we have.  */
+  SKIP_WHITESPACE ();
+  saved_ptr = input_line_pointer;
+
+  reg = arm_reg_parse (&input_line_pointer, all_reg_maps[REG_TYPE_FN].htab);
+  if (reg != FAIL)
+    {
+      s_arm_unwind_save_fpa (reg);
+      return;
+    }
+
+  if (*input_line_pointer == '{')
+    input_line_pointer++;
+
+  SKIP_WHITESPACE ();
+
+  reg = arm_reg_parse (&input_line_pointer, all_reg_maps[REG_TYPE_RN].htab);
+  if (reg != FAIL)
+    {
+      input_line_pointer = saved_ptr;
+      s_arm_unwind_save_core ();
+      return;
+    }
+
+  reg = arm_reg_parse (&input_line_pointer, all_reg_maps[REG_TYPE_DN].htab);
+  if (reg != FAIL)
+    {
+      input_line_pointer = saved_ptr;
+      s_arm_unwind_save_vfp ();
+      return;
+    }
+
+  reg = arm_reg_parse (&input_line_pointer,
+		       all_reg_maps[REG_TYPE_IWMMXT].htab);
+  if (reg != FAIL)
+    {
+      input_line_pointer = saved_ptr;
+      s_arm_unwind_save_wmmx ();
+      return;
+    }
+
+  /* TODO: Maverick registers.  */
+  as_bad (_("unrecognised register"));
+}
+
+
+/* Parse an unwind_movsp directive.  */
+
+static void
+s_arm_unwind_movsp (int ignored ATTRIBUTE_UNUSED)
+{
+  int reg;
+  valueT op;
+
+  SKIP_WHITESPACE ();
+  reg = reg_required_here (&input_line_pointer, -1);
+  if (reg == FAIL)
+    {
+      as_bad (_("ARM register expected"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  if (reg == 13 || reg == 15)
+    {
+      as_bad (_("r%d not permitted in .unwind_movsp directive"), reg);
+      ignore_rest_of_line ();
+      return;
+    }
+
+  if (unwind.fp_reg != 13)
+    as_bad (_("unexpected .unwind_movsp directive"));
+
+  /* Generate opcode to restore the value.  */
+  op = 0x90 | reg;
+  add_unwind_opcode (op, 1);
+
+  /* Record the information for later.  */
+  unwind.fp_reg = reg;
+  unwind.fp_offset = unwind.frame_size;
+  unwind.sp_restored = 1;
+  demand_empty_rest_of_line ();
+}
+
+
+/* Parse #<number>.  */
+
+static int
+require_hashconst (int * val)
+{
+  expressionS exp;
+
+  SKIP_WHITESPACE ();
+  if (*input_line_pointer == '#')
+    {
+      input_line_pointer++;
+      expression (&exp);
+    }
+  else
+    exp.X_op = O_illegal;
+
+  if (exp.X_op != O_constant)
+    {
+      as_bad (_("expected #constant"));
+      ignore_rest_of_line ();
+      return FAIL;
+    }
+  *val = exp.X_add_number;
+  return SUCCESS;
+}
+
+/* Parse an unwind_pad directive.  */
+
+static void
+s_arm_unwind_pad (int ignored ATTRIBUTE_UNUSED)
+{
+  int offset;
+
+  if (require_hashconst (&offset) == FAIL)
+    return;
+
+  if (offset & 3)
+    {
+      as_bad (_("stack increment must be multiple of 4"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  /* Don't generate any opcodes, just record the details for later.  */
+  unwind.frame_size += offset;
+  unwind.pending_offset += offset;
+
+  demand_empty_rest_of_line ();
+}
+
+/* Parse an unwind_setfp directive.  */
+
+static void
+s_arm_unwind_setfp (int ignored ATTRIBUTE_UNUSED)
+{
+  int sp_reg;
+  int fp_reg;
+  int offset;
+
+  fp_reg = reg_required_here (&input_line_pointer, -1);
+  if (skip_past_comma (&input_line_pointer) == FAIL)
+    sp_reg = FAIL;
+  else
+    sp_reg = reg_required_here (&input_line_pointer, -1);
+
+  if (fp_reg == FAIL || sp_reg == FAIL)
+    {
+      as_bad (_("expected <reg>, <reg>"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  /* Optonal constant.  */
+  if (skip_past_comma (&input_line_pointer) != FAIL)
+    {
+      if (require_hashconst (&offset) == FAIL)
+	return;
+    }
+  else
+    offset = 0;
+
+  demand_empty_rest_of_line ();
+
+  if (sp_reg != 13 && sp_reg != unwind.fp_reg)
+    {
+      as_bad (_("register must be either sp or set by a previous"
+		"unwind_movsp directive"));
+      return;
+    }
+
+  /* Don't generate any opcodes, just record the information for later.  */
+  unwind.fp_reg = fp_reg;
+  unwind.fp_used = 1;
+  if (sp_reg == 13)
+    unwind.fp_offset = unwind.frame_size - offset;
+  else
+    unwind.fp_offset -= offset;
+}
+
+/* Parse an unwind_raw directive.  */
+
+static void
+s_arm_unwind_raw (int ignored ATTRIBUTE_UNUSED)
+{
+  expressionS exp;
+  /* This is an arbitary limit.  */
+  unsigned char op[16];
+  int count;
+
+  SKIP_WHITESPACE ();
+  expression (&exp);
+  if (exp.X_op == O_constant
+      && skip_past_comma (&input_line_pointer) != FAIL)
+    {
+      unwind.frame_size += exp.X_add_number;
+      expression (&exp);
+    }
+  else
+    exp.X_op = O_illegal;
+
+  if (exp.X_op != O_constant)
+    {
+      as_bad (_("expected <offset>, <opcode>"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  count = 0;
+
+  /* Parse the opcode.  */
+  for (;;)
+    {
+      if (count >= 16)
+	{
+	  as_bad (_("unwind opcode too long"));
+	  ignore_rest_of_line ();
+	}
+      if (exp.X_op != O_constant || exp.X_add_number & ~0xff)
+	{
+	  as_bad (_("invalid unwind opcode"));
+	  ignore_rest_of_line ();
+	  return;
+	}
+      op[count++] = exp.X_add_number;
+
+      /* Parse the next byte.  */
+      if (skip_past_comma (&input_line_pointer) == FAIL)
+	break;
+
+      expression (&exp);
+    }
+
+  /* Add the opcode bytes in reverse order.  */
+  while (count--)
+    add_unwind_opcode (op[count], 1);
+
+  demand_empty_rest_of_line ();
+}
+
 #endif /* OBJ_ELF */
 
 /* This is called from HANDLE_ALIGN in write.c.  Fill in the contents
    of an rs_align_code fragment.  */
 
 void
-arm_handle_align (fragP)
-     fragS *fragP;
+arm_handle_align (fragS * fragP)
 {
   static char const arm_noop[4] = { 0x00, 0x00, 0xa0, 0xe1 };
   static char const thumb_noop[2] = { 0xc0, 0x46 };
@@ -14267,9 +14773,7 @@ arm_handle_align (fragP)
    frag in a code section.  */
 
 void
-arm_frag_align_code (n, max)
-     int n;
-     int max;
+arm_frag_align_code (int n, int max)
 {
   char * p;
 
@@ -14286,15 +14790,84 @@ arm_frag_align_code (n, max)
 		(offsetT) n,
 		(char *) NULL);
   *p = 0;
-
 }
 
 /* Perform target specific initialisation of a frag.  */
 
 void
-arm_init_frag (fragP)
-     fragS *fragP;
+arm_init_frag (fragS * fragP)
 {
   /* Record whether this frag is in an ARM or a THUMB area.  */
   fragP->tc_frag_data = thumb_mode;
 }
+
+#ifdef OBJ_ELF
+
+/* Convert REGNAME to a DWARF-2 register number.  */
+
+int
+tc_arm_regname_to_dw2regnum (const char *regname)
+{
+  unsigned int i;
+
+  for (i = 0; rn_table[i].name; i++)
+    if (streq (regname, rn_table[i].name))
+      return rn_table[i].number;
+
+  return -1;
+}
+
+/* Initialize the DWARF-2 unwind information for this procedure.  */
+
+void
+tc_arm_frame_initial_instructions (void)
+{
+  cfi_add_CFA_def_cfa (REG_SP, 0);
+}
+#endif
+
+/* This table describes all the machine specific pseudo-ops the assembler
+   has to support.  The fields are:
+     pseudo-op name without dot
+     function to call to execute this pseudo-op
+     Integer arg to pass to the function.  */
+
+const pseudo_typeS md_pseudo_table[] =
+{
+  /* Never called because '.req' does not start a line.  */
+  { "req",         s_req,         0 },
+  { "unreq",       s_unreq,       0 },
+  { "bss",         s_bss,         0 },
+  { "align",       s_align,       0 },
+  { "arm",         s_arm,         0 },
+  { "thumb",       s_thumb,       0 },
+  { "code",        s_code,        0 },
+  { "force_thumb", s_force_thumb, 0 },
+  { "thumb_func",  s_thumb_func,  0 },
+  { "thumb_set",   s_thumb_set,   0 },
+  { "even",        s_even,        0 },
+  { "ltorg",       s_ltorg,       0 },
+  { "pool",        s_ltorg,       0 },
+#ifdef OBJ_ELF
+  { "word",        s_arm_elf_cons, 4 },
+  { "long",        s_arm_elf_cons, 4 },
+  { "rel31",       s_arm_rel31,   0 },
+  { "fnstart",		s_arm_unwind_fnstart,	0 },
+  { "fnend",		s_arm_unwind_fnend,	0 },
+  { "cantunwind",	s_arm_unwind_cantunwind, 0 },
+  { "personality",	s_arm_unwind_personality, 0 },
+  { "personalityindex",	s_arm_unwind_personalityindex, 0 },
+  { "handlerdata",	s_arm_unwind_handlerdata, 0 },
+  { "save",		s_arm_unwind_save,	0 },
+  { "movsp",		s_arm_unwind_movsp,	0 },
+  { "pad",		s_arm_unwind_pad,	0 },
+  { "setfp",		s_arm_unwind_setfp,	0 },
+  { "unwind_raw",	s_arm_unwind_raw,	0 },
+#else
+  { "word",        cons, 4},
+#endif
+  { "extend",      float_cons, 'x' },
+  { "ldouble",     float_cons, 'x' },
+  { "packed",      float_cons, 'p' },
+  { 0, 0, 0 }
+};

@@ -75,6 +75,7 @@ CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
 CC_FOR_BUILD = @CC_FOR_BUILD@
+CPP = @CPP@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 DATADIRNAME = @DATADIRNAME@
@@ -89,6 +90,7 @@ GCJ = @GCJ@
 GCJFLAGS = @GCJFLAGS@
 GMOFILES = @GMOFILES@
 GMSGFMT = @GMSGFMT@
+GNATBIND = @GNATBIND@
 GT_NO = @GT_NO@
 GT_YES = @GT_YES@
 HDEFINES = @HDEFINES@
@@ -99,6 +101,7 @@ INTLLIBS = @INTLLIBS@
 INTLOBJS = @INTLOBJS@
 LEX = @LEX@
 LIBTOOL = @LIBTOOL@
+LN = @LN@
 LN_S = @LN_S@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
@@ -120,7 +123,15 @@ WARN_CFLAGS = @WARN_CFLAGS@
 YACC = @YACC@
 bfdincludedir = @bfdincludedir@
 bfdlibdir = @bfdlibdir@
+build_noncanonical = @build_noncanonical@
+build_subdir = @build_subdir@
+do_compare = @do_compare@
+host_noncanonical = @host_noncanonical@
+host_subdir = @host_subdir@
 l = @l@
+ncn_cv_ = @ncn_cv_@
+target_noncanonical = @target_noncanonical@
+target_subdir = @target_subdir@
 
 AUTOMAKE_OPTIONS = cygnus
 
@@ -438,6 +449,7 @@ config.texi: Makefile
 NetBSD_DISABLED_config.text:
 	rm -f config.texi
 	echo '@set VERSION $(VERSION)' > config.texi
+	echo "@set UPDATED `date "+%B %Y"`" >> config.texi
 
 binutils.dvi:  $(binutils_TEXI) config.texi
 

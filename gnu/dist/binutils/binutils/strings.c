@@ -1,6 +1,6 @@
 /* strings -- print the strings of printable characters in files
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003 Free Software Foundation, Inc.
+   2002, 2003, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -67,6 +67,7 @@
 #include "bucomm.h"
 #include "libiberty.h"
 #include "safe-ctype.h"
+#include <sys/stat.h>
 
 /* Some platforms need to put stdin into binary mode, to read
     binary files.  */
@@ -103,6 +104,13 @@ typedef off64_t file_off;
 #else
 typedef off_t file_off;
 #define file_open(s,m) fopen(s, m)
+#endif
+#ifdef HAVE_STAT64
+typedef struct stat64 statbuf;
+#define file_stat(f,s) stat64(f, s)
+#else
+typedef struct stat statbuf;
+#define file_stat(f,s) stat(f, s)
 #endif
 
 /* Radix for printing addresses (must be 8, 10 or 16).  */
@@ -317,7 +325,7 @@ strings_a_section (bfd *abfd, asection *sect, void *filearg)
 
   if ((sect->flags & DATA_FLAGS) == DATA_FLAGS)
     {
-      bfd_size_type sz = bfd_get_section_size_before_reloc (sect);
+      bfd_size_type sz = bfd_get_section_size (sect);
       void *mem = xmalloc (sz);
 
       if (bfd_get_section_contents (abfd, sect, mem, (file_ptr) 0, sz))
@@ -370,8 +378,17 @@ strings_object_file (const char *file)
 static bfd_boolean
 strings_file (char *file)
 {
-  if (get_file_size (file) < 1)
-    return FALSE;
+  statbuf st;
+
+  if (file_stat (file, &st) < 0)
+    {
+      if (errno == ENOENT)
+	non_fatal (_("'%s': No such file"), file);
+      else
+	non_fatal (_("Warning: could not locate '%s'.  reason: %s"),
+		   file, strerror (errno));
+      return FALSE;
+    }
 
   /* If we weren't told to scan the whole file,
      try to open it as an object file and only look at
@@ -512,7 +529,7 @@ print_strings (const char *filename, FILE *stream, file_off address,
 	}
 
       /* We found a run of `string_min' graphic characters.  Print up
-         to the next non-graphic character.  */
+	 to the next non-graphic character.  */
 
       if (print_filenames)
 	printf ("%s: ", filename);
@@ -557,7 +574,8 @@ print_strings (const char *filename, FILE *stream, file_off address,
 #else
 # if !BFD_HOST_64BIT_LONG
 	    if (start != (unsigned long) start)
-	      printf ("%lx%8.8lx ", start >> 32, start & 0xffffffff);
+	      printf ("%lx%8.8lx ", (unsigned long) (start >> 32),
+		      (unsigned long) (start & 0xffffffff));
 	    else
 # endif
 #endif
@@ -637,7 +655,7 @@ usage (FILE *stream, int status)
   -f --print-file-name      Print the name of the file before each string\n\
   -n --bytes=[number]       Locate & print any NUL-terminated sequence of at\n\
   -<number>                 least [number] characters (default 4).\n\
-  -t --radix={o,x,d}        Print the location of the string in base 8, 10 or 16\n\
+  -t --radix={o,d,x}        Print the location of the string in base 8, 10 or 16\n\
   -o                        An alias for --radix=o\n\
   -T --target=<BFDNAME>     Specify the binary file format\n\
   -e --encoding={s,S,b,l,B,L} Select character size and endianness:\n\
