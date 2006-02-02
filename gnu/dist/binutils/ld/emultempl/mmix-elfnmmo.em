@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2001, 2002, 2003 Free Software Foundation, Inc.
+#   Copyright 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 #
 # This file is part of GLD, the Gnu Linker.
 #
@@ -76,7 +76,7 @@ mmix_after_allocation (void)
   if (sec == NULL)
     return;
 
-  regvma = 256 * 8 - sec->_raw_size - 8;
+  regvma = 256 * 8 - sec->size - 8;
 
   /* If we start on a local register, we have too many global registers.
      We treat this error as nonfatal (meaning processing will continue in
@@ -85,22 +85,12 @@ mmix_after_allocation (void)
   if (regvma < 32 * 8)
     {
       einfo ("%X%P: Too many global registers: %u, max 223\n",
-	     (unsigned) sec->_raw_size / 8);
+	     (unsigned) sec->size / 8);
       regvma = 32 * 8;
     }
 
   /* Set vma to correspond to first such register number * 8.  */
   bfd_set_section_vma (output_bfd, sec, (bfd_vma) regvma);
-
-  /* ??? Why isn't the section size (_cooked_size) set?  Doesn't it get
-     set regardless of presence of relocations?  */
-  if (sec->_cooked_size == 0
-      && ! bfd_set_section_size (output_bfd, sec, sec->_raw_size))
-    {
-      /* This is a fatal error; make the einfo call not return.  */
-      einfo ("%F%P: Can't set section %s size to %u\n",
-	     MMIX_REG_CONTENTS_SECTION_NAME, (unsigned) sec->_raw_size);
-    }
 
   /* Simplify symbol output for the register section (without contents;
      created for register symbols) by setting the output offset to 0.

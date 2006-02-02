@@ -1,4 +1,4 @@
-# Copyright 1993, 1996, 1997, 2002 Free Software Foundation, Inc.
+# Copyright 1993, 1996, 1997, 2002, 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ proc do_relocation_reduction_tests {} {
 
     if {[istarget hppa*64*-*-*]
         || [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
-      return;
+      return
     }
 
     if [gas_test_old "reduce.s" "" "Relocation reductions (part1)"] then {
@@ -245,7 +245,7 @@ proc do_selector_scope_test {} {
     set x 0
 
     if [istarget hppa*64*-*-*] then {
-      return;
+      return
     }
 
     if [gas_test_old "selectorbug.s" "" "Test scope of field selector (part 1)"] {
@@ -348,7 +348,7 @@ proc do_exit_relocation_test {} {
     if {[istarget hppa*64*-*-*]
 	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
 	gas_test_old "exitbug.s" "" "Test for bogus R_EXIT relocation (part 1)"
-	return;
+	return
     }
 
     if [gas_test_old "exitbug.s" "" "Test for bogus R_EXIT relocation (part 1)"] {
@@ -381,7 +381,7 @@ proc do_cross_space_fixup_test_1 {} {
     # ELF doesn't really handle extra sections too well...
     if {[istarget hppa*64*-*-*]
 	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
-	return;
+	return
     }
 
     if [gas_test_old "fixupbug.s" "" "Test cross space jump/call fixup bug (part 1)"] {
@@ -415,7 +415,7 @@ proc do_cross_space_fixup_test_2 {} {
     # ELF doesn't really handle extra sections too well...
     if {[istarget hppa*64*-*-*]
 	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
-	return;
+	return
     }
 
     gas_start "fixupbug.s" "-al"
@@ -600,7 +600,7 @@ proc do_pic_relocation_test {} {
     # ELF doesn't really handle extra sections too well...
     if {[istarget hppa*64*-*-*]
 	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
-	return;
+	return
     }
 
     gas_start "picreloc.s" "-al"
@@ -629,7 +629,7 @@ proc do_apply_test {} {
     # ELF doesn't really handle extra sections too well...
     if {[istarget hppa*64*-*-*]
 	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
-	return;
+	return
     }
 
     gas_start "applybug.s" "-al"

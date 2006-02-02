@@ -1,6 +1,6 @@
 /* Print mips instructions for GDB, the GNU debugger, or for objdump.
    Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003
+   2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
    Contributed by Nobuyuki Hikichi(hikichi@sra.co.jp).
 
@@ -414,6 +414,9 @@ static const struct mips_cp0sel_name *mips_cp0sel_names;
 static int mips_cp0sel_names_len;
 static const char * const *mips_hwr_names;
 
+/* Other options */
+static int no_aliases;	/* If set disassemble as most general inst. */
+
 static const struct mips_abi_choice *choose_abi_by_name
   PARAMS ((const char *, unsigned int));
 static const struct mips_arch_choice *choose_arch_by_name
@@ -503,6 +506,7 @@ set_default_mips_dis_options (info)
   mips_cp0sel_names = NULL;
   mips_cp0sel_names_len = 0;
   mips_hwr_names = mips_hwr_names_numeric;
+  no_aliases = 0;
 
   /* If an ELF "newabi" binary, use the n32/(n)64 GPR names.  */
   if (info->flavour == bfd_target_elf_flavour && info->section != NULL)
@@ -544,6 +548,13 @@ parse_mips_dis_option (option, len)
   const struct mips_abi_choice *chosen_abi;
   const struct mips_arch_choice *chosen_arch;
 
+  /* Try to match options that are simple flags */
+  if (strncmp (option, "no-aliases", 10) == 0)
+    {
+      no_aliases = 1;
+      return;
+    }
+  
   /* Look for the = that delimits the end of the option name.  */
   for (i = 0; i < len; i++)
     {
@@ -1071,7 +1082,8 @@ print_insn_mips (memaddr, word, info)
 	{
 	  for (op = mips_opcodes; op < &mips_opcodes[NUMOPCODES]; op++)
 	    {
-	      if (op->pinfo == INSN_MACRO)
+	      if (op->pinfo == INSN_MACRO
+		  || (no_aliases && (op->pinfo2 & INSN2_ALIAS)))
 		continue;
 	      if (i == ((op->match >> OP_SH_OP) & OP_MASK_OP))
 		{
@@ -1098,7 +1110,9 @@ print_insn_mips (memaddr, word, info)
     {
       for (; op < &mips_opcodes[NUMOPCODES]; op++)
 	{
-	  if (op->pinfo != INSN_MACRO && (word & op->mask) == op->match)
+	  if (op->pinfo != INSN_MACRO 
+	      && !(no_aliases && (op->pinfo2 & INSN2_ALIAS))
+	      && (word & op->mask) == op->match)
 	    {
 	      register const char *d;
 
@@ -1296,7 +1310,9 @@ print_insn_mips16 (memaddr, info)
   opend = mips16_opcodes + bfd_mips16_num_opcodes;
   for (op = mips16_opcodes; op < opend; op++)
     {
-      if (op->pinfo != INSN_MACRO && (insn & op->mask) == op->match)
+      if (op->pinfo != INSN_MACRO
+	  && !(no_aliases && (op->pinfo2 & INSN2_ALIAS))
+	  && (insn & op->mask) == op->match)
 	{
 	  const char *s;
 

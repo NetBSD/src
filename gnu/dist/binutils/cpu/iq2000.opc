@@ -52,7 +52,7 @@
    instructions have same mnemonics but different functionality. */
 #define CGEN_VALIDATE_INSN_SUPPORTED
 
-extern int iq2000_cgen_insn_supported (CGEN_CPU_DESC cd, CGEN_INSN *insn);
+extern int iq2000_cgen_insn_supported (CGEN_CPU_DESC cd, const CGEN_INSN *insn);
 
 /* -- asm.c */
 static const char * parse_mimm PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
@@ -60,11 +60,11 @@ static const char * parse_imm  PARAMS ((CGEN_CPU_DESC, const char **, int, unsig
 static const char * parse_hi16 PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
 static const char * parse_lo16 PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
 
-/* Special check to ensure that instruction exists for given machine */
+/* Special check to ensure that instruction exists for given machine.  */
 int
 iq2000_cgen_insn_supported (cd, insn)
      CGEN_CPU_DESC cd;
-     CGEN_INSN *insn;
+     const CGEN_INSN *insn;
 {
   int machs = cd->machs;
 
@@ -172,7 +172,7 @@ parse_jtargq10 (cd, strp, opindex, reloc, type_addr, valuep)
      int opindex;
      int reloc;
      enum cgen_parse_operand_result *type_addr;
-     unsigned long *valuep;
+     bfd_vma *valuep;
 {
   const char *errmsg;
   bfd_vma value;
@@ -182,7 +182,7 @@ parse_jtargq10 (cd, strp, opindex, reloc, type_addr, valuep)
 			       &result_type, &value);
   if (errmsg == NULL && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
     {
-      /* check value is within 23-bits (remembering that 2-bit shift right will occur) */
+      /* Check value is within 23-bits (remembering that 2-bit shift right will occur).  */
       if (value > 0x7fffff)
         return _("21-bit offset out of range");
     }

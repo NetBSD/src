@@ -1,5 +1,6 @@
 /* V850 ELF support for BFD.
-   Copyright 1997, 1998, 2000, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 2000, 2002, 2003, 2004
+   Free Software Foundation, Inc.
    Created by Michael Meissner, Cygnus Support <meissner@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -79,6 +80,7 @@ START_RELOC_NUMBERS (v850_reloc_type)
      RELOC_NUMBER (R_V850_LONGJUMP, 26)
      RELOC_NUMBER (R_V850_ALIGN, 27)
      RELOC_NUMBER (R_V850_REL32, 28)
+     RELOC_NUMBER (R_V850_LO16_SPLIT_OFFSET, 29)	/* For ld.bu */
 END_RELOC_NUMBERS (R_V850_max)
 
 

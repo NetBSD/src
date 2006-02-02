@@ -12,6 +12,8 @@ cgen-dis.c
 cgen-opc.c
 cris-dis.c
 cris-opc.c
+crx-dis.c
+crx-opc.c
 d10v-dis.c
 d10v-opc.c
 d30v-dis.c
@@ -86,6 +88,7 @@ m68hc11-opc.c
 m68k-dis.c
 m68k-opc.c
 m88k-dis.c
+maxq-dis.c
 mcore-dis.c
 mcore-opc.h
 mips16-opc.c

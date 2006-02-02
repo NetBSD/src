@@ -12,7 +12,7 @@ Disassembly of section \.text:
 
 0+120001000 <fn2>:
    120001000:	02 00 bb 27 	ldah	gp,2\(t12\)
-   120001004:	c8 91 bd 23 	lda	gp,-28216\(gp\)
+   120001004:	00 a0 bd 23 	lda	gp,-24576\(gp\)
    120001008:	3e 15 c2 43 	subq	sp,0x10,sp
    12000100c:	00 00 5e b7 	stq	ra,0\(sp\)
    120001010:	08 80 1d a6 	ldq	a0,-32760\(gp\)

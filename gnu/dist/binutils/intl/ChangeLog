@@ -1,3 +1,7 @@
+2004-11-30  Tero Niemela  <tero_niemela@yahoo.com>
+
+	* Makefile.in: Change LOCALEDIR to $(datadir)/share.
+
 2002-01-21  Thomas Klausner <wiz@danbala.ifoer.tuwien.ac.at>
 
 	* linux-msg.sed: Comment typo fix.

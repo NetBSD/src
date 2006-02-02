@@ -10,6 +10,11 @@ OTHER_TEXT_SECTIONS='*(.glue_7t) *(.glue_7)'
 OTHER_BSS_SYMBOLS='__bss_start__ = .;'
 OTHER_BSS_END_SYMBOLS='_bss_end__ = . ; __bss_end__ = . ; __end__ = . ;'
 OTHER_SECTIONS='.note.gnu.arm.ident 0 : { KEEP (*(.note.gnu.arm.ident)) }'
+OTHER_READONLY_SECTIONS="
+  .ARM.extab ${RELOCATING-0} : { *(.ARM.extab${RELOCATING+* .gnu.linkonce.armextab.*}) }
+  ${RELOCATING+ __exidx_start = .; }
+  .ARM.exidx ${RELOCATING-0} : { *(.ARM.exidx${RELOCATING+* .gnu.linkonce.armexidx.*}) }
+  ${RELOCATING+ __exidx_end = .; }"
 
 DATA_START_SYMBOLS='__data_start = . ;';
 

@@ -1,3 +1,305 @@
+2005-03-07  Ian Lance Taylor  <ian@airs.com>
+
+	* mpw-config.in: Remove.
+	* mpw-make.sed: Remove.
+	* mpw.c: Remove.
+	* Makefile.in (CFILES): Remove pex-mpw.c.
+	(CONFIGURED_OFILES): Remove pex-mpw.o.
+	(mpw.o, pex-mpw.o): Remove targets.
+	* maint-tool (undoc): Remove reference to mpw.c.
+
+2005-03-06  DJ Delorie  <dj@redhat.com>
+
+	* configure.ac (target_header_dir): vfork is a stub under djgpp.
+	* configure: Regenerated.
+
+2005-03-01  Jan Beulich  <jbeulich@novell.com>
+
+	* Makefile.in (CFILES): Add unlink-if-ordinary.c
+	(REQUIRED_OFILES): Add unlink-if-ordinary.o.
+	Add dependencies and rule for unlink-if-ordinary.o.
+	* unlink-if-ordinary.c: New.
+
+2005-03-01  Ben Elliston  <bje@au.ibm.com>
+
+	* hashtab.c (htab_find_slot_with_hash): Make function
+	documentation clearer.
+
+2005-02-13  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (__cxa_demangle): Change resolution of ambiguous
+	arguments.
+
+2005-01-11  Tobias Schl"uter  <tobias.schlueter@physik.uni-muenchen.de>
+
+	* hex.c (hex_value): Group 'unsigned int' together to get correct
+	markup.
+	* functions.texi: Regenerated.
+	
+2004-12-27  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.in: Undo to 2004-12-17.
+	* aclocal.m4: Likewise.
+	* config.table: Likewise.
+	* configure.ac: Likewise.
+	* maint-tool: Likewise.
+	* configure: Likewise.
+
+2004-12-19  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/19072
+	* Makefile.in (enable_shared): New substitute.
+	(LTTARGETLIB): New.
+	(PREFIXTARGETLIB): New.
+	(LTTESTLIB): New.
+	(PREFIXTESTLIB): New.
+	(CCLD): New.
+	(LINK): New.
+	($(TARGETLIB)): Use $(LINK) to create libraries and create
+	targets by hand.
+	($(TESTLIB)): Likewise.
+	(mostlyclean): Don't remove .libs. Remove the libtool object
+	directory.
+
+	* config.table (enable_shared): Removed.
+
+	* configure.ac (enable_static): Set to yes.
+	(AC_PROG_LIBTOOL): Removed.
+	(AM_DISABLE_SHARED): Uncommented.
+	(AM_PROG_LIBTOOL): Likewise.
+	(LIBOBJS): Add `./' to avoid VPATH.
+	(LTLIBOBJS): Likewise.
+	(enable_shared): Substitute.
+	* configure: Regenerated.
+
+2004-12-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.in (top_builddir): Set to `.'.
+	(OUTPUT_OPTION): Removed.
+	(LIBTOOL): New.
+	(LTLIBOBJS): New.
+	(EXTRA_LTOFILES): New.
+	(FLAGS_TO_PASS): Add EXTRA_LTOFILES.
+	(all): Remove stamp-picdir.
+	(LTCOMPILE): New.
+	(.c.lo): New rule.
+	(REQUIRED_LTOFILES): New.
+	(CONFIGURED_LTOFILES): New.
+	($(TARGETLIB)): Check .libs for PIC object files. Depend on
+	$(REQUIRED_LTOFILES) $(EXTRA_LTOFILES) $(LTLIBOBJS).
+	(stamp-picdir): Completely removed.
+	(maint-missing): Pass $(REQUIRED_LTOFILES)
+	$(CONFIGURED_LTOFILES) instead of (REQUIRED_OFILES)
+	$(CONFIGURED_OFILES)
+	(maint-buildall): Depend on $(REQUIRED_LTOFILES)
+	$(CONFIGURED_LTOFILES).
+	(mostlyclean): Also remove *.lo .libs.
+	Run "make maint-deps".
+
+	* aclocal.m4: Include ../libtool.m4.
+
+	* config.table: Don't check --enable-shared.
+
+	* configure.ac (AC_PROG_LIBTOOL): Add.
+	(AC_PROG_CC_C_O): Removed.
+	(OUTPUT_OPTION): Removed.
+	(NO_MINUS_C_MINUS_O): Removed.
+	(ltpexecute): New substitute.
+	(LIBOBJS): Cleanup.
+	* configure: Regenerated.
+
+	* maint-tool: Updated for .lo/libtool.
+
+2004-12-11  Ben Elliston  <bje@au.ibm.com>
+
+	* configure.ac: Invoke AC_CHECK_SIZEOF for sizeof (int).
+	* configure: Regenerate.
+	* config.in: Likewise.
+
+2004-12-07  DJ Delorie  <dj@redhat.com>
+
+	* splay-tree.c (splay_tree_delete_helper): Redesign the logic so
+	that recursion (and thus large stack space) is not needed.
+
+2004-11-29  Matt Kraai  <kraai@alumni.cmu.edu>
+
+	* pex-unix.c: Fix the spelling of longjmp.
+
+2004-11-23  Ian Lance Taylor  <ian@wasabisystems.com>
+
+	PR other/18623
+	* cp-demangle.c (d_call_offset): Remove useless local variables
+	offset and virtual_offset.
+	* cplus-dem.c (ada_demangle): Remove useless local variable
+	at_start_name.
+	(demangle_template): Remove useless local variable start.
+
+2004-11-19  Roger Sayle  <roger@eyesopen.com>
+
+	* objalloc.c, strsignal.c, xstrerror.c: Include "config.h" before
+	"ansidecl.h" to avoid redeclaration errors with native compilers.
+	* regex.c: Protect config.h from multiple inclusion.
+
+2004-11-12  Mike Stump  <mrs@apple.com>
+
+	* Makefile.in (libiberty.html): Fix html generation.
+
+2004-09-08  Adam Nemet  <anemet@lnxw.com>
+
+	* vasprintf.c: Accept __va_copy in addition to va_copy.
+
+2004-09-03  Paolo Bonzini  <bonzini@gnu.org> 
+
+	* configure: Regenerate.
+
+2004-09-02  Paolo Bonzini  <bonzini@gnu.org> 
+
+	* configure.ac: Do not enable multilibs for build-side libiberty.
+
+2004-06-29  Danny Smith  <dannysmith@users.sourceforge.net> 
+
+	* lrealpath.c (lrealpath): Add _WIN32 support.
+
+2004-06-28  Zack Weinberg  <zack@codesourcery.com>
+
+	* cp-demangle.h: Declare cplus_demangle_operators,
+	cplus_demangle_builtin_types, cplus_demangle_mangled_name, and
+	cplus_demangle_type as static if IN_GLIBCPP_V3.
+
+2004-06-28  Ian Lance Taylor  <ian@wasabisystems.com>
+
+	PR other/16240
+	* cp-demangle.c (d_expr_primary): Check for a failure return from
+	cplus_demangle_type.
+	* testsuite/demangle-expected: Add test case.
+
+2004-05-31  Danny Smith  <dannysmith@users.sourceforge.net>
+
+	* pex-win32.c (fix_argv): Expand comment.
+
+2004-05-25  Daniel Jacobowitz  <drow@false.org>
+
+	* Makefile.in: Add .NOEXPORT.
+
+2004-04-29  Douglas B Rupp  <rupp@gnat.com>
+
+	* mkstemps.c (mkstemps) [VMS]: Remove special open option. Update
+	copyright.
+
+2004-04-26  Maciej W. Rozycki  <macro@ds2.pg.gda.pl>
+
+	* configure.ac (UNSIGNED_64BIT_TYPE): Unquote the definition.
+	* configure: Regenerate.
+
+2004-04-22  Richard Henderson  <rth@redhat.com>
+
+	* hashtab.c: Include limits.h, stdint.h, ansidecl.h.
+	(CHAR_BIT): Provide default.
+	(struct prime_ent, prime_tab): New.
+	(higher_prime_index): Rename from higher_prime_number, return index.
+	(htab_mod_1): New.
+	(htab_mod, htab_mod_m2): Use it.
+	(htab_create_alloc, htab_create_alloc_ex): Store prime index.
+	(htab_expand): Likewise.
+	* configure.ac: Check for stdint.h.
+	(UNSIGNED_64BIT_TYPE): New define and checks to fill it in.
+	* config.in, configure: Rebuild.
+
+2004-04-13  Ian Lance Taylor  <ian@wasabisystems.com>
+
+	* strerror.c: Include config.h, and redefine sys_nerr and
+	sys_errlist, before including ansidecl.h and libiberty.h.
+
+2004-04-13  Jeff Law  <law@redhat.com>
+
+	* hashtab.c (htab_remove_elt_with_hash): New function.
+	(htab_remove_elt): Implement in terms of htab_remove_elt_with_hash.
+
+2004-03-31  Richard Henderson  <rth@redhat.com>
+
+	* hashtab.c (htab_size): Move to top of file; mark inline.
+	(htab_elements): Likewise.
+	(htab_mod, htab_mod_m2): New.
+	(htab_delete): Refactor htab->size and htab->entries.
+	(htab_empty): Likewise.
+	(find_empty_slot_for_expand): Use htab_size, htab_mod, htab_mod_m2.
+	(htab_find_with_hash, htab_find_slot_with_hash): Likewise.
+	(htab_clear_slot): Use htab_size, htab_elements.
+	(htab_traverse_noresize, htab_traverse): Likewise.
+
+2004-03-17  Ian Lance Taylor  <ian@wasabisystems.com>
+
+	* pex-unix.c (pexecute): Use vfork instead of fork, with
+	appropriate changes to make this safe.
+	* pex-common.h (STDERR_FILE_NO): Define.
+
+	* Makefile.in: Clean up REQUIRED_OFILES and CONFIGURED_OFILES for
+	an 80 column screen.  Run maint-deps.
+
+2004-03-09  Kelley Cook  <kcook@gcc.gnu.org>
+
+	* configure.ac: Bump version to 2.59.  Apply suggested autoupdates.
+	* acconfig.h: Delete redundant file.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+
+2004-03-09  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure: Regenerate for config/accross.m4 correction.
+
+2004-03-07  Andreas Jaeger  <aj@suse.de>
+
+	* testsuite/test-demangle.c: Include <string.h> and <stdlib.h> for
+	prototypes.
+	(main): Initialize style.
+
+2004-02-24  Ian Lance Taylor  <ian@wasabisystems.com>
+
+	* cp-demangle.h (enum d_builtin_type_print): Add D_PRINT_UNSIGNED,
+	D_PRINT_UNSIGNED_LONG, D_PRINT_LONG_LONG,
+	D_PRINT_UNSIGNED_LONG_LONG, D_PRINT_FLOAT.
+	* cp-demangle.c (cplus_demangle_builtin_types): Change char and
+	short types to D_PRINT_DEFAULT.  Change other integer types to use
+	new D_PRINT_* values where appropriate.  Change float types to
+	D_PRINT_FLOAT.
+	(d_print_comp) [LITERAL, LITERAL_NEG]: Handle new D_PRINT_*
+	values.
+	* testsuite/demangle-expected: Adjust two test cases.
+
+	* cp-demangle.c (d_print_function_type): Print a space before the
+	parenthesis around the function type in more cases.
+	* testsuite/demangle-expected: Adjust one test case.
+
+	* cp-demangle.c (d_print_comp) [UNARY]: Don't emit extra
+	parentheses around a cast.
+	* testsuite/demangle-expected: Adjust two test cases to match new
+	output.
+
+	* cp-demangle.c (__cxa_demangle): Pass DMGL_PARAMS to d_demangle.
+
+	* cp-demangle.c (d_print_comp) [RESTRICT, VOLATILE, CONST]: Don't
+	push more than one of the same CV-qualifier on the top of the
+	stack.
+	(d_print_comp) [ARRAY_TYPE]: If the array itself is CV-qualified,
+	move the CV-qualifiers to apply to the element type instead.
+	(d_print_array_type): When checking the modifiers, keep looking
+	past ones which have been printed already.
+	* testsuite/demangle-expected: Add three test cases.
+
+2004-02-23  Ian Lance Taylor  <ian@wasabisystems.com>
+
+	* cp-demangle.c (__cxa_demangle): Adjust last patch to handle
+	empty string correctly.
+
+	* cp-demangle.c (__cxa_demangle): It is not an error if status is
+	not NULL.  It is an error if the mangled name is the same as a
+	built-in type name.
+	(main): If IN_GLIBCPP_V3 is defined, test __cxa_demangle rather
+	than cplus_demangle_v3.
+
+	* dyn-string.c: Remove test of IN_LIBGCC2 and IN_GLIBCPP_V3 and
+	the associated #define of RETURN_ON_ALLOCATION_FAILURE.
+
 2004-02-16  Matt Kraai  <kraai@alumni.cmu.edu>
 
 	* regex.c: Include <ansidecl.h>.
@@ -470,7 +772,7 @@
 
 2003-08-12  Nathanael Nerode  <neroden@gcc.gnu.org>
 
-        * cp-demangle.c: Clarify what package(s) this is part of.
+	* cp-demangle.c: Clarify what package(s) this is part of.
 
 2003-07-05  Danny Smith  <dannysmith@users.sourceforge.net>
 

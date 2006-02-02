@@ -34,12 +34,36 @@
 #define dbg (0)
 #endif
 
+
+/* Classification of the opcodes for the decoder to print 
+   the instructions.  */
+
+typedef enum { 
+  CLASS_A4_ARITH,	     
+  CLASS_A4_OP3_GENERAL,
+  CLASS_A4_FLAG,
+  /* All branches other than JC.  */
+  CLASS_A4_BRANCH,
+  CLASS_A4_JC ,
+  /* All loads other than immediate 
+     indexed loads.  */
+  CLASS_A4_LD0,
+  CLASS_A4_LD1,
+  CLASS_A4_ST,
+  CLASS_A4_SR,
+  /* All single operand instructions.  */
+  CLASS_A4_OP3_SUBOPC3F,
+  CLASS_A4_LR
+} a4_decoding_class;
+
+
 #define BIT(word,n)	((word) & (1 << n))
 #define BITS(word,s,e)  (((word) << (31 - e)) >> (s + (31 - e)))
 #define OPCODE(word)	(BITS ((word), 27, 31))
 #define FIELDA(word)	(BITS ((word), 21, 26))
 #define FIELDB(word)	(BITS ((word), 15, 20))
 #define FIELDC(word)	(BITS ((word),  9, 14))
+
 
 /* FIELD D is signed in all of its uses, so we make sure argument is
    treated as signed for bit shifting purposes:  */
@@ -531,7 +555,7 @@ dsmOneArcInst (addr, state)
      struct arcDisState * state;
 {
   int condCodeIsPartOfName = 0;
-  int decodingClass;
+  a4_decoding_class decodingClass;
   const char * instrName;
   int repeatsOp = 0;
   int fieldAisReg = 1;
@@ -572,7 +596,7 @@ dsmOneArcInst (addr, state)
 
   state->_opcode = OPCODE (state->words[0]);
   instrName = 0;
-  decodingClass = 0; /* default!  */
+  decodingClass = CLASS_A4_ARITH; /* default!  */
   repeatsOp = 0;
   condCodeIsPartOfName=0;
   state->commNum = 0;
@@ -606,14 +630,14 @@ dsmOneArcInst (addr, state)
 	  state->flow = invalid_instr;
 	  break;
 	}
-      decodingClass = 5;
+      decodingClass = CLASS_A4_LD0;
       break;
 
     case op_LD1:
       if (BIT (state->words[0],13))
 	{
 	  instrName = "lr";
-	  decodingClass = 10;
+	  decodingClass = CLASS_A4_LR;
 	}
       else
 	{
@@ -636,7 +660,7 @@ dsmOneArcInst (addr, state)
 	      state->flow = invalid_instr;
 	      break;
 	    }
-	  decodingClass = 6;
+	  decodingClass = CLASS_A4_LD1;
 	}
       break;
 
@@ -644,7 +668,7 @@ dsmOneArcInst (addr, state)
       if (BIT (state->words[0],25))
 	{
 	  instrName = "sr";
-	  decodingClass = 8;
+	  decodingClass = CLASS_A4_SR;
 	}
       else
 	{
@@ -664,17 +688,17 @@ dsmOneArcInst (addr, state)
 	      state->flow = invalid_instr;
 	      break;
 	    }
-	  decodingClass = 7;
+	  decodingClass = CLASS_A4_ST;
 	}
       break;
 
     case op_3:
-      decodingClass = 1;  /* default for opcode 3...  */
+      decodingClass = CLASS_A4_OP3_GENERAL;  /* default for opcode 3...  */
       switch (FIELDC (state->words[0]))
 	{
 	case  0:
 	  instrName = "flag";
-	  decodingClass = 2;
+	  decodingClass = CLASS_A4_FLAG;
 	  break;
 	case  1:
 	  instrName = "asr";
@@ -702,7 +726,7 @@ dsmOneArcInst (addr, state)
 	  break;
 	case  0x3f:
 	  {
-	    decodingClass = 9;
+	    decodingClass = CLASS_A4_OP3_SUBOPC3F;
 	    switch( FIELDD (state->words[0]) )
 	      {
 	      case 0:
@@ -763,7 +787,7 @@ dsmOneArcInst (addr, state)
 	    }
 	}
       condCodeIsPartOfName = 1;
-      decodingClass = ((state->_opcode == op_JC) ? 4 : 3);
+      decodingClass = ((state->_opcode == op_JC) ? CLASS_A4_JC : CLASS_A4_BRANCH );
       state->isBranch = 1;
       break;
 
@@ -771,7 +795,6 @@ dsmOneArcInst (addr, state)
     case op_ADC:
     case op_AND:
       repeatsOp = (FIELDC (state->words[0]) == FIELDB (state->words[0]));
-      decodingClass = 0;
 
       switch (state->_opcode)
 	{
@@ -801,7 +824,7 @@ dsmOneArcInst (addr, state)
 	{
 	  /* nop encoded as xor -1, -1, -1  */
 	  instrName = "nop";
-	  decodingClass = 9;
+	  decodingClass = CLASS_A4_OP3_SUBOPC3F;
 	}
       else
 	instrName = "xor";
@@ -828,7 +851,7 @@ dsmOneArcInst (addr, state)
 
   switch (decodingClass)
     {
-    case 0:
+    case CLASS_A4_ARITH:
       CHECK_FIELD_A ();
       CHECK_FIELD_B ();
       if (!repeatsOp)
@@ -857,7 +880,7 @@ dsmOneArcInst (addr, state)
       write_comments ();
       break;
 
-    case 1:
+    case CLASS_A4_OP3_GENERAL:
       CHECK_FIELD_A ();
       CHECK_FIELD_B ();
       CHECK_FLAG_COND_NULLIFY ();
@@ -879,7 +902,7 @@ dsmOneArcInst (addr, state)
       write_comments ();
       break;
 
-    case 2:
+    case CLASS_A4_FLAG:
       CHECK_FIELD_B ();
       CHECK_FLAG_COND_NULLIFY ();
       flag = 0; /* this is the FLAG instruction -- it's redundant  */
@@ -890,7 +913,7 @@ dsmOneArcInst (addr, state)
       write_comments ();
       break;
 
-    case 3:
+    case CLASS_A4_BRANCH:
       fieldA = BITS (state->words[0],7,26) << 2;
       fieldA = (fieldA << 10) >> 10; /* make it signed  */
       fieldA += addr + 4;
@@ -915,7 +938,7 @@ dsmOneArcInst (addr, state)
       write_comments ();
       break;
 
-    case 4:
+    case CLASS_A4_JC:
       /* For op_JC -- jump to address specified.
 	 Also covers jump and link--bit 9 of the instr. word
 	 selects whether linked, thus "is_linked" is set above.  */
@@ -961,7 +984,7 @@ dsmOneArcInst (addr, state)
       write_comments ();
       break;
 
-    case 5:
+    case CLASS_A4_LD0:
       /* LD instruction.
 	 B and C can be regs, or one (both?) can be limm.  */
       CHECK_FIELD_A ();
@@ -999,7 +1022,7 @@ dsmOneArcInst (addr, state)
       write_comments ();
       break;
 
-    case 6:
+    case CLASS_A4_LD1:
       /* LD instruction.  */
       CHECK_FIELD_B ();
       CHECK_FIELD_A ();
@@ -1045,7 +1068,7 @@ dsmOneArcInst (addr, state)
       write_comments ();
       break;
 
-    case 7:
+    case CLASS_A4_ST:
       /* ST instruction.  */
       CHECK_FIELD_B();
       CHECK_FIELD_C();
@@ -1090,7 +1113,8 @@ dsmOneArcInst (addr, state)
 		  fieldC, fieldB, fieldA);
       write_comments2(fieldA);
       break;
-    case 8:
+
+    case CLASS_A4_SR:
       /* SR instruction  */
       CHECK_FIELD_B();
       CHECK_FIELD_C();
@@ -1105,12 +1129,12 @@ dsmOneArcInst (addr, state)
       write_comments();
       break;
 
-    case 9:
+    case CLASS_A4_OP3_SUBOPC3F:
       write_instr_name();
       state->operandBuffer[0] = '\0';
       break;
 
-    case 10:
+    case CLASS_A4_LR:
       /* LR instruction */
       CHECK_FIELD_A();
       CHECK_FIELD_B();
@@ -1125,11 +1149,6 @@ dsmOneArcInst (addr, state)
       write_comments();
       break;
 
-    case 11:
-      CHECK_COND();
-      write_instr_name();
-      state->operandBuffer[0] = '\0';
-      break;
 
     default:
       mwerror (state, "Bad decoding class in ARC disassembler");

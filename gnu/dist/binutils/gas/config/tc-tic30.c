@@ -1,5 +1,6 @@
 /* tc-c30.c -- Assembly code for the Texas Instruments TMS320C30
-   Copyright 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This file is part of GAS, the GNU Assembler.

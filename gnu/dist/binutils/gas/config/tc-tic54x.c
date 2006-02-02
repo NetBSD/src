@@ -1,5 +1,6 @@
 /* tc-tic54x.c -- Assembly code for the Texas Instruments TMS320C54X
-   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of GAS, the GNU Assembler.
@@ -153,9 +154,6 @@ struct option md_longopts[] =
   { "mfar-mode",       no_argument,	    NULL, OPTION_ADDRESS_MODE },
   { "mf",	       no_argument,	    NULL, OPTION_ADDRESS_MODE },
   { "mcpu",	       required_argument,   NULL, OPTION_CPU_VERSION },
-#if 0
-  { "mcoff-version",   required_argument,   NULL, OPTION_COFF_VERSION },
-#endif
   { "merrors-to-file", required_argument,   NULL, OPTION_STDERR_TO_FILE },
   { "me",	       required_argument,   NULL, OPTION_STDERR_TO_FILE },
   { NULL,              no_argument,         NULL, 0},
@@ -349,9 +347,6 @@ md_show_usage (stream)
   fprintf (stream, _("C54x-specific command line  options:\n"));
   fprintf (stream, _("-mfar-mode | -mf          Use extended addressing\n"));
   fprintf (stream, _("-mcpu=<CPU version>       Specify the CPU version\n"));
-#if 0
-  fprintf (stream, _("-mcoff-version={0|1|2}    Select COFF version\n"));
-#endif
   fprintf (stream, _("-merrors-to-file <filename>\n"));
   fprintf (stream, _("-me <filename>            Redirect errors to a file\n"));
 }
@@ -667,7 +662,7 @@ tic54x_bss (x)
     }
 
   if (block)
-    bss_section->flags |= SEC_BLOCK;
+    bss_section->flags |= SEC_TIC54X_BLOCK;
 
   subseg_set (current_seg, current_subseg);	/* Restore current seg.  */
   demand_empty_rest_of_line ();
@@ -1580,7 +1575,7 @@ tic54x_usect (x)
   *p = 0;
 
   if (blocking_flag)
-    flags |= SEC_BLOCK;
+    flags |= SEC_TIC54X_BLOCK;
 
   if (!bfd_set_section_flags (stdoutput, seg, flags))
     as_warn ("Error setting flags for \"%s\": %s", name,
@@ -2020,7 +2015,7 @@ tic54x_clink (ignored)
 	}
     }
 
-  seg->flags |= SEC_CLINK;
+  seg->flags |= SEC_TIC54X_CLINK;
 
   demand_empty_rest_of_line ();
 }
@@ -2331,7 +2326,7 @@ tic54x_sblock (ignore)
 	  ignore_rest_of_line ();
 	  return;
 	}
-      seg->flags |= SEC_BLOCK;
+      seg->flags |= SEC_TIC54X_BLOCK;
 
       c = *input_line_pointer;
       if (!is_end_of_line[(int) c])
@@ -2583,9 +2578,6 @@ const pseudo_typeS md_pseudo_table[] =
   { "emsg"     , tic54x_message           ,        'e' },
   { "mmsg"     , tic54x_message           ,        'm' },
   { "wmsg"     , tic54x_message           ,        'w' },
-#if 0
-  { "end"      , s_end                    ,          0 },
-#endif
   { "far_mode" , tic54x_address_mode      ,   far_mode },
   { "fclist"   , tic54x_fclist            ,          1 },
   { "fcnolist" , tic54x_fclist            ,          0 },
@@ -2611,10 +2603,6 @@ const pseudo_typeS md_pseudo_table[] =
                                                              address.  */
   { "length"   , s_ignore                 ,          0 },
   { "width"    , s_ignore                 ,          0 },
-#if 0
-  { "list"     , listing_list             ,          1 },
-  { "nolist"   , listing_list             ,          0 },
-#endif
   { "long"     , tic54x_cons              ,        'l' },
   { "ulong"    , tic54x_cons              ,        'L' },
   { "xlong"    , tic54x_cons              ,        'x' },
@@ -2628,9 +2616,6 @@ const pseudo_typeS md_pseudo_table[] =
   { "newblock" , tic54x_clear_local_labels,          0 },
   { "option"   , s_ignore                 ,          0 },
   { "p2align"  , tic54x_p2align           ,          0 },
-#if 0
-  { "page"     , listing_eject            ,          0 },
-#endif
   { "sblock"   , tic54x_sblock            ,          0 },
   { "sect"     , tic54x_sect              ,        '*' },
   { "set"      , tic54x_set               ,          0 },
@@ -2646,9 +2631,6 @@ const pseudo_typeS md_pseudo_table[] =
   { "endstruct", tic54x_endstruct         ,          0 },
   { "tab"      , s_ignore                 ,          0 },
   { "text"     , tic54x_sect              ,        't' },
-#if 0
-  { "title"    , listing_title            ,          0 },
-#endif
   { "union"    , tic54x_struct            ,          1 },
   { "endunion" , tic54x_endstruct         ,          1 },
   { "usect"    , tic54x_usect             ,          0 },
@@ -2656,21 +2638,6 @@ const pseudo_typeS md_pseudo_table[] =
   { "version"  , tic54x_version           ,          0 },
   {0           , 0                        ,          0 }
 };
-
-#if 0
-/* For debugging, strings for each operand type.  */
-static const char *optypes[] =
-{
-  "none", "Xmem", "Ymem", "pmad", "dmad", "Smem", "Lmem", "MMR", "PA",
-  "Sind", "xpmad", "xpmad+", "MMRX", "MMRY",
-  "SRC1", "SRC", "RND", "DST",
-  "ARX",
-  "SHIFT", "SHFT",
-  "B", "A", "lk", "TS", "k8", "16", "BITC", "CC", "CC2", "CC3", "123", "031",
-  "k5", "k8u", "ASM", "T", "DP", "ARP", "k3", "lku", "N", "SBIT", "12",
-  "k9", "TRN",
-};
-#endif
 
 int
 md_parse_option (c, arg)
@@ -5080,24 +5047,6 @@ subsym_substitute (line, forced)
 		      break;
 		    }
 		  ++tail;
-#if 0
-		  /* Try to replace required whitespace
-		     eliminated by the preprocessor; technically, a forced
-		     substitution could come anywhere, even mid-symbol,
-		     e.g. if x is "0", 'sym:x:end' should result in 'sym0end',
-		     but 'sym:x: end' should result in 'sym0 end'.
-		     FIXME -- this should really be fixed in the preprocessor,
-		     but would require several new states;
-		     KEEP_WHITE_AROUND_COLON does part of the job, but isn't
-		     complete.  */
-		  if ((is_part_of_name (tail[1])
-		       && tail[1] != '.'
-		       && tail[1] != '$')
-		      || tail[1] == '\0' || tail[1] == ',' || tail[1] == '"')
-		    ++tail;
-		  else
-		    *tail = ' ';
-#endif
 		}
 	      else
 		/* Restore the character after the symbol end.  */
@@ -5379,7 +5328,7 @@ tic54x_adjust_symtab ()
       char *filename;
       unsigned lineno;
       as_where (&filename, &lineno);
-      c_dot_file_symbol (filename);
+      c_dot_file_symbol (filename, 0);
     }
 }
 
@@ -5402,11 +5351,6 @@ void
 tic54x_define_label (sym)
      symbolS *sym;
 {
-#if 0
-  static int local_label_count = 0;
-  const char *name = S_GET_NAME (sym);
-#endif
-
   /* Just in case we need this later; note that this is not necessarily the
      same thing as line_label...
      When aligning or assigning labels to fields, sometimes the label is
@@ -5456,17 +5400,6 @@ tic54x_parse_name (name, exp)
      char *name ATTRIBUTE_UNUSED;
      expressionS *exp ATTRIBUTE_UNUSED;
 {
-#if 0
-  symbol *sym = (symbol *) hash_find (mmreg_hash, name);
-
-  /* If it's a MMREG, replace it with its constant value.  */
-  if (sym)
-    {
-      exp->X_op = O_constant;
-      exp->X_add_number = sym->value;
-      return 1;
-    }
-#endif
   return 0;
 }
 

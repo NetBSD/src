@@ -1,6 +1,6 @@
 /* search-list.h
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2004 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -43,6 +43,6 @@ typedef struct
   }
 Search_List;
 
-extern void search_list_append PARAMS ((Search_List *, const char *));
+extern void search_list_append (Search_List *, const char *);
 
 #endif /* search_list_h */

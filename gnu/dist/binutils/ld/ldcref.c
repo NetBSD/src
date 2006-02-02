@@ -1,5 +1,5 @@
 /* ldcref.c -- output a cross reference table
-   Copyright 1996, 1997, 1998, 2000, 2002, 2003
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>
 
@@ -69,7 +69,7 @@ struct cref_hash_table {
 /* Forward declarations.  */
 
 static void output_one_cref (FILE *, struct cref_hash_entry *);
-static void check_section_sym_xref (lang_input_statement_type *);
+static void check_local_sym_xref (lang_input_statement_type *);
 static bfd_boolean check_nocrossref (struct cref_hash_entry *, void *);
 static void check_refs (const char *, asection *, bfd *,
 			struct lang_nocrossrefs *);
@@ -136,7 +136,7 @@ cref_hash_newfunc (struct bfd_hash_entry *entry,
 }
 
 /* Add a symbol to the cref hash table.  This is called for every
-   symbol that is seen during the link.  */
+   global symbol that is seen during the link.  */
 
 void
 add_cref (const char *name,
@@ -330,39 +330,69 @@ check_nocrossrefs (void)
 
   cref_hash_traverse (&cref_table, check_nocrossref, NULL);
 
-  lang_for_each_file (check_section_sym_xref);
+  lang_for_each_file (check_local_sym_xref);
 }
 
-/* Checks for prohibited cross references to section symbols.  */
+/* Check for prohibited cross references to local and section symbols.  */
 
 static void
-check_section_sym_xref (lang_input_statement_type *statement)
+check_local_sym_xref (lang_input_statement_type *statement)
 {
   bfd *abfd;
-  asection *sec;
+  lang_input_statement_type *li;
+  asymbol **asymbols, **syms;
 
   abfd = statement->the_bfd;
   if (abfd == NULL)
     return;
 
-  for (sec = abfd->sections; sec != NULL; sec = sec->next)
+  li = abfd->usrdata;
+  if (li != NULL && li->asymbols != NULL)
+    asymbols = li->asymbols;
+  else
     {
-      asection *outsec;
+      long symsize;
+      long symbol_count;
 
-      outsec = sec->output_section;
-      if (outsec != NULL)
+      symsize = bfd_get_symtab_upper_bound (abfd);
+      if (symsize < 0)
+	einfo (_("%B%F: could not read symbols; %E\n"), abfd);
+      asymbols = xmalloc (symsize);
+      symbol_count = bfd_canonicalize_symtab (abfd, asymbols);
+      if (symbol_count < 0)
+	einfo (_("%B%F: could not read symbols: %E\n"), abfd);
+      if (li != NULL)
 	{
-	  const char *outsecname;
+	  li->asymbols = asymbols;
+	  li->symbol_count = symbol_count;
+	}
+    }
+
+  for (syms = asymbols; *syms; ++syms)
+    {
+      asymbol *sym = *syms;
+      if (sym->flags & (BSF_GLOBAL | BSF_WARNING | BSF_INDIRECT | BSF_FILE))
+	continue;
+      if ((sym->flags & (BSF_LOCAL | BSF_SECTION_SYM)) != 0
+	  && sym->section->output_section != NULL)
+	{
+	  const char *outsecname, *symname;
 	  struct lang_nocrossrefs *ncrs;
 	  struct lang_nocrossref *ncr;
 
-	  outsecname = outsec->name;
+	  outsecname = sym->section->output_section->name;
+	  symname = NULL;
+	  if ((sym->flags & BSF_SECTION_SYM) == 0)
+	    symname = sym->name;
 	  for (ncrs = nocrossref_list; ncrs != NULL; ncrs = ncrs->next)
 	    for (ncr = ncrs->list; ncr != NULL; ncr = ncr->next)
 	      if (strcmp (ncr->name, outsecname) == 0)
-		check_refs (NULL, sec, abfd, ncrs);
+		check_refs (symname, sym->section, abfd, ncrs);
 	}
     }
+
+  if (li == NULL)
+    free (asymbols);
 }
 
 /* Check one symbol to see if it is a prohibited cross reference.  */

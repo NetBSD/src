@@ -1,5 +1,5 @@
 # Expect script for ld-sparc tests
-#   Copyright (C) 2002, 2003 Free Software Foundation
+#   Copyright (C) 2002, 2003, 2005 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,11 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 
-# Test i386 linking; all types of relocs.  This tests the assembler and
+# Test SPARC linking; all types of relocs.  This tests the assembler and
 # tools like objdump as well as the linker.
 
-if { !([istarget "sparc*-*-elf*"]		
+if { !([istarget "sparc*-*-elf*"]
+       || [istarget "sparc*-sun-solaris*"]
        || ([istarget "sparc*-*-linux*"]
 	   && ![istarget "*-*-*aout*"]
 	   && ![istarget "*-*-*oldld*"])) } {
@@ -84,5 +85,7 @@ set sparc64tests {
      {{objdump -sj.debug_foobar tlsg64.sd}} "tlsg64"}
 }
 
-run_ld_link_tests $sparctests
+if { ![istarget "sparc64-*-elf*"] } {
+    run_ld_link_tests $sparctests
+}
 # run_ld_link_tests $sparc64tests

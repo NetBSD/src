@@ -15,7 +15,7 @@ AM_CFLAGS = $(WARN_CFLAGS)
 
 MKDEP = gcc -MM
 
-INCLUDES = -D_GNU_SOURCE -DDEBUG -I../bfd -I$(srcdir)/../include -I$(srcdir)/../bfd -I$(srcdir)/../intl -I../intl -I. -DLOCALEDIR="\"$(prefix)/share/locale\""
+INCLUDES = -D_GNU_SOURCE -DDEBUG -I../bfd -I$(srcdir)/../include -I$(srcdir)/../bfd -I$(srcdir)/../intl -I../intl -I. -DLOCALEDIR="\"$(datadir)/locale\""
 
 bin_PROGRAMS = gprof
 
@@ -73,7 +73,7 @@ Makefile: $(BFDDIR)/configure.in
 
 # We want install to imply install-info as per GNU standards, despite the
 # cygnus option.
-install: install-info
+install-data-local: install-info
 
 # Targets to rebuild dependencies in this Makefile.
 # Have to get rid of DEP1 here so that "$?" later includes all sources.
@@ -196,11 +196,11 @@ sym_ids.o: sym_ids.c $(INCDIR)/libiberty.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/fopen-same.h $(INCDIR)/filenames.h ../bfd/bfd.h \
   $(INCDIR)/symcat.h gconfig.h $(INCDIR)/bin-bugs.h search_list.h \
   source.h symtab.h cg_arcs.h sym_ids.h
-utils.o: utils.c $(INCDIR)/demangle.h $(INCDIR)/ansidecl.h \
-  gprof.h $(BFDDIR)/sysdep.h ../bfd/config.h $(INCDIR)/fopen-same.h \
-  $(INCDIR)/filenames.h ../bfd/bfd.h $(INCDIR)/symcat.h \
-  gconfig.h $(INCDIR)/bin-bugs.h search_list.h source.h \
-  symtab.h cg_arcs.h utils.h
+utils.o: utils.c $(INCDIR)/demangle.h $(INCDIR)/libiberty.h \
+  $(INCDIR)/ansidecl.h gprof.h $(BFDDIR)/sysdep.h ../bfd/config.h \
+  $(INCDIR)/fopen-same.h $(INCDIR)/filenames.h ../bfd/bfd.h \
+  $(INCDIR)/symcat.h gconfig.h $(INCDIR)/bin-bugs.h search_list.h \
+  source.h symtab.h cg_arcs.h utils.h
 i386.o: i386.c gprof.h $(BFDDIR)/sysdep.h $(INCDIR)/ansidecl.h \
   ../bfd/config.h $(INCDIR)/fopen-same.h $(INCDIR)/filenames.h \
   ../bfd/bfd.h $(INCDIR)/symcat.h gconfig.h $(INCDIR)/bin-bugs.h \

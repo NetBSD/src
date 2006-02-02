@@ -1,5 +1,5 @@
 #  S/390 opcodes list. Use s390-mkopc to convert it into the opcode table.
-#  Copyright 2000, 2001 Free Software Foundation, Inc.
+#  Copyright 2000, 2001, 2003, 2004 Free Software Foundation, Inc.
 #  Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 5a a RX_RRRD "add" g5 esa,zarch
 6a ad RX_FRRD "add normalized (long)" g5 esa,zarch
@@ -726,8 +726,8 @@ e3000000001a algf RXY_RRRD "add logical with long offset 64<32" z990 zarch
 e3000000001b slgf RXY_RRRD "subtract logical with long offset 64<32" z990 zarch
 e3000000001c msgf RXY_RRRD "multiply single with long offset 64<32" z990 zarch
 e3000000001d dsgf RXY_RRRD "divide single 64<32" z990 zarch
-e3000000001e lrv RXY_RRRD "load reversed 32" z990 zarch
-e3000000001f lrvh RXY_RRRD "load reversed 16" z990 zarch
+e3000000001e lrv RXY_RRRD "load reversed 32" z990 esa,zarch
+e3000000001f lrvh RXY_RRRD "load reversed 16" z990 esa,zarch
 e30000000020 cg RXY_RRRD "compare with long offset 64" z990 zarch
 e30000000021 clg RXY_RRRD "compare logical with long offset 64" z990 zarch
 e30000000024 stg RXY_RRRD "store with long offset 64" z990 zarch
@@ -735,7 +735,7 @@ e3000000002e cvdg RXY_RRRD "convert to decimal with long offset 64" z990 zarch
 e3000000002f strvg RXY_RRRD "store reversed 64" z990 zarch
 e30000000030 cgf RXY_RRRD "compare with long offset 64<32" z990 zarch
 e30000000031 clgf RXY_RRRD "compare logical with long offset 64<32" z990 zarch
-e3000000003e strv RXY_RRRD "store reversed 32" z990 zarch
+e3000000003e strv RXY_RRRD "store reversed 32" z990 esa,zarch
 e3000000003f strvh RXY_RRRD "store reversed 64" z990 zarch
 e30000000046 bctg RXY_RRRD "branch on count 64" z990 zarch
 e30000000080 ng RXY_RRRD "and with long offset 64" z990 zarch
@@ -749,10 +749,10 @@ e3000000008e stpq RXY_RRRD "store pair to quadword" z990 zarch
 e3000000008f lpq RXY_RRRD "load pair from quadword" z990 zarch
 e30000000090 llgc RXY_RRRD "load logical character" z990 zarch
 e30000000091 llgh RXY_RRRD "load logical halfword" z990 zarch
-e30000000096 ml RXY_RRRD "multiply logical 32" z990 zarch
-e30000000097 dl RXY_RRRD "divide logical 32" z990 zarch
-e30000000098 alc RXY_RRRD "add logical with carry 32" z990 zarch
-e30000000099 slb RXY_RRRD "subtract logical with borrow 32" z990 zarch
+e30000000096 ml RXY_RRRD "multiply logical 32" z990 esa,zarch
+e30000000097 dl RXY_RRRD "divide logical 32" z990 esa,zarch
+e30000000098 alc RXY_RRRD "add logical with carry 32" z990 esa,zarch
+e30000000099 slb RXY_RRRD "subtract logical with borrow 32" z990 esa,zarch
 eb0000000004 lmg RSY_RRRD "load multiple with long offset 64" z990 zarch
 eb000000000a srag RSY_RRRD "shift right single 64" z990 zarch
 eb000000000b slag RSY_RRRD "shift left single 64" z990 zarch
@@ -760,7 +760,7 @@ eb000000000c srlg RSY_RRRD "shift right single logical 64" z990 zarch
 eb000000000d sllg RSY_RRRD "shift left single logical 64" z990 zarch
 eb000000000f tracg RSY_RRRD "trace 64" z990 zarch
 eb000000001c rllg RSY_RRRD "rotate left single logical 64" z990 zarch
-eb000000001d rll RSY_RRRD "rotate left single logical 32" z990 zarch
+eb000000001d rll RSY_RRRD "rotate left single logical 32" z990 esa,zarch
 eb0000000020 clmh RSY_RURD "compare logical characters under mask high with long offset" z990 zarch
 eb0000000024 stmg RSY_RRRD "store multiple with long offset 64" z990 zarch
 eb0000000025 stctg RSY_RRRD "store control 64" z990 zarch
@@ -772,7 +772,7 @@ eb000000003e cdsg RSY_RRRD "compare double and swap with long offset 64" z990 za
 eb0000000044 bxhg RSY_RRRD "branch on index high 64" z990 zarch
 eb0000000045 bxleg RSY_RRRD "branch on index low or equal 64" z990 zarch
 eb0000000080 icmh RSY_RURD "insert characters under mask high with long offset" z990 zarch
-eb000000008e mvclu RSY_RRRD "move long unicode" z990 zarch
+eb000000008e mvclu RSY_RRRD "move long unicode" z990 esa,zarch
 eb000000008f clclu RSY_RRRD "compare logical long unicode with long offset" z990 zarch
 eb0000000096 lmh RSY_RRRD "load multiple high" z990 zarch
 # new z990 instructions

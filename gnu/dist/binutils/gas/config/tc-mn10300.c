@@ -1,5 +1,5 @@
 /* tc-mn10300.c -- Assembler code for the Matsushita 10300
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -54,15 +54,20 @@ const char EXP_CHARS[] = "eE";
    as in 0d1.0.  */
 const char FLT_CHARS[] = "dD";
 
-const relax_typeS md_relax_table[] = {
+const relax_typeS md_relax_table[] =
+{
+  /* The plus values for the bCC and fBCC instructions in the table below
+     are because the branch instruction is translated into a jump
+     instruction that is now +2 or +3 bytes further on in memory, and the
+     correct size of jump instruction must be selected.  */
   /* bCC relaxing  */
   {0x7f, -0x80, 2, 1},
-  {0x7fff, -0x8000, 5, 2},
+  {0x7fff + 2, -0x8000 + 2, 5, 2},
   {0x7fffffff, -0x80000000, 7, 0},
 
-  /* bCC relaxing (uncommon cases)  */
+  /* bCC relaxing (uncommon cases for 3byte length instructions)  */
   {0x7f, -0x80, 3, 4},
-  {0x7fff, -0x8000, 6, 5},
+  {0x7fff + 3, -0x8000 + 3, 6, 5},
   {0x7fffffff, -0x80000000, 8, 0},
 
   /* call relaxing  */
@@ -80,7 +85,7 @@ const relax_typeS md_relax_table[] = {
 
   /* fbCC relaxing  */
   {0x7f, -0x80, 3, 14},
-  {0x7fff, -0x8000, 6, 15},
+  {0x7fff + 3, -0x8000 + 3, 6, 15},
   {0x7fffffff, -0x80000000, 8, 0},
 
 };
@@ -2542,6 +2547,15 @@ mn10300_fix_adjustable (fixp)
   if (S_GET_SEGMENT (fixp->fx_addsy)->flags & SEC_CODE)
     return 0;
 
+  /* Likewise, do not adjust symbols that won't be merged, or debug
+     symbols, because they too break relaxation.  We do want to adjust
+     other mergable symbols, like .rodata, because code relaxations
+     need section-relative symbols to properly relax them.  */
+  if (! (S_GET_SEGMENT(fixp->fx_addsy)->flags & SEC_MERGE))
+    return 0;
+  if (strncmp (S_GET_SEGMENT (fixp->fx_addsy)->name, ".debug", 6) == 0)
+    return 0;
+
   return 1;
 }
 
@@ -2584,17 +2598,7 @@ mn10300_insert_operand (insnp, extensionp, operand, val, file, line, shift)
       test = val;
 
       if (test < (offsetT) min || test > (offsetT) max)
-	{
-	  const char *err =
-	    _("operand out of range (%s not between %ld and %ld)");
-	  char buf[100];
-
-	  sprint_value (buf, test);
-	  if (file == (char *) NULL)
-	    as_warn (err, buf, min, max);
-	  else
-	    as_warn_where (file, line, err, buf, min, max);
-	}
+	as_warn_value_out_of_range (_("operand"), test, (offsetT) min, (offsetT) max, file, line);
     }
 
   if ((operand->flags & MN10300_OPERAND_SPLIT) != 0)

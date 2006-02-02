@@ -5,15 +5,15 @@ Section Headers:
   \[ 0\]                   NULL            00000000 000000 000000 00      0   0  0
   \[ 1\] \.init             PROGBITS        00001000 000100 000004 00 AXp  0   0  4
   \[ 2\] \.text             PROGBITS        00001004 000104 000018 00 AXp  0   0  4
-  \[ 3\] \.data             PROGBITS        000010a0 000120 000000 00  WA  0   0  1
-  \[ 4\] \.ctors            PROGBITS        000010a0 000184 000000 00   W  0   0  1
-  \[ 5\] \.dtors            PROGBITS        000010a0 000184 000000 00   W  0   0  1
+  \[ 3\] \.ctors            PROGBITS        000010a0 000184 000000 00   W  0   0  1
+  \[ 4\] \.dtors            PROGBITS        000010a0 000184 000000 00   W  0   0  1
+  \[ 5\] \.data             PROGBITS        000010a0 000120 000000 00  WA  0   0  1
   \[ 6\] \.sbss             PROGBITS        000010a0 000184 000000 00   W  0   0  1
   \[ 7\] \.bss              NOBITS          000010a0 000120 000000 00  WA  0   0  1
   \[ 8\] \.stack            PROGBITS        00080000 000180 000004 00  WA  0   0  1
   \[ 9\] \.cranges          LOUSER\+1        00000000 000184 00001e 00   W  0   0  1
   \[10\] \.shstrtab         STRTAB          00000000 0001a2 000056 00      0   0  1
-  \[11\] \.symtab           SYMTAB          00000000 000400 000180 10     12   e  4
+  \[11\] \.symtab           SYMTAB          00000000 000400 000180 10     12  14  4
   \[12\] \.strtab           STRTAB          00000000 000580 000064 00      0   0  1
 Key to Flags:
   W \(write\), A \(alloc\), X \(execute\), M \(merge\), S \(strings\)
@@ -38,16 +38,16 @@ Symbol table '\.symtab' contains 24 entries:
     11: 00000000     0 SECTION LOCAL  DEFAULT   11 
     12: 00000000     0 SECTION LOCAL  DEFAULT   12 
     13: 00001004     0 NOTYPE  LOCAL  DEFAULT    2 start2
-    14: 000010a0     0 NOTYPE  GLOBAL DEFAULT    5 ___dtors
+    14: 000010a0     0 NOTYPE  GLOBAL DEFAULT    4 ___dtors
     15: 000010a0     0 NOTYPE  GLOBAL DEFAULT  ABS __bss_start
-    16: 000010a0     0 NOTYPE  GLOBAL DEFAULT    4 ___ctors_end
+    16: 000010a0     0 NOTYPE  GLOBAL DEFAULT    3 ___ctors_end
     17: 00001004     0 NOTYPE  GLOBAL DEFAULT    2 diversion2
-    18: 000010a0     0 NOTYPE  GLOBAL DEFAULT    4 ___ctors
+    18: 000010a0     0 NOTYPE  GLOBAL DEFAULT    3 ___ctors
     19: 000010a0     0 NOTYPE  GLOBAL DEFAULT  ABS _edata
     20: 000010a0     0 NOTYPE  GLOBAL DEFAULT  ABS _end
     21: 00001000     0 NOTYPE  GLOBAL DEFAULT    1 start
     22: 00080000     0 NOTYPE  GLOBAL DEFAULT    8 _stack
-    23: 000010a0     0 NOTYPE  GLOBAL DEFAULT    5 ___dtors_end
+    23: 000010a0     0 NOTYPE  GLOBAL DEFAULT    4 ___dtors_end
 
 Hex dump of section '\.init':
   0x00001000 6ff0fff0                            .*

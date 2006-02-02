@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright 1996-2005 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -43,7 +43,7 @@ static const CGEN_ATTR_ENTRY bool_attr[] =
   { 0, 0 }
 };
 
-static const CGEN_ATTR_ENTRY MACH_attr[] =
+static const CGEN_ATTR_ENTRY MACH_attr[] ATTRIBUTE_UNUSED =
 {
   { "base", MACH_BASE },
   { "iq2000", MACH_IQ2000 },
@@ -52,7 +52,7 @@ static const CGEN_ATTR_ENTRY MACH_attr[] =
   { 0, 0 }
 };
 
-static const CGEN_ATTR_ENTRY ISA_attr[] =
+static const CGEN_ATTR_ENTRY ISA_attr[] ATTRIBUTE_UNUSED =
 {
   { "iq2000", ISA_IQ2000 },
   { "max", ISA_MAX },
@@ -122,7 +122,7 @@ const CGEN_ATTR_TABLE iq2000_cgen_insn_attr_table[] =
 /* Instruction set variants.  */
 
 static const CGEN_ISA iq2000_cgen_isa_table[] = {
-  { "iq2000", 32, 32, 23, 32 },
+  { "iq2000", 32, 32, 32, 32 },
   { 0, 0, 0, 0, 0 }
 };
 
@@ -394,8 +394,8 @@ const CGEN_OPERAND iq2000_cgen_operand_table[] =
   { "count", IQ2000_OPERAND_COUNT, HW_H_UINT, 15, 7,
     { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_COUNT] } }, 
     { 0, { (1<<MACH_BASE) } }  },
-/* f-index: index */
-  { "f-index", IQ2000_OPERAND_F_INDEX, HW_H_UINT, 8, 9,
+/* _index: index */
+  { "_index", IQ2000_OPERAND__INDEX, HW_H_UINT, 8, 9,
     { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_INDEX] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* execode: execcode */
@@ -1167,14 +1167,14 @@ static const CGEN_IBASE iq2000_cgen_insn_table[MAX_INSNS] =
     IQ2000_INSN_PKRL, "pkrl", "pkrl", 32,
     { 0|A(YIELD_INSN)|A(USES_RT)|A(USES_RD), { (1<<MACH_IQ2000) } }
   },
-/* pkrlr1 $rt,$count */
+/* pkrlr1 $rt,$_index,$count */
   {
-    IQ2000_INSN_PKRLR1, "pkrlr1", "pkrlr1", 23,
+    IQ2000_INSN_PKRLR1, "pkrlr1", "pkrlr1", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* pkrlr30 $rt,$count */
+/* pkrlr30 $rt,$_index,$count */
   {
-    IQ2000_INSN_PKRLR30, "pkrlr30", "pkrlr30", 23,
+    IQ2000_INSN_PKRLR30, "pkrlr30", "pkrlr30", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
 /* rb $rd,$rt */
@@ -1182,14 +1182,14 @@ static const CGEN_IBASE iq2000_cgen_insn_table[MAX_INSNS] =
     IQ2000_INSN_RB, "rb", "rb", 32,
     { 0|A(YIELD_INSN)|A(USES_RT)|A(USES_RD), { (1<<MACH_IQ2000) } }
   },
-/* rbr1 $rt,$count */
+/* rbr1 $rt,$_index,$count */
   {
-    IQ2000_INSN_RBR1, "rbr1", "rbr1", 23,
+    IQ2000_INSN_RBR1, "rbr1", "rbr1", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* rbr30 $rt,$count */
+/* rbr30 $rt,$_index,$count */
   {
-    IQ2000_INSN_RBR30, "rbr30", "rbr30", 23,
+    IQ2000_INSN_RBR30, "rbr30", "rbr30", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
 /* rfe */
@@ -1202,14 +1202,14 @@ static const CGEN_IBASE iq2000_cgen_insn_table[MAX_INSNS] =
     IQ2000_INSN_RX, "rx", "rx", 32,
     { 0|A(YIELD_INSN)|A(USES_RT)|A(USES_RD), { (1<<MACH_IQ2000) } }
   },
-/* rxr1 $rt,$count */
+/* rxr1 $rt,$_index,$count */
   {
-    IQ2000_INSN_RXR1, "rxr1", "rxr1", 23,
+    IQ2000_INSN_RXR1, "rxr1", "rxr1", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* rxr30 $rt,$count */
+/* rxr30 $rt,$_index,$count */
   {
-    IQ2000_INSN_RXR30, "rxr30", "rxr30", 23,
+    IQ2000_INSN_RXR30, "rxr30", "rxr30", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
 /* sleep */
@@ -1267,24 +1267,24 @@ static const CGEN_IBASE iq2000_cgen_insn_table[MAX_INSNS] =
     IQ2000_INSN_WBU, "wbu", "wbu", 32,
     { 0|A(YIELD_INSN)|A(USES_RT)|A(USES_RD), { (1<<MACH_IQ2000) } }
   },
-/* wbr1 $rt,$count */
+/* wbr1 $rt,$_index,$count */
   {
-    IQ2000_INSN_WBR1, "wbr1", "wbr1", 23,
+    IQ2000_INSN_WBR1, "wbr1", "wbr1", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wbr1u $rt,$count */
+/* wbr1u $rt,$_index,$count */
   {
-    IQ2000_INSN_WBR1U, "wbr1u", "wbr1u", 23,
+    IQ2000_INSN_WBR1U, "wbr1u", "wbr1u", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wbr30 $rt,$count */
+/* wbr30 $rt,$_index,$count */
   {
-    IQ2000_INSN_WBR30, "wbr30", "wbr30", 23,
+    IQ2000_INSN_WBR30, "wbr30", "wbr30", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wbr30u $rt,$count */
+/* wbr30u $rt,$_index,$count */
   {
-    IQ2000_INSN_WBR30U, "wbr30u", "wbr30u", 23,
+    IQ2000_INSN_WBR30U, "wbr30u", "wbr30u", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
 /* wx $rd,$rt */
@@ -1297,24 +1297,24 @@ static const CGEN_IBASE iq2000_cgen_insn_table[MAX_INSNS] =
     IQ2000_INSN_WXU, "wxu", "wxu", 32,
     { 0|A(YIELD_INSN)|A(USES_RT)|A(USES_RD), { (1<<MACH_IQ2000) } }
   },
-/* wxr1 $rt,$count */
+/* wxr1 $rt,$_index,$count */
   {
-    IQ2000_INSN_WXR1, "wxr1", "wxr1", 23,
+    IQ2000_INSN_WXR1, "wxr1", "wxr1", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wxr1u $rt,$count */
+/* wxr1u $rt,$_index,$count */
   {
-    IQ2000_INSN_WXR1U, "wxr1u", "wxr1u", 23,
+    IQ2000_INSN_WXR1U, "wxr1u", "wxr1u", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wxr30 $rt,$count */
+/* wxr30 $rt,$_index,$count */
   {
-    IQ2000_INSN_WXR30, "wxr30", "wxr30", 23,
+    IQ2000_INSN_WXR30, "wxr30", "wxr30", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
-/* wxr30u $rt,$count */
+/* wxr30u $rt,$_index,$count */
   {
-    IQ2000_INSN_WXR30U, "wxr30u", "wxr30u", 23,
+    IQ2000_INSN_WXR30U, "wxr30u", "wxr30u", 32,
     { 0|A(YIELD_INSN)|A(USES_RT), { (1<<MACH_IQ2000) } }
   },
 /* ldw $rt,$lo16($base) */

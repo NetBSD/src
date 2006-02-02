@@ -1,6 +1,6 @@
 /* This file is tc-sh.h
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003 Free Software Foundation, Inc.
+   2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -189,6 +189,8 @@ extern int target_big_endian;
 #define TARGET_FORMAT (!target_big_endian ? "elf32-sh-linux" : "elf32-shbig-linux")
 #elif defined(TE_NetBSD)
 #define TARGET_FORMAT (!target_big_endian ? "elf32-shl-nbsd" : "elf32-sh-nbsd")
+#elif defined TARGET_SYMBIAN
+#define TARGET_FORMAT (!target_big_endian ? "elf32-shl-symbian" : "elf32-sh-symbian")
 #else
 #define TARGET_FORMAT (!target_big_endian ? "elf32-shl" : "elf32-sh")
 #endif

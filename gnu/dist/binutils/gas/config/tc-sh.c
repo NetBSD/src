@@ -1,6 +1,6 @@
 /* tc-sh.c -- Assemble code for the Renesas / SuperH SH
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004  Free Software Foundation, Inc.
+   2003, 2004, 2005  Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -138,11 +138,11 @@ static int dont_adjust_reloc_32;
 
 /* preset architecture set, if given; zero otherwise.  */
 
-static int preset_target_arch;
+static unsigned int preset_target_arch;
 
 /* The bit mask of architectures that could
    accommodate the insns seen so far.  */
-static int valid_arch;
+static unsigned int valid_arch;
 
 const char EXP_CHARS[] = "eE";
 
@@ -836,10 +836,10 @@ md_begin (void)
 {
   const sh_opcode_info *opcode;
   char *prev_name = "";
-  int target_arch;
+  unsigned int target_arch;
 
   target_arch
-    = preset_target_arch ? preset_target_arch : arch_sh1_up & ~arch_sh_dsp_up;
+    = preset_target_arch ? preset_target_arch : arch_sh_up & ~arch_sh_has_dsp;
   valid_arch = target_arch;
 
 #ifdef HAVE_SH64
@@ -853,7 +853,7 @@ md_begin (void)
     {
       if (strcmp (prev_name, opcode->name) != 0)
 	{
-	  if (! (opcode->arch & target_arch))
+	  if (!SH_MERGE_ARCH_SET_VALID (opcode->arch, target_arch))
 	    continue;
 	  prev_name = opcode->name;
 	  hash_insert (opcode_hash_control, opcode->name, (char *) opcode);
@@ -1098,6 +1098,12 @@ parse_reg (char *src, int *mode, int *reg)
       return 3;
     }
 
+  if (l0 == 't' && l1 == 'b' && TOLOWER (src[2]) == 'r'
+      && ! IDENT_CHAR ((unsigned char) src[3]))
+    {
+      *mode = A_TBR;
+      return 3;
+    }
   if (l0 == 'm' && l1 == 'a' && TOLOWER (src[2]) == 'c'
       && ! IDENT_CHAR ((unsigned char) src[4]))
     {
@@ -1268,7 +1274,15 @@ parse_at (char *src, sh_operand_info *op)
   int len;
   int mode;
   src++;
-  if (src[0] == '-')
+  if (src[0] == '@')
+    {
+      src = parse_at (src, op);
+      if (op->type == A_DISP_TBR)
+	op->type = A_DISP2_TBR;
+      else
+	as_bad (_("illegal double indirection"));
+    }
+  else if (src[0] == '-')
     {
       /* Must be predecrement.  */
       src++;
@@ -1340,6 +1354,10 @@ parse_at (char *src, sh_operand_info *op)
 	      else if (mode == A_GBR)
 		{
 		  op->type = A_DISP_GBR;
+		}
+	      else if (mode == A_TBR)
+		{
+		  op->type = A_DISP_TBR;
 		}
 	      else if (mode == A_PC)
 		{
@@ -1542,6 +1560,36 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 	  sh_operand_info *user = operands + n;
 	  sh_arg_type arg = this_try->arg[n];
 
+	  if (SH_MERGE_ARCH_SET_VALID (valid_arch, arch_sh2a_nofpu_up)
+	      && (   arg == A_DISP_REG_M
+		  || arg == A_DISP_REG_N))
+	    {
+	      /* Check a few key IMM* fields for overflow.  */
+	      int opf;
+	      long val = user->immediate.X_add_number;
+
+	      for (opf = 0; opf < 4; opf ++)
+		switch (this_try->nibbles[opf])
+		  {
+		  case IMM0_4:
+		  case IMM1_4:
+		    if (val < 0 || val > 15)
+		      goto fail;
+		    break;
+		  case IMM0_4BY2:
+		  case IMM1_4BY2:
+		    if (val < 0 || val > 15 * 2)
+		      goto fail;
+		    break;
+		  case IMM0_4BY4:
+		  case IMM1_4BY4:
+		    if (val < 0 || val > 15 * 4)
+		      goto fail;
+		    break;
+		  default:
+		    break;
+		  }
+	    }
 	  switch (arg)
 	    {
 	    case A_DISP_PC:
@@ -1552,6 +1600,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 	    case A_BDISP12:
 	    case A_BDISP8:
 	    case A_DISP_GBR:
+	    case A_DISP2_TBR:
 	    case A_MACH:
 	    case A_PR:
 	    case A_MACL:
@@ -1596,6 +1645,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 	      reg_n = user->reg;
 	      break;
 	    case A_GBR:
+	    case A_TBR:
 	    case A_SR:
 	    case A_VBR:
 	    case A_DSR:
@@ -1614,6 +1664,22 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 	      if (user->type != arg)
 		goto fail;
 	      reg_b = user->reg;
+	      break;
+
+	    case A_INC_R15:
+	      if (user->type != A_INC_N)
+		goto fail;
+	      if (user->reg != 15)
+		goto fail;
+	      reg_n = user->reg;
+	      break;
+
+	    case A_DEC_R15:
+	      if (user->type != A_DEC_N)
+		goto fail;
+	      if (user->reg != 15)
+		goto fail;
+	      reg_n = user->reg;
 	      break;
 
 	    case A_REG_M:
@@ -1636,7 +1702,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AS_INC_N:
 	      if (user->type != A_INC_N)
 		goto fail;
@@ -1644,7 +1710,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AS_IND_N:
 	      if (user->type != A_IND_N)
 		goto fail;
@@ -1652,7 +1718,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AS_PMOD_N:
 	      if (user->type != AX_PMOD_N)
 		goto fail;
@@ -1660,7 +1726,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AX_INC_N:
 	      if (user->type != A_INC_N)
 		goto fail;
@@ -1668,7 +1734,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AX_IND_N:
 	      if (user->type != A_IND_N)
 		goto fail;
@@ -1676,7 +1742,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AX_PMOD_N:
 	      if (user->type != AX_PMOD_N)
 		goto fail;
@@ -1684,7 +1750,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AXY_INC_N:
 	      if (user->type != A_INC_N)
 		goto fail;
@@ -1693,7 +1759,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AXY_IND_N:
 	      if (user->type != A_IND_N)
 		goto fail;
@@ -1702,7 +1768,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AXY_PMOD_N:
 	      if (user->type != AX_PMOD_N)
 		goto fail;
@@ -1711,7 +1777,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AY_INC_N:
 	      if (user->type != A_INC_N)
 		goto fail;
@@ -1719,7 +1785,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AY_IND_N:
 	      if (user->type != A_IND_N)
 		goto fail;
@@ -1727,7 +1793,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AY_PMOD_N:
 	      if (user->type != AY_PMOD_N)
 		goto fail;
@@ -1744,7 +1810,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AYX_IND_N:
 	      if (user->type != A_IND_N)
 		goto fail;
@@ -1753,7 +1819,7 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 		goto fail;
 	      reg_n = user->reg;
 	      break;
-	      
+
 	    case AYX_PMOD_N:
 	      if (user->type != AY_PMOD_N)
 		goto fail;
@@ -2018,9 +2084,9 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 	      goto fail;
 	    }
 	}
-      if ( !(valid_arch & this_try->arch))
+      if ( !SH_MERGE_ARCH_SET_VALID (valid_arch, this_try->arch))
 	goto fail;
-      valid_arch &= this_try->arch;
+      valid_arch = SH_MERGE_ARCH_SET (valid_arch, this_try->arch);
       return this_try;
     fail:
       ;
@@ -2040,6 +2106,16 @@ insert (char *where, int how, int pcrel, sh_operand_info *op)
 	       how);
 }
 
+static void
+insert4 (char * where, int how, int pcrel, sh_operand_info * op)
+{
+  fix_new_exp (frag_now,
+	       where - frag_now->fr_literal,
+	       4,
+	       & op->immediate,
+	       pcrel,
+	       how);
+}
 static void
 build_relax (sh_opcode_info *opcode, sh_operand_info *op)
 {
@@ -2126,16 +2202,31 @@ static unsigned int
 build_Mytes (sh_opcode_info *opcode, sh_operand_info *operand)
 {
   int index;
-  char nbuf[4];
-  char *output = frag_more (2);
+  char nbuf[8];
+  char *output;
   unsigned int size = 2;
   int low_byte = target_big_endian ? 1 : 0;
+  int max_index = 4;
+
   nbuf[0] = 0;
   nbuf[1] = 0;
   nbuf[2] = 0;
   nbuf[3] = 0;
+  nbuf[4] = 0;
+  nbuf[5] = 0;
+  nbuf[6] = 0;
+  nbuf[7] = 0;
 
-  for (index = 0; index < 4; index++)
+  if (SH_MERGE_ARCH_SET (opcode->arch, arch_op32))
+    {
+      output = frag_more (4);
+      size = 4;
+      max_index = 8;
+    }
+  else
+    output = frag_more (2);
+
+  for (index = 0; index < max_index; index++)
     {
       sh_nibble_type i = opcode->nibbles[index];
       if (i < 16)
@@ -2166,6 +2257,48 @@ build_Mytes (sh_opcode_info *opcode, sh_operand_info *operand)
 	      break;
 	    case REG_N_B01:
 	      nbuf[index] = reg_n | 0x01;
+	      break;
+	    case IMM0_3s:
+	      nbuf[index] |= 0x08;
+	    case IMM0_3c:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM3, 0, operand);
+	      break;
+	    case IMM0_3Us:
+	      nbuf[index] |= 0x80;
+	    case IMM0_3Uc:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM3U, 0, operand);
+	      break;
+	    case DISP0_12:
+	      insert (output + 2, BFD_RELOC_SH_DISP12, 0, operand);
+	      break;
+	    case DISP0_12BY2:
+	      insert (output + 2, BFD_RELOC_SH_DISP12BY2, 0, operand);
+	      break;
+	    case DISP0_12BY4:
+	      insert (output + 2, BFD_RELOC_SH_DISP12BY4, 0, operand);
+	      break;
+	    case DISP0_12BY8:
+	      insert (output + 2, BFD_RELOC_SH_DISP12BY8, 0, operand);
+	      break;
+	    case DISP1_12:
+	      insert (output + 2, BFD_RELOC_SH_DISP12, 0, operand+1);
+	      break;
+	    case DISP1_12BY2:
+	      insert (output + 2, BFD_RELOC_SH_DISP12BY2, 0, operand+1);
+	      break;
+	    case DISP1_12BY4:
+	      insert (output + 2, BFD_RELOC_SH_DISP12BY4, 0, operand+1);
+	      break;
+	    case DISP1_12BY8:
+	      insert (output + 2, BFD_RELOC_SH_DISP12BY8, 0, operand+1);
+	      break;
+	    case IMM0_20_4:
+	      break;
+	    case IMM0_20:
+	      insert4 (output, BFD_RELOC_SH_DISP20, 0, operand);
+	      break;
+	    case IMM0_20BY8:
+	      insert4 (output, BFD_RELOC_SH_DISP20BY8, 0, operand);
 	      break;
 	    case IMM0_4BY4:
 	      insert (output + low_byte, BFD_RELOC_SH_IMM4BY4, 0, operand);
@@ -2231,6 +2364,19 @@ build_Mytes (sh_opcode_info *opcode, sh_operand_info *operand)
       output[0] = (nbuf[0] << 4) | (nbuf[1]);
       output[1] = (nbuf[2] << 4) | (nbuf[3]);
     }
+  if (SH_MERGE_ARCH_SET (opcode->arch, arch_op32))
+    {
+      if (!target_big_endian)
+	{
+	  output[3] = (nbuf[4] << 4) | (nbuf[5]);
+	  output[2] = (nbuf[6] << 4) | (nbuf[7]);
+	}
+      else
+	{
+	  output[2] = (nbuf[4] << 4) | (nbuf[5]);
+	  output[3] = (nbuf[6] << 4) | (nbuf[7]);
+	}
+    }
   return size;
 }
 
@@ -2254,7 +2400,7 @@ find_cooked_opcode (char **str_p)
      The pre-processor will eliminate whitespace in front of
      any '@' after the first argument; we may be called from
      assemble_ppi, so the opcode might be terminated by an '@'.  */
-  for (op_start = op_end = (unsigned char *) (str);
+  for (op_start = op_end = (unsigned char *) str;
        *op_end
        && nlen < 20
        && !is_end_of_line[*op_end] && *op_end != ' ' && *op_end != '@';
@@ -2273,7 +2419,7 @@ find_cooked_opcode (char **str_p)
     }
 
   name[nlen] = 0;
-  *str_p = op_end;
+  *str_p = (char *) op_end;
 
   if (nlen == 0)
     as_bad (_("can't find opcode "));
@@ -2486,9 +2632,9 @@ assemble_ppi (char *op_end, sh_opcode_info *opcode)
 		field_b -= 0x8100;
 	      /* pclr Dz pmuls Se,Sf,Dg */
 	      else if ((field_b & 0xff00) == 0x8d00
-		       && (valid_arch & arch_sh4al_dsp_up))
+		       && (SH_MERGE_ARCH_SET_VALID (valid_arch, arch_sh4al_dsp_up)))
 		{
-		  valid_arch &= arch_sh4al_dsp_up;
+		  valid_arch = SH_MERGE_ARCH_SET (valid_arch, arch_sh4al_dsp_up);
 		  field_b -= 0x8cf0;
 		}
 	      else
@@ -2588,10 +2734,11 @@ assemble_ppi (char *op_end, sh_opcode_info *opcode)
 void
 md_assemble (char *str)
 {
-  unsigned char *op_end;
+  char *op_end;
   sh_operand_info operand[3];
   sh_opcode_info *opcode;
   unsigned int size = 0;
+  char *initial_str = str;
 
 #ifdef HAVE_SH64
   if (sh64_isa_mode == sh64_isa_shmedia)
@@ -2618,7 +2765,46 @@ md_assemble (char *str)
 
   if (opcode == NULL)
     {
-      as_bad (_("unknown opcode"));
+      /* The opcode is not in the hash table.
+	 This means we definately have an assembly failure,
+	 but the instruction may be valid in another CPU variant.
+	 In this case emit something better than 'unknown opcode'.
+	 Search the full table in sh-opc.h to check. */
+
+      char *name = initial_str;
+      int name_length = 0;
+      const sh_opcode_info *op;
+      int found = 0;
+
+      /* identify opcode in string */
+      while (ISSPACE (*name))
+	{
+	  name++;
+	}
+      while (!ISSPACE (name[name_length]))
+	{
+	  name_length++;
+	}
+
+      /* search for opcode in full list */
+      for (op = sh_table; op->name; op++)
+	{
+	  if (strncasecmp (op->name, name, name_length) == 0
+	      && op->name[name_length] == '\0')
+	    {
+	      found = 1;
+	      break;
+	    }
+	}
+
+      if ( found )
+	{
+	  as_bad (_("opcode not valid for this cpu variant"));
+	}
+      else
+	{
+	  as_bad (_("unknown opcode"));
+	}
       return;
     }
 
@@ -2643,8 +2829,8 @@ md_assemble (char *str)
 	{
 	  /* Since we skip get_specific here, we have to check & update
 	     valid_arch now.  */
-	  if (valid_arch & opcode->arch)
-	    valid_arch &= opcode->arch;
+	  if (SH_MERGE_ARCH_SET_VALID (valid_arch, opcode->arch))
+	    valid_arch = SH_MERGE_ARCH_SET (valid_arch, opcode->arch);
 	  else
 	    as_bad (_("Delayed branches not available on SH1"));
 	  parse_exp (op_end + 1, &operand[0]);
@@ -2897,7 +3083,7 @@ md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
       break;
 
     case OPTION_DSP:
-      preset_target_arch = arch_sh1_up & ~arch_sh2e_up;
+      preset_target_arch = arch_sh_up & ~(arch_sh_sp_fpu|arch_sh_dp_fpu);
       break;
 
     case OPTION_RENESAS:
@@ -2905,16 +3091,12 @@ md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
       break;
 
     case OPTION_ISA:
-      if (strcasecmp (arg, "sh4") == 0)
-	preset_target_arch = arch_sh4;
-      else if (strcasecmp (arg, "sh4a") == 0)
-	preset_target_arch = arch_sh4a;
-      else if (strcasecmp (arg, "dsp") == 0)
-	preset_target_arch = arch_sh1_up & ~arch_sh2e_up;
+      if (strcasecmp (arg, "dsp") == 0)
+	preset_target_arch = arch_sh_up & ~(arch_sh_sp_fpu|arch_sh_dp_fpu);
       else if (strcasecmp (arg, "fp") == 0)
-	preset_target_arch = arch_sh2e_up;
+	preset_target_arch = arch_sh_up & ~arch_sh_has_dsp;
       else if (strcasecmp (arg, "any") == 0)
-	preset_target_arch = arch_sh1_up;
+	preset_target_arch = arch_sh_up;
 #ifdef HAVE_SH64
       else if (strcasecmp (arg, "shmedia") == 0)
 	{
@@ -2932,7 +3114,34 @@ md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
 	}
 #endif /* HAVE_SH64 */
       else
-	as_bad ("Invalid argument to --isa option: %s", arg);
+	{
+	  extern const bfd_arch_info_type bfd_sh_arch;
+	  bfd_arch_info_type const *bfd_arch = &bfd_sh_arch;
+	  preset_target_arch = 0;
+	  for (; bfd_arch; bfd_arch=bfd_arch->next)
+	    {
+	      int len = strlen(bfd_arch->printable_name);
+	      
+	      if (bfd_arch->mach == bfd_mach_sh5)
+		continue;
+	      
+	      if (strncasecmp (bfd_arch->printable_name, arg, len) != 0)
+		continue;
+
+	      if (arg[len] == '\0')
+		preset_target_arch =
+		  sh_get_arch_from_bfd_mach (bfd_arch->mach);
+	      else if (strcasecmp(&arg[len], "-up") == 0)
+		preset_target_arch =
+		  sh_get_arch_up_from_bfd_mach (bfd_arch->mach);
+	      else
+		continue;
+	      break;
+	    }
+	  
+	  if (!preset_target_arch)
+	    as_bad ("Invalid argument to --isa option: %s", arg);
+	}
       break;
 
 #ifdef HAVE_SH64
@@ -2990,17 +3199,27 @@ SH options:\n\
 -renesas		disable optimization with section symbol for\n\
 			compatibility with Renesas assembler.\n\
 -small			align sections to 4 byte boundaries, not 16\n\
--dsp			enable sh-dsp insns, and disable floating-point ISAs.\n"));
+-dsp			enable sh-dsp insns, and disable floating-point ISAs.\n\
+-isa=[any		use most appropriate isa\n\
+    | dsp               same as '-dsp'\n\
+    | fp"));
+  {
+    extern const bfd_arch_info_type bfd_sh_arch;
+    bfd_arch_info_type const *bfd_arch = &bfd_sh_arch;
+    for (; bfd_arch; bfd_arch=bfd_arch->next)
+      if (bfd_arch->mach != bfd_mach_sh5)
+	{
+	  fprintf (stream, "\n    | %s", bfd_arch->printable_name);
+	  fprintf (stream, "\n    | %s-up", bfd_arch->printable_name);
+	}
+  }
+  fprintf (stream, "]\n");
 #ifdef HAVE_SH64
   fprintf (stream, _("\
--isa=[sh4\n\
-    | sh4a\n\
-    | dsp		same as '-dsp'\n\
-    | fp\n\
-    | shmedia		set as the default instruction set for SH64\n\
+-isa=[shmedia		set as the default instruction set for SH64\n\
     | SHmedia\n\
     | shcompact\n\
-    | SHcompact\n"));
+    | SHcompact]\n"));
   fprintf (stream, _("\
 -abi=[32|64]		set size of expanded SHmedia operands and object\n\
 			file type\n\
@@ -3011,13 +3230,6 @@ SH options:\n\
 -no-expand		do not expand MOVI, PT, PTA or PTB instructions\n\
 -expand-pt32		with -abi=64, expand PT, PTA and PTB instructions\n\
 			to 32 bits only\n"));
-#else
-  fprintf (stream, _("\
--isa=[sh4\n\
-    | sh4a\n\
-    | dsp		same as '-dsp'\n\
-    | fp\n\
-    | any]\n"));
 #endif /* HAVE_SH64 */
 }
 
@@ -3563,33 +3775,12 @@ sh_elf_final_processing (void)
   if (sh64_isa_mode != sh64_isa_unspecified)
     val = EF_SH5;
   else
+#elif defined TARGET_SYMBIAN
+    if (1)
+      val = sh_symbian_find_elf_flags (valid_arch);
+    else
 #endif /* HAVE_SH64 */
-  if (valid_arch & arch_sh1)
-    val = EF_SH1;
-  else if (valid_arch & arch_sh2)
-    val = EF_SH2;
-  else if (valid_arch & arch_sh2e)
-    val = EF_SH2E;
-  else if (valid_arch & arch_sh_dsp)
-    val = EF_SH_DSP;
-  else if (valid_arch & arch_sh3)
-    val = EF_SH3;
-  else if (valid_arch & arch_sh3_dsp)
-    val = EF_SH3_DSP;
-  else if (valid_arch & arch_sh3e)
-    val = EF_SH3E;
-  else if (valid_arch & arch_sh4_nofpu)
-    val = EF_SH4_NOFPU;
-  else if (valid_arch & arch_sh4)
-    val = EF_SH4;
-  else if (valid_arch & arch_sh4a_nofpu)
-    val = EF_SH4A_NOFPU;
-  else if (valid_arch & arch_sh4a)
-    val = EF_SH4A;
-  else if (valid_arch & arch_sh4al_dsp)
-    val = EF_SH4AL_DSP;
-  else
-    abort ();
+    val = sh_find_elf_flags (valid_arch);
 
   elf_elfheader (stdoutput)->e_flags &= ~EF_SH_MACH_MASK;
   elf_elfheader (stdoutput)->e_flags |= val;
@@ -3677,6 +3868,57 @@ md_apply_fix3 (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
   shift = 0;
   switch (fixP->fx_r_type)
     {
+    case BFD_RELOC_SH_IMM3:
+      max = 0x7;
+      * buf = (* buf & 0xf8) | (val & 0x7);
+      break;
+    case BFD_RELOC_SH_IMM3U:
+      max = 0x7;
+      * buf = (* buf & 0x8f) | ((val & 0x7) << 4);
+      break;
+    case BFD_RELOC_SH_DISP12:
+      max = 0xfff;
+      buf[lowbyte] = val & 0xff;
+      buf[highbyte] |= (val >> 8) & 0x0f;
+      break;
+    case BFD_RELOC_SH_DISP12BY2:
+      max = 0xfff;
+      shift = 1;
+      buf[lowbyte] = (val >> 1) & 0xff;
+      buf[highbyte] |= (val >> 9) & 0x0f;
+      break;
+    case BFD_RELOC_SH_DISP12BY4:
+      max = 0xfff;
+      shift = 2;
+      buf[lowbyte] = (val >> 2) & 0xff;
+      buf[highbyte] |= (val >> 10) & 0x0f;
+      break;
+    case BFD_RELOC_SH_DISP12BY8:
+      max = 0xfff;
+      shift = 3;
+      buf[lowbyte] = (val >> 3) & 0xff;
+      buf[highbyte] |= (val >> 11) & 0x0f;
+      break;
+    case BFD_RELOC_SH_DISP20:
+      if (! target_big_endian)
+	abort();
+      max = 0x7ffff;
+      min = -0x80000;
+      buf[1] = (buf[1] & 0x0f) | ((val >> 12) & 0xf0);
+      buf[2] = (val >> 8) & 0xff;
+      buf[3] = val & 0xff;
+      break;
+    case BFD_RELOC_SH_DISP20BY8:
+      if (!target_big_endian)
+	abort();
+      max = 0x7ffff;
+      min = -0x80000;
+      shift = 8;
+      buf[1] = (buf[1] & 0x0f) | ((val >> 20) & 0xf0);
+      buf[2] = (val >> 16) & 0xff;
+      buf[3] = (val >> 8) & 0xff;
+      break;
+
     case BFD_RELOC_SH_IMM4:
       max = 0xf;
       *buf = (*buf & 0xf0) | (val & 0xf);
@@ -4314,7 +4556,6 @@ sh_parse_name (char const *name, expressionS *exprP, char *nextcharP)
 
   return 1;
 }
-#endif
 
 void
 sh_cfi_frame_initial_instructions (void)
@@ -4364,4 +4605,5 @@ sh_regname_to_dw2regnum (const char *regname)
     }
   return regnum;
 }
+#endif /* OBJ_ELF */
 #endif /* BFD_ASSEMBLER */

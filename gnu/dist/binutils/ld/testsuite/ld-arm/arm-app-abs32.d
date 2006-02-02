@@ -1,5 +1,5 @@
 
-tmpdir/arm-app-abs32:     file format elf32-littlearm
+tmpdir/arm-app-abs32:     file format elf32-(little|big)arm
 architecture: arm, flags 0x00000112:
 EXEC_P, HAS_SYMS, D_PAGED
 start address .*

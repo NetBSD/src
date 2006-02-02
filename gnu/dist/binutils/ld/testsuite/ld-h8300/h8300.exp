@@ -31,8 +31,11 @@ if {[istarget *-elf]} {
     run_dump_test relax-3
     run_dump_test relax-4
     run_dump_test relax-5
+    run_dump_test relax-6
+    run_dump_test gcsection	
 } else {
     run_dump_test relax-3-coff
     run_dump_test relax-4-coff
     run_dump_test relax-5-coff
+    run_dump_test relax-6-coff
 }

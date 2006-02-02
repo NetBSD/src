@@ -16,6 +16,7 @@ OTHER_BSS_END_SYMBOLS='_bss_end__ = . ; __bss_end__ = . ; __end__ = . ;'
 OTHER_SECTIONS='.note.gnu.arm.ident 0 : { KEEP (*(.note.gnu.arm.ident)) }'
 
 TEXT_START_ADDR=0x00008000
+TARGET2_TYPE=got-rel
 
 # ARM does not support .s* sections.
 NO_SMALL_DATA=yes

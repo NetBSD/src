@@ -1,6 +1,6 @@
 # Test ALIGN in a linker script.
 # By Nathan Sidwell, CodeSourcery LLC
-#   Copyright 2004
+#   Copyright 2004, 2005
 #   Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@ if [istarget "rs6000-*-aix*"] {
     return
 }
 
-set testname "ALIGN"
+set testname "align1"
 
 if ![ld_assemble $as $srcdir/$subdir/align.s tmpdir/align.o] {
     unresolved $testname
@@ -34,3 +34,9 @@ if ![ld_simple_link $ld tmpdir/align "-T $srcdir/$subdir/align.t tmpdir/align.o"
 } else {
     pass $testname
 }
+
+if ![is_aout_format] {
+    run_dump_test align2a
+    run_dump_test align2b
+}
+run_dump_test align2c

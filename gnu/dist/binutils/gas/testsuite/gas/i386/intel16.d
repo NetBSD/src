@@ -12,4 +12,4 @@ Disassembly of section .text:
   11:	66 0f b7 06 00 00 [ 	]*movzwl 0,%eax
   17:	66 0f b6 06 00 00 [ 	]*movzbl 0,%eax
   1d:	0f b6 06 00 00 [ 	]*movzbw 0,%ax
-	...
+#pass

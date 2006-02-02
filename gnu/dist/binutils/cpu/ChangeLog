@@ -1,3 +1,150 @@
+2005-02-24  Alan Modra  <amodra@bigpond.net.au>
+
+	* frv.opc (parse_A): Warning fix.
+
+2005-02-23  Nick Clifton  <nickc@redhat.com>
+
+	* frv.opc: Fixed compile time warnings about differing signed'ness
+	of pointers passed to functions.
+	* m32r.opc: Likewise.
+
+2005-02-11  Nick Clifton  <nickc@redhat.com>
+
+	* iq2000.opc (parse_jtargq10): Change type of valuep argument to
+	'bfd_vma *' in order avoid compile time warning message.
+
+2005-01-28  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris.cpu (mstep): Add missing insn.
+
+2005-01-25  Alexandre Oliva  <aoliva@redhat.com>
+
+	2004-11-10  Alexandre Oliva  <aoliva@redhat.com>
+	* frv.cpu: Add support for TLS annotations in loads and calll.
+	* frv.opc (parse_symbolic_address): New.
+	(parse_ldd_annotation): New.
+	(parse_call_annotation): New.
+	(parse_ld_annotation): New.
+	(parse_ulo16, parse_uslo16): Use parse_symbolic_address.
+	Introduce TLS relocations.
+	(parse_d12, parse_s12, parse_u12): Likewise.
+	(parse_uhi16): Likewise.  Fix constant checking on 64-bit host.
+	(parse_call_label, print_at): New.
+
+2004-12-21  Mikael Starvik  <starvik@axis.com>
+
+	* cris.cpu (cris-set-mem): Correct integral write semantics.
+
+2004-11-29  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris.cpu: New file.
+
+2004-11-15  Michael K. Lechner <mike.lechner@gmail.com>
+
+	* iq2000.cpu: Added quotes around macro arguments so that they
+	will work with newer versions of guile.
+
+2004-10-27  Nick Clifton  <nickc@redhat.com>
+
+	* iq2000m.cpu (pkrlr1, pkrlr30, rbr1, rbr30, rxr1, rxr30, wbr1,
+	wbr1u, wbr30, wbr30u, wxr1, wxr1u, wxr30, wxr30u): Add an index
+	operand.
+	* iq2000.cpu (dnop index): Rename to _index to avoid complications
+	with guile.
+
+2004-08-27  Richard Sandiford  <rsandifo@redhat.com>
+
+	* frv.cpu (cfmovs): Change UNIT attribute to FMALL.
+
+2004-05-15  Nick Clifton  <nickc@redhat.com>
+
+	* iq2000.opc (iq2000_cgen_insn_supported): Make 'insn' argument const.
+
+2004-03-30  Kazuhiro Inaoka  <inaoka.kazuhiro@renesas.com>
+
+	* m32r.opc (parse_hi16): Fixed shigh(0xffff8000) bug.
+
+2004-03-01  Richard Sandiford  <rsandifo@redhat.com>
+
+	* frv.cpu (define-arch frv): Add fr450 mach.
+	(define-mach fr450): New.
+	(define-model fr450): New.  Add profile units to every fr450 insn.
+	(define-attr UNIT): Add MDCUTSSI.
+	(define-attr FR450-MAJOR): New enum.  Add to every fr450 insn.
+	(define-attr AUDIO): New boolean.
+	(f-LRAE, f-LRAD, f-LRAS, f-TLBPRopx, f-TLBPRL)
+	(f-LRA-null, f-TLBPR-null): New fields.
+	(scr0, scr1, scr2, scr3, imavr1, damvr1, cxnr, ttbr)
+	(tplr, tppr, tpxr, timerh, timerl, timerd, btbr): New SPRs.
+	(LRAE, LRAD, LRAS, TLBPRopx, TLBPRL): New operands.
+	(LRA-null, TLBPR-null): New macros.
+	(iacc-multiply-r-r, slass, scutss, int-arith-ss-r-r): Add AUDIO attr.
+	(load-real-address): New macro.
+	(lrai, lrad, tlbpr): New instructions.
+	(media-cut-acc, media-cut-acc-ss): Add fr450-major argument.
+	(mcut, mcuti, mcutss, mcutssi): Adjust accordingly.
+	(mdcutssi): Change UNIT attribute to MDCUTSSI.
+	(media-low-clear-semantics, media-scope-limit-semantics)
+	(media-quad-limit, media-quad-shift): New macros.
+	(mqlclrhs, mqlmths, mqsllhi, mqsrahi): New instructions.
+	* frv.opc (frv_is_branch_major, frv_is_float_major, frv_is_media_major)
+	(frv_is_branch_insn, frv_is_float_insn, frv_is_media_insn)
+	(frv_vliw_reset, frv_vliw_add_insn): Handle bfd_mach_fr450.
+	(fr450_unit_mapping): New array.
+	(fr400_unit_mapping, fr500_unit_mapping, fr550_unit_mapping): Add entry
+	for new MDCUTSSI unit.
+	(fr450_check_insn_major_constraints): New function.
+	(check_insn_major_constraints): Use it.
+
+2004-03-01  Richard Sandiford  <rsandifo@redhat.com>
+
+	* frv.cpu (nsdiv, nudiv, nsdivi, nudivi): Remove fr400 profiling unit.
+	(scutss): Change unit to I0.
+	(calll, callil, ccalll): Add missing FR550-MAJOR and profile unit.
+	(mqsaths): Fix FR400-MAJOR categorization.
+	(media-quad-multiply-cross-acc, media-quad-cross-multiply-cross-acc)
+	(media-quad-cross-multiply-acc): Change unit from MDUALACC to FMALL.
+	* frv.opc (fr400_check_insn_major_constraints): Check for (M-2,M-1)
+	combinations.
+
+2004-03-01  Richard Sandiford  <rsandifo@redhat.com>
+
+	* frv.cpu (r-store, r-store-dual, r-store-quad): Delete.
+	(rstb, rsth, rst, rstd, rstq): Delete.
+	(rstbf, rsthf, rstf, rstdf, rstqf): Delete.
+
+2004-02-23  Nick Clifton  <nickc@redhat.com>
+
+	* Apply these patches from Renesas:
+
+	2004-02-10  Kazuhiro Inaoka  <inaoka.kazuhiro@renesas.com>
+
+	* cpu/m32r.opc (my_print_insn): Fixed incorrect output when
+	disassembling codes for 0x*2 addresses.
+
+	2003-12-15  Kazuhiro Inaoka  <inaoka.kazuhiro@renesas.com>
+
+	* cpu/m32r.cpu: Add PIPE_O attribute to "pop" instruction.
+
+	2003-12-03  Kazuhiro Inaoka  <inaoka.kazuhiro@renesas.com>
+
+	* cpu/m32r.cpu : Add new model m32r2.
+	Add new instructions.
+	Replace occurrances of 'Mitsubishi' with 'Renesas'.
+	Changed PIPE attr of push from O to OS.
+	Care for Little-endian of M32R.
+	* cpu/m32r.opc (CGEN_DIS_HASH, my_print_insn):
+	Care for Little-endian of M32R.
+	(parse_slo16): signed extension for value.
+
+2004-02-20  Andrew Cagney  <cagney@redhat.com>
+
+	* m32r.opc, m32r.cpu: New files.  Written by , Doug Evans, Nick
+	Clifton, Ben Elliston, Matthew Green, and Andrew Haley.
+
+	* sh.cpu, sh.opc, sh64-compact.cpu, sh64-media.cpu: New files, all
+	written by Ben Elliston.
+
 2004-01-14  Richard Sandiford  <rsandifo@redhat.com>
 
 	* frv.cpu (UNIT): Add IACC.

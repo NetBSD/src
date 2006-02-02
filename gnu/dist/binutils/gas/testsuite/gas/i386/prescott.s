@@ -8,8 +8,6 @@ foo:
 	addsubps	%xmm4,%xmm3
 	fisttp		0x90909090(%eax)
 	fisttpl		0x90909090(%eax)
-	fisttpd		0x90909090(%eax)
-	fisttpq		0x90909090(%eax)
 	fisttpll	0x90909090(%eax)
 	haddpd		0x0(%ebp),%xmm4
 	haddpd		%xmm6,%xmm5

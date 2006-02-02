@@ -1,5 +1,5 @@
 /* ia64-opc-i.c -- IA-64 `I' opcode table.
-   Copyright 1998, 1999, 2000, 2002 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2002, 2005 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -95,6 +95,8 @@
      (bOp (a) | bX3 (b) | bXb (c) | bIh (d) | bWh (e) | bTag13 (f)), \
      (mOp | mX3 | mXb | mIh | mWh | mTag13)
 
+#define FULL17 ((ia64_insn)0x10ff001fc0LL)
+
 /* Used to initialise unused fields in ia64_opcode struct,
    in order to stop gcc from complaining.  */
 #define EMPTY 0,0,NULL
@@ -126,6 +128,8 @@ struct ia64_opcode ia64_opcodes_i[] =
 #undef MOV
     {"mov",	I, OpX3X6 (0, 0, 0x31), {R1, B2}, EMPTY},
     {"mov",	I, OpX3 (0, 3), {PR, R2, IMM17}, EMPTY},
+    /* Don't remove one of the seemingly redundant FULL17-s.  */
+    {"mov",	I, FULL17 | OpX3 (0, 3) | FULL17, {PR, R2}, PSEUDO, 0, NULL},
     {"mov",	I, OpX3 (0, 2), {PR_ROT, IMM44}, EMPTY},
     {"mov",	I, OpX3X6 (0, 0, 0x30), {R1, IP}, EMPTY},
     {"mov",	I, OpX3X6 (0, 0, 0x33), {R1, PR}, EMPTY},
@@ -181,6 +185,7 @@ struct ia64_opcode ia64_opcodes_i[] =
     {"tbit.nz.or.andcm", TBIT   (1, 1, 0, 1)},
     {"tbit.z.and.orcm",  TBITCM (1, 1, 0, 1)},
 #undef TBIT
+#undef TBITCM
 #define TNAT(a,b,c,d) \
 	I2, OpX2TaTbYaC (5, 0, a, b, c, d), {P1, P2, R3}, EMPTY
 #define TNATCM(a,b,c,d) \
@@ -202,6 +207,7 @@ struct ia64_opcode ia64_opcodes_i[] =
     {"tnat.nz.or.andcm", TNAT   (1, 1, 1, 1)},
     {"tnat.z.and.orcm",  TNATCM (1, 1, 1, 1)},
 #undef TNAT
+#undef TNATCM
 
     {"pmpyshr2",   I, OpZaZbVeX2aX2b (7, 0, 1, 0, 0, 3), {R1, R2, R3, CNT2c}, EMPTY},
     {"pmpyshr2.u", I, OpZaZbVeX2aX2b (7, 0, 1, 0, 0, 1), {R1, R2, R3, CNT2c}, EMPTY},

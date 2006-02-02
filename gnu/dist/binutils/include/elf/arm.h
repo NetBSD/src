@@ -1,5 +1,6 @@
 /* ARM ELF support for BFD.
-   Copyright 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -36,16 +37,25 @@
 #define EF_ARM_VFP_FLOAT   0x400
 #define EF_ARM_MAVERICK_FLOAT 0x800
 
+/* Frame unwind information */
+#define PT_ARM_EXIDX (PT_LOPROC + 1) 
+
 /* Other constants defined in the ARM ELF spec. version B-01.  */
 #define EF_ARM_SYMSARESORTED 0x04	/* NB conflicts with EF_INTERWORK */
 #define EF_ARM_DYNSYMSUSESEGIDX 0x08	/* NB conflicts with EF_APCS26 */
 #define EF_ARM_MAPSYMSFIRST 0x10	/* NB conflicts with EF_APCS_FLOAT */
 #define EF_ARM_EABIMASK      0xFF000000
 
+/* Constants defined in AAELF.  */
+#define EF_ARM_BE8	    0x00800000
+#define EF_ARM_LE8	    0x00400000
+
 #define EF_ARM_EABI_VERSION(flags) ((flags) & EF_ARM_EABIMASK)
 #define EF_ARM_EABI_UNKNOWN  0x00000000
 #define EF_ARM_EABI_VER1     0x01000000
 #define EF_ARM_EABI_VER2     0x02000000
+#define EF_ARM_EABI_VER3     0x03000000
+#define EF_ARM_EABI_VER4     0x04000000
 
 /* Local aliases for some flags to match names used by COFF port.  */
 #define F_INTERWORK	   EF_ARM_INTERWORK
@@ -58,6 +68,9 @@
 /* Additional symbol types for Thumb.  */
 #define STT_ARM_TFUNC      STT_LOPROC   /* A Thumb function.  */
 #define STT_ARM_16BIT      STT_HIPROC   /* A Thumb label.  */
+
+/* Additional section types.  */
+#define SHT_ARM_EXIDX	   0x70000001	/* Section holds ARM unwind info.  */
 
 /* ARM-specific values for sh_flags.  */
 #define SHF_ENTRYSECT      0x10000000   /* Section contains an entry point.  */
@@ -114,16 +127,28 @@ START_RELOC_NUMBERS (elf_arm_reloc_type)
   FAKE_RELOC   (FIRST_INVALID_RELOC,   28)
   FAKE_RELOC   (LAST_INVALID_RELOC,   249)
 #else /* not OLD_ARM_ABI */
-  FAKE_RELOC   (FIRST_INVALID_RELOC1,  28)
+  RELOC_NUMBER (R_ARM_CALL,            28)
+  RELOC_NUMBER (R_ARM_JUMP24,          29)
+  FAKE_RELOC   (FIRST_INVALID_RELOC1,  30)
   FAKE_RELOC   (LAST_INVALID_RELOC1,   31)
   RELOC_NUMBER (R_ARM_ALU_PCREL7_0,    32)
   RELOC_NUMBER (R_ARM_ALU_PCREL15_8,   33)
   RELOC_NUMBER (R_ARM_ALU_PCREL23_15,  34)
-  RELOC_NUMBER (R_ARM_LDR_SBREL11_0,   35)
-  RELOC_NUMBER (R_ARM_ALU_SBREL19_12,  36)
-  RELOC_NUMBER (R_ARM_ALU_SBREL27_20,  37)
-  FAKE_RELOC   (FIRST_INVALID_RELOC2,  38)
-  FAKE_RELOC   (LAST_INVALID_RELOC2,   99)
+  RELOC_NUMBER (R_ARM_LDR_SBREL_11_0,  35)
+  RELOC_NUMBER (R_ARM_ALU_SBREL_19_12, 36)
+  RELOC_NUMBER (R_ARM_ALU_SBREL_27_20, 37)
+  RELOC_NUMBER (R_ARM_TARGET1,         38)
+  RELOC_NUMBER (R_ARM_ROSEGREL32,      39)
+  RELOC_NUMBER (R_ARM_V4BX,            40)
+  RELOC_NUMBER (R_ARM_TARGET2,	       41)
+  RELOC_NUMBER (R_ARM_PREL31,	       42)
+  FAKE_RELOC   (FIRST_INVALID_RELOC2,  43)
+  FAKE_RELOC   (LAST_INVALID_RELOC2,   94)
+  RELOC_NUMBER (R_ARM_GOT_ABS,	       95)
+  RELOC_NUMBER (R_ARM_GOT_PREL,	       96)
+  RELOC_NUMBER (R_ARM_GOT_BREL12,      97)
+  RELOC_NUMBER (R_ARM_GOTOFF12,	       98)
+  RELOC_NUMBER (R_ARM_GOTRELAX,	       99)
   RELOC_NUMBER (R_ARM_GNU_VTENTRY,    100)
   RELOC_NUMBER (R_ARM_GNU_VTINHERIT,  101)
   RELOC_NUMBER (R_ARM_THM_PC11,       102)   /* Cygnus extension to abi: Thumb unconditional branch.  */
@@ -142,5 +167,11 @@ END_RELOC_NUMBERS (R_ARM_max)
 
 /* The name of the note section used to identify arm variants.  */
 #define ARM_NOTE_SECTION ".note.gnu.arm.ident"
-     
+
+/* Special section names.  */
+#define ELF_STRING_ARM_unwind           ".ARM.exidx"
+#define ELF_STRING_ARM_unwind_info      ".ARM.extab"
+#define ELF_STRING_ARM_unwind_once      ".gnu.linkonce.armexidx."
+#define ELF_STRING_ARM_unwind_info_once ".gnu.linkonce.armextab."
+
 #endif /* _ELF_ARM_H */

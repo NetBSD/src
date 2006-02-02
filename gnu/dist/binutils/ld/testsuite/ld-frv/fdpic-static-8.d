@@ -1,7 +1,6 @@
 #name: FRV uClinux PIC relocs to global symbols with addends, static linking
 #source: fdpic8.s
 #objdump: -D
-#as: -mfdpic
 #ld: -static
 
 .*:     file format elf.*frv.*
@@ -21,11 +20,11 @@ Disassembly of section \.text:
    100b0:	80 f4 00 18 	setlo 0x18,gr0
    100b4:	80 f8 00 00 	sethi hi\(0x0\),gr0
    100b8:	80 40 ff f8 	addi gr15,-8,gr0
-   100bc:	80 fc ff f0 	setlos 0xfffffff0,gr0
+   100bc:	80 fc ff f0 	setlos 0xf*fffffff0,gr0
    100c0:	80 f4 ff c8 	setlo 0xffc8,gr0
    100c4:	80 f8 ff ff 	sethi 0xffff,gr0
    100c8:	80 40 ff c4 	addi gr15,-60,gr0
-   100cc:	80 fc ff c4 	setlos 0xffffffc4,gr0
+   100cc:	80 fc ff c4 	setlos 0xf*ffffffc4,gr0
    100d0:	80 f4 ff c4 	setlo 0xffc4,gr0
    100d4:	80 f8 ff ff 	sethi 0xffff,gr0
    100d8:	80 f4 00 20 	setlo 0x20,gr0

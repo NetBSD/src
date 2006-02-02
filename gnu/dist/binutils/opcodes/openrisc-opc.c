@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright 1996-2005 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -47,67 +47,67 @@ static unsigned int dis_hash_insn PARAMS ((const char *, CGEN_INSN_INT));
 #else
 #define F(f) & openrisc_cgen_ifld_table[OPENRISC_/**/f]
 #endif
-static const CGEN_IFMT ifmt_empty = {
+static const CGEN_IFMT ifmt_empty ATTRIBUTE_UNUSED = {
   0, 0, 0x0, { { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_j = {
+static const CGEN_IFMT ifmt_l_j ATTRIBUTE_UNUSED = {
   32, 32, 0xfc000000, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_ABS26) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_jr = {
+static const CGEN_IFMT ifmt_l_jr ATTRIBUTE_UNUSED = {
   32, 32, 0xffe00000, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_OP3) }, { F (F_OP4) }, { F (F_R2) }, { F (F_UIMM16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_bal = {
+static const CGEN_IFMT ifmt_l_bal ATTRIBUTE_UNUSED = {
   32, 32, 0xfc000000, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_DISP26) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_movhi = {
+static const CGEN_IFMT ifmt_l_movhi ATTRIBUTE_UNUSED = {
   32, 32, 0xfc000000, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_R1) }, { F (F_R2) }, { F (F_SIMM16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_mfsr = {
+static const CGEN_IFMT ifmt_l_mfsr ATTRIBUTE_UNUSED = {
   32, 32, 0xfc000000, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_R1) }, { F (F_R2) }, { F (F_UIMM16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_mtsr = {
+static const CGEN_IFMT ifmt_l_mtsr ATTRIBUTE_UNUSED = {
   32, 32, 0xfc0007ff, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_I16_1) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_lw = {
+static const CGEN_IFMT ifmt_l_lw ATTRIBUTE_UNUSED = {
   32, 32, 0xfc000000, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_R1) }, { F (F_R2) }, { F (F_SIMM16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_sw = {
+static const CGEN_IFMT ifmt_l_sw ATTRIBUTE_UNUSED = {
   32, 32, 0xfc000000, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_R1) }, { F (F_R3) }, { F (F_I16NC) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_sll = {
+static const CGEN_IFMT ifmt_l_sll ATTRIBUTE_UNUSED = {
   32, 32, 0xfc0007ff, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_F_10_3) }, { F (F_OP6) }, { F (F_F_4_1) }, { F (F_OP7) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_slli = {
+static const CGEN_IFMT ifmt_l_slli ATTRIBUTE_UNUSED = {
   32, 32, 0xfc00ffe0, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_R1) }, { F (F_R2) }, { F (F_F_15_8) }, { F (F_OP6) }, { F (F_UIMM5) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_add = {
+static const CGEN_IFMT ifmt_l_add ATTRIBUTE_UNUSED = {
   32, 32, 0xfc0007ff, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_F_10_7) }, { F (F_OP7) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_addi = {
+static const CGEN_IFMT ifmt_l_addi ATTRIBUTE_UNUSED = {
   32, 32, 0xfc000000, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_R1) }, { F (F_R2) }, { F (F_LO16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_sfgts = {
+static const CGEN_IFMT ifmt_l_sfgts ATTRIBUTE_UNUSED = {
   32, 32, 0xffe007ff, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_OP5) }, { F (F_R2) }, { F (F_R3) }, { F (F_F_10_11) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_sfgtsi = {
+static const CGEN_IFMT ifmt_l_sfgtsi ATTRIBUTE_UNUSED = {
   32, 32, 0xffe00000, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_OP5) }, { F (F_R2) }, { F (F_SIMM16) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_l_sfgtui = {
+static const CGEN_IFMT ifmt_l_sfgtui ATTRIBUTE_UNUSED = {
   32, 32, 0xffe00000, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_OP5) }, { F (F_R2) }, { F (F_UIMM16) }, { 0 } }
 };
 
@@ -532,7 +532,7 @@ static const CGEN_OPCODE openrisc_cgen_insn_opcode_table[MAX_INSNS] =
 #else
 #define F(f) & openrisc_cgen_ifld_table[OPENRISC_/**/f]
 #endif
-static const CGEN_IFMT ifmt_l_ret = {
+static const CGEN_IFMT ifmt_l_ret ATTRIBUTE_UNUSED = {
   32, 32, 0xffffffff, { { F (F_CLASS) }, { F (F_SUB) }, { F (F_OP3) }, { F (F_OP4) }, { F (F_R2) }, { F (F_UIMM16) }, { 0 } }
 };
 

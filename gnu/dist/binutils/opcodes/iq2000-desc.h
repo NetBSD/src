@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright 1996-2005 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -42,7 +42,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define CGEN_INSN_LSB0_P 1
 
 /* Minimum size of any insn (in bytes).  */
-#define CGEN_MIN_INSN_SIZE 3
+#define CGEN_MIN_INSN_SIZE 4
 
 /* Maximum size of any insn (in bytes).  */
 #define CGEN_MAX_INSN_SIZE 4
@@ -188,8 +188,6 @@ typedef enum isa_attr {
 
 /* Ifield support.  */
 
-extern const struct cgen_ifld iq2000_cgen_ifld_table[];
-
 /* Ifield attribute indices.  */
 
 /* Enum declaration for cgen_ifld attrs.  */
@@ -255,7 +253,7 @@ typedef enum cgen_operand_type {
  , IQ2000_OPERAND_RD_RS, IQ2000_OPERAND_RD_RT, IQ2000_OPERAND_RT_RS, IQ2000_OPERAND_SHAMT
  , IQ2000_OPERAND_IMM, IQ2000_OPERAND_OFFSET, IQ2000_OPERAND_BASEOFF, IQ2000_OPERAND_JMPTARG
  , IQ2000_OPERAND_MASK, IQ2000_OPERAND_MASKQ10, IQ2000_OPERAND_MASKL, IQ2000_OPERAND_COUNT
- , IQ2000_OPERAND_F_INDEX, IQ2000_OPERAND_EXECODE, IQ2000_OPERAND_BYTECOUNT, IQ2000_OPERAND_CAM_Y
+ , IQ2000_OPERAND__INDEX, IQ2000_OPERAND_EXECODE, IQ2000_OPERAND_BYTECOUNT, IQ2000_OPERAND_CAM_Y
  , IQ2000_OPERAND_CAM_Z, IQ2000_OPERAND_CM_3FUNC, IQ2000_OPERAND_CM_4FUNC, IQ2000_OPERAND_CM_3Z
  , IQ2000_OPERAND_CM_4Z, IQ2000_OPERAND_BASE, IQ2000_OPERAND_MASKR, IQ2000_OPERAND_BITNUM
  , IQ2000_OPERAND_HI16, IQ2000_OPERAND_LO16, IQ2000_OPERAND_MLO16, IQ2000_OPERAND_JMPTARGQ10
@@ -286,6 +284,8 @@ typedef enum cgen_insn_attr {
 /* cgen.h uses things we just defined.  */
 #include "opcode/cgen.h"
 
+extern const struct cgen_ifld iq2000_cgen_ifld_table[];
+
 /* Attributes.  */
 extern const CGEN_ATTR_TABLE iq2000_cgen_hardware_attr_table[];
 extern const CGEN_ATTR_TABLE iq2000_cgen_ifield_attr_table[];
@@ -296,6 +296,7 @@ extern const CGEN_ATTR_TABLE iq2000_cgen_insn_attr_table[];
 
 extern CGEN_KEYWORD iq2000_cgen_opval_gr_names;
 
+extern const CGEN_HW_ENTRY iq2000_cgen_hw_table[];
 
 
 

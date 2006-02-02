@@ -1,5 +1,6 @@
 /* Print VAX instructions.
-   Copyright 1995, 1998, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1995, 1998, 2000, 2001, 2002, 2005
+   Free Software Foundation, Inc.
    Contributed by Pauline Middelink <middelin@polyware.iaf.nl>
 
 This program is free software; you can redistribute it and/or modify
@@ -32,6 +33,21 @@ static char *reg_names[] =
 {
   "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
   "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
+};
+
+/* Definitions for the function entry mask bits.  */
+static char *entry_mask_bit[] =
+{
+  /* Registers 0 and 1 shall not be saved, since they're used to pass back
+     a function's result to it's caller...  */
+  "~r0~", "~r1~",
+  /* Registers 2 .. 11 are normal registers.  */
+  "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11",
+  /* Registers 12 and 13 are argument and frame pointer and must not
+     be saved by using the entry mask.  */
+  "~ap~", "~fp~",
+  /* Bits 14 and 15 control integer and decimal overflow.  */
+  "IntOvfl", "DecOvfl",
 };
 
 /* Sign-extend an (unsigned char). */
@@ -138,6 +154,27 @@ print_insn_vax (memaddr, info)
     {
       FETCH_DATA (info, buffer + 1);
       buffer[1] = 0;
+    }
+
+  /* Decode function entry mask.  */
+  if (info->symbols
+      && info->symbols[0]
+      && (info->symbols[0]->flags & BSF_FUNCTION)
+      && memaddr == bfd_asymbol_value (info->symbols[0]))
+    {
+      int i = 0;
+      int register_mask = buffer[1] << 8 | buffer[0];
+
+      (*info->fprintf_func) (info->stream, "Entry mask 0x%04x = <",
+			     register_mask);
+
+      for (i = 15; i >= 0; i--)
+	if (register_mask & (1 << i))
+          (*info->fprintf_func) (info->stream, " %s", entry_mask_bit[i]);
+
+      (*info->fprintf_func) (info->stream, " >");
+
+      return 2;
     }
 
   for (votp = &votstrs[0]; votp->name[0]; votp++)

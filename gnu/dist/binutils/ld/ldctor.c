@@ -1,6 +1,6 @@
 /* ldctor.c -- constructor support routines
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003 Free Software Foundation, Inc.
+   2002, 2003, 2004 Free Software Foundation, Inc.
    By Steve Chamberlain <sac@cygnus.com>
 
 This file is part of GLD, the Gnu Linker.
@@ -49,7 +49,7 @@ struct set_info *sets;
    RELOC is the relocation to use for an entry in the set.  SECTION
    and VALUE are the value to add.  This is called during the first
    phase of the link, when we are still gathering symbols together.
-   We just record the information now.  The ldctor_find_constructors
+   We just record the information now.  The ldctor_build_sets
    function will construct the sets.  */
 
 void

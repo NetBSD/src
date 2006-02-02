@@ -1,5 +1,5 @@
 /* Disassemble from a buffer, for GNU.
-   Copyright 1993, 1994, 1996, 1997, 1998, 1999, 2000
+   Copyright 1993, 1994, 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2005
    Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
@@ -56,10 +56,15 @@ perror_memory (status, memaddr, info)
     /* Can't happen.  */
     info->fprintf_func (info->stream, _("Unknown error %d\n"), status);
   else
-    /* Actually, address between memaddr and memaddr + len was
-       out of bounds.  */
-    info->fprintf_func (info->stream,
-			_("Address 0x%x is out of bounds.\n"), memaddr);
+    {
+      char buf[30];
+
+      /* Actually, address between memaddr and memaddr + len was
+	 out of bounds.  */
+      sprintf_vma (buf, memaddr);
+      info->fprintf_func (info->stream,
+			  _("Address 0x%s is out of bounds.\n"), buf);
+    }
 }
 
 /* This could be in a separate file, to save miniscule amounts of space

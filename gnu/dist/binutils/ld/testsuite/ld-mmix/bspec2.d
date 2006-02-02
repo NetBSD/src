@@ -28,7 +28,7 @@ Section Headers:
   \[ 7\] \.shstrtab         STRTAB           0+  0+c0
        0+56  0+           0     0     1
   \[ 8\] \.symtab           SYMTAB           0+  0+398
-       0+198  0+18           9     a     8
+       0+198  0+18           9    10     8
   \[ 9\] \.strtab           STRTAB           0+  0+530
        0+32  0+           0     0     1
 Key to Flags:

@@ -615,4 +615,14 @@ rot5:
  jmp	[eax]
  jmp	[bar]
  jmp	bar
+
+	# Check arithmetic operators
+	mov	%eax,(( 17 ) + 1) 
+	and	%eax,~(1 << ( 18 )) 
+	and	%eax,0xFFFBFFFF
+	mov	%al, (( 0x4711  ) & 0xff) 
+	mov	%al, 0x11
+	mov	%bl, ((( 0x4711  ) >> 8) & 0xff) 
+	mov	%bl, 0x47
+	
  .p2align 4,0

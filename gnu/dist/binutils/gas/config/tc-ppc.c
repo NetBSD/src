@@ -1,6 +1,6 @@
 /* tc-ppc.c -- Assemble for the PowerPC or POWER (RS/6000)
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004 Free Software Foundation, Inc.
+   2004, 2005 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -1156,7 +1156,8 @@ ppc_set_cpu ()
     }
 }
 
-/* Figure out the BFD architecture to use.  */
+/* Figure out the BFD architecture to use.  This function and ppc_mach
+   are called well before md_begin, when the output file is opened.  */
 
 enum bfd_architecture
 ppc_arch ()
@@ -1457,14 +1458,7 @@ ppc_insert_operand (insn, operand, val, file, line)
 	test = val;
 
       if (test < (offsetT) min || test > (offsetT) max)
-	{
-	  const char *err =
-	    _("operand out of range (%s not between %ld and %ld)");
-	  char buf[100];
-
-	  sprint_value (buf, test);
-	  as_bad_where (file, line, err, buf, min, max);
-	}
+	as_bad_value_out_of_range (_("operand"), test, (offsetT) min, (offsetT) max, file, line);
     }
 
   if (operand->insert)
@@ -1898,6 +1892,7 @@ void
 ppc_frob_file_before_adjust ()
 {
   symbolS *symp;
+  asection *toc;
 
   if (!ppc_obj64)
     return;
@@ -1925,10 +1920,14 @@ ppc_frob_file_before_adjust ()
       free (dotname);
       if (dotsym != NULL && (symbol_used_p (dotsym)
 			     || symbol_used_in_reloc_p (dotsym)))
-	{
-	  symbol_mark_used (symp);
-	}
+	symbol_mark_used (symp);
+
     }
+
+  toc = bfd_get_section_by_name (stdoutput, ".toc");
+  if (toc != NULL
+      && bfd_section_size (stdoutput, toc) > 0x10000)
+    as_warn (_("TOC section size exceeds 64k"));
 
   /* Don't emit .TOC. symbol.  */
   symp = symbol_find (".TOC.");
@@ -2098,6 +2097,7 @@ md_assemble (str)
   struct ppc_fixup fixups[MAX_INSN_FIXUPS];
   int fc;
   char *f;
+  int addr_mod;
   int i;
 #ifdef OBJ_ELF
   bfd_reloc_code_real_type reloc;
@@ -2625,6 +2625,11 @@ md_assemble (str)
 
   /* Write out the instruction.  */
   f = frag_more (4);
+  addr_mod = frag_now_fix () & 3;
+  if (frag_now->has_code && frag_now->insn_addr != addr_mod)
+    as_bad (_("instruction address is not a multiple of 4"));
+  frag_now->insn_addr = addr_mod;
+  frag_now->has_code = 1;
   md_number_to_chars (f, insn, 4);
 
 #ifdef OBJ_ELF
@@ -4844,7 +4849,7 @@ ppc_frob_symbol (sym)
      table.  */
   if (! symbol_used_in_reloc_p (sym)
       && ((symbol_get_bfdsym (sym)->flags & BSF_SECTION_SYM) != 0
-	  || (! S_IS_EXTERNAL (sym)
+	  || (! (S_IS_EXTERNAL (sym) || S_IS_WEAK (sym))
 	      && ! symbol_get_tc (sym)->output
 	      && S_GET_STORAGE_CLASS (sym) != C_FILE)))
     return 1;
@@ -4910,7 +4915,7 @@ ppc_frob_symbol (sym)
 	}
     }
 
-  if (! S_IS_EXTERNAL (sym)
+  if (! (S_IS_EXTERNAL (sym) || S_IS_WEAK (sym))
       && (symbol_get_bfdsym (sym)->flags & BSF_SECTION_SYM) == 0
       && S_GET_STORAGE_CLASS (sym) != C_FILE
       && S_GET_STORAGE_CLASS (sym) != C_FCN
@@ -5480,12 +5485,7 @@ ppc_fix_adjustable (fix)
 	  && fix->fx_r_type != BFD_RELOC_VTABLE_INHERIT
 	  && fix->fx_r_type != BFD_RELOC_VTABLE_ENTRY
 	  && !(fix->fx_r_type >= BFD_RELOC_PPC_TLS
-	       && fix->fx_r_type <= BFD_RELOC_PPC64_DTPREL16_HIGHESTA)
-	  && (fix->fx_pcrel
-	      || (fix->fx_subsy != NULL
-		  && (S_GET_SEGMENT (fix->fx_subsy)
-		      == S_GET_SEGMENT (fix->fx_addsy)))
-	      || S_IS_LOCAL (fix->fx_addsy)));
+	       && fix->fx_r_type <= BFD_RELOC_PPC64_DTPREL16_HIGHESTA));
 }
 #endif
 
@@ -5814,7 +5814,7 @@ md_apply_fix3 (fixP, valP, seg)
 	  if (fixP->fx_pcrel)
 	    abort ();
 	  {
-	    unsigned char *where = fixP->fx_frag->fr_literal + fixP->fx_where;
+	    char *where = fixP->fx_frag->fr_literal + fixP->fx_where;
 	    unsigned long val, mask;
 
 	    if (target_big_endian)
@@ -5841,6 +5841,8 @@ md_apply_fix3 (fixP, valP, seg)
 	  break;
 
 	case BFD_RELOC_PPC_TLS:
+	  break;
+
 	case BFD_RELOC_PPC_DTPMOD:
 	case BFD_RELOC_PPC_TPREL16:
 	case BFD_RELOC_PPC_TPREL16_LO:
@@ -5880,6 +5882,7 @@ md_apply_fix3 (fixP, valP, seg)
 	case BFD_RELOC_PPC64_DTPREL16_HIGHERA:
 	case BFD_RELOC_PPC64_DTPREL16_HIGHEST:
 	case BFD_RELOC_PPC64_DTPREL16_HIGHESTA:
+	  S_SET_THREAD_LOCAL (fixP->fx_addsy);
 	  break;
 #endif
 	  /* Because SDA21 modifies the register field, the size is set to 4
@@ -6033,7 +6036,7 @@ tc_ppc_regname_to_dw2regnum (const char *regname)
     {
       { "sp", 1 }, { "r.sp", 1 }, { "rtoc", 2 }, { "r.toc", 2 },
       { "mq", 64 }, { "lr", 65 }, { "ctr", 66 }, { "ap", 67 },
-      { "cc", 68 }, { "xer", 76 }, { "vrsave", 109 }, { "vscr", 110 },
+      { "cr", 70 }, { "xer", 76 }, { "vrsave", 109 }, { "vscr", 110 },
       { "spe_acc", 111 }, { "spefscr", 112 }
     };
 

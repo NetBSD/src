@@ -1,5 +1,6 @@
 /* An expandable hash tables datatype.  
-   Copyright (C) 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004
+   Free Software Foundation, Inc.
    Contributed by Vladimir Makarov (vmakarov@cygnus.com).
 
 This file is part of the libiberty library.
@@ -40,19 +41,28 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
-
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
-
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
+#endif
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
 #endif
 
 #include <stdio.h>
 
 #include "libiberty.h"
+#include "ansidecl.h"
 #include "hashtab.h"
+
+#ifndef CHAR_BIT
+#define CHAR_BIT 8
+#endif
 
 /* This macro defines reserved value for empty table entry. */
 
@@ -63,7 +73,10 @@ Boston, MA 02111-1307, USA.  */
 
 #define DELETED_ENTRY  ((PTR) 1)
 
-static unsigned long higher_prime_number PARAMS ((unsigned long));
+static unsigned int higher_prime_index PARAMS ((unsigned long));
+static hashval_t htab_mod_1 PARAMS ((hashval_t, hashval_t, hashval_t, int));
+static hashval_t htab_mod PARAMS ((hashval_t, htab_t));
+static hashval_t htab_mod_m2 PARAMS ((hashval_t, htab_t));
 static hashval_t hash_pointer PARAMS ((const void *));
 static int eq_pointer PARAMS ((const void *, const void *));
 static int htab_expand PARAMS ((htab_t));
@@ -75,69 +88,117 @@ static PTR *find_empty_slot_for_expand  PARAMS ((htab_t, hashval_t));
 htab_hash htab_hash_pointer = hash_pointer;
 htab_eq htab_eq_pointer = eq_pointer;
 
-/* The following function returns a nearest prime number which is
-   greater than N, and near a power of two. */
+/* Table of primes and multiplicative inverses.
 
-static unsigned long
-higher_prime_number (n)
+   Note that these are not minimally reduced inverses.  Unlike when generating
+   code to divide by a constant, we want to be able to use the same algorithm
+   all the time.  All of these inverses (are implied to) have bit 32 set.
+
+   For the record, here's the function that computed the table; it's a 
+   vastly simplified version of the function of the same name from gcc.  */
+
+#if 0
+unsigned int
+ceil_log2 (unsigned int x)
+{
+  int i;
+  for (i = 31; i >= 0 ; --i)
+    if (x > (1u << i))
+      return i+1;
+  abort ();
+}
+
+unsigned int
+choose_multiplier (unsigned int d, unsigned int *mlp, unsigned char *shiftp)
+{
+  unsigned long long mhigh;
+  double nx;
+  int lgup, post_shift;
+  int pow, pow2;
+  int n = 32, precision = 32;
+
+  lgup = ceil_log2 (d);
+  pow = n + lgup;
+  pow2 = n + lgup - precision;
+
+  nx = ldexp (1.0, pow) + ldexp (1.0, pow2);
+  mhigh = nx / d;
+
+  *shiftp = lgup - 1;
+  *mlp = mhigh;
+  return mhigh >> 32;
+}
+#endif
+
+struct prime_ent
+{
+  hashval_t prime;
+  hashval_t inv;
+  hashval_t inv_m2;	/* inverse of prime-2 */
+  hashval_t shift;
+};
+
+static struct prime_ent const prime_tab[] = {
+  {          7, 0x24924925, 0x9999999b, 2 },
+  {         13, 0x3b13b13c, 0x745d1747, 3 },
+  {         31, 0x08421085, 0x1a7b9612, 4 },
+  {         61, 0x0c9714fc, 0x15b1e5f8, 5 },
+  {        127, 0x02040811, 0x0624dd30, 6 },
+  {        251, 0x05197f7e, 0x073260a5, 7 },
+  {        509, 0x01824366, 0x02864fc8, 8 },
+  {       1021, 0x00c0906d, 0x014191f7, 9 },
+  {       2039, 0x0121456f, 0x0161e69e, 10 },
+  {       4093, 0x00300902, 0x00501908, 11 },
+  {       8191, 0x00080041, 0x00180241, 12 },
+  {      16381, 0x000c0091, 0x00140191, 13 },
+  {      32749, 0x002605a5, 0x002a06e6, 14 },
+  {      65521, 0x000f00e2, 0x00110122, 15 },
+  {     131071, 0x00008001, 0x00018003, 16 },
+  {     262139, 0x00014002, 0x0001c004, 17 },
+  {     524287, 0x00002001, 0x00006001, 18 },
+  {    1048573, 0x00003001, 0x00005001, 19 },
+  {    2097143, 0x00004801, 0x00005801, 20 },
+  {    4194301, 0x00000c01, 0x00001401, 21 },
+  {    8388593, 0x00001e01, 0x00002201, 22 },
+  {   16777213, 0x00000301, 0x00000501, 23 },
+  {   33554393, 0x00001381, 0x00001481, 24 },
+  {   67108859, 0x00000141, 0x000001c1, 25 },
+  {  134217689, 0x000004e1, 0x00000521, 26 },
+  {  268435399, 0x00000391, 0x000003b1, 27 },
+  {  536870909, 0x00000019, 0x00000029, 28 },
+  { 1073741789, 0x0000008d, 0x00000095, 29 },
+  { 2147483647, 0x00000003, 0x00000007, 30 },
+  /* Avoid "decimal constant so large it is unsigned" for 4294967291.  */
+  { 0xfffffffb, 0x00000006, 0x00000008, 31 }
+};
+
+/* The following function returns an index into the above table of the
+   nearest prime number which is greater than N, and near a power of two. */
+
+static unsigned int
+higher_prime_index (n)
      unsigned long n;
 {
-  /* These are primes that are near, but slightly smaller than, a
-     power of two.  */
-  static const unsigned long primes[] = {
-    (unsigned long) 7,
-    (unsigned long) 13,
-    (unsigned long) 31,
-    (unsigned long) 61,
-    (unsigned long) 127,
-    (unsigned long) 251,
-    (unsigned long) 509,
-    (unsigned long) 1021,
-    (unsigned long) 2039,
-    (unsigned long) 4093,
-    (unsigned long) 8191,
-    (unsigned long) 16381,
-    (unsigned long) 32749,
-    (unsigned long) 65521,
-    (unsigned long) 131071,
-    (unsigned long) 262139,
-    (unsigned long) 524287,
-    (unsigned long) 1048573,
-    (unsigned long) 2097143,
-    (unsigned long) 4194301,
-    (unsigned long) 8388593,
-    (unsigned long) 16777213,
-    (unsigned long) 33554393,
-    (unsigned long) 67108859,
-    (unsigned long) 134217689,
-    (unsigned long) 268435399,
-    (unsigned long) 536870909,
-    (unsigned long) 1073741789,
-    (unsigned long) 2147483647,
-					/* 4294967291L */
-    ((unsigned long) 2147483647) + ((unsigned long) 2147483644),
-  };
-
-  const unsigned long *low = &primes[0];
-  const unsigned long *high = &primes[sizeof(primes) / sizeof(primes[0])];
+  unsigned int low = 0;
+  unsigned int high = sizeof(prime_tab) / sizeof(prime_tab[0]);
 
   while (low != high)
     {
-      const unsigned long *mid = low + (high - low) / 2;
-      if (n > *mid)
+      unsigned int mid = low + (high - low) / 2;
+      if (n > prime_tab[mid].prime)
 	low = mid + 1;
       else
 	high = mid;
     }
 
   /* If we've run out of primes, abort.  */
-  if (n > *low)
+  if (n > prime_tab[low].prime)
     {
       fprintf (stderr, "Cannot find prime bigger than %lu\n", n);
       abort ();
     }
 
-  return *low;
+  return low;
 }
 
 /* Returns a hash code for P.  */
@@ -159,6 +220,76 @@ eq_pointer (p1, p2)
   return p1 == p2;
 }
 
+/* Return the current size of given hash table. */
+
+inline size_t
+htab_size (htab)
+     htab_t htab;
+{
+  return htab->size;
+}
+
+/* Return the current number of elements in given hash table. */
+
+inline size_t
+htab_elements (htab)
+     htab_t htab;
+{
+  return htab->n_elements - htab->n_deleted;
+}
+
+/* Return X % Y.  */
+
+static inline hashval_t
+htab_mod_1 (x, y, inv, shift)
+     hashval_t x, y, inv;
+     int shift;
+{
+  /* The multiplicative inverses computed above are for 32-bit types, and
+     requires that we be able to compute a highpart multiply.  */
+#ifdef UNSIGNED_64BIT_TYPE
+  __extension__ typedef UNSIGNED_64BIT_TYPE ull;
+  if (sizeof (hashval_t) * CHAR_BIT <= 32)
+    {
+      hashval_t t1, t2, t3, t4, q, r;
+
+      t1 = ((ull)x * inv) >> 32;
+      t2 = x - t1;
+      t3 = t2 >> 1;
+      t4 = t1 + t3;
+      q  = t4 >> shift;
+      r  = x - (q * y);
+
+      return r;
+    }
+#endif
+
+  /* Otherwise just use the native division routines.  */
+  return x % y;
+}
+
+/* Compute the primary hash for HASH given HTAB's current size.  */
+
+static inline hashval_t
+htab_mod (hash, htab)
+     hashval_t hash;
+     htab_t htab;
+{
+  const struct prime_ent *p = &prime_tab[htab->size_prime_index];
+  return htab_mod_1 (hash, p->prime, p->inv, p->shift);
+}
+
+/* Compute the secondary hash for HASH given HTAB's current size.  */
+
+static inline hashval_t
+htab_mod_m2 (hash, htab)
+     hashval_t hash;
+     htab_t htab;
+{
+  const struct prime_ent *p = &prime_tab[htab->size_prime_index];
+  return 1 + htab_mod_1 (hash, p->prime - 2, p->inv_m2, p->shift);
+}
+
 /* This function creates table with length slightly longer than given
    source length.  Created hash table is initiated as empty (all the
    hash table entries are EMPTY_ENTRY).  The function returns the
@@ -174,8 +305,11 @@ htab_create_alloc (size, hash_f, eq_f, del_f, alloc_f, free_f)
      htab_free free_f;
 {
   htab_t result;
+  unsigned int size_prime_index;
 
-  size = higher_prime_number (size);
+  size_prime_index = higher_prime_index (size);
+  size = prime_tab[size_prime_index].prime;
+
   result = (htab_t) (*alloc_f) (1, sizeof (struct htab));
   if (result == NULL)
     return NULL;
@@ -187,6 +321,7 @@ htab_create_alloc (size, hash_f, eq_f, del_f, alloc_f, free_f)
       return NULL;
     }
   result->size = size;
+  result->size_prime_index = size_prime_index;
   result->hash_f = hash_f;
   result->eq_f = eq_f;
   result->del_f = del_f;
@@ -210,8 +345,11 @@ htab_create_alloc_ex (size, hash_f, eq_f, del_f, alloc_arg, alloc_f,
      htab_free_with_arg free_f;
 {
   htab_t result;
+  unsigned int size_prime_index;
 
-  size = higher_prime_number (size);
+  size_prime_index = higher_prime_index (size);
+  size = prime_tab[size_prime_index].prime;
+
   result = (htab_t) (*alloc_f) (alloc_arg, 1, sizeof (struct htab));
   if (result == NULL)
     return NULL;
@@ -223,6 +361,7 @@ htab_create_alloc_ex (size, hash_f, eq_f, del_f, alloc_arg, alloc_f,
       return NULL;
     }
   result->size = size;
+  result->size_prime_index = size_prime_index;
   result->hash_f = hash_f;
   result->eq_f = eq_f;
   result->del_f = del_f;
@@ -282,22 +421,23 @@ void
 htab_delete (htab)
      htab_t htab;
 {
+  size_t size = htab_size (htab);
+  PTR *entries = htab->entries;
   int i;
 
   if (htab->del_f)
-    for (i = htab->size - 1; i >= 0; i--)
-      if (htab->entries[i] != EMPTY_ENTRY
-	  && htab->entries[i] != DELETED_ENTRY)
-	(*htab->del_f) (htab->entries[i]);
+    for (i = size - 1; i >= 0; i--)
+      if (entries[i] != EMPTY_ENTRY && entries[i] != DELETED_ENTRY)
+	(*htab->del_f) (entries[i]);
 
   if (htab->free_f != NULL)
     {
-      (*htab->free_f) (htab->entries);
+      (*htab->free_f) (entries);
       (*htab->free_f) (htab);
     }
   else if (htab->free_with_arg_f != NULL)
     {
-      (*htab->free_with_arg_f) (htab->alloc_arg, htab->entries);
+      (*htab->free_with_arg_f) (htab->alloc_arg, entries);
       (*htab->free_with_arg_f) (htab->alloc_arg, htab);
     }
 }
@@ -308,15 +448,16 @@ void
 htab_empty (htab)
      htab_t htab;
 {
+  size_t size = htab_size (htab);
+  PTR *entries = htab->entries;
   int i;
 
   if (htab->del_f)
-    for (i = htab->size - 1; i >= 0; i--)
-      if (htab->entries[i] != EMPTY_ENTRY
-	  && htab->entries[i] != DELETED_ENTRY)
-	(*htab->del_f) (htab->entries[i]);
+    for (i = size - 1; i >= 0; i--)
+      if (entries[i] != EMPTY_ENTRY && entries[i] != DELETED_ENTRY)
+	(*htab->del_f) (entries[i]);
 
-  memset (htab->entries, 0, htab->size * sizeof (PTR));
+  memset (entries, 0, size * sizeof (PTR));
 }
 
 /* Similar to htab_find_slot, but without several unwanted side effects:
@@ -331,8 +472,8 @@ find_empty_slot_for_expand (htab, hash)
      htab_t htab;
      hashval_t hash;
 {
-  size_t size = htab->size;
-  unsigned int index = hash % size;
+  hashval_t index = htab_mod (hash, htab);
+  size_t size = htab_size (htab);
   PTR *slot = htab->entries + index;
   hashval_t hash2;
 
@@ -341,7 +482,7 @@ find_empty_slot_for_expand (htab, hash)
   else if (*slot == DELETED_ENTRY)
     abort ();
 
-  hash2 = 1 + hash % (size - 2);
+  hash2 = htab_mod_m2 (hash, htab);
   for (;;)
     {
       index += hash2;
@@ -372,19 +513,27 @@ htab_expand (htab)
   PTR *olimit;
   PTR *p;
   PTR *nentries;
-  size_t nsize;
+  size_t nsize, osize, elts;
+  unsigned int oindex, nindex;
 
   oentries = htab->entries;
-  olimit = oentries + htab->size;
+  oindex = htab->size_prime_index;
+  osize = htab->size;
+  olimit = oentries + osize;
+  elts = htab_elements (htab);
 
   /* Resize only when table after removal of unused elements is either
      too full or too empty.  */
-  if ((htab->n_elements - htab->n_deleted) * 2 > htab->size
-      || ((htab->n_elements - htab->n_deleted) * 8 < htab->size
-	  && htab->size > 32))
-    nsize = higher_prime_number ((htab->n_elements - htab->n_deleted) * 2);
+  if (elts * 2 > osize || (elts * 8 < osize && osize > 32))
+    {
+      nindex = higher_prime_index (elts * 2);
+      nsize = prime_tab[nindex].prime;
+    }
   else
-    nsize = htab->size;
+    {
+      nindex = oindex;
+      nsize = osize;
+    }
 
   if (htab->alloc_with_arg_f != NULL)
     nentries = (PTR *) (*htab->alloc_with_arg_f) (htab->alloc_arg, nsize,
@@ -395,7 +544,7 @@ htab_expand (htab)
     return 0;
   htab->entries = nentries;
   htab->size = nsize;
-
+  htab->size_prime_index = nindex;
   htab->n_elements -= htab->n_deleted;
   htab->n_deleted = 0;
 
@@ -431,22 +580,20 @@ htab_find_with_hash (htab, element, hash)
      const PTR element;
      hashval_t hash;
 {
-  unsigned int index;
-  hashval_t hash2;
+  hashval_t index, hash2;
   size_t size;
   PTR entry;
 
   htab->searches++;
-  size = htab->size;
-  index = hash % size;
+  size = htab_size (htab);
+  index = htab_mod (hash, htab);
 
   entry = htab->entries[index];
   if (entry == EMPTY_ENTRY
       || (entry != DELETED_ENTRY && (*htab->eq_f) (entry, element)))
     return entry;
 
-  hash2 = 1 + hash % (size - 2);
-
+  hash2 = htab_mod_m2 (hash, htab);
   for (;;)
     {
       htab->collisions++;
@@ -474,11 +621,11 @@ htab_find (htab, element)
 
 /* This function searches for a hash table slot containing an entry
    equal to the given element.  To delete an entry, call this with
-   INSERT = 0, then call htab_clear_slot on the slot returned (possibly
-   after doing some checks).  To insert an entry, call this with
-   INSERT = 1, then write the value you want into the returned slot.
-   When inserting an entry, NULL may be returned if memory allocation
-   fails.  */
+   insert=NO_INSERT, then call htab_clear_slot on the slot returned
+   (possibly after doing some checks).  To insert an entry, call this
+   with insert=INSERT, then write the value you want into the returned
+   slot.  When inserting an entry, NULL may be returned if memory
+   allocation fails.  */
 
 PTR *
 htab_find_slot_with_hash (htab, element, hash, insert)
@@ -488,17 +635,19 @@ htab_find_slot_with_hash (htab, element, hash, insert)
      enum insert_option insert;
 {
   PTR *first_deleted_slot;
-  unsigned int index;
-  hashval_t hash2;
+  hashval_t index, hash2;
   size_t size;
   PTR entry;
 
-  if (insert == INSERT && htab->size * 3 <= htab->n_elements * 4
-      && htab_expand (htab) == 0)
-    return NULL;
+  size = htab_size (htab);
+  if (insert == INSERT && size * 3 <= htab->n_elements * 4)
+    {
+      if (htab_expand (htab) == 0)
+	return NULL;
+      size = htab_size (htab);
+    }
 
-  size = htab->size;
-  index = hash % size;
+  index = htab_mod (hash, htab);
 
   htab->searches++;
   first_deleted_slot = NULL;
@@ -511,7 +660,7 @@ htab_find_slot_with_hash (htab, element, hash, insert)
   else if ((*htab->eq_f) (entry, element))
     return &htab->entries[index];
       
-  hash2 = 1 + hash % (size - 2);
+  hash2 = htab_mod_m2 (hash, htab);
   for (;;)
     {
       htab->collisions++;
@@ -560,17 +709,31 @@ htab_find_slot (htab, element, insert)
 }
 
 /* This function deletes an element with the given value from hash
-   table.  If there is no matching element in the hash table, this
-   function does nothing.  */
+   table (the hash is computed from the element).  If there is no matching
+   element in the hash table, this function does nothing.  */
 
 void
 htab_remove_elt (htab, element)
      htab_t htab;
      PTR element;
 {
+  htab_remove_elt_with_hash (htab, element, (*htab->hash_f) (element));
+}
+
+
+/* This function deletes an element with the given value from hash
+   table.  If there is no matching element in the hash table, this
+   function does nothing.  */
+
+void
+htab_remove_elt_with_hash (htab, element, hash)
+     htab_t htab;
+     PTR element;
+     hashval_t hash;
+{
   PTR *slot;
 
-  slot = htab_find_slot (htab, element, NO_INSERT);
+  slot = htab_find_slot_with_hash (htab, element, hash, NO_INSERT);
   if (*slot == EMPTY_ENTRY)
     return;
 
@@ -590,7 +753,7 @@ htab_clear_slot (htab, slot)
      htab_t htab;
      PTR *slot;
 {
-  if (slot < htab->entries || slot >= htab->entries + htab->size
+  if (slot < htab->entries || slot >= htab->entries + htab_size (htab)
       || *slot == EMPTY_ENTRY || *slot == DELETED_ENTRY)
     abort ();
 
@@ -616,7 +779,7 @@ htab_traverse_noresize (htab, callback, info)
   PTR *limit;
 
   slot = htab->entries;
-  limit = slot + htab->size;
+  limit = slot + htab_size (htab);
 
   do
     {
@@ -638,28 +801,10 @@ htab_traverse (htab, callback, info)
      htab_trav callback;
      PTR info;
 {
-  if ((htab->n_elements - htab->n_deleted) * 8 < htab->size)
+  if (htab_elements (htab) * 8 < htab_size (htab))
     htab_expand (htab);
 
   htab_traverse_noresize (htab, callback, info);
-}
-
-/* Return the current size of given hash table. */
-
-size_t
-htab_size (htab)
-     htab_t htab;
-{
-  return htab->size;
-}
-
-/* Return the current number of elements in given hash table. */
-
-size_t
-htab_elements (htab)
-     htab_t htab;
-{
-  return htab->n_elements - htab->n_deleted;
 }
 
 /* Return the fraction of fixed collisions during all work with given

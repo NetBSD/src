@@ -7,8 +7,8 @@ else
 fi
 cat >e${EMULATION_NAME}.c <<EOF
 /* This file is part of GLD, the Gnu Linker.
-   Copyright 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2004
-   Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
+   2005 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -187,10 +187,6 @@ set_pe_subsystem (void)
       { "wwindows", 2, "_wWinMainCRTStartup" },
       { "console", 3, "_mainCRTStartup" },
       { "wconsole", 3, "_wmainCRTStartup" },
-#if 0
-      /* The Microsoft linker does not recognize this.  */
-      { "os2", 5, "" },
-#endif
       { "posix", 7, "___PosixProcessStartup"},
       { 0, 0, 0 }
     };
@@ -733,30 +729,7 @@ gld${EMULATION_NAME}_place_orphan (lang_input_statement_type *file, asection *s)
       }
   ps[0] = 0;
   if (l == NULL)
-#if 1
     einfo ("%P%F: *(%s\$) missing from linker script\n", output_secname);
-#else /* FIXME: This block is untried.  It exists to convey the intent,
-	 should one decide to not require *(.foo\$) to appear in the linker
-	 script.  */
-    {
-      lang_wild_statement_type *new;
-      struct wildcard_list *tmp;
-
-      tmp = (struct wildcard_list *) xmalloc (sizeof *tmp);
-      tmp->next = NULL;
-      tmp->spec.name = xmalloc (strlen (output_secname) + 2);
-      sprintf (tmp->spec.name, "%s\$", output_secname);
-      tmp->spec.exclude_name_list = NULL;
-      tmp->sorted = FALSE;
-      new = new_stat (lang_wild_statement, &os->children);
-      new->filename = NULL;
-      new->filenames_sorted = FALSE;
-      new->section_list = tmp;
-      new->keep_sections = FALSE;
-      lang_list_init (&new->children);
-      l = new;
-    }
-#endif
 
   /* Link the input section in and we're done for now.
      The sections still have to be sorted, but that has to wait until

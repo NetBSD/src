@@ -1,5 +1,5 @@
 /* tc-mn10200.c -- Assembler code for the Matsushita 10200
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -1235,17 +1235,24 @@ tc_gen_reloc (seg, fixp)
 
   if (fixp->fx_subsy != NULL)
     {
-      /* FIXME: We should resolve difference expressions if possible
-	 here.  At least this is better than silently ignoring the
-	 subtrahend.  */
-      as_bad_where (fixp->fx_file, fixp->fx_line,
-		    _("can't resolve `%s' {%s section} - `%s' {%s section}"),
-		    fixp->fx_addsy ? S_GET_NAME (fixp->fx_addsy) : "0",
-		    segment_name (fixp->fx_addsy
-				  ? S_GET_SEGMENT (fixp->fx_addsy)
-				  : absolute_section),
-		    S_GET_NAME (fixp->fx_subsy),
-		    segment_name (S_GET_SEGMENT (fixp->fx_addsy)));
+      if (S_GET_SEGMENT (fixp->fx_addsy) == S_GET_SEGMENT (fixp->fx_subsy)
+	  && S_IS_DEFINED (fixp->fx_subsy))
+	{
+	  fixp->fx_offset -= S_GET_VALUE (fixp->fx_subsy);
+	  fixp->fx_subsy = NULL;
+	}
+      else
+	/* FIXME: We should try more ways to resolve difference expressions
+	   here.  At least this is better than silently ignoring the
+	   subtrahend.  */
+	as_bad_where (fixp->fx_file, fixp->fx_line,
+		      _("can't resolve `%s' {%s section} - `%s' {%s section}"),
+		      fixp->fx_addsy ? S_GET_NAME (fixp->fx_addsy) : "0",
+		      segment_name (fixp->fx_addsy
+				    ? S_GET_SEGMENT (fixp->fx_addsy)
+				    : absolute_section),
+		      S_GET_NAME (fixp->fx_subsy),
+		      segment_name (S_GET_SEGMENT (fixp->fx_addsy)));
     }
 
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
@@ -1288,14 +1295,6 @@ md_pcrel_from (fixp)
      fixS *fixp;
 {
   return fixp->fx_frag->fr_address;
-#if 0
-  if (fixp->fx_addsy != (symbolS *) NULL && !S_IS_DEFINED (fixp->fx_addsy))
-    {
-      /* The symbol is undefined.  Let the linker figure it out.  */
-      return 0;
-    }
-  return fixp->fx_frag->fr_address + fixp->fx_where;
-#endif
 }
 
 void
@@ -1342,17 +1341,7 @@ mn10200_insert_operand (insnp, extensionp, operand, val, file, line, shift)
       test = val;
 
       if (test < (offsetT) min || test > (offsetT) max)
-        {
-          const char *err =
-            _("operand out of range (%s not between %ld and %ld)");
-          char buf[100];
-
-          sprint_value (buf, test);
-          if (file == (char *) NULL)
-            as_warn (err, buf, min, max);
-          else
-            as_warn_where (file, line, err, buf, min, max);
-        }
+	as_warn_value_out_of_range (_("operand"), test, (offsetT) min, (offsetT) max, file, line);
     }
 
   if ((operand->flags & MN10200_OPERAND_EXTENDED) == 0)

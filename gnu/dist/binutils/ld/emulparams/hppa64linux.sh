@@ -53,6 +53,7 @@ OTHER_GOT_RELOC_SECTIONS="
 DATA_START_SYMBOLS='. += 16;'
 
 DATA_PLT=
+PLT_BEFORE_GOT=
 
 # .dynamic should be at the start of the .text segment.
 TEXT_DYNAMIC=

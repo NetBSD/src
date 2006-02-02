@@ -571,6 +571,9 @@ iq2000_cgen_insert_operand (cd, opindex, fields, buffer, pc)
 
   switch (opindex)
     {
+    case IQ2000_OPERAND__INDEX :
+      errmsg = insert_normal (cd, fields->f_index, 0, 0, 8, 9, 32, total_length, buffer);
+      break;
     case IQ2000_OPERAND_BASE :
       errmsg = insert_normal (cd, fields->f_rs, 0, 0, 25, 5, 32, total_length, buffer);
       break;
@@ -606,9 +609,6 @@ iq2000_cgen_insert_operand (cd, opindex, fields, buffer, pc)
       break;
     case IQ2000_OPERAND_EXECODE :
       errmsg = insert_normal (cd, fields->f_excode, 0, 0, 25, 20, 32, total_length, buffer);
-      break;
-    case IQ2000_OPERAND_F_INDEX :
-      errmsg = insert_normal (cd, fields->f_index, 0, 0, 8, 9, 32, total_length, buffer);
       break;
     case IQ2000_OPERAND_HI16 :
       errmsg = insert_normal (cd, fields->f_imm, 0, 0, 15, 16, 32, total_length, buffer);
@@ -754,6 +754,9 @@ iq2000_cgen_extract_operand (cd, opindex, ex_info, insn_value, fields, pc)
 
   switch (opindex)
     {
+    case IQ2000_OPERAND__INDEX :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 8, 9, 32, total_length, pc, & fields->f_index);
+      break;
     case IQ2000_OPERAND_BASE :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 5, 32, total_length, pc, & fields->f_rs);
       break;
@@ -789,9 +792,6 @@ iq2000_cgen_extract_operand (cd, opindex, ex_info, insn_value, fields, pc)
       break;
     case IQ2000_OPERAND_EXECODE :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 20, 32, total_length, pc, & fields->f_excode);
-      break;
-    case IQ2000_OPERAND_F_INDEX :
-      length = extract_normal (cd, ex_info, insn_value, 0, 0, 8, 9, 32, total_length, pc, & fields->f_index);
       break;
     case IQ2000_OPERAND_HI16 :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 15, 16, 32, total_length, pc, & fields->f_imm);
@@ -927,6 +927,9 @@ iq2000_cgen_get_int_operand (cd, opindex, fields)
 
   switch (opindex)
     {
+    case IQ2000_OPERAND__INDEX :
+      value = fields->f_index;
+      break;
     case IQ2000_OPERAND_BASE :
       value = fields->f_rs;
       break;
@@ -962,9 +965,6 @@ iq2000_cgen_get_int_operand (cd, opindex, fields)
       break;
     case IQ2000_OPERAND_EXECODE :
       value = fields->f_excode;
-      break;
-    case IQ2000_OPERAND_F_INDEX :
-      value = fields->f_index;
       break;
     case IQ2000_OPERAND_HI16 :
       value = fields->f_imm;
@@ -1041,6 +1041,9 @@ iq2000_cgen_get_vma_operand (cd, opindex, fields)
 
   switch (opindex)
     {
+    case IQ2000_OPERAND__INDEX :
+      value = fields->f_index;
+      break;
     case IQ2000_OPERAND_BASE :
       value = fields->f_rs;
       break;
@@ -1076,9 +1079,6 @@ iq2000_cgen_get_vma_operand (cd, opindex, fields)
       break;
     case IQ2000_OPERAND_EXECODE :
       value = fields->f_excode;
-      break;
-    case IQ2000_OPERAND_F_INDEX :
-      value = fields->f_index;
       break;
     case IQ2000_OPERAND_HI16 :
       value = fields->f_imm;
@@ -1164,6 +1164,9 @@ iq2000_cgen_set_int_operand (cd, opindex, fields, value)
 {
   switch (opindex)
     {
+    case IQ2000_OPERAND__INDEX :
+      fields->f_index = value;
+      break;
     case IQ2000_OPERAND_BASE :
       fields->f_rs = value;
       break;
@@ -1199,9 +1202,6 @@ iq2000_cgen_set_int_operand (cd, opindex, fields, value)
       break;
     case IQ2000_OPERAND_EXECODE :
       fields->f_excode = value;
-      break;
-    case IQ2000_OPERAND_F_INDEX :
-      fields->f_index = value;
       break;
     case IQ2000_OPERAND_HI16 :
       fields->f_imm = value;
@@ -1275,6 +1275,9 @@ iq2000_cgen_set_vma_operand (cd, opindex, fields, value)
 {
   switch (opindex)
     {
+    case IQ2000_OPERAND__INDEX :
+      fields->f_index = value;
+      break;
     case IQ2000_OPERAND_BASE :
       fields->f_rs = value;
       break;
@@ -1310,9 +1313,6 @@ iq2000_cgen_set_vma_operand (cd, opindex, fields, value)
       break;
     case IQ2000_OPERAND_EXECODE :
       fields->f_excode = value;
-      break;
-    case IQ2000_OPERAND_F_INDEX :
-      fields->f_index = value;
       break;
     case IQ2000_OPERAND_HI16 :
       fields->f_imm = value;

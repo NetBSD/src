@@ -1,7 +1,4 @@
 /* config.in.  Generated from configure.ac by autoheader.  */
-/* Define to `unsigned long' if <sys/types.h> doesn't define.  */
-#undef uintptr_t
-
 
 /* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
 #undef BYTEORDER
@@ -344,6 +341,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* The size of a `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
 /* Define if you know the direction of stack growth for your system; otherwise
    it will be automatically deduced at run-time. STACK_DIRECTION > 0 => grows
    toward higher addresses STACK_DIRECTION < 0 => grows toward lower addresses
@@ -356,15 +356,20 @@
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
 
+/* Define to an unsigned 64-bit type available in the compiler. */
+#undef UNSIGNED_64BIT_TYPE
+
 /* whether byteorder is bigendian */
 #undef WORDS_BIGENDIAN
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
 
-/* Define as `__inline' if that's what the C compiler calls it, or to nothing
-   if it is not supported. */
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
 #undef inline
+#endif
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t

@@ -1,6 +1,6 @@
 # Support routines for LD testsuite.
-#   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
-#   Free Software Foundation, Inc.
+#   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+#    2004, 2005 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ proc is_endian_output_format { object_flags } {
 proc big_or_little_endian {} {
 
     if [board_info [target_info name] exists multilib_flags] {
-	set tmp_flags " [board_info [target_info name] multilib_flags]";
+	set tmp_flags " [board_info [target_info name] multilib_flags]"
 
 	foreach x $tmp_flags {
 	    case $x in {
@@ -235,7 +235,7 @@ proc default_ld_compile { cc source object } {
     }
 
     if [board_info [target_info name] exists multilib_flags] {
-	append flags " [board_info [target_info name] multilib_flags]";
+	append flags " [board_info [target_info name] multilib_flags]"
     }
 
     verbose -log "$cc $flags -c $source -o $object"
@@ -417,6 +417,50 @@ proc is_elf64 { binary_file } {
 }
 
 #
+# is_aout_format
+#	true if the object format is known to be aout
+proc is_aout_format {} {
+    if { [istarget *-*-*\[ab\]out*] \
+	     || [istarget *-*-linux*oldld*] \
+	     || [istarget *-*-msdos*] \
+	     || [istarget arm-*-netbsd] \
+	     || [istarget i?86-*-netbsd] \
+	     || [istarget i?86-*-mach*] \
+	     || [istarget i?86-*-vsta] \
+	     || [istarget pdp11-*-*] \
+	     || [istarget m68*-ericsson-ose] \
+	     || [istarget m68k-hp-bsd*] \
+	     || [istarget m68*-*-hpux*] \
+	     || [istarget m68*-*-netbsd] \
+	     || [istarget m68*-*-netbsd*4k*] \
+	     || [istarget m68k-sony-*] \
+	     || [istarget m68*-sun-sunos\[34\]*] \
+	     || [istarget m68*-wrs-vxworks*] \
+	     || [istarget ns32k-*-*] \
+	     || [istarget sparc*-*-netbsd] \
+	     || [istarget sparc-sun-sunos4*] \
+	     || [istarget vax-dec-ultrix*] \
+	     || [istarget vax-*-netbsd] } {
+	return 1
+    }
+    return 0
+}
+
+#
+# is_pecoff_format
+#	true if the object format is known to be PECOFF
+#
+proc is_pecoff_format {} {
+    if { ![istarget *-*-mingw32*] \
+	 && ![istarget *-*-cygwin*] \
+	 && ![istarget *-*-pe*] } {
+	return 0
+    }
+
+    return 1
+}
+
+#
 # simple_diff
 #	compares two files line-by-line
 #	returns differences if exist
@@ -573,6 +617,10 @@ proc simple_diff { file_1 file_2 } {
 #	to pass.  The PROG, objdump, nm and objcopy options have no
 #	meaning and need not supplied if this is present.
 #
+#   warning: REGEX
+#	Expect a linker warning matching REGEX.  It is an error to issue
+#	both "error" and "warning".
+#
 # Each option may occur at most once unless otherwise mentioned.
 #
 # After the option lines come regexp lines.  `run_dump_test' calls
@@ -620,6 +668,7 @@ proc run_dump_test { name } {
     set opts(PROG) {}
     set opts(source) {}
     set opts(error) {}
+    set opts(warning) {}
     set opts(objcopy_linked_file) {}
     set asflags(${file}.s) {}
 
@@ -685,49 +734,42 @@ proc run_dump_test { name } {
 	}
     }
 
-    if {$opts(PROG) != ""} {
-	switch -- $opts(PROG) {
-	    objdump
-		{ set program objdump }
-	    nm
-		{ set program nm }
-	    objcopy
-		{ set program objcopy }
-	    readelf
-		{ set program readelf }
-	    default
+    set program ""
+    # It's meaningless to require an output-testing method when we
+    # expect an error.
+    if { $opts(error) == "" } {
+	if {$opts(PROG) != ""} {
+	    switch -- $opts(PROG) {
+		objdump	{ set program objdump }
+		nm	{ set program nm }
+		objcopy	{ set program objcopy }
+		readelf	{ set program readelf }
+		default
 		{ perror "unrecognized program option $opts(PROG) in $file.d"
 		  unresolved $subdir/$name
 		  return }
-	}
-    } elseif { $opts(error) != "" } {
-	# It's meaningless to require an output-testing method when we
-	# expect an error.  For simplicity, we fake an arbitrary method.
-	set program "nm"
-    } else {
+	    }
+	} else {
 	# Guess which program to run, by seeing which option was specified.
-	set program ""
-	foreach p {objdump objcopy nm readelf} {
-	    if {$opts($p) != ""} {
-		if {$program != ""} {
-		    perror "ambiguous dump program in $file.d"
-		    unresolved $subdir/$name
-		    return
-		} else {
-		    set program $p
+	    foreach p {objdump objcopy nm readelf} {
+		if {$opts($p) != ""} {
+		    if {$program != ""} {
+			perror "ambiguous dump program in $file.d"
+			unresolved $subdir/$name
+			return
+		    } else {
+			set program $p
+		    }
 		}
 	    }
 	}
-	if {$program == ""} {
+	if { $program == "" && $opts(warning) == "" } {
 	    perror "dump program unspecified in $file.d"
 	    unresolved $subdir/$name
 	    return
 	}
     }
 
-    set progopts1 $opts($program)
-    eval set progopts \$[string toupper $program]FLAGS
-    eval set binary \$[string toupper $program]
     if { $opts(name) == "" } {
 	set testname "$subdir/$name"
     } else {
@@ -741,7 +783,7 @@ proc run_dump_test { name } {
 	foreach sf $opts(source) {
 	    if { [string match "/*" $sf] } {
 		lappend sourcefiles "$sf"
-	    } {
+	    } else {
 		lappend sourcefiles "$srcdir/$subdir/$sf"
 	    }
 	    # Must have asflags indexed on source name.
@@ -767,20 +809,25 @@ proc run_dump_test { name } {
 	set cmdret [catch "exec $cmd" comp_output]
 	set comp_output [prune_warnings $comp_output]
 
-	# We accept errors at assembly stage too, unless we're supposed to
-	# link something.
 	if { $cmdret != 0 || ![string match "" $comp_output] } then {
 	    send_log "$comp_output\n"
 	    verbose "$comp_output" 3
-	    if { $opts(error) != "" && $run_ld == 0 } {
-		if [regexp $opts(error) $comp_output] {
-		    pass $testname
-		    return
-		}
-	    }
+
+	    set exitstat "succeeded"
+	    if { $cmdret != 0 } { set exitstat "failed" }
+	    verbose -log "$exitstat with: <$comp_output>"
 	    fail $testname
 	    return
 	}
+    }
+
+    set expmsg $opts(error)
+    if { $opts(warning) != "" } {
+	if { $expmsg != "" } {
+	    perror "$testname: mixing error and warning test-directives"
+	    return
+	}
+	set expmsg $opts(warning)
     }
 
     # Perhaps link the file(s).
@@ -796,21 +843,20 @@ proc run_dump_test { name } {
 	set cmdret [catch "exec $cmd" comp_output]
 	set comp_output [prune_warnings $comp_output]
 
-	if { $cmdret != 0 || ![string match "" $comp_output] } then {
-	    verbose -log "failed with: <$comp_output>, expected: <$opts(error)>"
-	    send_log "$comp_output\n"
-	    verbose "$comp_output" 3
-	    if { $opts(error) != "" && $run_objcopy == 0 } {
-		if [regexp $opts(error) $comp_output] {
-		    pass $testname
-		    return
-		}
+	if { $cmdret != 0 } then {
+	    # If the executed program writes to stderr and stderr is not
+	    # redirected, exec *always* returns failure, regardless of the
+	    # program exit code.  Thankfully, we can retrieve the true
+	    # return status from a special variable.  Redirection would
+	    # cause a tcl-specific message to be appended, and we'd rather
+	    # not deal with that if we can help it.
+	    global errorCode
+	    if { [lindex $errorCode 0] == "NONE" } {
+		set cmdret 0
 	    }
-	    fail $testname
-	    return
 	}
 
-	if { $run_objcopy } {
+	if { $cmdret == 0 && $run_objcopy } {
 	    set infile $objfile
 	    set objfile "tmpdir/dump1"
 
@@ -820,18 +866,32 @@ proc run_dump_test { name } {
 
 	    send_log "$cmd\n"
 	    set cmdret [catch "exec $cmd" comp_output]
-	    set comp_output [prune_warnings $comp_output]
+	    append comp_output [prune_warnings $comp_output]
 
-	    if { $cmdret != 0 || ![string match "" $comp_output] } then {
-		verbose -log "failed with: <$comp_output>, expected: <$opts(error)>"
-		send_log "$comp_output\n"
-		verbose "$comp_output" 3
-		if { $opts(error) != "" } {
-		    if [regexp $opts(error) $comp_output] {
-			pass $testname
-			return
-		    }
+	    if { $cmdret != 0 } then {
+		global errorCode
+		if { [lindex $errorCode 0] == "NONE" } {
+		    set cmdret 0
 		}
+	    }
+	}
+
+	if { $cmdret != 0 || $comp_output != "" || $expmsg != "" } then {
+	    set exitstat "succeeded"
+	    if { $cmdret != 0 } { set exitstat "failed" }
+	    verbose -log "$exitstat with: <$comp_output>, expected: <$expmsg>"
+	    send_log "$comp_output\n"
+	    verbose "$comp_output" 3
+
+	    if { [regexp $expmsg $comp_output] \
+		    && (($cmdret == 0) == ($opts(warning) != "")) } {
+		# We have the expected output from ld.
+		if { $opts(error) != "" || $program == "" } {
+		    pass $testname
+		    return
+		}
+	    } else {
+		verbose -log "$exitstat with: <$comp_output>, expected: <$expmsg>"
 		fail $testname
 		return
 	    }
@@ -845,6 +905,10 @@ proc run_dump_test { name } {
 	fail $testname
 	return
     }
+
+    set progopts1 $opts($program)
+    eval set progopts \$[string toupper $program]FLAGS
+    eval set binary \$[string toupper $program]
 
     if { [which $binary] == 0 } {
 	untested $testname

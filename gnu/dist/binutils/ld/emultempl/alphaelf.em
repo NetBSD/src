@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2003 Free Software Foundation, Inc.
+#   Copyright 2003, 2004 Free Software Foundation, Inc.
 #
 # This file is part of GLD, the Gnu Linker.
 #
@@ -39,7 +39,8 @@ alpha_after_parse (void)
     lang_section_start (".interp",
 			exp_binop ('+',
 				   exp_intop (ALPHA_TEXT_START_32BIT),
-				   exp_nameop (SIZEOF_HEADERS, NULL)));
+				   exp_nameop (SIZEOF_HEADERS, NULL)),
+			NULL);
 }
 
 static void

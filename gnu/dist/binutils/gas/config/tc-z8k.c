@@ -1,6 +1,6 @@
 /* tc-z8k.c -- Assemble code for the Zilog Z800n
-   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001, 2002, 2003
-   Free Software Foundation, Inc.
+   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001, 2002, 2003,
+   2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -203,7 +203,7 @@ static int the_flags;
 static int the_interrupt;
 
 static char *
-whatreg (int *reg, char *src)
+whatreg (unsigned int *reg, char *src)
 {
   if (ISDIGIT (src[1]))
     {
@@ -631,13 +631,14 @@ get_operand (char **ptr, struct z8k_op *mode, unsigned int dst ATTRIBUTE_UNUSED)
     }
   else
     {
-      int regn;
+      unsigned int regn;
 
       end = parse_reg (src, &mode->mode, &regn);
 
       if (end)
 	{
-	  int nw, nr;
+	  int nw;
+	  unsigned int nr;
 
 	  src = end;
 	  if (*src == '(')
@@ -655,9 +656,6 @@ get_operand (char **ptr, struct z8k_op *mode, unsigned int dst ATTRIBUTE_UNUSED)
 		    src++;
 
 		  regaddr (mode->mode, "ra(rb) ra");
-#if 0
-		  regword (mode->mode, "ra(rb) rb");
-#endif
 		  mode->mode = CLASS_BX;
 		  mode->reg = regn;
 		  mode->x_reg = nr;
@@ -995,8 +993,6 @@ apply_fix (char *ptr, int type, expressionS *operand, int size)
 
 /* Now we know what sort of opcodes it is.  Let's build the bytes.  */
 
-#define INSERT(x,y) *x++ = y>>24; *x++ = y>> 16; *x++=y>>8; *x++ =y;
-
 static void
 build_bytes (opcode_entry_type *this_try, struct z8k_op *operand ATTRIBUTE_UNUSED)
 {
@@ -1186,7 +1182,7 @@ md_assemble (char *str)
   char c;
   char *op_start;
   char *op_end;
-  struct z8k_op operand[3];
+  struct z8k_op operand[4];
   opcode_entry_type *opcode;
 
   /* Drop leading whitespace.  */
@@ -1243,11 +1239,12 @@ md_assemble (char *str)
 
       new_input_line_pointer = get_operands (opcode, op_end, operand);
       if (new_input_line_pointer)
-        input_line_pointer = new_input_line_pointer;
+        {
+          input_line_pointer = new_input_line_pointer;
+          opcode = get_specific (opcode, operand);
+        }
 
-      opcode = get_specific (opcode, operand);
-
-      if (opcode == 0)
+      if (new_input_line_pointer == NULL || opcode == NULL)
 	{
 	  /* Couldn't find an opcode which matched the operands.  */
 	  char *where = frag_more (2);
@@ -1432,13 +1429,15 @@ md_apply_fix3 (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
         }
       else
         {
-      if (val & 1)
-        as_bad (_("cannot branch to odd address"));
-      val /= 2;
-      if (val > 127 || val < -128)
-            as_warn (_("relative jump out of range"));
-      *buf++ = val;
-      fixP->fx_no_overflow = 1;
+          if (val & 1)
+            as_bad_where (fixP->fx_file, fixP->fx_line,
+                          _("cannot branch to odd address"));
+          val /= 2;
+          if (val > 127 || val < -128)
+            as_bad_where (fixP->fx_file, fixP->fx_line,
+                          _("relative jump out of range"));
+          *buf++ = val;
+          fixP->fx_no_overflow = 1;
           fixP->fx_done = 1;
         }
       break;
@@ -1452,10 +1451,12 @@ md_apply_fix3 (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
       else
         {
           if (val & 1)
-            as_bad (_("cannot branch to odd address"));
+            as_bad_where (fixP->fx_file, fixP->fx_line,
+                          _("cannot branch to odd address"));
           val /= 2;
           if (val > 0 || val < -127)
-            as_bad (_("relative jump out of range"));
+            as_bad_where (fixP->fx_file, fixP->fx_line,
+                          _("relative jump out of range"));
           *buf = (*buf & 0x80) | (-val & 0x7f);
           fixP->fx_no_overflow = 1;
           fixP->fx_done = 1;
@@ -1471,9 +1472,11 @@ md_apply_fix3 (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
       else
         {
           if (val & 1)
-            as_bad (_("cannot branch to odd address"));
+            as_bad_where (fixP->fx_file, fixP->fx_line,
+                          _("cannot branch to odd address"));
           if (val > 4096 || val < -4095)
-            as_bad (_("relative call out of range"));
+            as_bad_where (fixP->fx_file, fixP->fx_line,
+                          _("relative call out of range"));
           val = -val / 2;
           *buf = (*buf & 0xf0) | ((val >> 8) & 0xf);
           buf++;
@@ -1502,20 +1505,12 @@ md_apply_fix3 (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
     case R_REL16:
       val = val - fixP->fx_frag->fr_address + fixP->fx_where - fixP->fx_size;
       if (val > 32767 || val < -32768)
-        as_bad (_("relative address out of range"));
+        as_bad_where (fixP->fx_file, fixP->fx_line,
+                      _("relative address out of range"));
       *buf++ = (val >> 8);
       *buf++ = val;
       fixP->fx_no_overflow = 1;
       break;
-
-#if 0
-    case R_DA | R_SEG:
-      *buf++ = (val >> 16);
-      *buf++ = 0x00;
-      *buf++ = (val >> 8);
-      *buf++ = val;
-      break;
-#endif
 
     case 0:
       md_number_to_chars (buf, val, fixP->fx_size);

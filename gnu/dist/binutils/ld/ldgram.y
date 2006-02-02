@@ -1,23 +1,23 @@
 /* A YACC grammar to parse a superset of the AT&T linker scripting language.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
-This file is part of GNU ld.
+   This file is part of GNU ld.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 %{
 /*
@@ -128,11 +128,13 @@ static int error_index;
 %token END
 %left <token> '('
 %token <token> ALIGN_K BLOCK BIND QUAD SQUAD LONG SHORT BYTE
-%token SECTIONS PHDRS SORT DATA_SEGMENT_ALIGN DATA_SEGMENT_END
+%token SECTIONS PHDRS DATA_SEGMENT_ALIGN DATA_SEGMENT_RELRO_END DATA_SEGMENT_END
+%token SORT_BY_NAME SORT_BY_ALIGNMENT
 %token '{' '}'
 %token SIZEOF_HEADERS OUTPUT_FORMAT FORCE_COMMON_ALLOCATION OUTPUT_ARCH
 %token INHIBIT_COMMON_ALLOCATION
 %token SIZEOF_HEADERS
+%token SEGMENT_START
 %token INCLUDE
 %token MEMORY DEFSYMEND
 %token NOLOAD DSECT COPY INFO OVERLAY
@@ -142,15 +144,15 @@ static int error_index;
 %token STARTUP HLL SYSLIB FLOAT NOFLOAT NOCROSSREFS
 %token ORIGIN FILL
 %token LENGTH CREATE_OBJECT_SYMBOLS INPUT GROUP OUTPUT CONSTRUCTORS
-%token ALIGNMOD AT SUBALIGN PROVIDE
-%type <token> assign_op atype attributes_opt
+%token ALIGNMOD AT SUBALIGN PROVIDE AS_NEEDED
+%type <token> assign_op atype attributes_opt sect_constraint
 %type <name>  filename
 %token CHIP LIST SECT ABSOLUTE  LOAD NEWLINE ENDWORD ORDER NAMEWORD ASSERT_K
 %token FORMAT PUBLIC DEFSYMEND BASE ALIAS TRUNCATE REL
 %token INPUT_SCRIPT INPUT_MRI_SCRIPT INPUT_DEFSYM CASE EXTERN START
 %token <name> VERS_TAG VERS_IDENTIFIER
 %token GLOBAL LOCAL VERSIONK INPUT_VERSION_SCRIPT
-%token KEEP
+%token KEEP ONLY_IF_RO ONLY_IF_RW
 %token EXCLUDE_FILE
 %type <versyms> vers_defns
 %type <versnode> vers_tag
@@ -370,6 +372,18 @@ input_list:
 	|	input_list LNAME
 		{ lang_add_input_file($2,lang_input_file_is_l_enum,
 				 (char *)NULL); }
+	|	AS_NEEDED '('
+		  { $<integer>$ = as_needed; as_needed = TRUE; }
+		     input_list ')'
+		  { as_needed = $<integer>3; }
+	|	input_list ',' AS_NEEDED '('
+		  { $<integer>$ = as_needed; as_needed = TRUE; }
+		     input_list ')'
+		  { as_needed = $<integer>5; }
+	|	input_list AS_NEEDED '('
+		  { $<integer>$ = as_needed; as_needed = TRUE; }
+		     input_list ')'
+		  { as_needed = $<integer>4; }
 	;
 
 sections:
@@ -412,25 +426,55 @@ wildcard_spec:
 		wildcard_name
 			{
 			  $$.name = $1;
-			  $$.sorted = FALSE;
+			  $$.sorted = none;
 			  $$.exclude_name_list = NULL;
 			}
 	| 	EXCLUDE_FILE '(' exclude_name_list ')' wildcard_name
 			{
 			  $$.name = $5;
-			  $$.sorted = FALSE;
+			  $$.sorted = none;
 			  $$.exclude_name_list = $3;
 			}
-	|	SORT '(' wildcard_name ')'
+	|	SORT_BY_NAME '(' wildcard_name ')'
 			{
 			  $$.name = $3;
-			  $$.sorted = TRUE;
+			  $$.sorted = by_name;
 			  $$.exclude_name_list = NULL;
 			}
-	|	SORT '(' EXCLUDE_FILE '(' exclude_name_list ')' wildcard_name ')'
+	|	SORT_BY_ALIGNMENT '(' wildcard_name ')'
+			{
+			  $$.name = $3;
+			  $$.sorted = by_alignment;
+			  $$.exclude_name_list = NULL;
+			}
+	|	SORT_BY_NAME '(' SORT_BY_ALIGNMENT '(' wildcard_name ')' ')'
+			{
+			  $$.name = $5;
+			  $$.sorted = by_name_alignment;
+			  $$.exclude_name_list = NULL;
+			}
+	|	SORT_BY_NAME '(' SORT_BY_NAME '(' wildcard_name ')' ')'
+			{
+			  $$.name = $5;
+			  $$.sorted = by_name;
+			  $$.exclude_name_list = NULL;
+			}
+	|	SORT_BY_ALIGNMENT '(' SORT_BY_NAME '(' wildcard_name ')' ')'
+			{
+			  $$.name = $5;
+			  $$.sorted = by_alignment_name;
+			  $$.exclude_name_list = NULL;
+			}
+	|	SORT_BY_ALIGNMENT '(' SORT_BY_ALIGNMENT '(' wildcard_name ')' ')'
+			{
+			  $$.name = $5;
+			  $$.sorted = by_alignment;
+			  $$.exclude_name_list = NULL;
+			}
+	|	SORT_BY_NAME '(' EXCLUDE_FILE '(' exclude_name_list ')' wildcard_name ')'
 			{
 			  $$.name = $7;
-			  $$.sorted = TRUE;
+			  $$.sorted = by_name;
 			  $$.exclude_name_list = $5;
 			}
 	;
@@ -481,7 +525,7 @@ input_section_spec_no_keep:
 			  struct wildcard_spec tmp;
 			  tmp.name = $1;
 			  tmp.exclude_name_list = NULL;
-			  tmp.sorted = FALSE;
+			  tmp.sorted = none;
 			  lang_add_wild (&tmp, NULL, ldgram_had_keep);
 			}
         |	'[' file_NAME_list ']'
@@ -514,7 +558,7 @@ statement:
 
 		  lang_add_attribute(lang_constructors_statement_enum);
 		}
-	| SORT '(' CONSTRUCTORS ')'
+	| SORT_BY_NAME '(' CONSTRUCTORS ')'
 		{
 		  constructors_sorted = TRUE;
 		  lang_add_attribute (lang_constructors_statement_enum);
@@ -730,96 +774,111 @@ nocrossref_list:
 		}
 	;
 
-mustbe_exp:		 { ldlex_expression(); }
+mustbe_exp:		 { ldlex_expression (); }
 		exp
-			 { ldlex_popstate(); $$=$2;}
+			 { ldlex_popstate (); $$=$2;}
 	;
 
 exp	:
 		'-' exp %prec UNARY
-			{ $$ = exp_unop('-', $2); }
+			{ $$ = exp_unop ('-', $2); }
 	|	'(' exp ')'
 			{ $$ = $2; }
 	|	NEXT '(' exp ')' %prec UNARY
-			{ $$ = exp_unop((int) $1,$3); }
+			{ $$ = exp_unop ((int) $1,$3); }
 	|	'!' exp %prec UNARY
-			{ $$ = exp_unop('!', $2); }
+			{ $$ = exp_unop ('!', $2); }
 	|	'+' exp %prec UNARY
 			{ $$ = $2; }
 	|	'~' exp %prec UNARY
-			{ $$ = exp_unop('~', $2);}
+			{ $$ = exp_unop ('~', $2);}
 
 	|	exp '*' exp
-			{ $$ = exp_binop('*', $1, $3); }
+			{ $$ = exp_binop ('*', $1, $3); }
 	|	exp '/' exp
-			{ $$ = exp_binop('/', $1, $3); }
+			{ $$ = exp_binop ('/', $1, $3); }
 	|	exp '%' exp
-			{ $$ = exp_binop('%', $1, $3); }
+			{ $$ = exp_binop ('%', $1, $3); }
 	|	exp '+' exp
-			{ $$ = exp_binop('+', $1, $3); }
+			{ $$ = exp_binop ('+', $1, $3); }
 	|	exp '-' exp
-			{ $$ = exp_binop('-' , $1, $3); }
+			{ $$ = exp_binop ('-' , $1, $3); }
 	|	exp LSHIFT exp
-			{ $$ = exp_binop(LSHIFT , $1, $3); }
+			{ $$ = exp_binop (LSHIFT , $1, $3); }
 	|	exp RSHIFT exp
-			{ $$ = exp_binop(RSHIFT , $1, $3); }
+			{ $$ = exp_binop (RSHIFT , $1, $3); }
 	|	exp EQ exp
-			{ $$ = exp_binop(EQ , $1, $3); }
+			{ $$ = exp_binop (EQ , $1, $3); }
 	|	exp NE exp
-			{ $$ = exp_binop(NE , $1, $3); }
+			{ $$ = exp_binop (NE , $1, $3); }
 	|	exp LE exp
-			{ $$ = exp_binop(LE , $1, $3); }
+			{ $$ = exp_binop (LE , $1, $3); }
   	|	exp GE exp
-			{ $$ = exp_binop(GE , $1, $3); }
+			{ $$ = exp_binop (GE , $1, $3); }
 	|	exp '<' exp
-			{ $$ = exp_binop('<' , $1, $3); }
+			{ $$ = exp_binop ('<' , $1, $3); }
 	|	exp '>' exp
-			{ $$ = exp_binop('>' , $1, $3); }
+			{ $$ = exp_binop ('>' , $1, $3); }
 	|	exp '&' exp
-			{ $$ = exp_binop('&' , $1, $3); }
+			{ $$ = exp_binop ('&' , $1, $3); }
 	|	exp '^' exp
-			{ $$ = exp_binop('^' , $1, $3); }
+			{ $$ = exp_binop ('^' , $1, $3); }
 	|	exp '|' exp
-			{ $$ = exp_binop('|' , $1, $3); }
+			{ $$ = exp_binop ('|' , $1, $3); }
 	|	exp '?' exp ':' exp
-			{ $$ = exp_trinop('?' , $1, $3, $5); }
+			{ $$ = exp_trinop ('?' , $1, $3, $5); }
 	|	exp ANDAND exp
-			{ $$ = exp_binop(ANDAND , $1, $3); }
+			{ $$ = exp_binop (ANDAND , $1, $3); }
 	|	exp OROR exp
-			{ $$ = exp_binop(OROR , $1, $3); }
+			{ $$ = exp_binop (OROR , $1, $3); }
 	|	DEFINED '(' NAME ')'
-			{ $$ = exp_nameop(DEFINED, $3); }
+			{ $$ = exp_nameop (DEFINED, $3); }
 	|	INT
 			{ $$ = exp_bigintop ($1.integer, $1.str); }
         |	SIZEOF_HEADERS
-			{ $$ = exp_nameop(SIZEOF_HEADERS,0); }
+			{ $$ = exp_nameop (SIZEOF_HEADERS,0); }
 
 	|	SIZEOF '(' NAME ')'
-			{ $$ = exp_nameop(SIZEOF,$3); }
+			{ $$ = exp_nameop (SIZEOF,$3); }
 	|	ADDR '(' NAME ')'
-			{ $$ = exp_nameop(ADDR,$3); }
+			{ $$ = exp_nameop (ADDR,$3); }
 	|	LOADADDR '(' NAME ')'
-			{ $$ = exp_nameop(LOADADDR,$3); }
+			{ $$ = exp_nameop (LOADADDR,$3); }
 	|	ABSOLUTE '(' exp ')'
-			{ $$ = exp_unop(ABSOLUTE, $3); }
+			{ $$ = exp_unop (ABSOLUTE, $3); }
 	|	ALIGN_K '(' exp ')'
-			{ $$ = exp_unop(ALIGN_K,$3); }
+			{ $$ = exp_unop (ALIGN_K,$3); }
 	|	ALIGN_K '(' exp ',' exp ')'
-			{ $$ = exp_binop(ALIGN_K,$3,$5); }
+			{ $$ = exp_binop (ALIGN_K,$3,$5); }
 	|	DATA_SEGMENT_ALIGN '(' exp ',' exp ')'
 			{ $$ = exp_binop (DATA_SEGMENT_ALIGN, $3, $5); }
+	|	DATA_SEGMENT_RELRO_END '(' exp ',' exp ')'
+			{ $$ = exp_binop (DATA_SEGMENT_RELRO_END, $5, $3); }
 	|	DATA_SEGMENT_END '(' exp ')'
-			{ $$ = exp_unop(DATA_SEGMENT_END, $3); }
+			{ $$ = exp_unop (DATA_SEGMENT_END, $3); }
+        |       SEGMENT_START '(' NAME ',' exp ')'
+                        { /* The operands to the expression node are
+			     placed in the opposite order from the way
+			     in which they appear in the script as
+			     that allows us to reuse more code in
+			     fold_binary.  */
+			  $$ = exp_binop (SEGMENT_START,
+					  $5,
+					  exp_nameop (NAME, $3)); }
 	|	BLOCK '(' exp ')'
-			{ $$ = exp_unop(ALIGN_K,$3); }
+			{ $$ = exp_unop (ALIGN_K,$3); }
 	|	NAME
-			{ $$ = exp_nameop(NAME,$1); }
+			{ $$ = exp_nameop (NAME,$1); }
 	|	MAX_K '(' exp ',' exp ')'
 			{ $$ = exp_binop (MAX_K, $3, $5 ); }
 	|	MIN_K '(' exp ',' exp ')'
 			{ $$ = exp_binop (MIN_K, $3, $5 ); }
 	|	ASSERT_K '(' exp ',' NAME ')'
 			{ $$ = exp_assert ($3, $5); }
+	|	ORIGIN '(' NAME ')'
+			{ $$ = exp_nameop (ORIGIN, $3); }
+	|	LENGTH '(' NAME ')'
+			{ $$ = exp_nameop (LENGTH, $3); }
 	;
 
 
@@ -838,22 +897,29 @@ opt_subalign:
 	|	{ $$ = 0; }
 	;
 
+sect_constraint:
+		ONLY_IF_RO { $$ = ONLY_IF_RO; }
+	|	ONLY_IF_RW { $$ = ONLY_IF_RW; }
+	|	{ $$ = 0; }
+	;
+
 section:	NAME 		{ ldlex_expression(); }
 		opt_exp_with_type
 		opt_at
 		opt_subalign	{ ldlex_popstate (); ldlex_script (); }
+		sect_constraint
 		'{'
 			{
 			  lang_enter_output_section_statement($1, $3,
 							      sectype,
-							      0, $5, $4);
+							      0, $5, $4, $7);
 			}
 		statement_list_opt
  		'}' { ldlex_popstate (); ldlex_expression (); }
 		memspec_opt memspec_at_opt phdr_opt fill_opt
 		{
 		  ldlex_popstate ();
-		  lang_leave_output_section_statement ($15, $12, $14, $13);
+		  lang_leave_output_section_statement ($16, $13, $15, $14);
 		}
 		opt_comma
 		{}

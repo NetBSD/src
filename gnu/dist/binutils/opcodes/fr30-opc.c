@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright 1996-2005 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -45,123 +45,123 @@ static unsigned int dis_hash_insn PARAMS ((const char *, CGEN_INSN_INT));
 #else
 #define F(f) & fr30_cgen_ifld_table[FR30_/**/f]
 #endif
-static const CGEN_IFMT ifmt_empty = {
+static const CGEN_IFMT ifmt_empty ATTRIBUTE_UNUSED = {
   0, 0, 0x0, { { 0 } }
 };
 
-static const CGEN_IFMT ifmt_add = {
+static const CGEN_IFMT ifmt_add ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_RJ) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_addi = {
+static const CGEN_IFMT ifmt_addi ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_U4) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_add2 = {
+static const CGEN_IFMT ifmt_add2 ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_M4) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_div0s = {
+static const CGEN_IFMT ifmt_div0s ATTRIBUTE_UNUSED = {
   16, 16, 0xfff0, { { F (F_OP1) }, { F (F_OP2) }, { F (F_OP3) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_div3 = {
+static const CGEN_IFMT ifmt_div3 ATTRIBUTE_UNUSED = {
   16, 16, 0xffff, { { F (F_OP1) }, { F (F_OP2) }, { F (F_OP3) }, { F (F_OP4) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldi8 = {
+static const CGEN_IFMT ifmt_ldi8 ATTRIBUTE_UNUSED = {
   16, 16, 0xf000, { { F (F_OP1) }, { F (F_I8) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldi20 = {
+static const CGEN_IFMT ifmt_ldi20 ATTRIBUTE_UNUSED = {
   16, 32, 0xff00, { { F (F_OP1) }, { F (F_I20) }, { F (F_OP2) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldi32 = {
+static const CGEN_IFMT ifmt_ldi32 ATTRIBUTE_UNUSED = {
   16, 48, 0xfff0, { { F (F_OP1) }, { F (F_I32) }, { F (F_OP2) }, { F (F_OP3) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldr14 = {
+static const CGEN_IFMT ifmt_ldr14 ATTRIBUTE_UNUSED = {
   16, 16, 0xf000, { { F (F_OP1) }, { F (F_DISP10) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldr14uh = {
+static const CGEN_IFMT ifmt_ldr14uh ATTRIBUTE_UNUSED = {
   16, 16, 0xf000, { { F (F_OP1) }, { F (F_DISP9) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldr14ub = {
+static const CGEN_IFMT ifmt_ldr14ub ATTRIBUTE_UNUSED = {
   16, 16, 0xf000, { { F (F_OP1) }, { F (F_DISP8) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldr15 = {
+static const CGEN_IFMT ifmt_ldr15 ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_UDISP6) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldr15dr = {
+static const CGEN_IFMT ifmt_ldr15dr ATTRIBUTE_UNUSED = {
   16, 16, 0xfff0, { { F (F_OP1) }, { F (F_OP2) }, { F (F_OP3) }, { F (F_RS2) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_movdr = {
+static const CGEN_IFMT ifmt_movdr ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_RS1) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_call = {
+static const CGEN_IFMT ifmt_call ATTRIBUTE_UNUSED = {
   16, 16, 0xf800, { { F (F_OP1) }, { F (F_OP5) }, { F (F_REL12) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_int = {
+static const CGEN_IFMT ifmt_int ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_U8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_brad = {
+static const CGEN_IFMT ifmt_brad ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_CC) }, { F (F_REL9) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_dmovr13 = {
+static const CGEN_IFMT ifmt_dmovr13 ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_DIR10) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_dmovr13h = {
+static const CGEN_IFMT ifmt_dmovr13h ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_DIR9) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_dmovr13b = {
+static const CGEN_IFMT ifmt_dmovr13b ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_DIR8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_copop = {
+static const CGEN_IFMT ifmt_copop ATTRIBUTE_UNUSED = {
   16, 32, 0xfff0, { { F (F_OP1) }, { F (F_CCC) }, { F (F_OP2) }, { F (F_OP3) }, { F (F_CRJ) }, { F (F_U4C) }, { F (F_CRI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_copld = {
+static const CGEN_IFMT ifmt_copld ATTRIBUTE_UNUSED = {
   16, 32, 0xfff0, { { F (F_OP1) }, { F (F_CCC) }, { F (F_OP2) }, { F (F_OP3) }, { F (F_RJC) }, { F (F_U4C) }, { F (F_CRI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_copst = {
+static const CGEN_IFMT ifmt_copst ATTRIBUTE_UNUSED = {
   16, 32, 0xfff0, { { F (F_OP1) }, { F (F_CCC) }, { F (F_OP2) }, { F (F_OP3) }, { F (F_CRJ) }, { F (F_U4C) }, { F (F_RIC) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_addsp = {
+static const CGEN_IFMT ifmt_addsp ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_S10) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldm0 = {
+static const CGEN_IFMT ifmt_ldm0 ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_REGLIST_LOW_LD) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldm1 = {
+static const CGEN_IFMT ifmt_ldm1 ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_REGLIST_HI_LD) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_stm0 = {
+static const CGEN_IFMT ifmt_stm0 ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_REGLIST_LOW_ST) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_stm1 = {
+static const CGEN_IFMT ifmt_stm1 ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_REGLIST_HI_ST) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_enter = {
+static const CGEN_IFMT ifmt_enter ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_U10) }, { 0 } }
 };
 
@@ -1192,15 +1192,15 @@ static const CGEN_OPCODE fr30_cgen_insn_opcode_table[MAX_INSNS] =
 #else
 #define F(f) & fr30_cgen_ifld_table[FR30_/**/f]
 #endif
-static const CGEN_IFMT ifmt_ldi8m = {
+static const CGEN_IFMT ifmt_ldi8m ATTRIBUTE_UNUSED = {
   16, 16, 0xf000, { { F (F_OP1) }, { F (F_I8) }, { F (F_RI) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldi20m = {
+static const CGEN_IFMT ifmt_ldi20m ATTRIBUTE_UNUSED = {
   16, 32, 0xff00, { { F (F_OP1) }, { F (F_OP2) }, { F (F_RI) }, { F (F_I20) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ldi32m = {
+static const CGEN_IFMT ifmt_ldi32m ATTRIBUTE_UNUSED = {
   16, 48, 0xfff0, { { F (F_OP1) }, { F (F_OP2) }, { F (F_OP3) }, { F (F_RI) }, { F (F_I32) }, { 0 } }
 };
 

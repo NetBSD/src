@@ -713,8 +713,26 @@ frv_cgen_insert_operand (cd, opindex, fields, buffer, pc)
     case FRV_OPERAND_LI :
       errmsg = insert_normal (cd, fields->f_LI, 0, 0, 25, 1, 32, total_length, buffer);
       break;
+    case FRV_OPERAND_LRAD :
+      errmsg = insert_normal (cd, fields->f_LRAD, 0, 0, 4, 1, 32, total_length, buffer);
+      break;
+    case FRV_OPERAND_LRAE :
+      errmsg = insert_normal (cd, fields->f_LRAE, 0, 0, 5, 1, 32, total_length, buffer);
+      break;
+    case FRV_OPERAND_LRAS :
+      errmsg = insert_normal (cd, fields->f_LRAS, 0, 0, 3, 1, 32, total_length, buffer);
+      break;
+    case FRV_OPERAND_TLBPRL :
+      errmsg = insert_normal (cd, fields->f_TLBPRL, 0, 0, 25, 1, 32, total_length, buffer);
+      break;
+    case FRV_OPERAND_TLBPROPX :
+      errmsg = insert_normal (cd, fields->f_TLBPRopx, 0, 0, 28, 3, 32, total_length, buffer);
+      break;
     case FRV_OPERAND_AE :
       errmsg = insert_normal (cd, fields->f_ae, 0, 0, 25, 1, 32, total_length, buffer);
+      break;
+    case FRV_OPERAND_CALLANN :
+      errmsg = insert_normal (cd, fields->f_reloc_ann, 0, 0, 0, 0, 32, total_length, buffer);
       break;
     case FRV_OPERAND_CCOND :
       errmsg = insert_normal (cd, fields->f_ccond, 0, 0, 12, 1, 32, total_length, buffer);
@@ -760,6 +778,12 @@ frv_cgen_insert_operand (cd, opindex, fields, buffer, pc)
         if (errmsg)
           break;
       }
+      break;
+    case FRV_OPERAND_LDANN :
+      errmsg = insert_normal (cd, fields->f_reloc_ann, 0, 0, 0, 0, 32, total_length, buffer);
+      break;
+    case FRV_OPERAND_LDDANN :
+      errmsg = insert_normal (cd, fields->f_reloc_ann, 0, 0, 0, 0, 32, total_length, buffer);
       break;
     case FRV_OPERAND_LOCK :
       errmsg = insert_normal (cd, fields->f_lock, 0, 0, 25, 1, 32, total_length, buffer);
@@ -1016,8 +1040,26 @@ frv_cgen_extract_operand (cd, opindex, ex_info, insn_value, fields, pc)
     case FRV_OPERAND_LI :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 1, 32, total_length, pc, & fields->f_LI);
       break;
+    case FRV_OPERAND_LRAD :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 1, 32, total_length, pc, & fields->f_LRAD);
+      break;
+    case FRV_OPERAND_LRAE :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 5, 1, 32, total_length, pc, & fields->f_LRAE);
+      break;
+    case FRV_OPERAND_LRAS :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 3, 1, 32, total_length, pc, & fields->f_LRAS);
+      break;
+    case FRV_OPERAND_TLBPRL :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 1, 32, total_length, pc, & fields->f_TLBPRL);
+      break;
+    case FRV_OPERAND_TLBPROPX :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 28, 3, 32, total_length, pc, & fields->f_TLBPRopx);
+      break;
     case FRV_OPERAND_AE :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 1, 32, total_length, pc, & fields->f_ae);
+      break;
+    case FRV_OPERAND_CALLANN :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 0, 32, total_length, pc, & fields->f_reloc_ann);
       break;
     case FRV_OPERAND_CCOND :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 12, 1, 32, total_length, pc, & fields->f_ccond);
@@ -1061,6 +1103,12 @@ frv_cgen_extract_operand (cd, opindex, ex_info, insn_value, fields, pc)
   FLD (f_label24) = ((((((((FLD (f_labelH6)) << (18))) | (FLD (f_labelL18)))) << (2))) + (pc));
 }
       }
+      break;
+    case FRV_OPERAND_LDANN :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 0, 32, total_length, pc, & fields->f_reloc_ann);
+      break;
+    case FRV_OPERAND_LDDANN :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 0, 32, total_length, pc, & fields->f_reloc_ann);
       break;
     case FRV_OPERAND_LOCK :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 1, 32, total_length, pc, & fields->f_lock);
@@ -1302,8 +1350,26 @@ frv_cgen_get_int_operand (cd, opindex, fields)
     case FRV_OPERAND_LI :
       value = fields->f_LI;
       break;
+    case FRV_OPERAND_LRAD :
+      value = fields->f_LRAD;
+      break;
+    case FRV_OPERAND_LRAE :
+      value = fields->f_LRAE;
+      break;
+    case FRV_OPERAND_LRAS :
+      value = fields->f_LRAS;
+      break;
+    case FRV_OPERAND_TLBPRL :
+      value = fields->f_TLBPRL;
+      break;
+    case FRV_OPERAND_TLBPROPX :
+      value = fields->f_TLBPRopx;
+      break;
     case FRV_OPERAND_AE :
       value = fields->f_ae;
+      break;
+    case FRV_OPERAND_CALLANN :
+      value = fields->f_reloc_ann;
       break;
     case FRV_OPERAND_CCOND :
       value = fields->f_ccond;
@@ -1334,6 +1400,12 @@ frv_cgen_get_int_operand (cd, opindex, fields)
       break;
     case FRV_OPERAND_LABEL24 :
       value = fields->f_label24;
+      break;
+    case FRV_OPERAND_LDANN :
+      value = fields->f_reloc_ann;
+      break;
+    case FRV_OPERAND_LDDANN :
+      value = fields->f_reloc_ann;
       break;
     case FRV_OPERAND_LOCK :
       value = fields->f_lock;
@@ -1539,8 +1611,26 @@ frv_cgen_get_vma_operand (cd, opindex, fields)
     case FRV_OPERAND_LI :
       value = fields->f_LI;
       break;
+    case FRV_OPERAND_LRAD :
+      value = fields->f_LRAD;
+      break;
+    case FRV_OPERAND_LRAE :
+      value = fields->f_LRAE;
+      break;
+    case FRV_OPERAND_LRAS :
+      value = fields->f_LRAS;
+      break;
+    case FRV_OPERAND_TLBPRL :
+      value = fields->f_TLBPRL;
+      break;
+    case FRV_OPERAND_TLBPROPX :
+      value = fields->f_TLBPRopx;
+      break;
     case FRV_OPERAND_AE :
       value = fields->f_ae;
+      break;
+    case FRV_OPERAND_CALLANN :
+      value = fields->f_reloc_ann;
       break;
     case FRV_OPERAND_CCOND :
       value = fields->f_ccond;
@@ -1571,6 +1661,12 @@ frv_cgen_get_vma_operand (cd, opindex, fields)
       break;
     case FRV_OPERAND_LABEL24 :
       value = fields->f_label24;
+      break;
+    case FRV_OPERAND_LDANN :
+      value = fields->f_reloc_ann;
+      break;
+    case FRV_OPERAND_LDDANN :
+      value = fields->f_reloc_ann;
       break;
     case FRV_OPERAND_LOCK :
       value = fields->f_lock;
@@ -1785,8 +1881,26 @@ frv_cgen_set_int_operand (cd, opindex, fields, value)
     case FRV_OPERAND_LI :
       fields->f_LI = value;
       break;
+    case FRV_OPERAND_LRAD :
+      fields->f_LRAD = value;
+      break;
+    case FRV_OPERAND_LRAE :
+      fields->f_LRAE = value;
+      break;
+    case FRV_OPERAND_LRAS :
+      fields->f_LRAS = value;
+      break;
+    case FRV_OPERAND_TLBPRL :
+      fields->f_TLBPRL = value;
+      break;
+    case FRV_OPERAND_TLBPROPX :
+      fields->f_TLBPRopx = value;
+      break;
     case FRV_OPERAND_AE :
       fields->f_ae = value;
+      break;
+    case FRV_OPERAND_CALLANN :
+      fields->f_reloc_ann = value;
       break;
     case FRV_OPERAND_CCOND :
       fields->f_ccond = value;
@@ -1817,6 +1931,12 @@ frv_cgen_set_int_operand (cd, opindex, fields, value)
       break;
     case FRV_OPERAND_LABEL24 :
       fields->f_label24 = value;
+      break;
+    case FRV_OPERAND_LDANN :
+      fields->f_reloc_ann = value;
+      break;
+    case FRV_OPERAND_LDDANN :
+      fields->f_reloc_ann = value;
       break;
     case FRV_OPERAND_LOCK :
       fields->f_lock = value;
@@ -2019,8 +2139,26 @@ frv_cgen_set_vma_operand (cd, opindex, fields, value)
     case FRV_OPERAND_LI :
       fields->f_LI = value;
       break;
+    case FRV_OPERAND_LRAD :
+      fields->f_LRAD = value;
+      break;
+    case FRV_OPERAND_LRAE :
+      fields->f_LRAE = value;
+      break;
+    case FRV_OPERAND_LRAS :
+      fields->f_LRAS = value;
+      break;
+    case FRV_OPERAND_TLBPRL :
+      fields->f_TLBPRL = value;
+      break;
+    case FRV_OPERAND_TLBPROPX :
+      fields->f_TLBPRopx = value;
+      break;
     case FRV_OPERAND_AE :
       fields->f_ae = value;
+      break;
+    case FRV_OPERAND_CALLANN :
+      fields->f_reloc_ann = value;
       break;
     case FRV_OPERAND_CCOND :
       fields->f_ccond = value;
@@ -2051,6 +2189,12 @@ frv_cgen_set_vma_operand (cd, opindex, fields, value)
       break;
     case FRV_OPERAND_LABEL24 :
       fields->f_label24 = value;
+      break;
+    case FRV_OPERAND_LDANN :
+      fields->f_reloc_ann = value;
+      break;
+    case FRV_OPERAND_LDDANN :
+      fields->f_reloc_ann = value;
       break;
     case FRV_OPERAND_LOCK :
       fields->f_lock = value;

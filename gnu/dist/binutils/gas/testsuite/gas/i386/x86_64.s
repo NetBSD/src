@@ -132,9 +132,9 @@ mov ax, flat symbol
 mov eax, flat symbol
 mov rax, flat symbol
 
-#parts
-mov eax, high part symbol
-mov eax, low part symbol
+#parts aren't supported by the parser
+#mov eax, high part symbol
+#mov eax, low part symbol
 
 #addressing modes
 

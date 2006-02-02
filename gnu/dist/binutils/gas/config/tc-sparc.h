@@ -1,6 +1,6 @@
 /* tc-sparc.h - Macros and type defines for the sparc.
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   1999, 2000, 2001, 2002, 2003, 2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -39,13 +39,6 @@ extern const char *sparc_target_format PARAMS ((void));
 #define RELOC_EXPANSION_POSSIBLE
 #define MAX_RELOC_EXPANSION 2
 
-#if 0
-#ifdef TE_SPARCAOUT
-/* Bi-endian support may eventually be unconditional, but until things are
-   working well it's only provided for targets that need it.  */
-#define SPARC_BIENDIAN
-#endif
-#endif
 /* Make it unconditional and check if -EL is valid after option parsing */
 #define SPARC_BIENDIAN
 

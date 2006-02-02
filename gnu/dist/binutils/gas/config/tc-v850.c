@@ -1,5 +1,5 @@
 /* tc-v850.c -- Assembler code for the NEC V850
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -1169,21 +1169,14 @@ md_parse_option (c, arg)
      char *arg;
 {
   if (c != 'm')
-    {
-      if (c != 'a')
-	/* xgettext:c-format  */
-	fprintf (stderr, _("unknown command line option: -%c%s\n"), c, arg);
-      return 0;
-    }
+    return 0;
 
   if (strcmp (arg, "warn-signed-overflow") == 0)
-    {
-      warn_signed_overflows = TRUE;
-    }
+    warn_signed_overflows = TRUE;
+
   else if (strcmp (arg, "warn-unsigned-overflow") == 0)
-    {
-      warn_unsigned_overflows = TRUE;
-    }
+    warn_unsigned_overflows = TRUE;
+
   else if (strcmp (arg, "v850") == 0)
     {
       machine = 0;
@@ -1211,11 +1204,7 @@ md_parse_option (c, arg)
   else if (strcmp (arg, "relax") == 0)
     v850_relax = 1;
   else
-    {
-      /* xgettext:c-format  */
-      fprintf (stderr, _("unknown command line option: -%c%s\n"), c, arg);
-      return 0;
-    }
+    return 0;
 
   return 1;
 }
@@ -1302,7 +1291,7 @@ md_convert_frag (abfd, sec, fragP)
 
       /* Now create the unconditional branch + fixup to the final
 	 target.  */
-      md_number_to_chars (buffer + 2, 0x00000780, 4);
+      md_number_to_chars ((char *) buffer + 2, 0x00000780, 4);
       fix_new (fragP, fragP->fr_fix + 2, 4, fragP->fr_symbol,
 	       fragP->fr_offset, 1, BFD_RELOC_UNUSED +
 	       (int) fragP->fr_opcode + 1);
@@ -1384,6 +1373,25 @@ md_begin ()
 
   v850_seg_table[BSS_SECTION].s = bss_section;
   bfd_set_arch_mach (stdoutput, TARGET_ARCH, machine);
+}
+
+static bfd_reloc_code_real_type
+handle_lo16 (const struct v850_operand *operand)
+{
+  if (operand != NULL)
+    {
+      if (operand->bits == -1)
+	return BFD_RELOC_V850_LO16_SPLIT_OFFSET;
+
+      if (!(operand->bits == 16 && operand->shift == 16)
+	  && !(operand->bits == 15 && operand->shift == 17))
+	{
+	  as_bad (_("lo() relocation used on an instruction which does "
+		    "not support it"));
+	  return BFD_RELOC_64;  /* Used to indicate an error condition.  */
+	}
+    }
+  return BFD_RELOC_LO16;
 }
 
 static bfd_reloc_code_real_type handle_ctoff
@@ -1527,7 +1535,7 @@ v850_reloc_prefix (operand)
 
   CHECK_ ("hi0",    BFD_RELOC_HI16	   );
   CHECK_ ("hi",	    BFD_RELOC_HI16_S	   );
-  CHECK_ ("lo",	    BFD_RELOC_LO16	   );
+  CHECK_ ("lo",	    handle_lo16 (operand)  );
   CHECK_ ("sdaoff", handle_sdaoff (operand));
   CHECK_ ("zdaoff", handle_zdaoff (operand));
   CHECK_ ("tdaoff", handle_tdaoff (operand));
@@ -1618,10 +1626,7 @@ v850_insert_operand (insn, operand, val, file, line, str)
 
 	  if (val < (offsetT) min || val > (offsetT) max)
 	    {
-	      /* xgettext:c-format  */
-	      const char *err =
-		_("operand out of range (%s not between %ld and %ld)");
-	      char buf[100];
+	      char buf [128];
 
 	      /* Restore min and mix to expected values for decimal ranges.  */
 	      if ((operand->flags & V850_OPERAND_SIGNED)
@@ -1633,18 +1638,12 @@ v850_insert_operand (insn, operand, val, file, line, str)
 		min = 0;
 
 	      if (str)
-		{
-		  sprintf (buf, "%s: ", str);
-
-		  sprint_value (buf + strlen (buf), val);
-		}
+		sprintf (buf, "%s: ", str);
 	      else
-		sprint_value (buf, val);
+		buf[0] = 0;
+	      strcat (buf, _("operand"));
 
-	      if (file == (char *) NULL)
-		as_warn (err, buf, min, max);
-	      else
-		as_warn_where (file, line, err, buf, min, max);
+	      as_bad_value_out_of_range (buf, val, (offsetT) min, (offsetT) max, file, line);
 	    }
 	}
 
@@ -1775,6 +1774,7 @@ md_assemble (str)
 		      /* Fall through.  */
 
 		    case BFD_RELOC_LO16:
+		    case BFD_RELOC_V850_LO16_SPLIT_OFFSET:
 		      {
 			/* Truncate, then sign extend the value.  */
 			ex.X_add_number = SEXT16 (ex.X_add_number);
@@ -2025,13 +2025,6 @@ md_assemble (str)
 	      if (errmsg)
 		goto error;
 
-#if 0
-	      fprintf (stderr,
-		       " insn: %x, operand %d, op: %d, add_number: %d\n",
-		       insn, opindex_ptr - opcode->operands,
-		       ex.X_op, ex.X_add_number);
-#endif
-
 	      switch (ex.X_op)
 		{
 		case O_illegal:
@@ -2219,6 +2212,7 @@ md_assemble (str)
 	  switch (reloc)
 	    {
 	    case BFD_RELOC_LO16:
+	    case BFD_RELOC_V850_LO16_SPLIT_OFFSET:
 	    case BFD_RELOC_HI16:
 	    case BFD_RELOC_HI16_S:
 	      fixP->fx_no_overflow = 1;
@@ -2410,10 +2404,6 @@ md_apply_fix3 (fixP, valueP, seg)
 	fixP->fx_r_type = BFD_RELOC_V850_9_PCREL;
       else
 	{
-#if 0
-	  fprintf (stderr, "bits: %d, insn: %x\n", operand->bits, insn);
-#endif
-
 	  as_bad_where (fixP->fx_file, fixP->fx_line,
 			_("unresolved expression that must be resolved"));
 	  fixP->fx_done = 1;
@@ -2425,7 +2415,11 @@ md_apply_fix3 (fixP, valueP, seg)
       /* We still have to insert the value into memory!  */
       where = fixP->fx_frag->fr_literal + fixP->fx_where;
 
-      if (fixP->fx_size == 1)
+      if (fixP->fx_r_type == BFD_RELOC_V850_LO16_SPLIT_OFFSET)
+	bfd_putl32 (((value << 16) & 0xfffe0000)
+		    | ((value << 5) & 0x20)
+		    | (bfd_getl32 (where) & ~0xfffe0020), where);
+      else if (fixP->fx_size == 1)
 	*where = value & 0xff;
       else if (fixP->fx_size == 2)
 	bfd_putl16 (value & 0xffff, (unsigned char *) where);

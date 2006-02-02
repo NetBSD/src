@@ -1,5 +1,5 @@
 /* pj-dis.c -- Disassemble picoJava instructions.
-   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain, of Transmeta (sac@pobox.com).
 
 This program is free software; you can redistribute it and/or modify

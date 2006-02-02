@@ -1,5 +1,5 @@
 /* Table of opcodes for the OpenRISC 1000 ISA.
-   Copyright 2002 Free Software Foundation, Inc.
+   Copyright 2002, 2004 Free Software Foundation, Inc.
    Contributed by Damjan Lampret (lampret@opencores.org).
    
    This file is part of gen_or1k_isa, or1k, GDB and GAS.
@@ -345,10 +345,8 @@ const struct or32_opcode or32_opcodes[] =
 static void debug PARAMS ((int, const char *, ...));
 
 static void
-debug (int level, const char *format, ...)
+debug (int level ATTRIBUTE_UNUSED, const char *format ATTRIBUTE_UNUSED, ...)
 {
-  /* Just to get rid of warnings.  */
-  format = (char *) level = 0;
 }
 #endif
 

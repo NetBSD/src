@@ -1,5 +1,5 @@
 /* Print DEC PDP-11 instructions.
-   Copyright 2001, 2002 Free Software Foundation, Inc.
+   Copyright 2001, 2002, 2004 Free Software Foundation, Inc.
 
 This file is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -342,7 +342,8 @@ print_insn_pdp11 (memaddr, info)
 	  case PDP11_OPCODE_REG_DISPL:
 	    {
 	      int displ = (opcode & 0x3f) << 10;
-	      bfd_vma address = memaddr + (sign_extend (displ) >> 9);
+	      bfd_vma address = memaddr - (displ >> 9);
+
 	      FPRINTF (F, OP.name);
 	      FPRINTF (F, AFTER_INSTRUCTION);
 	      print_reg (src, info);

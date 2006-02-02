@@ -13,7 +13,7 @@ proc gas_64_check { } {
     global srcdir
 
     catch "exec $srcdir/lib/run $NM $NMFLAGS --help" nm_help
-    return [regexp "elf64\[_-\]sparc" $nm_help];
+    return [regexp "elf64\[_-\]sparc" $nm_help]
 }
 
 proc sparc_elf_setup { } {

@@ -24,7 +24,7 @@ if { [istarget hppa*-*-*] || [istarget *c54x*-*-*] } then {
 }
 
 # No floating point support in assembly code for CRIS.
-if ![istarget cris-*-*] then {
+if { ![istarget cris-*-*] && ![istarget crisv32-*-*] } then {
     gas_test "float.s" ""   "" "simple FP constants"
 }
 
@@ -85,12 +85,13 @@ proc do_930509a {} {
     if !$x then { fail $testname }
 }
 
-# This test is meaningless for the PA; the difference of two symbols
+# This test is meaningless for the PA and CRX; the difference of two symbols
 # must not be resolved by the assembler.
 # C54x assembler (for compatibility) does not allow differences between
 # forward references
 # C30 counts a four byte offset as a difference of one.
 if { ![istarget hppa*-*-*] &&
+     ![istarget  crx*-*-*] &&
      ![istarget *c30*-*-*] &&
      ![istarget *c4x*-*-*] &&
      ![istarget *c54x*-*-*] } then {
@@ -110,6 +111,25 @@ case $target_triplet in {
 	run_dump_test struct
 	run_dump_test align
 	run_dump_test align2
+    }
+}
+
+# '<' and '>' appear to have special meanings on the excluded targets
+case $target_triplet in {
+    { a29k-*-* } { }
+    { frv-*-* } { }
+    { hppa*-*-* } { }
+    { m32r-*-* } { }
+    { mmix-*-* } { }
+    { *c4x*-*-* } { }
+    { *c54x*-*-* } { }
+    default {
+	run_dump_test altmacro
+	# The second test is valid only when '!' is not a comment
+	# character (it is allowed to be a line comment character).
+	if [string match "" [lindex [gas_run excl.s "-o /dev/null" ""] 0]] {
+	    run_dump_test altmac2
+	}
     }
 }
 
@@ -174,3 +194,15 @@ if {   [istarget "i*86-*-*pe*"] \
     || [istarget "i*86-*-mingw32*"] } {
   gas_test "fastcall.s" ""   "" "fastcall labels"
 }
+
+run_dump_test sleb128
+
+# .quad is 16 bytes on i960.
+if { ![istarget "i960-*-*"] } {
+    run_dump_test quad
+}
+
+load_lib gas-dg.exp
+dg-init
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/err-*.s $srcdir/$subdir/warn-*.s]] "" ""
+dg-finish

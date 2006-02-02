@@ -10,6 +10,8 @@
 #	OTHER_TEXT_SECTIONS - these get put in .text when relocating
 #	OTHER_READWRITE_SECTIONS - other than .data .bss .ctors .sdata ...
 #		(e.g., .PARISC.global)
+#	OTHER_RELRO_SECTIONS - other than .data.rel.ro ...
+#		(e.g. PPC32 .fixup, .got[12])
 #	OTHER_BSS_SECTIONS - other than .bss .sbss ...
 #	OTHER_SECTIONS - at the end
 #	EXECUTABLE_SYMBOLS - symbols that must be defined for an
@@ -67,17 +69,24 @@ test -z "$ENTRY" && ENTRY=_start
 test -z "${ELFSIZE}" && ELFSIZE=32
 test -z "${ALIGNMENT}" && ALIGNMENT="${ELFSIZE} / 8"
 test "$LD_FLAG" = "N" && DATA_ADDR=.
-test -n "$CREATE_SHLIB" && test -n "$SHLIB_DATA_ADDR" && COMMONPAGESIZE=""
-test -z "$CREATE_SHLIB" && test -n "$DATA_ADDR" && COMMONPAGESIZE=""
+test -n "$CREATE_SHLIB$CREATE_PIE" && test -n "$SHLIB_DATA_ADDR" && COMMONPAGESIZE=""
+test -z "$CREATE_SHLIB$CREATE_PIE" && test -n "$DATA_ADDR" && COMMONPAGESIZE=""
 DATA_SEGMENT_ALIGN="ALIGN(${SEGMENT_SIZE}) + (. & (${MAXPAGESIZE} - 1))"
+DATA_SEGMENT_RELRO_END=""
 DATA_SEGMENT_END=""
 if test -n "${COMMONPAGESIZE}"; then
   DATA_SEGMENT_ALIGN="ALIGN (${SEGMENT_SIZE}) - ((${MAXPAGESIZE} - .) & (${MAXPAGESIZE} - 1)); . = DATA_SEGMENT_ALIGN (${MAXPAGESIZE}, ${COMMONPAGESIZE})"
   DATA_SEGMENT_END=". = DATA_SEGMENT_END (.);"
+  DATA_SEGMENT_RELRO_END=". = DATA_SEGMENT_RELRO_END (.);"
 fi
 INTERP=".interp       ${RELOCATING-0} : { *(.interp) }"
+if test -z "$GOT"; then
+    GOT=".got          ${RELOCATING-0} : { *(.got) }"
+fi
 DYNAMIC=".dynamic      ${RELOCATING-0} : { *(.dynamic) }"
 RODATA=".rodata       ${RELOCATING-0} : { *(.rodata${RELOCATING+ .rodata.* .gnu.linkonce.r.*}) }"
+DATARELRO=".data.rel.ro : { *(.data.rel.ro.local) *(.data.rel.ro*) }"
+STACKNOTE="/DISCARD/ : { *(.note.GNU-stack) }"
 INIT_LIT=".init.literal 0 : { *(.init.literal)	}"
 INIT=".init         0 : { *(.init)		}"
 FINI_LIT=".fini.literal 0 : { *(.fini.literal)	}"
@@ -111,6 +120,8 @@ if test -z "${NO_SMALL_DATA}"; then
   .rela.sdata2  ${RELOCATING-0} : { *(.rela.sdata2${RELOCATING+ .rela.sdata2.* .rela.gnu.linkonce.s2.*}) }"
   REL_SBSS2=".rel.sbss2    ${RELOCATING-0} : { *(.rel.sbss2${RELOCATING+ .rel.sbss2.* .rel.gnu.linkonce.sb2.*}) }
   .rela.sbss2   ${RELOCATING-0} : { *(.rela.sbss2${RELOCATING+ .rela.sbss2.* .rela.gnu.linkonce.sb2.*}) }"
+else
+  NO_SMALL_DATA=" "
 fi
 CTOR=".ctors        ${CONSTRUCTING-0} : 
   {
@@ -175,8 +186,9 @@ ${RELOCATING- /* For some reason, the Solaris linker makes bad executables
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
-  ${CREATE_SHLIB-${RELOCATING+. = ${TEXT_BASE_ADDRESS};}}
+  ${CREATE_SHLIB-${CREATE_PIE-${RELOCATING+PROVIDE (__executable_start = ${TEXT_START_ADDR}); . = ${TEXT_BASE_ADDRESS};}}}
   ${CREATE_SHLIB+${RELOCATING+. = ${SHLIB_TEXT_START_ADDR:-0} + SIZEOF_HEADERS;}}
+  ${CREATE_PIE+${RELOCATING+. = ${SHLIB_TEXT_START_ADDR:-0} + SIZEOF_HEADERS;}}
   ${CREATE_SHLIB-${INTERP}}
   ${INITIAL_READONLY_SECTIONS}
   ${TEXT_DYNAMIC+${DYNAMIC}}
@@ -203,6 +215,8 @@ eval $COMBRELOCCAT <<EOF
   .rel.rodata   ${RELOCATING-0} : { *(.rel.rodata${RELOCATING+ .rel.rodata.* .rel.gnu.linkonce.r.*}) }
   .rela.rodata  ${RELOCATING-0} : { *(.rela.rodata${RELOCATING+ .rela.rodata.* .rela.gnu.linkonce.r.*}) }
   ${OTHER_READONLY_RELOC_SECTIONS}
+  .rel.data.rel.ro ${RELOCATING-0} : { *(.rel.data.rel.ro${RELOCATING+*}) }
+  .rela.data.rel.ro ${RELOCATING-0} : { *(.rel.data.rel.ro${RELOCATING+*}) }
   .rel.data     ${RELOCATING-0} : { *(.rel.data${RELOCATING+ .rel.data.* .rel.gnu.linkonce.d.*}) }
   .rela.data    ${RELOCATING-0} : { *(.rela.data${RELOCATING+ .rela.data.* .rela.gnu.linkonce.d.*}) }
   .rel.tdata	${RELOCATING-0} : { *(.rel.tdata${RELOCATING+ .rel.tdata.* .rel.gnu.linkonce.td.*}) }
@@ -257,7 +271,8 @@ cat <<EOF
     ${RELOCATING+${INIT_END}}
 
     ${RELOCATING+${TEXT_START_SYMBOLS}}
-    *(.literal .text .stub${RELOCATING+ .text.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*})
+    *(.literal .text .stub${RELOCATING+ .text.* .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*})
+    KEEP (*(.text.*personality*))
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
     ${RELOCATING+${OTHER_TEXT_SECTIONS}}
@@ -280,11 +295,22 @@ cat <<EOF
   ${CREATE_SHLIB-${SBSS2}}
   ${OTHER_READONLY_SECTIONS}
   .eh_frame_hdr : { *(.eh_frame_hdr) }
+  .eh_frame     ${RELOCATING-0} : ONLY_IF_RO { KEEP (*(.eh_frame)) }
+  .gcc_except_table ${RELOCATING-0} : ONLY_IF_RO { KEEP (*(.gcc_except_table)) *(.gcc_except_table.*) }
 
   /* Adjust the address for the data segment.  We want to adjust up to
      the same address within the page on the next page up.  */
-  ${CREATE_SHLIB-${RELOCATING+. = ${DATA_ADDR-${DATA_SEGMENT_ALIGN}};}}
+  ${CREATE_SHLIB-${CREATE_PIE-${RELOCATING+. = ${DATA_ADDR-${DATA_SEGMENT_ALIGN}};}}}
   ${CREATE_SHLIB+${RELOCATING+. = ${SHLIB_DATA_ADDR-${DATA_SEGMENT_ALIGN}};}}
+  ${CREATE_PIE+${RELOCATING+. = ${SHLIB_DATA_ADDR-${DATA_SEGMENT_ALIGN}};}}
+
+  /* Exception handling  */
+  .eh_frame     ${RELOCATING-0} : ONLY_IF_RW { KEEP (*(.eh_frame)) }
+  .gcc_except_table ${RELOCATING-0} : ONLY_IF_RW { KEEP (*(.gcc_except_table)) *(.gcc_except_table.*) }
+
+  /* Thread Local Storage sections  */
+  .tdata	${RELOCATING-0} : { *(.tdata${RELOCATING+ .tdata.* .gnu.linkonce.td.*}) }
+  .tbss		${RELOCATING-0} : { *(.tbss${RELOCATING+ .tbss.* .gnu.linkonce.tb.*})${RELOCATING+ *(.tcommon)} }
 
   /* Ensure the __preinit_array_start label is properly aligned.  We
      could instead move the label definition inside the section, but
@@ -292,36 +318,39 @@ cat <<EOF
      be empty, which isn't pretty.  */
   ${RELOCATING+. = ALIGN(${ALIGNMENT});}
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__preinit_array_start = .);}}
-  .preinit_array   ${RELOCATING-0} : { *(.preinit_array) }
+  .preinit_array   ${RELOCATING-0} : { KEEP (*(.preinit_array)) }
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__preinit_array_end = .);}}
 
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__init_array_start = .);}}
-  .init_array   ${RELOCATING-0} : { *(.init_array) }
+  .init_array   ${RELOCATING-0} : { KEEP (*(.init_array)) }
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__init_array_end = .);}}
 
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__fini_array_start = .);}}
-  .fini_array   ${RELOCATING-0} : { *(.fini_array) }
+  .fini_array   ${RELOCATING-0} : { KEEP (*(.fini_array)) }
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__fini_array_end = .);}}
+
+  ${RELOCATING+${CTOR}}
+  ${RELOCATING+${DTOR}}
+  .jcr          ${RELOCATING-0} : { KEEP (*(.jcr)) }
+
+  ${RELOCATING+${DATARELRO}}
+  ${OTHER_RELRO_SECTIONS}
+  ${TEXT_DYNAMIC-${DYNAMIC}}
+  ${NO_SMALL_DATA+${GOT}}
+  ${RELOCATING+${DATA_SEGMENT_RELRO_END}}
 
   .data         ${RELOCATING-0} :
   {
     ${RELOCATING+${DATA_START_SYMBOLS}}
     *(.data${RELOCATING+ .data.* .gnu.linkonce.d.*})
+    KEEP (*(.gnu.linkonce.d.*personality*))
     ${CONSTRUCTING+SORT(CONSTRUCTORS)}
   }
   .data1        ${RELOCATING-0} : { *(.data1) }
-  .tdata	${RELOCATING-0} : { *(.tdata${RELOCATING+ .tdata.* .gnu.linkonce.td.*}) }
-  .tbss		${RELOCATING-0} : { *(.tbss${RELOCATING+ .tbss.* .gnu.linkonce.tb.*})${RELOCATING+ *(.tcommon)} }
-  .eh_frame     ${RELOCATING-0} : { KEEP (*(.eh_frame)) }
-  .gcc_except_table ${RELOCATING-0} : { *(.gcc_except_table) }
   ${WRITABLE_RODATA+${RODATA}}
   ${OTHER_READWRITE_SECTIONS}
-  ${TEXT_DYNAMIC-${DYNAMIC}}
-  ${RELOCATING+${CTOR}}
-  ${RELOCATING+${DTOR}}
-  .jcr          ${RELOCATING-0} : { KEEP (*(.jcr)) }
   ${RELOCATING+${OTHER_GOT_SYMBOLS}}
-  .got          ${RELOCATING-0} : { *(.got) }
+  ${NO_SMALL_DATA-${GOT}}
   ${OTHER_GOT_SECTIONS}
   ${CREATE_SHLIB+${SDATA2}}
   ${CREATE_SHLIB+${SBSS2}}
@@ -393,5 +422,6 @@ cat <<EOF
   ${STACK_ADDR+${STACK}}
   ${OTHER_SECTIONS}
   ${RELOCATING+${OTHER_END_SYMBOLS}}
+  ${RELOCATING+${STACKNOTE}}
 }
 EOF

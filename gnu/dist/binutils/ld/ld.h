@@ -1,5 +1,6 @@
 /* ld.h -- general linker header file
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2002
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+   2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GLD, the Gnu Linker.
@@ -64,13 +65,18 @@ typedef struct name_list {
 }
 name_list;
 
-/* A wildcard specification.  This is only used in ldgram.y, but it
-   winds up in ldgram.h, so we need to define it outside.  */
+/* A wildcard specification.  */
+
+typedef enum {
+  none, by_name, by_alignment, by_name_alignment, by_alignment_name
+} sort_type;
+
+extern sort_type sort_section;
 
 struct wildcard_spec {
   const char *name;
   struct name_list *exclude_name_list;
-  bfd_boolean sorted;
+  sort_type sorted;
 };
 
 struct wildcard_list {
@@ -78,11 +84,32 @@ struct wildcard_list {
   struct wildcard_spec spec;
 };
 
+struct map_symbol_def {
+  struct bfd_link_hash_entry *entry;
+  struct map_symbol_def *next;
+};
+
 /* Extra information we hold on sections */
-typedef struct user_section_struct {
-  /* Pointer to the section where this data will go */
+typedef struct lean_user_section_struct {
+  /* For output sections: pointer to the section where this data will go.  */
   struct lang_input_statement_struct *file;
-} section_userdata_type;
+} lean_section_userdata_type;
+
+/* The initial part of fat_user_section_struct has to be idential with
+   lean_user_section_struct.  */
+typedef struct fat_user_section_struct {
+  /* For output sections: pointer to the section where this data will go.  */
+  struct lang_input_statement_struct *file;
+  /* For input sections, when writing a map file: head / tail of a linked
+     list of hash table entries for symbols defined in this section.  */
+  struct map_symbol_def *map_symbol_def_head;
+  struct map_symbol_def **map_symbol_def_tail;
+} fat_section_userdata_type;
+
+#define SECTION_USERDATA_SIZE \
+ (command_line.reduce_memory_overheads \
+  ? sizeof (lean_section_userdata_type) \
+  : sizeof (fat_section_userdata_type))
 
 #define get_userdata(x) ((x)->userdata)
 
@@ -154,6 +181,10 @@ typedef struct {
      input files.  */
   bfd_boolean accept_unknown_input_arch;
 
+  /* If TRUE reduce memory overheads, at the expense of speed.
+     This will cause map file generation to use an O(N^2) algorithm.  */
+  bfd_boolean reduce_memory_overheads;
+
 } args_type;
 
 extern args_type command_line;
@@ -216,6 +247,9 @@ typedef struct {
   /* If set, only search library directories explicitly selected
      on the command line.  */
   bfd_boolean only_cmd_line_lib_dirs;
+
+  /* The size of the hash table to use.  */
+  bfd_size_type hash_table_size;
 } ld_config_type;
 
 extern ld_config_type config;

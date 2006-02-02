@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright 1996-2005 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -83,47 +83,47 @@ static unsigned int dis_hash_insn PARAMS ((const char *, CGEN_INSN_INT));
 #else
 #define F(f) & ip2k_cgen_ifld_table[IP2K_/**/f]
 #endif
-static const CGEN_IFMT ifmt_empty = {
+static const CGEN_IFMT ifmt_empty ATTRIBUTE_UNUSED = {
   0, 0, 0x0, { { 0 } }
 };
 
-static const CGEN_IFMT ifmt_jmp = {
+static const CGEN_IFMT ifmt_jmp ATTRIBUTE_UNUSED = {
   16, 16, 0xe000, { { F (F_OP3) }, { F (F_ADDR16CJP) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_sb = {
+static const CGEN_IFMT ifmt_sb ATTRIBUTE_UNUSED = {
   16, 16, 0xf000, { { F (F_OP4) }, { F (F_BITNO) }, { F (F_REG) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_xorw_l = {
+static const CGEN_IFMT ifmt_xorw_l ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP4) }, { F (F_OP4MID) }, { F (F_IMM8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_loadl_a = {
+static const CGEN_IFMT ifmt_loadl_a ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP4) }, { F (F_OP4MID) }, { F (F_IMM8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_loadh_a = {
+static const CGEN_IFMT ifmt_loadh_a ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP4) }, { F (F_OP4MID) }, { F (F_IMM8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_addcfr_w = {
+static const CGEN_IFMT ifmt_addcfr_w ATTRIBUTE_UNUSED = {
   16, 16, 0xfe00, { { F (F_OP6) }, { F (F_DIR) }, { F (F_REG) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_speed = {
+static const CGEN_IFMT ifmt_speed ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_OP8) }, { F (F_IMM8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_ireadi = {
+static const CGEN_IFMT ifmt_ireadi ATTRIBUTE_UNUSED = {
   16, 16, 0xffff, { { F (F_OP6) }, { F (F_OP6_10LOW) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_page = {
+static const CGEN_IFMT ifmt_page ATTRIBUTE_UNUSED = {
   16, 16, 0xfff8, { { F (F_OP6) }, { F (F_OP6_7LOW) }, { F (F_PAGE3) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_reti = {
+static const CGEN_IFMT ifmt_reti ATTRIBUTE_UNUSED = {
   16, 16, 0xfff8, { { F (F_OP6) }, { F (F_OP6_7LOW) }, { F (F_RETI3) }, { 0 } }
 };
 
@@ -680,27 +680,27 @@ static const CGEN_OPCODE ip2k_cgen_insn_opcode_table[MAX_INSNS] =
 #else
 #define F(f) & ip2k_cgen_ifld_table[IP2K_/**/f]
 #endif
-static const CGEN_IFMT ifmt_sc = {
+static const CGEN_IFMT ifmt_sc ATTRIBUTE_UNUSED = {
   16, 16, 0xffff, { { F (F_OP4) }, { F (F_BITNO) }, { F (F_REG) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_snc = {
+static const CGEN_IFMT ifmt_snc ATTRIBUTE_UNUSED = {
   16, 16, 0xffff, { { F (F_OP4) }, { F (F_BITNO) }, { F (F_REG) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_sz = {
+static const CGEN_IFMT ifmt_sz ATTRIBUTE_UNUSED = {
   16, 16, 0xffff, { { F (F_OP4) }, { F (F_BITNO) }, { F (F_REG) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_snz = {
+static const CGEN_IFMT ifmt_snz ATTRIBUTE_UNUSED = {
   16, 16, 0xffff, { { F (F_OP4) }, { F (F_BITNO) }, { F (F_REG) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_skip = {
+static const CGEN_IFMT ifmt_skip ATTRIBUTE_UNUSED = {
   16, 16, 0xffff, { { F (F_OP4) }, { F (F_BITNO) }, { F (F_REG) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_skipb = {
+static const CGEN_IFMT ifmt_skipb ATTRIBUTE_UNUSED = {
   16, 16, 0xffff, { { F (F_OP4) }, { F (F_BITNO) }, { F (F_REG) }, { 0 } }
 };
 

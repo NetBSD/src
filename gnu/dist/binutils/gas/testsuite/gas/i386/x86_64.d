@@ -37,7 +37,7 @@ Disassembly of section .text:
 [ 	]+5a:	44 0f 20 c0[ 	]+mov[ 	]+%cr8,%rax
 [ 	]+5e:	44 0f 22 c0[ 	]+mov[ 	]+%rax,%cr8
 [ 	]+62:	f3 48 a5[ 	]+repz movsq %ds:\(%rsi\),%es:\(%rdi\)
-[ 	]+65:	f3 66 a5[ 	]+repz movsw %ds:\(%esi\),%es:\(%edi\)
+[ 	]+65:	f3 66 a5[ 	]+repz movsw %ds:\(%rsi\),%es:\(%rdi\)
 [ 	]+68:	f3 48 a5[ 	]+repz movsq %ds:\(%rsi\),%es:\(%rdi\)
 [ 	]+6b:	b0 11[ 	]+mov[ 	]+\$0x11,%al
 [ 	]+6d:	b4 11[ 	]+mov[ 	]+\$0x11,%ah
@@ -117,10 +117,8 @@ Disassembly of section .text:
  1d7:	66 b8 00 00[ 	]+mov[ 	]+\$0x0,%ax
  1db:	b8 00 00 00 00[ 	]+mov[ 	]+\$0x0,%eax
  1e0:	48 c7 c0 00 00 00 00 	mov[ 	]+\$0x0,%rax
- 1e7:	8b 04 25 00 00 00 00 	mov[ 	]+0x0,%eax
- 1ee:	8b 04 25 00 00 00 00 	mov[ 	]+0x0,%eax
- 1f5:	a1 00 00 00 00 00 00 00 00 	mov[ 	]+0x0,%eax
- 1fe:	8b 04 25 00 00 00 00 	mov[ 	]+0x0,%eax
- 205:	8b 80 00 00 00 00[ 	]+mov[ 	]+0x0\(%rax\),%eax
- 20b:	8b 05 00 00 00 00[ 	]+mov[ 	]+0\(%rip\),%eax.*
-	...
+ 1e7:	a1 00 00 00 00 00 00 00 00 	mov[ 	]+0x0,%eax
+ 1f0:	8b 04 25 00 00 00 00 	mov[ 	]+0x0,%eax
+ 1f7:	8b 80 00 00 00 00[ 	]+mov[ 	]+0x0\(%rax\),%eax
+ 1fd:	8b 05 00 00 00 00[ 	]+mov[ 	]+0\(%rip\),%eax.*
+#pass

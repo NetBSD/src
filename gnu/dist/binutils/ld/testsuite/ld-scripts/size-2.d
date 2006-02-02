@@ -13,5 +13,5 @@ Program Headers:
  Section to Segment mapping:
  +Segment Sections\.\.\.
  +00 .*
- +01 +\.text \.tdata \.map 
- +02 +\.tdata \.tbss \.map 
+ +01.*\.text.*\.tdata.*
+ +02.*\.tdata.*
