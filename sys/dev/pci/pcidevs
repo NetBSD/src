@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.758 2006/01/26 20:53:19 bouyer Exp $
+$NetBSD: pcidevs,v 1.759 2006/02/02 01:39:53 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1291,7 +1291,7 @@ product CMDTECH 3112		0x3112	SiI3112 SATALink
 product CMDTECH 3512		0x3512	SiI3512 SATALink
 product CMDTECH 3114		0x3114	SiI3114 SATALink
 product CMDTECH 3124		0x3124	SiI3124 SATALink
-product CMDTECH 3132		0x3124	SiI3132 SATALink
+product CMDTECH 3132		0x3132	SiI3132 SATALink
 
 /* C-Media products */
 product CMEDIA CMI8338A		0x0100	CMI8338A PCI Audio Device
