@@ -1,4 +1,4 @@
-/*	$NetBSD: udf_bswap.h,v 1.1 2006/02/02 15:19:15 reinoud Exp $	*/
+/*	$NetBSD: udf_bswap.h,v 1.2 2006/02/02 15:52:23 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -34,8 +34,8 @@
  *
  */
 
-#ifndef _UDF_BSWAP_H_
-#define _UDF_BSWAP_H_
+#ifndef _FS_UDF_UDF_BSWAP_H_
+#define _FS_UDF_UDF_BSWAP_H_
 
 #if HAVE_ENDIAN_H
 #include <endian.h>
@@ -93,5 +93,5 @@ udf_rw64(a)
 #endif
 
 
-#endif /* !_UDF_BSWAP_H_ */
+#endif /* !_FS_UDF_UDF_BSWAP_H_ */
 

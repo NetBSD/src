@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.2 2006/02/02 15:38:35 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.3 2006/02/02 15:52:23 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -42,8 +42,8 @@
 #include <sys/cdio.h>
 #include <miscfs/genfs/genfs_node.h>
 
-#ifndef _UDF_H_
-#define _UDF_H_
+#ifndef _FS_UDF_UDF_H_
+#define _FS_UDF_UDF_H_
 
 
 /* TODO make `udf_verbose' set by sysctl */
@@ -249,5 +249,5 @@ struct udf_node {
 	STAILQ_ENTRY(udf_node)	 dirty_nodes;		/* dirty udf nodes   */
 };
 
-#endif /* !_UDF_H_ */
+#endif /* !_FS_UDF_UDF_H_ */
 

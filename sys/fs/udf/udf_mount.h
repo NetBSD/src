@@ -1,4 +1,4 @@
-/* $NetBSD: udf_mount.h,v 1.2 2006/02/02 15:38:35 reinoud Exp $ */
+/* $NetBSD: udf_mount.h,v 1.3 2006/02/02 15:52:23 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -34,8 +34,8 @@
  */
 
 
-#ifndef _UDF_MOUNT_H_
-#define _UDF_MOUNT_H_
+#ifndef _FS_UDF_UDF_MOUNT_H_
+#define _FS_UDF_UDF_MOUNT_H_
 
 /*
  * Arguments to mount UDF filingsystem.
@@ -66,5 +66,5 @@ struct udf_args {
 #define UDFMNT_CLOSESESSION	0x00000001	/* close session on dismount */
 #define UDFMNT_BITS "\20\1CLOSESESSION"
 
-#endif /* !_UDF_MOUNT_H_ */
+#endif /* !_FS_UDF_UDF_MOUNT_H_ */
 
