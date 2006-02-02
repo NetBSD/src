@@ -1,6 +1,6 @@
 /* ns32k.c  -- Assemble on the National Semiconductor 32k series
    Copyright 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002
+   2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -2098,9 +2098,6 @@ md_estimate_size_before_relax (fragP, segment)
 			 frag_opcode_frag (fragP),
 			 frag_opcode_offset (fragP));
 	  fragP->fr_fix += 4;
-#if 0
-	  fragP->fr_opcode[1] = 0xff;
-#endif
 	  frag_wane (fragP);
 	  return 4;
 	}

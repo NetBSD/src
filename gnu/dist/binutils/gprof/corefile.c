@@ -1,6 +1,7 @@
 /* corefile.c
 
-   Copyright 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -41,21 +42,20 @@ int offset_to_code;
 struct function_map *symbol_map;
 unsigned int symbol_map_count;
 
-static void read_function_mappings PARAMS ((const char *));
-static int core_sym_class PARAMS ((asymbol *));
+static void read_function_mappings (const char *);
+static int core_sym_class (asymbol *);
 static bfd_boolean get_src_info
-  PARAMS ((bfd_vma, const char **, const char **, int *));
+  (bfd_vma, const char **, const char **, int *);
 
-extern void i386_find_call  PARAMS ((Sym *, bfd_vma, bfd_vma));
-extern void alpha_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
-extern void vax_find_call   PARAMS ((Sym *, bfd_vma, bfd_vma));
-extern void tahoe_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
-extern void sparc_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
-extern void mips_find_call  PARAMS ((Sym *, bfd_vma, bfd_vma));
+extern void i386_find_call  (Sym *, bfd_vma, bfd_vma);
+extern void alpha_find_call (Sym *, bfd_vma, bfd_vma);
+extern void vax_find_call   (Sym *, bfd_vma, bfd_vma);
+extern void tahoe_find_call (Sym *, bfd_vma, bfd_vma);
+extern void sparc_find_call (Sym *, bfd_vma, bfd_vma);
+extern void mips_find_call  (Sym *, bfd_vma, bfd_vma);
 
 static void
-read_function_mappings (filename)
-     const char *filename;
+read_function_mappings (const char *filename)
 {
   FILE *file = fopen (filename, "r");
   char dummy[1024];
@@ -141,9 +141,12 @@ read_function_mappings (filename)
 
 
 void
-core_init (aout_name)
-     const char *aout_name;
+core_init (const char *aout_name)
 {
+  int core_sym_bytes;
+  asymbol *synthsyms;
+  long synth_count;
+
   core_bfd = bfd_openr (aout_name, 0);
 
   if (!core_bfd)
@@ -175,15 +178,15 @@ core_init (aout_name)
   /* Read core's symbol table.  */
 
   /* This will probably give us more than we need, but that's ok.  */
-  core_num_syms = bfd_get_symtab_upper_bound (core_bfd);
-  if (core_num_syms < 0)
+  core_sym_bytes = bfd_get_symtab_upper_bound (core_bfd);
+  if (core_sym_bytes < 0)
     {
       fprintf (stderr, "%s: %s: %s\n", whoami, aout_name,
 	       bfd_errmsg (bfd_get_error ()));
       done (1);
     }
 
-  core_syms = (asymbol **) xmalloc (core_num_syms);
+  core_syms = (asymbol **) xmalloc (core_sym_bytes);
   core_num_syms = bfd_canonicalize_symtab (core_bfd, core_syms);
 
   if (core_num_syms < 0)
@@ -191,6 +194,23 @@ core_init (aout_name)
       fprintf (stderr, "%s: %s: %s\n", whoami, aout_name,
 	       bfd_errmsg (bfd_get_error ()));
       done (1);
+    }
+
+  synth_count = bfd_get_synthetic_symtab (core_bfd, core_num_syms, core_syms,
+					  0, NULL, &synthsyms);
+  if (synth_count > 0)
+    {
+      asymbol **symp;
+      long new_size;
+      long i;
+
+      new_size = (core_num_syms + synth_count + 1) * sizeof (*core_syms);
+      core_syms = xrealloc (core_syms, new_size);
+      symp = core_syms + core_num_syms;
+      core_num_syms += synth_count;
+      for (i = 0; i < synth_count; i++)
+	*symp++ = synthsyms + i;
+      *symp = 0;
     }
 
   min_insn_size = 1;
@@ -218,20 +238,19 @@ core_init (aout_name)
 /* Read in the text space of an a.out file.  */
 
 void
-core_get_text_space (cbfd)
-     bfd *cbfd;
+core_get_text_space (bfd *cbfd)
 {
-  core_text_space = (PTR) malloc ((unsigned int) core_text_sect->_raw_size);
+  core_text_space = malloc (bfd_get_section_size (core_text_sect));
 
   if (!core_text_space)
     {
       fprintf (stderr, _("%s: ran out room for %lu bytes of text space\n"),
-	       whoami, (unsigned long) core_text_sect->_raw_size);
+	       whoami, (unsigned long) bfd_get_section_size (core_text_sect));
       done (1);
     }
 
   if (!bfd_get_section_contents (cbfd, core_text_sect, core_text_space,
-				 (bfd_vma) 0, core_text_sect->_raw_size))
+				 0, bfd_get_section_size (core_text_sect)))
     {
       bfd_perror ("bfd_get_section_contents");
       free (core_text_space);
@@ -244,10 +263,7 @@ core_get_text_space (cbfd)
 
 
 void
-find_call (parent, p_lowpc, p_highpc)
-     Sym *parent;
-     bfd_vma p_lowpc;
-     bfd_vma p_highpc;
+find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 {
   switch (bfd_get_arch (core_bfd))
     {
@@ -290,8 +306,7 @@ find_call (parent, p_lowpc, p_highpc)
 	't' -> symbol is a local (static) name.  */
 
 static int
-core_sym_class (sym)
-     asymbol *sym;
+core_sym_class (asymbol *sym)
 {
   symbol_info syminfo;
   const char *name;
@@ -374,11 +389,7 @@ core_sym_class (sym)
 /* Get whatever source info we can get regarding address ADDR.  */
 
 static bfd_boolean
-get_src_info (addr, filename, name, line_num)
-     bfd_vma addr;
-     const char **filename;
-     const char **name;
-     int *line_num;
+get_src_info (bfd_vma addr, const char **filename, const char **name, int *line_num)
 {
   const char *fname = 0, *func_name = 0;
   int l = 0;
@@ -408,8 +419,7 @@ get_src_info (addr, filename, name, line_num)
    One symbol per function is entered.  */
 
 void
-core_create_function_syms (cbfd)
-     bfd *cbfd ATTRIBUTE_UNUSED;
+core_create_function_syms ()
 {
   bfd_vma min_vma = ~(bfd_vma) 0;
   bfd_vma max_vma = 0;
@@ -595,24 +605,23 @@ core_create_function_syms (cbfd)
    One symbol per line of source code is entered.  */
 
 void
-core_create_line_syms (cbfd)
-     bfd *cbfd;
+core_create_line_syms ()
 {
   char *prev_name, *prev_filename;
   unsigned int prev_name_len, prev_filename_len;
   bfd_vma vma, min_vma = ~(bfd_vma) 0, max_vma = 0;
-  bfd_vma offset;
   Sym *prev, dummy, *sentinel, *sym;
   const char *filename;
   int prev_line_num;
   Sym_Table ltab;
+  bfd_vma vma_high;
 
   /* Create symbols for functions as usual.  This is necessary in
      cases where parts of a program were not compiled with -g.  For
      those parts we still want to get info at the function level.  */
-  core_create_function_syms (cbfd);
+  core_create_function_syms ();
 
-  /* Pass 1 - counter number of symbols.  */
+  /* Pass 1: count the number of symbols.  */
 
   /* To find all line information, walk through all possible
      text-space addresses (one by one!) and get the debugging
@@ -620,7 +629,7 @@ core_create_line_syms (cbfd)
      it is time to create a new symbol.
 
      Of course, this is rather slow and it would be better if
-     bfd would provide an iterator for enumerating all line infos.  */
+     BFD would provide an iterator for enumerating all line infos.  */
   prev_name_len = PATH_MAX;
   prev_filename_len = PATH_MAX;
   prev_name = xmalloc (prev_name_len);
@@ -628,11 +637,10 @@ core_create_line_syms (cbfd)
   ltab.len = 0;
   prev_line_num = 0;
 
-  for (offset = 0; offset < core_text_sect->_raw_size; offset += min_insn_size)
+  vma_high = core_text_sect->vma + bfd_get_section_size (core_text_sect);
+  for (vma = core_text_sect->vma; vma < vma_high; vma += min_insn_size)
     {
       unsigned int len;
-
-      vma = core_text_sect->vma + offset;
 
       if (!get_src_info (vma, &filename, &dummy.name, &dummy.line_num)
 	  || (prev_line_num == dummy.line_num
@@ -696,12 +704,11 @@ core_create_line_syms (cbfd)
      lot cleaner now.  */
   prev = 0;
 
-  for (offset = 0; offset < core_text_sect->_raw_size; offset += min_insn_size)
+  for (vma = core_text_sect->vma; vma < vma_high; vma += min_insn_size)
     {
       sym_init (ltab.limit);
 
-      if (!get_src_info (core_text_sect->vma + offset, &filename,
-			 &ltab.limit->name, &ltab.limit->line_num)
+      if (!get_src_info (vma, &filename, &ltab.limit->name, &ltab.limit->line_num)
 	  || (prev && prev->line_num == ltab.limit->line_num
 	      && strcmp (prev->name, ltab.limit->name) == 0
 	      && strcmp (prev->file->name, filename) == 0))
@@ -711,7 +718,7 @@ core_create_line_syms (cbfd)
       ltab.limit->name = xstrdup (ltab.limit->name);
       ltab.limit->file = source_file_lookup_path (filename);
 
-      ltab.limit->addr = core_text_sect->vma + offset;
+      ltab.limit->addr = vma;
 
       /* Set is_static based on the enclosing function, using either:
 	 1) the previous symbol, if it's from the same function, or
