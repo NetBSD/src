@@ -1,6 +1,6 @@
 \input texinfo       @c                    -*- Texinfo -*-
 @setfilename binutils.info
-@c Copyright 2001, 2002, 2003 Free Software Foundation, Inc.
+@c Copyright 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
 @include config.texi
 
@@ -29,8 +29,8 @@ END-INFO-DIR-ENTRY
 
 @ifinfo
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000,
-2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright @copyright{} 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.1
@@ -54,8 +54,8 @@ notice identical to this one except for the removal of this paragraph
 @c This file documents the GNU binary utilities "ar", "ld", "objcopy",
 @c  "objdump", "nm", "size", "strings", "strip", "readelf" and "ranlib".
 @c
-@c Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001,
-@c 2002, 2003 Free Software Foundation, Inc.
+@c Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+@c 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 @c 
 @c This text may be freely distributed under the terms of the GNU
 @c Free Documentation License.
@@ -68,7 +68,7 @@ notice identical to this one except for the removal of this paragraph
 @title The @sc{gnu} Binary Utilities
 @subtitle Version @value{VERSION}
 @sp 1
-@subtitle May 1993
+@subtitle @value{UPDATED}
 @author Roland H. Pesch
 @author Jeffrey M. Osier
 @author Cygnus Support
@@ -80,8 +80,8 @@ notice identical to this one except for the removal of this paragraph
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1991, 92, 93, 94, 95, 96, 97, 1998, 2000, 2001,
-2002, 2003 Free Software Foundation, Inc.
+Copyright @copyright{} 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
       Permission is granted to copy, distribute and/or modify this document
       under the terms of the GNU Free Documentation License, Version 1.1
@@ -663,7 +663,7 @@ The @sc{gnu} linker @command{ld} is now described in a separate manual.
 nm [@option{-a}|@option{--debug-syms}] [@option{-g}|@option{--extern-only}]
    [@option{-B}] [@option{-C}|@option{--demangle}[=@var{style}]] [@option{-D}|@option{--dynamic}]
    [@option{-S}|@option{--print-size}] [@option{-s}|@option{--print-armap}]
-   [@option{-A}|@option{-o}|@option{--print-file-name}]
+   [@option{-A}|@option{-o}|@option{--print-file-name}][@option{--special-syms}]
    [@option{-n}|@option{-v}|@option{--numeric-sort}] [@option{-p}|@option{--no-sort}]
    [@option{-r}|@option{--reverse-sort}] [@option{--size-sort}] [@option{-u}|@option{--undefined-only}]
    [@option{-t} @var{radix}|@option{--radix=}@var{radix}] [@option{-P}|@option{--portability}]
@@ -748,7 +748,10 @@ The symbol is a weak symbol that has not been specifically tagged as a
 weak object symbol.  When a weak defined symbol is linked with a normal
 defined symbol, the normal defined symbol is used with no error.
 When a weak undefined symbol is linked and the symbol is not defined,
-the value of the weak symbol becomes zero with no error.
+the value of the symbol is determined in a system-specific manner without
+error.  On some systems, uppercase indicates that a default value has been 
+specified.
+
 
 @item -
 The symbol is a stabs symbol in an a.out object file.  In this case, the
@@ -878,6 +881,14 @@ value.  If the @code{bsd} output format is used the size of the symbol
 is printed, rather than the value, and @samp{-S} must be used in order 
 both size and value to be printed.
 
+@item --special-syms
+Display symbols which have a target-specific special meaning.  These
+symbols are usually used by the target for some special processing and
+are not normally helpful when included included in the normal symbol
+lists.  For example for ARM targets this option would skip the mapping
+symbols used to mark transistions between ARM code, THUMB code and
+data.
+
 @item -t @var{radix}
 @itemx --radix=@var{radix}
 Use @var{radix} as the radix for printing the symbol values.  It must be
@@ -936,6 +947,7 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
         [@option{-g}|@option{--strip-debug}]
         [@option{-K} @var{symbolname}|@option{--keep-symbol=}@var{symbolname}]
         [@option{-N} @var{symbolname}|@option{--strip-symbol=}@var{symbolname}]
+        [@option{--strip-unneeded-symbol=}@var{symbolname}]
         [@option{-G} @var{symbolname}|@option{--keep-global-symbol=}@var{symbolname}]
         [@option{-L} @var{symbolname}|@option{--localize-symbol=}@var{symbolname}]
         [@option{-W} @var{symbolname}|@option{--weaken-symbol=}@var{symbolname}]
@@ -967,6 +979,7 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
         [@option{--weaken}]
         [@option{--keep-symbols=}@var{filename}]
         [@option{--strip-symbols=}@var{filename}]
+        [@option{--strip-unneeded-symbols=}@var{filename}]
         [@option{--keep-global-symbols=}@var{filename}]
         [@option{--localize-symbols=}@var{filename}]
         [@option{--weaken-symbols=}@var{filename}]
@@ -1094,6 +1107,10 @@ be given more than once.
 @itemx --strip-symbol=@var{symbolname}
 Do not copy symbol @var{symbolname} from the source file.  This option
 may be given more than once.
+
+@item --strip-unneeded-symbol=@var{symbolname}
+Do not copy symbol @var{symbolname} from the source file unless it is needed
+by a relocation.  This option may be given more than once.
 
 @item -G @var{symbolname}
 @itemx --keep-global-symbol=@var{symbolname}
@@ -1336,6 +1353,12 @@ Apply @option{--strip-symbol} option to each symbol listed in the file
 name per line.  Line comments may be introduced by the hash character.
 This option may be given more than once.
 
+@item --strip-unneeded-symbols=@var{filename}
+Apply @option{--strip-unneeded-symbol} option to each symbol listed in
+the file @var{filename}.  @var{filename} is simply a flat file, with one
+symbol name per line.  Line comments may be introduced by the hash
+character.  This option may be given more than once.
+
 @item --keep-global-symbols=@var{filename}
 Apply @option{--keep-global-symbol} option to each symbol listed in the
 file @var{filename}.  @var{filename} is simply a flat file, with one
@@ -1494,6 +1517,7 @@ objdump [@option{-a}|@option{--archive-headers}]
         [@option{--prefix-addresses}]
         [@option{--[no-]show-raw-insn}]
         [@option{--adjust-vma=}@var{offset}]
+        [@option{--special-syms}]
         [@option{-V}|@option{--version}]
         [@option{-H}|@option{--help}]
         @var{objfile}@dots{}
@@ -1709,12 +1733,17 @@ For PPC, @option{booke}, @option{booke32} and @option{booke64} select
 disassembly of BookE instructions.  @option{32} and @option{64} select
 PowerPC and PowerPC64 disassembly, respectively.
 
-For MIPS, this option controls the printing of register names in
-disassembled instructions.  Multiple selections from the
-following may be specified as a comma separated string, and invalid
-options are ignored:
+For MIPS, this option controls the printing of instruction mneumonic
+names and register names in disassembled instructions.  Multiple
+selections from the following may be specified as a comma separated
+string, and invalid options are ignored:
 
 @table @code
+@item no-aliases
+Print the 'raw' instruction mneumonic instead of some pseudo
+instruction mneumonic.  I.E. print 'daddu' or 'or' instead of 'move',
+'sll' instead of 'nop', etc.
+
 @item gpr-names=@var{ABI}
 Print GPR (general-purpose register) names as appropriate
 for the specified ABI.  By default, GPR names are selected according to
@@ -1836,6 +1865,11 @@ meaningful for dynamic objects, such as certain types of shared
 libraries.  This is similar to the information provided by the @samp{nm}
 program when given the @option{-D} (@option{--dynamic}) option.
 
+@item --special-syms
+When displaying symbols include those which the target considers to be
+special in some way and which would not normally be of interest to the
+user.
+
 @item -V
 @itemx --version
 Print the version number of @command{objdump} and exit.
@@ -1846,7 +1880,7 @@ Print the version number of @command{objdump} and exit.
 @cindex header information, all
 Display all available header information, including the symbol table and
 relocation entries.  Using @option{-x} is equivalent to specifying all of
-@option{-a -f -h -r -t}.
+@option{-a -f -h -p -r -t}.
 
 @item -w
 @itemx --wide
@@ -2349,7 +2383,7 @@ takes parameters of different types).  All C++ and Java function names
 are encoded into a low-level assembly label (this process is known as
 @dfn{mangling}). The @command{c++filt}
 @footnote{MS-DOS does not allow @kbd{+} characters in file names, so on
-MS-DOS this program is named @command{cxxfilt}.}
+MS-DOS this program is named @command{CXXFILT}.}
 program does the inverse mapping: it decodes (@dfn{demangles}) low-level
 names into user-level names so that the linker can keep these overloaded
 functions from clashing.
@@ -2837,16 +2871,25 @@ the Info entries for @file{binutils}.
 @end ignore
 
 @node dlltool
-@chapter Create files needed to build and use DLLs
+@chapter dlltool
 @cindex DLL
 @kindex dlltool
 
-@command{dlltool} may be used to create the files needed to build and use
-dynamic link libraries (DLLs).
+@command{dlltool} is used to create the files needed to create dynamic
+link libraries (DLLs) on systems which understand PE format image
+files such as Windows.  A DLL contains an export table which contains
+information that the runtime loader needs to resolve references from a
+referencing program.
+
+The export table is generated by this program by reading in a
+@file{.def} file or scanning the @file{.a} and @file{.o} files which
+will be in the DLL.  A @file{.o} file can contain information in
+special @samp{.drectve} sections with export information.
 
 @quotation
-@emph{Warning:} @command{dlltool} is not always built as part of the binary
-utilities, since it is only useful for those targets which support DLLs.
+@emph{Note:} @command{dlltool} is not always built as part of the
+binary utilities, since it is only useful for those targets which
+support DLLs.
 @end quotation
 
 @c man title dlltool Create files needed to build and use DLLs.
@@ -2865,6 +2908,7 @@ dlltool [@option{-d}|@option{--input-def} @var{def-file-name}]
         [@option{-D}|@option{--dllname} @var{name}] [@option{-m}|@option{--machine} @var{machine}]
         [@option{-a}|@option{--add-indirect}] [@option{-U}|@option{--add-underscore}] [@option{-k}|@option{--kill-at}]
         [@option{-A}|@option{--add-stdcall-alias}]
+        [@option{-p}|@option{--ext-prefix-alias} @var{prefix}]
         [@option{-x}|@option{--no-idata4}] [@option{-c}|@option{--no-idata5}] [@option{-i}|@option{--interwork}]
         [@option{-n}|@option{--nodelete}] [@option{-t}|@option{--temp-prefix} @var{prefix}]
         [@option{-v}|@option{--verbose}] 
@@ -2888,13 +2932,13 @@ When creating a DLL, along with the source for the DLL, it is necessary
 to have three other files.  @command{dlltool} can help with the creation of
 these files.
 
-The first file is a @samp{.def} file which specifies which functions are
+The first file is a @file{.def} file which specifies which functions are
 exported from the DLL, which functions the DLL imports, and so on.  This
 is a text file and can be created by hand, or @command{dlltool} can be used
 to create it using the @option{-z} option.  In this case @command{dlltool}
 will scan the object files specified on its command line looking for
 those functions which have been specially marked as being exported and
-put entries for them in the .def file it creates.
+put entries for them in the @file{.def} file it creates.
 
 In order to mark a function as being exported from a DLL, it needs to
 have an @option{-export:<name_of_function>} entry in the @samp{.drectve}
@@ -2912,12 +2956,12 @@ The second file needed for DLL creation is an exports file.  This file
 is linked with the object files that make up the body of the DLL and it
 handles the interface between the DLL and the outside world.  This is a
 binary file and it can be created by giving the @option{-e} option to
-@command{dlltool} when it is creating or reading in a .def file. 
+@command{dlltool} when it is creating or reading in a @file{.def} file. 
 
 The third file needed for DLL creation is the library file that programs
 will link with in order to access the functions in the DLL.  This file
 can be created by giving the @option{-l} option to dlltool when it
-is creating or reading in a .def file.
+is creating or reading in a @file{.def} file.
 
 @command{dlltool} builds the library file by hand, but it builds the
 exports file by creating temporary files containing assembler statements
@@ -2951,7 +2995,7 @@ The command line options have the following meanings:
 @item -d @var{filename}
 @itemx --input-def @var{filename}
 @cindex input .def file
-Specifies the name of a .def file to be read in and processed.
+Specifies the name of a @file{.def} file to be read in and processed.
 
 @item -b @var{filename}
 @itemx --base-file @var{filename}
@@ -2966,7 +3010,7 @@ Specifies the name of the export file to be created by dlltool.
 
 @item -z @var{filename}
 @itemx --output-def @var{filename}
-Specifies the name of the .def file to be created by dlltool.
+Specifies the name of the @file{.def} file to be created by dlltool.
 
 @item -l @var{filename}
 @itemx --output-lib @var{filename}
@@ -2980,7 +3024,7 @@ option.  You may add to the list of symbols to not export by using the
 @option{--exclude-symbols} option.
 
 @item --no-export-all-symbols
-Only export symbols explicitly listed in an input .def file or in
+Only export symbols explicitly listed in an input @file{.def} file or in
 @samp{.drectve} sections in the input object files.  This is the default
 behaviour.  The @samp{.drectve} sections are created by @samp{dllexport}
 attributes in the source code.
@@ -3016,10 +3060,10 @@ double quotes.
 
 @item -D @var{name}
 @itemx --dll-name @var{name}
-Specifies the name to be stored in the .def file as the name of the DLL
-when the @option{-e} option is used.  If this option is not present, then
-the filename given to the @option{-e} option will be used as the name of
-the DLL.
+Specifies the name to be stored in the @file{.def} file as the name of
+the DLL when the @option{-e} option is used.  If this option is not
+present, then the filename given to the @option{-e} option will be
+used as the name of the DLL.
 
 @item -m @var{machine}
 @itemx -machine @var{machine}
@@ -3053,6 +3097,12 @@ function in a DLL, other than by name.
 Specifies that when @command{dlltool} is creating the exports file it
 should add aliases for stdcall symbols without @samp{@@ <number>}
 in addition to the symbols with @samp{@@ <number>}.
+
+@item -p
+@itemx --ext-prefix-alias @var{prefix}
+Causes @command{dlltool} to create external aliases for all DLL
+imports with the specified prefix.  The aliases are created for both
+external and import symbols with no leading underscore.
 
 @item -x
 @itemx --no-idata4
@@ -3101,9 +3151,60 @@ Displays dlltool's version number and then exits.
 
 @c man end
 
+@menu
+* def file format::             The format of the dlltool @file{.def} file
+@end menu
+
+@node def file format
+@section The format of the @command{dlltool} @file{.def} file
+
+A @file{.def} file contains any number of the following commands:
+
+@table @asis
+
+@item @code{NAME} @var{name} @code{[ ,} @var{base} @code{]}
+The result is going to be named @var{name}@code{.exe}.
+
+@item @code{LIBRARY} @var{name} @code{[ ,} @var{base} @code{]}
+The result is going to be named @var{name}@code{.dll}.
+
+@item @code{EXPORTS ( ( (} @var{name1} @code{[ = } @var{name2} @code{] ) | ( } @var{name1} @code{=} @var{module-name} @code{.} @var{external-name} @code{) )}
+@item @code{[} @var{integer} @code{] [ NONAME ] [ CONSTANT ] [ DATA ] [ PRIVATE ] ) *}
+Declares @var{name1} as an exported symbol from the DLL, with optional
+ordinal number @var{integer}, or declares @var{name1} as an alias
+(forward) of the function @var{external-name} in the DLL
+@var{module-name}.
+
+@item @code{IMPORTS ( (} @var{internal-name} @code{=} @var{module-name} @code{.} @var{integer} @code{) | [} @var{internal-name} @code{= ]} @var{module-name} @code{.} @var{external-name} @code{) ) *}
+Declares that @var{external-name} or the exported function whose
+ordinal number is @var{integer} is to be imported from the file
+@var{module-name}.  If @var{internal-name} is specified then this is
+the name that the imported function will be referred to in the body of
+the DLL.
+
+@item @code{DESCRIPTION} @var{string}
+Puts @var{string} into the output @file{.exp} file in the
+@code{.rdata} section.
+
+@item @code{STACKSIZE} @var{number-reserve} @code{[, } @var{number-commit} @code{]}
+@item @code{HEAPSIZE} @var{number-reserve} @code{[, } @var{number-commit} @code{]}
+Generates @code{--stack} or @code{--heap}
+@var{number-reserve},@var{number-commit} in the output @code{.drectve}
+section.  The linker will see this and act upon it.
+
+@item @code{CODE} @var{attr} @code{+}
+@item @code{DATA} @var{attr} @code{+}
+@item @code{SECTIONS (} @var{section-name} @var{attr}@code{ + ) *}
+Generates @code{--attr} @var{section-name} @var{attr} in the output
+@code{.drectve} section, where @var{attr} is one of @code{READ},
+@code{WRITE}, @code{EXECUTE} or @code{SHARED}.  The linker will see
+this and act upon it.
+
+@end table
+
 @ignore
 @c man begin SEEALSO dlltool
-the Info entries for @file{binutils}.
+The Info pages for @file{binutils}.
 @c man end
 @end ignore
 
@@ -3121,6 +3222,7 @@ readelf [@option{-a}|@option{--all}]
         [@option{-h}|@option{--file-header}]
         [@option{-l}|@option{--program-headers}|@option{--segments}]
         [@option{-S}|@option{--section-headers}|@option{--sections}]
+        [@option{-g}|@option{--section-groups}]
         [@option{-e}|@option{--headers}]
         [@option{-s}|@option{--syms}|@option{--symbols}]
         [@option{-n}|@option{--notes}]
@@ -3131,8 +3233,8 @@ readelf [@option{-a}|@option{--all}]
         [@option{-A}|@option{--arch-specific}]
         [@option{-D}|@option{--use-dynamic}]
         [@option{-x} <number>|@option{--hex-dump=}<number>]
-        [@option{-w[liaprmfFso]}|
-         @option{--debug-dump}[=line,=info,=abbrev,=pubnames,=ranges,=macro,=frames,=frames-interp,=str,=loc]]
+        [@option{-w[liaprmfFsoR]}|
+         @option{--debug-dump}[=line,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames-interp,=str,=loc,=Ranges]]
         [@option{-I}|@option{-histogram}]
         [@option{-v}|@option{--version}]
         [@option{-W}|@option{--wide}]
@@ -3191,6 +3293,12 @@ has any.
 Displays the information contained in the file's section headers, if it
 has any.
 
+@item -g
+@itemx --section-groups
+@cindex ELF section group information
+Displays the information contained in the file's section groups, if it
+has any.
+
 @item -s
 @itemx --symbols
 @itemx --syms
@@ -3203,19 +3311,13 @@ Display all the headers in the file.  Equivalent to @option{-h -l -S}.
 
 @item -n
 @itemx --notes
-@cindex ELF core notes
-Displays the contents of the NOTE segment, if it exists.
+@cindex ELF notes
+Displays the contents of the NOTE segments and/or sections, if any.
 
 @item -r
 @itemx --relocs
 @cindex ELF reloc information
 Displays the contents of the file's relocation section, if it has one.
-
-@item -u
-@itemx --unwind
-@cindex unwind information
-Displays the contents of the file's unwind section, if it has one.  Only
-the unwind sections for IA64 ELF files are currently supported.
 
 @item -u
 @itemx --unwind
@@ -3249,8 +3351,8 @@ symbols section.
 @itemx --hex-dump=<number>
 Displays the contents of the indicated section as a hexadecimal dump.
 
-@item -w[liaprmfFso]
-@itemx --debug-dump[=line,=info,=abbrev,=pubnames,=ranges,=macro,=frames,=frames-interp,=str,=loc]
+@item -w[liaprmfFsoR]
+@itemx --debug-dump[=line,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames-interp,=str,=loc,=Ranges]
 Displays the contents of the debug sections in the file, if any are
 present.  If one of the optional letters or words follows the switch
 then only data found in those specific sections will be dumped.

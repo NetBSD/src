@@ -1,5 +1,5 @@
 /* BFD back-end for CISCO crash dumps.
-   Copyright 1994, 1997, 1999, 2000, 2001, 2002
+   Copyright 1994, 1997, 1999, 2000, 2001, 2002, 2004
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -246,7 +246,7 @@ cisco_core_file_validate (abfd, crash_info_loc)
     goto error_return;
   asect->flags = SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS;
   /* The size of memory is the size of the core file itself.  */
-  asect->_raw_size = statbuf.st_size;
+  asect->size = statbuf.st_size;
   asect->vma = rambase;
   asect->filepos = 0;
 
@@ -259,7 +259,7 @@ cisco_core_file_validate (abfd, crash_info_loc)
   asect->flags = SEC_HAS_CONTENTS;
   asect->vma = 0;
   asect->filepos = crashinfo_offset;
-  asect->_raw_size = sizeof (crashinfo);
+  asect->size = sizeof (crashinfo);
 
   /* Create a ".reg" section to allow access to the saved
      registers.  */
@@ -274,7 +274,7 @@ cisco_core_file_validate (abfd, crash_info_loc)
      choose a register section size that is either the remaining part
      of the file, or 1024, whichever is smaller.  */
   nread = statbuf.st_size - asect->filepos;
-  asect->_raw_size = (nread < 1024) ? nread : 1024;
+  asect->size = (nread < 1024) ? nread : 1024;
 
   return abfd->xvec;
 

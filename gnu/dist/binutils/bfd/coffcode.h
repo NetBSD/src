@@ -1,6 +1,6 @@
 /* Support for the generic parts of most COFF variants, for BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003
+   2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -309,6 +309,9 @@ CODE_FRAGMENT
 
 #define STRING_SIZE_SIZE (4)
 
+#define DOT_DEBUG	".debug"
+#define GNU_LINKONCE_WI ".gnu.linkonce.wi."
+
 static long sec_to_styp_flags
   PARAMS ((const char *, flagword));
 static bfd_boolean styp_to_sec_flags
@@ -428,7 +431,7 @@ sec_to_styp_flags (sec_name, sec_flags)
       styp_flags = STYP_LIT;
 #endif /* _LIT */
     }
-  else if (!strncmp (sec_name, ".debug", 6))
+  else if (!strncmp (sec_name, DOT_DEBUG, sizeof (DOT_DEBUG) - 1))
     {
       /* Handle the XCOFF debug section and DWARF2 debug sections.  */
       if (!sec_name[6])
@@ -441,7 +444,7 @@ sec_to_styp_flags (sec_name, sec_flags)
       styp_flags = STYP_DEBUG_INFO;
     }
 #ifdef COFF_LONG_SECTION_NAMES
-  else if (!strncmp (sec_name, ".gnu.linkonce.wi.", 17))
+  else if (!strncmp (sec_name, GNU_LINKONCE_WI, sizeof (GNU_LINKONCE_WI) - 1))
     {
       styp_flags = STYP_DEBUG_INFO;
     }
@@ -491,12 +494,12 @@ sec_to_styp_flags (sec_name, sec_flags)
     }
 
 #ifdef STYP_CLINK
-  if (sec_flags & SEC_CLINK)
+  if (sec_flags & SEC_TIC54X_CLINK)
     styp_flags |= STYP_CLINK;
 #endif
 
 #ifdef STYP_BLOCK
-  if (sec_flags & SEC_BLOCK)
+  if (sec_flags & SEC_TIC54X_BLOCK)
     styp_flags |= STYP_BLOCK;
 #endif
 
@@ -518,7 +521,7 @@ sec_to_styp_flags (sec_name, sec_flags)
 
 static long
 sec_to_styp_flags (sec_name, sec_flags)
-     const char *sec_name ATTRIBUTE_UNUSED;
+     const char *sec_name;
      flagword sec_flags;
 {
   long styp_flags = 0;
@@ -530,6 +533,11 @@ sec_to_styp_flags (sec_name, sec_flags)
      COFF files.  IMAGE_SCN_* are the PE section flags which appear in
      PE files.  The STYP_* flags and the IMAGE_SCN_* flags overlap,
      but there are more IMAGE_SCN_* flags.  */
+
+  /* FIXME: There is no gas syntax to specify the debug section flag.  */
+  if (strncmp (sec_name, DOT_DEBUG, sizeof (DOT_DEBUG) - 1) == 0
+      || strncmp (sec_name, GNU_LINKONCE_WI, sizeof (GNU_LINKONCE_WI) - 1) == 0)
+    sec_flags = SEC_READONLY | SEC_DEBUGGING;
 
   /* skip LOAD */
   /* READONLY later */
@@ -571,7 +579,7 @@ sec_to_styp_flags (sec_name, sec_flags)
     styp_flags |= IMAGE_SCN_MEM_WRITE;    /* Invert READONLY for write.  */
   if (sec_flags & SEC_CODE)
     styp_flags |= IMAGE_SCN_MEM_EXECUTE;  /* CODE->EXECUTE.  */
-  if (sec_flags & SEC_SHARED)
+  if (sec_flags & SEC_COFF_SHARED)
     styp_flags |= IMAGE_SCN_MEM_SHARED;   /* Shared remains meaningful.  */
 
   return styp_flags;
@@ -600,12 +608,12 @@ styp_to_sec_flags (abfd, hdr, name, section, flags_ptr)
 
 #ifdef STYP_BLOCK
   if (styp_flags & STYP_BLOCK)
-    sec_flags |= SEC_BLOCK;
+    sec_flags |= SEC_TIC54X_BLOCK;
 #endif
 
 #ifdef STYP_CLINK
   if (styp_flags & STYP_CLINK)
-    sec_flags |= SEC_CLINK;
+    sec_flags |= SEC_TIC54X_CLINK;
 #endif
 
 #ifdef STYP_NOLOAD
@@ -675,12 +683,12 @@ styp_to_sec_flags (abfd, hdr, name, section, flags_ptr)
 #endif
 	sec_flags |= SEC_ALLOC;
     }
-  else if (strncmp (name, ".debug", 6) == 0
+  else if (strncmp (name, DOT_DEBUG, sizeof (DOT_DEBUG) - 1) == 0
 #ifdef _COMMENT
 	   || strcmp (name, _COMMENT) == 0
 #endif
 #ifdef COFF_LONG_SECTION_NAMES
-	   || strncmp (name, ".gnu.linkonce.wi.", 17) == 0
+	   || strncmp (name, GNU_LINKONCE_WI, sizeof (GNU_LINKONCE_WI) - 1) == 0
 #endif
 	   || strncmp (name, ".stab", 5) == 0)
     {
@@ -821,8 +829,6 @@ handle_COMDAT (abfd, sec_flags, hdr, name, section)
 		/* The first time we've seen the symbol.  */
 		union internal_auxent aux;
 
-		seen_state = 1;
-
 		/* If it isn't the stuff we're expecting, die;
 		   The MS documentation is vague, but it
 		   appears that the second entry serves BOTH
@@ -850,7 +856,10 @@ handle_COMDAT (abfd, sec_flags, hdr, name, section)
 		   function).  See comment above for more.  */
 
 		if (strcmp (name, symname) != 0)
-		  abort ();
+		  _bfd_error_handler (_("%B: warning: COMDAT symbol '%s' does not match section name '%s'"),
+				      abfd, symname, name);
+
+		seen_state = 1;
 
 		/* This is the section symbol.  */
 		bfd_coff_swap_aux_in (abfd, (PTR) (esym + bfd_coff_symesz (abfd)),
@@ -957,12 +966,13 @@ handle_COMDAT (abfd, sec_flags, hdr, name, section)
 		   Intel puts the two adjacent, but Alpha (at
 		   least) spreads them out.  */
 
-		amt = sizeof (struct bfd_comdat_info);
-		section->comdat = bfd_alloc (abfd, amt);
-		if (section->comdat == NULL)
+		amt = sizeof (struct coff_comdat_info);
+		coff_section_data (abfd, section)->comdat
+		  = bfd_alloc (abfd, amt);
+		if (coff_section_data (abfd, section)->comdat == NULL)
 		  abort ();
 
-		section->comdat->symbol =
+		coff_section_data (abfd, section)->comdat->symbol =
 		  (esym - esymstart) / bfd_coff_symesz (abfd);
 
 		amt = strlen (symname) + 1;
@@ -971,7 +981,8 @@ handle_COMDAT (abfd, sec_flags, hdr, name, section)
 		  abort ();
 
 		strcpy (newname, symname);
-		section->comdat->name = newname;
+		coff_section_data (abfd, section)->comdat->name
+		  = newname;
 	      }
 
 	      goto breakloop;
@@ -1055,7 +1066,11 @@ styp_to_sec_flags (abfd, hdr, name, section, flags_ptr)
 	  unhandled = "IMAGE_SCN_MEM_NOT_CACHED";
 	  break;
 	case IMAGE_SCN_MEM_NOT_PAGED:
-	  unhandled = "IMAGE_SCN_MEM_NOT_PAGED";
+	  /* Generate a warning message rather using the 'unhandled'
+	     variable as this will allow some .sys files generate by
+	     other toolchains to be processed.  See bugzilla issue 196.  */
+	  _bfd_error_handler (_("%B: Warning: Ignoring section flag IMAGE_SCN_MEM_NOT_PAGED in section %s"),
+			      abfd, name);
 	  break;
 	case IMAGE_SCN_MEM_EXECUTE:
 	  sec_flags |= SEC_CODE;
@@ -1071,7 +1086,7 @@ styp_to_sec_flags (abfd, hdr, name, section, flags_ptr)
 	    sec_flags |= SEC_DEBUGGING;
 	  break;
 	case IMAGE_SCN_MEM_SHARED:
-	  sec_flags |= SEC_SHARED;
+	  sec_flags |= SEC_COFF_SHARED;
 	  break;
 	case IMAGE_SCN_LNK_REMOVE:
 	  sec_flags |= SEC_EXCLUDE;
@@ -1109,8 +1124,8 @@ styp_to_sec_flags (abfd, hdr, name, section, flags_ptr)
       if (unhandled != NULL)
 	{
 	  (*_bfd_error_handler)
-	    (_("%s (%s): Section flag %s (0x%x) ignored"),
-	     bfd_archive_filename (abfd), name, unhandled, flag);
+	    (_("%B (%s): Section flag %s (0x%x) ignored"),
+	     abfd, name, unhandled, flag);
 	  result = FALSE;
 	}
     }
@@ -1967,6 +1982,22 @@ coff_set_arch_mach_hook (abfd, filehdr)
       machine = bfd_mach_m68020;
       break;
 #endif
+#ifdef MAXQ20MAGIC
+    case MAXQ20MAGIC:
+      arch = bfd_arch_maxq;
+      switch (internal_f->f_flags & F_MACHMASK)
+	{ 
+        case F_MAXQ10:
+          machine = bfd_mach_maxq10;
+          break;
+        case F_MAXQ20:
+          machine = bfd_mach_maxq20;
+          break;
+        default:
+          return FALSE;
+	}
+      break;
+#endif
 #ifdef MC88MAGIC
     case MC88MAGIC:
     case MC88DMAGIC:
@@ -2375,7 +2406,8 @@ coff_print_aux (abfd, file, table_base, symbol, aux, indaux)
 	{
 	  BFD_ASSERT (! aux->fix_scnlen);
 #ifdef XCOFF64
-	  fprintf (file, "val %5lld", aux->u.auxent.x_csect.x_scnlen.l);
+	  fprintf (file, "val %5lld",
+		   (long long) aux->u.auxent.x_csect.x_scnlen.l);
 #else
 	  fprintf (file, "val %5ld", (long) aux->u.auxent.x_csect.x_scnlen.l);
 #endif
@@ -2385,7 +2417,8 @@ coff_print_aux (abfd, file, table_base, symbol, aux, indaux)
 	  fprintf (file, "indx ");
 	  if (! aux->fix_scnlen)
 #ifdef XCOFF64
-	    fprintf (file, "%4lld", aux->u.auxent.x_csect.x_scnlen.l);
+	    fprintf (file, "%4lld",
+		     (long long) aux->u.auxent.x_csect.x_scnlen.l);
 #else
 	    fprintf (file, "%4ld", (long) aux->u.auxent.x_csect.x_scnlen.l);
 #endif
@@ -2900,6 +2933,22 @@ coff_set_flags (abfd, magicp, flagsp)
       return TRUE;
 #endif
 
+#ifdef MAXQ20MAGIC
+    case bfd_arch_maxq:
+      * magicp = MAXQ20MAGIC;
+      switch (bfd_get_mach (abfd))
+	{
+	case bfd_mach_maxq10:
+	  * flagsp = F_MAXQ10;
+	  return TRUE;
+	case bfd_mach_maxq20:
+	  * flagsp = F_MAXQ20;
+	  return TRUE;
+	default:
+	  return FALSE;
+	}
+#endif
+
     default:			/* Unknown architecture.  */
       /* Fall through to "return FALSE" below, to avoid
 	 "statement never reached" errors on the one below.  */
@@ -3004,10 +3053,10 @@ coff_compute_section_file_positions (abfd)
 	{
 	  asection *dsec;
 
-	  dsec = bfd_make_section_old_way (abfd, ".debug");
+	  dsec = bfd_make_section_old_way (abfd, DOT_DEBUG);
 	  if (dsec == NULL)
 	    abort ();
-	  dsec->_raw_size = sz;
+	  dsec->size = sz;
 	  dsec->flags |= SEC_HAS_CONTENTS;
 	}
     }
@@ -3106,7 +3155,7 @@ coff_compute_section_file_positions (abfd)
 	   a zero size and having real contents are different
 	   concepts: .bss has no contents, but (usually) non-zero
 	   size.  */
-	if (current->_raw_size == 0)
+	if (current->size == 0)
 	  {
 	    /* Discard.  However, it still might have (valid) symbols
 	       in it, so arbitrarily set it to section 1 (indexing is
@@ -3157,7 +3206,7 @@ coff_compute_section_file_positions (abfd)
 	    return FALSE;
 	}
       if (pei_section_data (abfd, current)->virt_size == 0)
-	pei_section_data (abfd, current)->virt_size = current->_raw_size;
+	pei_section_data (abfd, current)->virt_size = current->size;
 #endif
 
       /* Only deal with sections which have contents.  */
@@ -3166,7 +3215,7 @@ coff_compute_section_file_positions (abfd)
 
 #ifdef COFF_IMAGE_WITH_PE
       /* Make sure we skip empty sections in a PE image.  */
-      if (current->_raw_size == 0)
+      if (current->size == 0)
 	continue;
 #endif
 
@@ -3214,7 +3263,7 @@ coff_compute_section_file_positions (abfd)
 	    }
 #endif
 	  if (previous != (asection *) NULL)
-	    previous->_raw_size += sofar - old_sofar;
+	    previous->size += sofar - old_sofar;
 	}
 
 #endif
@@ -3224,16 +3273,16 @@ coff_compute_section_file_positions (abfd)
 #ifdef COFF_PAGE_SIZE
       if ((abfd->flags & D_PAGED) != 0
 	  && (current->flags & SEC_ALLOC) != 0)
-	sofar += (current->vma - sofar) % page_size;
+	sofar += (current->vma - (bfd_vma) sofar) % page_size;
 #endif
       current->filepos = sofar;
 
 #ifdef COFF_IMAGE_WITH_PE
       /* Set the padded size.  */
-      current->_raw_size = (current->_raw_size + page_size -1) & -page_size;
+      current->size = (current->size + page_size -1) & -page_size;
 #endif
 
-      sofar += current->_raw_size;
+      sofar += current->size;
 
 #ifdef ALIGN_SECTIONS_IN_FILE
       /* Make sure that this section is of the right size too.  */
@@ -3241,26 +3290,26 @@ coff_compute_section_file_positions (abfd)
 	{
 	  bfd_size_type old_size;
 
-	  old_size = current->_raw_size;
-	  current->_raw_size = BFD_ALIGN (current->_raw_size,
-					  1 << current->alignment_power);
-	  align_adjust = current->_raw_size != old_size;
-	  sofar += current->_raw_size - old_size;
+	  old_size = current->size;
+	  current->size = BFD_ALIGN (current->size,
+				     1 << current->alignment_power);
+	  align_adjust = current->size != old_size;
+	  sofar += current->size - old_size;
 	}
       else
 	{
 	  old_sofar = sofar;
 	  sofar = BFD_ALIGN (sofar, 1 << current->alignment_power);
 	  align_adjust = sofar != old_sofar;
-	  current->_raw_size += sofar - old_sofar;
+	  current->size += sofar - old_sofar;
 	}
 #endif
 
 #ifdef COFF_IMAGE_WITH_PE
       /* For PE we need to make sure we pad out to the aligned
-         _raw_size, in case the caller only writes out data to the
-         unaligned _raw_size.  */
-      if (pei_section_data (abfd, current)->virt_size < current->_raw_size)
+         size, in case the caller only writes out data to the
+         unaligned size.  */
+      if (pei_section_data (abfd, current)->virt_size < current->size)
 	align_adjust = TRUE;
 #endif
 
@@ -3300,86 +3349,6 @@ coff_compute_section_file_positions (abfd)
 
   return TRUE;
 }
-
-#if 0
-
-/* This can never work, because it is called too late--after the
-   section positions have been set.  I can't figure out what it is
-   for, so I am going to disable it--Ian Taylor 20 March 1996.  */
-
-/* If .file, .text, .data, .bss symbols are missing, add them.  */
-/* @@ Should we only be adding missing symbols, or overriding the aux
-   values for existing section symbols?  */
-static bfd_boolean
-coff_add_missing_symbols (abfd)
-     bfd *abfd;
-{
-  unsigned int nsyms = bfd_get_symcount (abfd);
-  asymbol **sympp = abfd->outsymbols;
-  asymbol **sympp2;
-  unsigned int i;
-  int need_text = 1, need_data = 1, need_bss = 1, need_file = 1;
-  bfd_size_type amt;
-
-  for (i = 0; i < nsyms; i++)
-    {
-      coff_symbol_type *csym = coff_symbol_from (abfd, sympp[i]);
-      const char *name;
-
-      if (csym)
-	{
-	  /* Only do this if there is a coff representation of the input
-	     symbol.  */
-	  if (csym->native && csym->native->u.syment.n_sclass == C_FILE)
-	    {
-	      need_file = 0;
-	      continue;
-	    }
-	  name = csym->symbol.name;
-	  if (!name)
-	    continue;
-	  if (!strcmp (name, _TEXT))
-	    need_text = 0;
-#ifdef APOLLO_M68
-	  else if (!strcmp (name, ".wtext"))
-	    need_text = 0;
-#endif
-	  else if (!strcmp (name, _DATA))
-	    need_data = 0;
-	  else if (!strcmp (name, _BSS))
-	    need_bss = 0;
-	}
-    }
-  /* Now i == bfd_get_symcount (abfd).  */
-  /* @@ For now, don't deal with .file symbol.  */
-  need_file = 0;
-
-  if (!need_text && !need_data && !need_bss && !need_file)
-    return TRUE;
-  nsyms += need_text + need_data + need_bss + need_file;
-  amt = nsyms;
-  amt *= sizeof (asymbol *);
-  sympp2 = (asymbol **) bfd_alloc (abfd, amt);
-  if (!sympp2)
-    return FALSE;
-  memcpy (sympp2, sympp, i * sizeof (asymbol *));
-
-  if (need_file)
-    /* @@ Generate fake .file symbol, in sympp2[i], and increment i.  */
-    abort ();
-
-  if (need_text)
-    sympp2[i++] = coff_section_symbol (abfd, _TEXT);
-  if (need_data)
-    sympp2[i++] = coff_section_symbol (abfd, _DATA);
-  if (need_bss)
-    sympp2[i++] = coff_section_symbol (abfd, _BSS);
-  BFD_ASSERT (i == nsyms);
-  bfd_set_symtab (abfd, sympp2, nsyms);
-  return TRUE;
-}
-
-#endif /* 0 */
 
 #ifdef COFF_IMAGE_WITH_PE
 
@@ -3632,7 +3601,7 @@ coff_write_object_contents (abfd)
 #endif
       section.s_vaddr = current->vma;
       section.s_paddr = current->lma;
-      section.s_size =  current->_raw_size;
+      section.s_size =  current->size;
 #ifdef coff_get_section_load_page
       section.s_page = coff_get_section_load_page (current);
 #endif
@@ -3651,8 +3620,8 @@ coff_write_object_contents (abfd)
 
       /* If this section has no size or is unloadable then the scnptr
 	 will be 0 too.  */
-      if (current->_raw_size == 0 ||
-	  (current->flags & (SEC_LOAD | SEC_HAS_CONTENTS)) == 0)
+      if (current->size == 0
+	  || (current->flags & (SEC_LOAD | SEC_HAS_CONTENTS)) == 0)
 	section.s_scnptr = 0;
       else
 	section.s_scnptr = current->filepos;
@@ -3886,6 +3855,8 @@ coff_write_object_contents (abfd)
 #ifdef COFF_IMAGE_WITH_PE
   if (! hasdebug)
     internal_f.f_flags |= IMAGE_FILE_DEBUG_STRIPPED;
+  if (pe_data (abfd)->real_flags & IMAGE_FILE_LARGE_ADDRESS_AWARE)
+    internal_f.f_flags |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
 #endif
 
 #ifdef COFF_WITH_PE
@@ -4042,6 +4013,11 @@ coff_write_object_contents (abfd)
     internal_a.magic = NMAGIC; /* Assume separate i/d.  */
 #endif
 
+#ifdef MAXQ20MAGIC
+#define __A_MAGIC_SET__
+      internal_a.magic = MAXQ20MAGIC;
+#endif
+ 
 #ifndef __A_MAGIC_SET__
 #include "Your aouthdr magic number is not being set!"
 #else
@@ -4058,10 +4034,7 @@ coff_write_object_contents (abfd)
   if (bfd_get_symcount (abfd) != 0)
     {
       int firstundef;
-#if 0
-      if (!coff_add_missing_symbols (abfd))
-	return FALSE;
-#endif
+
       if (!coff_renumber_symbols (abfd, &firstundef))
 	return FALSE;
       coff_mangle_symbols (abfd);
@@ -4122,17 +4095,17 @@ coff_write_object_contents (abfd)
 
   if (text_sec)
     {
-      internal_a.tsize = bfd_get_section_size_before_reloc (text_sec);
+      internal_a.tsize = text_sec->size;
       internal_a.text_start = internal_a.tsize ? text_sec->vma : 0;
     }
   if (data_sec)
     {
-      internal_a.dsize = bfd_get_section_size_before_reloc (data_sec);
+      internal_a.dsize = data_sec->size;
       internal_a.data_start = internal_a.dsize ? data_sec->vma : 0;
     }
   if (bss_sec)
     {
-      internal_a.bsize = bfd_get_section_size_before_reloc (bss_sec);
+      internal_a.bsize = bss_sec->size;
       if (internal_a.bsize && bss_sec->vma < internal_a.data_start)
 	internal_a.data_start = bss_sec->vma;
     }
@@ -4343,32 +4316,6 @@ coff_set_section_contents (abfd, section, location, offset, count)
 
   return bfd_bwrite (location, count, abfd) == count;
 }
-#if 0
-static bfd_boolean
-coff_close_and_cleanup (abfd)
-     bfd *abfd;
-{
-  if (!bfd_read_p (abfd))
-    switch (abfd->format)
-      {
-      case bfd_archive:
-	if (!_bfd_write_archive_contents (abfd))
-	  return FALSE;
-	break;
-      case bfd_object:
-	if (!coff_write_object_contents (abfd))
-	  return FALSE;
-	break;
-      default:
-	bfd_set_error (bfd_error_invalid_operation);
-	return FALSE;
-      }
-
-  /* We depend on bfd_close to free all the memory on the objalloc.  */
-  return TRUE;
-}
-
-#endif
 
 static PTR
 buy_and_read (abfd, where, size)
@@ -4425,8 +4372,7 @@ coff_slurp_line_table (abfd, asect)
   if (native_lineno == NULL)
     {
       (*_bfd_error_handler)
-        (_("%s: warning: line number table read failed"),
-	 bfd_archive_filename (abfd));
+        (_("%B: warning: line number table read failed"), abfd);
       return FALSE;
     }
   amt = ((bfd_size_type) asect->lineno_count + 1) * sizeof (alent);
@@ -4458,8 +4404,8 @@ coff_slurp_line_table (abfd, asect)
 		  || (bfd_vma) symndx >= obj_raw_syment_count (abfd))
 		{
 		  (*_bfd_error_handler)
-		    (_("%s: warning: illegal symbol index %ld in line numbers"),
-		     bfd_archive_filename (abfd), dst.l_addr.l_symndx);
+		    (_("%B: warning: illegal symbol index %ld in line numbers"),
+		     abfd, dst.l_addr.l_symndx);
 		  symndx = 0;
 		  warned = TRUE;
 		}
@@ -4472,9 +4418,8 @@ coff_slurp_line_table (abfd, asect)
 	      if (sym->lineno != NULL && ! warned)
 		{
 		  (*_bfd_error_handler)
-		    (_("%s: warning: duplicate line number information for `%s'"),
-		     bfd_archive_filename (abfd),
-		     bfd_asymbol_name (&sym->symbol));
+		    (_("%B: warning: duplicate line number information for `%s'"),
+		     abfd, bfd_asymbol_name (&sym->symbol));
 		}
 	      sym->lineno = cache_ptr;
 	    }
@@ -4554,11 +4499,6 @@ coff_slurp_symbol_table (abfd)
 	    {
 #ifdef I960
 	    case C_LEAFEXT:
-#if 0
-	      dst->symbol.value = src->u.syment.n_value - dst->symbol.section->vma;
-	      dst->symbol.flags = BSF_EXPORT | BSF_GLOBAL;
-	      dst->symbol.flags |= BSF_NOT_AT_END | BSF_FUNCTION;
-#endif
 	      /* Fall through to next case.  */
 #endif
 
@@ -4828,8 +4768,8 @@ coff_slurp_symbol_table (abfd)
 	    case C_HIDDEN:	/* Ext symbol in dmert public lib.  */
 	    default:
 	      (*_bfd_error_handler)
-		(_("%s: Unrecognized storage class %d for %s symbol `%s'"),
-		 bfd_archive_filename (abfd), src->u.syment.n_sclass,
+		(_("%B: Unrecognized storage class %d for %s symbol `%s'"),
+		 abfd, src->u.syment.n_sclass,
 		 dst->symbol.section->name, dst->symbol.name);
 	      dst->symbol.flags = BSF_DEBUGGING;
 	      dst->symbol.value = (src->u.syment.n_value);
@@ -4961,9 +4901,8 @@ coff_classify_symbol (abfd, syment)
       char buf[SYMNMLEN + 1];
 
       (*_bfd_error_handler)
-	(_("warning: %s: local symbol `%s' has no section"),
-	 bfd_archive_filename (abfd),
-	 _bfd_coff_internal_syment_name (abfd, syment, buf));
+	(_("warning: %B: local symbol `%s' has no section"),
+	 abfd, _bfd_coff_internal_syment_name (abfd, syment, buf));
     }
 
   return COFF_SYMBOL_LOCAL;
@@ -5068,8 +5007,8 @@ coff_slurp_reloc_table (abfd, asect, symbols)
 	  if (dst.r_symndx < 0 || dst.r_symndx >= obj_conv_table_size (abfd))
 	    {
 	      (*_bfd_error_handler)
-		(_("%s: warning: illegal symbol index %ld in relocs"),
-		 bfd_archive_filename (abfd), dst.r_symndx);
+		(_("%B: warning: illegal symbol index %ld in relocs"),
+		 abfd, dst.r_symndx);
 	      cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
 	      ptr = NULL;
 	    }
@@ -5106,8 +5045,8 @@ coff_slurp_reloc_table (abfd, asect, symbols)
       if (cache_ptr->howto == NULL)
 	{
 	  (*_bfd_error_handler)
-	    (_("%s: illegal relocation type %d at address 0x%lx"),
-	     bfd_archive_filename (abfd), dst.r_type, (long) dst.r_vaddr);
+	    (_("%B: illegal relocation type %d at address 0x%lx"),
+	     abfd, dst.r_type, (long) dst.r_vaddr);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	}
@@ -5190,15 +5129,6 @@ coff_canonicalize_reloc (abfd, section, relptr, symbols)
   *relptr = 0;
   return section->reloc_count;
 }
-
-#ifdef GNU960
-file_ptr
-coff_sym_filepos (abfd)
-     bfd *abfd;
-{
-  return obj_sym_filepos (abfd);
-}
-#endif
 
 #ifndef coff_reloc16_estimate
 #define coff_reloc16_estimate dummy_reloc16_estimate
@@ -5359,7 +5289,7 @@ coff_final_link_postscript (abfd, pfinfo)
 #define coff_SWAP_scnhdr_in coff_swap_scnhdr_in
 #endif
 
-static const bfd_coff_backend_data bfd_coff_std_swap_table =
+static const bfd_coff_backend_data bfd_coff_std_swap_table ATTRIBUTE_UNUSED =
 {
   coff_SWAP_aux_in, coff_SWAP_sym_in, coff_SWAP_lineno_in,
   coff_SWAP_aux_out, coff_SWAP_sym_out,
@@ -5501,6 +5431,10 @@ static const bfd_coff_backend_data ticoff1_swap_table =
 #define coff_bfd_copy_private_symbol_data   _bfd_generic_bfd_copy_private_symbol_data
 #endif
 
+#ifndef coff_bfd_copy_private_header_data
+#define coff_bfd_copy_private_header_data   _bfd_generic_bfd_copy_private_header_data
+#endif
+
 #ifndef coff_bfd_copy_private_section_data
 #define coff_bfd_copy_private_section_data  _bfd_generic_bfd_copy_private_section_data
 #endif
@@ -5523,6 +5457,10 @@ static const bfd_coff_backend_data ticoff1_swap_table =
 
 #ifndef coff_bfd_is_local_label_name
 #define coff_bfd_is_local_label_name	    _bfd_coff_is_local_label_name
+#endif
+
+#ifndef coff_bfd_is_target_special_symbol
+#define coff_bfd_is_target_special_symbol   ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #endif
 
 #ifndef coff_read_minisymbols
@@ -5556,8 +5494,17 @@ static const bfd_coff_backend_data ticoff1_swap_table =
 #define coff_bfd_merge_sections		    bfd_generic_merge_sections
 #endif
 
+#ifndef coff_bfd_is_group_section
+#define coff_bfd_is_group_section	    bfd_generic_is_group_section
+#endif
+
 #ifndef coff_bfd_discard_group
 #define coff_bfd_discard_group		    bfd_generic_discard_group
+#endif
+
+#ifndef coff_section_already_linked
+#define coff_section_already_linked \
+  _bfd_generic_section_already_linked
 #endif
 
 #define CREATE_BIG_COFF_TARGET_VEC(VAR, NAME, EXTRA_O_FLAGS, EXTRA_S_FLAGS, UNDER, ALTERNATIVE, SWAP_TABLE)	\
