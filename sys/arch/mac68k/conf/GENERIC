@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.168 2005/12/20 05:35:29 thorpej Exp $
+# $NetBSD: GENERIC,v 1.169 2006/02/02 21:32:09 reinoud Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.168 $"
+#ident 		"GENERIC-$Revision: 1.169 $"
 
 maxusers	16		# estimated number of users
 
@@ -121,6 +121,7 @@ file-system 	UNION		# union file system
 file-system 	CODA		# Venus/Coda distributed file system
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# UFS quotas

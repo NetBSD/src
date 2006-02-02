@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.58 2005/12/09 23:34:03 elad Exp $
+# $NetBSD: GENERIC,v 1.59 2006/02/02 21:32:10 reinoud Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.58 $"
+#ident 		"GENERIC-$Revision: 1.59 $"
 
 maxusers	8			# estimated number of users
 
@@ -68,6 +68,7 @@ file-system	UNION			# union file system
 file-system	NFS			# Network File System client
 file-system	PTYFS			# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER		# Network File System server
 #options 	QUOTA			# file system quotas
