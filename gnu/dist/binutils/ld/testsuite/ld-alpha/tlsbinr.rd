@@ -18,12 +18,12 @@ Section Headers:
  +\[ 5\] .rela.dyn +.*
  +\[ 6\] .rela.plt +.*
  +\[ 7\] .text +PROGBITS +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 0+ +AX +0 +0 4096
- +\[ 8\] .data +.*
+ +\[ 8\] .eh_frame +PROGBITS +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 00 +A +0 +0 +8
  +\[ 9\] .tdata +PROGBITS +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 0+ WAT +0 +0 +4
  +\[10\] .tbss +NOBITS +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 0+ WAT +0 +0 +1
- +\[11\] .eh_frame +PROGBITS +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 00 +A +0 +0 +8
- +\[12\] .dynamic +DYNAMIC +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 10 +WA +4 +0 +8
- +\[13\] .plt +PROGBITS +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 0+ WAX +0 +0 +8
+ +\[11\] .dynamic +DYNAMIC +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 10 +WA +4 +0 +8
+ +\[12\] .plt +PROGBITS +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 0+ WAX +0 +0 +8
+ +\[13\] .data +.*
  +\[14\] .got +PROGBITS +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 0+ +WA +0 +0 +8
  +\[15\] .sbss +.*
  +\[16\] .bss +.*

@@ -11,7 +11,7 @@ ELF Header:
   Entry point address:               0x10c4
   Start of program headers:          52 \(bytes into file\)
   Start of section headers:          664 \(bytes into file\)
-  Flags:                             0xa
+  Flags:                             0xa, sh5
   Size of this header:               52 \(bytes\)
   Size of program headers:           32 \(bytes\)
   Number of program headers:         3
@@ -24,15 +24,15 @@ Section Headers:
   \[ 0\]                   NULL            00000000 000000 000000 00      0   0  0
   \[ 1\] \.init             PROGBITS        00001000 000100 000004 00 AXp  0   0  4
   \[ 2\] \.text             PROGBITS        00001004 000104 0000d8 00 AXp  0   0  4
-  \[ 3\] \.data             PROGBITS        00001160 0001e0 000000 00  WA  0   0  1
-  \[ 4\] \.ctors            PROGBITS        00001160 000204 000000 00   W  0   0  1
-  \[ 5\] \.dtors            PROGBITS        00001160 000204 000000 00   W  0   0  1
+  \[ 3\] \.ctors            PROGBITS        00001160 000204 000000 00   W  0   0  1
+  \[ 4\] \.dtors            PROGBITS        00001160 000204 000000 00   W  0   0  1
+  \[ 5\] \.data             PROGBITS        00001160 0001e0 000000 00  WA  0   0  1
   \[ 6\] \.sbss             PROGBITS        00001160 000204 000000 00   W  0   0  1
   \[ 7\] \.bss              NOBITS          00001160 0001e0 000000 00  WA  0   0  1
   \[ 8\] \.stack            PROGBITS        00080000 000200 000004 00  WA  0   0  1
   \[ 9\] \.cranges          LOUSER\+1        00000000 000204 00003c 00   W  0   0  1
   \[10\] \.shstrtab         STRTAB          00000000 000240 000056 00      0   0  1
-  \[11\] \.symtab           SYMTAB          00000000 0004a0 0001b0 10     12  10  4
+  \[11\] \.symtab           SYMTAB          00000000 0004a0 0001b0 10     12  16  4
   \[12\] \.strtab           STRTAB          00000000 000650 000078 00      0   0  1
 Key to Flags:
   W \(write\), A \(alloc\), X \(execute\), M \(merge\), S \(strings\)
@@ -58,16 +58,16 @@ Symbol table '\.symtab' contains 27 entries:
     14: 000010a4     0 NOTYPE  LOCAL  DEFAULT    2 start2
     15: 000010bc     0 NOTYPE  LOCAL  DEFAULT    2 sec3
     16: 000010c4     0 NOTYPE  GLOBAL DEFAULT    2 diversion
-    17: 00001160     0 NOTYPE  GLOBAL DEFAULT    5 ___dtors
+    17: 00001160     0 NOTYPE  GLOBAL DEFAULT    4 ___dtors
     18: 00001160     0 NOTYPE  GLOBAL DEFAULT  ABS __bss_start
-    19: 00001160     0 NOTYPE  GLOBAL DEFAULT    4 ___ctors_end
+    19: 00001160     0 NOTYPE  GLOBAL DEFAULT    3 ___ctors_end
     20: 000010a4     0 NOTYPE  GLOBAL DEFAULT    2 diversion2
-    21: 00001160     0 NOTYPE  GLOBAL DEFAULT    4 ___ctors
+    21: 00001160     0 NOTYPE  GLOBAL DEFAULT    3 ___ctors
     22: 00001160     0 NOTYPE  GLOBAL DEFAULT  ABS _edata
     23: 00001160     0 NOTYPE  GLOBAL DEFAULT  ABS _end
     24: 00001000     0 NOTYPE  GLOBAL DEFAULT    1 start
     25: 00080000     0 NOTYPE  GLOBAL DEFAULT    8 _stack
-    26: 00001160     0 NOTYPE  GLOBAL DEFAULT    5 ___dtors_end
+    26: 00001160     0 NOTYPE  GLOBAL DEFAULT    4 ___dtors_end
 
 Hex dump of section '\.text':
   0x00001004 6ff0fff0 6ff0fff0 6ff0fff0 6ff0fff0 .*

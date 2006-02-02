@@ -1,5 +1,5 @@
 /* ppc-dis.c -- Disassemble PowerPC instructions
-   Copyright 1994, 1995, 2000, 2001, 2002, 2003, 2004
+   Copyright 1994, 1995, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support
 
@@ -44,7 +44,7 @@ struct dis_private {
 static int
 powerpc_dialect (struct disassemble_info *info)
 {
-  int dialect = PPC_OPCODE_PPC | PPC_OPCODE_ALTIVEC;
+  int dialect = PPC_OPCODE_PPC;
 
   if (BFD_DEFAULT_TARGET_SIZE == 64)
     dialect |= PPC_OPCODE_64;
@@ -55,25 +55,17 @@ powerpc_dialect (struct disassemble_info *info)
   else if ((info->mach == bfd_mach_ppc_e500)
 	   || (info->disassembler_options
 	       && strstr (info->disassembler_options, "e500") != NULL))
-    {
-      dialect |= PPC_OPCODE_BOOKE
-	| PPC_OPCODE_SPE | PPC_OPCODE_ISEL
-	| PPC_OPCODE_EFS | PPC_OPCODE_BRLOCK
-	| PPC_OPCODE_PMR | PPC_OPCODE_CACHELCK
-	| PPC_OPCODE_RFMCI;
-      /* efs* and AltiVec conflict.  */
-      dialect &= ~PPC_OPCODE_ALTIVEC;
-    }
+    dialect |= (PPC_OPCODE_BOOKE
+		| PPC_OPCODE_SPE | PPC_OPCODE_ISEL
+		| PPC_OPCODE_EFS | PPC_OPCODE_BRLOCK
+		| PPC_OPCODE_PMR | PPC_OPCODE_CACHELCK
+		| PPC_OPCODE_RFMCI);
   else if (info->disassembler_options
 	   && strstr (info->disassembler_options, "efs") != NULL)
-    {
-      dialect |= PPC_OPCODE_EFS;
-      /* efs* and AltiVec conflict.  */
-      dialect &= ~PPC_OPCODE_ALTIVEC;
-    }
+    dialect |= PPC_OPCODE_EFS;
   else
     dialect |= (PPC_OPCODE_403 | PPC_OPCODE_601 | PPC_OPCODE_CLASSIC
-		| PPC_OPCODE_COMMON);
+		| PPC_OPCODE_COMMON | PPC_OPCODE_ALTIVEC);
 
   if (info->disassembler_options
       && strstr (info->disassembler_options, "power4") != NULL)

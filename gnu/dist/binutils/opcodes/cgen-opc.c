@@ -1,6 +1,6 @@
 /* CGEN generic opcode support.
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2005
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils and GDB, the GNU debugger.
@@ -483,7 +483,7 @@ cgen_lookup_insn (CGEN_CPU_DESC cd,
       /* The instructions are stored in hash lists.
 	 Pick the first one and keep trying until we find the right one.  */
 
-      insn_list = cgen_dis_lookup_insn (cd, buf, base_insn);
+      insn_list = cgen_dis_lookup_insn (cd, (char *) buf, base_insn);
       while (insn_list != NULL)
 	{
 	  insn = insn_list->insn;

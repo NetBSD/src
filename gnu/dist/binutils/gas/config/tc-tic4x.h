@@ -1,5 +1,5 @@
 /* tc-tic4x.h -- Assemble for the Texas TMS320C[34]X.
-   Copyright (C) 1997, 2002, 2003 Free Software Foundation.
+   Copyright (C) 1997, 2002, 2003, 2005 Free Software Foundation.
    
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -65,7 +65,7 @@
 #define TC_COFF_SIZEMACHDEP(frag) tc_coff_sizemachdep (frag)
 #define NEED_FX_R_TYPE
 
-#define NOP_OPCODE              0x0c800000
+#define TIC_NOP_OPCODE		0x0c800000
 
 #define reloc_type 		int
 

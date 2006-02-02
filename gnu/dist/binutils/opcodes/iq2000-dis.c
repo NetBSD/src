@@ -4,7 +4,7 @@
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 - the resultant file is machine generated, cgen-dis.in isn't
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2005
 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and GDB, the GNU debugger.
@@ -43,17 +43,17 @@ along with this program; if not, write to the Free Software Foundation, Inc.,
 static void print_normal
   (CGEN_CPU_DESC, void *, long, unsigned int, bfd_vma, int);
 static void print_address
-  (CGEN_CPU_DESC, void *, bfd_vma, unsigned int, bfd_vma, int);
+  (CGEN_CPU_DESC, void *, bfd_vma, unsigned int, bfd_vma, int) ATTRIBUTE_UNUSED;
 static void print_keyword
-  (CGEN_CPU_DESC, void *, CGEN_KEYWORD *, long, unsigned int);
+  (CGEN_CPU_DESC, void *, CGEN_KEYWORD *, long, unsigned int) ATTRIBUTE_UNUSED;
 static void print_insn_normal
   (CGEN_CPU_DESC, void *, const CGEN_INSN *, CGEN_FIELDS *, bfd_vma, int);
 static int print_insn
-  (CGEN_CPU_DESC, bfd_vma,  disassemble_info *, char *, unsigned);
+  (CGEN_CPU_DESC, bfd_vma,  disassemble_info *, bfd_byte *, unsigned);
 static int default_print_insn
-  (CGEN_CPU_DESC, bfd_vma, disassemble_info *);
+  (CGEN_CPU_DESC, bfd_vma, disassemble_info *) ATTRIBUTE_UNUSED;
 static int read_insn
-  (CGEN_CPU_DESC, bfd_vma, disassemble_info *, char *, int, CGEN_EXTRACT_INFO *,
+  (CGEN_CPU_DESC, bfd_vma, disassemble_info *, bfd_byte *, int, CGEN_EXTRACT_INFO *,
    unsigned long *);
 
 /* -- disassembler routines inserted here */
@@ -92,6 +92,9 @@ iq2000_cgen_print_operand (cd, opindex, xinfo, fields, attrs, pc, length)
 
   switch (opindex)
     {
+    case IQ2000_OPERAND__INDEX :
+      print_normal (cd, info, fields->f_index, 0, pc, length);
+      break;
     case IQ2000_OPERAND_BASE :
       print_keyword (cd, info, & iq2000_cgen_opval_gr_names, fields->f_rs, 0);
       break;
@@ -127,9 +130,6 @@ iq2000_cgen_print_operand (cd, opindex, xinfo, fields, attrs, pc, length)
       break;
     case IQ2000_OPERAND_EXECODE :
       print_normal (cd, info, fields->f_excode, 0, pc, length);
-      break;
-    case IQ2000_OPERAND_F_INDEX :
-      print_normal (cd, info, fields->f_index, 0, pc, length);
       break;
     case IQ2000_OPERAND_HI16 :
       print_normal (cd, info, fields->f_imm, 0, pc, length);
@@ -330,7 +330,7 @@ static int
 read_insn (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 	   bfd_vma pc,
 	   disassemble_info *info,
-	   char *buf,
+	   bfd_byte *buf,
 	   int buflen,
 	   CGEN_EXTRACT_INFO *ex_info,
 	   unsigned long *insn_value)
@@ -360,7 +360,7 @@ static int
 print_insn (CGEN_CPU_DESC cd,
 	    bfd_vma pc,
 	    disassemble_info *info,
-	    char *buf,
+	    bfd_byte *buf,
 	    unsigned int buflen)
 {
   CGEN_INSN_INT insn_value;
@@ -384,7 +384,7 @@ print_insn (CGEN_CPU_DESC cd,
   /* The instructions are stored in hash lists.
      Pick the first one and keep trying until we find the right one.  */
 
-  insn_list = CGEN_DIS_LOOKUP_INSN (cd, buf, insn_value);
+  insn_list = CGEN_DIS_LOOKUP_INSN (cd, (char *) buf, insn_value);
   while (insn_list != NULL)
     {
       const CGEN_INSN *insn = insn_list->insn;
@@ -468,7 +468,7 @@ print_insn (CGEN_CPU_DESC cd,
 static int
 default_print_insn (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
 {
-  char buf[CGEN_MAX_INSN_SIZE];
+  bfd_byte buf[CGEN_MAX_INSN_SIZE];
   int buflen;
   int status;
 

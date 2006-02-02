@@ -1,6 +1,6 @@
 /* Opcode table for the TI MSP430 microcontrollers
 
-   Copyright 2002 Free Software Foundation, Inc.
+   Copyright 2002, 2004 Free Software Foundation, Inc.
    Contributed by Dmitry Diky <diwil@mail.ru>
    
    This program is free software; you can redistribute it and/or modify
@@ -103,6 +103,20 @@ static struct msp430_opcode_s msp430_opcodes[] =
   MSP_INSN (rra,   2, 1, 0x1100, 0xff80),
   MSP_INSN (swpb,  2, 1, 0x1080, 0xffc0),
   MSP_INSN (rrc,   2, 1, 0x1000, 0xff80),
+  /* Simple polymorphs.  */
+  MSP_INSN (beq,   4, 0, 0, 0xffff),
+  MSP_INSN (bne,   4, 1, 0, 0xffff),
+  MSP_INSN (blt,   4, 2, 0, 0xffff),
+  MSP_INSN (bltu,  4, 3, 0, 0xffff),
+  MSP_INSN (bge,   4, 4, 0, 0xffff),
+  MSP_INSN (bgeu,  4, 5, 0, 0xffff),
+  MSP_INSN (bltn,  4, 6, 0, 0xffff),
+  MSP_INSN (jump,  4, 7, 0, 0xffff),
+  /* Long polymorphs.  */
+  MSP_INSN (bgt,   5, 0, 0, 0xffff),
+  MSP_INSN (bgtu,  5, 1, 0, 0xffff),
+  MSP_INSN (bleu,  5, 2, 0, 0xffff),
+  MSP_INSN (ble,   5, 3, 0, 0xffff),
 
   /* End of instruction set.  */
   { NULL, 0, 0, 0, 0 }
