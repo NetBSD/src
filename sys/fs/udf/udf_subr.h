@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.2 2006/02/02 15:38:35 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.3 2006/02/02 15:52:23 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -34,8 +34,8 @@
  */
 
 
-#ifndef _UDF_SUBR_H_
-#define _UDF_SUBR_H_
+#ifndef _FS_UDF_UDF_SUBR_H_
+#define _FS_UDF_UDF_SUBR_H_
 
 /* device information updating */
 int udf_update_trackinfo(struct udf_mount *ump, struct mmc_trackinfo *trackinfo);
@@ -113,5 +113,5 @@ long udf_calchash(struct long_ad *icbptr);    /* for `inode' numbering */
 uint32_t udf_getaccessmode(struct udf_node *node);
 void udf_timestamp_to_timespec(struct udf_mount *ump, struct timestamp *timestamp, struct timespec *timespec);
 
-#endif	/* !_UDF_SUBR_H_ */
+#endif	/* !_FS_UDF_UDF_SUBR_H_ */
 
