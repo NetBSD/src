@@ -1089,6 +1089,7 @@ m68k_ip (char *instring)
   char c;
   int losing;
   int opsfound;
+  struct m68k_op operands_backup[6];
   LITTLENUM_TYPE words[6];
   LITTLENUM_TYPE *wordp;
   unsigned long ok_arch = 0;
@@ -1213,7 +1214,15 @@ m68k_ip (char *instring)
 	++losing;
       else
 	{
-	  for (s = opcode->m_operands, opP = &the_ins.operands[0];
+	  int i;
+
+	  /* Make a copy of the operands of this insn so that
+	     we can modify them safely, should we want to.  */
+	  assert (opsfound <= (int) ARRAY_SIZE (operands_backup));
+	  for (i = 0; i < opsfound; i++)
+	    operands_backup[i] = the_ins.operands[i];
+
+	  for (s = opcode->m_operands, opP = &operands_backup[0];
 	       *s && !losing;
 	       s += 2, opP++)
 	    {
@@ -1974,6 +1983,12 @@ m68k_ip (char *instring)
 	      if (losing)
 		break;
 	    }
+
+	  /* Since we have found the correct instruction, copy
+	     in the modifications that we may have made.  */
+	  if (!losing)
+	    for (i = 0; i < opsfound; i++)
+	      the_ins.operands[i] = operands_backup[i];
 	}
 
       if (!losing)
@@ -4116,6 +4131,9 @@ m68k_compare_opcode (const void * v1, const void * v2)
   struct m68k_opcode * op1, * op2;
   int ret;
 
+  if (v1 == v2)
+    return 0;
+
   op1 = *(struct m68k_opcode **) v1;
   op2 = *(struct m68k_opcode **) v2;
 
@@ -4126,7 +4144,7 @@ m68k_compare_opcode (const void * v1, const void * v2)
     return ret;
   if (op1 < op2)
     return -1;
-  return 0;
+  return 1;
 }
 
 void
