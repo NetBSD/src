@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.108 2006/02/02 16:23:25 elad Exp $ */
+/*	$NetBSD: sysctl.c,v 1.109 2006/02/02 18:00:07 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.108 2006/02/02 16:23:25 elad Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.109 2006/02/02 18:00:07 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,6 +222,8 @@ static const struct handlespec {
 #endif /* CPU_CONSDEV */
 
 	{ "/proc/[^/]+/rlimit/[^/]+/[^/]+",	proc_limit, proc_limit },
+
+	{ "/security/setid_core/mode",		mode_bits, mode_bits },
 
 	/*
 	 * these will only be called when the given node has no children
