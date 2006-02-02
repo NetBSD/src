@@ -1,4 +1,4 @@
-/*	$NetBSD: udf_bswap.h,v 1.2 2006/02/02 15:52:23 reinoud Exp $	*/
+/*	$NetBSD: udf_bswap.h,v 1.3 2006/02/02 15:57:35 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -56,9 +56,9 @@
 #include <sys/bswap.h>
 
 /* inlines for access to swapped data */
-static __inline u_int16_t udf_rw16 __P((u_int16_t));
-static __inline u_int32_t udf_rw32 __P((u_int32_t));
-static __inline u_int64_t udf_rw64 __P((u_int64_t));
+static __inline u_int16_t udf_rw16(u_int16_t);
+static __inline u_int32_t udf_rw32(u_int32_t);
+static __inline u_int64_t udf_rw64(u_int64_t);
 
 
 static __inline u_int16_t
