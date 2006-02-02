@@ -1,4 +1,4 @@
-/* $NetBSD: fattr.c,v 1.4 2005/03/03 21:15:26 dsl Exp $ */
+/* $NetBSD: fattr.c,v 1.5 2006/02/02 23:42:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fattr.c,v 1.4 2005/03/03 21:15:26 dsl Exp $");
+__RCSID("$NetBSD: fattr.c,v 1.5 2006/02/02 23:42:00 christos Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -53,8 +53,8 @@ __RCSID("$NetBSD: fattr.c,v 1.4 2005/03/03 21:15:26 dsl Exp $");
 
 #include "fattr.h"
 
-static int
-num_id(const char *s, const char *id_type)
+int
+a_num(const char *s, const char *id_type)
 {
 	int id;
 	char *ep;
@@ -72,7 +72,7 @@ a_gid(const char *s)
 
 	if ((gr = getgrnam(s)) != NULL)
 		return gr->gr_gid;
-	return num_id(s, "group");
+	return a_num(s, "group");
 }
 
 uid_t
@@ -82,7 +82,7 @@ a_uid(const char *s)
 
 	if ((pw = getpwnam(s)) != NULL)
 		return pw->pw_uid;
-	return num_id(s, "user");
+	return a_num(s, "user");
 }
 
 mode_t
