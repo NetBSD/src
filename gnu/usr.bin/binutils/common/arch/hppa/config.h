@@ -147,7 +147,7 @@
 #define PACKAGE "binutils"
 
 /* Version number of package */
-#define VERSION "2.15"
+#define VERSION "2.16.1"
 
 /* Define if you have the stpcpy function */
 /* #undef HAVE_STPCPY */
@@ -169,6 +169,9 @@
 
 /* Is fopen64 available? */
 /* #undef HAVE_FOPEN64 */
+
+/* Is stat64 available? */
+/* #undef HAVE_STAT64 */
 
 /* Enable LFS */
 /* #undef _LARGEFILE64_SOURCE */
