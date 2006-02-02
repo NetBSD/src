@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.848 2006/01/24 19:13:46 elad Exp $
+# $NetBSD: mi,v 1.849 2006/02/02 15:26:34 reinoud Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1968,6 +1968,7 @@
 ./usr/share/man/cat8/mount_smbfs.0		man-smbfs-catman	.cat
 ./usr/share/man/cat8/mount_sysvbfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_tmpfs.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/mount_udf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_ufs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_umap.0		man-miscfs-catman	.cat
 ./usr/share/man/cat8/mount_union.0		man-miscfs-catman	.cat
@@ -4267,6 +4268,7 @@
 ./usr/share/man/man8/mount_smbfs.8		man-smbfs-man		.man
 ./usr/share/man/man8/mount_sysvbfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_tmpfs.8		man-sysutil-man		.man
+./usr/share/man/man8/mount_udf.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_ufs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_umap.8		man-miscfs-man		.man
 ./usr/share/man/man8/mount_union.8		man-miscfs-man		.man

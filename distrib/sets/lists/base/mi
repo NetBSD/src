@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.589 2006/01/31 12:09:33 kleink Exp $
+# $NetBSD: mi,v 1.590 2006/02/02 15:26:32 reinoud Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -163,6 +163,7 @@
 ./sbin/mount_smbfs				base-smbfs-root
 ./sbin/mount_sysvbfs				base-sysutil-root
 ./sbin/mount_tmpfs				base-miscfs-root
+./sbin/mount_udf				base-sysutil-root
 ./sbin/mount_ufs				base-sysutil-root
 ./sbin/mount_umap				base-miscfs-root
 ./sbin/mount_union				base-miscfs-root
@@ -741,6 +742,7 @@
 ./usr/include/fs				base-c-usr
 ./usr/include/fs/smbfs				base-c-usr
 ./usr/include/fs/sysvbfs			base-c-usr
+./usr/include/fs/udf				base-c-usr
 ./usr/include/g++				base-cxx-usr
 ./usr/include/g++/backward			base-cxx-usr
 ./usr/include/g++/bits				base-cxx-usr
