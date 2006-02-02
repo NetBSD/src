@@ -1,4 +1,4 @@
-/* $NetBSD: mount_udf.c,v 1.2 2006/02/02 15:48:24 xtraeme Exp $ */
+/* $NetBSD: mount_udf.c,v 1.3 2006/02/02 16:25:46 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_udf.c,v 1.2 2006/02/02 15:48:24 xtraeme Exp $");
+__RCSID("$NetBSD: mount_udf.c,v 1.3 2006/02/02 16:25:46 xtraeme Exp $");
 #endif /* not lint */
 
 
@@ -78,7 +78,6 @@ static const struct mntopt mopts[] = {
 
 
 /* prototypes */
-int		main(int, char *[]);
 int		mount_udf(int argc, char **argv);
 static void	usage(void);
 
@@ -88,7 +87,7 @@ static void	usage(void);
 static void
 usage()
 {
-	fprintf(stderr, "usage: %s [-g gid] [-o options] [-s session] "
+	(void)fprintf(stderr, "usage: %s [-g gid] [-o options] [-s session] "
 			"[-t gmtoff] [-u uid] special node\n", getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -137,9 +136,8 @@ mount_udf(int argc, char **argv)
 	if (passwd && group) {
 		anon_uid = passwd->pw_uid;
 		anon_gid = group->gr_gid;
-	} else {
+	} else
 		errx(EXIT_FAILURE, "mount_udf: failed to get nobody:nobody\n");
-	};
 
 	nobody_uid = anon_uid;
 	nobody_gid = anon_gid;
@@ -188,8 +186,9 @@ mount_udf(int argc, char **argv)
 			break;
 		default  :
 			usage();
-		};
-	};
+			/* NOTREACHED */
+		}
+	}
 
 	if (optind + 2 != argc)
 		usage();
@@ -220,8 +219,7 @@ mount_udf(int argc, char **argv)
 
 		snprintb(buf, sizeof(buf), UDFMNT_BITS, args.udfmflags);
 		printf("gmtoffset=%d, sessionnr=%d, flags=%s\n",
-			args.gmtoff, args.sessionnr, buf
-		);
+			args.gmtoff, args.sessionnr, buf);
 	}
 
 	exit(EXIT_SUCCESS);
