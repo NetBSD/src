@@ -1,5 +1,6 @@
 /* itbl-ops.c
-   Copyright 1997, 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1997, 1999, 2000, 2001, 2002, 2003, 2005
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -204,18 +205,6 @@ struct itbl_entry *
 itbl_add_reg (int yyprocessor, int yytype, char *regname,
 	      int regnum)
 {
-#if 0
-#include "as.h"
-#include "symbols.h"
-  /* Since register names don't have a prefix, we put them in the symbol table so
-     they can't be used as symbols.  This also simplifies argument parsing as
-     we can let gas parse registers for us.  The recorded register number is
-     regnum.  */
-  /* Use symbol_create here instead of symbol_new so we don't try to
-     output registers into the object file's symbol table.  */
-  symbol_table_insert (symbol_create (regname, reg_section,
-				      regnum, &zero_address_frag));
-#endif
   return alloc_entry (get_processor (yyprocessor), get_type (yytype), regname,
 		      (unsigned long) regnum);
 }

@@ -1,5 +1,5 @@
 /* This file is obj-hp300.h
-   Copyright 1993, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 2000, 2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -30,8 +30,9 @@ hp300_header_append (where, headers)
 
 #define DO(FIELD)	\
   { \
-    md_number_to_chars (*where, headers->header.FIELD, sizeof (headers->header.FIELD)); \
-    *where += sizeof (headers->header.FIELD); \
+    md_number_to_chars (*where, headers->header.FIELD, \
+			sizeof (((struct exec_bytes *) 0)->FIELD)); \
+    *where += sizeof (((struct exec_bytes *) 0)->FIELD); \
   }
 
   DO (a_info);

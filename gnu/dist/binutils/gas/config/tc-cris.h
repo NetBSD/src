@@ -1,5 +1,6 @@
 /* tc-cris.h -- Header file for tc-cris.c, the CRIS GAS port.
-   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
    Originally written for GAS 1.38.1 by Mikael Asker.
@@ -39,6 +40,9 @@ extern const char *cris_target_format PARAMS ((void));
 
 #define TARGET_ARCH bfd_arch_cris
 
+extern unsigned int cris_mach PARAMS ((void));
+#define TARGET_MACH (cris_mach ())
+
 #define TARGET_BYTES_BIG_ENDIAN 0
 
 extern const char *md_shortopts;
@@ -64,9 +68,6 @@ extern const char FLT_CHARS[];
 #define md_operand(x)
 
 #define md_number_to_chars number_to_chars_littleendian
-
-extern const int md_short_jump_size;
-extern const int md_long_jump_size;
 
 /* There's no use having different functions for this; the sizes are the
    same.  Note that we can't #define md_short_jump_size here.  */
@@ -152,7 +153,7 @@ extern void tc_cris_check_adjusted_broken_word PARAMS ((offsetT,
  tc_cris_check_adjusted_broken_word ((offsetT) (new_offset), brokw)
 
 /* We don't want any implicit alignment, so we do nothing.  */
-#define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR)
+#define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR) do { } while (0)
 
 /* CRIS instructions, with operands and prefixes included, are a multiple
    of two bytes long.  */

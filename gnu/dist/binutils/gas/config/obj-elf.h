@@ -1,6 +1,6 @@
 /* ELF object file format.
    Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003 Free Software Foundation, Inc.
+   2002, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -159,7 +159,7 @@ extern void elf_frob_file_after_relocs (void);
 #ifndef obj_app_file
 #define obj_app_file elf_file_symbol
 #endif
-extern void elf_file_symbol (const char *);
+extern void elf_file_symbol (const char *, int);
 
 extern void obj_elf_section_change_hook (void);
 

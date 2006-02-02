@@ -1,5 +1,5 @@
 /* tc-fr30.c -- Assembler for the Fujitsu FR30.
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -203,50 +203,6 @@ const relax_typeS md_relax_table[] =
   {0x2000000 - 1 - 2, -0x2000000 - 2, 4, 0 }
 };
 
-#if 0
-long
-fr30_relax_frag (segment, fragP, stretch)
-     segT    segment;
-     fragS * fragP;
-     long    stretch;
-{
-  /* Address of branch insn.  */
-  long address = fragP->fr_address + fragP->fr_fix - 2;
-  long growth = 0;
-
-  /* Keep 32 bit insns aligned on 32 bit boundaries.  */
-  if (fragP->fr_subtype == 2)
-    {
-      if ((address & 3) != 0)
-	{
-	  fragP->fr_subtype = 3;
-	  growth = 2;
-	}
-    }
-  else if (fragP->fr_subtype == 3)
-    {
-      if ((address & 3) == 0)
-	{
-	  fragP->fr_subtype = 2;
-	  growth = -2;
-	}
-    }
-  else
-    {
-      growth = relax_frag (segment, fragP, stretch);
-
-      /* Long jump on odd halfword boundary?  */
-      if (fragP->fr_subtype == 2 && (address & 3) != 0)
-	{
-	  fragP->fr_subtype = 3;
-	  growth += 2;
-	}
-    }
-
-  return growth;
-}
-#endif
-
 /* Return an initial guess of the length by which a fragment must grow to
    hold a branch to reach its destination.
    Also updates fr_type/fr_subtype as necessary.
@@ -271,34 +227,11 @@ md_estimate_size_before_relax (fragP, segment)
 
   if (S_GET_SEGMENT (fragP->fr_symbol) != segment)
     {
-#if 0
-      int    old_fr_fix = fragP->fr_fix;
-#endif
-
       /* The symbol is undefined in this segment.
 	 Change the relaxation subtype to the max allowable and leave
 	 all further handling to md_convert_frag.  */
       fragP->fr_subtype = 2;
 
-#if 0 /* Can't use this, but leave in for illustration.  */
-      /* Change 16 bit insn to 32 bit insn.  */
-      fragP->fr_opcode[0] |= 0x80;
-
-      /* Increase known (fixed) size of fragment.  */
-      fragP->fr_fix += 2;
-
-      /* Create a relocation for it.  */
-      fix_new (fragP, old_fr_fix, 4,
-	       fragP->fr_symbol,
-	       fragP->fr_offset, 1 /* pcrel */,
-	       /* FIXME: Can't use a real BFD reloc here.
-		  gas_cgen_md_apply_fix3 can't handle it.  */
-	       BFD_RELOC_FR30_26_PCREL);
-
-      /* Mark this fragment as finished.  */
-      frag_wane (fragP);
-      return fragP->fr_fix - old_fr_fix;
-#else
       {
 	const CGEN_INSN * insn;
 	int               i;
@@ -321,7 +254,6 @@ md_estimate_size_before_relax (fragP, segment)
 	fragP->fr_cgen.insn = insn;
 	return 2;
       }
-#endif
     }
 
   /* Return the size of the variable part of the frag.  */
@@ -341,84 +273,6 @@ md_convert_frag (abfd, sec, fragP)
   segT sec ATTRIBUTE_UNUSED;
   fragS *fragP ATTRIBUTE_UNUSED;
 {
-#if 0
-  char * opcode;
-  char * displacement;
-  int    target_address;
-  int    opcode_address;
-  int    extension;
-  int    addend;
-
-  opcode = fragP->fr_opcode;
-
-  /* Address opcode resides at in file space.  */
-  opcode_address = fragP->fr_address + fragP->fr_fix - 2;
-
-  switch (fragP->fr_subtype)
-    {
-    case 1 :
-      extension = 0;
-      displacement = & opcode[1];
-      break;
-    case 2 :
-      opcode[0] |= 0x80;
-      extension = 2;
-      displacement = & opcode[1];
-      break;
-    case 3 :
-      opcode[2] = opcode[0] | 0x80;
-      md_number_to_chars (opcode, PAR_NOP_INSN, 2);
-      opcode_address += 2;
-      extension = 4;
-      displacement = & opcode[3];
-      break;
-    default :
-      abort ();
-    }
-
-  if (S_GET_SEGMENT (fragP->fr_symbol) != sec)
-    {
-      /* symbol must be resolved by linker */
-      if (fragP->fr_offset & 3)
-	as_warn (_("Addend to unresolved symbol not on word boundary."));
-      addend = fragP->fr_offset >> 2;
-    }
-  else
-    {
-      /* Address we want to reach in file space.  */
-      target_address = S_GET_VALUE (fragP->fr_symbol) + fragP->fr_offset;
-      addend = (target_address - (opcode_address & -4)) >> 2;
-    }
-
-  /* Create a relocation for symbols that must be resolved by the linker.
-     Otherwise output the completed insn.  */
-
-  if (S_GET_SEGMENT (fragP->fr_symbol) != sec)
-    {
-      assert (fragP->fr_subtype != 1);
-      assert (fragP->fr_cgen.insn != 0);
-      gas_cgen_record_fixup (fragP,
-			     /* Offset of branch insn in frag.  */
-			     fragP->fr_fix + extension - 4,
-			     fragP->fr_cgen.insn,
-			     4 /*length*/,
-			     /* FIXME: quick hack */
-#if 0
-			     CGEN_OPERAND_ENTRY (fragP->fr_cgen.opindex),
-#else
-			     CGEN_OPERAND_ENTRY (FR30_OPERAND_DISP24),
-#endif
-			     fragP->fr_cgen.opinfo,
-			     fragP->fr_symbol, fragP->fr_offset);
-    }
-
-#define SIZE_FROM_RELAX_STATE(n) ((n) == 1 ? 1 : 3)
-
-  md_number_to_chars (displacement, (valueT) addend,
-		      SIZE_FROM_RELAX_STATE (fragP->fr_subtype));
-
-  fragP->fr_fix += extension;
-#endif
 }
 
 /* Functions concerning relocs.  */

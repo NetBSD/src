@@ -1,6 +1,7 @@
 /* read.c - read a source file -
    Copyright 1986, 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -19,14 +20,10 @@ along with GAS; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
-#if 0
-/* If your chars aren't 8 bits, you will change this a bit.
+/* If your chars aren't 8 bits, you will change this a bit (eg. to 0xFF).
    But then, GNU isn't spozed to run on your machine anyway.
    (RMS is so shortsighted sometimes.)  */
-#define MASK_CHAR (0xFF)
-#else
 #define MASK_CHAR ((int)(unsigned char) -1)
-#endif
 
 /* This is the largest known floating point format (for now). It will
    grow when we do 4361 style flonums.  */
@@ -216,6 +213,8 @@ static int dwarf_file_string;
 
 static void do_align (int, char *, int, int);
 static void s_align (int, int);
+static void s_altmacro (int);
+static void s_bad_end (int);
 static int hex_float (int, char *);
 static segT get_known_segmented_expression (expressionS * expP);
 static void pobegin (void);
@@ -244,6 +243,24 @@ read_begin (void)
     lex_type['?'] = 3;
 }
 
+#ifndef TC_ADDRESS_BYTES
+#ifdef BFD_ASSEMBLER
+#define TC_ADDRESS_BYTES address_bytes
+
+static inline int
+address_bytes (void)
+{
+  /* Choose smallest of 1, 2, 4, 8 bytes that is large enough to
+     contain an address.  */
+  int n = (stdoutput->arch_info->bits_per_address - 1) / 8;
+  n |= n >> 1;
+  n |= n >> 2;
+  n += 1;
+  return n;
+}
+#endif
+#endif
+
 /* Set up pseudo-op tables.  */
 
 static struct hash_control *po_hash;
@@ -251,6 +268,7 @@ static struct hash_control *po_hash;
 static const pseudo_typeS potable[] = {
   {"abort", s_abort, 0},
   {"align", s_align_ptwo, 0},
+  {"altmacro", s_altmacro, 1},
   {"ascii", stringer, 0},
   {"asciz", stringer, 1},
   {"balign", s_align_bytes, 0},
@@ -263,6 +281,9 @@ static const pseudo_typeS potable[] = {
   {"common.s", s_mri_common, 1},
   {"data", s_data, 0},
   {"dc", cons, 2},
+#ifdef TC_ADDRESS_BYTES
+  {"dc.a", cons, 0},
+#endif
   {"dc.b", cons, 1},
   {"dc.d", float_cons, 'd'},
   {"dc.l", cons, 4},
@@ -299,11 +320,13 @@ static const pseudo_typeS potable[] = {
   {"endc", s_endif, 0},
   {"endfunc", s_func, 1},
   {"endif", s_endif, 0},
-  {"endr", s_bad_endr, 0},
+  {"endm", s_bad_end, 0},
+  {"endr", s_bad_end, 1},
 /* endef  */
   {"equ", s_set, 0},
   {"equiv", s_set, 1},
   {"err", s_err, 0},
+  {"error", s_errwarn, 1},
   {"exitm", s_mexit, 0},
 /* extend  */
   {"extern", s_ignore, 0},	/* We treat all undef as ext.  */
@@ -351,6 +374,7 @@ static const pseudo_typeS potable[] = {
   {"mri", s_mri, 0},
   {".mri", s_mri, 0},	/* Special case so .mri works in MRI mode.  */
   {"name", s_ignore, 0},
+  {"noaltmacro", s_altmacro, 0},
   {"noformat", s_ignore, 0},
   {"nolist", listing_list, 0},	/* Turn listing off.  */
   {"nopage", listing_nopage, 0},
@@ -408,6 +432,7 @@ static const pseudo_typeS potable[] = {
   {"xdef", s_globl, 0},
   {"xref", s_ignore, 0},
   {"xstabs", s_xstab, 's'},
+  {"warning", s_errwarn, 0},
   {"word", cons, 2},
   {"zero", s_space, 0},
   {NULL, NULL, 0}			/* End sentinel.  */
@@ -704,13 +729,13 @@ read_a_source_file (char *name)
 		  /* Input_line_pointer->after ':'.  */
 		  SKIP_WHITESPACE ();
 		}
-	      else if (c == '='
-		       || ((c == ' ' || c == '\t')
-			   && input_line_pointer[1] == '='
+              else if ((c == '='
+                       || ((c == ' ' || c == '\t')
+                            && input_line_pointer[1] == '='))
 #ifdef TC_EQUAL_IN_INSN
-			   && !TC_EQUAL_IN_INSN (c, input_line_pointer)
+                           && !TC_EQUAL_IN_INSN (c, s)
 #endif
-			   ))
+                           )
 		{
 		  equals (s, 1);
 		  demand_empty_rest_of_line ();
@@ -1077,6 +1102,29 @@ read_a_source_file (char *name)
 #endif
 }
 
+/* Convert O_constant expression EXP into the equivalent O_big representation.
+   Take the sign of the number from X_unsigned rather than X_add_number.  */
+
+static void
+convert_to_bignum (expressionS *exp)
+{
+  valueT value;
+  unsigned int i;
+
+  value = exp->X_add_number;
+  for (i = 0; i < sizeof (exp->X_add_number) / CHARS_PER_LITTLENUM; i++)
+    {
+      generic_bignum[i] = value & LITTLENUM_MASK;
+      value >>= LITTLENUM_NUMBER_OF_BITS;
+    }
+  /* Add a sequence of sign bits if the top bit of X_add_number is not
+     the sign of the original value.  */
+  if ((exp->X_add_number < 0) != !exp->X_unsigned)
+    generic_bignum[i++] = exp->X_unsigned ? 0 : LITTLENUM_MASK;
+  exp->X_op = O_big;
+  exp->X_add_number = i;
+}
+
 /* For most MRI pseudo-ops, the line actually ends at the first
    nonquoted space.  This function looks for that point, stuffs a null
    in, and sets *STOPCP to the character that used to be there, and
@@ -1155,6 +1203,9 @@ do_align (int n, char *fill, int len, int max)
       len = 0;
     }
 
+#ifdef md_flush_pending_output
+  md_flush_pending_output ();
+#endif
 #ifdef md_do_align
   md_do_align (n, fill, len, max, just_record_alignment);
 #endif
@@ -1187,10 +1238,17 @@ do_align (int n, char *fill, int len, int max)
    fill pattern.  BYTES_P is non-zero if the alignment value should be
    interpreted as the byte boundary, rather than the power of 2.  */
 
+#ifdef BFD_ASSEMBLER
+#define ALIGN_LIMIT (stdoutput->arch_info->bits_per_address - 1)
+#else
+#define ALIGN_LIMIT 15
+#endif
+
 static void
 s_align (int arg, int bytes_p)
 {
-  register unsigned int align;
+  unsigned int align_limit = ALIGN_LIMIT;
+  unsigned int align;
   char *stop = NULL;
   char stopc;
   offsetT fill = 0;
@@ -1229,9 +1287,9 @@ s_align (int arg, int bytes_p)
 	}
     }
 
-  if (align > 15)
+  if (align > align_limit)
     {
-      align = 15;
+      align = align_limit;
       as_warn (_("alignment too large: %u assumed"), align);
     }
 
@@ -1317,6 +1375,15 @@ s_align_ptwo (int arg)
   s_align (arg, 0);
 }
 
+/* Switch in and out of alternate macro mode.  */
+
+void
+s_altmacro (int on)
+{
+  demand_empty_rest_of_line ();
+  macro_set_alternate (on);
+}
+
 symbolS *
 s_comm_internal (int param,
 		 symbolS *(*comm_parse_extra) (int, symbolS *, addressT))
@@ -1353,7 +1420,6 @@ s_comm_internal (int param,
   if (*input_line_pointer == ',')
     input_line_pointer++;
 
-  *p = 0;
   temp = get_absolute_expr (&exp);
   size = temp;
 #ifdef BFD_ASSEMBLER
@@ -1362,18 +1428,17 @@ s_comm_internal (int param,
   if (exp.X_op == O_absent)
     {
       as_bad (_("missing size expression"));
-      *p = c;
       ignore_rest_of_line ();
       goto out;
     }
   else if (temp != size || !exp.X_unsigned)
     {
       as_warn (_("size (%ld) out of range, ignored"), (long) temp);
-      *p = c;
       ignore_rest_of_line ();
       goto out;
     }
 
+  *p = 0;
   symbolP = symbol_find_or_make (name);
   if (S_IS_DEFINED (symbolP) && !S_IS_COMMON (symbolP))
     {
@@ -1407,7 +1472,6 @@ s_comm_internal (int param,
 #endif
     }
 
-  know (symbolP == NULL || symbolP->sy_frag == &zero_address_frag);
   demand_empty_rest_of_line ();
  out:
   if (flag_mri)
@@ -1555,7 +1619,7 @@ s_data (int ignore ATTRIBUTE_UNUSED)
    .file.  */
 
 void
-s_app_file_string (char *file)
+s_app_file_string (char *file, int appfile ATTRIBUTE_UNUSED)
 {
 #ifdef LISTING
   if (listing)
@@ -1563,7 +1627,7 @@ s_app_file_string (char *file)
 #endif
   register_dependency (file);
 #ifdef obj_app_file
-  obj_app_file (file);
+  obj_app_file (file, appfile);
 #endif
 }
 
@@ -1591,7 +1655,7 @@ s_app_file (int appfile)
 
       demand_empty_rest_of_line ();
       if (!may_omit)
-	s_app_file_string (s);
+	s_app_file_string (s, appfile);
     }
 }
 
@@ -1647,6 +1711,43 @@ void
 s_err (int ignore ATTRIBUTE_UNUSED)
 {
   as_bad (_(".err encountered"));
+  demand_empty_rest_of_line ();
+}
+
+/* Handle the .error and .warning pseudo-ops.  */
+
+void
+s_errwarn (int err)
+{
+  int len;
+  /* The purpose for the conditional assignment is not to
+     internationalize the directive itself, but that we need a
+     self-contained message, one that can be passed like the
+     demand_copy_C_string return value, and with no assumption on the
+     location of the name of the directive within the message.  */
+  char *msg
+    = (err ? _(".error directive invoked in source file")
+       : _(".warning directive invoked in source file"));
+
+  if (!is_it_end_of_statement ())
+    {
+      if (*input_line_pointer != '\"')
+	{
+	  as_bad (_("%s argument must be a string"),
+		  err ? ".error" : ".warning");
+	  discard_rest_of_line ();
+	  return;
+	}
+
+      msg = demand_copy_C_string (&len);
+      if (msg == NULL)
+	return;
+    }
+
+  if (err)
+    as_bad ("%s", msg);
+  else
+    as_warn ("%s", msg);
   demand_empty_rest_of_line ();
 }
 
@@ -2580,12 +2681,14 @@ s_purgem (int ignore ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 }
 
-/* Handle the .rept pseudo-op.  */
+/* Handle the .endm/.endr pseudo-ops.  */
 
-void
-s_bad_endr (int ignore ATTRIBUTE_UNUSED)
+static void
+s_bad_end (int endr)
 {
-  as_warn (_(".endr encountered without preceeding .rept, .irc, or .irp"));
+  as_warn (_(".end%c encountered without preceeding %s"),
+	   endr ? 'r' : 'm',
+	   endr ? ".rept, .irp, or .irpc" : ".macro");
   demand_empty_rest_of_line ();
 }
 
@@ -2644,6 +2747,57 @@ end_repeat (int extra)
     buffer_limit = input_scrub_next_buffer (&input_line_pointer);
 }
 
+static void
+assign_symbol (char *name, int no_reassign)
+{
+  symbolS *symbolP;
+
+  if (name[0] == '.' && name[1] == '\0')
+    {
+      /* Turn '. = mumble' into a .org mumble.  */
+      segT segment;
+      expressionS exp;
+
+      segment = get_known_segmented_expression (&exp);
+
+      if (!need_pass_2)
+	do_org (segment, &exp, 0);
+
+      return;
+    }
+
+  if ((symbolP = symbol_find (name)) == NULL
+      && (symbolP = md_undefined_symbol (name)) == NULL)
+    {
+      symbolP = symbol_find_or_make (name);
+#ifndef NO_LISTING
+      /* When doing symbol listings, play games with dummy fragments living
+	 outside the normal fragment chain to record the file and line info
+	 for this symbol.  */
+      if (listing & LISTING_SYMBOLS)
+	{
+	  extern struct list_info_struct *listing_tail;
+	  fragS *dummy_frag = (fragS *) xcalloc (1, sizeof (fragS));
+	  dummy_frag->line = listing_tail;
+	  dummy_frag->fr_symbol = symbolP;
+	  symbol_set_frag (symbolP, dummy_frag);
+	}
+#endif
+#ifdef OBJ_COFF
+      /* "set" symbols are local unless otherwise specified.  */
+      SF_SET_LOCAL (symbolP);
+#endif
+    }
+
+  /* Permit register names to be redefined.  */
+  if (no_reassign
+      && S_IS_DEFINED (symbolP)
+      && S_GET_SEGMENT (symbolP) != reg_section)
+    as_bad (_("symbol `%s' is already defined"), name);
+
+  pseudo_set (symbolP);
+}
+
 /* Handle the .equ, .equiv and .set directives.  If EQUIV is 1, then
    this is .equiv, and it is an error if the symbol is already
    defined.  */
@@ -2651,10 +2805,9 @@ end_repeat (int extra)
 void
 s_set (int equiv)
 {
-  register char *name;
-  register char delim;
-  register char *end_name;
-  register symbolS *symbolP;
+  char *name;
+  char delim;
+  char *end_name;
 
   /* Especial apologies for the random logic:
      this just grew, and could be parsed much more simply!
@@ -2685,58 +2838,9 @@ s_set (int equiv)
   input_line_pointer++;
   *end_name = 0;
 
-  if (name[0] == '.' && name[1] == '\0')
-    {
-      /* Turn '. = mumble' into a .org mumble.  */
-      register segT segment;
-      expressionS exp;
-
-      segment = get_known_segmented_expression (&exp);
-
-      if (!need_pass_2)
-	do_org (segment, &exp, 0);
-
-      *end_name = delim;
-      return;
-    }
-
-  if ((symbolP = symbol_find (name)) == NULL
-      && (symbolP = md_undefined_symbol (name)) == NULL)
-    {
-#ifndef NO_LISTING
-      /* When doing symbol listings, play games with dummy fragments living
-	 outside the normal fragment chain to record the file and line info
-	 for this symbol.  */
-      if (listing & LISTING_SYMBOLS)
-	{
-	  extern struct list_info_struct *listing_tail;
-	  fragS *dummy_frag = (fragS *) xmalloc (sizeof (fragS));
-	  memset (dummy_frag, 0, sizeof (fragS));
-	  dummy_frag->fr_type = rs_fill;
-	  dummy_frag->line = listing_tail;
-	  symbolP = symbol_new (name, undefined_section, 0, dummy_frag);
-	  dummy_frag->fr_symbol = symbolP;
-	}
-      else
-#endif
-	symbolP = symbol_new (name, undefined_section, 0, &zero_address_frag);
-
-#ifdef OBJ_COFF
-      /* "set" symbols are local unless otherwise specified.  */
-      SF_SET_LOCAL (symbolP);
-#endif /* OBJ_COFF */
-    }
-
-  symbol_table_insert (symbolP);
-
+  assign_symbol (name, equiv);
   *end_name = delim;
 
-  if (equiv
-      && S_IS_DEFINED (symbolP)
-      && S_GET_SEGMENT (symbolP) != reg_section)
-    as_bad (_("symbol `%s' is already defined"), S_GET_NAME (symbolP));
-
-  pseudo_set (symbolP);
   demand_empty_rest_of_line ();
 }
 
@@ -3074,6 +3178,16 @@ discard_rest_of_line (void)
   know (is_end_of_line[(unsigned char) input_line_pointer[-1]]);
 }
 
+/* Sets frag for given symbol to zero_address_frag, except when the
+   symbol frag is already set to a dummy listing frag.  */
+
+static void
+set_zero_frag (symbolS *symbolP)
+{
+  if (symbol_get_frag (symbolP)->fr_type != rs_dummy)
+    symbol_set_frag (symbolP, &zero_address_frag);
+}
+
 /* In:	Pointer to a symbol.
 	Input_line_pointer->expression.
 
@@ -3085,14 +3199,12 @@ void
 pseudo_set (symbolS *symbolP)
 {
   expressionS exp;
+  segT seg;
 #if (defined (OBJ_AOUT) || defined (OBJ_BOUT)) && ! defined (BFD_ASSEMBLER)
   int ext;
 #endif /* OBJ_AOUT or OBJ_BOUT */
 
   know (symbolP);		/* NULL pointer is logic error.  */
-#if (defined (OBJ_AOUT) || defined (OBJ_BOUT)) && ! defined (BFD_ASSEMBLER)
-  ext = S_IS_EXTERNAL (symbolP);
-#endif /* OBJ_AOUT or OBJ_BOUT */
 
   (void) expression (&exp);
 
@@ -3117,6 +3229,15 @@ pseudo_set (symbolS *symbolP)
 			  - S_GET_VALUE (exp.X_op_symbol));
     }
 
+  if (symbol_section_p (symbolP))
+    {
+      as_bad ("attempt to set value of section symbol");
+      return;
+    }
+#if (defined (OBJ_AOUT) || defined (OBJ_BOUT)) && ! defined (BFD_ASSEMBLER)
+  ext = S_IS_EXTERNAL (symbolP);
+#endif /* OBJ_AOUT or OBJ_BOUT */
+
   switch (exp.X_op)
     {
     case O_illegal:
@@ -3126,53 +3247,55 @@ pseudo_set (symbolS *symbolP)
       /* Fall through.  */
     case O_constant:
       S_SET_SEGMENT (symbolP, absolute_section);
-#if (defined (OBJ_AOUT) || defined (OBJ_BOUT)) && ! defined (BFD_ASSEMBLER)
-      if (ext)
-	S_SET_EXTERNAL (symbolP);
-      else
-	S_CLEAR_EXTERNAL (symbolP);
-#endif /* OBJ_AOUT or OBJ_BOUT */
       S_SET_VALUE (symbolP, (valueT) exp.X_add_number);
-      if (exp.X_op != O_constant)
-	symbol_set_frag (symbolP, &zero_address_frag);
+      set_zero_frag (symbolP);
       break;
 
     case O_register:
       S_SET_SEGMENT (symbolP, reg_section);
       S_SET_VALUE (symbolP, (valueT) exp.X_add_number);
-      symbol_set_frag (symbolP, &zero_address_frag);
+      set_zero_frag (symbolP);
       break;
 
     case O_symbol:
-      if (S_GET_SEGMENT (exp.X_add_symbol) == undefined_section
-	  || exp.X_add_number != 0)
-	symbol_set_value_expression (symbolP, &exp);
-      else if (symbol_section_p (symbolP))
-	as_bad ("attempt to set value of section symbol");
-      else
+      seg = S_GET_SEGMENT (exp.X_add_symbol);
+      /* For x=undef+const, create an expression symbol.
+	 For x=x+const, just update x except when x is an undefined symbol
+	 For x=defined+const, evaluate x.  */
+      if (symbolP == exp.X_add_symbol
+	  && (seg != undefined_section
+	      || !symbol_constant_p (symbolP)))
+	{
+	  *symbol_X_add_number (symbolP) += exp.X_add_number;
+	  break;
+	}
+      else if (seg != undefined_section)
 	{
 	  symbolS *s = exp.X_add_symbol;
 
-	  S_SET_SEGMENT (symbolP, S_GET_SEGMENT (s));
-#if (defined (OBJ_AOUT) || defined (OBJ_BOUT)) && ! defined (BFD_ASSEMBLER)
-	  if (ext)
-	    S_SET_EXTERNAL (symbolP);
-	  else
-	    S_CLEAR_EXTERNAL (symbolP);
-#endif /* OBJ_AOUT or OBJ_BOUT */
-	  S_SET_VALUE (symbolP,
-		       exp.X_add_number + S_GET_VALUE (s));
+	  S_SET_SEGMENT (symbolP, seg);
+	  S_SET_VALUE (symbolP, exp.X_add_number + S_GET_VALUE (s));
 	  symbol_set_frag (symbolP, symbol_get_frag (s));
 	  copy_symbol_attributes (symbolP, s);
+	  break;
 	}
-      break;
+      /* Fall thru */
 
     default:
       /* The value is some complex expression.
-	 FIXME: Should we set the segment to anything?  */
+	 Set segment and frag back to that of a newly created symbol.  */
+      S_SET_SEGMENT (symbolP, undefined_section);
       symbol_set_value_expression (symbolP, &exp);
+      set_zero_frag (symbolP);
       break;
     }
+
+#if (defined (OBJ_AOUT) || defined (OBJ_BOUT)) && ! defined (BFD_ASSEMBLER)
+  if (ext)
+    S_SET_EXTERNAL (symbolP);
+  else
+    S_CLEAR_EXTERNAL (symbolP);
+#endif /* OBJ_AOUT or OBJ_BOUT */
 }
 
 /*			cons()
@@ -3255,6 +3378,11 @@ cons_worker (register int nbytes,	/* 1=.byte, 2=.word, 4=.long.  */
 	mri_comment_end (stop, stopc);
       return;
     }
+
+#ifdef TC_ADDRESS_BYTES
+  if (nbytes == 0)
+    nbytes = TC_ADDRESS_BYTES ();
+#endif
 
 #ifdef md_cons_align
   md_cons_align (nbytes);
@@ -3482,22 +3610,9 @@ emit_expr (expressionS *exp, unsigned int nbytes)
      pass to md_number_to_chars, handle it as a bignum.  */
   if (op == O_constant && nbytes > sizeof (valueT))
     {
-      valueT val;
-      int gencnt;
-
-      if (!exp->X_unsigned && exp->X_add_number < 0)
-	extra_digit = (valueT) -1;
-      val = (valueT) exp->X_add_number;
-      gencnt = 0;
-      do
-	{
-	  generic_bignum[gencnt] = val & LITTLENUM_MASK;
-	  val >>= LITTLENUM_NUMBER_OF_BITS;
-	  ++gencnt;
-	}
-      while (val != 0);
-      op = exp->X_op = O_big;
-      exp->X_add_number = gencnt;
+      extra_digit = exp->X_unsigned ? 0 : -1;
+      convert_to_bignum (exp);
+      op = O_big;
     }
 
   if (op == O_constant)
@@ -4217,36 +4332,48 @@ output_big_sleb128 (char *p, LITTLENUM_TYPE *bignum, int size)
   unsigned byte;
 
   /* Strip leading sign extensions off the bignum.  */
-  while (size > 0 && bignum[size - 1] == (LITTLENUM_TYPE) -1)
+  while (size > 1
+	 && bignum[size - 1] == LITTLENUM_MASK
+	 && bignum[size - 2] > LITTLENUM_MASK / 2)
     size--;
 
   do
     {
-      if (loaded < 7 && size > 0)
-	{
-	  val |= (*bignum << loaded);
-	  loaded += 8 * CHARS_PER_LITTLENUM;
-	  size--;
-	  bignum++;
-	}
+      /* OR in the next part of the littlenum.  */
+      val |= (*bignum << loaded);
+      loaded += LITTLENUM_NUMBER_OF_BITS;
+      size--;
+      bignum++;
 
-      byte = val & 0x7f;
-      loaded -= 7;
-      val >>= 7;
-
-      if (size == 0)
+      /* Add bytes until there are less than 7 bits left in VAL
+	 or until every non-sign bit has been written.  */
+      do
 	{
-	  if ((val == 0 && (byte & 0x40) == 0)
-	      || (~(val | ~(((valueT) 1 << loaded) - 1)) == 0
-		  && (byte & 0x40) != 0))
+	  byte = val & 0x7f;
+	  loaded -= 7;
+	  val >>= 7;
+	  if (size > 0
+	      || val != ((byte & 0x40) == 0 ? 0 : ((valueT) 1 << loaded) - 1))
 	    byte |= 0x80;
-	}
 
+	  if (orig)
+	    *p = byte;
+	  p++;
+	}
+      while ((byte & 0x80) != 0 && loaded >= 7);
+    }
+  while (size > 0);
+
+  /* Mop up any left-over bits (of which there will be less than 7).  */
+  if ((byte & 0x80) != 0)
+    {
+      /* Sign-extend VAL.  */
+      if (val & (1 << (loaded - 1)))
+	val |= ~0 << loaded;
       if (orig)
-	*p = byte;
+	*p = val & 0x7f;
       p++;
     }
-  while (byte & 0x80);
 
   return p - orig;
 }
@@ -4306,7 +4433,7 @@ void
 emit_leb128_expr (expressionS *exp, int sign)
 {
   operatorT op = exp->X_op;
-  int nbytes;
+  unsigned int nbytes;
 
   if (op == O_absent || op == O_illegal)
     {
@@ -4325,10 +4452,20 @@ emit_leb128_expr (expressionS *exp, int sign)
       as_warn (_("register value used as expression"));
       op = O_constant;
     }
+  else if (op == O_constant
+	   && sign
+	   && (exp->X_add_number < 0) != !exp->X_unsigned)
+    {
+      /* We're outputting a signed leb128 and the sign of X_add_number
+	 doesn't reflect the sign of the original value.  Convert EXP
+	 to a correctly-extended bignum instead.  */
+      convert_to_bignum (exp);
+      op = O_big;
+    }
 
   /* Let check_eh_frame know that data is being emitted.  nbytes == -1 is
      a signal that this is leb128 data.  It shouldn't optimize this away.  */
-  nbytes = -1;
+  nbytes = (unsigned int) -1;
   if (check_eh_frame (exp, &nbytes))
     abort ();
 
@@ -4376,10 +4513,6 @@ void
 s_leb128 (int sign)
 {
   expressionS exp;
-
-#ifdef md_flush_pending_output
-  md_flush_pending_output ();
-#endif
 
 #ifdef md_flush_pending_output
   md_flush_pending_output ();
@@ -4771,7 +4904,6 @@ is_it_end_of_statement (void)
 void
 equals (char *sym_name, int reassign)
 {
-  register symbolS *symbolP;	/* Symbol we are working with.  */
   char *stop = NULL;
   char stopc;
 
@@ -4785,44 +4917,10 @@ equals (char *sym_name, int reassign)
   if (flag_mri)
     stop = mri_comment_field (&stopc);
 
-  if (sym_name[0] == '.' && sym_name[1] == '\0')
-    {
-      /* Turn '. = mumble' into a .org mumble.  */
-      register segT segment;
-      expressionS exp;
-
-      segment = get_known_segmented_expression (&exp);
-      if (!need_pass_2)
-	do_org (segment, &exp, 0);
-    }
-  else
-    {
-#ifdef OBJ_COFF
-      int local;
-
-      symbolP = symbol_find (sym_name);
-      local = symbolP == NULL;
-      if (local)
-#endif /* OBJ_COFF */
-      symbolP = symbol_find_or_make (sym_name);
-      /* Permit register names to be redefined.  */
-      if (!reassign
-	  && S_IS_DEFINED (symbolP)
-	  && S_GET_SEGMENT (symbolP) != reg_section)
-	as_bad (_("symbol `%s' is already defined"), S_GET_NAME (symbolP));
-
-#ifdef OBJ_COFF
-      /* "set" symbols are local unless otherwise specified.  */
-      if (local)
-	SF_SET_LOCAL (symbolP);
-#endif /* OBJ_COFF */
-
-      pseudo_set (symbolP);
-    }
+  assign_symbol (sym_name, !reassign);
 
   if (flag_mri)
     {
-      /* Check garbage after the expression.  */
       demand_empty_rest_of_line ();
       mri_comment_end (stop, stopc);
     }
@@ -4912,13 +5010,13 @@ s_incbin (int x ATTRIBUTE_UNUSED)
 	}
       file_len = ftell (binfile);
 
-      /* If a count was not specified use the size of the file.  */
+      /* If a count was not specified use the remainder of the file.  */
       if (count == 0)
-	count = file_len;
+	count = file_len - skip;
 
-      if (skip + count > file_len)
+      if (skip < 0 || count < 0 || file_len < 0 || skip + count > file_len)
 	{
-	  as_bad (_("skip (%ld) + count (%ld) larger than file size (%ld)"),
+	  as_bad (_("skip (%ld) or count (%ld) invalid for file size (%ld)"),
 		  skip, count, file_len);
 	  goto done;
 	}

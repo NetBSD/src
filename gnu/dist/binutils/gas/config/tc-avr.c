@@ -1,6 +1,7 @@
 /* tc-avr.c -- Assembler code for the ATMEL AVR
 
-   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2004, 2005
+   Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of GAS, the GNU Assembler.
@@ -62,7 +63,7 @@ struct mcu_type_s
 static struct mcu_type_s mcu_types[] =
 {
   {"avr1",      AVR_ISA_TINY1,    bfd_mach_avr1},
-  {"avr2",      AVR_ISA_2xxx,     bfd_mach_avr2},
+  {"avr2",      AVR_ISA_TINY2,    bfd_mach_avr2},
   {"avr3",      AVR_ISA_M103,     bfd_mach_avr3},
   {"avr4",      AVR_ISA_M8,       bfd_mach_avr4},
   {"avr5",      AVR_ISA_ALL,      bfd_mach_avr5},
@@ -85,25 +86,36 @@ static struct mcu_type_s mcu_types[] =
   {"at90s8535", AVR_ISA_2xxx,     bfd_mach_avr2},
   {"at90c8534", AVR_ISA_2xxx,     bfd_mach_avr2},
   {"at86rf401", AVR_ISA_2xxx,     bfd_mach_avr2},
+  {"attiny13",  AVR_ISA_TINY2,    bfd_mach_avr2},
+  {"attiny2313",AVR_ISA_TINY2,    bfd_mach_avr2},
   {"atmega603", AVR_ISA_M603,     bfd_mach_avr3}, /* XXX -> m103 */
   {"atmega103", AVR_ISA_M103,     bfd_mach_avr3},
   {"at43usb320",AVR_ISA_M103,     bfd_mach_avr3},
   {"at43usb355",AVR_ISA_M603,     bfd_mach_avr3},
   {"at76c711",  AVR_ISA_M603,     bfd_mach_avr3},
+  {"atmega48",  AVR_ISA_M8,       bfd_mach_avr4},
   {"atmega8",   AVR_ISA_M8,       bfd_mach_avr4},
   {"atmega83",  AVR_ISA_M8,       bfd_mach_avr4}, /* XXX -> m8535 */
   {"atmega85",  AVR_ISA_M8,       bfd_mach_avr4}, /* XXX -> m8 */
+  {"atmega88",  AVR_ISA_M8,       bfd_mach_avr4},
   {"atmega8515",AVR_ISA_M8,       bfd_mach_avr4},
   {"atmega8535",AVR_ISA_M8,       bfd_mach_avr4},
   {"atmega16",  AVR_ISA_M323,     bfd_mach_avr5},
   {"atmega161", AVR_ISA_M161,     bfd_mach_avr5},
   {"atmega162", AVR_ISA_M323,     bfd_mach_avr5},
   {"atmega163", AVR_ISA_M161,     bfd_mach_avr5},
+  {"atmega165", AVR_ISA_M323,     bfd_mach_avr5},
+  {"atmega168", AVR_ISA_M323,     bfd_mach_avr5},
   {"atmega169", AVR_ISA_M323,     bfd_mach_avr5},
   {"atmega32",  AVR_ISA_M323,     bfd_mach_avr5},
   {"atmega323", AVR_ISA_M323,     bfd_mach_avr5},
+  {"atmega325", AVR_ISA_M323,     bfd_mach_avr5},
+  {"atmega3250",AVR_ISA_M323,     bfd_mach_avr5},
   {"atmega64",  AVR_ISA_M323,     bfd_mach_avr5},
   {"atmega128", AVR_ISA_M128,     bfd_mach_avr5},
+  {"atmega645", AVR_ISA_M323,     bfd_mach_avr5},
+  {"atmega6450",AVR_ISA_M323,     bfd_mach_avr5},
+  {"at90can128",AVR_ISA_M128,     bfd_mach_avr5},
   {"at94k",     AVR_ISA_94K,      bfd_mach_avr5},
   {NULL, 0, 0}
 };
@@ -531,7 +543,8 @@ avr_operands (opcode, line)
       /* Warn if the previous opcode was cpse/sbic/sbis/sbrc/sbrs
          (AVR core bug, fixed in the newer devices).  */
 
-      if (!(avr_opt.no_skip_bug || (avr_mcu->isa & AVR_ISA_MUL))
+      if (!(avr_opt.no_skip_bug ||
+            (avr_mcu->isa & (AVR_ISA_MUL | AVR_ISA_MOVW)))
 	  && AVR_SKIP_P (prev))
 	as_warn (_("skipping two-word instruction"));
 
@@ -543,6 +556,31 @@ avr_operands (opcode, line)
   prev = bin;
   *line = str;
   return bin;
+}
+
+/* Parse for ldd/std offset */
+
+static void
+avr_offset_expression (expressionS *exp)
+{
+  char *str = input_line_pointer;
+  char *tmp;
+  char op[8];
+
+  tmp = str;
+  str = extract_word (str, op, sizeof (op));
+
+  input_line_pointer = tmp;
+  expression (exp);
+
+  /* Warn about expressions that fail to use lo8 ().  */
+  if (exp->X_op == O_constant)
+    {
+      int x = exp->X_add_number;
+      
+      if (x < -255 || x > 255)
+	as_warn (_("constant out of 8-bit range: %d"), x);
+    }
 }
 
 /* Parse one instruction operand.
@@ -683,10 +721,11 @@ avr_operand (opcode, where, op, line)
 	str = skip_space (str);
 	if (*str++ == '+')
 	  {
-	    unsigned int x;
-	    x = avr_get_constant (str, 63);
+	    input_line_pointer = str;
+	    avr_offset_expression (& op_expr);
 	    str = input_line_pointer;
-	    op_mask |= (x & 7) | ((x & (3 << 3)) << 7) | ((x & (1 << 5)) << 8);
+	    fix_new_exp (frag_now, where, 3,
+			 &op_expr, FALSE, BFD_RELOC_AVR_6);
 	  }
       }
       break;
@@ -738,13 +777,11 @@ avr_operand (opcode, where, op, line)
       break;
 
     case 'K':
-      {
-	unsigned int x;
-
-	x = avr_get_constant (str, 63);
-	str = input_line_pointer;
-	op_mask |= (x & 0xf) | ((x & 0x30) << 2);
-      }
+      input_line_pointer = str;
+      avr_offset_expression (& op_expr);
+      str = input_line_pointer;
+      fix_new_exp (frag_now, where, 3,
+		   & op_expr, FALSE, BFD_RELOC_AVR_6_ADIW);
       break;
 
     case 'S':
@@ -870,7 +907,7 @@ md_apply_fix3 (fixP, valP, seg)
     {
       /* Fetch the instruction, insert the fully resolved operand
 	 value, and stuff the instruction back again.  */
-      where = fixP->fx_frag->fr_literal + fixP->fx_where;
+      where = (unsigned char *) fixP->fx_frag->fr_literal + fixP->fx_where;
       insn = bfd_getl16 (where);
 
       switch (fixP->fx_r_type)
@@ -922,6 +959,27 @@ md_apply_fix3 (fixP, valP, seg)
 
 	case BFD_RELOC_AVR_16_PM:
 	  bfd_putl16 ((bfd_vma) (value >> 1), where);
+	  break;
+
+	case BFD_RELOC_AVR_LDI:
+	  if (value > 255)
+	    as_bad_where (fixP->fx_file, fixP->fx_line,
+			  _("operand out of range: %ld"), value);
+	  bfd_putl16 ((bfd_vma) insn | LDI_IMMEDIATE (value), where);
+	  break;
+
+	case BFD_RELOC_AVR_6:
+	  if ((value > 63) || (value < 0))
+	    as_bad_where (fixP->fx_file, fixP->fx_line,
+			  _("operand out of range: %ld"), value);
+	  bfd_putl16 ((bfd_vma) insn | ((value & 7) | ((value & (3 << 3)) << 7) | ((value & (1 << 5)) << 8)), where);
+	  break;
+
+	case BFD_RELOC_AVR_6_ADIW:
+	  if ((value > 63) || (value < 0))
+	    as_bad_where (fixP->fx_file, fixP->fx_line,
+			  _("operand out of range: %ld"), value);
+	  bfd_putl16 ((bfd_vma) insn | (value & 0xf) | ((value & 0x30) << 2), where);
 	  break;
 
 	case BFD_RELOC_AVR_LO8_LDI:
@@ -1215,10 +1273,8 @@ avr_ldi_expression (exp)
       if (x < -255 || x > 255)
 	as_warn (_("constant out of 8-bit range: %d"), x);
     }
-  else
-    as_warn (_("expression possibly out of 8-bit range"));
 
-  return BFD_RELOC_AVR_LO8_LDI;
+  return BFD_RELOC_AVR_LDI;
 }
 
 /* Flag to pass `pm' mode between `avr_parse_cons_expression' and

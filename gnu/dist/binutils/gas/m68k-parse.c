@@ -1,4 +1,4 @@
-/* A Bison parser, made from m68k-parse.y
+/* A Bison parser, made from /nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y
    by GNU bison 1.35.  */
 
 #define YYBISON 1  /* Identify Bison output.  */
@@ -15,7 +15,7 @@
 # define	INDEXREG	266
 # define	EXPR	267
 
-#line 27 "m68k-parse.y"
+#line 28 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 
 
 #include "as.h"
@@ -27,7 +27,7 @@
    etc), as well as gratuitously global symbol names If other parser
    generators (bison, byacc, etc) produce additional global names that
    conflict at link time, then those parser generators need to be
-   fixed instead of adding those names to this list. */
+   fixed instead of adding those names to this list.  */
 
 #define	yymaxdepth m68k_maxdepth
 #define	yyparse	m68k_parse
@@ -82,7 +82,7 @@ static void yyerror PARAMS ((const char *));
 static struct m68k_op *op;
 
 
-#line 94 "m68k-parse.y"
+#line 95 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 #ifndef YYSTYPE
 typedef union
 {
@@ -91,6 +91,7 @@ typedef union
   struct m68k_exp exp;
   unsigned long mask;
   int onereg;
+  int trailing_ampersand;
 } yystype;
 # define YYSTYPE yystype
 # define YYSTYPE_IS_TRIVIAL 1
@@ -101,12 +102,12 @@ typedef union
 
 
 
-#define	YYFINAL		173
+#define	YYFINAL		180
 #define	YYFLAG		-32768
-#define	YYNTBASE	25
+#define	YYNTBASE	27
 
 /* YYTRANSLATE(YYLEX) -- Bison token number corresponding to YYLEX. */
-#define YYTRANSLATE(x) ((unsigned)(x) <= 267 ? yytranslate[x] : 44)
+#define YYTRANSLATE(x) ((unsigned)(x) <= 267 ? yytranslate[x] : 47)
 
 /* YYTRANSLATE[YYLEX] -- Bison token number corresponding to YYLEX. */
 static const char yytranslate[] =
@@ -114,13 +115,13 @@ static const char yytranslate[] =
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,    14,     2,     2,    15,     2,
-      16,    17,     2,    18,    20,    19,     2,    24,     2,     2,
+       2,     2,     2,     2,     2,    17,     2,     2,    14,     2,
+      18,    19,     2,    20,    22,    21,     2,    26,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,    23,     2,     2,     2,     2,     2,
+      15,     2,    16,     2,    25,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    21,     2,    22,     2,     2,     2,     2,     2,     2,
+       2,    23,     2,    24,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -143,54 +144,55 @@ static const char yytranslate[] =
 #if YYDEBUG
 static const short yyprhs[] =
 {
-       0,     0,     2,     4,     6,     8,    10,    12,    14,    16,
-      18,    21,    24,    26,    30,    35,    40,    46,    52,    57,
-      61,    65,    69,    77,    85,    92,    98,   105,   111,   118,
-     124,   130,   135,   145,   153,   162,   169,   180,   189,   200,
-     209,   218,   221,   225,   229,   235,   242,   253,   263,   274,
-     276,   278,   280,   282,   284,   286,   288,   290,   292,   294,
-     296,   298,   300,   302,   303,   305,   307,   309,   310,   313,
-     314,   317,   318,   321,   323,   327,   331,   333,   335,   339,
-     343,   347,   349,   351,   353
+       0,     0,     2,     5,     8,     9,    11,    14,    17,    19,
+      21,    23,    25,    27,    29,    32,    35,    37,    41,    46,
+      51,    57,    63,    68,    72,    76,    80,    88,    96,   103,
+     109,   116,   122,   129,   135,   141,   146,   156,   164,   173,
+     180,   191,   200,   211,   220,   229,   232,   236,   240,   246,
+     253,   264,   274,   285,   287,   289,   291,   293,   295,   297,
+     299,   301,   303,   305,   307,   309,   311,   313,   314,   316,
+     318,   320,   321,   324,   325,   328,   329,   332,   334,   338,
+     342,   344,   346,   350,   354,   358,   360,   362,   364
 };
 static const short yyrhs[] =
 {
-      26,     0,    27,     0,    28,     0,     3,     0,     4,     0,
-       5,     0,     6,     0,    11,     0,    13,     0,    14,    13,
-       0,    15,    13,     0,    40,     0,    16,     4,    17,     0,
-      16,     4,    17,    18,     0,    19,    16,     4,    17,     0,
-      16,    13,    20,    34,    17,     0,    16,    34,    20,    13,
-      17,     0,    13,    16,    34,    17,     0,    16,     7,    17,
-       0,    16,     8,    17,     0,    16,    10,    17,     0,    16,
-      13,    20,    34,    20,    29,    17,     0,    16,    13,    20,
-      34,    20,    36,    17,     0,    16,    13,    20,    30,    37,
-      17,     0,    16,    30,    20,    13,    17,     0,    13,    16,
-      34,    20,    29,    17,     0,    16,    34,    20,    29,    17,
-       0,    13,    16,    34,    20,    36,    17,     0,    16,    34,
-      20,    36,    17,     0,    13,    16,    30,    37,    17,     0,
-      16,    30,    37,    17,     0,    16,    21,    13,    37,    22,
-      20,    29,    38,    17,     0,    16,    21,    13,    37,    22,
-      38,    17,     0,    16,    21,    34,    22,    20,    29,    38,
-      17,     0,    16,    21,    34,    22,    38,    17,     0,    16,
-      21,    13,    20,    34,    20,    29,    22,    38,    17,     0,
-      16,    21,    34,    20,    29,    22,    38,    17,     0,    16,
-      21,    13,    20,    34,    20,    36,    22,    38,    17,     0,
-      16,    21,    34,    20,    36,    22,    38,    17,     0,    16,
-      21,    39,    30,    37,    22,    38,    17,     0,    35,    23,
-       0,    35,    23,    18,     0,    35,    23,    19,     0,    35,
-      23,    16,    13,    17,     0,    35,    23,    16,    39,    29,
-      17,     0,    35,    23,    16,    13,    17,    23,    16,    39,
-      29,    17,     0,    35,    23,    16,    13,    17,    23,    16,
-      13,    17,     0,    35,    23,    16,    39,    29,    17,    23,
-      16,    13,    17,     0,    12,     0,    31,     0,    12,     0,
-      32,     0,    32,     0,     4,     0,     8,     0,     3,     0,
-       9,     0,     4,     0,     7,     0,    33,     0,    10,     0,
-       8,     0,     0,    34,     0,     7,     0,    10,     0,     0,
-      20,    34,     0,     0,    20,    13,     0,     0,    13,    20,
-       0,    42,     0,    42,    24,    41,     0,    43,    24,    41,
-       0,    43,     0,    42,     0,    42,    24,    41,     0,    43,
-      24,    41,     0,    43,    19,    43,     0,     3,     0,     4,
-       0,     5,     0,     6,     0
+      29,     0,    30,    28,     0,    31,    28,     0,     0,    14,
+       0,    15,    15,     0,    16,    16,     0,     3,     0,     4,
+       0,     5,     0,     6,     0,    11,     0,    13,     0,    17,
+      13,     0,    14,    13,     0,    43,     0,    18,     4,    19,
+       0,    18,     4,    19,    20,     0,    21,    18,     4,    19,
+       0,    18,    13,    22,    37,    19,     0,    18,    37,    22,
+      13,    19,     0,    13,    18,    37,    19,     0,    18,     7,
+      19,     0,    18,     8,    19,     0,    18,    10,    19,     0,
+      18,    13,    22,    37,    22,    32,    19,     0,    18,    13,
+      22,    37,    22,    39,    19,     0,    18,    13,    22,    33,
+      40,    19,     0,    18,    33,    22,    13,    19,     0,    13,
+      18,    37,    22,    32,    19,     0,    18,    37,    22,    32,
+      19,     0,    13,    18,    37,    22,    39,    19,     0,    18,
+      37,    22,    39,    19,     0,    13,    18,    33,    40,    19,
+       0,    18,    33,    40,    19,     0,    18,    23,    13,    40,
+      24,    22,    32,    41,    19,     0,    18,    23,    13,    40,
+      24,    41,    19,     0,    18,    23,    37,    24,    22,    32,
+      41,    19,     0,    18,    23,    37,    24,    41,    19,     0,
+      18,    23,    13,    22,    37,    22,    32,    24,    41,    19,
+       0,    18,    23,    37,    22,    32,    24,    41,    19,     0,
+      18,    23,    13,    22,    37,    22,    39,    24,    41,    19,
+       0,    18,    23,    37,    22,    39,    24,    41,    19,     0,
+      18,    23,    42,    33,    40,    24,    41,    19,     0,    38,
+      25,     0,    38,    25,    20,     0,    38,    25,    21,     0,
+      38,    25,    18,    13,    19,     0,    38,    25,    18,    42,
+      32,    19,     0,    38,    25,    18,    13,    19,    25,    18,
+      42,    32,    19,     0,    38,    25,    18,    13,    19,    25,
+      18,    13,    19,     0,    38,    25,    18,    42,    32,    19,
+      25,    18,    13,    19,     0,    12,     0,    34,     0,    12,
+       0,    35,     0,    35,     0,     4,     0,     8,     0,     3,
+       0,     9,     0,     4,     0,     7,     0,    36,     0,    10,
+       0,     8,     0,     0,    37,     0,     7,     0,    10,     0,
+       0,    22,    37,     0,     0,    22,    13,     0,     0,    13,
+      22,     0,    45,     0,    45,    26,    44,     0,    46,    26,
+      44,     0,    46,     0,    45,     0,    45,    26,    44,     0,
+      46,    26,    44,     0,    46,    21,    46,     0,     3,     0,
+       4,     0,     5,     0,     6,     0
 };
 
 #endif
@@ -199,15 +201,15 @@ static const short yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined. */
 static const short yyrline[] =
 {
-       0,   117,   119,   120,   125,   131,   136,   141,   146,   151,
-     156,   161,   166,   178,   184,   189,   194,   204,   214,   224,
-     229,   234,   239,   246,   257,   264,   270,   277,   283,   294,
-     304,   311,   317,   325,   332,   339,   345,   353,   360,   372,
-     383,   395,   404,   412,   420,   430,   437,   445,   452,   465,
-     467,   479,   481,   492,   494,   495,   500,   502,   507,   509,
-     515,   517,   518,   523,   528,   533,   535,   540,   545,   553,
-     559,   567,   573,   581,   583,   587,   598,   603,   604,   608,
-     614,   624,   629,   633,   637
+       0,   120,   122,   126,   133,   136,   142,   148,   153,   158,
+     163,   168,   173,   178,   183,   188,   193,   205,   211,   216,
+     221,   231,   241,   251,   256,   261,   266,   273,   284,   291,
+     297,   304,   310,   321,   331,   338,   344,   352,   359,   366,
+     372,   380,   387,   399,   410,   422,   431,   439,   447,   457,
+     464,   472,   479,   492,   494,   506,   508,   519,   521,   522,
+     527,   529,   534,   536,   542,   544,   545,   550,   555,   560,
+     562,   567,   572,   580,   586,   594,   600,   608,   610,   614,
+     625,   630,   631,   635,   641,   651,   656,   660,   664
 };
 #endif
 
@@ -218,40 +220,41 @@ static const short yyrline[] =
 static const char *const yytname[] =
 {
   "$", "error", "$undefined.", "DR", "AR", "FPR", "FPCR", "LPC", "ZAR", 
-  "ZDR", "LZPC", "CREG", "INDEXREG", "EXPR", "'#'", "'&'", "'('", "')'", 
-  "'+'", "'-'", "','", "'['", "']'", "'@'", "'/'", "operand", 
-  "generic_operand", "motorola_operand", "mit_operand", "zireg", "zdireg", 
-  "zadr", "zdr", "apc", "zapc", "optzapc", "zpc", "optczapc", "optcexpr", 
-  "optexprc", "reglist", "ireglist", "reglistpair", "reglistreg", 0
+  "ZDR", "LZPC", "CREG", "INDEXREG", "EXPR", "'&'", "'<'", "'>'", "'#'", 
+  "'('", "')'", "'+'", "'-'", "','", "'['", "']'", "'@'", "'/'", 
+  "operand", "optional_ampersand", "generic_operand", "motorola_operand", 
+  "mit_operand", "zireg", "zdireg", "zadr", "zdr", "apc", "zapc", 
+  "optzapc", "zpc", "optczapc", "optcexpr", "optexprc", "reglist", 
+  "ireglist", "reglistpair", "reglistreg", 0
 };
 #endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives. */
 static const short yyr1[] =
 {
-       0,    25,    25,    25,    26,    26,    26,    26,    26,    26,
-      26,    26,    26,    27,    27,    27,    27,    27,    27,    27,
-      27,    27,    27,    27,    27,    27,    27,    27,    27,    27,
-      27,    27,    27,    27,    27,    27,    27,    27,    27,    27,
-      27,    28,    28,    28,    28,    28,    28,    28,    28,    29,
-      29,    30,    30,    31,    31,    31,    32,    32,    33,    33,
-      34,    34,    34,    35,    35,    36,    36,    37,    37,    38,
-      38,    39,    39,    40,    40,    40,    41,    41,    41,    41,
-      42,    43,    43,    43,    43
+       0,    27,    27,    27,    28,    28,    29,    29,    29,    29,
+      29,    29,    29,    29,    29,    29,    29,    30,    30,    30,
+      30,    30,    30,    30,    30,    30,    30,    30,    30,    30,
+      30,    30,    30,    30,    30,    30,    30,    30,    30,    30,
+      30,    30,    30,    30,    30,    31,    31,    31,    31,    31,
+      31,    31,    31,    32,    32,    33,    33,    34,    34,    34,
+      35,    35,    36,    36,    37,    37,    37,    38,    38,    39,
+      39,    40,    40,    41,    41,    42,    42,    43,    43,    43,
+      44,    44,    44,    44,    45,    46,    46,    46,    46
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN. */
 static const short yyr2[] =
 {
-       0,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       2,     2,     1,     3,     4,     4,     5,     5,     4,     3,
-       3,     3,     7,     7,     6,     5,     6,     5,     6,     5,
-       5,     4,     9,     7,     8,     6,    10,     8,    10,     8,
-       8,     2,     3,     3,     5,     6,    10,     9,    10,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     0,     1,     1,     1,     0,     2,     0,
-       2,     0,     2,     1,     3,     3,     1,     1,     3,     3,
-       3,     1,     1,     1,     1
+       0,     1,     2,     2,     0,     1,     2,     2,     1,     1,
+       1,     1,     1,     1,     2,     2,     1,     3,     4,     4,
+       5,     5,     4,     3,     3,     3,     7,     7,     6,     5,
+       6,     5,     6,     5,     5,     4,     9,     7,     8,     6,
+      10,     8,    10,     8,     8,     2,     3,     3,     5,     6,
+      10,     9,    10,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     0,     1,     1,
+       1,     0,     2,     0,     2,     0,     2,     1,     3,     3,
+       1,     1,     3,     3,     3,     1,     1,     1,     1
 };
 
 /* YYDEFACT[S] -- default rule to reduce with in state S when YYTABLE
@@ -259,115 +262,119 @@ static const short yyr2[] =
    error. */
 static const short yydefact[] =
 {
-      63,    81,    82,    83,    84,    59,    62,    61,     8,     9,
-       0,     0,     0,     0,     1,     2,     3,    60,    64,     0,
-      12,    73,     0,     0,    10,    11,    56,    58,    59,    62,
-      57,    61,    51,     0,    71,    67,    52,     0,     0,    41,
-       0,     0,     0,    58,    67,     0,    13,    19,    20,    21,
-       0,    67,     0,     0,     0,     0,     0,     0,    71,    42,
-      43,    81,    82,    83,    84,    74,    77,    76,    80,    75,
-       0,     0,    18,     0,    14,    67,     0,    72,     0,     0,
-      69,    67,     0,    68,    31,    54,    65,    55,    66,    49,
-       0,     0,    50,    53,     0,    15,     0,     0,     0,     0,
-      30,     0,     0,     0,    16,     0,    68,    69,     0,     0,
-       0,     0,     0,    25,    17,    27,    29,    44,    72,     0,
-      78,    79,    26,    28,    24,     0,     0,     0,     0,     0,
-      69,    69,    70,    69,    35,    69,     0,    45,    22,    23,
-       0,     0,    69,    33,     0,     0,     0,     0,     0,    71,
-       0,    69,    69,     0,    37,    39,    34,    40,     0,     0,
-       0,     0,     0,    32,    47,     0,     0,    36,    38,    46,
-      48,     0,     0,     0
+      67,    85,    86,    87,    88,    63,    66,    65,    12,    13,
+       0,     0,     0,     0,     0,     0,     1,     4,     4,    64,
+      68,     0,    16,    77,     0,     0,    15,     6,     7,    14,
+      60,    62,    63,    66,    61,    65,    55,     0,    75,    71,
+      56,     0,     0,     5,     2,     3,    45,     0,     0,     0,
+      62,    71,     0,    17,    23,    24,    25,     0,    71,     0,
+       0,     0,     0,     0,     0,    75,    46,    47,    85,    86,
+      87,    88,    78,    81,    80,    84,    79,     0,     0,    22,
+       0,    18,    71,     0,    76,     0,     0,    73,    71,     0,
+      72,    35,    58,    69,    59,    70,    53,     0,     0,    54,
+      57,     0,    19,     0,     0,     0,     0,    34,     0,     0,
+       0,    20,     0,    72,    73,     0,     0,     0,     0,     0,
+      29,    21,    31,    33,    48,    76,     0,    82,    83,    30,
+      32,    28,     0,     0,     0,     0,     0,    73,    73,    74,
+      73,    39,    73,     0,    49,    26,    27,     0,     0,    73,
+      37,     0,     0,     0,     0,     0,    75,     0,    73,    73,
+       0,    41,    43,    38,    44,     0,     0,     0,     0,     0,
+      36,    51,     0,     0,    40,    42,    50,    52,     0,     0,
+       0
 };
 
 static const short yydefgoto[] =
 {
-     171,    14,    15,    16,    91,    35,    92,    93,    17,    83,
-      19,    94,    55,   111,    53,    20,    65,    66,    67
+     178,    44,    16,    17,    18,    98,    39,    99,   100,    19,
+      90,    21,   101,    62,   118,    60,    22,    72,    73,    74
 };
 
 static const short yypact[] =
 {
-      89,    10,    11,    19,    23,-32768,-32768,-32768,-32768,    13,
-      -4,    22,    57,    36,-32768,-32768,-32768,-32768,-32768,    18,
-  -32768,    33,    -2,   114,-32768,-32768,-32768,    46,    62,    66,
-  -32768,    67,-32768,    68,   131,    69,-32768,    70,   105,   147,
-     156,   156,   156,-32768,    94,    25,   101,-32768,-32768,-32768,
-     114,   100,    53,     9,   138,   108,   103,   112,   117,-32768,
-  -32768,-32768,-32768,-32768,-32768,-32768,   119,    12,-32768,-32768,
-      64,   130,-32768,   124,-32768,    94,    81,    64,   135,   124,
-     132,    94,   150,-32768,-32768,-32768,-32768,-32768,-32768,-32768,
-     151,   152,-32768,-32768,   153,-32768,   120,   146,   156,   156,
-  -32768,   154,   155,   157,-32768,   124,   144,   158,   159,   160,
-      73,   162,   161,-32768,-32768,-32768,-32768,   163,-32768,   167,
-  -32768,-32768,-32768,-32768,-32768,   168,   170,   124,    73,   171,
-     169,   169,-32768,   169,-32768,   169,   164,   172,-32768,-32768,
-     174,   175,   169,-32768,   177,   176,   181,   182,   183,   178,
-     185,   169,   169,   186,-32768,-32768,-32768,-32768,   136,   146,
-     179,   187,   188,-32768,-32768,   189,   190,-32768,-32768,-32768,
-  -32768,   173,   194,-32768
+      89,     8,    11,    18,    22,-32768,-32768,-32768,-32768,    12,
+      24,    16,    23,    28,    67,    40,-32768,    32,    32,-32768,
+  -32768,    37,-32768,    62,   -11,   123,-32768,-32768,-32768,-32768,
+  -32768,    54,    70,    82,-32768,    92,-32768,    76,   140,    94,
+  -32768,    99,   118,-32768,-32768,-32768,    47,    79,    79,    79,
+  -32768,   101,    29,   114,-32768,-32768,-32768,   123,   117,   -10,
+      69,   147,   119,   105,   146,   139,-32768,-32768,-32768,-32768,
+  -32768,-32768,-32768,   141,     0,-32768,-32768,   154,   149,-32768,
+     133,-32768,   101,   127,   154,   145,   133,   148,   101,   152,
+  -32768,-32768,-32768,-32768,-32768,-32768,-32768,   153,   155,-32768,
+  -32768,   156,-32768,   137,    20,    79,    79,-32768,   157,   158,
+     159,-32768,   133,   151,   160,   161,   162,   116,   164,   163,
+  -32768,-32768,-32768,-32768,   165,-32768,   169,-32768,-32768,-32768,
+  -32768,-32768,   170,   172,   133,   116,   173,   171,   171,-32768,
+     171,-32768,   171,   166,   174,-32768,-32768,   176,   177,   171,
+  -32768,   167,   175,   178,   179,   183,   168,   185,   171,   171,
+     186,-32768,-32768,-32768,-32768,   144,    20,   182,   187,   188,
+  -32768,-32768,   189,   190,-32768,-32768,-32768,-32768,   196,   204,
+  -32768
 };
 
 static const short yypgoto[] =
 {
-  -32768,-32768,-32768,-32768,   -72,     1,-32768,    -7,-32768,     3,
-  -32768,   -65,   -31,  -103,   -58,-32768,   -40,   202,     6
+  -32768,   192,-32768,-32768,-32768,   -79,     9,-32768,    -8,-32768,
+       2,-32768,   -77,   -38,   -95,   -65,-32768,   -45,   211,     5
 };
 
 
-#define	YYLAST		207
+#define	YYLAST		211
 
 
 static const short yytable[] =
 {
-      97,   101,    69,    18,   129,    36,    22,   108,   102,    24,
-      -4,    -5,    26,    71,   109,    37,    36,    41,    30,    -6,
-      78,    32,    42,    -7,    44,   119,    45,   145,   146,    23,
-     147,    41,   148,   125,   -58,    25,    99,    52,   133,   153,
-     126,    39,    72,    36,   103,    73,    36,    68,   161,   162,
-     112,    75,    38,    76,    81,   140,   142,    40,   120,   121,
-      26,    27,   141,    46,    28,    29,    30,    31,    43,    32,
-      33,     5,     6,    79,     7,    80,    26,    85,    34,    47,
-     106,    87,    30,    48,    49,    89,   132,   165,    50,    54,
-      56,   159,     1,     2,     3,     4,     5,     6,   104,     7,
-       8,   105,     9,    10,    11,    12,    26,    85,    13,    57,
-      86,    87,    30,    88,    70,    89,    90,    26,    43,    74,
-      77,     5,     6,    30,     7,    84,    32,    26,    85,    95,
-      96,    86,    87,    30,    88,    43,    89,   117,     5,     6,
-     118,     7,    43,    98,    51,     5,     6,   100,     7,    26,
-      85,    82,   110,   164,    87,    30,   118,   107,    89,    61,
-      62,    63,    64,    58,   127,    59,    60,   113,   114,   115,
-     116,   122,   123,   172,   124,     0,     0,     0,   128,   134,
-     149,   130,   131,   135,   137,   138,   136,   139,   143,   144,
-     132,   158,   166,   154,   173,   150,   151,   152,   155,   156,
-     157,   160,    21,   163,   167,   168,   169,   170
+     104,   108,    20,   109,    76,    24,    40,   115,    -8,   116,
+      48,    -9,    86,    78,    87,    49,    41,    40,   -10,   136,
+      85,    48,   -11,    30,    92,   126,   106,    52,    94,    34,
+      25,    27,    96,   132,    51,   133,   -62,    26,   140,    28,
+      59,    29,   152,   153,   110,   154,    43,   155,    79,    40,
+     119,    80,    40,    75,   160,   147,   149,   148,    42,    83,
+     127,   128,    46,   168,   169,    65,    82,    66,    67,    88,
+      30,    31,    30,    53,    32,    33,    34,    35,    34,    36,
+      37,    36,    68,    69,    70,    71,   113,   172,    47,    54,
+      38,   166,     1,     2,     3,     4,     5,     6,    57,     7,
+       8,    55,     9,    10,    11,    12,    13,    14,    30,    92,
+      15,    56,    93,    94,    34,    95,    61,    96,    97,    30,
+      92,    63,    64,    77,    94,    34,    30,    50,    96,   139,
+       5,     6,    34,     7,    81,    36,    30,    92,    91,    84,
+      93,    94,    34,    95,    50,    96,   111,     5,     6,   112,
+       7,    50,   103,    58,     5,     6,   124,     7,    50,   125,
+      89,     5,     6,   171,     7,   102,   125,   105,   107,   114,
+     117,   120,   121,   134,   122,   123,   129,   130,   131,     0,
+     139,   165,   135,   141,   156,   137,   138,   142,   144,   145,
+     143,   146,   150,   151,   161,   173,   179,   162,   163,   157,
+     158,   159,   164,   167,   180,   170,   174,   175,   176,   177,
+      45,    23
 };
 
 static const short yycheck[] =
 {
-      58,    73,    42,     0,   107,    12,     0,    79,    73,    13,
-       0,     0,     3,    44,    79,    12,    23,    19,     9,     0,
-      51,    12,    24,     0,    23,    97,    23,   130,   131,    16,
-     133,    19,   135,   105,    23,    13,    24,    34,   110,   142,
-     105,    23,    17,    50,    75,    20,    53,    41,   151,   152,
-      81,    50,    16,    50,    53,   127,   128,    24,    98,    99,
-       3,     4,   127,    17,     7,     8,     9,    10,     4,    12,
-      13,     7,     8,    20,    10,    22,     3,     4,    21,    17,
-      77,     8,     9,    17,    17,    12,    13,   159,    20,    20,
-      20,   149,     3,     4,     5,     6,     7,     8,    17,    10,
-      11,    20,    13,    14,    15,    16,     3,     4,    19,     4,
-       7,     8,     9,    10,    20,    12,    13,     3,     4,    18,
-      20,     7,     8,     9,    10,    17,    12,     3,     4,    17,
-      13,     7,     8,     9,    10,     4,    12,    17,     7,     8,
-      20,    10,     4,    24,    13,     7,     8,    17,    10,     3,
-       4,    13,    20,    17,     8,     9,    20,    22,    12,     3,
-       4,     5,     6,    16,    20,    18,    19,    17,    17,    17,
-      17,    17,    17,     0,    17,    -1,    -1,    -1,    20,    17,
-      16,    22,    22,    22,    17,    17,    23,    17,    17,    20,
-      13,    13,    13,    17,     0,    23,    22,    22,    17,    17,
-      17,    16,     0,    17,    17,    17,    17,    17
+      65,    80,     0,    80,    49,     0,    14,    86,     0,    86,
+      21,     0,    22,    51,    24,    26,    14,    25,     0,   114,
+      58,    21,     0,     3,     4,   104,    26,    25,     8,     9,
+      18,    15,    12,   112,    25,   112,    25,    13,   117,    16,
+      38,    13,   137,   138,    82,   140,    14,   142,    19,    57,
+      88,    22,    60,    48,   149,   134,   135,   134,    18,    57,
+     105,   106,    25,   158,   159,    18,    57,    20,    21,    60,
+       3,     4,     3,    19,     7,     8,     9,    10,     9,    12,
+      13,    12,     3,     4,     5,     6,    84,   166,    26,    19,
+      23,   156,     3,     4,     5,     6,     7,     8,    22,    10,
+      11,    19,    13,    14,    15,    16,    17,    18,     3,     4,
+      21,    19,     7,     8,     9,    10,    22,    12,    13,     3,
+       4,    22,     4,    22,     8,     9,     3,     4,    12,    13,
+       7,     8,     9,    10,    20,    12,     3,     4,    19,    22,
+       7,     8,     9,    10,     4,    12,    19,     7,     8,    22,
+      10,     4,    13,    13,     7,     8,    19,    10,     4,    22,
+      13,     7,     8,    19,    10,    19,    22,    26,    19,    24,
+      22,    19,    19,    22,    19,    19,    19,    19,    19,    -1,
+      13,    13,    22,    19,    18,    24,    24,    24,    19,    19,
+      25,    19,    19,    22,    19,    13,     0,    19,    19,    25,
+      24,    24,    19,    18,     0,    19,    19,    19,    19,    19,
+      18,     0
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/share/bison-1.35/bison.simple"
+#line 3 "/usr/share/bison/bison.simple"
 
 /* Skeleton output parser for bison,
 
@@ -655,6 +662,7 @@ yystrlen (yystr)
 
 # ifndef yystpcpy
 #  if defined (__GLIBC__) && defined (_STRING_H) && defined (_GNU_SOURCE)
+#   include <string.h>
 #   define yystpcpy stpcpy
 #  else
 /* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
@@ -680,7 +688,7 @@ yystpcpy (yydest, yysrc)
 # endif
 #endif
 
-#line 315 "/usr/share/bison-1.35/bison.simple"
+#line 316 "/usr/share/bison/bison.simple"
 
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
@@ -1073,92 +1081,124 @@ yyreduce:
 
   switch (yyn) {
 
+case 2:
+#line 123 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  op->trailing_ampersand = yyvsp[0].trailing_ampersand;
+		}
+    break;
+case 3:
+#line 127 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  op->trailing_ampersand = yyvsp[0].trailing_ampersand;
+		}
+    break;
 case 4:
-#line 127 "m68k-parse.y"
+#line 135 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{ yyval.trailing_ampersand = 0; }
+    break;
+case 5:
+#line 137 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{ yyval.trailing_ampersand = 1; }
+    break;
+case 6:
+#line 144 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  op->mode = LSH;
+		}
+    break;
+case 7:
+#line 149 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  op->mode = RSH;
+		}
+    break;
+case 8:
+#line 154 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = DREG;
 		  op->reg = yyvsp[0].reg;
 		}
     break;
-case 5:
-#line 132 "m68k-parse.y"
+case 9:
+#line 159 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = AREG;
 		  op->reg = yyvsp[0].reg;
 		}
     break;
-case 6:
-#line 137 "m68k-parse.y"
+case 10:
+#line 164 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = FPREG;
 		  op->reg = yyvsp[0].reg;
 		}
     break;
-case 7:
-#line 142 "m68k-parse.y"
+case 11:
+#line 169 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = CONTROL;
 		  op->reg = yyvsp[0].reg;
 		}
     break;
-case 8:
-#line 147 "m68k-parse.y"
+case 12:
+#line 174 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = CONTROL;
 		  op->reg = yyvsp[0].reg;
 		}
     break;
-case 9:
-#line 152 "m68k-parse.y"
+case 13:
+#line 179 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = ABSL;
 		  op->disp = yyvsp[0].exp;
 		}
     break;
-case 10:
-#line 157 "m68k-parse.y"
+case 14:
+#line 184 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = IMMED;
 		  op->disp = yyvsp[0].exp;
 		}
     break;
-case 11:
-#line 162 "m68k-parse.y"
+case 15:
+#line 189 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = IMMED;
 		  op->disp = yyvsp[0].exp;
 		}
     break;
-case 12:
-#line 167 "m68k-parse.y"
+case 16:
+#line 194 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = REGLST;
 		  op->mask = yyvsp[0].mask;
 		}
     break;
-case 13:
-#line 180 "m68k-parse.y"
+case 17:
+#line 207 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = AINDR;
 		  op->reg = yyvsp[-1].reg;
 		}
     break;
-case 14:
-#line 185 "m68k-parse.y"
+case 18:
+#line 212 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = AINC;
 		  op->reg = yyvsp[-2].reg;
 		}
     break;
-case 15:
-#line 190 "m68k-parse.y"
+case 19:
+#line 217 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = ADEC;
 		  op->reg = yyvsp[-1].reg;
 		}
     break;
-case 16:
-#line 195 "m68k-parse.y"
+case 20:
+#line 222 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->reg = yyvsp[-1].reg;
 		  op->disp = yyvsp[-3].exp;
@@ -1169,8 +1209,8 @@ case 16:
 		    op->mode = DISP;
 		}
     break;
-case 17:
-#line 205 "m68k-parse.y"
+case 21:
+#line 232 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->reg = yyvsp[-3].reg;
 		  op->disp = yyvsp[-1].exp;
@@ -1181,8 +1221,8 @@ case 17:
 		    op->mode = DISP;
 		}
     break;
-case 18:
-#line 215 "m68k-parse.y"
+case 22:
+#line 242 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->reg = yyvsp[-1].reg;
 		  op->disp = yyvsp[-3].exp;
@@ -1193,68 +1233,29 @@ case 18:
 		    op->mode = DISP;
 		}
     break;
-case 19:
-#line 225 "m68k-parse.y"
+case 23:
+#line 252 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = DISP;
 		  op->reg = yyvsp[-1].reg;
 		}
     break;
-case 20:
-#line 230 "m68k-parse.y"
-{
-		  op->mode = BASE;
-		  op->reg = yyvsp[-1].reg;
-		}
-    break;
-case 21:
-#line 235 "m68k-parse.y"
-{
-		  op->mode = BASE;
-		  op->reg = yyvsp[-1].reg;
-		}
-    break;
-case 22:
-#line 240 "m68k-parse.y"
-{
-		  op->mode = BASE;
-		  op->reg = yyvsp[-3].reg;
-		  op->disp = yyvsp[-5].exp;
-		  op->index = yyvsp[-1].indexreg;
-		}
-    break;
-case 23:
-#line 247 "m68k-parse.y"
-{
-		  if (yyvsp[-3].reg == PC || yyvsp[-3].reg == ZPC)
-		    yyerror (_("syntax error"));
-		  op->mode = BASE;
-		  op->reg = yyvsp[-1].reg;
-		  op->disp = yyvsp[-5].exp;
-		  op->index.reg = yyvsp[-3].reg;
-		  op->index.size = SIZE_UNSPEC;
-		  op->index.scale = 1;
-		}
-    break;
 case 24:
-#line 258 "m68k-parse.y"
+#line 257 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-1].reg;
-		  op->disp = yyvsp[-4].exp;
-		  op->index = yyvsp[-2].indexreg;
 		}
     break;
 case 25:
-#line 265 "m68k-parse.y"
+#line 262 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = BASE;
-		  op->disp = yyvsp[-1].exp;
-		  op->index = yyvsp[-3].indexreg;
+		  op->reg = yyvsp[-1].reg;
 		}
     break;
 case 26:
-#line 271 "m68k-parse.y"
+#line 267 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-3].reg;
@@ -1263,15 +1264,7 @@ case 26:
 		}
     break;
 case 27:
-#line 278 "m68k-parse.y"
-{
-		  op->mode = BASE;
-		  op->reg = yyvsp[-3].reg;
-		  op->index = yyvsp[-1].indexreg;
-		}
-    break;
-case 28:
-#line 284 "m68k-parse.y"
+#line 274 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  if (yyvsp[-3].reg == PC || yyvsp[-3].reg == ZPC)
 		    yyerror (_("syntax error"));
@@ -1283,8 +1276,55 @@ case 28:
 		  op->index.scale = 1;
 		}
     break;
+case 28:
+#line 285 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  op->mode = BASE;
+		  op->reg = yyvsp[-1].reg;
+		  op->disp = yyvsp[-4].exp;
+		  op->index = yyvsp[-2].indexreg;
+		}
+    break;
 case 29:
-#line 295 "m68k-parse.y"
+#line 292 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  op->mode = BASE;
+		  op->disp = yyvsp[-1].exp;
+		  op->index = yyvsp[-3].indexreg;
+		}
+    break;
+case 30:
+#line 298 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  op->mode = BASE;
+		  op->reg = yyvsp[-3].reg;
+		  op->disp = yyvsp[-5].exp;
+		  op->index = yyvsp[-1].indexreg;
+		}
+    break;
+case 31:
+#line 305 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  op->mode = BASE;
+		  op->reg = yyvsp[-3].reg;
+		  op->index = yyvsp[-1].indexreg;
+		}
+    break;
+case 32:
+#line 311 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  if (yyvsp[-3].reg == PC || yyvsp[-3].reg == ZPC)
+		    yyerror (_("syntax error"));
+		  op->mode = BASE;
+		  op->reg = yyvsp[-1].reg;
+		  op->disp = yyvsp[-5].exp;
+		  op->index.reg = yyvsp[-3].reg;
+		  op->index.size = SIZE_UNSPEC;
+		  op->index.scale = 1;
+		}
+    break;
+case 33:
+#line 322 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  if (yyvsp[-3].reg == PC || yyvsp[-3].reg == ZPC)
 		    yyerror (_("syntax error"));
@@ -1295,8 +1335,8 @@ case 29:
 		  op->index.scale = 1;
 		}
     break;
-case 30:
-#line 305 "m68k-parse.y"
+case 34:
+#line 332 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-1].reg;
@@ -1304,16 +1344,16 @@ case 30:
 		  op->index = yyvsp[-2].indexreg;
 		}
     break;
-case 31:
-#line 312 "m68k-parse.y"
+case 35:
+#line 339 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-1].reg;
 		  op->index = yyvsp[-2].indexreg;
 		}
     break;
-case 32:
-#line 318 "m68k-parse.y"
+case 36:
+#line 345 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-5].reg;
@@ -1322,8 +1362,8 @@ case 32:
 		  op->odisp = yyvsp[-1].exp;
 		}
     break;
-case 33:
-#line 326 "m68k-parse.y"
+case 37:
+#line 353 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-3].reg;
@@ -1331,8 +1371,8 @@ case 33:
 		  op->odisp = yyvsp[-1].exp;
 		}
     break;
-case 34:
-#line 333 "m68k-parse.y"
+case 38:
+#line 360 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-5].reg;
@@ -1340,62 +1380,62 @@ case 34:
 		  op->odisp = yyvsp[-1].exp;
 		}
     break;
-case 35:
-#line 340 "m68k-parse.y"
+case 39:
+#line 367 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-3].reg;
 		  op->odisp = yyvsp[-1].exp;
 		}
     break;
-case 36:
-#line 346 "m68k-parse.y"
-{
-		  op->mode = PRE;
-		  op->reg = yyvsp[-5].reg;
-		  op->disp = yyvsp[-7].exp;
-		  op->index = yyvsp[-3].indexreg;
-		  op->odisp = yyvsp[-1].exp;
-		}
-    break;
-case 37:
-#line 354 "m68k-parse.y"
-{
-		  op->mode = PRE;
-		  op->reg = yyvsp[-5].reg;
-		  op->index = yyvsp[-3].indexreg;
-		  op->odisp = yyvsp[-1].exp;
-		}
-    break;
-case 38:
-#line 361 "m68k-parse.y"
-{
-		  if (yyvsp[-5].reg == PC || yyvsp[-5].reg == ZPC)
-		    yyerror (_("syntax error"));
-		  op->mode = PRE;
-		  op->reg = yyvsp[-3].reg;
-		  op->disp = yyvsp[-7].exp;
-		  op->index.reg = yyvsp[-5].reg;
-		  op->index.size = SIZE_UNSPEC;
-		  op->index.scale = 1;
-		  op->odisp = yyvsp[-1].exp;
-		}
-    break;
-case 39:
-#line 373 "m68k-parse.y"
-{
-		  if (yyvsp[-5].reg == PC || yyvsp[-5].reg == ZPC)
-		    yyerror (_("syntax error"));
-		  op->mode = PRE;
-		  op->reg = yyvsp[-3].reg;
-		  op->index.reg = yyvsp[-5].reg;
-		  op->index.size = SIZE_UNSPEC;
-		  op->index.scale = 1;
-		  op->odisp = yyvsp[-1].exp;
-		}
-    break;
 case 40:
-#line 384 "m68k-parse.y"
+#line 373 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  op->mode = PRE;
+		  op->reg = yyvsp[-5].reg;
+		  op->disp = yyvsp[-7].exp;
+		  op->index = yyvsp[-3].indexreg;
+		  op->odisp = yyvsp[-1].exp;
+		}
+    break;
+case 41:
+#line 381 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  op->mode = PRE;
+		  op->reg = yyvsp[-5].reg;
+		  op->index = yyvsp[-3].indexreg;
+		  op->odisp = yyvsp[-1].exp;
+		}
+    break;
+case 42:
+#line 388 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  if (yyvsp[-5].reg == PC || yyvsp[-5].reg == ZPC)
+		    yyerror (_("syntax error"));
+		  op->mode = PRE;
+		  op->reg = yyvsp[-3].reg;
+		  op->disp = yyvsp[-7].exp;
+		  op->index.reg = yyvsp[-5].reg;
+		  op->index.size = SIZE_UNSPEC;
+		  op->index.scale = 1;
+		  op->odisp = yyvsp[-1].exp;
+		}
+    break;
+case 43:
+#line 400 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  if (yyvsp[-5].reg == PC || yyvsp[-5].reg == ZPC)
+		    yyerror (_("syntax error"));
+		  op->mode = PRE;
+		  op->reg = yyvsp[-3].reg;
+		  op->index.reg = yyvsp[-5].reg;
+		  op->index.size = SIZE_UNSPEC;
+		  op->index.scale = 1;
+		  op->odisp = yyvsp[-1].exp;
+		}
+    break;
+case 44:
+#line 411 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = PRE;
 		  op->reg = yyvsp[-3].reg;
@@ -1404,8 +1444,8 @@ case 40:
 		  op->odisp = yyvsp[-1].exp;
 		}
     break;
-case 41:
-#line 397 "m68k-parse.y"
+case 45:
+#line 424 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  /* We use optzapc to avoid a shift/reduce conflict.  */
 		  if (yyvsp[-1].reg < ADDR0 || yyvsp[-1].reg > ADDR7)
@@ -1414,8 +1454,8 @@ case 41:
 		  op->reg = yyvsp[-1].reg;
 		}
     break;
-case 42:
-#line 405 "m68k-parse.y"
+case 46:
+#line 432 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  /* We use optzapc to avoid a shift/reduce conflict.  */
 		  if (yyvsp[-2].reg < ADDR0 || yyvsp[-2].reg > ADDR7)
@@ -1424,8 +1464,8 @@ case 42:
 		  op->reg = yyvsp[-2].reg;
 		}
     break;
-case 43:
-#line 413 "m68k-parse.y"
+case 47:
+#line 440 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  /* We use optzapc to avoid a shift/reduce conflict.  */
 		  if (yyvsp[-2].reg < ADDR0 || yyvsp[-2].reg > ADDR7)
@@ -1434,8 +1474,8 @@ case 43:
 		  op->reg = yyvsp[-2].reg;
 		}
     break;
-case 44:
-#line 421 "m68k-parse.y"
+case 48:
+#line 448 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->reg = yyvsp[-4].reg;
 		  op->disp = yyvsp[-1].exp;
@@ -1446,8 +1486,8 @@ case 44:
 		    op->mode = DISP;
 		}
     break;
-case 45:
-#line 431 "m68k-parse.y"
+case 49:
+#line 458 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-5].reg;
@@ -1455,8 +1495,8 @@ case 45:
 		  op->index = yyvsp[-1].indexreg;
 		}
     break;
-case 46:
-#line 438 "m68k-parse.y"
+case 50:
+#line 465 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-9].reg;
@@ -1465,8 +1505,8 @@ case 46:
 		  op->odisp = yyvsp[-2].exp;
 		}
     break;
-case 47:
-#line 446 "m68k-parse.y"
+case 51:
+#line 473 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-8].reg;
@@ -1474,8 +1514,8 @@ case 47:
 		  op->odisp = yyvsp[-1].exp;
 		}
     break;
-case 48:
-#line 453 "m68k-parse.y"
+case 52:
+#line 480 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  op->mode = PRE;
 		  op->reg = yyvsp[-9].reg;
@@ -1484,98 +1524,98 @@ case 48:
 		  op->odisp = yyvsp[-1].exp;
 		}
     break;
-case 50:
-#line 468 "m68k-parse.y"
+case 54:
+#line 495 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.indexreg.reg = yyvsp[0].reg;
 		  yyval.indexreg.size = SIZE_UNSPEC;
 		  yyval.indexreg.scale = 1;
 		}
     break;
-case 52:
-#line 482 "m68k-parse.y"
+case 56:
+#line 509 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.indexreg.reg = yyvsp[0].reg;
 		  yyval.indexreg.size = SIZE_UNSPEC;
 		  yyval.indexreg.scale = 1;
-		}
-    break;
-case 63:
-#line 525 "m68k-parse.y"
-{
-		  yyval.reg = ZADDR0;
 		}
     break;
 case 67:
-#line 542 "m68k-parse.y"
+#line 552 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.reg = ZADDR0;
 		}
     break;
-case 68:
-#line 546 "m68k-parse.y"
+case 71:
+#line 569 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  yyval.reg = ZADDR0;
+		}
+    break;
+case 72:
+#line 573 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.reg = yyvsp[0].reg;
 		}
     break;
-case 69:
-#line 555 "m68k-parse.y"
+case 73:
+#line 582 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.exp.exp.X_op = O_absent;
 		  yyval.exp.size = SIZE_UNSPEC;
 		}
     break;
-case 70:
-#line 560 "m68k-parse.y"
+case 74:
+#line 587 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.exp = yyvsp[0].exp;
 		}
     break;
-case 71:
-#line 569 "m68k-parse.y"
+case 75:
+#line 596 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.exp.exp.X_op = O_absent;
 		  yyval.exp.size = SIZE_UNSPEC;
 		}
     break;
-case 72:
-#line 574 "m68k-parse.y"
+case 76:
+#line 601 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.exp = yyvsp[-1].exp;
 		}
     break;
-case 74:
-#line 584 "m68k-parse.y"
-{
-		  yyval.mask = yyvsp[-2].mask | yyvsp[0].mask;
-		}
-    break;
-case 75:
-#line 588 "m68k-parse.y"
-{
-		  yyval.mask = (1 << yyvsp[-2].onereg) | yyvsp[0].mask;
-		}
-    break;
-case 76:
-#line 600 "m68k-parse.y"
-{
-		  yyval.mask = 1 << yyvsp[0].onereg;
-		}
-    break;
 case 78:
-#line 605 "m68k-parse.y"
+#line 611 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.mask = yyvsp[-2].mask | yyvsp[0].mask;
 		}
     break;
 case 79:
-#line 609 "m68k-parse.y"
+#line 615 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.mask = (1 << yyvsp[-2].onereg) | yyvsp[0].mask;
 		}
     break;
 case 80:
-#line 616 "m68k-parse.y"
+#line 627 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  yyval.mask = 1 << yyvsp[0].onereg;
+		}
+    break;
+case 82:
+#line 632 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  yyval.mask = yyvsp[-2].mask | yyvsp[0].mask;
+		}
+    break;
+case 83:
+#line 636 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
+{
+		  yyval.mask = (1 << yyvsp[-2].onereg) | yyvsp[0].mask;
+		}
+    break;
+case 84:
+#line 643 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  if (yyvsp[-2].onereg <= yyvsp[0].onereg)
 		    yyval.mask = (1 << (yyvsp[0].onereg + 1)) - 1 - ((1 << yyvsp[-2].onereg) - 1);
@@ -1583,26 +1623,26 @@ case 80:
 		    yyval.mask = (1 << (yyvsp[-2].onereg + 1)) - 1 - ((1 << yyvsp[0].onereg) - 1);
 		}
     break;
-case 81:
-#line 626 "m68k-parse.y"
+case 85:
+#line 653 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.onereg = yyvsp[0].reg - DATA0;
 		}
     break;
-case 82:
-#line 630 "m68k-parse.y"
+case 86:
+#line 657 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.onereg = yyvsp[0].reg - ADDR0 + 8;
 		}
     break;
-case 83:
-#line 634 "m68k-parse.y"
+case 87:
+#line 661 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  yyval.onereg = yyvsp[0].reg - FP0 + 16;
 		}
     break;
-case 84:
-#line 638 "m68k-parse.y"
+case 88:
+#line 665 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 {
 		  if (yyvsp[0].reg == FPI)
 		    yyval.onereg = 24;
@@ -1614,7 +1654,7 @@ case 84:
     break;
 }
 
-#line 705 "/usr/share/bison-1.35/bison.simple"
+#line 706 "/usr/share/bison/bison.simple"
 
 
   yyvsp -= yylen;
@@ -1845,7 +1885,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 648 "m68k-parse.y"
+#line 675 "/nevyn/big/src/binutils/binutils-2.16/src.snap/gas/.././gas/config/m68k-parse.y"
 
 
 /* The string to parse is stored here, and modified by yylex.  */
@@ -1958,19 +1998,21 @@ yylex ()
     case '/':
     case '[':
     case ']':
+    case '<':
+    case '>':
       return *str++;
     case '+':
       /* It so happens that a '+' can only appear at the end of an
-         operand.  If it appears anywhere else, it must be a unary
-         plus on an expression.  */
-      if (str[1] == '\0')
+	 operand, or if it is trailed by an '&'(see mac load insn).
+	 If it appears anywhere else, it must be a unary.  */
+      if (str[1] == '\0' || (str[1] == '&' && str[2] == '\0'))
 	return *str++;
       break;
     case '-':
       /* A '-' can only appear in -(ar), rn-rn, or ar@-.  If it
          appears anywhere else, it must be a unary minus on an
-         expression.  */
-      if (str[1] == '\0')
+         expression, unless it it trailed by a '&'(see mac load insn).  */
+      if (str[1] == '\0' || (str[1] == '&' && str[2] == '\0'))
 	return *str++;
       s = str + 1;
       if (*s == '(')

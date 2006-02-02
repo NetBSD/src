@@ -244,6 +244,7 @@ FIXME! hex is ambiguous with any digit
 */
 
 #include <stdio.h>
+#include "itbl-lex.h"
 #include "itbl-ops.h"
 
 /* #define DEBUG */
@@ -270,13 +271,10 @@ FIXME! hex is ambiguous with any digit
 
 static int sbit, ebit;
 static struct itbl_entry *insn=0;
-extern int insntbl_line;
-int yyparse PARAMS ((void));
-int yylex PARAMS ((void));
 static int yyerror PARAMS ((const char *));
 
 
-#line 283 "itbl-parse.y"
+#line 281 "itbl-parse.y"
 #ifndef YYSTYPE
 typedef union 
   {
@@ -358,9 +356,9 @@ static const short yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined. */
 static const short yyrline[] =
 {
-       0,   300,   304,   306,   309,   316,   316,   325,   326,   329,
-     331,   332,   335,   341,   346,   353,   362,   367,   371,   377,
-     383,   389,   396,   403,   411,   417,   422,   429,   437,   445
+       0,   298,   302,   304,   307,   314,   314,   323,   324,   327,
+     329,   330,   333,   339,   344,   351,   360,   365,   369,   375,
+     381,   387,   394,   401,   409,   415,   420,   427,   435,   443
 };
 #endif
 
@@ -451,7 +449,7 @@ static const short yycheck[] =
       36,    45,     6,    38,    13,    16
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/share/bison-1.35/bison.simple"
+#line 3 "/usr/share/bison/bison.simple"
 
 /* Skeleton output parser for bison,
 
@@ -739,6 +737,7 @@ yystrlen (yystr)
 
 # ifndef yystpcpy
 #  if defined (__GLIBC__) && defined (_STRING_H) && defined (_GNU_SOURCE)
+#   include <string.h>
 #   define yystpcpy stpcpy
 #  else
 /* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
@@ -764,7 +763,7 @@ yystpcpy (yydest, yysrc)
 # endif
 #endif
 
-#line 315 "/usr/share/bison-1.35/bison.simple"
+#line 316 "/usr/share/bison/bison.simple"
 
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
@@ -1158,7 +1157,7 @@ yyreduce:
   switch (yyn) {
 
 case 4:
-#line 311 "itbl-parse.y"
+#line 309 "itbl-parse.y"
 {
 	    DBG (("line %d: entry pnum=%d type=%d name=%s value=x%x\n", 
 	    	    insntbl_line, yyvsp[-4].num, yyvsp[-3].num, yyvsp[-2].str, yyvsp[-1].val));
@@ -1166,7 +1165,7 @@ case 4:
 	  }
     break;
 case 5:
-#line 317 "itbl-parse.y"
+#line 315 "itbl-parse.y"
 {
 	    DBG (("line %d: entry pnum=%d type=INSN name=%s value=x%x",
 	    	    insntbl_line, yyvsp[-5].num, yyvsp[-3].str, yyvsp[-2].val));
@@ -1175,32 +1174,32 @@ case 5:
 	  }
     break;
 case 6:
-#line 324 "itbl-parse.y"
+#line 322 "itbl-parse.y"
 {}
     break;
 case 12:
-#line 337 "itbl-parse.y"
+#line 335 "itbl-parse.y"
 {
 	    DBGL2 (("ftype\n"));
 	    yyval.num = yyvsp[0].num;
 	  }
     break;
 case 13:
-#line 342 "itbl-parse.y"
+#line 340 "itbl-parse.y"
 {
 	    DBGL2 (("addr\n"));
 	    yyval.num = ADDR;
 	  }
     break;
 case 14:
-#line 347 "itbl-parse.y"
+#line 345 "itbl-parse.y"
 {
 	    DBGL2 (("immed\n"));
 	    yyval.num = IMMED;
 	  }
     break;
 case 15:
-#line 355 "itbl-parse.y"
+#line 353 "itbl-parse.y"
 {
 	    DBG (("line %d: field type=%d sbit=%d ebit=%d, flags=0x%x\n", 
 	    	    insntbl_line, yyvsp[-2].num, sbit, ebit, yyvsp[0].val));
@@ -1208,38 +1207,38 @@ case 15:
 	  }
     break;
 case 16:
-#line 364 "itbl-parse.y"
+#line 362 "itbl-parse.y"
 {
 	    yyval.val = yyvsp[-2].num | yyvsp[0].val;
 	  }
     break;
 case 17:
-#line 368 "itbl-parse.y"
+#line 366 "itbl-parse.y"
 {
 	    yyval.val = yyvsp[-1].val;
 	  }
     break;
 case 18:
-#line 372 "itbl-parse.y"
+#line 370 "itbl-parse.y"
 {
 	    yyval.val = yyvsp[0].num;
 	  }
     break;
 case 19:
-#line 379 "itbl-parse.y"
+#line 377 "itbl-parse.y"
 {
 	    DBGL2 (("flags=%d\n", yyvsp[0].val));
 	    yyval.val = yyvsp[0].val;
 	  }
     break;
 case 20:
-#line 384 "itbl-parse.y"
+#line 382 "itbl-parse.y"
 {
 	    yyval.val = 0;
 	  }
     break;
 case 21:
-#line 391 "itbl-parse.y"
+#line 389 "itbl-parse.y"
 {
 	    DBGL2 (("range %d %d\n", yyvsp[-2].num, yyvsp[0].num));
 	    sbit = yyvsp[-2].num;
@@ -1247,56 +1246,56 @@ case 21:
 	  }
     break;
 case 22:
-#line 397 "itbl-parse.y"
+#line 395 "itbl-parse.y"
 {
 	    sbit = 31;
 	    ebit = 0;
 	  }
     break;
 case 23:
-#line 405 "itbl-parse.y"
+#line 403 "itbl-parse.y"
 {
 	    DBGL2 (("pnum=%d\n",yyvsp[0].num));
 	    yyval.num = yyvsp[0].num;
 	  }
     break;
 case 24:
-#line 413 "itbl-parse.y"
+#line 411 "itbl-parse.y"
 {
 	    DBGL2 (("dreg\n"));
 	    yyval.num = DREG;
 	  }
     break;
 case 25:
-#line 418 "itbl-parse.y"
+#line 416 "itbl-parse.y"
 {
 	    DBGL2 (("creg\n"));
 	    yyval.num = CREG;
 	  }
     break;
 case 26:
-#line 423 "itbl-parse.y"
+#line 421 "itbl-parse.y"
 {
 	    DBGL2 (("greg\n"));
 	    yyval.num = GREG;
 	  }
     break;
 case 27:
-#line 431 "itbl-parse.y"
+#line 429 "itbl-parse.y"
 {
 	    DBGL2 (("name=%s\n",yyvsp[0].str));
 	    yyval.str = yyvsp[0].str; 
 	  }
     break;
 case 28:
-#line 439 "itbl-parse.y"
+#line 437 "itbl-parse.y"
 {
 	    DBGL2 (("num=%d\n",yyvsp[0].num));
 	    yyval.num = yyvsp[0].num;
 	  }
     break;
 case 29:
-#line 447 "itbl-parse.y"
+#line 445 "itbl-parse.y"
 {
 	    DBGL2 (("val=x%x\n",yyvsp[0].num));
 	    yyval.val = yyvsp[0].num;
@@ -1304,7 +1303,7 @@ case 29:
     break;
 }
 
-#line 705 "/usr/share/bison-1.35/bison.simple"
+#line 706 "/usr/share/bison/bison.simple"
 
 
   yyvsp -= yylen;
@@ -1535,7 +1534,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 452 "itbl-parse.y"
+#line 450 "itbl-parse.y"
 
 
 static int

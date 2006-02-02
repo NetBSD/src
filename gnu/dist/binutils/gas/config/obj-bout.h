@@ -1,6 +1,6 @@
 /* b.out object file format
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000,
-   2002, 2003 Free Software Foundation, Inc.
+   2002, 2003, 2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -106,8 +106,10 @@ struct exec
     unsigned char a_relaxable;	/* Contains enough info to relax     */
   };
 
+#define	EXEC_BYTES_SIZE	(10 * 4 + 4 * 1)
+
 #define N_BADMAG(x)	(((x).a_magic)!=BMAGIC)
-#define N_TXTOFF(x)	( sizeof (struct exec) )
+#define N_TXTOFF(x)	EXEC_BYTES_SIZE
 #define N_DATOFF(x)	( N_TXTOFF(x) + (x).a_text )
 #define N_TROFF(x)	( N_DATOFF(x) + (x).a_data )
 #define N_DROFF(x)	( N_TROFF(x) + (x).a_trsize )
@@ -245,14 +247,14 @@ struct relocation_info
 
 /* File header macro and type definition */
 
-#define H_GET_FILE_SIZE(h)	(sizeof (struct exec) + \
+#define H_GET_FILE_SIZE(h)	(EXEC_BYTES_SIZE + \
 				 H_GET_TEXT_SIZE(h) + H_GET_DATA_SIZE(h) + \
 				 H_GET_SYMBOL_TABLE_SIZE(h) + \
 				 H_GET_TEXT_RELOCATION_SIZE(h) + \
 				 H_GET_DATA_RELOCATION_SIZE(h) + \
 				 (h)->string_table_size)
 
-#define H_GET_HEADER_SIZE(h)		(sizeof (struct exec))
+#define H_GET_HEADER_SIZE(h)		EXEC_BYTES_SIZE
 #define H_GET_TEXT_SIZE(h)		((h)->header.a_text)
 #define H_GET_DATA_SIZE(h)		((h)->header.a_data)
 #define H_GET_BSS_SIZE(h)		((h)->header.a_bss)
@@ -280,8 +282,7 @@ struct relocation_info
 
 #define H_SET_TEXT_RELOCATION_SIZE(h,v)	((h)->header.a_trsize = (v))
 #define H_SET_DATA_RELOCATION_SIZE(h,v)	((h)->header.a_drsize = (v))
-#define H_SET_SYMBOL_TABLE_SIZE(h,v)	((h)->header.a_syms = (v) * \
-					 sizeof (struct nlist))
+#define H_SET_SYMBOL_TABLE_SIZE(h,v)	((h)->header.a_syms = (v) * 12)
 
 #define H_SET_MAGIC_NUMBER(h,v)		((h)->header.a_magic = (v))
 
@@ -305,6 +306,12 @@ object_headers;
 /* unused hooks.  */
 #define OBJ_EMIT_LINENO(a, b, c)	{;}
 #define obj_pre_write_hook(a)		{;}
+
+#if WORDS_BIGENDIAN
+#define host_number_to_chars number_to_chars_bigendian
+#else
+#define host_number_to_chars number_to_chars_littleendian
+#endif
 
 #if __STDC__
 struct fix;

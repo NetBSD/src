@@ -1,5 +1,5 @@
 /* tc-ip2k.c -- Assembler for the Scenix IP2xxx.
-   Copyright (C) 2000, 2002, 2003 Free Software Foundation.
+   Copyright (C) 2000, 2002, 2003, 2005 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -173,7 +173,7 @@ md_assemble (str)
        the PCL (pc + 2) >> 1 is odd or even.  */
     {
       enum cgen_parse_operand_result result_type;
-      long value;
+      bfd_vma value;
       const char *curpc_plus_2 = ".+2";
       const char *err;
 
@@ -436,7 +436,7 @@ ip2k_apply_fix3 (fixP, valueP, seg)
       /* Canonical name, since used a lot.  */
       CGEN_CPU_DESC cd = gas_cgen_cpu_desc;
       CGEN_INSN_INT insn_value
-	= cgen_get_insn_value (cd, where,
+	= cgen_get_insn_value (cd, (unsigned char *) where,
 			       CGEN_INSN_BITSIZE (fixP->fx_cgen.insn));
       /* Preserve (DP) or (SP) specification.  */
       *valueP += (insn_value & 0x180);

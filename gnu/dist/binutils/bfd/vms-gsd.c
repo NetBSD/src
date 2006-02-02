@@ -1,6 +1,6 @@
 /* vms-gsd.c -- BFD back-end for VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    go and read the openVMS linker manual (esp. appendix B)
@@ -358,9 +358,9 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 		  return -1;
 		}
 	      old_flags = bfd_getl16 (vms_rec + 2);
-	      section->_raw_size = bfd_getl32 (vms_rec + 4);  /* allocation */
+	      section->size = bfd_getl32 (vms_rec + 4);  /* allocation */
 	      new_flags = vms_secflag_by_name (abfd, vax_section_flags, name,
-					       section->_raw_size > 0);
+					       section->size > 0);
 	      if (old_flags & EGPS_S_V_REL)
 		new_flags |= SEC_RELOC;
 	      if (old_flags & GPS_S_M_OVR)
@@ -377,7 +377,7 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 	      if ((base_addr % align_addr) != 0)
 		base_addr += (align_addr - (base_addr % align_addr));
 	      section->vma = (bfd_vma)base_addr;
-	      base_addr += section->_raw_size;
+	      base_addr += section->size;
 
 	      /* global section is common symbol  */
 
@@ -401,21 +401,21 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 	      if (old_section != 0)
 		{
 		  section->contents = old_section->contents;
-		  if (section->_raw_size < old_section->_raw_size)
+		  if (section->size < old_section->size)
 		    {
 		      (*_bfd_error_handler)
 			(_("Size mismatch section %s=%lx, %s=%lx"),
 			 old_section->name,
-			 (unsigned long) old_section->_raw_size,
+			 (unsigned long) old_section->size,
 			 section->name,
-			 (unsigned long) section->_raw_size);
+			 (unsigned long) section->size);
 		      return -1;
 		    }
-		  else if (section->_raw_size > old_section->_raw_size)
+		  else if (section->size > old_section->size)
 		    {
 		      section->contents = ((unsigned char *)
 					   bfd_realloc (old_section->contents,
-							section->_raw_size));
+							section->size));
 		      if (section->contents == NULL)
 			{
 			  bfd_set_error (bfd_error_no_memory);
@@ -426,19 +426,18 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 	      else
 		{
 		  section->contents = ((unsigned char *)
-				       bfd_zmalloc (section->_raw_size));
+				       bfd_zmalloc (section->size));
 		  if (section->contents == NULL)
 		    {
 		      bfd_set_error (bfd_error_no_memory);
 		      return -1;
 		    }
 		}
-	      section->_cooked_size = section->_raw_size;
 #if VMS_DEBUG
 	      vms_debug (4, "gsd psc %d (%s, flags %04x=%s) ",
 			 section->index, name, old_flags, flag2str (gpsflagdesc, old_flags));
 	      vms_debug (4, "%d bytes at 0x%08lx (mem %p)\n",
-			 section->_raw_size, section->vma, section->contents);
+			 section->size, section->vma, section->contents);
 #endif
 
 	      gsd_size = vms_rec[8] + 9;
@@ -521,7 +520,7 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 		  else
 		    psect = vms_rec[value_offset-1];
 
-		  symbol->section = (asection *)psect;
+		  symbol->section = (asection *) (size_t) psect;
 #if VMS_DEBUG
 		  vms_debug(4, "gsd sym def #%d (%s, %d [%p], %04x=%s)\n", abfd->symcount,
 				symbol->name, (int)symbol->section, symbol->section, old_flags, flag2str(gsyflagdesc, old_flags));
@@ -603,9 +602,9 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 	    if (!section)
 	      return -1;
 	    old_flags = bfd_getl16 (vms_rec + 6);
-	    section->_raw_size = bfd_getl32 (vms_rec + 8);	/* allocation */
+	    section->size = bfd_getl32 (vms_rec + 8);	/* allocation */
 	    new_flags = vms_secflag_by_name (abfd, evax_section_flags, name,
-					     section->_raw_size > 0);
+					     section->size > 0);
 	    if (old_flags & EGPS_S_V_REL)
 	      new_flags |= SEC_RELOC;
 	    if (!bfd_set_section_flags (abfd, section, new_flags))
@@ -615,17 +614,16 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 	    if ((base_addr % align_addr) != 0)
 	      base_addr += (align_addr - (base_addr % align_addr));
 	    section->vma = (bfd_vma)base_addr;
-	    base_addr += section->_raw_size;
+	    base_addr += section->size;
 	    section->contents = ((unsigned char *)
-				 bfd_zmalloc (section->_raw_size));
+				 bfd_zmalloc (section->size));
 	    if (section->contents == NULL)
 	      return -1;
-	    section->_cooked_size = section->_raw_size;
 #if VMS_DEBUG
 	    vms_debug(4, "egsd psc %d (%s, flags %04x=%s) ",
 		       section->index, name, old_flags, flag2str(gpsflagdesc, old_flags));
 	    vms_debug(4, "%d bytes at 0x%08lx (mem %p)\n",
-		       section->_raw_size, section->vma, section->contents);
+		       section->size, section->vma, section->contents);
 #endif
 	  }
 	  break;
@@ -758,7 +756,7 @@ _bfd_vms_write_gsd (abfd, objtype)
   while (section != 0)
     {
 #if VMS_DEBUG
-  vms_debug (3, "Section #%d %s, %d bytes\n", section->index, section->name, (int)section->_raw_size);
+  vms_debug (3, "Section #%d %s, %d bytes\n", section->index, section->name, (int)section->size);
 #endif
 
 	/* 13 bytes egsd, max 31 chars name -> should be 44 bytes */
@@ -824,10 +822,10 @@ _bfd_vms_write_gsd (abfd, objtype)
       else
 	{
 	  new_flags = vms_esecflag_by_name (evax_section_flags, sname,
-					    section->_raw_size > 0);
+					    section->size > 0);
 	}
       _bfd_vms_output_short (abfd, new_flags);
-      _bfd_vms_output_long (abfd, (unsigned long) section->_raw_size);
+      _bfd_vms_output_long (abfd, (unsigned long) section->size);
       _bfd_vms_output_counted (abfd, sname);
       _bfd_vms_output_flush (abfd);
 

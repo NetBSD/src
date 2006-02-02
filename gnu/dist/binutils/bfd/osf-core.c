@@ -56,11 +56,11 @@ struct osf_core_struct
 #define core_command(bfd) (core_hdr(bfd)->cmd)
 
 static asection *
-make_bfd_asection (abfd, name, flags, _raw_size, vma, filepos)
+make_bfd_asection (abfd, name, flags, size, vma, filepos)
      bfd *abfd;
      const char *name;
      flagword flags;
-     bfd_size_type _raw_size;
+     bfd_size_type size;
      bfd_vma vma;
      file_ptr filepos;
 {
@@ -71,7 +71,7 @@ make_bfd_asection (abfd, name, flags, _raw_size, vma, filepos)
     return NULL;
 
   asect->flags = flags;
-  asect->_raw_size = _raw_size;
+  asect->size = size;
   asect->vma = vma;
   asect->filepos = filepos;
   asect->alignment_power = 8;

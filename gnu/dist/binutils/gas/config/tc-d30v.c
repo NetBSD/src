@@ -1,5 +1,6 @@
 /* tc-d30v.c -- Assembler code for the Mitsubishi D30V
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -926,9 +927,6 @@ write_2_short (opcode1, insn1, opcode2, insn2, exec_type, fx)
       as_fatal (_("unknown execution type passed to write_2_short()"));
     }
 
-#if 0
-  printf ("writing out %llx\n", insn);
-#endif
   f = frag_more (8);
   d30v_number_to_chars (f, insn, 8);
 
@@ -1431,9 +1429,9 @@ do_assemble (str, opcode, shortp, is_parallel)
      int shortp;
      int is_parallel;
 {
-  unsigned char *op_start;
-  unsigned char *save;
-  unsigned char *op_end;
+  char *op_start;
+  char *save;
+  char *op_end;
   char           name[NAME_BUF_LEN];
   int            cmp_hack;
   int            nlen = 0;
@@ -1446,11 +1444,11 @@ do_assemble (str, opcode, shortp, is_parallel)
     str++;
 
   /* Find the opcode end.  */
-  for (op_start = op_end = (unsigned char *) (str);
+  for (op_start = op_end = str;
        *op_end
        && nlen < (NAME_BUF_LEN - 1)
        && *op_end != '/'
-       && !is_end_of_line[*op_end] && *op_end != ' ';
+       && !is_end_of_line[(unsigned char) *op_end] && *op_end != ' ';
        op_end++)
     {
       name[nlen] = TOLOWER (op_start[nlen]);
@@ -1477,9 +1475,6 @@ do_assemble (str, opcode, shortp, is_parallel)
 	  as_bad (_("unknown condition code: %s"), tmp);
 	  return -1;
 	}
-#if 0
-      printf ("condition code=%d\n", i);
-#endif
       opcode->ecc = i;
       op_end += 3;
     }
@@ -1520,10 +1515,6 @@ do_assemble (str, opcode, shortp, is_parallel)
     }
   else
     cmp_hack = 0;
-
-#if 0
-  printf ("cmp_hack=%d\n", cmp_hack);
-#endif
 
   /* Need to look for .s or .l.  */
   if (name[nlen - 2] == '.')
@@ -1758,9 +1749,6 @@ find_format (opcode, myops, fsize, cmp_hack)
 		    match = 0;
 		}
 	    }
-#if 0
-	  printf ("through the loop: match=%d\n", match);
-#endif
 	  /* We're only done if the operands matched so far AND there
 	     are no more to check.  */
 	  if (match && myops[j].X_op == 0)
@@ -1779,9 +1767,6 @@ find_format (opcode, myops, fsize, cmp_hack)
 	    }
 	  fm = (struct d30v_format *) &d30v_format_table[++k];
 	}
-#if 0
-      printf ("trying another format: i=%d\n", i);
-#endif
     }
   return NULL;
 }

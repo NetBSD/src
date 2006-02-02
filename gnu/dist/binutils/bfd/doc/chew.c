@@ -1,6 +1,6 @@
 /* chew
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001,
-   2002, 2003
+   2002, 2003, 2005
    Free Software Foundation, Inc.
    Contributed by steve chamberlain @cygnus
 
@@ -587,45 +587,6 @@ translatecomments ()
 
   pc++;
 }
-
-#if 0
-
-/* This is not currently used.  */
-
-/* turn everything not starting with a . into a comment */
-
-static void
-manglecomments ()
-{
-  unsigned int idx = 0;
-  string_type out;
-  init_string (&out);
-
-  while (at (tos, idx))
-    {
-      if (at (tos, idx) == '\n' && at (tos, idx + 1) == '*')
-	{
-	  cattext (&out, "	/*");
-	  idx += 2;
-	}
-      else if (at (tos, idx) == '*' && at (tos, idx + 1) == '}')
-	{
-	  cattext (&out, "*/");
-	  idx += 2;
-	}
-      else
-	{
-	  catchar (&out, at (tos, idx));
-	  idx++;
-	}
-    }
-
-  overwrite_string (tos, &out);
-
-  pc++;
-}
-
-#endif
 
 /* Mod tos so that only lines with leading dots remain */
 static void

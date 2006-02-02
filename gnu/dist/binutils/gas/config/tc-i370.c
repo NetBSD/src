@@ -1,7 +1,7 @@
 /* tc-i370.c -- Assembler for the IBM 360/370/390 instruction set.
    Loosely based on the ppc files by Linas Vepstas <linas@linas.org> 1998, 99
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
-   Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+   2004, 2005 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -425,8 +425,8 @@ static enum { SHLIB_NONE, SHLIB_PIC, SHILB_MRELOCATABLE } shlib = SHLIB_NONE;
 static flagword i370_flags = 0;
 
 #ifndef WORKING_DOT_WORD
-const int md_short_jump_size = 4;
-const int md_long_jump_size = 4;
+int md_short_jump_size = 4;
+int md_long_jump_size = 4;
 #endif
 
 #ifdef OBJ_ELF
@@ -588,7 +588,8 @@ md_begin ()
    op_end = i370_opcodes + i370_num_opcodes;
    for (op = i370_opcodes; op < op_end; op++)
      {
-       know ((op->opcode & op->mask) == op->opcode);
+       know ((op->opcode.i[0] & op->mask.i[0]) == op->opcode.i[0]
+	     && (op->opcode.i[1] & op->mask.i[1]) == op->opcode.i[1]);
 
        if ((op->flags & i370_cpu) != 0)
          {
@@ -687,11 +688,6 @@ i370_elf_suffix (str_p, exp_p)
 
   static struct map_bfd mapping[] =
   {
-#if 0
-    MAP ("l",		BFD_RELOC_LO16),
-    MAP ("h",		BFD_RELOC_HI16),
-    MAP ("ha",		BFD_RELOC_HI16_S),
-#endif
     /* warnings with -mrelocatable.  */
     MAP ("fixup",	BFD_RELOC_CTOR),
     { (char *)0, 0,	BFD_RELOC_UNUSED }
@@ -2060,7 +2056,7 @@ md_assemble (str)
       /* If there are fewer operands in the line then are called
 	 for by the instruction, we want to skip the optional
 	 operand.  */
-      nwanted = strlen (opcode->operands);
+      nwanted = strlen ((char *) opcode->operands);
       if (have_optional_index)
 	{
 	  if (opcount < nwanted)
@@ -2427,7 +2423,7 @@ i370_macro (str, macro)
       else
         {
           arg = strtol (format + 1, &send, 10);
-          know (send != format && arg >= 0 && arg < count);
+          know (send != format && arg >= 0 && (unsigned) arg < count);
           len += strlen (operands[arg]);
           format = send;
         }
@@ -2453,60 +2449,6 @@ i370_macro (str, macro)
   /* Assemble the constructed instruction.  */
   md_assemble (complete);
 }
-
-#if 0
-/* For ELF, add support for SHF_EXCLUDE and SHT_ORDERED */
-
-int
-i370_section_letter (letter, ptr_msg)
-     int letter;
-     char **ptr_msg;
-{
-  if (letter == 'e')
-    return SHF_EXCLUDE;
-
-  *ptr_msg = "Bad .section directive: want a,e,w,x,M,S in string";
-  return 0;
-}
-
-int
-i370_section_word (str, len)
-    char *str;
-    size_t len;
-{
-  if (len == 7 && strncmp (str, "exclude", 7) == 0)
-    return SHF_EXCLUDE;
-
-  return -1;
-}
-
-int
-i370_section_type (str, len)
-    char *str;
-    size_t len;
-{
-  if (len == 7 && strncmp (str, "ordered", 7) == 0)
-     return SHT_ORDERED;
-
-  return -1;
-}
-
-int
-i370_section_flags (flags, attr, type)
-     int flags;
-     int attr;
-     int type;
-{
-  if (type == SHT_ORDERED)
-    flags |= SEC_ALLOC | SEC_LOAD | SEC_SORT_ENTRIES;
-
-  if (attr & SHF_EXCLUDE)
-    flags |= SEC_EXCLUDE;
-
-  return flags;
-}
-#endif /* OBJ_ELF */
-
 
 /* Pseudo-op handling.  */
 
@@ -2787,13 +2729,6 @@ md_apply_fix3 (fixP, valP, seg)
 	 Why?  Because we are not expecting the compiler to generate
 	 any operands that need relocation.  Due to the 12-bit naturew of
 	 i370 addressing, this would be unusual.  */
-#if 0
-      if ((operand->flags & I370_OPERAND_RELATIVE) != 0
-          && operand->bits == 12
-          && operand->shift == 0)
-        fixP->fx_r_type = BFD_RELOC_I370_D12;
-      else
-#endif
         {
           char *sfile;
           unsigned int sline;

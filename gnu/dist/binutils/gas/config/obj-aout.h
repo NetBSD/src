@@ -1,6 +1,6 @@
 /* obj-aout.h, a.out object file format for gas, the assembler.
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000,
-   2002, 2003 Free Software Foundation, Inc.
+   2002, 2003, 2005 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -177,9 +177,10 @@ extern void obj_aout_frob_file_before_fix PARAMS ((void));
 #define H_GET_FILE_SIZE(h)	(H_GET_HEADER_SIZE(h) \
 				 + H_GET_TEXT_SIZE(h) \
 				 + H_GET_DATA_SIZE(h) \
-				 + H_GET_SYMBOL_TABLE_SIZE(h) \
 				 + H_GET_TEXT_RELOCATION_SIZE(h) \
 				 + H_GET_DATA_RELOCATION_SIZE(h) \
+				 + H_GET_LINENO_SIZE(h) \
+				 + H_GET_SYMBOL_TABLE_SIZE(h) \
 				 + H_GET_STRING_SIZE(h))
 
 #define H_GET_HEADER_SIZE(h)		(EXEC_BYTES_SIZE)
