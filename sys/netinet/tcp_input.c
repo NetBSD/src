@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.237 2005/11/15 18:39:46 dsl Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.238 2006/02/02 05:52:23 riz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.237 2005/11/15 18:39:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.238 2006/02/02 05:52:23 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -196,6 +196,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.237 2005/11/15 18:39:46 dsl Exp $");
 #include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
+#ifdef TCP_SIGNATURE
+#include <netinet6/scope6_var.h>
+#endif
 #endif
 
 #ifndef INET6
