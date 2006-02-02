@@ -128,7 +128,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OBJCOPY 1"
-.TH OBJCOPY 1 "2004-12-08" "binutils-2.15" "GNU Development Tools"
+.TH OBJCOPY 1 "2005-04-20" "binutils-2.15.97" "GNU Development Tools"
 .SH "NAME"
 objcopy \- copy and translate object files
 .SH "SYNOPSIS"
@@ -141,6 +141,7 @@ objcopy [\fB\-F\fR \fIbfdname\fR|\fB\-\-target=\fR\fIbfdname\fR]
         [\fB\-g\fR|\fB\-\-strip\-debug\fR]
         [\fB\-K\fR \fIsymbolname\fR|\fB\-\-keep\-symbol=\fR\fIsymbolname\fR]
         [\fB\-N\fR \fIsymbolname\fR|\fB\-\-strip\-symbol=\fR\fIsymbolname\fR]
+        [\fB\-\-strip\-unneeded\-symbol=\fR\fIsymbolname\fR]
         [\fB\-G\fR \fIsymbolname\fR|\fB\-\-keep\-global\-symbol=\fR\fIsymbolname\fR]
         [\fB\-L\fR \fIsymbolname\fR|\fB\-\-localize\-symbol=\fR\fIsymbolname\fR]
         [\fB\-W\fR \fIsymbolname\fR|\fB\-\-weaken\-symbol=\fR\fIsymbolname\fR]
@@ -172,6 +173,7 @@ objcopy [\fB\-F\fR \fIbfdname\fR|\fB\-\-target=\fR\fIbfdname\fR]
         [\fB\-\-weaken\fR]
         [\fB\-\-keep\-symbols=\fR\fIfilename\fR]
         [\fB\-\-strip\-symbols=\fR\fIfilename\fR]
+        [\fB\-\-strip\-unneeded\-symbols=\fR\fIfilename\fR]
         [\fB\-\-keep\-global\-symbols=\fR\fIfilename\fR]
         [\fB\-\-localize\-symbols=\fR\fIfilename\fR]
         [\fB\-\-weaken\-symbols=\fR\fIfilename\fR]
@@ -326,6 +328,10 @@ be given more than once.
 .PD
 Do not copy symbol \fIsymbolname\fR from the source file.  This option
 may be given more than once.
+.IP "\fB\-\-strip\-unneeded\-symbol=\fR\fIsymbolname\fR" 4
+.IX Item "--strip-unneeded-symbol=symbolname"
+Do not copy symbol \fIsymbolname\fR from the source file unless it is needed
+by a relocation.  This option may be given more than once.
 .IP "\fB\-G\fR \fIsymbolname\fR" 4
 .IX Item "-G symbolname"
 .PD 0
@@ -364,7 +370,7 @@ point (!) then the sense of the switch is reversed for that symbol.
 For example:
 .Sp
 .Vb 1
-\&          -w -W !foo -W fo*
+\&          \-w \-W !foo \-W fo*
 .Ve
 .Sp
 would cause objcopy to weaken all symbols that start with ``fo''
@@ -540,8 +546,8 @@ you wanted instead to create a section called .rodata containing binary
 data you could use the following command line to achieve it:
 .Sp
 .Vb 3
-\&          objcopy -I binary -O <output_format> -B <architecture> \e
-\&           --rename-section .data=.rodata,alloc,load,readonly,data,contents \e
+\&          objcopy \-I binary \-O <output_format> \-B <architecture> \e
+\&           \-\-rename\-section .data=.rodata,alloc,load,readonly,data,contents \e
 \&           <input_binary_file> <output_object_file>
 .Ve
 .IP "\fB\-\-change\-leading\-char\fR" 4
@@ -603,6 +609,12 @@ Apply \fB\-\-strip\-symbol\fR option to each symbol listed in the file
 \&\fIfilename\fR.  \fIfilename\fR is simply a flat file, with one symbol
 name per line.  Line comments may be introduced by the hash character.
 This option may be given more than once.
+.IP "\fB\-\-strip\-unneeded\-symbols=\fR\fIfilename\fR" 4
+.IX Item "--strip-unneeded-symbols=filename"
+Apply \fB\-\-strip\-unneeded\-symbol\fR option to each symbol listed in
+the file \fIfilename\fR.  \fIfilename\fR is simply a flat file, with one
+symbol name per line.  Line comments may be introduced by the hash
+character.  This option may be given more than once.
 .IP "\fB\-\-keep\-global\-symbols=\fR\fIfilename\fR" 4
 .IX Item "--keep-global-symbols=filename"
 Apply \fB\-\-keep\-global\-symbol\fR option to each symbol listed in the
@@ -737,8 +749,8 @@ Display a list showing all architectures and object formats available.
 \&\fIld\fR\|(1), \fIobjdump\fR\|(1), and the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000,
-2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.1
