@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.107 2005/09/06 03:22:58 rpaulo Exp $ */
+/*	$NetBSD: sysctl.c,v 1.108 2006/02/02 16:23:25 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.107 2005/09/06 03:22:58 rpaulo Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.108 2006/02/02 16:23:25 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,6 +171,7 @@ static void proc_limit(HANDLER_PROTO);
 #ifdef CPU_DISKINFO
 static void machdep_diskinfo(HANDLER_PROTO);
 #endif /* CPU_DISKINFO */
+static void mode_bits(HANDLER_PROTO);
 
 static const struct handlespec {
 	const char *ps_re;
@@ -2429,3 +2430,91 @@ machdep_diskinfo(HANDLER_ARGS)
 	printf("\n");
 }
 #endif /* CPU_DISKINFO */
+
+/*ARGSUSED*/
+static void
+mode_bits(HANDLER_ARGS)
+{
+	char buf[11], outbuf[100];
+	int o, m, *newp, rc;
+	size_t osz, nsz;
+	mode_t om, mm;
+
+	if (fn)
+		trim_whitespace(value, 3);
+
+	newp = NULL;
+	osz = sizeof(o);
+	if (value != NULL) {
+		void *foo;
+		int tt;
+		size_t ttsz = sizeof(tt);
+		mode_t old_umask;
+
+		nsz = sizeof(m);
+		newp = &m;
+		errno = 0;
+		rc = sysctl(name, namelen, &tt, &ttsz, NULL, 0);
+		if (rc == -1) {
+			sysctlperror("%s: failed query\n", sname);
+			return;
+		}
+
+		old_umask = umask(0);
+		foo = setmode(value);
+		umask(old_umask);
+		if (foo == NULL) {
+			sysctlperror("%s: '%s' is an invalid mode\n", sname,
+				     value);
+			EXIT(1);
+		}
+		old_umask = umask(0);
+		m = getmode(foo, (mode_t)tt);
+		umask(old_umask);
+		if (errno) {
+			sysctlperror("%s: '%s' is an invalid mode\n", sname,
+				     value);
+			EXIT(1);
+		}
+	}
+	else {
+		nsz = 0;
+		newp = NULL;
+	}
+
+	rc = sysctl(name, namelen, &o, &osz, newp, nsz);
+	if (rc == -1) {
+		sysctlerror(newp == NULL);
+		return;
+	}
+
+	if (newp && qflag)
+		return;
+
+	om = (mode_t)o;
+	mm = (mode_t)m;
+
+	if (rflag || xflag)
+		display_number(pnode, sname, &o, sizeof(o),
+			       newp ? DISPLAY_OLD : DISPLAY_VALUE);
+	else {
+		memset(buf, 0, sizeof(buf));
+		strmode(om, buf);
+		buf[10] = '\0';
+		rc = snprintf(outbuf, sizeof(outbuf), "%04o (%s)", om, buf + 1);
+		display_string(pnode, sname, outbuf, rc, newp ? DISPLAY_OLD : DISPLAY_VALUE);
+	}
+
+	if (newp) {
+		if (rflag || xflag)
+			display_number(pnode, sname, &m, sizeof(m),
+				       DISPLAY_NEW);
+		else {
+			memset(buf, 0, sizeof(buf));
+			strmode(mm, buf);
+			buf[10] = '\0';
+			rc = snprintf(outbuf, sizeof(outbuf), "%04o (%s)", mm, buf + 1);
+			display_string(pnode, sname, outbuf, rc, DISPLAY_NEW);
+		}
+	}
+}
