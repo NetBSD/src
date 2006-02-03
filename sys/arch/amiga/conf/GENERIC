@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.233 2006/02/02 21:32:08 reinoud Exp $
+# $NetBSD: GENERIC,v 1.234 2006/02/03 00:41:26 reinoud Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.48 2005/12/10 14:53:10 tsutsui Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.49 2006/02/03 00:40:16 reinoud Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.233 $"
+#ident 		"GENERIC-$Revision: 1.234 $"
 
 
 maxusers	8
