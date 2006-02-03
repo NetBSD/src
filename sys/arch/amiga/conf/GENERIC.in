@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.48 2005/12/10 14:53:10 tsutsui Exp $
+# $NetBSD: GENERIC.in,v 1.49 2006/02/03 00:40:16 reinoud Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.48 $"
+#ident 		"GENERIC-$Revision: 1.49 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -164,6 +164,7 @@ file-system 	UNION		# union filesystem
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 ')m4_dnl
 
 # Filesystem options
