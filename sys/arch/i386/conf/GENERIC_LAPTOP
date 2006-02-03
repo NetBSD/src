@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.170 2006/02/03 01:09:49 reinoud Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.171 2006/02/03 11:08:23 jmmv Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.170 $"
+#ident 		"GENERIC-$Revision: 1.171 $"
 
 maxusers	32		# estimated number of users
 
@@ -32,6 +32,9 @@ options 	ENHANCED_SPEEDSTEP
 
 options 	MTRR		# memory-type range register syscall support
 #options 	PERFCTRS	# performance-monitoring counters support
+
+options 	MULTIBOOT	# Multiboot support (see multiboot(8))
+#options 	MULTIBOOT_SYMTAB_SPACE=1048576
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000

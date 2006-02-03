@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.307 2006/02/02 17:35:37 rpaulo Exp $
+.\"	$NetBSD: options.4,v 1.308 2006/02/03 11:08:23 jmmv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd February 2, 2006
+.Dd February 3, 2006
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2420,6 +2420,19 @@ The duration of each beep when
 .Cd options BEEP_ONHALT
 is enabled, in milliseconds.
 Defaults to 250.
+.It Cd options MULTIBOOT
+Makes the kernel Multiboot-compliant, allowing it to be booted through
+a Multiboot-compliant boot manager such as GRUB.
+See
+.Xr multiboot 8
+for more information.
+.It Cd options MULTIBOOT_SYMTAB_SPACE=nbytes
+Space (in bytes) reserved in memory to store the kernel's symbol table.
+If the symbol table is bigger than this space, it will not be loaded;
+if it is smaller, the unused memory will be claimed by the kernel and
+used normally.
+You shouldn't need to touch this variable.
+Defaults to 1048576 bytes (one megabyte).
 .El
 .Ss isa-specific Options
 Options specific to

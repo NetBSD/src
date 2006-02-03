@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.849 2006/02/02 15:26:34 reinoud Exp $
+# $NetBSD: mi,v 1.850 2006/02/03 11:08:23 jmmv Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1848,6 +1848,7 @@
 ./usr/share/man/cat8/i386/ispcvt.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/kbdio.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/i386/multiboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/i386/mbr.0			man-sys-catman		.cat
 ./usr/share/man/cat8/i386/pxeboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/i386/reboot.0		man-obsolete		obsolete
@@ -4147,6 +4148,7 @@
 ./usr/share/man/man8/i386/ispcvt.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/kbdio.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/i386/multiboot.8		man-sys-man		.man
 ./usr/share/man/man8/i386/mbr.8			man-sys-man		.man
 ./usr/share/man/man8/i386/pxeboot.8		man-sys-man		.man
 ./usr/share/man/man8/i386/reboot.8		man-obsolete		obsolete

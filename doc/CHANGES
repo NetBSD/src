@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.570 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.571 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -178,3 +178,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		devices like harddisc partions and vnd's.
 		[reinoud 20060202]
 	binutils: updated to FSF binutils 2.16.1 release.  [skrll 20060202]
+	i386: Add support for the Multiboot Specification.  [jmmv 20060203]
