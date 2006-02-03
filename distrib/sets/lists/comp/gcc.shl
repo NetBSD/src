@@ -1,4 +1,4 @@
-#	$NetBSD: gcc.shl,v 1.12 2005/06/07 14:27:42 is Exp $
+#	$NetBSD: gcc.shl,v 1.13 2006/02/03 21:43:30 christos Exp $
 ./usr/lib/crtbeginT.o				comp-c-lib
 ./usr/lib/libg2c_pic.a				comp-fortran-lib
 ./usr/lib/libgcc_eh.a				comp-c-lib
@@ -6,6 +6,6 @@
 ./usr/lib/libgcc_eh_pic.a			comp-c-piclib
 ./usr/lib/libgcc_pic.a				comp-c-piclib
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
-./usr/lib/libopcodes.so.1			comp-c-shlib		bfd
-./usr/lib/libopcodes.so.1.0			comp-c-shlib		bfd
+./usr/lib/libopcodes.so.2			comp-c-shlib		bfd
+./usr/lib/libopcodes.so.2.0			comp-c-shlib		bfd
 ./usr/lib/libstdc++_pic.a			comp-cxx-piclib
