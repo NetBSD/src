@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.15 2006/02/02 16:05:37 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.16 2006/02/03 05:25:14 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -157,4 +157,11 @@ sys/dev/pci/azalia.c	 			1.19 via patch
 	Don't crash when a connection list has invalid NIDs.
 	This fixes PR kern/32485.
 	[kent, ticket #1124]
+
+sys/dev/pcmcia/aic_pcmcia.c			patch
+doc/HACKS					patch
+
+	aic(4): work around rbus resource allocation problem so cards work
+	again.
+	[jnemeth, ticket #1153]
 
