@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.32 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.32.4.1 2006/02/03 05:19:41 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.32 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.32.4.1 2006/02/03 05:19:41 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,9 @@ aic_pcmcia_validate_config(cfe)
 	    cfe->num_memspace != 0 ||
 	    cfe->num_iospace != 1)
 		return (EINVAL);
+/* XXX  Below line is a hack to get around an rbus resource allocation */
+/* XXX  problem.  It should be removed when the problem is fixed.      */
+	cfe->iomask = 0;
 	return (0);
 }
 
