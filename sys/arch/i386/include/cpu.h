@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.121 2005/12/31 17:55:55 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.122 2006/02/03 02:37:57 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -425,7 +425,8 @@ void x86_bus_space_mallocok(void);
 /* est.c */
 void	est_init(struct cpu_info *);
 
-/* pnow_k7.c */
+/* powernow_k7.c */
+void	pnowk7_probe(struct cpu_info *);
 void	pnowk7_init(struct cpu_info *);
 
 #endif /* _KERNEL */
