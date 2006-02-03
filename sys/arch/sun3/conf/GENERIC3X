@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.84 2005/12/10 14:39:34 tsutsui Exp $
+# $NetBSD: GENERIC3X,v 1.85 2006/02/03 13:48:35 tsutsui Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -7,7 +7,7 @@ include 	"arch/sun3/conf/std.sun3x"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC3X-$Revision: 1.84 $"
+#ident		"GENERIC3X-$Revision: 1.85 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE	# XXX - Ever needed?
@@ -87,6 +87,7 @@ file-system	UNION		# union file system
 file-system	MFS		# memory-based filesystem
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
