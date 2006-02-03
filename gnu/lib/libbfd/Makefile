@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2004/12/08 15:13:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.41 2006/02/03 16:29:34 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -22,7 +22,7 @@ LIB=		bfd
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/binutils
 
-SHLIB_MAJOR=	7
+SHLIB_MAJOR=	8
 SHLIB_MINOR=	0
 
 GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}
