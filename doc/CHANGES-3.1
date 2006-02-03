@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.27 2006/02/01 20:46:35 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.28 2006/02/03 05:25:03 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -629,4 +629,11 @@ sys/net/if_pppoe.c				1.64
 	Make sure error messages (received from the access concentrator) are
 	zero terminated.
 	[martin, ticket #1152]
+
+sys/dev/pcmcia/aic_pcmcia.c			patch
+doc/HACKS					patch
+
+	aic(4): work around rbus resource allocation problem so cards work
+	again.
+	[jnemeth, ticket #1153]
 
