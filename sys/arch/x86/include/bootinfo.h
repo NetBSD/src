@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.10 2005/12/30 13:37:57 jmmv Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.11 2006/02/03 11:08:24 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -34,6 +34,7 @@ struct btinfo_common {
 };
 
 #define BTINFO_BOOTPATH		0
+#define BTINFO_ROOTDEVICE	1
 #define BTINFO_BOOTDISK		3
 #define BTINFO_NETIF		4
 #define BTINFO_CONSOLE		6
@@ -45,6 +46,11 @@ struct btinfo_common {
 struct btinfo_bootpath {
 	struct btinfo_common common;
 	char bootpath[80];
+};
+
+struct btinfo_rootdevice {
+	struct btinfo_common common;
+	char devname[16];
 };
 
 struct btinfo_bootdisk {

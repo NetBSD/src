@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.5 2005/12/11 12:19:47 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.6 2006/02/03 11:08:24 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -364,6 +364,7 @@ uint32_t bootdev = 0;
 static void
 findroot(void)
 {
+	struct btinfo_rootdevice *biv;
 	struct btinfo_bootdisk *bid;
 	struct btinfo_bootwedge *biw;
 	struct device *dv;
@@ -385,6 +386,27 @@ findroot(void)
 		 */
 		printf("findroot: netboot interface not found.\n");
 		return;
+	}
+
+	if ((biv = lookup_bootinfo(BTINFO_ROOTDEVICE)) != NULL) {
+		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+		     dv = TAILQ_NEXT(dv, dv_list)) {
+			struct cfdata *cd;
+			size_t len;
+
+			if (dv->dv_class != DV_DISK)
+				continue;
+
+			cd = dv->dv_cfdata;
+			len = strlen(cd->cf_name);
+
+			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
+			    biv->devname[len] - '0' == cd->cf_unit) {
+				booted_device = dv;
+				booted_partition = biv->devname[len + 1] - 'a';
+				return;
+			}
+		}
 	}
 
 	if ((biw = lookup_bootinfo(BTINFO_BOOTWEDGE)) != NULL) {
