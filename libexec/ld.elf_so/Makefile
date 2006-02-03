@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2005/06/04 16:17:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.73 2006/02/03 02:01:19 rpaulo Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -24,7 +24,6 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
 PROG=		ld.elf_so
 
 LDFLAGS+=	-shared -symbolic -nostartfiles
-LDFLAGS+=	-Wl,-non_shared
 
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.
