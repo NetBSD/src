@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.145 2006/01/28 21:34:07 apb Exp $
+#	$NetBSD: build.sh,v 1.146 2006/02/03 12:29:41 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -128,6 +128,7 @@ initdefaults()
 	do_sets=false
 	do_sourcesets=false
 	do_syspkgs=false
+	do_iso_image=false
 	do_params=false
 
 	# Create scratch directory
@@ -378,6 +379,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-D dest] [-j njob]
 			DESTDIR should be populated beforehand.
     sourcesets          Create source sets in RELEASEDIR/source/sets.
     syspkgs             Create syspkgs in RELEASEDIR/MACHINE/binary/syspkgs.
+    iso-image           Create CD-ROM image in RELEASEDIR/MACHINE/installation.
     params              Display various make(1) parameters.
 
  Options:
@@ -618,6 +620,10 @@ parseoptions()
 			;;
 
 		makewrapper|obj|tools|build|distribution|release|sets|sourcesets|syspkgs|params)
+			;;
+
+		iso-image)
+			op=iso_image	# used as part of a variable name
 			;;
 
 		kernel=*|releasekernel=*)
@@ -862,7 +868,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.145 2006/01/28 21:34:07 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.146 2006/02/03 12:29:41 apb Exp $
 # with these arguments: ${_args}
 #
 EOF
