@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.6 2006/02/03 11:08:24 jmmv Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.7 2006/02/03 23:33:30 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/proc.h>
 #include <sys/md5.h>
 
+#include <x86/autoconf.h>
+
 #include <machine/bootinfo.h>
 
 #include "pci.h"
@@ -82,8 +84,8 @@ is_valid_disk(struct device *dv)
  * XXX Ugly bit of code.  But, this is the only safe time that the
  * match between BIOS disks and native disks can be done.
  */
-static void
-matchbiosdisks(void)
+void
+x86_matchbiosdisks(void)
 {
 	struct btinfo_biosgeom *big;
 	struct bi_biosgeom_entry *be;
@@ -199,6 +201,35 @@ matchbiosdisks(void)
 			vput(tv);
 		}
 	}
+}
+
+const char *
+x86_findbiosdisk(int devnum)
+{
+	int i;
+
+	KASSERT(x86_alldisks != NULL);
+
+	for (i = 0; i < x86_alldisks->dl_nnativedisks; i++) {
+		int j;
+		struct nativedisk_info *ni;
+
+		ni = &x86_alldisks->dl_nativedisks[i];
+
+		for (j = 0; j < ni->ni_nmatches; j++) {
+			int k;
+			struct biosdisk_info *bi;
+
+			k = ni->ni_biosmatches[j];
+			KASSERT(k < x86_alldisks->dl_nbiosdisks);
+			bi = &x86_alldisks->dl_biosdisks[k];
+
+			if (bi->bi_dev == devnum)
+				return ni->ni_devname;
+		}
+	}
+
+	return NULL;
 }
 
 /*
@@ -535,11 +566,10 @@ findroot(void)
 }
 
 void
-cpu_rootconf(void)
+x86_cpu_rootconf(void)
 {
 
 	findroot();
-	matchbiosdisks();
 
 	if (booted_wedge) {
 		KASSERT(booted_device != NULL);
