@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.36 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.37 2006/02/03 11:08:24 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -100,6 +100,8 @@
 #if NLAPIC > 0
 #include <machine/i82489reg.h>
 #endif
+
+#include <machine/multiboot.h>
 
 /* LINTSTUB: include <sys/types.h> */
 /* LINTSTUB: include <machine/cpu.h> */
@@ -224,6 +226,40 @@ tmpstk:
 	.globl	start
 start:	movw	$0x1234,0x472			# warm boot
 
+#if defined(MULTIBOOT)
+	jmp	1f
+
+	.align	4
+	.globl	Multiboot_Header
+_C_LABEL(Multiboot_Header):
+#define MULTIBOOT_HEADER_FLAGS	(MULTIBOOT_HEADER_WANT_MEMORY | \
+				 MULTIBOOT_HEADER_HAS_ADDR)
+	.long	MULTIBOOT_HEADER_MAGIC
+	.long	MULTIBOOT_HEADER_FLAGS
+	.long	-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
+	.long	RELOC(Multiboot_Header)
+	.long	RELOC(start)
+	.long	RELOC(_edata)
+	.long	RELOC(_end) + MULTIBOOT_SYMTAB_SPACE
+	.long	RELOC(start)
+
+1:
+	/* Check if we are being executed by a Multiboot-compliant boot
+	 * loader. */
+	cmpl	$MULTIBOOT_INFO_MAGIC,%eax
+	jne	1f
+
+	/* Indeed, a multiboot-compliat boot loader executed us.  We copy
+	 * the received Multiboot information structure into kernel's data
+	 * space to process it later -- after we are relocated.  It will
+	 * be safer to run complex C code than doing it at this point. */
+	pushl	%ebx		# Address of Multiboot information
+	call	_C_LABEL(multiboot_pre_reloc)
+	addl	$4,%esp
+	jmp	3f
+#endif
+
+1:
 	/*
 	 * Load parameters from stack
 	 * (howto, [bootdev], bootinfo, esym, basemem, extmem).
@@ -284,6 +320,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	%eax,RELOC(biosbasemem)
 1:
 
+3:
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
@@ -632,6 +669,14 @@ begin:
 	leal	(USPACE-FRAMESIZE)(%eax),%esp
 	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
+
+#if defined(MULTIBOOT)
+	/* It is now safe to parse the Multiboot information structure
+	 * we saved before from C code.  Note that we cannot delay its
+	 * parsing any more because initgdt (called below) needs to make
+	 * use of this information. */
+	call	_C_LABEL(multiboot_post_reloc)
+#endif
 
 	subl	$NGDT*8, %esp		# space for temporary gdt
 	pushl	%esp
