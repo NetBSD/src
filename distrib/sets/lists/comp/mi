@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.845 2006/02/02 15:26:34 reinoud Exp $
+#	$NetBSD: mi,v 1.846 2006/02/03 11:04:46 jmmv Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1395,6 +1395,7 @@
 ./usr/include/sys/mtio.h			comp-c-include
 ./usr/include/sys/namei.h			comp-c-include
 ./usr/include/sys/null.h			comp-c-include
+./usr/include/sys/optstr.h			comp-c-include
 ./usr/include/sys/param.h			comp-c-include
 ./usr/include/sys/pipe.h			comp-c-include
 ./usr/include/sys/pmc.h				comp-c-include
@@ -5432,6 +5433,8 @@
 ./usr/share/man/cat9/nextrunqueue.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/old_sysctl.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/opencrypto.0		comp-sys-catman		.cat
+./usr/share/man/cat9/optstr.0			comp-sys-catman		.cat
+./usr/share/man/cat9/optstr_get.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/panic.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pci.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_conf_hook.0		comp-sys-catman		.cat
@@ -9376,6 +9379,8 @@
 ./usr/share/man/man9/nextrunqueue.9		comp-sys-man		.man
 ./usr/share/man/man9/old_sysctl.9		comp-sys-man		.man
 ./usr/share/man/man9/opencrypto.9		comp-sys-man		.man
+./usr/share/man/man9/optstr.9			comp-sys-man		.man
+./usr/share/man/man9/optstr_get.9		comp-sys-man		.man
 ./usr/share/man/man9/panic.9			comp-sys-man		.man
 ./usr/share/man/man9/pci.9			comp-sys-man		.man
 ./usr/share/man/man9/pci_conf_hook.9		comp-sys-man		.man
