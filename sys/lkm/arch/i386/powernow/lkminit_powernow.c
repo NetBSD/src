@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.2 2006/01/15 04:12:09 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.3 2006/02/03 02:37:57 xtraeme Exp $	*/
 
 /*
  * Derived from:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.2 2006/01/15 04:12:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.3 2006/02/03 02:37:57 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,10 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.2 2006/01/15 04:12:09 xtraeme
 
 int powernow_lkmentry(struct lkm_table *, int, int);
 static int powernow_mod_handle(struct lkm_table *, int);
+void pnowk7_destroy(void);
 
 MOD_MISC("powernow");
-
-void pnowk7_destroy(void);
 
 /*
  * This function is called each time the module is loaded or unloaded.
@@ -65,8 +64,8 @@ void pnowk7_destroy(void);
 static int
 powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 {
-	int err = 0;	/* default = success */
 	struct cpu_info *ci;
+	int err = 0;	/* default = success */
 
 	switch (cmd) {
 	case LKM_E_LOAD:
@@ -77,7 +76,9 @@ powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 			return EEXIST;
 	
 		ci = curcpu();
+		pnowk7_probe(ci);
 		pnowk7_init(ci);
+
 		break;		/* Success */
 
 	case LKM_E_UNLOAD:
