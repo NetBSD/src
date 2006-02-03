@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.42 2005/02/22 18:47:09 christos Exp $
+# $NetBSD: HACKS,v 1.42.4.1 2006/02/03 05:20:06 riz Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -110,6 +110,17 @@ descr
 	applied is imported this should be backed out.
 kcah
 
+hack		rbus resource allocation work around
+cdate		31 January 2006
+who		jnemeth
+file		src/sys/dev/pcmcia/aic_pcmcia.c : 1.32
+pr		26909 31245
+descr
+	On some cards, the card align field property value interferes
+	with the rbus resource allocation causing the card not to
+	configure properly.  Setting it to 0 fixes the problem but it
+	is not the proper solution.
+kcah
 
 port	vax
 
