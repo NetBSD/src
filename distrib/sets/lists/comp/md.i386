@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.87 2005/05/03 08:24:15 tron Exp $
+# $NetBSD: md.i386,v 1.88 2006/02/03 11:08:23 jmmv Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -45,6 +45,7 @@
 ./usr/include/i386/mcontext.h			comp-c-include
 ./usr/include/i386/mouse.h			comp-obsolete		obsolete
 ./usr/include/i386/mtrr.h			comp-c-include
+./usr/include/i386/multiboot.h			comp-c-include
 ./usr/include/i386/npx.h			comp-c-include
 ./usr/include/i386/param.h			comp-c-include
 ./usr/include/i386/pcb.h			comp-c-include

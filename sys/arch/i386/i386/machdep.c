@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.569 2005/12/30 13:37:57 jmmv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.570 2006/02/03 11:08:24 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.569 2005/12/30 13:37:57 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570 2006/02/03 11:08:24 jmmv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.569 2005/12/30 13:37:57 jmmv Exp $");
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
 #include <machine/mtrr.h>
+#include <machine/multiboot.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -302,6 +303,10 @@ cpu_startup()
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s%s", copyright, version);
+
+#ifdef MULTIBOOT
+	multiboot_print_info();
+#endif
 
 #ifdef TRAPLOG
 	/*
