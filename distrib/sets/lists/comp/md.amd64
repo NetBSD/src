@@ -1,9 +1,10 @@
-# $NetBSD: md.amd64,v 1.17 2005/01/21 04:47:23 dyoung Exp $
+# $NetBSD: md.amd64,v 1.18 2006/02/03 23:33:30 jmmv Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
 ./usr/include/amd64/asm.h			comp-c-include
 ./usr/include/amd64/atomic.h			comp-c-include
+./usr/include/amd64/autoconf.h			comp-c-include
 ./usr/include/amd64/bootinfo.h			comp-c-include
 ./usr/include/amd64/bswap.h			comp-c-include
 ./usr/include/amd64/bus.h			comp-c-include
@@ -125,6 +126,7 @@
 ./usr/include/x64_64/vmparam.h			comp-obsolete		obsolete
 ./usr/include/x86				comp-c-include
 ./usr/include/x86/aout_machdep.h		comp-c-include
+./usr/include/x86/autoconf.h			comp-c-include
 ./usr/include/x86/bootinfo.h			comp-c-include
 ./usr/include/x86/bus.h				comp-c-include
 ./usr/include/x86/cacheinfo.h			comp-c-include
