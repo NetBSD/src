@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_udf.8,v 1.3 2006/02/02 16:45:06 reinoud Exp $
+.\" $NetBSD: mount_udf.8,v 1.4 2006/02/03 08:28:39 snj Exp $
 .\"
 .\" Copyright (c) 2005 Reinoud Zandijk
 .\" All rights reserved.
@@ -76,7 +76,7 @@ to be mounted instead of the default last one. Positive
 .Ar session
 values indicate an absolute session number. Negative
 .Ar session
-values are relative to the last lession found on the disc.
+values are relative to the last session found on the disc.
 Note that this option only makes sense when mounting sequential recordable
 media like CD-R and DVD*R.
 .It Fl t Ar gmtoff
@@ -96,7 +96,7 @@ user nobody.
 .Xr vnd 4 ,
 .Xr vnconfig 8 .
 .Sh NOTES
-UDF is a file system defined by the OSTA standardisation group and is tailored
+UDF is a file system defined by the OSTA standardization group and is tailored
 for data interchange on optical discs (like CDs and DVDs) between different
 operating systems. Its also more and more common on other media like Compact
 Flash (CF) cards.
@@ -117,7 +117,7 @@ Harddisc partitions and
 .Xr vnd 4
 devices may also be mounted. Note when mounting a
 .Xr vnd 4
-device it might be nessisary to specify the file image sector size in the
+device it might be necessary to specify the file image sector size in the
 .Pa geomspec
 when creating the
 .Xr vnd 4
