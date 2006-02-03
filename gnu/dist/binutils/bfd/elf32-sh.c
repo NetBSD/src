@@ -4684,6 +4684,7 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		      && ((! info->symbolic && h->dynindx != -1)
 			  || !h->def_regular)
 		      && ((r_type == R_SH_DIR32
+			   && !h->forced_local)
 			  || (r_type == R_SH_REL32
 			      && !SYMBOL_CALLS_LOCAL (info, h)))
 		      && ((input_section->flags & SEC_ALLOC) != 0
