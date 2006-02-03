@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.6 2006/01/30 22:46:35 dsl Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.7 2006/02/03 22:05:21 dsl Exp $	*/
 
 /*	$OpenBSD: endian.h,v 1.7 2001/06/29 20:28:54 mickey Exp $	*/
 
@@ -45,7 +45,7 @@ static __inline uint32_t __byte_swap_u32_variable(uint32_t);
 static __inline uint32_t
 __byte_swap_u32_variable(uint32_t x)
 {
-	register in_addr_t __swap32md_x;	\
+	register uint32_t __swap32md_x;	\
 						\
 	__asm  ("extru	%1, 7,8,%%r22\n\t"	\
 		"shd	%1,%1,8,%0\n\t"		\
@@ -70,7 +70,7 @@ static __inline uint16_t __byte_swap_u16_variable(uint16_t);
 static __inline uint16_t
 __byte_swap_u16_variable(uint16_t x)
 {
-	register in_port_t __swap16md_x;				\
+	register uint16_t __swap16md_x;				\
 									\
 	__asm  ("extru	%1,23,8,%0\n\t"					\
 		"dep	%1,23,8,%0"					\
