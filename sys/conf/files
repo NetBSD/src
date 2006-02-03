@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.756 2006/02/02 15:26:35 reinoud Exp $
+#	$NetBSD: files,v 1.757 2006/02/03 11:04:46 jmmv Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1250,6 +1250,7 @@ file	kern/subr_prf.c
 file	kern/subr_prof.c
 file	kern/subr_prop.c
 file	kern/subr_once.c
+file	kern/subr_optstr.c
 file	kern/subr_userconf.c		userconf
 file	kern/subr_workqueue.c
 file	kern/subr_xxx.c
