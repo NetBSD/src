@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.13 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: timepps.h,v 1.13.6.1 2006/02/04 12:09:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -150,9 +150,7 @@ static inline int time_pps_kcbind(pps_handle_t, const int, const int,
 	const int);
 
 static inline int
-time_pps_create(filedes, handle)
-	int filedes;
-	pps_handle_t *handle;
+time_pps_create(int filedes, pps_handle_t *handle)
 {
 
 	*handle = filedes;
@@ -160,57 +158,44 @@ time_pps_create(filedes, handle)
 }
 
 static inline int
-time_pps_destroy(handle)
-	pps_handle_t handle;
+time_pps_destroy(pps_handle_t handle)
 {
 
 	return (0);
 }
 
 static inline int
-time_pps_setparams(handle, ppsparams)
-	pps_handle_t handle;
-	const pps_params_t *ppsparams;
+time_pps_setparams(pps_handle_t handle, const pps_params_t *ppsparams)
 {
 
 	return (ioctl(handle, PPS_IOC_SETPARAMS, __UNCONST(ppsparams)));
 }
 
 static inline int
-time_pps_getparams(handle, ppsparams)
-	pps_handle_t handle;
-	pps_params_t *ppsparams;
+time_pps_getparams(pps_handle_t handle, pps_params_t *ppsparams)
 {
 
 	return (ioctl(handle, PPS_IOC_GETPARAMS, ppsparams));
 }
 
 static inline int
-time_pps_getcap(handle, mode)
-	pps_handle_t handle;
-	int *mode;
+time_pps_getcap(pps_handle_t handle, int *mode)
 {
 
 	return (ioctl(handle, PPS_IOC_GETCAP, mode));
 }
 
 static inline int
-time_pps_fetch(handle, tsformat, ppsinfobuf, timeout)
-	pps_handle_t handle;
-	const int tsformat;
-	pps_info_t *ppsinfobuf;
-	const struct timespec *timeout;
+time_pps_fetch(pps_handle_t handle, const int tsformat, pps_info_t *ppsinfobuf,
+    const struct timespec *timeout)
 {
 
 	return (ioctl(handle, PPS_IOC_FETCH, ppsinfobuf));
 }
 
 static inline int
-time_pps_kcbind(handle, kernel_consumer, edge, tsformat)
-	pps_handle_t handle;
-	const int kernel_consumer;
-	const int edge;
-	const int tsformat;
+time_pps_kcbind(pps_handle_t handle, const int kernel_consumer, const int edge,
+    const int tsformat)
 {
 
 	return (ioctl(handle, PPS_IOC_KCBIND, __UNCONST(&edge)));
