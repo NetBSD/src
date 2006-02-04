@@ -1,4 +1,4 @@
-# $NetBSD: KGDB3X,v 1.49 2005/12/07 09:10:20 tsutsui Exp $
+# $NetBSD: KGDB3X,v 1.50 2006/02/04 03:44:58 rpaulo Exp $
 
 # KGDB3X Sun3X (3/80, 3/470)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -201,7 +201,7 @@ pseudo-device	md		2
 
 # Misc.
 pseudo-device	loop		1	# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	sl		2	# CSLIP
 pseudo-device	ppp		2	# PPP
 pseudo-device	tun		2	# network tunneling over tty
