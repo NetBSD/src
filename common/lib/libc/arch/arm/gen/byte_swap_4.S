@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.2 2006/02/04 21:53:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,11 @@
 
 #include <machine/asm.h>
 
+#if defined(_KERNEL) || defined(_STANDALONE)
+_ENTRY(_C_LABEL(bswap32))
+#else
 _ENTRY(_C_LABEL(__bswap32))
+#endif
 _ENTRY(_C_LABEL(ntohl))
 _ENTRY(_C_LABEL(htonl))
 _PROF_PROLOGUE
