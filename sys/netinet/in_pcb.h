@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.41.4.1 2006/02/01 23:55:47 rpaulo Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.41.4.2 2006/02/04 03:24:01 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 2003 WIDE Project.
@@ -102,6 +102,11 @@ struct inpcbtable {
 #define	INP_ATTACHED		0
 #define	INP_BOUND		1
 #define	INP_CONNECTED		2
+
+/* for KAME src sync over BSD*'s */
+#define	IN6P_ATTACHED		INP_ATTACHED
+#define	IN6P_BOUND		INP_BOUND
+#define	IN6P_CONNECTED		INP_CONNECTED
 
 /*
  * Common structure pcb for internet protocol implementation.
