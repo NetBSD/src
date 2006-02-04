@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.148 2006/02/02 17:48:51 elad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.149 2006/02/04 16:11:36 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -909,11 +909,6 @@ extern struct sysctlnode sysctl_root;
 
 /* XXX this should not be here */
 extern int security_curtain;
-extern int security_setidcore_dump;
-extern char security_setidcore_path[];
-extern uid_t security_setidcore_owner;
-extern gid_t security_setidcore_group;
-extern mode_t security_setidcore_mode;
 
 /*
  * A log of nodes created by a setup function or set of setup
