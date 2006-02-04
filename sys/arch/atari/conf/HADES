@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.66 2006/02/03 00:43:32 reinoud Exp $
+# $NetBSD: HADES,v 1.67 2006/02/04 02:27:23 rpaulo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.8 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.58 2006/02/03 00:40:16 reinoud Exp $
+#		NetBSD: GENERIC.in,v 1.59 2006/02/04 02:25:57 rpaulo Exp $
 include "arch/atari/conf/std.hades"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -129,7 +129,7 @@ pseudo-device vnd 3 # 3 pseudo disks (see vnconfig)
 
 pseudo-device md 3 # Boot memory disk
 
-pseudo-device bpfilter 2 # berkeley packet filters
+pseudo-device bpfilter # berkeley packet filters
 pseudo-device tun 2 # network tunnel
 pseudo-device tap # virtual Ethernet
 
