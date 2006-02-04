@@ -1,6 +1,0 @@
-# $NetBSD: ISO-2022.alias,v 1.3 2005/03/27 22:30:06 tnozaki Exp $
-
-CN	iso-2022-cn iso2022-cn
-JP	iso-2022-jp iso2022-jp
-JP-2	iso-2022-jp-2 iso2022-jp2
-KR	iso-2022-kr iso2022-kr
