@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.1.1.10 2005/02/13 00:52:44 christos Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.1.1.11 2006/02/04 22:22:32 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rhosts.c,v 1.32 2003/11/04 08:54:09 djm Exp $");
+RCSID("$OpenBSD: auth-rhosts.c,v 1.33 2005/07/17 07:17:54 djm Exp $");
 
 #include "packet.h"
 #include "uidswap.h"
@@ -134,7 +134,7 @@ check_rhosts_file(const char *filename, const char *hostname,
 		/* If the entry was negated, deny access. */
 		if (negated) {
 			auth_debug_add("Matched negative entry in %.100s.",
-			     filename);
+			    filename);
 			return 0;
 		}
 		/* Accept authentication. */

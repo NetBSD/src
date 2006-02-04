@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.1.1.11 2005/04/23 16:27:58 christos Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.1.1.12 2006/02/04 22:22:32 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.33 2005/01/24 11:47:13 dtucker Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.34 2005/07/19 15:32:26 otto Exp $");
 
 #include "packet.h"
 #include "buffer.h"
@@ -135,6 +135,8 @@ sys_auth_passwd(Authctxt *authctxt, const char *password)
 
 	as = auth_usercheck(pw->pw_name, authctxt->style, "auth-ssh",
 	    (char *)password);
+	if (as == NULL)
+		return (0);
 	if (auth_getstate(as) & AUTH_PWEXPIRED) {
 		auth_close(as);
 		disable_forwarding();

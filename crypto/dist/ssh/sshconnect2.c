@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.1.1.20 2005/02/13 00:53:23 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.1.1.21 2006/02/04 22:23:22 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.138 2004/06/13 12:53:24 djm Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.143 2005/10/14 02:17:59 stevesk Exp $");
 
 #include "ssh.h"
 #include "ssh2.h"
@@ -100,10 +100,10 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	    compat_cipher_proposal(myproposal[PROPOSAL_ENC_ALGS_STOC]);
 	if (options.compression) {
 		myproposal[PROPOSAL_COMP_ALGS_CTOS] =
-		myproposal[PROPOSAL_COMP_ALGS_STOC] = "zlib,none";
+		myproposal[PROPOSAL_COMP_ALGS_STOC] = "zlib@openssh.com,zlib,none";
 	} else {
 		myproposal[PROPOSAL_COMP_ALGS_CTOS] =
-		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none,zlib";
+		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none,zlib@openssh.com,zlib";
 	}
 	if (options.macs != NULL) {
 		myproposal[PROPOSAL_MAC_ALGS_CTOS] =
@@ -351,7 +351,7 @@ void
 input_userauth_error(int type, u_int32_t seq, void *ctxt)
 {
 	fatal("input_userauth_error: bad message during authentication: "
-	   "type %d", type);
+	    "type %d", type);
 }
 
 void
@@ -481,7 +481,7 @@ userauth_gssapi(Authctxt *authctxt)
 {
 	Gssctxt *gssctxt = NULL;
 	static gss_OID_set gss_supported = NULL;
-	static int mech = 0;
+	static u_int mech = 0;
 	OM_uint32 min;
 	int ok = 0;
 
@@ -508,7 +508,8 @@ userauth_gssapi(Authctxt *authctxt)
 		}
 	}
 
-	if (!ok) return 0;
+	if (!ok)
+		return 0;
 
 	authctxt->methoddata=(void *)gssctxt;
 
@@ -543,7 +544,8 @@ process_gssapi_token(void *ctxt, gss_buffer_t recv_tok)
 	Authctxt *authctxt = ctxt;
 	Gssctxt *gssctxt = authctxt->methoddata;
 	gss_buffer_desc send_tok = GSS_C_EMPTY_BUFFER;
-	gss_buffer_desc gssbuf, mic;
+	gss_buffer_desc mic = GSS_C_EMPTY_BUFFER;
+	gss_buffer_desc gssbuf;
 	OM_uint32 status, ms, flags;
 	Buffer b;
 
@@ -677,7 +679,7 @@ input_gssapi_errtok(int type, u_int32_t plen, void *ctxt)
 
 	/* Stick it into GSSAPI and see what it says */
 	status = ssh_gssapi_init_ctx(gssctxt, options.gss_deleg_creds,
-				     &recv_tok, &send_tok, NULL);
+	    &recv_tok, &send_tok, NULL);
 
 	xfree(recv_tok.value);
 	gss_release_buffer(&ms, &send_tok);
@@ -699,7 +701,7 @@ input_gssapi_error(int type, u_int32_t plen, void *ctxt)
 
 	packet_check_eom();
 
-	debug("Server GSSAPI Error:\n%s\n", msg);
+	debug("Server GSSAPI Error:\n%s", msg);
 	xfree(msg);
 	xfree(lang);
 }

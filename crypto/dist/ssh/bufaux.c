@@ -1,4 +1,4 @@
-/*	$NetBSD: bufaux.c,v 1.1.1.12 2005/04/23 16:28:01 christos Exp $	*/
+/*	$NetBSD: bufaux.c,v 1.1.1.13 2006/02/04 22:22:36 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: bufaux.c,v 1.34 2004/12/06 16:00:43 markus Exp $");
+RCSID("$OpenBSD: bufaux.c,v 1.37 2005/11/05 05:01:15 djm Exp $");
 
 #include <openssl/bn.h>
 #include "bufaux.h"
@@ -64,6 +64,7 @@ buffer_put_bignum_ret(Buffer *buffer, const BIGNUM *value)
 	if (oi != bin_size) {
 		error("buffer_put_bignum_ret: BN_bn2bin() failed: oi %d != bin_size %d",
 		    oi, bin_size);
+		xfree(buf);
 		return (-1);
 	}
 
@@ -155,7 +156,7 @@ buffer_put_bignum2_ret(Buffer *buffer, const BIGNUM *value)
 	buf[0] = 0x00;
 	/* Get the value of in binary */
 	oi = BN_bn2bin(value, buf+1);
-	if (oi != bytes-1) {
+	if (oi < 0 || (u_int)oi != bytes - 1) {
 		error("buffer_put_bignum2_ret: BN_bn2bin() failed: "
 		    "oi %d != bin_size %d", oi, bytes);
 		xfree(buf);
@@ -180,7 +181,7 @@ buffer_get_bignum2_ret(Buffer *buffer, BIGNUM *value)
 {
 	u_int len;
 	u_char *bin;
-	
+
 	if ((bin = buffer_get_string_ret(buffer, &len)) == NULL) {
 		error("buffer_get_bignum2_ret: invalid bignum");
 		return (-1);
@@ -188,10 +189,12 @@ buffer_get_bignum2_ret(Buffer *buffer, BIGNUM *value)
 
 	if (len > 0 && (bin[0] & 0x80)) {
 		error("buffer_get_bignum2_ret: negative numbers not supported");
+		xfree(bin);
 		return (-1);
 	}
 	if (len > 8 * 1024) {
 		error("buffer_get_bignum2_ret: cannot handle BN of size %d", len);
+		xfree(bin);
 		return (-1);
 	}
 	BN_bin2bn(bin, len, value);

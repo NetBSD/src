@@ -1,4 +1,4 @@
-/*	$NetBSD: match.c,v 1.1.1.8 2002/03/08 01:20:47 itojun Exp $	*/
+/*	$NetBSD: match.c,v 1.1.1.9 2006/02/04 22:22:47 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: match.c,v 1.19 2002/03/01 13:12:10 markus Exp $");
+RCSID("$OpenBSD: match.c,v 1.20 2005/06/17 02:44:32 djm Exp $");
 
 #include "match.h"
 #include "xmalloc.h"
@@ -255,7 +255,7 @@ match_list(const char *client, const char *server, u_int *next)
 				ret = xstrdup(p);
 				if (next != NULL)
 					*next = (cp == NULL) ?
-					    strlen(c) : cp - c;
+					    strlen(c) : (u_int)(cp - c);
 				xfree(c);
 				xfree(s);
 				return ret;

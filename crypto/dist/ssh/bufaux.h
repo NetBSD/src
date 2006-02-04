@@ -1,5 +1,5 @@
-/*	$NetBSD: bufaux.h,v 1.1.1.9 2005/04/23 16:28:01 christos Exp $	*/
-/*	$OpenBSD: bufaux.h,v 1.20 2004/10/29 23:56:17 djm Exp $	*/
+/*	$NetBSD: bufaux.h,v 1.1.1.10 2006/02/04 22:22:36 christos Exp $	*/
+/*	$OpenBSD: bufaux.h,v 1.21 2005/03/10 22:01:05 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -41,7 +41,7 @@ void    buffer_put_string(Buffer *, const void *, u_int);
 void	buffer_put_cstring(Buffer *, const char *);
 
 #define buffer_skip_string(b) \
-    do { u_int l = buffer_get_int(b); buffer_consume(b, l); } while(0)
+    do { u_int l = buffer_get_int(b); buffer_consume(b, l); } while (0)
 
 int	buffer_put_bignum_ret(Buffer *, const BIGNUM *);
 int	buffer_get_bignum_ret(Buffer *, BIGNUM *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.1.1.21 2005/02/13 00:53:11 christos Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.1.1.22 2006/02/04 22:23:05 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.117 2004/08/11 21:43:05 avsm Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.124 2005/12/13 15:03:02 reyk Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -62,6 +62,7 @@ extern ServerOptions options;
 /* XXX */
 extern Kex *xxx_kex;
 extern Authctxt *the_authctxt;
+extern int use_privsep;
 
 static Buffer stdin_buffer;	/* Buffer for stdin data. */
 static Buffer stdout_buffer;	/* Buffer for stdout data. */
@@ -90,6 +91,9 @@ static int client_alive_timeouts = 0;
  */
 
 static volatile sig_atomic_t child_terminated = 0;	/* The child has terminated. */
+
+/* Cleanup on signals (!use_privsep case only) */
+static volatile sig_atomic_t received_sigterm = 0;
 
 /* prototypes */
 static void server_init_dispatch(void);
@@ -148,6 +152,12 @@ sigchld_handler(int sig)
 	signal(SIGCHLD, sigchld_handler);
 	notify_parent();
 	errno = save_errno;
+}
+
+static void
+sigterm_handler(int sig)
+{
+	received_sigterm = sig;
 }
 
 /*
@@ -501,6 +511,12 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 	child_terminated = 0;
 	signal(SIGCHLD, sigchld_handler);
 
+	if (!use_privsep) {
+		signal(SIGTERM, sigterm_handler);
+		signal(SIGINT, sigterm_handler);
+		signal(SIGQUIT, sigterm_handler);
+	}
+
 	/* Initialize our global variables. */
 	fdin = fdin_arg;
 	fdout = fdout_arg;
@@ -547,7 +563,7 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 	 * If we have no separate fderr (which is the case when we have a pty
 	 * - there we cannot make difference between data sent to stdout and
 	 * stderr), indicate that we have seen an EOF from stderr.  This way
-	 * we don\'t need to check the descriptor everywhere.
+	 * we don't need to check the descriptor everywhere.
 	 */
 	if (fderr == -1)
 		fderr_eof = 1;
@@ -627,6 +643,12 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 		/* Sleep in select() until we can do something. */
 		wait_until_can_do_something(&readset, &writeset, &max_fd,
 		    &nalloc, max_time_milliseconds);
+
+		if (received_sigterm) {
+			logit("Exiting on signal %d", received_sigterm);
+			/* Clean up sessions, utmp, etc. */
+			cleanup_exit(255);
+		}
 
 		/* Process any channel events. */
 		channel_after_select(readset, writeset);
@@ -748,6 +770,12 @@ server_loop2(Authctxt *authctxt)
 	connection_in = packet_get_connection_in();
 	connection_out = packet_get_connection_out();
 
+	if (!use_privsep) {
+		signal(SIGTERM, sigterm_handler);
+		signal(SIGINT, sigterm_handler);
+		signal(SIGQUIT, sigterm_handler);
+	}
+
 	notify_setup();
 
 	max_fd = MAX(connection_in, connection_out);
@@ -764,6 +792,12 @@ server_loop2(Authctxt *authctxt)
 			channel_output_poll();
 		wait_until_can_do_something(&readset, &writeset, &max_fd,
 		    &nalloc, 0);
+
+		if (received_sigterm) {
+			logit("Exiting on signal %d", received_sigterm);
+			/* Clean up sessions, utmp, etc. */
+			cleanup_exit(255);
+		}
 
 		collect_children();
 		if (!rekeying) {
@@ -864,7 +898,7 @@ server_request_direct_tcpip(void)
 	packet_check_eom();
 
 	debug("server_request_direct_tcpip: originator %s port %d, target %s port %d",
-	   originator, originator_port, target, target_port);
+	    originator, originator_port, target, target_port);
 
 	/* XXX check permission */
 	sock = channel_connect_to(target, target_port);
@@ -875,6 +909,47 @@ server_request_direct_tcpip(void)
 	c = channel_new("direct-tcpip", SSH_CHANNEL_CONNECTING,
 	    sock, sock, -1, CHAN_TCP_WINDOW_DEFAULT,
 	    CHAN_TCP_PACKET_DEFAULT, 0, "direct-tcpip", 1);
+	return c;
+}
+
+static Channel *
+server_request_tun(void)
+{
+	Channel *c = NULL;
+	int mode, tun;
+	int sock;
+
+	mode = packet_get_int();
+	switch (mode) {
+	case SSH_TUNMODE_POINTOPOINT:
+	case SSH_TUNMODE_ETHERNET:
+		break;
+	default:
+		packet_send_debug("Unsupported tunnel device mode.");
+		return NULL;
+	}
+	if ((options.permit_tun & mode) == 0) {
+		packet_send_debug("Server has rejected tunnel device "
+		    "forwarding");
+		return NULL;
+	}
+
+	tun = packet_get_int();
+	if (forced_tun_device != -1) {
+	 	if (tun != SSH_TUNID_ANY && forced_tun_device != tun)
+			goto done;
+		tun = forced_tun_device;
+	}
+	sock = tun_open(tun, mode);
+	if (sock < 0)
+		goto done;
+	c = channel_new("tun", SSH_CHANNEL_OPEN, sock, sock, -1,
+	    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT, 0, "tun", 1);
+	c->datagram = 1;
+
+ done:
+	if (c == NULL)
+		packet_send_debug("Failed to open the tunnel device.");
 	return c;
 }
 
@@ -899,7 +974,7 @@ server_request_session(void)
 		channel_free(c);
 		return NULL;
 	}
-	channel_register_cleanup(c->self, session_close_by_channel);
+	channel_register_cleanup(c->self, session_close_by_channel, 0);
 	return c;
 }
 
@@ -923,6 +998,8 @@ server_input_channel_open(int type, u_int32_t seq, void *ctxt)
 		c = server_request_session();
 	} else if (strcmp(ctype, "direct-tcpip") == 0) {
 		c = server_request_direct_tcpip();
+	} else if (strcmp(ctype, "tun@openssh.com") == 0) {
+		c = server_request_tun();
 	}
 	if (c != NULL) {
 		debug("server_input_channel_open: confirm %s", ctype);
