@@ -113,6 +113,7 @@ static void clear_lock PROTO ((struct lock *lock));
 static void set_lockers_name PROTO((struct stat *statp));
 static int set_writelock_proc PROTO((Node * p, void *closure));
 static int unlock_proc PROTO((Node * p, void *closure));
+static int find_root PROTO((const char *repository, char *rootdir));
 static int write_lock PROTO ((struct lock *lock));
 static void lock_simple_remove PROTO ((struct lock *lock));
 static void lock_wait PROTO((char *repository));
@@ -187,14 +188,19 @@ lock_name (repository, name)
     {
 	struct stat sb;
 	mode_t new_mode = 0;
+	int len;
 
 	/* The interesting part of the repository is the part relative
 	   to CVSROOT.  */
 	assert (current_parsed_root != NULL);
 	assert (current_parsed_root->directory != NULL);
-	assert (strncmp (repository, current_parsed_root->directory,
-			 strlen (current_parsed_root->directory)) == 0);
-	short_repos = repository + strlen (current_parsed_root->directory) + 1;
+	/* 
+	 * Unfortunately, string comparisons are not enough because we
+	 * might have symlinks present
+	 */
+	len = find_root(repository, current_parsed_root->directory);
+	assert(len != -1);
+	short_repos = repository + len + 1;
 
 	if (strcmp (repository, current_parsed_root->directory) == 0)
 	    short_repos = ".";
@@ -295,6 +301,45 @@ lock_name (repository, name)
 	}
     }
     return retval;
+}
+
+/*
+ * Find the root directory in the repository directory
+ */
+static int
+find_root(repository, rootdir)
+    const char *repository;
+    char *rootdir;
+{
+    struct stat strep, stroot;
+    char *p = NULL, *q = NULL;
+    size_t len;
+
+    if (stat(rootdir, &stroot) == -1)
+	return -1;
+    len = strlen(repository);
+    do {
+	if (p != NULL) {
+	    len = p - repository;
+	    *p = '\0';
+	}
+	if (q != NULL)
+	    *q = '/';
+	if (stat(repository, &strep) == -1) {
+	    if (p != NULL)
+		*p = '/';
+	    return -1;
+	}
+	if (strep.st_dev == stroot.st_dev && strep.st_ino == stroot.st_ino) {
+	    if (p != NULL)
+		*p = '/';
+	    if (q != NULL)
+		*q = '/';
+	    return len;
+	}
+	q = p;
+    } while ((p = strrchr(repository, '/')) != NULL);
+    return -1;
 }
 
 /*
@@ -416,6 +461,9 @@ Reader_Lock (xrepository)
     FILE *fp;
     char *tmp;
 
+    if (nolock)
+	return (0);
+
     if (trace)
 	(void) fprintf (stderr, "%s-> Reader_Lock(%s)\n", CLIENT_SERVER_STR,
                         xrepository);
@@ -494,6 +542,8 @@ Writer_Lock (list)
 {
     char *wait_repos;
 
+    if (nolock)
+	return (0);
     if (noexec)
 	return 0;
 

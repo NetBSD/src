@@ -1411,8 +1411,6 @@ Numeric tag %s contains characters other than digits and '.'", name);
 	add_to_val_tags (name);
 }
 
-
-
 /*
  * Check whether a join tag is valid.  This is just like
  * tag_check_valid, but we must stop before the colon if there is one.

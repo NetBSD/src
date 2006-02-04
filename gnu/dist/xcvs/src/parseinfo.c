@@ -357,6 +357,15 @@ parse_config (cvsroot)
 		goto error_return;
 	    }
 	}
+	else if (strcmp (line, "tag") == 0) {
+	    RCS_citag = xstrdup(p);
+	}
+	else if (strcmp (line, "AdminGroup") == 0) {
+	    CVS_admin_group = xstrdup(p);
+	}
+	else if (strcmp (line, "AdminOptions") == 0) {
+	    CVS_admin_options = xstrdup(p);
+	}
 	else if (strcmp (line, "PreservePermissions") == 0)
 	{
 	    if (strcmp (p, "no") == 0)
