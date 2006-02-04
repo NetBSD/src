@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.4 2005/12/11 12:24:44 christos Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.5 2006/02/04 22:24:26 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -34,6 +34,7 @@ ENTRY(bswap16)
 ALTENTRY(ntohs)
 ALTENTRY(htons)
 #endif
+	extu.w	r4, r4
 	rts
 	 swap.b	r4, r0
 
@@ -41,5 +42,5 @@ ALTENTRY(htons)
 ENTRY(ntohs)
 ALTENTRY(htons)
 	rts
-	 mov	r4, r0
+	 extu.w	r4, r0
 #endif
