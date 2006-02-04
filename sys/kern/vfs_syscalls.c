@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.235 2005/12/12 16:26:33 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.236 2006/02/04 12:09:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.235 2005/12/12 16:26:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.236 2006/02/04 12:09:50 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -728,7 +728,7 @@ done:
 	if (cwdi->cwdi_rdir != NULL) {
 		size_t len;
 		char *bp;
-		char *path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+		char *path = PNBUF_GET();
 		if (!path)
 			return ENOMEM;
 
@@ -737,7 +737,7 @@ done:
 		error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp, path,
 		    MAXPATHLEN / 2, 0, l);
 		if (error) {
-			free(path, M_TEMP);
+			PNBUF_PUT(path);
 			return error;
 		}
 		len = strlen(bp);
@@ -760,7 +760,7 @@ done:
 			else
 				error = EPERM;
 		}
-		free(path, M_TEMP);
+		PNBUF_PUT(path);
 	}
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return error;
