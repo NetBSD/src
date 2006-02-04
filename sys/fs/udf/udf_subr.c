@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.3 2006/02/04 21:29:11 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.4 2006/02/04 23:21:43 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.3 2006/02/04 21:29:11 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.4 2006/02/04 23:21:43 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -484,7 +484,7 @@ udf_update_discinfo(struct udf_mount *ump)
 	di->link_block_penalty	= 0;
 
 	di->mmc_cur     = MMC_CAP_RECORDABLE | MMC_CAP_REWRITABLE |
-		MMC_CAP_ZEROLINKBLK;
+		MMC_CAP_ZEROLINKBLK | MMC_CAP_HW_DEFECTFREE;
 	di->mmc_cap    = di->mmc_cur;
 	di->disc_flags = MMC_DFLAGS_UNRESTRICTED;
 
