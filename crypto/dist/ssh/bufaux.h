@@ -1,4 +1,4 @@
-/*	$NetBSD: bufaux.h,v 1.1.1.10 2006/02/04 22:22:36 christos Exp $	*/
+/*	$NetBSD: bufaux.h,v 1.2 2006/02/04 22:32:13 christos Exp $	*/
 /*	$OpenBSD: bufaux.h,v 1.21 2005/03/10 22:01:05 deraadt Exp $	*/
 
 /*

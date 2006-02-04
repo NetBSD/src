@@ -1,5 +1,5 @@
-/*	$NetBSD: includes.h,v 1.10 2005/09/09 12:20:12 christos Exp $	*/
-/*	$OpenBSD: includes.h,v 1.18 2004/06/13 15:03:02 djm Exp $	*/
+/*	$NetBSD: includes.h,v 1.11 2006/02/04 22:32:14 christos Exp $	*/
+/*	$OpenBSD: includes.h,v 1.22 2006/01/01 08:59:27 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -22,7 +22,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/select.h>
+#include <sys/queue.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/endian.h>
