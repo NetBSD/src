@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.24 2005/12/11 12:21:28 christos Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.24.6.1 2006/02/04 14:03:58 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.24 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.24.6.1 2006/02/04 14:03:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,27 +512,20 @@ lm_gtredata(sme, tred)
 	 struct sysmon_envsys *sme;
 	 struct envsys_tre_data *tred;
 {
-	 static const struct timeval onepointfive = { 1, 500000 };
-	 struct timeval t;
-	 struct lm_softc *sc = sme->sme_cookie;
-	 int i, s;
+	static const struct timeval onepointfive = { 1, 500000 };
+	struct timeval t, utv;
+	struct lm_softc *sc = sme->sme_cookie;
 
-	 /* read new values at most once every 1.5 seconds */
-	 timeradd(&sc->lastread, &onepointfive, &t);
-	 s = splclock();
-	 i = timercmp(&mono_time, &t, >);
-	 if (i) {
-		  sc->lastread.tv_sec  = mono_time.tv_sec;
-		  sc->lastread.tv_usec = mono_time.tv_usec;
-	 }
-	 splx(s);
+	/* read new values at most once every 1.5 seconds */
+	getmicrouptime(&utv);
+	timeradd(&sc->lastread, &onepointfive, &t);
+	if (timercmp(&utv, &t, >)) {
+		sc->lastread = utv;
+		sc->refresh_sensor_data(sc);
 
-	 if (i)
-		  sc->refresh_sensor_data(sc);
+	*tred = sc->sensors[tred->sensor];
 
-	 *tred = sc->sensors[tred->sensor];
-
-	 return 0;
+	return 0;
 }
 
 int
