@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.138 2006/02/04 11:52:32 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.139 2006/02/04 13:38:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.138 2006/02/04 11:52:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.139 2006/02/04 13:38:04 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -470,7 +470,11 @@ vndstrategy(struct buf *bp)
 	 * Do bounds checking and adjust transfer.  If there's an error,
 	 * the bounds check will flag that for us.
 	 */
-	if (DISKPART(bp->b_dev) != RAW_PART) {
+	if (DISKPART(bp->b_dev) == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+		    vnd->sc_size) <= 0)
+			goto done;
+	} else {
 		if (bounds_check_with_label(&vnd->sc_dkdev,
 		    bp, vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING)) <= 0)
 			goto done;
