@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.570 2006/02/03 11:08:24 jmmv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.570.2.1 2006/02/04 15:13:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570 2006/02/03 11:08:24 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570.2.1 2006/02/04 15:13:11 simonb Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -112,7 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570 2006/02/03 11:08:24 jmmv Exp $");
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
-#include <machine/kcore.h>
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -133,10 +132,12 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570 2006/02/03 11:08:24 jmmv Exp $");
 
 #include <sys/sysctl.h>
 
+#include <machine/clock.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/gdt.h>
+#include <machine/kcore.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -254,7 +255,6 @@ struct vm_map *phys_map = NULL;
 extern	paddr_t avail_start, avail_end;
 
 void (*delay_func)(int) = i8254_delay;
-void (*microtime_func)(struct timeval *) = i8254_microtime;
 void (*initclock_func)(void) = i8254_initclocks;
 
 /*
@@ -2273,7 +2273,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 void
 cpu_initclocks()
 {
+
 	(*initclock_func)();
+#if defined(I586_CPU) || defined(I686_CPU)
+	init_TSC_tc();
+#endif
 }
 
 #ifdef MULTIPROCESSOR
