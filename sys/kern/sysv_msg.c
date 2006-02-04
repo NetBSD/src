@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.40 2005/12/07 06:14:13 thorpej Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.40.6.1 2006/02/04 14:30:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.40 2005/12/07 06:14:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.40.6.1 2006/02/04 14:30:17 simonb Exp $");
 
 #define SYSVMSG
 
@@ -286,7 +286,7 @@ msgctl1(struct proc *p, int msqid, int cmd, struct msqid_ds *msqbuf)
 		msqptr->msg_perm.mode = (msqptr->msg_perm.mode & ~0777) |
 		    (msqbuf->msg_perm.mode & 0777);
 		msqptr->msg_qbytes = msqbuf->msg_qbytes;
-		msqptr->msg_ctime = time.tv_sec;
+		msqptr->msg_ctime = time_second;
 		break;
 
 	case IPC_STAT:
@@ -380,7 +380,7 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 		msqptr->msg_lrpid = 0;
 		msqptr->msg_stime = 0;
 		msqptr->msg_rtime = 0;
-		msqptr->msg_ctime = time.tv_sec;
+		msqptr->msg_ctime = time_second;
 	} else {
 		MSG_PRINTF(("didn't find it and wasn't asked to create it\n"));
 		return (ENOENT);
@@ -659,7 +659,7 @@ sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 	msqptr->_msg_cbytes += msghdr->msg_ts;
 	msqptr->msg_qnum++;
 	msqptr->msg_lspid = p->p_pid;
-	msqptr->msg_stime = time.tv_sec;
+	msqptr->msg_stime = time_second;
 
 	wakeup(msqptr);
 	return (0);
@@ -857,7 +857,7 @@ sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 	msqptr->_msg_cbytes -= msghdr->msg_ts;
 	msqptr->msg_qnum--;
 	msqptr->msg_lrpid = p->p_pid;
-	msqptr->msg_rtime = time.tv_sec;
+	msqptr->msg_rtime = time_second;
 
 	/*
 	 * Make msgsz the actual amount that we'll be returning.

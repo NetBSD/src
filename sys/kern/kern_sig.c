@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.214 2006/02/02 17:48:51 elad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.214.2.1 2006/02/04 14:30:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.214 2006/02/02 17:48:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.214.2.1 2006/02/04 14:30:17 simonb Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -2359,10 +2359,9 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	} */ *uap = v;
 	sigset_t *waitset, twaitset;
 	struct proc *p = l->l_proc;
-	int error, signum, s;
+	int error, signum;
 	int timo = 0;
-	struct timeval tvstart;
-	struct timespec ts;
+	struct timespec ts, tsstart;
 	ksiginfo_t *ksi;
 
 	MALLOC(waitset, sigset_t *, sizeof(sigset_t), M_TEMP, M_WAITOK);
@@ -2417,12 +2416,10 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 			return (EAGAIN);
 
 		/*
-		 * Remember current mono_time, it would be used in
+		 * Remember current uptime, it would be used in
 		 * ECANCELED/ERESTART case.
 		 */
-		s = splclock();
-		tvstart = mono_time;
-		splx(s);
+		getnanouptime(&tsstart);
 	}
 
 	/*
@@ -2469,26 +2466,22 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 		 * or called again.
 		 */
 		if (timo && (error == ERESTART || error == ECANCELED)) {
-			struct timeval tvnow, tvtimo;
+			struct timespec tsnow;
 			int err;
 
-			s = splclock();
-			tvnow = mono_time;
-			splx(s);
-
-			TIMESPEC_TO_TIMEVAL(&tvtimo, &ts);
+/* XXX double check the following change */
+			getnanouptime(&tsnow);
 
 			/* compute how much time has passed since start */
-			timersub(&tvnow, &tvstart, &tvnow);
+			timespecsub(&tsnow, &tsstart, &tsnow);
 			/* substract passed time from timeout */
-			timersub(&tvtimo, &tvnow, &tvtimo);
+			timespecsub(&ts, &tsnow, &ts);
 
-			if (tvtimo.tv_sec < 0) {
+			if (ts.tv_sec < 0) {
 				error = EAGAIN;
 				goto fail;
 			}
-
-			TIMEVAL_TO_TIMESPEC(&tvtimo, &ts);
+/* XXX double check the previous change */
 
 			/* copy updated timeout to userland */
 			if ((err = (*put_timeout)(&ts, SCARG(uap, timeout),

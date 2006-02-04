@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.73 2005/12/26 18:45:27 perry Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.73.6.1 2006/02/04 14:30:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.73 2005/12/26 18:45:27 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.73.6.1 2006/02/04 14:30:17 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -211,7 +211,6 @@ disk_init0(struct disk *diskp)
 static void
 disk_attach0(struct disk *diskp)
 {
-	int s;
 
 	/*
 	 * Allocate and initialize the disklabel structures.  Note that
@@ -230,9 +229,7 @@ disk_attach0(struct disk *diskp)
 	/*
 	 * Set the attached timestamp.
 	 */
-	s = splclock();
-	diskp->dk_attachtime = mono_time;
-	splx(s);
+	getmicrouptime(&diskp->dk_attachtime);
 
 	/*
 	 * Link into the disklist.
@@ -324,17 +321,9 @@ pseudo_disk_detach(struct disk *diskp)
 void
 disk_busy(struct disk *diskp)
 {
-	int s;
 
-	/*
-	 * XXX We'd like to use something as accurate as microtime(),
-	 * but that doesn't depend on the system TOD clock.
-	 */
-	if (diskp->dk_busy++ == 0) {
-		s = splclock();
-		diskp->dk_timestamp = mono_time;
-		splx(s);
-	}
+	if (diskp->dk_busy++ == 0)
+		getmicrouptime(&diskp->dk_timestamp);
 }
 
 /*
@@ -344,7 +333,6 @@ disk_busy(struct disk *diskp)
 void
 disk_unbusy(struct disk *diskp, long bcount, int read)
 {
-	int s;
 	struct timeval dv_time, diff_time;
 
 	if (diskp->dk_busy-- == 0) {
@@ -352,10 +340,7 @@ disk_unbusy(struct disk *diskp, long bcount, int read)
 		panic("disk_unbusy");
 	}
 
-	s = splclock();
-	dv_time = mono_time;
-	splx(s);
-
+	getmicrouptime(&dv_time);
 	timersub(&dv_time, &diskp->dk_timestamp, &diff_time);
 	timeradd(&diskp->dk_time, &diff_time, &diskp->dk_time);
 
@@ -380,17 +365,14 @@ disk_unbusy(struct disk *diskp, long bcount, int read)
 void
 disk_resetstat(struct disk *diskp)
 {
-	int s = splbio(), t;
+	int s = splbio();
 
 	diskp->dk_rxfer = 0;
 	diskp->dk_rbytes = 0;
 	diskp->dk_wxfer = 0;
 	diskp->dk_wbytes = 0;
 
-	t = splclock();
-	diskp->dk_attachtime = mono_time;
-	splx(t);
-
+	getmicrouptime(&diskp->dk_attachtime);
 	timerclear(&diskp->dk_time);
 
 	splx(s);
