@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99 2006/02/02 21:32:09 reinoud Exp $
+# $NetBSD: GENERIC,v 1.100 2006/02/04 03:29:57 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.99 $"
+#ident 		"GENERIC-$Revision: 1.100 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -236,7 +236,7 @@ pseudo-device	md		2
 
 # Misc.
 pseudo-device	loop		1	# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	sl		2	# CSLIP
 pseudo-device	ppp		2	# PPP
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
