@@ -1,3 +1,5 @@
+/* $NetBSD: tsc.c,v 1.1.1.1.2.3 2006/02/04 11:11:40 simonb Exp $ */
+
 /*-
  * Copyright (c) 1998-2003 Poul-Henning Kamp
  * All rights reserved.
@@ -25,7 +27,8 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $");
+/* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.1.1.2.3 2006/02/04 11:11:40 simonb Exp $");
 
 #include "opt_clock.h"
 
