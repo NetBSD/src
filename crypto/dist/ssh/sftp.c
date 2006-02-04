@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.17 2005/04/23 16:53:29 christos Exp $	*/
+/*	$NetBSD: sftp.c,v 1.18 2006/02/04 22:32:14 christos Exp $	*/
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,8 +17,8 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.62 2005/02/20 22:59:06 djm Exp $");
-__RCSID("$NetBSD: sftp.c,v 1.17 2005/04/23 16:53:29 christos Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.70 2006/01/31 10:19:02 djm Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.18 2006/02/04 22:32:14 christos Exp $");
 
 #include <glob.h>
 #include <histedit.h>
@@ -354,7 +354,7 @@ parse_ls_flags(const char **cpp, int *lflag)
 
 	/* Check for flags */
 	if (cp++[0] == '-') {
-		for(; strchr(WHITESPACE, *cp) == NULL; cp++) {
+		for (; strchr(WHITESPACE, *cp) == NULL; cp++) {
 			switch (*cp) {
 			case 'l':
 				*lflag &= ~VIEW_FLAGS;
@@ -401,7 +401,7 @@ get_pathname(const char **cpp, char **path)
 {
 	const char *cp = *cpp, *end;
 	char quot;
-	int i, j;
+	u_int i, j;
 
 	cp += strspn(cp, WHITESPACE);
 	if (!*cp) {
@@ -663,14 +663,15 @@ sdirent_comp(const void *aa, const void *bb)
 static int
 do_ls_dir(struct sftp_conn *conn, char *path, char *strip_path, int lflag)
 {
-	int n, c = 1, colspace = 0, columns = 1;
+	int n;
+	u_int c = 1, colspace = 0, columns = 1;
 	SFTP_DIRENT **d;
 
 	if ((n = do_readdir(conn, path, &d)) != 0)
 		return (n);
 
 	if (!(lflag & LS_SHORT_VIEW)) {
-		int m = 0, width = 80;
+		u_int m = 0, width = 80;
 		struct winsize ws;
 		char *tmp;
 
@@ -695,6 +696,8 @@ do_ls_dir(struct sftp_conn *conn, char *path, char *strip_path, int lflag)
 	}
 
 	if (lflag & SORT_FLAGS) {
+		for (n = 0; d[n] != NULL; n++)
+			;	/* count entries */
 		sort_flag = lflag & (SORT_FLAGS|LS_REVERSE_SORT);
 		qsort(d, n, sizeof(*d), sdirent_comp);
 	}
@@ -746,7 +749,7 @@ do_globbed_ls(struct sftp_conn *conn, char *path, char *strip_path,
     int lflag)
 {
 	glob_t g;
-	int i, c = 1, colspace = 0, columns = 1;
+	u_int i, c = 1, colspace = 0, columns = 1;
 	Attrib *a = NULL;
 
 	memset(&g, 0, sizeof(g));
@@ -782,7 +785,7 @@ do_globbed_ls(struct sftp_conn *conn, char *path, char *strip_path,
 	}
 
 	if (!(lflag & LS_SHORT_VIEW)) {
-		int m = 0, width = 80;
+		u_int m = 0, width = 80;
 		struct winsize ws;
 
 		/* Count entries for sort and find longest filename */
@@ -1233,7 +1236,7 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 	char *dir = NULL;
 	char cmd[2048];
 	struct sftp_conn *conn;
-	int err;
+	int err, interactive;
 	EditLine *el = NULL;
 	History *hl = NULL;
 	HistEvent hev;
@@ -1292,6 +1295,7 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(infile, NULL, _IOLBF, 0);
 
+	interactive = !batchmode && isatty(STDIN_FILENO);
 	err = 0;
 	for (;;) {
 		char *cp;
@@ -1301,16 +1305,24 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 		signal(SIGINT, SIG_IGN);
 
 		if (el == NULL) {
-			printf("sftp> ");
+			if (interactive)
+				printf("sftp> ");
 			if (fgets(cmd, sizeof(cmd), infile) == NULL) {
+				if (interactive)
+					printf("\n");
+				break;
+			}
+			if (!interactive) { /* Echo command */
+				printf("sftp> %s", cmd);
+				if (strlen(cmd) > 0 &&
+				    cmd[strlen(cmd) - 1] != '\n')
+					printf("\n");
+			}
+		} else {
+			if ((line = el_gets(el, &count)) == NULL || count <= 0) {
 				printf("\n");
 				break;
 			}
-			if (batchmode) /* Echo command */
-				printf("%s", cmd);
-		} else {
-			if ((line = el_gets(el, &count)) == NULL || count <= 0)
-				break;
 			history(hl, &hev, H_ENTER, line);
 			if (strlcpy(cmd, line, sizeof(cmd)) >= sizeof(cmd)) {
 				fprintf(stderr, "Error: input line too long\n");
@@ -1331,6 +1343,9 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 			break;
 	}
 	xfree(pwd);
+
+	if (el != NULL)
+		el_end(el);
 
 	/* err == 1 signifies normal "quit" exit */
 	return (err >= 0 ? 0 : -1);
@@ -1419,10 +1434,15 @@ main(int argc, char **argv)
 	extern int optind;
 	extern char *optarg;
 
+	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
+	sanitise_stdfd();
+
+	memset(&args, '\0', sizeof(args));
 	args.list = NULL;
-	addargs(&args, "ssh");		/* overwritten with ssh_program */
+	addargs(&args, ssh_program);
 	addargs(&args, "-oForwardX11 no");
 	addargs(&args, "-oForwardAgent no");
+	addargs(&args, "-oPermitLocalCommand no");
 	addargs(&args, "-oClearAllForwardings yes");
 
 	ll = SYSLOG_LEVEL_INFO;
@@ -1454,6 +1474,7 @@ main(int argc, char **argv)
 			break;
 		case 'S':
 			ssh_program = optarg;
+			replacearg(&args, 0, "%s", ssh_program);
 			break;
 		case 'b':
 			if (batchmode)
@@ -1461,7 +1482,7 @@ main(int argc, char **argv)
 
 			/* Allow "-" as stdin */
 			if (strcmp(optarg, "-") != 0 &&
-			   (infile = fopen(optarg, "r")) == NULL)
+			    (infile = fopen(optarg, "r")) == NULL)
 				fatal("%s (%s).", strerror(errno), optarg);
 			showprogress = 0;
 			batchmode = 1;
@@ -1530,7 +1551,6 @@ main(int argc, char **argv)
 		addargs(&args, "%s", host);
 		addargs(&args, "%s", (sftp_server != NULL ?
 		    sftp_server : "sftp"));
-		args.list[0] = ssh_program;
 
 		if (!batchmode)
 			fprintf(stderr, "Connecting to %s...\n", host);
@@ -1543,6 +1563,7 @@ main(int argc, char **argv)
 			fprintf(stderr, "Attaching to %s...\n", sftp_direct);
 		connect_to_server(sftp_direct, args.list, &in, &out);
 	}
+	freeargs(&args);
 
 	err = interactive_loop(in, out, file1, file2);
 

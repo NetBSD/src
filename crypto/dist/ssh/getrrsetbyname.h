@@ -1,5 +1,6 @@
 /* OPENBSD BASED ON : include/netdb.h */
 
+/* $NetBSD: getrrsetbyname.h,v 1.2 2006/02/04 22:32:14 christos Exp $ */
 /* $OpenBSD: getrrsetbyname.c,v 1.4 2001/08/16 18:16:43 ho Exp $ */
 
 /*
@@ -49,8 +50,6 @@
 #define _GETRRSETBYNAME_H
 
 #include "includes.h"
-#define HAVE__GETSHORT
-#define HAVE__GETLONG
 
 #ifndef HAVE_GETRRSETBYNAME
 

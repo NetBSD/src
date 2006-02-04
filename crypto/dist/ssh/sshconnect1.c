@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.28 2005/02/13 05:57:27 christos Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.29 2006/02/04 22:32:14 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,8 +14,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect1.c,v 1.60 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: sshconnect1.c,v 1.28 2005/02/13 05:57:27 christos Exp $");
+RCSID("$OpenBSD: sshconnect1.c,v 1.62 2005/10/30 08:52:18 djm Exp $");
+__RCSID("$NetBSD: sshconnect1.c,v 1.29 2006/02/04 22:32:14 christos Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -97,7 +97,7 @@ try_agent_authentication(void)
 		/* Wait for server's response. */
 		type = packet_read();
 
-		/* The server sends failure if it doesn\'t like our key or
+		/* The server sends failure if it doesn't like our key or
 		   does not support RSA authentication. */
 		if (type == SSH_SMSG_FAILURE) {
 			debug("Server refused our key.");
@@ -175,7 +175,7 @@ respond_to_rsa_challenge(BIGNUM * challenge, RSA * prv)
 	/* Compute the response. */
 	/* The response is MD5 of decrypted challenge plus session id. */
 	len = BN_num_bytes(challenge);
-	if (len <= 0 || len > sizeof(buf))
+	if (len <= 0 || (u_int)len > sizeof(buf))
 		packet_disconnect(
 		    "respond_to_rsa_challenge: bad challenge length %d", len);
 
@@ -228,8 +228,8 @@ try_rsa_authentication(int idx)
 	type = packet_read();
 
 	/*
-	 * The server responds with failure if it doesn\'t like our key or
-	 * doesn\'t support RSA authentication.
+	 * The server responds with failure if it doesn't like our key or
+	 * doesn't support RSA authentication.
 	 */
 	if (type == SSH_SMSG_FAILURE) {
 		debug("Server refused our key.");

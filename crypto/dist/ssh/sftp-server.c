@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-server.c,v 1.21 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: sftp-server.c,v 1.22 2006/02/04 22:32:14 christos Exp $	*/
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -15,14 +15,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.47 2004/06/25 05:38:48 dtucker Exp $");
-__RCSID("$NetBSD: sftp-server.c,v 1.21 2005/02/13 05:57:26 christos Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.50 2006/01/02 01:20:31 djm Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.22 2006/02/04 22:32:14 christos Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
 #include "getput.h"
 #include "log.h"
 #include "xmalloc.h"
+#include "misc.h"
 
 #include "sftp.h"
 #include "sftp-common.h"
@@ -130,7 +131,7 @@ Handle	handles[100];
 static void
 handle_init(void)
 {
-	int i;
+	u_int i;
 
 	for (i = 0; i < sizeof(handles)/sizeof(Handle); i++)
 		handles[i].use = HANDLE_UNUSED;
@@ -139,7 +140,7 @@ handle_init(void)
 static int
 handle_new(int use, const char *name, int fd, DIR *dirp)
 {
-	int i;
+	u_int i;
 
 	for (i = 0; i < sizeof(handles)/sizeof(Handle); i++) {
 		if (handles[i].use == HANDLE_UNUSED) {
@@ -156,7 +157,7 @@ handle_new(int use, const char *name, int fd, DIR *dirp)
 static int
 handle_is_ok(int i, int type)
 {
-	return i >= 0 && i < sizeof(handles)/sizeof(Handle) &&
+	return i >= 0 && (u_int)i < sizeof(handles)/sizeof(Handle) &&
 	    handles[i].use == type;
 }
 
@@ -477,10 +478,10 @@ process_write(void)
 		} else {
 /* XXX ATOMICIO ? */
 			ret = write(fd, data, len);
-			if (ret == -1) {
+			if (ret < 0) {
 				error("process_write: write failed");
 				status = errno_to_portable(errno);
-			} else if (ret == len) {
+			} else if ((size_t)ret == len) {
 				status = SSH2_FX_OK;
 			} else {
 				logit("nothing at all written");
@@ -927,7 +928,7 @@ process(void)
 		return;		/* Incomplete message. */
 	cp = buffer_ptr(&iqueue);
 	msg_len = GET_32BIT(cp);
-	if (msg_len > 256 * 1024) {
+	if (msg_len > SFTP_MAX_MSG_LENGTH) {
 		error("bad message ");
 		exit(11);
 	}
@@ -1017,6 +1018,9 @@ main(int ac, char **av)
 	fd_set *rset, *wset;
 	int in, out, max;
 	ssize_t len, olen, set_size;
+
+	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
+	sanitise_stdfd();
 
 	/* XXX should use getopt */
 
