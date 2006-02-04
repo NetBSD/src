@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.403 2006/02/02 22:31:39 skrll Exp $
+#	$NetBSD: 3RDPARTY,v 1.404 2006/02/04 00:31:23 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -550,7 +550,7 @@ the local copy of openpam_free_envlist() in the pam_exec module.
 
 Package:	OpenSSH
 Version:	4.0
-Current Vers:	4.2 / portable 4.2p1
+Current Vers:	4.3 / portable 4.3p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
