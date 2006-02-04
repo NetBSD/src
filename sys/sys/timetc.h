@@ -1,4 +1,4 @@
-/* $NetBSD: timetc.h,v 1.1.1.1.2.3 2006/02/04 08:19:04 simonb Exp $ */
+/* $NetBSD: timetc.h,v 1.1.1.1.2.4 2006/02/04 13:50:00 simonb Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -51,7 +51,7 @@ struct timecounter {
 		/* This mask should mask off any unimplemented bits. */
 	u_int64_t		tc_frequency;
 		/* Frequency of the counter in Hz. */
-	char			*tc_name;
+	const char		*tc_name;
 		/* Name of the timecounter. */
 	int			tc_quality;
 		/*
