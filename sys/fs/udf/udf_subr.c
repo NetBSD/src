@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.2 2006/02/02 15:38:35 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.3 2006/02/04 21:29:11 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.2 2006/02/02 15:38:35 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.3 2006/02/04 21:29:11 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -918,13 +918,16 @@ udf_retrieve_lvint(struct udf_mount *ump, struct logvol_int_desc **lvintp)
 	/* clean up the mess, esp. when there is an error */
 	if (dscr)
 		free(dscr, M_UDFVOLD);
-	if (error && lvint)
+
+	if (error && lvint) {
 		free(lvint, M_UDFVOLD);
-	*lvintp = lvint;
+		lvint = NULL;
+	};
 
 	if (!lvint)
 		error = ENOENT;
 
+	*lvintp = lvint;
 	return error;
 }
 
@@ -1357,7 +1360,7 @@ udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args)
 			error = udf_read_sparables(ump, mapping);
 			break;
 		case UDF_VTOP_TYPE_META :
-			/* load metafile and metabitmapfile FE/EFEs */
+			/* TODO load metafile and metabitmapfile FE/EFEs */
 			break;
 		default:
 			break;
