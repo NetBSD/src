@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.214 2006/02/02 17:48:51 elad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.215 2006/02/04 12:09:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.214 2006/02/02 17:48:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.215 2006/02/04 12:09:50 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -2095,7 +2095,7 @@ coredump(struct lwp *l, const char *pattern)
 	struct mount		*mp;
 	struct coredump_iostate	io;
 	int			error, error1;
-	char			name[MAXPATHLEN];
+	char			*name = NULL;
 
 	p = l->l_proc;
 	vm = p->p_vmspace;
@@ -2125,30 +2125,39 @@ restart:
 	 */
 	vp = p->p_cwdi->cwdi_cdir;
 	if (vp->v_mount == NULL ||
-	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
-		return (EPERM);
+	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0) {
+		error = EPERM;
+		goto done;
+	}
 
 	if (p->p_flag & P_SUGID && security_setidcore_dump)
 		pattern = security_setidcore_path;
 
 	if (pattern == NULL)
 		pattern = p->p_limit->pl_corename;
-	if ((error = build_corename(p, name, pattern, sizeof(name))) != 0)
-		return error;
-
+	if (name == NULL) {
+		name = PNBUF_GET();
+	}
+	error = build_corename(p, name, pattern, MAXPATHLEN);
+	if (error != 0) {
+		goto done;
+	}
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, l);
 	error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE, S_IRUSR | S_IWUSR);
-	if (error)
-		return (error);
+	if (error) {
+		goto done;
+	}
 	vp = nd.ni_vp;
 
 	if (vn_start_write(vp, &mp, V_NOWAIT) != 0) {
 		VOP_UNLOCK(vp, 0);
-		if ((error = vn_close(vp, FWRITE, cred, l)) != 0)
-			return (error);
+		if ((error = vn_close(vp, FWRITE, cred, l)) != 0) {
+			goto done;
+		}
 		if ((error = vn_start_write(NULL, &mp,
-		    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0)
-			return (error);
+		    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0) {
+			goto done;
+		}
 		goto restart;
 	}
 
@@ -2184,6 +2193,10 @@ restart:
 	error1 = vn_close(vp, FWRITE, cred, l);
 	if (error == 0)
 		error = error1;
+done:
+	if (name != NULL) {
+		PNBUF_PUT(name);
+	}
 	return (error);
 }
 
