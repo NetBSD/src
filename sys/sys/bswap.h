@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.7 2006/02/04 01:08:30 uwe Exp $      */
+/*      $NetBSD: bswap.h,v 1.8 2006/02/04 01:31:48 uwe Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -12,7 +12,6 @@
 #include <machine/bswap.h>
 
 __BEGIN_DECLS
-
 /* Always declare the functions in case their address is taken (etc) */
 #if defined(_KERNEL) || defined(_STANDALONE) || !defined(__BSWAP_RENAME)
 uint16_t bswap16(uint16_t) __attribute__((__const__));
@@ -22,6 +21,7 @@ uint16_t bswap16(uint16_t) __attribute__((__const__)) __RENAME(__bswap16);
 uint32_t bswap32(uint32_t) __attribute__((__const__)) __RENAME(__bswap32);
 #endif
 uint64_t bswap64(uint64_t) __attribute__((__const__));
+__END_DECLS
 
 #if defined(__GNUC__) && defined(__OPTIMIZE__)
 
@@ -70,9 +70,7 @@ uint64_t bswap64(uint64_t) __attribute__((__const__));
 	(__builtin_constant_p((x)) ? \
 	 __byte_swap_u16_constant(x) : __BYTE_SWAP_U16_VARIABLE(x))
 
-#endif /* __OPTIMIZE__ */
-
-__END_DECLS
+#endif /* __GNUC__ && __OPTIMIZE__ */
 #endif /* !_LOCORE */
 
 #endif /* !_SYS_BSWAP_H_ */
