@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.186 2005/12/11 12:23:51 christos Exp $ */
+/*	$NetBSD: st.c,v 1.186.6.1 2006/02/04 14:03:58 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.186 2005/12/11 12:23:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.186.6.1 2006/02/04 14:03:58 simonb Exp $");
 
 #include "opt_scsi.h"
 
@@ -1187,7 +1187,7 @@ ststart(struct scsipi_periph *periph)
 	struct buf *bp;
 	struct scsi_rw_tape cmd;
 	struct scsipi_xfer *xs;
-	int flags, error, s;
+	int flags, error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ststart "));
 	/*
@@ -1224,11 +1224,8 @@ ststart(struct scsipi_periph *periph)
 		if ((bp = BUFQ_PEEK(st->buf_queue)) == NULL)
 			return;
 
-		if (st->stats->busy++ == 0) {
-			s = splclock();
-			st->stats->timestamp = mono_time;
-			splx(s);
-		}
+		if (st->stats->busy++ == 0)
+			getmicrouptime(&st->stats->timestamp);
 		
 		/*
 		 * only FIXEDBLOCK devices have pending I/O or space operations.
@@ -1356,7 +1353,6 @@ stdone(struct scsipi_xfer *xs, int error)
 {
 	struct st_softc *st = (void *)xs->xs_periph->periph_dev;
 	struct buf *bp = xs->bp;
-	int s;
 	struct timeval st_time, diff_time;
 
 	if (bp) {
@@ -1375,9 +1371,7 @@ stdone(struct scsipi_xfer *xs, int error)
 			printf("%s: busy < 0, Oops.\n", st->stats->name);
 			st->stats->busy = 0;
 		} else {
-			s = splclock();
-			st_time = mono_time;
-			splx(s);
+			getmicrouptime(&st_time);
 
 			timersub(&st_time, &st->stats->timestamp, &diff_time);
 			timeradd(&st->stats->time, &diff_time,
@@ -2563,7 +2557,6 @@ struct tape *
 drive_attach(char *name) 
 {
 	struct tape *stats;
-	int s;
 	
 	/* Allocate and initialise statistics */
 	stats = (struct tape *) malloc(sizeof(struct tape), M_DEVBUF,
@@ -2574,9 +2567,7 @@ drive_attach(char *name)
 	/*
 	 * Set the attached timestamp.
 	 */
-	s = splclock();
-	stats->attachtime = mono_time;
-	splx(s);
+	getmicrouptime(&stats->attachtime);
 
 	  /* and clear the utilisation time */
 	timerclear(&stats->time);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.38 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: mlx.c,v 1.38.6.1 2006/02/04 14:03:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.38 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.38.6.1 2006/02/04 14:03:58 simonb Exp $");
 
 #include "ld.h"
 
@@ -134,8 +134,6 @@ static int	mlx_print(void *, const char *);
 static int	mlx_rebuild(struct mlx_softc *, int, int);
 static void	mlx_shutdown(void *);
 static int	mlx_user_command(struct mlx_softc *, struct mlx_usercommand *);
-
-static inline time_t	mlx_curtime(void);
 
 dev_type_open(mlxopen);
 dev_type_close(mlxclose);
@@ -252,23 +250,6 @@ struct {
 
 	{ 0,			14,	0x0104 },
 };
-
-/*
- * Return the current time in seconds - we're not particularly interested in
- * precision here.
- */
-static inline time_t
-mlx_curtime(void)
-{
-	time_t rt;
-	int s;
-
-	s = splclock();
-	rt = mono_time.tv_sec;
-	splx(s);
-
-	return (rt);
-}
 
 /*
  * Initialise the controller and our interface.
@@ -810,7 +791,7 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		/* Looks ok, go with it. */
 		mlx->mlx_pause.mp_which = mp->mp_which;
-		mlx->mlx_pause.mp_when = mlx_curtime() + mp->mp_when;
+		mlx->mlx_pause.mp_when = time_second + mp->mp_when;
 		mlx->mlx_pause.mp_howlong =
 		    mlx->mlx_pause.mp_when + mp->mp_howlong;
 
@@ -999,13 +980,10 @@ mlx_periodic(struct mlx_softc *mlx)
 {
 	struct mlx_ccb *mc, *nmc;
 	int etype, s;
-	time_t ct;
-
-	ct = mlx_curtime();
 
 	if ((mlx->mlx_pause.mp_which != 0) &&
 	    (mlx->mlx_pause.mp_when > 0) &&
-	    (ct >= mlx->mlx_pause.mp_when)) {
+	    (time_second >= mlx->mlx_pause.mp_when)) {
 	    	/*
 	    	 * Start bus pause.
 	    	 */
@@ -1016,15 +994,15 @@ mlx_periodic(struct mlx_softc *mlx)
 		/*
 		 * Stop pause if required.
 		 */
-		if (ct >= mlx->mlx_pause.mp_howlong) {
+		if (time_second >= mlx->mlx_pause.mp_howlong) {
 			mlx_pause_action(mlx);
 			mlx->mlx_pause.mp_which = 0;
 		}
-	} else if (ct > (mlx->mlx_lastpoll + 10)) {
+	} else if (time_second > (mlx->mlx_lastpoll + 10)) {
 		/*
 		 * Run normal periodic activities...
 		 */
-		mlx->mlx_lastpoll = ct;
+		mlx->mlx_lastpoll = time_second;
 
 		/*
 		 * Check controller status.
@@ -1068,7 +1046,7 @@ mlx_periodic(struct mlx_softc *mlx)
 	s = splbio();
 	for (mc = TAILQ_FIRST(&mlx->mlx_ccb_worklist); mc != NULL; mc = nmc) {
 		nmc = TAILQ_NEXT(mc, mc_chain.tailq);
-		if (mc->mc_expiry > ct) {
+		if (mc->mc_expiry > time_second) {
 			/*
 			 * The remaining CCBs will expire after this one, so
 			 * there's no point in going further.
@@ -1479,9 +1457,6 @@ mlx_pause_action(struct mlx_softc *mlx)
 {
 	struct mlx_ccb *mc;
 	int failsafe, i, cmd;
-	time_t ct;
-
-	ct = mlx_curtime();
 
 	/* What are we doing here? */
 	if (mlx->mlx_pause.mp_when == 0) {
@@ -1495,11 +1470,12 @@ mlx_pause_action(struct mlx_softc *mlx)
 		 * period, which is specified in multiples of 30 seconds.
 		 * This constrains us to a maximum pause of 450 seconds.
 		 */
-		failsafe = ((mlx->mlx_pause.mp_howlong - ct) + 5) / 30;
+		failsafe = ((mlx->mlx_pause.mp_howlong - time_second) + 5) / 30;
 
 		if (failsafe > 0xf) {
 			failsafe = 0xf;
-			mlx->mlx_pause.mp_howlong = ct + (0xf * 30) - 5;
+			mlx->mlx_pause.mp_howlong =
+			     time_second + (0xf * 30) - 5;
 		}
 	}
 
@@ -1542,7 +1518,7 @@ mlx_pause_done(struct mlx_ccb *mc)
 	else if (command == MLX_CMD_STOPCHANNEL)
 		printf("%s: channel %d pausing for %ld seconds\n",
 		    mlx->mlx_dv.dv_xname, channel,
-		    (long)(mlx->mlx_pause.mp_howlong - mlx_curtime()));
+		    (long)(mlx->mlx_pause.mp_howlong - time_second));
 	else
 		printf("%s: channel %d resuming\n", mlx->mlx_dv.dv_xname,
 		    channel);
@@ -2087,7 +2063,7 @@ mlx_ccb_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 
 	/* Mark the command as currently being processed. */
 	mc->mc_status = MLX_STATUS_BUSY;
-	mc->mc_expiry = mlx_curtime() + MLX_TIMEOUT;
+	mc->mc_expiry = time_second + MLX_TIMEOUT;
 
 	/* Spin waiting for the mailbox. */
 	for (i = 100; i != 0; i--) {

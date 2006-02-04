@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.9 2005/12/24 20:27:52 perry Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.9.6.1 2006/02/04 14:03:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -657,9 +657,7 @@ pms_synaptics_input(void *vsc, int data)
 		return;
 	}
 
-	s = splclock();
-	psc->current = mono_time;
-	splx(s);
+	getmicrouptime(&psc->current);
 
 	if (psc->inputstate > 0) {
 		timersub(&psc->current, &psc->last, &diff);
