@@ -551,7 +551,7 @@ do_recursion (frame)
     if (frame->flags == R_SKIP_ALL)
 	return (0);
 
-    locktype = noexec ? CVS_LOCK_NONE : frame->locktype;
+    locktype = nolock ? CVS_LOCK_NONE : frame->locktype;
 
     /* The fact that locks are not active here is what makes us fail to have
        the
@@ -1009,8 +1009,8 @@ but CVS uses %s for its own purposes; skipping %s directory",
 	char *cvsadmdir;
 
 	cvsadmdir = xmalloc (strlen (dir)
-			     + sizeof (CVSADM_REP)
-			     + sizeof (CVSADM_ENT)
+			     + strlen (CVSADM_REP)
+			     + strlen (CVSADM_ENT)
 			     + 80);
 
 	strcpy (cvsadmdir, dir);

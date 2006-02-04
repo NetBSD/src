@@ -33,8 +33,9 @@ static int ign_size;			/* This many slots available (plus
 static int ign_hold = -1;		/* Index where first "temporary" item
 					 * is held */
 
+extern const char *cvsDir;
 const char *ign_default = ". .. core RCSLOG tags TAGS RCS SCCS .make.state\
- .nse_depinfo #* .#* cvslog.* ,* CVS CVS.adm .del-* *.a *.olb *.o *.obj\
+ .nse_depinfo #* .#* cvslog.* ,* CVS.adm .del-* *.a *.olb *.o *.obj\
  *.so *.Z *~ *.old *.elc *.ln *.bak *.BAK *.orig *.rej *.exe _$* *$";
 
 #define IGN_GROW 16			/* grow the list by 16 elements at a
@@ -62,6 +63,9 @@ ign_setup ()
 
     /* Start with default list and special case */
     tmp = xstrdup (ign_default);
+    ign_add (tmp, 0);
+    free (tmp);
+    tmp = xstrdup(cvsDir);
     ign_add (tmp, 0);
     free (tmp);
 
@@ -428,8 +432,7 @@ ignore_files (ilist, entries, update_dir, proc)
 		   this directory if there is a CVS subdirectory.
 		   This will normally be the case, but the user may
 		   have messed up the working directory somehow.  */
-		p = xmalloc (strlen (file) + sizeof CVSADM + 10);
-		sprintf (p, "%s/%s", file, CVSADM);
+		xasprintf (&p, "%s/%s", file, CVSADM);
 		dir = isdir (p);
 		free (p);
 		if (dir)
@@ -462,8 +465,7 @@ ignore_files (ilist, entries, update_dir, proc)
 		{
 		    char *temp;
 
-		    temp = xmalloc (strlen (file) + sizeof (CVSADM) + 10);
-		    (void) sprintf (temp, "%s/%s", file, CVSADM);
+		    (void) xasprintf (&temp, "%s/%s", file, CVSADM);
 		    if (isdir (temp))
 		    {
 			free (temp);

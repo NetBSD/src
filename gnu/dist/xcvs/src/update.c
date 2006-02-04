@@ -977,8 +977,7 @@ update_dirent_proc (callerdat, dir, repository, update_dir, entries)
 	{
 	    char *tmp;
 
-	    tmp = xmalloc (strlen (dir) + sizeof (CVSADM_ENTSTAT) + 10);
-	    (void) sprintf (tmp, "%s/%s", dir, CVSADM_ENTSTAT);
+	    (void) xasprintf (&tmp, "%s/%s", dir, CVSADM_ENTSTAT);
 	    if (unlink_file (tmp) < 0 && ! existence_error (errno))
 		error (1, errno, "cannot remove file %s", tmp);
 #ifdef SERVER_SUPPORT
@@ -1234,11 +1233,7 @@ checkout_file (finfo, vers_ts, adding, merging, update_server)
        we are the server.  */
     if (!pipeout && !server_active)
     {
-	backup = xmalloc (strlen (finfo->file)
-			  + sizeof (CVSADM)
-			  + sizeof (CVSPREFIX)
-			  + 10);
-	(void) sprintf (backup, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
+	(void) xasprintf (&backup, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
 	if (isfile (finfo->file))
 	    rename_file (finfo->file, backup);
 	else
@@ -1341,11 +1336,18 @@ VERS: ", 0);
 		    xchmod (finfo->file, 1);
 		else
 		{
+		    mode_t oumask, writeaccess;
+
 		    /* We know that we are the server here, so
                        although xchmod checks umask, we don't bother.  */
-		    mode |= (((mode & S_IRUSR) ? S_IWUSR : 0)
+		    /* Not bothering with the umask makes the files
+		       mode 0777 on old clients, though. -chb */
+		    oumask = umask(0);
+		    (void) umask(oumask);
+		    writeaccess = (((mode & S_IRUSR) ? S_IWUSR : 0)
 			     | ((mode & S_IRGRP) ? S_IWGRP : 0)
 			     | ((mode & S_IROTH) ? S_IWOTH : 0));
+		    mode |= (~oumask) & writeaccess;
 		}
 	    }
 
@@ -1605,11 +1607,7 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
 	return 0;
     }
 
-    backup = xmalloc (strlen (finfo->file)
-		      + sizeof (CVSADM)
-		      + sizeof (CVSPREFIX)
-		      + 10);
-    (void) sprintf (backup, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
+    (void) xasprintf (&backup, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
     if (isfile (finfo->file))
         rename_file (finfo->file, backup);
     else
@@ -1619,16 +1617,8 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
 	    error (0, errno, "cannot remove %s", backup);
     }
 
-    file1 = xmalloc (strlen (finfo->file)
-		     + sizeof (CVSADM)
-		     + sizeof (CVSPREFIX)
-		     + 10);
-    (void) sprintf (file1, "%s/%s%s-1", CVSADM, CVSPREFIX, finfo->file);
-    file2 = xmalloc (strlen (finfo->file)
-		     + sizeof (CVSADM)
-		     + sizeof (CVSPREFIX)
-		     + 10);
-    (void) sprintf (file2, "%s/%s%s-2", CVSADM, CVSPREFIX, finfo->file);
+    (void) xasprintf (&file1, "%s/%s%s-1", CVSADM, CVSPREFIX, finfo->file);
+    (void) xasprintf (&file2, "%s/%s%s-2", CVSADM, CVSPREFIX, finfo->file);
 
     fail = 0;
 
