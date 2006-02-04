@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.15 2006/01/04 00:15:50 rpaulo Exp $ */
+/* $NetBSD: lapic.c,v 1.15.4.1 2006/02/04 15:31:49 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,11 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15 2006/01/04 00:15:50 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15.4.1 2006/02/04 15:31:49 simonb Exp $");
 
 #include "opt_ddb.h"
-#include "opt_multiprocessor.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
+#include "opt_multiprocessor.h"
 #include "opt_ntp.h"
 
 #include <sys/param.h>
@@ -236,20 +236,19 @@ void
 lapic_clockintr(void *arg, struct intrframe frame)
 {
 #if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
+#ifdef __HAVE_TIMECOUNTER
 	static int microset_iter; /* call cc_microset once/sec */
+#endif /* __HAVE_TIMECOUNTER */
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_isources[LIR_TIMER]->is_evcnt.ev_count++;
 
+#ifdef __HAVE_TIMECOUNTER
 	/*
 	 * If we have a cycle counter, do the microset thing.
 	 */
 	if (ci->ci_feature_flags & CPUID_TSC) {
-		if (
-#if defined(MULTIPROCESSOR)
-		    CPU_IS_PRIMARY(ci) &&
-#endif
-		    (microset_iter--) == 0) {
+		if (CPU_IS_PRIMARY(ci) && (microset_iter--) == 0) {
 			microset_iter = hz - 1;
 			cc_microset_time = time;
 #if defined(MULTIPROCESSOR)
@@ -258,26 +257,27 @@ lapic_clockintr(void *arg, struct intrframe frame)
 			cc_microset(ci);
 		}
 	}
-#endif
+#endif /* __HAVE_TIMECOUNTER */
+#endif /* I586_CPU || I686_CPU || __x86_64__ */
 
 	hardclock((struct clockframe *)&frame);
 }
 
-#ifdef NTP
+#if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
 extern int fixtick;
-#endif /* NTP */
+#endif /* !__HAVE_TIMECOUNTER && NTP */
 
 void
 lapic_initclocks()
 {
 
-#ifdef NTP
+#if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
 	/*
 	 * we'll actually get (lapic_per_second/lapic_tval) interrupts/sec.
 	 */
 	fixtick = 1000000 -
 	    ((int64_t)tick * lapic_per_second + lapic_tval / 2) / lapic_tval;
-#endif /* NTP */
+#endif /* !__HAVE_TIMECOUNTER && NTP */
 
 	/*
 	 * Start local apic countdown timer running, in repeated mode.
