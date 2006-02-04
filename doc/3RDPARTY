@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.404 2006/02/04 00:31:23 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.405 2006/02/04 22:40:12 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -154,8 +154,8 @@ License:	BSD-like
 Notes:
 
 Package:	cvs
-Version:	1.11.20
-Current Vers:	1.11.20/1.12.12
+Version:	1.11.21
+Current Vers:	1.11.21/1.12.12
 Maintainer:	cvshome
 Archive Site:	http://ftp.gnu.org/non-gnu/cvs/
 Home Page:	http://cvs.nongnu.org/
@@ -549,7 +549,7 @@ The next time OpenPAM is imported (OpenPAM Feterita or later), eliminate
 the local copy of openpam_free_envlist() in the pam_exec module.
 
 Package:	OpenSSH
-Version:	4.0
+Version:	4.3
 Current Vers:	4.3 / portable 4.3p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
@@ -566,7 +566,7 @@ markus is very cooperative about it):
 - IgnoreRootRhosts added
 - look at login.conf to check valid user/access list
 - krb4 and krb5 support re-added
-- hack in cipher.c #ifdef NEW_OPENSSL because we are missing EVP_acss
+- hack in cipher.c #ifdef ACCS because we are missing EVP_acss
   when someone imports openssl, we can remove this.
 - uidswap.c changed order of set{e,}{u,g}id so that it works on NetBSD
 - added moduli from portable openssh
