@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.63 2006/02/02 00:14:15 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.64 2006/02/04 08:11:30 simonb Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -866,6 +866,17 @@ End Date:
 Base Tag:	rpaulo-netinet-merge-pcb-base
 Maintainer:	Rui Paulo <rpaulo@NetBSD.org>
 Scope:		src/sys
+Notes:
+
+Branch:		simonb-timecounters
+Description:	Port FreeBSD timecounters to NetBSD
+Status:		Active
+Start Date:	Sat Feb 04 2006
+End Date:
+Base Tag:	simonb-timecounters-base
+Maintainer:	Simon Burge <simonb@NetBSD.org>,
+		Frank Kardel <kardel@NetBSD.org>
+Scope:		sys, sbin/savecore, usr.bin/vmstat, usr.sbin/ntp
 Notes:
 
 # Other:
