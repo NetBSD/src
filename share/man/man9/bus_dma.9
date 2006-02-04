@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.35 2006/01/29 02:26:27 rpaulo Exp $
+.\" $NetBSD: bus_dma.9,v 1.36 2006/02/04 20:19:21 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -258,7 +258,7 @@ If
 .Dv NULL ,
 the buffer is assumed to be in kernel space.
 Otherwise, the buffer is assumed to be in lwp
-.Fa l Ns 's
+.Fa l Ap s
 address space.
 .It Fa flags
 are defined as follows:
@@ -340,7 +340,7 @@ will
 determine if the buffers are in user or kernel virtual address space.
 If the buffers are in user address space, the buffers are assumed to be
 in
-.Fa "uio-\*[Gt]uio_procp" Ns 's
+.Fa "uio-\*[Gt]uio_procp" Ap s
 address space.
 .It Fn bus_dmamap_load_raw "tag" "dmam" "segs" "nsegs" "size" "flags"
 This is a variation of
@@ -728,7 +728,7 @@ If given valid arguments,
 always succeeds.
 .It Fn bus_dmamem_mmap "tag" "segs" "nsegs" "off" "prot" "flags"
 Provides support for user
-.Xr mmap 2 Ns 'ing
+.Xr mmap 2 Ap ing
 of DMA-safe memory.
 This function is to be called by a device driver's (*d_mmap)() entry
 point, which is called by the device pager for each page to be mapped.
@@ -741,7 +741,7 @@ This is the bus_dma_tag_t passed down from the parent driver via
 The array of bus_dma_segment_t's filled in by
 .Fn bus_dmamem_alloc ,
 representing the memory to be
-.Xr mmap 2 Ns 'ed .
+.Xr mmap 2 Ap ed .
 .It Fa nsegs
 The number of elements in the
 .Fa segs
