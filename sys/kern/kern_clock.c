@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.96 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.96.6.1 2006/02/04 13:49:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96.6.1 2006/02/04 13:49:07 simonb Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -93,6 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96 2005/12/11 12:24:29 christos Exp
 #include <sys/timex.h>
 #include <sys/sched.h>
 #include <sys/time.h>
+#ifdef __HAVE_TIMECOUNTER
+#include <sys/timetc.h>
+#endif
 
 #include <machine/cpu.h>
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -127,6 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96 2005/12/11 12:24:29 christos Exp
  * profhz/stathz for statistics.  (For profiling, every tick counts.)
  */
 
+#ifndef __HAVE_TIMECOUNTER
 #ifdef NTP	/* NTP phase-locked loop in kernel */
 /*
  * Phase/frequency-lock loop (PLL/FLL) definitions
@@ -308,7 +312,6 @@ long clock_cpu = 0;		/* CPU clock adjust */
 #endif /* EXT_CLOCK */
 #endif /* NTP */
 
-
 /*
  * Bump a timeval by a small number of usec's.
  */
@@ -322,6 +325,7 @@ long clock_cpu = 0;		/* CPU clock adjust */
 		tp->tv_sec++; \
 	} \
 }
+#endif /* !__HAVE_TIMECOUNTER */
 
 int	stathz;
 int	profhz;
@@ -332,6 +336,7 @@ int	hardclock_ticks;
 static int statscheddiv; /* stat => sched divider (used if schedhz == 0) */
 static int psdiv;			/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
+#ifndef __HAVE_TIMECOUNTER
 int	tickfix, tickfixinterval;	/* used if tick not really integral */
 #ifndef NTP
 static int tickfixcnt;			/* accumulated fractional error */
@@ -347,8 +352,11 @@ int	shifthz;
  */
 volatile struct	timeval time  __attribute__((__aligned__(__alignof__(quad_t))));
 volatile struct	timeval mono_time;
+#endif /* !__HAVE_TIMECOUNTER */
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void	*softclock_si;
+#endif
 
 /*
  * Initialize clock frequencies and start both clocks running.
@@ -369,6 +377,9 @@ initclocks(void)
 	 * code do its bit.
 	 */
 	psdiv = 1;
+#ifdef __HAVE_TIMECOUNTER
+	inittimecounter();
+#endif
 	cpu_initclocks();
 
 	/*
@@ -386,6 +397,7 @@ initclocks(void)
 			panic("statscheddiv");
 	}
 
+#ifndef __HAVE_TIMECOUNTER
 #ifdef NTP
 	switch (hz) {
 	case 1:
@@ -455,7 +467,8 @@ initclocks(void)
 		 */
 		fixtick = (1000000 - (hz*tick));
 	}
-#endif
+#endif /* NTP */
+#endif /* !__HAVE_TIMECOUNTER */
 }
 
 /*
@@ -466,15 +479,17 @@ hardclock(struct clockframe *frame)
 {
 	struct lwp *l;
 	struct proc *p;
+	struct cpu_info *ci = curcpu();
+	struct ptimer *pt;
+#ifndef __HAVE_TIMECOUNTER
 	int delta;
 	extern int tickdelta;
 	extern long timedelta;
-	struct cpu_info *ci = curcpu();
-	struct ptimer *pt;
 #ifdef NTP
 	int time_update;
 	int ltemp;
-#endif
+#endif /* NTP */
+#endif /* __HAVE_TIMECOUNTER */
 
 	l = curlwp;
 	if (l) {
@@ -509,6 +524,11 @@ hardclock(struct clockframe *frame)
 		return;
 #endif
 
+#ifdef __HAVE_TIMECOUNTER
+	hardclock_ticks++;
+
+	tc_ticktock();
+#else /* __HAVE_TIMECOUNTER */
 	/*
 	 * Increment the time-of-day.  The increment is normally just
 	 * ``tick''.  If the machine is one which has a clock frequency
@@ -831,6 +851,7 @@ hardclock(struct clockframe *frame)
 	}
 
 #endif /* NTP */
+#endif /* !__HAVE_TIMECOUNTER */
 
 	/*
 	 * Update real-time timeout queue.
@@ -858,6 +879,83 @@ hardclock(struct clockframe *frame)
 	}
 }
 
+#ifdef __HAVE_TIMECOUNTER
+/*
+ * Compute number of hz until specified time.  Used to compute second
+ * argument to callout_reset() from an absolute time.
+ */
+int
+hzto(struct timeval *tvp)
+{
+	struct timeval now, tv;
+
+	tv = *tvp;	/* Don't modify original tvp. */
+	getmicrotime(&now);
+	timersub(&tv, &now, &tv);
+	return tvtohz(&tv);
+}
+#endif /* __HAVE_TIMECOUNTER */
+
+/*
+ * Compute number of ticks in the specified amount of time.
+ */
+int
+tvtohz(struct timeval *tv)
+{
+	unsigned long ticks;
+	long sec, usec;
+
+	/*
+	 * If the number of usecs in the whole seconds part of the time
+	 * difference fits in a long, then the total number of usecs will
+	 * fit in an unsigned long.  Compute the total and convert it to
+	 * ticks, rounding up and adding 1 to allow for the current tick
+	 * to expire.  Rounding also depends on unsigned long arithmetic
+	 * to avoid overflow.
+	 *
+	 * Otherwise, if the number of ticks in the whole seconds part of
+	 * the time difference fits in a long, then convert the parts to
+	 * ticks separately and add, using similar rounding methods and
+	 * overflow avoidance.  This method would work in the previous
+	 * case, but it is slightly slower and assumes that hz is integral.
+	 *
+	 * Otherwise, round the time difference down to the maximum
+	 * representable value.
+	 *
+	 * If ints are 32-bit, then the maximum value for any timeout in
+	 * 10ms ticks is 248 days.
+	 */
+	sec = tv->tv_sec;
+	usec = tv->tv_usec;
+
+	if (usec < 0) {
+		sec--;
+		usec += 1000000;
+	}
+
+	if (sec < 0 || (sec == 0 && usec <= 0)) {
+		/*
+		 * Would expire now or in the past.  Return 0 ticks.
+		 * This is different from the legacy hzto() interface,
+		 * and callers need to check for it.
+		 */
+		ticks = 0;
+	} else if (sec <= (LONG_MAX / 1000000))
+		ticks = (((sec * 1000000) + (unsigned long)usec + (tick - 1))
+		    / tick) + 1;
+	else if (sec <= (LONG_MAX / hz))
+		ticks = (sec * hz) +
+		    (((unsigned long)usec + (tick - 1)) / tick) + 1;
+	else
+		ticks = LONG_MAX;
+
+	if (ticks > INT_MAX)
+		ticks = INT_MAX;
+
+	return ((int)ticks);
+}
+
+#ifndef __HAVE_TIMECOUNTER
 /*
  * Compute number of hz until specified time.  Used to compute second
  * argument to callout_reset() from an absolute time.
@@ -919,6 +1017,23 @@ hzto(struct timeval *tv)
 		ticks = INT_MAX;
 
 	return ((int)ticks);
+}
+#endif /* !__HAVE_TIMECOUNTER */
+
+/*
+ * Compute number of ticks in the specified amount of time.
+ */
+int
+tstohz(struct timespec *ts)
+{
+	struct timeval tv;
+
+	/*
+	 * usec has great enough resolution for hz, so convert to a
+	 * timeval and use tvtohz() above.
+	 */
+	TIMESPEC_TO_TIMEVAL(&tv, ts);
+	return tvtohz(&tv);
 }
 
 /*
@@ -1101,9 +1216,8 @@ statclock(struct clockframe *frame)
 	}
 }
 
-
+#ifndef __HAVE_TIMECOUNTER
 #ifdef NTP	/* NTP phase-locked loop in kernel */
-
 /*
  * hardupdate() - local clock update
  *
@@ -1432,15 +1546,62 @@ hardpps(struct timeval *tvp,		/* time at PPS */
 #endif /* PPS_SYNC */
 #endif /* NTP  */
 
-/*
- * XXX: Until all md code has it.
- */
-struct timespec *
+/* timecounter compat functions */
+void
 nanotime(struct timespec *ts)
 {
 	struct timeval tv;
 
 	microtime(&tv);
 	TIMEVAL_TO_TIMESPEC(&tv, ts);
-	return ts;
 }
+
+void
+getbinuptime(struct bintime *bt)
+{
+	struct timeval tv;
+
+	microtime(&tv);
+	timeval2bintime(&tv, bt);
+}
+
+void
+getnanouptime(struct timespec *tsp)
+{
+	int s;
+
+	s = splclock();
+	TIMEVAL_TO_TIMESPEC(&mono_time, tsp);
+	splx(s);
+}
+
+void
+getmicrouptime(struct timeval *tvp)
+{
+	int s;
+
+	s = splclock();
+	*tvp = mono_time;
+	splx(s);
+}
+
+void
+getnanotime(struct timespec *tsp)
+{
+	int s;
+
+	s = splclock();
+	TIMEVAL_TO_TIMESPEC(&time, tsp);
+	splx(s);
+}
+
+void
+getmicrotime(struct timeval *tvp)
+{
+	int s;
+
+	s = splclock();
+	*tvp = time;
+	splx(s);
+}
+#endif /* !__HAVE_TIMECOUNTER */
