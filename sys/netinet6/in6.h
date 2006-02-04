@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.51 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: in6.h,v 1.51.4.1 2006/02/04 14:18:52 simonb Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -361,11 +361,11 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 
 #define IFA6_IS_DEPRECATED(a) \
 	((a)->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME && \
-	 (u_int32_t)((time.tv_sec - (a)->ia6_updatetime)) > \
+	 (u_int32_t)((time_second - (a)->ia6_updatetime)) > \
 	 (a)->ia6_lifetime.ia6t_pltime)
 #define IFA6_IS_INVALID(a) \
 	((a)->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME && \
-	 (u_int32_t)((time.tv_sec - (a)->ia6_updatetime)) > \
+	 (u_int32_t)((time_second - (a)->ia6_updatetime)) > \
 	 (a)->ia6_lifetime.ia6t_vltime)
 #endif
 
