@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.277 2006/02/03 11:08:23 jmmv Exp $
+#	$NetBSD: files.i386,v 1.277.2.1 2006/02/04 14:56:52 simonb Exp $
 #
 # new style config file for i386 architecture
 #
@@ -87,7 +87,6 @@ file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
-file	kern/kern_microtime.c		i586_cpu | i686_cpu
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
@@ -96,6 +95,7 @@ file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/syscall.c
 file	arch/i386/i386/trap.c
+file	arch/i386/i386/tsc.c		i586_cpu | i686_cpu
 file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
 
