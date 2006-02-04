@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.71 2005/12/07 12:40:47 tsutsui Exp $
+#	$NetBSD: TX3922,v 1.72 2006/02/04 02:59:19 rpaulo Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -344,7 +344,7 @@ pseudo-device	md		1	# memory disk
 pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol

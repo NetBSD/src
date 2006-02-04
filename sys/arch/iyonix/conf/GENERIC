@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.25 2006/02/02 21:32:09 reinoud Exp $
+#	$NetBSD: GENERIC,v 1.26 2006/02/04 03:11:06 rpaulo Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -500,7 +500,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	kttcp			# network loopback
 
