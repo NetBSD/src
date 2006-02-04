@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.64 2006/02/02 21:32:09 reinoud Exp $
+# $NetBSD: GENERIC,v 1.65 2006/02/04 03:04:12 rpaulo Exp $
 #
 # GENERIC machine description file
 #
@@ -320,7 +320,7 @@ pseudo-device	fss		4	# file system snapshot device
 # network pseudo-devices
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		1	# serial-line IP ports
-pseudo-device	bpfilter	2	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if

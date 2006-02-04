@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.21 2006/02/02 21:32:09 reinoud Exp $
+#	$NetBSD: GENERIC,v 1.22 2006/02/04 03:10:30 rpaulo Exp $
 #
 #
 
@@ -268,7 +268,7 @@ audio*	at audiobus?
 pseudo-device	md		1	# memory disk device (ramdisk)
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# network tap
+pseudo-device	bpfilter		# network tap
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
