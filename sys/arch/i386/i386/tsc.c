@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.1.1.1.2.3 2006/02/04 11:11:40 simonb Exp $ */
+/* $NetBSD: tsc.c,v 1.1.1.1.2.4 2006/02/04 14:47:00 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998-2003 Poul-Henning Kamp
@@ -28,9 +28,9 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.1.1.2.3 2006/02/04 11:11:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.1.1.2.4 2006/02/04 14:47:00 simonb Exp $");
 
-#include "opt_clock.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,21 +39,13 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.1.1.2.3 2006/02/04 11:11:40 simonb Exp $
 #include <sys/timetc.h>
 #include <sys/kernel.h>
 #include <sys/power.h>
-#include <sys/smp.h>
+#include <sys/reboot.h>	/* XXX for bootverbose */
 #include <machine/clock.h>
-#include <machine/md_var.h>
 #include <machine/specialreg.h>
 
 uint64_t	tsc_freq;
-int		tsc_is_broken;
 u_int		tsc_present;
-
-#ifdef SMP
-static int	smp_tsc;
-SYSCTL_INT(_kern_timecounter, OID_AUTO, smp_tsc, CTLFLAG_RDTUN, &smp_tsc, 0,
-    "Indicates whether the TSC is safe to use in SMP mode");
-TUNABLE_INT("kern.timecounter.smp_tsc", &smp_tsc);
-#endif
+int		tsc_is_broken = 0;
 
 static	unsigned tsc_get_timecount(struct timecounter *tc);
 
@@ -91,10 +83,27 @@ init_TSC(void)
 		printf("TSC clock: %ju Hz\n", (intmax_t)tsc_freq);
 }
 
+#ifdef __FreeBSD__
+#ifdef MULTIPROCESSOR
+static int mp_tsc_ok = 0;
+
+SYSCTL_SETUP(sysctl_timecounter_setup, "sysctl timecounter setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE, CTLTYPE_INT, "tsc_ok",
+	    "Indicates whether the TSC is safe to use in SMP mode",
+	    NULL, 0, &mp_tsc_ok, 0, CTL_KERN, KERN_TIMECOUNTER,
+	    CTL_CREATE, CTL_EOL);
+}
+#endif /* MULTIPROCESSOR */
+#endif /* __FreeBSD__ */
 
 void
 init_TSC_tc(void)
 {
+
+#ifdef __FreeBSD__
 	/*
 	 * We can not use the TSC if we support APM. Precise timekeeping
 	 * on an APM'ed machine is at best a fools pursuit, since 
@@ -110,8 +119,10 @@ init_TSC_tc(void)
 		if (bootverbose)
 			printf("TSC timecounter disabled: APM enabled.\n");
 	}
+#endif /* __FreeBSD__ */
 
-#ifdef SMP
+#ifdef __FreeBSD__
+#ifdef MULTIPROCESSOR
 	/*
 	 * We can not use the TSC in SMP mode unless the TSCs on all CPUs
 	 * are somehow synchronized.  Some hardware configurations do
@@ -122,7 +133,8 @@ init_TSC_tc(void)
 	 */
 	if (mp_ncpus > 1 && !smp_tsc)
 		tsc_timecounter.tc_quality = -100;
-#endif
+#endif /* MULTIPROCESSOR */
+#endif /* __FreeBSD__ */
 
 	if (tsc_present && tsc_freq != 0 && !tsc_is_broken) {
 		tsc_timecounter.tc_frequency = tsc_freq;
@@ -130,6 +142,7 @@ init_TSC_tc(void)
 	}
 }
 
+#ifdef __FreeBSD__
 static int
 sysctl_machdep_tsc_freq(SYSCTL_HANDLER_ARGS)
 {
@@ -149,9 +162,11 @@ sysctl_machdep_tsc_freq(SYSCTL_HANDLER_ARGS)
 
 SYSCTL_PROC(_machdep, OID_AUTO, tsc_freq, CTLTYPE_QUAD | CTLFLAG_RW,
     0, sizeof(u_int), sysctl_machdep_tsc_freq, "IU", "");
+#endif /* __FreeBSD__ */
 
-static unsigned
+static u_int
 tsc_get_timecount(struct timecounter *tc)
 {
+
 	return (rdtsc());
 }
