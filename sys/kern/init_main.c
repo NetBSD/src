@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.261 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: init_main.c,v 1.261.6.1 2006/02/04 14:37:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,18 +71,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.261 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.261.6.1 2006/02/04 14:37:37 simonb Exp $");
 
 #include "opt_ipsec.h"
-#include "opt_sysv.h"
+#include "opt_kcont.h"
 #include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
+#include "opt_ntp.h"
 #include "opt_pipe.h"
+#include "opt_posix.h"
+#include "opt_rootfs_magiclinks.h"
 #include "opt_syscall_debug.h"
 #include "opt_systrace.h"
-#include "opt_posix.h"
-#include "opt_kcont.h"
-#include "opt_rootfs_magiclinks.h"
+#include "opt_sysv.h"
 #include "opt_verified_exec.h"
 
 #include "rnd.h"
@@ -179,7 +180,9 @@ struct	proc *initproc;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
-struct	timeval boottime;
+#ifndef __HAVE_TIMECOUNTER
+struct timeval boottime;
+#endif
 time_t	rootfstime;			/* recorded root fs time, if known */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
@@ -197,6 +200,9 @@ void main(void);
 void
 main(void)
 {
+#ifdef __HAVE_TIMECOUNTER
+	struct timeval time;
+#endif
 	struct lwp *l;
 	struct proc *p;
 	struct pdevinit *pdev;
@@ -415,6 +421,12 @@ main(void)
 	 */
 	inittodr(rootfstime);
 
+#ifdef __HAVE_TIMECOUNTER
+#ifdef NTP
+	ntp_init();
+#endif
+#endif /* __HAVE_TIMECOUNTER */
+
 	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
 #ifdef ROOTFS_MAGICLINKS
 	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_MAGICLINKS;
@@ -449,9 +461,15 @@ main(void)
 	 */
 	proclist_lock_read();
 	s = splsched();
+#ifdef __HAVE_TIMECOUNTER
+	getmicrotime(&time);
+#else
+	mono_time = time;
+#endif
+	boottime = time;
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & P_MARKER) == 0);
-		p->p_stats->p_start = mono_time = boottime = time;
+		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if (l->l_cpu != NULL)
 				l->l_cpu->ci_schedstate.spc_runtime = time;
