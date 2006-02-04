@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.35 2005/12/07 09:10:17 tsutsui Exp $
+# 	$NetBSD: NEWS1200,v 1.36 2006/02/04 03:27:53 rpaulo Exp $
 
 #	news1200 config file
 #
@@ -147,7 +147,7 @@ pseudo-device	sl		2	# SLIP interfaces
 pseudo-device	ppp		2	# PPP interfaces
 pseudo-device	tun		4	# Network "tunnel" device
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	bpfilter	16	# Berkeley Packet Filter
+pseudo-device	bpfilter		# Berkeley Packet Filter
 pseudo-device	ipfilter		# ip filter
 #pseudo-device	strip		1	# Starmode Radio IP (Metricom)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
