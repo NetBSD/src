@@ -1,6 +1,0 @@
-#!/bin/sh
-# $NetBSD: script1,v 1.1 2001/04/25 03:43:34 garbled Exp $
-INTFS=`ifconfig -l | sed -e \
- 's/lo.//g;s/sl.//g;s/ppp.//g;s/strip.//g;s/tun.//g;s/ipip.//g;\
-  s/eon.//g;s/gre.//g;s/gif.//g'`
-echo $INTFS | xargs -n 1 echo
