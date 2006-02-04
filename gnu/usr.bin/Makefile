@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.120 2004/03/26 08:52:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.121 2006/02/04 16:30:04 christos Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ SUBDIR+=	binutils
 .endif
 SUBDIR+=	c89
 .if ${MKCVS} != "no"
-SUBDIR+=	cvs
+SUBDIR+=	xcvs
 .endif
 SUBDIR+=	dc diffutils grep
 SUBDIR+=	groff rcs send-pr texinfo
