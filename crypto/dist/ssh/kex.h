@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.h,v 1.1.1.14 2005/02/13 00:53:00 christos Exp $	*/
-/*	$OpenBSD: kex.h,v 1.35 2004/06/13 12:53:24 djm Exp $	*/
+/*	$NetBSD: kex.h,v 1.1.1.15 2006/02/04 22:22:45 christos Exp $	*/
+/*	$OpenBSD: kex.h,v 1.38 2005/11/04 05:15:59 djm Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -32,9 +32,13 @@
 #include "cipher.h"
 #include "key.h"
 
-#define	KEX_DH1		"diffie-hellman-group1-sha1"
-#define	KEX_DH14	"diffie-hellman-group14-sha1"
-#define	KEX_DHGEX	"diffie-hellman-group-exchange-sha1"
+#define	KEX_DH1			"diffie-hellman-group1-sha1"
+#define	KEX_DH14		"diffie-hellman-group14-sha1"
+#define	KEX_DHGEX_SHA1		"diffie-hellman-group-exchange-sha1"
+
+#define COMP_NONE	0
+#define COMP_ZLIB	1
+#define COMP_DELAYED	2
 
 enum kex_init_proposals {
 	PROPOSAL_KEX_ALGS,
@@ -84,9 +88,9 @@ struct Mac {
 	char	*name;
 	int	enabled;
 	const EVP_MD	*md;
-	int	mac_len;
+	u_int	mac_len;
 	u_char	*key;
-	int	key_len;
+	u_int	key_len;
 };
 struct Comp {
 	int	type;
@@ -102,7 +106,7 @@ struct Kex {
 	u_char	*session_id;
 	u_int	session_id_len;
 	Newkeys	*newkeys[MODE_MAX];
-	int	we_need;
+	u_int	we_need;
 	int	server;
 	char	*name;
 	int	hostkey_type;
@@ -111,6 +115,7 @@ struct Kex {
 	Buffer	peer;
 	int	done;
 	int	flags;
+	const EVP_MD *evp_md;
 	char	*client_version_string;
 	char	*server_version_string;
 	int	(*verify_host_key)(Key *);
@@ -124,7 +129,7 @@ void	 kex_finish(Kex *);
 
 void	 kex_send_kexinit(Kex *);
 void	 kex_input_kexinit(int, u_int32_t, void *);
-void	 kex_derive_keys(Kex *, u_char *, BIGNUM *);
+void	 kex_derive_keys(Kex *, u_char *, u_int, BIGNUM *);
 
 Newkeys *kex_get_newkeys(int);
 
@@ -133,12 +138,13 @@ void	 kexdh_server(Kex *);
 void	 kexgex_client(Kex *);
 void	 kexgex_server(Kex *);
 
-u_char *
+void
 kex_dh_hash(char *, char *, char *, int, char *, int, u_char *, int,
-    BIGNUM *, BIGNUM *, BIGNUM *);
-u_char *
-kexgex_hash(char *, char *, char *, int, char *, int, u_char *, int,
-    int, int, int, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *);
+    BIGNUM *, BIGNUM *, BIGNUM *, u_char **, u_int *);
+void
+kexgex_hash(const EVP_MD *, char *, char *, char *, int, char *,
+    int, u_char *, int, int, int, int, BIGNUM *, BIGNUM *, BIGNUM *, 
+    BIGNUM *, BIGNUM *, u_char **, u_int *);
 
 void
 derive_ssh1_session_id(BIGNUM *, BIGNUM *, u_int8_t[8], u_int8_t[16]);

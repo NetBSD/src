@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-gss.c,v 1.1.1.1 2005/02/13 00:52:52 christos Exp $	*/
-/*	$OpenBSD: auth2-gss.c,v 1.8 2004/06/21 17:36:31 avsm Exp $	*/
+/*	$NetBSD: auth2-gss.c,v 1.1.1.2 2006/02/04 22:22:33 christos Exp $	*/
+/*	$OpenBSD: auth2-gss.c,v 1.12 2005/10/13 22:24:31 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -35,7 +35,6 @@
 #include "log.h"
 #include "dispatch.h"
 #include "servconf.h"
-#include "compat.h"
 #include "packet.h"
 #include "monitor_wrap.h"
 
@@ -50,7 +49,7 @@ static void input_gssapi_errtok(int, u_int32_t, void *);
 
 /*
  * We only support those mechanisms that we know about (ie ones that we know
- * how to check local user kuserok and the like
+ * how to check local user kuserok and the like)
  */
 static int
 userauth_gssapi(Authctxt *authctxt)
@@ -62,7 +61,7 @@ userauth_gssapi(Authctxt *authctxt)
 	int present;
 	OM_uint32 ms;
 	u_int len;
-	char *doid = NULL;
+	u_char *doid = NULL;
 
 	if (!authctxt->valid || authctxt->user == NULL)
 		return (0);
@@ -83,9 +82,8 @@ userauth_gssapi(Authctxt *authctxt)
 		present = 0;
 		doid = packet_get_string(&len);
 
-		if (len > 2 &&
-		   doid[0] == SSH_GSS_OIDTYPE &&
-		   doid[1] == len - 2) {
+		if (len > 2 && doid[0] == SSH_GSS_OIDTYPE &&
+		    doid[1] == len - 2) {
 			goid.elements = doid + 2;
 			goid.length   = len - 2;
 			gss_test_oid_set_member(&ms, &goid, supported,
@@ -107,7 +105,7 @@ userauth_gssapi(Authctxt *authctxt)
 		return (0);
 	}
 
-	authctxt->methoddata=(void *)ctxt;
+	authctxt->methoddata = (void *)ctxt;
 
 	packet_start(SSH2_MSG_USERAUTH_GSSAPI_RESPONSE);
 

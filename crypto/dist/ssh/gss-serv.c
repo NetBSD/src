@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv.c,v 1.1.1.1 2005/02/13 00:53:00 christos Exp $	*/
-/*	$OpenBSD: gss-serv.c,v 1.5 2003/11/17 11:06:07 markus Exp $	*/
+/*	$NetBSD: gss-serv.c,v 1.1.1.2 2006/02/04 22:22:44 christos Exp $	*/
+/*	$OpenBSD: gss-serv.c,v 1.13 2005/10/13 22:24:31 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -30,19 +30,15 @@
 #ifdef GSSAPI
 
 #include "bufaux.h"
-#include "compat.h"
 #include "auth.h"
 #include "log.h"
 #include "channels.h"
 #include "session.h"
 #include "servconf.h"
-#include "monitor_wrap.h"
 #include "xmalloc.h"
 #include "getput.h"
 
 #include "ssh-gss.h"
-
-extern ServerOptions options;
 
 static ssh_gssapi_client gssapi_client =
     { GSS_C_EMPTY_BUFFER, GSS_C_EMPTY_BUFFER,
@@ -62,7 +58,7 @@ ssh_gssapi_mech* supported_mechs[]= {
 	&gssapi_null_mech,
 };
 
-/* Unpriviledged */
+/* Unprivileged */
 void
 ssh_gssapi_supported_oids(gss_OID_set *oidset)
 {
@@ -91,7 +87,7 @@ ssh_gssapi_supported_oids(gss_OID_set *oidset)
  *    oid
  *    credentials	(from ssh_gssapi_acquire_cred)
  */
-/* Priviledged */
+/* Privileged */
 OM_uint32
 ssh_gssapi_accept_ctx(Gssctxt *ctx, gss_buffer_desc *recv_tok,
     gss_buffer_desc *send_tok, OM_uint32 *flags)
@@ -135,18 +131,18 @@ ssh_gssapi_accept_ctx(Gssctxt *ctx, gss_buffer_desc *recv_tok,
 static OM_uint32
 ssh_gssapi_parse_ename(Gssctxt *ctx, gss_buffer_t ename, gss_buffer_t name)
 {
-	char *tok;
+	u_char *tok;
 	OM_uint32 offset;
 	OM_uint32 oidl;
 
-	tok=ename->value;
+	tok = ename->value;
 
 	/*
 	 * Check that ename is long enough for all of the fixed length
 	 * header, and that the initial ID bytes are correct
 	 */
 
-	if (ename->length<6 || memcmp(tok,"\x04\x01", 2)!=0)
+	if (ename->length < 6 || memcmp(tok, "\x04\x01", 2) != 0)
 		return GSS_S_FAILURE;
 
 	/*
@@ -165,7 +161,7 @@ ssh_gssapi_parse_ename(Gssctxt *ctx, gss_buffer_t ename, gss_buffer_t name)
 	 */
 	if (tok[4] != 0x06 || tok[5] != oidl ||
 	    ename->length < oidl+6 ||
-	   !ssh_gssapi_check_oid(ctx,tok+6,oidl))
+	    !ssh_gssapi_check_oid(ctx, tok+6, oidl))
 		return GSS_S_FAILURE;
 
 	offset = oidl+6;
@@ -180,7 +176,7 @@ ssh_gssapi_parse_ename(Gssctxt *ctx, gss_buffer_t ename, gss_buffer_t name)
 		return GSS_S_FAILURE;
 
 	name->value = xmalloc(name->length+1);
-	memcpy(name->value,tok+offset,name->length);
+	memcpy(name->value, tok+offset,name->length);
 	((char *)name->value)[name->length] = 0;
 
 	return GSS_S_COMPLETE;
@@ -189,7 +185,7 @@ ssh_gssapi_parse_ename(Gssctxt *ctx, gss_buffer_t ename, gss_buffer_t name)
 /* Extract the client details from a given context. This can only reliably
  * be called once for a context */
 
-/* Priviledged (called from accept_secure_ctx) */
+/* Privileged (called from accept_secure_ctx) */
 OM_uint32
 ssh_gssapi_getclient(Gssctxt *ctx, ssh_gssapi_client *client)
 {
@@ -264,31 +260,41 @@ ssh_gssapi_do_child(char ***envp, u_int *envsizep)
 
 	if (gssapi_client.store.envvar != NULL &&
 	    gssapi_client.store.envval != NULL) {
-
 		debug("Setting %s to %s", gssapi_client.store.envvar,
-		gssapi_client.store.envval);
+		    gssapi_client.store.envval);
 		child_set_env(envp, envsizep, gssapi_client.store.envvar,
-		     gssapi_client.store.envval);
+		    gssapi_client.store.envval);
 	}
 }
 
-/* Priviledged */
+/* Privileged */
 int
 ssh_gssapi_userok(char *user)
 {
+	OM_uint32 lmin;
+
 	if (gssapi_client.exportedname.length == 0 ||
 	    gssapi_client.exportedname.value == NULL) {
 		debug("No suitable client data");
 		return 0;
 	}
 	if (gssapi_client.mech && gssapi_client.mech->userok)
-		return ((*gssapi_client.mech->userok)(&gssapi_client, user));
+		if ((*gssapi_client.mech->userok)(&gssapi_client, user))
+			return 1;
+		else {
+			/* Destroy delegated credentials if userok fails */
+			gss_release_buffer(&lmin, &gssapi_client.displayname);
+			gss_release_buffer(&lmin, &gssapi_client.exportedname);
+			gss_release_cred(&lmin, &gssapi_client.creds);
+			memset(&gssapi_client, 0, sizeof(ssh_gssapi_client));
+			return 0;
+		}
 	else
 		debug("ssh_gssapi_userok: Unknown GSSAPI mechanism");
 	return (0);
 }
 
-/* Priviledged */
+/* Privileged */
 OM_uint32
 ssh_gssapi_checkmic(Gssctxt *ctx, gss_buffer_t gssbuf, gss_buffer_t gssmic)
 {
