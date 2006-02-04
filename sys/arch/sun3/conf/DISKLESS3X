@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS3X,v 1.38 2005/12/11 12:19:20 christos Exp $
+# $NetBSD: DISKLESS3X,v 1.39 2006/02/04 03:44:58 rpaulo Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/80)
@@ -144,7 +144,7 @@ cgfour0 at obmem0 addr 0x50300000
 
 # Misc.
 pseudo-device	loop		1	# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	sl		2	# CSLIP
 pseudo-device	ppp		2	# PPP
 pseudo-device	tun		2	# network tunneling over tty
