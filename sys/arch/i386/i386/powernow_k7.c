@@ -1,4 +1,4 @@
-/* $NetBSD: powernow_k7.c,v 1.7 2006/02/04 14:01:08 xtraeme Exp $ */
+/* $NetBSD: powernow_k7.c,v 1.8 2006/02/04 22:08:01 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -32,7 +32,7 @@
 /* Sysctl related code was adapted from NetBSD's i386/est.c for compatibility */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.7 2006/02/04 14:01:08 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.8 2006/02/04 22:08:01 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,7 +124,7 @@ static size_t		freq_names_len;
 static int		powernow_cpu;
 
 #ifdef _LKM
-static struct sysctllog *sysctllog
+static struct sysctllog *sysctllog;
 #define SYSCTLLOG	&sysctllog
 #else
 #define SYSCTLLOG	NULL
