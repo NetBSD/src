@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.66 2006/02/02 21:32:08 reinoud Exp $
+# 	$NetBSD: GENERIC,v 1.67 2006/02/04 02:34:00 rpaulo Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.66 $"
+#ident		"GENERIC-$Revision: 1.67 $"
 
 # estimated number of users
 maxusers	32
@@ -337,7 +337,7 @@ eb0	at podulebus?			# EtherB network slot cards
 ne*	at podulebus?			# NE2000 clone cards
 
 pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 8		# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
