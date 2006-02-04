@@ -100,7 +100,7 @@ write_ent_proc (node, closure)
     Entnode *entnode = node->data;
 
     if (closure != NULL && entnode->type != ENT_FILE)
-	*(int *) closure = 1;
+	closure = (void *)1;
 
     if (fputentent(entfile, entnode))
 	error (1, errno, "cannot write %s", entfilename);
@@ -121,7 +121,7 @@ write_entries (list)
     sawdir = 0;
 
     /* open the new one and walk the list writing entries */
-    entfilename = CVSADM_ENTBAK;
+    entfilename = (char *)CVSADM_ENTBAK;
     entfile = CVS_FOPEN (entfilename, "w+");
     if (entfile == NULL)
     {
@@ -188,7 +188,7 @@ Scratch_Entry (list, fname)
     {
 	if (!noexec)
 	{
-	    entfilename = CVSADM_ENTLOG;
+	    entfilename = (char *)CVSADM_ENTLOG;
 	    entfile = open_file (entfilename, "a");
 
 	    if (fprintf (entfile, "R ") < 0)
@@ -251,7 +251,7 @@ Register (list, fname, vn, ts, options, tag, date, ts_conflict)
 
     if (!noexec)
     {
-	entfilename = CVSADM_ENTLOG;
+	entfilename = (char *)CVSADM_ENTLOG;
 	entfile = CVS_FOPEN (entfilename, "a");
 
 	if (entfile == NULL)
@@ -659,13 +659,10 @@ WriteTag (dir, tag, date, nonbranch, update_dir, repository)
     if (noexec)
 	return;
 
-    tmp = xmalloc ((dir ? strlen (dir) : 0)
-		   + sizeof (CVSADM_TAG)
-		   + 10);
     if (dir == NULL)
-	(void) strcpy (tmp, CVSADM_TAG);
+	tmp = xstrdup(CVSADM_TAG);
     else
-	(void) sprintf (tmp, "%s/%s", dir, CVSADM_TAG);
+	(void) xasprintf (&tmp, "%s/%s", dir, CVSADM_TAG);
 
     if (tag || date)
     {
@@ -816,7 +813,7 @@ Subdirs_Known (entries)
 	if (!noexec)
 	{
 	    /* Create Entries.Log so that Entries_Close will do something.  */
-	    entfilename = CVSADM_ENTLOG;
+	    entfilename = (char *)CVSADM_ENTLOG;
 	    fp = CVS_FOPEN (entfilename, "a");
 	    if (fp == NULL)
 	    {
@@ -856,14 +853,9 @@ subdir_record (cmd, parent, dir)
     if (!noexec)
     {
 	if (parent == NULL)
-	    entfilename = CVSADM_ENTLOG;
+	    entfilename = (char *)CVSADM_ENTLOG;
 	else
-	{
-	    entfilename = xmalloc (strlen (parent)
-				   + sizeof CVSADM_ENTLOG
-				   + 10);
-	    sprintf (entfilename, "%s/%s", parent, CVSADM_ENTLOG);
-	}
+	    xasprintf (&entfilename, "%s/%s", parent, CVSADM_ENTLOG);
 
 	entfile = CVS_FOPEN (entfilename, "a");
 	if (entfile == NULL)
@@ -1030,23 +1022,15 @@ base_walk (code, finfo, rev)
        computation probably should be broken out into a separate function,
        as recurse.c does it too and places like Entries_Open should be
        doing it.  */
-    baserev_fullname = xmalloc (sizeof (CVSADM_BASEREV)
-				+ strlen (finfo->update_dir)
-				+ 2);
-    baserev_fullname[0] = '\0';
-    baserevtmp_fullname = xmalloc (sizeof (CVSADM_BASEREVTMP)
-				   + strlen (finfo->update_dir)
-				   + 2);
-    baserevtmp_fullname[0] = '\0';
     if (finfo->update_dir[0] != '\0')
     {
-	strcat (baserev_fullname, finfo->update_dir);
-	strcat (baserev_fullname, "/");
-	strcat (baserevtmp_fullname, finfo->update_dir);
-	strcat (baserevtmp_fullname, "/");
+	xasprintf(&baserev_fullname, "%s/%s", finfo->update_dir, CVSADM_BASEREV);
+	xasprintf(&baserevtmp_fullname, "%s/%s",
+	    finfo->update_dir, CVSADM_BASEREVTMP);
+    } else {
+	baserev_fullname = xstrdup(CVSADM_BASEREV);
+	baserevtmp_fullname = xstrdup(CVSADM_BASEREVTMP);
     }
-    strcat (baserev_fullname, CVSADM_BASEREV);
-    strcat (baserevtmp_fullname, CVSADM_BASEREVTMP);
 
     fp = CVS_FOPEN (CVSADM_BASEREV, "r");
     if (fp == NULL)

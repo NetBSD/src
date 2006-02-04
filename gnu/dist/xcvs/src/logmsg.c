@@ -227,6 +227,8 @@ do_editor (dir, messagep, repository, changes)
 	    (*messagep)[strlen (*messagep) - 1] != '\n')
 	    (void) fprintf (fp, "\n");
     }
+    else
+	(void) fprintf (fp, "\n");
 
     if (repository != NULL)
 	/* tack templates on if necessary */
@@ -298,7 +300,7 @@ do_editor (dir, messagep, repository, changes)
     run_setup (editinfo_editor ? editinfo_editor : Editor);
     run_arg (fname);
     if ((retcode = run_exec (RUN_TTY, RUN_TTY, RUN_TTY,
-			     RUN_NORMAL | RUN_SIGIGNORE)) != 0)
+			     RUN_NORMAL | RUN_SIGIGNORE | RUN_UNSETXID)) != 0)
 	error (editinfo_editor ? 1 : 0, retcode == -1 ? errno : 0,
 	       editinfo_editor ? "Logfile verification failed" :
 	       "warning: editor session failed");
@@ -678,6 +680,15 @@ title_proc (p, closure)
 			xrealloc (str_list,
 				  strlen (str_list) + strlen (p->key) + 5);
 		    (void) strcat (str_list, p->key);
+		    break;
+		case 't':
+		    str_list =
+			xrealloc (str_list,
+				  (strlen (str_list)
+				   + (li->tag ? strlen (li->tag) : 0)
+				   + 10)
+				  );
+		    (void) strcat (str_list, (li->tag ? li->tag : ""));
 		    break;
 		case 'V':
 		    str_list =
