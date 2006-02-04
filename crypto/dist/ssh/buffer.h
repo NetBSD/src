@@ -1,5 +1,5 @@
-/*	$NetBSD: buffer.h,v 1.1.1.7 2005/04/23 16:28:01 christos Exp $	*/
-/*	$OpenBSD: buffer.h,v 1.12 2004/10/29 23:56:17 djm Exp $	*/
+/*	$NetBSD: buffer.h,v 1.1.1.8 2006/02/04 22:22:36 christos Exp $	*/
+/*	$OpenBSD: buffer.h,v 1.13 2005/03/14 11:46:56 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -23,6 +23,9 @@ typedef struct {
 	u_int	 offset;	/* Offset of first byte containing data. */
 	u_int	 end;		/* Offset of last byte containing data. */
 }       Buffer;
+
+#define	BUFFER_MAX_CHUNK	0x100000
+#define	BUFFER_MAX_LEN		0xa00000
 
 void	 buffer_init(Buffer *);
 void	 buffer_clear(Buffer *);
