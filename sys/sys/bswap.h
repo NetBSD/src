@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.8 2006/02/04 01:31:48 uwe Exp $      */
+/*      $NetBSD: bswap.h,v 1.9 2006/02/04 10:34:43 skrll Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -17,8 +17,8 @@ __BEGIN_DECLS
 uint16_t bswap16(uint16_t) __attribute__((__const__));
 uint32_t bswap32(uint32_t) __attribute__((__const__));
 #else
-uint16_t bswap16(uint16_t) __attribute__((__const__)) __RENAME(__bswap16);
-uint32_t bswap32(uint32_t) __attribute__((__const__)) __RENAME(__bswap32);
+uint16_t bswap16(uint16_t) __RENAME(__bswap16) __attribute__((__const__));
+uint32_t bswap32(uint32_t) __RENAME(__bswap32) __attribute__((__const__));
 #endif
 uint64_t bswap64(uint64_t) __attribute__((__const__));
 __END_DECLS
