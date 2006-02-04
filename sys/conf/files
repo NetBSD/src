@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.757.2.1 2006/02/04 13:54:17 simonb Exp $
+#	$NetBSD: files,v 1.757.2.2 2006/02/04 13:55:05 simonb Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1232,6 +1232,7 @@ file	kern/kern_systrace.c		systrace
 file	kern/kern_subr.c
 file	kern/kern_synch.c
 file	kern/kern_sysctl.c
+file	kern/kern_tc.c
 file	kern/kern_time.c
 file	kern/kern_timeout.c
 file	kern/kern_uuid.c
