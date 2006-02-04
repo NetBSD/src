@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.1.1.1.2.3 2006/02/04 08:19:04 simonb Exp $ */
+/* $NetBSD: kern_tc.c,v 1.1.1.1.2.4 2006/02/04 13:36:18 simonb Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,12 +11,14 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.3 2006/02/04 08:19:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.4 2006/02/04 13:36:18 simonb Exp $");
 
 #include "opt_ntp.h"
 
 #include <sys/param.h>
+#ifdef __HAVE_TIMECOUNTER	/* XXX */
 #include <sys/kernel.h>
+#include <sys/reboot.h>	/* XXX just to get AB_VERBOSE */
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -95,20 +97,24 @@ time_t time_uptime = 1;
 
 static struct bintime boottimebin;
 struct timeval boottime;
+#ifdef __FreeBSD__
 static int sysctl_kern_boottime(SYSCTL_HANDLER_ARGS);
 SYSCTL_PROC(_kern, KERN_BOOTTIME, boottime, CTLTYPE_STRUCT|CTLFLAG_RD,
     NULL, 0, sysctl_kern_boottime, "S,timeval", "System boottime");
 
 SYSCTL_NODE(_kern, OID_AUTO, timecounter, CTLFLAG_RW, 0, "");
+#endif /* __FreeBSD__ */
 
 static int timestepwarnings;
+#ifdef __FreeBSD__
 SYSCTL_INT(_kern_timecounter, OID_AUTO, stepwarnings, CTLFLAG_RW,
     &timestepwarnings, 0, "");
+#endif /* __FreeBSD__ */
 
-#define TC_STATS(foo) \
-	static u_int foo; \
-	SYSCTL_UINT(_kern_timecounter, OID_AUTO, foo, CTLFLAG_RD, &foo, 0, "");\
-	struct __hack
+#define	TC_STATS(name)							\
+static struct evcnt name =						\
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "timecounter", #name);	\
+EVCNT_ATTACH_STATIC(name)
 
 TC_STATS(nbinuptime);    TC_STATS(nnanouptime);    TC_STATS(nmicrouptime);
 TC_STATS(nbintime);      TC_STATS(nnanotime);      TC_STATS(nmicrotime);
@@ -120,6 +126,7 @@ TC_STATS(nsetclock);
 
 static void tc_windup(void);
 
+#ifdef __FreeBSD__
 static int
 sysctl_kern_boottime(SYSCTL_HANDLER_ARGS)
 {
@@ -134,6 +141,8 @@ sysctl_kern_boottime(SYSCTL_HANDLER_ARGS)
 #endif
 		return SYSCTL_OUT(req, &boottime, sizeof(boottime));
 }
+#endif /* __FreeBSD__ */
+
 /*
  * Return the difference between the timehands' counter value now and what
  * was when we copied it to the timehands' offset_count.
@@ -160,7 +169,7 @@ binuptime(struct bintime *bt)
 	struct timehands *th;
 	u_int gen;
 
-	nbinuptime++;
+	nbinuptime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -174,7 +183,7 @@ nanouptime(struct timespec *tsp)
 {
 	struct bintime bt;
 
-	nnanouptime++;
+	nnanouptime.ev_count++;
 	binuptime(&bt);
 	bintime2timespec(&bt, tsp);
 }
@@ -184,7 +193,7 @@ microuptime(struct timeval *tvp)
 {
 	struct bintime bt;
 
-	nmicrouptime++;
+	nmicrouptime.ev_count++;
 	binuptime(&bt);
 	bintime2timeval(&bt, tvp);
 }
@@ -193,7 +202,7 @@ void
 bintime(struct bintime *bt)
 {
 
-	nbintime++;
+	nbintime.ev_count++;
 	binuptime(bt);
 	bintime_add(bt, &boottimebin);
 }
@@ -203,7 +212,7 @@ nanotime(struct timespec *tsp)
 {
 	struct bintime bt;
 
-	nnanotime++;
+	nnanotime.ev_count++;
 	bintime(&bt);
 	bintime2timespec(&bt, tsp);
 }
@@ -213,7 +222,7 @@ microtime(struct timeval *tvp)
 {
 	struct bintime bt;
 
-	nmicrotime++;
+	nmicrotime.ev_count++;
 	bintime(&bt);
 	bintime2timeval(&bt, tvp);
 }
@@ -224,7 +233,7 @@ getbinuptime(struct bintime *bt)
 	struct timehands *th;
 	u_int gen;
 
-	ngetbinuptime++;
+	ngetbinuptime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -238,7 +247,7 @@ getnanouptime(struct timespec *tsp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetnanouptime++;
+	ngetnanouptime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -252,7 +261,7 @@ getmicrouptime(struct timeval *tvp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetmicrouptime++;
+	ngetmicrouptime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -266,7 +275,7 @@ getbintime(struct bintime *bt)
 	struct timehands *th;
 	u_int gen;
 
-	ngetbintime++;
+	ngetbintime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -281,7 +290,7 @@ getnanotime(struct timespec *tsp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetnanotime++;
+	ngetnanotime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -295,7 +304,7 @@ getmicrotime(struct timeval *tvp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetmicrotime++;
+	ngetmicrotime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -366,7 +375,7 @@ tc_setclock(struct timespec *ts)
 	struct timespec ts2;
 	struct bintime bt, bt2;
 
-	nsetclock++;
+	nsetclock.ev_count++;
 	binuptime(&bt2);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &bt2);
@@ -396,8 +405,10 @@ tc_windup(void)
 	struct timehands *th, *tho;
 	u_int64_t scale;
 	u_int delta, ncount, ogen;
+#ifdef NTP
 	int i;
 	time_t t;
+#endif /* NTP */
 
 	/*
 	 * Make the next timehands a copy of the current one, but do not
@@ -424,6 +435,7 @@ tc_windup(void)
 	th->th_offset_count &= th->th_counter->tc_counter_mask;
 	bintime_addx(&th->th_offset, th->th_scale * delta);
 
+#ifdef PPS_SYNC
 	/*
 	 * Hardware latching timecounters may not generate interrupts on
 	 * PPS events, so instead we poll them.  There is a finite risk that
@@ -434,7 +446,9 @@ tc_windup(void)
 	 */
 	if (tho->th_counter->tc_poll_pps)
 		tho->th_counter->tc_poll_pps(tho->th_counter);
+#endif /* PPS_SYNC */
 
+#ifdef NTP
 	/*
 	 * Deal with NTP second processing.  The for loop normally
 	 * iterates at most once, but in extreme situations it might
@@ -455,6 +469,8 @@ tc_windup(void)
 		if (bt.sec != t)
 			boottimebin.sec += bt.sec - t;
 	}
+#endif /* NTP */
+
 	/* Update the UTC timestamps used by the get*() functions. */
 	/* XXX shouldn't do this here.  Should force non-`get' versions. */
 	bintime2timeval(&bt, &th->th_microtime);
@@ -508,6 +524,7 @@ tc_windup(void)
 	timehands = th;
 }
 
+#ifdef __FreeBSD__
 /* Report or change the active timecounter hardware. */
 static int
 sysctl_kern_timecounter_hardware(SYSCTL_HANDLER_ARGS)
@@ -562,6 +579,7 @@ sysctl_kern_timecounter_choice(SYSCTL_HANDLER_ARGS)
 
 SYSCTL_PROC(_kern_timecounter, OID_AUTO, choice, CTLTYPE_STRING | CTLFLAG_RD,
     0, 0, sysctl_kern_timecounter_choice, "A", "");
+#endif /* __FreeBSD__ */
 
 /*
  * RFC 2783 PPS-API implementation.
@@ -576,7 +594,7 @@ pps_ioctl(u_long cmd, caddr_t data, struct pps_state *pps)
 	struct pps_kcbind_args *kapi;
 #endif
 
-	KASSERT(pps != NULL, ("NULL pps pointer in pps_ioctl"));
+	KASSERT(pps != NULL); /* XXX ("NULL pps pointer in pps_ioctl") */
 	switch (cmd) {
 	case PPS_IOC_CREATE:
 		return (0);
@@ -621,7 +639,7 @@ pps_ioctl(u_long cmd, caddr_t data, struct pps_state *pps)
 		return (EOPNOTSUPP);
 #endif
 	default:
-		return (ENOIOCTL);
+		return (EPASSTHROUGH);
 	}
 }
 
@@ -640,7 +658,7 @@ pps_capture(struct pps_state *pps)
 {
 	struct timehands *th;
 
-	KASSERT(pps != NULL, ("NULL pps pointer in pps_capture"));
+	KASSERT(pps != NULL); /* XXX ("NULL pps pointer in pps_capture") */
 	th = timehands;
 	pps->capgen = th->th_generation;
 	pps->capth = th;
@@ -658,7 +676,7 @@ pps_event(struct pps_state *pps, int event)
 	int foff, fhard;
 	pps_seq_t *pseq;
 
-	KASSERT(pps != NULL, ("NULL pps pointer in pps_event"));
+	KASSERT(pps != NULL); /* XXX ("NULL pps pointer in pps_event") */
 	/* If the timecounter was wound up underneath us, bail out. */
 	if (pps->capgen == 0 || pps->capgen != pps->capth->th_generation)
 		return;
@@ -708,7 +726,7 @@ pps_event(struct pps_state *pps, int event)
 	*tsp = ts;
 
 	if (foff) {
-		timespecadd(tsp, osp);
+		timespecadd(tsp, osp, tsp);
 		if (tsp->tv_nsec < 0) {
 			tsp->tv_nsec += 1000000000;
 			tsp->tv_sec -= 1;
@@ -746,7 +764,9 @@ pps_event(struct pps_state *pps, int event)
  */
 
 static int tc_tick;
+#ifdef __FreeBSD__
 SYSCTL_INT(_kern_timecounter, OID_AUTO, tick, CTLFLAG_RD, &tc_tick, 0, "");
+#endif /* __FreeBSD__ */
 
 void
 tc_ticktock(void)
@@ -759,8 +779,8 @@ tc_ticktock(void)
 	tc_windup();
 }
 
-static void
-inittimecounter(void *dummy)
+void
+inittimecounter(void)
 {
 	u_int p;
 
@@ -784,4 +804,7 @@ inittimecounter(void *dummy)
 	(void)timecounter->tc_get_timecount(timecounter);
 }
 
+#ifdef __FreeBSD__
 SYSINIT(timecounter, SI_SUB_CLOCKS, SI_ORDER_SECOND, inittimecounter, NULL)
+#endif /* __FreeBSD__ */
+#endif /* __HAVE_TIMECOUNTER */
