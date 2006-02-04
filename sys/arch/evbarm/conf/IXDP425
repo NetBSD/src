@@ -1,4 +1,4 @@
-#	$NetBSD: IXDP425,v 1.16 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: IXDP425,v 1.17 2006/02/04 02:50:10 rpaulo Exp $
 #
 #	IXDP425 -- Intel IXDP425/IXCDP1100 Development Platform
 #
@@ -237,7 +237,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	kttcp			# network loopback
 
