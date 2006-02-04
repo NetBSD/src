@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.45 2006/02/03 13:52:14 tsutsui Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.46 2006/02/04 03:37:42 rpaulo Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.45 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.46 $"
 
 maxusers	32
 
@@ -418,7 +418,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol

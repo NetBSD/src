@@ -1,4 +1,4 @@
-# 	$NetBSD: SPLODE,v 1.41 2005/12/07 09:10:19 tsutsui Exp $
+# 	$NetBSD: SPLODE,v 1.42 2006/02/04 03:42:01 rpaulo Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
@@ -6,7 +6,7 @@ include "arch/sparc64/conf/std.sparc64"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.41 $"
+#ident 		"GENERIC-$Revision: 1.42 $"
 
 maxusers	256
 
@@ -396,7 +396,7 @@ pseudo-device	ppp		4
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-pseudo-device	bpfilter	8
+pseudo-device	bpfilter
 
 ## Simple inter-network traffic bridging
 pseudo-device bridge
