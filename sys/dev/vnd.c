@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.139 2006/02/04 13:38:04 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.140 2006/02/04 13:40:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.139 2006/02/04 13:38:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.140 2006/02/04 13:40:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -652,12 +652,8 @@ vndthread(void *arg)
 				nra = 0;
 #endif
 
-			if ((off = bn % bsize) != 0)
-				sz = bsize - off;
-			else
-				sz = (1 + nra) * bsize;
-			if (resid < sz)
-				sz = resid;
+			off = bn % bsize;
+			sz = MIN(((off_t)1 + nra) * bsize - off, resid);
 #ifdef	DEBUG
 			if (vnddebug & VDB_IO)
 				printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
