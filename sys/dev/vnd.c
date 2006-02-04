@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.135 2006/02/02 06:57:35 cube Exp $	*/
+/*	$NetBSD: vnd.c,v 1.136 2006/02/04 10:48:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.135 2006/02/02 06:57:35 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.136 2006/02/04 10:48:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -306,11 +306,13 @@ int
 vnd_destroy(struct device *dev)
 {
 	int error;
+	struct cfdata *cf;
 
+	cf = dev->dv_cfdata;
 	error = config_detach(dev, 0);
 	if (error)
 		return error;
-	free(dev->dv_cfdata, M_DEVBUF);
+	free(cf, M_DEVBUF);
 	return 0;
 }
 
