@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99 2006/02/02 21:32:08 reinoud Exp $
+# $NetBSD: GENERIC,v 1.100 2006/02/04 02:44:07 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -569,7 +569,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
