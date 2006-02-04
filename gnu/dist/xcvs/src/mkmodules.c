@@ -313,6 +313,9 @@ static const char *const config_contents[] = {
     "# repositories.  Set it to `never' (the previous CVS behavior) to prevent\n",
     "# verifymsg scripts from changing the log message.\n",
     "#RereadLogAfterVerify=always\n",
+    "\n",
+    "# Set this to the name of a local tag to use in addition to Id\n",
+    "#tag=OurTag\n",
     NULL
 };
 
@@ -870,6 +873,10 @@ init (argc, argv)
     const struct admin_file *fileptr;
 
     umask (cvsumask);
+
+    if (!admin_group_member())
+	error (1, 0, "usage is restricted to members of the group %s",
+	       CVS_admin_group);
 
     if (argc == -1 || argc > 1)
 	usage (init_usage);

@@ -81,7 +81,7 @@ static Key_schedule sched;
 /* This is needed for GSSAPI encryption.  */
 static gss_ctx_id_t gcontext;
 
-static int connect_to_gserver PROTO((cvsroot_t *, int, struct hostent *));
+static int connect_to_gserver PROTO((cvsroot_t *, int, const char *));
 
 # endif /* HAVE_GSSAPI */
 
@@ -145,7 +145,7 @@ static void handle_notified PROTO((char *, int));
 static size_t try_read_from_server PROTO ((char *, size_t));
 
 static void auth_server PROTO ((cvsroot_t *, struct buffer *, struct buffer *,
-				int, int, struct hostent *));
+				int, int));
 
 /* We need to keep track of the list of directories we've sent to the
    server.  This list, along with the current CVSROOT, will help us
@@ -1508,7 +1508,7 @@ handle_copy_file (args, len)
 }
 
 
-static void read_counted_file PROTO ((char *, char *));
+static void read_counted_file PROTO ((const char *, const char *));
 
 /* Read from the server the count for the length of a file, then read
    the contents of that file and write them to FILENAME.  FULLNAME is
@@ -1517,8 +1517,8 @@ static void read_counted_file PROTO ((char *, char *));
    use it.  On error, gives a fatal error.  */
 static void
 read_counted_file (filename, fullname)
-    char *filename;
-    char *fullname;
+    const char *filename;
+    const char *fullname;
 {
     char *size_string;
     size_t size;
@@ -3800,33 +3800,50 @@ connect_to_pserver (root, to_server_p, from_server_p, verify_only, do_gssapi)
 {
     int sock;
     int port_number;
-    struct sockaddr_in client_sai;
-    struct hostent *hostinfo;
+    char no_passwd = 0;   /* gets set if no password found */
+    struct addrinfo hints, *res, *res0 = NULL;
+    char pbuf[10];
+    int e;
     struct buffer *to_server, *from_server;
 
-    sock = socket (AF_INET, SOCK_STREAM, 0);
-    if (sock == -1)
-    {
-	error (1, 0, "cannot create socket: %s", SOCK_STRERROR (SOCK_ERRNO));
-    }
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_CANONNAME;
     port_number = get_cvs_port_number (root);
-    hostinfo = init_sockaddr (&client_sai, root->hostname, port_number);
-    if (trace)
+    snprintf(pbuf, sizeof(pbuf), "%d", port_number);
+    e = getaddrinfo(root->hostname, pbuf, &hints, &res0);
+    if (e)
     {
-	fprintf (stderr, " -> Connecting to %s(%s):%d\n",
-		 root->hostname,
-		 inet_ntoa (client_sai.sin_addr), port_number);
+	error (1, 0, "%s", gai_strerror(e));
     }
-    if (connect (sock, (struct sockaddr *) &client_sai, sizeof (client_sai))
-	< 0)
-	error (1, 0, "connect to %s(%s):%d failed: %s",
-	       root->hostname,
-	       inet_ntoa (client_sai.sin_addr),
-	       port_number, SOCK_STRERROR (SOCK_ERRNO));
+    sock = -1;
+    for (res = res0; res; res = res->ai_next) {
+	sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (sock < 0)
+	    continue;
+
+	if (trace)
+	{
+	    fprintf (stderr, " -> Connecting to %s\n", root->hostname);
+	}
+	if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+	    close(sock);
+	    sock = -1;
+	    continue;
+	}
+	break;
+    }
+    freeaddrinfo(res0);
+    if (sock < 0)
+    {
+	error (1, 0, "connect to %s:%s failed: %s", root->hostname,
+	       pbuf, SOCK_STRERROR (SOCK_ERRNO));
+    }
 
     make_bufs_from_fds (sock, sock, 0, &to_server, &from_server, 1);
 
-    auth_server (root, to_server, from_server, verify_only, do_gssapi, hostinfo);
+    auth_server (root, to_server, from_server, verify_only, do_gssapi);
 
     if (verify_only)
     {
@@ -3860,13 +3877,12 @@ connect_to_pserver (root, to_server_p, from_server_p, verify_only, do_gssapi)
 
 
 static void
-auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi, hostinfo)
+auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi)
     cvsroot_t *root;
     struct buffer *lto_server;
     struct buffer *lfrom_server;
     int verify_only;
     int do_gssapi;
-    struct hostent *hostinfo;
 {
     char *username;			/* the username we use to connect */
     char no_passwd = 0;			/* gets set if no password found */
@@ -3896,7 +3912,7 @@ auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi, hostinfo)
 	    error (1, 0, "gserver currently only enabled for socket connections");
 	}
 
-	if (! connect_to_gserver (root, fd, hostinfo))
+	if (! connect_to_gserver (root, fd, root->hostname))
 	{
 	    error (1, 0,
 		    "authorization failed: server %s rejected access to %s",
@@ -4137,7 +4153,8 @@ start_tcp_server (root, to_server, from_server)
 
 	/* We don't care about the checksum, and pass it as zero.  */
 	status = krb_sendauth (KOPT_DO_MUTUAL, s, &ticket, "rcmd",
-			       hname, realm, (unsigned long) 0, &msg_data,
+			       hname, (char *)realm, (unsigned long) 0,
+			       &msg_data,
 			       &cred, sched, &laddr, &sin, "KCVSV1.0");
 	if (status != KSUCCESS)
 	    error (1, 0, "kerberos authentication failed: %s",
@@ -4197,10 +4214,10 @@ recv_bytes (sock, buf, need)
  */
 #define BUFSIZE 1024
 static int
-connect_to_gserver (root, sock, hostinfo)
+connect_to_gserver (root, sock, hostname)
     cvsroot_t *root;
     int sock;
-    struct hostent *hostinfo;
+    const char *hostname;
 {
     char *str;
     char buf[BUFSIZE];
@@ -4213,9 +4230,9 @@ connect_to_gserver (root, sock, hostinfo)
     if (send (sock, str, strlen (str), 0) < 0)
 	error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
 
-    if (strlen (hostinfo->h_name) > BUFSIZE - 5)
+    if (strlen (hostname) > BUFSIZE - 5)
 	error (1, 0, "Internal error: hostname exceeds length of buffer");
-    sprintf (buf, "cvs@%s", hostinfo->h_name);
+    sprintf (buf, "cvs@%s", hostname);
     tok_in.length = strlen (buf);
     tok_in.value = buf;
     gss_import_name (&stat_min, &tok_in, GSS_C_NT_HOSTBASED_SERVICE,
@@ -4528,6 +4545,16 @@ start_server ()
 		error (1, 0,
 		       "This server does not support the global -n option.");
 	}
+	if (nolock && !noexec)
+	{
+	    if (have_global)
+	    {
+		send_to_server ("Global_option -u\012", 0);
+	    }
+	    else
+		error (1, 0,
+		       "This server does not support the global -u option.");
+	}
 	if (quiet)
 	{
 	    if (have_global)
@@ -4759,27 +4786,7 @@ start_rsh_server (root, to_server, from_server)
     char *rsh_argv[10];
 
     if (!cvs_rsh)
-	/* People sometimes suggest or assume that this should default
-	   to "remsh" on systems like HPUX in which that is the
-	   system-supplied name for the rsh program.  However, that
-	   causes various problems (keep in mind that systems such as
-	   HPUX might have non-system-supplied versions of "rsh", like
-	   a Kerberized one, which one might want to use).  If we
-	   based the name on what is found in the PATH of the person
-	   who runs configure, that would make it harder to
-	   consistently produce the same result in the face of
-	   different people producing binary distributions.  If we
-	   based it on "remsh" always being the default for HPUX
-	   (e.g. based on uname), that might be slightly better but
-	   would require us to keep track of what the defaults are for
-	   each system type, and probably would cope poorly if the
-	   existence of remsh or rsh varies from OS version to OS
-	   version.  Therefore, it seems best to have the default
-	   remain "rsh", and tell HPUX users to specify remsh, for
-	   example in CVS_RSH or other such mechanisms to be devised,
-	   if that is what they want (the manual already tells them
-	   that).  */
-	cvs_rsh = "rsh";
+	cvs_rsh = "ssh";
     if (!cvs_server)
 	cvs_server = "cvs";
 
@@ -4840,7 +4847,7 @@ start_rsh_server (root, to_server, from_server)
     int child_pid;
 
     if (!cvs_rsh)
-	cvs_rsh = "rsh";
+	cvs_rsh = "ssh";
     if (!cvs_server)
 	cvs_server = "cvs";
 
@@ -5332,8 +5339,7 @@ send_dirent_proc (callerdat, dir, repository, update_dir, entries)
      * This case will happen when checking out a module defined as
      * ``-a .''.
      */
-    cvsadm_name = xmalloc (strlen (dir) + sizeof (CVSADM) + 10);
-    sprintf (cvsadm_name, "%s/%s", dir, CVSADM);
+    xasprintf (&cvsadm_name, "%s/%s", dir, CVSADM);
     dir_exists = isdir (cvsadm_name);
     free (cvsadm_name);
 

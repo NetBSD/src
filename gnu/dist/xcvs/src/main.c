@@ -46,6 +46,7 @@ int really_quiet = 0;
 int quiet = 0;
 int trace = 0;
 int noexec = 0;
+int nolock = 0;
 int logoff = 0;
 
 /* Set if we should be writing CVSADM directories at top level.  At
@@ -54,6 +55,10 @@ int logoff = 0;
 int top_level_admin = 0;
 
 mode_t cvsumask = UMASK_DFLT;
+char *RCS_citag = NULL;
+char *CVS_admin_group = NULL;
+char *CVS_admin_options = NULL;
+const char *cvsDir = "CVS";
 
 char *CurDir;
 
@@ -243,11 +248,13 @@ static const char *const opt_usage[] =
     "    -r           Make checked-out files read-only.\n",
     "    -w           Make checked-out files read-write (default).\n",
     "    -n           Do not execute anything that will change the disk.\n",
+    "    -u           Don't create locks (implies -l).\n",
     "    -t           Show trace of program execution -- try with -n.\n",
     "    -v           CVS version and copyright.\n",
     "    -T tmpdir    Use 'tmpdir' for temporary files.\n",
     "    -e editor    Use 'editor' for editing log information.\n",
     "    -d CVS_root  Overrides $CVSROOT as the root of the CVS tree.\n",
+    "	 -D dir	      use DIR as the bookkeeping directory instead of CVS.\n"
     "    -f           Do not use the ~/.cvsrc file.\n",
 #ifdef CLIENT_SUPPORT
     "    -z #         Use compression level '#' for net traffic.\n",
@@ -339,6 +346,10 @@ main_cleanup (sig)
 #ifndef DONT_USE_SIGNALS
     const char *name;
     char temp[10];
+    static int reenter = 0;
+
+    if (reenter++)
+	_exit(1);
 
     switch (sig)
     {
@@ -401,7 +412,7 @@ main (argc, argv)
     int help = 0;		/* Has the user asked for help?  This
 				   lets us support the `cvs -H cmd'
 				   convention to give help for cmd. */
-    static const char short_options[] = "+Qqrwtnvb:T:e:d:Hfz:s:xa";
+    static const char short_options[] = "+Qqrwtnulvb:T:e:d:D:Hfz:s:xa";
     static struct option long_options[] =
     {
         {"help", 0, NULL, 'H'},
@@ -525,6 +536,9 @@ main (argc, argv)
 		break;
 	    case 'n':
 		noexec = 1;
+	    case 'u':			/* Fall through */
+		nolock = 1;
+	    case 'l':			/* Fall through */
 		logoff = 1;
 		break;
 	    case 'v':
@@ -612,6 +626,11 @@ distribution kit for a complete list of contributors and copyrights.\n",
                    have it in their .cvsrc and not cause any trouble.
                    We will issue an error later if stream
                    authentication is not supported.  */
+		break;
+	    case 'D':
+		cvsDir = xstrdup(optarg);
+		if (strchr(cvsDir, '/') != NULL)
+		  error(1, 0, "cvsDir is not allowed to have slashes");
 		break;
 	    case '?':
 	    default:
@@ -887,7 +906,7 @@ distribution kit for a complete list of contributors and copyrights.\n",
 		/*
 		 * Check to see if the repository exists.
 		 */
-		if (!current_parsed_root->isremote)
+		if (!current_parsed_root->isremote && !nolock)
 		{
 		    char *path;
 		    int save_errno;
@@ -1119,6 +1138,26 @@ tm_to_internet (dest, source)
     sprintf (dest, "%d %s %d %02d:%02d:%02d -0000", source->tm_mday,
 	     source->tm_mon < 0 || source->tm_mon > 11 ? "???" : month_names[source->tm_mon],
 	     source->tm_year + 1900, source->tm_hour, source->tm_min, source->tm_sec);
+}
+
+const char *
+getCVSDir(const char *suffix)
+{
+  static const char *buf[20][2];
+  size_t i, len;
+  for (i = 0; i < 20; i++) 
+    {
+      if (buf[i][0] == NULL)
+	break;
+      if (strcmp(buf[i][0], suffix) == 0)
+	return buf[i][1];
+    }
+  if (i == 20)
+    error(1, 0, "Out of static buffer space");
+  buf[i][0] = suffix;
+  buf[i][1] = xmalloc(len = strlen(cvsDir) + strlen(suffix) + 1);
+  snprintf((char *)buf[i][1], len, "%s%s", cvsDir, suffix);
+  return buf[i][1];
 }
 
 void

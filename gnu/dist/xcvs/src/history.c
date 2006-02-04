@@ -36,6 +36,7 @@
  *		M	"Commit" cmd - "Modified" file.
  *		A	"Commit" cmd - "Added" file.
  *		R	"Commit" cmd - "Removed" file.
+ *		X	"Admin"  cmd.
  *
  *  date	is a fixed length 8-char hex representation of a Unix time_t.
  *		[Starting here, variable fields are delimited by '|' chars.]
@@ -760,7 +761,7 @@ history_write (type, update_dir, revs, name, repository)
     if (trace)
 	fprintf (stderr, "%s-> fopen(%s,a)\n",
 		 CLIENT_SERVER_STR, fname);
-    if (noexec)
+    if (nolock)
 	goto out;
 
     if (!history_lock (current_parsed_root->directory))
