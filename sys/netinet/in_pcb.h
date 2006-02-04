@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.41.4.2 2006/02/04 03:24:01 rpaulo Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.41.4.3 2006/02/04 03:26:27 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 2003 WIDE Project.
@@ -174,6 +174,7 @@ struct inpcb {
 	int	inp_af;			/* address family - AF_INET */
 	struct  socket *inp_socket;	/* back pointer to socket */
 	struct	inpcbtable *inp_table;
+	struct	mbuf *inp_options;	/* IP options */
 
 	struct	inpcbpolicy *inp_sp;	/* security policy */
 	u_char	inp_vflag;		/* IP version flag (v4/v6) */
@@ -191,7 +192,6 @@ struct inpcb {
 
 	/* protocol dependent part; IPv4 */
 	struct {
-		struct	mbuf *in4p_options;	/* IP options */
 		struct	ip_moptions *in4p_moptions; /* IP multicast options */
 		struct  route in4p_route;    /* placeholder for routing entry */
 		struct	ip in4p_ip;	     /* header prototype */
@@ -218,7 +218,6 @@ struct inpcb {
 		int	 in6p_cksum; 		/* IPV6_CHECKSUM setsockopt */
 		int	 in6p_hops;		/* default hop limit */
 		struct	 ip6_hdr in6p_ip6;	/* header prototype */
-		struct	 mbuf *in6p_options;	/* IP options */
 		uint32_t in6p_flowinfo;		/* priority and flowlabel */
 	} in6p_depend;
 #define in6p_fport	inp_fport
