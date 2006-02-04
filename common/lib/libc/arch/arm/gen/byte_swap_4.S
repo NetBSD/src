@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.2 2006/02/04 21:53:31 uwe Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.3 2006/02/04 23:14:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,8 +43,10 @@ _ENTRY(_C_LABEL(bswap32))
 #else
 _ENTRY(_C_LABEL(__bswap32))
 #endif
+#if BYTE_ORDER == LITTLE_ENDIAN
 _ENTRY(_C_LABEL(ntohl))
 _ENTRY(_C_LABEL(htonl))
+#endif
 _PROF_PROLOGUE
 	eor		r1, r0, r0, ror #16
 	bic		r1, r1, #0x00FF0000
