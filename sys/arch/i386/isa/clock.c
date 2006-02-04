@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.89 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.89.6.1 2006/02/04 15:38:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89.6.1 2006/02/04 15:38:16 simonb Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -132,10 +132,12 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89 2005/12/24 20:07:10 perry Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/clock.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
@@ -176,15 +178,15 @@ int clock_debug = 0;
 #define DPRINTF(arg)
 #endif
 
-void	spinwait(int);
-int	clockintr(void *, struct intrframe);
-int	gettick(void);
-void	sysbeep(int, int);
-void	rtcinit(void);
-int	rtcget(mc_todregs *);
-void	rtcput(mc_todregs *);
-int 	bcdtobin(int);
-int	bintobcd(int);
+int		gettick(void);
+void		sysbeep(int, int);
+
+static int	clockintr(void *, struct intrframe);
+static void	rtcinit(void);
+static int	rtcget(mc_todregs *);
+static void	rtcput(mc_todregs *);
+static int 	bcdtobin(int);
+static int	bintobcd(int);
 
 static int cmoscheck(void);
 
@@ -192,9 +194,26 @@ static int clock_expandyear(int);
 
 static inline int gettick_broken_latch(void);
 
+int clkintr_pending;
+static int timer0_max_count;
+
+static uint32_t i8254_lastcount;
+static uint32_t i8254_offset;
+static int i8254_ticked;
 
 inline u_int mc146818_read(void *, u_int);
 inline void mc146818_write(void *, u_int, u_int);
+
+static u_int i8254_get_timecount(struct timecounter *);
+
+static struct timecounter i8254_timecounter = {
+	i8254_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0u,			/* counter_mask */
+	TIMER_FREQ,		/* frequency */
+	"i8254",		/* name */
+	0			/* quality */
+};
 
 /* XXX use sc? */
 inline u_int
@@ -420,33 +439,15 @@ startrtclock(void)
 		printf("RTC BIOS diagnostic error %s\n",
 		    bitmask_snprintf(s, NVRAM_DIAG_BITS, bits, sizeof(bits)));
 	}
+
+	tc_init(&i8254_timecounter);
+
+	init_TSC();
 }
 
 int
 clockintr(void *arg, struct intrframe frame)
 {
-#if defined(I586_CPU) || defined(I686_CPU)
-	static int microset_iter; /* call cc_microset once/sec */
-	struct cpu_info *ci = curcpu();
-	
-	/*
-	 * If we have a cycle counter, do the microset thing.
-	 */
-	if (ci->ci_feature_flags & CPUID_TSC) {
-		if (
-#if defined(MULTIPROCESSOR)
-		    CPU_IS_PRIMARY(ci) &&
-#endif
-		    (microset_iter--) == 0) {
-			cc_microset_time = time;
-			microset_iter = hz - 1;
-#if defined(MULTIPROCESSOR)
-			x86_broadcast_ipi(X86_IPI_MICROSET);
-#endif
-			cc_microset(ci);
-		}
-	}
-#endif
 
 	hardclock((struct clockframe *)&frame);
 
@@ -457,6 +458,34 @@ clockintr(void *arg, struct intrframe frame)
 	}
 #endif
 	return -1;
+}
+
+static u_int
+i8254_get_timecount(struct timecounter *tc)
+{
+	u_int count;
+	u_int high, low;
+	u_long eflags;
+
+	/* Don't want someone screwing with the counter while we're here. */
+	eflags = read_eflags();
+	disable_intr();
+
+	/* Select timer0 and latch counter value. */ 
+	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
+
+	low = inb(IO_TIMER1 + TIMER_CNTR0);
+	high = inb(IO_TIMER1 + TIMER_CNTR0);
+	count = timer0_max_count - ((high << 8) | low);
+	if (count < i8254_lastcount || (!i8254_ticked && clkintr_pending)) {
+		i8254_ticked = 1;
+		i8254_offset += timer0_max_count;
+	}
+	i8254_lastcount = count;
+	count += i8254_offset;
+
+	write_eflags(eflags);
+	return (count);
 }
 
 int
@@ -594,21 +623,9 @@ sysbeep(int pitch, int period)
 #endif
 }
 
-#ifdef NTP
-extern int fixtick; /* XXX */
-#endif /* NTP */
-
 void
 i8254_initclocks(void)
 {
-
-#ifdef NTP
-	/*
-	 * we'll actually get (TIMER_FREQ/rtclock_tval) interrupts/sec.
-	 */
-	fixtick = 1000000 -
-	    ((int64_t)tick * TIMER_FREQ + rtclock_tval / 2) / rtclock_tval;
-#endif /* NTP */
 
 	/*
 	 * XXX If you're doing strange things with multiple clocks, you might
@@ -782,10 +799,9 @@ inittodr(time_t base)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
+	struct timespec ts;
 	int s;
-#if defined(I586_CPU) || defined(I686_CPU)
-	struct cpu_info *ci = curcpu();
-#endif
+
 	/*
 	 * We mostly ignore the suggested time (which comes from the
 	 * file system) and go for the RTC clock time stored in the
@@ -844,20 +860,16 @@ inittodr(time_t base)
 		}
 	}
 
-	time.tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
+	ts.tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
+	ts.tv_nsec = 0;
+	tc_setclock(&ts);
 #ifdef DEBUG_CLOCK
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
-#if defined(I586_CPU) || defined(I686_CPU)
-	if (ci->ci_feature_flags & CPUID_TSC) {
-		cc_microset_time = time;
-		cc_microset(ci);
-	}
-#endif
 
-	if (base != 0 && base < time.tv_sec - 5*SECYR)
+	if (base != 0 && base < time_second - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
-	else if (base > time.tv_sec + 5*SECYR) {
+	else if (base > time_second + 5*SECYR) {
 		printf("WARNING: clock time much less than file system time\n");
 		printf("WARNING: using file system time\n");
 		goto fstime;
@@ -868,7 +880,9 @@ inittodr(time_t base)
 
 fstime:
 	timeset = 1;
-	time.tv_sec = base;
+	ts.tv_sec = base;
+	ts.tv_nsec = 0;
+	tc_setclock(&ts);
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
@@ -895,7 +909,7 @@ resettodr(void)
 		memset(&rtclk, 0, sizeof(rtclk));
 	splx(s);
 
-	clock_secs_to_ymdhms(time.tv_sec - rtc_offset * 60, &dt);
+	clock_secs_to_ymdhms(time_second - rtc_offset * 60, &dt);
 
 	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
 	rtclk[MC_MIN] = bintobcd(dt.dt_min);
