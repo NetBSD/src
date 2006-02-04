@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.52 2005/12/07 09:10:16 tsutsui Exp $
+#	$NetBSD: POWERMAC,v 1.53 2006/02/04 03:16:23 rpaulo Exp $
 #
 # POWERMAC config file
 #
@@ -105,7 +105,7 @@ scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disks
 
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd		4	# disk-like interface to files

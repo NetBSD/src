@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.28 2005/12/07 12:40:47 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.29 2006/02/04 02:55:12 rpaulo Exp $
 #
 # INSTALL machine description file
 #
@@ -208,7 +208,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sl		4	# SLIP network interfaces
 #pseudo-device	ppp		4	# PPP network interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	bpfilter	16	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	vnd		4	# vnode pseudo-disks
 #pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver

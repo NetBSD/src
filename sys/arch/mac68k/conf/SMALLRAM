@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.24 2005/12/20 05:35:29 thorpej Exp $
+#	$NetBSD: SMALLRAM,v 1.25 2006/02/04 03:15:30 rpaulo Exp $
 #
 # This is an example of how to configure a small, efficient kernel for a
 # system with limited RAM. Even so it's capable of doing quite a bit. The
@@ -13,7 +13,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SMALLRAM-$Revision: 1.24 $"
+#ident 		"SMALLRAM-$Revision: 1.25 $"
 
 maxusers	8
 
@@ -284,7 +284,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	12	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
