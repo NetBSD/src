@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.40 2005/12/10 14:47:42 tsutsui Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.41 2006/02/04 03:42:01 rpaulo Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -412,7 +412,7 @@ pseudo-device	loop
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-pseudo-device	bpfilter	8
+pseudo-device	bpfilter
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.

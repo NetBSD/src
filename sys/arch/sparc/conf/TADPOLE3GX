@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.34 2005/12/07 09:10:19 tsutsui Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.35 2006/02/04 03:40:41 rpaulo Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -314,7 +314,7 @@ pseudo-device	tun		4
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-pseudo-device	bpfilter	16
+pseudo-device	bpfilter
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.
