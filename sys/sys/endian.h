@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.21 2006/01/30 21:52:38 dsl Exp $	*/
+/*	$NetBSD: endian.h,v 1.22 2006/02/04 00:01:36 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -77,8 +77,6 @@ __END_DECLS
 
 #include <machine/endian_machdep.h>
 
-#include <machine/bswap.h>
-
 /*
  * Define the order of 32-bit words in 64-bit words.
  */
@@ -105,6 +103,8 @@ __END_DECLS
 #define BYTE_ORDER	_BYTE_ORDER
 
 #ifndef _LOCORE
+
+#include <machine/bswap.h>
 
 /*
  * Macros for network/external number representation conversion.
