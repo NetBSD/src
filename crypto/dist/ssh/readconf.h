@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.15 2005/04/23 16:53:28 christos Exp $	*/
-/*	$OpenBSD: readconf.h,v 1.66 2005/03/01 10:40:27 djm Exp $	*/
+/*	$NetBSD: readconf.h,v 1.16 2006/02/04 22:32:14 christos Exp $	*/
+/*	$OpenBSD: readconf.h,v 1.68 2005/12/06 22:38:27 reyk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -124,8 +124,21 @@ typedef struct {
 	int	control_master;
 
 	int	hash_known_hosts;
+
+	int	tun_open;	/* tun(4) */
+	int     tun_local;	/* force tun device (optional) */
+	int     tun_remote;	/* force tun device (optional) */
+
+	char	*local_command;
+	int	permit_local_command;
+
 }       Options;
 
+#define SSHCTL_MASTER_NO	0
+#define SSHCTL_MASTER_YES	1
+#define SSHCTL_MASTER_AUTO	2
+#define SSHCTL_MASTER_ASK	3
+#define SSHCTL_MASTER_AUTO_ASK	4
 
 void     initialize_options(Options *);
 void     fill_default_options(Options *);

@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv-krb5.c,v 1.2 2005/02/13 18:14:04 christos Exp $	*/
-/*	$OpenBSD: gss-serv-krb5.c,v 1.3 2004/07/21 10:36:23 djm Exp $	*/
+/*	$NetBSD: gss-serv-krb5.c,v 1.3 2006/02/04 22:32:14 christos Exp $	*/
+/*	$OpenBSD: gss-serv-krb5.c,v 1.4 2005/10/13 19:08:08 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -34,10 +34,11 @@
 #include "xmalloc.h"
 #include "log.h"
 #include "servconf.h"
+#ifdef USE_PAM
+extern ServerOptions options;
+#endif
 
 #include "ssh-gss.h"
-
-extern ServerOptions options;
 
 #include <krb5.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: progressmeter.c,v 1.5 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: progressmeter.c,v 1.6 2006/02/04 22:32:14 christos Exp $	*/
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: progressmeter.c,v 1.22 2004/07/11 17:48:47 deraadt Exp $");
-__RCSID("$NetBSD: progressmeter.c,v 1.5 2005/02/13 05:57:26 christos Exp $");
+RCSID("$OpenBSD: progressmeter.c,v 1.24 2005/06/07 13:25:23 jaredy Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.6 2006/02/04 22:32:14 christos Exp $");
 
 #include "progressmeter.h"
 #include "atomicio.h"
@@ -43,6 +43,10 @@ static int can_output(void);
 static void format_size(char *, int, off_t);
 static void format_rate(char *, int, off_t);
 
+/* window resizing */
+static void sig_winch(int);
+static void setscreensize(void);
+
 /* updates the progressmeter to reflect the current state of the transfer */
 void refresh_progress_meter(void);
 
@@ -58,6 +62,7 @@ static volatile off_t *counter;	/* progress counter */
 static long stalled;		/* how long we have been stalled */
 static int bytes_per_second;	/* current speed in bytes per second */
 static int win_size;		/* terminal window size */
+static volatile sig_atomic_t win_resized; /* for window resizing */
 
 /* units for format_size */
 static const char unit[] = " KMGT";
@@ -148,6 +153,8 @@ refresh_progress_meter(void)
 		len = snprintf(buf, file_len + 1, "\r%s", file);
 		if (len < 0)
 			len = 0;
+		if (len >= file_len + 1)
+			len = file_len;
 		for (i = len;  i < file_len; i++ )
 			buf[i] = ' ';
 		buf[file_len] = '\0';
@@ -216,6 +223,10 @@ update_progress_meter(int ignore)
 
 	save_errno = errno;
 
+	if (win_resized) {
+		setscreensize();
+		win_resized = 0;
+	}
 	if (can_output())
 		refresh_progress_meter();
 
@@ -227,8 +238,6 @@ update_progress_meter(int ignore)
 void
 start_progress_meter(char *f, off_t filesize, off_t *ctr)
 {
-	struct winsize winsize;
-
 	start = last_update = time(NULL);
 	file = f;
 	end_pos = filesize;
@@ -237,20 +246,12 @@ start_progress_meter(char *f, off_t filesize, off_t *ctr)
 	stalled = 0;
 	bytes_per_second = 0;
 
-	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize) != -1 &&
-	    winsize.ws_col != 0) {
-		if (winsize.ws_col > MAX_WINSIZE)
-			win_size = MAX_WINSIZE;
-		else
-			win_size = winsize.ws_col;
-	} else
-		win_size = DEFAULT_WINSIZE;
-	win_size += 1;					/* trailing \0 */
-
+	setscreensize();
 	if (can_output())
 		refresh_progress_meter();
 
 	signal(SIGALRM, update_progress_meter);
+	signal(SIGWINCH, sig_winch);
 	alarm(UPDATE_INTERVAL);
 }
 
@@ -267,4 +268,26 @@ stop_progress_meter(void)
 		refresh_progress_meter();
 
 	atomicio(vwrite, STDOUT_FILENO, "\n", 1);
+}
+
+static void
+sig_winch(int sig)
+{
+	win_resized = 1;
+}
+
+static void
+setscreensize(void)
+{
+	struct winsize winsize;
+
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize) != -1 &&
+	    winsize.ws_col != 0) {
+		if (winsize.ws_col > MAX_WINSIZE)
+			win_size = MAX_WINSIZE;
+		else
+			win_size = winsize.ws_col;
+	} else
+		win_size = DEFAULT_WINSIZE;
+	win_size += 1;					/* trailing \0 */
 }

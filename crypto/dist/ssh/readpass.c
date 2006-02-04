@@ -1,4 +1,4 @@
-/*	$NetBSD: readpass.c,v 1.14 2005/04/23 16:53:28 christos Exp $	*/
+/*	$NetBSD: readpass.c,v 1.15 2006/02/04 22:32:14 christos Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readpass.c,v 1.31 2004/10/29 22:53:56 djm Exp $");
-__RCSID("$NetBSD: readpass.c,v 1.14 2005/04/23 16:53:28 christos Exp $");
+RCSID("$OpenBSD: readpass.c,v 1.33 2005/05/02 21:13:22 markus Exp $");
+__RCSID("$NetBSD: readpass.c,v 1.15 2006/02/04 22:32:14 christos Exp $");
 
 #include <readpassphrase.h>
 
@@ -110,15 +110,20 @@ read_passphrase(const char *prompt, int flags)
 	if (flags & RP_USE_ASKPASS)
 		use_askpass = 1;
 	else if (flags & RP_ALLOW_STDIN) {
-		if (!isatty(STDIN_FILENO))
+		if (!isatty(STDIN_FILENO)) {
+			debug("read_passphrase: stdin is not a tty");
 			use_askpass = 1;
+		}
 	} else {
 		rppflags |= RPP_REQUIRE_TTY;
 		ttyfd = open(_PATH_TTY, O_RDWR);
 		if (ttyfd >= 0)
 			close(ttyfd);
-		else
+		else {
+			debug("read_passphrase: can't open %s: %s", _PATH_TTY,
+			    strerror(errno));
 			use_askpass = 1;
+		}
 	}
 
 	if ((flags & RP_USE_ASKPASS) && getenv("DISPLAY") == NULL)

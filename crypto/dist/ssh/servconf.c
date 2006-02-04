@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.32 2005/06/02 04:52:25 lukem Exp $	*/
+/*	$NetBSD: servconf.c,v 1.33 2006/02/04 22:32:14 christos Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,8 +11,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.139 2005/03/01 10:09:52 djm Exp $");
-__RCSID("$NetBSD: servconf.c,v 1.32 2005/06/02 04:52:25 lukem Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.146 2005/12/08 18:34:11 reyk Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.33 2006/02/04 22:32:14 christos Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -117,6 +117,7 @@ initialize_server_options(ServerOptions *options)
 	options->authorized_keys_file = NULL;
 	options->authorized_keys_file2 = NULL;
 	options->num_accept_env = 0;
+	options->permit_tun = -1;
 
 	/* Needs to be accessable in many places */
 	use_privsep = -1;
@@ -227,7 +228,7 @@ fill_default_server_options(ServerOptions *options)
 	if (options->use_login == -1)
 		options->use_login = 0;
 	if (options->compression == -1)
-		options->compression = 1;
+		options->compression = COMP_DELAYED;
 	if (options->allow_tcp_forwarding == -1)
 		options->allow_tcp_forwarding = 1;
 	if (options->gateway_ports == -1)
@@ -255,6 +256,8 @@ fill_default_server_options(ServerOptions *options)
 	}
 	if (options->authorized_keys_file == NULL)
 		options->authorized_keys_file = _PATH_SSH_USER_PERMITTED_KEYS;
+	if (options->permit_tun == -1)
+		options->permit_tun = SSH_TUNMODE_NO;
 
 	/* Turn privilege separation on by default */
 	if (use_privsep == -1)
@@ -296,7 +299,7 @@ typedef enum {
 	sBanner, sUseDNS, sHostbasedAuthentication,
 	sHostbasedUsesNameFromPacketOnly, sClientAliveInterval,
 	sClientAliveCountMax, sAuthorizedKeysFile, sAuthorizedKeysFile2,
-	sGssAuthentication, sGssCleanupCreds, sAcceptEnv,
+	sGssAuthentication, sGssCleanupCreds, sAcceptEnv, sPermitTunnel,
 	sUsePrivilegeSeparation,
 	sIgnoreRootRhosts, sDeprecated, sUnsupported
 } ServerOpCodes;
@@ -399,6 +402,7 @@ static struct {
 	{ "authorizedkeysfile2", sAuthorizedKeysFile2 },
 	{ "useprivilegeseparation", sUsePrivilegeSeparation},
 	{ "acceptenv", sAcceptEnv },
+	{ "permittunnel", sPermitTunnel },
 	{ NULL, sBadOption }
 };
 
@@ -424,7 +428,7 @@ parse_token(const char *cp, const char *filename,
 static void
 add_listen_addr(ServerOptions *options, char *addr, u_short port)
 {
-	int i;
+	u_int i;
 
 	if (options->num_ports == 0)
 		options->ports[options->num_ports++] = SSH_DEFAULT_PORT;
@@ -464,9 +468,10 @@ process_server_config_line(ServerOptions *options, char *line,
     const char *filename, int linenum)
 {
 	char *cp, **charptr, *arg, *p;
-	int *intptr, value, i, n;
+	int *intptr, value, n;
 	ServerOpCodes opcode;
 	u_short port;
+	u_int i;
 
 	cp = line;
 	arg = strdelim(&cp);
@@ -542,6 +547,12 @@ parse_time:
 		if (arg == NULL || *arg == '\0')
 			fatal("%s line %d: missing address",
 			    filename, linenum);
+		/* check for bare IPv6 address: no "[]" and 2 or more ":" */
+		if (strchr(arg, '[') == NULL && (p = strchr(arg, ':')) != NULL
+		    && strchr(p+1, ':') != NULL) {
+			add_listen_addr(options, arg, 0);
+			break;
+		}
 		p = hpdelim(&arg);
 		if (p == NULL)
 			fatal("%s line %d: bad address:port usage",
@@ -558,6 +569,9 @@ parse_time:
 
 	case sAddressFamily:
 		arg = strdelim(&cp);
+		if (!arg || *arg == '\0')
+			fatal("%s line %d: missing address family.",
+			    filename, linenum);
 		intptr = &options->address_family;
 		if (options->listen_addrs != NULL)
 			fatal("%s line %d: address family must be specified before "
@@ -756,7 +770,23 @@ parse_flag:
 
 	case sCompression:
 		intptr = &options->compression;
-		goto parse_flag;
+		arg = strdelim(&cp);
+		if (!arg || *arg == '\0')
+			fatal("%s line %d: missing yes/no/delayed "
+			    "argument.", filename, linenum);
+		value = 0;	/* silence compiler */
+		if (strcmp(arg, "delayed") == 0)
+			value = COMP_DELAYED;
+		else if (strcmp(arg, "yes") == 0)
+			value = COMP_ZLIB;
+		else if (strcmp(arg, "no") == 0)
+			value = COMP_NONE;
+		else
+			fatal("%s line %d: Bad yes/no/delayed "
+			    "argument: %s", filename, linenum, arg);
+		if (*intptr == -1)
+			*intptr = value;
+		break;
 
 	case sGatewayPorts:
 		intptr = &options->gateway_ports;
@@ -971,6 +1001,28 @@ parse_flag:
 		}
 		break;
 
+	case sPermitTunnel:
+		intptr = &options->permit_tun;
+		arg = strdelim(&cp);
+		if (!arg || *arg == '\0')
+			fatal("%s line %d: Missing yes/point-to-point/"
+			    "ethernet/no argument.", filename, linenum);
+		value = 0;	/* silence compiler */
+		if (strcasecmp(arg, "ethernet") == 0)
+			value = SSH_TUNMODE_ETHERNET;
+		else if (strcasecmp(arg, "point-to-point") == 0)
+			value = SSH_TUNMODE_POINTOPOINT;
+		else if (strcasecmp(arg, "yes") == 0)
+			value = SSH_TUNMODE_YES;
+		else if (strcasecmp(arg, "no") == 0)
+			value = SSH_TUNMODE_NO;
+		else
+			fatal("%s line %d: Bad yes/point-to-point/ethernet/"
+			    "no argument: %s", filename, linenum, arg);
+		if (*intptr == -1)
+			*intptr = value;
+		break;
+
 	case sDeprecated:
 		logit("%s line %d: Deprecated option %s",
 		    filename, linenum, arg);
@@ -1036,7 +1088,7 @@ parse_server_config(ServerOptions *options, const char *filename, Buffer *conf)
 
 	obuf = cbuf = xstrdup(buffer_ptr(conf));
 	linenum = 1;
-	while((cp = strsep(&cbuf, "\n")) != NULL) {
+	while ((cp = strsep(&cbuf, "\n")) != NULL) {
 		if (process_server_config_line(options, cp, filename,
 		    linenum++) != 0)
 			bad_options++;

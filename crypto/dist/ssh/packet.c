@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.23 2005/04/23 16:53:28 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.24 2006/02/04 22:32:14 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,8 +38,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.116 2004/10/20 11:48:53 markus Exp $");
-__RCSID("$NetBSD: packet.c,v 1.23 2005/04/23 16:53:28 christos Exp $");
+RCSID("$OpenBSD: packet.c,v 1.120 2005/10/30 08:52:17 djm Exp $");
+__RCSID("$NetBSD: packet.c,v 1.24 2006/02/04 22:32:14 christos Exp $");
 
 #include <sys/queue.h>
 
@@ -117,6 +117,12 @@ static int initialized = 0;
 
 /* Set to true if the connection is interactive. */
 static int interactive_mode = 0;
+
+/* Set to true if we are the server side. */
+static int server_side = 0;
+
+/* Set to true if we are authenticated. */
+static int after_authentication = 0;
 
 /* Session key information for Encryption and MAC */
 Newkeys *newkeys[MODE_MAX];
@@ -563,7 +569,7 @@ packet_send1(void)
 	buffer_clear(&outgoing_packet);
 
 	/*
-	 * Note that the packet is now only buffered in output.  It won\'t be
+	 * Note that the packet is now only buffered in output.  It won't be
 	 * actually sent until packet_write_wait or packet_write_poll is
 	 * called.
 	 */
@@ -621,7 +627,9 @@ set_newkeys(int mode)
 	/* Deleting the keys does not gain extra security */
 	/* memset(enc->iv,  0, enc->block_size);
 	   memset(enc->key, 0, enc->key_len); */
-	if (comp->type != 0 && comp->enabled == 0) {
+	if ((comp->type == COMP_ZLIB ||
+	    (comp->type == COMP_DELAYED && after_authentication)) &&
+	    comp->enabled == 0) {
 		packet_init_compression();
 		if (mode == MODE_OUT)
 			buffer_compress_init_send(6);
@@ -639,6 +647,35 @@ set_newkeys(int mode)
 		*max_blocks = ((u_int64_t)1 << 30) / enc->block_size;
 	if (rekey_limit)
 		*max_blocks = MIN(*max_blocks, rekey_limit / enc->block_size);
+}
+
+/*
+ * Delayed compression for SSH2 is enabled after authentication:
+ * This happans on the server side after a SSH2_MSG_USERAUTH_SUCCESS is sent,
+ * and on the client side after a SSH2_MSG_USERAUTH_SUCCESS is received.
+ */
+static void
+packet_enable_delayed_compress(void)
+{
+	Comp *comp = NULL;
+	int mode;
+
+	/*
+	 * Remember that we are past the authentication step, so rekeying
+	 * with COMP_DELAYED will turn on compression immediately.
+	 */
+	after_authentication = 1;
+	for (mode = 0; mode < MODE_MAX; mode++) {
+		comp = &newkeys[mode]->comp;
+		if (comp && !comp->enabled && comp->type == COMP_DELAYED) {
+			packet_init_compression();
+			if (mode == MODE_OUT)
+				buffer_compress_init_send(6);
+			else
+				buffer_compress_init_recv();
+			comp->enabled = 1;
+		}
+	}
 }
 
 /*
@@ -754,6 +791,8 @@ packet_send2_wrapped(void)
 
 	if (type == SSH2_MSG_NEWKEYS)
 		set_newkeys(MODE_OUT);
+	else if (type == SSH2_MSG_USERAUTH_SUCCESS && server_side)
+		packet_enable_delayed_compress();
 }
 
 static void
@@ -989,7 +1028,7 @@ packet_read_poll2(u_int32_t *seqnr_p)
 	static u_int packet_length = 0;
 	u_int padlen, need;
 	u_char *macbuf, *cp, type;
-	int maclen, block_size;
+	u_int maclen, block_size;
 	Enc *enc   = NULL;
 	Mac *mac   = NULL;
 	Comp *comp = NULL;
@@ -1096,6 +1135,8 @@ packet_read_poll2(u_int32_t *seqnr_p)
 		packet_disconnect("Invalid ssh2 packet type: %d", type);
 	if (type == SSH2_MSG_NEWKEYS)
 		set_newkeys(MODE_IN);
+	else if (type == SSH2_MSG_USERAUTH_SUCCESS && !server_side)
+		packet_enable_delayed_compress();
 #ifdef PACKET_DEBUG
 	fprintf(stderr, "read/plain[%d]:\r\n", type);
 	buffer_dump(&incoming_packet);
@@ -1226,9 +1267,9 @@ packet_get_bignum2(BIGNUM * value)
 }
 
 void *
-packet_get_raw(int *length_ptr)
+packet_get_raw(u_int *length_ptr)
 {
-	int bytes = buffer_len(&incoming_packet);
+	u_int bytes = buffer_len(&incoming_packet);
 
 	if (length_ptr != NULL)
 		*length_ptr = bytes;
@@ -1517,4 +1558,16 @@ void
 packet_set_rekey_limit(u_int32_t bytes)
 {
 	rekey_limit = bytes;
+}
+
+void
+packet_set_server(void)
+{
+	server_side = 1;
+}
+
+void
+packet_set_authenticated(void)
+{
+	after_authentication = 1;
 }

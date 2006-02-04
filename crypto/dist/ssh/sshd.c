@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.38 2005/04/23 16:53:29 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.39 2006/02/04 22:32:14 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,8 +43,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.308 2005/02/08 22:24:57 dtucker Exp $");
-__RCSID("$NetBSD: sshd.c,v 1.38 2005/04/23 16:53:29 christos Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.318 2005/12/24 02:27:41 djm Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.39 2006/02/04 22:32:14 christos Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -355,7 +355,8 @@ key_regeneration_alarm(int sig)
 static void
 sshd_exchange_identification(int sock_in, int sock_out)
 {
-	int i, mismatch;
+	u_int i;
+	int mismatch;
 	int remote_major, remote_minor;
 	int major, minor;
 	char *s;
@@ -625,16 +626,8 @@ privsep_postauth(Authctxt *authctxt)
 {
 	if (authctxt->pw->pw_uid == 0 || options.use_login) {
 		/* File descriptor passing is broken or root login */
-		monitor_apply_keystate(pmonitor);
 		use_privsep = 0;
-		return;
-	}
-
-	/* Authentication complete */
-	alarm(0);
-	if (startup_pipe != -1) {
-		close(startup_pipe);
-		startup_pipe = -1;
+		goto skip;
 	}
 
 	/* New socket pair */
@@ -661,8 +654,15 @@ privsep_postauth(Authctxt *authctxt)
 	/* Drop privileges */
 	do_setusercontext(authctxt->pw);
 
+ skip:
 	/* It is safe now to apply the key state */
 	monitor_apply_keystate(pmonitor);
+
+	/*
+	 * Tell the packet layer that authentication was successful, since
+	 * this information is not part of the key state.
+	 */
+	packet_set_authenticated();
 }
 
 static char *
@@ -883,6 +883,9 @@ main(int ac, char **av)
 	/* Save argv. */
 	saved_argv = av;
 	rexec_argc = ac;
+
+	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
+	sanitise_stdfd();
 
 	/* Initialize configuration options to their default values. */
 	initialize_server_options(&options);
@@ -1550,20 +1553,28 @@ main(int ac, char **av)
 	signal(SIGQUIT, SIG_DFL);
 	signal(SIGCHLD, SIG_DFL);
 
-	/* Set SO_KEEPALIVE if requested. */
-	if (options.tcp_keep_alive &&
-	    setsockopt(sock_in, SOL_SOCKET, SO_KEEPALIVE, &on,
-	    sizeof(on)) < 0)
-		error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
-
 	/*
 	 * Register our connection.  This turns encryption off because we do
 	 * not have a key.
 	 */
 	packet_set_connection(sock_in, sock_out);
+	packet_set_server();
 
-	remote_port = get_remote_port();
-	remote_ip = get_remote_ipaddr();
+	/* Set SO_KEEPALIVE if requested. */
+	if (options.tcp_keep_alive && packet_connection_is_on_socket() &&
+	    setsockopt(sock_in, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0)
+		error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
+
+	if ((remote_port = get_remote_port()) < 0) {
+		debug("get_remote_port failed");
+		cleanup_exit(255);
+	}
+
+	/*
+	 * We use get_canonical_hostname with usedns = 0 instead of
+	 * get_remote_ipaddr here so IP options will be checked.
+	 */
+	remote_ip = get_canonical_hostname(0);
 
 #ifdef LIBWRAP
 	/* Check whether logins are denied from this host. */
@@ -1586,10 +1597,10 @@ main(int ac, char **av)
 	verbose("Connection from %.500s port %d", remote_ip, remote_port);
 
 	/*
-	 * We don\'t want to listen forever unless the other side
+	 * We don't want to listen forever unless the other side
 	 * successfully authenticates itself.  So we set up an alarm which is
 	 * cleared after successful authentication.  A limit of zero
-	 * indicates no limit. Note that we don\'t set the alarm in debugging
+	 * indicates no limit. Note that we don't set the alarm in debugging
 	 * mode; it is just annoying to have the server exit just when you
 	 * are about to discover the bug.
 	 */
@@ -1634,6 +1645,17 @@ main(int ac, char **av)
 	}
 
  authenticated:
+	/*
+	 * Cancel the alarm we set to limit the time taken for
+	 * authentication.
+	 */
+	alarm(0);
+	signal(SIGALRM, SIG_DFL);
+	if (startup_pipe != -1) {
+		close(startup_pipe);
+		startup_pipe = -1;
+	}
+
 	/*
 	 * In privilege separation, we fork another child and prepare
 	 * file descriptor passing.
@@ -1831,7 +1853,7 @@ do_ssh1_kex(void)
 	if (!rsafail) {
 		BN_mask_bits(session_key_int, sizeof(session_key) * 8);
 		len = BN_num_bytes(session_key_int);
-		if (len < 0 || len > sizeof(session_key)) {
+		if (len < 0 || (u_int)len > sizeof(session_key)) {
 			error("do_connection: bad session key len from %s: "
 			    "session_key_int %d > sizeof(session_key) %lu",
 			    get_remote_ipaddr(), len, (u_long)sizeof(session_key));
@@ -1918,10 +1940,14 @@ do_ssh2_kex(void)
 		myproposal[PROPOSAL_MAC_ALGS_CTOS] =
 		myproposal[PROPOSAL_MAC_ALGS_STOC] = options.macs;
 	}
-	if (!options.compression) {
+	if (options.compression == COMP_NONE) {
 		myproposal[PROPOSAL_COMP_ALGS_CTOS] =
 		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none";
+	} else if (options.compression == COMP_DELAYED) {
+		myproposal[PROPOSAL_COMP_ALGS_CTOS] =
+		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none,zlib@openssh.com";
 	}
+	
 	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = list_hostkey_types();
 
 	/* start key exchange */

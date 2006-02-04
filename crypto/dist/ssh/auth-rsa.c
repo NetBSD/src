@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rsa.c,v 1.5 2005/04/23 16:53:28 christos Exp $	*/
+/*	$NetBSD: auth-rsa.c,v 1.6 2006/02/04 22:32:13 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,8 +15,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rsa.c,v 1.62 2004/12/11 01:48:56 dtucker Exp $");
-__RCSID("$NetBSD: auth-rsa.c,v 1.5 2005/04/23 16:53:28 christos Exp $");
+RCSID("$OpenBSD: auth-rsa.c,v 1.63 2005/06/17 02:44:32 djm Exp $");
+__RCSID("$NetBSD: auth-rsa.c,v 1.6 2006/02/04 22:32:13 christos Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/md5.h>
@@ -207,6 +207,7 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 	while (read_keyfile_line(f, file, line, sizeof(line), &linenum) != -1) {
 		char *cp;
 		char *key_options;
+		int keybits;
 
 		/* Skip leading whitespace, empty and comment lines. */
 		for (cp = line; *cp == ' ' || *cp == '\t'; cp++)
@@ -245,7 +246,8 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 			continue;
 
 		/* check the real bits  */
-		if (bits != BN_num_bits(key->rsa->n))
+		keybits = BN_num_bits(key->rsa->n);
+		if (keybits < 0 || bits != (u_int)keybits)
 			logit("Warning: %s, line %lu: keysize mismatch: "
 			    "actual %d vs. announced %d.",
 			    file, linenum, BN_num_bits(key->rsa->n), bits);

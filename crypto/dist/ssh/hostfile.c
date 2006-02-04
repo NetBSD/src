@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.15 2005/06/01 12:07:00 lukem Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.16 2006/02/04 22:32:14 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,8 +37,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: hostfile.c,v 1.33 2005/03/01 10:40:26 djm Exp $");
-__RCSID("$NetBSD: hostfile.c,v 1.15 2005/06/01 12:07:00 lukem Exp $");
+RCSID("$OpenBSD: hostfile.c,v 1.36 2005/11/22 03:36:03 dtucker Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.16 2006/02/04 22:32:14 christos Exp $");
 
 #include <resolv.h>
 #include <openssl/hmac.h>
@@ -90,11 +90,11 @@ extract_salt(const char *s, u_int l, char *salt, size_t salt_len)
 		return (-1);
 	}
 	if (ret != SHA_DIGEST_LENGTH) {
-		debug2("extract_salt: expected salt len %lu, got %u",
-		    (unsigned long)salt_len, ret);
+		debug2("extract_salt: expected salt len %d, got %d",
+		    SHA_DIGEST_LENGTH, ret);
 		return (-1);
 	}
-	
+
 	return (0);
 }
 
@@ -125,7 +125,7 @@ host_hash(const char *host, const char *name_from_hostfile, u_int src_len)
 	HMAC_Final(&mac_ctx, result, NULL);
 	HMAC_cleanup(&mac_ctx);
 
-	if (__b64_ntop(salt, len, uu_salt, sizeof(uu_salt)) == -1 || 
+	if (__b64_ntop(salt, len, uu_salt, sizeof(uu_salt)) == -1 ||
 	    __b64_ntop(result, len, uu_result, sizeof(uu_result)) == -1)
 		fatal("host_hash: __b64_ntop failed");
 
@@ -312,7 +312,7 @@ lookup_key_in_hostfile_by_type(const char *filename, const char *host,
  */
 
 int
-add_host_to_hostfile(const char *filename, const char *host, const Key *key, 
+add_host_to_hostfile(const char *filename, const char *host, const Key *key,
     int store_hash)
 {
 	FILE *f;

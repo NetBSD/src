@@ -1,4 +1,4 @@
-/*	$NetBSD: authfile.c,v 1.20 2005/04/23 16:53:28 christos Exp $	*/
+/*	$NetBSD: authfile.c,v 1.21 2006/02/04 22:32:13 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,8 +37,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfile.c,v 1.60 2004/12/11 01:48:56 dtucker Exp $");
-__RCSID("$NetBSD: authfile.c,v 1.20 2005/04/23 16:53:28 christos Exp $");
+RCSID("$OpenBSD: authfile.c,v 1.61 2005/06/17 02:44:32 djm Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.21 2006/02/04 22:32:13 christos Exp $");
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: authfile.c,v 1.20 2005/04/23 16:53:28 christos Exp $");
 #include "authfile.h"
 #include "rsa.h"
 #include "misc.h"
+#include "atomicio.h"
 
 /* Version identification string for SSH v1 identity files. */
 static const char authfile_id_string[] =
@@ -149,8 +150,8 @@ key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
 		buffer_free(&encrypted);
 		return 0;
 	}
-	if (write(fd, buffer_ptr(&encrypted), buffer_len(&encrypted)) !=
-	    buffer_len(&encrypted)) {
+	if (atomicio(vwrite, fd, buffer_ptr(&encrypted),
+	    buffer_len(&encrypted)) != buffer_len(&encrypted)) {
 		error("write to key file %s failed: %s", filename,
 		    strerror(errno));
 		buffer_free(&encrypted);
@@ -238,7 +239,7 @@ key_load_public_rsa1(int fd, const char *filename, char **commentp)
 	Key *pub;
 	struct stat st;
 	char *cp;
-	int i;
+	u_int i;
 	size_t len;
 
 	if (fstat(fd, &st) < 0) {
@@ -255,7 +256,7 @@ key_load_public_rsa1(int fd, const char *filename, char **commentp)
 	buffer_init(&buffer);
 	cp = buffer_append_space(&buffer, len);
 
-	if (read(fd, cp, (size_t) len) != (size_t) len) {
+	if (atomicio(read, fd, cp, len) != len) {
 		debug("Read from key file %.200s failed: %.100s", filename,
 		    strerror(errno));
 		buffer_free(&buffer);
@@ -324,7 +325,8 @@ static Key *
 key_load_private_rsa1(int fd, const char *filename, const char *passphrase,
     char **commentp)
 {
-	int i, check1, check2, cipher_type;
+	u_int i;
+	int check1, check2, cipher_type;
 	size_t len;
 	Buffer buffer, decrypted;
 	u_char *cp;
@@ -349,7 +351,7 @@ key_load_private_rsa1(int fd, const char *filename, const char *passphrase,
 	buffer_init(&buffer);
 	cp = buffer_append_space(&buffer, len);
 
-	if (read(fd, cp, (size_t) len) != (size_t) len) {
+	if (atomicio(read, fd, cp, len) != len) {
 		debug("Read from key file %.200s failed: %.100s", filename,
 		    strerror(errno));
 		buffer_free(&buffer);

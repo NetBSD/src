@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.26 2005/05/08 21:15:04 christos Exp $	*/
+/*	$NetBSD: auth2.c,v 1.27 2006/02/04 22:32:13 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth2.c,v 1.107 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: auth2.c,v 1.26 2005/05/08 21:15:04 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.27 2006/02/04 22:32:13 christos Exp $");
 
 #include "ssh2.h"
 #include "xmalloc.h"
@@ -164,18 +164,14 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 		if (authctxt->pw && strcmp(service, "ssh-connection")==0) {
 			authctxt->valid = 1;
 			debug2("input_userauth_request: setting up authctxt for %s", user);
-#ifdef USE_PAM
-			if (options.use_pam)
-				PRIVSEP(start_pam(authctxt));
-#endif
 		} else {
 			logit("input_userauth_request: invalid user %s", user);
 			authctxt->pw = fakepw();
-#ifdef USE_PAM
-			if (options.use_pam)
-				PRIVSEP(start_pam(authctxt));
-#endif
 		}
+#ifdef USE_PAM
+		if (options.use_pam)
+			PRIVSEP(start_pam(authctxt));
+#endif
 		setproctitle("%s%s", authctxt->valid ? user : "unknown",
 		    use_privsep ? " [net]" : "");
 		authctxt->service = xstrdup(service);
