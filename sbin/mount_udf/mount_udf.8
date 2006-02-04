@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_udf.8,v 1.4 2006/02/03 08:28:39 snj Exp $
+.\" $NetBSD: mount_udf.8,v 1.5 2006/02/04 18:35:49 wiz Exp $
 .\"
 .\" Copyright (c) 2005 Reinoud Zandijk
 .\" All rights reserved.
@@ -45,25 +45,27 @@
 .Op Fl o Ar options
 .Op Fl t Ar gmtoff
 .Op Fl u Ar uid
-.Pa special
-.Pa node
+.Ar special
+.Ar node
 .Sh DESCRIPTION
 The
 .Nm
 command attaches the UDF file system residing on the specified
-.Pa special
+.Ar special
 device node on the location indicated with
-.Pa node .
+.Ar node .
 .Pp
 Anonymous files stored on the UDF disc will be represented and saved in the
-specified uid:gid pair. If unspecified it will default to nobody:nobody. Both
-uid and gid can be either specified with their names as with their numerical
-equivalents.
+specified uid:gid pair.
+If unspecified, it will default to nobody:nobody.
+Both uid and gid can be either specified with their names as with
+their numerical equivalents.
 .Bl -tag -width XXXoptions
-.\" -c flag specifies closure of CD/DVD session after dismount (writing)
+.\" .It Fl c
+.\" Close the CD/DVD session after unmount (writing).
 .It Fl g Ar gid
-Set the group of anonymous files on the file system. The default group is the
-nobody group.
+Set the group of anonymous files on the file system.
+The default group is the nobody group.
 .It Fl o Ar options
 Use the specified mount
 .Ar options
@@ -72,56 +74,64 @@ as specified in
 .It Fl s Ar session
 Select the session
 .Ar session
-to be mounted instead of the default last one. Positive
+to be mounted instead of the default last one.
+Positive
 .Ar session
-values indicate an absolute session number. Negative
+values indicate an absolute session number.
+Negative
 .Ar session
 values are relative to the last session found on the disc.
-Note that this option only makes sense when mounting sequential recordable
-media like CD-R and DVD*R.
+Note that this option only makes sense when mounting sequential
+recordable media like CD-R and DVD*R.
 .It Fl t Ar gmtoff
 Set the time zone offset (in seconds) from UTC to
-.Ar gmtoff .
+.Ar gmtoff ,
 with positive values indicating east of the Prime Meridian.
 If not set, the user's current time zone will be used.
 .It Fl u Ar uid
-Set the owner of anonymous files on the file system. The default owner is the
-user nobody.
+Set the owner of anonymous files on the file system.
+The default owner is the user nobody.
 .El
 .Sh SEE ALSO
 .Xr mount 2 ,
-.Xr unmount 8 ,
+.Xr vnd 4 ,
 .Xr fstab 5 ,
 .Xr mount 8 ,
-.Xr vnd 4 ,
-.Xr vnconfig 8 .
+.Xr umount 8 ,
+.Xr vnconfig 8
 .Sh NOTES
-UDF is a file system defined by the OSTA standardization group and is tailored
-for data interchange on optical discs (like CDs and DVDs) between different
-operating systems. Its also more and more common on other media like Compact
+UDF is a file system defined by the OSTA standardization group and
+is tailored for data interchange on optical discs (like CDs and
+DVDs) between different operating systems.
+Its also more and more common on other media like Compact
 Flash (CF) cards.
 .Pp
-Currently only read access is supported to all media types that CD/DVD type
-drives can recognize including DVD-RAM and BlueRay drives. Write access is
-planned and in preparation.
+Currently only read access is supported for all media types that
+CD/DVD type drives can recognize including DVD-RAM and BlueRay
+drives.
+Write access is planned and in preparation.
 .Pp
-Implemented and tested media types are CD-ROM, CD-R, CD-RW, CD-MRW, DVD-ROM,
-DVD*R, DVD*RW, DVD+MRW but the same code can also read DVD-RAM, HD-DVD and
-BluRay discs. Discs created and written by UDFclient, Nero's InCD and Roxio's
-DirectCD/Drag2Disc read fine. Both open and closed media are supported so
-there is no need to close discs or close sessions.
+Implemented and tested media types are CD-ROM, CD-R, CD-RW, CD-MRW,
+DVD-ROM, DVD*R, DVD*RW, DVD+MRW but the same code can also read
+DVD-RAM, HD-DVD and BluRay discs.
+Discs created and written by UDFclient, Nero's InCD, and Roxio's
+DirectCD/Drag2Disc can be read without problems.
+Both open and closed media are supported so
+there is no need to close discs or sessions.
 .Pp
 All current UDF versions upto version 2.60 are supported.
 .Pp
 Harddisc partitions and
 .Xr vnd 4
-devices may also be mounted. Note when mounting a
+devices may also be mounted.
+Note when mounting a
 .Xr vnd 4
-device it might be necessary to specify the file image sector size in the
+device it might be necessary to specify the file image sector size
+in the
 .Pa geomspec
 when creating the
 .Xr vnd 4
 device or the disc sector size will be used.
 .Sh BUGS
-Due to lack of test media version 2.50 and 2.60 are prepared though not
-implemented and tested yet.
+Due to lack of test media, versions 2.50 and 2.60 are prepared but
+not implemented and tested yet.
