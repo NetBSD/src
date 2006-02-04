@@ -1,4 +1,4 @@
-/*	$NetBSD: kexdhc.c,v 1.1.1.2 2005/02/13 00:53:00 christos Exp $	*/
+/*	$NetBSD: kexdhc.c,v 1.1.1.3 2006/02/04 22:22:45 christos Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexdhc.c,v 1.2 2004/06/13 12:53:24 djm Exp $");
+RCSID("$OpenBSD: kexdhc.c,v 1.3 2005/11/04 05:15:59 djm Exp $");
 
 #include "xmalloc.h"
 #include "key.h"
@@ -42,7 +42,7 @@ kexdh_client(Kex *kex)
 	Key *server_host_key;
 	u_char *server_host_key_blob = NULL, *signature = NULL;
 	u_char *kbuf, *hash;
-	u_int klen, kout, slen, sbloblen;
+	u_int klen, kout, slen, sbloblen, hashlen;
 
 	/* generate and send 'e', client DH public key */
 	switch (kex->kex_type) {
@@ -115,7 +115,7 @@ kexdh_client(Kex *kex)
 	xfree(kbuf);
 
 	/* calc and verify H */
-	hash = kex_dh_hash(
+	kex_dh_hash(
 	    kex->client_version_string,
 	    kex->server_version_string,
 	    buffer_ptr(&kex->my), buffer_len(&kex->my),
@@ -123,25 +123,26 @@ kexdh_client(Kex *kex)
 	    server_host_key_blob, sbloblen,
 	    dh->pub_key,
 	    dh_server_pub,
-	    shared_secret
+	    shared_secret,
+	    &hash, &hashlen
 	);
 	xfree(server_host_key_blob);
 	BN_clear_free(dh_server_pub);
 	DH_free(dh);
 
-	if (key_verify(server_host_key, signature, slen, hash, 20) != 1)
+	if (key_verify(server_host_key, signature, slen, hash, hashlen) != 1)
 		fatal("key_verify failed for server_host_key");
 	key_free(server_host_key);
 	xfree(signature);
 
 	/* save session id */
 	if (kex->session_id == NULL) {
-		kex->session_id_len = 20;
+		kex->session_id_len = hashlen;
 		kex->session_id = xmalloc(kex->session_id_len);
 		memcpy(kex->session_id, hash, kex->session_id_len);
 	}
 
-	kex_derive_keys(kex, hash, shared_secret);
+	kex_derive_keys(kex, hash, hashlen, shared_secret);
 	BN_clear_free(shared_secret);
 	kex_finish(kex);
 }

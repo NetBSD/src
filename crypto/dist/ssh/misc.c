@@ -1,6 +1,7 @@
-/*	$NetBSD: misc.c,v 1.1.1.11 2005/04/23 16:28:09 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.1.1.12 2006/02/04 22:22:47 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2005 Damien Miller.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,7 +25,9 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: misc.c,v 1.28 2005/03/01 10:09:52 djm Exp $");
+RCSID("$OpenBSD: misc.c,v 1.42 2006/01/31 10:19:02 djm Exp $");
+
+#include <net/if.h>
 
 #include "misc.h"
 #include "log.h"
@@ -188,6 +191,37 @@ a2port(const char *s)
 	return port;
 }
 
+int
+a2tun(const char *s, int *remote)
+{
+	const char *errstr = NULL;
+	char *sp, *ep;
+	int tun;
+
+	if (remote != NULL) {
+		*remote = SSH_TUNID_ANY;
+		sp = xstrdup(s);
+		if ((ep = strchr(sp, ':')) == NULL) {
+			xfree(sp);
+			return (a2tun(s, NULL));
+		}
+		ep[0] = '\0'; ep++;
+		*remote = a2tun(ep, NULL);
+		tun = a2tun(sp, NULL);
+		xfree(sp);
+		return (*remote == SSH_TUNID_ERR ? *remote : tun);
+	}
+
+	if (strcasecmp(s, "any") == 0)
+		return (SSH_TUNID_ANY);
+
+	tun = strtonum(s, 0, SSH_TUNID_MAX, &errstr);
+	if (errstr != NULL)
+		return (SSH_TUNID_ERR);
+
+	return (tun);
+}
+
 #define SECONDS		1
 #define MINUTES		(SECONDS * 60)
 #define HOURS		(MINUTES * 60)
@@ -298,13 +332,13 @@ hpdelim(char **cp)
 	case '\0':
 		*cp = NULL;	/* no more fields*/
 		break;
-	
+
 	case ':':
 	case '/':
 		*s = '\0';	/* terminate */
 		*cp = s + 1;
 		break;
-	
+
 	default:
 		return NULL;
 	}
@@ -350,12 +384,15 @@ void
 addargs(arglist *args, char *fmt, ...)
 {
 	va_list ap;
-	char buf[1024];
+	char *cp;
 	u_int nalloc;
+	int r;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	r = vasprintf(&cp, fmt, ap);
 	va_end(ap);
+	if (r == -1)
+		fatal("addargs: argument too long");
 
 	nalloc = args->nalloc;
 	if (args->list == NULL) {
@@ -366,8 +403,150 @@ addargs(arglist *args, char *fmt, ...)
 
 	args->list = xrealloc(args->list, nalloc * sizeof(char *));
 	args->nalloc = nalloc;
-	args->list[args->num++] = xstrdup(buf);
+	args->list[args->num++] = cp;
 	args->list[args->num] = NULL;
+}
+
+void
+replacearg(arglist *args, u_int which, char *fmt, ...)
+{
+	va_list ap;
+	char *cp;
+	int r;
+
+	va_start(ap, fmt);
+	r = vasprintf(&cp, fmt, ap);
+	va_end(ap);
+	if (r == -1)
+		fatal("replacearg: argument too long");
+
+	if (which >= args->num)
+		fatal("replacearg: tried to replace invalid arg %d >= %d",
+		    which, args->num);
+	xfree(args->list[which]);
+	args->list[which] = cp;
+}
+
+void
+freeargs(arglist *args)
+{
+	u_int i;
+
+	if (args->list != NULL) {
+		for (i = 0; i < args->num; i++)
+			xfree(args->list[i]);
+		xfree(args->list);
+		args->nalloc = args->num = 0;
+		args->list = NULL;
+	}
+}
+
+/*
+ * Expands tildes in the file name.  Returns data allocated by xmalloc.
+ * Warning: this calls getpw*.
+ */
+char *
+tilde_expand_filename(const char *filename, uid_t uid)
+{
+	const char *path;
+	char user[128], ret[MAXPATHLEN];
+	struct passwd *pw;
+	u_int len, slash;
+
+	if (*filename != '~')
+		return (xstrdup(filename));
+	filename++;
+
+	path = strchr(filename, '/');
+	if (path != NULL && path > filename) {		/* ~user/path */
+		slash = path - filename;
+		if (slash > sizeof(user) - 1)
+			fatal("tilde_expand_filename: ~username too long");
+		memcpy(user, filename, slash);
+		user[slash] = '\0';
+		if ((pw = getpwnam(user)) == NULL)
+			fatal("tilde_expand_filename: No such user %s", user);
+	} else if ((pw = getpwuid(uid)) == NULL)	/* ~/path */
+		fatal("tilde_expand_filename: No such uid %d", uid);
+
+	if (strlcpy(ret, pw->pw_dir, sizeof(ret)) >= sizeof(ret))
+		fatal("tilde_expand_filename: Path too long");
+
+	/* Make sure directory has a trailing '/' */
+	len = strlen(pw->pw_dir);
+	if ((len == 0 || pw->pw_dir[len - 1] != '/') &&
+	    strlcat(ret, "/", sizeof(ret)) >= sizeof(ret))
+		fatal("tilde_expand_filename: Path too long");
+
+	/* Skip leading '/' from specified path */
+	if (path != NULL)
+		filename = path + 1;
+	if (strlcat(ret, filename, sizeof(ret)) >= sizeof(ret))
+		fatal("tilde_expand_filename: Path too long");
+
+	return (xstrdup(ret));
+}
+
+/*
+ * Expand a string with a set of %[char] escapes. A number of escapes may be
+ * specified as (char *escape_chars, char *replacement) pairs. The list must
+ * be terminated by a NULL escape_char. Returns replaced string in memory
+ * allocated by xmalloc.
+ */
+char *
+percent_expand(const char *string, ...)
+{
+#define EXPAND_MAX_KEYS	16
+	struct {
+		const char *key;
+		const char *repl;
+	} keys[EXPAND_MAX_KEYS];
+	u_int num_keys, i, j;
+	char buf[4096];
+	va_list ap;
+
+	/* Gather keys */
+	va_start(ap, string);
+	for (num_keys = 0; num_keys < EXPAND_MAX_KEYS; num_keys++) {
+		keys[num_keys].key = va_arg(ap, char *);
+		if (keys[num_keys].key == NULL)
+			break;
+		keys[num_keys].repl = va_arg(ap, char *);
+		if (keys[num_keys].repl == NULL)
+			fatal("percent_expand: NULL replacement");
+	}
+	va_end(ap);
+
+	if (num_keys >= EXPAND_MAX_KEYS)
+		fatal("percent_expand: too many keys");
+
+	/* Expand string */
+	*buf = '\0';
+	for (i = 0; *string != '\0'; string++) {
+		if (*string != '%') {
+ append:
+			buf[i++] = *string;
+			if (i >= sizeof(buf))
+				fatal("percent_expand: string too long");
+			buf[i] = '\0';
+			continue;
+		}
+		string++;
+		if (*string == '%')
+			goto append;
+		for (j = 0; j < num_keys; j++) {
+			if (strchr(keys[j].key, *string) != NULL) {
+				i = strlcat(buf, keys[j].repl, sizeof(buf));
+				if (i >= sizeof(buf))
+					fatal("percent_expand: string too long");
+				break;
+			}
+		}
+		if (j >= num_keys)
+			fatal("percent_expand: unknown key %%%c", *string);
+	}
+	return (xstrdup(buf));
+#undef EXPAND_MAX_KEYS
 }
 
 /*
@@ -386,9 +565,112 @@ read_keyfile_line(FILE *f, const char *filename, char *buf, size_t bufsz,
 			debug("%s: %s line %lu exceeds size limit", __func__,
 			    filename, *lineno);
 			/* discard remainder of line */
-			while(fgetc(f) != '\n' && !feof(f))
+			while (fgetc(f) != '\n' && !feof(f))
 				;	/* nothing */
 		}
 	}
 	return -1;
 }
+
+int
+tun_open(int tun, int mode)
+{
+	struct ifreq ifr;
+	char name[100];
+	int fd = -1, sock;
+
+	/* Open the tunnel device */
+	if (tun <= SSH_TUNID_MAX) {
+		snprintf(name, sizeof(name), "/dev/tun%d", tun);
+		fd = open(name, O_RDWR);
+	} else if (tun == SSH_TUNID_ANY) {
+		for (tun = 100; tun >= 0; tun--) {
+			snprintf(name, sizeof(name), "/dev/tun%d", tun);
+			if ((fd = open(name, O_RDWR)) >= 0)
+				break;
+		}
+	} else {
+		debug("%s: invalid tunnel %u", __func__, tun);
+		return (-1);
+	}
+
+	if (fd < 0) {
+		debug("%s: %s open failed: %s", __func__, name, strerror(errno));
+		return (-1);
+	}
+
+	debug("%s: %s mode %d fd %d", __func__, name, mode, fd);
+
+	/* Set the tunnel device operation mode */
+	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "tun%d", tun);
+	if ((sock = socket(PF_UNIX, SOCK_STREAM, 0)) == -1)
+		goto failed;
+
+	if (ioctl(sock, SIOCGIFFLAGS, &ifr) == -1)
+		goto failed;
+
+	/* Set interface mode */
+	ifr.ifr_flags &= ~IFF_UP;
+	if (mode == SSH_TUNMODE_ETHERNET)
+		ifr.ifr_flags |= IFF_LINK0;
+	else
+		ifr.ifr_flags &= ~IFF_LINK0;
+	if (ioctl(sock, SIOCSIFFLAGS, &ifr) == -1)
+		goto failed;
+
+	/* Bring interface up */
+	ifr.ifr_flags |= IFF_UP;
+	if (ioctl(sock, SIOCSIFFLAGS, &ifr) == -1)
+		goto failed;
+
+	close(sock);
+	return (fd);
+
+ failed:
+	if (fd >= 0)
+		close(fd);
+	if (sock >= 0)
+		close(sock);
+	debug("%s: failed to set %s mode %d: %s", __func__, name,
+	    mode, strerror(errno));
+	return (-1);
+}
+
+void
+sanitise_stdfd(void)
+{
+	int nullfd, dupfd;
+
+	if ((nullfd = dupfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
+		fprintf(stderr, "Couldn't open /dev/null: %s", strerror(errno));
+		exit(1);
+	}
+	while (++dupfd <= 2) {
+		/* Only clobber closed fds */
+		if (fcntl(dupfd, F_GETFL, 0) >= 0)
+			continue;
+		if (dup2(nullfd, dupfd) == -1) {
+			fprintf(stderr, "dup2: %s", strerror(errno));
+			exit(1);
+		}
+	}
+	if (nullfd > 2)
+		close(nullfd);
+}
+
+char *
+tohex(const u_char *d, u_int l)
+{
+	char b[3], *r;
+	u_int i, hl;
+
+	hl = l * 2 + 1;
+	r = xmalloc(hl);
+	*r = '\0';
+	for (i = 0; i < l; i++) {
+		snprintf(b, sizeof(b), "%02x", d[i]);
+		strlcat(r, b, hl);
+	}
+	return (r);
+}
+

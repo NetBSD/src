@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv-krb5.c,v 1.1.1.1 2005/02/13 00:53:00 christos Exp $	*/
-/*	$OpenBSD: gss-serv-krb5.c,v 1.3 2004/07/21 10:36:23 djm Exp $	*/
+/*	$NetBSD: gss-serv-krb5.c,v 1.1.1.2 2006/02/04 22:22:44 christos Exp $	*/
+/*	$OpenBSD: gss-serv-krb5.c,v 1.4 2005/10/13 19:08:08 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -36,8 +36,6 @@
 #include "servconf.h"
 
 #include "ssh-gss.h"
-
-extern ServerOptions options;
 
 #include <krb5.h>
 

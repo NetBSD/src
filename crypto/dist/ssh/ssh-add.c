@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.1.1.15 2005/02/13 00:53:15 christos Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.1.1.16 2006/02/04 22:23:10 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.70 2004/05/08 00:21:31 djm Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.74 2005/11/12 18:37:59 deraadt Exp $");
 
 #include <openssl/evp.h>
 
@@ -146,7 +146,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 		/* clear passphrase since it did not work */
 		clear_pass();
 		snprintf(msg, sizeof msg, "Enter passphrase for %.200s: ",
-		   comment);
+		    comment);
 		for (;;) {
 			pass = read_passphrase(msg, RP_ALLOW_STDIN);
 			if (strcmp(pass, "") == 0) {
@@ -313,12 +313,16 @@ main(int argc, char **argv)
 	char *sc_reader_id = NULL;
 	int i, ch, deleting = 0, ret = 0;
 
+	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
+	sanitise_stdfd();
+
 	SSLeay_add_all_algorithms();
 
 	/* At first, get a connection to the authentication agent. */
 	ac = ssh_get_authentication_connection();
 	if (ac == NULL) {
-		fprintf(stderr, "Could not open a connection to your authentication agent.\n");
+		fprintf(stderr,
+		    "Could not open a connection to your authentication agent.\n");
 		exit(2);
 	}
 	while ((ch = getopt(argc, argv, "lLcdDxXe:s:t:")) != -1) {
@@ -386,7 +390,7 @@ main(int argc, char **argv)
 			goto done;
 		}
 
-		for(i = 0; default_files[i]; i++) {
+		for (i = 0; default_files[i]; i++) {
 			snprintf(buf, sizeof(buf), "%s/%s", pw->pw_dir,
 			    default_files[i]);
 			if (stat(buf, &st) < 0)
@@ -399,7 +403,7 @@ main(int argc, char **argv)
 		if (count == 0)
 			ret = 1;
 	} else {
-		for(i = 0; i < argc; i++) {
+		for (i = 0; i < argc; i++) {
 			if (do_file(ac, deleting, argv[i]) == -1)
 				ret = 1;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.1.1.18 2005/04/23 16:28:08 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.1.1.19 2006/02/04 22:22:46 christos Exp $	*/
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -33,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: key.c,v 1.57 2004/10/29 23:57:05 djm Exp $");
+RCSID("$OpenBSD: key.c,v 1.58 2005/06/17 02:44:32 djm Exp $");
 
 #include <openssl/evp.h>
 
@@ -232,7 +232,7 @@ static char *
 key_fingerprint_hex(u_char *dgst_raw, u_int dgst_raw_len)
 {
 	char *retval;
-	int i;
+	u_int i;
 
 	retval = xmalloc(dgst_raw_len * 3 + 1);
 	retval[0] = '\0';

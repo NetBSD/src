@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.1.1.9 2005/04/23 16:28:01 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.10 2006/02/04 22:22:36 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: buffer.c,v 1.22 2004/10/29 23:56:17 djm Exp $");
+RCSID("$OpenBSD: buffer.c,v 1.23 2005/03/14 11:46:56 markus Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -79,7 +79,7 @@ buffer_append_space(Buffer *buffer, u_int len)
 	u_int newlen;
 	void *p;
 
-	if (len > 0x100000)
+	if (len > BUFFER_MAX_CHUNK)
 		fatal("buffer_append_space: len %u not supported", len);
 
 	/* If the buffer is empty, start using it from the beginning. */
@@ -98,7 +98,7 @@ restart:
 	 * If the buffer is quite empty, but all data is at the end, move the
 	 * data to the beginning and retry.
 	 */
-	if (buffer->offset > buffer->alloc / 2) {
+	if (buffer->offset > MIN(buffer->alloc, BUFFER_MAX_CHUNK)) {
 		memmove(buffer->buf, buffer->buf + buffer->offset,
 			buffer->end - buffer->offset);
 		buffer->end -= buffer->offset;
@@ -108,7 +108,7 @@ restart:
 	/* Increase the size of the buffer and retry. */
 
 	newlen = buffer->alloc + len + 32768;
-	if (newlen > 0xa00000)
+	if (newlen > BUFFER_MAX_LEN)
 		fatal("buffer_append_space: alloc %u not supported",
 		    newlen);
 	buffer->buf = xrealloc(buffer->buf, newlen);

@@ -1,5 +1,5 @@
-.\"	$NetBSD: ssh-agent.1,v 1.1.1.14 2005/02/13 00:53:15 christos Exp $
-.\" $OpenBSD: ssh-agent.1,v 1.41 2004/07/11 17:48:47 deraadt Exp $
+.\"	$NetBSD: ssh-agent.1,v 1.1.1.15 2006/02/04 22:23:10 christos Exp $
+.\" $OpenBSD: ssh-agent.1,v 1.43 2005/11/28 06:02:56 dtucker Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -71,7 +71,7 @@ The options are as follows:
 Bind the agent to the unix-domain socket
 .Ar bind_address .
 The default is
-.Pa /tmp/ssh-XXXXXXXX/agent.<ppid> .
+.Pa /tmp/ssh-XXXXXXXXXX/agent.<ppid> .
 .It Fl c
 Generate C-shell commands on
 .Dv stdout .
@@ -91,7 +91,7 @@ environment variable).
 .It Fl t Ar life
 Set a default value for the maximum lifetime of identities added to the agent.
 The lifetime may be specified in seconds or in a time format specified in
-.Xr sshd 8 .
+.Xr sshd_config 5 .
 A lifetime specified for an identity with
 .Xr ssh-add 1
 overrides this value.
@@ -112,10 +112,10 @@ Keys are added using
 When executed without arguments,
 .Xr ssh-add 1
 adds the files
-.Pa $HOME/.ssh/id_rsa ,
-.Pa $HOME/.ssh/id_dsa
+.Pa ~/.ssh/id_rsa ,
+.Pa ~/.ssh/id_dsa
 and
-.Pa $HOME/.ssh/identity .
+.Pa ~/.ssh/identity .
 If the identity has a passphrase,
 .Xr ssh-add 1
 asks for the passphrase (using a small X11 application if running
@@ -180,13 +180,13 @@ The agent exits automatically when the command given on the command
 line terminates.
 .Sh FILES
 .Bl -tag -width Ds
-.It Pa $HOME/.ssh/identity
+.It Pa ~/.ssh/identity
 Contains the protocol version 1 RSA authentication identity of the user.
-.It Pa $HOME/.ssh/id_dsa
+.It Pa ~/.ssh/id_dsa
 Contains the protocol version 2 DSA authentication identity of the user.
-.It Pa $HOME/.ssh/id_rsa
+.It Pa ~/.ssh/id_rsa
 Contains the protocol version 2 RSA authentication identity of the user.
-.It Pa /tmp/ssh-XXXXXXXX/agent.<ppid>
+.It Pa /tmp/ssh-XXXXXXXXXX/agent.<ppid>
 Unix-domain sockets used to contain the connection to the
 authentication agent.
 These sockets should only be readable by the owner.

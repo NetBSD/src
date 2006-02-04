@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.1.1.8 2005/04/23 16:28:11 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.1.1.9 2006/02/04 22:22:54 christos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.62 2005/01/30 11:18:08 dtucker Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.64 2005/10/13 22:24:31 stevesk Exp $");
 
 #include <openssl/dh.h>
 
@@ -773,7 +773,7 @@ mm_answer_keyallowed(int sock, Buffer *m)
 	debug3("%s: key_from_blob: %p", __func__, key);
 
 	if (key != NULL && authctxt->valid) {
-		switch(type) {
+		switch (type) {
 		case MM_USERKEY:
 			allowed = options.pubkey_authentication &&
 			    user_key_allowed(authctxt->pw, key);
@@ -1579,7 +1579,7 @@ mm_answer_gss_setup_ctx(int sock, Buffer *m)
 	buffer_clear(m);
 	buffer_put_int(m, major);
 
-	mm_request_send(sock,MONITOR_ANS_GSSSETUP, m);
+	mm_request_send(sock, MONITOR_ANS_GSSSETUP, m);
 
 	/* Now we have a context, enable the step */
 	monitor_permit(mon_dispatch, MONITOR_REQ_GSSSTEP, 1);
@@ -1592,7 +1592,7 @@ mm_answer_gss_accept_ctx(int sock, Buffer *m)
 {
 	gss_buffer_desc in;
 	gss_buffer_desc out = GSS_C_EMPTY_BUFFER;
-	OM_uint32 major,minor;
+	OM_uint32 major, minor;
 	OM_uint32 flags = 0; /* GSI needs this */
 	u_int len;
 
@@ -1609,7 +1609,7 @@ mm_answer_gss_accept_ctx(int sock, Buffer *m)
 
 	gss_release_buffer(&minor, &out);
 
-	if (major==GSS_S_COMPLETE) {
+	if (major == GSS_S_COMPLETE) {
 		monitor_permit(mon_dispatch, MONITOR_REQ_GSSSTEP, 0);
 		monitor_permit(mon_dispatch, MONITOR_REQ_GSSUSEROK, 1);
 		monitor_permit(mon_dispatch, MONITOR_REQ_GSSCHECKMIC, 1);
@@ -1658,7 +1658,7 @@ mm_answer_gss_userok(int sock, Buffer *m)
 	debug3("%s: sending result %d", __func__, authenticated);
 	mm_request_send(sock, MONITOR_ANS_GSSUSEROK, m);
 
-	auth_method="gssapi-with-mic";
+	auth_method = "gssapi-with-mic";
 
 	/* Monitor loop will terminate if authenticated */
 	return (authenticated);

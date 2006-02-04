@@ -1,5 +1,5 @@
-#	$NetBSD: sshd_config,v 1.1.1.13 2005/04/23 16:28:32 christos Exp $
-#	$OpenBSD: sshd_config,v 1.70 2004/12/23 23:11:00 djm Exp $
+#	$NetBSD: sshd_config,v 1.1.1.14 2006/02/04 22:23:24 christos Exp $
+#	$OpenBSD: sshd_config,v 1.73 2005/12/06 22:38:28 reyk Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -26,7 +26,7 @@
 #ServerKeyBits 768
 
 # Logging
-#obsoletes QuietMode and FascistLogging
+# obsoletes QuietMode and FascistLogging
 #SyslogFacility AUTH
 #LogLevel INFO
 
@@ -79,12 +79,13 @@
 #UseLogin no
 #UsePrivilegeSeparation yes
 #PermitUserEnvironment no
-#Compression yes
+#Compression delayed
 #ClientAliveInterval 0
 #ClientAliveCountMax 3
 #UseDNS yes
 #PidFile /var/run/sshd.pid
 #MaxStartups 10
+#PermitTunnel no
 
 # no default banner path
 #Banner /some/path

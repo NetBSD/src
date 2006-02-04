@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-common.h,v 1.1.1.5 2005/02/13 00:53:14 christos Exp $	*/
-/*	$OpenBSD: sftp-common.h,v 1.5 2003/11/10 16:23:41 jakob Exp $	*/
+/*	$NetBSD: sftp-common.h,v 1.1.1.6 2006/02/04 22:23:08 christos Exp $	*/
+/*	$OpenBSD: sftp-common.h,v 1.6 2006/01/02 01:20:31 djm Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* Maximum packet that we are willing to send/accept */
+#define SFTP_MAX_MSG_LENGTH	(256 * 1024)
 
 typedef struct Attrib Attrib;
 

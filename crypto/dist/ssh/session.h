@@ -1,5 +1,5 @@
-/*	$NetBSD: session.h,v 1.1.1.10 2005/02/13 00:53:12 christos Exp $	*/
-/*	$OpenBSD: session.h,v 1.23 2004/07/17 05:31:41 dtucker Exp $	*/
+/*	$NetBSD: session.h,v 1.1.1.11 2006/02/04 22:23:06 christos Exp $	*/
+/*	$OpenBSD: session.h,v 1.25 2005/07/17 06:49:04 djm Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -50,8 +50,9 @@ struct Session {
 	int	single_connection;
 	/* proto 2 */
 	int	chanid;
+	int	*x11_chanids;
 	int	is_subsystem;
-	int	num_env;
+	u_int	num_env;
 	struct {
 		char	*name;
 		char	*val;
