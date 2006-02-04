@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.141 2006/02/02 21:32:10 reinoud Exp $
+# $NetBSD: GENERIC,v 1.142 2006/02/04 03:33:59 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include		"arch/pmax/conf/files.pmax_rcons"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.141 $"
+#ident		"GENERIC-$Revision: 1.142 $"
 
 maxusers	64
 
@@ -244,7 +244,7 @@ pseudo-device	sl		 4	# serial-line IP ports
 pseudo-device	ppp		 2	# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	bpfilter		# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	gre		 2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
