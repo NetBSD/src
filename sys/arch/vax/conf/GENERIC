@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.148 2006/02/04 03:45:49 rpaulo Exp $
+# $NetBSD: GENERIC,v 1.149 2006/02/04 03:47:41 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.148 $"
+#ident 		"GENERIC-$Revision: 1.149 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -296,7 +296,7 @@ wsmouse*	at lkms?
 
 pseudo-device	loop	1
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	bpfilter		# Not supported by de yet.
+pseudo-device	bpfilter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 #pseudo-device	sl	2
 pseudo-device	ppp	2
