@@ -1,4 +1,4 @@
-.\"	$NetBSD: byteorder.3,v 1.13 2005/09/11 02:23:52 soda Exp $
+.\"	$NetBSD: byteorder.3,v 1.14 2006/02/04 22:47:28 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,8 @@ These routines convert 16 and 32 bit quantities between network
 byte order and host byte order.
 .Pp
 On machines which have a byte order which is the same as the network
-order, routines are defined as null macros.
+order, these routines are defined as macros that expand to the value of
+their argument.
 .Pp
 These routines are most often used in conjunction with Internet
 addresses and ports as returned by
