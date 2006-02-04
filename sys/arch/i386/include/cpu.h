@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.122 2006/02/03 02:37:57 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.122.2.1 2006/02/04 15:11:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -296,11 +296,9 @@ struct clockframe {
  */
 extern void (*delay_func)(int);
 struct timeval;
-extern void (*microtime_func)(struct timeval *);
 
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
-#define microtime(tv)		(*microtime_func)(tv)
 
 /*
  * pull in #defines for kinds of processors
