@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.213 2005/12/07 09:10:11 tsutsui Exp $
+# $NetBSD: ALPHA,v 1.214 2006/02/04 02:37:23 rpaulo Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.213 $"
+ident		"ALPHA-$Revision: 1.214 $"
 
 maxusers 32
 
@@ -578,7 +578,7 @@ wsmouse*	at	vsms?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?
 
-pseudo-device	bpfilter	16
+pseudo-device	bpfilter
 pseudo-device	ccd		4
 pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

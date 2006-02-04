@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.21 2005/12/07 09:10:12 tsutsui Exp $
+# $NetBSD: NULL,v 1.22 2006/02/04 02:40:44 rpaulo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -309,7 +309,7 @@ a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 #pseudo-device	ppp		1	# PPP network interfaces
 #pseudo-device	tun		1	# network tunnel line discipline
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	bpfilter	16	# Berkeley packet filter
+#pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP Filter package
 
 pseudo-device	view		4	# views (needed for grfcc)

@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.27 2005/12/07 09:10:12 tsutsui Exp $
+# $NetBSD: RAWHIDE,v 1.28 2006/02/04 02:37:23 rpaulo Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -98,7 +98,7 @@ sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
 ch*	at	scsibus? target ? lun ?
 
-pseudo-device	bpfilter	16
+pseudo-device	bpfilter
 pseudo-device	ccd		16
 pseudo-device	ipfilter	1
 pseudo-device	loop		1

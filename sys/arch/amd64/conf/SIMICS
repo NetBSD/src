@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.25 2005/12/20 05:35:27 thorpej Exp $
+#	$NetBSD: SIMICS,v 1.26 2006/02/04 02:40:01 rpaulo Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -508,7 +508,7 @@ le*	at nele?
 #pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
-#pseudo-device	bpfilter	8	# Berkeley packet filter
+#pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp		2	# Point-to-Point Protocol
