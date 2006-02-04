@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.13 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.14 2006/02/04 12:13:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.13 2005/12/24 23:24:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.14 2006/02/04 12:13:05 martin Exp $");
 
 #include "debug_playstation2.h"
 
@@ -400,8 +400,7 @@ gsfb_set_cursor_pos(u_int32_t *p, int x, int y, int w, int h)
 	x *= w;
 	y *= h;
 	p[20] = ((x << 4) & 0xffff) | ((y << 20) & 0xffff0000);
-	p[28] = (((x + w - 1) << 4) & 0xffff) |
-	    (((y + h - 1) << 20) & 0xffff0000);
+	p[28] = (((x + w) << 4) & 0xffff) | (((y + h) << 20) & 0xffff0000);
 }
 
 int
