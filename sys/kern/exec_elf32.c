@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.108 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.109 2006/02/04 12:09:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.108 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.109 2006/02/04 12:09:50 yamt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -604,7 +604,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		if (pp->p_type == PT_INTERP) {
 			if (pp->p_filesz >= MAXPATHLEN)
 				goto bad;
-			MALLOC(interp, char *, MAXPATHLEN, M_TEMP, M_WAITOK);
+			interp = PNBUF_GET();
 			interp[0] = '\0';
 			if ((error = exec_read_from(l, epp->ep_vp,
 			    pp->p_offset, interp, pp->p_filesz)) != 0)
@@ -718,7 +718,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 
 		epp->ep_emul_arg = ap;
 
-		FREE(interp, M_TEMP);
+		PNBUF_PUT(interp);
 	} else
 		epp->ep_entry = eh->e_entry;
 
@@ -732,7 +732,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 
 bad:
 	if (interp)
-		FREE(interp, M_TEMP);
+		PNBUF_PUT(interp);
 	free(ph, M_TEMP);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return ENOEXEC;
