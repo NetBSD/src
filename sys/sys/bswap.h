@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.9 2006/02/04 10:34:43 skrll Exp $      */
+/*      $NetBSD: bswap.h,v 1.10 2006/02/04 11:44:48 dsl Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -23,8 +23,6 @@ uint32_t bswap32(uint32_t) __RENAME(__bswap32) __attribute__((__const__));
 uint64_t bswap64(uint64_t) __attribute__((__const__));
 __END_DECLS
 
-#if defined(__GNUC__) && defined(__OPTIMIZE__)
-
 /* machine/byte_swap.h might have defined inline versions */
 #ifndef __BYTE_SWAP_U64_VARIABLE
 #define	__BYTE_SWAP_U64_VARIABLE bswap64
@@ -37,6 +35,8 @@ __END_DECLS
 #ifndef __BYTE_SWAP_U16_VARIABLE
 #define	__BYTE_SWAP_U16_VARIABLE bswap16
 #endif
+
+#if defined(__GNUC__) && defined(__OPTIMIZE__)
 
 #define	__byte_swap_u64_constant(x) \
 	((((x) & 0xff00000000000000ull) >> 56) | \
@@ -69,6 +69,13 @@ __END_DECLS
 #define	bswap16(x) \
 	(__builtin_constant_p((x)) ? \
 	 __byte_swap_u16_constant(x) : __BYTE_SWAP_U16_VARIABLE(x))
+
+#else
+
+/* Use any inlined functions even when not optimising */
+#define	bswap64(x)	__BYTE_SWAP_U64_VARIABLE(x)
+#define	bswap32(x)	__BYTE_SWAP_U32_VARIABLE(x)
+#define	bswap16(x)	__BYTE_SWAP_U16_VARIABLE(x)
 
 #endif /* __GNUC__ && __OPTIMIZE__ */
 #endif /* !_LOCORE */
