@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.179 2006/01/14 17:41:16 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.179.4.1 2006/02/04 14:12:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.179 2006/01/14 17:41:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.179.4.1 2006/02/04 14:12:50 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -444,7 +444,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	if (fs->fs_fmod != 0) {	/* XXX */
 		fs->fs_fmod = 0;
 		if (fs->fs_clean & FS_WASCLEAN)
-			fs->fs_time = time.tv_sec;
+			fs->fs_time = time_second;
 		else {
 			printf("%s: file system not clean (fs_clean=%x); please fsck(8)\n",
 			    mp->mnt_stat.f_mntfromname, fs->fs_clean);
@@ -1378,7 +1378,7 @@ loop:
 	 */
 	if (fs->fs_fmod != 0) {
 		fs->fs_fmod = 0;
-		fs->fs_time = time.tv_sec;
+		fs->fs_time = time_second;
 		if ((error = ffs_cgupdate(ump, waitfor)))
 			allerror = error;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.4 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.4.6.1 2006/02/04 14:12:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.4 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.4.6.1 2006/02/04 14:12:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -72,7 +72,7 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 	if (ip->i_flag & IN_ACCESS) {
 #ifdef _KERNEL
 		if (acc == NULL)
-			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			acc = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
 #endif
 		ip->i_ffs1_atime = acc->tv_sec;
 		ip->i_ffs1_atimensec = acc->tv_nsec;
@@ -96,7 +96,8 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 		if (ip->i_flag & (IN_UPDATE | IN_MODIFY)) {
 #ifdef _KERNEL
 			if (mod == NULL)
-				mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+				mod = ts == NULL ?
+				    (getnanotime(&tsb), ts = &tsb) : ts;
 #endif
 			ip->i_ffs1_mtime = mod->tv_sec;
 			ip->i_ffs1_mtimensec = mod->tv_nsec;
@@ -105,7 +106,8 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 		if (ip->i_flag & (IN_CHANGE | IN_MODIFY)) {
 #ifdef _KERNEL
 			if (cre == NULL)
-				cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+				cre = ts == NULL ?
+				    (getnanotime(&tsb), ts = &tsb) : ts;
 #endif
 			ip->i_ffs1_ctime = cre->tv_sec;
 			ip->i_ffs1_ctimensec = cre->tv_nsec;

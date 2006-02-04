@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.73 2006/01/14 17:41:18 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.73.4.1 2006/02/04 14:12:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.73 2006/01/14 17:41:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.73.4.1 2006/02/04 14:12:50 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -839,7 +839,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			if (softdep_setup_directory_add(bp, dp, dp->i_offset,
 			    ufs_rw32(dirp->d_ino, needswap), newdirbp, 1) == 0) {
 				bdwrite(bp);
-				nanotime(&ts);
+				getnanotime(&ts);
 				return UFS_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
 			}
 			/* We have just allocated a directory block in an
@@ -864,7 +864,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		} else {
 			error = VOP_BWRITE(bp);
 		}
-		nanotime(&ts);
+		getnanotime(&ts);
 		ret = UFS_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
 		if (error == 0)
 			return (ret);

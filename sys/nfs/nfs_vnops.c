@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.230 2005/12/11 12:25:17 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.230.6.1 2006/02/04 14:12:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.230 2005/12/11 12:25:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.230.6.1 2006/02/04 14:12:50 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -326,7 +326,7 @@ nfs_access(v)
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
 	cachevalid = (np->n_accstamp != -1 &&
-	    (mono_time.tv_sec - np->n_accstamp) < NFS_ATTRTIMEO(nmp, np) &&
+	    (time_uptime - np->n_accstamp) < NFS_ATTRTIMEO(nmp, np) &&
 	    np->n_accuid == ap->a_cred->cr_uid);
 
 	/*
@@ -420,7 +420,7 @@ nfs_access(v)
 			else if ((np->n_accmode & ap->a_mode) == ap->a_mode)
 				np->n_accmode = ap->a_mode;
 		} else {
-			np->n_accstamp = mono_time.tv_sec;
+			np->n_accstamp = time_uptime;
 			np->n_accuid = ap->a_cred->cr_uid;
 			np->n_accmode = ap->a_mode;
 			np->n_accerror = error;
@@ -1770,7 +1770,9 @@ again:
 			goto again;
 		}
 	} else if (v3 && (fmode & O_EXCL)) {
-		struct timeval tm = time;
+		struct timespec ts;
+
+		getnanotime(&ts);
 
 		/*
 		 * make sure that we'll update timestamps as
@@ -1780,14 +1782,10 @@ again:
 		 * XXX it's better to use TOSERVER always.
 		 */
 
-		if (vap->va_atime.tv_sec == VNOVAL) {
-			vap->va_atime.tv_sec = tm.tv_sec;
-			vap->va_atime.tv_nsec = tm.tv_usec * 1000;
-		}
-		if (vap->va_mtime.tv_sec == VNOVAL) {
-			vap->va_mtime.tv_sec = tm.tv_sec;
-			vap->va_mtime.tv_nsec = tm.tv_usec * 1000;
-		}
+		if (vap->va_atime.tv_sec == VNOVAL)
+			vap->va_atime = ts;
+		if (vap->va_mtime.tv_sec == VNOVAL)
+			vap->va_mtime = ts;
 
 		error = nfs_setattrrpc(newvp, vap, cnp->cn_cred, cnp->cn_lwp);
 	}
@@ -3521,8 +3519,7 @@ nfsspec_read(v)
 	 * Set access flag.
 	 */
 	np->n_flag |= NACC;
-	np->n_atim.tv_sec = time.tv_sec;
-	np->n_atim.tv_nsec = time.tv_usec * 1000;
+	getnanotime(&np->n_atim);
 	return (VOCALL(spec_vnodeop_p, VOFFSET(vop_read), ap));
 }
 
@@ -3545,8 +3542,7 @@ nfsspec_write(v)
 	 * Set update flag.
 	 */
 	np->n_flag |= NUPD;
-	np->n_mtim.tv_sec = time.tv_sec;
-	np->n_mtim.tv_nsec = time.tv_usec * 1000;
+	getnanotime(&np->n_mtim);
 	return (VOCALL(spec_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
@@ -3603,8 +3599,7 @@ nfsfifo_read(v)
 	 * Set access flag.
 	 */
 	np->n_flag |= NACC;
-	np->n_atim.tv_sec = time.tv_sec;
-	np->n_atim.tv_nsec = time.tv_usec * 1000;
+	getnanotime(&np->n_atim);
 	return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_read), ap));
 }
 
@@ -3627,8 +3622,7 @@ nfsfifo_write(v)
 	 * Set update flag.
 	 */
 	np->n_flag |= NUPD;
-	np->n_mtim.tv_sec = time.tv_sec;
-	np->n_mtim.tv_nsec = time.tv_usec * 1000;
+	getnanotime(&np->n_mtim);
 	return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
@@ -3652,14 +3646,13 @@ nfsfifo_close(v)
 	struct vattr vattr;
 
 	if (np->n_flag & (NACC | NUPD)) {
-		if (np->n_flag & NACC) {
-			np->n_atim.tv_sec = time.tv_sec;
-			np->n_atim.tv_nsec = time.tv_usec * 1000;
-		}
-		if (np->n_flag & NUPD) {
-			np->n_mtim.tv_sec = time.tv_sec;
-			np->n_mtim.tv_nsec = time.tv_usec * 1000;
-		}
+		struct timespec ts;
+
+		getnanotime(&ts);
+		if (np->n_flag & NACC)
+			np->n_atim = ts;
+		if (np->n_flag & NUPD)
+			np->n_mtim = ts;
 		np->n_flag |= NCHG;
 		if (vp->v_usecount == 1 &&
 		    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
