@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.308 2006/02/03 11:08:23 jmmv Exp $
+.\"	$NetBSD: options.4,v 1.309 2006/02/04 18:37:20 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -145,7 +145,7 @@ Specifies (or sets) the option, or comma-separated list of options,
 .Ar option_name .
 Some options expect to be assigned a value, which may be an integer,
 a double-quoted word, a bare word, or an empty string
-.Pq Qq . 
+.Pq Qq .
 Note that those are eventually handled by the C compiler, so the rules
 of that language apply.
 .Pp
@@ -527,18 +527,18 @@ for details.
 If this is non-zero, enable history editing in the kernel debugger
 and set the size of the history to this value.
 .It Cd options DDB_ONPANIC
-The default if not specified is 
+The default if not specified is
 .Dq 1
 - just enter into DDB.
-If set to 
+If set to
 .Dq 2
 the kernel will
 attempt to print out a stack trace before entering into DDB.
-If set to 
+If set to
 .Dq 0
 the kernel will attempt to print out a stack trace
 and reboot the system.
-If set to 
+If set to
 .Dq -1
 then neither a stack trace is printed or DDB entered -
 it is as if DDB were not compiled into the kernel.
@@ -842,9 +842,11 @@ See
 for details.
 .It Cd file-system UDF
 .Bq Em EXPERIMENTAL
-Includes code for the UDF file system commenly found on CD and DVD media but
-also more and more on USB sticks. Useful primarily if you have a CD or a DVD
-drive be it a read-only or a rewritable device. Currently only read-access.
+Includes code for the UDF file system commonly found on CD and DVD
+media but also more and more on USB sticks.
+Useful primarily if you have a CD or a DVD drive, be it a read-only
+or a rewritable device.
+Currently only supports read-access.
 See
 .Xr mount_udf 8
 for details.
