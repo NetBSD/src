@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.137 2006/02/04 11:19:59 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.138 2006/02/04 11:52:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.137 2006/02/04 11:19:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.138 2006/02/04 11:52:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -584,7 +584,7 @@ vndthread(void *arg)
 		bp->b_flags = (obp->b_flags & B_READ) | B_CALL;
 		bp->b_iodone = vndiodone;
 		bp->b_private = obp;
-		bp->b_vp = NULL;
+		bp->b_vp = vnd->sc_vp;
 		bp->b_data = obp->b_data;
 		bp->b_bcount = bp->b_resid = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
@@ -596,8 +596,13 @@ vndthread(void *arg)
 		vnd->sc_active++;
 		splx(s);
 
-		if ((flags & B_READ) == 0)
+		if ((flags & B_READ) == 0) {
+			s = splbio();
+			V_INCR_NUMOUTPUT(bp->b_vp);
+			splx(s);
+
 			vn_start_write(vnd->sc_vp, &mp, V_WAIT);
+		}
 
 		/* Instrumentation. */
 		disk_busy(&vnd->sc_dkdev);
