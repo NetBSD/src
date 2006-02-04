@@ -1,4 +1,4 @@
-#	$NetBSD: DUMMY,v 1.32 2005/12/07 09:10:18 tsutsui Exp $
+#	$NetBSD: DUMMY,v 1.33 2006/02/04 03:31:45 rpaulo Exp $
 #
 # DUMMY: Matthias Pfaller's second pc532
 #
@@ -83,7 +83,7 @@ st* at scsibus? target ? lun ?		# SCSI tapes
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop 1			# loopback network
 pseudo-device	vnd 4			# vnode devices
-pseudo-device	bpfilter 8		# packet filter
+pseudo-device	bpfilter		# packet filter
 #pseudo-device	ccd 1
 #pseudo-device	fss 4			# file system snapshot device
 #pseudo-device	sl 1			# compressed SLIP
