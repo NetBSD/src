@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.21 2006/01/29 03:12:40 kochi Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.21.4.1 2006/02/04 15:06:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21 2006/01/29 03:12:40 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21.4.1 2006/02/04 15:06:38 simonb Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -430,7 +430,7 @@ acpi_md_sleep(int state)
 		 */
 
 		initrtclock();
-		inittodr(time.tv_sec);
+		inittodr(time_second);
 
 #ifdef ACPI_PRINT_REG
 		acpi_savecpu();
