@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.22 2006/02/04 00:01:36 uwe Exp $	*/
+/*	$NetBSD: endian.h,v 1.23 2006/02/04 01:07:20 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -122,10 +122,10 @@ __END_DECLS
 
 #else	/* LITTLE_ENDIAN || !defined(__lint__) */
 
-#define	ntohl(x)	((uint32_t)bswap32((uint32_t)(x)))
-#define	ntohs(x)	((uint16_t)bswap16((uint16_t)(x)))
-#define	htonl(x)	((uint32_t)bswap32((uint32_t)(x)))
-#define	htons(x)	((uint16_t)bswap16((uint16_t)(x)))
+#define	ntohl(x)	bswap32((uint32_t)(x))
+#define	ntohs(x)	bswap16((uint16_t)(x))
+#define	htonl(x)	bswap32((uint32_t)(x))
+#define	htons(x)	bswap16((uint16_t)(x))
 
 #define	NTOHL(x)	(x) = ntohl((uint32_t)(x))
 #define	NTOHS(x)	(x) = ntohs((uint16_t)(x))
