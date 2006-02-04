@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.3 2006/02/04 11:24:42 jmmv Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.4 2006/02/04 11:28:54 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.3 2006/02/04 11:24:42 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.4 2006/02/04 11:28:54 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,9 +473,10 @@ setup_bootdisk(struct multiboot_info *mi)
 	if (!found && (mi->mi_flags & MULTIBOOT_INFO_HAS_BOOT_DEVICE)) {
 		const char *devprefix;
 
-		/* XXX: This should use x86_alldisks to find the correct
-		 * match.  But, at this point, neither the drivers nor the
-		 * vector are initialized... */
+		/* Attempt to match the BIOS boot disk to a device.  There
+		 * is not much we can do to get it right.  (Well, strictly
+		 * speaking, we could, but it is certainly not worth the
+		 * extra effort.) */
 		switch (mi->mi_boot_device_drive) {
 		case 0x00:	devprefix = "fd0";	break;
 		case 0x01:	devprefix = "fd1";	break;
@@ -483,19 +484,17 @@ setup_bootdisk(struct multiboot_info *mi)
 		case 0x81:	devprefix = "wd1";	break;
 		case 0x82:	devprefix = "wd2";	break;
 		case 0x83:	devprefix = "wd3";	break;
-		default:	devprefix = "";
+		default:	devprefix = "wd0";
 		}
 
-		if (devprefix[0] != '\0') {
-			strcpy(bi.devname, devprefix);
-			if (mi->mi_boot_device_part2 != 0xFF)
-				bi.devname[3] = mi->mi_boot_device_part2 + 'a';
-			else
-				bi.devname[3] = 'a';
-			bi.devname[4] = '\0';
+		strcpy(bi.devname, devprefix);
+		if (mi->mi_boot_device_part2 != 0xFF)
+			bi.devname[3] = mi->mi_boot_device_part2 + 'a';
+		else
+			bi.devname[3] = 'a';
+		bi.devname[4] = '\0';
 
-			found = TRUE;
-		}
+		found = TRUE;
 	}
 
 	if (found) {
