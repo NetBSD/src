@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.61 2006/02/02 17:48:51 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.62 2006/02/04 12:09:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.61 2006/02/02 17:48:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.62 2006/02/04 12:09:50 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1450,26 +1450,31 @@ static int
 sysctl_kern_defcorename(SYSCTLFN_ARGS)
 {
 	int error;
-	char newcorename[MAXPATHLEN];
+	char *newcorename;
 	struct sysctlnode node;
 
+	newcorename = PNBUF_GET();
 	node = *rnode;
 	node.sysctl_data = &newcorename[0];
 	memcpy(node.sysctl_data, rnode->sysctl_data, MAXPATHLEN);
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
+	if (error || newp == NULL) {
+		goto done;
+	}
 
 	/*
 	 * when sysctl_lookup() deals with a string, it's guaranteed
 	 * to come back nul terminated.  so there.  :)
 	 */
-	if (strlen(newcorename) == 0)
-		return (EINVAL);
-
-	memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
-
-	return (0);
+	if (strlen(newcorename) == 0) {
+		error = EINVAL;
+	} else {
+		memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
+		error = 0;
+	}
+done:
+	PNBUF_PUT(newcorename);
+	return error;
 }
 
 /*

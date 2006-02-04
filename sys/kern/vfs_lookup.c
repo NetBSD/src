@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.65 2005/12/27 17:24:07 chs Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.66 2006/02/04 12:09:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.65 2005/12/27 17:24:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.66 2006/02/04 12:09:50 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -108,10 +108,11 @@ struct pool_cache pnbuf_cache;	/* pathname buffer cache */
 static int
 symlink_magic(struct proc *p, char *cp, int *len)
 {
-	char tmp[MAXPATHLEN];
+	char *tmp;
 	int change, i, newlen;
 	int termchar = '/';
 
+	tmp = PNBUF_GET();
 	for (change = i = newlen = 0; i < *len; ) {
 		if (cp[i] != '@') {
 			tmp[newlen++] = cp[i++];
@@ -161,11 +162,11 @@ symlink_magic(struct proc *p, char *cp, int *len)
 		}
 	}
 
-	if (! change)
-		return (0);
-
-	memcpy(cp, tmp, newlen);
-	*len = newlen;
+	if (change) {
+		memcpy(cp, tmp, newlen);
+		*len = newlen;
+	}
+	PNBUF_PUT(tmp);
 
 	return (0);
 }
