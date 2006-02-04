@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123 2006/02/02 21:32:10 reinoud Exp $
+# $NetBSD: GENERIC,v 1.124 2006/02/04 03:48:18 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.123 $"
+#ident 		"GENERIC-$Revision: 1.124 $"
 
 maxusers	8
 
@@ -486,7 +486,7 @@ pseudo-device	pppoe
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-pseudo-device	bpfilter	4
+pseudo-device	bpfilter
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.
