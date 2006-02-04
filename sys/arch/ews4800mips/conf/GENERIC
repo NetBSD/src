@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.5 2006/02/02 21:32:08 reinoud Exp $
+# $NetBSD: GENERIC,v 1.6 2006/02/04 02:54:38 rpaulo Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.5 $"
+#ident		"GENERIC-$Revision: 1.6 $"
 
 maxusers	16
 
@@ -250,7 +250,7 @@ pseudo-device	vnd		4	# virtual disk ick
 options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# packet filter ports
+pseudo-device	bpfilter		# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.111 2005/12/20 05:35:28 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.112 2006/02/04 03:09:40 rpaulo Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -254,7 +254,7 @@ ukphy*	at mii? phy ?				# generic unknown PHYs
 include	"arch/i386/conf/GENERIC.local"
 
 pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 4		# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty

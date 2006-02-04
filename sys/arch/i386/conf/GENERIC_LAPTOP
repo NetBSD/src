@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.172 2006/02/03 17:36:38 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.173 2006/02/04 03:09:40 rpaulo Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.172 $"
+#ident 		"GENERIC-$Revision: 1.173 $"
 
 maxusers	32		# estimated number of users
 
@@ -885,7 +885,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol

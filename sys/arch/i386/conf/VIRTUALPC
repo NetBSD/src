@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.35 2005/12/20 05:35:29 thorpej Exp $
+# $NetBSD: VIRTUALPC,v 1.36 2006/02/04 03:09:40 rpaulo Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.35 $"
+#ident 		"VIRTUALPC-$Revision: 1.36 $"
 
 maxusers	32		# estimated number of users
 
@@ -609,7 +609,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol

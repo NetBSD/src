@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.222 2006/02/02 21:32:09 reinoud Exp $
+# $NetBSD: GENERIC,v 1.223 2006/02/04 03:16:23 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.222 $"
+#ident 		"GENERIC-$Revision: 1.223 $"
 
 maxusers	32
 
@@ -520,7 +520,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

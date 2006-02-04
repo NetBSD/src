@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.169 2006/02/02 21:32:09 reinoud Exp $
+# $NetBSD: GENERIC,v 1.170 2006/02/04 03:15:30 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.169 $"
+#ident 		"GENERIC-$Revision: 1.170 $"
 
 maxusers	16		# estimated number of users
 
@@ -319,7 +319,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
-pseudo-device	bpfilter	12	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol

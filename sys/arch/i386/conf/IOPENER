@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.71 2005/12/20 05:35:29 thorpej Exp $
+#	$NetBSD: IOPENER,v 1.72 2006/02/04 03:09:40 rpaulo Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.71 $"
+#ident 		"IOPENER-$Revision: 1.72 $"
 
 maxusers	32		# estimated number of users
 
@@ -426,7 +426,7 @@ include	"arch/i386/conf/GENERIC.local"
 #pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
