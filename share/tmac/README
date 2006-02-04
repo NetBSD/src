@@ -1,8 +1,0 @@
-$NetBSD: README,v 1.8 2004/03/29 21:36:45 wiz Exp $
-
-The files previously in this dir have been replaced by versions
-(still BSD licensed) coming with GNU groff; you can find them in
-gnu/dist/groff/tmac.
-
-The only files that usually should be touched are, however, in
-gnu/usr.bin/groff/tmac.
