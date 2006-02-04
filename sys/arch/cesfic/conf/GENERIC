@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40 2006/02/02 21:32:08 reinoud Exp $
+# $NetBSD: GENERIC,v 1.41 2006/02/04 02:44:36 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -135,7 +135,7 @@ pseudo-device	pty		64	# pseudo ptys
 #pseudo-device	sl		4	# SLIP network interfaces
 #pseudo-device	ppp		4	# PPP network interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-#pseudo-device	bpfilter	16	# Berkeley packet filter
+#pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	vnd		4	# vnode pseudo-disks

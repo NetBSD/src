@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.22 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: NAPPI,v 1.23 2006/02/04 02:50:10 rpaulo Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -177,7 +177,7 @@ inphy*  at mii? phy ?                   # Intel 82555 PHYs
 #pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
-#pseudo-device	bpfilter	4	# Berkeley packet filter
+#pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices

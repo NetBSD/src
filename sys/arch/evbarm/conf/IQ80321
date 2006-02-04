@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.46 2005/12/14 16:21:55 briggs Exp $
+#	$NetBSD: IQ80321,v 1.47 2006/02/04 02:50:10 rpaulo Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -224,7 +224,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	kttcp			# network loopback
 
