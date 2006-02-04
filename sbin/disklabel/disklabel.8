@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.58 2006/01/29 00:04:26 dsl Exp $
+.\"	$NetBSD: disklabel.8,v 1.59 2006/02/04 20:10:53 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd January 29 2006
+.Dd January 29, 2006
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -71,20 +71,24 @@
 .Ar disk
 .Sh DESCRIPTION
 .Nm
-can be used to install, examine or modify the label on a disk drive or pack.
+can be used to install, examine, or modify the label on a disk drive or pack.
 When writing the label, it can be used to change the drive identification,
 the disk partitions on the drive, or to replace a damaged label.
 .Pp
 The
-.Fl e , i , R , w, N ,
+.Fl e , i , R , w , N ,
 and
 .Fl W
 options determine the basic operation, if none are specified the label
 is displayed.
 .Bl -tag -width flag
 .It Fl e
-Edit the existing label (using $EDITOR) and write it back to the disk.
-If $EDITOR is undefined, then 
+Edit the existing label (using
+.Ev EDITOR )
+and write it back to the disk.
+If
+.Ev EDITOR
+is undefined, then
 .Xr vi 1
 is used.
 .It Fl i
@@ -116,12 +120,14 @@ Read all labels from the disk, including ones deleted with
 Implies
 .Fl r .
 .It Fl C
-Output the partition offset and size values in <cylinder/head/sector> format.
-Note this format is always on input with either the
+Output the partition offset and size values in
+.Aq cylinder/head/sector
+format.
+Note this format is always accepted on input with either the
 .Fl e
 or
 .Fl R
-flag.
+flags.
 .It Fl D
 Delete all existing labels (by 1's complimenting the magic number) before
 writing any labels to their default location.
@@ -135,12 +141,14 @@ just deleted.
 Treat
 .Ar disk
 as a regular file.
-This suppresses all ioctl() calls, and is the default if
+This suppresses all
+.Xr ioctl 2
+calls, and is the default if
 .Ar disk
 is a regular file.
 .Ar disk
 is always opened using
-.Xr opendisk 5
+.Xr opendisk 3
 even if
 .Fl F
 is specified.
@@ -154,9 +162,11 @@ Implies
 .Fl r .
 .It Fl f Ar disktab
 Specify the name of a file to use instead of
-.Ar /etc/disktab .
+.Pa /etc/disktab .
 .It Fl r
-Read/write the disk directly rather than using ioctl() requests on the kernel.
+Read/write the disk directly rather than using
+.Xr ioctl 2
+requests on the kernel.
 When writing a label, the kernel will be told about the label before the
 label is written and asked to write afterwards.
 This is the historic behaviour and can be supressed by specifying
@@ -173,15 +183,16 @@ Specifying
 more than once will increase the verbosity.
 .El
 .Pp
-On systems that expect to have disks with mbr partitions (see
+On systems that expect to have disks with MBR partitions (see
 .Xr fdisk 8 )
 .Nm
-will find, and update if requested, labels in the first 8k of type
-169 (NetBSD) mbr labels and within the first 8k of the physical disk.
-On other systems 
+will find, and update if requested, labels in the first 8k of type 169
+.Pq Nx
+MBR labels and within the first 8k of the physical disk.
+On other systems
 .Nm
 will only look at the start of the disk.
-The offset at which the labels are written is also system dependant.
+The offset at which the labels are written is also system dependent.
 .Pp
 .Nm
 will detect byteswapped labels, but currently cannot display them.
@@ -202,8 +213,8 @@ The
 .Nm
 utility has completed successfully.
 .It 1
-A fatal error has occurred, such as unknown options passed on the command line,
-or writing the disklabel failed.
+A fatal error has occurred, such as unknown options passed on the
+command line, or writing the disklabel failed.
 .It 4
 An I/O error of some sort occurred.
 .It 101..n
@@ -215,12 +226,12 @@ Subtract 100 to get the number of warnings detected.
 .It Pa /etc/disktab
 .El
 .Sh EXAMPLES
-.Dl disklabel sd0
+.Dl Ic disklabel sd0
 .Pp
 Display the in-core label for sd0 as obtained via
 .Pa /dev/rsd0c .
 .Pp
-.Dl disklabel -w -r /dev/rsd0c sd2212 foo
+.Dl Ic disklabel -w -r /dev/rsd0c sd2212 foo
 .Pp
 Create a label for sd0 based on information for
 .Dq sd2212
@@ -234,27 +245,25 @@ If you do not have an entry for your disk in
 you can use this style to put
 an initial label onto a new disk.
 Then dump the label to a file (using
-.Em disklabel sd0 \*[Gt]
-.Em protofile ) ,
+.Ic disklabel sd0 \*[Gt] protofile ) ,
 editing the file, and replacing the label with
-.Em disklabel -R sd0
-.Em protofile .
+.Ic disklabel -R sd0 protofile .
 .Pp
-.Dl disklabel -e -r sd0
+.Dl Ic disklabel -e -r sd0
 .Pp
 Read the on-disk label for sd0, edit it and reinstall in-core as well
 as on-disk.
 .Pp
-.Dl disklabel -e -I sd0
+.Dl Ic disklabel -e -I sd0
 .Pp
 As previous, but don't fail if there was no label on the disk yet;
 provide some default values instead.
 .Pp
-.Dl disklabel -i -I sd0
+.Dl Ic disklabel -i -I sd0
 .Pp
 As previous, only use the built-in interactive editor.
 .Pp
-.Dl disklabel -R sd0 mylabel
+.Dl Ic disklabel -R sd0 mylabel
 .Pp
 Restore the on-disk and in-core label for sd0 from information in
 .Pa mylabel .
@@ -283,9 +292,9 @@ partition.
 .Sh BUGS
 If the disk partition is not specified in the disk name
 (i.e.,
-.Dq xy0
+.Ar xy0
 instead of
-.Dq /dev/rxy0c ) ,
+.Ar /dev/rxy0c ) ,
 .Nm
 will construct the full pathname of the disk and use the
 .Dq d
@@ -302,7 +311,7 @@ invalid and fail to boot the system.
 .Pp
 In addition, the
 .Fl r
-option should never be used on a sparc, sparc64, sun2 or sun3 system
+option should never be used on a sparc, sparc64, sun2, or sun3 system
 boot disk - the
 .Nx
 kernel translates the
