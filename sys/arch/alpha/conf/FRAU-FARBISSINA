@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.47 2005/12/07 09:10:11 tsutsui Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.48 2006/02/04 02:37:23 rpaulo Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.47 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.48 $"
 
 maxusers 64
 
@@ -428,7 +428,7 @@ wsdisplay*	at	vga?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?
 
-pseudo-device	bpfilter	16
+pseudo-device	bpfilter
 pseudo-device	ccd		4
 pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components

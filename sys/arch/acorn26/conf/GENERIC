@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40 2006/02/02 21:32:08 reinoud Exp $
+# $NetBSD: GENERIC,v 1.41 2006/02/04 02:31:12 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -227,7 +227,7 @@ ss*		at scsibus? target ? lun ?	# SCSI scanner
 arcvideo0	at root			# On-board video
 wsdisplay0	at arcvideo0
 
-pseudo-device	bpfilter	16
+pseudo-device	bpfilter
 pseudo-device	ccd		4
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
