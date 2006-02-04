@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.100 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.100.6.1 2006/02/04 14:30:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.100 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.100.6.1 2006/02/04 14:30:17 simonb Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -232,8 +232,7 @@ ktraddentry(struct lwp *l, struct ktrace_entry *kte, int flags)
 	struct proc *p = l->l_proc;
 	struct ktr_desc *ktd;
 #ifdef DEBUG
-	struct timeval t;
-	int s;
+	struct timeval t1, t2;
 #endif
 
 	if (p->p_traceflag & KTRFAC_TRC_EMUL) {
@@ -281,9 +280,7 @@ ktraddentry(struct lwp *l, struct ktrace_entry *kte, int flags)
 			ktd->ktd_flags |= KTDF_WAIT;
 			ktd_wakeup(ktd);
 #ifdef DEBUG
-			s = splclock();
-			t = mono_time;
-			splx(s);
+			getmicrouptime(&t1);
 #endif
 			if (ltsleep(&ktd->ktd_flags, PWAIT, "ktrsync",
 			    ktd_timeout * hz, &ktd->ktd_slock) != 0) {
@@ -297,13 +294,12 @@ ktraddentry(struct lwp *l, struct ktrace_entry *kte, int flags)
 				break;
 			}
 #ifdef DEBUG
-			s = splclock();
-			timersub(&mono_time, &t, &t);
-			splx(s);
-			if (t.tv_sec > 0)
+			getmicrouptime(&t2);
+			timersub(&t2, &t1, &t2);
+			if (t2.tv_sec > 0)
 				log(LOG_NOTICE,
 				    "ktrace long wait: %ld.%06ld\n",
-				    t.tv_sec, t.tv_usec);
+				    t2.tv_sec, t2.tv_usec);
 #endif
 		} while (p->p_tracep == ktd &&
 		    (ktd->ktd_flags & (KTDF_WAIT | KTDF_DONE)) == KTDF_WAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.59 2005/12/07 06:14:13 thorpej Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.59.6.1 2006/02/04 14:30:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.59 2005/12/07 06:14:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.59.6.1 2006/02/04 14:30:17 simonb Exp $");
 
 #define SYSVSEM
 
@@ -378,7 +378,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
 		semaptr->sem_perm.gid = sembuf->sem_perm.gid;
 		semaptr->sem_perm.mode = (semaptr->sem_perm.mode & ~0777) |
 		    (sembuf->sem_perm.mode & 0777);
-		semaptr->sem_ctime = time.tv_sec;
+		semaptr->sem_ctime = time_second;
 		break;
 
 	case IPC_STAT:
@@ -532,7 +532,7 @@ sys_semget(struct lwp *l, void *v, register_t *retval)
 		    (sema[semid].sem_perm._seq + 1) & 0x7fff;
 		sema[semid].sem_nsems = nsems;
 		sema[semid].sem_otime = 0;
-		sema[semid].sem_ctime = time.tv_sec;
+		sema[semid].sem_ctime = time_second;
 		sema[semid]._sem_base = &sem[semtot];
 		semtot += nsems;
 		memset(sema[semid]._sem_base, 0,
@@ -787,7 +787,7 @@ done:
 	}
 
 	/* Update sem_otime */
-	semaptr->sem_otime = time.tv_sec;
+	semaptr->sem_otime = time_second;
 
 	/* Do a wakeup if any semaphore was up'd. */
 	if (do_wakeup) {
