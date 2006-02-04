@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2006/02/03 23:33:31 jmmv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 2006/02/04 11:24:42 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2006/02/03 23:33:31 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2006/02/04 11:24:42 jmmv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2006/02/03 23:33:31 jmmv Exp $");
 #include <sys/systm.h>
 #include <sys/buf.h>
 
-#include <machine/autoconf.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
 
@@ -107,13 +106,4 @@ cpu_configure()
 
 	spl0();
 	lcr8(0);
-}
-
-void
-cpu_rootconf(void)
-{
-
-	x86_matchbiosdisks();
-
-	x86_cpu_rootconf();
 }
