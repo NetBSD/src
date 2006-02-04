@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.14 2005/12/07 09:10:19 tsutsui Exp $
+# $NetBSD: MRCOFFEE,v 1.15 2006/02/04 03:40:41 rpaulo Exp $
 # From: NetBSD: GENERIC,v 1.160 2004/07/10 12:05:35 uwe Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.14 $"
+#ident 		"MRCOFFEE-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -288,7 +288,7 @@ pseudo-device	loop
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-pseudo-device	bpfilter	8
+pseudo-device	bpfilter
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.

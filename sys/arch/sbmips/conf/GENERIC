@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.50 2006/02/02 21:32:10 reinoud Exp $
+# $NetBSD: GENERIC,v 1.51 2006/02/04 03:36:59 rpaulo Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.50 $"
+#ident 		"GENERIC-$Revision: 1.51 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -169,7 +169,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 # Network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp		2	# Point-to-Point Protocol

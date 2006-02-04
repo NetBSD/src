@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.42 2005/12/07 09:10:19 tsutsui Exp $
+#	$NetBSD: NATSUMI,v 1.43 2006/02/04 03:35:52 rpaulo Exp $
 #
 #	for development
 #
@@ -410,7 +410,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	16	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 #pseudo-device	ppp		1	# Point-to-Point Protocol
 #pseudo-device	sl		2	# Serial Line IP

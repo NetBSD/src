@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.20 2005/12/07 12:40:47 tsutsui Exp $
+# $NetBSD: WSCONS,v 1.21 2006/02/04 03:33:59 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -33,7 +33,7 @@ options 	WSCONS
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.20 $"
+#ident		"GENERIC-$Revision: 1.21 $"
 
 maxusers	64
 
@@ -291,7 +291,7 @@ pseudo-device	sl		 4	# serial-line IP ports
 pseudo-device	ppp		 2	# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	bpfilter		# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	gre		 2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
