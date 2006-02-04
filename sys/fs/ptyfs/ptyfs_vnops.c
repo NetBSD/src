@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.12 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.12.6.1 2006/02/04 14:12:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.6.1 2006/02/04 14:12:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -768,10 +768,10 @@ ptyfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 
-        simple_lock(&vp->v_interlock);
-        if (vp->v_usecount > 1)
+	simple_lock(&vp->v_interlock);
+	if (vp->v_usecount > 1)
 		PTYFS_ITIMES(ptyfs, NULL, NULL, NULL);
-        simple_unlock(&vp->v_interlock);
+	simple_unlock(&vp->v_interlock);
 
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
@@ -800,7 +800,7 @@ ptyfs_read(void *v)
 
 	ptyfs->ptyfs_flag |= PTYFS_ACCESS;
 	/* hardclock() resolution is good enough for ptyfs */
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	getnanotime(&ts);
 	(void)ptyfs_update(vp, &ts, &ts, 0);
 
 	switch (ptyfs->ptyfs_type) {
@@ -836,8 +836,7 @@ ptyfs_write(void *v)
 	int error;
 
 	ptyfs->ptyfs_flag |= PTYFS_MODIFY;
-	/* hardclock() resolution is good enough for ptyfs */
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	getnanotime(&ts);
 	(void)ptyfs_update(vp, &ts, &ts, 0);
 
 	switch (ptyfs->ptyfs_type) {
@@ -943,21 +942,22 @@ ptyfs_itimes(struct ptyfsnode *ptyfs, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
 	struct timespec *ts = NULL, tsb;
-
+ 
 	KASSERT(ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY));
+	/* XXX just call getnanotime early and use result if needed? */
 	if (ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_MODIFY)) {
 		if (acc == NULL)
-			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			acc = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
 		ptyfs->ptyfs_atime = *acc;
 	}
 	if (ptyfs->ptyfs_flag & PTYFS_MODIFY) {
 		if (mod == NULL)
-			mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			mod = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
 		ptyfs->ptyfs_mtime = *mod;
 	}
 	if (ptyfs->ptyfs_flag & PTYFS_CHANGE) {
 		if (cre == NULL)
-			cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			cre = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
 		ptyfs->ptyfs_ctime = *cre;
 	}
 	ptyfs->ptyfs_flag &= ~(PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.94 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.94.6.1 2006/02/04 14:12:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.94 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.94.6.1 2006/02/04 14:12:50 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -431,7 +431,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;
 		if (fs->e2fs.e2fs_state == 0)
-			fs->e2fs.e2fs_wtime = time.tv_sec;
+			fs->e2fs.e2fs_wtime = time_second;
 		else
 			printf("%s: file system not clean; please fsck(8)\n",
 				mp->mnt_stat.f_mntfromname);
@@ -896,7 +896,7 @@ loop:
 	 */
 	if (fs->e2fs_fmod != 0) {
 		fs->e2fs_fmod = 0;
-		fs->e2fs.e2fs_wtime = time.tv_sec;
+		fs->e2fs.e2fs_wtime = time_second;
 		if ((error = ext2fs_cgupdate(ump, waitfor)))
 			allerror = error;
 	}
@@ -1018,8 +1018,8 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 */
 
 	if (ip->i_e2fs_gen == 0) {
-		if (++ext2gennumber < (u_long)time.tv_sec)
-			ext2gennumber = time.tv_sec;
+		if (++ext2gennumber < (u_long)time_second)
+			ext2gennumber = time_second;
 		ip->i_e2fs_gen = ext2gennumber;
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;

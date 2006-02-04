@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.20 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.20.6.1 2006/02/04 14:12:50 simonb Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.20 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.20.6.1 2006/02/04 14:12:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ sched_sync(v)
 	updateproc = curlwp;
 
 	for (;;) {
-		starttime = time.tv_sec;
+		starttime = time_second;
 
 		/*
 		 * Push files whose dirty time has expired. Be careful
@@ -241,7 +241,7 @@ sched_sync(v)
 		 * matter as we are just trying to generally pace the
 		 * filesystem activity.
 		 */
-		if (time.tv_sec == starttime)
+		if (time_second == starttime)
 			tsleep(&rushjob, PPAUSE, "syncer", hz);
 	}
 }

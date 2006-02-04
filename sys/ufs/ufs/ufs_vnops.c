@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.138 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.138.6.1 2006/02/04 14:12:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.138 2005/12/11 12:25:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.138.6.1 2006/02/04 14:12:50 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1981,6 +1981,7 @@ void
 ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	struct vnode **vpp)
 {
+	struct timeval	tv;
 	struct inode	*ip;
 	struct vnode	*vp, *nvp;
 	dev_t		rdev;
@@ -2035,8 +2036,9 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	/*
 	 * Initialize modrev times
 	 */
-	ip->i_modrev = (uint64_t)(uint)mono_time.tv_sec << 32
-			| mono_time.tv_usec * 4294u;
+	getmicrouptime(&tv);
+	ip->i_modrev = (uint64_t)(uint)tv.tv_sec << 32
+			| tv.tv_usec * 4294u;
 	*vpp = vp;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.169 2006/01/04 10:13:06 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.169.4.1 2006/02/04 14:12:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.169 2006/01/04 10:13:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.169.4.1 2006/02/04 14:12:50 simonb Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -168,7 +168,7 @@ lfs_imtime(struct lfs *fs)
 	struct inode *ip;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
-	nanotime(&ts);
+	getnanotime(&ts);
 	ip = VTOI(fs->lfs_ivnode);
 	ip->i_ffs1_mtime = ts.tv_sec;
 	ip->i_ffs1_mtimensec = ts.tv_nsec;
@@ -1785,9 +1785,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	sup->su_nbytes += ssp->ss_ninos * sizeof (struct ufs1_dinode);
 	/* sup->su_nbytes += fs->lfs_sumsize; */
 	if (fs->lfs_version == 1)
-		sup->su_olastmod = time.tv_sec;
+		sup->su_olastmod = time_second;
 	else
-		sup->su_lastmod = time.tv_sec;
+		sup->su_lastmod = time_second;
 	sup->su_ninos += ninos;
 	++sup->su_nsums;
 	fs->lfs_dmeta += (btofsb(fs, fs->lfs_sumsize) + btofsb(fs, ninos *
@@ -1930,9 +1930,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		}
 	}
 	if (fs->lfs_version == 1)
-		ssp->ss_ocreate = time.tv_sec;
+		ssp->ss_ocreate = time_second;
 	else {
-		ssp->ss_create = time.tv_sec;
+		ssp->ss_create = time_second;
 		ssp->ss_serial = ++fs->lfs_serial;
 		ssp->ss_ident  = fs->lfs_ident;
 	}
@@ -2101,8 +2101,8 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 
 	/* Set timestamp of this version of the superblock */
 	if (fs->lfs_version == 1)
-		fs->lfs_otstamp = time.tv_sec;
-	fs->lfs_tstamp = time.tv_sec;
+		fs->lfs_otstamp = time_second;
+	fs->lfs_tstamp = time_second;
 
 	/* Checksum the superblock and copy it into a buffer. */
 	fs->lfs_cksum = lfs_sb_cksum(&(fs->lfs_dlfs));
