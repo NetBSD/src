@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.7 2005/12/11 12:18:09 christos Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.8 2006/02/04 03:18:10 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -79,10 +79,16 @@
  *	CHIP_EX_STORE_SIZE
  *			Size of the device-provided static storage area
  *			for the memory or I/O memory space extent.
+ *	CHIP_LITTLE_ENDIAN | CHIP_BIG_ENDIAN
+ *			For endian-specific busses, like PCI (little).
+ *	CHIP_ACCESS_SIZE
+ *			Size (in bytes) of minimum bus access, e.g. 4
+ *			to indicate all bus cycles are 32-bits.  Defaults
+ *			to 1, indicating any access size is valid.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.7 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.8 2006/02/04 03:18:10 gdamore Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -101,6 +107,73 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.7 2005/12/11 12:
 #endif
 #ifdef CHIP_MEM
 #define	__BS(A)		__C(__C(CHIP,_bus_mem_),A)
+#endif
+
+#if defined(CHIP_LITTLE_ENDIAN)
+#define	CHIP_SWAP16(x)	le16toh(x)
+#define	CHIP_SWAP32(x)	le32toh(x)
+#define	CHIP_SWAP64(x)	le64toh(x)
+#define	CHIP_NEED_STREAM	1
+#elif defined(CHIP_BIG_ENDIAN)
+#define	CHIP_SWAP16(x)	be16toh(x)
+#define	CHIP_SWAP32(x)	be32toh(x)
+#define	CHIP_SWAP64(x)	be64toh(x)
+#define	CHIP_NEED_STREAM	1	
+#else
+#define	CHIP_SWAP16(x)	(x)
+#define	CHIP_SWAP32(x)	(x)
+#define	CHIP_SWAP64(x)	(x)
+#endif
+
+#ifndef	CHIP_ACCESS_SIZE
+#define	CHIP_ACCESS_SIZE	1
+#endif
+
+/*
+ * The logic here determines a few macros to support requirements for
+ * whole-word accesses:
+ *
+ * CHIP_TYPE is a uintXX_t that represents the native access type for the bus.
+ *
+ * CHIP_SHIFTXX is the number of bits to shift a big-endian value to convert
+ * convert between the CHIP_TYPE and uintXX_t.
+ *
+ * The idea is that if we want to do a 16bit load from a bus that only
+ * supports 32-bit accesses, we will access the first 16 bits of the
+ * addressed 32-bit word.
+ *
+ * Obviously (hopefully) this method is inadequate to support addressing the
+ * second half of a 16-bit word, or the upper 3/4 of a 32-bit value, etc.
+ * In other words, the drivers should probably not be relying on this!
+ *
+ * We should probably come back in here some day and handle offsets properly.
+ * to do that, we need to mask off the low order bits of the address, and
+ * then figure out which bits they correspond to.
+ *
+ * If we have fixed access size limitations, we need to make sure that
+ * handle shifting required for big-endian storage.  The reality is
+ * that if the bus only supports size "n", then drivers should
+ * probably only access it using "n" sized (or bigger) accesses.
+ */
+
+#if	CHIP_ACCESS_SIZE == 1
+#define	CHIP_TYPE	uint8_t
+#endif
+
+#if	CHIP_ACCESS_SIZE == 2
+#define	CHIP_TYPE	uint16_t
+#endif
+
+#if	CHIP_ACCESS_SIZE == 4
+#define	CHIP_TYPE	uint32_t
+#endif
+
+#if	CHIP_ACCESS_SIZE == 8
+#define	CHIP_TYPE	uint64_t
+#endif
+
+#ifndef CHIP_TYPE
+#error	"Invalid chip access size!"
 #endif
 
 /* mapping/unmapping */
@@ -213,6 +286,62 @@ void		__BS(copy_region_4)(void *, bus_space_handle_t, bus_size_t,
 void		__BS(copy_region_8)(void *, bus_space_handle_t, bus_size_t,
 		    bus_space_handle_t, bus_size_t, bus_size_t);
 
+#ifdef	CHIP_NEED_STREAM
+
+/* read (single), stream */
+inline uint8_t	__BS(read_stream_1)(void *, bus_space_handle_t, bus_size_t);
+inline uint16_t	__BS(read_stream_2)(void *, bus_space_handle_t, bus_size_t);
+inline uint32_t	__BS(read_stream_4)(void *, bus_space_handle_t, bus_size_t);
+inline uint64_t	__BS(read_stream_8)(void *, bus_space_handle_t, bus_size_t);
+
+/* read multiple, stream */
+void	__BS(read_multi_stream_1)(void *, bus_space_handle_t, bus_size_t,
+			   uint8_t *, bus_size_t);
+void	__BS(read_multi_stream_2)(void *, bus_space_handle_t, bus_size_t,
+				  uint16_t *, bus_size_t);
+void	__BS(read_multi_stream_4)(void *, bus_space_handle_t, bus_size_t,
+				  uint32_t *, bus_size_t);
+void	__BS(read_multi_stream_8)(void *, bus_space_handle_t, bus_size_t,
+				  uint64_t *, bus_size_t);
+
+/* read region, stream */
+void	__BS(read_region_stream_1)(void *, bus_space_handle_t, bus_size_t,
+				   uint8_t *, bus_size_t);
+void	__BS(read_region_stream_2)(void *, bus_space_handle_t, bus_size_t,
+				   uint16_t *, bus_size_t);
+void	__BS(read_region_stream_4)(void *, bus_space_handle_t, bus_size_t,
+				   uint32_t *, bus_size_t);
+void	__BS(read_region_stream_8)(void *, bus_space_handle_t, bus_size_t,
+				   uint64_t *, bus_size_t);
+
+/* write (single), stream */
+inline void	__BS(write_stream_1)(void *, bus_space_handle_t, bus_size_t, uint8_t);
+inline void	__BS(write_stream_2)(void *, bus_space_handle_t, bus_size_t, uint16_t);
+inline void	__BS(write_stream_4)(void *, bus_space_handle_t, bus_size_t, uint32_t);
+inline void	__BS(write_stream_8)(void *, bus_space_handle_t, bus_size_t, uint64_t);
+
+/* write multiple, stream */
+void	__BS(write_multi_stream_1)(void *, bus_space_handle_t, bus_size_t,
+				   const uint8_t *, bus_size_t);
+void	__BS(write_multi_stream_2)(void *, bus_space_handle_t, bus_size_t,
+				   const uint16_t *, bus_size_t);
+void	__BS(write_multi_stream_4)(void *, bus_space_handle_t, bus_size_t,
+				   const uint32_t *, bus_size_t);
+void	__BS(write_multi_stream_8)(void *, bus_space_handle_t, bus_size_t,
+				   const uint64_t *, bus_size_t);
+
+/* write region, stream */
+void	__BS(write_region_stream_1)(void *, bus_space_handle_t, bus_size_t,
+				    const uint8_t *, bus_size_t);
+void	__BS(write_region_stream_2)(void *, bus_space_handle_t, bus_size_t,
+				    const uint16_t *, bus_size_t);
+void	__BS(write_region_stream_4)(void *, bus_space_handle_t, bus_size_t,
+				    const uint32_t *, bus_size_t);
+void	__BS(write_region_stream_8)(void *, bus_space_handle_t, bus_size_t,
+				    const uint64_t *, bus_size_t);
+
+#endif	/* CHIP_NEED_STREAM */
+
 #ifdef CHIP_EXTENT
 #ifndef	CHIP_EX_STORE
 static long
@@ -224,6 +353,30 @@ static long
 
 #ifndef CHIP_ALIGN_STRIDE
 #define	CHIP_ALIGN_STRIDE	0
+#endif
+
+#if CHIP_ALIGN_STRIDE > 0
+#define	CHIP_OFF8(o)	((o) << (CHIP_ALIGN_STRIDE))
+#else
+#define	CHIP_OFF8(o)	(o)
+#endif
+
+#if CHIP_ALIGN_STRIDE > 1
+#define	CHIP_OFF16(o)	((o) << (CHIP_ALIGN_STRIDE - 1))
+#else
+#define	CHIP_OFF16(o)	(o)
+#endif
+
+#if CHIP_ALIGN_STRIDE > 2
+#define	CHIP_OFF32(o)	((o) << (CHIP_ALIGN_STRIDE - 2))
+#else
+#define	CHIP_OFF32(o)	(o)
+#endif
+
+#if CHIP_ALIGN_STRIDE > 3
+#define	CHIP_OFF64(o)	((o) << (CHIP_ALIGN_STRIDE - 3))
+#else
+#define	CHIP_OFF64(o)	(o)
 #endif
 
 void
@@ -314,6 +467,82 @@ __BS(init)(bus_space_tag_t t, void *v)
 	t->bs_c_2 =		__BS(copy_region_2);
 	t->bs_c_4 =		__BS(copy_region_4);
 	t->bs_c_8 =		__BS(copy_region_8);
+
+#ifdef CHIP_NEED_STREAM
+	/* read (single), stream */
+	t->bs_rs_1 =		__BS(read_stream_1);
+	t->bs_rs_2 =		__BS(read_stream_2);
+	t->bs_rs_4 =		__BS(read_stream_4);
+	t->bs_rs_8 =		__BS(read_stream_8);
+	
+	/* read multiple, stream */
+	t->bs_rms_1 =		__BS(read_multi_stream_1);
+	t->bs_rms_2 =		__BS(read_multi_stream_2);
+	t->bs_rms_4 =		__BS(read_multi_stream_4);
+	t->bs_rms_8 =		__BS(read_multi_stream_8);
+	
+	/* read region, stream */
+	t->bs_rrs_1 =		__BS(read_region_stream_1);
+	t->bs_rrs_2 =		__BS(read_region_stream_2);
+	t->bs_rrs_4 =		__BS(read_region_stream_4);
+	t->bs_rrs_8 =		__BS(read_region_stream_8);
+	
+	/* write (single), stream */
+	t->bs_ws_1 =		__BS(write_stream_1);
+	t->bs_ws_2 =		__BS(write_stream_2);
+	t->bs_ws_4 =		__BS(write_stream_4);
+	t->bs_ws_8 =		__BS(write_stream_8);
+	
+	/* write multiple, stream */
+	t->bs_wms_1 =		__BS(write_multi_stream_1);
+	t->bs_wms_2 =		__BS(write_multi_stream_2);
+	t->bs_wms_4 =		__BS(write_multi_stream_4);
+	t->bs_wms_8 =		__BS(write_multi_stream_8);
+	
+	/* write region, stream */
+	t->bs_wrs_1 =		__BS(write_region_stream_1);
+	t->bs_wrs_2 =		__BS(write_region_stream_2);
+	t->bs_wrs_4 =		__BS(write_region_stream_4);
+	t->bs_wrs_8 =		__BS(write_region_stream_8);
+
+#else	/* CHIP_NEED_STREAM */
+
+	/* read (single), stream */
+	t->bs_rs_1 =		__BS(read_1);
+	t->bs_rs_2 =		__BS(read_2);
+	t->bs_rs_4 =		__BS(read_4);
+	t->bs_rs_8 =		__BS(read_8);
+	
+	/* read multiple, stream */
+	t->bs_rms_1 =		__BS(read_multi_1);
+	t->bs_rms_2 =		__BS(read_multi_2);
+	t->bs_rms_4 =		__BS(read_multi_4);
+	t->bs_rms_8 =		__BS(read_multi_8);
+	
+	/* read region, stream */
+	t->bs_rrs_1 =		__BS(read_region_1);
+	t->bs_rrs_2 =		__BS(read_region_2);
+	t->bs_rrs_4 =		__BS(read_region_4);
+	t->bs_rrs_8 =		__BS(read_region_8);
+	
+	/* write (single), stream */
+	t->bs_ws_1 =		__BS(write_1);
+	t->bs_ws_2 =		__BS(write_2);
+	t->bs_ws_4 =		__BS(write_4);
+	t->bs_ws_8 =		__BS(write_8);
+	
+	/* write multiple, stream */
+	t->bs_wms_1 =		__BS(write_multi_1);
+	t->bs_wms_2 =		__BS(write_multi_2);
+	t->bs_wms_4 =		__BS(write_multi_4);
+	t->bs_wms_8 =		__BS(write_multi_8);
+	
+	/* write region, stream */
+	t->bs_wrs_1 =		__BS(write_region_1);
+	t->bs_wrs_2 =		__BS(write_region_2);
+	t->bs_wrs_4 =		__BS(write_region_4);
+	t->bs_wrs_8 =		__BS(write_region_8);
+#endif	/* CHIP_NEED_STREAM */
 
 #ifdef CHIP_EXTENT
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
@@ -716,63 +945,52 @@ __BS(barrier)(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int f)
 inline uint8_t
 __BS(read_1)(void *v, bus_space_handle_t h, bus_size_t off)
 {
-#ifdef CHIP_ACCESSTYPE
-	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
-	CHIP_ACCESSTYPE rval;
+#if CHIP_ACCESS_SIZE > 1
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACCESS_SIZE > 1 */
+	volatile uint8_t *ptr;
+#endif	/* CHIP_ACCESS_SIZE > 1 */
 
-	rval = *ptr;
-	return (rval & 0xff);		/* XXX BigEndian safe? */
-#else	/* !CHIP_ACCESSTYPE */
-	volatile uint8_t *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
+	ptr = (void *)(h + CHIP_OFF8(off));
 
-	return (*ptr);
-#endif	/* !CHIP_ACCESSTYPE */
+	return *ptr & 0xff;
 }
 
 inline uint16_t
 __BS(read_2)(void *v, bus_space_handle_t h, bus_size_t off)
 {
-#ifdef CHIP_ACCESSTYPE
-#if CHIP_ALIGN_STRIDE >= 1 
-	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
-#else
-	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + off);
-#endif
-	CHIP_ACCESSTYPE rval;
+#if CHIP_ACCESS_SIZE > 2
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACCESS_SIZE > 2 */
+	volatile uint16_t *ptr;
+#endif	/* CHIP_ACCESS_SIZE > 2 */
 
-	rval = *ptr;
-	return (rval & 0xffff);		/* XXX BigEndian safe? */
-#else	/* !CHIP_ACCESSTYPE */
-#if CHIP_ALIGN_STRIDE >= 1
-	volatile uint16_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
-#else
-	volatile uint16_t *ptr = (void *)(h + off);
-#endif
-
-	return (*ptr);
-#endif	/* !CHIP_ACCESSTYPE */
+	ptr = (void *)(h + CHIP_OFF16(off));
+	return CHIP_SWAP16(*ptr) & 0xffff;
 }
 
 inline uint32_t
 __BS(read_4)(void *v, bus_space_handle_t h, bus_size_t off)
 {
-	/* XXX XXX XXX should use CHIP_ACCESSTYPE if it's > 32bits */
-#if CHIP_ALIGN_STRIDE >= 2
-	volatile uint32_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 2)));
-#else
-	volatile uint32_t *ptr = (void *)(h + off);
+#if CHIP_ACCESS_SIZE > 4
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACCESS_SIZE > 4 */
+	volatile uint32_t *ptr;
 #endif
 
-	return (*ptr);
+	ptr = (void *)(h + CHIP_OFF32(off));
+	return CHIP_SWAP32(*ptr) & 0xffffffff;
 }
 
 inline uint64_t
 __BS(read_8)(void *v, bus_space_handle_t h, bus_size_t off)
 {
+	volatile uint64_t *ptr;
 
-	/* XXX XXX XXX */
-	panic("%s not implemented", __S(__BS(read_8)));
+	ptr = (void *)(h + CHIP_OFF64(off));
+	return CHIP_SWAP64(*ptr);
 }
+
 
 #define CHIP_read_multi_N(BYTES,TYPE)					\
 void									\
@@ -810,62 +1028,49 @@ CHIP_read_region_N(8,uint64_t)
 inline void
 __BS(write_1)(void *v, bus_space_handle_t h, bus_size_t off, uint8_t val)
 {
-#ifdef CHIP_ACCESSTYPE
-	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
-	CHIP_ACCESSTYPE wval;
+#if CHIP_ACCESS_SIZE > 1
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACCESS_SIZE > 1 */
+	volatile uint8_t *ptr;
+#endif	/* CHIP_ACCESS_SIZE > 1 */
 
-	wval = val & 0xff;		/* XXX BigEndian safe? */
-	*ptr = wval;
-#else	/* !CHIP_ACCESSTYPE */
-	volatile uint8_t *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
-
+	ptr = (void *)(h + CHIP_OFF8(off));
 	*ptr = val;
-#endif	/* !CHIP_ACCESSTYPE */
 }
 
 inline void
 __BS(write_2)(void *v, bus_space_handle_t h, bus_size_t off, uint16_t val)
 {
-#ifdef CHIP_ACCESSTYPE
-#if CHIP_ALIGN_STRIDE >= 1
-	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
-#else
-	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + off);
-#endif
-	CHIP_ACCESSTYPE wval;
+#if CHIP_ACCESS_SIZE > 2
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACCESS_SIZE > 2 */
+	volatile uint16_t *ptr;
+#endif	/* CHIP_ACCESS_SIZE > 2 */
 
-	wval = val & 0xffff;		/* XXX BigEndian safe? */
-	*ptr = wval;
-#else	/* !CHIP_ACCESSTYPE */
-#if CHIP_ALIGN_STRIDE >= 1
-	volatile uint16_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
-#else
-	volatile uint16_t *ptr = (void *)(h + off);
-#endif
-
-	*ptr = val;
-#endif	/* !CHIP_ACCESSTYPE */
+	ptr = (void *)(h + CHIP_OFF16(off));
+	*ptr = CHIP_SWAP16(val);
 }
 
 inline void
 __BS(write_4)(void *v, bus_space_handle_t h, bus_size_t off, uint32_t val)
 {
-	/* XXX XXX XXX should use CHIP_ACCESSTYPE if it's > 32bits */
-#if CHIP_ALIGN_STRIDE >= 2
-	volatile uint32_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 2)));
-#else
-	volatile uint32_t *ptr = (void *)(h + off);
-#endif
+#if CHIP_ACCESS_SIZE > 4
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACESSS_SIZE > 4 */
+	volatile uint32_t *ptr;
+#endif	/* CHIP_ACCESS_SIZE > 4 */
 
-	*ptr = val;
+	ptr = (void *)(h + CHIP_OFF32(off));
+	*ptr = CHIP_SWAP32(val);
 }
 
 inline void
 __BS(write_8)(void *v, bus_space_handle_t h, bus_size_t off, uint64_t val)
 {
+	volatile uint64_t *ptr;
 
-	/* XXX XXX XXX */
-	panic("%s not implemented", __S(__BS(write_8)));
+	ptr = (void *)(h + CHIP_OFF64(off));
+	*ptr = CHIP_SWAP64(val);
 }
 
 #define CHIP_write_multi_N(BYTES,TYPE)					\
@@ -957,3 +1162,173 @@ CHIP_copy_region_N(1)
 CHIP_copy_region_N(2)
 CHIP_copy_region_N(4)
 CHIP_copy_region_N(8)
+
+#ifdef	CHIP_NEED_STREAM
+
+inline uint8_t
+__BS(read_stream_1)(void *v, bus_space_handle_t h, bus_size_t off)
+{
+#if CHIP_ACCESS_SIZE > 1
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACCESS_SIZE > 1 */
+	volatile uint8_t *ptr;
+#endif	/* CHIP_ACCESS_SIZE > 1 */
+
+	ptr = (void *)(h + CHIP_OFF8(off));
+	return *ptr & 0xff;
+}
+
+inline uint16_t
+__BS(read_stream_2)(void *v, bus_space_handle_t h, bus_size_t off)
+{
+#if CHIP_ACCESS_SIZE > 2
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACCESS_SIZE > 2 */
+	volatile uint16_t *ptr;
+#endif	/* CHIP_ACCESS_SIZE > 2 */
+
+	ptr = (void *)(h + CHIP_OFF16(off));
+	return *ptr & 0xffff;
+}
+
+inline uint32_t
+__BS(read_stream_4)(void *v, bus_space_handle_t h, bus_size_t off)
+{
+#if CHIP_ACCESS_SIZE > 4
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACCESS_SIZE > 4 */
+	volatile uint32_t *ptr;
+#endif
+
+	ptr = (void *)(h + CHIP_OFF32(off));
+	return *ptr & 0xffffffff;
+}
+
+inline uint64_t
+__BS(read_stream_8)(void *v, bus_space_handle_t h, bus_size_t off)
+{
+	volatile uint64_t *ptr;
+
+	ptr = (void *)(h + CHIP_OFF64(off));
+	return *ptr;
+}
+
+#define CHIP_read_multi_stream_N(BYTES,TYPE)				\
+void									\
+__C(__BS(read_multi_stream_),BYTES)(void *v, bus_space_handle_t h,	\
+    bus_size_t o, TYPE *a, bus_size_t c)				\
+{									\
+									\
+	while (c-- > 0) {						\
+		__BS(barrier)(v, h, o, sizeof *a,			\
+		    BUS_SPACE_BARRIER_READ);				\
+		*a++ = __C(__BS(read_stream_),BYTES)(v, h, o);		\
+	}								\
+}
+CHIP_read_multi_stream_N(1,uint8_t)
+CHIP_read_multi_stream_N(2,uint16_t)
+CHIP_read_multi_stream_N(4,uint32_t)
+CHIP_read_multi_stream_N(8,uint64_t)
+
+#define CHIP_read_region_stream_N(BYTES,TYPE)				\
+void									\
+__C(__BS(read_region_stream),BYTES)(void *v, bus_space_handle_t h,	\
+    bus_size_t o, TYPE *a, bus_size_t c)				\
+{									\
+									\
+	while (c-- > 0) {						\
+		*a++ = __C(__BS(read_stream_),BYTES)(v, h, o);		\
+		o += sizeof *a;						\
+	}								\
+}
+CHIP_read_region_stream_N(1,uint8_t)
+CHIP_read_region_stream_N(2,uint16_t)
+CHIP_read_region_stream_N(4,uint32_t)
+CHIP_read_region_stream_N(8,uint64_t)
+
+inline void
+__BS(write_stream_1)(void *v, bus_space_handle_t h, bus_size_t off,
+		     uint8_t val)
+{
+#if CHIP_ACCESS_SIZE > 1
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACCESS_SIZE > 1 */
+	volatile uint8_t *ptr;
+#endif	/* CHIP_ACCESS_SIZE > 1 */
+
+	ptr = (void *)(h + CHIP_OFF8(off));
+	*ptr = val;
+}
+
+inline void
+__BS(write_stream_2)(void *v, bus_space_handle_t h, bus_size_t off,
+	      uint16_t val)
+{
+#if CHIP_ACCESS_SIZE > 2
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACCESS_SIZE > 2 */
+	volatile uint16_t *ptr;
+#endif	/* CHIP_ACCESS_SIZE > 2 */
+
+	ptr = (void *)(h + CHIP_OFF16(off));
+	*ptr = val;
+}
+
+inline void
+__BS(write_stream_4)(void *v, bus_space_handle_t h, bus_size_t off,
+		     uint32_t val)
+{
+#if CHIP_ACCESS_SIZE > 4
+	volatile CHIP_TYPE *ptr;
+#else	/* CHIP_ACESSS_SIZE > 4 */
+	volatile uint32_t *ptr;
+#endif	/* CHIP_ACCESS_SIZE > 4 */
+
+	ptr = (void *)(h + CHIP_OFF32(off));
+	*ptr = val
+}
+
+inline void
+__BS(write_stream_8)(void *v, bus_space_handle_t h, bus_size_t off,
+		     uint64_t val)
+{
+	volatile uint64_t *ptr;
+
+	ptr = (void *)(h + CHIP_OFF64(off));
+	*ptr = val;
+}
+
+#define CHIP_write_multi_stream_N(BYTES,TYPE)				\
+void									\
+__C(__BS(write_multi_stream_),BYTES)(void *v, bus_space_handle_t h,	\
+    bus_size_t o, const TYPE *a, bus_size_t c)				\
+{									\
+									\
+	while (c-- > 0) {						\
+		__C(__BS(write_stream_),BYTES)(v, h, o, *a++);		\
+		__BS(barrier)(v, h, o, sizeof *a,			\
+		    BUS_SPACE_BARRIER_WRITE);				\
+	}								\
+}
+CHIP_write_multi_stream_N(1,uint8_t)
+CHIP_write_multi_stream_N(2,uint16_t)
+CHIP_write_multi_stream_N(4,uint32_t)
+CHIP_write_multi_stream_N(8,uint64_t)
+
+#define CHIP_write_region_stream_N(BYTES,TYPE)				\
+void									\
+__C(__BS(write_region_stream_),BYTES)(void *v, bus_space_handle_t h,	\
+    bus_size_t o, const TYPE *a, bus_size_t c)				\
+{									\
+									\
+	while (c-- > 0) {						\
+		__C(__BS(write_stream_),BYTES)(v, h, o, *a++);		\
+		o += sizeof *a;						\
+	}								\
+}
+CHIP_write_region_stream_N(1,uint8_t)
+CHIP_write_region_stream_N(2,uint16_t)
+CHIP_write_region_stream_N(4,uint32_t)
+CHIP_write_region_stream_N(8,uint64_t)
+
+#endif	/* CHIP_NEED_STREAM */
