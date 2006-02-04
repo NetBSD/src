@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.88 2006/02/02 21:32:09 reinoud Exp $
+# $NetBSD: GENERIC,v 1.89 2006/02/04 03:30:28 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.88 $"
+#ident 		"GENERIC-$Revision: 1.89 $"
 
 maxusers	32
 
@@ -192,7 +192,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP Filter (firewall) and NAT
 pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

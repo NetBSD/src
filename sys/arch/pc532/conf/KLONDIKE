@@ -1,5 +1,5 @@
 
-#	$NetBSD: KLONDIKE,v 1.36 2005/12/07 09:10:18 tsutsui Exp $
+#	$NetBSD: KLONDIKE,v 1.37 2006/02/04 03:31:45 rpaulo Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -95,7 +95,7 @@ lpt1 at mainbus? addr 0xffc80034 irq 6
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop 1			# loopback network
 pseudo-device	vnd 4			# vnode devices
-pseudo-device	bpfilter 8		# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	sl 1			# compressed SLIP
 pseudo-device	ppp 1			# Point-to-Point Protocol
 pseudo-device	tun 1			# ip tunneling
