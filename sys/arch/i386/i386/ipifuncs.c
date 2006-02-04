@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.12 2005/12/24 20:07:10 perry Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.12.6.1 2006/02/04 15:10:42 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.12 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.12.6.1 2006/02/04 15:10:42 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -86,11 +86,7 @@ void i386_reload_mtrr(struct cpu_info *);
 void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
-#if defined(I586_CPU) || defined(I686_CPU)
-	cc_microset,
-#else
-	0,
-#endif
+	0,	/* cc_microset - not used with timecounters */
 	i386_ipi_flush_fpu,
 	i386_ipi_synch_fpu,
 	pmap_do_tlb_shootdown,
