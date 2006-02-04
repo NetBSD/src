@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.29 2005/12/21 18:55:33 christos Exp $
+#	$NetBSD: PB1000,v 1.30 2006/02/04 02:51:31 rpaulo Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"PB1000-$Revision: 1.29 $"
+#ident 		"PB1000-$Revision: 1.30 $"
 
 maxusers	32
 
@@ -235,7 +235,7 @@ wi*		at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 pseudo-device	vnd		4		# disk-like interface to files
 
 # Network pseudo-devices
-pseudo-device	bpfilter	8		# Berkeley packet filter
+pseudo-device	bpfilter			# Berkeley packet filter
 pseudo-device	ipfilter			# IP filter (firewall) and NAT
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp		2		# Point-to-Point Protocol

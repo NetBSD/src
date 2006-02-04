@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.12 2005/12/17 16:33:30 tsutsui Exp $
+#	$NetBSD: TWINTAIL,v 1.13 2006/02/04 02:50:10 rpaulo Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -367,7 +367,7 @@ sm*	at mhzc?
 #pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	kttcp			# network loopback

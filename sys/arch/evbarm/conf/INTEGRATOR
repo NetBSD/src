@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.44 2005/12/07 09:10:12 tsutsui Exp $
+#	$NetBSD: INTEGRATOR,v 1.45 2006/02/04 02:50:10 rpaulo Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -247,7 +247,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
-#pseudo-device	bpfilter	4	# Berkeley packet filter
+#pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	loop			# network loopback
 

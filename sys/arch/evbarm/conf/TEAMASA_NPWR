@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.46 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.47 2006/02/04 02:50:10 rpaulo Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -210,7 +210,7 @@ pseudo-device	raid		4	# RAIDframe devices
 #pseudo-device	ccd		4	# Concatenated disk devices
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	kttcp
 

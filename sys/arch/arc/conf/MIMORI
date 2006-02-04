@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.43 2005/12/20 05:35:27 thorpej Exp $
+#	$NetBSD: MIMORI,v 1.44 2006/02/04 02:42:27 rpaulo Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -263,7 +263,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
