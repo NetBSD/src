@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.136 2006/02/04 10:48:32 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.137 2006/02/04 11:19:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.136 2006/02/04 10:48:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.137 2006/02/04 11:19:59 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -774,12 +774,6 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 
 	vnd = device_lookup(&vnd_cd, *un);
 	if (vnd == NULL)
-		/*
-		 * vnconfig(8) has weird expectations to list the
-		 * devices.
-		 * It will stop as soon as it gets ENXIO, but
-		 * will continue if it gets something else...
-		 */
 		return (*un >= vnd_cd.cd_ndevs) ? ENXIO : -1;
 
 	if ((vnd->sc_flags & VNF_INITED) == 0)
