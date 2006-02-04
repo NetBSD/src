@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.88 2005/12/11 12:17:41 christos Exp $ */
+/*	$NetBSD: apm.c,v 1.88.6.1 2006/02/04 15:06:38 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.88 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.88.6.1 2006/02/04 15:06:38 simonb Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -349,13 +349,13 @@ apmcall_debug(func, regs, line)
 			inf = aci[func].inflag;
 			outf = aci[func].outflag;
 		}
-		inittodr(time.tv_sec);	/* update timestamp */
+		inittodr(time_second);	/* update timestamp */
 		if (name)
 			printf("apmcall@%03ld: %s/%#x (line=%d) ", 
-				time.tv_sec % 1000, name, func, line);
+				time_second % 1000, name, func, line);
 		else
 			printf("apmcall@%03ld: %#x (line=%d) ", 
-				time.tv_sec % 1000, func, line);
+				time_second % 1000, func, line);
 		acallpr(inf, "in:", regs);
 	}
     	rv = apmcall(func, regs);
@@ -588,7 +588,7 @@ apm_resume(sc, regs)
 	 */
 	initrtclock();
 
-	inittodr(time.tv_sec);
+	inittodr(time_second);
 	dopowerhooks(PWR_RESUME);
 
 	splx(apm_spl);
