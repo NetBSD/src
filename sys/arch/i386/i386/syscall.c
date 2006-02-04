@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.32 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.33 2006/02/04 14:11:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33 2006/02/04 14:11:34 dsl Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -197,6 +197,7 @@ syscall_plain(frame)
 	userret(l);
 }
 
+#if defined(KTRACE) || defined(SYSTRACE)
 void
 syscall_fancy(frame)
 	struct trapframe *frame;
@@ -299,6 +300,7 @@ out:
 
 	userret(l);
 }
+#endif
 
 #ifdef VM86
 void
