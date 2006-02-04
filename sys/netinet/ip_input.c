@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.223 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.223.6.1 2006/02/04 14:18:52 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.223 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.223.6.1 2006/02/04 14:18:52 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -414,7 +414,7 @@ ip_init(void)
 	for (i = 0; i < IPREASS_NHASH; i++)
 	    	LIST_INIT(&ipq[i]);
 
-	ip_id = time.tv_sec & 0xfffff;
+	ip_id = time_second & 0xfffff;
 
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	ip_nmbclusters_changed();

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.21 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.21.6.1 2006/02/04 14:18:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.21 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.21.6.1 2006/02/04 14:18:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ pk_acct(lcp)
 	if (sa -> x25_opts.op_flags & X25_REVERSE_CHARGE)
 		acbuf.x25acct_revcharge = 1;
 	acbuf.x25acct_stime = lcp -> lcd_stime;
-	acbuf.x25acct_etime = time.tv_sec - acbuf.x25acct_stime;
+	acbuf.x25acct_etime = time_second - acbuf.x25acct_stime;
 	acbuf.x25acct_uid = curproc -> p_cred -> p_ruid;
 	acbuf.x25acct_psize = sa -> x25_opts.op_psize;
 	acbuf.x25acct_net = sa -> x25_net;

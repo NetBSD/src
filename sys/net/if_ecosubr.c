@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.18 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.18.6.1 2006/02/04 14:18:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.18 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.18.6.1 2006/02/04 14:18:52 simonb Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.18 2005/12/11 12:24:51 christos Exp
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.18 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.18.6.1 2006/02/04 14:18:52 simonb Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -220,7 +220,7 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time.tv_sec < rt->rt_rmx.rmx_expire)
+			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 	/*

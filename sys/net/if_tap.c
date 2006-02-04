@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.12 2006/02/01 05:51:58 cube Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.12.2.1 2006/02/04 14:18:52 simonb Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.12 2006/02/01 05:51:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.12.2.1 2006/02/04 14:18:52 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -250,24 +250,26 @@ tap_match(struct device *self, struct cfdata *cfdata, void *arg)
 void
 tap_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct tap_softc *sc = (struct tap_softc *)self;
-	struct ifnet *ifp;
+	char enaddrstr[18];
 	u_int8_t enaddr[ETHER_ADDR_LEN] =
 	    { 0xf2, 0x0b, 0xa4, 0xff, 0xff, 0xff };
-	char enaddrstr[18];
+	struct timeval tv;
+	struct tap_softc *sc = (struct tap_softc *)self;
+	struct ifnet *ifp;
+	const struct sysctlnode *node;
 	uint32_t ui;
 	int error;
-	const struct sysctlnode *node;
 
 	aprint_normal("%s: faking Ethernet device\n",
 	    self->dv_xname);
 
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,
-	 * do some randomisation using mono_time.  It's not meant for anything
-	 * but avoiding hard-coding an address.
+	 * do some randomisation using the current uptime.  It's not meant
+	 * for anything but avoiding hard-coding an address.
 	 */
-	ui = (mono_time.tv_sec ^ mono_time.tv_usec) & 0xffffff;
+	getmicrouptime(&tv);
+	ui = (tv.tv_sec ^ tv.tv_usec) & 0xffffff;
 	memcpy(enaddr+3, (u_int8_t *)&ui, 3);
 
 	aprint_normal("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,

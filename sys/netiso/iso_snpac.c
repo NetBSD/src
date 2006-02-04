@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.34 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.34.6.1 2006/02/04 14:18:53 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.34 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.34.6.1 2006/02/04 14:18:53 simonb Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -473,7 +473,7 @@ add:
 	}
 	if ((lc = (struct llinfo_llc *) rt->rt_llinfo) == 0)
 		panic("snpac_rtrequest");
-	rt->rt_rmx.rmx_expire = ht + time.tv_sec;
+	rt->rt_rmx.rmx_expire = ht + time_second;
 	lc->lc_flags = SNPA_VALID | type;
 	if ((type & SNPA_IS) && !(iso_systype & SNPA_IS))
 		snpac_logdefis(rt);
@@ -626,7 +626,8 @@ snpac_age(void *v)
 		nlc = lc->lc_list.le_next;
 		if (lc->lc_flags & SNPA_VALID) {
 			rt = lc->lc_rt;
-			if (rt->rt_rmx.rmx_expire && rt->rt_rmx.rmx_expire < time.tv_sec)
+			if (rt->rt_rmx.rmx_expire &&
+			    rt->rt_rmx.rmx_expire < time_second)
 				snpac_free(lc);
 		}
 	}
