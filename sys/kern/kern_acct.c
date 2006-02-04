@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.62 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.62.6.1 2006/02/04 14:30:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.62 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.62.6.1 2006/02/04 14:30:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,9 +390,9 @@ int
 acct_process(struct lwp *l)
 {
 	struct acct acct;
-	struct rusage *r;
 	struct timeval ut, st, tmp;
-	int s, t, error = 0;
+	struct rusage *r;
+	int t, error = 0;
 	struct plimit *oplim = NULL;
 	struct proc *p = l->l_proc;
 
@@ -428,9 +428,8 @@ acct_process(struct lwp *l)
 
 	/* (3) The elapsed time the commmand ran (and its starting time) */
 	acct.ac_btime = p->p_stats->p_start.tv_sec;
-	s = splclock();
-	timersub(&time, &p->p_stats->p_start, &tmp);
-	splx(s);
+	getmicrotime(&tmp);
+	timersub(&tmp, &p->p_stats->p_start, &tmp);
 	acct.ac_etime = encode_comp_t(tmp.tv_sec, tmp.tv_usec);
 
 	/* (4) The average amount of memory used */

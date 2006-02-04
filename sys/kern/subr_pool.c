@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.111 2006/01/26 15:07:25 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.111.4.1 2006/02/04 14:30:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.111 2006/01/26 15:07:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.111.4.1 2006/02/04 14:30:17 simonb Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1060,7 +1060,6 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 	struct pool_item *pi = v;
 	struct pool_item_header *ph;
 	caddr_t page;
-	int s;
 
 	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
 	SCHED_ASSERT_UNLOCKED();
@@ -1155,9 +1154,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 			 * be reclaimed by the pagedaemon.  This minimizes
 			 * ping-pong'ing for memory.
 			 */
-			s = splclock();
-			ph->ph_time = mono_time;
-			splx(s);
+			getmicrotime(&ph->ph_time);
 		}
 		pool_update_curpage(pp);
 	}
@@ -1272,7 +1269,6 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
 	int n;
-	int s;
 
 	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
 
@@ -1288,9 +1284,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	LIST_INIT(&ph->ph_itemlist);
 	ph->ph_page = storage;
 	ph->ph_nmissing = 0;
-	s = splclock();
-	ph->ph_time = mono_time;
-	splx(s);
+	getmicrotime(&ph->ph_time);
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
 		SPLAY_INSERT(phtree, &pp->pr_phtree, ph);
 
@@ -1475,7 +1469,6 @@ pool_reclaim(struct pool *pp)
 	struct pool_pagelist pq;
 	struct pool_cache_grouplist pcgl;
 	struct timeval curtime, diff;
-	int s;
 
 	if (pp->pr_drain_hook != NULL) {
 		/*
@@ -1497,9 +1490,7 @@ pool_reclaim(struct pool *pp)
 	LIST_FOREACH(pc, &pp->pr_cachelist, pc_poollist)
 		pool_cache_reclaim(pc, &pq, &pcgl);
 
-	s = splclock();
-	curtime = mono_time;
-	splx(s);
+	getmicrotime(&curtime);
 
 	for (ph = LIST_FIRST(&pp->pr_emptypages); ph != NULL; ph = phnext) {
 		phnext = LIST_NEXT(ph, ph_pagelist);
