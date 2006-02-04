@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.43 2006/02/04 03:45:49 rpaulo Exp $
+#	$NetBSD: INSTALL,v 1.44 2006/02/04 03:47:41 rpaulo Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -209,7 +209,7 @@ wskbd0		at lkkbd0		# wscons keyboard
 
 pseudo-device	loop	1
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
-#pseudo-device	bpfilter 	# Not supported by de yet.
+#pseudo-device	bpfilter
 #pseudo-device	tun	2
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	vnd	4
