@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.26 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.26.6.1 2006/02/04 14:12:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.26 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.26.6.1 2006/02/04 14:12:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,6 @@ void
 smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap)
 {
 	struct smbnode *np = VTOSMB(vp);
-	int s;
 
 	if (vp->v_type == VREG) {
 		if (np->n_size != fap->fa_size) {
@@ -326,9 +325,7 @@ smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap)
 	np->n_mtime = fap->fa_mtime;
 	np->n_dosattr = fap->fa_attr;
 
-	s = splclock();
-	np->n_attrage = mono_time.tv_sec;
-	splx(s);
+	np->n_attrage = time_uptime;
 }
 
 int
@@ -336,12 +333,9 @@ smbfs_attr_cachelookup(struct vnode *vp, struct vattr *va)
 {
 	struct smbnode *np = VTOSMB(vp);
 	struct smbmount *smp = VTOSMBFS(vp);
-	int s;
 	time_t diff;
 
-	s = splclock();
-	diff = mono_time.tv_sec - np->n_attrage;
-	splx(s);
+	diff = time_uptime - np->n_attrage;
 	if (diff > SMBFS_ATTRTIMO)	/* XXX should be configurable */
 		return ENOENT;
 

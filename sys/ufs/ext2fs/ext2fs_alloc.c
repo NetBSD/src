@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.28 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.28.6.1 2006/02/04 14:12:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.28 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.28.6.1 2006/02/04 14:12:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,8 +206,8 @@ ext2fs_valloc(struct vnode *pvp, int mode, struct ucred *cred,
 	/*
 	 * Set up a new generation number for this inode.
 	 */
-	if (++ext2gennumber < (u_long)time.tv_sec)
-		ext2gennumber = time.tv_sec;
+	if (++ext2gennumber < time_second)
+		ext2gennumber = time_second;
 	ip->i_e2fs_gen = ext2gennumber;
 	return (0);
 noinodes:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.64 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.64.6.1 2006/02/04 14:12:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.64 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.64.6.1 2006/02/04 14:12:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1340,6 +1340,7 @@ int
 ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 	int (**fifoops)(void *), struct vnode **vpp)
 {
+	struct timeval tv;
 	struct inode *ip;
 	struct vnode *vp, *nvp;
 
@@ -1385,8 +1386,9 @@ ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 	/*
 	 * Initialize modrev times
 	 */
-	SETHIGH(ip->i_modrev, mono_time.tv_sec);
-	SETLOW(ip->i_modrev, mono_time.tv_usec * 4294);
+	getmicrouptime(&tv);
+	SETHIGH(ip->i_modrev, tv.tv_sec);
+	SETLOW(ip->i_modrev, tv.tv_usec * 4294);
 	*vpp = vp;
 	return (0);
 }
