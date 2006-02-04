@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.34 2005/12/20 05:35:29 thorpej Exp $
+#	$NetBSD: MMTAICE,v 1.35 2006/02/04 03:18:58 rpaulo Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -235,7 +235,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
-#pseudo-device	bpfilter	8	# Berkeley packet filter
+#pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
