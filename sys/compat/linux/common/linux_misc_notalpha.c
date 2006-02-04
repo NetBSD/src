@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.76 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.76.6.1 2006/02/04 14:03:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.76 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.76.6.1 2006/02/04 14:03:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,10 @@ linux_sys_alarm(l, v, retval)
 		syscallarg(unsigned int) secs;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	int s;
+	struct timeval now;
 	struct itimerval *itp, it;
 	struct ptimer *ptp;
+	int s;
 
 	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL])
 		itp = &p->p_timers->pts_timers[ITIMER_REAL]->pt_time;
@@ -115,9 +116,10 @@ linux_sys_alarm(l, v, retval)
 	if (itp) {
 		callout_stop(&p->p_timers->pts_timers[ITIMER_REAL]->pt_ch);
 		timerclear(&itp->it_interval);
+		getmicrotime(&now);
 		if (timerisset(&itp->it_value) &&
-		    timercmp(&itp->it_value, &time, >))
-			timersub(&itp->it_value, &time, &itp->it_value);
+		    timercmp(&itp->it_value, &now, >))
+			timersub(&itp->it_value, &now, &itp->it_value);
 		/*
 		 * Return how many seconds were left (rounded up)
 		 */
@@ -169,7 +171,8 @@ linux_sys_alarm(l, v, retval)
 		 * Don't need to check hzto() return value, here.
 		 * callout_reset() does it for us.
 		 */
-		timeradd(&it.it_value, &time, &it.it_value);
+		getmicrotime(&now);
+		timeradd(&it.it_value, &now, &it.it_value);
 		callout_reset(&ptp->pt_ch, hzto(&it.it_value),
 		    realtimerexpire, ptp);
 	}

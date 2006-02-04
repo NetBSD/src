@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.31 2005/12/11 19:34:47 jonathan Exp $	*/
+/*	$NetBSD: amr.c,v 1.31.6.1 2006/02/04 14:03:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.31 2005/12/11 19:34:47 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.31.6.1 2006/02/04 14:03:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -819,7 +819,6 @@ amr_thread(void *cookie)
 	struct amr_ccb *ac;
 	struct amr_logdrive *al;
 	struct amr_enquiry *ae;
-	time_t curtime;
 	int rv, i, s;
 
 	amr = cookie;
@@ -836,10 +835,9 @@ amr_thread(void *cookie)
 
 		s = splbio();
 		amr_intr(cookie);
-		curtime = (time_t)mono_time.tv_sec;
 		ac = TAILQ_FIRST(&amr->amr_ccb_active);
 		while (ac != NULL) {
-			if (ac->ac_start_time + AMR_TIMEOUT > curtime)
+			if (ac->ac_start_time + AMR_TIMEOUT > time_uptime)
 				break;
 			if ((ac->ac_flags & AC_MOAN) == 0) {
 				printf("%s: ccb %d timed out; mailbox:\n",
@@ -1175,7 +1173,7 @@ amr_quartz_submit(struct amr_softc *amr, struct amr_ccb *ac)
 	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
 	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
 
-	ac->ac_start_time = (time_t)mono_time.tv_sec;
+	ac->ac_start_time = time_uptime;
 	ac->ac_flags |= AC_ACTIVE;
 	amr_outl(amr, AMR_QREG_IDB,
 	    (amr->amr_mbox_paddr + 16) | AMR_QIDB_SUBMIT);
@@ -1209,7 +1207,7 @@ amr_std_submit(struct amr_softc *amr, struct amr_ccb *ac)
 	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
 	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
 
-	ac->ac_start_time = (time_t)mono_time.tv_sec;
+	ac->ac_start_time = time_uptime;
 	ac->ac_flags |= AC_ACTIVE;
 	amr_outb(amr, AMR_SREG_CMD, AMR_SCMD_POST);
 	return (0);

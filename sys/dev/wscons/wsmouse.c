@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.38 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wsmouse.c,v 1.38.6.1 2006/02/04 14:03:58 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.38 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.38.6.1 2006/02/04 14:03:58 simonb Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -350,13 +350,7 @@ wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
 	}								\
 	any = 1
 	/* TIMESTAMP sets `time' field of the event to the current time */
-#define TIMESTAMP							\
-	do {								\
-		int s;							\
-		s = splhigh();						\
-		TIMEVAL_TO_TIMESPEC(&time, &ev->time);			\
-		splx(s);						\
-	} while (0)
+#define TIMESTAMP	getnanotime(&ev->time)
 
 	if (flags & WSMOUSE_INPUT_ABSOLUTE_X) {
 		if (sc->sc_x != x) {
