@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.15.2.1 2006/02/01 20:48:28 tron Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.15.2.2 2006/02/05 17:02:15 riz Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.15.2.1 2006/02/01 20:48:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.15.2.2 2006/02/05 17:02:15 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -657,6 +657,7 @@ xen_network_handler(void *arg)
 	mmu_update_t *mmu = rx_mmu;
 	multicall_entry_t *mcl = rx_mcl;
 	struct mbuf *m;
+	void *pktp;
 
 	network_tx_buf_gc(sc);
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -679,7 +680,7 @@ xen_network_handler(void *arg)
 		/* XXXcl check rx->status for error */
 
                 MGETHDR(m, M_DONTWAIT, MT_DATA);
-                if (m == NULL) {
+                if (__predict_false(m == NULL)) {
 			printf("xennet: rx no mbuf\n");
 			break;
 		}
@@ -706,14 +707,12 @@ xen_network_handler(void *arg)
 
 		/* Do all the remapping work, and M->P updates, in one
 		 * big hypercall. */
-		if ((mcl - rx_mcl) != 0) {
-			mcl->op = __HYPERVISOR_mmu_update;
-			mcl->args[0] = (unsigned long)rx_mmu;
-			mcl->args[1] = mmu - rx_mmu;
-			mcl->args[2] = 0;
-			mcl++;
-			(void)HYPERVISOR_multicall(rx_mcl, mcl - rx_mcl);
-		}
+		mcl->op = __HYPERVISOR_mmu_update;
+		mcl->args[0] = (unsigned long)rx_mmu;
+		mcl->args[1] = mmu - rx_mmu;
+		mcl->args[2] = 0;
+		mcl++;
+		(void)HYPERVISOR_multicall(rx_mcl, mcl - rx_mcl);
 		if (0)
 		printf("page mapped at va %08lx -> %08x/%08lx\n",
 		    sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va,
@@ -730,12 +729,24 @@ xen_network_handler(void *arg)
 		    (void *)(PTE_BASE[x86_btop
 			(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] & PG_FRAME)));
 
+		pktp = (void *)(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va +
+		    (rx->addr & PAGE_MASK));
+		if ((ifp->if_flags & IFF_PROMISC) == 0) {
+			struct ether_header *eh = pktp;
+			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
+			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    ETHER_ADDR_LEN) != 0) {
+				xennet_rx_push_buffer(sc, rx->id);
+				m_freem(m);
+				continue; /* packet not for us */
+			}
+		}
 		m->m_len = m->m_pkthdr.len = rx->status;
 		m->m_pkthdr.rcvif = ifp;
-		if (sc->sc_rx->req_prod != sc->sc_rx->resp_prod) {
-			MEXTADD(m, (void *)(sc->sc_rx_bufa[rx->id].xb_rx.
-			    xbrx_va + (rx->addr & PAGE_MASK)), rx->status, M_DEVBUF,
-			    xennet_rx_mbuf_free,
+		if (__predict_true(
+		    sc->sc_rx->req_prod != sc->sc_rx->resp_prod)) {
+			MEXTADD(m, pktp, rx->status,
+			    M_DEVBUF, xennet_rx_mbuf_free,
 			    &sc->sc_rx_bufa[rx->id]);
 		} else {
 			/*
@@ -747,10 +758,9 @@ xen_network_handler(void *arg)
 			if ((m->m_flags & M_EXT) == 0) {
 				printf("xennet: rx no mbuf 2\n");
 				m_free(m);
-				break;
+				continue;
 			}
-			memcpy(m->m_data, (void *)(sc->sc_rx_bufa[rx->id].
-			    xb_rx.xbrx_va + (rx->addr & PAGE_MASK)), rx->status);
+			memcpy(m->m_data, pktp, rx->status);
 			xennet_rx_push_buffer(sc, rx->id);
 		}
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.4.2.6 2005/05/27 23:05:44 riz Exp $      */
+/*      $NetBSD: xennetback.c,v 1.4.2.6.2.1 2006/02/05 17:02:15 riz Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -495,8 +495,8 @@ again:
 			do_event = 1;
 
 		XENPRINTF(("%s pkg size %d\n", xneti->xni_if.if_xname, txreq->size));
-		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
-		    (IFF_UP | IFF_RUNNING)) {
+		if (__predict_false((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+		    (IFF_UP | IFF_RUNNING))) {
 			/* interface not up, drop */
 			txresp->id = txreq->id;
 			txresp->status = NETIF_RSP_DROPPED;
@@ -505,8 +505,8 @@ again:
 		/*
 		 * Do some sanity checks, and map the packet's page.
 		 */
-		if (txreq->size < ETHER_HDR_LEN ||
-		   txreq->size > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
+		if (__predict_false(txreq->size < ETHER_HDR_LEN ||
+		   txreq->size > (ETHER_MAX_LEN - ETHER_CRC_LEN))) {
 			printf("%s: packet size %d too big\n",
 			    ifp->if_xname, txreq->size);
 			txresp->id = txreq->id;
@@ -515,7 +515,8 @@ again:
 			continue;
 		}
 		/* don't cross page boundaries */
-		if ((txreq->addr & PAGE_MASK) + txreq->size > PAGE_SIZE) {
+		if (__predict_false(
+		    (txreq->addr & PAGE_MASK) + txreq->size > PAGE_SIZE)) {
 			printf("%s: packet cross page boundary\n",
 			    ifp->if_xname);
 			txresp->id = txreq->id;
@@ -525,7 +526,8 @@ again:
 		}
 
 		ma = txreq->addr  & ~PAGE_MASK;
-		if (xen_shm_map(&ma, 1, xneti->domid, &pkt, 0) != 0) {
+		if (__predict_false(
+		    xen_shm_map(&ma, 1, xneti->domid, &pkt, 0) != 0)) {
 			printf("%s: can't map packet page\n", ifp->if_xname);
 			txresp->id = txreq->id;
 			txresp->status = NETIF_RSP_ERROR;
@@ -533,16 +535,28 @@ again:
 			continue;
 		}
 		pkt |= (txreq->addr & PAGE_MASK);
+		if ((ifp->if_flags & IFF_PROMISC) == 0) {
+			struct ether_header *eh = (void *)pkt;
+			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
+			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    ETHER_ADDR_LEN) != 0) {
+				/* packet not for us */
+				xen_shm_unmap(pkt, &ma, 1, xneti->domid);
+				txresp->id = txreq->id;
+				txresp->status = NETIF_RSP_OKAY;
+				continue;
+			}
+		}
 		/* get a mbuf for this packet */
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m != NULL) {
+		if (__predict_true(m != NULL)) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
+			if (__predict_false((m->m_flags & M_EXT) == 0)) {
 				m_freem(m);
 				m = NULL;
 			}
 		}
-		if (m == NULL) {
+		if (__predict_false(m == NULL)) {
 			txresp->id = txreq->id;
 			txresp->status = NETIF_RSP_DROPPED;
 			xen_shm_unmap(pkt, &ma, 1, xneti->domid);
