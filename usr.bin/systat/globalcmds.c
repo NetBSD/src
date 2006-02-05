@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.12 2005/02/26 19:01:09 dsl Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.13 2006/02/05 08:51:03 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: globalcmds.c,v 1.12 2005/02/26 19:01:09 dsl Exp $");
+__RCSID("$NetBSD: globalcmds.c,v 1.13 2006/02/05 08:51:03 dsl Exp $");
 #endif /* not lint */
 
 #include <curses.h>
@@ -79,28 +79,28 @@ global_help(char *args)
 {
 	int col, len;
 	struct mode *p;
-	char *cur, *prev;
+	char *name, *prev;
 
 	move(CMDLINE, col = 0);
-	cur = prev = NULL;
+	name = prev = NULL;
 	for (p = modes; p->c_name; p++) {
-		if ((cur = shortname(args, p->c_name)) == NULL)
+		if ((name = shortname(args, p->c_name)) == NULL)
 			continue;
-		if (cur && prev && strcmp(cur, prev) == 0) {
-			free(cur);
-			cur = NULL;
+		if (name && prev && strcmp(name, prev) == 0) {
+			free(name);
+			name = NULL;
 			continue;
 		}
-		len = strlen(cur);
+		len = strlen(name);
 		if (col + len > COLS)
 			break;
-		addstr(cur); col += len;
+		addstr(name); col += len;
 		if (col + 1 < COLS)
 			addch(' ');
 		if (prev)
 			free(prev);
-		prev = cur;
-		cur = NULL;
+		prev = name;
+		name = NULL;
 	}
 	if (col == 0 && args) {
 		standout();
@@ -111,8 +111,8 @@ global_help(char *args)
 		standend();
 	}
 	clrtoeol();
-	if (cur)
-		free(cur);
+	if (name)
+		free(name);
 	if (prev)
 		free(prev);
 }
