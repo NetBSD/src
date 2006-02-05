@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.574 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.575 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -184,3 +184,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	i386: Add support for the Multiboot Specification.  [jmmv 20060203]
 	cvs(1): Upgrade to 1.11.21, and move it to xcvs [christos 20060204]
 	openssh: Upgrade to 4.3. [christos 20060204]
+	openpam(3): update to 20050616 (figwort) [christos 20050204]
+
