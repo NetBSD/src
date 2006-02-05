@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.1 2006/02/05 18:06:50 christos Exp $ */
+/* $Id: pbms.c,v 1.2 2006/02/05 18:38:35 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -48,40 +48,6 @@
  */
 
 /*
- * XXX This should be extended and converted to a man page, or
- * removed.
- *
- * NAME
- *   pbms -- PowerBook (and iBook) trackpad mouse support
- *
- * SYNOPSIS
- *   pbms* at uhidev? reportid ?
- *   wsmouse* at pbms*
- *
- * DESCRIPTION
- *
- *   The pbms driver provides support for the trackpads on new (post
- *   February 2005) Apple PowerBooks and iBooks that are not standard
- *   USB HID mice.  Access to the trackpad is through the wscons(4)
- *   driver.
- *
- * SEE ALSO
- *
- * uhidev(4), usb(4), wsmouse(4)
- */
-
-/*
- * To add the driver to the kernel, copy this file to (say)
- * sys/arch/macppc/dev/pbms.c and add
- *
- *   device	pbms: wsmousedev
- *   attach	pbms at uhidbus
- *   file	arch/macppc/dev/pbms.c			pbms
- *
- * to sys/arch/macppc/conf/macppc.files. Then add the corresponding
- * specification to your kernel configuration file (see the synopsis
- * for the driver).
- *
  * To add support for other devices using the same protocol, add an
  * entry to the pbms_devices table below.  See the comments for
  * pbms_devices and struct pbms_devs.
@@ -141,8 +107,6 @@
  * Add support for tapping and two-finger scrolling?  The
  * implementation already detects two fingers, so this should be
  * relatively easy.
- *
- * Write a man page?
  *
  * Implement some of the mouse ioctls?
  *
