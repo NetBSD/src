@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.138 2005/10/22 15:32:48 nonaka Exp $ */
+/* $NetBSD: vmstat.c,v 1.139 2006/02/05 09:54:50 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.138 2005/10/22 15:32:48 nonaka Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.139 2006/02/05 09:54:50 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -646,6 +646,8 @@ dovmstat(struct timespec *interval, int reps)
 			printhdr();
 		/* Read new disk statistics */
 		dkreadstats();
+		cpureadstats();
+		tkreadstats();
 		kread(namelist, X_UVMEXP, &uvmexp, sizeof(uvmexp));
 		if (memf != NULL) {
 			/*
@@ -889,6 +891,8 @@ dkstats(void)
 
 	/* Calculate disk stat deltas. */
 	dkswap();
+	cpuswap();
+	tkswap();
 	etime = cur.cp_etime;
 
 	for (dn = 0; dn < dk_ndrive; ++dn) {

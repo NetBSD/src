@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.h,v 1.6 2002/11/01 12:47:56 mrg Exp $	*/
+/*	$NetBSD: dkstats.h,v 1.7 2006/02/05 09:54:50 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -37,7 +37,7 @@
 #include <unistd.h>
 
 /* poseur disk entry to hold the information we're interested in. */
-struct _disk {
+struct _vminfo {
 	int		 *dk_select;	/* Display stats for selected disks. */
 	char		**dk_name;	/* Disk names (sd0, wd1, etc). */
 	u_int64_t	 *dk_rxfer;	/* # of read transfers. */
@@ -53,10 +53,14 @@ struct _disk {
 	double		  cp_etime;		/* Elapsed time */
 };
 
-extern struct _disk	cur;
+extern struct _vminfo	cur;
 extern char		**dr_name;
 extern int		*dk_select, dk_ndrive;
 
 int	dkinit(int);
+void	cpureadstats(void);
 void	dkreadstats(void);
+void	tkreadstats(void);
+void	cpuswap(void);
 void	dkswap(void);
+void	tkswap(void);

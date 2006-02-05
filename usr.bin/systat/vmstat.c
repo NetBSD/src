@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.61 2005/08/07 12:32:38 blymn Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.62 2006/02/05 09:54:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.61 2005/08/07 12:32:38 blymn Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.62 2006/02/05 09:54:50 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -425,6 +425,7 @@ showvmstat(void)
 		relabel = 0;
 	}
 
+	cpuswap();
 	if (state == TIME) {
 		dkswap();
 		tpswap();
@@ -749,6 +750,7 @@ getinfo(struct Info *stats, enum state st)
 	size_t size;
 	int i;
 
+	cpureadstats();
 	dkreadstats();
 	tpreadstats();
 	NREAD(X_NCHSTATS, &stats->nchstats, sizeof stats->nchstats);
