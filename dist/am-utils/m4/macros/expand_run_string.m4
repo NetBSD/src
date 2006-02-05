@@ -12,7 +12,11 @@ int argc;
 {
 $2
 exit(0);
-}], value=`./conftest dummy 2>>config.log`, value="notfound", value="notfound")
+}],
+[
+value=`./conftest dummy 2>>config.log`
+test -z "$value" && value="notfound"
+], value="notfound", value="notfound")
 if test "$value" = notfound
 then
   :

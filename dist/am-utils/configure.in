@@ -55,7 +55,7 @@ AH_BOTTOM([
 dnl
 dnl AC_CONFIG_AUX_DIR(m4)
 AC_PREREQ(2.52)
-AC_REVISION($Revision: 1.1.1.7 $)
+AC_REVISION($Revision: 1.1.1.8 $)
 AC_COPYRIGHT([Copyright (c) 1997-2005 Erez Zadok])
 dnl find out system type
 AC_MSG_NOTICE(*** SYSTEM TYPES ***)
@@ -311,6 +311,8 @@ AC_CHECK_FUNCS(			\
 	signal			\
 	sigsuspend		\
 	socket			\
+	statfs			\
+	statvfs			\
 	strcasecmp		\
 	strchr			\
 	strcspn			\
@@ -488,6 +490,7 @@ AC_CHECK_HEADERS(			\
 	sys/fsid.h			\
 	sys/fstyp.h			\
 	sys/ioctl.h			\
+	sys/immu.h			\
 	sys/lock.h			\
 	sys/machine.h			\
 	sys/mbuf.h			\
@@ -508,6 +511,7 @@ AC_CHECK_HEADERS(			\
 	sys/sockio.h			\
 	sys/stat.h			\
 	sys/statfs.h			\
+	sys/statvfs.h			\
 	sys/syscall.h			\
 	sys/syslimits.h			\
 	sys/syslog.h			\
@@ -729,6 +733,11 @@ dnl Generic Typedef Checks
 AC_MSG_NOTICE(*** GENERIC TYPEDEFS ***)
 AMU_TYPE_TIME_T
 AMU_TYPE_RPCVERS_T
+case "${host_os}" in
+	irix6* )
+AMU_TYPE_PTE_T
+	;;
+esac
 AMU_CHECK_FHANDLE
 AMU_CHECK_MTYPE_TYPE
 AMU_CHECK_MTYPE_PRINTF_TYPE
@@ -762,6 +771,7 @@ dnl ======================================================================
 dnl Generic Compiler Characteristics
 AC_MSG_NOTICE(*** GENERIC COMPILER CHARACTERISTICS ***)
 AMU_C_VOID_P
+AMU_VARARGS_MACROS
 dnl ======================================================================
 
 dnl *********
@@ -930,7 +940,7 @@ dnl AMU_CHECK_FS_MNTENT(nfs3)
 AMU_CHECK_FS_MNTENT(vfat pcfs pc msdos msdosfs fat, pcfs)
 AMU_CHECK_FS_MNTENT(tfs)
 AMU_CHECK_FS_MNTENT(tmpfs)
-AMU_CHECK_FS_MNTENT(ext2 ffs ufs 42 efs xfs jfs ultrix, ufs)
+AMU_CHECK_FS_MNTENT(ext3 ext2 ffs ufs 42 43 44 efs xfs jfs ultrix, ufs)
 dnl openbsd 2.4 introduce a new file system called xfs, which is not
 dnl the same as irix-s xfs.  Sigh, why did openbsd have to use such a name!
 case "${host_os_name}" in
@@ -978,7 +988,7 @@ dnl check for mount(2) type/name for filesystem (MNTTYPE_*, MOUNT_*)
 AC_MSG_NOTICE(*** MOUNTING TYPES ***)
 AMU_CHECK_MOUNT_TYPE(nfs)
 AMU_CHECK_MOUNT_TYPE(nfs3)
-AMU_CHECK_MOUNT_TYPE(4.2 4.3 4.4 ext2 ufs efs xfs ffs jfs ultrix, ufs)
+AMU_CHECK_MOUNT_TYPE(ext3 ext2 ffs ufs 4.2 4.3 4.4 efs xfs jfs ultrix, ufs)
 AMU_CHECK_MOUNT_TYPE(xfs)
 AMU_CHECK_MOUNT_TYPE(efs)
 AMU_CHECK_MOUNT_TYPE(cdfs hsfs cd9660 iso9660 isofs cdrom, cdfs)
@@ -1001,7 +1011,7 @@ dnl check for mnttab name for filesystem
 AC_MSG_NOTICE(*** MOUNTING TABLE NAMES ***)
 AMU_CHECK_MNTTAB_TYPE(nfs)
 AMU_CHECK_MNTTAB_TYPE(nfs3)
-AMU_CHECK_MNTTAB_TYPE(ext2 ufs jfs 4.2 4.3 4.4 efs xfs ffs, ufs)
+AMU_CHECK_MNTTAB_TYPE(ext3 ext2 ffs ufs 4.2 4.3 4.4 efs xfs jfs ultrix, ufs)
 AMU_CHECK_MNTTAB_TYPE(xfs)
 AMU_CHECK_MNTTAB_TYPE(efs)
 AMU_CHECK_MNTTAB_TYPE(cdfs hsfs cd9660 iso9660 isofs cdrom, cdfs)
@@ -1290,14 +1300,17 @@ AC_CONFIG_FILES(			\
 	scripts/ctl-amd			\
 	scripts/ctl-hlfsd		\
 	scripts/expn			\
-	scripts/fixrmtab		\
 	scripts/fix-amd-map		\
+	scripts/fixrmtab		\
 	scripts/lostaltmail		\
 	scripts/redhat-ctl-amd		\
+	scripts/test-attrcache		\
 	scripts/wait4amd		\
 	scripts/wait4amd2die		\
 	)
 AC_OUTPUT
+# chmod some scripts that are built but not installed
+test -f scripts/test-attrcache && chmod +x scripts/test-attrcache
 dnl ======================================================================
 
 dnl ######################################################################

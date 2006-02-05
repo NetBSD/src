@@ -396,6 +396,7 @@ AIX.
 October 22, 2004: patch/fix to move mlock/mlockall/plock code after the
 fork().
 June 29, 2005: core dump going off end of exported_ap[] array.
+September 29, 2005: patch/fix for pawd not to go into an infinite loop.
 
 * David Rage <rage@ucl.ac.uk>
 January 17, 2005: prevent Amd from logging 'Read-only filesystem' errors
@@ -423,3 +424,6 @@ expects.
 * Graeme Wilford <G.Wilford@surrey.ac.uk>
 July 4, 2005: buffer overflow in pawd.
 
+* Steve Plite <splite-amutils@sigint.cs.purdue.edu>
+September 22, 2005: repair reversed meaning of D_AMQ, so amq will unregister
+on exit.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_netbsd1_4.h,v 1.1.1.9 2005/09/20 17:15:19 rpaulo Exp $	*/
+/*	$NetBSD: nfs_prot_netbsd1_4.h,v 1.1.1.10 2006/02/05 16:14:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -81,6 +81,9 @@ typedef int (*ypall_callback_fxn_t)(u_long, char *, int, char *, int, void *);
 typedef int (*ypall_callback_fxn_t)(int, char *, int, char *, int, char *);
 #endif /* DEFINED_YPALL_CALLBACK_FXN_T */
 
+#ifdef HAVE_STATVFS
+# define statfs statvfs
+#endif /* HAVE_STATVFS */
 
 /*
  * MACROS:

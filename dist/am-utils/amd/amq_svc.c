@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_svc.c,v 1.1.1.9 2005/09/20 17:14:44 rpaulo Exp $	*/
+/*	$NetBSD: amq_svc.c,v 1.1.1.10 2006/02/05 16:13:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -193,6 +193,12 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
     xdr_argument = (xdrproc_t) xdr_void;
     xdr_result = (xdrproc_t) xdr_int;
     local = (amqsvcproc_t) amqproc_getpid_1_svc;
+    break;
+
+  case AMQPROC_PAWD:
+    xdr_argument = (xdrproc_t) xdr_amq_string;
+    xdr_result = (xdrproc_t) xdr_amq_string;
+    local = (amqsvcproc_t) amqproc_pawd_1_svc;
     break;
 
   default:

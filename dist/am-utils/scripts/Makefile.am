@@ -18,7 +18,8 @@ sbin_SCRIPTS =		\
 	wait4amd2die
 
 noinst_SCRIPTS =	\
-	redhat-ctl-amd
+	redhat-ctl-amd	\
+	test-attrcache
 
 bin_SCRIPTS = expn
 

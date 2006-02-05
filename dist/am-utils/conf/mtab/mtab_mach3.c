@@ -1,4 +1,4 @@
-/*	$NetBSD: mtab_mach3.c,v 1.1.1.9 2005/09/20 17:15:11 rpaulo Exp $	*/
+/*	$NetBSD: mtab_mach3.c,v 1.1.1.10 2006/02/05 16:13:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -312,15 +312,15 @@ rewrite_mtab(mntlist *mp, const char *mnttabname)
   FILE *mfp;
   int error = 0;
   /*
-   * Concoct a temporary name in the same
-   * directory as the target mount table
-   * so that rename() will work.
+   * Concoct a temporary name in the same directory as the target mount
+   * table so that rename() will work.
    */
   char tmpname[64];
   int retries;
   int tmpfd;
   char *cp;
   char *mcp = mnttabname;
+
   cp = strrchr(mcp, '/');
   if (cp) {
     memmove(tmpname, mcp, cp - mcp);
@@ -330,7 +330,7 @@ rewrite_mtab(mntlist *mp, const char *mnttabname)
     tmpname[0] = '.';
     tmpname[1] = '\0';
   }
-  strcat(tmpname, "/mtabXXXXXX");
+  xstrlcat(tmpname, "/mtabXXXXXX", sizeof(tmpname));
   retries = 0;
 enfile1:
 #ifdef HAVE_MKSTEMP

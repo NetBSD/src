@@ -1,4 +1,4 @@
-/*	$NetBSD: mtab_svr4.c,v 1.1.1.9 2005/09/20 17:15:12 rpaulo Exp $	*/
+/*	$NetBSD: mtab_svr4.c,v 1.1.1.10 2006/02/05 16:13:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -183,7 +183,7 @@ update_mnttab_fields(const mntent_t *mnt)
   if (gettimeofday(&tv, NULL) < 0)
     timestr[0] = '\0';
   else
-    sprintf(timestr, "%ld", tv.tv_sec);
+    xsnprintf(timestr, sizeof(timestr), "%ld", tv.tv_sec);
 
   mt.mnt_time = timestr;
 

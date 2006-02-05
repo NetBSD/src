@@ -1,3 +1,267 @@
+2005-10-10  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	*******************************************************************
+	*** Released am-utils-6.1.3					***
+	*******************************************************************
+
+2005-10-07  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* m4/macros/check_mnttab_type.m4: move the test for MOUNT_* to the
+	very end, after the test using getvfsbyname().
+
+	* m4/macros/expand_run_string.m4: if the string value returned is
+	empty, consider it invalid.
+
+	* m4/macros/check_varargs_macros.m4: rewrite macro so it'll
+	try and compile the varargs test, not just cpp it.  Some systems
+	pass the old cpp test, but not when you actually try to compile
+	the code (Tru64's cc).
+
+	* conf/autofs/autofs_solaris_v1.h: redefine
+	autofs_strdup_space_hack as a macro to str3cat(NULL,(s)," ","").
+	This works everywhere and we avoid linking problems, inline
+	functions, etc.
+
+	* conf/autofs/autofs_solaris_v1.c (autofs_mount_fs): remove
+	autofs_strdup_space_hack() function altogether.
+
+	* m4/macros/os_cflags.m4: remove hack that hardcodes pte_t=u_int.
+
+	* configure.in: test for <sys/immu.h> header.
+	Test for pte_t, but only on IRIX6 systems.
+
+	* Makefile.am (EXTRA_DIST_M4): distribute new type_pte_t.m4 file.
+
+	* m4/macros/type_pte_t.m4: new test for existence of pte_t
+	typedef, needed on some IRIX-6.5/gcc systems.
+
+	* m4/macros/header_templates.m4: add missing templates for
+	HAVE_EXTERN_GETDTABLESIZE, HAVE_EXTERN_GETWD, and
+	HAVE_EXTERN_UALARM.
+
+	* amd/info_exec.c (exec_map_open): break assignment from inside
+	conditional, to work around an IRIX-6.5 cc bug.
+
+	* fsinfo/fsi_util.c (set_ether_if), amd/map.c (unmount_mp),
+	libamu/xutil.c (expand_error), libamu/strutil.c (xsnprintf): avoid
+	comparison between signed and unsigned integers.
+
+	* conf/autofs/autofs_solaris_v1.h, conf/autofs/autofs_solaris_v1.c
+	(autofs_strdup_space_hack): move "space_hack" function from static
+	inline in header, into the only source file that needs it.  This
+	is cleaner and also prevents linking problem with some compilers
+	that won't apply CPP macros inside static inline functions (for
+	the strl* functions).
+
+	* amq/pawd.c (find_mt, find_mlp): remove obsolete, inefficient
+	code.
+	(transform_dir): call the new, efficient amqproc_pawd_1() routine.
+
+	* amq/amq_clnt.c (amqproc_pawd_1): AMQPROC_PAWD wrapper routine.
+
+	* amq/amq.h (amqproc_pawd_1): extern for amq's AMQPROC_PAWD
+	wrapper routine.
+
+	* amd/amq_svc.c (amq_program_1): dispatch point for
+	amqproc_pawd_1_svc.
+
+	* amd/amq_subr.c (amqproc_pawd_1_svc): moved pawd's path-matching
+	functionality into Amd, where it can be done a lot more
+	efficiently.  We don't have to construct and ship a whole export
+	tree from Amd to pawd.  We just get a variable-length
+	xdr_wrapstring for the user's path, iterate over the entire export
+	list inside Amd, and return only a matched string if found
+	(otherwise we return "" to indicate that there was no match, and
+	let pawd printf the same string it sent over).
+
+	* amd/amd.h: extern for amqproc_pawd_1_svc, amd's service routine
+	the AMQPROC_PAWD RPC.
+
+2005-10-06  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* ltmain.sh, m4/macros/libtool.m4: update to libtool-1.5.20.
+	Fixes Tru64 bugs when using ksh.
+
+	* amd/amfs_toplvl.c (amfs_toplvl_mount): break complex ifdef macro
+	into two sections, to workaround a C99 varargs-macro bug in
+	gcc-3.2.2 (RH9).
+
+	* libamu/wire.c (print_wires): convert argument-less xsnprintf to
+	xstrlcpy.
+
+	* include/am_utils.h: use new HAVE_C99_VARARGS_MACROS or
+	HAVE_GCC_VARARGS_MACROS to pass file name and line number to
+	xsnprintf/xvsnprintf.
+
+	* libamu/strutil.c (xsnprintf, xvsnprintf): if debugging is on,
+	then also print the source file name and line number that called
+	xsnprintf/xvsnprintf with a buffer that wasn't large enough (most
+	likely an am-utils bug).
+
+	* Makefile.am (EXTRA_DIST_M4): distribute new
+	check_varargs_macros.m4 file.
+
+	* configure.in: execute new AMU_VARARGS_MACROS test.
+
+	* m4/macros/check_varargs_macros.m4: new test to check what style
+	of variable-length argument macros, if any, does the
+	compiler/pre-processor supports.
+
+	* conf/autofs/autofs_solaris_v2_v3.c (autofs_lookup_2_req)
+	conf/autofs/autofs_solaris_v1.c (autofs_mount_1_req), amd/opts.c,
+	amd/nfs_subr.c (nfsproc_lookup_2_svc), amd/nfs_start.c
+	(mount_automounter), amd/get_args.c (get_args), amd/amfs_toplvl.c,
+	amd/amfs_auto.c (amfs_auto_mount), amd/amd.h, amd/amd.c (main):
+	use sizeof() instead of fixed SIZEOF_* macros.
+
+	* libamu/strutil.c (xstrlcat, xstrlcpy), include/am_utils.h
+	(DEBUG): if debugging is on, then also print the source file name
+	and line number that called xstrl* with a buffer that wasn't large
+	enough (most likely an am-utils bug)
+
+	* include/am_compat.h (INADDR_NONE): define in a common location,
+	if OS doesn't have it, use 0xffffffffU which should work with any
+	ANSI compiler.
+
+	* fixmount/fixmount.c, libamu/wire.c: remove local definition of
+	INADDR_NONE.
+
+	* amd/amfs_toplvl.c (amfs_toplvl_mount), amd/amfs_auto.c
+	(amfs_auto_mount): use common SIZEOF_OPTS in definition and call
+	to autofs_get_opts.
+
+	* amd/amd.h (SIZEOF_OPTS): moved #define to common header.
+
+2005-10-06  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
+
+	* amd/opts.c (expand_op): Need to check BUFSPACE for env for
+	vlen+1.  Likewise for cp and strlen(cp)+1.
+
+	* amd/amfs_toplvl.c (amfs_toplvl_mount) [HAVE_FS_AUTOFS]: Pass new
+	size argument to autofs_get_opts.
+
+2005-10-05  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* amq/pawd.c (transform_dir): was using UDP only.  Now will also
+	try TCP if UDP failed.  Destroy client after use to avoid leftover
+	TCP sockets in the kernel.
+
+	* libamu/hasmntopt.c (amu_hasmntopt): increase size of MNTMAXSTR
+	from 128 to to 256, because some users have really long option
+	strings.  Suggestion from jon+amd-at-spock.org.
+
+	* amd/opts.c (expand_op): should check BUFSPACE for vlen+1, not
+	just vlen.  Bug discovered when started using xstrlcpy().
+
+	* ALL: convert from using strcat to the safer xstrlcat, and from
+	strcpy to safer xstrlcpy.
+
+2005-10-04  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* hlfsd/hlfsd.h: remove old fatalerror() and ERRM macros.
+
+	* hlfsd/hlfsd.c (fatalerror): new function instead of macro.
+	Easier to use xstrlcat in this new function.
+
+	* amd/amd.h, include/am_utils.h, amd/amd.c: moved 'hostd' extern
+	from am_utils.h to amd.h, and define its size as a macro that
+	could be passed to xstrl*().
+
+	* ALL: convert from using sprintf to the safer xsnprintf.
+
+	* mk-amd-map/Makefile.am (LDADD): link with libamu to get
+	xsnprintf().
+
+	* amd/amd.h, amd/amd.c, include/am_utils.h: moved pid_fsname
+	extern from am_utils.h to amd.h, and define its size as a macro
+	that could be passed to xsnprintf().
+
+2005-10-02  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* include/am_utils.h: extern for xvsnprintf().
+
+	* amd/autil.c: move strsplit() to libamu/strutil.c.
+
+	* libamu/Makefile.am: use strutil.c, not util.c.
+
+	* libamu/strutil.c: rename from util.c to explain better purpose
+	of file.  Move xvsnprintf and xsnprintf from xutil.c to this
+	file.  Sync up with 6.2 version of file.
+
+	* libamu/xutil.c: explain purpose of file.  Move mkdirs/rmdirs
+	code from old util.c.
+
+2005-10-01  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* m4/macros/header_templates.m4: templates for FFS.
+
+	* m4/macros/check_mnttab_type.m4: on BSD44 systems, check for file
+	system mount table name via the MOUNT_* mount(2) macros (because
+	BSD44 keeps the mount table in the kernel).
+
+	* configure.in: synchronise order of searching for mnttab entries
+	and mount names.  The new order is "ext3 ext2 ffs ufs 4.2 4.3 4.4
+	efs xfs jfs ultrix" (which would prefer ffs on BSD44 instead of
+	ufs, and ext3 instead of ext2 on Linux).
+
+	* include/am_defs.h: include <sys/statvfs.h> if it exists.
+
+	* conf/nfs_prot/nfs_prot_netbsd1_4.h: NetBSD 3 has both statfs()
+	and statvfs(), but the latter is preferred, so #define to use
+	statvfs.
+
+	* configure.in: check for statfs(), statvfs(), and
+	<sys/statvfs.h>.
+
+	* config.guess.long: strip trailing '.' on "netbsdelf3.0."
+	(Beta).  Workaround for bug in config.guess.
+
+	* config.{guess,sub}: update to latest versions.
+
+2005-09-30  Christos Zoulas  <christos@zoulas.com>
+
+	* fsinfo/fsi_util.c (set_ether_if): use INADDR_NONE instead of
+	hard-coded value of -1.
+
+	* include/amq_defs.h (AMQ_STRLEN): increase default size from 2KB
+	to 16KB.  We can afford it these days.
+
+	* libamu/strcasecmp.c (strcasecmp): use unsigned chars in
+	tolower() to avoid sign/size promotion bugs.
+
+	* libamu/xutil.c (switch_to_logfile): don't output to LOG_CONS by
+	default (it's unfriendly).  If user really wants to, they can set
+	it in /etc/syslog.conf.
+
+2005-09-29  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* amq/pawd.c (find_mt): if the auto mount type is used, pawd could
+	go into an infinite loop since the mt_directory and mt_mountpoint
+	fields are the same for auto mounts.  Solution: ignore type auto
+	mounts, similar to toplvl.  Bug fix from Jonathan Chen
+	<jon+amd@spock.org>.
+
+	* README.attrcache: document test-attrcache script.
+
+	* scripts/Makefile.am (noinst_SCRIPTS): build test-attrcache
+	script.
+
+	* configure.in: build scripts/test-attrcache script and chmod it
+	so it can be executed in place.
+
+	* scripts/test-attrcache.in: script to test the NFS attribute
+	cache using Amd.
+
+2005-09-26  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* libamu/xutil.c (unregister_amq): repair broken meaning of D_AMQ,
+	which was reversed in am-utils-6.2.  Bug fix from Steve Plite
+	<splite-amutils at sigint.cs.purdue.edu>.
+
+	* hlfsd/stubs.c (nfsproc_getattr_2_svc, nfsproc_lookup_2_svc,
+	nfsproc_readlink_2_svc, nfsproc_readdir_2_svc), hlfsd/hlfsd.c
+	(hlfsd_init): use new clocktime() function.
+
 2005-09-18  Erez Zadok  <ezk@cs.sunysb.edu>
 
 	*******************************************************************

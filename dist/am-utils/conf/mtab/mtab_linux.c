@@ -1,4 +1,4 @@
-/*	$NetBSD: mtab_linux.c,v 1.1.1.1 2005/09/20 17:15:11 rpaulo Exp $	*/
+/*	$NetBSD: mtab_linux.c,v 1.1.1.2 2006/02/05 16:13:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -161,6 +161,7 @@ lock_mtab(void)
 {
   int tries = 100000, i;
   char *linktargetfile;
+  size_t l;
 
   /*
    * Redhat's original code set a signal handler called "handler()" for all
@@ -177,8 +178,9 @@ lock_mtab(void)
 
   /* somewhat clumsy, but some ancient systems do not have snprintf() */
   /* use 20 as upper bound for the length of %d output */
-  linktargetfile = xmalloc(strlen(MOUNTLOCK_LINKTARGET) + 20);
-  sprintf(linktargetfile, MOUNTLOCK_LINKTARGET, getpid());
+  l = strlen(MOUNTLOCK_LINKTARGET) + 20;
+  linktargetfile = xmalloc(l);
+  xsnprintf(linktargetfile, l, MOUNTLOCK_LINKTARGET, getpid());
 
   i = open(linktargetfile, O_WRONLY|O_CREAT, 0);
   if (i < 0) {
@@ -344,7 +346,7 @@ rewrite_mtab(mntlist *mp, const char *mnttabname)
    * Concoct a temporary name in the same directory as the target mount
    * table so that rename() will work.
    */
-  strcpy(mcp, mnttabname);
+  xstrlcpy(mcp, mnttabname, sizeof(mcp));
   cp = strrchr(mcp, '/');
   if (cp) {
     memmove(tmpname, mcp, cp - mcp);
@@ -354,7 +356,7 @@ rewrite_mtab(mntlist *mp, const char *mnttabname)
     tmpname[0] = '.';
     tmpname[1] = '\0';
   }
-  strcat(tmpname, "/mtabXXXXXX");
+  xstrlcat(tmpname, "/mtabXXXXXX", sizeof(tmpname));
   retries = 0;
  enfile1:
 #ifdef HAVE_MKSTEMP

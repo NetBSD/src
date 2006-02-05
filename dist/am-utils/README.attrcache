@@ -111,5 +111,19 @@ After applying this patch and rebuilding your kernel, reboot with the new
 kernel.  Then copy the new nfs.h and nfsmount.h from /sys/nfs/ to
 /usr/include/nfs/, and finally rebuild am-utils from scratch.
 
+** Testing
+
+When you build am-utils, a script named scripts/test-attrcache is built,
+which can be used to test the NFS attribute cache behavior of the current
+OS.  You can run this script as root as follows:
+
+# make install
+# cd scripts
+# sh test-attrcache
+
+If you run this script on an OS whose status is known (and not listed
+above), please report it to am-utils@am-utils.org, so we can record it in
+this file.
+
 Sincerely,
 Erez.

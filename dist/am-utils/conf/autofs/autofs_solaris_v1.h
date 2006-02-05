@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_solaris_v1.h,v 1.1.1.4 2005/09/20 17:15:03 rpaulo Exp $	*/
+/*	$NetBSD: autofs_solaris_v1.h,v 1.1.1.5 2006/02/05 16:13:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Ion Badulescu
@@ -57,21 +57,13 @@
 typedef autofs_args_t autofs_fh_t;
 
 #define NEED_AUTOFS_SPACE_HACK
-
-static inline char *autofs_strdup_space_hack(char *s)
-{
-  /*
-   * autofs hack: append a space to the directory name
-   * to stop the kernel->daemon recursion.
-   *
-   * Returns malloc'ed space which needs to be freed by the caller.
-   */
-  extern void *malloc(size_t);
-  char *tmp = malloc(strlen(s) + 2);
-  strcpy(tmp, s);
-  strcat(tmp, " ");
-  return tmp;
-}
+/*
+ * autofs hack: append a space to the directory name
+ * to stop the kernel->daemon recursion.
+ *
+ * Returns malloc'ed space which needs to be freed by the caller.
+ */
+#define autofs_strdup_space_hack(s) str3cat(NULL, (s), " ", "")
 
 #define AUTOFS_AUTO_FS_FLAGS	(FS_AMQINFO | FS_DIRECTORY | FS_AUTOFS | FS_ON_AUTOFS)
 #define AUTOFS_DIRECT_FS_FLAGS	(FS_DIRECT | FS_NOTIMEOUT | FS_BACKGROUND | FS_AMQINFO | FS_DIRECTORY | FS_AUTOFS)

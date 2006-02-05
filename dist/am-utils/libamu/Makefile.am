@@ -16,7 +16,7 @@ libamu_la_SOURCES =	\
 	mount_fs.c	\
 	mtab.c		\
 	nfs_prot_xdr.c	\
-	util.c		\
+	strutil.c	\
 	wire.c		\
 	xdr_func.c	\
 	xutil.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtab_osf.c,v 1.1.1.9 2005/09/20 17:15:11 rpaulo Exp $	*/
+/*	$NetBSD: mtab_osf.c,v 1.1.1.10 2006/02/05 16:13:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -74,8 +74,8 @@ mnt_dup(struct statfs *mp)
 #endif /* HAVE_FS_NFS3 */
     at = strchr(mp->f_mntfromname, '@');
     if (at != '\0') {
-      strcpy(mntfrombuf, (at + 1));
-      strcat(mntfrombuf, ":");
+      xstrlcpy(mntfrombuf, (at + 1), sizeof(mntfrombuf));
+      xstrlcat(mntfrombuf, ":", sizeof(mntfrombuf));
       strncat(mntfrombuf, mp->f_mntfromname, (at - mp->f_mntfromname));
       mntfromptr = mntfrombuf;
     }
