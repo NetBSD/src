@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.17.6.1 2006/02/04 14:12:49 simonb Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.17.6.2 2006/02/05 11:42:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.17.6.1 2006/02/04 14:12:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.17.6.2 2006/02/05 11:42:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1213,7 +1213,7 @@ void
 tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
     const struct timespec *mod)
 {
-	struct timespec *ts = NULL, tsb;
+	struct timespec now;
 	struct tmpfs_node *node;
 
 	node = VP_TO_TMPFS_NODE(vp);
@@ -1222,22 +1222,19 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 	    TMPFS_NODE_CHANGED)) == 0)
 		return;
 
-	/* XXX just call getnanotime early and use result if needed? */
+	getnanotime(&now);
 	if (node->tn_status & TMPFS_NODE_ACCESSED) {
 		if (acc == NULL)
-			acc = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
+			acc = &now;
 		node->tn_atime = *acc;
 	}
 	if (node->tn_status & TMPFS_NODE_MODIFIED) {
 		if (mod == NULL)
-			mod = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
+			mod = &now;
 		node->tn_mtime = *mod;
 	}
-	if (node->tn_status & TMPFS_NODE_CHANGED) {
-		if (ts == NULL)
-			getnanotime(&tsb), ts = &tsb;
-		node->tn_ctime = *ts;
-	}
+	if (node->tn_status & TMPFS_NODE_CHANGED)
+		node->tn_ctime = now;
 
 	node->tn_status &=
 	    ~(TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED);

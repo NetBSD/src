@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.79.6.1 2006/02/04 14:12:50 simonb Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.79.6.2 2006/02/05 11:42:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.79.6.1 2006/02/04 14:12:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.79.6.2 2006/02/05 11:42:39 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -643,24 +643,23 @@ void
 ffs_itimes(struct inode *ip, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
-	struct timespec *ts = NULL, tsb;
+	struct timespec now;
 
 	if (!(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY))) {
 		return;
 	}
 
-	/* XXX just call getnanotime early and use result if needed? */
+	getnanotime(&now);
 	if (ip->i_flag & IN_ACCESS) {
 		if (acc == NULL)
-			acc = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
+			acc = &now;
 		DIP_ASSIGN(ip, atime, acc->tv_sec);
 		DIP_ASSIGN(ip, atimensec, acc->tv_nsec);
 	}
 	if (ip->i_flag & (IN_UPDATE | IN_MODIFY)) {
 		if ((ip->i_flags & SF_SNAPSHOT) == 0) {
 			if (mod == NULL)
-				mod = ts == NULL ?
-				    (getnanotime(&tsb), ts = &tsb) : ts;
+				mod = &now;
 			DIP_ASSIGN(ip, mtime, mod->tv_sec);
 			DIP_ASSIGN(ip, mtimensec, mod->tv_nsec);
 		}
@@ -668,7 +667,7 @@ ffs_itimes(struct inode *ip, const struct timespec *acc,
 	}
 	if (ip->i_flag & (IN_CHANGE | IN_MODIFY)) {
 		if (cre == NULL)
-			cre = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
+			cre = &now;
 		DIP_ASSIGN(ip, ctime, cre->tv_sec);
 		DIP_ASSIGN(ip, ctimensec, cre->tv_nsec);
 	}
