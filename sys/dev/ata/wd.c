@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.315.2.2 2006/02/01 14:52:08 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.315.2.3 2006/02/05 11:34:49 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.315.2.2 2006/02/01 14:52:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.315.2.3 2006/02/05 11:34:49 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1340,10 +1340,9 @@ bad:
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_resid = fop->df_count;
-		auio.uio_segflg = 0;
 		auio.uio_offset =
 			fop->df_startblk * wd->sc_dk.dk_label->d_secsize;
-		auio.uio_lwp = l;
+		auio.uio_vmspace = l->l_proc->p_vmspace;
 		error = physio(wdformat, NULL, dev, B_WRITE, minphys,
 		    &auio);
 		fop->df_count -= auio.uio_resid;
@@ -1385,10 +1384,9 @@ bad:
 			wi->wi_uio.uio_iovcnt = 1;
 			wi->wi_uio.uio_resid = atareq->datalen;
 			wi->wi_uio.uio_offset = 0;
-			wi->wi_uio.uio_segflg = UIO_USERSPACE;
 			wi->wi_uio.uio_rw =
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
-			wi->wi_uio.uio_lwp = l;
+			wi->wi_uio.uio_vmspace = l->l_proc->p_vmspace;
 			error1 = physio(wdioctlstrategy, &wi->wi_bp, dev,
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
 			    minphys, &wi->wi_uio);
