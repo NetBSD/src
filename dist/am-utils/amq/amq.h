@@ -1,4 +1,4 @@
-/*	$NetBSD: amq.h,v 1.1.1.9 2005/09/20 17:15:01 rpaulo Exp $	*/
+/*	$NetBSD: amq.h,v 1.1.1.10 2006/02/05 16:13:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -60,5 +60,6 @@ extern amq_mount_info_list *amqproc_getmntfs_1(voidp argp, CLIENT *rqstp);
 extern int *amqproc_mount_1(voidp argp, CLIENT *rqstp);
 extern amq_string *amqproc_getvers_1(voidp argp, CLIENT *rqstp);
 extern int *amqproc_getpid_1(voidp argp, CLIENT *rqstp);
+extern amq_string *amqproc_pawd_1(amq_string *argp, CLIENT *rqstp);
 
 #endif /* not _AMQ_H */

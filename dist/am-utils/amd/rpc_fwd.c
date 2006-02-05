@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_fwd.c,v 1.1.1.9 2005/09/20 17:14:53 rpaulo Exp $	*/
+/*	$NetBSD: rpc_fwd.c,v 1.1.1.10 2006/02/05 16:13:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -306,7 +306,7 @@ fwd_packet(int type_id, char *pkt, int len, struct sockaddr_in *fwdto, struct so
     if (p && fwdto)
       dlog("Sending packet id %#x to %s:%d",
 	   p->rf_xid,
-	   inet_dquad(dq, fwdto->sin_addr.s_addr),
+	   inet_dquad(dq, sizeof(dq), fwdto->sin_addr.s_addr),
 	   ntohs(fwdto->sin_port));
   }
 #endif /* DEBUG */
