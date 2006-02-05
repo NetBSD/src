@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.33.2.1 2005/12/31 11:14:00 yamt Exp $	*/
+/*	$NetBSD: uio.h,v 1.33.2.2 2006/02/05 12:23:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -84,7 +84,7 @@ struct uio {
 	enum	uio_rw uio_rw;	/* see above */
 	struct	vmspace *uio_vmspace;
 };
-#define	UIO_SETUP_SYSSPACE(uio)	(uio)->uio_vmspace = proc0.p_vmspace
+#define	UIO_SETUP_SYSSPACE(uio)	(uio)->uio_vmspace = vmspace_kernel()
 
 #endif /* __UIO_EXPOSE */
 
