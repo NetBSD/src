@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.5 2006/02/05 14:03:46 christos Exp $	*/
+/*	$NetBSD: powerd.c,v 1.6 2006/02/05 14:11:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -187,7 +187,7 @@ run_script(const char *argv[])
 
 			case 0:
 				/* Child. */
-				(void) execv(path, (char **)argv);
+				(void) execv(path, __UNCONST(argv));
 				_exit(1);
 				/* NOTREACHED */
 
