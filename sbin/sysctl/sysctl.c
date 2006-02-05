@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.109 2006/02/02 18:00:07 elad Exp $ */
+/*	$NetBSD: sysctl.c,v 1.110 2006/02/05 22:42:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.109 2006/02/02 18:00:07 elad Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.110 2006/02/05 22:42:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1075,7 +1075,7 @@ parse_create(char *l)
 		}
 		else if (strcmp(key, "n") == 0) {
 			errno = 0;
-			q = strtoq(value, &t, 0);
+			q = strtoll(value, &t, 0);
 			if (t == value || *t != '\0' || errno != 0 ||
 			    q < INT_MIN || q > UINT_MAX) {
 				sysctlperror(
@@ -1158,7 +1158,7 @@ parse_create(char *l)
 		switch (type) {
 		case CTLTYPE_INT:
 			errno = 0;
-			q = strtoq(data, &t, 0);
+			q = strtoll(data, &t, 0);
 			if (t == data || *t != '\0' || errno != 0 ||
 				q < INT_MIN || q > UINT_MAX) {
 				sysctlperror(
@@ -1644,7 +1644,7 @@ sysctlperror(const char *fmt, ...)
 static void
 write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 {
-	int ii, io;
+	u_int ii, io;
 	u_quad_t qi, qo;
 	size_t si, so;
 	int rc;
@@ -1658,8 +1658,8 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 	i = o = NULL;
 	errno = 0;
 	qi = strtouq(value, &t, 0);
-	if (errno != 0) {
-		sysctlperror("%s: value too large\n", value);
+	if (qi == UQUAD_MAX && errno == ERANGE) {
+		sysctlperror("%s: %s\n", value, strerror(errno));
 		EXIT(1);
 	}
 	if (t == value || *t != '\0') {
@@ -1668,11 +1668,11 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 	}
 
 	switch (SYSCTL_TYPE(node->sysctl_flags)) {
-	    case CTLTYPE_INT:
-		ii = (int)qi;
+	case CTLTYPE_INT:
+		ii = (u_int)qi;
 		qo = ii;
 		if (qo != qi) {
-			sysctlperror("%s: value too large\n", value);
+			sysctlperror("%s: %s\n", value, strerror(ERANGE));
 			EXIT(1);
 		}
 		o = &io;
