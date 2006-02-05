@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.12.6.1 2006/02/04 14:12:49 simonb Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.12.6.2 2006/02/05 11:42:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.6.1 2006/02/04 14:12:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.6.2 2006/02/05 11:42:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -941,23 +941,24 @@ void
 ptyfs_itimes(struct ptyfsnode *ptyfs, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
-	struct timespec *ts = NULL, tsb;
+	struct timespec now;
  
 	KASSERT(ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY));
-	/* XXX just call getnanotime early and use result if needed? */
+
+	getnanotime(&now);
 	if (ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_MODIFY)) {
 		if (acc == NULL)
-			acc = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
+			acc = &now;
 		ptyfs->ptyfs_atime = *acc;
 	}
 	if (ptyfs->ptyfs_flag & PTYFS_MODIFY) {
 		if (mod == NULL)
-			mod = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
+			mod = &now;
 		ptyfs->ptyfs_mtime = *mod;
 	}
 	if (ptyfs->ptyfs_flag & PTYFS_CHANGE) {
 		if (cre == NULL)
-			cre = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
+			cre = &now;
 		ptyfs->ptyfs_ctime = *cre;
 	}
 	ptyfs->ptyfs_flag &= ~(PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY);
