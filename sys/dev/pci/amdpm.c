@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.7.14.1 2006/02/05 17:26:10 riz Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.7.14.2 2006/02/05 17:28:54 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.7.14.1 2006/02/05 17:26:10 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.7.14.2 2006/02/05 17:28:54 riz Exp $");
 
 #include "opt_amdpm.h"
 
@@ -90,9 +90,15 @@ amdpm_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC)
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_AMD)
+		return (0);
+
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_AMD_PBC768_PMC:
+	case PCI_PRODUCT_AMD_PBC8111_ACPI:
 		return (1);
+	}
+
 	return (0);
 }
 
@@ -101,12 +107,15 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct amdpm_softc *sc = (struct amdpm_softc *) self;
 	struct pci_attach_args *pa = aux;
+	char devinfo[256];
 	pcireg_t reg;
 	u_int32_t pmreg;
 	int i;
 
 	aprint_naive("\n");
-	aprint_normal("\n");
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
