@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.30 2006/02/05 15:39:20 jmmv Exp $
+# $NetBSD: XEN0,v 1.31 2006/02/05 17:06:38 jmmv Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -24,9 +24,6 @@ makeoptions	COPTS="-O2 -mcpu=i686 -march=i686"
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 #options 	MTRR		# memory-type range register syscall support
-
-options 	MULTIBOOT	# Multiboot support (see multiboot(8))
-#options 	MULTIBOOT_SYMTAB_SPACE=1048576
 
 #options 	CONSDEVNAME="\"xencons\""
 #options 	CONS_OVERRIDE
