@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.41 2006/02/04 03:42:01 rpaulo Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.42 2006/02/05 05:02:02 cube Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -325,7 +325,7 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-#pseudo-device	vnd	4
+#pseudo-device	vnd	
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
@@ -395,20 +395,20 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 pseudo-device	loop
 
 ## SLIP and CSLIP interfaces, for IP over a serial line.
-#pseudo-device	sl		2
+#pseudo-device	sl		
 
 ## PPP, the successor to SLIP.  See pppd(8).
-#pseudo-device	ppp		2
+#pseudo-device	ppp		
 
 ## Starmode Radio IP, a special hardware network device.
-#pseudo-device	strip		1
+#pseudo-device	strip		
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
-#pseudo-device	tun		4
+#pseudo-device	tun		
 
 ## Generic L3 over IP tunnel
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	gre			# generic L3 over IP tunnel
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.223 2006/02/04 03:16:23 rpaulo Exp $
+# $NetBSD: GENERIC,v 1.224 2006/02/05 05:01:56 cube Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.223 $"
+#ident 		"GENERIC-$Revision: 1.224 $"
 
 maxusers	32
 
@@ -503,7 +503,7 @@ midi*	at eap?			# 137[01] MIDI port
 #pseudo-device 	crypto			# /dev/crypto device
 					# (disabled, requires generic softints)
 #pseudo-device	swcrypto		# software crypto implementation
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
@@ -522,15 +522,15 @@ pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	tun		4	# network tunneling over tty
+pseudo-device	sl			# Serial Line IP
+pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

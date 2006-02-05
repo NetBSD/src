@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.65 2006/02/04 03:04:12 rpaulo Exp $
+# $NetBSD: GENERIC,v 1.66 2006/02/05 05:01:55 cube Exp $
 #
 # GENERIC machine description file
 #
@@ -313,13 +313,13 @@ com*	at pcmcia? function ?		# Modems and serial cards
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		1	# serial-line IP ports
+pseudo-device	ppp			# serial-line IP ports
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	pf			# PF packet filter

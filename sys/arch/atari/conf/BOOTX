@@ -1,5 +1,5 @@
 #
-# $NetBSD: BOOTX,v 1.64 2006/02/04 02:27:23 rpaulo Exp $
+# $NetBSD: BOOTX,v 1.65 2006/02/05 05:01:49 cube Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -62,7 +62,7 @@ pseudo-device ppp # ppp
 
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
-pseudo-device vnd 3 # 3 pseudo disks (see vnconfig)
+pseudo-device vnd  # 3 pseudo disks (see vnconfig)
 
 pseudo-device md 3 # Boot memory disk
 pseudo-device view 4 # View (graphics mapping)
