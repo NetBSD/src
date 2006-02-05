@@ -1,4 +1,4 @@
-/*	$NetBSD: mouse.c,v 1.5 2006/02/05 17:38:33 jmmv Exp $ */
+/*	$NetBSD: mouse.c,v 1.6 2006/02/05 17:45:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2006 The NetBSD Foundation, Inc.
@@ -121,8 +121,8 @@ mouse_put_values(int fd)
 	if (field_by_value(&samplerate)->flags & FLG_SET) {
 		tmp = samplerate;
 		if (ioctl(fd, WSMOUSEIO_SRATE, &tmp) < 0)
-			err(1, "WSMOUSEIO_SRES");
-		pr_field(field_by_value(&tmp), " -> ");
+			err(1, "WSMOUSEIO_SRATE");
+		pr_field(field_by_value(&samplerate), " -> ");
 	}
 
 	if (field_by_value(&repeat.wr_buttons)->flags & FLG_SET ||
