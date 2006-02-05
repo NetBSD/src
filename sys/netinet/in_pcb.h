@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.41.4.3 2006/02/04 03:26:27 rpaulo Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.41.4.4 2006/02/05 03:01:32 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 2003 WIDE Project.
@@ -201,10 +201,8 @@ struct inpcb {
 #define	inp_faddr	inp_inc.inc_ie.ie_faddr
 #define	inp_laddr	inp_inc.inc_ie.ie_laddr
 #define	inp_ip		in4p_depend.in4p_ip
-#define	inp_options	in4p_depend.in4p_options
 #define	inp_moptions	in4p_depend.in4p_moptions
 #define inp_route	in4p_depend.in4p_route
-#define inp_options	in4p_depend.in4p_options
 
 	/* protocol dependent part; IPv6 */
 	struct {
@@ -231,7 +229,6 @@ struct inpcb {
 #define	in6p_cksum	in6p_depend.in6p_cksum
 #define	in6p_hops	in6p_depend.in6p_hops
 #define	in6p_ip6	in6p_depend.in6p_ip6
-#define in6p_options	in6p_depend.in6p_options
 #define in6p_flowinfo	in6p_depend.in6p_flowinfo
 #define	in6p_socket	inp_socket
 #define	in6p_ppcb	inp_ppcb
