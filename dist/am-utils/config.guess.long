@@ -62,8 +62,12 @@ case "${GCONFIG}" in
 	else
 	    echo ${GCONFIG}
 	fi
-    ;;
-    * ) echo ${GCONFIG}
-    ;;
+	;;
+    *netbsdelf3* )		# remove trailing '.' from beta
+	echo ${GCONFIG} | sed 's/\.$//g'
+	;;
+    * )
+	echo ${GCONFIG}
+	;;
 esac
 exit 0

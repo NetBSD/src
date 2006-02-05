@@ -43,12 +43,13 @@ i386-unknown-freebsd5.2		ezk	ezk	ezk	ezk	-
 i386-unknown-freebsd5.2.1	ezk	ezk	ezk	ezk	-
 i386-unknown-freebsd5.3		ezk	ezk	ezk	ezk	-
 i386-unknown-freebsd5.4		ezk	ezk	ezk	ezk	-
-i386-unknown-freebsd6 (SNAP1)	ezk	ezk	ezk	ezk	-
+i386-unknown-freebsd6 (BETA5)	ezk	ezk	ezk	ezk	-
 i386-unknown-netbsd1.6A		ezk	ezk	ezk	ezk	-
 i386-unknown-netbsdelf1.6.1	ezk	ezk	ezk	ezk	-
 i386-unknown-netbsdelf1.6.2	ezk	ezk	ezk	ezk	-
 i386-unknown-netbsdelf2.0	ezk	ezk	ezk	ezk	-
 i386-unknown-netbsdelf2.0.2	ezk	ezk	ezk	ezk	-
+i386-unknown-netbsdelf3.0	ezk	ezk	ezk	ezk	-
 i386-unknown-openbsd3.3		ezk	ezk	ezk	ezk	-
 i386-unknown-openbsd3.6		ezk	ezk	ezk	ezk	-
 i386-unknown-openbsd3.7		ezk	ezk	ezk	ezk	-
@@ -104,7 +105,7 @@ FOOTNOTES:
 
 [1] Due to limitations in the Sun autofs v1 implementation, some amd features
 cannot be properly supported. More precisely, trying to access a link mount
-pointing to another amd entry will result in failure and/or deadlock. 
+pointing to another amd entry will result in failure and/or deadlock.
 Ordinary nfs and link mounts work well, however.
 
 [2] AIX autofs appears to be a variant of the Sun autofs v1 protocol, but

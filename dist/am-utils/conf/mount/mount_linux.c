@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_linux.c,v 1.1.1.9 2005/09/20 17:15:09 rpaulo Exp $	*/
+/*	$NetBSD: mount_linux.c,v 1.1.1.10 2006/02/05 16:13:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -145,6 +145,7 @@ parse_opts(char *type, const char *optstr, int *flags, char **xopts, int *noauto
   const struct opt_map *std_opts;
   const struct fs_opts *dev_opts;
   char *opt, *topts, *xoptstr;
+  size_t l;
 
   if (optstr == NULL)
     return NULL;
@@ -152,8 +153,9 @@ parse_opts(char *type, const char *optstr, int *flags, char **xopts, int *noauto
   xoptstr = strdup(optstr);	/* because strtok is destructive below */
 
   *noauto = 0;
-  *xopts = (char *) xmalloc (strlen(optstr) + 2);
-  topts = (char *) xmalloc (strlen(optstr) + 2);
+  l = strlen(optstr) + 2;
+  *xopts = (char *) xmalloc(l);
+  topts = (char *) xmalloc(l);
   *topts = '\0';
   **xopts = '\0';
 
@@ -166,8 +168,8 @@ parse_opts(char *type, const char *optstr, int *flags, char **xopts, int *noauto
 	   !NSTREQ(std_opts->opt, opt, strlen(std_opts->opt)))
       ++std_opts;
     if (!(*noauto = STREQ(opt, MNTTAB_OPT_NOAUTO)) || std_opts->opt) {
-      strcat(topts, opt);
-      strcat(topts, ",");
+      xstrlcat(topts, opt, l);
+      xstrlcat(topts, ",", l);
       if (std_opts->inv)
 	*flags &= ~std_opts->mask;
       else
@@ -213,8 +215,8 @@ do_opts:
       ++dev_opts;
     }
     if (dev_opts->opt && *xopts) {
-      strcat(*xopts, opt);
-      strcat(*xopts, ",");
+      xstrlcat(*xopts, opt, l);
+      xstrlcat(*xopts, ",", l);
     }
   }
   /*
@@ -413,17 +415,19 @@ mount_linux_nonfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 
   tmp_opts = parse_opts(type, mnt->mnt_opts, &flags, &extra_opts, &noauto);
 
-#if defined(MOUNT_TYPE_LOFS)
+#ifdef MOUNT_TYPE_LOFS
   if (STREQ(type, MOUNT_TYPE_LOFS)) {
-# if defined(MNT2_GEN_OPT_BIND)
-    /* use bind mounts for lofs */
-    flags |= MNT2_GEN_OPT_BIND;
-# else /* not MNT2_GEN_OPT_BIND */
+# ifndef MNT2_GEN_OPT_BIND
+    size_t l;
     /* this is basically a hack to support fist lofs */
     XFREE(extra_opts);
-    extra_opts = (char *) xmalloc(strlen(mnt->mnt_fsname) + sizeof("dir=") + 1);
-    sprintf(extra_opts, "dir=%s", mnt->mnt_fsname);
-# endif /* not MNT2_GEN_OPT_BIND */
+    l = strlen(mnt->mnt_fsname) + sizeof("dir=") + 1;
+    extra_opts = (char *) xmalloc(l);
+    xsnprintf(extra_opts, l, sizeof(extra_opts), "dir=%s", mnt->mnt_fsname);
+# else /* MNT2_GEN_OPT_BIND */
+    /* use bind mounts for lofs */
+    flags |= MNT2_GEN_OPT_BIND;
+# endif /* MNT2_GEN_OPT_BIND */
     errorcode = do_mount_linux(type, mnt, flags, extra_opts);
   } else /* end of "if type is LOFS" */
 #endif /* MOUNT_TYPE_LOFS */
@@ -440,16 +444,16 @@ mount_linux_nonfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 	S_ISREG(buf.st_mode)) {
       if ((loopdev = setup_loop_device(mnt->mnt_fsname)) != NULL) {
 	char *str;
-	int len;
+	size_t l;
 
 	plog(XLOG_INFO, "setup loop device %s over %s OK", loopdev, mnt->mnt_fsname);
 	old_fsname = mnt->mnt_fsname;
 	mnt->mnt_fsname = loopdev;
 	/* XXX: hack, append loop=/dev/loopX to mnttab opts */
-	len = strlen(mnt->mnt_opts) + 7 + strlen(loopdev);
-	str = (char *) xmalloc(len);
+	l = strlen(mnt->mnt_opts) + 7 + strlen(loopdev);
+	str = (char *) xmalloc(l);
 	if (str) {
-	  sprintf(str, "%s,loop=%s", mnt->mnt_opts, loopdev);
+	  xsnprintf(str, l, "%s,loop=%s", mnt->mnt_opts, loopdev);
 	  XFREE(mnt->mnt_opts);
 	  mnt->mnt_opts = str;
 	}
@@ -757,7 +761,7 @@ find_unused_loop_device(void)
 #define LOOP_FMT_SIZE(a) (sizeof(a)/sizeof(a[0]))
   for (j = 0; j < (int) LOOP_FMT_SIZE(loop_formats); j++) {
     for(i = 0; i < 256; i++) {
-      sprintf(dev, loop_formats[j], i);
+      xsnprintf(dev, sizeof(dev), loop_formats[j], i);
       if (stat(dev, &statbuf) == 0 && S_ISBLK(statbuf.st_mode)) {
 	somedev++;
 	fd = open(dev, O_RDONLY);
