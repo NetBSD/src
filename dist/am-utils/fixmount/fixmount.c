@@ -1,4 +1,4 @@
-/*	$NetBSD: fixmount.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: fixmount.c,v 1.6 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -50,10 +50,6 @@
 
 #define CREATE_TIMEOUT	2	/* seconds */
 #define CALL_TIMEOUT	5	/* seconds */
-
-#ifndef INADDR_NONE
-# define INADDR_NONE	0xffffffff
-#endif /* not INADDR_NONE */
 
 /* Constant defs */
 #define	ALL		1

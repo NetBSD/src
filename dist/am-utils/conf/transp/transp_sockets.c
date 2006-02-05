@@ -1,4 +1,4 @@
-/*	$NetBSD: transp_sockets.c,v 1.9 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.10 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -115,7 +115,7 @@ amu_get_myaddress(struct in_addr *iap, const char *preferred_localhost)
   }
   memmove((voidp) &iap->s_addr, (voidp) hp->h_addr_list[0], sizeof(iap->s_addr));
   plog(XLOG_INFO, "localhost_address \"%s\" requested, using %s",
-       preferred_localhost, inet_dquad(dq, iap->s_addr));
+       preferred_localhost, inet_dquad(dq, sizeof(dq), iap->s_addr));
   return;
 
  out:

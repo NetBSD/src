@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.c,v 1.12 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.13 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -158,7 +158,8 @@ fsi_get_args(int c, char *v[])
     case 'I':
     case 'D':
     case 'U':
-      snprintf(iptr, sizeof(idvbuf) - (iptr - idvbuf), "-%c%s ", ch, optarg);
+      /* sizeof(iptr) is actually that of idvbuf.  See declaration above */
+      xsnprintf(iptr, sizeof(idvbuf), "-%c%s ", ch, optarg);
       iptr += strlen(iptr);
       break;
 

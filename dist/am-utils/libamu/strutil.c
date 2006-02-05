@@ -1,4 +1,4 @@
-/*	$NetBSD: strutil.c,v 1.1.1.1 2006/02/05 16:14:45 christos Exp $	*/
+/*	$NetBSD: strutil.c,v 1.2 2006/02/05 16:28:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok

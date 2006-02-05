@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: strerror.c,v 1.6 2006/02/05 16:28:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Ion Badulescu
@@ -60,7 +60,7 @@ strerror(int errnum)
 #ifdef HAVE_EXTERN_SYS_ERRLIST
   if (errnum < 0 || errnum >= (sizeof(sys_errlist) >> 2)) {
     static char errstr[30];
-    snprintf(errstr, sizeof(errstr), "Unknown error #%d", errnum);
+    xsnprintf(errstr, sizeof(errstr), "Unknown error #%d", errnum);
     return errstr;
   }
   return sys_errlist[error];
