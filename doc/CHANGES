@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.577 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.578 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -188,3 +188,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	am-utils: Upgrade to 6.1.3 [christos 20060205]
 	wsmouse(4): Add support to automatically repeat wsmouse button events.
 		[jmmv 20060205]
+	pbms(4): 15" powerbook mouse driver from Johan Wallen
+		[christos 20060205]
