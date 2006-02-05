@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.28 2006/02/03 05:25:03 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.29 2006/02/05 17:31:06 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -636,4 +636,38 @@ doc/HACKS					patch
 	aic(4): work around rbus resource allocation problem so cards work
 	again.
 	[jnemeth, ticket #1153]
+
+sys/arch/xen/xen/if_xennet.c			1.42 via patch
+sys/arch/xen/xen/xennetback.c			1.20 via patch
+
+	Check the destination ethernet address when not in promiscous mode.
+	Fix problem where packets would be duplicated, possibly looping, when
+	a domU is doing IP routing.
+	[bouyer, ticket #1155]
+
+share/man/man4/pdcsata.4			1.2
+sys/dev/pci/pcidevs				1.758
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/pdcsata.c				1.6
+
+	Add support for Promise PDC2057x SATA/150 IDE controllers.
+	From FreeBSD, tested by Douglas Wade Needham.
+	[bouyer, ticket #1156]
+
+sys/arch/xen/i386/xen_machdep.c			1.16
+
+	Fix bad cut'n'paste: use the target of strncpy() in sizeof().
+	[bouyer, ticket #1157]
+
+sys/dev/pci/amdpm.c				1.9
+
+	PR/32220: Murray Armfield: Enable AMD768 random no generator.
+	[tls, ticket #1158]
+
+share/man/man4/amdpm.4				1.4
+sys/dev/pci/amdpm.c				1.10
+
+	Add support for the AMD8111 RNG; from Nicolas Joly in PR kern/32284.
+	[tls, ticket #1159]
 
