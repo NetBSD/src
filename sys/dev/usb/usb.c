@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.84 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.84.2.1 2006/02/05 12:54:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.84 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.84.2.1 2006/02/05 12:54:07 yamt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -518,11 +518,10 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			uio.uio_iovcnt = 1;
 			uio.uio_resid = len;
 			uio.uio_offset = 0;
-			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw =
 				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
-			uio.uio_lwp = l;
+			uio.uio_vmspace = l->l_proc->p_vmspace;
 			ptr = malloc(len, M_TEMP, M_WAITOK);
 			if (uio.uio_rw == UIO_WRITE) {
 				error = uiomove(ptr, len, &uio);
