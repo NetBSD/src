@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.33 2005/08/07 12:32:38 blymn Exp $	*/
+/*	$NetBSD: iostat.c,v 1.34 2006/02/05 09:58:39 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.33 2005/08/07 12:32:38 blymn Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.34 2006/02/05 09:58:39 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,6 +84,7 @@ initiostat(void)
 
 	dkinit(1);
 	tpinit(1);
+	cpureadstats();
 	dkreadstats();
 	tpreadstats();
 	return(1);
@@ -93,14 +94,12 @@ void
 fetchiostat(void)
 {
 
-	if (dk_ndrive == 0)
-		return;
-	else
+	cpureadstats();
+
+	if (dk_ndrive != 0)
 		dkreadstats();
 
-	if (tp_ndrive == 0)
-		return;
-	else
+	if (tp_ndrive != 0)
 		tpreadstats();
 }
 
@@ -235,6 +234,7 @@ showiostat(void)
 	if (dk_ndrive == 0)
 		return;
 	dkswap();
+	cpuswap();
 	tpswap();
 
 	etime = cur.cp_etime;
