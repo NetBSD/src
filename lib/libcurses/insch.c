@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.19 2006/01/26 07:26:37 jdc Exp $	*/
+/*	$NetBSD: insch.c,v 1.20 2006/02/05 17:04:46 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.19 2006/01/26 07:26:37 jdc Exp $");
+__RCSID("$NetBSD: insch.c,v 1.20 2006/02/05 17:04:46 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -107,9 +107,9 @@ winsch(WINDOW *win, chtype ch)
 		temp1->ch = win->bch;
 	temp1->attr = (attr_t) ch & __ATTRIBUTES;
 	if (temp1->attr & __COLOR)
-		temp1->attr |= (win->bch & ~__COLOR);
+		temp1->attr |= (win->battr & ~__COLOR);
 	else
-		temp1->attr |= win->bch;
+		temp1->attr |= win->battr;
 	__touchline(win, (int) win->cury, (int) win->curx, (int) win->maxx - 1);
 	if (win->cury == LINES - 1 &&
 	    (win->lines[LINES - 1]->line[COLS - 1].ch != ' ' ||
