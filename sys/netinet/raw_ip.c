@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.88 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.88.4.1 2006/02/05 03:03:09 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.88 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.88.4.1 2006/02/05 03:03:09 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -140,7 +140,6 @@ rip_input(struct mbuf *m, ...)
 {
 	int proto;
 	struct ip *ip = mtod(m, struct ip *);
-	struct inpcb_hdr *inph;
 	struct inpcb *inp;
 	struct inpcb *last = 0;
 	struct mbuf *opts = 0;
@@ -166,8 +165,7 @@ rip_input(struct mbuf *m, ...)
 	ip->ip_len = ntohs(ip->ip_len) - (ip->ip_hl << 2);
 	NTOHS(ip->ip_off);
 
-	CIRCLEQ_FOREACH(inph, &rawcbtable.inpt_queue, inph_queue) {
-		inp = (struct inpcb *)inph;
+	CIRCLEQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
 		if (inp->inp_af != AF_INET)
 			continue;
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != proto)
