@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.16 2006/02/03 05:25:14 riz Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.17 2006/02/05 17:24:46 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -164,4 +164,17 @@ doc/HACKS					patch
 	aic(4): work around rbus resource allocation problem so cards work
 	again.
 	[jnemeth, ticket #1153]
+
+sys/arch/xen/xen/if_xennet.c			1.42 via patch
+sys/arch/xen/xen/xennetback.c			1.20 via patch
+
+	Check the destination ethernet address when not in promiscous mode.
+	Fix problem where packets would be duplicated, possibly looping, when
+	a domU is doing IP routing.
+	[bouyer, ticket #1155]
+
+sys/arch/xen/i386/xen_machdep.c			1.16
+
+	Fix bad cut'n'paste: use the target of strncpy() in sizeof().
+	[bouyer, ticket #1157]
 
