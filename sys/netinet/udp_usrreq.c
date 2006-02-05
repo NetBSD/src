@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.146 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.146.2.1 2006/02/05 03:09:11 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146.2.1 2006/02/05 03:09:11 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146 2006/01/21 00:15:36 rpaulo Exp 
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/in6_pcb.h>
 #include <netinet6/udp6_var.h>
 #include <netinet6/scope6_var.h>
 #endif

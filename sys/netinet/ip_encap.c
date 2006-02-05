@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.27 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.27.4.1 2006/02/05 03:09:11 rpaulo Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.27 2005/12/11 12:24:57 christos Exp $
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_encap.h>
+#include <netinet/in_pcb.h>
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
 #endif /* MROUTING */
@@ -101,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.27 2005/12/11 12:24:57 christos Exp $
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/in6_pcb.h>
 #include <netinet/icmp6.h>
 #endif
 
