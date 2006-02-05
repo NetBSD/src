@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.29 2006/02/05 17:31:06 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.30 2006/02/05 18:51:09 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -670,4 +670,12 @@ sys/dev/pci/amdpm.c				1.10
 
 	Add support for the AMD8111 RNG; from Nicolas Joly in PR kern/32284.
 	[tls, ticket #1159]
+
+distrib/sets/lists/base/md.alpha		1.35
+sys/arch/alpha/stand/Makefile			1.16
+sys/arch/alpha/stand/boot/filesystem.c		1.11
+sys/arch/alpha/stand/bootxx_ffsv2/Makefile	1.1
+
+	Support booting from ffsv2 filesystems.
+	[abs, ticket #738]
 
