@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.21 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: urio.c,v 1.21.2.1 2006/02/05 12:54:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.21 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.21.2.1 2006/02/05 12:54:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,10 +548,9 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		uio.uio_iovcnt = 1;
 		uio.uio_resid = len;
 		uio.uio_offset = 0;
-		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_rw = req.bmRequestType & UT_READ ?
 			     UIO_READ : UIO_WRITE;
-		uio.uio_lwp = l;
+		uio.uio_vmspace = l->l_proc->p_vmspace;
 		ptr = malloc(len, M_TEMP, M_WAITOK);
 		if (uio.uio_rw == UIO_WRITE) {
 			error = uiomove(ptr, len, &uio);
