@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_nfs.c,v 1.6 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: ops_nfs.c,v 1.7 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -609,6 +609,7 @@ webnfs_lookup(fh_cache *fp, fwd_fun fun, wchan_t wchan)
   am_LOOKUP3args args3;
 #endif
   char *wnfs_path;
+  size_t l;
 
   if (!nfs_auth) {
     error = make_nfs_auth();
@@ -626,9 +627,10 @@ webnfs_lookup(fh_cache *fp, fwd_fun fun, wchan_t wchan)
   /*
    * Use native path like the rest of amd (cf. RFC 2054, 6.1).
    */
-  wnfs_path = (char *) xmalloc(strlen(fp->fh_path) + 2);
+  l = strlen(fp->fh_path) + 2;
+  wnfs_path = (char *) xmalloc(l);
   wnfs_path[0] = 0x80;
-  strcpy(wnfs_path + 1, fp->fh_path);
+  xstrlcpy(wnfs_path + 1, fp->fh_path, l - 1);
 
   /* find the right program and lookup procedure */
 #ifdef HAVE_FS_NFS3
@@ -688,6 +690,7 @@ static char *
 nfs_match(am_opts *fo)
 {
   char *xmtab;
+  size_t l;
 
   if (fo->opt_fs && !fo->opt_rfs)
     fo->opt_rfs = fo->opt_fs;
@@ -703,8 +706,9 @@ nfs_match(am_opts *fo)
   /*
    * Determine magic cookie to put in mtab
    */
-  xmtab = (char *) xmalloc(strlen(fo->opt_rhost) + strlen(fo->opt_rfs) + 2);
-  sprintf(xmtab, "%s:%s", fo->opt_rhost, fo->opt_rfs);
+  l = strlen(fo->opt_rhost) + strlen(fo->opt_rfs) + 2;
+  xmtab = (char *) xmalloc(l);
+  xsnprintf(xmtab, l, "%s:%s", fo->opt_rhost, fo->opt_rfs);
   dlog("NFS: mounting remote server \"%s\", remote fs \"%s\" on \"%s\"",
        fo->opt_rhost, fo->opt_rfs, fo->opt_fs);
 
@@ -786,7 +790,8 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *fs_name, mntfs *mf)
 #ifdef MAXHOSTNAMELEN
   /* most kernels have a name length restriction */
   if (strlen(host) >= MAXHOSTNAMELEN)
-    strlcpy(host + MAXHOSTNAMELEN - 3, "..", sizeof(host) - (MAXHOSTNAMELEN - 3));
+    xstrlcpy(host + MAXHOSTNAMELEN - 3, "..",
+	     sizeof(host) - MAXHOSTNAMELEN + 3);
 #endif /* MAXHOSTNAMELEN */
 
   /*
@@ -801,11 +806,11 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *fs_name, mntfs *mf)
     proto = AMU_TYPE_TCP;
   if (proto != AMU_TYPE_NONE) {
     if (gopt.amfs_auto_timeo[proto] > 0)
-      sprintf(transp_timeo_opts, "%s=%d,",
-	      MNTTAB_OPT_TIMEO, gopt.amfs_auto_timeo[proto]);
+      xsnprintf(transp_timeo_opts, sizeof(transp_timeo_opts), "%s=%d,",
+		MNTTAB_OPT_TIMEO, gopt.amfs_auto_timeo[proto]);
     if (gopt.amfs_auto_retrans[proto] > 0)
-      sprintf(transp_retrans_opts, "%s=%d,",
-	      MNTTAB_OPT_RETRANS, gopt.amfs_auto_retrans[proto]);
+      xsnprintf(transp_retrans_opts, sizeof(transp_retrans_opts), "%s=%d,",
+		MNTTAB_OPT_RETRANS, gopt.amfs_auto_retrans[proto]);
   }
 
   if (mf->mf_remopts && *mf->mf_remopts &&
