@@ -1,3 +1,5 @@
+/*	$NetBSD: athrate.h,v 1.2 2006/02/05 06:03:26 xtraeme Exp $ */
+
 /*-
  * Copyright (c) 2004-2005 Sam Leffler, Errno Consulting
  * Copyright (c) 2004 Video54 Technologies, Inc.

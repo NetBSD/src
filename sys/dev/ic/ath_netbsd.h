@@ -1,3 +1,5 @@
+/*	$NetBSD: ath_netbsd.h,v 1.5 2006/02/05 06:03:26 xtraeme Exp $ */
+
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.

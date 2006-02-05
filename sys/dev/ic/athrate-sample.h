@@ -1,3 +1,5 @@
+/*	$NetBSD: athrate-sample.h,v 1.2 2006/02/05 06:03:26 xtraeme Exp $ */
+
 /*-
  * Copyright (c) 2005 John Bicket
  * All rights reserved.
