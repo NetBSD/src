@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.11 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.12 2006/02/05 17:39:52 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.11 2006/01/15 11:43:54 jdc Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.12 2006/02/05 17:39:52 jdc Exp $");
 #endif				/* not lint */
 
 /* 
@@ -75,6 +75,7 @@ winsdelln(WINDOW *win, int lines)
 {
 	int     y, i, last;
 	__LINE *temp;
+	attr_t	attr;
 
 #ifdef DEBUG
 	__CTRACE("winsdelln: (%p) cury=%d lines=%d\n", win, win->cury,
@@ -83,6 +84,11 @@ winsdelln(WINDOW *win, int lines)
 
 	if (!lines)
 		return(OK);
+
+	if (__using_color && win != curscr)
+		attr = win->battr & __COLOR;
+	else
+		attr = 0;
 
 	if (lines > 0) {
 		/* Insert lines */
@@ -112,8 +118,8 @@ winsdelln(WINDOW *win, int lines)
 		}
 		for (y = win->cury - 1 + lines; y >= win->cury; --y)
 			for (i = 0; i < win->maxx; i++) {
-				win->lines[y]->line[i].ch = ' ';
-				win->lines[y]->line[i].attr = 0;
+				win->lines[y]->line[i].ch = win->bch;
+				win->lines[y]->line[i].attr = attr;
 			}
 		for (y = last; y >= win->cury; --y)
 			__touchline(win, y, 0, (int) win->maxx - 1);
@@ -146,8 +152,8 @@ winsdelln(WINDOW *win, int lines)
 		}
 		for (y = last - lines; y < last; y++)
 			for (i = 0; i < win->maxx; i++) {
-				win->lines[y]->line[i].ch = ' ';
-				win->lines[y]->line[i].attr = 0;
+				win->lines[y]->line[i].ch = win->bch;
+				win->lines[y]->line[i].attr = attr;
 			}
 		for (y = win->cury; y < last; y++)
 			__touchline(win, y, 0, (int) win->maxx - 1);
