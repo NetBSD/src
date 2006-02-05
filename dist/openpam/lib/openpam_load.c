@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $P4: //depot/projects/openpam/lib/openpam_load.c#20 $
+ * $P4: //depot/projects/openpam/lib/openpam_load.c#21 $
  */
 
 #include <dlfcn.h>
