@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.22 2005/02/26 21:19:18 dsl Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.23 2006/02/05 09:54:50 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -66,7 +66,7 @@ static struct nlist namelist[] = {
 };
 
 /* Structures to hold the statistics. */
-struct _disk	cur, last;
+struct _vminfo	cur, last;
 
 /* Kernel pointers: nlistf and memf defined in calling program. */
 static kvm_t	*kd = NULL;
@@ -110,18 +110,18 @@ static void deref_kptr(void *, void *, size_t);
  * values, storing the present values in the 'last' structure, and
  * the delta values in the 'cur' structure.
  */
-void
-dkswap(void)
-{
-	double etime;
-	u_int64_t tmp;
-	int	i, state;
 
 #define	SWAP(fld) do {							\
 	tmp = cur.fld;							\
 	cur.fld -= last.fld;						\
 	last.fld = tmp;							\
 } while (/* CONSTCOND */0)
+
+void
+dkswap(void)
+{
+	u_int64_t tmp;
+	int	i;
 
 	for (i = 0; i < dk_ndrive; i++) {
 		struct timeval	tmp_timer;
@@ -143,10 +143,27 @@ dkswap(void)
 		timerclear(&(last.dk_time[i]));
 		timerset(&tmp_timer, &(last.dk_time[i]));
 	}
-	for (i = 0; i < CPUSTATES; i++)
-		SWAP(cp_time[i]);
+
+}
+
+void
+tkswap(void)
+{
+	u_int64_t tmp;
+
 	SWAP(tk_nin);
 	SWAP(tk_nout);
+}
+
+void
+cpuswap(void)
+{
+	double etime;
+	u_int64_t tmp;
+	int	i, state;
+
+	for (i = 0; i < CPUSTATES; i++)
+		SWAP(cp_time[i]);
 
 	etime = 0;
 	for (state = 0; state < CPUSTATES; ++state) {
@@ -158,13 +175,11 @@ dkswap(void)
 	etime /= cur.cp_ncpu;
 
 	cur.cp_etime = etime;
-
-#undef SWAP
 }
+#undef SWAP
 
 /*
  * Read the disk statistics for each disk in the disk list.
- * Also collect statistics for tty i/o and CPU ticks.
  */
 void
 dkreadstats(void)
@@ -193,7 +208,31 @@ dkreadstats(void)
 			cur.dk_time[i].tv_sec = dk_drives[i].dk_time_sec;
 			cur.dk_time[i].tv_usec = dk_drives[i].dk_time_usec;
 		}
+	} else {
+		for (i = 0; i < dk_ndrive; i++) {
+			deref_kptr(p, &cur_disk, sizeof(cur_disk));
+			cur.dk_rxfer[i] = cur_disk.dk_rxfer;
+			cur.dk_wxfer[i] = cur_disk.dk_wxfer;
+			cur.dk_seek[i] = cur_disk.dk_seek;
+			cur.dk_rbytes[i] = cur_disk.dk_rbytes;
+			cur.dk_wbytes[i] = cur_disk.dk_wbytes;
+			timerset(&(cur_disk.dk_time), &(cur.dk_time[i]));
+			p = cur_disk.dk_link.tqe_next;
+		}
+	}
+}
 
+/*
+ * Read collect statistics for tty i/o.
+ */
+
+void
+tkreadstats(void)
+{
+	size_t		size;
+	int		mib[3];
+
+	if (memf == NULL) {
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_TKSTAT;
 		mib[2] = KERN_TKSTAT_NIN;
@@ -206,20 +245,20 @@ dkreadstats(void)
 		if (sysctl(mib, 3, &cur.tk_nout, &size, NULL, 0) < 0)
 			cur.tk_nout = 0;
 	} else {
-		for (i = 0; i < dk_ndrive; i++) {
-			deref_kptr(p, &cur_disk, sizeof(cur_disk));
-			cur.dk_rxfer[i] = cur_disk.dk_rxfer;
-			cur.dk_wxfer[i] = cur_disk.dk_wxfer;
-			cur.dk_seek[i] = cur_disk.dk_seek;
-			cur.dk_rbytes[i] = cur_disk.dk_rbytes;
-			cur.dk_wbytes[i] = cur_disk.dk_wbytes;
-			timerset(&(cur_disk.dk_time), &(cur.dk_time[i]));
-			p = cur_disk.dk_link.tqe_next;
-		}
-
 		deref_nl(X_TK_NIN, &cur.tk_nin, sizeof(cur.tk_nin));
 		deref_nl(X_TK_NOUT, &cur.tk_nout, sizeof(cur.tk_nout));
 	}
+}
+
+/*
+ * Read collect statistics for CPU ticks.
+ */
+
+void
+cpureadstats(void)
+{
+	size_t		size;
+	int		mib[2];
 
 	/*
 	 * XXX Need to locate the `correct' CPU when looking for this
