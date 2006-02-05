@@ -64,7 +64,7 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am_libamu_la_OBJECTS = misc_rpc.lo mount_fs.lo mtab.lo nfs_prot_xdr.lo \
-	util.lo wire.lo xdr_func.lo xutil.lo
+	strutil.lo wire.lo xdr_func.lo xutil.lo
 libamu_la_OBJECTS = $(am_libamu_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp =
@@ -214,7 +214,7 @@ libamu_la_SOURCES = \
 	mount_fs.c	\
 	mtab.c		\
 	nfs_prot_xdr.c	\
-	util.c		\
+	strutil.c	\
 	wire.c		\
 	xdr_func.c	\
 	xutil.c

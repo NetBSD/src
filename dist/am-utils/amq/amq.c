@@ -1,4 +1,4 @@
-/*	$NetBSD: amq.c,v 1.1.1.9 2005/09/20 17:15:02 rpaulo Exp $	*/
+/*	$NetBSD: amq.c,v 1.1.1.10 2006/02/05 16:13:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -169,7 +169,7 @@ show_mti(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid, int *twid)
  * Display a pwd data
  */
 static void
-show_pwd(amq_mount_tree *mt, char *path, int *flag)
+show_pwd(amq_mount_tree *mt, char *path, size_t l, int *flag)
 {
   int len;
 
@@ -177,13 +177,13 @@ show_pwd(amq_mount_tree *mt, char *path, int *flag)
     len = strlen(mt->mt_mountpoint);
     if (NSTREQ(path, mt->mt_mountpoint, len) &&
 	!STREQ(mt->mt_directory, mt->mt_mountpoint)) {
-      char buf[MAXPATHLEN+1];
-      strcpy(buf, mt->mt_directory);
-      strcat(buf, &path[len]);
-      strcpy(path, buf);
+      char buf[MAXPATHLEN+1];	/* must be same size as 'path' */
+      xstrlcpy(buf, mt->mt_directory, sizeof(buf));
+      xstrlcat(buf, &path[len], sizeof(buf));
+      xstrlcpy(path, buf, l);
       *flag = 1;
     }
-    show_pwd(mt->mt_next, path, flag);
+    show_pwd(mt->mt_next, path, l, flag);
     mt = mt->mt_child;
   }
 }
@@ -553,7 +553,7 @@ Usage: %s [-fmpsvwHTU] [-h hostname] [-l log_file|\"syslog\"]\n\
       mt = mlp->amq_mount_tree_list_val[i];
       while (1) {
 	flag = 0;
-	show_pwd(mt, path, &flag);
+	show_pwd(mt, path, sizeof(path), &flag);
 	if (!flag) {
 	  printf("%s\n", path);
 	  break;

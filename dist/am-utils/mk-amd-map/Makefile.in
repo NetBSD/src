@@ -59,6 +59,7 @@ PROGRAMS = $(sbin_PROGRAMS)
 am_mk_amd_map_OBJECTS = mk-amd-map.$(OBJEXT)
 mk_amd_map_OBJECTS = $(am_mk_amd_map_OBJECTS)
 mk_amd_map_LDADD = $(LDADD)
+mk_amd_map_DEPENDENCIES = ../libamu/libamu.la
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp =
 am__depfiles_maybe =
@@ -203,8 +204,7 @@ man_MANS = mk-amd-map.8
 # headers this depends on, not to be installed
 #noinst_HEADERS =
 mk_amd_map_SOURCES = mk-amd-map.c
-
-#LDADD = ../libamu/libamu.la
+LDADD = ../libamu/libamu.la
 INCLUDES = -I$(top_srcdir)/include
 AM_CFLAGS = @CFLAGS@ $(AMU_CFLAGS)
 

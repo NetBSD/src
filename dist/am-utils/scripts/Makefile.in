@@ -48,7 +48,8 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/ctl-amd.in $(srcdir)/ctl-hlfsd.in $(srcdir)/expn.in \
 	$(srcdir)/fix-amd-map.in $(srcdir)/fixrmtab.in \
 	$(srcdir)/lostaltmail.in $(srcdir)/redhat-ctl-amd.in \
-	$(srcdir)/wait4amd.in $(srcdir)/wait4amd2die.in
+	$(srcdir)/test-attrcache.in $(srcdir)/wait4amd.in \
+	$(srcdir)/wait4amd2die.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 $(top_srcdir)/vers.m4 \
 	$(top_srcdir)/configure.in
@@ -57,8 +58,8 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES = am-eject amd2ldif amd2sun automount2amd ctl-amd \
-	ctl-hlfsd expn fixrmtab fix-amd-map lostaltmail redhat-ctl-amd \
-	wait4amd wait4amd2die
+	ctl-hlfsd expn fix-amd-map fixrmtab lostaltmail redhat-ctl-amd \
+	test-attrcache wait4amd wait4amd2die
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sbindir)" \
 	"$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man5dir)" \
 	"$(DESTDIR)$(man8dir)" "$(DESTDIR)$(sysconfdir)"
@@ -213,7 +214,8 @@ sbin_SCRIPTS = \
 	wait4amd2die
 
 noinst_SCRIPTS = \
-	redhat-ctl-amd
+	redhat-ctl-amd	\
+	test-attrcache
 
 bin_SCRIPTS = expn
 sysconf_DATA = amd.conf-sample lostaltmail.conf-sample
@@ -287,13 +289,15 @@ ctl-hlfsd: $(top_builddir)/config.status $(srcdir)/ctl-hlfsd.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 expn: $(top_builddir)/config.status $(srcdir)/expn.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-fixrmtab: $(top_builddir)/config.status $(srcdir)/fixrmtab.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 fix-amd-map: $(top_builddir)/config.status $(srcdir)/fix-amd-map.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+fixrmtab: $(top_builddir)/config.status $(srcdir)/fixrmtab.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 lostaltmail: $(top_builddir)/config.status $(srcdir)/lostaltmail.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 redhat-ctl-amd: $(top_builddir)/config.status $(srcdir)/redhat-ctl-amd.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+test-attrcache: $(top_builddir)/config.status $(srcdir)/test-attrcache.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 wait4amd: $(top_builddir)/config.status $(srcdir)/wait4amd.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

@@ -1,4 +1,4 @@
-/*	$NetBSD: get_args.c,v 1.1.1.9 2005/09/20 17:15:00 rpaulo Exp $	*/
+/*	$NetBSD: get_args.c,v 1.1.1.10 2006/02/05 16:13:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -73,7 +73,7 @@ get_version_string(void)
   char tmpbuf[1024];
   char *wire_buf;
   int wire_buf_len = 0;
-  size_t len;			/* max allocated length (to avoid buf overflow) */
+  size_t len;		  /* max allocated length (to avoid buf overflow) */
 
   /*
    * First get dynamic string listing all known networks.
@@ -112,13 +112,13 @@ get_version_string(void)
   strlcat(vers, tmpbuf, len);
 
   strlcat(vers, "Map support for: ", len);
-  mapc_showtypes(tmpbuf);
+  mapc_showtypes(tmpbuf, sizeof(tmpbuf));
   strlcat(vers, tmpbuf, len);
   strlcat(vers, ".\nAMFS: ", len);
-  ops_showamfstypes(tmpbuf);
+  ops_showamfstypes(tmpbuf, sizeof(tmpbuf));
   strlcat(vers, tmpbuf, len);
   strlcat(vers, ", inherit.\nFS: ", len); /* hack: "show" that we support type:=inherit */
-  ops_showfstypes(tmpbuf);
+  ops_showfstypes(tmpbuf, sizeof(tmpbuf));
   strlcat(vers, tmpbuf, len);
 
   /* append list of networks if available */
@@ -328,7 +328,8 @@ get_args(int argc, char *argv[])
     fp = fopen(amu_conf_file, "r");
     if (!fp) {
       char buf[128];
-      sprintf(buf, "Amd configuration file (%s)", amu_conf_file);
+      xsnprintf(buf, sizeof(buf), "Amd configuration file (%s)",
+		amu_conf_file);
       perror(buf);
       exit(1);
     }
@@ -384,8 +385,8 @@ get_args(int argc, char *argv[])
       hostdomain = gopt.sub_domain;
     if (*hostdomain == '.')
       hostdomain++;
-    strcat(hostd, ".");
-    strcat(hostd, hostdomain);
+    xstrlcat(hostd, ".", sizeof(hostd));
+    xstrlcat(hostd, hostdomain, sizeof(hostd));
 
 #ifdef MOUNT_TABLE_ON_FILE
     if (amuDebug(D_MTAB))

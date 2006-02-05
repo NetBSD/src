@@ -1,4 +1,4 @@
-/*	$NetBSD: info_exec.c,v 1.1.1.2 2005/09/20 17:14:55 rpaulo Exp $	*/
+/*	$NetBSD: info_exec.c,v 1.1.1.3 2006/02/05 16:13:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -286,7 +286,8 @@ exec_map_open(char *emap, char *key)
     return -1;
   case 0:
     /* child #1 */
-    switch ((p2 = vfork())) {
+    p2 = vfork();
+    switch (p2) {
     case -1:
       /* child #1: fork error */
       exit(errno);

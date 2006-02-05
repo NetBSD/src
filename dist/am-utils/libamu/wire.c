@@ -1,4 +1,4 @@
-/*	$NetBSD: wire.c,v 1.1.1.9 2005/09/20 17:16:11 rpaulo Exp $	*/
+/*	$NetBSD: wire.c,v 1.1.1.10 2006/02/05 16:14:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -83,10 +83,6 @@ struct addrlist {
 };
 static addrlist *localnets = NULL;
 
-#ifndef INADDR_NONE
-# define INADDR_NONE ((unsigned long) -1)
-#endif /* INADDR_NONE */
-
 #if defined(IFF_LOCAL_LOOPBACK) && !defined(IFF_LOOPBACK)
 # define IFF_LOOPBACK	IFF_LOCAL_LOOPBACK
 #endif /* defined(IFF_LOCAL_LOOPBACK) && !defined(IFF_LOOPBACK) */
@@ -107,31 +103,32 @@ print_wires(void)
   int bufcount = 0;
   int buf_size = 1024;
 
-  buf = SALLOC(1024);
+  buf = SALLOC(buf_size);	/* initial allocation (may grow!) */
   if (!buf)
     return NULL;
 
   if (!localnets) {
-    sprintf(buf, "No networks.\n");
+    xstrlcpy(buf, "No networks\n", buf_size);
     return buf;
   }
   /* check if there's more than one network */
   if (!localnets->ip_next) {
-    sprintf(buf,
-	    "Network: wire=\"%s\" (netnumber=%s).\n",
-	    localnets->ip_net_name, localnets->ip_net_num);
+    /* use buf_size for sizeof(buf) because of the realloc() below */
+    xsnprintf(buf, buf_size,
+	      "Network: wire=\"%s\" (netnumber=%s).\n",
+	      localnets->ip_net_name, localnets->ip_net_num);
     return buf;
   }
   buf[0] = '\0';		/* null out buffer before appending */
   for (i = 1, al = localnets; al; al = al->ip_next, i++) {
-    sprintf(s, "Network %d: wire=\"%s\" (netnumber=%s).\n",
-	    i, al->ip_net_name, al->ip_net_num);
+    xsnprintf(s, sizeof(s), "Network %d: wire=\"%s\" (netnumber=%s).\n",
+	      i, al->ip_net_name, al->ip_net_num);
     bufcount += strlen(s);
     if (bufcount > buf_size) {
       buf_size *= 2;
       buf = xrealloc(buf, buf_size);
     }
-    strcat(buf, s);
+    xstrlcat(buf, s, buf_size);
   }
   return buf;
 }
@@ -216,18 +213,18 @@ getwire_lookup(u_long address, u_long netmask, int ishost)
   }
 
   if ((subnet & 0xffffff) == 0) {
-    sprintf(netNumberBuf, "%lu", C(subnet >> 24));
+    xsnprintf(netNumberBuf, sizeof(netNumberBuf), "%lu", C(subnet >> 24));
   } else if ((subnet & 0xffff) == 0) {
-    sprintf(netNumberBuf, "%lu.%lu",
-	C(subnet >> 24), C(subnet >> 16));
+    xsnprintf(netNumberBuf, sizeof(netNumberBuf), "%lu.%lu",
+	      C(subnet >> 24), C(subnet >> 16));
   } else if ((subnet & 0xff) == 0) {
-    sprintf(netNumberBuf, "%lu.%lu.%lu",
-	C(subnet >> 24), C(subnet >> 16),
-	C(subnet >> 8));
+    xsnprintf(netNumberBuf, sizeof(netNumberBuf), "%lu.%lu.%lu",
+	      C(subnet >> 24), C(subnet >> 16),
+	      C(subnet >> 8));
   } else {
-    sprintf(netNumberBuf, "%lu.%lu.%lu.%lu",
-	C(subnet >> 24), C(subnet >> 16),
-	C(subnet >> 8), C(subnet));
+    xsnprintf(netNumberBuf, sizeof(netNumberBuf), "%lu.%lu.%lu.%lu",
+	      C(subnet >> 24), C(subnet >> 16),
+	      C(subnet >> 8), C(subnet));
   }
 
   /* fill in network number (string) */
@@ -243,7 +240,7 @@ getwire_lookup(u_long address, u_long netmask, int ishost)
     if (hp != NULL)
       s = (char *) hp->h_name;
     else
-      s = inet_dquad(buf, subnet);
+      s = inet_dquad(buf, sizeof(buf), subnet);
   }
 
   /* fill in network name (string) */
@@ -265,14 +262,14 @@ getwire_lookup(u_long address, u_long netmask, int ishost)
  * sizeof(buf) needs to be at least 16.
  */
 char *
-inet_dquad(char *buf, u_long addr)
+inet_dquad(char *buf, size_t l, u_long addr)
 {
   addr = ntohl(addr);
-  sprintf(buf, "%ld.%ld.%ld.%ld",
-	  ((addr >> 24) & 0xff),
-	  ((addr >> 16) & 0xff),
-	  ((addr >> 8) & 0xff),
-	  ((addr >> 0) & 0xff));
+  xsnprintf(buf, l, "%ld.%ld.%ld.%ld",
+	    ((addr >> 24) & 0xff),
+	    ((addr >> 16) & 0xff),
+	    ((addr >> 8) & 0xff),
+	    ((addr >> 0) & 0xff));
   return buf;
 }
 
@@ -293,7 +290,8 @@ islocalnet(u_long addr)
 #ifdef DEBUG
   {
     char buf[16];
-    plog(XLOG_INFO, "%s is on a remote network", inet_dquad(buf, addr));
+    plog(XLOG_INFO, "%s is on a remote network",
+	 inet_dquad(buf, sizeof(buf), addr));
   }
 #endif /* DEBUG */
 

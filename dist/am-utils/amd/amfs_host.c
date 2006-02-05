@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_host.c,v 1.1.1.9 2005/09/20 17:14:43 rpaulo Exp $	*/
+/*	$NetBSD: amfs_host.c,v 1.1.1.10 2006/02/05 16:13:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -99,21 +99,21 @@ am_ops amfs_host_ops =
  * allows the entire PC disk to be mounted.
  */
 static void
-make_mntpt(char *mntpt, const exports ex, const char *mf_mount)
+make_mntpt(char *mntpt, size_t l, const exports ex, const char *mf_mount)
 {
   if (ex->ex_dir[0] == '/') {
     if (ex->ex_dir[1] == 0)
-      strcpy(mntpt, mf_mount);
+      xstrlcpy(mntpt, mf_mount, l);
     else
-      sprintf(mntpt, "%s%s", mf_mount, ex->ex_dir);
+      xsnprintf(mntpt, l, "%s%s", mf_mount, ex->ex_dir);
   } else if (ex->ex_dir[0] >= 'a' &&
 	     ex->ex_dir[0] <= 'z' &&
 	     ex->ex_dir[1] == ':' &&
 	     ex->ex_dir[2] == '/' &&
 	     ex->ex_dir[3] == 0)
-    sprintf(mntpt, "%s/%c%%", mf_mount, ex->ex_dir[0]);
+    xsnprintf(mntpt, l, "%s/%c%%", mf_mount, ex->ex_dir[0]);
   else
-    sprintf(mntpt, "%s/%s", mf_mount, ex->ex_dir);
+    xsnprintf(mntpt, l, "%s/%s", mf_mount, ex->ex_dir);
 }
 
 
@@ -420,7 +420,7 @@ amfs_host_mount(am_node *am, mntfs *mf)
    */
   ep = (exports *) xmalloc(n_export * sizeof(exports));
   for (j = 0, ex = exlist; ex; ex = ex->ex_next) {
-    make_mntpt(mntpt, ex, mf->mf_mount);
+    make_mntpt(mntpt, sizeof(mntpt), ex, mf->mf_mount);
     if (already_mounted(mlist, mntpt))
       /* we have at least one mounted f/s, so don't fail the mount */
       ok = TRUE;
@@ -477,8 +477,14 @@ amfs_host_mount(am_node *am, mntfs *mf)
   for (j = 0; j < n_export; j++) {
     ex = ep[j];
     if (ex) {
-      strcpy(rfs_dir, ex->ex_dir);
-      make_mntpt(mntpt, ex, mf->mf_mount);
+      /*
+       * Note: the sizeof space left in rfs_dir is what's left in fs_name
+       * after strchr() above returned a pointer _inside_ fs_name.  The
+       * calculation below also takes into account that rfs_dir was
+       * incremented by the ++ above.
+       */
+      xstrlcpy(rfs_dir, ex->ex_dir, sizeof(fs_name) - (rfs_dir - fs_name));
+      make_mntpt(mntpt, sizeof(mntpt), ex, mf->mf_mount);
       if (do_mount(&fp[j], mntpt, fs_name, mf) == 0)
 	ok = TRUE;
     }

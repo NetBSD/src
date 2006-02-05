@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subr.c,v 1.1.1.9 2005/09/20 17:14:51 rpaulo Exp $	*/
+/*	$NetBSD: nfs_subr.c,v 1.1.1.10 2006/02/05 16:13:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -207,8 +207,8 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
   /* finally, find the effective uid/gid from RPC request */
   if (getcreds(rqstp, &uid, &gid, nfsxprt) < 0)
     plog(XLOG_ERROR, "cannot get uid/gid from RPC credentials");
-  sprintf(opt_uid, "%d", (int) uid);
-  sprintf(opt_gid, "%d", (int) gid);
+  xsnprintf(opt_uid, sizeof(uid_str), "%d", (int) uid);
+  xsnprintf(opt_gid, sizeof(gid_str), "%d", (int) gid);
 
   mp = fh_to_mp3(&argp->da_fhandle, &retry, VLOOK_CREATE);
   if (mp == 0) {

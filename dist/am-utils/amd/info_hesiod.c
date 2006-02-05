@@ -1,4 +1,4 @@
-/*	$NetBSD: info_hesiod.c,v 1.1.1.9 2005/09/20 17:14:54 rpaulo Exp $	*/
+/*	$NetBSD: info_hesiod.c,v 1.1.1.10 2006/02/05 16:13:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -107,7 +107,7 @@ hesiod_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
   if (key[0] == '.')
     return ENOENT;
 
-  sprintf(hes_key, "%s.%s", key, map + HES_PREFLEN);
+  xsnprintf(hes_key, sizeof(hes_key), "%s.%s", key, map + HES_PREFLEN);
 
   /*
    * Call the resolver

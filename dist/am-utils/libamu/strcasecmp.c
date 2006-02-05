@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.1.1.9 2005/09/20 17:16:13 rpaulo Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.1.1.10 2006/02/05 16:14:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -55,8 +55,8 @@
 int
 strcasecmp(const char *s1, const char *s2)
 {
-  const char *cp1 = s1;
-  const char *cp2 = s2;
+  const unsigned char *cp1 = (const unsigned char *)s1;
+  const unsigned char *cp2 = (const unsigned char *)s2;
 
   while (tolower(*cp1) == tolower(*cp2++))
     if (*cp1++ == '\0')
