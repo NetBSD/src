@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.1.1.1.2.4 2006/02/04 13:36:18 simonb Exp $ */
+/* $NetBSD: kern_tc.c,v 1.1.1.1.2.5 2006/02/05 11:17:39 simonb Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.4 2006/02/04 13:36:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.5 2006/02/05 11:17:39 simonb Exp $");
 
 #include "opt_ntp.h"
 
@@ -112,15 +112,15 @@ SYSCTL_INT(_kern_timecounter, OID_AUTO, stepwarnings, CTLFLAG_RW,
 #endif /* __FreeBSD__ */
 
 #define	TC_STATS(name)							\
-static struct evcnt name =						\
+static struct evcnt n##name =						\
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "timecounter", #name);	\
-EVCNT_ATTACH_STATIC(name)
+EVCNT_ATTACH_STATIC(n##name)
 
-TC_STATS(nbinuptime);    TC_STATS(nnanouptime);    TC_STATS(nmicrouptime);
-TC_STATS(nbintime);      TC_STATS(nnanotime);      TC_STATS(nmicrotime);
-TC_STATS(ngetbinuptime); TC_STATS(ngetnanouptime); TC_STATS(ngetmicrouptime);
-TC_STATS(ngetbintime);   TC_STATS(ngetnanotime);   TC_STATS(ngetmicrotime);
-TC_STATS(nsetclock);
+TC_STATS(binuptime);    TC_STATS(nanouptime);    TC_STATS(microuptime);
+TC_STATS(bintime);      TC_STATS(nanotime);      TC_STATS(microtime);
+TC_STATS(getbinuptime); TC_STATS(getnanouptime); TC_STATS(getmicrouptime);
+TC_STATS(getbintime);   TC_STATS(getnanotime);   TC_STATS(getmicrotime);
+TC_STATS(setclock);
 
 #undef TC_STATS
 
