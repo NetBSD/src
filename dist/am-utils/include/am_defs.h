@@ -1,4 +1,4 @@
-/*	$NetBSD: am_defs.h,v 1.8 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.9 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -1229,6 +1229,13 @@ extern char *nc_sperror(void);
 #ifdef HAVE_SYS_STATFS_H
 # include <sys/statfs.h>
 #endif /* HAVE_SYS_STATFS_H */
+
+/*
+ * Actions to take if <sys/statvfs.h> exists.
+ */
+#ifdef HAVE_SYS_STATVFS_H
+# include <sys/statvfs.h>
+#endif /* HAVE_SYS_STATVFS_H */
 
 /*
  * Actions to take if <sys/vfs.h> exists.

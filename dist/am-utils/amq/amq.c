@@ -1,4 +1,4 @@
-/*	$NetBSD: amq.c,v 1.9 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: amq.c,v 1.10 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -177,10 +177,10 @@ show_pwd(amq_mount_tree *mt, char *path, size_t l, int *flag)
     len = strlen(mt->mt_mountpoint);
     if (NSTREQ(path, mt->mt_mountpoint, len) &&
 	!STREQ(mt->mt_directory, mt->mt_mountpoint)) {
-      char buf[MAXPATHLEN+1];
-      strlcpy(buf, mt->mt_directory, sizeof(buf));
-      strlcat(buf, &path[len], sizeof(buf));
-      strlcpy(path, buf, l);
+      char buf[MAXPATHLEN+1];	/* must be same size as 'path' */
+      xstrlcpy(buf, mt->mt_directory, sizeof(buf));
+      xstrlcat(buf, &path[len], sizeof(buf));
+      xstrlcpy(path, buf, l);
       *flag = 1;
     }
     show_pwd(mt->mt_next, path, l, flag);

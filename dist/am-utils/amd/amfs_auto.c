@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_auto.c,v 1.7 2005/09/20 17:57:44 rpaulo Exp $	*/
+/*	$NetBSD: amfs_auto.c,v 1.8 2006/02/05 16:28:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -154,10 +154,10 @@ amfs_auto_mount(am_node *mp, mntfs *mf)
 
 #ifdef HAVE_FS_AUTOFS
   if (mf->mf_flags & MFF_IS_AUTOFS) {
-    char opts[256];
+    char opts[SIZEOF_OPTS];
     int error;
 
-    autofs_get_opts(opts, mp->am_autofs_fh);
+    autofs_get_opts(opts, sizeof(opts), mp->am_autofs_fh);
 
     /* now do the mount */
     error = amfs_mount(mp, mf, opts);

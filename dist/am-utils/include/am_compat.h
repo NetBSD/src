@@ -1,4 +1,4 @@
-/*	$NetBSD: am_compat.h,v 1.4 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: am_compat.h,v 1.5 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -356,5 +356,10 @@ struct netconfig {
   int dummy;
 };
 #endif /* not HAVE_NETCONFIG_H and not HAVE_SYS_NETCONFIG_H */
+
+/* some OSs don't define INADDR_NONE and assume it's unsigned -1 */
+#ifndef INADDR_NONE
+# define INADDR_NONE	0xffffffffU
+#endif /* INADDR_NONE */
 
 #endif /* not _AM_COMPAT_H */

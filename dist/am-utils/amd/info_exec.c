@@ -1,4 +1,4 @@
-/*	$NetBSD: info_exec.c,v 1.1.1.3 2006/02/05 16:13:40 christos Exp $	*/
+/*	$NetBSD: info_exec.c,v 1.2 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok

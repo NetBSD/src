@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_netbsd1_4.h,v 1.1.1.10 2006/02/05 16:14:10 christos Exp $	*/
+/*	$NetBSD: nfs_prot_netbsd1_4.h,v 1.2 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok

@@ -1,4 +1,4 @@
-/*	$NetBSD: hlfsd.h,v 1.7 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: hlfsd.h,v 1.8 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -101,9 +101,6 @@
 # define DEFAULT_LOGFILE 0
 #endif /* not HAVE)_SYSLOG */
 
-#define ERRM ": %m"
-#define fatalerror(str) \
-  (fatal (strcat (strnsave ((str), strlen ((str)) + sizeof (ERRM) - 1), ERRM)))
 
 /*
  * TYPEDEFS:

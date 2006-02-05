@@ -1,4 +1,4 @@
-/*	$NetBSD: autil.c,v 1.6 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: autil.c,v 1.7 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -82,87 +82,17 @@ static int dofork(void);
 char *
 strealloc(char *p, char *s)
 {
-  int len = strlen(s) + 1;
+  size_t len = strlen(s) + 1;
 
   p = (char *) xrealloc((voidp) p, len);
 
-  strlcpy(p, s, len);
+  xstrlcpy(p, s, len);
 #ifdef DEBUG_MEM
 # if defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY)
   malloc_verify();
 # endif /* not defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY) */
 #endif /* DEBUG_MEM */
   return p;
-}
-
-
-/*
- * Split s using ch as delimiter and qc as quote character
- */
-char **
-strsplit(char *s, int ch, int qc)
-{
-  char **ivec;
-  int ic = 0;
-  int done = 0;
-
-  ivec = (char **) xmalloc((ic + 1) * sizeof(char *));
-
-  while (!done) {
-    char *v;
-
-    /*
-     * skip to split char
-     */
-    while (*s && (ch == ' ' ? (isascii(*s) && isspace((int)*s)) : *s == ch))
-      *s++ = '\0';
-
-    /*
-     * End of string?
-     */
-    if (!*s)
-      break;
-
-    /*
-     * remember start of string
-     */
-    v = s;
-
-    /*
-     * skip to split char
-     */
-    while (*s && !(ch == ' ' ? (isascii(*s) && isspace((int)*s)) : *s == ch)) {
-      if (*s++ == qc) {
-	/*
-	 * Skip past string.
-	 */
-	s++;
-	while (*s && *s != qc)
-	  s++;
-	if (*s == qc)
-	  s++;
-      }
-    }
-
-    if (!*s)
-      done = 1;
-    *s++ = '\0';
-
-    /*
-     * save string in new ivec slot
-     */
-    ivec[ic++] = v;
-    ivec = (char **) xrealloc((voidp) ivec, (ic + 1) * sizeof(char *));
-    if (amuDebug(D_STR))
-      plog(XLOG_DEBUG, "strsplit saved \"%s\"", v);
-  }
-
-  if (amuDebug(D_STR))
-    plog(XLOG_DEBUG, "strsplit saved a total of %d strings", ic);
-
-  ivec[ic] = 0;
-
-  return ivec;
 }
 
 
@@ -563,13 +493,14 @@ amfs_mount(am_node *mp, mntfs *mf, char *opts)
   /*
    * Make a ``hostname'' string for the kernel
    */
-  sprintf(fs_hostname, "pid%ld@%s:%s",
-	  get_server_pid(), am_get_hostname(), dir);
+  xsnprintf(fs_hostname, sizeof(fs_hostname), "pid%ld@%s:%s",
+	    get_server_pid(), am_get_hostname(), dir);
   /*
    * Most kernels have a name length restriction (64 bytes)...
    */
   if (strlen(fs_hostname) >= MAXHOSTNAMELEN)
-    strcpy(fs_hostname + MAXHOSTNAMELEN - 3, "..");
+    xstrlcpy(fs_hostname + MAXHOSTNAMELEN - 3, "..",
+	     sizeof(fs_hostname) - MAXHOSTNAMELEN + 3);
 #ifdef HOSTNAMESZ
   /*
    * ... and some of these restrictions are 32 bytes (HOSTNAMESZ)
@@ -577,7 +508,8 @@ amfs_mount(am_node *mp, mntfs *mf, char *opts)
    * add the proper header file to the conf/nfs_prot/nfs_prot_*.h file.
    */
   if (strlen(fs_hostname) >= HOSTNAMESZ)
-    strcpy(fs_hostname + HOSTNAMESZ - 3, "..");
+    xstrlcpy(fs_hostname + HOSTNAMESZ - 3, "..",
+	     sizeof(fs_hostname) - HOSTNAMESZ + 3);
 #endif /* HOSTNAMESZ */
 
   /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.4 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.5 2006/02/05 16:28:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok

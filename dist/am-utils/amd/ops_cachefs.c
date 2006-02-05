@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_cachefs.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: ops_cachefs.c,v 1.6 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -177,8 +177,13 @@ mount_cachefs(char *mntdir, char *backdir, char *cachedir,
 
   /* CFS fscdir name */
   memset(ca.cfs_cacheid, 0, sizeof(ca.cfs_cacheid));
-  /* append cacheid and mountpoint */
-  snprintf(ca.cfs_cacheid, sizeof(ca.cfs_cacheid), "%s:%s", ca.cfs_fsid, mntdir);
+  /*
+   * Append cacheid and mountpoint.
+   * sizeof(cfs_cacheid) should be C_MAX_MOUNT_FSCDIRNAME as per
+   * <sys/fs/cachefs_fs.h> (checked on Solaris 8).
+   */
+  xsnprintf(ca.cfs_cacheid, sizeof(ca.cfs_cacheid),
+	    "%s:%s", ca.cfs_fsid, mntdir);
   /* convert '/' to '_' (Solaris does that...) */
   cp = ca.cfs_cacheid;
   while ((cp = strpbrk(cp, "/")) != NULL)
@@ -249,7 +254,7 @@ cachefs_umount(am_node *am, mntfs *mf)
 
     cachedir = (char *) mf->mf_private;
     plog(XLOG_INFO, "running fsck on cache directory \"%s\"", cachedir);
-    snprintf(cmd, sizeof(cmd), "fsck -F cachefs %s", cachedir);
+    xsnprintf(cmd, sizeof(cmd), "fsck -F cachefs %s", cachedir);
     system(cmd);
   }
 

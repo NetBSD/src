@@ -1,4 +1,4 @@
-/*	$NetBSD: opts.c,v 1.9 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: opts.c,v 1.10 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -115,7 +115,7 @@ static char *opt_key = nullstr;
 static char *opt_keyd = nullstr;
 static char *opt_map = nullstr;
 static char *opt_path = nullstr;
-static char uid_str[12], gid_str[12];
+char uid_str[SIZEOF_UID_STR], gid_str[SIZEOF_GID_STR];
 char *opt_uid = uid_str;
 char *opt_gid = gid_str;
 static char *vars[8];
@@ -1157,12 +1157,12 @@ expand_op(char *opt, int sel_p)
 	    /*
 	     * Copy the string across unexpanded
 	     */
-	    snprintf(xbuf, sizeof(xbuf), "${%s%s%s}",
-		    todo == E_File ? "/" :
-		    todo == E_Domain ? "." : "",
-		    nbuf,
-		    todo == E_Dir ? "/" :
-		    todo == E_Host ? "." : "");
+	    xsnprintf(xbuf, sizeof(xbuf), "${%s%s%s}",
+		      todo == E_File ? "/" :
+		      todo == E_Domain ? "." : "",
+		      nbuf,
+		      todo == E_Dir ? "/" :
+		      todo == E_Host ? "." : "");
 	    val = xbuf;
 	    /*
 	     * Make sure expansion doesn't
@@ -1221,8 +1221,8 @@ expand_op(char *opt, int sel_p)
 	      break;
 	    }
 
-	    if (BUFSPACE(ep, vlen)) {
-	      strlcpy(ep, vptr, sizeof(expbuf) - (ep - expbuf));
+	    if (BUFSPACE(ep, vlen+1)) {
+	      xstrlcpy(ep, vptr, vlen+1);
 	      ep += vlen;
 	    } else {
 	      plog(XLOG_ERROR, EXPAND_ERROR, opt);
@@ -1250,8 +1250,8 @@ expand_op(char *opt, int sel_p)
 	if (env) {
 	  int vlen = strlen(env);
 
-	  if (BUFSPACE(ep, vlen)) {
-	    strlcpy(ep, env, sizeof(expbuf) - (ep - expbuf));
+	  if (BUFSPACE(ep, vlen+1)) {
+	    xstrlcpy(ep, env, vlen+1);
 	    ep += vlen;
 	  } else {
 	    plog(XLOG_ERROR, EXPAND_ERROR, opt);
@@ -1281,9 +1281,10 @@ out:
     /*
      * Finish off the expansion
      */
-    if (BUFSPACE(ep, strlen(cp))) {
-      strlcpy(ep, cp, sizeof(expbuf) - (ep - expbuf));
-      /* ep += strlen(ep); */
+    int vlen = strlen(cp);
+    if (BUFSPACE(ep, vlen+1)) {
+      xstrlcpy(ep, cp, vlen+1);
+      /* ep += vlen; */
     } else {
       plog(XLOG_ERROR, EXPAND_ERROR, opt);
     }

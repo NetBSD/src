@@ -1,4 +1,4 @@
-/*	$NetBSD: info_passwd.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: info_passwd.c,v 1.6 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -152,11 +152,11 @@ passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
     do {
       q = strrchr(p, '/');
       if (q) {
-	strlcat(rhost, q + 1, sizeof(rhost));
-	strlcat(rhost, ".", sizeof(rhost));
+	xstrlcat(rhost, q + 1, sizeof(rhost));
+	xstrlcat(rhost, ".", sizeof(rhost));
 	*q = '\0';
       } else {
-	strlcat(rhost, p, sizeof(rhost));
+	xstrlcat(rhost, p, sizeof(rhost));
       }
     } while (q);
 
@@ -177,8 +177,8 @@ passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
       p++;
     else
       p = "type:=nfs;rfs:=/${var0}/${var1};rhost:=${var1};sublink:=${var2};fs:=${autodir}${var3}";
-    snprintf(val, sizeof(val), "var0:=%s;var1:=%s;var2:=%s;var3:=%s;%s",
-	    dir+1, rhost, user, pw->pw_dir, p);
+    xsnprintf(val, sizeof(val), "var0:=%s;var1:=%s;var2:=%s;var3:=%s;%s",
+	      dir+1, rhost, user, pw->pw_dir, p);
     dlog("passwd_search: map=%s key=%s -> %s", map, key, val);
     if (q)
       *q = '.';

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_start.c,v 1.8 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: nfs_start.c,v 1.9 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -237,7 +237,7 @@ run_rpc(void)
     }
     tvv.tv_usec = 0;
 
-    if (amd_state == Finishing && get_exported_ap(0) == 0) {
+    if (amd_state == Finishing && get_exported_ap(0) == NULL) {
       flush_mntfs();
       amd_state = Quit;
       break;
@@ -371,8 +371,8 @@ mount_automounter(int ppid)
     if (ret != 0)
       return ret;
   }
-  snprintf(pid_fsname, 16 + MAXHOSTNAMELEN, "%s:(pid%ld,port%u)",
-      am_get_hostname(), (long) am_mypid, nfs_port);
+  xsnprintf(pid_fsname, sizeof(pid_fsname), "%s:(pid%ld,port%u)",
+	    am_get_hostname(), (long) am_mypid, nfs_port);
 
   /* security: if user sets -D amq, don't even create listening socket */
   if (!amuDebug(D_AMQ)) {

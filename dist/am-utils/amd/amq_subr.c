@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_subr.c,v 1.11 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: amq_subr.c,v 1.12 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -190,6 +190,43 @@ amqproc_getpid_1_svc(voidp argp, struct svc_req *rqstp)
   static int res;
 
   res = getpid();
+  return &res;
+}
+
+
+/* process PAWD string of remote pawd tool */
+amq_string *
+amqproc_pawd_1_svc(voidp argp, struct svc_req *rqstp)
+{
+  static amq_string res;
+  int index, len;
+  am_node *mp;
+  char *mountpoint;
+  char *dir = *(char **) argp;
+  static char tmp_buf[MAXPATHLEN];
+
+  tmp_buf[0] = '\0';		/* default is empty string: no match */
+  for (mp = get_first_exported_ap(&index);
+       mp;
+       mp = get_next_exported_ap(&index)) {
+    if (STREQ(mp->am_mnt->mf_ops->fs_type, "toplvl"))
+      continue;
+    if (STREQ(mp->am_mnt->mf_ops->fs_type, "auto"))
+      continue;
+    mountpoint = (mp->am_link ? mp->am_link : mp->am_mnt->mf_mount);
+    len = strlen(mountpoint);
+    if (len == 0)
+      continue;
+    if (!NSTREQ(mountpoint, dir, len))
+      continue;
+    if (dir[len] != '\0' && dir[len] != '/')
+      continue;
+    xstrlcpy(tmp_buf, mp->am_path, sizeof(tmp_buf));
+    xstrlcat(tmp_buf, &dir[len], sizeof(tmp_buf));
+    break;
+  }
+
+  res = tmp_buf;
   return &res;
 }
 
