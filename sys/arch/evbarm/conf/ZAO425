@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.25 2006/02/04 02:50:10 rpaulo Exp $
+#	$NetBSD: ZAO425,v 1.26 2006/02/05 05:01:49 cube Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -252,7 +252,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

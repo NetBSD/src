@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.37 2006/02/04 03:15:30 rpaulo Exp $
+#	$NetBSD: INSTALL,v 1.38 2006/02/05 05:01:56 cube Exp $
 #
 # INSTALL
 
@@ -195,8 +195,8 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 
 # network pseudo-devices
 pseudo-device	loop 		1 	# network loopback
-pseudo-device	ppp		1 	# Point-to-Point Protocol
-pseudo-device	sl		1 	# Serial Line IP
+pseudo-device	ppp		 	# Point-to-Point Protocol
+pseudo-device	sl		 	# Serial Line IP
 
 # miscellaneous pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

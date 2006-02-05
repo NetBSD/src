@@ -1,4 +1,4 @@
-#	$NetBSD: IXM1200,v 1.23 2006/02/04 09:11:32 he Exp $
+#	$NetBSD: IXM1200,v 1.24 2006/02/05 05:01:49 cube Exp $
 #
 #	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
 #
@@ -177,7 +177,7 @@ inphy*  at mii? phy ?                   # Intel 82555 PHYs
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 #pseudo-device	bpfilter		# Berkeley packet filter

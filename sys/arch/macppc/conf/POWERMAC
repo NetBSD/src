@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.53 2006/02/04 03:16:23 rpaulo Exp $
+#	$NetBSD: POWERMAC,v 1.54 2006/02/05 05:01:56 cube Exp $
 #
 # POWERMAC config file
 #
@@ -108,7 +108,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	rnd			# /dev/random and in-kernel generator
