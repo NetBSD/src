@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.405 2006/02/04 22:40:12 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.406 2006/02/05 02:41:11 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -536,7 +536,7 @@ NOTE: As of 20010405 -current includes a fix for the "ntpdx" root
 exploit/DoS attack which has been pulled up to the 1.4 and 1.5 branches.
 
 Package:	OpenPAM
-Version:	20050201
+Version:	20050616
 Current Vers:	20050616
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
@@ -545,8 +545,6 @@ Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
 Notes:
-The next time OpenPAM is imported (OpenPAM Feterita or later), eliminate
-the local copy of openpam_free_envlist() in the pam_exec module.
 
 Package:	OpenSSH
 Version:	4.3
