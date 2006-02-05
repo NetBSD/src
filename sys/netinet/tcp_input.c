@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.237.4.1 2006/02/05 03:09:11 rpaulo Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.237.4.2 2006/02/05 03:15:53 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.237.4.1 2006/02/05 03:09:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.237.4.2 2006/02/05 03:15:53 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1284,12 +1284,12 @@ findpcb:
 
 #ifdef INET6
 	/* save packet options if user wanted */
-	if (in6p && (in6p->in6p_flags & IN6P_CONTROLOPTS)) {
-		if (in6p->in6p_options) {
-			m_freem(in6p->in6p_options);
-			in6p->in6p_options = 0;
+	if (inp->inp_af == AF_INET && (in6p->in6p_flags & IN6P_CONTROLOPTS)) {
+		if (inp->inp_options) {
+			m_freem(inp->inp_options);
+			inp->inp_options = 0;
 		}
-		ip6_savecontrol(in6p, &in6p->in6p_options, ip6, m);
+		ip6_savecontrol(inp, &inp->inp_options, ip6, m);
 	}
 #endif
 
@@ -3683,15 +3683,16 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 #endif
 	}
 #ifdef INET6
-	if (in6p && in6totcpcb(in6p)->t_family == AF_INET6 && sotoinpcb(oso)) {
-		struct in6pcb *oin6p = sotoin6pcb(oso);
+	if (inp->inp_af == AF_INET6 && 
+	    intotcpcb(inp)->t_family == AF_INET6 && sotoinpcb(oso)) {
+		struct inpcb *oinp = sotoinpcb(oso);
 		/* inherit socket options from the listening socket */
-		in6p->in6p_flags |= (oin6p->in6p_flags & IN6P_CONTROLOPTS);
-		if (in6p->in6p_flags & IN6P_CONTROLOPTS) {
-			m_freem(in6p->in6p_options);
-			in6p->in6p_options = 0;
+		inp->in6p_flags |= (oinp->in6p_flags & IN6P_CONTROLOPTS);
+		if (inp->in6p_flags & IN6P_CONTROLOPTS) {
+			m_freem(inp->inp_options);
+			inp->inp_options = 0;
 		}
-		ip6_savecontrol(in6p, &in6p->in6p_options,
+		ip6_savecontrol(inp, &inp->inp_options,
 			mtod(m, struct ip6_hdr *), m);
 	}
 #endif
