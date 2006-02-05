@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_linux.c,v 1.1.1.5 2005/09/20 17:15:04 rpaulo Exp $	*/
+/*	$NetBSD: autofs_linux.c,v 1.1.1.6 2006/02/05 16:13:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Ion Badulescu
@@ -79,7 +79,8 @@ static int numfds = 0;
 static int bind_works = 1;
 
 
-static void hash_init(void)
+static void
+hash_init(void)
 {
   int i;
   struct rlimit rlim;
@@ -100,7 +101,8 @@ static void hash_init(void)
 }
 
 
-static void hash_insert(int fd, am_node *mp)
+static void
+hash_insert(int fd, am_node *mp)
 {
   if (hash[fd] != 0)
     plog(XLOG_ERROR, "file descriptor %d already in the hash", fd);
@@ -111,7 +113,8 @@ static void hash_insert(int fd, am_node *mp)
 }
 
 
-static void hash_delete(int fd)
+static void
+hash_delete(int fd)
 {
   int i;
 
@@ -639,7 +642,7 @@ autofs_mount_fs(am_node *mp, mntfs *mf)
 
  out:
   if (target2)
-    free(target2);
+    XFREE(target2);
 
   if (err)
     return errno;
@@ -780,10 +783,10 @@ autofs_mount_failed(am_node *mp)
 
 
 void
-autofs_get_opts(char *opts, autofs_fh_t *fh)
+autofs_get_opts(char *opts, size_t l, autofs_fh_t *fh)
 {
-  sprintf(opts, "fd=%d,minproto=%d,maxproto=%d",
-	  fh->kernelfd, AUTOFS_MIN_VERSION, AUTOFS_MAX_VERSION);
+  xsnprintf(opts, l, "fd=%d,minproto=%d,maxproto=%d",
+	    fh->kernelfd, AUTOFS_MIN_VERSION, AUTOFS_MAX_VERSION);
 }
 
 

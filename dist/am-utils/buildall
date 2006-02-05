@@ -271,7 +271,7 @@ if test -d ./A.${host_alias} ; then
 else
     mkdir ./A.${host_alias}
 fi
-echo "Configuring/building am-utils in directory ./A.${host_alias} ..." 
+echo "Configuring/building am-utils in directory ./A.${host_alias} ..."
 echo cd ./A.${host_alias}
 cd ./A.${host_alias} || exit 1
 
