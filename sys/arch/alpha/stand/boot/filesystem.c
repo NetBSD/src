@@ -1,4 +1,4 @@
-/* $NetBSD: filesystem.c,v 1.8 2003/02/23 23:23:07 simonb Exp $ */
+/* $NetBSD: filesystem.c,v 1.8.16.1 2006/02/05 18:47:55 tron Exp $ */
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -42,6 +42,8 @@
 struct fs_ops file_system[] = {
     { ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, ustarfs_seek,
 	ustarfs_stat },	/* this one can work from tape, so put it first */
+    { ffsv2_open, ffsv2_close, ffsv2_read, ffsv2_write, ffsv2_seek,
+	ffsv2_stat },
     { ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek,
 	ufs_stat },
     { cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
