@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.113.4.1 2006/02/05 03:09:11 rpaulo Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.113.4.2 2006/02/05 03:47:54 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.4.1 2006/02/05 03:09:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.4.2 2006/02/05 03:47:54 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1191,20 +1191,18 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 int
 sysctl_inpcblist(SYSCTLFN_ARGS)
 {
+	const struct inpcb *inp;
 #ifdef INET
 	struct sockaddr_in *in;
-	const struct inpcb *inp;
 #endif
 #ifdef INET6
 	struct sockaddr_in6 *in6;
-	const struct in6pcb *in6p;
 #endif
 	/*
 	 * sysctl_data is const, but CIRCLEQ_FOREACH can't use a const
 	 * struct inpcbtable pointer, so we have to discard const.  :-/
 	 */
 	struct inpcbtable *pcbtbl = __UNCONST(rnode->sysctl_data);
-	const struct inpcb_hdr *inph;
 	struct tcpcb *tp;
 	struct kinfo_pcb pcb;
 	char *dp;
@@ -1238,19 +1236,12 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	proto = oname[2];
 	pf2 = (oldp == NULL) ? 0 : pf;
 
-	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
-#ifdef INET
-		inp = (const struct inpcb *)inph;
-#endif
-#ifdef INET6
-		in6p = (const struct in6pcb *)inph;
-#endif
-
-		if (inph->inph_af != pf)
+	CIRCLEQ_FOREACH(inp, &pcbtbl->inpt_queue, inp_queue) {
+		if (inp->inp_af != pf)
 			continue;
 
 		if (CURTAIN(l->l_proc->p_ucred->cr_uid,
-			    inph->inph_socket->so_uidinfo->ui_uid))
+			    inp->inp_socket->so_uidinfo->ui_uid))
 			continue;
 
 		memset(&pcb, 0, sizeof(pcb));
@@ -1303,43 +1294,43 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 #endif
 #ifdef INET6
 		case PF_INET6:
-			pcb.ki_family = in6p->in6p_socket->so_proto->
+			pcb.ki_family = inp->inp_socket->so_proto->
 			    pr_domain->dom_family;
-			pcb.ki_type = in6p->in6p_socket->so_proto->pr_type;
-			pcb.ki_protocol = in6p->in6p_socket->so_proto->
+			pcb.ki_type = inp->inp_socket->so_proto->pr_type;
+			pcb.ki_protocol = inp->inp_socket->so_proto->
 			    pr_protocol;
-			pcb.ki_pflags = in6p->in6p_flags;
+			pcb.ki_pflags = inp->in6p_flags;
 
-			pcb.ki_sostate = in6p->in6p_socket->so_state;
-			pcb.ki_prstate = in6p->in6p_state;
+			pcb.ki_sostate = inp->inp_socket->so_state;
+			pcb.ki_prstate = inp->inp_state;
 			if (proto == IPPROTO_TCP) {
-				tp = in6totcpcb(in6p);
+				tp = intotcpcb(inp);
 				pcb.ki_tstate = tp->t_state;
 				pcb.ki_tflags = tp->t_flags;
 			}
 
-			pcb.ki_pcbaddr = PTRTOUINT64(in6p);
-			pcb.ki_ppcbaddr = PTRTOUINT64(in6p->in6p_ppcb);
-			pcb.ki_sockaddr = PTRTOUINT64(in6p->in6p_socket);
+			pcb.ki_pcbaddr = PTRTOUINT64(inp);
+			pcb.ki_ppcbaddr = PTRTOUINT64(inp->inp_ppcb);
+			pcb.ki_sockaddr = PTRTOUINT64(inp->inp_socket);
 
-			pcb.ki_rcvq = in6p->in6p_socket->so_rcv.sb_cc;
-			pcb.ki_sndq = in6p->in6p_socket->so_snd.sb_cc;
+			pcb.ki_rcvq = inp->inp_socket->so_rcv.sb_cc;
+			pcb.ki_sndq = inp->inp_socket->so_snd.sb_cc;
 
 			in6 = satosin6(&pcb.ki_src);
 			in6->sin6_len = sizeof(*in6);
 			in6->sin6_family = pf;
-			in6->sin6_port = in6p->in6p_lport;
-			in6->sin6_flowinfo = in6p->in6p_flowinfo;
-			in6->sin6_addr = in6p->in6p_laddr;
+			in6->sin6_port = inp->inp_lport;
+			in6->sin6_flowinfo = inp->in6p_flowinfo;
+			in6->sin6_addr = inp->in6p_laddr;
 			in6->sin6_scope_id = 0; /* XXX? */
 
-			if (pcb.ki_prstate >= IN6P_CONNECTED) {
+			if (pcb.ki_prstate >= INP_CONNECTED) {
 				in6 = satosin6(&pcb.ki_dst);
 				in6->sin6_len = sizeof(*in6);
 				in6->sin6_family = pf;
-				in6->sin6_port = in6p->in6p_fport;
-				in6->sin6_flowinfo = in6p->in6p_flowinfo;
-				in6->sin6_addr = in6p->in6p_faddr;
+				in6->sin6_port = inp->inp_fport;
+				in6->sin6_flowinfo = inp->in6p_flowinfo;
+				in6->sin6_addr = inp->in6p_faddr;
 				in6->sin6_scope_id = 0; /* XXX? */
 			}
 			break;
