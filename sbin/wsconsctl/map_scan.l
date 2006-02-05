@@ -1,4 +1,4 @@
-/*	$NetBSD: map_scan.l,v 1.2 2005/01/19 20:37:52 xtraeme Exp $ */
+/*	$NetBSD: map_scan.l,v 1.3 2006/02/05 18:11:46 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,10 @@
 
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+
 #include <err.h>
+#include <stdlib.h>
+
 #include "wsconsctl.h"
 #include "map_parse.h"
 
@@ -49,6 +52,7 @@
 void
 map_scan_setinput(char *str)
 {
+
 	yy_scan_string(str);
 }
 
@@ -77,7 +81,7 @@ keysym {
 
 		i = name2ksym(yytext);
 		if (i == -1)
-			errx(1, "%s: not a keysym", yytext);
+			errx(EXIT_FAILURE, "%s: not a keysym", yytext);
 		yylval.kval = i;
 		if (KS_GROUP(i) == KS_GROUP_Command ||
 		    i == KS_Cmd || i == KS_Cmd1 || i == KS_Cmd2)
@@ -93,9 +97,11 @@ keysym {
 
 . {
 		if (yytext[0] >= ' ' && yytext[0] <= '~')
-			errx(1, "%c: illegal character in input", yytext[0]);
+			errx(EXIT_FAILURE, "%c: illegal character in input",
+			    yytext[0]);
 		else
-			errx(1, "%03o: illegal character in input", yytext[0] & 255);
+			errx(EXIT_FAILURE, "%03o: illegal character in input",
+			    yytext[0] & 255);
 
 		/* To quiet the compiler */
 		if (0)

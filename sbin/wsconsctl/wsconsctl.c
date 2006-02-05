@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.13 2005/06/26 22:45:50 christos Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.14 2006/02/05 18:11:46 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -36,12 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <fcntl.h>
 #include <err.h>
+#include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include "wsconsctl.h"
 
 #define PATH_KEYBOARD		"/dev/wskbd"
@@ -63,17 +64,16 @@ usage(const char *msg)
 	const char *progname = getprogname();
 
 	if (msg != NULL)
-		fprintf(stderr, "%s: %s\n\n", progname, msg);
+		(void)fprintf(stderr, "%s: %s\n\n", progname, msg);
 
-	fprintf(stderr, "Usage: %s [-kmd] [-f file] [-n] name ...\n",
-		progname);
-	fprintf(stderr, " -or-  %s [-kmd] [-f file] [-n] -w name=value ...\n",
-		progname);
-	fprintf(stderr, " -or-  %s [-kmd] [-f file] [-n] -w name+=value ...\n",
-		progname);
-	fprintf(stderr, " -or-  %s [-kmd] [-f file] [-n] -a\n", progname);
+	(void)fprintf(stderr,
+	    "Usage: %s [-kmd] [-f file] [-n] name ...\n"
+	    " -or-  %s [-kmd] [-f file] [-n] -w name=value ...\n"
+	    " -or-  %s [-kmd] [-f file] [-n] -w name+=value ...\n"
+	    " -or-  %s [-kmd] [-f file] [-n] -a\n",
+	    progname, progname, progname, progname);
 
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 	if (fd < 0)
 		fd = open(file, O_RDONLY);
 	if (fd < 0)
-		err(1, "%s", file);
+		err(EXIT_FAILURE, "%s", file);
 
 	if (aflag != 0) {
 		for (i = 0; i < field_tab_len; i++)
@@ -180,7 +180,7 @@ main(int argc, char **argv)
 		for (i = 0; i < field_tab_len; i++)
 			if (field_tab[i].flags & FLG_NOAUTO)
 				warnx("Use explicit arg to view %s.",
-				      field_tab[i].name);
+				    field_tab[i].name);
 			else if (field_tab[i].flags & FLG_GET &&
 				 !(field_tab[i].flags & FLG_DISABLED))
 				pr_field(field_tab + i, sep);
@@ -189,7 +189,7 @@ main(int argc, char **argv)
 			for (i = 0; i < argc; i++) {
 				p = strchr(argv[i], '=');
 				if (p == NULL)
-					errx(1, "'=' not found");
+					errx(EXIT_FAILURE, "'=' not found");
 				if (p > argv[i] && *(p - 1) == '+') {
 					*(p - 1) = '\0';
 					do_merge = 1;
@@ -198,11 +198,13 @@ main(int argc, char **argv)
 				*p++ = '\0';
 				f = field_by_name(argv[i]);
 				if ((f->flags & FLG_RDONLY) != 0)
-					errx(1, "%s: read only", argv[i]);
+					errx(EXIT_FAILURE, "%s: read only",
+					    argv[i]);
 				if (do_merge) {
 					if ((f->flags & FLG_MODIFY) == 0)
-						errx(1, "%s: can only be set",
-						     argv[i]);
+						errx(EXIT_FAILURE,
+						    "%s: can only be set",
+						    argv[i]);
 					f->flags |= FLG_GET;
 					(*getval)(fd);
 					f->flags &= ~FLG_GET;
@@ -216,14 +218,16 @@ main(int argc, char **argv)
 			for (i = 0; i < argc; i++) {
 				f = field_by_name(argv[i]);
 				if ((f->flags & FLG_WRONLY) != 0)
-					errx(1, "%s: write only", argv[i]);
+					errx(EXIT_FAILURE, "%s: write only",
+					    argv[i]);
 				f->flags |= FLG_GET;
 			}
 			(*getval)(fd);
 			for (i = 0; i < field_tab_len; i++) {
 				if (field_tab[i].flags & FLG_DISABLED)
-					errx(1, "%s: no kernel support",
-					     field_tab[i].name);
+					errx(EXIT_FAILURE,
+					    "%s: no kernel support",
+					    field_tab[i].name);
 				if (field_tab[i].flags & FLG_GET)
 					pr_field(field_tab + i, sep);
 			}
@@ -234,5 +238,6 @@ main(int argc, char **argv)
 	}
 
 	close(fd);
-	exit(0);
+
+	return EXIT_SUCCESS;
 }
