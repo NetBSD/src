@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.116 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.116.2.1 2006/02/05 13:20:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.116 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.116.2.1 2006/02/05 13:20:21 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1017,10 +1017,11 @@ kernfs_setdirentfileno_kt(struct dirent *d, const struct kern_target *kt,
 		return error;
 	if (kt->kt_tag == KFSdevice) {
 		struct vattr va;
-		if ((error = VOP_GETATTR(vp, &va, ap->a_cred,
-		    ap->a_uio->uio_segflg == UIO_USERSPACE ?
-		    ap->a_uio->uio_lwp : &lwp0)) != 0)
-			return (error);
+
+		error = VOP_GETATTR(vp, &va, ap->a_cred, curlwp);
+		if (error != 0) {
+			return error;
+		}
 		d->d_fileno = va.va_fileid;
 	} else {
 		kfs = VTOKERN(vp);
