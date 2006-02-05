@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.6 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: map.c,v 1.7 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -902,7 +902,7 @@ unmount_mp(am_node *mp)
     time_t last = mp->am_parent->am_attr.ns_u.ns_attr_u.na_mtime.nt_seconds;
     clocktime(&mp->am_parent->am_attr.ns_u.ns_attr_u.na_mtime);
     /* defensive programming... can't we assert the above condition? */
-    if (last == mp->am_parent->am_attr.ns_u.ns_attr_u.na_mtime.nt_seconds)
+    if (last == (time_t) mp->am_parent->am_attr.ns_u.ns_attr_u.na_mtime.nt_seconds)
       mp->am_parent->am_attr.ns_u.ns_attr_u.na_mtime.nt_seconds++;
   }
 #endif /* not MNT2_NFS_OPT_SYMTTL */

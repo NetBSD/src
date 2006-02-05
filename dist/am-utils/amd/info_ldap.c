@@ -1,4 +1,4 @@
-/*	$NetBSD: info_ldap.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: info_ldap.c,v 1.6 2006/02/05 16:28:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -352,7 +352,7 @@ get_ldap_timestamp(ALD *a, char *map, time_t *ts)
 
   tv.tv_sec = 3;
   tv.tv_usec = 0;
-  snprintf(filter, sizeof(filter), AMD_LDAP_TSFILTER, map);
+  xsnprintf(filter, sizeof(filter), AMD_LDAP_TSFILTER, map);
   dlog("Getting timestamp for map %s\n", map);
   dlog("Filter is: %s\n", filter);
   dlog("Base is: %s\n", gopt.ldap_base);
@@ -457,7 +457,7 @@ amu_ldap_search(mnt_map *m, char *map, char *key, char **pval, time_t *ts)
   if (amu_ldap_rebind(a))	/* Check that's the handle is still valid */
     return (ENOENT);
 
-  snprintf(filter, sizeof(filter), AMD_LDAP_FILTER, map, key);
+  xsnprintf(filter, sizeof(filter), AMD_LDAP_FILTER, map, key);
   /* "*" is special to ldap_search(); run through the filter escaping it. */
   f1 = filter; f2 = filter2;
   while (*f1) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: amd.h,v 1.4 2005/09/20 17:57:44 rpaulo Exp $	*/
+/*	$NetBSD: amd.h,v 1.5 2006/02/05 16:28:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -513,6 +513,7 @@ extern amq_mount_stats *amqproc_stats_1_svc(voidp argp, struct svc_req *rqstp);
 extern amq_mount_tree_list *amqproc_export_1_svc(voidp argp, struct svc_req *rqstp);
 extern amq_mount_tree_p *amqproc_mnttree_1_svc(voidp argp, struct svc_req *rqstp);
 extern amq_string *amqproc_getvers_1_svc(voidp argp, struct svc_req *rqstp);
+extern amq_string *amqproc_pawd_1_svc(voidp argp, struct svc_req *rqstp);
 extern int *amqproc_getpid_1_svc(voidp argp, struct svc_req *rqstp);
 extern int *amqproc_mount_1_svc(voidp argp, struct svc_req *rqstp);
 extern int *amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp);
@@ -591,7 +592,7 @@ extern void mapc_free(opaque_t);
 extern int  mapc_keyiter(mnt_map *, key_fun, opaque_t);
 extern void mapc_reload(void);
 extern int  mapc_search(mnt_map *, char *, char **);
-extern void mapc_showtypes(char *buf, size_t buflen);
+extern void mapc_showtypes(char *buf, size_t l);
 extern int  mapc_type_exists(const char *type);
 extern void mk_fattr(nfsfattr *, nfsftype);
 extern int  mount_auto_node(char *, opaque_t);
@@ -601,8 +602,8 @@ extern void mp_to_fh(am_node *, am_nfs_fh *);
 extern void new_ttl(am_node *);
 extern void nfs_quick_reply(am_node *mp, int error);
 extern void normalize_slash(char *);
-extern void ops_showamfstypes(char *buf);
-extern void ops_showfstypes(char *outbuf);
+extern void ops_showamfstypes(char *buf, size_t l);
+extern void ops_showfstypes(char *outbuf, size_t l);
 extern void rem_que(qelem *);
 extern void reschedule_timeout_mp(void);
 extern void restart(void);
@@ -620,6 +621,11 @@ extern int  valid_key(char *);
 extern void wakeup(wchan_t);
 extern void wakeup_srvr(fserver *);
 extern void wakeup_task(int, int, wchan_t);
+#define SIZEOF_PID_FSNAME	(16 + MAXHOSTNAMELEN)
+extern char pid_fsname[SIZEOF_PID_FSNAME]; /* "kiska.southseas.nz:(pid%d)" */
+#define SIZEOF_HOSTD (2 * MAXHOSTNAMELEN + 1)
+extern char hostd[SIZEOF_HOSTD]; /* Host+domain */
+#define SIZEOF_OPTS 256		/* used for char opts[] and preopts[] */
 
 /*
  * Global variables.
@@ -627,8 +633,10 @@ extern void wakeup_task(int, int, wchan_t);
 extern FILE *yyin;
 extern SVCXPRT *current_transp; /* For nfs_quick_reply() */
 extern char *conf_tag;
-extern char *opt_gid;
-extern char *opt_uid;
+#define SIZEOF_UID_STR	12
+#define SIZEOF_GID_STR	12
+extern char *opt_gid, gid_str[SIZEOF_GID_STR];
+extern char *opt_uid, uid_str[SIZEOF_UID_STR];
 extern int NumChildren;
 extern int fwd_sock;
 extern int select_intr_valid;
@@ -666,7 +674,7 @@ extern int autofs_umount_succeeded(am_node *mp);
 extern int autofs_umount_failed(am_node *mp);
 extern int autofs_mount_fs(am_node *mp, mntfs *mf);
 extern int autofs_umount_fs(am_node *mp, mntfs *mf);
-extern void autofs_get_opts(char *opts, autofs_fh_t *fh);
+extern void autofs_get_opts(char *opts, size_t l, autofs_fh_t *fh);
 extern int autofs_compute_mount_flags(mntent_t *);
 extern void autofs_timeout_mp(am_node *);
 extern int create_autofs_service(void);
