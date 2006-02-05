@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2005/08/28 07:41:41 christos Exp $
+# $NetBSD: Makefile.inc,v 1.5 2006/02/05 02:38:25 christos Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -31,6 +31,7 @@ CPPFLAGS+= -DOPENPAM_STATIC_MODULES
 # Enable the static module macros.
 CPPFLAGS+= -DOPENPAM_STATIC_MODULE
 
+CPPFLAGS+= -DOPENPAM_MODULES_DIR=\"/usr/lib/security\"
 # No debugging
 #CPPFLAGS+= -DDEBUG
 
