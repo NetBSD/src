@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.196.4.1 2006/02/05 03:26:35 rpaulo Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.196.4.2 2006/02/05 03:28:18 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.196.4.1 2006/02/05 03:26:35 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.196.4.2 2006/02/05 03:28:18 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1273,22 +1273,18 @@ tcp_freeq(tp)
 void
 tcp_drain(void)
 {
-	struct inpcb_hdr *inph;
+	struct inpcb *inp;
 	struct tcpcb *tp;
 
 	/*
 	 * Free the sequence queue of all TCP connections.
 	 */
-	CIRCLEQ_FOREACH(inph, &tcbtable.inpt_queue, inph_queue) {
-		switch (inph->inph_af) {
+	CIRCLEQ_FOREACH(inp, &tcbtable.inpt_queue, inp_queue) {
+		switch (inp->inp_af) {
 		case AF_INET:
-			tp = intotcpcb((struct inpcb *)inph);
-			break;
-#ifdef INET6
 		case AF_INET6:
-			tp = in6totcpcb((struct in6pcb *)inph);
+			tp = intotcpcb((struct inpcb *)inp);
 			break;
-#endif
 		default:
 			tp = NULL;
 			break;
