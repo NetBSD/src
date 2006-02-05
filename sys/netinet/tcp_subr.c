@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.196 2005/12/11 12:24:58 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.196.4.1 2006/02/05 03:26:35 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.196 2005/12/11 12:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.196.4.1 2006/02/05 03:26:35 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -138,7 +138,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.196 2005/12/11 12:24:58 christos Exp 
 #include <netinet/in.h>
 #endif
 #include <netinet/ip6.h>
-#include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6protosw.h>
