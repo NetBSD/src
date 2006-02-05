@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $P4: //depot/projects/openpam/lib/openpam_ttyconv.c#25 $
+ * $P4: //depot/projects/openpam/lib/openpam_ttyconv.c#26 $
  */
 
 #include <sys/types.h>
