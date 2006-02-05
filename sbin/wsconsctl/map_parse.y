@@ -1,4 +1,4 @@
-/*	$NetBSD: map_parse.y,v 1.5 2005/06/26 22:45:50 christos Exp $ */
+/*	$NetBSD: map_parse.y,v 1.6 2006/02/05 18:11:46 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,9 +55,13 @@
 %{
 
 #include <sys/time.h>
+
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsconsio.h>
+
 #include <err.h>
+#include <stdlib.h>
+
 #include "wsconsctl.h"
 
 extern struct wskbd_map_data kbmap;	/* from keyboard.c */
@@ -82,7 +86,7 @@ ksym_lookup(keysym_t ksym)
 			return(i);
 	}
 
-	errx(1, "keysym %s not found", ksym2name(ksym));
+	errx(EXIT_FAILURE, "keysym %s not found", ksym2name(ksym));
 }
 
 %}
@@ -139,7 +143,7 @@ keysym_expr	: T_KEYSYM keysym_var "=" keysym_var = {
 
 keycode_expr	: T_KEYCODE T_NUMBER "=" = {
 			if ($2 >= KS_NUMKEYCODES)
-				errx(1, "%d: keycode too large", $2);
+				errx(EXIT_FAILURE, "%d: keycode too large", $2);
 			if ($2 >= newkbmap.maplen)
 				newkbmap.maplen = $2 + 1;
 			cur_mp = mapdata + $2;
@@ -199,5 +203,6 @@ keysym_var	: T_KEYSYM_VAR = {
 void
 yyerror(const char *msg)
 {
-	errx(1, "parse: %s", msg);
+
+	errx(EXIT_FAILURE, "parse: %s", msg);
 }

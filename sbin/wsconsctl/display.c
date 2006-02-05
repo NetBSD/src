@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.11 2005/04/30 16:38:21 jmmv Exp $ */
+/*	$NetBSD: display.c,v 1.12 2006/02/05 18:11:46 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -39,12 +39,13 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <err.h>
-
 #include <dev/wscons/wsconsio.h>
+
+#include <err.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "wsconsctl.h"
 
@@ -65,8 +66,8 @@ struct field display_field_tab[] = {
     { "backlight",		&backlight.curval,  FMT_UINT,	0 },
     { "brightness",		&brightness.curval, FMT_UINT,	FLG_MODIFY },
     { "contrast",		&contrast.curval,   FMT_UINT,	FLG_MODIFY },
-    { "scroll.fastlines",	&scroll_l.fastlines, FMT_UINT, FLG_MODIFY },
-    { "scroll.slowlines",	&scroll_l.slowlines, FMT_UINT, FLG_MODIFY },
+    { "scroll.fastlines",	&scroll_l.fastlines, FMT_UINT,	FLG_MODIFY },
+    { "scroll.slowlines",	&scroll_l.slowlines, FMT_UINT,	FLG_MODIFY },
     { "msg.default.attrs",	&msg_default_attrs, FMT_ATTRS,	0 },
     { "msg.default.bg",		&msg_default_bg, FMT_COLOR,	0 },
     { "msg.default.fg",		&msg_default_fg, FMT_COLOR,	0 },
@@ -75,15 +76,16 @@ struct field display_field_tab[] = {
     { "msg.kernel.fg",		&msg_kernel_fg, FMT_COLOR,	0 },
 };
 
-int display_field_tab_len = sizeof(display_field_tab)/
-			     sizeof(display_field_tab[0]);
+int display_field_tab_len = sizeof(display_field_tab) /
+	sizeof(display_field_tab[0]);
 
 void
 display_get_values(int fd)
 {
+
 	if (field_by_value(&dpytype)->flags & FLG_GET)
 		if (ioctl(fd, WSDISPLAYIO_GTYPE, &dpytype) < 0)
-			err(1, "WSDISPLAYIO_GTYPE");
+			err(EXIT_FAILURE, "WSDISPLAYIO_GTYPE");
 	
 	if (field_by_value(&border)->flags & FLG_GET)
 		if (ioctl(fd, WSDISPLAYIO_GBORDER, &border) < 0)
@@ -152,36 +154,37 @@ void
 display_put_values(fd)
 	int fd;
 {
+
 	if (field_by_value(&font.name)->flags & FLG_SET) {
 		if (ioctl(fd, WSDISPLAYIO_SFONT, &font) < 0)
-			err(1, "WSDISPLAYIO_SFONT");
+			err(EXIT_FAILURE, "WSDISPLAYIO_SFONT");
 		pr_field(field_by_value(&font.name), " -> ");
 	}
 
 	if (field_by_value(&border)->flags & FLG_SET) {
 		if (ioctl(fd, WSDISPLAYIO_SBORDER, &border) < 0)
-			err(1, "WSDISPLAYIO_SBORDER");
+			err(EXIT_FAILURE, "WSDISPLAYIO_SBORDER");
 		pr_field(field_by_value(&border), " -> ");
 	}
 
 	if (field_by_value(&backlight.curval)->flags & FLG_SET) {
 		backlight.param = WSDISPLAYIO_PARAM_BACKLIGHT;
 		if (ioctl(fd, WSDISPLAYIO_SETPARAM, &backlight) < 0)
-			err(1, "WSDISPLAYIO_PARAM_BACKLIGHT");
+			err(EXIT_FAILURE, "WSDISPLAYIO_PARAM_BACKLIGHT");
 		pr_field(field_by_value(&backlight.curval), " -> ");
 	}
 
 	if (field_by_value(&brightness.curval)->flags & FLG_SET) {
 		brightness.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
 		if (ioctl(fd, WSDISPLAYIO_SETPARAM, &brightness) < 0)
-			err(1, "WSDISPLAYIO_PARAM_BRIGHTNESS");
+			err(EXIT_FAILURE, "WSDISPLAYIO_PARAM_BRIGHTNESS");
 		pr_field(field_by_value(&brightness.curval), " -> ");
 	}
 
 	if (field_by_value(&contrast.curval)->flags & FLG_SET) {
 		contrast.param = WSDISPLAYIO_PARAM_CONTRAST;
 		if (ioctl(fd, WSDISPLAYIO_SETPARAM, &contrast) < 0)
-			err(1, "WSDISPLAYIO_PARAM_CONTRAST");
+			err(EXIT_FAILURE, "WSDISPLAYIO_PARAM_CONTRAST");
 		pr_field(field_by_value(&contrast.curval), " -> ");
 	}
 
@@ -194,7 +197,7 @@ display_put_values(fd)
 		struct wsdisplay_msgattrs ma;
 
 		if (ioctl(fd, WSDISPLAYIO_GMSGATTRS, &ma) < 0)
-			err(1, "WSDISPLAYIO_GMSGATTRS");
+			err(EXIT_FAILURE, "WSDISPLAYIO_GMSGATTRS");
 
 		if (field_by_value(&msg_default_attrs)->flags & FLG_SET) {
 			ma.default_attrs = msg_default_attrs;
@@ -204,12 +207,12 @@ display_put_values(fd)
 			if (field_by_value(&msg_default_bg)->flags & FLG_SET) {
 				ma.default_bg = msg_default_bg;
 				pr_field(field_by_value(&msg_default_bg),
-				         " -> ");
+				    " -> ");
 			}
 			if (field_by_value(&msg_default_fg)->flags & FLG_SET) {
 				ma.default_fg = msg_default_fg;
 				pr_field(field_by_value(&msg_default_fg),
-				         " -> ");
+				    " -> ");
 			}
 		}
 
@@ -221,17 +224,17 @@ display_put_values(fd)
 			if (field_by_value(&msg_kernel_bg)->flags & FLG_SET) {
 				ma.kernel_bg = msg_kernel_bg;
 				pr_field(field_by_value(&msg_kernel_bg),
-				         " -> ");
+				    " -> ");
 			}
 			if (field_by_value(&msg_kernel_fg)->flags & FLG_SET) {
 				ma.kernel_fg = msg_kernel_fg;
 				pr_field(field_by_value(&msg_kernel_fg),
-				         " -> ");
+				    " -> ");
 			}
 		}
 
 		if (ioctl(fd, WSDISPLAYIO_SMSGATTRS, &ma) < 0)
-			err(1, "WSDISPLAYIO_SMSGATTRS");
+			err(EXIT_FAILURE, "WSDISPLAYIO_SMSGATTRS");
 	}
 
 	scroll_l.which = 0;
@@ -241,7 +244,7 @@ display_put_values(fd)
 		scroll_l.which |= WSDISPLAY_SCROLL_DOSLOWLINES;
 	if (scroll_l.which != 0 &&
 	    ioctl(fd, WSDISPLAYIO_DSSCROLL, &scroll_l) < 0)
-		err (1, "WSDISPLAYIO_DSSCROLL");
+		err(EXIT_FAILURE, "WSDISPLAYIO_DSSCROLL");
 	if (scroll_l.which & WSDISPLAY_SCROLL_DOFASTLINES)
 		pr_field(field_by_value(&scroll_l.fastlines), " -> ");
 	if (scroll_l.which & WSDISPLAY_SCROLL_DOSLOWLINES)

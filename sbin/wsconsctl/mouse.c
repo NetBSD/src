@@ -1,4 +1,4 @@
-/*	$NetBSD: mouse.c,v 1.6 2006/02/05 17:45:06 jmmv Exp $ */
+/*	$NetBSD: mouse.c,v 1.7 2006/02/05 18:11:46 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2006 The NetBSD Foundation, Inc.
@@ -62,13 +62,13 @@ struct field mouse_field_tab[] = {
     { "samplerate",		&samplerate,	FMT_UINT,	FLG_WRONLY },
     { "type",			&mstype,	FMT_MSTYPE,	FLG_RDONLY },
     { "repeat.buttons",		&repeat.wr_buttons,
-    				FMT_BITFIELD, FLG_MODIFY },
+    						FMT_BITFIELD, FLG_MODIFY },
     { "repeat.delay.first",	&repeat.wr_delay_first,
-    				FMT_UINT, FLG_MODIFY },
+    						FMT_UINT, FLG_MODIFY },
     { "repeat.delay.decrement",	&repeat.wr_delay_decrement,
-    				FMT_UINT, FLG_MODIFY },
+    						FMT_UINT, FLG_MODIFY },
     { "repeat.delay.minimum",	&repeat.wr_delay_minimum,
-    				FMT_UINT, FLG_MODIFY },
+ 		   				FMT_UINT, FLG_MODIFY },
 };
 
 int mouse_field_tab_len = sizeof(mouse_field_tab)/
@@ -77,9 +77,10 @@ int mouse_field_tab_len = sizeof(mouse_field_tab)/
 void
 mouse_get_values(int fd)
 {
+
 	if (field_by_value(&mstype)->flags & FLG_GET)
 		if (ioctl(fd, WSMOUSEIO_GTYPE, &mstype) < 0)
-			err(1, "WSMOUSEIO_GTYPE");
+			err(EXIT_FAILURE, "WSMOUSEIO_GTYPE");
 
 	if (field_by_value(&repeat.wr_buttons)->flags & FLG_GET ||
 	    field_by_value(&repeat.wr_delay_first)->flags & FLG_GET ||
@@ -94,7 +95,7 @@ mouse_get_repeat(int fd)
 	struct wsmouse_repeat tmp;
 
 	if (ioctl(fd, WSMOUSEIO_GETREPEAT, &tmp) == -1)
-		err(1, "WSMOUSEIO_GETREPEAT");
+		err(EXIT_FAILURE, "WSMOUSEIO_GETREPEAT");
 
 	if (field_by_value(&repeat.wr_buttons)->flags & FLG_GET)
 		repeat.wr_buttons = tmp.wr_buttons;
@@ -114,14 +115,14 @@ mouse_put_values(int fd)
 	if (field_by_value(&resolution)->flags & FLG_SET) {
 		tmp = resolution;
 		if (ioctl(fd, WSMOUSEIO_SRES, &tmp) < 0)
-			err(1, "WSMOUSEIO_SRES");
+			err(EXIT_FAILURE, "WSMOUSEIO_SRES");
 		pr_field(field_by_value(&resolution), " -> ");
 	}
 
 	if (field_by_value(&samplerate)->flags & FLG_SET) {
 		tmp = samplerate;
 		if (ioctl(fd, WSMOUSEIO_SRATE, &tmp) < 0)
-			err(1, "WSMOUSEIO_SRATE");
+			err(EXIT_FAILURE, "WSMOUSEIO_SRATE");
 		pr_field(field_by_value(&samplerate), " -> ");
 	}
 
@@ -139,7 +140,7 @@ mouse_put_repeat(int fd)
 
 	/* Fetch current values into the temporary structure. */
 	if (ioctl(fd, WSMOUSEIO_GETREPEAT, &tmp) == -1)
-		err(1, "WSMOUSEIO_GETREPEAT");
+		err(EXIT_FAILURE, "WSMOUSEIO_GETREPEAT");
 
 	/* Overwrite the desired values in the temporary structure. */
 	if (field_by_value(&repeat.wr_buttons)->flags & FLG_SET)
@@ -153,7 +154,7 @@ mouse_put_repeat(int fd)
 
 	/* Set new values for repeating events. */
 	if (ioctl(fd, WSMOUSEIO_SETREPEAT, &tmp) == -1)
-		err(1, "WSMOUSEIO_SETREPEAT");
+		err(EXIT_FAILURE, "WSMOUSEIO_SETREPEAT");
 
 	/* Now print what changed. */
 	if (field_by_value(&repeat.wr_buttons)->flags & FLG_SET)
