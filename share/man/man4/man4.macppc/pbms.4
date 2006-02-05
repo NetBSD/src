@@ -1,4 +1,4 @@
-.\" $NetBSD: pbms.4,v 1.1 2006/02/05 18:38:35 xtraeme Exp $
+.\" $NetBSD: pbms.4,v 1.2 2006/02/05 18:45:39 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,11 +45,14 @@ The
 .Nm
 driver provides support for the trackpads on new (post
 February 2005) Apple PowerBooks and iBooks that are not standard
-USB HID mice.  Access to the trackpad is through the
+USB HID mice.
+Access to the trackpad is through the
 .Xr wscons 4
 framework.
 .Sh SEE ALSO
-.Xr uhidev 4, usb 4, wsmouse 4  
+.Xr uhidev 4 ,
+.Xr usb 4 ,
+.Xr wsmouse 4
 .Sh HISTORY
 The
 .Nm
@@ -58,4 +61,5 @@ device driver appeared in
 .Sh AUTHORS
 The
 .Nm
-driver was written by Johan Wallén.
+driver was written by
+.An Johan Wallén .
