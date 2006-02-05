@@ -1,5 +1,5 @@
 #
-# $NetBSD: FALCON,v 1.75 2006/02/04 02:27:23 rpaulo Exp $
+# $NetBSD: FALCON,v 1.76 2006/02/05 05:01:49 cube Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -117,15 +117,15 @@ pseudo-device ppp # ppp
 
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
-pseudo-device vnd 3 # 3 pseudo disks (see vnconfig)
+pseudo-device vnd  # 3 pseudo disks (see vnconfig)
 
 pseudo-device md 3 # Boot memory disk
 
 pseudo-device bpfilter # berkeley packet filters
-pseudo-device tun 2 # network tunnel
+pseudo-device tun  # network tunnel
 pseudo-device tap # virtual Ethernet
 
-pseudo-device gif 4 # IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device gif  # IPv[46] over IPv[46] tunnel (RFC1933)
 
 pseudo-device ccd 4 # concatenating disk driver
 
