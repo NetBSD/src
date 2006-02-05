@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.4 2004/05/03 07:45:37 kochi Exp $	*/
+/*	$NetBSD: powerd.c,v 1.5 2006/02/05 14:03:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@ static int kq;
 #define	_PATH_DEV_POWER		"/dev/power"
 #define	_PATH_POWERD_SCRIPTS	"/etc/powerd/scripts"
 
-static void usage(void);
+static void usage(void) __attribute__((__noreturn__));
 static void run_script(const char *[]);
 static struct kevent *allocchange(void);
 static int wait_for_events(struct kevent *, size_t);
@@ -81,6 +81,8 @@ main(int argc, char *argv[])
 	char *cp;
 	int ch, fd;
 
+	setprogname(*argv);
+
 	while ((ch = getopt(argc, argv, "d")) != -1) {
 		switch (ch) {
 		case 'd':
@@ -98,29 +100,33 @@ main(int argc, char *argv[])
 		usage();
 
 	if (debug == 0)
-		daemon(0, 0);
+		(void)daemon(0, 0);
 
 	openlog("powerd", LOG_PID | LOG_NOWAIT, LOG_DAEMON);
-	pidfile(NULL);
+	(void)pidfile(NULL);
 
-	kq = kqueue();
-	if (kq < 0) {
+	if ((kq = kqueue()) == -1) {
 		syslog(LOG_ERR, "kqueue: %m");
 		exit(EX_OSERR);
 	}
 
-	fd = open(_PATH_DEV_POWER, O_RDONLY|O_NONBLOCK, 0600);
-	if (fd < 0) {
+	if ((fd = open(_PATH_DEV_POWER, O_RDONLY|O_NONBLOCK, 0600)) == -1) {
 		syslog(LOG_ERR, "open %s: %m", _PATH_DEV_POWER);
 		exit(EX_OSERR);
 	}
 
-	if (ioctl(fd, POWER_IOC_GET_TYPE, &power_type) < 0) {
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+		syslog(LOG_ERR, "Cannot set close on exec in power fd: %m");
+		exit(EX_OSERR);
+	}
+
+	if (ioctl(fd, POWER_IOC_GET_TYPE, &power_type) == -1) {
 		syslog(LOG_ERR, "POWER_IOC_GET_TYPE: %m");
 		exit(EX_OSERR);
 	}
 
-	asprintf(&cp, "%s/%s", _PATH_POWERD_SCRIPTS, power_type.power_type);
+	(void)asprintf(&cp, "%s/%s", _PATH_POWERD_SCRIPTS,
+	    power_type.power_type);
 	if (cp == NULL) {
 		syslog(LOG_ERR, "allocating script path: %m");
 		exit(EX_OSERR);
@@ -147,7 +153,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-d]\n", getprogname());
+	(void)fprintf(stderr, "usage: %s [-d]\n", getprogname());
 	exit(EX_USAGE);
 }
 
@@ -155,10 +161,11 @@ static void
 run_script(const char *argv[])
 {
 	char path[MAXPATHLEN+1];
-	int i;
+	size_t i, j;
 
 	for (i = 0; i < A_CNT(script_paths); i++) {
-		snprintf(path, sizeof(path), "%s/%s", script_paths[i], argv[0]);
+		(void)snprintf(path, sizeof(path), "%s/%s", script_paths[i],
+		    argv[0]);
 		if (access(path, R_OK|X_OK) == 0) {
 			int status;
 			pid_t pid;
@@ -166,10 +173,11 @@ run_script(const char *argv[])
 			argv[0] = path;
 
 			if (debug) {
-				fprintf(stderr, "running script: %s", argv[0]);
-				for (i = 1; argv[i] != NULL; i++)
-					fprintf(stderr, " %s", argv[i]);
-				fprintf(stderr, "\n");
+				(void)fprintf(stderr, "running script: %s",
+				    argv[0]);
+				for (j = 1; argv[j] != NULL; j++)
+					(void)fprintf(stderr, " %s", argv[j]);
+				(void)fprintf(stderr, "\n");
 			}
 
 			switch ((pid = vfork())) {
@@ -185,7 +193,11 @@ run_script(const char *argv[])
 
 			default:
 				/* Parent. */
-				(void) wait4(pid, &status, 0, 0);
+				if (waitpid(pid, &status, 0) == -1) {
+					syslog(LOG_ERR, "waitpid for %s: %m",
+					    path);
+					break;
+				}
 				if (WIFEXITED(status) &&
 				    WEXITSTATUS(status) != 0) {
 					syslog(LOG_ERR,
@@ -204,22 +216,22 @@ run_script(const char *argv[])
 
 	syslog(LOG_ERR, "no script for %s", argv[0]);
 	if (debug)
-		fprintf(stderr, "no script for %s\n", argv[0]);
+		(void)fprintf(stderr, "no script for %s\n", argv[0]);
 }
 
 static struct kevent changebuf[8];
-static int nchanges;
+static size_t nchanges;
 
 static struct kevent *
 allocchange(void)
 {
 
 	if (nchanges == A_CNT(changebuf)) {
-		(void) wait_for_events(NULL, 0);
+		(void)wait_for_events(NULL, 0);
 		nchanges = 0;
 	}
 
-	return (&changebuf[nchanges++]);
+	return &changebuf[nchanges++];
 }
 
 static int
@@ -228,7 +240,7 @@ wait_for_events(struct kevent *events, size_t nevents)
 	int rv;
 
 	while ((rv = kevent(kq, nchanges ? changebuf : NULL, nchanges,
-			    events, nevents, NULL)) < 0) {
+	    events, nevents, NULL)) < 0) {
 		nchanges = 0;
 		if (errno != EINTR) {
 			syslog(LOG_ERR, "kevent: %m");
@@ -236,7 +248,7 @@ wait_for_events(struct kevent *events, size_t nevents)
 		}
 	}
 
-	return (rv);
+	return rv;
 }
 
 static const char *
@@ -245,22 +257,22 @@ pswitch_type_name(int type)
 
 	switch (type) {
 	case PSWITCH_TYPE_POWER:
-		return ("power_button");
+		return "power_button";
 
 	case PSWITCH_TYPE_SLEEP:
-		return ("sleep_button");
+		return "sleep_button";
 
 	case PSWITCH_TYPE_LID:
-		return ("lid_switch");
+		return "lid_switch";
 
 	case PSWITCH_TYPE_RESET:
-		return ("reset_button");
+		return "reset_button";
 
 	case PSWITCH_TYPE_ACADAPTER:
-		return ("acadapter");
+		return "acadapter";
 
 	default:
-		return ("=unknown pswitch type=");
+		return "=unknown pswitch type=";
 	}
 }
 
@@ -270,13 +282,13 @@ pswitch_event_name(int type)
 
 	switch (type) {
 	case PSWITCH_EVENT_PRESSED:
-		return ("pressed");
+		return "pressed";
 
 	case PSWITCH_EVENT_RELEASED:
-		return ("released");
+		return "released";
 
 	default:
-		return ("=unknown pswitch event=");
+		return "=unknown pswitch event=";
 	}
 }
 
@@ -287,7 +299,7 @@ dispatch_dev_power(struct kevent *ev)
 	int fd = ev->ident;
 
 	if (debug)
-		fprintf(stderr, "dispatch_dev_power: %" PRId64 
+		(void)fprintf(stderr, "dispatch_dev_power: %" PRId64 
 		    " events available\n", ev->data);
 
  again:
@@ -299,7 +311,7 @@ dispatch_dev_power(struct kevent *ev)
 	}
 
 	if (debug) {
-		fprintf(stderr, "dispatch_dev_power: event type %d\n",
+		(void)fprintf(stderr, "dispatch_dev_power: event type %d\n",
 		    pev.pev_type);
 	}
 
@@ -327,7 +339,8 @@ dispatch_power_event_switch_state_change(power_event_t *pev)
 	argv[3] = NULL;
 
 	if (debug)
-		fprintf(stderr, "%s on %s %s\n", argv[0], argv[1], argv[2]);
+		(void)fprintf(stderr, "%s on %s %s\n", argv[0], argv[1],
+		    argv[2]);
 
 	run_script(argv);
 }
