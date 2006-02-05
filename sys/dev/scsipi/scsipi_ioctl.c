@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.57 2005/12/14 21:55:47 reinoud Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.57.2.1 2006/02/05 11:35:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.57 2005/12/14 21:55:47 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.57.2.1 2006/02/05 11:35:07 yamt Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -337,10 +337,13 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 			si->si_uio.uio_iovcnt = 1;
 			si->si_uio.uio_resid = len;
 			si->si_uio.uio_offset = 0;
-			si->si_uio.uio_segflg = (flag & FKIOCTL) ? UIO_SYSSPACE : UIO_USERSPACE;
 			si->si_uio.uio_rw =
 			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
-			si->si_uio.uio_lwp = l;
+			if ((flag & FKIOCTL) == 0) {
+				si->si_uio.uio_vmspace = l->l_proc->p_vmspace;
+			} else {
+				UIO_SETUP_SYSSPACE(&si->si_uio);
+			}
 			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
 			    periph->periph_channel->chan_adapter->adapt_minphys,
