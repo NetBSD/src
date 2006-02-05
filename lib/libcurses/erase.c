@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.20 2006/01/26 07:26:37 jdc Exp $	*/
+/*	$NetBSD: erase.c,v 1.21 2006/02/05 17:39:52 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.20 2006/01/26 07:26:37 jdc Exp $");
+__RCSID("$NetBSD: erase.c,v 1.21 2006/02/05 17:39:52 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -78,8 +78,8 @@ werase(WINDOW *win)
 		start = win->lines[y]->line;
 		end = &start[win->maxx];
 		for (sp = start; sp < end; sp++)
-			if (sp->ch != ' ' || sp->attr != 0) {
-				sp->ch = ' ';
+			if (sp->ch != win->bch || sp->attr != 0) {
+				sp->ch = win->bch;
 				sp->attr = attr;
 			}
 	}
