@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.6.2.6 2005/08/28 09:56:21 tron Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.6.2.7 2006/02/05 17:22:19 riz Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.6.2.6 2005/08/28 09:56:21 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.6.2.7 2006/02/05 17:22:19 riz Exp $");
 
 #include "opt_xen.h"
 
@@ -150,7 +150,7 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 		case XEN_PARSE_BOOTDEV:
 			if (strncasecmp(opt, "bootdev=", 8) == 0)
 				strncpy(xcp->xcp_bootdev, opt + 8,
-				    sizeof(xcp->xcp_console));
+				    sizeof(xcp->xcp_bootdev));
 			break;
 
 		case XEN_PARSE_NETINFO:
