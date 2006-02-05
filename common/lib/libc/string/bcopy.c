@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.1 2005/12/20 19:28:52 christos Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.2 2006/02/05 06:47:48 ross Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.2 2006/02/05 06:47:48 ross Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,8 +83,10 @@ bcopy(src0, dst0, length)
 	size_t t;
 	unsigned long u;
 
+#if !defined(_KERNEL)
 	_DIAGASSERT(dst0 != 0);
 	_DIAGASSERT(src0 != 0);
+#endif
 
 	if (length == 0 || dst == src)		/* nothing to do */
 		goto done;
