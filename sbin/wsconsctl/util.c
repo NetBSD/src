@@ -1,11 +1,11 @@
-/*	$NetBSD: util.c,v 1.23 2005/06/26 22:45:50 christos Exp $ */
+/*	$NetBSD: util.c,v 1.24 2006/02/05 17:38:33 jmmv Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Juergen Hannken-Illjes.
+ * by Juergen Hannken-Illjes and Julio M. Merino Vidal.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,10 +39,15 @@
 #include <sys/time.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymdef.h>
+
 #include <err.h>
-#include <string.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
 #include "wsconsctl.h"
 
 #define TABLEN(t)		(sizeof(t)/sizeof(t[0]))
@@ -169,6 +174,8 @@ static int field_tab_len;
 static const char *int2name(int, int, struct nameint *, int);
 static int name2int(char *, struct nameint *, int);
 static void print_kmap(struct wskbd_map_data *);
+static unsigned int rd_bitfield(const char *);
+static void pr_bitfield(unsigned int);
 
 void
 field_setup(struct field *ftab, int len)
@@ -255,6 +262,9 @@ pr_field(struct field *f, const char *sep)
 	case FMT_STRING:
 		printf("\"%s\"", *((char **) f->valp));
 		break;
+	case FMT_BITFIELD:
+		pr_bitfield(*((unsigned int *) f->valp));
+		break;
 	case FMT_KBDTYPE:
 		p = int2name(*((u_int *) f->valp), 1,
 			     kbtype_tab, TABLEN(kbtype_tab));
@@ -315,6 +325,25 @@ pr_field(struct field *f, const char *sep)
 	printf("\n");
 }
 
+static void
+pr_bitfield(unsigned int f)
+{
+
+	if (f == 0)
+		printf("none");
+	else {
+		int i, first, mask;
+
+		for (i = 0, first = 1, mask = 1; i < sizeof(f) * 8; i++) {
+			if (f & mask) {
+				printf("%s%d", first ? "" : " ", i);
+				first = 0;
+			}
+			mask = mask << 1;
+		}
+	}
+}
+
 void
 rd_field(struct field *f, char *val, int merge)
 {
@@ -335,6 +364,9 @@ rd_field(struct field *f, char *val, int merge)
 	case FMT_STRING:
 		if ((*((char **) f->valp) = strdup(val)) == NULL)
 			err(1, "strdup");
+		break;
+	case FMT_BITFIELD:
+		*((unsigned int *) f->valp) = rd_bitfield(val);
 		break;
 	case FMT_KBDENC:
 		p = strchr(val, '.');
@@ -402,6 +434,36 @@ rd_field(struct field *f, char *val, int merge)
 		errx(1, "internal error: rd_field: no format %d", f->format);
 		break;
 	}
+}
+
+static unsigned int
+rd_bitfield(const char *str)
+{
+	const char *ptr;
+	char *ep;
+	long lval;
+	unsigned int result;
+
+	ep = NULL;
+	ptr = str;
+	result = 0;
+	while (*ptr != '\0') {
+		errno = 0;
+		lval = strtol(ptr, &ep, 10);
+		if (*ep != '\0' && *ep != ' ')
+			errx(1, "%s: not a valid number list", str);
+		if (errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN))
+			errx(1, "%s: not a valid number list", str);
+		if (lval >= sizeof(result) * 8)
+			errx(1, "%ld: number out of range", lval);
+		result |= (1 << lval);
+
+		ptr = ep;
+		while (*ptr == ' ')
+			ptr++;
+	}
+
+	return result;
 }
 
 static void
