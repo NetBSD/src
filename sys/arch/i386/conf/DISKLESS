@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.112 2006/02/04 03:09:40 rpaulo Exp $
+#	$NetBSD: DISKLESS,v 1.113 2006/02/05 05:01:55 cube Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -255,13 +255,13 @@ include	"arch/i386/conf/GENERIC.local"
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter		# packet filter
-pseudo-device	sl	2		# CSLIP
-pseudo-device	ppp	2		# PPP
-pseudo-device	tun	2		# network tunneling over tty
+pseudo-device	sl			# CSLIP
+pseudo-device	ppp			# PPP
+pseudo-device	tun			# network tunneling over tty
 #pseudo-device	ipfilter		# IP filter
 
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	vnd	4		# paging to files
+#pseudo-device	vnd			# paging to files
 #pseudo-device	ccd	4		# concatenated disk devices
 #pseudo-device	fss	4		# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem

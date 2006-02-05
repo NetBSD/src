@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.58 2006/02/04 03:39:08 rpaulo Exp $
+#	$NetBSD: GENERIC,v 1.59 2006/02/05 05:02:02 cube Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.58 $"
+#ident		"GENERIC-$Revision: 1.59 $"
 
 # estimated number of users
 maxusers	32
@@ -289,16 +289,16 @@ joy*		at ofisa?
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter		# packet filter
-#pseudo-device	sl	2		# CSLIP
-#pseudo-device	ppp	2		# PPP
-#pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	sl			# CSLIP
+#pseudo-device	ppp			# PPP
+#pseudo-device	tun			# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
-pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
-#pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	strip	4		# STarmode Radio IP (Metricon Ricochet)
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	strip			# STarmode Radio IP (Metricon Ricochet)
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	vnd	4		# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	fss	4		# file system snapshot device

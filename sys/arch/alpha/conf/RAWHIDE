@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.28 2006/02/04 02:37:23 rpaulo Exp $
+# $NetBSD: RAWHIDE,v 1.29 2006/02/05 05:01:48 cube Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -103,9 +103,9 @@ pseudo-device	ccd		16
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1
-pseudo-device	ppp		4
+pseudo-device	ppp		
 pseudo-device	pty
-pseudo-device	sl		4
-pseudo-device	vnd		4
+pseudo-device	sl		
+pseudo-device	vnd		
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	fss		4	# file system snapshot device
