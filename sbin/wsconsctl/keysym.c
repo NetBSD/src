@@ -1,4 +1,4 @@
-/*	$NetBSD: keysym.c,v 1.6 2005/06/26 22:45:50 christos Exp $ */
+/*	$NetBSD: keysym.c,v 1.7 2006/02/05 18:11:46 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,10 +37,12 @@
  */
 
 #include <dev/wscons/wsksymdef.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "keysym.h"
 #include "wsconsctl.h"
 
@@ -52,7 +54,7 @@ static struct ksym ksym_tab_by_ksym[NUMKSYMS];
 /* copied from dev/wscons/wskbdutil.c ... */
 
 static const u_char latin1_to_upper[256] = {
-/*      0  8  1  9  2  a  3  b  4  c  5  d  6  e  7  f               */
+/*	0  8  1  9  2  a  3  b  4  c  5  d  6  e  7  f		     */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 0 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 0 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 1 */
@@ -97,27 +99,31 @@ static void sort_ksym_tab(void);
 static int
 qcmp_name(const void *a, const void *b)
 {
-	return(strcmp(((const struct ksym *) a)->name,
-	    ((const struct ksym *) b)->name));
+
+	return strcmp(((const struct ksym *) a)->name,
+	    ((const struct ksym *) b)->name);
 }
 
 static int
 qcmp_ksym(const void *a, const void *b)
 {
-	return(((const struct ksym *) b)->value -
-	    ((const struct ksym *) a)->value);
+
+	return ((const struct ksym *) b)->value -
+	    ((const struct ksym *) a)->value;
 }
 
 static int
 bcmp_name(const void *a, const void *b)
 {
-	return(strcmp((const char *) a, ((const struct ksym *) b)->name));
+
+	return strcmp((const char *) a, ((const struct ksym *) b)->name);
 }
 
 static int
 bcmp_ksym(const void *a, const void *b)
 {
-	return(((const struct ksym *) b)->value - *((const int *) a));
+
+	return ((const struct ksym *) b)->value - *((const int *) a);
 }
 
 static void
@@ -147,10 +153,10 @@ ksym2name(int k)
 		    NUMKSYMS, sizeof(struct ksym), bcmp_ksym);
 
 	if (r != NULL)
-		return(r->name);
+		return r->name;
 	else {
-		snprintf(tmp, sizeof(tmp), "unknown_%d", k);
-		return(tmp);
+		(void)snprintf(tmp, sizeof(tmp), "unknown_%d", k);
+		return tmp;
 	}
 }
 
@@ -167,22 +173,23 @@ name2ksym(char *n)
 		    NUMKSYMS, sizeof(struct ksym), bcmp_name);
 
 	if (r != NULL)
-		return(r->value);
+		return r->value;
 	else if (sscanf(n, "unknown_%d", &res) == 1)
-		return(res);
+		return res;
 	else
-		return(-1);
+		return -1;
 }
 
 keysym_t
 ksym_upcase(keysym_t ksym)
 {
+
 	if (ksym >= KS_f1 && ksym <= KS_f20)
-		return(KS_F1 - KS_f1 + ksym);
+		return KS_F1 - KS_f1 + ksym;
 
 	if (KS_GROUP(ksym) == KS_GROUP_Ascii && ksym <= 0xff &&
 	    latin1_to_upper[ksym] != 0x00)
-		return(latin1_to_upper[ksym]);
+		return latin1_to_upper[ksym];
 
-	return(ksym);
+	return ksym;
 }
