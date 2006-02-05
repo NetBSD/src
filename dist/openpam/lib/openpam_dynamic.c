@@ -73,7 +73,7 @@ openpam_dynamic(const char *path)
 		prefix = "";
 
 	/* try versioned module first, then unversioned module */
-	if (asprintf(&vpath, "%s%s.%d", prefix, path, LIB_MAJ) < 0)
+	if (asprintf(&vpath, "%s/%s.%d", prefix, path, LIB_MAJ) < 0)
 		goto buf_err;
 	if ((dlh = dlopen(vpath, RTLD_NOW)) == NULL) {
 		openpam_log(PAM_LOG_DEBUG, "%s: %s", vpath, dlerror());
