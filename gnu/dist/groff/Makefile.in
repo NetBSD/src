@@ -556,7 +556,6 @@ OTHERDIRS=\
   contrib/pic2graph \
   contrib/eqn2graph \
   contrib/grap2graph \
-  contrib/groffer \
   contrib/mom \
   contrib/pdfmark \
   contrib/gdiffmk
