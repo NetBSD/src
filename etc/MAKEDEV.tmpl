@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.48 2005/09/27 02:44:12 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.49 2006/02/06 13:12:41 hamajima Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -466,7 +466,7 @@ all)
 	makedev local
 	makedev atabus0 atabus1 atabus2 atabus3
 	makedev tap tap0 tap1 tap2 tap3
-	makedev gpio gpio0 gpio1 gpio2 gpio3
+	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	;;
 
 init)
@@ -484,7 +484,7 @@ audio)
 	;;
 
 gpio)
-	makedev gpio0 gpio1 gpio2 gpio3
+	makedev gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	lndev gpio0 gpio
 	;;
 
