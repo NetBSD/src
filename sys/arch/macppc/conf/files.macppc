@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.70 2006/02/05 18:10:57 christos Exp $
+#	$NetBSD: files.macppc,v 1.71 2006/02/06 19:23:17 jmmv Exp $
 #
 # macppc-specific configuration info
 
@@ -84,6 +84,7 @@ include "dev/pci/files.pci"
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
+include "dev/usb/files.usb"
 
 device ofb: wsemuldisplaydev, rasops8
 attach ofb at pci
@@ -189,7 +190,6 @@ device macofcons: tty
 attach macofcons at pci
 file arch/macppc/dev/ofcons.c			macofcons needs-flag
 
-include "dev/usb/files.usb"
 include "dev/ieee1394/files.ieee1394"
 
 #
