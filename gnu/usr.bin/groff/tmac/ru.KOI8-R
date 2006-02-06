@@ -1,4 +1,4 @@
-.\" Copyright (c) 2001 Ruslan Ermilov <ru@FreeBSD.org>.
+.\" Copyright (c) 2001-2003 Ruslan Ermilov <ru@FreeBSD.org>.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/gnu/usr.bin/groff/tmac/ru.KOI8-R,v 1.9 2002/10/09 08:51:52 ru Exp $
+.\" $FreeBSD: src/gnu/usr.bin/groff/tmac/ru.KOI8-R,v 1.14 2003/09/20 21:30:33 ru Exp $
 .\"
 .\"     %beginstrip%
 .
@@ -62,6 +62,7 @@
 .\" локализация .Sh
 .ds doc-section-name        НАЗВАНИЕ
 .ds doc-section-synopsis    СИНТАКСИС
+.ds doc-section-library     БИБЛИОТЕКА
 .ds doc-section-description ОПИСАНИЕ
 .ds doc-section-see-also    СМОТРИ
 .ds doc-section-files       ФАЙЛЫ
@@ -76,26 +77,29 @@
 .ds doc-str-Lb-libcipher   Библиотека криптографии FreeSec (libcipher, \-lcipher)
 .ds doc-str-Lb-libcompat   Библиотека совместимости (libcompat, \-lcompat)
 .ds doc-str-Lb-libcrypt    Библиотека криптографии (libcrypt, \-lcrypt)
-.ds doc-str-Lb-libcurses   Curses Library (libcurses, \-lcurses)
+.\" XXX ds doc-str-Lb-libcurses   Curses Library (libcurses, \-lcurses)
+.\" XXX ds doc-str-Lb-libdevinfo  Device and Resource Information Utility Library (libdevinfo, \-ldevinfo)
 .ds doc-str-Lb-libdevstat  Библиотека статистики устройств (libdevstat, \-ldevstat)
-.ds doc-str-Lb-libdisk     Interface to Slice and Partition Labels Library (libdisk, \-ldisk)
+.\" XXX ds doc-str-Lb-libdisk     Interface to Slice and Partition Labels Library (libdisk, \-ldisk)
 .ds doc-str-Lb-libedit     Библиотека редактора командной строки (libedit, \-ledit)
 .ds doc-str-Lb-libfetch    Библиотека файловой передачи (libfetch, \-lfetch)
+.ds doc-str-Lb-libgeom     Пользовательская API библиотека подсистемы ядра GEOM (libgeom, \-lgeom)
 .ds doc-str-Lb-libi386     Библиотека архитектуры i386 (libi386, \-li386)
 .ds doc-str-Lb-libipsec    Библиотека управления IPsec Policy (libipsec, \-lipsec)
 .ds doc-str-Lb-libipx      Библиотека поддержки конверсии адресов IPX (libipx, \-lipx)
 .ds doc-str-Lb-libkvm      Библиотека доступа к данным ядра (libkvm, \-lkvm)
 .ds doc-str-Lb-libm        Библиотека математических функций (libm, \-lm)
-.ds doc-str-Lb-libmd       Message Digest (MD4, MD5, и т.д.) Support Library (libmd, \-lmd)
-.ds doc-str-Lb-libmenu     Curses Menu Library (libmenu, \-lmenu)
+.\" XXX ds doc-str-Lb-libmd       Message Digest (MD4, MD5, и т.д.) Support Library (libmd, \-lmd)
+.\" XXX ds doc-str-Lb-libmenu     Curses Menu Library (libmenu, \-lmenu)
 .ds doc-str-Lb-libnetgraph Пользовательская библиотека Netgraph (libnetgraph, \-lnetgraph)
 .ds doc-str-Lb-libossaudio Библиотека эмуляции OSS Audio (libossaudio, \-lossaudio)
 .ds doc-str-Lb-libpam      Библиотека PAM (libpam, \-lpam)
 .ds doc-str-Lb-libposix    Библиотека \*[Px]\-совместимости (libposix, \-lposix)
-.ds doc-str-Lb-libresolv   DNS Resolver Library (libresolv, \-lresolv)
+.\" XXX ds doc-str-Lb-libresolv   DNS Resolver Library (libresolv, \-lresolv)
 .ds doc-str-Lb-librpcsvc   Библиотека служб RPC (librpcsvc, \-lrpcsvc)
-.ds doc-str-Lb-libskey     S/Key Password Control Table Access Library (libskey, \-lskey)
 .ds doc-str-Lb-libtermcap  Библиотека доступа к termcap (libtermcap, \-ltermcap)
+.ds doc-str-Lb-libufs      Библиотека доступа к файловой системе UFS (libufs, \-lufs)
+.\" XXX ds doc-str-Lb-libugidfw   File System Firewall Interface Library (libugidfw, \-lugidfw)
 .ds doc-str-Lb-libusbhid   Библиотека функций доступа к USB HID (libusbhid, \-lusbhid)
 .ds doc-str-Lb-libutil     Библиотека системных утилит (libutil, \-lutil)
 .ds doc-str-Lb-libvgl      Библиотека видео-графики (libvgl, \-lvgl)

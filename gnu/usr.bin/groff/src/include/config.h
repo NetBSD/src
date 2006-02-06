@@ -4,14 +4,14 @@
 /* Define if your C++ doesn't understand `delete []'. */
 /* #undef ARRAY_DELETE_NEEDS_SIZE */
 
+/* Define if you have a C++ <inttypes.h>. */
+#define HAVE_CC_INTTYPES_H 1
+
 /* Define if you have a C++ <limits.h>. */
 #define HAVE_CC_LIMITS_H 1
 
 /* Define if you have a C++ <osfcn.h>. */
 /* #undef HAVE_CC_OSFCN_H */
-
-/* Define if you have a C++ <stdint.h>. */
-#define HAVE_CC_STDINT_H 1
 
 /* Define to 1 if you have the declaration of `sys_siglist', and to 0 if you
    don't. */
@@ -203,6 +203,9 @@
 /* Define if the 0200 bit of the status returned by wait() indicates whether a
    core image was produced for a process that was terminated by a signal. */
 /* #undef WCOREFLAG */
+
+/* Define to 1 if the X Window System is missing or not being used. */
+#define X_DISPLAY_MISSING 1
 
 /* Define if -D_POSIX_SOURCE is necessary. */
 /* #undef _POSIX_SOURCE */
