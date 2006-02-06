@@ -9,6 +9,10 @@
 .nr VS 12
 .if '\*[.T]'html' .nr LL 10i
 .if r ps4html .nr LL 10i
+.
+.HEAD "<link rel=""stylesheet"" type=""text/css"" href=""groff.css"" >"
+.\" .HEAD "<link rel=""icon"" type=""image/png"" href=""http://www.gnu.org/graphics/gnu-mini.png"" >"
+.
 .mso www.tmac
 .
 .de blm-macro
@@ -26,10 +30,11 @@
 .
 .ds GNU \m[mydarkred]G\m[]\m[mydarkgreen]N\m[]\m[mydarkblue]U\m[]
 .
-.HTL
 .NHR
+.HTL
 .
 Home of Groff (GNU Troff).
+.
 .
 .HTML-IMAGE-LEFT
 .PSPIC -L gnu.eps 2i 2i
@@ -39,19 +44,18 @@ Home of Groff (GNU Troff).
 .  nop \v'-0.66i'\h'2.0i'\s[60]\*[GNU] Troff\s0
 .HTML-IMAGE-END
 .
-.HnS 1
 .HR
-GNU Troff
-.URL http://\:groff.ffii.org/ (Groff)
+.HnS 1
+GNU Troff (\c
+.URL http://\:groff.ffii.org/ Groff )
 \[em] a
 .URL http://\:www.gnu.org/ GNU
 project.
-Hosted by
-.URL http://\:ffii.org/ FFII .
-.HR
 .HnE
+.HR
 .LK
-
+.
+.LP
 .DC T HE mydarkred
 groff (GNU Troff) software
 is a typesetting package which reads plain text mixed with
@@ -64,18 +68,18 @@ Download
 
 The source code of the currently released versions of groff is
 available at the 
-.URL "ftp://\:groff.ffii.org/\:pub/\:groff/" "FFII host (Germany)" ,
+.URL "http://\:groff.ffii.org/\:groff/" "FFII host (Germany)" ,
 .URL "ftp://\:ftp.gnu.org/\:gnu/\:groff/" "GNU host (USA)" ,
 and its mirrors.
 .
-The USA site also contains more old, obsolete versions.
+The USA site also contains older, obsolete versions.
 
 The most actual pre-release, development version is available from a
 CVS repository, see below.
 .
 Development snapshots (produced twice a day from the CVS repository)
-can be downloaded with FTP from
-.URL "ftp://\:groff.ffii.org/\:pub/\:groff/devel" here .
+can be downloaded from
+.URL "http://\:groff.ffii.org/\:groff/\:devel" here .
 
 For a special version of groff on the Microsoft operating systems, see
 .URL "http://\:gnuwin32.sf.net/\:packages/\:groffl.htm" "Groff for Windows" .
@@ -84,10 +88,10 @@ GNU troff is released under the
 .URL http://\:www.gnu.org/\:copyleft/\:gpl.html "GNU Copyright License" .
 
 User issues lead:
-.MTO Ted.Harding@\:nessie.mcc.ac.uk "Ted Harding"
+.MTO Ted.Harding@\:nessie.mcc.ac.uk "Ted Harding" .
 .br
 Technical issues lead:
-.MTO wl@\:gnu.org "Werner Lemberg"
+.MTO wl@\:gnu.org "Werner Lemberg" .
 .
 .
 .SH
@@ -98,8 +102,8 @@ The version number is given in the file VERSION.
 
 Included in this release are implementations of troff, pic, eqn, tbl,
 grn, refer, \-man, \-mdoc, and \-ms macros, and drivers for PostScript,
-TeX dvi format, HP LaserJet 4 printers, Canon CAPSL printers, HTML format
-(still alpha), and typewriter-like devices.
+TeX dvi format, HP LaserJet\~4 printers, Canon CAPSL printers, HTML format
+(beta status), and typewriter-like devices.
 Also included is a modified version of the Berkeley \-me macros, an enhanced
 version of the X11 xditview previewer, and an implementation of the \-mm
 macros contributed by
@@ -116,43 +120,56 @@ See the file COPYING for copying permission.
 The file PROBLEMS describes various problems that have been encountered in
 compiling, installing, and running groff.
 
-The most recent released version of groff is always available by anonymous
-ftp from ftp.gnu.org in the directory pub/\:gnu/\:groff.
+The most recent released version of groff is always available by
+.URL "ftp://\:ftp.gnu.org/\:gnu/\:groff" "anonymous ftp" .
 
-A CVS repository is available, containing the current development
-version of groff.
-You can access it with the commands
+The current development version of groff is available from a
+.URL "http://\:savannah.gnu.org/\:cvs/\:?group=groff" "CVS repository" .
+You can access it by first selecting a parent directory in
+which to create a working copy (call it, say, ~/cvswork), and then
+executing the commands
 
 .in 2m
 .nf
 .ft C
-export CVSROOT=:pserver:anoncvs@anoncvs.ffii.org:/var/cvs
-cvs login
-cvs -z9 co groff
+cd ~/cvswork
+CVS_RSH=ssh; export CVS_RSH
+cvs -d:ext:anoncvs@savannah.gnu.org/cvsroot/groff -z5 co groff
 .ft P
 .fi
 .in
 
-(if the prompt for the password appears, just press the enter key).
-After a successful login you no longer need the first two commands; an
-update of a checked out repository should be done with
+(Note that you need an SSH client for security reasons.)
+
+This will create a subdirectory, ~/cvswork/groff, with a `checked out'
+copy of the CVS repository.
+An update of this working copy may be
+achieved, at any later time by invoking the commands
 
 .in 2m
+.nf
 .ft C
-cvs -z9 update -dP
+cd ~/cvswork/groff
+CVS_RSH=ssh cvs -z5 update -dP
 .ft P
+.fi
 .in
 
-Please read the info pages of cvs for further details.
+Please read the CVS info pages for further details.
 
-Alternatively, you can download snapshots (which are updated twice a day)
-from
-.URL ftp://\:ftp.ffii.org/\:pub/\:groff/\:devel/\:groff-current.tar.gz here
-or a diff file relative to the latest official groff release as
+Finally, it is possible to access the CVS with a
+.URL http://\:savannah.gnu.org/\:cvs/\:?group=groff "web browser" .
+
+Alternatively, you can download snapshots (which are updated twice a day).
+The complete groff source as a single file is available
+.URL http://\:groff.ffii.org/\:groff/\:devel/\:groff-current.tar.gz here .
+
+A diff file relative to groff-\[la]version\[ra], the latest official groff
+release is available at
 
 .in 2m
 .ft C
-ftp://ftp.ffii.org/pub/groff/devel/groff-\[la]version\[ra]-current.diff.gz
+http://groff.ffii.org/groff/devel/groff-\[la]version\[ra]-current.diff.gz
 .ft P
 .in
 
@@ -170,13 +187,33 @@ gunzip -c ../groff-\[la]version\[ra]-current.diff.gz | patch -p1
 .fi
 .in
 
-Finally, it is possible to access the CVS with a browser by pointing it
-to
+Depending on your requirements, you may need at least some of the
+following tools to build groff directly from its source:
 
 .in 2m
-.URL http://www.ffii.org/cgi-bin/viewcvs.cgi/groff \
-     http://www.ffii.org/cgi-bin/viewcvs.cgi/groff
+.nf
+ghostscript
+the psutils package
+the netpbm package
+texinfo 4.8
+bison \[>=] 1.875b or byacc
+.fi
 .in
+
+Note that texinfo and bison or byacc are required only for building from
+CVS sources (either a checked out working copy, or a daily snapshot).
+They are not required for building from a stable release tarball.
+Also note that the version numbers stated are the minimum supported.
+No version of texinfo < 4.8 will work, and the original release of bison
+1.875 is known not to work; you \fImay\fP find that bison releases < 1.875
+will work, but in case of difficulty, please update to a later version
+\fIbefore\fP posting a bug report.
+
+For \fIall\fP sources, you need ghostscript for creation of either PDF or
+HTML output; the netpbm and psutils packages are required only for HTML
+output.
+If you don't intend to produce output in either of these formats, then
+these packages are unnecessary.
 
 Please report bugs using the form in the file BUG-REPORT; the idea of this
 is to make sure that FSF has all the information it needs to fix the bug.
@@ -194,26 +231,34 @@ Three mailing lists are available:
 for reporting bugs
 
 .LI
-.MTO groff@ffii.org groff@ffii.org
+.MTO groff@gnu.org groff@gnu.org
 for general discussion of groff
 
 .LI
-.MTO groff-commit@ffii.org groff-commit@ffii.org
-a read-only list showing logs of commitments to the CVS repository
+.MTO groff-commit@gnu.org groff-commit@gnu.org
+a read-only list showing commitments to the CVS repository
 .ULE
 
-Note that groff@gnu.org is an alias for
-.MTO groff@\:ffii.org groff@\:ffii.org ;
-you must be subscribed to the `groff' list to send mails.
+You can post mails directly to the `bug-groff' list, without subscribing;
+to post mails to the `groff' list you must subscribe to it.
 
 To subscribe, send e-mail to \[la]list\[ra]-request@\[la]domain\[ra]
 (example:
-.MTO groff-request@\:ffii.org groff-request@\:ffii.org )
-with the word `subscribe' in either the
-subject or body of the e-mail (don't include the quotes) or have a look
-at the
-.URL http://\:ffii.org/\:mailman/\:listinfo/\:groff/ \
-     "groff mailing list webpage" .
+.MTO groff-request@\:gnu.org groff-request@\:gnu.org
+for the `groff' list) with the word `subscribe' in either the
+subject or body of the e-mail (don't include the quotes).
+Alternatively, you may subscribe by visiting the web pages at
+
+.in 2m
+.nf
+.URL http://lists.gnu.org/mailman/listinfo/bug-groff
+.URL http://lists.gnu.org/mailman/listinfo/groff
+.URL http://lists.gnu.org/mailman/listinfo/groff-commit
+.fi
+.in
+
+Each of these web pages also provides a link to a browseable archive of
+postings to the corresponding mailing list.
 
 GNU groff was written by
 .MTO jjc@\:jclark.com "James Clark" .
@@ -221,6 +266,266 @@ It is now maintained by
 .MTO Ted.Harding@\:nessie.mcc.ac.uk "Ted Harding"
 and
 .MTO wl@\:gnu.org "Werner Lemberg" .
+.
+.
+.SH
+NEWS VERSION 1.19.2
+.
+.SH 2 troff
+
+.ULS
+.LI
+Analogously to the .ft and \ef pair, two new requests `gcolor' and
+`fcolor' (which pair with \em and \eM, respectively) have been added to
+set the glyph and background colours.
+
+.LI
+A new read-only, string-valued register `.sty' returns the name of the
+current style.
+
+.LI
+Two new conditional operators `F\~\[la]name\[ra]' and `S\~\[la]name\[ra]'
+have been added.
+`F' is true if a font \[la]name\[ra] exists.
+`S' is true if a style \[la]name\[ra] has been registered.
+
+.LI
+Cyrillic characters have been added to the `utf8' and `html' output
+devices.
+.ULE
+.
+.
+.SH 2
+pic
+
+.ULS
+.LI
+The `by' argument in a `for' loop can now be negative if it is additive.
+For the multiplicative case, it must be greater than zero.
+.ULE
+.
+.
+.SH 2
+eqn
+
+.ULS
+.LI
+The following keywords aren't new but haven't been documented previously:
+
+.in 2m
+\fBundef NAME\fP (to undefine a macro)
+.br
+\fBcopy "FILE"\fP (a synonym for `include')
+.br
+\fBspace n\fP (to modify the vertical spacing before and after an equation)
+.in
+
+.LI
+The following macros aren't new but haven't been documented previously:
+
+.in 2m
+\fBAlpha, .\|.\|., Omega\fP (the same as `ALPHA', .\|.\|., `OMEGA')
+.br
+\fBldots\fP (three dots on the base line)
+.br
+\fBdollar\fP (a dollar glyph)
+.in
+
+.LI
+The following keywords have been extended.  Again, this isn't new but
+hasn't been documented previously:
+
+.in 2m
+.ft B
+col n { .\|.\|. }
+.br
+lcol n { .\|.\|. }
+.br
+rcol n { .\|.\|. }
+.br
+ccol n { .\|.\|. }
+.br
+pile n { .\|.\|. }
+.br
+lpile n { .\|.\|. }
+.br
+rpile n { .\|.\|. }
+.br
+cpile n { .\|.\|. }
+.ft P
+(set vertical spacing between rows to\~N)
+.ULE
+.
+.
+.SH 2
+grohtml
+
+.ULS
+.LI
+This device driver has been raised to beta stage; its set of tags should
+be stable now.
+
+.LI
+New command line option `\-s' to set the base point size.
+
+.LI
+New command line option `\-S' to set the split level while generating
+multiple files.
+.ULE
+.
+.
+.SH 2
+grotty
+
+.ULS
+.LI
+Experimental support for zero-width and double-width characters.
+.ULE
+.
+.
+.SH 2
+gxditview
+
+.ULS
+.LI
+On platforms which have the X\~Window System this program is now built and
+installed automatically.
+.ULE
+.
+.
+.SH 2
+xtotroff
+
+.ULS
+.LI
+This program to create font definition files for xditview isn't new but
+hasn't been installed previously.
+.ULE
+.
+.
+.SH 2
+groffer
+
+.ULS
+.LI
+A security problem (reported as CAN-2004-0969) has been fixed.
+.ULE
+.
+.
+.SH 2
+gdiffmk
+
+.ULS
+.LI
+A new script contributed by Mike Bianchi.
+It compares two groff, nroff, or troff documents and creates an output with
+added margin characters (using `.mc') to indicate the differences.
+.ULE
+.
+.
+.SH 2
+pdfroff
+
+.ULS
+.LI
+A new wrapper script contributed by Keith Marshall to easily create PDF
+documents with groff.
+.ULE
+.
+.
+.SH 2
+macro packages
+
+.ULS
+.LI
+ms.tmac
+
+.ULS
+.LI
+Support for fractional point sizes: A value for the `PS', `VS', `FPS',
+and `VPS' register larger than or equal to 1000 is always divided by 1000.
+For example, `.nr\~PS\~10250' sets the document's font size to 10.25 points.
+
+.LI
+The `Ds' and `De' macros provided in ms since groff version 1.19 have
+been removed; the equivalent `DS' and `DE' macros should be used instead.
+X11 documents which actually use `Ds' and `De' always load a
+specific macro file from the X11 distribution (`macros.t') which
+provides proper definitions for the two macros.
+
+.LI
+The following registers have been added for improving layout control:
+
+.IP PORPHANS
+Defines number of lines following `LP', `PP', `QP', `IP' or `XP' which
+must be kept together, before any automatic page break.
+
+.IP HORPHANS
+Sets number of lines of following paragraph which must be kept with a
+heading, defined by `NH' or `SH', before any automatic page break.
+
+.IP GROWPS
+Sets the first level of heading (set with `NH') which will keep the
+same point size as body text.
+
+.IP PSINCR
+Sets the point size increment for each level of heading (set with
+`NH'), below the threshold level set by `GROWPS'; e.g., if
+\en[PS]\~=\~10, \en[GROWPS]\~=\~3 and \en[PSINCR]\~=\~2.0p, then `.NH\~1'
+will produce 14pt headings, `.NH\~2' will produce 12pt, and all other levels
+will remain at 10pt (because \en[PS]\~=\~10).
+
+.LI
+The `SH' macro now accepts a numeric argument, to make heading size
+match that of `NH' with same argument value when the `GROWPS'/`PSINCR'
+feature is enabled.
+.ULE
+
+Please refer to the documentation of the ms package for other, minor
+improvements.
+
+.LI
+me.tmac
+
+The section type set with the `++' request is available in the `_M'
+register.
+This isn't new but hasn't been documented before.
+
+.LI
+www.tmac
+
+The `HR' macro no longer causes an empty line for non-HTML devices.
+
+A new macro `HEAD' has been added to directly add data to the
+<head>...</head> block.
+
+New macros `OLS' and `OLE' to start and end an ordered list.
+
+New macros `DLS' and `DLE' to start and end a definition list.
+.ULE
+.
+.
+.SH 2
+pdfmark
+
+.ULS
+.LI
+A new macro package contributed by Keith Marshall which implements PDF
+marks.
+This is in alpha stage currently.
+.ULE
+.
+.
+.SH 2
+miscellaneous
+
+.ULS
+.LI
+Two new keywords to the DESC file have been added which are needed for
+grohtml: `image_generator' and `unscaled_charwidths'.
+The former gives the name of the program which creates PNG images,
+and the latter makes troff always use unscaled character widths.
+.ULE
 .
 .
 .SH
@@ -309,7 +614,7 @@ tbl
 New key character `x' to make tbl call a user-defined macro on a table
 cell.
 Patch by
-.MTO hj.oertel@\:surfeu.de "Heinz-Jürgen Oertel" .
+.MTO hj.oertel@\:surfeu.de "Heinz-J\[:u]rgen Oertel" .
 .ULE
 .
 .

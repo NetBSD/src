@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 #
 # eqn2graph -- compile EQN equation descriptions to bitmap images
 #
@@ -32,7 +32,7 @@
 #
 # Thus, we pass -U to groff(1), and everything else to convert(1).
 #
-# Id: eqn2graph.sh,v 1.3 2003/10/28 07:46:23 wlemb Exp
+# Id: eqn2graph.sh,v 1.5 2005/05/18 07:03:06 wl Exp
 #
 groff_opts=""
 convert_opts=""
@@ -85,7 +85,7 @@ trap 'exit_status=$?; rm -rf $tmp && exit $exit_status' 0 2 15
 read equation
 (echo ".EQ"; echo 'delim $$'; echo ".EN"; echo '$'"$equation"'$') | \
 	groff -e $groff_opts -Tps -P-pletter > $tmp/eqn2graph.ps \
-	&& convert -crop 0x0 $convert_opts $tmp/eqn2graph.ps $tmp/eqn2graph.$format \
+	&& convert -trim -crop 0x0 $convert_opts $tmp/eqn2graph.ps $tmp/eqn2graph.$format \
 	&& cat $tmp/eqn2graph.$format
 
 # End

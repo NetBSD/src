@@ -48,7 +48,8 @@ font format.
 The font files for device
 .I name
 are stored in a directory
-.BI dev name.
+.BI dev name\c
+\&.
 .
 There are two types of file: a
 device description file called
@@ -101,6 +102,17 @@ will cause no font to be mounted on the corresponding font position.
 The horizontal resolution is
 .I n
 machine units.
+.
+.TP
+.BI image_generator\  string
+Needed for
+.B grohtml
+only.
+It specifies the program to generate PNG images from
+PostScript input.
+Under GNU/Linux this is usually
+.I gs
+but under other systems (notably cygwin) it might be set to another name.
 .
 .TP
 .BI paperlength\  n
@@ -274,6 +286,13 @@ Quantities in the font files are given in machine units
 for fonts whose point size is
 .I n 
 scaled points.
+.
+.TP
+.B unscaled_charwidths
+Make the font handling module always return unscaled character widths.
+Needed for the
+.B grohtml
+device.
 .
 .TP
 .B use_charnames_in_special
@@ -522,9 +541,13 @@ field has the form (in one line; it is broken here for the sake of
 readability):
 .
 .IP
-.IR width [\fB, height [\fB, depth [\fB, italic-correction
+.I width\c
+.RI [\fB, height\c
+.RI [\fB, depth\c
+.RI [\fB, italic-correction
 .br
-.RI [\fB, left-italic-correction [\fB, subscript-correction ]]]]]
+.RI [\fB, left-italic-correction\c
+.RI [\fB, subscript-correction ]]]]]
 .
 .LP
 There must not be any spaces between these subfields.

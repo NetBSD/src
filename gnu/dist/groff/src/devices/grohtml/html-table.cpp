@@ -1,7 +1,7 @@
-/*	$NetBSD: html-table.cpp,v 1.1.1.1 2003/06/30 17:52:15 wiz Exp $	*/
+/*	$NetBSD: html-table.cpp,v 1.1.1.2 2006/02/06 18:14:46 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 2002, 2003 Free Software Foundation, Inc.
+/* Copyright (C) 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
  *
  *  Gaius Mulley (gaius@glam.ac.uk) wrote html-table.cpp
  *
@@ -26,7 +26,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "driver.h"
 #include "stringclass.h"
@@ -34,6 +34,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #include "html-table.h"
 #include "ctype.h"
 #include "html.h"
+#include "html-text.h"
 
 #if !defined(TRUE)
 #   define TRUE  (1==1)
@@ -64,7 +65,7 @@ void tabs::delete_list (void)
   while (p != NULL) {
     q = p;
     p = p->next;
-    free(q);
+    delete q;
   }
   tab = NULL;
 }
@@ -106,7 +107,7 @@ int tabs::compatible (const char *s)
     while ((*s != (char)0) && isspace(*s))
       s++;
     // collect tab position
-    total += atoi(s);
+    total = atoi(s);
     // move over tab position
     while ((*s != (char)0) && !isspace(*s))
       s++;
@@ -151,16 +152,26 @@ void tabs::init (const char *s)
     while ((*s != (char)0) && !isspace(*s))
       s++;
     if (last == NULL) {
-      tab = (tab_position *)malloc(sizeof(tab_position));
+      tab = new tab_position;
       last = tab;
     } else {
-      last->next = (tab_position *)malloc(sizeof(tab_position));
+      last->next = new tab_position;
       last = last->next;
     }
     last->alignment = align;
     last->position = total;
     last->next = NULL;    
   }
+}
+
+/*
+ *  check_init - define tab stops using, s, providing none already exist.
+ */
+
+void tabs::check_init (const char *s)
+{
+  if (tab == NULL)
+    init(s);
 }
 
 /*
@@ -230,7 +241,7 @@ void tabs::dump_tabs (void)
  */
 
 html_table::html_table (simple_output *op, int linelen)
-  : columns(NULL), out(op), linelength(linelen), last_col(NULL), start_space(FALSE)
+  : out(op), columns(NULL), linelength(linelen), last_col(NULL), start_space(FALSE)
 {
   tab_stops = new tabs();
 }
@@ -244,7 +255,7 @@ html_table::~html_table ()
   c = columns;
   while (columns != NULL) {
     columns = columns->next;
-    free(c);
+    delete c;
     c = columns;
   }
 }
@@ -260,7 +271,7 @@ void html_table::remove_cols (cols *c)
   while (c != NULL) {
     p = c;
     c = c->next;
-    free(p);
+    delete p;
   }
 }
 
@@ -324,15 +335,21 @@ void html_table::emit_table_header (int space)
 
   last_col = NULL;
   if (linelength > 0) {
-    int n = no_columns() + no_gaps();
+    out->nl();
+    out->nl();
 
-    out->nl();
-    out->nl();
-    if (space)
-      out->put_string("<p>");
-    start_space = space;
-    out->put_string("<table width=\"100%\" border=0 rules=\"none\" frame=\"void\"\n       cols=\"").put_number(n).put_string("\" cellspacing=\"0\" cellpadding=\"0\">").nl();
-    out->put_string("<tr valign=\"top\" align=\"left\">").nl();
+    out->put_string("<table width=\"100%\"")
+      .put_string(" border=0 rules=\"none\" frame=\"void\"\n")
+      .put_string("       cellspacing=\"0\" cellpadding=\"0\"");
+    out->put_string(">")
+      .nl();
+    out->put_string("<tr valign=\"top\" align=\"left\"");
+    if (space) {
+      out->put_string(" style=\"margin-top: ");
+      out->put_string(STYLE_VERTICAL_SPACE);
+      out->put_string("\"");
+    }
+    out->put_string(">").nl();
   }
 }
 
@@ -347,6 +364,16 @@ int html_table::get_right (cols *c)
   if (c->next != NULL)
     return c->left;
   return linelength;
+}
+
+/*
+ *  set_space - assigns start_space. Used to determine the
+ *              vertical alignment when generating the next table row.
+ */
+
+void html_table::set_space (int space)
+{
+  start_space = space;
 }
 
 /*
@@ -463,18 +490,22 @@ void html_table::finish_row (void)
 void html_table::emit_new_row (void)
 {
   finish_row();
-  out->put_string("<tr valign=\"top\" align=\"left\">").nl();
+
+  out->put_string("<tr valign=\"top\" align=\"left\"");
+  if (start_space) {
+    out->put_string(" style=\"margin-top: ");
+    out->put_string(STYLE_VERTICAL_SPACE);
+    out->put_string("\"");
+  }
+  out->put_string(">").nl();
+  start_space = FALSE;
   last_col = NULL;
 }
 
 void html_table::emit_finish_table (void)
 {
   finish_row();
-  // out->put_string("linelength = ").put_number(linelength).nl();
   out->put_string("</table>");
-  if (start_space)
-    out->put_string("</p>");
-  out->nl();
 }
 
 /*
@@ -518,13 +549,23 @@ cols *html_table::get_column (int coln)
 int html_table::insert_column (int coln, int hstart, int hend, char align)
 {
   cols *c = columns;
-  cols *l = NULL;
+  cols *l = columns;
   cols *n = NULL;
 
   while (c != NULL && c->no < coln) {
     l = c;
     c = c->next;
   }
+  if (l != NULL && l->no>coln && hend > l->left)
+    return FALSE;	// new column bumps into previous one
+
+  l = NULL;
+  c = columns;
+  while (c != NULL && c->no < coln) {
+    l = c;
+    c = c->next;
+  }
+
   if ((l != NULL) && (hstart < l->right))
     return FALSE;	// new column bumps into previous one
   
@@ -532,7 +573,7 @@ int html_table::insert_column (int coln, int hstart, int hend, char align)
       (l->next->left < hend))
     return FALSE;  // new column bumps into next one
 
-  n = (cols *)malloc(sizeof(cols));
+  n = new cols;
   if (l == NULL) {
     n->next = columns;
     columns = n;
@@ -693,7 +734,6 @@ html_indent::html_indent (simple_output *op, int ind, int pageoffset, int linele
   in = ind;
   pg = pageoffset;
   ll = linelength;
-  is_used = FALSE;
 }
 
 html_indent::~html_indent (void)
@@ -704,18 +744,33 @@ html_indent::~html_indent (void)
 
 void html_indent::begin (int space)
 {
-  if (! is_used) {
-    table->emit_table_header(space);
-    table->emit_col(1);
-    is_used = TRUE;
+  if (in + pg == 0) {
+    if (space) {
+      table->out->put_string(" style=\"margin-top: ");
+      table->out->put_string(STYLE_VERTICAL_SPACE);
+      table->out->put_string("\"");
+    }
+  }
+  else {
+    //
+    // we use exactly the same mechanism for calculating
+    // indentation as html_table::emit_col
+    //
+    table->out->put_string(" style=\"margin-left:")
+      .put_number(((in + pg) * 100 + ll/2) / ll -
+		  (ll/2)/ll)
+      .put_string("%;");
+
+    if (space) {
+      table->out->put_string(" margin-top: ");
+      table->out->put_string(STYLE_VERTICAL_SPACE);
+    }
+    table->out->put_string("\"");
   }
 }
 
 void html_indent::end (void)
 {
-  if (is_used)
-    table->emit_finish_table();
-  is_used = FALSE;
 }
 
 /*

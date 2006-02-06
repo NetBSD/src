@@ -1,6 +1,6 @@
-/*	$NetBSD: pipeline.c,v 1.1.1.3 2004/07/30 14:44:53 wiz Exp $	*/
+/*	$NetBSD: pipeline.c,v 1.1.1.4 2006/02/06 18:14:02 wiz Exp $	*/
 
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -18,7 +18,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -103,7 +103,6 @@ static const char *xstrsignal(int);
 
 #include <process.h>
 #include <fcntl.h>
-#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 
