@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.759 2006/02/02 01:39:53 christos Exp $
+$NetBSD: pcidevs,v 1.760 2006/02/06 12:40:44 abs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2698,6 +2698,7 @@ product SIS 86C205		0x0005	86C205
 product SIS 85C503		0x0008	85C503 or 5597/5598 ISA bridge
 product SIS 600PMC		0x0009	600 Power Mngmt Controller
 product SIS 180_SATA		0x0180	180 SATA controller
+product SIS 190			0x0190	190 Ethernet
 product SIS 5597_VGA		0x0200	5597/5598 integrated VGA
 product SIS 300			0x0300	300/305 AGP VGA
 product SIS 85C501		0x0406	85C501
