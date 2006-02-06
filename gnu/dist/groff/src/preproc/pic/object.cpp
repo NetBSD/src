@@ -1,7 +1,7 @@
-/*	$NetBSD: object.cpp,v 1.1.1.2 2004/07/30 14:44:58 wiz Exp $	*/
+/*	$NetBSD: object.cpp,v 1.1.1.3 2006/02/06 18:14:21 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002, 2003, 2004
+/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002, 2003, 2004, 2005
      Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -19,7 +19,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "pic.h"
 #include "ptable.h"
@@ -204,7 +204,7 @@ double operator*(const position &a, const position &b)
 
 double hypot(const position &a)
 {
-  return hypot(a.x, a.y);
+  return groff_hypot(a.x, a.y);
 }
 
 struct arrow_head_type {
@@ -235,13 +235,14 @@ void draw_arrow(const position &pos, const distance &dir,
     v[2] = pos + base - n;
     // fill with outline color
     out->set_color(outline_color_for_fill, outline_color_for_fill);
+    // make stroke thin to avoid arrow sticking
+    slt.thickness = 0.1;
     out->polygon(v, 3, slt, 1);
   }
   else {
-    position v[2];
-    v[0] = pos;
-    v[1] = pos + base + n;
-    out->line(pos + base - n, v, 2, slt);
+    // use two line segments to avoid arrow sticking
+    out->line(pos + base - n, &pos, 1, slt);
+    out->line(pos + base + n, &pos, 1, slt);
   }
 }
 
@@ -1260,12 +1261,47 @@ void line_object::print()
   if (lt.type == line_type::invisible)
     return;
   out->set_color(0, graphic_object::get_outline_color());
-  out->line(strt, v, n, lt);
-  if (arrow_at_start)
-    draw_arrow(strt, strt-v[0], aht, lt, graphic_object::get_outline_color());
-  if (arrow_at_end)
-    draw_arrow(en, v[n-1] - (n > 1 ? v[n - 2] : strt), aht, lt,
-	       graphic_object::get_outline_color());
+  // shorten line length to avoid arrow sticking.
+  position sp = strt;
+  if (arrow_at_start) {
+    position base = v[0] - strt;
+    double hyp = hypot(base);
+    if (hyp == 0.0) {
+      error("cannot draw arrow on object with zero length");
+      return;
+    }
+    if (aht.solid && out->supports_filled_polygons()) {
+      base *= aht.height / hyp;
+      draw_arrow(strt, strt - v[0], aht, lt,
+		 graphic_object::get_outline_color());
+      sp = strt + base;
+    } else {
+      base *= fabs(lt.thickness) / hyp / 72 / 4;
+      sp = strt + base;
+      draw_arrow(sp, sp - v[0], aht, lt,
+		 graphic_object::get_outline_color());
+    }
+  }
+  if (arrow_at_end) {
+    position base = v[n-1] - (n > 1 ? v[n-2] : strt);
+    double hyp = hypot(base);
+    if (hyp == 0.0) {
+      error("cannot draw arrow on object with zero length");
+      return;
+    }
+    if (aht.solid && out->supports_filled_polygons()) {
+      base *= aht.height / hyp;
+      draw_arrow(en, v[n-1] - (n > 1 ? v[n-2] : strt), aht, lt,
+		 graphic_object::get_outline_color());
+      v[n-1] = en - base;
+    } else {
+      base *= fabs(lt.thickness) / hyp / 72 / 4;
+      v[n-1] = en - base;
+      draw_arrow(v[n-1], v[n-1] - (n > 1 ? v[n-2] : strt), aht, lt,
+		 graphic_object::get_outline_color());
+    }
+  }
+  out->line(sp, v, n, lt);
   out->reset_color();
 }
 
@@ -1330,12 +1366,47 @@ void spline_object::print()
   if (lt.type == line_type::invisible)
     return;
   out->set_color(0, graphic_object::get_outline_color());
-  out->spline(strt, v, n, lt);
-  if (arrow_at_start)
-    draw_arrow(strt, strt-v[0], aht, lt, graphic_object::get_outline_color());
-  if (arrow_at_end)
-    draw_arrow(en, v[n-1] - (n > 1 ? v[n - 2] : strt), aht, lt,
-	       graphic_object::get_outline_color());
+  // shorten line length for spline to avoid arrow sticking
+  position sp = strt;
+  if (arrow_at_start) {
+    position base = v[0] - strt;
+    double hyp = hypot(base);
+    if (hyp == 0.0) {
+      error("cannot draw arrow on object with zero length");
+      return;
+    }
+    if (aht.solid && out->supports_filled_polygons()) {
+      base *= aht.height / hyp;
+      draw_arrow(strt, strt - v[0], aht, lt,
+		 graphic_object::get_outline_color());
+      sp = strt + base*0.1; // to reserve spline shape
+    } else {
+      base *= fabs(lt.thickness) / hyp / 72 / 4;
+      sp = strt + base;
+      draw_arrow(sp, sp - v[0], aht, lt,
+		 graphic_object::get_outline_color());
+    }
+  }
+  if (arrow_at_end) {
+    position base = v[n-1] - (n > 1 ? v[n-2] : strt);
+    double hyp = hypot(base);
+    if (hyp == 0.0) {
+      error("cannot draw arrow on object with zero length");
+      return;
+    }
+    if (aht.solid && out->supports_filled_polygons()) {
+      base *= aht.height / hyp;
+      draw_arrow(en, v[n-1] - (n > 1 ? v[n-2] : strt), aht, lt,
+		 graphic_object::get_outline_color());
+      v[n-1] = en - base*0.1; // to reserve spline shape
+    } else {
+      base *= fabs(lt.thickness) / hyp / 72 / 4;
+      v[n-1] = en - base;
+      draw_arrow(v[n-1], v[n-1] - (n > 1 ? v[n-2] : strt), aht, lt,
+		 graphic_object::get_outline_color());
+    }
+  }
+  out->spline(sp, v, n, lt);
   out->reset_color();
 }
 
@@ -1544,22 +1615,70 @@ void arc_object::print()
   if (lt.type == line_type::invisible)
     return;
   out->set_color(0, graphic_object::get_outline_color());
-  if (clockwise)
-    out->arc(en, cent, strt, lt);
-  else
-    out->arc(strt, cent, en, lt);
+  // handle arrow direction; make shorter line for arc
+  position sp, ep, b;
+  if (clockwise) {
+    sp = en;
+    ep = strt;
+  } else {
+    sp = strt;
+    ep = en;
+  }
   if (arrow_at_start) {
-    position c = cent - strt;
-    draw_arrow(strt,
-	       (clockwise ? position(c.y, -c.x) : position(-c.y, c.x)),
-	       aht, lt, graphic_object::get_outline_color());
+    double theta = aht.height / rad;
+    if (clockwise)
+      theta = - theta;
+    b = strt - cent;
+    b = position(b.x*cos(theta) - b.y*sin(theta),
+		 b.x*sin(theta) + b.y*cos(theta)) + cent;
+    if (clockwise)
+      ep = b;
+    else
+      sp = b;
+    if (aht.solid && out->supports_filled_polygons()) {
+      draw_arrow(strt, strt - b, aht, lt,
+		 graphic_object::get_outline_color());
+    } else {
+      position v = b;
+      theta = fabs(lt.thickness) / 72 / 4 / rad;
+      if (clockwise)
+	theta = - theta;
+      b = strt - cent;
+      b = position(b.x*cos(theta) - b.y*sin(theta),
+		   b.x*sin(theta) + b.y*cos(theta)) + cent;
+      draw_arrow(b, b - v, aht, lt,
+		 graphic_object::get_outline_color());
+      out->line(b, &v, 1, lt);
+    }
   }
   if (arrow_at_end) {
-    position e = en - cent;
-    draw_arrow(en,
-	       (clockwise ? position(e.y, -e.x) : position(-e.y, e.x)),
-	       aht, lt, graphic_object::get_outline_color());
+    double theta = aht.height / rad;
+    if (!clockwise)
+      theta = - theta;
+    b = en - cent;
+    b = position(b.x*cos(theta) - b.y*sin(theta),
+                 b.x*sin(theta) + b.y*cos(theta)) + cent;
+    if (clockwise)
+      sp = b;
+    else
+      ep = b;
+    if (aht.solid && out->supports_filled_polygons()) {
+      draw_arrow(en, en - b, aht, lt,
+		 graphic_object::get_outline_color());
+    } else {
+      position v = b;
+      theta = fabs(lt.thickness) / 72 / 4 / rad;
+      if (!clockwise)
+	theta = - theta;
+      b = en - cent;
+      b = position(b.x*cos(theta) - b.y*sin(theta),
+                   b.x*sin(theta) + b.y*cos(theta)) + cent;
+      draw_arrow(b, b - v, aht, lt,
+		 graphic_object::get_outline_color());
+      out->line(b, &v, 1, lt);
+    }
   }
+  out->arc(sp, cent, ep, lt);
   out->reset_color();
 }
 
@@ -1755,7 +1874,7 @@ object *object_spec::make_object(position *curpos, direction *dirp)
     obj->set_thickness(th);
     if (flags & IS_OUTLINED)
       obj->set_outline_color(outlined);
-    if (flags & (IS_DEFAULT_FILLED|IS_FILLED)) {
+    if (flags & (IS_DEFAULT_FILLED | IS_FILLED)) {
       if (flags & IS_SHADED)
 	obj->set_fill_color(shaded);
       else {

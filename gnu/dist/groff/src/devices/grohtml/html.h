@@ -1,7 +1,7 @@
-/*	$NetBSD: html.h,v 1.1.1.3 2004/07/30 14:45:05 wiz Exp $	*/
+/*	$NetBSD: html.h,v 1.1.1.4 2006/02/06 18:14:46 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 2000, 2001, 2002 Free Software Foundation, Inc.
+/* Copyright (C) 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -18,7 +18,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #if !defined(HTML_H)
 #  define HTML_H
@@ -74,6 +74,7 @@ public:
   simple_output &enable_newlines(int);
   simple_output &check_newline(int n);
   simple_output &nl(void);
+  simple_output &force_nl(void);
   simple_output &space_or_newline (void);
   simple_output &begin_tag (void);
   FILE *get_file();

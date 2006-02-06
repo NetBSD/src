@@ -1,7 +1,7 @@
-/*	$NetBSD: soelim.cpp,v 1.1.1.2 2004/07/30 14:45:03 wiz Exp $	*/
+/*	$NetBSD: soelim.cpp,v 1.1.1.3 2006/02/06 18:14:40 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989-1992, 2000, 2001, 2003, 2004
+/* Copyright (C) 1989-1992, 2000, 2001, 2003, 2004, 2005
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -19,7 +19,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "lib.h"
 
@@ -161,12 +161,12 @@ int do_file(const char *filename)
 						    &file_name_in_path);
   int err = errno;
   string whole_filename(file_name_in_path ? file_name_in_path : filename);
+  whole_filename += '\0';
   a_delete file_name_in_path;
   if (fp == 0) {
     error("can't open `%1': %2", whole_filename.contents(), strerror(err));
     return 0;
   }
-  whole_filename += '\0';
   current_filename = whole_filename.contents();
   current_lineno = 1;
   set_location();

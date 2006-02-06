@@ -1,5 +1,6 @@
 .ig
-Copyright (C) 1989-2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (C) 1989-2000, 2001, 2002, 2003, 2004, 2005
+  Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -115,6 +116,15 @@ using the
 .B groff
 .B \-P
 option.
+.
+.PP
+Note that
+.B grops
+doesn't produce a valid document structure (conforming to the Document
+Structuring Convention) if called with multiple file arguments.
+.
+To print such concatenated output it is necessary to deactivate DSC
+handling in the printing program or previewer.
 .
 .
 .SH OPTIONS
@@ -774,7 +784,7 @@ commands.
 .RS
 .LP
 For example,
-.B gxditview
+.B \%gxditview
 is not able to display a proper
 .B \[rs](em
 character because the standard X11 fonts do not provide it;
@@ -792,7 +802,7 @@ request
 .
 .LP
 In this case,
-.B gxditview
+.B \%gxditview
 will be unable to display the
 .B \[rs](em
 character and will draw the line,
@@ -803,10 +813,10 @@ will print the
 character
 and ignore the line (this code is already in file
 .B Xps.tmac
-which will be loaded if a documented intended for
+which will be loaded if a document intended for
 .B grops
 is previewed with
-.BR gxditview ).
+.BR \%gxditview ).
 .RE
 .
 .LP
@@ -1148,6 +1158,10 @@ Temporary file.
 .BR groff_font (@MAN5EXT@),
 .BR groff_char (@MAN7EXT@),
 .BR groff_tmac (@MAN5EXT@)
+.
+.PP
+.URL "http://\:partners.adobe.com/\:public/\:developer/\:en/\:ps/\:5001.DSC_Spec.pdf" \
+     "PostScript Language Document Structuring Conventions Specification"
 .
 .cp \n[grops_C]
 .
