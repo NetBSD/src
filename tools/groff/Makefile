@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.27 2004/02/06 00:06:53 ross Exp $
+#	$NetBSD: Makefile,v 1.28 2006/02/06 23:48:35 tron Exp $
 
 MODULE=		groff
 
 ALL_TARGET=	src/include all
 MAKE_ARGS=	bindir=${TOOLDIR}/lib/groff MAKEINFO=${TOOL_MAKEINFO:Q} \
 		INSTALL_INFO=${TOOL_INSTALL_INFO:Q}
+# we don't need any of the X applications
+CONFIGURE_ARGS+=	--without-x
 
 TMACDIR=	${TOOLDIR}/share/groff/tmac
 SITETMACDIR=	${TOOLDIR}/share/groff/site-tmac
