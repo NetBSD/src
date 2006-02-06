@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.578 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.579 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -190,3 +190,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[jmmv 20060205]
 	pbms(4): 15" powerbook mouse driver from Johan Wallen
 		[christos 20060205]
+	evbarm: Add support for the Atmark Techno Armadillo-210.
+		[hamajima 20060206]
