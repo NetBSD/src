@@ -1,7 +1,10 @@
-.\" $NetBSD: wsmouse.4,v 1.14 2005/10/25 02:27:18 wiz Exp $
+.\" $NetBSD: wsmouse.4,v 1.15 2006/02/06 16:17:30 jmmv Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
+.\"
+.\" Copyright (c) 2006
+.\" 	Julio M. Merino Vidal.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -24,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 25, 2004
+.Dd February 6, 2006
 .Os
 .Dt WSMOUSE 4
 .Sh NAME
@@ -57,14 +60,54 @@ For use with X servers,
 can be generated.
 .Pp
 The
-.Nm
-driver provides a number of ioctl functions to control
-various parameters.
-A complete list is in
-.Pa /usr/include/dev/wscons/wsconsio.h .
-The
 .Xr wsconsctl 8
-utility gives access to these variables.
+utility gives access to several configurable details that affect this
+driver.
+.Ss Ioctls
+The following
+.Xr ioctl 2
+calls are provided by the
+.Nm
+driver or by devices which use it.
+Their definitions are found in
+.Pa dev/wscons/wsconsio.h .
+.Bl -tag -width Dv
+.It Dv WSMOUSEIO_GETREPEAT Pq Li "struct wsmouse_repeat"
+Retrieve the current automatic button repeating configuration.
+The structure returned is as follows:
+.Bd -literal -offset indent
+struct wsmouse_repeat {
+	unsigned long   wr_buttons;
+	unsigned int    wr_delay_first;
+	unsigned int    wr_delay_decrement;
+	unsigned int    wr_delay_minimum;
+};
+.Ed
+.Pp
+The
+.Va wr_buttons
+field is a bit mask that specifies which buttons send press and
+release events periodically while they are physically held down.
+The least significant bit corresponds to button 0.
+.Pp
+The other three fields describe the frequency upon which these
+automatic events are sent.
+.Va wr_delay_first
+specifies the milliseconds before the first repeated event is sent.
+.Va wr_delay_decrement
+is used to calculate the delay between the most recently generated
+event and the forthcoming one: the previous delay is taken and it is
+decreased by the value given in this variable.
+.Va wr_delay_minimum
+specifies the minimum delay, in milliseconds, between two consecutive
+events.
+.Pp
+.It Dv WSMOUSEIO_SETREPEAT Pq Li "struct wsmouse_repeat"
+Set the automatic button repeating configuration.
+See
+.Dv WSMOUSEIO_GETREPEAT
+above for more details.
+.El
 .Sh FILES
 .Bl -item
 .It
