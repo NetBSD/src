@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.31 2006/02/05 05:01:49 cube Exp $
+#	$NetBSD: ALCHEMY,v 1.1 2006/02/06 03:43:46 gdamore Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"PB1000-$Revision: 1.31 $"
+#ident 		"ALCHEMY-$Revision: 1.1 $"
 
 maxusers	32
 
