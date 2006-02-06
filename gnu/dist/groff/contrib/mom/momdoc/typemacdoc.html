@@ -1,3 +1,4 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
@@ -7,8 +8,8 @@
 
 <!====================================================================>
 
-<a href="appendices.html#TOP">Next</a>&nbsp;&nbsp;
-<a href="letters.html#TOP">Prev</a>&nbsp;&nbsp;
+<a href="docelement.html#TOP">Next</a>&nbsp;&nbsp;
+<a href="docprocessing.html#TOP">Prev</a>&nbsp;&nbsp;
 <a href="toc.html">Back to Table of Contents</a>
 <p>
 
@@ -51,14 +52,6 @@ margins, line length,
 <a href="definitions.html#TERMS_LEADING">leading</a>,
 and
 <a href="definitions.html#TERMS_QUAD">quad</a>.
-<p>
-<strong>NOTE:</strong> See the section on
-<a href="#TB_MARGINS">Top and bottom margins in document processing</a>
-for information on how <strong>mom</strong> interprets
-<a href="typesetting.html#T_MARGIN">T_MARGIN</a>
-and
-<a href="typesetting.html#B_MARGIN">B_MARGIN</a>
-in document processing.
 
 <p>
 <strong>Mom</strong> assumes that any changes to these parameters
@@ -70,7 +63,17 @@ middle of a document.
 <p>
 The following lists those typesetting macros whose behaviour during
 document processing requires some explanation.
-<p>
+(Please refer to
+<a href="#TB_MARGINS">Top and bottom margins in document processing</a>
+for information on how <strong>mom</strong> interprets
+<a href="typesetting.html#T_MARGIN">T_MARGIN</a>
+and
+<a href="typesetting.html#B_MARGIN">B_MARGIN</a>
+in document processing.  Additionally, see
+<a href="#ADD_SPACE">ADD_SPACE</a>
+if you encounter the problem of trying to get <strong>mom</strong>
+to put space at the tops of pages after the first.)
+
 <pre>
 MACRO           EFFECT DURING DOCUMENT PROCESSING
 -----           ---------------------------------
@@ -176,10 +179,56 @@ running text, but have no effect on the placement of
 <a href="definitions.html#TERMS_FOOTER">footers</a>,
 or page numbers.
 
+<a name="ADD_SPACE">
+	<h2><u>ADD_SPACE</u></h2>
+</a>
+
+<p>
+Occasionally, you may want to insert space before the start of
+<a href="definitions.html#TERMS_RUNNING">running text</a>
+on pages after the first.
+<p>
+You might have tried using
+<a href="typesetting.html#ALD">ALD</a>
+or
+<a href="typesetting.html#SPACE">SPACE</a>
+and found it did nothing.  This is because <strong>mom</strong>
+normally inhibits any extra space before the start of running text
+on pages after the first.
+<p>
+If you need the space, you must use the macro,
+<strong>ADD_SPACE</strong>, in conjuction with
+<a href="typesetting.html#NEWPAGE">NEWPAGE</a>.
+<strong>ADD_SPACE</strong> takes as its single argument the
+distance you want <strong>mom</strong> to advance from the normal
+baseline position at the top of the page.  A
+<a href="definitions.html#TERMS_UNITOFMEASURE">unit of measure</a>
+is required.
+
+<p>
+For example, say you wanted to insert 2 inches of space before the
+start of running text on a page other than the first.  You'd
+accomplish it with
+
+<p>
+<pre>
+	.NEWPAGE
+	.ADD_SPACE 2i
+</pre>
+
+which would terminate your current page, break to a new page,
+print the header (assuming headers are on) and insert 2 inches of
+space before the start of running text.
+<p>
+Since adding space in this way is almost sure to disrupt
+<strong>mom</strong>'s ability to guarantee perfectly flush bottom
+margins, I highly recommend using the
+<a href="docprocessing.html#SHIM">SHIM</a>
+macro immediately after <strong>ADD_SPACE</strong>.
 <p>
 <hr>
-<a href="appendices.html#TOP">Next</a>&nbsp;&nbsp;
-<a href="letters.html#TOP">Prev</a>&nbsp;&nbsp;
+<a href="docelement.html#TOP">Next</a>&nbsp;&nbsp;
+<a href="docprocessing.html#TOP">Prev</a>&nbsp;&nbsp;
 <a href="#TOP">Top</a>&nbsp;&nbsp;
 <a href="toc.html">Back to Table of Contents</a>
 </body>

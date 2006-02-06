@@ -1,7 +1,7 @@
-#!/bin/sh
+#! /bin/sh
 # shdeps.sh: Generate OS dependency fixups, for `groff' shell scripts
 #
-# Copyright (C) 2004 Free Software Foundation, Inc.
+# Copyright (C) 2004, 2005 Free Software Foundation, Inc.
 #      Written by Keith Marshall (keith.d.marshall@ntlworld.com)
 #
 # Invoked only by `make', as:
@@ -21,7 +21,7 @@
 # 
 # You should have received a copy of the GNU General Public License along
 # with groff; see the file COPYING.  If not, write to the Free Software
-# Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA.
 
 cat << ETX
 # shdeps.sed: Script generated automatically by \`make' -- do not modify!
@@ -40,6 +40,7 @@ then
   cat << ETX
 \\
 GROFF_RUNTIME="\${GROFF_BIN_PATH=$3}:"
+/@PATH_SEARCH_SETUP@/d
 ETX
 
 else
@@ -82,6 +83,34 @@ case "\$OSTYPE" in\\
   *)\\
     GROFF_RUNTIME=\${GROFF_BIN_PATH="$POSIX_BINDIR"}";" ;;\\
 esac
+ETX
+  # On Microsoft platforms, we may also need to configure
+  # the PATH search function, used in the `pdfroff' script,
+  # to use ';', instead of ':', as the PATH_SEPARATOR.
+
+  cat << ETX
+/@PATH_SEARCH_SETUP@/c\\
+#\\
+# This implementation is configured for a Microsoft platform.\\
+# Thus, the default PATH_SEPARATOR is ';', although some shells may\\
+# use the POSIX standard ':' instead.  Therefore, we need to examine\\
+# the OSTYPE environment variable, to identify which is appropriate\\
+# to make PATH searches work correctly.\\
+#\\
+  case "\$OSTYPE" in\\
+#\\
+    msys | cygwin)\\
+    #\\
+    # These emulate POSIX, and use ':'\\
+    #\\
+      PATH_SEPARATOR=\${PATH_SEPARATOR-':'} ;;\\
+#\\
+    *)\\
+    #\\
+    # For anything else, default to ';'\\
+    #\\
+      PATH_SEPARATOR=\${PATH_SEPARATOR-';'} ;;\\
+  esac
 ETX
 
 fi

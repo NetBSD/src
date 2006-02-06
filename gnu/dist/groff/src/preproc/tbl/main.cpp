@@ -1,7 +1,7 @@
-/*	$NetBSD: main.cpp,v 1.1.1.2 2004/07/30 14:44:57 wiz Exp $	*/
+/*	$NetBSD: main.cpp,v 1.1.1.3 2006/02/06 18:14:17 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -19,7 +19,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "table.h"
 
@@ -28,11 +28,14 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 extern "C" const char *Version_string;
 
-static int compatible_flag = 0;
+int compatible_flag = 0;
 
 class table_input {
   FILE *fp;
-  enum { START, MIDDLE, REREAD_T, REREAD_TE, REREAD_E, END, ERROR } state;
+  enum { START, MIDDLE,
+	 REREAD_T, REREAD_TE, REREAD_E,
+	 LEADER_1, LEADER_2, LEADER_3, LEADER_4,
+	 END, ERROR } state;
   string unget_stack;
 public:
   table_input(FILE *);
@@ -119,11 +122,15 @@ int table_input::get()
       }
       break;
     case MIDDLE:
-      // handle line continuation
+      // handle line continuation and uninterpreted leader character
       if ((c = getc(fp)) == '\\') {
 	c = getc(fp);
 	if (c == '\n')
 	  c = getc(fp);		// perhaps state ought to be START now
+	else if (c == 'a' && compatible_flag) {
+	  state = LEADER_1;
+	  return '\\';
+	}
 	else {
 	  if (c != EOF)
 	    ungetc(c, fp);
@@ -154,6 +161,18 @@ int table_input::get()
     case REREAD_E:
       state = MIDDLE;
       return 'E';
+    case LEADER_1:
+      state = LEADER_2;
+      return '*';
+    case LEADER_2:
+      state = LEADER_3;
+      return '(';
+    case LEADER_3:
+      state = LEADER_4;
+      return PREFIX_CHAR;
+    case LEADER_4:
+      state = MIDDLE;
+      return LEADER_CHAR;
     case END:
     case ERROR:
       return EOF;
@@ -1336,13 +1355,19 @@ table *process_data(table_input &in, format *f, options *opt)
 		  }
 		  break;
 		case GOT_RIGHT_BRACE:
+		  if ((opt->flags & table::NOSPACES)) {
+		    while (c == ' ')
+		      c = in.get();
+		    if (c == EOF)
+		      break;
+		  }
 		  if (c == '\n' || c == tab_char)
 		    state = END;
 		  else {
 		    input_entry += 'T';
 		    input_entry += '}';
 		    input_entry += c;
-		    state = c == '\n' ? START : MIDDLE;
+		    state = MIDDLE;
 		  }
 		  break;
 		case MIDDLE:
@@ -1469,7 +1494,6 @@ table *process_data(table_input &in, format *f, options *opt)
 
 void process_table(table_input &in)
 {
-  int c;
   options *opt = 0;
   format *form = 0;
   table *tbl = 0;
@@ -1481,7 +1505,7 @@ void process_table(table_input &in)
   }
   else {
     error("giving up on this table");
-    while ((c = in.get()) != EOF)
+    while (in.get() != EOF)
       ;
   }
   delete opt;
@@ -1545,10 +1569,8 @@ int main(int argc, char **argv)
       else {
 	errno = 0;
 	FILE *fp = fopen(argv[i], "r");
-	if (fp == 0) {
-	  current_lineno = -1;
-	  error("can't open `%1': %2", argv[i], strerror(errno));
-	}
+	if (fp == 0)
+	  fatal("can't open `%1': %2", argv[i], strerror(errno));
 	else {
 	  current_lineno = 1;
 	  current_filename = argv[i];

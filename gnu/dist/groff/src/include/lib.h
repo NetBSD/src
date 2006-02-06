@@ -1,7 +1,8 @@
-/*	$NetBSD: lib.h,v 1.1.1.3 2004/07/30 14:44:51 wiz Exp $	*/
+/*	$NetBSD: lib.h,v 1.1.1.4 2006/02/06 18:13:51 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989-2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2000, 2001, 2002, 2003, 2005
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -18,7 +19,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -33,19 +34,8 @@ extern "C" {
   const char *if_to_a(int, int);
 }
 
-/* stdio.h on IRIX, OSF/1, emx, UWIN, and MinGW include getopt.h */
-/* unistd.h on CYGWIN includes getopt.h */
-
-#if !(defined(__sgi) \
-      || (defined(__osf__) && defined(__alpha)) \
-      || defined(_UWIN) \
-      || defined(__EMX__) \
-      || defined(__CYGWIN__) \
-      || defined(__MINGW32__))
-#include <groff-getopt.h>
-#else
+#define __GETOPT_PREFIX groff_
 #include <getopt.h>
-#endif
 
 #ifdef HAVE_SETLOCALE
 #include <locale.h>
@@ -55,6 +45,7 @@ extern "C" {
 
 char *strsave(const char *s);
 int is_prime(unsigned);
+double groff_hypot(double, double);
 
 #include <stdio.h>
 #include <string.h>
@@ -101,6 +92,7 @@ extern "C" { int pclose (FILE *); }
 #endif /* NEED_DECLARATION_PCLOSE */
 
 size_t file_name_max(const char *fname);
+size_t path_name_max();
 
 int interpret_lf_args(const char *p);
 

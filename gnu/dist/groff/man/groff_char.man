@@ -8,7 +8,7 @@ groff_char \- groff glyph names
 .
 .
 .\" --------------------------------------------------------------------
-.\" Legalize
+.\" Legal terms
 .\" --------------------------------------------------------------------
 .
 .ig
@@ -17,9 +17,9 @@ groff_char(7)
 This file is part of groff (GNU roff).
 
 File position: <groff_src_top>/man/groff_char.man
-Last update: 27 Dec 2003
+Last update: 05 Dec 2004
 
-Copyright (C) 1989-2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (C) 1989-2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 written by Werner Lemberg <wl@gnu.org>
 with additions by Bernd Warken <bwarken@mayn.de>
 
@@ -1130,7 +1130,7 @@ square root sign.
 .2e OK a19 u2713 "check mark, tick"
 .
 .Pa
-.I Legalize
+.I Legal Symbols
 .P
 .2s co copyright u00A9 "+"
 .C2 rg registered u00AE "+"
@@ -1357,7 +1357,8 @@ phi, and `\f(CW\e[+f]\fP' the curly variant.
 .SH "AUTHOR"
 .\" --------------------------------------------------------------------
 .
-Copyright \(co 1989-2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright \(co 1989-2000, 2001, 2002, 2003,
+2004 Free Software Foundation, Inc.
 .
 .P
 This document is distributed under the terms of the FDL (GNU Free

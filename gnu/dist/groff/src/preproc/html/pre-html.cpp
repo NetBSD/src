@@ -1,4 +1,4 @@
-/*	$NetBSD: pre-html.cpp,v 1.1.1.2 2004/07/30 14:45:03 wiz Exp $	*/
+/*	$NetBSD: pre-html.cpp,v 1.1.1.3 2006/02/06 18:14:41 wiz Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
@@ -18,7 +18,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define PREHTMLC
 
@@ -36,6 +36,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #include "defs.h"
 #include "searchpath.h"
 #include "paper.h"
+#include "device.h"
 #include "font.h"
 
 #include <errno.h>
@@ -212,6 +213,7 @@ static char *htmlFileName = NULL;	// output of pre-html output which
 
 static char *linebuf = NULL;		// for scanning devps/DESC
 static int linebufsize = 0;
+static const char *image_gen = NULL;    // the `gs' program
 
 const char *const FONT_ENV_VAR = "GROFF_FONT_PATH";
 static search_path font_path(FONT_ENV_VAR, FONTPATH, 0, 0);
@@ -928,11 +930,12 @@ int imageList::createPage(int pageno)
   html_system(s, 1);
 
   s = make_message("echo showpage | "
-		   "gs%s -q -dBATCH -dSAFER "
+		   "%s%s -q -dBATCH -dSAFER "
 		   "-dDEVICEHEIGHTPOINTS=792 "
 		   "-dDEVICEWIDTHPOINTS=%d -dFIXEDMEDIA=true "
 		   "-sDEVICE=%s -r%d %s "
 		   "-sOutputFile=%s %s -\n",
+		   image_gen,
 		   EXE_EXT,
 		   (getMaxX(pageno) * image_res) / postscriptRes,
 		   image_device,
@@ -1544,13 +1547,10 @@ static int scanArguments(int argc, char **argv)
     { "version", no_argument, 0, 'v' },
     { NULL, 0, 0, 0 }
   };
-  while ((c = getopt_long(argc, argv,
-			  "+a:g:o:i:I:j:D:F:vbdhlrnp", long_options, NULL))
+  while ((c = getopt_long(argc, argv, "+a:bdD:F:g:hi:I:j:lno:prs:S:v",
+			  long_options, NULL))
 	 != EOF)
     switch(c) {
-    case 'v':
-      printf("GNU pre-grohtml (groff) version %s\n", Version_string);
-      exit(0);
     case 'a':
       textAlphaBits = min(max(MIN_ALPHA_BITS, atoi(optarg)),
 			  MAX_ALPHA_BITS);
@@ -1558,6 +1558,20 @@ static int scanArguments(int argc, char **argv)
 	error("cannot use 3 bits of antialiasing information");
 	exit(1);
       }
+      break;
+    case 'b':
+      // handled by post-grohtml (set background color to white)
+      break;
+    case 'd':
+#if defined(DEBUGGING)
+      debug = TRUE;
+#endif
+      break;
+    case 'D':
+      image_dir = optarg;
+      break;
+    case 'F':
+      font_path.command_line_dir(optarg);
       break;
     case 'g':
       graphicAlphaBits = min(max(MIN_ALPHA_BITS, atoi(optarg)),
@@ -1567,23 +1581,23 @@ static int scanArguments(int argc, char **argv)
 	exit(1);
       }
       break;
-    case 'b':
-      // handled by post-grohtml (set background color to white)
-      break;
-    case 'D':
-      image_dir = optarg;
-      break;
-    case 'I':
-      image_template = optarg;
+    case 'h':
+      // handled by post-grohtml
       break;
     case 'i':
       image_res = atoi(optarg);
       break;
-    case 'F':
-      font_path.command_line_dir(optarg);
+    case 'I':
+      image_template = optarg;
       break;
     case 'j':
       // handled by post-grohtml (set job name for multiple file output)
+      break;
+    case 'l':
+      // handled by post-grohtml (no automatic section links)
+      break;
+    case 'n':
+      // handled by post-grohtml (generate simple heading anchors)
       break;
     case 'o':
       vertical_offset = atoi(optarg);
@@ -1591,14 +1605,18 @@ static int scanArguments(int argc, char **argv)
     case 'p':
       show_progress = TRUE;
       break;
-    case 'd':
-#if defined(DEBUGGING)
-      debug = TRUE;
-#endif
+    case 'r':
+      // handled by post-grohtml (no header and footer lines)
       break;
-    case 'h':
-      // handled by post-grohtml
+    case 's':
+      // handled by post-grohtml (use font size n as the html base font size)
       break;
+    case 'S':
+      // handled by post-grohtml (set file split level)
+      break;
+    case 'v':
+      printf("GNU pre-grohtml (groff) version %s\n", Version_string);
+      exit(0);
     case CHAR_MAX + 1: // --help
       usage(stdout);
       exit(0);
@@ -1703,6 +1721,12 @@ int main(int argc, char **argv)
   }
   exit(1);
 #endif /* CAPTURE_MODE */
+  device = "html";
+  if (!font::load_desc())
+    fatal("cannot find devhtml/DESC exiting");
+  image_gen = font::image_generator;
+  if (image_gen == NULL || (strcmp(image_gen, "") == 0))
+    fatal("devhtml/DESC must set the image_generator field, exiting");
   postscriptRes = get_resolution();
   i = scanArguments(argc, argv);
   setupAntiAlias();

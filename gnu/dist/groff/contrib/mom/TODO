@@ -1,3 +1,6 @@
+As of version 1.2, the items on this TODO list will only be dealt
+with if users request they be implemented.
+
 UNDERLINING
 -----------
 Explore "the ultimative underline macro" for possible inclusion
@@ -11,12 +14,6 @@ FOOTNOTES
 ---------
 In columnar docs, maybe give user the choice of gathering all
 footnotes at the bottom of the last column?
-
-Figure out a way to bypass the \c requirement before .FOOTNOTE.
-
-Figure out a way to process blockquotes and quotes that contain
-footnotes so that the user doesn't have to use the awful kludge
-.BREAKQUOTE.
 
 CONTROL MACROS -- _INDENT
 --------------

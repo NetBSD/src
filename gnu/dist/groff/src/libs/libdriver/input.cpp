@@ -1,16 +1,16 @@
-/*	$NetBSD: input.cpp,v 1.1.1.2 2004/07/30 14:44:52 wiz Exp $	*/
+/*	$NetBSD: input.cpp,v 1.1.1.3 2006/02/06 18:13:59 wiz Exp $	*/
 
 // -*- C++ -*-
 
 // <groff_src_dir>/src/libs/libdriver/input.cpp
 
-/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002, 2003, 2004
+/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    Written by James Clark (jjc@jclark.com)
    Major rewrite 2001 by Bernd Warken (bwarken@mayn.de)
 
-   Last update: 04 Apr 2003
+   Last update: 15 Jun 2005
 
    This file is part of groff, the GNU roff text processing system.
 
@@ -26,8 +26,8 @@
 
    You should have received a copy of the GNU General Public License
    along with groff; see the file COPYING.  If not, write to the Free
-   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
-   02111-1307, USA.
+   Software Foundation, 51 Franklin St - Fifth Floor, Boston, MA
+   02110-1301, USA.
 */
 
 /* Description
@@ -274,16 +274,15 @@ public:
   IntArray(void);
   IntArray(const size_t);
   ~IntArray(void);
-  const IntArg operator[](const size_t i) const
+  IntArg operator[](const size_t i) const
   {
     if (i >= num_stored)
       fatal("index out of range");
     return (IntArg) data[i];
   }
   void append(IntArg);
-  const IntArg * const
-    get_data(void) const { return (IntArg *)data; }
-  const size_t len(void) const { return num_stored; }
+  IntArg *get_data(void) const { return (IntArg *)data; }
+  size_t len(void) const { return num_stored; }
 };
 
 // Characters read from the input queue.
@@ -610,6 +609,7 @@ void delete_current_env(void)
   delete current_env->col;
   delete current_env->fill;
   delete current_env;
+  current_env = 0;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1522,6 +1522,9 @@ parse_x_command(void)
       char *str_arg = get_extended_arg(); // includes line skip
       if (npages <= 0)
 	error("`x X' command invalid before first `p' command");
+      else if (str_arg && (strncmp(str_arg, "devtag:",
+				   strlen("devtag:")) == 0))
+	pr->devtag(str_arg, current_env);
       else
 	pr->special(str_arg, current_env);
       a_delete str_arg;
@@ -1825,6 +1828,7 @@ do_file(const char *filename)
   if (npages > 0)
     pr->end_page(current_env->vpos);
   delete pr;
+  pr = 0;
   fclose(current_file);
   // If `stopped' is not `true' here then there wasn't any `x stop'.
   if (!stopped)

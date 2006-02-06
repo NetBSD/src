@@ -1,5 +1,5 @@
 .ig
-Copyright (C) 1989-2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (C) 1989-2000, 2001, 2002, 2003, 2005 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -66,7 +66,7 @@ creates a font file for use with groff and
 .
 .B afmtodit
 is written in perl;
-you must have perl version 3 or newer installed in order to run
+you must have perl version 5.004 or newer installed in order to run
 .BR afmtodit .
 .
 .LP

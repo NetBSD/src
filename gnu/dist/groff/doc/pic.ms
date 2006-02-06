@@ -10,7 +10,7 @@
 .\" This document was written for free use and redistribution by
 .\" Eric S. Raymond <esr@thyrsus.com> in August 1995.
 .\"
-.\"	Id: pic.ms,v 1.25 2003/07/12 06:08:49 wlemb Exp	
+.\"	Id: pic.ms,v 1.29 2005/04/27 20:52:34 wl Exp	
 .\"
 .\" Set a proper TeX and LaTeX
 .ie t \{\
@@ -972,7 +972,7 @@ picture to the smallest bounding box before writing it out.  For
 example, if you have a picture consisting of a small box with its lower
 left corner at (2,2) and another small box with its upper right corner
 at (5,5), the width and height of the image are both 3\~units and
-not~5.  To get the origin at (0,0) included, simply add an invisible
+not\~5.  To get the origin at (0,0) included, simply add an invisible
 object to the picture, positioning the object's left corner at (0,0).
 .
 .NH 2
@@ -1731,7 +1731,7 @@ Accordingly, the command
 .RS
 .KS
 .IP
-.ft CW
+.CW
 .nf
 \&.PS
 copy thru % circle at ($1,$2) % until "END"
@@ -1750,7 +1750,7 @@ is equivalent to
 .RS
 .KS
 .IP
-.ft CW
+.CW
 .nf
 \&.PS
 circle at (1,2)
@@ -1787,6 +1787,27 @@ This has a similar effect to a line beginning with
 or
 \fB\e\fR\|,
 but allows the values of variables to be passed through.
+.LP
+For example,
+.KS
+.DS
+.CW
+.nf
+\&.PS
+x = 14
+command ".ds string x is " x "."
+\&.PE
+\e*[string]
+.DE
+.R
+.KE
+.LP
+prints
+.DS
+.CW
+x is 14.
+.R
+.DE
 .
 .NH 2
 Executing Shell Commands
@@ -1865,6 +1886,16 @@ then
 .I variable
 will instead be multiplied by
 \fIexpr3\fR.
+The value of
+.I expr3
+can be negative for the additive case;
+.I variable
+is then tested whether it is greater than or equal to
+\fIexpr2\fR.
+For the multiplicative case,
+.I expr3
+must be greater than zero.
+If the constraints aren't met, the loop isn't executed.
 .I X
 can be any character not occurring in
 \fIbody\fR; or the two \fIX\/\fPs may be paired braces (as in the
@@ -2657,6 +2688,7 @@ ways to specify positions:
 <position> ::=
   <position-not-place>
   <place>
+  ( <position> )
 .R
 .DE
 .DS

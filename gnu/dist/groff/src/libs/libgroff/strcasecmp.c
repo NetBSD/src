@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.1.1.2 2004/07/30 14:44:51 wiz Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.1.1.3 2006/02/06 18:13:55 wiz Exp $	*/
 
 /* strcasecmp.c -- case insensitive string comparator
    Copyright (C) 1998, 1999 Free Software Foundation, Inc.
@@ -15,7 +15,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Inc., 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #if HAVE_CONFIG_H
 # include <config.h>

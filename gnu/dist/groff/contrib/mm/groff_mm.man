@@ -1,5 +1,5 @@
 .\"
-.\" Id: groff_mm.man,v 2.12 2004/05/13 13:13:24 wlemb Exp
+.\" Id: groff_mm.man,v 2.13 2004/07/03 12:46:56 wlemb Exp
 .\"
 .de T2
 .if t .ne 2v
@@ -1278,7 +1278,7 @@ the header in letters or other special texts.
 This macro must be used before any text to inhibit the pageheader
 on the first page.
 .TP
-.B PIC [-L] [-C] [-R] [-I n] filename [width [height]]
+.B "PIC [-L] [-C] [-R] [-I n] filename [width [height]]"
 \fBPIC\fP includes a Postscript file in the document.
 The macro depends on \fBmmroff\fP and \fBINITR\fP.
 \fB-L\fP, \fB-C\fP, \fB-R\fP and \fB-I n\fP adjusts the picture

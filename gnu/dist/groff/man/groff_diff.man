@@ -3,7 +3,7 @@
 .ig
 groff_diff.man
 
-Last update : 04 May 2004
+Last update : 26 Jul 2004
 
 This file is part of groff, the GNU roff type-setting system.
 It is the source of the man-page groff_diff(7).
@@ -1394,6 +1394,15 @@ is checked only if the particular glyph isn't found in the current font.
 This test happens before checking special fonts.
 .
 .TP
+.BI .fcolor\  c
+Set the fill color to
+.IR c .
+If
+.I c
+is missing,
+switch to the previous fill color.
+.
+.TP
 .BI .fschar\  f\ c\ string
 Define fallback glyph
 .I c
@@ -1440,7 +1449,11 @@ Whenever a font named
 .I f
 is referred to in an
 .B \[rs]f
-escape sequence, or in the
+escape sequence, in the
+.B F
+and
+.B S
+conditional operators, or in the
 .BR ft ,
 .BR ul ,
 .BR bd ,
@@ -1461,6 +1474,15 @@ is missing, or equal to
 then font
 .I f
 will not be translated.
+.
+.TP
+.BI .gcolor\  c
+Set the glyph color to
+.IR c .
+If
+.I c
+is missing,
+switch to the previous glyph color.
 .
 .TP
 .BI .hcode \ c1\ code1\ c2\ code2\|.\|.\|.\&
@@ -2467,6 +2489,24 @@ there is a current diversion; this behaviour is so anomalous that it
 must be considered a bug.
 .
 .TP
+.BI .de\  xx\ yy
+.TQ
+.BI .am\  xx\ yy
+.TQ
+.BI .ds\  xx\ yy
+.TQ
+.BI .as\  xx\ yy
+In compatibility mode, these requests behaves similar to
+.BR .de1 ,
+.BR .am1 ,
+.BR .ds1 ,
+and
+.BR .as1 ,
+respectively: A `compatibility save' token is inserted at the
+beginning, and a `compatibility restore' token at the end, with
+compatibility mode switched on during execution.
+.
+.TP
 .BI .ev\  xx
 If
 .I xx
@@ -2771,6 +2811,12 @@ arguments of the
 request.
 .
 .TP
+.B \[rs]n[.sty]
+The current font style.
+.
+This is a string-valued register.
+.
+.TP
 .B \[rs]n[.tabs]
 A string representation of the current tab settings suitable for use
 as an argument to the
@@ -3073,6 +3119,26 @@ has been defined by the
 .B char
 request.
 .
+.TP
+.BI .if\ F f
+True if font
+.I f
+exists.
+.
+.B f
+is handled as if it was opened with the
+.B ft
+request (this is, font translation and styles are applied), without
+actually mounting it.
+.
+.TP
+.BI .if\ S s
+True if style
+.I s
+has been registered.
+.
+Font translation is applied.
+.
 .P
 The
 .B tr
@@ -3089,16 +3155,11 @@ Example:
 .ne 6v+\n(.Vu
 .ft CB
 .nf
-.Text .de foo
-.Text .  nop Hello, I'm `foo'.
-.Text .  nop I will now define `bar'.
+.Text .if t \[rs]{\[rs]
 .Text .  de bar
 .Text .    nop Hello, I'm `bar'.
 .Text .  .
-.Text .  nop Done.
-.Text ..
-.Text .foo
-.Text .bar
+.Text .\[rs]}
 .fi
 .
 .
@@ -3461,7 +3522,7 @@ for groff.
 provides a
 .B compatibility mode
 that allows to process roff code written for classical
-.troff
+.B troff
 or for other implementations of roff in a consistent way.
 .
 .P

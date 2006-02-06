@@ -1,7 +1,7 @@
-/*	$NetBSD: posix.h,v 1.1.1.3 2004/07/30 14:44:51 wiz Exp $	*/
+/*	$NetBSD: posix.h,v 1.1.1.4 2006/02/06 18:13:51 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1992, 2000, 2001, 2002 Free Software Foundation, Inc.
+/* Copyright (C) 1992, 2000, 2001, 2002, 2005 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -18,7 +18,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -58,6 +58,10 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #ifndef O_RDONLY
 #define O_RDONLY 0
+#endif
+
+#ifndef F_OK
+#define F_OK 0
 #endif
 
 #ifndef HAVE_ISATTY

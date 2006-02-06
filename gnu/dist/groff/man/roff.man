@@ -1,7 +1,7 @@
 .ig
 roff.man
 
-Last update: 21 Jan 2004
+Last update: 1 Jun 2004
 
 This file is part of groff, the GNU roff type-setting system.
 
@@ -523,7 +523,7 @@ When you read a system manual page (man page) roff is working in the
 background.
 .
 Roff documents can be viewed with a native viewer called
-.BR xditview (1x),
+.BR \%xditview (1x),
 a standard program of the X window distribution, see
 .BR X (7x).
 .

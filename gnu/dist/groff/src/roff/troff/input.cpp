@@ -1,7 +1,7 @@
-/*	$NetBSD: input.cpp,v 1.1.1.2 2004/07/30 14:44:56 wiz Exp $	*/
+/*	$NetBSD: input.cpp,v 1.1.1.3 2006/02/06 18:14:11 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -19,23 +19,26 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
+
+#define DEBUGGING
 
 #include "troff.h"
 #include "dictionary.h"
 #include "hvunits.h"
+#include "stringclass.h"
+#include "mtsm.h"
 #include "env.h"
 #include "request.h"
 #include "node.h"
-#include "reg.h"
 #include "token.h"
 #include "div.h"
+#include "reg.h"
 #include "charinfo.h"
-#include "stringclass.h"
-#include "font.h"
 #include "macropath.h"
-#include "defs.h"
 #include "input.h"
+#include "defs.h"
+#include "font.h"
 #include "unicode.h"
 
 // Needed for getpid() and isatty()
@@ -104,7 +107,7 @@ static int compatible_flag = 0;
 int ascii_output_flag = 0;
 int suppress_output_flag = 0;
 int is_html = 0;
-int begin_level = 0;		// number of nested .begin requests
+int begin_level = 0;		// number of nested \O escapes
 
 int have_input = 0;		// whether \f, \F, \D'F...', \H, \m, \M,
 				// \R, \s, or \S has been processed in
@@ -119,6 +122,7 @@ double spread_limit = -3.0 - 1.0;	// negative means deactivated
 
 double warn_scale;
 char warn_scaling_indicator;
+int debug_state = 0;            // turns on debugging of the html troff state
 
 search_path *mac_path = &safer_macro_path;
 
@@ -155,6 +159,9 @@ static void trapping_blank_line();
 class input_iterator;
 input_iterator *make_temp_iterator(const char *);
 const char *input_char_description(int);
+
+void process_input_stack();
+void chop_macro();		// declare to avoid friend name injection
 
 
 void set_escape_char()
@@ -195,9 +202,12 @@ void restore_escape_char()
 class input_iterator {
 public:
   input_iterator();
+  input_iterator(int is_div);
   virtual ~input_iterator() {}
   int get(node **);
   friend class input_stack;
+  int is_diversion;
+  statem *diversion_state;
 protected:
   const unsigned char *ptr;
   const unsigned char *eptr;
@@ -214,7 +224,6 @@ private:
   virtual int next_file(FILE *, const char *) { return 0; }
   virtual void shift(int) {}
   virtual int is_boundary() {return 0; }
-  virtual int internal_level() { return 0; }
   virtual int is_file() { return 0; }
   virtual int is_macro() { return 0; }
   virtual void save_compatible_flag(int) {}
@@ -222,7 +231,12 @@ private:
 };
 
 input_iterator::input_iterator()
-: ptr(0), eptr(0)
+: is_diversion(0), ptr(0), eptr(0)
+{
+}
+
+input_iterator::input_iterator(int is_div)
+: is_diversion(is_div), ptr(0), eptr(0)
 {
 }
 
@@ -416,16 +430,21 @@ public:
   static int is_return_boundary();
   static void remove_boundary();
   static int get_level();
+  static int get_div_level();
+  static void increase_level();
+  static void decrease_level();
   static void clear();
   static void pop_macro();
   static void save_compatible_flag(int);
   static int get_compatible_flag();
-
+  static statem *get_diversion_state();
+  static void check_end_diversion(input_iterator *t);
   static int limit;
+  static int div_level;
+  static statem *diversion_state;
 private:
   static input_iterator *top;
   static int level;
-
   static int finish_get(node **);
   static int finish_peek();
 };
@@ -433,10 +452,29 @@ private:
 input_iterator *input_stack::top = &nil_iterator;
 int input_stack::level = 0;
 int input_stack::limit = DEFAULT_INPUT_STACK_LIMIT;
+int input_stack::div_level = 0;
+statem *input_stack::diversion_state = NULL;
+int suppress_push=0;
+
 
 inline int input_stack::get_level()
 {
-  return level + top->internal_level();
+  return level;
+}
+
+inline void input_stack::increase_level()
+{
+  level++;
+}
+
+inline void input_stack::decrease_level()
+{
+  level--;
+}
+
+inline int input_stack::get_div_level()
+{
+  return div_level;
 }
 
 inline int input_stack::get(node **np)
@@ -458,6 +496,13 @@ int input_stack::finish_get(node **np)
     if (top == &nil_iterator)
       break;
     input_iterator *tem = top;
+    check_end_diversion(tem);
+#if defined(DEBUGGING)
+  if (debug_state)
+    if (tem->is_diversion)
+      fprintf(stderr,
+	      "in diversion level = %d\n", input_stack::get_div_level());
+#endif
     top = top->next;
     level--;
     delete tem;
@@ -473,6 +518,14 @@ inline int input_stack::peek()
   return (top->ptr < top->eptr) ? *top->ptr : finish_peek();
 }
 
+void input_stack::check_end_diversion(input_iterator *t)
+{
+  if (t->is_diversion) {
+    div_level--;
+    diversion_state = t->diversion_state;
+  }
+}
+
 int input_stack::finish_peek()
 {
   for (;;) {
@@ -482,6 +535,7 @@ int input_stack::finish_peek()
     if (top == &nil_iterator)
       break;
     input_iterator *tem = top;
+    check_end_diversion(tem);
     top = top->next;
     level--;
     delete tem;
@@ -511,6 +565,8 @@ void input_stack::remove_boundary()
 {
   assert(top->is_boundary());
   input_iterator *temp = top->next;
+  check_end_diversion(top);
+
   delete top;
   top = temp;
   level--;
@@ -524,6 +580,38 @@ void input_stack::push(input_iterator *in)
     fatal("input stack limit exceeded (probable infinite loop)");
   in->next = top;
   top = in;
+  if (top->is_diversion) {
+    div_level++;
+    in->diversion_state = diversion_state;
+    diversion_state = curenv->construct_state(0);
+#if defined(DEBUGGING)
+    if (debug_state) {
+      curenv->dump_troff_state();
+      fflush(stderr);
+    }
+#endif
+  }
+#if defined(DEBUGGING)
+  if (debug_state)
+    if (top->is_diversion) {
+      fprintf(stderr,
+	      "in diversion level = %d\n", input_stack::get_div_level());
+      fflush(stderr);
+    }
+#endif
+}
+
+statem *get_diversion_state()
+{
+  return input_stack::get_diversion_state();
+}
+
+statem *input_stack::get_diversion_state()
+{
+  if (diversion_state == NULL)
+    return NULL;
+  else
+    return new statem(diversion_state);
 }
 
 input_iterator *input_stack::get_arg(int i)
@@ -602,6 +690,7 @@ void input_stack::end_file()
   for (input_iterator **pp = &top; *pp != &nil_iterator; pp = &(*pp)->next)
     if ((*pp)->is_file()) {
       input_iterator *tem = *pp;
+      check_end_diversion(tem);
       *pp = (*pp)->next;
       delete tem;
       level--;
@@ -616,6 +705,7 @@ void input_stack::clear()
     if (top->is_boundary())
       nboundaries++;
     input_iterator *tem = top;
+    check_end_diversion(tem);
     top = top->next;
     level--;
     delete tem;
@@ -636,6 +726,7 @@ void input_stack::pop_macro()
       nboundaries++;
     is_macro = top->is_macro();
     input_iterator *tem = top;
+    check_end_diversion(tem);
     top = top->next;
     level--;
     delete tem;
@@ -836,6 +927,28 @@ static int get_copy(node **nd, int defining)
 {
   for (;;) {
     int c = input_stack::get(nd);
+    if (c == PUSH_GROFF_MODE) {
+      input_stack::save_compatible_flag(compatible_flag);
+      compatible_flag = 0;
+      continue;
+    }
+    if (c == PUSH_COMP_MODE) {
+      input_stack::save_compatible_flag(compatible_flag);
+      compatible_flag = 1;
+      continue;
+    }
+    if (c == POP_GROFFCOMP_MODE) {
+      compatible_flag = input_stack::get_compatible_flag();
+      continue;
+    }
+    if (c == BEGIN_QUOTE) {
+      input_stack::increase_level();
+      continue;
+    }
+    if (c == END_QUOTE) {
+      input_stack::decrease_level();
+      continue;
+    }
     if (c == ESCAPE_NEWLINE) {
       if (defining)
 	return c;
@@ -998,6 +1111,7 @@ public:
   int same(node *);
   const char *type();
   int force_tprint();
+  int is_tag();
 };
 
 int non_interpreted_char_node::same(node *nd)
@@ -1011,6 +1125,11 @@ const char *non_interpreted_char_node::type()
 }
 
 int non_interpreted_char_node::force_tprint()
+{
+  return 0;
+}
+
+int non_interpreted_char_node::is_tag()
 {
   return 0;
 }
@@ -1462,6 +1581,7 @@ public:
   int same(node *);
   const char *type();
   int force_tprint();
+  int is_tag();
 };
 
 token_node::token_node(const token &t) : tk(t)
@@ -1489,6 +1609,11 @@ const char *token_node::type()
 }
 
 int token_node::force_tprint()
+{
+  return 0;
+}
+
+int token_node::is_tag()
 {
   return 0;
 }
@@ -1559,12 +1684,22 @@ void token::next()
     if (cc != escape_char || escape_char == 0) {
     handle_normal_char:
       switch(cc) {
-      case COMPATIBLE_SAVE:
+      case PUSH_GROFF_MODE:
 	input_stack::save_compatible_flag(compatible_flag);
 	compatible_flag = 0;
 	continue;
-      case COMPATIBLE_RESTORE:
+      case PUSH_COMP_MODE:
+	input_stack::save_compatible_flag(compatible_flag);
+	compatible_flag = 1;
+	continue;
+      case POP_GROFFCOMP_MODE:
 	compatible_flag = input_stack::get_compatible_flag();
+	continue;
+      case BEGIN_QUOTE:
+	input_stack::increase_level();
+	continue;
+      case END_QUOTE:
+	input_stack::decrease_level();
 	continue;
       case EOF:
 	type = TOKEN_EOF;
@@ -2536,12 +2671,16 @@ int node::reread(int *)
   return 0;
 }
 
+int global_diverted_space = 0;
+
 int diverted_space_node::reread(int *bolp)
 {
+  global_diverted_space = 1;
   if (curenv->get_fill())
     trapping_blank_line();
   else
     curdiv->space(n);
+  global_diverted_space = 0;
   *bolp = 1;
   return 1;
 }
@@ -2598,10 +2737,33 @@ void process_input_stack()
 	    tok.next();
 	  } while (tok.white_space());
 	  symbol nm = get_name();
+#if defined(DEBUGGING)
+	  if (debug_state) {
+	    if (! nm.is_null()) {
+	      if (strcmp(nm.contents(), "test") == 0) {
+		fprintf(stderr, "found it!\n");
+		fflush(stderr);
+	      }
+	      fprintf(stderr, "interpreting [%s]", nm.contents());
+	      if (strcmp(nm.contents(), "di") == 0 && topdiv != curdiv)
+		fprintf(stderr, " currently in diversion: %s",
+			curdiv->get_diversion_name());
+	      fprintf(stderr, "\n");
+	      fflush(stderr);
+	    }
+	  }
+#endif
 	  if (nm.is_null())
 	    skip_line();
-	  else
+	  else {
 	    interpolate_macro(nm);
+#if defined(DEBUGGING)
+	    if (debug_state) {
+	      fprintf(stderr, "finished interpreting [%s] and environment state is\n", nm.contents());
+	      curenv->dump_troff_state();
+	    }
+#endif
+	  }
 	  suppress_next = 1;
 	}
 	else {
@@ -2609,6 +2771,11 @@ void process_input_stack()
 	    ;
 	  else {
 	    for (;;) {
+#if defined(DEBUGGING)
+	      if (debug_state) {
+		fprintf(stderr, "found [%c]\n", ch); fflush(stderr);
+	      }
+#endif
 	      curenv->add_char(charset_table[ch]);
 	      tok.next();
 	      if (tok.type != token::TOKEN_CHAR)
@@ -2986,6 +3153,7 @@ macro::~macro()
 }
 
 macro::macro()
+: is_a_diversion(0)
 {
   if (!input_stack::get_location(1, &filename, &lineno)) {
     filename = 0;
@@ -2997,11 +3165,28 @@ macro::macro()
 }
 
 macro::macro(const macro &m)
-: p(m.p), filename(m.filename), lineno(m.lineno), len(m.len),
-  empty_macro(m.empty_macro)
+: filename(m.filename), lineno(m.lineno), len(m.len),
+  empty_macro(m.empty_macro), is_a_diversion(m.is_a_diversion), p(m.p)
 {
   if (p != 0)
     p->count++;
+}
+
+macro::macro(int is_div)
+  : is_a_diversion(is_div)
+{
+  if (!input_stack::get_location(1, &filename, &lineno)) {
+    filename = 0;
+    lineno = 0;
+  }
+  len = 0;
+  empty_macro = 1;
+  p = 0;
+}
+
+int macro::is_diversion()
+{
+  return is_a_diversion;
 }
 
 macro &macro::operator=(const macro &m)
@@ -3016,6 +3201,7 @@ macro &macro::operator=(const macro &m)
   lineno = m.lineno;
   len = m.len;
   empty_macro = m.empty_macro;
+  is_a_diversion = m.is_a_diversion;
   return *this;
 }
 
@@ -3032,7 +3218,7 @@ void macro::append(unsigned char c)
   }
   p->cl.append(c);
   ++len;
-  if (c != COMPATIBLE_SAVE && c != COMPATIBLE_RESTORE)
+  if (c != PUSH_GROFF_MODE && c != PUSH_COMP_MODE && c != POP_GROFFCOMP_MODE)
     empty_macro = 0;
 }
 
@@ -3166,11 +3352,12 @@ public:
   void backtrace();
   void save_compatible_flag(int f) { saved_compatible_flag = f; }
   int get_compatible_flag() { return saved_compatible_flag; }
+  int is_diversion();
 };
 
 string_iterator::string_iterator(const macro &m, const char *p, symbol s)
-: mac(m), how_invoked(p),
-  newline_flag(0), lineno(1), nm(s)
+: input_iterator(m.is_a_diversion), mac(m), how_invoked(p), newline_flag(0),
+  lineno(1), nm(s)
 {
   count = mac.len;
   if (count != 0) {
@@ -3196,6 +3383,11 @@ string_iterator::string_iterator()
   count = 0;
 }
 
+int string_iterator::is_diversion()
+{
+  return mac.is_diversion();
+}
+
 int string_iterator::fill(node **np)
 {
   if (newline_flag)
@@ -3209,8 +3401,13 @@ int string_iterator::fill(node **np)
     p = bp->s;
   }
   if (*p == '\0') {
-    if (np)
+    if (np) {
       *np = nd->copy();
+      if (is_diversion())
+	(*np)->div_nest_level = input_stack::get_div_level();
+      else
+	(*np)->div_nest_level = 0;
+    }
     nd = nd->next;
     eptr = ptr = p + 1;
     count--;
@@ -3398,6 +3595,7 @@ public:
   void add_arg(const macro &m);
   void shift(int n);
   int is_macro() { return 1; }
+  int is_diversion();
 };
 
 input_iterator *macro_iterator::get_arg(int i)
@@ -3521,12 +3719,13 @@ static void decode_args(macro_iterator *mi)
       macro arg;
       int quote_input_level = 0;
       int done_tab_warning = 0;
-      if (c == '\"') {
+      if (c == '"') {
 	quote_input_level = input_stack::get_level();
 	c = get_copy(&n);
       }
+      arg.append(compatible_flag ? PUSH_COMP_MODE : PUSH_GROFF_MODE);
       while (c != EOF && c != '\n' && !(c == ' ' && quote_input_level == 0)) {
-	if (quote_input_level > 0 && c == '\"'
+	if (quote_input_level > 0 && c == '"'
 	    && (compatible_flag
 		|| input_stack::get_level() == quote_input_level)) {
 	  c = get_copy(&n);
@@ -3550,6 +3749,7 @@ static void decode_args(macro_iterator *mi)
 	  c = get_copy(&n);
 	}
       }
+      arg.append(POP_GROFFCOMP_MODE);
       mi->add_arg(arg);
     }
   }
@@ -3571,14 +3771,14 @@ static void decode_string_args(macro_iterator *mi)
     macro arg;
     int quote_input_level = 0;
     int done_tab_warning = 0;
-    if (c == '\"') {
+    if (c == '"') {
       quote_input_level = input_stack::get_level();
       c = get_copy(&n);
     }
     while (c != EOF && c != '\n'
 	   && !(c == ']' && quote_input_level == 0)
 	   && !(c == ' ' && quote_input_level == 0)) {
-      if (quote_input_level > 0 && c == '\"'
+      if (quote_input_level > 0 && c == '"'
 	  && input_stack::get_level() == quote_input_level) {
 	c = get_copy(&n);
 	if (c == '"') {
@@ -3830,7 +4030,7 @@ void read_request()
 
 enum define_mode { DEFINE_NORMAL, DEFINE_APPEND, DEFINE_IGNORE };
 enum calling_mode { CALLING_NORMAL, CALLING_INDIRECT };
-enum comp_mode { COMP_IGNORE, COMP_DISABLE };
+enum comp_mode { COMP_IGNORE, COMP_DISABLE, COMP_ENABLE };
 
 void do_define_string(define_mode mode, comp_mode comp)
 {
@@ -3863,7 +4063,9 @@ void do_define_string(define_mode mode, comp_mode comp)
   if (mode == DEFINE_APPEND && mm)
     mac = *mm;
   if (comp == COMP_DISABLE)
-    mac.append(COMPATIBLE_SAVE);
+    mac.append(PUSH_GROFF_MODE);
+  else if (comp == COMP_ENABLE)
+    mac.append(PUSH_COMP_MODE);
   while (c != '\n' && c != EOF) {
     if (c == 0)
       mac.append(n);
@@ -3875,15 +4077,16 @@ void do_define_string(define_mode mode, comp_mode comp)
     mm = new macro;
     request_dictionary.define(nm, mm);
   }
-  if (comp == COMP_DISABLE)
-    mac.append(COMPATIBLE_RESTORE);
+  if (comp == COMP_DISABLE || comp == COMP_ENABLE)
+    mac.append(POP_GROFFCOMP_MODE);
   *mm = mac;
   tok.next();
 }
 
 void define_string()
 {
-  do_define_string(DEFINE_NORMAL, COMP_IGNORE);
+  do_define_string(DEFINE_NORMAL,
+		   compatible_flag ? COMP_ENABLE: COMP_IGNORE);
 }
 
 void define_nocomp_string()
@@ -3893,7 +4096,8 @@ void define_nocomp_string()
 
 void append_string()
 {
-  do_define_string(DEFINE_APPEND, COMP_IGNORE);
+  do_define_string(DEFINE_APPEND,
+		   compatible_flag ? COMP_ENABLE : COMP_IGNORE);
 }
 
 void append_nocomp_string()
@@ -4005,26 +4209,6 @@ static void interpolate_string_with_args(symbol s)
   }
 }
 
-/* This class is used for the implementation of \$@.  It is used for
-each of the closing double quotes.  It artificially increases the
-input level by 2, so that the closing double quote will appear to have
-the same input level as the opening quote. */
-
-class end_quote_iterator : public input_iterator {
-  unsigned char buf[1];
-public:
-  end_quote_iterator();
-  ~end_quote_iterator() { }
-  int internal_level() { return 2; }
-};
-
-end_quote_iterator::end_quote_iterator()
-{
-  buf[0] = '"';
-  ptr = buf;
-  eptr = buf + 1;
-}
-
 static void interpolate_arg(symbol nm)
 {
   const char *s = nm.contents();
@@ -4033,17 +4217,39 @@ static void interpolate_arg(symbol nm)
   else if (s[1] == 0 && csdigit(s[0]))
     input_stack::push(input_stack::get_arg(s[0] - '0'));
   else if (s[0] == '*' && s[1] == '\0') {
-    for (int i = input_stack::nargs(); i > 0; i--) {
-      input_stack::push(input_stack::get_arg(i));
-      if (i != 1)
-	input_stack::push(make_temp_iterator(" "));
+    int limit = input_stack::nargs();
+    string args;
+    for (int i = 1; i <= limit; i++) {
+      input_iterator *p = input_stack::get_arg(i);
+      int c;
+      while ((c = p->get(0)) != EOF)
+	args += c;
+      if (i != limit)
+	args += ' ';
+    }
+    if (limit > 0) {
+      args += '\0';
+      input_stack::push(make_temp_iterator(args.contents()));
     }
   }
   else if (s[0] == '@' && s[1] == '\0') {
-    for (int i = input_stack::nargs(); i > 0; i--) {
-      input_stack::push(new end_quote_iterator);
-      input_stack::push(input_stack::get_arg(i));
-      input_stack::push(make_temp_iterator(i == 1 ? "\"" : " \""));
+    int limit = input_stack::nargs();
+    string args;
+    for (int i = 1; i <= limit; i++) {
+      args += '"';
+      args += BEGIN_QUOTE;
+      input_iterator *p = input_stack::get_arg(i);
+      int c;
+      while ((c = p->get(0)) != EOF)
+	args += c;
+      args += END_QUOTE;
+      args += '"';
+      if (i != limit)
+	args += ' ';
+    }
+    if (limit > 0) {
+      args += '\0';
+      input_stack::push(make_temp_iterator(args.contents()));
     }
   }
   else {
@@ -4150,7 +4356,9 @@ void do_define_macro(define_mode mode, calling_mode calling, comp_mode comp)
   }
   int bol = 1;
   if (comp == COMP_DISABLE)
-    mac.append(COMPATIBLE_SAVE);
+    mac.append(PUSH_GROFF_MODE);
+  else if (comp == COMP_ENABLE)
+    mac.append(PUSH_COMP_MODE);
   for (;;) {
     while (c == ESCAPE_NEWLINE) {
       if (mode == DEFINE_NORMAL || mode == DEFINE_APPEND)
@@ -4186,8 +4394,8 @@ void do_define_macro(define_mode mode, calling_mode calling, comp_mode comp)
 	    mm = new macro;
 	    request_dictionary.define(nm, mm);
 	  }
-	  if (comp == COMP_DISABLE)
-	    mac.append(COMPATIBLE_RESTORE);
+	  if (comp == COMP_DISABLE || comp == COMP_ENABLE)
+	    mac.append(POP_GROFFCOMP_MODE);
 	  *mm = mac;
 	}
 	if (term != dot_symbol) {
@@ -4237,7 +4445,8 @@ void do_define_macro(define_mode mode, calling_mode calling, comp_mode comp)
 
 void define_macro()
 {
-  do_define_macro(DEFINE_NORMAL, CALLING_NORMAL, COMP_IGNORE);
+  do_define_macro(DEFINE_NORMAL, CALLING_NORMAL,
+		  compatible_flag ? COMP_ENABLE : COMP_IGNORE);
 }
 
 void define_nocomp_macro()
@@ -4247,7 +4456,8 @@ void define_nocomp_macro()
 
 void define_indirect_macro()
 {
-  do_define_macro(DEFINE_NORMAL, CALLING_INDIRECT, COMP_IGNORE);
+  do_define_macro(DEFINE_NORMAL, CALLING_INDIRECT,
+		  compatible_flag ? COMP_ENABLE : COMP_IGNORE);
 }
 
 void define_indirect_nocomp_macro()
@@ -4257,7 +4467,8 @@ void define_indirect_nocomp_macro()
 
 void append_macro()
 {
-  do_define_macro(DEFINE_APPEND, CALLING_NORMAL, COMP_IGNORE);
+  do_define_macro(DEFINE_APPEND, CALLING_NORMAL,
+		  compatible_flag ? COMP_ENABLE : COMP_IGNORE);
 }
 
 void append_nocomp_macro()
@@ -4267,7 +4478,8 @@ void append_nocomp_macro()
 
 void append_indirect_macro()
 {
-  do_define_macro(DEFINE_APPEND, CALLING_INDIRECT, COMP_IGNORE);
+  do_define_macro(DEFINE_APPEND, CALLING_INDIRECT,
+		  compatible_flag ? COMP_ENABLE : COMP_IGNORE);
 }
 
 void append_indirect_nocomp_macro()
@@ -4332,11 +4544,12 @@ void chop_macro()
       // we have to check for additional save/restore pairs which could be
       // there due to empty am1 requests.
       for (;;) {
-	if (m->get(m->len - 1) != COMPATIBLE_RESTORE)
+	if (m->get(m->len - 1) != POP_GROFFCOMP_MODE)
           break;
 	have_restore = 1;
 	m->len -= 1;
-	if (m->get(m->len - 1) != COMPATIBLE_SAVE)
+	if (m->get(m->len - 1) != PUSH_GROFF_MODE
+	    && m->get(m->len - 1) != PUSH_COMP_MODE)
           break;
 	have_restore = 0;
 	m->len -= 1;
@@ -4347,7 +4560,7 @@ void chop_macro()
 	error("cannot chop empty macro");
       else {
 	if (have_restore)
-	  m->set(COMPATIBLE_RESTORE, m->len - 1);
+	  m->set(POP_GROFFCOMP_MODE, m->len - 1);
 	else
 	  m->len -= 1;
       }
@@ -4372,7 +4585,9 @@ void substring_request()
 	string_iterator iter1(*m);
 	for (int l = 0; l < m->len; l++) {
 	  int c = iter1.get(0);
-	  if (c == COMPATIBLE_SAVE || c == COMPATIBLE_RESTORE)
+	  if (c == PUSH_GROFF_MODE
+	      || c == PUSH_COMP_MODE
+	      || c == POP_GROFFCOMP_MODE)
 	    continue;
 	  if (c == EOF)
 	    break;
@@ -4414,7 +4629,9 @@ void substring_request()
 	int i;
 	for (i = 0; i < start; i++) {
 	  int c = iter.get(0);
-	  while (c == COMPATIBLE_SAVE || c == COMPATIBLE_RESTORE)
+	  while (c == PUSH_GROFF_MODE
+		 || c == PUSH_COMP_MODE
+		 || c == POP_GROFFCOMP_MODE)
 	    c = iter.get(0);
 	  if (c == EOF)
 	    break;
@@ -4423,7 +4640,9 @@ void substring_request()
 	for (; i <= end; i++) {
 	  node *nd = 0;		// pacify compiler
 	  int c = iter.get(&nd);
-	  while (c == COMPATIBLE_SAVE || c == COMPATIBLE_RESTORE)
+	  while (c == PUSH_GROFF_MODE
+		 || c == PUSH_COMP_MODE
+		 || c == POP_GROFFCOMP_MODE)
 	    c = iter.get(0);
 	  if (c == EOF)
 	    break;
@@ -4889,6 +5108,7 @@ public:
   int same(node *);
   const char *type();
   int force_tprint();
+  int is_tag();
 };
 
 non_interpreted_node::non_interpreted_node(const macro &m) : mac(m)
@@ -4911,6 +5131,11 @@ const char *non_interpreted_node::type()
 }
 
 int non_interpreted_node::force_tprint()
+{
+  return 0;
+}
+
+int non_interpreted_node::is_tag()
 {
   return 0;
 }
@@ -5272,6 +5497,24 @@ int do_if_request()
     result = character_exists(ci, curenv);
     tok.next();
   }
+  else if (c == 'F') {
+    tok.next();
+    symbol nm = get_long_name(1);
+    if (nm.is_null()) {
+      skip_alternative();
+      return 0;
+    }
+    result = check_font(curenv->get_family()->nm, nm);
+  }
+  else if (c == 'S') {
+    tok.next();
+    symbol nm = get_long_name(1);
+    if (nm.is_null()) {
+      skip_alternative();
+      return 0;
+    }
+    result = check_style(nm);
+  }
   else if (tok.space())
     result = 0;
   else if (tok.delimiter()) {
@@ -5281,6 +5524,7 @@ int do_if_request()
     environment env2(curenv);
     environment *oldenv = curenv;
     curenv = &env1;
+    suppress_push = 1;
     for (int i = 0; i < 2; i++) {
       for (;;) {
 	tok.next();
@@ -5304,6 +5548,7 @@ int do_if_request()
     delete_node_list(n2);
     curenv = oldenv;
     have_input = 0;
+    suppress_push = 0;
     tok.next();
   }
   else {
@@ -5763,8 +6008,9 @@ const char *asciify(int c)
   case ESCAPE_COLON:
     buf[1] = ':';
     break;
-  case COMPATIBLE_SAVE:
-  case COMPATIBLE_RESTORE:
+  case PUSH_GROFF_MODE:
+  case PUSH_COMP_MODE:
+  case POP_GROFFCOMP_MODE:
     buf[0] = '\0';
     break;
   default:
@@ -5813,6 +6059,52 @@ const char *input_char_description(int c)
   }
   sprintf(buf, "character code %d", c);
   return buf;
+}
+
+void tag()
+{
+  if (!tok.newline() && !tok.eof()) {
+    string s;
+    int c;
+    for (;;) {
+      c = get_copy(0);
+      if (c == '"') {
+	c = get_copy(0);
+	break;
+      }
+      if (c != ' ' && c != '\t')
+	break;
+    }
+    s = "x X ";
+    for (; c != '\n' && c != EOF; c = get_copy(0))
+      s += (char)c;
+    s += '\n';
+    curenv->add_node(new tag_node(s, 0));
+  }
+  tok.next();
+}
+
+void taga()
+{
+  if (!tok.newline() && !tok.eof()) {
+    string s;
+    int c;
+    for (;;) {
+      c = get_copy(0);
+      if (c == '"') {
+	c = get_copy(0);
+	break;
+      }
+      if (c != ' ' && c != '\t')
+	break;
+    }
+    s = "x X ";
+    for (; c != '\n' && c != EOF; c = get_copy(0))
+      s += (char)c;
+    s += '\n';
+    curenv->add_node(new tag_node(s, 1));
+  }
+  tok.next();
 }
 
 // .tm, .tm1, and .tmc
@@ -6983,8 +7275,12 @@ int main(int argc, char **argv)
     { "version", no_argument, 0, 'v' },
     { 0, 0, 0, 0 }
   };
-  while ((c = getopt_long(argc, argv, "abciI:vw:W:zCEf:m:n:o:r:d:F:M:T:tqs:RU",
-			  long_options, 0))
+#if defined(DEBUGGING)
+#define DEBUG_OPTION "D"
+#endif
+  while ((c = getopt_long(argc, argv,
+			  "abciI:vw:W:zCEf:m:n:o:r:d:F:M:T:tqs:RU"
+			  DEBUG_OPTION, long_options, 0))
 	 != EOF)
     switch(c) {
     case 'v':
@@ -7077,6 +7373,11 @@ int main(int argc, char **argv)
     case 'U':
       safer_flag = 0;	// unsafe behaviour
       break;
+#if defined(DEBUGGING)
+    case 'D':
+      debug_state = 1;
+      break;
+#endif
     case CHAR_MAX + 1: // --help
       usage(stdout, argv[0]);
       exit(0);
@@ -7312,6 +7613,8 @@ void init_input_requests()
   init_request("spreadwarn", spreadwarn_request);
   init_request("substring", substring_request);
   init_request("sy", system_request);
+  init_request("tag", tag);
+  init_request("taga", taga);
   init_request("tm", terminal);
   init_request("tm1", terminal1);
   init_request("tmc", terminal_continue);

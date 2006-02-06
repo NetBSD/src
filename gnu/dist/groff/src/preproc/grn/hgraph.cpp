@@ -1,4 +1,4 @@
-/*	$NetBSD: hgraph.cpp,v 1.1.1.2 2004/07/30 14:45:02 wiz Exp $	*/
+/*	$NetBSD: hgraph.cpp,v 1.1.1.3 2006/02/06 18:14:35 wiz Exp $	*/
 
 /* Last non-groff version: hgraph.c  1.14 (Berkeley) 84/11/27
  *
@@ -10,19 +10,13 @@
 
 #include "gprint.h"
 
-#ifdef NEED_DECLARATION_HYPOT
-extern "C" {
-  double hypot(double, double);
-}
-#endif /* NEED_DECLARATION_HYPOT */
-
 #define MAXVECT	40
 #define MAXPOINTS	200
 #define LINELENGTH	1
 #define PointsPerInterval 64
 #define pi		3.14159265358979324
 #define twopi		(2.0 * pi)
-#define len(a, b)	hypot((double)(b.x-a.x), (double)(b.y-a.y))
+#define len(a, b)	groff_hypot((double)(b.x-a.x), (double)(b.y-a.y))
 
 
 extern int dotshifter;		/* for the length of dotted curves */
@@ -602,7 +596,7 @@ HGArc(register int cx,
 
   length = 0;
 
-  resolution = (1.0 + hypot(xs, ys) / res) * PointsPerInterval;
+  resolution = (1.0 + groff_hypot(xs, ys) / res) * PointsPerInterval;
   /* mask = (1 << (int) log10(resolution + 1.0)) - 1; */
   (void) frexp(resolution, &m);		/* A bit more elegant than log10 */
   for (mask = 1; mask < m; mask = mask << 1);
@@ -673,13 +667,13 @@ picurve(register int *x,
   for (; npts--; x++, y++) {	/* traverse the line segments */
     xp = x[0] - x[1];
     yp = y[0] - y[1];
-    nseg = (int) hypot((double) xp, (double) yp);
+    nseg = (int) groff_hypot((double) xp, (double) yp);
     xp = x[1] - x[2];
     yp = y[1] - y[2];
 				/* `nseg' is the number of line    */
 				/* segments that will be drawn for */
 				/* each curve segment.             */
-    nseg = (int) ((double) (nseg + (int) hypot((double) xp, (double) yp)) /
+    nseg = (int) ((double) (nseg + (int) groff_hypot((double) xp, (double) yp)) /
 		  res * PointsPerInterval);
 
     for (i = 1; i < nseg; i++) {
@@ -797,7 +791,7 @@ Paramaterize(int x[],
       dy = y[j + 1] - y[j];
       /* Here was overflowing, so I changed it.       */
       /* u[i] += sqrt ((double) (dx * dx + dy * dy)); */
-      u[i] += hypot((double) dx, (double) dy);
+      u[i] += groff_hypot((double) dx, (double) dy);
     }
   }
   for (i = 1; i < n; ++i)

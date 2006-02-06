@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.c,v 1.1.1.3 2004/07/30 14:45:07 wiz Exp $	*/
+/*	$NetBSD: signal.c,v 1.1.1.4 2006/02/06 18:14:57 wiz Exp $	*/
 
 /* Copyright (C) 1992, 2001, 2003, 2004 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
@@ -17,7 +17,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 /* Unfortunately vendors seem to have problems writing a <signal.h>
 that is correct for C++, so we implement all signal handling in C. */

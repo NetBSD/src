@@ -63,11 +63,13 @@ will cause the standard input to be read.
 .SH OPTIONS
 .TP
 .B \-C
-Recognize
+Enable compatibility mode to
+recognize
 .B .TS
 and
 .B .TE
 even when followed by a character other than space or newline.
+Leader characters (\[rs]a) are handled as interpreted.
 .TP
 .B \-v
 Print the version number.
@@ -456,7 +458,8 @@ and use
 instead of
 .BR bp .
 .LP
-Using \ea directly in a table to get leaders will not work.
+Using \ea directly in a table to get leaders will not work (except in
+compatibility mode).
 This is correct behaviour: \ea is an
 .B uninterpreted
 leader.

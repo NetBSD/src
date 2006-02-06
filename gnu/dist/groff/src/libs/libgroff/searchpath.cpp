@@ -1,7 +1,7 @@
-/*	$NetBSD: searchpath.cpp,v 1.1.1.2 2004/07/30 14:44:51 wiz Exp $	*/
+/*	$NetBSD: searchpath.cpp,v 1.1.1.3 2006/02/06 18:13:55 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2003
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2003, 2005
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -19,7 +19,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "lib.h"
 
@@ -29,6 +29,12 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "searchpath.h"
 #include "nonposix.h"
+
+#ifdef _WIN32
+# include "relocate.h"
+#else
+# define relocate(path) strsave(path)
+#endif
 
 search_path::search_path(const char *envvar, const char *standard,
 			 int add_home, int add_current)
@@ -110,11 +116,16 @@ FILE *search_path::open_file(const char *name, char **pathp)
     if (!end)
       end = strchr(p, '\0');
     int need_slash = end > p && strchr(DIR_SEPS, end[-1]) == 0;
-    char *path = new char[(end - p) + need_slash + namelen + 1];
-    memcpy(path, p, end - p);
+    char *origpath = new char[(end - p) + need_slash + namelen + 1];
+    memcpy(origpath, p, end - p);
     if (need_slash)
-      path[end - p] = '/';
-    strcpy(path + (end - p) + need_slash, name);
+      origpath[end - p] = '/';
+    strcpy(origpath + (end - p) + need_slash, name);
+#if 0
+    fprintf(stderr, "origpath `%s'\n", origpath);
+#endif
+    char *path = relocate(origpath);
+    a_delete origpath;
 #if 0
     fprintf(stderr, "trying `%s'\n", path);
 #endif
@@ -162,11 +173,16 @@ FILE *search_path::open_file_cautious(const char *name, char **pathp,
     if (!end)
       end = strchr(p, '\0');
     int need_slash = end > p && strchr(DIR_SEPS, end[-1]) == 0;
-    char *path = new char[(end - p) + need_slash + namelen + 1];
-    memcpy(path, p, end - p);
+    char *origpath = new char[(end - p) + need_slash + namelen + 1];
+    memcpy(origpath, p, end - p);
     if (need_slash)
-      path[end - p] = '/';
-    strcpy(path + (end - p) + need_slash, name);
+      origpath[end - p] = '/';
+    strcpy(origpath + (end - p) + need_slash, name);
+#if 0
+    fprintf(stderr, "origpath `%s'\n", origpath);
+#endif
+    char *path = relocate(origpath);
+    a_delete origpath;
 #if 0
     fprintf(stderr, "trying `%s'\n", path);
 #endif

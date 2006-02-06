@@ -1,8 +1,8 @@
-This is groff, produced by makeinfo version 4.6 from ./groff.texinfo.
+This is groff, produced by makeinfo version 4.8 from ./groff.texinfo.
 
-This manual documents GNU `troff' version 1.19.
+   This manual documents GNU `troff' version 1.19.2.
 
-   Copyright (C) 1994-2000, 2001, 2002, 2003, 2004 Free Software
+   Copyright (C) 1994-2000, 2001, 2002, 2003, 2004, 2005 Free Software
 Foundation, Inc.
 
      Permission is granted to copy, distribute and/or modify this
@@ -16,7 +16,7 @@ Foundation, Inc.
      (a) The FSF's Back-Cover Text is: `You have freedom to copy and
      modify this GNU Manual, like GNU software.  Copies published by
      the Free Software Foundation raise funds for GNU development."
-   
+
 INFO-DIR-SECTION Typesetting
 START-INFO-DIR-ENTRY
 * Groff: (groff).               The GNU troff document formatting system.
@@ -28,9 +28,9 @@ File: groff,  Node: Top,  Next: Introduction,  Prev: (dir),  Up: (dir)
 GNU troff
 *********
 
-This manual documents GNU `troff' version 1.19.
+This manual documents GNU `troff' version 1.19.2.
 
-   Copyright (C) 1994-2000, 2001, 2002, 2003, 2004 Free Software
+   Copyright (C) 1994-2000, 2001, 2002, 2003, 2004, 2005 Free Software
 Foundation, Inc.
 
      Permission is granted to copy, distribute and/or modify this
@@ -44,7 +44,7 @@ Foundation, Inc.
      (a) The FSF's Back-Cover Text is: `You have freedom to copy and
      modify this GNU Manual, like GNU software.  Copies published by
      the Free Software Foundation raise funds for GNU development."
-   
+
 * Menu:
 
 * Introduction::
@@ -71,8 +71,8 @@ Foundation, Inc.
 
 File: groff,  Node: Introduction,  Next: Invoking groff,  Prev: Top,  Up: Top
 
-Introduction
-************
+1 Introduction
+**************
 
 GNU `troff' (or `groff') is a system for typesetting documents.
 `troff' is very flexible and has been in existence (and use) for about
@@ -92,8 +92,8 @@ community.
 
 File: groff,  Node: What Is groff?,  Next: History,  Prev: Introduction,  Up: Introduction
 
-What Is `groff'?
-================
+1.1 What Is `groff'?
+====================
 
 `groff' belongs to an older generation of document preparation systems,
 which operate more like compilers than the more recent interactive
@@ -135,8 +135,8 @@ File: groff,  Node: What Is groff?-Footnotes,  Up: What Is groff?
 
 File: groff,  Node: History,  Next: groff Capabilities,  Prev: What Is groff?,  Up: Introduction
 
-History
-=======
+1.2 History
+===========
 
 `troff' can trace its origins back to a formatting program called
 `runoff', written by J. E. Saltzer, which ran on MIT's CTSS operating
@@ -176,7 +176,7 @@ changes).
 transform certain parts of a document into `troff', which made a very
 natural use of pipes in UNIX.
 
-   The `eqn' preprocessor allowed mathematical formulae to be specified
+   The `eqn' preprocessor allowed mathematical formulæ to be specified
 in a much simpler and more intuitive manner.  `tbl' is a preprocessor
 for formatting tables.  The `refer' preprocessor (and the similar
 program, `bib') processes citations in a document according to a
@@ -238,8 +238,8 @@ produce HTML output have been added.
 
 File: groff,  Node: groff Capabilities,  Next: Macro Package Intro,  Prev: History,  Up: Introduction
 
-`groff' Capabilities
-====================
+1.3 `groff' Capabilities
+========================
 
 So what exactly is `groff' capable of doing?  `groff' provides a wide
 range of low-level text formatting operations.  Using these, it is
@@ -288,8 +288,8 @@ the most important operations supported by `groff':
 
 File: groff,  Node: Macro Package Intro,  Next: Preprocessor Intro,  Prev: groff Capabilities,  Up: Introduction
 
-Macro Packages
-==============
+1.4 Macro Packages
+==================
 
 Since `groff' provides such low-level facilities, it can be quite
 difficult to use by itself.  However, `groff' provides a "macro"
@@ -302,8 +302,8 @@ described in this manual) are `man', `mdoc', `me', `ms', and `mm'.
 
 File: groff,  Node: Preprocessor Intro,  Next: Output device intro,  Prev: Macro Package Intro,  Up: Introduction
 
-Preprocessors
-=============
+1.5 Preprocessors
+=================
 
 Although `groff' provides most functions needed to format a document,
 some operations would be unwieldy (e.g. to draw pictures).  Therefore,
@@ -335,8 +335,8 @@ drawing mathematical pictures (`ideal') and chemical structures
 
 File: groff,  Node: Output device intro,  Next: Credits,  Prev: Preprocessor Intro,  Up: Introduction
 
-Output Devices
-==============
+1.6 Output Devices
+==================
 
 `groff' actually produces device independent code which may be fed into
 a postprocessor to produce output for a particular device.  Currently,
@@ -347,8 +347,8 @@ printers (which use CAPSL), and HTML.
 
 File: groff,  Node: Credits,  Prev: Output device intro,  Up: Introduction
 
-Credits
-=======
+1.7 Credits
+===========
 
 Large portions of this manual were taken from existing documents, most
 notably, the manual pages for the `groff' package by James Clark, and
@@ -363,8 +363,8 @@ system.
 
 File: groff,  Node: Invoking groff,  Next: Tutorial for Macro Users,  Prev: Introduction,  Up: Top
 
-Invoking `groff'
-****************
+2 Invoking `groff'
+******************
 
 This section focuses on how to invoke the `groff' front end.  This
 front end takes care of the details of constructing the pipeline among
@@ -398,8 +398,8 @@ called AT&T `troff' which is the common origin of all `troff' derivates
 
 File: groff,  Node: Groff Options,  Next: Environment,  Prev: Invoking groff,  Up: Invoking groff
 
-Options
-=======
+2.1 Options
+===========
 
 `groff' normally runs the `gtroff' program and a postprocessor
 appropriate for the selected device.  The default device is `ps' (but
@@ -705,8 +705,8 @@ to format a file.
 
 File: groff,  Node: Environment,  Next: Macro Directories,  Prev: Groff Options,  Up: Invoking groff
 
-Environment
-===========
+2.2 Environment
+===============
 
 There are also several environment variables (of the operating system,
 not within `gtroff') which can modify the behavior of `groff'.
@@ -753,8 +753,8 @@ above.
 
 File: groff,  Node: Macro Directories,  Next: Font Directories,  Prev: Environment,  Up: Invoking groff
 
-Macro Directories
-=================
+2.3 Macro Directories
+=====================
 
 All macro file names must be named `NAME.tmac' or `tmac.NAME' to make
 the `-mNAME' command line option work.  The `mso' request doesn't have
@@ -792,8 +792,8 @@ files are (in that order):
 
 File: groff,  Node: Font Directories,  Next: Paper Size,  Prev: Macro Directories,  Up: Invoking groff
 
-Font Directories
-================
+2.4 Font Directories
+====================
 
 Basically, there is no restriction how font files for `groff' are named
 and how long font names are; however, to make the font family mechanism
@@ -832,8 +832,8 @@ files for `grodvi' must be in `/foo/bar/devdvi'.
 
 File: groff,  Node: Paper Size,  Next: Invocation Examples,  Prev: Font Directories,  Up: Invoking groff
 
-Paper Size
-==========
+2.5 Paper Size
+==============
 
 In groff, the page size for `gtroff' and for output devices are handled
 separately.  *Note Page Layout::, for vertical manipulation of the page
@@ -865,8 +865,8 @@ page dimensions set in this way (most do).
 
 File: groff,  Node: Invocation Examples,  Prev: Paper Size,  Up: Invoking groff
 
-Invocation Examples
-===================
+2.6 Invocation Examples
+=======================
 
 This section lists several common uses of `groff' and the corresponding
 command lines.
@@ -916,8 +916,8 @@ in general; for example, to load `trace.tmac', either `-mtrace' or
 
 File: groff,  Node: grog,  Prev: Invocation Examples,  Up: Invocation Examples
 
-`grog'
-------
+2.6.1 `grog'
+------------
 
 `grog' reads files, guesses which of the `groff' preprocessors and/or
 macro packages are required for formatting them, and prints the `groff'
@@ -952,8 +952,8 @@ something meaningful (i.e. either a file or a pager program like
 
 File: groff,  Node: Tutorial for Macro Users,  Next: Macro Packages,  Prev: Invoking groff,  Up: Top
 
-Tutorial for Macro Users
-************************
+3 Tutorial for Macro Users
+**************************
 
 Most users tend to use a macro package to format their papers.  This
 means that the whole breadth of `groff' is not necessary for most
@@ -968,8 +968,8 @@ macro package.
 
 File: groff,  Node: Basics,  Next: Common Features,  Prev: Tutorial for Macro Users,  Up: Tutorial for Macro Users
 
-Basics
-======
+3.1 Basics
+==========
 
 This section covers some of the basic concepts necessary to understand
 how to use a macro package.(1) (*note Basics-Footnote-1::) References
@@ -1103,8 +1103,8 @@ File: groff,  Node: Basics-Footnotes,  Up: Basics
 
 File: groff,  Node: Common Features,  Prev: Basics,  Up: Tutorial for Macro Users
 
-Common Features
-===============
+3.2 Common Features
+===================
 
 `gtroff' provides very low-level operations for formatting a document.
 There are many common routine operations which are done in all
@@ -1134,8 +1134,8 @@ into the following categories.
 
 File: groff,  Node: Paragraphs,  Next: Sections and Chapters,  Prev: Common Features,  Up: Common Features
 
-Paragraphs
-----------
+3.2.1 Paragraphs
+----------------
 
 One of the most common and most used capability is starting a
 paragraph.  There are a number of different types of paragraphs, any of
@@ -1175,8 +1175,8 @@ at the margin and the remaining text indented.
 
 File: groff,  Node: Sections and Chapters,  Next: Headers and Footers,  Prev: Paragraphs,  Up: Common Features
 
-Sections and Chapters
----------------------
+3.2.2 Sections and Chapters
+---------------------------
 
 Most macro packages supply some form of section headers.  The simplest
 kind is simply the heading on a line by itself in bold type.  Others
@@ -1187,8 +1187,8 @@ supply macros for starting chapters and appendices.
 
 File: groff,  Node: Headers and Footers,  Next: Page Layout Adjustment,  Prev: Sections and Chapters,  Up: Common Features
 
-Headers and Footers
--------------------
+3.2.3 Headers and Footers
+-------------------------
 
 Every macro package gives some way to manipulate the "headers" and
 "footers" (also called "titles") on each page.  This is text put at the
@@ -1206,8 +1206,8 @@ with the `%' character (see *Note Page Layout::, for more details).
 
 File: groff,  Node: Page Layout Adjustment,  Next: Displays,  Prev: Headers and Footers,  Up: Common Features
 
-Page Layout
------------
+3.2.4 Page Layout
+-----------------
 
 Most macro packages let the user specify top and bottom margins and
 other details about the appearance of the printed pages.
@@ -1215,8 +1215,8 @@ other details about the appearance of the printed pages.
 
 File: groff,  Node: Displays,  Next: Footnotes and Annotations,  Prev: Page Layout Adjustment,  Up: Common Features
 
-Displays
---------
+3.2.5 Displays
+--------------
 
 "Displays" are sections of text to be set off from the body of the
 paper.  Major quotes, tables, and figures are types of displays, as are
@@ -1244,8 +1244,8 @@ surrounding text `flows' around the keep, thus leaving no blank areas.
 
 File: groff,  Node: Footnotes and Annotations,  Next: Table of Contents,  Prev: Displays,  Up: Common Features
 
-Footnotes and Annotations
--------------------------
+3.2.6 Footnotes and Annotations
+-------------------------------
 
 There are a number of requests to save text for later printing.
 
@@ -1262,8 +1262,8 @@ means of automatically numbering either type of annotation.
 
 File: groff,  Node: Table of Contents,  Next: Indices,  Prev: Footnotes and Annotations,  Up: Common Features
 
-Table of Contents
------------------
+3.2.7 Table of Contents
+-----------------------
 
 "Tables of contents" are a type of delayed text having a tag (usually
 the page number) attached to each entry after a row of dots.  The table
@@ -1275,8 +1275,8 @@ tables, etc).
 
 File: groff,  Node: Indices,  Next: Paper Formats,  Prev: Table of Contents,  Up: Common Features
 
-Indices
--------
+3.2.8 Indices
+-------------
 
 While some macro packages use the term "index", none actually provide
 that functionality.  The facilities they call indices are actually more
@@ -1288,8 +1288,8 @@ appropriate for tables of contents.
 
 File: groff,  Node: Paper Formats,  Next: Multiple Columns,  Prev: Indices,  Up: Common Features
 
-Paper Formats
--------------
+3.2.9 Paper Formats
+-------------------
 
 Some macro packages provide stock formats for various kinds of
 documents.  Many of them provide a common format for the title and
@@ -1299,8 +1299,8 @@ provide formats for letters and memoranda.
 
 File: groff,  Node: Multiple Columns,  Next: Font and Size Changes,  Prev: Paper Formats,  Up: Common Features
 
-Multiple Columns
-----------------
+3.2.10 Multiple Columns
+-----------------------
 
 Some macro packages (but not `man') provide the ability to have two or
 more columns on a page.
@@ -1308,8 +1308,8 @@ more columns on a page.
 
 File: groff,  Node: Font and Size Changes,  Next: Predefined Strings,  Prev: Multiple Columns,  Up: Common Features
 
-Font and Size Changes
----------------------
+3.2.11 Font and Size Changes
+----------------------------
 
 The built-in font and size functions are not always intuitive, so all
 macro packages provide macros to make these operations simpler.
@@ -1317,8 +1317,8 @@ macro packages provide macros to make these operations simpler.
 
 File: groff,  Node: Predefined Strings,  Next: Preprocessor Support,  Prev: Font and Size Changes,  Up: Common Features
 
-Predefined Strings
-------------------
+3.2.12 Predefined Strings
+-------------------------
 
 Most macro packages provide various predefined strings for a variety of
 uses; examples are sub- and superscripts, printable dates, quotes and
@@ -1327,8 +1327,8 @@ various special characters.
 
 File: groff,  Node: Preprocessor Support,  Next: Configuration and Customization,  Prev: Predefined Strings,  Up: Common Features
 
-Preprocessor Support
---------------------
+3.2.13 Preprocessor Support
+---------------------------
 
 All macro packages provide support for various preprocessors and may
 extend their functionality.
@@ -1341,8 +1341,8 @@ new page (when the table is too long to fit on a single page).
 
 File: groff,  Node: Configuration and Customization,  Prev: Preprocessor Support,  Up: Common Features
 
-Configuration and Customization
--------------------------------
+3.2.14 Configuration and Customization
+--------------------------------------
 
 Some macro packages provide means of customizing many of the details of
 how the package behaves.  This ranges from setting the default type size
@@ -1351,8 +1351,8 @@ to changing the appearance of section headers.
 
 File: groff,  Node: Macro Packages,  Next: gtroff Reference,  Prev: Tutorial for Macro Users,  Up: Top
 
-Macro Packages
-**************
+4 Macro Packages
+****************
 
 This chapter documents the main macro packages that come with `groff'.
 
@@ -1379,8 +1379,8 @@ non-option arguments; the above (failing) sample is thus reordered to
 
 File: groff,  Node: man,  Next: mdoc,  Prev: Macro Packages,  Up: Macro Packages
 
-`man'
-=====
+4.1 `man'
+=========
 
 This is the most popular and probably the most important macro package
 of `groff'.  It is easy to use, and a vast majority of manual pages are
@@ -1399,8 +1399,8 @@ based on it.
 
 File: groff,  Node: Man options,  Next: Man usage,  Prev: man,  Up: man
 
-Options
--------
+4.1.1 Options
+-------------
 
 The command line format for using the `man' macros with `groff' is:
 
@@ -1438,15 +1438,18 @@ It is possible to use `-man' instead of `-m man'.
      additive; the default is 14.
 
 `-rIN=LENGTH'
-     Set the body text indent to LENGTH.  If not specified, the indent
-     defaults to 7n (7 characters) in nroff mode and 7.2n otherwise.
-     For nroff, this value should always be an integer multiple of unit
-     `n' to get consistent indentation.
+     Set the body text indentation to LENGTH.  If not specified, the
+     indentation defaults to 7n (7 characters) in nroff mode and 7.2n
+     otherwise.  For nroff, this value should always be an integer
+     multiple of unit `n' to get consistent indentation.
 
 `-rLL=LENGTH'
-     Set line length to LENGTH.  If not specified, the line length
-     defaults to 78 en in nroff mode (this is 78 characters per line)
-     and 6.5 inch otherwise.
+     Set line length to LENGTH.  If not specified, the line length is
+     set to respect any value set by a prior `ll' request (which _must_
+     be in effect when the `TH' macro is invoked), if this differs from
+     the built-in default for the formatter; otherwise it defaults to
+     78n in nroff mode (this is 78 characters per line) and 6.5i in
+     troff mode.(1) (*note Man options-Footnote-1::)
 
 `-rLT=LENGTH'
      Set title length to LENGTH.  If not specified, the title length
@@ -1460,8 +1463,8 @@ It is possible to use `-man' instead of `-m man'.
      size instead of the default value of 10pt.
 
 `-rSN=LENGTH'
-     Set the indent for sub-subheadings to LENGTH.  If not specified,
-     the indent defaults to 3n.
+     Set the indentation for sub-subheadings to LENGTH.  If not
+     specified, the indentation defaults to 3n.
 
 `-rXNNN'
      After page NNN, number pages as NNNa, NNNb, NNNc, etc.  For
@@ -1469,16 +1472,31 @@ It is possible to use `-man' instead of `-m man'.
      2, 2a, 2b, 2c, etc.
 
 
+File: groff,  Node: Man options-Footnotes,  Up: Man options
+
+   (1) Note that the use of a `.ll LENGTH' request to initialize the
+line length, prior to use of the `TH' macro, is supported for backward
+compatibility with some versions of the `man' program.  _Always_ use the
+`-rLL=LENGTH' option, or an equivalent `.nr LL LENGTH' request, in
+preference to such a `.ll LENGTH' request.  In particular, note that in
+nroff mode, the request `.ll 65n', (with any LENGTH expression which
+evaluates equal to 65n, i.e., the formatter's default line length in
+nroff mode), will _not_ set the line length to 65n (it will be adjusted
+to the `man' macro package's default setting of 78n), whereas the use
+of the `-rLL=65n' option, or the `.nr LL 65n' request _will_ establish
+a line length of 65n.
+
+
 File: groff,  Node: Man usage,  Next: Man font macros,  Prev: Man options,  Up: man
 
-Usage
------
+4.1.2 Usage
+-----------
 
 This section describes the available macros for manual pages.  For
 further customization, put additional macros and requests into the file
 `man.local' which is loaded immediately after the `man' package.
 
- - Macro: .TH title section [extra1 [extra2 [extra3]]]
+ -- Macro: .TH title section [extra1 [extra2 [extra3]]]
      Set the title of the man page to TITLE and the section to SECTION,
      which must have a value between 1 and 8.  The value of SECTION may
      also have a string appended, e.g. `.pm', to indicate a specific
@@ -1499,7 +1517,7 @@ further customization, put additional macros and requests into the file
      pages; a single man page should contain exactly one `TH' macro at
      the beginning of the file.
 
- - Macro: .SH [heading]
+ -- Macro: .SH [heading]
      Set up an unnumbered section heading sticking out to the left.
      Prints out all the text following `SH' up to the end of the line
      (or the text in the next line if there is no argument to `SH') in
@@ -1508,7 +1526,7 @@ further customization, put additional macros and requests into the file
      and the indentation for the following text is reset to its default
      value.
 
- - Macro: .SS [heading]
+ -- Macro: .SS [heading]
      Set up an unnumbered (sub)section heading.  Prints out all the text
      following `SS' up to the end of the line (or the text in the next
      line if there is no argument to `SS') in bold face (or the font
@@ -1516,7 +1534,7 @@ further customization, put additional macros and requests into the file
      document size.  Additionally, the left margin and the indentation
      for the following text is reset to its default value.
 
- - Macro: .TP [nnn]
+ -- Macro: .TP [nnn]
      Set up an indented paragraph with label.  The indentation is set to
      NNN if that argument is supplied (the default unit is `n' if
      omitted), otherwise it is set to the previous indentation value
@@ -1535,9 +1553,9 @@ further customization, put additional macros and requests into the file
      font shape nor font size of the label is set to a default value;
      on the other hand, the rest of the text has default font settings.
 
- - Macro: .LP
- - Macro: .PP
- - Macro: .P
+ -- Macro: .LP
+ -- Macro: .PP
+ -- Macro: .P
      These macros are mutual aliases.  Any of them causes a line break
      at the current position, followed by a vertical space downwards by
      the amount specified by the `PD' macro.  The font size and shape
@@ -1545,7 +1563,7 @@ further customization, put additional macros and requests into the file
      given on the command line).  Finally, the current left margin and
      the indentation is restored.
 
- - Macro: .IP [designator [nnn]]
+ -- Macro: .IP [designator [nnn]]
      Set up an indented paragraph, using DESIGNATOR as a tag to mark
      its beginning.  The indentation is set to NNN if that argument is
      supplied (default unit is `n'), otherwise it is set to the
@@ -1565,7 +1583,7 @@ further customization, put additional macros and requests into the file
           .IP \(bu 4
 
 
- - Macro: .HP [nnn]
+ -- Macro: .HP [nnn]
      Set up a paragraph with hanging left indentation.  The indentation
      is set to NNN if that argument is supplied (default unit is `n'),
      otherwise it is set to the previous indentation value specified
@@ -1573,7 +1591,7 @@ further customization, put additional macros and requests into the file
      been used yet).  Font size and face are reset to their default
      values.
 
- - Macro: .RS [nnn]
+ -- Macro: .RS [nnn]
      Move the left margin to the right by the value NNN if specified
      (default unit is `n'); otherwise it is set to the previous
      indentation value specified with `TP', `IP', or `HP' (or to the
@@ -1582,7 +1600,7 @@ further customization, put additional macros and requests into the file
 
      Calls to the `RS' macro can be nested.
 
- - Macro: .RE [nnn]
+ -- Macro: .RE [nnn]
      Move the left margin back to level NNN, restoring the previous left
      margin.  If no argument is given, it moves one level back.  The
      first level (i.e., no call to `RS' yet) has number 1, and each call
@@ -1601,21 +1619,21 @@ indentation to its default value.
 
 File: groff,  Node: Man font macros,  Next: Miscellaneous man macros,  Prev: Man usage,  Up: man
 
-Macros to set fonts
--------------------
+4.1.3 Macros to set fonts
+-------------------------
 
 The standard font is roman; the default text size is 10 point.  If
 command line option `-rS=N' is given, use Npt as the default text size.
 
- - Macro: .SM [text]
+ -- Macro: .SM [text]
      Set the text on the same line or the text on the next line in a
      font that is one point size smaller than the default font.
 
- - Macro: .SB [text]
+ -- Macro: .SB [text]
      Set the text on the same line or the text on the next line in bold
      face font, one point size smaller than the default font.
 
- - Macro: .BI text
+ -- Macro: .BI text
      Set its arguments alternately in bold face and italic, without a
      space between the arguments.  Thus,
 
@@ -1625,50 +1643,50 @@ command line option `-rS=N' is given, use Npt as the default text size.
      produces "thisword andthat" with "this" and "that" in bold face,
      and "word and" in italics.
 
- - Macro: .IB text
+ -- Macro: .IB text
      Set its arguments alternately in italic and bold face, without a
      space between the arguments.
 
- - Macro: .RI text
+ -- Macro: .RI text
      Set its arguments alternately in roman and italic, without a space
      between the arguments.
 
- - Macro: .IR text
+ -- Macro: .IR text
      Set its arguments alternately in italic and roman, without a space
      between the arguments.
 
- - Macro: .BR text
+ -- Macro: .BR text
      Set its arguments alternately in bold face and roman, without a
      space between the arguments.
 
- - Macro: .RB text
+ -- Macro: .RB text
      Set its arguments alternately in roman and bold face, without a
      space between the arguments.
 
- - Macro: .B [text]
+ -- Macro: .B [text]
      Set TEXT in bold face.  If no text is present on the line where
      the macro is called, then the text of the next line appears in bold
      face.
 
- - Macro: .I [text]
+ -- Macro: .I [text]
      Set TEXT in italic.  If no text is present on the line where the
      macro is called, then the text of the next line appears in italic.
 
 
 File: groff,  Node: Miscellaneous man macros,  Next: Predefined man strings,  Prev: Man font macros,  Up: man
 
-Miscellaneous macros
---------------------
+4.1.4 Miscellaneous macros
+--------------------------
 
 The default indentation is 7.2n in troff mode and 7n in nroff mode
 except for `grohtml' which ignores indentation.
 
- - Macro: .DT
+ -- Macro: .DT
      Set tabs every 0.5 inches.  Since this macro is always executed
      during a call to the `TH' macro, it makes sense to call it only if
      the tab positions have been changed.
 
- - Macro: .PD [nnn]
+ -- Macro: .PD [nnn]
      Adjust the empty space before a new paragraph (or section).  The
      optional argument gives the amount of space (default unit is `v');
      without parameter, the value is reset to its default value (1 line
@@ -1679,7 +1697,7 @@ except for `grohtml' which ignores indentation.
 
    The following two macros are included for BSD compatibility.
 
- - Macro: .AT [system [release]]
+ -- Macro: .AT [system [release]]
      Alter the footer for use with AT&T manpages.  This command exists
      only for compatibility; don't use it.  The first argument SYSTEM
      can be:
@@ -1696,7 +1714,7 @@ except for `grohtml' which ignores indentation.
      An optional second argument RELEASE to `AT' specifies the release
      number (such as "System V Release 3").
 
- - Macro: .UC [version]
+ -- Macro: .UC [version]
      Alters the footer for use with BSD manpages.  This command exists
      only for compatibility; don't use it.  The argument can be:
 
@@ -1718,33 +1736,33 @@ except for `grohtml' which ignores indentation.
 
 File: groff,  Node: Predefined man strings,  Next: Preprocessors in man pages,  Prev: Miscellaneous man macros,  Up: man
 
-Predefined strings
-------------------
+4.1.5 Predefined strings
+------------------------
 
 The following strings are defined:
 
- - String: \*[S]
+ -- String: \*[S]
      Switch back to the default font size.
 
- - String: \*[HF]
+ -- String: \*[HF]
      The typeface used for headings.  The default is `B'.
 
- - String: \*[R]
+ -- String: \*[R]
      The `registered' sign.
 
- - String: \*[Tm]
+ -- String: \*[Tm]
      The `trademark' sign.
 
- - String: \*[lq]
- - String: \*[rq]
+ -- String: \*[lq]
+ -- String: \*[rq]
      Left and right quote.  This is equal to `\(lq' and `\(rq',
      respectively.
 
 
 File: groff,  Node: Preprocessors in man pages,  Next: Optional man extensions,  Prev: Predefined man strings,  Up: man
 
-Preprocessors in `man' pages
-----------------------------
+4.1.6 Preprocessors in `man' pages
+----------------------------------
 
 If a preprocessor like `gtbl' or `geqn' is needed, it has become common
 usage to make the first line of the man page look like this:
@@ -1760,8 +1778,8 @@ read this first line and automatically call the right preprocessor(s).
 
 File: groff,  Node: Optional man extensions,  Prev: Preprocessors in man pages,  Up: man
 
-Optional `man' extensions
--------------------------
+4.1.7 Optional `man' extensions
+-------------------------------
 
 Use the file `man.local' for local extensions to the `man' macros or
 for style changes.
@@ -1772,12 +1790,12 @@ Custom headers and footers
 In groff versions 1.18.2 and later, you can specify custom headers and
 footers by redefining the following macros in `man.local'.
 
- - Macro: .PT
+ -- Macro: .PT
      Control the content of the headers.  Normally, the header prints
      the command name and section number on either side, and the
      optional fifth argument to `TH' in the center.
 
- - Macro: .BT
+ -- Macro: .BT
      Control the content of the footers.  Normally, the footer prints
      the page number and the third and fourth arguments to `TH'.
 
@@ -1792,79 +1810,79 @@ containing macros compatible with the Ultrix variant of `man'.  Copy
 this file into `man.local' (or use the `mso' request to load it) to
 enable the following macros.
 
- - Macro: .CT key
+ -- Macro: .CT key
      Print `<CTRL/KEY>'.
 
- - Macro: .CW
+ -- Macro: .CW
      Print subsequent text using the constant width (Courier) typeface.
 
- - Macro: .Ds
+ -- Macro: .Ds
      Begin a non-filled display.
 
- - Macro: .De
+ -- Macro: .De
      End a non-filled display started with `Ds'.
 
- - Macro: .EX [indent]
+ -- Macro: .EX [indent]
      Begins a non-filled display using the constant width (Courier)
      typeface.  Use the optional INDENT argument to indent the display.
 
- - Macro: .EE
+ -- Macro: .EE
      End a non-filled display started with `EX'.
 
- - Macro: .G [text]
+ -- Macro: .G [text]
      Sets TEXT in Helvetica.  If no text is present on the line where
      the macro is called, then the text of the next line appears in
      Helvetica.
 
- - Macro: .GL [text]
+ -- Macro: .GL [text]
      Sets TEXT in Helvetica Oblique.  If no text is present on the line
      where the macro is called, then the text of the next line appears
      in Helvetica Oblique.
 
- - Macro: .HB [text]
+ -- Macro: .HB [text]
      Sets TEXT in Helvetica Bold.  If no text is present on the line
      where the macro is called, then all text up to the next `HB'
      appears in Helvetica Bold.
 
- - Macro: .TB [text]
+ -- Macro: .TB [text]
      Identical to `HB'.
 
- - Macro: .MS title sect [punct]
+ -- Macro: .MS title sect [punct]
      Set a manpage reference in Ultrix format.  The TITLE is in Courier
      instead of italic.  Optional punctuation follows the section
      number without an intervening space.
 
- - Macro: .NT [`C'] [title]
+ -- Macro: .NT [`C'] [title]
      Begin a note.  Print the optional title, or the word "Note",
      centered on the page.  Text following the macro makes up the body
      of the note, and is indented on both sides.  If the first argument
      is `C', the body of the note is printed centered (the second
      argument replaces the word "Note" if specified).
 
- - Macro: .NE
+ -- Macro: .NE
      End a note begun with `NT'.
 
- - Macro: .PN path [punct]
+ -- Macro: .PN path [punct]
      Set the path name in constant width (Courier), followed by
      optional punctuation.
 
- - Macro: .Pn [punct] path [punct]
+ -- Macro: .Pn [punct] path [punct]
      When called with two arguments, identical to `PN'.  When called
      with three arguments, set the second argument in constant width
      (Courier), bracketed by the first and third arguments in the
      current font.
 
- - Macro: .R
+ -- Macro: .R
      Switch to roman font and turn off any underlining in effect.
 
- - Macro: .RN
+ -- Macro: .RN
      Print the string `<RETURN>'.
 
- - Macro: .VS [`4']
+ -- Macro: .VS [`4']
      Start printing a change bar in the margin if the number `4' is
      specified.  Otherwise, this macro does nothing.
 
- - Macro: .VE
+ -- Macro: .VE
      End printing the change bar begun by `VS'.
 
 Simple example
@@ -1888,8 +1906,8 @@ printed in Helvetica Bold.
 
 File: groff,  Node: mdoc,  Next: ms,  Prev: man,  Up: Macro Packages
 
-`mdoc'
-======
+4.2 `mdoc'
+==========
 
 See the `groff_mdoc(7)' man page (type `man groff_mdoc' at the command
 line).
@@ -1897,8 +1915,8 @@ line).
 
 File: groff,  Node: ms,  Next: me,  Prev: mdoc,  Up: Macro Packages
 
-`ms'
-====
+4.3 `ms'
+========
 
 The `-ms' macros are suitable for reports, letters, books, user
 manuals, and so forth.  The package provides macros for cover pages,
@@ -1914,18 +1932,19 @@ of contents.
 * ms Body Text::
 * ms Page Layout::
 * Differences from AT&T ms::
+* Naming Conventions::
 
 
 File: groff,  Node: ms Intro,  Next: General ms Structure,  Prev: ms,  Up: ms
 
-Introduction to `ms'
---------------------
+4.3.1 Introduction to `ms'
+--------------------------
 
-The original `-ms' macros were included with AT&T `troff' as well as the
-`man' macros.  While the `man' package is intended for brief documents
-that can be read on-line as well as printed, the `ms' macros are
-suitable for longer documents that are meant to be printed rather than
-read on-line.
+The original `-ms' macros were included with AT&T `troff' as well as
+the `man' macros.  While the `man' package is intended for brief
+documents that can be read on-line as well as printed, the `ms' macros
+are suitable for longer documents that are meant to be printed rather
+than read on-line.
 
    The `ms' macro package included with `groff' is a complete,
 bottom-up re-implementation.  Several macros (specific to AT&T or
@@ -1935,8 +1954,8 @@ Differences from AT&T ms::, for more information.
 
 File: groff,  Node: General ms Structure,  Next: ms Document Control Registers,  Prev: ms Intro,  Up: ms
 
-General structure of an `ms' document
--------------------------------------
+4.3.2 General structure of an `ms' document
+-------------------------------------------
 
 The `ms' macro package expects a certain amount of structure, but not
 as much as packages such as `man' or `mdoc'.
@@ -1961,8 +1980,8 @@ even blank lines.  Longer documents have a structure as follows:
 
 *Cover page*
      A cover page consists of a title, the author's name and
-     institution, an abstract, and the date.  (1) (*note General ms
-     Structure-Footnote-1::) *Note ms Cover Page Macros::, for more
+     institution, an abstract, and the date.(1) (*note General ms
+     Structure-Footnote-1::)  *Note ms Cover Page Macros::, for more
      details.
 
 *Body*
@@ -1974,9 +1993,9 @@ even blank lines.  Longer documents have a structure as follows:
      Text::, for more details.
 
 *Table of contents*
-     Longer documents usually include a table of contents, which you
-     can invoke by placing the `TC' macro at the end of your document.
-     The `ms' macros have minimal indexing facilities, consisting of the
+     Longer documents usually include a table of contents, which you can
+     invoke by placing the `TC' macro at the end of your document.  The
+     `ms' macros have minimal indexing facilities, consisting of the
      `IX' macro, which prints an entry on standard error.  Printing the
      table of contents at the end is necessary since `groff' is a
      single-pass text formatter, thus it cannot determine the page
@@ -1993,8 +2012,8 @@ File: groff,  Node: General ms Structure-Footnotes,  Up: General ms Structure
 
 File: groff,  Node: ms Document Control Registers,  Next: ms Cover Page Macros,  Prev: General ms Structure,  Up: ms
 
-Document control registers
---------------------------
+4.3.3 Document control registers
+--------------------------------
 
 The following is a list of document control number registers.  For the
 sake of consistency, set registers related to margins at the beginning
@@ -2005,38 +2024,38 @@ the beginning to make them easy to find and edit as necessary.
 Margin Settings
 ...............
 
- - Register: \n[PO]
-     Defines the page offset (i.e. the left margin).  There is no
-     explicit right margin setting; the combination of the `PO' and
-     `LL' registers implicitly define the right margin width.
+ -- Register: \n[PO]
+     Defines the page offset (i.e., the left margin).  There is no
+     explicit right margin setting; the combination of the `PO' and `LL'
+     registers implicitly define the right margin width.
 
      Effective: next page.
 
      Default value: 1i.
 
- - Register: \n[LL]
-     Defines the line length (i.e. the width of the body text).
+ -- Register: \n[LL]
+     Defines the line length (i.e., the width of the body text).
 
      Effective: next paragraph.
 
      Default: 6i.
 
- - Register: \n[LT]
-     Defines the title length (i.e. the header and footer width).  This
+ -- Register: \n[LT]
+     Defines the title length (i.e., the header and footer width).  This
      is usually the same as `LL', but not necessarily.
 
      Effective: next paragraph.
 
      Default: 6i.
 
- - Register: \n[HM]
+ -- Register: \n[HM]
      Defines the header margin height at the top of the page.
 
      Effective: next page.
 
      Default: 1i.
 
- - Register: \n[FM]
+ -- Register: \n[FM]
      Defines the footer margin height at the bottom of the page.
 
      Effective: next page.
@@ -2046,96 +2065,171 @@ Margin Settings
 Text Settings
 .............
 
- - Register: \n[PS]
-     Defines the point size of the body text.
+ -- Register: \n[PS]
+     Defines the point size of the body text.  If the value is larger
+     than or equal to 1000, divide it by 1000 to get a fractional point
+     size.  For example, `.nr PS 10250' sets the document's point size
+     to 10.25p.
 
      Effective: next paragraph.
 
      Default: 10p.
 
- - Register: \n[VS]
-     Defines the space between lines (line height plus leading).
+ -- Register: \n[VS]
+     Defines the space between lines (line height plus leading).  If the
+     value is larger than or equal to 1000, divide it by 1000 to get a
+     fractional point size.  Due to backwards compatibility, `VS' must
+     be smaller than 40000 (this is 40.0p).
 
      Effective: next paragraph.
 
      Default: 12p.
 
+ -- Register: \n[PSINCR]
+     Defines an increment in point size, which will be applied to
+     section headings at nesting levels below the value specified in
+     `GROWPS'.  The value of `PSINCR' should be specified in points,
+     with the p scaling factor, and may include a fractional component;
+     for example, `.nr PSINCR 1.5p' sets a point size increment of 1.5p.
+
+     Effective: next section heading.
+
+     Default: 1p.
+
+ -- Register: \n[GROWPS]
+     Defines the heading level below which the point size increment set
+     by `PSINCR' becomes effective.  Section headings at and above the
+     level specified by `GROWPS' will be printed at the point size set
+     by `PS'; for each level below the value of `GROWPS', the point
+     size will be increased in steps equal to the value of `PSINCR'.
+     Setting `GROWPS' to any value less than 2 disables the incremental
+     heading size feature.
+
+     Effective: next section heading.
+
+     Default: 0.
+
+ -- Register: \n[HY]
+     Defines the hyphenation level.  `HY' sets safely the value of the
+     low-level `hy' register.  Setting the value of `HY' to 0 is
+     equivalent to using the `nh' request.
+
+     Effective: next paragraph.
+
+     Default: 14.
+
+ -- Register: \n[FAM]
+     Defines the font family used to typeset the document.
+
+     Effective: next paragraph.
+
+     Default: as defined in the output device.
+
 Paragraph Settings
 ..................
 
- - Register: \n[PI]
-     Defines the initial indent of a `.PP' paragraph.
+ -- Register: \n[PI]
+     Defines the initial indentation of a (`PP' macro) paragraph.
 
      Effective: next paragraph.
 
      Default: 5n.
 
- - Register: \n[PD]
+ -- Register: \n[PD]
      Defines the space between paragraphs.
 
      Effective: next paragraph.
 
      Default: 0.3v.
 
- - Register: \n[QI]
-     Defines the indent on both sides of a quoted (`.QP') paragraph.
+ -- Register: \n[QI]
+     Defines the indentation on both sides of a quoted (`QP' macro)
+     paragraph.
 
      Effective: next paragraph.
 
      Default: 5n.
 
+ -- Register: \n[PORPHANS]
+     Defines the minimum number of initial lines of any paragraph which
+     should be kept together, to avoid orphan lines at the bottom of a
+     page.  If a new paragraph is started close to the bottom of a page,
+     and there is insufficient space to accommodate `PORPHANS' lines
+     before an automatic page break, then the page break will be forced,
+     before the start of the paragraph.
+
+     Effective: next paragraph.
+
+     Default: 1.
+
+ -- Register: \n[HORPHANS]
+     Defines the minimum number of lines of the following paragraph
+     which should be kept together with any section heading introduced
+     by the `NH' or `SH' macros.  If a section heading is placed close
+     to the bottom of a page, and there is insufficient space to
+     accommodate both the heading and at least `HORPHANS' lines of the
+     following paragraph, before an automatic page break, then the page
+     break will be forced before the heading.
+
+     Effective: next paragraph.
+
+     Default: 1.
+
 Footnote Settings
 .................
 
- - Register: \n[FL]
+ -- Register: \n[FL]
      Defines the length of a footnote.
 
      Effective: next footnote.
 
      Default: `\n[LL]' * 5 / 6.
 
- - Register: \n[FI]
-     Defines the footnote indent.
+ -- Register: \n[FI]
+     Defines the footnote indentation.
 
      Effective: next footnote.
 
      Default: 2n.
 
- - Register: \n[FF]
+ -- Register: \n[FF]
      The footnote format:
     `0'
-          Prints the footnote number as a superscript; indents the
+          Print the footnote number as a superscript; indent the
           footnote (default).
 
     `1'
-          Prints the number followed by a period (like 1.)  and indents
-          the footnote.
+          Print the number followed by a period (like 1.) and indent the
+          footnote.
 
     `2'
-          Like 1, without an indent.
+          Like 1, without an indentation.
 
     `3'
-          Like 1, but prints the footnote number as a hanging paragraph.
+          Like 1, but print the footnote number as a hanging paragraph.
 
      Effective: next footnote.
 
      Default: 0.
 
- - Register: \n[FPS]
-     Defines the footnote point size.
+ -- Register: \n[FPS]
+     Defines the footnote point size.  If the value is larger than or
+     equal to 1000, divide it by 1000 to get a fractional point size.
 
      Effective: next footnote.
 
      Default: `\n[PS]' - 2.
 
- - Register: \n[FVS]
-     Defines the footnote vertical spacing.
+ -- Register: \n[FVS]
+     Defines the footnote vertical spacing.  If the value is larger
+     than or equal to 1000, divide it by 1000 to get a fractional point
+     size.
 
      Effective: next footnote.
 
      Default: `\n[FPS]' + 2.
 
- - Register: \n[FPD]
+ -- Register: \n[FPD]
      Defines the footnote paragraph spacing.
 
      Effective: next footnote.
@@ -2145,7 +2239,7 @@ Footnote Settings
 Miscellaneous Number Registers
 ..............................
 
- - Register: \n[MINGW]
+ -- Register: \n[MINGW]
      Defines the minimum width between columns in a multi-column
      document.
 
@@ -2156,38 +2250,41 @@ Miscellaneous Number Registers
 
 File: groff,  Node: ms Cover Page Macros,  Next: ms Body Text,  Prev: ms Document Control Registers,  Up: ms
 
-Cover page macros
------------------
+4.3.4 Cover page macros
+-----------------------
 
 Use the following macros to create a cover page for your document in
 the order shown.
 
- - Macro: .RP [`no']
+ -- Macro: .RP [`no']
      Specifies the report format for your document.  The report format
-     creates a separate cover page.  The default action (no `.RP'
-     macro) is to print a subset of the cover page on page 1 of your
-     document.
+     creates a separate cover page.  The default action (no `RP' macro)
+     is to print a subset of the cover page on page 1 of your document.
 
      If you use the word `no' as an optional argument, `groff' prints a
      title page but does not repeat any of the title page information
-     (title, author, abstract, etc.)  on page 1 of the document.
+     (title, author, abstract, etc.) on page 1 of the document.
 
- - Macro: .DA [...]
-     (optional) Print the current date, or the arguments to the macro
+ -- Macro: .P1
+     (P-one) Prints the header on page 1.  The default is to suppress
+     the header.
+
+ -- Macro: .DA [...]
+     (optional) Prints the current date, or the arguments to the macro
      if any, on the title page (if specified) and in the footers.  This
      is the default for `nroff'.
 
- - Macro: .ND [...]
-     (optional) Print the current date, or the arguments to the macro
+ -- Macro: .ND [...]
+     (optional) Prints the current date, or the arguments to the macro
      if any, on the title page (if specified) but not in the footers.
      This is the default for `troff'.
 
- - Macro: .TL
+ -- Macro: .TL
      Specifies the document title.  `groff' collects text following the
-     `.TL' macro into the title, until reaching the author name or
+     `TL' macro into the title, until reaching the author name or
      abstract.
 
- - Macro: .AU
+ -- Macro: .AU
      Specifies the author's name, which appears on the line (or lines)
      immediately following.  You can specify multiple authors as
      follows:
@@ -2201,23 +2298,23 @@ the order shown.
           Martha Buck
           .AI
           Monolithic Corporation
-          
+
           ...
 
 
- - Macro: .AI
+ -- Macro: .AI
      Specifies the author's institution.  You can specify multiple
      institutions in the same way that you specify multiple authors.
 
- - Macro: .AB [`no']
+ -- Macro: .AB [`no']
      Begins the abstract.  The default is to print the word ABSTRACT,
      centered and in italics, above the text of the abstract.  The word
      `no' as an optional argument suppresses this heading.
 
- - Macro: .AE
-     End the abstract.
+ -- Macro: .AE
+     Ends the abstract.
 
-   The following is example mark-up for a title page.
+   The following is example mark-up for a title page.  
 
 
      .RP
@@ -2245,17 +2342,17 @@ the order shown.
      bugs and the added features are in line with
      user demand.
      .AE
-     
+
      ... the rest of the paper follows ...
 
 
 File: groff,  Node: ms Body Text,  Next: ms Page Layout,  Prev: ms Cover Page Macros,  Up: ms
 
-Body text
----------
+4.3.5 Body text
+---------------
 
-This section describes macros used to mark up the body of your document.
-Examples include paragraphs, sections, and other groups.
+This section describes macros used to mark up the body of your
+document.  Examples include paragraphs, sections, and other groups.
 
 * Menu:
 
@@ -2263,7 +2360,7 @@ Examples include paragraphs, sections, and other groups.
 * Headings in ms::
 * Highlighting in ms::
 * Lists in ms::
-* Indents in ms::
+* Indentation values in ms::
 * Tabstops in ms::
 * ms Displays and Keeps::
 * ms Insertions::
@@ -2273,23 +2370,21 @@ Examples include paragraphs, sections, and other groups.
 
 File: groff,  Node: Paragraphs in ms,  Next: Headings in ms,  Prev: ms Body Text,  Up: ms Body Text
 
-Paragraphs
-..........
+4.3.5.1 Paragraphs
+..................
 
 The following paragraph types are available.
 
- - Macro: .PP
-     Sets a paragraph with an initial indent.
+ -- Macro: .PP
+ -- Macro: .LP
+     Sets a paragraph with an initial indentation.
 
- - Macro: .LP
-     Sets a paragraph with no initial indent.
-
- - Macro: .QP
+ -- Macro: .QP
      Sets a paragraph that is indented at both left and right margins.
      The effect is identical to the HTML `<BLOCKQUOTE>' element.  The
      next paragraph or heading returns margins to normal.
 
- - Macro: .XP
+ -- Macro: .XP
      Sets a paragraph whose lines are indented, except for the first
      line.  This is a Berkeley extension.
 
@@ -2326,11 +2421,15 @@ The following paragraph types are available.
      and criticisms about the quality and usability of
      free software.
 
+   The `PORPHANS' register (*note ms Document Control Registers::)
+operates in conjunction with each of these macros, to inhibit the
+printing of orphan lines at the bottom of any page.
+
 
 File: groff,  Node: Headings in ms,  Next: Highlighting in ms,  Prev: Paragraphs in ms,  Up: ms Body Text
 
-Headings
-........
+4.3.5.2 Headings
+................
 
 Use headings to create a hierarchical structure for your document.  The
 `ms' macros print headings in *bold*, using the same font family and
@@ -2338,8 +2437,8 @@ point size as the body text.
 
    The following describes the heading macros:
 
- - Macro: .NH curr-level
- - Macro: .NH S level0 ...
+ -- Macro: .NH curr-level
+ -- Macro: .NH S level0 ...
      Numbered heading.  The argument is either a numeric argument to
      indicate the level of the heading, or the letter `S' followed by
      numeric arguments to set the heading level explicitly.
@@ -2347,19 +2446,52 @@ point size as the body text.
      If you specify heading levels out of sequence, such as invoking
      `.NH 3' after `.NH 1', `groff' prints a warning on standard error.
 
- - Macro: .SH
+ -- String: \*[SN]
+ -- String: \*[SN-DOT]
+ -- String: \*[SN-NO-DOT]
+     After invocation of `NH', the assigned section number is made
+     available in the strings `SN-DOT' (exactly as it appears in the
+     printed section heading) and `SN-NO-DOT' (with the final period
+     omitted).  The string `SN' is also defined, as an alias for
+     `SN-DOT'; if preferred, you may redefine it as an alias for
+     `SN-NO-DOT', by including the initialization
+
+
+          .ds SN-NO-DOT
+          .als SN SN-NO-DOT
+
+     *before* your first use of `NH', or simply
+
+
+          .als SN SN-NO-DOT
+
+     *after* your first use of `NH'.
+
+ -- Macro: .SH [match-level]
      Unnumbered subheading.
+
+     The optional MATCH-LEVEL argument is a GNU extension.  It is a
+     number indicating the level of the heading, in a manner analogous
+     to the CURR-LEVEL argument to `.NH'.  Its purpose is to match the
+     point size, at which the heading is printed, to the size of a
+     numbered heading at the same level, when the `GROWPS' and `PSINCR'
+     heading size adjustment mechanism is in effect.  *Note ms Document
+     Control Registers::.
+
+   The `HORPHANS' register (*note ms Document Control Registers::)
+operates in conjunction with the `NH' and `SH' macros, to inhibit the
+printing of orphaned section headings at the bottom of any page.
 
 
 File: groff,  Node: Highlighting in ms,  Next: Lists in ms,  Prev: Headings in ms,  Up: ms Body Text
 
-Highlighting
-............
+4.3.5.3 Highlighting
+....................
 
 The `ms' macros provide a variety of methods to highlight or emphasize
 text:
 
- - Macro: .B [txt [post [pre]]]
+ -- Macro: .B [txt [post [pre]]]
      Sets its first argument in *bold type*.  If you specify a second
      argument, `groff' prints it in the previous font after the bold
      text, with no intervening space (this allows you to set
@@ -2376,66 +2508,75 @@ text:
      following in bold until the next highlighting, paragraph, or
      heading macro.
 
- - Macro: .R [txt [post [pre]]]
+ -- Macro: .R [txt [post [pre]]]
      Sets its first argument in roman (or regular) type.  It operates
      similarly to the `B' macro otherwise.
 
- - Macro: .I [txt [post [pre]]]
+ -- Macro: .I [txt [post [pre]]]
      Sets its first argument in _italic type_.  It operates similarly
      to the `B' macro otherwise.
 
- - Macro: .CW [txt [post [pre]]]
+ -- Macro: .CW [txt [post [pre]]]
      Sets its first argument in a `constant width face'.  It operates
      similarly to the `B' macro otherwise.
 
- - Macro: .BI [txt [post [pre]]]
+ -- Macro: .BI [txt [post [pre]]]
      Sets its first argument in bold italic type.  It operates
      similarly to the `B' macro otherwise.
 
- - Macro: .BX [txt]
+ -- Macro: .BX [txt]
      Prints its argument and draws a box around it.  If you want to box
      a string that contains spaces, use a digit-width space (`\0').
 
- - Macro: .UL [txt [post]]
+ -- Macro: .UL [txt [post]]
      Prints its first argument with an underline.  If you specify a
      second argument, `groff' prints it in the previous font after the
      underlined text, with no intervening space.
 
- - Macro: .LG
+ -- Macro: .LG
      Prints all text following in larger type (two points larger than
      the current point size) until the next font size, highlighting,
      paragraph, or heading macro.  You can specify this macro multiple
      times to enlarge the point size as needed.
 
- - Macro: .SM
+ -- Macro: .SM
      Prints all text following in smaller type (two points smaller than
      the current point size) until the next type size, highlighting,
      paragraph, or heading macro.  You can specify this macro multiple
      times to reduce the point size as needed.
 
- - Macro: .NL
+ -- Macro: .NL
      Prints all text following in the normal point size (that is, the
      value of the `PS' register).
 
+ -- String: \*[{]
+ -- String: \*[}]
+     Text enclosed with `\*{' and `\*}' is printed as a superscript.
+
 
-File: groff,  Node: Lists in ms,  Next: Indents in ms,  Prev: Highlighting in ms,  Up: ms Body Text
+File: groff,  Node: Lists in ms,  Next: Indentation values in ms,  Prev: Highlighting in ms,  Up: ms Body Text
 
-Lists
-.....
+4.3.5.4 Lists
+.............
 
-The `.IP' macro handles duties for all lists.
+The `IP' macro handles duties for all lists.
 
- - Macro: .IP [marker [width]]
+ -- Macro: .IP [marker [width]]
      The MARKER is usually a bullet glyph (`\[bu]') for unordered
      lists, a number (or auto-incrementing number register) for
      numbered lists, or a word or phrase for indented (glossary-style)
      lists.
 
-     The WIDTH specifies the indent for the body of each list item; its
-     default unit is `n'.  Once specified, the indent remains the same
-     for all list items in the document until specified again.
+     The WIDTH specifies the indentation for the body of each list
+     item; its default unit is `n'.  Once specified, the indentation
+     remains the same for all list items in the document until specified
+     again.
 
-   The following is an example of a bulleted list.
+     The `PORPHANS' register (*note ms Document Control Registers::)
+     operates in conjunction with the `IP' macro, to inhibit the
+     printing of orphaned list markers at the bottom of any page.
+
+   The following is an example of a bulleted list.  
 
 
      A bulleted list:
@@ -2450,15 +2591,14 @@ The `.IP' macro handles duties for all lists.
 
 
      A bulleted list:
-     
+
      o lawyers
-     
+
      o guns
-     
+
      o money
 
-
-   The following is an example of a numbered list.
+   The following is an example of a numbered list.  
 
 
      .nr step 1 1
@@ -2474,18 +2614,17 @@ The `.IP' macro handles duties for all lists.
 
 
      A numbered list:
-     
+
      1. lawyers
-     
+
      2. guns
-     
+
      3. money
 
    Note the use of the auto-incrementing number register in this
 example.
 
-
-   The following is an example of a glossary-style list.
+   The following is an example of a glossary-style list.  
 
 
      A glossary-style list:
@@ -2502,12 +2641,12 @@ example.
 
 
      A glossary-style list:
-     
+
      lawyers
            Two or more attorneys.
-     
+
      guns  Firearms, preferably large-caliber.
-     
+
      money
            Gotta pay for those lawyers and guns!
 
@@ -2531,7 +2670,6 @@ printing the term or label.
      .IP money
      Gotta pay for those lawyers and guns!
 
-
    The second workaround uses the `\p' escape to force the break.  Note
 the space following the escape; this is important.  If you omit the
 space, `groff' prints the first word on the same line as the term or
@@ -2546,9 +2684,8 @@ label (if it fits) *then* breaks the line.
      .IP money
      Gotta pay for those lawyers and guns!
 
-
-   To set nested lists, use the `RS' and `RE' macros.  *Note Indents in
-ms::, for more information.
+   To set nested lists, use the `RS' and `RE' macros.  *Note
+Indentation values in ms::, for more information.  
 
    For example:
 
@@ -2570,44 +2707,44 @@ ms::, for more information.
 
 
      o Lawyers:
-     
+
        o  Dewey,
-     
+
        o  Cheatham,
-     
+
        o  and Howe.
-     
+
      o Guns
 
 
-File: groff,  Node: Indents in ms,  Next: Tabstops in ms,  Prev: Lists in ms,  Up: ms Body Text
+File: groff,  Node: Indentation values in ms,  Next: Tabstops in ms,  Prev: Lists in ms,  Up: ms Body Text
 
-Indents
-.......
+4.3.5.5 Indentation values
+..........................
 
-In many situations, you may need to indent a section of text while
+In many situations, you may need to indentation a section of text while
 still wrapping and filling.  *Note Lists in ms::, for an example of
 nested lists.
 
- - Macro: .RS
- - Macro: .RE
+ -- Macro: .RS
+ -- Macro: .RE
      These macros begin and end an indented section.  The `PI' register
-     controls the amount of indent, allowing the indented text to line
-     up under hanging and indented paragraphs.
+     controls the amount of indentation, allowing the indented text to
+     line up under hanging and indented paragraphs.
 
-   *Note ms Displays and Keeps::, for macros to indent and turn off
+   *Note ms Displays and Keeps::, for macros to indentation and turn off
 filling.
 
 
-File: groff,  Node: Tabstops in ms,  Next: ms Displays and Keeps,  Prev: Indents in ms,  Up: ms Body Text
+File: groff,  Node: Tabstops in ms,  Next: ms Displays and Keeps,  Prev: Indentation values in ms,  Up: ms Body Text
 
-Tab Stops
-.........
+4.3.5.6 Tab Stops
+.................
 
 Use the `ta' request to define tab stops as needed.  *Note Tabs and
 Fields::.
 
- - Macro: .TA
+ -- Macro: .TA
      Use this macro to reset the tab stops to the default for `ms'
      (every 5n).  You can redefine the `TA' macro to create a different
      set of default tab stops.
@@ -2615,8 +2752,8 @@ Fields::.
 
 File: groff,  Node: ms Displays and Keeps,  Next: ms Insertions,  Prev: Tabstops in ms,  Up: ms Body Text
 
-Displays and keeps
-..................
+4.3.5.7 Displays and keeps
+..........................
 
 Use displays to show text-based examples or figures (such as code
 listings).
@@ -2625,25 +2762,25 @@ listings).
 without inserting `br' requests in between each line.  Displays can be
 "kept" on a single page, or allowed to break across pages.
 
- - Macro: .DS L
- - Macro: .LD
- - Macro: .DE
+ -- Macro: .DS L
+ -- Macro: .LD
+ -- Macro: .DE
      Left-justified display.  The `.DS L' call generates a page break,
      if necessary, to keep the entire display on one page.  The `LD'
      macro allows the display to break across pages.  The `DE' macro
      ends the display.
 
- - Macro: .DS I
- - Macro: .ID
- - Macro: .DE
+ -- Macro: .DS I
+ -- Macro: .ID
+ -- Macro: .DE
      Indents the display as defined by the `DI' register.  The `.DS I'
      call generates a page break, if necessary, to keep the entire
      display on one page.  The `ID' macro allows the display to break
      across pages.  The `DE' macro ends the display.
 
- - Macro: .DS B
- - Macro: .BD
- - Macro: .DE
+ -- Macro: .DS B
+ -- Macro: .BD
+ -- Macro: .DE
      Sets a block-centered display: the entire display is
      left-justified, but indented so that the longest line in the
      display is centered on the page.  The `.DS B' call generates a
@@ -2651,26 +2788,31 @@ without inserting `br' requests in between each line.  Displays can be
      The `BD' macro allows the display to break across pages.  The `DE'
      macro ends the display.
 
- - Macro: .DS C
- - Macro: .CD
- - Macro: .DE
-     Sets a centered display: each line in the display is centered.
-     The `.DS C' call generates a page break, if necessary, to keep the
+ -- Macro: .DS C
+ -- Macro: .CD
+ -- Macro: .DE
+     Sets a centered display: each line in the display is centered.  The
+     `.DS C' call generates a page break, if necessary, to keep the
      entire display on one page.  The `CD' macro allows the display to
      break across pages.  The `DE' macro ends the display.
 
- - Macro: .DS R
- - Macro: .RD
- - Macro: .DE
+ -- Macro: .DS R
+ -- Macro: .RD
+ -- Macro: .DE
      Right-justifies each line in the display.  The `.DS R' call
-     generates a page break, if necessary, to keep the entire display
-     on one page.  The `RD' macro allows the display to break across
+     generates a page break, if necessary, to keep the entire display on
+     one page.  The `RD' macro allows the display to break across
      pages.  The `DE' macro ends the display.
 
- - Macro: .Ds
- - Macro: .De
-     These two macros are aliases for `DS' and `DE', respectively.
-
+ -- Macro: .Ds
+ -- Macro: .De
+     These two macros were formerly provided as aliases for `DS' and
+     `DE', respectively.  They have been removed, and should no longer
+     be used.  The original implementations of `DS' and `DE' are
+     retained, and should be used instead.  X11 documents which actually
+     use `Ds' and `De' always load a specific macro file from the X11
+     distribution (`macros.t') which provides proper definitions for
+     the two macros.
 
    On occasion, you may want to "keep" other text together on a page.
 For example, you may want to keep two paragraphs together, or a
@@ -2678,13 +2820,13 @@ paragraph that refers to a table (or list, or other item) immediately
 following.  The `ms' macros provide the `KS' and `KE' macros for this
 purpose.
 
- - Macro: .KS
- - Macro: .KE
+ -- Macro: .KS
+ -- Macro: .KE
      The `KS' macro begins a block of text to be kept on a single page,
      and the `KE' macro ends the block.
 
- - Macro: .KF
- - Macro: .KE
+ -- Macro: .KF
+ -- Macro: .KE
      Specifies a "floating keep"; if the keep cannot fit on the current
      page, `groff' holds the contents of the keep and allows text
      following the keep (in the source file) to fill in the remainder of
@@ -2697,12 +2839,11 @@ purpose.
    You can also use the `ne' request to force a page break if there is
 not enough vertical space remaining on the page.
 
+   Use the following macros to draw a box around a section of text (such
+as a display).
 
-   Use the following macros to draw a box around a section of text
-(such as a display).
-
- - Macro: .B1
- - Macro: .B2
+ -- Macro: .B1
+ -- Macro: .B2
      Marks the beginning and ending of text that is to have a box drawn
      around it.  The `B1' macro begins the box; the `B2' macro ends it.
      Text in the box is automatically placed in a diversion (keep).
@@ -2710,15 +2851,15 @@ not enough vertical space remaining on the page.
 
 File: groff,  Node: ms Insertions,  Next: Example multi-page table,  Prev: ms Displays and Keeps,  Up: ms Body Text
 
-Tables, figures, equations, and references
-..........................................
+4.3.5.8 Tables, figures, equations, and references
+..................................................
 
 The `ms' macros support the standard `groff' preprocessors: `tbl',
 `pic', `eqn', and `refer'.  You mark text meant for preprocessors by
 enclosing it in pairs of tags as follows.
 
- - Macro: .TS [`H']
- - Macro: .TE
+ -- Macro: .TS [`H']
+ -- Macro: .TE
      Denotes a table, to be processed by the `tbl' preprocessor.  The
      optional argument `H' to `TS' instructs `groff' to create a
      running header with the information up to the `TH' macro.  `groff'
@@ -2726,21 +2867,21 @@ enclosing it in pairs of tags as follows.
      onto another page, `groff' prints the header on the next page as
      well.
 
- - Macro: .PS
- - Macro: .PE
+ -- Macro: .PS
+ -- Macro: .PE
      Denotes a graphic, to be processed by the `pic' preprocessor.  You
      can create a `pic' file by hand, using the AT&T `pic' manual
      available on the Web as a reference, or by using a graphics
      program such as `xfig'.
 
- - Macro: .EQ [align]
- - Macro: .EN
+ -- Macro: .EQ [align]
+ -- Macro: .EN
      Denotes an equation, to be processed by the `eqn' preprocessor.
      The optional ALIGN argument can be `C', `L', or `I' to center (the
      default), left-justify, or indent the equation.
 
- - Macro: .[
- - Macro: .]
+ -- Macro: .[
+ -- Macro: .]
      Denotes a reference, to be processed by the `refer' preprocessor.
      The GNU `refer(1)' man page provides a comprehensive reference to
      the preprocessor and the format of the bibliographic database.
@@ -2752,8 +2893,8 @@ enclosing it in pairs of tags as follows.
 
 File: groff,  Node: Example multi-page table,  Next: ms Footnotes,  Prev: ms Insertions,  Up: ms Body Text
 
-An example multi-page table
-...........................
+4.3.5.9 An example multi-page table
+...................................
 
 The following is an example of how to set up a table that may print
 across two or more pages.
@@ -2774,18 +2915,18 @@ across two or more pages.
 
 File: groff,  Node: ms Footnotes,  Prev: Example multi-page table,  Up: ms Body Text
 
-Footnotes
-.........
+4.3.5.10 Footnotes
+..................
 
 The `ms' macro package has a flexible footnote system.  You can specify
 either numbered footnotes or symbolic footnotes (that is, using a
 marker such as a dagger symbol).
 
- - String: \*[*]
+ -- String: \*[*]
      Specifies the location of a numbered footnote marker in the text.
 
- - Macro: .FS
- - Macro: .FE
+ -- Macro: .FS
+ -- Macro: .FE
      Specifies the text of the footnote.  The default action is to
      create a numbered footnote; you can create a symbolic footnote by
      specifying a "mark" glyph (such as `\[dg]' for the dagger glyph)
@@ -2795,11 +2936,18 @@ marker such as a dagger symbol).
    You can control how `groff' prints footnote numbers by changing the
 value of the `FF' register.  *Note ms Document Control Registers::.
 
+   Footnotes can be safely used within keeps and displays, but you
+should avoid using numbered footnotes within floating keeps.  You can
+set a second `\**' marker between a `\**' and its corresponding `.FS'
+entry; as long as each `FS' macro occurs _after_ the corresponding
+`\**' and the occurrences of `.FS' are in the same order as the
+corresponding occurrences of `\**'.
+
 
 File: groff,  Node: ms Page Layout,  Next: Differences from AT&T ms,  Prev: ms Body Text,  Up: ms
 
-Page layout
------------
+4.3.6 Page layout
+-----------------
 
 The default output from the `ms' macros provides a minimalist page
 layout: it prints a single column, with the page number centered at the
@@ -2819,33 +2967,33 @@ strings.
 
 File: groff,  Node: ms Headers and Footers,  Next: ms Margins,  Prev: ms Page Layout,  Up: ms Page Layout
 
-Headers and footers
-...................
+4.3.6.1 Headers and footers
+...........................
 
 For documents that do not distinguish between odd and even pages, set
 the following strings:
 
- - String: \*[LH]
- - String: \*[CH]
- - String: \*[RH]
+ -- String: \*[LH]
+ -- String: \*[CH]
+ -- String: \*[RH]
      Sets the left, center, and right headers.
 
- - String: \*[LF]
- - String: \*[CF]
- - String: \*[RF]
+ -- String: \*[LF]
+ -- String: \*[CF]
+ -- String: \*[RF]
      Sets the left, center, and right footers.
 
+   For documents that need different information printed in the even and
+odd pages, use the following macros:
 
-   For documents that need different information printed in the even
-and odd pages, use the following macros:
-
- - Macro: .OH 'left'center'right'
- - Macro: .EH 'left'center'right'
- - Macro: .OF 'left'center'right'
- - Macro: .EF 'left'center'right'
-     The `OH' and `EH' macros define headers for the odd and even pages;
-     the `OF' and `EF' macros define footers for the odd and even pages.
-     This is more flexible than defining the individual strings.
+ -- Macro: .OH 'left'center'right'
+ -- Macro: .EH 'left'center'right'
+ -- Macro: .OF 'left'center'right'
+ -- Macro: .EF 'left'center'right'
+     The `OH' and `EH' macros define headers for the odd and even
+     pages; the `OF' and `EF' macros define footers for the odd and
+     even pages.  This is more flexible than defining the individual
+     strings.
 
      You can replace the quote (`'') marks with any character not
      appearing in the header or footer text.
@@ -2853,8 +3001,8 @@ and odd pages, use the following macros:
 
 File: groff,  Node: ms Margins,  Next: ms Multiple Columns,  Prev: ms Headers and Footers,  Up: ms Page Layout
 
-Margins
-.......
+4.3.6.2 Margins
+...............
 
 You control margins using a set of number registers.  *Note ms Document
 Control Registers::, for details.
@@ -2862,22 +3010,22 @@ Control Registers::, for details.
 
 File: groff,  Node: ms Multiple Columns,  Next: ms TOC,  Prev: ms Margins,  Up: ms Page Layout
 
-Multiple columns
-................
+4.3.6.3 Multiple columns
+........................
 
 The `ms' macros can set text in as many columns as will reasonably fit
 on the page.  The following macros are available; all of them force a
 page break if a multi-column mode is already set.  However, if the
-current mode is single-column, starting a multi-column mode does *not*
+current mode is single-column, starting a multi-column mode does _not_
 force a page break.
 
- - Macro: .1C
+ -- Macro: .1C
      Single-column mode.
 
- - Macro: .2C
+ -- Macro: .2C
      Two-column mode.
 
- - Macro: .MC [width [gutter]]
+ -- Macro: .MC [width [gutter]]
      Multi-column mode.  If you specify no arguments, it is equivalent
      to the `2C' macro.  Otherwise, WIDTH is the width of each column
      and GUTTER is the space between columns.  The `MINGW' number
@@ -2886,20 +3034,20 @@ force a page break.
 
 File: groff,  Node: ms TOC,  Next: ms Strings and Special Characters,  Prev: ms Multiple Columns,  Up: ms Page Layout
 
-Creating a table of contents
-............................
+4.3.6.4 Creating a table of contents
+....................................
 
 The facilities in the `ms' macro package for creating a table of
 contents are semi-automated at best.  Assuming that you want the table
 of contents to consist of the document's headings, you need to repeat
 those headings wrapped in `XS' and `XE' macros.
 
- - Macro: .XS [page]
- - Macro: .XA [page]
- - Macro: .XE
+ -- Macro: .XS [page]
+ -- Macro: .XA [page]
+ -- Macro: .XE
      These macros define a table of contents or an individual entry in
-     the table of contents, depending on their use.  The macros are
-     very simple; they cannot indent a heading based on its level.  The
+     the table of contents, depending on their use.  The macros are very
+     simple; they cannot indent a heading based on its level.  The
      easiest way to work around this is to add tabs to the table of
      contents string.  The following is an example:
 
@@ -2937,17 +3085,17 @@ those headings wrapped in `XS' and `XE' macros.
           .XE
 
 
- - Macro: .TC [`no']
-     Prints the table of contents on a new page, setting the page
-     number to *i* (Roman numeral one).  You should usually place this
-     macro at the end of the file, since `groff' is a single-pass
+ -- Macro: .TC [`no']
+     Prints the table of contents on a new page, setting the page number
+     to *i* (Roman lowercase numeral one).  You should usually place
+     this macro at the end of the file, since `groff' is a single-pass
      formatter and can only print what has been collected up to the
      point that the `TC' macro appears.
 
      The optional argument `no' suppresses printing the title specified
      by the string register `TOC'.
 
- - Macro: .PX [`no']
+ -- Macro: .PX [`no']
      Prints the table of contents on a new page, using the current page
      numbering sequence.  Use this macro to print a manually-generated
      table of contents at the beginning of your document.
@@ -2966,54 +3114,54 @@ time in the long run if you use `ms' regularly.
 
 File: groff,  Node: ms Strings and Special Characters,  Prev: ms TOC,  Up: ms Page Layout
 
-Strings and Special Characters
-..............................
+4.3.6.5 Strings and Special Characters
+......................................
 
 The `ms' macros provide the following predefined strings.  You can
 change the string definitions to help in creating documents in
 languages other than English.
 
- - String: \*[REFERENCES]
+ -- String: \*[REFERENCES]
      Contains the string printed at the beginning of the references
      (bibliography) page.  The default is `References'.
 
- - String: \*[ABSTRACT]
+ -- String: \*[ABSTRACT]
      Contains the string printed at the beginning of the abstract.  The
      default is `ABSTRACT'.
 
- - String: \*[TOC]
+ -- String: \*[TOC]
      Contains the string printed at the beginning of the table of
      contents.
 
- - String: \*[MONTH1]
- - String: \*[MONTH2]
- - String: \*[MONTH3]
- - String: \*[MONTH4]
- - String: \*[MONTH5]
- - String: \*[MONTH6]
- - String: \*[MONTH7]
- - String: \*[MONTH8]
- - String: \*[MONTH9]
- - String: \*[MONTH10]
- - String: \*[MONTH11]
- - String: \*[MONTH12]
+ -- String: \*[MONTH1]
+ -- String: \*[MONTH2]
+ -- String: \*[MONTH3]
+ -- String: \*[MONTH4]
+ -- String: \*[MONTH5]
+ -- String: \*[MONTH6]
+ -- String: \*[MONTH7]
+ -- String: \*[MONTH8]
+ -- String: \*[MONTH9]
+ -- String: \*[MONTH10]
+ -- String: \*[MONTH11]
+ -- String: \*[MONTH12]
      Prints the full name of the month in dates.  The default is
      `January', `February', etc.
 
    The following special characters are available(1) (*note ms Strings
 and Special Characters-Footnote-1::):
 
- - String: \*[-]
+ -- String: \*[-]
      Prints an em dash.
 
- - String: \*[*Q]
- - String: \*[*U]
-     Prints typographer's quotes in troff, plain quotes in nroff.  `*Q'
-     is the left quote and `*U' is the right quote.
+ -- String: \*[Q]
+ -- String: \*[U]
+     Prints typographer's quotes in troff, and plain quotes in nroff.
+     `\*Q' is the left quote and `\*U' is the right quote.
 
    Improved accent marks are available in the `ms' macros.
 
- - Macro: .AM
+ -- Macro: .AM
      Specify this macro at the beginning of your document to enable
      extended accent marks and special characters.  This is a Berkeley
      extension.
@@ -3021,74 +3169,77 @@ and Special Characters-Footnote-1::):
      To use the accent marks, place them *after* the character being
      accented.
 
+     Note that groff's native support for accents is superior to the
+     following definitions.
+
    The following accent marks are available after invoking the `AM'
 macro:
 
- - String: \*[']
+ -- String: \*[']
      Acute accent.
 
- - String: \*[`]
+ -- String: \*[`]
      Grave accent.
 
- - String: \*[^]
+ -- String: \*[^]
      Circumflex.
 
- - String: \*[,]
+ -- String: \*[,]
      Cedilla.
 
- - String: \*[~]
+ -- String: \*[~]
      Tilde.
 
- - String: \*[:]
+ -- String: \*[:]
      Umlaut.
 
- - String: \*[v]
+ -- String: \*[v]
      Hacek.
 
- - String: \*[_]
+ -- String: \*[_]
      Macron (overbar).
 
- - String: \*[.]
+ -- String: \*[.]
      Underdot.
 
- - String: \*[o]
+ -- String: \*[o]
      Ring above.
 
    The following are standalone characters available after invoking the
 `AM' macro:
 
- - String: \*[?]
+ -- String: \*[?]
      Upside-down question mark.
 
- - String: \*[!]
+ -- String: \*[!]
      Upside-down exclamation point.
 
- - String: \*[8]
-     German ss ligature.
+ -- String: \*[8]
+     German ß ligature.
 
- - String: \*[3]
+ -- String: \*[3]
      Yogh.
 
- - String: \*[Th]
+ -- String: \*[Th]
      Uppercase thorn.
 
- - String: \*[th]
+ -- String: \*[th]
      Lowercase thorn.
 
- - String: \*[D-]
+ -- String: \*[D-]
      Uppercase eth.
 
- - String: \*[d-]
+ -- String: \*[d-]
      Lowercase eth.
 
- - String: \*[q]
+ -- String: \*[q]
      Hooked o.
 
- - String: \*[ae]
-     Lowercase ae ligature.
+ -- String: \*[ae]
+     Lowercase æ ligature.
 
- - String: \*[Ae]
-     Uppercase AE ligature.
+ -- String: \*[Ae]
+     Uppercase Æ ligature.
 
 
 File: groff,  Node: ms Strings and Special Characters-Footnotes,  Up: ms Strings and Special Characters
@@ -3097,13 +3248,55 @@ File: groff,  Node: ms Strings and Special Characters-Footnotes,  Up: ms Strings
 Characters::.
 
 
-File: groff,  Node: Differences from AT&T ms,  Prev: ms Page Layout,  Up: ms
+File: groff,  Node: Differences from AT&T ms,  Next: Naming Conventions,  Prev: ms Page Layout,  Up: ms
 
-Differences from AT&T `ms'
---------------------------
+4.3.7 Differences from AT&T `ms'
+--------------------------------
 
 This section lists the (minor) differences between the `groff -ms'
 macros and AT&T `troff -ms' macros.
+
+   * The internals of `groff -ms' differ from the internals of AT&T
+     `troff -ms'.  Documents that depend upon implementation details of
+     AT&T `troff -ms' may not format properly with `groff -ms'.
+
+   * The general error-handling policy of `groff -ms' is to detect and
+     report errors, rather than silently to ignore them.
+
+   * `groff -ms' does not work in compatibility mode (this is, with the
+     `-C' option).
+
+   * There is no special support for typewriter-like devices.
+
+   * `groff -ms' does not provide cut marks.
+
+   * Multiple line spacing is not supported.  Use a larger vertical
+     spacing instead.
+
+   * Some UNIX `ms' documentation says that the `CW' and `GW' number
+     registers can be used to control the column width and gutter
+     width, respectively.  These number registers are not used in
+     `groff -ms'.
+
+   * Macros that cause a reset (paragraphs, headings, etc.) may change
+     the indentation.  Macros that change the indentation do not
+     increment or decrement the indentation, but rather set it
+     absolutely.  This can cause problems for documents that define
+     additional macros of their own.  The solution is to use not the
+     `in' request but instead the `RS' and `RE' macros.
+
+   * To make `groff -ms' use the default page offset (which also
+     specifies the left margin), the `PO' register must stay undefined
+     until the first `-ms' macro is evaluated.  This implies that `PO'
+     should not be used early in the document, unless it is changed
+     also: Remember that accessing an undefined register automatically
+     defines it.
+
+ -- Register: \n[GS]
+     This number register is set to 1 by the `groff -ms' macros, but it
+     is not used by the `AT&T' `troff -ms' macros.  Documents that need
+     to determine whether they are being formatted with `AT&T' `troff
+     -ms' or `groff -ms' should use this number register.
 
 * Menu:
 
@@ -3113,11 +3306,11 @@ macros and AT&T `troff -ms' macros.
 
 File: groff,  Node: Missing ms Macros,  Next: Additional ms Macros,  Prev: Differences from AT&T ms,  Up: Differences from AT&T ms
 
-`troff' macros not appearing in `groff'
-.......................................
+4.3.7.1 `troff' macros not appearing in `groff'
+...............................................
 
 Macros missing from `groff -ms' are cover page macros specific to Bell
-Labs.  The macros known to be missing are:
+Labs and Berkeley.  The macros known to be missing are:
 
 `.TM'
      Technical memorandum; a cover sheet style
@@ -3149,46 +3342,76 @@ Labs.  The macros known to be missing are:
 
 File: groff,  Node: Additional ms Macros,  Prev: Missing ms Macros,  Up: Differences from AT&T ms
 
-`groff' macros not appearing in AT&T `troff'
-............................................
+4.3.7.2 `groff' macros not appearing in AT&T `troff'
+....................................................
 
 The `groff -ms' macros have a few minor extensions compared to the AT&T
 `troff -ms' macros.
 
- - Macro: .AM
+ -- Macro: .AM
      Improved accent marks.  *Note ms Strings and Special Characters::,
      for details.
 
- - Macro: .DS I
+ -- Macro: .DS I
      Indented display.  The default behavior of AT&T `troff -ms' was to
      indent; the `groff' default prints displays flush left with the
      body text.
 
- - Macro: .CW
+ -- Macro: .CW
      Print text in `constant width' (Courier) font.
 
- - Macro: .IX
+ -- Macro: .IX
      Indexing term (printed on standard error).  You can write a script
      to capture and process an index generated in this manner.
 
-
    The following additional number registers appear in `groff -ms':
 
- - Register: \n[MINGW]
+ -- Register: \n[MINGW]
      Specifies a minimum space between columns (for multi-column
      output); this takes the place of the `GW' register that was
      documented but apparently not implemented in AT&T `troff'.
-
 
    Several new string registers are available as well.  You can change
 these to handle (for example) the local language.  *Note ms Strings and
 Special Characters::, for details.
 
 
+File: groff,  Node: Naming Conventions,  Prev: Differences from AT&T ms,  Up: ms
+
+4.3.8 Naming Conventions
+------------------------
+
+The following conventions are used for names of macros, strings and
+number registers.  External names available to documents that use the
+`groff -ms' macros contain only uppercase letters and digits.
+
+   Internally the macros are divided into modules; naming conventions
+are as follows:
+
+   * Names used only within one module are of the form MODULE`*'NAME.
+
+   * Names used outside the module in which they are defined are of the
+     form MODULE`@'NAME.
+
+   * Names associated with a particular environment are of the form
+     ENVIRONMENT`:'NAME; these are used only within the `par' module.
+
+   * NAME does not have a module prefix.
+
+   * Constructed names used to implement arrays are of the form
+     ARRAY`!'INDEX.
+
+   Thus the groff ms macros reserve the following names:
+
+   * Names containing the characters `*', `@', and `:'.
+
+   * Names containing only uppercase letters and digits.
+
+
 File: groff,  Node: me,  Next: mm,  Prev: ms,  Up: Macro Packages
 
-`me'
-====
+4.4 `me'
+========
 
 See the `meintro.me' and `meref.me' documents in groff's `doc'
 directory.
@@ -3196,8 +3419,8 @@ directory.
 
 File: groff,  Node: mm,  Prev: me,  Up: Macro Packages
 
-`mm'
-====
+4.5 `mm'
+========
 
 See the `groff_mm(7)' man page (type `man groff_mm' at the command
 line).
@@ -3205,8 +3428,8 @@ line).
 
 File: groff,  Node: gtroff Reference,  Next: Preprocessors,  Prev: Macro Packages,  Up: Top
 
-`gtroff' Reference
-******************
+5 `gtroff' Reference
+********************
 
 This chapter covers *all* of the facilities of `gtroff'.  Users of
 macro packages may skip it if not interested in details.
@@ -3251,8 +3474,8 @@ macro packages may skip it if not interested in details.
 
 File: groff,  Node: Text,  Next: Measurements,  Prev: gtroff Reference,  Up: gtroff Reference
 
-Text
-====
+5.1 Text
+========
 
 `gtroff' input files contain text with control commands interspersed
 throughout.  But, even without control codes, `gtroff' still does
@@ -3279,8 +3502,8 @@ several things with the input text:
 
 File: groff,  Node: Filling and Adjusting,  Next: Hyphenation,  Prev: Text,  Up: Text
 
-Filling and Adjusting
----------------------
+5.1.1 Filling and Adjusting
+---------------------------
 
 When `gtroff' reads text, it collects words from the input and fits as
 many of them together on one output line as it can.  This is known as
@@ -3298,8 +3521,8 @@ Spaces at the front of a line cause a "break" (breaks are explained in
 
 File: groff,  Node: Hyphenation,  Next: Sentences,  Prev: Filling and Adjusting,  Up: Text
 
-Hyphenation
------------
+5.1.2 Hyphenation
+-----------------
 
 Since the odds are not great for finding a set of words, for every
 output line, which fit nicely on a line without inserting excessive
@@ -3316,8 +3539,8 @@ hyphen), and the other portion is added to the next line to be filled.
 
 File: groff,  Node: Sentences,  Next: Tab Stops,  Prev: Hyphenation,  Up: Text
 
-Sentences
----------
+5.1.3 Sentences
+---------------
 
 Although it is often debated, some typesetting rules say there should be
 different amounts of space after various punctuation marks.  For
@@ -3344,8 +3567,8 @@ character (at the end of a line), append `\&'.
 
 File: groff,  Node: Tab Stops,  Next: Implicit Line Breaks,  Prev: Sentences,  Up: Text
 
-Tab Stops
----------
+5.1.4 Tab Stops
+---------------
 
 `gtroff' translates "tabulator characters", also called "tabs"
 (normally code point ASCII `0x09' or EBCDIC `0x05'), in the input into
@@ -3371,8 +3594,8 @@ produces
 
 File: groff,  Node: Implicit Line Breaks,  Next: Input Conventions,  Prev: Tab Stops,  Up: Text
 
-Implicit Line Breaks
---------------------
+5.1.5 Implicit Line Breaks
+--------------------------
 
 An important concept in `gtroff' is the "break".  When a break occurs,
 `gtroff' outputs the partially filled line (unjustified), and resumes
@@ -3396,8 +3619,8 @@ is discussed in *Note Manipulating Filling and Adjusting::.
 
 File: groff,  Node: Input Conventions,  Next: Input Encodings,  Prev: Implicit Line Breaks,  Up: Text
 
-Input Conventions
------------------
+5.1.6 Input Conventions
+-----------------------
 
 Since `gtroff' does filling automatically, it is traditional in `groff'
 not to try and type things in as nicely formatted paragraphs.  These
@@ -3417,8 +3640,8 @@ are some conventions commonly used when typing `gtroff' text:
 
 File: groff,  Node: Input Encodings,  Prev: Input Conventions,  Up: Text
 
-Input Encodings
----------------
+5.1.7 Input Encodings
+---------------------
 
 Currently, the following input encodings are available.
 
@@ -3467,8 +3690,8 @@ used also to load the file `ec.tmac' (which flips to the EC fonts).
 
 File: groff,  Node: Measurements,  Next: Expressions,  Prev: Text,  Up: gtroff Reference
 
-Measurements
-============
+5.2 Measurements
+================
 
 `gtroff' (like many other programs) requires numeric parameters to
 specify various measurements.  Most numeric parameters(1) (*note
@@ -3539,8 +3762,8 @@ File: groff,  Node: Measurements-Footnotes,  Up: Measurements
 
 File: groff,  Node: Default Units,  Prev: Measurements,  Up: Measurements
 
-Default Units
--------------
+5.2.1 Default Units
+-------------------
 
 Many requests take a default unit.  While this can be helpful at times,
 it can cause strange errors in some expressions.  For example, the line
@@ -3568,8 +3791,8 @@ scalar value, use `u' as the unit for that value.
 
 File: groff,  Node: Expressions,  Next: Identifiers,  Prev: Measurements,  Up: gtroff Reference
 
-Expressions
-===========
+5.3 Expressions
+===============
 
 `gtroff' has most arithmetic operators common to other languages:
 
@@ -3629,7 +3852,7 @@ signs indicate increments and decrements.
 
    *Note Setting Registers::, for some examples.
 
- - Escape: \B'anything'
+ -- Escape: \B'anything'
      Return 1 if ANYTHING is a valid numeric expression; or 0 if
      ANYTHING is empty or not a valid numeric expression.
 
@@ -3642,8 +3865,8 @@ Loops::.
 
 File: groff,  Node: Identifiers,  Next: Embedded Commands,  Prev: Expressions,  Up: gtroff Reference
 
-Identifiers
-===========
+5.4 Identifiers
+===============
 
 Like any other language, `gtroff' has rules for properly formed
 "identifiers".  In `gtroff', an identifier can be made up of almost any
@@ -3693,7 +3916,7 @@ after `.[' and `.]' is handled as a special argument to `refer'.  For
 example, `.[foo' makes `refer' to start a reference, using `foo' as a
 parameter.
 
- - Escape: \A'ident'
+ -- Escape: \A'ident'
      Test whether an identifier IDENT is valid in `gtroff'.  It expands
      to the character 1 or 0 according to whether its argument (usually
      delimited by quotes) is or is not acceptable as the name of a
@@ -3757,8 +3980,8 @@ The contents of the first macro definition is lost.
 
 File: groff,  Node: Embedded Commands,  Next: Registers,  Prev: Identifiers,  Up: gtroff Reference
 
-Embedded Commands
-=================
+5.5 Embedded Commands
+=====================
 
 Most documents need more functionality beyond filling, adjusting and
 implicit line breaking.  In order to gain further functionality,
@@ -3781,8 +4004,8 @@ symbol, etc.
 
 File: groff,  Node: Requests,  Next: Macros,  Prev: Embedded Commands,  Up: Embedded Commands
 
-Requests
---------
+5.5.1 Requests
+--------------
 
 A request line begins with a control character, which is either a single
 quote (`'', the "no-break control character") or a period (`.', the
@@ -3813,16 +4036,16 @@ assigning an empty macro to it.
      .de do-nothing
      ..
      .blm do-nothing  \" activate blank line macro
-     
+
      .de foo
      .  tm This is foo.
      ..
-     
-     
+
+
      .de bar
      .  tm This is bar.
      ..
-     
+
      .blm             \" deactivate blank line macro
 
    *Note Blank Line Traps::.
@@ -3842,8 +4065,8 @@ character prevents this.
 
 File: groff,  Node: Request and Macro Arguments,  Prev: Requests,  Up: Requests
 
-Request and Macro Arguments
-...........................
+5.5.1.1 Request and Macro Arguments
+...................................
 
 Arguments to requests and macros are processed much like the shell: The
 line is split into arguments according to spaces.(1) (*note Request and
@@ -3931,8 +4154,8 @@ non-breaking space.
 
 File: groff,  Node: Macros,  Next: Escapes,  Prev: Requests,  Up: Embedded Commands
 
-Macros
-------
+5.5.2 Macros
+------------
 
 `gtroff' has a "macro" facility for defining a series of lines which
 can be invoked by name.  They are called in the same manner as requests
@@ -3943,8 +4166,8 @@ can be invoked by name.  They are called in the same manner as requests
 
 File: groff,  Node: Escapes,  Prev: Macros,  Up: Embedded Commands
 
-Escapes
--------
+5.5.3 Escapes
+-------------
 
 Escapes may occur anywhere in the input to `gtroff'.  They usually
 begin with a backslash and are followed by a single character which
@@ -3988,10 +4211,10 @@ makes e.g.
      A caf
      \o
      e\'
-     
-     
+
+
      in Paris
-       => A cafe' in Paris
+       => A café in Paris
 
 possible, but it is better not to use this feature to avoid confusion.
 
@@ -4033,13 +4256,13 @@ Diversions::, *Note Identifiers::, for more information.
 
 File: groff,  Node: Comments,  Prev: Escapes,  Up: Escapes
 
-Comments
-........
+5.5.3.1 Comments
+................
 
 Probably one of the most(1) (*note Comments-Footnote-1::) common forms
 of escapes is the comment.
 
- - Escape: \"
+ -- Escape: \"
      Start a comment.  Everything to the end of the input line is
      ignored.
 
@@ -4067,7 +4290,7 @@ of escapes is the comment.
 
 
           Test
-          
+
           Test
 
      To avoid this, it is common to start the line with `.\"' which
@@ -4079,7 +4302,7 @@ of escapes is the comment.
      `gtroff' gives a warning about an undefined macro (namely `'''),
      which is harmless, but irritating.
 
- - Escape: \#
+ -- Escape: \#
      To avoid all this, `gtroff' has a new comment mechanism using the
      `\#' escape.  This escape works the same as `\"' except that the
      newline is also ignored:
@@ -4096,7 +4319,7 @@ of escapes is the comment.
 
      as expected.
 
- - Request: .ig [end]
+ -- Request: .ig [end]
      Ignore all input until `gtroff' encounters the macro named `.'END
      on a line by itself (or `..' if END is not specified).  This is
      useful for commenting out large blocks of text:
@@ -4107,7 +4330,7 @@ of escapes is the comment.
           This is part of a large block
           of text that has been
           temporarily(?) commented out.
-          
+
           We can restore it simply by removing
           the .ig request and the ".." at the
           end of the block.
@@ -4133,8 +4356,8 @@ hackers will believe it `:-)'
 
 File: groff,  Node: Registers,  Next: Manipulating Filling and Adjusting,  Prev: Embedded Commands,  Up: gtroff Reference
 
-Registers
-=========
+5.6 Registers
+=============
 
 Numeric variables in `gtroff' are called "registers".  There are a
 number of built-in registers, supplying anything from the date to
@@ -4153,13 +4376,13 @@ details of formatting parameters.
 
 File: groff,  Node: Setting Registers,  Next: Interpolating Registers,  Prev: Registers,  Up: Registers
 
-Setting Registers
------------------
+5.6.1 Setting Registers
+-----------------------
 
 Define or set registers using the `nr' request or the `\R' escape.
 
- - Request: .nr ident value
- - Escape: \R'ident value'
+ -- Request: .nr ident value
+ -- Escape: \R'ident value'
      Set number register IDENT to VALUE.  If IDENT doesn't exist,
      `gtroff' creates it.
 
@@ -4180,10 +4403,10 @@ Define or set registers using the `nr' request or the `\R' escape.
    Both `nr' and `\R' have two additional special forms to increment or
 decrement a register.
 
- - Request: .nr ident +value
- - Request: .nr ident -value
- - Escape: \R'ident +value'
- - Escape: \R'ident -value'
+ -- Request: .nr ident +value
+ -- Request: .nr ident -value
+ -- Escape: \R'ident +value'
+ -- Escape: \R'ident -value'
      Increment (decrement) register IDENT by VALUE.
 
 
@@ -4220,15 +4443,15 @@ decrement a register.
               => -3
 
 
- - Request: .rr ident
+ -- Request: .rr ident
      Remove number register IDENT.  If IDENT doesn't exist, the request
      is ignored.
 
- - Request: .rnn ident1 ident2
+ -- Request: .rnn ident1 ident2
      Rename number register IDENT1 to IDENT2.  If either IDENT1 or
      IDENT2 doesn't exist, the request is ignored.
 
- - Request: .aln ident1 ident2
+ -- Request: .aln ident1 ident2
      Create an alias IDENT1 for a number register IDENT2.  The new name
      and the old name are exactly equivalent.  If IDENT1 is undefined,
      a warning of type `reg' is generated, and the request is ignored.
@@ -4237,14 +4460,14 @@ decrement a register.
 
 File: groff,  Node: Interpolating Registers,  Next: Auto-increment,  Prev: Setting Registers,  Up: Registers
 
-Interpolating Registers
------------------------
+5.6.2 Interpolating Registers
+-----------------------------
 
 Numeric registers can be accessed via the `\n' escape.
 
- - Escape: \ni
- - Escape: \n(id
- - Escape: \n[ident]
+ -- Escape: \ni
+ -- Escape: \n(id
+ -- Escape: \n[ident]
      Interpolate number register with name IDENT (one-character name I,
      two-character name ID).  This means that the value of the register
      is expanded in-place while `gtroff' is parsing the input line.
@@ -4270,14 +4493,14 @@ Numeric registers can be accessed via the `\n' escape.
 
 File: groff,  Node: Auto-increment,  Next: Assigning Formats,  Prev: Interpolating Registers,  Up: Registers
 
-Auto-increment
---------------
+5.6.3 Auto-increment
+--------------------
 
 Number registers can also be auto-incremented and auto-decremented.
 The increment or decrement value can be specified with a third argument
 to the `nr' request or `\R' escape.
 
- - Request: .nr ident value incr
+ -- Request: .nr ident value incr
      Set number register IDENT to VALUE; the increment for
      auto-incrementing is set to INCR.  Note that the `\R' escape
      doesn't support this notation.
@@ -4285,16 +4508,16 @@ to the `nr' request or `\R' escape.
    To activate auto-incrementing, the escape `\n' has a special syntax
 form.
 
- - Escape: \n+i
- - Escape: \n-i
- - Escape: \n(+id
- - Escape: \n(-id
- - Escape: \n+(id
- - Escape: \n-(id
- - Escape: \n[+ident]
- - Escape: \n[-ident]
- - Escape: \n+[ident]
- - Escape: \n-[ident]
+ -- Escape: \n+i
+ -- Escape: \n-i
+ -- Escape: \n(+id
+ -- Escape: \n(-id
+ -- Escape: \n+(id
+ -- Escape: \n-(id
+ -- Escape: \n[+ident]
+ -- Escape: \n[-ident]
+ -- Escape: \n+[ident]
+ -- Escape: \n-[ident]
      Before interpolating, increment or decrement IDENT (one-character
      name I, two-character name ID) by the auto-increment value as
      specified with the `nr' request (or the `\R' escape).  If no
@@ -4329,8 +4552,8 @@ register (A in the example), the following can be used:
 
 File: groff,  Node: Assigning Formats,  Next: Built-in Registers,  Prev: Auto-increment,  Up: Registers
 
-Assigning Formats
------------------
+5.6.4 Assigning Formats
+-----------------------
 
 When a register is used in the text of an input file (as opposed to
 part of an expression), it is textually replaced (or interpolated) with
@@ -4338,7 +4561,7 @@ a representation of that number.  This output format can be changed to
 a variety of formats (numbers, Roman numerals, etc.).  This is done
 using the `af' request.
 
- - Request: .af ident format
+ -- Request: .af ident format
      Change the output format of a number register.  The first argument
      IDENT is the name of the number register to be changed, and the
      second argument FORMAT is the output format.  The following output
@@ -4400,9 +4623,9 @@ using the `af' request.
      writeable register, then apply the `af' request to this other
      register.
 
- - Escape: \gi
- - Escape: \g(id
- - Escape: \g[ident]
+ -- Escape: \gi
+ -- Escape: \g(id
+ -- Escape: \g[ident]
      Return the current format of the specified register IDENT
      (one-character name I, two-character name ID).  For example, `\ga'
      after the previous example would produce the string `000'.  If the
@@ -4411,8 +4634,8 @@ using the `af' request.
 
 File: groff,  Node: Built-in Registers,  Prev: Assigning Formats,  Up: Registers
 
-Built-in Registers
-------------------
+5.6.5 Built-in Registers
+------------------------
 
 The following lists some built-in registers which are not described
 elsewhere in this manual.  Any register which begins with a `.' is
@@ -4534,15 +4757,15 @@ read-only.  A complete listing of all built-in registers can be found in
 
 File: groff,  Node: Manipulating Filling and Adjusting,  Next: Manipulating Hyphenation,  Prev: Registers,  Up: gtroff Reference
 
-Manipulating Filling and Adjusting
-==================================
+5.7 Manipulating Filling and Adjusting
+======================================
 
 Various ways of causing "breaks" were given in *Note Implicit Line
 Breaks::.  The `br' request likewise causes a break.  Several other
 requests also cause breaks, but implicitly.  These are `bp', `ce',
 `cf', `fi', `fl', `in', `nf', `rj', `sp', `ti', and `trf'.
 
- - Request: .br
+ -- Request: .br
      Break the current line, i.e., the input collected so far is emitted
      without adjustment.
 
@@ -4560,8 +4783,8 @@ requests also cause breaks, but implicitly.  These are `bp', `ce',
 can be disabled via the `nf' request and re-enabled with the `fi'
 request.
 
- - Request: .fi
- - Register: \n[.u]
+ -- Request: .fi
+ -- Register: \n[.u]
      Activate fill mode (which is the default).  This request implicitly
      enables adjusting; it also inserts a break in the text currently
      being filled.  The read-only number register `.u' is set to 1.
@@ -4571,7 +4794,7 @@ request.
 
      See *Note Line Control::, for interaction with the `\c' escape.
 
- - Request: .nf
+ -- Request: .nf
      Activate no-fill mode.  Input lines are output as-is, retaining
      line breaks and ignoring the current line length.  This command
      implicitly disables adjusting; it also causes a break.  The number
@@ -4582,8 +4805,8 @@ request.
 
      See *Note Line Control::, for interaction with the `\c' escape.
 
- - Request: .ad [mode]
- - Register: \n[.j]
+ -- Request: .ad [mode]
+ -- Register: \n[.j]
      Set adjusting mode.
 
      Activation and deactivation of adjusting is done implicitly with
@@ -4634,7 +4857,7 @@ request.
      The adjustment mode status is associated with the current
      environment (*note Environments::).
 
- - Request: .na
+ -- Request: .na
      Disable adjusting.  This request won't change the current
      adjustment mode: A subsequent call to `ad' uses the previous
      adjustment setting.
@@ -4642,8 +4865,8 @@ request.
      The adjustment mode status is associated with the current
      environment (*note Environments::).
 
- - Request: .brp
- - Escape: \p
+ -- Request: .brp
+ -- Escape: \p
      Adjust the current line and cause a break.
 
      In most cases this produces very ugly results since `gtroff'
@@ -4664,9 +4887,9 @@ request.
             This is an uninteresting sentence.
 
 
- - Request: .ss word_space_size [sentence_space_size]
- - Register: \n[.ss]
- - Register: \n[.sss]
+ -- Request: .ss word_space_size [sentence_space_size]
+ -- Register: \n[.ss]
+ -- Register: \n[.sss]
      Change the size of a space between words.  It takes its units as
      one twelfth of the space width parameter for the current font.
      Initially both the WORD_SPACE_SIZE and SENTENCE_SPACE_SIZE are 12.
@@ -4719,8 +4942,8 @@ request.
 
      Note that the `\h' escape produces unbreakable space.
 
- - Request: .ce [nnn]
- - Register: \n[.ce]
+ -- Request: .ce [nnn]
+ -- Register: \n[.ce]
      Center text.  While the `.ad c' request also centers text, it
      fills the text as well.  `ce' does not fill the text it affects.
      This request causes a break.  The number of lines still to be
@@ -4736,7 +4959,7 @@ request.
           This is a small text fragment which shows the differences
           between the `.ce' and the `.ad c' request.
           .ce 0
-          
+
           .ad c
           This is a small text fragment which shows the differences
           between the `.ce' and the `.ad c' request.
@@ -4747,7 +4970,7 @@ request.
             This is a small text fragment which
                    shows the differences
           between the `.ce' and the `.ad c' request.
-          
+
             This is a small text fragment which
           shows the differences between the `.ce'
                   and the `.ad c' request.
@@ -4768,8 +4991,8 @@ request.
      The `.ce' read-only number register contains the number of lines
      remaining to be centered, as set by the `ce' request.
 
- - Request: .rj [nnn]
- - Register: \n[.rj]
+ -- Request: .rj [nnn]
+ -- Register: \n[.rj]
      Justify unfilled text to the right margin.  Arguments are
      identical to the `ce' request.  The `.rj' read-only number
      register is the number of lines to be right-justified as set by
@@ -4780,14 +5003,13 @@ request.
 
 File: groff,  Node: Manipulating Hyphenation,  Next: Manipulating Spacing,  Prev: Manipulating Filling and Adjusting,  Up: gtroff Reference
 
-Manipulating Hyphenation
-========================
+5.8 Manipulating Hyphenation
+============================
 
-As discussed in *Note Hyphenation::, `gtroff' hyphenates words.  There
-are a number of ways to influence hyphenation.
+Here a description of requests which influence hyphenation.
 
- - Request: .hy [mode]
- - Register: \n[.hy]
+ -- Request: .hy [mode]
+ -- Register: \n[.hy]
      Enable hyphenation.  The request has an optional numeric argument,
      MODE, to restrict hyphenation if necessary:
 
@@ -4814,7 +5036,7 @@ are a number of ways to influence hyphenation.
      The hyphenation mode is associated with the current environment
      (*note Environments::).
 
- - Request: .nh
+ -- Request: .nh
      Disable hyphenation (i.e., set the hyphenation mode to zero).  Note
      that the hyphenation mode of the last call to `hy' is not
      remembered.
@@ -4822,9 +5044,9 @@ are a number of ways to influence hyphenation.
      The hyphenation mode is associated with the current environment
      (*note Environments::).
 
- - Request: .hlm [nnn]
- - Register: \n[.hlm]
- - Register: \n[.hlc]
+ -- Request: .hlm [nnn]
+ -- Register: \n[.hlm]
+ -- Register: \n[.hlc]
      Set the maximum number of consecutive hyphenated lines to NNN.  If
      this number is negative, there is no maximum.  The default value
      is -1 if NNN is omitted.  This value is associated with the
@@ -4838,7 +5060,7 @@ are a number of ways to influence hyphenation.
      consecutive hyphenated lines are available in the read-only number
      register `.hlc'.
 
- - Request: .hw word1 word2 ...
+ -- Request: .hw word1 word2 ...
      Define how WORD1, WORD2, etc. are to be hyphenated.  The words
      must be given with hyphens at the hyphenation points.  For example:
 
@@ -4861,8 +5083,8 @@ are a number of ways to influence hyphenation.
      store such information; fortunately, with `gtroff', this is no
      longer a restriction.
 
- - Escape: \%
- - Escape: \:
+ -- Escape: \%
+ -- Escape: \:
      To tell `gtroff' how to hyphenate words on the fly, use the `\%'
      escape, also known as the "hyphenation character".  Preceding a
      word with this character prevents it from being hyphenated;
@@ -4882,7 +5104,7 @@ are a number of ways to influence hyphenation.
      hyphenation but inserts a hyphenation point at the beginning of
      `foobar'; most likely this isn't what you want to do.
 
- - Request: .hc [char]
+ -- Request: .hc [char]
      Change the hyphenation character to CHAR.  This character then
      works the same as the `\%' escape, and thus, no longer appears in
      the output.  Without an argument, `hc' resets the hyphenation
@@ -4891,9 +5113,9 @@ are a number of ways to influence hyphenation.
      The hyphenation character is associated with the current
      environment (*note Environments::).
 
- - Request: .hpf pattern_file
- - Request: .hpfa pattern_file
- - Request: .hpfcode a b [c d ...]
+ -- Request: .hpf pattern_file
+ -- Request: .hpfa pattern_file
+ -- Request: .hpfcode a b [c d ...]
      Read in a file of hyphenation patterns.  This file is searched for
      in the same way as `NAME.tmac' (or `tmac.NAME') is searched for if
      the `-mNAME' option is specified.
@@ -4951,18 +5173,43 @@ are a number of ways to influence hyphenation.
      Invoking `hpf' causes an error if there is no current hyphenation
      language.
 
- - Request: .hcode c1 code1 c2 code2 ...
+ -- Request: .hcode c1 code1 [c2 code2 ...]
      Set the hyphenation code of character C1 to CODE1, that of C2 to
      CODE2, etc.  A hyphenation code must be a single input character
      (not a special character) other than a digit or a space.
-     Initially each lower-case letter (`a'-`z') has its hyphenation
-     code set to itself, and each upper-case letter (`A'-`Z') has a
-     hyphenation code which is the lower-case version of itself.
+
+     To make hyphenation work, hyphenation codes must be set up.  At
+     start-up, groff only assigns hyphenation codes to the letters
+     `a'-`z' (mapped to themselves) and to the letters `A'-`Z' (mapped
+     to `a'-`z'); all other hyphenation codes are set to zero.
+     Normally, hyphenation patterns contain only lowercase letters
+     which should be applied regardless of case.  With other words, the
+     words `FOO' and `Foo' should be hyphenated exactly the same way as
+     the word `foo' is hyphenated, and this is what `hcode' is good
+     for.  Words which contain other letters won't be hyphenated
+     properly if the corresponding hyphenation patterns actually do
+     contain them.  For example, the following `hcode' requests are
+     necessary to assign hyphenation codes to the letters `ÄäÖöÜüß'
+     (this is needed for German):
+
+
+          .hcode ä ä  Ä ä
+          .hcode ö ö  Ö ö
+          .hcode ü ü  Ü ü
+          .hcode ß ß
+
+     Without those assignments, groff treats German words like
+     `Kindergärten' (the plural form of `kindergarten') as two
+     substrings `kinderg' and `rten' because the hyphenation code of
+     the umlaut a is zero by default.  There is a German hyphenation
+     pattern which covers `kinder', so groff finds the hyphenation
+     `kin-der'.  The other two hyphenation points (`kin-der-gär-ten')
+     are missed.
 
      This request is ignored if it has no parameter.
 
- - Request: .hym [length]
- - Register: \n[.hym]
+ -- Request: .hym [length]
+ -- Register: \n[.hym]
      Set the (right) hyphenation margin to LENGTH.  If the current
      adjustment mode is not `b' or `n', the line is not hyphenated if
      it is shorter than LENGTH.  Without an argument, the hyphenation
@@ -4976,8 +5223,8 @@ are a number of ways to influence hyphenation.
      The current hyphenation margin is available in the `.hym' read-only
      number register.
 
- - Request: .hys [hyphenation_space]
- - Register: \n[.hys]
+ -- Request: .hys [hyphenation_space]
+ -- Register: \n[.hys]
      Set the hyphenation space to HYPHENATION_SPACE.  If the current
      adjustment mode is `b' or `n', don't hyphenate the line if it can
      be justified by adding no more than HYPHENATION_SPACE extra space
@@ -4992,7 +5239,7 @@ are a number of ways to influence hyphenation.
      The current hyphenation space is available in the `.hys' read-only
      number register.
 
- - Request: .shc [glyph]
+ -- Request: .shc [glyph]
      Set the "soft hyphen character" to GLYPH.(1) (*note Manipulating
      Hyphenation-Footnote-1::)  If the argument is omitted, the soft
      hyphen character is set to the default glyph `\(hy' (this is the
@@ -5005,8 +5252,8 @@ are a number of ways to influence hyphenation.
      with the `tr' request) are considered when finding the soft hyphen
      character.
 
- - Request: .hla language
- - Register: \n[.hla]
+ -- Request: .hla language
+ -- Register: \n[.hla]
      Set the current hyphenation language to the string LANGUAGE.
      Hyphenation exceptions specified with the `hw' request and
      hyphenation patterns specified with the `hpf' and `hpfa' requests
@@ -5032,10 +5279,10 @@ glyph.
 
 File: groff,  Node: Manipulating Spacing,  Next: Tabs and Fields,  Prev: Manipulating Hyphenation,  Up: gtroff Reference
 
-Manipulating Spacing
-====================
+5.9 Manipulating Spacing
+========================
 
- - Request: .sp [distance]
+ -- Request: .sp [distance]
      Space downwards DISTANCE.  With no argument it advances 1 line.  A
      negative argument causes `gtroff' to move up the page the
      specified distance.  If the argument is preceded by a `|' then
@@ -5062,10 +5309,10 @@ Manipulating Spacing
 
 
           foo
-          
-          
+
+
           bar
-          
+
           baz
 
      The amount of discarded space is available in the number register
@@ -5079,8 +5326,8 @@ Manipulating Spacing
           .vpt 1
 
 
- - Request: .ls [nnn]
- - Register: \n[.L]
+ -- Request: .ls [nnn]
+ -- Register: \n[.L]
      Output NNN-1 blank lines after each line of text.  With no
      argument, `gtroff' uses the previous value before the last `ls'
      call.
@@ -5099,8 +5346,8 @@ Manipulating Spacing
    *Note Changing Type Sizes::, for the requests `vs' and `pvs' as
 alternatives to `ls'.
 
- - Escape: \x'spacing'
- - Register: \n[.a]
+ -- Escape: \x'spacing'
+ -- Register: \n[.a]
      Sometimes, extra vertical spacing is only needed occasionally, e.g.
      to allow space for a tall construct (like an equation).  The `\x'
      escape does this.  The escape is given a numerical argument,
@@ -5141,9 +5388,9 @@ alternatives to `ls'.
           This is a test with the \b escape.
 
 
- - Request: .ns
- - Request: .rs
- - Register: \n[.ns]
+ -- Request: .ns
+ -- Request: .rs
+ -- Register: \n[.ns]
      Enable "no-space mode".  In this mode, spacing (either via `sp' or
      via blank lines) is disabled.  The `bp' request to advance to the
      next page is also disabled, except if it is accompanied by a page
@@ -5160,18 +5407,18 @@ alternatives to `ls'.
 
 File: groff,  Node: Tabs and Fields,  Next: Character Translations,  Prev: Manipulating Spacing,  Up: gtroff Reference
 
-Tabs and Fields
-===============
+5.10 Tabs and Fields
+====================
 
 A tab character (ASCII char 9, EBCDIC char 5) causes a horizontal
 movement to the next tab stop (much like it did on a typewriter).
 
- - Escape: \t
+ -- Escape: \t
      This escape is a non-interpreted tab character.  In copy mode
      (*note Copy-in Mode::), `\t' is the same as a real tab character.
 
- - Request: .ta [n1 n2 ... nn T r1 r2 ... rn]
- - Register: \n[.tabs]
+ -- Request: .ta [n1 n2 ... nn T r1 r2 ... rn]
+ -- Register: \n[.tabs]
      Change tab stop positions.  This request takes a series of tab
      specifiers as arguments (optionally divided into two groups with
      the letter `T') which indicate where each tab stop is to be
@@ -5295,7 +5542,7 @@ movement to the next tab stop (much like it did on a typewriter).
      The `troff' version of the Plan 9 operating system uses register
      `.S' for the same purpose.
 
- - Request: .tc [fill-glyph]
+ -- Request: .tc [fill-glyph]
      Normally `gtroff' fills the space to the next tab stop with
      whitespace.  This can be changed with the `tc' request.  With no
      argument `gtroff' reverts to using whitespace, which is the
@@ -5303,8 +5550,8 @@ movement to the next tab stop (much like it did on a typewriter).
      associated with the current environment (*note Environments::).(1)
      (*note Tabs and Fields-Footnote-1::)
 
- - Request: .linetabs n
- - Register: \n[.linetabs]
+ -- Request: .linetabs n
+ -- Register: \n[.linetabs]
      If N is missing or not zero, enable "line-tabs" mode, or disable
      it otherwise (the default).  In line-tabs mode, `gtroff' computes
      tab distances relative to the (current) output line instead of the
@@ -5349,8 +5596,8 @@ glyph.
 
 File: groff,  Node: Leaders,  Next: Fields,  Prev: Tabs and Fields,  Up: Tabs and Fields
 
-Leaders
--------
+5.10.1 Leaders
+--------------
 
 Sometimes it may may be desirable to use the `tc' request to fill a
 particular tab stop with a given glyph (for example dots in a table of
@@ -5363,12 +5610,12 @@ character: It moves to the next tab stop.  The only difference is that
 for this movement, the fill glyph defaults to a period character and
 not to space.
 
- - Escape: \a
+ -- Escape: \a
      This escape is a non-interpreted leader character.  In copy mode
      (*note Copy-in Mode::), `\a' is the same as a real leader
      character.
 
- - Request: .lc [fill-glyph]
+ -- Request: .lc [fill-glyph]
      Declare the "leader repetition character".(1) (*note
      Leaders-Footnote-1::) Without an argument, leaders act the same as
      tabs (i.e., using whitespace for filling).  `gtroff''s start-up
@@ -5401,8 +5648,8 @@ output glyph.
 
 File: groff,  Node: Fields,  Prev: Leaders,  Up: Tabs and Fields
 
-Fields
-------
+5.10.2 Fields
+-------------
 
 "Fields" are a more general way of laying out tabular data.  A field is
 defined as the data between a pair of "delimiting characters".  It
@@ -5415,7 +5662,7 @@ stretchable space equal to the field width.  If more than one padding
 character is inserted, the available space is evenly distributed among
 them.
 
- - Request: .fc [delim-char [padding-char]]
+ -- Request: .fc [delim-char [padding-char]]
      Define a delimiting and a padding character for fields.  If the
      latter is missing, the padding character defaults to a space
      character.  If there is no argument at all, the field mechanism is
@@ -5442,25 +5689,25 @@ them.
 
 File: groff,  Node: Character Translations,  Next: Troff and Nroff Mode,  Prev: Tabs and Fields,  Up: gtroff Reference
 
-Character Translations
-======================
+5.11 Character Translations
+===========================
 
 The control character (`.') and the no-break control character (`'')
 can be changed with the `cc' and `c2' requests, respectively.
 
- - Request: .cc [c]
+ -- Request: .cc [c]
      Set the control character to C.  With no argument the default
      control character `.' is restored.  The value of the control
      character is associated with the current environment (*note
      Environments::).
 
- - Request: .c2 [c]
+ -- Request: .c2 [c]
      Set the no-break control character to C.  With no argument the
      default control character `'' is restored.  The value of the
      no-break control character is associated with the current
      environment (*note Environments::).
 
- - Request: .eo
+ -- Request: .eo
      Disable the escape mechanism completely.  After executing this
      request, the backslash character `\' no longer starts an escape
      sequence.
@@ -5485,7 +5732,7 @@ can be changed with the `cc' and `c2' requests, respectively.
           .ec
 
 
- - Request: .ec [c]
+ -- Request: .ec [c]
      Set the escape character to C.  With no argument the default
      escape character `\' is restored.  It can be also used to
      re-enable the escape mechanism after an `eo' request.
@@ -5496,8 +5743,8 @@ can be changed with the `cc' and `c2' requests, respectively.
      independent of its representation (TeX has this mechanism).  If a
      macro is called, it is executed literally.
 
- - Request: .ecs
- - Request: .ecr
+ -- Request: .ecs
+ -- Request: .ecr
      The `ecs' request saves the current escape character in an
      internal register.  Use this request in combination with the `ec'
      request to temporarily change the escape character.
@@ -5506,9 +5753,9 @@ can be changed with the `cc' and `c2' requests, respectively.
      Without a previous call to `ecs', this request sets the escape
      character to `\'.
 
- - Escape: \\
- - Escape: \e
- - Escape: \E
+ -- Escape: \\
+ -- Escape: \e
+ -- Escape: \E
      Print the current escape character (which is the backslash
      character `\' by default).
 
@@ -5564,7 +5811,7 @@ can be changed with the `cc' and `c2' requests, respectively.
               => 1
 
 
- - Escape: \.
+ -- Escape: \.
      Similar to `\\', the sequence `\.' isn't a real escape sequence.
      As before, a warning message is suppressed if the escape character
      is followed by a dot, and the dot itself is printed.
@@ -5591,8 +5838,8 @@ gets assigned the metric information of the mapped output character
 right before input tokens are converted to nodes (*note Gtroff
 Internals::, for more on this process).
 
- - Request: .tr abcd...
- - Request: .trin abcd...
+ -- Request: .tr abcd...
+ -- Request: .trin abcd...
      Translate character A to glyph B, character C to glyph D, etc.  If
      there is an odd number of arguments, the last one is translated to
      an unstretchable space (`\ ').
@@ -5665,9 +5912,9 @@ Internals::, for more on this process).
           Consider the following translation:
 
 
-               .tr e'E'
+               .tr éÉ
 
-          This maps input character `e'' onto glyph `E'', which is
+          This maps input character `é' onto glyph `É', which is
           identical to glyph `char201'.  But this glyph intentionally
           doesn't exist!  Instead, `\[char201]' is treated as an input
           character entity and is by default mapped onto `\['E]', and
@@ -5676,14 +5923,14 @@ Internals::, for more on this process).
           The right way to write the above translation is
 
 
-               .tr e'\['E]
+               .tr é\['E]
 
           With other words, the first argument of `tr' should be an
           input character or entity, and the second one a glyph entity.
 
         * Without an argument, the `tr' request is ignored.
 
- - Request: .trnt abcd...
+ -- Request: .trnt abcd...
      `trnt' is the same as the `tr' request except that the
      translations do not apply to text that is transparently throughput
      into a diversion with `\!'.  *Note Diversions::, for more
@@ -5704,8 +5951,8 @@ Internals::, for more on this process).
 
 File: groff,  Node: Troff and Nroff Mode,  Next: Line Layout,  Prev: Character Translations,  Up: gtroff Reference
 
-Troff and Nroff Mode
-====================
+5.12 Troff and Nroff Mode
+=========================
 
 Originally, `nroff' and `troff' were two separate programs, the former
 for TTY output, the latter for everything else.  With GNU `troff', both
@@ -5724,7 +5971,7 @@ TTY and non-TTY devices: `gtroff' provides two built-in conditions `n'
 and `t' for the `if', `ie', and `while' requests to decide whether
 `gtroff' shall behave like `nroff' or like `troff'.
 
- - Request: .troff
+ -- Request: .troff
      Make the `t' built-in condition true (and the `n' built-in
      condition false) for `if', `ie', and `while' conditional requests.
      This is the default if `gtroff' (_not_ `groff') is started with
@@ -5732,7 +5979,7 @@ and `t' for the `if', `ie', and `while' requests to decide whether
      and `troffrc-end'.  Without `-R', `gtroff' stays in troff mode if
      the output device is not a TTY (e.g. `ps').
 
- - Request: .nroff
+ -- Request: .nroff
      Make the `n' built-in condition true (and the `t' built-in
      condition false) for `if', `ie', and `while' conditional requests.
      This is the default if `gtroff' uses a TTY output device; the
@@ -5745,8 +5992,8 @@ conditions.
 
 File: groff,  Node: Line Layout,  Next: Line Control,  Prev: Troff and Nroff Mode,  Up: gtroff Reference
 
-Line Layout
-===========
+5.13 Line Layout
+================
 
 The following drawing shows the dimensions which `gtroff' uses for
 placing a line of output onto the page.  They are labeled with the
@@ -5802,10 +6049,10 @@ These dimensions are:
      parameters restore the  previ-
      ous values.
 
- - Request: .po [offset]
- - Request: .po +offset
- - Request: .po -offset
- - Register: \n[.o]
+ -- Request: .po [offset]
+ -- Request: .po +offset
+ -- Request: .po -offset
+ -- Register: \n[.o]
      Set horizontal page offset to OFFSET (or increment or decrement
      the current value by OFFSET).  Note that this request does not
      cause a break, so changing the page offset in the middle of text
@@ -5832,10 +6079,10 @@ These dimensions are:
               => 720
 
 
- - Request: .in [indent]
- - Request: .in +indent
- - Request: .in -indent
- - Register: \n[.i]
+ -- Request: .in [indent]
+ -- Request: .in +indent
+ -- Request: .in -indent
+ -- Register: \n[.i]
      Set indentation to INDENT (or increment or decrement the current
      value by INDENT).  This request causes a break.  Initially, there
      is no indentation.
@@ -5852,16 +6099,16 @@ These dimensions are:
      indentation to zero.
 
      The effect of `in' is delayed until a partially collected line (if
-     it exists) is output.  A temporary indent value is reset to zero
-     also.
+     it exists) is output.  A temporary indentation value is reset to
+     zero also.
 
      The current indentation (as set by `in') can be found in the
      read-only number register `.i'.
 
- - Request: .ti offset
- - Request: .ti +offset
- - Request: .ti -offset
- - Register: \n[.in]
+ -- Request: .ti offset
+ -- Request: .ti +offset
+ -- Request: .ti -offset
+ -- Register: \n[.in]
      Temporarily indent the next output line by OFFSET.  If an
      increment or decrement value is specified, adjust the temporary
      indentation relative to the value set by the `in' request.
@@ -5886,11 +6133,11 @@ These dimensions are:
      into account whether a partially collected line still uses the old
      indentation value or a temporary indentation value is active.
 
- - Request: .ll [length]
- - Request: .ll +length
- - Request: .ll -length
- - Register: \n[.l]
- - Register: \n[.ll]
+ -- Request: .ll [length]
+ -- Request: .ll +length
+ -- Request: .ll -length
+ -- Register: \n[.l]
+ -- Register: \n[.ll]
      Set the line length to LENGTH (or increment or decrement the
      current value by LENGTH).  Initially, the line length is set to
      6.5i.  The effect of `ll' is delayed until a partially collected
@@ -5916,8 +6163,8 @@ These dimensions are:
 
 File: groff,  Node: Line Control,  Next: Page Layout,  Prev: Line Layout,  Up: gtroff Reference
 
-Line Control
-============
+5.14 Line Control
+=================
 
 It is important to understand how `gtroff' handles input and output
 lines.
@@ -5927,7 +6174,7 @@ example, this
 
 
      This is a \h'|1.2i'test.
-     
+
      This is a
      \h'|1.2i'test.
 
@@ -5935,7 +6182,7 @@ produces
 
 
      This is a   test.
-     
+
      This is a             test.
 
    The main usage of this feature is to define macros which act exactly
@@ -5955,9 +6202,9 @@ from right to left.
    `gtroff' makes a difference between input and output line
 continuation; the latter is also called "interrupting" a line.
 
- - Escape: \<RET>
- - Escape: \c
- - Register: \n[.int]
+ -- Escape: \<RET>
+ -- Escape: \c
+ -- Register: \n[.int]
      Continue a line.  `\<RET>' (this is a backslash at the end of a
      line immediately followed by a newline) works on the input level,
      suppressing the effects of the following newline in the input.
@@ -6008,16 +6255,16 @@ continuation; the latter is also called "interrupting" a line.
 
 File: groff,  Node: Page Layout,  Next: Page Control,  Prev: Line Control,  Up: gtroff Reference
 
-Page Layout
-===========
+5.15 Page Layout
+================
 
 `gtroff' provides some very primitive operations for controlling page
 layout.
 
- - Request: .pl [length]
- - Request: .pl +length
- - Request: .pl -length
- - Register: \n[.p]
+ -- Request: .pl [length]
+ -- Request: .pl +length
+ -- Request: .pl -length
+ -- Register: \n[.p]
      Set the "page length" to LENGTH (or increment or decrement the
      current value by LENGTH).  This is the length of the physical
      output page.  The default scaling indicator is `v'.
@@ -6039,7 +6286,7 @@ layout.
    `gtroff' provides several operations which help in setting up top
 and bottom titles (or headers and footers).
 
- - Request: .tl 'left'center'right'
+ -- Request: .tl 'left'center'right'
      Print a "title line".  It consists of three parts: a left
      justified portion, a centered portion, and a right justified
      portion.  The argument separator `'' can be replaced with any
@@ -6064,10 +6311,10 @@ and bottom titles (or headers and footers).
         * `tl' accepts the same parameter delimiting characters as the
           `\A' escape; see *Note Escapes::.
 
- - Request: .lt [length]
- - Request: .lt +length
- - Request: .lt -length
- - Register: \n[.lt]
+ -- Request: .lt [length]
+ -- Request: .lt +length
+ -- Request: .lt -length
+ -- Register: \n[.lt]
      The title line is printed using its own line length, which is
      specified (or incremented or decremented) with the `lt' request.
      Initially, the title line length is set to 6.5i.  If a negative
@@ -6081,10 +6328,10 @@ and bottom titles (or headers and footers).
      number register; it is associated with the current environment
      (*note Environments::).
 
- - Request: .pn page
- - Request: .pn +page
- - Request: .pn -page
- - Register: \n[.pn]
+ -- Request: .pn page
+ -- Request: .pn +page
+ -- Request: .pn -page
+ -- Register: \n[.pn]
      Change (increase or decrease) the page number of the _next_ page.
      The only argument is the page number; the request is ignored
      without a parameter.
@@ -6093,7 +6340,7 @@ and bottom titles (or headers and footers).
      page: either the value set by a `pn' request, or the number of the
      current page plus 1.
 
- - Request: .pc [char]
+ -- Request: .pc [char]
      Change the page number character (used by the `tl' request) to a
      different character.  With no argument, this mechanism is disabled.
      Note that this doesn't affect the number register `%'.
@@ -6103,13 +6350,13 @@ and bottom titles (or headers and footers).
 
 File: groff,  Node: Page Control,  Next: Fonts and Symbols,  Prev: Page Layout,  Up: gtroff Reference
 
-Page Control
-============
+5.16 Page Control
+=================
 
- - Request: .bp [page]
- - Request: .bp +page
- - Request: .bp -page
- - Register: \n[%]
+ -- Request: .bp [page]
+ -- Request: .bp +page
+ -- Request: .bp -page
+ -- Register: \n[%]
      Stop processing the current page and move to the next page.  This
      request causes a break.  It can also take an argument to set
      (increase, decrease) the page number of the next page (which
@@ -6133,7 +6380,7 @@ Page Control
      The number register `.pe' is set to 1 while `bp' is active.  *Note
      Page Location Traps::.
 
- - Request: .ne [space]
+ -- Request: .ne [space]
      It is often necessary to force a certain amount of space before a
      new page occurs.  This is most useful to make sure that there is
      not a single "orphan" line left at the bottom of a page.  The `ne'
@@ -6153,8 +6400,8 @@ Page Control
      `ne' will then automatically cause a page break if there is space
      for one line only.
 
- - Request: .sv [space]
- - Request: .os
+ -- Request: .sv [space]
+ -- Request: .os
      `sv' is similar to the `ne' request; it reserves the specified
      amount of vertical space.  If the desired amount of space exists
      before the next trap (or the bottom page boundary if no trap is
@@ -6167,7 +6414,7 @@ Page Control
      Both `sv' and `os' ignore no-space mode.  While the `sv' request
      allows negative values for SPACE, `os' will ignore them.
 
- - Register: \n[nl]
+ -- Register: \n[nl]
      This register contains the current vertical position.  If the
      vertical position is zero and the top of page transition hasn't
      happened yet, `nl' is set to negative value.  `gtroff' itself does
@@ -6194,13 +6441,13 @@ Page Control
 
 
           First page.
-          
+
           ...
-          
+
                                        Header
-          
+
           Second page.
-          
+
           ...
 
      Without resetting `nl' to a negative value, the just planted trap
@@ -6213,8 +6460,8 @@ Page Control
 
 File: groff,  Node: Fonts and Symbols,  Next: Sizes,  Prev: Page Control,  Up: gtroff Reference
 
-Fonts and Symbols
-=================
+5.17 Fonts and Symbols
+======================
 
 `gtroff' can switch fonts at any point in the text.
 
@@ -6236,13 +6483,14 @@ also at least one symbol font which contains various special symbols
 
 File: groff,  Node: Changing Fonts,  Next: Font Families,  Prev: Fonts and Symbols,  Up: Fonts and Symbols
 
-Changing Fonts
---------------
+5.17.1 Changing Fonts
+---------------------
 
- - Request: .ft [font]
- - Escape: \ff
- - Escape: \f(fn
- - Escape: \f[font]
+ -- Request: .ft [font]
+ -- Escape: \ff
+ -- Escape: \f(fn
+ -- Escape: \f[font]
+ -- Register: \n[.sty]
      The `ft' request and the `\f' escape change the current font to
      FONT (one-character name F, two-character name FN).
 
@@ -6267,7 +6515,7 @@ Changing Fonts
           spam
           .ft
           and sausage.
-          
+
           eggs, bacon, \fBspam\fP and sausage.
 
      Note that `\f' doesn't produce an input token in `gtroff'.  As a
@@ -6277,38 +6525,44 @@ Changing Fonts
 
           .mc \f[I]x\f[]
 
+     The current style name is available in the read-only number
+     register `.sty' (this is a string-valued register); if the current
+     font isn't a style, the empty string is returned.  It is
+     associated with the current environment.
+
      *Note Font Positions::, for an alternative syntax.
 
- - Request: .ftr f [g]
+ -- Request: .ftr f [g]
      Translate font F to font G.  Whenever a font named F is referred
-     to in a `\f' escape sequence, or in the `ft', `ul', `bd', `cs',
-     `tkf', `special', `fspecial', `fp', or `sty' requests, font G is
-     used.  If G is missing or equal to F the translation is undone.
+     to in a `\f' escape sequence, in the `F' and `S' conditional
+     operators, or in the `ft', `ul', `bd', `cs', `tkf', `special',
+     `fspecial', `fp', or `sty' requests, font G is used.  If G is
+     missing or equal to F the translation is undone.
 
 
 File: groff,  Node: Font Families,  Next: Font Positions,  Prev: Changing Fonts,  Up: Fonts and Symbols
 
-Font Families
--------------
+5.17.2 Font Families
+--------------------
 
 Due to the variety of fonts available, `gtroff' has added the concept
 of "font families" and "font styles".  The fonts are specified as the
 concatenation of the font family and style.  Specifying a font without
 the family part causes `gtroff' to use that style of the current family.
 
-   Currently, fonts for the devices `-Tps', `-Tdvi', and `-Tlbp' are
-set up to this mechanism.  By default, `gtroff' uses the Times family
-with the four styles `R', `I', `B', and `BI'.
+   Currently, fonts for the devices `-Tps', `-Tdvi', `-Tlj4', `-Tlbp',
+and the X11 fonts are set up to this mechanism.  By default, `gtroff'
+uses the Times family with the four styles `R', `I', `B', and `BI'.
 
    This way, it is possible to use the basic four fonts and to select a
 different font family on the command line (*note Groff Options::).
 
- - Request: .fam [family]
- - Register: \n[.fam]
- - Escape: \Ff
- - Escape: \F(fm
- - Escape: \F[family]
- - Register: \n[.fn]
+ -- Request: .fam [family]
+ -- Register: \n[.fam]
+ -- Escape: \Ff
+ -- Escape: \F(fm
+ -- Escape: \F[family]
+ -- Register: \n[.fn]
      Switch font family to FAMILY (one-character name F, two-character
      name FM).  If no argument is given, switch back to the previous
      font family.  Use `\F[]' to do this with the escape.  Note that
@@ -6345,7 +6599,7 @@ different font family on the command line (*note Groff Options::).
      font is a style, the value of `\n[.fn]' is the proper
      concatenation of family and style name.
 
- - Request: .sty n style
+ -- Request: .sty n style
      Associate STYLE with font position N.  A font position can be
      associated either with a font or with a style.  The current font
      is the index of a font position and so is also either a font or a
@@ -6409,16 +6663,16 @@ different font family on the command line (*note Groff Options::).
 
 File: groff,  Node: Font Positions,  Next: Using Symbols,  Prev: Font Families,  Up: Fonts and Symbols
 
-Font Positions
---------------
+5.17.3 Font Positions
+---------------------
 
 For the sake of old phototypesetters and compatibility with old versions
 of `troff', `gtroff' has the concept of font "positions", on which
 various fonts are mounted.
 
- - Request: .fp pos font [external-name]
- - Register: \n[.f]
- - Register: \n[.fp]
+ -- Request: .fp pos font [external-name]
+ -- Register: \n[.f]
+ -- Register: \n[.fp]
      Mount font FONT at position POS (which must be a non-negative
      integer).  This numeric position can then be referred to with font
      changing commands.  When `gtroff' starts it is using font
@@ -6463,10 +6717,10 @@ various fonts are mounted.
    Both the `ft' request and the `\f' escape have alternative syntax
 forms to access font positions.
 
- - Request: .ft nnn
- - Escape: \fn
- - Escape: \f(nn
- - Escape: \f[nnn]
+ -- Request: .ft nnn
+ -- Escape: \fn
+ -- Escape: \f(nn
+ -- Escape: \f[nnn]
      Change the current font position to NNN (one-digit position N,
      two-digit position NN), which must be a non-negative integer.
 
@@ -6490,8 +6744,8 @@ forms to access font positions.
 
 File: groff,  Node: Using Symbols,  Next: Special Fonts,  Prev: Font Positions,  Up: Fonts and Symbols
 
-Using Symbols
--------------
+5.17.4 Using Symbols
+--------------------
 
 A "glyph" is a graphical representation of a "character".  While a
 character is an abstract entity containing semantic information, a
@@ -6625,9 +6879,9 @@ set of glyph names which can't be derived algorithmically is called
    * glyph names of the GGL can't be used in composite glyph names; for
      example, `^E_u0301' is invalid.
 
- - Escape: \(nm
- - Escape: \[name]
- - Escape: \[component1 component2 ...]
+ -- Escape: \(nm
+ -- Escape: \[name]
+ -- Escape: \[component1 component2 ...]
      Insert a symbol NAME (two-character name NM) or a composite glyph
      with component glyphs COMPONENT1, COMPONENT2, .... There is no
      special syntax for one-character names - the natural form `\N'
@@ -6677,13 +6931,13 @@ set of glyph names which can't be derived algorithmically is called
      a groff font file.  This is not really a limitation; instead, you
      have to define `u0041_0328'.
 
- - Escape: \C'xxx'
+ -- Escape: \C'xxx'
      Typeset the glyph named XXX.(2) (*note Using Symbols-Footnote-2::)
      Normally it is more convenient to use `\[XXX]', but `\C' has the
      advantage that it is compatible with newer versions of AT&T
      `troff' and is available in compatibility mode.
 
- - Request: .composite from to
+ -- Request: .composite from to
      Map glyph name FROM to glyph name TO if it is used in `\[...]'
      with more than one component.  See above for examples.
 
@@ -6693,7 +6947,7 @@ set of glyph names which can't be derived algorithmically is called
      A set of default mappings for many accents can be found in the file
      `composite.tmac' which is loaded at start-up.
 
- - Escape: \N'n'
+ -- Escape: \N'n'
      Typeset the glyph with code N in the current font (`n' is *not*
      the input character code).  The number N can be any non-negative
      decimal integer.  Most devices only have glyphs with codes between
@@ -6715,19 +6969,19 @@ set of glyph names which can't be derived algorithmically is called
 
    Some escape sequences directly map onto special glyphs.
 
- - Escape: \'
+ -- Escape: \'
      This is a backslash followed by the apostrophe character, ASCII
      character `0x27' (EBCDIC character `0x7D').  The same as `\[aa]',
      the acute accent.
 
- - Escape: \`
+ -- Escape: \`
      This is a backslash followed by ASCII character `0x60' (EBCDIC
      character `0x79' usually).  The same as `\[ga]', the grave accent.
 
- - Escape: \-
+ -- Escape: \-
      This is the same as `\[-]', the minus sign in the current font.
 
- - Request: .cflags n c1 c2 ...
+ -- Request: .cflags n c1 c2 ...
      Input characters and symbols have certain properties associated
      with it.(3) (*note Using Symbols-Footnote-3::)  These properties
      can be modified with the `cflags' request.  The first argument is
@@ -6767,10 +7021,10 @@ set of glyph names which can't be derived algorithmically is called
           zero space factor in TeX (initially characters `"')]*' and
           the symbols `\[dg]' and `\[rq]' have this property).
 
- - Request: .char g [string]
- - Request: .fchar g [string]
- - Request: .fschar f g [string]
- - Request: .schar g [string]
+ -- Request: .char g [string]
+ -- Request: .fchar g [string]
+ -- Request: .fschar f g [string]
+ -- Request: .schar g [string]
      Define a new glyph G to be STRING (which can be empty).(4) (*note
      Using Symbols-Footnote-4::)  Every time glyph G needs to be
      printed, STRING is processed in a temporary environment and the
@@ -6826,8 +7080,8 @@ set of glyph names which can't be derived algorithmically is called
      *Note Using Symbols::, for a detailed description of the glyph
      searching mechanism in `gtroff'.
 
- - Request: .rchar c1 c2 ...
- - Request: .rfschar f c1 c2 ...
+ -- Request: .rchar c1 c2 ...
+ -- Request: .rfschar f c1 c2 ...
      Remove the definitions of glyphs C1, C2, ....  This undoes the
      effect of a `char', `fchar', or `schar' request.
 
@@ -6861,8 +7115,8 @@ width, depth, and height, nothing else.  All manipulations with the
 
 File: groff,  Node: Special Fonts,  Next: Artificial Fonts,  Prev: Using Symbols,  Up: Fonts and Symbols
 
-Special Fonts
--------------
+5.17.5 Special Fonts
+--------------------
 
 Special fonts are those that `gtroff' searches when it cannot find the
 requested glyph in the current font.  The Symbol font is usually a
@@ -6874,8 +7128,8 @@ searching mechanism in `gtroff'.
 
    Usually, only non-TTY devices have special fonts.
 
- - Request: .special [s1 s2 ...]
- - Request: .fspecial f [s1 s2 ...]
+ -- Request: .special [s1 s2 ...]
+ -- Request: .fspecial f [s1 s2 ...]
      Use the `special' request to define special fonts.  Initially, this
      list is empty.
 
@@ -6894,8 +7148,8 @@ searching mechanism in `gtroff'.
 
 File: groff,  Node: Artificial Fonts,  Next: Ligatures and Kerning,  Prev: Special Fonts,  Up: Fonts and Symbols
 
-Artificial Fonts
-----------------
+5.17.6 Artificial Fonts
+-----------------------
 
 There are a number of requests and escapes for artificially creating
 fonts.  These are largely vestiges of the days when output devices did
@@ -6903,10 +7157,10 @@ not have a wide variety of fonts, and when `nroff' and `troff' were
 separate programs.  Most of them are no longer necessary in GNU
 `troff'.  Nevertheless, they are supported.
 
- - Escape: \H'height'
- - Escape: \H'+height'
- - Escape: \H'-height'
- - Register: \n[.height]
+ -- Escape: \H'height'
+ -- Escape: \H'+height'
+ -- Escape: \H'-height'
+ -- Register: \n[.height]
      Change (increment, decrement) the height of the current font, but
      not the width.  If HEIGHT is zero, restore the original height.
      Default scaling indicator is `z'.
@@ -6935,8 +7189,8 @@ separate programs.  Most of them are no longer necessary in GNU
      prints the word `test' twice with the same font height (five
      points larger than the current font size).
 
- - Escape: \S'slant'
- - Register: \n[.slant]
+ -- Escape: \S'slant'
+ -- Register: \n[.slant]
      Slant the current font by SLANT degrees.  Positive values slant to
      the right.  Only integer values are possible.
 
@@ -6955,7 +7209,7 @@ separate programs.  Most of them are no longer necessary in GNU
      This request is incorrectly documented in the original UNIX troff
      manual; the slant is always set to an absolute value.
 
- - Request: .ul [lines]
+ -- Request: .ul [lines]
      The `ul' request normally underlines subsequent lines if a TTY
      output device is used.  Otherwise, the lines are printed in italics
      (only the term `underlined' is used in the following).  The single
@@ -6977,18 +7231,18 @@ separate programs.  Most of them are no longer necessary in GNU
 
      The `ul' request does not underline spaces.
 
- - Request: .cu [lines]
+ -- Request: .cu [lines]
      The `cu' request is similar to `ul' but underlines spaces as well
      (if a TTY output device is used).
 
- - Request: .uf font
+ -- Request: .uf font
      Set the underline font (globally) used by `ul' and `cu'.  By
      default, this is the font at position 2.  FONT can be either a
      non-negative font position or the name of a font.
 
- - Request: .bd font [offset]
- - Request: .bd font1 font2 [offset]
- - Register: \n[.b]
+ -- Request: .bd font [offset]
+ -- Request: .bd font1 font2 [offset]
+ -- Register: \n[.b]
      Artificially create a bold font by printing each glyph twice,
      slightly offset.
 
@@ -7017,7 +7271,7 @@ separate programs.  Most of them are no longer necessary in GNU
           `special' command in font files or with the `fspecial'
           request).
 
- - Request: .cs font [width [em-size]]
+ -- Request: .cs font [width [em-size]]
      Switch to and from "constant glyph space mode".  If activated, the
      width of every glyph is WIDTH/36 ems.  The em size is given
      absolutely by EM-SIZE; if this argument is missing, the em value
@@ -7030,8 +7284,8 @@ separate programs.  Most of them are no longer necessary in GNU
 
 File: groff,  Node: Ligatures and Kerning,  Prev: Artificial Fonts,  Up: Fonts and Symbols
 
-Ligatures and Kerning
----------------------
+5.17.7 Ligatures and Kerning
+----------------------------
 
 Ligatures are groups of characters that are run together, i.e, producing
 a single glyph.  For example, the letters `f' and `i' can form a
@@ -7049,8 +7303,8 @@ support these (yet).
 special fonts nor entities defined with the `char' request (and its
 siblings) are taken into account.
 
- - Request: .lg [flag]
- - Register: \n[.lg]
+ -- Request: .lg [flag]
+ -- Register: \n[.lg]
      Switch the ligature mechanism on or off; if the parameter is
      non-zero or missing, ligatures are enabled, otherwise disabled.
      Default is on.  The current ligature mode can be found in the
@@ -7067,8 +7321,8 @@ most cases (but not always) the distance is decreased.  Typewriter-like
 fonts and fonts for terminals where all glyphs have the same width
 don't use kerning.
 
- - Request: .kern [flag]
- - Register: \n[.kern]
+ -- Request: .kern [flag]
+ -- Register: \n[.kern]
      Switch kerning on or off.  If the parameter is non-zero or missing,
      enable pairwise kerning, otherwise disable it.  The read-only
      number register `.kern' is set to 1 if pairwise kerning is enabled,
@@ -7086,7 +7340,7 @@ single line or spread some text to fill a narrow column.  It must be
 used with great care since it is usually considered bad typography if
 the reader notices the effect.
 
- - Request: .tkf f s1 n1 s2 n2
+ -- Request: .tkf f s1 n1 s2 n2
      Enable track kerning for font F.  If the current font is F the
      width of every glyph is increased by an amount between N1 and N2
      (N1, N2 can be negative); if the current point size is less than
@@ -7106,7 +7360,7 @@ the reader notices the effect.
 space at such boundaries are needed.  There are two escapes to help
 with this.
 
- - Escape: \/
+ -- Escape: \/
      Increase the width of the preceding glyph so that the spacing
      between that glyph and the following glyph is correct if the
      following glyph is a roman glyph.  For example, if an italic `f'
@@ -7118,7 +7372,7 @@ with this.
      "italic correction".
 
 
- - Escape: \,
+ -- Escape: \,
      Modify the spacing of the following glyph so that the spacing
      between that glyph and the preceding glyph is correct if the
      preceding glyph is a roman glyph.  Use this escape sequence
@@ -7128,7 +7382,7 @@ with this.
      widely.
 
 
- - Escape: \&
+ -- Escape: \&
      Insert a zero-width character, which is invisible.  Its intended
      use is to stop interaction of a character with its surrounding.
 
@@ -7157,7 +7411,7 @@ with this.
         * It is needed to map an arbitrary character to nothing in the
           `tr' request (*note Character Translations::).
 
- - Escape: \)
+ -- Escape: \)
      This escape is similar to `\&' except that it behaves like a
      character declared with the `cflags' request to be transparent for
      the purposes of an end-of-sentence character.
@@ -7185,8 +7439,8 @@ with this.
 
 File: groff,  Node: Sizes,  Next: Strings,  Prev: Fonts and Symbols,  Up: gtroff Reference
 
-Sizes
-=====
+5.18 Sizes
+==========
 
 `gtroff' uses two dimensions with each line of text, type size and
 vertical spacing.  The "type size" is approximately the height of the
@@ -7218,14 +7472,14 @@ point, and the size of `Courier' must be increased by one point.
 
 File: groff,  Node: Changing Type Sizes,  Next: Fractional Type Sizes,  Prev: Sizes,  Up: Sizes
 
-Changing Type Sizes
--------------------
+5.18.1 Changing Type Sizes
+--------------------------
 
- - Request: .ps [size]
- - Request: .ps +size
- - Request: .ps -size
- - Escape: \ssize
- - Register: \n[.s]
+ -- Request: .ps [size]
+ -- Request: .ps +size
+ -- Request: .ps -size
+ -- Escape: \ssize
+ -- Register: \n[.s]
      Use the `ps' request or the `\s' escape to change (increase,
      decrease) the type size (in points).  Specify SIZE as either an
      absolute point size, or as a relative change from the current size.
@@ -7283,7 +7537,7 @@ Changing Type Sizes
      *Note Fractional Type Sizes::, for yet another syntactical form of
      using the `\s' escape.
 
- - Request: .sizes s1 s2 ... sn [0]
+ -- Request: .sizes s1 s2 ... sn [0]
      Some devices may only have certain permissible sizes, in which case
      `gtroff' rounds to the nearest permissible size.  The `DESC' file
      specifies which sizes are permissible for the device.
@@ -7298,10 +7552,10 @@ Changing Type Sizes
      range of sizes (such as `4000-72000').  You can optionally end the
      list with a zero.
 
- - Request: .vs [space]
- - Request: .vs +space
- - Request: .vs -space
- - Register: \n[.v]
+ -- Request: .vs [space]
+ -- Request: .vs +space
+ -- Request: .vs -space
+ -- Register: \n[.v]
      Change (increase, decrease) the vertical spacing by SPACE.  The
      default scaling indicator is `p'.
 
@@ -7347,10 +7601,10 @@ preprocessors assume single-spacing.
    *Note Manipulating Spacing::, for more details on the `\x' escape
 and the `ls' request.
 
- - Request: .pvs [space]
- - Request: .pvs +space
- - Request: .pvs -space
- - Register: \n[.pvs]
+ -- Request: .pvs [space]
+ -- Request: .pvs +space
+ -- Request: .pvs -space
+ -- Register: \n[.pvs]
      Change (increase, decrease) the post-vertical spacing by SPACE.
      The default scaling indicator is `p'.
 
@@ -7367,8 +7621,8 @@ and the `ls' request.
 
 File: groff,  Node: Fractional Type Sizes,  Prev: Changing Type Sizes,  Up: Sizes
 
-Fractional Type Sizes
----------------------
+5.18.2 Fractional Type Sizes
+----------------------------
 
 A "scaled point" is equal to 1/SIZESCALE points, where SIZESCALE is
 specified in the `DESC' file (1 by default).  There is a new scale
@@ -7398,15 +7652,15 @@ numeric expression whose default scale indicator was `z', and so
 of units in a scaled point.  So, for example, `\n[.ps]s' is equal to
 `1m'.  Be sure not to confuse the `s' and `z' scale indicators.
 
- - Register: \n[.ps]
+ -- Register: \n[.ps]
      A read-only number register returning the point size in scaled
      points.
 
      `.ps' is associated with the current environment (*note
      Environments::).
 
- - Register: \n[.psr]
- - Register: \n[.sr]
+ -- Register: \n[.psr]
+ -- Register: \n[.sr]
      The last-requested point size in scaled points is contained in the
      `.psr' read-only number register.  The last requested point size
      in points as a decimal fraction can be found in `.sr'.  This is a
@@ -7445,18 +7699,18 @@ type sizes:
 
 File: groff,  Node: Strings,  Next: Conditionals and Loops,  Prev: Sizes,  Up: gtroff Reference
 
-Strings
-=======
+5.19 Strings
+============
 
 `gtroff' has string variables, which are entirely for user convenience
 (i.e. there are no built-in strings exept `.T', but even this is a
 read-write string variable).
 
- - Request: .ds name [string]
- - Request: .ds1 name [string]
- - Escape: \*n
- - Escape: \*(nm
- - Escape: \*[name arg1 arg2 ...]
+ -- Request: .ds name [string]
+ -- Request: .ds1 name [string]
+ -- Escape: \*n
+ -- Escape: \*(nm
+ -- Escape: \*[name arg1 arg2 ...]
      Define and access a string variable NAME (one-character name N,
      two-character name NM).  If NAME already exists, `ds' overwrites
      the previous definition.  Only the syntax form using brackets can
@@ -7547,7 +7801,7 @@ read-write string variable).
           ..
           This is \*[xxx]
               => This is a funny test.
-          
+
           .ds yyy a funny test
           This is
           .yyy
@@ -7611,8 +7865,8 @@ read-write string variable).
 
      *Note Gtroff Internals::, for more information.
 
- - Request: .as name [string]
- - Request: .as1 name [string]
+ -- Request: .as name [string]
+ -- Request: .as1 name [string]
      The `as' request is similar to `ds' but appends STRING to the
      string stored as NAME instead of redefining it.  If NAME doesn't
      exist yet, it is created.
@@ -7629,7 +7883,7 @@ read-write string variable).
    Rudimentary string manipulation routines are given with the next two
 requests.
 
- - Request: .substring str n1 [n2]
+ -- Request: .substring str n1 [n2]
      Replace the string named STR with the substring defined by the
      indices N1 and N2.  The first character in the string has index 0.
      If N2 is omitted, it is taken to be equal to the string's length.
@@ -7645,7 +7899,7 @@ requests.
               => bcde
 
 
- - Request: .length reg str
+ -- Request: .length reg str
      Compute the number of characters of STR and return it in the
      number register REG.  If REG doesn't exist, it is created.  `str'
      is read in copy mode.
@@ -7657,22 +7911,22 @@ requests.
               => 14
 
 
- - Request: .rn xx yy
+ -- Request: .rn xx yy
      Rename the request, macro, diversion, or string XX to YY.
 
- - Request: .rm xx
+ -- Request: .rm xx
      Remove the request, macro, diversion, or string XX.  `gtroff'
      treats subsequent invocations as if the object had never been
      defined.
 
- - Request: .als new old
+ -- Request: .als new old
      Create an alias named NEW for the request, string, macro, or
      diversion object named OLD.  The new name and the old name are
      exactly equivalent (it is similar to a hard rather than a soft
      link). If OLD is undefined, `gtroff' generates a warning of type
      `mac' and ignores the request.
 
- - Request: .chop xx
+ -- Request: .chop xx
      Remove (chop) the last character from the macro, string, or
      diversion named XX.  This is useful for removing the newline from
      the end of diversions that are to be interpolated as strings.
@@ -7684,8 +7938,8 @@ requests.
 
 File: groff,  Node: Conditionals and Loops,  Next: Writing Macros,  Prev: Strings,  Up: gtroff Reference
 
-Conditionals and Loops
-======================
+5.20 Conditionals and Loops
+===========================
 
 * Menu:
 
@@ -7696,8 +7950,8 @@ Conditionals and Loops
 
 File: groff,  Node: Operators in Conditionals,  Next: if-else,  Prev: Conditionals and Loops,  Up: Conditionals and Loops
 
-Operators in Conditionals
--------------------------
+5.20.1 Operators in Conditionals
+--------------------------------
 
 In `if' and `while' requests, there are several more operators
 available:
@@ -7755,6 +8009,18 @@ available:
      special character (`\(GG' or `\[GGG]'); the condition is also true
      if G has been defined by the `char' request.
 
+`F FONT'
+     True if a font named FONT exists.  FONT is handled as if it was
+     opened with the `ft' request (this is, font translation and styles
+     are applied), without actually mounting it.
+
+     This test doesn't load the complete font but only its header to
+     verify its validity.
+
+`S STYLE'
+     True if style STYLE has been registered.  Font translation is
+     applied.
+
    Note that these operators can't be combined with other operators like
 `:' or `&'; only a leading `!' (without whitespace between the
 exclamation mark and the operator) can be used to negate the result.
@@ -7795,13 +8061,13 @@ tests names of output glyphs.
 
 File: groff,  Node: if-else,  Next: while,  Prev: Operators in Conditionals,  Up: Conditionals and Loops
 
-if-else
--------
+5.20.2 if-else
+--------------
 
 `gtroff' has if-then-else constructs like other languages, although the
 formatting can be painful.
 
- - Request: .if expr anything
+ -- Request: .if expr anything
      Evaluate the expression EXPR, and executes ANYTHING (the remainder
      of the line) if EXPR evaluates to a value greater than zero
      (true).  ANYTHING is interpreted as though it was on a line by
@@ -7815,11 +8081,11 @@ formatting can be painful.
               => true
 
 
- - Request: .nop anything
+ -- Request: .nop anything
      Executes ANYTHING.  This is similar to `.if 1'.
 
- - Request: .ie expr anything
- - Request: .el anything
+ -- Request: .ie expr anything
+ -- Request: .el anything
      Use the `ie' and `el' requests to write an if-then-else.  The
      first request is the `if' part and the latter is the `else' part.
 
@@ -7828,8 +8094,8 @@ formatting can be painful.
           .el   .ls 1 \" single-spacing in troff
 
 
- - Escape: \{
- - Escape: \}
+ -- Escape: \{
+ -- Escape: \}
      In many cases, an if (or if-else) construct needs to execute more
      than one request.  This can be done using the `\{' and `\}'
      escapes.  The following example shows the possible ways to use
@@ -7852,13 +8118,13 @@ formatting can be painful.
 
 File: groff,  Node: while,  Prev: if-else,  Up: Conditionals and Loops
 
-while
------
+5.20.3 while
+------------
 
 `gtroff' provides a looping construct using the `while' request, which
 is used much like the `if' (and related) requests.
 
- - Request: .while expr anything
+ -- Request: .while expr anything
      Evaluate the expression EXPR, and repeatedly execute ANYTHING (the
      remainder of the line) until EXPR evaluates to 0.
 
@@ -7921,11 +8187,11 @@ is used much like the `if' (and related) requests.
                    => unbalanced \{ \}
 
 
- - Request: .break
+ -- Request: .break
      Break out of a `while' loop.  Be sure not to confuse this with the
      `br' request (causing a line break).
 
- - Request: .continue
+ -- Request: .continue
      Finish the current iteration of a `while' loop, immediately
      restarting the next iteration.
 
@@ -7934,16 +8200,16 @@ is used much like the `if' (and related) requests.
 
 File: groff,  Node: Writing Macros,  Next: Page Motions,  Prev: Conditionals and Loops,  Up: gtroff Reference
 
-Writing Macros
-==============
+5.21 Writing Macros
+===================
 
 A "macro" is a collection of text and embedded commands which can be
 invoked multiple times.  Use macros to define common operations.
 
- - Request: .de name [end]
- - Request: .de1 name [end]
- - Request: .dei name [end]
- - Request: .dei1 name [end]
+ -- Request: .de name [end]
+ -- Request: .de1 name [end]
+ -- Request: .dei name [end]
+ -- Request: .dei1 name [end]
      Define a new macro named NAME.  `gtroff' copies subsequent lines
      (starting with the next one) into an internal buffer until it
      encounters the line `..' (two dots).  The optional second argument
@@ -8002,7 +8268,7 @@ invoked multiple times.  Use macros to define common operations.
           .cp 1
           .
           .aa
-              => warning: number register ' not defined
+              => warning: number register `[' not defined
               => The value of xxx is 0xxx].
           .bb
               => The value of xxx ix 12345.
@@ -8025,15 +8291,22 @@ invoked multiple times.  Use macros to define common operations.
      The `dei1' request is similar to `dei' but with compatibility mode
      switched off during execution of the defined macro.
 
+     If compatibility mode is on, `de' (and `dei') behave similar to
+     `de1' (and `dei1'): A `compatibility save' token is inserted at
+     the beginning, and a `compatibility restore' token at the end, with
+     compatibility mode switched on during execution.  *Note Gtroff
+     Internals::, for more information on switching compatibility mode
+     on and off in a single document.
+
      Using `trace.tmac', you can trace calls to `de' and `de1'.
 
      Note that macro identifiers are shared with identifiers for
      strings and diversions.
 
- - Request: .am name [end]
- - Request: .am1 name [end]
- - Request: .ami name [end]
- - Request: .ami1 name [end]
+ -- Request: .am name [end]
+ -- Request: .am1 name [end]
+ -- Request: .ami name [end]
+ -- Request: .ami1 name [end]
      Works similarly to `de' except it appends onto the macro named
      NAME.  So, to make the previously defined `P' macro actually do
      indented instead of block paragraphs, add the necessary code to the
@@ -8066,7 +8339,7 @@ diversion or string diversion is currently undefined or if it is
 defined to be a request; normally they modify the value of an existing
 object.
 
- - Request: .return [anything]
+ -- Request: .return [anything]
      Exit a macro, immediately returning to the caller.
 
      If called with an argument, exit twice, namely the current macro
@@ -8081,8 +8354,8 @@ object.
 
 File: groff,  Node: Copy-in Mode,  Next: Parameters,  Prev: Writing Macros,  Up: Writing Macros
 
-Copy-in Mode
-------------
+5.21.1 Copy-in Mode
+-------------------
 
 When `gtroff' reads in the text for a macro, string, or diversion, it
 copies the text (including request lines, but excluding escapes) into
@@ -8110,13 +8383,13 @@ the escapes with an extra backslash.  Compare this to the `\def' and
 
 File: groff,  Node: Parameters,  Prev: Copy-in Mode,  Up: Writing Macros
 
-Parameters
-----------
+5.21.2 Parameters
+-----------------
 
 The arguments to a macro or string can be examined using a variety of
 escapes.
 
- - Register: \n[.$]
+ -- Register: \n[.$]
      The number of arguments passed to a macro or string.  This is a
      read-only number register.
 
@@ -8125,9 +8398,9 @@ escapes.
    Any individual argument can be retrieved with one of the following
 escapes:
 
- - Escape: \$n
- - Escape: \$(nn
- - Escape: \$[nnn]
+ -- Escape: \$n
+ -- Escape: \$(nn
+ -- Escape: \$[nnn]
      Retrieve the Nth, NNth or NNNth argument.  As usual, the first
      form only accepts a single number (larger than zero), the second a
      two-digit number (larger or equal to 10), and the third any
@@ -8136,7 +8409,7 @@ escapes:
      mode, use two backslashes on these in actual use to prevent
      interpolation until the macro is actually invoked.
 
- - Request: .shift [n]
+ -- Request: .shift [n]
      Shift the arguments 1 position, or as many positions as specified
      by its argument.  After executing this request, argument I becomes
      argument I-N; arguments 1 to N are no longer available.  Shifting
@@ -8144,8 +8417,8 @@ escapes:
 
      The register `.$' is adjusted accordingly.
 
- - Escape: \$*
- - Escape: \$@
+ -- Escape: \$*
+ -- Escape: \$@
      In some cases it is convenient to use all of the arguments at once
      (for example, to pass the arguments along to another macro).  The
      `\$*' escape concatenates all the arguments separated by spaces.  A
@@ -8154,7 +8427,7 @@ escapes:
      in compatibility mode, the input level of double quotes is
      preserved (see *Note Request and Macro Arguments::).
 
- - Escape: \$0
+ -- Escape: \$0
      The name used to invoke the current macro.  The `als' request can
      make a macro have more than one name.
 
@@ -8176,14 +8449,14 @@ escapes:
 
 File: groff,  Node: Page Motions,  Next: Drawing Requests,  Prev: Writing Macros,  Up: gtroff Reference
 
-Page Motions
-============
+5.22 Page Motions
+=================
 
 *Note Manipulating Spacing::, for a discussion of the main request for
 vertical motion, `sp'.
 
- - Request: .mk [reg]
- - Request: .rt [dist]
+ -- Request: .mk [reg]
+ -- Request: .rt [dist]
      The request `mk' can be used to mark a location on a page, for
      movement to later.  This request takes a register name as an
      argument in which to store the current page location.  With no
@@ -8237,7 +8510,7 @@ vertical motion, `sp'.
           .ll 4i
           This is a small test which shows how the
           rt request works in combination with mk.
-          
+
           .2c
           Starting here, text is typeset in two columns.
           Note that this implementation isn't robust
@@ -8249,7 +8522,7 @@ vertical motion, `sp'.
 
           This is a small test which shows how the
           rt request works in combination with mk.
-          
+
           Starting  here,    isn't    robust
           text is typeset    and   thus  not
           in two columns.    suited  for   a
@@ -8259,7 +8532,7 @@ vertical motion, `sp'.
 
    The following escapes give fine control of movements about the page.
 
- - Escape: \v'e'
+ -- Escape: \v'e'
      Move vertically, usually from the current location on the page (if
      no absolute position operator `|' is used).  The argument E
      specifies the distance to move; positive is downwards and negative
@@ -8275,16 +8548,16 @@ vertical motion, `sp'.
 
    There are some special-case escapes for vertical motion.
 
- - Escape: \r
+ -- Escape: \r
      Move upwards 1v.
 
- - Escape: \u
+ -- Escape: \u
      Move upwards .5v.
 
- - Escape: \d
+ -- Escape: \d
      Move down .5v.
 
- - Escape: \h'e'
+ -- Escape: \h'e'
      Move horizontally, usually from the current location (if no
      absolute position operator `|' is used).  The expression E
      indicates how far to move: positive is rightwards and negative
@@ -8295,23 +8568,23 @@ vertical motion, `sp'.
 
    There are a number of special-case escapes for horizontal motion.
 
- - Escape: \<SP>
+ -- Escape: \<SP>
      An unbreakable and unpaddable (i.e. not expanded during filling)
      space.  (Note: This is a backslash followed by a space.)
 
- - Escape: \~
+ -- Escape: \~
      An unbreakable space that stretches like a normal inter-word space
      when a line is adjusted.
 
- - Escape: \|
+ -- Escape: \|
      A 1/6th em space.  Ignored for TTY output devices (rounded to
      zero).
 
- - Escape: \^
+ -- Escape: \^
      A 1/12th em space.  Ignored for TTY output devices (rounded to
      zero).
 
- - Escape: \0
+ -- Escape: \0
      A space the size of a digit.
 
    The following string sets the TeX logo:
@@ -8319,14 +8592,14 @@ vertical motion, `sp'.
 
      .ds TeX T\h'-.1667m'\v'.224m'E\v'-.224m'\h'-.125m'X
 
- - Escape: \w'text'
- - Register: \n[st]
- - Register: \n[sb]
- - Register: \n[rst]
- - Register: \n[rsb]
- - Register: \n[ct]
- - Register: \n[ssc]
- - Register: \n[skw]
+ -- Escape: \w'text'
+ -- Register: \n[st]
+ -- Register: \n[sb]
+ -- Register: \n[rst]
+ -- Register: \n[rsb]
+ -- Register: \n[ct]
+ -- Register: \n[ssc]
+ -- Register: \n[skw]
      Return the width of the specified TEXT in basic units.  This
      allows horizontal movement based on the width of some arbitrary
      text (e.g. given as an argument to a macro).
@@ -8375,30 +8648,30 @@ vertical motion, `sp'.
           argument, the center of an accent from a roman font should be
           placed over that glyph.
 
- - Escape: \kp
- - Escape: \k(ps
- - Escape: \k[position]
+ -- Escape: \kp
+ -- Escape: \k(ps
+ -- Escape: \k[position]
      Store the current horizontal position in the _input_ line in
      number register with name POSITION (one-character name P,
      two-character name PS).  Use this, for example, to return to the
      beginning of a string for highlighting or other decoration.
 
- - Register: \n[hp]
+ -- Register: \n[hp]
      The current horizontal position at the input line.
 
- - Register: \n[.k]
+ -- Register: \n[.k]
      A read-only number register containing the current horizontal
      output position (relative to the current indentation).
 
- - Escape: \o'abc'
+ -- Escape: \o'abc'
      Overstrike glyphs A, B, C, ...; the glyphs are centered, and the
      resulting spacing is the largest width of the affected glyphs.
 
- - Escape: \zg
+ -- Escape: \zg
      Print glyph G with zero width, i.e., without spacing.  Use this to
      overstrike glyphs left-aligned.
 
- - Escape: \Z'anything'
+ -- Escape: \Z'anything'
      Print ANYTHING, then restore the horizontal and vertical position.
      The argument may not contain tabs or leaders.
 
@@ -8415,527 +8688,8 @@ vertical motion, `sp'.
           an actual emergency!
 
 
-
-File: groff,  Node: Drawing Requests,  Next: Traps,  Prev: Page Motions,  Up: gtroff Reference
-
-Drawing Requests
-================
-
-`gtroff' provides a number of ways to draw lines and other figures on
-the page.  Used in combination with the page motion commands (see *Note
-Page Motions::, for more info), a wide variety of figures can be drawn.
-However, for complex drawings these operations can be quite
-cumbersome, and it may be wise to use graphic preprocessors like `gpic'
-or `ggrn'.  *Note gpic::, and *Note ggrn::, for more information.
-
-   All drawing is done via escapes.
-
- - Escape: \l'l'
- - Escape: \l'lg'
-     Draw a line horizontally.  L is the length of the line to be
-     drawn.  If it is positive, start the line at the current location
-     and draw to the right; its end point is the new current location.
-     Negative values are handled differently: The line starts at the
-     current location and draws to the left, but the current location
-     doesn't move.
-
-     L can also be specified absolutely (i.e. with a leading `|') which
-     draws back to the beginning of the input line.  Default scaling
-     indicator is `m'.
-
-     The optional second parameter G is a glyph to draw the line with.
-     If this second argument is not specified, `gtroff' uses the
-     underscore glyph, `\[ru]'.
-
-     To separate the two arguments (to prevent `gtroff' from
-     interpreting a drawing glyph as a scaling indicator if the glyph is
-     represented by a single character) use `\&'.
-
-     Here a small useful example:
-
-
-          .de box
-          \[br]\\$*\[br]\l'|0\[rn]'\l'|0\[ul]'
-          ..
-
-     Note that this works by outputting a box rule (a vertical line),
-     then the text given as an argument and then another box rule.
-     Finally, the line drawing escapes both draw from the current
-     location to the beginning of the _input_ line - this works because
-     the line length is negative, not moving the current point.
-
- - Escape: \L'l'
- - Escape: \L'lg'
-     Draw vertical lines.  Its parameters are similar to the `\l'
-     escape, except that the default scaling indicator is `v'.  The
-     movement is downwards for positive values, and upwards for
-     negative values.  The default glyph is the box rule glyph,
-     `\[br]'.  As with the vertical motion escapes, text processing
-     blindly continues where the line ends.
-
-
-          This is a \L'3v'test.
-
-     Here the result, produced with `grotty'.
-
-
-          This is a
-                    |
-                    |
-                    |test.
-
-
- - Escape: \D'command arg ...'
-     The `\D' escape provides a variety of drawing functions.  Note
-     that on character devices, only vertical and horizontal lines are
-     supported within `grotty'; other devices may only support a subset
-     of the available drawing functions.
-
-     The default scaling indicator for all subcommands of `\D' is `m'
-     for horizontal distances and `v' for vertical ones.  Exceptions
-     are `\D'f ...'' and `\D't ...'' which use `u' as the default, and
-     `\D'FX ...'' which arguments are treated similar to the `defcolor'
-     request.
-
-    `\D'l DX DY''
-          Draw a line from the current location to the relative point
-          specified by (DX,DY), where positive values mean down and
-          right, respectively.  The end point of the line is the new
-          current location.
-
-          The following example is a macro for creating a box around a
-          text string; for simplicity, the box margin is taken as a
-          fixed value, 0.2m.
-
-
-               .de BOX
-               .  nr @wd \w'\\$1'
-               \h'.2m'\
-               \h'-.2m'\v'(.2m - \\n[rsb]u)'\
-               \D'l 0 -(\\n[rst]u - \\n[rsb]u + .4m)'\
-               \D'l (\\n[@wd]u + .4m) 0'\
-               \D'l 0 (\\n[rst]u - \\n[rsb]u + .4m)'\
-               \D'l -(\\n[@wd]u + .4m) 0'\
-               \h'.2m'\v'-(.2m - \\n[rsb]u)'\
-               \\$1\
-               \h'.2m'
-               ..
-
-          First, the width of the string is stored in register `@wd'.
-          Then, four lines are drawn to form a box, properly offset by
-          the box margin.  The registers `rst' and `rsb' are set by the
-          `\w' escape, containing the largest height and depth of the
-          whole string.
-
-    `\D'c D''
-          Draw a circle with a diameter of D with the leftmost point at
-          the current position.  After drawing, the current location is
-          positioned at the rightmost point of the circle.
-
-    `\D'C D''
-          Draw a solid circle with the same parameters and behaviour as
-          an outlined circle.  No outline is drawn.
-
-    `\D'e X Y''
-          Draw an ellipse with a horizontal diameter of X and a vertical
-          diameter of Y with the leftmost point at the current position.
-          After drawing, the current location is positioned at the
-          rightmost point of the ellipse.
-
-    `\D'E X Y''
-          Draw a solid ellipse with the same parameters and behaviour
-          as an outlined ellipse.  No outline is drawn.
-
-    `\D'a DX1 DY1 DX2 DY2''
-          Draw an arc clockwise from the current location through the
-          two specified relative locations (DX1,DY1) and (DX2,DY2).
-          The coordinates of the first point are relative to the
-          current position, and the coordinates of the second point are
-          relative to the first point.  After drawing, the current
-          position is moved to the final point of the arc.
-
-    `\D'~ DX1 DY1 DX2 DY2 ...''
-          Draw a spline from the current location to the relative point
-          (DX1,DY1) and then to (DX2,DY2), and so on.  The current
-          position is moved to the terminal point of the drawn curve.
-
-    `\D'f N''
-          Set the shade of gray to be used for filling solid objects
-          to N; N must be an integer between 0 and 1000, where 0
-          corresponds solid white and 1000 to solid black, and values
-          in between correspond to intermediate shades of gray.  This
-          applies only to solid circles, solid ellipses, and solid
-          polygons.  By default, a level of 1000 is used.
-
-          Despite of being silly, the current point is moved
-          horizontally to the right by N.
-
-          Don't use this command!  It has the serious drawback that it
-          will be always rounded to the next integer multiple of the
-          horizontal resolution (the value of the `hor' keyword in the
-          `DESC' file).  Use `\M' (*note Colors::) or `\D'Fg ...''
-          instead.
-
-    `\D'p DX1 DY1 DX2 DY2 ...''
-          Draw a polygon from the current location to the relative
-          position (DX1,DY1) and then to (DX2,DY2) and so on.  When the
-          specified data points are exhausted, a line is drawn back to
-          the starting point.  The current position is changed by
-          adding the sum of all arguments with odd index to the actual
-          horizontal position and the even ones to the vertical
-          position.
-
-    `\D'P DX1 DY1 DX2 DY2 ...''
-          Draw a solid polygon with the same parameters and behaviour
-          as an outlined polygon.  No outline is drawn.
-
-          Here a better variant of the box macro to fill the box with
-          some color.  Note that the box must be drawn before the text
-          since colors in `gtroff' are not transparent; the filled
-          polygon would hide the text completely.
-
-
-               .de BOX
-               .  nr @wd \w'\\$1'
-               \h'.2m'\
-               \h'-.2m'\v'(.2m - \\n[rsb]u)'\
-               \M[lightcyan]\
-               \D'P 0 -(\\n[rst]u - \\n[rsb]u + .4m) \
-                    (\\n[@wd]u + .4m) 0 \
-                    0 (\\n[rst]u - \\n[rsb]u + .4m) \
-                    -(\\n[@wd]u + .4m) 0'\
-               \h'.2m'\v'-(.2m - \\n[rsb]u)'\
-               \M[]\
-               \\$1\
-               \h'.2m'
-               ..
-
-    `\D't N''
-          Set the current line thickness to N machine units.  A value of
-          zero selects the smallest available line thickness.  A
-          negative value makes the line thickness proportional to the
-          current point size (this is the default behaviour of AT&T
-          `troff').
-
-          Despite of being silly, the current point is moved
-          horizontally to the right by N.
-
-    `\D'FSCHEME COLOR_COMPONENTS''
-          Change current fill color.  SCHEME is a single letter
-          denoting the color scheme: `r' (rgb), `c' (cmy), `k' (cmyk),
-          `g' (gray), or `d' (default color).  The color components use
-          exactly the same syntax as in the `defcolor' request (*note
-          Colors::); the command `\D'Fd'' doesn't take an argument.
-
-          _No_ position changing!
-
-          Examples:
-
-
-          \D'Fg .3'      \" same gray as \D'f 700' \D'Fr #0000ff' \"
-          blue
-
-   *Note Graphics Commands::.
-
- - Escape: \b'string'
-     "Pile" a sequence of glyphs vertically, and center it vertically
-     on the current line.  Use it to build large brackets and braces.
-
-     Here an example how to create a large opening brace:
-
-
-          \b'\[lt]\[bv]\[lk]\[bv]\[lb]'
-
-     The first glyph is on the top, the last glyph in STRING is at the
-     bottom.  Note that `gtroff' separates the glyphs vertically by 1m,
-     and the whole object is centered 0.5m above the current baseline;
-     the largest glyph width is used as the width for the whole object.
-     This rather unflexible positioning algorithm doesn't work with
-     `-Tdvi' since the bracket pieces vary in height for this device.
-     Instead, use the `eqn' preprocessor.
-
-     *Note Manipulating Spacing::, how to adjust the vertical spacing
-     with the `\x' escape.
 
 
-File: groff,  Node: Traps,  Next: Diversions,  Prev: Drawing Requests,  Up: gtroff Reference
-
-Traps
-=====
-
-"Traps" are locations, which, when reached, call a specified macro.
-These traps can occur at a given location on the page, at a given
-location in the current diversion, at a blank line, after a certain
-number of input lines, or at the end of input.
-
-   Setting a trap is also called "planting".  It is also said that a
-trap is "sprung" if the associated macro is executed.
-
-* Menu:
-
-* Page Location Traps::
-* Diversion Traps::
-* Input Line Traps::
-* Blank Line Traps::
-* End-of-input Traps::
-
-
-File: groff,  Node: Page Location Traps,  Next: Diversion Traps,  Prev: Traps,  Up: Traps
-
-Page Location Traps
--------------------
-
-"Page location traps" perform an action when `gtroff' reaches or passes
-a certain vertical location on the page.  Page location traps have a
-variety of purposes, including:
-
-   * setting headers and footers
-
-   * setting body text in multiple columns
-
-   * setting footnotes
-
- - Request: .vpt flag
- - Register: \n[.vpt]
-     Enable vertical position traps if FLAG is non-zero, or disables
-     them otherwise.  Vertical position traps are traps set by the `wh'
-     or `dt' requests.  Traps set by the `it' request are not vertical
-     position traps.  The parameter that controls whether vertical
-     position traps are enabled is global.  Initially vertical position
-     traps are enabled.  The current setting of this is available in the
-     `.vpt' read-only number register.
-
-     Note that a page can't be ejected if `vpt' is set to zero.
-
- - Request: .wh dist [macro]
-     Set a page location trap.  Non-negative values for DIST set the
-     trap relative to the top of the page; negative values set the trap
-     relative to the bottom of the page.  Default scaling indicator is
-     `v'.
-
-     MACRO is the name of the macro to execute when the trap is sprung.
-     If MACRO is missing, remove the first trap (if any) at DIST.
-
-     The following is a simple example of how many macro packages set
-     headers and footers.
-
-
-          .de hd                \" Page header
-          '  sp .5i
-          .  tl 'Title''date'
-          '  sp .3i
-          ..
-          .
-          .de fo                \" Page footer
-          '  sp 1v
-          .  tl ''%''
-          '  bp
-          ..
-          .
-          .wh 0   hd            \" trap at top of the page
-          .wh -1i fo            \" trap one inch from bottom
-
-     A trap at or below the bottom of the page is ignored; it can be
-     made active by either moving it up or increasing the page length
-     so that the trap is on the page.
-
-     It is possible to have more than one trap at the same location; to
-     do so, the traps must be defined at different locations, then
-     moved together with the `ch' request; otherwise the second trap
-     would replace the first one.  Earlier defined traps hide later
-     defined traps if moved to the same position (the many empty lines
-     caused by the `bp' request are omitted in the following example):
-
-
-          .de a
-          .  nop a
-          ..
-          .de b
-          .  nop b
-          ..
-          .de c
-          .  nop c
-          ..
-          .
-          .wh 1i a
-          .wh 2i b
-          .wh 3i c
-          .bp
-              => a b c
-
-
-          .ch b 1i
-          .ch c 1i
-          .bp
-              => a
-
-
-          .ch a 0.5i
-          .bp
-              => a b
-
-
- - Register: \n[.t]
-     A read-only number register holding the distance to the next trap.
-
-     If there are no traps between the current position and the bottom
-     of the page, it contains the distance to the page bottom.  In a
-     diversion, the distance to the page bottom is infinite (the
-     returned value is the biggest integer which can be represented in
-     `groff') if there are no diversion traps.
-
- - Request: .ch macro [dist]
-     Change the location of a trap.  The first argument is the name of
-     the macro to be invoked at the trap, and the second argument is
-     the new location for the trap (note that the parameters are
-     specified in opposite order as in the `wh' request).  This is
-     useful for building up footnotes in a diversion to allow more
-     space at the bottom of the page for them.
-
-     Default scaling indicator for DIST is `v'.  If DIST is missing,
-     the trap is removed.
-
-
- - Register: \n[.ne]
-     The read-only number register `.ne' contains the amount of space
-     that was needed in the last `ne' request that caused a trap to be
-     sprung.  Useful in conjunction with the `.trunc' register.  *Note
-     Page Control::, for more information.
-
-     Since the `.ne' register is only set by traps it doesn't make much
-     sense to use it outside of trap macros.
-
- - Register: \n[.trunc]
-     A read-only register containing the amount of vertical space
-     truncated by the most recently sprung vertical position trap, or,
-     if the trap was sprung by an `ne' request, minus the amount of
-     vertical motion produced by the `ne' request.  In other words, at
-     the point a trap is sprung, it represents the difference of what
-     the vertical position would have been but for the trap, and what
-     the vertical position actually is.
-
-     Since the `.trunc' register is only set by traps it doesn't make
-     much sense to use it outside of trap macros.
-
- - Register: \n[.pe]
-     A read-only register which is set to 1 while a page is ejected with
-     the `bp' request (or by the end of input).
-
-     Outside of traps this register is always zero.  In the following
-     example, only the second call to `x' is caused by `bp'.
-
-
-          .de x
-          \&.pe=\\n[.pe]
-          .br
-          ..
-          .wh 1v x
-          .wh 4v x
-          A line.
-          .br
-          Another line.
-          .br
-              => A line.
-                 .pe=0
-                 Another line.
-          
-                 .pe=1
-
-
-   An important fact to consider while designing macros is that
-diversions and traps do not interact normally.  For example, if a trap
-invokes a header macro (while outputting a diversion) which tries to
-change the font on the current page, the effect will not be visible
-before the diversion has completely been printed (except for input
-protected with `\!' or `\?') since the data in the diversion is already
-formatted.  In most cases, this is not the expected behaviour.
-
-
-File: groff,  Node: Diversion Traps,  Next: Input Line Traps,  Prev: Page Location Traps,  Up: Traps
-
-Diversion Traps
----------------
-
- - Request: .dt [dist macro]
-     Set a trap _within_ a diversion.  DIST is the location of the trap
-     (identical to the `wh' request; default scaling indicator is `v')
-     and MACRO is the name of the macro to be invoked.  If called
-     without arguments, the diversion trap is removed.
-
-     Note that there exists only a single diversion trap.
-
-     The number register `.t' still works within diversions.  *Note
-     Diversions::, for more information.
-
-
-File: groff,  Node: Input Line Traps,  Next: Blank Line Traps,  Prev: Diversion Traps,  Up: Traps
-
-Input Line Traps
-----------------
-
- - Request: .it n macro
- - Request: .itc n macro
-     Set an input line trap.  N is the number of lines of input which
-     may be read before springing the trap, MACRO is the macro to be
-     invoked.  Request lines are not counted as input lines.
-
-     For example, one possible use is to have a macro which prints the
-     next N lines in a bold font.
-
-
-          .de B
-          .  it \\$1 B-end
-          .  ft B
-          ..
-          .
-          .de B-end
-          .  ft R
-          ..
-
-     The `itc' request is identical except that an interrupted text
-     line (ending with `\c') is not counted as a separate line.
-
-     Both requests are associated with the current environment (*note
-     Environments::); switching to another environment disables the
-     current input trap, and going back reactivates it, restoring the
-     number of already processed lines.
-
-
-File: groff,  Node: Blank Line Traps,  Next: End-of-input Traps,  Prev: Input Line Traps,  Up: Traps
-
-Blank Line Traps
-----------------
-
- - Request: .blm macro
-     Set a blank line trap.  `gtroff' executes MACRO when it encounters
-     a blank line in the input file.
-
-
-File: groff,  Node: End-of-input Traps,  Prev: Blank Line Traps,  Up: Traps
-
-End-of-input Traps
-------------------
-
- - Request: .em macro
-     Set a trap at the end of input.  MACRO is executed after the last
-     line of the input file has been processed.
-
-     For example, if the document had to have a section at the bottom
-     of the last page for someone to approve it, the `em' request could
-     be used.
-
-
-          .de approval
-          .  ne 5v
-          .  sp |(\\n[.t] - 6v)
-          .  in +4i
-          .  lc _
-          .  br
-          Approved:\t\a
-          .  sp
-          Date:\t\t\a
-          ..
-          .
-          .em approval
-
-
+Local Variables:
+coding: iso-8859-1
+End:

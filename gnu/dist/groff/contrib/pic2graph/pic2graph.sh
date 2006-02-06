@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 #
 # pic2graph -- compile PIC image descriptions to bitmap images
 #
@@ -32,7 +32,7 @@
 # We don't have complete option coverage on eqn because this is primarily
 # intended as a pic translator; we can live with eqn defaults. 
 #
-# Id: pic2graph.sh,v 1.5 2003/10/31 19:32:36 wlemb Exp
+# Id: pic2graph.sh,v 1.7 2005/05/18 07:03:07 wl Exp
 #
 groffpic_opts=""
 gs_opts=""
@@ -95,7 +95,7 @@ trap 'exit_status=$?; rm -rf $tmp && exit $exit_status' 0 2 15
 # 4. Use convert(1) to crop the PostScript and turn it into a bitmap.
 (echo ".EQ"; echo $eqndelim; echo ".EN"; echo ".PS"; cat; echo ".PE") | \
     groff -e -p $groffpic_opts -Tps -P-pletter > $tmp/pic2graph.ps \
-    && convert -crop 0x0 $convert_opts $tmp/pic2graph.ps $tmp/pic2graph.$format \
+    && convert -trim -crop 0x0 $convert_opts $tmp/pic2graph.ps $tmp/pic2graph.$format \
     && cat $tmp/pic2graph.$format
 
 # End

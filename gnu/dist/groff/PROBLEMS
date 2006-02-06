@@ -450,8 +450,12 @@ Make sure that the paper size is `letter'.  See groff_tmac(5).
 
 This error means you haven't correctly installed the application
 defaults file, GXditview.ad; `make install' does this for you
-automatically, so either you didn't do `make install', or you don't
-have imake configured correctly.
+automatically, so either you didn't do `make install', or you haven't
+passed a good `--appresdir=<DIR>' argument to groff's configure script.
+
+See the X(7) man page for information how and where application resource
+files have to be located.  Look for the XAPPLRESDIR and XUSERFILESEARCHPATH
+environment variables.
 
 ----------------------------------------------------------------------
 
@@ -629,13 +633,13 @@ as empty):
 
 Create a script called 'eqn':
 
- > #!/bin/sh
+ > #! /bin/sh
  > if [ ${1:-""} = /usr/pub/eqnchar ] ; then shift ; fi
  > geqn $*
 
 and a script called 'neqn':
 
- > #!/bin/sh
+ > #! /bin/sh
  > if [ ${1:-""} = /usr/pub/eqnchar ] ; then shift ; fi
  > geqn -Tascii $*
 
@@ -655,7 +659,7 @@ To get PostScript output from 'man -t', you also need to create a
 --- /usr/local/bin/psroff       Sat Feb 13 17:45:46 1993
 ***************
 *** 1,8 ****
-  #!/bin/sh
+  #! /bin/sh
 ! # Emulate nroff with groff.
 
   prog="$0"
@@ -664,7 +668,7 @@ To get PostScript output from 'man -t', you also need to create a
 
   for i
 --- 1,8 ----
-  #!/bin/sh
+  #! /bin/sh
 ! # Emulate psroff with groff.
 
   prog="$0"
@@ -716,30 +720,6 @@ Compilation Problems
 
 You need bison version 1.875b or greater.  Alternatively, use yacc or
 byacc.
-
-----------------------------------------------------------------------
-
-* My compiler fails to build src/utils/indxbib/signal.c, giving
-  messages like
-
-    signal.c: cannot convert `int (*)(int)' to `void (*)(int)'
-    for argument `2' to `void (* signal(int, void (*)(int)))(int)'
-
-  I use a C++ compiler for compiling C programs.
-
-The current version of the configure script doesn't handle C++ very
-well if used as a substitute for a C compiler.  In this particular
-case, it failed to recognize the proper return type of signal handlers.
-An easy fix is to manually edit the file `src/include/config.h'
-(created by configure), changing the line
-
-  #define RETSIGTYPE int
-
-to
-
-  #define RETSIGTYPE void
-
-Say `make clean' before restarting compilation.
 
 ----------------------------------------------------------------------
 
@@ -818,8 +798,11 @@ argument is a const char *.  Fix the declaration of open() in
 This occurs because GNU make and Unix make handle VPATH differently,
 and the groff build relies on GNU make's VPATH handling.
 
-Use GNU make to work around the problem.  In Solaris 8, GNU make is
-on the Software Companion CD and is installed as /opt/sfw/bin/gmake.
+Use GNU make <http://www.gnu.org/software/make/> to work around this.
+In Solaris 8 and 9, GNU make is on the Software Companion CD in
+package SFWgmake and is installed as /opt/sfw/bin/gmake.  Prebuilt
+versions of GNU make for Solaris are also available from
+sunfreeware.com.
 
 ----------------------------------------------------------------------
 
@@ -894,11 +877,27 @@ directory and include that directory with a -I option.
 
 ----------------------------------------------------------------------
 
-* I get errors when I try to compile groff with Sun C++ version 5.0
-  or 5.1.
+* I get errors when I try to compile groff with Forte Development 6
+  or 6u1, or Sun C++ version 5.0 through 5.2.
 
-This is a known problem; see Sun bug #4301919.  As of this writing, no
-patch is available.  Use GCC 2.95.2 or later instead.
+This is a known problem; see Sun bug #4301919.  See Sun patches
+109482, 109490, 109508, and 109509 for fixes.
+
+----------------------------------------------------------------------
+
+* I get warnings from the Sun linker while using gcc 3.4.0:
+
+  ld: warning: relocation error: R_SPARC_UA32:
+      file groff/src/libs/libgroff/libgroff.a(getopt.o): symbol optarg:
+      external symbolic relocation against non-allocatable
+      section .debug_info; cannot be processed at runtime:
+      relocation ignored
+
+This seems to be a known problem (Sun bugs #4910101 and #4910810,
+filed in September 2003; gcc bug #15599, filed May 2004) without a
+public fix as of this writing.  A work-around is to use option
+`-gstabs+' instead of `-g' (and a high probability that the output is
+only debuggable with gdb but not with Sun's debuggers).
 
 ----------------------------------------------------------------------
 

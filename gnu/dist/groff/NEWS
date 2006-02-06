@@ -1,6 +1,181 @@
 This file describes recent user-visible changes in groff.  Bug fixes are not
 described.  There are more details in the man and info pages.
 
+VERSION 1.19.2
+==============
+
+Troff
+-----
+
+o Analogously to the .ft and \f pair, two new requests `gcolor' and
+  `fcolor' (which pair with \m and \M, respectively) have been added to
+  set the glyph and background colours.
+
+o A new read-only, string-valued register `.sty' returns the name of the
+  current style.
+
+o Two new conditional operators `F <name>' and `S <name>' have been added.
+  `F' is true if a font <name> exists.  `S' is true if a style <name> has
+  been registered.
+
+o Cyrillic characters have been added to the `utf8' and `html' output
+  devices.
+
+Pic
+---
+
+o The `by' argument in a `for' loop can now be negative if it is additive.
+  For the multiplicative case, it must be greater than zero.
+
+Eqn
+---
+
+o The following keywords aren't new but haven't been documented previously:
+
+    undef NAME    (to undefine a macro)
+    copy  "FILE"  (a synonym for `include')
+    space n       (to modify the vertical spacing before and after
+                   an equation)
+
+o The following macros aren't new but haven't been documented previously:
+
+    Alpha, ..., Omega   (the same as `ALPHA', ..., `OMEGA')
+    ldots               (three dots on the base line)
+    dollar              (a dollar glyph)
+
+o The following keywords have been extended.  Again, this isn't new but
+  hasn't been documented previously:
+
+    col n { ... }
+    lcol n { ... }
+    rcol n { ... }
+    ccol n { ... }
+    pile n { ... }
+    lpile n { ... }
+    rpile n { ... }
+    cpile n { ... }   (set vertical spacing between rows to N)
+
+Grohtml
+-------
+
+o This device driver has been raised to beta stage; its set of tags should
+  be stable now.
+
+o New command line option `-s' to set the base point size.
+
+o New command line option `-S' to set the split level while generating
+  multiple files.
+
+Grotty
+------
+
+o Experimental support for zero-width and double-width characters.
+  
+Gxditview
+---------
+
+o On platforms which have the X Window System this program is now built and
+  installed automatically.
+
+Xtotroff
+--------
+
+o This program to create font definition files for xditview isn't new but
+  hasn't been installed previously.
+
+Groffer
+-------
+
+o A security problem (reported as CAN-2004-0969) has been fixed.
+
+Gdiffmk
+-------
+
+o A new script contributed by Mike Bianchi.  It compares two groff, nroff,
+  or troff documents and creates an output with added margin characters
+  (using `.mc') to indicate the differences.
+
+Pdfroff
+-------
+
+o A new wrapper script contributed by Keith Marshall to easily create PDF
+  documents with groff.
+
+Macro packages
+--------------
+
+o ms.tmac
+
+  . Support for fractional point sizes: A value for the `PS', `VS', `FPS',
+    and `VPS' register larger than or equal to 1000 is always divided by
+    1000.  For example, `.nr PS 10250' sets the document's font size to
+    10.25 points.
+
+  . The `Ds' and `De' macros provided in ms since groff version 1.19 have
+    been removed; the equivalent `DS' and `DE' macros should be used
+    instead.  X11 documents which actually use `Ds' and `De' always load a
+    specific macro file from the X11 distribution (`macros.t') which
+    provides proper definitions for the two macros.
+
+  . The following registers have been added for improving layout control:
+
+    PORPHANS
+      Defines number of lines following `LP', `PP', `QP', `IP' or `XP' which
+      must be kept together, before any automatic page break.
+
+    HORPHANS
+      Sets number of lines of following paragraph which must be kept with a
+      heading, defined by `NH' or `SH', before any automatic page break.
+
+    GROWPS
+      Sets the first level of heading (set with `NH') which will keep the
+      same point size as body text.
+
+    PSINCR
+      Sets the point size increment for each level of heading (set with
+      `NH'), below the threshold level set by `GROWPS'; e.g., if
+      \n[PS] = 10, \n[GROWPS] = 3 and \n[PSINCR] = 2.0p, then `.NH 1' will
+      produce 14pt headings, `.NH 2' will produce 12pt, and all other levels
+      will remain at 10pt (because \n[PS] = 10).
+
+  . The `SH' macro now accepts a numeric argument, to make heading size
+    match that of `NH' with same argument value when the `GROWPS'/`PSINCR'
+    feature is enabled.
+
+  Please refer to the documentation of the ms package for other, minor
+  improvements.
+
+o me.tmac
+
+  The section type set with the `++' request is available in the `_M'
+  register.  This isn't new but hasn't been documented before.
+
+o www.tmac
+
+  The `HR' macro no longer causes an empty line for non-HTML devices.
+
+  A new macro `HEAD' has been added to directly add data to the
+  <head>...</head> block.
+
+  New macros `OLS' and `OLE' to start and end an ordered list.
+
+  New macros `DLS' and `DLE' to start and end a definition list.
+
+Pdfmark
+-------
+
+o A new macro package contributed by Keith Marshall which implements PDF
+  marks.  This is in alpha stage currently.
+
+Miscellaneous
+-------------
+
+o Two new keywords to the DESC file have been added which are needed for
+  grohtml: `image_generator' and `unscaled_charwidths'.  The former gives
+  the name of the program which creates PNG images, and the latter makes
+  troff always use unscaled character widths.
+
+
 VERSION 1.19.1
 ==============
 

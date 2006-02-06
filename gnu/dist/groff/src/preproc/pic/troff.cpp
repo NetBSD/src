@@ -1,7 +1,7 @@
-/*	$NetBSD: troff.cpp,v 1.1.1.2 2004/07/30 14:44:59 wiz Exp $	*/
+/*	$NetBSD: troff.cpp,v 1.1.1.3 2006/02/06 18:14:29 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -19,7 +19,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "pic.h"
 #include "common.h"
@@ -490,7 +490,7 @@ void troff_output::set_fill(double f)
   if (last_filled) {
     free(last_filled);
     last_filled = 0;
-    printf("\\M[]\n");
+    printf(".fcolor\n");
   }
 }
 
@@ -500,14 +500,14 @@ void troff_output::set_color(char *color_fill, char *color_outlined)
     if (last_filled || last_outlined) {
       reset_color();
     }
-    // \m and \M emit a node in compatibility mode only,
+    // .gcolor and .fcolor emit a node in compatibility mode only,
     // but that won't work anyway
     if (color_fill) {
-      printf("\\M[%s]\n", color_fill);
+      printf(".fcolor %s\n", color_fill);
       last_filled = strsave(color_fill);
     }
     if (color_outlined) {
-      printf("\\m[%s]\n", color_outlined);
+      printf(".gcolor %s\n", color_outlined);
       last_outlined = strsave(color_outlined);
     }
   }
@@ -517,12 +517,12 @@ void troff_output::reset_color()
 {
   if (driver_extension_flag) {
     if (last_filled) {
-      printf("\\M[]\n");
+      printf(".fcolor\n");
       a_delete last_filled;
       last_filled = 0;
     }
     if (last_outlined) {
-      printf("\\m[]\n");
+      printf(".gcolor\n");
       a_delete last_outlined;
       last_outlined = 0;
     }

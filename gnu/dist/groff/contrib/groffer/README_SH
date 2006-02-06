@@ -1,39 +1,39 @@
-Description of groffer.sh, the shell version of groffer
-
-Display groff files and man pages on X or tty, even when compressed.
+Additional description for the shell version of `groffer'
 
 
-Usage
+Scripts
 
-Input comes from either standard input or command line parameters that
-represent names of exisiting roff files or standardized specifications
-for searching man pages.  All of these can be compressed in a format
-that is decompressible by `gzip', including `.gz', `bz2', and `.Z'.
+The shell version of `groffer' contains two files, `groffer.sh' and
+`groffer2.sh'.
 
-The following displaying modes are available:
-- Display formatted input with the X roff viewer `gxditview',
-- with a Prostcript viewer,
-- with a dvi viewer,
-- with a web browser.
-- Display formatted input in plain text mode.
-- Run a pager on the formatted input in a text terminal (tty).
-- Generate output for some groff device on stdout without a viewer.
-- Output only the source code without any groff processing.
-- Generate the troff intermediate output on standard output
-  without groff postprocessing.
-By default, the program tries to display with `gxditview' as graphical
-device, `tty' mode with a pager is tried as text display.
+`groffer.sh' is a short introductory script without any functions.  I
+can be run with a very poor Bourne shell.  It just contains some basic
+variables, the reading of the configuration files, and the
+determination of the shell for `groffer2.sh'.  This script is
+transformed by `make' into `groffer' which will be installed into
+@bindir@, which is usually /usr/local/bin.
+
+`groffer2.sh' is a long main script with all functions; it is called
+by `groffer.sh' (`groffer' after installation).  It is installed
+unchanged into @libdir@/groff/groffer, which is usually
+/usr/local/lib/groff/groffer.  This script can be called with a
+different shell, using the `groffer' option `--shell'.
 
 
-Several File Arguments
+Options
 
-So far, `groffer' bundles all filespec parameters into a single output
-file in the same way as `groff'.  The disadvantage of this is that all
-file name arguments must have the same groff language.
+The `groffer' script provides its own option parser.  It is compatible
+to the usual GNU style command line This includes long option names
+with two signs such as `--option', clusters of short options, the
+mixing of options and non-option file names, the option `--' to close
+the option handling, and it is possible to abbreviate the long option
+names.
 
-To change this, the option parsing must be revised for large parts.
-It seems that this would create incompatibilities, so the actual
-option strategy is kept.
+The flexible mixing of options and file names in GNU style is always
+possible, even if the environment variable `$POSIXLY_CORRECT' is set
+to a non-empty value.  This disables the rather wicked POSIX behavior
+to terminate option parsing when the first non-option command line
+argument is found.
 
 
 Error Handling
@@ -44,115 +44,32 @@ subshells.  This was solved by sending kill signals, see $_PROCESS_ID
 and error().
 
 
-Shell Compatibility
+Function Definitions in `groffer2.sh'
 
-This shell script is compatible to the both the GNU and the POSIX
-shell and utilities.  Care was taken to restrict the programming
-technics used here in order to achieve POSIX compatibility as far
-back as POSIX P1003.2 Draft 11.2 of September 1991.
+Each funtion in groffer2.sh has a description that starts with the
+function name and symbols for its arguments in paranthesis `()'.  Each
+`<>' construction gives an argument name that just gives a hint on
+what the argument is meant to be; these argument names are otherwise
+irrelevant.  The `>' sign can be followed by another character that
+shows how many of these arguments are possible.
 
-The only non-builtin used here is POSIX `sed'.  This script was
-tested under `bash', `ash', and `ksh'.  The speed under `ash' is
-more than double when compared to the larger shells.
+<arg>      exactly 1 of this argument
+<arg>?     0 or 1 of these arguments
+<arg>*     arbitrarily many such arguments, incl. none
+<arg>+     one or more such arguments
+<arg>...   one or more such arguments
+[...]      optional arguments
 
-This script provides its own option parser.  It is compatible to the
-usual GNU style command line (option clusters, long options, mixing
-of options and non-option file names), except that it is not
-possible to abbreviate long option names.
-
-The mixing of options and file names can be prohibited by setting
-the environment variable `$POSIXLY_CORRECT' to a non-empty value.
-This enables the rather wicked POSIX behavior to terminate option
-parsing when the first non-option command line argument is found.
-
-
-Survey of Functions defined in groffer.sh
-
-The elements specified within paranthesis `(<>)' give hints to what
-the arguments are meant to be; the argument names are irrelevant.
-<>?     0 or 1
-<>*     arbitrarily many such arguments, incl. none
-<>+     one or more such arguments
-<>      exactly 1
-
-A function that starts with an underscore `_' is an internal
-function for some function.  The internal functions are defined just
-after their corresponding function; they are not mentioned in the
-following.
-
-abort (text>*)
-base_name (path)
-catz (<file>)
-clean_up ()
-diag (text>*)
-dirname_append (<path> [<dir...>])
-dirname_chop (<path>)
-do_filearg (<filearg>)
-do_nothing ()
-echo2 (<text>*)
-echo2n (<text>*)
-error (<text>*)
-get_first_essential (<arg>*)
-is_dir (<name>)
-is_empty (<string>)
-is_equal (<string1> <string2>)
-is_file (<name>)
-is_non_empty_file (<name>)
-is_not_dir (<name>)
-is_not_empty (<string>)
-is_not_equal (<string1> <string2>)
-is_not_file (<name>)
-is_not_prog (<name>)
-is_not_writable (<name>)
-is_not_yes (<string>)
-is_prog (<name>)
-is_yes (<string>)
-leave ()
-landmark (<text>)
-list_append (<list> <element>...)
-list_from_cmdline (<s_n> <s_a> <l_n> <l_n> [<cmdline_arg>...])
-list_from_split (<string> <separator>)
-list_get (<list>)
-list_has (<list> <element>)
-list_has_not (<list> <element>)
-main_*(), see after the functions
-man_do_filespec (<filespec>)
-man_setup ()
-man_register_file (<file> [<name> [<section>]])
-man_search_section (<name> <section>)
-man_set()
-manpath_add_lang(<path> <language>)
-manpath_add_system()
-manpath_from_path ()
-normalize_args (<shortopts> <longopts> <arg>*)
-path_chop (<path>)
-path_clean (<path>)
-path_contains (<path> <dir>)
-path_not_contains (<path> <dir>)
-path_split (<path>)
-register_file (<filename>)
-register_title (<filespec>)
-res (<var_name> <function_name> <arg>...)
-reset ()
-save_stdin ()
-string_contains (<string> <part>)
-string_not_contains (<string> <part>)
-tmp_cat ()
-tmp_create (<suffix>?)
-to_tmp (<filename>)
-trap_clean ()
-trap_set (<functionname>)
-usage ()
-version ()
-warning (<string>)
-whatis (<filename>)
-where (<program>)
+A function that starts with an underscore `_' is an internal function
+for some other function.  The internal functions are defined just
+after their corresponding function.
 
 
-External non-groffer Environment Variables
+External Environment Variables
 
-If these variables are exported in the script the `ash' shell coughs
-when calling `groff' in `main_display()'.
+The groffer.sh script uses the following external system variables.
+It is supposed that these variables are already exported outside of
+groffer.sh; otherwise they do not have a value within the script.
 
 external system environment variables that are explicitly used
 $DISPLAY:		Presets the X display.
@@ -160,7 +77,7 @@ $LANG:			For language specific man pages.
 $LC_ALL:		For language specific man pages.
 $LC_MESSAGES:		For language specific man pages.
 $PAGER:			Paging program for tty mode.
-$PATH:			Path for the programs called (: list).
+$PATH:			Path for the programs called (`:' separated list).
 
 groffer native environment variables
 $GROFFER_OPT		preset options for groffer.
@@ -196,24 +113,156 @@ The basic functions for object handling are obj_*().
 The class `list' represents an array structure, see list_*().
 
 
+Shell Compatibility
+
+The `groffer' shell scripts are compatible to both the GNU and the
+POSIX shell and utilities.  Care was taken to restrict the programming
+technics used here in order to achieve POSIX compatibility as far back
+as POSIX P1003.2 Draft 11.2 of September 1991.  This draft is
+available at http://www.funet.fi/pub/doc/posix/p1003.2/d11.2 in the
+internet.
+
+The POSIX draft does not include `local' variables for functions.  So
+this concept was replaced by global variables with a prefix that
+differs for each function.  The prefix is chosen from the function
+name.  These quasi-local variables are unset before each return of the
+function.
+
+The `groffer' scripts were tested under the shells `ash', `bash',
+`bash-minimal', `dash', 'ksh', `mksh', `pdksh', 'posh', and `zsh'
+without problems in Linux Debian.  A shell can be tested by the
+`groffer' option `--shell', but that will run only with groffer2.sh.
+To start it directly from the beginning under this shell the following
+command can be used.
+
+  <shell-name> groffer.sh --shell=<shell-name> <argument>...
+
+
+Some shells are not fully POSIX compatible.  For them the following
+restrictions were done.  For more information look at the
+documentation `Portable shells' in the `info' page of `autoconf'
+(look-up in Emacs-Help-Manuals_Info).
+
+- The command parts `then', `else', and `do' must be written each on a
+  line of their own.
+
+- Replace `for i in "$@"' by `for i' and remove internal `;' (kah).
+
+- Replace `set -- ...' by `set x ...; shift'.  After the first
+  non-option argument, all arguments including those starting with `-'
+  are accepted as non-option.  For variables or `$()' constructs with
+  line-breaks, use `eval set' without quotes.  That transforms a
+  line-break within a variable to a space.
+
+- The name of the variable in `for' is chosen as a single character
+  (old ash).  The content of such variables is not safe because it can
+  also occur in other functions.  So it is often stored in an
+  additional quasi-local variable.
+
+- `echo' is not portable on options; some `echo' commands have many
+  options, others have none.  So `echo -n' cannot be used, such that
+  the output of each function has complete lines.  There are two
+  methods to avoid having `-' as the first character of any argument.
+  Either a character such as `x' can be prepended to the argument;
+  this must later on be removed by `sed'.  Otherwise, `echo' can be
+  replaced by `cat <<EOF'.
+
+- `ls' has problems.  Old UNIX systems echoed the error message to
+  standard output.  So handle the output with `sed'.  If the output
+  contains `not found' map it to an empty string.
+
+- As `test -e' is not available in Solaris 2.5 replace it by
+  `test -f || test -d'.
+
+- As `unset' is not supported by all shells replace it by `eval
+  ${_UNSET}' where this variable is `unset' if it exists and `:'
+  otherwise.
+
+- Some shells have problems with options in `eval'.  So quoting must
+  be done right to hide the options from `eval'.
+
+- In backquote calls `` avoid the backquote ` in comments.
+
+- Replace `true' by `:', `false' isn't used.
+
+- Do not redefine builtins as functions (ash).
+
+- Avoid `[^...]' in `case' patterns (ash).
+
+- `trap' does not allow error code 127.
+
+The scripts call the following commands with all options used:
+.
+:
+apropos
+break
+bzip2 -c -d -t
+cat
+catz
+cd
+continue
+echo
+eval
+expr
+grep
+groff -v
+grog -T -X -Z
+gs -c -d -f -q -s
+gzip -c -d -f
+less -r -R
+ls
+man -k --apropos
+mkdir
+mv
+pwd
+return
+rm -f -r
+rmdir
+sed -e -n
+set -e
+sh -c
+shift
+test -c -d -f -r -s -w -x
+trap
+umask
+unset
+
+
+Bugs
+
+If the `groffer' run is interrupted by Crtl-C the clean up is not done
+by all shells.  The `trap' commands work for the shells `bash',
+`bash-minimal', and 'ksh'; they do not work for `ash', `dash',
+`pdksh', `posh', and `zsh'.
+
+
 ####### License
 
-Copyright (C) 2003,2004 Free Software Foundation, Inc.
+Last update: 19 August 2005
+
+Copyright (C) 2003,2004,2005 Free Software Foundation, Inc.
 Written by Bernd Warken
 
-This file is part of groffer, which is part of groff.
+This file is part of `groffer', which is part of `groff'.
 
-groff is free software; you can redistribute it and/or modify it
+`groff' is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
-groff is distributed in the hope that it will be useful, but WITHOUT
+`groff' is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
 License for more details.
 
 You should have received a copy of the GNU General Public License
-along with groff; see the files COPYING and LICENSE in the top
-directory of the groff source.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+along with `groff'; see the files COPYING and LICENSE in the top
+directory of the `groff' source.  If not, write to the Free Software
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA.
+
+
+####### Emacs settings
+
+Local Variables:
+mode: text
+End:

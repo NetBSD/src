@@ -1,17 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
-<title>Mom -- Table of Contents</title>
+<title>Mom, version 1.3-a -- Table of Contents</title>
 </head>
 <body bgcolor="#dfdfdf">
 
 <!====================================================================>
 
-<h1><u>Table of Contents</u></h1>
-<a href="#TOC_PROP">This link takes you to the top of the Table of Contents proper</a>
+<h1 align="center"><u>Table of Contents for mom, version 1.3-a</u></h1>
+
+The table of contents has grown quite large.  If you've been using
+<strong>mom</strong> for a while, you might prefer the
+<a href="macrolist.html#TOP"><strong>Quick Reference Guide</strong></a>.
+<p>
+If you're new to <strong>mom</strong>, click on any link in the
+<a href="#QUICK_TOC"><strong>Quick Table of Contents</strong></a>
+to go to the
+appropriate section of the <strong>Full Table of Contents</strong>.
+<p>
+Or click
+<a href="#TOC_PROP">here</a>
+to go directly to the <strong>Full Table of Contents</strong>.
 <p>
 <hr>
-<h2>Quick Table of Contents Navigation</h2>
+
+<a name="QUICK_TOC"><h2>Quick Table of Contents</h2></a>
 <a href="#INTRO"><strong>INTRODUCTORY STUFF</strong></a>
 <ul>
     <li><a href="#WHAT">What is mom?</a>
@@ -34,6 +48,7 @@
     <li><a href="#ESCAPES">Inline escapes</a>
     <li><a href="#COLOR">Coloured text</a>
 </ul>
+<p>
 <a href="#DOCPROC"><strong>DOCUMENT PROCESSING WITH MOM</strong></a>
 <ul>
     <li><a href="#DOCPROC_INTRO">Introduction to document processing</a>
@@ -43,14 +58,16 @@
     <li><a href="#PAGINATE">Pagination</a>
     <li><a href="#RV">Recto/verso printing and collating</a>
     <li><a href="#COVER">Cover pages</a>
+    <li><a href="#REF">Bibliographies and references</a>
     <li><a href="#LETTER">Writing letters</a>
     <li><a href="#TYPEMACDOC">Using typesetting macros during document processing</a>
+    <li><a href="#QUICK">Quick reference guide to mom</a>
     <li><a href="#APP">Appendices</a>
 </ul>
 <br>
 <hr>
 <a name="TOC_PROP"></a>
-<h2>The Table of Contents Proper</h2>
+<h2>Full Table of Contents</h2>
 <a name="INTRO"></a>
 <a name="WHAT"></a>
 	<li><a href="intro.html#INTRO"><strong>1. WHAT IS MOM?</strong></a>
@@ -92,7 +109,7 @@
 			<li><a href="typesetting.html#INDEX_SETUP">4.2.1 Macro list</a>
 		</ul>
 <a name="PARAM"></a>
-		<li><a href="typesetting.html#BASIC_PARAMS"><strong>4.3 Basic Parameters</strong></a> -- family, font, point size, line space, line length, autolead
+		<li><a href="typesetting.html#BASIC_PARAMS"><strong>4.3 Basic Parameters</strong></a> -- family, font, fallback font, point size, line space, line length, autolead
 		<ul>
 			<li><a href="typesetting.html#INDEX_BASIC">4.3.1 Macro list</a>
 		</ul>
@@ -144,7 +161,7 @@
 		<li><a href="goodies.html#GOODIES"><strong>4.11 Goodies</strong></a> -- aliases,
 			transparent lines, smartquotes, caps,
 			underscoring/underlining, padding lines, leaders, drop
-			caps, superscripts, (nested) lists
+			caps, superscripts, (nested) lists, user-definable strings
 		<ul>
 			<li><a href="goodies.html#INDEX_GOODIES">4.11.1 Macro list</a>
 		</ul>
@@ -188,6 +205,10 @@
 				<li><a href="docprocessing.html#CHAPTER_TITLE">5.3.2.6 CHAPTER_TITLE</a>
 				<li><a href="docprocessing.html#DRAFT">5.3.2.7 DRAFT</a>
 				<li><a href="docprocessing.html#REVISION">5.3.2.8 REVISION</a>
+				<li><a href="docprocessing.html#COPYRIGHT">5.3.2.9 COPYRIGHT</a>
+				<li><a href="docprocessing.html#MISC">5.3.2.10 MISC</a>
+				<li><a href="docprocessing.html#COVERTITLE">5.3.2.11 COVER_TITLE</a>
+				<li><a href="docprocessing.html#COVERTITLE">5.3.2.12 DOC_COVER_TITLE</a>
 			</ul>
 			<li><a href="docprocessing.html#DOCSTYLE_MACROS"><strong>5.3.3 The Docstyle Macros</strong></a>
 			<ul>
@@ -197,12 +218,15 @@
 			</ul>
 			<li><a href="docprocessing.html#STYLE_BEFORE_START"><strong>5.3.4 Changing Type and Style Parameters <em>before</em> START</strong></a>
 			<ul>
-				<li><a href="docprocessing.html#TYPE_BEFORE_START">5.3.4.1 Typesetting macros</a> -- usage
+				<li><a href="docprocessing.html#TYPE_BEFORE_START">5.3.4.1 Typesetting macros before START</a> -- usage
 				<ul>
 					<li><a href="docprocessing.html#COLOR">Colour</a>
 				</ul>
-				<li><a href="docprocessing.html#DOC_LEAD_ADJUST">5.3.4.2  DOC_LEAD_ADJUST</a> -- adjust document leading to fill pages
-				<li><a href="docprocessing.html#DOCHEADER">5.3.4.3 DOCHEADER</a> -- managing the docheader
+				<li><a href="docprocessing.html#DOC_LEAD_ADJUST">5.3.4.2  DOC_LEAD_ADJUST</a> -- adjusting the document
+				    <a href="definitions.html#TERMS_LEADING">leading</a> (line spacing) to fill pages
+				<li><a href="docprocessing.html#DOCHEADER">5.3.4.3 DOCHEADER</a> -- managing the
+                    <a href="definitions.html#TERMS_DOCHEADER">document header</a>
+
 			    <li><a href="docprocessing.html#COLUMNS_INTRO">5.3.4.4 COLUMNS</a> -- setting documents in columns
 			</ul>
 			<li><a href="docprocessing.html#START_MACRO"><strong>5.3.5 ***START***</strong></a> -- the macro to initiate document processing
@@ -211,6 +235,8 @@
 			<ul>
 				<li><a href="docprocessing.html#INDEX_DOC_PARAM">5.3.6.1 Macro list</a>
 			</ul>
+<a name="TYPEMACDOC"></a>
+		<li><a href="typemacdoc.html#TYPESETTING"><strong>5.3.7 Using typesetting macros during document processing</strong></A>
 		</ul>
 <a name="TAGS"></a>
 		<li><a href="docelement.html#DOCELEMENT"><strong>5.4 THE DOCUMENT ELEMENT TAGS</strong></a>
@@ -225,15 +251,17 @@
 			<li><a href="docelement.html#HEAD_INTRO">5.4.4 Main heads</a>
 			<li><a href="docelement.html#SUBHEAD_INTRO">5.4.5 Subheads</a>
 			<li><a href="docelement.html#PARAHEAD_INTRO">5.4.6 Paragraph heads</a>
-			<li><a href="docelement.html#LINEBREAK_INTRO">5.4.7 Linebreaks</a> -- author linebreaks
-			<li><a href="docelement.html#QUOTE_INTRO">5.4.8 Quotes</a> -- line for line poetic quotes or unformatted, verbatim text
+			<li><a href="docelement.html#LINEBREAK_INTRO">5.4.7 Linebreaks</a> -- author linebreaks (section breaks)
+			<li><a href="docelement.html#QUOTE_INTRO">5.4.8 Quotes</a> -- line for line poetic quotes or unformatted, verbatim text (e.g. code snippets)
 			<li><a href="docelement.html#BLOCKQUOTE_INTRO">5.4.9 Blockquotes</a> -- cited material
 			<li><a href="docelement.html#LIST_INTRO">5.4.10 Lists</a> -- (nested) lists
-			<li><a href="docelement.html#FOOTNOTE_INTRO">5.4.11 Footnotes</a>
-			<li><a href="docelement.html#ENDNOTE_INTRO">5.4.12 Endnotes</a>
-			<li><a href="docelement.html#BLANK_PAGE_TITLE">5.4.13 Blank page</a>
-			<li><a href="docelement.html#TOC_INTRO">5.4.14 Table of contents</a>
-			<li><a href="docelement.html#FINIS_INTRO">5.4.15 Document termination</a> -- FINIS
+			<li><a href="docelement.html#NUMBER_LINES_INTRO">5.4.11 Line numbering</a>
+			<li><a href="docelement.html#FOOTNOTE_INTRO">5.4.12 Footnotes</a>
+			<li><a href="docelement.html#ENDNOTE_INTRO">5.4.13 Endnotes</a>
+			<li><a href="docelement.html#MARGIN_NOTES_INTRO">5.4.14 Margin notes</a>
+			<li><a href="docelement.html#BLANK_PAGE_TITLE">5.4.15 Blank pages</a>
+			<li><a href="docelement.html#TOC_INTRO">5.4.16 Table of contents</a>
+			<li><a href="docelement.html#FINIS_INTRO">5.4.17 Document termination</a> -- FINIS
 		</ul>
 <a name="HDRFTR"></a>
 		<li><a href="headfootpage.html#HEADFOOTPAGE"><strong>5.5 DOCUMENT HEADERS AND FOOTERS</strong></a>
@@ -267,26 +295,34 @@
 			</ul>
 		</ul>
 <a name="COVER"></a>
-		<li><a href="cover.html"><strong>5.8 CREATING A COVER PAGE</strong></a>
+		<li><a href="cover.html#COVER_TOP"><strong>5.8 CREATING COVER PAGES</strong></a>
+		<br>
+<a name="REF"></a>
+		<li><a href="refer.html#REF_TOP"><strong>5.9 BIBLIOGRAPHIES AND REFERENCES</strong></a>
 		<br>
 <a name="LETTER"></a>
-		<li><a href="letters.html#LETTERS"><strong>5.9 WRITING LETTERS</strong></a>
+		<li><a href="letters.html#LETTERS"><strong>5.10 WRITING LETTERS</strong></a>
 		<ul>
-			<li><a href="letters.html#LETTERS_INTRO">5.9.1 Introduction to writing letters</a>
-			<li><a href="letters.html#TUTORIAL">5.9.2 Tutorial on writing letters</a>
-			<li><a href="letters.html#LETTERS_DEFAULTS">5.9.3 Default style for letters</a>
-			<li><a href="letters.html#LETTERS_MACROS">5.9.4 The letter macros</a>
+			<li><a href="letters.html#LETTERS_INTRO">5.10.1 Introduction to writing letters</a>
+			<li><a href="letters.html#TUTORIAL">5.10.2 Tutorial on writing letters</a>
+			<li><a href="letters.html#LETTERS_DEFAULTS">5.10.3 Default style for letters</a>
+			<li><a href="letters.html#LETTERS_MACROS">5.10.4 The letter macros</a>
 		</ul>
-<a name="TYPEMACDOC"></a>
-		<li><a href="typemacdoc.html#TYPESETTING"><strong>5.10 USING TYPESETTING MACROS DURING DOCUMENT PROCESSING</strong></a>
 	</ul>
+<a name="QUICK"></a>
+<li><a href="macrolist.html#QUICK"><strong>6. QUICK REFERENCE GUIDE TO MOM</strong></a>
+<p>
 <a name="APP"></a>
-	<li><a href="appendices.html#APPENDICES"><strong>6. APPENDICES</strong></a>
+<li><a href="appendices.html#APPENDICES"><strong>7. APPENDICES</strong></a>
 	<ul>
-		<li><a href="appendices.html#MOREDOC">6.1 Further notes on this documentation</a>
-		<li><a href="appendices.html#CODENOTES">6.2 Some reflections on mom</a>
-		<li><a href="reserved.html#RESERVED">6.3 List of reserved words</a>
-		<li><a href="appendices.html#CONTACT">6.4 Contact the author</a>
+		<li><a href="appendices.html#MOREDOC">7.1 Further notes on this documentation</a>
+		<li><a href="appendices.html#FONTS">7.2 Adding PostScript fonts to groff</a>
+		<ul>
+			<li><a href="appendices.html#HOWTO">7.2.1 How to create a PostScript font for use with groff</a>
+		</ul>
+		<li><a href="appendices.html#CODENOTES">7.2 Some reflections on mom</a>
+		<li><a href="reserved.html#RESERVED">7.3 List of reserved words</a>
+		<li><a href="appendices.html#CONTACT">7.4 Contact the author</a>
 	</ul>
 </ul>
 </body>
