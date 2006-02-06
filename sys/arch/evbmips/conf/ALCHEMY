@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.1 2006/02/06 03:43:46 gdamore Exp $
+#	$NetBSD: ALCHEMY,v 1.2 2006/02/06 23:23:53 gdamore Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"ALCHEMY-$Revision: 1.1 $"
+#ident 		"ALCHEMY-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -14,6 +14,12 @@ options 	NOFPU		# No FPU
 options 	SOFTFLOAT	# emulate FPU insn
 #options	CONSPEED=115200	# YAMON default
 options 	HZ=512		# for profiling
+
+# CPU support
+options		ALCHEMY_AU1000
+options		ALCHEMY_AU1100
+options		ALCHEMY_AU1500
+options		ALCHEMY_AU1550
 
 #options 	LOCKDEBUG
 options 	SOSEND_LOAN

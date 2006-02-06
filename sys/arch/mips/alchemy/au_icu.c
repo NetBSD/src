@@ -1,4 +1,35 @@
-/*	$NetBSD: au_icu.c,v 1.12 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.13 2006/02/06 23:23:53 gdamore Exp $	*/
+
+/*-
+ * Copyright (c) 2006 Itronix Inc.
+ * All rights reserved.
+ *
+ * Written by Garrett D'Amore for Itronix Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of Itronix Inc. may not be used to endorse
+ *    or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY ITRONIX INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ITRONIX INC. BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */ 
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.12 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.13 2006/02/06 23:23:53 gdamore Exp $");
 
 #include "opt_ddb.h"
 
@@ -116,112 +147,51 @@ const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 
 #define	NIRQS		64
 
-const char *au1000_intrnames[NIRQS] = {
-	"uart0",
-	"uart1",
-	"uart2",
-	"uart3",
-	"ssi0",
-	"ssi1",
-	"dma0",
-	"dma1",
-	"dma2",
-	"dma3",
-	"dma4",
-	"dma5",
-	"dma6",
-	"dma7",
-	"pc0",
-	"pc0 match1",
-	"pc0 match2",
-	"pc0 match3",
-	"pc1",
-	"pc1 match1",
-	"pc1 match2",
-	"pc1 match3",
-	"irda tx",
-	"irda rx",
-	"usb intr",
-	"usb suspend",
-	"usb host",
-	"ac97",
-	"mac0",
-	"mac1",
-	"i2s",
-	"ac97 cmd",
-
-	"gpio 0",
-	"gpio 1",
-	"gpio 2",
-	"gpio 3",
-	"gpio 4",
-	"gpio 5",
-	"gpio 6",
-	"gpio 7",
-	"gpio 8",
-	"gpio 9",
-	"gpio 10",
-	"gpio 11",
-	"gpio 12",
-	"gpio 13",
-	"gpio 14",
-	"gpio 15",
-	"gpio 16",
-	"gpio 17",
-	"gpio 18",
-	"gpio 19",
-	"gpio 20",
-	"gpio 21",
-	"gpio 22",
-	"gpio 23",
-	"gpio 24",
-	"gpio 25",
-	"gpio 26",
-	"gpio 27",
-	"gpio 28",
-	"gpio 29",
-	"gpio 30",
-	"gpio 31",
-};
-
-struct au1000_intrhead {
+struct au_icu_intrhead {
 	struct evcnt intr_count;
 	int intr_refcnt;
 };
-struct au1000_intrhead au1000_intrtab[NIRQS];
+struct au_icu_intrhead au_icu_intrtab[NIRQS];
 
 #define	NINTRS			4	/* MIPS INT0 - INT3 */
 
-struct au1000_cpuintr {
+struct au_cpuintr {
 	LIST_HEAD(, evbmips_intrhand) cintr_list;
 	struct evcnt cintr_count;
 };
 
-struct au1000_cpuintr au1000_cpuintrs[NINTRS];
-const char *au1000_cpuintrnames[NINTRS] = {
+struct au_cpuintr au_cpuintrs[NINTRS];
+const char *au_cpuintrnames[NINTRS] = {
 	"icu 0, req 0",
 	"icu 0, req 1",
 	"icu 1, req 0",
 	"icu 1, req 1",
 };
 
+static bus_addr_t ic0_base, ic1_base;
+
 void
 au_intr_init(void)
 {
-	int i;
+	int			i;
+	struct au_chipdep	*chip;
 
 	for (i = 0; i < NINTRS; i++) {
-		LIST_INIT(&au1000_cpuintrs[i].cintr_list);
-		evcnt_attach_dynamic(&au1000_cpuintrs[i].cintr_count,
-		    EVCNT_TYPE_INTR, NULL, "mips", au1000_cpuintrnames[i]);
+		LIST_INIT(&au_cpuintrs[i].cintr_list);
+		evcnt_attach_dynamic(&au_cpuintrs[i].cintr_count,
+		    EVCNT_TYPE_INTR, NULL, "mips", au_cpuintrnames[i]);
 	}
 
-	for (i = 0; i < NIRQS; i++) {
-		/* XXX steering - use an irqmap array? */
+	chip = au_chipdep();
+	KASSERT(chip != NULL);
 
-		au1000_intrtab[i].intr_refcnt = 0;
-		evcnt_attach_dynamic(&au1000_intrtab[i].intr_count,
-		    EVCNT_TYPE_INTR, NULL, "au1000", au1000_intrnames[i]);
+	ic0_base = chip->icus[0];
+	ic1_base = chip->icus[1];
+
+	for (i = 0; i < NIRQS; i++) {
+		au_icu_intrtab[i].intr_refcnt = 0;
+		evcnt_attach_dynamic(&au_icu_intrtab[i].intr_count,
+		    EVCNT_TYPE_INTR, NULL, chip->name, chip->irqnames[i]);
 	}
 }
 
@@ -229,9 +199,13 @@ void *
 au_intr_establish(int irq, int req, int level, int type,
     int (*func)(void *), void *arg)
 {
-	struct evbmips_intrhand *ih;
-	uint32_t icu_base;
-	int cpu_int, s;
+	struct evbmips_intrhand	*ih;
+	uint32_t		icu_base;
+	int			cpu_int, s;
+	struct au_chipdep	*chip;
+
+	chip = au_chipdep();
+	KASSERT(chip != NULL);
 
 	if (irq >= NIRQS)
 		panic("au_intr_establish: bogus IRQ %d", irq);
@@ -254,18 +228,18 @@ au_intr_establish(int irq, int req, int level, int type,
 	 *     a list anyway) per irq, not per CPU interrupt?
 	 */
 	cpu_int = (irq < 32 ? 0 : 2);
-	LIST_INSERT_HEAD(&au1000_cpuintrs[cpu_int].cintr_list, ih, ih_q);
+	LIST_INSERT_HEAD(&au_cpuintrs[cpu_int].cintr_list, ih, ih_q);
 
 	/*
 	 * Now enable it.
 	 */
-	if (au1000_intrtab[irq].intr_refcnt++ == 0) {
-		icu_base = (irq < 32) ? IC0_BASE : IC1_BASE;
+	if (au_icu_intrtab[irq].intr_refcnt++ == 0) {
+		icu_base = (irq < 32) ? ic0_base : ic1_base;
 
 		irq &= 31;	/* throw away high bit if set */
 		irq = 1 << irq;	/* only used as a mask from here on */
 
-		/* XXX Only high-level interrupts for now */
+		/* XXX Only level interrupts for now */
 		switch (type) {
 		case IST_NONE:
 		case IST_PULSE:
@@ -325,8 +299,8 @@ au_intr_disestablish(void *cookie)
 	 * Now, disable it, if there is nothing remaining on the
 	 * list.
 	 */
-	if (au1000_intrtab[irq].intr_refcnt-- == 1) {
-		icu_base = (irq < 32) ? IC0_BASE : IC1_BASE;
+	if (au_icu_intrtab[irq].intr_refcnt-- == 1) {
+		icu_base = (irq < 32) ? ic0_base : ic1_base;
 
 		irq &= 31;	/* throw away high bit if set */
 		irq = 1 << irq;	/* only used as a mask from here on */
@@ -369,27 +343,27 @@ au_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		 */
 		switch (level) {
 		case 0:
-			icu_base = IC0_BASE;
+			icu_base = ic0_base;
 			irqmask = REGVAL(icu_base + IC_REQUEST0_INT);
 			break;
 		case 1:
-			icu_base = IC0_BASE;
+			icu_base = ic0_base;
 			irqmask = REGVAL(icu_base + IC_REQUEST1_INT);
 			break;
 		case 2:
-			icu_base = IC1_BASE;
+			icu_base = ic1_base;
 			irqmask = REGVAL(icu_base + IC_REQUEST0_INT);
 			break;
 		case 3:
-			icu_base = IC1_BASE;
+			icu_base = ic1_base;
 			irqmask = REGVAL(icu_base + IC_REQUEST1_INT);
 			break;
 		}
-		au1000_cpuintrs[level].cintr_count.ev_count++;
-		LIST_FOREACH(ih, &au1000_cpuintrs[level].cintr_list, ih_q) {
+		au_cpuintrs[level].cintr_count.ev_count++;
+		LIST_FOREACH(ih, &au_cpuintrs[level].cintr_list, ih_q) {
 			/* XXX should check is see if interrupt is masked? */
 			if (1 << ih->ih_irq & irqmask) {
-				au1000_intrtab[ih->ih_irq].intr_count.ev_count++;
+				au_icu_intrtab[ih->ih_irq].intr_count.ev_count++;
 				(*ih->ih_func)(ih->ih_arg);
 
 				REGVAL(icu_base + IC_MASK_CLEAR) = 1 << ih->ih_irq;
