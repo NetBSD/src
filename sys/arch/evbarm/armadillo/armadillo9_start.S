@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_start.S,v 1.1 2005/11/13 06:33:05 hamajima Exp $ */
+/*	$NetBSD: armadillo9_start.S,v 1.2 2006/02/06 14:03:22 hamajima Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -76,8 +76,8 @@ Lunmapped:
 	adr	sp, Ltable
 	ldr	sp, [sp]
 
-	/* initialize UART1 */
-	bl	init_UART1
+	/* initialize UART */
+	bl	init_UART
 #endif
 	/* copy to virtual address */
 	adr	r0, Lsection
@@ -204,10 +204,21 @@ Lsection:
 	.word	__bss_start
 
 #ifdef VERBOSE_INIT_ARM
-init_UART1:
+#ifndef CONUNIT
+#define	CONUNIT	0
+#endif
+#if CONUNIT == 0
+#define	UART_BASE	0x008c0000 /* +0x80000000 */
+#elif CONUNIT == 1
+#define	UART_BASE	0x008d0000 /* +0x80000000 */
+#elif CONUNIT == 2
+#define	UART_BASE	0x008e0000 /* +0x80000000 */
+#endif
+
+init_UART:
 	stmfd	sp!, {r4, r5, lr}
 	mov	r4, #0x80000000
-	add	r4, r4, #0x008c0000
+	add	r4, r4, #UART_BASE
 	ldr	r5, [r4, #0x08]
 	orr	r5, r5, #0x10
 	str	r5, [r4, #0x08]	/* enable FIFO */
@@ -218,7 +229,7 @@ init_UART1:
 print_char:	/* char = r5 */
 	stmfd	sp!, {r4, r6, lr}
 	mov	r4, #0x80000000
-	add	r4, r4, #0x008c0000
+	add	r4, r4, #UART_BASE
 1:
 	ldr	r6, [r4, #0x18]
 	tst	r6, #0x20	/* check TXFF */
