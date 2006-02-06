@@ -1,7 +1,7 @@
-/*	$NetBSD: tty.cpp,v 1.4 2004/07/30 14:56:51 wiz Exp $	*/
+/*	$NetBSD: tty.cpp,v 1.5 2006/02/06 18:25:48 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989-2000, 2001, 2002, 2003, 2004
+/* Copyright (C) 1989-2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -19,7 +19,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "driver.h"
 #include "device.h"
@@ -95,7 +95,7 @@ static unsigned char bold_underline_mode;
 #define SGR_REVERSE CSI "7m"
 #define SGR_NO_REVERSE CSI "27m"
 // many terminals can't handle `CSI 39 m' and `CSI 49 m' to reset
-// the foreground and bachground color, respectively; thus we use
+// the foreground and background color, respectively; we thus use
 // `CSI 0 m' exclusively
 #define SGR_DEFAULT CSI "0m"
 
@@ -157,6 +157,7 @@ class glyph {
   static glyph *free_list;
 public:
   glyph *next;
+  int w;
   int hpos;
   unsigned int code;
   unsigned char mode;
@@ -206,10 +207,10 @@ class tty_printer : public printer {
   int is_bold;
   int cu_flag;
   PTABLE(schar) tty_colors;
-  void make_underline();
-  void make_bold(unsigned int);
+  void make_underline(int);
+  void make_bold(unsigned int, int);
   schar color_to_idx(color *col);
-  void add_char(unsigned int, int, int, color *, color *, unsigned char);
+  void add_char(unsigned int, int, int, int, color *, color *, unsigned char);
   char *make_rgb_string(unsigned int, unsigned int, unsigned int);
   int tty_color(unsigned int, unsigned int, unsigned int, schar *,
 		schar = DEFAULT_COLOR_IDX);
@@ -301,11 +302,18 @@ tty_printer::~tty_printer()
   a_delete lines;
 }
 
-void tty_printer::make_underline()
+void tty_printer::make_underline(int w)
 {
   if (old_drawing_scheme) {
-    putchar('_');
-    putchar('\b');
+    if (!w)
+      warning("can't underline zero-width character");
+    else {
+      int n = w / font::hor;
+      for (int i = 0; i < n; i++)
+	putchar('_');
+      for (int j = 0; j < n; j++)
+	putchar('\b');
+    }
   }
   else {
     if (!is_underline) {
@@ -320,11 +328,17 @@ void tty_printer::make_underline()
   }
 }
 
-void tty_printer::make_bold(unsigned int c)
+void tty_printer::make_bold(unsigned int c, int w)
 {
   if (old_drawing_scheme) {
-    put_char(c);
-    putchar('\b');
+    if (!w)
+      warning("can't print zero-width character in bold");
+    else {
+      int n = w / font::hor;
+      put_char(c);
+      for (int i = 0; i < n; i++)
+	putchar('\b');
+    }
   }
   else {
     if (!is_bold)
@@ -351,15 +365,15 @@ schar tty_printer::color_to_idx(color *col)
 void tty_printer::set_char(int i, font *f, const environment *env,
 			   int w, const char *)
 {
-  if (w != font::hor)
-    fatal("width of character not equal to horizontal resolution");
-  add_char(f->get_code(i),
+  if (w % font::hor != 0)
+    fatal("width of character not a multiple of horizontal resolution");
+  add_char(f->get_code(i), w,
 	   env->hpos, env->vpos,
 	   env->col, env->fill,
 	   ((tty_font *)f)->get_mode());
 }
 
-void tty_printer::add_char(unsigned int c,
+void tty_printer::add_char(unsigned int c, int w,
 			   int h, int v,
 			   color *fore, color *back,
 			   unsigned char mode)
@@ -400,6 +414,7 @@ void tty_printer::add_char(unsigned int c,
     cached_vpos = vpos;
   }
   glyph *g = new glyph;
+  g->w = w;
   g->hpos = hpos;
   g->code = c;
   g->fore_color_idx = color_to_idx(fore);
@@ -423,7 +438,8 @@ void tty_printer::add_char(unsigned int c,
 void tty_printer::special(char *arg, const environment *env, char type)
 {
   if (type == 'u') {
-    add_char(*arg - '0', env->hpos, env->vpos, env->col, env->fill, CU_MODE);
+    add_char(*arg - '0', 0, env->hpos, env->vpos, env->col, env->fill,
+	     CU_MODE);
     return;
   }
   if (type != 'p')
@@ -462,12 +478,12 @@ void tty_printer::special(char *arg, const environment *env, char type)
 
 void tty_printer::change_color(const environment * const env)
 {
-  add_char(0, env->hpos, env->vpos, env->col, env->fill, COLOR_CHANGE);
+  add_char(0, 0, env->hpos, env->vpos, env->col, env->fill, COLOR_CHANGE);
 }
 
 void tty_printer::change_fill_color(const environment * const env)
 {
-  add_char(0, env->hpos, env->vpos, env->col, env->fill, COLOR_CHANGE);
+  add_char(0, 0, env->hpos, env->vpos, env->col, env->fill, COLOR_CHANGE);
 }
 
 void tty_printer::draw(int code, int *p, int np, const environment *env)
@@ -487,20 +503,20 @@ void tty_printer::draw(int code, int *p, int np, const environment *env)
       len = -len;
     }
     if (len >= 0 && len <= font::vert)
-      add_char(vline_char, env->hpos, v, env->col, env->fill,
+      add_char(vline_char, font::hor, env->hpos, v, env->col, env->fill,
 	       VDRAW_MODE|START_LINE|END_LINE);
     else {
-      add_char(vline_char, env->hpos, v, env->col, env->fill,
+      add_char(vline_char, font::hor, env->hpos, v, env->col, env->fill,
 	       VDRAW_MODE|START_LINE);
       len -= font::vert;
       v += font::vert;
       while (len > 0) {
-	add_char(vline_char, env->hpos, v, env->col, env->fill,
+	add_char(vline_char, font::hor, env->hpos, v, env->col, env->fill,
 		 VDRAW_MODE|START_LINE|END_LINE);
 	len -= font::vert;
 	v += font::vert;
       }
-      add_char(vline_char, env->hpos, v, env->col, env->fill,
+      add_char(vline_char, font::hor, env->hpos, v, env->col, env->fill,
 	       VDRAW_MODE|END_LINE);
     }
   }
@@ -513,20 +529,20 @@ void tty_printer::draw(int code, int *p, int np, const environment *env)
       len = -len;
     }
     if (len >= 0 && len <= font::hor)
-      add_char(hline_char, h, env->vpos, env->col, env->fill,
+      add_char(hline_char, font::hor, h, env->vpos, env->col, env->fill,
 	       HDRAW_MODE|START_LINE|END_LINE);
     else {
-      add_char(hline_char, h, env->vpos, env->col, env->fill,
+      add_char(hline_char, font::hor, h, env->vpos, env->col, env->fill,
 	       HDRAW_MODE|START_LINE);
       len -= font::hor;
       h += font::hor;
       while (len > 0) {
-	add_char(hline_char, h, env->vpos, env->col, env->fill,
+	add_char(hline_char, font::hor, h, env->vpos, env->col, env->fill,
 		 HDRAW_MODE|START_LINE|END_LINE);
 	len -= font::hor;
 	h += font::hor;
       }
-      add_char(hline_char, h, env->vpos, env->col, env->fill,
+      add_char(hline_char, font::hor, h, env->vpos, env->col, env->fill,
 	       HDRAW_MODE|END_LINE);
     }
   }
@@ -678,7 +694,7 @@ void tty_printer::end_page(int page_length)
 	    if (next_tab_pos > p->hpos)
 	      break;
 	    if (cu_flag)
-	      make_underline();
+	      make_underline(p->w);
 	    else if (!old_drawing_scheme && is_underline) {
 	      if (italic_flag)
 		putstring(SGR_NO_ITALIC);
@@ -694,7 +710,7 @@ void tty_printer::end_page(int page_length)
 	}
 	for (; hpos < p->hpos; hpos++) {
 	  if (cu_flag)
-	    make_underline();
+	    make_underline(p->w);
 	  else if (!old_drawing_scheme && is_underline) {
 	    if (italic_flag)
 	      putstring(SGR_NO_ITALIC);
@@ -722,7 +738,7 @@ void tty_printer::end_page(int page_length)
 	continue;
       }
       if (p->mode & UNDERLINE_MODE)
-	make_underline();
+	make_underline(p->w);
       else if (!old_drawing_scheme && is_underline) {
 	if (italic_flag)
 	  putstring(SGR_NO_ITALIC);
@@ -733,7 +749,7 @@ void tty_printer::end_page(int page_length)
 	is_underline = 0;
       }
       if (p->mode & BOLD_MODE)
-	make_bold(p->code);
+	make_bold(p->code, p->w);
       else if (!old_drawing_scheme && is_bold) {
 	putstring(SGR_NO_BOLD);
 	is_bold = 0;
@@ -749,7 +765,7 @@ void tty_printer::end_page(int page_length)
 	}
       }
       put_char(p->code);
-      hpos++;
+      hpos += p->w / font::hor;
     }
     if (!old_drawing_scheme
 	&& (is_bold || is_underline
