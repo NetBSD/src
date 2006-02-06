@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.295 2006/01/21 09:54:03 kleink Exp $
+#	$NetBSD: NetBSD.dist,v 1.296 2006/02/06 18:35:27 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -326,10 +326,14 @@
 ./usr/share/dict/papers
 ./usr/share/dict/special
 ./usr/share/doc
+./usr/share/doc/groff
+./usr/share/doc/groff/mom
 ./usr/share/doc/html
 ./usr/share/doc/html/bind9
 ./usr/share/doc/html/bind9/arm
 ./usr/share/doc/html/bzip2
+./usr/share/doc/html/groff
+./usr/share/doc/html/groff/mom
 ./usr/share/doc/html/postfix
 ./usr/share/doc/psd
 ./usr/share/doc/psd/01.cacm
