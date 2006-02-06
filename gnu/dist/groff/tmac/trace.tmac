@@ -59,10 +59,10 @@
 .!!de am
 .  do ecs
 .  ec
-.  do !!am \$1
+.  do !!de \$1
 .    ie "\$1"\\$0" .do tm1 "\\*[!!sp]*** am trace enter: \\$0 \\$@
 .    el .do tm1 "\\*[!!sp]*** am trace enter \$1: \\$0 \\$@
-.    as !!sp " \"
+.    do as !!sp " \"
 .    do nop \\*[!!\$1]\\
 .    do substring !!sp 1
 .    ie "\$1"\\$0" .do tm1 "\\*[!!sp]*** trace exit: \\$0 \\$@
@@ -79,10 +79,10 @@
 .!!de am1
 .  do ecs
 .  ec
-.  do !!am \$1
+.  do !!de \$1
 .    ie "\$1"\\$0" .do tm1 "\\*[!!sp]*** am1 trace enter: \\$0 \\$@
 .    el .do tm1 "\\*[!!sp]*** am1 trace enter \$1: \\$0 \\$@
-.    as !!sp " \"
+.    do as !!sp " \"
 .    do nop \\*[!!\$1]\\
 .    do substring !!sp 1
 .    ie "\$1"\\$0" .do tm1 "\\*[!!sp]*** trace exit: \\$0 \\$@

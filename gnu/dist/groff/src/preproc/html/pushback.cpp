@@ -1,7 +1,7 @@
-/*	$NetBSD: pushback.cpp,v 1.1.1.2 2004/07/30 14:45:03 wiz Exp $	*/
+/*	$NetBSD: pushback.cpp,v 1.1.1.3 2006/02/06 18:14:42 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 2000, 2001, 2003, 2004 Free Software Foundation, Inc.
+/* Copyright (C) 2000, 2001, 2003, 2004, 2005 Free Software Foundation, Inc.
      Written by Gaius Mulley (gaius@glam.ac.uk).
 
 This file is part of groff.
@@ -18,7 +18,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "lib.h"
 
@@ -85,14 +85,12 @@ pushBackBuffer::pushBackBuffer (char *filename)
 
 pushBackBuffer::~pushBackBuffer ()
 {
-  int old;
-
   if (charStack != 0) {
     free(charStack);
   }
   close(0);
   /* restore stdin in file descriptor 0 */
-  old = dup(stdIn);
+  dup(stdIn);
   close(stdIn);
 }
 
@@ -164,10 +162,8 @@ static int isWhite (char ch)
 
 void pushBackBuffer::skipToNewline (void)
 {
-  char ch;
-
   while ((putPB(getPB()) != '\n') && (! eofFound)) {
-    ch = getPB();
+    getPB();
   }
 }
 

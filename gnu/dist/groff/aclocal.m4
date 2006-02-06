@@ -1,21 +1,22 @@
 # Autoconf macros for groff.
-# Copyright (C) 1989-1995, 2001, 2002, 2003 Free Software Foundation, Inc.
-# 
+# Copyright (C) 1989-1995, 2001, 2002, 2003, 2004, 2005
+# Free Software Foundation, Inc.
+#
 # This file is part of groff.
-# 
+#
 # groff is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free
 # Software Foundation; either version 2, or (at your option) any later
 # version.
-# 
+#
 # groff is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along
 # with groff; see the file COPYING.  If not, write to the Free Software
-# Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA.
 
 AC_DEFUN([GROFF_PRINT],
   [if test -z "$PSPRINT"; then
@@ -41,7 +42,7 @@ AC_DEFUN([GROFF_PRINT],
    # Figure out DVIPRINT from PSPRINT.
    AC_MSG_CHECKING([for command to use for printing dvi files])
    if test -n "$PSPRINT" && test -z "$DVIPRINT"; then
-     if test "X$PSPRINT" = "Xlpr"; then
+     if test "x$PSPRINT" = "xlpr"; then
        DVIPRINT="lpr -d"
      else
        DVIPRINT="$PSPRINT"
@@ -59,56 +60,84 @@ AC_DEFUN([GROFF_PROG_YACC],
 # The following programs are needed for grohtml.
 
 AC_DEFUN([GROFF_HTML_PROGRAMS],
-  [make_html=html
+  [AC_REQUIRE([GROFF_GHOSTSCRIPT_PATH])
+   make_html=html
    make_install_html=install_html
 
    missing=
    AC_FOREACH([groff_prog],
-     [pnmcut pnmcrop pnmtopng psselect pnmtops gs],
+     [pnmcut pnmcrop pnmtopng psselect pnmtops],
      [AC_CHECK_PROG(groff_prog, groff_prog, [found], [missing])
       if test $[]groff_prog = missing; then
-	missing="$missing groff_prog"
+	missing="$missing \`groff_prog'"
       fi;])
 
+   test "$GHOSTSCRIPT" = "missing" && missing="$missing \`gs'"
+
    if test -n "$missing"; then
-     cnt=0
-     for i in $missing
-     do
-       cnt=`expr $cnt + 1`
-       eval "prog$cnt=$i"
-     done
-     plural="s"
-     case $cnt in
-     1)
-       plural=""
-       progs="\`$prog1'" ;;
-     2)
-       progs="\`$prog1' and \`$prog2'" ;;
-     3)
-       progs="\`$prog1', \`$prog2', and \`$prog3'" ;;
-     4)
-       progs="\`$prog1', \`$prog2', \`$prog3', and \`$prog4'" ;;
-     5)
-       progs="\`$prog1', \`$prog2', \`$prog3', \`$prog4', and \`$prog5'" ;;
-     6)
-       progs="\`$prog1', \`$prog2', \`$prog3', \`$prog4', \`$prog5', and \`$prog6'" ;;
-     esac
+     plural=`set $missing; test $[#] -gt 1 && echo s`
+     missing=`set $missing
+       missing=""
+       while test $[#] -gt 0
+	 do
+	   case $[#] in
+	     1) missing="$missing$[1]" ;;
+	     2) missing="$missing$[1] and " ;;
+	     *) missing="$missing$[1], " ;;
+	   esac
+	   shift
+	 done
+	 echo $missing`
 
      make_html=
      make_install_html=
 
-     AC_MSG_WARN([
+     AC_MSG_WARN([missing program$plural:
 
   The program$plural
-    $progs
-  can't be found in the path, thus the HTML backend of groff (grohtml)
-  won't work properly.  Consequently, no documentation in HTML format
-  is built and installed.
+     $missing
+  cannot be found in the PATH.
+  Consequently, groff's HTML backend (grohtml) will not work properly;
+  therefore, it will neither be possible to prepare, nor to install,
+  documentation in HTML format.
      ])
    fi
 
    AC_SUBST([make_html])
    AC_SUBST([make_install_html])])
+
+# To produce PDF docs, we need both awk and ghostscript.
+
+AC_DEFUN([GROFF_PDFDOC_PROGRAMS],
+  [AC_REQUIRE([GROFF_AWK_PATH])
+   AC_REQUIRE([GROFF_GHOSTSCRIPT_PATH])
+
+   make_pdfdoc=pdfdoc
+   make_install_pdfdoc=install_pdfdoc
+
+   missing=""
+   test "$AWK" = missing && missing="\`awk'"
+   test "$GHOSTSCRIPT" = missing && missing="$missing \`gs'"
+   if test -n "$missing"; then
+     plural=`set $missing; test $[#] -eq 2 && echo s`
+     test x$plural = xs \
+       && missing=`set $missing; echo "$[1] and $[2]"` \
+       || missing=`echo $missing`
+
+     make_pdfdoc=
+     make_install_pdfdoc=
+
+     AC_MSG_WARN([missing program$plural:
+
+  The program$plural $missing cannot be found in the PATH.
+  Consequently, groff's PDF formatter (pdfroff) will not work properly;
+  therefore, it will neither be possible to prepare, nor to install,
+  documentation in PDF format.
+     ])
+   fi
+
+   AC_SUBST([make_pdfdoc])
+   AC_SUBST([make_install_pdfdoc])])
 
 # Check whether pnmtops can handle the -nosetpage option.
 
@@ -123,13 +152,57 @@ AC_DEFUN([GROFF_PNMTOPS_NOSETPAGE],
    fi
    AC_SUBST([pnmtops_nosetpage])])
 
+# Check location of `gs'; allow `--with-gs=PROG' option to override.
+
+AC_DEFUN([GROFF_GHOSTSCRIPT_PATH],
+  [AC_REQUIRE([GROFF_GHOSTSCRIPT_PREFS])
+   AC_ARG_WITH([gs],
+     [AS_HELP_STRING([--with-gs=PROG],
+       [actual [/path/]name of ghostscript executable])],
+     [GHOSTSCRIPT=$withval],
+     [AC_CHECK_TOOLS(GHOSTSCRIPT, [$ALT_GHOSTSCRIPT_PROGS], [missing])])
+   test "$GHOSTSCRIPT" = "no" && GHOSTSCRIPT=missing])
+
+# Preferences for choice of `gs' program...
+# (allow --with-alt-gs="LIST" to override).
+
+AC_DEFUN([GROFF_GHOSTSCRIPT_PREFS],
+  [AC_ARG_WITH([alt-gs],
+    [AS_HELP_STRING([--with-alt-gs=LIST],
+      [alternative names for ghostscript executable])],
+    [ALT_GHOSTSCRIPT_PROGS="$withval"],
+    [ALT_GHOSTSCRIPT_PROGS="gs gswin32c gsos2"])
+   AC_SUBST([ALT_GHOSTSCRIPT_PROGS])])
+
+# Check location of `awk'; allow `--with-awk=PROG' option to override.
+
+AC_DEFUN([GROFF_AWK_PATH],
+  [AC_REQUIRE([GROFF_AWK_PREFS])
+   AC_ARG_WITH([awk],
+     [AS_HELP_STRING([--with-awk=PROG],
+       [actual [/path/]name of awk executable])],
+     [AWK=$withval],
+     [AC_CHECK_TOOLS(AWK, [$ALT_AWK_PROGS], [missing])])
+   test "$AWK" = "no" && AWK=missing])
+
+# Preferences for choice of `awk' program; allow --with-alt-awk="LIST"
+# to override.
+
+AC_DEFUN([GROFF_AWK_PREFS],
+  [AC_ARG_WITH([alt-awk],
+    [AS_HELP_STRING([--with-alt-awk=LIST],
+      [alternative names for awk executable])],
+    [ALT_AWK_PROGS="$withval"],
+    [ALT_AWK_PROGS="gawk mawk nawk awk"])
+   AC_SUBST([ALT_AWK_PROGS])])
+
 # GROFF_CSH_HACK(if hack present, if not present)
 
 AC_DEFUN([GROFF_CSH_HACK],
   [AC_MSG_CHECKING([for csh hash hack])
 
 cat <<EOF >conftest.sh
-#!/bin/sh
+#! /bin/sh
 true || exit 0
 export PATH || exit 0
 exit 1
@@ -192,6 +265,48 @@ extern "C" { void srand(unsigned int); }
 	[Define if srand() returns void not int.])],
      [AC_MSG_RESULT([int])])
    AC_LANG_POP([C++])])
+
+# In April 2005, autoconf's AC_TYPE_SIGNAL is still broken.
+
+AC_DEFUN([GROFF_TYPE_SIGNAL],
+  [AC_MSG_CHECKING([for return type of signal handlers])
+   for groff_declaration in \
+     'extern "C" void (*signal (int, void (*)(int)))(int);' \
+     'extern "C" void (*signal (int, void (*)(int)) throw ())(int);' \
+     'void (*signal ()) ();' 
+   do
+     AC_COMPILE_IFELSE([
+	 AC_LANG_PROGRAM([[
+
+#include <sys/types.h>
+#include <signal.h>
+#ifdef signal
+# undef signal
+#endif
+$groff_declaration
+
+	 ]],
+	 [[
+
+int i;
+
+	 ]])
+       ],
+       [break],
+       [continue])
+   done
+
+   if test -n "$groff_declaration"; then
+     AC_MSG_RESULT([void])
+     AC_DEFINE([RETSIGTYPE], [void],
+       [Define as the return type of signal handlers
+	(`int' or `void').])
+   else
+     AC_MSG_RESULT([int])
+     AC_DEFINE([RETSIGTYPE], [int],
+       [Define as the return type of signal handlers
+	(`int' or `void').])
+   fi])
 
 AC_DEFUN([GROFF_SYS_NERR],
   [AC_LANG_PUSH([C++])
@@ -281,28 +396,6 @@ int z = UCHAR_MAX;
      [AC_MSG_RESULT([yes])
       AC_DEFINE([HAVE_CC_LIMITS_H], [1],
 	[Define if you have a C++ <limits.h>.])],
-     [AC_MSG_RESULT([no])])
-   AC_LANG_POP([C++])])
-
-AC_DEFUN([GROFF_STDINT_H],
-  [AC_LANG_PUSH([C++])
-   AC_MSG_CHECKING([C++ <stdint.h>])
-   AC_COMPILE_IFELSE([
-       AC_LANG_PROGRAM([[
-
-#include <stdint.h>
-
-       ]],
-       [[
-
-uint32_t x;
-int32_t y;
-
-       ]])
-     ],
-     [AC_MSG_RESULT([yes])
-      AC_DEFINE([HAVE_CC_STDINT_H], [1],
-	[Define if you have a C++ <stdint.h>.])],
      [AC_MSG_RESULT([no])])
    AC_LANG_POP([C++])])
 
@@ -426,7 +519,7 @@ AC_DEFUN([GROFF_BROKEN_SPOOLER_FLAGS],
 AC_DEFUN([GROFF_PAGE],
   [AC_MSG_CHECKING([default paper size])
    groff_prefix=$prefix
-   test "x$prefix" = xNONE && groff_prefix=$ac_default_prefix
+   test "x$prefix" = "xNONE" && groff_prefix=$ac_default_prefix
    if test -z "$PAGE"; then
      descfile=
      if test -r $groff_prefix/share/groff/font/devps/DESC; then
@@ -581,7 +674,7 @@ AC_DEFUN([GROFF_TMAC],
        *)
 	 grep "Copyright.*Free Software Foundation" $f >/dev/null \
 	      || tmac_wrap="$tmac_wrap $suff" ;;
-       esac 
+       esac
      done
    elif test -n "$sys_tmac_prefix"; then
      files=`echo $sys_tmac_prefix*`
@@ -704,7 +797,7 @@ AC_DEFUN([GROFF_NEED_DECLARATION],
    AC_LANG_PUSH([C++])
    AC_CACHE_VAL([groff_cv_decl_needed_$1],
      [AC_COMPILE_IFELSE([
-          AC_LANG_PROGRAM([[
+	  AC_LANG_PROGRAM([[
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
@@ -775,7 +868,7 @@ f = mkstemp;
 
 AC_DEFUN([GROFF_INTTYPES_H],
   [AC_LANG_PUSH([C++])
-   AC_MSG_CHECKING([for inttypes.h])
+   AC_MSG_CHECKING([C++ <inttypes.h>])
    AC_COMPILE_IFELSE([
        AC_LANG_PROGRAM([[
 
@@ -789,7 +882,9 @@ uintmax_t i = (uintmax_t)-1;
 
        ]])
      ],
-     [groff_cv_header_inttypes_h=yes],
+     [groff_cv_header_inttypes_h=yes
+      AC_DEFINE([HAVE_CC_INTTYPES_H], [1],
+	[Define if you have a C++ <inttypes.h>.])],
      [groff_cv_header_inttypes_h=no])
    AC_MSG_RESULT([$groff_cv_header_inttypes_h])
    AC_LANG_POP([C++])])
@@ -845,7 +940,7 @@ AC_DEFUN([GROFF_TARGET_PATH_SEPARATOR],
    cp ${srcdir}/src/include/nonposix.h conftest.h
    AC_COMPILE_IFELSE([
        AC_LANG_PROGRAM([[
-        
+	
 #include <ctype.h>
 #include "conftest.h"
 
@@ -862,3 +957,196 @@ make an error "Path separator is ';'"
      [GROFF_PATH_SEPARATOR=";"])
    AC_MSG_RESULT([$GROFF_PATH_SEPARATOR])
    AC_SUBST(GROFF_PATH_SEPARATOR)])
+
+# Check for X11.
+
+AC_DEFUN([GROFF_X11],
+  [AC_REQUIRE([AC_PATH_XTRA])
+   groff_no_x=$no_x
+   if test -z "$groff_no_x"; then
+     OLDCFLAGS=$CFLAGS
+     OLDLDFLAGS=$LDFLAGS
+     OLDLIBS=$LIBS
+     CFLAGS="$CFLAGS $X_CFLAGS"
+     LDFLAGS="$LDFLAGS $X_LIBS"
+     LIBS="$LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
+
+     LIBS="$LIBS -lXaw"
+     AC_MSG_CHECKING([for Xaw library and header files])
+     AC_LINK_IFELSE([
+	 AC_LANG_PROGRAM([[
+
+#include <X11/Intrinsic.h>
+#include <X11/Xaw/Simple.h>
+
+	 ]],
+	 [])
+       ],
+       [AC_MSG_RESULT([yes])],
+       [AC_MSG_RESULT([no])
+	groff_no_x="yes"])
+
+     LIBS="$LIBS -lXmu"
+     AC_MSG_CHECKING([for Xmu library and header files])
+     AC_LINK_IFELSE([
+	 AC_LANG_PROGRAM([[
+
+#include <X11/Intrinsic.h>
+#include <X11/Xmu/Converters.h>
+
+	 ]],
+	 [])
+       ],
+       [AC_MSG_RESULT([yes])],
+       [AC_MSG_RESULT([no])
+	groff_no_x="yes"])
+
+     CFLAGS=$OLDCFLAGS
+     LDFLAGS=$OLDLDFLAGS
+     LIBS=$OLDLIBS
+   fi
+
+   if test "x$groff_no_x" = "xyes"; then
+     AC_MSG_NOTICE([gxditview and xtotroff won't be built])
+   else
+     XDEVDIRS="font/devX75 font/devX75-12 font/devX100 font/devX100-12"
+     XPROGDIRS="src/devices/xditview src/utils/xtotroff"
+     XLIBDIRS="src/libs/libxutil"
+   fi
+
+   AC_SUBST([XDEVDIRS])
+   AC_SUBST([XPROGDIRS])
+   AC_SUBST([XLIBDIRS])])
+
+# Set up the `--with-appresdir' command line option.
+
+AC_DEFUN([GROFF_APPRESDIR_OPTION],
+  [AC_ARG_WITH([appresdir],
+     dnl Don't quote AS_HELP_STRING!
+     AS_HELP_STRING([--with-appresdir=DIR],
+		    [X11 application resource files]))])
+
+# Get a default value for the application resource directory.
+#
+# We ignore the `XAPPLRES' and `XUSERFILESEARCHPATH' environment variables.
+#
+# The goal is to find the `root' of X11.  Under most systems this is
+# `/usr/X11/lib'.  Application default files are then in
+# `/usr/X11/lib/X11/app-defaults'.
+#
+# Based on autoconf's AC_PATH_X macro.
+
+AC_DEFUN([GROFF_APPRESDIR_DEFAULT],
+  [if test -z "$groff_no_x"; then
+     # Create an Imakefile, run `xmkmf', then `make'.
+     rm -f -r conftest.dir
+     if mkdir conftest.dir; then
+       cd conftest.dir
+       # Make sure to not put `make' in the Imakefile rules,
+       # since we grep it out.
+       cat >Imakefile <<'EOF'
+
+xlibdirs:
+	@echo 'groff_x_usrlibdir="${USRLIBDIR}"; groff_x_libdir="${LIBDIR}"'
+EOF
+
+       if (xmkmf) >/dev/null 2>/dev/null && test -f Makefile; then
+	 # GNU make sometimes prints "make[1]: Entering...",
+	 # which would confuse us.
+	 eval `${MAKE-make} xlibdirs 2>/dev/null | grep -v make`
+
+	 # Open Windows `xmkmf' reportedly sets LIBDIR instead of USRLIBDIR.
+	 for groff_extension in a so sl; do
+	   if test ! -f $groff_x_usrlibdir/libX11.$groff_extension &&
+	      test -f $groff_x_libdir/libX11.$groff_extension; then
+	     groff_x_usrlibdir=$groff_x_libdir
+	     break
+	   fi
+	 done
+       fi
+
+       cd ..
+       rm -f -r conftest.dir
+     fi
+
+     # In case the test with `xmkmf' wasn't successful, try a suite of
+     # standard directories.  Check `X11' before `X11Rn' because it is often
+     # a symlink to the current release.
+     groff_x_libdirs='
+       /usr/X11/lib
+       /usr/X11R6/lib
+       /usr/X11R5/lib
+       /usr/X11R4/lib
+
+       /usr/lib/X11
+       /usr/lib/X11R6
+       /usr/lib/X11R5
+       /usr/lib/X11R4
+
+       /usr/local/X11/lib
+       /usr/local/X11R6/lib
+       /usr/local/X11R5/lib
+       /usr/local/X11R4/lib
+
+       /usr/local/lib/X11
+       /usr/local/lib/X11R6
+       /usr/local/lib/X11R5
+       /usr/local/lib/X11R4
+
+       /usr/X386/lib
+       /usr/x386/lib
+       /usr/XFree86/lib/X11
+
+       /usr/lib
+       /usr/local/lib
+       /usr/unsupported/lib
+       /usr/athena/lib
+       /usr/local/x11r5/lib
+       /usr/lpp/Xamples/lib
+
+       /usr/openwin/lib
+       /usr/openwin/share/lib'
+
+     if test -z "$groff_x_usrlibdir"; then
+       # We only test whether libX11 exists.
+       for groff_dir in $groff_x_libdirs; do
+	 for groff_extension in a so sl; do
+	   if test ! -r $groff_dir/libX11.$groff_extension; then
+	     groff_x_usrlibdir=$groff_dir
+	     break 2
+	   fi
+	 done
+       done
+     fi
+
+     if test "x$with_appresdir" = "x"; then
+       appresdir=$groff_x_usrlibdir/X11/app-defaults
+     else
+       appresdir=$with_appresdir
+     fi
+   fi
+   AC_SUBST([appresdir])])
+
+
+# Emit warning if --with-appresdir hasn't been used.
+
+AC_DEFUN([GROFF_APPRESDIR_CHECK],
+  [if test -z "$groff_no_x"; then
+     if test "x$with_appresdir" = "x"; then
+       AC_MSG_NOTICE([
+
+  The application resource file for gxditview will be installed as
+
+    $appresdir/GXditview
+
+  (an existing file will be saved as `GXditview.old').
+  To install it into a different directory, say, `/etc/gxditview',
+  add `--with-appresdir=/etc/gxditview' to the configure script
+  command line options and rerun it.  The environment variable
+  `APPLRESDIR' must then be set to `/etc/' (note the trailing slash),
+  omitting the `gxditview' part which is automatically appended by
+  the X11 searching routines for resource files.  More details can be
+  found in the X(7) manual page.
+       ])
+     fi
+   fi])
