@@ -1,5 +1,15 @@
-#	$NetBSD: files.alchemy,v 1.4 2005/12/11 12:18:09 christos Exp $
+#	$NetBSD: files.alchemy,v 1.5 2006/02/06 23:23:53 gdamore Exp $
 
+defflag opt_alchemy.h		ALCHEMY_AU1000
+				ALCHEMY_AU1100
+				ALCHEMY_AU1500
+				ALCHEMY_AU1550
+
+file	arch/mips/alchemy/au_chipdep.c
+file	arch/mips/alchemy/au1000.c		alchemy_au1000
+file	arch/mips/alchemy/au1100.c		alchemy_au1100
+file	arch/mips/alchemy/au1500.c		alchemy_au1500
+file	arch/mips/alchemy/au1550.c		alchemy_au1550
 file	arch/mips/alchemy/au_icu.c
 file	arch/mips/alchemy/au_timer.c
 file	arch/mips/alchemy/au_cpureg_mem.c

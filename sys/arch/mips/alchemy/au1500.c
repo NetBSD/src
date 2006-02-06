@@ -1,10 +1,10 @@
-/* $NetBSD: aubus.c,v 1.18 2006/02/06 23:23:53 gdamore Exp $ */
+/* $NetBSD: au1500.c,v 1.1 2006/02/06 23:23:53 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
  *
- * Portions written by Garrett D'Amore for Itronix Inc.
+ * Written by Garrett D'Amore for Itronix Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -97,119 +97,114 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.18 2006/02/06 23:23:53 gdamore Exp $");
-
-#include "locators.h"
+__KERNEL_RCSID(0, "$NetBSD: au1500.c,v 1.1 2006/02/06 23:23:53 gdamore Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/extent.h>
-#include <sys/malloc.h>
-
-#define _MIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/locore.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
-#include <mips/alchemy/include/aubusvar.h>
 
-static int	aubus_match(struct device *, struct cfdata *, void *);
-static void	aubus_attach(struct device *, struct device *, void *);
-static int	aubus_print(void *, const char *);
-static void  aubus_alloc_dma_tag(struct device *, bus_dma_tag_t);
+static const char *au1500_irqnames[] = {
+	"uart0",
+	"pci inta",
+	"pci intb",
+	"uart3",
+	"pci intc",
+	"pci intd",
+	"dma0",
+	"dma1",
+	"dma2",
+	"dma3",
+	"dma4",
+	"dma5",
+	"dma6",
+	"dma7",
+	"toy tick",
+	"toy match0",
+	"toy match1",
+	"toy match2",
+	"rtc tick",
+	"rtc match0",
+	"rtc match1",
+	"rtc match2",
+	"pci error",
+	"irq 23",
+	"usb intr",
+	"usb suspend",
+	"usb host",
+	"ac97",
+	"mac0",
+	"mac1",
+	"irq 30",
+	"ac97 cmd",
+	"gpio 0",
+	"gpio 1",
+	"gpio 2",
+	"gpio 3",
+	"gpio 4",
+	"gpio 5",
+	"gpio 6",
+	"gpio 7",
+	"gpio 8",
+	"gpio 9",
+	"gpio 10",
+	"gpio 11",
+	"gpio 12",
+	"gpio 13",
+	"gpio 14",
+	"gpio 15",
+	"gpio 200",
+	"gpio 201",
+	"gpio 202",
+	"gpio 203",
+	"gpio 20",
+	"gpio 204",
+	"gpio 205",
+	"gpio 23",
+	"gpio 24",
+	"gpio 25",
+	"gpio 26",
+	"gpio 27",
+	"gpio 28",
+	"gpio 206",
+	"gpio 207",
+	"gpio 208:215"
+};
 
-CFATTACH_DECL(aubus, sizeof(struct device),
-    aubus_match, aubus_attach, NULL, NULL);
+static struct au_dev au1500_devices[] = {
+	{ "aucom",	{ UART0_BASE },				   {  0, -1 }},
+	{ "aucom",	{ UART3_BASE },				   {  3, -1 }},
+	{ "aurtc",	{ },					   { -1, -1 }},
+	{ "aumac",	{ AU1500_MAC0_BASE, AU1500_MAC0_ENABLE,
+			  MAC0_DMA_BASE },			   { 28, -1 }},
+	{ "aumac",	{ AU1500_MAC1_BASE, AU1500_MAC1_ENABLE,
+			  MAC1_DMA_BASE },			   { 29, -1 }},
+	{ "ohci",	{ USBH_BASE, USBH_ENABLE, USBH_SIZE },	   { 26, -1 }},
+#if 0
+	{ "aupci",	{ PCI_BASE },				   { -1, -1 }},
+	{ "auaudio",	{ AC97_BASE },				   { 27, 31 }},
+	{ "usbd",	{ USBD_BASE },				   { 24, 25 }},
+	{ "gpio",	{ SYS_BASE },				   { -1, -1 }},
+	{ "gpio",	{ GPIO2_BASE },				   { -1, -1 }},
+#endif
+	{ NULL }
+};
 
-bus_space_tag_t	aubus_st;		/* XXX */
-struct mips_bus_dma_tag  aubus_mdt;
+static struct au_chipdep au1500_chipdep = {
+	"au1500",
+	{ IC0_BASE, IC1_BASE },		/* ICUs */
+	au1500_devices,
+	au1500_irqnames,
+};
 
-/*
- * Probe for the aubus; always succeeds.
- */
-static int
-aubus_match(struct device *parent, struct cfdata *match, void *aux)
+boolean_t
+au1500_match(struct au_chipdep **cpp)
 {
 
-	return 1;
-}
-
-/*
- * Attach the aubus.
- */
-static void
-aubus_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct aubus_attach_args aa;
-	struct device *sc = (struct device *)self;
-	struct au_chipdep *chip;
-	const struct au_dev *ad;
-	int locs[AUBUSCF_NLOCS];
-
-	printf("\n");
-
-	chip = au_chipdep();
-	KASSERT(chip != NULL);
-
-	for (ad = chip->devices; ad->name != NULL; ad++) {
-		aa.aa_name = ad->name;
-		aa.aa_st = aubus_st;
-		aa.aa_dt = &aubus_mdt;
-		aubus_alloc_dma_tag(sc, aa.aa_dt);
-		aa.aa_addrs[0] = ad->addr[0];
-		aa.aa_addrs[1] = ad->addr[1];
-		aa.aa_addrs[2] = ad->addr[2];
-		aa.aa_irq[0] = ad->irq[0];
-		aa.aa_irq[1] = ad->irq[1];
-
-		locs[AUBUSCF_ADDR] = ad->addr[0];
-
-		(void) config_found_sm_loc(self, "aubus", locs, &aa,
-					   aubus_print, config_stdsubmatch);
+	if (MIPS_PRID_COPTS(cpu_id) == MIPS_AU1500) {
+		*cpp = &au1500_chipdep;
+		return TRUE;
 	}
-}
-
-static int
-aubus_print(void *aux, const char *pnp)
-{
-	struct aubus_attach_args *aa = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", aa->aa_name, pnp);
-
-	if (aa->aa_addr != AUBUSCF_ADDR_DEFAULT)
-		aprint_normal(" addr 0x%lx", aa->aa_addr);
-	if (aa->aa_irq[0] >= 0)
-		aprint_normal(" irq %d", aa->aa_irq[0]);
-	if (aa->aa_irq[1] >= 0)
-		aprint_normal(",%d", aa->aa_irq[1]);
-	return (UNCONF);
-}
-
-void
-aubus_alloc_dma_tag(sc, pdt)
-	struct device *sc;
-	bus_dma_tag_t pdt;
-{
-	bus_dma_tag_t	t;
-
-	t = pdt;
-	t->_cookie = sc;
-	t->_wbase = 0;	/* XXX */
-	t->_physbase = 0;	/* XXX */
-	t->_wsize = MIPS_KSEG1_START - MIPS_KSEG0_START;
-	t->_dmamap_create = _bus_dmamap_create;
-	t->_dmamap_destroy = _bus_dmamap_destroy;
-	t->_dmamap_load = _bus_dmamap_load;
-	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
-	t->_dmamap_load_uio = _bus_dmamap_load_uio;
-	t->_dmamap_load_raw = _bus_dmamap_load_raw;
-	t->_dmamap_unload = _bus_dmamap_unload;
-	t->_dmamap_sync = _bus_dmamap_sync;
-	t->_dmamem_alloc = _bus_dmamem_alloc;
-	t->_dmamem_free = _bus_dmamem_free;
-	t->_dmamem_map = _bus_dmamem_map;
-	t->_dmamem_unmap = _bus_dmamem_unmap;
-	t->_dmamem_mmap = _bus_dmamem_mmap;
+	return FALSE;
 }
