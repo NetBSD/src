@@ -15,7 +15,7 @@
 # 
 # You should have received a copy of the GNU General Public License along
 # with groff; see the file COPYING.  If not, write to the Free Software
-# Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # Makefile.comm
 #
@@ -30,6 +30,7 @@ LINK.c=$(CC) $(CFLAGS) $(LDFLAGS)
 LIBGROFF=$(top_builddir)/src/libs/libgroff/libgroff.$(LIBEXT)
 LIBBIB=$(top_builddir)/src/libs/libbib/libbib.$(LIBEXT)
 LIBDRIVER=$(top_builddir)/src/libs/libdriver/libdriver.$(LIBEXT)
+LIBXUTIL=$(top_builddir)/src/libs/libxutil/libxutil.$(LIBEXT)
 MLIB=
 XLIBS=
 YTABH=
@@ -92,22 +93,22 @@ realclean: distclean
 	-rm -f $(REALCLEANFILES)
 
 extraclean: distclean
-	-rm -f \#* *~ =* core junk grot old temp tmp tem
+	-rm -f \#* *~ =* core junk grot old temp tmp tem *.new *.old *.orig
 
 .SUFFIXES:
 .SUFFIXES: .o .obj .cpp .c .y .man .n
 
 .cpp.o:
-	$(COMPILE.cpp) $<
+	$(COMPILE.cpp) $(EXTRA_CCFLAGS) $<
 
 .c.o:
-	$(COMPILE.c) $<
+	$(COMPILE.c) $(EXTRA_CFLAGS) $<
 
 .cpp.obj:
-	$(COMPILE.cpp) $<
+	$(COMPILE.cpp) $(EXTRA_CCFLAGS) $<
 
 .c.obj:
-	$(COMPILE.c) $<
+	$(COMPILE.c) $(EXTRA_CFLAGS) $<
 
 .y.cpp:
 	if test -n "$(YTABH)"; then \
@@ -132,7 +133,7 @@ extraclean: distclean
 	-test -f y.tab.c && mv y.tab.c y_tab.c
 	mv y_tab.c $(YTABC)
 	test -z "$(YTABH)" || mv y_tab.h $(YTABH)
-	$(COMPILE.cpp) $(YTABC)
+	$(COMPILE.cpp) $(EXTRA_CCFLAGS) $(YTABC)
 
 .man.n:
 	@echo Making $@ from $<
@@ -147,6 +148,7 @@ extraclean: distclean
 	-e "s|@DOCDIR@|$(docdir)|g" \
 	-e "s|@EXAMPLEDIR@|$(exampledir)|g" \
 	-e "s|@HTMLDOCDIR@|$(htmldocdir)|g" \
+	-e "s|@PDFDOCDIR@|$(pdfdocdir)|g" \
 	-e "s|@DEVICE@|$(DEVICE)|g" \
 	-e "s|@DEFAULT_INDEX@|$(indexdir)/$(indexname)|g" \
 	-e "s|@DEFAULT_INDEX_NAME@|$(indexname)|g" \
