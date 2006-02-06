@@ -4,6 +4,7 @@
 #define DEVICE "ps"
 #define BINPATH "/usr/bin"
 #define FONTPATH "/usr/share/groff_font"
+#define INSTALLPATH "/usr"
 #define MACROPATH "/usr/share/tmac"
 #define INDEX_SUFFIX ".i"
 #define COMMON_WORDS_FILE "/usr/share/dict/eign"
