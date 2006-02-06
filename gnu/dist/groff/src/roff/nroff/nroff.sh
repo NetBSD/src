@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 # Emulate nroff with groff.
 
 prog="$0"
@@ -8,7 +8,7 @@ prog="$0"
 case "`exec 2>/dev/null ; locale charmap`" in
   UTF-8)
     T=-Tutf8 ;;
-  ISO-8859-1)
+  ISO-8859-1 | ISO-8859-15)
     T=-Tlatin1 ;;
   IBM-1047)
     T=-Tcp1047 ;;
@@ -16,7 +16,8 @@ case "`exec 2>/dev/null ; locale charmap`" in
     case "${LC_ALL-${LC_CTYPE-${LANG}}}" in
       *.UTF-8)
         T=-Tutf8 ;;
-      iso_8859_1 | *.ISO-8859-1)
+      iso_8859_1 | *.ISO-8859-1 | *.ISO8859-1 | \
+      iso_8859_15 | *.ISO-8859-15 | *.ISO8859-15)
         T=-Tlatin1 ;;
       *.IBM-1047)
         T=-Tcp1047 ;;
@@ -47,10 +48,10 @@ for i
     -[eq] | -s*)
       # ignore these options
       ;;
-    -[dmrnoT])
+    -[dMmrnoT])
       echo "$prog: option $1 requires an argument" >&2
       exit 1 ;;
-    -[iptSUC] | -[dmrno]*)
+    -[iptSUC] | -[dMmrno]*)
       opts="$opts $1" ;;
     -Tascii | -Tlatin1 | -Tutf8 | -Tcp1047)
       T=$1 ;;
@@ -67,8 +68,8 @@ for i
       echo "GNU nroff (groff) version @VERSION@"
       exit 0 ;;
     --help)
-      echo "usage: nroff [-CchipStUv] [-dCS] [-mNAME] [-nNUM] [-oLIST] [-rCN]"
-      echo "       [-Tname] [FILE...]"
+      echo "usage: nroff [-CchipStUv] [-dCS] [-MDIR] [-mNAME] [-nNUM] [-oLIST]"
+      echo "             [-rCN] [-Tname] [FILE...]"
       exit 0 ;;
     --)
       shift

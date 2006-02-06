@@ -1,4 +1,4 @@
-/*	$NetBSD: main.cpp,v 1.1.1.2 2004/07/30 14:45:02 wiz Exp $	*/
+/*	$NetBSD: main.cpp,v 1.1.1.3 2006/02/06 18:14:36 wiz Exp $	*/
 
 /* Last non-groff version: main.c 1.23  (Berkeley)  85/08/05
  *
@@ -216,7 +216,7 @@ int compatibility_flag = FALSE;	/* TRUE if in compatibility mode */
 
 
 void getres();
-char *doinput(FILE *fp);
+int doinput(FILE *fp);
 void conv(register FILE *fp, int baseline);
 void savestate();
 int has_polygon(register ELT *elist);
@@ -319,7 +319,7 @@ main(int argc,
     } else
       fp = stdin;
 
-    while (doinput(fp) != NULL) {
+    while (doinput(fp)) {
       if (*c1 == '.' && *c2 == 'G' && *c3 == 'S') {
 	if (compatibility_flag ||
 	    *c4 == '\n' || *c4 == ' ' || *c4 == '\0')
@@ -393,7 +393,7 @@ getres()
 
 
 /*----------------------------------------------------------------------------*
- | Routine:	char  * doinput (file_pointer)
+ | Routine:	int  doinput (file_pointer)
  |
  | Results:	A line of input is read into `inputline'.
  |
@@ -403,16 +403,14 @@ getres()
  |		updating `linenum'.
  *----------------------------------------------------------------------------*/
 
-char *
+int
 doinput(FILE *fp)
 {
-  char *k;
-
-  if ((k = fgets(inputline, MAXINLINE, fp)) == NULL)
-    return k;
+  if (fgets(inputline, MAXINLINE, fp) == NULL)
+    return 0;
   if (strchr(inputline, '\n'))	/* ++ only if it's a complete line */
     linenum++;
-  return (char *) !NULL;
+  return 1;
 }
 
 
@@ -492,7 +490,7 @@ conv(register FILE *fp,
   strcpy(GScommand, inputline);	/* save `.GS' line for later */
 
   do {
-    done = (doinput(fp) == NULL);	/* test for EOF */
+    done = !doinput(fp);		/* test for EOF */
     flyback = (*c3 == 'F');		/* and .GE or .GF */
     compat = (compatibility_flag ||
 	      *c4 == '\n' || *c4 == ' ' || *c4 == '\0');

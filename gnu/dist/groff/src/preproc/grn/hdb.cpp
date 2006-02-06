@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb.cpp,v 1.1.1.2 2004/07/30 14:45:01 wiz Exp $	*/
+/*	$NetBSD: hdb.cpp,v 1.1.1.3 2006/02/06 18:14:35 wiz Exp $	*/
 
  /* Last non-groff version: hdb.c  1.8 (Berkeley) 84/10/20
  *
@@ -24,6 +24,7 @@
 extern int linenum;		/* current line number in input file */
 extern char gremlinfile[];	/* name of file currently reading */
 extern int SUNFILE;		/* TRUE if SUN gremlin file */
+extern int compatibility_flag;	/* TRUE if in compatibility mode */
 extern void savebounds(double x, double y);
 
 /* imports from hpoint.cpp */
@@ -148,6 +149,10 @@ DBRead(register FILE *file)
 	    (void) sscanf(string, "%lf%lf", &x, &y);
 	    if ((x == -1.00 && y == -1.00) && (!SUNFILE))
 	      lastpoint = TRUE;
+	    else {
+	      if (compatibility_flag)
+		savebounds(xorn(x, y), yorn(x, y));
+	    }
 	  }
 	} while (!lastpoint);
 #endif	/* UW_FASTSCAN */

@@ -1,6 +1,7 @@
-/*	$NetBSD: nonposix.h,v 1.1.1.3 2004/07/30 14:44:51 wiz Exp $	*/
+/*	$NetBSD: nonposix.h,v 1.1.1.4 2006/02/06 18:13:51 wiz Exp $	*/
 
-/* Copyright (C) 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+/* Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
      Written by Eli Zaretskii (eliz@is.elta.co.il)
 
 This file is part of groff.
@@ -17,7 +18,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, 51 Franklin St - Fifth Floor, Boston, MA 02110-1301, USA. */
 
 /* This header file compartmentalize all idiosyncrasies of non-Posix
    systems, such as MS-DOS, MS-Windows, etc.  It should be loaded after
@@ -66,6 +67,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #  define dup2(f1,f2)	_dup2(f1,f2)
 #  define close(f)	_close(f)
 #  define isatty(f)	_isatty(f)
+#  define access(p,m)	_access(p,m)
 # endif
 # define SET_BINARY(f)	do {if (!isatty(f)) setmode(f,O_BINARY);} while(0)
 # define FOPEN_RB	"rb"
@@ -102,6 +104,9 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 /* The executable extension.  */
 # define EXE_EXT	".exe"
+
+/* Possible executable extensions.  */
+# define PATH_EXT	".com;.exe;.bat;.cmd"
 
 /* The system null device.  */
 # define NULL_DEV	"NUL"
@@ -210,6 +215,9 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #endif
 #ifndef EXE_EXT
 # define EXE_EXT	""
+#endif
+#ifndef PATH_EXT
+# define PATH_EXT	""
 #endif
 #ifndef NULL_DEV
 # define NULL_DEV	"/dev/null"

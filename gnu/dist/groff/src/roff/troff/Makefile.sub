@@ -8,6 +8,7 @@ OBJS=\
   env.$(OBJEXT) \
   input.$(OBJEXT) \
   majorminor.$(OBJEXT) \
+  mtsm.$(OBJEXT) \
   node.$(OBJEXT) \
   number.$(OBJEXT) \
   reg.$(OBJEXT)
@@ -17,6 +18,7 @@ CCSRCS=\
   $(srcdir)/env.cpp \
   $(srcdir)/input.cpp \
   majorminor.cpp \
+  $(srcdir)/mtsm.cpp \
   $(srcdir)/node.cpp \
   $(srcdir)/number.cpp \
   $(srcdir)/reg.cpp
@@ -27,6 +29,7 @@ HDRS=\
   $(srcdir)/env.h \
   $(srcdir)/hvunits.h \
   $(srcdir)/input.h \
+  $(srcdir)/mtsm.h \
   $(srcdir)/node.h \
   $(srcdir)/reg.h \
   $(srcdir)/request.h \

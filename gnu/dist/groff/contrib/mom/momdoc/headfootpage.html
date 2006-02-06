@@ -1,3 +1,4 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
@@ -292,7 +293,7 @@ there's no need to turn headers off first.
 <hr width="66%" align="left">
 <p>
 <a name="HEADERS"></a>
-Macro: <strong>HEADERS</strong> <var>toggle</var>
+<nobr>Macro: <strong>HEADERS</strong> toggle</nobr>
 
 <p>
 <a href="definitions.html#TERMS_HEADER">Page headers</a>
@@ -331,7 +332,7 @@ picas.)
 <hr width="66%" align="left">
 <p>
 <a name="FOOTERS"></a>
-Macro: <strong>FOOTERS</strong> <var>toggle</var>
+<nobr>Macro: <strong>FOOTERS</strong> toggle</nobr>
 
 <p>
 <a href="definitions.html#TERMS_FOOTER">Page footers</a>
@@ -362,7 +363,7 @@ If you don't want this behaviour, you can change it with
 <hr width="66%" align="left">
 <p>
 <a name="FOOTER_ON_FIRST_PAGE"></a>
-Macro: <strong>FOOTER_ON_FIRST_PAGE</strong> <var>toggle</var>
+<nobr>Macro: <strong>FOOTER_ON_FIRST_PAGE</strong> toggle</nobr>
 
 <p>
 If you invoke
@@ -370,7 +371,7 @@ If you invoke
 <strong>mom</strong>, by default, does not print a footer on the
 first page of the document.  (The
 <a href="definitions.html">docheader</a>
-on page makes it redundant.)  However, should you wish a footer on
+on page 1 makes it redundant.)  However, should you wish a footer on
 page 1, invoke <strong>FOOTER_ON_FIRST_PAGE</strong> without any argument.
 <p>
 <hr>
@@ -444,9 +445,9 @@ mechanism whereby it's possible to &quot;pad&quot; the string as well.
 <hr width="66%" align="left">
 <p>
 <a name="HDRFTR_RECTOVERSO"></a>
-Macro: <strong>HEADER_RECTO</strong> <var>LEFT | CENTER | RIGHT &quot;&lt;header recto string&gt;&quot;</var>
+<nobr>Macro: <strong>HEADER_RECTO</strong> LEFT | CENTER | RIGHT &quot;&lt;header recto string&gt;&quot;</nobr>
 <br>
-Macro: <strong>HEADER_VERSO</strong> <var>LEFT | CENTER | RIGHT &quot;&lt;header verso string&gt;&quot;</var>
+<nobr>Macro: <strong>HEADER_VERSO</strong> LEFT | CENTER | RIGHT &quot;&lt;header verso string&gt;&quot;</nobr>
 <br>
 
 <p>
@@ -619,15 +620,15 @@ can be designed to your own specifications.
 <a name="HDRFTR_STRINGS"><h3><u>Header/footer strings</u></h3></a>
 <p>
 <a name="HDRFTR_LEFT">
-	Macro: <strong>HEADER_LEFT</strong> <var>&quot;&lt;text of header left&gt;&quot; | #</var>
+	<nobr>Macro: <strong>HEADER_LEFT</strong> &quot;&lt;text of header left&gt;&quot; | #</nobr>
 </a>
 <br>
 <a name="HDRFTR_CENTER">
-	Macro: <strong>HEADER_CENTER</strong> <var>&quot;&lt;text of header centre&gt;&quot; | #</var>
+	<nobr>Macro: <strong>HEADER_CENTER</strong> &quot;&lt;text of header centre&gt;&quot; | #</nobr>
 </a>
 <br>
 <a name="HDRFTR_RIGHT">
-	Macro: <strong>HEADER_RIGHT</strong> <var>&quot;&lt;text of header right&gt;&quot; | #</var>
+	<nobr>Macro: <strong>HEADER_RIGHT</strong> &quot;&lt;text of header right&gt;&quot; | #</nobr>
 </a>
 
 <p>
@@ -652,7 +653,7 @@ with <strong>FOOTER_</strong> to change the strings in footers.
 
 <a name="HDRFTR_CENTER_PAD"><h3><u>*Padding the header/footer centre string</u></h3></a>
 <p>
-Macro: <strong>HEADER_CENTER_PAD</strong> <var>LEFT | RIGHT &lt;amount of space by which to pad centre string left or right&gt;</var>
+<nobr>Macro: <strong>HEADER_CENTER_PAD</strong> LEFT | RIGHT &lt;amount of space by which to pad centre string left or right&gt;</nobr>
 <br>
 <em>*Requires a <a href="definitions.html#TERMS_UNITOFMEASURE">unit of measure</a></em>
 <p>
@@ -861,7 +862,7 @@ Please note that <strong>HEADER_FAMILY</strong> and
 <hr width="33%" align="left">
 <p>
 <a name="HDRFTR_GLOBAL_FAMILY">
-	Macro: <strong>HEADER_FAMILY</strong> <var>&lt;family&gt;</var>
+	<nobr>Macro: <strong>HEADER_FAMILY</strong> &lt;family&gt;</nobr>
 </a>
 
 <p>
@@ -880,7 +881,7 @@ with <strong>FOOTER_</strong> to change the footer family.
 <hr width="33%" align="left">
 <p>
 <a name="HDRFTR_GLOBAL_SIZE">
-	Macro: <strong>HEADER_SIZE</strong> <var>&lt;+|-number of points&gt;</var>
+	<nobr>Macro: <strong>HEADER_SIZE</strong> &lt;+|-number of points&gt;</nobr>
 	<br>
 	<em>*Argument is relative to the point size of type in paragraphs</em>
 </a>
@@ -949,7 +950,7 @@ default behaviour for the various elements of footer style.
 <hr width="33%" align="left">
 <p>
 <a name="HDRFTR_COLOR">
-	Macro: <strong>HEADER_COLOR</strong> <var>&lt;colorname&gt;</var>
+	<nobr>Macro: <strong>HEADER_COLOR</strong> &lt;colorname&gt;</nobr>
 </a>
 
 <p>
@@ -991,7 +992,7 @@ or <strong>RIGHT</strong> as appropriate.
 <hr width="33%" align="left">
 <p>
 <a name="_FAMILY">
-	Macro: <strong>HEADER_&lt;POSITION&gt;_FAMILY</strong> <var>&lt;family&gt;</var>
+	<nobr>Macro: <strong>HEADER_&lt;POSITION&gt;_FAMILY</strong> &lt;family&gt;</nobr>
 </a>
 <p>
 Use <strong>HEADER_&lt;POSITION&gt;_FAMILY</strong> to change the
@@ -1008,7 +1009,7 @@ with <strong>FOOTER_</strong> to change a footer part's family.
 <hr width="33%" align="left">
 <p>
 <a name="_FONT">
-	Macro: <strong>HEADER_&lt;POSITION&gt;_FONT</strong> <var>&lt;font&gt;</var>
+	<nobr>Macro: <strong>HEADER_&lt;POSITION&gt;_FONT</strong> &lt;font&gt;</nobr>
 </a>
 <p>
 Use <strong>HEADER_&lt;POSITION&gt;_FONT</strong> to change the
@@ -1025,7 +1026,7 @@ with <strong>FOOTER_</strong> to change a footer part's font.
 <hr width="33%" align="left">
 <p>
 <a name="_SIZE">
-	Macro: <strong>HEADER_&lt;POSITION&gt;_SIZE</strong> <var>&lt;+|-number of points&gt;</var>
+	<nobr>Macro: <strong>HEADER_&lt;POSITION&gt;_SIZE</strong> &lt;+|-number of points&gt;</nobr>
 </a>
 <p>
 Use <strong>HEADER_&lt;POSITION&gt;_SIZE</strong> to change the size of any
@@ -1042,7 +1043,7 @@ with <strong>FOOTER_</strong> to change a footer part's size.
 <hr width="33%" align="left">
 <p>
 <a name="_CAPS">
-	Macro: <strong>HEADER_&lt;POSITION&gt;_CAPS</strong> <var>toggle</var>
+	<nobr>Macro: <strong>HEADER_&lt;POSITION&gt;_CAPS</strong> toggle</nobr>
 </a>
 <p>
 <strong>HEADER_&lt;POSITION&gt;_CAPS</strong> is a
@@ -1067,7 +1068,7 @@ capitalization style.
 <hr width="33%" align="left">
 <p>
 <a name="_COLOR">
-	Macro: <strong>HEADER_&lt;POSITION&gt;_COLOR</strong> <var>&lt;colorname&gt;</var>
+	<nobr>Macro: <strong>HEADER_&lt;POSITION&gt;_COLOR</strong> &lt;colorname&gt;</nobr>
 </a>
 <p>
 <strong>HEADER_&lt;POSITION&gt;_COLOR</strong> allows you to set a
@@ -1126,7 +1127,7 @@ headers, footers, and top/bottom page margins.
 <hr width="66%" align="left">
 <p>
 <a name="HDRFTR_MARGIN"></a>
-Macro: <strong>HEADER_MARGIN</strong> <var>&lt;distance to baseline of header&gt;</var>
+<nobr>Macro: <strong>HEADER_MARGIN</strong> &lt;distance to baseline of header&gt;</nobr>
 <br>
 <em>*Requires a <a href="definitions.html#TERMS_UNITOFMEASURE">unit of measure</a></em>
 
@@ -1226,7 +1227,7 @@ baseline placement.
 <hr width="66%" align="left">
 <p>
 <a name="HDRFTR_GAP"></a>
-Macro: <strong>HEADER_GAP</strong> <var>&lt;distance from header to start of running text&gt;</var>
+<nobr>Macro: <strong>HEADER_GAP</strong> &lt;distance from header to start of running text&gt;</nobr>
 <br>
 <em>*Requires a <a href="definitions.html#TERMS_UNITOFMEASURE">unit of measure</a></em>
 
@@ -1318,7 +1319,7 @@ footer), you can alter its placement.
 <hr width="66%" align="left">
 <p>
 <a name="HDRFTR_RULE"></a>
-Macro: <strong>HEADER_RULE</strong> <var>toggle</var>
+<nobr>Macro: <strong>HEADER_RULE</strong> toggle</nobr>
 
 <p>
 By default, <strong>mom</strong> prints a header separator rule
@@ -1344,7 +1345,7 @@ the footer separator rule.  (Most likely, if you're using
 <hr width="66%" align="left">
 <p>
 <a name="HDRFTR_RULE_GAP"></a>
-Macro: <strong>HEADER_RULE_GAP</strong> <var>distance of rule beneath header</var>
+<nobr>Macro: <strong>HEADER_RULE_GAP</strong> distance of rule beneath header</nobr>
 <br>
 <em>*Requires a <a href="definitions.html#TERMS_UNITOFMEASURE">unit of measure</a></em>
 
@@ -1395,7 +1396,7 @@ should always be negative (smaller) than the default.
 <hr width="66%" align="left">
 <p>
 <a name="HDRFTR_RULE_COLOR"></a>
-Macro: <strong>HEADER_RULE_COLOR</strong> <var>&lt;colorname&gt;</var>
+<nobr>Macro: <strong>HEADER_RULE_COLOR</strong> &lt;colorname&gt;</nobr>
 
 <p>
 If you wish to change the colour of the header rule, invoke
@@ -1449,7 +1450,7 @@ with control macros.
 <hr width="66%" align="left">
 <p>
 <a name="PAGINATE"></a>
-Macro: <strong>PAGINATE</strong> <var>toggle</var>
+<nobr>Macro: <strong>PAGINATE</strong> toggle</nobr>
 <br>
 Alias: <strong>PAGINATION</strong>
 
@@ -1472,7 +1473,7 @@ without any argument.
 <hr width="66%" align="left">
 <p>
 <a name="PAGENUMBER"></a>
-Macro: <strong>PAGENUMBER</strong> <var>&lt;number&gt;</var>
+<nobr>Macro: <strong>PAGENUMBER</strong> &lt;number&gt;</nobr>
 
 <p>
 As is to be expected, pagination of documents begins at page 1.
@@ -1492,7 +1493,7 @@ incremented by 1 from that number.
 <hr width="66%" align="left">
 <p>
 <a name="PAGENUM_STYLE"></a>
-Macro: <strong>PAGENUM_STYLE</strong> <var>DIGIT | ROMAN | roman | ALPHA | alpha</var>
+<nobr>Macro: <strong>PAGENUM_STYLE</strong> DIGIT | ROMAN | roman | ALPHA | alpha</nobr>
 
 <p>
 <strong>PAGENUM_STYLE</strong> lets you tell
@@ -1512,7 +1513,7 @@ Macro: <strong>PAGENUM_STYLE</strong> <var>DIGIT | ROMAN | roman | ALPHA | alpha
 <hr width="66%" align="left">
 <p>
 <a name="PAGENUM_ON_FIRST_PAGE"></a>
-Macro: <strong>PAGENUM_ON_FIRST_PAGE</strong> <var>toggle</var>
+<nobr>Macro: <strong>PAGENUM_ON_FIRST_PAGE</strong> toggle</nobr>
 
 <p>
 This macro applies only if you've enabled
@@ -1572,12 +1573,12 @@ draft-style copy.
 <a name="PAGINATE_CONTROL"><h3><u>Pagination control macros</u></h3></a>
 
 <ol>
-	<li><a href="#PAGINATE_GENERAL">Family/font/size</a>
+	<li><a href="#PAGINATE_GENERAL">Family/font/size/colour</a>
 	<li><a href="#PAGENUM_POS">Page number position (vertical and horizontal)</a>
 	<li><a href="#PAGENUM_HYPHENS">Enclose page numbers with hyphens (on or off)</a>
 </ol>
 <br>
-<a name="PAGINATE_GENERAL"><h3><u>1. Page number family/font/size</u></h3></a>
+<a name="PAGINATE_GENERAL"><h3><u>1. Page number family/font/size/colour</u></h3></a>
 <p>
 See
 <a href="#CONTROL_MACRO_ARGS">Arguments to the control macros</a>.
@@ -1586,11 +1587,12 @@ See
 .PAGENUM_FAMILY default = prevailing document family; default is Times Roman
 .PAGENUM_FONT   default = roman
 .PAGENUM_SIZE   default = 0 (i.e. same size as paragraph text)
+.PAGENUM_COLOR  default= black
 </pre>
 
 <a name="PAGENUM_POS"><h3><u>2. Page number position</u></h3></a>
 <p>
-Macro: <strong>PAGENUM_POS</strong> <var>TOP | BOTTOM&nbsp;&nbsp;LEFT | CENTER | RIGHT</var>
+<nobr>Macro: <strong>PAGENUM_POS</strong> TOP | BOTTOM&nbsp;&nbsp;LEFT | CENTER | RIGHT</nobr>
 
 <p>
 Use <strong>PAGENUM_POS</strong> to change the default position of
@@ -1610,7 +1612,7 @@ pages at the top right position, enter
 	.PAGENUM_POS TOP RIGHT
 </pre>
 
-<a name="#PAGENUM_HYPHENS"><h3><u>3. Enclose page numbers with hyphens (on or off)</u></h3></a>
+<a name="PAGENUM_HYPHENS"><h3><u>3. Enclose page numbers with hyphens (on or off)</u></h3></a>
 <p>
 By default, <strong>mom</strong> encloses page numbers between hyphens.
 If you don't want this behaviour, invoke the macro

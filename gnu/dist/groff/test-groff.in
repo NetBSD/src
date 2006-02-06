@@ -1,17 +1,9 @@
 #! /bin/sh
 # This script runs groff without requiring that it be installed.
-# The current directory must be the top build directory.
 
 SEP='@PATH_SEPARATOR@'
-EXEEXT=@EXEEXT@
-builddir=./src
-srcdir=`echo $0 | sed -e 's;/[^/]*$;;'`
-
-if test ! -d $builddir/roff/groff || \
-   test ! -r $builddir/roff/groff/groff$EXEEXT; then
-  echo $0 must be run with the top build directory as the current directory 2>&1
-  exit 1
-fi
+builddir=@abs_top_builddir@/src
+srcdir=@abs_top_srcdir@
 
 GROFF_BIN_PATH=\
 $builddir/roff/groff$SEP\
@@ -29,11 +21,9 @@ $builddir/devices/grotty$SEP\
 $builddir/devices/grolj4$SEP\
 $builddir/devices/grolbp$SEP\
 $builddir/devices/grohtml$SEP\
-$srcdir/$builddir/xditview
+$builddir/devices/xditview
 
-test -n "$srcdir" || srcdir=.
-
-XENVIRONMENT=`cd $srcdir; pwd`/src/xditview/GXditview.ad
+XENVIRONMENT=$srcdir/src/devices/xditview/GXditview.ad
 export XENVIRONMENT
 
 GROFF_COMMAND_PREFIX=
