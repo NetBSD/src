@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.2 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.3 2006/02/06 14:03:22 hamajima Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for Iyonix.
+ * Machine dependant functions for kernel setup for Armadillo.
  */
 
 /*	Armadillo-9 physical memory map
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.2 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.3 2006/02/06 14:03:22 hamajima Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -135,6 +135,9 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.2 2005/12/24 22:45:34 perry
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
+#ifdef	ARMADILLO210
+#define	DRAM_BLOCKS	4
+#endif
 #include <machine/bootconfig.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -469,11 +472,23 @@ initarm(void *arg)
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
 	/* XXX must make the memory description h/w independant */
+#ifdef	ARMADILLO210
+	bootconfig.dramblocks = 4;
+	bootconfig.dram[0].address = 0xc0000000UL;
+	bootconfig.dram[0].pages = 0x800000UL / PAGE_SIZE;
+	bootconfig.dram[1].address = 0xc1000000UL;
+	bootconfig.dram[1].pages = 0x800000UL / PAGE_SIZE;
+	bootconfig.dram[2].address = 0xc4000000UL;
+	bootconfig.dram[2].pages = 0x800000UL / PAGE_SIZE;
+	bootconfig.dram[3].address = 0xc5000000UL;
+	bootconfig.dram[3].pages = 0x800000UL / PAGE_SIZE;
+#else	/* ARMADILLO9 */
 	bootconfig.dramblocks = 2;
 	bootconfig.dram[0].address = 0xc0000000UL;
 	bootconfig.dram[0].pages = 0x2000000UL / PAGE_SIZE;
 	bootconfig.dram[1].address = 0xc4000000UL;
 	bootconfig.dram[1].pages = 0x2000000UL / PAGE_SIZE;
+#endif
 
 	/*
 	 * Set up the variables that define the availablilty of
@@ -773,17 +788,15 @@ initarm(void *arg)
 	uvm_page_physload(atop(0xc0000000), atop(physical_freeend_low),
 	    atop(0xc0000000), atop(physical_freeend_low),
 	    VM_FREELIST_DEFAULT);
-	/*
-	 * There is 64 MB of memory on the Armadillo-9 in 2 32MB chunks, so
-	 * for we've only been working with the first one mapped at
-	 * 0xc0000000. Tell UVM about the others.	
-	 */
-	uvm_page_physload(atop(0xc4000000), atop(0xc6000000),
-	    atop(0xc4000000), atop(0xc6000000),
-	    VM_FREELIST_DEFAULT);
-
-	physmem = 0x4000000 / PAGE_SIZE;
-	
+	physmem = bootconfig.dram[0].pages;
+	for (loop = 1; loop < bootconfig.dramblocks; ++loop) {
+		size_t start = bootconfig.dram[loop].address;
+		size_t size = bootconfig.dram[loop].pages * PAGE_SIZE;
+		uvm_page_physload(atop(start), atop(start + size),
+				  atop(start), atop(start + size),
+				  VM_FREELIST_DEFAULT);
+		physmem += bootconfig.dram[loop].pages;
+	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
 #ifdef VERBOSE_INIT_ARM
@@ -868,9 +881,21 @@ consinit(void)
 #endif
 
 #if NEPCOM > 0
-	bus_space_map(&ep93xx_bs_tag, EP93XX_APB_HWBASE + EP93XX_APB_UART1, 
+#ifndef CONUNIT
+#define	CONUNIT	0
+#endif
+#if CONUNIT == 0
+#define	UART	EP93XX_APB_UART1
+#elif CONUNIT == 1
+#define	UART	EP93XX_APB_UART2
+#elif CONUNIT == 2
+#define	UART	EP93XX_APB_UART3
+#else
+#error	CONUNIT must less than 3.
+#endif
+	bus_space_map(&ep93xx_bs_tag, EP93XX_APB_HWBASE + UART, 
 		EP93XX_APB_UART_SIZE, 0, &ioh);
-        if (epcomcnattach(&ep93xx_bs_tag, EP93XX_APB_HWBASE + EP93XX_APB_UART1, 
+        if (epcomcnattach(&ep93xx_bs_tag, EP93XX_APB_HWBASE + UART, 
 		ioh, comcnspeed, comcnmode))
 	{
 		panic("can't init serial console");
