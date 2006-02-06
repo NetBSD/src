@@ -1,8 +1,9 @@
-# $NetBSD: mi,v 1.24 2005/04/26 10:51:26 agc Exp $
+# $NetBSD: mi,v 1.25 2006/02/06 18:53:25 wiz Exp $
 ./etc/mtree/set.text				text-sys-root
 ./usr/bin/addftinfo				text-groff-bin
 ./usr/bin/checknr				text-groff-bin
 ./usr/bin/eqn					text-groff-bin
+./usr/bin/gdiffmk				text-groff-bin
 ./usr/bin/grn					text-groff-bin
 ./usr/bin/grodvi				text-groff-bin
 ./usr/bin/groff					text-groff-bin
@@ -35,6 +36,39 @@
 ./usr/bin/troff					text-groff-bin
 ./usr/bin/vgrind				text-groff-bin
 ./usr/libexec/vfontedpr				text-groff-bin
+./usr/share/doc/groff				text-groff-doc		share
+./usr/share/doc/groff/mom			text-groff-doc		share
+./usr/share/doc/groff/mom/README.txt		text-groff-doc		share
+./usr/share/doc/groff/mom/elvis_syntax		text-groff-doc		share
+./usr/share/doc/groff/mom/elvis_syntax.new	text-groff-doc		share
+./usr/share/doc/groff/mom/letter.mom		text-groff-doc		share
+./usr/share/doc/groff/mom/letter.ps		text-groff-doc		share
+./usr/share/doc/groff/mom/penguin.ps		text-groff-doc		share
+./usr/share/doc/groff/mom/sample_docs.mom	text-groff-doc		share
+./usr/share/doc/groff/mom/sample_docs.ps	text-groff-doc		share
+./usr/share/doc/groff/mom/typesetting.mom	text-groff-doc		share
+./usr/share/doc/groff/mom/typesetting.ps	text-groff-doc		share
+./usr/share/doc/html/groff			text-groff-doc		share
+./usr/share/doc/html/groff/mom			text-groff-doc		share
+./usr/share/doc/html/groff/mom/appendices.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/color.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/cover.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/definitions.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/docelement.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/docprocessing.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/goodies.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/headfootpage.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/inlines.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/intro.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/letters.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/macrolist.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/rectoverso.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/refer.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/reserved.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/toc.html		text-groff-doc		share
+./usr/share/doc/html/groff/mom/typemacdoc.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/typesetting.html	text-groff-doc		share
+./usr/share/doc/html/groff/mom/using.html	text-groff-doc		share
 ./usr/share/groff_font/devX100-12/CB		text-groff-font		share
 ./usr/share/groff_font/devX100-12/CBI		text-groff-font		share
 ./usr/share/groff_font/devX100-12/CI		text-groff-font		share
@@ -377,6 +411,7 @@
 ./usr/share/man/cat1/addftinfo.0		text-groff-catman	.cat
 ./usr/share/man/cat1/checknr.0			text-groff-catman	.cat
 ./usr/share/man/cat1/eqn.0			text-groff-catman	.cat
+./usr/share/man/cat1/gdiffmk.0			text-groff-catman	.cat
 ./usr/share/man/cat1/grn.0			text-groff-catman	.cat
 ./usr/share/man/cat1/grodvi.0			text-groff-catman	.cat
 ./usr/share/man/cat1/groff.0			text-groff-catman	.cat
@@ -415,6 +450,7 @@
 ./usr/share/man/cat7/groff_mdoc.0		text-groff-catman	.cat
 ./usr/share/man/cat7/groff_me.0			text-groff-catman	.cat
 ./usr/share/man/cat7/groff_mm.0			text-groff-catman	.cat
+./usr/share/man/cat7/groff_mom.0		text-groff-catman	.cat
 ./usr/share/man/cat7/groff_mmse.0		text-groff-catman	.cat
 ./usr/share/man/cat7/groff_ms.0			text-groff-catman	.cat
 ./usr/share/man/cat7/groff_msafer.0		text-obsolete	obsolete
@@ -430,6 +466,7 @@
 ./usr/share/man/man1/addftinfo.1		text-groff-man		.man
 ./usr/share/man/man1/checknr.1			text-groff-man		.man
 ./usr/share/man/man1/eqn.1			text-groff-man		.man
+./usr/share/man/man1/gdiffmk.1			text-groff-man		.man
 ./usr/share/man/man1/grn.1			text-groff-man		.man
 ./usr/share/man/man1/grodvi.1			text-groff-man		.man
 ./usr/share/man/man1/groff.1			text-groff-man		.man
@@ -468,6 +505,7 @@
 ./usr/share/man/man7/groff_mdoc.7		text-groff-man		.man
 ./usr/share/man/man7/groff_me.7			text-groff-man		.man
 ./usr/share/man/man7/groff_mm.7			text-groff-man		.man
+./usr/share/man/man7/groff_mom.7		text-groff-man		.man
 ./usr/share/man/man7/groff_mmse.7		text-groff-man		.man
 ./usr/share/man/man7/groff_ms.7			text-groff-man		.man
 ./usr/share/man/man7/groff_msafer.7		text-obsolete		obsolete
@@ -512,6 +550,7 @@
 ./usr/share/tmac/andoc.tmac			text-groff-share	share
 ./usr/share/tmac/composite.tmac			text-groff-share	share
 ./usr/share/tmac/cp1047.tmac			text-groff-share	share
+./usr/share/tmac/devtag.tmac			text-groff-share	share
 ./usr/share/tmac/doc.tmac			text-groff-share	share
 ./usr/share/tmac/doc2html.tmac			text-groff-share	share
 ./usr/share/tmac/dvi.tmac			text-groff-share	share
@@ -525,7 +564,7 @@
 ./usr/share/tmac/hyphenex.us			text-groff-share	share
 ./usr/share/tmac/latin1.tmac			text-groff-share	share
 ./usr/share/tmac/latin2.tmac			text-groff-share	share
-./usr/share/tmac/latin5.tmac			text-groff-share	share
+./usr/share/tmac/latin5.tmac			text-obsolete		obsolete
 ./usr/share/tmac/latin9.tmac			text-groff-share	share
 ./usr/share/tmac/lbp.tmac			text-groff-share	share
 ./usr/share/tmac/lj4.tmac			text-groff-share	share
@@ -551,8 +590,10 @@
 ./usr/share/tmac/mm/se_locale			text-groff-share	share
 ./usr/share/tmac/mm/se_ms.cov			text-groff-share	share
 ./usr/share/tmac/mmse.tmac			text-groff-share	share
+./usr/share/tmac/mom.tmac			text-groff-share	share
 ./usr/share/tmac/ms.tmac			text-groff-share	share
 ./usr/share/tmac/mse.tmac			text-groff-share	share
+./usr/share/tmac/om.tmac			text-groff-share	share
 ./usr/share/tmac/papersize.tmac			text-groff-share	share
 ./usr/share/tmac/pic.tmac			text-groff-share	share
 ./usr/share/tmac/ps.tmac			text-groff-share	share
@@ -598,5 +639,6 @@
 ./usr/share/tmac/troffrc-end			text-groff-share	share
 ./usr/share/tmac/tty-char.tmac			text-groff-share	share
 ./usr/share/tmac/tty.tmac			text-groff-share	share
+./usr/share/tmac/unicode.tmac			text-groff-share	share
 ./usr/share/tmac/vgrind.tmac			text-groff-share	share
 ./usr/share/tmac/www.tmac			text-groff-share	share
