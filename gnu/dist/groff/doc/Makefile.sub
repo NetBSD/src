@@ -142,7 +142,7 @@ examples.stamp: grnexmpl.g groff.css gnu.eps
 	fi
 	echo timestamp > $@
 
-groff: groff.texinfo
+dont_build_groff: groff.texinfo
 	$(MAKEINFO) --enable-encoding -I$(srcdir) $(srcdir)/groff.texinfo
 
 gnu.eps: gnu.xpm
