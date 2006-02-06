@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.760 2006/02/02 01:40:19 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.761 2006/02/06 12:41:02 abs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.759 2006/02/02 01:39:53 christos Exp
+ *	NetBSD: pcidevs,v 1.760 2006/02/06 12:40:44 abs Exp
  */
 
 /*
@@ -2705,6 +2705,7 @@
 #define	PCI_PRODUCT_SIS_85C503	0x0008		/* 85C503 or 5597/5598 ISA bridge */
 #define	PCI_PRODUCT_SIS_600PMC	0x0009		/* 600 Power Mngmt Controller */
 #define	PCI_PRODUCT_SIS_180_SATA	0x0180		/* 180 SATA controller */
+#define	PCI_PRODUCT_SIS_190	0x0190		/* 190 Ethernet */
 #define	PCI_PRODUCT_SIS_5597_VGA	0x0200		/* 5597/5598 integrated VGA */
 #define	PCI_PRODUCT_SIS_300	0x0300		/* 300/305 AGP VGA */
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
