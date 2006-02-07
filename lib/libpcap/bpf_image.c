@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_image.c,v 1.7 2004/09/27 23:02:53 dyoung Exp $	*/
+/*	$NetBSD: bpf_image.c,v 1.8 2006/02/07 20:13:22 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/bpf_image.c,v 1.25.2.1 2003/11/15 23:26:38 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: bpf_image.c,v 1.7 2004/09/27 23:02:53 dyoung Exp $");
+__RCSID("$NetBSD: bpf_image.c,v 1.8 2006/02/07 20:13:22 wiz Exp $");
 #endif
 #endif
 
@@ -242,7 +242,6 @@ bpf_image(p, n)
 	case BPF_ALU|BPF_RSH|BPF_K:
 		op = "rsh";
 		goto immediate;
-		break;
 
 	case BPF_ALU|BPF_NEG:
 		op = "neg";
