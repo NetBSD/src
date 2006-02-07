@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.41.4.5 2006/02/07 06:21:31 rpaulo Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.41.4.6 2006/02/07 06:32:04 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 2003 WIDE Project.
@@ -175,6 +175,7 @@ struct inpcb {
 	struct  socket *inp_socket;	/* back pointer to socket */
 	struct	inpcbtable *inp_table;
 	struct	mbuf *inp_options;	/* IP options */
+	struct	lock inp_lock;		/* locking */
 
 	struct	inpcbpolicy *inp_sp;	/* security policy */
 	u_char	inp_vflag;		/* IP version flag (v4/v6) */
@@ -274,6 +275,22 @@ struct inpcb {
 #define IN6P_CONTROLOPTS	(IN6P_PKTINFO|IN6P_HOPLIMIT|IN6P_HOPOPTS|\
 				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS|\
 				 IN6P_MINMTU)
+
+/* XXX: define proper locking */
+#define INP_LOCK_INIT(inp, d, t)	/* nothing */
+#define INP_LOCK_DESTROY(inp)		/* nothing */
+#define INP_LOCK(inp)			/* nothing */		
+#define INP_UNLOCK(inp)			/* nothing */
+#define INP_LOCK_ASSERT(inp)		/* nothing */
+#define INP_UNLOCK_ASSERT(inp)		/* nothing */
+#define INP_INFO_LOCK_INIT(ipi, d)	/* nothing */
+#define INP_INFO_LOCK_DESTROY(ipi)	/* nothing */
+#define INP_INFO_RLOCK(ipi)		/* nothing */
+#define INP_INFO_WLOCK(ipi)		/* nothing */
+#define INP_INFO_RUNLOCK(ipi)		/* nothing */
+#define INP_INFO_WUNLOCK(ipi)		/* nothing */
+#define INP_INFO_RLOCK_ASSERT(ipi)	/* nothing */
+#define INP_INFO_WLOCK_ASSERT(ipi)	/* nothing */
 
 /* compute hash value for foreign and local in6_addr and port */
 #define IN6_HASH(faddr, fport, laddr, lport) 			\
