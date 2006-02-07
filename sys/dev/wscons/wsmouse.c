@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.39 2006/02/05 17:38:33 jmmv Exp $ */
+/* $NetBSD: wsmouse.c,v 1.40 2006/02/07 09:13:02 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.39 2006/02/05 17:38:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.40 2006/02/07 09:13:02 jmmv Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -313,10 +313,14 @@ wsmouse_detach(struct device  *self, int flags)
 	if (evar != NULL && evar->io != NULL) {
 		s = spltty();
 		if (--sc->sc_refcnt >= 0) {
+			struct wscons_event event;
+
 			/* Wake everyone by generating a dummy event. */
-			if (++evar->put >= WSEVENT_QSIZE)
-				evar->put = 0;
-			WSEVENT_WAKEUP(evar);
+			event.type = 0;
+			event.value = 0;
+			if (wsevent_inject(evar, &event, 1) != 0)
+				wsevent_wakeup(evar);
+
 			/* Wait for processes to go away. */
 			if (tsleep(sc, PZERO, "wsmdet", hz * 60))
 				printf("wsmouse_detach: %s didn't detach\n",
@@ -340,9 +344,9 @@ wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
 	int x, int y, int z, int w, u_int flags)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)wsmousedev;
-	struct wscons_event *ev;
 	struct wseventvar *evar;
-	int mb, ub, d, get, put, any;
+	int mb, ub, d, nevents;
+	struct wscons_event events[4 + sizeof(d) * 8];
 
         /*
          * Discard input if not open.
@@ -381,108 +385,58 @@ wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
 	 * mark them `unchanged'.
 	 */
 	ub = sc->sc_ub;
-	any = 0;
-	get = evar->get;
-	put = evar->put;
-	ev = &evar->q[put];
-
-	/* NEXT prepares to put the next event, backing off if necessary */
-#define	NEXT								\
-	if ((++put) % WSEVENT_QSIZE == get) {				\
-		put--;							\
-		goto out;						\
-	}
-	/* ADVANCE completes the `put' of the event */
-#define	ADVANCE								\
-	ev++;								\
-	if (put >= WSEVENT_QSIZE) {					\
-		put = 0;						\
-		ev = &evar->q[0];				\
-	}								\
-	any = 1
-	/* TIMESTAMP sets `time' field of the event to the current time */
-#define TIMESTAMP							\
-	do {								\
-		int s;							\
-		s = splhigh();						\
-		TIMEVAL_TO_TIMESPEC(&time, &ev->time);			\
-		splx(s);						\
-	} while (0)
+	nevents = 0;
 
 	if (flags & WSMOUSE_INPUT_ABSOLUTE_X) {
 		if (sc->sc_x != x) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_X;
-			ev->value = x;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_x = x;
+			events[nevents].type = WSCONS_EVENT_MOUSE_ABSOLUTE_X;
+			events[nevents].value = x;
+			nevents++;
 		}
 	} else {
 		if (sc->sc_dx) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_DELTA_X;
-			ev->value = sc->sc_dx;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_dx = 0;
+			events[nevents].type = WSCONS_EVENT_MOUSE_DELTA_X;
+			events[nevents].value = sc->sc_dx;
+			nevents++;
 		}
 	}
 	if (flags & WSMOUSE_INPUT_ABSOLUTE_Y) {
 		if (sc->sc_y != y) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_Y;
-			ev->value = y;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_y = y;
+			events[nevents].type = WSCONS_EVENT_MOUSE_ABSOLUTE_Y;
+			events[nevents].value = y;
+			nevents++;
 		}
 	} else {
 		if (sc->sc_dy) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_DELTA_Y;
-			ev->value = sc->sc_dy;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_dy = 0;
+			events[nevents].type = WSCONS_EVENT_MOUSE_DELTA_Y;
+			events[nevents].value = sc->sc_dy;
+			nevents++;
 		}
 	}
 	if (flags & WSMOUSE_INPUT_ABSOLUTE_Z) {
 		if (sc->sc_z != z) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_Z;
-			ev->value = z;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_z = z;
+			events[nevents].type = WSCONS_EVENT_MOUSE_ABSOLUTE_Z;
+			events[nevents].value = z;
+			nevents++;
 		}
 	} else {
 		if (sc->sc_dz) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_DELTA_Z;
-			ev->value = sc->sc_dz;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_dz = 0;
+			events[nevents].type = WSCONS_EVENT_MOUSE_DELTA_Z;
+			events[nevents].value = sc->sc_dz;
+			nevents++;
 		}
 	}
 	if (flags & WSMOUSE_INPUT_ABSOLUTE_W) {
 		if (sc->sc_w != w) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_W;
-			ev->value = w;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_w = w;
+			events[nevents].type = WSCONS_EVENT_MOUSE_ABSOLUTE_W;
+			events[nevents].value = w;
+			nevents++;
 		}
 	} else {
 		if (sc->sc_dw) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_DELTA_W;
-			ev->value = sc->sc_dw;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_dw = 0;
+			events[nevents].type = WSCONS_EVENT_MOUSE_DELTA_W;
+			events[nevents].value = sc->sc_dw;
+			nevents++;
 		}
 	}
 
@@ -506,17 +460,15 @@ wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
 		 * Mouse button change.  Find the first change and drop
 		 * it into the event queue.
 		 */
-		NEXT;
 		btnno = ffs(d) - 1;
 		KASSERT(btnno >= 0);
 
-		ev->value = btnno;
-		d = 1 << ev->value;
-		ev->type =
+		events[nevents].type =
 		    (mb & d) ? WSCONS_EVENT_MOUSE_DOWN : WSCONS_EVENT_MOUSE_UP;
-		TIMESTAMP;
-		ADVANCE;
-		ub ^= d;
+		events[nevents].value = btnno;
+		nevents++;
+
+		ub ^= (1 << btnno);
 
 		/*
 		 * Program button repeating if configured for this button.
@@ -530,11 +482,19 @@ wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
 			    sc);
 		}
 	}
-out:
-	if (any) {
+
+	KASSERT(nevents > 0 &&
+	    nevents <= sizeof(events) / sizeof(struct wscons_event));
+
+	if (wsevent_inject(evar, events, nevents) == 0) {
+		/* All events were correctly injected into the queue.
+		 * Synchronize the mouse's status with what the user
+		 * has received. */
+		sc->sc_x = x; sc->sc_dx = 0;
+		sc->sc_y = y; sc->sc_dy = 0;
+		sc->sc_z = z; sc->sc_dz = 0;
+		sc->sc_w = w; sc->sc_dw = 0;
 		sc->sc_ub = ub;
-		evar->put = put;
-		WSEVENT_WAKEUP(evar);
 #if NWSMUX > 0
 		DPRINTFN(5,("wsmouse_input: %s wakeup evar=%p\n",
 			    sc->sc_base.me_dv.dv_xname, evar));
@@ -548,7 +508,7 @@ wsmouse_repeat(void *v)
 	int oldspl;
 	unsigned int newdelay;
 	struct wsmouse_softc *sc;
-	struct wseventvar *evar;
+	struct wscons_event events[2];
 
 	oldspl = spltty();
 	sc = (struct wsmouse_softc *)v;
@@ -566,34 +526,13 @@ wsmouse_repeat(void *v)
 
 	newdelay = sc->sc_repeat_delay;
 
-	evar = sc->sc_base.me_evp;
-	if ((evar->put + 1) % WSEVENT_QSIZE != evar->get &&
-	    (evar->put + 2) % WSEVENT_QSIZE != evar->get) {
-		/* Queue has room for at least two more events. */
-		int oldspl2;
-		struct wscons_event *ev;
+	events[0].type = WSCONS_EVENT_MOUSE_UP;
+	events[0].value = sc->sc_repeat_button;
+	events[1].type = WSCONS_EVENT_MOUSE_DOWN;
+	events[1].value = sc->sc_repeat_button;
 
-		/* Construct and inject new button up event. */
-		ev = &evar->q[evar->put];
-		ev->value = sc->sc_repeat_button;
-		ev->type = WSCONS_EVENT_MOUSE_UP;
-		oldspl2 = splhigh();
-		TIMEVAL_TO_TIMESPEC(&time, &ev->time);
-		splx(oldspl2);
-		evar->put = (evar->put + 1) % WSEVENT_QSIZE;
-
-		/* Construct and inject new button down event. */
-		ev = &evar->q[evar->put];
-		ev->value = sc->sc_repeat_button;
-		ev->type = WSCONS_EVENT_MOUSE_DOWN;
-		oldspl2 = splhigh();
-		TIMEVAL_TO_TIMESPEC(&time, &ev->time);
-		splx(oldspl2);
-		evar->put = (evar->put + 1) % WSEVENT_QSIZE;
-
+	if (wsevent_inject(sc->sc_base.me_evp, events, 2) == 0) {
 		sc->sc_ub = 1 << sc->sc_repeat_button;
-
-		WSEVENT_WAKEUP(evar);
 
 		if (newdelay - sc->sc_repeat.wr_delay_decrement <
 		    sc->sc_repeat.wr_delay_minimum)
@@ -642,9 +581,8 @@ wsmouseopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
-	wsevent_init(evar);
+	wsevent_init(evar, l->l_proc);
 	sc->sc_base.me_evp = evar;
-	evar->io = l->l_proc;
 
 	error = wsmousedoopen(sc, evar);
 	if (error) {
