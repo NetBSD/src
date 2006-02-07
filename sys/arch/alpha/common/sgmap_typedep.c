@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.32.2.1 2006/02/05 13:53:40 yamt Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.32.2.2 2006/02/07 10:17:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.32.2.1 2006/02/05 13:53:40 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.32.2.2 2006/02/07 10:17:58 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -203,7 +203,7 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags, struct alpha_sgmap *sgmap)
 {
 	int seg, error;
-	struct vmspace *vm = p->p_vmspace;
+	struct vmspace *vm;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -220,6 +220,11 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	map->_dm_flags |= flags & (BUS_DMA_READ|BUS_DMA_WRITE);
 
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
 	seg = 0;
 	error = __C(SGMAP_TYPE,_load_buffer)(t, map, buf, buflen, vm,
 	    flags, seg, sgmap);
