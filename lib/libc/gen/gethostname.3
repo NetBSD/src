@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostname.3,v 1.16 2005/10/14 23:53:41 christos Exp $
+.\"	$NetBSD: gethostname.3,v 1.17 2006/02/07 18:59:56 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,7 +71,9 @@ placed in the global location
 .Va errno .
 .Sh ERRORS
 If the
-.Fn
+.Fn gethostname
+or
+.Fn sethostname
 functions fail,
 they will set
 .Va errno
