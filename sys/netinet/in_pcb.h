@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.41.4.4 2006/02/05 03:01:32 rpaulo Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.41.4.5 2006/02/07 06:21:31 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 2003 WIDE Project.
@@ -117,7 +117,7 @@ struct inpcbtable {
  */
 LIST_HEAD(inpcbhead, inpcb);
 LIST_HEAD(inpcbporthead, inpcbport);
-typedef	u_quad_t		inp_gen_t;
+typedef u_quad_t inp_gen_t;
 
 /*
  * PCB with AF_INET6 null bind'ed laddr can receive AF_INET input packet.
