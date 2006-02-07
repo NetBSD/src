@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.15 2006/01/22 05:56:58 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.16 2006/02/07 23:56:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.15 2006/01/22 05:56:58 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.16 2006/02/07 23:56:20 uwe Exp $")
 
 
 /*
@@ -148,19 +148,19 @@ VECTOR_END_MARKER(sh_vector_generic_end)
 NENTRY(sh3_vector_tlbmiss)
 	__EXCEPTION_ENTRY
 	mov.l	_L.TEA3, r0
-	mov.l	@r0,	r6
-	mov.l	__L.VPN_MASK, r1
-	and	r1,	r6	/* 3rd arg */
+	mov.l	@r0,	r6	/* 3rd arg: va = TEA */
 #if !defined(P1_STACK)
 	/* Load kernel stack */
-	tst	r6,	r6	/* check VPN == 0 */
+	mov.l	__L.VPN_MASK, r0
+	and	r6,	r0
+	tst	r0,	r0	/* check VPN == 0 */
 	bt	6f
 	mov.l	_L.CURUPTE, r1
 	mov.l	@r1,	r1
 	mov	#UPAGES,r3
 	mov	#1,	r2
 4:	mov.l	@r1+,	r7
-	cmp/eq	r7,	r6	/* md_upte.addr: u-area VPN */
+	cmp/eq	r7,	r0	/* md_upte.addr: u-area VPN */
 	bt	5f
 	add	#4,	r1	/* skip md_upte.data */
 	cmp/eq	r2,	r3
