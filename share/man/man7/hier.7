@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.69 2006/01/09 18:41:18 tsutsui Exp $
+.\"	$NetBSD: hier.7,v 1.70 2006/02/07 19:40:51 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd January 9, 2006
+.Dd February 7, 2006
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -608,7 +608,6 @@ timezone configuration information;
 see
 .Xr tzfile 5
 .El
-.Pp
 .El
 .Pp
 .It Sy /usr/src/
@@ -619,6 +618,8 @@ and local source files
 .It Sy bin/
 source for utilities/files in
 .Pa /bin
+.It Sy common/
+sources shared between kernel and userland
 .It Sy crypto/
 cryptographic source, which may have import or export restrictions
 .It Sy dist/
@@ -813,7 +814,7 @@ Sharp X680x0 680x0-based workstations
 General support for PC/AT compatibles with ia32 or x86_64 CPUs
 .It Sy xen/
 The Xen virtual machine monitor
-El
+.El
 .Pp
 .It Sy compat/
 kernel compatibility modules directory
