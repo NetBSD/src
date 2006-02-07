@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.35 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.35.2.1 2006/02/07 04:51:49 rpaulo Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -254,7 +254,7 @@ extern int   ip6_lowportmax;		/* maximum reserved port */
 extern int	ip6_use_defzone; /* whether to use the default scope zone
 				    when unspecified */
 
-struct in6pcb;
+struct inpcb;
 
 int	icmp6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 
@@ -275,7 +275,7 @@ void	ip6_delaux __P((struct mbuf *));
 int	ip6_mforward __P((struct ip6_hdr *, struct ifnet *, struct mbuf *));
 int	ip6_process_hopopts __P((struct mbuf *, u_int8_t *, int, u_int32_t *,
 				 u_int32_t *));
-void	ip6_savecontrol __P((struct in6pcb *, struct mbuf **, struct ip6_hdr *,
+void	ip6_savecontrol __P((struct inpcb *, struct mbuf **, struct ip6_hdr *,
 		struct mbuf *));
 int	ip6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
@@ -289,7 +289,7 @@ int	ip6_output __P((struct mbuf *, struct ip6_pktopts *,
 int	ip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	ip6_raw_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	ip6_setpktoptions __P((struct mbuf *, struct ip6_pktopts *, int));
-int	ip6_optlen __P((struct in6pcb *));
+int	ip6_optlen __P((struct inpcb *));
 
 int	route6_input __P((struct mbuf **, int *, int));
 
