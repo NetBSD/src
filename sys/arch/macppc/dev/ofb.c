@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.43 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: ofb.c,v 1.44 2006/02/07 02:29:28 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.43 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.44 2006/02/07 02:29:28 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -67,9 +67,8 @@ int ofb_enable_cache = 1;
 int ofb_enable_cache = 0;
 #endif
 
-int	ofbmatch __P((struct device *, struct cfdata *, void *));
-void	ofbattach __P((struct device *, struct device *, void *));
-int	ofbprint __P((void *, const char *));
+static int	ofbmatch(struct device *, struct cfdata *, void *);
+static void	ofbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ofb, sizeof(struct ofb_softc),
     ofbmatch, ofbattach, NULL, NULL);
@@ -93,14 +92,14 @@ struct wsscreen_list ofb_screenlist = {
 	sizeof(_ofb_scrlist) / sizeof(struct wsscreen_descr *), _ofb_scrlist
 };
 
-static int ofb_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
-static paddr_t ofb_mmap __P((void *, off_t, int));
-static int ofb_alloc_screen __P((void *, const struct wsscreen_descr *,
-				void **, int *, int *, long *));
-static void ofb_free_screen __P((void *, void *));
-static int ofb_show_screen __P((void *, void *, int,
-				void (*) (void *, int, int), void *));
-static int copy_rom_font __P((void));
+static int ofb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t ofb_mmap(void *, off_t, int);
+static int ofb_alloc_screen(void *, const struct wsscreen_descr *, void **,
+    int *, int *, long *);
+static void ofb_free_screen(void *, void *);
+static int ofb_show_screen(void *, void *, int,	void (*) (void *, int, int),
+    void *);
+static int copy_rom_font(void);
 
 struct wsdisplay_accessops ofb_accessops = {
 	ofb_ioctl,
@@ -113,15 +112,12 @@ struct wsdisplay_accessops ofb_accessops = {
 
 static struct wsdisplay_font openfirm6x11;
 
-static void ofb_common_init __P((int, struct ofb_devconfig *));
-static int ofb_getcmap __P((struct ofb_softc *, struct wsdisplay_cmap *));
-static int ofb_putcmap __P((struct ofb_softc *, struct wsdisplay_cmap *));
+static void ofb_common_init(int, struct ofb_devconfig *);
+static int ofb_getcmap(struct ofb_softc *, struct wsdisplay_cmap *);
+static int ofb_putcmap(struct ofb_softc *, struct wsdisplay_cmap *);
 
 int
-ofbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ofbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -135,10 +131,8 @@ ofbmatch(parent, match, aux)
 	return 0;
 }
 
-void
-ofbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ofbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofb_softc *sc = (struct ofb_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -224,10 +218,8 @@ ofbattach(parent, self, aux)
 	config_found(self, &a, wsemuldisplaydevprint);
 }
 
-void
-ofb_common_init(node, dc)
-	int node;
-	struct ofb_devconfig *dc;
+static void
+ofb_common_init(int node, struct ofb_devconfig *dc)
 {
 	struct rasops_info *ri = &dc->dc_ri;
 	int32_t addr, width, height, linebytes, depth;
@@ -340,13 +332,8 @@ ofb_is_console()
 		return 0;
 }
 
-int
-ofb_ioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+static int
+ofb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ofb_softc *sc = v;
 	struct ofb_devconfig *dc = sc->sc_dc;
@@ -388,11 +375,8 @@ ofb_ioctl(v, cmd, data, flag, l)
 	return EPASSTHROUGH;
 }
 
-paddr_t
-ofb_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+static paddr_t
+ofb_mmap(void *v, off_t offset, int prot)
 {
 	struct ofb_softc *sc = v;
 	struct ofb_devconfig *dc = sc->sc_dc;
@@ -441,13 +425,9 @@ ofb_mmap(v, offset, prot)
 	return -1;
 }
 
-int
-ofb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+static int
+ofb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct ofb_softc *sc = v;
 	struct rasops_info *ri = &sc->sc_dc->dc_ri;
@@ -465,10 +445,8 @@ ofb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	return 0;
 }
 
-void
-ofb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+static void
+ofb_free_screen(void *v, void *cookie)
 {
 	struct ofb_softc *sc = v;
 
@@ -478,13 +456,9 @@ ofb_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-int
-ofb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb) __P((void *, int, int));
-	void *cbarg;
+static int
+ofb_show_screen(void *v, void *cookie, int waitok, 
+    void (*cb)(void *, int, int), void *cbarg)
 {
 
 	return (0);
@@ -526,7 +500,7 @@ ofb_cnattach()
 	return 0;
 }
 
-int
+static int
 copy_rom_font()
 {
 	u_char *romfont;
@@ -565,10 +539,8 @@ copy_rom_font()
 	return 0;
 }
 
-int
-ofb_getcmap(sc, cm)
-	struct ofb_softc *sc;
-	struct wsdisplay_cmap *cm;
+static int
+ofb_getcmap(struct ofb_softc *sc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
@@ -590,10 +562,8 @@ ofb_getcmap(sc, cm)
 	return 0;
 }
 
-int
-ofb_putcmap(sc, cm)
-	struct ofb_softc *sc;
-	struct wsdisplay_cmap *cm;
+static int
+ofb_putcmap(struct ofb_softc *sc, struct wsdisplay_cmap *cm)
 {
 	struct ofb_devconfig *dc = sc->sc_dc;
 	u_int index = cm->index;
