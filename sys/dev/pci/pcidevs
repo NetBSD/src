@@ -1,6 +1,4 @@
-WARNS=	4
-
-$NetBSD: pcidevs,v 1.761 2006/02/07 17:15:54 cube Exp $
+$NetBSD: pcidevs,v 1.762 2006/02/07 17:21:56 cube Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
