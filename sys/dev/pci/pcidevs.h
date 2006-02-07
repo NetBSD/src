@@ -1,13 +1,11 @@
-/*	$NetBSD: pcidevs.h,v 1.762 2006/02/07 17:20:47 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.763 2006/02/07 17:23:23 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	WARNS=	4
+ *	NetBSD: pcidevs,v 1.762 2006/02/07 17:21:56 cube Exp
  */
-
-$NetBSD: pcidevs.h,v 1.762 2006/02/07 17:20:47 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
