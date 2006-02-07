@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.23 2004/11/24 11:57:09 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.24 2006/02/07 20:07:42 wiz Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: field.c,v 1.23 2004/11/24 11:57:09 blymn Exp $");
+__RCSID("$NetBSD: field.c,v 1.24 2006/02/07 20:07:42 wiz Exp $");
 
 #include <stdlib.h>
 #include <strings.h>
@@ -327,12 +327,12 @@ field_buffer_init(FIELD *field, int buffer, unsigned int len)
 		field->row_count = 1; /* must be at least one row  XXX need to shift old rows (if any) to free list??? */
 		field->lines->length = len;
 		if ((newp = realloc(field->lines->string,
-				    (unsigned long) len + 1)) == NULL)
+				    (size_t) len + 1)) == NULL)
 			return E_SYSTEM_ERROR;
 		field->lines->string = newp;
 		field->lines->allocated = len + 1;
 		strlcpy(field->lines->string, field->buffers[buffer].string,
-			(unsigned long) len + 1);
+			(size_t) len + 1);
 		field->lines->expanded =
 			_formi_tab_expanded_length(field->lines->string,
 						   0, field->lines->length);
@@ -515,7 +515,7 @@ field_buffer(FIELD *field, int buffer)
 			{
 				if (linep->length != 0) {
 					strncpy(p, linep->string,
-						(unsigned long) linep->length);
+						(size_t) linep->length);
 					p += linep->length;
 				}
 				
