@@ -1,42 +1,13 @@
-/*	$NetBSD: pcidevs_data.h,v 1.760 2006/02/06 12:41:02 abs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.761 2006/02/07 17:20:47 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.760 2006/02/06 12:40:44 abs Exp
+ *	WARNS=	4
  */
 
-/*
- * Copyright (c) 1995, 1996 Christopher G. Demetriou
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *	for the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+$NetBSD: pcidevs_data.h,v 1.761 2006/02/07 17:20:47 xtraeme Exp $
 
 static const struct pci_vendor pci_vendors[] = {
 	{
@@ -8344,6 +8315,10 @@ static const struct pci_product pci_products[] = {
 	    "FNW-3800-TX 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9054,
+	    "9054 I/O Accelerator",
+	},
+	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9060ES,
 	    "9060ES PCI bus controller",
 	},
@@ -10760,4 +10735,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2106;
+const int pci_nproducts = 2107;

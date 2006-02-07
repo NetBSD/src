@@ -1,11 +1,13 @@
-/*	$NetBSD: pcidevs.h,v 1.761 2006/02/06 12:41:02 abs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.762 2006/02/07 17:20:47 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.760 2006/02/06 12:40:44 abs Exp
+ *	WARNS=	4
  */
+
+$NetBSD: pcidevs.h,v 1.762 2006/02/07 17:20:47 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2470,6 +2472,7 @@
 #define	PCI_PRODUCT_PLANEX_FNW_3800_TX	0xab07		/* FNW-3800-TX 10/100 Ethernet */
 
 /* PLX Technology products */
+#define	PCI_PRODUCT_PLX_9054	0x9054		/* 9054 I/O Accelerator */
 #define	PCI_PRODUCT_PLX_9060ES	0x906e		/* 9060ES PCI bus controller */
 #define	PCI_PRODUCT_PLX_9656	0x9656		/* 9656 I/O Accelerator */
 
