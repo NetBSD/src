@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.16 2005/07/16 22:00:40 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.17 2006/02/07 06:39:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -33,7 +33,7 @@
 
 #define DEF_POINTS (KTRFAC_SYSCALL | KTRFAC_SYSRET | KTRFAC_NAMEI | \
 		  KTRFAC_GENIO | KTRFAC_PSIG | KTRFAC_EMUL | KTRFAC_USER | \
-		  KTRFAC_MMSG | KTRFAC_MOOL)
+		  KTRFAC_MMSG | KTRFAC_MOOL | KTRFAC_SAUPCALL)
 
 #define ALL_POINTS KTRFAC_MASK
 
