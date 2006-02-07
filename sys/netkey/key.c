@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.139 2006/01/25 15:12:05 rpaulo Exp $	*/
+/*	$NetBSD: key.c,v 1.139.2.1 2006/02/07 17:13:58 rpaulo Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.139 2006/01/25 15:12:05 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.139.2.1 2006/02/07 17:13:58 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -73,12 +73,9 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.139 2006/01/25 15:12:05 rpaulo Exp $");
 #include <netinet6/scope6_var.h>
 #endif /* INET6 */
 
-#ifdef INET
+#if defined(INET) || defined(INET6)
 #include <netinet/in_pcb.h>
 #endif
-#ifdef INET6
-#include <netinet6/in6_pcb.h>
-#endif /* INET6 */
 
 #include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
