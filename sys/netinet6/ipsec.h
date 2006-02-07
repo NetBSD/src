@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.45 2005/12/10 23:39:56 elad Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.45.4.1 2006/02/07 04:51:49 rpaulo Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ extern struct secpolicy *ipsec6_getpolicybyaddr
 
 struct inpcb;
 #ifdef INET6
-struct in6pcb;
+struct inpcb;
 #endif
 extern int ipsec_init_pcbpolicy __P((struct socket *, struct inpcbpolicy **));
 extern int ipsec_copy_pcbpolicy
@@ -380,11 +380,11 @@ extern int ipsec4_in_reject __P((struct mbuf *, struct inpcb *));
 
 #ifdef INET6
 extern int ipsec6_in_reject_so __P((struct mbuf *, struct socket *));
-extern int ipsec6_delete_pcbpolicy __P((struct in6pcb *));
-extern int ipsec6_set_policy __P((struct in6pcb *, int, caddr_t, size_t, int));
-extern int ipsec6_get_policy __P((struct in6pcb *, caddr_t, size_t,
+extern int ipsec6_delete_pcbpolicy __P((struct inpcb *));
+extern int ipsec6_set_policy __P((struct inpcb *, int, caddr_t, size_t, int));
+extern int ipsec6_get_policy __P((struct inpcb *, caddr_t, size_t,
 	    struct mbuf **));
-extern int ipsec6_in_reject __P((struct mbuf *, struct in6pcb *));
+extern int ipsec6_in_reject __P((struct mbuf *, struct inpcb *));
 #endif /* INET6 */
 
 struct secas;
@@ -396,7 +396,7 @@ extern int ipsec_updatereplay __P((u_int32_t, struct secasvar *));
 extern size_t ipsec4_hdrsiz __P((struct mbuf *, u_int, struct inpcb *));
 extern size_t ipsec4_hdrsiz_tcp __P((struct tcpcb *));
 #ifdef INET6
-extern size_t ipsec6_hdrsiz __P((struct mbuf *, u_int, struct in6pcb *));
+extern size_t ipsec6_hdrsiz __P((struct mbuf *, u_int, struct inpcb *));
 extern size_t ipsec6_hdrsiz_tcp __P((struct tcpcb *));
 #endif
 

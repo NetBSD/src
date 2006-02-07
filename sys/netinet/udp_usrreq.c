@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.146.2.1 2006/02/05 03:09:11 rpaulo Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.146.2.2 2006/02/07 04:51:49 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146.2.1 2006/02/05 03:09:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146.2.2 2006/02/07 04:51:49 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -713,7 +713,6 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 	u_int16_t *sport, *dport;
 	int rcvcnt;
 	struct in_addr *src4, *dst4;
-	struct inpcb_hdr *inph;
 	struct inpcb *inp;
 	struct mbuf *m = *mp;
 
@@ -753,8 +752,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		/*
 		 * Locate pcb(s) for datagram.
 		 */
-		CIRCLEQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
-			inp = (struct inpcb *)inph;
+		CIRCLEQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
 			if (inp->inp_af != AF_INET)
 				continue;
 
@@ -844,8 +842,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 	int rcvcnt;
 	struct in6_addr src6, *dst6;
 	const struct in_addr *dst4;
-	struct inpcb_hdr *inph;
-	struct in6pcb *in6p;
+	struct inpcb *inp;
 
 	rcvcnt = 0;
 	off += sizeof(struct udphdr);	/* now, offset of payload */
@@ -891,34 +888,33 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 		/*
 		 * Locate pcb(s) for datagram.
 		 */
-		CIRCLEQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
-			in6p = (struct in6pcb *)inph;
-			if (in6p->in6p_af != AF_INET6)
+		CIRCLEQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
+			if (inp->inp_af != AF_INET6)
 				continue;
 
-			if (in6p->in6p_lport != dport)
+			if (inp->inp_lport != dport)
 				continue;
-			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
-				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr,
+			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->in6p_laddr)) {
+				if (!IN6_ARE_ADDR_EQUAL(&inp->in6p_laddr,
 				    dst6))
 					continue;
 			} else {
 				if (IN6_IS_ADDR_V4MAPPED(dst6) &&
-				    (in6p->in6p_flags & IN6P_IPV6_V6ONLY))
+				    (inp->inp_flags & IN6P_IPV6_V6ONLY))
 					continue;
 			}
-			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
-				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr,
-				    &src6) || in6p->in6p_fport != sport)
+			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->in6p_faddr)) {
+				if (!IN6_ARE_ADDR_EQUAL(&inp->in6p_faddr,
+				    &src6) || inp->inp_fport != sport)
 					continue;
 			} else {
 				if (IN6_IS_ADDR_V4MAPPED(&src6) &&
-				    (in6p->in6p_flags & IN6P_IPV6_V6ONLY))
+				    (inp->inp_flags & IN6P_IPV6_V6ONLY))
 					continue;
 			}
 
 			udp6_sendup(m, off, (struct sockaddr *)src,
-				in6p->in6p_socket);
+				inp->inp_socket);
 			rcvcnt++;
 
 			/*
@@ -929,7 +925,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 			 * port.  It assumes that an application will never
 			 * clear these options after setting them.
 			 */
-			if ((in6p->in6p_socket->so_options &
+			if ((inp->inp_socket->so_options &
 			    (SO_REUSEPORT|SO_REUSEADDR)) == 0)
 				break;
 		}
@@ -937,16 +933,16 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 		/*
 		 * Locate pcb for datagram.
 		 */
-		in6p = in6_pcblookup_connect(&udbtable, &src6, sport, dst6,
+		inp = in6_pcblookup_connect(&udbtable, &src6, sport, dst6,
 		    dport, 0);
-		if (in6p == 0) {
+		if (inp == 0) {
 			++udpstat.udps_pcbhashmiss;
-			in6p = in6_pcblookup_bind(&udbtable, dst6, dport, 0);
-			if (in6p == 0)
+			inp = in6_pcblookup_bind(&udbtable, dst6, dport, 0);
+			if (inp == 0)
 				return rcvcnt;
 		}
 
-		udp6_sendup(m, off, (struct sockaddr *)src, in6p->in6p_socket);
+		udp6_sendup(m, off, (struct sockaddr *)src, inp->inp_socket);
 		rcvcnt++;
 	}
 
