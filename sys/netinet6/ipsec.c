@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.106 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.106.2.1 2006/02/07 04:58:11 rpaulo Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.106 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.106.2.1 2006/02/07 04:58:11 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.106 2006/01/21 00:15:36 rpaulo Exp $");
 #endif
 #include <netinet/in_pcb.h>
 #ifdef INET6
-#include <netinet6/in6_pcb.h>
 #include <netinet/icmp6.h>
 #include <netinet6/scope6_var.h>
 #endif

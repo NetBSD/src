@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.2.1 2006/02/07 04:58:11 rpaulo Exp $");
 
 #include "opt_inet.h"
 
@@ -103,9 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23 2006/01/21 00:15:36 rpaulo Exp $");
 #include <netinet/in_pcb.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
-#ifndef __OpenBSD__
-#include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet6/scope6_var.h>
