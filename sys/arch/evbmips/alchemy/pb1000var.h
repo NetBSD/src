@@ -1,4 +1,4 @@
-/*	$NetBSD: pb1000var.h,v 1.1 2002/07/29 16:22:59 simonb Exp $	*/
+/*	$NetBSD: pb1000var.h,v 1.2 2006/02/07 18:57:12 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,9 +45,3 @@ struct pb1000_config {
 	struct mips_bus_space pc_cpuregt;
 };
 
-#ifdef _KERNEL
-extern struct pb1000_config pb1000_configuration;
-
-void *pb1000_intr_establish(int, int, int, int, int (*)(void *), void *);
-void pb1000_intr_disestablish(void *);
-#endif /* _KERNEL */
