@@ -1,6 +1,6 @@
-#	$NetBSD: files.pb1000,v 1.9 2005/12/11 12:17:11 christos Exp $
+#	$NetBSD: files.pb1000,v 1.10 2006/02/07 18:57:12 gdamore Exp $
 
-file	arch/evbmips/alchemy/pb1000_intr.c
+file	arch/evbmips/alchemy/mach_intr.c
 
 file	arch/evbmips/alchemy/autoconf.c
 file	arch/evbmips/alchemy/machdep.c

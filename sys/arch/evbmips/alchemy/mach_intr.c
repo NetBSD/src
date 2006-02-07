@@ -1,4 +1,4 @@
-/*	$NetBSD: pb1000_intr.c,v 1.3 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: mach_intr.c,v 1.1 2006/02/07 18:57:12 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,14 +37,15 @@
  */
 
 /*
- * Platform-specific interrupt support for the Alchemy Semiconductor Pb1000.
+ * Platform-specific interrupt support for the Alchemy parts.
  *
- * The Alchemy Semiconductor Pb1000's interrupts are wired to two internal
- * interrupt controllers.
+ * These boards just use the interrupt controller built into the
+ * Alchemy processors, so we just provide evbmips-compliant wrapper
+ * routines.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pb1000_intr.c,v 1.3 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.1 2006/02/07 18:57:12 gdamore Exp $");
 
 #include "opt_ddb.h"
 
@@ -60,35 +61,12 @@ __KERNEL_RCSID(0, "$NetBSD: pb1000_intr.c,v 1.3 2005/12/11 12:17:11 christos Exp
 
 #include <mips/locore.h>
 #include <mips/alchemy/include/auvar.h>
-
-#include <evbmips/evbmips/clockvar.h>
 #include <mips/alchemy/include/aubusvar.h>
-#include <evbmips/alchemy/pb1000reg.h>
-#include <evbmips/alchemy/pb1000var.h>
-
-#include <dev/ic/mc146818reg.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
 
 void
 evbmips_intr_init(void)
 {
 	au_intr_init();
-}
-
-void *
-pb1000_intr_establish(int irq, int req, int level, int type,
-    int (*func)(void *), void *arg)
-{
-
-	return (au_intr_establish(irq, req, level, type, func, arg));
-}
-
-void
-pb1000_intr_disestablish(void *cookie)
-{
-
-	return (au_intr_disestablish(cookie));
 }
 
 void
