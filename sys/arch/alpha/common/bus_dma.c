@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.61.2.1 2006/02/05 13:53:39 yamt Exp $ */
+/* $NetBSD: bus_dma.c,v 1.61.2.2 2006/02/07 10:17:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.61.2.1 2006/02/05 13:53:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.61.2.2 2006/02/07 10:17:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ _bus_dmamap_load_direct(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 {
 	paddr_t lastaddr;
 	int seg, error;
-	struct vmspace *vm = p->p_vmspace;
+	struct vmspace *vm;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -248,6 +248,11 @@ _bus_dmamap_load_direct(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
 	seg = 0;
 	error = _bus_dmamap_load_buffer_direct(t, map, buf, buflen,
 	    vm, flags, &lastaddr, &seg, 1);
@@ -335,8 +340,8 @@ _bus_dmamap_load_mbuf_direct(bus_dma_tag_t t, bus_dmamap_t map,
 
 		default:
 			error = _bus_dmamap_load_buffer_direct(t, map,
-			    m->m_data, m->m_len, NULL, flags, &lastaddr,
-			    &seg, first);
+			    m->m_data, m->m_len, vmspace_kernel(), flags,
+			    &lastaddr, &seg, first);
 		}
 		first = 0;
 	}
