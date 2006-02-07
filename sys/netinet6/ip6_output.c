@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.94 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.94.2.1 2006/02/07 04:58:11 rpaulo Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94.2.1 2006/02/07 04:58:11 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -86,11 +86,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94 2006/01/21 00:15:36 rpaulo Exp $
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#include <netinet/in_pcb.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet/in_offload.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet6/scope6_var.h>
