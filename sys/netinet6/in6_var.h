@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.41 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.41.2.1 2006/02/07 04:51:49 rpaulo Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -613,7 +613,7 @@ void	in6_purgeprefix __P((struct ifnet *));
 
 int in6_src_ioctl __P((u_long, caddr_t));
 int	in6_is_addr_deprecated __P((struct sockaddr_in6 *));
-struct in6pcb;
+struct inpcb;
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IN6_VAR_H_ */
