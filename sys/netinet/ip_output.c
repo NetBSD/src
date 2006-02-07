@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.159 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.159.4.1 2006/02/07 16:51:50 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.159 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.159.4.1 2006/02/07 16:51:50 rpaulo Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -528,7 +528,7 @@ sendit:
 		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND,
 		    flags, &error);
 	else {
-		if (IPSEC_PCB_SKIP_IPSEC(sotoinpcb_hdr(so)->inph_sp,
+		if (IPSEC_PCB_SKIP_IPSEC(sotoinpcb(so)->inp_sp,
 					 IPSEC_DIR_OUTBOUND))
 			goto skip_ipsec;
 		sp = ipsec4_getpolicybysock(m, IPSEC_DIR_OUTBOUND, so, &error);
