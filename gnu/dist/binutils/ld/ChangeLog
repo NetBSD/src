@@ -7,6 +7,10 @@
 	* emultempl/ppc64elf.em (ppc_before_allocation): Always run
 	ppc64_elf_edit_opd.
 
+2005-06-01  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* emulparams/elf32btsmip.sh: Unset DATA_ADDR.
+
 2005-04-12  Alan Modra  <amodra@bigpond.net.au>
 
 	* emultempl/elf32.em (gld${EMULATION_NAME}_stat_needed): Ignore
