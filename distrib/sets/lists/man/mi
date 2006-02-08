@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.853 2006/02/08 00:54:33 christos Exp $
+# $NetBSD: mi,v 1.854 2006/02/08 19:00:34 agc Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1518,6 +1518,7 @@
 ./usr/share/man/cat5/ippool.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat5/ipsec.conf.0		man-netutil-catman	.cat
 ./usr/share/man/cat5/ipsend.0			man-ipf-catman		ipfilter,.cat
+./usr/share/man/cat5/targets.0			man-iscsi-catman	.cat
 ./usr/share/man/cat5/isdnd.acct.0		man-isdn-catman		.cat
 ./usr/share/man/cat5/isdnd.rates.0		man-isdn-catman		.cat
 ./usr/share/man/cat5/isdnd.rc.0			man-isdn-catman		.cat
@@ -1880,6 +1881,7 @@
 ./usr/share/man/cat8/ipwctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/irda.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/irdaattach.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/iscsi-target.0		man-iscsi-catman	.cat
 ./usr/share/man/cat8/isdnd.0			man-isdn-catman		.cat
 ./usr/share/man/cat8/isdnmonitor.0		man-isdn-catman		.cat
 ./usr/share/man/cat8/isdntel.0			man-isdn-catman		.cat
@@ -3820,6 +3822,7 @@
 ./usr/share/man/man5/ippool.5			man-ipf-man		ipfilter,.man
 ./usr/share/man/man5/ipsec.conf.5		man-netutil-man		.man
 ./usr/share/man/man5/ipsend.5			man-ipf-man		ipfilter,.man
+./usr/share/man/man5/targets.5			man-iscsi-man		.man
 ./usr/share/man/man5/isdnd.acct.5		man-isdn-man		.man
 ./usr/share/man/man5/isdnd.rates.5		man-isdn-man		.man
 ./usr/share/man/man5/isdnd.rc.5			man-isdn-man		.man
@@ -4182,6 +4185,7 @@
 ./usr/share/man/man8/ipwctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/irda.8			man-sysutil-man		.man
 ./usr/share/man/man8/irdaattach.8		man-sysutil-man		.man
+./usr/share/man/man8/iscsi-target.8		man-iscsi-man		.man
 ./usr/share/man/man8/isdnd.8			man-isdn-man		.man
 ./usr/share/man/man8/isdnmonitor.8		man-isdn-man		.man
 ./usr/share/man/man8/isdntel.8			man-isdn-man		.man

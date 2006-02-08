@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.161 2005/09/14 00:38:39 lukem Exp $
+# $NetBSD: mi,v 1.162 2006/02/08 19:00:34 agc Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -56,6 +56,8 @@
 ./etc/hosts.equiv				etc-netutil-etc
 ./etc/hosts.lpd					etc-lpr-etc
 ./etc/inetd.conf				etc-netutil-etc
+./etc/iscsi/auths				etc-iscsi-etc
+./etc/iscsi/targets				etc-iscsi-etc
 ./etc/lkm.conf					etc-sys-etc
 ./etc/localtime					etc-sys-etc
 ./etc/locate.conf				etc-sys-etc
@@ -167,6 +169,7 @@
 ./etc/rc.d/ipmon				etc-ipf-rc
 ./etc/rc.d/ipnat				etc-ipf-rc
 ./etc/rc.d/ipsec				etc-net-rc
+./etc/rc.d/iscsi_target				etc-iscsi-rc
 ./etc/rc.d/isdnd				etc-isdn-rc
 ./etc/rc.d/kdc					etc-krb5-rc
 ./etc/rc.d/kerberos				etc-obsolete		obsolete
