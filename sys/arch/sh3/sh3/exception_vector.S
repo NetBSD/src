@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.17 2006/02/08 00:32:06 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.18 2006/02/08 02:19:57 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.17 2006/02/08 00:32:06 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.18 2006/02/08 02:19:57 uwe Exp $")
 
 
 /*
@@ -166,8 +166,8 @@ NENTRY(sh3_vector_tlbmiss)
 	cmp/eq	r2,	r3
 	bf/s	4b
 	 add	#1,	r2
-	bra	6f
-	 nop
+	bra	7f		/* pull insn at 6f into delay slot */
+	 mov	#(SH3_EXPEVT & 0xff), r0
 5:	mov.l	@r1,	r2	/* md_upte.data: u-area PTE */
 	mov	#(SH3_PTEL & 0xff), r1
 	mov.l	r2,	@r1
@@ -177,12 +177,11 @@ NENTRY(sh3_vector_tlbmiss)
 	and	r2,	r0
 	mov.l	r0,	@r1	/* ASID 0 */
 	ldtlb
-	mov.l	r2,	@r1	/* restore ASID */
 	bra	3f
-	 nop
+	 mov.l	r2,	@r1	/* restore ASID */
 #endif /* !P1_STACK */
 6:	mov	#(SH3_EXPEVT & 0xff), r0
-	mov.l	@r0,	r0
+7:	mov.l	@r0,	r0
 	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
 	mov.l	2f,	r0
 	mov.l	@r0,	r4	/* 1st arg */
