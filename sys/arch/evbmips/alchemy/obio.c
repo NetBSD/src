@@ -1,4 +1,4 @@
-/* $NetBSD: pb1000_obio.c,v 1.9 2005/12/11 12:17:11 christos Exp $ */
+/* $NetBSD: obio.c,v 1.1 2006/02/08 09:04:01 gdamore Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pb1000_obio.c,v 1.9 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.1 2006/02/08 09:04:01 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: pb1000_obio.c,v 1.9 2005/12/11 12:17:11 christos Exp
 #include <mips/cache.h>
 #include <mips/cpuregs.h>
 
-#include <evbmips/alchemy/pb1000reg.h>
-#include <evbmips/alchemy/pb1000_obiovar.h>
+#include <evbmips/alchemy/board.h>
+#include <evbmips/alchemy/obiovar.h>
 
 #include "locators.h"
 
@@ -62,20 +62,7 @@ CFATTACH_DECL(obio, sizeof(struct device),
     obio_match, obio_attach, NULL, NULL);
 
 /* There can be only one. */
-int	obio_found;
-
-struct obiodev {
-	const char *od_name;
-	bus_addr_t od_addr;
-	int od_irq;
-};
-
-struct obiodev obiodevs[] = {
-	{ "pcmcia",		-1,	-1 },
-	{ "lcd",		-1,	-1 },
-	{ "flash",		-1,	-1 },
-	{ NULL,			0,	0 },
-};
+static int	obio_found = 0;
 
 static int
 obio_match(struct device *parent, struct cfdata *match, void *aux)
@@ -91,12 +78,14 @@ static void
 obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_attach_args oa;
-	struct obiodev *od;
+	const struct obiodev *od;
+	const struct alchemy_board *board;
 
 	obio_found = 1;
 	printf("\n");
 
-	for (od = obiodevs; od->od_name != NULL; od++) {
+	board = board_info();
+	for (od = board->ab_devices; od->od_name != NULL; od++) {
 		oa.oba_name = od->od_name;
 		oa.oba_addr = od->od_addr;
 		oa.oba_irq = od->od_irq;
