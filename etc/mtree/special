@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.89 2005/08/23 12:12:56 peter Exp $
+#	$NetBSD: special,v 1.90 2006/02/08 19:02:59 agc Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -74,6 +74,9 @@
 ./etc/ipf6.conf			type=file mode=0644 optional
 ./etc/ipnat.conf		type=file mode=0644 optional
 ./etc/ipsec.conf		type=file mode=0600 optional tags=nodiff
+./etc/iscsi			type=dir  mode=0755
+./etc/iscsi/auths		type=file mode=0644
+./etc/iscsi/targets		type=file mode=0644
 ./etc/kerberosIV		type=dir  mode=0755 ignore optional
 ./etc/ld.so.conf		type=file mode=0644 optional
 ./etc/lkm.conf			type=file mode=0644 optional
@@ -177,6 +180,7 @@
 ./etc/rc.d/ipmon		type=file mode=0555
 ./etc/rc.d/ipnat		type=file mode=0555
 ./etc/rc.d/ipsec		type=file mode=0555
+./etc/rc.d/iscsi_target		type=file mode=0555
 ./etc/rc.d/isdnd		type=file mode=0555
 ./etc/rc.d/kdc			type=file mode=0555
 ./etc/rc.d/ldconfig		type=file mode=0555

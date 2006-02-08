@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.297 2006/02/08 17:19:00 christos Exp $
+#	$NetBSD: NetBSD.dist,v 1.298 2006/02/08 19:02:59 agc Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -26,6 +26,7 @@
 ./etc/cgd			mode=0700
 ./etc/defaults
 ./etc/fonts
+./etc/iscsi
 ./etc/kerberosIV
 ./etc/kerberosV
 ./etc/mail
