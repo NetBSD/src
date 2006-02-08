@@ -134,27 +134,6 @@ base-smbfs-root root file system support for the smbfs client SMB filesystem sup
 base-smm-share	directory structure for the System Manager's Manual
 base-sup-bin	utilities for the SUP software update protocol
 base-sup-examples	example configuration files for the SUP software update protocol
-base-sushi-bin	This package contains the sushi(8) menu-based system administration
-base-sushi-bin	tool.
-base-sushi-bin	
-base-sushi-bin	The sushi tool gives the user a menu of various system administration
-base-sushi-bin	tasks that may be performed on the system.  It is designed to be
-base-sushi-bin	simple enough for a novice to use, and quick enough to help seasoned
-base-sushi-bin	users perform more complex tasks with ease.
-base-sushi-share	This package contains shared data files for the sushi(8) menu-based
-base-sushi-share	system administration tool.
-base-sushi-share	
-base-sushi-share	The sushi tool gives the user a menu of various system administration
-base-sushi-share	tasks that may be performed on the system.  It is designed to be
-base-sushi-share	simple enough for a novice to use, and quick enough to help seasoned
-base-sushi-share	users perform more complex tasks with ease.
-base-sushi_locale-share	This package contains shared locale support for the sushi(8)
-base-sushi_locale-share	menu-based system administration tool.
-base-sushi_locale-share	
-base-sushi_locale-share	The sushi tool gives the user a menu of various system administration
-base-sushi_locale-share	tasks that may be performed on the system.  It is designed to be
-base-sushi_locale-share	simple enough for a novice to use, and quick enough to help seasoned
-base-sushi_locale-share	users perform more complex tasks with ease.
 base-sys-devlinks	device node symbolic links
 base-sys-examples	example configuration files for kernel functionality
 base-sys-lkm	system support for loadable kernel modules 
@@ -669,20 +648,6 @@ man-smbfs-catman	formatted manual pages for SMB filesystem
 man-smbfs-man	source manual pages for SMB filesystem
 man-sup-catman	formatted manual pages for the sup(8) software update protocol
 man-sup-man	manual pages source for the sup(8) software update protocol
-man-sushi-catman	This package contains formatted manual pages for the sushi(8) menu-based
-man-sushi-catman	system administration tool.
-man-sushi-catman	
-man-sushi-catman	The sushi tool gives the user a menu of various system administration
-man-sushi-catman	tasks that may be performed on the system.  It is designed to be
-man-sushi-catman	simple enough for a novice to use, and quick enough to help seasoned
-man-sushi-catman	users perform more complex tasks with ease.
-man-sushi-man	This package contains manual page source for the sushi(8) menu-based
-man-sushi-man	system administration tool.
-man-sushi-man	
-man-sushi-man	The sushi tool gives the user a menu of various system administration
-man-sushi-man	tasks that may be performed on the system.  It is designed to be
-man-sushi-man	simple enough for a novice to use, and quick enough to help seasoned
-man-sushi-man	users perform more complex tasks with ease.
 man-sys-catman	formatted manual pages for base operating system functionality
 man-sys-info	the GNU texinfo software
 man-sys-man	manual pages source for base operating system functionality
