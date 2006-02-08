@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/06/30 03:37:41 jmc Exp $
+#	$NetBSD: Makefile,v 1.7 2006/02/08 17:29:33 christos Exp $
 
 SUBDIR+=base-adosfs-lkm
 SUBDIR+=base-adosfs-root
@@ -118,9 +118,6 @@ SUBDIR+=base-slip-root
 SUBDIR+=base-smm-share
 SUBDIR+=base-sup-bin
 SUBDIR+=base-sup-examples
-SUBDIR+=base-sushi-bin
-SUBDIR+=base-sushi-share
-SUBDIR+=base-sushi_locale-share
 SUBDIR+=base-sys-devlinks
 SUBDIR+=base-sys-examples
 SUBDIR+=base-sys-lkm
