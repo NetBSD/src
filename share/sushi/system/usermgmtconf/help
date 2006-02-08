@@ -1,7 +1,0 @@
-More information on the various fields can be found in the following
-manpages:
-useradd(8), userdel(8), userinfo(8), usermod(8), user(8)
-
-The range field is a range of UID's in the form:
-100..500
-Where the '..' is the separator field.
