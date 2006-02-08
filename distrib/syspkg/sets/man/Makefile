@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/06/30 03:37:48 jmc Exp $
+#	$NetBSD: Makefile,v 1.4 2006/02/08 17:29:33 christos Exp $
 
 SUBDIR+=man-adosfs-catman
 SUBDIR+=man-adosfs-man
@@ -101,8 +101,6 @@ SUBDIR+=man-slip-catman
 SUBDIR+=man-slip-man
 SUBDIR+=man-sup-catman
 SUBDIR+=man-sup-man
-SUBDIR+=man-sushi-catman
-SUBDIR+=man-sushi-man
 SUBDIR+=man-sys-catman
 SUBDIR+=man-sys-info
 SUBDIR+=man-sys-man
