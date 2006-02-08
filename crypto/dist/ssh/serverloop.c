@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.24 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.25 2006/02/08 23:08:13 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: serverloop.c,v 1.124 2005/12/13 15:03:02 reyk Exp $");
-__RCSID("$NetBSD: serverloop.c,v 1.24 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.25 2006/02/08 23:08:13 he Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -646,7 +646,7 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 		    &nalloc, max_time_milliseconds);
 
 		if (received_sigterm) {
-			logit("Exiting on signal %d", received_sigterm);
+			logit("Exiting on signal %d", (int)received_sigterm);
 			/* Clean up sessions, utmp, etc. */
 			cleanup_exit(255);
 		}
@@ -795,7 +795,7 @@ server_loop2(Authctxt *authctxt)
 		    &nalloc, 0);
 
 		if (received_sigterm) {
-			logit("Exiting on signal %d", received_sigterm);
+			logit("Exiting on signal %d", (int)received_sigterm);
 			/* Clean up sessions, utmp, etc. */
 			cleanup_exit(255);
 		}
