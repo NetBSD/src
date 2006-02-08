@@ -1,0 +1,5 @@
+#!/bin/sh
+umount /mnt
+rmmod osdfs
+rmmod intel_iscsi
+rmmod so
