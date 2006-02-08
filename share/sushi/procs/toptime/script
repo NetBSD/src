@@ -1,6 +1,0 @@
-#!/bin/sh
-# $NetBSD: script,v 1.2 2004/03/09 19:33:49 garbled Exp $
-
-ps=`ps -aux`
-echo "$ps" | head -1
-echo "$ps" | tail +2 | sort -k 10 -r | head -15

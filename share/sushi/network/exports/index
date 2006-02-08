@@ -1,3 +1,0 @@
-# $NetBSD: index,v 1.1 2001/04/25 03:43:26 garbled Exp $
-delexport	delexport	Un-export currently exported filesystems
-addexport	addexport	Add or change exported filesystems
