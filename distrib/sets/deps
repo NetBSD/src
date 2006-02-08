@@ -139,9 +139,6 @@ base-smbfs-root base-sys-root
 base-smm-share base-sys-share
 base-sup-bin base-sys-usr
 base-sup-examples base-sys-share
-base-sushi-bin base-sys-usr
-base-sushi-share base-sys-share
-base-sushi_locale-share base-locale-share
 base-sys-examples base-sys-share
 base-sys-lkm base-sys-usr
 base-sys-share base-sys-root
@@ -461,8 +458,6 @@ man-smbfs-catman base-man-share
 man-smbfs-man base-man-share
 man-sup-catman base-man-share
 man-sup-man base-man-share
-man-sushi-catman base-man-share
-man-sushi-man base-man-share
 man-sys-cat base-man-share
 man-sys-catman base-man-share
 man-sys-info base-texinfo-share
