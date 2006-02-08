@@ -1,11 +1,10 @@
-#	$NetBSD: ALCHEMY,v 1.4 2006/02/08 09:04:01 gdamore Exp $
+#	$NetBSD: DBAU1550,v 1.1 2006/02/08 09:04:01 gdamore Exp $
 #
-# Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
-# DBAu1000 and DBAu1500 evaluation boards.
+# Kernel config for the AMD Alchemy DBAu1550 evaluation board.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.4 $"
+#ident 		"DBAU1550-$Revision: 1.1 $"
 
 maxusers	32
 
@@ -15,14 +14,9 @@ options 	SOFTFLOAT	# emulate FPU insn
 #options	CONSPEED=115200	# YAMON default
 options 	HZ=512		# for profiling
 
-# CPU support
-options 	ALCHEMY_AU1000
-options 	ALCHEMY_AU1100
-options 	ALCHEMY_AU1500
-options 	ALCHEMY_AU1550
-
-# Board support
-options		ALCHEMY_GENERIC
+# CPU and Board support
+options		ALCHEMY_AU1550
+options		ALCHEMY_DBAU1550
 
 #options 	LOCKDEBUG
 options 	SOSEND_LOAN
@@ -63,7 +57,7 @@ options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem
