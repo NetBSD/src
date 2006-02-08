@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.16 2006/02/07 23:56:20 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.17 2006/02/08 00:32:06 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.16 2006/02/07 23:56:20 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.17 2006/02/08 00:32:06 uwe Exp $")
 
 
 /*
@@ -147,7 +147,7 @@ VECTOR_END_MARKER(sh_vector_generic_end)
  */
 NENTRY(sh3_vector_tlbmiss)
 	__EXCEPTION_ENTRY
-	mov.l	_L.TEA3, r0
+	mov	#(SH3_TEA & 0xff), r0
 	mov.l	@r0,	r6	/* 3rd arg: va = TEA */
 #if !defined(P1_STACK)
 	/* Load kernel stack */
@@ -169,9 +169,9 @@ NENTRY(sh3_vector_tlbmiss)
 	bra	6f
 	 nop
 5:	mov.l	@r1,	r2	/* md_upte.data: u-area PTE */
-	mov.l	_L.PTEL, r1
+	mov	#(SH3_PTEL & 0xff), r1
 	mov.l	r2,	@r1
-	mov.l	_L.PTEH, r1
+	mov	#(SH3_PTEH & 0xff), r1
 	mov.l	@r1,	r2
 	mov.l	__L.VPN_MASK, r0
 	and	r2,	r0
@@ -181,7 +181,7 @@ NENTRY(sh3_vector_tlbmiss)
 	bra	3f
 	 nop
 #endif /* !P1_STACK */
-6:	mov.l	_L.EXPEVT3, r0
+6:	mov	#(SH3_EXPEVT & 0xff), r0
 	mov.l	@r0,	r0
 	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
 	mov.l	2f,	r0
@@ -195,10 +195,6 @@ NENTRY(sh3_vector_tlbmiss)
 	.align	2
 2:		.long	_C_LABEL(curlwp)
 1:		.long	_C_LABEL(tlb_exception)
-_L.EXPEVT3:	.long	SH3_EXPEVT
-_L.TEA3:	.long	SH3_TEA
-_L.PTEL:	.long	SH3_PTEL
-_L.PTEH:	.long	SH3_PTEH
 __L.VPN_MASK:	.long	0xfffff000
 _L.CURUPTE:	.long	_C_LABEL(curupte)
 
