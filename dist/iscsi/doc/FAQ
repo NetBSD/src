@@ -4,10 +4,10 @@ iSCSI Frequently Asked Questions
 Q1. What is iSCSI?
 ==================
 
-A1. It's an IETF standard (RFC 3720) for remote access to block-level
+A1.  It's an IETF standard (RFC 3720) for remote access to block-level
 storage.  It can be thought of as similar to NFS, except that an NFS
-server exports files, which the iSCSI target exports blocks to the
-iSCSI initiators, which are the clients.
+server exports files; the iSCSI target exports blocks to the iSCSI
+initiators, which are the clients.
 
 
 Q2. What's the difference between an initiator and a target?
@@ -129,10 +129,10 @@ methods of providing authentication and/or security.  In practice,
 it's whatever is provided by the initiator you are using which will
 determine what authentication or security is used.
 
-In practice, it's probably best to use ssh port forwarding for all
-your traffic if you're worried about security.  CHAP will only provide
-authentication, the other information will flow across the network in
-clear.
+If you want any form of security, it's probably best to use ssh port
+forwarding for all your traffic if you're worried about security. 
+CHAP will only provide authentication, the other information will flow
+across the network in clear.
 
 
 Q5.  Using the Microsoft initiator, I can't login with CHAP
@@ -144,7 +144,7 @@ less than that, your Discovery login will silently fail.
 
 Since CHAP provides very little authentication anyway, you are advised
 not to use it - ssh port forwarding, and the use of tcp wrappers,
-will do a much better job of protection anyway.
+will do a much better job of protection.
 
 
 Q6. What initiators work with the NetBSD iSCSI target?
