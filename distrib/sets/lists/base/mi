@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.591 2006/02/08 00:54:33 christos Exp $
+# $NetBSD: mi,v 1.592 2006/02/08 19:00:32 agc Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -70,6 +70,7 @@
 ./etc/defaults					base-sys-root
 ./etc/disklabels				base-obsolete		obsolete
 ./etc/fonts					base-x11-root
+./etc/iscsi					base-sysutil-root
 ./etc/kerberosIV				base-krb4-root
 ./etc/kerberosV					base-krb5-root
 ./etc/mail					base-sendmail-root
@@ -1018,6 +1019,7 @@
 ./usr/sbin/ipsend				base-netutil-bin	ipfilter
 ./usr/sbin/iptest				base-netutil-bin	ipfilter
 ./usr/sbin/irdaattach				base-sysutil-bin
+./usr/sbin/iscsi-target				base-iscsi-bin
 ./usr/sbin/isdnd				base-isdn-bin
 ./usr/sbin/isdnmonitor				base-isdn-bin
 ./usr/sbin/isdntel				base-isdn-bin

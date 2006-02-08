@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.846 2006/02/03 11:04:46 jmmv Exp $
+#	$NetBSD: mi,v 1.847 2006/02/08 19:00:33 agc Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1647,6 +1647,9 @@
 ./usr/lib/libintl_p.a				comp-c-proflib		profile
 ./usr/lib/libipsec.a				comp-c-lib
 ./usr/lib/libipsec_p.a				comp-c-proflib		profile
+./usr/lib/libiscsi.a				comp-iscsi-lib
+./usr/lib/libiscsi_p.a				comp-iscsi-proflib	profile
+./usr/lib/libiscsi_pic.a			comp-iscsi-proflib	profile
 ./usr/lib/libkadm.a				comp-krb4-lib		kerberos4
 ./usr/lib/libkadm5clnt.a			comp-krb5-lib		kerberos
 ./usr/lib/libkadm5clnt_p.a			comp-krb5-proflib	kerberos,profile
@@ -1753,6 +1756,7 @@
 ./usr/libdata/lint/llib-lgnumalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lintl.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-liscsi.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lkstream.ln		comp-c-lintlib		lint,kerberos4
 ./usr/libdata/lint/llib-lkvm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ll.ln			comp-c-lintlib		lint
