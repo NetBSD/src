@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.239 2006/02/04 21:26:15 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.240 2006/02/08 23:09:15 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.239 2006/02/04 21:26:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.240 2006/02/08 23:09:15 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -2646,7 +2646,7 @@ mmc_process_feature(struct mmc_discinfo *mmc_discinfo,
 		flags |= MMC_CAP_RECORDABLE;
 		flags |= MMC_CAP_FORMATTABLE;
 		break;
-	case 0x0024 :
+	case 0x0024 :	/* hardware assised defect management feature */
 		flags |= MMC_CAP_HW_DEFECTFREE;
 		break;
 	case 0x0025 : 	/* write once */
