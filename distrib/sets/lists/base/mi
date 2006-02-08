@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.590 2006/02/02 15:26:32 reinoud Exp $
+# $NetBSD: mi,v 1.591 2006/02/08 00:54:33 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1179,7 +1179,7 @@
 ./usr/sbin/sup					base-sup-bin
 ./usr/sbin/supfilesrv				base-sup-bin
 ./usr/sbin/supscan				base-sup-bin
-./usr/sbin/sushi				base-sushi-bin
+./usr/sbin/sushi				base-obsolete		obsolete
 ./usr/sbin/sysconfd				base-obsolete		obsolete
 ./usr/sbin/sysctl				base-obsolete		obsolete
 ./usr/sbin/syslogd				base-sysutil-bin
@@ -2506,7 +2506,7 @@
 # C locale is required by POSIX, so is installed if any locales are.
 ./usr/share/nls/C				base-locale-share
 ./usr/share/nls/C/libc.cat			base-locale-share	nls
-./usr/share/nls/C/sushi.cat			base-sushi_locale-share	nls
+./usr/share/nls/C/sushi.cat			base-obsolete		obsolete
 ./usr/share/nls/Pig				base-locale-Pig
 ./usr/share/nls/Pig/libc.cat			base-locale-Pig		nls
 ./usr/share/nls/ca				base-locale-ca
@@ -2542,318 +2542,318 @@
 ./usr/share/sendmail/ostype			base-sendmail-share
 ./usr/share/sendmail/sh				base-sendmail-share
 ./usr/share/sendmail/siteconfig			base-sendmail-share
-./usr/share/sushi				base-sushi-share
-./usr/share/sushi/help				base-sushi-share	share
-./usr/share/sushi/index				base-sushi-share	share
-./usr/share/sushi/info				base-sushi-share
-./usr/share/sushi/info/index			base-sushi-share	share
-./usr/share/sushi/info/programming		base-sushi-share
-./usr/share/sushi/info/programming/basics	base-sushi-share
-./usr/share/sushi/info/programming/basics/help	base-sushi-share	share
-./usr/share/sushi/info/programming/execapi	base-sushi-share
-./usr/share/sushi/info/programming/execapi/help	base-sushi-share	share
-./usr/share/sushi/info/programming/formapi	base-sushi-share
-./usr/share/sushi/info/programming/formapi/help	base-sushi-share	share
-./usr/share/sushi/info/programming/help		base-sushi-share	share
-./usr/share/sushi/info/programming/helpapi	base-sushi-share
-./usr/share/sushi/info/programming/helpapi/help	base-sushi-share	share
-./usr/share/sushi/info/programming/i18n		base-sushi-share
-./usr/share/sushi/info/programming/i18n/help	base-sushi-share	share
-./usr/share/sushi/info/programming/index	base-sushi-share	share
-./usr/share/sushi/info/programming/indexapi	base-sushi-share
-./usr/share/sushi/info/programming/indexapi/help	base-sushi-share	share
-./usr/share/sushi/info/programming/scriptapi	base-sushi-share
-./usr/share/sushi/info/programming/scriptapi/help	base-sushi-share	share
-./usr/share/sushi/info/programming/searchpaths	base-sushi-share
-./usr/share/sushi/info/programming/searchpaths/help	base-sushi-share	share
-./usr/share/sushi/install			base-sushi-share
-./usr/share/sushi/install/help			base-sushi-share	share
-./usr/share/sushi/install/index			base-sushi-share	share
-./usr/share/sushi/install/install		base-sushi-share
-./usr/share/sushi/install/install/form		base-sushi-share	share
-./usr/share/sushi/install/install/preform	base-sushi-share	share
-./usr/share/sushi/install/install/script	base-sushi-share	share
-./usr/share/sushi/install/install/script1	base-sushi-share	share
-./usr/share/sushi/install/install/script2	base-sushi-share	share
-./usr/share/sushi/install/installb		base-sushi-share
-./usr/share/sushi/install/installb/form		base-sushi-share	share
-./usr/share/sushi/install/installb/preform	base-sushi-share	share
-./usr/share/sushi/install/installb/script	base-sushi-share	share
-./usr/share/sushi/install/list			base-sushi-share
-./usr/share/sushi/install/list/exec		base-sushi-share	share
-./usr/share/sushi/install/remove		base-sushi-share
-./usr/share/sushi/install/remove/form		base-sushi-share	share
-./usr/share/sushi/install/remove/script		base-sushi-share	share
-./usr/share/sushi/install/remove/script1	base-sushi-share	share
-./usr/share/sushi/network			base-sushi-share
-./usr/share/sushi/network/exports		base-sushi-share
-./usr/share/sushi/network/exports/addexport	base-sushi-share
-./usr/share/sushi/network/exports/addexport/form	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/help	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/preform	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/script	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/script1	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/script2	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/script3	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/script4	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/script5	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/script6	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/script7	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/script8	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/script9	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/scripta	base-sushi-share	share
-./usr/share/sushi/network/exports/addexport/scriptb	base-sushi-share	share
-./usr/share/sushi/network/exports/delexport	base-sushi-share
-./usr/share/sushi/network/exports/delexport/form	base-sushi-share	share
-./usr/share/sushi/network/exports/delexport/help	base-sushi-share	share
-./usr/share/sushi/network/exports/delexport/script	base-sushi-share	share
-./usr/share/sushi/network/exports/delexport/script1	base-sushi-share	share
-./usr/share/sushi/network/exports/help		base-sushi-share	share
-./usr/share/sushi/network/exports/index		base-sushi-share	share
-./usr/share/sushi/network/help			base-sushi-share	share
-./usr/share/sushi/network/hostname		base-sushi-share
-./usr/share/sushi/network/hostname/form		base-sushi-share	share
-./usr/share/sushi/network/hostname/help		base-sushi-share	share
-./usr/share/sushi/network/hostname/script	base-sushi-share	share
-./usr/share/sushi/network/hostname/script1	base-sushi-share	share
-./usr/share/sushi/network/hosts			base-sushi-share
-./usr/share/sushi/network/hosts/addhost		base-sushi-share
-./usr/share/sushi/network/hosts/addhost/form	base-sushi-share	share
-./usr/share/sushi/network/hosts/addhost/help	base-sushi-share	share
-./usr/share/sushi/network/hosts/addhost/script	base-sushi-share	share
-./usr/share/sushi/network/hosts/addv6host	base-sushi-share
-./usr/share/sushi/network/hosts/addv6host/form	base-sushi-share	share
-./usr/share/sushi/network/hosts/addv6host/help	base-sushi-share	share
-./usr/share/sushi/network/hosts/addv6host/script	base-sushi-share	share
-./usr/share/sushi/network/hosts/delhost		base-sushi-share
-./usr/share/sushi/network/hosts/delhost/form	base-sushi-share	share
-./usr/share/sushi/network/hosts/delhost/help	base-sushi-share	share
-./usr/share/sushi/network/hosts/delhost/script	base-sushi-share	share
-./usr/share/sushi/network/hosts/delhost/script1	base-sushi-share	share
-./usr/share/sushi/network/hosts/help		base-sushi-share	share
-./usr/share/sushi/network/hosts/index		base-sushi-share	share
-./usr/share/sushi/network/hosts/modhost		base-sushi-share
-./usr/share/sushi/network/hosts/modhost/form	base-sushi-share	share
-./usr/share/sushi/network/hosts/modhost/help	base-sushi-share	share
-./usr/share/sushi/network/hosts/modhost/preform	base-sushi-share	share
-./usr/share/sushi/network/hosts/modhost/script	base-sushi-share	share
-./usr/share/sushi/network/hosts/modhost/script1	base-sushi-share	share
-./usr/share/sushi/network/hosts/modhost/script2	base-sushi-share	share
-./usr/share/sushi/network/hosts/modv6host	base-sushi-share
-./usr/share/sushi/network/hosts/modv6host/form	base-sushi-share	share
-./usr/share/sushi/network/hosts/modv6host/help	base-sushi-share	share
-./usr/share/sushi/network/hosts/modv6host/preform	base-sushi-share	share
-./usr/share/sushi/network/hosts/modv6host/script	base-sushi-share	share
-./usr/share/sushi/network/hosts/modv6host/script1	base-sushi-share	share
-./usr/share/sushi/network/hosts/modv6host/script2	base-sushi-share	share
-./usr/share/sushi/network/index			base-sushi-share	share
-./usr/share/sushi/network/interfaces		base-sushi-share
-./usr/share/sushi/network/interfaces/help	base-sushi-share	share
-./usr/share/sushi/network/interfaces/index	base-sushi-share	share
-./usr/share/sushi/network/interfaces/interface	base-sushi-share
-./usr/share/sushi/network/interfaces/interface/form	base-sushi-share	share
-./usr/share/sushi/network/interfaces/interface/help	base-sushi-share	share
-./usr/share/sushi/network/interfaces/interface/nwid.sed	base-sushi-share	share
-./usr/share/sushi/network/interfaces/interface/preform	base-sushi-share	share
-./usr/share/sushi/network/interfaces/interface/script	base-sushi-share	share
-./usr/share/sushi/network/interfaces/interface/script1	base-sushi-share	share
-./usr/share/sushi/network/interfaces/interface/script2	base-sushi-share	share
-./usr/share/sushi/network/interfaces/listif	base-sushi-share
-./usr/share/sushi/network/interfaces/listif/script	base-sushi-share	share
-./usr/share/sushi/network/routing		base-sushi-share
-./usr/share/sushi/network/routing/default	base-sushi-share
-./usr/share/sushi/network/routing/default/form	base-sushi-share	share
-./usr/share/sushi/network/routing/default/help	base-sushi-share	share
-./usr/share/sushi/network/routing/default/script	base-sushi-share	share
-./usr/share/sushi/network/routing/default/script1	base-sushi-share	share
-./usr/share/sushi/network/routing/help		base-sushi-share	share
-./usr/share/sushi/network/routing/index		base-sushi-share	share
-./usr/share/sushi/network/routing/ipv4table	base-sushi-share
-./usr/share/sushi/network/routing/ipv4table/exec	base-sushi-share	share
-./usr/share/sushi/network/yp			base-sushi-share
-./usr/share/sushi/network/yp/client		base-sushi-share
-./usr/share/sushi/network/yp/client/form	base-sushi-share	share
-./usr/share/sushi/network/yp/client/help	base-sushi-share	share
-./usr/share/sushi/network/yp/client/script	base-sushi-share	share
-./usr/share/sushi/network/yp/client/script1	base-sushi-share	share
-./usr/share/sushi/network/yp/domainname		base-sushi-share
-./usr/share/sushi/network/yp/domainname/form	base-sushi-share	share
-./usr/share/sushi/network/yp/domainname/help	base-sushi-share	share
-./usr/share/sushi/network/yp/domainname/script	base-sushi-share	share
-./usr/share/sushi/network/yp/domainname/script1	base-sushi-share	share
-./usr/share/sushi/network/yp/help		base-sushi-share	share
-./usr/share/sushi/network/yp/index		base-sushi-share	share
-./usr/share/sushi/network/yp/master		base-sushi-share
-./usr/share/sushi/network/yp/master/form	base-sushi-share	share
-./usr/share/sushi/network/yp/master/help	base-sushi-share	share
-./usr/share/sushi/network/yp/master/script	base-sushi-share	share
-./usr/share/sushi/network/yp/master/script1	base-sushi-share	share
-./usr/share/sushi/network/yp/slave		base-sushi-share
-./usr/share/sushi/network/yp/slave/form		base-sushi-share	share
-./usr/share/sushi/network/yp/slave/help		base-sushi-share	share
-./usr/share/sushi/network/yp/slave/script	base-sushi-share	share
-./usr/share/sushi/network/yp/slave/script1	base-sushi-share	share
-./usr/share/sushi/procs				base-sushi-share
-./usr/share/sushi/procs/help			base-sushi-share	share
-./usr/share/sushi/procs/index			base-sushi-share	share
-./usr/share/sushi/procs/restartallprocs		base-sushi-share
-./usr/share/sushi/procs/restartallprocs/form	base-sushi-share	share
-./usr/share/sushi/procs/restartallprocs/help	base-sushi-share	share
-./usr/share/sushi/procs/restartallprocs/script	base-sushi-share	share
-./usr/share/sushi/procs/restartallprocs/script1	base-sushi-share	share
-./usr/share/sushi/procs/restartprocs		base-sushi-share
-./usr/share/sushi/procs/restartprocs/form	base-sushi-share	share
-./usr/share/sushi/procs/restartprocs/help	base-sushi-share	share
-./usr/share/sushi/procs/restartprocs/script	base-sushi-share	share
-./usr/share/sushi/procs/restartprocs/script1	base-sushi-share	share
-./usr/share/sushi/procs/showallprocs		base-sushi-share
-./usr/share/sushi/procs/showallprocs/script	base-sushi-share	share
-./usr/share/sushi/procs/showprocs		base-sushi-share
-./usr/share/sushi/procs/showprocs/script	base-sushi-share	share
-./usr/share/sushi/procs/startallprocs		base-sushi-share
-./usr/share/sushi/procs/startallprocs/form	base-sushi-share	share
-./usr/share/sushi/procs/startallprocs/help	base-sushi-share	share
-./usr/share/sushi/procs/startallprocs/script	base-sushi-share	share
-./usr/share/sushi/procs/startallprocs/script1	base-sushi-share	share
-./usr/share/sushi/procs/startprocs		base-sushi-share
-./usr/share/sushi/procs/startprocs/form		base-sushi-share	share
-./usr/share/sushi/procs/startprocs/help		base-sushi-share	share
-./usr/share/sushi/procs/startprocs/script	base-sushi-share	share
-./usr/share/sushi/procs/startprocs/script1	base-sushi-share	share
-./usr/share/sushi/procs/stopallprocs		base-sushi-share
-./usr/share/sushi/procs/stopallprocs/form	base-sushi-share	share
-./usr/share/sushi/procs/stopallprocs/help	base-sushi-share	share
-./usr/share/sushi/procs/stopallprocs/script	base-sushi-share	share
-./usr/share/sushi/procs/stopallprocs/script1	base-sushi-share	share
-./usr/share/sushi/procs/stopprocs		base-sushi-share
-./usr/share/sushi/procs/stopprocs/form		base-sushi-share	share
-./usr/share/sushi/procs/stopprocs/help		base-sushi-share	share
-./usr/share/sushi/procs/stopprocs/script	base-sushi-share	share
-./usr/share/sushi/procs/stopprocs/script1	base-sushi-share	share
-./usr/share/sushi/procs/topcpu			base-sushi-share
-./usr/share/sushi/procs/topcpu/script		base-sushi-share	share
-./usr/share/sushi/procs/topmem			base-sushi-share
-./usr/share/sushi/procs/topmem/script		base-sushi-share	share
-./usr/share/sushi/procs/toptime			base-sushi-share
-./usr/share/sushi/procs/toptime/script		base-sushi-share	share
-./usr/share/sushi/scriptoff			base-obsolete		obsolete
-./usr/share/sushi/scriptoff/func		base-obsolete		obsolete
-./usr/share/sushi/scripton			base-obsolete		obsolete
-./usr/share/sushi/scripton/func			base-obsolete		obsolete
-./usr/share/sushi/system			base-sushi-share
-./usr/share/sushi/system/dailyconf		base-sushi-share
-./usr/share/sushi/system/dailyconf/form		base-sushi-share	share
-./usr/share/sushi/system/dailyconf/help		base-sushi-share	share
-./usr/share/sushi/system/dailyconf/script	base-sushi-share	share
-./usr/share/sushi/system/dailyconf/script1	base-sushi-share	share
-./usr/share/sushi/system/dailyconf/script2	base-sushi-share	share
-./usr/share/sushi/system/dailyconf/script3	base-sushi-share	share
-./usr/share/sushi/system/help			base-sushi-share	share
-./usr/share/sushi/system/index			base-sushi-share	share
-./usr/share/sushi/system/inetdconf		base-sushi-share
-./usr/share/sushi/system/inetdconf/form		base-sushi-share	share
-./usr/share/sushi/system/inetdconf/script	base-sushi-share	share
-./usr/share/sushi/system/inetdconf/script1	base-sushi-share	share
-./usr/share/sushi/system/localtime		base-sushi-share
-./usr/share/sushi/system/localtime/form		base-sushi-share	share
-./usr/share/sushi/system/localtime/help		base-sushi-share	share
-./usr/share/sushi/system/localtime/script	base-sushi-share	share
-./usr/share/sushi/system/localtime/script1	base-sushi-share	share
-./usr/share/sushi/system/mailerconf		base-sushi-share
-./usr/share/sushi/system/mailerconf/form	base-sushi-share	share
-./usr/share/sushi/system/mailerconf/script	base-sushi-share	share
-./usr/share/sushi/system/mailerconf/script1	base-sushi-share	share
-./usr/share/sushi/system/rcconf			base-sushi-share
-./usr/share/sushi/system/rcconf/form		base-sushi-share	share
-./usr/share/sushi/system/rcconf/script		base-sushi-share	share
-./usr/share/sushi/system/rcconf/script1		base-sushi-share	share
-./usr/share/sushi/system/rcconf/script2		base-sushi-share	share
-./usr/share/sushi/system/rcconf/script3		base-obsolete		obsolete
-./usr/share/sushi/system/rcconf/script4		base-sushi-share	share
-./usr/share/sushi/system/securityconf		base-sushi-share
-./usr/share/sushi/system/securityconf/form	base-sushi-share	share
-./usr/share/sushi/system/securityconf/help	base-sushi-share	share
-./usr/share/sushi/system/securityconf/script	base-sushi-share	share
-./usr/share/sushi/system/securityconf/script1	base-sushi-share	share
-./usr/share/sushi/system/securityconf/script2	base-sushi-share	share
-./usr/share/sushi/system/securityconf/script3	base-sushi-share	share
-./usr/share/sushi/system/sshdconf		base-sushi-share
-./usr/share/sushi/system/sshdconf/defaults	base-sushi-share	share
-./usr/share/sushi/system/sshdconf/form		base-sushi-share	share
-./usr/share/sushi/system/sshdconf/help		base-sushi-share	share
-./usr/share/sushi/system/sshdconf/script	base-sushi-share	share
-./usr/share/sushi/system/sshdconf/script1	base-sushi-share	share
-./usr/share/sushi/system/sshdconf/script2	base-sushi-share	share
-./usr/share/sushi/system/sshdconf/script3	base-sushi-share	share
-./usr/share/sushi/system/sshdconf/script4	base-sushi-share	share
-./usr/share/sushi/system/sshdconf/script5	base-sushi-share	share
-./usr/share/sushi/system/sshdconf/script6	base-sushi-share	share
-./usr/share/sushi/system/sshdconf/script7	base-sushi-share	share
-./usr/share/sushi/system/sysctl			base-sushi-share
-./usr/share/sushi/system/sysctl/form		base-sushi-share	share
-./usr/share/sushi/system/sysctl/help		base-sushi-share	share
-./usr/share/sushi/system/sysctl/preform		base-sushi-share	share
-./usr/share/sushi/system/sysctl/script		base-sushi-share	share
-./usr/share/sushi/system/sysctl/script1		base-sushi-share	share
-./usr/share/sushi/system/sysctl/script2		base-sushi-share	share
-./usr/share/sushi/system/sysctl/sysctls		base-sushi-share	share
-./usr/share/sushi/system/usermgmtconf		base-sushi-share
-./usr/share/sushi/system/usermgmtconf/form	base-sushi-share	share
-./usr/share/sushi/system/usermgmtconf/help	base-sushi-share	share
-./usr/share/sushi/system/usermgmtconf/script	base-sushi-share	share
-./usr/share/sushi/system/usermgmtconf/script1	base-sushi-share	share
-./usr/share/sushi/system/weeklyconf		base-sushi-share
-./usr/share/sushi/system/weeklyconf/form	base-sushi-share	share
-./usr/share/sushi/system/weeklyconf/help	base-sushi-share	share
-./usr/share/sushi/system/weeklyconf/script	base-sushi-share	share
-./usr/share/sushi/system/weeklyconf/script1	base-sushi-share	share
-./usr/share/sushi/system/weeklyconf/script3	base-sushi-share	share
-./usr/share/sushi/users				base-sushi-share
-./usr/share/sushi/users/addgroup		base-sushi-share
-./usr/share/sushi/users/addgroup/form		base-sushi-share	share
-./usr/share/sushi/users/addgroup/script		base-sushi-share	share
-./usr/share/sushi/users/adduser			base-sushi-share
-./usr/share/sushi/users/adduser/form		base-sushi-share	share
-./usr/share/sushi/users/adduser/script		base-sushi-share	share
-./usr/share/sushi/users/adduser/script1		base-sushi-share	share
-./usr/share/sushi/users/adduser/script2		base-sushi-share	share
-./usr/share/sushi/users/adduser/script3		base-sushi-share	share
-./usr/share/sushi/users/delgroup		base-sushi-share
-./usr/share/sushi/users/delgroup/form		base-sushi-share	share
-./usr/share/sushi/users/delgroup/script		base-sushi-share	share
-./usr/share/sushi/users/delgroup/script1	base-sushi-share	share
-./usr/share/sushi/users/deluser			base-sushi-share
-./usr/share/sushi/users/deluser/form		base-sushi-share	share
-./usr/share/sushi/users/deluser/preform		base-sushi-share	share
-./usr/share/sushi/users/deluser/script		base-sushi-share	share
-./usr/share/sushi/users/deluser/script1		base-sushi-share	share
-./usr/share/sushi/users/deluser/script2		base-sushi-share	share
-./usr/share/sushi/users/disuser			base-sushi-share
-./usr/share/sushi/users/disuser/form		base-sushi-share	share
-./usr/share/sushi/users/disuser/script		base-sushi-share	share
-./usr/share/sushi/users/disuser/script1		base-sushi-share	share
-./usr/share/sushi/users/index			base-sushi-share	share
-./usr/share/sushi/users/listgroup		base-sushi-share
-./usr/share/sushi/users/listgroup/script	base-sushi-share	share
-./usr/share/sushi/users/listuser		base-sushi-share
-./usr/share/sushi/users/listuser/script		base-sushi-share	share
-./usr/share/sushi/users/moduser			base-sushi-share
-./usr/share/sushi/users/moduser/form		base-sushi-share	share
-./usr/share/sushi/users/moduser/preform		base-sushi-share	share
-./usr/share/sushi/users/moduser/script		base-sushi-share	share
-./usr/share/sushi/users/moduser/script1		base-sushi-share	share
-./usr/share/sushi/users/moduser/script2		base-sushi-share	share
-./usr/share/sushi/users/passwd			base-sushi-share
-./usr/share/sushi/users/passwd/form		base-sushi-share	share
-./usr/share/sushi/users/passwd/script		base-sushi-share	share
-./usr/share/sushi/users/passwd/script1		base-sushi-share	share
-./usr/share/sushi/util				base-sushi-share
-./usr/share/sushi/util/help			base-sushi-share	share
-./usr/share/sushi/util/index			base-sushi-share	share
-./usr/share/sushi/util/logging			base-sushi-share
-./usr/share/sushi/util/logging/func		base-sushi-share	share
-./usr/share/sushi/util/scripting		base-sushi-share
-./usr/share/sushi/util/scripting/func		base-sushi-share	share
+./usr/share/sushi				base-obsolete	obsolete
+./usr/share/sushi/help				base-obsolete	obsolete
+./usr/share/sushi/index				base-obsolete	obsolete
+./usr/share/sushi/info				base-obsolete	obsolete
+./usr/share/sushi/info/index			base-obsolete	obsolete
+./usr/share/sushi/info/programming		base-obsolete	obsolete
+./usr/share/sushi/info/programming/basics	base-obsolete	obsolete
+./usr/share/sushi/info/programming/basics/help	base-obsolete	obsolete
+./usr/share/sushi/info/programming/execapi	base-obsolete	obsolete
+./usr/share/sushi/info/programming/execapi/help	base-obsolete	obsolete
+./usr/share/sushi/info/programming/formapi	base-obsolete	obsolete
+./usr/share/sushi/info/programming/formapi/help	base-obsolete	obsolete
+./usr/share/sushi/info/programming/help		base-obsolete	obsolete
+./usr/share/sushi/info/programming/helpapi	base-obsolete	obsolete
+./usr/share/sushi/info/programming/helpapi/help	base-obsolete	obsolete
+./usr/share/sushi/info/programming/i18n		base-obsolete	obsolete
+./usr/share/sushi/info/programming/i18n/help	base-obsolete	obsolete
+./usr/share/sushi/info/programming/index	base-obsolete	obsolete
+./usr/share/sushi/info/programming/indexapi	base-obsolete	obsolete
+./usr/share/sushi/info/programming/indexapi/help	base-obsolete	obsolete
+./usr/share/sushi/info/programming/scriptapi	base-obsolete	obsolete
+./usr/share/sushi/info/programming/scriptapi/help	base-obsolete	obsolete
+./usr/share/sushi/info/programming/searchpaths	base-obsolete	obsolete
+./usr/share/sushi/info/programming/searchpaths/help	base-obsolete	obsolete
+./usr/share/sushi/install			base-obsolete	obsolete
+./usr/share/sushi/install/help			base-obsolete	obsolete
+./usr/share/sushi/install/index			base-obsolete	obsolete
+./usr/share/sushi/install/install		base-obsolete	obsolete
+./usr/share/sushi/install/install/form		base-obsolete	obsolete
+./usr/share/sushi/install/install/preform	base-obsolete	obsolete
+./usr/share/sushi/install/install/script	base-obsolete	obsolete
+./usr/share/sushi/install/install/script1	base-obsolete	obsolete
+./usr/share/sushi/install/install/script2	base-obsolete	obsolete
+./usr/share/sushi/install/installb		base-obsolete	obsolete
+./usr/share/sushi/install/installb/form		base-obsolete	obsolete
+./usr/share/sushi/install/installb/preform	base-obsolete	obsolete
+./usr/share/sushi/install/installb/script	base-obsolete	obsolete
+./usr/share/sushi/install/list			base-obsolete	obsolete
+./usr/share/sushi/install/list/exec		base-obsolete	obsolete
+./usr/share/sushi/install/remove		base-obsolete	obsolete
+./usr/share/sushi/install/remove/form		base-obsolete	obsolete
+./usr/share/sushi/install/remove/script		base-obsolete	obsolete
+./usr/share/sushi/install/remove/script1	base-obsolete	obsolete
+./usr/share/sushi/network			base-obsolete	obsolete
+./usr/share/sushi/network/exports		base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/form	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/help	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/preform	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/script	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/script1	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/script2	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/script3	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/script4	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/script5	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/script6	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/script7	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/script8	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/script9	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/scripta	base-obsolete	obsolete
+./usr/share/sushi/network/exports/addexport/scriptb	base-obsolete	obsolete
+./usr/share/sushi/network/exports/delexport	base-obsolete	obsolete
+./usr/share/sushi/network/exports/delexport/form	base-obsolete	obsolete
+./usr/share/sushi/network/exports/delexport/help	base-obsolete	obsolete
+./usr/share/sushi/network/exports/delexport/script	base-obsolete	obsolete
+./usr/share/sushi/network/exports/delexport/script1	base-obsolete	obsolete
+./usr/share/sushi/network/exports/help		base-obsolete	obsolete
+./usr/share/sushi/network/exports/index		base-obsolete	obsolete
+./usr/share/sushi/network/help			base-obsolete	obsolete
+./usr/share/sushi/network/hostname		base-obsolete	obsolete
+./usr/share/sushi/network/hostname/form		base-obsolete	obsolete
+./usr/share/sushi/network/hostname/help		base-obsolete	obsolete
+./usr/share/sushi/network/hostname/script	base-obsolete	obsolete
+./usr/share/sushi/network/hostname/script1	base-obsolete	obsolete
+./usr/share/sushi/network/hosts			base-obsolete	obsolete
+./usr/share/sushi/network/hosts/addhost		base-obsolete	obsolete
+./usr/share/sushi/network/hosts/addhost/form	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/addhost/help	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/addhost/script	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/addv6host	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/addv6host/form	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/addv6host/help	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/addv6host/script	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/delhost		base-obsolete	obsolete
+./usr/share/sushi/network/hosts/delhost/form	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/delhost/help	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/delhost/script	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/delhost/script1	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/help		base-obsolete	obsolete
+./usr/share/sushi/network/hosts/index		base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modhost		base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modhost/form	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modhost/help	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modhost/preform	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modhost/script	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modhost/script1	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modhost/script2	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modv6host	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modv6host/form	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modv6host/help	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modv6host/preform	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modv6host/script	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modv6host/script1	base-obsolete	obsolete
+./usr/share/sushi/network/hosts/modv6host/script2	base-obsolete	obsolete
+./usr/share/sushi/network/index			base-obsolete	obsolete
+./usr/share/sushi/network/interfaces		base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/help	base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/index	base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/interface	base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/interface/form	base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/interface/help	base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/interface/nwid.sed	base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/interface/preform	base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/interface/script	base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/interface/script1	base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/interface/script2	base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/listif	base-obsolete	obsolete
+./usr/share/sushi/network/interfaces/listif/script	base-obsolete	obsolete
+./usr/share/sushi/network/routing		base-obsolete	obsolete
+./usr/share/sushi/network/routing/default	base-obsolete	obsolete
+./usr/share/sushi/network/routing/default/form	base-obsolete	obsolete
+./usr/share/sushi/network/routing/default/help	base-obsolete	obsolete
+./usr/share/sushi/network/routing/default/script	base-obsolete	obsolete
+./usr/share/sushi/network/routing/default/script1	base-obsolete	obsolete
+./usr/share/sushi/network/routing/help		base-obsolete	obsolete
+./usr/share/sushi/network/routing/index		base-obsolete	obsolete
+./usr/share/sushi/network/routing/ipv4table	base-obsolete	obsolete
+./usr/share/sushi/network/routing/ipv4table/exec	base-obsolete	obsolete
+./usr/share/sushi/network/yp			base-obsolete	obsolete
+./usr/share/sushi/network/yp/client		base-obsolete	obsolete
+./usr/share/sushi/network/yp/client/form	base-obsolete	obsolete
+./usr/share/sushi/network/yp/client/help	base-obsolete	obsolete
+./usr/share/sushi/network/yp/client/script	base-obsolete	obsolete
+./usr/share/sushi/network/yp/client/script1	base-obsolete	obsolete
+./usr/share/sushi/network/yp/domainname		base-obsolete	obsolete
+./usr/share/sushi/network/yp/domainname/form	base-obsolete	obsolete
+./usr/share/sushi/network/yp/domainname/help	base-obsolete	obsolete
+./usr/share/sushi/network/yp/domainname/script	base-obsolete	obsolete
+./usr/share/sushi/network/yp/domainname/script1	base-obsolete	obsolete
+./usr/share/sushi/network/yp/help		base-obsolete	obsolete
+./usr/share/sushi/network/yp/index		base-obsolete	obsolete
+./usr/share/sushi/network/yp/master		base-obsolete	obsolete
+./usr/share/sushi/network/yp/master/form	base-obsolete	obsolete
+./usr/share/sushi/network/yp/master/help	base-obsolete	obsolete
+./usr/share/sushi/network/yp/master/script	base-obsolete	obsolete
+./usr/share/sushi/network/yp/master/script1	base-obsolete	obsolete
+./usr/share/sushi/network/yp/slave		base-obsolete	obsolete
+./usr/share/sushi/network/yp/slave/form		base-obsolete	obsolete
+./usr/share/sushi/network/yp/slave/help		base-obsolete	obsolete
+./usr/share/sushi/network/yp/slave/script	base-obsolete	obsolete
+./usr/share/sushi/network/yp/slave/script1	base-obsolete	obsolete
+./usr/share/sushi/procs				base-obsolete	obsolete
+./usr/share/sushi/procs/help			base-obsolete	obsolete
+./usr/share/sushi/procs/index			base-obsolete	obsolete
+./usr/share/sushi/procs/restartallprocs		base-obsolete	obsolete
+./usr/share/sushi/procs/restartallprocs/form	base-obsolete	obsolete
+./usr/share/sushi/procs/restartallprocs/help	base-obsolete	obsolete
+./usr/share/sushi/procs/restartallprocs/script	base-obsolete	obsolete
+./usr/share/sushi/procs/restartallprocs/script1	base-obsolete	obsolete
+./usr/share/sushi/procs/restartprocs		base-obsolete	obsolete
+./usr/share/sushi/procs/restartprocs/form	base-obsolete	obsolete
+./usr/share/sushi/procs/restartprocs/help	base-obsolete	obsolete
+./usr/share/sushi/procs/restartprocs/script	base-obsolete	obsolete
+./usr/share/sushi/procs/restartprocs/script1	base-obsolete	obsolete
+./usr/share/sushi/procs/showallprocs		base-obsolete	obsolete
+./usr/share/sushi/procs/showallprocs/script	base-obsolete	obsolete
+./usr/share/sushi/procs/showprocs		base-obsolete	obsolete
+./usr/share/sushi/procs/showprocs/script	base-obsolete	obsolete
+./usr/share/sushi/procs/startallprocs		base-obsolete	obsolete
+./usr/share/sushi/procs/startallprocs/form	base-obsolete	obsolete
+./usr/share/sushi/procs/startallprocs/help	base-obsolete	obsolete
+./usr/share/sushi/procs/startallprocs/script	base-obsolete	obsolete
+./usr/share/sushi/procs/startallprocs/script1	base-obsolete	obsolete
+./usr/share/sushi/procs/startprocs		base-obsolete	obsolete
+./usr/share/sushi/procs/startprocs/form		base-obsolete	obsolete
+./usr/share/sushi/procs/startprocs/help		base-obsolete	obsolete
+./usr/share/sushi/procs/startprocs/script	base-obsolete	obsolete
+./usr/share/sushi/procs/startprocs/script1	base-obsolete	obsolete
+./usr/share/sushi/procs/stopallprocs		base-obsolete	obsolete
+./usr/share/sushi/procs/stopallprocs/form	base-obsolete	obsolete
+./usr/share/sushi/procs/stopallprocs/help	base-obsolete	obsolete
+./usr/share/sushi/procs/stopallprocs/script	base-obsolete	obsolete
+./usr/share/sushi/procs/stopallprocs/script1	base-obsolete	obsolete
+./usr/share/sushi/procs/stopprocs		base-obsolete	obsolete
+./usr/share/sushi/procs/stopprocs/form		base-obsolete	obsolete
+./usr/share/sushi/procs/stopprocs/help		base-obsolete	obsolete
+./usr/share/sushi/procs/stopprocs/script	base-obsolete	obsolete
+./usr/share/sushi/procs/stopprocs/script1	base-obsolete	obsolete
+./usr/share/sushi/procs/topcpu			base-obsolete	obsolete
+./usr/share/sushi/procs/topcpu/script		base-obsolete	obsolete
+./usr/share/sushi/procs/topmem			base-obsolete	obsolete
+./usr/share/sushi/procs/topmem/script		base-obsolete	obsolete
+./usr/share/sushi/procs/toptime			base-obsolete	obsolete
+./usr/share/sushi/procs/toptime/script		base-obsolete	obsolete
+./usr/share/sushi/scriptoff			base-obsolete	obsolete
+./usr/share/sushi/scriptoff/func		base-obsolete	obsolete
+./usr/share/sushi/scripton			base-obsolete	obsolete
+./usr/share/sushi/scripton/func			base-obsolete	obsolete
+./usr/share/sushi/system			base-obsolete	obsolete
+./usr/share/sushi/system/dailyconf		base-obsolete	obsolete
+./usr/share/sushi/system/dailyconf/form		base-obsolete	obsolete
+./usr/share/sushi/system/dailyconf/help		base-obsolete	obsolete
+./usr/share/sushi/system/dailyconf/script	base-obsolete	obsolete
+./usr/share/sushi/system/dailyconf/script1	base-obsolete	obsolete
+./usr/share/sushi/system/dailyconf/script2	base-obsolete	obsolete
+./usr/share/sushi/system/dailyconf/script3	base-obsolete	obsolete
+./usr/share/sushi/system/help			base-obsolete	obsolete
+./usr/share/sushi/system/index			base-obsolete	obsolete
+./usr/share/sushi/system/inetdconf		base-obsolete	obsolete
+./usr/share/sushi/system/inetdconf/form		base-obsolete	obsolete
+./usr/share/sushi/system/inetdconf/script	base-obsolete	obsolete
+./usr/share/sushi/system/inetdconf/script1	base-obsolete	obsolete
+./usr/share/sushi/system/localtime		base-obsolete	obsolete
+./usr/share/sushi/system/localtime/form		base-obsolete	obsolete
+./usr/share/sushi/system/localtime/help		base-obsolete	obsolete
+./usr/share/sushi/system/localtime/script	base-obsolete	obsolete
+./usr/share/sushi/system/localtime/script1	base-obsolete	obsolete
+./usr/share/sushi/system/mailerconf		base-obsolete	obsolete
+./usr/share/sushi/system/mailerconf/form	base-obsolete	obsolete
+./usr/share/sushi/system/mailerconf/script	base-obsolete	obsolete
+./usr/share/sushi/system/mailerconf/script1	base-obsolete	obsolete
+./usr/share/sushi/system/rcconf			base-obsolete	obsolete
+./usr/share/sushi/system/rcconf/form		base-obsolete	obsolete
+./usr/share/sushi/system/rcconf/script		base-obsolete	obsolete
+./usr/share/sushi/system/rcconf/script1		base-obsolete	obsolete
+./usr/share/sushi/system/rcconf/script2		base-obsolete	obsolete
+./usr/share/sushi/system/rcconf/script3		base-obsolete	obsolete
+./usr/share/sushi/system/rcconf/script4		base-obsolete	obsolete
+./usr/share/sushi/system/securityconf		base-obsolete	obsolete
+./usr/share/sushi/system/securityconf/form	base-obsolete	obsolete
+./usr/share/sushi/system/securityconf/help	base-obsolete	obsolete
+./usr/share/sushi/system/securityconf/script	base-obsolete	obsolete
+./usr/share/sushi/system/securityconf/script1	base-obsolete	obsolete
+./usr/share/sushi/system/securityconf/script2	base-obsolete	obsolete
+./usr/share/sushi/system/securityconf/script3	base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf		base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf/defaults	base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf/form		base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf/help		base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf/script	base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf/script1	base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf/script2	base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf/script3	base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf/script4	base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf/script5	base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf/script6	base-obsolete	obsolete
+./usr/share/sushi/system/sshdconf/script7	base-obsolete	obsolete
+./usr/share/sushi/system/sysctl			base-obsolete	obsolete
+./usr/share/sushi/system/sysctl/form		base-obsolete	obsolete
+./usr/share/sushi/system/sysctl/help		base-obsolete	obsolete
+./usr/share/sushi/system/sysctl/preform		base-obsolete	obsolete
+./usr/share/sushi/system/sysctl/script		base-obsolete	obsolete
+./usr/share/sushi/system/sysctl/script1		base-obsolete	obsolete
+./usr/share/sushi/system/sysctl/script2		base-obsolete	obsolete
+./usr/share/sushi/system/sysctl/sysctls		base-obsolete	obsolete
+./usr/share/sushi/system/usermgmtconf		base-obsolete	obsolete
+./usr/share/sushi/system/usermgmtconf/form	base-obsolete	obsolete
+./usr/share/sushi/system/usermgmtconf/help	base-obsolete	obsolete
+./usr/share/sushi/system/usermgmtconf/script	base-obsolete	obsolete
+./usr/share/sushi/system/usermgmtconf/script1	base-obsolete	obsolete
+./usr/share/sushi/system/weeklyconf		base-obsolete	obsolete
+./usr/share/sushi/system/weeklyconf/form	base-obsolete	obsolete
+./usr/share/sushi/system/weeklyconf/help	base-obsolete	obsolete
+./usr/share/sushi/system/weeklyconf/script	base-obsolete	obsolete
+./usr/share/sushi/system/weeklyconf/script1	base-obsolete	obsolete
+./usr/share/sushi/system/weeklyconf/script3	base-obsolete	obsolete
+./usr/share/sushi/users				base-obsolete	obsolete
+./usr/share/sushi/users/addgroup		base-obsolete	obsolete
+./usr/share/sushi/users/addgroup/form		base-obsolete	obsolete
+./usr/share/sushi/users/addgroup/script		base-obsolete	obsolete
+./usr/share/sushi/users/adduser			base-obsolete	obsolete
+./usr/share/sushi/users/adduser/form		base-obsolete	obsolete
+./usr/share/sushi/users/adduser/script		base-obsolete	obsolete
+./usr/share/sushi/users/adduser/script1		base-obsolete	obsolete
+./usr/share/sushi/users/adduser/script2		base-obsolete	obsolete
+./usr/share/sushi/users/adduser/script3		base-obsolete	obsolete
+./usr/share/sushi/users/delgroup		base-obsolete	obsolete
+./usr/share/sushi/users/delgroup/form		base-obsolete	obsolete
+./usr/share/sushi/users/delgroup/script		base-obsolete	obsolete
+./usr/share/sushi/users/delgroup/script1	base-obsolete	obsolete
+./usr/share/sushi/users/deluser			base-obsolete	obsolete
+./usr/share/sushi/users/deluser/form		base-obsolete	obsolete
+./usr/share/sushi/users/deluser/preform		base-obsolete	obsolete
+./usr/share/sushi/users/deluser/script		base-obsolete	obsolete
+./usr/share/sushi/users/deluser/script1		base-obsolete	obsolete
+./usr/share/sushi/users/deluser/script2		base-obsolete	obsolete
+./usr/share/sushi/users/disuser			base-obsolete	obsolete
+./usr/share/sushi/users/disuser/form		base-obsolete	obsolete
+./usr/share/sushi/users/disuser/script		base-obsolete	obsolete
+./usr/share/sushi/users/disuser/script1		base-obsolete	obsolete
+./usr/share/sushi/users/index			base-obsolete	obsolete
+./usr/share/sushi/users/listgroup		base-obsolete	obsolete
+./usr/share/sushi/users/listgroup/script	base-obsolete	obsolete
+./usr/share/sushi/users/listuser		base-obsolete	obsolete
+./usr/share/sushi/users/listuser/script		base-obsolete	obsolete
+./usr/share/sushi/users/moduser			base-obsolete	obsolete
+./usr/share/sushi/users/moduser/form		base-obsolete	obsolete
+./usr/share/sushi/users/moduser/preform		base-obsolete	obsolete
+./usr/share/sushi/users/moduser/script		base-obsolete	obsolete
+./usr/share/sushi/users/moduser/script1		base-obsolete	obsolete
+./usr/share/sushi/users/moduser/script2		base-obsolete	obsolete
+./usr/share/sushi/users/passwd			base-obsolete	obsolete
+./usr/share/sushi/users/passwd/form		base-obsolete	obsolete
+./usr/share/sushi/users/passwd/script		base-obsolete	obsolete
+./usr/share/sushi/users/passwd/script1		base-obsolete	obsolete
+./usr/share/sushi/util				base-obsolete	obsolete
+./usr/share/sushi/util/help			base-obsolete	obsolete
+./usr/share/sushi/util/index			base-obsolete	obsolete
+./usr/share/sushi/util/logging			base-obsolete	obsolete
+./usr/share/sushi/util/logging/func		base-obsolete	obsolete
+./usr/share/sushi/util/scripting		base-obsolete	obsolete
+./usr/share/sushi/util/scripting/func		base-obsolete	obsolete
 ./usr/share/tabset				base-util-share
 ./usr/share/tabset/3101				base-util-share		share
 ./usr/share/tabset/9837				base-util-share		share
