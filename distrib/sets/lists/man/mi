@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.852 2006/02/06 18:53:25 wiz Exp $
+# $NetBSD: mi,v 1.853 2006/02/08 00:54:33 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2235,7 +2235,7 @@
 ./usr/share/man/cat8/supfilesrv.0		man-sup-catman		.cat
 ./usr/share/man/cat8/supscan.0			man-sup-catman		.cat
 ./usr/share/man/cat8/supservers.0		man-sup-catman		.cat
-./usr/share/man/cat8/sushi.0			man-sushi-catman	.cat
+./usr/share/man/cat8/sushi.0			man-obsolete		obsolete
 ./usr/share/man/cat8/swapctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/swapon.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/sync.0			man-sysutil-catman	.cat
@@ -4537,7 +4537,7 @@
 ./usr/share/man/man8/supfilesrv.8		man-sup-man		.man
 ./usr/share/man/man8/supscan.8			man-sup-man		.man
 ./usr/share/man/man8/supservers.8		man-sup-man		.man
-./usr/share/man/man8/sushi.8			man-sushi-man		.man
+./usr/share/man/man8/sushi.8			man-obsolete		obsolete
 ./usr/share/man/man8/swapctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/swapon.8			man-sysutil-man		.man
 ./usr/share/man/man8/sync.8			man-sysutil-man		.man
