@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.30 2006/02/05 18:51:09 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.31 2006/02/08 21:11:46 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -678,4 +678,12 @@ sys/arch/alpha/stand/bootxx_ffsv2/Makefile	1.1
 
 	Support booting from ffsv2 filesystems.
 	[abs, ticket #738]
+
+sys/dev/pci/if_sip.c				1.104
+sys/dev/pci/if_wm.c				1.111
+
+	In the receive interrupt handler, compute the packet length before  
+	resetting m to point to the first buffer in the packet. The bug would
+	cause the length of jumbo frames to be incorrect.
+	[thorpej, ticket #1161]
 
