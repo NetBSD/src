@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.110 2006/02/05 22:42:55 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.111 2006/02/08 18:13:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.110 2006/02/05 22:42:55 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.111 2006/02/08 18:13:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1670,8 +1670,8 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 	switch (SYSCTL_TYPE(node->sysctl_flags)) {
 	case CTLTYPE_INT:
 		ii = (u_int)qi;
-		qo = ii;
-		if (qo != qi) {
+		io = (u_int)(qi >> 32);
+		if (io != (u_int)-1 && io != 0) {
 			sysctlperror("%s: %s\n", value, strerror(ERANGE));
 			EXIT(1);
 		}
