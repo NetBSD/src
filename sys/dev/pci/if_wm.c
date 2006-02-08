@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.100.2.3 2005/08/28 09:51:46 tron Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.100.2.4 2006/02/08 21:10:28 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.3 2005/08/28 09:51:46 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.4 2006/02/08 21:10:28 tron Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2254,8 +2254,8 @@ wm_rxintr(struct wm_softc *sc)
 		m->m_len -= ETHER_CRC_LEN;
 
 		*sc->sc_rxtailp = NULL;
-		m = sc->sc_rxhead;
 		len = m->m_len + sc->sc_rxlen;
+		m = sc->sc_rxhead;
 
 		WM_RXCHAIN_RESET(sc);
 
