@@ -1,3 +1,0 @@
-# $NetBSD: form,v 1.1 2001/04/25 03:43:36 garbled Exp $
-escript:40,script1	Domainname of this machine
-list:both,now,boot	Modify domainname now, at boot-time, or both?
