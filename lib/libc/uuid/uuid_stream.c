@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid_stream.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $	*/
+/*	$NetBSD: uuid_stream.c,v 1.2 2006/02/09 22:03:15 dogcow Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -28,12 +28,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: uuid_stream.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $");
+__RCSID("$NetBSD: uuid_stream.c,v 1.2 2006/02/09 22:03:15 dogcow Exp $");
 #endif
 
 #include "namespace.h"
 
-#include <sys/endian.h>
+#include <machine/endian.h>
 #include <uuid.h>
 
 /*
