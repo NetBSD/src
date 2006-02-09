@@ -28,108 +28,41 @@ PREFIX= @prefix@
 INCLUDE = ../include
 BIN = ../bin
 
-#CFLAGS_KERN = $(CFLAGS) -D__KERNEL__ -I/usr/src/linux-2.4.19/include -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common  -g  -U__i386__ -Ui386 -DUM_FASTCALL -D__arch_um__ -DSUBARCH="i386" -D_LARGEFILE64_SOURCE -I/usr/src/linux-2.4.19/arch/um/include -Derrno=kernel_errno -DMODULE  -nostdinc -I /usr/lib/gcc-lib/i386-redhat-linux/egcs-2.91.66/include -I$(SRC)/drivers/scsi -I/usr/include
-
-CFLAGS_KERN = $(CFLAGS) -D__KERNEL__ -DMODULE -I$(SRC)/include -I$(SRC)/drivers/scsi
-
-#ifeq ($(shell grep 'define CONFIG_MODVERSIONS' $(SRC)/include/linux/autoconf.h | wc -l | sed 's/ //g'),1)
-#CFLAGS_KERN += -DMODVERSIONS -include $(SRC)/include/linux/modversions.h
-#endif
-
 #
 # Compilation Targets
 #
 
-TARGETS_OSD = uosd
-TARGETS = $(BIN) $(BIN)/iscsi-target $(BIN)/utest $(BIN)/usocktest $(BIN)/ktest $(BIN)/uosd
-#ifeq ($(shell grep 'define CONFIG_SMP' $(SRC)/include/linux/autoconf.h | wc -l | sed 's/ //g'),1)
-#TARGETS_OSD = no_smp.o
-#TARGETS = no_smp.o
-#else
-#TARGETS_OSD += intel_iscsi.o kramdisk.o osdfs.o so.o
-#TARGETS += intel_iscsi.o kramdisk.o
-#endif
+TARGETS = $(BIN) $(BIN)/iscsi-target # $(BIN)/osd
+INITIATORS= $(BIN)/iscsi-harness 
 
-all: $(TARGETS)
-osd: $(TARGETS_OSD)
-	touch osd
+all: $(TARGETS) ${INITIATORS}
 
 $(BIN):
 	-mkdir $(BIN)
-asm: 
-	$(CC) -Wa,-ahls,-L, $(CFLAGS_KERN) driver.c
-
-#
-# Filesystems
-#
-
-osdfs.o:  $(INCLUDE)/iscsi.h iscsi.c $(INCLUDE)/initiator.h initiator.c $(INCLUDE)/util.h util.c $(INCLUDE)/parameters.h parameters.c osdfs.c $(INCLUDE)/osd.h osd_ops.c $(INCLUDE)/osd_ops.h
-	$(CC) $(CFLAGS_KERN) -c osdfs.c -o $(BIN)/osdfs.o
-
-#
-# SCSI Upper layer
-#
-
-so.o: so.c $(INCLUDE)/so.h $(INCLUDE)/util.h $(INCLUDE)/osd.h
-	$(CC) $(CFLAGS_KERN) -c so.c -o $(BIN)/so.o
-
-#
-# Initiators
-#
-
-intel_iscsi.o: $(INCLUDE)/driver.h driver.c $(INCLUDE)/iscsi.h iscsi.c $(INCLUDE)/tests.h tests.c $(INCLUDE)/initiator.h initiator.c $(INCLUDE)/util.h util.c $(INCLUDE)/parameters.h parameters.c $(INCLUDE)/osd.h $(INCLUDE)/osd_ops.h osd_ops.c
-	$(CC) $(CFLAGS_KERN) -c driver.c -o intel_iscsi.o
 
 #
 # User-level Targets
 #
 COMPATOBJS= strlcpy.o snprintf.o strtoll.o
 
-USER_TARGET_OBJS = target.o iscsi.o util.o parameters.o ${COMPATOBJS}
-$(BIN)/uosd: osd-target.c osd.c $(USER_TARGET_OBJS)
-	$(CC) $(CFLAGS) osd-target.c osd.c $(USER_TARGET_OBJS)  ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o $(BIN)/uosd
+USER_TARGET_OBJS = target.o iscsi.o util.o parameters.o conffile.o ${COMPATOBJS}
+$(BIN)/osd: osd-target.c osd.c $(USER_TARGET_OBJS)
+	$(CC) $(CFLAGS) osd-target.c osd.c $(USER_TARGET_OBJS)  ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o $(BIN)/osd
 $(BIN)/iscsi-target: iscsi-target.c disk.c $(USER_TARGET_OBJS)
 	$(CC) $(CFLAGS) iscsi-target.c disk.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o $(BIN)/iscsi-target
 iscsi-target: iscsi-target.c disk.c $(USER_TARGET_OBJS)
 	$(CC) $(CFLAGS) iscsi-target.c disk.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o iscsi-target
-uosd: osd-target.c osd.c $(USER_TARGET_OBJS)
-	$(CC) $(CFLAGS) osd-target.c osd.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o uosd
+osd: osd-target.c osd.c $(USER_TARGET_OBJS)
+	$(CC) $(CFLAGS) osd-target.c osd.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o osd
 
 #
-# Kernel-level Targets
+# Test harness (initiators)
 #
 
-kramdisk.o: ktarget.c  $(INCLUDE)/iscsi.h iscsi.c $(INCLUDE)/util.h util.c $(INCLUDE)/target.h target.c $(INCLUDE)/device.h disk.c $(INCLUDE)/parameters.h parameters.c
-	$(CC) $(CFLAGS_KERN) -DCONFIG_DISK_RAMDISK -c ktarget.c -o kramdisk.o
-
-#
-# Tests
-#
-
-$(BIN)/usocktest: usocktest.o util.o
-	$(CC) $(CFLAGS) usocktest.o util.o ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o $(BIN)/usocktest
-$(BIN)/utest: utest.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o
-	$(CC) utest.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o -o $(BIN)/utest ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS}
-$(BIN)/ktest: ktest.o
-	$(CC) $(CFLAGS) ktest.o -o $(BIN)/ktest
-usocktest: usocktest.o util.o
-	$(CC) $(CFLAGS) usocktest.o util.o ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o usocktest
-utest: utest.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o
-	$(CC) utest.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o -o utest ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS}
-ktest: ktest.o
-	$(CC) $(CFLAGS) ktest.o -o ktest
-
-#
-# Errors
-#
-
-no_smp.o: 
-	@echo
-	@echo "************************************************************"
-	@echo "** The kernel mode drivers in this distribution do not    **"
-	@echo "** support SMP. You will need to reconfigure your kernel. **"
-	@echo "************************************************************"
-	@echo
+$(BIN)/iscsi-harness: iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o
+	$(CC) iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o -o $(BIN)/iscsi-harness ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS}
+iscsi-harness: iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o
+	$(CC) iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o -o iscsi-harness ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS}
 
 #
 # Dependencies
@@ -142,7 +75,7 @@ usocktest.o: usocktest.c $(INCLUDE)/util.h
 disk.o: disk.c  $(INCLUDE)/device.h $(INCLUDE)/util.h $(INCLUDE)/iscsi.h
 osd.o: osd.c $(INCLUDE)/osd.h $(INCLUDE)/device.h $(INCLUDE)/util.h $(INCLUDE)/iscsi.h
 iscsi.o: iscsi.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h
-utest.o: utest.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h $(INCLUDE)/osd.h $(INCLUDE)/initiator.h $(INCLUDE)/tests.h $(INCLUDE)/parameters.h $(INCLUDE)/osd_ops.h
+iscsi-harness.o: iscsi-harness.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h $(INCLUDE)/osd.h $(INCLUDE)/initiator.h $(INCLUDE)/tests.h $(INCLUDE)/parameters.h $(INCLUDE)/osd_ops.h
 utarget.o: utarget.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h $(INCLUDE)/target.h $(INCLUDE)/device.h
 tests.o: tests.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h $(INCLUDE)/initiator.h $(INCLUDE)/tests.h
 target.o: target.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h $(INCLUDE)/target.h $(INCLUDE)/parameters.h
@@ -153,8 +86,8 @@ initiator.o: initiator.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h $(INCLUDE)/initiat
 #
 
 clean: 
-	rm -f $(INITIATORS) $(BIN)/* $(TARGETS_OSD) $(TESTS) osd *.o
+	rm -f $(INITIATORS) $(BIN)/* $(TESTS) osd *.o
 
 test: ${TARGETS}
-	../bin/iscsi-target & (sleep 1; ../bin/utest -n 3 -h localhost; pkill iscsi-target)
-	../bin/uosd & (sleep 1; ../bin/utest -n 3 -h localhost; pkill uosd)
+	../bin/iscsi-target & (sleep 1; ../bin/iscsi-harness -n 3 -h localhost; pkill iscsi-target)
+	../bin/osd & (sleep 1; ../bin/iscsi-harness -n 3 -h localhost; pkill uosd)
