@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.310 2006/02/04 18:50:39 wiz Exp $
+.\"	$NetBSD: options.4,v 1.311 2006/02/09 19:24:40 manu Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -378,6 +378,10 @@ compatibility with Linux ELF and
 applications built for the same architecture.
 This currently includes the alpha, arm, i386, m68k, mips, powerpc, and
 x86_64 ports.
+.It Cd options COMPAT_LINUX32
+On those 64 bit architectures that support it, this enables binary
+compatibility with 32 bit Linux binaries. For now this is limited to 
+running i386 ELF Linux binaries on amd64.
 .It Cd options COMPAT_SUNOS
 On those architectures that support it, this enables binary
 compatibility with
