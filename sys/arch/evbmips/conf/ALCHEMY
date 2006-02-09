@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.4 2006/02/08 09:04:01 gdamore Exp $
+#	$NetBSD: ALCHEMY,v 1.5 2006/02/09 00:26:39 gdamore Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.4 $"
+#ident 		"ALCHEMY-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -151,8 +151,11 @@ options 	AUMAC_EVENT_COUNTERS
 # MII/PHY support
 amhphy*		at mii? phy ?			# AMD 79c901 Ethernet PHYs
 bmtphy*		at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
+brgphy*		at mii? phy ?			# Broadcom BCM5400-family PHYs
 sqphy*		at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 acphy*		at mii? phy ?			# AMD/Altima AC101 PHYs
+rlphy*		at mii? phy ?			# RealTek 8139/8201L PHYs
+ukphy*		at mii? phy ?			# Catch-all PHYs
 
 # USB
 ohci*		at aubus? addr ?		# USB Open Host Controller
