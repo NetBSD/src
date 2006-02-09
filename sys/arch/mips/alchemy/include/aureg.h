@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.10 2006/02/09 01:20:18 gdamore Exp $ */
+/* $NetBSD: aureg.h,v 1.11 2006/02/09 03:14:31 gdamore Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,151 +35,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*  *********************************************************************
-    *  Naming schemes for constants in these files:
-    *
-    *  M_xxx            MASK constant (identifies bits in a register).
-    *                   For multi-bit fields, all bits in the field will
-    *                   be set.
-    *
-    *  K_xxx            "Code" constant (value for data in a multi-bit
-    *                   field).  The value is right justified.
-    *
-    *  V_xxx            "Value" constant.  This is the same as the
-    *                   corresponding "K_xxx" constant, except it is
-    *                   shifted to the correct position in the register.
-    *
-    *  S_xxx            SHIFT constant.  This is the number of bits that
-    *                   a field value (code) needs to be shifted
-    *                   (towards the left) to put the value in the right
-    *                   position for the register.
-    *
-    *  A_xxx            ADDRESS constant.  This will be a physical
-    *                   address.  Use the MIPS_PHYS_TO_KSEG1 macro to
-    *                   generate a K1SEG address.
-    *
-    *  R_xxx            RELATIVE offset constant.  This is an offset from
-    *                   an A_xxx constant (usually the first register in
-    *                   a group).
-    *
-    *  G_xxx(X)         GET value.  This macro obtains a multi-bit field
-    *                   from a register, masks it, and shifts it to
-    *                   the bottom of the register (retrieving a K_xxx
-    *                   value, for example).
-    *
-    *  V_xxx(X)         VALUE.  This macro computes the value of a
-    *                   K_xxx constant shifted to the correct position
-    *                   in the register.
-    ********************************************************************* */
-
-#if !defined(__ASSEMBLER__)
-#define _MAKE64(x) ((uint64_t)(x))
-#define _MAKE32(x) ((uint32_t)(x))
-#else
-#define _MAKE64(x) (x)  
-#define _MAKE32(x) (x)
-#endif 
-
-/* Make a mask for 1 bit at position 'n' */
-#define _MAKEMASK1_64(n) (_MAKE64(1) << _MAKE64(n))
-#define _MAKEMASK1_32(n) (_MAKE32(1) << _MAKE32(n))
-
-/* Make a mask for 'v' bits at position 'n' */
-#define _MAKEMASK_64(v,n) (_MAKE64((_MAKE64(1)<<(v))-1) << _MAKE64(n))
-#define _MAKEMASK_32(v,n) (_MAKE32((_MAKE32(1)<<(v))-1) << _MAKE32(n))
-
-/* Make a value at 'v' at bit position 'n' */
-#define _MAKEVALUE_64(v,n) (_MAKE64(v) << _MAKE64(n))
-#define _MAKEVALUE_32(v,n) (_MAKE32(v) << _MAKE32(n))
-
-#define _GETVALUE_64(v,n,m) ((_MAKE64(v) & _MAKE64(m)) >> _MAKE64(n))
-#define _GETVALUE_32(v,n,m) ((_MAKE32(v) & _MAKE32(m)) >> _MAKE32(n))
-
+#ifndef	_MIPS_ALCHEMY_AUREG_H
+#define	_MIPS_ALCHEMY_AUREG_H
 
 /************************************************************************/
 /********************   AC97 Controller registers   *********************/
 /************************************************************************/
 #define	AC97_BASE		0x10000000
 
-#define	AC97_CONFIG		0x00
-
-#define	  M_AC97CFG_RS		  _MAKEMASK1_32(0)
-#define	  M_AC97CFG_SN		  _MAKEMASK1_32(1)
-#define	  M_AC97CFG_SG		  _MAKEMASK1_32(2)
-
-#define	  S_AC97CFG_XS		  _MAKE32(12)
-#define	  M_AC97CFG_XS		  _MAKEMASK_32(10)
-#define	  V_AC97CFG_XS(x)	  _MAKEVALUE_32(x, S_AC97CFG_XS)
-#define	  G_AC97CFG_XS(x)	  _GETVALUE_32(x, S_AC97CFG_XS, M_AC97CFG_XS)
-
-#define	  S_AC97CFG_RC		  _MAKE32(12)
-#define	  M_AC97CFG_RC		  _MAKEMASK_32(10)
-#define	  V_AC97CFG_RC(x)	  _MAKEVALUE_32(x, S_AC97CFG_RC)
-#define	  G_AC97CFG_RC(x)	  _GETVALUE_32(x, S_AC97CFG_RC, M_AC97CFG_RC)
-
-#define	AC97_STATUS		0x04
-
-#define	  M_AC97STAT_RF		  _MAKEMASK1_32(0)
-#define	  M_AC97STAT_RE		  _MAKEMASK1_32(1)
-#define	  M_AC97STAT_TF		  _MAKEMASK1_32(3)
-#define	  M_AC97STAT_TE		  _MAKEMASK1_32(4)
-#define	  M_AC97STAT_CP		  _MAKEMASK1_32(6)
-#define	  M_AC97STAT_RD		  _MAKEMASK1_32(7)
-#define	  M_AC97STAT_RO		  _MAKEMASK1_32(8)
-#define	  M_AC97STAT_RU		  _MAKEMASK1_32(9)
-#define	  M_AC97STAT_XO		  _MAKEMASK1_32(10)
-#define	  M_AC97STAT_XU		  _MAKEMASK1_32(11)
-
-#define	AC97_DATA		0x08
-
-#define	  S_AC97DATA_DATA	  _MAKE32(0)
-#define	  M_AC97DATA_DATA	  _MAKEMASK_32(16)
-#define	  V_AC97DATA_DATA(x)	  _MAKEVALUE_32(x, S_AC97DATA_DATA)
-#define	  G_AC97DATA_DATA(x)	  _GETVALUE_32(x, S_AC97DATA_DATA, M_AC97DATA_DATA)
-
-#define	AC97_COMMAND		0x0c
-
-#define	  S_AC97CMD_INDEX	  _MAKE32(0)
-#define	  M_AC97CMD_INDEX	  _MAKEMASK_32(7)
-#define	  V_AC97CMD_INDEX(x)	  _MAKEVALUE_32(x, S_AC97CMD_INDEX)
-#define	  G_AC97CMD_INDEX(x)	  _GETVALUE_32(x, S_AC97CMD_INDEX, M_AC97CMD_INDEX)
-
-#define	  M_AC97CMD_RW		  _MAKEMASK1_32(7)
-
-#define	  S_AC97CMD_DATA	  _MAKE32(16)
-#define	  M_AC97CMD_DATA	  _MAKEMASK_32(16)
-#define	  V_AC97CMD_DATA(x)	  _MAKEVALUE_32(x, S_AC97CMD_DATA)
-#define	  G_AC97CMD_DATA(x)	  _GETVALUE_32(x, S_AC97CMD_DATA, M_AC97CMD_DATA)
-
-#define	AC97_COMMAND_RESPONSE	0x0c
-
-#define	  S_AC97CMDRESP_DATA	  _MAKE32(0)
-#define	  M_AC97CMDRESP_DATA	  _MAKEMASK_32(16)
-#define	  V_AC97CMDRESP_DATA(x)	  _MAKEVALUE_32(x, S_AC97CMDRESP_DATA)
-#define	  G_AC97CMDRESP_DATA(x)	  _GETVALUE_32(x, S_AC97CMDRESP_DATA, M_AC97CMDRESP_DATA)
-
-#define	AC97_ENABLE		0x10
-
-#define	  M_AC97EN_CE		  _MAKEMASK1_32(0)
-#define	  M_AC97EN_D		  _MAKEMASK1_32(1)
-
-#define	AC97_SIZE		0x14		/* size of register set */
-
 /************************************************************************/
 /***********************   USB Host registers   *************************/
 /************************************************************************/
 #define	USBH_BASE		0x10100000
+#define	AU1550_USBH_BASE	0x14020000
 
 #define	USBH_ENABLE		0x7fffc
-#define	  UE_RD			  0x00000010	/* reset done */
-#define	  UE_CE			  0x00000008	/* clock enable */
-#define	  UE_E			  0x00000004	/* enable */
-#define	  UE_C			  0x00000002	/* coherent */
-#define	  UE_BE			  0x00000001	/* big-endian */
+#define	USBH_SIZE		0x100000
 
-#define	USBH_SIZE		0x100000	/* size of register set */
-
-#define	AU1550_USBH_BASE	0x14020000
 #define	AU1550_USBH_ENABLE	0x7ffc
 #define AU1550_USBH_SIZE	0x60000
 
@@ -187,29 +59,6 @@
 /**********************   USB Device registers   ************************/
 /************************************************************************/
 #define	USBD_BASE		0x10200000
-
-#define USBD_EP0RD		0x00		/* Read from endpoint 0 */
-#define USBD_EP0WR		0x04		/* Write to endpoint 0 */
-#define USBD_EP1WR		0x08		/* Write to endpoint 1 */
-#define USBD_EP2WR		0x0c		/* Write to endpoint 2 */
-#define USBD_EP3RD		0x10		/* Read from endpoint 3 */
-#define USBD_EP4RD		0x14		/* Read from endpoint 4 */
-#define USBD_INTEN		0x18		/* Interrupt Enable Register */
-#define USBD_INTSTAT		0x1c		/* Interrupt Status Register */
-#define USBD_CONFIG		0x20		/* Write Configuration Register */
-#define USBD_EP0CS		0x24		/* Endpoint 0 control and status */
-#define USBD_EP1CS		0x28		/* Endpoint 1 control and status */
-#define USBD_EP2CS		0x2c		/* Endpoint 2 control and status */
-#define USBD_EP3CS		0x30		/* Endpoint 3 control and status */
-#define USBD_EP4CS		0x34		/* Endpoint 4 control and status */
-#define USBD_FRAMENUM		0x38		/* Current frame number */
-#define USBD_EP0RDSTAT		0x40		/* EP0 Read FIFO Status */
-#define USBD_EP0WRSTAT		0x44		/* EP0 Write FIFO Status */
-#define USBD_EP1WRSTAT		0x48		/* EP1 Write FIFO Status */
-#define USBD_EP2WRSTAT		0x4c		/* EP2 Write FIFO Status */
-#define USBD_EP3RDSTAT		0x50		/* EP3 Read FIFO Status */
-#define USBD_EP4RDSTAT		0x54		/* EP4 Read FIFO Status */
-#define USBD_ENABLE		0x58		/* USB Device Controller Enable */
 
 /************************************************************************/
 /*************************   IRDA registers   ***************************/
@@ -220,8 +69,8 @@
 /******************   Interrupt Controller registers   ******************/
 /************************************************************************/
 
-#define	IC0_BASE	0x10400000
-#define	IC1_BASE	0x11800000
+#define	IC0_BASE		0x10400000
+#define	IC1_BASE		0x11800000
 
 /*
  * The *_READ registers read the current value of the register
@@ -319,10 +168,10 @@
 /**************************   UART registers   **************************/
 /************************************************************************/
 
-#define	UART0_BASE	0x11100000
-#define	UART1_BASE	0x11200000
-#define	UART2_BASE	0x11300000
-#define	UART3_BASE	0x11400000
+#define	UART0_BASE		0x11100000
+#define	UART1_BASE		0x11200000
+#define	UART2_BASE		0x11300000
+#define	UART3_BASE		0x11400000
 
 /************************************************************************/
 /*************************   SSI registers   ****************************/
@@ -448,3 +297,5 @@
 
 #define SYS_CPUPLL		(SYS_BASE + 0x60)
 #define SYS_AUXPLL              (SYS_BASE + 0x64)
+
+#endif	/* _MIPS_ALCHEMY_AUREG_H */
