@@ -52,6 +52,9 @@
 #include "target.h"
 #include "device.h"
 
+#include "conffile.h"
+#include "storage.h"
+
 /*
  * Globals
  */
