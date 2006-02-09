@@ -69,6 +69,10 @@
 #include <arpa/inet.h>
 #endif
 
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+           
 
 #include "iscsi.h"
 #include "target.h"
@@ -213,7 +217,8 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 				scsi_cmd.ext_cdb = ahs_ptr + 4;
 				break;
 			case 0x02:
-				scsi_cmd.bidi_trans_len = NTOHL(*((uint32_t *) (void *) (ahs_ptr + 4)));
+				scsi_cmd.bidi_trans_len = ntohl(*((uint32_t *) (void *) (ahs_ptr + 4)));
+				*((uint32_t *) (void *) (ahs_ptr + 4)) = scsi_cmd.bidi_trans_len;
 				TRACE(TRACE_ISCSI_DEBUG, "Got Bidirectional Read AHS (expected read length %u)\n", scsi_cmd.bidi_trans_len);
 				break;
 			default:
@@ -874,7 +879,7 @@ response:
 		PRINT("**************************************************\n");
 		PRINT("*                LOGIN SUCCESSFUL                *\n");
 		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "CID", sess->cid);
-		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20llu *\n", "ISID", sess->isid);
+		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20" PRIu64 " *\n", "ISID", sess->isid);
 		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "TSIH", sess->tsih);
 		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "StatSN", sess->StatSN);
 		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "ExpCmdSN", sess->ExpCmdSN);
@@ -935,7 +940,7 @@ logout_command_t(target_session_t * sess, uint8_t *header)
 	PRINT("*               LOGOUT SUCCESSFUL                *\n");
 	PRINT("*                                                *\n");
 	PRINT("* %20s:%20u      *\n", "CID", sess->cid);
-	PRINT("* %20s:%20llu    *\n", "ISID", sess->isid);
+	PRINT("* %20s:%20" PRIu64 "    *\n", "ISID", sess->isid);
 	PRINT("* %20s:%20u      *\n", "TSIH", sess->tsih);
 	PRINT("**************************************************\n");
 
