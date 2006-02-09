@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.24 2006/02/08 09:04:01 gdamore Exp $ */
+/* $NetBSD: machdep.c,v 1.25 2006/02/09 00:26:39 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2006/02/08 09:04:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2006/02/09 00:26:39 gdamore Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -146,6 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2006/02/08 09:04:01 gdamore Exp $")
 #include <machine/yamon.h>
 
 #include <evbmips/alchemy/board.h>
+#include <mips/alchemy/dev/aupcivar.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
@@ -507,16 +508,16 @@ cpu_reboot(int howto, char *bootstr)
 	/*NOTREACHED*/
 }
 
-#if 0
-/* add this when we add PCI support */
+/*
+ * Export our interrupt map function so aupci can find it.
+ */
 int
-machdep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+aupci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	struct alchemy_board *board;
+	const struct alchemy_board *board;
 
 	board = board_info();
 	if (board->ab_pci_intr_map != NULL)
 		return (board->ab_pci_intr_map(pa, ihp));
-	return 0;
+	return 1;
 }
-#endif

@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.1 2006/02/08 09:04:01 gdamore Exp $
+#	$NetBSD: files.alchemy,v 1.2 2006/02/09 00:26:39 gdamore Exp $
 
 # Platform support - select just one, please
 defflag		opt_alchemy.h	ALCHEMY_GENERIC
@@ -13,6 +13,7 @@ file	arch/evbmips/alchemy/machdep.c
 file	arch/evbmips/alchemy/genericbd.c	alchemy_generic
 file	arch/evbmips/alchemy/dbau1500.c		alchemy_dbau1500
 file	arch/evbmips/alchemy/dbau1550.c		alchemy_dbau1550
+file	arch/evbmips/alchemy/pciide_machdep.c	pciide_common
 
 file	arch/mips/mips/bus_dma.c
 file	arch/evbmips/evbmips/clock.c
@@ -53,6 +54,12 @@ include "dev/wscons/files.wscons"
 
 # Machine-independent USB device support
 include "dev/usb/files.usb"
+
+# Machine-independent I2O drivers
+include "dev/i2o/files.i2o"
+
+# Machine-independent PCI drivers
+include "dev/pci/files.pci"
 
 # Machine-independent PCMCIA drivers
 device	fdc {drive = -1}	# files.pcmcia requires.
