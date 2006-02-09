@@ -1,4 +1,4 @@
-/* 	$NetBSD: rmd160.c,v 1.3 2005/09/25 22:20:59 elad Exp $ */
+/* 	$NetBSD: rmd160.c,v 1.4 2006/02/09 22:03:15 dogcow Exp $ */
 /*	$KAME: rmd160.c,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
 /*
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
-#include <sys/endian.h>
+#include <machine/endian.h>
 #include <string.h>
 #include <crypto/rmd160.h>
 
