@@ -1,4 +1,4 @@
-#	$NetBSD: DBAU1500,v 1.2 2006/02/08 17:02:05 gdamore Exp $
+#	$NetBSD: DBAU1500,v 1.3 2006/02/09 00:43:10 gdamore Exp $
 #
 # Kernel config for the AMD Alchemy DBAu1500 evaluation board.
 
@@ -14,3 +14,27 @@ no options	ALCHEMY_GENERIC
 
 options		ALCHEMY_AU1500
 options		ALCHEMY_DBAU1500
+options		PCI_NETBSD_CONFIGURE
+
+aupci*	at aubus? addr ?
+pci*	at aupci?
+
+# Note that this is just fairly random selection of PCI devices.
+# Only the hptide controller is actually on-board.
+
+bge*		at pci? dev ? function ?	# Broadcom GigE
+wi*		at pci? dev ? function ?	# Intersil PRISM WLAN
+ral*		at pci?	dev ? function ?	# Ralink WLAN
+re*		at pci? dev ? function ?	# Realtek 8169 GigE
+tlp*		at pci? dev ? function ?	# DEC Tulip Ethernet
+vge*		at pci? dev ? function ?	# VIA GigE
+rtk*		at pci? dev ? function ?	# Realtek 8129/8139
+hptide*		at pci? dev ? function ?	# Triones/HighPoint IDE
+
+atabus*		at ata?
+wd*		at atabus? drive ? flags 0x0000
+
+atapibus*	at atabus?
+cd*		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown
