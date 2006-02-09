@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsi-target.8,v 1.1.1.1 2006/02/08 18:56:20 agc Exp $
+.\" $NetBSD: iscsi-target.8,v 1.2 2006/02/09 23:36:48 agc Exp $
 .\"
 .\" Copyright © 2006 Alistair Crooks.  All rights reserved.
 .\"
@@ -46,12 +46,8 @@ is the server for
 iSCSI
 requests from iSCSI initiators.
 .Nm
-listens for discovery and login requests on the port specified in the
-.Xr targets 5
-configuration file, and responds to those requests appropriately.
-See
-.%T "The Internet Small Computer Systems Interface" ,
-RFC 3720.
+listens for discovery and login requests on the required port,
+and responds to those requests appropriately.
 .Pp
 Options and operands available for
 .Nm iscsi-target :
