@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.9 2006/02/09 01:08:40 gdamore Exp $ */
+/* $NetBSD: aureg.h,v 1.10 2006/02/09 01:20:18 gdamore Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -293,53 +293,6 @@
 #define	AU1500_MAC0_BASE	0x11500000	/* Grr, difference on Au1500 */
 #define	AU1500_MAC1_BASE	0x11510000	/* Grr, difference on Au1500 */
 
-#if 0
-#define	MAC_CONTROL		0x00	/* operation mode and address filter */
-#define	  MC_RA			  0x80000000  /* Receive All */
-#define	  MC_EM			  0x40000000  /* Endian Mode - data buffer is big endian */
-#define	  MC_DRO		  0x00800000  /* Disable Receive Own */
-#define	  MC_LM_MASK		  0x00600000  /* Loopback Operating Mode - mask */
-#define	  MC_LM_NORMAL		  0x00600000
-#define	  MC_LM_INTERNAL	  0x00400000
-#define	  MC_LM_EXTERNAL	  0x00200000
-#define	  MC_F			  0x00100000  /* Full duplex mode */
-#define	  MC_PM			  0x00080000  /* Pall all Multicast */
-#define	  MC_PR			  0x00040000  /* Promiscious Mode */
-#define	  MC_IF			  0x00020000  /* Inverse Filtering */
-#define	  MC_PB			  0x00010000  /* Pass Bad frames */
-#define	  MC_HO			  0x00008000  /* Hash Only filtering mode */
-#define	  MC_HP			  0x00002000  /* Hash/Perfect filtering mode */
-#define	  MC_LC			  0x00001000  /* Late Collision control */
-#define	  MC_DB			  0x00000800  /* Disable Broadcast frames */
-#define	  MC_DR			  0x00000400  /* Disable Retry */
-#define	  MC_AP			  0x00000100  /* Automatic Pad stripping */
-#define	  MC_BL_MASK		  0x000000c0  /* Backoff Limit mask */
-#define	  MC_BL_SHIFT		  6
-#define	  MC_DC			  0x00000020  /* Deferral Check */
-#define	  MC_TE			  0x00000008  /* Transmitter Enable */
-#define	  MC_RE			  0x00000004  /* Receiver Enable */
-#define	MAC_ADDRESS_HIGH	0x04	/* high 16 bits of the MAC address */
-#define	MAC_ADDRESS_LOW		0x08	/* lower 32 bits of the MAC address */
-#define	MAC_MCAST_HASH_HIGH	0x0c	/* high 16 bits of mcat hash address */
-#define	MAC_MCAST_HASH_LOW	0x10	/* low 32 bits of mcat hash address */
-#define	MAC_MII_CONTROL		0x14	/* control of PHY management interface */
-#define	  MMC_PHY_ADDR_MASK	  0x0000f800  /* PHY Address mask */
-#define	  MMC_PHY_ADDR_SHIFT	  11
-#define	  MMC_MIIREG_MASK	  0x000007c0  /* MII Register mask */
-#define	  MMC_MIIREG_SHIFT	  6
-#define	  MMC_MW		  0x00000002  /* MII Write */
-#define	  MMC_MB		  0x00000001  /* MII Busy */
-#define	MAC_MII_DATA		0x18	/* data to/from PHY */
-#define	MAC_FLOW_CONTROL	0x1c	/* frame generation control */
-#define	  MFC_PT_MASK		  0xffff0000  /* Pause Time mask */
-#define	  MFC_PT_SHIFT		  16
-#define	  MFC_PC		  0x00000004  /* Pass Control frame */
-#define	  MFC_FE		  0x00000002  /* Flow Control enable */
-#define	  MFC_FB		  0x00000001  /* Flow control Busy */
-#define	MAC_VLAN1_TAG		0x20	/* VLAN1 tag */
-#define	MAC_VLAN2_TAG		0x24	/* VLAN2 tag */
-#endif
-
 #define	MAC0_ENABLE		0x10520000
 #define	MAC1_ENABLE		0x10520004
 #define	MACENx_SIZE		0x04
@@ -347,81 +300,9 @@
 #define	AU1500_MAC0_ENABLE	0x11520000	/* Grr, difference on Au1500 */
 #define	AU1500_MAC1_ENABLE	0x11520004	/* Grr, difference on Au1500 */
 
-#if 0
-#define	  ME_DR			  0x40		/* DMA reset */
-#define	  ME_R2			  0x20		/* Reset2 */
-#define	  ME_R1			  0x10		/* Reset1 */
-#define	  ME_C			  0x08		/* Cacheable */
-#define	  ME_TS			  0x04		/* Toss */
-#define	  ME_R0			  0x02		/* Reset0 */
-#define	  ME_EN			  0x01		/* Clock Enable */
-#endif
-
 #define	MAC0_DMA_BASE		0x14004000
 #define	MAC1_DMA_BASE		0x14004200
 #define	MACx_DMA_SIZE		0x140
-#if 0
-#define	MAC_TXDMA		0x000
-#define	MAC_RXDMA		0x100
-#define	MAC_TXQLEN		4
-#define	MAC_RXQLEN		4
-
-/* MAC Transmit Status registers */
-#define	MTS_PR		0x80000000  /* Packet Retry */
-#define	MTS_HB		0x00004000  /* ?!?? */
-#define	MTS_CC_MASK	0x00003c00  /* Collision Count mask */
-#define	MTS_CC_SHIFT	10
-#define MTS_LO		0x00000200  /* Late collision Observed */
-#define	MTS_DF		0x00000100  /* Deferred */
-#define	MTS_UR		0x00000080  /* Underrun */
-#define	MTS_EC		0x00000040  /* Excessive Collisions */
-#define	MTS_LC		0x00000020  /* Late Collision */
-#define	MTS_ED		0x00000010  /* Excessive Deferral */
-#define	MFS_LS		0x00000008  /* LoSs of carrier */
-#define	MFS_NC		0x00000004  /* No Carrier */
-#define	MFS_JT		0x00000002  /* Jabber Timeout */
-#define	MFS_FA		0x00000001  /* Frame Aborted */
-
-/* MAC Transmit Buffer Address/Enable registers */
-#define	MTBAE_ADDR_MASK	0xffffffe0  /* Buffer address */
-#define	MTBAE_CB_MASK	0x0000000c  /* Current (DMA) Buffer */
-#define MTBAE_CB_SHIFT	2
-#define MTBAE_DONE	0x00000002  /* transation DONE */
-#define	MTBAE_EN	0x00000001  /* MAC DMA Enable */
-
-/* MAC Transmit Buffer Length registers */
-#define	MTBL_LEN_MASK	0x000007ff  /* buffer LENgth */
-#define MTBL_LEN_SHIFT	0
-
-/* MAC Receive Status registers */
-#define	MRS_MI		0x80000000  /* MIssed frame */
-#define	MRS_PF		0x40000000  /* Packet Filter */
-#define	MRS_FF		0x20000000  /* Filtering Fail */
-#define	MRS_BF		0x10000000  /* Broadcast Frame */
-#define	MRS_MF		0x08000000  /* Multicast Frame */
-#define	MRS_UC		0x04000000  /* Unsupported Control frame */
-#define	MRS_CF		0x02000000  /* Control Frame */
-#define	MRS_LE		0x01000000  /* Length Error */
-#define	MRS_V2		0x00800000  /* Vlan2 ID */
-#define	MRS_V1		0x00400000  /* Vlan1 ID */
-#define	MRS_CR		0x00200000  /* CRC error */
-#define	MRS_DB		0x00100000  /* Dribbling Bit */
-#define	MRS_ME		0x00080000  /* MII Error */
-#define	MRS_FT		0x00040000  /* Frame Type */
-#define	MRS_CS		0x00020000  /* Collision Seen */
-#define	MRS_FL		0x00010000  /* Frame too Long */
-#define	MRS_RF		0x00008000  /* Runt Frame */
-#define	MRS_WT		0x00004000  /* Watchdog Timeout */
-#define	MRS_L_MASK	0x00003fff  /* frame Length mask*/
-#define	MRS_L_SHIFT	0
-
-/* MAC Receive Buffer Address/Enable registers */
-#define	MRBAE_ADDR_MASK	0xffffffe0  /* Buffer address */
-#define	MRBAE_CB_MASK	0x0000000c  /* Current (DMA) Buffer */
-#define	MRBAE_CB_SHIFT	2
-#define	MRBAE_DN	0x00000002  /* transation DoNe */
-#define	MRBAE_EN	0x00000001  /* MAC DMA Enable */
-#endif
 
 /************************************************************************/
 /********************   Secure Digital registers   **********************/
