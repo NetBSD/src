@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.20 2005/01/15 17:55:38 jdolecek Exp $	*/
+/*	$NetBSD: setemul.c,v 1.21 2006/02/09 19:18:57 manu Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.20 2005/01/15 17:55:38 jdolecek Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.21 2006/02/09 19:18:57 manu Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -94,6 +94,7 @@ __RCSID("$NetBSD: setemul.c,v 1.20 2005/01/15 17:55:38 jdolecek Exp $");
 #include "../../sys/compat/ibcs2/ibcs2_syscall.h"
 #include "../../sys/compat/irix/irix_syscall.h"
 #include "../../sys/compat/linux/linux_syscall.h"
+#include "../../sys/compat/linux32/linux32_syscall.h"
 #include "../../sys/compat/mach/mach_syscall.h"
 #include "../../sys/compat/darwin/darwin_syscall.h"
 #include "../../sys/compat/mach/arch/powerpc/ppccalls/mach_ppccalls_syscall.h"
@@ -114,6 +115,7 @@ __RCSID("$NetBSD: setemul.c,v 1.20 2005/01/15 17:55:38 jdolecek Exp $");
 #include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
 #include "../../sys/compat/irix/irix_syscalls.c"
 #include "../../sys/compat/linux/linux_syscalls.c"
+#include "../../sys/compat/linux32/linux32_syscalls.c"
 #include "../../sys/compat/darwin/darwin_syscalls.c"
 #include "../../sys/compat/mach/mach_syscalls.c"
 #include "../../sys/compat/mach/arch/powerpc/ppccalls/mach_ppccalls_syscalls.c"
@@ -179,6 +181,10 @@ const struct emulation emulations[] = {
 	  svr4_to_native_signo,		NSIG,	0 },
 
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL,
+	  native_to_linux_errno,	NELEM(native_to_linux_errno),
+	  linux_to_native_signo,	NSIG,	0 },
+
+	{ "linux32",	linux32_syscallnames,	LINUX32_SYS_MAXSYSCALL,
 	  native_to_linux_errno,	NELEM(native_to_linux_errno),
 	  linux_to_native_signo,	NSIG,	0 },
 
