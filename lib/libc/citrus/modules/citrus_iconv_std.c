@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.11 2005/10/29 18:02:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.12 2006/02/09 22:03:15 dogcow Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.11 2005/10/29 18:02:04 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.12 2006/02/09 22:03:15 dogcow Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: citrus_iconv_std.c,v 1.11 2005/10/29 18:02:04 tshiozak Exp $")
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/endian.h>
+#include <machine/endian.h>
 #include <sys/queue.h>
 
 #include "citrus_namespace.h"
