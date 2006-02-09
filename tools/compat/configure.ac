@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.52 2006/02/09 22:03:15 dogcow Exp $
+#	$NetBSD: configure.ac,v 1.53 2006/02/09 22:26:06 wiz Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -17,7 +17,9 @@ AC_DEFUN([AC_NETBSD],
 	#endif
 	],
 	[AC_MSG_RESULT([yes])
-	AC_DEFINE(_POSIX_SOURCE, 1) AC_DEFINE(_POSIX_C_SOURCE, 200112L) AC_DEFINE(_XOPEN_SOURCE, 600)],
+	 AC_DEFINE([_POSIX_SOURCE], 1, [Define for NetBSD headers.])
+	 AC_DEFINE([_POSIX_C_SOURCE], 200112L, [Define for NetBSD headers.])
+	 AC_DEFINE([_XOPEN_SOURCE], 600, [Define for NetBSD headers.])],
 	[AC_MSG_RESULT([no])])
 ])# AC_NETBSD
 
@@ -26,7 +28,7 @@ AC_PATH_PROG(BSHELL, sh, )
 if test x"$BSHELL" = x; then
 	AC_MSG_ERROR([sh must be somewhere on \$PATH])
 fi
-AC_DEFINE_UNQUOTED(PATH_BSHELL, "$BSHELL")
+AC_DEFINE_UNQUOTED([PATH_BSHELL], "$BSHELL", [Path to sh(1).])
 
 AC_C_BIGENDIAN
 AC_HEADER_STDC
@@ -53,8 +55,8 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(sys/sysmacros.h sys/syslimits.h \
 	getopt.h features.h malloc.h sys/poll.h stddef.h)
-AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h sys/endian.h sys/featuretest.h \
-	err.h inttypes.h libgen.h paths.h stdint.h util.h,,
+AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h sys/endian.h \
+	sys/featuretest.h err.h inttypes.h libgen.h paths.h stdint.h util.h,,
 	[test -f include/$ac_header || touch include/$ac_header])
 AC_CHECK_HEADERS(rpc/types.h netconfig.h,,
 	[echo '#include "nbtool_config.h"' >include/$ac_header.new
@@ -68,7 +70,8 @@ AC_CHECK_HEADERS(rpc/types.h netconfig.h,,
 # Typedefs.
 AC_TYPE_SIZE_T
 AC_CHECK_TYPES([id_t, long long, u_long, u_char, u_short, u_int, u_quad_t])
-AC_CHECK_TYPE(socklen_t, [AC_DEFINE(HAVE_SOCKLEN_T)],,
+AC_CHECK_TYPE(socklen_t, [AC_DEFINE([HAVE_SOCKLEN_T], 1,
+			  [Define if you have the socklen_t type.])],,
 [#include <sys/types.h>
 #include <sys/socket.h>])
 
@@ -78,12 +81,14 @@ dnl
 define([NB_CHECK_INTTYPE], [
 	AC_CHECK_TYPE(uint][$1][_t,, [
 		AC_CHECK_TYPE(u_int][$1][_t,
-			AC_DEFINE(uint][$1][_t, u_int][$1][_t),
+			AC_DEFINE(uint][$1][_t, u_int][$1][_t, \
+			          [Define if you have u_int][$1][_t, but not uint][$1][_t.]),
 			AC_MSG_ERROR([cannot find a suitable type for uint][$1][_t]))
 	])
 	AC_CHECK_TYPE(u_int][$1][_t,, [
 		AC_CHECK_TYPE(uint][$1][_t,
-			AC_DEFINE(u_int][$1][_t, uint][$1][_t),
+			AC_DEFINE(u_int][$1][_t, uint][$1][_t, \
+				  [Define if you have uint][$1][_t, but not u_int][$1][_t.]),
 			AC_MSG_ERROR([cannot find a suitable type for u_int][$1][_t]))
 	])
 ])
@@ -125,11 +130,11 @@ AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64, be16toh, b
 #include <sys/types.h>
 ])
 
-AC_CHECK_FUNCS([bswap16 bswap32 bswap64],,, [
+AC_CHECK_DECLS([bswap16, bswap32, bswap64],,, [
 #include <machine/bswap.h>
 ])
 
-AC_CHECK_FUNCS([fstatvfs],,, [
+AC_CHECK_DECLS([fstatvfs],,, [
 #include <sys/statvfs.h>
 ])
 
