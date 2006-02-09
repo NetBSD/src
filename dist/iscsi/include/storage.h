@@ -1,4 +1,4 @@
-/* $NetBSD: storage.h,v 1.1.1.1 2006/02/08 18:56:15 agc Exp $ */
+/* $NetBSD: storage.h,v 1.2 2006/02/09 23:08:31 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -82,5 +82,8 @@ typedef struct disc_target_t {
 } disc_target_t;
 
 DEFINE_ARRAY(targv_t, disc_target_t);
+
+int read_conf_file(const char *, targv_t *, devv_t *, extv_t *);
+void write_pid_file(const char *);
 
 #endif /* !STORAGE_H_ */
