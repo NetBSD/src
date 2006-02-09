@@ -1,4 +1,4 @@
-/* $NetBSD: au1500.c,v 1.1 2006/02/06 23:23:53 gdamore Exp $ */
+/* $NetBSD: au1500.c,v 1.2 2006/02/09 00:26:40 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au1500.c,v 1.1 2006/02/06 23:23:53 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au1500.c,v 1.2 2006/02/09 00:26:40 gdamore Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -181,8 +181,8 @@ static struct au_dev au1500_devices[] = {
 	{ "aumac",	{ AU1500_MAC1_BASE, AU1500_MAC1_ENABLE,
 			  MAC1_DMA_BASE },			   { 29, -1 }},
 	{ "ohci",	{ USBH_BASE, USBH_ENABLE, USBH_SIZE },	   { 26, -1 }},
-#if 0
 	{ "aupci",	{ PCI_BASE },				   { -1, -1 }},
+#if 0
 	{ "auaudio",	{ AC97_BASE },				   { 27, 31 }},
 	{ "usbd",	{ USBD_BASE },				   { 24, 25 }},
 	{ "gpio",	{ SYS_BASE },				   { -1, -1 }},
