@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.48 2005/09/14 14:06:11 tron Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.49 2006/02/09 22:03:15 dogcow Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -561,60 +561,60 @@ int	 cgetustr(char *, const char *, char **);
 /* <sys/endian.h> */
 
 #if WORDS_BIGENDIAN
-#if !HAVE_HTOBE16
+#if !HAVE_DECL_HTOBE16
 #define htobe16(x)	(x)
 #endif
-#if !HAVE_HTOBE32
+#if !HAVE_DECL_HTOBE32
 #define htobe32(x)	(x)
 #endif
-#if !HAVE_HTOBE64
+#if !HAVE_DECL_HTOBE64
 #define htobe64(x)	(x)
 #endif
-#if !HAVE_HTOLE16
+#if !HAVE_DECL_HTOLE16
 #define htole16(x)	bswap16((u_int16_t)(x))
 #endif
-#if !HAVE_HTOLE32
+#if !HAVE_DECL_HTOLE32
 #define htole32(x)	bswap32((u_int32_t)(x))
 #endif
-#if !HAVE_HTOLE64
+#if !HAVE_DECL_HTOLE64
 #define htole64(x)	bswap64((u_int64_t)(x))
 #endif
 #else
-#if !HAVE_HTOBE16
+#if !HAVE_DECL_HTOBE16
 #define htobe16(x)	bswap16((u_int16_t)(x))
 #endif
-#if !HAVE_HTOBE32
+#if !HAVE_DECL_HTOBE32
 #define htobe32(x)	bswap32((u_int32_t)(x))
 #endif
-#if !HAVE_HTOBE64
+#if !HAVE_DECL_HTOBE64
 #define htobe64(x)	bswap64((u_int64_t)(x))
 #endif
-#if !HAVE_HTOLE16
+#if !HAVE_DECL_HTOLE16
 #define htole16(x)	(x)
 #endif
-#if !HAVE_HTOLE32
+#if !HAVE_DECL_HTOLE32
 #define htole32(x)	(x)
 #endif
-#if !HAVE_HTOLE64
+#if !HAVE_DECL_HTOLE64
 #define htole64(x)	(x)
 #endif
 #endif
-#if !HAVE_BE16TOH
+#if !HAVE_DECL_BE16TOH
 #define be16toh(x)	htobe16(x)
 #endif
-#if !HAVE_BE32TOH
+#if !HAVE_DECL_BE32TOH
 #define be32toh(x)	htobe32(x)
 #endif
-#if !HAVE_BE64TOH
+#if !HAVE_DECL_BE64TOH
 #define be64toh(x)	htobe64(x)
 #endif
-#if !HAVE_LE16TOH
+#if !HAVE_DECL_LE16TOH
 #define le16toh(x)	htole16(x)
 #endif
-#if !HAVE_LE32TOH
+#if !HAVE_DECL_LE32TOH
 #define le32toh(x)	htole32(x)
 #endif
-#if !HAVE_LE64TOH
+#if !HAVE_DECL_LE64TOH
 #define le64toh(x)	htole64(x)
 #endif
 

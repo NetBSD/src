@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_std.c,v 1.4 2004/12/21 11:25:43 yamt Exp $	*/
+/*	$NetBSD: citrus_mapper_std.c,v 1.5 2006/02/09 22:03:15 dogcow Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_std.c,v 1.4 2004/12/21 11:25:43 yamt Exp $");
+__RCSID("$NetBSD: citrus_mapper_std.c,v 1.5 2006/02/09 22:03:15 dogcow Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: citrus_mapper_std.c,v 1.4 2004/12/21 11:25:43 yamt Exp $");
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <sys/endian.h>
+#include <machine/endian.h>
 #include <sys/queue.h>
 
 #include "citrus_namespace.h"

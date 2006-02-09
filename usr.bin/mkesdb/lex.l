@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.2 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: lex.l,v 1.3 2006/02/09 22:03:15 dogcow Exp $	*/
 
 %{
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: lex.l,v 1.2 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: lex.l,v 1.3 2006/02/09 22:03:15 dogcow Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: lex.l,v 1.2 2003/10/27 00:12:43 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/endian.h>
+#include <machine/endian.h>
 #include <sys/queue.h>
 
 #include "ldef.h"
