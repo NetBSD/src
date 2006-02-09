@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 2006/01/21 00:56:05 uwe Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 2006/02/09 10:08:32 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2006/01/21 00:56:05 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2006/02/09 10:08:32 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -585,8 +585,16 @@ pmap_kremove(vaddr_t va, vsize_t len)
 boolean_t
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
-	pt_entry_t *pte = __pmap_pte_lookup(pmap, va);
+	pt_entry_t *pte;
 
+	/* handle P1 and P2 specially: va == pa */
+	if (pmap == pmap_kernel() && (va >> 30) == 2) {
+		if (pap != NULL)
+			*pap = va & SH3_PHYS_MASK;
+		return (TRUE);
+	}
+
+	pte = __pmap_pte_lookup(pmap, va);
 	if (pte == NULL || *pte == 0)
 		return (FALSE);
 
