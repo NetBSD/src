@@ -46,6 +46,10 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
+
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
            
 #include "iscsi.h"
 #include "util.h"
@@ -60,7 +64,7 @@ iscsi_task_cmd_encap(uint8_t *header, iscsi_task_cmd_t * cmd)
 {
 	TRACE(TRACE_ISCSI_ARGS, "Immediate: %i\n", cmd->immediate);
 	TRACE(TRACE_ISCSI_ARGS, "Function:  %u\n", cmd->function);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:       %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:       %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:       0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Ref Tag:   0x%x\n", cmd->ref_tag);
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:     %u\n", cmd->CmdSN);
@@ -110,7 +114,7 @@ iscsi_task_cmd_decap(uint8_t *header, iscsi_task_cmd_t * cmd)
 
 	TRACE(TRACE_ISCSI_ARGS, "Immediate: %i\n", cmd->immediate);
 	TRACE(TRACE_ISCSI_ARGS, "Function:  %u\n", cmd->function);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:       %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:       %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:       0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Ref Tag:   0x%x\n", cmd->ref_tag);
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:     %u\n", cmd->CmdSN);
@@ -197,7 +201,7 @@ iscsi_nop_out_encap(uint8_t *header, iscsi_nop_out_args_t * cmd)
 
 	TRACE(TRACE_ISCSI_ARGS, "Immediate:    %i\n", cmd->immediate);
 	TRACE(TRACE_ISCSI_ARGS, "Length:       %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:          %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:          %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:        %u\n", cmd->CmdSN);
@@ -245,7 +249,7 @@ iscsi_nop_out_decap(uint8_t *header, iscsi_nop_out_args_t * cmd)
 
 	TRACE(TRACE_ISCSI_ARGS, "Immediate:    %i\n", cmd->immediate);
 	TRACE(TRACE_ISCSI_ARGS, "Length:       %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:          %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:          %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:        %u\n", cmd->CmdSN);
@@ -264,7 +268,7 @@ iscsi_nop_in_encap(uint8_t *header, iscsi_nop_in_args_t * cmd)
 	uint32_t        length;
 
 	TRACE(TRACE_ISCSI_ARGS, "Length:       %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:          %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:          %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "StatSN:       %u\n", cmd->StatSN);
@@ -313,7 +317,7 @@ iscsi_nop_in_decap(uint8_t *header, iscsi_nop_in_args_t * cmd)
 	RETURN_NOT_EQUAL("Bytes 44-47", *((uint32_t *) (void *) (header + 44)), 0, NO_CLEANUP, 1);
 
 	TRACE(TRACE_ISCSI_ARGS, "Length:       %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:          %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:          %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "StatSN:       %u\n", cmd->StatSN);
@@ -335,7 +339,7 @@ iscsi_text_cmd_encap(uint8_t *header, iscsi_text_cmd_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "Final:        %i\n", cmd->final);
 	TRACE(TRACE_ISCSI_ARGS, "Continue:     %i\n", cmd->cont);
 	TRACE(TRACE_ISCSI_ARGS, "Length:       %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:          %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:          %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:        %u\n", cmd->CmdSN);
@@ -392,7 +396,7 @@ iscsi_text_cmd_decap(uint8_t *header, iscsi_text_cmd_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "Final:        %i\n", cmd->final);
 	TRACE(TRACE_ISCSI_ARGS, "Continue:     %i\n", cmd->cont);
 	TRACE(TRACE_ISCSI_ARGS, "Length:       %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:          %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:          %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:        %u\n", cmd->CmdSN);
@@ -413,7 +417,7 @@ iscsi_text_rsp_encap(uint8_t *header, iscsi_text_rsp_args_t * rsp)
 	TRACE(TRACE_ISCSI_ARGS, "Final:        %i\n", rsp->final);
 	TRACE(TRACE_ISCSI_ARGS, "Continue:     %i\n", rsp->cont);
 	TRACE(TRACE_ISCSI_ARGS, "Length:       %u\n", rsp->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:          %llu\n", rsp->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:          %" PRIu64 "\n", rsp->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:          0x%x\n", rsp->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag: 0x%x\n", rsp->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "StatSN:       %u\n", rsp->StatSN);
@@ -467,7 +471,7 @@ iscsi_text_rsp_decap(uint8_t *header, iscsi_text_rsp_args_t * rsp)
 	TRACE(TRACE_ISCSI_ARGS, "Final:        %i\n", rsp->final);
 	TRACE(TRACE_ISCSI_ARGS, "Continue:     %i\n", rsp->cont);
 	TRACE(TRACE_ISCSI_ARGS, "Length:       %u\n", rsp->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:          %llu\n", rsp->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:          %" PRIu64 "\n", rsp->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:          0x%x\n", rsp->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag: 0x%x\n", rsp->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "StatSN:       %u\n", rsp->StatSN);
@@ -494,7 +498,7 @@ iscsi_login_cmd_encap(uint8_t *header, iscsi_login_cmd_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "Version_max:       %u\n", cmd->version_max);
 	TRACE(TRACE_ISCSI_ARGS, "TotalAHSLength:    %u\n", cmd->AHSlength);
 	TRACE(TRACE_ISCSI_ARGS, "DataSegmentLength: %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "ISID:              %llu\n", cmd->isid);
+	TRACE(TRACE_ISCSI_ARGS, "ISID:              %" PRIu64 "\n", cmd->isid);
 	TRACE(TRACE_ISCSI_ARGS, "TSIH:              %hu\n", cmd->tsih);
 	TRACE(TRACE_ISCSI_ARGS, "Task Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "CID:               %hu\n", cmd->cid);
@@ -554,7 +558,7 @@ iscsi_login_cmd_decap(uint8_t *header, iscsi_login_cmd_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "Version_max:       %u\n", cmd->version_max);
 	TRACE(TRACE_ISCSI_ARGS, "TotalAHSLength:    %u\n", cmd->AHSlength);
 	TRACE(TRACE_ISCSI_ARGS, "DataSegmentLength: %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "ISID:              %llu\n", cmd->isid);
+	TRACE(TRACE_ISCSI_ARGS, "ISID:              %" PRIu64 "\n", cmd->isid);
 	TRACE(TRACE_ISCSI_ARGS, "TSIH:              %hu\n", cmd->tsih);
 	TRACE(TRACE_ISCSI_ARGS, "Task Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "CID:               %hu\n", cmd->cid);
@@ -593,7 +597,7 @@ iscsi_login_rsp_encap(uint8_t *header, iscsi_login_rsp_args_t * rsp)
 	TRACE(TRACE_ISCSI_ARGS, "Version_active:    %u\n", rsp->version_active);
 	TRACE(TRACE_ISCSI_ARGS, "TotalAHSLength:    %u\n", rsp->AHSlength);
 	TRACE(TRACE_ISCSI_ARGS, "DataSegmentLength: %u\n", rsp->length);
-	TRACE(TRACE_ISCSI_ARGS, "ISID:              %llu\n", rsp->isid);
+	TRACE(TRACE_ISCSI_ARGS, "ISID:              %" PRIu64 "\n", rsp->isid);
 	TRACE(TRACE_ISCSI_ARGS, "TSIH:              %u\n", rsp->tsih);
 	TRACE(TRACE_ISCSI_ARGS, "Task Tag:          0x%x\n", rsp->tag);
 	TRACE(TRACE_ISCSI_ARGS, "StatSN:            %u\n", rsp->StatSN);
@@ -661,7 +665,7 @@ iscsi_login_rsp_decap(uint8_t *header, iscsi_login_rsp_args_t * rsp)
 	TRACE(TRACE_ISCSI_ARGS, "Version_active:    %u\n", rsp->version_active);
 	TRACE(TRACE_ISCSI_ARGS, "TotalAHSLength:    %u\n", rsp->AHSlength);
 	TRACE(TRACE_ISCSI_ARGS, "DataSegmentLength: %u\n", rsp->length);
-	TRACE(TRACE_ISCSI_ARGS, "ISID:              %llu\n", rsp->isid);
+	TRACE(TRACE_ISCSI_ARGS, "ISID:              %" PRIu64 "\n", rsp->isid);
 	TRACE(TRACE_ISCSI_ARGS, "TSIH:              %u\n", rsp->tsih);
 	TRACE(TRACE_ISCSI_ARGS, "Task Tag:          0x%x\n", rsp->tag);
 	TRACE(TRACE_ISCSI_ARGS, "StatSN:            %u\n", rsp->StatSN);
@@ -832,7 +836,7 @@ iscsi_scsi_cmd_encap(uint8_t *header, iscsi_scsi_cmd_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "ATTR:              %i\n", cmd->attr);
 	TRACE(TRACE_ISCSI_ARGS, "TotalAHSLength:    %u\n", cmd->ahs_len);
 	TRACE(TRACE_ISCSI_ARGS, "DataSegmentLength: %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:               %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:               %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Task Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Length:   %u\n", cmd->trans_len);
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:             %u\n", cmd->CmdSN);
@@ -897,7 +901,7 @@ iscsi_scsi_cmd_decap(uint8_t *header, iscsi_scsi_cmd_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "ATTR:              %i\n", cmd->attr);
 	TRACE(TRACE_ISCSI_ARGS, "TotalAHSLength:    %u\n", cmd->ahs_len);
 	TRACE(TRACE_ISCSI_ARGS, "DataSegmentLength: %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:               %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:               %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Task Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Length:   %u\n", cmd->trans_len);
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:             %u\n", cmd->CmdSN);
@@ -1016,7 +1020,7 @@ iscsi_r2t_encap(uint8_t *header, iscsi_r2t_t * cmd)
 	uint32_t        length;
 
 	TRACE(TRACE_ISCSI_ARGS, "TotalAHSLength:    %u\n", cmd->AHSlength);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:          %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:          %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "StatSN:       %u\n", cmd->StatSN);
@@ -1070,7 +1074,7 @@ iscsi_r2t_decap(uint8_t *header, iscsi_r2t_t * cmd)
 	RETURN_NOT_EQUAL("Bytes 12-15", *((uint32_t *) (void *) (header + 12)), 0, NO_CLEANUP, 1);
 
 	TRACE(TRACE_ISCSI_ARGS, "AHSLength:    %u\n", cmd->AHSlength);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:          %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:          %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Tag:          0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "StatSN:       %u\n", cmd->StatSN);
@@ -1092,7 +1096,7 @@ iscsi_write_data_encap(uint8_t *header, iscsi_write_data_t * cmd)
 
 	TRACE(TRACE_ISCSI_ARGS, "Final:              %u\n", cmd->final);
 	TRACE(TRACE_ISCSI_ARGS, "DataSegmentLength:  %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:                %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:                %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Task Tag:           0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag:       0x%x\n", cmd->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "ExpStatSN:          %u\n", cmd->ExpStatSN);
@@ -1139,7 +1143,7 @@ iscsi_write_data_decap(uint8_t *header, iscsi_write_data_t * cmd)
 
 	TRACE(TRACE_ISCSI_ARGS, "Final:              %u\n", cmd->final);
 	TRACE(TRACE_ISCSI_ARGS, "DataSegmentLength:  %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:                %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:                %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Task Tag:           0x%x\n", cmd->tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag:       0x%x\n", cmd->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "ExpStatSN:          %u\n", cmd->ExpStatSN);
@@ -1164,7 +1168,7 @@ iscsi_read_data_encap(uint8_t *header, iscsi_read_data_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "S_bit:             %i\n", cmd->S_bit);
 	TRACE(TRACE_ISCSI_ARGS, "Status:            %u\n", cmd->status);
 	TRACE(TRACE_ISCSI_ARGS, "DataSegmentLength: %u\n", cmd->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:               %llu\n", cmd->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:               %" PRIu64 "\n", cmd->lun);
 	TRACE(TRACE_ISCSI_ARGS, "Task Tag:          0x%x\n", cmd->task_tag);
 	TRACE(TRACE_ISCSI_ARGS, "Transfer Tag:      0x%x\n", cmd->transfer_tag);
 	TRACE(TRACE_ISCSI_ARGS, "StatSN:            %u\n", cmd->StatSN);
@@ -1331,7 +1335,7 @@ iscsi_amsg_decap(uint8_t *header, iscsi_async_msg_t * msg)
 
 	TRACE(TRACE_ISCSI_ARGS, "TotalAHSLength:    %u\n", msg->AHSlength);
 	TRACE(TRACE_ISCSI_ARGS, "DataSegmentLength: %u\n", msg->length);
-	TRACE(TRACE_ISCSI_ARGS, "LUN:               %llu\n", msg->lun);
+	TRACE(TRACE_ISCSI_ARGS, "LUN:               %" PRIu64 "\n", msg->lun);
 	TRACE(TRACE_ISCSI_ARGS, "StatSN:            %u\n", msg->StatSN);
 	TRACE(TRACE_ISCSI_ARGS, "ExpCmdSN:          %u\n", msg->ExpCmdSN);
 	TRACE(TRACE_ISCSI_ARGS, "MaxCmdSN:          %u\n", msg->MaxCmdSN);

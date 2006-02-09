@@ -690,7 +690,7 @@ device_init(globals_t *gp, targv_t *tvp, disc_target_t *tp)
 	case 4096:
 		break;
 	default:
-		TRACE_ERROR("Invalid block len %lld. Choose one of 512, 1024, 2048, 4096.\n", disks.v[disks.c].blocklen);
+		TRACE_ERROR("Invalid block len %" PRIu64 ". Choose one of 512, 1024, 2048, 4096.\n", disks.v[disks.c].blocklen);
 		return -1;
 	}
 #if 0
@@ -700,7 +700,7 @@ device_init(globals_t *gp, targv_t *tvp, disc_target_t *tp)
 #else
 	disks.v[disks.c].type = ISCSI_FS;
 #endif
-	PRINT("DISK: %lld logical units (%lld blocks, %lld bytes/block), type %s\n",
+	PRINT("DISK: %" PRIu64 " logical units (%" PRIu64 " blocks, %" PRIu64 " bytes/block), type %s\n",
 	      disks.v[disks.c].luns, disks.v[disks.c].blockc, disks.v[disks.c].blocklen,
 	      (disks.v[disks.c].type == ISCSI_FS) ? "iscsi fs" :
 	      (disks.v[disks.c].type == ISCSI_FS_MMAP) ? "iscsi fs mmap" : "iscsi ramdisk");
@@ -712,8 +712,8 @@ device_init(globals_t *gp, targv_t *tvp, disc_target_t *tp)
 				TRACE_ERROR("iscsi_malloc() failed\n");
 				return -1;
 			}
-			TRACE(TRACE_ISCSI_DEBUG, "allocated %lld bytes at %p\n", disks.v[disks.c].size, disks.v[disks.c].ramdisk[i]);
-			PRINT("%lld MB ramdisk\n", disks.v[disks.c].size / MB(1));
+			TRACE(TRACE_ISCSI_DEBUG, "allocated %" PRIu64 " bytes at %p\n", disks.v[disks.c].size, disks.v[disks.c].ramdisk[i]);
+			PRINT("%" PRIu64 " MB ramdisk\n", disks.v[disks.c].size / MB(1));
 		} else {
 			(void) strlcpy(disks.v[disks.c].filename, disc_get_filename(&tp->de), sizeof(disks.v[disks.c].filename));
 			if (de_open(&tp->de, O_CREAT | O_RDWR, 0666) == -1) {
@@ -739,7 +739,7 @@ device_init(globals_t *gp, targv_t *tvp, disc_target_t *tp)
 				TRACE_ERROR("error allocating space for \"%s\"", tp->target);
 				return -1;
 			}
-			PRINT("%llu MB disk storage for \"%s\"\n", (de_getsize(&tp->de) / MB(1)), tp->target);
+			PRINT("%" PRIu64 " MB disk storage for \"%s\"\n", (de_getsize(&tp->de) / MB(1)), tp->target);
 #endif
 		}
 	}
@@ -1014,7 +1014,7 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 	struct iovec    sg;
 	uint64_t        extra = 0;
 
-	TRACE(TRACE_SCSI_DATA, "writing %lld bytes from socket into device at byte offset %lld\n", num_bytes, byte_offset);
+	TRACE(TRACE_SCSI_DATA, "writing %" PRIu64 " bytes from socket into device at byte offset %" PRIu64 "\n", num_bytes, byte_offset);
 
 	/* Assign ptr for write data */
 
@@ -1047,11 +1047,11 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 	switch(disks.v[sess->d].type) {
 	case ISCSI_FS:
 		if (de_lseek(&disks.v[sess->d].tv->v[sess->d].de, (off_t) byte_offset, SEEK_SET) == -1) {
-			TRACE_ERROR("lseek() to offset %lld failed\n", byte_offset);
+			TRACE_ERROR("lseek() to offset %" PRIu64 " failed\n", byte_offset);
 			return -1;
 		}
 		if (de_write(&disks.v[sess->d].tv->v[sess->d].de, ptr, (unsigned) num_bytes) != num_bytes) {
-			TRACE_ERROR("write() of %lld bytes failed at offset %lld, size %lld\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[0].de));
+			TRACE_ERROR("write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[0].de));
 			return -1;
 		}
 		break;
@@ -1062,7 +1062,7 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 			return -1;
 		}
 	}
-	TRACE(TRACE_SCSI_DATA, "wrote %lld bytes to device OK\n", num_bytes);
+	TRACE(TRACE_SCSI_DATA, "wrote %" PRIu64 " bytes to device OK\n", num_bytes);
 	return 0;
 }
 
@@ -1096,7 +1096,7 @@ disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, u
 	RETURN_EQUAL("len", len, 0, NO_CLEANUP, -1);
 	if ((lba > (disks.v[sess->d].blockc - 1)) || ((lba + len) > disks.v[sess->d].blockc)) {
 		TRACE_ERROR("attempt to read beyond end of media\n");
-		TRACE_ERROR("max_lba = %lld, requested lba = %u, len = %u\n", disks.v[sess->d].blockc - 1, lba, len);
+		TRACE_ERROR("max_lba = %" PRIu64 ", requested lba = %u, len = %u\n", disks.v[sess->d].blockc - 1, lba, len);
 		return -1;
 	}
 	switch (disks.v[sess->d].type) {
@@ -1119,7 +1119,7 @@ disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, u
 			}
 			n += rc;
 			if (n < num_bytes) {
-				TRACE_ERROR("Got partial file read: %i bytes of %lld\n", rc, num_bytes - n + rc);
+				TRACE_ERROR("Got partial file read: %i bytes of %" PRIu64 "\n", rc, num_bytes - n + rc);
 			}
 		} while (n < num_bytes);
 		break;

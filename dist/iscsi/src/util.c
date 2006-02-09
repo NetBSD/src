@@ -381,7 +381,7 @@ modify_iov(struct iovec ** iov_ptr, int *iovc, uint32_t offset, uint32_t length)
 	if (i == *iovc) {
 		TRACE_ERROR("sum of iovec lens (%u) < length (%u)\n", len, length);
 		for (i = 0; i < *iovc; i++) {
-			TRACE_ERROR("iov[%i].iov_base = %p (len %u)\n", i, iov[i].iov_base, iov[i].iov_len);
+			TRACE_ERROR("iov[%i].iov_base = %p (len %u)\n", i, iov[i].iov_base, (unsigned)iov[i].iov_len);
 		}
 		return -1;
 	}
@@ -392,7 +392,7 @@ modify_iov(struct iovec ** iov_ptr, int *iovc, uint32_t offset, uint32_t length)
 	TRACE(TRACE_NET_IOV, "new iov:\n");
 	len = 0;
 	for (i = 0; i < *iovc; i++) {
-		TRACE(TRACE_NET_IOV, "iov[%i].iov_base = %p (len %i)\n", i, iov[i].iov_base, iov[i].iov_len);
+		TRACE(TRACE_NET_IOV, "iov[%i].iov_base = %p (len %u)\n", i, iov[i].iov_base, (unsigned)iov[i].iov_len);
 		len += iov[i].iov_len;
 	}
 	TRACE(TRACE_NET_IOV, "new iov length: %u bytes\n", len);
@@ -644,7 +644,7 @@ iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc
 		total_len = 0;
 		TRACE(TRACE_NET_DEBUG, "%s %i buffers\n", xmit ? "gathering from" : "scattering into", iovc);
 		for (i = 0; i < iovc; i++) {
-			TRACE(TRACE_NET_IOV, "iov[%i].iov_base = %p, len %u\n", i, iov[i].iov_base, iov[i].iov_len);
+			TRACE(TRACE_NET_IOV, "iov[%i].iov_base = %p, len %u\n", i, iov[i].iov_base, (unsigned)iov[i].iov_len);
 			total_len += iov[i].iov_len;
 		}
 		if (total_len != len - n) {
@@ -652,7 +652,7 @@ iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc
 			TRACE_ERROR("iov = %p\n", iov);
 			for (i = 0; i < iovc; i++) {
 				TRACE_ERROR("iov[%i].iov_base = %p, len %u\n",
-					i, iov[i].iov_base, iov[i].iov_len);
+					i, iov[i].iov_base, (unsigned)iov[i].iov_len);
 			}
 			return -1;
 		}
