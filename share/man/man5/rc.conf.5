@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.97 2005/11/24 19:32:35 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.98 2006/02/09 23:19:39 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -388,9 +388,11 @@ Controls the strict level of Veriexec.
 Level 0 is learning mode, used when building the signatures file.
 It will only output messages but will not enforce anything.
 Level 1 will only prevent access to files with a fingerprint
-mismatch. Level 2 will also deny writing to and removing of
+mismatch.
+Level 2 will also deny writing to and removing of
 monitored files, as well as enforce access type (as specified in
-the signatures file). Level 3 will take a step further and prevent
+the signatures file).
+Level 3 will take a step further and prevent
 access to files that are not monitored.
 .It Sy veriexec_verbose
 A number.
