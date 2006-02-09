@@ -1,4 +1,4 @@
-/* $NetBSD: auvar.h,v 1.4 2006/02/06 23:23:53 gdamore Exp $ */
+/* $NetBSD: auvar.h,v 1.5 2006/02/09 00:26:40 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,6 +70,26 @@
 #define	_MIPS_ALCHEMY_AUVAR_H_
 
 #include "opt_alchemy.h"
+
+/*
+ * 224MB virtual PCI memory.  Note that we probably cannot
+ * really use all this because of limits on the number wired
+ * entries we can have at once.  In all likelihood, we won't
+ * use wired entries for more than a few megs anyway, since
+ * big devices like framebuffers are likely to be mapped into
+ * USEG using ordinary TLB entries.
+ *
+ * This tunable is an area for possible investigation and improvement.
+ */
+
+#define	AU_PCI_MEM_VA		0xE0000000UL
+#define	AU_PCI_MEM_SZ		0x0E000000UL	/* 224 MB */
+
+#define	AU_PCI_IO_VA		0xEE000000UL
+#define	AU_PCI_IO_SZ		0x01000000UL	/* 16 MB */
+
+#define	AU_PCI_CFG_VA		0xEF000000UL
+#define	AU_PCI_CFG_SZ		0x01000000UL	/* 16 MB, overkill */
 
 struct au_dev {
 	const char *name;
