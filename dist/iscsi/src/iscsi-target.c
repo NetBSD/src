@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi-target.c,v 1.1.1.1 2006/02/08 18:56:16 agc Exp $ */
+/* $NetBSD: iscsi-target.c,v 1.2 2006/02/09 15:11:40 he Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -189,7 +189,7 @@ do_device(conffile_t *cf, devv_t *devvp, extv_t *evp, ent_t *ep)
 			}
 			if (devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp->len != devvp->v[devvp->c].len) {
 				(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
-				(void) fprintf(stderr, "Error: extent `%s' has size %lld, not %lld\n", ep->sv.v[devvp->v[devvp->c].c + 2], devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp->len, devvp->v[devvp->c].len);
+				(void) fprintf(stderr, "Error: extent `%s' has size %" PRIu64 ", not %" PRIu64"\n", ep->sv.v[devvp->v[devvp->c].c + 2], devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp->len, devvp->v[devvp->c].len);
 				return 0;
 			}
 			devvp->v[devvp->c].xv[devvp->v[devvp->c].c].type = DE_EXTENT;
@@ -279,7 +279,7 @@ pextent(disc_extent_t *ep, int indent)
 	for (i = 0 ; i < indent ; i++) {
 		(void) fputc('\t', stdout);
 	}
-	printf("%s:%s:%lld:%lld\n", ep->extent, ep->dev, ep->sacred, ep->len);
+	printf("%s:%s:%" PRIu64 ":%" PRIu64 "\n", ep->extent, ep->dev, ep->sacred, ep->len);
 }
 
 static void pdevice(disc_device_t *, int);
