@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.13 2006/02/06 23:23:53 gdamore Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.14 2006/02/09 18:03:12 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.13 2006/02/06 23:23:53 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.14 2006/02/09 18:03:12 gdamore Exp $");
 
 #include "opt_ddb.h"
 
@@ -93,14 +93,14 @@ __KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.13 2006/02/06 23:23:53 gdamore Exp $");
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 
-#define	REGVAL(x)	*((volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
+#define	REGVAL(x)	*((volatile uint32_t *)(MIPS_PHYS_TO_KSEG1((x))))
 
 /*
  * This is a mask of bits to clear in the SR when we go to a
  * given hardware interrupt priority level.
  */
 
-const u_int32_t ipl_sr_bits[_IPL_N] = {
+const uint32_t ipl_sr_bits[_IPL_N] = {
 	0,					/*  0: IPL_NONE */
 
 	MIPS_SOFT_INT_MASK_0,			/*  1: IPL_SOFT */
@@ -138,7 +138,7 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
  * given software interrupt priority level.
  * Hardware ipls are port/board specific.
  */
-const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTNET */
@@ -155,8 +155,15 @@ struct au_icu_intrhead au_icu_intrtab[NIRQS];
 
 #define	NINTRS			4	/* MIPS INT0 - INT3 */
 
+struct au_intrhand {
+	LIST_ENTRY(au_intrhand) ih_q;
+	int (*ih_func)(void *);
+	void *ih_arg;
+	int ih_irq;
+};
+
 struct au_cpuintr {
-	LIST_HEAD(, evbmips_intrhand) cintr_list;
+	LIST_HEAD(, au_intrhand) cintr_list;
 	struct evcnt cintr_count;
 };
 
@@ -199,7 +206,7 @@ void *
 au_intr_establish(int irq, int req, int level, int type,
     int (*func)(void *), void *arg)
 {
-	struct evbmips_intrhand	*ih;
+	struct au_intrhand	*ih;
 	uint32_t		icu_base;
 	int			cpu_int, s;
 	struct au_chipdep	*chip;
@@ -282,7 +289,7 @@ au_intr_establish(int irq, int req, int level, int type,
 void
 au_intr_disestablish(void *cookie)
 {
-	struct evbmips_intrhand *ih = cookie;
+	struct au_intrhand *ih = cookie;
 	uint32_t icu_base;
 	int irq, s;
 
@@ -318,11 +325,11 @@ au_intr_disestablish(void *cookie)
 }
 
 void
-au_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
-	struct evbmips_intrhand *ih;
+	struct au_intrhand *ih;
 	int level;
-	u_int32_t icu_base = 0, irqmask = 0;	/* Both XXX gcc */
+	uint32_t icu_base = 0, irqmask = 0;	/* Both XXX gcc */
 
 	for (level = 3; level >= 0; level--) {
 		if ((ipending & (MIPS_INT_MASK_0 << level)) == 0)
