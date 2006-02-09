@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.33 2006/02/09 19:18:56 manu Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.34 2006/02/09 23:27:08 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.33 2006/02/09 19:18:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.34 2006/02/09 23:27:08 dogcow Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -61,10 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.33 2006/02/09 19:18:56 manu Exp $");
 #include <compat/linux/common/linux_msg.h>
 #include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_sem.h>
-#include <compat/linux/common/linux_ipccall.h>
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
+
+#include <compat/linux/common/linux_ipccall.h>
 
 /*
  * Note: Not all linux architechtures have explicit versions
