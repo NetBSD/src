@@ -193,6 +193,32 @@ b) start the iSCSI target: /etc/rc.d/iscsi_target forcestart
 c) use an initiator to point it at the machine you started it on
 
 
+Q9. Why does the test harness not work properly?
+================================================
+
+A9. Firstly, you should be invoking the test harness as
+
+	iscsi-harness -n 3 -h localhost
+
+where the 'n' option is the number of iterations to perform, and the
+'h' parameter is the name or address of the machine where the
+iscsi-target is running.
+
+If the harness was invoked properly, check any error messages which
+the test harness sends:
+
+If one of them looks like:
+
+	No matching user configuration entry for `agc' was found
+	Please add an entry for `agc' to `/etc/iscsi/auths'
+
+(where "agc" is substituted for the name of the user who was running
+the test harness), then please do as suggested. The iSCSI test harness
+tests, amongst other things, the CHAP authentication process, and so
+CHAP credentials for that user are needed.
+
+
+
 Alistair Crooks
 agc@NetBSD.org
 Wed Feb  8 07:21:56 GMT 2006
