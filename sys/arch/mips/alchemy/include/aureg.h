@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.8 2006/02/09 00:26:40 gdamore Exp $ */
+/* $NetBSD: aureg.h,v 1.9 2006/02/09 01:08:40 gdamore Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -442,80 +442,6 @@
 #define	UART1_BASE	0x11200000
 #define	UART2_BASE	0x11300000
 #define	UART3_BASE	0x11400000
-
-#define	UART_RXDATA		0x000	/* Received Data FIFO (R) */
-#define	UART_TXDATA		0x004	/* Transmit Data FIFO (W) */
-#define	UART_INTERRUPT_ENABLE	0x008	/* Interrupt Enable Register (R/W) */
-#define	  UIE_MIE		  0x8	/* Modem Status Interrupt enable */
-#define	  UIE_LIE		  0x4	/* Line Status Interrupt enable */
-#define	  UIE_TIE		  0x2	/* Transmit Interrupt Enable */
-#define	  UIE_RIE		  0x1	/* Receive Interrupt Enable */
-#define	UART_INTERRUPT_CAUSE	0x00c	/* Pending Interrupt Cause Register (R) */
-#define	  UIC_IID_MASK		  0xe	/* mask for Interrupt IDentifier */
-#define	  UIC_IID_MS		  0x0	/* Modem Status */
-#define	  UIC_IID_TBA		  0x2	/* Transmit Buffer Available */
-#define	  UIC_IID_RDA		  0x4	/* Receive Data Available */
-#define	  UIC_IID_RLS		  0x6	/* Receive Line Status */
-#define	  UIC_IID_CTO		  0xc	/* Character Time Out */
-#define	  UIC_IP		  0x1	/* XXX-no?-XXX Interrupt Pending */
-#define	UART_FIFO_CONTROL	0x010	/* FIFO Control Register (W) */
-#define	  UFC_RFT_0		  0x00	/* Receiver FIFO Threshold of 0 chars */
-#define	  UFC_RFT_4		  0x40	/* Receiver FIFO Threshold of 4 chars */
-#define	  UFC_RFT_8		  0x80	/* Receiver FIFO Threshold of 8 chars */
-#define	  UFC_RFT_12		  0xc0	/* Receiver FIFO Threshold of 12 chars */
-#define	  UFC_TFT_0		  0x00	/* Transmit FIFO Threshold of 0 chars */
-#define	  UFC_TFT_4		  0x10	/* Transmit FIFO Threshold of 4 chars */
-#define	  UFC_TFT_8		  0x20	/* Transmit FIFO Threshold of 8 chars */
-#define	  UFC_TFT_12		  0x30	/* Transmit FIFO Threshold of 12 chars */
-#define	  UFC_MS		  0x08	/* Mode Select */
-#define	  UFC_TR		  0x04	/* Transmitter Reset */
-#define	  UFC_RR		  0x02	/* Receiver Reset */
-#define	  UFC_FE		  0x01	/* FIFO Enable */
-#define	UART_LINE_CONTROL	0x014	/* Line Control Register (R/W) */
-#define	  ULC_SB		  0x40	/* Send Break */
-#define	  ULC_PAR_MASK		  0x30	/* mask for PARity select */
-#define	  ULC_PAR_ODD		  0x00	/* odd parity */
-#define	  ULC_PAR_EVEN		  0x10	/* even parity */
-#define	  ULC_PAR_MARK		  0x20	/* mark parity */
-#define	  ULC_PAR_ZERO		  0x30	/* zero parity */
-#define	  ULC_PE		  0x08	/* Parity Enable */
-#define	  ULC_ST		  0x04	/* 1.5 or 2 stop bits */
-#define	  ULC_WLS_MASK		  0x03	/* mask for Word Length Select */
-#define	  ULC_WLS_5		  0x00	/* 5 bits per serial word */
-#define	  ULC_WLS_6		  0x01	/* 6 bits */
-#define	  ULC_WLS_7		  0x02	/* 7 bits */
-#define	  ULC_WLS_8		  0x03	/* 8 bits */
-#define	UART_MODEM_CONTROL	0x018	/* Modem Line Control Register (UART 4 only) (R/W) */
-#define	  UMC_LB		  0x10	/* Loop Back */
-#define	  UMC_X2		  0x08	/* eXternal line 2 state */
-#define	  UMC_X1		  0x04	/* eXternal line 1 state */
-#define	  UMC_RT		  0x02	/* Request To send */
-#define	  UMC_DT		  0x01	/* Data Terminal ready */
-#define	UART_LINE_STATUS	0x01c	/* Line Status Register (R/W) */
-#define	  ULS_RF		  0x80	/* Receiver FIFO contains error */
-#define	  ULS_TE		  0x40	/* Transmit shift register Empty */
-#define	  ULS_TFE		  0x20	/* Transmit FIFO Empty */
-#define	  ULS_BI		  0x10	/* Break Indication */
-#define	  ULS_FE		  0x08	/* Framing Error */
-#define	  ULS_PE		  0x04	/* Parity Error */
-#define	  ULS_OE		  0x02	/* Overrun Error */
-#define	  ULS_DR		  0x01	/* Data Ready */
-#define	  ULS_RCV_MASK		  0x1f	/* mask for incoming data or error */
-#define	UART_MODEM_STATUS	0x020	/* Modem Line Status Register  (UART 4 only) (R/W) */
-#define	  UMS_CD		  0x80	/* data Carrier Detect */
-#define	  UMS_RI		  0x40	/* Ring Indication */
-#define	  UMS_DS		  0x20	/* Data Set ready */
-#define	  UMS_CT		  0x10	/* Clear To send */
-#define	  UMS_DD		  0x08	/* Delta DCD */
-#define	  UMS_TRI		  0x04	/* Terminate Ring Indication */
-#define	  UMS_DR		  0x02	/* Delta DSR */
-#define	  UMS_DC		  0x01	/* Delta CTS */
-#define	UART_CLOCK_DIVIDER	0x028	/* Baud Rate Clock Divider (16bit) */
-#define	UART_MODULE_CONTROL	0x100	/* Module Control Register */
-#define	  UMC_CE		  0x2	/* Module Clock Enable */
-#define	  UMC_ME		  0x1	/* Module Enable */
-
-#define	UART_SIZE		0x104
 
 /************************************************************************/
 /*************************   SSI registers   ****************************/
