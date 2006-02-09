@@ -561,7 +561,7 @@ typedef struct {
 #define NO_CLEANUP {}
 #define RETURN_GREATER(NAME, V1, V2, CU, RC)                         \
 if ((V1)>(V2)) {                                                     \
-  TRACE_ERROR("Bad \"%s\": %u > %u.\n", NAME, V1, V2);               \
+  TRACE_ERROR("Bad \"%s\": %u > %u.\n", NAME, (unsigned)V1, (unsigned)V2); \
   CU;                                                                \
   return RC;                                                         \
 }
