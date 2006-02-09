@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.149 2006/02/04 16:11:36 elad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.150 2006/02/09 19:18:57 manu Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -888,14 +888,16 @@ struct kinfo_file {
 #define	EMUL_IRIX	2
 #define	EMUL_DARWIN	3
 #define	EMUL_MACH	4
+#define	EMUL_LINUX32	5
 
-#define	EMUL_MAXID	5
+#define	EMUL_MAXID	6
 #define	CTL_EMUL_NAMES { \
 	{ 0, 0 }, \
 	{ "linux", CTLTYPE_NODE }, \
 	{ "irix", CTLTYPE_NODE }, \
 	{ "darwin", CTLTYPE_NODE }, \
 	{ "mach", CTLTYPE_NODE }, \
+	{ "linux32", CTLTYPE_NODE }, \
 }
 
 #ifdef _KERNEL
