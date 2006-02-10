@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.13 2005/12/24 12:31:57 jmmv Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.14 2006/02/10 16:00:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -43,9 +43,6 @@
 /* ---------------------------------------------------------------------
  * KERNEL-SPECIFIC DEFINITIONS
  * --------------------------------------------------------------------- */
-
-#if defined(_KERNEL)
-
 #include <sys/dirent.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
@@ -295,6 +292,7 @@ struct tmpfs_fid {
 
 /* --------------------------------------------------------------------- */
 
+#ifdef _KERNEL
 /*
  * Prototypes for tmpfs_subr.c.
  */
@@ -403,6 +401,8 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 /* Returns the available space for the given file system. */
 #define TMPFS_PAGES_AVAIL(tmp) (TMPFS_PAGES_MAX(tmp) - (tmp)->tm_pages_used)
 
+#endif
+
 /* --------------------------------------------------------------------- */
 
 /*
@@ -416,7 +416,9 @@ VFS_TO_TMPFS(struct mount *mp)
 {
 	struct tmpfs_mount *tmp;
 
+#ifdef KASSERT
 	KASSERT((mp) != NULL && (mp)->mnt_data != NULL);
+#endif
 	tmp = (struct tmpfs_mount *)(mp)->mnt_data;
 	return tmp;
 }
@@ -427,7 +429,9 @@ VP_TO_TMPFS_NODE(struct vnode *vp)
 {
 	struct tmpfs_node *node;
 
+#ifdef KASSERT
 	KASSERT((vp) != NULL && (vp)->v_data != NULL);
+#endif
 	node = (struct tmpfs_node *)vp->v_data;
 	return node;
 }
@@ -439,11 +443,11 @@ VP_TO_TMPFS_DIR(struct vnode *vp)
 	struct tmpfs_node *node;
 
 	node = VP_TO_TMPFS_NODE(vp);
+#ifdef KASSERT
 	TMPFS_VALIDATE_DIR(node);
+#endif
 	return node;
 }
-
-#endif /* _KERNEL */
 
 /* ---------------------------------------------------------------------
  * USER AND KERNEL DEFINITIONS
