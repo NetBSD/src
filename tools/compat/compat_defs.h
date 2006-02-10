@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.49 2006/02/09 22:03:15 dogcow Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.50 2006/02/10 07:07:20 wiz Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -275,19 +275,19 @@ int lchown(const char *, uid_t, gid_t);
 #define __nbcompat_bswap64(x)	(((u_int64_t)bswap32((x)) << 32) | \
 				 ((u_int64_t)bswap32((x) >> 32)))
 
-#if !HAVE_BSWAP16
+#if ! HAVE_DECL_BSWAP16
 #ifdef bswap16
 #undef bswap16
 #endif
 #define bswap16(x)	__nbcompat_bswap16(x)
 #endif
-#if !HAVE_BSWAP32
+#if ! HAVE_DECL_BSWAP32
 #ifdef bswap32
 #undef bswap32
 #endif
 #define bswap32(x)	__nbcompat_bswap32(x)
 #endif
-#if !HAVE_BSWAP64
+#if ! HAVE_DECL_BSWAP64
 #ifdef bswap64
 #undef bswap64
 #endif
