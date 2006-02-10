@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.14 2006/02/09 18:03:12 gdamore Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.15 2006/02/10 00:22:42 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.14 2006/02/09 18:03:12 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.15 2006/02/10 00:22:42 gdamore Exp $");
 
 #include "opt_ddb.h"
 
@@ -316,7 +316,9 @@ au_intr_disestablish(void *cookie)
 		REGVAL(icu_base + IC_CONFIG1_CLEAR) = irq;
 		REGVAL(icu_base + IC_CONFIG0_CLEAR) = irq;
 
-		/* XXX disable with MASK_CLEAR and WAKEUP_CLEAR */
+		/* disable with MASK_CLEAR and WAKEUP_CLEAR */
+		REGVAL(icu_base + IC_MASK_CLEAR) = irq;
+		REGVAL(icu_base + IC_WAKEUP_CLEAR) = irq;
 	}
 
 	splx(s);
@@ -329,7 +331,7 @@ au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct au_intrhand *ih;
 	int level;
-	uint32_t icu_base = 0, irqmask = 0;	/* Both XXX gcc */
+	uint32_t icu_base = 0, irqstat = 0, irqmask = 0; /* XXX gcc */
 
 	for (level = 3; level >= 0; level--) {
 		if ((ipending & (MIPS_INT_MASK_0 << level)) == 0)
@@ -351,30 +353,32 @@ au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		switch (level) {
 		case 0:
 			icu_base = ic0_base;
-			irqmask = REGVAL(icu_base + IC_REQUEST0_INT);
+			irqstat = REGVAL(icu_base + IC_REQUEST0_INT);
 			break;
 		case 1:
 			icu_base = ic0_base;
-			irqmask = REGVAL(icu_base + IC_REQUEST1_INT);
+			irqstat = REGVAL(icu_base + IC_REQUEST1_INT);
 			break;
 		case 2:
 			icu_base = ic1_base;
-			irqmask = REGVAL(icu_base + IC_REQUEST0_INT);
+			irqstat = REGVAL(icu_base + IC_REQUEST0_INT);
 			break;
 		case 3:
 			icu_base = ic1_base;
-			irqmask = REGVAL(icu_base + IC_REQUEST1_INT);
+			irqstat = REGVAL(icu_base + IC_REQUEST1_INT);
 			break;
 		}
+		irqmask = REGVAL(icu_base + IC_MASK_READ);
 		au_cpuintrs[level].cintr_count.ev_count++;
 		LIST_FOREACH(ih, &au_cpuintrs[level].cintr_list, ih_q) {
-			/* XXX should check is see if interrupt is masked? */
-			if (1 << ih->ih_irq & irqmask) {
+			int irq = (1 << ih->ih_irq);
+
+			if ((irq && irqmask) && (irq && irqstat)) {
 				au_icu_intrtab[ih->ih_irq].intr_count.ev_count++;
 				(*ih->ih_func)(ih->ih_arg);
 
-				REGVAL(icu_base + IC_MASK_CLEAR) = 1 << ih->ih_irq;
-				REGVAL(icu_base + IC_MASK_SET) = 1 << ih->ih_irq;
+				REGVAL(icu_base + IC_MASK_CLEAR) = irq;
+				REGVAL(icu_base + IC_MASK_SET) = irq;
 			}
 		}
 		cause &= ~(MIPS_INT_MASK_0 << level);
@@ -382,4 +386,47 @@ au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 	/* Re-enable anything that we have processed. */
 	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
+}
+
+/*
+ * Some devices (e.g. PCMCIA) want to be able to mask interrupts at
+ * the ICU, and leave them masked off until some later time
+ * (e.g. reenabled by a soft interrupt).
+ */
+
+void
+au_intr_enable(int irq)
+{
+	int		s;
+	uint32_t	icu_base, mask;
+
+	if (irq >= NIRQS)
+		panic("au_intr_enable: bogus IRQ %d", irq);
+
+	icu_base = (irq < 32) ? ic0_base : ic1_base;
+	mask = irq & 31;
+	mask = 1 << mask;
+
+	s = splhigh();
+	/* only enable the interrupt if we have a handler */
+	if (au_icu_intrtab[irq].intr_refcnt)
+		REGVAL(icu_base + IC_MASK_SET) = mask;
+	splx(s);
+}
+
+void
+au_intr_disable(int irq)
+{
+	int		s;
+	uint32_t	icu_base, mask;
+
+	icu_base = (irq < 32) ? ic0_base : ic1_base;
+	mask = irq & 31;
+	mask = 1 << mask;
+
+	if (irq >= NIRQS)
+		panic("au_intr_disable: bogus IRQ %d", irq);
+	s = splhigh();
+	REGVAL(icu_base + IC_MASK_CLEAR) = mask;
+	splx(s);
 }

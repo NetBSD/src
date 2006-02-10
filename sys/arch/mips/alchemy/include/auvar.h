@@ -1,4 +1,4 @@
-/* $NetBSD: auvar.h,v 1.5 2006/02/09 00:26:40 gdamore Exp $ */
+/* $NetBSD: auvar.h,v 1.6 2006/02/10 00:22:42 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -122,6 +122,8 @@ boolean_t	au1550_match(struct au_chipdep **);
 void	au_intr_init(void);
 void	*au_intr_establish(int, int, int, int, int (*)(void *), void *);
 void	au_intr_disestablish(void *);
+void	au_intr_enable(int);
+void	au_intr_disable(int);
 void	au_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 void	au_cpureg_bus_mem_init(bus_space_tag_t, void *);
