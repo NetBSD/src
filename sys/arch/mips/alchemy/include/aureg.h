@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.11 2006/02/09 03:14:31 gdamore Exp $ */
+/* $NetBSD: aureg.h,v 1.12 2006/02/10 20:49:14 gdamore Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -192,6 +192,13 @@
 #define	PCI_MEM_BASE		0x400000000ULL
 #define	PCI_IO_BASE		0x500000000ULL
 #define	PCI_CONFIG_BASE		0x600000000ULL
+
+/************************************************************************/
+/***********************   PCMCIA registers   ***************************/
+/************************************************************************/
+#define	PCMCIA_IO_BASE		0xF00000000ULL
+#define	PCMCIA_ATTR_BASE	0xF40000000ULL
+#define	PCMCIA_MEM_BASE		0xF80000000ULL
 
 /************************************************************************/
 /******************   Programmable Counter registers   ******************/
