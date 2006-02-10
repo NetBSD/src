@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.40 2006/02/07 09:13:02 jmmv Exp $ */
+/* $NetBSD: wsmouse.c,v 1.41 2006/02/10 17:33:01 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.40 2006/02/07 09:13:02 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.41 2006/02/10 17:33:01 christos Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -346,6 +346,7 @@ wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)wsmousedev;
 	struct wseventvar *evar;
 	int mb, ub, d, nevents;
+	/* one for each dimension (4) + a bit for each button */
 	struct wscons_event events[4 + sizeof(d) * 8];
 
         /*
@@ -463,6 +464,12 @@ wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
 		btnno = ffs(d) - 1;
 		KASSERT(btnno >= 0);
 
+		if (nevents >= events / sizeof(events[0])) {
+			printf("%s: Event queue full (button status mb=0x%x"
+			    " ub=0x%x\n", sc->sc_dev.dv_xname, mb, ub);
+			break;
+		}
+
 		events[nevents].type =
 		    (mb & d) ? WSCONS_EVENT_MOUSE_DOWN : WSCONS_EVENT_MOUSE_UP;
 		events[nevents].value = btnno;
@@ -483,10 +490,7 @@ wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
 		}
 	}
 
-	KASSERT(nevents > 0 &&
-	    nevents <= sizeof(events) / sizeof(struct wscons_event));
-
-	if (wsevent_inject(evar, events, nevents) == 0) {
+	if (nevents == 0 || wsevent_inject(evar, events, nevents) == 0) {
 		/* All events were correctly injected into the queue.
 		 * Synchronize the mouse's status with what the user
 		 * has received. */
