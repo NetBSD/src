@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.16 2006/02/10 00:56:41 gdamore Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.17 2006/02/10 02:15:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.16 2006/02/10 00:56:41 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.17 2006/02/10 02:15:37 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -331,7 +331,9 @@ au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct au_intrhand *ih;
 	int level;
-	uint32_t icu_base = 0, irqstat = 0, irqmask = 0; /* XXX gcc */
+	uint32_t icu_base, irqstat, irqmask;
+
+	icu_base = irqstat = 0;	/* XXX gcc */
 
 	for (level = 3; level >= 0; level--) {
 		if ((ipending & (MIPS_INT_MASK_0 << level)) == 0)
@@ -343,7 +345,7 @@ au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		 *
 		 * is something like:
 		 *
-		 *    irqmask = REGVAL(
+		 *    irqstat = REGVAL(
 		 *	 (level & 4 == 0) ? IC0_BASE ? IC1_BASE +
 		 *	 (level & 2 == 0) ? IC_REQUEST0_INT : IC_REQUEST1_INT);
 		 *
