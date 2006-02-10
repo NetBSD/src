@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.41 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: namei.h,v 1.42 2006/02/10 00:53:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -205,6 +205,7 @@ void	namecache_print(struct vnode *, void (*)(const char *, ...));
 
 /*
  * Stats on usefulness of namei caches.
+ * XXX: should be 64-bit counters.
  */
 struct	nchstats {
 	long	ncs_goodhits;		/* hits that we can really use */
