@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.72 2005/07/17 07:36:26 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.73 2006/02/10 16:01:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.72 2005/07/17 07:36:26 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.73 2006/02/10 16:01:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -438,6 +438,10 @@ vfilestat(struct vnode *vp, struct filestat *fsp)
 			break;
 		case VT_PTYFS:
 			if (!ptyfs_filestat(vp, fsp))
+				badtype = "error";
+			break;
+		case VT_TMPFS:
+			if (!tmpfs_filestat(vp, fsp))
 				badtype = "error";
 			break;
 		case VT_NULL:
