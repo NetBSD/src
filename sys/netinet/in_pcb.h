@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.41.4.6 2006/02/07 06:32:04 rpaulo Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.41.4.7 2006/02/10 19:28:39 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 2003 WIDE Project.
@@ -84,6 +84,7 @@
 
 struct inpcbpolicy;
 struct icmp6_filter;
+struct pool inpcb_pool;
 
 struct inpcbtable {
 	CIRCLEQ_HEAD(, inpcb) inpt_queue;
@@ -292,19 +293,25 @@ struct inpcb {
 #define INP_INFO_RLOCK_ASSERT(ipi)	/* nothing */
 #define INP_INFO_WLOCK_ASSERT(ipi)	/* nothing */
 
-/* compute hash value for foreign and local in6_addr and port */
-#define IN6_HASH(faddr, fport, laddr, lport) 			\
-	(((faddr)->s6_addr32[0] ^ (faddr)->s6_addr32[1] ^	\
-	  (faddr)->s6_addr32[2] ^ (faddr)->s6_addr32[3] ^	\
-	  (laddr)->s6_addr32[0] ^ (laddr)->s6_addr32[1] ^	\
-	  (laddr)->s6_addr32[2] ^ (laddr)->s6_addr32[3])	\
-	 + (fport) + (lport))
-
+#define INP_SOCKAF(so)			so->so_proto->pr_domain->dom_family
 
 #define	sotoinpcb(so)	((struct inpcb *)(so)->so_pcb)
 #define	sotoin6pcb	sotoinpcb	/* for KAME src sync over BSD*'s */
 
 #ifdef _KERNEL
+
+#define	INPCBHASH_PORT(table, lport) \
+	&(table)->inpt_porthashtbl[ntohs(lport) & (table)->inpt_porthash]
+
+#define	INPCBHASH_BIND(table, laddr, lport) \
+	&(table)->inpt_bindhashtbl[ \
+	    ((ntohl((laddr).s_addr) + ntohs(lport))) & (table)->inpt_bindhash]
+#define	INPCBHASH_CONNECT(table, faddr, fport, laddr, lport) \
+	&(table)->inpt_connecthashtbl[ \
+	    ((ntohl((faddr).s_addr) + ntohs(fport)) + \
+	     (ntohl((laddr).s_addr) + ntohs(lport))) & \
+	     (table)->inpt_connecthash]
+
 void	in_losing(struct inpcb *);
 int	in_pcballoc(struct socket *, void *);
 int	in_pcbbind(void *, struct mbuf *, struct proc *);
@@ -337,6 +344,27 @@ extern struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
 	struct route *, int, struct ip_moptions *, int *);
 
 #ifdef INET6
+/* compute hash value for foreign and local in6_addr and port */
+#define IN6_HASH(faddr, fport, laddr, lport) 			\
+	(((faddr)->s6_addr32[0] ^ (faddr)->s6_addr32[1] ^	\
+	  (faddr)->s6_addr32[2] ^ (faddr)->s6_addr32[3] ^	\
+	  (laddr)->s6_addr32[0] ^ (laddr)->s6_addr32[1] ^	\
+	  (laddr)->s6_addr32[2] ^ (laddr)->s6_addr32[3])	\
+	 + (fport) + (lport))
+
+#define IN6PCBHASH_BIND(table, laddr, lport) \
+	&(table)->inpt_bindhashtbl[ \
+	    (((laddr)->s6_addr32[0] ^ (laddr)->s6_addr32[1] ^ \
+	      (laddr)->s6_addr32[2] ^ (laddr)->s6_addr32[3]) + ntohs(lport)) & \
+	    (table)->inpt_bindhash]
+#define IN6PCBHASH_CONNECT(table, faddr, fport, laddr, lport) \
+	&(table)->inpt_bindhashtbl[ \
+	    ((((faddr)->s6_addr32[0] ^ (faddr)->s6_addr32[1] ^ \
+	      (faddr)->s6_addr32[2] ^ (faddr)->s6_addr32[3]) + ntohs(fport)) + \
+	     (((laddr)->s6_addr32[0] ^ (laddr)->s6_addr32[1] ^ \
+	      (laddr)->s6_addr32[2] ^ (laddr)->s6_addr32[3]) + \
+	      ntohs(lport))) & (table)->inpt_bindhash]
+
 void	in6_losing(struct inpcb *);
 void	in6_pcbinit(struct inpcbtable *, int, int);
 int	in6_pcballoc(struct socket *, void *);
