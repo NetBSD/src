@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.15 2006/02/10 00:22:42 gdamore Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.16 2006/02/10 00:56:41 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.15 2006/02/10 00:22:42 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.16 2006/02/10 00:56:41 gdamore Exp $");
 
 #include "opt_ddb.h"
 
@@ -373,12 +373,14 @@ au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		LIST_FOREACH(ih, &au_cpuintrs[level].cintr_list, ih_q) {
 			int irq = (1 << ih->ih_irq);
 
-			if ((irq && irqmask) && (irq && irqstat)) {
+			if ((irq & irqmask) && (irq & irqstat)) {
 				au_icu_intrtab[ih->ih_irq].intr_count.ev_count++;
 				(*ih->ih_func)(ih->ih_arg);
 
-				REGVAL(icu_base + IC_MASK_CLEAR) = irq;
-				REGVAL(icu_base + IC_MASK_SET) = irq;
+				if (REGVAL(icu_base + IC_MASK_READ) & irq) {
+					REGVAL(icu_base + IC_MASK_CLEAR) = irq;
+					REGVAL(icu_base + IC_MASK_SET) = irq;
+				}
 			}
 		}
 		cause &= ~(MIPS_INT_MASK_0 << level);
