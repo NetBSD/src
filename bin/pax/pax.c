@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.37 2005/04/24 01:45:04 christos Exp $	*/
+/*	$NetBSD: pax.c,v 1.38 2006/02/11 10:35:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.37 2005/04/24 01:45:04 christos Exp $");
+__RCSID("$NetBSD: pax.c,v 1.38 2006/02/11 10:35:19 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ main(int argc, char **argv)
 	 */
 	cwdfd = open(".", O_RDONLY);
 	if (cwdfd < 0) {
-		syswarn(0, errno, "Can't open current working directory.");
+		syswarn(1, errno, "Can't open current working directory.");
 		return(exit_val);
 	}
 	if (updatepath() == -1)
@@ -345,10 +345,10 @@ sig_cleanup(int which_sig)
 	vflag = vfpart = 1;
 #ifdef SIGXCPU
 	if (which_sig == SIGXCPU)
-		tty_warn(0, "CPU time limit reached, cleaning up.");
+		tty_warn(1, "CPU time limit reached, cleaning up.");
 	else
 #endif
-		tty_warn(0, "Signal caught, cleaning up.");
+		tty_warn(1, "Signal caught, cleaning up.");
 
 	/* delete any open temporary file */
 	if (xtmp_name)
