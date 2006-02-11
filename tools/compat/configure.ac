@@ -1,11 +1,20 @@
-#	$NetBSD: configure.ac,v 1.55 2006/02/11 01:28:01 wiz Exp $
+#	$NetBSD: configure.ac,v 1.56 2006/02/11 10:35:29 wiz Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
 
 AC_INIT([libnbcompat], [noversion], [lib-bug-people@NetBSD.org])
-AC_CONFIG_HEADERS(nbtool_config_internal.h)
+AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
+
+# Autoheader header and footer
+AH_TOP([/*      $NetBSD: configure.ac,v 1.56 2006/02/11 10:35:29 wiz Exp $    */
+ 
+#ifndef __NETBSD_NBTOOL_CONFIG_H__
+#define __NETBSD_NBTOOL_CONFIG_H__])
+
+AH_BOTTOM([#include "compat_defs.h"
+#endif /* !__NETBSD_NBTOOL_CONFIG_H__ */])
 
 AC_DEFUN([AC_NETBSD],
 [AC_BEFORE([$0], [AC_COMPILE_IFELSE])dnl
