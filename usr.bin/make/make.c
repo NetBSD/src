@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.59 2006/01/04 21:16:53 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.60 2006/02/11 18:37:36 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.59 2006/01/04 21:16:53 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.60 2006/02/11 18:37:36 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.59 2006/01/04 21:16:53 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.60 2006/02/11 18:37:36 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -934,6 +934,11 @@ MakeStartJobs(void)
     int		have_token = 0;
 
     while (!Lst_IsEmpty (toBeMade)) {
+	/* Get token now to avoid cycling job-list when we only have 1 token */
+	if (!have_token && !Job_TokenWithdraw())
+	    break;
+	have_token = 1;
+
 	gn = (GNode *)Lst_DeQueue(toBeMade);
 	if (DEBUG(MAKE)) {
 	    printf("Examining %s...", gn->name);
@@ -966,12 +971,6 @@ MakeStartJobs(void)
 		continue;
 	    }
 	}
-
-	if (!have_token && !Job_TokenWithdraw()) {
-	    Lst_AtFront(toBeMade, gn);
-	    break;
-	}
-	have_token = 1;
 
 	numNodes--;
 	if (Make_OODate(gn)) {
@@ -1192,6 +1191,10 @@ Make_Run(Lst targs)
     int	    	    errors; 	/* Number of errors the Job module reports */
 
     toBeMade = Make_ExpandUse(targs);
+    if (DEBUG(MAKE)) {
+	 printf("#***# toBeMade\n");
+	 Lst_ForEach(toBeMade, Targ_PrintNode, 0);
+    }
 
     if (queryFlag) {
 	/*
