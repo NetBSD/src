@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.27 2005/12/24 20:45:10 perry Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.28 2006/02/11 12:45:07 yamt Exp $	*/
 
 /*
  *
@@ -64,23 +64,11 @@
 
 struct vm_amap;
 
-/*
- * handle inline options... we allow amap ops to be inline, but we also
- * provide a hook to turn this off.  macros can also be used.
- */
-
-#ifdef UVM_AMAP_INLINE			/* defined/undef'd in uvm_amap.c */
-#define AMAP_INLINE static inline	/* inline enabled */
-#else
-#define AMAP_INLINE			/* inline disabled */
-#endif /* UVM_AMAP_INLINE */
-
 
 /*
  * prototypes for the amap interface
  */
 
-AMAP_INLINE
 void		amap_add 	/* add an anon to an amap */
 			(struct vm_aref *, vaddr_t,
 			 struct vm_anon *, boolean_t);
@@ -99,14 +87,11 @@ void		amap_free	/* free amap */
 			(struct vm_amap *);
 void		amap_lock	/* lock amap */
 			(struct vm_amap *);
-AMAP_INLINE
 struct vm_anon	*amap_lookup	/* lookup an anon @ offset in amap */
 			(struct vm_aref *, vaddr_t);
-AMAP_INLINE
 void		amap_lookups	/* lookup multiple anons */
 			(struct vm_aref *, vaddr_t,
 			 struct vm_anon **, int);
-AMAP_INLINE
 void		amap_ref	/* add a reference to an amap */
 			(struct vm_amap *, vaddr_t, vsize_t, int);
 int		amap_refs	/* get number of references of amap */
@@ -115,12 +100,10 @@ void		amap_share_protect /* protect pages in a shared amap */
 			(struct vm_map_entry *, vm_prot_t);
 void		amap_splitref	/* split reference to amap into two */
 			(struct vm_aref *, struct vm_aref *, vaddr_t);
-AMAP_INLINE
 void		amap_unadd	/* remove an anon from an amap */
 			(struct vm_aref *, vaddr_t);
 void		amap_unlock	/* unlock amap */
 			(struct vm_amap *);
-AMAP_INLINE
 void		amap_unref	/* drop reference to an amap */
 			(struct vm_amap *, vaddr_t, vsize_t, int);
 void		amap_wipeout	/* remove all anons from amap */
