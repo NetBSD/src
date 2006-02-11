@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.62 2005/04/24 01:23:21 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.63 2006/02/11 10:43:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.62 2005/04/24 01:23:21 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.63 2006/02/11 10:43:18 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,9 +120,9 @@ check_sum(char *hd, size_t hdlen, char *bl, size_t bllen, int quiet)
 		if (!quiet)
 			tty_warn(0, "Header checksum %lo does not match %lo",
 			    hdck, blck);
-		return(-1);
+		return -1;
 	}
-	return(0);
+	return 0;
 }
 
 
@@ -136,7 +136,7 @@ check_sum(char *hd, size_t hdlen, char *bl, size_t bllen, int quiet)
 int
 tar_endwr(void)
 {
-	return(wr_skip((off_t)(NULLCNT * BLKMULT)));
+	return wr_skip((off_t)(NULLCNT * BLKMULT));
 }
 
 /*
@@ -149,7 +149,7 @@ tar_endwr(void)
 off_t
 tar_endrd(void)
 {
-	return((off_t)((gnu_short_trailer ? 1 : NULLCNT) * BLKMULT));
+	return (off_t)((gnu_short_trailer ? 1 : NULLCNT) * BLKMULT);
 }
 
 /*
@@ -181,7 +181,7 @@ tar_trail(char *buf, int in_resync, int *cnt)
 	 * if not all zero it is not a trailer, but MIGHT be a header.
 	 */
 	if (i != BLKMULT)
-		return(-1);
+		return -1;
 
 	/*
 	 * When given a zero block, we must be careful!
@@ -202,9 +202,9 @@ tar_trail(char *buf, int in_resync, int *cnt)
 			++*cnt;
 		}
 		if (*cnt >= NULLCNT)
-			return(0);
+			return 0;
 	}
-	return(1);
+	return 1;
 }
 
 /*
@@ -257,8 +257,8 @@ ul_oct(u_long val, char *str, int len, int term)
 	while (pt >= str)
 		*pt-- = '0';
 	if (val != (u_long)0)
-		return(-1);
-	return(0);
+		return -1;
+	return 0;
 }
 
 #if !defined(NET2_STAT) && !defined(_LP64)
@@ -312,8 +312,8 @@ ull_oct(unsigned long long val, char *str, int len, int term)
 	while (pt >= str)
 		*pt-- = '0';
 	if (val != (unsigned long long)0)
-		return(-1);
-	return(0);
+		return -1;
+	return 0;
 }
 #endif
 
@@ -352,7 +352,7 @@ tar_chksm(char *blk, int len)
 	stop = blk + len;
 	while (pt < stop)
 		chksm += (u_long)(*pt++ & 0xff);
-	return(chksm);
+	return chksm;
 }
 
 /*
@@ -376,7 +376,7 @@ tar_id(char *blk, int size)
 	static int is_ustar = -1;
 
 	if (size < BLKMULT)
-		return(-1);
+		return -1;
 	hd = (HD_TAR *)blk;
 	uhd = (HD_USTAR *)blk;
 
@@ -388,11 +388,11 @@ tar_id(char *blk, int size)
 	 * checksum. If this is ok we have to assume it is a valid header.
 	 */
 	if (hd->name[0] == '\0')
-		return(-1);
+		return -1;
 	if (strncmp(uhd->magic, TMAGIC, TMAGLEN - 1) == 0) {
 		if (is_ustar == -1) {
 			is_ustar = 1;
-			return(-1);
+			return -1;
 		} else
 			tty_warn(0,
 			    "Busted tar archive: has both ustar and old tar "
@@ -423,7 +423,7 @@ tar_opt(void)
 			tty_warn(1,
 			    "%s=%s is the only supported tar format option",
 			    TAR_OPTION, TAR_NODIR);
-			return(-1);
+			return -1;
 		}
 
 		/*
@@ -432,11 +432,11 @@ tar_opt(void)
 		if ((act != APPND) && (act != ARCHIVE)) {
 			tty_warn(1, "%s=%s is only supported when writing.",
 			    opt->name, opt->value);
-			return(-1);
+			return -1;
 		}
 		tar_nodir = 1;
 	}
-	return(0);
+	return 0;
 }
 
 
@@ -458,7 +458,7 @@ tar_rd(ARCHD *arcn, char *buf)
 	 * we only get proper sized buffers passed to us
 	 */
 	if (tar_id(buf, BLKMULT) < 0)
-		return(-1);
+		return -1;
 	memset(arcn, 0, sizeof(*arcn));
 	arcn->org_name = arcn->name;
 	arcn->pat = NULL;
@@ -564,7 +564,7 @@ tar_rd(ARCHD *arcn, char *buf)
 		*pt = '\0';
 		--arcn->nlen;
 	}
-	return(0);
+	return 0;
 }
 
 /*
@@ -595,29 +595,29 @@ tar_wr(ARCHD *arcn)
 		 * user asked that dirs not be written to the archive
 		 */
 		if (tar_nodir)
-			return(1);
+			return 1;
 		break;
 	case PAX_CHR:
 		tty_warn(1, "Tar cannot archive a character device %s",
 		    arcn->org_name);
-		return(1);
+		return 1;
 	case PAX_BLK:
 		tty_warn(1,
 		    "Tar cannot archive a block device %s", arcn->org_name);
-		return(1);
+		return 1;
 	case PAX_SCK:
 		tty_warn(1, "Tar cannot archive a socket %s", arcn->org_name);
-		return(1);
+		return 1;
 	case PAX_FIF:
 		tty_warn(1, "Tar cannot archive a fifo %s", arcn->org_name);
-		return(1);
+		return 1;
 	case PAX_SLK:
 	case PAX_HLK:
 	case PAX_HRG:
 		if (arcn->ln_nlen > sizeof(hd->linkname)) {
 			tty_warn(1,"Link name too long for tar %s",
 			    arcn->ln_name);
-			return(1);
+			return 1;
 		}
 		break;
 	case PAX_REG:
@@ -634,7 +634,7 @@ tar_wr(ARCHD *arcn)
 		++len;
 	if (len >= sizeof(hd->name)) {
 		tty_warn(1, "File name too long for tar %s", arcn->name);
-		return(1);
+		return 1;
 	}
 
 	/*
@@ -684,7 +684,7 @@ tar_wr(ARCHD *arcn)
 		if (OFFT_OCT(arcn->sb.st_size, hd->size, sizeof(hd->size), 1)) {
 			tty_warn(1,"File is too large for tar %s",
 			    arcn->org_name);
-			return(1);
+			return 1;
 		}
 		arcn->pad = TAR_PAD(arcn->sb.st_size);
 	}
@@ -712,19 +712,19 @@ tar_wr(ARCHD *arcn)
 						 * seems incorrect */
 
 	if (wr_rdbuf(hdblk, sizeof(HD_TAR)) < 0)
-		return(-1);
+		return -1;
 	if (wr_skip((off_t)(BLKMULT - sizeof(HD_TAR))) < 0)
-		return(-1);
+		return -1;
 	if ((arcn->type == PAX_CTG) || (arcn->type == PAX_REG))
-		return(0);
-	return(1);
+		return 0;
+	return 1;
 
     out:
 	/*
 	 * header field is out of range
 	 */
 	tty_warn(1, "Tar header field is too small for %s", arcn->org_name);
-	return(1);
+	return 1;
 }
 
 /*
@@ -741,7 +741,7 @@ tar_wr(ARCHD *arcn)
 int
 ustar_strd(void)
 {
-	return(0);
+	return 0;
 }
 
 /*
@@ -754,7 +754,7 @@ ustar_strd(void)
 int
 ustar_stwr(void)
 {
-	return(0);
+	return 0;
 }
 
 /*
@@ -771,7 +771,7 @@ ustar_id(char *blk, int size)
 	HD_USTAR *hd;
 
 	if (size < BLKMULT)
-		return(-1);
+		return -1;
 	hd = (HD_USTAR *)blk;
 
 	/*
@@ -781,9 +781,9 @@ ustar_id(char *blk, int size)
 	 * check the checksum. If ok we have to assume it is a valid header.
 	 */
 	if (hd->name[0] == '\0')
-		return(-1);
+		return -1;
 	if (strncmp(hd->magic, TMAGIC, TMAGLEN - 1) != 0)
-		return(-1);
+		return -1;
 	/* This is GNU tar */
 	if (strncmp(hd->magic, "ustar  ", 8) == 0 && !is_gnutar &&
 	    !seen_gnu_warning) {
@@ -815,7 +815,7 @@ ustar_rd(ARCHD *arcn, char *buf)
 	 * we only get proper sized buffers
 	 */
 	if (ustar_id(buf, BLKMULT) < 0)
-		return(-1);
+		return -1;
 
 	memset(arcn, 0, sizeof(*arcn));
 	arcn->org_name = arcn->name;
@@ -959,7 +959,7 @@ ustar_rd(ARCHD *arcn, char *buf)
 		arcn->sb.st_mode |= S_IFREG;
 		break;
 	}
-	return(0);
+	return 0;
 }
 
 static int
@@ -1047,7 +1047,7 @@ ustar_wr(ARCHD *arcn)
 		if (!is_gnutar)
 			tty_warn(1, "Ustar cannot archive a socket %s",
 			    arcn->org_name);
-		return(1);
+		return 1;
 
 	case PAX_SLK:
 	case PAX_HLK:
@@ -1061,7 +1061,7 @@ ustar_wr(ARCHD *arcn)
 			} else {
 				tty_warn(1, "Link name too long for ustar %s",
 				    arcn->ln_name);
-				return(1);
+				return 1;
 			}
 		}
 		break;
@@ -1080,7 +1080,7 @@ ustar_wr(ARCHD *arcn)
 		} else {
 			tty_warn(1, "File name too long for ustar %s",
 			    arcn->name);
-			return(1);
+			return 1;
 		}
 	}
 
@@ -1166,7 +1166,7 @@ ustar_wr(ARCHD *arcn)
 			    sizeof(hd->size), 3)) {
 				tty_warn(1,"File is too long for ustar %s",
 				    arcn->org_name);
-				return(1);
+				return 1;
 			}
 		} else {
 			if (arcn->type == PAX_CTG)
@@ -1178,7 +1178,7 @@ ustar_wr(ARCHD *arcn)
 			    sizeof(hd->size), 3)) {
 				tty_warn(1,"File is too long for ustar %s",
 				    arcn->org_name);
-				return(1);
+				return 1;
 			}
 		}
 		break;
@@ -1216,22 +1216,22 @@ ustar_wr(ARCHD *arcn)
 	   sizeof(hd->chksum), 3))
 		return size_err("CHKSUM", arcn);
 	if (wr_rdbuf(hdblk, sizeof(HD_USTAR)) < 0)
-		return(-1);
+		return -1;
 	if (wr_skip((off_t)(BLKMULT - sizeof(HD_USTAR))) < 0)
-		return(-1);
+		return -1;
 	if (gnu_hack_string) {
 		int res = wr_rdbuf(gnu_hack_string, gnu_hack_len);
 		int pad = gnu_hack_len;
 		gnu_hack_string = NULL;
 		gnu_hack_len = 0;
 		if (res < 0)
-			return(-1);
+			return -1;
 		if (wr_skip((off_t)(BLKMULT - (pad % BLKMULT))) < 0)
-			return(-1);
+			return -1;
 	}
 	if ((arcn->type == PAX_CTG) || (arcn->type == PAX_REG))
-		return(0);
-	return(1);
+		return 0;
+	return 1;
 }
 
 /*
@@ -1256,7 +1256,7 @@ name_split(char *name, int len)
 	 * field. if so just return a pointer to the name.
 	 */
 	if (len < TNMSZ)
-		return(name);
+		return name;
 	/*
 	 * GNU tar does not honor the prefix+name mode if the magic
 	 * is not "ustar\0". So in GNU tar compatibility mode, we don't
@@ -1266,7 +1266,7 @@ name_split(char *name, int len)
 	 * really need do, but we are behaving like GNU tar after all.
 	 */
 	if (is_gnutar || len > (TPFSZ + TNMSZ))
-		return(NULL);
+		return NULL;
 
 	/*
 	 * we start looking at the biggest sized piece that fits in the name
@@ -1284,7 +1284,7 @@ name_split(char *name, int len)
 	 * cannot store this file.
 	 */
 	if (*start == '\0')
-		return(NULL);
+		return NULL;
 	len = start - name;
 
 	/*
@@ -1294,12 +1294,12 @@ name_split(char *name, int len)
 	 * makes this special case follow the spec to the letter.
 	 */
 	if ((len >= TPFSZ) || (len == 0))
-		return(NULL);
+		return NULL;
 
 	/*
 	 * ok have a split point, return it to the caller
 	 */
-	return(start);
+	return start;
 }
 
 /*
@@ -1389,7 +1389,7 @@ tar_gnutar_X_compat(path)
 	if (fp == NULL) {
 		tty_warn(1, "cannot open %s: %s", path,
 		    strerror(errno));
-		return(-1);
+		return -1;
 	}
 
 	while ((line = fgetln(fp, &len))) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.38 2006/02/11 10:35:19 dsl Exp $	*/
+/*	$NetBSD: pax.c,v 1.39 2006/02/11 10:43:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.38 2006/02/11 10:35:19 dsl Exp $");
+__RCSID("$NetBSD: pax.c,v 1.39 2006/02/11 10:43:18 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -256,7 +256,7 @@ main(int argc, char **argv)
 	 * general init
 	 */
 	if ((gen_init() < 0) || (tty_init() < 0))
-		return(exit_val);
+		return exit_val;
 
 	/*
 	 * Keep a reference to cwd, so we can always come back home.
@@ -264,10 +264,10 @@ main(int argc, char **argv)
 	cwdfd = open(".", O_RDONLY);
 	if (cwdfd < 0) {
 		syswarn(1, errno, "Can't open current working directory.");
-		return(exit_val);
+		return exit_val;
 	}
 	if (updatepath() == -1)
-		return(exit_val);
+		return exit_val;
 
 	/*
 	 * Where should we put temporary files?
@@ -280,7 +280,7 @@ main(int argc, char **argv)
 	tempfile = malloc(tdlen + 1 + sizeof(_TFILE_BASE));
 	if (tempfile == NULL) {
 		tty_warn(1, "Cannot allocate memory for temp file name.");
-		return(exit_val);
+		return exit_val;
 	}
 	if (tdlen)
 		memcpy(tempfile, tmpdir, tdlen);
@@ -322,7 +322,7 @@ main(int argc, char **argv)
 		list();
 		break;
 	}
-	return(exit_val);
+	return exit_val;
 }
 
 /*
@@ -426,18 +426,18 @@ gen_init(void)
 	    (sigaddset(&s_mask,SIGINT) < 0)||(sigaddset(&s_mask,SIGHUP) < 0) ||
 	    (sigaddset(&s_mask,SIGPIPE) < 0)||(sigaddset(&s_mask,SIGQUIT)<0)){
 		tty_warn(1, "Unable to set up signal mask");
-		return(-1);
+		return -1;
 	}
 #ifdef SIGXCPU
 	if (sigaddset(&s_mask,SIGXCPU) < 0) {
 		tty_warn(1, "Unable to set up signal mask");
-		return(-1);
+		return -1;
 	}
 #endif
 #ifdef SIGXFSZ
 	if (sigaddset(&s_mask,SIGXFSZ) < 0) {
 		tty_warn(1, "Unable to set up signal mask");
-		return(-1);
+		return -1;
 	}
 #endif
 
@@ -479,9 +479,9 @@ gen_init(void)
 	if (sigaction(SIGXFSZ, &n_hand, &o_hand) < 0)
 		goto out;
 #endif
-	return(0);
+	return 0;
 
     out:
 	syswarn(1, errno, "Unable to set up signal handler");
-	return(-1);
+	return -1;
 }
