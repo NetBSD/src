@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.40 2006/02/11 18:37:36 dsl Exp $	*/
+/*	$NetBSD: targ.c,v 1.41 2006/02/11 20:19:36 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.40 2006/02/11 18:37:36 dsl Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.41 2006/02/11 20:19:36 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.40 2006/02/11 18:37:36 dsl Exp $");
+__RCSID("$NetBSD: targ.c,v 1.41 2006/02/11 20:19:36 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -141,7 +141,6 @@ static Hash_Table targets;	/* a hash table of same */
 
 static int TargPrintOnlySrc(ClientData, ClientData);
 static int TargPrintName(ClientData, ClientData);
-static int TargPrintNode(ClientData, ClientData);
 #ifdef CLEANUP
 static void TargFreeGN(ClientData);
 #endif
@@ -657,6 +656,9 @@ Targ_PrintNode(ClientData gnp, ClientData passp)
 		Lst_ForEach(gn->iParents, TargPrintName, (ClientData)0);
 		fputc('\n', stdout);
 	    }
+	} else {
+	    if (gn->unmade)
+		printf("# %d unmade children\n", gn->unmade);
 	}
 	if (!Lst_IsEmpty (gn->parents)) {
 	    printf("# parents: ");
