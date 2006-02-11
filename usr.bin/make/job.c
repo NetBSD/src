@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.103 2006/01/22 19:54:55 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.104 2006/02/11 20:58:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.103 2006/01/22 19:54:55 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.104 2006/02/11 20:58:53 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.103 2006/01/22 19:54:55 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.104 2006/02/11 20:58:53 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -329,7 +329,7 @@ STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
 				 * limits or migration home */
 
 
-sigset_t	caught_signals;	/* Set of signals we handle */
+static sigset_t caught_signals;	/* Set of signals we handle */
 #if defined(USE_PGRP) && defined(SYSV)
 # define KILL(pid, sig)		kill(-(pid), (sig))
 #else
@@ -397,7 +397,7 @@ static void JobSigLock(sigset_t *omaskp)
 {
 	if (sigprocmask(SIG_BLOCK, &caught_signals, omaskp) != 0) {
 		Punt("JobSigLock: sigprocmask: %s", strerror(errno));
-	sigemptyset(omaskp);
+		sigemptyset(omaskp);
 	}
 }
 
@@ -2815,7 +2815,7 @@ static void JobSigReset(void)
 {
 #define DELSIG(s)					\
     if (sigismember(&caught_signals, s)) {		\
-	(void)signal(SIGINT, SIG_DFL);			\
+	(void)signal(s, SIG_DFL);			\
     }
 
     DELSIG(SIGINT)
