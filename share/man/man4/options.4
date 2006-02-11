@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.312 2006/02/09 23:18:10 wiz Exp $
+.\"	$NetBSD: options.4,v 1.313 2006/02/11 18:33:34 ross Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2499,6 +2499,10 @@ instructions and data types and software support for floating point traps.
 Limit the amount of memory seen by the kernel to
 .Ar value
 bytes (OEA only).
+.It Cd options PTEGCOUNT=value
+Specify the size of the page table as
+.Ar value
+PTE groups. Normally, one PTEG is allocated per physical page frame.
 .El
 .Ss sparc-specific Options
 .Bl -ohang
