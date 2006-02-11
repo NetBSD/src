@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.321 2006/02/08 19:02:58 agc Exp $
+#	$NetBSD: Makefile,v 1.322 2006/02/11 20:56:29 dsl Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -43,6 +43,7 @@
 
 # XXX: .WAIT doesn't work the way this makefile needs it to.
 # So until that is fixed.
+# Actually that isn't enough either.... snap_pre must not depend on anything
 .NOTPARALLEL:
 
 .MAKEOVERRIDES+=	USETOOLS
@@ -193,7 +194,7 @@ params: .PHONY
 .endfor
 
 CLEANFILES+=	etc-release
-etc-release: .EXEC
+etc-release: .EXEC .MAKE
 	${_MKTARGET_CREATE}
 	@(	echo "NetBSD ${DISTRIBVER}/${MACHINE}"; \
 		echo ; \
@@ -342,7 +343,7 @@ OBSOLETE.files=		base comp etc games man misc text
 OBSOLETE.files+=	xbase xcomp xetc xfont xserver
 .endif
 
-install-obsolete-lists: .PHONY
+install-obsolete-lists: .PHONY .MAKE
 	mkdir -p ${OBSOLETE.dir}
 .if ${MKX11} != "no"
 	(cd ${NETBSDSRCDIR}/distrib/sets && \
@@ -457,7 +458,7 @@ iso-image-md-post: .PHONY check_DESTDIR check_RELEASEDIR .WAIT iso-image-mi
 # snap_pre --
 #	Create ${RELEASEDIR} and necessary subdirectories.
 #
-snap_pre: .PHONY check_DESTDIR check_RELEASEDIR
+snap_pre: .PHONY # check_DESTDIR check_RELEASEDIR
 	${INSTALL} -d -m 755 ${RELEASEDIR}
 .if ${MKUPDATE} == "no"
 # Could be a mount point, ignore the errors
@@ -471,7 +472,7 @@ snap_pre: .PHONY check_DESTDIR check_RELEASEDIR
 # snap_post --
 #	Build the install media and notes from distrib
 #
-snap_post: .PHONY check_DESTDIR check_RELEASEDIR
+snap_post: .PHONY .MAKE check_DESTDIR check_RELEASEDIR
 .if ${MKUPDATE} == "no"
 	cd ${NETBSDSRCDIR}/distrib && ${MAKE} cleandir
 .endif
@@ -530,7 +531,7 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 .if !defined(KERNELS_DONE)						# {
 .for configfile in ${ALL_KERNELS}					# {
 _KERNELS_TO_BUILD+=kern-${configfile}
-kern-${configfile}: .PHONY
+kern-${configfile}: .PHONY .MAKE
 	cd ${KERNCONFDIR} && ${TOOL_CONFIG} -s ${KERNSRCDIR} \
 	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
 .if ${MKUPDATE} == "no"
@@ -608,7 +609,7 @@ build_releasekernels: ${_RELEASEKERNELS_TO_BUILD}
 # snap_kern --
 #	build the kernels, then the sets & release kernels
 #
-snap_kern: check_DESTDIR check_RELEASEDIR .WAIT \
+snap_kern: .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
 	    build_kernels .WAIT \
 	    build_kernelsets build_releasekernels
 
@@ -619,7 +620,7 @@ snap_kern: check_DESTDIR check_RELEASEDIR .WAIT \
 #	Machine dependent distribution media operations.
 #	Overridden by etc.$MACHINE/Makefile.inc
 #
-snap_md_post: check_DESTDIR check_RELEASEDIR
+snap_md_post: .PHONY check_DESTDIR check_RELEASEDIR
 #	(empty -- look in the machine-dependent Makefile.inc)
 
 
