@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.847 2006/02/08 19:00:33 agc Exp $
+#	$NetBSD: mi,v 1.848 2006/02/11 12:57:03 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -516,10 +516,10 @@
 ./usr/include/fnmatch.h				comp-c-include
 ./usr/include/form.h				comp-c-include
 ./usr/include/frame.h				comp-obsolete		obsolete
-./usr/include/fstab.h				comp-c-include
+./usr/include/fs/sysvbfs/bfs.h			comp-c-include
 ./usr/include/fs/udf/ecma167-udf.h		comp-c-include
 ./usr/include/fs/udf/udf_mount.h		comp-c-include
-./usr/include/fs/sysvbfs/bfs.h			comp-c-include
+./usr/include/fstab.h				comp-c-include
 ./usr/include/fts.h				comp-c-include
 ./usr/include/ftw.h				comp-c-include
 ./usr/include/g++/ACG.h				comp-obsolete		obsolete
@@ -1165,8 +1165,8 @@
 ./usr/include/openssl/pem2.h			comp-c-include		crypto
 ./usr/include/openssl/pkcs12.h			comp-c-include		crypto
 ./usr/include/openssl/pkcs7.h			comp-c-include		crypto
-./usr/include/openssl/pqueue.h			comp-c-include		crypto
 ./usr/include/openssl/pq_compat.h		comp-c-include		crypto
+./usr/include/openssl/pqueue.h			comp-c-include		crypto
 ./usr/include/openssl/rand.h			comp-c-include		crypto
 ./usr/include/openssl/rc2.h			comp-c-include		crypto
 ./usr/include/openssl/rc4.h			comp-c-include		crypto
@@ -2270,10 +2270,10 @@
 ./usr/share/man/cat2/x86_64_iopl.0		comp-c-catman		.cat
 ./usr/share/man/cat2/x86_64_set_mtrr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ASN1_OBJECT_new.0		comp-c-catman		crypto,.cat
-./usr/share/man/cat3/ASN1_generate_nconf.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/ASN1_STRING_length.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/ASN1_STRING_new.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/ASN1_STRING_print_ex.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/ASN1_generate_nconf.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_ctrl.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_f_base64.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_f_buffer.0		comp-c-catman		crypto,.cat
@@ -2402,8 +2402,8 @@
 ./usr/share/man/cat3/MD5Update.0		comp-c-catman		.cat
 ./usr/share/man/cat3/MD5_Init.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/OBJ_nid2obj.0		comp-c-catman		crypto,.cat
-./usr/share/man/cat3/OPENSSL_VERSION_NUMBER.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_Applink.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/OPENSSL_VERSION_NUMBER.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_config.0		comp-c-man		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_ia32cap.0		comp-c-man		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_load_builtin_modules.0	comp-c-man		crypto,.cat
@@ -3181,12 +3181,12 @@
 ./usr/share/man/cat3/ftok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ftrylockfile.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fts.0			comp-c-catman		.cat
-./usr/share/man/cat3/ftw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fts_children.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fts_close.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fts_open.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fts_read.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fts_set.0			comp-c-catman		.cat
+./usr/share/man/cat3/ftw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fullname.0			comp-c-catman		.cat
 ./usr/share/man/cat3/funlockfile.0		comp-c-catman		.cat
 ./usr/share/man/cat3/funopen.0			comp-c-catman		.cat
@@ -4447,7 +4447,6 @@
 ./usr/share/man/cat3/standout.0			comp-c-catman		.cat
 ./usr/share/man/cat3/start_color.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stdarg.0			comp-c-catman		.cat
-./usr/share/man/cat3/sysexits.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stdio.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcasecmp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcasestr.0		comp-c-catman		.cat
@@ -4558,6 +4557,7 @@
 ./usr/share/man/cat3/sysctlbyname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sysctlgetmibinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sysctlnametomib.0		comp-c-catman		.cat
+./usr/share/man/cat3/sysexits.0			comp-c-catman		.cat
 ./usr/share/man/cat3/syslog.0			comp-c-catman		.cat
 ./usr/share/man/cat3/system.0			comp-c-catman		.cat
 ./usr/share/man/cat3/t_freent.0			comp-c-catman		.cat
@@ -4913,6 +4913,7 @@
 ./usr/share/man/cat9/PCI_REVISION.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/PCI_VENDOR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/PMC_ENABLED.0		comp-sys-catman		.cat
+./usr/share/man/cat9/RUN_ONCE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/SCHED_LOCK.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/SCHED_UNLOCK.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/TC_DENSE_TO_SPARSE.0	comp-sys-catman		.cat
@@ -5104,8 +5105,8 @@
 ./usr/share/man/cat9/cdevvp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/checkalias.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/child_return.0		comp-sys-catman		.cat
-./usr/share/man/cat9/chooseproc.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/chooselwp.0		comp-sys-catman		.cat
+./usr/share/man/cat9/chooseproc.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/clock_secs_to_ymdhms.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/clock_ymdhms_to_secs.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/closef.0			comp-sys-catman		.cat
@@ -5146,9 +5147,9 @@
 ./usr/share/man/cat9/cpu_dumpsize.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_exit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_fork.0			comp-obsolete		obsolete
-./usr/share/man/cat9/cpu_lwp_fork.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_idle.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_initclocks.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cpu_lwp_fork.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_number.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_reboot.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_rootconf.0		comp-sys-catman		.cat
@@ -5254,12 +5255,12 @@
 ./usr/share/man/cat9/file.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/filedesc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/firmload.0			comp-sys-catman		.cat
-./usr/share/man/cat9/firmware_open.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/firmware_close.0		comp-sys-catman		.cat
-./usr/share/man/cat9/firmware_get_size.0	comp-sys-catman		.cat
-./usr/share/man/cat9/firmware_read.0		comp-sys-catman		.cat
-./usr/share/man/cat9/firmware_malloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/firmware_free.0		comp-sys-catman		.cat
+./usr/share/man/cat9/firmware_get_size.0	comp-sys-catman		.cat
+./usr/share/man/cat9/firmware_malloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/firmware_open.0		comp-sys-catman		.cat
+./usr/share/man/cat9/firmware_read.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fork1.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/format_bytes.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fownsignal.0		comp-sys-catman		.cat
@@ -5592,7 +5593,6 @@
 ./usr/share/man/cat9/rt_timer_queue_destroy.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/rt_timer_remove_all.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/runtime.0			comp-obsolete		obsolete
-./usr/share/man/cat9/RUN_ONCE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/sched_lock_idle.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sched_psignal.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sched_unlock_idle.0	comp-sys-catman		.cat
@@ -6338,13 +6338,13 @@
 ./usr/share/man/man3/MD2FileChunk.3		comp-c-man		.man
 ./usr/share/man/man3/MD2Final.3			comp-c-man		.man
 ./usr/share/man/man3/MD2Init.3			comp-c-man		.man
+./usr/share/man/man3/MD2Transform.3		comp-c-man		.man
 ./usr/share/man/man3/MD2Update.3		comp-c-man		.man
 ./usr/share/man/man3/MD4Data.3			comp-c-man		.man
 ./usr/share/man/man3/MD4End.3			comp-c-man		.man
 ./usr/share/man/man3/MD4File.3			comp-c-man		.man
 ./usr/share/man/man3/MD4Final.3			comp-c-man		.man
 ./usr/share/man/man3/MD4Init.3			comp-c-man		.man
-./usr/share/man/man3/MD2Transform.3		comp-c-man		.man
 ./usr/share/man/man3/MD4Update.3		comp-c-man		.man
 ./usr/share/man/man3/MD5Data.3			comp-c-man		.man
 ./usr/share/man/man3/MD5End.3			comp-c-man		.man
@@ -7133,12 +7133,12 @@
 ./usr/share/man/man3/ftok.3			comp-c-man		.man
 ./usr/share/man/man3/ftrylockfile.3		comp-c-man		.man
 ./usr/share/man/man3/fts.3			comp-c-man		.man
-./usr/share/man/man3/ftw.3			comp-c-man		.man
 ./usr/share/man/man3/fts_children.3		comp-c-man		.man
 ./usr/share/man/man3/fts_close.3		comp-c-man		.man
 ./usr/share/man/man3/fts_open.3			comp-c-man		.man
 ./usr/share/man/man3/fts_read.3			comp-c-man		.man
 ./usr/share/man/man3/fts_set.3			comp-c-man		.man
+./usr/share/man/man3/ftw.3			comp-c-man		.man
 ./usr/share/man/man3/fullname.3			comp-c-man		.man
 ./usr/share/man/man3/funlockfile.3		comp-c-man		.man
 ./usr/share/man/man3/funopen.3			comp-c-man		.man
@@ -8394,7 +8394,6 @@
 ./usr/share/man/man3/standout.3			comp-c-man		.man
 ./usr/share/man/man3/start_color.3		comp-c-man		.man
 ./usr/share/man/man3/stdarg.3			comp-c-man		.man
-./usr/share/man/man3/sysexits.3			comp-c-man		.man
 ./usr/share/man/man3/stdio.3			comp-c-man		.man
 ./usr/share/man/man3/strcasecmp.3		comp-c-man		.man
 ./usr/share/man/man3/strcasestr.3		comp-c-man		.man
@@ -8505,6 +8504,7 @@
 ./usr/share/man/man3/sysctlbyname.3		comp-c-man		.man
 ./usr/share/man/man3/sysctlgetmibinfo.3		comp-c-man		.man
 ./usr/share/man/man3/sysctlnametomib.3		comp-c-man		.man
+./usr/share/man/man3/sysexits.3			comp-c-man		.man
 ./usr/share/man/man3/syslog.3			comp-c-man		.man
 ./usr/share/man/man3/system.3			comp-c-man		.man
 ./usr/share/man/man3/t_freent.3			comp-c-man		.man
@@ -8859,6 +8859,7 @@
 ./usr/share/man/man9/PCI_REVISION.9		comp-sys-man		.man
 ./usr/share/man/man9/PCI_VENDOR.9		comp-sys-man		.man
 ./usr/share/man/man9/PMC_ENABLED.9		comp-sys-man		.man
+./usr/share/man/man9/RUN_ONCE.9			comp-sys-man		.man
 ./usr/share/man/man9/SCHED_LOCK.9		comp-sys-man		.man
 ./usr/share/man/man9/SCHED_UNLOCK.9		comp-sys-man		.man
 ./usr/share/man/man9/TC_DENSE_TO_SPARSE.9	comp-sys-man		.man
@@ -9050,8 +9051,8 @@
 ./usr/share/man/man9/cdevvp.9			comp-sys-man		.man
 ./usr/share/man/man9/checkalias.9		comp-sys-man		.man
 ./usr/share/man/man9/child_return.9		comp-sys-man		.man
-./usr/share/man/man9/chooseproc.9		comp-obsolete		obsolete
 ./usr/share/man/man9/chooselwp.9		comp-sys-man		.man
+./usr/share/man/man9/chooseproc.9		comp-obsolete		obsolete
 ./usr/share/man/man9/clock_secs_to_ymdhms.9	comp-sys-man		.man
 ./usr/share/man/man9/clock_ymdhms_to_secs.9	comp-sys-man		.man
 ./usr/share/man/man9/closef.9			comp-sys-man		.man
@@ -9092,9 +9093,9 @@
 ./usr/share/man/man9/cpu_dumpsize.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_exit.9			comp-sys-man		.man
 ./usr/share/man/man9/cpu_fork.9			comp-obsolete		obsolete
-./usr/share/man/man9/cpu_lwp_fork.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_idle.9			comp-sys-man		.man
 ./usr/share/man/man9/cpu_initclocks.9		comp-sys-man		.man
+./usr/share/man/man9/cpu_lwp_fork.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_number.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_reboot.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_rootconf.9		comp-sys-man		.man
@@ -9200,12 +9201,12 @@
 ./usr/share/man/man9/file.9			comp-sys-man		.man
 ./usr/share/man/man9/filedesc.9			comp-sys-man		.man
 ./usr/share/man/man9/firmload.9			comp-sys-man		.man
-./usr/share/man/man9/firmware_open.9		comp-sys-man		.man
 ./usr/share/man/man9/firmware_close.9		comp-sys-man		.man
-./usr/share/man/man9/firmware_get_size.9	comp-sys-man		.man
-./usr/share/man/man9/firmware_read.9		comp-sys-man		.man
-./usr/share/man/man9/firmware_malloc.9		comp-sys-man		.man
 ./usr/share/man/man9/firmware_free.9		comp-sys-man		.man
+./usr/share/man/man9/firmware_get_size.9	comp-sys-man		.man
+./usr/share/man/man9/firmware_malloc.9		comp-sys-man		.man
+./usr/share/man/man9/firmware_open.9		comp-sys-man		.man
+./usr/share/man/man9/firmware_read.9		comp-sys-man		.man
 ./usr/share/man/man9/fork1.9			comp-sys-man		.man
 ./usr/share/man/man9/format_bytes.9		comp-sys-man		.man
 ./usr/share/man/man9/fownsignal.9		comp-sys-man		.man
@@ -9538,7 +9539,6 @@
 ./usr/share/man/man9/rt_timer_queue_destroy.9	comp-sys-man		.man
 ./usr/share/man/man9/rt_timer_remove_all.9	comp-sys-man		.man
 ./usr/share/man/man9/runtime.9			comp-obsolete		obsolete
-./usr/share/man/man9/RUN_ONCE.9			comp-sys-man		.man
 ./usr/share/man/man9/sched_lock_idle.9		comp-sys-man		.man
 ./usr/share/man/man9/sched_psignal.9		comp-sys-man		.man
 ./usr/share/man/man9/sched_unlock_idle.9	comp-sys-man		.man
