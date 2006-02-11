@@ -1,4 +1,4 @@
-/*	$NetBSD: nbtool_config.h.in,v 1.9 2006/02/09 22:28:06 wiz Exp $	*/
+/*	$NetBSD: nbtool_config.h.in,v 1.10 2006/02/11 00:55:17 wiz Exp $	*/
  
 /* When regenerating this file with autoheader, make sure that
    the header and footer stay. */
@@ -119,6 +119,10 @@
 /* Define to 1 if you have the declaration of `setpassent', and to 0 if you
    don't. */
 #undef HAVE_DECL_SETPASSENT
+
+/* Define to 1 if you have the declaration of `strsuftoll', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRSUFTOLL
 
 /* Define to 1 if you have the declaration of `sys_signame', and to 0 if you
    don't. */
