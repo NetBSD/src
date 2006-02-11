@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.298 2006/02/08 19:02:59 agc Exp $
+#	$NetBSD: NetBSD.dist,v 1.299 2006/02/11 01:51:22 gdamore Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -661,6 +661,7 @@
 ./usr/share/man/cat4/cobalt
 ./usr/share/man/cat4/dreamcast
 ./usr/share/man/cat4/evbarm
+./usr/share/man/cat4/evbmips
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/hp700
 ./usr/share/man/cat4/hpcmips
@@ -766,6 +767,7 @@
 ./usr/share/man/man4/cobalt
 ./usr/share/man/man4/dreamcast
 ./usr/share/man/man4/evbarm
+./usr/share/man/man4/evbmips
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/hp700
 ./usr/share/man/man4/hpcmips
@@ -871,6 +873,7 @@
 ./usr/share/man/html4/cobalt
 ./usr/share/man/html4/dreamcast
 ./usr/share/man/html4/evbarm
+./usr/share/man/html4/evbmips
 ./usr/share/man/html4/hp300
 ./usr/share/man/html4/hp700
 ./usr/share/man/html4/hpcmips
