@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.48 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: ebus.c,v 1.49 2006/02/11 17:57:31 cdi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.48 2005/12/11 12:19:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.49 2006/02/11 17:57:31 cdi Exp $");
 
 #include "opt_ddb.h"
 
@@ -98,20 +98,19 @@ struct ebus_softc {
 	int				sc_nintmap;
 };
 
-int	ebus_match __P((struct device *, struct cfdata *, void *));
-void	ebus_attach __P((struct device *, struct device *, void *));
+int	ebus_match(struct device *, struct cfdata *, void *);
+void	ebus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ebus, sizeof(struct ebus_softc),
     ebus_match, ebus_attach, NULL, NULL);
 
-bus_space_tag_t ebus_alloc_bus_tag __P((struct ebus_softc *, int));
+bus_space_tag_t ebus_alloc_bus_tag(struct ebus_softc *, int);
 
-int	ebus_setup_attach_args __P((struct ebus_softc *, int,
-	    struct ebus_attach_args *));
-void	ebus_destroy_attach_args __P((struct ebus_attach_args *));
-int	ebus_print __P((void *, const char *));
-void	ebus_find_ino __P((struct ebus_softc *, struct ebus_attach_args *));
-int	ebus_find_node __P((struct pci_attach_args *));
+int	ebus_setup_attach_args(struct ebus_softc *, int,
+	    struct ebus_attach_args *);
+void	ebus_destroy_attach_args(struct ebus_attach_args *);
+int	ebus_print(void *, const char *);
+void	ebus_find_ino(struct ebus_softc *, struct ebus_attach_args *);
 
 /*
  * here are our bus space and bus DMA routines.
@@ -123,10 +122,7 @@ static void *ebus_intr_establish __P((bus_space_tag_t, int, int,
 				int (*) __P((void *)), void *, void(*)__P((void))));
 
 int
-ebus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ebus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char *name;
@@ -166,9 +162,7 @@ ebus_match(parent, match, aux)
  * after the sbus code which does similar things.
  */
 void
-ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ebus_softc *sc = (struct ebus_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -247,11 +241,11 @@ ebus_attach(parent, self, aux)
 	}
 }
 
+int	ebus_setup_attach_args(struct ebus_softc *, int,
+	    struct ebus_attach_args *);
 int
-ebus_setup_attach_args(sc, node, ea)
-	struct ebus_softc	*sc;
-	int			node;
-	struct ebus_attach_args	*ea;
+ebus_setup_attach_args(struct ebus_softc *sc, int node,
+	struct ebus_attach_args	*ea)
 {
 	int	n, rv;
 
@@ -293,8 +287,7 @@ ebus_setup_attach_args(sc, node, ea)
 }
 
 void
-ebus_destroy_attach_args(ea)
-	struct ebus_attach_args	*ea;
+ebus_destroy_attach_args(struct ebus_attach_args *ea)
 {
 
 	if (ea->ea_name)
@@ -308,9 +301,7 @@ ebus_destroy_attach_args(ea)
 }
 
 int
-ebus_print(aux, p)
-	void *aux;
-	const char *p;
+ebus_print(void *aux, const char *p)
 {
 	struct ebus_attach_args *ea = aux;
 	int i;
@@ -337,9 +328,7 @@ ebus_print(aux, p)
  * to give the INO for this interrupt.
  */
 void
-ebus_find_ino(sc, ea)
-	struct ebus_softc *sc;
-	struct ebus_attach_args *ea;
+ebus_find_ino(struct ebus_softc *sc, struct ebus_attach_args *ea)
 {
 	u_int32_t hi, lo, intr;
 	int i, j, k;
@@ -395,9 +384,7 @@ next_intr:;
  * about PCI physical addresses, which also applies to ebus.
  */
 bus_space_tag_t
-ebus_alloc_bus_tag(sc, type)
-	struct ebus_softc *sc;
-	int type;
+ebus_alloc_bus_tag(struct ebus_softc *sc, int type)
 {
 	bus_space_tag_t bt;
 
