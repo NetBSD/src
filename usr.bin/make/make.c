@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.60 2006/02/11 18:37:36 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.61 2006/02/11 20:59:49 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.60 2006/02/11 18:37:36 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.61 2006/02/11 20:59:49 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.60 2006/02/11 18:37:36 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.61 2006/02/11 20:59:49 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -726,6 +726,10 @@ Make_Update(GNode *cgn)
 		 * Queue the node up -- any unmade predecessors will
 		 * be dealt with in MakeStartJobs.
 		 */
+		if (DEBUG(MAKE)) {
+		    printf("# %s made, schedule %s\n", cgn->name, pgn->name);
+		    Targ_PrintNode(pgn, 0);
+		}
 		(void)Lst_EnQueue(toBeMade, (ClientData)pgn);
 	    } else if (pgn->unmade < 0) {
 		Error("Graph cycles through %s", pgn->name);
