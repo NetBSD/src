@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.47 2006/01/31 19:25:20 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.48 2006/02/11 10:43:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.47 2006/01/31 19:25:20 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.48 2006/02/11 10:43:17 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1180,7 +1180,7 @@ next_head(ARCHD *arcn)
 			 * them, so exit gracefully.
 			 */
 			if (first && ret == 0)
-				return(-1);
+				return -1;
 			first = 0;
 
 			/*
@@ -1190,13 +1190,13 @@ next_head(ARCHD *arcn)
 			if ((ret == 0) || (rd_sync() < 0)) {
 				tty_warn(1,
 				    "Premature end of file on archive read");
-				return(-1);
+				return -1;
 			}
 			if (!in_resync) {
 				if (act == APPND) {
 					tty_warn(1,
 					  "Archive I/O error, cannot continue");
-					return(-1);
+					return -1;
 				}
 				tty_warn(1,
 				    "Archive I/O error. Trying to recover.");
@@ -1234,7 +1234,7 @@ next_head(ARCHD *arcn)
 				 * valid trailer found, drain input as required
 				 */
 				ar_drain();
-				return(-1);
+				return -1;
 			}
 
 			if (ret == 1) {
@@ -1262,7 +1262,7 @@ next_head(ARCHD *arcn)
 			if (act == APPND) {
 				tty_warn(1,
 				    "Unable to append, archive header flaw");
-				return(-1);
+				return -1;
 			}
 			tty_warn(1,
 			    "Invalid header, starting valid header search.");
@@ -1283,11 +1283,11 @@ next_head(ARCHD *arcn)
 		 * valid trailer found, drain input as required
 		 */
 		ar_drain();
-		return(-1);
+		return -1;
 	}
 
 	++flcnt;
-	return(0);
+	return 0;
 }
 
 /*
@@ -1319,7 +1319,7 @@ get_arc(void)
 			minhd = fsub[ford[i]].hsz;
 	}
 	if (rd_start() < 0)
-		return(-1);
+		return -1;
 	res = BLKMULT;
 	hdsz = 0;
 	hdend = hdbuf;
@@ -1351,7 +1351,7 @@ get_arc(void)
 			hdend = hdbuf;
 			if (!notice) {
 				if (act == APPND)
-					return(-1);
+					return -1;
 				tty_warn(1,
 				    "Cannot identify format. Searching...");
 				++notice;
@@ -1378,7 +1378,7 @@ get_arc(void)
 			 * adding all the special case code is far worse.
 			 */
 			pback(hdbuf, hdsz);
-			return(0);
+			return 0;
 		}
 
 		/*
@@ -1387,7 +1387,7 @@ get_arc(void)
 		 */
 		if (!notice) {
 			if (act == APPND)
-				return(-1);
+				return -1;
 			tty_warn(1, "Cannot identify format. Searching...");
 			++notice;
 		}
@@ -1414,5 +1414,5 @@ get_arc(void)
 	 * we cannot find a header, bow, apologize and quit
 	 */
 	tty_warn(1, "Sorry, unable to determine archive format.");
-	return(-1);
+	return -1;
 }
