@@ -1,5 +1,5 @@
 /*-
- * $Id: lmcconfig.c,v 1.6 2006/02/11 23:01:10 christos Exp $
+ * $NetBSD: lmcconfig.c,v 1.7 2006/02/11 23:02:10 christos Exp $
  *
  * First author: Michael Graff.
  * Copyright (c) 1997-2000 Lan Media Corp.
