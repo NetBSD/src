@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.39 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: pax.c,v 1.40 2006/02/11 11:04:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.39 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: pax.c,v 1.40 2006/02/11 11:04:57 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,6 +242,7 @@ main(int argc, char **argv)
 {
 	const char *tmpdir;
 	size_t tdlen;
+	int rval;
 
 	setprogname(argv[0]);
 
@@ -294,34 +295,36 @@ main(int argc, char **argv)
 	/*
 	 * select a primary operation mode
 	 */
-	switch(act) {
+	switch (act) {
 	case EXTRACT:
-		extract();
+		rval = extract();
 		break;
 	case ARCHIVE:
-		archive();
+		rval = archive();
 		break;
 	case APPND:
 		if (gzip_program != NULL)
 			err(1, "cannot gzip while appending");
-		append();
+		rval = append();
 		/* 
 		 * Check if we tried to append on an empty file and
 		 * turned into ARCHIVE mode.
 		 */
 		if (act == -ARCHIVE) {
 			act = ARCHIVE;
-			archive();
+			rval = archive();
 		}
 		break;
 	case COPY:
-		copy();
+		rval = copy();
 		break;
 	default:
 	case LIST:
-		list();
+		rval = list();
 		break;
 	}
+	if (rval != 0)
+		exit_val = 1;
 	return exit_val;
 }
 
