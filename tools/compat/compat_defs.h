@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.50 2006/02/10 07:07:20 wiz Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.51 2006/02/11 00:56:08 wiz Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -367,7 +367,7 @@ size_t strlcpy(char *, const char *, size_t);
 char *strsep(char **, const char *);
 #endif
 
-#if !HAVE_STRSUFTOLL
+#if !HAVE_DECL_STRSUFTOLL
 long long strsuftoll(const char *, const char *, long long, long long);
 long long strsuftollx(const char *, const char *,
 			long long, long long, char *, size_t);
