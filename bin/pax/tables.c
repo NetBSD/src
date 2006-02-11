@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.24 2005/09/16 17:05:14 christos Exp $	*/
+/*	$NetBSD: tables.c,v 1.25 2006/02/11 10:43:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.24 2005/09/16 17:05:14 christos Exp $");
+__RCSID("$NetBSD: tables.c,v 1.25 2006/02/11 10:43:18 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,12 +117,12 @@ int
 lnk_start(void)
 {
 	if (ltab != NULL)
-		return(0);
+		return 0;
 	if ((ltab = (HRDLNK **)calloc(L_TAB_SZ, sizeof(HRDLNK *))) == NULL) {
 		tty_warn(1, "Cannot allocate memory for hard link table");
-		return(-1);
+		return -1;
 	}
-	return(0);
+	return 0;
 }
 
 /*
@@ -145,12 +145,12 @@ chk_lnk(ARCHD *arcn)
 	u_int indx;
 
 	if (ltab == NULL)
-		return(-1);
+		return -1;
 	/*
 	 * ignore those nodes that cannot have hard links
 	 */
 	if ((arcn->type == PAX_DIR) || (arcn->sb.st_nlink <= 1))
-		return(0);
+		return 0;
 
 	/*
 	 * hash inode number and look for this file
@@ -192,7 +192,7 @@ chk_lnk(ARCHD *arcn)
 				(void)free((char *)pt->name);
 				(void)free((char *)pt);
 			}
-			return(1);
+			return 1;
 		}
 	}
 
@@ -207,13 +207,13 @@ chk_lnk(ARCHD *arcn)
 			pt->nlink = arcn->sb.st_nlink;
 			pt->fow = ltab[indx];
 			ltab[indx] = pt;
-			return(0);
+			return 0;
 		}
 		(void)free((char *)pt);
 	}
 
 	tty_warn(1, "Hard link table out of memory");
-	return(-1);
+	return -1;
 }
 
 /*
@@ -341,10 +341,10 @@ int
 ftime_start(void)
 {
 	if (ftab != NULL)
-		return(0);
+		return 0;
 	if ((ftab = (FTM **)calloc(F_TAB_SZ, sizeof(FTM *))) == NULL) {
 		tty_warn(1, "Cannot allocate memory for file time table");
-		return(-1);
+		return -1;
 	}
 
 	/*
@@ -355,11 +355,11 @@ ftime_start(void)
 	if ((ffd = mkstemp(tempfile)) == -1) {
 		syswarn(1, errno, "Unable to create temporary file: %s",
 		    tempfile);
-		return(-1);
+		return -1;
 	}
 
 	(void)unlink(tempfile);
-	return(0);
+	return 0;
 }
 
 /*
@@ -386,7 +386,7 @@ chk_ftime(ARCHD *arcn)
 	 * no info, go ahead and add to archive
 	 */
 	if (ftab == NULL)
-		return(0);
+		return 0;
 
 	/*
 	 * hash the pathname and look up in table
@@ -408,12 +408,12 @@ chk_ftime(ARCHD *arcn)
 				if (lseek(ffd,pt->seek,SEEK_SET) != pt->seek) {
 					syswarn(1, errno,
 					    "Failed ftime table seek");
-					return(-1);
+					return -1;
 				}
 				if (xread(ffd, ckname, namelen) != namelen) {
 					syswarn(1, errno,
 					    "Failed ftime table read");
-					return(-1);
+					return -1;
 				}
 
 				/*
@@ -438,12 +438,12 @@ chk_ftime(ARCHD *arcn)
 				 * file is newer
 				 */
 				pt->mtime = arcn->sb.st_mtime;
-				return(0);
+				return 0;
 			}
 			/*
 			 * file is older
 			 */
-			return(1);
+			return 1;
 		}
 	}
 
@@ -461,7 +461,7 @@ chk_ftime(ARCHD *arcn)
 				pt->namelen = namelen;
 				pt->fow = ftab[indx];
 				ftab[indx] = pt;
-				return(0);
+				return 0;
 			}
 			syswarn(1, errno, "Failed write to file time table");
 		} else
@@ -471,7 +471,7 @@ chk_ftime(ARCHD *arcn)
 
 	if (pt != NULL)
 		(void)free((char *)pt);
-	return(-1);
+	return -1;
 }
 
 /*
@@ -497,13 +497,13 @@ int
 name_start(void)
 {
 	if (ntab != NULL)
-		return(0);
+		return 0;
 	if ((ntab = (NAMT **)calloc(N_TAB_SZ, sizeof(NAMT *))) == NULL) {
 		tty_warn(1,
 		    "Cannot allocate memory for interactive rename table");
-		return(-1);
+		return -1;
 	}
-	return(0);
+	return 0;
 }
 
 /*
@@ -526,7 +526,7 @@ add_name(char *oname, int onamelen, char *nname)
 		 * should never happen
 		 */
 		tty_warn(0, "No interactive rename table, links may fail\n");
-		return(0);
+		return 0;
 	}
 
 	/*
@@ -547,14 +547,14 @@ add_name(char *oname, int onamelen, char *nname)
 			 * the user just input (if it is different)
 			 */
 			if (strcmp(nname, pt->nname) == 0)
-				return(0);
+				return 0;
 
 			(void)free((char *)pt->nname);
 			if ((pt->nname = strdup(nname)) == NULL) {
 				tty_warn(1, "Cannot update rename table");
-				return(-1);
+				return -1;
 			}
-			return(0);
+			return 0;
 		}
 	}
 
@@ -566,14 +566,14 @@ add_name(char *oname, int onamelen, char *nname)
 			if ((pt->nname = strdup(nname)) != NULL) {
 				pt->fow = ntab[indx];
 				ntab[indx] = pt;
-				return(0);
+				return 0;
 			}
 			(void)free((char *)pt->oname);
 		}
 		(void)free((char *)pt);
 	}
 	tty_warn(1, "Interactive rename table out of memory");
-	return(-1);
+	return -1;
 }
 
 /*
@@ -670,12 +670,12 @@ int
 dev_start(void)
 {
 	if (dtab != NULL)
-		return(0);
+		return 0;
 	if ((dtab = (DEVT **)calloc(D_TAB_SZ, sizeof(DEVT *))) == NULL) {
 		tty_warn(1, "Cannot allocate memory for device mapping table");
-		return(-1);
+		return -1;
 	}
-	return(0);
+	return 0;
 }
 
 /*
@@ -692,8 +692,8 @@ int
 add_dev(ARCHD *arcn)
 {
 	if (chk_dev(arcn->sb.st_dev, 1) == NULL)
-		return(-1);
-	return(0);
+		return -1;
+	return 0;
 }
 
 /*
@@ -716,7 +716,7 @@ chk_dev(dev_t dev, int add)
 	u_int indx;
 
 	if (dtab == NULL)
-		return(NULL);
+		return NULL;
 	/*
 	 * look to see if this device is already in the table
 	 */
@@ -729,7 +729,7 @@ chk_dev(dev_t dev, int add)
 		 * found it, return a pointer to it
 		 */
 		if (pt != NULL)
-			return(pt);
+			return pt;
 	}
 
 	/*
@@ -737,7 +737,7 @@ chk_dev(dev_t dev, int add)
 	 * to see if a device number is being used.
 	 */
 	if (add == 0)
-		return(NULL);
+		return NULL;
 
 	/*
 	 * allocate a node for this device and add it to the front of the hash
@@ -746,13 +746,13 @@ chk_dev(dev_t dev, int add)
 	 */
 	if ((pt = (DEVT *)malloc(sizeof(DEVT))) == NULL) {
 		tty_warn(1, "Device map table out of memory");
-		return(NULL);
+		return NULL;
 	}
 	pt->dev = dev;
 	pt->list = NULL;
 	pt->fow = dtab[indx];
 	dtab[indx] = pt;
-	return(pt);
+	return pt;
 }
 /*
  * map_dev()
@@ -779,7 +779,7 @@ map_dev(ARCHD *arcn, u_long dev_mask, u_long ino_mask)
 	ino_t nino;
 
 	if (dtab == NULL)
-		return(0);
+		return 0;
 	/*
 	 * check for device and inode truncation, and extract the truncated
 	 * bit pattern.
@@ -810,7 +810,7 @@ map_dev(ARCHD *arcn, u_long dev_mask, u_long ino_mask)
 			 */
 			arcn->sb.st_dev = dpt->dev;
 			arcn->sb.st_ino = nino;
-			return(0);
+			return 0;
 		}
 	} else {
 		/*
@@ -818,7 +818,7 @@ map_dev(ARCHD *arcn, u_long dev_mask, u_long ino_mask)
 		 * form of truncation, we do not need a remap
 		 */
 		if (!trc_ino && !trc_dev)
-			return(0);
+			return 0;
 
 		/*
 		 * we have truncation, have to add this as a device to remap
@@ -876,14 +876,14 @@ map_dev(ARCHD *arcn, u_long dev_mask, u_long ino_mask)
 	pt->list = dpt;
 	arcn->sb.st_dev = lastdev;
 	arcn->sb.st_ino = nino;
-	return(0);
+	return 0;
 
     bad:
 	tty_warn(1,
 	    "Unable to fix truncated inode/device field when storing %s",
 	    arcn->name);
 	tty_warn(0, "Archive may create improper hard links when extracted");
-	return(0);
+	return 0;
 }
 
 /*
@@ -914,13 +914,13 @@ int
 atdir_start(void)
 {
 	if (atab != NULL)
-		return(0);
+		return 0;
 	if ((atab = (ATDIR **)calloc(A_TAB_SZ, sizeof(ATDIR *))) == NULL) {
 		tty_warn(1,
 		    "Cannot allocate space for directory access time table");
-		return(-1);
+		return -1;
 	}
-	return(0);
+	return 0;
 }
 
 
@@ -1032,13 +1032,13 @@ get_atdir(dev_t dev, ino_t ino, time_t *mtime, time_t *atime)
 	u_int indx;
 
 	if (atab == NULL)
-		return(-1);
+		return -1;
 	/*
 	 * hash by inode and search the chain for an inode and device match
 	 */
 	indx = ((unsigned)ino) % A_TAB_SZ;
 	if ((pt = atab[indx]) == NULL)
-		return(-1);
+		return -1;
 
 	ppt = &(atab[indx]);
 	while (pt != NULL) {
@@ -1055,7 +1055,7 @@ get_atdir(dev_t dev, ino_t ino, time_t *mtime, time_t *atime)
 	 * return if we did not find it.
 	 */
 	if (pt == NULL)
-		return(-1);
+		return -1;
 
 	/*
 	 * found it. return the times and remove the entry from the table.
@@ -1065,7 +1065,7 @@ get_atdir(dev_t dev, ino_t ino, time_t *mtime, time_t *atime)
 	*atime = pt->atime;
 	(void)free((char *)pt->name);
 	(void)free((char *)pt);
-	return(0);
+	return 0;
 }
 
 /*
@@ -1108,7 +1108,7 @@ dir_start(void)
 {
 #ifdef DIRS_USE_FILE
 	if (dirfd != -1)
-		return(0);
+		return 0;
 
 	/*
 	 * unlink the file so it goes away at termination by itself
@@ -1116,11 +1116,11 @@ dir_start(void)
 	memcpy(tempbase, _TFILE_BASE, sizeof(_TFILE_BASE));
 	if ((dirfd = mkstemp(tempfile)) >= 0) {
 		(void)unlink(tempfile);
-		return(0);
+		return 0;
 	}
 	tty_warn(1, "Unable to create temporary file for directory times: %s",
 	    tempfile);
-	return(-1);
+	return -1;
 #else
 	return (0);
 #endif /* DIRS_USE_FILE */
@@ -1360,5 +1360,5 @@ st_hash(char *name, int len, int tabsz)
 	/*
 	 * return the result mod the table size
 	 */
-	return(key % tabsz);
+	return key % tabsz;
 }
