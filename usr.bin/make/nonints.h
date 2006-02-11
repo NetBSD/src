@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.34 2005/05/08 00:38:47 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.35 2006/02/11 18:37:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -172,6 +172,7 @@ Boolean Targ_Silent(GNode *);
 Boolean Targ_Precious(GNode *);
 void Targ_SetMain(GNode *);
 int Targ_PrintCmd(ClientData, ClientData);
+int Targ_PrintNode(ClientData, ClientData);
 char *Targ_FmtTime(time_t);
 void Targ_PrintType(int);
 void Targ_PrintGraph(int);

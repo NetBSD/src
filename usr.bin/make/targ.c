@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.39 2006/01/08 17:43:31 dsl Exp $	*/
+/*	$NetBSD: targ.c,v 1.40 2006/02/11 18:37:36 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.39 2006/01/08 17:43:31 dsl Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.40 2006/02/11 18:37:36 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.39 2006/01/08 17:43:31 dsl Exp $");
+__RCSID("$NetBSD: targ.c,v 1.40 2006/02/11 18:37:36 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -618,11 +618,11 @@ Targ_PrintType(int type)
  *	print the contents of a node
  *-----------------------------------------------------------------------
  */
-static int
-TargPrintNode(ClientData gnp, ClientData passp)
+int
+Targ_PrintNode(ClientData gnp, ClientData passp)
 {
     GNode         *gn = (GNode *)gnp;
-    int	    	  pass = *(int *)passp;
+    int	    	  pass = passp ? *(int *)passp : 0;
     if (!OP_NOP(gn->type)) {
 	printf("#\n");
 	if (gn == mainTarg) {
@@ -689,7 +689,7 @@ TargPrintNode(ClientData gnp, ClientData passp)
 	Lst_ForEach(gn->commands, Targ_PrintCmd, (ClientData)0);
 	printf("\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
-	    Lst_ForEach(gn->cohorts, TargPrintNode, (ClientData)&pass);
+	    Lst_ForEach(gn->cohorts, Targ_PrintNode, (ClientData)&pass);
 	}
     }
     return (0);
@@ -738,7 +738,7 @@ void
 Targ_PrintGraph(int pass)
 {
     printf("#*** Input graph:\n");
-    Lst_ForEach(allTargets, TargPrintNode, (ClientData)&pass);
+    Lst_ForEach(allTargets, Targ_PrintNode, (ClientData)&pass);
     printf("\n\n");
     printf("#\n#   Files that are only sources:\n");
     Lst_ForEach(allTargets, TargPrintOnlySrc, (ClientData) 0);
