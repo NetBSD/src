@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.26 2005/04/24 03:26:03 christos Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.27 2006/02/11 10:43:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.26 2005/04/24 03:26:03 christos Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.27 2006/02/11 10:43:18 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,12 +106,12 @@ wr_start(void)
 	if (wrblksz > MAXBLK) {
 		tty_warn(1, "Write block size of %d too large, maximum is: %d",
 			wrblksz, MAXBLK);
-		return(-1);
+		return -1;
 	}
 	if (wrblksz % BLKMULT) {
 		tty_warn(1, "Write block size of %d is not a %d byte multiple",
 		    wrblksz, BLKMULT);
-		return(-1);
+		return -1;
 	}
 
 	/*
@@ -119,11 +119,11 @@ wr_start(void)
 	 */
 	blksz = rdblksz = wrblksz;
 	if ((ar_open(arcname) < 0) && (ar_next() < 0))
-		return(-1);
+		return -1;
 	wrcnt = 0;
 	bufend = buf + wrblksz;
 	bufpt = buf;
-	return(0);
+	return 0;
 }
 
 /*
@@ -147,13 +147,13 @@ rd_start(void)
 			tty_warn(1,
 			    "Write block size %d too large, maximum is: %d",
 			    wrblksz, MAXBLK);
-			return(-1);
+			return -1;
 		}
 		if (wrblksz % BLKMULT) {
 			tty_warn(1,
 			    "Write block size %d is not a %d byte multiple",
 			    wrblksz, BLKMULT);
-			return(-1);
+			return -1;
 		}
 	}
 
@@ -161,11 +161,11 @@ rd_start(void)
 	 * open the archive
 	 */
 	if ((ar_open(arcname) < 0) && (ar_next() < 0))
-		return(-1);
+		return -1;
 	bufend = buf + rdblksz;
 	bufpt = bufend;
 	rdcnt = 0;
-	return(0);
+	return 0;
 }
 
 /*
@@ -220,7 +220,7 @@ appnd_start(off_t skcnt)
 
 	if (exit_val != 0) {
 		tty_warn(0, "Cannot append to an archive that may have flaws.");
-		return(-1);
+		return -1;
 	}
 	/*
 	 * if the user did not specify a write blocksize, inherit the size used
@@ -236,7 +236,7 @@ appnd_start(off_t skcnt)
 	 * make sure that this volume allows appends
 	 */
 	if (ar_app_ok() < 0)
-		return(-1);
+		return -1;
 
 	/*
 	 * Calculate bytes to move back and move in front of record where we
@@ -291,13 +291,13 @@ appnd_start(off_t skcnt)
 	 * ARCHIVE mode (write) conditions
 	 */
 	if (ar_set_wr() < 0)
-		return(-1);
+		return -1;
 	act = ARCHIVE;
-	return(0);
+	return 0;
 
     out:
 	tty_warn(1, "Unable to rewrite archive trailer, cannot append.");
-	return(-1);
+	return -1;
 }
 
 /*
@@ -321,11 +321,11 @@ rd_sync(void)
 	 * if the user says bail out on first fault, we are out of here...
 	 */
 	if (maxflt == 0)
-		return(-1);
+		return -1;
 	if (act == APPND) {
 		tty_warn(1,
 		    "Unable to append when there are archive read errors.");
-		return(-1);
+		return -1;
 	}
 
 	/*
@@ -333,7 +333,7 @@ rd_sync(void)
 	 */
 	if (ar_rdsync() < 0) {
 		if (ar_next() < 0)
-			return(-1);
+			return -1;
 		else
 			rdcnt = 0;
 	}
@@ -346,7 +346,7 @@ rd_sync(void)
 			bufpt = buf;
 			bufend = buf + res;
 			rdcnt += res;
-			return(0);
+			return 0;
 		}
 
 		/*
@@ -367,7 +367,7 @@ rd_sync(void)
 		rdcnt = 0;
 		errcnt = 0;
 	}
-	return(-1);
+	return -1;
 }
 
 /*
@@ -411,7 +411,7 @@ rd_skip(off_t skcnt)
 	 * do not want.
 	 */
 	if (skcnt == 0)
-		return(0);
+		return 0;
 	res = MIN((bufend - bufpt), skcnt);
 	bufpt += res;
 	skcnt -= res;
@@ -420,7 +420,7 @@ rd_skip(off_t skcnt)
 	 * if skcnt is now 0, then no additional i/o is needed
 	 */
 	if (skcnt == 0)
-		return(0);
+		return 0;
 
 	/*
 	 * We have to read more, calculate complete and partial record reads
@@ -434,7 +434,7 @@ rd_skip(off_t skcnt)
 	 * how much it can skip over. We will have to read the rest.
 	 */
 	if (ar_fow(cnt, &skipped) < 0)
-		return(-1);
+		return -1;
 	res += cnt - skipped;
 	rdcnt += skipped;
 
@@ -448,14 +448,14 @@ rd_skip(off_t skcnt)
 		 * if the read fails, we will have to resync
 		 */
 		if ((cnt <= 0) && ((cnt = buf_fill()) < 0))
-			return(-1);
+			return -1;
 		if (cnt == 0)
-			return(1);
+			return 1;
 		cnt = MIN(cnt, res);
 		bufpt += cnt;
 		res -= cnt;
 	}
-	return(0);
+	return 0;
 }
 
 /*
@@ -499,7 +499,7 @@ wr_rdbuf(char *out, int outcnt)
 	while (outcnt > 0) {
 		cnt = bufend - bufpt;
 		if ((cnt <= 0) && ((cnt = buf_flush(blksz)) < 0))
-			return(-1);
+			return -1;
 		/*
 		 * only move what we have space for
 		 */
@@ -509,7 +509,7 @@ wr_rdbuf(char *out, int outcnt)
 		out += cnt;
 		outcnt -= cnt;
 	}
-	return(0);
+	return 0;
 }
 
 /*
@@ -543,8 +543,8 @@ rd_wrbuf(char *in, int cpcnt)
 			 * do with it
 			 */
 			if ((res = cpcnt - incnt) > 0)
-				return(res);
-			return(cnt);
+				return res;
+			return cnt;
 		}
 
 		/*
@@ -557,7 +557,7 @@ rd_wrbuf(char *in, int cpcnt)
 		incnt -= cnt;
 		in += cnt;
 	}
-	return(cpcnt);
+	return cpcnt;
 }
 
 /*
@@ -582,13 +582,13 @@ wr_skip(off_t skcnt)
 	while (skcnt > 0L) {
 		cnt = bufend - bufpt;
 		if ((cnt <= 0) && ((cnt = buf_flush(blksz)) < 0))
-			return(-1);
+			return -1;
 		cnt = MIN(cnt, skcnt);
 		memset(bufpt, 0, cnt);
 		bufpt += cnt;
 		skcnt -= cnt;
 	}
-	return(0);
+	return 0;
 }
 
 /*
@@ -633,7 +633,7 @@ wr_rdfile(ARCHD *arcn, int ifd, off_t *left)
 		cnt = bufend - bufpt;
 		if ((cnt <= 0) && ((cnt = buf_flush(blksz)) < 0)) {
 			*left = size;
-			return(-1);
+			return -1;
 		}
 		cnt = MIN(cnt, size);
 		if ((res = read_with_restart(ifd, bufpt, cnt)) <= 0)
@@ -656,7 +656,7 @@ wr_rdfile(ARCHD *arcn, int ifd, off_t *left)
 		tty_warn(1, "File %s was modified during copy to archive",
 			arcn->org_name);
 	*left = size;
-	return(0);
+	return 0;
 }
 
 /*
@@ -752,7 +752,7 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 	 * if we failed from archive read, we do not want to skip
 	 */
 	if ((size > 0L) && (*left == 0L))
-		return(-1);
+		return -1;
 
 	/*
 	 * some formats record a crc on file data. If so, then we compare the
@@ -761,7 +761,7 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 	if (docrc && (size == 0L) && (arcn->crc != crc))
 		tty_warn(1,"Actual crc does not match expected crc %s",
 		    arcn->name);
-	return(0);
+	return 0;
 }
 
 /*
@@ -869,7 +869,7 @@ buf_fill(void)
 	static int fini = 0;
 
 	if (fini)
-		return(0);
+		return 0;
 
 	for(;;) {
 		/*
@@ -880,7 +880,7 @@ buf_fill(void)
 			bufpt = buf;
 			bufend = buf + cnt;
 			rdcnt += cnt;
-			return(cnt);
+			return cnt;
 		}
 
 		/*
@@ -893,12 +893,12 @@ buf_fill(void)
 			break;
 		if (frmt == NULL || ar_next() < 0) {
 			fini = 1;
-			return(0);
+			return 0;
 		}
 		rdcnt = 0;
 	}
 	exit_val = 1;
-	return(-1);
+	return -1;
 }
 
 /*
@@ -929,7 +929,7 @@ buf_flush(int bufcnt)
 		if (ar_next() < 0) {
 			wrcnt = 0;
 			exit_val = 1;
-			return(-1);
+			return -1;
 		}
 		wrcnt = 0;
 
@@ -944,7 +944,7 @@ buf_flush(int bufcnt)
 		 */
 		bufend = buf + blksz;
 		if (blksz > bufcnt)
-			return(0);
+			return 0;
 		if (blksz < bufcnt)
 			push = bufcnt - blksz;
 	}
@@ -976,7 +976,7 @@ buf_flush(int bufcnt)
 				}
 			} else
 				bufpt = buf;
-			return(totcnt);
+			return totcnt;
 		} else if (cnt > 0) {
 			/*
 			 * Oh drat we got a partial write!
@@ -991,7 +991,7 @@ buf_flush(int bufcnt)
 			memcpy(buf, bufpt, cnt);
 			bufpt = buf + cnt;
 			if (!frmt->blkalgn || ((cnt % frmt->blkalgn) == 0))
-				return(totcnt);
+				return totcnt;
 			break;
 		}
 
@@ -1009,7 +1009,7 @@ buf_flush(int bufcnt)
 		 */
 		bufend = buf + blksz;
 		if (blksz > bufcnt)
-			return(0);
+			return 0;
 		if (blksz < bufcnt)
 			push = bufcnt - blksz;
 	}
@@ -1018,5 +1018,5 @@ buf_flush(int bufcnt)
 	 * write failed, stop pax. we must not create a bad archive!
 	 */
 	exit_val = 1;
-	return(-1);
+	return -1;
 }
