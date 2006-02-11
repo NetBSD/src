@@ -1,4 +1,4 @@
-.\"     $NetBSD: aupci.4,v 1.1 2006/02/10 21:50:06 gdamore Exp $
+.\"     $NetBSD: aupci.4,v 1.2 2006/02/11 10:37:44 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,12 +47,12 @@
 The
 .Nm
 driver provides support for the on-chip PCI bridge found in Alchemy Au1500
-and Au1550 processors. 
+and Au1550 processors.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr pci 4
 .Sh BUGS
 Additional board-specific support in the driver is
 required, so it might not be supported on all Au1500 and Au1550 designs.
 .Pp
 DMA is not supported while the PCI is running in big endian mode.
-.Sh SEE ALSO
-.Xr intro 4 ,
-.Xr pci 4
