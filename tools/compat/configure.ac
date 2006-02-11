@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.53 2006/02/09 22:26:06 wiz Exp $
+#	$NetBSD: configure.ac,v 1.54 2006/02/11 00:54:35 wiz Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -126,17 +126,13 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	strsuftoll strtoll \
 	user_from_uid vasprintf vasnprintf vsnprintf)
 
-AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64, be16toh, be32toh, be64toh, le16toh, le32toh, le64toh],,, [
-#include <sys/types.h>
-])
+AC_CHECK_DECLS([strsuftoll],,,[#include <stdlib.h>])
 
-AC_CHECK_DECLS([bswap16, bswap32, bswap64],,, [
-#include <machine/bswap.h>
-])
+AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64, be16toh, be32toh, be64toh, le16toh, le32toh, le64toh],,, [#include <sys/types.h>])
 
-AC_CHECK_DECLS([fstatvfs],,, [
-#include <sys/statvfs.h>
-])
+AC_CHECK_DECLS([bswap16, bswap32, bswap64],,, [#include <machine/bswap.h>])
+
+AC_CHECK_DECLS([fstatvfs],,, [#include <sys/statvfs.h>])
 
 AC_CHECK_DECLS([setgroupent, setpassent],,, [
 #include <sys/types.h>
