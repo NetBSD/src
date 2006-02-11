@@ -1298,7 +1298,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-          ac_config_headers="$ac_config_headers nbtool_config.h"
+          ac_config_headers="$ac_config_headers nbtool_config_internal.h"
 
           ac_config_files="$ac_config_files defs.mk"
 
@@ -9759,7 +9759,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "defs.mk" ) CONFIG_FILES="$CONFIG_FILES defs.mk" ;;
-  "nbtool_config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS nbtool_config.h" ;;
+  "nbtool_config_internal.h" ) CONFIG_HEADERS="$CONFIG_HEADERS nbtool_config_internal.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
