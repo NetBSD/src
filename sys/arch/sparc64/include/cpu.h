@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2006/01/27 18:37:49 cdi Exp $ */
+/*	$NetBSD: cpu.h,v 1.52 2006/02/11 17:57:31 cdi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -294,8 +294,8 @@ struct intrhand {
 	char			ih_pil;		/* interrupt priority */
 	struct intrhand		*ih_next;	/* global list */
 	struct intrhand		*ih_pending;	/* interrupt queued */
-	volatile u_int64_t	*ih_map;	/* Interrupt map reg */
-	volatile u_int64_t	*ih_clr;	/* clear interrupt reg */
+	volatile uint64_t	*ih_map;	/* Interrupt map reg */
+	volatile uint64_t	*ih_clr;	/* clear interrupt reg */
 };
 extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
@@ -325,8 +325,8 @@ int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
 struct fpstate64;
 void	savefpstate __P((struct fpstate64 *));
 void	loadfpstate __P((struct fpstate64 *));
-u_int64_t	probeget __P((paddr_t, int, int));
-int	probeset __P((paddr_t, int, int, u_int64_t));
+uint64_t	probeget __P((paddr_t, int, int));
+int	probeset __P((paddr_t, int, int, uint64_t));
 
 #define	 write_all_windows() __asm volatile("flushw" : : )
 #define	 write_user_windows() __asm volatile("flushw" : : )
