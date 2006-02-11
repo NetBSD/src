@@ -1,14 +1,16 @@
-/*
+/*-
+ * $Id: lmcconfig.c,v 1.6 2006/02/11 23:01:10 christos Exp $
+ *
  * First author: Michael Graff.
- * Copyright (c) 1997-2000 Lan Media Corp. (www.lanmedia.com).
+ * Copyright (c) 1997-2000 Lan Media Corp.
  * All rights reserved.
  *
  * Second author: Andrew Stanley-Jones.
- * Copyright (c) 2000-2002 SBE Corp. (www.sbei.com).
+ * Copyright (c) 2000-2002 SBE Corp.
  * All rights reserved.
  *
  * Third author: David Boggs.
- * Copyright (c) 2002-2004 David Boggs. (boggs@boggs.palo-alto.ca.us).
+ * Copyright (c) 2002-2006 David Boggs.
  * All rights reserved.
  *
  * BSD License:
@@ -36,79 +38,85 @@
  *
  * GNU General Public License:
  *
- * This program is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU General Public License as published by the Free 
- * Software Foundation; either version 2 of the License, or (at your option) 
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
- * 
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 
+ * this program; if not, write to the Free Software Foundation, Inc., 59
  * Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  * Description:
  *
- * This program configures the Unix/Linux device driver for SBE Corp's
- *  wanADAPT and wanPMC series of Wide Area Network Interface Cards.
- * There is a man page for this program; go find it.
- * 
+ * This program configures the Unix/Linux device driver
+ *  for LMC wide area network interface cards.
+ * A complete man page for this program exists.
+ * This is a total rewrite of the program 'lmcctl' by
+ *  Michael Graff, Rob Braun and Andrew Stanley-Jones.
+ *
  * If Netgraph is present (FreeBSD only):
  *    cc -o lmcconfig -l netgraph -D NETGRAPH lmcconfig.c
  * If Netgraph is NOT present:
  *    cc -o lmcconfig lmcconfig.c
- * Install the executable program in /usr/local/sbin/lmcconfig.
- *
  */
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: lmcconfig.c,v 1.5 2005/12/07 13:59:12 christos Exp $");
 
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <unistd.h>
 #if defined(NETGRAPH)
 # include <netgraph.h>
 #endif
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/time.h>
+#include <sys/cdefs.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <net/if.h>
+/* and finally... */
+# include "if_lmc.h"
 
-#include "if_lmc.h"
+/* procedure prototypes */
 
 void usage(void);
-void call_driver(unsigned long cmd, struct iohdr *iohdr);
-u_int32_t read_pci_config(u_int8_t addr);
-void write_pci_config(u_int8_t addr, u_int32_t data);
-u_int32_t read_csr(u_int8_t addr);
-void write_csr(u_int8_t addr, u_int32_t data);
-u_int16_t read_srom(u_int8_t addr);
-void write_srom(u_int8_t addr, u_int16_t data);
-u_int8_t read_bios_rom(u_int32_t addr);
-void write_bios_rom(u_int32_t addr, u_int8_t data);
-u_int16_t read_mii(u_int8_t addr);
-void write_mii(u_int8_t addr, u_int16_t data);
-unsigned char read_framer(u_int16_t addr);
-void write_framer(u_int16_t addr, u_int8_t data);
-void write_synth(struct synth synth);
-void write_dac(u_int16_t data);
+
+void call_driver(unsigned long, struct iohdr *);
+
+u_int32_t read_pci_config(u_int8_t);
+void     write_pci_config(u_int8_t, u_int32_t);
+u_int32_t read_csr(u_int8_t);
+void     write_csr(u_int8_t, u_int32_t);
+u_int16_t read_srom(u_int8_t);
+void     write_srom(u_int8_t, u_int16_t);
+u_int8_t  read_bios_rom(u_int32_t);
+void     write_bios_rom(u_int32_t, u_int8_t);
+u_int16_t read_mii(u_int8_t);
+void     write_mii(u_int8_t, u_int16_t);
+u_int8_t  read_framer(u_int16_t);
+void     write_framer(u_int16_t, u_int8_t);
+
+void write_synth(struct synth);
+void write_dac(u_int16_t);
+
 void reset_xilinx(void);
 void load_xilinx_from_rom(void);
-void load_xilinx_from_file(char *ucode, u_int32_t len);
-void ioctl_snmp_send(u_int32_t send);
-void ioctl_snmp_loop(u_int32_t loop);
+void load_xilinx_from_file(char *, int);
+
+void ioctl_snmp_send(u_int32_t);
+void ioctl_snmp_loop(u_int32_t);
 void ioctl_reset_cntrs(void);
 void ioctl_read_config(void);
 void ioctl_write_config(void);
 void ioctl_read_status(void);
+
 void print_card_name(void);
 void print_card_type(void);
 void print_status(void);
@@ -116,40 +124,48 @@ void print_tx_speed(void);
 void print_debug(void);
 void print_line_prot(void);
 void print_crc_len(void);
-void print_loop_back(void);
+void print_loop_back(int);
 void print_tx_clk_src(void);
 void print_format(void);
 void print_dte_dce(void);
 void print_synth_freq(void);
-void synth_freq(unsigned long target);
+void synth_freq(unsigned long);
 void print_cable_len(void);
 void print_cable_type(void);
 void print_time_slots(void);
 void print_scrambler(void);
-double vga_dbs(u_int8_t vga);
-void print_rx_gain(void);
+double vga_dbs(u_int8_t);
+void print_rx_gain_max(void);
 void print_tx_lbo(void);
-void print_tx_pulse(void);
+void print_tx_pulse(int);
 void print_ssi_sigs(void);
 void print_hssi_sigs(void);
 void print_events(void);
 void print_summary(void);
-char *print_t3_bop(int bop_code);
+
+char *print_t3_bop(int);
 void print_t3_snmp(void);
 void print_t3_dsu(void);
-void t3_cmd(int argc, char **argv);
-void print_test_pattern(int patt);
-char *print_t1_bop(int bop_code);
-void print_far_report(int index);
+void t3_cmd(int, char **);
+
+char *print_t1_bop(int);
+void print_t1_test_pattern(int);
+void print_t1_far_report(int);
 void print_t1_snmp(void);
 void print_t1_dsu(void);
-void t1_cmd(int argc, char **argv);
-unsigned char read_hex(FILE *f);
-u_int32_t crc32(char *bufp, int len);
-u_int8_t crc8(u_int16_t *bufp, int len);
-void init_srom(int board);
+void t1_cmd(int, char **);
+
+unsigned char read_hex(FILE *);
+void load_xilinx(char *);
+
+u_int32_t crc32(u_int8_t *, int);
+u_int8_t  crc8(u_int16_t *, int);
+
+void main_cmd(int, char **);
+/* int main(int, char **); */
 
 /* program global variables */
+
 char *		progname;	/* name of this program */
 char *		ifname;		/* interface name */
 int		fdcs;		/* ifnet File Desc or ng Ctl Socket */
@@ -158,12 +174,13 @@ struct config	config;		/* card configuration (read/write) */
 int		netgraph = 0;	/* non-zero if netgraph present */
 int		summary  = 0;	/* print summary at end */
 int		update   = 0;	/* update driver config */
-int             verbose  = 0;	/* verbose output */
+int		verbose  = 0;	/* verbose output */
+unsigned int	waittime = 0;	/* time in seconds between status prints */
 u_int8_t	checksum;	/* gate array ucode file checksum */
 
 void usage()
   {
-  fprintf(stderr, "Usage: %s interface [-abBcCdDeEfhiLmMpPsStTuUvVwWxXyYzZ?]\n", progname);
+  fprintf(stderr, "Usage: %s interface [-abBcCdDeEfgGhiLmMpPsStTuUvVwxXyY?]\n", progname);
   fprintf(stderr, "or\n");
   fprintf(stderr, "Usage: %s interface -1 [-aABcdeEfFgiIlLpPstTuUvxX]\n", progname);
   fprintf(stderr, "or\n");
@@ -175,7 +192,7 @@ void usage()
   fprintf(stderr, "\t-1 following parameters apply to T1E1 cards\n");
   fprintf(stderr, "\t-3 following parameters apply to T3 cards\n");
   fprintf(stderr, "\t-a <number> Set Tx clock source, where:\n");
-  fprintf(stderr, "\t   1:modem Tx clk 2:int src 3:modem Rx Clk 4:ext conn\n");
+  fprintf(stderr, "\t   1:modem Tx clk 2:xtal osc 3:modem Rx Clk 4:ext conn\n");
   fprintf(stderr, "\t-b Read and print bios rom addrs 0-255\n");
   fprintf(stderr, "\t-B Write bios rom with address pattern\n");
   fprintf(stderr, "\t-c Set 16-bit CRC (default)\n");
@@ -185,11 +202,13 @@ void usage()
   fprintf(stderr, "\t-e Set DTE mode (default)\n");
   fprintf(stderr, "\t-E Set DCE mode\n");
   fprintf(stderr, "\t-f <number> Set synth osc freq in bits/sec\n");
-  fprintf(stderr, "\t-F Set SPPP line protocol to Frame-Relay\n");
+  fprintf(stderr, "\t-g Load gate array from ROM\n");
+  fprintf(stderr, "\t-G <filename> Load gate array from file\n");
   fprintf(stderr, "\t-h Help: this usage message\n");
   fprintf(stderr, "\t-i Interface name (eg, lmc0)\n");
-  fprintf(stderr, "\t-L <number> Set loopback: 1:none 2:payload 3:line 4:other\n");
-  fprintf(stderr, "\t   5:inward 6:dual 16:Tulip 17:pins 18:LA/LL 19:LB/RL\n");
+  fprintf(stderr, "\t-L <number> Set loopback, where:\n");
+  fprintf(stderr, "\t   1:none 2:payload 3:line 4:other 5: inward\n");
+  fprintf(stderr, "\t   6:dual 16:Tulip 17:pins 18:LA/LL 19:LB/RL\n");
   fprintf(stderr, "\t-m Read and print MII regs\n");
   fprintf(stderr, "\t-M <addr> <data> Write MII reg\n");
   fprintf(stderr, "\t-p Read and print PCI config regs\n");
@@ -202,14 +221,13 @@ void usage()
   fprintf(stderr, "\t-U Reset gate array\n");
   fprintf(stderr, "\t-v Set verbose printout mode\n");
   fprintf(stderr, "\t-V Print card configuration\n");
-  fprintf(stderr, "\t-w Load gate array from ROM\n");
-  fprintf(stderr, "\t-W <filename> Load gate array from file\n");
-  fprintf(stderr, "\t-x select RAWIP mode and bypass line protocols\n");
-  fprintf(stderr, "\t-X Select line protocols: SPPP, P2P or HDLC\n");
-  fprintf(stderr, "\t-y disable SPPP keep-alive packets\n");
-  fprintf(stderr, "\t-Y enable SPPP keep-alive packets\n");
-  fprintf(stderr, "\t-z Set SPPP line protocol to Cisco-HDLC\n");
-  fprintf(stderr, "\t-Z Set SPPP line protocol to PPP\n");
+  fprintf(stderr, "\t-w <number> Seconds between status prints\n");
+  fprintf(stderr, "\t-x <number> Set line protocol where:\n");
+  fprintf(stderr, "\t   1:RAW-IP 2:PPP 3:C-HDLC 4:FRM-RLY 5:RAW-ETH\n");
+  fprintf(stderr, "\t-X <number> Set line package where:\n");
+  fprintf(stderr, "\t   1:RAW-IP 2:SPPP 3:P2P 4:GEN-HDLC 5:SYNC-PPP\n");
+  fprintf(stderr, "\t-y Disable SPPP keep-alive packets\n");
+  fprintf(stderr, "\t-Y  Enable SPPP keep-alive packets\n");
 
   fprintf(stderr, "The -1 switch precedes T1/E1 commands.\n");
   fprintf(stderr, "\t-a <y|b|a> Stop  sending Yellow|Blue|AIS signal\n");
@@ -254,9 +272,8 @@ void usage()
   fprintf(stderr, "\t-U <number> Set line build out where:\n");
   fprintf(stderr, "\t   0:0dB 1:7.5dB 2:15dB 3:22.5dB\n");
   fprintf(stderr, "\t   4:auto-set based on cable length\n");
-  fprintf(stderr, "\t-v Set verbose printout mode\n");
-  fprintf(stderr, "\t-x disable Transmitter outputs\n");
-  fprintf(stderr, "\t-X enable  Transmitter outputs\n");
+  fprintf(stderr, "\t-x Disable Transmitter outputs\n");
+  fprintf(stderr, "\t-X  Enable Transmitter outputs\n");
 
   fprintf(stderr, "The -3 switch precedes T3 commands.\n");
   fprintf(stderr, "\t-a <y|b|a|i> Stop  sending Yellow|Blue|AIS|Idle signal\n");
@@ -273,14 +290,11 @@ void usage()
   fprintf(stderr, "\t-s Print status of T3 DSU/CSU\n");
   fprintf(stderr, "\t-S <number> Set DS3 scrambler mode, where:\n");
   fprintf(stderr, "\t   1:OFF 2:DigitalLink|Kentrox 3:Larse\n");
-  fprintf(stderr, "\t-v Set verbose printout mode\n");
   fprintf(stderr, "\t-V <number> Write to T3 VCXO freq control DAC\n");
   }
 
 void call_driver(unsigned long cmd, struct iohdr *iohdr)
   {
-  int error = 0;
-
   strncpy(iohdr->ifname, ifname, sizeof(iohdr->ifname));
   iohdr->cookie = NGM_LMC_COOKIE;
   iohdr->iohdr = iohdr;
@@ -309,20 +323,19 @@ void call_driver(unsigned long cmd, struct iohdr *iohdr)
   else
 #endif
     {
-    if ((error = ioctl(fdcs, cmd, (caddr_t)iohdr)) < 0)
+    if (ioctl(fdcs, cmd, (caddr_t)iohdr) < 0)
       {
       fprintf(stderr, "%s: ioctl() returned error code %d: %s\n",
        progname, errno, strerror(errno));
-      if (errno == ENETDOWN)
-        printf("Type: 'ifconfig %s up' then try again.\n", ifname);
       exit(1);
       }
     }
 
   if (iohdr->cookie != NGM_LMC_COOKIE)
     {
-    fprintf(stderr, "%s: cookie = 0x%08X, expected 0x%08X\n", progname, iohdr->cookie, NGM_LMC_COOKIE);
-    fprintf(stderr, "%s: This version of %s is incompatible with the device driver\n", progname, progname);
+    fprintf(stderr, "%s: cookie is 0x%08X; expected 0x%08X\n",
+     progname, iohdr->cookie, NGM_LMC_COOKIE);
+    fprintf(stderr, "%s: recompile this program!\n", progname);
     exit(1);
     }
   }
@@ -462,7 +475,7 @@ void write_mii(u_int8_t addr, u_int16_t data)
   call_driver(LMCIOCWRITE, &ioctl.iohdr);
   }
 
-unsigned char read_framer(u_int16_t addr)
+u_int8_t read_framer(u_int16_t addr)
   {
   struct ioctl ioctl;
 
@@ -535,7 +548,7 @@ void load_xilinx_from_rom()
   call_driver(LMCIOCTL, &ioctl.iohdr);
   }
 
-void load_xilinx_from_file(char *ucode, u_int32_t len)
+void load_xilinx_from_file(char *ucode, int len)
   {
   struct ioctl ioctl;
 
@@ -617,36 +630,36 @@ void print_card_type()
   printf("Card type:\t\t");
   switch(status.card_type)
     {
-    case TLP_CSID_HSSI:
+    case LMC_CSID_HSSI:
       printf("HSSI (lmc5200)\n");
       break;
-    case TLP_CSID_T3:
+    case LMC_CSID_T3:
       printf("T3 (lmc5245)\n");
       break;
-    case TLP_CSID_SSI:
+    case LMC_CSID_SSI:
       printf("SSI (lmc1000)\n");
       break;
-    case TLP_CSID_T1E1:
+    case LMC_CSID_T1E1:
       printf("T1E1 (lmc1200)\n");
       break;
-    case TLP_CSID_HSSIc:
+    case LMC_CSID_HSSIc:
       printf("HSSI (lmc5200C)\n");
       break;
     default:
-      printf("unknown card_type: %d\n", status.card_type);
+      printf("Unknown card_type: %d\n", status.card_type);
       break;
     }
   }
 
 void print_status()
   {
-  char *status_string;
+  const char *status_string;
 
-  if      (status.oper_status == STATUS_UP)
+  if      (status.link_state == STATE_UP)
     status_string = "Up";
-  else if (status.oper_status == STATUS_DOWN)
+  else if (status.link_state == STATE_DOWN)
     status_string = "Down";
-  else if (status.oper_status == STATUS_TEST)
+  else if (status.link_state == STATE_TEST)
     status_string = "Test";
   else
     status_string = "Unknown";
@@ -666,13 +679,16 @@ void print_debug()
 
 void print_line_prot()
   {
-  char *on = "On", *off = "Off";
+  const char *on = "On", *off = "Off";
 
   printf("Line Prot/Pkg:\t\t");
   switch (status.line_prot)
     {
     case 0:
       printf("NotSet/");
+      break;
+    case PROT_IP_HDLC:
+      printf("IP-in-HDLC/");
       break;
     case PROT_PPP:
       printf("PPP/");
@@ -683,9 +699,6 @@ void print_line_prot()
     case PROT_FRM_RLY:
       printf("Frame-Relay/");
       break;
-    case PROT_IP_HDLC:
-      printf("IP-in-HDLC/");
-      break;
     case PROT_ETH_HDLC:
       printf("Ether-in-HDLC/");
       break;
@@ -693,7 +706,7 @@ void print_line_prot()
       printf("X25+LAPB/");
       break;
     default:
-      printf("unknown line_prot: %d/", status.line_prot);
+      printf("Unknown line_prot: %d/", status.line_prot);
       break;
     }
 
@@ -705,32 +718,36 @@ void print_line_prot()
     case PKG_RAWIP:
       printf("Driver\n");
       break;
-    case PKG_NG:
-      printf("Netgraph\n");
-      break;
-    case PKG_GEN_HDLC:
-      printf("GenHDLC\n");
-      break;
     case PKG_SPPP:
       printf("SPPP\n");
       break;
     case PKG_P2P:
       printf("P2P\n");
       break;
+    case PKG_GEN_HDLC:
+      printf("GenHDLC\n");
+      break;
+    case PKG_SYNC_PPP:
+      printf("SyncPPP\n");
+      break;
+    case PKG_NETGRAPH:
+      printf("Netgraph\n");
+      break;
     default:
-      printf("unknown line_pkg: %d\n", status.line_pkg);
+      printf("Unknown line_pkg: %d\n", status.line_pkg);
       break;
     }
 
-  if (status.line_pkg == PKG_SPPP)
-    printf("SPPP Keep-alives:\t%s\n",
-     config.keep_alive ? on : off);
+  if ((status.line_pkg == PKG_SPPP) ||
+      (status.line_pkg == PKG_SYNC_PPP) ||
+     ((status.line_pkg == PKG_GEN_HDLC) && (status.line_prot == PROT_PPP)))
+    printf("Keep-alive pkts:\t%s\n", status.keep_alive ? on : off);
   }
 
 void print_crc_len()
   {
   printf("CRC length:\t\t");
-  if (config.crc_len == CFG_CRC_0)
+  if      (config.crc_len == CFG_CRC_0)
     printf("no CRC\n");
   else if (config.crc_len == CFG_CRC_16)
     printf("16 bits\n");
@@ -740,8 +757,11 @@ void print_crc_len()
     printf("bad crc_len: %d\n", config.crc_len);
   }
 
-void print_loop_back()
+void print_loop_back(int skip_none)
   {
+  if ((config.loop_back == CFG_LOOP_NONE) && skip_none)
+    return;
+
   printf("Loopback:\t\t");
   switch (config.loop_back)
     {
@@ -776,7 +796,7 @@ void print_loop_back()
       printf("LB/RL asserted\n");
       break;
     default:
-      printf("unknown loop_back: %d\n", config.loop_back);
+      printf("Unknown loop_back: %d\n", config.loop_back);
       break;
     }
   }
@@ -787,19 +807,19 @@ void print_tx_clk_src()
   switch (config.tx_clk_src)
     {
     case CFG_CLKMUX_ST:
-      printf("Tx Clk from modem\n");
+      printf("Modem Tx Clk\n");
       break;
     case CFG_CLKMUX_INT:
-      printf("Internal source\n");
+      printf("Crystal osc\n");
       break;
     case CFG_CLKMUX_RT:
-      printf("Rx Clk from modem (loop timed)\n");
+      printf("Modem Rx Clk (loop timed)\n");
       break;
     case CFG_CLKMUX_EXT:
       printf("External connector\n");
       break;
     default:
-      printf("unknown tx_clk_src: %d\n", config.tx_clk_src);
+      printf("Unknown tx_clk_src: %d\n", config.tx_clk_src);
       break;
     }
   }
@@ -837,7 +857,7 @@ void print_format()
       printf("T3-M13/B3ZS\n");
       break;
     default:
-      printf("unknown format: %d\n", config.format);
+      printf("Unknown format: %d\n", config.format);
       break;
     }
   }
@@ -854,7 +874,7 @@ void print_dte_dce()
       printf("DCE (driving TxClk)\n");
       break;
     default:
-      printf("unknown dte_dce: %d\n", config.dte_dce);
+      printf("Unknown dte_dce: %d\n", config.dte_dce);
       break;
     }
   }
@@ -926,27 +946,27 @@ void print_cable_type()
   {
   printf("Cable type:\t\t");
   if (status.cable_type > 7)
-    printf("unknown cable_type: %d\n", status.cable_type);
+    printf("Unknown cable_type: %d\n", status.cable_type);
   else
     printf("%s\n", ssi_cables[status.cable_type]);
   }
 
 void print_time_slots()
   {
-  printf("TimeSlot [31-0]:\t0x%08X\n", config.time_slots);
+  printf("TimeSlot [31-0]:\t0x%08X\n", status.time_slots);
   }
 
 void print_scrambler()
   {
   printf("Scrambler:\t\t");
-  if (config.scrambler == CFG_SCRAM_OFF)
+  if      (config.scrambler == CFG_SCRAM_OFF)
     printf("off\n");
   else if (config.scrambler == CFG_SCRAM_DL_KEN)
     printf("DigLink/Kentrox: X^43+1\n");
   else if (config.scrambler == CFG_SCRAM_LARS)
     printf("Larse: X^20+X^17+1 w/28ZS\n");
   else
-    printf("unknown scrambler: %d\n", config.scrambler);
+    printf("Unknown scrambler: %d\n", config.scrambler);
   }
 
 double vga_dbs(u_int8_t vga)
@@ -957,18 +977,16 @@ double vga_dbs(u_int8_t vga)
   if ((vga >= 0x34) && (vga <= 0x39)) return 40.0 + 1.67 * (vga - 0x34);
   if ((vga >= 0x3A) && (vga <= 0x3F)) return 50.0 + 2.80 * (vga - 0x3A);
   if  (vga >  0x3F)                   return 64.0;
-  return 0.0;  /* suppress compiler warning */
+  return 0.0; /* suppress compiler warning */
   }
 
-void print_rx_gain()
+void print_rx_gain_max()
   {
-  printf("Rx gain max:\t\t");
-
-  if (config.rx_gain == CFG_GAIN_AUTO)
-    printf("auto-set to %02.1f dB\n",
-     vga_dbs(read_framer(Bt8370_VGA_MAX) & 0x3F));
-  else
-    printf("up to %02.1f dB\n", vga_dbs(config.rx_gain));
+  if (config.rx_gain_max != CFG_GAIN_AUTO)
+    {
+    printf("Rx gain max:\t\t");
+    printf("up to %02.1f dB\n", vga_dbs(config.rx_gain_max));
+    }
   }
 
 void print_tx_lbo()
@@ -997,7 +1015,7 @@ void print_tx_lbo()
       printf("22.5 dB\n");
       break;
     default:
-      printf("unknown tx_lbo: %d\n", config.tx_lbo);
+      printf("Unknown tx_lbo: %d\n", config.tx_lbo);
       break;
     }
 
@@ -1005,9 +1023,12 @@ void print_tx_lbo()
     config.tx_lbo = saved_lbo;
   }
 
-void print_tx_pulse()
+void print_tx_pulse(int skip_auto)
   {
   u_int8_t saved_pulse = config.tx_pulse;
+
+  if ((config.tx_pulse == CFG_PULSE_AUTO) && skip_auto)
+    return;
 
   printf("Tx pulse shape:\t\t");
   if (config.tx_pulse == CFG_PULSE_AUTO)
@@ -1044,7 +1065,7 @@ void print_tx_pulse()
       print_tx_lbo();
       break;
     default:
-      printf("unknown tx_pulse: %d\n", config.tx_pulse);
+      printf("Unknown tx_pulse: %d\n", config.tx_pulse);
       break;
     }
 
@@ -1055,7 +1076,7 @@ void print_tx_pulse()
 void print_ssi_sigs()
   {
   u_int32_t mii16 = status.snmp.ssi.sigs;
-  char *on = "On", *off = "Off";
+  const char *on = "On", *off = "Off";
 
   printf("Modem signals:\t\tDTR=%s DSR=%s RTS=%s CTS=%s\n",
    (mii16 & MII16_SSI_DTR) ? on : off,
@@ -1073,7 +1094,7 @@ void print_ssi_sigs()
 void print_hssi_sigs()
   {
   u_int32_t mii16 = status.snmp.hssi.sigs;
-  char *on = "On", *off = "Off";
+  const char *on = "On", *off = "Off";
 
   printf("Modem signals:\t\tTA=%s CA=%s\n",
    (mii16 & MII16_HSSI_TA) ? on : off,
@@ -1087,36 +1108,37 @@ void print_hssi_sigs()
 
 void print_events()
   {
-  const char *time;
+  char *time;
   struct timeval tv;
-  struct timezone tz;
-  time_t tsec;
+  time_t tv_sec;
 
-  (void)gettimeofday(&tv, &tz);
-  tsec = tv.tv_sec;
-  time = ctime(&tsec);
+  (void)gettimeofday(&tv, NULL);
+  tv_sec = tv.tv_sec;
+  time = ctime(&tv_sec);
   printf("Current time:\t\t%s", time);
+
   if (status.cntrs.reset_time.tv_sec < 1000)
     time = "Never\n";
-  else 
+  else
     {
-    tsec = status.cntrs.reset_time.tv_sec;
-    time = ctime(&tsec);
+    tv_sec = status.cntrs.reset_time.tv_sec;
+    time = ctime(&tv_sec);
     }
   printf("Cntrs reset:\t\t%s", time);
 
-  if (status.cntrs.ibytes)     printf("Rx bytes:\t\t%llu\n",    (unsigned long long)status.cntrs.ibytes);
-  if (status.cntrs.obytes)     printf("Tx bytes:\t\t%llu\n",    (unsigned long long)status.cntrs.obytes);
-  if (status.cntrs.ipackets)   printf("Rx packets:\t\t%llu\n",  (unsigned long long)status.cntrs.ipackets);
-  if (status.cntrs.opackets)   printf("Tx packets:\t\t%llu\n",  (unsigned long long)status.cntrs.opackets);
+  if (status.cntrs.ibytes)     printf("Rx bytes:\t\t%llu\n",   (unsigned long long)status.cntrs.ibytes);
+  if (status.cntrs.obytes)     printf("Tx bytes:\t\t%llu\n",   (unsigned long long)status.cntrs.obytes);
+  if (status.cntrs.ipackets)   printf("Rx packets:\t\t%llu\n", (unsigned long long)status.cntrs.ipackets);
+  if (status.cntrs.opackets)   printf("Tx packets:\t\t%llu\n", (unsigned long long)status.cntrs.opackets);
   if (status.cntrs.ierrors)    printf("Rx errors:\t\t%u\n",    status.cntrs.ierrors);
   if (status.cntrs.oerrors)    printf("Tx errors:\t\t%u\n",    status.cntrs.oerrors);
   if (status.cntrs.idrops)     printf("Rx drops:\t\t%u\n",     status.cntrs.idrops);
+  if (status.cntrs.missed)     printf("Rx missed:\t\t%u\n",    status.cntrs.missed);
   if (status.cntrs.odrops)     printf("Tx drops:\t\t%u\n",     status.cntrs.odrops);
   if (status.cntrs.fifo_over)  printf("Rx fifo overruns:\t%u\n", status.cntrs.fifo_over);
-  if (status.cntrs.fifo_under) printf("Tx fifo underruns:\t%u\n", status.cntrs.fifo_under);
-  if (status.cntrs.missed)     printf("Rx missed:\t\t%u\n",    status.cntrs.missed);
   if (status.cntrs.overruns)   printf("Rx overruns:\t\t%u\n",  status.cntrs.overruns);
+  if (status.cntrs.fifo_under) printf("Tx fifo underruns:\t%u\n", status.cntrs.fifo_under);
+  if (status.cntrs.underruns)  printf("Rx underruns:\t\t%u\n", status.cntrs.underruns);
   if (status.cntrs.fdl_pkts)   printf("Rx FDL pkts:\t\t%u\n",  status.cntrs.fdl_pkts);
   if (status.cntrs.crc_errs)   printf("Rx CRC:\t\t\t%u\n",     status.cntrs.crc_errs);
   if (status.cntrs.lcv_errs)   printf("Rx line code:\t\t%u\n", status.cntrs.lcv_errs);
@@ -1127,13 +1149,14 @@ void print_events()
   if (status.cntrs.mfrm_errs)  printf("Rx M-bits:\t\t%u\n",    status.cntrs.mfrm_errs);
   if (config.debug)
     { /* These events are hard to explain and may worry users, */
-    if (status.cntrs.rxdma)     printf("Rx no buffs:\t\t%u\n", status.cntrs.rxdma);
+    if (status.cntrs.rxbuf)     printf("Rx no buffs:\t\t%u\n", status.cntrs.rxbuf);
     if (status.cntrs.txdma)     printf("Tx no descs:\t\t%u\n", status.cntrs.txdma);
-    if (status.cntrs.lck_watch) printf("Lck watch:\t\t%u\n",   status.cntrs.lck_watch);
-    if (status.cntrs.lck_intr)  printf("Lck intr:\t\t%u\n",    status.cntrs.lck_intr);
-    if (status.cntrs.spare1)    printf("Spare1:\t\t%u\n",      status.cntrs.spare1);
-    if (status.cntrs.spare2)    printf("Spare2:\t\t%u\n",      status.cntrs.spare2);
-    if (status.cntrs.spare3)    printf("Spare3:\t\t%u\n",      status.cntrs.spare3);
+    if (status.cntrs.lck_watch) printf("Lock watch:\t\t%u\n",  status.cntrs.lck_watch);
+    if (status.cntrs.lck_intr)  printf("Lock intr:\t\t%u\n",   status.cntrs.lck_intr);
+    if (status.cntrs.spare1)    printf("Spare1:\t\t\t%u\n",    status.cntrs.spare1);
+    if (status.cntrs.spare2)    printf("Spare2:\t\t\t%u\n",    status.cntrs.spare2);
+    if (status.cntrs.spare3)    printf("Spare3:\t\t\t%u\n",    status.cntrs.spare3);
+    if (status.cntrs.spare4)    printf("Spare4:\t\t\t%u\n",    status.cntrs.spare4);
     }
   }
 
@@ -1141,7 +1164,7 @@ void print_summary()
   {
   switch(status.card_type)
     {
-    case TLP_CSID_HSSI:
+    case LMC_CSID_HSSI:
       {
       print_card_name();
       print_card_type();
@@ -1150,13 +1173,13 @@ void print_summary()
       print_tx_speed();
       print_line_prot();
       print_crc_len();
-      print_loop_back();
+      print_loop_back(1);
       print_tx_clk_src();
       print_hssi_sigs();
       print_events();
       break;
       }
-    case TLP_CSID_T3:
+    case LMC_CSID_T3:
       {
       print_card_name();
       print_card_type();
@@ -1165,14 +1188,14 @@ void print_summary()
       print_tx_speed();
       print_line_prot();
       print_crc_len();
-      print_loop_back();
+      print_loop_back(1);
       print_format();
       print_cable_len();
       print_scrambler();
       print_events();
       break;
       }
-    case TLP_CSID_SSI:
+    case LMC_CSID_SSI:
       {
       print_card_name();
       print_card_type();
@@ -1181,7 +1204,7 @@ void print_summary()
       print_tx_speed();
       print_line_prot();
       print_crc_len();
-      print_loop_back();
+      print_loop_back(1);
       print_dte_dce();
       print_synth_freq();
       print_cable_type();
@@ -1189,7 +1212,7 @@ void print_summary()
       print_events();
       break;
       }
-    case TLP_CSID_T1E1:
+    case LMC_CSID_T1E1:
       {
       print_card_name();
       print_card_type();
@@ -1198,17 +1221,17 @@ void print_summary()
       print_tx_speed();
       print_line_prot();
       print_crc_len();
-      print_loop_back();
+      print_loop_back(1);
       print_tx_clk_src();
       print_format();
       print_time_slots();
       print_cable_len();
-      print_tx_pulse();
-      print_rx_gain();
+      print_tx_pulse(1);
+      print_rx_gain_max();
       print_events();
       break;
       }
-    case TLP_CSID_HSSIc:
+    case LMC_CSID_HSSIc:
       {
       print_card_name();
       print_card_type();
@@ -1217,7 +1240,7 @@ void print_summary()
       print_line_prot();
       print_tx_speed();
       print_crc_len();
-      print_loop_back();
+      print_loop_back(1);
       print_tx_clk_src();
       print_dte_dce();
       print_synth_freq();
@@ -1266,14 +1289,14 @@ void print_t3_snmp()
   printf(" AIS=%d", (status.snmp.t3.line & TLINE_RX_AIS) ? 1 : 0);
   printf(" SEF=%d", (status.snmp.t3.line & T1LINE_SEF)   ? 1 : 0);
   printf(" OOF=%d", (status.snmp.t3.line & TLINE_LOF)    ? 1 : 0);
-  printf("  FEBE=%d", status.snmp.t3.febe);
+  printf(" FEBE=%d", status.snmp.t3.febe);
   printf(" RAI=%d", (status.snmp.t3.line & TLINE_RX_RAI) ? 1 : 0);
   printf("\n");
   }
 
 void print_t3_dsu()
   {
-  char *no = "No", *yes = "Yes";
+  const char *no = "No", *yes = "Yes";
   u_int16_t mii16 = read_mii(16);
   u_int8_t ctl1   = read_framer(T3CSR_CTL1);
   u_int8_t ctl8   = read_framer(T3CSR_CTL8);
@@ -1322,8 +1345,9 @@ void print_t3_dsu()
 void t3_cmd(int argc, char **argv)
   {
   int ch;
+  char *optstring = "a:A:B:c:de:fF:lLsS:V:";
 
-  while ((ch = getopt(argc, argv, "a:A:B:c:de:fF:lLsS:vV:")) != -1)
+  while ((ch = getopt(argc, argv, optstring)) != -1)
     {
     switch (ch)
       {
@@ -1413,7 +1437,7 @@ void t3_cmd(int argc, char **argv)
         }
       case 'B': /* send BOP msg */
         {
-        u_int8_t bop = strtoul(optarg, NULL, 0);
+        u_int8_t bop = (u_int8_t)strtoul(optarg, NULL, 0);
         write_framer(T3CSR_TX_FEAC,  0xC0 + bop);
         if (verbose) printf("Sent '0x%02X' BOP msg 10 times\n", bop);
         break;
@@ -1482,11 +1506,6 @@ void t3_cmd(int argc, char **argv)
         update = 1;
         break;
         }
-      case 'v': /* set verbose mode */
-        {
-        verbose = 1;
-        break;
-        }
       case 'V': /* set T3 freq control DAC */
         {
         u_int32_t dac = strtoul(optarg, NULL, 0);
@@ -1503,7 +1522,30 @@ void t3_cmd(int argc, char **argv)
     } /* while */
   } /* proc */
 
-void print_test_pattern(int patt)
+char *print_t1_bop(int bop_code)
+  {
+  switch(bop_code)
+    {
+    case 0x00:
+      return "Yellow Alarm (far end LOF)";
+    case 0x07:
+      return "Line Loop up";
+    case 0x1C:
+      return "Line Loop down";
+    case 0x0A:
+      return "Payload Loop up";
+    case 0x19:
+      return "Payload Loop down";
+    case 0x09:
+      return "Network Loop up";
+    case 0x12:
+      return "Network Loop down";
+    default:
+      return "Unknown BOP code";
+    }
+  }
+
+void print_t1_test_pattern(int patt)
   {
   printf("Test Pattern:\t\t");
   switch (patt)
@@ -1559,30 +1601,7 @@ void print_test_pattern(int patt)
     }
   }
 
-char *print_t1_bop(int bop_code)
-  {
-  switch(bop_code)
-    {
-    case 0x00:
-      return "Yellow Alarm (far end LOF)";
-    case 0x07:
-      return "Line Loop up";
-    case 0x1C:
-      return "Line Loop down";
-    case 0x0A:
-      return "Payload Loop up";
-    case 0x19:
-      return "Payload Loop down";
-    case 0x09:
-      return "Network Loop up";
-    case 0x12:
-      return "Network Loop down";
-    default:
-      return "Unknown BOP code";
-    }
-  }
-
-void print_far_report(int index)
+void print_t1_far_report(int index)
   {
   u_int16_t far = status.snmp.t1.prm[index];
 
@@ -1617,16 +1636,16 @@ void print_t1_snmp()
   if (config.format == CFG_FORMAT_T1ESF)
     {
     printf("ANSI Far-end performance reports:\n");
-    print_far_report(0);
-    print_far_report(1);
-    print_far_report(2);
-    print_far_report(3);
+    print_t1_far_report(0);
+    print_t1_far_report(1);
+    print_t1_far_report(2);
+    print_t1_far_report(3);
     }
   }
 
 void print_t1_dsu()
   {
-  char *no = "No", *yes = "Yes";
+  const char *no = "No", *yes = "Yes";
   u_int16_t mii16  = read_mii(16);
   u_int8_t isr0    = read_framer(Bt8370_ISR0);
   u_int8_t loop    = read_framer(Bt8370_LOOP);
@@ -1637,6 +1656,7 @@ void print_t1_dsu()
   u_int8_t tpatt   = read_framer(Bt8370_TPATT);
   u_int8_t tpulse  = read_framer(Bt8370_TLIU_CR);
   u_int8_t vga;
+  u_int8_t bop;
   u_int8_t saved_pulse, saved_lbo;
 
   /* d/c write required before read */
@@ -1652,7 +1672,7 @@ void print_t1_dsu()
   config.tx_pulse = tpulse & 0x0E;
   saved_lbo       = config.tx_lbo;
   config.tx_lbo   = tpulse & 0x30;
-  print_tx_pulse();
+  print_tx_pulse(0);
   config.tx_pulse = saved_pulse;
   config.tx_lbo   = saved_lbo;
 
@@ -1706,10 +1726,10 @@ void print_t1_dsu()
     }
   if (config.format == CFG_FORMAT_T1ESF)
     {
-    printf("Last Tx BOP msg:\t0x%02X (%s)\n",
-     read_framer(Bt8370_TBOP), print_t1_bop(read_framer(Bt8370_TBOP)));
-    printf("Last Rx BOP msg:\t0x%02X (%s)\n",
-     read_framer(Bt8370_RBOP), print_t1_bop(read_framer(Bt8370_RBOP)&0x3F));
+    if ((bop = read_framer(Bt8370_TBOP)))
+      printf("Last Tx BOP msg:\t0x%02X (%s)\n", bop, print_t1_bop(bop));
+    if ((bop = read_framer(Bt8370_RBOP)))
+      printf("Last Rx BOP msg:\t0x%02X (%s)\n", bop, print_t1_bop(bop&0x3F));
     }
   print_t1_snmp();
   }
@@ -1717,8 +1737,9 @@ void print_t1_dsu()
 void t1_cmd(int argc, char **argv)
   {
   int ch;
+  char *optstring = "a:A:B:c:de:E:fF:g:iIlLpPstT:u:U:xX";
 
-  while ((ch = getopt(argc, argv, "a:A:B:c:de:E:fF:g:iIlLpPstT:u:U:vxX")) != -1)
+  while ((ch = getopt(argc, argv, optstring)) != -1)
     {
     switch (ch)
       {
@@ -1791,7 +1812,7 @@ void t1_cmd(int argc, char **argv)
         }
       case 'B': /* send BOP msg */
         {
-        u_int8_t bop = strtoul(optarg, NULL, 0);
+        u_int8_t bop = (u_int8_t)strtoul(optarg, NULL, 0);
         if (config.format == CFG_FORMAT_T1ESF)
           {
           write_framer(Bt8370_BOP, 0x0B); /* rbop off, tbop 25 */
@@ -1858,8 +1879,8 @@ void t1_cmd(int argc, char **argv)
 	}
       case 'g': /* set receiver gain */
         {
-        config.rx_gain = strtoul(optarg, NULL, 0);
-        if (verbose) print_rx_gain();
+        config.rx_gain_max = strtoul(optarg, NULL, 0);
+        if (verbose) print_rx_gain_max();
         update = 1;
         break;
         }
@@ -1943,16 +1964,16 @@ void t1_cmd(int argc, char **argv)
         }
       case 'T': /* start sending test pattern */
         {
-        u_int8_t patt = strtoul(optarg, NULL, 0);
+        u_int8_t patt = (u_int8_t)strtoul(optarg, NULL, 0);
         write_framer(Bt8370_TPATT, 0x10 + patt);
         write_framer(Bt8370_RPATT, 0x30 + patt);
-        if (verbose) print_test_pattern(patt);
+        if (verbose) print_t1_test_pattern(patt);
         break;
         }
       case 'u': /* set transmit pulse shape */
         {
         config.tx_pulse = strtoul(optarg, NULL, 0);
-        if (verbose) print_tx_pulse();
+        if (verbose) print_tx_pulse(0);
         update = 1;
         break;
         }
@@ -1961,16 +1982,11 @@ void t1_cmd(int argc, char **argv)
         if (config.tx_pulse == CFG_PULSE_T1CSU)
           {
           config.tx_lbo = strtoul(optarg, NULL, 0);
-          if (verbose) print_tx_pulse();
+          if (verbose) print_tx_pulse(0);
           update = 1;
 	  }
         else
           printf("LBO only meaningful if Tx Pulse is T1CSU\n");
-        break;
-        }
-      case 'v': /* set verbose mode */
-        {
-        verbose = 1;
         break;
         }
       case 'x': /* disable transmitter outputs */
@@ -2009,12 +2025,11 @@ unsigned char read_hex(FILE *f)
   return b;
   }
 
-static void load_xilinx(char *name)
+void load_xilinx(char *name)
   {
   FILE *f;
   char *ucode;
-  int i, length;
-  int c;
+  int c, i, length;
 
   if (verbose) printf("Load firmware from file %s...\n", name);
   if ((f = fopen(name, "r")) == 0)
@@ -2087,7 +2102,7 @@ static void load_xilinx(char *name)
   }
 
 /* 32-bit CRC calculated right-to-left over 8-bit bytes */
-u_int32_t crc32(char *bufp, int len)
+u_int32_t crc32(u_int8_t *bufp, int len)
   {
   int bit, i;
   u_int32_t data;
@@ -2118,96 +2133,19 @@ u_int8_t crc8(u_int16_t *bufp, int len)
   return crc;
   }
 
-/* HSSI=3, DS3=4, SSI=5, T1E1=6, HSSIc=7, SDSL=8 */
-void init_srom(int board)
+void main_cmd(int argc, char **argv)
   {
-  int i;
-  u_int16_t srom[64];
+  int ch;
+  char *optstring = "13a:bBcCdDeEf:gG:hi:L:mM:pP:sS:tT:uUvVw:x:X:yY?";
 
-  /* zero the entire rom */
-  for (i=0; i<64; i++) srom[i] = 0;
-
-  srom[0]  = 0x1376; /* subsys vendor id */
-  srom[1]  = board ? board : (read_mii(3)>>4 & 0xF) +1;
-  srom[8]  = crc8(srom, 9);
-  /* Tulip hardware checks this checksum */
-  srom[10] = 0x6000; /* ethernet address */
-  srom[11] = 0x0099; /* ethernet address */
-  srom[12] = 0x0000; /* ethernet address */
-  /* srom checksum is low 16 bits of Ethernet CRC-32 */
-  srom[63] = crc32((char *)srom, 126) ^ 0xFFFFFFFFL;
-
-  /* write the SROM */
-#if 1 /* really write it */
-  for (i=0; i<64; i++) write_srom(i, srom[i]);
-#else /* print what would be written */
-  printf("     0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F");
-  for (i=0; i<64; i++)
-    {
-    if (i%8 == 0) printf("\n%02X: ", i<<1);
-    printf("%02X %02X ", srom[i] & 0xFF, srom[i]>>8);
-    }
-  printf("\n\n");
-#endif
-  }
-
-int main(int argc, char **argv)
-  {
-  int i, error, ch;
-  char *optstring = "13a:bBcCdDeEf:Fhi:L:mM:pP:sS:tT:uUvVwW:xXyYzZ?";
-
-  progname = (char *)argv[0];
-
-  /* Here is the overall plan:
-   *  1) Read the interface name from the command line.
-   *  2) Open the device; decide if netgraph is being used.
-   *  3) Read the current interface configuration from the driver.
-   *  4) Read the command line args and carry out their actions.
-   *  5) Write the modified interface configuration to the driver.
-   */
-
-  /* 1) Read the interface name from the command line. */
-#if __linux__
-  ifname = (argc==1) ? "hdlc0" : (char *) argv[1];
-#else
-  ifname = (argc==1) ? DEVICE_NAME"0" : (char *) argv[1];
-#endif
-
-  /* 2) Open the device; decide if netgraph is being used, */
-  /* use netgraph if ifname ends with ":" */
-  for (i=0; i<16; i++) if (ifname[i] == 0) break;
-
-  /* Get a socket type file descriptor. */
-#if defined(NETGRAPH)
-  if ((netgraph = (ifname[i-1] == ':')))
-    error = NgMkSockNode(NULL, &fdcs, NULL);
-  else
-#endif
-    error = fdcs = socket(AF_INET, SOCK_DGRAM, 0);
-  if (error < 0)
-    {
-    fprintf(stderr, "%s: %s() failed: %s\n", progname,
-     netgraph? "NgMkSockNode" : "socket", strerror(errno));
-    exit(1);
-    }
-
-  /* 3) Read the current interface configuration from the driver. */
-  ioctl_read_config();
-  ioctl_read_status();
-
-  summary = (argc <= 2);  /* print summary at end */
-  update  = 0;	/* write to card at end */
-
-  /* 4) Read the command line args and carry out their actions. */
-  optind = 2;
-  while (((ch = getopt(argc, argv, optstring)) != -1) && (argc > 2))
+  while ((ch = getopt(argc, argv, optstring)) != -1)
     {
     switch (ch)
       {
       case '1': /* T1 commands */
         {
         if (verbose) printf("Doing T1 settings\n");
-        if (status.card_type != TLP_CSID_T1E1)
+        if (status.card_type != LMC_CSID_T1E1)
           {
           printf("T1 settings only apply to T1E1 cards\n");
           exit(1);
@@ -2218,7 +2156,7 @@ int main(int argc, char **argv)
       case '3': /* T3 commands */
         {
         if (verbose) printf("Doing T3 settings\n");
-        if (status.card_type != TLP_CSID_T3)
+        if (status.card_type != LMC_CSID_T3)
           {
           printf("T3 settings only apply to T3 cards\n");
           exit(1);
@@ -2228,9 +2166,9 @@ int main(int argc, char **argv)
         }
       case 'a': /* clock source */
         {
-        if ((status.card_type != TLP_CSID_T1E1) ||
-            (status.card_type != TLP_CSID_HSSI) ||
-            (status.card_type != TLP_CSID_HSSIc))
+        if ((status.card_type != LMC_CSID_T1E1) ||
+            (status.card_type != LMC_CSID_HSSI) ||
+            (status.card_type != LMC_CSID_HSSIc))
           {
           if (verbose) print_tx_clk_src();
           config.tx_clk_src = strtoul(optarg, NULL, 0);
@@ -2242,7 +2180,7 @@ int main(int argc, char **argv)
         }
       case 'b': /* read bios rom */
         {
-        int i;
+        unsigned int i;
         printf("Bios ROM:\n");
         printf("     0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F");
         for (i=0; i<256; i++)
@@ -2255,7 +2193,7 @@ int main(int argc, char **argv)
 	}
       case 'B': /* write bios rom */
         {
-        int i;
+        unsigned int i;
         for (i=0; i<256; i++) write_bios_rom(i, 255-i);
         if (verbose) printf("wrote (0..255) to bios rom addrs (0..255)\n");
         break;
@@ -2290,8 +2228,8 @@ int main(int argc, char **argv)
 	}
       case 'e': /* set DTE (default) */
         {
-        if ((status.card_type == TLP_CSID_SSI) ||
-            (status.card_type == TLP_CSID_HSSIc))
+        if ((status.card_type == LMC_CSID_SSI) ||
+            (status.card_type == LMC_CSID_HSSIc))
           {
           config.dte_dce = CFG_DTE;
           if (verbose) print_dte_dce();
@@ -2303,8 +2241,8 @@ int main(int argc, char **argv)
 	}
       case 'E': /* set DCE */
         {
-        if ((status.card_type == TLP_CSID_SSI) ||
-            (status.card_type == TLP_CSID_HSSIc))
+        if ((status.card_type == LMC_CSID_SSI) ||
+            (status.card_type == LMC_CSID_HSSIc))
           {
           config.dte_dce = CFG_DCE;
           if (verbose) print_dte_dce();
@@ -2316,8 +2254,8 @@ int main(int argc, char **argv)
 	}
       case 'f': /* set synth osc freq */
         {
-        if ((status.card_type == TLP_CSID_SSI) ||
-            (status.card_type == TLP_CSID_HSSIc))
+        if ((status.card_type == LMC_CSID_SSI) ||
+            (status.card_type == LMC_CSID_HSSIc))
           {
           synth_freq(strtoul(optarg, NULL, 0));
           write_synth(config.synth);
@@ -2327,19 +2265,24 @@ int main(int argc, char **argv)
           printf("synth osc freq only applies to SSI & HSSIc cards\n");
         break;
         }
-      case 'F': /* set SPPP line protocol to Frame-Relay */
+      case 'g': /* load gate array microcode from ROM */
         {
-        config.line_prot = PROT_FRM_RLY;
-        config.keep_alive = 1; /* required for LMI operation */
-        if (verbose) printf("SPPP line protocol set to Frame-Relay\n");
-        update = 1;
+        load_xilinx_from_rom();
+        if (verbose) printf("gate array configured from on-board ROM\n");
         break;
-	}
+        }
+      case 'G': /* load gate array microcode from file */
+        {
+        load_xilinx(optarg);
+        if (verbose) printf("gate array configured from file %s\n", optarg);
+        break;
+        }
       case 'h': /* help */
       case '?':
         {
         usage();
         exit(0);
+        /*NOTREACHED*/
         }
       case 'i': /* interface name */
         {
@@ -2349,12 +2292,13 @@ int main(int argc, char **argv)
       case 'L': /* set loopback modes */
         {
         config.loop_back = strtoul(optarg, NULL, 0);
-        if (verbose) print_loop_back();
+        if (verbose) print_loop_back(0);
         update = 1;
         break;
 	}
       case 'm': /* read and print MII regs */
         {
+        int i;
         printf("MII regs:\n");
         printf("      0    1    2    3    4    5    6    7");
         for (i=0; i<32; i++)
@@ -2419,17 +2363,35 @@ int main(int argc, char **argv)
 	}
       case 'S': /* write Tulip SROM loc */
         {
-#if 0  /* write a single location -- not too useful */
-        u_int32_t addr = strtoul(optarg, NULL, 0);
-        u_int32_t data = strtoul(argv[optind++], NULL, 0);
-        write_mii(addr, data);
-        data = read_mii(addr);
-        printf("Write SROM: addr = 0x%02X data = 0x%04X\n", addr, data);
-#endif
-#if 0  /* write the whole SROM -- very dangerous */
-        init_srom(strtoul(optarg, NULL, 0));
-#endif
+        int i;
+        u_int16_t srom[64];
+        u_int32_t board = strtoul(optarg, NULL, 0);
+        /* board: HSSI=3, DS3=4, SSI=5, T1E1=6, HSSIc=7 */
+
+        for (i=0; i<64; i++) srom[i] = 0;
+        srom[0]  = 0x1376; /* subsys vendor id */
+        srom[1]  = board ? (u_int16_t)board : (read_mii(3)>>4 & 0xF) +1;
+        /* Tulip hardware checks this checksum */
+        srom[8]  = crc8(srom, 9);
+        srom[10] = 0x6000; /* ethernet address */
+        srom[11] = 0x0099; /* ethernet address */
+        srom[12] = read_srom(12); /* 0x0000; */
+        /* srom checksum is low 16 bits of Ethernet CRC-32 */
+        srom[63] = (u_int16_t)~crc32((u_int8_t *)srom, 126);
+
+#if 0 /* really write it */
+        for (i=0; i<64; i++) write_srom(i, srom[i]);
+#else /* print what would be written */
         printf("Caution! Recompile %s to enable this.\n", progname);
+        printf("This is what would have been written:\n");
+        printf("     0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F");
+        for (i=0; i<64; i++)
+          {
+          if (i%8 == 0) printf("\n%02X: ", i<<1);
+          printf("%02X %02X ", srom[i] & 0xFF, srom[i]>>8);
+          }
+        printf("\n\n");
+#endif
         break;
 	}
       case 't': /* read and print Tulip CSRs */
@@ -2479,29 +2441,24 @@ int main(int argc, char **argv)
         summary = 1;
         break;
 	}
-      case 'w': /* load gate array microcode from ROM */
+      case 'w':
         {
-        load_xilinx_from_rom();
-        if (verbose) printf("gate array configured from on-board ROM\n");
+        waittime = strtoul(optarg, NULL, 0);
         break;
-        }
-      case 'W': /* load gate array microcode from file */
+	}
+      case 'x': /* <number> set line protocol */
         {
-        load_xilinx(optarg);
-        if (verbose) printf("gate array configured from file %s\n", optarg);
-        break;
-        }
-      case 'x': /* select RAWIP protocol */
-        {
-        config.line_pkg = PKG_RAWIP;
-        if (verbose) printf("RAWIP mode selected\n");
+        config.keep_alive = 1; /* required for LMI operation */
+        config.line_prot = strtoul(optarg, NULL, 0);
+        if (verbose) printf("line protocol set to %d\n", config.line_prot);
         update = 1;
         break;
 	}
-      case 'X': /* Select in-kernel line protocol packages */
+      case 'X': /* <number> set line package */
         {
-        config.line_pkg = 0;
-        if (verbose) printf("line protocol mode selected\n");
+        config.keep_alive = 1; /* required for LMI operation */
+        config.line_pkg = strtoul(optarg, NULL, 0);
+        if (verbose) printf("line package set to %d\n", config.line_pkg);
         update = 1;
         break;
 	}
@@ -2525,34 +2482,105 @@ int main(int argc, char **argv)
         update = 1;
         break;
 	}
-      case 'z': /* set SPPP line protocol to Cisco HDLC */
-        {
-        config.line_prot = PROT_C_HDLC;
-        config.keep_alive = 1;
-        if (verbose) printf("SPPP line protocol set to Cisco-HDLC\n");
-        update = 1;
-        break;
-	}
-      case 'Z': /* set SPPP line protocol to PPP */
-        {
-        config.line_prot = PROT_PPP;
-        config.keep_alive = 0;
-        if (verbose) printf("SPPP line protocol set to PPP\n");
-        update = 1;
-        break;
-	}
       default:
         {
         printf("Unknown command char: %c\n", ch);
         exit(1);
-	}
+	} /* case */
       } /* switch */
     } /* while */
+  } /* proc */
+
+int main(int argc, char **argv)
+  {
+  int i, error;
+
+  progname = (char *)argv[0];
+
+  /* 1) Read the interface name from the command line. */
+#if __linux__
+  ifname = (argc==1) ? "hdlc0" : (char *)argv[1];
+#else
+  ifname = (argc==1) ? DEVICE_NAME"0" : (char *)argv[1];
+#endif
+
+  /* 2) Open the device; decide if netgraph is being used, */
+  /* use netgraph if ifname ends with ":" */
+  for (i=0; i<16; i++) if (ifname[i] == 0) break;
+
+  /* Get a socket type file descriptor. */
+#if defined(NETGRAPH)
+  if ((netgraph = (ifname[i-1] == ':')))
+    error = NgMkSockNode(NULL, &fdcs, NULL);
+  else
+#endif
+    error = fdcs = socket(AF_INET, SOCK_DGRAM, 0);
+  if (error < 0)
+    {
+    fprintf(stderr, "%s: %s() failed: %s\n", progname,
+     netgraph? "NgMkSockNode" : "socket", strerror(errno));
+    exit(1);
+    }
+
+  /* 3) Read the current interface configuration from the driver. */
+  ioctl_read_config();
+  ioctl_read_status();
+
+  summary = (argc <= 2);  /* print summary at end */
+  update  = 0;	/* write to card at end */
+
+  /* 4) Read the command line args and carry out their actions. */
+  optind = 2;
+  if (argc > 2) main_cmd(argc, argv);
 
   if (summary) print_summary();
 
-  /*  5) Write the modified interface configuration to the driver. */
+  /* 5) Write the modified interface configuration to the driver. */
   if (update) ioctl_write_config();
 
+  while (waittime)
+    {
+    struct status old;
+
+    ioctl_read_status();
+    old = status;
+    sleep(waittime);
+    ioctl_read_status();
+
+    status.cntrs.ibytes    -= old.cntrs.ibytes;
+    status.cntrs.obytes    -= old.cntrs.obytes;
+    status.cntrs.ipackets  -= old.cntrs.ipackets;
+    status.cntrs.opackets  -= old.cntrs.opackets;
+    status.cntrs.ierrors   -= old.cntrs.ierrors;
+    status.cntrs.oerrors   -= old.cntrs.oerrors;
+    status.cntrs.idrops    -= old.cntrs.idrops;
+    status.cntrs.missed    -= old.cntrs.missed;
+    status.cntrs.odrops    -= old.cntrs.odrops;
+    status.cntrs.fifo_over -= old.cntrs.fifo_over;
+    status.cntrs.overruns  -= old.cntrs.overruns;
+    status.cntrs.fifo_under-= old.cntrs.fifo_under;
+    status.cntrs.underruns -= old.cntrs.underruns;
+    status.cntrs.crc_errs  -= old.cntrs.crc_errs;
+    status.cntrs.lcv_errs  -= old.cntrs.lcv_errs;
+    status.cntrs.frm_errs  -= old.cntrs.frm_errs;
+    status.cntrs.febe_errs -= old.cntrs.febe_errs;
+    status.cntrs.par_errs  -= old.cntrs.par_errs;
+    status.cntrs.cpar_errs -= old.cntrs.cpar_errs;
+    status.cntrs.mfrm_errs -= old.cntrs.mfrm_errs;
+    status.cntrs.rxbuf     -= old.cntrs.rxbuf;
+    status.cntrs.txdma     -= old.cntrs.txdma;
+    status.cntrs.lck_watch -= old.cntrs.lck_watch;
+    status.cntrs.lck_intr  -= old.cntrs.lck_intr;
+    status.cntrs.spare1    -= old.cntrs.spare1;
+    status.cntrs.spare2    -= old.cntrs.spare2;
+    status.cntrs.spare3    -= old.cntrs.spare3;
+    status.cntrs.spare4    -= old.cntrs.spare4;
+
+    putchar('\n');
+
+    print_summary();
+    }
+
   exit(0);
+  /* NOTREACHED */
   }
