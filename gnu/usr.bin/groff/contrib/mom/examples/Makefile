@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2006/02/06 18:29:48 wiz Exp $
+# $NetBSD: Makefile,v 1.2 2006/02/11 19:39:01 christos Exp $
 
 DIST_SUBDIR=    contrib/mom/examples
 
@@ -6,23 +6,21 @@ DIST_SUBDIR=    contrib/mom/examples
 
 .if ${MKSHARE} != "no"
 FILESDIR=       ${DOCDIR}/groff/mom
-FILES=          README.txt elvis_syntax.new penguin.ps typesetting.mom \
-		elvis_syntax letter.mom sample_docs.mom
+MOM_FILES=	typesetting.mom letter.mom sample_docs.mom
+FILES=          README.txt elvis_syntax.new penguin.ps ${MOM_FILES}
 
-PROCESSED_FILES=	letter.ps sample_docs.ps typesetting.ps
+PROCESSED_FILES= ${MOM_FILES:S/.mom/.ps/}
 FILES+=			${PROCESSED_FILES}
-CLEANFILES+=		${PROCESSED_FILES} penguin.ps
-.endif
+CLEANFILES+=		${PROCESSED_FILES}
 
-.SUFFIXES: .mom .ps
-.mom.ps:
-	${TOOL_GROFF} -Tps -mom $< >$@
+.for i in ${PROCESSED_FILES}
+$i: ${i:S/.ps/.mom/}
+	${TOOL_GROFF} -Tps -mom ${.ALLSRC} >${.TARGET}
+.endfor
 
 dependall: ${PROCESSED_FILES}
-${PROCESSED_FILES}: ${.OBJDIR}/penguin.ps
 
-${.OBJDIR}/penguin.ps: penguin.ps
-	cp ${.ALLSRC} ${.TARGET}
+.endif
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
