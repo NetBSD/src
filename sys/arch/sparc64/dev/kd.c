@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.35 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: kd.c,v 1.36 2006/02/11 17:57:31 cdi Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.35 2005/12/11 12:19:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.36 2006/02/11 17:57:31 cdi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -105,9 +105,9 @@ static int kd_is_console;
 
 static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
-static void kd_init __P((struct kd_softc *));
-static void kd_cons_input __P((int));
-static int  kdcngetc __P((dev_t));
+static void kd_init(struct kd_softc *);
+static void kd_cons_input(int);
+static int  kdcngetc(dev_t);
 
 int	cons_ocount;		/* output byte count */
 
@@ -116,8 +116,7 @@ int	cons_ocount;		/* output byte count */
  * XXX - Make this a proper child of kbd?
  */
 void
-kd_init(kd)
-	struct kd_softc *kd;
+kd_init(struct kd_softc *kd)
 {
 	struct tty *tp;
 	char prop[6+1];
@@ -433,21 +432,19 @@ kd_putfb(tp)
 /*
  * Default PROM-based console input stream
  */
-static int kd_rom_iopen __P((struct cons_channel *));
-static int kd_rom_iclose __P((struct cons_channel *));
+static int kd_rom_iopen(struct cons_channel *);
+static int kd_rom_iclose(struct cons_channel *);
 
 static struct cons_channel prom_cons_channel;
 
 int
-kd_rom_iopen(cc)
-	struct cons_channel *cc;
+kd_rom_iopen(struct cons_channel *cc)
 {
 	return (0);
 }
 
 int
-kd_rom_iclose(cc)
-	struct cons_channel *cc;
+kd_rom_iclose(struct cons_channel *cc)
 {
 	return (0);
 }
@@ -457,8 +454,7 @@ kd_rom_iclose(cc)
  * the keyboard driver (dev/sun/kbd.c) at spltty.
  */
 void
-kd_cons_input(c)
-	int c;
+kd_cons_input(int c)
 {
 	struct kd_softc *kd = &kd_softc;
 	struct tty *tp;
@@ -481,10 +477,10 @@ kd_cons_input(c)
 /* The debugger gets its own key translation state. */
 static struct kbd_state *kdcn_state;
 
-static void kdcnprobe __P((struct consdev *));
-static void kdcninit __P((struct consdev *));
-static void kdcnputc __P((dev_t, int));
-static void kdcnpollc __P((dev_t, int));
+static void kdcnprobe(struct consdev *);
+static void kdcninit(struct consdev *);
+static void kdcnputc(dev_t, int);
+static void kdcnpollc(dev_t, int);
 
 /* The keyboard driver uses cn_hw to access the real console driver */
 extern struct consdev consdev_prom;
@@ -550,14 +546,12 @@ kd_attach_input(cc)
 
 /* We never call this. */
 static void
-kdcnprobe(cn)
-	struct consdev *cn;
+kdcnprobe(struct consdev *cn)
 {
 }
 
 static void
-kdcninit(cn)
-	struct consdev *cn;
+kdcninit(struct consdev *cn)
 {
 #if 0
 	struct kbd_state *ks = kdcn_state;
@@ -581,12 +575,11 @@ kdcninit(cn)
 }
 
 static int
-kdcngetc(dev)
-	dev_t dev;
+kdcngetc(dev_t dev)
 {
 	struct kbd_state *ks = kdcn_state;
 	int code, class, data, keysym;
-	extern int prom_cngetc __P((dev_t));
+	extern int prom_cngetc(dev_t);
 
 
 	if (cn_hw->cn_getc == prom_cngetc) return (*cn_hw->cn_getc)(dev);
@@ -626,9 +619,7 @@ out:
 }
 
 static void
-kdcnputc(dev, c)
-	dev_t dev;
-	int c;
+kdcnputc(dev_t dev, int c)
 {
 	int s;
 	char c0 = (c & 0x7f);
@@ -639,9 +630,7 @@ kdcnputc(dev, c)
 }
 
 static void
-kdcnpollc(dev, on)
-	dev_t dev;
-	int on;
+kdcnpollc(dev_t dev, int on)
 {
 	struct kbd_state *ks = kdcn_state;
 
