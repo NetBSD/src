@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.10 2005/09/30 14:25:07 jmmv Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.11 2006/02/11 05:49:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,9 +39,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.10 2005/09/30 14:25:07 jmmv Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.11 2006/02/11 05:49:48 christos Exp $");
 #endif /* not lint */
 
+#define __POOL_EXPOSE
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
