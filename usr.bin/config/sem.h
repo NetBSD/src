@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.4 2005/10/12 01:17:43 cube Exp $	*/
+/*	$NetBSD: sem.h,v 1.5 2006/02/11 20:15:53 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@ void		selectattr(struct attr *);
 void		setmajor(struct devbase *, int);
 void		addconf(struct config *);
 void		setconf(struct nvlist **, const char *, struct nvlist *);
+void		delconf(const char *);
 void		setfstype(const char **, const char *);
 void		adddev(const char *, const char *, struct nvlist *, int);
 void		deldevi(const char *, const char *);

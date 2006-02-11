@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.17 2005/12/18 23:43:15 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.18 2006/02/11 20:15:53 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -849,6 +849,26 @@ setconf(struct nvlist **npp, const char *what, struct nvlist *v)
 		nvfreel(v);
 	} else
 		*npp = v;
+}
+
+void
+delconf(const char *name)
+{
+	struct config *cf;
+
+	if (ht_lookup(cfhashtab, name) == NULL) {
+		error("configuration `%s' undefined", name);
+		return;
+	}
+	(void)ht_remove(cfhashtab, name);
+
+	TAILQ_FOREACH(cf, &allcf, cf_next)
+		if (!strcmp(cf->cf_name, name))
+			break;
+	if (cf == NULL)
+		panic("lost configuration `%s'", name);
+
+	TAILQ_REMOVE(&allcf, cf, cf_next);
 }
 
 void
