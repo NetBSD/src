@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.4 2005/10/12 01:17:43 cube Exp $	*/
+/*	$NetBSD: gram.y,v 1.5 2006/02/11 20:15:53 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -446,6 +446,7 @@ config_spec:
 	IDENT stringvalue		{ setident($2); } |
 	CONFIG conf root_spec sysparam_list
 					{ addconf(&conf); } |
+	NO CONFIG WORD			{ delconf($3); } |
 	NO PSEUDO_DEVICE WORD		{ delpseudo($3); } |
 	PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); } |
 	NO device_instance AT attachment
