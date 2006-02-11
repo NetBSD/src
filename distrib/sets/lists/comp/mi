@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.848 2006/02/11 12:57:03 yamt Exp $
+#	$NetBSD: mi,v 1.849 2006/02/11 13:05:30 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1519,7 +1519,7 @@
 ./usr/include/uuid.h				comp-c-include
 ./usr/include/uvm/uvm.h				comp-c-include
 ./usr/include/uvm/uvm_amap.h			comp-c-include
-./usr/include/uvm/uvm_amap_i.h			comp-c-include
+./usr/include/uvm/uvm_amap_i.h			comp-obsolete		obsolete
 ./usr/include/uvm/uvm_anon.h			comp-c-include
 ./usr/include/uvm/uvm_aobj.h			comp-c-include
 ./usr/include/uvm/uvm_device.h			comp-c-include
@@ -1531,12 +1531,12 @@
 ./usr/include/uvm/uvm_km.h			comp-c-include
 ./usr/include/uvm/uvm_loan.h			comp-c-include
 ./usr/include/uvm/uvm_map.h			comp-c-include
-./usr/include/uvm/uvm_map_i.h			comp-c-include
+./usr/include/uvm/uvm_map_i.h			comp-obsolete		obsolete
 ./usr/include/uvm/uvm_object.h			comp-c-include
 ./usr/include/uvm/uvm_page.h			comp-c-include
-./usr/include/uvm/uvm_page_i.h			comp-c-include
+./usr/include/uvm/uvm_page_i.h			comp-obsolete		obsolete
 ./usr/include/uvm/uvm_pager.h			comp-c-include
-./usr/include/uvm/uvm_pager_i.h			comp-c-include
+./usr/include/uvm/uvm_pager_i.h			comp-obsolete		obsolete
 ./usr/include/uvm/uvm_param.h			comp-c-include
 ./usr/include/uvm/uvm_pdaemon.h			comp-c-include
 ./usr/include/uvm/uvm_pglist.h			comp-c-include
