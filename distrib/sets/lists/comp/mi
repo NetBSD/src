@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.849 2006/02/11 13:05:30 yamt Exp $
+#	$NetBSD: mi,v 1.850 2006/02/11 17:39:36 jmmv Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1395,7 +1395,7 @@
 ./usr/include/sys/mtio.h			comp-c-include
 ./usr/include/sys/namei.h			comp-c-include
 ./usr/include/sys/null.h			comp-c-include
-./usr/include/sys/optstr.h			comp-c-include
+./usr/include/sys/optstr.h			comp-obsolete		obsolete
 ./usr/include/sys/param.h			comp-c-include
 ./usr/include/sys/pipe.h			comp-c-include
 ./usr/include/sys/pmc.h				comp-c-include
