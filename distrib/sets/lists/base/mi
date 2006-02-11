@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.592 2006/02/08 19:00:32 agc Exp $
+# $NetBSD: mi,v 1.593 2006/02/11 01:51:22 gdamore Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2152,6 +2152,7 @@
 ./usr/share/man/cat4/cobalt			base-man-share
 ./usr/share/man/cat4/dreamcast			base-man-share
 ./usr/share/man/cat4/evbarm			base-man-share
+./usr/share/man/cat4/evbmips			base-man-share
 ./usr/share/man/cat4/hp300			base-man-share
 ./usr/share/man/cat4/hp700			base-man-share
 ./usr/share/man/cat4/hpcmips			base-man-share
@@ -2267,6 +2268,7 @@
 ./usr/share/man/html4/cobalt			base-man-share
 ./usr/share/man/html4/dreamcast			base-man-share
 ./usr/share/man/html4/evbarm			base-man-share
+./usr/share/man/html4/evbmips			base-man-share
 ./usr/share/man/html4/hp300			base-man-share
 ./usr/share/man/html4/hp700			base-man-share
 ./usr/share/man/html4/hpcmips			base-man-share
@@ -2383,6 +2385,7 @@
 ./usr/share/man/man4/cobalt			base-man-share
 ./usr/share/man/man4/dreamcast			base-man-share
 ./usr/share/man/man4/evbarm			base-man-share
+./usr/share/man/man4/evbmips			base-man-share
 ./usr/share/man/man4/hp300			base-man-share
 ./usr/share/man/man4/hp700			base-man-share
 ./usr/share/man/man4/hpcmips			base-man-share
