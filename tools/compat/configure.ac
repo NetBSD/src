@@ -1,10 +1,10 @@
-#	$NetBSD: configure.ac,v 1.54 2006/02/11 00:54:35 wiz Exp $
+#	$NetBSD: configure.ac,v 1.55 2006/02/11 01:28:01 wiz Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
 
 AC_INIT([libnbcompat], [noversion], [lib-bug-people@NetBSD.org])
-AC_CONFIG_HEADERS(nbtool_config.h)
+AC_CONFIG_HEADERS(nbtool_config_internal.h)
 AC_CONFIG_FILES(defs.mk)
 
 AC_DEFUN([AC_NETBSD],

@@ -1,11 +1,4 @@
-/*	$NetBSD: nbtool_config.h.in,v 1.10 2006/02/11 00:55:17 wiz Exp $	*/
- 
-/* When regenerating this file with autoheader, make sure that
-   the header and footer stay. */
-#ifndef	__NETBSD_NBTOOL_CONFIG_H__
-#define	__NETBSD_NBTOOL_CONFIG_H__
-
-/* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
+/* nbtool_config_internal.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
@@ -523,6 +516,3 @@
 
 /* Define if you have u_int8_t, but not uint8_t. */
 #undef uint8_t
-
-#include "compat_defs.h"
-#endif /* !__NETBSD_NBTOOL_CONFIG_H__ */
