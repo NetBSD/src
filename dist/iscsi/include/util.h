@@ -605,5 +605,6 @@ enum {
 	Transmit = 1
 };
 
+int		allow_netmask(const char *, const char *);
 
 #endif				/* _UTIL_H_ */
