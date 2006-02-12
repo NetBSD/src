@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.16 2004/08/17 14:16:00 chs Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.17 2006/02/12 11:41:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_stack.c,v 1.16 2004/08/17 14:16:00 chs Exp $");
+__RCSID("$NetBSD: pthread_stack.c,v 1.17 2006/02/12 11:41:53 yamt Exp $");
 
 #define __EXPOSE_STACK 1
 #include <sys/param.h>
@@ -57,8 +57,7 @@ __RCSID("$NetBSD: pthread_stack.c,v 1.16 2004/08/17 14:16:00 chs Exp $");
 #include "pthread.h"
 #include "pthread_int.h"
 
-static pthread_t
-pthread__stackid_setup(void *base, size_t size);
+static int pthread__stackid_setup(void *, size_t, pthread_t *);
 
 #ifndef PT_FIXEDSTACKSIZE_LG
 /* 
@@ -93,8 +92,7 @@ pthread__stackalloc(pthread_t *newt)
 
 	pthread__assert(((intptr_t)addr & PT_STACKMASK) == 0);
 
-	*newt = pthread__stackid_setup(addr, PT_STACKSIZE); 
-	return 0;
+	return pthread__stackid_setup(addr, PT_STACKSIZE, newt); 
 }
 
 
@@ -109,6 +107,7 @@ pthread__initmain(pthread_t *newt)
 	pthread_t t;
 	void *base;
 	size_t size;
+	int error;
 
 #ifndef PT_FIXEDSTACKSIZE_LG
 	struct rlimit slimit;
@@ -146,7 +145,11 @@ pthread__initmain(pthread_t *newt)
 	base = (void *)(pthread__sp() & ~PT_STACKMASK);
 	size = PT_STACKSIZE;
 
-	t = pthread__stackid_setup(base, size);
+	error = pthread__stackid_setup(base, size, &t);
+	if (error) {
+		/* XXX */
+		errx(2, "failed to setup main thread: error=%d", error);
+	}
 
 	/*
 	 * The "safe" area chosen below isn't safe for the initial thread stack
@@ -167,9 +170,9 @@ pthread__initmain(pthread_t *newt)
 	*newt = t;
 }
 
-static pthread_t
+static int
 /*ARGSUSED*/
-pthread__stackid_setup(void *base, size_t size)
+pthread__stackid_setup(void *base, size_t size, pthread_t *tp)
 {
 	pthread_t t;
 	void *redaddr;
@@ -201,10 +204,17 @@ pthread__stackid_setup(void *base, size_t size)
 
 	/* Protect the next-to-bottom stack page as a red zone. */
 	ret = mprotect(redaddr, pagesize, PROT_NONE);
-	if (ret == -1)
-		err(2, "Couldn't mprotect() stack redzone at %p\n", redaddr);
-
-	return t;
+	if (ret == -1) {
+		return errno;
+	}
+#ifdef PTHREAD_MLOCK_KLUDGE
+	ret = mlock(t, sizeof(struct __pthread_st));
+	if (ret < 0) {
+		return errno;
+	}
+#endif
+	*tp = t;
+	return 0;
 }
 
 
