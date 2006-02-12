@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.121 2006/01/31 17:48:27 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.122 2006/02/12 10:32:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -913,6 +913,8 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define	PACKET_TAG_IPSEC_NAT_T_PORTS		25 /* two uint16_t */
 
 #define	PACKET_TAG_INET6			26 /* IPv6 info */
+
+#define	PACKET_TAG_ECO_RETRYPARMS		27 /* Econet retry parameters */
 
 /*
  * Return the number of bytes in the mbuf chain, m.
