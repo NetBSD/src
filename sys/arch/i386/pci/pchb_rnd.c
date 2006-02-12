@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.16 2006/01/16 22:59:36 christos Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.17 2006/02/12 12:03:55 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.16 2006/01/16 22:59:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.17 2006/02/12 12:03:55 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,8 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 		case PCI_PRODUCT_INTEL_82875P_HB:
 		case PCI_PRODUCT_INTEL_82915G_HB:
 		case PCI_PRODUCT_INTEL_82915GM_HB:
+		case PCI_PRODUCT_INTEL_82945P_MCH:
+		case PCI_PRODUCT_INTEL_82955X_MCH:
 			sc->sc_st = pa->pa_memt;
 			if (bus_space_map(sc->sc_st, I82802_IOBASE,
 			    I82802_IOSIZE, 0, &sc->sc_sh) != 0) {
