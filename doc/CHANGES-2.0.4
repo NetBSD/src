@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.20 2006/01/27 22:21:19 tron Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.21 2006/02/12 16:30:36 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -167,4 +167,9 @@ sys/uvm/uvm_amap.c				1.66 via patch
 	Prevent occasional panics on machines which are low on memory.
 	This fixes PR kern/25392, port-sparc/30257 and kern/31924.
 	[chs, ticket #10230]
+
+sys/net/if_bridge.c				1.36
+
+	Fix memory disclosure in bridge(4).
+	[adrianp, ticket #10306]
 
