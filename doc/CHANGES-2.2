@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.39 2006/02/01 20:51:47 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.40 2006/02/12 16:29:41 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -510,4 +510,9 @@ sys/net/if_pppoe.c				1.64
 	Make sure error messages (received from the access concentrator) are
 	zero terminated.
 	[martin, ticket #10239]
+
+sys/net/if_bridge.c				1.36
+
+	Fix memory disclosure in bridge(4).
+	[adrianp, ticket #10306]
 
