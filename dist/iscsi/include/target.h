@@ -55,13 +55,14 @@ enum {
 
 /* global variables, moved from target.c */
 typedef struct globals_t {
-	char		targetname[MAX_TGT_NAME_SIZE];
-	uint16_t	port;
-	iscsi_socket_t	sock;
-	int      	state;
-	int		listener_pid;
-	volatile int    listener_listening;
+	char		targetname[MAX_TGT_NAME_SIZE];		/* name of target */
+	uint16_t	port;					/* target port */
+	iscsi_socket_t	sock;					/* socket on which it's listening */
+	int      	state;					/* current state of target */
+	int		listener_pid;				/* PID on which it's listening */
+	volatile int    listener_listening;			/* whether a listener is listening */
 	char     	targetaddress[MAX_TGT_NAME_SIZE];	/* iSCSI TargetAddress set after iscsi_sock_accept() */
+	targv_t		*tv;					/* array of target devices */
 } globals_t;
 
 typedef struct target_session_t {
