@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.58 2005/07/14 15:00:58 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.59 2006/02/12 16:15:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.58 2005/07/14 15:00:58 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.59 2006/02/12 16:15:07 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -160,6 +160,7 @@ static Function *map[256];
 static unsigned char	 _el_rl_complete(EditLine *, int);
 static unsigned char	 _el_rl_tstp(EditLine *, int);
 static char		*_get_prompt(EditLine *);
+static int		 _getc_function(EditLine *, char *);
 static HIST_ENTRY	*_move_history(int);
 static int		 _history_expand_command(const char *, size_t, size_t,
     char **);
@@ -194,6 +195,22 @@ _move_history(int op)
 	rl_he.data = NULL;
 
 	return (&rl_he);
+}
+
+
+/*
+ * read one key from user defined input function
+ */
+static int
+_getc_function(EditLine *el, char *c)
+{
+	int i;
+
+	i = (*rl_getc_function)(NULL, 0);
+	if (i == -1)
+		return 0;
+	*c = i;
+	return 1;
 }
 
 
@@ -241,6 +258,10 @@ rl_initialize(void)
 	history_length = 0;
 	max_input_history = INT_MAX;
 	el_set(e, EL_HIST, history, h);
+
+	/* setup getc function if valid */
+	if (rl_getc_function)
+		el_set(e, EL_GETCFN, _getc_function);
 
 	/* for proper prompt printing in readline() */
 	rl_prompt = strdup("");
