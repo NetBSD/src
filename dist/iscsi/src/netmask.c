@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.1 2006/02/12 14:49:40 agc Exp $ */
+/* $NetBSD: netmask.c,v 1.2 2006/02/12 15:33:26 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright © 2006 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: netmask.c,v 1.1 2006/02/12 14:49:40 agc Exp $");
+__RCSID("$NetBSD: netmask.c,v 1.2 2006/02/12 15:33:26 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: netmask.c,v 1.1 2006/02/12 14:49:40 agc Exp $");
 #include <unistd.h>
 
 #include <arpa/inet.h>
+
+#include "util.h"
 
 enum {
 	NETMASK_BUFFER_SIZE = 256
