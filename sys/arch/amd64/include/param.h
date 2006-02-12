@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2003/04/26 18:39:45 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2006/02/12 01:12:48 chs Exp $	*/
 
 #ifdef _KERNEL
 #ifdef _LOCORE
@@ -107,7 +107,7 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((1 *1024 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
