@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.c,v 1.13 2003/08/07 11:14:21 agc Exp $	*/
+/*	$NetBSD: locate.c,v 1.14 2006/02/12 00:45:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: locate.c,v 1.13 2003/08/07 11:14:21 agc Exp $");
+__RCSID("$NetBSD: locate.c,v 1.14 2006/02/12 00:45:01 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -206,7 +206,7 @@ fastfind(FILE *fp, char *pathpart)
 		/* overlay old path */
 		for (p = path + count; (c = getc(fp)) > SWITCH;) {
 			/* sanity check */
-			if (p < path || p >= path + sizeof(path) - 2)
+			if (p < path || p >= path + sizeof(path) - 1)
 				return -1;	/* invalid database file */
 			if (c < PARITY)
 				*p++ = c;
