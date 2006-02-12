@@ -1,7 +1,6 @@
 To do
 =====
 cmdline fs or fsmmap
-add discovery masking
 add ability to add a target in, take one out (if !busy)
 
 Done
@@ -29,3 +28,4 @@ error if no config file
 mmap & munmap
 get port from cmd line
 raid0
+add discovery masking
