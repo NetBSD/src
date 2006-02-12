@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.4 2002/10/02 03:25:47 thorpej Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.5 2006/02/12 10:32:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.4 2002/10/02 03:25:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.5 2006/02/12 10:32:46 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -325,7 +325,7 @@ eca_init_rxbuf(struct eca_softc *sc, int flags)
 	 */
 
 	totlen = 0;
-	n = NULL;
+	m = n = NULL;
 	while (totlen < sc->sc_ec.ec_if.if_mtu + ECO_HDR_LEN) {
 		MGETHDR(m, flags, MT_DATA);
 		if (m == NULL)
