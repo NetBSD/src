@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.110 2006/02/11 12:45:07 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.111 2006/02/12 09:19:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.110 2006/02/11 12:45:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.111 2006/02/12 09:19:27 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1682,9 +1682,7 @@ uvm_pageunwire(struct vm_page *pg)
 	UVM_LOCK_ASSERT_PAGEQ();
 	pg->wire_count--;
 	if (pg->wire_count == 0) {
-		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
-		uvmexp.active++;
-		pg->pqflags |= PQ_ACTIVE;
+		uvm_pageactivate(pg);
 		uvmexp.wired--;
 	}
 }
