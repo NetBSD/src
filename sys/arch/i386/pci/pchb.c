@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.57 2006/01/16 22:59:36 christos Exp $	*/
+/*	$NetBSD: pchb.c,v 1.58 2006/02/12 18:16:01 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.57 2006/01/16 22:59:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.58 2006/02/12 18:16:01 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.57 2006/01/16 22:59:36 christos Exp $");
 #include <dev/pci/agpreg.h>
 #include <dev/pci/agpvar.h>
 
-#include <arch/i386/pci/pchbvar.h>
+#include <arch/x86/pci/pchbvar.h>
 
 #include "rnd.h"
 
