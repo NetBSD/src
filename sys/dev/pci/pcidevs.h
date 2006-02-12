@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.763 2006/02/07 17:23:23 cube Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.764 2006/02/12 11:51:23 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.762 2006/02/07 17:21:56 cube Exp
+ *	NetBSD: pcidevs,v 1.763 2006/02/12 11:51:07 tron Exp
  */
 
 /*
@@ -1932,6 +1932,8 @@
 #define	PCI_PRODUCT_INTEL_82801FB_IDE	0x266f		/* 82801FB/FR IDE Controller */
 #define	PCI_PRODUCT_INTEL_82945P_MCH	0x2770		/* 82945G/P Memory Controller Hub */
 #define	PCI_PRODUCT_INTEL_82945P_EXP	0x2771		/* 82945G/P PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_82955P_MCH	0x2774		/* 82955X Memory Controller Hub */
+#define	PCI_PRODUCT_INTEL_82955P_EXP	0x2775		/* 82955X PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82915G_IGDC	0x2782		/* 82915G/GL IGD Companion */
 #define	PCI_PRODUCT_INTEL_82915GM_IGDC	0x2792		/* 82915GM/GMS IGD Companion */
 #define	PCI_PRODUCT_INTEL_82801G_LPC	0x27b8		/* 82801GB/GR LPC Interface Bridge */
