@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.29.4.1 2006/01/09 13:35:35 tron Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.29.4.2 2006/02/12 16:50:33 tron Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.29.4.1 2006/01/09 13:35:35 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.29.4.2 2006/02/12 16:50:33 tron Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -772,6 +772,7 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 
 	count = 0;
 	len = bifc->ifbic_len;
+	memset(&breq, 0, sizeof breq);
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		if (len < sizeof(breq))
 			break;
