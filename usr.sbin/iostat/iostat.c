@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.47 2006/02/12 11:23:31 yamt Exp $	*/
+/*	$NetBSD: iostat.c,v 1.48 2006/02/12 22:11:54 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.47 2006/02/12 11:23:31 yamt Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.48 2006/02/12 22:11:54 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,6 +196,7 @@ main(int argc, char *argv[])
 
 	dkinit(0);
 	tpinit(0);
+	cpureadstats();
 	dkreadstats();
 	tpreadstats();
 	ndrives = selectdrives(argc, argv);
@@ -224,6 +225,7 @@ main(int argc, char *argv[])
 		}
 
 		if (!ISSET(todo, SHOW_TOTALS)) {
+			cpuswap();
 			dkswap();
 			tpswap();
 		}
@@ -233,6 +235,7 @@ main(int argc, char *argv[])
 		if (reps >= 0 && --reps <= 0)
 			break;
 		nanosleep(&tv, NULL);
+		cpureadstats();
 		dkreadstats();
 		tpreadstats();
 	}
