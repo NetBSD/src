@@ -72,11 +72,12 @@ iscsi_task_cmd_encap(uint8_t *header, iscsi_task_cmd_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "RefCmdSN:  %u\n", cmd->RefCmdSN);
 	TRACE(TRACE_ISCSI_ARGS, "ExpDataSN: %u\n", cmd->ExpDataSN);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] |= ISCSI_TASK_CMD;	/* Opcode */
-	if (cmd->immediate)
+	if (cmd->immediate) {
 		header[0] |= 0x40;	/* Immediate bit  */
+	}
 	header[1] = cmd->function & 0x80;	/* Function  */
 	*((uint64_t *) (void *) (header + 8)) = ISCSI_HTONLL6(cmd->lun);	/* LUN */
 	*((uint32_t *) (void *) (header + 16)) = ISCSI_HTONL(cmd->tag);	/* Tag */
@@ -142,7 +143,7 @@ iscsi_task_rsp_encap(uint8_t *header, iscsi_task_rsp_t * rsp)
 	TRACE(TRACE_ISCSI_ARGS, "ExpCmdSN:  %u\n", rsp->ExpCmdSN);
 	TRACE(TRACE_ISCSI_ARGS, "MaxCmdSN:  %u\n", rsp->MaxCmdSN);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] |= ISCSI_TASK_RSP;	/* Opcode */
 	header[1] |= 0x80;	/* Byte 1 bit 0  */
@@ -207,11 +208,12 @@ iscsi_nop_out_encap(uint8_t *header, iscsi_nop_out_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:        %u\n", cmd->CmdSN);
 	TRACE(TRACE_ISCSI_ARGS, "ExpStatSN:    %u\n", cmd->ExpStatSN);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] = ISCSI_NOP_OUT;	/* Opcode */
-	if (cmd->immediate)
+	if (cmd->immediate) {
 		header[0] |= 0x40;	/* Immediate bit */
+	}
 	header[1] |= 0x80;	/* Byte 1 bit 0 and Reserved */
 	length = (cmd->length & 0x00ffffff);	/* Length  */
 	*((uint32_t *) (void *) (header + 4)) = ISCSI_HTONL(length);	/* Length  */
@@ -275,7 +277,7 @@ iscsi_nop_in_encap(uint8_t *header, iscsi_nop_in_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "ExpCmdSN:     %u\n", cmd->ExpCmdSN);
 	TRACE(TRACE_ISCSI_ARGS, "MaxCmdSN:     %u\n", cmd->MaxCmdSN);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] = 0x00 | ISCSI_NOP_IN;	/* Opcode  */
 	header[1] |= 0x80;	/* Reserved */
@@ -345,15 +347,18 @@ iscsi_text_cmd_encap(uint8_t *header, iscsi_text_cmd_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:        %u\n", cmd->CmdSN);
 	TRACE(TRACE_ISCSI_ARGS, "ExpStatSN:    %u\n", cmd->ExpStatSN);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] |= ISCSI_TEXT_CMD;	/* Opcode */
-	if (cmd->immediate)
+	if (cmd->immediate) {
 		header[0] |= 0x40;	/* Immediate bit */
-	if (cmd->final)
+	}
+	if (cmd->final) {
 		header[1] |= 0x80;	/* Final bit */
-	if (cmd->cont)
+	}
+	if (cmd->cont) {
 		header[1] |= 0x40;	/* Continue bit */
+	}
 	length = (cmd->length & 0x00ffffff);	/* Length */
 	*((uint32_t *) (void *) (header + 4)) = ISCSI_HTONL(length);	/* Length */
 	*((uint64_t *) (void *) (header + 8)) = ISCSI_HTONLL6(cmd->lun);	/* LUN */
@@ -424,12 +429,14 @@ iscsi_text_rsp_encap(uint8_t *header, iscsi_text_rsp_args_t * rsp)
 	TRACE(TRACE_ISCSI_ARGS, "ExpCmdSN:     %u\n", rsp->ExpCmdSN);
 	TRACE(TRACE_ISCSI_ARGS, "MaxCmdSN:     %u\n", rsp->MaxCmdSN);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 	header[0] |= 0x00 | ISCSI_TEXT_RSP;	/* Opcode */
-	if (rsp->final)
+	if (rsp->final) {
 		header[1] |= 0x80;	/* Final bit */
-	if (rsp->cont)
+	}
+	if (rsp->cont) {
 		header[1] |= 0x40;	/* Continue */
+	}
 	length = (rsp->length & 0x00ffffff);	/* Length */
 	*((uint32_t *) (void *) (header + 4)) = ISCSI_HTONL(length);	/* Length */
 	*((uint64_t *) (void *) (header + 8)) = ISCSI_HTONLL6(rsp->lun);	/* LUN */
@@ -505,13 +512,15 @@ iscsi_login_cmd_encap(uint8_t *header, iscsi_login_cmd_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:             %u\n", cmd->CmdSN);
 	TRACE(TRACE_ISCSI_ARGS, "ExpStatSN:         %u\n", cmd->ExpStatSN);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] |= 0x40 | ISCSI_LOGIN_CMD;	/* Opcode  */
-	if (cmd->transit)
+	if (cmd->transit) {
 		header[1] |= 0x80;	/* Transit */
-	if (cmd->cont)
+	}
+	if (cmd->cont) {
 		header[1] |= 0x40;	/* Continue */
+	}
 	header[1] |= ((cmd->csg) << 2) & 0x0c;	/* CSG */
 	header[1] |= (cmd->nsg) & 0x03;	/* NSG */
 	header[2] = cmd->version_max;	/* Version-Max  */
@@ -573,10 +582,12 @@ iscsi_login_cmd_decap(uint8_t *header, iscsi_login_cmd_args_t * cmd)
 	RETURN_NOT_EQUAL("Bytes 44-47", *((uint32_t *) (void *) (header + 44)), 0, NO_CLEANUP, 1);
 
 	if (cmd->transit) {
-		if (cmd->nsg <= cmd->csg)
+		if (cmd->nsg <= cmd->csg) {
 			return -1;
-		if ((cmd->nsg != 0) && (cmd->nsg != 1) && (cmd->nsg != 3))
+		}
+		if ((cmd->nsg != 0) && (cmd->nsg != 1) && (cmd->nsg != 3)) {
 			return -1;
+		}
 	}
 	return 0;
 }
@@ -606,16 +617,19 @@ iscsi_login_rsp_encap(uint8_t *header, iscsi_login_rsp_args_t * rsp)
 	TRACE(TRACE_ISCSI_ARGS, "Status-Class:      %u\n", rsp->status_class);
 	TRACE(TRACE_ISCSI_ARGS, "Status-Detail:     %u\n", rsp->status_detail);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] |= 0x00 | ISCSI_LOGIN_RSP;	/* Opcode  */
-	if (rsp->transit)
+	if (rsp->transit) {
 		header[1] |= 0x80;	/* Transit  */
-	if (rsp->cont)
+	}
+	if (rsp->cont) {
 		header[1] |= 0x40;	/* Continue */
+	}
 	header[1] |= ((rsp->csg) << 2) & 0x0c;	/* CSG */
-	if (rsp->transit)
+	if (rsp->transit) {
 		header[1] |= (rsp->nsg) & 0x03;	/* NSG */
+	}
 	header[2] = rsp->version_max;	/* Version-max */
 	header[3] = rsp->version_active;	/* Version-active */
 	header[4] = rsp->AHSlength;	/* TotalAHSLength */
@@ -699,11 +713,12 @@ iscsi_logout_cmd_encap(uint8_t *header, iscsi_logout_cmd_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "CmdSN:     %u\n", cmd->CmdSN);
 	TRACE(TRACE_ISCSI_ARGS, "ExpStatSN: %u\n", cmd->ExpStatSN);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] = ISCSI_LOGOUT_CMD;	/* Opcode */
-	if (cmd->immediate)
+	if (cmd->immediate) {
 		header[0] |= 0x40;	/* Immediate */
+	}
 	header[1] = cmd->reason | 0x80;	/* Reason  */
 	*((uint32_t *) (void *) (header + 16)) = ISCSI_HTONL(cmd->tag);	/* Tag */
 	*((uint16_t *) (void *) (header + 20)) = ISCSI_HTONS(cmd->cid);	/* CID */
@@ -768,7 +783,7 @@ iscsi_logout_rsp_encap(uint8_t *header, iscsi_logout_rsp_args_t * rsp)
 	TRACE(TRACE_ISCSI_ARGS, "Time2Wait:   %hu\n", rsp->Time2Wait);
 	TRACE(TRACE_ISCSI_ARGS, "Time2Retain: %hu\n", rsp->Time2Retain);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] |= 0x00 | ISCSI_LOGOUT_RSP;	/* Opcode  */
 	header[1] |= 0x80;	/* Reserved  */
@@ -843,17 +858,21 @@ iscsi_scsi_cmd_encap(uint8_t *header, iscsi_scsi_cmd_args_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "ExpStatSN:         %u\n", cmd->ExpStatSN);
 	TRACE(TRACE_ISCSI_ARGS, "CDB:               0x%x\n", cmd->cdb[0]);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] |= ISCSI_SCSI_CMD;	/* Opcode */
-	if (cmd->immediate)
+	if (cmd->immediate) {
 		header[0] |= 0x40;	/* Immediate */
-	if (cmd->final)
+	}
+	if (cmd->final) {
 		header[1] |= 0x80;	/* Final */
-	if (cmd->input)
+	}
+	if (cmd->input) {
 		header[1] |= 0x40;	/* Input bit */
-	if (cmd->output)
+	}
+	if (cmd->output) {
 		header[1] |= 0x20;	/* Output bit */
+	}
 	header[1] |= cmd->attr & 0x07;	/* ATTR  */
 	*((uint32_t *) (void *) (header + 4)) = ISCSI_HTONL(cmd->length);	/* DataSegmentLength */
 	header[4] = cmd->ahs_len;	/* TotalAHSLength  */
@@ -934,18 +953,22 @@ iscsi_scsi_rsp_encap(uint8_t *header, iscsi_scsi_rsp_t * rsp)
 	TRACE(TRACE_ISCSI_ARGS, "Bidi Residual Count: %u\n", rsp->bidi_res_cnt);
 	TRACE(TRACE_ISCSI_ARGS, "Residual Count:      %u\n", rsp->basic_res_cnt);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] |= 0x00 | ISCSI_SCSI_RSP;	/* Opcode  */
 	header[1] |= 0x80;	/* Byte 1 bit 7 */
-	if (rsp->bidi_overflow)
+	if (rsp->bidi_overflow) {
 		header[1] |= 0x10;	/* Bidi overflow */
-	if (rsp->bidi_underflow)
+	}
+	if (rsp->bidi_underflow) {
 		header[1] |= 0x08;	/* Bidi underflow */
-	if (rsp->overflow)
+	}
+	if (rsp->overflow) {
 		header[1] |= 0x04;	/* Overflow */
-	if (rsp->underflow)
+	}
+	if (rsp->underflow) {
 		header[1] |= 0x02;	/* Underflow  */
+	}
 	header[2] = rsp->response;	/* iSCSI Response */
 	header[3] = rsp->status;/* SCSI Status */
 	header[4] = rsp->ahs_len;	/* TotalAHSLength  */
@@ -1030,7 +1053,7 @@ iscsi_r2t_encap(uint8_t *header, iscsi_r2t_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "Offset:       %u\n", cmd->offset);
 	TRACE(TRACE_ISCSI_ARGS, "Length:       %u\n", cmd->length);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] |= 0x00 | ISCSI_R2T;	/* Opcode  */
 	header[1] |= 0x80;
@@ -1103,10 +1126,11 @@ iscsi_write_data_encap(uint8_t *header, iscsi_write_data_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "DataSN:             %u\n", cmd->DataSN);
 	TRACE(TRACE_ISCSI_ARGS, "Buffer Offset:      %u\n", cmd->offset);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 	header[0] = 0x00 | ISCSI_WRITE_DATA;	/* Opcode  */
-	if (cmd->final)
+	if (cmd->final) {
 		header[1] |= 0x80;	/* Final */
+	}
 	*((uint32_t *) (void *) (header + 4)) = ISCSI_HTONL(cmd->length);	/* Length */
 	*((uint64_t *) (void *) (header + 8)) = ISCSI_HTONLL6(cmd->lun);	/* LUN */
 	*((uint32_t *) (void *) (header + 16)) = ISCSI_HTONL(cmd->tag);	/* Tag */
@@ -1178,33 +1202,41 @@ iscsi_read_data_encap(uint8_t *header, iscsi_read_data_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "Buffer Offset      %u\n", cmd->offset);
 	TRACE(TRACE_ISCSI_ARGS, "Residual Count:    %u\n", cmd->res_count);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] = 0x00 | ISCSI_READ_DATA;	/* Opcode  */
-	if (cmd->final)
+	if (cmd->final) {
 		header[1] |= 0x80;	/* Final */
-	if (cmd->ack)
+	}
+	if (cmd->ack) {
 		header[1] |= 0x40;	/* ACK */
-	if (cmd->overflow)
+	}
+	if (cmd->overflow) {
 		header[1] |= 0x04;	/* Overflow  */
-	if (cmd->underflow)
+	}
+	if (cmd->underflow) {
 		header[1] |= 0x02;	/* Underflow */
-	if (cmd->S_bit)
+	}
+	if (cmd->S_bit) {
 		header[1] |= 0x01;	/* S Bit */
-	if (cmd->S_bit)
+	}
+	if (cmd->S_bit) {
 		header[3] = cmd->status;	/* Status  */
+	}
 	*((uint32_t *) (void *) (header + 4)) = ISCSI_HTONL(cmd->length);	/* Length */
 	*((uint64_t *) (void *) (header + 8)) = ISCSI_HTONLL6(cmd->lun);	/* LUN */
 	*((uint32_t *) (void *) (header + 16)) = ISCSI_HTONL(cmd->task_tag);	/* Task Tag */
 	*((uint32_t *) (void *) (header + 20)) = ISCSI_HTONL(cmd->transfer_tag);	/* Transfer Tag */
-	if (cmd->S_bit)
+	if (cmd->S_bit) {
 		*((uint32_t *) (void *) (header + 24)) = ISCSI_HTONL(cmd->StatSN);	/* StatSN */
+	}
 	*((uint32_t *) (void *) (header + 28)) = ISCSI_HTONL(cmd->ExpCmdSN);	/* ExpCmdSN  */
 	*((uint32_t *) (void *) (header + 32)) = ISCSI_HTONL(cmd->MaxCmdSN);	/* MaxCmdSN  */
 	*((uint32_t *) (void *) (header + 36)) = ISCSI_HTONL(cmd->DataSN);	/* DataSN  */
 	*((uint32_t *) (void *) (header + 40)) = ISCSI_HTONL(cmd->offset);	/* Buffer Offset */
-	if (cmd->S_bit)
+	if (cmd->S_bit) {
 		*((uint32_t *) (void *) (header + 44)) = ISCSI_HTONL(cmd->res_count);	/* Residual Count  */
+	}
 
 	return 0;
 }
@@ -1272,7 +1304,7 @@ iscsi_reject_encap(uint8_t *header, iscsi_reject_t * cmd)
 	TRACE(TRACE_ISCSI_ARGS, "MaxCmdSN: %u\n", cmd->MaxCmdSN);
 	TRACE(TRACE_ISCSI_ARGS, "DataSN:   %u\n", cmd->DataSN);
 
-	memset(header, 0, ISCSI_HEADER_LEN);
+	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
 	header[0] |= 0x00 | ISCSI_REJECT;	/* Opcode  */
 	header[1] |= 0x80;
