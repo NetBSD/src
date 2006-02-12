@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2006/02/06 18:29:48 wiz Exp $
+# $NetBSD: Makefile,v 1.2 2006/02/12 18:11:54 tron Exp $
 
 SUBDIR=		examples momdoc
 DIST_SUBDIR=    contrib/mom
@@ -18,6 +18,8 @@ MAN=		groff_mom.7
 FILESDIR=	${TMACDIR}
 FILES+=		${NORMALFILES}
 .endif
+
+CLEANFILES+=	groff_mom.7
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
