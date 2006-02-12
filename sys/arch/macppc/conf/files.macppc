@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.71 2006/02/06 19:23:17 jmmv Exp $
+#	$NetBSD: files.macppc,v 1.72 2006/02/12 21:00:46 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -78,15 +78,15 @@ device uni_n: uni_n
 attach uni_n at mainbus
 file arch/macppc/dev/uni-n.c			uni_n
 
-# PCI bus support
-include "dev/pci/files.pci"
-
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
 include "dev/usb/files.usb"
 
-device ofb: wsemuldisplaydev, rasops8
+# PCI bus support
+include "dev/pci/files.pci"
+
+device ofb: wsemuldisplaydev, rasops8, vcons
 attach ofb at pci
 file arch/macppc/dev/ofb.c			ofb needs-flag
 
