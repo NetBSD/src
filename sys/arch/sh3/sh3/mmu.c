@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.13 2006/01/24 00:01:22 uwe Exp $	*/
+/*	$NetBSD: mmu.c,v 1.14 2006/02/12 02:23:03 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.13 2006/01/24 00:01:22 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.14 2006/02/12 02:23:03 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,9 +110,6 @@ sh_mmu_information(void)
 void
 sh_tlb_set_asid(int asid)
 {
-	int s;
 
-	s = _cpu_exception_suspend();
 	_reg_write_4(SH_(PTEH), asid);
-	_cpu_exception_resume(s);
 }
