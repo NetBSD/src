@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.763 2006/02/12 11:51:23 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.764 2006/02/12 11:54:00 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.763 2006/02/12 11:51:07 tron Exp
+ *	NetBSD: pcidevs,v 1.764 2006/02/12 11:53:26 tron Exp
  */
 
 /*
@@ -6624,11 +6624,11 @@ static const struct pci_product pci_products[] = {
 	    "82945G/P PCI Express Bridge",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955P_MCH,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955X_MCH,
 	    "82955X Memory Controller Hub",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955P_EXP,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955X_EXP,
 	    "82955X PCI Express Bridge",
 	},
 	{
