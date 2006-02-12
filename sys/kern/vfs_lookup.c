@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.66 2006/02/04 12:09:50 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.67 2006/02/12 01:32:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.66 2006/02/04 12:09:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.67 2006/02/12 01:32:06 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
+#include "opt_magiclinks.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +64,12 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.66 2006/02/04 12:09:50 yamt Exp $")
 #ifdef SYSTRACE
 #include <sys/systrace.h>
 #endif
+
+#ifndef MAGICLINKS
+#define MAGICLINKS 0
+#endif
+
+int vfs_magiclinks = MAGICLINKS;
 
 struct pool pnbuf_pool;		/* pathname buffer pool */
 struct pool_cache pnbuf_cache;	/* pathname buffer cache */
@@ -332,7 +339,7 @@ namei(struct nameidata *ndp)
 		 * Do symlink substitution, if appropriate, and
 		 * check length for potential overflow.
 		 */
-		if (((ndp->ni_vp->v_mount->mnt_flag & MNT_MAGICLINKS) &&
+		if ((vfs_magiclinks &&
 		     symlink_magic(cnp->cn_lwp->l_proc, cp, &linklen)) ||
 		    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
 			error = ENAMETOOLONG;
