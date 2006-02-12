@@ -561,13 +561,13 @@ nop_out_t(target_session_t * sess, uint8_t *header)
 static int 
 text_command_t(target_session_t * sess, uint8_t *header)
 {
-	iscsi_text_cmd_args_t text_cmd;
-	iscsi_text_rsp_args_t text_rsp;
-	uint8_t   rsp_header[ISCSI_HEADER_LEN];
-	char           *text_in = NULL;
-	char           *text_out = NULL;
-	unsigned             len_in;
-	int             len_out = 0;
+	iscsi_text_cmd_args_t	 text_cmd;
+	iscsi_text_rsp_args_t	 text_rsp;
+	uint8_t   		 rsp_header[ISCSI_HEADER_LEN];
+	char           		*text_in = NULL;
+	char           		*text_out = NULL;
+	unsigned		 len_in;
+	int			 len_out = 0;
 
 #define TC_CLEANUP { if (text_in != NULL) iscsi_free_atomic(text_in);if (text_out != NULL) iscsi_free_atomic(text_out);}
 #define TC_ERROR {TC_CLEANUP; return -1;}
@@ -622,8 +622,13 @@ text_command_t(target_session_t * sess, uint8_t *header)
 				TRACE(TRACE_ISCSI_DEBUG, "Rejecting SendTargets=All in a non Discovery session\n");
 				PARAM_TEXT_ADD(sess->params, "SendTargets", "Reject", text_out, &len_out, 2048, 0, TC_ERROR);
 			} else {
-				PARAM_TEXT_ADD(sess->params, "TargetName", sess->globals->targetname, text_out, &len_out, 2048, 0, TC_ERROR);
-				PARAM_TEXT_ADD(sess->params, "TargetAddress", sess->globals->targetaddress, text_out, &len_out, 2048, 0, TC_ERROR);
+				if (allow_netmask(sess->globals->tv->v[0].mask, sess->initiator)) {
+					PARAM_TEXT_ADD(sess->params, "TargetName", sess->globals->targetname, text_out, &len_out, 2048, 0, TC_ERROR);
+					PARAM_TEXT_ADD(sess->params, "TargetAddress", sess->globals->targetaddress, text_out, &len_out, 2048, 0, TC_ERROR);
+				} else {
+					syslog(LOG_INFO, "WARNING: attempt to discover targets from %s (not allowed by %s) has been rejected", sess->initiator, sess->globals->tv->v[0].mask);
+					PARAM_TEXT_ADD(sess->params, "SendTargets", "Reject", text_out, &len_out, 2048, 0, TC_ERROR);
+				}
 			}
 			ptr->rx_offer = 0;
 		}
@@ -1404,7 +1409,7 @@ target_init(globals_t *gp, targv_t *tv, char *TargetName, int n)
 	int             i;
 
 	(void) strlcpy(gp->targetname, TargetName, sizeof(gp->targetname));
-	if ((d = device_init(gp, tv, &tv->v[n])) < 0) {
+	if ((d = device_init(gp, gp->tv = tv, &tv->v[n])) < 0) {
 		TRACE_ERROR("device_init() failed\n");
 		return -1;
 	}
