@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.17 2006/02/05 17:24:46 riz Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.18 2006/02/12 16:50:46 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -177,4 +177,9 @@ sys/arch/xen/i386/xen_machdep.c			1.16
 
 	Fix bad cut'n'paste: use the target of strncpy() in sizeof().
 	[bouyer, ticket #1157]
+
+sys/net/if_bridge.c				1.36
+
+	Fix memory disclosure in bridge(4).
+	[adrianp, ticket #1163]
 
