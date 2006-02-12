@@ -1,4 +1,4 @@
-#	$NetBSD: DBAU1550,v 1.3 2006/02/09 00:26:39 gdamore Exp $
+#	$NetBSD: DBAU1550,v 1.4 2006/02/12 20:49:34 gdamore Exp $
 #
 # Kernel config for the AMD Alchemy DBAu1550 evaluation board.
 
@@ -18,6 +18,9 @@ options		PCI_NETBSD_CONFIGURE
 
 aupci*	at aubus? addr ?
 pci*	at aupci?
+
+augpio*	at aubus? addr ?
+gpio*	at augpio?
 
 # Note that this is just fairly random selection of PCI devices.
 # Only the hptide controller is actually on-board.
