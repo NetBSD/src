@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1550.c,v 1.1 2006/02/08 09:04:01 gdamore Exp $ */
+/* $NetBSD: dbau1550.c,v 1.2 2006/02/12 06:43:03 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.1 2006/02/08 09:04:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.2 2006/02/12 06:43:03 gdamore Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -72,13 +72,13 @@ board_info(void)
 void
 dbau1550_init(void)
 {
-	uint32_t	whoami;
+	uint32_t		whoami;
 
 	if (MIPS_PRID_COPTS(cpu_id) != MIPS_AU1550)
 		panic("dbau1550: CPU not Au1550");
 
 	/* check the whoami register for a match */
-	whoami = *((volatile uint32_t *)DBAU1550_WHOAMI);
+	whoami = *((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(DBAU1550_WHOAMI));
 
 	if (DBAU1550_WHOAMI_BOARD(whoami) != DBAU1550_WHOAMI_DBAU1550_REV1)
 		panic("dbau1550: WHOAMI (%x) not DBAu1550!", whoami);

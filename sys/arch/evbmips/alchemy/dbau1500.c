@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1500.c,v 1.1 2006/02/08 09:04:01 gdamore Exp $ */
+/* $NetBSD: dbau1500.c,v 1.2 2006/02/12 06:43:03 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.1 2006/02/08 09:04:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.2 2006/02/12 06:43:03 gdamore Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -76,7 +76,7 @@ dbau1500_init(void)
 		panic("dbau1500: CPU not an AU1500!");
 
 	/* check the whoami register for a match */
-	whoami = *((volatile uint32_t *)DBAU1500_WHOAMI);
+	whoami = *((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(DBAU1500_WHOAMI));
 
 	if (DBAU1500_WHOAMI_BOARD(whoami) != DBAU1500_WHOAMI_DBAU1500)
 		panic("dbau1500: WHOAMI (%x) not DBAu1500!", whoami);
@@ -91,7 +91,6 @@ dbau1500_init(void)
 		printf("no daughtercard\n");
 
 	/* leave console and clocks alone -- YAMON should have got it right! */
-
 }
 
 int
