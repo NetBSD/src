@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.31 2006/02/08 21:11:46 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.32 2006/02/12 16:50:17 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -686,4 +686,9 @@ sys/dev/pci/if_wm.c				1.111
 	resetting m to point to the first buffer in the packet. The bug would
 	cause the length of jumbo frames to be incorrect.
 	[thorpej, ticket #1161]
+
+sys/net/if_bridge.c				1.36
+
+	Fix memory disclosure in bridge(4).
+	[adrianp, ticket #1163]
 
