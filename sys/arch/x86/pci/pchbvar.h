@@ -1,4 +1,4 @@
-/*	$NetBSD: pchbvar.h,v 1.2 2005/12/26 19:24:00 perry Exp $	*/
+/*	$NetBSD: pchbvar.h,v 1.1 2006/02/12 18:16:01 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

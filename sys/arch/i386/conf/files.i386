@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.277 2006/02/03 11:08:23 jmmv Exp $
+#	$NetBSD: files.i386,v 1.278 2006/02/12 18:16:01 tron Exp $
 #
 # new style config file for i386 architecture
 #
@@ -188,7 +188,7 @@ device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
 	      agp_via
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb			needs-flag
-file	arch/i386/pci/pchb_rnd.c	pchb & rnd
+file	arch/x86/pci/pchb_rnd.c		pchb & rnd
 
 # AMD Elan SC520 System Controller (PCI-Host bridge)
 device	elansc: sysmon_wdog, gpiobus

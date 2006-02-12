@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.18 2006/02/12 16:37:31 tron Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.1 2006/02/12 18:16:01 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.18 2006/02/12 16:37:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.1 2006/02/12 18:16:01 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.18 2006/02/12 16:37:31 tron Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <arch/i386/pci/i82802reg.h>
-#include <arch/i386/pci/pchbvar.h>
+#include <arch/x86/pci/i82802reg.h>
+#include <arch/x86/pci/pchbvar.h>
 
 void pchb_rnd_callout(void *v);
 
@@ -61,6 +61,8 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
+#if defined(__i386__)
+		/* Old chipsets which only support IA32 CPUs. */
 		case PCI_PRODUCT_INTEL_82810E_MCH:
 		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
 		case PCI_PRODUCT_INTEL_82810_MCH:
@@ -75,6 +77,8 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 		case PCI_PRODUCT_INTEL_82860_HB:
 		case PCI_PRODUCT_INTEL_82865_HB:
 		case PCI_PRODUCT_INTEL_82875P_HB:
+#endif	/* defined((__i386__) */
+		/* New chipsets which support EM64T CPUs. */
 		case PCI_PRODUCT_INTEL_82915G_HB:
 		case PCI_PRODUCT_INTEL_82915GM_HB:
 		case PCI_PRODUCT_INTEL_82925X_HB:

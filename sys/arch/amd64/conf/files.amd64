@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.20 2006/02/09 19:18:56 manu Exp $
+#	$NetBSD: files.amd64,v 1.21 2006/02/12 18:16:01 tron Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -111,6 +111,7 @@ defparam			PCI_CONF_MODE
 device	pchb: pcibus
 attach	pchb at pci
 file	arch/amd64/pci/pchb.c			pchb
+file	arch/x86/pci/pchb_rnd.c			pchb & rnd
 
 # PCI-ISA bridges
 device	pcib: isabus
