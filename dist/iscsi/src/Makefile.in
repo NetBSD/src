@@ -45,7 +45,7 @@ $(BIN):
 #
 COMPATOBJS= strlcpy.o snprintf.o strtoll.o
 
-USER_TARGET_OBJS = target.o iscsi.o util.o parameters.o conffile.o storage.o ${COMPATOBJS}
+USER_TARGET_OBJS = target.o iscsi.o util.o parameters.o netmask.o conffile.o storage.o ${COMPATOBJS}
 $(BIN)/osd: osd-target.c osd.c $(USER_TARGET_OBJS)
 	$(CC) $(CFLAGS) osd-target.c osd.c $(USER_TARGET_OBJS)  ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o $(BIN)/osd
 $(BIN)/iscsi-target: iscsi-target.c disk.c $(USER_TARGET_OBJS)
