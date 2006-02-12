@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.19 2006/02/04 11:24:42 jmmv Exp $
+# $NetBSD: md.amd64,v 1.20 2006/02/12 07:14:34 riz Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/amd64/joystick.h			comp-c-include
 ./usr/include/amd64/kcore.h			comp-c-include
 ./usr/include/amd64/limits.h			comp-c-include
+./usr/include/amd64/linux32_machdep.h		comp-c-include
 ./usr/include/amd64/lock.h			comp-c-include
 ./usr/include/amd64/math.h			comp-c-include
 ./usr/include/amd64/mcontext.h			comp-c-include
