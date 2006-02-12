@@ -1,4 +1,4 @@
-/* $NetBSD: au1550.c,v 1.2 2006/02/09 00:26:40 gdamore Exp $ */
+/* $NetBSD: au1550.c,v 1.3 2006/02/12 20:49:34 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au1550.c,v 1.2 2006/02/09 00:26:40 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au1550.c,v 1.3 2006/02/12 20:49:34 gdamore Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -182,14 +182,14 @@ static struct au_dev au1550_devices[] = {
 	{ "ohci",	{ AU1550_USBH_BASE, AU1550_USBH_ENABLE, 
 			  AU1550_USBH_SIZE },			   { 26, -1 }},
 	{ "aupci",	{ PCI_BASE },				   { -1, -1 }},
+	{ "augpio",	{ SYS_BASE, 27 },			   { -1, -1 }},
+	{ "augpio",	{ GPIO2_BASE, 16 },			   { -1, -1 }},
 #if 0
 	{ "usbd",	{ USBD_BASE },				   { 24, 25 }},
 	{ "aupsc",	{ PSC0_BASE },				   { 10, -1 }},
 	{ "aupsc",	{ PSC1_BASE },				   { 11, -1 }},
 	{ "aupsc",	{ PSC2_BASE },				   { 12, -1 }},
 	{ "aupsc",	{ PSC3_BASE },				   { 13, -1 }},
-	{ "gpio",	{ SYS_BASE },				   { -1, -1 }},
-	{ "gpio",	{ GPIO2_BASE },				   { -1, -1 }},
 	{ "aucrypto",	{ CRYPTO_BASE },			   {  4, -1 }},
 #endif
 	{ NULL }
