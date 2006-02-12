@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2006/02/09 23:09:06 agc Exp $
+# $NetBSD: Makefile,v 1.3 2006/02/12 15:38:34 agc Exp $
 
 .include <bsd.own.mk>
 
 LIB= iscsi
-SRCS= conffile.c disk.c target.c iscsi.c util.c parameters.c storage.c
+SRCS= conffile.c disk.c target.c iscsi.c util.c parameters.c storage.c netmask.c
 CPPFLAGS+= -DCONFIG_ISCSI_DEBUG -D_FILE_OFFSET_BITS=64
 CPPFLAGS+= -I${ISCSIDIST}/include
 CPPFLAGS+= -pthread
