@@ -1,4 +1,4 @@
-/*	$NetBSD: includes.h,v 1.11 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: includes.h,v 1.12 2006/02/13 16:49:33 christos Exp $	*/
 /*	$OpenBSD: includes.h,v 1.22 2006/01/01 08:59:27 stevesk Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 # include <security/pam_appl.h>
 #endif
 
+#include "namespace.h"
 #include "version.h"
 
 #include "random.h"
