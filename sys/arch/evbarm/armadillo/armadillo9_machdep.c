@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.3 2006/02/06 14:03:22 hamajima Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.4 2006/02/13 12:24:21 hamajima Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.3 2006/02/06 14:03:22 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.4 2006/02/13 12:24:21 hamajima Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -135,9 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.3 2006/02/06 14:03:22 hamaj
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#ifdef	ARMADILLO210
 #define	DRAM_BLOCKS	4
-#endif
 #include <machine/bootconfig.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -172,6 +170,13 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.3 2006/02/06 14:03:22 hamaj
 #include <machine/isa_machdep.h>
 
 #include <evbarm/armadillo/armadillo9reg.h>
+#include <evbarm/armadillo/armadillo9var.h>
+
+struct armadillo_model_t *armadillo_model = 0;
+static struct armadillo_model_t armadillo_model_table[] = {
+	{ DEVCFG_ARMADILLO9, "Armadillo-9" },
+	{ DEVCFG_ARMADILLO210, "Armadillo-210" },
+	{ 0, "Armadillo(unknown model)" } };
 
 #include "opt_ipkdb.h"
 #include "ksyms.h"
@@ -258,6 +263,7 @@ void	consinit(void);
 /*
  * Define the default console speed for the machine.
  */
+#if NEPCOM > 0
 #ifndef CONSPEED
 #define CONSPEED B115200
 #endif /* ! CONSPEED */
@@ -266,8 +272,15 @@ void	consinit(void);
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 
+#ifndef CONUNIT
+#define	CONUNIT	0
+#endif
+
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
+const unsigned long comaddr[] = {
+	EP93XX_APB_UART1, EP93XX_APB_UART2 };
+#endif
 
 #if KGDB
 #ifndef KGDB_DEVNAME
@@ -447,6 +460,8 @@ initarm(void *arg)
 	int loop1;
 	u_int l1pagetable;
 	pv_addr_t kernel_l1pt;
+	struct bootparam_tag *bootparam_p;
+	unsigned long devcfg;
 
 	/*
 	 * Since we map the on-board devices VA==PA, and the kernel
@@ -455,10 +470,47 @@ initarm(void *arg)
 	 */
 	consinit();
 
-#ifdef VERBOSE_INIT_ARM
+	/* identify model */
+	devcfg = *((volatile unsigned long*)(EP93XX_APB_HWBASE 
+					     + EP93XX_APB_SYSCON
+					     + EP93XX_SYSCON_DeviceCfg));
+	for (armadillo_model = &armadillo_model_table[0];
+				armadillo_model->devcfg; armadillo_model++)
+		if (devcfg == armadillo_model->devcfg)
+			break;
+
 	/* Talk to the user */
-	printf("\nNetBSD/armadillo9 booting ...\n");
+	printf("\nNetBSD/%s booting ...\n", armadillo_model->name);
+
+	/* set some informations from bootloader */
+	bootparam_p = (struct bootparam_tag *)bootparam;
+	bootconfig.dramblocks = 0;
+	while (bootparam_p->hdr.tag != BOOTPARAM_TAG_NONE) {
+		switch (bootparam_p->hdr.tag) {
+		case BOOTPARAM_TAG_MEM:
+			if (bootconfig.dramblocks < DRAM_BLOCKS) {
+#ifdef VERBOSE_INIT_ARM
+			printf("dram[%d]: address=0x%08lx, size=0x%08lx\n",
+						bootconfig.dramblocks,
+						bootparam_p->u.mem.start,
+						bootparam_p->u.mem.size);
 #endif
+				bootconfig.dram[bootconfig.dramblocks].address =
+					bootparam_p->u.mem.start;
+				bootconfig.dram[bootconfig.dramblocks].pages =
+					bootparam_p->u.mem.size / PAGE_SIZE;
+				bootconfig.dramblocks++;
+			}
+			break;
+		case BOOTPARAM_TAG_CMDLINE:
+#ifdef VERBOSE_INIT_ARM
+			printf("cmdline: %s\n", bootparam_p->u.cmdline.cmdline);
+#endif
+			parse_mi_bootargs(bootparam_p->u.cmdline.cmdline);
+			break;
+		}
+		bootparam_p = bootparam_tag_next(bootparam_p);
+	}
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -469,27 +521,6 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
-
-	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
-#ifdef	ARMADILLO210
-	bootconfig.dramblocks = 4;
-	bootconfig.dram[0].address = 0xc0000000UL;
-	bootconfig.dram[0].pages = 0x800000UL / PAGE_SIZE;
-	bootconfig.dram[1].address = 0xc1000000UL;
-	bootconfig.dram[1].pages = 0x800000UL / PAGE_SIZE;
-	bootconfig.dram[2].address = 0xc4000000UL;
-	bootconfig.dram[2].pages = 0x800000UL / PAGE_SIZE;
-	bootconfig.dram[3].address = 0xc5000000UL;
-	bootconfig.dram[3].pages = 0x800000UL / PAGE_SIZE;
-#else	/* ARMADILLO9 */
-	bootconfig.dramblocks = 2;
-	bootconfig.dram[0].address = 0xc0000000UL;
-	bootconfig.dram[0].pages = 0x2000000UL / PAGE_SIZE;
-	bootconfig.dram[1].address = 0xc4000000UL;
-	bootconfig.dram[1].pages = 0x2000000UL / PAGE_SIZE;
-#endif
-
 	/*
 	 * Set up the variables that define the availablilty of
 	 * physical memory.  For now, we're going to set
@@ -869,33 +900,11 @@ consinit(void)
 	 * device.
 	 */
 	pmap_devmap_register(armadillo9_devmap);
-#if 0
-	isa_armadillo9_init(ARMADILLO9_IO16_VBASE + ARMADILLO9_ISAIO,
-		ARMADILLO9_IO16_VBASE + ARMADILLO9_ISAMEM);	
-
-        if (comcnattach(&isa_io_bs_tag, 0x3e8, comcnspeed,
-            COM_FREQ, COM_TYPE_NORMAL, comcnmode))
-        {
-                panic("can't init serial console");
-        }
-#endif
 
 #if NEPCOM > 0
-#ifndef CONUNIT
-#define	CONUNIT	0
-#endif
-#if CONUNIT == 0
-#define	UART	EP93XX_APB_UART1
-#elif CONUNIT == 1
-#define	UART	EP93XX_APB_UART2
-#elif CONUNIT == 2
-#define	UART	EP93XX_APB_UART3
-#else
-#error	CONUNIT must less than 3.
-#endif
-	bus_space_map(&ep93xx_bs_tag, EP93XX_APB_HWBASE + UART, 
+	bus_space_map(&ep93xx_bs_tag, EP93XX_APB_HWBASE + comaddr[CONUNIT], 
 		EP93XX_APB_UART_SIZE, 0, &ioh);
-        if (epcomcnattach(&ep93xx_bs_tag, EP93XX_APB_HWBASE + UART, 
+        if (epcomcnattach(&ep93xx_bs_tag, EP93XX_APB_HWBASE + comaddr[CONUNIT], 
 		ioh, comcnspeed, comcnmode))
 	{
 		panic("can't init serial console");
