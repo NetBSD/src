@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.73 2006/02/12 09:19:59 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.74 2006/02/13 14:41:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.73 2006/02/12 09:19:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.74 2006/02/13 14:41:22 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -493,7 +493,6 @@ swapcluster_flush(struct swapcluster *swc, boolean_t now)
  * => we work on meeting our free target by converting inactive pages
  *    into free pages.
  * => we handle the building of swap-backed clusters
- * => we return TRUE if we are exiting because we met our target
  */
 
 static void
