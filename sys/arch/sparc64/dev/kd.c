@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.36 2006/02/11 17:57:31 cdi Exp $	*/
+/*	$NetBSD: kd.c,v 1.37 2006/02/13 21:47:12 cdi Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.36 2006/02/11 17:57:31 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.37 2006/02/13 21:47:12 cdi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -148,8 +148,7 @@ kd_init(struct kd_softc *kd)
 }
 
 struct tty *
-kdtty(dev)
-	dev_t dev;
+kdtty(dev_t dev)
 {
 	struct kd_softc *kd;
 
@@ -158,10 +157,7 @@ kdtty(dev)
 }
 
 int
-kdopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+kdopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct kd_softc *kd;
 	int error, s, unit;
@@ -222,10 +218,7 @@ static	int firstopen = 1;
 }
 
 int
-kdclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+kdclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -248,10 +241,7 @@ kdclose(dev, flag, mode, l)
 }
 
 int
-kdread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+kdread(dev_t dev, struct uio *uio, int flag)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -263,10 +253,7 @@ kdread(dev, uio, flag)
 }
 
 int
-kdwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+kdwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -278,10 +265,7 @@ kdwrite(dev, uio, flag)
 }
 
 int
-kdpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+kdpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -293,12 +277,7 @@ kdpoll(dev, events, l)
 }
 
 int
-kdioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+kdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -323,9 +302,7 @@ kdioctl(dev, cmd, data, flag, l)
 }
 
 static int
-kdparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+kdparam(struct tty *tp, struct termios *t)
 {
 	/* XXX - These are ignored... */
 	tp->t_ispeed = t->c_ispeed;
@@ -339,8 +316,7 @@ static void kd_later(void*);
 static void kd_putfb(struct tty *);
 
 static void
-kdstart(tp)
-	struct tty *tp;
+kdstart(struct tty *tp)
 {
 	struct clist *cl;
 	register int s;
@@ -390,8 +366,7 @@ out:
  * Called at splsoftclock when requested by kdstart.
  */
 static void
-kd_later(tpaddr)
-	void *tpaddr;
+kd_later(void *tpaddr)
 {
 	struct tty *tp = tpaddr;
 	register int s;
@@ -410,8 +385,7 @@ kd_later(tpaddr)
  * interrupts, this is called at splsoftclock.
  */
 static void
-kd_putfb(tp)
-	struct tty *tp;
+kd_putfb(struct tty *tp)
 {
 	char buf[PUT_WSIZE];
 	struct clist *cl = &tp->t_outq;
@@ -495,9 +469,7 @@ struct consdev consdev_kd = {
 struct consdev *cn_hw = &consdev_kd;
 
 void
-cons_attach_input(cc, cn)
-	struct cons_channel *cc;
-	struct consdev *cn;
+cons_attach_input(struct cons_channel *cc, struct consdev *cn)
 {
 	struct kd_softc *kd = &kd_softc;
 	struct kbd_softc *kds = cc->cc_dev;
@@ -534,8 +506,7 @@ cons_attach_input(cc, cn)
 
 void kd_attach_input(struct cons_channel *);
 void
-kd_attach_input(cc)
-	struct cons_channel *cc;
+kd_attach_input(struct cons_channel *cc)
 {
 	struct kd_softc *kd = &kd_softc;
 

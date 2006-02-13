@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.75 2006/02/11 17:57:31 cdi Exp $ */
+/*	$NetBSD: sbus.c,v 1.76 2006/02/13 21:47:12 cdi Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.75 2006/02/11 17:57:31 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.76 2006/02/13 21:47:12 cdi Exp $");
 
 #include "opt_ddb.h"
 
@@ -145,9 +145,7 @@ void	sbus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size);
  * Return UNCONF (config_find ignores this if the device was configured).
  */
 int
-sbus_print(args, busname)
-	void *args;
-	const char *busname;
+sbus_print(void *args, const char *busname)
 {
 	struct sbus_attach_args *sa = args;
 	int i;
@@ -315,12 +313,8 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
-	struct sbus_softc	*sc;
-	bus_space_tag_t		bustag;
-	bus_dma_tag_t		dmatag;
-	int			node;
-	struct sbus_attach_args	*sa;
+sbus_setup_attach_args(struct sbus_softc *sc, bus_space_tag_t bustag,
+	bus_dma_tag_t dmatag, int node, struct sbus_attach_args	*sa)
 {
 	/*struct	openprom_addr sbusreg;*/
 	/*int	base;*/
@@ -351,7 +345,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	}
 	for (n = 0; n < sa->sa_nreg; n++) {
 		/* Convert to relative addressing, if necessary */
-		u_int32_t base = sa->sa_reg[n].oa_base;
+		uint32_t base = sa->sa_reg[n].oa_base;
 		if (SBUS_ABS(base)) {
 			sa->sa_reg[n].oa_space = SBUS_ABS_TO_SLOT(base);
 			sa->sa_reg[n].oa_base = SBUS_ABS_TO_OFFSET(base);
@@ -362,7 +356,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	    sa->sa_slot)) != 0)
 		return (error);
 
-	error = prom_getprop(node, "address", sizeof(u_int32_t),
+	error = prom_getprop(node, "address", sizeof(uint32_t),
 			 &sa->sa_npromvaddrs, &sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
@@ -371,8 +365,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 }
 
 void
-sbus_destroy_attach_args(sa)
-	struct sbus_attach_args	*sa;
+sbus_destroy_attach_args(struct sbus_attach_args *sa)
 {
 	if (sa->sa_name != NULL)
 		free(sa->sa_name, M_DEVBUF);
@@ -407,10 +400,7 @@ _sbus_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size, int flags,
 
 
 bus_addr_t
-sbus_bus_addr(t, btype, offset)
-	bus_space_tag_t t;
-	u_int btype;
-	u_int offset;
+sbus_bus_addr(bus_space_tag_t t, u_int btype, u_int offset)
 {
 	int slot = btype;
 	struct openprom_range *rp;
@@ -434,9 +424,7 @@ sbus_bus_addr(t, btype, offset)
  * its sbusdev portion.
  */
 void
-sbus_establish(sd, dev)
-	register struct sbusdev *sd;
-	register struct device *dev;
+sbus_establish(register struct sbusdev *sd, register struct device *dev)
 {
 	register struct sbus_softc *sc;
 	register struct device *curdev;

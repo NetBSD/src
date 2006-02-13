@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbvar.h,v 1.6 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: ffbvar.h,v 1.7 2006/02/13 21:47:11 cdi Exp $	*/
 /*	$OpenBSD: creatorvar.h,v 1.6 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ struct ffb_screen {
 	struct ffb_softc *sc;
 	const struct wsscreen_descr *type;
 	int active;
-	u_int16_t *chars;
+	uint16_t *chars;
 	long *attrs;
 
 	int cursoron;
