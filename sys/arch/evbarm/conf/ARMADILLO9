@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.9 2006/02/06 14:03:22 hamajima Exp $
+#	$NetBSD: ARMADILLO9,v 1.10 2006/02/13 12:24:22 hamajima Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -273,6 +273,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
+options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices

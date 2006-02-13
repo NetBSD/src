@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_com.c,v 1.1 2006/02/06 14:03:22 hamajima Exp $ */
+/*	$NetBSD: armadillo9_com.c,v 1.2 2006/02/13 12:24:21 hamajima Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_com.c,v 1.1 2006/02/06 14:03:22 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_com.c,v 1.2 2006/02/13 12:24:21 hamajima Exp $");
 
 /* Front-end of epcom */
 
@@ -53,18 +53,15 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_com.c,v 1.1 2006/02/06 14:03:22 hamajima 
 #include <arm/ep93xx/ep93xxreg.h>
 #include <arm/ep93xx/ep93xxvar.h>
 #include <arm/ep93xx/epsocvar.h>
-#ifdef ARMADILLO210
 #include "epled.h"
 #if NEPLED > 0
 #include <arm/ep93xx/epledvar.h>
 #endif
-#endif
+#include <evbarm/armadillo/armadillo9var.h>
 
 static int armadillo9com_match(struct device *, struct cfdata *, void *);
 static void armadillo9com_attach(struct device *, struct device *, void *);
-#ifdef ARMADILLO210
 static int armadillo9com_intr(void *);
-#endif
 
 CFATTACH_DECL(armadillo9com, sizeof(struct epcom_softc),
     armadillo9com_match, armadillo9com_attach, NULL, NULL);
@@ -100,29 +97,26 @@ armadillo9com_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_unmap(sa->sa_iot, ioh, EP93XX_APB_SYSCON_SIZE);
 
 	epcom_attach_subr(sc);
-#ifdef ARMADILLO210
 	ep93xx_intr_establish(sa->sa_intr, IPL_SERIAL, armadillo9com_intr, sc);
 #if NEPLED > 0
-	epled_red_off();
-#endif
-#else
-	ep93xx_intr_establish(sa->sa_intr, IPL_SERIAL, epcomintr, sc);
+	if (armadillo_model->devcfg == DEVCFG_ARMADILLO210)
+		epled_red_off();
 #endif
 }
 
-#ifdef ARMADILLO210
 static int
 armadillo9com_intr(void *arg)
 {
 	int n;
 
 #if NEPLED > 0  
-        epled_red_on();
+	if (armadillo_model->devcfg == DEVCFG_ARMADILLO210)
+        	epled_red_on();
 #endif
 	n = epcomintr(arg);
 #if NEPLED > 0
-        epled_red_off();  
+	if (armadillo_model->devcfg == DEVCFG_ARMADILLO210)
+        	epled_red_off();  
 #endif  
 	return n;
 }
-#endif

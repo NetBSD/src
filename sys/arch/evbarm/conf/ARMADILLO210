@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.1 2006/02/06 14:03:22 hamajima Exp $
+#	$NetBSD: ARMADILLO210,v 1.2 2006/02/13 12:24:22 hamajima Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -83,7 +83,7 @@ options 	NFS_BOOT_BOOTP
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
 #options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_43	# 4.3BSD compatibility.
+#options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 #options 	COMPAT_LINUX	# binary compatibility with Linux
@@ -103,16 +103,17 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
+options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+options		MEMORY_RBFLAGS=0
 
 # Console options. The default console is speed is 115200 baud.
 options 	CONSPEED=115200		# Console speed
 options 	CONUNIT=1		# Console port number
 
 # Miscellaneous kernel options
-options 	KTRACE		# system call tracing, a la ktrace(1)
-options		SYSTRACE	# system call vetting via systrace(1)
+#options 	KTRACE		# system call tracing, a la ktrace(1)
+#options	SYSTRACE	# system call vetting via systrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
@@ -144,8 +145,6 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 config		netbsd		root on ? type ?
 #config		netbsd		root on epe0 type nfs
-
-options		ARMADILLO210
 
 # The main bus device
 mainbus0	at root
@@ -189,25 +188,25 @@ lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 
 # disk/mass storage pseudo-devices
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-#pseudo-device	ppp		2	# Point-to-Point Protocol
+#pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-#pseudo-device	sl		2	# Serial Line IP
-#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tap			# virtual Ethernet
-#pseudo-device	tun		2	# network tunneling over tty
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
@@ -220,6 +219,6 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
-pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	crypto			# /dev/crypto device
 #pseudo-device	swcrypto		# software crypto implementation
