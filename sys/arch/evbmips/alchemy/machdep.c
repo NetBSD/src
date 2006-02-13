@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.25 2006/02/09 00:26:39 gdamore Exp $ */
+/* $NetBSD: machdep.c,v 1.26 2006/02/13 02:37:05 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2006/02/09 00:26:39 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2006/02/13 02:37:05 gdamore Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -446,10 +446,14 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	static int waittime = -1;
+	const struct alchemy_board *board;
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
 		savectx((struct user *)curpcb);
+
+	board = board_info();
+	KASSERT(board != NULL);
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)
@@ -487,6 +491,31 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	if ((boothowto & RB_POWERDOWN) == RB_POWERDOWN)
+		if (board && board->ab_poweroff)
+			board->ab_poweroff();
+
+	/*
+	 * YAMON may autoboot (depending on settings), and we cannot pass
+	 * flags to it (at least I haven't figured out how to yet), so
+	 * we "pseudo-halt" now.
+	 */
+	if (boothowto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);	/* For proper keyboard command handling */
+		cngetc();
+		cnpollc(0);
+	}
+
+	/*
+	 * Try to use board-specific reset logic, which might involve a better
+	 * hardware reset.
+	 */
+	if (board->ab_reboot)
+		board->ab_reboot();
 
 #if 1
 	/* XXX
