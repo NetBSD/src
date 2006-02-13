@@ -1,4 +1,4 @@
-/*	$NetBSD: board.h,v 1.1 2006/02/08 09:04:01 gdamore Exp $	*/
+/*	$NetBSD: board.h,v 1.2 2006/02/13 02:37:05 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -42,6 +42,8 @@ struct alchemy_board {
 	void		(*ab_init)(void);
 	int		(*ab_pci_intr_map)(struct pci_attach_args *,
 					   pci_intr_handle_t *);
+	void		(*ab_reboot)(void);
+	void		(*ab_poweroff)(void);
 
 	/*
 	 * XXX: csb250 (and perhaps others) will require pci_idsel
