@@ -1,4 +1,4 @@
-/* $NetBSD: augpio.c,v 1.1 2006/02/12 20:49:34 gdamore Exp $ */
+/* $NetBSD: augpio.c,v 1.2 2006/02/13 04:30:47 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.1 2006/02/12 20:49:34 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.2 2006/02/13 04:30:47 gdamore Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,6 +103,7 @@ augpio_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": Alchemy GPIO");
 	if (aa->aa_addrs[0] == SYS_BASE) {
+
 		for (pin = 0; pin < aa->aa_addrs[1]; pin++) {
 
 			sc->sc_pins[sc->sc_npins].pin_num = pin;
@@ -119,15 +120,12 @@ augpio_attach(struct device *parent, struct device *self, void *aux)
 		printf(", primary block");
 
 	} else if (aa->aa_addrs[0] == GPIO2_BASE) {
-
-		/* initialize GPIO2 block */
-		uint32_t	val;
-		val = AUGPIO_GPIO2_ENABLE_MR | AUGPIO_GPIO2_ENABLE_CE;
-		PUTREG(GPIO2_BASE + AUGPIO_GPIO2_ENABLE, val);
-		delay(10);
-		val &= ~AUGPIO_GPIO2_ENABLE_MR;
-		PUTREG(GPIO2_BASE + AUGPIO_GPIO2_ENABLE, val);
-
+		/*
+		 * We rely on firmware (or platform init code) to initialize
+		 * the GPIO2 block.  We can't do it ourselves, because
+		 * resetting the GPIO2 block can have nasty effects (e.g.
+		 * reset PCI bus...)
+		 */
 		for (pin = 0; pin < aa->aa_addrs[1]; pin++) {
 			sc->sc_pins[sc->sc_npins].pin_num = pin;
 			sc->sc_pins[sc->sc_npins].pin_caps =
