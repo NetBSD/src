@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125 2006/02/11 17:57:32 cdi Exp $ */
+/*	$NetBSD: trap.c,v 1.126 2006/02/13 21:47:12 cdi Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2006/02/11 17:57:32 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126 2006/02/13 21:47:12 cdi Exp $");
 
 #define NEW_FPSTATE
 
@@ -891,7 +891,7 @@ rwindow_save(l)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct rwindow64 *rw = &pcb->pcb_rw[0];
-	u_int64_t rwdest;
+	uint64_t rwdest;
 	int i, j;
 
 	i = pcb->pcb_nsaved;
@@ -995,7 +995,7 @@ void
 data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	vaddr_t addr, vaddr_t sfva, u_long sfsr)
 {
-	u_int64_t tstate;
+	uint64_t tstate;
 	struct lwp *l;
 	struct proc *p;
 	struct vmspace *vm;
@@ -1262,7 +1262,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	u_long afsr, vaddr_t sfva, u_long sfsr)
 {
 	u_long pc;
-	u_int64_t tstate;
+	uint64_t tstate;
 	struct lwp *l;
 	vaddr_t onfault;
 	u_quad_t sticks;
@@ -1419,7 +1419,7 @@ void
 text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	u_long sfsr)
 {
-	u_int64_t tstate;
+	uint64_t tstate;
 	struct lwp *l;
 	struct proc *p;
 	struct vmspace *vm;
