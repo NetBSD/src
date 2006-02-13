@@ -1,4 +1,4 @@
-.\" $NetBSD: vcons.9,v 1.1 2006/02/12 23:06:43 macallan Exp $
+.\" $NetBSD: vcons.9,v 1.2 2006/02/13 19:57:58 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Michael Lorenz
 .\" All rights reserved.
@@ -29,31 +29,34 @@
 .Os
 .Sh NAME
 .Nm vcons
-.Nd a generic virtual console framework
+.Nd generic virtual console framework
 .Sh SYNOPSIS
 .In wscons/wsdisplay_vconsvar.h
 .Ft int
 .Fn vcons_init "struct vcons_data *vd" "void *cookie" \
 "struct wsscreen_descr *desc" "struct wsdisplay_accessops *accops"
-.Ft int	
+.Ft int
 .Fn vcons_init_screen "struct vcons_data *vd" "struct vcons_screen *scr" \
 "int exists" "long *defattr"
 .Ft void
 .Fn vcons_redraw_screen "struct vcons_screen *scr"
 .Sh DESCRIPTION
-These functions are used to setup and control the generic virtual console framework
+These functions are used to setup and control the generic virtual
+console framework.
 .Pp
 .\"
 The
 .Fn vcons_init
-function initializes the framework, it needs to be called for each driver that's going
-to use vcons. 
+function initializes the framework, it needs to be called for each
+driver that's going to use
+.Nm .
 .Pp
 .Fn vcons_init_screen
 adds a virtual screen to a display.
 .Pp
 .Fn vcons_redraw_screen
-redraws a screen, a driver should call it when returning to terminal emulation mode,
+redraws a screen.
+A driver should call it when returning to terminal emulation mode,
 for instance when X exits.
 .Pp
 .\"
@@ -63,56 +66,57 @@ usually it will be a member of the driver's softc.
 .Pp
 .Vt struct vcons_screen
 describes a virtual screen.
-.Pp
 .Sh USAGE
 .\"
 To use vcons with a driver it needs to be initialized by calling
-.Fn vcons_init
-, usually in the driver's attach function. 
-.Fa vd
+.Fn vcons_init ,
+usually in the driver's attach function.
+.Bl -tag -width cookieXX
+.It Fa vd
 should be a pointer to the driver's
-.Vt struct vcons_data
-.Pp
-.Fa cookie
+.Vt struct vcons_data .
+.It Fa cookie
 should be a pointer to the driver's softc.
-.Pp
-.Fa desc
-should point to a 
+.It Fa desc
+should point to a
 .Vt struct wsscreen_descr
-describing the default screen type for this display
-.Pp
-.Vt accops
-points to the driver's 
+describing the default screen type for this display.
+.It Fa accops
+points to the driver's
 .Vt struct wsdisplay_accessops
 so
 .Fn vcons_init
-can fill it in with its own implementations of 
+can fill it in with its own implementations of
 .Fn alloc_screen ,
-.Fn free_screen
+.Fn free_screen ,
 and
-.Fn show_screen
+.Fn show_screen .
+.El
 .Pp
-A driver should however provide its own 
+A driver should however provide its own
 .Fn ioctl
 and
 .Fn mmap
-implementations. Both will receive a pointer to the driver's 
+implementations.
+Both will receive a pointer to the driver's
 .Vt struct vcons_data
 as first parameter.
 .Pp
 After initialization the driver needs to provide a callback function that
-will be called whenever a screen is added, its purpose is to setup the
+will be called whenever a screen is added.
+Its purpose is to set up the
 .Vt struct rasops_info
-describing the screen. After that the drawing methods in
+describing the screen.
+After that the drawing methods in
 .Vt struct rasops_info
-will be replaced with wrappers which call the original drawing functions (
-which may or may not be provided by the driver ) only when the respective
+will be replaced with wrappers which call the original drawing functions
+(which may or may not be provided by the driver) only when the respective
 screen is visible.
-To add a virtual screen the driver should call
+To add a virtual screen the driver one should call
 .Fn vcons_init_screen
 which will call the callback function described above, allocate storage for
 characters and attributes based on whatever the callback set up in
-.Vt struct rasops_info
+.Vt struct rasops_info ,
 and add the screen to a list kept in
 .Vt struct vcons_data .
 .Pp
@@ -122,33 +126,34 @@ The callback needs to have this form:
 .Fn init_screen "void *cookie" "struct vcons_screen *scr" "int existing" \
 "long *defattr"
 .Pp
-and should be stored in the 
+and should be stored in the
 .Va init_screen
 member found in
 .Vt struct vcons_data .
-.Fa cookie 
-is the cookie passed to 
+The arguments are:
+.Bl -tag -width cookieXX
+.It Fa cookie
+is the cookie passed to
 .Fn vcons_init
-.Pp
-.Fa scr
-points to the 
+.It Fa scr
+points to the
 .Vt struct vcons_screen
 being added, its
 .Va scr_ri
 member, a
-.Vt struct rasops_info
+.Vt struct rasops_info ,
 needs to be filled in.
-.Pp
-.Fa existing
-is non-zero if the screen already exists and is only added to the list
-.Pp
-.Fa defattr
-points to the screen's default text attribute, it's filled in by
+.It Fa existing
+is non-zero if the screen already exists and is only added to the list.
+.It Fa defattr
+points to the screen's default text attribute.
+It's filled in by
 .Fn vcons_init_screen
-by calling the 
+by calling the
 .Fn alloc_attr
-method found in 
+method found in
 .Vt struct rasops_info .
+.El
 .Pp
 When attaching a
 .Xr wsdisplay 9
@@ -162,33 +167,29 @@ needs to be a pointer to the driver's
 .Vt struct vcons_data .
 .Pp
 The following members of
-.Vt struct vcons_screen 
+.Vt struct vcons_screen
 may be of interest to drivers:
-.Pp
-.Va scr_ri
-contains the 
+.Bl -tag -width scr_cookieXX
+.It Va scr_ri
+contains the
 .Vt struct rasops_info
-describing the screen's geometry, access methods and so on
-.Pp
-.Va scr_cookie
+describing the screen's geometry, access methods and so on.
+.It Va scr_cookie
 the value passed as cookie to
 .Fn vcons_init .
 Usually the driver's softc.
-.Pp
-.Va scr_vd
+.It Va scr_vd
 the driver's
 .Vt struct vcons_data .
-.Pp
-.Va scr_flags
+.It Va scr_flags
 can be zero or any combination of:
-.Pp
 .Bl -tag -width XXXXXXXXXXXXXXXXXXXXXX -compact
 .It Dv VCONS_NO_REDRAW
 don't call
 .Fn vcons_redraw_screen
 when this screen becomes visible.
 .It Dv VCONS_SCREEN_IS_STATIC
-don't 
+don't
 .Xr free 9
 this screen's
 .Vt struct vcons_screen
@@ -196,11 +197,11 @@ in
 .Fn free_screen
 - useful if the screen has been statically allocated.
 .El
-.Pp
-.Va scr_status
+.It Va scr_status
 currently contains only one flag,
-.Dv VCONS_IS_VISIBLE
+.Dv VCONS_IS_VISIBLE ,
 which is set when the screen is visible.
+.El
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsdisplay 4
