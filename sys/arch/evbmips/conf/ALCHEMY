@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.5 2006/02/09 00:26:39 gdamore Exp $
+#	$NetBSD: ALCHEMY,v 1.6 2006/02/13 00:09:15 gdamore Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.5 $"
+#ident 		"ALCHEMY-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -218,20 +218,18 @@ ugen*		at uhub? port ?
 auaudio*	at aubus? addr ?		# STAC9745 audio codec
 audio*		at auaudio?
 
+# GPIOs
+augpio*	at aubus? addr ?
+gpio*	at augpio?
+
 # On-board devices
 obio*		at mainbus?
 
 aupcmcia*	at obio? addr ?
 pcmcia*		at aupcmcia?
 
-#pbpci*		at obio? addr ?
-#pci*		at pbpci?
-
 #flash*		at obio? addr ?
 #lcd*		at obio? addr ?
-
-#pchb*		at pci? dev ? function ?
-#pcib*		at pci? dev ? function ?
 
 # PCMCIA devices
 wi*		at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
