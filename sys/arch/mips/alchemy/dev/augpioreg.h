@@ -1,4 +1,4 @@
-/* $NetBSD: augpioreg.h,v 1.1 2006/02/12 20:49:34 gdamore Exp $ */
+/* $NetBSD: augpioreg.h,v 1.2 2006/02/13 04:30:47 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -37,6 +37,7 @@
 #define	AUGPIO_NPINS			64
 
 /* SYS_GPIO registers -- offset from SYS_BASE */
+#define	AUGPIO_SYS_PINFUNC		0x02C
 #define	AUGPIO_SYS_TRIOUTRD		0x100
 #define	AUGPIO_SYS_TRIOUTCLR		0x100
 #define	AUGPIO_SYS_OUTPUTRD		0x108
