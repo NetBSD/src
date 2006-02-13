@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.78 2006/02/11 17:57:31 cdi Exp $	*/
+/*	$NetBSD: iommu.c,v 1.79 2006/02/13 21:47:12 cdi Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.78 2006/02/11 17:57:31 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.79 2006/02/13 21:47:12 cdi Exp $");
 
 #include "opt_ddb.h"
 
@@ -82,7 +82,7 @@ static	int iommu_strbuf_flush_done(struct strbuf_ctl *);
  *	- create a private DVMA map.
  */
 void
-iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
+iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 {
 	psize_t size;
 	vaddr_t va;
