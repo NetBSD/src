@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.27 2005/12/24 21:14:50 matt Exp $  */
+/*      $NetBSD: ps.c,v 1.28 2006/02/13 16:01:58 kleink Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.27 2005/12/24 21:14:50 matt Exp $");
+__RCSID("$NetBSD: ps.c,v 1.28 2006/02/13 16:01:58 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -278,8 +278,21 @@ comm2str(struct kinfo_proc2 *kp)
 			argv++;
 			strlcat(commstr, " ", sizeof(commstr));
 		}
-	} else
-		snprintf(commstr, sizeof(commstr), "(%s)", kp->p_comm);
+	} else {
+		const char *fmt;
+
+		/*
+		 * Commands that don't set an argv vector are printed with
+		 * square brackets if they are system commands.  Otherwise
+		 * they are printed within parentheses.
+		 */
+		if (kp->p_flag & P_SYSTEM)
+			fmt = "[%s]";
+		else
+			fmt = "(%s)";
+
+		snprintf(commstr, sizeof(commstr), fmt, kp->p_comm);
+	}
 
 	return commstr;
 }
