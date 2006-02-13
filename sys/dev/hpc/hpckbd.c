@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.15 2006/02/12 23:19:14 peter Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.16 2006/02/13 16:35:57 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.15 2006/02/12 23:19:14 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.16 2006/02/13 16:35:57 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,8 @@ __hpckbd_input(void *arg, int flag, int scancode)
 		type = WSCONS_EVENT_KEY_UP;
 	}
 
-	if ((key = hc->hc_keymap[scancode]) == UNK) {
+	key = hc->hc_keymap[scancode];
+	if (key == UNK) {
 #ifdef DEBUG
 		printf("hpckbd: unknown scan code %#x (%d, %d)\n",
 		    scancode, scancode >> 3,
