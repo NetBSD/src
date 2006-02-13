@@ -501,6 +501,12 @@
 # RAR archiver (Greg Roelofs, newt@uchicago.edu)
 0	string		Rar!		RAR archive data,
 >44	byte		x		v%0x,
+>10	byte		>0		flags:
+>>10	byte		&0x01		Archive volume,
+>>10	byte		&0x02		Commented,
+>>10	byte		&0x04		Locked,
+>>10	byte		&0x08		Solid,
+>>10	byte		&0x20		Authenticated,
 >35	byte		0		os: MS-DOS
 >35	byte		1		os: OS/2
 >35	byte		2		os: Win32
@@ -521,6 +527,7 @@
 >4	byte		0x0a		\b, at least v1.0 to extract
 >4	byte		0x0b		\b, at least v1.1 to extract
 >4	byte		0x14		\b, at least v2.0 to extract
+>0x161	string		WINZIP		\b, WinZIP self-extracting
 
 # Zoo archiver
 20	lelong		0xfdc4a7dc	Zoo archive data
