@@ -1,4 +1,4 @@
-/* $NetBSD: au1000.c,v 1.1 2006/02/06 23:23:53 gdamore Exp $ */
+/* $NetBSD: au1000.c,v 1.2 2006/02/13 00:09:15 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -181,6 +181,7 @@ static struct au_dev au1000_devices[] = {
 	{ "aumac",	{ MAC0_BASE, MAC0_ENABLE, MAC0_DMA_BASE }, { 28, -1 }},
 	{ "aumac",	{ MAC1_BASE, MAC1_ENABLE, MAC1_DMA_BASE }, { 29, -1 }},
 	{ "ohci",	{ USBH_BASE, USBH_ENABLE, USBH_SIZE },	   { 26, -1 }},
+	{ "augpio",	{ SYS_BASE, 32 },			   { -1, -1 }},
 #if 0
 	{ "auaudio",	{ AC97_BASE },				   { 27, 31 }},
 	{ "i2s",	{ I2S_BASE },				   { 30, -1 }},
