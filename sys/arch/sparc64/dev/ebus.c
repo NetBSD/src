@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.49 2006/02/11 17:57:31 cdi Exp $	*/
+/*	$NetBSD: ebus.c,v 1.50 2006/02/13 21:47:11 cdi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.49 2006/02/11 17:57:31 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.50 2006/02/13 21:47:11 cdi Exp $");
 
 #include "opt_ddb.h"
 
@@ -115,11 +115,11 @@ void	ebus_find_ino(struct ebus_softc *, struct ebus_attach_args *);
 /*
  * here are our bus space and bus DMA routines.
  */
-static paddr_t ebus_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
-static int _ebus_bus_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int, 
-			      vaddr_t, bus_space_handle_t *));
-static void *ebus_intr_establish __P((bus_space_tag_t, int, int,
-				int (*) __P((void *)), void *, void(*)__P((void))));
+static paddr_t ebus_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
+static int _ebus_bus_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, vaddr_t,
+	bus_space_handle_t *);
+static void *ebus_intr_establish(bus_space_tag_t, int, int, int (*)(void *),
+	void *, void(*)(void));
 
 int
 ebus_match(struct device *parent, struct cfdata *match, void *aux)
@@ -265,7 +265,7 @@ ebus_setup_attach_args(struct ebus_softc *sc, int node,
 	if (rv)
 		return (rv);
 
-	rv = prom_getprop(node, "address", sizeof(u_int32_t), &ea->ea_nvaddr,
+	rv = prom_getprop(node, "address", sizeof(uint32_t), &ea->ea_nvaddr,
 	    &ea->ea_vaddr);
 	if (rv != ENOENT) {
 		if (rv)
@@ -277,7 +277,7 @@ ebus_setup_attach_args(struct ebus_softc *sc, int node,
 	} else
 		ea->ea_nvaddr = 0;
 
-	if (prom_getprop(node, "interrupts", sizeof(u_int32_t), &ea->ea_nintr,
+	if (prom_getprop(node, "interrupts", sizeof(uint32_t), &ea->ea_nintr,
 	    &ea->ea_intr))
 		ea->ea_nintr = 0;
 	else
@@ -330,7 +330,7 @@ ebus_print(void *aux, const char *p)
 void
 ebus_find_ino(struct ebus_softc *sc, struct ebus_attach_args *ea)
 {
-	u_int32_t hi, lo, intr;
+	uint32_t hi, lo, intr;
 	int i, j, k;
 
 	if (sc->sc_nintmap == 0) {
@@ -404,13 +404,8 @@ ebus_alloc_bus_tag(struct ebus_softc *sc, int type)
 }
 
 static int
-_ebus_bus_map(t, ba, size, flags, va, hp)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	bus_size_t size;
-	int	flags;
-	vaddr_t va;
-	bus_space_handle_t *hp;
+_ebus_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags,
+	vaddr_t va, bus_space_handle_t *hp)
 {
 	struct ebus_softc *sc = t->cookie;
 	paddr_t offset;
@@ -422,7 +417,7 @@ _ebus_bus_map(t, ba, size, flags, va, hp)
 
 	DPRINTF(EDB_BUSMAP,
 		("\n_ebus_bus_map: bar %d offset %08x sz %x flags %x va %p\n",
-		 (int)bar, (u_int32_t)offset, (u_int32_t)size,
+		 (int)bar, (uint32_t)offset, (uint32_t)size,
 		 flags, (void *)va));
 
 	for (i = 0; i < sc->sc_nrange; i++) {
@@ -457,7 +452,7 @@ _ebus_bus_map(t, ba, size, flags, va, hp)
 
 		DPRINTF(EDB_BUSMAP,
 			("_ebus_bus_map: mapping to PCI addr %x\n",
-			 (u_int32_t)pciaddr));
+			 (uint32_t)pciaddr));
 
 		/* pass it onto the psycho */
 		return (bus_space_map(t, pciaddr, size, flags, hp));
@@ -467,12 +462,8 @@ _ebus_bus_map(t, ba, size, flags, va, hp)
 }
 
 static paddr_t
-ebus_bus_mmap(t, paddr, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t paddr;
-	off_t off;
-	int prot;
-	int flags;
+ebus_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
+	int flags)
 {
 	bus_addr_t offset = paddr;
 	struct ebus_softc *sc = t->cookie;
@@ -499,13 +490,8 @@ ebus_bus_mmap(t, paddr, off, prot, flags)
  * install an interrupt handler for a ebus device
  */
 void *
-ebus_intr_establish(t, pri, level, handler, arg, fastvec)
-	bus_space_tag_t t;
-	int pri;
-	int level;
-	int (*handler) __P((void *));
-	void *arg;
-	void (*fastvec) __P((void));	/* ignored */
+ebus_intr_establish(bus_space_tag_t t, int pri, int level,
+	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
 {
 
 	return (bus_intr_establish(t->parent, pri, level, handler, arg));
