@@ -1,4 +1,4 @@
-.\"	$NetBSD: grep.1,v 1.11 2004/11/11 01:39:25 wiz Exp $
+.\"	$NetBSD: grep.1,v 1.12 2006/02/13 21:18:35 wiz Exp $
 .\"
 .\" grep man page
 .if !\n(.g \{\
@@ -245,7 +245,7 @@ Displays input actually coming from standard input as input coming from file
 This is especially useful for tools like zgrep, e.g.
 .B "gzip -cd foo.gz |grep --label=foo something"
 .TP
-.BR \-\^\-line-buffering
+.BR \-\^\-line-buffered
 Use line buffering, it can be a performance penality.
 .TP
 .BI \-m " NUM" "\fR,\fP \-\^\-max-count=" NUM
