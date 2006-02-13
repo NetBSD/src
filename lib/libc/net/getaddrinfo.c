@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.75 2005/12/02 11:22:09 yamt Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.76 2006/02/13 17:16:20 ginsbach Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.75 2005/12/02 11:22:09 yamt Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.76 2006/02/13 17:16:20 ginsbach Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -489,7 +489,7 @@ getaddrinfo(const char *hostname, const char *servname,
 
 	/*
 	 * XXX
-	 * If numreic representation of AF1 can be interpreted as FQDN
+	 * If numeric representation of AF1 can be interpreted as FQDN
 	 * representation of AF2, we need to think again about the code below.
 	 */
 	if (sentinel.ai_next)
