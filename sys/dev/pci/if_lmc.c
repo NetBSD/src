@@ -7188,8 +7188,10 @@ nbsd_detach(struct device *self, int flags)
   return 0;
   }
 
+#ifdef _LKM
 static CFDRIVER_DECL(lmc, DV_IFNET, NULL);	/* lmc_cd */
 static struct cfdriver *cfdrivers[] = { &lmc_cd, NULL };
+#endif
 
 CFATTACH_DECL(lmc, sizeof(softc_t),		/* lmc_ca */
  nbsd_match, nbsd_attach, nbsd_detach, NULL);
@@ -7197,6 +7199,7 @@ static struct cfattach *cfattachs[] = { &lmc_ca, NULL };
 static const struct cfattachlkminit cfattachinit[] =
   { { DEVICE_NAME, cfattachs }, { NULL } };
 
+#ifdef _LKM
 static int pci_locators[] = { -1, -1 }; /* device, function */
 static const struct cfparent pci_parent = { "pci", "pci", DVUNIT_ANY };
 static struct cfdata cfdatas[] =
@@ -7207,6 +7210,7 @@ MOD_DRV("if_"DEVICE_NAME, cfdrivers, cfattachinit, cfdatas);
 
 int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
  { LKM_DISPATCH(lkmtp, cmd, NULL, lkm_nofunc, lkm_nofunc, lkm_nofunc); }
+#endif
 
 #endif  /* __NetBSD__ */
 
