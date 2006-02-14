@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.96 2006/01/29 12:55:16 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.97 2006/02/14 04:48:15 dyoung Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.96 2006/01/29 12:55:16 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.97 2006/02/14 04:48:15 dyoung Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -86,6 +86,9 @@ __RCSID("$NetBSD: fdisk.c,v 1.96 2006/01/29 12:55:16 dsl Exp $");
 #include <machine/cpu.h>
 #endif /* !HAVE_NBTOOL_CONFIG_H */
 #define BOOTSEL
+#endif
+
+#ifdef BOOTSEL
 
 #define	DEFAULT_BOOTCODE	"mbr"
 #define	DEFAULT_BOOTSELCODE	"mbr_bootsel"
@@ -203,7 +206,9 @@ void	init_sector0(int);
 void	intuit_translated_geometry(void);
 void	get_geometry(void);
 void	get_extended_ptn(void);
+#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 void	get_diskname(const char *, char *, size_t);
+#endif /* (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H */
 int	change_part(int, int, int, daddr_t, daddr_t, char *);
 void	print_params(void);
 void	change_active(int);
@@ -883,8 +888,7 @@ get_extended_ptn(void)
 	ext.num_ptn = 0;
 }
 
-#if defined(__i386__) || defined(__x86_64__)
-
+#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 void	    
 get_diskname(const char *fullname, char *diskname, size_t size)
 {	       
@@ -927,7 +931,6 @@ get_diskname(const char *fullname, char *diskname, size_t size)
 	diskname[len] = 0;
 }
 
-#if !HAVE_NBTOOL_CONFIG_H
 void
 get_geometry(void)
 {
@@ -975,8 +978,7 @@ get_geometry(void)
 	/* Allright, allright, make a stupid guess.. */
 	intuit_translated_geometry();
 }
-#endif /* HAVE_NBTOOL_CONFIG_H */
-#endif /* defined(__i386__) || defined(__x86_64__) */
+#endif /* (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H */
 
 #ifdef BOOTSEL
 daddr_t
