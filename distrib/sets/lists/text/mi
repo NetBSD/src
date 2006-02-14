@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.25 2006/02/06 18:53:25 wiz Exp $
+# $NetBSD: mi,v 1.26 2006/02/14 23:44:51 dyoung Exp $
 ./etc/mtree/set.text				text-sys-root
 ./usr/bin/addftinfo				text-groff-bin
 ./usr/bin/checknr				text-groff-bin
@@ -42,12 +42,12 @@
 ./usr/share/doc/groff/mom/elvis_syntax		text-groff-doc		share
 ./usr/share/doc/groff/mom/elvis_syntax.new	text-groff-doc		share
 ./usr/share/doc/groff/mom/letter.mom		text-groff-doc		share
-./usr/share/doc/groff/mom/letter.ps		text-groff-doc		share
+./usr/share/doc/groff/mom/letter.ps		text-groff-doc		share,man
 ./usr/share/doc/groff/mom/penguin.ps		text-groff-doc		share
 ./usr/share/doc/groff/mom/sample_docs.mom	text-groff-doc		share
-./usr/share/doc/groff/mom/sample_docs.ps	text-groff-doc		share
+./usr/share/doc/groff/mom/sample_docs.ps	text-groff-doc		share,man
 ./usr/share/doc/groff/mom/typesetting.mom	text-groff-doc		share
-./usr/share/doc/groff/mom/typesetting.ps	text-groff-doc		share
+./usr/share/doc/groff/mom/typesetting.ps	text-groff-doc		share,man
 ./usr/share/doc/html/groff			text-groff-doc		share
 ./usr/share/doc/html/groff/mom			text-groff-doc		share
 ./usr/share/doc/html/groff/mom/appendices.html	text-groff-doc		share
