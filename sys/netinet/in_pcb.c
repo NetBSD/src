@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.101.4.1 2006/02/02 00:05:30 rpaulo Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.101.4.2 2006/02/14 02:17:12 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.101.4.1 2006/02/02 00:05:30 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.101.4.2 2006/02/14 02:17:12 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.101.4.1 2006/02/02 00:05:30 rpaulo Exp 
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -140,16 +141,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.101.4.1 2006/02/02 00:05:30 rpaulo Exp 
 #endif /* IPSEC */
 
 struct	in_addr zeroin_addr;
-
-#define	INPCBHASH_PORT(table, lport) \
-	&(table)->inpt_porthashtbl[ntohs(lport) & (table)->inpt_porthash]
-#define	INPCBHASH_BIND(table, laddr, lport) \
-	&(table)->inpt_bindhashtbl[ \
-	    ((ntohl((laddr).s_addr) + ntohs(lport))) & (table)->inpt_bindhash]
-#define	INPCBHASH_CONNECT(table, faddr, fport, laddr, lport) \
-	&(table)->inpt_connecthashtbl[ \
-	    ((ntohl((faddr).s_addr) + ntohs(fport)) + \
-	     (ntohl((laddr).s_addr) + ntohs(lport))) & (table)->inpt_connecthash]
 
 int	anonportmin = IPPORT_ANONMIN;
 int	anonportmax = IPPORT_ANONMAX;
@@ -198,6 +189,18 @@ in_pcballoc(struct socket *so, void *v)
 		return error;
 	}
 #endif
+#ifdef INET6
+	if (INP_SOCKAF(so) == AF_INET6) {
+		inp->inp_af = AF_INET6;
+		inp->inp_vflag |= INP_IPV6PROTO;
+		if (ip6_v6only)
+			inp->inp_flags |= IN6P_IPV6_V6ONLY;
+	} else
+		inp->inp_af = AF_INET;
+#else
+	inp->inp_af = AF_INET;
+#endif
+
 	so->so_pcb = inp;
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
