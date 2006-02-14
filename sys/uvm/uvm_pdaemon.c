@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.75 2006/02/14 02:28:21 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.76 2006/02/14 15:06:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.75 2006/02/14 02:28:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.76 2006/02/14 15:06:27 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -371,6 +371,51 @@ uvm_aiodone_daemon(void *arg)
 	}
 }
 
+/*
+ * uvmpd_trylockowner: trylock the page's owner.
+ *
+ * => called with pageq locked.
+ * => resolve orphaned O->A loaned page.
+ * => return the locked simplelock on success.  otherwise, return NULL.
+ */
+
+static struct simplelock *
+uvmpd_trylockowner(struct vm_page *pg)
+{
+	struct uvm_object *uobj = pg->uobject;
+	struct simplelock *slock;
+
+	UVM_LOCK_ASSERT_PAGEQ();
+	if (uobj != NULL) {
+		slock = &uobj->vmobjlock;
+	} else {
+		struct vm_anon *anon = pg->uanon;
+
+		KASSERT(anon != NULL);
+		slock = &anon->an_lock;
+	}
+
+	if (!simple_lock_try(slock)) {
+		return NULL;
+	}
+
+	if (uobj == NULL) {
+
+		/*
+		 * set PQ_ANON if it isn't set already.
+		 */
+
+		if ((pg->pqflags & PQ_ANON) == 0) {
+			KASSERT(pg->loan_count > 0);
+			pg->loan_count--;
+			pg->pqflags |= PQ_ANON;
+			/* anon now owns it */
+		}
+	}
+
+	return slock;
+}
+
 #if defined(VMSWAP)
 struct swapcluster {
 	int swc_slot;
@@ -623,41 +668,22 @@ uvmpd_scan_inactive(struct pglist *pglst)
 		 * and make it its own.
 		 */
 
+		slock = uvmpd_trylockowner(p);
+		if (slock == NULL) {
+			continue;
+		}
+		if (p->flags & PG_BUSY) {
+			simple_unlock(slock);
+			uvmexp.pdbusy++;
+			continue;
+		}
+
 		/* does the page belong to an object? */
 		if (uobj != NULL) {
-			slock = &uobj->vmobjlock;
-			if (!simple_lock_try(slock)) {
-				continue;
-			}
-			if (p->flags & PG_BUSY) {
-				simple_unlock(slock);
-				uvmexp.pdbusy++;
-				continue;
-			}
 			uvmexp.pdobscan++;
 		} else {
 #if defined(VMSWAP)
 			KASSERT(anon != NULL);
-			slock = &anon->an_lock;
-			if (!simple_lock_try(slock)) {
-				continue;
-			}
-
-			/*
-			 * set PQ_ANON if it isn't set already.
-			 */
-
-			if ((p->pqflags & PQ_ANON) == 0) {
-				KASSERT(p->loan_count > 0);
-				p->loan_count--;
-				p->pqflags |= PQ_ANON;
-				/* anon now owns it */
-			}
-			if (p->flags & PG_BUSY) {
-				simple_unlock(slock);
-				uvmexp.pdbusy++;
-				continue;
-			}
 			uvmexp.pdanscan++;
 #else /* defined(VMSWAP) */
 			panic("%s: anon", __func__);
@@ -850,14 +876,10 @@ uvmpd_scan(void)
 {
 	int inactive_shortage, swap_shortage, pages_freed;
 	struct vm_page *p, *nextpg;
-	struct uvm_object *uobj;
-	struct vm_anon *anon;
 	struct simplelock *slock;
 	UVMHIST_FUNC("uvmpd_scan"); UVMHIST_CALLED(pdhist);
 
 	uvmexp.pdrevs++;
-	uobj = NULL;
-	anon = NULL;
 
 #ifndef __SWAP_BROKEN
 
@@ -924,26 +946,9 @@ uvmpd_scan(void)
 		 * lock the page's owner.
 		 */
 
-		if (p->uobject != NULL) {
-			uobj = p->uobject;
-			slock = &uobj->vmobjlock;
-			if (!simple_lock_try(slock)) {
-				continue;
-			}
-		} else {
-			anon = p->uanon;
-			KASSERT(anon != NULL);
-			slock = &anon->an_lock;
-			if (!simple_lock_try(slock)) {
-				continue;
-			}
-
-			/* take over the page? */
-			if ((p->pqflags & PQ_ANON) == 0) {
-				KASSERT(p->loan_count > 0);
-				p->loan_count--;
-				p->pqflags |= PQ_ANON;
-			}
+		slock = uvmpd_trylockowner(p);
+		if (slock == NULL) {
+			continue;
 		}
 
 		/*
@@ -962,13 +967,15 @@ uvmpd_scan(void)
 		 */
 
 		if (swap_shortage > 0) {
+			struct vm_anon *anon = p->uanon;
+
 			if ((p->pqflags & PQ_ANON) && anon->an_swslot) {
 				uvm_swap_free(anon->an_swslot, 1);
 				anon->an_swslot = 0;
 				p->flags &= ~PG_CLEAN;
 				swap_shortage--;
 			} else if (p->pqflags & PQ_AOBJ) {
-				int slot = uao_set_swslot(uobj,
+				int slot = uao_set_swslot(p->uobject,
 					p->offset >> PAGE_SHIFT, 0);
 				if (slot) {
 					uvm_swap_free(slot, 1);
