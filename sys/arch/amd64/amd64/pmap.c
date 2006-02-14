@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15.8.1 2005/06/06 12:16:28 tron Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15.8.2 2006/02/14 13:29:38 tron Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15.8.1 2005/06/06 12:16:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15.8.2 2006/02/14 13:29:38 tron Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -429,7 +429,6 @@ TAILQ_HEAD(pv_pagelist, pv_page);
 static struct pv_pagelist pv_freepages;	/* list of pv_pages with free entrys */
 static struct pv_pagelist pv_unusedpgs; /* list of unused pv_pages */
 static int pv_nfpvents;			/* # of free pv entries */
-static struct pv_page *pv_initpage;	/* bootstrap page from kernel_map */
 static vaddr_t pv_cachedva;		/* cached VA for later use */
 
 #define PVE_LOWAT (PVE_PER_PVPAGE / 2)	/* free pv_entry low water mark */
@@ -1306,18 +1305,23 @@ pmap_init()
 
 	/*
 	 * now we need to free enough pv_entry structures to allow us to get
-	 * the kmem_map allocated and inited (done after this
-	 * function is finished).  to do this we allocate one bootstrap page out
-	 * of kernel_map and use it to provide an initial pool of pv_entry
-	 * structures.   we never free this page.
+	 * kmem_map allocated and inited (done after this function is finished).
+	 * to do this we allocate several bootstrap pages out of kernel_map
+	 * and use them to provide an initial pool of pv_entry structures.
+	 * we never free these pages.
 	 */
 
-	pv_initpage = (struct pv_page *) uvm_km_alloc(kernel_map, PAGE_SIZE);
-	if (pv_initpage == NULL)
-		panic("pmap_init: pv_initpage");
+	for (i = 0; i < 4; i++) {
+		struct pv_page *pvpg;
+
+		pvpg = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE);
+		if (pvpg == NULL)
+			panic("pmap_init: no pages");
+		(void) pmap_add_pvpage(pvpg, TRUE);
+	}
+
 	pv_cachedva = 0;   /* a VA we have allocated but not used yet */
 	pv_nfpvents = 0;
-	(void) pmap_add_pvpage(pv_initpage, FALSE);
 
 	pj_page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE);
 	if (pj_page == NULL)
@@ -1635,15 +1639,7 @@ pmap_free_pvpage()
 
 	pvp = TAILQ_FIRST(&pv_unusedpgs);
 
-	/*
-	 * note: watch out for pv_initpage which is allocated out of
-	 * kernel_map rather than kmem_map.
-	 */
-
-	if (pvp == pv_initpage)
-		map = kernel_map;
-	else
-		map = kmem_map;
+	map = kmem_map;
 	if (vm_map_lock_try(map)) {
 
 		/* remove pvp from pv_unusedpgs */
@@ -1660,10 +1656,6 @@ pmap_free_pvpage()
 
 		pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
 	}
-	if (pvp == pv_initpage)
-		/* no more initpage, we've freed it */
-		pv_initpage = NULL;
-
 	splx(s);
 }
 
