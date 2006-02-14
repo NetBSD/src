@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi-target.c,v 1.3 2006/02/09 23:08:31 agc Exp $ */
+/* $NetBSD: iscsi-target.c,v 1.4 2006/02/14 20:08:37 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -129,11 +129,9 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 	/* Initialize target */
-	for (i = 0 ; i < tv.c ; i++) {
-		if (target_init(&g, &tv, TargetName, i) != 0) {
-			TRACE_ERROR("target_init() failed\n");
-			exit(EXIT_FAILURE);
-		}
+	if (target_init(&g, &tv, TargetName) != 0) {
+		TRACE_ERROR("target_init() failed\n");
+		exit(EXIT_FAILURE);
 	}
 
 #ifdef HAVE_DAEMON
