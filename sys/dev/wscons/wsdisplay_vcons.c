@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.1 2006/02/12 20:55:35 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.2 2006/02/14 14:15:59 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.1 2006/02/12 20:55:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.2 2006/02/14 14:15:59 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,10 @@ int
 vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
     struct wsdisplay_accessops *ao)
 {
+
+	/* zero out everything so we can rely on untouched fields being 0 */
+	bzero(vd, sizeof(struct vcons_data));
+	
 	vd->cookie = cookie;
 
 	vd->init_screen = vcons_dummy_init_screen;
@@ -177,7 +181,8 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 
 	scr->scr_cookie = vd->cookie;
 	scr->scr_vd = vd;
-
+	SCREEN_IDLE(scr);
+	
 	/*
 	 * call the driver-supplied init_screen function which is expected
 	 * to set up rasops_info, override cursor() and probably others
@@ -231,12 +236,17 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 		scr->scr_chars[i] = 0x20;
 	}
 
-	if (existing) {
-		scr->scr_status = VCONS_IS_VISIBLE;
-	} else {
-		scr->scr_status = 0;
+	if(vd->active == NULL) {
+		vd->active = scr;
+		SCREEN_VISIBLE(scr);
 	}
-	SCREEN_IDLE(scr);
+	
+	if (existing) {
+		SCREEN_VISIBLE(scr);
+		vd->active = scr;
+	} else {
+		SCREEN_INVISIBLE(scr);
+	}
 	
 	LIST_INSERT_HEAD(&vd->screens, scr, next);
 	return 0;
@@ -363,6 +373,8 @@ vcons_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		return ENOMEM;
 
 	scr->scr_flags = 0;		
+	scr->scr_status = 0;
+	scr->scr_busy = 0;
 	scr->scr_type = type;
 
 	ret = vcons_init_screen(vd, scr, 0, defattrp);
