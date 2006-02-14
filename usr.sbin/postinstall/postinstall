@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.9 2005/11/22 22:10:52 lukem Exp $
+# $NetBSD: postinstall,v 1.10 2006/02/14 17:14:21 tsarna Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -498,6 +498,36 @@ modify_file()
 		done < "${_mfscratch}.diffs"
 	fi
 	return ${_mffailed}
+}
+
+
+# contents_owner op directory user group
+#	Make sure directory and contents are owned (and group-owned)
+#	as specified.
+#
+contents_owner()
+{
+	[ $# -eq 4 ] || err 2 "USAGE: contents_owner op dir user group"
+
+	_op=$1
+	_dir=$2
+	_user=$3
+	_grp=$4
+
+	if [ "${_op}" = "check" ]; then
+		if [ ! -z "`find ${_dir} \( ! -user ${_user} \) -o \
+		\( ! -group ${_grp} \)`" ]
+		then
+			msg "${_dir} and contents not all owned by ${_user}:${_grp}"
+			return 1
+		else
+			return 0
+		fi
+	elif [ "${_op}" = "fix" ]; then
+		find ${_dir} \( \( ! -user ${_user} \) -o \
+		\( ! -group ${_grp} \) \) -a -print0 \
+		| xargs -0 chown ${_user}:${_grp}
+	fi	
 }
 
 
@@ -1084,6 +1114,18 @@ do_uid()
 
 	check_ids $1 users "${DEST_DIR}/etc/master.passwd" \
 	    named ntpd sshd smmsp _pflogd _rwhod
+}
+
+
+#
+#	varrwho
+#
+additem varrwho "required ownership of files in /var/rwho"
+do_varrwho()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_varrwho  fix|check"
+
+	contents_owner $1 "${DEST_DIR}/var/rwho" _rwhod _rwhod
 }
 
 
