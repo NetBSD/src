@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.34 2006/02/14 13:32:40 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.35 2006/02/14 20:41:52 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -717,4 +717,23 @@ sys/arch/amd64/include/param.h			1.2
 	Increase NKMEMPAGES_MAX_DEFAULT to 1 GB.
 	This allows lots more memory to be used for amaps, etc..
 	[chs, ticket #1166]
+
+sys/arch/i386/pci/pchb.c			1.57
+sys/arch/i386/pci/pchb_rnd.c			1.16
+sys/dev/pci/agp.c				1.37
+sys/dev/pci/agp_ali.c				1.9
+sys/dev/pci/agp_amd.c				1.14
+sys/dev/pci/agp_i810.c				1.28
+sys/dev/pci/agp_intel.c				1.17
+sys/dev/pci/agp_sis.c				1.8
+sys/dev/pci/agp_via.c				1.9
+sys/dev/pci/agpreg.h				1.10
+sys/dev/pci/agpvar.h				1.11
+sys/dev/pci/pcidevs				1.723,1.757
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add agp(4) support for Intel i915 chipset integrated graphics.
+	This fixes PR port-i386/32550.
+	[tron, ticket #1168]
 
