@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.73.2.1 2006/02/07 04:58:11 rpaulo Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.73.2.2 2006/02/14 02:26:27 rpaulo Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.73.2.1 2006/02/07 04:58:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.73.2.2 2006/02/14 02:26:27 rpaulo Exp $");
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -109,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.73.2.1 2006/02/07 04:58:11 rpaulo 
 extern struct inpcbtable udbtable;
 struct	udp6stat udp6stat;
 
-static	void udp6_notify __P((struct in6pcb *, int));
+static	void udp6_notify __P((struct inpcb *, int));
 
 void
 udp6_init()
@@ -122,13 +124,13 @@ udp6_init()
  * just wake up so that he can collect error status.
  */
 static	void
-udp6_notify(in6p, errno)
-	struct in6pcb *in6p;
+udp6_notify(inp, errno)
+	struct inpcb *inp;
 	int errno;
 {
-	in6p->in6p_socket->so_error = errno;
-	sorwakeup(in6p->in6p_socket);
-	sowwakeup(in6p->in6p_socket);
+	inp->inp_socket->so_error = errno;
+	sorwakeup(inp->inp_socket);
+	sowwakeup(inp->inp_socket);
 }
 
 void
@@ -145,7 +147,7 @@ udp6_ctlinput(cmd, sa, d)
 	void *cmdarg;
 	struct ip6ctlparam *ip6cp = NULL;
 	const struct sockaddr_in6 *sa6_src = NULL;
-	void (*notify) __P((struct in6pcb *, int)) = udp6_notify;
+	void (*notify) __P((struct inpcb *, int)) = udp6_notify;
 	struct udp_portonly {
 		u_int16_t uh_sport;
 		u_int16_t uh_dport;
@@ -262,7 +264,7 @@ udp6_usrreq(so, req, m, addr6, control, l)
 	struct mbuf *m, *addr6, *control;
 	struct lwp *l;
 {
-	struct	in6pcb *in6p = sotoin6pcb(so);
+	struct	inpcb *inp = sotoinpcb(so);
 	struct	proc *p;
 	int	error = 0;
 	int	s;
@@ -289,7 +291,7 @@ udp6_usrreq(so, req, m, addr6, control, l)
 		return (0);
 	}
 
-	if (in6p == NULL && req != PRU_ATTACH) {
+	if (inp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
 	}
@@ -301,29 +303,29 @@ udp6_usrreq(so, req, m, addr6, control, l)
 		 *  Always attach for IPv6,
 		 *  and only when necessary for IPv4.
 		 */
-		if (in6p != NULL) {
+		if (inp != NULL) {
 			error = EINVAL;
 			break;
 		}
 		s = splsoftnet();
-		error = in6_pcballoc(so, &udbtable);
+		error = in_pcballoc(so, &udbtable);
 		splx(s);
 		if (error)
 			break;
 		error = soreserve(so, udp6_sendspace, udp6_recvspace);
 		if (error)
 			break;
-		in6p = sotoin6pcb(so);
-		in6p->in6p_cksum = -1;	/* just to be sure */
+		inp = sotoinpcb(so);
+		inp->in6p_cksum = -1;	/* just to be sure */
 		break;
 
 	case PRU_DETACH:
-		in6_pcbdetach(in6p);
+		in6_pcbdetach(inp);
 		break;
 
 	case PRU_BIND:
 		s = splsoftnet();
-		error = in6_pcbbind(in6p, addr6, p);
+		error = in6_pcbbind(inp, addr6, p);
 		splx(s);
 		break;
 
@@ -332,12 +334,12 @@ udp6_usrreq(so, req, m, addr6, control, l)
 		break;
 
 	case PRU_CONNECT:
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
+		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->in6p_faddr)) {
 			error = EISCONN;
 			break;
 		}
 		s = splsoftnet();
-		error = in6_pcbconnect(in6p, addr6, p);
+		error = in6_pcbconnect(inp, addr6, p);
 		splx(s);
 		if (error == 0)
 			soisconnected(so);
@@ -352,16 +354,16 @@ udp6_usrreq(so, req, m, addr6, control, l)
 		break;
 
 	case PRU_DISCONNECT:
-		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&inp->in6p_faddr)) {
 			error = ENOTCONN;
 			break;
 		}
 		s = splsoftnet();
-		in6_pcbdisconnect(in6p);
-		bzero((caddr_t)&in6p->in6p_laddr, sizeof(in6p->in6p_laddr));
+		in6_pcbdisconnect(inp);
+		bzero((caddr_t)&inp->in6p_laddr, sizeof(inp->in6p_laddr));
 		splx(s);
 		so->so_state &= ~SS_ISCONNECTED;		/* XXX */
-		in6_pcbstate(in6p, IN6P_BOUND);		/* XXX */
+		in6_pcbstate(inp, IN6P_BOUND);		/* XXX */
 		break;
 
 	case PRU_SHUTDOWN:
@@ -369,19 +371,19 @@ udp6_usrreq(so, req, m, addr6, control, l)
 		break;
 
 	case PRU_SEND:
-		return (udp6_output(in6p, m, addr6, control, p));
+		return (udp6_output(inp, m, addr6, control, p));
 
 	case PRU_ABORT:
 		soisdisconnected(so);
-		in6_pcbdetach(in6p);
+		in6_pcbdetach(inp);
 		break;
 
 	case PRU_SOCKADDR:
-		in6_setsockaddr(in6p, addr6);
+		in6_setsockaddr(inp, addr6);
 		break;
 
 	case PRU_PEERADDR:
-		in6_setpeeraddr(in6p, addr6);
+		in6_setpeeraddr(inp, addr6);
 		break;
 
 	case PRU_SENSE:
