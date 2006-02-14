@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.74 2006/02/13 14:41:22 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.75 2006/02/14 02:28:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.74 2006/02/13 14:41:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.75 2006/02/14 02:28:21 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -376,7 +376,7 @@ struct swapcluster {
 	int swc_slot;
 	int swc_nallocated;
 	int swc_nused;
-	struct vm_page *swc_pages[round_page(MAXPHYS) >> PAGE_SHIFT];
+	struct vm_page *swc_pages[howmany(MAXPHYS, MIN_PAGE_SIZE)];
 };
 
 static void
