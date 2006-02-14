@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.21 2006/02/05 17:11:00 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.22 2006/02/14 20:37:36 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3400,6 +3400,10 @@ const struct pci_product pci_products[] = {
 	    "ISDN",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M24_1P,
+	    "Radeon Mobility X600",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_A3,
 	    "Radeon Mobility A3",
 	},
@@ -6246,6 +6250,18 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_EXP,
 	    "82925X PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915PM_HB,
+	    "82915PM/GM/GMS,82910GML Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915PM_PEG,
+	    "82915PM/GM PCI Express Graphics Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGD,
+	    "82915GM/GMS,82910GML Integrated Graphics Device",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_LPC,
@@ -10380,4 +10396,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2016;
+const int pci_nproducts = 2020;
