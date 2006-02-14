@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.22 2006/02/14 20:37:36 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.23 2006/02/14 20:40:00 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -4540,6 +4540,10 @@ const struct pci_product pci_products[] = {
 	    "Deskpro 4000 5233MMX",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PRESARIO56XX,
+	    "Presario 56xx",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_M700,
 	    "Armada M700",
 	},
@@ -6232,12 +6236,12 @@ const struct pci_product pci_products[] = {
 	    "82875P PCI-CSA Bridge",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915P_HB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_HB,
 	    "82915P/G/GL Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915P_EXP,
-	    "82915P/G/GL PCI Express Bridge",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_PEG,
+	    "82915P/G/GL PCI Express Graphics Port",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGD,
@@ -6248,12 +6252,20 @@ const struct pci_product pci_products[] = {
 	    "82925X Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_EXP,
-	    "82925X PCI Express Bridge",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_PEG,
+	    "82925X PCI Express Graphics Port",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915PM_HB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_HB,
 	    "82915PM/GM/GMS,82910GML Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_PEG,
+	    "82915PM/GM PCI Express Graphics Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGD,
+	    "82915GM/GMS Integrated Graphics Device",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915PM_PEG,
@@ -6390,6 +6402,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGDC,
 	    "82915G/GL IGD Companion",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGDC,
+	    "82915GM/GMS IGD Companion",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_LPC,
@@ -10396,4 +10412,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2020;
+const int pci_nproducts = 2024;
