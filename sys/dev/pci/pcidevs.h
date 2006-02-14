@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.21 2006/02/05 17:11:00 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.22 2006/02/14 20:37:36 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -958,6 +958,7 @@
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
 
 /* ATI products */
+#define	PCI_PRODUCT_ATI_RADEON_M24_1P	0x3150		/* Radeon Mobility X600 */
 #define	PCI_PRODUCT_ATI_RADEON_A3	0x4136		/* Radeon Mobility A3 */
 #define	PCI_PRODUCT_ATI_RADEON_9600_LE	0x4151		/* Radeon 9600 LE */
 #define	PCI_PRODUCT_ATI_RADEON_9600_XT	0x4152		/* Radeon 9600 XT */
@@ -1836,6 +1837,9 @@
 #define	PCI_PRODUCT_INTEL_82915G_IGD	0x2582		/* 82915G/GL Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82925X_HB	0x2584		/* 82925X Host */
 #define	PCI_PRODUCT_INTEL_82925X_EXP	0x2585		/* 82925X PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_82915PM_HB	0x2590		/* 82915PM/GM/GMS,82910GML Host Bridge */
+#define	PCI_PRODUCT_INTEL_82915PM_PEG	0x2591		/* 82915PM/GM PCI Express Graphics Port */
+#define	PCI_PRODUCT_INTEL_82915GM_IGD	0x2592		/* 82915GM/GMS,82910GML Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_6300ESB_LPC	0x25a1		/* 6300ESB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_6300ESB_IDE	0x25a2		/* 6300ESB IDE Controller */
 #define	PCI_PRODUCT_INTEL_6300ESB_SATA	0x25a3		/* 6300ESB SATA Controller */
