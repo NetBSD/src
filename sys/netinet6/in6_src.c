@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.2.1 2006/02/07 04:58:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.2.2 2006/02/14 02:23:24 rpaulo Exp $");
 
 #include "opt_inet.h"
 
@@ -880,13 +880,13 @@ in6_selecthlim(in6p, ifp)
  * Find an empty port and set it to the specified PCB.
  */
 int
-in6_pcbsetport(laddr, in6p, p)
+in6_pcbsetport(laddr, inp, p)
 	struct in6_addr *laddr;
-	struct in6pcb *in6p;
+	struct inpcb *inp;
 	struct proc *p;
 {
-	struct socket *so = in6p->in6p_socket;
-	struct inpcbtable *table = in6p->in6p_table;
+	struct socket *so = inp->inp_socket;
+	struct inpcbtable *table = inp->inp_table;
 	int cnt;
 	u_int16_t minport, maxport;
 	u_int16_t lport, *lastport;
@@ -899,7 +899,7 @@ in6_pcbsetport(laddr, in6p, p)
 	    (so->so_options & SO_ACCEPTCONN) == 0))
 		wild = 1;
 
-	if (in6p->in6p_flags & IN6P_LOWPORT) {
+	if (inp->inp_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
 		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
 			return (EACCES);
@@ -942,10 +942,10 @@ in6_pcbsetport(laddr, in6p, p)
 	return (EAGAIN);
 
 found:
-	in6p->in6p_flags |= IN6P_ANONPORT;
+	inp->inp_flags |= IN6P_ANONPORT;
 	*lastport = lport;
-	in6p->in6p_lport = htons(lport);
-	in6_pcbstate(in6p, IN6P_BOUND);
+	inp->inp_lport = htons(lport);
+	in6_pcbstate(inp, INP_BOUND);
 	return (0);		/* success */
 }
 
