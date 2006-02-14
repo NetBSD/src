@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.33 2006/02/12 22:50:48 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.34 2006/02/14 13:32:40 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -696,4 +696,25 @@ usr.sbin/wsconscfg/wsconscfg.8			1.16-1.17
 
 	Sort options. New sentence, new line. Fix typo.
 	[jmmv, ticket #1162]
+
+distrib/sparc/install.md			1.20
+distrib/sparc/miniroot/list			1.29
+
+	Change the old pre-sysinst install.md script to not need file(1)
+	and take that program and its associated "magic" database
+	out of the miniroot image. This fixes PR port-sparc/32379.
+	[chs, ticket #1163]
+
+sys/arch/sparc/include/vmparam.h		1.38
+
+	Reduce MAXSSIZ to 32 MB, like most other ports. This fixes
+	PR port-sparc/30918.
+	[chs, ticket #1165]
+
+sys/arch/amd64/amd64/pmap.c			patch
+sys/arch/amd64/include/param.h			1.2
+
+	Increase NKMEMPAGES_MAX_DEFAULT to 1 GB.
+	This allows lots more memory to be used for amaps, etc..
+	[chs, ticket #1166]
 
