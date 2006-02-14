@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.28 2003/12/28 13:00:47 martin Exp $
+#	$NetBSD: list,v 1.28.6.1 2006/02/14 13:19:29 tron Exp $
 
 # Sparc extra's
 PROG	bin/rcmd
@@ -14,7 +14,6 @@ PROG	usr/bin/rsh
 PROG	usr/bin/tset usr/bin/reset
 PROG	usr/bin/vi
 PROG	usr/bin/less usr/bin/more
-PROG	usr/bin/file
 PROG	usr/sbin/installboot
 
 # crunchgen source directory specials
@@ -34,9 +33,6 @@ COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
 COPY	${ARCHDIR}/termcap.src		usr/share/misc/termcap
-
-# and the magic file
-COPY	${DESTDIR}/usr/share/misc/magic usr/share/misc/magic
 
 # copy the kernel
 COPY	${KERNOBJDIR}/GENERIC/netbsd	netbsd
