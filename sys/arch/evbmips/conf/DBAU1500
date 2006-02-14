@@ -1,4 +1,4 @@
-#	$NetBSD: DBAU1500,v 1.3 2006/02/09 00:43:10 gdamore Exp $
+#	$NetBSD: DBAU1500,v 1.4 2006/02/14 04:26:59 gdamore Exp $
 #
 # Kernel config for the AMD Alchemy DBAu1500 evaluation board.
 
@@ -16,8 +16,20 @@ options		ALCHEMY_AU1500
 options		ALCHEMY_DBAU1500
 options		PCI_NETBSD_CONFIGURE
 
-aupci*	at aubus? addr ?
-pci*	at aupci?
+# XXX AU1500 PCI seems busted, at least on the DBAU1500.  Attempts to use
+# commands like "dd if=/dev/zero of=/tmp/f bs=64k count=1000" result in
+# kernel panics when running diskless with / mounted over a PCI NIC.
+#
+# Additionally early steppings (AB, AC) of the AU1500 are incredibly buggy
+# and are unlikely to perform properly without special software workarounds
+# that I have not yet figured out.
+#
+# Finally, the AU1500 pci bus is completely hopeless when it comes to making
+# PCI-PCI bridges (such as multiport ethernet cards).  The design is flawed,
+# and has not been fixed in at least the AD stepping of the AU1500.
+#
+# aupci*	at aubus? addr ?
+# pci*	at aupci?
 
 # Note that this is just fairly random selection of PCI devices.
 # Only the hptide controller is actually on-board.
