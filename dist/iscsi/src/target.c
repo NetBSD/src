@@ -567,7 +567,9 @@ text_command_t(target_session_t * sess, uint8_t *header)
 	char           		*text_in = NULL;
 	char           		*text_out = NULL;
 	unsigned		 len_in;
+	char			 buf[BUFSIZ];
 	int			 len_out = 0;
+	int			 i;
 
 #define TC_CLEANUP { if (text_in != NULL) iscsi_free_atomic(text_in);if (text_out != NULL) iscsi_free_atomic(text_out);}
 #define TC_ERROR {TC_CLEANUP; return -1;}
@@ -622,12 +624,14 @@ text_command_t(target_session_t * sess, uint8_t *header)
 				TRACE(TRACE_ISCSI_DEBUG, "Rejecting SendTargets=All in a non Discovery session\n");
 				PARAM_TEXT_ADD(sess->params, "SendTargets", "Reject", text_out, &len_out, 2048, 0, TC_ERROR);
 			} else {
-				if (allow_netmask(sess->globals->tv->v[0].mask, sess->initiator)) {
-					PARAM_TEXT_ADD(sess->params, "TargetName", sess->globals->targetname, text_out, &len_out, 2048, 0, TC_ERROR);
-					PARAM_TEXT_ADD(sess->params, "TargetAddress", sess->globals->targetaddress, text_out, &len_out, 2048, 0, TC_ERROR);
-				} else {
-					syslog(LOG_INFO, "WARNING: attempt to discover targets from %s (not allowed by %s) has been rejected", sess->initiator, sess->globals->tv->v[0].mask);
-					PARAM_TEXT_ADD(sess->params, "SendTargets", "Reject", text_out, &len_out, 2048, 0, TC_ERROR);
+				for (i = 0 ; i < sess->globals->tv->c ; i++) {
+					if (allow_netmask(sess->globals->tv->v[i].mask, sess->initiator)) {
+						(void) snprintf(buf, sizeof(buf), "%s:%s", sess->globals->targetname, sess->globals->tv->v[i].target);
+						PARAM_TEXT_ADD(sess->params, "TargetName", buf, text_out, &len_out, 2048, 0, TC_ERROR);
+						PARAM_TEXT_ADD(sess->params, "TargetAddress", sess->globals->targetaddress, text_out, &len_out, 2048, 0, TC_ERROR);
+					} else {
+						syslog(LOG_INFO, "WARNING: attempt to discover targets from %s (not allowed by %s) has been rejected", sess->initiator, sess->globals->tv->v[0].mask);
+					}
 				}
 			}
 			ptr->rx_offer = 0;
@@ -685,9 +689,12 @@ login_command_t(target_session_t * sess, uint8_t *header)
 	uint8_t   rsp_header[ISCSI_HEADER_LEN];
 	char           *text_in = NULL;
 	char           *text_out = NULL;
+	char		buf[BUFSIZ];
 	int             len_in = 0;
 	int             len_out = 0;
 	int             status = 0;
+	int		found;
+	int		i;
 
 	/* Initialize response */
 
@@ -814,7 +821,15 @@ login_command_t(target_session_t * sess, uint8_t *header)
 			if (param_equiv(sess->params, "TargetName", "")) {
 				TRACE_ERROR("TargetName not specified\n");
 				goto response;
-			} else if (!param_equiv(sess->params, "TargetName", sess->globals->targetname)) {
+			}
+			for (found = 0, i = 0 ; i < sess->globals->tv->c ; i++) {
+				(void) snprintf(buf, sizeof(buf), "%s:%s", sess->globals->targetname, sess->globals->tv->v[i].target);
+				if (param_equiv(sess->params, "TargetName", buf)) {
+					found = 1;
+					sess->d = i;
+				}
+			}
+			if (!found) {
 				TRACE_ERROR("Bad TargetName \"%s\"\n", param_val(sess->params, "TargetName"));
 				goto response;
 			}
@@ -1403,16 +1418,11 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
  ********************/
 
 int 
-target_init(globals_t *gp, targv_t *tv, char *TargetName, int n)
+target_init(globals_t *gp, targv_t *tv, char *TargetName)
 {
-	int		d;
 	int             i;
 
 	(void) strlcpy(gp->targetname, TargetName, sizeof(gp->targetname));
-	if ((d = device_init(gp, gp->tv = tv, &tv->v[n])) < 0) {
-		TRACE_ERROR("device_init() failed\n");
-		return -1;
-	}
 	if (gp->state == TARGET_INITIALIZING || gp->state == TARGET_INITIALIZED) {
 		TRACE_ERROR("duplicate target initialization attempted\n");
 		return -1;
@@ -1422,11 +1432,17 @@ target_init(globals_t *gp, targv_t *tv, char *TargetName, int n)
 		TRACE_ERROR("iscsi_queue_init() failed\n");
 		return -1;
 	}
+	gp->tv = tv;
 	for (i = 0; i < DEFAULT_TARGET_MAX_SESSIONS; i++) {
 		g_session[i].id = i;
-		g_session[i].d = d;
 		if (iscsi_queue_insert(&g_session_q, &g_session[i]) != 0) {
 			TRACE_ERROR("iscsi_queue_insert() failed\n");
+			return -1;
+		}
+	}
+	for (i = 0 ; i < tv->c ; i++) {
+		if ((g_session[i].d  = device_init(gp, tv, &tv->v[i])) < 0) {
+			TRACE_ERROR("device_init() failed\n");
 			return -1;
 		}
 	}

@@ -93,7 +93,7 @@ typedef struct target_cmd_t {
 	void           *callback_arg;
 }               target_cmd_t;
 
-int             target_init(globals_t *, targv_t *, char *, int);
+int             target_init(globals_t *, targv_t *, char *);
 int             target_shutdown(globals_t *);
 int             target_listen(globals_t *);
 int             target_transfer_data(target_session_t *, iscsi_scsi_cmd_args_t *, struct iovec *, int);
