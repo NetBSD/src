@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.2 2006/02/14 14:15:59 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.3 2006/02/14 16:02:00 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.2 2006/02/14 14:15:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.3 2006/02/14 16:02:00 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 {
 
 	/* zero out everything so we can rely on untouched fields being 0 */
-	bzero(vd, sizeof(struct vcons_data));
+	memset(vd, 0, sizeof(struct vcons_data));
 	
 	vd->cookie = cookie;
 
