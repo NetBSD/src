@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.94.2.2 2006/02/07 16:57:16 rpaulo Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.94.2.3 2006/02/14 02:25:13 rpaulo Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94.2.2 2006/02/07 16:57:16 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94.2.3 2006/02/14 02:25:13 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1376,7 +1376,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 	int level, optname;
 	struct mbuf **mp;
 {
-	struct in6pcb *in6p = sotoin6pcb(so);
+	struct inpcb *inp = sotoinpcb(so);
 	struct mbuf *m = *mp;
 	int optval = 0;
 	int error = 0;
@@ -1388,7 +1388,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 			switch (optname) {
 			case IPV6_PKTOPTIONS:
 				/* m is freed in ip6_pcbopts */
-				return (ip6_pcbopts(&in6p->in6p_outputopts,
+				return (ip6_pcbopts(&inp->in6p_outputopts,
 				    m, so));
 			case IPV6_HOPOPTS:
 			case IPV6_DSTOPTS:
@@ -1419,15 +1419,15 @@ ip6_ctloutput(op, so, level, optname, mp)
 						error = EINVAL;
 					else {
 						/* -1 = kernel default */
-						in6p->in6p_hops = optval;
+						inp->in6p_hops = optval;
 					}
 					break;
 #define OPTSET(bit) \
 do { \
 	if (optval) \
-		in6p->in6p_flags |= (bit); \
+		inp->inp_flags |= (bit); \
 	else \
-		in6p->in6p_flags &= ~(bit); \
+		inp->inp_flags &= ~(bit); \
 } while (/*CONSTCOND*/ 0)
 
 				case IPV6_RECVOPTS:
@@ -1476,8 +1476,8 @@ do { \
 					 * available only prior to bind(2).
 					 * see ipng mailing list, Jun 22 2001.
 					 */
-					if (in6p->in6p_lport ||
-					    !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
+					if (inp->inp_lport ||
+					    !IN6_IS_ADDR_UNSPECIFIED(&inp->in6p_laddr)) {
 						error = EINVAL;
 						break;
 					}
@@ -1498,7 +1498,7 @@ do { \
 			case IPV6_JOIN_GROUP:
 			case IPV6_LEAVE_GROUP:
 				error =	ip6_setmoptions(optname,
-				    &in6p->in6p_moptions, m);
+				    &inp->in6p_moptions, m);
 				break;
 
 			case IPV6_PORTRANGE:
@@ -1506,18 +1506,18 @@ do { \
 
 				switch (optval) {
 				case IPV6_PORTRANGE_DEFAULT:
-					in6p->in6p_flags &= ~(IN6P_LOWPORT);
-					in6p->in6p_flags &= ~(IN6P_HIGHPORT);
+					inp->inp_flags &= ~(IN6P_LOWPORT);
+					inp->inp_flags &= ~(IN6P_HIGHPORT);
 					break;
 
 				case IPV6_PORTRANGE_HIGH:
-					in6p->in6p_flags &= ~(IN6P_LOWPORT);
-					in6p->in6p_flags |= IN6P_HIGHPORT;
+					inp->inp_flags &= ~(IN6P_LOWPORT);
+					inp->inp_flags |= IN6P_HIGHPORT;
 					break;
 
 				case IPV6_PORTRANGE_LOW:
-					in6p->in6p_flags &= ~(IN6P_HIGHPORT);
-					in6p->in6p_flags |= IN6P_LOWPORT;
+					inp->inp_flags &= ~(IN6P_HIGHPORT);
+					inp->inp_flags |= IN6P_LOWPORT;
 					break;
 
 				default:
@@ -1541,7 +1541,7 @@ do { \
 					req = mtod(m, caddr_t);
 					len = m->m_len;
 				}
-				error = ipsec6_set_policy(in6p,
+				error = ipsec6_set_policy(inp,
 				                   optname, req, len, priv);
 			    }
 				break;
@@ -1564,8 +1564,8 @@ do { \
 				break;
 
 			case IPV6_PKTOPTIONS:
-				if (in6p->in6p_options) {
-					*mp = m_copym(in6p->in6p_options, 0,
+				if (inp->inp_options) {
+					*mp = m_copym(inp->inp_options, 0,
 					    M_COPYALL, M_WAIT);
 				} else {
 					*mp = m_get(M_WAIT, MT_SOOPTS);
@@ -1596,10 +1596,10 @@ do { \
 				switch (optname) {
 
 				case IPV6_UNICAST_HOPS:
-					optval = in6p->in6p_hops;
+					optval = inp->in6p_hops;
 					break;
 
-#define OPTBIT(bit) (in6p->in6p_flags & bit ? 1 : 0)
+#define OPTBIT(bit) (inp->inp_flags & bit ? 1 : 0)
 
 				case IPV6_RECVOPTS:
 					optval = OPTBIT(IN6P_RECVOPTS);
@@ -1616,7 +1616,7 @@ do { \
 				case IPV6_PORTRANGE:
 				    {
 					int flags;
-					flags = in6p->in6p_flags;
+					flags = inp->inp_flags;
 					if (flags & IN6P_HIGHPORT)
 						optval = IPV6_PORTRANGE_HIGH;
 					else if (flags & IN6P_LOWPORT)
@@ -1666,7 +1666,7 @@ do { \
 			case IPV6_MULTICAST_LOOP:
 			case IPV6_JOIN_GROUP:
 			case IPV6_LEAVE_GROUP:
-				error = ip6_getmoptions(optname, in6p->in6p_moptions, mp);
+				error = ip6_getmoptions(optname, inp->in6p_moptions, mp);
 				break;
 
 #if 0	/* defined(IPSEC) */
@@ -1680,7 +1680,7 @@ do { \
 					req = mtod(m, caddr_t);
 					len = m->m_len;
 				}
-				error = ipsec6_get_policy(in6p, req, len, mp);
+				error = ipsec6_get_policy(inp, req, len, mp);
 				break;
 			}
 #endif /* IPSEC */
@@ -1708,7 +1708,7 @@ ip6_raw_ctloutput(op, so, level, optname, mp)
 {
 	int error = 0, optval, optlen;
 	const int icmp6off = offsetof(struct icmp6_hdr, icmp6_cksum);
-	struct in6pcb *in6p = sotoin6pcb(so);
+	struct in6pcb *inp = sotoinpcb(so);
 	struct mbuf *m = *mp;
 
 	optlen = m ? m->m_len : 0;
@@ -1744,14 +1744,14 @@ ip6_raw_ctloutput(op, so, level, optname, mp)
 				if (optval != icmp6off)
 					error = EINVAL;
 			} else
-				in6p->in6p_cksum = optval;
+				inp->in6p_cksum = optval;
 			break;
 
 		case PRCO_GETOPT:
 			if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
 				optval = icmp6off;
 			else
-				optval = in6p->in6p_cksum;
+				optval = inp->in6p_cksum;
 
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(int);
