@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2006/02/12 01:18:05 wiz Exp $
+# $NetBSD: Makefile,v 1.5 2006/02/14 23:37:39 dyoung Exp $
 
 DIST_SUBDIR=	contrib/mom/examples
 
@@ -9,6 +9,7 @@ FILESDIR=	${DOCDIR}/groff/mom
 MOM_FILES=	typesetting.mom letter.mom sample_docs.mom
 FILES=		README.txt elvis_syntax elvis_syntax.new penguin.ps ${MOM_FILES}
 
+.if ${MKMAN} != "no"
 PROCESSED_FILES=	${MOM_FILES:S/.mom/.ps/}
 FILES+=			${PROCESSED_FILES}
 CLEANFILES+=		${PROCESSED_FILES}
@@ -19,7 +20,8 @@ $i: ${i:S/.ps/.mom/}
 .endfor
 
 dependall: ${PROCESSED_FILES}
-.endif
+.endif	# MKMAN
+.endif	# MKSHARE
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
