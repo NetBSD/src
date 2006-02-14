@@ -1,4 +1,4 @@
-/* $NetBSD: scifreg.h,v 1.8 2006/02/14 00:00:34 uwe Exp $ */
+/* $NetBSD: scifreg.h,v 1.9 2006/02/14 00:02:03 uwe Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -30,7 +30,7 @@
 #define	_SH3_SCIFREG_H_
 
 /*
- * Serial Communication Interface (SCIF)
+ * Serial Communication Interface with FIFO (SCIF)
  */
 
 #ifdef SH3
