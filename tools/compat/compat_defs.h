@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.51 2006/02/11 00:56:08 wiz Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.52 2006/02/14 04:59:33 dyoung Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -122,6 +122,9 @@ struct passwd;
 #  undef d_fileno
 # else
 #  include <dirent.h>
+#  if defined(__DARWIN_UNIX03)
+#   undef d_fileno
+#  endif
 # endif
 # define NAMLEN(dirent) (strlen((dirent)->d_name))
 #else

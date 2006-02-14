@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile.disklabel,v 1.5 2005/12/29 15:35:19 tsutsui Exp $
+#	$NetBSD: Makefile.disklabel,v 1.6 2006/02/14 04:59:33 dyoung Exp $
 
 _ARCHDIR=	${.CURDIR}/../../sys/arch
 _INCDIR=	${.CURDIR}/../../include
 _SYSDIR=	${.CURDIR}/../../sys/sys
+_UFSDIR=	${.CURDIR}/../../sys/ufs
 _SUBDIR!=	cd ${_ARCHDIR} && ${MAKE} -V SUBDIR
 
+_UFS_INCS!=	cd ${_UFSDIR} && find ffs ufs -name '*.h'
 _ARCH_INCS!=	cd ${_ARCHDIR} && find . -name disklabel.h
 
 _ARCH_INCS+=	ews4800mips/include/pdinfo.h ews4800mips/include/vtoc.h
@@ -18,6 +20,7 @@ HOST_CPPFLAGS+=	-I${TOOLDIR}/include
 beforedepend: 
 	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude
 	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude/sys
+	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude/ufs
 	cd ${_ARCHDIR} && \
 	    ${TOOL_PAX} -s /include\\/// -rw ${_ARCH_INCS} \
 	    ${TOOLDIR}/include/nbinclude
@@ -25,5 +28,7 @@ beforedepend:
 	    ${TOOL_PAX} -rw ${_INCS} ${TOOLDIR}/include/nbinclude
 	cd ${_SYSDIR} && \
 	    ${TOOL_PAX} -rw ${_SYSINCS} ${TOOLDIR}/include/nbinclude/sys
+	cd ${_UFSDIR} && \
+	    ${TOOL_PAX} -rw ${_UFS_INCS} ${TOOLDIR}/include/nbinclude/ufs
 	cd ${TOOLDIR}/include/nbinclude && rm -f machine && \
 	    ${HOST_INSTALL_SYMLINK} ${MACHINE} machine
