@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.701.2.25 2006/02/15 19:23:31 riz Exp $
+$NetBSD: pcidevs,v 1.701.2.26 2006/02/15 19:26:50 riz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1827,14 +1827,14 @@ product INTEL 82875P_HB		0x2578	82875P Host
 product INTEL 82875P_AGP	0x2579	82875P AGP
 product INTEL 82875P_CSA	0x257b	82875P PCI-CSA Bridge
 product INTEL 82915G_HB		0x2580	82915P/G/GL Host
-product INTEL 82915G_PEG	0x2581	82915P/G/GL PCI Express Graphics Port
+product INTEL 82915G_EX		0x2581	82915P/G/GL PCI Express Bridge
 product INTEL 82915G_IGD	0x2582	82915G/GL Integrated Graphics Device
 product INTEL 82925X_HB		0x2584	82925X Host
-product INTEL 82925X_PEG	0x2585	82925X PCI Express Graphics Port
+product INTEL 82925X_EX		0x2585	82925X PCI Express Bridge
 product INTEL 82915GM_HB	0x2590	82915PM/GM/GMS,82910GML Host Bridge
-product INTEL 82915GM_PEG	0x2591	82915PM/GM PCI Express Graphics Port
+product INTEL 82915GM_EX	0x2591	82915PM/GM PCI Express Bridge
 product INTEL 82915GM_IGD	0x2592	82915GM/GMS Integrated Graphics Device
-product INTEL 82915PM_PEG	0x2591	82915PM/GM PCI Express Graphics Port
+product INTEL 82915PM_EX	0x2591	82915PM/GM PCI Express Bridge
 product INTEL 82915GM_IGD	0x2592	82915GM/GMS,82910GML Integrated Graphics Device
 product INTEL 6300ESB_LPC	0x25a1	6300ESB LPC Interface Bridge
 product INTEL 6300ESB_IDE	0x25a2	6300ESB IDE Controller
@@ -1867,8 +1867,8 @@ product INTEL 82801FB_AC	0x266e	82801FB/FR AC'97 Audio Controller
 product INTEL 82801FB_IDE	0x266f	82801FB/FR IDE Controller
 product INTEL 82945P_MCH	0x2770	82945G/P Memory Controller Hub
 product INTEL 82945P_EXP	0x2771	82945G/P PCI Express Bridge
-product INTEL 82955P_MCH	0x2774	82955X Memory Controller Hub
-product INTEL 82955P_EXP	0x2775	82955X PCI Express Bridge
+product INTEL 82955X_HB		0x2774	82955X Host
+product INTEL 82955X_EXP	0x2775	82955X PCI Express Bridge
 product INTEL 82915G_IGDC	0x2782	82915G/GL IGD Companion
 product INTEL 82915GM_IGDC	0x2792	82915GM/GMS IGD Companion
 product INTEL 82801G_LPC	0x27b8	82801GB/GR LPC Interface Bridge
