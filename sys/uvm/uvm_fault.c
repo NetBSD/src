@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.107 2006/01/31 14:11:25 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.108 2006/02/15 14:06:45 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.107 2006/01/31 14:11:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.108 2006/02/15 14:06:45 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -242,7 +242,7 @@ uvmfault_amapcopy(struct uvm_faultinfo *ufi)
 		 */
 
 		if (UVM_ET_ISNEEDSCOPY(ufi->entry))
-			amap_copy(ufi->map, ufi->entry, M_NOWAIT, TRUE,
+			amap_copy(ufi->map, ufi->entry, AMAP_COPY_NOWAIT,
 				ufi->orig_rvaddr, ufi->orig_rvaddr + 1);
 
 		/*
