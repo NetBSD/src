@@ -630,7 +630,9 @@ text_command_t(target_session_t * sess, uint8_t *header)
 						PARAM_TEXT_ADD(sess->params, "TargetName", buf, text_out, &len_out, 2048, 0, TC_ERROR);
 						PARAM_TEXT_ADD(sess->params, "TargetAddress", sess->globals->targetaddress, text_out, &len_out, 2048, 0, TC_ERROR);
 					} else {
+#ifdef HAVE_SYSLOG_H
 						syslog(LOG_INFO, "WARNING: attempt to discover targets from %s (not allowed by %s) has been rejected", sess->initiator, sess->globals->tv->v[0].mask);
+#endif
 					}
 				}
 			}
@@ -822,7 +824,7 @@ login_command_t(target_session_t * sess, uint8_t *header)
 				TRACE_ERROR("TargetName not specified\n");
 				goto response;
 			}
-			for (found = 0, i = 0 ; i < sess->globals->tv->c ; i++) {
+			for (found = 0, i = 0 ; !found && i < sess->globals->tv->c ; i++) {
 				(void) snprintf(buf, sizeof(buf), "%s:%s", sess->globals->targetname, sess->globals->tv->v[i].target);
 				if (param_equiv(sess->params, "TargetName", buf)) {
 					found = 1;
