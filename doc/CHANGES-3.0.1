@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.18 2006/02/12 16:50:46 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.19 2006/02/15 19:48:28 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -182,4 +182,14 @@ sys/net/if_bridge.c				1.36
 
 	Fix memory disclosure in bridge(4).
 	[adrianp, ticket #1163]
+
+sys/dev/raidframe/rf_driver.c			1.110
+sys/dev/raidframe/rf_psstatus.c			1.31
+sys/dev/raidframe/rf_psstatus.h			1.13
+
+	RAIDframe was erroneously re-initializing the Parity Stripe Status
+	pool each time a new array was configured.  This causes grief
+	with things like 'vmstat -m' by causing it to loop.  Make RAIDframe
+	only initialize PSS bits once.
+	[oster, ticket #1170]
 
