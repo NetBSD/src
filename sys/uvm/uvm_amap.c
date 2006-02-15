@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.71 2006/02/11 12:45:07 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.72 2006/02/15 14:06:45 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.71 2006/02/11 12:45:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.72 2006/02/15 14:06:45 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -725,15 +725,17 @@ amap_wipeout(struct vm_amap *amap)
  */
 
 void
-amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
-    boolean_t canchunk, vaddr_t startva, vaddr_t endva)
+amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
+    vaddr_t startva, vaddr_t endva)
 {
 	struct vm_amap *amap, *srcamap;
 	int slots, lcv;
 	vaddr_t chunksize;
+	const int waitf = (flags & AMAP_COPY_NOWAIT) ? M_NOWAIT : M_WAITOK;
+	const boolean_t canchunk = (flags & AMAP_COPY_NOCHUNK) == 0;
 	UVMHIST_FUNC("amap_copy"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, waitf=%d)",
-		    map, entry, waitf, 0);
+	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, flags=%d)",
+		    map, entry, flags, 0);
 
 	KASSERT(map != kernel_map);	/* we use nointr pool */
 
@@ -764,7 +766,8 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 				UVM_MAP_CLIP_END(map, entry, endva, NULL);
 		}
 
-		if (uvm_mapent_trymerge(map, entry, UVM_MERGE_COPYING)) {
+		if ((flags & AMAP_COPY_NOMERGE) == 0 &&
+		    uvm_mapent_trymerge(map, entry, UVM_MERGE_COPYING)) {
 			return;
 		}
 
