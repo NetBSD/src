@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.2 2006/02/15 09:31:17 manu Exp $ */
+/*	$NetBSD: linux32_ioctl.h,v 1.1 2006/02/15 09:31:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -30,60 +30,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _AMD64_LINUX32_IOCTL_H
+#define _AMD64_LINUX32_IOCTL_H
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.2 2006/02/15 09:31:17 manu Exp $");
+#define _LINUX32_IOC_NRBITS        8
+#define _LINUX32_IOC_TYPEBITS      8
+#define _LINUX32_IOC_SIZEBITS     14
+#define _LINUX32_IOC_DIRBITS       2
+ 
+#define _LINUX32_IOC_NRSHIFT       0
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/ucred.h>
+#define _LINUX32_IOC_NONE         0U
+#define _LINUX32_IOC_WRITE        1U
+#define _LINUX32_IOC_READ         2U
 
-#include <compat/netbsd32/netbsd32.h>
-#include <compat/netbsd32/netbsd32_syscallargs.h>
-
-#include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_signal.h>
-#include <compat/linux/linux_syscallargs.h>
-
-#include <compat/linux32/common/linux32_types.h>
-#include <compat/linux32/common/linux32_signal.h>
-#include <compat/linux32/common/linux32_ioctl.h>
-#include <compat/linux32/common/linux32_termios.h>
-#include <compat/linux32/common/linux32_sysctl.h>
-#include <compat/linux32/linux32_syscallargs.h>
-
-int
-linux32_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux32_sys_ioctl_args /* {
-		syscallarg(int) fd;
-		syscallarg(netbsd32_u_long) com;
-		syscallarg(netbsd32_charp) data;
-	} */ *uap = v;
-	int group;
-	int error;
-
-	group = LINUX32_IOCGROUP((int)SCARG(uap, com));
-
-	printf("linux32_sys_ioctl(%d, 0x%x/\'%c\', %p)\n", SCARG(uap, fd),
-	    SCARG(uap, com), (char)group, NETBSD32PTR64(SCARG(uap, data)));
-
-	switch(group) {
-	case 'T':
-		error = linux32_ioctl_termios(l, uap, retval);
-		break;
-	default:
-		printf("Not yet implemented ioctl group \'%c\'\n", group);
-		error = EINVAL;
-		break;
-	}
-
-	if (error == EPASSTHROUGH)
-		error = EINVAL;
-
-	return error;
-}
+#endif /* _AMD64_LINUX32_IOCTL_H */

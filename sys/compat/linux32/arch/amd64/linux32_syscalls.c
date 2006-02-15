@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscalls.c,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/* $NetBSD: linux32_syscalls.c,v 1.2 2006/02/15 09:31:17 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscalls.c,v 1.1 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscalls.c,v 1.2 2006/02/15 09:31:17 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -220,7 +220,7 @@ const char *const linux32_syscallnames[] = {
 	"#180 (unimplemented pread)",		/* 180 = unimplemented pread */
 	"#181 (unimplemented pwrite)",		/* 181 = unimplemented pwrite */
 	"#182 (unimplemented chown16)",		/* 182 = unimplemented chown16 */
-	"#183 (unimplemented getcwd)",		/* 183 = unimplemented getcwd */
+	"netbsd32___getcwd",			/* 183 = netbsd32___getcwd */
 	"#184 (unimplemented capget)",		/* 184 = unimplemented capget */
 	"#185 (unimplemented capset)",		/* 185 = unimplemented capset */
 	"#186 (unimplemented sigaltstack)",		/* 186 = unimplemented sigaltstack */

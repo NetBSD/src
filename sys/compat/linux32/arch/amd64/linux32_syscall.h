@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscall.h,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/* $NetBSD: linux32_syscall.h,v 1.2 2006/02/15 09:31:17 manu Exp $ */
 
 /*
  * System call numbers.
@@ -340,6 +340,9 @@
 
 /* syscall: "rt_sigsuspend" ret: "int" args: "linux32_sigsetp_t" "netbsd32_size_t" */
 #define	LINUX32_SYS_rt_sigsuspend	179
+
+/* syscall: "netbsd32___getcwd" ret: "int" args: "netbsd32_charp" "netbsd32_size_t" */
+#define	LINUX32_SYS_netbsd32___getcwd	183
 
 /* syscall: "__vfork14" ret: "int" args: */
 #define	LINUX32_SYS___vfork14	190
