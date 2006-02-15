@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.211 2006/02/11 12:45:07 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.212 2006/02/15 14:06:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.211 2006/02/11 12:45:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.212 2006/02/15 14:06:45 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2367,7 +2367,8 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 		/* clear needs_copy (allow chunking) */
 		if (UVM_ET_ISNEEDSCOPY(entry)) {
-			amap_copy(srcmap, entry, M_NOWAIT, TRUE, start, end);
+			amap_copy(srcmap, entry,
+			    AMAP_COPY_NOWAIT|AMAP_COPY_NOMERGE, start, end);
 			if (UVM_ET_ISNEEDSCOPY(entry)) {  /* failed? */
 				error = ENOMEM;
 				goto bad;
@@ -3025,8 +3026,7 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 				if (UVM_ET_ISNEEDSCOPY(entry) &&
 				    ((entry->max_protection & VM_PROT_WRITE) ||
 				     (entry->object.uvm_obj == NULL))) {
-					amap_copy(map, entry, M_WAITOK, TRUE,
-					    start, end);
+					amap_copy(map, entry, 0, start, end);
 					/* XXXCDC: wait OK? */
 				}
 			}
@@ -3283,8 +3283,8 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 				if (UVM_ET_ISNEEDSCOPY(entry) &&
 				    ((entry->max_protection & VM_PROT_WRITE) ||
 				     (entry->object.uvm_obj == NULL))) {
-					amap_copy(map, entry, M_WAITOK, TRUE,
-					    entry->start, entry->end);
+					amap_copy(map, entry, 0, entry->start,
+					    entry->end);
 					/* XXXCDC: wait OK? */
 				}
 			}
@@ -3878,7 +3878,7 @@ uvmspace_fork(struct vmspace *vm1)
 
 			if (UVM_ET_ISNEEDSCOPY(old_entry)) {
 				/* get our own amap, clears needs_copy */
-				amap_copy(old_map, old_entry, M_WAITOK, FALSE,
+				amap_copy(old_map, old_entry, AMAP_COPY_NOCHUNK,
 				    0, 0);
 				/* XXXCDC: WAITOK??? */
 			}
@@ -3977,8 +3977,8 @@ uvmspace_fork(struct vmspace *vm1)
 				     AMAP_SHARED) != 0 ||
 				    VM_MAPENT_ISWIRED(old_entry)) {
 
-					amap_copy(new_map, new_entry, M_WAITOK,
-					    FALSE, 0, 0);
+					amap_copy(new_map, new_entry,
+					    AMAP_COPY_NOCHUNK, 0, 0);
 					/* XXXCDC: M_WAITOK ... ok? */
 				}
 			}
