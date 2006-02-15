@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.35 2006/02/14 20:41:52 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.36 2006/02/15 19:48:49 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -736,4 +736,28 @@ sys/dev/pci/pcidevs_data.h			regen
 	Add agp(4) support for Intel i915 chipset integrated graphics.
 	This fixes PR port-i386/32550.
 	[tron, ticket #1168]
+
+sys/arch/i386/pci/pchb_rnd.c			1.17-1.18
+sys/dev/pci/pcidevs				1.763,1.765
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add hardware RNG support for Intel i925X, i945G/P and i955X chipsets.
+	[tron, ticket #1169]
+
+sys/dev/raidframe/rf_driver.c			1.110
+sys/dev/raidframe/rf_psstatus.c			1.31
+sys/dev/raidframe/rf_psstatus.h			1.13
+
+	RAIDframe was erroneously re-initializing the Parity Stripe Status
+	pool each time a new array was configured.  This causes grief
+	with things like 'vmstat -m' by causing it to loop.  Make RAIDframe
+	only initialize PSS bits once.
+	[oster, ticket #1170]
+
+usr.bin/systat/ps.c				1.28
+
+	Print system processes' command names in square brackets, like ps(1)
+	does.
+	[kleink, ticket #1172]
 
