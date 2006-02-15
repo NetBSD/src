@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.28 2006/02/11 12:45:07 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.29 2006/02/15 14:06:45 yamt Exp $	*/
 
 /*
  *
@@ -76,7 +76,7 @@ struct vm_amap	*amap_alloc	/* allocate a new amap */
 			(vaddr_t, vaddr_t, int);
 void		amap_copy	/* clear amap needs-copy flag */
 			(struct vm_map *, struct vm_map_entry *, int,
-			 boolean_t, vaddr_t, vaddr_t);
+			 vaddr_t, vaddr_t);
 void		amap_cow_now	/* resolve all COW faults now */
 			(struct vm_map *, struct vm_map_entry *);
 int		amap_extend	/* make amap larger */
@@ -118,6 +118,14 @@ boolean_t	amap_swap_off
 #define AMAP_SHARED	0x1	/* amap is shared */
 #define AMAP_REFALL	0x2	/* amap_ref: reference entire amap */
 #define AMAP_SWAPOFF	0x4	/* amap_swap_off() is in progress */
+
+/*
+ * amap_copy flags
+ */
+
+#define	AMAP_COPY_NOWAIT	0x02	/* not allowed to sleep */
+#define	AMAP_COPY_NOCHUNK	0x04	/* not allowed to chunk */
+#define	AMAP_COPY_NOMERGE	0x08	/* not allowed to merge */
 
 /*
  * amap_extend flags
