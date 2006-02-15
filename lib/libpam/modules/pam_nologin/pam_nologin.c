@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_nologin.c,v 1.5 2005/04/19 03:15:35 christos Exp $	*/
+/*	$NetBSD: pam_nologin.c,v 1.6 2006/02/15 20:28:32 bouyer Exp $	*/
 
 /*-
  * Copyright 2001 Mark R V Murray
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_nologin/pam_nologin.c,v 1.10 2002/04/12 22:27:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_nologin.c,v 1.5 2005/04/19 03:15:35 christos Exp $");
+__RCSID("$NetBSD: pam_nologin.c,v 1.6 2006/02/15 20:28:32 bouyer Exp $");
 #endif
 
 
@@ -100,7 +100,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 			rootlogin = 1;
 	}
 
-	lc = login_getclass(NULL);
+	lc = login_getclass(pwd->pw_class);
 	ignorenologin = login_getcapbool(lc, "ignorenologin", rootlogin);
 	nologin = login_getcapstr(lc, "nologin", nologin_def, nologin_def);
 	login_close(lc);
