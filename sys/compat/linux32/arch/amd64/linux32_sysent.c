@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_sysent.c,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/* $NetBSD: linux32_sysent.c,v 1.2 2006/02/15 09:31:17 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.1 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.2 2006/02/15 09:31:17 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -403,8 +403,8 @@ struct sysent linux32_sysent[] = {
 	    linux_sys_nosys },			/* 181 = unimplemented pwrite */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 182 = unimplemented chown16 */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 183 = unimplemented getcwd */
+	{ 2, s(struct netbsd32___getcwd_args), 0,
+	    netbsd32___getcwd },		/* 183 = netbsd32___getcwd */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 184 = unimplemented capget */
 	{ 0, 0, 0,
