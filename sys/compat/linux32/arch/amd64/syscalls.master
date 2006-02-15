@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 2006/02/09 19:18:57 manu Exp $
+	$NetBSD: syscalls.master,v 1.2 2006/02/15 15:23:18 manu Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -116,7 +116,7 @@
 		    const netbsd32_charp to); }
 39	STD	{ int linux32_sys_mkdir(const netbsd32_charp path, int mode); }
 40	STD	{ int linux32_sys_rmdir(const netbsd32_charp path); }
-41	NOARGS	{ int sys_dup(u_int fd); }
+41	NOARGS	{ int netbsd32_dup(u_int fd); }
 42	STD	{ int linux32_sys_pipe(netbsd32_intp fd); }
 43	STD	{ int linux32_sys_times(linux32_tmsp_t tms); }
 44	OBSOL	prof
@@ -142,7 +142,7 @@
 60	NOARGS	{ int sys_umask(int newmask); }
 61	NOARGS	chroot { int netbsd32_chroot(netbsd32_charp path); }
 62	UNIMPL	ustat
-63	NOARGS	{ int sys_dup2(u_int from, u_int to); }
+63	NOARGS	{ int netbsd32_dup2(u_int from, u_int to); }
 64	NOARGS	{ pid_t sys_getppid(void); }
 65	NOARGS	{ int sys_getpgrp(void); }
 66	NOARGS	{ int sys_setsid(void); }
@@ -300,7 +300,8 @@
 180	UNIMPL	pread
 181	UNIMPL	pwrite
 182	UNIMPL	chown16
-183	UNIMPL	getcwd
+183	NOARGS	{ int netbsd32___getcwd(netbsd32_charp bufp, \
+		    netbsd32_size_t length); } 
 184	UNIMPL	capget
 185	UNIMPL	capset
 186	UNIMPL	sigaltstack
@@ -326,8 +327,10 @@
 202	NOARGS	{ gid_t sys_getegid(void); }
 203	NOARGS	{ int sys_setreuid(uid_t ruid, uid_t euid); }
 204	NOARGS	{ int sys_setregid(gid_t rgid, gid_t egid); }
-205	UNIMPL	getgroups
-206	UNIMPL	setgroups
+205	NOARGS	{ int netbsd32_getgroups(int gidsetsize, \
+		    netbsd32_gid_tp gidset); }
+206	NOARGS	{ int netbsd32_setgroups(int gidsetsize, \
+		    netbsd32_gid_tp gidset); }
 207	NOARGS	{ int sys___posix_fchown(int fd, uid_t uid, gid_t gid); }
 208	NOARGS	{ int linux_sys_setresuid(uid_t ruid, uid_t euid, \
 		    uid_t suid); }
