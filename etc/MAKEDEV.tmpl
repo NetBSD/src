@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.49 2006/02/06 13:12:41 hamajima Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.50 2006/02/15 21:59:08 dsl Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -736,7 +736,9 @@ ttyCY*)
 	eminor=$(($minor + $off))
 	while [ $minor -lt $eminor ]
 	do
-		nminor=$(zeropad 3 $minor)
+		# nminor=$(zeropad 3 $minor)
+		nminor=000$minor
+		nminor=${nminor#${nminor%???}}
 		mkdev t$name$nminor c $chr $(($minor + $dialin )) "" "" $u_uucp
 		mkdev d$name$nminor c $chr $(($minor + $dialout)) "" "" $u_uucp
 		minor=$(($minor + 1))
@@ -750,7 +752,9 @@ ttyCZ*)
 	eminor=$(($minor + $off))
 	while [ $minor -lt $eminor ]
 	do
-		nminor=$(zeropad 4 $minor)
+		# nminor=$(zeropad 4 $minor)
+		nminor=0000$minor
+		nminor=${nminor#${nminor%????}}
 		mkdev t$name$nminor c $chr $(($minor + $dialin )) "" "" $u_uucp
 		mkdev d$name$nminor c $chr $(($minor + $dialout)) "" "" $u_uucp
 		minor=$(($minor + 1))
@@ -771,7 +775,9 @@ tty[0-9]|tty0[0-9])
 
 tty0*|tty1*|tty[0-9])
 	unit=${i#tty}
-	ounit=$(zeropad 2 $unit)
+	# ounit=$(zeropad 2 $unit)
+	ounit=00$unit
+	ounit=${ounit#${ounit%??}}
 	mkdev tty$ounit c %com_chr% $(($unit + $dialin )) "" "" $u_uucp
 	mkdev dty$ounit c %com_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
