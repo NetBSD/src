@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscallargs.h,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/* $NetBSD: linux32_syscallargs.h,v 1.2 2006/02/15 09:31:17 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -568,6 +568,8 @@ int	linux32_sys_rt_sigaction(struct lwp *, void *, register_t *);
 int	linux32_sys_rt_sigprocmask(struct lwp *, void *, register_t *);
 
 int	linux32_sys_rt_sigsuspend(struct lwp *, void *, register_t *);
+
+int	netbsd32___getcwd(struct lwp *, void *, register_t *);
 
 int	sys___vfork14(struct lwp *, void *, register_t *);
 
