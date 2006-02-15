@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.322 2006/02/11 20:56:29 dsl Exp $
+#	$NetBSD: Makefile,v 1.323 2006/02/15 21:59:08 dsl Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -141,7 +141,7 @@ PWD_MKDB_ENDIAN=
 # distribution --
 #	Build a distribution
 #
-distribution: .PHONY check_DESTDIR .WAIT distrib-dirs
+distribution: .PHONY .MAKE check_DESTDIR .WAIT distrib-dirs
 .if !defined(DISTRIBUTION_DONE)
 .if !defined(INSTALL_DONE)
 	${MAKEDIRTARGET} ${NETBSDSRCDIR} include _DISTRIB=
@@ -256,7 +256,7 @@ CONFIGSYMLINKS+=	${TZDIR}/${LOCALTIME}	/etc/localtime \
 # install-etc-files --
 #	Install etc (config) files; not performed by "make build"
 #
-install-etc-files: .PHONY check_DESTDIR MAKEDEV
+install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/master.passwd
 	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
 	    master.passwd ${DESTDIR}/etc
@@ -392,7 +392,7 @@ distrib-dirs: .PHONY check_DESTDIR
 # release, snapshot --
 #	Build a full distribution including kernels & install media.
 #
-release snapshot: .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
+release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR .WAIT \
 		    distribution .WAIT \
 		    snap_pre .WAIT snap_kern .WAIT \
 		    snap_post .WAIT snap_md_post
