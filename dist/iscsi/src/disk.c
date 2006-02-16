@@ -444,6 +444,13 @@ de_write(disc_de_t *dp, void *buf, size_t cc)
 	}
 }
 
+/* return non-zero if the target is writable */
+static int
+target_writable(disc_target_t *tp)
+{
+	return !(tp->flags & TARGET_READONLY);
+}
+
 /* return size of the extent */
 static uint64_t
 extent_getsize(disc_extent_t *xp)
@@ -651,6 +658,8 @@ allocate_space(disc_target_t *tp)
 {
 	int	i;
 
+	/* Don't perform check for writability in the target here, as the
+	following write() in de_allocate is non-destructive */
 	switch(tp->de.type) {
 	case DE_EXTENT:
 		return de_allocate(&tp->de, tp->target);
@@ -1048,6 +1057,10 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 	case ISCSI_FS:
 		if (de_lseek(&disks.v[sess->d].tv->v[sess->d].de, (off_t) byte_offset, SEEK_SET) == -1) {
 			TRACE_ERROR("lseek() to offset %" PRIu64 " failed\n", byte_offset);
+			return -1;
+		}
+		if (!target_writable(&disks.v[sess->d].tv->v[sess->d])) {
+			TRACE_ERROR("write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "[READONLY TARGET]\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[0].de));
 			return -1;
 		}
 		if (de_write(&disks.v[sess->d].tv->v[sess->d].de, ptr, (unsigned) num_bytes) != num_bytes) {
