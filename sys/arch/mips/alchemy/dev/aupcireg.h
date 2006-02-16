@@ -1,4 +1,4 @@
-/* $NetBSD: aupcireg.h,v 1.1 2006/02/09 00:26:40 gdamore Exp $ */
+/* $NetBSD: aupcireg.h,v 1.2 2006/02/16 01:55:17 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,5 +97,6 @@
 #define	AUPCI_ID		0x0100
 #define	AUPCI_COMMAND_STATUS	0x0104
 #define	AUPCI_CLASS		0x0108
+#define	AUPCI_MBAR		0x0110
 
 #endif	/* _MIPS_ALCHEMY_DEV_AUPCIREG_H */
