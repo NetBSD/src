@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs.h,v 1.14 2006/02/10 16:00:02 christos Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.15 2006/02/16 14:57:50 jmmv Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -168,7 +168,7 @@ struct tmpfs_node {
 		/* Valid when tn_type == VBLK || tn_type == VCHR. */
 		struct {
 			dev_t			tn_rdev;
-		};
+		} tn_dev;
 
 		/* Valid when tn_type == VDIR. */
 		struct {
@@ -193,16 +193,16 @@ struct tmpfs_node {
 			 * point where readdir starts returning values. */
 			off_t			tn_readdir_lastn;
 			struct tmpfs_dirent *	tn_readdir_lastp;
-		};
+		} tn_dir;
 
 		/* Valid when tn_type == VLNK. */
-		struct {
+		struct tn_lnk {
 			/* The link's target, allocated from a string pool. */
 			char *			tn_link;
-		};
+		} tn_lnk;
 
 		/* Valid when tn_type == VREG. */
-		struct {
+		struct tn_reg {
 			/* The contents of regular files stored in a tmpfs
 			 * file system are represented by a single anonymous
 			 * memory object (aobj, for short).  The aobj provides
@@ -214,8 +214,8 @@ struct tmpfs_node {
 			 * a position within the file is accessed. */
 			struct uvm_object *	tn_aobj;
 			size_t			tn_aobj_pages;
-		};
-	};
+		} tn_reg;
+	} tn_spec;
 };
 LIST_HEAD(tmpfs_node_list, tmpfs_node);
 
@@ -360,8 +360,9 @@ int	tmpfs_truncate(struct vnode *, off_t);
 #define TMPFS_VALIDATE_DIR(node) \
     KASSERT((node)->tn_type == VDIR); \
     KASSERT((node)->tn_size % sizeof(struct tmpfs_dirent) == 0); \
-    KASSERT((node)->tn_readdir_lastp == NULL || \
-	TMPFS_DIRCOOKIE((node)->tn_readdir_lastp) == (node)->tn_readdir_lastn);
+    KASSERT((node)->tn_spec.tn_dir.tn_readdir_lastp == NULL || \
+        TMPFS_DIRCOOKIE((node)->tn_spec.tn_dir.tn_readdir_lastp) == \
+        (node)->tn_spec.tn_dir.tn_readdir_lastn);
 
 /* --------------------------------------------------------------------- */
 
