@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.2 2006/02/13 22:57:52 simonb Exp $ */
+/* $NetBSD: aupci.c,v 1.3 2006/02/16 01:55:17 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.2 2006/02/13 22:57:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.3 2006/02/16 01:55:17 gdamore Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.2 2006/02/13 22:57:52 simonb Exp $");
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
-#include <machine/wired_map.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -61,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.2 2006/02/13 22:57:52 simonb Exp $");
 #include <mips/cache.h>
 #endif
 
-#include <mips/alchemy/include/au_wired_space.h>
+#include <mips/alchemy/include/au_himem_space.h>
 #include <mips/alchemy/include/aubusvar.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
@@ -74,15 +73,15 @@ struct aupci_softc {
 	struct mips_pci_chipset		sc_pc;
 	struct mips_bus_space		sc_mem_space;
 	struct mips_bus_space		sc_io_space;
+	struct mips_bus_space		sc_cfg_space;
 
 	bus_space_tag_t			sc_memt;
 	bus_space_tag_t			sc_iot;
+	bus_space_tag_t			sc_cfgt;
 
 	bus_space_tag_t			sc_bust;
 
 	bus_space_handle_t		sc_bush;
-	vaddr_t				sc_cfgva;
-	paddr_t				sc_cfgpa;
 	paddr_t				sc_cfgbase;
 	paddr_t				sc_membase;
 	paddr_t				sc_iobase;
@@ -153,6 +152,8 @@ aupciattach(struct device *parent, struct device *self, void *aux)
 	struct aubus_attach_args	*aa = (struct aubus_attach_args *)aux;
 	uint32_t			cfg;
 #if NPCI > 0
+	uint32_t			mbar, mask, sz; 
+	bus_addr_t			mstart, mend;
 	struct pcibus_attach_args	pba;
 #endif
 	
@@ -168,22 +169,13 @@ aupciattach(struct device *parent, struct device *self, void *aux)
 
 #if NPCI > 0
 	/*
-	 * XXX: These physical addresses are locked in on the CPUs we have
+	 * These physical addresses are locked in on the CPUs we have
 	 * seen.  Perhaps these should be passed in via locators, thru
 	 * the configuration file.
 	 */
 	sc->sc_cfgbase = PCI_CONFIG_BASE;
 	sc->sc_membase = PCI_MEM_BASE;
 	sc->sc_iobase = PCI_IO_BASE;
-
-	/*
-	 * We cannot map all of configuration space, because of the IDSEL
-	 * logic.  So we create a single entry and reuse it.  For now we
-	 * just map it to the start of configuration space, though we
-	 * will be "adjusting" this for subsequent accesses later.
-	 */
-	sc->sc_cfgpa = 0;
-	sc->sc_cfgva = AU_PCI_CFG_VA;
 #endif
 
 	/*
@@ -218,31 +210,44 @@ aupciattach(struct device *parent, struct device *self, void *aux)
 	else
 		printf(", 33MHz");
 
-
 	printf("\n");
 
 #if NPCI > 0
 	/*
-	 * 256MB virtual PCI memory.  Note that we probably cannot
-	 * really use all this because of limits on the number wired
-	 * entries we can have at once.  In all likelihood, we won't
-	 * use wired entries for more than a few megs anyway, since
-	 * big devices like framebuffers are likely to be mapped into
-	 * USEG using ordinary TLB entries.
+	 * PCI configuration space.  Address in this bus are
+	 * orthogonal to other spaces.  We need to make the entire
+	 * 32-bit address space available.
 	 */
-	sc->sc_memt = &sc->sc_mem_space;
-	au_wired_space_init(sc->sc_memt, "pcimem",
-	    sc->sc_membase | AU_PCI_MEM_VA, AU_PCI_MEM_VA, AU_PCI_MEM_SZ, 
-	    AU_WIRED_SPACE_LITTLE_ENDIAN /* | AU_WIRED_SPACE_SWAP_HW */);
+	sc->sc_cfgt = &sc->sc_cfg_space;
+	au_himem_space_init(sc->sc_cfgt, "pcicfg", sc->sc_cfgbase,
+	    0x00000000, 0xffffffff, AU_HIMEM_SPACE_IO);
 
 	/*
-	 * IO space.
+	 * Virtual PCI memory.  Configured so that we don't overlap
+	 * with PCI memory space.
+	 */
+	mask = bus_space_read_4(sc->sc_bust, sc->sc_bush, AUPCI_MWMASK);
+	mask >>= AUPCI_MWMASK_SHIFT;
+	mask <<= AUPCI_MWMASK_SHIFT;
+	sz = 1 + ~mask;
+
+	mbar = bus_space_read_4(sc->sc_bust, sc->sc_bush, AUPCI_MBAR);
+	mstart = mbar + sz;
+	mend = 0xffffffff - mstart;
+
+	sc->sc_memt = &sc->sc_mem_space;
+	au_himem_space_init(sc->sc_memt, "pcimem", sc->sc_membase,
+	    mstart, mend, AU_HIMEM_SPACE_LITTLE_ENDIAN);
+
+	/*
+	 * IO space.  Address in this bus are orthogonal to other spaces.
+	 * 16 MB should be plenty.  We don't start from zero to avoid
+	 * potential device bugs.
 	 */
 	sc->sc_iot = &sc->sc_io_space;
-	au_wired_space_init(sc->sc_iot, "pciio",
-	    sc->sc_iobase | AU_PCI_IO_VA, AU_PCI_IO_VA, AU_PCI_IO_SZ,
-	    AU_WIRED_SPACE_LITTLE_ENDIAN | /* AU_WIRED_SPACE_SWAP_HW | */
-	    AU_WIRED_SPACE_IO);
+	au_himem_space_init(sc->sc_iot, "pciio",
+	    sc->sc_iobase, AUPCI_IO_START, AUPCI_IO_END,
+	    AU_HIMEM_SPACE_LITTLE_ENDIAN | AU_HIMEM_SPACE_IO);
 
 	sc->sc_pc.pc_conf_v = sc;
 	sc->sc_pc.pc_attach_hook = aupci_attach_hook;
@@ -260,10 +265,12 @@ aupciattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_conf_interrupt = aupci_conf_interrupt;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	mem_ex = extent_create("pcimem", AU_PCI_MEM_VA,
-	    AU_PCI_MEM_VA + AU_PCI_MEM_SZ - 1, M_DEVBUF, NULL, 0, EX_WAITOK);
-	io_ex = extent_create("pciio", AU_PCI_IO_VA,
-	    AU_PCI_IO_VA + AU_PCI_IO_SZ - 1, M_DEVBUF, NULL, 0, EX_WAITOK);
+	mem_ex = extent_create("pcimem", mstart, mend,
+	    M_DEVBUF, NULL, 0, EX_WAITOK);
+
+	io_ex = extent_create("pciio", AUPCI_IO_START, AUPCI_IO_END,
+	    M_DEVBUF, NULL, 0, EX_WAITOK);
+
 	pci_configure_bus(&sc->sc_pc,
 	    io_ex, mem_ex, NULL, 0, mips_dcache_align);
 	extent_destroy(mem_ex);
@@ -324,69 +331,40 @@ aupci_decompose_tag(void *v, pcitag_t tag, int *b, int *d, int *f)
 		*f = (tag >> 8) & 0x07;
 }
 
-/*
- * Figure out the configuration space physical address for a given
- * tag, taking into consideration the IDSEL logic on bus 0.
- */ 
-static inline paddr_t
-aupci_conf_tag_to_pa(void *v, pcitag_t tag)
+static inline boolean_t
+aupci_conf_access(void *v, int dir, pcitag_t tag, int reg, pcireg_t *datap)
 {
-	uint32_t		offset;
-	int			b, d, f;
 	struct aupci_softc	*sc = (struct aupci_softc *)v;
+	uint32_t		status;
+	int			s;
+	bus_addr_t		addr;
+	int			b, d, f;
+	bus_space_handle_t	h;
 
 	aupci_decompose_tag(v, tag, &b, &d, &f);
 	if (b) {
 		/* configuration type 1 */
-		offset = 0x80000000 | tag;
+		addr = 0x80000000 | tag;
 	} else if (d > 19) {
 		/* device num too big for bus 0 */
-		return 0;
+		return FALSE;
 	} else {
-		offset = (0x800 << d) | (f << 8);
+		addr = (0x800 << d) | (f << 8);
 	}
-	return (sc->sc_cfgbase + offset);
-}
 
-static inline boolean_t
-aupci_conf_access(void *v, int dir, pcitag_t tag, int reg, pcireg_t *datap)
-{
-	uint32_t		status;
-	int			s;
-	vsize_t			off;
-	paddr_t			pa;
-	struct aupci_softc	*sc = (struct aupci_softc *)v;
-
-	pa = aupci_conf_tag_to_pa(v, tag);
 	/* probing illegal target is OK, return an error indication */
-	if (pa == 0)
+	if (addr == 0)
 		return FALSE;
 
-	/* align it down to start of phys addr */
-	off = pa & (MIPS3_WIRED_SIZE - 1);
-	pa -= off;
+	if (bus_space_map(sc->sc_cfgt, addr, 256, 0, &h) != 0)
+		return FALSE;
 
 	s = splhigh();
 
-	if (sc->sc_cfgpa != pa) {
-		if (mips3_wired_enter_region(sc->sc_cfgva, pa,
-			MIPS3_WIRED_SIZE) == FALSE) {
-			printf("%s: cannot map PCI configuration space!\n",
-			    sc->sc_dev.dv_xname);
-			splx(s);
-			return FALSE;
-		}
-		sc->sc_cfgpa = pa;
-	}
-
-	/*
-	 * Note that configuration space accesses are *always* endian
-	 * swapped properly by the processor.
-	 */
 	if (dir == PCI_CFG_WRITE)
-		*(volatile pcireg_t *)(sc->sc_cfgva + off + reg) = *datap;
+		bus_space_write_4(sc->sc_cfgt, h, reg, *datap);
 	else
-		*datap = *(volatile pcireg_t *)(sc->sc_cfgva + off + reg);
+		*datap = bus_space_read_4(sc->sc_cfgt, h, reg);
 
 	DELAY(2);
 
@@ -395,17 +373,17 @@ aupci_conf_access(void *v, int dir, pcitag_t tag, int reg, pcireg_t *datap)
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, AUPCI_CONFIG,
 	    status & ~(AUPCI_CONFIG_EF));
 
-	/* if we got a PCI master abort, fail it */
-	if (status & AUPCI_CONFIG_EF) {
-		splx(s);
-		return FALSE;
-	}
-
 	splx(s);
+
+	bus_space_unmap(sc->sc_cfgt, h, 256);
+	
+	/* if we got a PCI master abort, fail it */
+	if (status & AUPCI_CONFIG_EF)
+		return FALSE;
+
 
 	return TRUE;
 }
-
 
 pcireg_t
 aupci_conf_read(void *v, pcitag_t tag, int reg)

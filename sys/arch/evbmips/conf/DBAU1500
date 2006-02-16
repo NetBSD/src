@@ -1,4 +1,4 @@
-#	$NetBSD: DBAU1500,v 1.5 2006/02/14 04:29:27 gdamore Exp $
+#	$NetBSD: DBAU1500,v 1.6 2006/02/16 01:55:17 gdamore Exp $
 #
 # Kernel config for the AMD Alchemy DBAu1500 evaluation board.
 
@@ -31,8 +31,8 @@ options		PCI_NETBSD_CONFIGURE
 # I would welcome some constructive feedback or correction to any or all of
 # these problems.  Please include gdamore@netbsd.org if you figure this out.
 #
-# aupci*	at aubus? addr ?
-# pci*	at aupci?
+aupci*	at aubus? addr ?
+pci*	at aupci?
 
 # Note that this is just fairly random selection of PCI devices.
 # Only the hptide controller is actually on-board.
