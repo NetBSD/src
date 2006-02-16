@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.c,v 1.4 2004/07/12 08:51:56 jdolecek Exp $	*/
+/*	$NetBSD: locale.c,v 1.5 2006/02/16 19:19:49 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Alexey Zelkin <phantom@FreeBSD.org>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: locale.c,v 1.4 2004/07/12 08:51:56 jdolecek Exp $");
+__RCSID("$NetBSD: locale.c,v 1.5 2006/02/16 19:19:49 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -43,10 +43,12 @@ __RCSID("$NetBSD: locale.c,v 1.4 2004/07/12 08:51:56 jdolecek Exp $");
  */
 
 #include <sys/types.h>
+#include <assert.h>
 #include <dirent.h>
 #include <err.h>
 #include <locale.h>
 #include <langinfo.h>
+#include <limits.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,8 +56,16 @@ __RCSID("$NetBSD: locale.c,v 1.4 2004/07/12 08:51:56 jdolecek Exp $");
 #include <stringlist.h>
 #include <unistd.h>
 
+#ifdef CITRUS
+#include "citrus_namespace.h"
+#include "citrus_region.h"
+#include "citrus_lookup.h"
+#endif
+#include "rune.h"
+
 /* Local prototypes */
 void	init_locales_list(void);
+void	init_locales_list_alias(void);
 void	list_charmaps(void);
 void	list_locales(void);
 const char *lookup_localecat(int);
@@ -68,7 +78,6 @@ void	usage(void);
 
 /* Global variables */
 static StringList *locales = NULL;
-extern char *_PathLocale;
 
 int	all_locales = 0;
 int	all_charmaps = 0;
@@ -379,6 +388,7 @@ init_locales_list(void)
 {
 	DIR *dirp;
 	struct dirent *dp;
+	char *s;
 
 	/* why call this function twice ? */
 	if (locales != NULL)
@@ -401,9 +411,15 @@ init_locales_list(void)
 
 	/* scan directory and store its contents except "." and ".." */
 	while ((dp = readdir(dirp)) != NULL) {
-		if (*(dp->d_name) == '.')
-			continue;		/* exclude "." and ".." */
-		sl_add(locales, strdup(dp->d_name));
+		/* exclude "." and "..", _LOCALE_ALIAS_NAME */
+		if ((dp->d_name[0] != '.' || (dp->d_name[1] != '\0' &&
+		    (dp->d_name[1] != '.' ||  dp->d_name[2] != '\0'))) &&
+		    strcmp(_LOCALE_ALIAS_NAME, dp->d_name) != 0) {
+			s = strdup(dp->d_name);
+			if (s == NULL)
+				err(1, "could not allocate memory");
+			sl_add(locales, s);
+		}
 	}
 	closedir(dirp);
 
@@ -417,8 +433,65 @@ init_locales_list(void)
 	if (sl_find(locales, "C") == NULL)
 		sl_add(locales, "C");
 
+	init_locales_list_alias();
+
 	/* make output nicer, sort the list */
 	qsort(locales->sl_str, locales->sl_cur, sizeof(char *), scmp);
+}
+
+void
+init_locales_list_alias(void)
+{
+	char aliaspath[PATH_MAX];
+#ifdef CITRUS
+	struct _lookup *hlookup;
+	struct _region key, dat;
+#else
+	FILE *fp;
+#endif
+	size_t n;
+	char *s, *t;
+
+	_DIAGASSERT(locales != NULL);
+	_DIAGASSERT(_PathLocale != NULL);
+
+	(void)snprintf(aliaspath, sizeof(aliaspath),
+		"%s/" _LOCALE_ALIAS_NAME, _PathLocale);
+
+#ifdef CITRUS
+	if (_lookup_seq_open(&hlookup, aliaspath,
+	    _LOOKUP_CASE_SENSITIVE) == 0) {
+		while (_lookup_seq_next(hlookup, &key, &dat) == 0) {
+			n = _region_size((const struct _region *)&key);
+			s = _region_head((const struct _region *)&key);
+			for (t = s; n > 0 && *s!= '/'; --n, ++s);
+#else
+	fp = fopen(aliaspath, "r");
+	if (fp != NULL) {
+		while ((s = fgetln(fp, &n)) != NULL) {
+			_DIAGASSERT(n > 0);
+			if (*s == '#' || *s == '\n')
+				continue;
+			for (t = s; n > 0 && strchr("/ \t\n", *s) == NULL;
+			    --n, ++s);
+#endif
+			n = (size_t)(s - t);
+			s = malloc(n);
+			if (s == NULL)
+				err(1, "could not allocate memory");
+			memcpy(s, t, n);
+			s[n] = '\0';
+			if (sl_find(locales, s) == NULL)
+				sl_add(locales, s);
+			else
+				free(s);
+		}
+#ifdef CITRUS
+		_lookup_seq_close(hlookup);
+#else
+		fclose(fp);
+#endif
+	}
 }
 
 /*
