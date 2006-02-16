@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.15 2006/02/16 14:57:50 jmmv Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.16 2006/02/16 20:17:19 perry Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -385,7 +385,7 @@ int	tmpfs_truncate(struct vnode *, off_t);
  * the memory for a given mount point, the system will always reserve a
  * minimum of TMPFS_PAGES_RESERVED pages, which is also taken into account
  * by this macro (see above). */
-static inline size_t
+static __inline size_t
 TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 {
 	size_t freepages;
@@ -411,7 +411,7 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
  * specific ones.
  */
 
-static inline
+static __inline
 struct tmpfs_mount *
 VFS_TO_TMPFS(struct mount *mp)
 {
@@ -424,7 +424,7 @@ VFS_TO_TMPFS(struct mount *mp)
 	return tmp;
 }
 
-static inline
+static __inline
 struct tmpfs_node *
 VP_TO_TMPFS_NODE(struct vnode *vp)
 {
@@ -437,7 +437,7 @@ VP_TO_TMPFS_NODE(struct vnode *vp)
 	return node;
 }
 
-static inline
+static __inline
 struct tmpfs_node *
 VP_TO_TMPFS_DIR(struct vnode *vp)
 {
