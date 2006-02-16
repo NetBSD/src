@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.24 2005/10/03 05:34:51 christos Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.25 2006/02/16 20:50:57 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -36,12 +36,12 @@
  *		Tomas Svensson <ts@unix1.net>
  *
  *
- * $Id: m_netbsd15.c,v 1.24 2005/10/03 05:34:51 christos Exp $
+ * $Id: m_netbsd15.c,v 1.25 2006/02/16 20:50:57 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.24 2005/10/03 05:34:51 christos Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.25 2006/02/16 20:50:57 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -195,6 +195,8 @@ static int onproc = -1;
 static int pref_len;
 static struct kinfo_proc2 *pbase;
 static struct kinfo_proc2 **pref;
+static int maxswap;
+static void *swapp;
 
 /* these are for getting the memory statistics */
 
@@ -338,7 +340,7 @@ get_system_info(si)
 	size_t ssize;
 	int mib[2];
 	struct uvmexp_sysctl uvmexp;
-	struct swapent *sep, *seporig;
+	struct swapent *sep;
 	struct timeval boottime;
 	u_int64_t totalsize, totalinuse;
 	time_t now;
@@ -388,18 +390,19 @@ get_system_info(si)
 
 	swap_stats[0] = swap_stats[1] = swap_stats[2] = 0;
 
-	seporig = NULL;
 	do {
 		nswap = swapctl(SWAP_NSWAP, 0, 0);
 		if (nswap < 1)
 			break;
-		/* Use seporig to keep track of the malloc'd memory
-		 * base, as sep will be incremented in the for loop
-		 * below.
-		 */
-		seporig = sep = (struct swapent *)malloc(nswap * sizeof(*sep));
-		if (sep == NULL)
-			break;
+		if (nswap > maxswap) {
+			if (swapp)
+				free(swapp);
+			swapp = sep = malloc(nswap * sizeof(*sep));
+			if (sep == NULL)
+				break;
+			maxswap = nswap;
+		} else
+			sep = swapp;
 		rnswap = swapctl(SWAP_STATS, (void *)sep, nswap);
 		if (nswap != rnswap)
 			break;
@@ -415,19 +418,7 @@ get_system_info(si)
 		swap_stats[0] = dbtob(totalsize) / 1024;
 		swap_stats[1] = dbtob(totalinuse) / 1024;
 		swap_stats[2] = dbtob(totalsize) / 1024 - swap_stats[1];
-		/* Free here, before we malloc again in the next
-		 * iteration of this loop.
-		 */
-		if (seporig) {
-			free(seporig);
-			seporig = NULL;
-		}
 	} while (0);
-	/* Catch the case where we malloc'd, but then exited the
-	 * loop due to nswap != rnswap.
-	 */
-	if (seporig)
-		free(seporig);
 
 	memory_stats[6] = -1;
 	swap_stats[3] = -1;
