@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.14 2003/08/07 16:44:39 agc Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.15 2006/02/16 20:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,12 +52,15 @@ struct __kvm {
 	struct kinfo_proc *procbase;
 	struct kinfo_proc2 *procbase2;
 	struct kinfo_lwp *lwpbase;
+	size_t  procbase_len;
+	size_t  procbase2_len;
+	size_t  lwpbase_len;
 	u_long	usrstack;		/* address of end of user stack */
 	u_long	min_uva, max_uva;	/* min/max user virtual address */
 	int	nbpg;		/* page size */
 	char	*swapspc;	/* (dynamic) storage for swapped pages */
 	char	*argspc, *argbuf; /* (dynamic) storage for argv strings */
-	int	arglen;		/* length of the above */
+	size_t	argspc_len;	/* length of the above */
 	char	**argv;		/* (dynamic) storage for argv pointers */
 	int	argc;		/* length of above (not actual # present) */
 
@@ -112,3 +115,15 @@ void	 _kvm_syserr
 	    __P((kvm_t *kd, const char *program, const char *fmt, ...))
 	    __attribute__((__format__(__printf__, 3, 4)));
 
+#define KVM_ALLOC(kd, member, size) \
+    do { \
+	if (kd->member == NULL)	\
+		kd->member = _kvm_malloc(kd, kd->member ## _len = size); \
+	else if (kd->member ## _len < size) \
+		kd->member = _kvm_realloc(kd, kd->member, \
+		    kd->member ## _len = size); \
+	if (kd->member == NULL) { \
+		kd->member ## _len = 0; \
+		return (NULL); \
+	} \
+    } while (/*CONSTCOND*/0)
