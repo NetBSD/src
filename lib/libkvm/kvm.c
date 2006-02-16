@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.84 2005/07/30 16:32:29 yamt Exp $	*/
+/*	$NetBSD: kvm.c,v 1.85 2006/02/16 20:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.84 2005/07/30 16:32:29 yamt Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.85 2006/02/16 20:48:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -229,20 +229,23 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->swfd = -1;
 	kd->nlfd = -1;
 	kd->alive = KVM_ALIVE_DEAD;
-	kd->procbase = 0;
-	kd->procbase2 = 0;
-	kd->lwpbase = 0;
+	kd->procbase = NULL;
+	kd->procbase_len = 0;
+	kd->procbase2 = NULL;
+	kd->procbase2_len = 0;
+	kd->lwpbase = NULL;
+	kd->lwpbase_len = 0;
 	kd->nbpg = getpagesize();
-	kd->swapspc = 0;
-	kd->argspc = 0;
-	kd->arglen = 0;
-	kd->argbuf = 0;
-	kd->argv = 0;
-	kd->vmst = 0;
-	kd->vm_page_buckets = 0;
-	kd->kcore_hdr = 0;
+	kd->swapspc = NULL;
+	kd->argspc = NULL;
+	kd->argspc_len = 0;
+	kd->argbuf = NULL;
+	kd->argv = NULL;
+	kd->vmst = NULL;
+	kd->vm_page_buckets = NULL;
+	kd->kcore_hdr = NULL;
 	kd->cpu_dsize = 0;
-	kd->cpu_data = 0;
+	kd->cpu_data = NULL;
 	kd->dump_off = 0;
 
 	if (flag & KVM_NO_FILES) {
