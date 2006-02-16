@@ -1,4 +1,4 @@
-/* $NetBSD: storage.h,v 1.2 2006/02/09 23:08:31 agc Exp $ */
+/* $NetBSD: storage.h,v 1.3 2006/02/16 19:19:38 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -73,12 +73,17 @@ typedef struct disc_device_t {
 
 DEFINE_ARRAY(devv_t, disc_device_t);
 
+enum {
+	TARGET_READONLY = 0x01
+};
+
 /* this struct describes an iscsi target's associated features */
 typedef struct disc_target_t {
 	char		*target;	/* target name */
 	disc_de_t	 de;		/* pointer to its device */
 	uint16_t	 port;		/* port to listen on */
 	char		*mask;		/* mask to export it to */
+	uint32_t	 flags;		/* any flags */
 } disc_target_t;
 
 DEFINE_ARRAY(targv_t, disc_target_t);

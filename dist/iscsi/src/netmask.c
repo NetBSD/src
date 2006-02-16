@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.2 2006/02/12 15:33:26 agc Exp $ */
+/* $NetBSD: netmask.c,v 1.3 2006/02/16 19:19:38 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright © 2006 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: netmask.c,v 1.2 2006/02/12 15:33:26 agc Exp $");
+__RCSID("$NetBSD: netmask.c,v 1.3 2006/02/16 19:19:38 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,20 +55,45 @@ enum {
 	NETMASK_BUFFER_SIZE = 256
 };
 
+/* this struct is used to define a magic netmask value */
+typedef struct magic_t {
+	const char	*magic;	/* string to match */
+	const char	*xform;	/* string to transform it into */
+} magic_t;
+
+
+static magic_t	magics[] = {
+	{	"any",	"0/0"	},
+	{	"all",	"0/0"	},
+	{	"none",	"0/32"	},
+	{	NULL,	}
+};
+
 #ifndef ISCSI_HTONL
 #define ISCSI_HTONL(x)	htonl(x)
 #endif
 
 /* return 1 if address is in netmask's range */
 int
-allow_netmask(const char *netmask, const char *addr)
+allow_netmask(const char *netmaskarg, const char *addr)
 {
 	struct in_addr	 a;
 	struct in_addr	 m;
+	const char	*netmask;
+	magic_t		*mp;
 	char	 	 maskaddr[NETMASK_BUFFER_SIZE];
 	char		*cp;
 	int		 slash;
 	int		 i;
+
+	/* firstly check for any magic values in the netmask */
+	netmask = netmaskarg;
+	for (mp = magics ; mp->magic ; mp++) {
+		if (strcmp(netmask, mp->magic) == 0) {
+			netmask = mp->xform;
+			break;
+		}
+	}
 
 	/* find out if slash notation has been used */
 	(void) memset(&a, 0x0, sizeof(a));

@@ -1,4 +1,4 @@
-/* $NetBSD: storage.c,v 1.1 2006/02/09 23:08:31 agc Exp $ */
+/* $NetBSD: storage.c,v 1.2 2006/02/16 19:19:38 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -68,9 +68,14 @@ enum {
 	DEVICE_LENGTH_COL = 2,
 
 	TARGET_NAME_COL = 0,
-	TARGET_DEVICE_COL = 1,
-	TARGET_NETMASK_COL = 2
+	TARGET_V1_DEVICE_COL = 1,
+	TARGET_V1_NETMASK_COL = 2,
+	TARGET_V2_FLAGS_COL = 1,
+	TARGET_V2_DEVICE_COL = 2,
+	TARGET_V2_NETMASK_COL = 3
 };
+
+#define DEFAULT_FLAGS	"ro"
 
 
 /* find an extent by name */
@@ -237,6 +242,9 @@ do_target(conffile_t *cf, targv_t *tvp, devv_t *devvp, extv_t *evp, ent_t *ep)
 {
 	disc_extent_t	*xp;
 	disc_device_t	*dp;
+	const char	*flags;
+	int		 netmaskcol;
+	int		 devcol;
 
 	if (find_target(tvp, ep->sv.v[TARGET_NAME_COL]) != NULL) {
 		(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
@@ -244,24 +252,41 @@ do_target(conffile_t *cf, targv_t *tvp, devv_t *devvp, extv_t *evp, ent_t *ep)
 		return 0;
 	}
 	ALLOC(disc_target_t, tvp->v, tvp->size, tvp->c, 14, 14, "do_target", exit(EXIT_FAILURE));
-	if ((dp = find_device(devvp, ep->sv.v[TARGET_DEVICE_COL])) != NULL) {
+	if (ep->sv.c == 3) {
+		(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
+		(void) fprintf(stderr, "Warning: old 3 field \"targets\" entry, assuming read-only target\n");
+		devcol = TARGET_V1_DEVICE_COL;
+		netmaskcol = TARGET_V1_NETMASK_COL;
+		flags = DEFAULT_FLAGS;
+	} else {
+		devcol = TARGET_V2_DEVICE_COL;
+		flags = ep->sv.v[TARGET_V2_FLAGS_COL];
+		netmaskcol = TARGET_V2_NETMASK_COL;
+	}
+	if ((dp = find_device(devvp, ep->sv.v[devcol])) != NULL) {
 		tvp->v[tvp->c].de.type = DE_DEVICE;
 		tvp->v[tvp->c].de.u.dp = dp;
 		tvp->v[tvp->c].target = strdup(ep->sv.v[TARGET_NAME_COL]);
-		tvp->v[tvp->c].mask = strdup(ep->sv.v[TARGET_NETMASK_COL]);
+		tvp->v[tvp->c].mask = strdup(ep->sv.v[netmaskcol]);
+		if (strcmp(flags, "readonly") == 0 || strcmp(flags, "ro") == 0 || strcmp(flags, "r") == 0) {
+			tvp->v[tvp->c].flags |= TARGET_READONLY;
+		}
 		tvp->c += 1;
 		return 1;
 	}
-	if ((xp = find_extent(evp, ep->sv.v[TARGET_DEVICE_COL])) != NULL) {
+	if ((xp = find_extent(evp, ep->sv.v[devcol])) != NULL) {
 		tvp->v[tvp->c].de.type = DE_EXTENT;
 		tvp->v[tvp->c].de.u.xp = xp;
 		tvp->v[tvp->c].target = strdup(ep->sv.v[TARGET_NAME_COL]);
-		tvp->v[tvp->c].mask = strdup(ep->sv.v[TARGET_NETMASK_COL]);
+		tvp->v[tvp->c].mask = strdup(ep->sv.v[netmaskcol]);
+		if (strcmp(flags, "readonly") == 0 || strcmp(flags, "ro") == 0 || strcmp(flags, "r") == 0) {
+			tvp->v[tvp->c].flags |= TARGET_READONLY;
+		}
 		tvp->c += 1;
 		return 1;
 	}
 	(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
-	(void) fprintf(stderr, "Error: no device or extent found for `%s'\n", ep->sv.v[TARGET_DEVICE_COL]);
+	(void) fprintf(stderr, "Error: no device or extent found for `%s'\n", ep->sv.v[devcol]);
 	return 0;
 }
 
@@ -318,7 +343,7 @@ ptarget(disc_target_t *tp, int indent)
 	for (i = 0 ; i < indent ; i++) {
 		(void) fputc('\t', stdout);
 	}
-	printf("%s:%s\n", tp->target, tp->mask);
+	printf("%s:%s:%s\n", tp->target, (tp->flags & TARGET_READONLY) ? "ro" : "rw", tp->mask);
 	pu(&tp->de, indent + 1);
 }
 
