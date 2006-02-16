@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1500.c,v 1.2 2006/02/12 06:43:03 gdamore Exp $ */
+/* $NetBSD: dbau1500.c,v 1.3 2006/02/16 01:52:37 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.2 2006/02/12 06:43:03 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.3 2006/02/16 01:52:37 gdamore Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -41,9 +41,15 @@ __KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.2 2006/02/12 06:43:03 gdamore Exp $")
 #include <evbmips/alchemy/board.h>
 #include <evbmips/alchemy/dbau1500reg.h>
 
+#define	GET16(x)	\
+	(*((volatile uint16_t *)MIPS_PHYS_TO_KSEG1(x)))
+#define	PUT16(x, v)	\
+	(*((volatile uint16_t *)MIPS_PHYS_TO_KSEG1(x)) = (v))
+
 static void dbau1500_init(void);
 static int dbau1500_pci_intr_map(struct pci_attach_args *,
 				 pci_intr_handle_t *);
+static void dbau1500_reboot(void);
 
 static const struct obiodev dbau1500_devices[] = {
 #if 0
@@ -58,6 +64,8 @@ static struct alchemy_board dbau1500_info = {
 	dbau1500_devices,
 	dbau1500_init,
 	dbau1500_pci_intr_map,
+	dbau1500_reboot,
+	NULL,	/* poweroff */
 };
 
 const struct alchemy_board *
@@ -123,4 +131,11 @@ dbau1500_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		return 1;
 	}
 	return 0;
+}
+
+void
+dbau1500_reboot(void)
+{
+	PUT16(DBAU1500_SOFTWARE_RESET, 0);
+	delay(100000);	/* 100 msec */
 }
