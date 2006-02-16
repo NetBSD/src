@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.c,v 1.1 2006/02/10 16:01:45 christos Exp $	*/
+/*	$NetBSD: tmpfs.c,v 1.2 2006/02/16 14:58:35 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tmpfs.c,v 1.1 2006/02/10 16:01:45 christos Exp $");
+__RCSID("$NetBSD: tmpfs.c,v 1.2 2006/02/16 14:58:35 jmmv Exp $");
 
 #define __POOL_EXPOSE
 #include <sys/types.h>
@@ -76,7 +76,7 @@ tmpfs_filestat(struct vnode *vp, struct filestat *fsp)
 	switch (tn.tn_type) {
 	case VBLK:
 	case VCHR:
-		fsp->rdev = tn.tn_rdev;
+		fsp->rdev = tn.tn_spec.tn_dev.tn_rdev;
 		break;
 	default:
 		fsp->rdev = 0;
