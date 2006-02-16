@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.36 2003/12/30 22:10:20 martin Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.37 2006/02/16 23:26:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.36 2003/12/30 22:10:20 martin Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.37 2006/02/16 23:26:19 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: vfscanf.c,v 1.36 2003/12/30 22:10:20 martin Exp $");
 #include "reentrant.h"
 #include "local.h"
 
-#ifdef FLOATING_POINT
+#ifndef NO_FLOATING_POINT
 #include "floatio.h"
 #endif
 
@@ -283,7 +283,7 @@ literal:
 			base = 16;
 			break;
 
-#ifdef FLOATING_POINT
+#ifndef NO_FLOATING_POINT
 		case 'E':
 		case 'F':
 		case 'G':
@@ -647,7 +647,7 @@ literal:
 			nread += p - buf;
 			break;
 
-#ifdef FLOATING_POINT
+#ifndef NO_FLOATING_POINT
 		case CT_FLOAT:
 			/* scan a floating point number as if by strtod */
 #ifdef hardway
@@ -739,7 +739,7 @@ literal:
 			}
 			nread += p - buf;
 			break;
-#endif /* FLOATING_POINT */
+#endif /* NO_FLOATING_POINT */
 		}
 	}
 input_failure:
