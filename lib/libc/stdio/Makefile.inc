@@ -1,10 +1,8 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.32 2005/07/28 16:26:29 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.33 2006/02/16 23:26:19 christos Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
-
-CPPFLAGS+=-DFLOATING_POINT
 
 COPTS.vfprintf.c+=	-Wno-uninitialized	# see rev 1.46 for why
 

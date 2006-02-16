@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 2006/01/24 19:33:10 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2006/02/16 23:26:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -38,6 +38,7 @@ void _resumecontext __P((void));
 const char *__strerror __P((int , char *, size_t));
 const char *__strsignal __P((int , char *, size_t));
 char *__dtoa __P((double, int, int, int *, int *, char **));
+void __freedtoa __P((char *));
 int __sysctl __P((int *, unsigned int, void *, size_t *, void *, size_t));
 
 struct sigaction;
@@ -51,4 +52,11 @@ long _telldir_unlocked(const struct _dirdesc *);
 struct dirent;
 struct dirent *_readdir_unlocked(struct _dirdesc *) __RENAME(___readdir_unlocked30);
 #endif
+
+#ifdef WIDE_DOUBLE
+char *__hdtoa(double, const char *, int, int *, int *, char **);
+char *__hldtoa(long double, const char *, int, int *, int *,  char **);
+char *__ldtoa(long double *, int, int, int *, int *, char **);
+#endif
+
 __END_DECLS

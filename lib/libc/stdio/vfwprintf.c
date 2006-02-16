@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.6 2006/01/26 10:40:12 kleink Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.7 2006/02/16 23:26:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.24 2005/04/16 22:36:51 das Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.6 2006/01/26 10:40:12 kleink Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.7 2006/02/16 23:26:19 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -437,17 +437,16 @@ vfwprintf(FILE * __restrict fp, const wchar_t * __restrict fmt0, va_list ap)
 
 #ifndef NO_FLOATING_POINT
 
-#define	dtoa		__dtoa
-#define	freedtoa	__freedtoa
-
 #include <float.h>
 #include <math.h>
 #include "floatio.h"
 
 #define	DEFPREC		6
 
+#ifndef WIDE_DOUBLE
 static int exponent(wchar_t *, int, wchar_t);
-static wchar_t *cvt(double, int, int, char *, int *, int, int *);
+static char *cvt(double, int, int, char *, int *, int, int *);
+#endif
 
 #endif /* !NO_FLOATING_POINT */
 
@@ -513,18 +512,18 @@ __vfwprintf_unlocked(FILE *fp, const wchar_t *fmt0, va_list ap)
 	 * F:	at least two digits for decimal, at least one digit for hex
 	 */
 	char *decimal_point;	/* locale specific decimal point */
-#ifdef notyet
+#ifdef WIDE_DOUBLE
 	int signflag;		/* true if float is negative */
 	union {			/* floating point arguments %[aAeEfFgG] */
 		double dbl;
 		long double ldbl;
 	} fparg;
 	char *dtoaend;		/* pointer to end of converted digits */
-	char *dtoaresult;	/* buffer allocated by dtoa */
 #else
 	double _double;		/* double precision arguments %[eEfgG] */
 	char softsign;		/* temporary negative sign for floats */
 #endif
+	char *dtoaresult = NULL;/* buffer allocated by dtoa */
 	int expt;		/* integer value of exponent */
 	char expchar;		/* exponent character: [eEpP\0] */
 	int expsize;		/* character count for expstr */
@@ -846,7 +845,7 @@ reswitch:	switch (ch) {
 			base = 10;
 			goto number;
 #ifndef NO_FLOATING_POINT
-#ifdef notyet
+#ifdef WIDE_DOUBLE
 		case 'a':
 		case 'A':
 			if (ch == 'a') {
@@ -880,7 +879,7 @@ reswitch:	switch (ch) {
 				free(convbuf);
 			ndig = dtoaend - dtoaresult;
 			result = convbuf = __mbsconv(dtoaresult, -1);
-			freedtoa(dtoaresult);
+			__freedtoa(dtoaresult);
 			goto fp_common;
 		case 'e':
 		case 'E':
@@ -919,7 +918,7 @@ fp_begin:
 			}
 			ndig = dtoaend - dtoaresult;
 			result = convbuf = __mbsconv(dtoaresult, -1);
-			freedtoa(dtoaresult);
+			__freedtoa(dtoaresult);
 fp_common:
 			if (signflag)
 				sign = '-';
@@ -972,8 +971,10 @@ fp_common:
 			}
 
 			flags |= FPT;
-			result = cvt(_double, prec, flags, &softsign,
-				&expt, ch, &ndig);
+			dtoaresult = cvt(_double, prec, flags, &softsign,
+			    &expt, ch, &ndig);
+			result = convbuf = __mbsconv(dtoaresult, -1);
+			__freedtoa(dtoaresult);
 			if (softsign)
 				sign = '-';
 #endif
@@ -1676,13 +1677,13 @@ __grow_type_table (int nextarg, enum typeid **typetable, int *tablesize)
 
 
 #ifndef NO_FLOATING_POINT
-static wchar_t *
+#ifndef WIDE_DOUBLE
+static char *
 cvt(double value, int ndigits, int flags, char *sign, int *decpt, int ch,
     int *length)
 {
 	int mode, dsgn;
 	char *digits, *bp, *rve;
-	static wchar_t buf[512];
 
 	_DIAGASSERT(decpt != NULL);
 	_DIAGASSERT(length != NULL);
@@ -1720,9 +1721,9 @@ cvt(double value, int ndigits, int flags, char *sign, int *decpt, int ch,
 			*rve++ = '0';
 	}
 	*length = rve - digits;
-	(void)mbstowcs(buf, digits, sizeof(buf)/sizeof(buf[0]));
-	return buf;
+	return digits;
 }
+
 static int
 exponent(wchar_t *p0, int expo, wchar_t fmtch)
 {
@@ -1758,4 +1759,5 @@ exponent(wchar_t *p0, int expo, wchar_t fmtch)
 	}
 	return (p - p0);
 }
+#endif
 #endif /* !NO_FLOATING_POINT */
