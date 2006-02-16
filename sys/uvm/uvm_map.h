@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.51 2006/02/11 12:45:07 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.52 2006/02/16 20:17:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -396,11 +396,11 @@ int		uvm_mapent_trymerge(struct vm_map *,
 #include <sys/proc.h>	/* for tsleep(), wakeup() */
 #include <sys/systm.h>	/* for panic() */
 
-static inline boolean_t	vm_map_lock_try(struct vm_map *);
-static inline void		vm_map_lock(struct vm_map *);
+static __inline boolean_t	vm_map_lock_try(struct vm_map *);
+static __inline void		vm_map_lock(struct vm_map *);
 extern const char vmmapbsy[];
 
-static inline boolean_t
+static __inline boolean_t
 vm_map_lock_try(struct vm_map *map)
 {
 	boolean_t rv;
@@ -423,7 +423,7 @@ vm_map_lock_try(struct vm_map *map)
 	return (rv);
 }
 
-static inline void
+static __inline void
 vm_map_lock(struct vm_map *map)
 {
 	int error;

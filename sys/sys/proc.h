@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.211 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: proc.h,v 1.212 2006/02/16 20:17:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -389,7 +389,7 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 
 static struct proc *__curproc(void);
 
-static inline struct proc *
+static __inline struct proc *
 __curproc()
 {
 	struct lwp *l = curlwp;
@@ -489,9 +489,9 @@ void	p_sugid(struct proc *);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);
-static inline struct proc *_proclist_skipmarker(struct proc *);
+static __inline struct proc *_proclist_skipmarker(struct proc *);
 
-static inline struct proc *
+static __inline struct proc *
 _proclist_skipmarker(struct proc *p0)
 {
 	struct proc *p = p0;
