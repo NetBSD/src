@@ -44,7 +44,7 @@
 #define DEFAULT_TARGET_NUM_LUNS     1
 #define DEFAULT_TARGET_BLOCK_LEN    512
 #define DEFAULT_TARGET_NUM_BLOCKS   204800
-#define DEFAULT_TARGET_NAME         "iqn.1993-03.org.netbsd.iscsi-target"
+#define DEFAULT_TARGET_NAME         "iqn.1994-04.org.netbsd.iscsi-target"
 #define DEFAULT_TARGET_QUEUE_DEPTH  8
 #define DEFAULT_TARGET_TCQ          0
 
