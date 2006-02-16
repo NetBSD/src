@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1550.c,v 1.3 2006/02/13 02:37:05 gdamore Exp $ */
+/* $NetBSD: dbau1550.c,v 1.4 2006/02/16 01:52:57 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.3 2006/02/13 02:37:05 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.4 2006/02/16 01:52:57 gdamore Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -41,10 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.3 2006/02/13 02:37:05 gdamore Exp $")
 #include <evbmips/alchemy/board.h>
 #include <evbmips/alchemy/dbau1550reg.h>
 
-#define	GET32(x)	\
-	(*((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(x)))
-#define	PUT32(x, v)	\
-	(*((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(x)) = (v))
+#define	GET16(x)	\
+	(*((volatile uint16_t *)MIPS_PHYS_TO_KSEG1(x)))
 #define	PUT16(x, v)	\
 	(*((volatile uint16_t *)MIPS_PHYS_TO_KSEG1(x)) = (v))
 
@@ -83,13 +81,13 @@ board_info(void)
 void
 dbau1550_init(void)
 {
-	uint32_t		whoami;
+	uint16_t		whoami;
 
 	if (MIPS_PRID_COPTS(cpu_id) != MIPS_AU1550)
 		panic("dbau1550: CPU not Au1550");
 
 	/* check the whoami register for a match */
-	whoami = *((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(DBAU1550_WHOAMI));
+	whoami = GET16(DBAU1550_WHOAMI);
 
 	if (DBAU1550_WHOAMI_BOARD(whoami) != DBAU1550_WHOAMI_DBAU1550_REV1)
 		panic("dbau1550: WHOAMI (%x) not DBAu1550!", whoami);
