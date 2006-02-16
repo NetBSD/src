@@ -1,4 +1,4 @@
-# $NetBSD: targets,v 1.1 2006/02/08 19:02:59 agc Exp $
+# $NetBSD: targets,v 1.2 2006/02/16 19:30:57 agc Exp $
 #
 # Structure of this file:
 #
@@ -17,5 +17,5 @@
 # extent	file or device		start		length
 extent0		/tmp/iscsi-target0	0		100MB
 
-# target	storage			netmask
-target0		extent0			0.0.0.0/0
+# target	flags	storage		netmask
+target0		rw	extent0		0.0.0.0/0
