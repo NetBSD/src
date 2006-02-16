@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.60 2005/07/30 16:32:29 yamt Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.61 2006/02/16 20:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.60 2005/07/30 16:32:29 yamt Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.61 2006/02/16 20:48:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -193,7 +193,7 @@ _kvm_ureadm(kd, p, va, cnt)
 	u_long slot;
 
 	if (kd->swapspc == NULL) {
-		kd->swapspc = (char *)_kvm_malloc(kd, (size_t)kd->nbpg);
+		kd->swapspc = _kvm_malloc(kd, (size_t)kd->nbpg);
 		if (kd->swapspc == NULL)
 			return (NULL);
 	}
@@ -463,15 +463,6 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 	int mib[6], st, nprocs;
 	struct pstats pstats;
 
-	if (kd->procbase2 != NULL) {
-		free(kd->procbase2);
-		/*
-		 * Clear this pointer in case this call fails.  Otherwise,
-		 * kvm_close() will free it again.
-		 */
-		kd->procbase2 = NULL;
-	}
-
 	if (ISSYSCTL(kd)) {
 		size = 0;
 		mib[0] = CTL_KERN;
@@ -487,9 +478,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 		}
 
 		mib[5] = (int) (size / esize);
-		kd->procbase2 = (struct kinfo_proc2 *)_kvm_malloc(kd, size);
-		if (kd->procbase2 == NULL)
-			return (NULL);
+		KVM_ALLOC(kd, procbase2, size);
 		st = sysctl(mib, 6, kd->procbase2, &size, NULL, (size_t)0);
 		if (st == -1) {
 			_kvm_syserr(kd, kd->program, "kvm_getproc2");
@@ -507,7 +496,8 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 		if (kp == NULL)
 			return (NULL);
 
-		kd->procbase2 = _kvm_malloc(kd, nprocs * esize);
+		size = nprocs * esize;
+		KVM_ALLOC(kd, procbase2, size);
 		kp2c = (char *)(void *)kd->procbase2;
 		kp2p = &kp2;
 		for (i = 0; i < nprocs; i++, kp++) {
@@ -673,8 +663,6 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			memcpy(kp2c, &kp2, esize);
 			kp2c += esize;
 		}
-
-		_kvm_freeprocs(kd);
 	}
 	*cnt = nprocs;
 	return (kd->procbase2);
@@ -693,15 +681,6 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 	ssize_t st;
 	struct kinfo_lwp *kl;
 
-	if (kd->lwpbase != NULL) {
-		free(kd->lwpbase);
-		/*
-		 * Clear this pointer in case this call fails.  Otherwise,
-		 * kvm_close() will free it again.
-		 */
-		kd->lwpbase = NULL;
-	}
-
 	if (ISSYSCTL(kd)) {
 		size = 0;
 		mib[0] = CTL_KERN;
@@ -716,9 +695,7 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 		}
 
 		mib[4] = (int) (size / esize);
-		kd->lwpbase = (struct kinfo_lwp *)_kvm_malloc(kd, size);
-		if (kd->lwpbase == NULL)
-			return (NULL);
+		KVM_ALLOC(kd, lwpbase, size);
 		st = sysctl(mib, 5, kd->lwpbase, &size, NULL, (size_t)0);
 		if (st == -1) {
 			_kvm_syserr(kd, kd->program, "kvm_getlwps");
@@ -739,10 +716,8 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 		}
 
 		nlwps = p.p_nlwps;
-		kd->lwpbase = (struct kinfo_lwp *)_kvm_malloc(kd,
-		    nlwps * sizeof(struct kinfo_lwp));
-		if (kd->lwpbase == NULL)
-			return (NULL);
+		size = nlwps * sizeof(*kd->lwpbase);
+		KVM_ALLOC(kd, lwpbase, size);
 		laddr = (u_long)PTRTOUINT64(p.p_lwps.lh_first);
 		for (i = 0; (i < nlwps) && (laddr != 0); i++) {
 			st = kvm_read(kd, laddr, &l, sizeof(l));
@@ -786,14 +761,6 @@ kvm_getprocs(kd, op, arg, cnt)
 	size_t size;
 	int mib[4], st, nprocs;
 
-	if (kd->procbase != NULL) {
-		free(kd->procbase);
-		/*
-		 * Clear this pointer in case this call fails.  Otherwise,
-		 * kvm_close() will free it again.
-		 */
-		kd->procbase = NULL;
-	}
 	if (ISKMEM(kd)) {
 		size = 0;
 		mib[0] = CTL_KERN;
@@ -805,9 +772,7 @@ kvm_getprocs(kd, op, arg, cnt)
 			_kvm_syserr(kd, kd->program, "kvm_getprocs");
 			return (NULL);
 		}
-		kd->procbase = (struct kinfo_proc *)_kvm_malloc(kd, size);
-		if (kd->procbase == NULL)
-			return (NULL);
+		KVM_ALLOC(kd, procbase, size);
 		st = sysctl(mib, 4, kd->procbase, &size, NULL, (size_t)0);
 		if (st == -1) {
 			_kvm_syserr(kd, kd->program, "kvm_getprocs");
@@ -844,11 +809,8 @@ kvm_getprocs(kd, op, arg, cnt)
 			_kvm_err(kd, kd->program, "can't read nprocs");
 			return (NULL);
 		}
-		size = nprocs * sizeof(struct kinfo_proc);
-		kd->procbase = (struct kinfo_proc *)_kvm_malloc(kd, size);
-		if (kd->procbase == NULL)
-			return (NULL);
-
+		size = nprocs * sizeof(*kd->procbase);
+		KVM_ALLOC(kd, procbase, size);
 		nprocs = kvm_deadprocs(kd, op, arg, nl[1].n_value,
 		    nl[2].n_value, nprocs);
 		if (nprocs < 0)
@@ -860,17 +822,6 @@ kvm_getprocs(kd, op, arg, cnt)
 	}
 	*cnt = nprocs;
 	return (kd->procbase);
-}
-
-void
-_kvm_freeprocs(kd)
-	kvm_t *kd;
-{
-
-	if (kd->procbase) {
-		free(kd->procbase);
-		kd->procbase = NULL;
-	}
 }
 
 void *
@@ -918,25 +869,24 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 		 * Try to avoid reallocs.
 		 */
 		kd->argc = MAX(narg + 1, 32);
-		kd->argv = (char **)_kvm_malloc(kd, kd->argc *
-		    sizeof(*kd->argv));
+		kd->argv = _kvm_malloc(kd, kd->argc * sizeof(*kd->argv));
 		if (kd->argv == NULL)
 			return (NULL);
 	} else if (narg + 1 > kd->argc) {
 		kd->argc = MAX(2 * kd->argc, narg + 1);
-		kd->argv = (char **)_kvm_realloc(kd, kd->argv, kd->argc *
+		kd->argv = _kvm_realloc(kd, kd->argv, kd->argc *
 		    sizeof(*kd->argv));
 		if (kd->argv == NULL)
 			return (NULL);
 	}
 	if (kd->argspc == NULL) {
-		kd->argspc = (char *)_kvm_malloc(kd, (size_t)kd->nbpg);
+		kd->argspc = _kvm_malloc(kd, (size_t)kd->nbpg);
 		if (kd->argspc == NULL)
 			return (NULL);
-		kd->arglen = kd->nbpg;
+		kd->argspc_len = kd->nbpg;
 	}
 	if (kd->argbuf == NULL) {
-		kd->argbuf = (char *)_kvm_malloc(kd, (size_t)kd->nbpg);
+		kd->argbuf = _kvm_malloc(kd, (size_t)kd->nbpg);
 		if (kd->argbuf == NULL)
 			return (NULL);
 	}
@@ -965,14 +915,14 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 		ep = memchr(cp, '\0', cc);
 		if (ep != NULL)
 			cc = ep - cp + 1;
-		if (len + cc > kd->arglen) {
+		if (len + cc > kd->argspc_len) {
 			ptrdiff_t off;
 			char **pp;
 			char *op = kd->argspc;
 
-			kd->arglen *= 2;
-			kd->argspc = (char *)_kvm_realloc(kd, kd->argspc,
-			    (size_t)kd->arglen);
+			kd->argspc_len *= 2;
+			kd->argspc = _kvm_realloc(kd, kd->argspc,
+			    kd->argspc_len);
 			if (kd->argspc == NULL)
 				return (NULL);
 			/*
@@ -1127,7 +1077,7 @@ kvm_doargv2(kd, pid, type, nchr)
 {
 	size_t bufs;
 	int narg, mib[4];
-	size_t newarglen;
+	size_t newargspc_len;
 	char **ap, *bp, *endp;
 
 	/*
@@ -1153,43 +1103,31 @@ kvm_doargv2(kd, pid, type, nchr)
 		 * Try to avoid reallocs.
 		 */
 		kd->argc = MAX(narg + 1, 32);
-		kd->argv = (char **)_kvm_malloc(kd, kd->argc *
-		    sizeof(*kd->argv));
+		kd->argv = _kvm_malloc(kd, kd->argc * sizeof(*kd->argv));
 		if (kd->argv == NULL)
 			return (NULL);
 	} else if (narg + 1 > kd->argc) {
 		kd->argc = MAX(2 * kd->argc, narg + 1);
-		kd->argv = (char **)_kvm_realloc(kd, kd->argv, kd->argc *
+		kd->argv = _kvm_realloc(kd, kd->argv, kd->argc *
 		    sizeof(*kd->argv));
 		if (kd->argv == NULL)
 			return (NULL);
 	}
 
-	newarglen = MIN(nchr, ARG_MAX);
-	if (kd->arglen < newarglen) {
-		if (kd->arglen == 0)
-			kd->argspc = (char *)_kvm_malloc(kd, newarglen);
-		else
-			kd->argspc = (char *)_kvm_realloc(kd, kd->argspc,
-			    newarglen);
-		if (kd->argspc == NULL)
-			return (NULL);
-		if (newarglen > INT_MAX)
-			return NULL;
-		kd->arglen = (int)newarglen;
-	}
-	memset(kd->argspc, 0, (size_t)kd->arglen);	/* XXX necessary? */
+	newargspc_len = MIN(nchr, ARG_MAX);
+	KVM_ALLOC(kd, argspc, newargspc_len);
+	memset(kd->argspc, 0, (size_t)kd->argspc_len);	/* XXX necessary? */
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROC_ARGS;
 	mib[2] = pid;
 	mib[3] = type;
-	bufs = kd->arglen;
+	bufs = kd->argspc_len;
 	if (sysctl(mib, 4, kd->argspc, &bufs, NULL, (size_t)0) == -1)
 		return (NULL);
 
 	bp = kd->argspc;
-	bp[kd->arglen-1] = '\0';	/* make sure the string ends with nul */
+	bp[kd->argspc_len-1] = '\0';	/* make sure the string ends with nul */
 	ap = kd->argv;
 	endp = bp + MIN(nchr, bufs);
 

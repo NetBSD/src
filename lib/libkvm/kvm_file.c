@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_file.c,v 1.23 2003/08/07 16:44:36 agc Exp $	*/
+/*	$NetBSD: kvm_file.c,v 1.24 2006/02/16 20:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_file.c,v 1.23 2003/08/07 16:44:36 agc Exp $");
+__RCSID("$NetBSD: kvm_file.c,v 1.24 2006/02/16 20:48:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,7 +86,7 @@ kvm_deadfiles(kd, op, arg, ofhead, numfiles)
 	int op, arg, numfiles;
 	long ofhead;
 {
-	int buflen = kd->arglen, n = 0;
+	size_t buflen = kd->argspc_len, n = 0;
 	struct file *fp;
 	struct filelist fhead;
 	char *where = kd->argspc;
@@ -146,13 +146,7 @@ kvm_getfiles(kd, op, arg, cnt)
 			_kvm_syserr(kd, kd->program, "kvm_getprocs");
 			return (0);
 		}
-		if (kd->argspc == 0)
-			kd->argspc = (char *)_kvm_malloc(kd, size);
-		else if (kd->arglen < size)
-			kd->argspc = (char *)_kvm_realloc(kd, kd->argspc, size);
-		if (kd->argspc == 0)
-			return (0);
-		kd->arglen = size;
+		KVM_ALLOC(kd, argspc, size);
 		st = sysctl(mib, 2, kd->argspc, &size, NULL, 0);
 		if (st == -1 || size < sizeof(fhead)) {
 			_kvm_syserr(kd, kd->program, "kvm_getfiles");
@@ -183,13 +177,7 @@ kvm_getfiles(kd, op, arg, cnt)
 			return (0);
 		}
 		size = sizeof(fhead) + (numfiles + 10) * sizeof(struct file);
-		if (kd->argspc == 0)
-			kd->argspc = (char *)_kvm_malloc(kd, size);
-		else if (kd->arglen < size)
-			kd->argspc = (char *)_kvm_realloc(kd, kd->argspc, size);
-		if (kd->argspc == 0)
-			return (0);
-		kd->arglen = size;
+		KVM_ALLOC(kd, argspc, size);
 		numfiles = kvm_deadfiles(kd, op, arg, (long)nl[1].n_value,
 		    numfiles);
 		if (numfiles == 0)
