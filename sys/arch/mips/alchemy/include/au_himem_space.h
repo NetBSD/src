@@ -1,4 +1,4 @@
-/* $NetBSD: aupcivar.h,v 1.2 2006/02/16 01:55:17 gdamore Exp $ */
+/* $NetBSD: au_himem_space.h,v 1.1 2006/02/16 01:55:17 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -31,33 +31,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */ 
 
-#ifndef _MIPS_ALCHEMY_DEV_AUPCIVAR_H
-#define	_MIPS_ALCHEMY_DEV_AUPCIVAR_H
+#ifndef _MIPS_ALCHEMY_AU_HIMEM_SPACE_H_
+#define	_MIPS_ALCHEMY_AU_HIMEM_SPACE_H_
 
-#include <dev/pci/pcivar.h>
+/* bus endianness */
+#define	AU_HIMEM_SPACE_BIG_ENDIAN	(1 << 0)
+#define	AU_HIMEM_SPACE_LITTLE_ENDIAN	(1 << 1)
 
-/*
- * PCI configuration space encompasses all 32-bits.
- *
- * PCI memory space encompasses all 32-bits, excepting that portion of
- * the address space that is decoded by the Alchemy core for accesses
- * to host memory.  (That range is determined dynamically.) 
- *
- * PCI I/O address range.  We want to start offset from zero to avoid
- * potential problems with devices.  These addresses do not
- * participate on the Alchemy system bus, hence we can choose any
- * range we like.  16 MB is plenty.
- */
+/* endian swapping done in hardware? */
+#define	AU_HIMEM_SPACE_SWAP_HW		(1 << 2)
 
-#define	AUPCI_IO_START	0x1000000
-#define	AUPCI_IO_END	0x1FFFFFF
+/* chip type */
+#define	AU_HIMEM_SPACE_IO		(1 << 3)	/* no linear mapping */
 
+extern void au_himem_space_init(bus_space_tag_t, const char *, paddr_t,
+    bus_addr_t, bus_addr_t, int);
 
-/*
- * Machdep code must implement this.  Stores an IRQ number in
- * pci_intr_handle_t.  See pci_intr_map(9) for more detail.  Returns 0
- * on success, non-zero on failure.
- */
-int aupci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-
-#endif	/* _MIPS_ALCHEMY_DEV_AUPCIVAR_H */
+#endif /* _MIPS_ALCHEMY_AU_WIRED_SPACE_H_ */
