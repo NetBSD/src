@@ -1,4 +1,4 @@
-.\" $NetBSD: targets.5,v 1.2 2006/02/12 15:48:17 agc Exp $
+.\" $NetBSD: targets.5,v 1.3 2006/02/16 19:29:28 agc Exp $
 .\"
 .\" Copyright © 2006 Alistair Crooks.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 12, 2006
+.Dd February 16, 2006
 .Dt TARGETS 5
 .Os
 .Sh NAME
@@ -119,11 +119,25 @@ The first field in the definition is the target name, which must
 begin with the word
 .Dq target
 and be followed by a number.
+The next field is a selector for whether the storage should be presented
+as writable, or merely as read-only storage.
+The field of
+.Dq rw
+denotes read-write storage,
+whilst
+.Dq ro
+denotes read-only storage.
 The next field is the device or extent name that will be used as persistent storage
 for this target.
-The third field is a slash-notation netmask which will be used, during the
+The fourth field is a slash-notation netmask which will be used, during the
 discovery phase, to control the network addresses to which targets will
 be presented.
+The magic values
+.Dq any ,
+and
+.Dq all
+will expand to be the same as
+.Dq 0/0 .
 If an attempt is made to discover a target which is not allowed
 by the netmask, a warning will be issued using
 .Xr syslog 3
