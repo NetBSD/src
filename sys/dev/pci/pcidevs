@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.765 2006/02/12 16:35:20 tron Exp $
+$NetBSD: pcidevs,v 1.766 2006/02/16 08:36:03 kochi Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1930,6 +1930,8 @@ product INTEL 82955X_EXP	0x2775	82955X PCI Express Bridge
 product INTEL 82915G_IGDC	0x2782	82915G/GL IGD Companion
 product INTEL 82915GM_IGDC	0x2792	82915GM/GMS IGD Companion
 product INTEL 82801G_LPC	0x27b8	82801GB/GR LPC Interface Bridge
+product INTEL 82801GBM_LPC	0x27b9	82801GBM LPC Interface Bridge
+product INTEL 82801GHM_LPC	0x27bd	82801GHM LPC Interface Bridge
 product INTEL 82801G_SATA	0x27c0	82801GB/GR SATA Controller
 product INTEL 82801G_SATA_AHCI	0x27c1	82801GB/GR AHCI SATA Controller
 product INTEL 82801G_SATA_RAID	0x27c3	82801GB/GR RAID SATA Controller
