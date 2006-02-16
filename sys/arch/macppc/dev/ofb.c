@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.45 2006/02/12 21:00:46 macallan Exp $	*/
+/*	$NetBSD: ofb.c,v 1.46 2006/02/16 02:15:29 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.45 2006/02/12 21:00:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.46 2006/02/16 02:15:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -146,9 +146,12 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args a;
 	struct rasops_info *ri = &ofb_console_screen.scr_ri;
 	long defattr;
-	int console, len;
+	int console, len, node;
 	char devinfo[256];
 
+	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
+	console = (node == console_node);
+	
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;	
 	sc->sc_pc = pa->pa_pc;
@@ -157,24 +160,25 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s\n", devinfo);
+
+	if (!console)
+		return;
 	
 	vcons_init(&sc->vd, sc, &ofb_stdscreen, &ofb_accessops);
 	sc->vd.init_screen = ofb_init_screen;
 
 	console = ofb_is_console();
 
+	sc->sc_node = node;
+
 	if (console) {
-		sc->sc_node = console_node;
 		sc->sc_ih = console_instance;
 		vcons_init_screen(&sc->vd, &ofb_console_screen, 1, &defattr);
-		SCREEN_VISIBLE((&ofb_console_screen));
-		sc->vd.active = &ofb_console_screen;
 		ofb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 		printf("%s: %d x %d, %dbpp\n", self->dv_xname,
 		       ri->ri_width, ri->ri_height, ri->ri_depth);
 	} else {
 		char name[64];
-		sc->sc_node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 		if (sc->sc_node == 0) {
 			printf(": ofdev not found\n");
 			return;
