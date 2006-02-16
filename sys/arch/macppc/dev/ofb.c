@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.46 2006/02/16 02:15:29 macallan Exp $	*/
+/*	$NetBSD: ofb.c,v 1.47 2006/02/16 18:48:38 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.46 2006/02/16 02:15:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.47 2006/02/16 18:48:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -146,11 +146,21 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args a;
 	struct rasops_info *ri = &ofb_console_screen.scr_ri;
 	long defattr;
-	int console, len, node;
+	int console, len, node, sub;
 	char devinfo[256];
 
 	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 	console = (node == console_node);
+	if (!console) {
+		/* check if any of the childs matches */
+		sub = OF_child(node);
+		while ((sub != 0) && (sub != console_node)) {
+			sub = OF_peer(sub);
+		}
+		if (sub == console_node) {
+			console = TRUE;
+		}
+	}
 	
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;	
