@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2005/12/24 20:07:20 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2006/02/16 20:17:14 perry Exp $	*/
 
 /*
  *
@@ -63,7 +63,7 @@
 #define	splsched()	spl7()
 #define	spllock()	spl7()
 
-static inline void
+static __inline void
 splx(int sr)
 {
 

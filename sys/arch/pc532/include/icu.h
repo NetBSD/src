@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.14 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: icu.h,v 1.15 2006/02/16 20:17:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -119,7 +119,7 @@ enum {HIGH_LEVEL, LOW_LEVEL, RISING_EDGE, FALLING_EDGE} int_modes;
 /*
  * Select a SCSI controller.
  */
-static inline int
+static __inline int
 scsi_select_ctlr(int ctlr)
 {
 	int old;

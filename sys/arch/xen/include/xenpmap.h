@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.12 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.13 2006/02/16 20:17:15 perry Exp $	*/
 
 /*
  *
@@ -223,14 +223,14 @@ paddr_t *xpmap_phys_to_machine_mapping;
 #define	XPMAP_OFFSET	(KERNTEXTOFF - KERNBASE)
 #endif
 
-static inline paddr_t
+static __inline paddr_t
 xpmap_mtop(paddr_t mpa)
 {
 	return ((machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT) +
 	    XPMAP_OFFSET) | (mpa & ~PG_FRAME);
 }
 
-static inline paddr_t
+static __inline paddr_t
 xpmap_ptom(paddr_t ppa)
 {
 	return (xpmap_phys_to_machine_mapping[(ppa -
@@ -238,7 +238,7 @@ xpmap_ptom(paddr_t ppa)
 		| (ppa & ~PG_FRAME);
 }
 
-static inline paddr_t
+static __inline paddr_t
 xpmap_ptom_masked(paddr_t ppa)
 {
 	return (xpmap_phys_to_machine_mapping[(ppa -

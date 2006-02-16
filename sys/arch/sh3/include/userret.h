@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.8 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: userret.h,v 1.9 2006/02/16 20:17:15 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
 
 #include <sys/userret.h>
 
-static inline void
+static __inline void
 userret(struct lwp *l)
 {
 

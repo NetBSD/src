@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.122 2006/02/03 02:37:57 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.123 2006/02/16 20:17:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -192,7 +192,7 @@ extern struct cpu_info *cpu_info_list;
 
 static struct cpu_info *curcpu(void);
 
-inline static struct cpu_info * __attribute__((__unused__))
+__inline static struct cpu_info * __attribute__((__unused__))
 curcpu()
 {
 	struct cpu_info *ci;

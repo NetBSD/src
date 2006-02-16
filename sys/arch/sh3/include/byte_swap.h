@@ -1,4 +1,4 @@
-/*      $NetBSD: byte_swap.h,v 1.2 2006/02/02 06:39:05 skrll Exp $      */
+/*      $NetBSD: byte_swap.h,v 1.3 2006/02/16 20:17:15 perry Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -12,7 +12,7 @@
 __BEGIN_DECLS 
 
 #define __BYTE_SWAP_U16_VARIABLE __byte_swap_u16_variable
-static inline uint16_t
+static __inline uint16_t
 __byte_swap_u16_variable(uint16_t x)
 {
 	uint16_t rval;
@@ -23,7 +23,7 @@ __byte_swap_u16_variable(uint16_t x)
 }
 
 #define __BYTE_SWAP_U32_VARIABLE __byte_swap_u32_variable
-static inline uint32_t
+static __inline uint32_t
 __byte_swap_u32_variable(uint32_t x)
 {
 	uint32_t rval;
