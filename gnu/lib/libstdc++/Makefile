@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2003/09/02 05:26:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.24 2006/02/16 10:36:24 he Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -35,7 +35,8 @@ GCPPFLAGS=	${G_XCFLAGS} ${G_CINCLUDES} ${G_MT_CFLAGS} ${G_CXXINCLUDES}
 CPPFLAGS+=	-nostdinc++ -I${.CURDIR}/arch/${MACHINE_ARCH} \
 		${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
 		-I${DIST}/gcc/cp/inc \
-		-I${NETBSDSRCDIR}/gnu/lib/libiberty -I${DIST}/include
+		-I${NETBSDSRCDIR}/gnu/lib/libiberty -I${DIST}/include \
+		-I${NETBSDSRCDIR}/gnu/lib/libiberty/arch/${MACHINE_ARCH}
 
 CXXFLAGS+=	${G_XCXXFLAGS:M-f*}
 
