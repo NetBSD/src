@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.1 2003/09/12 06:42:38 simonb Exp $
+# $NetBSD: defs.mk,v 1.2 2006/02/17 07:59:00 skrll Exp $
 G_GDB_OBJS=\
 annotate.o \
 arch-utils.o \
@@ -98,6 +98,7 @@ mips-tdep.o \
 mipsnbsd-nat.o \
 mipsnbsd-tdep.o \
 mipsread.o \
+nbsd-proc.o \
 nbsd-tdep.o \
 nlmread.o \
 objfiles.o \
