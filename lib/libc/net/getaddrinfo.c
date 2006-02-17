@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.76 2006/02/13 17:16:20 ginsbach Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.77 2006/02/17 15:55:01 ginsbach Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.76 2006/02/13 17:16:20 ginsbach Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.77 2006/02/17 15:55:01 ginsbach Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -266,6 +266,7 @@ static const char * const ai_errlist[] = {
 	"System error returned in errno", 		/* EAI_SYSTEM     */
 	"Invalid value for hints",			/* EAI_BADHINTS	  */
 	"Resolved protocol is unknown",			/* EAI_PROTOCOL   */
+	"Argument buffer overflow",			/* EAI_OVERFLOW   */
 	"Unknown error", 				/* EAI_MAX        */
 };
 
