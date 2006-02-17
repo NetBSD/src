@@ -2106,6 +2106,12 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    case EF_SH4_NOFPU: strcat (buf, ", sh4-nofpu"); break;
 	    case EF_SH4A_NOFPU: strcat (buf, ", sh4a-nofpu"); break;
 	    case EF_SH2A_NOFPU: strcat (buf, ", sh2a-nofpu"); break;
+	    case EF_SH3_NOMMU: strcat (buf, ", sh3-nommu"); break;
+	    case EF_SH4_NOMMU_NOFPU: strcat (buf, ", sh4-nommu-nofpu"); break;
+	    case EF_SH2A_SH4_NOFPU: strcat (buf, ", sh2a-nofpu-or-sh4-nommu-nofpu"); break;
+	    case EF_SH2A_SH3_NOFPU: strcat (buf, ", sh2a-nofpu-or-sh3-nommu"); break;
+	    case EF_SH2A_SH4: strcat (buf, ", sh2a-or-sh4"); break;
+	    case EF_SH2A_SH3E: strcat (buf, ", sh2a-or-sh3e"); break;
 	    default: strcat (buf, ", unknown ISA"); break;
 	    }
 
