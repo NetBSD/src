@@ -1,5 +1,5 @@
-/* Native-dependent definitions for NetBSD.
-   Copyright 1994, 1996, 1999 Free Software Foundation, Inc.
+/* NetBSD-specific methods for using the /proc file system.
+   Copyright 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,17 +18,18 @@
    Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
-#define PTRACE_ARG3_TYPE char*
+#include <sys/param.h>
 
-#define FETCH_INFERIOR_REGISTERS
+#include "defs.h"
 
-#define ATTACH_DETACH
+char *
+child_pid_to_exec_file (int pid)
+{
+  char *path;
 
-#define	FETCH_KCORE_REGISTERS
+  path = xmalloc (MAXPATHLEN);
+  xasprintf (&path, "/proc/%d/file", pid);
+  make_cleanup (xfree, path);
 
-#if !defined(NO_SOLIB)
-#include "solib.h"             /* Support for shared libraries. */
-#endif
-
-/* Override child_pid_to_exec_file in 'inftarg.c'.  */
-#define CHILD_PID_TO_EXEC_FILE
+  return path;
+}
