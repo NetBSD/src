@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.42 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.43 2006/02/17 15:58:26 ginsbach Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.42 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.43 2006/02/17 15:58:26 ginsbach Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -350,7 +350,7 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 
 	numaddrlen = strlen(numaddr);
 	if (numaddrlen + 1 > hostlen) /* don't forget terminator */
-		return EAI_MEMORY;
+		return EAI_OVERFLOW;
 	strlcpy(host, numaddr, hostlen);
 
 	if (((const struct sockaddr_in6 *)(const void *)sa)->sin6_scope_id) {
@@ -361,9 +361,9 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 		    (const struct sockaddr_in6 *)(const void *)sa,
 		    zonebuf, sizeof(zonebuf), flags);
 		if (zonelen < 0)
-			return EAI_MEMORY;
+			return EAI_OVERFLOW;
 		if ((size_t) zonelen + 1 + numaddrlen + 1 > hostlen)
-			return EAI_MEMORY;
+			return EAI_OVERFLOW;
 		/* construct <numeric-addr><delim><zoneid> */
 		memcpy(host + numaddrlen + 1, zonebuf,
 		    (size_t)zonelen);
