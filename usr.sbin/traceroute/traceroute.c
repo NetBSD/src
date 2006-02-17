@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.61 2004/04/22 01:41:22 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.62 2006/02/17 21:31:18 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.61 2004/04/22 01:41:22 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.62 2006/02/17 21:31:18 rpaulo Exp $");
 #endif
 #endif
 
@@ -270,6 +270,54 @@ struct outdata {
 	struct timeval tv;	/* time packet left */
 };
 
+/*
+ * Support for ICMP extensions
+ *
+ * http://www.ietf.org/proceedings/01aug/I-D/draft-ietf-mpls-icmp-02.txt
+ */
+#define ICMP_EXT_OFFSET    8 /* ICMP type, code, checksum, unused */ + \
+                         128 /* original datagram */
+#define ICMP_EXT_VERSION 2
+/*
+ * ICMP extensions, common header
+ */
+struct icmp_ext_cmn_hdr {
+#if BYTE_ORDER == BIG_ENDIAN
+	unsigned char   version:4;
+	unsigned char   reserved1:4;
+#else
+	unsigned char   reserved1:4;
+	unsigned char   version:4;
+#endif
+	unsigned char   reserved2;
+	unsigned short  checksum;
+};
+
+/*
+ * ICMP extensions, object header
+ */
+struct icmp_ext_obj_hdr {
+    u_short length;
+    u_char  class_num;
+#define MPLS_STACK_ENTRY_CLASS 1
+    u_char  c_type;
+#define MPLS_STACK_ENTRY_C_TYPE 1
+};
+
+struct mpls_header {
+#if BYTE_ORDER == BIG_ENDIAN
+	 uint32_t	label:20;
+	 unsigned char  exp:3;
+	 unsigned char  s:1;
+	 unsigned char  ttl:8;
+#else
+	 unsigned char  ttl:8;
+	 unsigned char  s:1;
+	 unsigned char  exp:3;
+	 uint32_t	label:20;
+#endif
+};
+
 u_char	packet[512];		/* last inbound (icmp) packet */
 
 struct ip *outip;		/* last output (udp) packet */
@@ -308,6 +356,7 @@ int verbose;
 int waittime = 5;		/* time to wait for response (in seconds) */
 int nflag;			/* print addresses numerically */
 int dump;
+int Mflag;			/* show MPLS labels if any */
 int as_path;			/* print as numbers for each hop */
 char *as_server = NULL;
 void *asn;
@@ -369,6 +418,7 @@ int	str2val(const char *, const char *, int, int);
 void	tvsub(struct timeval *, struct timeval *);
 __dead	void usage(void);
 int	wait_for_reply(int, struct sockaddr_in *, struct timeval *);
+void	decode_extensions(unsigned char *buf, int ip_len);
 void	frag_err(void);
 int	find_local_ip(struct sockaddr_in *, struct sockaddr_in *);
 #ifdef IPSEC
@@ -407,7 +457,7 @@ main(int argc, char **argv)
 		prog = argv[0];
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "aA:dDFPInlrvxf:g:i:m:p:q:s:t:w:")) != -1)
+	while ((op = getopt(argc, argv, "aA:dDFPIMnlrvxf:g:i:m:p:q:s:t:w:")) != -1)
 		switch (op) {
 
 		case 'a':
@@ -460,6 +510,10 @@ main(int argc, char **argv)
 
 		case 'm':
 			max_ttl = str2val(optarg, "max ttl", 1, 255);
+			break;
+
+		case 'M':
+			Mflag = 1;
 			break;
 
 		case 'n':
@@ -1001,6 +1055,8 @@ again:
 			}
 			if (cc == 0)
 				Printf(" *");
+			else if (cc && probe == nprobes - 1 && Mflag)
+				decode_extensions(packet, cc);
 			(void)fflush(stdout);
 		}
 		putchar('\n');
@@ -1049,6 +1105,121 @@ wait_for_reply(int sock, struct sockaddr_in *fromp, struct timeval *tp)
 	}
 
 	return(cc);
+}
+
+void
+decode_extensions(unsigned char *buf, int ip_len)
+{
+        struct icmp_ext_cmn_hdr *cmn_hdr;
+        struct icmp_ext_obj_hdr *obj_hdr;
+        union {
+                struct mpls_header mpls;
+                uint32_t mpls_h;
+        } mpls;
+        int datalen, obj_len;
+        struct ip *ip;
+
+        ip = (struct ip *)buf;
+
+        if (ip_len <= sizeof(struct ip) + ICMP_EXT_OFFSET) {
+		/*
+		 * No support for ICMP extensions on this host
+		 */
+		return;
+        }
+
+        /*
+         * Move forward to the start of the ICMP extensions, if present
+         */
+        buf += (ip->ip_hl << 2) + ICMP_EXT_OFFSET;
+        cmn_hdr = (struct icmp_ext_cmn_hdr *)buf;
+
+        if (cmn_hdr->version != ICMP_EXT_VERSION) {
+		/*
+		 * Unknown version
+		 */
+		return;
+        }
+
+        datalen = ip_len - ((u_char *)cmn_hdr - (u_char *)ip);
+
+        /*
+         * Check the checksum, cmn_hdr->checksum == 0 means no checksum'ing
+         * done by sender.
+         *
+        * If the checksum is ok, we'll get 0, as the checksum is calculated
+         * with the checksum field being 0'd.
+         */
+        if (ntohs(cmn_hdr->checksum) &&
+            in_cksum((u_short *)cmn_hdr, datalen)) {
+ 
+            return;
+        }
+ 
+        buf += sizeof(*cmn_hdr);
+        datalen -= sizeof(*cmn_hdr);
+ 
+        while (datalen > 0) {
+		obj_hdr = (struct icmp_ext_obj_hdr *)buf;
+		obj_len = ntohs(obj_hdr->length);
+
+		/*
+		 * Sanity check the length field
+		 */
+		if (obj_len > datalen) {
+			return;
+		}
+
+		datalen -= obj_len;
+ 
+		/*
+		 * Move past the object header
+		 */
+		buf += sizeof(struct icmp_ext_obj_hdr);
+		obj_len -= sizeof(struct icmp_ext_obj_hdr);
+ 
+		switch (obj_hdr->class_num) {
+		case MPLS_STACK_ENTRY_CLASS:
+			switch (obj_hdr->c_type) {
+			case MPLS_STACK_ENTRY_C_TYPE:
+				while (obj_len >= sizeof(uint32_t)) {
+					mpls.mpls_h = ntohl(*(uint32_t *)buf);
+ 
+					buf += sizeof(uint32_t);
+					obj_len -= sizeof(uint32_t);
+ 
+					printf(" [MPLS: label: %d, exp: 0x%x,"
+					    " ttl: %d]", mpls.mpls.label,
+					    mpls.mpls.exp, mpls.mpls.ttl);
+				}
+				if (obj_len > 0) {
+					/*
+					 * Something went wrong, and we're at
+					 * a unknown offset into the packet,
+					 * ditch the rest of it.
+					 */
+					return;
+				}
+				break;
+			default:
+				/*
+				 * Unknown object, skip past it
+				 */
+				buf += ntohs(obj_hdr->length) -
+				    sizeof(struct icmp_ext_obj_hdr);
+				break;
+			}
+			break;
+ 
+		default:
+			/*
+			 * Unknown object, skip past it
+			 */
+			buf += ntohs(obj_hdr->length) -
+			    sizeof(struct icmp_ext_obj_hdr);
+			break;
+		}
+	}
 }
 
 void
@@ -1602,7 +1773,7 @@ usage(void)
 	extern char version[];
 
 	Fprintf(stderr, "Version %s\n", version);
-	Fprintf(stderr, "usage: %s [-adDFPIlnrvx] [-g gateway] [-i iface] \
+	Fprintf(stderr, "usage: %s [-adDFPIlMnrvx] [-g gateway] [-i iface] \
 [-f first_ttl]\n\t[-m max_ttl] [-p port] [-q nqueries] [-s src_addr] [-t tos]\n\t\
 [-w waittime] [-A as_server] host [packetlen]\n",
 	    prog);
