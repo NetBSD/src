@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467.c,v 1.4 2006/02/17 17:58:53 macallan Exp $	*/
+/*	$NetBSD: adt7467.c,v 1.5 2006/02/17 18:45:40 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -37,7 +37,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.4 2006/02/17 17:58:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.5 2006/02/17 18:45:40 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ uint8_t adt7467c_readreg(struct adt7467c_softc *sc, uint8_t reg)
 	uint8_t data = 0;
 	
 	iic_acquire_bus(sc->sc_i2c, 0);
-	iic_exec(sc->sc_i2c, I2C_OP_READ|I2C_OP_WRITE, sc->address, &reg, 1,
+	iic_exec(sc->sc_i2c, I2C_OP_READ, sc->address, &reg, 1,
 	    &data, 1, 0);
 	iic_release_bus(sc->sc_i2c, 0);
 	return data;
