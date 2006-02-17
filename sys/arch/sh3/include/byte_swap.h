@@ -1,4 +1,4 @@
-/*      $NetBSD: byte_swap.h,v 1.3 2006/02/16 20:17:15 perry Exp $      */
+/*      $NetBSD: byte_swap.h,v 1.4 2006/02/17 08:23:26 skrll Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -35,6 +35,6 @@ __byte_swap_u32_variable(uint32_t x)
 }
 
 __END_DECLS
-#endif /* _KERNEL */
+#endif /* __GNUC_ */
 
 #endif /* !_SH3_BYPE_SWAP_H_ */
