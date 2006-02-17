@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.49 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: rnd.c,v 1.50 2006/02/17 19:22:30 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.49 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.50 2006/02/17 19:22:30 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -906,12 +906,6 @@ rnd_add_uint32(rndsource_element_t *rs, u_int32_t val)
 	rnd_sample_t *state;
 	u_int32_t ts;
 	int s;
-
-	/*
-	 * If we are not collecting any data at all, just return.
-	 */
-	if (rs == NULL)
-		return;
 
 	rst = &rs->data;
 
