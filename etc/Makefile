@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.323 2006/02/15 21:59:08 dsl Exp $
+#	$NetBSD: Makefile,v 1.324 2006/02/17 22:09:33 dsl Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -40,11 +40,6 @@
 .include <bsd.sys.mk>		# for HOST_SH
 .include <bsd.kernobj.mk>	# For KERNSRCDIR, KERNOBJDIR, ...
 .include <bsd.endian.mk>	# For TARGET_ENDIANNESS
-
-# XXX: .WAIT doesn't work the way this makefile needs it to.
-# So until that is fixed.
-# Actually that isn't enough either.... snap_pre must not depend on anything
-.NOTPARALLEL:
 
 .MAKEOVERRIDES+=	USETOOLS
 
@@ -141,7 +136,7 @@ PWD_MKDB_ENDIAN=
 # distribution --
 #	Build a distribution
 #
-distribution: .PHONY .MAKE check_DESTDIR .WAIT distrib-dirs
+distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 .if !defined(DISTRIBUTION_DONE)
 .if !defined(INSTALL_DONE)
 	${MAKEDIRTARGET} ${NETBSDSRCDIR} include _DISTRIB=
@@ -392,10 +387,7 @@ distrib-dirs: .PHONY check_DESTDIR
 # release, snapshot --
 #	Build a full distribution including kernels & install media.
 #
-release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR .WAIT \
-		    distribution .WAIT \
-		    snap_pre .WAIT snap_kern .WAIT \
-		    snap_post .WAIT snap_md_post
+release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR snap_md_post
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib/sets sets
 	${MAKESUMS} -A -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets \
 		${KERNEL_SETS:@.SETS.@kern-${.SETS.}.tgz@}
@@ -413,7 +405,7 @@ CDROM.image=${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom/netbsd-${MACHI
 CDROM.dir=	${.OBJDIR}/cdrom.dir
 CDROM.pathlist=	${.OBJDIR}/cdrom.pathlist
 
-iso-image: .PHONY check_DESTDIR check_RELEASEDIR .WAIT iso-image-md-post
+iso-image: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-post
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom '*.iso'
 	@echo "iso-image created as: ${CDROM.image}"
 
@@ -431,8 +423,7 @@ iso-image-setup: .PHONY check_RELEASEDIR
 # iso-image-mi --
 #	Create the image after the MD operations have completed.
 #
-iso-image-mi: .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
-		iso-image-setup .WAIT iso-image-md-pre
+iso-image-mi: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-pre
 	@if ! ${MKISOFS} --version; then \
 		echo "install pkgsrc/sysutils/cdrtools and run 'make iso-image'." ; \
 		false; \
@@ -444,21 +435,21 @@ iso-image-mi: .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
 #	Setup ${CDROM.dir} to produce a bootable CD image.
 #	Overridden by etc.$MACHINE/Makefile.inc
 #
-iso-image-md-pre: .PHONY check_DESTDIR check_RELEASEDIR
+iso-image-md-pre: .PHONY check_DESTDIR check_RELEASEDIR iso-image-setup
 #	(empty -- look in the machine-dependent Makefile.inc)
 
 # iso-image-md-post --
 #	Fixup the CD-image to be bootable.
 #	Overridden by etc.$MACHINE/Makefile.inc
 #
-iso-image-md-post: .PHONY check_DESTDIR check_RELEASEDIR .WAIT iso-image-mi
+iso-image-md-post: .PHONY check_DESTDIR check_RELEASEDIR iso-image-mi
 #	(empty -- look in the machine-dependent Makefile.inc)
 
 
 # snap_pre --
 #	Create ${RELEASEDIR} and necessary subdirectories.
 #
-snap_pre: .PHONY # check_DESTDIR check_RELEASEDIR
+snap_pre: .PHONY check_DESTDIR check_RELEASEDIR distribution
 	${INSTALL} -d -m 755 ${RELEASEDIR}
 .if ${MKUPDATE} == "no"
 # Could be a mount point, ignore the errors
@@ -472,14 +463,14 @@ snap_pre: .PHONY # check_DESTDIR check_RELEASEDIR
 # snap_post --
 #	Build the install media and notes from distrib
 #
-snap_post: .PHONY .MAKE check_DESTDIR check_RELEASEDIR
+snap_post: .PHONY .MAKE build_kernelsets build_releasekernels
 .if ${MKUPDATE} == "no"
 	cd ${NETBSDSRCDIR}/distrib && ${MAKE} cleandir
 .endif
 	cd ${NETBSDSRCDIR}/distrib && ${MAKE} depend && ${MAKE} && \
 	    ${MAKE} release
 
-# snap_kern --
+# build kernels --
 #	This target builds the kernels specified by each port.
 #	A port may specify the following kernels:
 #
@@ -519,9 +510,7 @@ ALL_KERNELS?=	${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
 GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
 
-.if !target(snap_kern)						# {
-
-# build_kernels --
+build_kernels: .PHONY
 #	Configure & compile kernels listed in ${ALL_KERNELS}
 #
 # The 'sync' is so that all writes during the build are pushed back
@@ -530,7 +519,7 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 #
 .if !defined(KERNELS_DONE)						# {
 .for configfile in ${ALL_KERNELS}					# {
-_KERNELS_TO_BUILD+=kern-${configfile}
+build_kernels: kern-${configfile}
 kern-${configfile}: .PHONY .MAKE
 	cd ${KERNCONFDIR} && ${TOOL_CONFIG} -s ${KERNSRCDIR} \
 	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
@@ -542,15 +531,13 @@ kern-${configfile}: .PHONY .MAKE
 .endfor	# ALL_KERNELS							# }
 .endif	# KERNELS_DONE							# }
 
-build_kernels: .PHONY ${_KERNELS_TO_BUILD}
-
-# build_kernelsets --
+build_kernelsets: .PHONY
 #	Create kernel sets from ${KERNEL_SETS} into
 #	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
 #
 .for configfile in ${KERNEL_SETS}					# {
-_KERNELSETS_TO_BUILD+=kernset-${configfile}
-kernset-${configfile}: .PHONY
+build_kernelsets: kernset-${configfile}
+kernset-${configfile}: .PHONY build_kernels snap_pre
 	@ kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
@@ -578,15 +565,13 @@ kernset-${configfile}: .PHONY
 	}
 .endfor	# KERNEL_SETS							# }
 
-build_kernelsets: ${_KERNELSETS_TO_BUILD}
-
-# build_releasekernels --
+build_releasekernels: .PHONY
 #	Build kernel.gz from ${KERNEL_SETS} ${EXTRA_KERNELS} into
 #	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel
 #
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}			# {
-_RELEASEKERNELS_TO_BUILD+=releasekern-${configfile}
-releasekern-${configfile}: .PHONY
+build_releasekernels: releasekern-${configfile}
+releasekern-${configfile}: .PHONY build_kernels snap_pre
 	@ kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
@@ -604,23 +589,11 @@ releasekern-${configfile}: .PHONY
 	}
 .endfor	# KERNEL_SETS EXTRA_KERNELS					# }
 
-build_releasekernels: ${_RELEASEKERNELS_TO_BUILD}
-
-# snap_kern --
-#	build the kernels, then the sets & release kernels
-#
-snap_kern: .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
-	    build_kernels .WAIT \
-	    build_kernelsets build_releasekernels
-
-.endif # !target(snap_kern)					# }
-
-
 # snap_md_post --
 #	Machine dependent distribution media operations.
 #	Overridden by etc.$MACHINE/Makefile.inc
 #
-snap_md_post: .PHONY check_DESTDIR check_RELEASEDIR
+snap_md_post: .PHONY check_DESTDIR check_RELEASEDIR snap_post
 #	(empty -- look in the machine-dependent Makefile.inc)
 
 
