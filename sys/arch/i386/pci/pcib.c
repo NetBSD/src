@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.38 2006/02/16 01:08:09 rpaulo Exp $	*/
+/*	$NetBSD: pcib.c,v 1.39 2006/02/17 06:57:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.38 2006/02/16 01:08:09 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.39 2006/02/17 06:57:18 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -160,7 +160,7 @@ pcibmatch(struct device *parent, struct cfdata *match, void *aux)
 	 * The Cyrix cs5530 PCI host bridge does not have a broken
 	 * latch on the i8254 clock core, unlike its predecessors
 	 * the cs5510 and cs5520. This reverses the setting from
-	 * i386/i386/identcpu.c where it argueably should not have
+	 * i386/i386/identcpu.c where it arguably should not have
 	 * been set in the first place. XXX
 	 */
 	case PCI_VENDOR_CYRIX:
