@@ -1,3 +1,7 @@
+2006-02-17  Nick Hudson  <nick.hudson@dsl.pipex.com>
+
+	* readelf.c (get_machine_flags): Add logic for missing EF_SH flags.
+
 2005-04-20  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	* readelf.c (display_debug_frames): Use data factor for
