@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.26.2.3 2006/02/18 14:35:56 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.26.2.4 2006/02/18 14:39:41 yamt Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.2.3 2006/02/18 14:35:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.2.4 2006/02/18 14:39:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,7 +367,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
-		map->_dm_vmspace = uio->vmspace;
+		map->_dm_vmspace = uio->uio_vmspace;
 	}
 	return error;
 }
