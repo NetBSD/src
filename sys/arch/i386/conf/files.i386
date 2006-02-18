@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.278 2006/02/12 18:16:01 tron Exp $
+#	$NetBSD: files.i386,v 1.279 2006/02/18 19:07:11 jmcneill Exp $
 #
 # new style config file for i386 architecture
 #
@@ -482,10 +482,11 @@ file	arch/i386/bios/vesabios.c		vesabios needs-flag
 defflag	opt_vesabios.h	VESABIOSVERBOSE
 
 include	"dev/rasops/files.rasops"
+include "dev/splash/files.splash"
 
-device vesarasterviii: rasops8
-attach vesarasterviii at vesabios
-file	arch/i386/bios/vesa_raster8.c	vesarasterviii
+device vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash
+attach vesafb at vesabios
+file	arch/i386/bios/vesafb.c		vesafb
 
 device vesatext
 attach vesatext at vesabios
