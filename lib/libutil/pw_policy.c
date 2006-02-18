@@ -1,7 +1,7 @@
-/* $NetBSD: pw_policy.c,v 1.2 2005/09/16 22:38:48 elad Exp $ */
+/* $NetBSD: pw_policy.c,v 1.3 2006/02/18 10:52:48 elad Exp $ */
 
 /*-
- * Copyright 2005 Elad Efrat <elad@NetBSD.org>
+ * Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,26 +41,19 @@
 
 #define	PW_POLICY_DEFAULTKEY	"pw_policy"
 
-#define	PW_GETCONF(buf, len, key, opt)			\
-	do {						\
-		memset(buf, 0, len);	\
-		pw_getconf(buf, len, key, opt);		\
-	} while (/*CONSTCOND*/0)
+#define	LOAD_POLICY	0
+#define	TEST_POLICY	1
 
-#define	NEED_NONE	0
-#define	NEED_ARG	1
-#define	NEED_ARGS	2
+#define	MINMAX_ERR(min, max, n)	((min == 0 || max == 0) && n != 0) ||	\
+				 (min > 0 && min > n) ||		\
+				 (max > 0 && max < n)
 
-#define	HANDLER_PROTO	char *, size_t, void *, void *
-#define	HANDLER_ARGS	char *pw, size_t len, void *arg, void *arg2
-#define	HANDLER_SANE(needarg)					\
-	((pw != NULL) && (len != 0) &&				\
-	 ((/*CONSTCOND*/needarg == NEED_NONE) ||		\
-	  (/*CONSTCOND*/needarg == NEED_ARG && arg != NULL) ||	\
-	  (/*CONSTCOND*/needarg == NEED_ARGS && arg != NULL && arg2 != NULL)))
+#define	HANDLER_PROTO	struct pw_policy *, int, char *, void *, void *
+#define	HANDLER_ARGS	struct pw_policy *policy, int flag, char *pw, void *arg, void *arg2
 
 static int pw_policy_parse_num(char *, int32_t *);
 static int pw_policy_parse_range(char *, int32_t *, int32_t *);
+
 static int pw_policy_handle_len(HANDLER_PROTO);
 static int pw_policy_handle_charclass(HANDLER_PROTO);
 static int pw_policy_handle_nclasses(HANDLER_PROTO);
@@ -68,7 +61,7 @@ static int pw_policy_handle_ntoggles(HANDLER_PROTO);
 
 struct pw_policy_handler {
 	const char *name;
-	int (*handler)(char *, size_t, void *, void *);
+	int (*handler)(HANDLER_PROTO);
 	void *arg2;
 };
 
@@ -87,23 +80,26 @@ static int
 pw_policy_parse_num(char *s, int32_t *n)
 {
 	char *endptr = NULL;
-	unsigned long m;
+	long l;
 
 	if (s == NULL || n == NULL)
 		return (EFAULT);
 
-	m = strtoul(s, &endptr, 10);
-	if (*endptr != '\0' || m == ULONG_MAX)
-		return (EINVAL);
+	if (s[0] == '*' && s[1] == '\0') {
+		*n = -1;
+		return (0);
+	}
 
-	/*
-	 * We receive a signed 32-bit integer, but we only allow
-	 * unsigned 16-bit values.
-	 */
-	if (m >= (unsigned long)UINT16_MAX)
+	l = strtol(s, &endptr, 10);
+	if (*endptr != '\0')
+		return (EINVAL);
+	if (errno == ERANGE && (l == LONG_MIN || l == LONG_MAX))
 		return (ERANGE);
 
-	*n = (int32_t)m;
+	if (l < 0 || l >= UINT16_MAX)
+		return (ERANGE);
+
+	*n = (int32_t)l;
 
 	return (0);
 }
@@ -124,11 +120,11 @@ pw_policy_parse_range(char *range, int32_t *n, int32_t *m)
 
 	/* Single characters: * = any number, 0 = none. */
 	if (range[0] == '0' && range[1] == '\0') {
-		*n = *m = -1;
+		*n = *m = 0;
 		return (0);
 	}
 	if (range[0] == '*' && range[1] == '\0') {
-		*n = *m = 0;
+		*n = *m = -1;
 		return (0);
 	}
 
@@ -152,25 +148,35 @@ pw_policy_parse_range(char *range, int32_t *n, int32_t *m)
 	return (0);
 }
 
+/*ARGSUSED*/
 static int
 pw_policy_handle_len(HANDLER_ARGS)
 {
-	int32_t n = 0, m = 0;
+	switch (flag) {
+	case LOAD_POLICY:
+		/* Here, '0' and '*' mean the same. */
+		if (pw_policy_parse_range(arg, &policy->minlen, &policy->maxlen) != 0)
+			return (EINVAL);
 
-	if (!HANDLER_SANE(NEED_ARG))
-		return (EFAULT);
+		if (policy->minlen < 0)
+			policy->minlen = 0;
+		if (policy->maxlen < 0)
+			policy->maxlen = 0;
 
-	/* Here, '0' and '*' mean the same. */
-	if (pw_policy_parse_range(arg, &n, &m) != 0)
-		return (EINVAL);
+		break;
 
-	if (n < 0)
-		n = 0;
-	if (m < 0)
-		m = 0;
+	case TEST_POLICY: {
+		size_t len;
 
-	if ((n && len < n) || (m && len > m))
-		return (EPERM);
+		len = strlen(pw);
+
+		if ((policy->minlen && len < policy->minlen) ||
+		    (policy->maxlen && len > policy->maxlen))
+			return (EPERM);
+
+		break;
+		}
+	}
 
 	return (0);
 }
@@ -179,136 +185,164 @@ static int
 pw_policy_handle_charclass(HANDLER_ARGS)
 {
 	int (*ischarclass)(int);
-	int32_t n = 0, m = 0, count = 0;
+	int32_t *n = NULL, *m = NULL, count = 0;
 
-	if (!HANDLER_SANE(NEED_ARGS))
-		return (EFAULT);
+	if (arg2 == islower) {
+		n = &policy->minlower;
+		m = &policy->maxlower;
+	} else if (arg2 == isupper) {
+		n = &policy->minupper;
+		m = &policy->maxupper;
+	} else if (arg2 == isdigit) {
+		n = &policy->mindigits;
+		m = &policy->maxdigits;
+	} else if (arg2 == ispunct) {
+		n = &policy->minpunct;
+		m = &policy->maxpunct;
+	}
 
-	if (pw_policy_parse_range(arg, &n, &m) != 0)
-		return (EINVAL);
+	switch (flag) {
+	case LOAD_POLICY:
+		if ((pw_policy_parse_range(arg, n, m) != 0))
+			return (EINVAL);
 
-	ischarclass = arg2;
+		break;
 
-	if (n == 0 && m == 0)
-		return (0);
+	case TEST_POLICY:
+		ischarclass = arg2;
 
-	do {
-		if (ischarclass((int)*pw++))
-			count++;
-	} while (*pw != '\0');
+		do {
+			if (!isspace((int)*pw) && ischarclass((int)*pw++))
+				count++;
+		} while (*pw != '\0');
 
-	if (n == -1 && count)
-		return (EPERM);
+		if (MINMAX_ERR(*n, *m, count))
+			return (EPERM);
 
-	if ((n >= 0 && count < n) || (m >= 0 && count > m))
-		return (EPERM);
+		break;
+	}
 
 	return (0);
 }
 
+/*ARGSUSED*/
 static int
 pw_policy_handle_nclasses(HANDLER_ARGS)
 {
-	int have_lower = 0, have_upper = 0, have_digit = 0, have_punct = 0;
-	int32_t n = 0, m = 0, nsets = 0;
+	switch (flag) {
+	case LOAD_POLICY:
+		if (pw_policy_parse_range(arg, &policy->minclasses, &policy->maxclasses) != 0)
+			return (EINVAL);
 
-	if (!HANDLER_SANE(NEED_ARG))
-		return (EFAULT);
+		break;
 
-	if (pw_policy_parse_range(arg, &n, &m) != 0)
-		return (EINVAL);
+	case TEST_POLICY: {
+		int have_lower = 0, have_upper = 0, have_digit = 0, have_punct = 0;
+		int32_t nsets = 0;
 
-	while (*pw != '\0') {
-		if (islower((unsigned char)*pw) && !have_lower) {
-			have_lower = 1;
-			nsets++;
-		} else if (isupper((unsigned char)*pw) && !have_upper) {
-			have_upper = 1;
-			nsets++;
-		} else if (isdigit((unsigned char)*pw) && !have_digit) {
-			have_digit = 1;
-			nsets++;
-		} else if (ispunct((unsigned char)*pw) && !have_punct) {
-			have_punct = 1;
-			nsets++;
+		while (*pw != '\0') {
+			if (islower((unsigned char)*pw) && !have_lower) {
+				have_lower = 1;
+				nsets++;
+			} else if (isupper((unsigned char)*pw) && !have_upper) {
+				have_upper = 1;
+				nsets++;
+			} else if (isdigit((unsigned char)*pw) && !have_digit) {
+				have_digit = 1;
+				nsets++;
+			} else if (ispunct((unsigned char)*pw) && !have_punct) {
+				have_punct = 1;
+				nsets++;
+			}
+			pw++;
 		}
-		pw++;
-	}
 
-	if ((n >= 0 && nsets < n) || (m >= 0 && nsets > m))
-		return (EPERM);
+		if (MINMAX_ERR(policy->minclasses, policy->maxclasses, nsets))
+			return (EPERM);
+
+		break;
+		}
+	}
 
 	return (0);
 }
 
+/*ARGSUSED*/
 static int
 pw_policy_handle_ntoggles(HANDLER_ARGS)
 {
-	int previous_set = 0, current_set = 0;
-	int32_t n = 0, m = 0, ntoggles = 0;
+	switch (flag) {
+	case LOAD_POLICY:
+		if (pw_policy_parse_range(arg, &policy->mintoggles, &policy->maxtoggles) != 0)
+			return (EINVAL);
 
-	if (!HANDLER_SANE(NEED_ARG))
-		return (EFAULT);
+		break;
 
-	if (pw_policy_parse_range(arg, &n, &m) != 0)
-		return (EINVAL);
+	case TEST_POLICY: {
+		int previous_set = 0, current_set = 0;
+		int32_t ntoggles = 0, current_ntoggles = 0;
 
 #define	CHAR_CLASS(c)		(islower((unsigned char)(c)) ? 1 :	\
-				isupper((unsigned char)(c))  ? 2 :	\
-				isdigit((unsigned char)(c))  ? 3 :	\
-				ispunct((unsigned char)(c))  ? 4 :	\
+				 isupper((unsigned char)(c)) ? 2 :	\
+				 isdigit((unsigned char)(c)) ? 3 :	\
+				 ispunct((unsigned char)(c)) ? 4 :	\
 				 0)
 
-	while (*pw != '\0') {
-		current_set = CHAR_CLASS(*pw);
-		if (!current_set) {
-			return (EINVAL);
-		}
+		while (*pw != '\0') {
+			if (!isspace((int)*pw)) {
+				current_set = CHAR_CLASS(*pw);
+				if (!current_set) {
+					return (EINVAL);
+				}
 
-		if (!previous_set || current_set == previous_set) {
-			ntoggles++;
-		} else {
-			ntoggles = 1;
-		}
+				if (!previous_set || current_set == previous_set) {
+					current_ntoggles++;
+				} else {
+					if (current_ntoggles > ntoggles)
+						ntoggles = current_ntoggles;
 
-		previous_set = current_set;
-		pw++;
-	}
+					current_ntoggles = 1;
+				}
+
+				previous_set = current_set;
+			}
+
+			pw++;
+		}
 
 #undef CHAR_CLASS
 
-	if ((n >= 0 && ntoggles < n) || (m >= 0 && ntoggles > m))
-		return (EPERM);
+		if (MINMAX_ERR(policy->mintoggles, policy->maxtoggles, ntoggles))
+			return (EPERM);
+
+		break;
+		}
+	}
 
 	return (0);
 }
 
 int
-pw_policy_test(char *pw, void *key, int how)
+pw_policy_load(struct pw_policy *policy, void *key, int how)
 {
 	struct pw_policy_handler *hp;
 	char buf[BUFSIZ];
-	size_t pwlen;
 
-	/*
-	 * No password provided, fail the test.
-	 */
-	if (pw == NULL)
-		return (EFAULT);
-
-	/*
-	 * If there's no /etc/passwd.conf, we allow the password.
-	 */
+	/* If there's no /etc/passwd.conf, don't touch the policy. */
 	if (access(_PATH_PASSWD_CONF, R_OK) == -1)
 		return (ENOENT);
 
-	/*
-	 * No key provided. Use default.
-	 */
+	if (policy == NULL)
+		return (EFAULT);
+
+	/* No key provided. Use default. */
 	if (key == NULL) {
 		key = __UNCONST(PW_POLICY_DEFAULTKEY);
-		goto test_policies;
+		goto load_policies;
 	}
+
+	errno = 0;
+	memset(buf, 0, sizeof(buf));
 
 	switch (how) {
 	case PW_POLICY_BYSTRING:
@@ -316,10 +350,10 @@ pw_policy_test(char *pw, void *key, int how)
 		 * Check for provided key. If non-existant, fallback to
 		 * the default.
 		 */
-		errno = 0;
-		PW_GETCONF(buf, sizeof(buf), key, "foo");
+		pw_getconf(buf, sizeof(buf), key, "foo");
 		if (errno == ENOTDIR)
 			key = __UNCONST(PW_POLICY_DEFAULTKEY);
+
 		break;
 
 	case PW_POLICY_BYPASSWD: {
@@ -330,16 +364,17 @@ pw_policy_test(char *pw, void *key, int how)
 		 * try a policy for the login class. If can't find any,
 		 * fallback to the default.
 		 */
-		errno = 0;
-		PW_GETCONF(buf, sizeof(buf), pentry->pw_name, "foo");
+		pw_getconf(buf, sizeof(buf), pentry->pw_name, "foo");
 		if (errno == ENOTDIR) {
-			PW_GETCONF(buf, sizeof(buf), pentry->pw_class, "foo");
+			memset(buf, 0, sizeof(buf));
+			pw_getconf(buf, sizeof(buf), pentry->pw_class, "foo");
 			if (errno == ENOTDIR)
 				key = __UNCONST(PW_POLICY_DEFAULTKEY);
 			else
 				key = pentry->pw_class;
 		} else
 			key = pentry->pw_name;
+
 		break;
 		}
 
@@ -350,12 +385,12 @@ pw_policy_test(char *pw, void *key, int how)
 		 * Check for policy for given group. If can't find any,
 		 * fallback to the default.
 		 */
-		errno = 0;
-		PW_GETCONF(buf, sizeof(buf), gentry->gr_name, "foo");
+		pw_getconf(buf, sizeof(buf), gentry->gr_name, "foo");
 		if (errno == ENOTDIR)
 			key = __UNCONST(PW_POLICY_DEFAULTKEY);
 		else
 			key = gentry->gr_name;
+
 		break;
 		}
 
@@ -367,13 +402,40 @@ pw_policy_test(char *pw, void *key, int how)
 		return (EINVAL);
 	}
 
- test_policies:
-	pwlen = strlen(pw);
+ load_policies:
+	hp = &handlers[0];
+	while (hp->name != NULL) {
+		int error;
+
+		memset(buf, 0, sizeof(buf));
+		pw_getconf(buf, sizeof(buf), key, hp->name);
+		if (*buf) {
+			error = hp->handler(policy, LOAD_POLICY, NULL, buf,
+					    hp->arg2);
+			if (error)
+				return (error);
+		}
+
+		hp++;
+	}
+
+	return (0);
+}
+
+int
+pw_policy_test(struct pw_policy *policy, char *pw)
+{
+	struct pw_policy_handler *hp;
+
+	if (policy == NULL)
+		return (0);
+
+	if (pw == NULL)
+		return (EFAULT);
 
 	hp = &handlers[0];
 	while (hp->name != NULL) {
-		PW_GETCONF(buf, sizeof(buf), key, hp->name);
-		if (*buf && hp->handler(pw, pwlen, buf, hp->arg2) != 0)
+		if (hp->handler(policy, TEST_POLICY, pw, NULL, hp->arg2) != 0)
 			return (EPERM);
 
 		hp++;
