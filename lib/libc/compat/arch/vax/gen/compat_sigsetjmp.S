@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1993
+ * Copyright (c) 1983, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,23 +27,38 @@
  * SUCH DAMAGE.
  */
 
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigreturn.S,v 1.8 2004/03/26 22:15:03 drochner Exp $"
-#endif /* SYSLIBC_SCCS and not lint */
-
-#include "SYS.h"
+#if defined(LIBC_SCCS) && !defined(lint)
+	.asciz "$NetBSD: compat_sigsetjmp.S,v 1.1 2006/02/18 22:54:51 matt Exp $"
+#endif /* LIBC_SCCS and not lint */
 
 /*
- * We must preserve the state of the registers as the user has set them up.
+ * C library -- sigsetjmp, siglongjmp
+ *
+ *      siglongjmp(a,v)
+ * will generate a "return(v)" from
+ * the last call to
+ *      sigsetjmp(a, savemask)
+ * by restoring registers from the stack,
+ * and dependent on savemask restores the
+ * signal mask.
  */
-#ifdef GPROF
-#undef ENTRY
-#define	ENTRY(x, y) \
-	_ENTRY(x, y); pushr $0x3f; _PROF_PROLOGUE; popr $0x3f;
-#endif /* GPROF */
 
-WARN_REFERENCES(sigreturn, \
-    "warning: reference to compatibility sigreturn()")
+#include "DEFS.h"
+#include <machine/setjmp.h>
 
-PSEUDO(sigreturn,compat_13_sigreturn13)
+ENTRY(sigsetjmp, R6)
+	movl	4(%ap),%r0		# get env pointer
+	movl	8(%ap),(_JBLEN*4)(%r0)	# save "savemask"
+	tstl	8(%ap)			# do saving of signal mask?
+	beql	L1
+	jmp	_C_LABEL(setjmp)+2	# yep, do full setjmp
+L1:	jmp	_C_LABEL(_setjmp)+2	# nope, skip to _setjmp
+
+ENTRY(siglongjmp, 0)
+	movl	4(%ap),%r0		# get env pointer
+	tstl	(_JBLEN*4)(%r0)		# test if "savemask" was set
+	beql	L2
+	jmp	_C_LABEL(longjmp)+2	# yep, do full longjmp
+L2:	jmp	_C_LABEL(_longjmp)+2	# nope, skip to _longjmp
+
+

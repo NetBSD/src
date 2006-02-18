@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,19 +28,18 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigsuspend.S,v 1.8 2003/08/07 16:42:34 agc Exp $"
+	/* .asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93" */
+	.asciz "$NetBSD: compat___sigreturn14.S,v 1.1 2006/02/18 22:54:51 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-WARN_REFERENCES(sigsuspend, \
-    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
+/*
+ * We must preserve the state of the registers as the user has set them up.
+ */
+#ifdef GPROF
+#undef ENTRY
+#define	ENTRY(x, y)	_ENTRY(x, y); pushr $0x3f; _PROF_PROLOGUE; popr $0x3f
+#endif /* GPROF */
 
-ENTRY(sigsuspend, 0)
-	movl	*4(%ap),4(%ap)		# indirect to mask arg
-	chmk	$ SYS_compat_13_sigsuspend13
-	jcc	1f
-	jmp	CERROR+2
-1:	clrl	%r0			# shouldnt happen
-	ret
+PSEUDO(__sigreturn14,compat_16___sigreturn14)

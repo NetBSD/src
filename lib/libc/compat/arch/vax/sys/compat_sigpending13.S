@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1993, 1995
+ * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,38 +27,17 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "$NetBSD: sigsetjmp.S,v 1.4 2003/08/07 16:42:31 agc Exp $"
-#endif /* LIBC_SCCS and not lint */
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+	/* .asciz "@(#)sigpending.s	8.1 (Berkeley) 6/4/93" */
+	.asciz "$NetBSD: compat_sigpending13.S,v 1.1 2006/02/18 22:54:51 matt Exp $"
+#endif /* SYSLIBC_SCCS and not lint */
 
-/*
- * C library -- sigsetjmp, siglongjmp
- *
- *      siglongjmp(a,v)
- * will generate a "return(v)" from
- * the last call to
- *      sigsetjmp(a, savemask)
- * by restoring registers from the stack,
- * and dependent on savemask restores the
- * signal mask.
- */
+#include "SYS.h"
 
-#include "DEFS.h"
-#include <machine/setjmp.h>
+WARN_REFERENCES(sigpending, \
+    "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
-ENTRY(sigsetjmp, R6)
-	movl	4(%ap),%r0		# get env pointer
-	movl	8(%ap),(_JBLEN*4)(%r0)	# save "savemask"
-	tstl	8(%ap)			# do saving of signal mask?
-	beql	L1
-	jmp	_C_LABEL(setjmp)+2	# yep, do full setjmp
-L1:	jmp	_C_LABEL(_setjmp)+2	# nope, skip to _setjmp
-
-ENTRY(siglongjmp, 0)
-	movl	4(%ap),%r0		# get env pointer
-	tstl	(_JBLEN*4)(%r0)		# test if "savemask" was set
-	beql	L2
-	jmp	_C_LABEL(longjmp)+2	# yep, do full longjmp
-L2:	jmp	_C_LABEL(_longjmp)+2	# nope, skip to _longjmp
-
-
+_SYSCALL(sigpending,compat_13_sigpending13)
+	movl	%r0,*4(%ap)		# store old mask
+	clrl	%r0
+	ret
