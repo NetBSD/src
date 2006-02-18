@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13.2.1 2006/02/18 15:38:43 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.13.2.2 2006/02/18 23:28:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -614,7 +614,7 @@ struct newsmips_bus_dmamap {
 	int		_dm_flags;	/* misc. flags */
 	int		_dm_maptbl;	/* DMA mapping table index */
 	int		_dm_maptblcnt;	/* number of DMA mapping table */
-	struct proc	*_dm_proc;	/* proc that owns the mapping */
+	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.

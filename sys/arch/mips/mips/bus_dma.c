@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.16.2.1 2006/02/18 11:12:19 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.16.2.2 2006/02/18 23:28:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16.2.1 2006/02/18 11:12:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16.2.2 2006/02/18 23:28:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
-	map->_dm_proc = NULL;
+	map->_dm_vmspace = NULL;
 	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
@@ -262,7 +262,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
-		map->_dm_proc = p;
+		map->_dm_vmspace = vm;
 
 		/*
 		 * For linear buffers, we support marking the mapping
@@ -316,7 +316,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
-		map->_dm_proc = NULL;	/* always kernel */
+		map->_dm_vmspace = vmspace_kernel();	/* always kernel */
 	}
 	return (error);
 }
@@ -365,7 +365,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
-		map->_dm_proc = p;
+		map->_dm_vmspace = uio->uio_vmspace;
 	}
 	return (error);
 }
@@ -471,8 +471,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *
 	 * This should be true the vast majority of the time.
 	 */
-	if (__predict_true(map->_dm_proc == NULL || 
-		map->_dm_proc == curlwp->l_proc))
+	if (__predict_true(VMSPACE_IS_KERNEL_P(map->_dm_vmspace) ||
+	    map->_dm_vmspace == curproc->p_vmspace))
 		useindex = 0;
 	else
 		useindex = 1;
