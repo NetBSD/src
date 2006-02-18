@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.584 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.585 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -198,3 +198,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	evbmips: Add support Alchemy Au15XX PCI host. (DBAu1500/DBAu1550).
 		[gdamore 20060208]
 	amd64: Add initial COMPAT_LINUX32 support [manu 20060209]
+	rasops(9): Add shadow framebuffer support [jmcneill 20060218]
