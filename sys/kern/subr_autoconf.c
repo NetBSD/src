@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.104 2006/02/18 05:04:13 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.105 2006/02/18 19:09:53 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.104 2006/02/18 05:04:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.105 2006/02/18 19:09:53 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,6 +95,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.104 2006/02/18 05:04:13 thorpej 
 #include "opt_userconf.h"
 #ifdef USERCONF
 #include <sys/userconf.h>
+#endif
+
+#include "opt_splash.h"
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+#include <dev/splash/splash.h>
+extern struct splash_progress *splash_progress_state;
 #endif
 
 /*
@@ -798,6 +804,11 @@ config_found_sm_loc(device_t parent,
 {
 	cfdata_t cf;
 
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
+
 	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
 		return(config_attach_loc(parent, cf, locs, aux, print));
 	if (print) {
@@ -805,6 +816,12 @@ config_found_sm_loc(device_t parent,
 			twiddle();
 		aprint_normal("%s", msgs[(*print)(aux, parent->dv_xname)]);
 	}
+
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
+
 	return (NULL);
 }
 
@@ -903,6 +920,11 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	int myunit;
 	char num[10];
 	const struct cfiattrdata *ia;
+
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	KASSERT(cd != NULL);
@@ -1017,7 +1039,15 @@ config_attach_loc(device_t parent, cfdata_t cf,
 #ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
 #endif
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 	(*ca->ca_attach)(parent, dev, aux);
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 	config_process_deferred(&deferred_config_queue, dev);
 	return (dev);
 }
