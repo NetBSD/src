@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.12 2006/02/05 18:11:46 jmmv Exp $ */
+/*	$NetBSD: display.c,v 1.13 2006/02/18 19:35:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ static struct wsdisplay_param contrast;
 static struct wsdisplay_scroll_data scroll_l;
 static int msg_default_attrs, msg_default_bg, msg_default_fg;
 static int msg_kernel_attrs, msg_kernel_bg, msg_kernel_fg;
+static int splash_enable, splash_progress;
 
 struct field display_field_tab[] = {
     { "border",			&border,	FMT_COLOR,	0 },
@@ -74,6 +75,8 @@ struct field display_field_tab[] = {
     { "msg.kernel.attrs",	&msg_kernel_attrs, FMT_ATTRS,	0 },
     { "msg.kernel.bg",		&msg_kernel_bg, FMT_COLOR,	0 },
     { "msg.kernel.fg",		&msg_kernel_fg, FMT_COLOR,	0 },
+    { "splash.enable",		&splash_enable, FMT_UINT,	0 },
+    { "splash.progress",	&splash_progress, FMT_UINT,	0 },
 };
 
 int display_field_tab_len = sizeof(display_field_tab) /
@@ -186,6 +189,18 @@ display_put_values(fd)
 		if (ioctl(fd, WSDISPLAYIO_SETPARAM, &contrast) < 0)
 			err(EXIT_FAILURE, "WSDISPLAYIO_PARAM_CONTRAST");
 		pr_field(field_by_value(&contrast.curval), " -> ");
+	}
+
+	if (field_by_value(&splash_enable)->flags & FLG_SET) {
+		if (ioctl(fd, WSDISPLAYIO_SSPLASH, &splash_enable) < 0)
+			err(EXIT_FAILURE, "WSDISPLAYIO_SSPLASH");
+		pr_field(field_by_value(&splash_enable), " -> ");
+	}
+
+	if (field_by_value(&splash_progress)->flags & FLG_SET) {
+		if (ioctl(fd, WSDISPLAYIO_SPROGRESS, &splash_progress) < 0)
+			err(EXIT_FAILURE, "WSDISPLAYIO_SPROGRESS");
+		pr_field(field_by_value(&splash_progress), " -> ");
 	}
 
 	if (field_by_value(&msg_default_attrs)->flags & FLG_SET ||
