@@ -1,4 +1,4 @@
-/* $NetBSD: pw_policy.c,v 1.3 2006/02/18 10:52:48 elad Exp $ */
+/* $NetBSD: pw_policy.c,v 1.4 2006/02/18 16:32:45 elad Exp $ */
 
 /*-
  * Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -48,8 +48,8 @@
 				 (min > 0 && min > n) ||		\
 				 (max > 0 && max < n)
 
-#define	HANDLER_PROTO	struct pw_policy *, int, char *, void *, void *
-#define	HANDLER_ARGS	struct pw_policy *policy, int flag, char *pw, void *arg, void *arg2
+#define	HANDLER_PROTO	pw_policy_t, int, char *, void *, void *
+#define	HANDLER_ARGS	pw_policy_t policy, int flag, char *pw, void *arg, void *arg2
 
 static int pw_policy_parse_num(char *, int32_t *);
 static int pw_policy_parse_range(char *, int32_t *, int32_t *);
@@ -58,6 +58,23 @@ static int pw_policy_handle_len(HANDLER_PROTO);
 static int pw_policy_handle_charclass(HANDLER_PROTO);
 static int pw_policy_handle_nclasses(HANDLER_PROTO);
 static int pw_policy_handle_ntoggles(HANDLER_PROTO);
+
+struct pw_policy {
+	int32_t minlen;
+	int32_t maxlen;
+	int32_t minupper;
+	int32_t maxupper;
+	int32_t minlower;
+	int32_t maxlower;
+	int32_t mindigits;
+	int32_t maxdigits;
+	int32_t minpunct;
+	int32_t maxpunct;
+	int32_t mintoggles;
+	int32_t maxtoggles;
+	int32_t minclasses;
+	int32_t maxclasses;
+};
 
 struct pw_policy_handler {
 	const char *name;
@@ -322,18 +339,19 @@ pw_policy_handle_ntoggles(HANDLER_ARGS)
 	return (0);
 }
 
-int
-pw_policy_load(struct pw_policy *policy, void *key, int how)
+pw_policy_t
+pw_policy_load(void *key, int how)
 {
+	pw_policy_t policy;
 	struct pw_policy_handler *hp;
 	char buf[BUFSIZ];
 
 	/* If there's no /etc/passwd.conf, don't touch the policy. */
-	if (access(_PATH_PASSWD_CONF, R_OK) == -1)
-		return (ENOENT);
+	if (access(_PATH_PASSWD_CONF, R_OK) == -1) {
+		errno = ENOENT;
 
-	if (policy == NULL)
-		return (EFAULT);
+		return (NULL);
+	}
 
 	/* No key provided. Use default. */
 	if (key == NULL) {
@@ -399,10 +417,18 @@ pw_policy_load(struct pw_policy *policy, void *key, int how)
 		 * Fail the policy because we don't know how to parse the
 		 * key we were passed.
 		 */
-		return (EINVAL);
+		errno = EINVAL;
+
+		return (NULL);
 	}
 
  load_policies:
+	policy = malloc(sizeof(struct pw_policy));
+	if (policy == NULL)
+		return (NULL);
+
+	memset(policy, 0, sizeof(struct pw_policy));
+
 	hp = &handlers[0];
 	while (hp->name != NULL) {
 		int error;
@@ -412,18 +438,20 @@ pw_policy_load(struct pw_policy *policy, void *key, int how)
 		if (*buf) {
 			error = hp->handler(policy, LOAD_POLICY, NULL, buf,
 					    hp->arg2);
-			if (error)
-				return (error);
+			if (error) {
+				errno = error;
+				return (NULL);
+			}
 		}
 
 		hp++;
 	}
 
-	return (0);
+	return (policy);
 }
 
 int
-pw_policy_test(struct pw_policy *policy, char *pw)
+pw_policy_test(pw_policy_t policy, char *pw)
 {
 	struct pw_policy_handler *hp;
 
@@ -442,4 +470,10 @@ pw_policy_test(struct pw_policy *policy, char *pw)
 	}
 
 	return (0);
+}
+
+void
+pw_policy_free(pw_policy_t policy)
+{
+	free(policy);
 }
