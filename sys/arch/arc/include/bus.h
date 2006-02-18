@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.20 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.20.2.1 2006/02/18 14:35:57 yamt Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -813,7 +813,7 @@ struct arc_bus_dmamap {
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-	struct proc	*_dm_proc;	/* proc that owns the mapping */
+	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
 	/*
 	 * Private cookie to be used by the DMA back-end.
