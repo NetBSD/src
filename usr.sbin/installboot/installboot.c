@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.23 2006/02/18 10:08:07 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.24 2006/02/18 12:42:26 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,9 +42,10 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.23 2006/02/18 10:08:07 dsl Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.24 2006/02/18 12:42:26 dsl Exp $");
 #endif	/* !__lint */
 
+#include <sys/ioctl.h>
 #include <sys/utsname.h>
 
 #include <assert.h>
@@ -458,6 +459,8 @@ getmachine(ib_params *param, const char *mach, const char *provider)
 	assert(provider != NULL);
 
 	for (i = 0; machines[i] != NULL; i++) {
+		if (machines[i]->name == NULL)
+			continue;
 		if (strcmp(machines[i]->name, mach) == 0) {
 			param->machine = machines[i];
 			return;
@@ -473,18 +476,27 @@ machine_usage(void)
 {
 	const char *prefix;
 	int	i;
+	int col, len;
+	const char *name;
+	struct winsize win;
+
+	if (ioctl(fileno(stderr), TIOCGWINSZ, &win) != 0)
+		win.ws_col = 80;
 
 	warnx("Supported machines are:");
-#define MACHS_PER_LINE	9
-	prefix="";
+	prefix="\t";
+	col = 8 + 3;
 	for (i = 0; machines[i] != NULL; i++) {
-		if (i == 0)
-			prefix="\t";
-		else if (i % MACHS_PER_LINE)
-			prefix=", ";
-		else
+		name = machines[i]->name;
+		if (name == NULL)
+			continue;
+		len = strlen(name);
+		if (col + len > win.ws_col) {
 			prefix=",\n\t";
-		fprintf(stderr, "%s%s", prefix, machines[i]->name);
+			col = -2 + 8 + 3;
+		}
+		col += fprintf(stderr, "%s%s", prefix, name);
+		prefix=", ";
 	}
 	fputs("\n", stderr);
 }
@@ -517,15 +529,12 @@ fstype_usage(void)
 
 	warnx("Supported file system types are:");
 #define FSTYPES_PER_LINE	9
-	prefix="";
+	prefix="\t";
 	for (i = 0; fstypes[i].name != NULL; i++) {
-		if (i == 0)
-			prefix="\t";
-		else if (i % FSTYPES_PER_LINE)
-			prefix=", ";
-		else
+		if ((i % FSTYPES_PER_LINE) == 0)
 			prefix=",\n\t";
 		fprintf(stderr, "%s%s", prefix, fstypes[i].name);
+		prefix=", ";
 	}
 	fputs("\n", stderr);
 }
