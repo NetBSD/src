@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.27.2.1 2006/02/18 09:47:03 yamt Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.27.2.2 2006/02/18 11:44:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.27.2.1 2006/02/18 09:47:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.27.2.2 2006/02/18 11:44:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -697,7 +697,7 @@ ntfs_readdir(ap)
 #endif
 
 		dprintf(("ntfs_readdir: %d cookies\n",ncookies));
-		if (!VM_VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
+		if (!VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
 		    uio->uio_iovcnt != 1)
 			panic("ntfs_readdir: unexpected uio from NFS server");
 		dpStart = (struct dirent *)
