@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.45.2.1 2006/01/15 10:02:47 yamt Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.45.2.2 2006/02/18 09:47:02 yamt Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.45.2.1 2006/01/15 10:02:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.45.2.2 2006/02/18 09:47:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,7 +359,7 @@ coda_read(void *v)
 
     ENTRY;
     return(coda_rdwr(ap->a_vp, ap->a_uio, UIO_READ,
-		    ap->a_ioflag, ap->a_cred, ap->a_uio->uio_lwp));
+		    ap->a_ioflag, ap->a_cred, curlwp));
 }
 
 int
@@ -369,7 +369,7 @@ coda_write(void *v)
 
     ENTRY;
     return(coda_rdwr(ap->a_vp, ap->a_uio, UIO_WRITE,
-		    ap->a_ioflag, ap->a_cred, ap->a_uio->uio_lwp));
+		    ap->a_ioflag, ap->a_cred, curlwp));
 }
 
 int
@@ -387,10 +387,10 @@ coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
 
     MARK_ENTRY(CODA_RDWR_STATS);
 
-    CODADEBUG(CODA_RDWR, myprintf(("coda_rdwr(%d, %p, %lu, %lld, %d)\n", rw,
+    CODADEBUG(CODA_RDWR, myprintf(("coda_rdwr(%d, %p, %lu, %lld)\n", rw,
 			      uiop->uio_iov->iov_base,
 			      (unsigned long) uiop->uio_resid,
-			      (long long) uiop->uio_offset, uiop->uio_segflg)); )
+			      (long long) uiop->uio_offset)); )
 
     /* Check for rdwr of control object. */
     if (IS_CTL_VP(vp)) {
@@ -712,8 +712,8 @@ coda_readlink(void *v)
     struct cnode *cp = VTOC(vp);
     struct uio *uiop = ap->a_uio;
     struct ucred *cred = ap->a_cred;
-    struct lwp *l = ap->a_uio->uio_lwp;
 /* locals */
+    struct lwp *l = curlwp;
     int error;
     char *str;
     int len;
@@ -1649,14 +1649,14 @@ coda_readdir(void *v)
     int *eofflag = ap->a_eofflag;
     off_t **cookies = ap->a_cookies;
     int *ncookies = ap->a_ncookies;
-    struct lwp *l = ap->a_uio->uio_lwp;
 /* upcall decl */
 /* locals */
+    struct lwp *l = curlwp;
     int error = 0;
 
     MARK_ENTRY(CODA_READDIR_STATS);
 
-    CODADEBUG(CODA_READDIR, myprintf(("coda_readdir(%p, %lu, %lld, %d)\n", uiop->uio_iov->iov_base, (unsigned long) uiop->uio_resid, (long long) uiop->uio_offset, uiop->uio_segflg)); )
+    CODADEBUG(CODA_READDIR, myprintf(("coda_readdir(%p, %lu, %lld)\n", uiop->uio_iov->iov_base, (unsigned long) uiop->uio_resid, (long long) uiop->uio_offset)); )
 
     /* Check for readdir of control object. */
     if (IS_CTL_VP(vp)) {

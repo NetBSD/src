@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.23 2005/12/11 12:20:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.23.2.1 2006/02/18 09:47:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.23 2005/12/11 12:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.23.2.1 2006/02/18 09:47:03 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -137,8 +137,7 @@ dofilereadv32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 	error = netbsd32_to_iovecin(iovp, iov, iovcnt);
 	if (error)
 		goto done;
@@ -260,8 +259,7 @@ dofilewritev32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 	error = netbsd32_to_iovecin(iovp, iov, iovcnt);
 	if (error)
 		goto done;
