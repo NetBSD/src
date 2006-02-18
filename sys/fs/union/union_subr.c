@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.15 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.15.2.1 2006/02/18 09:47:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.15 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.15.2.1 2006/02/18 09:47:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,9 +637,8 @@ union_copyfile(fvp, tvp, cred, l)
 	 * give up at the first sign of trouble.
 	 */
 
-	uio.uio_lwp = NULL;
-	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_offset = 0;
+	UIO_SETUP_SYSSPACE(&uio);
 
 	VOP_UNLOCK(fvp, 0);			/* XXX */
 	VOP_LEASE(fvp, l, cred, LEASE_READ);
