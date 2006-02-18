@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.105 2005/12/29 22:20:03 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.106 2006/02/18 22:07:11 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.105 2005/12/29 22:20:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.106 2006/02/18 22:07:11 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2522,6 +2522,7 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	switch (nstate) {
 	case IEEE80211_S_AUTH:
 	case IEEE80211_S_ASSOC:
+		atw_write_bssid(sc);
 		error = atw_tune(sc);
 		break;
 	case IEEE80211_S_INIT:
