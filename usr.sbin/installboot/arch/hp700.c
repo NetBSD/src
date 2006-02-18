@@ -1,4 +1,4 @@
-/*	$NetBSD: hp700.c,v 1.1 2005/05/14 14:46:21 chs Exp $	*/
+/*	$NetBSD: hp700.c,v 1.2 2006/02/18 10:08:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp700.c,v 1.1 2005/05/14 14:46:21 chs Exp $");
+__RCSID("$NetBSD: hp700.c,v 1.2 2006/02/18 10:08:07 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -62,7 +62,13 @@ __RCSID("$NetBSD: hp700.c,v 1.1 2005/05/14 14:46:21 chs Exp $");
 #define HP700_LABELSIZE		404 /* reserve 16 partitions */
 #define	HP700_BOOT_BLOCK_SIZE	8192
 
-int
+static int hp700_clearboot(ib_params *);
+static int hp700_setboot(ib_params *);
+
+struct ib_mach ib_mach_hp700 =
+	{ "hp700", hp700_setboot, hp700_clearboot, no_editboot, 0};
+
+static int
 hp700_clearboot(ib_params *params)
 {
 	char		bb[HP700_BOOT_BLOCK_SIZE];
@@ -113,7 +119,7 @@ hp700_clearboot(ib_params *params)
 	return (retval);
 }
 
-int
+static int
 hp700_setboot(ib_params *params)
 {
 	struct stat	bootstrapsb;

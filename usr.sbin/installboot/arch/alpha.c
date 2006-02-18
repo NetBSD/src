@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.15 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: alpha.c,v 1.16 2006/02/18 10:08:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.15 2003/10/27 00:12:44 lukem Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.16 2006/02/18 10:08:07 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -125,8 +125,14 @@ static void	sun_bootstrap(ib_params *, struct alpha_boot_block * const);
 static void	check_sparc(const struct alpha_boot_block * const,
 			    const char *);
 
+static int alpha_clearboot(ib_params *);
+static int alpha_setboot(ib_params *);
 
-int
+struct ib_mach ib_mach_alpha =
+	{ "alpha", alpha_setboot, alpha_clearboot, no_editboot,
+		IB_STAGE1START | IB_ALPHASUM | IB_APPEND | IB_SUNSUM };
+
+static int
 alpha_clearboot(ib_params *params)
 {
 	struct alpha_boot_block	bb;
@@ -201,7 +207,7 @@ alpha_clearboot(ib_params *params)
 	return (1);
 }
 
-int
+static int
 alpha_setboot(ib_params *params)
 {
 	struct alpha_boot_block	bb;

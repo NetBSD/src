@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax.c,v 1.11 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: pmax.c,v 1.12 2006/02/18 10:08:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: pmax.c,v 1.11 2003/10/27 00:12:44 lukem Exp $");
+__RCSID("$NetBSD: pmax.c,v 1.12 2006/02/18 10:08:07 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -125,8 +125,15 @@ __RCSID("$NetBSD: pmax.c,v 1.11 2003/10/27 00:12:44 lukem Exp $");
 static int	load_bootstrap(ib_params *, char **,
 				uint32_t *, uint32_t *, size_t *);
 
+static int pmax_clearboot(ib_params *);
+static int pmax_setboot(ib_params *);
 
-int
+struct ib_mach ib_mach_pmax =
+	{ "pmax", pmax_setboot, pmax_clearboot, no_editboot,
+		IB_STAGE1START | IB_APPEND | IB_SUNSUM };
+
+
+static int
 pmax_clearboot(ib_params *params)
 {
 	struct pmax_boot_block	bb;
@@ -181,7 +188,7 @@ pmax_clearboot(ib_params *params)
 	return (1);
 }
 
-int
+static int
 pmax_setboot(ib_params *params)
 {
 	struct pmax_boot_block	bb;

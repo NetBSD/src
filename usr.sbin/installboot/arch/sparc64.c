@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.14 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.15 2006/02/18 10:08:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.14 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.15 2006/02/18 10:08:07 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -85,7 +85,13 @@ __RCSID("$NetBSD: sparc64.c,v 1.14 2004/06/20 22:20:17 jmc Exp $");
 
 #include "installboot.h"
 
-int
+static int sparc64_clearboot(ib_params *);
+static int sparc64_setboot(ib_params *);
+
+struct ib_mach ib_mach_sparc64 =
+	{ "sparc64", sparc64_setboot, sparc64_clearboot, no_editboot, 0};
+
+static int
 sparc64_clearboot(ib_params *params)
 {
 	char	bb[SPARC64_BOOT_BLOCK_MAX_SIZE];
@@ -132,7 +138,7 @@ sparc64_clearboot(ib_params *params)
 	return (1);
 }
 
-int
+static int
 sparc64_setboot(ib_params *params)
 {
 	char		bb[SPARC64_BOOT_BLOCK_MAX_SIZE];

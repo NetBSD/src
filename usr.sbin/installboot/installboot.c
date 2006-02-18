@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.22 2005/12/26 13:30:25 jmmv Exp $	*/
+/*	$NetBSD: installboot.c,v 1.23 2006/02/18 10:08:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.22 2005/12/26 13:30:25 jmmv Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.23 2006/02/18 10:08:07 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -457,9 +457,9 @@ getmachine(ib_params *param, const char *mach, const char *provider)
 	assert(mach != NULL);
 	assert(provider != NULL);
 
-	for (i = 0; machines[i].name != NULL; i++) {
-		if (strcmp(machines[i].name, mach) == 0) {
-			param->machine = &machines[i];
+	for (i = 0; machines[i] != NULL; i++) {
+		if (strcmp(machines[i]->name, mach) == 0) {
+			param->machine = machines[i];
 			return;
 		}
 	}
@@ -477,14 +477,14 @@ machine_usage(void)
 	warnx("Supported machines are:");
 #define MACHS_PER_LINE	9
 	prefix="";
-	for (i = 0; machines[i].name != NULL; i++) {
+	for (i = 0; machines[i] != NULL; i++) {
 		if (i == 0)
 			prefix="\t";
 		else if (i % MACHS_PER_LINE)
 			prefix=", ";
 		else
 			prefix=",\n\t";
-		fprintf(stderr, "%s%s", prefix, machines[i].name);
+		fprintf(stderr, "%s%s", prefix, machines[i]->name);
 	}
 	fputs("\n", stderr);
 }

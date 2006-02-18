@@ -5,7 +5,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: ews4800mips.c,v 1.1 2005/12/29 15:32:20 tsutsui Exp $");
+__RCSID("$NetBSD: ews4800mips.c,v 1.2 2006/02/18 10:08:07 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -13,6 +13,11 @@ __RCSID("$NetBSD: ews4800mips.c,v 1.1 2005/12/29 15:32:20 tsutsui Exp $");
 #include <err.h>
 #include <stdio.h>
 #include "installboot.h"
+
+static int ews4800mips_setboot(ib_params *);
+
+struct ib_mach ib_mach_ews4800mips =
+	{ "ews4800mips", ews4800mips_setboot, no_clearboot, no_editboot, 0};
 
 struct bbinfo_params ews4800mips_bbparams = {
 	EWS4800MIPS_BBINFO_MAGIC,
@@ -23,7 +28,7 @@ struct bbinfo_params ews4800mips_bbparams = {
 	BBINFO_BIG_ENDIAN,
 };
 
-int
+static int
 ews4800mips_setboot(ib_params *params)
 {
 	u_int8_t buf[EWS4800MIPS_BOOT_BLOCK_MAX_SIZE];

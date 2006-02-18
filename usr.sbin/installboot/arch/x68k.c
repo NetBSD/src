@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k.c,v 1.2 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: x68k.c,v 1.3 2006/02/18 10:08:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: x68k.c,v 1.2 2003/10/27 00:12:44 lukem Exp $");
+__RCSID("$NetBSD: x68k.c,v 1.3 2006/02/18 10:08:07 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -63,6 +63,12 @@ __RCSID("$NetBSD: x68k.c,v 1.2 2003/10/27 00:12:44 lukem Exp $");
 
 static int x68k_clearheader(ib_params *, struct bbinfo_params *, uint8_t *);
 
+static int x68k_clearboot(ib_params *);
+static int x68k_setboot(ib_params *);
+
+struct ib_mach ib_mach_x68k =
+	{ "x68k", x68k_setboot, x68k_clearboot, no_editboot,
+		IB_STAGE1START | IB_STAGE2START };
 
 static struct bbinfo_params bbparams = {
 	X68K_BBINFO_MAGIC,
@@ -73,7 +79,7 @@ static struct bbinfo_params bbparams = {
 	BBINFO_BIG_ENDIAN,
 };
 
-int
+static int
 x68k_clearboot(ib_params *params)
 {
 
@@ -100,7 +106,7 @@ x68k_clearheader(ib_params *params, struct bbinfo_params *bb_params,
 	return 1;
 }
 
-int
+static int
 x68k_setboot(ib_params *params)
 {
 	struct stat	bootstrapsb;
