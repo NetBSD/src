@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1993
+ * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,52 +28,19 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: Ovfork.S,v 1.7 2003/08/07 16:42:33 agc Exp $"
+	/* .asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93" */
+	.asciz "$NetBSD: compat_sigsuspend13.S,v 1.1 2006/02/18 22:54:51 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
-
-/*
- * @(#)vfork.s	4.1 (Berkeley) 12/21/80
- * C library -- vfork
- */
 
 #include "SYS.h"
 
-WARN_REFERENCES(vfork, \
-    "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
+WARN_REFERENCES(sigsuspend, \
+    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
-/*
- * pid = vfork();
- *
- * %r1 == 0 in parent process, %r1 == 1 in child process.
- * %r0 == pid of child in parent, %r0 == pid of parent in child.
- *
- * trickery here, due to keith sklower, uses ret to clear the stack,
- * and then returns with a jump indirect, since only one person can return
- * with a ret off this stack... we do the ret before we vfork!
- */
-
-ENTRY(vfork, 0)
-	movl	16(%fp),%r2	# save return address before we smash it
-	movab	here,16(%fp)
+ENTRY(sigsuspend, 0)
+	movl	*4(%ap),4(%ap)		# indirect to mask arg
+	chmk	$ SYS_compat_13_sigsuspend13
+	jcc	1f
+	jmp	CERROR+2
+1:	clrl	%r0			# shouldnt happen
 	ret
-here:
-	chmk	$ SYS_vfork
-	bcs	err		# if failed, set errno and return -1
-	/* this next trick is Chris Torek's fault */
-	mnegl	%r1,%r1		# %r1 = 0xffffffff if child, 0 if parent
-	bicl2	%r1,%r0		# %r0 &= ~%r1, i.e., 0 if child, else unchanged
-	jmp	(%r2)
-
-err:
-#ifdef _REENTRANT
-	pushr	$0x5
-	calls	$0,_C_LABEL(__errno)
-	movl	(%sp)+,(%r0)
-	mnegl	$1,%r0
-	rsb
-#else
-	movl	%r0,_C_LABEL(errno)
-	mnegl	$1,%r0
-	jmp	(%r2)
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1993
+ * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,18 +28,29 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: __sigreturn14.S,v 1.4 2004/03/26 20:35:37 drochner Exp $"
+	/* .asciz "@(#)sigprocmask.s	8.1 (Berkeley) 6/4/93" */
+	.asciz "$NetBSD: compat_sigprocmask13.S,v 1.1 2006/02/18 22:54:51 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-/*
- * We must preserve the state of the registers as the user has set them up.
- */
-#ifdef GPROF
-#undef ENTRY
-#define	ENTRY(x, y)	_ENTRY(x, y); pushr $0x3f; _PROF_PROLOGUE; popr $0x3f
-#endif /* GPROF */
+WARN_REFERENCES(sigprocmask, \
+    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
-PSEUDO(__sigreturn14,compat_16___sigreturn14)
+ENTRY(sigprocmask, 0)
+	tstl	8(%ap)			# check new sigset pointer
+	bneq	1f			# if not null, indirect
+/*	movl	$0,8(%ap)		# null mask pointer: block empty set */
+	movl	$1,4(%ap)		# SIG_BLOCK
+	jbr	2f
+1:	movl	*8(%ap),8(%ap)		# indirect to new mask arg
+2:	chmk	$ SYS_compat_13_sigprocmask13
+	jcc	3f
+	jmp	CERROR+2
+
+3:	tstl	12(%ap)			# test if old mask requested
+	beql	out
+	movl	%r0,*12(%ap)		# store old mask
+out:
+	clrl	%r0
+	ret
