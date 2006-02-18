@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.4 2006/02/13 12:24:21 hamajima Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.5 2006/02/18 05:04:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.4 2006/02/13 12:24:21 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.5 2006/02/18 05:04:11 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -127,6 +127,9 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.4 2006/02/13 12:24:21 hamaj
 #include <sys/termios.h>
 #include <sys/ksyms.h>
 
+#include <net/if.h>
+#include <net/if_ether.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
@@ -137,6 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.4 2006/02/13 12:24:21 hamaj
 
 #define	DRAM_BLOCKS	4
 #include <machine/bootconfig.h>
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -303,6 +307,25 @@ int kgdb_devrate = KGDB_DEVRATE;
 #endif
 int kgdb_devmode = KGDB_DEVMODE;
 #endif /* KGDB */
+
+/*
+ * MAC address for the built-in Ethernet.
+ */
+uint8_t	armadillo9_ethaddr[ETHER_ADDR_LEN];
+
+static void
+armadillo9_device_register(device_t dev, void *aux)
+{
+
+	/* MAC address for the built-in Ethernet. */
+	if (strcmp(dev->dv_cfdata->cf_name, "epe") == 0) {
+		if (devprop_set(dev, "mac-addr", armadillo9_ethaddr,
+				ETHER_ADDR_LEN, PROP_ARRAY, 0) != 0) {
+			printf("WARNING: unable to set mac-addr property "
+			    "for %s\n", dev->dv_xname);
+		}
+	}
+}
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -876,6 +899,9 @@ initarm(void *arg)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
+	/* We have our own device_register() */
+	evbarm_device_register = armadillo9_device_register;
 
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);

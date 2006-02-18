@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2006/02/16 18:20:31 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2006/02/18 05:04:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2006/02/16 18:20:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2006/02/18 05:04:11 thorpej Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -107,7 +107,7 @@ device_register(struct device *dev, void *aux)
 		struct pci_attach_args *pa = aux;
 
 		if (BUILTIN_ETHERNET_P(pa)) {
-			if (prop_set(dev_propdb, dev, "mac-addr",
+			if (devprop_set(dev, "mac-addr",
 				     algor_ethaddr,
 				     sizeof(algor_ethaddr), 0, 0) != 0) {
 				printf("WARNING: unable to set mac-addr "
