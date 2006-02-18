@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.586 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.587 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -201,3 +201,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	rasops(9): Add shadow framebuffer support [jmcneill 20060218]
 	etcupdate: Add ability to update from a binary set file.  Change
 		the meaning of some options.  [apb 20060218]
+	splash(9): Add splash screen support [jmcneill 20060218]
+	vesafb(4): Add console driver for VBE 2.0+ framebuffers on i386
+		[jmcneill 20060218]
+	wsdisplay(4): Add WSDISPLAYIO_SSPLASH and WSDISPLAYIO_SPROGRESS
+		ioctls [jmcneill 20060218]
