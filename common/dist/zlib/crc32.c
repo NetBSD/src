@@ -1,4 +1,4 @@
-/*	$NetBSD: crc32.c,v 1.3 2006/01/25 23:15:55 uwe Exp $	*/
+/*	$NetBSD: crc32.c,v 1.4 2006/02/18 18:39:58 dsl Exp $	*/
 
 /* crc32.c -- compute the CRC-32 of a data stream
  * Copyright (C) 1995-2005 Mark Adler
@@ -32,9 +32,14 @@
 
 #define local static
 
+#if defined(__NetBSD__) && defined(_STANDALONE)
+#define NOBYFOUR
+#define DYNAMIC_CRC_TABLE
+#endif
+
 /* Find a four-byte integer type for crc32_little() and crc32_big(). */
 #ifndef NOBYFOUR
-#if defined(__NetBSD__) && (defined(_KERNEL) || defined(_STANDALONE))
+#if defined(__NetBSD__) && defined(_KERNEL)
 #  define BYFOUR
    typedef uint32_t u4;
 #else
@@ -55,7 +60,7 @@
 #      endif
 #    endif
 #  endif /* STDC */
-#endif /* __NetBSD__ && (_KERNEL || _STANDALONE) */
+#endif /* __NetBSD__ && _KERNEL */
 #endif /* !NOBYFOUR */
 
 /* Definitions for doing the crc four data bytes at a time. */
