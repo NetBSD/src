@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.23.2.1 2006/02/18 11:12:18 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.23.2.2 2006/02/18 14:49:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.23.2.1 2006/02/18 11:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.23.2.2 2006/02/18 14:49:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
-	map->_dm_proc = NULL;
+	map->_dm_vmspace = NULL;
 	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
@@ -338,7 +338,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
-		map->_dm_proc = p;
+		map->_dm_vmspace = vm;
 
 		/*
 		 * For linear buffers, we support marking the mapping
@@ -395,7 +395,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
-		map->_dm_proc = NULL;	/* always kernel */
+		map->_dm_vmspace = vmspace_kernel();	/* always kernel */
 	}
 	return error;
 }
@@ -446,7 +446,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
-		map->_dm_proc = p;
+		map->_dm_vmspace = uio->uio_vmspace;
 	}
 	return error;
 }
@@ -485,7 +485,7 @@ _bus_dmamap_unload(t, map)
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	map->_dm_flags &= ~COBALT_DMAMAP_COHERENT;
-	map->_dm_proc = NULL;
+	map->_dm_vmspace = NULL;
 }
 
 /*
@@ -564,7 +564,8 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 *
 	 * This should be true the vast majority of the time.
 	 */
-	if (__predict_true(map->_dm_proc == NULL || map->_dm_proc == curproc))
+	if (__predict_true(VM_SPACE_IS_KERNEL_P(map->_dm_vmspace) ||
+	    map->_dm_vmspace == curproc->p_vmspace))
 		useindex = 0;
 	else
 		useindex = 1;
