@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2006/02/18 17:09:35 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2006/02/18 17:13:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2006/02/18 17:09:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2006/02/18 17:13:39 thorpej Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2006/02/18 17:09:35 thorpej Exp $"
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+
+#include <dev/pci/pcivar.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
