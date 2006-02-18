@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.25.2.2 2006/02/18 23:43:25 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.25.2.3 2006/02/18 23:44:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25.2.2 2006/02/18 23:43:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25.2.3 2006/02/18 23:44:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -564,12 +564,12 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
+_bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags, lastaddrp, segp, first)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
-	struct proc *p;
+	struct vmspace *vm;
 	int flags;
 	vaddr_t *lastaddrp;
 	int *segp;
@@ -586,10 +586,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 	    buf, buflen, flags, first);
 #endif	/* DEBUG_DMA */
 
-	if (p != NULL)
-		pmap = p->p_vmspace->vm_map.pmap;
-	else
-		pmap = pmap_kernel();
+	pmap = vm_map_pmap(&vm->vm_map);
 
 	lastaddr = *lastaddrp;
 	bmask  = ~(map->_dm_boundary - 1);
