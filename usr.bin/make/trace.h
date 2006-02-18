@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.h,v 1.1 2000/12/29 23:11:08 sommerfeld Exp $	*/
+/*	$NetBSD: trace.h,v 1.2 2006/02/18 01:28:48 sjg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ typedef enum {
 	MAKEERROR,
 	JOBSTART,
 	JOBEND,
-	MAKEINTR,
+	MAKEINTR
 } TrEvent;
 
 void Trace_Init(const char *);
