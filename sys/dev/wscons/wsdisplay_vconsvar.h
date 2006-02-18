@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.1 2006/02/12 20:55:35 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.2 2006/02/18 18:56:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -43,6 +43,7 @@ struct vcons_screen {
 	LIST_ENTRY(vcons_screen) next;
 	void *scr_cookie;
 	struct vcons_data *scr_vd;
+	struct vcons_data *scr_origvd;
 	const struct wsscreen_descr *scr_type;
 	uint16_t *scr_chars;
 	long *scr_attrs;
