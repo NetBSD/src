@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.33.2.2 2006/02/05 12:23:56 yamt Exp $	*/
+/*	$NetBSD: uio.h,v 1.33.2.3 2006/02/18 13:34:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -84,7 +84,7 @@ struct uio {
 	enum	uio_rw uio_rw;	/* see above */
 	struct	vmspace *uio_vmspace;
 };
-#define	UIO_SETUP_SYSSPACE(uio)	(uio)->uio_vmspace = vmspace_kernel()
+#define	UIO_SETUP_SYSSPACE(uio)	uio_setup_sysspace(uio)
 
 #endif /* __UIO_EXPOSE */
 
@@ -101,6 +101,8 @@ struct uio {
 MALLOC_DECLARE(M_IOV);
 
 #define UIO_SMALLIOV	8		/* 8 on stack, else malloc */
+
+void uio_setup_sysspace(struct uio *);
 #endif
 
 #ifndef	_KERNEL
