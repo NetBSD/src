@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.16.2.2 2006/02/18 23:28:28 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.16.2.3 2006/02/18 23:52:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16.2.2 2006/02/18 23:28:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16.2.3 2006/02/18 23:52:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,6 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
-	struct proc *p = NULL;
 	struct iovec *iov;
 	caddr_t addr;
 
