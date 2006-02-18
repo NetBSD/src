@@ -1,4 +1,4 @@
-.\" $NetBSD: pw_policy.3,v 1.3 2006/02/18 16:32:45 elad Exp $
+.\" $NetBSD: pw_policy.3,v 1.4 2006/02/18 16:45:01 elad Exp $
 .\"
 .\" Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\"
@@ -211,6 +211,14 @@ And that the user must change character class every 2 characters:
 .Bd -literal -offset indent
 ntoggles = *-2
 .Ed
+.Pp
+Note that when using the
+.Dq nclasses
+directive, the policy will be initialized to allow any number of characters
+from all classes.
+If desired, this should be overridden after the
+.Dq nclasses
+option.
 .Sh RETURN VALUES
 .Fn pw_policy_load
 returns a

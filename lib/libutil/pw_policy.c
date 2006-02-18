@@ -1,4 +1,4 @@
-/* $NetBSD: pw_policy.c,v 1.4 2006/02/18 16:32:45 elad Exp $ */
+/* $NetBSD: pw_policy.c,v 1.5 2006/02/18 16:45:01 elad Exp $ */
 
 /*-
  * Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -250,6 +250,19 @@ pw_policy_handle_nclasses(HANDLER_ARGS)
 	case LOAD_POLICY:
 		if (pw_policy_parse_range(arg, &policy->minclasses, &policy->maxclasses) != 0)
 			return (EINVAL);
+
+		/*
+		 * Set these to -1 just in case. This indicates we allow any
+		 * number of characters from all classes.
+		 */
+		policy->minlower = -1;
+		policy->maxlower = -1;
+		policy->minupper = -1;
+		policy->maxupper = -1;
+		policy->mindigits = -1;
+		policy->maxdigits = -1;
+		policy->minpunct = -1;
+		policy->maxpunct = -1;
 
 		break;
 
