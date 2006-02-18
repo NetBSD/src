@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.23.2.2 2006/02/18 14:49:22 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.23.2.3 2006/02/18 14:52:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.23.2.2 2006/02/18 14:49:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.23.2.3 2006/02/18 14:52:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -564,7 +564,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 *
 	 * This should be true the vast majority of the time.
 	 */
-	if (__predict_true(VM_SPACE_IS_KERNEL_P(map->_dm_vmspace) ||
+	if (__predict_true(VMSPACE_IS_KERNEL_P(map->_dm_vmspace) ||
 	    map->_dm_vmspace == curproc->p_vmspace))
 		useindex = 0;
 	else
