@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.10 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: vax.c,v 1.11 2006/02/18 10:08:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.10 2003/10/27 00:12:44 lukem Exp $");
+__RCSID("$NetBSD: vax.c,v 1.11 2006/02/18 10:08:07 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -92,7 +92,14 @@ __RCSID("$NetBSD: vax.c,v 1.10 2003/10/27 00:12:44 lukem Exp $");
 static int	load_bootstrap(ib_params *, char **,
 		    uint32_t *, uint32_t *, size_t *);
 
-int
+static int vax_clearboot(ib_params *);
+static int vax_setboot(ib_params *);
+
+struct ib_mach ib_mach_vax =
+	{ "vax", vax_setboot, vax_clearboot, no_editboot,
+		IB_STAGE1START | IB_APPEND | IB_SUNSUM };
+
+static int
 vax_clearboot(ib_params *params)
 {
 	struct vax_boot_block	bb;
@@ -150,7 +157,7 @@ vax_clearboot(ib_params *params)
 	return (1);
 }
 
-int
+static int
 vax_setboot(ib_params *params)
 {
 	struct stat		bootstrapsb;

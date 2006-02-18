@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.21 2006/01/30 21:15:37 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.22 2006/02/18 10:08:07 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.21 2006/01/30 21:15:37 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.22 2006/02/18 10:08:07 dsl Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -64,6 +64,19 @@ static const char *const console_names[] = {
 	"pc", "com0", "com1", "com2", "com3",
 	"com0kbd", "com1kbd", "com2kbd", "com3kbd",
 	NULL };
+
+static int i386_setboot(ib_params *);
+static int i386_editboot(ib_params *);
+
+struct ib_mach ib_mach_i386 =
+	{ "i386", i386_setboot, no_clearboot, i386_editboot,
+		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
+		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT };
+
+struct ib_mach ib_mach_amd64 =
+	{ "amd64", i386_setboot, no_clearboot, i386_editboot,
+		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
+		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT };
 
 static void
 show_i386_boot_params(struct x86_boot_params  *bpp)
@@ -153,7 +166,7 @@ update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
 	return 0;
 }
 
-int
+static int
 i386_setboot(ib_params *params)
 {
 	int		retval, i, bpbsize;
@@ -323,7 +336,7 @@ i386_setboot(ib_params *params)
 	return retval;
 }
 
-int
+static int
 i386_editboot(ib_params *params)
 {
 	int		retval;
