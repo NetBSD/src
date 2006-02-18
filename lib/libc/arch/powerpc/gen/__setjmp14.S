@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.4 2002/07/30 06:07:57 matt Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.4 2006/02/18 00:45:22 matt Exp $	*/
 
 #include <sys/syscall.h>
 
@@ -6,7 +6,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$NetBSD: setjmp.S,v 1.4 2002/07/30 06:07:57 matt Exp $"
+	.asciz "$NetBSD: __setjmp14.S,v 1.4 2006/02/18 00:45:22 matt Exp $"
 #endif
 
 /*
@@ -19,31 +19,32 @@
  * The previous signal state is restored.
  */
 
-ENTRY(setjmp)
+ENTRY(__setjmp14)
 	mr	%r6,%r3
 	li	%r3,1			# SIG_BLOCK
 	li	%r4,0
-	li	%r0,SYS_compat_13_sigprocmask13
+	addi	%r5,%r6,100		# &sigmask
+	li	%r0,SYS___sigprocmask14
 	sc				# assume no error	XXX
 	mflr	%r11
 	mfcr	%r12
 	mr	%r10,%r1
 	mr	%r9,%r2
-	mr	%r8,%r3
-	stmw	%r8,4(%r6)
+	stmw	%r8,4(%r6)		# save r8-r31
 	li	%r3,0
 	blr
 
-ENTRY(longjmp)
-	lmw	%r8,4(%r3)
+ENTRY(__longjmp14)
+	lmw	%r8,4(%r3)		# load r8-r31
 	mr	%r6,%r4
 	mtlr	%r11
 	mtcr	%r12
 	mr	%r2,%r9
 	mr	%r1,%r10
-	mr	%r4,%r8
+	addi	%r4,%r3,100		# &sigmask
 	li	%r3,3			# SIG_SETMASK
-	li	%r0,SYS_compat_13_sigprocmask13
+	li	%r5,0
+	li	%r0,SYS___sigprocmask14
 	sc				# assume no error	XXX
 	or.	%r3,%r6,%r6
 	bnelr
