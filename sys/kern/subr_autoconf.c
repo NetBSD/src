@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.105 2006/02/18 19:09:53 jmcneill Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.106 2006/02/18 19:40:42 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.105 2006/02/18 19:09:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.106 2006/02/18 19:40:42 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -97,10 +97,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.105 2006/02/18 19:09:53 jmcneill
 #include <sys/userconf.h>
 #endif
 
+#ifdef __i386__
 #include "opt_splash.h"
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
 #include <dev/splash/splash.h>
 extern struct splash_progress *splash_progress_state;
+#endif
 #endif
 
 /*
