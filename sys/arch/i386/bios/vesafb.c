@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.1 2006/02/18 19:07:11 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.2 2006/02/18 19:33:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.1 2006/02/18 19:07:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.2 2006/02/18 19:33:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,8 +427,10 @@ vesafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		sc->sc_sp.sp_force = 1;
 		splash_progress_update(&sc->sc_sp);
 		sc->sc_sp.sp_force = 0;
-#endif
+		return 0;
+#else
 		return ENODEV;
+#endif
 	}
 
 	return EPASSTHROUGH;
