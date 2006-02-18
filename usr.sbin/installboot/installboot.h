@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.29 2006/02/18 10:08:07 dsl Exp $	*/
+/*	$NetBSD: installboot.h,v 1.30 2006/02/18 11:01:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -161,23 +161,23 @@ int		raw_match(ib_params *);
 int		raw_findstage2(ib_params *, uint32_t *, ib_block *);
 
 	/* machines.c */
-struct ib_mach ib_mach_alpha;
-struct ib_mach ib_mach_amd64;
-struct ib_mach ib_mach_amiga;
-struct ib_mach ib_mach_ews4800mips;
-struct ib_mach ib_mach_hp300;
-struct ib_mach ib_mach_hp700;
-struct ib_mach ib_mach_i386;
-struct ib_mach ib_mach_macppc;
-struct ib_mach ib_mach_news68k;
-struct ib_mach ib_mach_newsmips;
-struct ib_mach ib_mach_next68k;
-struct ib_mach ib_mach_pmax;
-struct ib_mach ib_mach_sparc;
-struct ib_mach ib_mach_sparc64;
-struct ib_mach ib_mach_sun2;
-struct ib_mach ib_mach_sun3;
-struct ib_mach ib_mach_vax;
-struct ib_mach ib_mach_x68k;
+extern struct ib_mach ib_mach_alpha;
+extern struct ib_mach ib_mach_amd64;
+extern struct ib_mach ib_mach_amiga;
+extern struct ib_mach ib_mach_ews4800mips;
+extern struct ib_mach ib_mach_hp300;
+extern struct ib_mach ib_mach_hp700;
+extern struct ib_mach ib_mach_i386;
+extern struct ib_mach ib_mach_macppc;
+extern struct ib_mach ib_mach_news68k;
+extern struct ib_mach ib_mach_newsmips;
+extern struct ib_mach ib_mach_next68k;
+extern struct ib_mach ib_mach_pmax;
+extern struct ib_mach ib_mach_sparc;
+extern struct ib_mach ib_mach_sparc64;
+extern struct ib_mach ib_mach_sun2;
+extern struct ib_mach ib_mach_sun3;
+extern struct ib_mach ib_mach_vax;
+extern struct ib_mach ib_mach_x68k;
 
 #endif	/* _INSTALLBOOT_H */
