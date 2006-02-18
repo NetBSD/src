@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.31.2.1 2006/02/18 11:12:19 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.31.2.2 2006/02/18 16:10:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31.2.1 2006/02/18 11:12:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31.2.2 2006/02/18 16:10:08 yamt Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1008,7 +1008,7 @@ mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio,
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(NULL, map, addr, minlen,
-		    uo->uio_vmspace, flags, &lastaddr, &seg, first);
+		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
 		first = 0;
 
 		resid -= minlen;
