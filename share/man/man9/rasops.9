@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasops.9,v 1.9 2005/01/21 21:14:06 rumble Exp $
+.\"     $NetBSD: rasops.9,v 1.10 2006/02/18 18:36:26 jmcneill Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,6 +70,12 @@ struct rasops_info {
 	int	ri_width;	/* width (pels) */
 	int	ri_height;	/* height (pels) */
 	int	ri_stride;	/* stride in bytes */
+
+	/*
+	 * If you want shadow framebuffer support, point ri_hwbits
+	 * to the real framebuffer, and ri_bits to the shadow framebuffer
+	 */
+	u_char	*ri_hwbits;
 
 	/*
 	 * These can optionally be left zeroed out. If you fill ri_font,
