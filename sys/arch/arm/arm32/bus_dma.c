@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.47.2.1 2006/02/18 11:12:18 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.47.2.2 2006/02/18 13:52:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.47.2.1 2006/02/18 11:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.47.2.2 2006/02/18 13:52:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->_dm_origbuf = NULL;
 	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
-	map->_dm_proc = NULL;
+	map->_dm_vmspace = vmspace_kernel();
 	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
@@ -239,7 +239,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	map->dm_nsegs = 0;
 	map->_dm_origbuf = NULL;
 	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
-	map->_dm_proc = NULL;
+	map->_dm_vmspace = NULL;
 
 	free(map, M_DMAMAP);
 }
@@ -284,7 +284,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		map->dm_mapsize = buflen;
 		map->_dm_origbuf = buf;
 		map->_dm_buftype = ARM32_BUFTYPE_LINEAR;
-		map->_dm_proc = p;
+		map->_dm_vmspace = vm;
 	}
 #ifdef DEBUG_DMA
 	printf("dmamap_load: error=%d\n", error);
@@ -398,7 +398,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->_dm_origbuf = m0;
 		map->_dm_buftype = ARM32_BUFTYPE_MBUF;
-		map->_dm_proc = NULL;	/* always kernel */
+		map->_dm_vmspace = vmspace_kernel();	/* always kernel */
 	}
 #ifdef DEBUG_DMA
 	printf("dmamap_load_mbuf: error=%d\n", error);
@@ -449,7 +449,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		map->dm_mapsize = uio->uio_resid;
 		map->_dm_origbuf = uio;
 		map->_dm_buftype = ARM32_BUFTYPE_UIO;
-		map->_dm_proc = p;
+		map->_dm_vmspace = uio->uio_vmspace;
 	}
 	return (error);
 }
@@ -486,7 +486,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->dm_nsegs = 0;
 	map->_dm_origbuf = NULL;
 	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
-	map->_dm_proc = NULL;
+	map->_dm_vmspace = NULL;
 }
 
 static inline void
@@ -700,8 +700,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 * vmspace has not been active since the last time a full
 	 * cache flush was performed, we don't need to do anything.
 	 */
-	if (__predict_false(map->_dm_proc != NULL &&
-	    map->_dm_proc->p_vmspace->vm_map.pmap->pm_cstate.cs_cache_d == 0))
+	if (__predict_false(!VMSPACE_IS_KERNEL_P(map->_dm_vmspace) &&
+	    vm_map_pmap(&map->_dm_vmspace->vm_map)->pm_cstate.cs_cache_d == 0))
 		return;
 
 	switch (map->_dm_buftype) {
