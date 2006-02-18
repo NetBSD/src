@@ -1,12 +1,11 @@
-/*	$NetBSD: shmctl.S,v 1.1 1999/08/25 05:09:31 thorpej Exp $	*/
+/*	$NetBSD: compat___sigtramp1.S,v 1.1 2006/02/18 00:21:28 matt Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,7 +38,19 @@
 
 #include "SYS.h"
 
-WARN_REFERENCES(shmctl, \
-    "warning: reference to compatibility shmctl(); include <sys/shm.h> for correct reference")
-
-PSEUDO(shmctl,compat_14_shmctl)
+/*
+ * On entry, stack and registers look like:
+ *
+ *	r3	signal number
+ *	r4	signal specific code
+ *	r5	pointer to sigcontext structure
+ *	lr	address of handler
+ *
+ *	sp->	sigcontext structure
+ */
+ENTRY_NOPROFILE(__sigtramp_sigcontext_1)
+	addi	%r1,%r1,-16		/* space for callee */
+	blrl				/* call handler */
+	addi	%r3,%r1,16		/* compute address of sigcontext */
+	_DOSYSCALL(compat_16___sigreturn14)	/* and call sigreturn */
+	_DOSYSCALL(exit)		/* or exit with errno if failed */

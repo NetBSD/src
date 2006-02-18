@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.8 2002/07/30 06:08:01 matt Exp $	*/
+/*	$NetBSD: compat_sigpending13.S,v 1.1 2006/02/18 00:21:28 matt Exp $	*/
 
 #include "SYS.h"
 
