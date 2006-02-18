@@ -1,11 +1,11 @@
-#	$NetBSD: std.armadillo9,v 1.1 2005/11/13 06:33:06 hamajima Exp $
+#	$NetBSD: std.armadillo9,v 1.1.6.1 2006/02/18 15:38:32 yamt Exp $
 #
 # standard NetBSD/evbarm for Armadillo9 options
 
 machine	evbarm arm
 include		"conf/std"	# MI standard options
 
-# Pull in tsarm config definitions.
+# Pull in armadillo9 config definitions.
 include "arch/evbarm/conf/files.armadillo9"
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.59.2.2 2006/02/01 14:52:20 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.59.2.3 2006/02/18 15:39:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.59.2.2 2006/02/01 14:52:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.59.2.3 2006/02/18 15:39:18 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.59.2.2 2006/02/01 14:52:20 yamt Ex
 #define	VERIEXEC_NEED_NODE
 #include <sys/verified_exec.h>
 #endif /* VERIFIED_EXEC */
+#include <sys/stat.h>
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>
@@ -92,6 +93,11 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.59.2.2 2006/02/01 14:52:20 yamt Ex
 
 /* XXX this should not be here */
 int security_curtain = 0;
+int security_setidcore_dump;
+char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
+uid_t security_setidcore_owner = 0;
+gid_t security_setidcore_group = 0;
+mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
 
 /*
  * try over estimating by 5 procs/lwps
@@ -147,6 +153,8 @@ static int sysctl_kern_file2(SYSCTLFN_PROTO);
 #ifdef VERIFIED_EXEC
 static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
 #endif
+static int sysctl_security_setidcore(SYSCTLFN_PROTO);
+static int sysctl_security_setidcorename(SYSCTLFN_PROTO);
 static int sysctl_kern_cpid(SYSCTLFN_PROTO);
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
@@ -1036,6 +1044,49 @@ SYSCTL_SETUP(sysctl_security_setup, "sysctl security subtree setup")
 				    " to users not owning them."),
 		       NULL, 0, &security_curtain, 0,
 		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "setid_core",
+		       SYSCTL_DESCR("Set-id processes' coredump settings."),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "dump",
+		       SYSCTL_DESCR("Allow set-id processes to dump core."),
+		       sysctl_security_setidcore, 0, &security_setidcore_dump,
+		       sizeof(security_setidcore_dump),
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "path",
+		       SYSCTL_DESCR("Path pattern for set-id coredumps."),
+		       sysctl_security_setidcorename, 0,
+		       &security_setidcore_path,
+		       sizeof(security_setidcore_path),
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "owner",
+		       SYSCTL_DESCR("Owner id for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_owner,
+		       0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "group",
+		       SYSCTL_DESCR("Group id for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_group,
+		       0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "mode",
+		       SYSCTL_DESCR("Mode for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_mode,
+		       0,
+		       CTL_CREATE, CTL_EOL);
 }
 
 /*
@@ -1399,26 +1450,31 @@ static int
 sysctl_kern_defcorename(SYSCTLFN_ARGS)
 {
 	int error;
-	char newcorename[MAXPATHLEN];
+	char *newcorename;
 	struct sysctlnode node;
 
+	newcorename = PNBUF_GET();
 	node = *rnode;
 	node.sysctl_data = &newcorename[0];
 	memcpy(node.sysctl_data, rnode->sysctl_data, MAXPATHLEN);
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
+	if (error || newp == NULL) {
+		goto done;
+	}
 
 	/*
 	 * when sysctl_lookup() deals with a string, it's guaranteed
 	 * to come back nul terminated.  so there.  :)
 	 */
-	if (strlen(newcorename) == 0)
-		return (EINVAL);
-
-	memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
-
-	return (0);
+	if (strlen(newcorename) == 0) {
+		error = EINVAL;
+	} else {
+		memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
+		error = 0;
+	}
+done:
+	PNBUF_PUT(newcorename);
+	return error;
 }
 
 /*
@@ -2518,6 +2574,52 @@ sysctl_kern_veriexec(SYSCTLFN_ARGS)
 	return (error);
 }
 #endif /* VERIFIED_EXEC */
+
+static int
+sysctl_security_setidcore(SYSCTLFN_ARGS)
+{
+	int newsize, error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &newsize;
+	newsize = *(int *)rnode->sysctl_data;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (securelevel > 0)
+		return (EPERM);
+
+	*(int *)rnode->sysctl_data = newsize;
+
+	return 0;
+}
+
+static int
+sysctl_security_setidcorename(SYSCTLFN_ARGS)
+{
+	int error;
+	char newsetidcorename[MAXPATHLEN];
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &newsetidcorename[0];
+	memcpy(node.sysctl_data, rnode->sysctl_data, MAXPATHLEN);
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (securelevel > 0)
+		return (EPERM);
+
+	if (strlen(newsetidcorename) == 0)
+		return (EINVAL);
+
+	memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
+
+	return (0);
+}
 
 /*
  * sysctl helper routine for kern.cp_id node.  maps cpus to their

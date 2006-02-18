@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.9 2005/12/11 12:17:11 christos Exp $ */
+/* $NetBSD: autoconf.c,v 1.9.2.1 2006/02/18 15:38:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.1 2006/02/18 15:38:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ device_register(struct device *dev, void *aux)
 				 */
 				ethaddr[4] += 0x10;
 			}
-			if (prop_set(dev_propdb, dev, "mac-addr",
+			if (devprop_set(dev, "mac-addr",
 				     ethaddr, sizeof(ethaddr), 0, 0) != 0) {
 				printf("WARNING: unable to set mac-addr "
 				    "property for %s\n", dev->dv_xname);

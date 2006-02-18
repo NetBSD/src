@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34.2.1 2006/02/01 14:51:37 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34.2.2 2006/02/18 15:38:48 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -92,10 +92,10 @@
  * page bits.
  */
 struct page_size_map {
-	u_int64_t mask;
-	u_int64_t code;
+	uint64_t mask;
+	uint64_t code;
 #ifdef DEBUG
-	u_int64_t use;
+	uint64_t use;
 #endif
 };
 extern struct page_size_map page_size_map[];
@@ -133,9 +133,9 @@ struct pmap {
  * This comes from the PROM and is used to map prom entries.
  */
 struct prom_map {
-	u_int64_t	vstart;
-	u_int64_t	vsize;
-	u_int64_t	tte;
+	uint64_t	vstart;
+	uint64_t	vsize;
+	uint64_t	tte;
 };
 
 #define PMAP_NC		0x001	/* Set the E bit in the page */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.118.2.1 2006/02/01 14:52:48 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.118.2.2 2006/02/18 15:39:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -870,8 +870,8 @@ void	mbinit(void);
 void	m_move_pkthdr(struct mbuf *to, struct mbuf *from);
 
 /* Inline routines. */
-static inline u_int m_length(struct mbuf *) __unused;
-static inline void m_ext_free(struct mbuf *, boolean_t) __unused;
+static __inline u_int m_length(struct mbuf *) __unused;
+static __inline void m_ext_free(struct mbuf *, boolean_t) __unused;
 
 /* Packet tag routines */
 struct	m_tag *m_tag_get(int, int, int);
@@ -914,10 +914,12 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
 #define	PACKET_TAG_INET6			26 /* IPv6 info */
 
+#define	PACKET_TAG_ECO_RETRYPARMS		27 /* Econet retry parameters */
+
 /*
  * Return the number of bytes in the mbuf chain, m.
  */
-static inline u_int
+static __inline u_int
 m_length(struct mbuf *m)
 {
 	struct mbuf *m0;
@@ -938,7 +940,7 @@ m_length(struct mbuf *m)
  * => if 'dofree', free the mbuf m itsself as well.
  * => called at splvm.
  */
-static inline void
+static __inline void
 m_ext_free(struct mbuf *m, boolean_t dofree)
 {
 

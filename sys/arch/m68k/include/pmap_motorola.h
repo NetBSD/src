@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.9 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.9.2.1 2006/02/18 15:38:37 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -174,7 +174,7 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
 #define	pmap_update(pmap)		/* nothing (yet) */
 
-static inline void
+static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */

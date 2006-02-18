@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.34 2005/12/07 09:10:19 tsutsui Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.34.2.1 2006/02/18 15:38:46 yamt Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -273,7 +273,7 @@ wd*		at atabus? drive ? flags 0x0000
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	4
+pseudo-device	vnd	
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
@@ -303,18 +303,18 @@ wi*	at pcmcia?
 pseudo-device	loop
 
 ## PPP, the successor to SLIP.  See pppd(8).
-pseudo-device	ppp		2
+pseudo-device	ppp		
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
-pseudo-device	tun		4
+pseudo-device	tun		
 
 ## Generic L3 over IP tunnel
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	gre			# generic L3 over IP tunnel
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-pseudo-device	bpfilter	16
+pseudo-device	bpfilter
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.

@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.13 2005/12/08 22:41:44 yamt Exp $ */
+/* $NetBSD: if_aumac.c,v 1.13.2.1 2006/02/18 15:38:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.13 2005/12/08 22:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.13.2.1 2006/02/18 15:38:41 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -235,7 +235,7 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_st = aa->aa_st;
 
 	/* Get the MAC address. */
-	if (prop_get(dev_propdb, &sc->sc_dev, "mac-addr", enaddr,
+	if (devprop_get(&sc->sc_dev, "mac-addr", enaddr,
 		     sizeof(enaddr), NULL) != sizeof(enaddr)) {
 		printf("%s: unable to get mac-addr property\n",
 		    sc->sc_dev.dv_xname);

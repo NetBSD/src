@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.21 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.21.2.1 2006/02/18 15:38:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.21 2005/12/11 12:18:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.21.2.1 2006/02/18 15:38:45 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -207,5 +207,5 @@ prep_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 	    PCI_PRODUCT(id) == PCI_PRODUCT_WEITEK_P9100)
 		return 0;
 
-	return (PCI_CONF_ALL & ~PCI_CONF_MAP_ROM);
+	return (PCI_CONF_DEFAULT);
 }

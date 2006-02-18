@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.2.1 2006/02/18 15:38:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -74,7 +74,7 @@ extern void softintr_init(void);
 extern void *softintr_establish(int, void (*)(void *), void *);
 extern void softintr_disestablish(void *);
 
-static inline void
+static __inline void
 softintr_schedule(void *arg)
 {
 	struct softintr_handler * const sh = arg;
@@ -99,10 +99,10 @@ extern void isr_add_custom(int, void *);
  * (See the GCC extensions info document.)
  */
 
-static inline int _getsr(void);
+static __inline int _getsr(void);
 
 /* Get current sr value. */
-static inline int
+static __inline int
 _getsr(void)
 {
 	int rv;

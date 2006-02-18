@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.42 2005/12/07 09:10:19 tsutsui Exp $
+#	$NetBSD: NATSUMI,v 1.42.2.1 2006/02/18 15:38:44 yamt Exp $
 #
 #	for development
 #
@@ -406,20 +406,20 @@ joy*	at isapnp?			# Game ports (usually on audio cards)
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	16	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-#pseudo-device	ppp		1	# Point-to-Point Protocol
-#pseudo-device	sl		2	# Serial Line IP
-#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-#pseudo-device	tun		2	# network tunneling over tty
-pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		2	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		2	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+#pseudo-device	tun			# network tunneling over tty
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

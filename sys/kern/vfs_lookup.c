@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.65.2.1 2005/12/31 11:14:01 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.65.2.2 2006/02/18 15:39:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.65.2.1 2005/12/31 11:14:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.65.2.2 2006/02/18 15:39:18 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
+#include "opt_magiclinks.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +64,12 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.65.2.1 2005/12/31 11:14:01 yamt Exp
 #ifdef SYSTRACE
 #include <sys/systrace.h>
 #endif
+
+#ifndef MAGICLINKS
+#define MAGICLINKS 0
+#endif
+
+int vfs_magiclinks = MAGICLINKS;
 
 struct pool pnbuf_pool;		/* pathname buffer pool */
 struct pool_cache pnbuf_cache;	/* pathname buffer cache */
@@ -108,10 +115,11 @@ struct pool_cache pnbuf_cache;	/* pathname buffer cache */
 static int
 symlink_magic(struct proc *p, char *cp, int *len)
 {
-	char tmp[MAXPATHLEN];
+	char *tmp;
 	int change, i, newlen;
 	int termchar = '/';
 
+	tmp = PNBUF_GET();
 	for (change = i = newlen = 0; i < *len; ) {
 		if (cp[i] != '@') {
 			tmp[newlen++] = cp[i++];
@@ -161,11 +169,11 @@ symlink_magic(struct proc *p, char *cp, int *len)
 		}
 	}
 
-	if (! change)
-		return (0);
-
-	memcpy(cp, tmp, newlen);
-	*len = newlen;
+	if (change) {
+		memcpy(cp, tmp, newlen);
+		*len = newlen;
+	}
+	PNBUF_PUT(tmp);
 
 	return (0);
 }
@@ -330,7 +338,7 @@ namei(struct nameidata *ndp)
 		 * Do symlink substitution, if appropriate, and
 		 * check length for potential overflow.
 		 */
-		if (((ndp->ni_vp->v_mount->mnt_flag & MNT_MAGICLINKS) &&
+		if ((vfs_magiclinks &&
 		     symlink_magic(cnp->cn_lwp->l_proc, cp, &linklen)) ||
 		    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
 			error = ENAMETOOLONG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_vnd.c,v 1.4.2.1 2006/02/01 14:52:36 yamt Exp $	*/
+/*	$NetBSD: lkminit_vnd.c,v 1.4.2.2 2006/02/18 15:39:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.4.2.1 2006/02/01 14:52:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.4.2.2 2006/02/18 15:39:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.4.2.1 2006/02/01 14:52:36 yamt Exp
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+#include <sys/device.h>
 
 CFDRIVER_DECL(vnd, DV_DISK, NULL);
 

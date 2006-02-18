@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43.2.1 2006/02/01 14:51:37 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.43.2.2 2006/02/18 15:38:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.2.1 2006/02/01 14:51:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.2.2 2006/02/18 15:38:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,6 +334,7 @@ cpu_attach(parent, dev, aux)
 	 * in there.
 	 */
 	alloc_cpuinfo((u_int)node);
+	printf("%s: upa id %" PRIu64 "\n", dev->dv_xname, CPU_UPAID);
 }
 
 #if defined(MULTIPROCESSOR)

@@ -1,8 +1,20 @@
-#	$NetBSD: files.alchemy,v 1.4 2005/12/11 12:18:09 christos Exp $
+#	$NetBSD: files.alchemy,v 1.4.2.1 2006/02/18 15:38:41 yamt Exp $
 
+defflag opt_alchemy.h		ALCHEMY_AU1000
+				ALCHEMY_AU1100
+				ALCHEMY_AU1500
+				ALCHEMY_AU1550
+
+file	arch/mips/alchemy/au_chipdep.c
+file	arch/mips/alchemy/au1000.c		alchemy_au1000
+file	arch/mips/alchemy/au1100.c		alchemy_au1100
+file	arch/mips/alchemy/au1500.c		alchemy_au1500
+file	arch/mips/alchemy/au1550.c		alchemy_au1550
 file	arch/mips/alchemy/au_icu.c
 file	arch/mips/alchemy/au_timer.c
 file	arch/mips/alchemy/au_cpureg_mem.c
+file	arch/mips/alchemy/au_wired_space.c
+file	arch/mips/alchemy/au_himem_space.c
 
 # Alchemy peripheral bus
 device	aubus { [addr=-1] }
@@ -36,3 +48,13 @@ file	arch/mips/alchemy/dev/ohci_aubus.c	ohci
 device	auaudio: audiobus, auconv, mulaw, ac97, aurateconv
 attach	auaudio at aubus
 file	arch/mips/alchemy/dev/auaudio.c		auaudio
+
+# On-chip PCI
+device	aupci: pcibus
+attach	aupci at aubus
+file	arch/mips/alchemy/dev/aupci.c		aupci
+
+# On-chip GPIO
+device	augpio: gpiobus
+attach	augpio at aubus
+file	arch/mips/alchemy/dev/augpio.c		augpio

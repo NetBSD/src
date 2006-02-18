@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.78 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.78.2.1 2006/02/18 15:39:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.78 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.78.2.1 2006/02/18 15:39:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -503,8 +503,13 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #endif
 
 	switch(dst->sa_family) {
+#ifdef INET6
+	case AF_INET6:
+#endif
 #ifdef INET
 	case AF_INET:
+#endif
+#if defined(INET) || defined(INET6)
 		if (tp->tun_flags & TUN_PREPADDR) {
 			/* Simple link-layer header */
 			M_PREPEND(m0, dst->sa_len, M_DONTWAIT);
@@ -800,6 +805,11 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		ifq = &ipintrq;
 		isr = NETISR_IP;
 		break;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		ifq = &ip6intrq;
+		isr = NETISR_IPV6;
 #endif
 	default:
 		error = EAFNOSUPPORT;

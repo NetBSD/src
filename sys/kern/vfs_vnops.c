@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.102.2.2 2006/01/15 10:02:56 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.102.2.3 2006/02/18 15:39:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.102.2.2 2006/01/15 10:02:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.102.2.3 2006/02/18 15:39:18 yamt Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -475,7 +475,6 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
 	if (fp->f_flag & FALTIO)
 		ioflag |= IO_ALTSEMANTICS;
 	vn_lock(vp, LK_SHARED | LK_RETRY);
-	vn_ra_allocctx(vp);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
 	error = VOP_READ(vp, uio, ioflag, cred);

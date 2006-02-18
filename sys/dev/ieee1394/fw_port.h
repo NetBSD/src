@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.7 2005/12/20 04:31:28 thorpej Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.7.2.1 2006/02/18 15:39:05 yamt Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -1132,7 +1132,7 @@ typedef void bus_dmamap_callback_t(void *, bus_dma_segment_t *, int, int);
 typedef void
     bus_dmamap_callback2_t(void *, bus_dma_segment_t *, int, bus_size_t, int);
 
-static int inline
+static int __inline
 fw_bus_dma_tag_create(bus_dma_tag_t parent,
     bus_size_t alignment, bus_size_t boundary,
     bus_addr_t lowaddr, bus_addr_t highaddr,
@@ -1169,7 +1169,7 @@ fw_bus_dma_tag_create(bus_dma_tag_t parent,
 	    (ft)->nsegments, (ft)->maxsegsz, (ft)->boundary, (f), (mp))
 #define fw_bus_dmamap_destroy(ft, m) \
 	bus_dmamap_destroy((ft)->tag, (m))
-static inline int
+static __inline int
 fw_bus_dmamap_load(fw_bus_dma_tag_t ft, bus_dmamap_t m,
     void *b, bus_size_t l, bus_dmamap_callback_t *func, void *a, int f)   
 {
@@ -1177,7 +1177,7 @@ fw_bus_dmamap_load(fw_bus_dma_tag_t ft, bus_dmamap_t m,
 	(func)(a, m->dm_segs, m->dm_nsegs, err);
 	return (err);
 }
-static inline int
+static __inline int
 fw_bus_dmamap_load_mbuf(fw_bus_dma_tag_t ft, bus_dmamap_t m,
     struct mbuf *b, bus_dmamap_callback2_t *func, void *a, int f)   
 {
@@ -1189,7 +1189,7 @@ fw_bus_dmamap_load_mbuf(fw_bus_dma_tag_t ft, bus_dmamap_t m,
 	bus_dmamap_unload((ft)->tag, (m))
 #define fw_bus_dmamap_sync(ft, m, op) \
 	bus_dmamap_sync((ft)->tag, (m), 0, (m)->dm_mapsize, (op))
-static inline int
+static __inline int
 fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 {
         bus_dma_segment_t segs;

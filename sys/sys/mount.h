@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.136 2005/12/29 14:53:47 tsutsui Exp $	*/
+/*	$NetBSD: mount.h,v 1.136.2.1 2006/02/18 15:39:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -127,7 +127,8 @@ struct mount {
 #define VFS_CONF	2		/* struct: vfsconf for filesystem given
 					   as next argument */
 #define VFS_USERMOUNT	3		/* enable/disable fs mnt by non-root */
-#define	VFSGEN_MAXID	4		/* number of valid vfs.generic ids */
+#define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
+#define	VFSGEN_MAXID	5		/* number of valid vfs.generic ids */
 
 /*
  * USE THE SAME NAMES AS MOUNT_*!
@@ -166,6 +167,7 @@ struct mount {
 	{ "maxtypenum", CTLTYPE_INT }, \
 	{ "conf", CTLTYPE_NODE }, 	/* Special */ \
 	{ "usermount", CTLTYPE_INT }, \
+	{ "magiclinks", CTLTYPE_INT }, \
 }
 
 /*

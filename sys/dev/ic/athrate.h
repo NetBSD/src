@@ -1,3 +1,5 @@
+/*	$NetBSD: athrate.h,v 1.1.1.1.12.1 2006/02/18 15:39:04 yamt Exp $ */
+
 /*-
  * Copyright (c) 2004-2005 Sam Leffler, Errno Consulting
  * Copyright (c) 2004 Video54 Technologies, Inc.

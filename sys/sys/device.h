@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.84 2005/12/24 19:01:28 perry Exp $ */
+/* $NetBSD: device.h,v 1.84.2.1 2006/02/18 15:39:23 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -303,8 +303,6 @@ extern int booted_partition;		/* or the partition on that device */
 
 extern volatile int config_pending; 	/* semaphore for mountroot */
 
-extern propdb_t dev_propdb;		/* device properties database */
-
 void	config_init(void);
 void	configure(void);
 
@@ -353,6 +351,12 @@ void	config_finalize(void);
 #ifdef __HAVE_DEVICE_REGISTER
 void	device_register(device_t, void *);
 #endif
+
+int	devprop_set(device_t, const char *, void *, size_t, int, int);
+size_t	devprop_list(device_t, char *, size_t);
+size_t	devprop_get(device_t, const char *, void *, size_t, int *);
+int	devprop_delete(device_t, const char *);
+int	devprop_copy(device_t, device_t, int);
 
 /* convenience definitions */
 #define	device_lookup(cfd, unit)					\

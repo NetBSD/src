@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_pci.c,v 1.2 2005/12/11 12:17:51 christos Exp $	*/
+/*	$NetBSD: iyonix_pci.c,v 1.2.2.1 2006/02/18 15:38:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.2 2005/12/11 12:17:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.2.2.1 2006/02/18 15:38:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,5 +222,5 @@ pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 		pci_conf_write_byte(pc, tag, 0x78, 1 << 7);
 	}
 
-	return (PCI_CONF_ALL & ~PCI_CONF_MAP_ROM);
+	return (PCI_CONF_DEFAULT);
 }

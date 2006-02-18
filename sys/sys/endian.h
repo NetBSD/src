@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.20.2.1 2006/02/01 14:52:48 yamt Exp $	*/
+/*	$NetBSD: endian.h,v 1.20.2.2 2006/02/18 15:39:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -77,8 +77,6 @@ __END_DECLS
 
 #include <machine/endian_machdep.h>
 
-#include <machine/bswap.h>
-
 /*
  * Define the order of 32-bit words in 64-bit words.
  */
@@ -106,6 +104,8 @@ __END_DECLS
 
 #ifndef _LOCORE
 
+#include <machine/bswap.h>
+
 /*
  * Macros for network/external number representation conversion.
  */
@@ -122,10 +122,10 @@ __END_DECLS
 
 #else	/* LITTLE_ENDIAN || !defined(__lint__) */
 
-#define	ntohl(x)	((uint32_t)bswap32((uint32_t)(x)))
-#define	ntohs(x)	((uint16_t)bswap16((uint16_t)(x)))
-#define	htonl(x)	((uint32_t)bswap32((uint32_t)(x)))
-#define	htons(x)	((uint16_t)bswap16((uint16_t)(x)))
+#define	ntohl(x)	bswap32((uint32_t)(x))
+#define	ntohs(x)	bswap16((uint16_t)(x))
+#define	htonl(x)	bswap32((uint32_t)(x))
+#define	htons(x)	bswap16((uint16_t)(x))
 
 #define	NTOHL(x)	(x) = ntohl((uint32_t)(x))
 #define	NTOHS(x)	(x) = ntohs((uint16_t)(x))

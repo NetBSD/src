@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.106.2.1 2006/02/01 14:51:37 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.106.2.2 2006/02/18 15:38:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.106.2.1 2006/02/01 14:51:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.106.2.2 2006/02/18 15:38:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -128,19 +128,19 @@ extern	int kgdb_debug_panic;
 
 char	machine_model[100];
 
-static	char *str2hex __P((char *, int *));
-static	int mbprint __P((void *, const char *));
-static	void crazymap __P((const char *, int *));
-int	st_crazymap __P((int));
-void	sync_crash __P((void));
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-static	void mainbus_attach __P((struct device *, struct device *, void *));
+static	char *str2hex(register char *, register int *);
+static	int mbprint(void *, const char *);
+static	void crazymap(const char *, int *);
+int	st_crazymap(int);
+void	sync_crash(void);
+int	mainbus_match(struct device *, struct cfdata *, void *);
+static	void mainbus_attach(struct device *, struct device *, void *);
 static  void get_ncpus(void);
 
 struct	bootpath bootpath[8];
 int	nbootpath;
-static	void bootpath_build __P((void));
-static	void bootpath_print __P((struct bootpath *));
+static	void bootpath_build(void);
+static	void bootpath_print(struct bootpath *);
 
 /*
  * Kernel 4MB mappings.
@@ -193,9 +193,7 @@ matchbyname(parent, cf, aux)
  * Depends on ASCII order (this *is* machine-dependent code, you know).
  */
 static char *
-str2hex(str, vp)
-	register char *str;
-	register int *vp;
+str2hex(register char *str, register int *vp)
 {
 	register int v, c;
 
@@ -304,14 +302,14 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 			o3, ofw);
 
 	/* Extract bootinfo pointer */
-	if ((long)bootsize >= (4 * sizeof(u_int64_t))) {
+	if ((long)bootsize >= (4 * sizeof(uint64_t))) {
 		/* Loaded by 64-bit bootloader */
-		bi = (void*)(u_long)(((u_int64_t*)bootargs)[3]);
-		bmagic = (long)(((u_int64_t*)bootargs)[0]);
-	} else if ((long)bootsize >= (4 * sizeof(u_int32_t))) {
+		bi = (void*)(u_long)(((uint64_t*)bootargs)[3]);
+		bmagic = (long)(((uint64_t*)bootargs)[0]);
+	} else if ((long)bootsize >= (4 * sizeof(uint32_t))) {
 		/* Loaded by 32-bit bootloader */
-		bi = (void*)(u_long)(((u_int32_t*)bootargs)[3]);
-		bmagic = (long)(((u_int32_t*)bootargs)[0]);
+		bi = (void*)(u_long)(((uint32_t*)bootargs)[3]);
+		bmagic = (long)(((uint32_t*)bootargs)[0]);
 	} else {
 		printf("Bad bootinfo size.\n"
 				"This kernel requires NetBSD boot loader.\n");
@@ -327,7 +325,7 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 		panic("sparc64_init.");
 	}
 
-	bootinfo = (void*)(u_long)((u_int64_t*)bi)[1];
+	bootinfo = (void*)(u_long)((uint64_t*)bi)[1];
 	LOOKUP_BOOTINFO(bi_kend, BTINFO_KERNEND);
 
 	if (bi_kend->addr == (vaddr_t)0) {
@@ -470,8 +468,7 @@ bootpath_build()
  */
 
 static void
-bootpath_print(bp)
-	struct bootpath *bp;
+bootpath_print(struct bootpath *bp)
 {
 	printf("bootpath: ");
 	while (bp->name[0]) {
@@ -515,9 +512,7 @@ bootpath_store(storep, bp)
  * target of the (boot) device (i.e., the value in bp->v0val[0]).
  */
 static void
-crazymap(prop, map)
-	const char *prop;
-	int *map;
+crazymap(const char *prop, int *map)
 {
 	int i;
 
@@ -545,8 +540,7 @@ sd_crazymap(n)
 }
 
 int
-st_crazymap(n)
-	int	n;
+st_crazymap(int n)
 {
 	static int prom_st_crazymap[8]; /* static: compute only once! */
 	static int init = 0;
@@ -641,9 +635,7 @@ clockfreq(freq)
 
 /* ARGSUSED */
 static int
-mbprint(aux, name)
-	void *aux;
-	const char *name;
+mbprint(void *aux, const char *name)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -657,10 +649,7 @@ mbprint(aux, name)
 }
 
 int
-mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	return (1);
@@ -674,9 +663,7 @@ mainbus_match(parent, cf, aux)
  * We also record the `node id' of the default frame buffer, if any.
  */
 static void
-mainbus_attach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *dev, void *aux)
 {
 extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern struct sparc_bus_space_tag mainbus_space_tag;
@@ -915,10 +902,10 @@ getdevunit(name, unit)
 #define BUSCLASS_XYC		8
 #define BUSCLASS_FDC		9
 
-static int bus_class __P((struct device *));
-static int dev_compatible __P((struct device *, void *, char *));
-static int instance_match __P((struct device *, void *, struct bootpath *));
-static void nail_bootdev __P((struct device *, struct bootpath *));
+static int bus_class(struct device *);
+static int dev_compatible(struct device *, void *, char *);
+static int instance_match(struct device *, void *, struct bootpath *);
+static void nail_bootdev(struct device *, struct bootpath *);
 
 static struct {
 	const char *name;
@@ -968,10 +955,7 @@ static struct {
 };
 
 int
-dev_compatible(dev, aux, bpname)
-	struct device *dev;
-	void *aux;
-	char *bpname;
+dev_compatible(struct device *dev, void *aux, char *bpname)
 {
 	int i, j;
 
@@ -1067,8 +1051,7 @@ dev_compatible(dev, aux, bpname)
 }
 
 static int
-bus_class(dev)
-	struct device *dev;
+bus_class(struct device *dev)
 {
 	const char *name;
 	int i, class;
@@ -1089,10 +1072,7 @@ bus_class(dev)
 }
 
 int
-instance_match(dev, aux, bp)
-	struct device *dev;
-	void *aux;
-	struct bootpath *bp;
+instance_match(struct device *dev, void *aux, struct bootpath *bp)
 {
 	struct mainbus_attach_args *ma;
 	struct sbus_attach_args *sa;
@@ -1151,9 +1131,7 @@ instance_match(dev, aux, bp)
 }
 
 void
-nail_bootdev(dev, bp)
-	struct device *dev;
-	struct bootpath *bp;
+nail_bootdev(struct device *dev, struct bootpath *bp)
 {
 
 	if (bp->dev != NULL)

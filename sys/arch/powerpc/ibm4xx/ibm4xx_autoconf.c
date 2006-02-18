@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.3 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.3.2.1 2006/02/18 15:38:44 yamt Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.3 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.3.2.1 2006/02/18 15:38:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -58,6 +58,8 @@ ibm4xx_device_register(struct device *dev, void *aux)
 			uint8_t enaddr[ETHER_ADDR_LEN];
 			unsigned char prop_name[15];
 
+			/* XXX dv_unit abuse */
+			/* XXX Should be using index / offset */
 			snprintf(prop_name, sizeof(prop_name),
 				"emac%d-mac-addr", dev->dv_unit);
 
@@ -68,7 +70,7 @@ ibm4xx_device_register(struct device *dev, void *aux)
 				return;
 			}
 
-			if (prop_set(dev_propdb, dev, "mac-addr",
+			if (devprop_set(dev, "mac-addr",
 				     enaddr, sizeof(enaddr),
 				     PROP_ARRAY, 0) != 0)
 				printf("WARNING: unable to set mac-addr "
