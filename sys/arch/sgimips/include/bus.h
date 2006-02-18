@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16.2.1 2006/02/18 15:38:45 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.16.2.2 2006/02/18 23:21:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -609,7 +609,7 @@ struct sgimips_bus_dmamap {
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-	struct proc	*_dm_proc;	/* proc that owns the mapping */
+	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
