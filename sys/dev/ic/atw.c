@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.106 2006/02/18 22:07:11 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.107 2006/02/18 22:12:01 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.106 2006/02/18 22:07:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.107 2006/02/18 22:12:01 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -353,6 +353,10 @@ atw_enable(struct atw_softc *sc)
 			return (EIO);
 		}
 		sc->sc_flags |= ATWF_ENABLED;
+                /* Power may have been removed, and WEP keys thus
+                 * reset.
+		 */
+		sc->sc_flags &= ~ATWF_WEP_SRAM_VALID;
 	}
 	return (0);
 }
