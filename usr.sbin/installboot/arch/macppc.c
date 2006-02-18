@@ -1,4 +1,4 @@
-/*	$NetBSD: macppc.c,v 1.7 2003/10/27 00:12:44 lukem Exp $ */
+/*	$NetBSD: macppc.c,v 1.8 2006/02/18 10:08:07 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: macppc.c,v 1.7 2003/10/27 00:12:44 lukem Exp $");
+__RCSID("$NetBSD: macppc.c,v 1.8 2006/02/18 10:08:07 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -66,8 +66,14 @@ static struct bbinfo_params bbparams = {
 
 static int writeapplepartmap(ib_params *, struct bbinfo_params *, uint8_t *);
 
+static int macppc_clearboot(ib_params *);
+static int macppc_setboot(ib_params *);
 
-int
+struct ib_mach ib_mach_macppc =
+	{ "macppc", macppc_setboot, macppc_clearboot, no_editboot,
+		IB_STAGE2START };
+
+static int
 macppc_clearboot(ib_params *params)
 {
 
@@ -77,7 +83,7 @@ macppc_clearboot(ib_params *params)
 	return (shared_bbinfo_clearboot(params, &bbparams, NULL));
 }
 
-int
+static int
 macppc_setboot(ib_params *params)
 {
 

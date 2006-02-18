@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.6 2005/06/12 21:38:12 dyoung Exp $ */
+/* $NetBSD: hp300.c,v 1.7 2006/02/18 10:08:07 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.6 2005/06/12 21:38:12 dyoung Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.7 2006/02/18 10:08:07 dsl Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -68,7 +68,12 @@ __RCSID("$NetBSD: hp300.c,v 1.6 2005/06/12 21:38:12 dyoung Exp $");
 
 #include "installboot.h"
 
-int
+static int hp300_setboot(ib_params *);
+
+struct ib_mach ib_mach_hp300 =
+	{ "hp300", hp300_setboot, no_clearboot, no_editboot, IB_APPEND };
+
+static int
 hp300_setboot(ib_params *params)
 {
 	int		retval;
