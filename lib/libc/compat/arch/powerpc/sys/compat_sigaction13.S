@@ -1,4 +1,4 @@
-/*	$NetBSD: sigaction.S,v 1.2 1998/12/02 01:01:04 thorpej Exp $	*/
+/*	$NetBSD: compat_sigaction13.S,v 1.1 2006/02/18 00:21:28 matt Exp $	*/
 
 #include "SYS.h"
 
