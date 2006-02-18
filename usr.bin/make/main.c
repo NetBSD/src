@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.118 2006/01/22 19:54:55 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.119 2006/02/18 04:10:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.118 2006/01/22 19:54:55 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.119 2006/02/18 04:10:05 tsutsui Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.118 2006/01/22 19:54:55 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.119 2006/02/18 04:10:05 tsutsui Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -639,6 +639,9 @@ main(int argc, char **argv)
 	static char defsyspath[] = _PATH_DEFSYSPATH;
 	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 	struct timeval rightnow;		/* to initialize random seed */
+#ifdef MAKE_NATIVE
+	struct utsname utsname;
+#endif
 
 	/*
 	 * Set the seed to produce a different random sequences
@@ -709,8 +712,6 @@ main(int argc, char **argv)
 	 */
 	if (!machine) {
 #ifdef MAKE_NATIVE
-	    struct utsname utsname;
-
 	    if (uname(&utsname) == -1) {
 		(void)fprintf(stderr, "%s: uname failed (%s).\n", progname,
 		    strerror(errno));
