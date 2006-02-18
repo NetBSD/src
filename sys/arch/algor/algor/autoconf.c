@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2006/02/18 05:04:11 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2006/02/18 16:45:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2006/02/18 05:04:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2006/02/18 16:45:35 thorpej Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -102,7 +102,7 @@ device_register(struct device *dev, void *aux)
 	 * Fetch the MAC address for the built-in Ethernet (we grab it
 	 * from PMON earlier in the boot process).
 	 */
-	if (dev->dev_parent != NULL &&
+	if (dev->dv_parent != NULL &&
 	    strcmp(dev->dv_parent->dv_cfdata->cf_name, "pci") == 0) {
 		struct pci_attach_args *pa = aux;
 
