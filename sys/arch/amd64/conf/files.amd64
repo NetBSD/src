@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.19 2005/12/21 22:35:41 rjs Exp $
+#	$NetBSD: files.amd64,v 1.19.2.1 2006/02/18 15:38:30 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -111,6 +111,7 @@ defparam			PCI_CONF_MODE
 device	pchb: pcibus
 attach	pchb at pci
 file	arch/amd64/pci/pchb.c			pchb
+file	arch/x86/pci/pchb_rnd.c			pchb & rnd
 
 # PCI-ISA bridges
 device	pcib: isabus
@@ -168,6 +169,12 @@ include "compat/linux/arch/amd64/files.linux_amd64"
 file	arch/amd64/amd64/linux_sigcode.S		compat_linux
 file	arch/amd64/amd64/linux_syscall.c		compat_linux
 file	arch/x86/x86/linux_trap.c			compat_linux
+
+# Linux 32 bit compatibility (COMPAT_LINUX32)
+include "compat/linux32/files.linux32"
+include "compat/linux32/arch/amd64/files.linux32_amd64"
+file	arch/amd64/amd64/linux32_sigcode.S		compat_linux32
+file	arch/amd64/amd64/linux32_syscall.c		compat_linux32
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"

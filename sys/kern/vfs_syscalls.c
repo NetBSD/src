@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.235.2.1 2005/12/31 11:14:01 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.235.2.2 2006/02/18 15:39:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.235.2.1 2005/12/31 11:14:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.235.2.2 2006/02/18 15:39:18 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -340,13 +340,12 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 		mp->mnt_flag &=
 		  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-		    MNT_MAGICLINKS);
+		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
 		mp->mnt_flag |= SCARG(uap, flags) &
 		   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-		    MNT_IGNORE | MNT_MAGICLINKS);
+		    MNT_IGNORE);
 	}
 	/*
 	 * Mount the filesystem.
@@ -728,7 +727,7 @@ done:
 	if (cwdi->cwdi_rdir != NULL) {
 		size_t len;
 		char *bp;
-		char *path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+		char *path = PNBUF_GET();
 		if (!path)
 			return ENOMEM;
 
@@ -737,7 +736,7 @@ done:
 		error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp, path,
 		    MAXPATHLEN / 2, 0, l);
 		if (error) {
-			free(path, M_TEMP);
+			PNBUF_PUT(path);
 			return error;
 		}
 		len = strlen(bp);
@@ -760,7 +759,7 @@ done:
 			else
 				error = EPERM;
 		}
-		free(path, M_TEMP);
+		PNBUF_PUT(path);
 	}
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return error;

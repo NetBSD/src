@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.84 2005/12/06 18:37:57 christos Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.84.2.1 2006/02/18 15:39:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.84 2005/12/06 18:37:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.84.2.1 2006/02/18 15:39:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,17 +624,21 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	    }
 
 	default:
-#ifdef algor
 		/*
-		 * XXX This should be done with device properties, but
-		 * XXX we don't have those yet.
+		 * XXX This isn't quite the right way to do this; we should
+		 * XXX be attempting to fetch the mac-addr property in the
+		 * XXX bus-agnostic part of the driver independently.  But
+		 * XXX that requires a larger change in the SROM handling
+		 * XXX logic, and for now we can at least remove a machine-
+		 * XXX dependent wart from the PCI front-end.
 		 */
-		if (algor_get_ethaddr(pa, NULL)) {
+		if (devprop_get(&sc->sc_dev, "mac-addr",
+			     enaddr, sizeof(enaddr), NULL) == sizeof(enaddr)) {
 			extern int tlp_srom_debug;
 			sc->sc_srom_addrbits = 6;
 			sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF,
 			    M_NOWAIT|M_ZERO);
-			algor_get_ethaddr(pa, sc->sc_srom);
+			memcpy(sc->sc_srom, enaddr, sizeof(enaddr));
 			if (tlp_srom_debug) {
 				printf("SROM CONTENTS:");
 				for (i = 0; i < TULIP_ROM_SIZE(6); i++) {
@@ -646,7 +650,6 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 			}
 			break;
 		}
-#endif /* algor */
 
 		/* Check for a slaved ROM on a multi-port board. */
 		tlp_pci_check_slaved(psc, TULIP_PCI_SHAREDROM,

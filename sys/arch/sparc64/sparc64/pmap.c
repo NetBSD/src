@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.166.2.2 2006/02/01 14:51:38 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.166.2.3 2006/02/18 15:38:51 yamt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166.2.2 2006/02/01 14:51:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166.2.3 2006/02/18 15:38:51 yamt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -76,8 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166.2.2 2006/02/01 14:51:38 yamt Exp $");
 paddr_t cpu0paddr;		/* contigious phys memory preallocated for cpus */
 
 /* These routines are in assembly to allow access thru physical mappings */
-extern int64_t pseg_get __P((struct pmap *, vaddr_t));
-extern int pseg_set __P((struct pmap *, vaddr_t, int64_t, paddr_t));
+extern int64_t pseg_get(struct pmap *, vaddr_t);
+extern int pseg_set(struct pmap *, vaddr_t, int64_t, paddr_t);
 
 /*
  * Diatribe on ref/mod counting:
@@ -124,10 +124,10 @@ extern int pseg_set __P((struct pmap *, vaddr_t, int64_t, paddr_t));
 struct pool pmap_pmap_pool;
 struct pool pmap_pv_pool;
 
-pv_entry_t	pmap_remove_pv __P((struct pmap *, vaddr_t, struct vm_page *));
-void	pmap_enter_pv __P((struct pmap *, vaddr_t, paddr_t, struct vm_page *,
-			   pv_entry_t));
-void	pmap_page_cache __P((struct pmap *, paddr_t, int));
+pv_entry_t	pmap_remove_pv(struct pmap *, vaddr_t, struct vm_page *);
+void	pmap_enter_pv(struct pmap *, vaddr_t, paddr_t, struct vm_page *,
+			   pv_entry_t);
+void	pmap_page_cache(struct pmap *, paddr_t, int);
 
 /*
  * First and last managed physical addresses.
@@ -176,7 +176,7 @@ struct mem_region *phys_installed;
 
 paddr_t avail_start, avail_end;	/* These are used by ps & family */
 
-static int ptelookup_va __P((vaddr_t va));
+static int ptelookup_va(vaddr_t va);
 
 static inline void
 clrx(void *addr)
@@ -546,7 +546,7 @@ pmap_read_memlist(const char *device, const char *property, void **ml,
 				device, property);
 		prom_halt();
 	}
-	if ( (va = (void*)(* ml_alloc)(size, sizeof(u_int64_t))) == NULL) {
+	if ( (va = (void*)(* ml_alloc)(size, sizeof(uint64_t))) == NULL) {
 		prom_printf("pmap_read_memlist(): Cannot allocate memlist.\n");
 		prom_halt();
 	}
@@ -591,7 +591,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	size_t s, sz;
 	int64_t data;
 	vaddr_t va, intstk;
-	u_int64_t phys_msgbuf;
+	uint64_t phys_msgbuf;
 	paddr_t newp;
 
 	void *prom_memlist;
@@ -768,7 +768,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	pcnt = prom_memlist_size / sizeof(*orig);
 
 	BDPRINTF(PDB_BOOT1, ("Available physical memory:\n"));
-	avail = (struct mem_region*)kdata_alloc(sz, sizeof(u_int64_t));
+	avail = (struct mem_region*)kdata_alloc(sz, sizeof(uint64_t));
 	for (i = 0; i < pcnt; i++) {
 		avail[i] = orig[i];
 		BDPRINTF(PDB_BOOT1, ("memlist start %lx size %lx\n",
@@ -781,7 +781,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	 * Allocate and initialize a context table
 	 */
 	numctx = get_maxctx();
-	ctxbusy = (paddr_t *)kdata_alloc(CTXSIZE, sizeof(u_int64_t));
+	ctxbusy = (paddr_t *)kdata_alloc(CTXSIZE, sizeof(uint64_t));
 	memset(ctxbusy, 0, CTXSIZE);
 	LIST_INIT(&pmap_ctxlist);
 
@@ -1007,7 +1007,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	{
 		extern vaddr_t u0[2];
 		extern struct pcb* proc0paddr;
-		extern void main __P((void));
+		extern void main(void);
 		paddr_t pa;
 
 		/* Initialize all the pointers to u0 */
@@ -1134,7 +1134,7 @@ pmap_init()
 {
 	struct vm_page *pg;
 	struct pglist pglist;
-	u_int64_t data;
+	uint64_t data;
 	paddr_t pa;
 	psize_t size;
 	vaddr_t va;
@@ -2153,7 +2153,7 @@ pmap_dumpsize()
  */
 int
 pmap_dumpmmu(dump, blkno)
-	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	daddr_t blkno;
 {
 	kcore_seg_t	*kseg;
@@ -2193,18 +2193,18 @@ pmap_dumpmmu(dump, blkno)
 	/* Fill in MD segment header (interpreted by MD part of libkvm) */
 	kcpu = (cpu_kcore_hdr_t *)((long)bp + ALIGN(sizeof(kcore_seg_t)));
 	kcpu->cputype = CPU_SUN4U;
-	kcpu->kernbase = (u_int64_t)KERNBASE;
-	kcpu->cpubase = (u_int64_t)CPUINFO_VA;
+	kcpu->kernbase = (uint64_t)KERNBASE;
+	kcpu->cpubase = (uint64_t)CPUINFO_VA;
 
 	/* Describe the locked text segment */
-	kcpu->ktextbase = (u_int64_t)ktext;
-	kcpu->ktextp = (u_int64_t)ktextp;
-	kcpu->ktextsz = (u_int64_t)ektextp - ktextp;
+	kcpu->ktextbase = (uint64_t)ktext;
+	kcpu->ktextp = (uint64_t)ktextp;
+	kcpu->ktextsz = (uint64_t)ektextp - ktextp;
 
 	/* Describe locked data segment */
-	kcpu->kdatabase = (u_int64_t)kdata;
-	kcpu->kdatap = (u_int64_t)kdatap;
-	kcpu->kdatasz = (u_int64_t)ekdatap - kdatap;
+	kcpu->kdatabase = (uint64_t)kdata;
+	kcpu->kdatap = (uint64_t)kdatap;
+	kcpu->kdatasz = (uint64_t)ekdatap - kdatap;
 
 	/* Now the memsegs */
 	kcpu->nmemseg = phys_installed_size;
@@ -2212,7 +2212,7 @@ pmap_dumpmmu(dump, blkno)
 
 	/* Now we need to point this at our kernel pmap. */
 	kcpu->nsegmap = STSZ;
-	kcpu->segmapoffset = (u_int64_t)pmap_kernel()->pm_physaddr;
+	kcpu->segmapoffset = (uint64_t)pmap_kernel()->pm_physaddr;
 
 	/* Note: we have assumed everything fits in buffer[] so far... */
 	bp = (int *)((long)kcpu + ALIGN(sizeof(cpu_kcore_hdr_t)));
@@ -2297,8 +2297,7 @@ int64 GenerateTSBPointer(
  * for that particular va and return it.  IT MAY BE FOR ANOTHER MAPPING!
  */
 int
-ptelookup_va(va)
-	vaddr_t va;
+ptelookup_va(vaddr_t va)
 {
 	long tsbptr;
 #define TSBBASEMASK	(0xffffffffffffe000LL << tsbsize)
@@ -2971,12 +2970,8 @@ ctx_free(pm)
  */
 
 void
-pmap_enter_pv(pmap, va, pa, pg, npv)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t pa;
-	struct vm_page *pg;
-	pv_entry_t npv;
+pmap_enter_pv(struct pmap *pmap, vaddr_t va, paddr_t pa, struct vm_page *pg,
+	      pv_entry_t npv)
 {
 	pv_entry_t pvh;
 
@@ -3034,10 +3029,7 @@ pmap_enter_pv(pmap, va, pa, pg, npv)
  */
 
 pv_entry_t
-pmap_remove_pv(pmap, va, pg)
-	struct pmap *pmap;
-	vaddr_t va;
-	struct vm_page *pg;
+pmap_remove_pv(struct pmap *pmap, vaddr_t va, struct vm_page *pg)
 {
 	pv_entry_t pvh, npv, pv;
 	int64_t data = 0;
@@ -3110,10 +3102,7 @@ pmap_remove_pv(pmap, va, pg)
  *	Change all mappings of a page to cached/uncached.
  */
 void
-pmap_page_cache(pm, pa, mode)
-	struct pmap *pm;
-	paddr_t pa;
-	int mode;
+pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 {
 	struct vm_page *pg;
 	pv_entry_t pv;
@@ -3203,13 +3192,9 @@ pmap_free_page(paddr_t pa)
 
 #ifdef DDB
 
-void db_dump_pv __P((db_expr_t, int, db_expr_t, const char *));
+void db_dump_pv(db_expr_t, int, db_expr_t, const char *);
 void
-db_dump_pv(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_dump_pv(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct vm_page *pg;
 	struct pv_entry *pv;
@@ -3235,7 +3220,7 @@ db_dump_pv(addr, have_addr, count, modif)
 #ifdef DEBUG
 /*
  * Test ref/modify handling.  */
-void pmap_testout __P((void));
+void pmap_testout(void);
 void
 pmap_testout()
 {

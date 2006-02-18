@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.20.2.1 2006/02/01 14:51:28 yamt Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.20.2.2 2006/02/18 15:38:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.20.2.1 2006/02/01 14:51:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.20.2.2 2006/02/18 15:38:35 yamt Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.20.2.1 2006/02/01 14:51:28 yamt Ex
 #include "acpi_wakecode.h"
 
 
-paddr_t	phys_wakeup = 0;
+static paddr_t phys_wakeup = 0;
 
 uint32_t
 acpi_md_get_npages_of_wakecode(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2005/11/27 14:01:45 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.2.1 2006/02/18 15:38:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -88,8 +88,8 @@
 
 #ifdef	_KERNEL
 
-extern const u_int32_t ipl_sr_bits[_IPL_N];
-extern const u_int32_t ipl_si_to_sr[_IPL_NSOFT];
+extern const uint32_t ipl_sr_bits[_IPL_N];
+extern const uint32_t ipl_si_to_sr[_IPL_NSOFT];
 
 extern int		_splraise(int);
 extern int		_spllower(int);
@@ -121,7 +121,7 @@ struct evbmips_intrhand {
 
 void	evbmips_intr_init(void);
 void	intr_init(void);
-void	evbmips_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	evbmips_iointr(uint32_t, uint32_t, uint32_t, uint32_t);
 void	*evbmips_intr_establish(int, int (*)(void *), void *);
 void	evbmips_intr_disestablish(void *);
 #endif /* _KERNEL */

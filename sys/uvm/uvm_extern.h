@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.108.2.3 2006/02/01 14:52:48 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.108.2.4 2006/02/18 15:39:31 yamt Exp $	*/
 
 /*
  *
@@ -322,7 +322,7 @@ struct uvmexp {
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
 
-	/* stat counters */
+	/* stat counters.  XXX: should be 64-bit counters */
 	int faults;		/* page fault count */
 	int traps;		/* trap count */
 	int intrs;		/* interrupt count */
@@ -347,7 +347,7 @@ struct uvmexp {
 	int colorhit;		/* pagealloc where we got optimal color */
 	int colormiss;		/* pagealloc where we didn't */
 
-	/* fault subcounters */
+	/* fault subcounters.  XXX: should be 64-bit counters */
 	int fltnoram;	/* number of times fault was out of ram */
 	int fltnoanon;	/* number of times fault was out of anons */
 	int fltpgwait;	/* number of times fault had to wait on a page */
@@ -367,7 +367,7 @@ struct uvmexp {
 	int flt_prcopy;	/* number of times fault promotes with copy (2b) */
 	int flt_przero;	/* number of times fault promotes with zerofill (2b) */
 
-	/* daemon counters */
+	/* daemon counters.  XXX: should be 64-bit counters */
 	int pdwoke;	/* number of times daemon woke up */
 	int pdrevs;	/* number of times daemon rev'd clock hand */
 	int pdswout;	/* number of times daemon called for swapout */

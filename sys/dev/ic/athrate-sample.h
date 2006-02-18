@@ -1,3 +1,5 @@
+/*	$NetBSD: athrate-sample.h,v 1.1.1.1.12.1 2006/02/18 15:39:04 yamt Exp $ */
+
 /*-
  * Copyright (c) 2005 John Bicket
  * All rights reserved.

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.751.2.2 2006/02/01 14:52:09 yamt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.751.2.3 2006/02/18 15:39:08 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.758 2006/01/26 20:53:19 bouyer Exp
+ *	NetBSD: pcidevs,v 1.766 2006/02/16 08:36:03 kochi Exp
  */
 
 /*
@@ -6456,8 +6456,8 @@ static const struct pci_product pci_products[] = {
 	    "82915P/G/GL Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_PEG,
-	    "82915P/G/GL PCI Express Graphics Port",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_EX,
+	    "82915P/G/GL PCI Express Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGD,
@@ -6468,24 +6468,24 @@ static const struct pci_product pci_products[] = {
 	    "82925X Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_PEG,
-	    "82925X PCI Express Graphics Port",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_EX,
+	    "82925X PCI Express Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_HB,
 	    "82915PM/GM/GMS,82910GML Host Bridge",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_PEG,
-	    "82915PM/GM PCI Express Graphics Port",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_EX,
+	    "82915PM/GM PCI Express Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGD,
 	    "82915GM/GMS Integrated Graphics Device",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915PM_PEG,
-	    "82915PM/GM PCI Express Graphics Port",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915PM_EX,
+	    "82915PM/GM PCI Express Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGD,
@@ -6624,6 +6624,14 @@ static const struct pci_product pci_products[] = {
 	    "82945G/P PCI Express Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955X_HB,
+	    "82955X Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955X_EXP,
+	    "82955X PCI Express Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGDC,
 	    "82915G/GL IGD Companion",
 	},
@@ -6634,6 +6642,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_LPC,
 	    "82801GB/GR LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GBM_LPC,
+	    "82801GBM LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GHM_LPC,
+	    "82801GHM LPC Interface Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SATA,
@@ -8344,6 +8360,10 @@ static const struct pci_product pci_products[] = {
 	    "FNW-3800-TX 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9054,
+	    "9054 I/O Accelerator",
+	},
+	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9060ES,
 	    "9060ES PCI bus controller",
 	},
@@ -9078,6 +9098,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_180_SATA,
 	    "180 SATA controller",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_190,
+	    "190 Ethernet",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_VGA,
@@ -10756,4 +10780,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2105;
+const int pci_nproducts = 2111;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.41 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.41.2.1 2006/02/18 15:38:31 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -171,7 +171,7 @@ extern struct pmap	kernel_pmap_store;
 
 #define	pmap_update(pmap)		/* nothing (yet) */
 
-static inline void
+static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */

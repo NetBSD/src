@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.41 2005/12/11 12:21:01 christos Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.41.2.1 2006/02/18 15:39:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.41 2005/12/11 12:21:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.41.2.1 2006/02/18 15:39:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ static void acpibat_print_stat(struct acpibat_softc *);
 static void acpibat_update(void *);
 
 static void acpibat_init_envsys(struct acpibat_softc *);
-static void acpibat_notify_handler(ACPI_HANDLE, UINT32, void *context);
+static void acpibat_notify_handler(ACPI_HANDLE, UINT32, void *);
 static int acpibat_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
 static int acpibat_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
 

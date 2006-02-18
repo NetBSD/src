@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.61.2.1 2006/01/15 10:02:48 yamt Exp $
+$NetBSD: miidevs,v 1.61.2.2 2006/02/18 15:39:05 yamt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -189,6 +189,7 @@ model MYSON MTD803		0x0000 MTD803 3-in-1 media interface
 model xxNATSEMI DP83840		0x0000 DP83840 10/100 media interface
 model xxNATSEMI DP83843		0x0001 DP83843 10/100 media interface
 model xxNATSEMI DP83815		0x0002 DP83815 10/100 media interface
+model xxNATSEMI DP83847		0x0003 DP83843 10/100 media interface
 model xxNATSEMI DP83891		0x0005 DP83891 1000BASE-T media interface
 model xxNATSEMI DP83861		0x0006 DP83861 1000BASE-T media interface
 

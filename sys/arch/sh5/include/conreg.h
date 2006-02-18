@@ -1,4 +1,4 @@
-/*	$NetBSD: conreg.h,v 1.4 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: conreg.h,v 1.4.2.1 2006/02/18 15:38:45 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -98,7 +98,7 @@
 #define	SH5_FP_IS_DIRTY(usr,r)		((usr & (1 << (8+((r)/8)))) != 0)
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-static inline u_int
+static __inline u_int
 sh5_getctc(void)
 {
 	u_int64_t rv;

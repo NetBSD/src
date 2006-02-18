@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.124 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: trap.c,v 1.124.2.1 2006/02/18 15:38:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124.2.1 2006/02/18 15:38:51 yamt Exp $");
 
 #define NEW_FPSTATE
 
@@ -374,21 +374,20 @@ const char *trap_type[] = {
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
 
-void trap __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate));
-void data_access_fault __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, 
-	vaddr_t va, vaddr_t sfva, u_long sfsr));
-void data_access_error __P((struct trapframe64 *tf, unsigned type, 
-	vaddr_t afva, u_long afsr, vaddr_t sfva, u_long sfsr));
-void text_access_fault __P((struct trapframe64 *tf, unsigned type, 
-	vaddr_t pc, u_long sfsr));
-void text_access_error __P((struct trapframe64 *tf, unsigned type, 
-	vaddr_t pc, u_long sfsr, vaddr_t afva, u_long afsr));
+void trap(struct trapframe64 *, unsigned int, vaddr_t, long);
+void data_access_fault(struct trapframe64 *, unsigned int, vaddr_t, vaddr_t,
+	vaddr_t, u_long);
+void data_access_error(struct trapframe64 *, unsigned int, vaddr_t, u_long,
+	vaddr_t, u_long);
+void text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
+	u_long sfsr);
+void text_access_error(struct trapframe64 *, unsigned int, vaddr_t, u_long,
+	vaddr_t, u_long);
 
 #ifdef DEBUG
-void print_trapframe __P((struct trapframe64 *));
+void print_trapframe(struct trapframe64 *);
 void
-print_trapframe(tf)
-	struct trapframe64 *tf;
+print_trapframe(struct trapframe64 *tf)
 {
 
 	printf("Trapframe %p:\ttstate: %lx\tpc: %lx\tnpc: %lx\n",
@@ -428,11 +427,7 @@ print_trapframe(tf)
  * (MMU-related traps go through mem_access_fault, below.)
  */
 void
-trap(tf, type, pc, tstate)
-	struct trapframe64 *tf;
-	unsigned int type;
-	vaddr_t pc;
-	long tstate;
+trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -896,7 +891,7 @@ rwindow_save(l)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct rwindow64 *rw = &pcb->pcb_rw[0];
-	u_int64_t rwdest;
+	uint64_t rwdest;
 	int i, j;
 
 	i = pcb->pcb_nsaved;
@@ -997,15 +992,10 @@ kill_user_windows(l)
  * of them could be recoverable through uvm_fault.
  */
 void
-data_access_fault(tf, type, pc, addr, sfva, sfsr)
-	struct trapframe64 *tf;
-	unsigned type;
-	vaddr_t pc;
-	vaddr_t addr;
-	vaddr_t sfva;
-	u_long sfsr;
+data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
+	vaddr_t addr, vaddr_t sfva, u_long sfsr)
 {
-	u_int64_t tstate;
+	uint64_t tstate;
 	struct lwp *l;
 	struct proc *p;
 	struct vmspace *vm;
@@ -1251,7 +1241,7 @@ kfault:
 		print_trapframe(tf);
 	}
 	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW)) {
-		extern void *return_from_trap __P((void));
+		extern void *return_from_trap(void);
 
 		if ((void *)(u_long)tf->tf_pc == (void *)return_from_trap) {
 			printf("Returning from stack datafault\n");
@@ -1268,16 +1258,11 @@ kfault:
  * special PEEK/POKE code sequence.
  */
 void
-data_access_error(tf, type, afva, afsr, sfva, sfsr)
-	struct trapframe64 *tf;
-	unsigned type;
-	vaddr_t sfva;
-	u_long sfsr;
-	vaddr_t afva;
-	u_long afsr;
+data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
+	u_long afsr, vaddr_t sfva, u_long sfsr)
 {
 	u_long pc;
-	u_int64_t tstate;
+	uint64_t tstate;
 	struct lwp *l;
 	vaddr_t onfault;
 	u_quad_t sticks;
@@ -1431,13 +1416,10 @@ out:
  * of them could be recoverable through uvm_fault.
  */
 void
-text_access_fault(tf, type, pc, sfsr)
-	unsigned type;
-	vaddr_t pc;
-	struct trapframe64 *tf;
-	u_long sfsr;
+text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
+	u_long sfsr)
 {
-	u_int64_t tstate;
+	uint64_t tstate;
 	struct lwp *l;
 	struct proc *p;
 	struct vmspace *vm;
@@ -1568,13 +1550,8 @@ text_access_fault(tf, type, pc, sfsr)
  * special PEEK/POKE code sequence.
  */
 void
-text_access_error(tf, type, pc, sfsr, afva, afsr)
-	struct trapframe64 *tf;
-	unsigned type;
-	vaddr_t pc;
-	u_long sfsr;
-	vaddr_t afva;
-	u_long afsr;
+text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
+	u_long sfsr, vaddr_t afva, u_long afsr)
 {
 	int64_t tstate;
 	struct lwp *l;

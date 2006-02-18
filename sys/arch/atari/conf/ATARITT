@@ -1,12 +1,12 @@
 #
-# $NetBSD: ATARITT,v 1.75 2005/12/11 12:16:54 christos Exp $
+# $NetBSD: ATARITT,v 1.75.2.1 2006/02/18 15:38:31 yamt Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: ATARITT.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.56 2005/11/03 16:48:29 chs Exp $
+#		NetBSD: GENERIC.in,v 1.59 2006/02/04 02:25:57 rpaulo Exp $
 include "arch/atari/conf/std.atari"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -121,15 +121,15 @@ pseudo-device pppoe # PPP over Ethernet (RFC 2516)
 
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
-pseudo-device vnd 3 # 3 pseudo disks (see vnconfig)
+pseudo-device vnd  # 3 pseudo disks (see vnconfig)
 
 pseudo-device md 3 # Boot memory disk
 
-pseudo-device bpfilter 2 # berkeley packet filters
-pseudo-device tun 2 # network tunnel
+pseudo-device bpfilter # berkeley packet filters
+pseudo-device tun  # network tunnel
 pseudo-device tap # virtual Ethernet
 
-pseudo-device gif 4 # IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device gif  # IPv[46] over IPv[46] tunnel (RFC1933)
 
 pseudo-device vlan # IEEE 802.1q encapsulation
 pseudo-device bridge # simple inter-network bridging

@@ -1,3 +1,5 @@
+/*	$NetBSD: athrate-onoe.c,v 1.6.2.1 2006/02/18 15:39:04 yamt Exp $ */
+
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -39,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.6 2005/11/18 16:48:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.6.2.1 2006/02/18 15:39:04 yamt Exp $");
 #endif
 
 /*

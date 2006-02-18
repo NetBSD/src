@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.148.2.2 2006/02/01 14:52:20 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.148.2.3 2006/02/18 15:39:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.148.2.2 2006/02/01 14:52:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.148.2.3 2006/02/18 15:39:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1806,7 +1806,7 @@ nestiobuf_iodone(struct buf *bp)
 		error = EIO;
 	}
 
-	donebytes = bp->b_bufsize; /* ignore b_resid ! */
+	donebytes = bp->b_bufsize;
 
 	putiobuf(bp);
 	nestiobuf_done(mbp, donebytes, error);

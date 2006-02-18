@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.56 2005/12/24 20:07:37 perry Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.56.2.1 2006/02/18 15:38:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.56 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.56.2.1 2006/02/18 15:38:51 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -89,7 +89,7 @@ const char	machine32[] = "sparc";
 const char	machine_arch32[] = "sparc";	
 
 #if NFIRM_EVENTS > 0
-static int ev_out32 __P((struct firm_event *, int, struct uio *));
+static int ev_out32(struct firm_event *, int, struct uio *);
 #endif
 
 void netbsd32_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
@@ -283,7 +283,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_global[1] = (long)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
+	tf->tf_out[6] = (uint64_t)(u_int)(u_long)newsp;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -894,24 +894,24 @@ netbsd32_cpu_setmcontext(l, mcp, flags)
 		/* take only tstate CCR (and ASI) fields */
 		tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) |
 		    PSRCC_TO_TSTATE(gr[_REG_PSR]);
-		tf->tf_pc        = (u_int64_t)gr[_REG_PC];
-		tf->tf_npc       = (u_int64_t)gr[_REG_nPC];
-		tf->tf_y         = (u_int64_t)gr[_REG_Y];
-		tf->tf_global[1] = (u_int64_t)gr[_REG_G1];
-		tf->tf_global[2] = (u_int64_t)gr[_REG_G2];
-		tf->tf_global[3] = (u_int64_t)gr[_REG_G3];
-		tf->tf_global[4] = (u_int64_t)gr[_REG_G4];
-		tf->tf_global[5] = (u_int64_t)gr[_REG_G5];
-		tf->tf_global[6] = (u_int64_t)gr[_REG_G6];
-		tf->tf_global[7] = (u_int64_t)gr[_REG_G7];
-		tf->tf_out[0]    = (u_int64_t)gr[_REG_O0];
-		tf->tf_out[1]    = (u_int64_t)gr[_REG_O1];
-		tf->tf_out[2]    = (u_int64_t)gr[_REG_O2];
-		tf->tf_out[3]    = (u_int64_t)gr[_REG_O3];
-		tf->tf_out[4]    = (u_int64_t)gr[_REG_O4];
-		tf->tf_out[5]    = (u_int64_t)gr[_REG_O5];
-		tf->tf_out[6]    = (u_int64_t)gr[_REG_O6];
-		tf->tf_out[7]    = (u_int64_t)gr[_REG_O7];
+		tf->tf_pc        = (uint64_t)gr[_REG_PC];
+		tf->tf_npc       = (uint64_t)gr[_REG_nPC];
+		tf->tf_y         = (uint64_t)gr[_REG_Y];
+		tf->tf_global[1] = (uint64_t)gr[_REG_G1];
+		tf->tf_global[2] = (uint64_t)gr[_REG_G2];
+		tf->tf_global[3] = (uint64_t)gr[_REG_G3];
+		tf->tf_global[4] = (uint64_t)gr[_REG_G4];
+		tf->tf_global[5] = (uint64_t)gr[_REG_G5];
+		tf->tf_global[6] = (uint64_t)gr[_REG_G6];
+		tf->tf_global[7] = (uint64_t)gr[_REG_G7];
+		tf->tf_out[0]    = (uint64_t)gr[_REG_O0];
+		tf->tf_out[1]    = (uint64_t)gr[_REG_O1];
+		tf->tf_out[2]    = (uint64_t)gr[_REG_O2];
+		tf->tf_out[3]    = (uint64_t)gr[_REG_O3];
+		tf->tf_out[4]    = (uint64_t)gr[_REG_O4];
+		tf->tf_out[5]    = (uint64_t)gr[_REG_O5];
+		tf->tf_out[6]    = (uint64_t)gr[_REG_O6];
+		tf->tf_out[7]    = (uint64_t)gr[_REG_O7];
 		/* %asi restored above; %fprs not yet supported. */
 
 		/* XXX mcp->__gwins */
@@ -968,10 +968,7 @@ netbsd32_cpu_setmcontext(l, mcp, flags)
  * Write out a series of 32-bit firm_events.
  */
 int
-ev_out32(e, n, uio)
-	struct firm_event *e;
-	int n;
-	struct uio *uio;
+ev_out32(struct firm_event *e, int n, struct uio *uio)
 {
 	struct firm_event32 e32;
 	int error = 0;
@@ -1239,24 +1236,24 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		/* take only tstate CCR (and ASI) fields */
 		tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) |
 		    PSRCC_TO_TSTATE(gr[_REG32_PSR]);
-		tf->tf_pc        = (u_int64_t)gr[_REG32_PC];
-		tf->tf_npc       = (u_int64_t)gr[_REG32_nPC];
-		tf->tf_y         = (u_int64_t)gr[_REG32_Y];
-		tf->tf_global[1] = (u_int64_t)gr[_REG32_G1];
-		tf->tf_global[2] = (u_int64_t)gr[_REG32_G2];
-		tf->tf_global[3] = (u_int64_t)gr[_REG32_G3];
-		tf->tf_global[4] = (u_int64_t)gr[_REG32_G4];
-		tf->tf_global[5] = (u_int64_t)gr[_REG32_G5];
-		tf->tf_global[6] = (u_int64_t)gr[_REG32_G6];
-		tf->tf_global[7] = (u_int64_t)gr[_REG32_G7];
-		tf->tf_out[0]    = (u_int64_t)gr[_REG32_O0];
-		tf->tf_out[1]    = (u_int64_t)gr[_REG32_O1];
-		tf->tf_out[2]    = (u_int64_t)gr[_REG32_O2];
-		tf->tf_out[3]    = (u_int64_t)gr[_REG32_O3];
-		tf->tf_out[4]    = (u_int64_t)gr[_REG32_O4];
-		tf->tf_out[5]    = (u_int64_t)gr[_REG32_O5];
-		tf->tf_out[6]    = (u_int64_t)gr[_REG32_O6];
-		tf->tf_out[7]    = (u_int64_t)gr[_REG32_O7];
+		tf->tf_pc        = (uint64_t)gr[_REG32_PC];
+		tf->tf_npc       = (uint64_t)gr[_REG32_nPC];
+		tf->tf_y         = (uint64_t)gr[_REG32_Y];
+		tf->tf_global[1] = (uint64_t)gr[_REG32_G1];
+		tf->tf_global[2] = (uint64_t)gr[_REG32_G2];
+		tf->tf_global[3] = (uint64_t)gr[_REG32_G3];
+		tf->tf_global[4] = (uint64_t)gr[_REG32_G4];
+		tf->tf_global[5] = (uint64_t)gr[_REG32_G5];
+		tf->tf_global[6] = (uint64_t)gr[_REG32_G6];
+		tf->tf_global[7] = (uint64_t)gr[_REG32_G7];
+		tf->tf_out[0]    = (uint64_t)gr[_REG32_O0];
+		tf->tf_out[1]    = (uint64_t)gr[_REG32_O1];
+		tf->tf_out[2]    = (uint64_t)gr[_REG32_O2];
+		tf->tf_out[3]    = (uint64_t)gr[_REG32_O3];
+		tf->tf_out[4]    = (uint64_t)gr[_REG32_O4];
+		tf->tf_out[5]    = (uint64_t)gr[_REG32_O5];
+		tf->tf_out[6]    = (uint64_t)gr[_REG32_O6];
+		tf->tf_out[7]    = (uint64_t)gr[_REG32_O7];
 		/* %asi restored above; %fprs not yet supported. */
 
 		/* XXX mcp->__gwins */

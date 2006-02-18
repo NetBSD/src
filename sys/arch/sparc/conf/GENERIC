@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.182 2005/12/09 23:34:03 elad Exp $
+# $NetBSD: GENERIC,v 1.182.2.1 2006/02/18 15:38:45 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.182 $"
+#ident 		"GENERIC-$Revision: 1.182.2.1 $"
 
 maxusers	32
 
@@ -190,6 +190,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
@@ -468,7 +469,7 @@ fd*	at fdc0					# the drive itself
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	4
+pseudo-device	vnd	
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 ## Concatenated and striped disks; with this, you can create a software-based
@@ -564,37 +565,37 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 pseudo-device	loop
 
 ## SLIP and CSLIP interfaces, for IP over a serial line.
-pseudo-device	sl		2
+pseudo-device	sl		
 
 ## PPP, the successor to SLIP.  See pppd(8).
-pseudo-device	ppp		2
+pseudo-device	ppp		
 
 ## PPP over Ethernet (RFC 2516)
 pseudo-device	pppoe
 
 ## Starmode Radio IP, a special hardware network device.
-#pseudo-device	strip		1
+#pseudo-device	strip		
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
-pseudo-device	tun		4
+pseudo-device	tun		
 pseudo-device	tap			# virtual Ethernet
 
 ## Generic L3 over IP tunnel
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	gre			# generic L3 over IP tunnel
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-pseudo-device	bpfilter	8
+pseudo-device	bpfilter
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.
 pseudo-device	ipfilter
 
 ## for IPv6
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan

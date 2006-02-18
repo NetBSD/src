@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.207.2.2 2006/02/01 14:51:37 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.207.2.3 2006/02/18 15:38:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6236,7 +6236,7 @@ ENTRY(icache_flush_page)
 	 nop
 
 /*
- *	cache_flush_phys __P((paddr_t, psize_t, int));
+ *	cache_flush_phys(paddr_t, psize_t, int);
  *
  *	Clear a set of paddrs from the D$, I$ and if param3 is
  *	non-zero, E$.  (E$ is not supported yet).
@@ -8091,7 +8091,7 @@ ENTRY(subyte)
  */
 
 /*
- * u_int64_t
+ * uint64_t
  * probeget(addr, asi, size)
  *	paddr_t addr;
  *	int asi;

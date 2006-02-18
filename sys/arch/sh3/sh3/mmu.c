@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.11.2.2 2006/02/01 14:51:32 yamt Exp $	*/
+/*	$NetBSD: mmu.c,v 1.11.2.3 2006/02/18 15:38:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.11.2.2 2006/02/01 14:51:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.11.2.3 2006/02/18 15:38:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ void (*__sh_mmu_start)(void);
 void (*__sh_tlb_invalidate_addr)(int, vaddr_t);
 void (*__sh_tlb_invalidate_asid)(int);
 void (*__sh_tlb_invalidate_all)(void);
-void (*__sh_tlb_update)(int, vaddr_t, u_int32_t);
+void (*__sh_tlb_update)(int, vaddr_t, uint32_t);
 #endif /* SH3 && SH4 */
 
 
@@ -84,7 +84,7 @@ sh_mmu_init(void)
 void
 sh_mmu_information(void)
 {
-	u_int32_t r;
+	uint32_t r;
 #ifdef SH3
 	if (CPU_IS_SH3) {
 		printf("cpu0: 4-way set-associative 128 TLB entries\n");
@@ -110,9 +110,6 @@ sh_mmu_information(void)
 void
 sh_tlb_set_asid(int asid)
 {
-	int s;
 
-	s = _cpu_exception_suspend();
 	_reg_write_4(SH_(PTEH), asid);
-	_cpu_exception_resume(s);
 }

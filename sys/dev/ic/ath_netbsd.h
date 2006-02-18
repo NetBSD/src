@@ -1,3 +1,5 @@
+/*	$NetBSD: ath_netbsd.h,v 1.4.10.1 2006/02/18 15:39:04 yamt Exp $ */
+
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.110 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.110.2.1 2006/02/18 15:39:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.110 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.110.2.1 2006/02/18 15:39:08 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.110 2005/12/24 20:27:42 perry Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_wmreg.h>
+#include <dev/pci/if_wmvar.h>
 
 #ifdef WM_DEBUG
 #define	WM_DEBUG_LINK		0x01
@@ -357,6 +358,7 @@ do {									\
 #define	WM_F_HAS_MII		0x01	/* has MII */
 #define	WM_F_EEPROM_HANDSHAKE	0x02	/* requires EEPROM handshake */
 #define	WM_F_EEPROM_SPI		0x04	/* EEPROM is SPI */
+#define	WM_F_EEPROM_MD		0x08	/* EEPROM not present, use MD hook */
 #define	WM_F_IOH_VALID		0x10	/* I/O handle is valid */
 #define	WM_F_BUS64		0x20	/* bus is 64-bit */
 #define	WM_F_PCIX		0x40	/* bus is PCI-X */
@@ -463,7 +465,11 @@ static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_softc *, int);
 static int	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
+static int	wm_validate_eeprom_checksum(struct wm_softc *);
 static void	wm_tick(void *);
+#ifdef __HAVE_WM_READ_EEPROM_HOOK
+extern int	wm_read_eeprom_hook(int, int, u_int16_t *);
+#endif
 
 static void	wm_set_filter(struct wm_softc *);
 
@@ -1066,13 +1072,30 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_flags |= WM_F_EEPROM_SPI;
 		sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
 	}
-	if (sc->sc_flags & WM_F_EEPROM_SPI)
-		eetype = "SPI";
-	else
-		eetype = "MicroWire";
-	aprint_verbose("%s: %u word (%d address bits) %s EEPROM\n",
-	    sc->sc_dev.dv_xname, 1U << sc->sc_ee_addrbits,
-	    sc->sc_ee_addrbits, eetype);
+
+	/*
+	 * Defer printing the EEPROM type until after verifying the checksum
+	 * This allows the EEPROM type to be printed correctly in the case
+	 * that no EEPROM is attached.
+	 */
+
+ 
+	/*
+	 * Validate the EEPROM checksum. If the checksum fails:
+	 *
+	 * If __HAVE_WM_READ_EEPROM_HOOK, we defer to the device-specific
+	 * hook for EEPROM reads. Otherwise we have run out of options,
+	 * so bail.
+	 */
+	if (wm_validate_eeprom_checksum(sc)) {
+#ifdef __HAVE_WM_READ_EEPROM_HOOK
+		sc->sc_flags |= WM_F_EEPROM_MD;
+#else
+		aprint_error("%s: EEPROM failed checksum\n",
+		    sc->sc_dev.dv_xname);
+		return;
+#endif
+	}
 
 	/*
 	 * Read the Ethernet address from the EEPROM.
@@ -1083,6 +1106,19 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	if (sc->sc_flags & WM_F_EEPROM_MD)
+		aprint_verbose("%s: No EEPROM\n", sc->sc_dev.dv_xname);
+	else {
+		if (sc->sc_flags & WM_F_EEPROM_SPI)
+			eetype = "SPI";
+		else
+			eetype = "MicroWire";
+		aprint_verbose("%s: %u word (%d address bits) %s EEPROM\n",
+		    sc->sc_dev.dv_xname, 1U << sc->sc_ee_addrbits,
+		    sc->sc_ee_addrbits, eetype);
+	}
+
 	enaddr[0] = myea[0] & 0xff;
 	enaddr[1] = myea[0] >> 8;
 	enaddr[2] = myea[1] & 0xff;
@@ -2276,8 +2312,8 @@ wm_rxintr(struct wm_softc *sc)
 		m->m_len -= ETHER_CRC_LEN;
 
 		*sc->sc_rxtailp = NULL;
-		m = sc->sc_rxhead;
 		len = m->m_len + sc->sc_rxlen;
+		m = sc->sc_rxhead;
 
 		WM_RXCHAIN_RESET(sc);
 
@@ -3111,6 +3147,35 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	return (0);
 }
 
+#define EEPROM_CHECKSUM		0xBABA
+#define EEPROM_SIZE		0x0040
+
+/*
+ * wm_validate_eeprom_checksum
+ *
+ * The checksum is defined as the sum of the first 64 (16 bit) words.
+ */
+static int
+wm_validate_eeprom_checksum(struct wm_softc *sc)
+{   
+	uint16_t checksum;
+	uint16_t eeprom_data;
+	int i;
+
+	checksum = 0;
+
+	for (i = 0; i < EEPROM_SIZE; i++) {
+		if(wm_read_eeprom(sc, i, 1, &eeprom_data))
+			return 1;
+		checksum += eeprom_data;
+	}
+
+	if (checksum != (uint16_t) EEPROM_CHECKSUM)
+		return 1;
+
+	return 0;
+}
+
 /*
  * wm_read_eeprom:
  *
@@ -3120,6 +3185,13 @@ static int
 wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 {
 	int rv;
+
+#ifdef __HAVE_WM_READ_EEPROM_HOOK
+	if (sc->sc_flags & WM_F_EEPROM_MD) {
+		rv = wm_read_eeprom_hook(word, wordcnt, data);
+		return (rv);
+	}
+#endif
 
 	if (wm_acquire_eeprom(sc))
 		return (1);

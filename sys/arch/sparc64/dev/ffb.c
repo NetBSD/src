@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.21 2005/12/12 02:44:31 christos Exp $	*/
+/*	$NetBSD: ffb.c,v 1.21.2.1 2006/02/18 15:38:48 yamt Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.21 2005/12/12 02:44:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.21.2.1 2006/02/18 15:38:48 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,7 +107,7 @@ int	ffb_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 void	ffb_switch_screen(struct ffb_softc *);
 void	ffb_restore_screen(struct ffb_screen *, 
-	    const struct wsscreen_descr *, u_int16_t *);
+	    const struct wsscreen_descr *, uint16_t *);
 void	ffb_clearscreen(struct ffb_softc *);
 int	ffb_load_font(void *, void *, struct wsdisplay_font *);
 void	ffb_init_screen(struct ffb_softc *, struct ffb_screen *, int, 
@@ -429,7 +429,7 @@ ffb_ras_fifo_wait(struct ffb_softc *sc, int n)
 void
 ffb_ras_wait(struct ffb_softc *sc)
 {
-	u_int32_t ucsr, r;
+	uint32_t ucsr, r;
 
 	while (1) {
 		ucsr = FBC_READ(sc, FFB_FBC_UCSR);
@@ -809,7 +809,7 @@ ffb_switch_screen(struct ffb_softc *sc)
 
 void
 ffb_restore_screen(struct ffb_screen *scr,
-    const struct wsscreen_descr *type, u_int16_t *mem)
+    const struct wsscreen_descr *type, uint16_t *mem)
 {
 	int i, j, offset = 0;
 	uint16_t *charptr = scr->chars;

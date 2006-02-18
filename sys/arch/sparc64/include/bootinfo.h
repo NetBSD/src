@@ -1,4 +1,4 @@
-/*       $NetBSD: bootinfo.h,v 1.1.40.1 2006/02/01 14:51:37 yamt Exp $        */
+/*       $NetBSD: bootinfo.h,v 1.1.40.2 2006/02/18 15:38:48 yamt Exp $        */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  * Kernels written for pre-v1.8 ofwboot require first three cells to present
  * in this particular order, those that rely on v1.9 and higher won't work if
  * the last pointer is not in the table; therefore, the vector cannot be
- * shorter than 4 * sizeof(u_int32_t) or 4 * sizeof(u_int64_t) for 32-bit and
+ * shorter than 4 * sizeof(uint32_t) or 4 * sizeof(uint64_t) for 32-bit and
  * 64-bit boot loader, respectively.
  *
  * As of ofwboot v1.9,  bootinfo binary object is placed right after the kernel

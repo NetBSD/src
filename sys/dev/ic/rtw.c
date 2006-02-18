@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.64 2005/12/29 22:27:17 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.64.2.1 2006/02/18 15:39:05 yamt Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.64 2005/12/29 22:27:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.64.2.1 2006/02/18 15:39:05 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -1993,7 +1993,7 @@ rtw_txring_fixup(struct rtw_softc *sc)
 			continue;
 		printf("%s: tx-ring %d expected next %u, read %u\n", __func__,
 		    pri, tdb->tdb_next, next);
-		tdb->tdb_next = next;
+		tdb->tdb_next = MIN(next, tdb->tdb_ndesc - 1);
 	}
 }
 
@@ -2011,7 +2011,7 @@ rtw_rxring_fixup(struct rtw_softc *sc)
 	if (rdb->rdb_next != next) {
 		printf("%s: rx-ring expected next %u, read %u\n", __func__,
 		    rdb->rdb_next, next);
-		rdb->rdb_next = next;
+		rdb->rdb_next = MIN(next, rdb->rdb_ndesc - 1);
 	}
 }
 

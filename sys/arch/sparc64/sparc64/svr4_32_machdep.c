@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.21 2005/12/11 12:19:15 christos Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.21.2.1 2006/02/18 15:38:51 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.21 2005/12/11 12:19:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.21.2.1 2006/02/18 15:38:51 yamt Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.21 2005/12/11 12:19:15 christo
 #include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_32_getsiginfo __P((union svr4_32_siginfo *, int, u_long, caddr_t));
+static void svr4_32_getsiginfo(union svr4_32_siginfo *, int, u_long, caddr_t);
 
 void
 svr4_32_setregs(l, epp, stack)
@@ -99,12 +99,10 @@ svr4_32_setregs(l, epp, stack)
 #endif
 
 #ifdef DEBUG_SVR4
-static void svr4_32_printmcontext __P((const char *, struct svr4_32_mcontext *));
+static void svr4_32_printmcontext(const char *, struct svr4_32_mcontext *);
 
 static void
-svr4_32_printmcontext(fun, mc)
-	const char *fun;
-	struct svr4_32_mcontext *mc;
+svr4_32_printmcontext(const char *fun, struct svr4_32_mcontext *mc)
 {
 	svr4_32_greg_t *r = mc->greg;
 
@@ -341,11 +339,8 @@ svr4_32_setmcontext(l, mc, flags)
  * map the trap code into the svr4 siginfo as best we can
  */
 static void
-svr4_32_getsiginfo(si, sig, code, addr)
-	union svr4_32_siginfo	*si;
-	int			 sig;
-	u_long			 code;
-	caddr_t			 addr;
+svr4_32_getsiginfo(union svr4_32_siginfo *si, int sig, u_long code,
+	caddr_t addr)
 {
 	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.28 2005/12/14 20:33:46 rpaulo Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.28.2.1 2006/02/18 15:39:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.28 2005/12/14 20:33:46 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.28.2.1 2006/02/18 15:39:23 yamt Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -168,6 +168,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 	A = 0;
 	X = 0;
 	--pc;
+	/* CONSTCOND */
 	while (1) {
 		++pc;
 		switch (pc->code) {

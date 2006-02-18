@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.211.2.2 2006/02/05 12:23:56 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.211.2.3 2006/02/18 15:39:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -389,7 +389,7 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 
 static struct proc *__curproc(void);
 
-static inline struct proc *
+static __inline struct proc *
 __curproc()
 {
 	struct lwp *l = curlwp;
@@ -492,9 +492,9 @@ int	proc_vmspace_getref(struct proc *, struct vmspace **);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);
-static inline struct proc *_proclist_skipmarker(struct proc *);
+static __inline struct proc *_proclist_skipmarker(struct proc *);
 
-static inline struct proc *
+static __inline struct proc *
 _proclist_skipmarker(struct proc *p0)
 {
 	struct proc *p = p0;

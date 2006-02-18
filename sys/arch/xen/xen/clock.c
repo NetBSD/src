@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15.2.1 2006/02/01 14:51:48 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.15.2.2 2006/02/18 15:38:59 yamt Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15.2.1 2006/02/01 14:51:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15.2.2 2006/02/18 15:38:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,11 +110,11 @@ get_time_values_from_xen(void)
 static uint64_t
 get_tsc_offset_ns(void)
 {
-	uint32_t tsc_delta;
+	uint64_t tsc_delta;
 	struct cpu_info *ci = curcpu();
 
-	tsc_delta = cpu_counter32() - shadow_tsc_stamp;
-	return tsc_delta * 1000000000 / cpu_frequency(ci);
+	tsc_delta = cpu_counter() - shadow_tsc_stamp;
+	return tsc_delta * 1000000000ULL / cpu_frequency(ci);
 }
 
 void

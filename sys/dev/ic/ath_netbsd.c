@@ -1,3 +1,5 @@
+/*	$NetBSD: ath_netbsd.c,v 1.5.2.1 2006/02/18 15:39:04 yamt Exp $ */
+
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.
@@ -24,6 +26,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.5.2.1 2006/02/18 15:39:04 yamt Exp $");
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/errno.h>

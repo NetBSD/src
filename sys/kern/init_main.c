@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.261 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: init_main.c,v 1.261.2.1 2006/02/18 15:39:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.261 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.261.2.1 2006/02/18 15:39:18 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_sysv.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.261 2005/12/24 19:12:23 perry Exp $"
 #include "opt_systrace.h"
 #include "opt_posix.h"
 #include "opt_kcont.h"
-#include "opt_rootfs_magiclinks.h"
 #include "opt_verified_exec.h"
 
 #include "rnd.h"
@@ -416,9 +415,6 @@ main(void)
 	inittodr(rootfstime);
 
 	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
-#ifdef ROOTFS_MAGICLINKS
-	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_MAGICLINKS;
-#endif
 	CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
 
 	/*

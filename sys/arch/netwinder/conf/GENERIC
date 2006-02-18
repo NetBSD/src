@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.75 2005/12/09 23:34:02 elad Exp $
+# $NetBSD: GENERIC,v 1.75.2.1 2006/02/18 15:38:42 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -70,6 +70,7 @@ file-system	PROCFS		# /proc
 #file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -291,13 +292,13 @@ pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	cgd		4	# cryptographic disk devices
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

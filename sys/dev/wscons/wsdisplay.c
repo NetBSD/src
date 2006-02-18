@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.87 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.87.2.1 2006/02/18 15:39:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.87 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.87.2.1 2006/02/18 15:39:12 yamt Exp $");
 
 #include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
@@ -726,8 +726,7 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return (ENXIO);
 
 	if (ISWSDISPLAYSTAT(dev)) {
-		wsevent_init(&sc->evar);
-		sc->evar.io = l->l_proc;
+		wsevent_init(&sc->evar, l->l_proc);
 		return (0);
 	}
 
@@ -1341,8 +1340,7 @@ wsdisplay_stat_inject(struct device *dev, u_int type, int value)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *) dev;
 	struct wseventvar *evar;
-	struct wscons_event *ev;
-	int put;
+	struct wscons_event event;
 
 	evar = &sc->evar;
 
@@ -1352,18 +1350,12 @@ wsdisplay_stat_inject(struct device *dev, u_int type, int value)
 	if (evar->q == NULL)
 		return (1);
 
-	put = evar->put;
-	ev = &evar->q[put];
-	put = (put + 1) % WSEVENT_QSIZE;
-	if (put == evar->get) {
+	event.type = type;
+	event.value = value;
+	if (wsevent_inject(evar, &event, 1) != 0) {
 		log(LOG_WARNING, "wsdisplay: event queue overflow\n");
 		return (1);
 	}
-	ev->type = type;
-	ev->value = value;
-	nanotime(&ev->time);
-	evar->put = put;
-	WSEVENT_WAKEUP(evar);
 
 	return (0);
 }

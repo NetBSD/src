@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.77 2005/12/29 15:24:51 tsutsui Exp $ */
+/* $NetBSD: wsconsio.h,v 1.77.2.1 2006/02/18 15:39:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -241,6 +241,16 @@ struct wsmouse_id {
 	u_char data[WSMOUSE_ID_MAXLEN];
 };
 #define	WSMOUSEIO_GETID		_IOWR('W', 38, struct wsmouse_id)
+
+/* Get/set button repeating. */
+struct wsmouse_repeat {
+	unsigned long	wr_buttons;
+	unsigned int	wr_delay_first;
+	unsigned int	wr_delay_decrement;
+	unsigned int	wr_delay_minimum;
+};
+#define WSMOUSEIO_GETREPEAT	_IOR('W', 39, struct wsmouse_repeat)
+#define WSMOUSEIO_SETREPEAT	_IOW('W', 40, struct wsmouse_repeat)
 
 /*
  * Display ioctls (64 - 95)

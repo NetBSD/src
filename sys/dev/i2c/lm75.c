@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.3 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: lm75.c,v 1.3.2.1 2006/02/18 15:39:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[0].warnflags = ENVSYS_WARN_OK;
 
 	sc->sc_sensor[0].units = sc->sc_info[0].units = ENVSYS_STEMP;
-	if (prop_get(dev_propdb, &sc->sc_dev, "description",
+	if (devprop_get(&sc->sc_dev, "description",
 		     sc->sc_info[0].desc, sizeof(sc->sc_info[0].desc),
 		     &ptype) < 1 ||
 	    ptype != PROP_STRING)

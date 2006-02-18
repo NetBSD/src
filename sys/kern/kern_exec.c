@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.212 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.212.2.1 2006/02/18 15:39:18 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.212 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.212.2.1 2006/02/18 15:39:18 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -402,6 +402,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	size_t			len;
 	char			*stack;
 	struct ps_strings	arginfo;
+	struct ps_strings	*aip = &arginfo;
 	struct vmspace		*vm;
 	char			**tmpfap;
 	int			szsigcode;
@@ -734,10 +735,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	p->p_psnenv = offsetof(struct ps_strings, ps_nenvstr);
 
 	/* copy out the process's ps_strings structure */
-	if ((error = copyout(&arginfo, (char *)p->p_psstr,
+	if ((error = copyout(aip, (char *)p->p_psstr,
 	    sizeof(arginfo))) != 0) {
 		DPRINTF(("execve: ps_strings copyout %p->%p size %ld failed\n",
-		       &arginfo, (char *)p->p_psstr, (long)sizeof(arginfo)));
+		       aip, (char *)p->p_psstr, (long)sizeof(arginfo)));
 		goto exec_abort;
 	}
 
