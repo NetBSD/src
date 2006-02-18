@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.19 2003/10/27 00:12:44 lukem Exp $ */
+/*	$NetBSD: sun68k.c,v 1.20 2006/02/18 10:08:07 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.19 2003/10/27 00:12:44 lukem Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.20 2006/02/18 10:08:07 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -53,6 +53,17 @@ __RCSID("$NetBSD: sun68k.c,v 1.19 2003/10/27 00:12:44 lukem Exp $");
 
 #include "installboot.h"
 
+static int sun68k_clearboot(ib_params *);
+static int sun68k_setboot(ib_params *);
+
+struct ib_mach ib_mach_sun2 =
+	{ "sun2", sun68k_setboot, sun68k_clearboot, no_editboot,
+		IB_STAGE2START };
+
+struct ib_mach ib_mach_sun3 =
+	{ "sun3", sun68k_setboot, sun68k_clearboot, no_editboot,
+		IB_STAGE2START };
+
 static struct bbinfo_params bbparams = {
 	SUN68K_BBINFO_MAGIC,
 	SUN68K_BOOT_BLOCK_OFFSET,
@@ -62,7 +73,7 @@ static struct bbinfo_params bbparams = {
 	BBINFO_BIG_ENDIAN,
 };
 
-int
+static int
 sun68k_clearboot(ib_params *params)
 {
 
@@ -71,7 +82,7 @@ sun68k_clearboot(ib_params *params)
 	return (shared_bbinfo_clearboot(params, &bbparams, NULL));
 }
 
-int
+static int
 sun68k_setboot(ib_params *params)
 {
 

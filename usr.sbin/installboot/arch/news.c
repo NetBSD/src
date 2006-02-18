@@ -1,4 +1,4 @@
-/*	$NetBSD: news.c,v 1.5 2003/10/27 00:12:44 lukem Exp $ */
+/*	$NetBSD: news.c,v 1.6 2006/02/18 10:08:07 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: news.c,v 1.5 2003/10/27 00:12:44 lukem Exp $");
+__RCSID("$NetBSD: news.c,v 1.6 2006/02/18 10:08:07 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -59,6 +59,18 @@ __RCSID("$NetBSD: news.c,v 1.5 2003/10/27 00:12:44 lukem Exp $");
 
 static int news_copydisklabel(ib_params *, struct bbinfo_params *, uint8_t *);
 
+static int news68k_clearboot(ib_params *);
+static int news68k_setboot(ib_params *);
+static int newsmips_clearboot(ib_params *);
+static int newsmips_setboot(ib_params *);
+
+struct ib_mach ib_mach_news68k =
+	{ "news68k", news68k_setboot, news68k_clearboot, no_editboot,
+		IB_STAGE2START };
+
+struct ib_mach ib_mach_newsmips =
+	{ "newsmips", newsmips_setboot, newsmips_clearboot, no_editboot,
+		IB_STAGE2START };
 
 /*
  * news68k specific support
@@ -73,7 +85,7 @@ static struct bbinfo_params news68k_bbparams = {
 	BBINFO_BIG_ENDIAN,
 };
 
-int
+static int
 news68k_clearboot(ib_params *params)
 {
 
@@ -83,7 +95,7 @@ news68k_clearboot(ib_params *params)
 	    news_copydisklabel));
 }
 
-int
+static int
 news68k_setboot(ib_params *params)
 {
 
@@ -107,7 +119,7 @@ static struct bbinfo_params newsmips_bbparams = {
 	BBINFO_BIG_ENDIAN,
 };
 
-int
+static int
 newsmips_clearboot(ib_params *params)
 {
 
@@ -117,7 +129,7 @@ newsmips_clearboot(ib_params *params)
 	    news_copydisklabel));
 }
 
-int
+static int
 newsmips_setboot(ib_params *params)
 {
 

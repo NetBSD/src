@@ -1,4 +1,4 @@
-/* $NetBSD: next68k.c,v 1.3 2004/06/20 22:20:17 jmc Exp $ */
+/* $NetBSD: next68k.c,v 1.4 2006/02/18 10:08:07 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: next68k.c,v 1.3 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: next68k.c,v 1.4 2006/02/18 10:08:07 dsl Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -61,6 +61,10 @@ __RCSID("$NetBSD: next68k.c,v 1.3 2004/06/20 22:20:17 jmc Exp $");
 #define	SECTOR_SIZE	DEV_BSIZE
 
 static uint16_t nextstep_checksum(const void *, const void *);
+static int next68k_setboot(ib_params *);
+
+struct ib_mach ib_mach_next68k =
+	{ "next68k", next68k_setboot, no_clearboot, no_editboot, 0};
 
 static uint16_t
 nextstep_checksum(const void *vbuf, const void *vlimit)
@@ -76,7 +80,7 @@ nextstep_checksum(const void *vbuf, const void *vlimit)
 	return (sum & 0xffff);
 }
 
-int
+static int
 next68k_setboot(ib_params *params)
 {
 	int retval, labelupdated;
