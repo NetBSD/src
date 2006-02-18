@@ -1,4 +1,4 @@
-/* $NetBSD: scifreg.h,v 1.9 2006/02/14 00:02:03 uwe Exp $ */
+/* $NetBSD: scifreg.h,v 1.10 2006/02/18 00:41:32 uwe Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -33,12 +33,14 @@
  * Serial Communication Interface with FIFO (SCIF)
  */
 
+#define SH3_SCIF0_BASE	0xa4000150
+#define SH3_SCIF1_BASE	0xa4000140
+
+#define SH4_SCIF_BASE	0xffe80000
+
 #ifdef SH3
 
 /* SH3 definitions */
-
-#define SH3_SCIF0_BASE	0xa4000150
-#define SH3_SCIF1_BASE	0xa4000140
 
 #define	SCIF_SMR		0x0	/* serial mode */
 #define	SCIF_BRR		0x2	/* bit rate */
@@ -61,8 +63,6 @@
 #else  /* !SH3 */
 
 /* SH4 definitions */
-
-#define SH4_SCIF_BASE	0xffe80000
 
 #define	SCIF_SMR		0x00	/* serial mode */
 #define	SCIF_BRR		0x04	/* bit rate */
@@ -112,6 +112,14 @@
 #define SCSMR2_STOP		0x08	/* STOP bit (set = 2 stop bits) */
 #define	SCSMR2_CKS1		0x02	/* ClocK Select 1 */
 #define	SCSMR2_CKS0		0x01	/* ClocK Select 0 */
+
+/* SMR: serial mode (for IrDA) */
+#define SCSMR2_IRMOD		0x80	/* IrDA mode */
+#define SCSMR2_ICK3		0x40
+#define SCSMR2_ICK2		0x20
+#define SCSMR2_ICK1		0x10
+#define SCSMR2_ICK0		0x08
+#define SCSMR2_PSEL		0x04	/* Pulse width SELelect */
 
 /* SCR: serial control */
 #define	SCSCR2_TIE		0x80	/* Transmit Interrupt Enable */
