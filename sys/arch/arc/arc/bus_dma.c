@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.26.2.1 2006/02/18 11:12:18 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.26.2.2 2006/02/18 14:31:36 yamt Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.2.1 2006/02/18 11:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.2.2 2006/02/18 14:31:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		if (!VMSPACE_IS_KERNEL_P(vm))
 			(void)pmap_extract(vm_map_pmap(&vm->vm_map),
 			    vaddr, &curaddr);
-		} else
+		else
 			curaddr = kvtophys(vaddr);
 
 		/*
