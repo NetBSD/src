@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.100 2005/08/27 08:04:26 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.101 2006/02/18 01:29:27 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.100 2005/08/27 08:04:26 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.101 2006/02/18 01:29:27 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.100 2005/08/27 08:04:26 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.101 2006/02/18 01:29:27 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1890,6 +1890,8 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	  Boolean *freePtr)
 {
     const char	   *tstr;    	/* Pointer into str */
+    char	   *tstr2;	/* Secondary tstr if we need
+				 * to expand modifiers  */
     Var	    	   *v;	    	/* Variable in invocation */
     const char     *cp;    	/* Secondary pointer into str (place marker
 				 * for tstr) */
@@ -1915,6 +1917,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
     start = str;
     parsestate.oneBigWord = FALSE;
     parsestate.varSpace = ' ';	/* word separator */
+    tstr2 = NULL;
 
     if (str[1] != PROPEN && str[1] != BROPEN) {
 	/*
@@ -2257,6 +2260,9 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	tstr++;
 	delim = '\0';
 
+	if (*tstr == '$') {
+	    tstr = tstr2 = Var_Subst(NULL, tstr, ctxt, err);
+	}
 	while (*tstr && *tstr != endc) {
 	    char	*newStr;    /* New value to return */
 	    char	termc;	    /* Character which terminated scan */
@@ -2974,7 +2980,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			*lengthPtr = cp - start + 1;
 			VarREError(error, &pattern.re, "RE substitution error");
 			free(pattern.replace);
-			return (var_Error);
+			goto cleanup;
 		    }
 
 		    pattern.nsub = pattern.re.re_nsub + 1;
@@ -3224,6 +3230,11 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	free(v->name);
 	free(v);
     }
+    /*
+     * XXX: If we need to free tstr2 - tstr is  no longer valid either.
+     */
+    if (tstr2)
+	free(tstr2);
     return (nstr);
 
  bad_modifier:
@@ -3235,6 +3246,8 @@ cleanup:
     *lengthPtr = cp - start + 1;
     if (*freePtr)
 	free(nstr);
+    if (tstr2)
+	free(tstr2);
     if (delim != '\0')
 	Error("Unclosed substitution for %s (%c missing)",
 	      v->name, delim);
