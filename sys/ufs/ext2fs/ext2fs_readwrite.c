@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.40.2.2 2006/01/15 10:24:52 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.40.2.3 2006/02/18 13:07:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.40.2.2 2006/01/15 10:24:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.40.2.3 2006/02/18 13:07:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,7 +399,7 @@ out:
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		(void) ext2fs_truncate(vp, osize, ioflag & IO_SYNC, ap->a_cred,
-		    curlwp);
+		    p);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
