@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.79.2.1 2006/02/01 14:51:48 yamt Exp $	*/
+/*	$NetBSD: acpi.c,v 1.79.2.2 2006/02/18 15:39:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.79.2.1 2006/02/01 14:51:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.79.2.2 2006/02/18 15:39:02 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -117,7 +117,7 @@ MALLOC_DECLARE(M_ACPI);
 #define	ACPI_DBGR_PROBE		0x08
 #define	ACPI_DBGR_RUNNING	0x10
 
-int	acpi_dbgr = 0x00;
+static int acpi_dbgr = 0x00;
 #endif
 
 static int	acpi_match(struct device *, struct cfdata *, void *);

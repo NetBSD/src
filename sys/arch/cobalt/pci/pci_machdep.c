@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.18 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.18.2.1 2006/02/18 15:38:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.18 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.18.2.1 2006/02/18 15:38:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -248,6 +248,6 @@ pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
 	if (dev == 9)
 		return 0;
 
-	return PCI_CONF_ALL & ~(PCI_CONF_MAP_ROM |
-	    PCI_COMMAND_SERR_ENABLE | PCI_COMMAND_PARITY_ENABLE);
+	return PCI_CONF_DEFAULT & ~(PCI_COMMAND_SERR_ENABLE |
+	    PCI_COMMAND_PARITY_ENABLE);
 }

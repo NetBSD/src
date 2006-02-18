@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.2.1 2006/02/18 15:38:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@ extern unsigned int imask[], Cur_pl, sirpending, astpending;
 #if defined(NO_INLINE_SPLX)
 # define INTR_INLINE
 #else
-# define INTR_INLINE inline
+# define INTR_INLINE __inline
 #endif
 
 void	intr_init __P((void));

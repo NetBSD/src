@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.18 2005/12/11 12:21:01 christos Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.18.2.1 2006/02/18 15:39:02 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.18 2005/12/11 12:21:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.18.2.1 2006/02/18 15:39:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ CFATTACH_DECL(acpibut, sizeof(struct acpibut_softc),
     acpibut_match, acpibut_attach, NULL, NULL);
 
 static void	acpibut_pressed_event(void *);
-static void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *context);
+static void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *);
 
 /*
  * acpibut_match:

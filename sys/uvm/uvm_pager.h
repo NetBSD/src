@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.32 2005/12/24 20:45:10 perry Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.32.2.1 2006/02/18 15:39:31 yamt Exp $	*/
 
 /*
  *
@@ -169,21 +169,11 @@ struct uvm_pagerops {
 #ifdef _KERNEL
 
 /*
- * handle inline options
- */
-
-#ifdef UVM_PAGER_INLINE
-#define PAGER_INLINE static inline
-#else
-#define PAGER_INLINE /* nothing */
-#endif /* UVM_PAGER_INLINE */
-
-/*
  * prototypes
  */
 
 void	uvm_pager_init(void);
-PAGER_INLINE struct vm_page *uvm_pageratop(vaddr_t);
+struct vm_page *uvm_pageratop(vaddr_t);
 vaddr_t	uvm_pagermapin(struct vm_page **, int, int);
 void	uvm_pagermapout(vaddr_t, int);
 

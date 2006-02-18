@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.258.2.2 2006/02/01 14:52:20 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.258.2.3 2006/02/18 15:39:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.258.2.2 2006/02/01 14:52:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.258.2.3 2006/02/18 15:39:18 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -130,6 +130,7 @@ int doforce = 1;		/* 1 => permit forcible unmounting */
 int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 
 extern int dovfsusermount;	/* 1 => permit any user to mount filesystems */
+extern int vfs_magiclinks;	/* 1 => expand "magic" symlinks */
 
 /*
  * Insq/Remq for the vnode usage lists.
@@ -1970,6 +1971,12 @@ SYSCTL_SETUP(sysctl_vfs_setup, "sysctl vfs subtree setup")
 		       SYSCTL_DESCR("List of file systems present"),
 		       sysctl_vfs_generic_fstypes, 0, NULL, 0,
 		       CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "magiclinks",
+		       SYSCTL_DESCR("Whether \"magic\" symlinks are expanded"),
+		       NULL, 0, &vfs_magiclinks, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_MAGICLINKS, CTL_EOL);
 }
 
 
@@ -2580,8 +2587,9 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 {
 	char bf[1024];
 
-	(*pr)("  vp %p lblkno 0x%"PRIx64" blkno 0x%"PRIx64" dev 0x%x\n",
-		  bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_dev);
+	(*pr)("  vp %p lblkno 0x%"PRIx64" blkno 0x%"PRIx64" rawblkno 0x%"
+	    PRIx64 " dev 0x%x\n",
+	    bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_rawblkno, bp->b_dev);
 
 	bitmask_snprintf(bp->b_flags, buf_flagbits, bf, sizeof(bf));
 	(*pr)("  error %d flags 0x%s\n", bp->b_error, bf);

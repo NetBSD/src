@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.94.2.1 2006/02/01 14:52:41 yamt Exp $	*/
+/*	$NetBSD: in6.c,v 1.94.2.2 2006/02/18 15:39:23 yamt Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.94.2.1 2006/02/01 14:52:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.94.2.2 2006/02/18 15:39:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -558,7 +558,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCGIFSTAT_ICMP6:
 		if (ifp == NULL)
 			return EINVAL;
-		bzero(&ifr->ifr_ifru.ifru_stat,
+		bzero(&ifr->ifr_ifru.ifru_icmp6stat,
 		    sizeof(ifr->ifr_ifru.ifru_icmp6stat));
 		ifr->ifr_ifru.ifru_icmp6stat =
 		    *((struct in6_ifextra *)ifp->if_afdata[AF_INET6])->icmp6_ifstat;

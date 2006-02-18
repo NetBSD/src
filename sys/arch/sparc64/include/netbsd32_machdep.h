@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.19 2005/12/11 12:19:10 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.19.2.1 2006/02/18 15:38:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -35,7 +35,7 @@
 
 struct proc;
 
-typedef	u_int32_t netbsd32_pointer_t;
+typedef	uint32_t netbsd32_pointer_t;
 
 /*
  * Convert a pointer in the 32-bit world to a valid 64-bit pointer.
@@ -43,7 +43,7 @@ typedef	u_int32_t netbsd32_pointer_t;
 #define	NETBSD32PTR64(p32)	((void *)(u_long)(u_int)(p32))
 
 /* from <arch/sparc/include/signal.h> */
-typedef u_int32_t netbsd32_sigcontextp_t;
+typedef uint32_t netbsd32_sigcontextp_t;
 
 struct netbsd32_sigcontext {
 	int		sc_onstack;	/* sigstack state to restore */

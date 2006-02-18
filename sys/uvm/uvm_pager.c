@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.72.2.1 2006/01/15 10:03:05 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.72.2.2 2006/02/18 15:39:31 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.72.2.1 2006/01/15 10:03:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.72.2.2 2006/02/18 15:39:31 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.72.2.1 2006/01/15 10:03:05 yamt Exp 
 #include <sys/pool.h>
 #include <sys/vnode.h>
 
-#define UVM_PAGER_C
 #include <uvm/uvm.h>
 
 struct pool *uvm_aiobuf_pool;
@@ -477,4 +476,23 @@ uvm_aio_aiodone(struct buf *bp)
 	}
 	putiobuf(bp);
 	splx(s);
+}
+
+/*
+ * uvm_pageratop: convert KVAs in the pager map back to their page
+ * structures.
+ */
+
+struct vm_page *
+uvm_pageratop(vaddr_t kva)
+{
+	struct vm_page *pg;
+	paddr_t pa;
+	boolean_t rv;
+
+	rv = pmap_extract(pmap_kernel(), kva, &pa);
+	KASSERT(rv);
+	pg = PHYS_TO_VM_PAGE(pa);
+	KASSERT(pg != NULL);
+	return (pg);
 }

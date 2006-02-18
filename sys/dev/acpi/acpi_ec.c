@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.35 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.35.2.1 2006/02/18 15:39:02 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.35 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.35.2.1 2006/02/18 15:39:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,22 +246,16 @@ typedef struct {
 	UINT8		Data;
 } EC_REQUEST;
 
-static UINT32		EcGpeHandler(void *Context);
-static ACPI_STATUS	EcSpaceSetup(ACPI_HANDLE Region, UINT32 Function,
-			    void *Context, void **return_Context);
-static ACPI_STATUS	EcSpaceHandler(UINT32 Function,
-			    ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
-			    ACPI_INTEGER *Value, void *Context,
-			    void *RegionContext);
+static UINT32		EcGpeHandler(void *);
+static ACPI_STATUS	EcSpaceSetup(ACPI_HANDLE, UINT32, void *, void **);
+static ACPI_STATUS	EcSpaceHandler(UINT32, ACPI_PHYSICAL_ADDRESS, UINT32,
+			    ACPI_INTEGER *, void *, void *);
 
-static ACPI_STATUS	EcWaitEvent(struct acpi_ec_softc *sc, EC_EVENT Event);
-static ACPI_STATUS	EcQuery(struct acpi_ec_softc *sc, UINT8 *Data);
-static ACPI_STATUS	EcTransaction(struct acpi_ec_softc *sc,
-			    EC_REQUEST *EcRequest);
-static ACPI_STATUS	EcRead(struct acpi_ec_softc *sc, UINT8 Address,
-			    UINT8 *Data);
-static ACPI_STATUS	EcWrite(struct acpi_ec_softc *sc, UINT8 Address,
-			    UINT8 *Data);
+static ACPI_STATUS	EcWaitEvent(struct acpi_ec_softc *, EC_EVENT);
+static ACPI_STATUS	EcQuery(struct acpi_ec_softc *, UINT8 *);
+static ACPI_STATUS	EcTransaction(struct acpi_ec_softc *, EC_REQUEST *);
+static ACPI_STATUS	EcRead(struct acpi_ec_softc *, UINT8, UINT8 *);
+static ACPI_STATUS	EcWrite(struct acpi_ec_softc *, UINT8, UINT8 *);
 static void		EcGpeQueryHandler(void *);
 static inline int	EcIsLocked(struct acpi_ec_softc *);
 static inline void	EcLock(struct acpi_ec_softc *);

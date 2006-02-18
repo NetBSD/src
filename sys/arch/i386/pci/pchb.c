@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.56.2.1 2006/02/01 14:51:28 yamt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.56.2.2 2006/02/18 15:38:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.56.2.1 2006/02/01 14:51:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.56.2.2 2006/02/18 15:38:37 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.56.2.1 2006/02/01 14:51:28 yamt Exp $");
 #include <dev/pci/agpreg.h>
 #include <dev/pci/agpvar.h>
 
-#include <arch/i386/pci/pchbvar.h>
+#include <arch/x86/pci/pchbvar.h>
 
 #include "rnd.h"
 

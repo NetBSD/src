@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.56 2005/12/20 05:35:30 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.56.2.1 2006/02/18 15:38:45 yamt Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.56 $"
+#ident		"GENERIC-$Revision: 1.56.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -60,6 +60,7 @@ file-system	PROCFS		# /proc
 #file-system	CODA		# Coda file system (needs vcoda below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -287,17 +288,17 @@ midi*		at opl?
 joy*		at ofisa?
 
 pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 8		# packet filter
-#pseudo-device	sl	2		# CSLIP
-#pseudo-device	ppp	2		# PPP
-#pseudo-device	tun	2		# network tunneling over tty
+pseudo-device	bpfilter		# packet filter
+#pseudo-device	sl			# CSLIP
+#pseudo-device	ppp			# PPP
+#pseudo-device	tun			# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
-pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
-#pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	strip	4		# STarmode Radio IP (Metricon Ricochet)
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	strip			# STarmode Radio IP (Metricon Ricochet)
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	vnd	4		# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	fss	4		# file system snapshot device

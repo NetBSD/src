@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.125.2.4 2006/02/02 14:44:35 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.125.2.5 2006/02/18 15:39:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.125.2.4 2006/02/02 14:44:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.125.2.5 2006/02/18 15:39:02 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -306,11 +306,13 @@ int
 vnd_destroy(struct device *dev)
 {
 	int error;
+	struct cfdata *cf;
 
+	cf = dev->dv_cfdata;
 	error = config_detach(dev, 0);
 	if (error)
 		return error;
-	free(dev->dv_cfdata, M_DEVBUF);
+	free(cf, M_DEVBUF);
 	return 0;
 }
 
@@ -413,11 +415,20 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
 
 	vndunlock(sc);
+
+	if ((sc->sc_flags & VNF_INITED) == 0) {
+		if ((error = vnd_destroy((struct device *)sc)) != 0) {
+			aprint_error("%s: unable to detach instance\n",
+			    sc->sc_dev.dv_xname);
+			return error;
+		}
+	}
+
 	return (0);
 }
 
 /*
- * Qeue the request, and wakeup the kernel thread to handle it.
+ * Queue the request, and wakeup the kernel thread to handle it.
  */
 static void
 vndstrategy(struct buf *bp)
@@ -459,7 +470,11 @@ vndstrategy(struct buf *bp)
 	 * Do bounds checking and adjust transfer.  If there's an error,
 	 * the bounds check will flag that for us.
 	 */
-	if (DISKPART(bp->b_dev) != RAW_PART) {
+	if (DISKPART(bp->b_dev) == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+		    vnd->sc_size) <= 0)
+			goto done;
+	} else {
 		if (bounds_check_with_label(&vnd->sc_dkdev,
 		    bp, vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING)) <= 0)
 			goto done;
@@ -573,7 +588,7 @@ vndthread(void *arg)
 		bp->b_flags = (obp->b_flags & B_READ) | B_CALL;
 		bp->b_iodone = vndiodone;
 		bp->b_private = obp;
-		bp->b_vp = NULL;
+		bp->b_vp = vnd->sc_vp;
 		bp->b_data = obp->b_data;
 		bp->b_bcount = bp->b_resid = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
@@ -585,8 +600,13 @@ vndthread(void *arg)
 		vnd->sc_active++;
 		splx(s);
 
-		if ((flags & B_READ) == 0)
+		if ((flags & B_READ) == 0) {
+			s = splbio();
+			V_INCR_NUMOUTPUT(bp->b_vp);
+			splx(s);
+
 			vn_start_write(vnd->sc_vp, &mp, V_WAIT);
+		}
 
 		/* Instrumentation. */
 		disk_busy(&vnd->sc_dkdev);
@@ -632,12 +652,8 @@ vndthread(void *arg)
 				nra = 0;
 #endif
 
-			if ((off = bn % bsize) != 0)
-				sz = bsize - off;
-			else
-				sz = (1 + nra) * bsize;
-			if (resid < sz)
-				sz = resid;
+			off = bn % bsize;
+			sz = MIN(((off_t)1 + nra) * bsize - off, resid);
 #ifdef	DEBUG
 			if (vnddebug & VDB_IO)
 				printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
@@ -763,12 +779,6 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 
 	vnd = device_lookup(&vnd_cd, *un);
 	if (vnd == NULL)
-		/*
-		 * vnconfig(8) has weird expectations to list the
-		 * devices.
-		 * It will stop as soon as it gets ENXIO, but
-		 * will continue if it gets something else...
-		 */
 		return (*un >= vnd_cd.cd_ndevs) ? ENXIO : -1;
 
 	if ((vnd->sc_flags & VNF_INITED) == 0)
@@ -1133,12 +1143,6 @@ unlock_and_exit:
 
 		/* Detatch the disk. */
 		pseudo_disk_detach(&vnd->sc_dkdev);
-		if ((error = vnd_destroy((struct device *)vnd)) != 0) {
-			aprint_error("%s: unable to detach instance\n",
-			    vnd->sc_dev.dv_xname);
-			return error;
-		}
-
 		break;
 
 #ifdef COMPAT_30

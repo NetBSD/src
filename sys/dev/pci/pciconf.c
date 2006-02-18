@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.27 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.27.2.1 2006/02/18 15:39:08 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.27 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.27.2.1 2006/02/18 15:39:08 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -283,7 +283,7 @@ probe_bus(pciconf_bus_t *pb)
 				 * when not needed will cause all sorts of
 				 * lossage.
 				 */
-				confmode = PCI_CONF_ALL & ~PCI_CONF_MAP_ROM;
+				confmode = PCI_CONF_DEFAULT;
 #endif
 				if (pci_do_device_query(pb, tag, device,
 				    function, confmode))
@@ -654,10 +654,14 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 			pb->pmem_total += size;
 		}
 	} else {
+		/* Don't enable ROMs if we aren't going to map them. */
+		mode &= ~PCI_CONF_ENABLE_ROM;
+		pd->enable &= ~PCI_CONF_ENABLE_ROM;
+	}
+
+	if (!(mode & PCI_CONF_ENABLE_ROM)) {
 		/* Ensure ROM is disabled */
 		bar = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
-		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM, 0xfffffffe);
-		mask = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
 		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM,
 		    bar & ~PCI_MAPREG_ROM_ENABLE);
 	}
@@ -804,6 +808,8 @@ setup_memwins(pciconf_bus_t *pb)
 	for (pm=pb->pcimemwin; pm < &pb->pcimemwin[pb->nmemwin] ; pm++) {
 		if (pm->reg == PCI_MAPREG_ROM && pm->address != -1) {
 			pd = pm->dev;
+			if (!(pd->enable & PCI_CONF_ENABLE_ROM))
+				continue;
 			if (pci_conf_debug) {
 				print_tag(pd->pc, pd->tag);
 				printf(

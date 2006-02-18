@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13.2.1 2006/02/18 14:49:22 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.13.2.2 2006/02/18 15:38:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -149,11 +149,11 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define __COBALT_bus_space_read_multi(BYTES,BITS)				\
-static inline void __CONCAT(bus_space_read_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_read_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_read_multi_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -187,11 +187,11 @@ __COBALT_bus_space_read_multi(4,32)
  */
 
 #define __COBALT_bus_space_read_region(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_read_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_read_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_read_region_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -257,11 +257,11 @@ do {									\
  */
 
 #define __COBALT_bus_space_write_multi(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_write_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_write_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -295,11 +295,11 @@ __COBALT_bus_space_write_multi(4,32)
  */
 
 #define __COBALT_bus_space_write_region(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_write_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_write_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -335,11 +335,11 @@ __COBALT_bus_space_write_region(4,32)
  */
 
 #define __COBALT_bus_space_set_multi(BYTES,BITS)				\
-static inline void __CONCAT(bus_space_set_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_set_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_set_multi_,BYTES)(t, h, o, v, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -373,11 +373,11 @@ __COBALT_bus_space_set_multi(4,32)
  */
 
 #define __COBALT_bus_space_set_region(BYTES,BITS)				\
-static inline void __CONCAT(bus_space_set_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_set_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_set_region_,BYTES)(t, h, o, v, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -414,13 +414,13 @@ __COBALT_bus_space_set_region(4,32)
  */
 
 #define	__COBALT_copy_region(BYTES)					\
-static inline void __CONCAT(bus_space_copy_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	(bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
 	    bus_size_t count);						\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h1, h2;					\

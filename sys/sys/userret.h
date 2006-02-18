@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.7 2005/12/24 19:01:28 perry Exp $ */
+/* $NetBSD: userret.h,v 1.7.2.1 2006/02/18 15:39:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2003 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  * XXX The following ports don't use this yet:
  * XXX   pc532 vax
  */
-static inline void
+static __inline void
 mi_userret(struct lwp *l)
 {
 	struct proc *p = l->l_proc;

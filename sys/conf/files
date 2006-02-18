@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.750.2.2 2006/02/01 14:51:48 yamt Exp $
+#	$NetBSD: files,v 1.750.2.3 2006/02/18 15:39:02 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -85,6 +85,7 @@ defflag				COMPAT_HPUX
 defflag				COMPAT_IBCS2
 defflag				COMPAT_IRIX
 defflag				COMPAT_LINUX
+defflag				COMPAT_LINUX32
 defflag				COMPAT_OSF1
 defflag				COMPAT_SUNOS
 defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
@@ -167,7 +168,7 @@ defparam			SB_MAX
 defflag				SOFTDEP			# XXX files.ufs?
 defflag				QUOTA			# XXX files.ufs?
 defflag				VNODE_LOCKDEBUG
-defflag				ROOTFS_MAGICLINKS
+defflag				MAGICLINKS
 
 # buffer cache size options
 #
@@ -1134,6 +1135,7 @@ include "fs/filecorefs/files.filecorefs"
 include "fs/msdosfs/files.msdosfs"
 include "fs/ntfs/files.ntfs"
 include "fs/ptyfs/files.ptyfs"
+include "fs/udf/files.udf"
 include "fs/smbfs/files.smbfs"
 include "fs/sysvbfs/files.sysvbfs"
 include "fs/tmpfs/files.tmpfs"
@@ -1249,6 +1251,7 @@ file	kern/subr_prf.c
 file	kern/subr_prof.c
 file	kern/subr_prop.c
 file	kern/subr_once.c
+file	kern/subr_optstr.c
 file	kern/subr_userconf.c		userconf
 file	kern/subr_workqueue.c
 file	kern/subr_xxx.c

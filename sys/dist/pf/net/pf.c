@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.19 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.19.2.1 2006/02/18 15:39:12 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.483 2005/03/15 17:38:43 dhartmei Exp $ */
 
 /*
@@ -2577,7 +2577,7 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, struct pf_pdesc *pd)
 		    dport, 0);
 		if (in6p == NULL) {
 			in6p = in6_pcblookup_bind(tb, &daddr->v6, dport, 0);
-			if (inp == NULL)
+			if (in6p == NULL)
 				return (0);
 		}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.99 2005/12/11 12:20:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.99.2.1 2006/02/18 15:39:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.99 2005/12/11 12:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.99.2.1 2006/02/18 15:39:02 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1896,6 +1896,7 @@ netbsd32_reboot(l, v, retval)
 	return (sys_reboot(l, &ua, retval));
 }
 
+#include <sys/poll.h>
 int
 netbsd32_poll(l, v, retval)
 	struct lwp *l;
@@ -1912,6 +1913,7 @@ netbsd32_poll(l, v, retval)
 	NETBSD32TOP_UAP(fds, struct pollfd);
 	NETBSD32TO64_UAP(nfds);
 	NETBSD32TO64_UAP(timeout);
+
 	return (sys_poll(l, &ua, retval));
 }
 

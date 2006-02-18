@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.8 2005/12/11 12:25:21 christos Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.8.2.1 2006/02/18 15:39:23 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ struct statvfs {
 #define	ST_ASYNC	MNT_ASYNC
 #define	ST_NOCOREDUMP	MNT_NOCOREDUMP
 #define	ST_IGNORE	MNT_IGNORE
-#define	ST_MAGICLINKS	MNT_MAGICLINKS
 #define	ST_NOATIME	MNT_NOATIME
 #define	ST_SYMPERM	MNT_SYMPERM
 #define	ST_NODEVMTIME	MNT_NODEVMTIME

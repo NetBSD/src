@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.85 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wskbd.c,v 1.85.2.1 2006/02/18 15:39:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.85 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.85.2.1 2006/02/18 15:39:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -576,10 +576,14 @@ wskbd_detach(struct device  *self, int flags)
 	if (evar != NULL && evar->io != NULL) {
 		s = spltty();
 		if (--sc->sc_refcnt >= 0) {
+			struct wscons_event event;
+
 			/* Wake everyone by generating a dummy event. */
-			if (++evar->put >= WSEVENT_QSIZE)
-				evar->put = 0;
-			WSEVENT_WAKEUP(evar);
+			event.type = 0;
+			event.value = 0;
+			if (wsevent_inject(evar, &event, 1) != 0)
+				wsevent_wakeup(evar);
+
 			/* Wait for processes to go away. */
 			if (tsleep(sc, PZERO, "wskdet", hz * 60))
 				printf("wskbd_detach: %s didn't detach\n",
@@ -667,8 +671,7 @@ static void
 wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 {
 	struct wseventvar *evar;
-	struct wscons_event *ev;
-	int put;
+	struct wscons_event event;
 
 	evar = sc->sc_base.me_evp;
 
@@ -684,19 +687,11 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 	}
 #endif
 	
-	put = evar->put;
-	ev = &evar->q[put];
-	put = (put + 1) % WSEVENT_QSIZE;
-	if (put == evar->get) {
+	event.type = type;
+	event.value = value;
+	if (wsevent_inject(evar, &event, 1) != 0)
 		log(LOG_WARNING, "%s: event queue overflow\n",
 		    sc->sc_base.me_dv.dv_xname);
-		return;
-	}
-	ev->type = type;
-	ev->value = value;
-	nanotime(&ev->time);
-	evar->put = put;
-	WSEVENT_WAKEUP(evar);
 }
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -821,8 +816,7 @@ wskbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
-	wsevent_init(evar);
-	evar->io = l->l_proc;
+	wsevent_init(evar, l->l_proc);
 
 	error = wskbd_do_open(sc, evar);
 	if (error) {

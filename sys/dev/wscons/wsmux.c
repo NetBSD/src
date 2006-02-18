@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.41 2005/12/25 17:23:42 jmmv Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.41.2.1 2006/02/18 15:39:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.41 2005/12/25 17:23:42 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.41.2.1 2006/02/18 15:39:12 yamt Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -227,8 +227,7 @@ wsmuxopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
-	wsevent_init(evar);
-	evar->io = l->l_proc;
+	wsevent_init(evar, l->l_proc);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	sc->sc_rawkbd = 0;
 #endif
@@ -407,9 +406,9 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 	struct wsevsrc *me;
 	int error, ok;
-	int s, put, get, n;
+	int s, n;
 	struct wseventvar *evar;
-	struct wscons_event *ev;
+	struct wscons_event event;
 	struct wsmux_device_list *l;
 
 	DPRINTF(("wsmux_do_ioctl: %s: enter sc=%p, cmd=%08lx\n",
@@ -428,22 +427,12 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		}
 
 		s = spltty();
-		get = evar->get;
-		put = evar->put;
-		ev = &evar->q[put];
-		if (++put % WSEVENT_QSIZE == get) {
-			put--;
-			splx(s);
-			return (ENOSPC);
-		}
-		if (put >= WSEVENT_QSIZE)
-			put = 0;
-		*ev = *(struct wscons_event *)data;
-		nanotime(&ev->time);
-		evar->put = put;
-		WSEVENT_WAKEUP(evar);
+		event.type = ((struct wscons_event *)data)->type;
+		event.value = ((struct wscons_event *)data)->value;
+		error = wsevent_inject(evar, &event, 1);
 		splx(s);
-		return (0);
+
+		return error;
 	case WSMUXIO_ADD_DEVICE:
 #define d ((struct wsmux_device *)data)
 		DPRINTF(("%s: add type=%d, no=%d\n", sc->sc_base.me_dv.dv_xname,

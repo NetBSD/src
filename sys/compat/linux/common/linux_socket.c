@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.58 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.58.2.1 2006/02/18 15:38:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.58 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.58.2.1 2006/02/18 15:38:59 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -90,7 +90,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.58 2005/12/11 12:20:19 christos E
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_socket.h>
+#if !defined(__alpha__) && !defined(__amd64__)
 #include <compat/linux/common/linux_socketcall.h>
+#endif
 #include <compat/linux/common/linux_sockio.h>
 
 #include <compat/linux/linux_syscallargs.h>
@@ -1672,7 +1674,7 @@ linux_sys_send(l, v, retval)
 
 	return (sys_sendto(l, &bsa, retval));
 }
-#endif /* __amd64__ */
+#endif
 
 int
 linux_sys_accept(l, v, retval)

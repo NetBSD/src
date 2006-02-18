@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9.2.1 2006/02/18 15:38:35 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.1 2006/02/18 15:38:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -100,7 +100,7 @@ device_register(struct device *dev, void *aux)
 		/* Set the frequency of the on-chip UART. */
 		int freq = COM_FREQ * 6;
 
-		if (prop_set(dev_propdb, dev, "frequency",
+		if (devprop_set(dev, "frequency",
 			     &freq, sizeof(freq), PROP_INT, 0) != 0)
 			printf("WARNING: unable to set frequency "
 			    "property for %s\n", dev->dv_xname);
@@ -111,7 +111,7 @@ device_register(struct device *dev, void *aux)
 	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
 		/* Set the mac-addr of the on-chip Ethernet. */
 		/* XXX 405GP only has one; what about CPUs with two? */
-		if (prop_set(dev_propdb, dev, "mac-addr",
+		if (devprop_set(dev, "mac-addr",
 			     &board_data.mac_address_local,
 			     sizeof(board_data.mac_address_local),
 			     PROP_CONST, 0) != 0)

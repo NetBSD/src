@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10.2.1 2006/02/18 15:38:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10.2.1 2006/02/18 15:38:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2005/12/11 12:16:21 christos Exp $"
 
 #if NACPI > 0
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_madt.h>
 #endif
 
 /*
