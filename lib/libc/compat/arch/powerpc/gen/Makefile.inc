@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2006/02/18 00:21:28 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2006/02/18 00:45:22 matt Exp $
 
 # objects built from assembler sources (need lint stubs)
-SRCS+=	compat___setjmp14.S compat___sigsetjmp14.S
+SRCS+=	compat_setjmp.S compat_sigsetjmp.S
