@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.39 2006/02/18 10:53:33 elad Exp $	*/
+/*	$NetBSD: util.h,v 1.40 2006/02/18 16:32:45 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -56,9 +56,6 @@
 #define	PW_POLICY_BYPASSWD	1
 #define	PW_POLICY_BYGROUP	2
 
-#define PW_POLICY_INIT	{ -1, -1, -1, -1, -1, -1, -1, \
-			  -1, -1, -1, -1, -1, -1, -1 }
-
 __BEGIN_DECLS
 struct disklabel;
 struct iovec;
@@ -68,22 +65,7 @@ struct utmp;
 struct winsize;
 struct sockaddr;
 
-struct pw_policy {
-	int32_t minlen;
-	int32_t maxlen;
-	int32_t minupper;
-	int32_t maxupper;
-	int32_t minlower;
-	int32_t maxlower;
-	int32_t mindigits;
-	int32_t maxdigits;
-	int32_t minpunct;
-	int32_t maxpunct;
-	int32_t mintoggles;
-	int32_t maxtoggles;
-	int32_t minclasses;
-	int32_t maxclasses;
-};
+typedef struct pw_policy *pw_policy_t; 
 
 pid_t		forkpty(int *, char *, struct termios *, struct winsize *);
 const char     *getbootfile(void);
@@ -118,8 +100,9 @@ const char     *pw_getprefix(void);
 void		pw_init(void);
 int		pw_lock(int);
 int		pw_mkdb(const char *, int);
-int		pw_policy_load(struct pw_policy *, void *, int);
-int		pw_policy_test(struct pw_policy *, char *);
+pw_policy_t	pw_policy_load(void *, int);
+int		pw_policy_test(pw_policy_t, char *);
+void		pw_policy_free(pw_policy_t);
 void		pw_prompt(void);
 int		pw_setprefix(const char *);
 int		secure_path(const char *);

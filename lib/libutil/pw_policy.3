@@ -1,4 +1,4 @@
-.\" $NetBSD: pw_policy.3,v 1.2 2006/02/18 10:52:48 elad Exp $
+.\" $NetBSD: pw_policy.3,v 1.3 2006/02/18 16:32:45 elad Exp $
 .\"
 .\" Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\"
@@ -34,22 +34,28 @@
 .Lb libutil
 .Sh SYNOPSIS
 .In util.h
+.Ft pw_policy_t
+.Fn pw_policy_load "void *key" "int how"
 .Ft int
-.Fn pw_policy_load "struct pw_policy *policy" "void *key" "int how"
-.Ft int
-.Fn pw_policy_test "struct pw_policy *policy" "char *pw"
+.Fn pw_policy_test "pw_policy_t policy" "char *pw"
+.Ft void
+.Fn pw_policy_free "pw_policy_t policy"
 .Sh DESCRIPTION
 The
-.Fn pw_policy_load
+.Fn pw_policy_load ,
+.Fn pw_policy_test ,
 and
-.Fn pw_policy_test
+.Fn pw_policy_free
 functions are used as an interface to the system's password policy
 as specified in
 .Pa /etc/passwd.conf .
 .Pp
 .Fn pw_policy_load
-will load a password policy into
-.Ar policy .
+will load a password policy and return a pointer to a
+.Ar pw_policy_t
+containing it.
+It is the caller's responsibility to free this pointer using
+.Fn pw_policy_free .
 .Pp
 Using
 .Xr pw_getconf 3
@@ -207,19 +213,28 @@ ntoggles = *-2
 .Ed
 .Sh RETURN VALUES
 .Fn pw_policy_load
-returns 0 upon success, or any of the below errors upon failure:
+returns a
+.Ar pw_policu_t
+on success, or NULL on failure, in which case the
+.Ar errno
+variable will be set to any of the following values indicating the
+reason for the failure:
 .Bl -tag -width Er
 .It Bq Er ENOENT
 The
 .Pa /etc/passwd.conf
 is missing.
-.It Bq Er EFAULT
-NULL pointer passed for policy storage.
 .It Bq Er EINVAL
 Invalid value for the
 .Ar how
 parameter or an invalid value in the password policy specification.
 .El
+.Pp
+.Fn pw_policy_load
+can also set
+.Ar errno
+to a value returned by the called handlers and/or
+.Xr malloc 3 .
 .Pp
 .Fn pw_policy_test
 returns 0 if the password follows the policy, or any of the following
@@ -232,8 +247,6 @@ NULL pointer was passed as the password.
 .El
 .Pp
 In addition,
-.Fn pw_policy_load
-and
 .Fn pw_policy_test
 can also return any of the values returned by the called handlers.
 .Sh FILES
@@ -242,16 +255,16 @@ can also return any of the values returned by the called handlers.
 password configuration file.
 .El
 .Sh EXAMPLES
-Initialize a password policy structure:
+Declare a password policy storage:
 .Bd -literal -offset indent
-struct pw_policy policy = PW_POLICY_INIT;
+pw_policy_t policy;
 .Ed
 .Pp
 Load the system global password policy into
 .Ar policy :
 .Bd -literal -offset indent
-error = pw_policy_load(&policy, NULL, 0);
-if (error)
+policy = pw_policy_load(NULL, 0);
+if (policy == NULL)
 	errx(1, "Can't load password policy");
 .Ed
 .Pp
@@ -260,11 +273,9 @@ Load a policy for a user whose password database entry is in
 into
 .Ar policy :
 .Bd -literal -offset indent
-error = pw_policy_load(&policy, pw_entry, PW_POLICY_BYPASSWD);
-if (error == EPERM) {
-	warnx("Please refer to the password policy");
-	return (EPERM);
-}
+policy = pw_policy_load(pw_entry, PW_POLICY_BYPASSWD);
+if (policy == NULL)
+	errx(1, "Can't load password policy for \e"%s\e"", pw_entry-\*[Gt]pw_name);
 .Ed
 .Pp
 Note that
@@ -276,25 +287,15 @@ if not found, it will try looking for a policy for the login class in
 and if it can't find such either it will fallback to the default key,
 .Dq pw_policy .
 .Pp
-To handle cases where there is no
-.Pa /etc/passwd.conf ,
-it might be desired to fallback to an internal policy:
-.Bd -literal -offset indent
-error = pw_policy_load(&policy, NULL, 0);
-if (error == ENOENT) {
-	/* No /etc/passwd.conf. Just check minimum length. */
-	policy.minlen = 8;
-}
-.Ed
-.Pp
 Load the password policy for a group
 whose group database entry is in
 .Ar grent ,
 into
 .Ar policy :
-error = pw_policy_load(&policy, grent, PW_POLICY_BYGROUP);
-if (error)
-	errx(1, "Can't load password policy for \"%s\"", grent-\*[Gt]gr_name);
+.Bd -literal -offset indent
+policy = pw_policy_load(grent, PW_POLICY_BYGROUP);
+if (policy == NULL)
+	errx(1, "Can't load password policy for \e"%s\e"", grent-\*[Gt]gr_name);
 .Ed
 .Pp
 Check if
@@ -302,9 +303,14 @@ Check if
 follows the policy in
 .Ar policy :
 .Bd -literal -offset indent
-error = pw_policy_test(&policy, the_password);
+error = pw_policy_test(policy, the_password);
 if (error == EPERM)
 	warnx("Please refer to the password policy");
+.Ed
+.Pp
+After finished using the password policy, free it:
+.Bd -literal -offset indent
+pw_policy_free(policy);
 .Ed
 .Pp
 An example for a common default password policy in
@@ -328,9 +334,10 @@ A different policy that might be used:
 .Xr passwd.conf 5
 .Sh HISTORY
 The
-.Fn pw_policy_load
+.Fn pw_policy_load ,
+.Fn pw_policy_test ,
 and
-.Fn pw_policy_test
+.Fn pw_policy_free
 functions first appeared in
 .Nx 4.0 .
 .Sh AUTHORS
