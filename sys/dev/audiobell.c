@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.2.2.1 2006/02/18 09:47:03 yamt Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.2.2.2 2006/02/18 13:14:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -31,7 +31,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.2.2.1 2006/02/18 09:47:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.2.2.2 2006/02/18 13:14:37 yamt Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.2.2.1 2006/02/18 09:47:03 yamt Exp $
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/null.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 
