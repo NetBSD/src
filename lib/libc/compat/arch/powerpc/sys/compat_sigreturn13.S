@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.5 2004/03/26 22:15:03 drochner Exp $	*/
+/*	$NetBSD: compat_sigreturn13.S,v 1.1 2006/02/18 00:21:28 matt Exp $	*/
 
 #include "SYS.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.4 2002/07/30 06:07:59 matt Exp $	*/
+/*	$NetBSD: compat_Ovfork.S,v 1.1 2006/02/18 00:21:28 matt Exp $	*/
 
 /*
  * pid = vfork();

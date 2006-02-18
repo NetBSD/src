@@ -1,4 +1,4 @@
-/*	$NetBSD: msgctl.S,v 1.1 1999/08/25 05:09:31 thorpej Exp $	*/
+/*	$NetBSD: compat_msgctl.S,v 1.1 2006/02/18 00:21:28 matt Exp $	*/
 
 #include "SYS.h"
 
