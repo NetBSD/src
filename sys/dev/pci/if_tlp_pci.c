@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.85 2006/02/16 18:20:31 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.86 2006/02/18 05:04:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.85 2006/02/16 18:20:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.86 2006/02/18 05:04:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -632,9 +632,8 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 		 * XXX logic, and for now we can at least remove a machine-
 		 * XXX dependent wart from the PCI front-end.
 		 */
-		if (prop_get(dev_propdb, &sc->sc_dev, "mac-addr",
-			     enaddr, sizeof(enaddr), NULL) ==
-		    sizeof(enaddr)) {
+		if (devprop_get(&sc->sc_dev, "mac-addr",
+			     enaddr, sizeof(enaddr), NULL) == sizeof(enaddr)) {
 			extern int tlp_srom_debug;
 			sc->sc_srom_addrbits = 6;
 			sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF,
