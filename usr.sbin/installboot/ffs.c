@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.17 2005/10/23 16:12:31 thorpej Exp $	*/
+/*	$NetBSD: ffs.c,v 1.18 2006/02/18 12:39:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.17 2005/10/23 16:12:31 thorpej Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.18 2006/02/18 12:39:38 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -69,7 +69,13 @@ __RCSID("$NetBSD: ffs.c,v 1.17 2005/10/23 16:12:31 thorpej Exp $");
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+#ifndef NO_FFS_SWAP
 #include <ufs/ufs/ufs_bswap.h>
+#else
+#define	ffs_sb_swap(fs_a, fs_b)
+#define	ffs_dinode1_swap(inode_a, inode_b)
+#define	ffs_dinode2_swap(inode_a, inode_b)
+#endif
 
 static int	ffs_read_disk_block(ib_params *, uint64_t, int, char *);
 static int	ffs_find_disk_blocks_ufs1(ib_params *, ino_t,
@@ -477,6 +483,7 @@ ffs_match(ib_params *params)
 			params->fstype->blocksize = fs->fs_bsize;
 			params->fstype->sblockloc = loc;
 			break;
+#ifndef FFS_NO_SWAP
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
@@ -485,6 +492,7 @@ ffs_match(ib_params *params)
 			params->fstype->blocksize = bswap32(fs->fs_bsize);
 			params->fstype->sblockloc = loc;
 			break;
+#endif
 		default:
 			continue;
 		}
