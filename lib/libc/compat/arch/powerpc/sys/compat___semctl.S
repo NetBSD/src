@@ -1,4 +1,4 @@
-/*	$NetBSD: __semctl.S,v 1.1 1999/08/25 05:09:30 thorpej Exp $	*/
+/*	$NetBSD: compat___semctl.S,v 1.1 2006/02/18 00:21:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
