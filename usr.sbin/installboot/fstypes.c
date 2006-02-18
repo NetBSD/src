@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.c,v 1.7 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.8 2006/02/18 12:45:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: fstypes.c,v 1.7 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: fstypes.c,v 1.8 2006/02/18 12:45:15 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -54,11 +54,14 @@ __RCSID("$NetBSD: fstypes.c,v 1.7 2004/06/20 22:20:17 jmc Exp $");
 #include "installboot.h"
 
 struct ib_fs fstypes[] = {
+#ifndef NO_STAGE2
 	{ "ffs",	ffs_match,	ffs_findstage2	},
 	{ "raw",	raw_match,	raw_findstage2	},
+#endif
 	{ 0, 0, 0 }
 };
 
+#ifndef NO_STAGE2
 int
 hardcode_stage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 {
@@ -133,3 +136,4 @@ raw_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 	}
 	return (hardcode_stage2(params, maxblk, blocks));
 }
+#endif
