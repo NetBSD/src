@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9var.h,v 1.1 2006/02/13 12:24:21 hamajima Exp $	*/
+/*	$NetBSD: armadillo9var.h,v 1.2 2006/02/18 05:04:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006 HAMAJIMA Katsuomi. All rights reserved.
@@ -73,5 +73,7 @@ struct bootparam_tag {
 	((struct bootparam_tag *)((unsigned long *)(t) + (t)->hdr.size))
 
 extern char bootparam[];
+
+extern uint8_t armadillo9_ethaddr[];
 
 #endif /* _ARMADILLO9VAR_H_ */
