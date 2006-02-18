@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.3 2006/02/14 16:02:00 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.4 2006/02/18 18:56:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.3 2006/02/14 16:02:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.4 2006/02/18 18:56:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 	int cnt, i;
 
 	scr->scr_cookie = vd->cookie;
-	scr->scr_vd = vd;
+	scr->scr_vd = scr->scr_origvd = vd;
 	SCREEN_IDLE(scr);
 	
 	/*
