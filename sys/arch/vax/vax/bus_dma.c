@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.25 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.25.2.1 2006/02/18 08:29:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25.2.1 2006/02/18 08:29:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ extern	paddr_t avail_start, avail_end;
 extern  vaddr_t virtual_avail;
 
 int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, vaddr_t *, int *, int));
+	    bus_size_t, struct vmspace *, int, vaddr_t *, int *, int));
 int	_bus_dma_inrange __P((bus_dma_segment_t *, int, bus_addr_t));
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t, bus_size_t, bus_size_t,
 	    bus_size_t, bus_dma_segment_t*, int, int *, int, vaddr_t, vaddr_t));
@@ -167,6 +167,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	vaddr_t lastaddr;
 	int seg, error;
+	struct vmspace *vm;
 
 #ifdef DEBUG_DMA
 	printf("dmamap_load: t=%p map=%p buf=%p len=%lx p=%p f=%d\n",
@@ -183,8 +184,14 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
+
 	seg = 0;
-	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
+	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags,
 	    &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
@@ -237,7 +244,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 		if (m->m_len == 0)
 			continue;
 		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
-		    NULL, flags, &lastaddr, &seg, first);
+		    vmspace_kernel(), flags, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
@@ -277,14 +284,6 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
-#ifdef DIAGNOSTIC
-		if (p == NULL)
-			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
-#endif
-	}
-
 	first = 1;
 	seg = 0;
 	error = 0;
@@ -297,7 +296,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    p, flags, &lastaddr, &seg, first);
+		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
 		first = 0;
 
 		resid -= minlen;
