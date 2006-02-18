@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.89.2.1 2006/02/18 09:47:03 yamt Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.89.2.2 2006/02/18 11:47:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.89.2.1 2006/02/18 09:47:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.89.2.2 2006/02/18 11:47:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -732,7 +732,7 @@ fdesc_readdir(v)
 		    i < nfdesc_targets; ft++, i++) {
 			switch (ft->ft_fileno) {
 			case FD_CTTY:
-				if (cttyvp(curlwp) == NULL)
+				if (cttyvp(curproc) == NULL)
 					continue;
 				break;
 
