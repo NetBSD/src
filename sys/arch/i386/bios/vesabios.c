@@ -1,7 +1,7 @@
-/* $NetBSD: vesabios.c,v 1.16 2006/02/19 17:07:52 jmcneill Exp $ */
+/* $NetBSD: vesabios.c,v 1.17 2006/02/19 23:19:28 thorpej Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.16 2006/02/19 17:07:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.17 2006/02/19 23:19:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,25 +215,33 @@ vesabios_attach(parent, dev, aux)
 			continue;
 		}
 		mi = (struct modeinfoblock *)buf;
+#ifdef VESABIOSVERBOSE
 		aprint_verbose("%s: VESA mode %04x: attributes %04x",
 		       dev->dv_xname, modes[i], mi->ModeAttributes);
+#endif
 		if (!(mi->ModeAttributes & 1)) {
+#ifdef VESABIOSVERBOSE
 			aprint_verbose("\n");
+#endif
 			continue;
 		}
 		if (mi->ModeAttributes & 0x10) {
 			/* graphics */
+#ifdef VESABIOSVERBOSE
 			aprint_verbose(", %dx%d %dbbp %s\n",
 			       mi->XResolution, mi->YResolution,
 			       mi->BitsPerPixel, mm2txt(mi->MemoryModel));
+#endif
 			if (mi->ModeAttributes & 0x80) {
 				/* flat buffer */
 				rastermodes[nrastermodes++] = modes[i];
 			}
 		} else {
 			/* text */
+#ifdef VESABIOSVERBOSE
 			aprint_verbose(", text %dx%d\n",
 			       mi->XResolution, mi->YResolution);
+#endif
 			if (!(mi->ModeAttributes & 0x20)) /* VGA compatible */
 				textmodes[ntextmodes++] = modes[i];
 		}
