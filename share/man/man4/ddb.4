@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.90 2006/01/24 13:03:33 yamt Exp $
+.\"	$NetBSD: ddb.4,v 1.91 2006/02/19 22:46:40 bjh21 Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -595,6 +595,10 @@ Set the named variable or register to the value of
 .Ar expression .
 Valid variable names are described in
 .Sx VARIABLES .
+.It Ic show all pages
+Display basic information about all physical pages managed by the VM system.
+For more detailed information about a single page, use
+.Ic show page .
 .It Ic show all pools Ns Op Cm /clp
 Display all pool information.
 Modifiers are the same as
