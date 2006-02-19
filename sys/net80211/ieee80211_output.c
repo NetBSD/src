@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.41 2005/12/29 21:08:26 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.42 2006/02/19 07:49:28 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.41 2005/12/29 21:08:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.42 2006/02/19 07:49:28 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -786,7 +786,8 @@ ieee80211_compute_duration(const struct ieee80211_frame_min *wh,
     struct ieee80211_duration *dn, int *npktp, int debug)
 {
 	int ack, rc;
-	int firstlen,	/* first fragment's payload + overhead length */
+	int cryptolen,	/* crypto overhead: header+trailer */
+	    firstlen,	/* first fragment's payload + overhead length */
 	    hdrlen,	/* header length w/o driver padding */
 	    lastlen,	/* last fragment's payload length w/ overhead */
 	    lastlen0,	/* last fragment's payload length w/o overhead */
@@ -805,8 +806,10 @@ ieee80211_compute_duration(const struct ieee80211_frame_min *wh,
 	overlen = IEEE80211_CRC_LEN;
 
 	if (wk != NULL) {
-		paylen -= wk->wk_cipher->ic_header;
-		overlen += wk->wk_cipher->ic_header;
+		cryptolen = wk->wk_cipher->ic_header +
+		            wk->wk_cipher->ic_trailer;
+		paylen -= cryptolen;
+		overlen += cryptolen;
 	}
 
 	npkt = paylen / fraglen;
