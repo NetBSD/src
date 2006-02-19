@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.44.2.1 2006/02/18 14:26:06 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.44.2.2 2006/02/19 00:04:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.44.2.1 2006/02/18 14:26:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.44.2.2 2006/02/19 00:04:38 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -399,7 +399,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
-		map->_dm_vmspace = vm;
+		map->_dm_vmspace = uio->uio_vmspace;
 	}
 	return (error);
 }
