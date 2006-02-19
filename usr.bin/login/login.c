@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.84 2005/03/29 17:00:21 jmmv Exp $       */
+/*     $NetBSD: login.c,v 1.85 2006/02/19 00:12:36 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.84 2005/03/29 17:00:21 jmmv Exp $");
+__RCSID("$NetBSD: login.c,v 1.85 2006/02/19 00:12:36 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -989,7 +989,7 @@ static void
 dolastlogx(int quiet)
 {
 	struct lastlogx ll;
-	if (getlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != NULL) {
+	if (!quiet && getlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != NULL) {
 		time_t t = (time_t)ll.ll_tv.tv_sec;
 		(void)printf("Last login: %.24s ", ctime(&t));
 		if (*ll.ll_host != '\0')
