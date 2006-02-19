@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.759 2006/02/12 01:32:06 chs Exp $
+#	$NetBSD: files,v 1.760 2006/02/19 17:24:36 jmcneill Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -275,6 +275,9 @@ define	rasops15
 define	rasops16
 define	rasops24
 define	rasops32
+
+# splash screen support
+include "dev/splash/files.splash"
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, token ring, atm and eco(net).
