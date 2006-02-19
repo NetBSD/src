@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.1 2006/02/19 02:24:20 tls Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.2 2006/02/19 08:49:45 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -31,6 +31,9 @@
 /* driver for SMBUS 1.0 host controller found in the
  * AMD-8111 HyperTransport I/O Hub
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.2 2006/02/19 08:49:45 xtraeme Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
