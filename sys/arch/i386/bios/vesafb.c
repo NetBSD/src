@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.3 2006/02/19 03:04:37 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.4 2006/02/19 14:59:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.3 2006/02/19 03:04:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.4 2006/02/19 14:59:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,9 +204,13 @@ vesafb_attach(parent, dev, aux)
 	struct wsemuldisplaydev_attach_args aa;
 	bus_space_handle_t h;
 
+	aprint_naive("\n");
+	aprint_normal(": VESA frame buffer\n");
+
 	buf = kvm86_bios_addpage(0x2000);
 	if (!buf) {
-		aprint_error("vesafb_attach: kvm86_bios_addpage(0x2000) failed\n");
+		aprint_error("%s: kvm86_bios_addpage(0x2000) failed\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	sc->sc_buf = buf;
@@ -231,7 +235,8 @@ vesafb_attach(parent, dev, aux)
 
 		res = kvm86_bioscall(0x10, &tf);
 		if (res || tf.tf_eax != 0x004f) {
-			aprint_error("vbecall: res=%d, ax=%x\n", res, tf.tf_eax);
+			aprint_error("%s: vbecall: res=%d, ax=%x\n",
+			    sc->sc_dev.dv_xname, res, tf.tf_eax);
 			goto out;
 		}
 		mi = (struct modeinfoblock *)buf;
@@ -245,7 +250,8 @@ vesafb_attach(parent, dev, aux)
 	}
 
 	if (i == vaa->vbaa_nmodes) {
-		aprint_error("%s: no supported mode found\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: no supported mode found\n",
+		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 
@@ -270,7 +276,8 @@ vesafb_attach(parent, dev, aux)
 	    &vesafb_accessops);
 	sc->sc_vd.init_screen = vesafb_init_screen;
 
-	aprint_normal(": fb %dx%dx%d @0x%x%s\n", mi->XResolution, mi->YResolution,
+	aprint_normal("%s: fb %dx%dx%d @0x%x%s\n", sc->sc_dev.dv_xname,
+	       mi->XResolution, mi->YResolution,
 	       mi->BitsPerPixel, mi->PhysBasePtr,
 	       (sc->sc_pm == 1 ? " (VBE/PM)" : ""));
 
@@ -278,7 +285,8 @@ vesafb_attach(parent, dev, aux)
 			      mi->YResolution * mi->BytesPerScanLine,
 			      BUS_SPACE_MAP_LINEAR, &h);
 	if (res) {
-		aprint_error("framebuffer mapping failed\n");
+		aprint_error("%s: framebuffer mapping failed\n",
+		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 	sc->sc_bits = bus_space_vaddr(X86_BUS_SPACE_MEM, h);
@@ -507,7 +515,8 @@ vesafb_init(struct vesafb_softc *sc)
 
 	res = kvm86_bioscall(0x10, &tf);
 	if (res || (tf.tf_eax & 0xffff) != 0x004f) {
-		aprint_error("vbecall: res=%d, ax=%x\n", res, tf.tf_eax);
+		aprint_error("%s: vbecall: res=%d, ax=%x\n",
+		    sc->sc_dev.dv_xname, res, tf.tf_eax);
 		return;
 	}
 
@@ -519,7 +528,8 @@ vesafb_init(struct vesafb_softc *sc)
 
 		res = kvm86_bioscall(0x10, &tf);
 		if (res || (tf.tf_eax & 0xffff) != 0x004f) {
-			aprint_error("vbecall: res=%d, ax=%x\n", res, tf.tf_eax);
+			aprint_error("%s: vbecall: res=%d, ax=%x\n",
+			    sc->sc_dev.dv_xname, res, tf.tf_eax);
 			return;
 		}
 
@@ -603,7 +613,8 @@ vesafb_set_palette(struct vesafb_softc *sc, int reg,
 
 	res = kvm86_bioscall(0x10, &tf);
 	if (res || (tf.tf_eax & 0xffff) != 0x004f)
-		aprint_error("vbecall: res=%d, ax=%x\n", res, tf.tf_eax);
+		aprint_error("%s: vbecall: res=%d, ax=%x\n",
+		    sc->sc_dev.dv_xname, res, tf.tf_eax);
 
 	return;
 }
