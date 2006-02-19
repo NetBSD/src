@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.107 2006/02/18 22:12:01 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.108 2006/02/19 08:02:46 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.107 2006/02/18 22:12:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.108 2006/02/19 08:02:46 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2210,18 +2210,21 @@ atw_key_update_end(struct ieee80211com *ic)
 static void
 atw_write_wep(struct atw_softc *sc)
 {
+#if 0
 	struct ieee80211com *ic = &sc->sc_ic;
+	u_int32_t reg;
+	int i;
+#endif
 	/* SRAM shared-key record format: key0 flags key1 ... key12 */
 	u_int8_t buf[IEEE80211_WEP_NKID]
 	            [1 /* key[0] */ + 1 /* flags */ + 12 /* key[1 .. 12] */];
-	u_int32_t reg;
-	int i;
 
 	sc->sc_wepctl = 0;
 	ATW_WRITE(sc, ATW_WEPCTL, sc->sc_wepctl);
 
 	memset(&buf[0][0], 0, sizeof(buf));
 
+#if 0
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		if (ic->ic_nw_keys[i].wk_keylen > 5) {
 			buf[i][1] = ATW_WEP_ENABLED | ATW_WEP_104BIT;
@@ -2254,6 +2257,7 @@ atw_write_wep(struct atw_softc *sc)
 	default:
 		break;
 	}
+#endif
 
 	atw_write_sram(sc, ATW_SRAM_ADDR_SHARED_KEY, (u_int8_t*)&buf[0][0],
 	    sizeof(buf));
@@ -3199,10 +3203,12 @@ atw_rxintr(struct atw_softc *sc)
 
 		wh = mtod(m, struct ieee80211_frame_min *);
 		ni = ieee80211_find_rxnode(ic, wh);
+#if 0
 		if (atw_hw_decrypted(sc, wh)) {
 			wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 			DPRINTF(sc, ("%s: hw decrypted\n", __func__));
 		}
+#endif
 		ieee80211_input(ic, m, ni, (int)rssi, 0);
 		ieee80211_free_node(ni);
 	}
@@ -3405,7 +3411,7 @@ atw_start(struct ifnet *ifp)
 	struct mbuf *m0, *m;
 	struct atw_txsoft *txs, *last_txs;
 	struct atw_txdesc *txd;
-	int do_encrypt, npkt, rate;
+	int npkt, rate;
 	bus_dmamap_t dmamap;
 	int ctl, error, firsttx, nexttx, lasttx = -1, first, ofree, seg;
 
@@ -3468,11 +3474,14 @@ atw_start(struct ifnet *ifp)
 
 		whm = mtod(m0, struct ieee80211_frame_min *);
 
-		do_encrypt = ((whm->i_fc[1] & IEEE80211_FC1_WEP) != 0) ? 1 : 0;
-		if (do_encrypt)
-			k = &ic->ic_nw_keys[ic->ic_def_txkey];
-		else
+		if ((whm->i_fc[1] & IEEE80211_FC1_WEP) == 0)
 			k = NULL;
+		else if ((k = ieee80211_crypto_encap(ic, ni, m0)) == NULL) {
+			m_freem(m0);
+			ieee80211_free_node(ni);
+			ifp->if_oerrors++;
+			break;
+		}
 
 		if (ieee80211_compute_duration(whm, k, m0->m_pkthdr.len,
 		    ic->ic_flags, ic->ic_fragthreshold, rate,
@@ -3558,10 +3567,12 @@ atw_start(struct ifnet *ifp)
 		hh->atw_fragthr = htole16(ic->ic_fragthreshold);
 		hh->atw_rtylmt = 3;
 		hh->atw_hdrctl = htole16(ATW_HDRCTL_UNKNOWN1);
+#if 0
 		if (do_encrypt) {
 			hh->atw_hdrctl |= htole16(ATW_HDRCTL_WEP);
 			hh->atw_keyid = ic->ic_def_txkey;
 		}
+#endif
 
 		hh->atw_head_plcplen = htole16(txs->txs_d0.d_plcp_len);
 		hh->atw_tail_plcplen = htole16(txs->txs_dn.d_plcp_len);
