@@ -1,3 +1,5 @@
+/*	$NetBSD: adt7463reg.h,v 1.2 2006/02/19 08:40:12 xtraeme Exp $ */
+
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
  * All rights reserved.
