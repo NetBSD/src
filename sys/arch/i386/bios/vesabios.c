@@ -1,7 +1,7 @@
-/* $NetBSD: vesabios.c,v 1.15 2006/02/19 14:59:22 thorpej Exp $ */
+/* $NetBSD: vesabios.c,v 1.16 2006/02/19 17:07:52 jmcneill Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.15 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.16 2006/02/19 17:07:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ vesabios_attach(parent, dev, aux)
 		}
 		mi = (struct modeinfoblock *)buf;
 		aprint_verbose("%s: VESA mode %04x: attributes %04x",
-		       sc->sc_dev.dv_xname, modes[i], mi->ModeAttributes);
+		       dev->dv_xname, modes[i], mi->ModeAttributes);
 		if (!(mi->ModeAttributes & 1)) {
 			aprint_verbose("\n");
 			continue;
