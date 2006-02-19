@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.5 2006/02/19 15:13:55 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.6 2006/02/19 16:20:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.5 2006/02/19 15:13:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.6 2006/02/19 16:20:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.5 2006/02/19 15:13:55 jmcneill Exp $");
 #include <machine/frame.h>
 #include <machine/kvm86.h>
 #include <machine/bus.h>
+
+#include "opt_vesafb.h"
 
 #include <arch/i386/bios/vesabios.h>
 #include <arch/i386/bios/vesabiosreg.h>
