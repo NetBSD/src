@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.212 2006/02/15 14:06:45 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.213 2006/02/19 18:52:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.212 2006/02/15 14:06:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.213 2006/02/19 18:52:29 bjh21 Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4637,6 +4637,28 @@ uvm_page_printit(struct vm_page *pg, boolean_t full,
 			(*pr)("  >>> PAGE NOT FOUND ON PAGEQ LIST! <<<\n");
 	}
 }
+
+/*
+ * uvm_pages_printthem - print a summary of all managed pages
+ */
+
+void
+uvm_page_printall(void (*pr)(const char *, ...))
+{
+	unsigned i;
+	struct vm_page *pg;
+
+	(*pr)("%18s %4s %2s %18s %18s\n",
+	    "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
+	for (i = 0; i < vm_nphysseg; i++) {
+		for (pg = vm_physmem[i].pgs; pg <= vm_physmem[i].lastpg; pg++) {
+			(*pr)("%18p %04x %02x %18p %18p\n",
+			    pg, pg->flags, pg->pqflags, pg->uobject,
+			    pg->uanon);
+		}
+	}
+}
+
 #endif
 
 /*
