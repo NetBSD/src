@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.85 2006/02/19 00:12:36 christos Exp $       */
+/*     $NetBSD: login.c,v 1.86 2006/02/19 00:48:34 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.85 2006/02/19 00:12:36 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.86 2006/02/19 00:48:34 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -940,7 +940,8 @@ update_db(int quietlog)
 	}
 	if (hostname != NULL && have_ss == 0) {
 		socklen_t len = sizeof(ss);
-		(void)getpeername(STDIN_FILENO, (struct sockaddr *)&ss, &len);
+		have_ss = getpeername(STDIN_FILENO, (struct sockaddr *)&ss,
+		    &len) != -1;
 	}
 	(void)gettimeofday(&now, NULL);
 #ifdef SUPPORT_UTMPX
@@ -1002,10 +1003,14 @@ dolastlogx(int quiet)
 	}
 	ll.ll_tv = now;
 	(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
-	if (hostname) {
+	if (hostname)
 		(void)strncpy(ll.ll_host, hostname, sizeof(ll.ll_host));
+	else
+		(void)memset(ll.ll_host, '\0', sizeof(ll.ll_host));
+	if (have_ss)
 		ll.ll_ss = ss;
-	}
+	else
+		(void)memset(&ll.ll_ss, 0, sizeof(ll.ll_ss));
 	if (updlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != 0)
 		syslog(LOG_NOTICE, "Cannot update lastlogx: %m");
 }
