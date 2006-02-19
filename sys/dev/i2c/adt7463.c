@@ -1,3 +1,5 @@
+/*	$NetBSD: adt7463.c,v 1.2 2006/02/19 08:40:12 xtraeme Exp $ */
+
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
  * All rights reserved.
@@ -32,6 +34,9 @@
  * http://www.analog.com/UploadedFiles/Data_Sheets/272624927ADT7463_c.pdf
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.2 2006/02/19 08:40:12 xtraeme Exp $");
+
 /* Fan speed control added by Hanns Hartman */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +49,7 @@
 #include <dev/i2c/adt7463reg.h>
 
 
-int adt7463c_gtredata __P((struct sysmon_envsys *, struct envsys_tre_data *));
+int adt7463c_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
 
 static int adt7463c_send_1(struct adt7463c_softc *sc, u_int8_t val);
 static int adt7463c_receive_1(struct adt7463c_softc *sc);
