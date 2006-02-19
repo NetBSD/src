@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.89 2006/02/19 14:59:22 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.90 2006/02/19 19:54:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.89 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.90 2006/02/19 19:54:23 thorpej Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -1174,7 +1174,8 @@ apmattach(parent, self, aux)
 	DPRINTF(APMDEBUG_ATTACH, ("\n%s: ", apmsc->sc_dev.dv_xname));
 
 	if ((apminfo.apm_detail & APM_32BIT_SUPPORTED) == 0) {
-		aprint_error("%s: no 32-bit APM support\n");
+		aprint_error("%s: no 32-bit APM support\n",
+		    apmsc->sc_dev.dv_xname);
 		goto bail_disconnected;
 	}
 
