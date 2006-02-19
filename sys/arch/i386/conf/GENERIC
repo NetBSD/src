@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.726 2006/02/18 19:15:19 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.727 2006/02/19 02:55:21 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.726 $"
+#ident 		"GENERIC-$Revision: 1.727 $"
 
 maxusers	32		# estimated number of users
 
@@ -576,6 +576,13 @@ lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
 # Hardware monitors
+
+# AMD 768 and 8111 power/ACPI controllers
+amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
+#iic*	at amdpm?			# sensors below are on this bus
+#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
+#adt7463c* at iic? addr 0x2D		# Tyan S2881
+#adt7463c* at iic? addr 0x2E		# Tyan S2882-D
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
