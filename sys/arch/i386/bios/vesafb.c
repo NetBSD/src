@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.6 2006/02/19 16:20:59 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.7 2006/02/19 18:12:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.6 2006/02/19 16:20:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.7 2006/02/19 18:12:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,19 +74,6 @@ static void	vesafb_init_screen(void *, struct vcons_screen *,
 
 static void	vesafb_init(struct vesafb_softc *);
 static void	vesafb_powerhook(int, void *);
-
-#ifdef VESAFB_DISABLE_TEXT
-static int	vesafb_disable_text(struct vesafb_softc *);
-static int	vesafb_enable_text(struct vesafb_softc *);
-
-/* dummy wsdisplay textops */
-static void	vesafb_null_cursor(void *, int, int, int);
-static void	vesafb_null_putchar(void *, int, int, u_int, long);
-static void	vesafb_null_copycols(void *, int, int, int, int);
-static void	vesafb_null_erasecols(void *, int, int, int, long);
-static void	vesafb_null_copyrows(void *, int, int, int);
-static void	vesafb_null_eraserows(void *, int, int, long);
-#endif /* !VESAFB_DISABLE_TEXT */
 
 static int	vesafb_svideo(struct vesafb_softc *, u_int *);
 static int	vesafb_gvideo(struct vesafb_softc *, u_int *);
@@ -288,13 +275,7 @@ vesafb_attach(parent, dev, aux)
 	aa.accesscookie = &sc->sc_vd;
 
 #ifdef VESAFB_DISABLE_TEXT
-	sc->sc_vdnull.cursor = vesafb_null_cursor;
-	sc->sc_vdnull.putchar = vesafb_null_putchar;
-	sc->sc_vdnull.copycols = vesafb_null_copycols;
-	sc->sc_vdnull.erasecols = vesafb_null_erasecols;
-	sc->sc_vdnull.copyrows = vesafb_null_copyrows;
-	sc->sc_vdnull.eraserows = vesafb_null_eraserows;
-	vesafb_disable_text(sc);
+	SCREEN_DISABLE_DRAWING(&vesafb_console_screen);
 #endif /* !VESAFB_DISABLE_TEXT */
 
 	sc->sc_isconsole = 1;
@@ -372,9 +353,9 @@ vesafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case WSDISPLAYIO_SSPLASH:
 #if defined(SPLASHSCREEN)
 		if (*(int *)data == 1)
-			vesafb_disable_text(sc);
+			SCREEN_DISABLE_DRAWING(&vesafb_console_screen);
 		else
-			vesafb_enable_text(sc);
+			SCREEN_ENABLE_DRAWING(&vesafb_console_screen);
 		return 0;
 #else
 		return ENODEV;
@@ -442,7 +423,7 @@ vesafb_init_screen(void *c, struct vcons_screen *scr, int existing,
 
 #ifdef VESA_DISABLE_TEXT
 	if (scr == &vesafb_console_screen)
-		scr->scr_vd = &sc->sc_vdnull;
+		SCREEN_DISABLE_DRAWING(&vesafb_console_screen);
 #endif
 }
 
@@ -567,24 +548,6 @@ vesafb_set_palette(struct vesafb_softc *sc, int reg,
 
 	return;
 }
-
-#ifdef VESAFB_DISABLE_TEXT
-static int
-vesafb_disable_text(struct vesafb_softc *sc)
-{
-	vesafb_console_screen.scr_vd = &sc->sc_vdnull;
-
-	return 0;
-}
-
-static int
-vesafb_enable_text(struct vesafb_softc *sc)
-{
-	vesafb_console_screen.scr_vd = vesafb_console_screen.scr_origvd;
-
-	return 0;
-}
-#endif
 
 static int
 vesafb_svideo(struct vesafb_softc *sc, u_int *on)
@@ -724,42 +687,3 @@ vesafb_getcmap(struct vesafb_softc *sc,
 
 	return 0;
 }
-
-#ifdef VESAFB_DISABLE_TEXT
-static void
-vesafb_null_cursor(void *c, int on, int row, int col)
-{
-	return;
-}
-
-static void
-vesafb_null_putchar(void *c, int row, int col, u_int uc, long attr)
-{
-	return;
-}
-
-static void
-vesafb_null_copycols(void *c, int row, int srccol, int dstcol, int ncols)
-{
-	return;
-}
-
-static void
-vesafb_null_erasecols(void *c, int row, int startcol, int ncols,
-    long attr)
-{
-	return;
-}
-
-static void
-vesafb_null_copyrows(void *c, int srcrow, int dstrow, int nrows)
-{
-	return;
-}
-
-static void
-vesafb_null_eraserows(void *c, int row, int nrows, long attr)
-{
-	return;
-}
-#endif /* !VESAFB_DISABLE_TEXT */
