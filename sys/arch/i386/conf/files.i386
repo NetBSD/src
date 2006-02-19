@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.281 2006/02/19 17:24:37 jmcneill Exp $
+#	$NetBSD: files.i386,v 1.282 2006/02/19 21:41:18 jmcneill Exp $
 #
 # new style config file for i386 architecture
 #
@@ -487,6 +487,7 @@ device vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash
 attach vesafb at vesabios
 file	arch/i386/bios/vesafb.c		vesafb needs-flag
 defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
+defflag opt_vesafb.h	VESAFB_PM
 
 device vesatext
 attach vesatext at vesabios

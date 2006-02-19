@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.7 2006/02/19 18:12:28 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.8 2006/02/19 21:41:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.7 2006/02/19 18:12:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.8 2006/02/19 21:41:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ vesafb_attach(parent, dev, aux)
 	sc->sc_wsmode = WSDISPLAYIO_MODE_EMUL;
 	sc->sc_mode = vaa->vbaa_modes[0]; /* XXX */
 	sc->sc_pm = 0;
+	sc->sc_pmstates = 0;
 	sc->sc_isconsole = 0;
 	mi = NULL;
 	j = 0;
@@ -200,8 +201,11 @@ vesafb_attach(parent, dev, aux)
 	res = kvm86_bioscall(0x10, &tf);
 	if (res || tf.tf_eax != 0x004f)
 		sc->sc_pm = 0; /* power management not supported */
-	else
+	else {
 		sc->sc_pm = 1; /* power management is supported */
+		sc->sc_pmver = tf.tf_ebx & 0xff;
+		sc->sc_pmstates = (tf.tf_ebx >> 8);
+	}
 
 	ri = &vesafb_console_screen.scr_ri;
 	memset(ri, 0, sizeof(struct rasops_info));
@@ -210,10 +214,22 @@ vesafb_attach(parent, dev, aux)
 	    &vesafb_accessops);
 	sc->sc_vd.init_screen = vesafb_init_screen;
 
-	aprint_normal("%s: fb %dx%dx%d @0x%x%s\n", sc->sc_dev.dv_xname,
+	aprint_normal("%s: fb %dx%dx%d @0x%x\n", sc->sc_dev.dv_xname,
 	       mi->XResolution, mi->YResolution,
-	       mi->BitsPerPixel, mi->PhysBasePtr,
-	       (sc->sc_pm == 1 ? " (VBE/PM)" : ""));
+	       mi->BitsPerPixel, mi->PhysBasePtr);
+	if (sc->sc_pm) {
+		aprint_normal("%s: VBE/PM %d.%d", sc->sc_dev.dv_xname,
+		    (sc->sc_pmver >> 4), sc->sc_pmver & 0xf);
+		if (sc->sc_pmstates & 1)
+			aprint_normal(" [standby]");
+		if (sc->sc_pmstates & 2)
+			aprint_normal(" [suspend]");
+		if (sc->sc_pmstates & 4)
+			aprint_normal(" [off]");
+		if (sc->sc_pmstates & 8)
+			aprint_normal(" [reduced on]");
+		aprint_normal("\n");
+	}
 
 	res = _x86_memio_map(X86_BUS_SPACE_MEM, mi->PhysBasePtr,
 			      mi->YResolution * mi->BytesPerScanLine,
@@ -552,7 +568,7 @@ vesafb_set_palette(struct vesafb_softc *sc, int reg,
 static int
 vesafb_svideo(struct vesafb_softc *sc, u_int *on)
 {
-#if notyet
+#ifdef VESAFB_PM
 	struct trapframe tf;
 	int res, bh;
 
@@ -582,7 +598,7 @@ vesafb_svideo(struct vesafb_softc *sc, u_int *on)
 static int
 vesafb_gvideo(struct vesafb_softc *sc, u_int *on)
 {
-#if notyet
+#ifdef VESAFB_PM
 	struct trapframe tf;
 	int res, bh;
 
