@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.852 2006/02/14 19:07:30 he Exp $
+#	$NetBSD: mi,v 1.853 2006/02/19 22:30:20 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4069,6 +4069,7 @@
 ./usr/share/man/cat3/pnoutrefresh.0		comp-c-catman		.cat
 ./usr/share/man/cat3/popen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pos_form_cursor.0		comp-c-catman		.cat
+./usr/share/man/cat3/posix_fadvise.0		comp-c-catman		.cat
 ./usr/share/man/cat3/posix_openpt.0		comp-c-catman		.cat
 ./usr/share/man/cat3/post_form.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pow.0			comp-c-catman		.cat
@@ -8021,6 +8022,7 @@
 ./usr/share/man/man3/pnoutrefresh.3		comp-c-man		.man
 ./usr/share/man/man3/popen.3			comp-c-man		.man
 ./usr/share/man/man3/pos_form_cursor.3		comp-c-man		.man
+./usr/share/man/man3/posix_fadvise.3		comp-c-man		.man
 ./usr/share/man/man3/posix_openpt.3		comp-c-man		.man
 ./usr/share/man/man3/post_form.3		comp-c-man		.man
 ./usr/share/man/man3/pow.3			comp-c-man		.man
