@@ -1,4 +1,7 @@
-/* $NetBSD: vesabiosreg.h,v 1.3 2006/02/18 19:07:11 jmcneill Exp $ */
+/* $NetBSD: vesabiosreg.h,v 1.4 2006/02/19 15:09:58 jmcneill Exp $ */
+
+#ifndef _ARCH_I386_BIOS_VESABIOSREG_H
+#define _ARCH_I386_BIOS_VESABIOSREG_H
 
 struct modeinfoblock {
 	/* Mandatory information for all VBE revisions */
@@ -48,3 +51,5 @@ struct paletteentry {
 	uint8_t Red;
 	uint8_t Alignment;
 } __attribute__ ((packed));
+
+#endif /* !_ARCH_I386_BIOS_VESABIOSREG_H */
