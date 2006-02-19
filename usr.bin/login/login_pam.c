@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.10 2005/11/01 15:47:43 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.11 2006/02/19 00:12:36 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.10 2005/11/01 15:47:43 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.11 2006/02/19 00:12:36 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -460,7 +460,7 @@ skip_auth:
 
 	if (!quietlog) {
 		quietlog = access(_PATH_HUSHLOGIN, F_OK) == 0;
-		pam_silent = 0;
+		pam_silent = quietlog ? PAM_SILENT : 0;
 	}
 
 	/* regain special privileges */
