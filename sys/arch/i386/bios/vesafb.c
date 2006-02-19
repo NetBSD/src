@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.4 2006/02/19 14:59:22 thorpej Exp $ */
+/* $NetBSD: vesafb.c,v 1.5 2006/02/19 15:13:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.4 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.5 2006/02/19 15:13:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,68 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.4 2006/02/19 14:59:22 thorpej Exp $");
 
 #include <arch/i386/bios/vesabios.h>
 #include <arch/i386/bios/vesabiosreg.h>
-
-#include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wsdisplayvar.h>
-#include <dev/rasops/rasops.h>
-#include <dev/wscons/wsdisplay_vconsvar.h>
-#include <dev/wsfont/wsfont.h>
-#include <dev/cons.h>
-
-#include "opt_rasops.h"
-#include "opt_splash.h"
-
-#ifdef SPLASHSCREEN
-#define	VESAFB_DISABLE_TEXT
-#include <dev/splash/splash.h>
-/* XXX */
-extern const char _splash_header_data_cmap[64+32][3];
-#endif
-
-/* Safe defaults */
-#ifndef VESAFB_WIDTH
-#define VESAFB_WIDTH	640
-#endif
-#ifndef VESAFB_HEIGHT
-#define	VESAFB_HEIGHT	480
-#endif
-#ifndef VESAFB_DEPTH
-#define	VESAFB_DEPTH	8
-#endif
-
-#define	VESAFB_SHADOW_FB
+#include <arch/i386/bios/vesafbvar.h>
 
 MALLOC_DEFINE(M_VESAFB, "vesafb", "vesafb shadow framebuffer");
 
 static int vesafb_match(struct device *, struct cfdata *, void *);
 static void vesafb_attach(struct device *, struct device *, void *);
-
-struct vesafb_softc {
-	struct device sc_dev;
-	int sc_mode;
-	struct vcons_data sc_vd;
-	struct modeinfoblock sc_mi;
-#ifdef SPLASHSCREEN
-	struct splash_info sc_si;
-#endif
-#ifdef SPLASHSCREEN_PROGRESS
-	struct splash_progress sc_sp;
-#endif
-#ifdef VESAFB_DISABLE_TEXT
-	struct vcons_data sc_vdnull;
-#endif
-	char *sc_buf;
-	u_char *sc_bits;
-	u_char *sc_shadowbits;
-	u_char sc_cmap_red[256];
-	u_char sc_cmap_green[256];
-	u_char sc_cmap_blue[256];
-	int sc_wsmode;
-	int sc_nscreens;
-
-	int sc_pm;
-	void *sc_powerhook;
-};
 
 struct wsscreen_descr vesafb_stdscreen = {
 	"fb",
@@ -222,6 +166,7 @@ vesafb_attach(parent, dev, aux)
 	sc->sc_wsmode = WSDISPLAYIO_MODE_EMUL;
 	sc->sc_mode = vaa->vbaa_modes[0]; /* XXX */
 	sc->sc_pm = 0;
+	sc->sc_isconsole = 0;
 	mi = NULL;
 	j = 0;
 
@@ -349,6 +294,8 @@ vesafb_attach(parent, dev, aux)
 	sc->sc_vdnull.eraserows = vesafb_null_eraserows;
 	vesafb_disable_text(sc);
 #endif /* !VESAFB_DISABLE_TEXT */
+
+	sc->sc_isconsole = 1;
 
 	sc->sc_powerhook = powerhook_establish(vesafb_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
