@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.106 2006/02/18 19:40:42 martin Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.107 2006/02/19 15:01:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.106 2006/02/18 19:40:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.107 2006/02/19 15:01:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1537,4 +1537,85 @@ devprop_copy(device_t from, device_t to, int wait)
 {
 
 	return (prop_copy(dev_propdb, from, to, wait));
+}
+
+/*
+ * device_lookup:
+ *
+ *	Look up a device instance for a given driver.
+ */
+void *
+device_lookup(cfdriver_t cd, int unit)
+{
+
+	if (unit < 0 || unit >= cd->cd_ndevs)
+		return (NULL);
+	
+	return (cd->cd_devs[unit]);
+}
+
+/*
+ * Accessor functions for the device_t type.
+ */
+devclass_t
+device_class(device_t dev)
+{
+
+	return (dev->dv_class);
+}
+
+cfdata_t
+device_cfdata(device_t dev)
+{
+
+	return (dev->dv_cfdata);
+}
+
+cfdriver_t
+device_cfdriver(device_t dev)
+{
+
+	return (dev->dv_cfdriver);
+}
+
+cfattach_t
+device_cfattach(device_t dev)
+{
+
+	return (dev->dv_cfattach);
+}
+
+int
+device_unit(device_t dev)
+{
+
+	return (dev->dv_unit);
+}
+
+const char *
+device_xname(device_t dev)
+{
+
+	return (dev->dv_xname);
+}
+
+device_t
+device_parent(device_t dev)
+{
+
+	return (dev->dv_parent);
+}
+
+boolean_t
+device_is_active(device_t dev)
+{
+
+	return ((dev->dv_flags & DVF_ACTIVE) != 0);
+}
+
+int *
+device_locators(device_t dev)
+{
+
+	return (dev->dv_locators);
 }
