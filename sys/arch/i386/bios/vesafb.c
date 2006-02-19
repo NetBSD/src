@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.2 2006/02/18 19:33:03 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.3 2006/02/19 03:04:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.2 2006/02/18 19:33:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.3 2006/02/19 03:04:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,10 +129,10 @@ static void	vesafb_init_screen(void *, struct vcons_screen *,
 static void	vesafb_init(struct vesafb_softc *);
 static void	vesafb_powerhook(int, void *);
 
+#ifdef VESAFB_DISABLE_TEXT
 static int	vesafb_disable_text(struct vesafb_softc *);
 static int	vesafb_enable_text(struct vesafb_softc *);
 
-#ifdef VESAFB_DISABLE_TEXT
 /* dummy wsdisplay textops */
 static void	vesafb_null_cursor(void *, int, int, int);
 static void	vesafb_null_putchar(void *, int, int, u_int, long);
@@ -608,12 +608,11 @@ vesafb_set_palette(struct vesafb_softc *sc, int reg,
 	return;
 }
 
+#ifdef VESAFB_DISABLE_TEXT
 static int
 vesafb_disable_text(struct vesafb_softc *sc)
 {
-#ifdef VESAFB_DISABLE_TEXT
 	vesafb_console_screen.scr_vd = &sc->sc_vdnull;
-#endif
 
 	return 0;
 }
@@ -621,12 +620,11 @@ vesafb_disable_text(struct vesafb_softc *sc)
 static int
 vesafb_enable_text(struct vesafb_softc *sc)
 {
-#ifdef VESAFB_DISABLE_TEXT
 	vesafb_console_screen.scr_vd = vesafb_console_screen.scr_origvd;
-#endif
 
 	return 0;
 }
+#endif
 
 static int
 vesafb_svideo(struct vesafb_softc *sc, u_int *on)
