@@ -1,4 +1,4 @@
-/* $NetBSD: pw_policy.c,v 1.6 2006/02/19 20:46:29 elad Exp $ */
+/* $NetBSD: pw_policy.c,v 1.7 2006/02/19 23:13:14 elad Exp $ */
 
 /*-
  * Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
+#include <assert.h>
 
 #include <machine/int_limits.h>
 
