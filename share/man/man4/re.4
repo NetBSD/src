@@ -1,4 +1,4 @@
-.\"	$NetBSD: re.4,v 1.8 2005/06/10 08:06:33 mrg Exp $
+.\"	$NetBSD: re.4,v 1.9 2006/02/19 09:40:32 xtraeme Exp $
 .\"
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/re.4,v 1.4 2004/03/04 06:42:46 sanpei Exp $
 .\"
-.Dd June 9, 2004
+.Dd February 19, 2006
 .Dt RE 4
 .Os
 .Sh NAME
@@ -40,11 +40,12 @@
 .Nd "RealTek 8139C+/8169/8169S/8110S PCI Ethernet adapter driver"
 .Sh SYNOPSIS
 .Cd "re* at pci? dev ? function ?"
+.Cd "re* at cardbus? function ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for various NICs based on the RealTek RTL8139C+,
-RTL8169, RTL8169S, and RTL8110S PCI Ethernet controllers, including
+RTL8169, RTL8169S, and RTL8110S PCI/Cardbus Ethernet controllers, including
 the following:
 .Pp
 .Bl -bullet -compact
@@ -165,6 +166,7 @@ the network connection (cable).
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr cardbus 4 ,
 .Xr mii 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
