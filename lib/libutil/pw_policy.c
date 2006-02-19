@@ -1,4 +1,4 @@
-/* $NetBSD: pw_policy.c,v 1.5 2006/02/18 16:45:01 elad Exp $ */
+/* $NetBSD: pw_policy.c,v 1.6 2006/02/19 20:46:29 elad Exp $ */
 
 /*-
  * Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -488,5 +488,7 @@ pw_policy_test(pw_policy_t policy, char *pw)
 void
 pw_policy_free(pw_policy_t policy)
 {
+	_DIAGASSERT(policy != NULL);
+
 	free(policy);
 }
