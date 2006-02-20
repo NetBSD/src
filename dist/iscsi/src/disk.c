@@ -1,3 +1,36 @@
+/* $NetBSD: disk.c,v 1.4 2006/02/20 08:57:32 agc Exp $ */
+
+/*
+ * Copyright © 2006 Alistair Crooks.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Alistair Crooks
+ *	for the NetBSD project.
+ * 4. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING. By downloading, copying, installing or
  * using the software you agree to this license. If you do not agree to this license, do not download, install,
@@ -729,27 +762,11 @@ device_init(globals_t *gp, targv_t *tvp, disc_target_t *tp)
 				TRACE_ERROR("error opening \"%s\"\n", disks.v[disks.c].filename);
 				return -1;
 			}
-#if 0
-			if (de_lseek(&tp->de, (off_t)disks.v[disks.c].size - 1, SEEK_SET) == -1) {
-				TRACE_ERROR("error seeking \"%s\"\n", disks.v[disks.c].filename);
-				return -1;
-			}
-			if (de_read(&tp->de, &ch, 1) == -1) {
-				TRACE_ERROR("error reading \"%s\"", disks.v[disks.c].filename);
-				return -1;
-			}
-			if (de_write(&tp->de, &ch, 1) == -1) {
-				TRACE_ERROR("error writing \"%s\"", disks.v[disks.c].filename);
-				return -1;
-			}
-			PRINT("%llu MB disk file \"%s\"\n", (de_getsize(&tp->de) / MB(1)), disks.v[disks.c].filename);
-#else
 			if (!allocate_space(tp)) {
 				TRACE_ERROR("error allocating space for \"%s\"", tp->target);
 				return -1;
 			}
 			PRINT("%" PRIu64 " MB disk storage for \"%s\"\n", (de_getsize(&tp->de) / MB(1)), tp->target);
-#endif
 		}
 	}
 	return disks.c++;
@@ -826,19 +843,13 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		/* data[3] |= 0x40;                        // TrmIOP  */
 		/* data[3] |= 0x20;                        // NormACA  */
 		data[4] = cdb[4] - 4;	/* Additional length  */
-		/*
-		 * data[7] |= 0x80;                        // Relative
-		 * addressing
-		 */
+		/* data[7] |= 0x80;                        // Relative addressing */
 		data[7] |= 0x40;/* WBus32  */
 		data[7] |= 0x20;/* WBus16 */
 		/* data[7] |= 0x10;                        // Sync  */
 		/* data[7] |= 0x08;                        // Linked Commands */
 		/* data[7] |= 0x04;                        // TransDis  */
-		/*
-		 * data[7] |= 0x02;                        // Tagged Command
-		 * Queueing
-		 */
+		/* data[7] |= 0x02;                        // Tagged Command Queueing */
 		/* data[7] |= 0x01;                        // SftRe */
 		(void) memset(data + 8, 0x0, 32);
 		(void) strlcpy((char *)&data[8], ISCSI_VENDOR, 8);	/* Vendor */
