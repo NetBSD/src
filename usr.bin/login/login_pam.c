@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.11 2006/02/19 00:12:36 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.12 2006/02/20 05:05:16 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.11 2006/02/19 00:12:36 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.12 2006/02/20 05:05:16 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -767,7 +767,8 @@ update_db(int quietlog)
 	}
 	if (hostname != NULL && have_ss == 0) {
 		socklen_t len = sizeof(ss);
-		(void)getpeername(STDIN_FILENO, (struct sockaddr *)&ss, &len);
+		have_ss = getpeername(STDIN_FILENO, (struct sockaddr *)&ss,
+		    &len) != -1;
 	}
 	(void)gettimeofday(&now, NULL);
 }
