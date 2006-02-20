@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.301 2006/01/26 00:56:39 gdamore Exp $
+.\"	$NetBSD: main,v 1.302 2006/02/20 19:30:06 jschauma Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1139,6 +1139,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Steve Woodford                 Ta Mt       scw@NetBSD.org Ta Sy evbsh5
 .It Ta Steve Woodford                 Ta Mt       scw@NetBSD.org Ta Sy mvme68k
 .It Ta Steve Woodford                 Ta Mt       scw@NetBSD.org Ta Sy mvmeppc
+.It Ta Takayoshi Kochi                Ta Mt     kochi@NetBSD.org Ta Sy ia64
 .It Ta Tohru Nishimura                Ta Mt  nisimura@NetBSD.org Ta Sy luna68k
 .It Ta Tsubai Masanari                Ta Mt    tsubai@NetBSD.org Ta Sy macppc
 .It Ta Tsubai Masanari                Ta Mt    tsubai@NetBSD.org Ta Sy newsmips
