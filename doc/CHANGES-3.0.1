@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.19 2006/02/15 19:48:28 riz Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.20 2006/02/20 13:52:15 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -192,4 +192,10 @@ sys/dev/raidframe/rf_psstatus.h			1.13
 	with things like 'vmstat -m' by causing it to loop.  Make RAIDframe
 	only initialize PSS bits once.
 	[oster, ticket #1170]
+
+lib/libpam/modules/pam_nologin/pam_nologin.c	1.6
+
+	Use the class of the user, not then default class, when checking for
+	nologin and ignorelogin login.conf(5) capabilities.
+	[bouyer, ticket #1176]
 
