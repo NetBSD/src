@@ -32,6 +32,7 @@ port-hpcsh
 port-hppa
 port-i386
 port-ia64
+port-ibmnws
 port-iyonix
 port-luna68k
 port-m68k
