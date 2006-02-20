@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.20 2005/10/12 20:03:59 reed Exp $	*/
+/*	$NetBSD: find.c,v 1.21 2006/02/20 16:31:02 jschauma Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.20 2005/10/12 20:03:59 reed Exp $");
+__RCSID("$NetBSD: find.c,v 1.21 2006/02/20 16:31:02 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,9 +98,9 @@ find_formplan(argv)
 	}
 
 	/*
-	 * if the user didn't specify one of -print, -ok, -fprint, or -exec,
-	 * then -print is assumed so we bracket the current expression with
-	 * parens, if necessary, and add a -print node on the end.
+	 * if the user didn't specify one of -print, -ok, -fprint, -exec, or
+	 * -exit, then -print is assumed so we bracket the current expression
+	 * with parens, if necessary, and add a -print node on the end.
 	 */
 	if (!isoutput) {
 		if (plan == NULL) {
@@ -189,14 +189,16 @@ find_execute(plan, paths)
 	char **paths;		/* array of pathnames to traverse */
 {
 	PLAN *p;
-	int rval;
+	int rval, cval;
 	sigset_t s;
+
+	cval = 1;
 
 	if (!(tree = fts_open(paths, ftsoptions, issort ? ftscompare : NULL)))
 		err(1, "ftsopen");
 
 	sig_lock(&s);
-	for (rval = 0; (g_entry = fts_read(tree)) != NULL; sig_lock(&s)) {
+	for (rval = 0; cval && (g_entry = fts_read(tree)) != NULL; sig_lock(&s)) {
 		sig_unlock(&s);
 		switch (g_entry->fts_info) {
 		case FTS_D:
@@ -230,8 +232,12 @@ find_execute(plan, paths)
 		 * the work specified by the user on the command line.
 		 */
 		for (p = plan; p && (p->eval)(p, g_entry); p = p->next)
-			;
+			if (p->type == N_EXIT) {
+				rval = p->exit_val;
+				cval = 0;
+			}
 	}
+
 	sig_unlock(&s);
 	if (errno)
 		err(1, "fts_read");

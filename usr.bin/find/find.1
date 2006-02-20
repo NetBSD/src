@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.55 2005/11/09 00:47:16 reed Exp $
+.\"	$NetBSD: find.1,v 1.56 2006/02/20 16:31:02 jschauma Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd November 8, 2005
+.Dd February 20, 2006
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -232,6 +232,14 @@ the current file.
 The filename substituted for the string
 .Dq {}
 is not qualified.
+.It Ic -exit Op Ar n
+This primary causes
+.Nm
+to stop traversing the filesystem and exit immediately if a
+previous condition was met.
+If no value is specified, the exit value will be 0, else
+.Ar n .
+Note that other primaries will be evaluated and acted upon before exiting.
 .It Ic -false
 This primary always evaluates to false.
 This can be used following a primary that caused the
@@ -454,6 +462,7 @@ It prints the pathname of the current file to standard output, followed
 by a newline character.
 If none of
 .Ic -exec ,
+.Ic -exit ,
 .Ic -fprint ,
 .Ic -ls ,
 .Ic -ok ,
@@ -611,6 +620,16 @@ Print out a list of all the files that are either owned by
 .Dq wnj
 or that are newer than
 .Dq ttt .
+.It Li "find  /  \e(  -newer  ttt  -or  -user wnj  \e)  -exit 1"
+Return immediately with a value of 1 if any files are found that are either
+owned by
+.Dq wnj
+or that are newer than
+.Dq ttt ,
+but do not print them.
+.It Li "find  /  \e(  -newer  ttt  -or  -user wnj  \e)  -ls -exit 1"
+Same as above, but list the first file matching the criteria before exiting
+with a value of 1.
 .El
 .Sh SEE ALSO
 .Xr chflags 1 ,
