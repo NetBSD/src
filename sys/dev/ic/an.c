@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.39 2006/02/19 08:20:02 dyoung Exp $	*/
+/*	$NetBSD: an.c,v 1.40 2006/02/20 16:50:37 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.39 2006/02/19 08:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.40 2006/02/20 16:50:37 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -491,7 +491,7 @@ an_intr(void *arg)
 	u_int16_t status;
 
 	if (!sc->sc_enabled || sc->sc_invalid ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 ||
+	    !device_is_active(&sc->sc_dev) ||
 	    (ifp->if_flags & IFF_RUNNING) == 0)
 		return 0;
 
@@ -918,7 +918,7 @@ an_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct an_softc *sc = ifp->if_softc;
 	int s, error = 0;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return ENXIO;
 
 	s = splnet();

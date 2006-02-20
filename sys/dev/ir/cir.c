@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.11 2006/01/29 11:35:11 augustss Exp $	*/
+/*	$NetBSD: cir.c,v 1.12 2006/02/20 16:50:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.11 2006/01/29 11:35:11 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.12 2006/02/20 16:50:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ ciropen(dev_t dev, int flag, int mode, struct proc *p)
 	sc = device_lookup(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 	if (sc->sc_open)
 		return (EBUSY);
@@ -183,7 +183,7 @@ cirread(dev_t dev, struct uio *uio, int flag)
 	sc = device_lookup(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 	return (sc->sc_methods->im_read(sc->sc_handle, uio, flag));
 }
@@ -196,7 +196,7 @@ cirwrite(dev_t dev, struct uio *uio, int flag)
 	sc = device_lookup(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 	return (sc->sc_methods->im_write(sc->sc_handle, uio, flag));
 }
@@ -210,7 +210,7 @@ cirioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	sc = device_lookup(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 
 	switch (cmd) {
@@ -244,7 +244,7 @@ cirpoll(dev_t dev, int events, struct proc *p)
 	sc = device_lookup(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (POLLERR);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (POLLERR);
 
 	revents = 0;

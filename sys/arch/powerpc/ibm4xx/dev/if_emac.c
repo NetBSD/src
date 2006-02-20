@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.24 2006/02/18 05:04:11 thorpej Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.25 2006/02/20 16:50:36 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.24 2006/02/18 05:04:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.25 2006/02/20 16:50:36 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -1546,7 +1546,7 @@ emac_mii_tick(void *arg)
 	struct emac_softc *sc = arg;
 	int s;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();

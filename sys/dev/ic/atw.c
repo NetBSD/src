@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.108 2006/02/19 08:02:46 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.109 2006/02/20 16:50:37 thorpej Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.108 2006/02/19 08:02:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.109 2006/02/20 16:50:37 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -2799,7 +2799,7 @@ atw_intr(void *arg)
 	 * possibly have come from us.
 	 */
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 	for (;;) {
@@ -3849,7 +3849,7 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s, error = 0;
 
 	/* XXX monkey see, monkey do. comes from wi_ioctl. */
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return ENXIO;
 
 	s = splnet();
