@@ -67,19 +67,7 @@
 #include "osd_ops.h"
 
 
-#ifdef __KERNEL__
-uint32_t 
-toSeconds(uint32_t j)
-{
-	if ((j - ((j / 100) * 100)) > 49) {
-		return (j + 100) / 100;
-	} else {
-		return (j) / 100;
-	}
-}
-#else
 #define toSeconds(t) (t.tv_sec + (t.tv_usec/1000000.0))
-#endif
 
 typedef struct osd_device_t {
 	int             target;
@@ -122,13 +110,15 @@ nop_out(uint64_t target, int lun, int length, int ping, const char *data)
 	cmd.type = ISCSI_NOP_OUT;
 	cmd.ptr = &nop_cmd;
 	cmd.isid = target;
-	memset(&nop_cmd, 0, sizeof(iscsi_nop_out_args_t));
+	cmd.targetname[0] = 0x0;
+	(void) memset(&nop_cmd, 0x0, sizeof(iscsi_nop_out_args_t));
 	RETURN_GREATER("length", length, 4096, NO_CLEANUP, -1);
 	nop_cmd.length = length;
 	nop_cmd.data = data;
 	nop_cmd.lun = lun;
-	if (!ping)
+	if (!ping) {
 		nop_cmd.tag = 0xffffffff;
+	}
 	if (initiator_command(&cmd) != 0) {
 		TRACE_ERROR("initiator_command() failed\n");
 		return -1;
@@ -427,14 +417,8 @@ throughput_test(uint32_t target, uint32_t lun, uint32_t length, uint32_t request
 	uint32_t        block_offset;
 	struct iovec   *sg;
 	int             i, j;
-#ifdef __KERNEL__
-	uint32_t        t_start, t_stop;
-	uint32_t        num_jiffies;
-	uint32_t        mbytes_per_sec;
-#else
 	struct timeval  t_start, t_stop;
 	double          seconds;
-#endif
 
 	/* Get device block len & capacity */
 
@@ -477,11 +461,7 @@ throughput_test(uint32_t target, uint32_t lun, uint32_t length, uint32_t request
 		}
 	}
 
-#ifdef __KERNEL__
-	t_start = jiffies;
-#else
 	gettimeofday(&t_start, 0);
-#endif
 
 	iters = length / request;
 	num_blocks = request / block_len;
@@ -504,24 +484,13 @@ throughput_test(uint32_t target, uint32_t lun, uint32_t length, uint32_t request
 		}
 	}
 
-#ifdef __KERNEL__
-	t_stop = jiffies;
-	num_jiffies = t_stop - t_start;
-	mbytes_per_sec = ((length / num_jiffies) * HZ) / 1048576;
-#else
 	gettimeofday(&t_stop, 0);
 	seconds = toSeconds(t_stop) - toSeconds(t_start);
-#endif
 
 	/* Output results */
 
-#ifdef __KERNEL__
-	PRINT("%u bytes %s in %u jiffies --> ~ %u MB/second\n",
-	   length, writing ? "written" : "read", num_jiffies, mbytes_per_sec);
-#else
 	PRINT("%u MB %s in %.2f seconds --> %.2f MB/sec\n", length / 1048576, writing ? "written" : "read", (double) seconds,
 	      (double) (length / seconds) / 1048576);
-#endif
 
 done:	for (i = 0; i < sg_factor; i++) {
 		if (data[i])
@@ -639,11 +608,7 @@ done:
 int 
 nop_test(uint32_t target, uint32_t lun, uint32_t iters)
 {
-#ifdef __KERNEL__
-	uint32_t        t_start, t_stop;
-#else
 	struct timeval  t_start, t_stop;
-#endif
 	char           *data;
 	int             i, j, k;
 
@@ -659,33 +624,20 @@ nop_test(uint32_t target, uint32_t lun, uint32_t iters)
 	for (k = 0; k <= 1; k++) {	/* 0 = no ping, 1= ping */
 		for (j = 0; j <= 4096; j *= 4) {	/* payload between 0 and
 							 * 4K  */
-#ifdef __KERNEL__
-			t_start = jiffies;
-#else
 			gettimeofday(&t_start, 0);
-#endif
 			for (i = 0; i < iters; i++) {
 				if (nop_out(target, lun, j, k, data) != 0) {
 					TRACE_ERROR("nop_out() failed\n");
 					return -1;
 				}
 			}
-#ifdef __KERNEL__
-			t_stop = jiffies;
-#else
 			gettimeofday(&t_stop, 0);
-#endif
 
 			/* Output results */
 
-#ifdef __KERNEL__
-			PRINT("NOP_OUT (%4i bytes, ping = %i): %u iters in %u jiffies --> %u usec\n", j, k,
-			      iters, t_stop - t_start, ((t_stop - t_start) * 1000000) / (100 * iters));
-#else
 			PRINT("NOP_OUT (%4i bytes, ping = %i): %u iters in %.2f sec --> %.2f usec\n", j, k,
 			      iters, toSeconds(t_stop) - toSeconds(t_start),
 			      ((toSeconds(t_stop) - toSeconds(t_start)) * 1e6) / iters);
-#endif
 			if (!j)
 				j = 1;
 		}
@@ -708,11 +660,7 @@ latency_test(uint64_t target, uint32_t lun, uint8_t op, uint32_t iters)
 	uint8_t  *data, cdb[16];
 	initiator_cmd_t cmd;
 	iscsi_scsi_cmd_args_t args;
-#ifdef __KERNEL__
-	uint32_t        t_start, t_stop;
-#else
 	struct timeval  t_start, t_stop;
-#endif
 	int             i, rc = -1;
 	uint32_t        lba = 0;
 	uint16_t  len = 1;
@@ -828,11 +776,7 @@ latency_test(uint64_t target, uint32_t lun, uint8_t op, uint32_t iters)
 
 	/* Run test */
 
-#ifdef __KERNEL__
-	t_start = jiffies;
-#else
 	gettimeofday(&t_start, 0);
-#endif
 	for (i = 0; i < iters; i++) {
 		if (initiator_command(&cmd) != 0) {
 			TRACE_ERROR("initiator_command() failed\n");
@@ -843,22 +787,13 @@ latency_test(uint64_t target, uint32_t lun, uint8_t op, uint32_t iters)
 			goto done;
 		}
 	}
-#ifdef __KERNEL__
-	t_stop = jiffies;
-#else
 	gettimeofday(&t_stop, 0);
-#endif
 
 	/* Output results */
 
-#ifdef __KERNEL__
-	PRINT("SCSI op 0x%2x: %u iters in %u jiffies --> %u usec\n",
-	      op, iters, t_stop - t_start, ((t_stop - t_start) * 1000000) / (HZ * iters));
-#else
 	PRINT("SCSI op 0x%2x: %u iters in %.2f sec --> %.2f usec\n",
 	      op, iters, toSeconds(t_stop) - toSeconds(t_start),
 	      ((toSeconds(t_stop) - toSeconds(t_start)) * 1e6) / iters);
-#endif
 
 	rc = 0;
 done:
@@ -893,11 +828,7 @@ scatter_gather_test(uint64_t target, uint32_t lun, uint8_t op)
 	int             xfer_size = 100 * 1048576;
 	int             xfer_chunk = 1048576;
 	int             rc = -1;
-#ifdef __KERNEL__
-	uint32_t        t_start, t_stop;
-#else
 	struct timeval  t_start, t_stop;
-#endif
 
 	/* Number of iterations (xfer_chunk bytes read/written per iteration) */
 
@@ -980,11 +911,7 @@ scatter_gather_test(uint64_t target, uint32_t lun, uint8_t op)
 	cdb[8] = ((uint8_t *) &len)[0];
 #endif
 
-#ifdef __KERNEL__
-	t_start = jiffies;
-#else
 	gettimeofday(&t_start, 0);
-#endif
 
 	/* Begin I/O  */
 
@@ -1023,23 +950,11 @@ scatter_gather_test(uint64_t target, uint32_t lun, uint8_t op)
 		}
 	}
 
-#ifdef __KERNEL__
-	t_stop = jiffies;
-#else
 	gettimeofday(&t_stop, 0);
-#endif
-#ifdef __KERNEL__
-	printk("SCSI op 0x%x: %u bytes (%s) in %u jiffies --> %u MB/sec\n",
-	       op, xfer_size, (op == WRITE_10) ? "gathered" : "scattered",
-	       t_stop - t_start,
-	       ((xfer_size / (t_stop - t_start)) * 100) / 1048576);
-
-#else
 	printf("SCSI op 0x%x: %u bytes (%s) in %.2f secs --> %.2f MB/sec\n",
 	       op, xfer_size, (op == WRITE_10) ? "gathered" : "scattered",
 	       toSeconds(t_stop) - toSeconds(t_start),
 	  (xfer_size / 1048576) / (toSeconds(t_stop) - toSeconds(t_start)));
-#endif
 	rc = 0;
 
 done:
