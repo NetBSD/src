@@ -1,4 +1,4 @@
-/*	$NetBSD: infinity.c,v 1.4 2004/03/05 01:00:53 kleink Exp $	*/
+/*	$NetBSD: infinity.c,v 1.5 2006/02/20 17:14:33 drochner Exp $	*/
 
 /*
  * This file is in the Public Domain.
@@ -24,7 +24,7 @@ main(int argc, char **argv)
 	/* HUGE_VALF is the float analog of HUGE_VAL. */
 	assert(isinf(HUGE_VALF));
 
-	/* HUGE_VALL is the float analog of HUGE_VAL. */
+	/* HUGE_VALL is the long double analog of HUGE_VAL. */
 	assert(isinf(HUGE_VALL));
 
 	return 0;
