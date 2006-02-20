@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.36 2006/02/15 19:48:49 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.37 2006/02/20 13:58:57 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -760,4 +760,31 @@ usr.bin/systat/ps.c				1.28
 	Print system processes' command names in square brackets, like ps(1)
 	does.
 	[kleink, ticket #1172]
+
+gnu/dist/binutils/ld/ChangeLog			1.2 via patch
+gnu/dist/binutils/ld/emulparams/elf32btsmip.sh	1.2
+
+	Pull in a change form binutils-current that removes the gap between
+	text and data on mips platforms which was dragged over from the
+	Irix defaults.
+	[skrll, ticket #1173]
+
+tools/gcc/README.mknative			1.5 via patch
+tools/toolchain/README.mknative			1.7
+
+	I haven't touched the mknative stuff since 2002. Take my name off of
+	the readmes, so I'm not implied as a point of contact.
+	[tv, ticket #1174]
+
+sys/arch/alpha/pci/pci_6600.c			1.14
+
+	Fix to properly add the dec_6600 interrupt event counters so the
+	interrupt counts can be displayed.
+	[mhitch, ticket #1175]
+
+lib/libpam/modules/pam_nologin/pam_nologin.c	1.6
+
+	Use the class of the user, not then default class, when checking for
+	nologin and ignorelogin login.conf(5) capabilities.
+	[bouyer, ticket #1176]
 
