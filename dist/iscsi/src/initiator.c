@@ -87,14 +87,9 @@ static iscsi_queue_t g_session_q;
 static int      g_initiator_state;
 char           *gfilename;
 
-#ifdef __KERNEL__
-MODULE_PARM(gfilename, "s");
-#endif
-#ifndef __KERNEL__
 /* Testing of initiator_abort */
 
 static initiator_cmd_t *g_cmd = NULL;
-#endif
 
 /*
  * Enqueue worker functions. The enqueue worker is responsible for enqueing
@@ -166,106 +161,7 @@ static int      get_target_config(const char *);
 static int 
 get_target_config(const char *hostname)
 {
-#ifdef __KERNEL__
-	char           *buffer = NULL;
-	struct file    *filp = NULL;
-	int             gfilenameNull = 0;
-	static char     targ_default_file1[] = "/etc/intel_iscsi_targets";
-	static char     targ_default_file2[] = "./intel_iscsi_targets";
-
-	if (gfilename == NULL) {
-		gfilenameNull = 1;
-		gfilename = targ_default_file1;
-	}
-	TRACE(TRACE_ISCSI_DEBUG, "opening target configuration file...\n");
-	filp = filp_open(gfilename, O_RDONLY, 0);
-	if (IS_ERR(filp)) {
-		if (gfilenameNull) {
-			gfilename = targ_default_file2;
-			filp = filp_open(gfilename, O_RDONLY, 0);
-		}
-	}
-	if (IS_ERR(filp)) {
-		if (strcmp(g_target[0].ip, "151.0.1.1")) {
-			TRACE(TRACE_ISCSI_DEBUG, "Using static compiled target ip addresses\n");
-			return 0;
-		}
-		if (gfilenameNull) {
-			TRACE(TRACE_ISCSI_DEBUG, "No 'gfilename' target configuration file specified\n");
-			TRACE(TRACE_ISCSI_DEBUG, "Specify 'gfilename=\"<filename>\" as insmod argument\n");
-			TRACE(TRACE_ISCSI_DEBUG, "or use default ./intel_iscsi_targets\n");
-			TRACE(TRACE_ISCSI_DEBUG, "target config file format 'ip=192.168.1.1' for each target\n");
-			return -1;
-		}
-		TRACE(TRACE_ISCSI_DEBUG, "Target configuration file read error\n");
-		return -1;
-	} else {
-		TRACE(TRACE_ISCSI_DEBUG, "Target configuration file opened successfully\n");
-	}
-
-	if (!filp->f_op) {
-		TRACE(TRACE_ISCSI_DEBUG, "Target configuration file has no operations registered\n");
-	} else {
-		if (!filp->f_op->read) {
-			TRACE(TRACE_ISCSI_DEBUG, "Target configuration file has no read operation registered\n");
-			filp_close(filp, NULL);
-			return -1;
-		} else {
-			int             bytes = 0;
-			long            file_length = 0;
-			mm_segment_t    oldfs;
-			filp->f_pos = 0;
-			file_length = filp->f_op->llseek(filp, 0L, 2);
-			TRACE(TRACE_ISCSI_DEBUG, "Target configuration file length is:%lu\n", file_length);
-			if (file_length == 0) {
-				filp_close(filp, NULL);
-				return -1;
-			}
-			filp->f_op->llseek(filp, 0L, 0);
-			buffer = (char *) iscsi_malloc(file_length);
-			if (buffer == NULL) {
-				TRACE(TRACE_ISCSI_DEBUG, "get_target_config(): iscsi_malloc returned NULL\n");
-				filp_close(filp, NULL);
-				return -1;
-			}
-			oldfs = get_fs();
-			set_fs(KERNEL_DS);
-			bytes = filp->f_op->read(filp, buffer, file_length, &filp->f_pos);
-			buffer[file_length] = (char) NULL;
-			TRACE(TRACE_ISCSI_DEBUG, "number of  bytes read from target configuration file:%d\n", bytes);
-			TRACE(TRACE_ISCSI_DEBUG, " target configuration file contents :%s\n", buffer);
-			set_fs(oldfs);
-		}
-	}
-	filp_close(filp, NULL);
-
-	/* Tokenize the buffer to read the IP and target name fields */
-	if (buffer) {
-		char           *token;
-		int             num_targets = -1;
-
-		TRACE(TRACE_ISCSI_DEBUG, "Extracting target config info from buffer read from file...\n");
-
-		token = strtok(buffer, " \n");
-		while (token != NULL) {
-			if (strstr(token, "ip=") != NULL) {
-				strcpy(g_target[++num_targets].ip, token + 3);
-				TRACE(TRACE_ISCSI_DEBUG, " g_target [%d].ip=%s\n", num_targets, g_target[num_targets].ip);
-				g_target[num_targets].port = ISCSI_PORT;
-			} else if (strstr(token, "name=") != NULL) {
-				strcpy(g_target[num_targets].TargetName, token + 5);
-				TRACE(TRACE_ISCSI_DEBUG, " g_target [%d].TargetName=%s\n", num_targets, g_target[num_targets].TargetName);
-			} else if (strstr(token, "port=") != NULL) {
-				g_target[num_targets].port = driver_atoi(token + 5);
-				TRACE(TRACE_ISCSI_DEBUG, " g_target [%d].port=%d\n", num_targets, g_target[num_targets].port);
-			}
-			token = strtok(NULL, " \n");
-		}
-		iscsi_free(buffer);
-	}
-#else
 	(void) strlcpy(g_target[0].name, hostname, sizeof(g_target[0].name));
-#endif
 	return 0;
 }
 
@@ -649,9 +545,11 @@ full_feature_negotiation_phase_i(initiator_session_t * sess, char *text, int tex
 }
 
 static int 
-discovery_phase(int target)
+discovery_phase(int target, strv_t *svp)
 {
 	initiator_session_t *sess = g_target[target].sess;
+	iscsi_parameter_value_t	*vp;
+	iscsi_parameter_t	*ip;
 	char           *ptr, *colon_ptr, *comma_ptr;
 	char            port[64];
 	char           *text = NULL;
@@ -692,11 +590,24 @@ discovery_phase(int target)
 	 * Use the first TargetName and TargetAddress sent to us (all others
 	 * are currently ignored)
 	 */
-	if (param_val(sess->params, "TargetName")) {
+	if (param_val(sess->params, "TargetName") != NULL) {
 		strlcpy(g_target[target].TargetName, param_val(sess->params, "TargetName"), sizeof(g_target[target].TargetName));
 	} else {
 		TRACE_ERROR("SendTargets failed\n");
 		DP_ERROR;
+	}
+
+	/* fill in information on the targets from the TargetName values */
+	(void) memset(svp, 0x0, sizeof(*svp));
+	for (ip = sess->params ; ip ; ip = ip->next) {
+		if (strcmp(ip->key, "TargetName") == 0) {
+			for (vp = ip->value_l ; vp ; vp = vp->next) {
+				ALLOC(char *, svp->v, svp->size, svp->c, 10, 10, "discovery_phase", return -1);
+				svp->v[svp->c++] = strdup(vp->value);
+				ALLOC(char *, svp->v, svp->size, svp->c, 10, 10, "discovery_phase2", return -1);
+				svp->v[svp->c++] = strdup(param_val(sess->params, "TargetAddress"));
+			}
+		}
 	}
 
 	if (param_val(sess->params, "TargetAddress")) {
@@ -1017,8 +928,9 @@ initiator_enqueue(initiator_cmd_t * cmd)
 			break;
 		case ISCSI_NOP_OUT:
 			nop_out = (iscsi_nop_out_args_t *) cmd->ptr;
-			if (nop_out->tag != 0xffffffff)
+			if (nop_out->tag != 0xffffffff) {
 				nop_out->tag = tag;
+			}
 			break;
 		default:
 			TRACE_ERROR("enqueue_worker: unknown command type %i\n", cmd->type);
@@ -1061,8 +973,11 @@ enqueue_worker_proc(void *arg)
 	iscsi_nop_out_args_t *nop_out;
 	iscsi_worker_t *me = (iscsi_worker_t *) arg;
 	uint64_t target;
+	strv_t		sv;
 	int             rc;
 	uint32_t        tag;
+	int		i;
+
 
 	ISCSI_THREAD_START("enqueue_worker");
 	ISCSI_SET_THREAD(me)
@@ -1096,8 +1011,9 @@ enqueue_worker_proc(void *arg)
 				break;
 			case ISCSI_NOP_OUT:
 				nop_out = (iscsi_nop_out_args_t *) cmd->ptr;
-				if (nop_out->tag != 0xffffffff)
+				if (nop_out->tag != 0xffffffff) {
 					nop_out->tag = tag;
+				}
 				break;
 			default:
 				TRACE_ERROR("enqueue_worker: unknown command type %i\n", cmd->type);
@@ -1119,12 +1035,16 @@ initialize:
 			sess = g_target[target].sess;
 			TRACE(TRACE_ISCSI_DEBUG, "enqueue_worker: session 0x%p\n", sess);
 
-			/* Discovery login if TargetName is "iSCSI" */
+			/* Discovery login if TargetName is zero length */
 
-			if (!strlen(g_target[target].TargetName)) {
+			if (strlen(g_target[target].TargetName) == 0) {
 				TRACE(TRACE_ISCSI_DEBUG, "enqueue_worker: entering Discovery phase with target %llu\n", target);
-				rc = discovery_phase(target);
+				rc = discovery_phase(target, &sv);
 				TRACE(TRACE_ISCSI_DEBUG, "enqueue_worker: Discovery phase complete\n");
+
+				for (i = 0 ; i < sv.c ; i += 2) {
+					PRINT("%s: %s %s\n", cmd->targetname, sv.v[i + 1], sv.v[i]);
+				}
 
 				/* Destroy session */
 
@@ -1136,6 +1056,7 @@ initialize:
 						}
 					}
 				}
+
 				/*
 				 * If the Discovery phase was successful, we
 				 * re-initialize the session, enter
@@ -1291,11 +1212,13 @@ tx_worker_proc_i(void *arg)
 			if (!((cmd->type == ISCSI_NOP_OUT) && (((iscsi_nop_out_args_t *) (cmd->ptr))->tag == 0xffffffff))) {
 				cmd->next = NULL;
 				iscsi_spin_lock(&sess->cmds_spin);
-				for (ptr = sess->cmds; ((ptr) && (ptr->next != NULL)); ptr = ptr->next);
-				if (ptr)
+				for (ptr = sess->cmds; ((ptr) && (ptr->next != NULL)); ptr = ptr->next) {
+				}
+				if (ptr) {
 					ptr->next = cmd;
-				else
+				} else {
 					sess->cmds = cmd;
+				}
 				iscsi_spin_unlock(&sess->cmds_spin);
 			}
 			cmd->tx_done = 0;
@@ -1702,7 +1625,6 @@ logout_phase_i(initiator_session_t * sess)
 	return 0;
 }
 
-#ifndef __KERNEL__
 static void 
 alarm_handler(int arg)
 {
@@ -1711,7 +1633,6 @@ alarm_handler(int arg)
 		TRACE_ERROR("initiator_abort() failed\n");
 	}
 }
-#endif
 
 static int 
 login_phase_i(initiator_session_t * sess, char *text, int text_len)
@@ -1719,9 +1640,7 @@ login_phase_i(initiator_session_t * sess, char *text, int text_len)
 	initiator_cmd_t *cmd = NULL;
 	initiator_wait_t wait;
 	iscsi_login_cmd_args_t *login_cmd = NULL;
-#ifndef __KERNEL__
 	struct sigaction act;
-#endif
 
 	sess->state = INITIATOR_SESSION_STATE_LOGGING_IN;
 
@@ -1793,12 +1712,10 @@ login_phase_i(initiator_session_t * sess, char *text, int text_len)
 
 		/* Set Alarm */
 
-#ifndef __KERNEL__
 		g_cmd = cmd;
 		act.sa_handler = alarm_handler;
 		sigaction(SIGALRM, &act, NULL);
 		alarm(5);
-#endif
 
 		/* Enqueue initiator command to Tx worker */
 
@@ -1824,9 +1741,7 @@ login_phase_i(initiator_session_t * sess, char *text, int text_len)
 		ISCSI_MUTEX_DESTROY(&wait.mutex, LI_ERROR);
 		TRACE(TRACE_ISCSI_DEBUG, "received login callback ok\n");
 
-#ifndef __KERNEL__
 		alarm(0);
-#endif
 
 		if (cmd->status != 0) {
 			TRACE_ERROR("initiator_cmd_t failed\n");
@@ -2055,6 +1970,7 @@ login_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *hea
 				LIR_ERROR;
 			}
 
+#if ISCSI_DEBUG
 			PRINT("*********************************************\n");
 			PRINT("*              LOGIN SUCCESSFUL             *\n");
 			PRINT("*                                           *\n");
@@ -2065,6 +1981,7 @@ login_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *hea
 			PRINT("* %20s:%20u *\n", "MaxCmdSN", sess->MaxCmdSN);
 			PRINT("* %20s:%20u *\n", "ExpStatSN", sess->ExpStatSN);
 			PRINT("*********************************************\n");
+#endif
 			break;
 		default:
 			LIR_ERROR;
@@ -2182,6 +2099,8 @@ callback:
 		TRACE_ERROR("callback() failed\n");
 		return -1;
 	}
+
+#if ISCSI_DEBUG
 	PRINT("*********************************************\n");
 	PRINT("*             LOGOUT SUCCESSFUL             *\n");
 	PRINT("*                                           *\n");
@@ -2189,6 +2108,7 @@ callback:
 	PRINT("* %20s:%20llu *\n", "ISID", sess->isid);
 	PRINT("* %20s:%20u *\n", "TSIH", sess->tsih);
 	PRINT("*********************************************\n");
+#endif
 
 	return 0;
 }
@@ -3184,4 +3104,26 @@ initiator_info(char *ptr, int size, int len)
 		len += snprintf(ptr + len, size - len, ")\n");
 	}
 	return len;
+}
+
+int 
+initiator_discover(char *host, uint64_t target, int lun)
+{
+	iscsi_nop_out_args_t	discover_cmd;
+	initiator_cmd_t		cmd;
+
+	cmd.type = ISCSI_NOP_OUT;
+	cmd.ptr = &discover_cmd;
+	cmd.isid = target;
+	(void) strlcpy(cmd.targetname, host, sizeof(cmd.targetname));
+	(void) memset(&discover_cmd, 0x0, sizeof(iscsi_nop_out_args_t));
+	discover_cmd.length = 1;
+	discover_cmd.data = "";
+	discover_cmd.lun = lun;
+	discover_cmd.tag = 0xffffffff;
+	if (initiator_command(&cmd) != 0) {
+		TRACE_ERROR("initiator_command() failed\n");
+		return -1;
+	}
+	return 0;
 }
