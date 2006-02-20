@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.52 2005/11/09 00:47:16 reed Exp $	*/
+/*	$NetBSD: function.c,v 1.53 2006/02/20 16:31:02 jschauma Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.52 2005/11/09 00:47:16 reed Exp $");
+__RCSID("$NetBSD: function.c,v 1.53 2006/02/20 16:31:02 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -647,6 +647,29 @@ c_execdir(argvp, isok)
 	*argvp = argv + 1;
 	return (new);
 }
+
+PLAN *
+c_exit(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	char *arg = **argvp;
+	PLAN *new;
+
+	/* not technically true, but otherwise '-print' is implied */
+	isoutput = 1;
+
+	new = palloc(N_EXIT, f_always_true);
+
+	if (arg) {
+		(*argvp)++;
+		new->exit_val = find_parsenum(new, "-exit", arg, NULL);
+	} else
+		new->exit_val = 0;
+
+	return (new);
+}
+
 
 /*
  * -false function
