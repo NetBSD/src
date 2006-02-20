@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.16 2006/02/11 17:57:31 cdi Exp $ */
+/*	$NetBSD: pte.h,v 1.17 2006/02/20 19:00:27 cdi Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -134,14 +134,14 @@ struct ipi_tlb_args {
 };
 
 /* Assembly routines to flush TLB mappings */
-void sp_tlb_flush_pte __P((vaddr_t, int));
-void sp_tlb_flush_ctx __P((int));
-void sp_tlb_flush_all __P((void));
+void sp_tlb_flush_pte(vaddr_t, int);
+void sp_tlb_flush_ctx(int);
+void sp_tlb_flush_all(void);
 
 #if defined(MULTIPROCESSOR)
-void smp_tlb_flush_pte __P((vaddr_t, int));
-void smp_tlb_flush_ctx __P((int));
-void smp_tlb_flush_all __P((void));
+void smp_tlb_flush_pte(vaddr_t, int);
+void smp_tlb_flush_ctx(int);
+void smp_tlb_flush_all(void);
 #define	tlb_flush_pte(va,ctx)	smp_tlb_flush_pte(va, ctx)
 #define	tlb_flush_ctx(ctx)	smp_tlb_flush_ctx(ctx)
 #define	tlb_flush_all()		smp_tlb_flush_all()

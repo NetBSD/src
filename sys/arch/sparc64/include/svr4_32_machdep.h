@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.h,v 1.7 2006/02/11 17:57:31 cdi Exp $	 */
+/*	$NetBSD: svr4_32_machdep.h,v 1.8 2006/02/20 19:00:27 cdi Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -93,6 +93,6 @@ struct svr4_32_ucontext;
 
 #define svr4_32_syscall_intern syscall_intern
 
-int svr4_32_trap __P((int, struct lwp *));
+int svr4_32_trap(int, struct lwp *);
 
 #endif /* !_SPARC_SVR4_32_MACHDEP_H_ */

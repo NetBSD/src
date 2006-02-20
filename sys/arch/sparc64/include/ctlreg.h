@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.41 2006/02/16 20:17:15 perry Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.42 2006/02/20 19:00:27 cdi Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1164,7 +1164,7 @@ casxa(paddr_t loc, int asi, uint64_t value, uint64_t oldvalue)
 })
 #endif
 
-extern void next_tick __P((long));
+extern void next_tick(long);
 #endif
 
 #endif /* _SPARC_CTLREG_H_ */

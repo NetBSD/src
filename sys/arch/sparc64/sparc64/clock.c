@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.77 2006/02/11 17:57:32 cdi Exp $ */
+/*	$NetBSD: clock.c,v 1.78 2006/02/20 19:00:27 cdi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.77 2006/02/11 17:57:32 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.78 2006/02/20 19:00:27 cdi Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -672,8 +672,7 @@ setstatclockrate(newhz)
 static int clockcheck = 0;
 #endif
 int
-clockintr(cap)
-	void *cap;
+clockintr(void *cap)
 {
 	static int microset_iter;	/* call cc_microset once/sec */
 	struct cpu_info *ci = curcpu();
@@ -727,8 +726,7 @@ int poll_console = 0;
  * locore.s to a level 10.
  */
 int
-tickintr(cap)
-	void *cap;
+tickintr(void *cap)
 {
 	static int microset_iter;	/* call cc_microset once/sec */
 	struct cpu_info *ci = curcpu();
