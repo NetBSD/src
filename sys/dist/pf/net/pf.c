@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.12.4.3 2005/08/15 13:14:14 tron Exp $	*/
+/*	$NetBSD: pf.c,v 1.12.4.4 2006/02/20 15:23:44 tron Exp $	*/
 /*	$OpenBSD: pf.c,v 1.457.2.7 2005/01/06 14:11:56 brad Exp $ */
 
 /*
@@ -5057,9 +5057,6 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct pf_addr		 naddr;
 	struct pf_src_node	*sn = NULL;
 	int			 error = 0;
-#ifdef __NetBSD__
-	struct tcphdr		 th;
-#endif
 
 	if (m == NULL || *m == NULL || r == NULL ||
 	    (dir != PF_IN && dir != PF_OUT) || oifp == NULL)
@@ -5178,10 +5175,10 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		}
 	}
 #else
-	m_copydata(m0, sizeof(*ip), sizeof(th), &th);
-	th.th_sum = 0;
-	m_copyback(m0, sizeof(*ip), sizeof(th), &th);
-	in4_cksum(m0, IPPROTO_TCP, sizeof(*ip), m0->m_pkthdr.len - sizeof(*ip));
+	if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+		in_delayed_cksum(m0);
+		m0->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+	}
 #endif
 
 	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
@@ -5197,6 +5194,8 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 #else
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m0, ip->ip_hl << 2);
+
+		m0->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
 #endif
 #ifdef __OpenBSD__
 		/* Update relevant hardware checksum stats for TCP/UDP */
