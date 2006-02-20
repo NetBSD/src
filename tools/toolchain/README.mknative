@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.6 2003/07/27 15:00:52 mrg Exp $
+$NetBSD: README.mknative,v 1.6.6.1 2006/02/20 13:41:58 tron Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -69,5 +69,3 @@ src/tools/toolchain to generate compiler information.
    a native compiler.
 
 9. If all is well, commit the glue files added to src/gnu/{lib,usr.bin}/*.
-
-- tv@NetBSD.org
