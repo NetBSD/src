@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.14 2004/08/02 21:29:07 dsl Exp $	*/
+/*	$NetBSD: parse.y,v 1.15 2006/02/20 21:06:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -163,19 +163,24 @@ option_list : option
 	  | option_list option  { $2->next = $1; $$ = $2; }
 	  ;
 
-option	  : OPTION text ","
+option	  : OPTION
 		{ cur_optn = (optn_info *) malloc (sizeof(optn_info));
-		  cur_optn->name = $2;
 		  cur_optn->menu = -1;
+		  cur_optn->name = NULL;
+		  cur_optn->name_is_code = FALSE;
 		  cur_optn->issub = FALSE;
 		  cur_optn->doexit = FALSE;
 		  cur_optn->optact.code = "";
 		  cur_optn->optact.endwin = FALSE;
 		  cur_optn->next = NULL;
 		}
+	    option_legend ","
 	    elem_list ";"
 		{ $$ = cur_optn; }
 	  ;
+
+option_legend : text	{ cur_optn->name = $1; }
+	  | CODE	{ cur_optn->name = $1; cur_optn->name_is_code = TRUE;}
 
 elem_list : elem
 	  | elem_list "," elem

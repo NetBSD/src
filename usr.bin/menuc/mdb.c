@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.41 2004/08/02 21:29:07 dsl Exp $	*/
+/*	$NetBSD: mdb.c,v 1.42 2006/02/20 21:06:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,7 +45,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.41 2004/08/02 21:29:07 dsl Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.42 2006/02/20 21:06:40 dsl Exp $");
 #endif
 
 
@@ -121,6 +121,7 @@ write_menu_file (char *initcode)
 	char sname[1024];
 	char *sys_prefix;
 	char *tmpstr;
+	int name_is_code;
 
 	int nlen;
 
@@ -320,13 +321,15 @@ write_menu_file (char *initcode)
 				menus[i]->info->title);
 			exit (1);
 		}
-		toptn = menus[i]->info->optns;
-		j = 0;
 		(void) fprintf (out_file,
 				"static menu_ent optent%d[] = {\n", i);
-		while (toptn != NULL) {
+		name_is_code = 0;
+		for (j = 0, toptn = menus[i]->info->optns; toptn;
+		    toptn = toptn->next, j++) {
+			name_is_code += toptn->name_is_code;
 			(void) fprintf (out_file, "\t{%s,%d,%d,",
-				toptn->name, toptn->menu,
+				toptn->name_is_code ? "0" : toptn->name,
+				toptn->menu,
 				(toptn->issub ? OPT_SUB : 0)
 				+(toptn->doexit ? OPT_EXIT : 0)
 				+(toptn->optact.endwin ? OPT_ENDWIN : 0));
@@ -337,11 +340,23 @@ write_menu_file (char *initcode)
 				(void) fprintf (out_file, "NULL}");
 			(void) fprintf (out_file, "%s\n",
 				(toptn->next ? "," : ""));
-			j++;
-			toptn = toptn->next;
 		}
 		(void) fprintf (out_file, "\t};\n\n");
 
+		if (name_is_code) {
+			menus[i]->info->name_is_code = 1;
+			fprintf(out_file, "static void menu_%d_legend("
+			    "menudesc *menu, int opt, void *arg)\n{\n"
+			    "\tswitch (opt) {\n", i);
+			for (j = 0, toptn = menus[i]->info->optns; toptn;
+			    toptn = toptn->next, j++) {
+				if (!toptn->name_is_code)
+					continue;
+				fprintf(out_file, "\tcase %d:\n\t\t{%s};\n"
+				    "\t\tbreak;\n", j, toptn->name);
+			}
+			fprintf(out_file, "\t}\n}\n\n");
+		}
 	}
 
 
@@ -389,6 +404,10 @@ write_menu_file (char *initcode)
 			(void) fprintf (out_file, ",NULL");
 		if (strlen(menus[i]->info->exitact.code))
 			(void) fprintf (out_file, ",menu_%d_exitact", i);
+		else
+			(void) fprintf (out_file, ",NULL");
+		if (menus[i]->info->name_is_code)
+			(void) fprintf (out_file, ",menu_%d_legend", i);
 		else
 			(void) fprintf (out_file, ",NULL");
 

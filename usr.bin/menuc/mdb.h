@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.h,v 1.7 2004/08/02 21:29:07 dsl Exp $	*/
+/*	$NetBSD: mdb.h,v 1.8 2006/02/20 21:06:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,6 +67,7 @@ typedef struct action {
 
 typedef struct optn_info {
 	char *name;
+	int   name_is_code;
 	int   menu;
 	int   issub;
 	int   doexit;
@@ -82,6 +83,7 @@ struct menu_info {
 	int y, x;
 	int h, w;
 	int numopt;
+	int name_is_code;
 	optn_info *optns;
 	action postact;
 	action exitact;
