@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
+#	$NetBSD: files.i2c,v 1.3.16.1 2006/02/20 23:00:27 tron Exp $
 
 define	i2cbus { }
 define	i2cexec
@@ -57,3 +57,9 @@ file	dev/i2c/ds1307.c			dsrtc
 device	xrtc
 attach	xrtc at iic
 file	dev/i2c/x1226.c				xrtc
+
+# Analog Devices ADT 7463 thermal monitor / fan controller
+define adt7463c {}
+device adt7463c: sysmon_envsys
+attach adt7463c at iic
+file dev/i2c/adt7463.c			adt7463c
