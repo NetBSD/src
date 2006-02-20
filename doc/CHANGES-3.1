@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.37 2006/02/20 13:58:57 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.38 2006/02/20 15:28:59 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -787,4 +787,15 @@ lib/libpam/modules/pam_nologin/pam_nologin.c	1.6
 	Use the class of the user, not then default class, when checking for
 	nologin and ignorelogin login.conf(5) capabilities.
 	[bouyer, ticket #1176]
+
+sys/dist/pf/net/pf.c				1.21
+
+	Fix TCP/UDP checksum handling. This fixes PR kern/32874.
+	[peter, ticket #1177]
+
+sbin/ccdconfig/ccdconfig.c			1.42
+sys/dev/ccd.c					1.108
+
+	Fix "ccdconfig -g".
+	[lukem, ticket #1178]
 
