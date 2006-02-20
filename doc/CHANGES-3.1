@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.38 2006/02/20 15:28:59 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.39 2006/02/20 23:12:56 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -798,4 +798,26 @@ sys/dev/ccd.c					1.108
 
 	Fix "ccdconfig -g".
 	[lukem, ticket #1178]
+
+sys/dev/DEVNAMES				1.192 via patch
+sys/dev/i2c/adt7463.c				1.1
+sys/dev/i2c/adt7463reg.h			1.1
+sys/dev/i2c/files.i2c				1.7 via patch
+sys/dev/pci/amdpm.c				1.11
+sys/dev/pci/amdpm_smbus.c			1.1
+sys/dev/pci/amdpm_smbusreg.h			1.1
+sys/dev/pci/amdpmvar.h				1.1
+sys/dev/pci/files.pci				1.242
+
+	Add support for i2c bus on AMD-8111 used on many Opteron server
+	motherboards, and ADT 7463c thermal and voltage monitor found on
+	the Tyan S2881 and S2882-D(and probably other boards as well).
+	From PR kern/32463.
+	[tls, ticket #1179]
+
+sys/arch/amd64/conf/GENERIC			1.87
+sys/arch/i386/conf/GENERIC			1.727
+
+	Add amdpm(4). This fixes PR kern/32463.
+	[tls, ticket #1180]
 
