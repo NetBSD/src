@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1.1.1 2006/02/08 18:56:15 agc Exp $ */
+/* $NetBSD: defs.h,v 1.2 2006/02/20 08:59:07 agc Exp $ */
 
 /*
  * Copyright (c) 1999-2005 Alistair Crooks.  All rights reserved.
@@ -83,14 +83,6 @@ typedef struct name {							\
 	uint32_t	size;						\
 	type	       *v;						\
 } name
-
-#ifndef MIN
-#define MIN(a,b)	(((a) < (b)) ? (a) : (b))
-#endif
-
-#ifndef MAX
-#define MAX(a,b)	(((a) > (b)) ? (a) : (b))
-#endif
 
 #ifndef ABS
 #define ABS(a)		(((a) < 0) ? -(a) : (a))

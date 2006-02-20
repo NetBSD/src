@@ -52,11 +52,6 @@ typedef struct MD5Context MD5Context_t;
 
 #define ISCSI_CHAP_DATA_LENGTH          16
 #define ISCSI_CHAP_STRING_LENGTH        256
-/* XXX - agc */
-#define ISCSI_CHAP_INUSER               "alice"
-#define ISCSI_CHAP_INPASSWORD           "alicePass"
-#define ISCSI_CHAP_OUTUSER              "tommas"
-#define ISCSI_CHAP_OUTPASSWORD          "tomPass"
 
 #define ISCSI_PARAM_STATUS_AUTH_FAILED	-2
 #define ISCSI_PARAM_STATUS_FAILED	-1
@@ -82,7 +77,6 @@ typedef struct iscsi_parameter_item_t {
 	struct iscsi_parameter_item_t *next;
 }               iscsi_parameter_value_t;
 
-/* XXX - agc */
 /* this struct defines the credentials a user has */
 typedef struct cred_t {
 	char		*user;			/* user's name */
