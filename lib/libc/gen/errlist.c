@@ -1,4 +1,4 @@
-/*	$NetBSD: errlist.c,v 1.15 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: errlist.c,v 1.16 2006/02/20 17:33:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: errlist.c,v 1.15 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: errlist.c,v 1.16 2006/02/20 17:33:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -166,7 +166,13 @@ static const char *const errlist[] = {
 	"No STREAM resources",			/* 90 - ENOSR */
 	"Not a STREAM",				/* 91 - ENOSTR */
 	"STREAM ioctl timeout",			/* 92 - ETIME */
-	"Attribute not found"			/* 93 - ENOATTR */
+
+/* File system extended attribute errors */
+	"Attribute not found",			/* 93 - ENOATTR */
+
+	"Multihop attempted",			/* 94 - EMULTIHOP */
+	"Link has been severed",		/* 95 - ENOLINK */
+	"Protocol error"			/* 96 - EPROTO */
 };
 
 const int sys_nerr = sizeof(errlist) / sizeof(errlist[0]);
