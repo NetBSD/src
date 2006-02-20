@@ -637,18 +637,8 @@ param_parse_security(iscsi_parameter_t * head,
 		MD5Update(context, chapdata, ISCSI_CHAP_DATA_LENGTH);
 		MD5Final(chapdata, context);
 
-#if 0
-		if (param_in->rx_offer) {
-			HexTextToData(param_in->offer_rx, ISCSI_CHAP_STRING_LENGTH,
-				      respdata, ISCSI_CHAP_DATA_LENGTH);
-		} else {
-			HexTextToData(param_in->answer_rx, ISCSI_CHAP_STRING_LENGTH,
-				      respdata, ISCSI_CHAP_DATA_LENGTH);
-		}
-#else
 		HexTextToData((param_in->rx_offer) ? param_in->offer_rx : param_in->answer_rx, ISCSI_CHAP_STRING_LENGTH,
 				      respdata, ISCSI_CHAP_DATA_LENGTH);
-#endif
 
 		HexDataToText(chapdata, ISCSI_CHAP_DATA_LENGTH,
 			      param_in->offer_rx, ISCSI_CHAP_STRING_LENGTH);
@@ -762,9 +752,11 @@ param_text_parse(iscsi_parameter_t * head,
 		*text_len_out = 0;
 	}
 
+#if ISCSI_DEBUG
 	PRINT("**************************************************\n");
 	PRINT("*              PARAMETERS NEGOTIATED             *\n");
 	PRINT("*                                                *\n");
+#endif
 
 	for (ptr = text_in; ptr - text_in < text_len_in; ptr += (strlen(ptr) + 1)) {
 
@@ -1212,7 +1204,9 @@ value_ok:
 
 		c = param->negotiated[19];
 		param->negotiated[19] = 0x0;
+#if ISCSI_DEBUG
 		PRINT("* %25s:%20s *\n", param->key, param->negotiated);
+#endif
 		param->negotiated[19] = c;
 
 		if (param->reset) {
@@ -1250,9 +1244,11 @@ next:
 		continue;
 	}
 	if (!outgoing) {
-		TRACE(TRACE_ISCSI_PARAM, "generated %i bytes response\n", *text_len_out);
+		TRACE(TRACE_ISCSI_PARAM, "generated %d bytes response\n", *text_len_out);
 	}
+#if ISCSI_DEBUG
 	PRINT("**************************************************\n");
+#endif
 
 	PTP_CLEANUP;
 	return 0;
