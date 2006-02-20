@@ -1,3 +1,7 @@
+2005-06-01  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* emulparams/elf32btsmip.sh: Unset DATA_ADDR.
+
 2004-05-13  Joel Sherrill <joel@oarcorp.com>
 
 	* configure.tgt (or32-*-rtems*): Switch to elf and
