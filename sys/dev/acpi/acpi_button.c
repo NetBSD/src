@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.19 2006/02/16 06:19:26 kochi Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.20 2006/02/20 12:17:49 kochi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.19 2006/02/16 06:19:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.20 2006/02/20 12:17:49 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,12 +128,13 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 		panic("acpibut_attach: impossible");
 	}
 
-	printf(": ACPI %s Button\n", desc);
+	aprint_naive(": ACPI %s Button\n", desc);
+	aprint_normal(": ACPI %s Button\n", desc);
 
 	sc->sc_node = aa->aa_node;
 
 	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
-		printf("%s: unable to register with sysmon\n",
+		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -141,7 +142,7 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpibut_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
+		aprint_error("%s: unable to register DEVICE NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
