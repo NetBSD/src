@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.108 2006/02/11 17:57:32 cdi Exp $ */
+/*	$NetBSD: autoconf.c,v 1.109 2006/02/20 19:00:27 cdi Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.108 2006/02/11 17:57:32 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.109 2006/02/20 19:00:27 cdi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -179,10 +179,7 @@ int autoconf_debug = 0x0;
  * device names with our internal names.
  */
 int
-matchbyname(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+matchbyname(struct device *parent, struct cfdata *cf, void *aux)
 {
 	printf("%s: WARNING: matchbyname\n", cf->cf_name);
 	return (0);
@@ -239,8 +236,7 @@ get_ncpus()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
@@ -492,9 +488,7 @@ bootpath_print(struct bootpath *bp)
  * dk_establish(), and use this to recover the bootpath.
  */
 struct bootpath *
-bootpath_store(storep, bp)
-	int storep;
-	struct bootpath *bp;
+bootpath_store(int storep, struct bootpath *bp)
 {
 	static struct bootpath *save;
 	struct bootpath *retval;
@@ -526,8 +520,7 @@ crazymap(const char *prop, int *map)
 }
 
 int
-sd_crazymap(n)
-	int	n;
+sd_crazymap(int n)
 {
 	static int prom_sd_crazymap[8]; /* static: compute only once! */
 	static int init = 0;
@@ -615,8 +608,7 @@ sync_crash()
 }
 
 char *
-clockfreq(freq)
-	long freq;
+clockfreq(long freq)
 {
 	char *p;
 	static char sbuf[10];
@@ -827,8 +819,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
  * variables.  Returns nonzero on error.
  */
 int
-romgetcursoraddr(rowp, colp)
-	int **rowp, **colp;
+romgetcursoraddr(int **rowp, int **colp)
 {
 	cell_t row = 0UL, col = 0UL;
 
@@ -857,9 +848,7 @@ void callrom()
  * find a device matching "name" and unit number
  */
 struct device *
-getdevunit(name, unit)
-	const char *name;
-	int unit;
+getdevunit(const char *name, int unit)
 {
 	struct device *dev = alldevs.tqh_first;
 	char num[10], fullname[16];
@@ -1153,9 +1142,7 @@ nail_bootdev(struct device *dev, struct bootpath *bp)
 }
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
 	const char *dvname;
