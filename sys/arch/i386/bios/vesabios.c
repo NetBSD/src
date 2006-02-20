@@ -1,7 +1,7 @@
-/* $NetBSD: vesabios.c,v 1.17 2006/02/19 23:19:28 thorpej Exp $ */
+/* $NetBSD: vesabios.c,v 1.18 2006/02/20 00:50:10 jmcneill Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.17 2006/02/19 23:19:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.18 2006/02/20 00:50:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,9 @@ static int vesabios_print(void *, const char *);
 
 static int vbegetinfo(struct vbeinfoblock **);
 static void vbefreeinfo(struct vbeinfoblock *);
+#ifdef VESABIOSVERBOSE
 static const char *mm2txt(unsigned int);
+#endif
 
 CFATTACH_DECL(vesabios, sizeof(struct device),
     vesabios_match, vesabios_attach, NULL, NULL);
@@ -112,6 +114,7 @@ vbeprobe()
 	return (1);
 }
 
+#ifdef VESABIOSVERBOSE
 static const char *
 mm2txt(mm)
 	unsigned int mm;
@@ -133,6 +136,7 @@ mm2txt(mm)
 	snprintf(buf, sizeof(buf), "unknown memory model %d", mm);
 	return (buf);
 }
+#endif
 
 static void
 vesabios_attach(parent, dev, aux)
