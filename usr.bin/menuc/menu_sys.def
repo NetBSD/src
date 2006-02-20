@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.57 2004/09/17 18:27:28 wrstuden Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.58 2006/02/20 21:06:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -147,6 +147,8 @@ init_menu(menudesc *m)
 	wmax = 0;
 	hadd = ((m->mopt & MC_NOBOX) ? 0 : 2);
 	wadd = ((m->mopt & MC_NOBOX) ? 2 : 4);
+	if (!(m->mopt & MC_NOSHORTCUT))
+		wadd += 3;
 
 	if (m->title && *(title = MSG_XLAT(m->title)) != 0) {
 		/* Allow multiple line titles */
@@ -215,9 +217,10 @@ init_menu(menudesc *m)
 	if (w == 0) {
 		int l;
 		for (i = 0; i < m->numopts; i++) {
-			l = strlen(MSG_XLAT(m->opts[i].opt_name));
-			if (!(m->mopt & MC_NOSHORTCUT))
-				l += 3;
+			tp = MSG_XLAT(m->opts[i].opt_name);
+			if (tp == NULL)
+				continue;
+			l = strlen(tp);
 			wmax = MAX(wmax, l);
 		}
 		w = wmax;
@@ -651,7 +654,11 @@ process_menu(int num, void *arg)
 		return;
 	}
 
+	if (num < 0 || num >= num_menus)
+		return;
 	m = &MENUS(num);
+	if (m == NULL)
+		return;
 
 	/* Default to select option 0 and display from 0 */
 	m->topline = 0;
