@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.11 2005/12/11 12:22:42 christos Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.12 2006/02/20 16:50:37 thorpej Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.11 2005/12/11 12:22:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.12 2006/02/20 16:50:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __FUNCTION__));
 
-	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->mii_dev))
 		return (ENXIO);
 
 	switch (cmd) {

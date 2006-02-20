@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.1 2006/01/04 21:52:17 xtraeme Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.2 2006/02/20 16:50:37 thorpej Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.1 2006/01/04 21:52:17 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.2 2006/02/20 16:50:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	int rv;
 
-	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->mii_dev))
 		return ENXIO;
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.66 2006/02/19 08:10:06 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.67 2006/02/20 16:50:37 thorpej Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.66 2006/02/19 08:10:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.67 2006/02/20 16:50:37 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -2133,7 +2133,7 @@ rtw_intr(void *arg)
 	 */
 	if ((sc->sc_flags & RTW_F_ENABLED) == 0 ||
 	    (ifp->if_flags & IFF_RUNNING) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
+	    !device_is_active(&sc->sc_dev)) {
 		RTW_DPRINTF(RTW_DEBUG_INTR, ("%s: stray interrupt\n", sc->sc_dev.dv_xname));
 		return (0);
 	}
