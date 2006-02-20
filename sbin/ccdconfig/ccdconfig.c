@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.40 2005/01/20 15:49:24 xtraeme Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.40.2.1 2006/02/20 15:26:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.40 2005/01/20 15:49:24 xtraeme Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.40.2.1 2006/02/20 15:26:49 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -91,6 +91,8 @@ static	struct nlist nl[] = {
 #define SYM_CCDSOFTC		0
 	{ "_numccd" },
 #define SYM_NUMCCD		1
+	{ "_ccd_softc_elemsize" },
+#define SYM_CCDSOFTCELEMSIZE	2
 	{ NULL },
 };
 
@@ -405,7 +407,6 @@ static int
 pathtounit(char *path, int *unitp)
 {
 	struct stat st;
-	int maxpartitions;
 
 	if (stat(path, &st) != 0)
 		return (errno);
@@ -413,10 +414,7 @@ pathtounit(char *path, int *unitp)
 	if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
 		return (EINVAL);
 
-	if ((maxpartitions = getmaxpartitions()) < 0)
-		return (errno);
-
-	*unitp = minor(st.st_rdev) / maxpartitions;
+	*unitp = DISKUNIT(st.st_rdev);
 
 	return (0);
 }
@@ -491,12 +489,14 @@ dump_ccd(int argc, char **argv, int action)
 {
 	char errbuf[_POSIX2_LINE_MAX], *ccd, *cp;
 	struct ccd_softc *cs, *kcs;
+	void *vcs;
 	size_t readsize;
-	int i, error, numccd, numconfiged = 0;
+	int i, error, numccd, ccd_softc_elemsize, numconfiged = 0;
 	kvm_t *kd;
 
 	memset(errbuf, 0, sizeof(errbuf));
 
+	vcs = NULL;
 	(void)setegid(egid);
 	if ((kd = kvm_openfiles(kernel, core, NULL, O_RDONLY,
 	    errbuf)) == NULL) {
@@ -509,7 +509,7 @@ dump_ccd(int argc, char **argv, int action)
 		KVM_ABORT(kd, "ccd-related symbols not available");
 
 	/* Check to see how many ccds are currently configured. */
-	if (kvm_read(kd, nl[SYM_NUMCCD].n_value, (char *)&numccd,
+	if (kvm_read(kd, nl[SYM_NUMCCD].n_value, (void *)&numccd,
 	    sizeof(numccd)) != sizeof(numccd))
 		KVM_ABORT(kd, "can't determine number of configured ccds");
 
@@ -518,28 +518,48 @@ dump_ccd(int argc, char **argv, int action)
 		goto done;
 	}
 
-	/* Allocate space for the configuration data. */
-	readsize = numccd * sizeof(struct ccd_softc);
-	if ((cs = malloc(readsize)) == NULL) {
+	if (kvm_read(kd, nl[SYM_CCDSOFTCELEMSIZE].n_value,
+	    (void *)&ccd_softc_elemsize, sizeof(ccd_softc_elemsize))
+	    != sizeof(ccd_softc_elemsize))
+		KVM_ABORT(kd, "can't determine size of ccd_softc");
+
+	/* Allocate space for the kernel's configuration data. */
+	readsize = numccd * ccd_softc_elemsize;
+	if ((vcs = malloc(readsize)) == NULL) {
 		warnx("no memory for configuration data");
 		goto bad;
 	}
-	memset(cs, 0, readsize);
+	memset(vcs, 0, readsize);
 
 	/*
-	 * Read the ccd configuration data from the kernel and dump
-	 * it to stdout.
+	 * Read the ccd configuration data from the kernel.
+	 * The kernel's ccd_softc is larger than userland's
+	 * (the former contains extra structure members at
+	 * the end of the structure), so read the kernel
+	 * ccd_softcs into a temporary buffer and convert
+	 * into userland ccd_softcs.
 	 */
-	if (kvm_read(kd, nl[SYM_CCDSOFTC].n_value, (char *)&kcs,
+	if (kvm_read(kd, nl[SYM_CCDSOFTC].n_value, (void *)&kcs,
 	    sizeof(kcs)) != sizeof(kcs)) {
-		free(cs);
+		free(vcs);
 		KVM_ABORT(kd, "can't find pointer to configuration data");
 	}
-	if (kvm_read(kd, (u_long)kcs, (char *)cs, readsize) != readsize) {
-		free(cs);
+	if (kvm_read(kd, (u_long)kcs, vcs, readsize) != readsize) {
+		free(vcs);
 		KVM_ABORT(kd, "can't read configuration data");
 	}
 
+	if ((cs = calloc(numccd, sizeof(struct ccd_softc))) == NULL) {
+		warnx("no memory for configuration data");
+		goto bad;
+	}
+	for (i = 0; i < numccd; i++) {
+		memcpy(&cs[i], (char *)vcs + i * ccd_softc_elemsize,
+		    sizeof(struct ccd_softc));
+	}
+	free(vcs);
+
+	/* Dump ccd configuration to stdout. */
 	if (argc == 0) {
 		for (i = 0; i < numccd; ++i)
 			if (cs[i].sc_flags & CCDF_INITED) {
@@ -613,7 +633,7 @@ print_ccd_info(struct ccd_softc *cs, kvm_t *kd)
 	fflush(stdout);
 
 	/* Read in the component info. */
-	if (kvm_read(kd, (u_long)cs->sc_cinfo, (char *)cip,
+	if (kvm_read(kd, (u_long)cs->sc_cinfo, (void *)cip,
 	    readsize) != readsize) {
 		printf("\n");
 		warnx("can't read component info");
@@ -623,7 +643,7 @@ print_ccd_info(struct ccd_softc *cs, kvm_t *kd)
 
 	/* Read component pathname and display component info. */
 	for (i = 0; i < cs->sc_nccdisks; ++i) {
-		if (kvm_read(kd, (u_long)cip[i].ci_path, (char *)path,
+		if (kvm_read(kd, (u_long)cip[i].ci_path, (void *)path,
 		    cip[i].ci_pathlen) != cip[i].ci_pathlen) {
 			printf("\n");
 			warnx("can't read component pathname");
