@@ -35,6 +35,7 @@
 
 #include "iscsi.h"
 #include "parameters.h"
+#include "defs.h"
 
 #define CONFIG_INITIATOR_NUM_TARGETS 1
 
@@ -101,6 +102,7 @@ typedef struct initiator_cmd_t {
 	struct initiator_cmd_t *next;
 	struct initiator_cmd_t *hash_next;
 	uint32_t        key;
+	char            targetname[TARGET_HOSTNAME_SIZE];
 }               initiator_cmd_t;
 
 typedef struct iscsi_target_t {
@@ -112,6 +114,8 @@ typedef struct iscsi_target_t {
 	int             has_session;
 }               initiator_target_t;
 
+DEFINE_ARRAY(strv_t, char *);
+
 /**********
  * Public *
  **********/
@@ -122,5 +126,6 @@ int             initiator_command(initiator_cmd_t *);
 int             initiator_enqueue(initiator_cmd_t *);
 int             initiator_abort(initiator_cmd_t *);
 int             initiator_shutdown(void);
+int             initiator_discover(char *, uint64_t, int);
 
 #endif				/* _INITIATOR_H_ */

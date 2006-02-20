@@ -174,10 +174,12 @@ void	set_debug(const char *);
 		       _iscsi_trace_buf);				\
 	}								\
 } while (/* CONSTCOND */ 0)
+#define PRINT printf
 #else
 #define TRACE(trace, args...)
 #define TRACE_WARNING(args...)
 #define PRINT_BUFF(buf, len)
+#define PRINT(args...)
 #endif
 
 #define TRACE_ERROR(args...) do {					\
@@ -237,16 +239,6 @@ void	set_debug(const char *);
 #  define ISCSI_HTONS(a)	htons(a)
 /*
 #endif .* !linux */
-
-/*
- * printf and printk
- */
-
-#ifdef __KERNEL__
-#define PRINT printk
-#else
-#define PRINT printf
-#endif
 
 /*
  * Process ID
