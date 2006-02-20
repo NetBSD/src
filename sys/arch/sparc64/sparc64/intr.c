@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.49 2006/02/11 17:57:32 cdi Exp $ */
+/*	$NetBSD: intr.c,v 1.50 2006/02/20 19:00:27 cdi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.49 2006/02/11 17:57:32 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.50 2006/02/20 19:00:27 cdi Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -225,9 +225,7 @@ intr_list_handler(void * arg)
  * This is not possible if it has been taken away as a fast vector.
  */
 void
-intr_establish(level, ih)
-	int level;
-	struct intrhand *ih;
+intr_establish(int level, struct intrhand *ih)
 {
 	register struct intrhand **p, *q = NULL;
 	int s;
@@ -300,10 +298,7 @@ intr_establish(level, ih)
 }
 
 void *
-softintr_establish(level, fun, arg)
-	int level; 
-	void (*fun)(void *);
-	void *arg;
+softintr_establish(int level, void (*fun)(void *), void *arg)
 {
 	struct intrhand *ih;
 
@@ -318,15 +313,13 @@ softintr_establish(level, fun, arg)
 }
 
 void
-softintr_disestablish(cookie)
-	void *cookie;
+softintr_disestablish(void *cookie)
 {
 	free(cookie, M_DEVBUF);
 }
 
 void
-softintr_schedule(cookie)
-	void *cookie;
+softintr_schedule(void *cookie)
 {
 	struct intrhand *ih = (struct intrhand *)cookie;
 
