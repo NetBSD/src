@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.853 2006/02/19 22:30:20 yamt Exp $
+#	$NetBSD: mi,v 1.854 2006/02/20 00:34:30 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2166,6 +2166,7 @@
 ./usr/share/man/cat2/pmc_get_info.0		comp-c-catman		.cat
 ./usr/share/man/cat2/poll.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pollts.0			comp-c-catman		.cat
+./usr/share/man/cat2/posix_fadvise.0		comp-c-catman		.cat
 ./usr/share/man/cat2/pread.0			comp-c-catman		.cat
 ./usr/share/man/cat2/preadv.0			comp-c-catman		.cat
 ./usr/share/man/cat2/profil.0			comp-c-catman		.cat
@@ -4069,7 +4070,6 @@
 ./usr/share/man/cat3/pnoutrefresh.0		comp-c-catman		.cat
 ./usr/share/man/cat3/popen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pos_form_cursor.0		comp-c-catman		.cat
-./usr/share/man/cat3/posix_fadvise.0		comp-c-catman		.cat
 ./usr/share/man/cat3/posix_openpt.0		comp-c-catman		.cat
 ./usr/share/man/cat3/post_form.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pow.0			comp-c-catman		.cat
@@ -6121,6 +6121,7 @@
 ./usr/share/man/man2/pmc_get_info.2		comp-c-man		.man
 ./usr/share/man/man2/poll.2			comp-c-man		.man
 ./usr/share/man/man2/pollts.2			comp-c-man		.man
+./usr/share/man/man2/posix_fadvise.2		comp-c-man		.man
 ./usr/share/man/man2/pread.2			comp-c-man		.man
 ./usr/share/man/man2/preadv.2			comp-c-man		.man
 ./usr/share/man/man2/profil.2			comp-c-man		.man
@@ -8022,7 +8023,6 @@
 ./usr/share/man/man3/pnoutrefresh.3		comp-c-man		.man
 ./usr/share/man/man3/popen.3			comp-c-man		.man
 ./usr/share/man/man3/pos_form_cursor.3		comp-c-man		.man
-./usr/share/man/man3/posix_fadvise.3		comp-c-man		.man
 ./usr/share/man/man3/posix_openpt.3		comp-c-man		.man
 ./usr/share/man/man3/post_form.3		comp-c-man		.man
 ./usr/share/man/man3/pow.3			comp-c-man		.man
