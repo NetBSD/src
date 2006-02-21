@@ -185,6 +185,12 @@ $ ETIME
 92 STREAM ioctl timeout
 $ ENOATTR
 93 Attribute not found
+$ EMULTIHOP
+94 Multihop attempted
+$ ENOLINK
+95 Link has been severed
+$ EPROTO
+96 Protocol error
 $set 2
 $ SIGHUP
 1 Hangup
