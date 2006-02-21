@@ -185,6 +185,12 @@ $ ETIME
 92 Temps d'espera esgotat en el ioctl STREAM
 $ ENOATTR
 93 Atribut inexistent
+$ EMULTIHOP
+94 S'ha intentat un multisalt
+$ ENOLINK
+95 L'enllaç s'ha servit
+$ EPROTO
+96 Error de protocol
 $set 2
 $ SIGHUP
 1 Fí de línia (hangup)
