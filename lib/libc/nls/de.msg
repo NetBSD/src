@@ -185,6 +185,12 @@ $ ETIME
 92 Zeitüberschreitung bei STREAM Ioctl
 $ ENOATTR
 93 Attribut nicht gefunden
+$ EMULTIHOP
+94 Multihopversuch
+$ ENOLINK
+95 Verbindung wurde getrennt
+$ EPROTO
+96 Protokollfehler
 $set 2
 $ SIGHUP
 1 Verbindungsende
