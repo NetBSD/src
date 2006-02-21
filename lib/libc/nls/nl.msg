@@ -185,6 +185,12 @@ $ ETIME
 92 STREAM ioctl verlopen
 $ ENOATTR
 93 Attribuut niet gevonden
+$ EMULTIHOP
+94 Multihopverzoek
+$ ENOLINK
+95 Verbinding werd verstoord
+$ EPROTO
+96 Protocolfout
 $set 2
 $ SIGHUP
 1 Opgehangen
