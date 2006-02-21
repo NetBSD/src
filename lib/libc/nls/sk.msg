@@ -185,6 +185,12 @@ $ ETIME
 92 Èasový limit pre STREAM ioctl vypr¹al
 $ ENOATTR
 93 Atribút nenájdený
+$ EMULTIHOP
+94 Pokus o spojenie cez viacero uzlov
+$ ENOLINK
+95 Odkaz bol pretrhnutý
+$ EPROTO
+96 Chyba protokolu
 $set 2
 $ SIGHUP
 1 Terminál odpojený
