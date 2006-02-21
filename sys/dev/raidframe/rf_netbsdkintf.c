@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.199 2006/01/08 22:26:30 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.200 2006/02/21 04:32:38 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.199 2006/01/08 22:26:30 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.200 2006/02/21 04:32:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -382,6 +382,8 @@ raidattach(int num)
 	for (raidID = 0; raidID < num; raidID++) {
 		bufq_alloc(&raid_softc[raidID].buf_queue, "fcfs", 0);
 		pseudo_disk_init(&raid_softc[raidID].sc_dkdev);
+
+		/* XXXJRT Should use config_attach_pseudo() */
 
 		raidrootdev[raidID].dv_class  = DV_DISK;
 		raidrootdev[raidID].dv_cfdata = NULL;
@@ -2593,7 +2595,7 @@ rf_find_raid_components()
 	     dv = dv->dv_list.tqe_next) {
 
 		/* we are only interested in disks... */
-		if (dv->dv_class != DV_DISK)
+		if (device_class(dv) != DV_DISK)
 			continue;
 
 		/* we don't care about floppies... */

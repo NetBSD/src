@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.192 2006/01/14 17:41:17 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.193 2006/02/21 04:32:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.192 2006/01/14 17:41:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193 2006/02/21 04:32:39 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -320,7 +320,7 @@ lfs_mountroot()
 	struct lwp *l = curlwp;	/* XXX */
 	int error;
 
-	if (root_device->dv_class != DV_DISK)
+	if (device_class(root_device) != DV_DISK)
 		return (ENODEV);
 
 	if (rootdev == NODEV)

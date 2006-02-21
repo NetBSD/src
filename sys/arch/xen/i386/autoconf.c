@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2006/02/21 04:32:38 thorpej Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2005/12/11 12:19:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2006/02/21 04:32:38 thorpej Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -246,7 +246,7 @@ matchbiosdisks(void)
 	 */
 	n = -1;
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (dv->dv_class != DV_DISK)
+		if (device_class(dv) != DV_DISK)
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
@@ -427,7 +427,7 @@ findroot(void)
 		 */
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
 			if (!strcmp(dv->dv_cfdata->cf_name, "fd")) {
@@ -545,7 +545,7 @@ device_register(struct device *dev, void *aux)
 	 * For disks, there is nothing useful available at attach time.
 	 */
 #if NXENNET > 0
-	if (dev->dv_class == DV_IFNET) {
+	if (device_class(dev) == DV_IFNET) {
 		union xen_cmdline_parseinfo xcp;
 
 		xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
@@ -557,7 +557,7 @@ device_register(struct device *dev, void *aux)
 		}
 	}
 #endif
-	if (dev->dv_class == DV_IFNET) {
+	if (device_class(dev) == DV_IFNET) {
 		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
 		if (bin == NULL)
 			return;
@@ -616,7 +616,7 @@ is_valid_disk(struct device *dv)
 {
 	const char *name;
 
-	if (dv->dv_class != DV_DISK)
+	if (device_class(dv) != DV_DISK)
 		return (0);
 
 	name = dv->dv_cfdata->cf_name;
