@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.8 2006/02/04 11:24:42 jmmv Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.9 2006/02/21 04:32:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,7 +69,7 @@ is_valid_disk(struct device *dv)
 {
 	const char *name;
 
-	if (dv->dv_class != DV_DISK)
+	if (device_class(dv) != DV_DISK)
 		return (0);
 	
 	name = dv->dv_cfdata->cf_name;
@@ -135,7 +135,7 @@ matchbiosdisks(void)
 	n = -1;
 	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 	     dv = TAILQ_NEXT(dv, dv_list)) {
-		if (dv->dv_class != DV_DISK)
+		if (device_class(dv) != DV_DISK)
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
@@ -394,7 +394,7 @@ findroot(void)
 			struct cfdata *cd;
 			size_t len;
 
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
 			cd = dv->dv_cfdata;
@@ -419,7 +419,7 @@ findroot(void)
 		 */
 		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 		     dv = TAILQ_NEXT(dv, dv_list)) {
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
 			if (is_valid_disk(dv)) {
@@ -459,7 +459,7 @@ findroot(void)
 		 */
 		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 		     dv = TAILQ_NEXT(dv, dv_list)) {
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
 			if (strcmp(dv->dv_cfdata->cf_name, "fd") == 0) {
@@ -563,7 +563,7 @@ device_register(struct device *dev, void *aux)
 	 *
 	 * For disks, there is nothing useful available at attach time.
 	 */
-	if (dev->dv_class == DV_IFNET) {
+	if (device_class(dev) == DV_IFNET) {
 		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
 		if (bin == NULL)
 			return;
