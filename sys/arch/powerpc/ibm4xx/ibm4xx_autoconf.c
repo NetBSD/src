@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.4 2006/02/18 05:04:11 thorpej Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.5 2006/02/21 04:25:29 thorpej Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.4 2006/02/18 05:04:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.5 2006/02/21 04:25:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.4 2006/02/18 05:04:11 thorpej 
 
 #include <machine/cpu.h>
 
+#include <powerpc/ibm4xx/dev/opbvar.h>
+
 void
 ibm4xx_device_register(struct device *dev, void *aux)
 {
@@ -53,15 +55,14 @@ ibm4xx_device_register(struct device *dev, void *aux)
 	if (strcmp(dev->dv_cfdata->cf_name, "emac") == 0 &&
 	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
 		/* Set the mac-addr of the on-chip Ethernet. */
+		struct opb_attach_args *oaa = aux;
 
 		if (dev->dv_unit < 10) {
 			uint8_t enaddr[ETHER_ADDR_LEN];
 			unsigned char prop_name[15];
 
-			/* XXX dv_unit abuse */
-			/* XXX Should be using index / offset */
 			snprintf(prop_name, sizeof(prop_name),
-				"emac%d-mac-addr", dev->dv_unit);
+				"emac%d-mac-addr", oaa->opb_instance);
 
 			if (board_info_get(prop_name,
 				enaddr, sizeof(enaddr)) == -1) {
