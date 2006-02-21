@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.767 2006/02/16 08:39:27 kochi Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.768 2006/02/21 03:11:12 chuck Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.766 2006/02/16 08:36:03 kochi Exp
+ *	NetBSD: pcidevs,v 1.767 2006/02/21 03:09:54 chuck Exp
  */
 
 /*
@@ -2073,6 +2073,7 @@
 #define	PCI_PRODUCT_LINKSYS_EG1032	0x1032		/* EG1032 v2 Instant Gigabit Network Adapter */
 #define	PCI_PRODUCT_LINKSYS_EG1064	0x1064		/* EG1064 v2 Instant Gigabit Network Adapter */
 #define	PCI_PRODUCT_LINKSYS_PCMPC200	0xab08		/* PCMPC200 */
+#define	PCI_PRODUCT_LINKSYS_PCM200	0xab09		/* PCM200 */
 #define	PCI_PRODUCT_LINKSYS2_IPN2220	0x2220		/* IPN 2220 Wireless LAN Adapter (rev 01) */
 
 /* Lite-On products */
