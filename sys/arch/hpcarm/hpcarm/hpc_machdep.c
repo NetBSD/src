@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.76 2006/01/26 11:12:20 peter Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.77 2006/02/21 12:32:02 is Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.76 2006/01/26 11:12:20 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.77 2006/02/21 12:32:02 is Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -202,7 +202,7 @@ u_int cpu_get_control(void);
 void rpc_sa110_cc_setup(void);
 
 #ifdef DEBUG_BEFOREMMU
-static void fakecninit();
+static void fakecninit(void);
 #endif
 
 #ifdef BOOT_DUMP
