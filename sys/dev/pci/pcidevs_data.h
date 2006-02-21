@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.766 2006/02/16 08:39:27 kochi Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.767 2006/02/21 03:11:12 chuck Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.766 2006/02/16 08:36:03 kochi Exp
+ *	NetBSD: pcidevs,v 1.767 2006/02/21 03:09:54 chuck Exp
  */
 
 /*
@@ -7084,6 +7084,10 @@ static const struct pci_product pci_products[] = {
 	    "PCMPC200",
 	},
 	{
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCM200,
+	    "PCM200",
+	},
+	{
 	    PCI_VENDOR_LINKSYS2, PCI_PRODUCT_LINKSYS2_IPN2220,
 	    "IPN 2220 Wireless LAN Adapter (rev 01)",
 	},
@@ -10780,4 +10784,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2111;
+const int pci_nproducts = 2112;
