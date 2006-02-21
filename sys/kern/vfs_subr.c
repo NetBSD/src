@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.263 2006/02/12 01:32:06 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.264 2006/02/21 04:32:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.263 2006/02/12 01:32:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.264 2006/02/21 04:32:39 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2250,7 +2250,7 @@ vfs_mountroot(void)
 	if (root_device == NULL)
 		panic("vfs_mountroot: root device unknown");
 
-	switch (root_device->dv_class) {
+	switch (device_class(root_device)) {
 	case DV_IFNET:
 		if (rootdev != NODEV)
 			panic("vfs_mountroot: rootdev set for DV_IFNET "
@@ -2303,14 +2303,14 @@ vfs_mountroot(void)
 
 	if (v == NULL) {
 		printf("no file system for %s", root_device->dv_xname);
-		if (root_device->dv_class == DV_DISK)
+		if (device_class(root_device) == DV_DISK)
 			printf(" (dev 0x%x)", rootdev);
 		printf("\n");
 		error = EFTYPE;
 	}
 
 done:
-	if (error && root_device->dv_class == DV_DISK) {
+	if (error && device_class(root_device) == DV_DISK) {
 		VOP_CLOSE(rootvp, FREAD, FSCRED, curlwp);
 		vrele(rootvp);
 	}

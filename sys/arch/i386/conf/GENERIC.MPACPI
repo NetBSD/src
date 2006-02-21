@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.56 2006/01/04 20:43:18 dsl Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.57 2006/02/21 04:32:38 thorpej Exp $
 #
 #	GENERIC.MP -- Generic, plus enable Multiprocessor support.
 #
@@ -42,11 +42,11 @@ pcppi*          at acpi?                # AT-style speaker sound
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 # Sony Vaio jog dial
-#spic* 		at acpi?		# Sony Programmable I/O Controller
-#wsmouse* 	at spic?
+spic* 		at acpi?		# Sony Programmable I/O Controller
+wsmouse* 	at spic?
 
 # Sony LCD brightness etc.
-#sony* 		at acpi?		# Sony Miscellaneous Controller
+sony* 		at acpi?		# Sony Miscellaneous Controller
 
 # Remove support for old cpus
 no options I386_CPU, I486_CPU, I586_CPU
