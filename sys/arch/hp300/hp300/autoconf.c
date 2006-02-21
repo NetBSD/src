@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.74 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.75 2006/02/21 04:32:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.74 2005/12/11 12:17:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.75 2006/02/21 04:32:38 thorpej Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -398,7 +398,7 @@ cpu_rootconf(void)
 		if (vops != NULL && vops->vfs_mountroot == mountroot) {
 			for (dd = dev_data_list.lh_first;
 			    dd != NULL; dd = dd->dd_list.le_next) {
-				if (dd->dd_dev->dv_class == DV_IFNET) {
+				if (device_class(dd->dd_dev) == DV_IFNET) {
 					/* Got it! */
 					dv = dd->dd_dev;
 					break;
@@ -420,7 +420,7 @@ cpu_rootconf(void)
 	/*
 	 * If we booted from tape, ask the user.
 	 */
-	if (booted_device != NULL && booted_device->dv_class == DV_TAPE)
+	if (booted_device != NULL && device_class(booted_device) == DV_TAPE)
 		boothowto |= RB_ASKNAME;
 
 	setroot(dv, booted_partition);
@@ -464,7 +464,7 @@ device_register(struct device *dev, void *aux)
 	 * using the lowest select code network interface,
 	 * so we ignore all but the first.
 	 */
-	if (dev->dv_class == DV_IFNET && seen_netdevice == 0) {
+	if (device_class(dev) == DV_IFNET && seen_netdevice == 0) {
 		struct dio_attach_args *da = aux;
 
 		seen_netdevice = 1;
@@ -553,7 +553,7 @@ findbootdev(void)
 	if (netboot) {
 		for (dd = dev_data_list.lh_first; dd != NULL;
 		    dd = dd->dd_list.le_next) {
-			if (dd->dd_dev->dv_class == DV_IFNET) {
+			if (device_class(dd->dd_dev) == DV_IFNET) {
 				/*
 				 * Found it!
 				 */
@@ -686,7 +686,7 @@ setbootdev(void)
 	 * If the root device is network, we're done
 	 * early.
 	 */
-	if (root_device->dv_class == DV_IFNET) {
+	if (device_class(root_device) == DV_IFNET) {
 		bootdev = MAKEBOOTDEV(6, 0, 0, 0, 0);
 		goto out;
 	}
