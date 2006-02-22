@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.8 2006/02/19 05:06:03 christos Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.9 2006/02/22 08:49:45 he Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.8 2006/02/19 05:06:03 christos Exp $");
+__RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.9 2006/02/22 08:49:45 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -56,7 +56,6 @@ extern const int __sigtramp_siginfo_3[];
 int
 __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 {
-	int rv;
 
 	/*
 	 * If no sigaction, use the "default" trampoline since it won't
