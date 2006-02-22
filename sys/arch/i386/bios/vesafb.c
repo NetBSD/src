@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.8 2006/02/19 21:41:18 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.9 2006/02/22 00:07:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.8 2006/02/19 21:41:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.9 2006/02/22 00:07:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,9 +368,10 @@ vesafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return 0;
 	case WSDISPLAYIO_SSPLASH:
 #if defined(SPLASHSCREEN)
-		if (*(int *)data == 1)
+		if (*(int *)data == 1) {
 			SCREEN_DISABLE_DRAWING(&vesafb_console_screen);
-		else
+			splash_render(&sc->sc_si, SPLASH_F_CENTER|SPLASH_F_FILL);
+		} else
 			SCREEN_ENABLE_DRAWING(&vesafb_console_screen);
 		return 0;
 #else
