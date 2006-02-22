@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.79 2006/02/05 05:01:55 cube Exp $
+#	$NetBSD: SWINGER,v 1.80 2006/02/22 10:41:35 hira Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.79 $"
+#ident 		"SWINGER-$Revision: 1.80 $"
 
 maxusers	64		# estimated number of users
 
@@ -641,7 +641,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
 # Serial adapters
