@@ -1,4 +1,4 @@
-/*	$NetBSD: residual.c,v 1.5 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: residual.c,v 1.6 2006/02/22 05:36:18 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.5 2005/12/11 12:18:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.6 2006/02/22 05:36:18 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,14 +52,14 @@ static void bustype_subr(DEVICE_ID *);
 
 #define	NELEMS(array)	((size_t)(sizeof(array)/sizeof(array[0])))
 
-static char *FirmwareSupplier[] = {
+static const char *FirmwareSupplier[] = {
 	"IBMFirmware",
 	"MotoFirmware",
 	"FirmWorks",
 	"Bull",
 };
 
-static char *FirmwareSupports[] = {
+static const char *FirmwareSupports[] = {
 	"Conventional",
 	"OpenFirmware",
 	"Diagnostics",
@@ -74,24 +74,24 @@ static char *FirmwareSupports[] = {
 	"FW_Boot_Path",
 };
 
-static char *EndianSwitchMethod[] = {
+static const char *EndianSwitchMethod[] = {
 	"Unknown",
 	"UsePort92",
 	"UsePCIConfigA8",
 	"UseFF001030",
 };
 
-static char *SpreadIOMethod[] = {
+static const char *SpreadIOMethod[] = {
 	"UsePort850",
 };
 
-static char *CacheAttrib[] = {
+static const char *CacheAttrib[] = {
 	"None",
 	"Split cache",
 	"Combined cache",
 };
 
-static char *Usage[] = {
+static const char *Usage[] = {
 	"FirmwareStack",
 	"FirmwareHeap",
 	"FirmwareCode",
@@ -110,7 +110,7 @@ static char *Usage[] = {
 	"Other",
 };
 
-static char *BusId[] = {
+static const char *BusId[] = {
 	"ISA",
 	"EISA",
 	"PCI",
@@ -122,7 +122,7 @@ static char *BusId[] = {
 	"VME",
 };
 
-static char *Flags[] = {
+static const char *Flags[] = {
 	"Output",
 	"Input",
 	"ConsoleOut",
@@ -148,7 +148,7 @@ print_residual_device_info(void)
 	MEM_MAP *mem_map;
 	PPC_MEM *ppc_mem;
 	PPC_DEVICE *ppc_dev;
-	char *str;
+	const char *str;
 	unsigned long l;
 	unsigned short s;
 	unsigned long nmseg;
@@ -441,7 +441,7 @@ pnp_small_pkt(void *v)
 			printf("None ");
 
 		if (size == 3) {
-			static char *IRQInfo[] = {
+			static const char *IRQInfo[] = {
 				"high true edge sensitive",
 				"low true edge sensitive",
 				"high true level sensitive",
@@ -647,7 +647,7 @@ static void
 bustype_subr(DEVICE_ID *id)
 {
 	static struct bustype {
-		char	*str;
+		const char	*str;
 		void	(*func)(DEVICE_ID *);
 	} BaseType[] = {
 		{ "Reserved"			, NULL },
@@ -674,11 +674,11 @@ bustype_subr(DEVICE_ID *id)
 static void
 mass_subr(DEVICE_ID *id)
 {
-	static char *IDEController_tabel[] = {
+	static const char *IDEController_tabel[] = {
 		"GeneralIDE",
 		"ATACompatible",
 	};
-	static char *FloppyController_table[] = {
+	static const char *FloppyController_table[] = {
 		"GeneralFloppy",
 		"Compatible765",
 		"NS398_Floppy",
@@ -687,7 +687,7 @@ mass_subr(DEVICE_ID *id)
 		"NS2E_Floppy",
 		"CHRP_Floppy",
 	};
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case SCSIController:
@@ -723,7 +723,7 @@ mass_subr(DEVICE_ID *id)
 static void
 nic_subr(DEVICE_ID *id)
 {
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case EthernetController:
@@ -753,7 +753,7 @@ nic_subr(DEVICE_ID *id)
 static void
 display_subr(DEVICE_ID *id)
 {
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case VGAController:
@@ -783,11 +783,11 @@ display_subr(DEVICE_ID *id)
 static void
 mm_subr(DEVICE_ID *id)
 {
-	static char *AudioController_table[] = {
+	static const char *AudioController_table[] = {
 		"GeneralAudio",
 		"CS4232Audio",
 	};
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case VideoController:
@@ -814,7 +814,7 @@ mm_subr(DEVICE_ID *id)
 static void
 mem_subr(DEVICE_ID *id)
 {
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case RAM:
@@ -840,12 +840,12 @@ mem_subr(DEVICE_ID *id)
 static void
 bridge_subr(DEVICE_ID *id)
 {
-	static char *PCIBridge_table[] = {
+	static const char *PCIBridge_table[] = {
 		"GeneralPCIBridge",
 		"PCIBridgeIndirect",
 		"PCIBridgeRS6K",
 	};
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case HostProcessorBridge:
@@ -892,7 +892,7 @@ bridge_subr(DEVICE_ID *id)
 static void
 comm_subr(DEVICE_ID *id)
 {
-	static char *RS232Device_table[] = {
+	static const char *RS232Device_table[] = {
 		"GeneralRS232",
 		"COMx",
 		"Compatible16450",
@@ -902,7 +902,7 @@ comm_subr(DEVICE_ID *id)
 		"NS15CSerPort",
 		"NS2ESerPort",
 	};
-	static char *ATCompatibleParallelPort_table[] = {
+	static const char *ATCompatibleParallelPort_table[] = {
 		"GeneralParPort",
 		"LPTx",
 		"NS398ParPort",
@@ -910,7 +910,7 @@ comm_subr(DEVICE_ID *id)
 		"NS15CParPort",
 		"NS2EParPort",
 	};
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case RS232Device:
@@ -938,50 +938,50 @@ comm_subr(DEVICE_ID *id)
 static void
 sys_subr(DEVICE_ID *id)
 {
-	static char *PIC_table[] = {
+	static const char *PIC_table[] = {
 		"GeneralPIC",
 		"ISA_PIC",
 		"EISA_PIC",
 		"MPIC",
 		"RS6K_PIC",
 	};
-	static char *DMAController_table[] = {
+	static const char *DMAController_table[] = {
 		"GeneralDMA",
 		"ISA_DMA",
 		"EISA_DMA",
 	};
-	static char *SystemTimer_table[] = {
+	static const char *SystemTimer_table[] = {
 		"GeneralTimer",
 		"ISA_Timer",
 		"EISA_Timer",
 	};
-	static char *RealTimeClock_table[] = {
+	static const char *RealTimeClock_table[] = {
 		"GeneralRTC",
 		"ISA_RTC",
 	};
-	static char *L2Cache_table[] = {
+	static const char *L2Cache_table[] = {
 		"None",
 		"StoreThruOnly",
 		"StoreInEnabled",
 		"RS6KL2Cache",
 	};
-	static char *NVRAM_table[] = {
+	static const char *NVRAM_table[] = {
 		"IndirectNVRAM",
 		"DirectNVRAM",
 		"IndirectNVRAM24",
 	};
-	static char *PowerManagement_table[] = {
+	static const char *PowerManagement_table[] = {
 		"GeneralPowerManagement",
 		"EPOWPowerManagement",
 		"PowerControl",
 	};
-	static char *GraphicAssist_table[] = {
+	static const char *GraphicAssist_table[] = {
 		"Unknown",
 		"TransferData",
 		"IGMC32",
 		"IGMC64",
 	};
-	static char *OperatorPanel_table[] = {
+	static const char *OperatorPanel_table[] = {
 		"GeneralOPPanel",
 		"HarddiskLight",
 		"CDROMLight",
@@ -991,7 +991,7 @@ sys_subr(DEVICE_ID *id)
 		"SystemStatusLED",
 		"CHRP_SystemStatusLED",
 	};
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case ProgrammableInterruptController:
@@ -1074,7 +1074,7 @@ sys_subr(DEVICE_ID *id)
 static void
 input_subr(DEVICE_ID *id)
 {
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case KeyboardController:
@@ -1104,7 +1104,7 @@ input_subr(DEVICE_ID *id)
 static void
 service_subr(DEVICE_ID *id)
 {
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case GeneralMemoryController:
