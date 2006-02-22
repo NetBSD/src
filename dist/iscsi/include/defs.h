@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.2 2006/02/20 08:59:07 agc Exp $ */
+/* $NetBSD: defs.h,v 1.3 2006/02/22 08:56:46 he Exp $ */
 
 /*
  * Copyright (c) 1999-2005 Alistair Crooks.  All rights reserved.
@@ -31,6 +31,7 @@
 #define DEFS_H_
 
 #include <sys/types.h>
+#include <sys/param.h>
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
