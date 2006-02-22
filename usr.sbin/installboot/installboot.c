@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.24 2006/02/18 12:42:26 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.25 2006/02/22 07:10:26 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.24 2006/02/18 12:42:26 dsl Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.25 2006/02/22 07:10:26 dogcow Exp $");
 #endif	/* !__lint */
 
 #include <sys/ioctl.h>
@@ -478,10 +478,13 @@ machine_usage(void)
 	int	i;
 	int col, len;
 	const char *name;
+	int	wincol=80;
+#ifdef TIOCGWINSZ
 	struct winsize win;
 
-	if (ioctl(fileno(stderr), TIOCGWINSZ, &win) != 0)
-		win.ws_col = 80;
+	if (ioctl(fileno(stderr), TIOCGWINSZ, &win) == 0)
+		wincol = win.ws_col;
+#endif
 
 	warnx("Supported machines are:");
 	prefix="\t";
@@ -491,7 +494,7 @@ machine_usage(void)
 		if (name == NULL)
 			continue;
 		len = strlen(name);
-		if (col + len > win.ws_col) {
+		if (col + len > wincol) {
 			prefix=",\n\t";
 			col = -2 + 8 + 3;
 		}
@@ -531,7 +534,7 @@ fstype_usage(void)
 #define FSTYPES_PER_LINE	9
 	prefix="\t";
 	for (i = 0; fstypes[i].name != NULL; i++) {
-		if ((i % FSTYPES_PER_LINE) == 0)
+		if (i && (i % FSTYPES_PER_LINE) == 0)
 			prefix=",\n\t";
 		fprintf(stderr, "%s%s", prefix, fstypes[i].name);
 		prefix=", ";
