@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.33 2006/02/11 12:45:07 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.34 2006/02/22 22:28:18 drochner Exp $	*/
 
 /*
  *
@@ -137,7 +137,7 @@ struct uvm_pagerops {
 
 	/* special non-standard fault processing */
 	int	(*pgo_fault)(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
-			     int, int, vm_fault_t, vm_prot_t, int);
+			     int, int, vm_prot_t, int);
 
 	/* get/read pages */
 	int	(*pgo_get)(struct uvm_object *, voff_t, struct vm_page **,
