@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.111 2006/02/05 05:02:02 cube Exp $
+# $NetBSD: GENERIC,v 1.112 2006/02/22 10:41:35 hira Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.111 $"
+#ident		"GENERIC-$Revision: 1.112 $"
 
 maxusers	32
 
@@ -445,7 +445,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #udav*	at uhub? port ?		# Davicom DM9601 based adapters
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 #upl*	at uhub? port ?
 
 # Serial adapters
