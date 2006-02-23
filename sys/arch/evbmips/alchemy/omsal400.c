@@ -1,9 +1,11 @@
-/* $NetBSD: omsal400.c,v 1.1 2006/02/23 17:14:01 shige Exp $ */
+/* $NetBSD: omsal400.c,v 1.2 2006/02/23 17:47:35 shige Exp $ */
 
 /*-
+ * Copyright (c) 2006 Itronix Inc.
  * Copyright (c) 2006 Shigeyuki Fukushima.
  * All rights reserved.
  *
+ * Written by Garrett D'Amore for Itronix Inc
  * Written by Shigeyuki Fukushima.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +36,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.1 2006/02/23 17:14:01 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.2 2006/02/23 17:47:35 shige Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
