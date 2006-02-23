@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.94.2.3 2006/02/14 02:25:13 rpaulo Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.94.2.4 2006/02/23 16:59:20 rpaulo Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94.2.3 2006/02/14 02:25:13 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94.2.4 2006/02/23 16:59:20 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1708,7 +1708,7 @@ ip6_raw_ctloutput(op, so, level, optname, mp)
 {
 	int error = 0, optval, optlen;
 	const int icmp6off = offsetof(struct icmp6_hdr, icmp6_cksum);
-	struct in6pcb *inp = sotoinpcb(so);
+	struct inpcb *inp = sotoinpcb(so);
 	struct mbuf *m = *mp;
 
 	optlen = m ? m->m_len : 0;
@@ -2474,22 +2474,22 @@ ip6_splithdr(m, exthdrs)
  * Compute IPv6 extension header length.
  */
 int
-ip6_optlen(in6p)
-	struct in6pcb *in6p;
+ip6_optlen(inp)
+	struct inpcb *inp;
 {
 	int len;
 
-	if (!in6p->in6p_outputopts)
+	if (!inp->in6p_outputopts)
 		return 0;
 
 	len = 0;
 #define elen(x) \
     (((struct ip6_ext *)(x)) ? (((struct ip6_ext *)(x))->ip6e_len + 1) << 3 : 0)
 
-	len += elen(in6p->in6p_outputopts->ip6po_hbh);
-	len += elen(in6p->in6p_outputopts->ip6po_dest1);
-	len += elen(in6p->in6p_outputopts->ip6po_rthdr);
-	len += elen(in6p->in6p_outputopts->ip6po_dest2);
+	len += elen(inp->in6p_outputopts->ip6po_hbh);
+	len += elen(inp->in6p_outputopts->ip6po_dest1);
+	len += elen(inp->in6p_outputopts->ip6po_rthdr);
+	len += elen(inp->in6p_outputopts->ip6po_dest2);
 	return len;
 #undef elen
 }
