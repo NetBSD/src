@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.18 2006/01/21 23:16:57 uwe Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.19 2006/02/23 00:46:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Matrix scan keyboard connected to SH7709, SH7709A PFC module.
+ * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
+ */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.18 2006/01/21 23:16:57 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.19 2006/02/23 00:46:31 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -62,14 +66,14 @@ __KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.18 2006/01/21 23:16:57 uwe Exp $");
 #endif
 #include <machine/debug.h>
 
-STATIC int pfckbd_match(struct device *, struct cfdata *, void *);
-STATIC void pfckbd_attach(struct device *, struct device *, void *);
-STATIC void (*pfckbd_callout_lookup(void))(void *);
-STATIC void pfckbd_callout_unknown(void *);
-STATIC void pfckbd_callout_hp(void *);
-STATIC void pfckbd_callout_hitachi(void *);
+static int pfckbd_match(struct device *, struct cfdata *, void *);
+static void pfckbd_attach(struct device *, struct device *, void *);
+static void (*pfckbd_callout_lookup(void))(void *);
+static void pfckbd_callout_unknown(void *);
+static void pfckbd_callout_hp(void *);
+static void pfckbd_callout_hitachi(void *);
 
-STATIC struct pfckbd_core {
+static struct pfckbd_core {
 	int pc_attached;
 	int pc_enabled;
 	struct callout pc_soft_ch;
@@ -80,7 +84,7 @@ STATIC struct pfckbd_core {
 } pfckbd_core;
 
 /* callout function table. this function is platfrom specific. */
-STATIC const struct {
+static const struct {
 	platid_mask_t *platform;
 	void (*func)(void *);
 } pfckbd_calloutfunc_table[] = {
@@ -91,15 +95,11 @@ STATIC const struct {
 CFATTACH_DECL(pfckbd, sizeof(struct device),
     pfckbd_match, pfckbd_attach, NULL, NULL);
 
-STATIC int pfckbd_poll(void *);
-STATIC void pfckbd_ifsetup(struct pfckbd_core *);
-STATIC int pfckbd_input_establish(void *, struct hpckbd_if *);
-STATIC void pfckbd_input(struct hpckbd_if *, uint16_t *, uint16_t, int);
+static int pfckbd_poll(void *);
+static void pfckbd_ifsetup(struct pfckbd_core *);
+static int pfckbd_input_establish(void *, struct hpckbd_if *);
+static void pfckbd_input(struct hpckbd_if *, uint16_t *, uint16_t, int);
 
-/*
- * Matrix scan keyboard connected to SH7709, SH7709A PFC module.
- * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
- */
 void
 pfckbd_cnattach()
 {
@@ -116,7 +116,7 @@ pfckbd_cnattach()
 	hpckbd_cnattach(&pc->pc_if);
 }
 
-int
+static int
 pfckbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
@@ -127,7 +127,7 @@ pfckbd_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (!pfckbd_core.pc_attached);
 }
 
-void
+static void
 pfckbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpckbd_attach_args haa;
@@ -148,7 +148,7 @@ pfckbd_attach(struct device *parent, struct device *self, void *aux)
 	    &pfckbd_core);
 }
 
-int
+static int
 pfckbd_input_establish(void *ic, struct hpckbd_if *kbdif)
 {
 	struct pfckbd_core *pc = ic;
@@ -161,7 +161,7 @@ pfckbd_input_establish(void *ic, struct hpckbd_if *kbdif)
 	return 0;
 }
 
-int
+static int
 pfckbd_poll(void *arg)
 {
 	struct pfckbd_core *pc = arg;
@@ -172,7 +172,7 @@ pfckbd_poll(void *arg)
 	return 0;
 }
 
-void
+static void
 pfckbd_ifsetup(struct pfckbd_core *pc)
 {
 	int i;
@@ -187,7 +187,7 @@ pfckbd_ifsetup(struct pfckbd_core *pc)
 	pc->pc_callout = pfckbd_callout_lookup();
 }
 
-void
+static void
 pfckbd_input(struct hpckbd_if *hpckbd, uint16_t *buf, uint16_t data,
     int column)
 {
@@ -215,7 +215,8 @@ pfckbd_input(struct hpckbd_if *hpckbd, uint16_t *buf, uint16_t data,
  */
 
 /* Look up appropriate callback handler */
-void (*pfckbd_callout_lookup())(void *)
+static void
+(*pfckbd_callout_lookup())(void *)
 {
 	int i, n = sizeof(pfckbd_calloutfunc_table) /
 	    sizeof(pfckbd_calloutfunc_table[0]);
@@ -229,7 +230,7 @@ void (*pfckbd_callout_lookup())(void *)
 }
 
 /* Placeholder for unknown platform */
-void
+static void
 pfckbd_callout_unknown(void *arg)
 {
 
@@ -237,7 +238,7 @@ pfckbd_callout_unknown(void *arg)
 }
 
 /* HP Jornada680/690, HP620LX */
-void
+static void
 pfckbd_callout_hp(void *arg)
 {
 #define PFCKBD_HP_PDCR_MASK 0xcc0c
@@ -317,7 +318,7 @@ pfckbd_callout_hp(void *arg)
 }
 
 /* HITACH PERSONA (HPW-50PAD) */
-void
+static void
 pfckbd_callout_hitachi(void *arg)
 {
 #define PFCKBD_HITACHI_PCCR_MASK 0xfff3
