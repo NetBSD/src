@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.82.2.1 2006/02/07 04:58:11 rpaulo Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.82.2.2 2006/02/23 16:57:04 rpaulo Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.82.2.1 2006/02/07 04:58:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.82.2.2 2006/02/23 16:57:04 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1009,15 +1009,15 @@ ip6_unknown_opt(optp, m, off)
  * you are using IP6_EXTHDR_CHECK() not m_pulldown())
  */
 void
-ip6_savecontrol(in6p, mp, ip6, m)
-	struct in6pcb *in6p;
+ip6_savecontrol(inp, mp, ip6, m)
+	struct inpcb *inp;
 	struct mbuf **mp;
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
 {
 
 #ifdef SO_TIMESTAMP
-	if (in6p->in6p_socket->so_options & SO_TIMESTAMP) {
+	if (inp->inp_socket->so_options & SO_TIMESTAMP) {
 		struct timeval tv;
 
 		microtime(&tv);
@@ -1027,7 +1027,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			mp = &(*mp)->m_next;
 	}
 #endif
-	if (in6p->in6p_flags & IN6P_RECVDSTADDR) {
+	if (inp->inp_flags & IN6P_RECVDSTADDR) {
 		*mp = sbcreatecontrol((caddr_t) &ip6->ip6_dst,
 		    sizeof(struct in6_addr), IPV6_RECVDSTADDR, IPPROTO_IPV6);
 		if (*mp)
@@ -1036,15 +1036,15 @@ ip6_savecontrol(in6p, mp, ip6, m)
 
 #ifdef noyet
 	/* options were tossed above */
-	if (in6p->in6p_flags & IN6P_RECVOPTS)
+	if (inp->inp_flags & IN6P_RECVOPTS)
 		/* broken */
 	/* ip6_srcroute doesn't do what we want here, need to fix */
-	if (in6p->in6p_flags & IPV6P_RECVRETOPTS)
+	if (inp->inp_flags & IPV6P_RECVRETOPTS)
 		/* broken */
 #endif
 
 	/* RFC 2292 sec. 5 */
-	if ((in6p->in6p_flags & IN6P_PKTINFO) != 0) {
+	if ((inp->inp_flags & IN6P_PKTINFO) != 0) {
 		struct in6_pktinfo pi6;
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
 		in6_clearscope(&pi6.ipi6_addr);	/* XXX */
@@ -1056,7 +1056,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-	if (in6p->in6p_flags & IN6P_HOPLIMIT) {
+	if (inp->inp_flags & IN6P_HOPLIMIT) {
 		int hlim = ip6->ip6_hlim & 0xff;
 		*mp = sbcreatecontrol((caddr_t) &hlim, sizeof(int),
 		    IPV6_HOPLIMIT, IPPROTO_IPV6);
@@ -1072,7 +1072,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	 * returned to normal user.
 	 * See also RFC 2292 section 6.
 	 */
-	if ((in6p->in6p_flags & IN6P_HOPOPTS) != 0) {
+	if ((inp->inp_flags & IN6P_HOPOPTS) != 0) {
 		/*
 		 * Check if a hop-by-hop options header is contatined in the
 		 * received packet, and if so, store the options as ancillary
@@ -1115,7 +1115,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	}
 
 	/* IPV6_DSTOPTS and IPV6_RTHDR socket options */
-	if (in6p->in6p_flags & (IN6P_DSTOPTS | IN6P_RTHDR)) {
+	if (inp->inp_flags & (IN6P_DSTOPTS | IN6P_RTHDR)) {
 		struct ip6_hdr *xip6 = mtod(m, struct ip6_hdr *);
 		int nxt = xip6->ip6_nxt, off = sizeof(struct ip6_hdr);
 
@@ -1164,7 +1164,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 
 			switch (nxt) {
 			case IPPROTO_DSTOPTS:
-				if (!in6p->in6p_flags & IN6P_DSTOPTS)
+				if (!inp->inp_flags & IN6P_DSTOPTS)
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
@@ -1174,7 +1174,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 				break;
 
 			case IPPROTO_ROUTING:
-				if (!in6p->in6p_flags & IN6P_RTHDR)
+				if (!inp->inp_flags & IN6P_RTHDR)
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
