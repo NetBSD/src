@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.40 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.41 2006/02/23 03:20:53 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.40 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.41 2006/02/23 03:20:53 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,6 +445,9 @@ pcmcia_scan_cis(dev, fct, arg)
 				    PCMCIA_MEM_ATTR,
 				    longlink_addr, PCMCIA_CIS_SIZE,
 				    &pcmh, &tuple.ptr, &window);
+
+				tuple.memt = pcmh.memt;
+				tuple.memh = pcmh.memh;
 
 				if (!longlink_common)
 					tuple.ptr /= 2;
