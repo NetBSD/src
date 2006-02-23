@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.83 2006/02/20 12:17:49 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.84 2006/02/23 17:38:03 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.83 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.84 2006/02/23 17:38:03 wiz Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -282,8 +282,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpibus_attach_args *aa = aux;
 	ACPI_STATUS rv;
 
-	aprint_naive(": Advacned Configuration and Power Interface\n");
-	aprint_normal(": Advacned Configuration and Power Interface\n");
+	aprint_naive(": Advanced Configuration and Power Interface\n");
+	aprint_normal(": Advanced Configuration and Power Interface\n");
 
 	if (acpi_softc != NULL)
 		panic("acpi_attach: ACPI has already been attached");
