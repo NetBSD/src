@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.103 2006/01/26 17:24:52 jmmv Exp $ */
+/* $NetBSD: user.c,v 1.104 2006/02/23 22:45:25 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.103 2006/01/26 17:24:52 jmmv Exp $");
+__RCSID("$NetBSD: user.c,v 1.104 2006/02/23 22:45:25 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -967,17 +967,16 @@ valid_shell(const char *shellname)
 	} 
 
 	/* if nologin is used as a shell, consider it a valid shell */
-	if (strcmp(shellname, NOLOGIN) == 0) {
+	if (strcmp(shellname, NOLOGIN) == 0)
 		return 1;
-	}
 
-	while ((shellp = getusershell()) != NULL) {
-		if (strcmp(shellp, shellname) == 0) {
+	while ((shellp = getusershell()) != NULL)
+		if (strcmp(shellp, shellname) == 0)
 			return 1;
-		}
-	}
 
-	return 0;
+	warnx("Shell `%s' not found in `%s'", shellname, _PATH_SHELLS);
+
+	return access(shellname, X_OK) != -1;
 }
 #endif
 
@@ -1142,10 +1141,13 @@ adduser(char *login_name, user_t *up)
 	if (up->u_flags & F_SHELL) {
 #ifdef EXTENSIONS
 		if (!valid_shell(up->u_shell)) {
+			int oerrno = errno;
 			(void)close(ptmpfd);
 			(void)pw_abort();
+			errno = oerrno;
 			errx(EXIT_FAILURE, "Can't add user `%s': "
-			    "shell `%s' is not valid", login_name, up->u_shell);
+			    "Cannot access shell `%s'",
+			    login_name, up->u_shell);
 		}
 #endif
 	}
@@ -1568,10 +1570,13 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 		if (up->u_flags & F_SHELL) {
 #ifdef EXTENSIONS
 		if (!valid_shell(up->u_shell)) {
+			int oerrno = errno;
 			(void)close(ptmpfd);
 			(void)pw_abort();
+			errno = oerrno;
 			errx(EXIT_FAILURE, "Can't modify user `%s': "
-			    "shell `%s' is not valid", login_name, up->u_shell);
+			    "Cannot access shell `%s'",
+			    login_name, up->u_shell);
 		}
 		pwp->pw_shell = up->u_shell;
 #else
