@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.27 2006/01/16 21:47:55 dsl Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.28 2006/02/23 21:44:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -488,18 +488,10 @@ wollen.
 }
 
 message ftpsource
-{
-Dies sind die Daten zum Aufbau einer %s Verbindung.
+{Dies sind die Daten zum Aufbau einer %s Verbindung.
 Falls der Benutzer "ftp" ist, benötigen Sie kein Passwort.
 
-Server:		  %s 
-Basispfad:	  %s 
-Verzeichnis:	  %s 
-Benutzer:	  %s 
-Passwort:	  %s 
-Proxy:		  %s
-Zwischenspeicher  %s
-} /* fix XLAT */
+}
 
 message email
 {E-Mail Adresse}
@@ -512,9 +504,6 @@ message nfssource
 finden ist. 
 (Das Verzeichnis muss .tgz Dateien enthalten und NFS mountbar sein)
 
-Server:		%s 
-Basispfad:	%s 
-Verzeichnis:	%s
 }
 
 message cdromsource
@@ -522,8 +511,6 @@ message cdromsource
 an, in dem die Distribution zu finden ist.
 (Das Verzeichnis muss .tgz Dateien enthalten)
 
-Laufwerk:	%s 
-Verzeichnis:	%s
 }
 
 message localfssource
@@ -531,10 +518,6 @@ message localfssource
 Verzeichnis an, in dem die Distribution zu finden ist.
 (Das Verzeichnis muss .tgz Dateien enthalten)
 
-Laufwerk:	%s 
-Dateisystem:	%s 
-Basispfad:	%s 
-Verzeichnis:	%s
 }
 
 message localdir
@@ -542,8 +525,6 @@ message localdir
 die Distribution zu finden ist.
 (Das Verzeichnis muss .tgz Dateien enthalten)
 
-Basispfad:	%s 
-Verzeichnis:	%s
 }
 
 message filesys
