@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.46 2006/02/23 05:37:47 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47 2006/02/23 05:49:42 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.46 2006/02/23 05:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2006/02/23 05:49:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -202,11 +202,6 @@ canonicalize_bootpath()
 		*p = '\0';
 }
 
-#define DEVICE_IS(dev, name) \
-	(!strncmp(dev->dv_xname, name, sizeof(name) - 1) && \
-	dev->dv_xname[sizeof(name) - 1] >= '0' && \
-	dev->dv_xname[sizeof(name) - 1] <= '9')
-
 /*
  * device_register is called from config_attach as each device is
  * attached. We use it to find the NetBSD device corresponding to the
@@ -226,18 +221,18 @@ device_register(dev, aux)
 		return;
 
 	/* Skip over devices not represented in the OF tree. */
-	if (DEVICE_IS(dev, "mainbus")) {
+	if (device_is_a(dev, "mainbus")) {
 		parent = dev;
 		return;
 	}
-	if (DEVICE_IS(dev, "atapibus") || DEVICE_IS(dev, "pci") ||
-	    DEVICE_IS(dev, "scsibus") || DEVICE_IS(dev, "atabus"))
+	if (device_is_a(dev, "atapibus") || device_is_a(dev, "pci") ||
+	    device_is_a(dev, "scsibus") || device_is_a(dev, "atabus"))
 		return;
 
-	if (DEVICE_IS(device_parent(dev), "atapibus") ||
-	    DEVICE_IS(device_parent(dev), "atabus") ||
-	    DEVICE_IS(device_parent(dev), "pci") ||
-	    DEVICE_IS(device_parent(dev), "scsibus")) {
+	if (device_is_a(device_parent(dev), "atapibus") ||
+	    device_is_a(device_parent(dev), "atabus") ||
+	    device_is_a(device_parent(dev), "pci") ||
+	    device_is_a(device_parent(dev), "scsibus")) {
 		if (device_parent(device_parent(dev)) != parent)
 			return;
 	} else {
@@ -263,31 +258,31 @@ device_register(dev, aux)
 	} else
 		addr = strtoul(p + 1, &p, 16);
 
-	if (DEVICE_IS(device_parent(dev), "mainbus")) {
+	if (device_is_a(device_parent(dev), "mainbus")) {
 		struct confargs *ca = aux;
 
 		if (strcmp(ca->ca_name, "ofw") == 0)		/* XXX */
 			return;
 		if (addr != ca->ca_reg[0])
 			return;
-	} else if (DEVICE_IS(device_parent(dev), "pci")) {
+	} else if (device_is_a(device_parent(dev), "pci")) {
 		struct pci_attach_args *pa = aux;
 
 		if (addr != pa->pa_device)
 			return;
-	} else if (DEVICE_IS(device_parent(dev), "obio")) {
+	} else if (device_is_a(device_parent(dev), "obio")) {
 		struct confargs *ca = aux;
 
 		if (addr != ca->ca_reg[0])
 			return;
-	} else if (DEVICE_IS(device_parent(dev), "scsibus") ||
-		   DEVICE_IS(device_parent(dev), "atapibus")) {
+	} else if (device_is_a(device_parent(dev), "scsibus") ||
+		   device_is_a(device_parent(dev), "atapibus")) {
 		struct scsipibus_attach_args *sa = aux;
 
 		/* periph_target is target for scsi, drive # for atapi */
 		if (addr != sa->sa_periph->periph_target)
 			return;
-	} else if (DEVICE_IS(device_parent(device_parent(dev)), "pciide")) {
+	} else if (device_is_a(device_parent(device_parent(dev)), "pciide")) {
 		struct ata_device *adev = aux;
 
 		if (addr != adev->adev_drv_data->drive)
@@ -304,7 +299,7 @@ device_register(dev, aux)
 			return;
 		if (strtoul(p, &p, 16) != adev->adev_drv_data->drive)
 			return;
-	} else if (DEVICE_IS(device_parent(device_parent(dev)), "wdc")) {
+	} else if (device_is_a(device_parent(device_parent(dev)), "wdc")) {
 		struct ata_device *adev = aux;
 
 		if (addr != adev->adev_drv_data->drive)
