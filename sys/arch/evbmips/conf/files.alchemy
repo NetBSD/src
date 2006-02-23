@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.2 2006/02/09 00:26:39 gdamore Exp $
+#	$NetBSD: files.alchemy,v 1.3 2006/02/23 03:34:35 gdamore Exp $
 
 # Platform support - select just one, please
 defflag		opt_alchemy.h	ALCHEMY_GENERIC
@@ -37,10 +37,6 @@ file	arch/evbmips/alchemy/cpu.c		cpu
 device	obio { [addr=-1] }
 attach	obio at mainbus
 file	arch/evbmips/alchemy/obio.c		obio
-
-device	aupcmcia: pcmciabus
-attach	aupcmcia at obio
-file	arch/evbmips/alchemy/dev/aupcmcia.c	aupcmcia
 
 # Machine-independent SCSI drivers
 include "dev/scsipi/files.scsipi"
