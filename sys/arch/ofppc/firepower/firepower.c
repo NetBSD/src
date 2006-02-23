@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.14 2005/12/11 12:18:29 christos Exp $	*/
+/*	$NetBSD: firepower.c,v 1.15 2006/02/23 05:37:47 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.14 2005/12/11 12:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.15 2006/02/23 05:37:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,11 +152,11 @@ firepower_device_register(struct device *dev, void *aux)
 	if (DEVICE_IS(dev, "atapibus") || DEVICE_IS(dev, "scsibus"))
 		return;
 
-	if (DEVICE_IS(dev->dv_parent, "atapibus") ||
-	    DEVICE_IS(dev->dv_parent, "scsibus")) {
-		if (dev->dv_parent->dv_parent != parent)
+	if (DEVICE_IS(device_parent(dev), "atapibus") ||
+	    DEVICE_IS(device_parent(dev), "scsibus")) {
+		if (device_parent(device_parent(dev)) != parent)
 			return;
-	} else if (dev->dv_parent != parent) {
+	} else if (device_parent(dev) != parent) {
 		return;
 	}
 
@@ -181,23 +181,23 @@ firepower_device_register(struct device *dev, void *aux)
 		addr = strtoul(paddr + 1, NULL, 0x10);
 	}
 
-	if (DEVICE_IS(dev->dv_parent, "mainbus")) {
+	if (DEVICE_IS(device_parent(dev), "mainbus")) {
 		struct ofbus_attach_args *oba = aux;
 		
 		if (strcmp(oba->oba_busname, "cpu") == 0)
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "ofbus")) {
+	} else if (DEVICE_IS(device_parent(dev), "ofbus")) {
 		struct ofbus_attach_args *oba = aux;
 
 		if (strncmp(oba->oba_ofname, cp, clen))
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "pci")) {
+	} else if (DEVICE_IS(device_parent(dev), "pci")) {
 		struct pci_attach_args *pa = aux;
 
 		if (addr != pa->pa_device)
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "scsibus") ||
-		   DEVICE_IS(dev->dv_parent, "atapibus")) {
+	} else if (DEVICE_IS(device_parent(dev), "scsibus") ||
+		   DEVICE_IS(device_parent(dev), "atapibus")) {
 		struct scsipibus_attach_args *sa = aux;
 
 		/* periph_target is target for scsi, drive # for atapi */
