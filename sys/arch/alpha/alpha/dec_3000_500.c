@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.38 2002/09/27 15:35:34 provos Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.39 2006/02/23 05:37:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.38 2002/09/27 15:35:34 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.39 2006/02/23 05:37:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ dec_3000_500_device_register(dev, aux)
 	static struct device *scsidev;
 	static struct device *tcdsdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 	struct cfdata *cf = dev->dv_cfdata;
 	const char *name = cf->cf_name;
 
@@ -227,7 +227,7 @@ dec_3000_500_device_register(dev, aux)
 	     strcmp(name, "cd") == 0)) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (parent->dv_parent != scsidev)
+		if (device_parent(parent) != scsidev)
 			return;
 
 		if (b->unit / 100 != sa->sa_periph->periph_target)

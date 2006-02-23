@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a500.c,v 1.12 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: dec_2100_a500.c,v 1.13 2006/02/23 05:37:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.12 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.13 2006/02/23 05:37:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ dec_2100_a500_device_register(struct device *dev, void *aux)
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 	struct cfdata *cf = dev->dv_cfdata;
 	const char *name = cf->cf_name;
 
@@ -313,7 +313,7 @@ dec_2100_a500_device_register(struct device *dev, void *aux)
 		struct scsipi_periph *periph = sa->sa_periph;
 		int unit;
 
-		if (parent->dv_parent != ctrlrdev)
+		if (device_parent(parent) != ctrlrdev)
 			return;
 
 		unit = periph->periph_target * 100 + periph->periph_lun;

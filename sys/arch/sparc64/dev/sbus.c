@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.76 2006/02/13 21:47:12 cdi Exp $ */
+/*	$NetBSD: sbus.c,v 1.77 2006/02/23 05:37:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.76 2006/02/13 21:47:12 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.77 2006/02/23 05:37:48 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -435,7 +435,7 @@ sbus_establish(register struct sbusdev *sd, register struct device *dev)
 	 * We don't just use the device structure of the above-attached
 	 * sbus, since we might (in the future) support multiple sbus's.
 	 */
-	for (curdev = dev->dv_parent; ; curdev = curdev->dv_parent) {
+	for (curdev = device_parent(dev); ; curdev = device_parent(curdev)) {
 		if (!curdev || !curdev->dv_xname)
 			panic("sbus_establish: can't find sbus parent for %s",
 			      sd->sd_dev->dv_xname
