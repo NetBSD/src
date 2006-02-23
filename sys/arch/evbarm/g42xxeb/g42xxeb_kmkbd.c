@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.3 2006/02/23 05:37:47 thorpej Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.4 2006/02/23 23:57:32 he Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.3 2006/02/23 05:37:47 thorpej Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.4 2006/02/23 23:57:32 he Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,7 @@ static int
 kmkbd_intr(void *arg)
 {
 	struct kmkbd_softc *sc = arg;
-	struct obio_softc *osc = (struct obio_softc *)device_parent(&sc->dev;
+	struct obio_softc *osc = (struct obio_softc *)device_parent(&sc->dev);
 
 	if ( sc->state != ST_ALL_UP ){
 		printf("Spurious interrupt from key matrix\n");
