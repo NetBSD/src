@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.42 2006/02/16 03:15:02 hubertf Exp $
+.\"	$NetBSD: legal.common,v 1.43 2006/02/23 15:33:31 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -663,7 +663,7 @@ In the following statement, the phrase ``this text'' refers to portions
 of the system documentation.
 .Pp
 Portions of this text are reprinted and reproduced in electronic form in
-the {Product Name}, from IEEE Std 1003.1, 2004 Edition, Standard for
+NetBSD, from IEEE Std 1003.1, 2004 Edition, Standard for
 Information Technology -- Portable Operating System Interface (POSIX),
 The Open Group Base Specifications Issue 6, Copyright (C) 2001-2004 by the
 Institute of Electrical and Electronics Engineers, Inc and The Open Group.
