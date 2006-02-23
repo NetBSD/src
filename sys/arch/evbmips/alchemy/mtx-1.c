@@ -1,4 +1,4 @@
-/* $NetBSD: mtx-1.c,v 1.1 2006/02/23 04:40:52 gdamore Exp $ */
+/* $NetBSD: mtx-1.c,v 1.2 2006/02/23 04:45:55 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.1 2006/02/23 04:40:52 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.2 2006/02/23 04:45:55 gdamore Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -70,7 +70,7 @@ static struct alchemy_board mtx1_info = {
 };
 
 const struct alchemy_board *
-mtx1_info(void)
+board_info(void)
 {
 
 	return &mtx1_info;
