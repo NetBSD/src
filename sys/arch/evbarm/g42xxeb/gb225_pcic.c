@@ -141,7 +141,7 @@ opcic_attach(struct device *parent, struct device *self, void *aux)
 	struct opcic_softc *sc = (struct opcic_softc *)self;
 	struct opio_softc *psc = (struct opio_softc *)parent;
 	struct obio_softc *bsd = (struct obio_softc *)device_parent(parent);
-	bus_space_handle_t memctl_ioh = bsc->sc_memctl_ioh;
+	bus_space_handle_t memctl_ioh = bsd->sc_memctl_ioh;
 	bus_space_tag_t iot =  psc->sc_iot;
 
 	printf("\n");
