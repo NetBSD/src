@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.760 2006/02/19 17:24:36 jmcneill Exp $
+#	$NetBSD: files,v 1.761 2006/02/23 08:01:59 macallan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -917,6 +917,7 @@ define	wsdisplaydev		{[kbdmux = 1]}
 define	wsemuldisplaydev	{[console = -1], [kbdmux = 1]}
 define	wskbddev		{[console = -1], [mux = 1]}
 define	wsmousedev		{[mux = 0]}
+define	vcons
 # attribute to pull in raster support
 #
 define	wsrasteremulops
@@ -939,7 +940,7 @@ file	dev/ic/vga_subr.c	vga | vga_rasterconsole
 file	dev/ic/vga_common.c	vga | vga_rasterconsole
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
-device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8
+device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8, vcons
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
 
