@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.141 2006/01/16 21:47:56 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.142 2006/02/23 21:44:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -474,13 +474,6 @@ message ftpsource
 {The following are the %s site, directory, user, and password that
 will be used.  If "user" is "ftp", then the password is not needed.
 
-host:		    %s 
-base directory:	    %s 
-set directory:	    %s 
-user:		    %s 
-password:	    %s 
-proxy:		    %s 
-transfer directory: %s
 }
 
 message email
@@ -494,9 +487,6 @@ message nfssource
 Remember, the directory should contain the .tgz files and
 must be nfs mountable.
 
-host:		%s 
-base directory:	%s 
-set directory:	%s 
 }
 
 message cdromsource
@@ -504,8 +494,6 @@ message cdromsource
 the distribution is located. 
 Remember, the directory should contain the .tgz files.
 
-device:		%s 
-set directory:	%s
 }
 
 message localfssource
@@ -513,18 +501,12 @@ message localfssource
 the distribution is located. 
 Remember, the directory should contain the .tgz files.
 
-device:		%s 
-file system:	%s 
-base directory:	%s 
-set directory:	%s
 }
 
 message localdir
 {Enter the already-mounted local directory where the distribution is located. 
 Remember, the directory should contain the .tgz files.
 
-base directory:	%s 
-set directory:	%s
 }
 
 message filesys

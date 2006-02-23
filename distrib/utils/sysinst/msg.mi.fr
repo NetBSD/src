@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.90 2006/01/16 21:47:56 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.91 2006/02/23 21:44:57 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -480,14 +480,7 @@ Si l'utilisateur est ftp, alors le mot de passe n'est pas nécessaire.
 Le répertoire des composants est relatif au répertoire de base, et
 doit contenir les fichiers .tgz.
 
-serveur:		   %s 
-répertoire de base:	   %s 
-répertoire des composants: %s 
-utilisateur:		   %s 
-mot de passe:		   %s 
-proxy:			   %s
-répertoire de transfer:    %s 
-} /* fix XLAT */
+}
 
 message email
 {adresse e-mail}
@@ -502,9 +495,6 @@ Le répertoire de base doit etre accessible par NFS, le répertoire des
 composants est relatif au répertoire de base et doit contenir les fichiers
 .tgz.
 
-serveur:		   %s 
-répertoire de base:	   %s 
-répertoire des composants: %s
 }
 
 message cdromsource
@@ -512,8 +502,6 @@ message cdromsource
 le répertoire qui contient les composants. 
 Rappelez-vous que le répertoire doit contenir les fichiers .tgz .
 
-device:		%s 
-répertoire:	%s
 }
 
 
@@ -523,10 +511,6 @@ ainsi que le répertoire contenant les composants.
 Le répertoire des composants est relatif au répertoire de base et doit
 contenir les fichiers .tgz.
 
-device:			%s 
-système de fichiers:		%s 
-répertoire de base:		%s 
-répertoire des composants:	%s
 }
 
 message localdir
@@ -534,8 +518,6 @@ message localdir
 distribution. 
 Rapellez vous que ce répertoire doit contenir les fichiers .tgz.
 
-Répertoire de base:	        %s
-Répertoire des composants:	%s
 }
 
 message filesys
