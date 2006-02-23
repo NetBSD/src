@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.112 2006/02/22 10:41:35 hira Exp $
+# $NetBSD: GENERIC,v 1.113 2006/02/23 19:44:02 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.112 $"
+#ident		"GENERIC-$Revision: 1.113 $"
 
 maxusers	32
 
@@ -34,6 +34,7 @@ options 	PLATFORM_IBM_6040		# IBM ThinkPad 820
 options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
 options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
 options 	PLATFORM_IBM_7043_140		# IBM RS/6000 43P 7043-140
+options		PLATFORM_IBM_7024		# IBM RS/6000 7024-E20/E30
 options 	PLATFORM_MOTOROLA_ULMB60XA	# Motorola ULMB60xA (?)
 
 options 	OPENPIC				# OpenPIC support (7043-140)
@@ -207,9 +208,14 @@ options 	PCI_NETBSD_CONFIGURE
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+pceb*	at pci? dev ? function ?	# PCI-EISA bridges
+
+# EISA bus support
+eisa*	at pceb?
 
 # ISA bus support
 isa*	at pcib?			# ISA on PCI-ISA bridge
+isa*	at pceb?
 
 # PCMCIA bus support
 pcmcia* at pcic? controller ? socket ?

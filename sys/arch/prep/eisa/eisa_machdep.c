@@ -1,8 +1,7 @@
-/*	$NetBSD: bus.h,v 1.12 2006/02/23 19:44:02 garbled Exp $	*/
-/*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.1 2006/02/23 19:44:02 garbled Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,8 +38,6 @@
  */
 
 /*
- * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
- * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -71,61 +68,154 @@
  */
 
 /*
- * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
- * Copyright (c) 1996 Niklas Hallqvist.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *	for the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Machine-specific functions for EISA autoconfiguration.
  */
 
-#ifndef _PREP_BUS_H_
-#define _PREP_BUS_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.1 2006/02/23 19:44:02 garbled Exp $");
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/device.h>
+#include <sys/extent.h>
+
+#define _POWERPC_BUS_DMA_PRIVATE
+#include <machine/bus.h>
+#include <machine/pio.h>
+#include <machine/intr.h>
+
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#include <dev/eisa/eisavar.h>
 
 /*
- * Values for the Be bus space tag, not to be used directly by MI code.
+ * EISA doesn't have any special needs; just use the generic versions
+ * of these funcions.
  */
-#define	PREP_BUS_SPACE_IO	0x80000000	/* i/o space */
-#define PREP_BUS_SPACE_MEM	0xC0000000	/* mem space */
+struct powerpc_bus_dma_tag eisa_bus_dma_tag = {
+	0,			/* _bounce_thresh */
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	NULL,			/* _dmamap_sync */
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap,
+};
 
-/*
- * Address conversion as seen from a PCI master.
- */
-#define MPC105_DIRECT_MAPPED_SPACE	0x80000000
-#define PHYS_TO_BUS_MEM(t, x)	((x) | MPC105_DIRECT_MAPPED_SPACE)
-#define BUS_MEM_TO_PHYS(t, x)	((x) & ~MPC105_DIRECT_MAPPED_SPACE)
+void
+eisa_attach_hook(struct device *parent, struct device *self,
+    struct eisabus_attach_args *eba)
+{
+	/* Nothing to do. */
+}
 
-#ifdef _KERNEL
-extern struct powerpc_bus_space prep_io_space_tag;
-extern struct powerpc_bus_space prep_isa_io_space_tag;
-extern struct powerpc_bus_space prep_eisa_io_space_tag;
-extern struct powerpc_bus_space prep_mem_space_tag;
-extern struct powerpc_bus_space prep_isa_mem_space_tag;
-extern struct powerpc_bus_space prep_eisa_mem_space_tag;
-#endif
+int
+eisa_maxslots(eisa_chipset_tag_t ec)
+{
 
-#include <powerpc/bus.h>
+	/*
+	 * Always try 16 slots.
+	 */
+	return (16);
+}
 
-#endif /* _PREP_BUS_H_ */
+int
+eisa_intr_map(eisa_chipset_tag_t ec, u_int irq, eisa_intr_handle_t *ihp)
+{
+	if (irq >= I8259_INTR_NUM) {
+		printf("eisa_intr_map: bad IRQ %d\n", irq);
+		*ihp = -1;
+		return 1;
+	}
+	if (irq == 2) {
+		printf("eisa_intr_map: changed IRQ 2 to IRQ 9\n");
+		irq = 9;
+	}
+
+	*ihp = irq;
+	return 0;
+}
+
+const char *
+eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
+{
+	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
+
+	if (ih == 0 || (ih & 0xff) >= I8259_INTR_NUM || ih == 2)
+		panic("eisa_intr_string: bogus handle 0x%x", ih);
+
+	snprintf(irqstr, sizeof(irqstr), "irq %d", ih);
+	return (irqstr);
+	
+}
+
+const struct evcnt *
+eisa_intr_evcnt(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
+}
+
+void *
+eisa_intr_establish(eisa_chipset_tag_t ec, eisa_intr_handle_t ih,
+    int type, int level, int (*func)(void *), void *arg)
+{
+	int irq;
+
+	irq = ih;
+	return (void *)intr_establish(irq, type, level, func, arg);
+}
+
+void
+eisa_intr_disestablish(eisa_chipset_tag_t ec, void *cookie)
+{
+
+	intr_disestablish(cookie);
+}
+
+int
+eisa_conf_read_mem(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_mem *ecm)
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
+}
+
+int
+eisa_conf_read_irq(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_irq *eci)
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
+}
+
+int
+eisa_conf_read_dma(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_dma *ecd)
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
+}
+
+int
+eisa_conf_read_io(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_io *ecio)
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
+}
