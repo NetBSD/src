@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.26 2006/02/13 02:37:05 gdamore Exp $ */
+/* $NetBSD: machdep.c,v 1.27 2006/02/23 03:51:40 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2006/02/13 02:37:05 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2006/02/23 03:51:40 gdamore Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -147,6 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2006/02/13 02:37:05 gdamore Exp $")
 
 #include <evbmips/alchemy/board.h>
 #include <mips/alchemy/dev/aupcivar.h>
+#include <mips/alchemy/dev/aupcmciavar.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
@@ -549,4 +550,13 @@ aupci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	if (board->ab_pci_intr_map != NULL)
 		return (board->ab_pci_intr_map(pa, ihp));
 	return 1;
+}
+
+struct aupcmcia_machdep *
+aupcmcia_machdep(void)
+{
+	const struct alchemy_board *board;
+
+	board = board_info();
+	return (board->ab_pcmcia);
 }
