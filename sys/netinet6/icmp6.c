@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.113.2.1 2006/02/02 22:16:11 rpaulo Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.113.2.2 2006/02/23 16:09:01 rpaulo Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.113.2.1 2006/02/02 22:16:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.113.2.2 2006/02/23 16:09:01 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1972,7 +1972,7 @@ icmp6_rip6_input(mp, off)
 			if (opts)
 				m_freem(opts);
 		} else
-			sorwakeup(last->in6p_socket);
+			sorwakeup(last->inp_socket);
 	} else {
 		m_freem(m);
 		ip6stat.ip6s_delivered--;
@@ -2664,7 +2664,7 @@ icmp6_ctloutput(op, so, level, optname, mp)
 {
 	int error = 0;
 	int optlen;
-	struct in6pcb *in6p = sotoin6pcb(so);
+	struct inpcb *inp = sotoinpcb(so);
 	struct mbuf *m = *mp;
 
 	optlen = m ? m->m_len : 0;
@@ -2687,11 +2687,11 @@ icmp6_ctloutput(op, so, level, optname, mp)
 				break;
 			}
 			p = mtod(m, struct icmp6_filter *);
-			if (!p || !in6p->in6p_icmp6filt) {
+			if (!p || !inp->in6p_icmp6filt) {
 				error = EINVAL;
 				break;
 			}
-			bcopy(p, in6p->in6p_icmp6filt,
+			bcopy(p, inp->in6p_icmp6filt,
 				sizeof(struct icmp6_filter));
 			error = 0;
 			break;
@@ -2711,14 +2711,14 @@ icmp6_ctloutput(op, so, level, optname, mp)
 		    {
 			struct icmp6_filter *p;
 
-			if (!in6p->in6p_icmp6filt) {
+			if (!inp->in6p_icmp6filt) {
 				error = EINVAL;
 				break;
 			}
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(struct icmp6_filter);
 			p = mtod(m, struct icmp6_filter *);
-			bcopy(in6p->in6p_icmp6filt, p,
+			bcopy(inp->in6p_icmp6filt, p,
 				sizeof(struct icmp6_filter));
 			error = 0;
 			break;
