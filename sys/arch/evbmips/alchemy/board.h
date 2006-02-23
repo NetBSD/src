@@ -1,4 +1,4 @@
-/*	$NetBSD: board.h,v 1.2 2006/02/13 02:37:05 gdamore Exp $	*/
+/*	$NetBSD: board.h,v 1.3 2006/02/23 03:51:40 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -42,19 +42,15 @@ struct alchemy_board {
 	void		(*ab_init)(void);
 	int		(*ab_pci_intr_map)(struct pci_attach_args *,
 					   pci_intr_handle_t *);
+
 	void		(*ab_reboot)(void);
 	void		(*ab_poweroff)(void);
+
+	struct aupcmcia_machdep	*ab_pcmcia;
 
 	/*
 	 * XXX: csb250 (and perhaps others) will require pci_idsel
 	 * entry point
-	 *
-	 * XXX: almost certainly some PCMCIA logic will have to be
-	 * added
-	 *
-	 * XXX: some boards have hardware reset better than yamon, and
-	 * power management interfaces -- maybe we should add hooks
-	 * here
 	 */
 };
 
