@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2006/02/21 04:32:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2006/02/23 05:37:49 thorpej Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2006/02/21 04:32:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2006/02/23 05:37:49 thorpej Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -571,7 +571,7 @@ device_register(struct device *dev, void *aux)
 		 */
 
 		if (bin->bus == BI_BUS_ISA &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_name, "isa")) {
+		    !strcmp(device_parent(dev)->dv_cfdata->cf_name, "isa")) {
 			struct isa_attach_args *iaa = aux;
 
 			/* compare IO base address */
@@ -582,7 +582,7 @@ device_register(struct device *dev, void *aux)
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_name, "pci")) {
+		    !strcmp(device_parent(dev)->dv_cfdata->cf_name, "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
 

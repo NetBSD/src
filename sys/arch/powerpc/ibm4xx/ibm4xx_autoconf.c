@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.5 2006/02/21 04:25:29 thorpej Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.6 2006/02/23 05:37:47 thorpej Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.5 2006/02/21 04:25:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.6 2006/02/23 05:37:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.5 2006/02/21 04:25:29 thorpej 
 void
 ibm4xx_device_register(struct device *dev, void *aux)
 {
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 
 	if (strcmp(dev->dv_cfdata->cf_name, "emac") == 0 &&
 	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {

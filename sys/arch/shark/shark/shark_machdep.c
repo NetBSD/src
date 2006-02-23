@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.21 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.22 2006/02/23 05:37:48 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.21 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.22 2006/02/23 05:37:48 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -423,13 +423,13 @@ ofw_device_register(struct device *dev, void *aux)
 		oba = aux;
 	} else if (parent == NULL) {
 		return;
-	} else if (parent == dev->dv_parent
+	} else if (parent == device_parent(dev)
 		   && !strcmp(parent->dv_cfdata->cf_name, "ofisa")) {
 		struct ofisa_attach_args *aa = aux;
 		oba = &aa->oba;
 #if NWD > 0 || NSD > 0 || NCD > 0
-	} else if (dev->dv_parent->dv_parent != NULL
-		   && parent == dev->dv_parent->dv_parent
+	} else if (device_parent(device_parent(dev)) != NULL
+		   && parent == device_parent(device_parent(dev))
 		   && !strcmp(parent->dv_cfdata->cf_name, "wdc")) {
 #if NSD > 0 || NCD > 0
 		if (!strcmp(cd_name, "atapibus")) {
@@ -451,7 +451,7 @@ ofw_device_register(struct device *dev, void *aux)
 		return;
 #endif /* NWD > 0 */
 #if NSD > 0 || NCD > 0
-	} else if (scsipidev == dev->dv_parent
+	} else if (scsipidev == device_parent(dev)
 	    && (!strcmp(cd_name, "sd") || !strcmp(cd_name, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 		char *cp = strchr(boot_component, '@');

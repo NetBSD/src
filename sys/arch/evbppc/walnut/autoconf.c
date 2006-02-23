@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2006/02/18 05:04:11 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2006/02/23 05:37:47 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2006/02/18 05:04:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2006/02/23 05:37:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -93,7 +93,7 @@ cpu_rootconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 
 	if (strcmp(dev->dv_cfdata->cf_name, "com") == 0 &&
 	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.46 2006/02/21 04:32:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47 2006/02/23 05:37:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.46 2006/02/21 04:32:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2006/02/23 05:37:49 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -261,8 +261,8 @@ scsi_find(dev_t bdev)
 
 		for (scsibus = TAILQ_FIRST(&alldevs); scsibus;
 					scsibus = TAILQ_NEXT(scsibus, dv_list))
-			if (scsibus->dv_parent
-			    && !strcmp(tname, scsibus->dv_parent->dv_xname))
+			if (device_parent(scsibus)
+			    && !strcmp(tname, device_parent(scsibus)->dv_xname))
 				break;
 	}
 	if (!scsibus)

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.109 2006/02/20 19:00:27 cdi Exp $ */
+/*	$NetBSD: autoconf.c,v 1.110 2006/02/23 05:37:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.109 2006/02/20 19:00:27 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.110 2006/02/23 05:37:48 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -953,7 +953,7 @@ dev_compatible(struct device *dev, void *aux, char *bpname)
 	 *
 	 * If this is a PCI device, find it's device class and try that.
 	 */
-	if ((bus_class(dev->dv_parent)) == BUSCLASS_PCI) {
+	if ((bus_class(device_parent(dev))) == BUSCLASS_PCI) {
 		struct pci_attach_args *pa = aux;
 
 		DPRINTF(ACDB_BOOTDEV,
@@ -1083,7 +1083,7 @@ instance_match(struct device *dev, void *aux, struct bootpath *bp)
 	/*
 	 * Rank parent bus so we know which locators to check.
 	 */
-	switch (bus_class(dev->dv_parent)) {
+	switch (bus_class(device_parent(dev))) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
 		DPRINTF(ACDB_BOOTDEV,
@@ -1207,12 +1207,12 @@ device_register(struct device *dev, void *aux)
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
 		struct scsibus_softc *sbsc =
-			(struct scsibus_softc *)dev->dv_parent;
+			(struct scsibus_softc *)device_parent(dev);
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
 
 		/* Check the controller that this scsibus is on */
-		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
+		if ((bp-1)->dev != device_parent(&sbsc->sc_dev))
 			return;
 
 		/*
