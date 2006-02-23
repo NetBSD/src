@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.2.2 2006/02/14 02:23:24 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.2.3 2006/02/23 16:11:13 rpaulo Exp $");
 
 #include "opt_inet.h"
 
@@ -864,12 +864,12 @@ in6_selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone)
  * 3. The system default hoplimit.
 */
 int
-in6_selecthlim(in6p, ifp)
-	struct in6pcb *in6p;
+in6_selecthlim(inp, ifp)
+	struct inpcb *inp;
 	struct ifnet *ifp;
 {
-	if (in6p && in6p->in6p_hops >= 0)
-		return (in6p->in6p_hops);
+	if (inp && inp->in6p_hops >= 0)
+		return (inp->in6p_hops);
 	else if (ifp)
 		return (ND_IFINFO(ifp)->chlim);
 	else
