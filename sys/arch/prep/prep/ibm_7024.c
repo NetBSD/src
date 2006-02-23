@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_7043_140.c,v 1.6 2006/02/23 19:44:02 garbled Exp $	*/
+/*	$NetBSD: ibm_7024.c,v 1.1 2006/02/23 19:44:02 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm_7043_140.c,v 1.6 2006/02/23 19:44:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm_7024.c,v 1.1 2006/02/23 19:44:02 garbled Exp $");
 
 #include "opt_openpic.h"
 #if !defined(OPENPIC)
-#error RS/6000 43P 7043-140 require "options OPENPIC" in kernel config file!
+#error RS/6000 7024 require "options OPENPIC" in kernel config file!
 #endif
 
 #include "pci.h"
@@ -58,30 +58,62 @@ __KERNEL_RCSID(0, "$NetBSD: ibm_7043_140.c,v 1.6 2006/02/23 19:44:02 garbled Exp
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-void pci_intr_fixup_ibm_7043_140(int, int, int, int, int *);
-void init_intr_mpic(void);
+void pci_intr_fixup_ibm_7024(int, int, int, int, int *);
+void init_intr_mpic2(void);
 
-struct platform platform_ibm_7043_140 = {
-	"IBM Model 7042/7043 (ED)",		/* model */
+struct platform platform_ibm_7024_E20 = {
+	"IBM Model 7024E20 (c0ED)",		/* model */
 	platform_generic_match,			/* match */
 	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
-	pci_intr_fixup_ibm_7043_140,		/* pci_intr_fixup */
-	init_intr_mpic,				/* init_intr */
+	pci_intr_fixup_ibm_7024,		/* pci_intr_fixup */
+	init_intr_mpic2,			/* init_intr */
 	cpu_setup_unknown,			/* cpu_setup */
 	reset_prep_generic,			/* reset */
 	obiodevs_nodev,				/* obiodevs */
 };
 
-void
-pci_intr_fixup_ibm_7043_140(int bus, int dev, int pin, int swiz, int *line)
-{
+struct platform platform_ibm_7024_E30 = {
+	"IBM Model 7024E30 (c0ED)",		/* model */
+	platform_generic_match,			/* match */
+	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
+	pci_intr_fixup_ibm_7024,		/* pci_intr_fixup */
+	init_intr_mpic2,			/* init_intr */
+	cpu_setup_unknown,			/* cpu_setup */
+	reset_prep_generic,			/* reset */
+	obiodevs_nodev,				/* obiodevs */
+};
 
-	if (*line >= 1 && *line < OPENPIC_INTR_NUM - 3)
-		*line += I8259_INTR_NUM;
+/*
+  XXX:
+   The 7024 defines it's interrupt map in residual data.  The array below
+   is the interrupt map of a 7024 Model E20.  This will likely break given
+   a PCI card with it's own pci bridge. (or possibly with an E30?)
+*/
+void
+pci_intr_fixup_ibm_7024(int bus, int dev, int pin, int swiz, int *line)
+{
+	static int irqmap[2][5][4] = {
+	      { { 0, 0, 0, 0 },
+		{ 0, 0, 0, 0 },
+		{ 0, 0, 0, 0 },
+		{ 2, 3, 2, 3 },
+		{ 4, 5, 4, 5 },
+	      },
+	      { { 1, 0, 0, 0 },
+		{ 8, 9, 8, 9 },
+		{ 10, 11, 10, 11 },
+		{ 12, 13, 12, 13 },
+		{ 14, 15, 14, 15 }
+	      }
+	};
+
+	if (bus < 2 && dev < 5 && pin < 5)
+		*line = irqmap[bus][dev][pin-1] + I8259_INTR_NUM;
 }
 
+
 void
-init_intr_mpic(void)
+init_intr_mpic2(void)
 {
 	unsigned char *baseaddr = (unsigned char *)0xC0006800;	/* XXX */
 #if NPCI > 0
@@ -95,7 +127,7 @@ init_intr_mpic(void)
 	id = pci_conf_read(&pc, tag, PCI_ID_REG);
 
 	if (PCI_VENDOR(id) == PCI_VENDOR_IBM
-	    && PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC) {
+	    && PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC2) {
 		address = pci_conf_read(&pc, tag, 0x10);
 		if ((address & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM) {
 			address &= PCI_MAPREG_MEM_ADDR_MASK;
@@ -114,9 +146,12 @@ init_intr_mpic(void)
 			else
 				baseaddr = (unsigned char *)
 				    (PREP_BUS_SPACE_MEM | address);
+		} else if ((address & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_IO) {
+			address &= PCI_MAPREG_IO_ADDR_MASK;
+			baseaddr = (unsigned char *) mapiodev(
+			    PREP_BUS_SPACE_IO | address, 0x40000);
 		}
 	}
 #endif
-
 	openpic_init(baseaddr);
 }
