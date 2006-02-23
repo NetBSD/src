@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.214 2005/11/16 22:10:58 uwe Exp $ */
+/*	$NetBSD: autoconf.c,v 1.215 2006/02/23 05:37:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.214 2005/11/16 22:10:58 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.215 2006/02/23 05:37:48 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1617,7 +1617,7 @@ instance_match(struct device *dev, void *aux, struct bootpath *bp)
 	/*
 	 * Rank parent bus so we know which locators to check.
 	 */
-	switch (bus_class(dev->dv_parent)) {
+	switch (bus_class(device_parent(dev))) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
 		DPRINTF(ACDB_BOOTDEV, ("instance_match: mainbus device, "
@@ -1791,12 +1791,12 @@ device_register(struct device *dev, void *aux)
 		struct scsipi_periph *periph = sa->sa_periph;
 		struct scsipi_channel *chan = periph->periph_channel;
 		struct scsibus_softc *sbsc =
-			(struct scsibus_softc *)dev->dv_parent;
+			(struct scsibus_softc *)device_parent(dev);
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
 
 		/* Check the controller that this scsibus is on */
-		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
+		if ((bp-1)->dev != device_parent(&sbsc->sc_dev))
 			return;
 
 		/*

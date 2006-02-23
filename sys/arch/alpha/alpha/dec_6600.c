@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.22 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: dec_6600.c,v 1.23 2006/02/23 05:37:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.22 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.23 2006/02/23 05:37:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ dec_6600_device_register(dev, aux)
 	static int found, initted, diskboot, netboot;
 	static struct device *primarydev, *pcidev, *ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 	struct cfdata *cf = dev->dv_cfdata;
 	const char *name = cf->cf_name;
 
@@ -227,7 +227,7 @@ dec_6600_device_register(dev, aux)
 		while (parent) {
 			if (parent == primarydev)
 				break;
-			parent = parent->dv_parent;
+			parent = device_parent(parent);
 		}
 		if (!parent)
 			return;
@@ -277,7 +277,7 @@ dec_6600_device_register(dev, aux)
 		struct scsipi_periph *periph = sa->sa_periph;
 		int unit;
 
-		if (parent->dv_parent != ctrlrdev)
+		if (device_parent(parent) != ctrlrdev)
 			return;
 
 		unit = periph->periph_target * 100 + periph->periph_lun;
@@ -300,7 +300,7 @@ dec_6600_device_register(dev, aux)
 
 		if (strcmp("atabus", parent->dv_cfdata->cf_name))
 			return;
-		if (parent->dv_parent != ctrlrdev)
+		if (device_parent(parent) != ctrlrdev)
 			return;
 
 		DR_VERBOSE(printf("\nAtapi info: drive: %d, channel %d\n",

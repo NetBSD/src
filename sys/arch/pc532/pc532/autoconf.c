@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.41 2006/02/23 05:37:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.40 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41 2006/02/23 05:37:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -108,7 +108,7 @@ device_register(dev, aux)
 {
 	static int found;
 	static struct device *booted_controller;
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 	const char *name = dev->dv_cfdata->cf_name;
 
 	if (found)
@@ -132,7 +132,7 @@ device_register(dev, aux)
 	    strcmp(name, "cd") == 0)) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (parent->dv_parent != booted_controller)
+		if (device_parent(parent) != booted_controller)
 			return;
 		if (B_UNIT(bootdev) != sa->sa_periph->periph_target)
 			return;

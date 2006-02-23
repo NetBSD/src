@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.9 2006/02/21 04:32:38 thorpej Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.10 2006/02/23 05:37:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -576,7 +576,7 @@ device_register(struct device *dev, void *aux)
 		 * idenfity the device.
 		 */
 		if (bin->bus == BI_BUS_ISA &&
-		    strcmp(dev->dv_parent->dv_cfdata->cf_name, "isa") == 0) {
+		    strcmp(device_parent(dev)->dv_cfdata->cf_name, "isa") == 0) {
 			struct isa_attach_args *iaa = aux;
 
 			/* Compare IO base address */
@@ -587,7 +587,7 @@ device_register(struct device *dev, void *aux)
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
-		    strcmp(dev->dv_parent->dv_cfdata->cf_name, "pci") == 0) {
+		    strcmp(device_parent(dev)->dv_cfdata->cf_name, "pci") == 0) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
 

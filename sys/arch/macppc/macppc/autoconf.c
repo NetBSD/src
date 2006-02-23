@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.46 2006/02/23 05:37:47 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.46 2006/02/23 05:37:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -234,14 +234,14 @@ device_register(dev, aux)
 	    DEVICE_IS(dev, "scsibus") || DEVICE_IS(dev, "atabus"))
 		return;
 
-	if (DEVICE_IS(dev->dv_parent, "atapibus") ||
-	    DEVICE_IS(dev->dv_parent, "atabus") ||
-	    DEVICE_IS(dev->dv_parent, "pci") ||
-	    DEVICE_IS(dev->dv_parent, "scsibus")) {
-		if (dev->dv_parent->dv_parent != parent)
+	if (DEVICE_IS(device_parent(dev), "atapibus") ||
+	    DEVICE_IS(device_parent(dev), "atabus") ||
+	    DEVICE_IS(device_parent(dev), "pci") ||
+	    DEVICE_IS(device_parent(dev), "scsibus")) {
+		if (device_parent(device_parent(dev)) != parent)
 			return;
 	} else {
-		if (dev->dv_parent != parent)
+		if (device_parent(dev) != parent)
 			return;
 	}
 
@@ -263,31 +263,31 @@ device_register(dev, aux)
 	} else
 		addr = strtoul(p + 1, &p, 16);
 
-	if (DEVICE_IS(dev->dv_parent, "mainbus")) {
+	if (DEVICE_IS(device_parent(dev), "mainbus")) {
 		struct confargs *ca = aux;
 
 		if (strcmp(ca->ca_name, "ofw") == 0)		/* XXX */
 			return;
 		if (addr != ca->ca_reg[0])
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "pci")) {
+	} else if (DEVICE_IS(device_parent(dev), "pci")) {
 		struct pci_attach_args *pa = aux;
 
 		if (addr != pa->pa_device)
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "obio")) {
+	} else if (DEVICE_IS(device_parent(dev), "obio")) {
 		struct confargs *ca = aux;
 
 		if (addr != ca->ca_reg[0])
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "scsibus") ||
-		   DEVICE_IS(dev->dv_parent, "atapibus")) {
+	} else if (DEVICE_IS(device_parent(dev), "scsibus") ||
+		   DEVICE_IS(device_parent(dev), "atapibus")) {
 		struct scsipibus_attach_args *sa = aux;
 
 		/* periph_target is target for scsi, drive # for atapi */
 		if (addr != sa->sa_periph->periph_target)
 			return;
-	} else if (DEVICE_IS(dev->dv_parent->dv_parent, "pciide")) {
+	} else if (DEVICE_IS(device_parent(device_parent(dev)), "pciide")) {
 		struct ata_device *adev = aux;
 
 		if (addr != adev->adev_drv_data->drive)
@@ -304,7 +304,7 @@ device_register(dev, aux)
 			return;
 		if (strtoul(p, &p, 16) != adev->adev_drv_data->drive)
 			return;
-	} else if (DEVICE_IS(dev->dv_parent->dv_parent, "wdc")) {
+	} else if (DEVICE_IS(device_parent(device_parent(dev)), "wdc")) {
 		struct ata_device *adev = aux;
 
 		if (addr != adev->adev_drv_data->drive)

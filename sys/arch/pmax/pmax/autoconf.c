@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.68 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.69 2006/02/23 05:37:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.69 2006/02/23 05:37:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ device_register(dev, aux)
 {
 	static int found, initted, scsiboot, netboot;
 	static struct device *ioasicdev;
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 	struct cfdata *cf = dev->dv_cfdata;
 	const char *name = cf->cf_name;
 
@@ -265,7 +265,7 @@ device_register(dev, aux)
 	    strcmp(name, "cd") == 0)) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (parent->dv_parent != booted_controller)
+		if (device_parent(parent) != booted_controller)
 			return;
 		if (booted_unit != sa->sa_periph->periph_target)
 			return;

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.30 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.31 2006/02/23 05:37:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.30 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.31 2006/02/23 05:37:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ dec_kn300_device_register(dev, aux)
 	static int found, initted, diskboot, netboot;
 	static struct device *primarydev, *pcidev, *ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 	struct cfdata *cf = dev->dv_cfdata;
 	const char *name = cf->cf_name;
 
@@ -277,7 +277,7 @@ dec_kn300_device_register(dev, aux)
 		while (parent) {
 			if (parent == primarydev)
 				break;
-			parent = parent->dv_parent;
+			parent = device_parent(parent);
 		}
 		if (!parent)
 			return;
@@ -331,7 +331,7 @@ dec_kn300_device_register(dev, aux)
 		struct scsipi_periph *periph = sa->sa_periph;
 		int unit;
 
-		if (parent->dv_parent != ctrlrdev)
+		if (device_parent(parent) != ctrlrdev)
 			return;
 
 		unit = periph->periph_target * 100 + periph->periph_lun;

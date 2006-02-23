@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 2006/02/23 05:37:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2005/12/11 12:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2006/02/23 05:37:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -172,7 +172,7 @@ void
 device_register(struct device *dev, void *aux)
 {
 	static int found, initted, scsiboot, netboot;
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 	struct cfdata *cf = dev->dv_cfdata;
 	const char *name = cf->cf_name;
 
@@ -206,7 +206,7 @@ device_register(struct device *dev, void *aux)
 	    strcmp(name, "cd") == 0)) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (parent->dv_parent != booted_controller)
+		if (device_parent(parent) != booted_controller)
 			return;
 		if (booted_unit != sa->sa_periph->periph_target)
 			return;

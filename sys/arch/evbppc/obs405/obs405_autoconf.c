@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405_autoconf.c,v 1.2 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: obs405_autoconf.c,v 1.3 2006/02/23 05:37:47 thorpej Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs405_autoconf.c,v 1.2 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs405_autoconf.c,v 1.3 2006/02/23 05:37:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,9 +52,10 @@ cpu_rootconf(void)
 	setroot(booted_device, booted_partition);
 }
 
-void obs405_device_register(struct device *dev, void *aux, int com_freq)
+void
+obs405_device_register(struct device *dev, void *aux, int com_freq)
 {
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 
 	/* register "com" device */
 	if (strcmp(dev->dv_cfdata->cf_name, "com") == 0 &&

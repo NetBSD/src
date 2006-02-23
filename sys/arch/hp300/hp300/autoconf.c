@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.75 2006/02/21 04:32:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.76 2006/02/23 05:37:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.75 2006/02/21 04:32:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.76 2006/02/23 05:37:47 thorpej Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -643,7 +643,7 @@ findbootdev_slave(ddlist_t *ddlist, int ctlr, int slave, int punit)
 		 * "sd" -> "scsibus" -> "spc"
 		 * "rd" -> "hpibbus" -> "fhpib"
 		 */
-		if (dd->dd_dev->dv_parent->dv_parent != cdd->dd_dev)
+		if (device_parent(device_parent(dd->dd_dev)) != cdd->dd_dev)
 			continue;
 
 		if (dd->dd_slave == slave &&
@@ -719,7 +719,8 @@ setbootdev(void)
 		 */
 		for (cdd = dev_data_list_hpib.lh_first, ctlr = 0;
 		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) {
-			if (cdd->dd_dev == root_device->dv_parent->dv_parent) {
+			if (cdd->dd_dev ==
+			    device_parent(device_parent(root_device))) {
 				/*
 				 * Found it!
 				 */
