@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.51 2006/01/16 21:47:56 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.52 2006/02/23 21:44:57 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -463,14 +463,7 @@ message ftpsource
 {Ponizej masz site %s, katalog, uzytkownika, oraz haslo gotowe do uzycia.
 Jesli "uzytkownik" to "ftp", wtedy haslo nie jest wymagane.
 
-host:		  %s 
-katalog:	  %s 
-katalog:	  %s 
-uzytkownik:	  %s 
-haslo:	 	  %s 
-proxy:	 	  %s 
-transfer katalog: %s 
-} /* fix XLAT */
+}
 
 message email
 {adres e-mail}
@@ -483,9 +476,6 @@ message nfssource
 Pmietaj, ze katalog musi zawierac pliki .tgz oraz, ze musi byc
 dostepny via nfs.
 
-host:		%s 
-katalog:	%s 
-katalog:	%s
 }
 
 message cdromsource
@@ -493,8 +483,6 @@ message cdromsource
 dystrybucja. 
 Pamietaj, ze katalog musi zawierac pliki .tgz.
 
-urzadzenie:	%s 
-katalog:	%s
 }
 
 message localfssource
@@ -502,18 +490,12 @@ message localfssource
 znajduje sie dystrybucja. 
 Pamietaj, ze katalog musi zawierac pliki .tgz.
 
-urzadzenie:	%s 
-system plikow:	%s 
-katalog:	%s 
-katalog:	%s
 }
 
 message localdir
 {Podaj aktualnie zamountowany lokalny katalog, gdzie znajduje sie dystrybucja. 
 Pamietaj, ze katalog musi zawierac pliki .tgz.
 
-katalog:	%s
-katalog:	%s
 }
 
 message filesys
