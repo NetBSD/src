@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_6040.c,v 1.5 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: ibm_6040.c,v 1.6 2006/02/23 19:44:02 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm_6040.c,v 1.5 2005/12/11 12:18:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm_6040.c,v 1.6 2006/02/23 19:44:02 garbled Exp $");
 
 #include <sys/param.h>
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibm_6040.c,v 1.5 2005/12/11 12:18:48 christos Exp $"
 #include <machine/platform.h>
 
 /*
-static void pci_intr_fixup_ibm_6040(int, int, int, int *);
+static void pci_intr_fixup_ibm_6040(int, int, int, int, int *);
 */
 
 static const char *obiodevs_ibm_6040[] = {
