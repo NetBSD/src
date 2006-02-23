@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.36 2006/02/12 20:55:35 macallan Exp $
+# $NetBSD: files.wscons,v 1.37 2006/02/23 08:01:59 macallan Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -72,5 +72,4 @@ file	dev/wscons/tpcalib.c		tpcalib
 file	dev/wscons/mra.c		tpcalib
 
 # generic virtual console support on bitmapped framebuffers
-define	vcons
 file	dev/wscons/wsdisplay_vcons.c		vcons

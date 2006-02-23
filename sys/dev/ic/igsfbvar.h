@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.12 2006/02/16 20:17:16 perry Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.13 2006/02/23 08:01:59 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -98,13 +98,9 @@ struct igsfb_devconfig {
 	((((dc)->dc_hwflags) & (IGSFB_HW_BSWAP | IGSFB_HW_BE_SELECT))	\
 		== IGSFB_HW_BSWAP)
 
-	int dc_nscreens;		/* can do only a single screen */
-
 	int dc_blanked;			/* screen is currently blanked */
 	int dc_curenb;			/* cursor sprite enabled */
 	int dc_mapped;			/* currently in mapped mode */
-
-	struct rasops_info dc_ri;
 
 	/* saved dc_ri.ri_ops.putchar */
 	void (*dc_ri_putchar)(void *, int, int, u_int, long);
@@ -114,6 +110,10 @@ struct igsfb_devconfig {
 
 	/* precomputed bit table for cursor sprite 1bpp -> 2bpp conversion */
 	uint16_t dc_bexpand[256];
+	
+	/* virtual console support */
+	struct vcons_data dc_vd;
+	struct vcons_screen dc_console;
 };
 
 
