@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.24 2006/01/15 20:41:00 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.25 2006/02/23 21:44:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -55,6 +55,11 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+static void
+src_legend(menudesc *menu, const char *legend, const char *text)
+{
+        wprintw(menu->mw, "%-25s %.50s", MSG_XLAT(legend), text);
+}
 }
 
 default y=12, no exit, scrollable;
@@ -227,30 +232,27 @@ menu distset, title MSG_Select_your_distribution;
 	option MSG_Full_installation, exit;
 	option MSG_Custom_installation, exit, action { customise_sets(); };
 
-menu ftpsource, title MSG_Change;
-	display action {
-		msg_clear();
-		msg_table_add(MSG_ftpsource, arg, ftp.host, ftp.dir, set_dir,
-		    ftp.user, strcmp(ftp.user, "ftp") == 0 || ftp.pass[0] == 0
-			? ftp.pass : msg_string(MSG_hidden),
-		    ftp.proxy, xfer_dir);
-		};
-	option MSG_Host, action
-		{ msg_prompt_win(MSG_Host, -1, 12, 0, 0,
+menu ftpsource, y=-4, x=0, w=70, no box, no clear,
+	    exitstring MSG_Get_Distribution;
+	display action { msg_display(MSG_ftpsource, arg); };
+	option {wprintw(menu->mw, "%25s %s", MSG_XLAT(MSG_Host), ftp.host);},
+		action { msg_prompt_win(MSG_Host, -1, 12, 0, 0,
 				ftp.host, ftp.host, sizeof ftp.host); };
-	option MSG_Base_dir, action
-		{ msg_prompt_win(MSG_Base_dir, -1, 12, 0, 0,
+	option {wprintw(menu->mw, "%25s %s", MSG_XLAT(MSG_Base_dir), ftp.dir);},
+		action { msg_prompt_win(MSG_Base_dir, -1, 12, 0, 0,
 				ftp.dir, ftp.dir, sizeof ftp.dir); };
-	option MSG_Set_dir, action
-		{ msg_prompt_win(MSG_Set_dir, -1, 12, 0, 0,
+	option {wprintw(menu->mw, "%25s %s", MSG_XLAT(MSG_Set_dir), set_dir);},
+		action { msg_prompt_win(MSG_Set_dir, -1, 12, 0, 0,
 				set_dir, set_dir, sizeof set_dir); };
-	option MSG_User, action
-		{ msg_prompt_win(MSG_User, -1, 12, 0, 0,
+	option {wprintw(menu->mw, "%25s %s", MSG_XLAT(MSG_User), ftp.user);},
+		action { msg_prompt_win(MSG_User, -1, 12, 0, 0,
 				ftp.user, ftp.user, sizeof ftp.user);
 			ftp.pass[0] = 0;
 		};
-	option MSG_Password, action
-		{ if (strcmp(ftp.user, "ftp") == 0)
+	option {wprintw(menu->mw, "%25s %s", MSG_XLAT(MSG_Password),
+		    strcmp(ftp.user, "ftp") == 0 || ftp.pass[0] == 0
+			? ftp.pass : msg_string(MSG_hidden));},
+		action { if (strcmp(ftp.user, "ftp") == 0)
 			msg_prompt_win(MSG_email, -1, 12, 0, 0,
 					ftp.pass, ftp.pass, sizeof ftp.pass);
 		  else {
@@ -258,8 +260,8 @@ menu ftpsource, title MSG_Change;
 					ftp.pass, sizeof ftp.pass);
 		  }
 		};
-	option MSG_Proxy, action
-		{ msg_prompt_win(MSG_Proxy, -1, 12, 0, 0,
+	option {wprintw(menu->mw, "%25s %s", MSG_XLAT(MSG_Proxy), ftp.proxy);},
+		action { msg_prompt_win(MSG_Proxy, -1, 12, 0, 0,
 				ftp.proxy, ftp.proxy, sizeof ftp.proxy);
 		  if (strcmp(ftp.proxy, "") == 0) {
 			unsetenv("ftp_proxy");
@@ -269,24 +271,22 @@ menu ftpsource, title MSG_Change;
 			setenv("http_proxy", ftp.proxy, 1);
 		  }
 		};
-	option MSG_Xfer_dir, action
-		{ msg_prompt_win(MSG_Xfer_dir, -1, 12, 0, 0,
+	option {wprintw(menu->mw, "%25s %s", MSG_XLAT(MSG_Xfer_dir), xfer_dir);},
+		action { msg_prompt_win(MSG_Xfer_dir, -1, 12, 0, 0,
 				xfer_dir, xfer_dir, sizeof xfer_dir); };
-	option MSG_Get_Distribution, exit;
 
-menu nfssource, title MSG_Change;
-	display action
-		{ msg_display(MSG_nfssource, nfs_host, nfs_dir, set_dir); };
-	option MSG_Host, action
-		{ msg_prompt_win(MSG_Host, -1, 12, 0, 0,
+menu nfssource, y=-4, x=0, w=70, no box, no clear,
+	    exitstring MSG_Continue;
+	display action { msg_display(MSG_nfssource); };
+	option {src_legend(menu, MSG_Host, nfs_host);},
+		action { msg_prompt_win(MSG_Host, -1, 12, 0, 0,
 				nfs_host, nfs_host, sizeof nfs_host); };
-	option MSG_Base_dir, action
-		{ msg_prompt_win(MSG_Base_dir, -1, 12, 0, 0,
+	option {src_legend(menu, MSG_Base_dir, nfs_dir);},
+		action { msg_prompt_win(MSG_Base_dir, -1, 12, 0, 0,
 				nfs_dir, nfs_dir, sizeof nfs_dir); };
-	option MSG_Set_dir, action
-		{ msg_prompt_win(MSG_Set_dir, -1, 12, 0, 0,
+	option {src_legend(menu, MSG_Set_dir, set_dir);},
+		action { msg_prompt_win(MSG_Set_dir, -1, 12, 0, 0,
 				set_dir, set_dir, sizeof set_dir); };
-	option MSG_Continue, exit;
 
 menu fdremount, title MSG_What_do_you_want_to_do;
 	option MSG_Try_again, exit, action { *(int *)arg = SET_CONTINUE; };
@@ -304,43 +304,38 @@ menu crypttype, title MSG_Password_cipher, y=16;
 	option MSG_Blowfish_2_7_round, exit, action { yesno = 3; };
 	option MSG_do_not_change, exit, action { yesno = 0; };
 
-menu cdromsource, title MSG_Change;
-	display action
-		{ msg_display(MSG_cdromsource, cdrom_dev, set_dir); };
-	option MSG_Device, action
-		{ msg_prompt_win(MSG_dev, -1, 12, 0, 0,
+menu cdromsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
+	display action { msg_display(MSG_cdromsource); };
+	option {src_legend(menu, MSG_Device, cdrom_dev);},
+		action { msg_prompt_win(MSG_dev, -1, 12, 0, 0,
 				cdrom_dev, cdrom_dev, sizeof cdrom_dev); };
-	option MSG_Set_dir, action
-		{ msg_prompt_win(MSG_Set_dir, -1, 12, 0, 0,
+	option {src_legend(menu, MSG_Set_dir, set_dir);},
+		action { msg_prompt_win(MSG_Set_dir, -1, 12, 0, 0,
 				set_dir, set_dir, sizeof set_dir); };
-	option MSG_Continue, exit;
 
-menu localfssource, title MSG_Change;
-	display action
-		{ msg_display(MSG_localfssource, localfs_dev, localfs_fs,
-				localfs_dir, set_dir); };
-	option MSG_Device, action
-		{ msg_prompt_win(MSG_dev, -1, 12, 0, 0,
+menu localfssource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
+	display action { msg_display(MSG_localfssource); };
+	option {src_legend(menu, MSG_Device, localfs_dev);},
+		action { msg_prompt_win(MSG_dev, -1, 12, 0, 0,
 				localfs_dev, localfs_dev, sizeof localfs_dev);};
-	option MSG_File_system, action
-		{ msg_prompt_win(MSG_filesys, -1, 12, 0, 0,
+	option {src_legend(menu, MSG_File_system, localfs_fs);},
+		action { msg_prompt_win(MSG_filesys, -1, 12, 0, 0,
 				localfs_fs, localfs_fs, sizeof localfs_fs); };
-	option MSG_Base_dir, action
-		{ msg_prompt_win(MSG_Base_dir, -1, 12, 0, 0,
+	option {src_legend(menu, MSG_Base_dir, localfs_dir);},
+		action { msg_prompt_win(MSG_Base_dir, -1, 12, 0, 0,
 				localfs_dir, localfs_dir, sizeof localfs_dir);};
-	option MSG_Set_dir, action
-		{ msg_prompt_win(MSG_Set_dir, -1, 12, 0, 0,
+	option {src_legend(menu, MSG_Set_dir, set_dir);},
+		action { msg_prompt_win(MSG_Set_dir, -1, 12, 0, 0,
 				set_dir, set_dir, sizeof set_dir); };
-	option MSG_Continue, exit;
 
-menu localdirsource, title MSG_Change;
-	display action
-		{ msg_display(MSG_localdir, localfs_dir, set_dir); };
-	option MSG_Base_dir, action
-	    { msg_prompt_win(MSG_Base_dir, -1, 12, 0, 0, localfs_dir, localfs_dir, 60); };
-	option MSG_Set_dir, action
-	    { msg_prompt_win(MSG_Set_dir, -1, 12, 0, 0, set_dir, set_dir, 60); };
-	option MSG_Continue, exit;
+menu localdirsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
+	display action { msg_display(MSG_localdir); };
+	option {src_legend(menu, MSG_Base_dir, localfs_dir);},
+		action { msg_prompt_win(MSG_Base_dir, -1, 12, 0, 0,
+				localfs_dir, localfs_dir, 60); };
+	option {src_legend(menu, MSG_Set_dir, set_dir);},
+		action { msg_prompt_win(MSG_Set_dir, -1, 12, 0, 0,
+				set_dir, set_dir, 60); };
 
 menu namesrv6, title MSG_Select_IPv6_DNS_server;
 	option "ns9.iij.ad.jp", exit, action
