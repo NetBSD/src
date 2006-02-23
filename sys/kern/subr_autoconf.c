@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.107 2006/02/19 15:01:21 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.108 2006/02/23 05:48:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.107 2006/02/19 15:01:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.108 2006/02/23 05:48:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1618,4 +1618,17 @@ device_locators(device_t dev)
 {
 
 	return (dev->dv_locators);
+}
+
+/*
+ * device_is_a:
+ *
+ *	Returns true if the device is an instance of the specified
+ *	driver.
+ */
+boolean_t
+device_is_a(device_t dev, const char *dname)
+{
+
+	return (strcmp(dev->dv_cfdriver->cd_name, dname) == 0);
 }
