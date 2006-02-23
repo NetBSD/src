@@ -1,4 +1,4 @@
-/* $NetBSD: mtx-1.c,v 1.2 2006/02/23 04:45:55 gdamore Exp $ */
+/* $NetBSD: mtx-1.c,v 1.3 2006/02/23 04:52:49 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.2 2006/02/23 04:45:55 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.3 2006/02/23 04:52:49 gdamore Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -104,7 +104,6 @@ mtx1_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * used on each slot.
 	 */
 	static const int irqmap[8/*device*/][4/*pin*/] = {
-		{ 
 		{  1,  2, -1, -1 },	/* IDSEL 0 - Adapter A - Slot 0 */
 		{  1,  2, -1, -1 },	/* IDSEL 1 - Adapter A - Slot 1 */
 		{  4,  5, -1, -1 },	/* IDSEL 2 - Adapter B - Slot 0 */
@@ -114,7 +113,6 @@ mtx1_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		{  1,  2, -1, -1 },	/* IDSEL 5 - Adapter C - Slot 1 */
 		{  4,  5, -1, -1 },	/* IDSEL 6 - Adapter D - Slot 0 */
 		{  5,  4, -1, -1 },	/* IDSEL 7 - Adapter D - Slot 1 */
-		}
 	};
 	int	pin, dev, irq;
 
