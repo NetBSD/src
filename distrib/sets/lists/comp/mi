@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.854 2006/02/20 00:34:30 yamt Exp $
+#	$NetBSD: mi,v 1.855 2006/02/24 12:49:16 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5237,6 +5237,7 @@
 ./usr/share/man/cat9/fdavail.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fdcheckstd.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fdclear.0			comp-sys-catman		.cat
+./usr/share/man/cat9/fdclone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fdcloseexec.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fdcopy.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fddi_addmulti.0		comp-sys-catman		.cat
@@ -9185,6 +9186,7 @@
 ./usr/share/man/man9/fdavail.9			comp-sys-man		.man
 ./usr/share/man/man9/fdcheckstd.9		comp-sys-man		.man
 ./usr/share/man/man9/fdclear.9			comp-sys-man		.man
+./usr/share/man/man9/fdclone.9			comp-sys-man		.man
 ./usr/share/man/man9/fdcloseexec.9		comp-sys-man		.man
 ./usr/share/man/man9/fdcopy.9			comp-sys-man		.man
 ./usr/share/man/man9/fddi_addmulti.9		comp-sys-man		.man
