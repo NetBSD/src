@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci_configure_bus.9,v 1.13 2006/02/22 03:07:40 garbled Exp $
+.\"	$NetBSD: pci_configure_bus.9,v 1.14 2006/02/24 21:57:22 wiz Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -219,14 +219,14 @@ pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func,
     pcireg_t id)
 {
 
-	if ((PCI_VENDOR(id) == PCI_VENDOR_IBM &&
+	if ((PCI_VENDOR(id) == PCI_VENDOR_IBM \*[Am]\*[Am]
 	     PCI_PRODUCT(id) == PCI_PRODUCT_IBM_405GP) ||
-	    (PCI_VENDOR(id) == PCI_VENDOR_INTEL &&
+	    (PCI_VENDOR(id) == PCI_VENDOR_INTEL \*[Am]\*[Am]
 	     PCI_PRODUCT(id) == PCI_PRODUCT_INTEL_80960_RP)) {
 		/* Don't configure the bridge and PCI probe. */
 		return 0;
 	}
-	return (PCI_CONF_ALL & ~PCI_CONF_MAP_ROM);
+	return (PCI_CONF_ALL \*[Am] ~PCI_CONF_MAP_ROM);
 }
 .Ed
 .Pp
