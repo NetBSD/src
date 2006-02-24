@@ -1,4 +1,4 @@
-.\" $NetBSD: pw_policy.3,v 1.4 2006/02/18 16:45:01 elad Exp $
+.\" $NetBSD: pw_policy.3,v 1.5 2006/02/24 21:06:50 wiz Exp $
 .\"
 .\" Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\"
@@ -223,7 +223,9 @@ option.
 .Fn pw_policy_load
 returns a
 .Ar pw_policu_t
-on success, or NULL on failure, in which case the
+on success, or
+.Dv NULL
+on failure, in which case the
 .Ar errno
 variable will be set to any of the following values indicating the
 reason for the failure:
@@ -251,7 +253,8 @@ values:
 .It Bq Er EPERM
 The password does not follow the password policy.
 .It Bq Er EFAULT
-NULL pointer was passed as the password.
+.Dv NULL
+pointer was passed as the password.
 .El
 .Pp
 In addition,
