@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.12 2006/02/01 05:51:58 cube Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.13 2006/02/24 12:54:48 pooka Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.12 2006/02/01 05:51:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.13 2006/02/24 12:54:48 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -684,7 +684,7 @@ tap_cdev_open(dev_t dev, int flags, int fmt, struct lwp *l)
  *
  * That magic value is interpreted by sys_open() which then replaces the
  * current file descriptor by the new one (through a magic member of struct
- * proc, p_dupfd).
+ * lwp, l_dupfd).
  *
  * The tap device is flagged as being busy since it otherwise could be
  * externally accessed through the corresponding device node with the cdevsw
