@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.13 2006/02/20 17:08:08 gdamore Exp $ */
+/* $NetBSD: aureg.h,v 1.14 2006/02/24 14:34:31 shige Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,6 +130,16 @@
  *	   1	   1	   0		Low Level Enabled
  *	   1	   1	   1		Both Levels and Both Edges Enabled
  */
+
+/************************************************************************/
+/*************   Programable Serial Controller registers   **************/
+/************************************************************************/
+
+#define	PSC0_BASE		0x011A0000
+#define	PSC1_BASE		0x011B0000
+#define	PSC2_BASE		0x010A0000
+#define	PSC3_BASE		0x010B0000
+
 
 /************************************************************************/
 /**********************   Ethernet MAC registers   **********************/
