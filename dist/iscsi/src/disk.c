@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.4 2006/02/20 08:57:32 agc Exp $ */
+/* $NetBSD: disk.c,v 1.5 2006/02/24 20:47:30 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -860,6 +860,13 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		args->status = 0;
 		break;
 
+	case LOAD_UNLOAD:
+
+		TRACE(TRACE_SCSI_CMD, "LOAD_UNLOAD\n");
+		args->status = 0;
+		args->length = 0;
+		break;
+
 	case READ_CAPACITY:
 
 		TRACE(TRACE_SCSI_CMD, "READ_CAPACITY\n");
@@ -985,6 +992,27 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	case VERIFY:
 		/* For now just set the status to success. */
 		args->status = 0;
+		break;
+
+	case SYNC_CACHE:
+
+		TRACE(TRACE_SCSI_CMD, "SYNC_CACHE\n");
+		args->status = 0;
+		args->length = 0;
+		break;
+
+	case LOG_SENSE:
+
+		TRACE(TRACE_SCSI_CMD, "LOG_SENSE\n");
+		args->status = 0;
+		args->length = 0;
+		break;
+
+	case UNKNOWN_5E:
+
+		TRACE(TRACE_SCSI_CMD, "UNKNOWN_5E\n");
+		args->status = 0;
+		args->length = 0;
 		break;
 
 	case REPORT_LUNS:
