@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2006/02/16 23:26:19 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2006/02/24 19:33:09 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -39,7 +39,8 @@ const char *__strerror __P((int , char *, size_t));
 const char *__strsignal __P((int , char *, size_t));
 char *__dtoa __P((double, int, int, int *, int *, char **));
 void __freedtoa __P((char *));
-int __sysctl __P((int *, unsigned int, void *, size_t *, void *, size_t));
+int __sysctl __P((const int *, unsigned int, void *, size_t *,
+		  const void *, size_t));
 
 struct sigaction;
 int __sigaction_sigtramp __P((int, const struct sigaction *,

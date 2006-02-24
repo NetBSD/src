@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.150 2006/02/09 19:18:57 manu Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.151 2006/02/24 19:33:09 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1099,7 +1099,7 @@ MALLOC_DECLARE(M_SYSCTLDATA);
 typedef void *sysctlfn;
 
 __BEGIN_DECLS
-int	sysctl(int *, u_int, void *, size_t *, const void *, size_t);
+int	sysctl(const int *, u_int, void *, size_t *, const void *, size_t);
 int	sysctlbyname(const char *, void *, size_t *, void *, size_t);
 int	sysctlgetmibinfo(const char *, int *, u_int *,
 			 char *, size_t *, struct sysctlnode **, int);
