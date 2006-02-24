@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.16 2004/09/27 23:02:53 dyoung Exp $	*/
+/*	$NetBSD: optimize.c,v 1.17 2006/02/24 23:41:50 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/optimize.c,v 1.76.2.3 2003/12/22 00:26:36 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: optimize.c,v 1.16 2004/09/27 23:02:53 dyoung Exp $");
+__RCSID("$NetBSD: optimize.c,v 1.17 2006/02/24 23:41:50 drochner Exp $");
 #endif
 #endif
 
@@ -587,7 +587,7 @@ fold_op(s, v0, v1)
 	struct stmt *s;
 	int v0, v1;
 {
-	bpf_int32 a, b;
+	bpf_u_int32 a, b;
 
 	a = vmap[v0].const_val;
 	b = vmap[v1].const_val;
