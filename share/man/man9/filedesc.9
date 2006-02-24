@@ -1,4 +1,4 @@
-.\"     $NetBSD: filedesc.9,v 1.10 2006/02/24 12:47:18 pooka Exp $
+.\"     $NetBSD: filedesc.9,v 1.11 2006/02/24 22:04:15 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,7 +100,7 @@ and are created by system calls specific to the type of object.
 In
 .Nx ,
 six types of objects can be represented by file descriptors: data
-files, pipes, sockets, event queues, crypto and miscellaneous.
+files, pipes, sockets, event queues, crypto, and miscellaneous.
 .Pp
 The kernel maintains a descriptor table for each process which is used
 to translate the external representation of a file descriptor into an
@@ -186,7 +186,7 @@ process.
 .It Fn fdalloc "p" "want" "*result"
 Allocate a file descriptor
 .Fa want
- for process
+for process
 .Fa p .
 The resultant file descriptor is returned in
 .Fa *result .
@@ -201,7 +201,7 @@ file descriptors are available to process
 .Fa p .
 Returns zero on success, or 1 on failure.
 .It Fn fdcheckstd "l"
-Check the standard file descriptors 0, 1, 2 and ensure they are
+Check the standard file descriptors 0, 1, and 2 and ensure they are
 referencing valid file descriptors.
 If they are not, create references to
 .Pa /dev/null .
