@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.200 2006/02/21 04:32:38 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.201 2006/02/24 03:20:22 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.200 2006/02/21 04:32:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.201 2006/02/24 03:20:22 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1220,7 +1220,6 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			  (RF_DeviceConfig_t *));
 		if (d_cfg == NULL)
 			return (ENOMEM);
-		memset((char *) d_cfg, 0, sizeof(RF_DeviceConfig_t));
 		d_cfg->rows = 1; /* there is only 1 row now */
 		d_cfg->cols = raidPtr->numCol;
 		d_cfg->ndevs = raidPtr->numCol;
@@ -2364,11 +2363,12 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 						 raidPtr->Disks[c].dev,
 						 raidPtr->raid_cinfo[c].ci_vp,
 						 &clabel);
-				/* make sure status is noted */
+			/* make sure status is noted */
 			clabel.status = rf_ds_optimal;
-				/* bump the counter */
+			
+			/* bump the counter */
 			clabel.mod_counter = raidPtr->mod_counter;
-
+			
 			raidwrite_component_label(
 						  raidPtr->Disks[c].dev,
 						  raidPtr->raid_cinfo[c].ci_vp,
