@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/10/21 12:14:22 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.3 2006/02/24 22:13:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,22 +44,6 @@ entfernen.
 
 }
 
-message diagcyl
-{Einige der älteren BIOS Chips oder Diagnoseprogramme nutzen den letzten
-Zylinder der Festplatte für Testzwecke. Dies sollte bei moderneren Systemen 
-nicht mehr der Fall sein. Wenn Sie ein altes System haben oder sich nicht
-sicher sind ob Ihres betroffen ist, können Sie den letzten Zylinder Ihrer
-Festplatte ausschliessen. Dieser wird dann nicht genutzt.
-
-Wenn Sie den letzten Zylinder ausschliessen, wird sowohl die reale als auch
-die Geometrie des BIOS Ihrer Festplatte angepasst; Sie brauchen diese somit 
-nicht manuell einzugeben.
-
-Wollen Sie den letzten Zylinder ausschliessen?  
-
-}
-
-/* the %s's will expand into three character strings */
 message dobad144
 {Installiere die Tabelle der defekten Blöcke ...
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.7 2003/06/12 10:51:42 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.8 2006/02/24 22:13:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,19 +40,6 @@
 
 message md_hello
 {Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
-
-}
-
-message diagcyl
-{Certains vieux BIOS ou programmes de diagnostics peuvent utiliser le dernier
-cylindre pour des tests. Cela ne devrait plus etre le cas avec des systèmes
-modernes. Si vous utilisez un vieux système, ou que vous n'etes pas certains
-s'il peut faire cela, vous pouvez exlure le dernier cylindre.
-
-Si vous excluez le dernier cylindre, les géomotries du BIOS et réelles seront
-corrigées, vous n'avez pas besoin de les entrer à nouveau.
-
-Voulez-vous exclure le dernier cylindre ?
 
 }
 

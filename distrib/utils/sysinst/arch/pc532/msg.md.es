@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:32 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3 2006/02/24 22:13:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,9 +42,6 @@ message md_hello
 {Si ha iniciado desde disquette, ahora deberia retirar el disco.
 
 }
-
-message askboot
-{¿Tamaño de la partición de imagenes de arranque en sectores? }
 
 message dobootblks
 {Instalando bloques de arranque en %s....

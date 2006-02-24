@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.3 2004/10/21 12:14:22 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.4 2006/02/24 22:13:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,10 +43,6 @@ message md_hello
 enfernen.
 
 }
-
-message askboot
-{Größe der Bootimages Partition in Sektoren? }
-
 
 message dobootblks
 {Installiere die Bootblöcke auf %s ...
