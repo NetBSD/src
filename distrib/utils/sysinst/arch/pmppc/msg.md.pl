@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.1 2004/03/05 05:36:11 jmc Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.2 2006/02/24 22:13:16 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/10/24 19:43:40 briggs Exp */
 
@@ -42,19 +42,6 @@
 
 message md_hello
 {Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
-
-}
-
-message diagcyl
-{Niektore stare BIOSy lub programy diagnostyczne moga uzywac ostatniego
-cylindra dysku w celach testowych. Nie powinno to byc problemem w nowoczesnych
-systemach. Jesli masz stary system i nie jestes pewnien czy moze on tak dzialac,
-mozesz wylaczyc ostatni cylinder dysku z uzycia.
-
-Jesli to zrobisz, zarowno geometria rzeczywista jak i BIOS zostanie dopasowana, 
-nie musisz jej ponownie wprowadzac.
-
-Czy chcesz wylaczyc ostatni cylinder z uzycia?
 
 }
 

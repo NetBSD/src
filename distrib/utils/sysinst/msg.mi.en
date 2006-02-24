@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.142 2006/02/23 21:44:56 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.143 2006/02/24 22:13:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,9 +136,6 @@ message ask_disk
 message Available_disks
 {Available disks}
 
-message cylinders
-{cylinders}
-
 message heads
 {heads}
 
@@ -185,11 +182,6 @@ choose partition sizes that are exact multiples of your actual
 cylinder size.
 
 Choose your size specifier}
-
-message defaultunit
-{Unless specified with 'M' (megabytes), 'G' (gigabytes), 'c' (cylinders)
-or 's' sector at the end of input, sizes and offsets are in %s.
-}
 
 message ptnsizes
 {You can now change the sizes for the system partitions.  The default is
@@ -371,40 +363,6 @@ message openfail
 {Could not open %s, error message was: %s.
 }
 
-message statfail
-{Can't get properties of %s, error message was: %s.
-}
-
-message unlink_fail
-{I was unable to delete %s, error message was: %s.
-}
-
-message rename_fail
-{I was unable to rename %s to %s, error message was: %s.
-}
-
-message deleting_files
-{As part of the upgrade procedure, the following have to be deleted:
-}
-
-message deleting_dirs
-{As part of the upgrade procedure, the following directories have to be
-deleted (I will rename those that are not empty):
-}
-
-message renamed_dir
-{The directory %s has been renamed to %s because it was not empty.
-}
-
-message cleanup_warn
-{Cleanup of the existing install failed. This may cause the extraction
-of the set to fail.
-}
-
-message nomount
-{Partition %c's type is not 4.2BSD or msdos and therefore does not have
-a mount point.}
-
 message mountfail
 {mount of device /dev/%s%c on %s failed.
 }
@@ -512,13 +470,6 @@ Remember, the directory should contain the .tgz files.
 message filesys
 {file system}
 
-message badlocalsetdir
-{%s is not a directory}
-
-message badsetdir
-{%s does not contain the mandatory installation sets etc.tgz 
-and base.tgz.  Are you sure you've got the right directory?}
-
 message nonet
 {I can not find any network interfaces for use by NetBSD.  You will be
 returned to the previous menu.
@@ -623,10 +574,6 @@ message realdir
 {Could not change to directory %s: %s.  Install aborted.
 }
 
-message ftperror
-{Ftp could not retrieve a file.
-Do you want to try again?}
-
 message xferdir
 {What directory shall I use for %s? }
 
@@ -726,9 +673,6 @@ message badfs
 {It appears that /dev/%s%c is not a BSD file system or the fsck was
 not successful.  The upgrade has been aborted.  (Error number %d.)
 }
-
-message badmount
-{Your file system /dev/%s%c was not successfully mounted.  Upgrade aborted.}
 
 message rootmissing
 { target root is missing %s.
@@ -848,27 +792,8 @@ to the main menu.
 
 Edit the partition table again?}
 
-message not_regular_file
-{Config file %s is not a regular file.\n}
-
-message out_of_memory
-{Out of memory (malloc failed).\n}
-
 message config_open_error
 {Could not open config file %s\n}
-
-message config_read_error
-{Could not read config file %s\n}
-
-message cmdfail
-{Command
-	%s
-failed. I can't continue.}
-
-message upgradeparttype
-{The only suitable partition that was found for NetBSD installation is of
-the old NetBSD/386BSD/FreeBSD partition type. Do you want to change the type
-of this partition to the new NetBSD-only partition type?}
 
 message choose_timezone
 {Please choose the timezone that fits you best from the list below. 
@@ -917,12 +842,6 @@ and is thus empty.  Do you want to set a root password for the system now?}
 message rootsh
 {You can now select which shell to use for the root user. The default is
 /bin/sh, but you may prefer another one.}
-
-message postuseexisting
-{
-Don't forget to check the file system mount points for each of the
-file systems that are to be mounted.  Press <return> to continue.
-}
 
 message no_root_fs
 {
@@ -980,13 +899,11 @@ message local_dir {Local directory}
 message Select_your_distribution {Select your distribution}
 message Full_installation {Full installation}
 message Custom_installation {Custom installation}
-message Change {Change}
 message hidden {** hidden **}
 message Host {Host}
 message Base_dir {Base directory}
 message Set_dir {Set directory}
 message Xfer_dir {Transfer directory}
-message Directory {Directory}
 message User {User}
 message Password {Password}
 message Proxy {Proxy}
@@ -994,8 +911,6 @@ message Get_Distribution {Get Distribution}
 message Continue {Continue}
 message What_do_you_want_to_do {What do you want to do?}
 message Try_again {Try again}
-message Give_up {Give up}
-message Ignore_continue_anyway {Ignore, continue anyway}
 message Set_finished {Set finished}
 message Skip_set {Skip set}
 message Skip_group {Skip set group}
