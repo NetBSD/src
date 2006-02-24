@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.3 2003/06/06 14:31:29 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4 2006/02/24 22:13:16 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.8 2000/12/03 01:54:49 minoura Exp */
 
@@ -46,9 +46,6 @@ message md_hello
 {Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
 
 }
-
-message askboot
-{Rozmiar bootowalnych obrazow partycji w sektorach?}
 
 message dobootblks
 {Instalowanie bootblokow na %s....
