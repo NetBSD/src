@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.15 2005/10/01 09:55:00 scw Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.16 2006/02/24 22:14:10 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/pcap-bpf.c,v 1.67.2.4 2003/11/22 00:06:28 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap-bpf.c,v 1.15 2005/10/01 09:55:00 scw Exp $");
+__RCSID("$NetBSD: pcap-bpf.c,v 1.16 2006/02/24 22:14:10 drochner Exp $");
 #endif
 #endif
 
@@ -153,6 +153,7 @@ pcap_read_bpf(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 	int n = 0;
 	register u_char *bp, *ep;
 	struct bpf_insn *fcode;
+	int pad;
 
 	fcode = p->md.use_bpf ? NULL : p->fcode.bf_insns;
  again:
@@ -280,10 +281,23 @@ pcap_read_bpf(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 			 */
 			bhp->bh_tstamp.tv_usec = bhp->bh_tstamp.tv_usec/1000;
 #endif
+			if (p->linktype == DLT_FDDI) {
+				if (bhp->bh_caplen > PCAP_FDDIPAD)
+					bhp->bh_caplen -= PCAP_FDDIPAD;
+				else
+					bhp->bh_caplen = 0;
+				if (bhp->bh_datalen > PCAP_FDDIPAD)
+					bhp->bh_datalen -= PCAP_FDDIPAD;
+				else
+					bhp->bh_datalen = 0;
+				pad = PCAP_FDDIPAD;
+			} else
+				pad = 0;
 			/*
 			 * XXX A bpf_hdr matches a pcap_pkthdr.
 			 */
-			(*callback)(user, (struct pcap_pkthdr*)bp, bp + hdrlen);
+			(*callback)(user, (struct pcap_pkthdr*)bp, bp + hdrlen
+				+ pad);
 			bp += BPF_WORDALIGN(caplen + hdrlen);
 			if (++n >= cnt && cnt > 0) {
 				p->bp = bp;
