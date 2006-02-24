@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.12 2006/02/23 21:44:57 dsl Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.13 2006/02/24 22:13:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -140,9 +140,6 @@ message ask_disk
 message Available_disks
 {Discos disponibles}
 
-message cylinders
-{cilindros}
-
 message heads
 {cabezas}
 
@@ -190,12 +187,6 @@ tamaños de partición que sean multiples exactos del tamaño real del
 cilindro.
 
 Escoja su especificador de tamaño}
-
-message defaultunit
-{A no ser que haya especificado con «M» (megabytes), «G» (gigabytes), «c»
-(cilindros) o «s» sectores al final de la entrada, los tamaños y
-desplazamientos están en %s.
-}
 
 message ptnsizes
 {Ahora puede cambiar los tamaños de las particiones del sistema.  Por
@@ -378,40 +369,6 @@ message openfail
 {No se ha podido abrir %s, el mensaje de error ha sido: %s.
 }
 
-message statfail
-{No se pueden obtener las propiedades de %s, el mensaje de error ha sido: %s.
-}
-
-message unlink_fail
-{No se ha podido borrar %s, el mensaje de error ha sido: %s.
-}
-
-message rename_fail
-{No he podido renombrar %s a %s, el mensaje de error ha sido: %s.
-}
-
-message deleting_files
-{Como parte del proceso de actualización, se tiene que borrar lo siguiente:
-}
-
-message deleting_dirs
-{Como parte del proceso de actualización, se tienen que borrar los siguientes
-directorios (se renombrarán los que no estén vacíos):
-}
-
-message renamed_dir
-{El directorio %s ha sido renombrado a %s porque no estaba vacío.
-}
-
-message cleanup_warn
-{La limpieza de la instalación existente ha fallado.  Esto puede hacer que
-la extracción del conjunto falle.
-}
-
-message nomount
-{El tipo de partición de %c no es 4.2BSD o msdos, y por lo tanto no tiene
-un punto de montaje.}
-
 message mountfail
 {el montaje del dispositivo /dev/%s%c en %s ha fallado.
 }
@@ -521,14 +478,6 @@ Recuerde, el directorio debe contener los archivos .tgz.
 message filesys
 {sistema de ficheros}
 
-message badlocalsetdir
-{%s no es un directorio}
-
-message badsetdir
-{%s no contiene los conjuntos de instalación obligatorios etc.tgz 
-y base.tgz.  ¿Está seguro de que ha introducido el directorio
-correcto?}
-
 message nonet
 {No se ha podido encontrar ninguna interfaz de red para ser usada por NetBSD.
 Se le devolverá al menú anterior.
@@ -634,10 +583,6 @@ message realdir
 {No se ha podido cambiar el directorio a %s: %s.  Instalación
 interrumpida.
 }
-
-message ftperror
-{Ftp no ha podido descargar un fichero.
-¿Desea intentarlo de nuevo?}
 
 message xferdir
 {¿Qué directorio debería usar para %s? }
@@ -745,10 +690,6 @@ message badfs
 {Parece que /dev/%s%c no es un sistema de ficheros BSD o el fsck no ha sido
 correcto.  La actualización ha sido interrumpida.  (Error número %d.)
 }
-
-message badmount
-{Su sistema de ficheros /dev/%s%c no ha sido montado correctamente.
-Actualización interrumpida.}
 
 message rootmissing
 { el directorio raíz objetivo no existe %s.
@@ -870,28 +811,8 @@ menú principal.
 
 ¿Editar la tabla de particiones de nuevo?}
 
-message not_regular_file
-{El fichero de configuración %s no es un fichero normal.\n}
-
-message out_of_memory
-{Sin memoria (malloc fallido).\n}
-
 message config_open_error
 {No se ha podido abrir el fichero de configuración %s\n}
-
-message config_read_error
-{No se ha podido leer el fichero de configuración %s\n}
-
-message cmdfail
-{La orden
-	%s
-ha fallado.  No se puede continuar.}
-
-message upgradeparttype
-{La unica partición adecuada que se ha encontrado para la instalación de
-NetBSD es del tipo antiguo (NetBSD/386BSD/FreeBSD).  ¿Quiere
-cambiar el tipo de esta partición al nuevo tipo de partición de
-sólo-NetBSD?}
 
 message choose_timezone
 {Por favor, escoja de la siguiente lista la zona horaria que le convenga.  
@@ -943,12 +864,6 @@ el sistema?}
 message rootsh
 {Ahora puede seleccionar que shell quiere usar para el usuario root.  Por
 omisión es /bin/sh, pero podría preferir otra.}
-
-message postuseexisting
-{
-No olvide comprobar los puntos de montaje para cada sistema de ficheros
-que vaya a ser montado.  Presione <return> para continuar.
-}
 
 message no_root_fs
 {
@@ -1006,13 +921,11 @@ message local_dir {Directorio Local}
 message Select_your_distribution {Seleccione su distribución}
 message Full_installation {Instalación completa}
 message Custom_installation {Instalación personalizada}
-message Change {Cambiar}
 message hidden {** oculto **}
 message Host {Máquina}
 message Base_dir {Directorio base}
 message Set_dir {Directorio de conjuntos}
 message Xfer_dir {Directorio a transferir a} /* XXX translation */
-message Directory {Directorio}
 message User {Usuario}
 message Password {Contraseña}
 message Proxy {Proxy}
@@ -1020,8 +933,6 @@ message Get_Distribution {Obtener la distribución}
 message Continue {Continuar}
 message What_do_you_want_to_do {¿Qué desea hacer?}
 message Try_again {Reintentar}
-message Give_up {Abandonar}
-message Ignore_continue_anyway {Ignorar, continuar de todos modos}
 message Set_finished {Conjunto finalizado}
 message Skip_set {Skip set}  /* XXX translation */
 message Skip_group {Skip set group}  /* XXX translation */

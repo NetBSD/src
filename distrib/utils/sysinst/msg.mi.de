@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.28 2006/02/23 21:44:56 dsl Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.29 2006/02/24 22:13:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -138,9 +138,6 @@ message ask_disk
 message Available_disks
 {Verfügbare Festplatten}
 
-message cylinders
-{Zylinder}
-
 message heads
 {Köpfe}
 
@@ -189,12 +186,6 @@ ist es am effizientesten sich Partitionsgrößen auszusuchen, die exakt
 ein Vielfaches der aktuellen Zylindergröße ausmachen.
 
 Wählen Sie Ihre Einheit.}
-
-message defaultunit
-{Solange Sie nicht 'M' (Megabytes), 'G' (Gigabytes), 'c' (Zylinder) oder
-'s' (Sektoren) Ihrer Zahleneingabe anhängen, wird sowohl bei Größen als auch
-Offsets von %s ausgegangen.
-}
 
 message ptnsizes
 {Sie können jetzt die Größen der Systempartitionen verändern. Standardmäßig
@@ -383,42 +374,6 @@ message openfail
 }
 
 
-message statfail
-{Kann Eigenschaften von %s nicht lesen, die Fehlermeldung lautet: %s.
-}
-
-message unlink_fail
-{Ich konnte %s nicht löschen, die Fehermeldung lautet: %s.
-}
-
-message rename_fail
-{Ich konnte %s nicht auf %s umbenennen, die Fehlermeldung lautet: %s.
-}
-
-message deleting_files
-{Folgende Dateien werden im Rahmen dieser Aktualisierung gelöscht:
-}
-
-message deleting_dirs
-{Im Rahmen dieser Aktualisierung werden folgende Verzeichnisse gelöscht
-(ich werde Verzeichnisse die noch Dateien enthalten umbenennen):
-}
-
-message renamed_dir
-{Das Verzeichnis %s wurde zu %s umbenannt, weil es nicht leer ist.
-}
-
-message cleanup_warn
-{Das Löschen nicht mehr benötigter Dateien der bestehenden
-Installation ist fehlgeschlagen. Dadurch kann das Extrahieren der
-Distribution ebenfalls fehlschlagen.
-}
-
-message nomount
-{Bei der Partition %c handelt es sich nicht um ein 4.2BSD oder msdos
-Dateisystem, so daß diese Partition kein Mountverzeichnis hat.
-}
-
 message mountfail
 {Das Mounten des Gerätes /dev/%s%c auf %s ist fehlgeschlagen.
 }
@@ -530,13 +485,6 @@ die Distribution zu finden ist.
 message filesys
 {Dateisystem}
 
-message badlocalsetdir
-{%s ist kein Verzeichnis.}
-
-message badsetdir
-{Die notwendigen Pakete etc.tgz und base.tgz sind in %s nicht vorhanden.
-Sind Sie sicher, daß Sie das richtige Verzeichnis angegeben haben?}
-
 message nonet
 {NetBSD hat keinen bekannten Netzwerkadapter gefunden.
 Zurück zum vorigen Menü.
@@ -647,10 +595,6 @@ message realdir
 {Konnte nicht in das Verzeichnis %s: %s wechseln. Installation abgebrochen.
 }
 
-message ftperror
-{"ftp" konnte eine Datei nicht herunterladen.
-Wollen Sie es erneut versuchen?}
-
 message xferdir
 {Welches Verzeichnis möchten Sie für %s nutzen?}
 
@@ -758,10 +702,6 @@ die Prüfung des Dateisystems (fsck) ist fehlgeschlagen.
 
 Die Aktualisierung wird abgebrochen. (Fehlernummer %d.)
 }
-
-message badmount
-{Das Dateisystem auf /dev/%s%c konnte nicht erfolgreich gemountet werden. Die
-Aktualisierung wird abgebrochen.}
 
 message rootmissing
 { Das Zielverzeichnis %s existiert nicht.
@@ -885,27 +825,8 @@ Hauptmenü zurückkehren.
 Wollen Sie die Partitionstabelle erneut editieren?}
 
 
-message not_regular_file
-{Die Konfigurationsdatei %s ist keine reguläre Datei.\n}
-
-message out_of_memory
-{Nicht genug freier Arbeitsspeicher (malloc ist fehlgeschlagen).\n}
-
 message config_open_error
 {Konnte Konfigurationsdatei %s nicht öffnen.\n}
-
-message config_read_error
-{Konnte Konfigurationsdatei %s nicht lesen.\n}
-
-message cmdfail
-{Das Kommando
-	%s
-ist fehlgeschlagen. Der Vorgang muss abgebrochen werden.}
-
-message upgradeparttype
-{Die einzige für NetBSD nutzbare Partition hat den alten
-NetBSD/386BSD/FreeBSD Typ. Möchten Sie den Typ dieser Partition in den
-aktuellen nur-NetBSD Partitionstyp ändern?}
 
 message choose_timezone
 {Bitte wählen Sie die für Sie passende Zeitzone aus der folgenden Liste aus.
@@ -957,12 +878,6 @@ message rootsh
 {Sie können jetzt die Standardshell für Benutzer "root" auswählen.
 Die Vorgabe dafür ist /bin/sh, aber vielleicht bevorzugen Sie eine andere
 Shell.}
-
-message postuseexisting
-{
-Vergessen Sie nicht alle Mountverzeichnisse für jedes Dateisystem, das
-gemountet werden soll, zu prüfen. Drücken Sie die Eingabetaste um fortzufahren.
-}
 
 message no_root_fs
 {
@@ -1016,13 +931,11 @@ message local_dir {Lokales Verzeichnis}
 message Select_your_distribution {Wählen Sie Ihre Pakete}
 message Full_installation {Volle Installation}
 message Custom_installation {Benutzerdefinierte Installation}
-message Change {Ändern}
 message hidden {** versteckt **}
 message Host {Host}
 message Base_dir {Basispfad}
 message Set_dir {Verzeichnis}
 message Xfer_dir {Zwischenspeicher}
-message Directory {Verzeichnis}
 message User {Benutzer}
 message Password {Passwort}
 message Proxy {Proxy}
@@ -1030,8 +943,6 @@ message Get_Distribution {Distribution herunterladen}
 message Continue {Weiter}
 message What_do_you_want_to_do {Was möchten Sie tun?}
 message Try_again {Versuchen Sie es erneut}
-message Give_up {Aufgeben}
-message Ignore_continue_anyway {Ignorieren und dennoch fortsetzen}
 message Set_finished {Paket fertig}
 message Skip_set {Paket skip}	/* XXX */
 message Skip_group {Paket skip group}	/* XXX */

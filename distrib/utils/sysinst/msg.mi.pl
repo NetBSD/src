@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.52 2006/02/23 21:44:57 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.53 2006/02/24 22:13:16 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -136,9 +136,6 @@ message ask_disk
 message Available_disks
 {Dostepne dyski}
 
-message cylinders
-{cylindry}
-
 message heads
 {glowice}
 
@@ -182,11 +179,6 @@ bardziej wydajne jest podawanie rozmiaru dysku, ktore sa
 wielokrotnoscia aktualnego rozmiaru cylindra.
 
 Wybierz specyfikator rozmiaru}
-
-message defaultunit
-{Jezeli nie wybrales 'M' (megabajty), 'G' (gigabajty), 'c' (cylindry)
-lub 's' sektory rozmiary i przesuniecia podawane sa w %s.
-}
 
 message ptnsizes
 {Mozesz teraz zmienic rozmiary partycji systemowych. Domyslne ustawienia
@@ -367,39 +359,6 @@ message openfail
 {Nie moglem otworzyc %s, blad: %s.
 }
 
-message statfail
-{Nie moglem pobrac wlasciwosci %s, blad: %s.
-}
-
-message unlink_fail
-{Nie moglem skasowac %s, blad: %s.
-}
-
-message rename_fail
-{Nie moglem zmienic nazwy %s na %s, blad: %s.
-}
-
-message deleting_files
-{Jako czesc procedury aktualizacji, ponizsze pliki musza zostac usuniete:
-}
-
-message deleting_dirs
-{Jako czesc procedury aktualizacji, ponizsze katalogi musza zostac usuniete:
-(Zmienie nazwy tych, ktore nie sa puste):
-}
-
-message renamed_dir
-{Katalog %s zostal przezwany na %s poniewaz nie byl pusty.
-}
-
-message cleanup_warn
-{Wyczyszczenie istniejacej instalacji nie powiodlo sie. Moze to spowodowac
-niepowodzenie przy rozpakowywaniu pakietow.
-}
-
-message nomount
-{Typ partycji %c to nie 4.2BSD lub msdos i dlatego nie ma ona swojego mountpoint.}
-
 message mountfail
 {zamountowanie urzadzenia /dev/%s%c na %s nie powiodlo sie.
 }
@@ -500,13 +459,6 @@ Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 message filesys
 {system plikow}
-
-message badlocalsetdir
-{%s nie jest katalogiem}
-
-message badsetdir
-{%s nie zawiera wymaganych pakietow instalacyjnych etc.tgz, 
-base.tgz.  Jestes pewien, ze podales dobry katalog ?}
 
 message nonet
 {Nie znalazlem zadnych interfejsow sieciowych do uzycia z NetBSD.
@@ -615,10 +567,6 @@ message realdir
 {Nie moglem przejsc do katalogu %s: %s.  Instalacja przerwana.
 }
 
-message ftperror
-{Ftp nie moze sciagnac pliku.
-Czy chcesz sprobowac jeszcze raz?}
-
 message xferdir
 {Jakiego katalogu powinienem uzyc dla %s? }
 
@@ -716,9 +664,6 @@ message badfs
 {Wyglada na to, ze /dev/%s%c nie jest systemem plikow BSD albo nie powiodlo sie
 jego sprawdzenie. Aktualizacja zostala przerwana. (Blad numer %d.)
 }
-
-message badmount
-{System plikow /dev/%s%c nie zostal pomyslnie zamountowany. Aktualizacja przerwana.}
 
 message rootmissing
 { docelowy / jest zagubiony %s.
@@ -833,27 +778,8 @@ i powrocic do glownego menu.
 
 Edytowac tablice partycji ponownie ?}
 
-message not_regular_file
-{Plik konfiguracyjny %s nie jest plikiem regularnym.\n}
-
-message out_of_memory
-{Za malo pamieci (alokacja pamieci nie powiodla sie).\n}
-
 message config_open_error
 {Nie moglem otworzyc pliku konfiguracyjnego %s\n}
-
-message config_read_error
-{Nie moglem odczytac pliku konfiguracyjnego %s\n}
-
-message cmdfail
-{Polecenie
-	%s
-nie powiodlo sie. Nie moge kontynuowac.}
-
-message upgradeparttype
-{Jedyna odpowienid partycja, ktora zostala znaleziona dla instalacji NetBSD
-jest starego typu NetBSD/386BSD/FreeBSD. Czy chcesz zmienic typ tej partycji
-na nowa partycje tylko dla NetBSD?}
 
 message choose_timezone
 {Wybierz strefe czasowa, ktora najlepiej ci odpowiada z ponizszej listy. 
@@ -902,12 +828,6 @@ i dlatego jest puste. Czy chcesz ustawic haslo dla root'a teraz?}
 message rootsh
 {Mozesz  teraz wybrac, ktorej powloki ma uzywac uzytkownik root. Domyslnie
 jest to /bin/sh, ale moze preferujesz inna.}
-
-message postuseexisting
-{
-Nie zapomnij zamountowac wszystkich systemow plikow, ktorych chcesz
-uzywac w systemie. Nacisnij <enter> aby kontynuowac.
-}
 
 message no_root_fs
 {
@@ -961,13 +881,11 @@ message local_dir {Lokalny katalog}
 message Select_your_distribution {Wybierz swoja dystrybucje}
 message Full_installation {Pelna instalacja}
 message Custom_installation {Inna instalacja}
-message Change {Zmien}
 message hidden {** ukryte **}
 message Host {Host}
 message Base_dir {Katalog}
 message Set_dir {Katalog}
 message Xfer_dir {Transfer Katalog} /* fix XLAT */
-message Directory {Katalog}
 message User {Uzytkownik}
 message Password {Haslo}
 message Proxy {Proxy}
@@ -975,8 +893,6 @@ message Get_Distribution {Sciagnij Dystrybucje}
 message Continue {Kontynuuj}
 message What_do_you_want_to_do {Co chcesz zrobic?}
 message Try_again {Sprobowac jeszcze raz}
-message Give_up {Poddac sie}
-message Ignore_continue_anyway {Zignorowac, kontynuowac}
 message Set_finished {Ustawianie zakonczone}
 message Skip_set {Skip set}  /* XXX translate */
 message Skip_group {Skip set group}  /* XXX translate */

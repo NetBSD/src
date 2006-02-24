@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.13 2003/06/12 10:51:39 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.14 2006/02/24 22:13:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,20 +43,6 @@ message md_hello
 
 }
 
-message diagcyl
-{Certains vieux BIOS ou programmes de diagnostics peuvent utiliser le dernier
-cylindre pour des tests. Cela ne devrait plus etre le cas avec des systèmes
-modernes. Si vous utilisez un vieux système, ou que vous n'etes pas certains
-s'il peut faire cela, vous pouvez exlure le dernier cylindre.
-
-Si vous excluez le dernier cylindre, les géomotries du BIOS et réelles seront
-corrigées, vous n'avez pas besoin de les entrer à nouveau.
-
-Voulez-vous exclure le dernier cylindre ?
-
-}
-
-/* the %s's will expand into three character strings */
 message dobad144
 {Installation de la table des bad block
 }

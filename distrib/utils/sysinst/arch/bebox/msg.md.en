@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.18 2003/06/12 10:51:39 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.19 2006/02/24 22:13:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,21 +43,6 @@ message md_hello
 
 }
 
-message diagcyl
-{Some old BIOSs or old diagnostic programs may use the last cylinder of
-the disk for test purposes. This should no longer be the case with
-modern systems. If you have an old system and are uncertain if it
-may do this, you can exclude the last cylinder of your hard disk
-from use.
-
-If you exclude the last cylinder, both the real and BIOS geometry will
-be adjusted, you do not need to reenter them.
-
-Do you wish to exclude the last cylinder?
-
-}
-
-/* the %s's will expand into three character strings */
 message dobad144
 {Installing the bad block table ...
 }

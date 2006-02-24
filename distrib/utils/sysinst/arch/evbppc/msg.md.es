@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:32 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3 2006/02/24 22:13:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,21 +43,6 @@ message md_hello
 
 }
 
-message diagcyl
-{Algunas BIOS viejas o programas de diagnostico antiguos pueden usar el
-ultimo cilindro del disco para propositos de testeo. Este ya no deberia
-ser el caso de los sistemas modernos. Si tiene un sistema viejo y no
-esta seguro de si podria hacerlo, puede excluir el ultimo cilindro de
-su disco duro de ser usado.
-
-Si excluye el ultimo cilindro, ambas geometrias la real y la de BIOS
-seran ajustadas, no necesita reintroducirlas.
-
-¿Quiere excluir el ultimo cilindro?
-
-}
-
-/* the %s's will expand into three character strings */
 message dobad144
 {Instalando la tabla de bloques malos ...
 }
