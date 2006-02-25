@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.1.1.8 2005/08/18 21:08:49 rpaulo Exp $	*/
+/*	$NetBSD: smtp.c,v 1.1.1.9 2006/02/25 22:10:02 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -87,6 +87,10 @@
 /*	Always send EHLO at the start of an SMTP session.
 /* .IP "\fBsmtp_never_send_ehlo (no)\fR"
 /*	Never send EHLO at the start of an SMTP session.
+/* .IP "\fBsmtp_cname_overrides_servername (yes)\fR"
+/*	Allow DNS CNAME records to override the servername that the
+/*	Postfix SMTP client uses for logging, SASL password lookup, TLS
+/*	policy decisions, or TLS certificate verification.
 /* .IP "\fBsmtp_defer_if_no_mx_address_found (no)\fR"
 /*	Defer mail delivery when no MX record resolves to an IP address.
 /* .IP "\fBsmtp_line_length_limit (990)\fR"
@@ -499,6 +503,7 @@ bool    var_smtp_tls_note_starttls_offer;
 
 char   *var_smtp_generic_maps;
 char   *var_prop_extension;
+bool    var_smtp_cname_overr;
 
  /*
   * Global variables. smtp_errno is set by the address lookup routines and by
@@ -792,6 +797,7 @@ int     main(int argc, char **argv)
 	VAR_SMTP_TLS_ENFORCE_PN, DEF_SMTP_TLS_ENFORCE_PN, &var_smtp_tls_enforce_peername,
 	VAR_SMTP_TLS_NOTEOFFER, DEF_SMTP_TLS_NOTEOFFER, &var_smtp_tls_note_starttls_offer,
 #endif
+	VAR_SMTP_CNAME_OVERR, DEF_SMTP_CNAME_OVERR, &var_smtp_cname_overr,
 
 	0,
     };

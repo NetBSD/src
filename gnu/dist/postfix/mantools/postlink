@@ -313,6 +313,7 @@ while (<>) {
     s;\bsmtp_always_send_ehlo\b;<a href="postconf.5.html#smtp_always_send_ehlo">$&</a>;g;
     s;\bsmtp_bind_address\b;<a href="postconf.5.html#smtp_bind_address">$&</a>;g;
     s;\bsmtp_bind_address6\b;<a href="postconf.5.html#smtp_bind_address6">$&</a>;g;
+    s;\bsmtp_cname_overrides_servername\b;<a href="postconf.5.html#smtp_cname_overrides_servername">$&</a>;g;
     s;\bsmtp_connect_timeout\b;<a href="postconf.5.html#smtp_connect_timeout">$&</a>;g;
 
     s;\bsmtp_connection_cache_on_demand\b;<a href="postconf.5.html#smtp_connection_cache_on_demand">$&</a>;g;
