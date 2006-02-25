@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.410 2006/02/25 01:39:48 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.411 2006/02/25 01:47:55 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -331,7 +331,7 @@ Maintainer:	Heimdal <heimdal@pdc.kth.se>
 Archive Site:	ftp://ftp.pdc.kth.se/pub/heimdal/src/
 Home Page:	http://www.pdc.kth.se/heimdal/
 Mailing List:	heimdal-discuss@pdc.kth.se
-Responsible:	assar, joda, lha
+Responsible:	joda, lha
 License:	BSD
 Notes:
 
@@ -359,7 +359,7 @@ ipf2netbsd should be used on a virgin ipfilter source tree.
 
 Package:	ipsec-tools
 Version:	0.6.3
-Current Vers:	0.6.4
+Current Vers:	0.6.5
 Maintainer:	IPsec-Tools project <ipsec-tools-core@lists.sourceforge.net>
 Archive Site:	http://ipsec-tools.sourceforge.net
 Home Page:	http://ipsec-tools.sourceforge.net
@@ -397,7 +397,7 @@ Maintainer:	kth-krb@pdc.kth.se
 Archive Site:	ftp://ftp.pdc.kth.se/pub/krb/src/
 Home Page:	http://www.pdc.kth.se/kth-krb/
 Mailing List:	krb4@sics.se
-Responsible:	assar, joda
+Responsible:	joda
 License:	BSD, MIT
 Notes:
 
