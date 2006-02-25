@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.593 2006/02/11 01:51:22 gdamore Exp $
+# $NetBSD: mi,v 1.594 2006/02/25 01:44:15 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -213,7 +213,7 @@
 ./sbin/umount					base-sysutil-root
 ./sbin/veriexecctl				base-sysutil-root
 ./sbin/verifiedexec_load			base-obsolete		obsolete
-./sbin/vinum					base-sysutil-root
+./sbin/vinum					base-obsolete		obsolete
 ./sbin/wdogctl					base-sysutil-root
 ./sbin/wsconsctl				base-sysutil-root
 ./stand						base-sys-root
@@ -736,7 +736,7 @@
 ./usr/include/dev/sun				base-c-usr
 ./usr/include/dev/tc				base-c-usr
 ./usr/include/dev/usb				base-c-usr
-./usr/include/dev/vinum				base-c-usr
+./usr/include/dev/vinum				base-obsolete		obsolete
 ./usr/include/dev/vme				base-c-usr
 ./usr/include/dev/wscons			base-c-usr
 ./usr/include/filecorefs			base-c-usr
