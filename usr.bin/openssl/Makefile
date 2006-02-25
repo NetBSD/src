@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.23 2005/11/26 00:36:40 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2006/02/25 12:00:24 simonb Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.23 2005/11/26 00:36:40 christos Exp $
+#	$Id: Makefile,v 1.24 2006/02/25 12:00:24 simonb Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -62,8 +62,6 @@ DPADD+=	${LIBCRYPTO_RC5}
 # this must be _after_ the libcrypto_rc5/libcrypto_idea entries.
 LDADD+=	-lssl -lcrypto -lcrypt
 DPADD+=	${LIBSSL} ${LIBCRYPTO} ${LIBCRYPT}
-LDADD+=	-lcompat
-DPADD+=	${LIBCOMPAT}
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
