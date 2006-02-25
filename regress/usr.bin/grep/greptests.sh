@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: greptests.sh,v 1.2 2003/09/14 15:10:49 cjep Exp $
+# $NetBSD: greptests.sh,v 1.3 2006/02/25 02:28:55 wiz Exp $
 #
 #
 # Regression tests for grep. Some of these tests are based on those
@@ -138,7 +138,7 @@ ${zgrep} line ${tmpdir}/input.gz | diff $p/test14.gnu.out -
 rm -rf ${tmpdir}
 echo ""
 
-# Test 15: Don't print out infomation about non-existent files
+# Test 15: Don't print out information about non-existent files
 #
 echo "15. Ignore non-existent files (-s)"
 ${grep} -s foobar $p/notexistent | diff /dev/null -

@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.17 2005/08/17 22:35:20 heas Exp $	*/
+/*	$NetBSD: do_command.c,v 1.18 2006/02/25 02:28:58 wiz Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.17 2005/08/17 22:35:20 heas Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.18 2006/02/25 02:28:58 wiz Exp $");
 #endif
 #endif
 
@@ -102,7 +102,7 @@ child_process(entry *e, user *u)
 #ifdef USE_SIGCHLD
 	/* our parent is watching for our death by catching SIGCHLD.  we
 	 * do not care to watch for our children's deaths this way -- we
-	 * use wait() explictly.  so we have to disable the signal (which
+	 * use wait() explicitly.  so we have to disable the signal (which
 	 * was inherited from the parent).
 	 */
 	(void) signal(SIGCHLD, SIG_DFL);
