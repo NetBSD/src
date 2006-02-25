@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2003/01/17 15:32:23 wiz Exp $
+#	$NetBSD: Makefile,v 1.10 2006/02/25 12:04:23 simonb Exp $
 
-NOLINKLIB=	# defined
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
+MKPRIVATELIB=	yes
 
 LIB=		common
 SRCS+=		substring.c xexit.c xmalloc.c xstrdup.c
