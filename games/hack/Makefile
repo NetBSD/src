@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2003/11/16 14:14:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.40 2006/02/25 11:56:51 simonb Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -18,7 +18,7 @@ SRCS+=	alloc.c hack.Decl.c hack.apply.c hack.bones.c hack.c hack.cmd.c \
 	hack.u_init.c hack.unix.c hack.vault.c hack.version.c hack.wield.c \
 	hack.wizard.c hack.worm.c hack.worn.c hack.zap.c rnd.c
 MAN=	hack.6
-DPADD+=	${LIBTERM} ${LIBCOMPAT}
+DPADD+=	${LIBTERMCAP}
 LDADD+=	-ltermcap
 HIDEGAME=hidegame
 SETGIDGAME=yes
