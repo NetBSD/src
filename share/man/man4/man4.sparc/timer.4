@@ -1,4 +1,4 @@
-.\" $NetBSD: timer.4,v 1.1 2006/02/25 17:42:42 christos Exp $
+.\" $NetBSD: timer.4,v 1.2 2006/02/25 22:54:23 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Stephan Meisinger
 .\"
@@ -38,7 +38,7 @@
 .Dt TIMER 4 sparc
 .Os
 .Sh NAME
-.Nm timer 
+.Nm timer
 .Nd Timer driver for Sun SPARC computers
 .Sh SYNOPSIS
 .Cd "timer0 at mainbus0                # sun4c"
@@ -47,8 +47,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-device is used to generate clocks for the NetBSD kernel. 
-.Pp 
+device is used to generate clocks for the NetBSD kernel.
+.Pp
 The hardclock is provided by the timer register and the statistics clock by CPU counter registers.
 .Sh SEE ALSO
 .Xr sparc/clock 4
