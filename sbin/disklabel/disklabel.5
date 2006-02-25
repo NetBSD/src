@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.26 2005/09/21 14:51:20 tsutsui Exp $
+.\"	$NetBSD: disklabel.5,v 1.27 2006/02/25 01:55:00 christos Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)disklabel.5.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd January 7, 2005
+.Dd February 24, 2006
 .Dt DISKLABEL 5
 .Os
 .Sh NAME
@@ -258,7 +258,7 @@ struct disklabel {
 #define DTYPE_LD	15	/* logical disk */
 #define DTYPE_JFS2	16	/* IBM JFS2 */
 #define DTYPE_CGD	17	/* cryptographic pseudo-disk */
-#define DTYPE_VINUM	18	/* vinum volume */
+#define DTYPE_VINUM	18	/* vinum volume obsolete */
 #define DTYPE_FLASH	19	/* flash memory device */
 
 #ifdef DKTYPENAMES
@@ -281,7 +281,7 @@ static const char *const dktypenames[] = {
 	"ld",
 	"jfs",
 	"cgd",
-	"vinum",
+	"obsolete vinum",
 	"flash",
 	NULL
 };
@@ -343,7 +343,7 @@ static const char *const fstypenames[] = {
 	"ccd",
 	"jfs",
 	"Apple UFS",
-	"vinum",
+	"obsolete vinum",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
