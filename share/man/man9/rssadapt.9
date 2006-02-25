@@ -1,4 +1,4 @@
-.\"     $NetBSD: rssadapt.9,v 1.4 2004/12/08 18:35:56 peter Exp $
+.\"     $NetBSD: rssadapt.9,v 1.5 2006/02/25 01:04:26 wiz Exp $
 .\"
 .\" Copyright (c) 2004 David Young.  All rights reserved.
 .\"
@@ -96,19 +96,19 @@ PER for all packets of a certain length.
 Choose the transmission data rate for a packet.
 .Bl -tag -width "do_not_adapt" -compact
 .It Fa ra
-ordinarily, the
+Ordinarily, the
 .Nm
-state object belonging to the node who is the packet destination.
+state object belonging to the node which is the packet destination.
 However, if the destination is a broadcast/multicast address, then
 .Fa ra
 belongs to the BSS node,
 .Va ic-\*[Gt]ic_bss .
 .It Fa rs
-a list of eligible data rates for the node; for example, the
+A list of eligible data rates for the node; for example, the
 rates negotiated when the node associated with the network.
 .It Fa len
-the packet length in bytes, including the 802.11 header and
-frame check sequence.
+The packet length in bytes, including the 802.11 header and
+frame check sequence
 .Pq FCS .
 .It Fa fixed_rate
 If the operator has set the data rate using, for example,
@@ -122,7 +122,6 @@ obeys a fixed data rate whenever the 802.11 standard allows it:
 sometimes the standard requires multicast/broadcast packets to be
 transmitted at a so-called
 .Dq basic rate .
-.Fn ieee80211_rssadapt_choose
 .It Fa dvname
 The device driver uses
 .Fa dvname
@@ -151,18 +150,18 @@ indicating its choice of transmit data rate.
 The RSS serves as a rough estimate of the S/N at each node.
 A driver provides RSS updates using
 .Fn ieee80211_rssadapt_input ,
-whose arguments are
+whose arguments are:
 .Bl -tag -width "rssi" -compact
 .It Fa ic
-the wireless interface's 802.11 state object;
+The wireless interface's 802.11 state object.
 .It Fa ni
-the 802.11 node whose RSS the driver is updating;
+The 802.11 node whose RSS the driver is updating.
 .It Fa ra
-the node's
+The node's
 .Nm
-state object; and
+state object.
 .It Fa rssi
-the node's received signal strength indication.
+The node's received signal strength indication.
 The range of
 .Fa rssi
 is from 0 to 255.
@@ -176,15 +175,15 @@ and
 to indicate transmit successes and failures, respectively.
 .Bl -tag -width "ni" -compact
 .It Fa ic
-is the 802.11 state object,
+The 802.11 state object.
 .It Fa ni
-is the neighbor to whom the driver transmitted,
+The neighbor to whom the driver transmitted.
 .It Fa ra
-is the neighbor's
+The neighbor's
 .Nm
-state object, and
+state object.
 .It Fa id
-tells statistics on the transmission attempt.
+DIsplays statistics on the transmission attempt.
 .El
 .It Fn ieee80211_rssadapt_updatestats "ra"
 An 802.11 node is eligible for its RSS thresholds to decay every
@@ -200,7 +199,7 @@ every 1/10th second for each node's
 object.
 .Bl -tag -width "ra" -compact
 .It Fa ra
-the neighbor's
+The neighbor's
 .Nm
 state object.
 .El
@@ -281,13 +280,13 @@ struct ieee80211_rssdesc {
 .Ed
 .Pp
 .Fa id_len
-tells the length, in bytes, of the transmitted packet.
+is the length, in bytes, of the transmitted packet.
 .Fa id_node
-points at the neighbor's
+points to the neighbor's
 .Vt ieee8021_node ,
 and
 .Fa id_rssi
-tells the exponential-average RSS at the time the packet was
+is the exponential-average RSS at the time the packet was
 transmitted.
 .Fa id_rateidx
 is an index into the destination-neighbor's rate-set,
@@ -344,7 +343,7 @@ and
 are used to control the rate that RSS thresholds
 .Dq decay .
 .Fa ra_last_raise
-tells when
+indicates when
 .Fn ieee80211_rssadapt_raise_rate
 was last called.
 .Fa ra_raise_interval
