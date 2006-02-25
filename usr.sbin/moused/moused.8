@@ -1,4 +1,4 @@
-.\" $NetBSD: moused.8,v 1.6 2003/02/14 16:11:36 grant Exp $
+.\" $NetBSD: moused.8,v 1.7 2006/02/25 02:27:42 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -72,10 +72,12 @@ in the standard format
 .Pp
 .Nm
 listens to the specified port for mouse data, interprets and then
-passes it via ioctls to the console driver.  It reports translation
-movement, button press/release events and movement of the roller or
-the wheel if available.  The roller/wheel movement is reported as
-``Z'' axis movement.
+passes it via ioctls to the console driver.
+It reports translation movement, button press/release events and
+movement of the roller or the wheel if available.
+The roller/wheel movement is reported as
+.Dq Z
+axis movement.
 .Pp
 If
 .Nm
@@ -106,7 +108,8 @@ When the third button emulation is enabled (see above),
 waits
 .Ar timeout
 milliseconds at most before deciding whether two buttons are being
-pressed simultaneously.  The default timeout is 100 milliseconds.
+pressed simultaneously.
+The default timeout is 100 milliseconds.
 .It Fl F Ar rate
 Set the report rate (reports per second) of the device if supported.
 .It Fl I Ar file
@@ -143,7 +146,8 @@ Not all serial mice support this option.
 .It Fl W Ar devicename
 Select the
 .Xr wsmux 4
-control device.  The default is
+control device.
+The default is
 .Pa /dev/wsmuxctl0 .
 .It Fl a Ar X Ns Op ,Y
 Accelerate or decelerate the mouse input.
@@ -161,8 +165,8 @@ Enable debugging messages.
 Do not become a daemon and instead run as a foreground process.
 Useful for testing and debugging.
 .It Fl i Ar info
-Print specified information and quit.  Available pieces of
-information are:
+Print specified information and quit.
+Available pieces of information are:
 .Pp
 .Bl -tag -compact -width modelxxx
 .It Ar port
@@ -180,8 +184,8 @@ Mouse model.
 .Nm
 may not always be able to identify the model.
 .It Ar all
-All of the above items.  Print port, interface, type and model in this order
-in one line.
+All of the above items.
+Print port, interface, type and model in this order in one line.
 .El
 .Pp
 If
@@ -220,11 +224,11 @@ You may explicitly specify a type listed below, or use
 .Ar auto
 to let
 .Nm
-automatically select an appropriate protocol for the given mouse.  If
-you entirely omit this options in the command line,
+automatically select an appropriate protocol for the given mouse.
+If you entirely omit this option on the command line,
 .Fl t Ar auto
-is assumed.  Under normal circumstances, you need to use this option
-only if
+is assumed.
+Under normal circumstances, you need to use this option only if
 .Nm
 is not able to detect the protocol automatically.
 .Pp
@@ -239,24 +243,29 @@ listed below.
 For the serial mouse:
 .Bl -tag -compact -width mousesystemsxxx
 .It Ar microsoft
-Microsoft serial mouse protocol.  Most 2-button serial mice use this protocol.
+Microsoft serial mouse protocol.
+Most 2-button serial mice use this protocol.
 .It Ar intellimouse
-Microsoft IntelliMouse protocol.  Genius NetMouse, ASCII Mie Mouse,
-Logitech MouseMan+ and FirstMouse+ use this protocol too.
+Microsoft IntelliMouse protocol.
+Genius NetMouse, ASCII Mie Mouse, Logitech MouseMan+ and FirstMouse+
+use this protocol too.
 Other mice with a roller/wheel may be compatible with this protocol.
 .It Ar mousesystems
-MouseSystems 5-byte protocol.  3-button mice may use this protocol.
+MouseSystems 5-byte protocol.
+3-button mice may use this protocol.
 .It Ar mmseries
 MM Series mouse protocol.
 .It Ar logitech
-Logitech mouse protocol.  Note that this is for old Logitech models.
+Logitech mouse protocol.
+Note that this is for old Logitech models.
 .Ar mouseman
 or
 .Ar intellimouse
 should be specified for newer models.
 .It Ar mouseman
-Logitech MouseMan and TrackMan protocol.  Some 3-button mice may be compatible
-with this protocol.  Note that MouseMan+ and FirstMouse+ use
+Logitech MouseMan and TrackMan protocol.
+Some 3-button mice may be compatible with this protocol.
+Note that MouseMan+ and FirstMouse+ use
 .Ar intellimouse
 protocol rather than this one.
 .It Ar glidepoint
@@ -408,11 +417,12 @@ in
 .Nm
 partially supports
 .Dq Plug and Play External COM Device Specification
-in order to support PnP serial mice.  However, due to various degrees
-of conformance to the specification by existing serial mice, it does
-not strictly follow version 1.0 of the standard.  Even with this less
-strict approach, it may not always determine an appropriate protocol
-type for the given serial mouse.
+in order to support PnP serial mice.
+However, due to various degrees of conformance to the specification
+by existing serial mice, it does not strictly follow version 1.0
+of the standard.
+Even with this less strict approach, it may not always determine
+an appropriate protocol type for the given serial mouse.
 .Sh HISTORY
 The mouse daemon
 .Nm
