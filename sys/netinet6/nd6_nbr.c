@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.59 2006/01/21 00:15:37 rpaulo Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.60 2006/02/25 00:58:35 wiz Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.59 2006/01/21 00:15:37 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.60 2006/02/25 00:58:35 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -228,7 +228,7 @@ nd6_ns_input(m, off, icmp6len)
 	}
 	if (!ifa) {
 		/*
-		 * We've got an NS packet, and we don't have that adddress
+		 * We've got an NS packet, and we don't have that address
 		 * assigned for us.  We MUST silently ignore it.
 		 * See RFC2461 7.2.3.
 		 */

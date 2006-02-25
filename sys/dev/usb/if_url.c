@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.18 2005/11/28 13:31:09 augustss Exp $	*/
+/*	$NetBSD: if_url.c,v 1.19 2006/02/25 00:58:35 wiz Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.18 2005/11/28 13:31:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.19 2006/02/25 00:58:35 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -270,7 +270,7 @@ USB_ATTACH(url)
 	/* Print Ethernet Address */
 	printf("%s: Ethernet address %s\n", devname, ether_sprintf(eaddr));
 
-	/* initialize interface infomation */
+	/* initialize interface information */
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;

@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.51 2003/10/31 10:09:55 hannken Exp $	*/
+/*	$NetBSD: route6d.c,v 1.52 2006/02/25 00:58:36 wiz Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.51 2003/10/31 10:09:55 hannken Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.52 2006/02/25 00:58:36 wiz Exp $");
 #endif
 
 #include <stdio.h>
@@ -117,7 +117,7 @@ struct	ifc {			/* Configuration of an interface */
 	int	ifc_joined;			/* joined to ff02::9 */
 };
 
-struct	ifac {			/* Adddress associated to an interface */ 
+struct	ifac {			/* Address associated to an interface */ 
 	struct	ifc *ifa_conf;		/* back pointer */
 	struct	ifac *ifa_next;
 	struct	in6_addr ifa_addr;	/* address */
