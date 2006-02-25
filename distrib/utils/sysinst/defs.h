@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.126 2006/02/25 13:29:34 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.127 2006/02/25 20:21:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -244,7 +244,6 @@ const char *doessf;
 /* Relative file name for storing a distribution. */
 char xfer_dir[STRSIZE];  
 int  clean_xfer_dir;
-/* Absolute path name where the distribution should be extracted from. */
 
 #if !defined(SYSINST_FTP_HOST)
 #define SYSINST_FTP_HOST	"ftp.NetBSD.org"
@@ -274,6 +273,7 @@ char nfs_host[STRSIZE];
 char nfs_dir[STRSIZE];
 
 char cdrom_dev[SSTRSIZE];
+char fd_dev[SSTRSIZE];
 
 char localfs_dev[SSTRSIZE];
 char localfs_fs[SSTRSIZE];
@@ -374,7 +374,6 @@ int	get_via_floppy(void);
 int	get_via_cdrom(void);
 int	get_via_localfs(void);
 int	get_via_localdir(void);
-void	get_xfer_dir(const char *);
 void	show_cur_distsets(void);
 void	make_ramdisk_dir(const char *);
 void    set_kernel_set(unsigned int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.29 2006/02/24 22:13:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.30 2006/02/25 20:21:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -461,6 +461,12 @@ finden ist.
 
 }
 
+message floppysource	/* XXX translate */
+{Enter the floppy device to be used and transfer directory on the target
+filesystem.  The set files must be in the root directory of the floppies.
+
+}
+
 message cdromsource
 {Geben Sie das CD-Laufwerk und das entsprechende Verzeichnis 
 an, in dem die Distribution zu finden ist.
@@ -595,13 +601,8 @@ message realdir
 {Konnte nicht in das Verzeichnis %s: %s wechseln. Installation abgebrochen.
 }
 
-message xferdir
-{Welches Verzeichnis möchten Sie für %s nutzen?}
-
-message delete_xfer_files
-{Wollen Sie die NetBSD Pakete von %s löschen? 
-(Sie können diese auch dazu beibehalten ein weiteres System zu installieren
-oder zu erneuern.)}
+message delete_xfer_file	/* XXX translate */
+{Delete after install}
 
 message verboseextract
 {

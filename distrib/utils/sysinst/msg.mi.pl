@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.53 2006/02/24 22:13:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.54 2006/02/25 20:21:00 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -437,6 +437,12 @@ dostepny via nfs.
 
 }
 
+message floppysource	/* XXX translate */
+{Enter the floppy device to be used and transfer directory on the target
+filesystem.  The set files must be in the root directory of the floppies.
+
+}
+
 message cdromsource
 {Podaj urzadzenie CDROM oraz katalog na CDROMie, w ktorym znajduje sie
 dystrybucja. 
@@ -567,12 +573,8 @@ message realdir
 {Nie moglem przejsc do katalogu %s: %s.  Instalacja przerwana.
 }
 
-message xferdir
-{Jakiego katalogu powinienem uzyc dla %s? }
-
-message delete_xfer_files
-{Czy chcesz usunac pakiety NetBSD z %s? 
-(Mozesz je zachowac aby zainstalowac/zaktualizowac kolejny system.)}
+message delete_xfer_file	/* XXX translate */
+{Delete after install}
 
 message verboseextract
 {
