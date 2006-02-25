@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.17 2005/02/11 14:58:41 jmc Exp $
+#	$NetBSD: Makefile,v 1.18 2006/02/25 12:04:23 simonb Exp $
 
-NOLINKLIB=	# defined
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
+MKPRIVATELIB=	yes
 
 LIB=		backend
 

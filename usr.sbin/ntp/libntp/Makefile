@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2003/12/04 16:41:56 drochner Exp $
+#	$NetBSD: Makefile,v 1.6 2006/02/25 12:04:24 simonb Exp $
 
-NOLINKLIB=# defined
-NOMAN=	# defined
-NOPIC=	# defined
-NOLINT=	# defined
+MKPRIVATELIB=	yes
 
 LIB=	ntp
 SRCS=	a_md5encrypt.c adjtime.c atoint.c atolfp.c atouint.c \

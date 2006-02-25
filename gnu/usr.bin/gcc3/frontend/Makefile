@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/18 19:48:15 skrll Exp $
+#	$NetBSD: Makefile,v 1.6 2006/02/25 12:04:23 simonb Exp $
 
-NOLINKLIB=	# defined
-NOLINT=		# defined
-NOPROFILE=	# defined
+MKPRIVATELIB=	yes
 
 # For ../Makefile.inc and bsd.own.mk
 .include <bsd.init.mk>
