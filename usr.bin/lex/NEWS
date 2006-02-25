@@ -987,7 +987,7 @@ Changes between 2.3 (full) release of 28Jun90 and 2.2 (alpha) release:
 	- yy_switch_to_buffer() can be used in the yywrap() macro/routine.
 
 	- flex scanners do not use stdio for their input, and hence when
-	  writing an interactive scanner one must explictly call fflush()
+	  writing an interactive scanner one must explicitly call fflush()
 	  after writing out a prompt.
 
 	- flex scanner can be made reentrant (after a fashion) by using

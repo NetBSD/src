@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.171 2006/02/01 14:20:14 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.172 2006/02/25 02:28:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.171 2006/02/01 14:20:14 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.172 2006/02/25 02:28:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1497,7 +1497,7 @@ pass(const char *passwd)
 		}
 		break;
 	case CLASS_REAL:
-			/* only chroot REAL if explictly requested */
+			/* only chroot REAL if explicitly requested */
 		if (! EMPTYSTR(curclass.chroot)) {
 			format_path(root, curclass.chroot);
 			if (EMPTYSTR(root) || chroot(root) < 0) {

@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxvar.h,v 1.11 2000/06/13 13:39:12 ad Exp $	*/
+/* 	$NetBSD: pxvar.h,v 1.12 2006/02/25 02:28:57 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ struct px_cliplist {
 	int32_t	*cl_fixup;	/* cliprect fixup pointer for current packet */
 };
 
-/* Do not let this struture grow larger than NBPG - 1! */
+/* Do not let this structure grow larger than NBPG - 1! */
 struct px_info {
 	tc_addr_t pxi_slotbase;
 	struct	stic_regs *pxi_stic;

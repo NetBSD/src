@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.70 2006/02/23 05:37:47 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.71 2006/02/25 02:28:56 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.70 2006/02/23 05:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.71 2006/02/25 02:28:56 wiz Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -561,7 +561,7 @@ rdreset(struct rd_softc *rs)
 }
 
 /*
- * Read or constuct a disklabel
+ * Read or construct a disklabel
  */
 static int
 rdgetinfo(dev_t dev)

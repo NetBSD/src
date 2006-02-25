@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.29 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.30 2006/02/25 02:28:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -225,7 +225,7 @@
  * Address and length for a single bus-master DMA transfer.
  * Unused for elink3 cards.
  */
-#define ELINK_W7_MASTER_ADDDRES	0x00
+#define ELINK_W7_MASTER_ADDRES	0x00
 #define ELINK_W7_RX_ERROR	0x04
 #define ELINK_W7_MASTER_LEN	0x06
 #define ELINK_W7_RX_STATUS	0x08

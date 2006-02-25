@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.18 2006/02/11 20:15:53 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.19 2006/02/25 02:28:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1239,7 +1239,7 @@ remove_devi(struct devi *i)
 		j->i_alias = i;
 	}
 	/*
-	 *   - reconstuct d->d_umax
+	 *   - reconstruct d->d_umax
 	 */
 	d->d_umax = 0;
 	for (i = d->d_ihead; i != NULL; i = i->i_bsame)

@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.c,v 1.13 2005/12/11 12:18:09 christos Exp $ */
+/* $NetBSD: mips_mcclock.c,v 1.14 2006/02/25 02:28:56 wiz Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.13 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.14 2006/02/25 02:28:56 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ mips_mc_cpuspeed(mcclock_addr, clockmask, tickpollfn)
 	s = splhigh();
 
 	/*
-	 * Enable periodic interrupst on the mc146818,
+	 * Enable periodic interrupts on the mc146818,
 	 * and set it up for 256Hz (4ms) interrupts.
 	 * Save any state we change so we can restore it on exit.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.50 2006/01/13 08:43:11 skrll Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.51 2006/02/25 02:28:58 wiz Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.50 2006/01/13 08:43:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.51 2006/02/25 02:28:58 wiz Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1969,7 +1969,7 @@ IEEE80211_DPRINTF(ic, IEEE80211_MSG_POWER, "[%s] discard frame, age %u\n", ether
 			 * have a reference count of 1.  ieee80211_node_leave
 			 * will do a "free" of the node which will drop the
 			 * reference count.  But in the meantime a reference
-			 * wil be held by the deauth frame.  The actual reclaim
+			 * will be held by the deauth frame.  The actual reclaim
 			 * of the node will happen either after the tx is
 			 * completed or by ieee80211_node_leave.
 			 *
