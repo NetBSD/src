@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.16 2005/10/10 22:13:20 kleink Exp $	*/
+/*	$NetBSD: pkill.c,v 1.17 2006/02/25 01:13:55 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.16 2005/10/10 22:13:20 kleink Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.17 2006/02/25 01:13:55 wiz Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -422,8 +422,8 @@ usage(void)
 		ustr = "[-signal] [-finvx]";
 
 	(void)fprintf(stderr,
-		"Usage: %s %s [-G gid] [-P ppid] [-U uid] [-g pgrp] [-s sid]\n"
-		"             [-t tty] [-u euid] pattern ...\n", getprogname(),
+		"Usage: %s %s [-G gid] [-g pgrp] [-P ppid] [-s sid] [-t tty]\n"
+		"             [-U uid] [-u euid] pattern ...\n", getprogname(),
 		ustr);
 
 	exit(STATUS_BADUSAGE);
