@@ -1,4 +1,4 @@
-.\" $NetBSD: timer.4,v 1.2 2006/02/25 22:54:23 wiz Exp $
+.\" $NetBSD: timer.4,v 1.3 2006/02/25 22:57:09 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Stephan Meisinger
 .\"
@@ -47,9 +47,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-device is used to generate clocks for the NetBSD kernel.
+device is used to generate clocks for the
+.Nx
+kernel.
 .Pp
-The hardclock is provided by the timer register and the statistics clock by CPU counter registers.
+The hardclock is provided by the timer register and the statistics
+clock by CPU counter registers.
 .Sh SEE ALSO
 .Xr sparc/clock 4
 .Sh HISTORY
