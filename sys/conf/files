@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.761 2006/02/23 08:01:59 macallan Exp $
+#	$NetBSD: files,v 1.762 2006/02/25 01:32:10 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -322,11 +322,6 @@ include "dev/mii/files.mii"
 # RAIDframe
 #
 include "dev/raidframe/files.raidframe"
-
-#
-# Vinum
-#
-include "dev/vinum/files.vinum"
 
 #
 # Hardware-assisted data mover API
