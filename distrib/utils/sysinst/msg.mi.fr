@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.92 2006/02/24 22:13:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.93 2006/02/25 20:21:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -451,6 +451,12 @@ composants est relatif au répertoire de base et doit contenir les fichiers
 
 }
 
+message floppysource	/* XXX translate */
+{Enter the floppy device to be used and transfer directory on the target
+filesystem.  The set files must be in the root directory of the floppies.
+
+}
+
 message cdromsource
 {Donnez le nom de périphérique du CD-Rom à utiliser ainsi que
 le répertoire qui contient les composants. 
@@ -589,12 +595,8 @@ message realdir
 L'installation a échoué.
 }
 
-message xferdir
-{Quel répertoire dois je utiliser pour %s ?}
-
-message delete_xfer_files
-{Voulez-vous supprimer les fichiers de distribution de NetBSD de %s ? 
-Vous pouvez les conserver pour installer ou mettre a jour d'autre systèmes.}
+message delete_xfer_file	/* XXX translate */
+{Delete after install}
 
 message verboseextract
 {

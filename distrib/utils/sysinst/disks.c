@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.93 2006/01/15 20:33:05 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.94 2006/02/25 20:21:00 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -155,6 +155,8 @@ find_disks(const char *doingwhat)
 	/* need a redraw here, kernel messages hose everything */
 	touchwin(stdscr);
 	refresh();
+	/* Kill typeahead, it won't be what the user had in mind */
+	fpurge(stdin);
 
 	if (numdisks == 0) {
 		/* No disks found! */

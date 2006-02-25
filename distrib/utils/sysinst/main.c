@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.49 2006/01/12 22:02:44 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.50 2006/02/25 20:21:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,6 +95,7 @@ static const struct f_arg fflagopts[] = {
 	{"nfs host", "", nfs_host, sizeof nfs_host},
 	{"nfs dir", "/bsd/release", nfs_dir, sizeof nfs_dir},
 	{"cd dev", "cd0a", cdrom_dev, sizeof cdrom_dev},
+	{"fd dev", "/dev/fd0a", fd_dev, sizeof fd_dev},
 	{"local dev", "", localfs_dev, sizeof localfs_dev},
 	{"local fs", "ffs", localfs_fs, sizeof localfs_fs},
 	{"local dir", "release", localfs_dir, sizeof localfs_dir},

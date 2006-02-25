@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.141 2006/01/16 21:47:56 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.142 2006/02/25 20:21:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,8 +70,6 @@ static uint8_t set_status[SET_GROUP_END];
 #define SET_SELECTED	0x02
 #define SET_SKIPPED	0x04
 #define SET_INSTALLED	0x08
-
-static char fddev[STRSIZE];
 
 struct  tarstats {
 	int nselected;
@@ -253,7 +251,7 @@ floppy_fetch(const char *set_name)
 		menu = MENU_fdremount;
 		prompt = MSG_fdremount;
 		if (run_program(0, "/sbin/mount -r -t %s %s /mnt2",
-							fdtype, fddev))
+							fdtype, fd_dev))
 			continue;
 		mnt2_mounted = 1;
 		prompt = MSG_fdnotfound;
@@ -284,12 +282,12 @@ int
 get_via_floppy(void)
 {
 
-	(void)strlcpy(fddev, "/dev/fd0a", sizeof fddev);
-	get_xfer_dir("unloading from floppy");
+	process_menu(MENU_floppysource, NULL);
 
-	msg_prompt_add(MSG_fddev, fddev, fddev, sizeof fddev);
 	fetch_fn = floppy_fetch;
-	clean_xfer_dir = 1;
+
+	/* Set ext_dir for absolute path. */
+	snprintf(ext_dir, sizeof ext_dir, "%s/%s", target_prefix(), xfer_dir);
 
 	return SET_OK;
 }
@@ -313,8 +311,6 @@ get_via_cdrom(void)
 
 	snprintf(ext_dir, sizeof ext_dir, "%s/%s", "/mnt2", set_dir);
 
-	/* return location, don't clean... */
-	clean_xfer_dir = 0;
 	return SET_OK;
 }
 
@@ -340,8 +336,6 @@ get_via_localfs(void)
 	snprintf(ext_dir, sizeof ext_dir, "%s/%s/%s",
 		"/mnt2", localfs_dir, set_dir);
 
-	/* return location, don't clean... */
-	clean_xfer_dir = 0;
 	return SET_OK;
 }
 
@@ -362,24 +356,7 @@ get_via_localdir(void)
 	 */
 	snprintf(ext_dir, sizeof ext_dir, "/%s/%s", localfs_dir, set_dir);
 
-	/* return location, don't clean... */
-	clean_xfer_dir = 0;
 	return SET_OK;
-}
-
-
-void
-get_xfer_dir(const char *forwhat)
-{
-
-	/* ask user for the mountpoint. */
-	msg_prompt(MSG_xferdir, xfer_dir, xfer_dir,
-	    sizeof xfer_dir, forwhat);
-
-	clean_xfer_dir = 1;
-
-	/* Set ext_dir for absolute path. */
-	snprintf(ext_dir, sizeof ext_dir, "%s/%s", target_prefix(), xfer_dir);
 }
 
 
@@ -618,11 +595,25 @@ ask_verbose_dist(msg setup_done)
 	return verbose;
 }
 
+/*
+ * Extract_file **REQUIRES** an absolute path in ext_dir.  Any code
+ * that sets up xfer_dir for use by extract_file needs to put in the
+ * full path name to the directory. 
+ */
+
 static int
-extract_file(distinfo *dist, int update, int verbose, char *path)
+extract_file(distinfo *dist, int update, int verbose)
 {
+	char path[STRSIZE];
 	char *owd;
 	int   rval;
+
+	/* If we might need to tidy up, ensure directory exists */
+	if (fetch_fn != NULL)
+		make_target_dir(xfer_dir);
+
+	(void)snprintf(path, sizeof path, "%s/%s%s",
+	    ext_dir, dist->name, dist_postfix);
 	
 	owd = getcwd(NULL, 0);
 
@@ -672,6 +663,11 @@ extract_file(distinfo *dist, int update, int verbose, char *path)
 		return SET_RETRY;
 	}
 
+	if (fetch_fn != NULL && clean_xfer_dir) {
+		run_program(0, "rm %s", path);
+		/* Plausibly we should unlink an empty xfer_dir as well */
+	}
+
 	if (update && dist->set == SET_ETC) {
 		run_program(RUN_DISPLAY | RUN_CHROOT,
 			"/usr/sbin/postinstall -s /.sysinst -d / fix");
@@ -680,32 +676,6 @@ extract_file(distinfo *dist, int update, int verbose, char *path)
 	set_status[dist->set] |= SET_INSTALLED;
 	tarstats.nsuccess++;
 	return SET_OK;
-}
-
-
-/*
- * Extract_dist **REQUIRES** an absolute path in ext_dir.  Any code
- * that sets up xfer_dir for use by extract_dist needs to put in the
- * full path name to the directory. 
- */
-
-static int
-extract_dist(distinfo *dist, int update, int verbose)
-{
-	char fname[STRSIZE];
-	int set;
-
-	/* If we might need to tidy up, ensure directory exists */
-	if (fetch_fn != NULL && clean_xfer_dir)
-		make_target_dir(xfer_dir);
-
-	set = dist->set;
-	(void)snprintf(fname, sizeof fname, "%s/%s%s",
-	    ext_dir, dist->name, dist_postfix);
-
-	/* if extraction failed and user aborted, punt. */
-	return extract_file(dist, update, verbose, fname);
-
 }
 
 static void
@@ -804,8 +774,8 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 			}
 		}
 
-		/* Extract the distribution, retry from top on errors. */
-		status = extract_dist(dist, update, verbose);
+		/* Try to extract this set */
+		status = extract_file(dist, update, verbose);
 		if (status == SET_RETRY)
 			dist--;
 	}
@@ -832,27 +802,6 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 	/* Other configuration. */
 	mnt_net_config();
-
-#if 0
-	/* Clean up dist dir (use absolute path name) */
-	if (clean_xfer_dir) {
-		msg_display(MSG_delete_xfer_files, xfer_dir);
-		process_menu(MENU_yesno, deconst(MSG_Delete));
-		if (yesno) {
-			for (dist = dist_list; dist->desc != NULL; dist++) {
-				if (dist->name == NULL)
-					/* menu entry for a group of sets */
-					continue;
-				run_program(0, "/bin/rm -f %s/%s/%s%s",
-					target_prefix(), xfer_dir,
-					dist->name, dist_postfix);
-			}
-			/* chroot 'cos no rmdir in install fs */
-			run_program(RUN_CHROOT | RUN_SILENT | RUN_ERROR_OK,
-					"/bin/rmdir %s", xfer_dir);
-		}
-	}
-#endif
 
 	/* Mounted dist dir? */
 	umount_mnt2();
