@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.264 2006/02/21 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.265 2006/02/25 07:11:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.264 2006/02/21 04:32:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.265 2006/02/25 07:11:31 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2193,12 +2193,12 @@ extern struct simplelock bqueue_slock; /* XXX */
 void
 vfs_shutdown(void)
 {
-	struct lwp *l = curlwp;
-	struct proc *p;
+	struct lwp *l;
 
-	/* XXX we're certainly not running in proc0's context! */
-	if (l == NULL || (p = l->l_proc) == NULL)
-		p = &proc0;
+	/* XXX we're certainly not running in lwp0's context! */
+	l = curlwp;
+	if (l == NULL)
+		l = &lwp0;
 
 	printf("syncing disks... ");
 
