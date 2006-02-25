@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.855 2006/02/24 12:49:16 pooka Exp $
+#	$NetBSD: mi,v 1.856 2006/02/25 01:44:15 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -469,16 +469,16 @@
 ./usr/include/dev/usb/usbcdc.h			comp-obsolete		obsolete
 ./usr/include/dev/usb/usbdevs.h			comp-obsolete		obsolete
 ./usr/include/dev/usb/usbhid.h			comp-c-include
-./usr/include/dev/vinum/request.h		comp-c-include
-./usr/include/dev/vinum/statetexts.h		comp-c-include
-./usr/include/dev/vinum/vinumext.h		comp-c-include
-./usr/include/dev/vinum/vinumhdr.h		comp-c-include
-./usr/include/dev/vinum/vinumio.h		comp-c-include
-./usr/include/dev/vinum/vinumkw.h		comp-c-include
-./usr/include/dev/vinum/vinumobj.h		comp-c-include
-./usr/include/dev/vinum/vinumstate.h		comp-c-include
-./usr/include/dev/vinum/vinumutil.h		comp-c-include
-./usr/include/dev/vinum/vinumvar.h		comp-c-include
+./usr/include/dev/vinum/request.h		comp-obsolete		obsolete
+./usr/include/dev/vinum/statetexts.h		comp-obsolete		obsolete
+./usr/include/dev/vinum/vinumext.h		comp-obsolete		obsolete
+./usr/include/dev/vinum/vinumhdr.h		comp-obsolete		obsolete
+./usr/include/dev/vinum/vinumio.h		comp-obsolete		obsolete
+./usr/include/dev/vinum/vinumkw.h		comp-obsolete		obsolete
+./usr/include/dev/vinum/vinumobj.h		comp-obsolete		obsolete
+./usr/include/dev/vinum/vinumstate.h		comp-obsolete		obsolete
+./usr/include/dev/vinum/vinumutil.h		comp-obsolete		obsolete
+./usr/include/dev/vinum/vinumvar.h		comp-obsolete		obsolete
 ./usr/include/dev/vme/vmevar.h			comp-obsolete		obsolete
 ./usr/include/dev/vme/xdreg.h			comp-obsolete		obsolete
 ./usr/include/dev/vme/xdvar.h			comp-obsolete		obsolete
