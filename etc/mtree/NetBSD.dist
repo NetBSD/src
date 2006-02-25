@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.299 2006/02/11 01:51:22 gdamore Exp $
+#	$NetBSD: NetBSD.dist,v 1.300 2006/02/25 10:30:11 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -241,7 +241,6 @@
 ./usr/include/dev/sun
 ./usr/include/dev/tc
 ./usr/include/dev/usb
-./usr/include/dev/vinum
 ./usr/include/dev/vme
 ./usr/include/dev/wscons
 ./usr/include/filecorefs
