@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.35 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.36 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -1948,7 +1948,7 @@ Changes from NetBSD 1.0 to NetBSD 1.1:
 		preening, fsck(8) will skip file systems already marked as
 		`clean'.  [mycroft 19950412]
 	netinet: made the netinet code more type size-safe, by using
-		explictly-sized types where appropriate.  (cgd)
+		explicitly-sized types where appropriate.  (cgd)
 	lpd(8): Fixed to reset the group list before exec(2)ing a filter
 		program. [mycroft 19950414]
 	cron(8): Fixed to use the `-t' option to sendmail, rather than trying
