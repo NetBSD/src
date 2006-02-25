@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.409 2006/02/07 07:28:20 kochi Exp $
+#	$NetBSD: 3RDPARTY,v 1.410 2006/02/25 01:39:48 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -848,20 +848,6 @@ Mailing List:	taylor-uucp@cirr.com
 Responsible:	jtk
 License:	GPLv2
 Notes:
-
-Package:	Vinum
-Version:	2003-10-10
-Current Vers:	2003-10-10
-Maintainer:	Greg Lehy <grog@lemis.com>
-Archive Site:
-Home page:	http://www.vinumvm.org/
-Mailing List:	vinum-devel@auug.org.au
-Responsible:	grog
-License:	BSD (4-clause)
-Notes:
-        Based on a NetBSD-specific version generated on the fly.  This
-        should remain effectively identical to the NetBSD branch
-        except during testing.
 
 Package:	wpa_supplicant
 Version:	0.3.9
