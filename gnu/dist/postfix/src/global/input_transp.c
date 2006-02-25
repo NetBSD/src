@@ -1,4 +1,4 @@
-/*	$NetBSD: input_transp.c,v 1.1.1.3 2005/08/18 21:06:20 rpaulo Exp $	*/
+/*	$NetBSD: input_transp.c,v 1.1.1.4 2006/02/25 22:08:49 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -28,7 +28,7 @@
 /*	given in parentheses:
 /* .IP "no_unknown_recipient_checks (INPUT_TRANSP_UNKNOWN_RCPT)"
 /*	Do not try to reject unknown recipients.
-/* .IP "no_address_mapping (INPUT_TRANSP_ADDRESS_MAPPING)
+/* .IP "no_address_mappings (INPUT_TRANSP_ADDRESS_MAPPING)
 /*	Disable canonical address mapping, virtual alias map expansion,
 /*	address masquerading, and automatic BCC recipients.
 /* .IP "no_header_body_checkss (INPUT_TRANSP_HEADER_BODY)

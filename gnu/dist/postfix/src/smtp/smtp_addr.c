@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_addr.c,v 1.1.1.8 2005/08/18 21:08:51 rpaulo Exp $	*/
+/*	$NetBSD: smtp_addr.c,v 1.1.1.9 2006/02/25 22:10:03 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -121,7 +121,7 @@ static void smtp_print_addr(char *what, DNS_RR *addr_list)
 	    msg_warn("skipping record type %s: %m", dns_strtype(addr->type));
 	} else {
 	    msg_info("pref %4d host %s/%s",
-		     addr->pref, addr->name,
+		     addr->pref, SMTP_HNAME(addr),
 		     hostaddr.buf);
 	}
     }
