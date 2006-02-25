@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.8 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: jobs.c,v 1.9 2006/02/25 00:58:34 wiz Exp $	*/
 
 /*
  * Process and job control
@@ -26,7 +26,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: jobs.c,v 1.8 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.9 2006/02/25 00:58:34 wiz Exp $");
 #endif
 
 
@@ -1740,7 +1740,7 @@ new_job()
 	return newj;
 }
 
-/* Allocate new process strut
+/* Allocate new process struct
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.12 2002/12/06 02:18:37 thorpej Exp $	*/
+/*	$NetBSD: radix.c,v 1.13 2006/02/25 00:58:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -42,7 +42,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: radix.c,v 1.12 2002/12/06 02:18:37 thorpej Exp $");
+__RCSID("$NetBSD: radix.c,v 1.13 2006/02/25 00:58:35 wiz Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -97,7 +97,7 @@ static int rn_satisfies_leaf(char *, struct radix_node *, int);
  * node as high in the tree as we can go.
  *
  * The present version of the code makes use of normal routes in short-
- * circuiting an explict mask and compare operation when testing whether
+ * circuiting an explicit mask and compare operation when testing whether
  * a key satisfies a normal route, and also in remembering the unique leaf
  * that governs a subtree.
  */

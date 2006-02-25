@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_msg.h,v 1.14 2005/12/26 19:01:47 perry Exp $	*/
+/*	$NetBSD: rpc_msg.h,v 1.15 2006/02/25 00:58:34 wiz Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -47,7 +47,7 @@
 
 /*
  * Bottom up definition of an rpc message.
- * NOTE: call and reply use the same overall stuct but
+ * NOTE: call and reply use the same overall struct but
  * different parts of unions within it.
  */
 
