@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.143 2006/02/24 22:13:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.144 2006/02/25 20:21:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -447,6 +447,12 @@ must be nfs mountable.
 
 }
 
+message floppysource
+{Enter the floppy device to be used and transfer directory on the target
+filesystem.  The set files must be in the root directory of the floppies.
+
+}
+
 message cdromsource
 {Enter the CDROM device to be used and directory on the CDROM where
 the distribution is located. 
@@ -574,12 +580,8 @@ message realdir
 {Could not change to directory %s: %s.  Install aborted.
 }
 
-message xferdir
-{What directory shall I use for %s? }
-
-message delete_xfer_files
-{Do you want to delete the NetBSD sets from %s? 
-(You can keep them to install/upgrade a second system.)}
+message delete_xfer_file
+{Delete after install}
 
 message verboseextract
 {
