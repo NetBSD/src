@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.14 2005/12/01 21:56:55 rpaulo Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.15 2006/02/25 22:17:12 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -230,7 +230,7 @@ static SMTP_SESSION *smtp_connect_addr(const char *dest, DNS_RR *addr,
     SOCKADDR_TO_HOSTADDR(sa, salen, &hostaddr, (MAI_SERVPORT_STR *) 0, 0);
     if (msg_verbose)
 	msg_info("%s: trying: %s[%s] port %d...",
-		 myname, addr->name, hostaddr.buf, ntohs(port));
+		 myname, SMTP_HNAME(addr), hostaddr.buf, ntohs(port));
     if (var_smtp_conn_tmout > 0) {
 	non_blocking(sock, NON_BLOCKING);
 	conn_stat = timed_connect(sock, sa, salen, var_smtp_conn_tmout);
@@ -242,7 +242,7 @@ static SMTP_SESSION *smtp_connect_addr(const char *dest, DNS_RR *addr,
     }
     if (conn_stat < 0) {
 	vstring_sprintf(why, "connect to %s[%s]: %m",
-			addr->name, hostaddr.buf);
+			SMTP_HNAME(addr), hostaddr.buf);
 	smtp_errno = SMTP_ERR_RETRY;
 	close(sock);
 	return (0);
@@ -253,7 +253,7 @@ static SMTP_SESSION *smtp_connect_addr(const char *dest, DNS_RR *addr,
      */
     if (read_wait(sock, var_smtp_helo_tmout) < 0) {
 	vstring_sprintf(why, "connect to %s[%s]: read timeout",
-			addr->name, hostaddr.buf);
+			SMTP_HNAME(addr), hostaddr.buf);
 	smtp_errno = SMTP_ERR_RETRY;
 	close(sock);
 	return (0);
@@ -265,7 +265,7 @@ static SMTP_SESSION *smtp_connect_addr(const char *dest, DNS_RR *addr,
     stream = vstream_fdopen(sock, O_RDWR);
     if ((ch = VSTREAM_GETC(stream)) == VSTREAM_EOF) {
 	vstring_sprintf(why, "connect to %s[%s]: server dropped connection without sending the initial SMTP greeting",
-			addr->name, hostaddr.buf);
+			SMTP_HNAME(addr), hostaddr.buf);
 	smtp_errno = SMTP_ERR_RETRY;
 	vstream_fclose(stream);
 	return (0);
@@ -283,13 +283,13 @@ static SMTP_SESSION *smtp_connect_addr(const char *dest, DNS_RR *addr,
 	VSTRING *salvage_buf = smtp_salvage(stream);
 
 	vstring_sprintf(why, "connect to %s[%s]: server refused to talk to me: %s",
-			addr->name, hostaddr.buf, STR(salvage_buf));
+			SMTP_HNAME(addr), hostaddr.buf, STR(salvage_buf));
 	vstring_free(salvage_buf);
 	smtp_errno = SMTP_ERR_RETRY;
 	vstream_fclose(stream);
 	return (0);
     }
-    return (smtp_session_alloc(stream, dest, addr->name,
+    return (smtp_session_alloc(stream, dest, SMTP_HNAME(addr),
 			       hostaddr.buf, port, sess_flags));
 }
 

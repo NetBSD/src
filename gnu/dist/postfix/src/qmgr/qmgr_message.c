@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.13 2005/08/18 22:06:28 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.14 2006/02/25 22:17:12 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -887,8 +887,14 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 
 	/*
 	 * Content filtering overrides the address resolver.
+	 * 
+	 * XXX Bypass content_filter inspection for user-generated probes
+	 * (sendmail -bv). MTA-generated probes never have the "please filter
+	 * me" bits turned on, but we handle them here anyway for the sake of
+	 * future proofing.
 	 */
-	else if (message->filter_xport) {
+	else if (message->filter_xport
+		 && (message->tflags & DEL_REQ_TRACE_ONLY_MASK) == 0) {
 	    vstring_strcpy(reply.transport, message->filter_xport);
 	    if ((nexthop = split_at(STR(reply.transport), ':')) == 0
 		|| *nexthop == 0)

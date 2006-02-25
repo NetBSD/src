@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.18 2005/12/01 21:56:55 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.19 2006/02/25 22:17:12 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -2316,7 +2316,7 @@ static int check_server_access(SMTPD_STATE *state, const char *table,
 			    (VSTRING *) 0, (VSTRING *) 0);
     if (dns_status == DNS_NOTFOUND && h_errno == NO_DATA) {
 	if (type == T_MX) {
-	    server_list = dns_rr_create(domain, type, C_IN, 0, 0,
+	    server_list = dns_rr_create(domain, domain, type, C_IN, 0, 0,
 					domain, strlen(domain) + 1);
 	    dns_status = DNS_OK;
 	} else if (type == T_NS) {
@@ -3469,18 +3469,16 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 		msg_warn("restriction `%s' after `%s' is ignored",
 			 cpp[1], CHECK_RELAY_DOMAINS);
 	} else if (strcasecmp(name, PERMIT_SASL_AUTH) == 0) {
-	    if (var_smtpd_sasl_enable)
 #ifdef USE_SASL_AUTH
+	    if (var_smtpd_sasl_enable)
 		status = permit_sasl_auth(state,
 					  SMTPD_CHECK_OK, SMTPD_CHECK_DUNNO);
-#else
-		msg_warn("restriction `%s' ignored: no SASL support", name);
 #endif
 #ifdef USE_TLS
 	} else if (strcasecmp(name, PERMIT_TLS_ALL_CLIENTCERTS) == 0) {
-	  status = permit_tls_clientcerts(state, 1);
+	    status = permit_tls_clientcerts(state, 1);
 	} else if (strcasecmp(name, PERMIT_TLS_CLIENTCERTS) == 0) {
-	  status = permit_tls_clientcerts(state, 0);
+	    status = permit_tls_clientcerts(state, 0);
 #endif
 	} else if (strcasecmp(name, REJECT_UNKNOWN_RCPTDOM) == 0) {
 	    if (state->recipient)
@@ -3633,10 +3631,9 @@ void    smtpd_check_rewrite(SMTPD_STATE *state)
 		status = SMTPD_CHECK_OK;
 	} else if (strcasecmp(name, PERMIT_SASL_AUTH) == 0) {
 #ifdef USE_SASL_AUTH
-	    status = permit_sasl_auth(state, SMTPD_CHECK_OK,
-				      SMTPD_CHECK_DUNNO);
-#else
-	    status = SMTPD_CHECK_DUNNO;
+	    if (var_smtpd_sasl_enable)
+		status = permit_sasl_auth(state, SMTPD_CHECK_OK,
+					  SMTPD_CHECK_DUNNO);
 #endif
 #ifdef USE_TLS
 	} else if (strcasecmp(name, PERMIT_TLS_ALL_CLIENTCERTS) == 0) {
@@ -4339,6 +4336,7 @@ char   *var_relay_rcpt_maps;
 char   *var_verify_sender;
 char   *var_smtpd_sasl_opts;
 char   *var_local_rwr_clients;
+char   *var_smtpd_relay_ccerts;
 
 typedef struct {
     char   *name;
@@ -4381,6 +4379,7 @@ static STRING_TABLE string_table[] = {
     VAR_MAIL_NAME, DEF_MAIL_NAME, &var_mail_name,
     VAR_SMTPD_SASL_OPTS, DEF_SMTPD_SASL_OPTS, &var_smtpd_sasl_opts,
     VAR_LOC_RWR_CLIENTS, DEF_LOC_RWR_CLIENTS, &var_local_rwr_clients,
+    VAR_RELAY_CCERTS, DEF_RELAY_CCERTS, &var_smtpd_relay_ccerts,
     0,
 };
 
