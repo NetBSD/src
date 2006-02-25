@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.151 2006/02/24 19:33:09 drochner Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.152 2006/02/25 00:58:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -809,7 +809,7 @@ struct kinfo_file {
  * CTL_DEBUG definitions
  *
  * Second level identifier specifies which debug variable.
- * Third level identifier specifies which stucture component.
+ * Third level identifier specifies which structure component.
  */
 #define	CTL_DEBUG_NAME		0	/* string: variable name */
 #define	CTL_DEBUG_VALUE		1	/* int: variable value */
