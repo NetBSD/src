@@ -1,8 +1,8 @@
-/*	$NetBSD: dumptab.c,v 1.6 2002/07/14 00:26:17 wiz Exp $	*/
+/*	$NetBSD: dumptab.c,v 1.7 2006/02/25 02:28:58 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dumptab.c,v 1.6 2002/07/14 00:26:17 wiz Exp $");
+__RCSID("$NetBSD: dumptab.c,v 1.7 2006/02/25 02:28:58 wiz Exp $");
 #endif
 
 /*
@@ -336,7 +336,7 @@ dump_generic(FILE *fp, struct shared_bindata *generic)
  *
  * The addresses are printed in standard ASCII "dot" notation and separated
  * from one another by a single space.  A single leading space is also
- * printed before the first adddress.
+ * printed before the first address.
  *
  * Null lists produce no output (and no error).
  */

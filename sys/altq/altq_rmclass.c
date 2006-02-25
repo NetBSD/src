@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.11 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.12 2006/02/25 02:28:56 wiz Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.9 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.11 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.12 2006/02/25 02:28:56 wiz Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 
@@ -553,7 +553,7 @@ rmc_depth_recompute(rm_class_t *cl)
 /*
  * void
  * rmc_delete_class(struct rm_ifdat *ifdat, struct rm_class *cl) - This
- *	function deletes a class from the link-sharing stucture and frees
+ *	function deletes a class from the link-sharing structure and frees
  *	all resources associated with the class.
  *
  *	Returns: NONE

@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.41 2005/11/29 08:47:22 dbj Exp $	*/
+/*	$NetBSD: atactl.c,v 1.42 2006/02/25 02:28:55 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.41 2005/11/29 08:47:22 dbj Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.42 2006/02/25 02:28:55 wiz Exp $");
 #endif
 
 
@@ -556,7 +556,7 @@ struct {
 const char *selftest_status[] = {
 	"No error",
 	"Aborted by the host",
-	"Interruped by the host by reset",
+	"Interrupted by the host by reset",
 	"Fatal error or unknown test error",
 	"Unknown test element failed",
 	"Electrical test element failed",

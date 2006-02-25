@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_arch.cpp,v 1.12 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: sh_arch.cpp,v 1.13 2006/02/25 02:28:56 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ void
 SHArchitecture::systemInfo()
 {
 
-	// Windows CE common infomation.
+	// Windows CE common information.
 	super::systemInfo();
 
 	// CPU specific.

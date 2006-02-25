@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.35 2004/10/30 14:31:45 dsl Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.36 2006/02/25 02:28:58 wiz Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.35 2004/10/30 14:31:45 dsl Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.36 2006/02/25 02:28:58 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -413,7 +413,7 @@ send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
     else local = INADDR_ANY;
 
     /*
-     * If the reply address was not explictly specified, start off
+     * If the reply address was not explicitly specified, start off
      * with the unicast address of this host.  Then, if there is no
      * response after trying half the tries with unicast, switch to
      * the standard multicast reply address.  If the TTL was also not
