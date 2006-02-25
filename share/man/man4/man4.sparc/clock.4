@@ -1,4 +1,4 @@
-.\" $NetBSD: clock.4,v 1.1 2006/02/25 17:42:42 christos Exp $
+.\" $NetBSD: clock.4,v 1.2 2006/02/25 21:58:16 christos Exp $
 .\" 
 .\" Copyright (c) 2006 Stephan Meisinger
 .\"
@@ -53,7 +53,7 @@ The
 .Nm
 device contains common timer, clock and eeprom routines for the NetBSD kernel. 
 .Pp All system use the timer interrupt to drive the hard clock. 
-The second interrupt is used to drive statistics clock, expect sun4/100 and sun4/200 machines, which don't have a spare timer device.
+The second interrupt is used to drive statistics clock, except sun4/100 and sun4/200 machines, which don't have a spare timer device.
 .Sh HARDWARE
 The
 .Nm
