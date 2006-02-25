@@ -1,4 +1,4 @@
-.\" $NetBSD: mixerctl.1,v 1.19 2004/01/23 21:12:07 snj Exp $
+.\" $NetBSD: mixerctl.1,v 1.20 2006/02/25 01:19:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,7 +105,10 @@ The
 .Fl v
 flag shows the possible values of enumeration and set valued
 variables.
-Enumerated values are shown in [] and set values are shown in {}.
+Enumerated values are shown in brackets
+.Pp Dq []
+and set values are shown in curly braces
+.Pq Dq {} .
 .Pp
 The exact set of controls that can be manipulated depends on
 the mixer.
@@ -123,7 +126,7 @@ of the mixer, respectively.
 .Va name
 indicates what part of the mixer the control affects.
 Continuous mixer values, e.g., volume, have numeric values
-in the range 0-255.
+in the range 0\-255.
 If
 .Va value
 can be set for each channel independently, the values are printed
