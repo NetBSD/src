@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.108 2006/01/15 20:34:20 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.109 2006/02/25 20:21:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -956,7 +956,6 @@ get_via_ftp(const char *xfer_type)
 	/* We'll fetch each file just before installing it */
 	fetch_fn = ftp_fetch;
 	ftp.xfer_type = xfer_type;
-	clean_xfer_dir = 1;
 	snprintf(ext_dir, sizeof ext_dir, "%s/%s", target_prefix(),
 	    xfer_dir + (*xfer_dir == '/'));
 
@@ -983,7 +982,6 @@ get_via_nfs(void)
 	snprintf(ext_dir, sizeof ext_dir, "/mnt2/%s", set_dir);
 
 	/* return location, don't clean... */
-	clean_xfer_dir = 0;
 	return SET_OK;
 }
 
