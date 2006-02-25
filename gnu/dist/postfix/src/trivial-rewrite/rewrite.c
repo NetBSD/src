@@ -1,4 +1,4 @@
-/*	$NetBSD: rewrite.c,v 1.1.1.7 2005/08/18 21:09:45 rpaulo Exp $	*/
+/*	$NetBSD: rewrite.c,v 1.1.1.8 2006/02/25 22:10:35 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -175,7 +175,8 @@ void    rewrite_tree(RWR_CONTEXT *context, TOK822 *tree)
 	/*
 	 * Append missing @origin
 	 */
-	else if (var_append_at_myorigin != 0) {
+	else if (var_append_at_myorigin != 0
+		 && context->origin[0][0] != 0) {
 	    domain = tok822_sub_append(tree, tok822_alloc('@', (char *) 0));
 	    tok822_sub_append(tree, tok822_scan(REW_PARAM_VALUE(context->origin),
 						(TOK822 **) 0));
@@ -188,6 +189,7 @@ void    rewrite_tree(RWR_CONTEXT *context, TOK822 *tree)
      * alone.
      */
     if (var_append_dot_mydomain != 0
+	&& context->domain[0][0] != 0
 	&& (domain = tok822_rfind_type(tree->tail, '@')) != 0
 	&& domain != tree->tail
 	&& tok822_find_type(domain, TOK822_DOMLIT) == 0
