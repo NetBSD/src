@@ -1,20 +1,20 @@
-#	$NetBSD: MTX-1,v 1.1 2006/02/23 04:40:53 gdamore Exp $
+#	$NetBSD: MTX-1,v 1.2 2006/02/25 11:45:24 simonb Exp $
 #
 # Kernel config for the 4G Systems MTX-1 board (e.g. meshcube/accesscube).
 
 include		"arch/evbmips/conf/ALCHEMY"
 
-no options	ALCHEMY_AU1000
-no options	ALCHEMY_AU1100
-no options	ALCHEMY_AU1500
-no options	ALCHEMY_AU1550
-no options	ALCHEMY_GENERIC
+no options 	ALCHEMY_AU1000
+no options 	ALCHEMY_AU1100
+no options 	ALCHEMY_AU1500
+no options 	ALCHEMY_AU1550
+no options 	ALCHEMY_GENERIC
 
 # configure out local board support
 
-options		ALCHEMY_AU1500
-options		ALCHEMY_MTX1
-options		PCI_NETBSD_CONFIGURE
+options 	ALCHEMY_AU1500
+options 	ALCHEMY_MTX1
+options 	PCI_NETBSD_CONFIGURE
 
 # XXX AU1500 PCI seems busted, at least on the DBAU1500.  Attempts to use
 # commands like "dd if=/dev/zero of=/tmp/f bs=64k count=1000" result in
@@ -35,21 +35,10 @@ aupci*	at aubus? addr ?
 pci*	at aupci?
 
 # Note that this is just fairly random selection of PCI devices.
-# Only the hptide controller is actually on-board.
-
 bge*		at pci? dev ? function ?	# Broadcom GigE
-wi*		at pci? dev ? function ?	# Intersil PRISM WLAN
 ral*		at pci?	dev ? function ?	# Ralink WLAN
 re*		at pci? dev ? function ?	# Realtek 8169 GigE
+rtk*		at pci? dev ? function ?	# Realtek 8129/8139
 tlp*		at pci? dev ? function ?	# DEC Tulip Ethernet
 vge*		at pci? dev ? function ?	# VIA GigE
-rtk*		at pci? dev ? function ?	# Realtek 8129/8139
-hptide*		at pci? dev ? function ?	# Triones/HighPoint IDE
-
-atabus*		at ata?
-wd*		at atabus? drive ? flags 0x0000
-
-atapibus*	at atabus?
-cd*		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
-sd*		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
-uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown
+wi*		at pci? dev ? function ?	# Intersil PRISM WLAN
