@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_addr.c,v 1.1.1.3 2005/08/18 21:07:17 rpaulo Exp $	*/
+/*	$NetBSD: lmtp_addr.c,v 1.1.1.4 2006/02/25 22:09:20 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -107,7 +107,7 @@ static void lmtp_print_addr(char *what, DNS_RR *addr_list)
 	    msg_warn("skipping record type %s: %m", dns_strtype(addr->type));
 	} else {
 	    msg_info("pref %4d host %s/%s",
-		     addr->pref, addr->name,
+		     addr->pref, addr->rname,
 		     hostaddr.buf);
 	}
     }
