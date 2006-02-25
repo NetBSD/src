@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.9 2003/11/30 14:36:43 dsl Exp $
+/*	$NetBSD: aout2elf.c,v 1.10 2006/02/25 13:29:34 dsl Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -43,6 +43,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,6 +58,7 @@
 static int is_aout_shared_lib(const char *name);
 static void handle_aout_x_libs(const char *srcdir, const char *tgtdir);
 static int handle_aout_libs(const char *dir, int op, const void *arg);
+static char *target_realpath(const char *, char *);
 
 #define LIB_COUNT	0
 #define LIB_MOVE	1
@@ -299,4 +301,151 @@ domove:
 	}
 
 	return n;
+}
+
+/*
+ * XXXX had to include this to deal with symlinks in some places.
+ * When the target * disk is mounted under /targetroot, absolute symlinks
+ * on it don't work right.
+ * This function will resolve them using the mountpoint as prefix.
+ * Copied verbatim from libc, with added prefix handling.
+ *
+ * char *realpath(const char *path, char resolved_path[MAXPATHLEN]);
+ *
+ * Find the real name of path, by removing all ".", ".." and symlink
+ * components.  Returns (resolved) on success, or (NULL) on failure,
+ * in which case the path which caused trouble is left in (resolved).
+ */
+static char *
+target_realpath(const char *path, char *resolved)
+{
+	struct stat sb;
+	int fd, n, rootd, serrno, nlnk = 0;
+	char *p, *q, wbuf[MAXPATHLEN];
+	char solidus[2], empty[1];
+	solidus[0] = '/';
+	solidus[1] = '\0';
+	empty[0] = '\0';
+
+	/* Save the starting point. */
+	if ((fd = open(".", O_RDONLY)) < 0) {
+		(void)strlcpy(resolved, ".", MAXPATHLEN);
+		return (NULL);
+	}
+
+	/*
+	 * Find the dirname and basename from the path to be resolved.
+	 * Change directory to the dirname component.
+	 * lstat the basename part.
+	 *     if it is a symlink, read in the value and loop.
+	 *     if it is a directory, then change to that directory.
+	 * get the current directory name and append the basename.
+	 */
+	if (target_prefix() != NULL && strcmp(target_prefix(), "") != 0)
+		snprintf(resolved, MAXPATHLEN, "%s/%s", target_prefix(), path);
+	else
+		if (strlcpy(resolved, path, MAXPATHLEN) >= MAXPATHLEN) {
+			errno = ENAMETOOLONG;
+			goto err1;
+		}
+loop:
+	q = strrchr(resolved, '/');
+	if (q != NULL) {
+		p = q + 1;
+		if (q == resolved)
+			q = solidus;
+		else {
+			do {
+				--q;
+			} while (q > resolved && *q == '/');
+			q[1] = '\0';
+			q = resolved;
+		}
+		if (chdir(q) < 0)
+			goto err1;
+	} else
+		p = resolved;
+
+	/* Deal with the last component. */
+	if (lstat(p, &sb) == 0) {
+		if (S_ISLNK(sb.st_mode)) {
+			if (nlnk++ >= MAXSYMLINKS) {
+				errno = ELOOP;
+				goto err1;
+			}
+			n = readlink(p, wbuf, MAXPATHLEN - 1);
+			if (n < 0)
+				goto err1;
+			wbuf[n] = '\0';
+			if (wbuf[0] == '/')
+				snprintf(resolved, MAXPATHLEN, "%s%s",
+				    target_prefix(), wbuf);
+			else
+				strlcpy(resolved, wbuf, MAXPATHLEN);
+			goto loop;
+		}
+		if (S_ISDIR(sb.st_mode)) {
+			if (chdir(p) < 0)
+				goto err1;
+			p = empty;
+		}
+	}
+
+	/*
+	 * Save the last component name and get the full pathname of
+	 * the current directory.
+	 */
+	if (strlcpy(wbuf, p, sizeof(wbuf)) >= sizeof(wbuf)) {
+		errno = ENAMETOOLONG;
+		goto err1;
+	}
+
+	/*
+	 * Call the internal internal version of getcwd which
+	 * does a physical search rather than using the $PWD short-cut
+	 */
+	if (getcwd(resolved, MAXPATHLEN) == 0)
+		goto err1;
+
+	/*
+	 * Join the two strings together, ensuring that the right thing
+	 * happens if the last component is empty, or the dirname is root.
+	 */
+	if (resolved[0] == '/' && resolved[1] == '\0')
+		rootd = 1;
+	else
+		rootd = 0;
+
+	if (*wbuf) {
+		if (strlen(resolved) + strlen(wbuf) + (rootd ? 0 : 1) + 1 >
+		    MAXPATHLEN) {
+			errno = ENAMETOOLONG;
+			goto err1;
+		}
+		if (rootd == 0)
+			if (strlcat(resolved, "/", MAXPATHLEN) >= MAXPATHLEN) {
+				errno = ENAMETOOLONG;
+				goto err1;
+			}
+		if (strlcat(resolved, wbuf, MAXPATHLEN) >= MAXPATHLEN) {
+			errno = ENAMETOOLONG;
+			goto err1;
+		}
+	}
+
+	/* Go back to where we came from. */
+	if (fchdir(fd) < 0) {
+		serrno = errno;
+		goto err2;
+	}
+
+	/* It's okay if the close fails, what's an fd more or less? */
+	(void)close(fd);
+	return (resolved);
+
+err1:	serrno = errno;
+	(void)fchdir(fd);
+err2:	(void)close(fd);
+	errno = serrno;
+	return (NULL);
 }

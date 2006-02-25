@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.125 2006/01/15 20:41:00 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.126 2006/02/25 13:29:34 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -400,7 +400,6 @@ void	umount_mnt2(void);
 
 /* from target.c */
 const	char *concat_paths(const char *, const char *);
-char	*target_realpath(const char *, char *);
 const	char *target_expand(const char *);
 void	make_target_dir(const char *);
 void	append_to_target_file(const char *, const char *);
