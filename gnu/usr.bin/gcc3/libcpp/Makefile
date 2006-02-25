@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2003/12/07 12:51:43 simonb Exp $
+#	$NetBSD: Makefile,v 1.3 2006/02/25 12:04:23 simonb Exp $
 
-NOLINKLIB=	# defined
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
+MKPRIVATELIB=	yes
 
 LIB=		cpp
 

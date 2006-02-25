@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2002/09/18 13:31:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2006/02/25 12:04:24 simonb Exp $
 
-NOLINKLIB=# defined
-NOMAN=	# defined
-NOPIC=	# defined
-NOLINT=	# defined
+MKPRIVATELIB=	yes
 
 LIB=	parse
 SRCS=	parse.c parse_conf.c clk_meinberg.c clk_schmid.c clk_rawdcf.c \
