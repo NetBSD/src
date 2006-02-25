@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.215 2006/02/23 05:37:48 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.216 2006/02/25 00:58:35 wiz Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.215 2006/02/23 05:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.216 2006/02/25 00:58:35 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -568,7 +568,7 @@ bootpath_build(void)
 				}
 			} else {
 				bp->val[0] = -1; /* no #'s: assume unit 0, no
-							sbus offset/adddress */
+							sbus offset/address */
 			}
 			++bp;
 			++nbootpath;
