@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.21 2005/07/01 16:50:55 jmc Exp $	*/
+/*	$NetBSD: canfield.c,v 1.22 2006/02/25 02:06:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.21 2005/07/01 16:50:55 jmc Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.22 2006/02/25 02:06:08 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1562,7 +1562,7 @@ movecard(void)
 }
 
 const char *const basicinstructions[] = {
-	"Here are brief instuctions to the game of Canfield:\n\n",
+	"Here are brief instructions to the game of Canfield:\n\n",
 	"     If you have never played solitaire before, it is recom-\n",
 	"mended  that  you  consult  a solitaire instruction book. In\n",
 	"Canfield, tableau cards may be built on each other  downward\n",
