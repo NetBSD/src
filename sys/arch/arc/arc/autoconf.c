@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 2006/02/23 05:37:46 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 2006/02/25 17:37:14 thorpej Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2006/02/23 05:37:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 2006/02/25 17:37:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,8 +251,6 @@ device_register(struct device *dev, void *aux)
 {
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = device_parent(dev);
-	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_name;
 
 	static int found = 0, initted = 0, scsiboot = 0;
 	static struct device *scsibusdev = NULL;
@@ -268,7 +266,8 @@ device_register(struct device *dev, void *aux)
 		initted = 1;
 	}
 
-	if (scsiboot && strcmp(name, "scsibus") == 0) {
+	if (scsiboot && device_is_a(dev, "scsibus")) {
+		/* XXX dv_unit abuse */
 		if (dev->dv_unit == b->bus) {
 			scsibusdev = dev;
 #if 0
@@ -278,10 +277,10 @@ device_register(struct device *dev, void *aux)
 		return;
 	}
 
-	if (strcmp(b->dev_type, name) != 0)
+	if (!device_is_a(dev, b->dev_type))
 		return;
 
-	if (strcmp(name, "sd") == 0) {
+	if (device_is_a(dev, "sd")) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (scsiboot && scsibusdev && parent == scsibusdev &&
@@ -294,6 +293,7 @@ device_register(struct device *dev, void *aux)
 		}
 		return;
 	}
+	/* XXX dv_unit abuse */
 	if (dev->dv_unit == b->unit) {
 		booted_device = dev;
 #if 0
