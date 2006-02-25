@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.9 2005/08/18 22:04:54 rpaulo Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.10 2006/02/25 22:17:12 rpaulo Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -2347,6 +2347,13 @@ extern char *var_smtp_ehlo_dis_words;
 #define VAR_SMTP_EHLO_DIS_MAPS		"smtp_discard_ehlo_keyword_address_maps"
 #define DEF_SMTP_EHLO_DIS_MAPS		""
 extern char *var_smtp_ehlo_dis_maps;
+
+ /*
+  * Allow CNAME lookup result to override the server hostname.
+  */
+#define VAR_SMTP_CNAME_OVERR		"smtp_cname_overrides_servername"
+#define DEF_SMTP_CNAME_OVERR		1
+extern bool var_smtp_cname_overr;
 
 /* LICENSE
 /* .ad
