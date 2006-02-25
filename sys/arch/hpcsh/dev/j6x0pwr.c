@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.8 2005/12/24 23:24:00 perry Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.9 2006/02/25 16:43:36 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.8 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.9 2006/02/25 16:43:36 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,25 +93,28 @@ j6x0pwr_match(struct device *parent, struct cfdata *cfp, void *aux)
 	 * Is 620 wired similarly?
 	 */
 	if (!platid_match(&platid, &platid_mask_MACH_HP_JORNADA_6XX))
-		return (0);
+		return 0;
 
 	if (strcmp(cfp->cf_name, "j6x0pwr") != 0)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 
 static void
 j6x0pwr_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct j6x0pwr_softc *sc = (struct j6x0pwr_softc *)self;
+
+	/* XXX: in machdep.c */
 	extern void (*__sleep_func)(void *);
 	extern void *__sleep_ctx;
-	struct j6x0pwr_softc *sc = (struct j6x0pwr_softc *)self;
 
 	/* regsiter sleep function to APM */
 	__sleep_func = j6x0pwr_sleep;
 	__sleep_ctx = self;
+
 	sc->sc_poweroff = 0;
 
 	/* drain the old interrupt */
@@ -145,11 +148,12 @@ j6x0pwr_intr(void *self)
 	uint8_t irr0;
 	uint8_t pgdr;
 
-	if (((irr0 = j6x0pwr_clear_interrupt()) & IRR0_IRQ0) == 0) {
+	irr0 = j6x0pwr_clear_interrupt();
+	if ((irr0 & IRR0_IRQ0) == 0) {
 #ifdef DIAGNOSTIC
 		printf_nolog("%s: irr0=0x%02x?\n", sc->sc_dev.dv_xname, irr0);
 #endif
-		return (0);
+		return 0;
 	}
 
 	pgdr = _reg_read_1(SH7709_PGDR);
@@ -171,7 +175,7 @@ j6x0pwr_intr(void *self)
 	config_hook_call(CONFIG_HOOK_BUTTONEVENT, CONFIG_HOOK_BUTTONEVENT_POWER,
 	    (void *)0);
 
-	return (1);
+	return 1;
 }
 
 static int
@@ -202,7 +206,9 @@ j6x0pwr_sleep(void *self)
 		/* Disable interrupt except for power button. */
 		s = _cpu_intr_resume(IPL_CLOCK << 4);
 		_reg_write_1(SH7709_PKDR, 0xff);	/* Green LED off */
+
 		__asm volatile("sleep");
+
 		_reg_write_1(SH7709_PKDR, 0);		/* Green LED on */
 		_cpu_intr_resume(s);
 	} while (sc->sc_poweroff);
