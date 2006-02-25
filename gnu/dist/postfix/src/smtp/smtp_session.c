@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_session.c,v 1.1.1.3 2005/08/18 21:08:58 rpaulo Exp $	*/
+/*	$NetBSD: smtp_session.c,v 1.1.1.4 2006/02/25 22:10:08 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -130,14 +130,20 @@
 #ifdef USE_TLS
 
  /*
-  * Per-site policies can override main.cf settings.
+  * TLS enforcement level. Actual TLS policies will be NONE or higher.
+  * 
+  * There are two pseudo levels: NOTFOUND is a sentinel value for the ease of
+  * implementation; MAY is a wild-card that indicates "anything goes".
+  * 
+  * Non pseudo levels can also be used to indicate the actual security level of
+  * a session.
   */
-typedef struct {
-    int     dont_use;			/* don't use TLS */
-    int     use;			/* useless, see above */
-    int     enforce;			/* must always use TLS */
-    int     enforce_peername;		/* must verify certificate name */
-} SMTP_TLS_SITE_POLICY;
+#define SMTP_TLS_LEV_NOTFOUND	(-1)	/* sentinel */
+#define SMTP_TLS_LEV_NONE	0	/* plain-text only */
+#define SMTP_TLS_LEV_MAY	1	/* wildcard */
+#define SMTP_TLS_LEV_ENCRYPT	2	/* encrypted connection */
+#define SMTP_TLS_LEV_VERIFY	3	/* certificate verified */
+#define SMTP_TLS_LEV_STRICT	4	/* "secure" verification */
 
 static MAPS *tls_per_site;		/* lookup table(s) */
 
@@ -149,9 +155,21 @@ void    smtp_tls_list_init(void)
 			       DICT_FLAG_LOCK);
 }
 
+/* smtp_tls_policy_print - print policy level */
+
+static void smtp_tls_policy_print(const char *name, int level)
+{
+    msg_info("%s TLS level: %s", name,
+	     level == SMTP_TLS_LEV_VERIFY ? "verify" :
+	     level == SMTP_TLS_LEV_ENCRYPT ? "encrypt" :
+	     level == SMTP_TLS_LEV_MAY ? "may" :
+	     level == SMTP_TLS_LEV_NONE ? "none" :
+	     "unknown");
+}
+
 /* smtp_tls_site_policy - look up per-site TLS policy */
 
-static void smtp_tls_site_policy(SMTP_TLS_SITE_POLICY *policy,
+static void smtp_tls_site_policy(int *site_level,
 				         const char *site_name,
 				         const char *site_class)
 {
@@ -159,31 +177,99 @@ static void smtp_tls_site_policy(SMTP_TLS_SITE_POLICY *policy,
     char   *lookup_key;
 
     /*
-     * Initialize the default policy.
-     */
-    policy->dont_use = 0;
-    policy->use = 0;
-    policy->enforce = 0;
-    policy->enforce_peername = 0;
-
-    /*
-     * Look up a non-default policy.
+     * Look up a non-default policy. In case of multiple lookup results, the
+     * precedence order is a permutation of the TLS enforcement level order:
+     * VERIFY, ENCRYPT, NONE, MAY, NOTFOUND. I.e. we override MAY with a more
+     * specific policy including NONE, otherwise we choose the stronger
+     * enforcement level.
      */
     lookup_key = lowercase(mystrdup(site_name));
     if ((lookup = maps_find(tls_per_site, lookup_key, 0)) != 0) {
-	if (!strcasecmp(lookup, "NONE"))
-	    policy->dont_use = 1;
-	else if (!strcasecmp(lookup, "MAY"))
-	    policy->use = 1;
-	else if (!strcasecmp(lookup, "MUST"))
-	    policy->enforce = policy->enforce_peername = 1;
-	else if (!strcasecmp(lookup, "MUST_NOPEERMATCH"))
-	    policy->enforce = 1;
-	else
+	if (!strcasecmp(lookup, "NONE")) {
+	    /* NONE overrides MAY or NOTFOUND. */
+	    if (*site_level <= SMTP_TLS_LEV_MAY)
+		*site_level = SMTP_TLS_LEV_NONE;
+	} else if (!strcasecmp(lookup, "MAY")) {
+	    /* MAY overrides NOTFOUND but not NONE. */
+	    if (*site_level < SMTP_TLS_LEV_NONE)
+		*site_level = SMTP_TLS_LEV_MAY;
+	} else if (!strcasecmp(lookup, "MUST_NOPEERMATCH")) {
+	    if (*site_level < SMTP_TLS_LEV_ENCRYPT)
+		*site_level = SMTP_TLS_LEV_ENCRYPT;
+	} else if (!strcasecmp(lookup, "MUST")) {
+	    if (*site_level < SMTP_TLS_LEV_VERIFY)
+		*site_level = SMTP_TLS_LEV_VERIFY;
+	} else {
 	    msg_warn("Table %s: ignoring unknown TLS policy '%s' for %s %s",
 		     var_smtp_tls_per_site, lookup, site_class, site_name);
+	}
     }
     myfree(lookup_key);
+}
+
+/* smtp_tls_level_init - configure session TLS enforcement level */
+
+static int smtp_tls_level_init(const char *dest, const char *host)
+{
+    int     global_level;
+    int     site_level;
+    int     tls_level;
+
+    /*
+     * Compute the global TLS policy. This is the default policy level when
+     * no per-site policy exists. It also is used to override a wild-card
+     * per-site policy.
+     */
+    if (var_smtp_enforce_tls)
+	global_level = var_smtp_tls_enforce_peername ?
+	    SMTP_TLS_LEV_VERIFY : SMTP_TLS_LEV_ENCRYPT;
+    else
+	global_level = var_smtp_use_tls ?
+	    SMTP_TLS_LEV_MAY : SMTP_TLS_LEV_NONE;
+    if (msg_verbose)
+	smtp_tls_policy_print("global", global_level);
+
+    /*
+     * Compute the per-site TLS enforcement level. For compatibility with the
+     * original TLS patch, this algorithm is gives equal precedence to host
+     * and next-hop policies.
+     */
+    site_level = SMTP_TLS_LEV_NOTFOUND;
+
+    if (tls_per_site) {
+	smtp_tls_site_policy(&site_level, dest, "next-hop destination");
+	if (strcasecmp(dest, host) != 0)
+	    smtp_tls_site_policy(&site_level, host, "server hostname");
+	if (msg_verbose)
+	    smtp_tls_policy_print("site", site_level);
+    }
+
+    /*
+     * Override a wild-card per-site policy with a more specific global
+     * policy.
+     * 
+     * With the original TLS patch, 1) a per-site ENCRYPT could not override a
+     * global VERIFY, and 2) a combined per-site (NONE+MAY) policy produced
+     * inconsistent results: it changed a global VERIFY into NONE, while
+     * producing MAY with all weaker global policy settings.
+     * 
+     * With the current implementation, a combined per-site (NONE+MAY)
+     * consistently overrides global policy with NONE, and global policy can
+     * override only a per-site MAY wildcard. That is, specific policies
+     * consistently override wildcard policies, and (non-wildcard) per-site
+     * policies consistently override global policies.
+     */
+    if (site_level == SMTP_TLS_LEV_NOTFOUND
+	|| (site_level == SMTP_TLS_LEV_MAY
+	    && global_level > SMTP_TLS_LEV_MAY))
+	tls_level = global_level;
+    else
+	tls_level = site_level;
+
+    if (msg_verbose && tls_per_site)
+	smtp_tls_policy_print("effective", tls_level);
+
+    return (tls_level);
 }
 
 #endif
@@ -195,12 +281,6 @@ SMTP_SESSION *smtp_session_alloc(VSTREAM *stream, const char *dest,
 				         unsigned port, int flags)
 {
     SMTP_SESSION *session;
-
-#ifdef USE_TLS
-    SMTP_TLS_SITE_POLICY host_policy;
-    SMTP_TLS_SITE_POLICY rcpt_policy;
-
-#endif
 
     session = (SMTP_SESSION *) mymalloc(sizeof(*session));
     session->stream = stream;
@@ -238,39 +318,14 @@ SMTP_SESSION *smtp_session_alloc(VSTREAM *stream, const char *dest,
     session->tls_enforce_peername = 0;
     session->tls_context = 0;
     session->tls_info = tls_info_zero;
-
-    /*
-     * Override the main.cf TLS policy with an optional per-site policy.
-     */
-    if (smtp_tls_ctx != 0) {
-	smtp_tls_site_policy(&host_policy, host, "receiving host");
-	smtp_tls_site_policy(&rcpt_policy, dest, "recipient domain");
-
-	/*
-	 * Set up TLS enforcement for this session.
-	 */
-	if ((var_smtp_enforce_tls && !host_policy.dont_use && !rcpt_policy.dont_use)
-	    || host_policy.enforce || rcpt_policy.enforce)
-	    session->tls_enforce_tls = session->tls_use_tls = 1;
-
-	/*
-	 * Set up peername checking for this session.
-	 * 
-	 * We want to make sure that a MUST* entry in the tls_per_site table
-	 * always has precedence. MUST always must lead to a peername check,
-	 * MUST_NOPEERMATCH must always disable it. Only when no explicit
-	 * setting has been found, the default will be used. There is the
-	 * case left, that both "host" and "recipient" settings conflict. In
-	 * this case, the "host" setting wins.
-	 */
-	if (host_policy.enforce && host_policy.enforce_peername)
-	    session->tls_enforce_peername = 1;
-	else if (rcpt_policy.enforce && rcpt_policy.enforce_peername)
-	    session->tls_enforce_peername = 1;
-	else if (var_smtp_enforce_tls && var_smtp_tls_enforce_peername)
-	    session->tls_enforce_peername = 1;
-	else if ((var_smtp_use_tls && !host_policy.dont_use && !rcpt_policy.dont_use) || host_policy.use || rcpt_policy.use)
-	    session->tls_use_tls = 1;
+    switch (smtp_tls_level_init(dest, host)) {
+    case SMTP_TLS_LEV_VERIFY:
+	session->tls_enforce_peername = 1;
+    case SMTP_TLS_LEV_ENCRYPT:
+	session->tls_enforce_tls = 1;
+    case SMTP_TLS_LEV_MAY:
+	session->tls_use_tls = 1;
+	break;
     }
 #endif
     debug_peer_check(host, addr);

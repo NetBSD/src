@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.h,v 1.1.1.6 2005/08/18 21:08:50 rpaulo Exp $	*/
+/*	$NetBSD: smtp.h,v 1.1.1.7 2006/02/25 22:10:03 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -165,6 +165,12 @@ extern int smtp_ext_prop_mask;		/* address externsion propagation */
 extern SSL_CTX *smtp_tls_ctx;		/* client-side TLS engine */
 
 #endif
+
+
+ /*
+  * What's in a name?
+  */
+#define SMTP_HNAME(rr) (var_smtp_cname_overr ? (rr)->rname : (rr)->qname)
 
  /*
   * smtp_session.c

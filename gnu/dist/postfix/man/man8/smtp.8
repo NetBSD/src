@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp.8,v 1.1.1.9 2005/08/18 21:04:23 rpaulo Exp $
+.\"	$NetBSD: smtp.8,v 1.1.1.10 2006/02/25 22:06:48 rpaulo Exp $
 .\"
 .TH SMTP 8 
 .ad
@@ -105,6 +105,10 @@ Ignore DNS MX lookups that produce no response.
 Always send EHLO at the start of an SMTP session.
 .IP "\fBsmtp_never_send_ehlo (no)\fR"
 Never send EHLO at the start of an SMTP session.
+.IP "\fBsmtp_cname_overrides_servername (yes)\fR"
+Allow DNS CNAME records to override the servername that the
+Postfix SMTP client uses for logging, SASL password lookup, TLS
+policy decisions, or TLS certificate verification.
 .IP "\fBsmtp_defer_if_no_mx_address_found (no)\fR"
 Defer mail delivery when no MX record resolves to an IP address.
 .IP "\fBsmtp_line_length_limit (990)\fR"

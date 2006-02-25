@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rr.c,v 1.1.1.4 2005/08/18 21:05:58 rpaulo Exp $	*/
+/*	$NetBSD: dns_rr.c,v 1.1.1.5 2006/02/25 22:08:23 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,9 +8,10 @@
 /* SYNOPSIS
 /*	#include <dns.h>
 /*
-/*	DNS_RR	*dns_rr_create(name, type, class, ttl, preference, 
+/*	DNS_RR	*dns_rr_create(qname, rname, type, class, ttl, preference,
 /*				data, data_len)
-/*	const char *name;
+/*	const char *qname;
+/*	const char *rname;
 /*	unsigned short type;
 /*	unsigned short class;
 /*	unsigned int ttl;
@@ -43,7 +44,8 @@
 /*	information, and maintain lists of DNS resource records.
 /*
 /*	dns_rr_create() creates and initializes one resource record.
-/*	The \fIname\fR record specifies the record name.
+/*	The \fIqname\fR field specifies the query name.
+/*	The \fIrname\fR field specifies the reply name.
 /*	\fIpreference\fR is used for MX records; \fIdata\fR is a null
 /*	pointer or specifies optional resource-specific data;
 /*	\fIdata_len\fR is the amount of resource-specific data.
@@ -93,14 +95,16 @@
 
 /* dns_rr_create - fill in resource record structure */
 
-DNS_RR *dns_rr_create(const char *name, ushort type, ushort class,
+DNS_RR *dns_rr_create(const char *qname, const char *rname,
+		              ushort type, ushort class,
 		              unsigned int ttl, unsigned pref,
 		              const char *data, unsigned data_len)
 {
     DNS_RR *rr;
 
     rr = (DNS_RR *) mymalloc(sizeof(*rr) + data_len - 1);
-    rr->name = mystrdup(name);
+    rr->qname = mystrdup(qname);
+    rr->rname = mystrdup(rname);
     rr->type = type;
     rr->class = class;
     rr->ttl = ttl;
@@ -119,7 +123,8 @@ void    dns_rr_free(DNS_RR *rr)
     if (rr) {
 	if (rr->next)
 	    dns_rr_free(rr->next);
-	myfree(rr->name);
+	myfree(rr->qname);
+	myfree(rr->rname);
 	myfree((char *) rr);
     }
 }
@@ -136,7 +141,8 @@ DNS_RR *dns_rr_copy(DNS_RR *src)
      */
     dst = (DNS_RR *) mymalloc(len);
     memcpy((char *) dst, (char *) src, len);
-    dst->name = mystrdup(src->name);
+    dst->qname = mystrdup(src->qname);
+    dst->rname = mystrdup(src->rname);
     dst->next = 0;
     return (dst);
 }
