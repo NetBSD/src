@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.4 2005/08/18 21:53:53 rpaulo Exp $
+.\"	$NetBSD: postconf.5,v 1.5 2006/02/25 22:17:12 rpaulo Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -3197,6 +3197,15 @@ inet_interfaces documentation for more detail.
 .PP
 Note 2: address information may be enclosed inside [],
 but this form is not recommended here.
+.SH smtp_cname_overrides_servername (default: yes)
+Allow DNS CNAME records to override the servername that the
+Postfix SMTP client uses for logging, SASL password lookup, TLS
+policy decisions, or TLS certificate verification. The default value
+(yes) is backwards compatible. Specify "no" to harden Postfix 2.2
+smtp_tls_per_site hostname-based policies against false hostname
+information in DNS CNAME records.
+.PP
+This feature is available in Postfix 2.2.9 and later.
 .SH smtp_connect_timeout (default: 30s)
 The SMTP client time limit for completing a TCP connection, or
 zero (use the operating system built-in time limit).
@@ -3750,33 +3759,70 @@ postfix/smtp[pid]:  Host offered STARTTLS: [name.of.host]
 .ft R
 .SH smtp_tls_per_site (default: empty)
 Optional lookup tables with the Postfix SMTP client TLS usage
-policy by next-hop domain name and by remote SMTP server hostname.
+policy by next-hop destination and by remote SMTP server hostname.
+When both lookups succeed, the more specific per-site policy (NONE,
+MUST, etc) overrides the less specific one (MAY), and the more
+secure per-site policy (MUST, etc) overrides the less secure one
+(NONE).
 .PP
-Table format:  domain names or server hostnames are specified
-on the left-hand side; no wildcards are allowed.  On the right hand
-side specify one of the following keywords:
+Specify a next-hop destination or server hostname on the left-hand
+side; no wildcards are allowed. The next-hop destination is either
+the recipient domain, or the destination specified with a \fBtransport\fR(5)
+table, the relayhost parameter, or the relay_transport parameter.
+On the right hand side specify one of the following keywords:
 .IP "NONE"
-Don't use TLS at all.
+Don't use TLS at all. This overrides a less
+specific \fBMAY\fR lookup result from the alternate host or next-hop
+lookup key, and overrides the global smtp_use_tls, smtp_enforce_tls,
+and smtp_tls_enforce_peername settings.
 .IP "MAY"
-Try to use STARTTLS if offered, otherwise use
-the unencrypted connection.
-.IP "MUST"
-Require usage of STARTTLS, require that the
-remote SMTP server hostname matches the information in the remote
-SMTP server certificate, and require that the remote SMTP server
-certificate was issued by a trusted CA.
+Try to use TLS if the server announces support,
+otherwise use the unencrypted connection. This has less precedence
+than a more specific result (including \fBNONE\fR) from the alternate
+host or next-hop lookup key, and has less precedence than the more
+specific global "smtp_enforce_tls = yes" or "smtp_tls_enforce_peername
+= yes".
 .IP "MUST_NOPEERMATCH"
-Require usage of STARTTLS, but do
-not require that the remote SMTP server hostname matches the
-information in the remote SMTP server certificate, or that the
-server certificate was issued by a trusted CA.
+Require TLS encryption, but do not
+require that the remote SMTP server hostname matches the information
+in the remote SMTP server certificate, or that the server certificate
+was issued by a trusted CA. This overrides a less secure \fBNONE\fR
+or a less specific \fBMAY\fR lookup result from the alternate host
+or next-hop lookup key, and overrides the global smtp_use_tls,
+smtp_enforce_tls and smtp_tls_enforce_peername settings.
+.IP "MUST"
+Require TLS encryption, require that the remote
+SMTP server hostname matches the information in the remote SMTP
+server certificate, and require that the remote SMTP server certificate
+was issued by a trusted CA. This overrides a less secure \fBNONE\fR
+and \fBMUST_NOPEERMATCH\fR or a less specific \fBMAY\fR lookup
+result from the alternate host or next-hop lookup key, and overrides
+the global smtp_use_tls, smtp_enforce_tls and smtp_tls_enforce_peername
+settings.
 .PP
-Special hint for enforcement mode:  since no secure DNS lookup
-mechanism is available, the recommended setup is:  specify local
-\fBtransport\fR(5) table entries for sensitive domains with explicit
-smtp:[mailhost] destinations (since you can assure security of this
-table unlike DNS), then specify MUST for these mail hosts in the
-smtp_tls_per_site table.
+As long as no secure DNS lookup mechanism is available, false
+hostnames in MX or CNAME responses can change the server hostname
+that Postfix uses for TLS policy lookup and server certificate
+verification. Even with a perfect match between the server hostname
+and the server certificate, there is no guarantee that Postfix is
+connected to the right server.  To avoid this loophole take the
+following steps:
+.IP \(bu
+Disallow CNAME hostname overrides. In main.cf specify
+"smtp_cname_overrides_servername = no". This prevents false hostname
+information in DNS CNAME records from changing the server hostname
+that Postfix uses for TLS policy lookup and server certificate
+verification. This feature requires Postfix 2.2.9 or later.
+.IP \(bu
+Eliminate MX lookups. Specify local \fBtransport\fR(5) table entries
+for sensitive domains with explicit smtp:[mailhost] or smtp:[mailhost]:port
+destinations.  This prevents false hostname information in DNS MX
+records from changing the server hostname that Postfix uses for TLS
+policy lookup and server certificate verification.
+.IP \(bu
+Specify MUST for these mail hosts (including [ ] and port) in
+the smtp_tls_per_site table.
+.PP
 .SH smtp_tls_scert_verifydepth (default: 5)
 The verification depth for remote SMTP server certificates. A
 depth of 1 is sufficient, if the certificate is directly issued by
