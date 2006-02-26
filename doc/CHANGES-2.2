@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.40 2006/02/12 16:29:41 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.41 2006/02/26 21:56:16 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -515,4 +515,24 @@ sys/net/if_bridge.c				1.36
 
 	Fix memory disclosure in bridge(4).
 	[adrianp, ticket #10306]
+
+tools/gcc/README.mknative			1.5 via patch
+tools/toolchain/README.mknative			1.7
+
+	I haven't touched the mknative stuff since 2002.  Take my name off
+	of the readmes, so I'm not implied as a point of contact.
+	[tv, ticket #10318]
+
+sys/arch/alpha/pci/pci_6600.c			1.14
+
+	Fix interrupt event counter attach typo.  Only the last interrupt
+	was getting an event counter, and none of the dec_6600 interrupts were
+	getting counted.
+	[mhitch, ticket #10320]
+
+sys/arch/i386/pci/pchb_rnd.c			patch
+
+	Improve code probing for the Intel hardware RNG to avoid false
+	detections.
+	[tron, ticket #10327]
 
