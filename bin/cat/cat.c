@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.43 2004/01/04 03:31:28 jschauma Exp $	*/
+/* $NetBSD: cat.c,v 1.44 2006/02/26 19:44:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.43 2004/01/04 03:31:28 jschauma Exp $");
+__RCSID("$NetBSD: cat.c,v 1.44 2006/02/26 19:44:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,6 +160,8 @@ cook_args(char **argv)
 		cook_buf(fp);
 		if (fp != stdin)
 			(void)fclose(fp);
+		else
+			clearerr(fp);
 	} while (*argv);
 }
 
