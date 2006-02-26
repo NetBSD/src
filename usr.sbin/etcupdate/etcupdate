@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.25 2006/02/19 14:56:56 apb Exp $
+# $NetBSD: etcupdate,v 1.26 2006/02/26 19:51:05 apb Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -533,13 +533,18 @@ if ! ${CONTINUE}; then
 			echo "*** ERROR: Unable to find ${SRCDIR}/etc/Makefile"
 			exit 1
 		fi
-		# Set the environment for make
+		# Set the environment for make.
+		#
+		# INSTALL_DONE=1 prevents installation of unwanted
+		# files (things that are not part of the etc set).
+		# BUILD_DONE=1 allows building of files that are wanted.
 		MAKE_ENV=" 			\
 			DESTDIR=${TEMPROOT}	\
 			MAKE=make		\
 			MTREE=mtree		\
 			TOOL_MTREE=mtree	\
 			INSTALL_DONE=1		\
+			BUILD=1			\
 			USETOOLS=never"
 		echo "*** Populating ${TEMPROOT} from ${SRCDIR}"
 		cd ${SRCDIR}/etc
