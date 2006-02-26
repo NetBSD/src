@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.9 2004/04/19 01:05:22 lukem Exp $
+#	$NetBSD: updatedb.sh,v 1.10 2006/02/26 03:00:16 dyoung Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -116,7 +116,9 @@ trap "rm -f '$FILELIST'; exit 1" INT QUIT TERM
 # Entries of each directory shall be sorted (find -s).
 
 set -f
-find -s ${SRCHPATHS} $lp $ignorefs $ignore $rp -print >> "$FILELIST"
+if ! find -s ${SRCHPATHS} $lp $ignorefs $ignore $rp -print >> "$FILELIST"; then
+	exit 1
+fi
 
 BIGRAMS=`$LIBDIR/locate.bigram <"$FILELIST"`
 
