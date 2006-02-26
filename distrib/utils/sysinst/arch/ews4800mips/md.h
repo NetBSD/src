@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2006/01/09 10:03:51 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2006/02/26 10:25:53 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,4 +71,3 @@
 int ews4800mips_boot_offset(void);
 int ews4800mips_boot_size(void);
 int ews4800mips_sysvbfs_size(void);
-extern const char *fdtype;

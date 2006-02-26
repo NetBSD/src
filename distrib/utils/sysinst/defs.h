@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.127 2006/02/25 20:21:00 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.128 2006/02/26 10:25:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -272,8 +272,9 @@ int (*fetch_fn)(const char *);
 char nfs_host[STRSIZE];
 char nfs_dir[STRSIZE];
 
-char cdrom_dev[SSTRSIZE];
-char fd_dev[SSTRSIZE];
+char cdrom_dev[SSTRSIZE];		/* Typically "cd0a" */
+char fd_dev[SSTRSIZE];			/* Typically "/dev/fd0a" */
+const char *fd_type;			/* "msdos", "ffs" or maybe "ados" */
 
 char localfs_dev[SSTRSIZE];
 char localfs_fs[SSTRSIZE];

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.13 2006/01/12 22:02:45 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.14 2006/02/26 10:25:54 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,9 +71,3 @@
  * Machine-specific command to write a new label to a disk.
  */
 #define	DISKLABEL_CMD "disklabel -w -r"
-
-/*
- * Default fileystem type for IDE disk.
- * On playstation2, that is msdos.
- */
-const char *fdtype;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.109 2006/01/12 22:02:45 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.110 2006/02/26 10:25:53 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,8 +69,6 @@ static void md_upgrade_mbrtype(void);
 static int md_read_bootcode(const char *, struct mbr_sector *);
 static unsigned int get_bootmodel(void);
 static char *md_bootxx_name(void);
-
-const char *fdtype = "msdos";
 
 
 int

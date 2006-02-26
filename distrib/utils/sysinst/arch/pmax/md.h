@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.30 2004/06/06 06:07:01 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.31 2006/02/26 10:25:54 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,12 +69,3 @@
  *      base etc comp games man misc text xbase xcomp xetc xfont xserver
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-
-/*
- * Default fileystem type for floppy disks.
- *
- * On pmax, we don't support a dedicated floppy-disk driver, only
- * SCSI floppy drives, so we can't recognize floppies by name.
- */
-const char *fdtype;
-

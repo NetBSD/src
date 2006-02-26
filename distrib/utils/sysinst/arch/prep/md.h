@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.13 2006/01/12 22:02:45 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.14 2006/02/26 10:25:54 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -88,15 +88,3 @@
  * On prep, do what the 1.2 install scripts did. 
  */
 #define DISKLABEL_CMD "disklabel -w -r"
-
-
-/*
- * Default fileystem type for floppy disks.
- * On prep, that is msdos.
- */
-const char *fdtype;
-
-
-/*
- *  prototypes for MD code.
- */

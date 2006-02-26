@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.9 2004/06/06 06:07:00 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.10 2006/02/26 10:25:53 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,17 +68,3 @@
  * On bebox, do what the 1.2 install scripts did. 
  */
 #define DISKLABEL_CMD "disklabel -w -r"
-
-
-/*
- * Default fileystem type for floppy disks.
- * On bebox, that is  msdos.
- */
-const char *fdtype;
-
-
-/*
- *  prototypes for MD code.
- */
-
-

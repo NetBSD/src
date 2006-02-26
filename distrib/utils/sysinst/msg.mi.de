@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.30 2006/02/25 20:21:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.31 2006/02/26 10:25:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -713,9 +713,25 @@ message badroot
 Sind Sie sicher, daß Sie alle benötigten Sets installiert haben? 
 }
 
-message fddev
-{Welches Diskettenlaufwerk wollen Sie nutzen? }
+message fd_type		/* XXX translate */
+{Floppy file system type}
 
+message fdnotfound	/* XXX fix translation */
+{Ich konnte die Datei nicht finden.
+}
+
+message fdremount
+{Die Diskette konnte nicht gemountet werden.
+}
+
+message fdmount		/* XXX translate */
+{Please load the floppy containing the file named "%s.%s". 
+
+If the set's has no more disks, select "Set finished" to install the set.
+Select "Abort fetch" to return to the install media selection menu.
+}
+
+.if 0
 message fdmount
 {Bitte legen Sie die Diskette ein, auf der sich die Datei "%s.%s" befindet. }
 
@@ -738,6 +754,7 @@ nächsten Paket fortfahren - falls ein weiteres existiert.
 Keine weiteren Pakete mehr vom dem Diskettenlaufwerk laden und die Installation
 abbrechen.
 }
+.endif
 
 message mntnetconfig
 {Möchten Sie die aktuellen Netzwerkeinstellungen für den allgemeinen
@@ -948,7 +965,7 @@ message Set_finished {Paket fertig}
 message Skip_set {Paket skip}	/* XXX */
 message Skip_group {Paket skip group}	/* XXX */
 message Abandon {Abandon installation}	/* XXX */
-message Abort_install {Installation abbrechen}
+message Abort_fetch {Abort fetch}	/* XXX */
 message Password_cipher {Passwort Verschlüsselungsverfahren}
 message DES {DES}
 message MD5 {MD5}

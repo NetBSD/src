@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2006/01/12 22:02:45 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2006/02/26 10:25:53 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -84,10 +84,3 @@
  * On mvme68k, do what the miniroot install scripts did. 
  */
 #define DISKLABEL_CMD "disklabel -w -r"
-
-
-/*
- * Default fileystem type for floppy disks.
- * On mvme68k, if we had floppies, that would be ffs.
- */
-const char *fdtype;

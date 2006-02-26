@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2005/02/19 17:00:38 dsl Exp $
+#	$NetBSD: Makefile,v 1.8 2006/02/26 10:25:52 dsl Exp $
 #
 
 LANGUAGES=	en fr de
 NODISKLABEL=	yes
+MD_OPTIONS=	ADOS_FLOPPY
 
 .include "../../Makefile.inc"

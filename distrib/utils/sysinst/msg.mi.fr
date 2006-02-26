@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.93 2006/02/25 20:21:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.94 2006/02/26 10:25:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -710,23 +710,22 @@ message badroot
 Avez-vous bien installé tous les composants indispensables ?
 }
 
-message fddev
-{Quel lecteur de disquette voulez vous utiliser? }
-
-message fdmount
-{Veuillez insérer la disquette contenant le fichier "%s.%s". }
+message fd_type		/* XXX translate */
+{Floppy file system type}
 
 message fdnotfound
-{Impossible de trouver le fichier "%s.%s" sur la disquette.
+{Impossible de trouver le fichier sur la disquette.
 }
 
 message fdremount
-{La disquette n'a pas été montée correctement. Vous devez :
+{La disquette n'a pas été montée correctement.
+}
 
-Insérer une disquette contenant le fichier %s.%s.
+message fdmount
+{Veuillez insérer la disquette contenant le fichier "%s.%s".
 
-Ne plus charger d'autre fichiers depuis la disquette et interrompre le
-processus
+If the set's has no more disks, select "Set finished" to install the set.
+Select "Abort fetch" to return to the install media selection menu.
 }
 
 message mntnetconfig
@@ -936,7 +935,7 @@ message Set_finished {Extraction terminée}
 message Skip_set {Skip set}  /* XXX translate */
 message Skip_group {Skip set group}  /* XXX translate */
 message Abandon {Abandon installation}	/* XXX */
-message Abort_install {Annuler l'installation}
+message Abort_fetch {Abort fetch}	/* XXX */
 message Password_cipher {Password cipher}
 message DES {DES}
 message MD5 {MD5}

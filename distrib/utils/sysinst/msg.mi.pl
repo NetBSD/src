@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.54 2006/02/25 20:21:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.55 2006/02/26 10:25:52 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -676,22 +676,22 @@ message badroot
  Jestes pewien, ze zainstalowales wszystkie wymagane pakiety? 
 }
 
-message fddev
-{Ktorego urzadzenia dyskietek chcesz uzyc ? }
-
-message fdmount
-{Wloz dyskietke zawierajaca plik "%s.%s". }
+message fd_type		/* XXX translate */
+{Floppy file system type}
 
 message fdnotfound
-{Nie moglem znalezc pliku "%s.%s" na dysku. Wloz dyskietke
-zawierajaca ten plik.}
+{Nie moglem znalezc pliku na dysku.
+}
 
 message fdremount
-{Dyskietka nie zostala pomyslnie zamountowana. Mozesz:
+{Dyskietka nie zostala pomyslnie zamountowana.
+}
 
-Sprobowac jeszcze raz i wlozyc dyskietke z plikiem "%s.%s".
+message fdmount		/* XXX translate */
+{Wloz dyskietke zawierajaca plik "%s.%s".
 
-Nie wgrywac wiecej plikow z dyskietek i przerwac proces.
+If the set's has no more disks, select "Set finished" to install the set.
+Select "Abort fetch" to return to the install media selection menu.
 }
 
 message mntnetconfig
@@ -899,7 +899,7 @@ message Set_finished {Ustawianie zakonczone}
 message Skip_set {Skip set}  /* XXX translate */
 message Skip_group {Skip set group}  /* XXX translate */
 message Abandon {Abandon installation}	/* XXX */
-message Abort_install {Przerwac instalacje}
+message Abort_fetch {Abort fetch}	/* XXX */
 message Password_cipher {Kodowanie hasel}
 message DES {DES}
 message MD5 {MD5}

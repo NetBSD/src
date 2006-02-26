@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.144 2006/02/25 20:21:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.145 2006/02/26 10:25:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -685,27 +685,22 @@ message badroot
  Are you sure you installed all the required sets?
 }
 
-message fddev
-{What floppy device do you want to use? }
-
-message fdmount
-{Please load the floppy containing the file named "%s.%s". }
+message fd_type
+{Floppy file system type}
 
 message fdnotfound
-{Could not find the file named "%s.%s" on the disk.  Please load the
-floppy with that file on it.
-
-If this was the last set's disk, hit "Set finished" to continue on
-the next set, if any.}
+{Could not find the file on the floppy.
+}
 
 message fdremount
-{The floppy was not mounted successfully.  You may:
+{The floppy was not mounted successfully. 
+}
 
-Try again and put in the floppy containing the file named "%s.%s".
+message fdmount
+{Please load the floppy containing the file named "%s.%s".
 
-Not load any more files from this set and continue on the next one, if any.
-
-Not load any more files from floppy and abort the process.
+If the set's has no more disks, select "Set finished" to install the set.
+Select "Abort fetch" to return to the install media selection menu.
 }
 
 message mntnetconfig
@@ -917,7 +912,7 @@ message Set_finished {Set finished}
 message Skip_set {Skip set}
 message Skip_group {Skip set group}
 message Abandon {Abandon installation}
-message Abort_install {Abort install}
+message Abort_fetch {Abort fetch}
 message Password_cipher {Password cipher}
 message DES {DES}
 message MD5 {MD5}
