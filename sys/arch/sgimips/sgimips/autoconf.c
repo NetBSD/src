@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2006/02/23 05:37:47 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 2006/02/26 05:31:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2006/02/23 05:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2006/02/26 05:31:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -173,8 +173,6 @@ device_register(struct device *dev, void *aux)
 {
 	static int found, initted, scsiboot, netboot;
 	struct device *parent = device_parent(dev);
-	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_name;
 
 	if (found)
 		return;
@@ -190,8 +188,8 @@ device_register(struct device *dev, void *aux)
 	 * wdsc -- IP12/22/24
 	 * ahc -- IP32
 	 */
-	if ( (scsiboot && strcmp(name, "wdsc") == 0) ||
-	     (scsiboot && strcmp(name, "ahc") == 0) ) {
+	if ( (scsiboot && device_is_a(dev, "wdsc")) ||
+	     (scsiboot && device_is_a(dev, "ahc")) ) {
 		if (dev->dv_unit == booted_slot)
 			booted_controller = dev;
 		return;
@@ -201,9 +199,10 @@ device_register(struct device *dev, void *aux)
 	 * If we found the boot controller, if check disk/tape/cdrom device
 	 * on that controller matches.
 	 */
-	if (booted_controller && (strcmp(name, "sd") == 0 ||
-	    strcmp(name, "st") == 0 ||
-	    strcmp(name, "cd") == 0)) {
+	if (booted_controller &&
+	    (device_is_a(dev, "sd") ||
+	     device_is_a(dev, "st") ||
+	     device_is_a(dev, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (device_parent(parent) != booted_controller)
@@ -218,8 +217,9 @@ device_register(struct device *dev, void *aux)
 	/*
 	 * Check if netboot device.
 	 */
-	if (netboot && (strcmp(name, "sq") == 0 ||
-	    strcmp(name, "mec") == 0)) {
+	if (netboot &&
+	    (device_is_a(dev, "sq") ||
+	     device_is_a(dev, "mec"))) {
 		/* XXX Check unit number? (Which we don't parse yet) */
 		booted_device = dev;
 		found = 1;
