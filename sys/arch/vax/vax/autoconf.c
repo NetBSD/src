@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.86 2006/02/23 05:37:48 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.87 2006/02/26 18:59:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86 2006/02/23 05:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.87 2006/02/26 18:59:46 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -257,7 +257,7 @@ jmfr(const char *n, struct device *dev, int nr)
 {
 	if (rpb.devtyp != nr)
 		return 1;
-	return strcmp(n, dev->dv_cfdata->cf_name);
+	return !device_is_a(dev, n);
 }
 
 #include <dev/qbus/ubavar.h>
