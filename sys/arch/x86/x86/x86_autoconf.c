@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.12 2006/02/26 06:15:01 thorpej Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.13 2006/02/26 06:17:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,10 +71,10 @@ is_valid_disk(struct device *dv)
 	if (device_class(dv) != DV_DISK)
 		return (0);
 	
-	return (device_is_a(dev, "sd") ||
-		device_is_a(dev, "wd") ||
-		device_is_a(dev, "ld") ||
-		device_is_a(dev, "ed"));
+	return (device_is_a(dv, "sd") ||
+		device_is_a(dv, "wd") ||
+		device_is_a(dv, "ld") ||
+		device_is_a(dv, "ed"));
 }
 
 /*
