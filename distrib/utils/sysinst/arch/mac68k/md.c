@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.45 2006/01/12 22:02:45 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.46 2006/02/26 10:25:53 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -81,8 +81,6 @@ struct apple_part_map_entry new_map[] =
 	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6,4320, 0,
 	  "untitled", "Apple_Free", 0, 0, 0x37 }
 };
-
-const char *fdtype = "msdos";
 
 /*
  * Compare lexigraphically two strings

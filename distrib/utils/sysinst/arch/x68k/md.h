@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17 2004/06/06 06:07:02 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.18 2006/02/26 10:25:54 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,10 +89,3 @@
  * On x68k, do what the 1.2 install scripts did. 
  */
 #define DISKLABEL_CMD "disklabel -w"
-
-
-/*
- * Default fileystem type for floppy disks.
- * On x68k, that is  msdos.
- */
-const char *fdtype;

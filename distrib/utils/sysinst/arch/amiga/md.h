@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.14 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.15 2006/02/26 10:25:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,13 +80,6 @@
  * On amiga, disklabel can't be used to rewrite the RDB
  */
 /* #define DISKLABEL_CMD "disklabel -w -r" */
-
-
-/*
- * Default fileystem type for floppy disks.
- * On amiga, that is ados.
- */
-const char *fdtype;
 
  
 /*

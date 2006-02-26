@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.142 2006/02/25 20:21:00 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.143 2006/02/26 10:25:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -234,33 +234,34 @@ static int
 floppy_fetch(const char *set_name)
 {
 	char post[4];
-	msg prompt;
+	msg errmsg;
 	int menu;
 	int status;
+	const char *write_mode = ">";
 
 	strcpy(post, "aa");
 
-	prompt = MSG_fdmount;
+	errmsg = "";
 	menu = MENU_fdok;
 	for (;;) {
 		umount_mnt2();
-		msg_display(prompt, set_name, post);
+		msg_display(errmsg);
+		msg_display_add(MSG_fdmount, set_name, post);
 		process_menu(menu, &status);
 		if (status != SET_CONTINUE)
 			return status;
 		menu = MENU_fdremount;
-		prompt = MSG_fdremount;
+		errmsg = MSG_fdremount;
 		if (run_program(0, "/sbin/mount -r -t %s %s /mnt2",
-							fdtype, fd_dev))
+							fd_type, fd_dev))
 			continue;
 		mnt2_mounted = 1;
-		prompt = MSG_fdnotfound;
+		errmsg = MSG_fdnotfound;
 
 		/* Display this because it might take a while.... */
 		if (run_program(RUN_DISPLAY,
 			    "sh -c '/bin/cat /mnt2/%s.%s %s %s/%s/%s%s'",
-			    set_name, post,
-			    post[0] == 'a' && post[1] == 'a' ? ">" : ">>",
+			    set_name, post, write_mode,
 			    target_prefix(), xfer_dir, set_name, dist_postfix))
 			/* XXX: a read error will give a corrupt file! */
 			continue;
@@ -270,7 +271,8 @@ floppy_fetch(const char *set_name)
 			post[1]++;
 		else
 			post[1] = 'a', post[0]++;
-		prompt = MSG_fdmount;
+		write_mode = ">>";
+		errmsg = "";
 		menu = MENU_fdok;
 	}
 }

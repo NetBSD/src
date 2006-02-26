@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.11 2006/01/12 22:02:45 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.12 2006/02/26 10:25:53 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,12 +72,3 @@
  * hand-edited disklabel will NOT be written by MI code.
  */
 #define DISKLABEL_CMD "disklabel -w -r"
-
-
-
-/*
- * Default fileystem type for floppy disks.
- *
- * On NetBSD/mipsco, we don't currently support a dedicated floppy-disk drive
- */
-const char *fdtype;

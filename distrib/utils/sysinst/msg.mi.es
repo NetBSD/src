@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.14 2006/02/25 20:21:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.15 2006/02/26 10:25:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -702,28 +702,22 @@ message badroot
 
 }
 
-message fddev
-{¿Qué dispositivo de disquete quiere usar? }
-
-message fdmount
-{Por favor, inserte el disquete que contiene el fichero «%s.%s». }
+message fd_type		/* XXX translate */
+{Floppy file system type}
 
 message fdnotfound
-{No se ha encontrado el fichero «%s.%s» en el disco.  Por favor, inserte
-el disquete que lo contenga.
-
-Si éste era el último disco del conjunto, pulse «Conjunto acabado» para
-continuar con el siguiente conjunto, si lo hay.}
+{No se ha encontrado el fichero en el disco.
+}
 
 message fdremount
-{El disquete no ha sido montado correctamente.  Puede:
+{El disquete no ha sido montado correctamente.
+}
 
-Intentarlo de nuevo e insertar el disquete que contenga el fichero «%s.%s».
+message fdmount		/* XXX translate */
+{Por favor, inserte el disquete que contiene el fichero «%s.%s».
 
-No cargar ningún otro fichero de este conjunto y continuar con el siguiente,
-si lo hay.
-
-No cargar ningún otro fichero desde el disquete e interrumpir el proceso.
+If the set's has no more disks, select "Set finished" to install the set.
+Select "Abort fetch" to return to the install media selection menu.
 }
 
 message mntnetconfig
@@ -938,7 +932,7 @@ message Set_finished {Conjunto finalizado}
 message Skip_set {Skip set}  /* XXX translation */
 message Skip_group {Skip set group}  /* XXX translation */
 message Abandon {Abandon installation}	/* XXX */
-message Abort_install {Interrumpir la instalación}
+message Abort_fetch {Abort fetch}	/* XXX */
 message Password_cipher {Cifrado de las contraseñas}
 message DES {DES}
 message MD5 {MD5}
