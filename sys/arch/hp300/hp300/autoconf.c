@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.76 2006/02/23 05:37:47 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.77 2006/02/26 05:31:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.76 2006/02/23 05:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77 2006/02/26 05:31:54 thorpej Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -472,16 +472,16 @@ device_register(struct device *dev, void *aux)
 		goto linkup;
 	}
 
-	if (memcmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    memcmp(dev->dv_xname, "nhpib", 5) == 0 ||
-	    memcmp(dev->dv_xname, "spc", 3) == 0) {
+	if (device_is_a(dev, "fhpib") ||
+	    device_is_a(dev, "nhpib") ||
+	    device_is_a(dev, "spc")) {
 		struct dio_attach_args *da = aux;
 
 		dd->dd_scode = da->da_scode;
 		goto linkup;
 	}
 
-	if (memcmp(dev->dv_xname, "rd", 2) == 0) {
+	if (device_is_a(dev, "rd")) {
 		struct hpibbus_attach_args *ha = aux;
 
 		dd->dd_slave = ha->ha_slave;
@@ -489,7 +489,7 @@ device_register(struct device *dev, void *aux)
 		goto linkup;
 	}
 
-	if (memcmp(dev->dv_xname, "sd", 2) == 0) {
+	if (device_is_a(dev, "sd")) {
 		struct scsipibus_attach_args *sa = aux;
 
 		dd->dd_slave = sa->sa_periph->periph_target;
@@ -506,13 +506,13 @@ device_register(struct device *dev, void *aux)
  linkup:
 	LIST_INSERT_HEAD(&dev_data_list, dd, dd_list);
 
-	if (memcmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    memcmp(dev->dv_xname, "nhpib", 5) == 0) {
+	if (device_is_a(dev, "fhpib") ||
+	    device_is_a(dev, "nhpib")) {
 		dev_data_insert(dd, &dev_data_list_hpib);
 		return;
 	}
 
-	if (memcmp(dev->dv_xname, "spc", 3) == 0) {
+	if (device_is_a(dev, "spc")) {
 		dev_data_insert(dd, &dev_data_list_scsi);
 		return;
 	}
@@ -576,8 +576,8 @@ findbootdev(void)
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 0 && memcmp(booted_device->dv_xname, "ct", 2)) ||
-		    (type == 2 && memcmp(booted_device->dv_xname, "rd", 2))) {
+		if ((type == 0 && !device_is_a(booted_device, "ct")) ||
+		    (type == 2 && !device_is_a(booted_device, "rd"))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
@@ -598,7 +598,7 @@ findbootdev(void)
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 4 && memcmp(booted_device->dv_xname, "sd", 2))) {
+		if ((type == 4 && !device_is_a(booted_device, "sd"))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
@@ -694,11 +694,11 @@ setbootdev(void)
 	/*
 	 * Determine device type.
 	 */
-	if (memcmp(root_device->dv_xname, "rd", 2) == 0)
+	if (device_is_a(root_device, "rd") == 0)
 		type = 2;
-	else if (memcmp(root_device->dv_xname, "sd", 2) == 0)
+	else if (device_is_a(root_device, "sd") == 0)
 		type = 4;
-	else if (memcmp(root_device->dv_xname, "md", 2) == 0)
+	else if (device_is_a(root_device, "md") == 0)
 		goto out;
 	else {
 		printf("WARNING: strange root device!\n");

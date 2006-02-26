@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2006/02/22 00:23:52 gavan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2006/02/26 05:31:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2006/02/22 00:23:52 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2006/02/26 05:31:54 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -111,8 +111,10 @@ cpu_configure(void)
 void
 device_register(struct device *dev, void *aux)
 {
-	if (dev->dv_parent != NULL &&
-	    strcmp(dev->dv_parent->dv_cfdata->cf_name, "pci") == 0) {
+	struct device *pdev;
+
+	if ((pdev = device_parent(dev)) != NULL &&
+	    device_is_a(pdev, "pci") == 0) {
 		struct pci_attach_args *pa = aux;
 
 		if (BUILTIN_ETHERNET_P(pa)) {
