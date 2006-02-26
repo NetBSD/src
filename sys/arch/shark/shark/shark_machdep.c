@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.22 2006/02/23 05:37:48 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.23 2006/02/26 05:31:54 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.22 2006/02/23 05:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.23 2006/02/26 05:31:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -389,7 +389,6 @@ ofw_device_register(struct device *dev, void *aux)
 #endif
 	static char *boot_component;
 	struct ofbus_attach_args *oba;
-	const char *cd_name = dev->dv_cfdata->cf_name;
 	char name[64];
 	int i;
 
@@ -419,26 +418,26 @@ ofw_device_register(struct device *dev, void *aux)
 	    || boot_component[0] == '\0')
 		return;
 
-	if (!strcmp(cd_name, "ofbus") || !strcmp(cd_name, "ofisa")) {
+	if (device_is_a(dev, "ofbus") || device_is_a(dev, "ofisa")) {
 		oba = aux;
 	} else if (parent == NULL) {
 		return;
 	} else if (parent == device_parent(dev)
-		   && !strcmp(parent->dv_cfdata->cf_name, "ofisa")) {
+		   && device_is_a(parent, "ofisa")) {
 		struct ofisa_attach_args *aa = aux;
 		oba = &aa->oba;
 #if NWD > 0 || NSD > 0 || NCD > 0
 	} else if (device_parent(device_parent(dev)) != NULL
 		   && parent == device_parent(device_parent(dev))
-		   && !strcmp(parent->dv_cfdata->cf_name, "wdc")) {
+		   && device_is_a(parent, "wdc")) {
 #if NSD > 0 || NCD > 0
-		if (!strcmp(cd_name, "atapibus")) {
+		if (device_is_a(dev, "atapibus")) {
 			scsipidev = dev;
 			return;
 		}
 #endif
 #if NWD > 0
-		if (!strcmp(cd_name, "wd")) {
+		if (device_is_a(dev, "wd")) {
 			struct ata_device *adev = aux;
 			char *cp = strchr(boot_component, '@');
 			if (cp != NULL
@@ -452,7 +451,7 @@ ofw_device_register(struct device *dev, void *aux)
 #endif /* NWD > 0 */
 #if NSD > 0 || NCD > 0
 	} else if (scsipidev == device_parent(dev)
-	    && (!strcmp(cd_name, "sd") || !strcmp(cd_name, "cd"))) {
+	    && (device_is_a(dev, "sd") || device_is_a(dev, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 		char *cp = strchr(boot_component, '@');
 		if (cp != NULL
