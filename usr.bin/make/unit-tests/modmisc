@@ -1,6 +1,6 @@
-# $Id: modmisc,v 1.2 2006/02/26 22:20:55 sjg Exp $
+# $Id: modmisc,v 1.3 2006/02/26 22:40:50 wiz Exp $
 #
-# miscelaneous modifier tests
+# miscellaneous modifier tests
 
 path=:/bin:/usr/bin::/sbin:/usr/sbin:.:/home/user/bin:.
 # strip cwd from path.
