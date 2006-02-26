@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.14 2006/02/26 23:23:59 pooka Exp $	*/
+/*	$NetBSD: auconv.c,v 1.15 2006/02/26 23:52:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.14 2006/02/26 23:23:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.15 2006/02/26 23:52:08 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -818,7 +818,7 @@ auconv_exact_match(const struct audio_format *formats, int nformats,
 			continue;
 		f_enc = auconv_normalize_encoding(formats[i].encoding,
 						  formats[i].precision);
-		DPRINTF(("%s: formtat[%d] normalized: %s\n",
+		DPRINTF(("%s: format[%d] normalized: %s\n",
 			 __func__, i, encoding_dbg_names[f_enc]));
 		if (f_enc != enc)
 			continue;
