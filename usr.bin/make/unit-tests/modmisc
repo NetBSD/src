@@ -1,0 +1,18 @@
+# $Id: modmisc,v 1.1 2006/02/26 21:43:01 sjg Exp $
+#
+# miscelaneous modifier tests
+
+path=:/bin:/usr/bin::/sbin:/usr/sbin:.:/home/user/bin:./bin:.
+# strip cwd from path.
+MOD_NODOT=S/:/ /g:N.:ts:
+# and decorate, note that $'s need to be doubled. Also note that 
+# the modifier_variable can be used with other modifiers.
+MOD_NODOTX=S/:/ /g:N.:@d@'$$d'@
+
+all:	modvar
+
+modvar:
+	@echo "path='${path}'"
+	@echo "path='${path:${MOD_NODOT}}'"
+	@echo "path='${path:S,home,homes,:${MOD_NODOT}}'"
+	@echo "path=${path:${MOD_NODOTX}:ts:}"

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2006/02/13 18:17:36 apb Exp $
+# $NetBSD: Makefile,v 1.18 2006/02/26 21:43:01 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -22,6 +22,7 @@ SUBFILES= \
 	comment \
 	cond1 \
 	modmatch \
+	modmisc \
 	modorder \
 	modts \
 	modword \
