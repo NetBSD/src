@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.175 2006/01/20 22:27:20 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.176 2006/02/26 22:06:03 riz Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2145,4 +2145,10 @@ dist/am-utils/libamu/mount_fs.c			patch
 
 	Backout changes made for ticket #624. This fixes PR bin/27287.
 	[bouyer, ticket #5994]
+
+sys/arch/i386/pci/pchb_rnd.c			patch
+
+	Improve code probing for the Intel hardware RNG to avoid false
+	detections.
+	[tron, ticket #6015]
 
