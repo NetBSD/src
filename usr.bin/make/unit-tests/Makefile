@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2006/02/26 21:43:01 sjg Exp $
+# $NetBSD: Makefile,v 1.19 2006/02/26 22:45:46 apb Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -21,6 +21,7 @@ UNIT_TESTS:= ${.PARSEDIR}
 SUBFILES= \
 	comment \
 	cond1 \
+	dotwait \
 	modmatch \
 	modmisc \
 	modorder \
@@ -34,6 +35,7 @@ all: ${SUBFILES}
 
 # the tests are actually done with sub-makes.
 .PHONY: ${SUBFILES}
+.PRECIOUS: ${SUBFILES}
 ${SUBFILES}:
 	-@${.MAKE} -k -f ${UNIT_TESTS}/$@
 
