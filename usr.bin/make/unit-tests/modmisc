@@ -1,8 +1,8 @@
-# $Id: modmisc,v 1.1 2006/02/26 21:43:01 sjg Exp $
+# $Id: modmisc,v 1.2 2006/02/26 22:20:55 sjg Exp $
 #
 # miscelaneous modifier tests
 
-path=:/bin:/usr/bin::/sbin:/usr/sbin:.:/home/user/bin:./bin:.
+path=:/bin:/usr/bin::/sbin:/usr/sbin:.:/home/user/bin:.
 # strip cwd from path.
 MOD_NODOT=S/:/ /g:N.:ts:
 # and decorate, note that $'s need to be doubled. Also note that 
