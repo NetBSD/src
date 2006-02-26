@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.101 2006/02/18 01:29:27 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.102 2006/02/26 21:43:00 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.101 2006/02/18 01:29:27 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.102 2006/02/26 21:43:00 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.101 2006/02/18 01:29:27 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.102 2006/02/26 21:43:00 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2260,13 +2260,16 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	tstr++;
 	delim = '\0';
 
-	if (*tstr == '$') {
-	    tstr = tstr2 = Var_Subst(NULL, tstr, ctxt, err);
-	}
 	while (*tstr && *tstr != endc) {
 	    char	*newStr;    /* New value to return */
 	    char	termc;	    /* Character which terminated scan */
 
+	    if (*tstr == '$') {
+		    newStr = Var_Subst(NULL, tstr, ctxt, err);
+		    if (tstr2)
+			    free(tstr2);
+		    tstr = tstr2 = newStr;
+	    }
 	    if (DEBUG(VAR)) {
 		printf("Applying :%c to \"%s\"\n", *tstr, nstr);
 	    }
