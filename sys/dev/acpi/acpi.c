@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.84 2006/02/23 17:38:03 wiz Exp $	*/
+/*	$NetBSD: acpi.c,v 1.85 2006/02/26 18:46:04 cube Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.84 2006/02/23 17:38:03 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.85 2006/02/26 18:46:04 cube Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1137,7 +1137,7 @@ acpi_get_intr(ACPI_HANDLE handle)
 	rv = acpi_get(handle, &ret, AcpiGetCurrentResources);
 	if (ACPI_FAILURE(rv))
 		return intr;
-	for (res = ret.Pointer; res->Type != ACPI_RESOURCE_TYPE_END_DEPENDENT;
+	for (res = ret.Pointer; res->Type != ACPI_RESOURCE_TYPE_END_TAG;
 	     res = ACPI_NEXT_RESOURCE(res)) {
 		if (res->Type == ACPI_RESOURCE_TYPE_IRQ) {
 			irq = (ACPI_RESOURCE_IRQ *)&res->Data;
@@ -1310,11 +1310,11 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 	bufn.Pointer = resn = malloc(bufn.Length, M_ACPI, M_WAITOK);
 	resp = bufp.Pointer;
 	resc = bufc.Pointer;
-	while (resc->Type != ACPI_RESOURCE_TYPE_END_DEPENDENT &&
-	       resp->Type != ACPI_RESOURCE_TYPE_END_DEPENDENT) {
-		while (resc->Type != resp->Type && resp->Type != ACPI_RESOURCE_TYPE_END_DEPENDENT)
+	while (resc->Type != ACPI_RESOURCE_TYPE_END_TAG &&
+	       resp->Type != ACPI_RESOURCE_TYPE_END_TAG) {
+		while (resc->Type != resp->Type && resp->Type != ACPI_RESOURCE_TYPE_END_TAG)
 			resp = ACPI_NEXT_RESOURCE(resp);
-		if (resp->Type == ACPI_RESOURCE_TYPE_END_DEPENDENT)
+		if (resp->Type == ACPI_RESOURCE_TYPE_END_TAG)
 			break;
 		/* Found identical Id */
 		resn->Type = resc->Type;
@@ -1350,13 +1350,13 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 			resn = (ACPI_RESOURCE *)((UINT8 *)bufn.Pointer + delta);
 		}
 	}
-	if (resc->Type != ACPI_RESOURCE_TYPE_END_DEPENDENT) {
+	if (resc->Type != ACPI_RESOURCE_TYPE_END_TAG) {
 		printf("acpi_allocate_resources: resc not exhausted\n");
 		rv = AE_BAD_DATA;
 		goto out3;
 	}
 
-	resn->Type = ACPI_RESOURCE_TYPE_END_DEPENDENT;
+	resn->Type = ACPI_RESOURCE_TYPE_END_TAG;
 	rv = AcpiSetCurrentResources(handle, &bufn);
 	if (ACPI_FAILURE(rv)) {
 		printf("acpi_allocate_resources: AcpiSetCurrentResources %s\n",
