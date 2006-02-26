@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.111 2006/02/25 00:58:35 wiz Exp $ */
+/*	$NetBSD: autoconf.c,v 1.112 2006/02/26 05:36:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.111 2006/02/25 00:58:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.112 2006/02/26 05:36:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1016,8 +1016,7 @@ dev_compatible(struct device *dev, void *aux, char *bpname)
 	 * match.  This is a nasty O(n^2) operation.
 	 */
 	for (i = 0; dev_compat_tab[i].name != NULL; i++) {
-		if (strcmp(dev->dv_cfdata->cf_name, 
-			dev_compat_tab[i].name) == 0) {
+		if (device_is_a(dev, dev_compat_tab[i].name)) {
 			DPRINTF(ACDB_BOOTDEV,
 				("\n%s: dev_compatible: translating %s\n",
 					dev->dv_xname, dev_compat_tab[i].name));
@@ -1042,16 +1041,14 @@ dev_compatible(struct device *dev, void *aux, char *bpname)
 static int
 bus_class(struct device *dev)
 {
-	const char *name;
 	int i, class;
 
 	class = BUSCLASS_NONE;
 	if (dev == NULL)
 		return (class);
 
-	name = dev->dv_cfdata->cf_name;
 	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
-		if (strcmp(name, bus_class_tab[i].name) == 0) {
+		if (device_is_a(dev, bus_class_tab[i].name)) {
 			class = bus_class_tab[i].class;
 			break;
 		}
@@ -1145,7 +1142,6 @@ void
 device_register(struct device *dev, void *aux)
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
-	const char *dvname;
 	char *bpname;
 
 	/*
@@ -1160,13 +1156,12 @@ device_register(struct device *dev, void *aux)
 	 * that.
 	 */
 	bpname = bp->name;
-	dvname = dev->dv_cfdata->cf_name;
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s\n",
-	    dev->dv_xname, dvname, dev->dv_xname, bpname));
+	    dev->dv_xname, dev->dv_cfdata->cf_name, dev->dv_xname, bpname));
 
 	/* First, match by name */
-	if (strcmp(dvname, bpname) != 0) {
+	if (!device_is_a(dev, bpname)) {
 		if (dev_compatible(dev, aux, bpname) != 0)
 			return;
 	}
@@ -1183,9 +1178,9 @@ device_register(struct device *dev, void *aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "le") == 0 ||
-		   strcmp(dvname, "hme") == 0 ||
-		   strcmp(dvname, "tlp") == 0) {
+	} else if (device_is_a(dev, "le") ||
+		   device_is_a(dev, "hme") ||
+		   device_is_a(dev, "tlp")) {
 
 		/*
 		 * ethernet devices.
@@ -1196,7 +1191,8 @@ device_register(struct device *dev, void *aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
+	} else if (device_is_a(dev, "sd") ||
+		   device_is_a(dev, "cd")) {
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
 		 * from parent and match with current bootpath component.
@@ -1232,7 +1228,7 @@ device_register(struct device *dev, void *aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp("wd", dvname) == 0) {
+	} else if (device_is_a(dev, "wd") == 0) {
 		/* IDE disks. */
 		struct ata_device *adev = aux;
 
