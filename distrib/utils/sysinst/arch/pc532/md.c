@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.31 2004/08/14 16:06:42 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.32 2006/02/26 10:25:54 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,8 +53,6 @@
 /* Maximum */
 #define MAX(i,j) ((i)>(j)?(i):(j))
 
-const char *fdtype = "";
-   
 
 int
 md_get_info(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.26 2006/02/25 20:21:00 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.27 2006/02/26 10:25:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -291,12 +291,12 @@ menu nfssource, y=-4, x=0, w=70, no box, no clear,
 menu fdremount, title MSG_What_do_you_want_to_do;
 	option MSG_Try_again, exit, action { *(int *)arg = SET_CONTINUE; };
 	option MSG_Set_finished, exit, action { *(int *)arg = SET_OK; };
-	option MSG_Abort_install, exit, action { *(int *)arg = SET_RETRY; };
+	option MSG_Abort_fetch, exit, action { *(int *)arg = SET_RETRY; };
 
 menu fdok, title MSG_What_do_you_want_to_do;
 	option MSG_OK, exit, action { *(int *)arg = SET_CONTINUE; };
 	option MSG_Set_finished, exit, action { *(int *)arg = SET_OK; };
-	option MSG_Abort_install, exit, action { *(int *)arg = SET_RETRY; };
+	option MSG_Abort_fetch, exit, action { *(int *)arg = SET_RETRY; };
 
 menu crypttype, title MSG_Password_cipher, y=16;
 	option MSG_DES, exit, action { yesno = 1; };
@@ -304,11 +304,18 @@ menu crypttype, title MSG_Password_cipher, y=16;
 	option MSG_Blowfish_2_7_round, exit, action { yesno = 3; };
 	option MSG_do_not_change, exit, action { yesno = 0; };
 
+menu fd_type, title MSG_fd_type, y=16;
+	option "msdos", exit, action { fd_type = "msdos"; };
+	option "ffs",   exit, action { fd_type = "ffs"; };
+.if ADOS_FLOPPY
+	option "ados",  exit, action { fd_type = "ados"; };
+.endif
+
 menu floppysource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 	display action { msg_display(MSG_floppysource); };
 	option {src_legend(menu, MSG_Device, fd_dev);},
 		action { src_prompt(MSG_dev, fd_dev, sizeof fd_dev); };
-	/* XXX: ask for fsytype */
+	option {src_legend(menu, MSG_fd_type, fd_type);}, sub menu fd_type;
 	option {src_legend(menu, MSG_Xfer_dir, xfer_dir);},
 		action { src_prompt(MSG_Xfer_dir, xfer_dir, sizeof xfer_dir); };
 	option {src_legend(menu, MSG_delete_xfer_file,

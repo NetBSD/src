@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.31 2004/10/16 13:20:11 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.32 2006/02/26 10:25:54 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,9 +66,6 @@ int md_need_newdisk = 0;
 
 /* prototypes */
 static int md_newdisk (void);
-
-const char *fdtype = "msdos";
-
 
 int
 md_get_info(void)

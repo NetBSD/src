@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 2006/01/12 22:02:45 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.20 2006/02/26 10:25:54 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,7 +54,6 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-const char *fdtype = "";
 struct utsname instsys;
 
 int

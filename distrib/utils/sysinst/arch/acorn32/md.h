@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.15 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.16 2006/02/26 10:25:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,13 +69,3 @@
  * hand-edited disklabel will NOT be written by MI code.
  */
 #define DISKLABEL_CMD "disklabel -w -r"
-
-/*
- * Default fileystem type for floppy disks.
- * On acorn32, that is  msdos.
- */
-const char *fdtype;
-
-/*
- *  prototypes for MD code.
- */
