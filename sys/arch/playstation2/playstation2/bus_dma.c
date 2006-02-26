@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.13.2.1 2006/02/18 11:12:19 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13.2.2 2006/02/26 17:03:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13.2.1 2006/02/18 11:12:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13.2.2 2006/02/26 17:03:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -153,8 +153,8 @@ _bus_dmamap_load_buffer(bus_dmamap_t map, void *buf, bus_size_t buflen,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (!VMSPACE_IS_KERNEL(vm))
-			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
+		if (!VMSPACE_IS_KERNEL_P(vm))
+			(void) pmap_extract(vm_map_pmap(&vm->vm_map),
 			    vaddr, (paddr_t *)&curaddr);
 		else
 			curaddr = kvtophys(vaddr);
