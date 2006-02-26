@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2006/02/23 05:37:49 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 2006/02/26 06:17:00 thorpej Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2006/02/23 05:37:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2006/02/26 06:17:00 thorpej Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -255,8 +255,7 @@ matchbiosdisks(void)
 		if (is_valid_disk(dv)) {
 			n++;
 			sprintf(x86_alldisks->dl_nativedisks[n].ni_devname,
-			    "%s%d", dv->dv_cfdata->cf_name,
-			    dv->dv_unit);
+			    "%s", dv->dv_xname);
 
 			bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
 			if (bmajor == -1)
@@ -430,7 +429,7 @@ findroot(void)
 			if (device_class(dv) != DV_DISK)
 				continue;
 
-			if (!strcmp(dv->dv_cfdata->cf_name, "fd")) {
+			if (device_is_a(dv, "fd")) {
 				/*
 				 * Assume the configured unit number matches
 				 * the BIOS device number.  (This is the old
@@ -571,7 +570,7 @@ device_register(struct device *dev, void *aux)
 		 */
 
 		if (bin->bus == BI_BUS_ISA &&
-		    !strcmp(device_parent(dev)->dv_cfdata->cf_name, "isa")) {
+		    device_is_a(device_parent(dev), "isa")) {
 			struct isa_attach_args *iaa = aux;
 
 			/* compare IO base address */
@@ -582,7 +581,7 @@ device_register(struct device *dev, void *aux)
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
-		    !strcmp(device_parent(dev)->dv_cfdata->cf_name, "pci")) {
+		    device_is_a(device_parent(dev), "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
 
@@ -614,14 +613,13 @@ found:
 static int
 is_valid_disk(struct device *dv)
 {
-	const char *name;
 
 	if (device_class(dv) != DV_DISK)
 		return (0);
 
-	name = dv->dv_cfdata->cf_name;
-
-	return (strcmp(name, "sd") == 0 || strcmp(name, "wd") == 0 ||
-	    strcmp(name, "ld") == 0 || strcmp(name, "ed") == 0 ||
-	    strcmp(name, "xbd") == 0);
+	return (device_is_a(dv, "sd") ||
+		device_is_a(dv, "wd") ||
+		device_is_a(dv, "ld") ||
+		device_is_a(dv, "ed") ||
+		device_is_a(dv, "xbd"));
 }
