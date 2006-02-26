@@ -129,20 +129,25 @@
  *	7) the number of its children that are, as yet, unmade
  *	8) its modification time
  *	9) the modification time of its youngest child (qv. make.c)
- *	10) a list of nodes for which this is a source
- *	11) a list of nodes on which this depends
+ *	10) a list of nodes for which this is a source (parents)
+ *	11) a list of nodes on which this depends (children)
  *	12) a list of nodes that depend on this, as gleaned from the
- *	    transformation rules.
- *	13) a list of nodes of the same name created by the :: operator
- *	14) a list of nodes that must be made (if they're made) before
- *	    this node can be, but that do no enter into the datedness of
+ *	    transformation rules (iParents)
+ *	13) a list of ancestor nodes, which includes parents, iParents,
+ *	    and recursive parents of parents
+ *	14) a list of nodes of the same name created by the :: operator
+ *	15) a list of nodes that must be made (if they're made) before
+ *	    this node can be, but that do not enter into the datedness of
  *	    this node.
- *	15) a list of nodes that must be made (if they're made) after
+ *	16) a list of nodes that must be made (if they're made) before
+ *	    this node or any child of this node can be, but that do not
+ *	    enter into the datedness of this node.
+ *	17) a list of nodes that must be made (if they're made) after
  *	    this node is, but that do not depend on this node, in the
  *	    normal sense.
- *	16) a Lst of ``local'' variables that are specific to this target
+ *	18) a Lst of ``local'' variables that are specific to this target
  *	   and this target only (qv. var.c [$@ $< $?, etc.])
- *	17) a Lst of strings that are commands to be given to a shell
+ *	19) a Lst of strings that are commands to be given to a shell
  *	   to create this target.
  */
 typedef struct GNode {
@@ -189,9 +194,12 @@ typedef struct GNode {
 				 * implied source, if any */
     Lst	    	    cohorts;  	/* Other nodes for the :: operator */
     Lst             parents;   	/* Nodes that depend on this one */
+    Lst             ancestors; 	/* Parents, parents of parents, ... */
     Lst             children;  	/* Nodes on which this one depends */
     Lst	    	    successors;	/* Nodes that must be made after this one */
     Lst	    	    preds;  	/* Nodes that must be made before this one */
+    Lst	    	    recpreds;	/* Nodes that must be added to preds
+				 * recursively for all child nodes */
     int		    unmade_cohorts;/* # of unmade instances on the
 				      cohorts list */
     struct GNode    *centurion;	/* Pointer to the first instance of a ::

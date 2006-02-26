@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.109 2006/02/11 20:59:49 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.110 2006/02/26 22:45:46 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.109 2006/02/11 20:59:49 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.110 2006/02/26 22:45:46 apb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.109 2006/02/11 20:59:49 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.110 2006/02/26 22:45:46 apb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -613,6 +613,8 @@ ParseDoOp(ClientData gnp, ClientData opp)
  *
  * Side Effects:
  *	A dependency can be added between the two nodes.
+ *	The dependency is tagged for recursive addition to
+ *	all children of sp.
  *
  *---------------------------------------------------------------------
  */
@@ -635,6 +637,7 @@ ParseAddDep(ClientData pp, ClientData sp)
      */
     (void)Lst_AtEnd(p->successors, (ClientData)s);
     (void)Lst_AtEnd(s->preds, (ClientData)p);
+    (void)Lst_AtEnd(s->recpreds, (ClientData)p);
     if (DEBUG(PARSE)) {
 	printf("# ParseAddDep: added .WAIT dependency %s - %s\n",
 		p->name, s->name);
