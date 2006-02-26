@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.216 2006/02/25 00:58:35 wiz Exp $ */
+/*	$NetBSD: autoconf.c,v 1.217 2006/02/26 05:36:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.216 2006/02/25 00:58:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.217 2006/02/26 05:36:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1719,7 +1719,7 @@ void
 device_register(struct device *dev, void *aux)
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
-	const char *dvname, *bpname;
+	const char *bpname;
 
 	/*
 	 * If device name does not match current bootpath component
@@ -1732,14 +1732,14 @@ device_register(struct device *dev, void *aux)
 	 * Translate PROM name in case our drivers are named differently
 	 */
 	bpname = bus_compatible(bp->name);
-	dvname = dev->dv_cfdata->cf_name;
 
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",
-	    dev->dv_xname, dvname, dev->dv_xname, bpname, bp->name));
+	    dev->dv_xname, dev->dv_cfdata->cf_name, dev->dv_xname,
+	    bpname, bp->name));
 
 	/* First, match by name */
-	if (strcmp(dvname, bpname) != 0)
+	if (!device_is_a(dev, bpname))
 		return;
 
 	if (bus_class(dev) != BUSCLASS_NONE) {
@@ -1748,7 +1748,7 @@ device_register(struct device *dev, void *aux)
 		 * parameters and advance boot path on match.
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
-			if (strcmp(dvname, "fdc") == 0) {
+			if (device_is_a(dev, "fdc")) {
 				/*
 				 * XXX - HACK ALERT
 				 * Sun PROMs don't really seem to support
@@ -1767,8 +1767,9 @@ device_register(struct device *dev, void *aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "le") == 0 || strcmp(dvname, "hme") == 0 ||
-	    strcmp(dvname, "be") == 0) {
+	} else if (device_is_a(dev, "le") ||
+		   device_is_a(dev, "hme") ||
+		   device_is_a(dev, "be")) {
 		/*
 		 * LANCE, Happy Meal, or BigMac ethernet device
 		 */
@@ -1778,7 +1779,8 @@ device_register(struct device *dev, void *aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
+	} else if (device_is_a(dev, "sd") ||
+		   device_is_a(dev, "cd")) {
 #if NSCSIBUS > 0
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
@@ -1832,7 +1834,8 @@ device_register(struct device *dev, void *aux)
 			return;
 		}
 #endif /* NSCSIBUS */
-	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
+	} else if (device_is_a(dev, "xd") ||
+		   device_is_a(dev, "xy")) {
 
 		/* A Xylogic disk */
 		if (instance_match(dev, aux, bp) != 0) {
@@ -1842,7 +1845,7 @@ device_register(struct device *dev, void *aux)
 			return;
 		}
 
-	} else if (strcmp("fd", dvname) == 0) {
+	} else if (device_is_a(dev, "fd")) {
 		/*
 		 * Sun PROMs don't really seem to support multiple
 		 * floppy drives. So we aren't going to, either.
@@ -1863,7 +1866,6 @@ device_register(struct device *dev, void *aux)
 			return;
 		}
 	}
-
 }
 
 /*
