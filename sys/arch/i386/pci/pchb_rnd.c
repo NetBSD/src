@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.13 2003/07/06 07:24:31 tron Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.13.26.1 2006/02/26 21:25:41 riz Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.13 2003/07/06 07:24:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.13.26.1 2006/02/26 21:25:41 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.13 2003/07/06 07:24:31 tron Exp $");
 #include <arch/i386/pci/i82802reg.h>
 #include <arch/i386/pci/pchbvar.h>
 
-void pchb_rnd_callout(void *v);
+static void pchb_rnd_callout(void *v);
+
+#define	PCHB_RNG_RETRIES	1000
 
 void
 pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
@@ -111,20 +113,27 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 			}
 
 			/* Check to see if we can read data from the RNG. */
-			for (i = 0; i < 1000; i++) {
+			for (i = 0; i < PCHB_RNG_RETRIES; i++) {
 				reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh,
 				    I82802_RNG_RNGST);
-				if (reg8 & I82802_RNG_RNGST_DATAV)
+				if (!(reg8 & I82802_RNG_RNGST_DATAV)) {
+					delay(10);
+					continue;
+				}
+				if (bus_space_read_1(sc->sc_st, sc->sc_sh,
+				    I82802_RNG_DATA) != 0xff) {
 					break;
-				delay(10);
+				}
 			}
 
-			if ((reg8 & I82802_RNG_RNGST_DATAV) == 0) {
+			if (i == PCHB_RNG_RETRIES) {
 				bus_space_unmap(sc->sc_st, sc->sc_sh,
 				    I82802_IOSIZE);
-				printf("%s: unable to read from random "
-				    "number generator.\n",
+#ifdef DIAGNOSTIC
+				aprint_verbose("%s: unable to read from "
+				    "random number generator.\n",
 				    sc->sc_dev.dv_xname);
+#endif
 				return;
 			}
 
@@ -157,7 +166,7 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 	}
 }
 
-void
+static void
 pchb_rnd_callout(void *v)
 {
 	struct pchb_softc *sc = v;
