@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2006/02/23 05:37:47 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2006/02/26 05:24:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2006/02/23 05:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2006/02/26 05:24:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -95,8 +95,7 @@ device_register(struct device *dev, void *aux)
 {
 	struct device *parent = device_parent(dev);
 
-	if (strcmp(dev->dv_cfdata->cf_name, "com") == 0 &&
-	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
+	if (device_is_a(dev, "com") && device_is_a(parent, "opb")) {
 		/* Set the frequency of the on-chip UART. */
 		int freq = COM_FREQ * 6;
 
@@ -107,8 +106,7 @@ device_register(struct device *dev, void *aux)
 		return;
 	}
 
-	if (strcmp(dev->dv_cfdata->cf_name, "emac") == 0 &&
-	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
+	if (device_is_a(dev, "emac") && device_is_a(parent, "opb")) {
 		/* Set the mac-addr of the on-chip Ethernet. */
 		/* XXX 405GP only has one; what about CPUs with two? */
 		if (devprop_set(dev, "mac-addr",
