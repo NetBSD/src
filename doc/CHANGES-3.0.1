@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.20 2006/02/20 13:52:15 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.21 2006/02/26 21:34:57 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -198,4 +198,15 @@ lib/libpam/modules/pam_nologin/pam_nologin.c	1.6
 	Use the class of the user, not then default class, when checking for
 	nologin and ignorelogin login.conf(5) capabilities.
 	[bouyer, ticket #1176]
+
+sys/arch/i386/pci/pchb_rnd.c				1.28
+
+	Improve code probing for the Intel hardware RNG to avoid false
+	detections.
+	[tron, ticket #1181]
+
+sys/dev/pci/twe.c				1.74
+
+	Fix memory leak in the TWEIO_GET_PARAM ioctl.
+	[simonb, ticket #1182]
 
