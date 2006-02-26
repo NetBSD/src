@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2006/02/26 05:24:52 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 2006/02/26 05:51:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2006/02/26 05:24:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2006/02/26 05:51:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -106,15 +106,5 @@ device_register(struct device *dev, void *aux)
 		return;
 	}
 
-	if (device_is_a(dev, "emac") && device_is_a(parent, "opb")) {
-		/* Set the mac-addr of the on-chip Ethernet. */
-		/* XXX 405GP only has one; what about CPUs with two? */
-		if (devprop_set(dev, "mac-addr",
-			     &board_data.mac_address_local,
-			     sizeof(board_data.mac_address_local),
-			     PROP_CONST, 0) != 0)
-			printf("WARNING: unable to set mac-addr "
-			    "property for %s\n", dev->dv_xname);
-		return;
-	}
+	ibm4xx_device_register(dev, aux);
 }
