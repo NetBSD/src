@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.53 2006/02/25 17:32:43 thorpej Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.54 2006/02/26 21:42:16 he Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.53 2006/02/25 17:32:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.54 2006/02/26 21:42:16 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ dec_eb164_device_register(dev, aux)
 
 	if (device_is_a(dev, "sd") ||
 	    device_is_a(dev, "st") ||
-	    device_is_a(dev, cd")) {
+	    device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
 		int unit;
