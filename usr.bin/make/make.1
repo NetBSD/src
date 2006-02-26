@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.121 2006/02/26 22:40:50 wiz Exp $
+.\"	$NetBSD: make.1,v 1.122 2006/02/26 22:45:46 apb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1430,6 +1430,11 @@ appears in a dependency line, the sources that precede it are
 made before the sources that succeed it in the line.
 Loops are not
 detected and targets that form loops will be silently ignored.
+The ordering imposed by
+.Ic .WAIT
+applies recursively to dependents of the named targets,
+except where recursive interpretation of the ordering
+would cause a cycle in the ordering graph.
 .El
 .Sh SPECIAL TARGETS
 Special targets may not be included with other targets, i.e. they must be
@@ -1495,6 +1500,10 @@ Synonym for
 for compatibility with other pmake variants.
 .It Ic .ORDER
 The named targets are made in sequence.
+The ordering imposed by
+.Ic .ORDER
+applies only to the named targets themselves,
+not to dependents of the named targets.
 .\" XXX: NOT YET!!!!
 .\" .It Ic .PARALLEL
 .\" The named targets are executed in parallel mode.

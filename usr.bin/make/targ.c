@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.41 2006/02/11 20:19:36 dsl Exp $	*/
+/*	$NetBSD: targ.c,v 1.42 2006/02/26 22:45:46 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.41 2006/02/11 20:19:36 dsl Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.42 2006/02/26 22:45:46 apb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.41 2006/02/11 20:19:36 dsl Exp $");
+__RCSID("$NetBSD: targ.c,v 1.42 2006/02/26 22:45:46 apb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -117,6 +117,11 @@ __RCSID("$NetBSD: targ.c,v 1.41 2006/02/11 20:19:36 dsl Exp $");
  *
  *	Targ_Precious	    	Return TRUE if the target is precious and
  *	    	  	    	should not be removed if we are interrupted.
+ *
+ *	Targ_Propagate		Propagate information between related
+ *				nodes.	Should be called after the
+ *				makefiles are parsed but before any
+ *				action is taken.
  *
  * Debugging:
  *	Targ_PrintGraph	    	Print out the entire graphm all variables
@@ -247,9 +252,11 @@ Targ_NewGN(const char *name)
     gn->iParents =  	Lst_Init(FALSE);
     gn->cohorts =   	Lst_Init(FALSE);
     gn->parents =   	Lst_Init(FALSE);
+    gn->ancestors =   	Lst_Init(FALSE);
     gn->children =  	Lst_Init(FALSE);
     gn->successors = 	Lst_Init(FALSE);
     gn->preds =     	Lst_Init(FALSE);
+    gn->recpreds =	Lst_Init(FALSE);
     Hash_InitTable(&gn->context, 0);
     gn->commands =  	Lst_Init(FALSE);
     gn->suffix =	NULL;
@@ -295,9 +302,11 @@ TargFreeGN(ClientData gnp)
     Lst_Destroy(gn->iParents, NOFREE);
     Lst_Destroy(gn->cohorts, NOFREE);
     Lst_Destroy(gn->parents, NOFREE);
+    Lst_Destroy(gn->ancestors, NOFREE);
     Lst_Destroy(gn->children, NOFREE);
     Lst_Destroy(gn->successors, NOFREE);
     Lst_Destroy(gn->preds, NOFREE);
+    Lst_Destroy(gn->recpreds, NOFREE);
     Hash_DeleteTable(&gn->context);
     Lst_Destroy(gn->commands, NOFREE);
     free(gn);
@@ -665,9 +674,19 @@ Targ_PrintNode(ClientData gnp, ClientData passp)
 	    Lst_ForEach(gn->parents, TargPrintName, (ClientData)0);
 	    fputc('\n', stdout);
 	}
+	if (!Lst_IsEmpty (gn->children)) {
+	    printf("# children: ");
+	    Lst_ForEach(gn->children, TargPrintName, (ClientData)0);
+	    fputc('\n', stdout);
+	}
 	if (!Lst_IsEmpty (gn->preds)) {
 	    printf("# preds: ");
 	    Lst_ForEach(gn->preds, TargPrintName, (ClientData)0);
+	    fputc('\n', stdout);
+	}
+	if (!Lst_IsEmpty (gn->recpreds)) {
+	    printf("# recpreds: ");
+	    Lst_ForEach(gn->recpreds, TargPrintName, (ClientData)0);
 	    fputc('\n', stdout);
 	}
 	if (!Lst_IsEmpty (gn->successors)) {
@@ -754,6 +773,298 @@ Targ_PrintGraph(int pass)
     Suff_PrintAll();
 }
 
+/*-
+ *-----------------------------------------------------------------------
+ * TargAppendAncestor -
+ *	Appends a single ancestor to a node's list of ancestors,
+ *	ignoring duplicates.
+ *
+ * Input:
+ *	ancestorgnp	An ancestor to be added to a list.
+ *	thisgnp		The node whose ancestor list will be changed.
+ *
+ * Results:
+ *	Always returns 0, for the benefit of Lst_ForEach().
+ *
+ * Side Effects:
+ *	May modify the ancestors list of the node we are
+ *	examining.
+ *-----------------------------------------------------------------------
+ */
+static int
+TargAppendAncestor(ClientData ancestorgnp, ClientData thisgnp)
+{
+    GNode	  *ancestorgn = (GNode *)ancestorgnp;
+    GNode	  *thisgn = (GNode *)thisgnp;
+
+    if (Lst_Member(thisgn->ancestors, ancestorgn) == NILLNODE) {
+	(void)Lst_AtEnd(thisgn->ancestors, (ClientData)ancestorgn);
+    }
+    return (0);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * TargAppendParentAncestors -
+ *	Appends all ancestors of a parent node to the ancestor list of a
+ *	given node, ignoring duplicates.
+ *
+ * Input:
+ *	parentgnp	A parent node whose ancestor list will be
+ *			propagated to another node.
+ *	thisgnp		The node whose ancestor list will be changed.
+ *
+ * Results:
+ *	Always returns 0, for the benefit of Lst_ForEach().
+ *
+ * Side Effects:
+ *	May modify the ancestors list of the node we are
+ *	examining.
+ *-----------------------------------------------------------------------
+ */
+static int
+TargAppendParentAncestors(ClientData parentgnp, ClientData thisgnp)
+{
+    GNode	  *parentgn = (GNode *)parentgnp;
+    GNode	  *thisgn = (GNode *)thisgnp;
+
+    Lst_ForEach(parentgn->ancestors, TargAppendAncestor, thisgn);
+    return (0);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * TargInitAncestors -
+ *	Initialises the ancestor list of a node and all the
+ *	node's ancestors.
+ *
+ * Input:
+ *	thisgnp		The node that we are examining.
+ *
+ * Results:
+ *	Always returns 0, for the benefit of Lst_ForEach().
+ *
+ * Side Effects:
+ *	May initialise the ancestors list of the node we are
+ *	examining and all its ancestors.  Does nothing if the
+ *	list has already been initialised.
+ *-----------------------------------------------------------------------
+ */
+static int
+TargInitAncestors(ClientData thisgnp, ClientData junk __unused)
+{
+    GNode	  *thisgn = (GNode *)thisgnp;
+
+    if (Lst_IsEmpty (thisgn->ancestors)) {
+	/*
+	 * Add our parents to our ancestor list before recursing, to
+	 * ensure that loops in the dependency graph will not result in
+	 * infinite recursion.
+	 */
+	Lst_ForEach(thisgn->parents, TargAppendAncestor, thisgn);
+	Lst_ForEach(thisgn->iParents, TargAppendAncestor, thisgn);
+	/* Recursively initialise our parents' ancestor lists */
+	Lst_ForEach(thisgn->parents, TargInitAncestors, (ClientData)0);
+	Lst_ForEach(thisgn->iParents, TargInitAncestors, (ClientData)0);
+	/* Our parents' ancestors are also our ancestors */
+	Lst_ForEach(thisgn->parents, TargAppendParentAncestors, thisgn);
+	Lst_ForEach(thisgn->iParents, TargAppendParentAncestors, thisgn);
+    }
+    return (0);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * TargHasAncestor -
+ *	Checks whether one node is an ancestor of another node.
+ *
+ *	If called with both arguments pointing to the
+ *	same node, checks whether the node is part of a cycle
+ *	in the graph.
+ *
+ * Input:
+ *	thisgnp		The node whose ancestor list we are examining.
+ *	seekgnp		The node that we are seeking in the
+ *			ancestor list.
+ *
+ * Results:
+ *	TRUE if seekgn is an ancestor of thisgn; FALSE if not.
+ *
+ * Side Effects:
+ *	Initialises the ancestors list in thisgnp and all its ancestors.
+ *-----------------------------------------------------------------------
+ */
+static Boolean
+TargHasAncestor(ClientData thisgnp, ClientData seekgnp)
+{
+    GNode	  *thisgn = (GNode *)thisgnp;
+    GNode	  *seekgn = (GNode *)seekgnp;
+
+    TargInitAncestors(thisgn, (ClientData)0);
+    if (Lst_Member(thisgn->ancestors, seekgn) != NILLNODE) {
+	return (TRUE);
+    }
+    return (FALSE);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * TargPropagateRecpredChild --
+ *	Create a new predecessor/successor relationship between a pair
+ *	of nodes, and recursively propagate the relationship to all
+ *	children of the successor node.
+ *
+ *	If there is already a predecessor/successor relationship
+ *	in the opposite direction, or if there is already an
+ *	ancestor/descendent relationship in the oposite direction, then
+ *	we avoid adding the new relationship, because that would cause a
+ *	cycle in the graph.
+ *
+ * Input:
+ *	succgnp		Successor node.
+ *	predgnp		Predecessor node.
+ *
+ * Results:
+ *	Always returns 0, for the benefit of Lst_ForEach().
+ *
+ * Side Effects:
+ *	preds/successors information is modified for predgnp, succgnp,
+ *	and recursively for all children of succgnp.
+ *-----------------------------------------------------------------------
+ */
+static int
+TargPropagateRecpredChild(ClientData succgnp, ClientData predgnp)
+{
+    GNode	  *succgn = (GNode *)succgnp;
+    GNode	  *predgn = (GNode *)predgnp;
+    Boolean	  debugmore = FALSE;	/* how much debugging? */
+
+    /* Ignore if succgn == predgn */
+    if (succgn == predgn) {
+	if (DEBUG(TARG) && debugmore) {
+	    printf("# TargPropagateRecpredChild: not propagating %s - %s (identical)\n",
+		    predgn->name, succgn->name);
+	}
+	return (0);
+    }
+    /* Pre-existing pred/successor relationship
+     * in the opposite direction takes precedence. */
+    if (Lst_Member(succgn->successors, predgn) != NILLNODE) {
+	if (DEBUG(TARG) && debugmore) {
+	    printf("# TargPropagateRecpredChild: not propagating %s - %s (opposite)\n",
+		    predgn->name, succgn->name);
+	}
+	return (0);
+    }
+    /* Pre-existing descendent/ancestor relationship in the opposite
+     * direction takes precedence. */
+    if (TargHasAncestor(succgn, predgn)) {
+	if (DEBUG(TARG) && debugmore) {
+	    printf("# TargPropagateRecpredChild: not propagating %s - %s (ancestor)\n",
+		    predgn->name, succgn->name);
+	}
+	return (0);
+    }
+    /* Note the new pred/successor relationship. */
+    if (DEBUG(TARG)) {
+	printf("# TargPropagateRecpredChild: propagating %s - %s\n",
+		predgn->name, succgn->name);
+    }
+    if (Lst_Member(succgn->preds, predgn) == NILLNODE) {
+	(void)Lst_AtEnd(succgn->preds, (ClientData)predgn);
+	(void)Lst_AtEnd(predgn->successors, (ClientData)succgn);
+    }
+    /* Recurse, provided there's not a cycle. */
+    if (! TargHasAncestor(succgn, succgn)) {
+	Lst_ForEach(succgn->children, TargPropagateRecpredChild, predgn);
+    }
+    return (0);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * TargPropagateRecpred --
+ *	Recursively propagate information about a single predecessor
+ *	node, from a single successor node to all children of the
+ *	successor node.
+ *
+ * Input:
+ *	predgnp		Predecessor node.
+ *	succgnp		Successor node.
+ *
+ * Results:
+ *	Always returns 0, for the benefit of Lst_ForEach().
+ *
+ * Side Effects:
+ *	preds/successors information is modified for predgnp, succgnp,
+ *	and recursively for all children of succgnp.
+ *	
+ *	The real work is done by TargPropagateRecpredChild(), which
+ *	will be called for each child of the successor node.
+ *-----------------------------------------------------------------------
+ */
+static int
+TargPropagateRecpred(ClientData predgnp, ClientData succgnp)
+{
+    GNode	  *predgn = (GNode *)predgnp;
+    GNode	  *succgn = (GNode *)succgnp;
+
+    Lst_ForEach(succgn->children, TargPropagateRecpredChild, predgn);
+    return (0);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * TargPropagateNode --
+ *	Propagate information from a single node to related nodes if
+ *	appropriate.
+ *
+ * Input:
+ *	gnp		The node that we are processing.
+ *
+ * Results:
+ *	Always returns 0, for the benefit of Lst_ForEach().
+ *
+ * Side Effects:
+ *	Information is propagated from this node to cohort or child
+ *	nodes.
+ *
+ *	If the node was defined with "::", then TargPropagateCohort()
+ *	will be called for each cohort node.
+ *
+ *	If the node has recursive predecessors, then
+ *	TargPropagateRecpred() will be called for each recursive
+ *	predecessor.
+ *-----------------------------------------------------------------------
+ */
+static int
+TargPropagateNode(ClientData gnp, ClientData junk __unused)
+{
+    GNode	  *gn = (GNode *)gnp;
+    if (gn->type & OP_DOUBLEDEP)
+	Lst_ForEach(gn->cohorts, TargPropagateCohort, gnp);
+    Lst_ForEach(gn->recpreds, TargPropagateRecpred, gnp);
+    return (0);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * TargPropagateCohort --
+ *	Propagate some bits in the type mask from a node to
+ *	a related cohort node.
+ *
+ * Input:
+ *	cnp		The node that we are processing.
+ *	gnp		Another node that has cnp as a cohort.
+ *
+ * Results:
+ *	Always returns 0, for the benefit of Lst_ForEach().
+ *
+ * Side Effects:
+ *	cnp's type bitmask is modified to incorporate some of the
+ *	bits from gnp's type bitmask.  (XXX need a better explanation.)
+ *-----------------------------------------------------------------------
+ */
 static int
 TargPropagateCohort(ClientData cgnp, ClientData pgnp)
 {
@@ -764,15 +1075,20 @@ TargPropagateCohort(ClientData cgnp, ClientData pgnp)
     return (0);
 }
 
-static int
-TargPropagateNode(ClientData gnp, ClientData junk __unused)
-{
-    GNode	  *gn = (GNode *)gnp;
-    if (gn->type & OP_DOUBLEDEP)
-	Lst_ForEach(gn->cohorts, TargPropagateCohort, gnp);
-    return (0);
-}
-
+/*-
+ *-----------------------------------------------------------------------
+ * Targ_Propagate --
+ *	Propagate information between related nodes.  Should be called
+ *	after the makefiles are parsed but before any action is taken.
+ *
+ * Results:
+ *	none
+ *
+ * Side Effects:
+ *	Information is propagated between related nodes throughout the
+ *	graph.
+ *-----------------------------------------------------------------------
+ */
 void
 Targ_Propagate(void)
 {
