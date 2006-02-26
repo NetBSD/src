@@ -1,4 +1,4 @@
-/*	$NetBSD: print-802_11.c,v 1.8 2004/09/28 00:01:02 dyoung Exp $	*/
+/*	$NetBSD: print-802_11.c,v 1.9 2006/02/26 03:04:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -28,7 +28,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-802_11.c,v 1.22.2.6 2003/12/10 09:52:33 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-802_11.c,v 1.8 2004/09/28 00:01:02 dyoung Exp $");
+__RCSID("$NetBSD: print-802_11.c,v 1.9 2006/02/26 03:04:28 dyoung Exp $");
 #endif
 #endif
 
@@ -1035,6 +1035,8 @@ print_radiotap_field(struct cpack_state *s, u_int32_t bit)
 			printf("wep ");
 		if (u.u8 & IEEE80211_RADIOTAP_F_FRAG)
 			printf("fragmented ");
+		if (u.u8 & IEEE80211_RADIOTAP_F_BADFCS)
+			printf("bad-fcs ");
 		break;
 	case IEEE80211_RADIOTAP_ANTENNA:
 		printf("antenna %d ", u.u8);
