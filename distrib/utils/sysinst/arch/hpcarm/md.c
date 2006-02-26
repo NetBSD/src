@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2005/12/30 11:40:23 rjs Exp $ */
+/*	$NetBSD: md.c,v 1.2 2006/02/26 10:25:53 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,10 +49,6 @@
 #include "menu_defs.h"
 #include "endian.h"
 #include "mbr.h"
-
-
-/* prototypes */
-const char *fdtype = "msdos";
 
 
 int

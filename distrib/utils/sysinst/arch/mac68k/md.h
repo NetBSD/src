@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.21 2004/06/12 14:44:42 he Exp $	*/
+/*	$NetBSD: md.h,v 1.22 2006/02/26 10:25:53 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -206,13 +206,3 @@ extern struct apple_part_map_entry new_map[];
 /* Definition of files to retrieve from ftp. */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 #define SET_KERNEL_2_NAME	"kern-GENERICSBC"
-
-/*
- * Default fileystem type for floppy disks.
- */
-const char *fdtype;
-
-/*
- *  prototypes for MD code.
- */
-

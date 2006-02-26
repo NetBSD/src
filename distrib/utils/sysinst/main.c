@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.50 2006/02/25 20:21:00 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.51 2006/02/26 10:25:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,6 +117,7 @@ init(void)
 	doessf = "";
 	clean_xfer_dir = 0;
 	mnt2_mounted = 0;
+	fd_type = "msdos";
 
 	for (arg = fflagopts; arg->name != NULL; arg++)
 		strlcpy(arg->var, arg->dflt, arg->size);

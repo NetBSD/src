@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.18 2004/10/16 13:20:11 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.19 2006/02/26 10:25:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -84,13 +84,6 @@
  * On amd64, do what the 1.2 install scripts did. 
  */
 #define DISKLABEL_CMD "disklabel -w -r"
-
-
-/*
- * Default fileystem type for floppy disks.
- * On x86_64, that is  msdos.
- */
-const char *fdtype;
 
 #define _PATH_MBR	DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE
 #define _PATH_BOOTSEL	DEFAULT_BOOTDIR "/" DEFAULT_BOOTSELCODE
