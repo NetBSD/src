@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.21 2006/02/12 16:30:36 tron Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.22 2006/02/26 21:55:23 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -172,4 +172,10 @@ sys/net/if_bridge.c				1.36
 
 	Fix memory disclosure in bridge(4).
 	[adrianp, ticket #10306]
+
+sys/arch/i386/pci/pchb_rnd.c			patch
+
+	Improve code probing for the Intel hardware RNG to avoid false
+	detections.
+	[tron, ticket #10327]
 
