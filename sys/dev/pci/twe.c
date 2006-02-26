@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.64 2005/03/16 17:11:17 erh Exp $	*/
+/*	$NetBSD: twe.c,v 1.64.4.1 2006/02/26 21:33:31 riz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.64 2005/03/16 17:11:17 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.64.4.1 2006/02/26 21:33:31 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1901,6 +1901,7 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		error = copyout(param->tp_data, tp->tp_data,
 		    param->tp_param_size);
+		free(param, M_DEVBUF);
 		goto done;
 
 	case TWEIO_SET_PARAM:
