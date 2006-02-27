@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.29 2006/02/07 20:10:48 wiz Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.30 2006/02/27 11:42:58 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.29 2006/02/07 20:10:48 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.30 2006/02/27 11:42:58 drochner Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -533,6 +533,7 @@ bpf_validate(struct bpf_insn *f, int len)
 				 */
 				if (BPF_RVAL(p->code) == BPF_K && p->k == 0)
 					return 0;
+				break;
 			default:
 				return 0;
 			}
