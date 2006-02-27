@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2006/02/26 05:31:54 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2006/02/27 04:50:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2006/02/26 05:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2006/02/27 04:50:47 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -106,7 +106,7 @@ cpu_configure(void)
 			    y, z, 0, 0) != 0)				\
 				printf("WARNING: unable to set " x " "	\
 				   "property for %s\n", dev->dv_xname);	\
-			} while (0)
+			} while (/*CONSTCOND*/0)
 
 void
 device_register(struct device *dev, void *aux)
@@ -130,9 +130,9 @@ device_register(struct device *dev, void *aux)
 			swdpin = 0;
 
 			SETPROP("mac-addr", iyonix_macaddr, ETHER_ADDR_LEN);
-			SETPROP("cfg1", &cfg1, sizeof(cfg1));
-			SETPROP("cfg2", &cfg2, sizeof(cfg2));
-			SETPROP("swdpin", &swdpin, sizeof(swdpin));
+			SETPROP("i82543-cfg1", &cfg1, sizeof(cfg1));
+			SETPROP("i82543-cfg2", &cfg2, sizeof(cfg2));
+			SETPROP("i82543-swdpin", &swdpin, sizeof(swdpin));
 		}
 	}
 }
