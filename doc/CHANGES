@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.588 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.589 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -207,3 +207,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	wsdisplay(4): Add WSDISPLAYIO_SSPLASH and WSDISPLAYIO_SPROGRESS
 		ioctls [jmcneill 20060218]
 	postfix(1): Updated to 2.2.9. [rpaulo 20060225]
+	evbmips: Add support for 4G Systems MTX-1 board (MeshCube/AccessCube).
+		[gdamore 20060225]
