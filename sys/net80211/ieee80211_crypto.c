@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.11 2006/02/19 07:55:59 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.12 2006/02/27 00:55:46 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.11 2006/02/19 07:55:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.12 2006/02/27 00:55:46 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -612,7 +612,7 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 		    "[%s] unable to pullup %s header\n",
 		    ether_sprintf(wh->i_addr2), cip->ic_name);
 		ic->ic_stats.is_rx_wepfail++;	/* XXX */
-		return 0;
+		return NULL;
 	}
 
 	return (cip->ic_decap(k, m, hdrlen) ? k : NULL);
