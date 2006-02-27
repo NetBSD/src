@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.4 2006/02/27 05:02:50 gdamore Exp $ */
+/* $NetBSD: aupci.c,v 1.5 2006/02/27 21:10:27 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.4 2006/02/27 05:02:50 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.5 2006/02/27 21:10:27 gdamore Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -229,10 +229,9 @@ aupciattach(struct device *parent, struct device *self, void *aux)
 	mask = bus_space_read_4(sc->sc_bust, sc->sc_bush, AUPCI_MWMASK);
 	mask >>= AUPCI_MWMASK_SHIFT;
 	mask <<= AUPCI_MWMASK_SHIFT;
-	mask = ~mask;
 
 	mbar = bus_space_read_4(sc->sc_bust, sc->sc_bush, AUPCI_MBAR);
-	mstart = (mbar & mask) + (mask + 1);
+	mstart = (mbar & mask) + (~mask + 1);
 
 	sc->sc_memt = &sc->sc_mem_space;
 	au_himem_space_init(sc->sc_memt, "pcimem", sc->sc_membase,
