@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.17 2006/02/27 18:37:03 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.18 2006/02/27 19:25:45 xtraeme Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.17 2006/02/27 18:37:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.18 2006/02/27 19:25:45 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,6 +335,15 @@ static const struct fq_info pentium_m_n755[] = {
 	{  600,  988 }
 };
 
+/* Intel Pentium M processor 760 2.0Ghz */
+static const struct fq_info pentium_m_n760[] = {
+	{ 2000, 1356 },
+	{ 1600, 1244 },
+	{ 1333, 1164 },
+	{ 1066, 1084 },
+	{  800,  988 }
+};
+
 /* Intel Pentium M processor 765 2.1 GHz */
 static const struct fq_info pentium_m_n765[] = {
 	{ 2100, 1340 },
@@ -393,7 +402,8 @@ static const struct fqlist pentium_m_dothan[] = {
 	ENTRY("1.70", 0, pentium_m_n735),
 	ENTRY("1.73", 0, pentium_m_n740),
 	ENTRY("1.80", 0, pentium_m_n745),
-	ENTRY("2.00", 0, pentium_m_n755),
+	ENTRY("2.00", 0x06d6, pentium_m_n755),
+	ENTRY("2.00", 0x06d8, pentium_m_n760),
 	ENTRY("2.10", 0, pentium_m_n765),
 	ENTRY("2.13", 0, pentium_m_n770),
 };
