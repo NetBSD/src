@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.2 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.3 2006/02/27 02:58:03 thorpej Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.2 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.3 2006/02/27 02:58:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 	    MII_MODEL(ma->mii_id2) != 0)
 		return 0;
 
-	if (strcmp(parent->dv_cfdata->cf_name, "rtk") != 0)
+	if (!device_is_a(parent, "rtk") != 0)
 		return 0;
 
 	/*
