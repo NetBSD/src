@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.9 2006/02/22 00:07:17 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.10 2006/02/27 13:41:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.9 2006/02/22 00:07:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.10 2006/02/27 13:41:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,6 +522,7 @@ vesafb_init(struct vesafb_softc *sc)
 static void
 vesafb_powerhook(int why, void *opaque)
 {
+#if notyet
 	struct vesafb_softc *sc;
 
 	sc = (struct vesafb_softc *)opaque;
@@ -534,6 +535,7 @@ vesafb_powerhook(int why, void *opaque)
 		vesafb_init(sc);
 		break;
 	}
+#endif
 
 	return;
 }
