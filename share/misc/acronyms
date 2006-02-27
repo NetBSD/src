@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.153 2006/02/25 04:13:54 wiz Exp $
+$NetBSD: acronyms,v 1.154 2006/02/27 17:31:14 pooka Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -238,6 +238,7 @@ W/	with
 W/O	without
 WAG	wild-ass guess
 WB	welcome back
+WFH	working from home
 WFM	works for me
 WIBNI	wouldn't it be nice if
 WIP	work in progress
