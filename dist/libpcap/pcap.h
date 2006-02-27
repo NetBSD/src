@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap.h,v 1.1.1.1 2006/02/27 15:45:49 drochner Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap.h,v 1.2 2006/02/27 15:55:30 drochner Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h
@@ -232,10 +232,10 @@ int	pcap_inject(pcap_t *, const void *, size_t);
 int	pcap_sendpacket(pcap_t *, const u_char *, int);
 char	*pcap_strerror(int);
 char	*pcap_geterr(pcap_t *);
-int	pcap_compile(pcap_t *, struct bpf_program *, char *, int,
+int	pcap_compile(pcap_t *, struct bpf_program *, const char *, int,
 	    bpf_u_int32);
 int	pcap_compile_nopcap(int, int, struct bpf_program *,
-	    char *, int, bpf_u_int32);
+	    const char *, int, bpf_u_int32);
 void	pcap_freecode(struct bpf_program *);
 int	pcap_datalink(pcap_t *);
 int	pcap_list_datalinks(pcap_t *, int **);

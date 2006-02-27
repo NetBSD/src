@@ -33,7 +33,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap.c,v 1.1.1.1 2006/02/27 15:45:49 drochner Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap.c,v 1.2 2006/02/27 15:55:30 drochner Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -457,8 +457,8 @@ int
 pcap_strcasecmp(const char *s1, const char *s2)
 {
 	register const u_char	*cm = charmap,
-				*us1 = (u_char *)s1,
-				*us2 = (u_char *)s2;
+				*us1 = (const u_char *)s1,
+				*us2 = (const u_char *)s2;
 
 	while (cm[*us1] == cm[*us2++])
 		if (*us1++ == '\0')
