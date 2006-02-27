@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2006/02/27 08:08:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.41 2006/02/27 09:08:10 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -93,10 +93,10 @@ afterinstall: ${DATA} ${REDO}
 	cd ${.CURDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -p ${POSIXRULES}
 	cd ${TZBUILDDIR} && \
-	    find . -type f -print | xargs ${TOOL_STAT} -f '%i %N' | sort -n \
-	| while read nlinks tzfile; do \
+	    find . -type f -print | xargs ${TOOL_STAT} -qf '%d,%i %N' | sort \
+	| while read devino tzfile; do \
 		destfile=${DESTDIR}${TZDIR}/$${tzfile#./}; \
-		if [ "$$nlinks" = "$$lastnlinks" ]; then \
+		if [ "$$devino" = "$$lastdevino" ]; then \
 			if  ldevino=`${TOOL_STAT} -qf '%d %i' $$lastfile` && \
 			    tdevino=`${TOOL_STAT} -qf '%d %i' $$destfile` && \
 			    [ "$$ldevino" = "$$tdevino" ]; then \
@@ -106,7 +106,7 @@ afterinstall: ${DATA} ${REDO}
 			${_MKSHECHO} ${INSTALL_LINK} $$lastfile $$destfile; \
 			${INSTALL_LINK} $$lastfile $$destfile; \
 		else \
-			lastnlinks=$$nlinks; \
+			lastdevino=$$devino; \
 			lastfile=$$destfile; \
 			cmp -s $$tzfile $$destfile >/dev/null 2>&1 && continue;\
 			${_MKSHMSG_INSTALL} $$destfile; \
