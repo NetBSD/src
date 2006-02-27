@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.3 2006/02/27 02:58:03 thorpej Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.4 2006/02/27 02:58:56 thorpej Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.3 2006/02/27 02:58:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.4 2006/02/27 02:58:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,9 +309,7 @@ rlphy_status(struct mii_softc *sc)
 		 *   can test the 'SPEED10' bit of the MAC's media status
 		 *   register.
 		 */
-		if (strcmp("rtk",
-		    sc->mii_dev.dv_parent->dv_cfdata->cf_name)
-		    == 0) {
+		if (device_is_a(sc->mii_dev.dv_parent, "rtk")) {
 			if (PHY_READ(sc, RTK_MEDIASTAT) & RTK_MEDIASTAT_SPEED10)
 				mii->mii_media_active |= IFM_10_T;
 			else
