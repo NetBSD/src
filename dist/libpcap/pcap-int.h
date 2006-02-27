@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap-int.h,v 1.1.1.1 2006/02/27 15:45:48 drochner Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap-int.h,v 1.2 2006/02/27 15:50:09 drochner Exp $ (LBL)
  */
 
 #ifndef pcap_int_h
@@ -112,6 +112,7 @@ struct pcap_md {
  * Ultrix, DEC OSF/1^H^H^H^H^H^H^H^H^HDigital UNIX^H^H^H^H^H^H^H^H^H^H^H^H
  * Tru64 UNIX, and NetBSD pad to make everything line up on a nice boundary.
  */
+#include <sys/param.h>
 #if defined(ultrix) || defined(__osf__) || (defined(__NetBSD__) && __NetBSD_Version__ > 106000000)
 #define       PCAP_FDDIPAD 3
 #endif
