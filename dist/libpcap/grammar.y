@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/grammar.y,v 1.1.1.1 2006/02/27 15:45:46 drochner Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/grammar.y,v 1.2 2006/02/27 15:55:30 drochner Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -68,7 +68,7 @@ int n_errors = 0;
 static struct qual qerr = { Q_UNDEF, Q_UNDEF, Q_UNDEF, Q_UNDEF };
 
 static void
-yyerror(char *msg)
+yyerror(const char *msg)
 {
 	++n_errors;
 	bpf_error("%s", msg);
