@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.77 2006/02/21 12:32:02 is Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.78 2006/02/27 11:34:35 peter Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.77 2006/02/21 12:32:02 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.78 2006/02/27 11:34:35 peter Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.77 2006/02/21 12:32:02 is Exp $");
 
 #include <arm/sa11x0/sa11x0_reg.h>
 
+#include <dev/hpc/apm/apmvar.h>
 #include <dev/hpc/bicons.h>
 
 #include "opt_ipkdb.h"
@@ -762,6 +763,17 @@ fakecninit(void)
 }
 #endif
 
+void
+machine_sleep(void)
+{
+
+}
+
+void
+machine_standby(void)
+{
+
+}
 
 /*
  * For optimal cache cleaning we need two 16K banks of
