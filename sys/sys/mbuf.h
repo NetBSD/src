@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.123 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.124 2006/02/27 05:46:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -311,11 +311,14 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
 #define	M_CANFASTFWD	0x0400	/* used by filters to indicate packet can
 				   be fast-forwarded */
-#define M_ANYCAST6	0x0800	/* received as IPv6 anycast */
-#define	M_LINK0		0x1000	/* link layer specific flag */
-#define	M_LINK1		0x2000	/* link layer specific flag */
-#define	M_LINK2		0x4000	/* link layer specific flag */
-#define	M_LINK3		0x8000	/* link layer specific flag */
+#define	M_ANYCAST6	0x00800	/* received as IPv6 anycast */
+#define	M_LINK0		0x01000	/* link layer specific flag */
+#define	M_LINK1		0x02000	/* link layer specific flag */
+#define	M_LINK2		0x04000	/* link layer specific flag */
+#define	M_LINK3		0x08000	/* link layer specific flag */
+#define	M_LINK4		0x10000	/* link layer specific flag */
+#define	M_LINK5		0x20000	/* link layer specific flag */
+#define	M_LINK6		0x40000	/* link layer specific flag */
 
 /* additional flags for M_EXT mbufs */
 #define	M_EXT_FLAGS	0xff000000
