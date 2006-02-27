@@ -1,3 +1,5 @@
+/* $NetBSD: pcap-namedb.h,v 1.2 2006/02/27 15:57:17 drochner Exp $ */
+
 /*
  * Copyright (c) 1994, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap-namedb.h,v 1.1.1.1 2006/02/27 15:45:40 drochner Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap-namedb.h,v 1.2 2006/02/27 15:57:17 drochner Exp $ (LBL)
  */
 
 #ifndef lib_pcap_namedb_h
