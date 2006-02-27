@@ -1,3 +1,5 @@
+/* $NetBSD: pcap.h,v 1.3 2006/02/27 15:57:17 drochner Exp $ */
+
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -31,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap.h,v 1.2 2006/02/27 15:55:30 drochner Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap.h,v 1.3 2006/02/27 15:57:17 drochner Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h
@@ -47,9 +49,7 @@
   #include <sys/time.h>
 #endif /* WIN32/MSDOS/UN*X */
 
-#ifndef PCAP_DONT_INCLUDE_PCAP_BPF_H
-#include <pcap-bpf.h>
-#endif
+#include <net/bpf.h>
 
 #include <stdio.h>
 
@@ -230,7 +230,7 @@ int	pcap_setnonblock(pcap_t *, int, char *);
 void	pcap_perror(pcap_t *, char *);
 int	pcap_inject(pcap_t *, const void *, size_t);
 int	pcap_sendpacket(pcap_t *, const u_char *, int);
-char	*pcap_strerror(int);
+const char *pcap_strerror(int);
 char	*pcap_geterr(pcap_t *);
 int	pcap_compile(pcap_t *, struct bpf_program *, const char *, int,
 	    bpf_u_int32);
@@ -265,8 +265,10 @@ void	pcap_freealldevs(pcap_if_t *);
 
 const char *pcap_lib_version(void);
 
+#if 0
 /* XXX this guy lives in the bpf tree */
 u_int	bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
+#endif
 int	bpf_validate(struct bpf_insn *f, int len);
 char	*bpf_image(struct bpf_insn *, int);
 void	bpf_dump(struct bpf_program *, int);

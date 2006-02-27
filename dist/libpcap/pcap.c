@@ -33,7 +33,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap.c,v 1.2 2006/02/27 15:55:30 drochner Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap.c,v 1.3 2006/02/27 15:57:17 drochner Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -671,7 +671,7 @@ pcap_win32strerror(void)
 /*
  * Not all systems have strerror().
  */
-char *
+const char *
 pcap_strerror(int errnum)
 {
 #ifdef HAVE_STRERROR
