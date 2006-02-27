@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.113 2006/02/22 00:17:43 gavan Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.114 2006/02/27 04:50:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.113 2006/02/22 00:17:43 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.114 2006/02/27 04:50:47 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1131,7 +1131,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * Read the config info from the EEPROM, and set up various
 	 * bits in the control registers based on their contents.
 	 */
-	if (devprop_get(&sc->sc_dev, "cfg1",
+	if (devprop_get(&sc->sc_dev, "i82543-cfg1",
 	    &cfg1, sizeof(cfg1), NULL) != sizeof(cfg1)) {
 		if (wm_read_eeprom(sc, EEPROM_OFF_CFG1, 1, &cfg1)) {
 			aprint_error("%s: unable to read CFG1\n",
@@ -1139,7 +1139,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	}
-	if (devprop_get(&sc->sc_dev, "cfg2",
+	if (devprop_get(&sc->sc_dev, "i82543-cfg2",
 	    &cfg2, sizeof(cfg2), NULL) != sizeof(cfg2)) {
 		if (wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &cfg2)) {
 			aprint_error("%s: unable to read CFG2\n",
@@ -1148,7 +1148,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	if (sc->sc_type >= WM_T_82544) {
-		if (devprop_get(&sc->sc_dev, "swdpin",
+		if (devprop_get(&sc->sc_dev, "i82543-swdpin",
 		    &swdpin, sizeof(swdpin), NULL) != sizeof(swdpin)) {
 			if (wm_read_eeprom(sc, EEPROM_OFF_SWDPIN, 1, &swdpin)) {
 				aprint_error("%s: unable to read SWDPIN\n",
