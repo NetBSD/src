@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.217 2006/02/26 05:36:15 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.218 2006/02/27 02:53:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.217 2006/02/26 05:36:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.218 2006/02/27 02:53:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1573,16 +1573,14 @@ bus_compatible(const char *bpname)
 static int
 bus_class(struct device *dev)
 {
-	const char *name;
 	int i, class;
 
 	class = BUSCLASS_NONE;
 	if (dev == NULL)
 		return (class);
 
-	name = dev->dv_cfdata->cf_name;
 	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
-		if (strcmp(name, bus_class_tab[i].name) == 0) {
+		if (device_is_a(dev, bus_class_tab[i].name)) {
 			class = bus_class_tab[i].class;
 			break;
 		}
