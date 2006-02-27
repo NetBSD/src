@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.589 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.590 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -209,3 +209,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	postfix(1): Updated to 2.2.9. [rpaulo 20060225]
 	evbmips: Add support for 4G Systems MTX-1 board (MeshCube/AccessCube).
 		[gdamore 20060225]
+	evbmips: Add support for Plat'home OpenMicroServer (OMS-AL400/128).
+		[shige 20060227]
