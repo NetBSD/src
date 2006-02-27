@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.16 2005/01/28 13:02:33 wiz Exp $
+.\"     $NetBSD: pci.9,v 1.17 2006/02/27 16:19:23 gdamore Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -311,7 +311,8 @@ The mapping is to memory address space.
 .It PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT
 The mapping is to 64-bit memory address space.
 .It PCI_MAPREG_TYPE_ROM
-The mapping is to ROM.
+The mapping is to ROM.  Note that in the current implementation,
+PCI_MAPREG_TYPE_ROM has the same numeric value as PCI_MAPREG_TYPE_MEM.
 .El
 .sp
 The argument
@@ -338,7 +339,10 @@ The mapping should be to I/O address space.
 .It PCI_MAPREG_TYPE_MEM
 The mapping should be to memory address space.
 .It PCI_MAPREG_TYPE_ROM
-The mapping is to access ROM.
+The mapping is to access ROM.  This type of mapping is only permitted when
+the value for 
+.Fa reg
+is PCI_MAPREG_ROM.
 .El
 .sp
 The argument
