@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.5 2006/02/24 13:06:12 cube Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.6 2006/02/27 02:30:39 peter Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.5 2006/02/24 13:06:12 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.6 2006/02/27 02:30:39 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.5 2006/02/24 13:06:12 cube Exp $");
 #include <dev/hpc/apm/apmvar.h>
 
 #include <machine/bus.h>
-#include <machine/autoconf.h>
 #include <machine/config_hook.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
