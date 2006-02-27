@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.53 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: uda.c,v 1.54 2006/02/27 03:00:33 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.53 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.54 2006/02/27 03:00:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -245,8 +245,7 @@ udaattach(struct device *parent, struct device *self, void *aux)
 	 * ctlr type it is, we check what is generated and later
 	 * set the correct vcid.
 	 */
-	ma.ma_type = (strcmp(self->dv_cfdata->cf_name, "mtc") ?
-	    MSCPBUS_DISK : MSCPBUS_TAPE);
+	ma.ma_type = (device_is_a(self, "mtc") ? MSCPBUS_TAPE : MSCPBUS_DISK);
 
 	ma.ma_mc = &uda_mscp_ctlr;
 	ma.ma_type |= MSCPBUS_UDA;
