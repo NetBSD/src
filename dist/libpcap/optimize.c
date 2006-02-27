@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/optimize.c,v 1.1.1.1 2006/02/27 15:45:46 drochner Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/optimize.c,v 1.2 2006/02/27 15:53:24 drochner Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -1823,9 +1823,9 @@ intern_blocks(root)
 {
 	struct block *p;
 	int i, j;
-	int done;
+	int done1; /* don't shadow global */
  top:
-	done = 1;
+	done1 = 1;
 	for (i = 0; i < n_blocks; ++i)
 		blocks[i]->link = 0;
 
@@ -1849,15 +1849,15 @@ intern_blocks(root)
 		if (JT(p) == 0)
 			continue;
 		if (JT(p)->link) {
-			done = 0;
+			done1 = 0;
 			JT(p) = JT(p)->link;
 		}
 		if (JF(p)->link) {
-			done = 0;
+			done1 = 0;
 			JF(p) = JF(p)->link;
 		}
 	}
-	if (!done)
+	if (!done1)
 		goto top;
 }
 
