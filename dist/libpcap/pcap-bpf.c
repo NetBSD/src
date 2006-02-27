@@ -20,7 +20,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap-bpf.c,v 1.1.1.1 2006/02/27 15:45:47 drochner Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap-bpf.c,v 1.2 2006/02/27 15:51:38 drochner Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -34,6 +34,9 @@ static const char rcsid[] _U_ =
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
+#ifdef __NetBSD__
+#include <paths.h>
+#endif
 
 #include <net/if.h>
 
@@ -523,8 +526,12 @@ static inline int
 bpf_open(pcap_t *p, char *errbuf)
 {
 	int fd;
+#ifndef _PATH_BPF
 	int n = 0;
 	char device[sizeof "/dev/bpf0000000000"];
+#else
+	const char *device = _PATH_BPF;
+#endif
 
 #ifdef _AIX
 	/*
@@ -536,6 +543,7 @@ bpf_open(pcap_t *p, char *errbuf)
 		return (-1);
 #endif
 
+#ifndef _PATH_BPF
 	/*
 	 * Go through all the minors and find one that isn't in use.
 	 */
@@ -566,6 +574,12 @@ bpf_open(pcap_t *p, char *errbuf)
 	if (fd < 0)
 		snprintf(errbuf, PCAP_ERRBUF_SIZE, "(no devices found) %s: %s",
 		    device, pcap_strerror(errno));
+#else
+	if ((fd = open(device, O_RDWR)) == -1 &&
+	    (errno != EACCES || (fd = open(device, O_RDONLY)) == -1))
+		snprintf(errbuf, PCAP_ERRBUF_SIZE,
+		  "(cannot open device) %s: %s", device, pcap_strerror(errno));
+#endif
 
 	return (fd);
 }
