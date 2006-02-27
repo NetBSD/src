@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_startup.9,v 1.3 2003/04/16 13:35:27 wiz Exp $
+.\"     $NetBSD: cpu_startup.9,v 1.4 2006/02/27 11:21:03 sketch Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,13 +46,15 @@
 .Fn cpu_startup "void"
 .Sh DESCRIPTION
 .Fn cpu_startup
-is invoked early during system bootstrap, after the copyright banner
-has been displayed on the console and immediately after
+is invoked early during system bootstrap, after the console
+has been set up and immediately after
 .Xr uvm 9
 has been initialized.
 .Fn cpu_startup
 performs the following tasks:
 .Bl -bullet
+.It
+prints the initial copyright message
 .It
 allocate memory and buffers for kernel tables
 .It

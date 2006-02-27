@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.71 2006/01/29 03:09:19 rpaulo Exp $
+.\"	$NetBSD: uvm.9,v 1.72 2006/02/27 11:21:03 sketch Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -88,7 +88,7 @@ There are also several miscellaneous functions.
 .Pp
 .Fn uvm_init
 sets up the UVM system at system boot time, after the
-copyright has been printed.
+console has been setup.
 It initialises global state, the page, map, kernel virtual memory state,
 machine-dependent physical map, kernel memory allocator,
 pager and anonymous memory sub-systems, and then enables
