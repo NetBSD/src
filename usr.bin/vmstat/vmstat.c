@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.138.2.1 2006/02/04 15:53:52 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.138.2.2 2006/02/28 21:09:32 kardel Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.138.2.1 2006/02/04 15:53:52 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.138.2.2 2006/02/28 21:09:32 kardel Exp $");
 #endif
 #endif /* not lint */
 
@@ -551,7 +551,7 @@ long
 getuptime(void)
 {
 	static struct timeval boottime;
-	struct timeval now, diff;
+	struct timeval now;
 	time_t uptime;
 
 	if (boottime.tv_sec == 0)
@@ -562,7 +562,7 @@ getuptime(void)
 #else
 	kread(namelist, X_TIME_SECOND, &now, sizeof(now));
 #endif
-	uptime = now - boottime.tv_sec;
+	uptime = now.tv_sec - boottime.tv_sec;
 	if (uptime <= 0 || uptime > 60*60*24*365*10)
 		errx(1, "time makes no sense; namelist must be wrong.");
 	return (uptime);
