@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 2006/02/26 05:31:54 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43 2006/02/28 23:08:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42 2006/02/26 05:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43 2006/02/28 23:08:20 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -128,8 +128,7 @@ device_register(dev, aux)
 	 * on that controller matches.
 	 */
 	if (booted_controller &&
-	    (device_is_a(dev, "sd") ||
-	     device_is_a(dev, "cd") == 0)) {
+	    (device_is_a(dev, "sd") || device_is_a(dev, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (device_parent(parent) != booted_controller)
