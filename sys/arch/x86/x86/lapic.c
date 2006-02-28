@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.15.4.1 2006/02/04 15:31:49 simonb Exp $ */
+/* $NetBSD: lapic.c,v 1.15.4.2 2006/02/28 20:57:57 kardel Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15.4.1 2006/02/04 15:31:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15.4.2 2006/02/28 20:57:57 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15.4.1 2006/02/04 15:31:49 simonb Exp $"
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
+#include <machine/clock.h>
 
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
@@ -236,14 +237,14 @@ void
 lapic_clockintr(void *arg, struct intrframe frame)
 {
 #if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
-#ifdef __HAVE_TIMECOUNTER
+#ifndef __HAVE_TIMECOUNTER
 	static int microset_iter; /* call cc_microset once/sec */
 #endif /* __HAVE_TIMECOUNTER */
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_isources[LIR_TIMER]->is_evcnt.ev_count++;
 
-#ifdef __HAVE_TIMECOUNTER
+#ifndef __HAVE_TIMECOUNTER
 	/*
 	 * If we have a cycle counter, do the microset thing.
 	 */
@@ -257,7 +258,7 @@ lapic_clockintr(void *arg, struct intrframe frame)
 			cc_microset(ci);
 		}
 	}
-#endif /* __HAVE_TIMECOUNTER */
+#endif /* !__HAVE_TIMECOUNTER */
 #endif /* I586_CPU || I686_CPU || __x86_64__ */
 
 	hardclock((struct clockframe *)&frame);
@@ -400,6 +401,7 @@ lapic_calibrate_timer(ci)
 		 */
 		delay_func = lapic_delay;
 		initclock_func = lapic_initclocks;
+		initrtclock(0);
 	}
 }
 
