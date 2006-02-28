@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.7 2006/02/26 05:31:54 thorpej Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.8 2006/02/28 01:16:59 simonb Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.7 2006/02/26 05:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.8 2006/02/28 01:16:59 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,8 +52,7 @@ ibm4xx_device_register(struct device *dev, void *aux)
 {
 	struct device *parent = device_parent(dev);
 
-	if (device_is_a(dev, "emac") == 0 &&
-	    device_is_a(parent, "opb") == 0) {
+	if (device_is_a(dev, "emac") && device_is_a(parent, "opb")) {
 		/* Set the mac-addr of the on-chip Ethernet. */
 		struct opb_attach_args *oaa = aux;
 
