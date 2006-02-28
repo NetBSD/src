@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.590 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.591 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -211,3 +211,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[gdamore 20060225]
 	evbmips: Add support for Plat'home OpenMicroServer (OMS-AL400/128).
 		[shige 20060227]
+	evbarm: Add support for the Linksys NSLU2 (a.k.a. "Slug") NAS device.
+		[scw 20060228]
