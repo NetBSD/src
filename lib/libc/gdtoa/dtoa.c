@@ -1,4 +1,4 @@
-/* $NetBSD: dtoa.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: dtoa.c,v 1.3 2006/02/28 18:51:08 kleink Exp $ */
 
 /****************************************************************
 
@@ -751,6 +751,10 @@ dtoa
 		clear_inexact();
 #endif
 	Bfree(b);
+	if (s == s0) {			/* don't return empty string */
+		*s++ = '0';
+		k = 0;
+	}
 	*s = 0;
 	*decpt = k + 1;
 	if (rve)
