@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.218 2006/02/27 02:53:33 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.219 2006/02/28 06:30:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.218 2006/02/27 02:53:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.219 2006/02/28 06:30:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1808,7 +1808,7 @@ device_register(struct device *dev, void *aux)
 			return;
 		}
 
-		if (CPU_ISSUN4 && dvname[0] == 's' &&
+		if (CPU_ISSUN4 && device_is_a(dev, "sd") &&
 		    target == 0 &&
 		    scsipi_lookup_periph(chan, target, lun) == NULL) {
 			/*
@@ -1821,7 +1821,7 @@ device_register(struct device *dev, void *aux)
 			lun = 0;
 		}
 
-		if (CPU_ISSUN4C && dvname[0] == 's')
+		if (CPU_ISSUN4C && device_is_a(dev, "sd"))
 			target = sd_crazymap(target);
 
 		if (periph->periph_target == target &&
