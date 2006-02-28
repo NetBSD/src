@@ -1,4 +1,5 @@
-#	$NetBSD: files.i386,v 1.277.2.1 2006/02/04 14:56:52 simonb Exp $
+
+#	$NetBSD: files.i386,v 1.277.2.2 2006/02/28 20:25:08 kardel Exp $
 #
 # new style config file for i386 architecture
 #
@@ -195,10 +196,20 @@ device	elansc: sysmon_wdog, gpiobus
 attach	elansc at pci
 file	arch/i386/pci/elan520.c		elansc
 
+# AMD Geode SC1100 GCB area
+device  geodegcb {}
+attach	geodegcb at pci
+file	arch/i386/pci/geode.c		geodegcb
+
 # AMD Geode SC1100 Watchdog Timer
-device	geodewdog: sysmon_wdog
-attach	geodewdog at pci
-file	arch/i386/pci/geode.c		geodewdog
+device	geodewdog: sysmon_wdog, geodegcb
+attach	geodewdog at geodegcb
+file	arch/i386/pci/geodewdg.c	geodewdog
+
+# AMD Geode SC1100 high resolution counter
+device	geodecntr: geodegcb
+attach  geodecntr at geodegcb
+file	arch/i386/pci/geodecntr.c	geodecntr
 
 # PCI-EISA bridges
 device	pceb: eisabus, isabus
