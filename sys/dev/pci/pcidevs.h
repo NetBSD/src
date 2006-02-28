@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.768 2006/02/21 03:11:12 chuck Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.769 2006/02/28 20:57:14 gdamore Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.767 2006/02/21 03:09:54 chuck Exp
+ *	NetBSD: pcidevs,v 1.768 2006/02/28 20:56:52 gdamore Exp
  */
 
 /*
@@ -1077,6 +1077,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_9100	0x514d		/* Radeon 9100 Series */
 #define	PCI_PRODUCT_ATI_RADEON_7500	0x5157		/* Radeon 7500 */
 #define	PCI_PRODUCT_ATI_RADEON_7000	0x5159		/* Radeon 7000/VE */
+#define	PCI_PRODUCT_ATI_RADEON_7000_2	0x515a		/* Radeon 7000/VE */
 #define	PCI_PRODUCT_ATI_RADEON_9100_S	0x516d		/* Radeon 9100 Series Secondary */
 #define	PCI_PRODUCT_ATI_RAGEGLPCI	0x5245		/* Rage 128 GL PCI */
 #define	PCI_PRODUCT_ATI_RAGEGLAGP	0x5246		/* Rage 128 GL AGP 2x */

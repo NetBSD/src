@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.767 2006/02/21 03:11:12 chuck Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.768 2006/02/28 20:57:14 gdamore Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.767 2006/02/21 03:09:54 chuck Exp
+ *	NetBSD: pcidevs,v 1.768 2006/02/28 20:56:52 gdamore Exp
  */
 
 /*
@@ -3873,6 +3873,10 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_7000,
+	    "Radeon 7000/VE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_7000_2,
 	    "Radeon 7000/VE",
 	},
 	{
@@ -10784,4 +10788,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2112;
+const int pci_nproducts = 2113;
