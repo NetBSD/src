@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.5 2005/03/04 17:11:19 christos Exp $	*/
+/*	$NetBSD: want.c,v 1.6 2006/02/28 17:17:43 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -132,12 +132,12 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 			if ((linep[0] == '{' || linep[0] == '|') && !linep[1]) {
 				if (want(bp, NO)) {
 					ct = fmttime(bp->ut_timefld, fulltime);
-				printf("%-*.*s  %-*.*s %-*.*s %s\n",
-				    namesz, namesz, namep,
-				    linesz, linesz, linep,
-				    hostsz, hostsz,
-				    gethost(bp, hostp, numeric),
-				    ct);
+					printf("%-*.*s  %-*.*s %-*.*s %s\n",
+					    namesz, namesz, namep,
+					    linesz, linesz, linep,
+					    hostsz, hostsz,
+					    gethost(bp, hostp, numeric),
+					    ct);
 					if (maxrec && !--maxrec)
 						return;
 				}
