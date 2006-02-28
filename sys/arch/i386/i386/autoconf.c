@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.82 2006/02/03 23:33:30 jmmv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.82.2.1 2006/02/28 20:28:53 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.82 2006/02/03 23:33:30 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.82.2.1 2006/02/28 20:28:53 kardel Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.82 2006/02/03 23:33:30 jmmv Exp $");
 #include <machine/cpu.h>
 #include <machine/gdt.h>
 #include <machine/pcb.h>
+#include <machine/clock.h>
 
 #include "ioapic.h"
 #include "lapic.h"
@@ -130,6 +131,10 @@ cpu_configure(void)
 #ifdef MULTIPROCESSOR
 	/* propagate this to the idle pcb's. */
 	cpu_init_idle_pcbs();
+#endif
+
+#if defined(I586) || defined(I686)
+	init_TSC_tc();
 #endif
 
 	spl0();

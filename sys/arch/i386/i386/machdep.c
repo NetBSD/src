@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.570.2.1 2006/02/04 15:13:11 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.570.2.2 2006/02/28 20:28:53 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570.2.1 2006/02/04 15:13:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570.2.2 2006/02/28 20:28:53 kardel Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2275,9 +2275,6 @@ cpu_initclocks()
 {
 
 	(*initclock_func)();
-#if defined(I586_CPU) || defined(I686_CPU)
-	init_TSC_tc();
-#endif
 }
 
 #ifdef MULTIPROCESSOR
