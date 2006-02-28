@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.29.6.1 2006/02/04 12:47:20 simonb Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.29.6.2 2006/02/28 21:01:52 kardel Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.1 2006/02/04 12:47:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.2 2006/02/28 21:01:52 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -160,12 +160,14 @@ static long time_esterror = MAXPHASE / 1000; /* estimated error (us) */
 static long time_reftime;		/* time at last adjustment (s) */
 static l_fp time_offset;		/* time offset (ns) */
 static l_fp time_freq;			/* frequency offset (ns/s) */
-static l_fp time_adj;			/* tick adjust (ns/s) */
+#endif /* NTP */
 
-static int64_t time_adjtime;		/* correction from adjtime(2) (usec) */
+static l_fp time_adj;			/* tick adjust (ns/s) */
+int64_t time_adjtime;		/* correction from adjtime(2) (usec) */
 
 extern int time_adjusted;	/* ntp might have changed the system time */
 
+#ifdef NTP
 #ifdef PPS_SYNC
 /*
  * The following variables are used when a pulse-per-second (PPS) signal
@@ -360,7 +362,7 @@ ntp_adjtime1(ntv, v, retval)
 		else if (ntv->shift > PPS_FAVGMAX)
 			pps_shiftmax = PPS_FAVGMAX;
 		else
-			pps_shiftmax = ntv.shift;
+			pps_shiftmax = ntv->shift;
 	}
 #endif /* PPS_SYNC */
 	if (modes & MOD_NANO)
@@ -448,6 +450,7 @@ ntp_adjtime1(ntv, v, retval)
 	}
 	return error;
 }
+#endif /* NTP */
 
 /*
  * second_overflow() - called after ntp_tick_adjust()
@@ -462,6 +465,8 @@ ntp_update_second(int64_t *adjustment, time_t *newsec)
 {
 	int tickrate;
 	l_fp ftemp;		/* 32/64-bit temporary */
+
+#ifdef NTP
 
 	/*
 	 * On rollover of the second both the nanosecond and microsecond
@@ -556,6 +561,15 @@ ntp_update_second(int64_t *adjustment, time_t *newsec)
 	L_SUB(time_offset, ftemp);
 	L_ADD(time_adj, time_freq);
 	
+#ifdef PPS_SYNC
+	if (pps_valid > 0)
+		pps_valid--;
+	else
+		time_status &= ~STA_PPSSIGNAL;
+#endif /* PPS_SYNC */
+
+#endif /* NTP */
+
 	/*
 	 * Apply any correction from adjtime(2).  If more than one second
 	 * off we slew at a rate of 5ms/s (5000 PPM) else 500us/s (500PPM)
@@ -578,12 +592,6 @@ ntp_update_second(int64_t *adjustment, time_t *newsec)
 	}
 	*adjustment = time_adj;
 		
-#ifdef PPS_SYNC
-	if (pps_valid > 0)
-		pps_valid--;
-	else
-		time_status &= ~STA_PPSSIGNAL;
-#endif /* PPS_SYNC */
 }
 
 /*
@@ -606,6 +614,8 @@ ntp_init(void)
 	 * initialized, and these only in the simulator. In the actual
 	 * kernel, any nonzero values here will quickly evaporate.
 	 */
+	L_CLR(time_adj);
+#ifdef NTP
 	L_CLR(time_offset);
 	L_CLR(time_freq);
 #ifdef PPS_SYNC
@@ -614,9 +624,11 @@ ntp_init(void)
 	pps_tf[2].tv_sec = pps_tf[2].tv_nsec = 0;
 	pps_fcount = 0;
 	L_CLR(pps_freq);
-#endif /* PPS_SYNC */	   
+#endif /* PPS_SYNC */
+#endif
 }
 
+#ifdef NTP
 /*
  * hardupdate() - local clock update
  *
@@ -722,8 +734,8 @@ hardupdate(long offset)
  * routine.
  */
 void
-hardpps(struct timespec *tvp,		/* time at PPS */
-	long usec			/* hardware counter at PPS */)
+hardpps(struct timespec *tsp,		/* time at PPS */
+	long nsec			/* hardware counter at PPS */)
 {
 	long u_sec, u_nsec, v_nsec; /* temps */
 	l_fp ftemp;
@@ -1048,7 +1060,7 @@ sys_ntp_gettime(l, v, retval)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.1 2006/02/04 12:47:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.2 2006/02/28 21:01:52 kardel Exp $");
 
 #include "opt_ntp.h"
 
