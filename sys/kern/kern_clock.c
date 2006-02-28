@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.96.6.1 2006/02/04 13:49:07 simonb Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.96.6.2 2006/02/28 20:59:53 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96.6.1 2006/02/04 13:49:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96.6.2 2006/02/28 20:59:53 kardel Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -524,9 +524,9 @@ hardclock(struct clockframe *frame)
 		return;
 #endif
 
-#ifdef __HAVE_TIMECOUNTER
 	hardclock_ticks++;
 
+#ifdef __HAVE_TIMECOUNTER
 	tc_ticktock();
 #else /* __HAVE_TIMECOUNTER */
 	/*
@@ -537,7 +537,6 @@ hardclock(struct clockframe *frame)
 	 * if we are still adjusting the time (see adjtime()),
 	 * ``tickdelta'' may also be added in.
 	 */
-	hardclock_ticks++;
 	delta = tick;
 
 #ifndef NTP
