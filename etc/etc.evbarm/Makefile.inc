@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2005/02/27 02:27:12 bsh Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2006/02/28 20:41:31 scw Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -22,7 +22,7 @@ BUILD_KERNELS+=		${board}_INSTALL
 KERNEL_SETS+=		IXM1200
 .else
 # Big endian platforms.
-KERNEL_SETS+=		IXM1200
+KERNEL_SETS+=		IXM1200 NSLU2
 .endif
 
 KERNEL_SUFFIXES=	bin srec
