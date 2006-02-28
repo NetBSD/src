@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.122.2.1 2006/02/04 15:11:54 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.122.2.2 2006/02/28 20:47:32 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -374,7 +374,7 @@ void	savectx(struct pcb *);
 void	proc_trampoline(void);
 
 /* clock.c */
-void	initrtclock(void);
+void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(int);
 void	i8254_microtime(struct timeval *);
