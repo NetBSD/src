@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.1.1.1.2.5 2006/02/05 11:17:39 simonb Exp $ */
+/* $NetBSD: kern_tc.c,v 1.1.1.1.2.6 2006/02/28 21:04:27 kardel Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -6,12 +6,12 @@
  * <phk@FreeBSD.ORG> wrote this file.  As long as you retain this notice you
  * can do whatever you want with this stuff. If we meet some day, and you think
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
- * ----------------------------------------------------------------------------
+ * ---------------------------------------------------------------------------
  */
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.5 2006/02/05 11:17:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.6 2006/02/28 21:04:27 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -110,6 +110,135 @@ static int timestepwarnings;
 SYSCTL_INT(_kern_timecounter, OID_AUTO, stepwarnings, CTLFLAG_RW,
     &timestepwarnings, 0, "");
 #endif /* __FreeBSD__ */
+
+/*
+ * sysctl helper routine for kern.timercounter.current
+ */
+static int
+sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error;
+	char newname[32];
+	struct timecounter *newtc, *tc;
+
+	tc = timecounter;
+
+	strlcpy(newname, tc->tc_name, sizeof(newname));
+
+	node = *rnode;
+	node.sysctl_data = newname;
+	node.sysctl_size = sizeof(newname);
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error ||
+	    newp == NULL ||
+	    strncmp(newname, tc->tc_name, sizeof(newname)) == 0)
+		return error;
+
+	if (l && (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
+		return (error);
+
+	/* XXX locking */
+
+	for (newtc = timecounters; newtc != NULL; newtc = newtc->tc_next) {
+		if (strcmp(newname, newtc->tc_name) != 0)
+			continue;
+
+		/* Warm up new timecounter. */
+		(void)newtc->tc_get_timecount(newtc);
+		(void)newtc->tc_get_timecount(newtc);
+
+		timecounter = newtc;
+
+		return (0);
+	}
+
+	/* XXX unlock */
+
+	return (EINVAL);
+}
+
+static int
+sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
+{
+	char buf[32];
+	char *where = oldp;
+	const char *spc;
+	struct timecounter *tc;
+	size_t needed, left, slen;
+	int error;
+
+	if (newp != NULL)
+		return (EPERM);
+	if (namelen != 0)
+		return (EINVAL);
+
+	spc = "";
+	error = 0;
+	needed = 0;
+	left = *oldlenp;
+
+	/* XXX locking */
+
+	for (tc = timecounters; error == 0 && tc != NULL; tc = tc->tc_next) {
+		if (where == NULL) {
+			needed += sizeof(buf);  /* be conservative */
+		} else {
+			slen = snprintf(buf, sizeof(buf), "%s%s(%d)",
+					spc, tc->tc_name, tc->tc_quality);
+			if (left < slen + 1)
+				break;
+			/* XXX use sysctl_copyout? (from sysctl_hw_disknames) */
+			error = copyout(buf, where, slen + 1);
+			spc = " ";
+			where += slen;
+			needed += slen;
+			left -= slen;
+		}
+	}
+
+	/* XXX unlock */
+
+	*oldlenp = needed;
+	return (error);
+}
+
+SYSCTL_SETUP(sysctl_timecounter_setup, "sysctl timecounter setup")
+{
+	const struct sysctlnode *node;
+
+	sysctl_createv(clog, 0, NULL, &node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "timecounter",
+		       SYSCTL_DESCR("time counter information"),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+
+	if (node != NULL) {
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_STRING, "choice",
+			       SYSCTL_DESCR("available counters"),
+			       sysctl_kern_timecounter_choice, 0, NULL, 0,
+			       CTL_KERN, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_STRING, "hardware",
+			       SYSCTL_DESCR("currently active time counter"),
+			       sysctl_kern_timecounter_hardware, 0, NULL, 0,
+			       CTL_KERN, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "timestepwarnings",
+			       SYSCTL_DESCR("log time steps"),
+			       NULL, 0, &timestepwarnings, 0,
+			       CTL_KERN, node->sysctl_num, CTL_CREATE, CTL_EOL);
+	}
+}
 
 #define	TC_STATS(name)							\
 static struct evcnt n##name =						\
@@ -327,16 +456,17 @@ tc_init(struct timecounter *tc)
 	if (u > hz && tc->tc_quality >= 0) {
 		tc->tc_quality = -2000;
 		if (bootverbose) {
-			printf("Timecounter \"%s\" frequency %ju Hz",
+			printf("timecounter: Timecounter \"%s\" frequency %ju Hz",
 			    tc->tc_name, (uintmax_t)tc->tc_frequency);
 			printf(" -- Insufficient hz, needs at least %u\n", u);
 		}
 	} else if (tc->tc_quality >= 0 || bootverbose) {
-		printf("Timecounter \"%s\" frequency %ju Hz quality %d\n",
+		printf("timecounter: Timecounter \"%s\" frequency %ju Hz quality %d\n",
 		    tc->tc_name, (uintmax_t)tc->tc_frequency,
 		    tc->tc_quality);
 	}
 
+	/* XXX locking */
 	tc->tc_next = timecounters;
 	timecounters = tc;
 	/*
@@ -405,10 +535,8 @@ tc_windup(void)
 	struct timehands *th, *tho;
 	u_int64_t scale;
 	u_int delta, ncount, ogen;
-#ifdef NTP
 	int i;
 	time_t t;
-#endif /* NTP */
 
 	/*
 	 * Make the next timehands a copy of the current one, but do not
@@ -448,7 +576,6 @@ tc_windup(void)
 		tho->th_counter->tc_poll_pps(tho->th_counter);
 #endif /* PPS_SYNC */
 
-#ifdef NTP
 	/*
 	 * Deal with NTP second processing.  The for loop normally
 	 * iterates at most once, but in extreme situations it might
@@ -457,6 +584,8 @@ tc_windup(void)
 	 * has been read, so on really large steps, we call
 	 * ntp_update_second only twice.  We need to call it twice in
 	 * case we missed a leap second.
+	 * If NTP is not compiled in ntp_update_second still calculates
+	 * the adjustment resulting from adjtime() calls.
 	 */
 	bt = th->th_offset;
 	bintime_add(&bt, &boottimebin);
@@ -469,7 +598,6 @@ tc_windup(void)
 		if (bt.sec != t)
 			boottimebin.sec += bt.sec - t;
 	}
-#endif /* NTP */
 
 	/* Update the UTC timestamps used by the get*() functions. */
 	/* XXX shouldn't do this here.  Should force non-`get' versions. */
@@ -480,6 +608,10 @@ tc_windup(void)
 	if (th->th_counter != timecounter) {
 		th->th_counter = timecounter;
 		th->th_offset_count = ncount;
+
+		printf("timecounter: selected timecounter \"%s\" frequency %ju Hz quality %d\n",
+		    timecounter->tc_name, (uintmax_t)timecounter->tc_frequency,
+		    timecounter->tc_quality);
 	}
 
 	/*-
@@ -540,6 +672,7 @@ sysctl_kern_timecounter_hardware(SYSCTL_HANDLER_ARGS)
 	if (error != 0 || req->newptr == NULL ||
 	    strcmp(newname, tc->tc_name) == 0)
 		return (error);
+
 	for (newtc = timecounters; newtc != NULL; newtc = newtc->tc_next) {
 		if (strcmp(newname, newtc->tc_name) != 0)
 			continue;
@@ -797,7 +930,7 @@ inittimecounter(void)
 	else
 		tc_tick = 1;
 	p = (tc_tick * 1000000) / hz;
-	printf("Timecounters tick every %d.%03u msec\n", p / 1000, p % 1000);
+	printf("timecounter: Timecounters tick every %d.%03u msec\n", p / 1000, p % 1000);
 
 	/* warm up new timecounter (again) and get rolling. */
 	(void)timecounter->tc_get_timecount(timecounter);
