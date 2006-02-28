@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.1.1.1.2.4 2006/02/04 14:47:00 simonb Exp $ */
+/* $NetBSD: tsc.c,v 1.1.1.1.2.5 2006/02/28 20:44:46 kardel Exp $ */
 
 /*-
  * Copyright (c) 1998-2003 Poul-Henning Kamp
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.1.1.2.4 2006/02/04 14:47:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.1.1.2.5 2006/02/28 20:44:46 kardel Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -83,21 +83,41 @@ init_TSC(void)
 		printf("TSC clock: %ju Hz\n", (intmax_t)tsc_freq);
 }
 
-#ifdef __FreeBSD__
 #ifdef MULTIPROCESSOR
 static int mp_tsc_ok = 0;
 
+#if 0
+/*
+ * XXX
+ * this sysctl makes only limited sense as initialisation
+ * is finished by the time this can be set. maybe there will
+ * be a sysctl setting functionality some time in the future.
+ */
 SYSCTL_SETUP(sysctl_timecounter_setup, "sysctl timecounter setup")
 {
+	const struct sysctlnode *node;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE, CTLTYPE_INT, "tsc_ok",
-	    "Indicates whether the TSC is safe to use in SMP mode",
-	    NULL, 0, &mp_tsc_ok, 0, CTL_KERN, KERN_TIMECOUNTER,
-	    CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "timecounter",
+		       SYSCTL_DESCR("allow usage of TSC on multi processors"),
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	if (node != NULL) {
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "smp_tsc_ok",
+			       SYSCTL_DESCR(
+			       "allow usage of TSC on multi processors"),
+			       NULL, 0, &mp_tsc_ok, 0,
+			       CTL_MACHDEP, node->sysctl_num, CTL_CREATE,
+			       CTL_EOL);
+	}
+
 }
-#endif /* MULTIPROCESSOR */
-#endif /* __FreeBSD__ */
+#endif
+#endif	/* MULTIPROCESSOR */
 
 void
 init_TSC_tc(void)
@@ -121,9 +141,10 @@ init_TSC_tc(void)
 	}
 #endif /* __FreeBSD__ */
 
-#ifdef __FreeBSD__
 #ifdef MULTIPROCESSOR
-	/*
+	extern u_int32_t cpus_attached;
+	/* 
+	 * FreeBSD comment:
 	 * We can not use the TSC in SMP mode unless the TSCs on all CPUs
 	 * are somehow synchronized.  Some hardware configurations do
 	 * this, but we have no way of determining whether this is the
@@ -131,10 +152,13 @@ init_TSC_tc(void)
 	 * unless the user indicated (by setting kern.timecounter.smp_tsc
 	 * to 1) that he believes that his TSCs are synchronized.
 	 */
-	if (mp_ncpus > 1 && !smp_tsc)
+	if (cpus_attached & ~1 && !mp_tsc_ok)
 		tsc_timecounter.tc_quality = -100;
-#endif /* MULTIPROCESSOR */
-#endif /* __FreeBSD__ */
+
+	/*
+	 * XXX - implement NetBSD MP TSC strategy
+	 */
+#endif
 
 	if (tsc_present && tsc_freq != 0 && !tsc_is_broken) {
 		tsc_timecounter.tc_frequency = tsc_freq;
