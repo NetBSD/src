@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.98.6.1 2006/02/04 14:39:43 simonb Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.98.6.2 2006/02/28 21:07:13 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98.6.1 2006/02/04 14:39:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98.6.2 2006/02/28 21:07:13 kardel Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -488,9 +488,12 @@ settimeofday1(const struct timeval *utv, const struct timezone *utzp,
 	return settime(p, &ts);
 }
 
+#ifndef __HAVE_TIMECOUNTER
 int	tickdelta;			/* current clock skew, us. per tick */
 long	timedelta;			/* unapplied time correction, us. */
 long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
+#endif
+
 int	time_adjusted;			/* set if an adjustment is made */
 
 /* ARGSUSED */
@@ -514,10 +517,41 @@ int
 adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 {
 	struct timeval atv;
-	long ndelta, ntickdelta, odelta;
-	int error;
-	int s;
+	int error = 0;
 
+#ifdef __HAVE_TIMECOUNTER
+	extern int64_t time_adjtime;  /* in kern_ntptime.c */
+#else /* !__HAVE_TIMECOUNTER */
+	long ndelta, ntickdelta, odelta;
+	int s;
+#endif /* !__HAVE_TIMECOUNTER */
+
+#ifdef __HAVE_TIMECOUNTER
+	if (olddelta) {
+		atv.tv_sec = time_adjtime / 1000000;
+		atv.tv_usec = time_adjtime % 1000000;
+		if (atv.tv_usec < 0) {
+			atv.tv_usec += 1000000;
+			atv.tv_sec--;
+		}
+		error = copyout(&atv, olddelta, sizeof(struct timeval));
+		if (error)
+			return (error);
+	}
+	
+	if (delta) {
+		error = copyin(delta, &atv, sizeof(struct timeval));
+		if (error)
+			return (error);
+
+		time_adjtime = (int64_t)atv.tv_sec * 1000000 +
+			atv.tv_usec;
+
+		if (time_adjtime)
+			/* We need to save the system time during shutdown */
+			time_adjusted |= 1;
+	}
+#else /* !__HAVE_TIMECOUNTER */
 	error = copyin(delta, &atv, sizeof(struct timeval));
 	if (error)
 		return (error);
@@ -558,6 +592,8 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 		atv.tv_usec = odelta % 1000000;
 		error = copyout(&atv, olddelta, sizeof(struct timeval));
 	}
+#endif /* __HAVE_TIMECOUNTER */
+
 	return error;
 }
 
