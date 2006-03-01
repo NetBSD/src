@@ -1,4 +1,4 @@
-/* $NetBSD: omsal400.c,v 1.2 2006/02/23 17:47:35 shige Exp $ */
+/* $NetBSD: omsal400.c,v 1.3 2006/03/01 20:21:41 shige Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.2 2006/02/23 17:47:35 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.3 2006/03/01 20:21:41 shige Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -114,7 +114,7 @@ omsal400_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 *  dev 3 (PCI_INTB):	Intel GB Ether 82541PI
 	 *  dev 4 (PCI_INTA):	Intel GB Ether 82541PI
 	 */
-	static const int irqmap[5/*device*/][4/*pin*/] = {
+	static const int irqmap[4/*device*/][4/*pin*/] = {
 		{  6, -1, -1, -1 },	/* 1: PCI Connecter (not used) */
 		{  5,  5,  5, -1 },	/* 2: NEC USB 2.0 */
 		{  2, -1, -1, -1 },	/* 3: Intel GbE */
