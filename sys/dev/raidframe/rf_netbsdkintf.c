@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.201 2006/02/24 03:20:22 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.202 2006/03/01 21:41:49 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.201 2006/02/24 03:20:22 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202 2006/03/01 21:41:49 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -254,6 +254,8 @@ struct raid_softc {
 
 #define	raidunit(x)	DISKUNIT(x)
 int numraid = 0;
+
+extern struct cfdriver raid_cd;
 
 /*
  * Allow RAIDOUTSTANDING number of simultaneous IO's to this RAID device.
@@ -390,6 +392,7 @@ raidattach(int num)
 		raidrootdev[raidID].dv_unit   = raidID;
 		raidrootdev[raidID].dv_parent = NULL;
 		raidrootdev[raidID].dv_flags  = 0;
+		raidrootdev[raidID].dv_cfdriver = &raid_cd;
 		snprintf(raidrootdev[raidID].dv_xname,
 		    sizeof(raidrootdev[raidID].dv_xname), "raid%d", raidID);
 
