@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.122 2006/01/03 12:30:01 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.123 2006/03/01 12:38:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.122 2006/01/03 12:30:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.123 2006/03/01 12:38:32 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -630,11 +630,10 @@ tryagain:
 			aio.iov_len = sizeof(u_int32_t);
 			auio.uio_iov = &aio;
 			auio.uio_iovcnt = 1;
-			auio.uio_segflg = UIO_SYSSPACE;
 			auio.uio_rw = UIO_READ;
 			auio.uio_offset = 0;
 			auio.uio_resid = sizeof(u_int32_t);
-			auio.uio_lwp = NULL;
+			UIO_SETUP_SYSSPACE(&auio);
 			do {
 			   rcvflg = MSG_WAITALL;
 			   error = (*so->so_receive)(so, (struct mbuf **)0, &auio,
@@ -708,7 +707,7 @@ tryagain:
 			 * on.
 			 */
 			auio.uio_resid = len = 100000000; /* Anything Big */
-			auio.uio_lwp = l;
+			/* not need to setup uio_vmspace */
 			do {
 			    rcvflg = 0;
 			    error =  (*so->so_receive)(so, (struct mbuf **)0,
@@ -752,7 +751,7 @@ errout:
 		else
 			getnam = aname;
 		auio.uio_resid = len = 1000000;
-		auio.uio_lwp = l;
+		/* not need to setup uio_vmspace */
 		do {
 			rcvflg = 0;
 			error =  (*so->so_receive)(so, getnam, &auio, mp,
@@ -2042,7 +2041,7 @@ nfs_getreq(nd, nfsd, has_header)
 			uio.uio_offset = 0;
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
-			uio.uio_segflg = UIO_SYSSPACE;
+			UIO_SETUP_SYSSPACE(&uio);
 			iov.iov_base = (caddr_t)&nfsd->nfsd_authstr[4];
 			iov.iov_len = RPCAUTH_MAXSIZ - 4;
 			nfsm_mtouio(&uio, uio.uio_resid);
@@ -2237,8 +2236,6 @@ nfsrv_rcv(so, arg, waitflag)
 		goto dorecs;
 	}
 #endif
-	/* XXX: was NULL, soreceive() requires non-NULL uio->uio_lwp */
-	auio.uio_lwp = curlwp;	/* XXX curlwp */
 	simple_lock(&slp->ns_lock);
 	slp->ns_flag &= ~SLP_NEEDQ;
 	simple_unlock(&slp->ns_lock);
@@ -2257,6 +2254,7 @@ nfsrv_rcv(so, arg, waitflag)
 		 * Do soreceive().
 		 */
 		auio.uio_resid = 1000000000;
+		/* not need to setup uio_vmspace */
 		flags = MSG_DONTWAIT;
 		error = (*so->so_receive)(so, &nam, &auio, &mp, NULL, &flags);
 		if (error || mp == NULL) {
@@ -2291,6 +2289,7 @@ nfsrv_rcv(so, arg, waitflag)
 	} else {
 		do {
 			auio.uio_resid = 1000000000;
+			/* not need to setup uio_vmspace */
 			flags = MSG_DONTWAIT;
 			error = (*so->so_receive)(so, &nam, &auio, &mp, NULL,
 			    &flags);

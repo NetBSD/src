@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.23 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.24 2006/03/01 12:38:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -615,7 +615,7 @@ struct pmax_bus_dmamap {
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-	struct proc	*_dm_proc;	/* proc that owns the mapping */
+	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
