@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.21.6.2 2006/03/01 03:53:44 riz Exp $
+# $NetBSD: etcupdate,v 1.21.6.3 2006/03/01 03:54:27 riz Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -173,6 +173,33 @@ install_checksum() {
 	md5 "${1}" > "/var/etcupdate/${1}"
 }
 
+# Initialise the DIFF_EXTRA_OPTIONS variable.
+init_diff_extra_options() {
+	#
+	# Start with a few options that are always available.
+	#
+	DIFF_EXTRA_OPTIONS=\
+"  su  Show differences in unified format (\"diff -u\")
+  sc  Show differences in context format (\"diff -c\")
+  ss  Show differences side by side (\"sdiff -w${WIDTH}\")"
+	#
+	# wdiff is not part of the base system, but the
+	# user might have installed it from pkgsrc.  It is
+	# useful to show differences on a word by word basis
+	# instead of line by line.  If it is executable
+	# then offer to use it in the menu.
+	#
+	if (wdiff /dev/null /dev/null) >/dev/null 2>&1 ; then
+		DIFF_EXTRA_OPTIONS="${DIFF_EXTRA_OPTIONS}
+  sw  Show differences word by word (\"wdiff -n -l\")"
+	fi
+	#
+	# End with an option to use a user-specified diff-like command.
+	#
+	DIFF_EXTRA_OPTIONS="${DIFF_EXTRA_OPTIONS}
+  scommand Show differences using the specified diff-like command"
+}
+
 diff_and_merge_file() {
 	# $1 = target file
 
@@ -253,22 +280,18 @@ EOF
   i  Install the new file (overwrites your local modifications!)
   m  Merge the currently installed and new files
   s  Show the differences between the currently installed and new files
-  sd  Show the differences ... using "diff -u"
-  sw  Show the differences ... using "wdiff -n -l"
-  scommand Show the differences ... using the specified diff-like command
+${DIFF_EXTRA_OPTIONS}
   v  Show the new file
 
 EOF
 		else
 			cat << EOF
-  d  Don't install the merged file (keep your old file)
-  i  Install the merged file
-  m  Merge again (your old file against the result from the previous merge)
-  s  Show the differences between the currently installed and new merged files
-  sd  Show the differences ... using "diff -u"
-  sw  Show the differences ... using "wdiff -n -l"
-  scommand Show the differences ... using the specified diff-like command
-  u  Undo merge and restore the original version of the new file
+  d  Don't install the new file
+  i  Install the new file (overwrites your modifications!)
+  m  Merge again the currently installed and new files
+  s  Show the differences between the currently installed and new files
+${DIFF_EXTRA_OPTIONS}
+  u  Undo merge and restore the temporary file from backup
   v  Show the merged file
 
 EOF
@@ -304,9 +327,11 @@ EOF
 			${DOES_EXIST} || continue
 			case "${ANSWER}" in
 			[sS])	: no change ;;
-			[sS]d)	DIFF_COMMAND="diff -u" ;;
+			[sS]u)	DIFF_COMMAND="diff -u" ;;
+			[sS]c)	DIFF_COMMAND="diff -c" ;;
+			[sS]s)	DIFF_COMMAND="sdiff -w${WIDTH}" ;;
 			[sS]w)	DIFF_COMMAND="wdiff -n -l" ;;
-			*)	DIFF_COMMAND="${ANSWER#?}" ;;
+			[sS]*)	DIFF_COMMAND="${ANSWER#?}" ;;
 			esac
 			${DIFF_COMMAND} "${1}" "${TEMPROOT}${1}" | ${PAGER}
 			;;
@@ -354,8 +379,16 @@ for i; do
 		shift
 		;;
 	-b)
-		echo "The '-b tempdir' option has been replaced by '-s tempdir'"
-		exit 1
+
+		# Backward compatibility for deprecated "-b tempdir" option.
+		# Remove this after NetBSD-4.0 is released.
+		cat <<EOF
+*** WARNING: The "-b tempdir" option is deprecated.
+             Please use "-s tempdir" in future.
+EOF
+		BINARYMODE=true
+		BINARYDIRMODE=true
+		BINARYDIR="${arg}"
 		;;
 	-h)
 		usage
@@ -383,16 +416,23 @@ for i; do
 			BINARYMODE=true
 			BINARYTGZMODE=true
 			TGZLIST="${TGZLIST}${TGZLIST:+:}${arg}"
-		elif [ -d "${arg}" ] && [ -f "${ARG}/etc/Makefile" ]; then
+		elif [ -d "${arg}" ] && [ -f "${arg}/etc/Makefile" ]; then
 			# arg refers to a source directory
 			SOURCEMODE=true
 			SRCDIR="${arg}"
-		elif [ -d "${arg}" ] && [ -f "${ARG}/../etc/Makefile" ]; then
+		elif [ -d "${arg}" ] && [ -f "${arg}/../etc/Makefile" ]; then
 			# backward compatibility: allow arg to refer to
 			# etc subdirectory within source dir.
+			# Remove this after NetBSD-4.0 is released.
+			cat <<EOF
+*** WARNING: The "-s srcdir" option should refer to the top level
+             source directory, not to the etc subdirectory.
+EOF
 			SOURCEMODE=true
 			SRCDIR="${arg}/.."
-		elif [ -d "${arg}" ] && [ -d "${ARG}/etc" ]; then
+		elif [ -d "${arg}" ] && [ -d "${ARG}/etc" ] \
+			&& ! [ -f "${arg}/etc/Makefile" ]
+		then
 			# arg refers to a directory where the
 			# sets have already been extracted
 			BINARYMODE=true
@@ -543,6 +583,7 @@ fi
 
 # Start the comparision
 echo "*** Checking for added/modified files"
+init_diff_extra_options
 for i in `find ${TEMPROOT} -type f  -a ! -name \*.etcupdate.\*`; do
 	D=`echo ${i} | sed "s#${TEMPROOT}##"`
 	diff_and_merge_file "${D}"
