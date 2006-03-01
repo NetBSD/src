@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.21.6.4 2006/03/01 03:55:18 riz Exp $
+# $NetBSD: etcupdate,v 1.21.6.5 2006/03/01 03:56:02 riz Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -479,7 +479,9 @@ fi
 if ${BINARYTGZMODE}; then
 	SRCDIR="${TEMPROOT}"
 fi
-if ${SOURCEMODE} && [ -x "${SRCDIR}" ]; then
+if ! ${SOURCEMODE} && ! ${BINARYMODE}; then
+	# default if no "-s" option was specified
+	SOURCEMODE=true
 	SRCDIR=/usr/src
 fi
 if [ -z "${SRCDIR}" -o -z "${TEMPROOT}" ]; then
