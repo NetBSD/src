@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.25 2006/01/14 23:49:59 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.26 2006/03/01 12:38:13 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.25 2006/01/14 23:49:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.26 2006/03/01 12:38:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,7 +561,7 @@ msdosfs_write(v)
 	vsize_t bytelen;
 	off_t oldoff;
 	struct uio *uio = ap->a_uio;
-	struct proc *p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
+	struct proc *p = curproc;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
@@ -599,8 +599,7 @@ msdosfs_write(v)
 	/*
 	 * If they've exceeded their filesize limit, tell them about it.
 	 */
-	if (p &&
-	    ((uio->uio_offset + uio->uio_resid) >
+	if (((uio->uio_offset + uio->uio_resid) >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
 		psignal(p, SIGXFSZ);
 		return (EFBIG);

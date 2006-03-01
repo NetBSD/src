@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.212 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: proc.h,v 1.213 2006/03/01 12:38:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -402,6 +402,7 @@ __curproc()
 
 extern struct proc	proc0;		/* Process slot for swapper */
 extern int		nprocs, maxproc; /* Current and max number of procs */
+#define	vmspace_kernel()	(proc0.p_vmspace)
 
 /* Process list lock; see kern_proc.c for locking protocol details */
 extern struct lock	proclist_lock;
@@ -486,6 +487,8 @@ void	proclist_unlock_read(void);
 int	proclist_lock_write(void);
 void	proclist_unlock_write(int);
 void	p_sugid(struct proc *);
+
+int	proc_vmspace_getref(struct proc *, struct vmspace **);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.31 2006/02/25 02:28:57 wiz Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.32 2006/03/01 12:38:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.31 2006/02/25 02:28:57 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.32 2006/03/01 12:38:12 yamt Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -477,9 +477,8 @@ darwin_iohidsystem_thread(args)
 		aiov.iov_len = sizeof(wsevt);
 		auio.uio_resid = sizeof(wsevt);
 		auio.uio_offset = 0;
-		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
-		auio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&auio);
 
 		if ((error = (wsmux->d_read)(dev, &auio, 0)) != 0) {
 #ifdef DEBUG_DARWIN

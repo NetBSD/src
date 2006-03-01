@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.140 2006/02/04 13:40:38 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.141 2006/03/01 12:38:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.140 2006/02/04 13:40:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141 2006/03/01 12:38:13 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1308,8 +1308,8 @@ vndsetcred(struct vnd_softc *vnd, struct ucred *cred)
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_resid = aiov.iov_len;
+	UIO_SETUP_SYSSPACE(&auio);
 	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READ(vnd->sc_vp, &auio, 0, vnd->sc_cred);
 	if (error == 0) {
@@ -1607,7 +1607,7 @@ compstrategy(struct buf *bp, off_t bn)
 
 	/* set up constants for data move */
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
+	UIO_SETUP_SYSSPACE(&auio);
 
 	/* read, and transfer the data */
 	addr = bp->b_data;
