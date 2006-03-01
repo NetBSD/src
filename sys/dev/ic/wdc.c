@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.231.2.1 2006/02/01 14:52:08 yamt Exp $ */
+/*	$NetBSD: wdc.c,v 1.231.2.2 2006/03/01 09:28:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.231.2.1 2006/02/01 14:52:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.231.2.2 2006/03/01 09:28:13 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -784,7 +784,7 @@ wdcintr(void *arg)
 	struct ata_xfer *xfer;
 	int ret;
 
-	if ((atac->atac_dev.dv_flags & DVF_ACTIVE) == 0) {
+	if (!device_is_active(&atac->atac_dev)) {
 		ATADEBUG_PRINT(("wdcintr: deactivated controller\n"),
 		    DEBUG_INTR);
 		return (0);
@@ -1502,7 +1502,7 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		ata_c->r_error = chp->ch_error;
 	}
 	if ((ata_c->flags & AT_READREG) != 0 &&
-	    (atac->atac_dev.dv_flags & DVF_ACTIVE) != 0 &&
+	    device_is_active(&atac->atac_dev) &&
 	    (ata_c->flags & (AT_ERROR | AT_DF)) == 0) {
 		ata_c->r_head = bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_sdh], 0);

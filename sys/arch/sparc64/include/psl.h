@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.30.2.1 2006/02/18 15:38:48 yamt Exp $ */
+/*	$NetBSD: psl.h,v 1.30.2.2 2006/03/01 09:28:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -309,7 +309,7 @@ intr_restore(int pstate)
  */
 
 #ifdef SPLDEBUG
-void prom_printf __P((const char *fmt, ...));
+void prom_printf(const char *fmt, ...);
 extern int printspl;
 #define SPLPRINT(x) \
 { \

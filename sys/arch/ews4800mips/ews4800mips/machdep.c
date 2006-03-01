@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.1 2006/03/01 09:27:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.1 2006/03/01 09:27:53 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -211,7 +211,7 @@ option(int argc, char *argv[], struct bootinfo *bi)
 	if (!boot_device_set)
 		strcpy(__boot_kernel_name, argv[1]);
 
-	/* Memory address infomation from IPL */
+	/* Memory address information from IPL */
 	sbd_memcluster_init(bi->bi_mainfo);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.15 2005/12/24 20:06:52 perry Exp $ */
+/*	$NetBSD: sscom.c,v 1.15.2.1 2006/03/01 09:27:45 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.15 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.15.2.1 2006/03/01 09:27:45 yamt Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -241,9 +241,9 @@ void	sscom_kgdb_putc (void *, int);
 
 #if 0
 #define	SSCOM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			 ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
+				 device_is_active(&(sc)->sc_dev))
 #else
-#define	SSCOM_ISALIVE(sc) ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE)
+#define	SSCOM_ISALIVE(sc)	device_is_active(&(sc)->sc_dev)
 #endif
 
 #define	BR	BUS_SPACE_BARRIER_READ
@@ -616,7 +616,7 @@ sscomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rbuf == NULL)
 		return ENXIO;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return ENXIO;
 
 #ifdef KGDB

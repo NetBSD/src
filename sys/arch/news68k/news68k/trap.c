@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.40.2.1 2006/03/01 09:27:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40 2005/12/11 12:18:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.2.1 2006/03/01 09:27:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -419,7 +419,7 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		break;
 
 #ifdef M68040
-	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
+	case T_FPEMULI|T_USER:	/* unimplemented FP instruction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 		/* XXX need to FSAVE */
 		printf("pid %d(%s): unimplemented FP %s at %x (EA %x)\n",

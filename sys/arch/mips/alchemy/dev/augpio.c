@@ -1,4 +1,4 @@
-/* $NetBSD: augpio.c,v 1.2.2.2 2006/02/18 15:38:41 yamt Exp $ */
+/* $NetBSD: augpio.c,v 1.2.2.3 2006/03/01 09:27:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.2.2.2 2006/02/18 15:38:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.2.2.3 2006/03/01 09:27:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,19 +50,29 @@ __KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.2.2.2 2006/02/18 15:38:41 yamt Exp $");
 #include <mips/alchemy/include/aubusvar.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/dev/augpioreg.h>
-#include <mips/alchemy/dev/augpiovar.h>
 
 struct augpio_softc {
 	struct device			sc_dev;
 	struct gpio_chipset_tag		sc_gc;
 	gpio_pin_t			sc_pins[AUGPIO_NPINS];
 	int				sc_npins;
-	int				sc_isgpio2;
+	bus_space_tag_t			sc_bst;
+	bus_space_handle_t		sc_bsh;
+	int				sc_caps;
+	const char 			*sc_name;
+	int				(*sc_getctl)(void *, int);
 };
 
-static int augpio_pin_read(void *, int);
-static void augpio_pin_write(void *, int, int);
-static void augpio_pin_ctl(void *, int, int);
+static int augpio_read(void *, int);
+static void augpio_write(void *, int, int);
+static void augpio_ctl(void *, int, int);
+static int augpio_getctl(void *, int);
+
+static int augpio2_read(void *, int);
+static void augpio2_write(void *, int, int);
+static void augpio2_ctl(void *, int, int);
+static int augpio2_getctl(void *, int);
+
 static int augpio_match(struct device *, struct cfdata *, void *);
 static void augpio_attach(struct device *, struct device *, void *);
 
@@ -99,25 +109,24 @@ augpio_attach(struct device *parent, struct device *self, void *aux)
 	struct aubus_attach_args *aa = aux;
 	struct gpiobus_attach_args gba;
 
-	sc->sc_npins = 0;
+	sc->sc_bst = aa->aa_st;
+	sc->sc_npins = aa->aa_addrs[1];
+	sc->sc_gc.gp_cookie = sc;
 
-	printf(": Alchemy GPIO");
-	if (aa->aa_addrs[0] == SYS_BASE) {
+	if (aa->aa_addrs[0] == GPIO_BASE) {
 
-		for (pin = 0; pin < aa->aa_addrs[1]; pin++) {
-
-			sc->sc_pins[sc->sc_npins].pin_num = pin;
-			sc->sc_pins[sc->sc_npins].pin_caps =
-			    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT |
-			    GPIO_PIN_TRISTATE;
-			sc->sc_pins[sc->sc_npins].pin_flags =
-			    au_gpio_ctl(pin, 0);
-			sc->sc_pins[sc->sc_npins].pin_state =
-			    au_gpio_read(pin);
-			sc->sc_npins++;
+		if (bus_space_map(sc->sc_bst, aa->aa_addrs[0],
+			AUGPIO_SIZE, 0, &sc->sc_bsh) != 0) {
+			printf(": cannot map registers!\n");
+			return;
 		}
-		sc->sc_isgpio2 = 0;
-		printf(", primary block");
+		sc->sc_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT |
+		    GPIO_PIN_TRISTATE;
+		sc->sc_gc.gp_pin_read = augpio_read;
+		sc->sc_gc.gp_pin_write = augpio_write;
+		sc->sc_gc.gp_pin_ctl = augpio_ctl;
+		sc->sc_getctl = augpio_getctl;
+		sc->sc_name = "primary block";
 
 	} else if (aa->aa_addrs[0] == GPIO2_BASE) {
 		/*
@@ -126,167 +135,155 @@ augpio_attach(struct device *parent, struct device *self, void *aux)
 		 * resetting the GPIO2 block can have nasty effects (e.g.
 		 * reset PCI bus...)
 		 */
-		for (pin = 0; pin < aa->aa_addrs[1]; pin++) {
-			sc->sc_pins[sc->sc_npins].pin_num = pin;
-			sc->sc_pins[sc->sc_npins].pin_caps =
-			    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
-			sc->sc_pins[sc->sc_npins].pin_flags =
-			    au_gpio2_ctl(pin, 0);
-			sc->sc_pins[sc->sc_npins].pin_state =
-			    au_gpio2_read(pin);
-			sc->sc_npins++;
+		if (bus_space_map(sc->sc_bst, aa->aa_addrs[0],
+			AUGPIO2_SIZE, 0, &sc->sc_bsh) != 0) {
+			printf(": cannot map registers!\n");
+			return;
 		}
-
-		printf(", secondary block");
-		sc->sc_isgpio2 = 1;
+		sc->sc_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
+		sc->sc_gc.gp_pin_read = augpio2_read;
+		sc->sc_gc.gp_pin_write = augpio2_write;
+		sc->sc_gc.gp_pin_ctl = augpio2_ctl;
+		sc->sc_getctl = augpio2_getctl;
+		sc->sc_name = "secondary block";
 
 	} else {
-		printf(", unidentified block");
+		printf(": unidentified block\n");
+		return;
 	}
-	printf("\n");
 
-	sc->sc_gc.gp_cookie = sc;
-	sc->sc_gc.gp_pin_read = augpio_pin_read;
-	sc->sc_gc.gp_pin_write = augpio_pin_write;
-	sc->sc_gc.gp_pin_ctl = augpio_pin_ctl;
+	for (pin = 0; pin < sc->sc_npins; pin++) {
+		gpio_pin_t	*pp = &sc->sc_pins[pin];
+
+		pp->pin_num = pin;
+		pp->pin_caps = sc->sc_caps;
+		pp->pin_flags = sc->sc_getctl(sc, pin);
+		pp->pin_state = sc->sc_gc.gp_pin_read(sc, pin);
+	}
 
 	gba.gba_gc = &sc->sc_gc;
 	gba.gba_pins = sc->sc_pins;
 	gba.gba_npins = sc->sc_npins;
 
+	printf(": Alchemy GPIO, %s\n", sc->sc_name);
 	config_found_ia(&sc->sc_dev, "gpiobus", &gba, gpiobus_print);
 }
 
 int
-augpio_pin_read(void *arg, int pin)
+augpio_read(void *arg, int pin)
 {
-	struct augpio_softc *sc = arg;
+	struct augpio_softc	*sc = arg;
 
-	return (sc->sc_isgpio2 ? au_gpio2_read(pin) : au_gpio_read(pin));
-}
+	pin = 1 << pin;
 
-void
-augpio_pin_write(void *arg, int pin, int value)
-{
-	struct augpio_softc *sc = arg;
-	
-	if (sc->sc_isgpio2)
-		au_gpio2_write(pin, value);
+	if (bus_space_read_4(sc->sc_bst, sc->sc_bsh, AUGPIO_PINSTATERD) & pin)
+		return GPIO_PIN_HIGH;
 	else
-		au_gpio_write(pin, value);
+		return GPIO_PIN_LOW;
 }
 
 void
-augpio_pin_ctl(void *arg, int pin, int flags)
+augpio_write(void *arg, int pin, int value)
 {
-	struct augpio_softc *sc = arg;
-
-	if (sc->sc_isgpio2)
-		(void) au_gpio2_ctl(pin, flags);
-	else
-		(void) au_gpio_ctl(pin, flags);
-}
-
-int
-au_gpio_read(int pin)
-{
+	struct augpio_softc	*sc = arg;
 
 	pin = 1 << pin;
-	return ((GETREG(SYS_BASE + AUGPIO_SYS_PINSTATERD) & pin) ?
-	    GPIO_PIN_HIGH : GPIO_PIN_LOW);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+	    value ? AUGPIO_OUTPUTSET : AUGPIO_OUTPUTCLR, pin);
 }
 
 void
-au_gpio_write(int pin, int value)
+augpio_ctl(void *arg, int pin, int flags)
 {
+	struct augpio_softc	*sc = arg;
+	bus_addr_t		reg;
 
 	pin = 1 << pin;
-	if (value) {
-		PUTREG(SYS_BASE + AUGPIO_SYS_OUTPUTSET, pin);
-	} else {
-		PUTREG(SYS_BASE + AUGPIO_SYS_OUTPUTCLR, pin);
-	}
-}
-
-int
-au_gpio_ctl(int pin, int flags)
-{
-	uint32_t		tri, out;
-	int			old;
-
-	old = 0;
-
-	pin = 1 << pin;
-	tri = GETREG(SYS_BASE + AUGPIO_SYS_TRIOUTRD);
-	out = GETREG(SYS_BASE + AUGPIO_SYS_OUTPUTRD);
-	old = 0;
-
-	if (tri & pin) {
-		old |= GPIO_PIN_INPUT;
-	} else {
-		old |= GPIO_PIN_OUTPUT;
-	}
 
 	if (flags & (GPIO_PIN_TRISTATE|GPIO_PIN_INPUT)) {
-		PUTREG(SYS_BASE + AUGPIO_SYS_TRIOUTCLR, pin);
+		reg = AUGPIO_TRIOUTCLR;
 	} else if (flags & GPIO_PIN_OUTPUT) {
-		if (pin & out) {
-			PUTREG(SYS_BASE + AUGPIO_SYS_OUTPUTSET, pin);
-		} else {
-			PUTREG(SYS_BASE + AUGPIO_SYS_OUTPUTCLR, pin);
-		}
+		uint32_t		out;
+		out = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AUGPIO_OUTPUTRD);
+		reg = pin & out ? AUGPIO_OUTPUTSET : AUGPIO_OUTPUTCLR;
+	} else {
+		return;
 	}
-
-	return old;
+	
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, reg, pin);
 }
 
 int
-au_gpio2_read(int pin)
+augpio_getctl(void *arg, int pin)
 {
+	struct augpio_softc	*sc = arg;
+
+	if (bus_space_read_4(sc->sc_bst, sc->sc_bsh, AUGPIO_TRIOUTRD) & pin)
+		return GPIO_PIN_OUTPUT;
+	else
+		return GPIO_PIN_INPUT;
+}
+
+int
+augpio2_read(void *arg, int pin)
+{
+	struct augpio_softc	*sc = arg;
 
 	pin = 1 << pin;
-
-	return ((GETREG(GPIO2_BASE + AUGPIO_GPIO2_PINSTATE) & pin) ?
-	    GPIO_PIN_HIGH : GPIO_PIN_LOW);
+	
+	if (bus_space_read_4(sc->sc_bst, sc->sc_bsh, AUGPIO2_PINSTATE) & pin)
+		return GPIO_PIN_HIGH;
+	else
+		return GPIO_PIN_LOW;
 }
 
 void
-au_gpio2_write(int pin, int value)
+augpio2_write(void *arg, int pin, int value)
 {
+	struct augpio_softc	*sc = arg;
 
 	pin = 1 << pin;
 
 	if (value) {
-		PUTREG(GPIO2_BASE + AUGPIO_GPIO2_OUTPUT, (pin | (pin << 16)));
+		pin = pin | (pin << 16);
 	} else {
-		PUTREG(GPIO2_BASE + AUGPIO_GPIO2_OUTPUT, (pin << 16));
+		pin = (pin << 16);
 	}
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AUGPIO2_OUTPUT, pin);
 }
 
-int
-au_gpio2_ctl(int pin, int flags)
+void
+augpio2_ctl(void *arg, int pin, int flags)
 {
+	struct augpio_softc	*sc = arg;
 	uint32_t		dir;
-	int			old;
 
 	pin = 1 << pin;
 
-	dir = GETREG(GPIO2_BASE + AUGPIO_GPIO2_DIR);
-	old = dir;
-
-	if (dir & pin) {
-		old |= GPIO_PIN_OUTPUT;
-	} else {
-		old |= GPIO_PIN_INPUT;
-	}
+	dir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AUGPIO2_DIR);
 
 	if (flags & GPIO_PIN_INPUT) {
 		dir |= pin;
-		PUTREG(GPIO2_BASE + AUGPIO_GPIO2_DIR, pin);
 	} else if (flags & GPIO_PIN_OUTPUT) {
 		dir &= ~pin;
-		PUTREG(GPIO2_BASE + AUGPIO_GPIO2_DIR, pin);
 	}
-
-	return old;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AUGPIO2_DIR, dir);
 }
+
+int
+augpio2_getctl(void *arg, int pin)
+{
+	struct augpio_softc	*sc = arg;
+	uint32_t		dir;
+
+	pin = 1 << pin;
+
+	dir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AUGPIO2_DIR);
+	if (dir & (uint32_t)pin) {
+		return GPIO_PIN_OUTPUT;
+	} else {
+		return GPIO_PIN_INPUT;
+	}
+}
+

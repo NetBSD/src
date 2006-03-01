@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.110 2005/12/26 19:23:59 perry Exp $	*/
+/*	$NetBSD: npx.c,v 1.110.2.1 2006/03/01 09:27:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.110 2005/12/26 19:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.110.2.1 2006/03/01 09:27:55 yamt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -298,7 +298,7 @@ void npxinit(struct cpu_info *ci)
 	fninit();
 	if (npx586bug1(4195835, 3145727) != 0) {
 		i386_fpu_fdivbug = 1;
-		printf("%s: WARNING: Pentium FDIV bug detected!\n",
+		aprint_normal("%s: WARNING: Pentium FDIV bug detected!\n",
 		    ci->ci_dev->dv_xname);
 	}
 	lcr0(rcr0() | (CR0_TS));

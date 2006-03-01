@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.1.54.1 2006/02/01 14:51:27 yamt Exp $	*/
+/*	$NetBSD: alloc.c,v 1.1.54.2 2006/03/01 09:27:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -43,4 +43,10 @@ void *
 alloc(size_t size)
 {
 	return malloc(size);
+}
+
+void
+dealloc(void *ptr, size_t size)
+{
+	free(ptr);
 }

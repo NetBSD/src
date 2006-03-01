@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.82.2.1 2006/02/01 14:51:48 yamt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.82.2.2 2006/03/01 09:28:11 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.82.2.1 2006/02/01 14:51:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.82.2.2 2006/03/01 09:28:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -113,6 +113,7 @@ static void	db_map_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_namecache_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_object_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_page_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_show_all_pages(db_expr_t, int, db_expr_t, const char *);
 static void	db_pool_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_reboot_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_sifting_cmd(db_expr_t, int, db_expr_t, const char *);
@@ -129,6 +130,7 @@ static void	db_mbuf_print_cmd(db_expr_t, int, db_expr_t, const char *);
 
 static const struct db_command db_show_all_cmds[] = {
 	{ "callout",	db_show_callout,	0, NULL },
+	{ "pages",	db_show_all_pages,	0, NULL },
 	{ "procs",	db_show_all_procs,	0, NULL },
 	{ "pools",	db_show_all_pools,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
@@ -574,6 +576,14 @@ db_page_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *mo
 		full = TRUE;
 
 	uvm_page_printit((struct vm_page *)(intptr_t) addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+static void
+db_show_all_pages(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+{
+
+	uvm_page_printall(db_printf);
 }
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.60.2.1 2006/02/18 15:38:36 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.60.2.2 2006/03/01 09:27:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.60.2.1 2006/02/18 15:38:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.60.2.2 2006/03/01 09:27:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,8 @@ mainbus_attach(parent, self, aux)
 #endif
 	int mpacpi_active = 0;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 #ifdef MPBIOS
 	mpbios_present = mpbios_probe(self);

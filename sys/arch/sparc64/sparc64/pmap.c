@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.166.2.3 2006/02/18 15:38:51 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.166.2.4 2006/03/01 09:28:06 yamt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166.2.3 2006/02/18 15:38:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166.2.4 2006/03/01 09:28:06 yamt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -581,8 +581,7 @@ pmap_read_memlist(const char *device, const char *property, void **ml,
  */
 
 void
-pmap_bootstrap(kernelstart, kernelend)
-	u_long kernelstart, kernelend;
+pmap_bootstrap(u_long kernelstart, u_long kernelend)
 {
 	extern int etext, data_start[];	/* start of data segment */
 	extern int msgbufmapped;
@@ -2152,9 +2151,7 @@ pmap_dumpsize()
  *	phys_ram_seg_t[phys_installed_size]  physical memory segments
  */
 int
-pmap_dumpmmu(dump, blkno)
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
-	daddr_t blkno;
+pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
 {
 	kcore_seg_t	*kseg;
 	cpu_kcore_hdr_t	*kcpu;
@@ -2233,8 +2230,7 @@ pmap_dumpmmu(dump, blkno)
  * Determine (non)existance of physical page
  */
 int
-pmap_pa_exists(pa)
-	paddr_t pa;
+pmap_pa_exists(paddr_t pa)
 {
 	int i;
 
@@ -2791,8 +2787,7 @@ pmap_page_protect(pg, prot)
  * count pages in pmap -- this can be slow.
  */
 int
-pmap_count_res(pm)
-	struct pmap *pm;
+pmap_count_res(struct pmap *pm)
 {
 	int64_t data;
 	paddr_t *pdir, *ptbl;
@@ -2835,8 +2830,7 @@ pmap_count_res(pm)
  * count wired pages in pmap -- this can be slow.
  */
 int
-pmap_count_wired(pm)
-	struct pmap *pm;
+pmap_count_wired(struct pmap *pm)
 {
 	int64_t data;
 	paddr_t *pdir, *ptbl;
@@ -2888,8 +2882,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
  * Allocate a hardware context to the given pmap.
  */
 int
-ctx_alloc(pm)
-	struct pmap *pm;
+ctx_alloc(struct pmap *pm)
 {
 	int i, ctx;
 
@@ -2932,8 +2925,7 @@ ctx_alloc(pm)
  * Give away a context.
  */
 void
-ctx_free(pm)
-	struct pmap *pm;
+ctx_free(struct pmap *pm)
 {
 	int oldctx;
 

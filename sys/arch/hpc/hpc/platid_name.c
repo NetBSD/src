@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.18 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.18.2.1 2006/03/01 09:27:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -100,6 +100,10 @@ struct platid_name platid_name_table[] = {
 	 TEXT("ARM STRONGARM SA1100") },
 	{ &platid_mask_CPU_ARM_STRONGARM_SA1110,
 	 TEXT("ARM STRONGARM SA1110") },
+	{ &platid_mask_CPU_ARM_XSCALE,
+	 TEXT("ARM XSCALE") },
+	{ &platid_mask_CPU_ARM_XSCALE_PXA250,
+	 TEXT("ARM XSCALE PXA250") },
 #endif /* hpcarm */
 #ifdef hpcmips
 	{ &platid_mask_MACH_NEC,
@@ -340,6 +344,10 @@ struct platid_name platid_name_table[] = {
 	 TEXT("Compaq iPAQ H3600") },
 	{ &platid_mask_MACH_COMPAQ_IPAQ_H3660,
 	 TEXT("Compaq iPAQ H3660") },
+	{ &platid_mask_MACH_COMPAQ_IPAQ_H39XX,
+	 TEXT("Compaq iPAQ H39XX") },
+	{ &platid_mask_MACH_COMPAQ_IPAQ_H3900,
+	 TEXT("Compaq iPAQ H3900") },
 #endif /* hpcarm */
 #ifdef hpcsh
 	{ &platid_mask_MACH_COMPAQ_AERO,

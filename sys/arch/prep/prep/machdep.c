@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55.2.1 2006/03/01 09:28:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2005/12/24 23:24:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55.2.1 2006/03/01 09:28:02 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -399,6 +399,10 @@ struct powerpc_bus_space prep_isa_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0x80000000, 0x00000000, 0x00010000,
 };
+struct powerpc_bus_space prep_eisa_io_space_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	0x80000000, 0x00000000, 0x0000f000,
+};
 struct powerpc_bus_space prep_mem_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0xC0000000, 0x00000000, 0x3f000000,
@@ -406,6 +410,10 @@ struct powerpc_bus_space prep_mem_space_tag = {
 struct powerpc_bus_space prep_isa_mem_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0xC0000000, 0x00000000, 0x01000000,
+};
+struct powerpc_bus_space prep_eisa_mem_space_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0xC0000000, 0x00000000, 0x3f000000,
 };
 
 static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]

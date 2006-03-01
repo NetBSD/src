@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.161.2.3 2006/02/18 15:38:36 yamt Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.161.2.4 2006/03/01 09:27:55 yamt Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.161.2.3 $"
+#ident 		"GENERIC-$Revision: 1.161.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -716,7 +716,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
 # Serial adapters

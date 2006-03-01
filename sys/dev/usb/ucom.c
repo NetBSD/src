@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.60 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: ucom.c,v 1.60.2.1 2006/03/01 09:28:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.60 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.60.2.1 2006/03/01 09:28:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sc->sc_dying)
 		return (EIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 	tp = sc->sc_tty;

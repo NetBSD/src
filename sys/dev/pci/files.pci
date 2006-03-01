@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.241 2005/12/06 03:01:45 christos Exp $
+#	$NetBSD: files.pci,v 1.241.2.1 2006/03/01 09:28:21 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -643,9 +643,11 @@ file	dev/pci/viaenv.c		viaenv			needs-flag
 
 # AMD 768MPX power management controller
 defflag	opt_amdpm.h			AMDPM_RND_COUNTERS
-device	amdpm {}
+define	amdpm {}
+device	amdpm: i2cbus, amdpm
 attach	amdpm at pci
 file	dev/pci/amdpm.c			amdpm
+file	dev/pci/amdpm_smbus.c		amdpm
 
 # Hi/fn 7751
 device	hifn: opencrypto

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.16 2005/12/10 23:26:35 elad Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.16.2.1 2006/03/01 09:28:47 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -423,6 +423,17 @@ struct ieee80211req {
 #define	SIOCG80211STATS		_IOWR('i', 236, struct ifreq)
 #endif /* __FreeBSD__ */
 
+#ifdef __NetBSD__
+#define	SIOCS80211		 _IOW('i', 244, struct ieee80211req)
+#define	SIOCG80211		_IOWR('i', 245, struct ieee80211req)
+#define	SIOCG80211STATS		_IOWR('i', 246, struct ifreq)
+#define	SIOCG80211ZSTATS	_IOWR('i', 247, struct ifreq)
+#ifdef COMPAT_20
+#define	OSIOCG80211STATS	_IOWR('i', 242, struct ifreq)
+#define	OSIOCG80211ZSTATS	_IOWR('i', 243, struct ifreq)
+#endif /* COMPAT_20 */
+#endif /* __NetBSD__ */
+
 #ifdef __FreeBSD__
 #define IEEE80211_IOC_SSID		1
 #endif /* __FreeBSD__ */
@@ -594,14 +605,6 @@ struct ieee80211_bssid {
 #define	SIOCS80211BSSID		 _IOW('i', 240, struct ieee80211_bssid)
 #define	SIOCG80211BSSID		_IOWR('i', 241, struct ieee80211_bssid)
 
-#ifdef COMPAT_20
-#define	OSIOCG80211STATS	_IOWR('i', 242, struct ifreq)
-#define	OSIOCG80211ZSTATS	_IOWR('i', 243, struct ifreq)
-#endif /* COMPAT_20 */
-#define	SIOCS80211		 _IOW('i', 244, struct ieee80211req)
-#define	SIOCG80211		_IOWR('i', 245, struct ieee80211req)
-#define	SIOCG80211STATS		_IOWR('i', 246, struct ifreq)
-#define	SIOCG80211ZSTATS	_IOWR('i', 247, struct ifreq)
 #endif
 
 #endif /* !_NET80211_IEEE80211_IOCTL_H_ */

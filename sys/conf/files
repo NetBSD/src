@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.750.2.3 2006/02/18 15:39:02 yamt Exp $
+#	$NetBSD: files,v 1.750.2.4 2006/03/01 09:28:10 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -276,6 +276,9 @@ define	rasops16
 define	rasops24
 define	rasops32
 
+# splash screen support
+include "dev/splash/files.splash"
+
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, token ring, atm and eco(net).
 #
@@ -319,11 +322,6 @@ include "dev/mii/files.mii"
 # RAIDframe
 #
 include "dev/raidframe/files.raidframe"
-
-#
-# Vinum
-#
-include "dev/vinum/files.vinum"
 
 #
 # Hardware-assisted data mover API
@@ -914,6 +912,7 @@ define	wsdisplaydev		{[kbdmux = 1]}
 define	wsemuldisplaydev	{[console = -1], [kbdmux = 1]}
 define	wskbddev		{[console = -1], [mux = 1]}
 define	wsmousedev		{[mux = 0]}
+define	vcons
 # attribute to pull in raster support
 #
 define	wsrasteremulops
@@ -936,7 +935,7 @@ file	dev/ic/vga_subr.c	vga | vga_rasterconsole
 file	dev/ic/vga_common.c	vga | vga_rasterconsole
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
-device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8
+device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8, vcons
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
 

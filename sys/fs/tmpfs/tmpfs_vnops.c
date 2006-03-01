@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.19.2.2 2006/02/18 15:39:18 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.19.2.3 2006/03/01 09:28:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.19.2.2 2006/02/18 15:39:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.19.2.3 2006/03/01 09:28:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -224,11 +224,15 @@ tmpfs_lookup(void *v)
 			if ((cnp->cn_flags & ISLASTCN) &&
 			    (cnp->cn_nameiop == DELETE ||
 			    cnp->cn_nameiop == RENAME)) {
+				if ((dnode->tn_mode & S_ISTXT) != 0 &&
+				    cnp->cn_cred->cr_uid != 0 &&
+				    cnp->cn_cred->cr_uid != dnode->tn_uid &&
+				    cnp->cn_cred->cr_uid != tnode->tn_uid)
+					return EPERM;
 				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred,
 				    cnp->cn_lwp);
 				if (error != 0)
 					goto out;
-				/* TODO: Check sticky bit. */
 				tnode->tn_lookup_dirent = de;
 			}
 
