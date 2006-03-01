@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.237 2006/02/12 01:32:06 chs Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.238 2006/03/01 12:38:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.237 2006/02/12 01:32:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.238 2006/03/01 12:38:21 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2251,8 +2251,8 @@ sys_readlink(struct lwp *l, void *v, register_t *retval)
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
-		auio.uio_segflg = UIO_USERSPACE;
-		auio.uio_lwp = l;
+		KASSERT(l == curlwp);
+		auio.uio_vmspace = l->l_proc->p_vmspace;
 		auio.uio_resid = SCARG(uap, count);
 		error = VOP_READLINK(vp, &auio, p->p_ucred);
 	}
