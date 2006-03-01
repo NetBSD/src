@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.32 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.33 2006/03/01 15:18:09 is Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshconnect.c,v 1.171 2005/12/06 22:38:27 reyk Exp $");
-__RCSID("$NetBSD: sshconnect.c,v 1.32 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.33 2006/03/01 15:18:09 is Exp $");
 
 #include <openssl/bn.h>
 
@@ -167,9 +167,16 @@ ssh_create_socket(int privileged, struct addrinfo *ai)
 		return sock;
 	}
 	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-	if (sock < 0)
-		error("socket: %.100s", strerror(errno));
-
+	if (sock < 0) {
+		switch (errno) {
+		case EPROTONOSUPPORT:
+			debug("socket: %.100s", strerror(errno));
+			break;
+		default:
+			error("socket: %.100s", strerror(errno));
+		}
+	}
+  
 	/* Bind the socket to an alternative local IP address */
 	if (options.bind_address == NULL)
 		return sock;
@@ -329,7 +336,10 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 			/* Create a socket for connecting. */
 			sock = ssh_create_socket(needpriv, ai);
 			if (sock < 0)
-				/* Any error is already output */
+				/*
+				 * Any serious error is already output,
+				 * at least in the debug case.
+				 */
 				continue;
 
 			if (timeout_connect(sock, ai->ai_addr, ai->ai_addrlen,
