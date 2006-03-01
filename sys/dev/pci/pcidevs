@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.768 2006/02/28 20:56:52 gdamore Exp $
+$NetBSD: pcidevs,v 1.769 2006/03/01 22:22:36 dogcow Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -625,7 +625,7 @@ vendor ARC		0xedd8	ARC Logic
 vendor INVALID		0xffff	INVALID VENDOR ID
 
 /*
- * List of known products.  Grouped by vendor.
+ * List of known products. Grouped by vendor.
  */
 
 /* 3COM Products */
@@ -962,30 +962,30 @@ product ASUSTEK HFCPCI		0x0675	ISDN
 /* ATI products */
 product ATI RADEON_M24_1P	0x3150	Radeon Mobility X600
 product ATI RADEON_A3		0x4136	Radeon Mobility A3
-product	ATI RADEON_9600_LE	0x4151	Radeon 9600 LE
-product	ATI RADEON_9600_XT	0x4152	Radeon 9600 XT
+product ATI RADEON_9600_LE	0x4151	Radeon 9600 LE
+product ATI RADEON_9600_XT	0x4152	Radeon 9600 XT
 product ATI MACH32		0x4158	Mach32
-product	ATI RADEON_9600_LE_S	0x4171	Radeon 9600 LE Secondary
-product	ATI RADEON_9600_XT_S	0x4172	Radeon 9600 XT Secondary
+product ATI RADEON_9600_LE_S	0x4171	Radeon 9600 LE Secondary
+product ATI RADEON_9600_XT_S	0x4172	Radeon 9600 XT Secondary
 product ATI RADEON_U1		0x4336	Radeon Mobility U1
 product ATI RADEON_M6_U2	0x4337	Radeon Mobility M6
-product	ATI IXP_AUDIO_200	0x4341	IXP AC'97 Audio Controller
-product	ATI SB200_PPB		0x4342	SB200 PCI-PCI Bridge
-product	ATI SB200_EHCI		0x4345	SB200 USB2 Host Controller
-product	ATI SB200_OHCI_1	0x4347	SB200 USB Host Controller
-product	ATI SB200_OHCI_2	0x4348	SB200 USB Host Controller
-product	ATI SB200_ISA		0x434c	SB200 PCI-ISA Bridge
-product	ATI SB200_SMB		0x4353	SB200 SMBus Controller
-product	ATI IXP_AUDIO_300	0x4361	IXP AC'97 Audio Controller
-product	ATI IXP_AUDIO_400	0x4370	IXP AC'97 Audio Controller
-product	ATI IXP_IDE_200		0x4349	IXP IDE Controller
-product	ATI IXP_IDE_300		0x4369	IXP IDE Controller
+product ATI IXP_AUDIO_200	0x4341	IXP AC'97 Audio Controller
+product ATI SB200_PPB		0x4342	SB200 PCI-PCI Bridge
+product ATI SB200_EHCI		0x4345	SB200 USB2 Host Controller
+product ATI SB200_OHCI_1	0x4347	SB200 USB Host Controller
+product ATI SB200_OHCI_2	0x4348	SB200 USB Host Controller
+product ATI SB200_ISA		0x434c	SB200 PCI-ISA Bridge
+product ATI SB200_SMB		0x4353	SB200 SMBus Controller
+product ATI IXP_AUDIO_300	0x4361	IXP AC'97 Audio Controller
+product ATI IXP_AUDIO_400	0x4370	IXP AC'97 Audio Controller
+product ATI IXP_IDE_200		0x4349	IXP IDE Controller
+product ATI IXP_IDE_300		0x4369	IXP IDE Controller
 product ATI SB400_PPB		0x4371	SB400 PCI-PCI Bridge
 product ATI SB400_SMB		0x4372	SB400 SMB Controller
 product ATI SB400_EHCI		0x4373	SB400 USB2 Host Controller
 product ATI SB400_OHCI_1	0x4374	SB400 USB Host Controller
 product ATI SB400_OHCI_2	0x4375	SB400 USB Host Controller
-product	ATI IXP_IDE_400		0x4376	SB400 IXP IDE Controller
+product ATI IXP_IDE_400		0x4376	SB400 IXP IDE Controller
 product ATI SB400_ISA		0x4377	SB400 PCI-ISA Bridge
 product ATI SB400_SATA_1	0x4379	SB400 SATA Controller
 product ATI SB400_SATA_2	0x437a	SB400 SATA Controller
@@ -1323,7 +1323,7 @@ product COMPAQ CSA5300		0x4070	Smart Array 5300
 product COMPAQ CSA5i		0x4080	Smart Array 5i
 product COMPAQ CSA532		0x4082	Smart Array 532
 product COMPAQ USB		0x7020	USB Controller
-product COMPAQ ASMC		0xa0f0  Advanced Systems Management Controller
+product COMPAQ ASMC		0xa0f0	Advanced Systems Management Controller
 /* MediaGX Cx55x0 built-in OHCI seems to have this ID */
 product COMPAQ USB_MEDIAGX	0xa0f8	USB Controller
 product COMPAQ SMART2P		0xae10	SMART2P RAID
@@ -1738,16 +1738,16 @@ product INTEL 82541ER		0x1078	i82541ER Gigabit Ethernet
 product INTEL 82546GB_COPPER	0x1079	i82546GB 1000baseT Ethernet
 product INTEL 82546GB_FIBER	0x107a	i82546GB 1000baseX Ethernet
 product INTEL 82546GB_SERDES	0x107b	i82546GB Gigabit Ethernet (SERDES)
-product INTEL 82541PI		0x107c  i82541PI Gigabit Ethernet
-product INTEL 82571EB_COPPER	0x105e  i82571EB 1000baseT Ethernet
-product INTEL 82571EB_FIBER	0x105f  i82571EB 1000baseX Ethernet
-product INTEL 82571EB_SERDES	0x1060  i82571EB Gigabit Ethernet (SERDES)
-product INTEL 82572EI_COPPER	0x107d  i82572EI 1000baseT Ethernet
-product INTEL 82572EI_FIBER	0x107e  i82572EI 1000baseX Ethernet
-product INTEL 82572EI_SERDES	0x107f  i82572EI Gigabit Ethernet (SERDES)
-product INTEL 82573E		0x108b  i82573E Gigabit Ethernet
-product INTEL 82573E_IAMT	0x108c  i82573E Gigabit Ethernet
-product INTEL 82573L		0x109a  i82573L Gigabit Ethernet
+product INTEL 82541PI		0x107c	i82541PI Gigabit Ethernet
+product INTEL 82571EB_COPPER	0x105e	i82571EB 1000baseT Ethernet
+product INTEL 82571EB_FIBER	0x105f	i82571EB 1000baseX Ethernet
+product INTEL 82571EB_SERDES	0x1060	i82571EB Gigabit Ethernet (SERDES)
+product INTEL 82572EI_COPPER	0x107d	i82572EI 1000baseT Ethernet
+product INTEL 82572EI_FIBER	0x107e	i82572EI 1000baseX Ethernet
+product INTEL 82572EI_SERDES	0x107f	i82572EI Gigabit Ethernet (SERDES)
+product INTEL 82573E		0x108b	i82573E Gigabit Ethernet
+product INTEL 82573E_IAMT	0x108c	i82573E Gigabit Ethernet
+product INTEL 82573L		0x109a	i82573L Gigabit Ethernet
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
@@ -2066,9 +2066,9 @@ product LINEARSYS DVB_RX	0x7630	DVB Receiver
 /* Linksys products */
 product LINKSYS EG1032		0x1032	EG1032 v2 Instant Gigabit Network Adapter
 product LINKSYS EG1064		0x1064	EG1064 v2 Instant Gigabit Network Adapter
-product	LINKSYS	PCMPC200	0xab08	PCMPC200
-product	LINKSYS	PCM200		0xab09	PCM200
-product	LINKSYS2 IPN2220	0x2220	IPN 2220 Wireless LAN Adapter (rev 01)
+product LINKSYS	PCMPC200	0xab08	PCMPC200
+product LINKSYS	PCM200		0xab09	PCM200
+product LINKSYS2 IPN2220	0x2220	IPN 2220 Wireless LAN Adapter (rev 01)
 
 /* Lite-On products */
 product LITEON 82C168	0x0002	82C168/82C169 (PNIC) 10/100 Ethernet
@@ -2104,7 +2104,7 @@ product LUCENT LTMODEM_045a	0x045a	LTMODEM
 product LUCENT OR3LP26		0x5400	ORCA FPGA w/32-bit PCI ASIC core
 product LUCENT OR3TP12		0x5401	ORCA FPGA w/64-bit PCI ASIC core
 product LUCENT USBHC		0x5801	USB Host Controller
-product	LUCENT EVDO		0x5802	Sierra Wireless AirCard 580
+product LUCENT EVDO		0x5802	Sierra Wireless AirCard 580
 product LUCENT FW322_323	0x5811	FW322/323 IEEE 1394 Host Controller
 
 /* Macronix */
@@ -2300,16 +2300,19 @@ product NVIDIA	RIVATNT2	0x0028	RIVA TNT2
 product NVIDIA	RIVATNT2U	0x0029	RIVA TNT2 Ultra
 product NVIDIA	VANTA		0x002c	Vanta
 product NVIDIA	RIVATNT2M64	0x002d	RIVA TNT2 Model 64
+product NVIDIA	MCP04_NET1	0x0037	MCP04 Ethernet
+product NVIDIA	MCP04_NET2	0x0038	MCP04 Ethernet
 product NVIDIA	GEFORCE_6800U	0x0040	GeForce 6800 Ultra
 product NVIDIA	GEFORCE_6800	0x0041	GeForce 6800
 product NVIDIA	GEFORCE_6800LE	0x0042	GeForce 6800LE
 product NVIDIA	GEFORCE_6800GT	0x0045	GeForce 6800 GT
 product NVIDIA	NFORCE4_PCIB	0x0051	nForce4 PCI-ISA bridge
-product	NVIDIA	NFORCE4_SMBUS	0x0052	nForce4 SMBus
+product NVIDIA	NFORCE4_SMBUS	0x0052	nForce4 SMBus
 product NVIDIA	NFORCE4_ATA133	0x0053	nForce4 ATA133 IDE
-product	NVIDIA	NFORCE4_SATA1	0x0054	nForce4 Serial ATA 1
-product	NVIDIA	NFORCE4_SATA2	0x0055	nForce4 Serial ATA 2
-product	NVIDIA	NFORCE4_NET	0x0057	nForce4 Ethernet
+product NVIDIA	NFORCE4_SATA1	0x0054	nForce4 Serial ATA 1
+product NVIDIA	NFORCE4_SATA2	0x0055	nForce4 Serial ATA 2
+product NVIDIA	NFORCE4_NET1	0x0057	nForce4 Ethernet
+product NVIDIA	NFORCE4_NET2	0x0057	nForce4 Ethernet
 product NVIDIA	NFORCE4_AC	0x0059	nForce4 AC-97
 product NVIDIA	NFORCE4_USB	0x005a	nForce4 USB Host Controller
 product NVIDIA	NFORCE4_USB2	0x005b	nForce4 USB2 Host Controller
@@ -2329,25 +2332,30 @@ product NVIDIA	NFORCE2_FW	0x006e	nForce2 Firewire Controller
 product NVIDIA	NFORCE2_400_PCIB	0x0080	nForce2 Ultra 400 PCI-ISA bridge
 product NVIDIA	NFORCE2_400_SMBUS	0x0084	nForce2 Ultra 400 SMBus Controller
 product NVIDIA	NFORCE2_400_ATA133	0x0085	nForce2 Ultra 400 ATA133 IDE
+product NVIDIA	NFORCE3_NET2		0x0086	nforce3 Ethernet #2
 product NVIDIA	NFORCE2_400_OHCI	0x0087	nForce2 Ultra 400 USB Host Controller
 product NVIDIA	NFORCE2_400_EHCI	0x0088	nForce2 Ultra 400 USB2 Host Controller
 product NVIDIA	NFORCE2_400_MCPT_AC	0x008a	nForce2 Ultra 400 AC-97
 product NVIDIA	NFORCE2_400_PPB		0x008b	nForce2 Ultra 400 PCI-PCI bridge
+product NVIDIA	NFORCE3_NET3		0x008c	nforce3 Ethernet #3
 product NVIDIA	NFORCE2_400_SATA	0x008e	nForce2 Ultra 400 Serial ATA Controller
 product NVIDIA	NFORCE3_PCHB	0x00d1	nForce3 Host-PCI bridge
 product NVIDIA	NFORCE3_PCIB	0x00d0	nForce3 PCI-ISA bridge
 product NVIDIA	NFORCE3_SMBUS	0x00d4	nForce3 SMBus controller
 product NVIDIA	NFORCE3_ATA133	0x00d5	nForce3 ATA133 IDE
+product NVIDIA	NFORCE3_NET1	0x00d6	nForce3 Ethernet
 product NVIDIA	NFORCE3_OHCI	0x00d7	nForce3 USB Host Controller
 product NVIDIA	NFORCE3_EHCI	0x00d8	nForce3 USB2 Host Controller
 product NVIDIA	NFORCE3_MCPT_AC	0x00da	nForce3 MCP-T AC-97
 product NVIDIA	NFORCE3_PPB	0x00dd	nForce3 PCI-PCI bridge
+product NVIDIA	NFORCE3_NET4	0x00df	nForce3 ethernet #4
 product NVIDIA	NFORCE3_250_PCHB	0x00e1	nForce3 250 Host-PCI bridge
 product NVIDIA	NFORCE3_250_AGP		0x00e2	nForce3 250 AGP
 product NVIDIA	NFORCE3_250_PCIB	0x00e0	nForce3 250 PCI-ISA bridge
 product NVIDIA	NFORCE3_250_SMBUS	0x00e4	nForce3 250 SMBus Controller
 product NVIDIA	NFORCE3_250_ATA133	0x00e5	nForce3 250 ATA133 IDE
 product NVIDIA	NFORCE3_250_SATA	0x00e3	nForce3 250 Serial ATA Controller
+product NVIDIA	NFORCE3_NET5	0x00e6	nForce3 ethernet #5
 product NVIDIA	NFORCE3_250_OHCI	0x00e7	nForce3 250 USB Host Controller
 product NVIDIA	NFORCE3_250_EHCI	0x00e8	nForce3 250 USB2 Host Controller
 product NVIDIA	NFORCE3_250_MCPT_AC	0x00ea	nForce3 250 MCP-T AC-97
@@ -2379,6 +2387,7 @@ product NVIDIA	QUADRO4_380XGL	0x018b	Quadro4 380 XGL
 product NVIDIA	GEFORCE2_IGP	0x01a0	GeForce2 Integrated GPU
 product NVIDIA	NFORCE_MCP_AC	0x01b1	nForce MCP AC-97
 product NVIDIA	NFORCE_ATA100	0x01bc	nForce ATA100 IDE
+product NVIDIA	NFORCE_NET	0x01c3	nForce Ethetnet
 product NVIDIA	NFORCE2_PCHB	0x01e0	nForce2 Host-PCI Bridge
 product NVIDIA	NFORCE2_PPB2	0x01e8	nForce2 PCI-PCI Bridge
 product NVIDIA	NFORCE2_MEM1	0x01eb	nForce2 Memory Controller
@@ -2402,7 +2411,8 @@ product NVIDIA	NFORCE430_SMBUS	0x0264	nForce430 SMBus Controller
 product NVIDIA	NFORCE430_ATA133	0x0265	nForce430 ATA133 IDE Controller
 product NVIDIA	NFORCE430_SATA1	0x0266	nForce430 Serial SATA Controller 1
 product NVIDIA	NFORCE430_SATA2	0x0267	nForce430 Serial SATA Controller 2
-product NVIDIA	NFORCE430_NET	0x0269	nForce430 Gigabit Ethernet Controller
+product NVIDIA	NFORCE430_NET1	0x0268	nForce430 Gigabit Ethernet Controller
+product NVIDIA	NFORCE430_NET2	0x0269	nForce430 Gigabit Ethernet Controller
 product NVIDIA	NFORCE430_AC	0x026c	nForce430 AC-97
 product NVIDIA	NFORCE430_OHCI	0x026d	nForce430 USB Controller
 product NVIDIA	NFORCE430_EHCI	0x026e	nForce430 USB2 Controller
@@ -2428,7 +2438,9 @@ product NVIDIA	GF_FX5900	0x0331	GeForce FX 5900
 product NVIDIA	GF_FX5900XT	0x0332	GeForce FX 5900XT
 product NVIDIA	GF_FX5950U	0x0333	GeForce FX 5950 Ultra
 product NVIDIA	QUADRO_FX_3000	0x0338	Quadro FX 3000
-product	NVIDIA	GF_FX5700_LE	0x0343	GeForce FX 5700 LE
+product NVIDIA	GF_FX5700_LE	0x0343	GeForce FX 5700 LE
+product NVIDIA	MCP55_NET1	0x0372	MCP55 Ethernet
+product NVIDIA	MCP55_NET2	0x0373	MCP55 Ethernet
 
 /* Nvidia & SGS-Thomson Microelectronics */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
@@ -2562,7 +2574,7 @@ product RISCOM N2	0x5568	N2
 product RNS FDDI	0x2200	2200 FDDI
 
 /* S2io products */
-product	S2IO XFRAME	0x5831	Xframe 10 Gigabit ethernet adapter
+product S2IO XFRAME	0x5831	Xframe 10 Gigabit ethernet adapter
 
 /* S3 products */
 product S3 VIRGE	0x5631	ViRGE
@@ -2594,7 +2606,7 @@ product S3 TRIO3D2X	0x8a13	Trio3D/2X
 product S3 SAVAGE3D	0x8a20	Savage3D
 product S3 SAVAGE3D_MV	0x8a21	Savage3D+MV
 product S3 SAVAGE4	0x8a22	Savage4
-product S3 PROSAVAGE_KM133  0x8a26  ProSavage KM133
+product S3 PROSAVAGE_KM133	0x8a26	ProSavage KM133
 product S3 VIRGE_MX	0x8c01	ViRGE/MX
 product S3 VIRGE_MXP	0x8c03	ViRGE/MXP
 product S3 SAVAGE_MX_MV	0x8c10	Savage/MX+MV
@@ -2799,7 +2811,7 @@ product SUN US_IIe	0xa001	UltraSPARC IIe PCI
 
 /* Sundance Technology products */
 product SUNDANCETI ST201	0x0201	ST201 10/100 Ethernet
-product	SUNDANCETI ST1023	0x1023	ST1023 Gigabit Ethernet
+product SUNDANCETI ST1023	0x1023	ST1023 Gigabit Ethernet
 product SUNDANCETI ST2021	0x2021	ST2021 Gigabit Ethernet
 
 /* Surecom Technology products */
@@ -2821,8 +2833,8 @@ product SCHNEIDERKOCH	SK_9DX1		0x4400	SK-NET SK-9DX1 Gigabit Ethernet
 product SCHNEIDERKOCH	SK_9D21		0x4421	SK-9D21 1000BASE-T
 product SCHNEIDERKOCH	SK_9D41		0x4441	SK-9D41 1000BASE-X
 /* This next entry is used for both single-port (SK-9E21D) and dual-port
- * (SK-9E22) gig-e based on Marvell Yukon-2, with PCI revision  0x17 for
- * the single-port and 0x12 for the  dual-port.
+ * (SK-9E22) gig-e based on Marvell Yukon-2, with PCI revision	0x17 for
+ * the single-port and 0x12 for the	dual-port.
  */
 product SCHNEIDERKOCH	SK_9E21		0x9e00	SK-9E21D/SK-9E22 1000base-T
 
@@ -2857,9 +2869,9 @@ product TI	PCI4451LYNX	0x8027	PCI4451 IEEE 1394 Host Controller w/ PCI-CardBus B
 product TI	PCI4510LYNX	0x8029	PCI4510 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
 product TI	PCI4520LYNX	0x802A	PCI4520 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
 product TI	PCI7410LYNX	0x802B	PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
-product	TI	PCI72111CB	0x8031	PCI7x21/7x11 Cardbus Controller
-product	TI	PCI72111FW	0x8032	PCI7x21/7x11 IEEE 1394 Host Controller
-product	TI	PCI72111FM	0x8033	PCI7x21/7x11 Integrated FlashMedia Controller
+product TI	PCI72111CB	0x8031	PCI7x21/7x11 Cardbus Controller
+product TI	PCI72111FW	0x8032	PCI7x21/7x11 IEEE 1394 Host Controller
+product TI	PCI72111FM	0x8033	PCI7x21/7x11 Integrated FlashMedia Controller
 product TI	PCI6515A	0x8036	PCI6515A Cardbus Controller 
 product TI	PCI6515ASM	0x8038	PCI6515A Cardbus Controller (Smart Card mode)
 product TI	ACX100		0x8400	ACX100 802.11b
@@ -2990,7 +3002,7 @@ product ULSI US201	0x0201	US201
 /* US Robotics products */
 product USR 3C2884A	0x1007	56K Voice Internal PCI Modem (WinModem)
 product USR 3CP5609	0x1008	3CP5609 PCI 16550 Modem
-product USR2 USR997902	0x0116  USR997902 Gigabit Ethernet
+product USR2 USR997902	0x0116	USR997902 Gigabit Ethernet
 product USR2 2415	0x3685	Wireless PCI-PCMCIA adapter
 
 /* V3 Semiconductor products */
@@ -3000,7 +3012,7 @@ product V3 V96DPC	0xc960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
 product VIATECH VT6305		0x0130	VT6305 IEEE 1394 Host Controller
-product VIATECH KT880           0x0269  KT880 CPU to PCI Bridge
+product VIATECH KT880	0x0269	KT880 CPU to PCI Bridge
 product VIATECH VT8363_HB	0x0305	VT8363 (Apollo KT133) Host Bridge
 product VIATECH	VT8371_HB	0x0391	VT8371 (Apollo KX133) Host Bridge
 product VIATECH VT8501_MVP4	0x0501	VT8501 (Apollo MVP4) Host Bridge
@@ -3021,10 +3033,10 @@ product VIATECH VT82C693	0x0693	VT82C693 (Apollo Pro Plus) Host-PCI
 product VIATECH VT86C926	0x0926	VT86C926 Amazon PCI-Ethernet Controller
 product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
 product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA Bridge
-product VIATECH KT880_1         0x1269  KT880 CPU to PCI Bridge
+product VIATECH KT880_1	0x1269	KT880 CPU to PCI Bridge
 product VIATECH VT82C586_IDE	0x1571	VT82C586 IDE Controller
 product VIATECH VT82C595_2	0x1595	VT82C595 (Apollo VP2) Host-PCI Bridge
-product VIATECH KT880_2         0x2269  KT880 CPU to PCI Bridge
+product VIATECH KT880_2	0x2269	KT880 CPU to PCI Bridge
 product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 product VIATECH VT82C586_PWR	0x3040	VT82C586 Power Management Controller
 product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
@@ -3046,15 +3058,15 @@ product VIATECH VT8623		0x3123	VT8623 (Apollo CLE266) CPU-PCI Bridge
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
 product VIATECH VT8237_SATA	0x3149	VT8237 Integrated SATA Controller
 product VIATECH VT6421_RAID	0x3249	VT6421 Serial RAID Controller
-product VIATECH KT880_3         0x3269  KT880 CPU to PCI bridge
+product VIATECH KT880_3	0x3269	KT880 CPU to PCI bridge
 product VIATECH VT8235		0x3177	VT8235 (Apollo KT400) PCI-ISA Bridge
 product VIATECH VT8377		0x3189	VT8377 Apollo KT400 CPU to PCI Bridge
-product VIATECH VT8378          0x3205  VT8378 Apollo KM400 CPU to PCI Bridge
+product VIATECH VT8378	0x3205	VT8378 Apollo KM400 CPU to PCI Bridge
 product VIATECH VT8237		0x3227	VT8237 (Apollo KT600) PCI-ISA Bridge
-product VIATECH KT880_4         0x4269  KT880 CPU to PCI Bridge
+product VIATECH KT880_4	0x4269	KT880 CPU to PCI Bridge
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
-product VIATECH VT8378_IG       0x7205  VT8378 KM400 UniChrome Integrated Graphics
-product VIATECH KT880_5         0x7269  KT880 CPU to PCI Bridge
+product VIATECH VT8378_IG	0x7205	VT8378 KM400 UniChrome Integrated Graphics
+product VIATECH KT880_5	0x7269	KT880 CPU to PCI Bridge
 product VIATECH VT8231		0x8231	VT8231 PCI-ISA Bridge
 product VIATECH VT8231_PWR	0x8235	VT8231 Power Management Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 (Apollo KT133) PCI to AGP Bridge
@@ -3152,7 +3164,7 @@ product VLSI 82C975	0x0200	82C975
 product VLSI 82C925	0x0280	82C925
 
 /* VMware products */
-product VMWARE VIRTUAL  0x0710	Virtual SVGA
+product VMWARE VIRTUAL	0x0710	Virtual SVGA
 product VMWARE VIRTUAL2 0x0405	Virtual SVGA II
 
 /* Weitek products */
