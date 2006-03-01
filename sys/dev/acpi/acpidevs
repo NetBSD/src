@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.9 2006/02/17 04:33:12 kochi Exp $
+# $NetBSD: acpidevs,v 1.10 2006/03/01 09:29:47 cube Exp $
 #
 # Extracted from:
 # http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
@@ -300,7 +300,7 @@ PNP8327	IBM Token Ring (All Types)
 PNP8385	Remote Network Access Driver
 PNP8387	RNA Point-to-point Protocol Driver
 PNP8388	Reserved for Microsoft Networking components
-PNP8389		Peer IrLAN infrared driver (Microsoft-supplied)
+PNP8389	Peer IrLAN infrared driver (Microsoft-supplied)
 PNP8390	Generic network adapter
 NSC6001	NSC IrDA Fast Infrared Port
 # ***** SCSI, Proprietary CD Adapters - PNPAxxx **********
@@ -344,9 +344,11 @@ PNPB02F	Joystick/Game port
 PNPC000	Compaq 14400 Modem (TBD)
 PNPC001	Compaq 2400/9600 Modem (TBD)
 # ***** ACPI specific devices *****
-ACPI0001 SMBus 1.0 Host Controller
-ACPI0002 Smart Battery Subsystem
-ACPI0003 AC Device
-ACPI0004 Module Device
-ACPI0005 SMBus 2.0 Host Controller
-ACPI0006 GPE Block Device
+ACPI0001	SMBus 1.0 Host Controller
+ACPI0002	Smart Battery Subsystem
+ACPI0003	AC Device
+ACPI0004	Module Device
+ACPI0005	SMBus 2.0 Host Controller
+ACPI0006	GPE Block Device
+# **** Others ****
+INT0800	Intel FWH Random Number Generator
