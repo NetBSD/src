@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.9 2006/02/17 04:34:00 kochi Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.10 2006/03/01 09:30:22 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.9 2006/02/17 04:33:12 kochi Exp
+ *	# NetBSD: acpidevs,v 1.10 2006/03/01 09:29:47 cube Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -1307,5 +1307,9 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "ACPI0006",
 	    "GPE Block Device",
+	},
+	{
+	    "INT0800",
+	    "Intel FWH Random Number Generator",
 	},
 };
