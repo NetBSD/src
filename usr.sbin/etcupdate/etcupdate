@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.21.6.3 2006/03/01 03:54:27 riz Exp $
+# $NetBSD: etcupdate,v 1.21.6.4 2006/03/01 03:55:18 riz Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -286,12 +286,12 @@ ${DIFF_EXTRA_OPTIONS}
 EOF
 		else
 			cat << EOF
-  d  Don't install the new file
-  i  Install the new file (overwrites your modifications!)
-  m  Merge again the currently installed and new files
-  s  Show the differences between the currently installed and new files
+  d  Don't install the merged file (keep your old file)
+  i  Install the merged file (overwrites your old file)
+  m  Merge again (your old file against the result from the previous merge)
+  s  Show the differences between the currently installed and new merged files
 ${DIFF_EXTRA_OPTIONS}
-  u  Undo merge and restore the temporary file from backup
+  u  Undo merge (start again with the original version of the new file)
   v  Show the merged file
 
 EOF
