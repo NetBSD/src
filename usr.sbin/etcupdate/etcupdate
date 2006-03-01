@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.21.6.6 2006/03/01 04:00:43 riz Exp $
+# $NetBSD: etcupdate,v 1.21.6.7 2006/03/01 04:01:16 riz Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -539,7 +539,7 @@ if ! ${CONTINUE}; then
 		#
 		# INSTALL_DONE=1 prevents installation of unwanted
 		# files (things that are not part of the etc set).
-		# BUILD_DONE=1 allows building of files that are wanted.
+		# BUILD=1 allows building of files that are wanted.
 		MAKE_ENV=" 			\
 			DESTDIR=${TEMPROOT}	\
 			MAKE=make		\
