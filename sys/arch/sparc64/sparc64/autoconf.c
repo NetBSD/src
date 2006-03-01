@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.106.2.2 2006/02/18 15:38:50 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.106.2.3 2006/03/01 09:28:05 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.106.2.2 2006/02/18 15:38:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.106.2.3 2006/03/01 09:28:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -179,10 +179,7 @@ int autoconf_debug = 0x0;
  * device names with our internal names.
  */
 int
-matchbyname(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+matchbyname(struct device *parent, struct cfdata *cf, void *aux)
 {
 	printf("%s: WARNING: matchbyname\n", cf->cf_name);
 	return (0);
@@ -239,8 +236,7 @@ get_ncpus()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
@@ -407,7 +403,7 @@ bootpath_build()
 				bp->val[2] = *++cp - 'a', ++cp;
 		} else {
 			bp->val[0] = -1; /* no #'s: assume unit 0, no
-					    sbus offset/adddress */
+					    sbus offset/address */
 		}
 		++bp;
 		++nbootpath;
@@ -492,9 +488,7 @@ bootpath_print(struct bootpath *bp)
  * dk_establish(), and use this to recover the bootpath.
  */
 struct bootpath *
-bootpath_store(storep, bp)
-	int storep;
-	struct bootpath *bp;
+bootpath_store(int storep, struct bootpath *bp)
 {
 	static struct bootpath *save;
 	struct bootpath *retval;
@@ -526,8 +520,7 @@ crazymap(const char *prop, int *map)
 }
 
 int
-sd_crazymap(n)
-	int	n;
+sd_crazymap(int n)
 {
 	static int prom_sd_crazymap[8]; /* static: compute only once! */
 	static int init = 0;
@@ -615,8 +608,7 @@ sync_crash()
 }
 
 char *
-clockfreq(freq)
-	long freq;
+clockfreq(long freq)
 {
 	char *p;
 	static char sbuf[10];
@@ -827,8 +819,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
  * variables.  Returns nonzero on error.
  */
 int
-romgetcursoraddr(rowp, colp)
-	int **rowp, **colp;
+romgetcursoraddr(int **rowp, int **colp)
 {
 	cell_t row = 0UL, col = 0UL;
 
@@ -857,9 +848,7 @@ void callrom()
  * find a device matching "name" and unit number
  */
 struct device *
-getdevunit(name, unit)
-	const char *name;
-	int unit;
+getdevunit(const char *name, int unit)
 {
 	struct device *dev = alldevs.tqh_first;
 	char num[10], fullname[16];
@@ -964,7 +953,7 @@ dev_compatible(struct device *dev, void *aux, char *bpname)
 	 *
 	 * If this is a PCI device, find it's device class and try that.
 	 */
-	if ((bus_class(dev->dv_parent)) == BUSCLASS_PCI) {
+	if ((bus_class(device_parent(dev))) == BUSCLASS_PCI) {
 		struct pci_attach_args *pa = aux;
 
 		DPRINTF(ACDB_BOOTDEV,
@@ -1027,8 +1016,7 @@ dev_compatible(struct device *dev, void *aux, char *bpname)
 	 * match.  This is a nasty O(n^2) operation.
 	 */
 	for (i = 0; dev_compat_tab[i].name != NULL; i++) {
-		if (strcmp(dev->dv_cfdata->cf_name, 
-			dev_compat_tab[i].name) == 0) {
+		if (device_is_a(dev, dev_compat_tab[i].name)) {
 			DPRINTF(ACDB_BOOTDEV,
 				("\n%s: dev_compatible: translating %s\n",
 					dev->dv_xname, dev_compat_tab[i].name));
@@ -1053,16 +1041,14 @@ dev_compatible(struct device *dev, void *aux, char *bpname)
 static int
 bus_class(struct device *dev)
 {
-	const char *name;
 	int i, class;
 
 	class = BUSCLASS_NONE;
 	if (dev == NULL)
 		return (class);
 
-	name = dev->dv_cfdata->cf_name;
 	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
-		if (strcmp(name, bus_class_tab[i].name) == 0) {
+		if (device_is_a(dev, bus_class_tab[i].name)) {
 			class = bus_class_tab[i].class;
 			break;
 		}
@@ -1094,7 +1080,7 @@ instance_match(struct device *dev, void *aux, struct bootpath *bp)
 	/*
 	 * Rank parent bus so we know which locators to check.
 	 */
-	switch (bus_class(dev->dv_parent)) {
+	switch (bus_class(device_parent(dev))) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
 		DPRINTF(ACDB_BOOTDEV,
@@ -1153,12 +1139,9 @@ nail_bootdev(struct device *dev, struct bootpath *bp)
 }
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
-	const char *dvname;
 	char *bpname;
 
 	/*
@@ -1173,13 +1156,12 @@ device_register(dev, aux)
 	 * that.
 	 */
 	bpname = bp->name;
-	dvname = dev->dv_cfdata->cf_name;
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s\n",
-	    dev->dv_xname, dvname, dev->dv_xname, bpname));
+	    dev->dv_xname, dev->dv_cfdata->cf_name, dev->dv_xname, bpname));
 
 	/* First, match by name */
-	if (strcmp(dvname, bpname) != 0) {
+	if (!device_is_a(dev, bpname)) {
 		if (dev_compatible(dev, aux, bpname) != 0)
 			return;
 	}
@@ -1196,9 +1178,9 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "le") == 0 ||
-		   strcmp(dvname, "hme") == 0 ||
-		   strcmp(dvname, "tlp") == 0) {
+	} else if (device_is_a(dev, "le") ||
+		   device_is_a(dev, "hme") ||
+		   device_is_a(dev, "tlp")) {
 
 		/*
 		 * ethernet devices.
@@ -1209,7 +1191,8 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
+	} else if (device_is_a(dev, "sd") ||
+		   device_is_a(dev, "cd")) {
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
 		 * from parent and match with current bootpath component.
@@ -1220,12 +1203,12 @@ device_register(dev, aux)
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
 		struct scsibus_softc *sbsc =
-			(struct scsibus_softc *)dev->dv_parent;
+			(struct scsibus_softc *)device_parent(dev);
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
 
 		/* Check the controller that this scsibus is on */
-		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
+		if ((bp-1)->dev != device_parent(&sbsc->sc_dev))
 			return;
 
 		/*
@@ -1245,7 +1228,7 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp("wd", dvname) == 0) {
+	} else if (device_is_a(dev, "wd") == 0) {
 		/* IDE disks. */
 		struct ata_device *adev = aux;
 

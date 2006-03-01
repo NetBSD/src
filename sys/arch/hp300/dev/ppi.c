@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.31 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: ppi.c,v 1.31.2.1 2006/03/01 09:27:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.31 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.31.2.1 2006/03/01 09:27:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ ppirw(dev_t dev, struct uio *uio)
 	if (uio->uio_resid == 0)
 		return(0);
 
-	ctlr = sc->sc_dev.dv_parent->dv_unit;
+	ctlr = device_parent(&sc->sc_dev)->dv_unit;
 	slave = sc->sc_slave;
 
 #ifdef DEBUG
@@ -329,7 +329,7 @@ ppirw(dev_t dev, struct uio *uio)
 again:
 		s = splbio();
 		if ((sc->sc_flags & PPIF_UIO) &&
-		    hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq) == 0)
+		    hpibreq(device_parent(&sc->sc_dev), &sc->sc_hq) == 0)
 			(void) tsleep(sc, PRIBIO + 1, "ppirw", 0);
 		/*
 		 * Check if we timed out during sleep or uiomove
@@ -357,7 +357,7 @@ again:
 		else
 			cnt = hpibrecv(ctlr, slave, sc->sc_sec, cp, len);
 		s = splbio();
-		hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
+		hpibfree(device_parent(&sc->sc_dev), &sc->sc_hq);
 #ifdef DEBUG
 		if (ppidebug & PDB_IO)
 			printf("ppirw: %s(%d, %d, %x, %p, %d) -> %d\n",

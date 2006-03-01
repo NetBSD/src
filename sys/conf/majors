@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.18 2005/12/11 12:20:30 christos Exp $
+# $NetBSD: majors,v 1.18.2.1 2006/03/01 09:28:11 yamt Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -11,7 +11,7 @@
 
 device-major	crypto		char 160		crypto
 device-major	pf		char 161		pf
-device-major	vinum		char 162 block 162	vinum
+#obsolete	vinum		char 162		vinum
 device-major	fss		char 163 block 163	fss
 device-major	pps		char 164		pps
 device-major	ptm		char 165		pty

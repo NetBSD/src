@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.49.2.2 2006/02/18 15:39:11 yamt Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.49.2.3 2006/03/01 09:28:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.49.2.2 2006/02/18 15:39:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.49.2.3 2006/03/01 09:28:28 yamt Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -469,7 +469,6 @@ rasops_copyrows(cookie, src, dst, num)
 	int32_t *sp, *dp, *hp, *srp, *drp, *hrp;
 	struct rasops_info *ri;
 	int n8, n1, cnt, delta;
-	int i;
 
 	ri = (struct rasops_info *)cookie;
 	hp = hrp = NULL;
@@ -533,15 +532,31 @@ rasops_copyrows(cookie, src, dst, num)
 			DELTA(hrp, delta, int32_t *);
 
 		for (cnt = n8; cnt; cnt--) {
-			for (i = 0; i < 8; i++) {
-				dp[i] = sp[i];
-				if (ri->ri_hwbits)
-					hp[i] = sp[i];
-			}
+			dp[0] = sp[0];
+			dp[1] = sp[1];
+			dp[2] = sp[2];
+			dp[3] = sp[3];
+			dp[4] = sp[4];
+			dp[5] = sp[5];
+			dp[6] = sp[6];
+			dp[7] = sp[7];
 			dp += 8;
 			sp += 8;
-			if (ri->ri_hwbits)
+		}
+		if (ri->ri_hwbits) {
+			sp -= (8 * n8);
+			for (cnt = n8; cnt; cnt--) {
+				hp[0] = sp[0];
+				hp[1] = sp[1];
+				hp[2] = sp[2];
+				hp[3] = sp[3];
+				hp[4] = sp[4];
+				hp[5] = sp[5];
+				hp[6] = sp[6];
+				hp[7] = sp[7];
 				hp += 8;
+				sp += 8;
+			}
 		}
 
 		for (cnt = n1; cnt; cnt--) {

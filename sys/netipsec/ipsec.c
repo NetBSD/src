@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.19 2005/12/11 12:25:05 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.19.2.1 2006/03/01 09:28:47 yamt Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.19 2005/12/11 12:25:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.19.2.1 2006/03/01 09:28:47 yamt Exp $");
 
 /*
  * IPsec controller part.
@@ -442,7 +442,7 @@ key_allocsp_default(const char* where, int tag)
  *		others	: error occurred.
  *	others:	a pointer to SP
  *
- * NOTE: IPv6 mapped adddress concern is implemented here.
+ * NOTE: IPv6 mapped address concern is implemented here.
  */
 struct secpolicy *
 ipsec_getpolicy(struct tdb_ident *tdbi, u_int dir)
@@ -470,7 +470,7 @@ ipsec_getpolicy(struct tdb_ident *tdbi, u_int dir)
  *		others	: error occurred.
  *	others:	a pointer to SP
  *
- * NOTE: IPv6 mapped adddress concern is implemented here.
+ * NOTE: IPv6 mapped address concern is implemented here.
  */
 static struct secpolicy *
 ipsec_getpolicybysock(m, dir, inp, error)

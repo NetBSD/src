@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.14 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.14.2.1 2006/03/01 09:28:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.14 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.14.2.1 2006/03/01 09:28:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,11 +111,12 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 {
 	pcireg_t address, mask, address1 = 0, mask1 = 0xffffffff;
 	u_int64_t waddress, wmask;
-	int s, is64bit;
+	int s, is64bit, isrom;
 
 	is64bit = (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT);
+	isrom = (reg == PCI_MAPREG_ROM);
 
-	if (reg < PCI_MAPREG_START ||
+	if ((!isrom) && (reg < PCI_MAPREG_START ||
 #if 0
 	    /*
 	     * Can't do this check; some devices have mapping registers
@@ -123,7 +124,7 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	     */
 	    reg >= PCI_MAPREG_END ||
 #endif
-	    (reg & 3))
+	    (reg & 3)))
 		panic("pci_mem_find: bad request");
 
 	if (is64bit && (reg + 4) >= PCI_MAPREG_END)
@@ -152,15 +153,24 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	}
 	splx(s);
 
-	if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_MEM) {
-		printf("pci_mem_find: expected type mem, found i/o\n");
-		return (1);
-	}
-	if (PCI_MAPREG_MEM_TYPE(address) != PCI_MAPREG_MEM_TYPE(type)) {
-		printf("pci_mem_find: expected mem type %08x, found %08x\n",
-		    PCI_MAPREG_MEM_TYPE(type),
-		    PCI_MAPREG_MEM_TYPE(address));
-		return (1);
+	if (!isrom) {
+		/*
+		 * roms should have an enable bit instead of a memory
+		 * type decoder bit.  For normal BARs, make sure that
+		 * the address decoder type matches what we asked for.
+		 */
+		if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_MEM) {
+			printf("pci_mem_find: expected type mem, found i/o\n");
+			return (1);
+		}
+		if (PCI_MAPREG_MEM_TYPE(address) !=
+		    PCI_MAPREG_MEM_TYPE(type)) {
+			printf("pci_mem_find: "
+			    "expected mem type %08x, found %08x\n",
+			    PCI_MAPREG_MEM_TYPE(type),
+			    PCI_MAPREG_MEM_TYPE(address));
+			return (1);
+		}
 	}
 
 	waddress = (u_int64_t)address1 << 32UL | address;
@@ -208,7 +218,7 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 			*sizep = PCI_MAPREG_MEM64_SIZE(wmask);
 	}
 	if (flagsp != 0)
-		*flagsp = PCI_MAPREG_MEM_PREFETCHABLE(address) ?
+		*flagsp = (isrom || PCI_MAPREG_MEM_PREFETCHABLE(address)) ?
 		    BUS_SPACE_MAP_PREFETCHABLE : 0;
 
 	return (0);
@@ -285,6 +295,17 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type,
 		    &size, &flags))
 			return (1);
 		tag = pa->pa_memt;
+	}
+
+	if (reg == PCI_MAPREG_ROM) {
+		pcireg_t 	mask;
+		int		s;
+		/* we have to enable the ROM address decoder... */
+		s = splhigh();
+		mask = pci_conf_read(pa->pa_pc, pa->pa_tag, reg);
+		mask |= PCI_MAPREG_ROM_ENABLE;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, reg, mask);
+		splx(s);
 	}
 
 	if (bus_space_map(tag, base, size, busflags | flags, &handle))

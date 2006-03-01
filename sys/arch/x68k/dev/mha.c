@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.39 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: mha.c,v 1.39.2.1 2006/03/01 09:28:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.39 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.39.2.1 2006/03/01 09:28:06 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -291,7 +291,7 @@ mhamatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (ia->ia_addr != 0xea0000)
 		return 0;
 
-	if (intio_map_allocate_region(parent->dv_parent, ia,
+	if (intio_map_allocate_region(device_parent(parent), ia,
 				      INTIO_MAP_TESTONLY) < 0) /* FAKE */
 		return 0;
 
@@ -323,7 +323,7 @@ mhaattach(struct device *parent, struct device *self, void *aux)
 	SPC_TRACE(("mhaattach  "));
 	sc->sc_state = SPC_INIT;
 	sc->sc_iobase = INTIO_ADDR(ia->ia_addr + 0x80); /* XXX */
-	intio_map_allocate_region (parent->dv_parent, ia, INTIO_MAP_ALLOCATE);
+	intio_map_allocate_region (device_parent(parent), ia, INTIO_MAP_ALLOCATE);
 				/* XXX: FAKE  */
 	sc->sc_dmat = ia->ia_dmat;
 

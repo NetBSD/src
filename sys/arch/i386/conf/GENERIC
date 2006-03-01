@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.714.2.3 2006/02/18 15:38:35 yamt Exp $
+# $NetBSD: GENERIC,v 1.714.2.4 2006/03/01 09:27:54 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.714.2.3 $"
+#ident 		"GENERIC-$Revision: 1.714.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -282,6 +282,9 @@ options 	PCDISPLAY_SOFTCURSOR
 options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
 #options 	VGA_RASTERCONSOLE
+# enable splash screen support; requires hw driver support
+#options 	SPLASHSCREEN
+#options 	SPLASHSCREEN_PROGRESS
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -503,6 +506,16 @@ wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+# VESA framebuffer console
+#options 	KVM86			# required for vesabios
+#vesabios*	at vesabiosbus?
+#vesafb* 	at vesabios?
+#options 	VESAFB_WIDTH=640
+#options 	VESAFB_HEIGHT=480
+#options 	VESAFB_DEPTH=8
+#options 	VESAFB_PM		# power management support
+#wsdisplay*	at vesafb? console ?
+
 attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
@@ -564,6 +577,13 @@ lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
 # Hardware monitors
+
+# AMD 768 and 8111 power/ACPI controllers
+amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
+#iic*	at amdpm?			# sensors below are on this bus
+#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
+#adt7463c* at iic? addr 0x2D		# Tyan S2881
+#adt7463c* at iic? addr 0x2E		# Tyan S2882-D
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
@@ -1254,10 +1274,6 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
-
-# Vinum
-# pseudo-device	vinum		8	# Vinum
-# options 	VINUMDEBUG
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files

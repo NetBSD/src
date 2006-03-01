@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.7 2005/12/11 12:21:21 christos Exp $ */
+/*	$NetBSD: rd.c,v 1.7.2.1 2006/03/01 09:28:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.7 2005/12/11 12:21:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.7.2.1 2006/03/01 09:28:12 yamt Exp $");
 
 #include "rnd.h"
 
@@ -475,7 +475,7 @@ rdattach(parent, self, aux)
 }
 
 /*
- * Read or constuct a disklabel
+ * Read or construct a disklabel
  */
 int
 rdgetinfo(sc)

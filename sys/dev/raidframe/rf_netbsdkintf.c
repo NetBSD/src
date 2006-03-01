@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.192.2.1 2006/01/15 10:02:56 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.192.2.2 2006/03/01 09:28:28 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.192.2.1 2006/01/15 10:02:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.192.2.2 2006/03/01 09:28:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -382,6 +382,8 @@ raidattach(int num)
 	for (raidID = 0; raidID < num; raidID++) {
 		bufq_alloc(&raid_softc[raidID].buf_queue, "fcfs", 0);
 		pseudo_disk_init(&raid_softc[raidID].sc_dkdev);
+
+		/* XXXJRT Should use config_attach_pseudo() */
 
 		raidrootdev[raidID].dv_class  = DV_DISK;
 		raidrootdev[raidID].dv_cfdata = NULL;
@@ -1218,7 +1220,6 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			  (RF_DeviceConfig_t *));
 		if (d_cfg == NULL)
 			return (ENOMEM);
-		memset((char *) d_cfg, 0, sizeof(RF_DeviceConfig_t));
 		d_cfg->rows = 1; /* there is only 1 row now */
 		d_cfg->cols = raidPtr->numCol;
 		d_cfg->ndevs = raidPtr->numCol;
@@ -2362,11 +2363,12 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 						 raidPtr->Disks[c].dev,
 						 raidPtr->raid_cinfo[c].ci_vp,
 						 &clabel);
-				/* make sure status is noted */
+			/* make sure status is noted */
 			clabel.status = rf_ds_optimal;
-				/* bump the counter */
+			
+			/* bump the counter */
 			clabel.mod_counter = raidPtr->mod_counter;
-
+			
 			raidwrite_component_label(
 						  raidPtr->Disks[c].dev,
 						  raidPtr->raid_cinfo[c].ci_vp,
@@ -2593,7 +2595,7 @@ rf_find_raid_components()
 	     dv = dv->dv_list.tqe_next) {
 
 		/* we are only interested in disks... */
-		if (dv->dv_class != DV_DISK)
+		if (device_class(dv) != DV_DISK)
 			continue;
 
 		/* we don't care about floppies... */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aucom.c,v 1.17 2005/12/27 00:46:38 chs Exp $	*/
+/*	$NetBSD: aucom.c,v 1.17.2.1 2006/03/01 09:27:59 yamt Exp $	*/
 /*	 NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.17 2005/12/27 00:46:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.17.2.1 2006/03/01 09:27:59 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -293,7 +293,7 @@ void	com_kgdb_putc(void *, int);
 #define	COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define	COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			 ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
+			 device_is_active(&(sc)->sc_dev))
 
 #define	BR	BUS_SPACE_BARRIER_READ
 #define	BW	BUS_SPACE_BARRIER_WRITE
@@ -865,7 +865,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB

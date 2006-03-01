@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.6 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.6.2.1 2006/03/01 09:28:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.6 2005/12/11 12:24:01 christos Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.6.2.1 2006/03/01 09:28:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,7 +329,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sc->sc_dying)
 		return (EIO);
 
-	if (ISSET(sc->sc_hdev.sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_hdev.sc_dev))
 		return (ENXIO);
 
 	tp = sc->sc_tty;

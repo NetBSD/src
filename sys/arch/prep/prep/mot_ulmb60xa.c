@@ -1,4 +1,4 @@
-/*	$NetBSD: mot_ulmb60xa.c,v 1.10 2005/12/24 20:07:31 perry Exp $	*/
+/*	$NetBSD: mot_ulmb60xa.c,v 1.10.2.1 2006/03/01 09:28:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mot_ulmb60xa.c,v 1.10 2005/12/24 20:07:31 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mot_ulmb60xa.c,v 1.10.2.1 2006/03/01 09:28:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: mot_ulmb60xa.c,v 1.10 2005/12/24 20:07:31 perry Exp 
 
 
 static int mot_ulmb60xa_match(struct platform *);
-static void pci_intr_fixup_mot_ulmb60xa(int, int, int, int *);
+static void pci_intr_fixup_mot_ulmb60xa(int, int, int, int, int *);
 
 struct platform platform_mot_ulmb60xa = {
 	"BULL ESTRELLA (e0)         (e0)",	/* model */ /* XXX */
@@ -107,7 +107,7 @@ mot_ulmb60xa_match(struct platform *p)
 }
 
 static void
-pci_intr_fixup_mot_ulmb60xa(int bus, int dev, int swiz, int *line)
+pci_intr_fixup_mot_ulmb60xa(int bus, int dev, int pin, int swiz, int *line)
 {
 
 	if (bus == 0) {

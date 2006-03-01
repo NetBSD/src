@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.25 2005/12/27 11:10:06 yamt Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.25.2.1 2006/03/01 09:27:45 yamt Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.25 2005/12/27 11:10:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.25.2.1 2006/03/01 09:27:45 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -179,7 +179,7 @@ static void	sacom_j720_init(struct sa11x0_softc *, struct sacom_softc *);
 #define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			 ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
+			 device_is_active(&(sc)->sc_dev))
 
 #define COM_BARRIER(t, h, f) bus_space_barrier((t), (h), 0, COM_NPORTS, (f))
 #define COM_LOCK(sc)
@@ -536,7 +536,7 @@ sacomopen(dev, flag, mode, l)
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 	tp = sc->sc_tty;

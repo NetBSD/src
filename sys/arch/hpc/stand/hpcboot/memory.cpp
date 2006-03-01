@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.cpp,v 1.7 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: memory.cpp,v 1.7.2.1 2006/03/01 09:27:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -95,8 +95,8 @@ MemoryManager::reservePage(vsize_t size, BOOL page_commit)
 		DPRINTF((TEXT("can't allocate memory for translation table.\n")));
 		return FALSE;
 	}
-	DPRINTF((TEXT("address translation table %d pages.(%d byte)\n"), npage,
-	    tabsz));
+	DPRINTF((TEXT("address translation table %d pages. (0x%x bytes)\n"),
+		 npage, tabsz));
 
 	if (page_commit)
 		vbase = vaddr_t(VirtualAlloc(0, vsize, MEM_RESERVE,

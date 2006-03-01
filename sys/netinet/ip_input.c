@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.223 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.223.2.1 2006/03/01 09:28:47 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.223 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.223.2.1 2006/03/01 09:28:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1839,10 +1839,10 @@ ip_forward(struct mbuf *m, int srcrt)
 
 	dest = 0;
 #ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf("forward: src %2.2x dst %2.2x ttl %x\n",
-		    ntohl(ip->ip_src.s_addr),
-		    ntohl(ip->ip_dst.s_addr), ip->ip_ttl);
+	if (ipprintfs) {
+		printf("forward: src %s ", inet_ntoa(ip->ip_src));
+		printf("dst %s ttl %x\n", inet_ntoa(ip->ip_dst), ip->ip_ttl);
+	}
 #endif
 	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;

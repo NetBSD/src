@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.15.2.1 2006/02/18 15:38:50 yamt Exp $	*/
+/*	$NetBSD: emul.c,v 1.15.2.2 2006/03/01 09:28:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.15.2.1 2006/02/18 15:38:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.15.2.2 2006/03/01 09:28:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,9 +220,7 @@ muldiv(struct trapframe64 *tf, union instr *code, int32_t *rd, int32_t *rs1,
  */
 
 int
-fixalign(l, tf)
-	struct lwp *l;
-	struct trapframe64 *tf;
+fixalign(struct lwp *l, struct trapframe64 *tf)
 {
 	static u_char sizedef[] = { 0x4, 0xff, 0x2, 0x8 };
 
@@ -385,9 +383,7 @@ fixalign(l, tf)
  * Emulate unimplemented instructions on earlier sparc chips.
  */
 int
-emulinstr(pc, tf)
-	vaddr_t pc;
-	struct trapframe64 *tf;
+emulinstr(vaddr_t pc, struct trapframe64 *tf)
 {
 	union instr code;
 	int32_t rs1, rs2, rd;

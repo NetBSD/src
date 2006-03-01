@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.64.2.1 2006/02/18 15:39:05 yamt Exp $ */
+/* $NetBSD: rtw.c,v 1.64.2.2 2006/03/01 09:28:13 yamt Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.64.2.1 2006/02/18 15:39:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.64.2.2 2006/03/01 09:28:13 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -648,7 +648,7 @@ static void
 rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 {
 	uint8_t psr, scr;
-	int i, tx_key_len;
+	int i, keylen;
 	struct rtw_regs *regs;
 	union rtw_keys *rk;
 
@@ -672,26 +672,23 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 	if ((sc->sc_ic.ic_flags & IEEE80211_F_PRIVACY) == 0)
 		goto out;
 
-	if (!rtw_key_hwsupp(sc->sc_flags, &wk[txkey]))
-		goto out;
-
-	tx_key_len = wk[txkey].wk_keylen;
-
-	switch (tx_key_len) {
-	case 5:
-		scr |= RTW_SCR_KM_WEP40;
-		break;
-	case 13:
-		scr |= RTW_SCR_KM_WEP104;
-		break;
-	default:
-		goto out;
+	for (keylen = i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (!rtw_key_hwsupp(sc->sc_flags, &wk[i]))
+			continue;
+		if (i == txkey) {
+			keylen = wk[i].wk_keylen;
+			break;
+		}
+		keylen = MAX(keylen, wk[i].wk_keylen);
 	}
 
-	scr |= RTW_SCR_RXSECON;
+	if (keylen == 5)
+		scr |= RTW_SCR_KM_WEP40 | RTW_SCR_RXSECON;
+	else if (keylen == 13)
+		scr |= RTW_SCR_KM_WEP104 | RTW_SCR_RXSECON;
 
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		if (wk[i].wk_keylen != tx_key_len ||
+		if (wk[i].wk_keylen != keylen ||
 		    wk[i].wk_cipher->ic_cipher != IEEE80211_CIPHER_WEP)
 			continue;
 		/* h/w will decrypt, s/w still strips headers */
@@ -2136,7 +2133,7 @@ rtw_intr(void *arg)
 	 */
 	if ((sc->sc_flags & RTW_F_ENABLED) == 0 ||
 	    (ifp->if_flags & IFF_RUNNING) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
+	    !device_is_active(&sc->sc_dev)) {
 		RTW_DPRINTF(RTW_DEBUG_INTR, ("%s: stray interrupt\n", sc->sc_dev.dv_xname));
 		return (0);
 	}
@@ -2515,6 +2512,10 @@ rtw_enable(struct rtw_softc *sc)
 			return (EIO);
 		}
 		sc->sc_flags |= RTW_F_ENABLED;
+                /* Power may have been removed, and WEP keys thus
+                 * reset.
+		 */
+		sc->sc_flags &= ~RTW_F_DK_VALID;
 	}
 	return (0);
 }
@@ -3321,6 +3322,10 @@ rtw_start(struct ifnet *ifp)
 		if (m0->m_pkthdr.len > ic->ic_rtsthreshold)
 			ctl0 |= RTW_TXCTL0_RTSEN;
 
+                /* XXX Sometimes writes a bogus keyid; h/w doesn't
+                 * seem to care, since we don't activate h/w Tx
+                 * encryption.
+		 */
 		if (k != NULL) {
 			ctl0 |= LSHIFT(k->wk_keyix, RTW_TXCTL0_KEYID_MASK) &
 			    RTW_TXCTL0_KEYID_MASK;

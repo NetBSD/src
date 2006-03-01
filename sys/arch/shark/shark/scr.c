@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.15 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: scr.c,v 1.15.2.1 2006/03/01 09:28:02 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.15 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.15.2.1 2006/03/01 09:28:02 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -712,8 +712,7 @@ int scrprobe(parent, match, aux)
     KERN_DEBUG (scrdebug, SCRPROBE_DEBUG_INFO,("scrprobe: called, name = %s\n",
                                                parent->dv_cfdata->cf_name));
 
-    if (strcmp(parent->dv_cfdata->cf_name, "ofisascr") == 0 &&
-        devices == 0)
+    if (device_is_a(parent, "ofisascr") && devices == 0)
     {
         /* set "devices" to ensure that we respond only once */
         devices++;      
@@ -776,7 +775,7 @@ void scrattach(parent, self, aux)
     struct scr_softc       *sc = (void *)self;
 
     printf("\n");
-    if (!strcmp(parent->dv_cfdata->cf_name, "ofisascr"))
+    if (device_is_a(parent, "ofisascr"))
     {
         KERN_DEBUG (scrdebug, SCRATTACH_DEBUG_INFO,("scrattach: called \n"));
 

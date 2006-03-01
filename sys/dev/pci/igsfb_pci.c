@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.9 2005/12/11 12:22:50 christos Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.9.2.1 2006/03/01 09:28:21 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.9 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.9.2.1 2006/03/01 09:28:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.9 2005/12/11 12:22:50 christos Exp $
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <dev/ic/igsfbreg.h>
 #include <dev/ic/igsfbvar.h>

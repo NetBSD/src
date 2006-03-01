@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.4 2005/12/24 20:27:41 perry Exp $	*/
+/*	$NetBSD: sbp.c,v 1.4.2.1 2006/03/01 09:28:20 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -1704,7 +1704,7 @@ END_DEBUG
 		if(sbp_cmd_status->ill_len)
 			sense->flags |= SSD_ILI;
 
-		bcopy(&sbp_cmd_status->info, &sense->infomation[0], 4);
+		bcopy(&sbp_cmd_status->info, &sense->information[0], 4);
 
 		if (sbp_status->len <= 1)
 			/* XXX not scsi status. shouldn't be happened */ 

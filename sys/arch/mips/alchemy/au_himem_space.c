@@ -1,4 +1,4 @@
-/* $NetBSD: au_himem_space.c,v 1.1.2.2 2006/02/18 15:38:41 yamt Exp $ */
+/* $NetBSD: au_himem_space.c,v 1.1.2.3 2006/03/01 09:27:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.1.2.2 2006/02/18 15:38:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.1.2.3 2006/03/01 09:27:59 yamt Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -280,6 +280,9 @@ au_himem_unmap(void *cookie, bus_space_handle_t bsh, bus_size_t size, int acct)
 
 	s = splhigh();
 
+	/* make sure that any pending writes are flushed */
+	wbflush();
+
 	/*
 	 * we have to get the bus address, so that we can free it in the
 	 * extent manager.  this is the unfortunate thing about using
@@ -373,34 +376,40 @@ au_himem_barrier(void *cookie, bus_space_handle_t bsh, bus_size_t o,
 inline uint8_t
 au_himem_r_1(void *v, bus_space_handle_t h, bus_size_t o)
 {
-
+	wbflush();
 	return (*(volatile uint8_t *)(h + o));
 }
 
 inline uint16_t
 au_himem_r_2(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	uint16_t		val = (*(volatile uint16_t *)(h + o));
+	uint16_t		val;
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
+	wbflush();
+	val = (*(volatile uint16_t *)(h + o));
 	return (c->c_swswap ? bswap16(val) : val);
 }
 
 inline uint32_t
 au_himem_r_4(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	uint32_t		val = (*(volatile uint32_t *)(h + o));
+	uint32_t		val;
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
+	wbflush();
+	val = (*(volatile uint32_t *)(h + o));
 	return (c->c_swswap ? bswap32(val) : val);
 }
 
 inline uint64_t
 au_himem_r_8(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	uint64_t		val = (*(volatile uint64_t *)(h + o));
+	uint64_t		val;
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
+	wbflush();
+	val = (*(volatile uint64_t *)(h + o));
 	return (c->c_swswap ? bswap64(val) : val);
 }
 
@@ -409,6 +418,7 @@ au_himem_w_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t val)
 {
 
 	*(volatile uint8_t *)(h + o) = val;
+	wbflush();
 }
 
 inline void
@@ -417,6 +427,7 @@ au_himem_w_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t val)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	*(volatile uint16_t *)(h + o) = c->c_swswap ? bswap16(val) : val;
+	wbflush();
 }
 
 inline void
@@ -425,6 +436,7 @@ au_himem_w_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t val)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	*(volatile uint32_t *)(h + o) = c->c_swswap ? bswap32(val) : val;
+	wbflush();
 }
 
 inline void
@@ -433,6 +445,7 @@ au_himem_w_8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t val)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	*(volatile uint64_t *)(h + o) = c->c_swswap ? bswap64(val) : val;
+	wbflush();
 }
 
 inline uint16_t
@@ -441,24 +454,30 @@ au_himem_rs_2(void *v, bus_space_handle_t h, bus_size_t o)
 	uint16_t		val = (*(volatile uint16_t *)(h + o));
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
+	wbflush();
+	val = (*(volatile uint16_t *)(h + o));
 	return (c->c_hwswap ? bswap16(val) : val);
 }
 
 inline uint32_t
 au_himem_rs_4(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	uint32_t		val = (*(volatile uint32_t *)(h + o));
+	uint32_t		val;
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
+	wbflush();
+	val = (*(volatile uint32_t *)(h + o));
 	return (c->c_hwswap ? bswap32(val) : val);
 }
 
 inline uint64_t
 au_himem_rs_8(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	uint64_t		val = (*(volatile uint64_t *)(h + o));
+	uint64_t		val;
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
+	wbflush();
+	val = (*(volatile uint64_t *)(h + o));
 	return (c->c_hwswap ? bswap64(val) : val);
 }
 
@@ -468,6 +487,7 @@ au_himem_ws_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t val)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	*(volatile uint16_t *)(h + o) = c->c_hwswap ? bswap16(val) : val;
+	wbflush();
 }
 
 inline void
@@ -476,6 +496,7 @@ au_himem_ws_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t val)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	*(volatile uint32_t *)(h + o) = c->c_hwswap ? bswap32(val) : val;
+	wbflush();
 }
 
 inline void
@@ -484,6 +505,7 @@ au_himem_ws_8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t val)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	*(volatile uint64_t *)(h + o) = c->c_hwswap ? bswap64(val) : val;
+	wbflush();
 }
 
 #define	AU_HIMEM_RM(TYPE,BYTES)						\
@@ -507,7 +529,6 @@ __CONCAT(au_himem_rms_,BYTES)(void *v,					\
 {									\
 									\
 	while (cnt-- > 0) {						\
-		wbflush();						\
 		*dst++ = __CONCAT(au_himem_rs_,BYTES)(v, h, o);		\
 	}								\
 }
@@ -555,7 +576,6 @@ __CONCAT(au_himem_wm_,BYTES)(void *v,					\
 									\
 	while (cnt-- > 0) {						\
 		__CONCAT(au_himem_w_,BYTES)(v, h, o, *src++);		\
-		wbflush();						\
 	}								\
 }
 AU_HIMEM_WM(uint8_t,1)
@@ -572,7 +592,6 @@ __CONCAT(au_himem_wms_,BYTES)(void *v,					\
 									\
 	while (cnt-- > 0) {						\
 		__CONCAT(au_himem_ws_,BYTES)(v, h, o, *src++);		\
-		wbflush();						\
 	}								\
 }
 AU_HIMEM_WMS(uint16_t,2)

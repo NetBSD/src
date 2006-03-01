@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.6 2005/12/14 00:32:29 christos Exp $ */
+/*	$NetBSD: epcom.c,v 1.6.2.1 2006/03/01 09:27:45 yamt Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.6 2005/12/14 00:32:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.6.2.1 2006/03/01 09:27:45 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -188,7 +188,7 @@ struct consdev epcomcons = {
 #define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
+			device_is_active(&(sc)->sc_dev))
 
 #define SET(t, f)	(t) |= (f)
 #define CLR(t, f)	(t) &= ~(f)
@@ -459,7 +459,7 @@ epcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB

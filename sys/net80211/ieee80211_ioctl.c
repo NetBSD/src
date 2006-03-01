@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.26.2.2 2006/02/01 14:52:37 yamt Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.26.2.3 2006/03/01 09:28:47 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.26.2.2 2006/02/01 14:52:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.26.2.3 2006/03/01 09:28:47 yamt Exp $");
 #endif
 
 /*
@@ -2587,9 +2587,7 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 #ifdef COMPAT_20
 	struct ieee80211_ostats ostats;
 #endif /* COMPAT_20 */
-	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	};
+	static const u_int8_t zerobssid[IEEE80211_ADDR_LEN];
 	u_int8_t tmpkey[IEEE80211_WEP_NKID][IEEE80211_KEYBUF_SIZE];
 
 	switch (cmd) {
@@ -2773,26 +2771,12 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		break;
 	case SIOCS80211BSSID:
 		bssid = (struct ieee80211_bssid *)data;
-		if (IEEE80211_ADDR_EQ(bssid->i_bssid, empty_macaddr))
+		IEEE80211_ADDR_COPY(ic->ic_des_bssid, bssid->i_bssid);
+		if (IEEE80211_ADDR_EQ(ic->ic_des_bssid, zerobssid))
 			ic->ic_flags &= ~IEEE80211_F_DESBSSID;
-		else {
+		else
 			ic->ic_flags |= IEEE80211_F_DESBSSID;
-			IEEE80211_ADDR_COPY(ic->ic_des_bssid, bssid->i_bssid);
-		}
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-			break;
-		switch (ic->ic_state) {
-		case IEEE80211_S_INIT:
-		case IEEE80211_S_SCAN:
-			error = ENETRESET;
-			break;
-		default:
-			if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
-			    !IEEE80211_ADDR_EQ(ic->ic_des_bssid,
-			    ic->ic_bss->ni_bssid))
-				error = ENETRESET;
-			break;
-		}
+		error = ENETRESET;
 		break;
 	case SIOCG80211BSSID:
 		bssid = (struct ieee80211_bssid *)data;

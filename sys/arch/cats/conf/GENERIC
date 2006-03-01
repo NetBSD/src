@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98.2.1 2006/02/18 15:38:32 yamt Exp $
+# $NetBSD: GENERIC,v 1.98.2.2 2006/03/01 09:27:45 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -420,7 +420,7 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
 # Serial adapters
