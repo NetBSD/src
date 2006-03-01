@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.15 2006/02/27 16:11:58 gdamore Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.16 2006/03/01 18:53:39 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.15 2006/02/27 16:11:58 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.16 2006/03/01 18:53:39 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,4 +321,89 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type,
 		*sizep = size;
 
 	return (0);
+}
+
+int
+pci_find_rom(struct pci_attach_args *pa, bus_space_tag_t bst,
+    bus_space_handle_t bsh, int type, bus_space_handle_t *romh, bus_size_t *sz)
+{
+	bus_size_t	romsz, offset = 0, imagesz;
+	uint16_t	ptr;
+	int		done = 0;
+
+	if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM,
+	    PCI_MAPREG_TYPE_ROM, NULL, &romsz, NULL))
+		return 1;
+
+	/*
+	 * no upper bound check; i cannot imagine a 4GB ROM, but
+	 * it appears the spec would allow it!
+	 */
+	if (romsz < 1024)
+		return 1;
+
+	while (offset < romsz && !done){
+		struct pci_rom_header	hdr;
+		struct pci_rom		rom;
+
+		hdr.romh_magic = bus_space_read_2(bst, bsh,
+		    offset + offsetof (struct pci_rom_header, romh_magic));
+		hdr.romh_data_ptr = bus_space_read_2(bst, bsh,
+		    offset + offsetof (struct pci_rom_header, romh_data_ptr));
+
+		/* no warning: quite possibly ROM is simply not populated */
+		if (hdr.romh_magic != PCI_ROM_HEADER_MAGIC)
+			return 1;
+
+		ptr = offset + hdr.romh_data_ptr;
+		
+		if (ptr > romsz) {
+			printf("pci_find_rom: rom data ptr out of range\n");
+			return 1;
+		}
+
+		rom.rom_signature = bus_space_read_4(bst, bsh, ptr);
+		rom.rom_vendor = bus_space_read_2(bst, bsh, ptr +
+		    offsetof(struct pci_rom, rom_vendor));
+		rom.rom_product = bus_space_read_2(bst, bsh, ptr +
+		    offsetof(struct pci_rom, rom_product));
+		rom.rom_class = bus_space_read_1(bst, bsh,
+		    ptr + offsetof (struct pci_rom, rom_class));
+		rom.rom_subclass = bus_space_read_1(bst, bsh,
+		    ptr + offsetof (struct pci_rom, rom_subclass));
+		rom.rom_interface = bus_space_read_1(bst, bsh,
+		    ptr + offsetof (struct pci_rom, rom_interface));
+		rom.rom_len = bus_space_read_2(bst, bsh,
+		    ptr + offsetof (struct pci_rom, rom_len));
+		rom.rom_code_type = bus_space_read_1(bst, bsh,
+		    ptr + offsetof (struct pci_rom, rom_code_type));
+		rom.rom_indicator = bus_space_read_1(bst, bsh,
+		    ptr + offsetof (struct pci_rom, rom_indicator));
+
+		if (rom.rom_signature != PCI_ROM_SIGNATURE) {
+			printf("pci_find_rom: bad rom data signature\n");
+			return 1;
+		}
+
+		imagesz = rom.rom_len * 512;
+
+		if ((rom.rom_vendor == PCI_VENDOR(pa->pa_id)) &&
+		    (rom.rom_product == PCI_PRODUCT(pa->pa_id)) &&
+		    (rom.rom_class == PCI_CLASS(pa->pa_class)) &&
+		    (rom.rom_subclass == PCI_SUBCLASS(pa->pa_class)) &&
+		    (rom.rom_interface == PCI_INTERFACE(pa->pa_class)) &&
+		    (rom.rom_code_type == type)) {
+			*sz = imagesz;
+			bus_space_subregion(bst, bsh, offset, imagesz, romh);
+			return 0;
+		}
+		
+		/* last image check */
+		if (rom.rom_indicator & PCI_ROM_INDICATOR_LAST)
+			return 1;
+
+		/* offset by size */
+		offset += imagesz;
+	}
+	return 1;
 }
