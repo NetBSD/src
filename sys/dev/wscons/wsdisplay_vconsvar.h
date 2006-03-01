@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.1.2.2 2006/02/18 15:39:12 yamt Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.1.2.3 2006/03/01 09:28:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -43,6 +43,7 @@ struct vcons_screen {
 	LIST_ENTRY(vcons_screen) next;
 	void *scr_cookie;
 	struct vcons_data *scr_vd;
+	struct vcons_data *scr_origvd;
 	const struct wsscreen_descr *scr_type;
 	uint16_t *scr_chars;
 	long *scr_attrs;
@@ -55,6 +56,7 @@ struct vcons_screen {
 					 * poll the busy flag when switching
 					 * - for drivers that use software
 					 * drawing */
+#define VCONS_DONT_DRAW		8	/* don't draw on this screen at all */
 	/* status flags used by vcons */
 	uint32_t scr_status;
 #define VCONS_IS_VISIBLE	1	/* this screen is currently visible */
@@ -64,11 +66,13 @@ struct vcons_screen {
 
 #define SCREEN_IS_VISIBLE(scr) (((scr)->scr_status & VCONS_IS_VISIBLE) != 0)
 #define SCREEN_IS_BUSY(scr) ((scr)->scr_busy != 0)
+#define SCREEN_CAN_DRAW(scr) (((scr)->scr_flags & VCONS_DONT_DRAW) == 0)
 #define SCREEN_BUSY(scr) ((scr)->scr_busy = 1)
 #define SCREEN_IDLE(scr) ((scr)->scr_busy = 0)
 #define SCREEN_VISIBLE(scr) ((scr)->scr_status |= VCONS_IS_VISIBLE)
 #define SCREEN_INVISIBLE(scr) ((scr)->scr_status &= ~VCONS_IS_VISIBLE)
-
+#define SCREEN_DISABLE_DRAWING(scr) ((scr)->scr_flags |= VCONS_DONT_DRAW)
+#define SCREEN_ENABLE_DRAWING(scr) ((scr)->scr_flags &= ~VCONS_DONT_DRAW)
 struct vcons_data {
 	/* usually the drivers softc */
 	void *cookie;

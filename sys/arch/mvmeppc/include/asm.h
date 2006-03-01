@@ -1,8 +1,8 @@
-/*	$NetBSD: asm.h,v 1.1 2002/02/27 21:02:14 scw Exp $	*/
+/*	$NetBSD: asm.h,v 1.1.48.1 2006/03/01 09:27:59 yamt Exp $	*/
 
 #include <powerpc/asm.h>
 
-#define	HID0_NOOPTI	(1 << 0)	/* No-op D-cache touch instrutions */
+#define	HID0_NOOPTI	(1 << 0)	/* No-op D-cache touch instructions */
 #define	HID0_BTCD	(1 << 1)
 #define	HID0_BHTE	(1 << 2)
 #define	HID0_FBIOB	(1 << 4)	/* Force branch indirect on bus */

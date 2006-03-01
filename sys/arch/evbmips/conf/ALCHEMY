@@ -1,18 +1,18 @@
-#	$NetBSD: ALCHEMY,v 1.7.2.2 2006/02/18 15:38:34 yamt Exp $
+#	$NetBSD: ALCHEMY,v 1.7.2.3 2006/03/01 09:27:46 yamt Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.7.2.2 $"
+#ident 		"ALCHEMY-$Revision: 1.7.2.3 $"
 
 maxusers	32
 
 options 	MIPS32
 options 	NOFPU		# No FPU
 options 	SOFTFLOAT	# emulate FPU insn
-#options	CONSPEED=115200	# YAMON default
+#options 	CONSPEED=115200	# YAMON default
 options 	HZ=512		# for profiling
 
 # CPU support
@@ -22,7 +22,7 @@ options 	ALCHEMY_AU1500
 options 	ALCHEMY_AU1550
 
 # Board support
-options		ALCHEMY_GENERIC
+options 	ALCHEMY_GENERIC
 
 #options 	LOCKDEBUG
 options 	SOSEND_LOAN
@@ -149,13 +149,15 @@ aumac*		at aubus? addr ?
 options 	AUMAC_EVENT_COUNTERS
 
 # MII/PHY support
+acphy*		at mii? phy ?			# AMD/Altima AC101 PHYs
 amhphy*		at mii? phy ?			# AMD 79c901 Ethernet PHYs
 bmtphy*		at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 brgphy*		at mii? phy ?			# Broadcom BCM5400-family PHYs
-sqphy*		at mii? phy ?			# Seeq 80220/80221/80223 PHYs
-acphy*		at mii? phy ?			# AMD/Altima AC101 PHYs
+lxtphy*		at mii? phy ?			# Level One LXT970 PHYs
+nsphyter*	at mii? phy ?			# NS83843 PHYs
+rgephy*		at mii? phy ?			# RealTek 8169S/8110S PHY
 rlphy*		at mii? phy ?			# RealTek 8139/8201L PHYs
-rgephy*		at mii? phy ?			# RealTek 8169 PHYs
+sqphy*		at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 ukphy*		at mii? phy ?			# Catch-all PHYs
 
 # USB
@@ -226,14 +228,8 @@ gpio*	at augpio?
 # On-board devices
 obio*		at mainbus?
 
-aupcmcia*	at obio? addr ?
-pcmcia*		at aupcmcia?
-
 #flash*		at obio? addr ?
 #lcd*		at obio? addr ?
-
-# PCMCIA devices
-wi*		at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 
 # Pseudo-devices
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: geode.c,v 1.3 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: geode.c,v 1.3.2.1 2006/03/01 09:27:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.3 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.3.2.1 2006/03/01 09:27:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,13 +235,15 @@ geode_wdog_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t cba;
 	uint8_t wdsts;
 
-	printf(": AMD Geode SC1100 Watchdog Timer\n");
+	aprint_naive(": Watchdog Timer\n");
+	aprint_normal(": AMD Geode SC1100 Watchdog Timer\n");
 
 	cba = pci_conf_read(pa->pa_pc, pa->pa_tag, SC1100_XBUS_CBA_SCRATCHPAD);
 	sc->sc_iot = pa->pa_iot;
 	if (bus_space_map(sc->sc_iot, (bus_addr_t)cba, SC1100_GCB_SIZE, 0,
 	    &sc->sc_ioh) != 0) {
-		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: unable to map registers\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -258,7 +260,8 @@ geode_wdog_attach(struct device *parent, struct device *self, void *aux)
 	    wdsts));
 
 	if (wdsts & SC1100_WDSTS_WDRST)
-		printf("%s: WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n",
+		aprint_error(
+		    "%s: WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n",
 		    sc->sc_dev.dv_xname);
 
 	/* reset WDOVF by writing 1 to it */
@@ -274,7 +277,7 @@ geode_wdog_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_smw.smw_tickle = geode_wdog_tickle;
 	sc->sc_smw.smw_period = 32;
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		printf("%s: unable to register watchdog with sysmon\n",
+		aprint_error("%s: unable to register watchdog with sysmon\n",
 		    sc->sc_dev.dv_xname);
 
 	/* cancel any pending countdown */

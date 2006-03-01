@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.17.2.1 2006/02/18 15:39:02 yamt Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.17.2.2 2006/03/01 09:28:11 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.17.2.1 2006/02/18 15:39:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.17.2.2 2006/03/01 09:28:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,14 +100,15 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
 
-	printf(": ACPI Lid Switch\n");
+	aprint_naive(": ACPI Lid Switch\n");
+	aprint_normal(": ACPI Lid Switch\n");
 
 	sc->sc_node = aa->aa_node;
 
 	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_LID;
 	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
-		printf("%s: unable to register with sysmon\n",
+		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -115,7 +116,7 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpilid_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
+		aprint_error("%s: unable to register DEVICE NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}

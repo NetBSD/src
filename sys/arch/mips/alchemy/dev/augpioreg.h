@@ -1,4 +1,4 @@
-/* $NetBSD: augpioreg.h,v 1.2.2.2 2006/02/18 15:38:41 yamt Exp $ */
+/* $NetBSD: augpioreg.h,v 1.2.2.3 2006/03/01 09:27:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,22 +36,28 @@
 
 #define	AUGPIO_NPINS			64
 
-/* SYS_GPIO registers -- offset from SYS_BASE */
-#define	AUGPIO_SYS_PINFUNC		0x02C
-#define	AUGPIO_SYS_TRIOUTRD		0x100
-#define	AUGPIO_SYS_TRIOUTCLR		0x100
-#define	AUGPIO_SYS_OUTPUTRD		0x108
-#define	AUGPIO_SYS_OUTPUTSET		0x108
-#define	AUGPIO_SYS_OUTPUTCLR		0x10C
-#define	AUGPIO_SYS_PINSTATERD		0x110
-#define	AUGPIO_SYS_PININPUTEN		0x110
+/*
+ * SYS_GPIO registers -- offset from GPIO_BASE.
+ *
+ * This excludes SYS_PINFUNC, that has to be included in the SYS_BASE
+ * registers -- it is surrounded by other non-GPIO related regs.
+ */
+#define	AUGPIO_TRIOUTRD		0x00
+#define	AUGPIO_TRIOUTCLR	0x00
+#define	AUGPIO_OUTPUTRD		0x08
+#define	AUGPIO_OUTPUTSET	0x08
+#define	AUGPIO_OUTPUTCLR	0x0C
+#define	AUGPIO_PINSTATERD	0x10
+#define	AUGPIO_PININPUTEN	0x10
+#define	AUGPIO_SIZE		0x14
 
 /* GPIO2 registers -- offset from GPIO2_BASE */
-#define	AUGPIO_GPIO2_DIR		0x00
-#define	AUGPIO_GPIO2_OUTPUT		0x08
-#define	AUGPIO_GPIO2_PINSTATE		0x0C
-#define	AUGPIO_GPIO2_INTEN		0x10
-#define	AUGPIO_GPIO2_ENABLE		0x14
+#define	AUGPIO2_DIR		0x00
+#define	AUGPIO2_OUTPUT		0x08
+#define	AUGPIO2_PINSTATE	0x0C
+#define	AUGPIO2_INTEN		0x10
+#define	AUGPIO2_ENABLE		0x14
+#define	AUGPIO2_SIZE		0x18
 
 #define	AUGPIO_GPIO2_ENABLE_CE		0x1
 #define	AUGPIO_GPIO2_ENABLE_MR		0x2

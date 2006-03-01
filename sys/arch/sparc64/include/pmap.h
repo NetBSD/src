@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34.2.2 2006/02/18 15:38:48 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34.2.3 2006/03/01 09:28:03 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -160,8 +160,8 @@ extern struct pmap kernel_pmap_;
 
 #ifdef PMAP_COUNT_DEBUG
 /* diagnostic versions if PMAP_COUNT_DEBUG option is used */
-int pmap_count_res __P((struct pmap *));
-int pmap_count_wired __P((struct pmap *));
+int pmap_count_res(struct pmap *);
+int pmap_count_wired(struct pmap *);
 #define	pmap_resident_count(pm)		pmap_count_res((pm))
 #define	pmap_wired_count(pm)		pmap_count_wired((pm))
 #else
@@ -173,7 +173,7 @@ int pmap_count_wired __P((struct pmap *));
 
 void pmap_activate_pmap(struct pmap *);
 void pmap_update(struct pmap *);
-void pmap_bootstrap __P((u_long, u_long));
+void pmap_bootstrap(u_long, u_long);
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
 #define	PMAP_PREFER(pa, va, sz, td)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT))))
 
@@ -183,16 +183,16 @@ void pmap_bootstrap __P((u_long, u_long));
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 
 /* SPARC specific? */
-int             pmap_dumpsize __P((void));
-int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
-                                 daddr_t));
-int		pmap_pa_exists __P((paddr_t));
-void		switchexit __P((struct lwp *, int));
+int             pmap_dumpsize(void);
+int             pmap_dumpmmu(int (*)(dev_t, daddr_t, caddr_t, size_t),
+                                 daddr_t);
+int		pmap_pa_exists(paddr_t);
+void		switchexit(struct lwp *, int);
 void		pmap_kprotect(vaddr_t, vm_prot_t);
 
 /* SPARC64 specific */
-int	ctx_alloc __P((struct pmap *));
-void	ctx_free __P((struct pmap *));
+int	ctx_alloc(struct pmap *);
+void	ctx_free(struct pmap *);
 
 /* Installed physical memory, as discovered during bootstrap. */
 extern int phys_installed_size;

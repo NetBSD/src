@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.102.2.1 2006/01/15 10:02:36 yamt Exp $ */
+/* $NetBSD: trap.c,v 1.102.2.2 2006/03/01 09:27:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102.2.1 2006/01/15 10:02:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102.2.2 2006/03/01 09:27:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,9 +499,7 @@ do_fault:
 			}
 
 			va = trunc_page((vaddr_t)a0);
-			rv = uvm_fault(map, va,
-			    (a1 == ALPHA_MMCSR_INVALTRANS) ?
-			    VM_FAULT_INVALID : VM_FAULT_PROTECT, ftype);
+			rv = uvm_fault(map, va, 0, ftype);
 
 			/*
 			 * If this was a stack access we keep track of the

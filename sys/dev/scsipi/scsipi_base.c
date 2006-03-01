@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.133 2005/12/24 20:27:52 perry Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.133.2.1 2006/03/01 09:28:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.133 2005/12/24 20:27:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.133.2.1 2006/03/01 09:28:28 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -525,7 +525,7 @@ scsipi_put_xs(struct scsipi_xfer *xs)
 		wakeup(periph);
 	} else {
 		if (periph->periph_switch->psw_start != NULL &&
-		    (periph->periph_dev->dv_flags & DVF_ACTIVE)) {
+		    device_is_active(periph->periph_dev)) {
 			SC_DEBUG(periph, SCSIPI_DB2,
 			    ("calling private start()\n"));
 			(*periph->periph_switch->psw_start)(periph);

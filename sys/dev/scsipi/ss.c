@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.63 2005/12/11 12:23:51 christos Exp $	*/
+/*	$NetBSD: ss.c,v 1.63.2.1 2006/03/01 09:28:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.63 2005/12/11 12:23:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.63.2.1 2006/03/01 09:28:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ ssopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (!ss)
 		return (ENXIO);
 
-	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&ss->sc_dev))
 		return (ENODEV);
 
 	ssmode = SSMODE(dev);
@@ -375,7 +375,7 @@ ssread(dev_t dev, struct uio *uio, int flag)
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error;
 
-	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&ss->sc_dev))
 		return (ENODEV);
 
 	/* if the scanner has not yet been started, do it now */
@@ -409,7 +409,7 @@ ssstrategy(struct buf *bp)
 	/*
 	 * If the device has been made invalid, error out
 	 */
-	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
+	if (!device_is_active(&ss->sc_dev)) {
 		bp->b_flags |= B_ERROR;
 		if (periph->periph_flags & PERIPH_OPEN)
 			bp->b_error = EIO;
@@ -542,7 +542,7 @@ ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	int error = 0;
 	struct scan_io *sio;
 
-	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&ss->sc_dev))
 		return (ENODEV);
 
 	switch (cmd) {

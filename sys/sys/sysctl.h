@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.145.2.2 2006/02/18 15:39:23 yamt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.145.2.3 2006/03/01 09:28:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -809,7 +809,7 @@ struct kinfo_file {
  * CTL_DEBUG definitions
  *
  * Second level identifier specifies which debug variable.
- * Third level identifier specifies which stucture component.
+ * Third level identifier specifies which structure component.
  */
 #define	CTL_DEBUG_NAME		0	/* string: variable name */
 #define	CTL_DEBUG_VALUE		1	/* int: variable value */
@@ -1099,7 +1099,7 @@ MALLOC_DECLARE(M_SYSCTLDATA);
 typedef void *sysctlfn;
 
 __BEGIN_DECLS
-int	sysctl(int *, u_int, void *, size_t *, const void *, size_t);
+int	sysctl(const int *, u_int, void *, size_t *, const void *, size_t);
 int	sysctlbyname(const char *, void *, size_t *, void *, size_t);
 int	sysctlgetmibinfo(const char *, int *, u_int *,
 			 char *, size_t *, struct sysctlnode **, int);

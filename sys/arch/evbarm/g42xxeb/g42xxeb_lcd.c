@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.2 2005/12/11 12:17:08 christos Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.2.2.1 2006/03/01 09:27:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -243,7 +243,7 @@ int
 lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct obio_softc *osc = 
-	    (struct obio_softc *)((struct device *)v)->dv_parent;
+	    (struct obio_softc *) device_parent((struct device *)v);
 	uint16_t reg;
 
 	switch (cmd) {
@@ -270,7 +270,7 @@ lcd_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	struct obio_softc *osc = 
-	    (struct obio_softc *)((struct device *)v)->dv_parent;
+	    (struct obio_softc *) device_parent((struct device *)v);
 	uint16_t reg;
 
 	pxa2x0_lcd_show_screen(v,cookie,waitok,cb,cbarg);

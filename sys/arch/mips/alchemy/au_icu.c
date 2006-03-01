@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.12.2.1 2006/02/18 15:38:41 yamt Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.12.2.2 2006/03/01 09:27:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.12.2.1 2006/02/18 15:38:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.12.2.2 2006/03/01 09:27:59 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -265,6 +265,7 @@ au_intr_establish(int irq, int req, int level, int type,
 			REGVAL(icu_base + IC_CONFIG0_CLEAR) = irq;
 			break;
 		}
+		wbflush();
 
 		/* XXX handle GPIO interrupts - not done at all yet */
 		if (cpu_int & 0x1)
@@ -280,6 +281,8 @@ au_intr_establish(int irq, int req, int level, int type,
 
 		/* And allow the interrupt to interrupt idle */
 		REGVAL(icu_base + IC_WAKEUP_SET) = irq;
+
+		wbflush();
 	}
 	splx(s);
 
@@ -319,6 +322,7 @@ au_intr_disestablish(void *cookie)
 		/* disable with MASK_CLEAR and WAKEUP_CLEAR */
 		REGVAL(icu_base + IC_MASK_CLEAR) = irq;
 		REGVAL(icu_base + IC_WAKEUP_CLEAR) = irq;
+		wbflush();
 	}
 
 	splx(s);
@@ -382,6 +386,7 @@ au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 				if (REGVAL(icu_base + IC_MASK_READ) & irq) {
 					REGVAL(icu_base + IC_MASK_CLEAR) = irq;
 					REGVAL(icu_base + IC_MASK_SET) = irq;
+					wbflush();
 				}
 			}
 		}
@@ -413,8 +418,11 @@ au_intr_enable(int irq)
 
 	s = splhigh();
 	/* only enable the interrupt if we have a handler */
-	if (au_icu_intrtab[irq].intr_refcnt)
+	if (au_icu_intrtab[irq].intr_refcnt) {
 		REGVAL(icu_base + IC_MASK_SET) = mask;
+		REGVAL(icu_base + IC_WAKEUP_SET) = mask;
+		wbflush();
+	}
 	splx(s);
 }
 
@@ -424,13 +432,16 @@ au_intr_disable(int irq)
 	int		s;
 	uint32_t	icu_base, mask;
 
+	if (irq >= NIRQS)
+		panic("au_intr_disable: bogus IRQ %d", irq);
+
 	icu_base = (irq < 32) ? ic0_base : ic1_base;
 	mask = irq & 31;
 	mask = 1 << mask;
 
-	if (irq >= NIRQS)
-		panic("au_intr_disable: bogus IRQ %d", irq);
 	s = splhigh();
 	REGVAL(icu_base + IC_MASK_CLEAR) = mask;
+	REGVAL(icu_base + IC_WAKEUP_CLEAR) = mask;
+	wbflush();
 	splx(s);
 }

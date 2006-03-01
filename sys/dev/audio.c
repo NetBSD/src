@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.199 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: audio.c,v 1.199.2.1 2006/03/01 09:28:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.199 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.199.2.1 2006/03/01 09:28:11 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3534,7 +3534,12 @@ static void
 mixer_remove(struct audio_softc *sc, struct lwp *l)
 {
 	struct mixer_asyncs **pm, *m;
-	struct proc *p = l->l_proc;
+	struct proc *p;
+
+	if (l == NULL)
+		return;
+
+	p = l->l_proc;
 
 	for (pm = &sc->sc_async_mixer; *pm; pm = &(*pm)->next) {
 		if ((*pm)->proc == p) {

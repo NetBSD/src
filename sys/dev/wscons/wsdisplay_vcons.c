@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.3.2.2 2006/02/18 15:39:12 yamt Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.3.2.3 2006/03/01 09:28:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.3.2.2 2006/02/18 15:39:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.3.2.3 2006/03/01 09:28:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 	int cnt, i;
 
 	scr->scr_cookie = vd->cookie;
-	scr->scr_vd = vd;
+	scr->scr_vd = scr->scr_origvd = vd;
 	SCREEN_IDLE(scr);
 	
 	/*
@@ -328,7 +328,7 @@ vcons_redraw_screen(struct vcons_screen *scr)
 	int i, j, offset;
 
 	vcons_lock(scr);
-	if (SCREEN_IS_VISIBLE(scr)) {
+	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 
 		/*
 		 * only clear the screen when RI_FULLCLEAR is set since we're
@@ -474,7 +474,7 @@ vcons_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	vcons_copycols_buffer(cookie, row, srccol, dstcol, ncols);
 
 	vcons_lock(scr);
-	if (SCREEN_IS_VISIBLE(scr)) {
+	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 		scr->scr_vd->copycols(cookie, row, srccol, dstcol, ncols);
 	}
 	vcons_unlock(scr);
@@ -503,7 +503,7 @@ vcons_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 	vcons_erasecols_buffer(cookie, row, startcol, ncols, fillattr);
 
 	vcons_lock(scr);
-	if (SCREEN_IS_VISIBLE(scr)) {
+	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 		scr->scr_vd->erasecols(cookie, row, startcol, ncols, 
 		    fillattr);
 	}
@@ -536,7 +536,7 @@ vcons_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	vcons_copyrows_buffer(cookie, srcrow, dstrow, nrows);
 
 	vcons_lock(scr);
-	if (SCREEN_IS_VISIBLE(scr)) {
+	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 		scr->scr_vd->copyrows(cookie, srcrow, dstrow, nrows);
 	}
 	vcons_unlock(scr);
@@ -567,7 +567,7 @@ vcons_eraserows(void *cookie, int row, int nrows, long fillattr)
 	vcons_eraserows_buffer(cookie, row, nrows, fillattr);
 
 	vcons_lock(scr);
-	if (SCREEN_IS_VISIBLE(scr)) {
+	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 		scr->scr_vd->eraserows(cookie, row, nrows, fillattr);
 	}
 	vcons_unlock(scr);
@@ -597,7 +597,7 @@ vcons_putchar(void *cookie, int row, int col, u_int c, long attr)
 	vcons_putchar_buffer(cookie, row, col, c, attr);
 	
 	vcons_lock(scr);
-	if (SCREEN_IS_VISIBLE(scr)) {
+	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 		scr->scr_vd->putchar(cookie, row, col, c, attr);
 	}
 	vcons_unlock(scr);
@@ -610,7 +610,7 @@ vcons_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 
 	vcons_lock(scr);
-	if (SCREEN_IS_VISIBLE(scr)) {
+	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 		scr->scr_vd->cursor(cookie, on, row, col);
 	} else {
 		scr->scr_ri.ri_crow = row;

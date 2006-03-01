@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6.2.3 2006/02/18 17:22:04 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.2.4 2006/03/01 09:27:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.2.3 2006/02/18 17:22:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.2.4 2006/03/01 09:27:44 yamt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -97,6 +97,7 @@ cpu_rootconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
+	struct device *pdev;
 
 	/*
 	 * We don't ever know the boot device.  But that's because the
@@ -107,8 +108,7 @@ device_register(struct device *dev, void *aux)
 	 * Fetch the MAC address for the built-in Ethernet (we grab it
 	 * from PMON earlier in the boot process).
 	 */
-	if (dev->dv_parent != NULL &&
-	    strcmp(dev->dv_parent->dv_cfdata->cf_name, "pci") == 0) {
+	if ((pdev = device_parent(dev)) != NULL && device_is_a(pdev, "pci")) {
 		struct pci_attach_args *pa = aux;
 
 		if (BUILTIN_ETHERNET_P(pa)) {

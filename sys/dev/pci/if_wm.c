@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.110.2.1 2006/02/18 15:39:08 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.110.2.2 2006/03/01 09:28:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.110.2.1 2006/02/18 15:39:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.110.2.2 2006/03/01 09:28:21 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.110.2.1 2006/02/18 15:39:08 yamt Exp $")
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_wmreg.h>
-#include <dev/pci/if_wmvar.h>
 
 #ifdef WM_DEBUG
 #define	WM_DEBUG_LINK		0x01
@@ -358,7 +357,7 @@ do {									\
 #define	WM_F_HAS_MII		0x01	/* has MII */
 #define	WM_F_EEPROM_HANDSHAKE	0x02	/* requires EEPROM handshake */
 #define	WM_F_EEPROM_SPI		0x04	/* EEPROM is SPI */
-#define	WM_F_EEPROM_MD		0x08	/* EEPROM not present, use MD hook */
+#define	WM_F_EEPROM_INVALID	0x08	/* EEPROM not present (bad checksum) */
 #define	WM_F_IOH_VALID		0x10	/* I/O handle is valid */
 #define	WM_F_BUS64		0x20	/* bus is 64-bit */
 #define	WM_F_PCIX		0x40	/* bus is PCI-X */
@@ -467,9 +466,6 @@ static int	wm_add_rxbuf(struct wm_softc *, int);
 static int	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_validate_eeprom_checksum(struct wm_softc *);
 static void	wm_tick(void *);
-#ifdef __HAVE_WM_READ_EEPROM_HOOK
-extern int	wm_read_eeprom_hook(int, int, u_int16_t *);
-#endif
 
 static void	wm_set_filter(struct wm_softc *);
 
@@ -1081,33 +1077,13 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
  
 	/*
-	 * Validate the EEPROM checksum. If the checksum fails:
-	 *
-	 * If __HAVE_WM_READ_EEPROM_HOOK, we defer to the device-specific
-	 * hook for EEPROM reads. Otherwise we have run out of options,
-	 * so bail.
+	 * Validate the EEPROM checksum. If the checksum fails, flag this for
+	 * later, so we can fail future reads from the EEPROM.
 	 */
-	if (wm_validate_eeprom_checksum(sc)) {
-#ifdef __HAVE_WM_READ_EEPROM_HOOK
-		sc->sc_flags |= WM_F_EEPROM_MD;
-#else
-		aprint_error("%s: EEPROM failed checksum\n",
-		    sc->sc_dev.dv_xname);
-		return;
-#endif
-	}
+	if (wm_validate_eeprom_checksum(sc))
+		sc->sc_flags |= WM_F_EEPROM_INVALID;
 
-	/*
-	 * Read the Ethernet address from the EEPROM.
-	 */
-	if (wm_read_eeprom(sc, EEPROM_OFF_MACADDR,
-	    sizeof(myea) / sizeof(myea[0]), myea)) {
-		aprint_error("%s: unable to read Ethernet address\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	if (sc->sc_flags & WM_F_EEPROM_MD)
+	if (sc->sc_flags & WM_F_EEPROM_INVALID)
 		aprint_verbose("%s: No EEPROM\n", sc->sc_dev.dv_xname);
 	else {
 		if (sc->sc_flags & WM_F_EEPROM_SPI)
@@ -1119,12 +1095,25 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_ee_addrbits, eetype);
 	}
 
-	enaddr[0] = myea[0] & 0xff;
-	enaddr[1] = myea[0] >> 8;
-	enaddr[2] = myea[1] & 0xff;
-	enaddr[3] = myea[1] >> 8;
-	enaddr[4] = myea[2] & 0xff;
-	enaddr[5] = myea[2] >> 8;
+	/*
+	 * Read the Ethernet address from the EEPROM, if not first found
+	 * in device properties.
+	 */
+	if (devprop_get(&sc->sc_dev, "mac-addr",
+	    enaddr, sizeof(enaddr), NULL) != sizeof(enaddr)) {
+		if (wm_read_eeprom(sc, EEPROM_OFF_MACADDR,
+		    sizeof(myea) / sizeof(myea[0]), myea)) {
+			aprint_error("%s: unable to read Ethernet address\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+		enaddr[0] = myea[0] & 0xff;
+		enaddr[1] = myea[0] >> 8;
+		enaddr[2] = myea[1] & 0xff;
+		enaddr[3] = myea[1] >> 8;
+		enaddr[4] = myea[2] & 0xff;
+		enaddr[5] = myea[2] >> 8;
+	}
 
 	/*
 	 * Toggle the LSB of the MAC address on the second port
@@ -1142,21 +1131,30 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * Read the config info from the EEPROM, and set up various
 	 * bits in the control registers based on their contents.
 	 */
-	if (wm_read_eeprom(sc, EEPROM_OFF_CFG1, 1, &cfg1)) {
-		aprint_error("%s: unable to read CFG1 from EEPROM\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-	if (wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &cfg2)) {
-		aprint_error("%s: unable to read CFG2 from EEPROM\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-	if (sc->sc_type >= WM_T_82544) {
-		if (wm_read_eeprom(sc, EEPROM_OFF_SWDPIN, 1, &swdpin)) {
-			aprint_error("%s: unable to read SWDPIN from EEPROM\n",
+	if (devprop_get(&sc->sc_dev, "i82543-cfg1",
+	    &cfg1, sizeof(cfg1), NULL) != sizeof(cfg1)) {
+		if (wm_read_eeprom(sc, EEPROM_OFF_CFG1, 1, &cfg1)) {
+			aprint_error("%s: unable to read CFG1\n",
 			    sc->sc_dev.dv_xname);
 			return;
+		}
+	}
+	if (devprop_get(&sc->sc_dev, "i82543-cfg2",
+	    &cfg2, sizeof(cfg2), NULL) != sizeof(cfg2)) {
+		if (wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &cfg2)) {
+			aprint_error("%s: unable to read CFG2\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	}
+	if (sc->sc_type >= WM_T_82544) {
+		if (devprop_get(&sc->sc_dev, "i82543-swdpin",
+		    &swdpin, sizeof(swdpin), NULL) != sizeof(swdpin)) {
+			if (wm_read_eeprom(sc, EEPROM_OFF_SWDPIN, 1, &swdpin)) {
+				aprint_error("%s: unable to read SWDPIN\n",
+				    sc->sc_dev.dv_xname);
+				return;
+			}
 		}
 	}
 
@@ -3186,15 +3184,11 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 {
 	int rv;
 
-#ifdef __HAVE_WM_READ_EEPROM_HOOK
-	if (sc->sc_flags & WM_F_EEPROM_MD) {
-		rv = wm_read_eeprom_hook(word, wordcnt, data);
-		return (rv);
-	}
-#endif
+	if (sc->sc_flags & WM_F_EEPROM_INVALID)
+		return 1;
 
 	if (wm_acquire_eeprom(sc))
-		return (1);
+		return 1;
 
 	if (sc->sc_flags & WM_F_EEPROM_SPI)
 		rv = wm_read_eeprom_spi(sc, word, wordcnt, data);
@@ -3202,7 +3196,7 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		rv = wm_read_eeprom_uwire(sc, word, wordcnt, data);
 
 	wm_release_eeprom(sc);
-	return (rv);
+	return rv;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.1.2.2 2006/01/15 10:02:48 yamt Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.1.2.3 2006/03/01 09:28:21 yamt Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.1.2.2 2006/01/15 10:02:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.1.2.3 2006/03/01 09:28:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 	    MII_MODEL(ma->mii_id2) != 0)
 		return 0;
 
-	if (strcmp(parent->dv_cfdata->cf_name, "rtk") != 0)
+	if (!device_is_a(parent, "rtk"))
 		return 0;
 
 	/*
@@ -132,7 +132,7 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	int rv;
 
-	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->mii_dev))
 		return ENXIO;
 
 	/*
@@ -309,9 +309,7 @@ rlphy_status(struct mii_softc *sc)
 		 *   can test the 'SPEED10' bit of the MAC's media status
 		 *   register.
 		 */
-		if (strcmp("rtk",
-		    sc->mii_dev.dv_parent->dv_cfdata->cf_name)
-		    == 0) {
+		if (device_is_a(sc->mii_dev.dv_parent, "rtk")) {
 			if (PHY_READ(sc, RTK_MEDIASTAT) & RTK_MEDIASTAT_SPEED10)
 				mii->mii_media_active |= IFM_10_T;
 			else

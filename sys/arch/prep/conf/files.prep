@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.49 2005/12/11 12:18:47 christos Exp $
+#	$NetBSD: files.prep,v 1.49.2.1 2006/03/01 09:28:00 yamt Exp $
 #
 # prep-specific configuration info
 #
@@ -13,6 +13,7 @@ defflag	opt_platform.h	PLATFORM_IBM_6015
 			PLATFORM_IBM_6050
 			PLATFORM_IBM_7248
 			PLATFORM_IBM_7043_140
+			PLATFORM_IBM_7024
 			PLATFORM_MOTOROLA_ULMB60XA
 
 # IBM
@@ -22,6 +23,7 @@ file	arch/prep/prep/ibm_6040.c	platform_ibm_6040
 file	arch/prep/prep/ibm_6050.c	platform_ibm_6050
 file	arch/prep/prep/ibm_7248.c	platform_ibm_7248
 file	arch/prep/prep/ibm_7043_140.c	platform_ibm_7043_140
+file	arch/prep/prep/ibm_7024.c	platform_ibm_7024
 
 # Motorola
 file	arch/prep/prep/mot_machdep.c
@@ -101,6 +103,11 @@ device	pcib: isabus
 attach	pcib at pci
 file	arch/prep/pci/pcib.c		pcib
 
+# PCI-EISA bridges
+device	pceb: eisabus, isabus
+attach	pceb at pci
+file	arch/prep/pci/pceb.c		pceb
+
 # IBM G10 display on ThinkPad 820
 device	gten: wsemuldisplaydev, rasops8
 attach	gten at pci
@@ -150,6 +157,13 @@ attach	fd at fdc
 device	paud { }: audiobus, isadma, ad1848, auconv
 attach	paud at isa with paud_isa
 file	arch/prep/isa/paud_isa.c	paud_isa
+
+#
+# EISA-only drivers
+#
+
+include	"dev/eisa/files.eisa"
+file	arch/prep/eisa/eisa_machdep.c	eisa
 
 # USB drivers
 include "dev/usb/files.usb"

@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.2 2005/12/11 12:17:09 christos Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.2.2.1 2006/03/01 09:27:46 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.2 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.2.2.1 2006/03/01 09:27:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,7 @@ int
 lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct obio_softc *osc = 
-	    (struct obio_softc *)((struct device *)v)->dv_parent;
+	    (struct obio_softc *) device_parent((struct device *)v);
 	uint16_t reg;
 
 	switch (cmd) {
@@ -242,7 +242,7 @@ lcd_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	struct obio_softc *osc = 
-	    (struct obio_softc *)((struct device *)v)->dv_parent;
+	    (struct obio_softc *) device_parent((struct device *)v);
 
 	pxa2x0_lcd_show_screen(v,cookie,waitok,cb,cbarg);
 	

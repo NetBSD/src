@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.4.2.1 2006/02/18 15:38:41 yamt Exp $
+#	$NetBSD: files.alchemy,v 1.4.2.2 2006/03/01 09:27:59 yamt Exp $
 
 defflag opt_alchemy.h		ALCHEMY_AU1000
 				ALCHEMY_AU1100
@@ -13,7 +13,7 @@ file	arch/mips/alchemy/au1550.c		alchemy_au1550
 file	arch/mips/alchemy/au_icu.c
 file	arch/mips/alchemy/au_timer.c
 file	arch/mips/alchemy/au_cpureg_mem.c
-file	arch/mips/alchemy/au_wired_space.c
+#file	arch/mips/alchemy/au_wired_space.c
 file	arch/mips/alchemy/au_himem_space.c
 
 # Alchemy peripheral bus
@@ -58,3 +58,21 @@ file	arch/mips/alchemy/dev/aupci.c		aupci
 device	augpio: gpiobus
 attach	augpio at aubus
 file	arch/mips/alchemy/dev/augpio.c		augpio
+
+# On-chip PSC
+device	aupsc
+attach	aupsc at aubus
+file	arch/mips/alchemy/dev/aupsc.c		aupsc
+
+# On-chip PCMCIA
+#
+# XXX: NOTE: As of Feb. 22, 2006, the aupcmcia bus is not quite
+# functional.  Some cards have CIS misparsed, and there seems to
+# some kind of problem with the IO address mapping.  This is really
+# for development only at this point.  If you do enable this, it will
+# generally be benign in your kernel unless you actually insert
+# a card.  After that, all bets are off!
+#
+device	aupcmcia: pcmciabus
+attach	aupcmcia at aubus
+file	arch/mips/alchemy/dev/aupcmcia.c	aupcmcia

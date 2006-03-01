@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.39 2005/12/11 12:18:58 christos Exp $ */
+/* $NetBSD: sci.c,v 1.39.2.1 2006/03/01 09:28:02 yamt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.39 2005/12/11 12:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.39.2.1 2006/03/01 09:28:02 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -516,7 +516,7 @@ sciparam(struct tty *tp, struct termios *t)
 	int ospeed = t->c_ospeed;
 	int s;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 
 	/* Check requested parameters. */
@@ -656,7 +656,7 @@ sciopen(dev_t dev, int flag, int mode, struct lwp *l)
 	    sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -768,7 +768,7 @@ sciclose(dev_t dev, int flag, int mode, struct lwp *l)
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (0);
 
 	return (0);
@@ -818,7 +818,7 @@ sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int error;
 	int s;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
@@ -1089,7 +1089,7 @@ scisoft(void *arg)
 	struct sci_softc *sc = arg;
 	struct tty *tp;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	{
@@ -1116,7 +1116,7 @@ scisoft(void *arg)
 		if (sc == NULL || !ISSET(sc->sc_hwflags, SCI_HW_DEV_OK))
 			continue;
 
-		if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+		if (!device_is_active(&sc->sc_dev))
 			continue;
 
 		tp = sc->sc_tty;
@@ -1160,7 +1160,7 @@ sciintr(void *arg)
 	u_int cc;
 	u_short ssr;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (0);
 
 	end = sc->sc_ebuf;

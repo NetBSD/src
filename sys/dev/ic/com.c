@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.239.2.1 2006/01/15 10:02:48 yamt Exp $	*/
+/*	$NetBSD: com.c,v 1.239.2.2 2006/03/01 09:28:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.239.2.1 2006/01/15 10:02:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.239.2.2 2006/03/01 09:28:12 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -249,7 +249,7 @@ void	com_kgdb_putc(void *, int);
 #define	COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define	COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			 ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
+			 device_is_active(&(sc)->sc_dev))
 
 #define	BR	BUS_SPACE_BARRIER_READ
 #define	BW	BUS_SPACE_BARRIER_WRITE
@@ -812,7 +812,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB

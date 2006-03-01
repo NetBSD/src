@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.5.2.1 2006/02/18 15:38:54 yamt Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.5.2.2 2006/03/01 09:28:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,15 +67,14 @@ int x86_ndisks;
 static int
 is_valid_disk(struct device *dv)
 {
-	const char *name;
 
-	if (dv->dv_class != DV_DISK)
+	if (device_class(dv) != DV_DISK)
 		return (0);
 	
-	name = dv->dv_cfdata->cf_name;
-
-	return (strcmp(name, "sd") == 0 || strcmp(name, "wd") == 0 ||
-		strcmp(name, "ld") == 0 || strcmp(name, "ed") == 0);
+	return (device_is_a(dv, "sd") ||
+		device_is_a(dv, "wd") ||
+		device_is_a(dv, "ld") ||
+		device_is_a(dv, "ed"));
 }
 
 /*
@@ -135,7 +134,7 @@ matchbiosdisks(void)
 	n = -1;
 	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 	     dv = TAILQ_NEXT(dv, dv_list)) {
-		if (dv->dv_class != DV_DISK)
+		if (device_class(dv) != DV_DISK)
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
@@ -146,7 +145,7 @@ matchbiosdisks(void)
 			/* XXXJRT why not just dv_xname?? */
 			snprintf(x86_alldisks->dl_nativedisks[n].ni_devname,
 			    sizeof(x86_alldisks->dl_nativedisks[n].ni_devname),
-			    "%s%d", dv->dv_cfdata->cf_name, dv->dv_unit);
+			    "%s", dv->dv_xname);
 
 			bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
 			if (bmajor == -1)
@@ -394,7 +393,7 @@ findroot(void)
 			struct cfdata *cd;
 			size_t len;
 
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
 			cd = dv->dv_cfdata;
@@ -419,7 +418,7 @@ findroot(void)
 		 */
 		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 		     dv = TAILQ_NEXT(dv, dv_list)) {
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
 			if (is_valid_disk(dv)) {
@@ -459,10 +458,10 @@ findroot(void)
 		 */
 		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 		     dv = TAILQ_NEXT(dv, dv_list)) {
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
-			if (strcmp(dv->dv_cfdata->cf_name, "fd") == 0) {
+			if (device_is_a(dv, "fd")) {
 				/*
 				 * Assume the configured unit number matches
 				 * the BIOS device number.  (This is the old
@@ -563,7 +562,7 @@ device_register(struct device *dev, void *aux)
 	 *
 	 * For disks, there is nothing useful available at attach time.
 	 */
-	if (dev->dv_class == DV_IFNET) {
+	if (device_class(dev) == DV_IFNET) {
 		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
 		if (bin == NULL)
 			return;
@@ -576,7 +575,7 @@ device_register(struct device *dev, void *aux)
 		 * idenfity the device.
 		 */
 		if (bin->bus == BI_BUS_ISA &&
-		    strcmp(dev->dv_parent->dv_cfdata->cf_name, "isa") == 0) {
+		    device_is_a(device_parent(dev), "isa")) {
 			struct isa_attach_args *iaa = aux;
 
 			/* Compare IO base address */
@@ -587,7 +586,7 @@ device_register(struct device *dev, void *aux)
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
-		    strcmp(dev->dv_parent->dv_cfdata->cf_name, "pci") == 0) {
+		    device_is_a(device_parent(dev), "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
 

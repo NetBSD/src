@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.54 2005/12/24 20:27:52 perry Exp $ */
+/*	$NetBSD: if_xi.c,v 1.54.2.1 2006/03/01 09:28:28 yamt Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.54 2005/12/24 20:27:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.54.2.1 2006/03/01 09:28:28 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -322,7 +322,7 @@ xi_intr(arg)
 	DPRINTF(XID_CONFIG, ("xi_intr()\n"));
 
 	if (sc->sc_enabled == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 	ifp->if_timer = 0;	/* turn watchdog timer off */

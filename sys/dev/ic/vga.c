@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.83 2005/12/11 12:21:29 christos Exp $ */
+/* $NetBSD: vga.c,v 1.83.2.1 2006/03/01 09:28:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.83 2005/12/11 12:21:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.83.2.1 2006/03/01 09:28:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.83 2005/12/11 12:21:29 christos Exp $");
 #include <dev/wsfont/wsfont.h>
 
 #include <dev/ic/pcdisplay.h>
+
+#ifdef __i386__
+#include <arch/i386/bios/vesafbvar.h>
+#endif
 
 int vga_no_builtinfont = 0;
 
@@ -720,6 +724,17 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 int
 vga_is_console(bus_space_tag_t iot, int type)
 {
+#ifdef __i386__
+	struct device *dv;
+	struct vesafb_softc *vesafb;
+
+	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
+		if (strncmp(dv->dv_xname, "vesafb", 6) == 0) {
+			vesafb = (struct vesafb_softc *)dv;
+			if (vesafb->sc_isconsole)
+				return (0);
+		}
+#endif
 	if (vgaconsole &&
 	    !vga_console_attached &&
 	    iot == vga_console_vc.hdl.vh_iot &&

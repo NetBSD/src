@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 2005/12/11 12:19:45 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.76.2.1 2006/03/01 09:28:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2005/12/11 12:19:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76.2.1 2006/03/01 09:28:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -450,7 +450,7 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 	/*
 	 * Unimplemented FPU instructions/datatypes.
 	 */
-	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
+	case T_FPEMULI|T_USER:	/* unimplemented FP instruction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 #ifdef FPU_EMULATE
 		if (fpu_emulate(&frame, &l->l_addr->u_pcb.pcb_fpregs,

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.35.2.1 2006/02/18 15:39:02 yamt Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.35.2.2 2006/03/01 09:28:11 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.35.2.1 2006/02/18 15:39:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.35.2.2 2006/03/01 09:28:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,8 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
-	printf(": ACPI Embedded Controller\n");
+	aprint_naive(": ACPI Embedded Controller\n");
+	aprint_normal(": ACPI Embedded Controller\n");
 
 	lockinit(&sc->sc_lock, PWAIT, "eclock", 0, 0);
 	simple_lock_init(&sc->sc_slock);
@@ -515,12 +516,12 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 		rv = AcpiRemoveAddressSpaceHandler(ACPI_ROOT_OBJECT,
 		    ACPI_ADR_SPACE_EC, EcSpaceHandler);
 		if (ACPI_FAILURE(rv))
-			printf("ERROR: RemoveAddressSpaceHandler: %s\n",
+			aprint_error("ERROR: RemoveAddressSpaceHandler: %s\n",
 			    AcpiFormatException(rv));
 		rv = AcpiRemoveGpeHandler(NULL, ecdt_sc->sc_gpebit,
 		    EcGpeHandler);
 		if (ACPI_FAILURE(rv))
-			printf("ERROR: RemoveAddressSpaceHandler: %s\n",
+			aprint_error("ERROR: RemoveAddressSpaceHandler: %s\n",
 			    AcpiFormatException(rv));
 
 		bus_space_unmap(ecdt_sc->sc_csr_st,
@@ -537,13 +538,13 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_data_st = aa->aa_iot;
 	io0 = acpi_res_io(&res, 0);
 	if (io0 == NULL) {
-		printf("%s: unable to find data register resource\n",
+		aprint_error("%s: unable to find data register resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 	if (bus_space_map(sc->sc_data_st, io0->ar_base, io0->ar_length,
 	    0, &sc->sc_data_sh) != 0) {
-		printf("%s: unable to map data register\n",
+		aprint_error("%s: unable to map data register\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -551,13 +552,13 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_csr_st = aa->aa_iot;
 	io1 = acpi_res_io(&res, 1);
 	if (io1 == NULL) {
-		printf("%s: unable to find csr register resource\n",
+		aprint_error("%s: unable to find csr register resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 	if (bus_space_map(sc->sc_csr_st, io1->ar_base, io1->ar_length,
 	    0, &sc->sc_csr_sh) != 0) {
-		printf("%s: unable to map csr register\n",
+		aprint_error("%s: unable to map csr register\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -569,7 +570,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	rv = acpi_eval_integer(sc->sc_handle, "_GLK", &v);
 	if (ACPI_FAILURE(rv)) {
 		if (rv != AE_NOT_FOUND)
-			printf("%s: unable to evaluate _GLK: %s\n",
+			aprint_error("%s: unable to evaluate _GLK: %s\n",
 			       sc->sc_dev.dv_xname,
 			       AcpiFormatException(rv));
 		sc->sc_glk = 0;
@@ -584,7 +585,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	rv = acpi_eval_integer(sc->sc_handle, "_GPE", &v);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to evaluate _GPE: %s\n",
+		aprint_error("%s: unable to evaluate _GPE: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		goto out;
 	}
@@ -601,21 +602,21 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallGpeHandler(NULL, sc->sc_gpebit,
 	    ACPI_GPE_EDGE_TRIGGERED, EcGpeHandler, sc);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to install GPE handler: %s\n",
+		aprint_error("%s: unable to install GPE handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		goto out;
 	}
 
 	rv = AcpiSetGpeType(NULL, sc->sc_gpebit, ACPI_GPE_TYPE_RUNTIME);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to set GPE type: %s\n",
+		aprint_error("%s: unable to set GPE type: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		goto out2;
 	}
 
 	rv = AcpiEnableGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to enable GPE: %s\n",
+		aprint_error("%s: unable to enable GPE: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		goto out2;
 	}
@@ -624,7 +625,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallAddressSpaceHandler(sc->sc_handle,
 	     ACPI_ADR_SPACE_EC, EcSpaceHandler, EcSpaceSetup, sc);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to install address space handler: %s\n",
+		aprint_error("%s: unable to install address space handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		goto out2;
 	}

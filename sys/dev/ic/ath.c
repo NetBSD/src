@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.66 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: ath.c,v 1.66.2.1 2006/03/01 09:28:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.66 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.66.2.1 2006/03/01 09:28:12 yamt Exp $");
 #endif
 
 /*
@@ -1185,7 +1185,7 @@ ath_start(struct ifnet *ifp)
 			STAILQ_REMOVE_HEAD(&sc->sc_txbuf, bf_list);
 		ATH_TXBUF_UNLOCK(sc);
 		if (bf == NULL) {
-			DPRINTF(sc, ATH_DEBUG_ANY, "%s: out of xmit buffers\n",
+			DPRINTF(sc, ATH_DEBUG_XMIT, "%s: out of xmit buffers\n",
 				__func__);
 			sc->sc_stats.ast_tx_qstop++;
 			ifp->if_flags |= IFF_OACTIVE;
@@ -1201,9 +1201,10 @@ ath_start(struct ifnet *ifp)
 			 * No data frames go out unless we're associated.
 			 */
 			if (ic->ic_state != IEEE80211_S_RUN) {
-				DPRINTF(sc, ATH_DEBUG_ANY,
-					"%s: ignore data packet, state %u\n",
-					__func__, ic->ic_state);
+				DPRINTF(sc, ATH_DEBUG_XMIT,
+				    "%s: discard data packet, state %s\n",
+				    __func__,
+				    ieee80211_state_name[ic->ic_state]);
 				sc->sc_stats.ast_tx_discard++;
 				ATH_TXBUF_LOCK(sc);
 				STAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
@@ -1263,7 +1264,7 @@ ath_start(struct ifnet *ifp)
 			 */
 			m = ieee80211_encap(ic, m, ni);
 			if (m == NULL) {
-				DPRINTF(sc, ATH_DEBUG_ANY,
+				DPRINTF(sc, ATH_DEBUG_XMIT,
 					"%s: encapsulation failure\n",
 					__func__);
 				sc->sc_stats.ast_tx_encap++;

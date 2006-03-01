@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.83.2.2 2006/02/18 15:38:50 yamt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.83.2.3 2006/03/01 09:28:06 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.83.2.2 2006/02/18 15:38:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.83.2.3 2006/03/01 09:28:06 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -273,9 +273,7 @@ kdb_kbd_trap(struct trapframe64 *tf)
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
-kdb_trap(type, tf)
-	int	type;
-	register struct trapframe64 *tf;
+kdb_trap(int type, register struct trapframe64 *tf)
 {
 	int s, tl;
 	struct trapstate *ts = &ddb_regs.ddb_ts[0];
@@ -1144,10 +1142,7 @@ const struct db_command db_machine_command_table[] = {
  * much simpler this way.
  */
 db_addr_t
-db_branch_taken(inst, pc, regs)
-	int inst;
-	db_addr_t pc;
-	db_regs_t *regs;
+db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 {
     union instr insn;
     db_addr_t npc = ddb_regs.ddb_tf.tf_npc;
@@ -1188,8 +1183,7 @@ db_branch_taken(inst, pc, regs)
 }
 
 boolean_t
-db_inst_branch(inst)
-	int inst;
+db_inst_branch(int inst)
 {
     union instr insn;
 
@@ -1214,8 +1208,7 @@ db_inst_branch(inst)
 
 
 boolean_t
-db_inst_call(inst)
-	int inst;
+db_inst_call(int inst)
 {
     union instr insn;
 
@@ -1235,8 +1228,7 @@ db_inst_call(inst)
 
 
 boolean_t
-db_inst_unconditional_flow_transfer(inst)
-	int inst;
+db_inst_unconditional_flow_transfer(int inst)
 {
     union instr insn;
 
@@ -1264,16 +1256,14 @@ db_inst_unconditional_flow_transfer(inst)
 
 
 boolean_t
-db_inst_return(inst)
-	int inst;
+db_inst_return(int inst)
 {
     return (inst == I_JMPLri(I_G0, I_O7, 8) ||		/* ret */
 	    inst == I_JMPLri(I_G0, I_I7, 8));		/* retl */
 }
 
 boolean_t
-db_inst_trap_return(inst)
-	int inst;
+db_inst_trap_return(int inst)
 {
     union instr insn;
 
@@ -1285,8 +1275,7 @@ db_inst_trap_return(inst)
 
 
 int
-db_inst_load(inst)
-	int inst;
+db_inst_load(int inst)
 {
     union instr insn;
 
@@ -1326,8 +1315,7 @@ db_inst_load(inst)
 }
 
 int
-db_inst_store(inst)
-	int inst;
+db_inst_store(int inst)
 {
     union instr insn;
 

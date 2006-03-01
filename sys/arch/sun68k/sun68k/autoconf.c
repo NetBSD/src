@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2005/12/11 12:19:29 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.2.1 2006/03/01 09:28:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2005/12/11 12:19:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.2.1 2006/03/01 09:28:06 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -365,7 +365,7 @@ cpu_rootconf(void)
 		boot_device = (*find)(promname, prom_ctlr, prom_unit);
 	if (boot_device) {
 		devname = boot_device->dv_xname;
-		if (boot_device->dv_class == DV_DISK) {
+		if (device_class(boot_device) == DV_DISK) {
 			boot_partition = prom_part & 7;
 			partname[0] = 'a' + boot_partition;
 			partname[1] = '\0';

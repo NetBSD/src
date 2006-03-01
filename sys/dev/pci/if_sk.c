@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.18.2.1 2006/02/18 15:39:08 yamt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.18.2.2 2006/03/01 09:28:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1619,7 +1619,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sk_name = sc->sk_vpd_prodname;
 		break;
  	default:
-		sc->sk_name = "Unkown Marvell";
+		sc->sk_name = "Unknown Marvell";
 	}
 
 

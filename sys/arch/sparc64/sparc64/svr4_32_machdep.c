@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.21.2.1 2006/02/18 15:38:51 yamt Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.21.2.2 2006/03/01 09:28:06 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.21.2.1 2006/02/18 15:38:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.21.2.2 2006/03/01 09:28:06 yamt Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -81,10 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.21.2.1 2006/02/18 15:38:51 yam
 static void svr4_32_getsiginfo(union svr4_32_siginfo *, int, u_long, caddr_t);
 
 void
-svr4_32_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+svr4_32_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	register struct trapframe64 *tf = l->l_md.md_tf;
 
@@ -133,10 +130,8 @@ svr4_32_printmcontext(const char *fun, struct svr4_32_mcontext *mc)
 #endif
 
 void *
-svr4_32_getmcontext(l, mc, flags)
-	struct lwp *l;
-	struct svr4_32_mcontext *mc;
-	netbsd32_u_long *flags;
+svr4_32_getmcontext(struct lwp *l, struct svr4_32_mcontext *mc,
+	netbsd32_u_long *flags)
 {
 	struct trapframe64 *tf = (struct trapframe64 *)l->l_md.md_tf;
 	svr4_32_greg_t *r = mc->greg;
@@ -228,10 +223,8 @@ svr4_32_getmcontext(l, mc, flags)
  * This is almost like sigreturn() and it shows.
  */
 int
-svr4_32_setmcontext(l, mc, flags)
-	struct lwp *l;
-	struct svr4_32_mcontext *mc;
-	netbsd32_u_long flags;
+svr4_32_setmcontext(struct lwp *l, struct svr4_32_mcontext *mc,
+	netbsd32_u_long flags)
 {
 	register struct trapframe64 *tf;
 	svr4_32_greg_t *r = mc->greg;
@@ -583,9 +576,7 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
 int
-svr4_32_trap(type, l)
-	int	type;
-	struct lwp *l;
+svr4_32_trap(int type, struct lwp *l)
 {
 	int n;
 	struct proc *p = l->l_proc;
@@ -671,10 +662,7 @@ svr4_32_trap(type, l)
 /*
  */
 int
-svr4_32_sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_sysarch_args *uap = v;
 

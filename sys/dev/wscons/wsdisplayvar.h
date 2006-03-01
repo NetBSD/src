@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.34 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.34.2.1 2006/03/01 09:28:41 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_WSCONS_WSDISPLAYVAR_H
+#define _DEV_WSCONS_WSDISPLAYVAR_H
 
 struct device;
 
@@ -266,3 +269,5 @@ const struct wsscreen_descr *
 #    define WSDISPLAY_BORDER_COLOR WSCOL_BLACK
 #  endif
 #endif /* _KERNEL */
+
+#endif /* !_DEV_WSCONS_WSDISPLAYVAR_H */

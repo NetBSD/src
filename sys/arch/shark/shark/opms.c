@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.15 2005/12/11 12:19:05 christos Exp $        */
+/*      $NetBSD: opms.c,v 1.15.2.1 2006/03/01 09:28:02 yamt Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.15 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.15.2.1 2006/03/01 09:28:02 yamt Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -270,9 +270,9 @@ opmsprobe(parent, match, aux)
     ** the console drivers. (We really wish we could be the
     ** child of a real keyboard controller driver.)
     */
-    if ((parent != NULL) &&
-        (!strcmp(parent->dv_cfdata->cf_name, "pc") ||
-         (!strcmp(parent->dv_cfdata->cf_name, "vt"))))
+    if (parent != NULL &&
+        (device_is_a(parent, "pc") ||
+         device_is_a(parent, "vt")))
     {
         /* 
         ** The mouse shares registers with the parent, so

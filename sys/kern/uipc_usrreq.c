@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.86 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.86.2.1 2006/03/01 09:28:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.86 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.86.2.1 2006/03/01 09:28:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,8 +339,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		case SOCK_STREAM:
 #define	rcv (&so2->so_rcv)
 #define	snd (&so->so_snd)
-			if (unp->unp_conn == 0)
-				panic("uipc 3");
+			if (unp->unp_conn == NULL) {
+				error = ENOTCONN;
+				break;
+			}
 			so2 = unp->unp_conn->unp_socket;
 			if (unp->unp_conn->unp_flags & UNP_WANTCRED) {
 				/*

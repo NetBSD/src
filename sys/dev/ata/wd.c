@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.315.2.3 2006/02/05 11:34:49 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.315.2.4 2006/03/01 09:28:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.315.2.3 2006/02/05 11:34:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.315.2.4 2006/03/01 09:28:11 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -883,7 +883,7 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (wd == NULL)
 		return (ENXIO);
 
-	if ((wd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (! device_is_active(&wd->sc_dev))
 		return (ENODEV);
 
 	part = WDPART(dev);

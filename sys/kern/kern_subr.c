@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.123.2.6 2006/02/18 13:34:21 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.123.2.7 2006/03/01 09:28:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.123.2.6 2006/02/18 13:34:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.123.2.7 2006/03/01 09:28:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -772,9 +772,8 @@ int booted_partition;
  * XXX Check for wedge is kinda gross.
  */
 #define	DEV_USES_PARTITIONS(dv)						\
-	((dv)->dv_class == DV_DISK &&					\
-	((dv)->dv_cfdata == NULL ||					\
-	 strcmp((dv)->dv_cfdata->cf_name, "dk") != 0))
+	(device_class((dv)) == DV_DISK &&				\
+	 !device_is_a((dv), "dk"))
 
 void
 setroot(struct device *bootdv, int bootpartition)
@@ -819,7 +818,7 @@ setroot(struct device *bootdv, int bootpartition)
 	vops = vfs_getopsbyname("nfs");
 	if (vops != NULL && vops->vfs_mountroot == mountroot &&
 	    rootspec == NULL &&
-	    (bootdv == NULL || bootdv->dv_class != DV_IFNET)) {
+	    (bootdv == NULL || device_class(bootdv) != DV_IFNET)) {
 		IFNET_FOREACH(ifp) {
 			if ((ifp->if_flags &
 			     (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
@@ -1004,7 +1003,7 @@ setroot(struct device *bootdv, int bootpartition)
 		 * early.
 		 */
 		dv = finddevice(rootspec);
-		if (dv != NULL && dv->dv_class == DV_IFNET) {
+		if (dv != NULL && device_class(dv) == DV_IFNET) {
 			rootdv = dv;
 			goto haveroot;
 		}
@@ -1032,7 +1031,7 @@ setroot(struct device *bootdv, int bootpartition)
 
 	root_device = rootdv;
 
-	switch (rootdv->dv_class) {
+	switch (device_class(rootdv)) {
 	case DV_IFNET:
 		aprint_normal("root on %s", rootdv->dv_xname);
 		break;
@@ -1173,9 +1172,9 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 			if (DEV_USES_PARTITIONS(dv))
 				printf(" %s[a-%c]", dv->dv_xname,
 				    'a' + MAXPARTITIONS - 1);
-			else if (dv->dv_class == DV_DISK)
+			else if (device_class(dv) == DV_DISK)
 				printf(" %s", dv->dv_xname);
-			if (isdump == 0 && dv->dv_class == DV_IFNET)
+			if (isdump == 0 && device_class(dv) == DV_IFNET)
 				printf(" %s", dv->dv_xname);
 		}
 		if (isdump)
@@ -1227,7 +1226,7 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 
 	dv = finddevice(str);
 	if (dv != NULL) {
-		if (dv->dv_class == DV_DISK) {
+		if (device_class(dv) == DV_DISK) {
 #ifdef MEMORY_DISK_HOOKS
  gotdisk:
 #endif
@@ -1240,7 +1239,7 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 				*devp = makedev(majdev, dv->dv_unit);
 		}
 
-		if (dv->dv_class == DV_IFNET)
+		if (device_class(dv) == DV_IFNET)
 			*devp = NODEV;
 	}
 

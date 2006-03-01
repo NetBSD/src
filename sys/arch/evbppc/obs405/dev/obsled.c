@@ -1,4 +1,4 @@
-/*	$NetBSD: obsled.c,v 1.4 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: obsled.c,v 1.4.2.1 2006/03/01 09:27:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.4 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.4.2.1 2006/03/01 09:27:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -186,8 +186,7 @@ obs266_led_set(int led)
 	 * Do you have something better idea?
 	 */
         for (dp = TAILQ_FIRST(dlp); dp != NULL; dp = TAILQ_NEXT(dp, dv_list)) {
-		if (dp->dv_cfdata != NULL
-			&& strcmp(dp->dv_cfdata->cf_name, "obsled") == 0) {
+		if (device_is_a(dp, "obsles")) {
 			struct obsled_softc *sc = (struct obsled_softc *)dp;
 			sc->sc_led_state =
 				(led & (1 << dp->dv_unit)) >> dp->dv_unit;

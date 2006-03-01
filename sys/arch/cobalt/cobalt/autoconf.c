@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2005/12/11 12:17:05 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14.2.1 2006/03/01 09:27:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2005/12/11 12:17:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14.2.1 2006/03/01 09:27:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,12 +77,11 @@ device_register(dev, aux)
 		return;
 
 	if ((booted_device == NULL) && (netboot == 1))
-		if (dev->dv_class == DV_IFNET)
+		if (device_class(dev) == DV_IFNET)
 			booted_device = dev;
 
 	if ((booted_device == NULL) && (netboot == 0)) {
-		if (dev->dv_class == DV_DISK &&
-		    !strcmp(dev->dv_cfdata->cf_name, "wd")) {
+		if (device_class(dev) == DV_DISK && device_is_a(dev, "wd")) {
 			hd_iterate++;
 			if (hd_iterate == bootunit) {
 				booted_device = dev;

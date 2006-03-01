@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.69 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: rd.c,v 1.69.2.1 2006/03/01 09:27:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.69 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.69.2.1 2006/03/01 09:27:53 yamt Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -528,7 +528,7 @@ rdident(struct device *parent, struct rd_softc *sc,
 static void
 rdreset(struct rd_softc *rs)
 {
-	int ctlr = rs->sc_dev.dv_parent->dv_unit;
+	int ctlr = device_parent(&rs->sc_dev)->dv_unit;
 	int slave = rs->sc_slave;
 	u_char stat;
 
@@ -561,7 +561,7 @@ rdreset(struct rd_softc *rs)
 }
 
 /*
- * Read or constuct a disklabel
+ * Read or construct a disklabel
  */
 static int
 rdgetinfo(dev_t dev)
@@ -775,7 +775,7 @@ rdustart(struct rd_softc *rs)
 	bp = BUFQ_PEEK(rs->sc_tab);
 	rs->sc_addr = bp->b_data;
 	rs->sc_resid = bp->b_bcount;
-	if (hpibreq(rs->sc_dev.dv_parent, &rs->sc_hq))
+	if (hpibreq(device_parent(&rs->sc_dev), &rs->sc_hq))
 		rdstart(rs);
 }
 
@@ -787,7 +787,7 @@ rdfinish(struct rd_softc *rs, struct buf *bp)
 	(void)BUFQ_GET(rs->sc_tab);
 	bp->b_resid = 0;
 	biodone(bp);
-	hpibfree(rs->sc_dev.dv_parent, &rs->sc_hq);
+	hpibfree(device_parent(&rs->sc_dev), &rs->sc_hq);
 	if ((bp = BUFQ_PEEK(rs->sc_tab)) != NULL)
 		return (bp);
 	rs->sc_active = 0;
@@ -805,7 +805,7 @@ rdstart(void *arg)
 	struct buf *bp = BUFQ_PEEK(rs->sc_tab);
 	int part, ctlr, slave;
 
-	ctlr = rs->sc_dev.dv_parent->dv_unit;
+	ctlr = device_parent(&rs->sc_dev)->dv_unit;
 	slave = rs->sc_slave;
 
 again:
@@ -871,7 +871,7 @@ again:
 	if (bp) {
 		rs->sc_addr = bp->b_data;
 		rs->sc_resid = bp->b_bcount;
-		if (hpibreq(rs->sc_dev.dv_parent, &rs->sc_hq))
+		if (hpibreq(device_parent(&rs->sc_dev), &rs->sc_hq))
 			goto again;
 	}
 }
@@ -883,7 +883,7 @@ rdgo(void *arg)
 	struct buf *bp = BUFQ_PEEK(rs->sc_tab);
 	int rw, ctlr, slave;
 
-	ctlr = rs->sc_dev.dv_parent->dv_unit;
+	ctlr = device_parent(&rs->sc_dev)->dv_unit;
 	slave = rs->sc_slave;
 
 	rw = bp->b_flags & B_READ;
@@ -907,7 +907,7 @@ rdintr(void *arg)
 	u_char stat = 13;	/* in case hpibrecv fails */
 	int rv, restart, ctlr, slave;
 
-	ctlr = rs->sc_dev.dv_parent->dv_unit;
+	ctlr = device_parent(&rs->sc_dev)->dv_unit;
 	slave = rs->sc_slave;
 
 #ifdef DEBUG
@@ -977,7 +977,7 @@ rdstatus(struct rd_softc *rs)
 	u_char stat;
 	int rv;
 
-	c = rs->sc_dev.dv_parent->dv_unit;
+	c = device_parent(&rs->sc_dev)->dv_unit;
 	s = rs->sc_slave;
 	rs->sc_rsc.c_unit = C_SUNIT(rs->sc_punit);
 	rs->sc_rsc.c_sram = C_SRAM;
@@ -1057,7 +1057,7 @@ rderror(int unit)
 		       rs->sc_dev.dv_xname, rdtimo);
 		rs->sc_stats.rdtimeouts++;
 #endif
-		hpibfree(rs->sc_dev.dv_parent, &rs->sc_hq);
+		hpibfree(device_parent(&rs->sc_dev), &rs->sc_hq);
 		callout_reset(&rs->sc_restart_ch, rdtimo * hz, rdrestart, rs);
 		return(0);
 	}
@@ -1318,7 +1318,7 @@ rddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	    (rs->sc_flags & RDF_ALIVE) == 0)
 		return (ENXIO);
 
-	ctlr = rs->sc_dev.dv_parent->dv_unit;
+	ctlr = device_parent(&rs->sc_dev)->dv_unit;
 	slave = rs->sc_slave;
 
 	/*

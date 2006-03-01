@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.44 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: ct.c,v 1.44.2.1 2006/03/01 09:27:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.44 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.44.2.1 2006/03/01 09:27:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,7 @@ ctreset(struct ct_softc *sc)
 	int ctlr, slave;
 	u_char stat;
 
-	ctlr = sc->sc_dev.dv_parent->dv_unit;
+	ctlr = device_parent(&sc->sc_dev)->dv_unit;
 	slave = sc->sc_slave;
 
 	sc->sc_clear.unit = C_SUNIT(sc->sc_punit);
@@ -374,7 +374,7 @@ ctopen(dev_t dev, int flag, int type, struct lwp *l)
 	if (sc->sc_flags & CTF_OPEN)
 		return (EBUSY);
 
-	ctlr = sc->sc_dev.dv_parent->dv_unit;
+	ctlr = device_parent(&sc->sc_dev)->dv_unit;
 	slave = sc->sc_slave;
 
 	sc->sc_soptc.unit = C_SUNIT(sc->sc_punit);
@@ -513,7 +513,7 @@ ctustart(struct ct_softc *sc)
 	bp = BUFQ_PEEK(sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
-	if (hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq))
+	if (hpibreq(device_parent(&sc->sc_dev), &sc->sc_hq))
 		ctstart(sc);
 }
 
@@ -524,7 +524,7 @@ ctstart(void *arg)
 	struct buf *bp;
 	int i, ctlr, slave;
 
-	ctlr = sc->sc_dev.dv_parent->dv_unit;
+	ctlr = device_parent(&sc->sc_dev)->dv_unit;
 	slave = sc->sc_slave;
 
 	bp = BUFQ_PEEK(sc->sc_tab);
@@ -639,7 +639,7 @@ ctgo(void *arg)
 
 	bp = BUFQ_PEEK(sc->sc_tab);
 	rw = bp->b_flags & B_READ;
-	hpibgo(sc->sc_dev.dv_parent->dv_unit, sc->sc_slave, C_EXEC,
+	hpibgo(device_parent(&sc->sc_dev)->dv_unit, sc->sc_slave, C_EXEC,
 	    sc->sc_addr, sc->sc_resid, rw, rw != 0);
 }
 
@@ -726,7 +726,7 @@ ctintr(void *arg)
 	u_char stat;
 	int ctlr, slave, unit;
 
-	ctlr = sc->sc_dev.dv_parent->dv_unit;
+	ctlr = device_parent(&sc->sc_dev)->dv_unit;
 	slave = sc->sc_slave;
 	unit = sc->sc_dev.dv_unit;
 
@@ -867,7 +867,7 @@ ctdone(struct ct_softc *sc, struct buf *bp)
 
 	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
-	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
+	hpibfree(device_parent(&sc->sc_dev), &sc->sc_hq);
 	if (BUFQ_PEEK(sc->sc_tab) == NULL) {
 		sc->sc_active = 0;
 		return;

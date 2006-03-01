@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.103.2.1 2006/02/18 15:39:18 yamt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.103.2.2 2006/03/01 09:28:46 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.103.2.1 2006/02/18 15:39:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.103.2.2 2006/03/01 09:28:46 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,6 +95,14 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.103.2.1 2006/02/18 15:39:18 yamt
 #include "opt_userconf.h"
 #ifdef USERCONF
 #include <sys/userconf.h>
+#endif
+
+#ifdef __i386__
+#include "opt_splash.h"
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+#include <dev/splash/splash.h>
+extern struct splash_progress *splash_progress_state;
+#endif
 #endif
 
 /*
@@ -798,6 +806,11 @@ config_found_sm_loc(device_t parent,
 {
 	cfdata_t cf;
 
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
+
 	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
 		return(config_attach_loc(parent, cf, locs, aux, print));
 	if (print) {
@@ -805,6 +818,12 @@ config_found_sm_loc(device_t parent,
 			twiddle();
 		aprint_normal("%s", msgs[(*print)(aux, parent->dv_xname)]);
 	}
+
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
+
 	return (NULL);
 }
 
@@ -903,6 +922,11 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	int myunit;
 	char num[10];
 	const struct cfiattrdata *ia;
+
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	KASSERT(cd != NULL);
@@ -1017,7 +1041,15 @@ config_attach_loc(device_t parent, cfdata_t cf,
 #ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
 #endif
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 	(*ca->ca_attach)(parent, dev, aux);
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 	config_process_deferred(&deferred_config_queue, dev);
 	return (dev);
 }
@@ -1505,4 +1537,98 @@ devprop_copy(device_t from, device_t to, int wait)
 {
 
 	return (prop_copy(dev_propdb, from, to, wait));
+}
+
+/*
+ * device_lookup:
+ *
+ *	Look up a device instance for a given driver.
+ */
+void *
+device_lookup(cfdriver_t cd, int unit)
+{
+
+	if (unit < 0 || unit >= cd->cd_ndevs)
+		return (NULL);
+	
+	return (cd->cd_devs[unit]);
+}
+
+/*
+ * Accessor functions for the device_t type.
+ */
+devclass_t
+device_class(device_t dev)
+{
+
+	return (dev->dv_class);
+}
+
+cfdata_t
+device_cfdata(device_t dev)
+{
+
+	return (dev->dv_cfdata);
+}
+
+cfdriver_t
+device_cfdriver(device_t dev)
+{
+
+	return (dev->dv_cfdriver);
+}
+
+cfattach_t
+device_cfattach(device_t dev)
+{
+
+	return (dev->dv_cfattach);
+}
+
+int
+device_unit(device_t dev)
+{
+
+	return (dev->dv_unit);
+}
+
+const char *
+device_xname(device_t dev)
+{
+
+	return (dev->dv_xname);
+}
+
+device_t
+device_parent(device_t dev)
+{
+
+	return (dev->dv_parent);
+}
+
+boolean_t
+device_is_active(device_t dev)
+{
+
+	return ((dev->dv_flags & DVF_ACTIVE) != 0);
+}
+
+int *
+device_locators(device_t dev)
+{
+
+	return (dev->dv_locators);
+}
+
+/*
+ * device_is_a:
+ *
+ *	Returns true if the device is an instance of the specified
+ *	driver.
+ */
+boolean_t
+device_is_a(device_t dev, const char *dname)
+{
+
+	return (strcmp(dev->dv_cfdriver->cd_name, dname) == 0);
 }

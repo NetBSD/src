@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.27.2.1 2006/02/18 15:39:08 yamt Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.27.2.2 2006/03/01 09:28:21 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.27.2.1 2006/02/18 15:39:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.27.2.2 2006/03/01 09:28:21 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -808,7 +808,7 @@ setup_memwins(pciconf_bus_t *pb)
 	for (pm=pb->pcimemwin; pm < &pb->pcimemwin[pb->nmemwin] ; pm++) {
 		if (pm->reg == PCI_MAPREG_ROM && pm->address != -1) {
 			pd = pm->dev;
-			if (!(pd->enable & PCI_CONF_ENABLE_ROM))
+			if (!(pd->enable & PCI_CONF_MAP_ROM))
 				continue;
 			if (pci_conf_debug) {
 				print_tag(pd->pc, pd->tag);
@@ -817,7 +817,10 @@ setup_memwins(pciconf_bus_t *pb)
 				    PRIx64 " (reg %x)\n", pm->size,
 				    pm->address, pm->reg);
 			}
-			base = (pcireg_t) (pm->address | PCI_MAPREG_ROM_ENABLE);
+			base = (pcireg_t) pm->address;
+			if (pd->enable & PCI_CONF_ENABLE_ROM)
+				base |= PCI_MAPREG_ROM_ENABLE;
+
 			pci_conf_write(pd->pc, pd->tag, pm->reg, base);
 		}
 	}

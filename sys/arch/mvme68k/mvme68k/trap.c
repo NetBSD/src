@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.79.2.1 2006/03/01 09:27:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79.2.1 2006/03/01 09:27:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -478,7 +478,7 @@ trap(type, code, v, frame)
 		goto dopanic;
 	}
 
-	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
+	case T_FPEMULI|T_USER:	/* unimplemented FP instruction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 #if defined(M68040) || defined(M68060)
 		/* XXX need to FSAVE */

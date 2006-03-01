@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.103.2.2 2006/02/18 15:39:31 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.103.2.3 2006/03/01 09:28:51 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.103.2.2 2006/02/18 15:39:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.103.2.3 2006/03/01 09:28:51 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1017,7 +1017,7 @@ ReFault:
 
 		/* locked: maps(read), amap (if there), uobj */
 		error = uobj->pgops->pgo_fault(&ufi, startva, pages, npages,
-		    centeridx, fault_type, access_type, PGO_LOCKED|PGO_SYNCIO);
+		    centeridx, access_type, PGO_LOCKED|PGO_SYNCIO);
 
 		/* locked: nothing, pgo_fault has unlocked everything */
 

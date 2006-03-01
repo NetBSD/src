@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.258.2.3 2006/02/18 15:39:18 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.258.2.4 2006/03/01 09:28:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.258.2.3 2006/02/18 15:39:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.258.2.4 2006/03/01 09:28:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2193,12 +2193,12 @@ extern struct simplelock bqueue_slock; /* XXX */
 void
 vfs_shutdown(void)
 {
-	struct lwp *l = curlwp;
-	struct proc *p;
+	struct lwp *l;
 
-	/* XXX we're certainly not running in proc0's context! */
-	if (l == NULL || (p = l->l_proc) == NULL)
-		p = &proc0;
+	/* XXX we're certainly not running in lwp0's context! */
+	l = curlwp;
+	if (l == NULL)
+		l = &lwp0;
 
 	printf("syncing disks... ");
 
@@ -2250,7 +2250,7 @@ vfs_mountroot(void)
 	if (root_device == NULL)
 		panic("vfs_mountroot: root device unknown");
 
-	switch (root_device->dv_class) {
+	switch (device_class(root_device)) {
 	case DV_IFNET:
 		if (rootdev != NODEV)
 			panic("vfs_mountroot: rootdev set for DV_IFNET "
@@ -2303,14 +2303,14 @@ vfs_mountroot(void)
 
 	if (v == NULL) {
 		printf("no file system for %s", root_device->dv_xname);
-		if (root_device->dv_class == DV_DISK)
+		if (device_class(root_device) == DV_DISK)
 			printf(" (dev 0x%x)", rootdev);
 		printf("\n");
 		error = EFTYPE;
 	}
 
 done:
-	if (error && root_device->dv_class == DV_DISK) {
+	if (error && device_class(root_device) == DV_DISK) {
 		VOP_CLOSE(rootvp, FREAD, FSCRED, curlwp);
 		vrele(rootvp);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.31 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: mt.c,v 1.31.2.1 2006/03/01 09:27:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.31 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.31.2.1 2006/03/01 09:27:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,7 +520,7 @@ mtustart(struct mt_softc *sc)
 {
 
 	dlog(LOG_DEBUG, "%s ustart", sc->sc_dev.dv_xname);
-	if (hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq))
+	if (hpibreq(device_parent(&sc->sc_dev), &sc->sc_hq))
 		mtstart(sc);
 }
 
@@ -737,7 +737,7 @@ done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
 	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
-	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
+	hpibfree(device_parent(&sc->sc_dev), &sc->sc_hq);
 	if ((bp = BUFQ_PEEK(sc->sc_tab)) == NULL)
 		sc->sc_active = 0;
 	else
@@ -920,7 +920,7 @@ mtintr(void *arg)
 	bp->b_flags &= ~B_CMD;
 	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
-	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
+	hpibfree(device_parent(&sc->sc_dev), &sc->sc_hq);
 	if (BUFQ_PEEK(sc->sc_tab) == NULL)
 		sc->sc_active = 0;
 	else

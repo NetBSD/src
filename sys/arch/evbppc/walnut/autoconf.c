@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9.2.1 2006/02/18 15:38:35 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9.2.2 2006/03/01 09:27:53 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.1 2006/02/18 15:38:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.2 2006/03/01 09:27:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -93,10 +93,9 @@ cpu_rootconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 
-	if (strcmp(dev->dv_cfdata->cf_name, "com") == 0 &&
-	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
+	if (device_is_a(dev, "com") && device_is_a(parent, "opb")) {
 		/* Set the frequency of the on-chip UART. */
 		int freq = COM_FREQ * 6;
 
@@ -107,16 +106,5 @@ device_register(struct device *dev, void *aux)
 		return;
 	}
 
-	if (strcmp(dev->dv_cfdata->cf_name, "emac") == 0 &&
-	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
-		/* Set the mac-addr of the on-chip Ethernet. */
-		/* XXX 405GP only has one; what about CPUs with two? */
-		if (devprop_set(dev, "mac-addr",
-			     &board_data.mac_address_local,
-			     sizeof(board_data.mac_address_local),
-			     PROP_CONST, 0) != 0)
-			printf("WARNING: unable to set mac-addr "
-			    "property for %s\n", dev->dv_xname);
-		return;
-	}
+	ibm4xx_device_register(dev, aux);
 }

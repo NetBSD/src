@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.141 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: tulip.c,v 1.141.2.1 2006/03/01 09:28:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.141 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.141.2.1 2006/03/01 09:28:13 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -1077,7 +1077,7 @@ tlp_intr(void *arg)
 	 * possibly have come from us.
 	 */
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 	/* Disable interrupts on the DM9102 (interrupt edge bug). */
@@ -3231,7 +3231,7 @@ tlp_mii_tick(void *arg)
 	struct tulip_softc *sc = arg;
 	int s;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();
@@ -5209,7 +5209,7 @@ tlp_2114x_nway_tick(void *arg)
 	struct mii_data *mii = &sc->sc_mii;
 	int s, ticks;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();
@@ -5644,7 +5644,7 @@ tlp_pnic_nway_tick(void *arg)
 	struct tulip_softc *sc = arg;
 	int s;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();

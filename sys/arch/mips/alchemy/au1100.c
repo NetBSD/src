@@ -1,4 +1,4 @@
-/* $NetBSD: au1100.c,v 1.2.2.2 2006/02/18 15:38:41 yamt Exp $ */
+/* $NetBSD: au1100.c,v 1.2.2.3 2006/03/01 09:27:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au1100.c,v 1.2.2.2 2006/02/18 15:38:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au1100.c,v 1.2.2.3 2006/03/01 09:27:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -179,7 +179,7 @@ static struct au_dev au1100_devices[] = {
 	{ "aurtc",	{ },					   { -1, -1 }},
 	{ "aumac",	{ MAC0_BASE, MAC0_ENABLE, MAC0_DMA_BASE }, { 28, -1 }},
 	{ "ohci",	{ USBH_BASE, USBH_ENABLE, USBH_SIZE },	   { 26, -1 }},
-	{ "augpio",	{ SYS_BASE, 32 },			   { -1, -1 }},
+	{ "augpio",	{ GPIO_BASE, 32 },			   { -1, -1 }},
 	{ "augpio",	{ GPIO2_BASE, 16 },			   { -1, -1 }},
 #if 0
 	{ "auaudio",	{ AC97_BASE },				   { 27, 31 }},
@@ -190,8 +190,6 @@ static struct au_dev au1100_devices[] = {
 	{ "ssi",	{ SSI1_BASE },				   {  5, -1 }},
 	{ "usbd",	{ USBD_BASE },				   { 24, 25 }},
 	{ "irda",	{ IRDA_BASE },				   { 22, 23 }},
-	{ "gpio",	{ SYS_BASE },				   { -1, -1 }},
-	{ "gpio",	{ GPIO2_BASE },				   { -1, -1 }},
 	/* XXX: lcd? */
 #endif
 	{ NULL }

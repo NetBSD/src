@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.124.2.1 2006/02/18 15:38:51 yamt Exp $ */
+/*	$NetBSD: trap.c,v 1.124.2.2 2006/03/01 09:28:06 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124.2.1 2006/02/18 15:38:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124.2.2 2006/03/01 09:28:06 yamt Exp $");
 
 #define NEW_FPSTATE
 
@@ -886,8 +886,7 @@ badtrap:
  * window thing entirely.  
  */
 int
-rwindow_save(l)
-	struct lwp *l;
+rwindow_save(struct lwp *l)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct rwindow64 *rw = &pcb->pcb_rw[0];
@@ -979,8 +978,7 @@ rwindow_save(l)
  * the registers into the new process after the exec.
  */
 void
-kill_user_windows(l)
-	struct lwp *l;
+kill_user_windows(struct lwp *l)
 {
 
 	write_user_windows();

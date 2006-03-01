@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.1.2.2 2006/02/18 15:39:02 yamt Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.1.2.3 2006/03/01 09:28:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.1.2.2 2006/02/18 15:39:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.1.2.3 2006/03/01 09:28:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,11 +132,21 @@ linux32_sys_time(l, v, retval)
 	struct linux32_sys_time_args /* {
 		syscallcarg(linux32_timep_t) t;
 	} */ *uap = v;
-	struct linux_sys_time_args ua;
+        struct timeval atv;
+        linux32_time_t tt;
+        int error;
+ 
+        microtime(&atv);
 
-	NETBSD32TOP_UAP(t, linux_time_t);
+        tt = (linux32_time_t)atv.tv_sec;
 
-	return linux_sys_time(l, &ua, retval);
+        if (SCARG(uap, t) && (error = copyout(&tt, 
+	    NETBSD32PTR64(SCARG(uap, t)), sizeof(tt))))
+                return error;
+
+        retval[0] = tt;
+
+        return 0;
 }
 
 

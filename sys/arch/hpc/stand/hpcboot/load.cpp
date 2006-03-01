@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.8.2.1 2006/01/15 10:02:37 yamt Exp $	*/
+/*	$NetBSD: load.cpp,v 1.8.2.2 2006/03/01 09:27:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ void
 Loader::_load_segment_end(void)
 {
 	_opvec_prev->next = ~0; // terminate
-	DPRINTF((TEXT("load link %d zero clear link %d.\n"),
+	DPRINTF((TEXT("load link %d, zero clear link %d\n"),
 	    _nload_link, _n0clr_link));
 }
 

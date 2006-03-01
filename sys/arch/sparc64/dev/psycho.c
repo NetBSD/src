@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.75.2.1 2006/02/18 15:38:48 yamt Exp $	*/
+/*	$NetBSD: psycho.c,v 1.75.2.2 2006/03/01 09:28:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.75.2.1 2006/02/18 15:38:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.75.2.2 2006/03/01 09:28:03 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -508,7 +508,7 @@ found:
 			&sc->sc_regs->power_clr_int);
 		psycho_register_power_button(sc);
 		if (sc->sc_mode != PSYCHO_MODE_SABRE) {
-			/* sabre doesn't have these interrups */
+			/* sabre doesn't have these interrupts */
 			psycho_set_intr(sc, 15, psycho_bus_b,
 					&sc->sc_regs->pciberr_int_map, 
 					&sc->sc_regs->pciberr_clr_int);

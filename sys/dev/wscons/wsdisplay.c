@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.87.2.1 2006/02/18 15:39:12 yamt Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.87.2.2 2006/03/01 09:28:41 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.87.2.1 2006/02/18 15:39:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.87.2.2 2006/03/01 09:28:41 yamt Exp $");
 
 #include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
@@ -211,6 +211,7 @@ int wsdisplay_update_rawkbd(struct wsdisplay_softc *,
 #endif
 
 static int wsdisplay_console_initted;
+static int wsdisplay_console_attached;
 static struct wsdisplay_softc *wsdisplay_console_device;
 static struct wsscreen_internal wsdisplay_console_conf;
 
@@ -530,6 +531,10 @@ wsdisplay_emul_attach(struct device *parent, struct device *self, void *aux)
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)self;
 	struct wsemuldisplaydev_attach_args *ap = aux;
 
+	/* Don't allow more than one console to attach */
+	if (wsdisplay_console_attached && ap->console)
+		ap->console = 0;
+
 	wsdisplay_common_attach(sc, ap->console,
 	     sc->sc_dv.dv_cfdata->wsemuldisplaydevcf_kbdmux, ap->scrdata,
 	     ap->accessops, ap->accesscookie);
@@ -651,6 +656,8 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 		sc->sc_focusidx = 0;
 		sc->sc_focus = sc->sc_scr[0];
 		start = 1;
+
+		wsdisplay_console_attached = 1;
 	}
 	printf("\n");
 

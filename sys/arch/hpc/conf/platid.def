@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.19 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: platid.def,v 1.19.2.1 2006/03/01 09:27:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -80,6 +80,9 @@ ARM {
 	STRONGARM {
 		SA1100
 		SA1110
+	}
+	XSCALE {
+		PXA250
 	}
 }
 #endif /* hpcarm */
@@ -252,6 +255,10 @@ Compaq {
 		CPU=ARM_STRONGARM_SA1110
 		H3600
 		H3660
+	}
+	H39XX {
+		CPU=ARM_XSCALE_PXA250
+		H3900
 	}
   }
 #endif /* hpcarm */

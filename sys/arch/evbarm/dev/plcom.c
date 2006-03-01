@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.13 2005/12/27 00:46:38 chs Exp $	*/
+/*	$NetBSD: plcom.c,v 1.13.2.1 2006/03/01 09:27:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.13 2005/12/27 00:46:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.13.2.1 2006/03/01 09:27:46 yamt Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -265,7 +265,7 @@ void	plcom_kgdb_putc (void *, int);
 #define	PLCOMDIALOUT(x)	(minor(x) & PLCOMDIALOUT_MASK)
 
 #define	PLCOM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			 ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
+				 device_is_active(&(sc)->sc_dev))
 
 #define	BR	BUS_SPACE_BARRIER_READ
 #define	BW	BUS_SPACE_BARRIER_WRITE
@@ -625,7 +625,7 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rbuf == NULL)
 		return ENXIO;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return ENXIO;
 
 #ifdef KGDB

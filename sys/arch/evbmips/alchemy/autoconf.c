@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.9.2.1 2006/02/18 15:38:32 yamt Exp $ */
+/* $NetBSD: autoconf.c,v 1.9.2.2 2006/03/01 09:27:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.1 2006/02/18 15:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.2 2006/03/01 09:27:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,6 @@ cpu_rootconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
-	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_name;
 	struct aubus_attach_args *aa = aux;
 
 	/*
@@ -90,7 +88,7 @@ device_register(struct device *dev, void *aux)
 	 */
 
 	/* Fetch the MAC addresses from YAMON. */
-	if (strcmp(name, "aumac") == 0) {
+	if (device_is_a(dev, "aumac")) {
 		uint8_t ethaddr[ETHER_ADDR_LEN];
 		const char *cp;
 		char *cp0;

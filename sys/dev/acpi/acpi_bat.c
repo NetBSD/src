@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.41.2.1 2006/02/18 15:39:02 yamt Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.41.2.2 2006/03/01 09:28:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.41.2.1 2006/02/18 15:39:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.41.2.2 2006/03/01 09:28:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,8 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
 
-	printf(": ACPI Battery (Control Method)\n");
+	aprint_naive(": ACPI Battery (Control Method)\n");
+	aprint_normal(": ACPI Battery (Control Method)\n");
 
 	sc->sc_node = aa->aa_node;
 	simple_lock_init(&sc->sc_lock);
@@ -271,7 +272,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 				      ACPI_DEVICE_NOTIFY,
 				      acpibat_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
+		aprint_error("%s: unable to register DEVICE NOTIFY handler: %s\n",
 		       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
@@ -281,7 +282,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 				      ACPI_SYSTEM_NOTIFY,
 				      acpibat_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to register SYSTEM NOTIFY handler: %s\n",
+		aprint_error("%s: unable to register SYSTEM NOTIFY handler: %s\n",
 		       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}

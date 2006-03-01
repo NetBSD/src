@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.22 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.22.2.1 2006/03/01 09:28:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.22 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.22.2.1 2006/03/01 09:28:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -147,7 +147,7 @@ filecore_mountroot()
 	int error;
 	struct filecore_args args;
 
-	if (root_device->dv_class != DV_DISK)
+	if (device_class(root_device) != DV_DISK)
 		return (ENODEV);
 
 	/*

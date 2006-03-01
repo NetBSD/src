@@ -1,0 +1,9 @@
+#	$NetBSD: files.hpcapm,v 1.1.2.2 2006/03/01 09:28:12 yamt Exp $
+#	H/PC APM device emulator
+
+include "dev/hpc/apm/files.apm"
+
+define	hpcapmif { }
+device	hpcapm: apmdevif
+attach	hpcapm at hpcapmif
+file	dev/hpc/hpcapm.c	hpcapm

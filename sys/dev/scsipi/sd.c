@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.244 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.244.2.1 2006/03/01 09:28:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.244 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.244.2.1 2006/03/01 09:28:28 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -410,7 +410,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (sd == NULL)
 		return (ENXIO);
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sd->sc_dev))
 		return (ENODEV);
 
 	part = SDPART(dev);
@@ -657,7 +657,7 @@ sdstrategy(struct buf *bp)
 	 * If the device has been made invalid, error out
 	 */
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0 ||
-	    (sd->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
+	    !device_is_active(&sd->sc_dev)) {
 		if (periph->periph_flags & PERIPH_OPEN)
 			bp->b_error = EIO;
 		else
@@ -1444,7 +1444,7 @@ sdsize(dev_t dev)
 	if (sd == NULL)
 		return (-1);
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sd->sc_dev))
 		return (-1);
 
 	part = SDPART(dev);
@@ -1502,7 +1502,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sd->sc_dev))
 		return (ENODEV);
 
 	periph = sd->sc_periph;

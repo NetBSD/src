@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.10 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: platform.h,v 1.10.2.1 2006/03/01 09:28:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ struct platform {
 	const char	*model;
 	int		(*match)(struct platform *);
 	void		(*pci_get_chipset_tag)(pci_chipset_tag_t);
-	void		(*pci_intr_fixup)(int, int, int, int *);
+	void		(*pci_intr_fixup)(int, int, int, int, int *);
 	void		(*init_intr)(void);
 	void		(*cpu_setup)(struct device *);
 	void		(*reset)(void);
@@ -65,7 +65,7 @@ extern const char *obiodevs_nodev[];
 
 int ident_platform(void);
 int platform_generic_match(struct platform *);
-void pci_intr_nofixup(int, int, int, int *);
+void pci_intr_nofixup(int, int, int, int, int *);
 void cpu_setup_unknown(struct device *);
 void reset_unknown(void);
 void reset_prep_generic(void);
@@ -77,6 +77,8 @@ extern struct platform platform_ibm_6040;
 extern struct platform platform_ibm_6050;
 extern struct platform platform_ibm_7248;
 extern struct platform platform_ibm_7043_140;
+extern struct platform platform_ibm_7024_E20;
+extern struct platform platform_ibm_7024_E30;
 
 void cpu_setup_ibm_generic(struct device *);
 

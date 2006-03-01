@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.3.2.2 2006/02/18 15:38:41 yamt Exp $ */
+/* $NetBSD: aupci.c,v 1.3.2.3 2006/03/01 09:27:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.3.2.2 2006/02/18 15:38:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.3.2.3 2006/03/01 09:27:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -152,8 +152,8 @@ aupciattach(struct device *parent, struct device *self, void *aux)
 	struct aubus_attach_args	*aa = (struct aubus_attach_args *)aux;
 	uint32_t			cfg;
 #if NPCI > 0
-	uint32_t			mbar, mask, sz; 
-	bus_addr_t			mstart, mend;
+	uint32_t			mbar, mask;
+	bus_addr_t			mstart;
 	struct pcibus_attach_args	pba;
 #endif
 	
@@ -229,15 +229,13 @@ aupciattach(struct device *parent, struct device *self, void *aux)
 	mask = bus_space_read_4(sc->sc_bust, sc->sc_bush, AUPCI_MWMASK);
 	mask >>= AUPCI_MWMASK_SHIFT;
 	mask <<= AUPCI_MWMASK_SHIFT;
-	sz = 1 + ~mask;
 
 	mbar = bus_space_read_4(sc->sc_bust, sc->sc_bush, AUPCI_MBAR);
-	mstart = mbar + sz;
-	mend = 0xffffffff - mstart;
+	mstart = (mbar & mask) + (~mask + 1);
 
 	sc->sc_memt = &sc->sc_mem_space;
 	au_himem_space_init(sc->sc_memt, "pcimem", sc->sc_membase,
-	    mstart, mend, AU_HIMEM_SPACE_LITTLE_ENDIAN);
+	    mstart, 0xffffffff, AU_HIMEM_SPACE_LITTLE_ENDIAN);
 
 	/*
 	 * IO space.  Address in this bus are orthogonal to other spaces.
@@ -265,7 +263,7 @@ aupciattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_conf_interrupt = aupci_conf_interrupt;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	mem_ex = extent_create("pcimem", mstart, mend,
+	mem_ex = extent_create("pcimem", mstart, 0xffffffff,
 	    M_DEVBUF, NULL, 0, EX_WAITOK);
 
 	io_ex = extent_create("pciio", AUPCI_IO_START, AUPCI_IO_END,

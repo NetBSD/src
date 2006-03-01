@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.102 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.102.2.1 2006/03/01 09:28:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.102 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.102.2.1 2006/03/01 09:28:21 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -4071,7 +4071,7 @@ bge_ioctl(ifp, command, data)
 			    sc->bge_if_flags & IFF_PROMISC) {
 				BGE_CLRBIT(sc, BGE_RX_MODE,
 				    BGE_RXMODE_RX_PROMISC);
-			} else
+			} else if (!(sc->bge_if_flags & IFF_UP))
 				bge_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING) {

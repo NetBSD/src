@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.18 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.18.2.1 2006/03/01 09:27:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -152,6 +152,14 @@ extern platid_t platid_mask_CPU_ARM_STRONGARM_SA1100;
 extern platid_t platid_mask_CPU_ARM_STRONGARM_SA1110;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define GENERIC_ARM_STRONGARM_SA1110 ((int)&platid_mask_CPU_ARM_STRONGARM_SA1110)
+#endif
+extern platid_t platid_mask_CPU_ARM_XSCALE;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_ARM_XSCALE ((int)&platid_mask_CPU_ARM_XSCALE)
+#endif
+extern platid_t platid_mask_CPU_ARM_XSCALE_PXA250;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_ARM_XSCALE_PXA250 ((int)&platid_mask_CPU_ARM_XSCALE_PXA250)
 #endif
 #endif /* hpcarm */
 #ifdef hpcmips
@@ -614,6 +622,14 @@ extern platid_t platid_mask_MACH_COMPAQ_IPAQ_H3600;
 extern platid_t platid_mask_MACH_COMPAQ_IPAQ_H3660;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define COMPAQ_IPAQ_H3660 ((int)&platid_mask_MACH_COMPAQ_IPAQ_H3660)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_IPAQ_H39XX;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_IPAQ_H39XX ((int)&platid_mask_MACH_COMPAQ_IPAQ_H39XX)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_IPAQ_H3900;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_IPAQ_H3900 ((int)&platid_mask_MACH_COMPAQ_IPAQ_H3900)
 #endif
 #endif /* hpcarm */
 #ifdef hpcsh

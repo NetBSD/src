@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.37 2005/12/11 12:22:42 christos Exp $	*/
+/*	$NetBSD: exphy.c,v 1.37.2.1 2006/03/01 09:28:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.37 2005/12/11 12:22:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.37.2.1 2006/03/01 09:28:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ exphymatch(struct device *parent, struct cfdata *match, void *aux)
 	/*
 	 * Make sure the parent is an `ex'.
 	 */
-	if (strcmp(parent->dv_cfdata->cf_name, "ex") != 0)
+	if (!device_is_a(parent, "ex"))
 		return (0);
 
 	return (10);
@@ -165,7 +165,7 @@ exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
-	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->mii_dev))
 		return (ENXIO);
 
 	/*
