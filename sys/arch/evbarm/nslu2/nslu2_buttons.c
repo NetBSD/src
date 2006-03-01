@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_buttons.c,v 1.1 2006/02/28 20:40:33 scw Exp $	*/
+/*	$NetBSD: nslu2_buttons.c,v 1.2 2006/03/01 21:02:50 scw Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_buttons.c,v 1.1 2006/02/28 20:40:33 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_buttons.c,v 1.2 2006/03/01 21:02:50 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,9 @@ struct slugbutt_softc {
 
 static int slugbutt_attached;
 
+#define	SLUGBUTT_PWR_BIT	(1u << GPIO_BUTTON_PWR)
+#define	SLUGBUTT_RST_BIT	(1u << GPIO_BUTTON_RST)
+
 static void
 power_event(void *arg)
 {
@@ -73,8 +76,7 @@ power_intr(void *arg)
 	struct slugbutt_softc *sc = arg;
 	int rv;
 
-	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPISR,
-	    1u << GPIO_BUTTON_PWR);
+	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPISR, SLUGBUTT_PWR_BIT);
 
 	rv = sysmon_task_queue_sched(0, power_event, sc);
 	if (rv) {
@@ -99,8 +101,7 @@ reset_intr(void *arg)
 	struct slugbutt_softc *sc = arg;
 	int rv;
 
-	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPISR,
-	    1u << GPIO_BUTTON_RST);
+	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPISR, SLUGBUTT_RST_BIT);
 
 	rv = sysmon_task_queue_sched(0, reset_event, sc);
 	if (rv) {
@@ -120,7 +121,7 @@ slugbutt_deferred(struct device *self)
 
 	/* Configure the GPIO pins as inputs */
 	reg = GPIO_CONF_READ_4(ixsc, IXP425_GPIO_GPOER);
-	reg |= GPIO_BUTTON_PWR | GPIO_BUTTON_RST;
+	reg |= SLUGBUTT_PWR_BIT | SLUGBUTT_RST_BIT;
 	GPIO_CONF_WRITE_4(ixsc, IXP425_GPIO_GPOER, reg);
 
 	/* Configure the input type: Falling edge */
@@ -135,8 +136,8 @@ slugbutt_deferred(struct device *self)
 	GPIO_CONF_WRITE_4(ixsc, GPIO_TYPE_REG(GPIO_BUTTON_RST), reg);
 
 	/* Clear any existing interrupt */
-	GPIO_CONF_WRITE_4(ixsc, IXP425_GPIO_GPISR, (1u << GPIO_BUTTON_PWR) |
-	    (1u << GPIO_BUTTON_RST));
+	GPIO_CONF_WRITE_4(ixsc, IXP425_GPIO_GPISR, SLUGBUTT_PWR_BIT |
+	    SLUGBUTT_RST_BIT);
 
 	sysmon_task_queue_init();
 
