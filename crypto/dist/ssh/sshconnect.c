@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.33 2006/03/01 15:18:09 is Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.34 2006/03/01 15:39:00 is Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshconnect.c,v 1.171 2005/12/06 22:38:27 reyk Exp $");
-__RCSID("$NetBSD: sshconnect.c,v 1.33 2006/03/01 15:18:09 is Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.34 2006/03/01 15:39:00 is Exp $");
 
 #include <openssl/bn.h>
 
@@ -175,6 +175,7 @@ ssh_create_socket(int privileged, struct addrinfo *ai)
 		default:
 			error("socket: %.100s", strerror(errno));
 		}
+		return -1;
 	}
   
 	/* Bind the socket to an alternative local IP address */
