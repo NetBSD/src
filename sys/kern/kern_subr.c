@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.126 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.127 2006/03/01 22:12:09 cube Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.126 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.127 2006/03/01 22:12:09 cube Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -743,6 +743,7 @@ dopowerhooks(int why)
 
 #ifdef MEMORY_DISK_HOOKS
 static struct device fakemdrootdev[NMD];
+extern struct cfdriver md_cd;
 #endif
 
 #ifdef MEMORY_DISK_IS_ROOT
@@ -798,6 +799,7 @@ setroot(struct device *bootdv, int bootpartition)
 	for (i = 0; i < NMD; i++) {
 		fakemdrootdev[i].dv_class  = DV_DISK;
 		fakemdrootdev[i].dv_cfdata = NULL;
+		fakemdrootdev[i].dv_cfdriver = &md_cd;
 		fakemdrootdev[i].dv_unit   = i;
 		fakemdrootdev[i].dv_parent = NULL;
 		snprintf(fakemdrootdev[i].dv_xname,
