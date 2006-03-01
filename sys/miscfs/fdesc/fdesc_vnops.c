@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.89 2005/12/11 12:24:50 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.90 2006/03/01 12:38:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.89 2005/12/11 12:24:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.90 2006/03/01 12:38:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -698,7 +698,7 @@ fdesc_readdir(v)
 		break;
 	}
 
-	fdp = uio->uio_lwp ? uio->uio_lwp->l_proc->p_fd : NULL;
+	fdp = curproc->p_fd;
 
 	if (uio->uio_resid < UIO_MX)
 		return EINVAL;
@@ -732,8 +732,7 @@ fdesc_readdir(v)
 		    i < nfdesc_targets; ft++, i++) {
 			switch (ft->ft_fileno) {
 			case FD_CTTY:
-				if (uio->uio_lwp == NULL ||
-				    cttyvp(uio->uio_lwp->l_proc) == NULL)
+				if (cttyvp(curproc) == NULL)
 					continue;
 				break;
 

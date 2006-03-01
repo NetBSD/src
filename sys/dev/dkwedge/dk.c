@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.11 2006/01/04 10:13:05 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.12 2006/03/01 12:38:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.11 2006/01/04 10:13:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.12 2006/03/01 12:38:13 yamt Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -588,6 +588,7 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	struct iovec iov;
 	struct dkwedge_softc *sc;
 	struct dkwedge_info dkw;
+	struct vmspace *vm;
 	int error = 0;
 
 	iov.iov_base = dkwl->dkwl_buf;
@@ -597,9 +598,16 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	uio.uio_iovcnt = 1;
 	uio.uio_offset = 0;
 	uio.uio_resid = dkwl->dkwl_bufsize;
-	uio.uio_segflg = l != NULL ? UIO_USERSPACE : UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
-	uio.uio_lwp = l;
+	if (l == NULL) {
+		UIO_SETUP_SYSSPACE(&uio);
+	} else {
+		error = proc_vmspace_getref(l->l_proc, &vm);
+		if (error) {
+			return error;
+		}
+		uio.uio_vmspace = vm;
+	}
 
 	dkwl->dkwl_ncopied = 0;
 
@@ -626,6 +634,10 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	}
 	dkwl->dkwl_nwedges = pdk->dk_nwedges;
 	(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
+
+	if (l != NULL) {
+		uvmspace_free(vm);
+	}
 
 	return (error);
 }

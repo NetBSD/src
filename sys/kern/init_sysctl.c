@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.62 2006/02/04 12:09:50 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.63 2006/03/01 12:38:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.62 2006/02/04 12:09:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63 2006/03/01 12:38:21 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2440,9 +2440,8 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = psstr_addr;
 	auio.uio_resid = sizeof(pss);
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&auio);
 	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
@@ -2472,9 +2471,8 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = sizeof(argv);
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&auio);
 	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
@@ -2494,9 +2492,8 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		auio.uio_offset = argv + len;
 		xlen = PAGE_SIZE - ((argv + len) & PAGE_MASK);
 		auio.uio_resid = xlen;
-		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
-		auio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&auio);
 		error = uvm_io(&vmspace->vm_map, &auio);
 		if (error)
 			goto done;
