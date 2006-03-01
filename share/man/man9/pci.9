@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.20 2006/03/01 23:29:07 wiz Exp $
+.\"     $NetBSD: pci.9,v 1.21 2006/03/01 23:49:57 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -321,7 +321,7 @@ Note that in the current implementation,
 has the same numeric value as
 .Dv PCI_MAPREG_TYPE_MEM .
 .El
-.sp
+.Pp
 The argument
 .Fa tag
 is the PCI tag for the current device attached to PCI chipset
@@ -352,7 +352,7 @@ This type of mapping is only permitted when the value for
 is
 .Dv PCI_MAPREG_ROM .
 .El
-.sp
+.Pp
 The argument
 .Fa busflags
 are bus-space flags passed to
