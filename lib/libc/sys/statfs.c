@@ -1,4 +1,4 @@
-/*	$NetBSD: statfs.c,v 1.2.2.1 2005/04/08 13:38:06 tron Exp $	*/
+/*	$NetBSD: statfs.c,v 1.2.2.2 2006/03/01 17:12:51 riz Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -55,8 +55,6 @@ __warn_references(fhstatfs,
 
 __warn_references(getfsstat,
     "warning: reference to obsolete getfsstat(); use getvfsstat()")
-
-int _getfsstat(struct statfs12 *, long, int);
 
 /*
  * Convert from a new statvfs to an old statfs structure.
@@ -162,7 +160,7 @@ fhstatfs(const fhandle_t *fh, struct statfs12 *ost)
 }
 
 int
-_getfsstat(struct statfs12 *ost, long size, int flags)
+getfsstat(struct statfs12 *ost, long size, int flags)
 {
 	struct statvfs *nst;
 	int ret, i;
@@ -183,10 +181,4 @@ done:
 	if (nst)
 		free(nst);
 	return ret;
-}
-
-int
-getfsstat(struct statfs12 *ost, long size, int flags)
-{
-	return _getfsstat(ost, size, flags);
 }
