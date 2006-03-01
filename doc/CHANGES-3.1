@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.42 2006/03/01 04:04:00 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.43 2006/03/01 17:17:38 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -852,4 +852,21 @@ usr.sbin/etcupdate/etcupdate			1.26-1.27
 
 	Pass BUILD=1 in make environment.
 	[apb, ticket #1185]
+
+xfree/xc/programs/Xserver/hw/xfree86/drivers/i810/i830_driver.c 1.5
+
+	Apply patch by David Dawes, member of the XFree86 project, which allows
+	to use screen resolution larger than 640x480 with i830 chipsets.
+	This fixes PR xsrc/32939 by Louis Guillaume.
+	[tron, ticket #1186]
+
+lib/libc/gen/__getmntinfo13.c			1.2
+lib/libc/gen/getmntinfo.c			1.15
+lib/libc/sys/statfs.c				1.4
+
+	getmntinfo() is a compatibility function, so there is no point in
+	hiding references to the compatibility getfsstat()
+	The real problem behind PR lib/29919 was a stale weak_alias, so back
+	out the workaround.
+	[drochner, ticket #1187]
 
