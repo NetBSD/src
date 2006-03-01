@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.41 2006/02/26 21:58:25 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.42 2006/03/01 04:04:00 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -831,4 +831,25 @@ sys/dev/pci/twe.c				1.74
 
 	Fix memory leak in the TWEIO_GET_PARAM ioctl.
 	[simonb, ticket #1182]
+
+gnu/dist/diffutils/src/sdiff.c			1.2
+
+	Merge the check_child_status function from diffutils-2.8.7.
+	The rest of the gnu/dist/diffutils tree remains at version 2.8.1.
+	[apb, ticket #1183]
+
+usr.sbin/etcupdate/etcupdate			1.23-1.25,1.28
+usr.sbin/etcupdate/etcupdate.8			1.11
+
+	Give etcupdate the ability to use etc.tgz and xetc.tgz.
+	* Expand the "-s" flag to -s {srcdir|tgzfile|tempdir}.
+	* Deprecate the "-b" flag.  It is replaced by "-s tempdir".
+	* Change "-s srcdir" to refer to the top of the source tree (e.g.
+  	/usr/src) instead of the etc subdirectory.
+	[apb, ticket #1184]
+
+usr.sbin/etcupdate/etcupdate			1.26-1.27
+
+	Pass BUILD=1 in make environment.
+	[apb, ticket #1185]
 
