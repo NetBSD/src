@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.4.2.2 2006/02/18 15:39:18 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.4.2.3 2006/03/01 09:34:56 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.4.2.2 2006/02/18 15:39:18 yamt Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.4.2.3 2006/03/01 09:34:56 yamt Exp $");
 #endif /* not lint */
 
 
@@ -2401,7 +2401,7 @@ udf_read_fid_stream(struct vnode *vp, uint64_t *offset,
 	dir_uio.uio_rw     = UIO_READ;	/* read into this space */
 	dir_uio.uio_iovcnt = 1;
 	dir_uio.uio_iov    = &dir_iovec;
-	dir_uio.uio_segflg = UIO_SYSSPACE;
+	UIO_SETUP_SYSSPACE(&dir_uio);
 	dir_iovec.iov_base = fid;
 	dir_iovec.iov_len  = lb_size;
 	dir_uio.uio_offset = *offset;
