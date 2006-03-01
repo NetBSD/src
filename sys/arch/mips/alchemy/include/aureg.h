@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.14 2006/02/24 14:34:31 shige Exp $ */
+/* $NetBSD: aureg.h,v 1.15 2006/03/01 18:35:28 shige Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -135,10 +135,10 @@
 /*************   Programable Serial Controller registers   **************/
 /************************************************************************/
 
-#define	PSC0_BASE		0x011A0000
-#define	PSC1_BASE		0x011B0000
-#define	PSC2_BASE		0x010A0000
-#define	PSC3_BASE		0x010B0000
+#define	PSC0_BASE		0x11A00000
+#define	PSC1_BASE		0x11B00000
+#define	PSC2_BASE		0x10A00000
+#define	PSC3_BASE		0x10B00000
 
 
 /************************************************************************/
