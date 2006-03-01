@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.123 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.124 2006/03/01 15:30:12 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.123 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.124 2006/03/01 15:30:12 rpaulo Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2421,7 +2421,8 @@ nfsrv_getstream(slp, waitflag)
 				slp->ns_flag |= SLP_LASTFRAG;
 			else
 				slp->ns_flag &= ~SLP_LASTFRAG;
-			if (slp->ns_reclen > NFS_MAXPACKET) {
+			if (slp->ns_reclen > NFS_MAXPACKET
+			    || slp->ns_reclen <= 0) {
 				error = EPERM;
 				break;
 			}
