@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.768 2006/02/28 20:57:14 gdamore Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.769 2006/03/01 22:23:21 dogcow Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.768 2006/02/28 20:56:52 gdamore Exp
+ *	NetBSD: pcidevs,v 1.769 2006/03/01 22:22:36 dogcow Exp
  */
 
 /*
@@ -7772,6 +7772,14 @@ static const struct pci_product pci_products[] = {
 	    "RIVA TNT2 Model 64",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_NET1,
+	    "MCP04 Ethernet",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_NET2,
+	    "MCP04 Ethernet",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800U,
 	    "GeForce 6800 Ultra",
 	},
@@ -7808,7 +7816,11 @@ static const struct pci_product pci_products[] = {
 	    "nForce4 Serial ATA 2",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_NET,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_NET1,
+	    "nForce4 Ethernet",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_NET2,
 	    "nForce4 Ethernet",
 	},
 	{
@@ -7888,6 +7900,10 @@ static const struct pci_product pci_products[] = {
 	    "nForce2 Ultra 400 ATA133 IDE",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_NET2,
+	    "nforce3 Ethernet #2",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_OHCI,
 	    "nForce2 Ultra 400 USB Host Controller",
 	},
@@ -7902,6 +7918,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_PPB,
 	    "nForce2 Ultra 400 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_NET3,
+	    "nforce3 Ethernet #3",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA,
@@ -7924,6 +7944,10 @@ static const struct pci_product pci_products[] = {
 	    "nForce3 ATA133 IDE",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_NET1,
+	    "nForce3 Ethernet",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_OHCI,
 	    "nForce3 USB Host Controller",
 	},
@@ -7938,6 +7962,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PPB,
 	    "nForce3 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_NET4,
+	    "nForce3 ethernet #4",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB,
@@ -7962,6 +7990,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA,
 	    "nForce3 250 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_NET5,
+	    "nForce3 ethernet #5",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_OHCI,
@@ -8088,6 +8120,10 @@ static const struct pci_product pci_products[] = {
 	    "nForce ATA100 IDE",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_NET,
+	    "nForce Ethetnet",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCHB,
 	    "nForce2 Host-PCI Bridge",
 	},
@@ -8180,7 +8216,11 @@ static const struct pci_product pci_products[] = {
 	    "nForce430 Serial SATA Controller 2",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_NET,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_NET1,
+	    "nForce430 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_NET2,
 	    "nForce430 Gigabit Ethernet Controller",
 	},
 	{
@@ -8286,6 +8326,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5700_LE,
 	    "GeForce FX 5700 LE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_NET1,
+	    "MCP55 Ethernet",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_NET2,
+	    "MCP55 Ethernet",
 	},
 	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
@@ -10788,4 +10836,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2113;
+const int pci_nproducts = 2125;
