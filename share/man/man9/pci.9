@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.17 2006/02/27 16:19:23 gdamore Exp $
+.\"     $NetBSD: pci.9,v 1.18 2006/03/01 21:40:17 gdamore Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,6 +100,10 @@
 .Ft int
 .Fn pci_mapreg_info "pci_chipset_tag_t pc" "pcitag_t tag" "int reg" \
 "pcireg_t type" "bus_addr_t *basep" "bus_size_t *sizep" "int *flagsp"
+.Ft int
+.Fn pci_find_rom "struct pci_attach_args *pa" \
+"bus_space_tag_t bst" "bus_space_handle_t bsh" "int code" \
+"bus_space_handle_t *handlep" "bus_space_size_t *sizep"
 .Ft int
 .Fn pci_intr_map "struct pci_attach_args *pa" "pci_intr_handle_t *ih"
 .Ft const char *
@@ -391,6 +395,37 @@ space and deferring the mapping to a later time, such as in a
 bus-independent attachment routine.
 .Fa pci_mapreg_info
 returns zero on success and non-zero on failure.
+.It Fn pci_find_rom "pa" "bst" "bsh" "code" "handlep" "sizep"
+Locates a suitable ROM image within a PCI expansion ROM previously mapped with
+.Fn pci_mapreg_map
+and creates a subregion for it with
+.Fn bus_space_subregion .
+The 
+.Fa bst
+and
+.Fa bsh
+are the bus tag and handle obtained with the prior call to
+.Fn pci_mapreg_map .
+Valid values for the image type
+.Fa code
+are:
+.Bl -tag -width compact
+.It PCI_ROM_CODE_TYPE_X86
+Find a ROM image containing i386 executable code for use by PC BIOS.
+.It PCI_ROM_CODE_TYPE_OFW
+Find a ROM image conaining Forth code for use by Open Firmware. 
+.It PCI_ROM_CODE_TYPE_HPPA
+Find a ROM image containing HP PA/RISC executable code.
+.El
+.sp
+The created subregion will cover the entire selected ROM image, including
+header data.
+The handle to this subregion is returned in
+.Fa handlep .
+The size of the image (and the corresponding subregion) is returned in
+.Fa sizep .
+This function can only be used with expansion ROMs located at the
+PCI_MAPREG_ROM base address register (BAR).
 .It Fn pci_intr_map "pa" "ih"
 See
 .Xr pci_intr 9 .
