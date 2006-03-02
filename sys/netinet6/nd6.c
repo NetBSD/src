@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.96 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: nd6.c,v 1.97 2006/03/02 05:11:31 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.96 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.97 2006/03/02 05:11:31 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -425,13 +425,7 @@ nd6_llinfo_timer(arg)
 	ln = (struct llinfo_nd6 *)arg;
 
 	if (ln->ln_ntick > 0) {
-		if (ln->ln_ntick > INT_MAX) {
-			ln->ln_ntick -= INT_MAX;
-			nd6_llinfo_settimer(ln, INT_MAX);
-		} else {
-			ln->ln_ntick = 0;
-			nd6_llinfo_settimer(ln, ln->ln_ntick);
-		}
+		nd6_llinfo_settimer(ln, ln->ln_ntick);
 		splx(s);
 		return;
 	}
