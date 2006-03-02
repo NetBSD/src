@@ -62,9 +62,9 @@ Tenth Edition     |                      |
    |                    |                  4.4BSD            |
    |                    |                    / |             |
    |                    |   4.4BSD-Encumbered  |             |
-   |                 NetBSD 0.8                |           BSD/386 1.0
-   |                    |                      |             |
-FreeBSD 1.0          NetBSD 0.9                |           BSD/386 1.1
+   |               - NetBSD 0.8                |           BSD/386 1.0
+   |              /     |                      |             |
+FreeBSD 1.0 <----'   NetBSD 0.9                |           BSD/386 1.1
    |                    |           .----- 4.4BSD Lite       |
 FreeBSD 1.1             |          /   /       |     \       |
    |                    |         /   /        |      \      |
