@@ -1,11 +1,11 @@
-.\"	$NetBSD: pppstats.8,v 1.2 2005/02/20 10:47:18 cube Exp $
+.\"	$NetBSD: pppstats.8,v 1.3 2006/03/02 17:32:28 christos Exp $
 .\"
 .\"	@(#) Id: pppstats.8,v 1.4 2004/11/13 12:22:49 paulus Exp
-.TH PPPSTATS 8 "26 June 1995"
+.TH PPPSTATS 8 "2 March 2006"
 .SH NAME
-pppstats \- print PPP statistics
+pppstats, slstats \- print PPP/SLIP statistics
 .SH SYNOPSIS
-.B pppstats
+.B pppstats, slstats
 [
 .B \-a
 ] [
@@ -27,9 +27,14 @@ pppstats \- print PPP statistics
 .SH DESCRIPTION
 The
 .B pppstats
-utility reports PPP\-related statistics at regular intervals for the
-specified PPP interface.  If the interface is unspecified, it will
-default to ppp0.
+or
+.B slstats
+utility reports PPP or SLIP related statistics at regular intervals for the
+specified PPP/SLIP interface.  If the interface is unspecified, 
+.B pppstats
+will default to ppp0 and
+.B slstats
+will default to sl0.
 The display is split horizontally
 into input and output sections containing columns of statistics
 describing the properties and volume of packets received and
@@ -176,7 +181,10 @@ When the
 option is specified,
 .B pppstats
 instead displays the following fields, relating to the packet
-compression algorithm currently in use.  If packet compression is not
+compression algorithm currently in use.  This option is not supported
+by
+.B slstats
+and it always displays zeros.  If packet compression is not
 in use, these fields will all display zeroes.  The fields displayed on
 the input side are:
 .TP
@@ -216,4 +224,5 @@ The number of incompressible packets transmitted.
 .B COMP RATIO
 The recent compression ratio for outgoing packets.
 .SH SEE ALSO
-pppd(8)
+pppd(8),
+slattach(8)
