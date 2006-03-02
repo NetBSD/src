@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.8 2005/12/11 12:21:15 christos Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.9 2006/03/02 01:24:00 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.8 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.9 2006/03/02 01:24:00 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -195,10 +195,12 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	 */
 	ath_attach(PCI_PRODUCT(ca->ca_id), sc);
 
+#ifdef ath_powerdown
 	/*
 	 * Power down the socket.
 	 */
 	Cardbus_function_disable(csc->sc_ct);
+#endif /* ath_powerdown */
 }
 
 int
@@ -281,8 +283,10 @@ ath_cardbus_disable(struct ath_softc *sc)
 	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
 	csc->sc_ih = NULL;
 
+#ifdef ath_powerdown
 	/* Power down the socket. */
 	Cardbus_function_disable(ct);
+#endif /* ath_powerdown */
 }
 
 void
