@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.858 2006/02/25 17:44:50 christos Exp $
+# $NetBSD: mi,v 1.859 2006/03/02 04:31:40 dyoung Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -917,9 +917,9 @@
 ./usr/share/man/cat4/i386/pcvt.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/pms.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/pnpbios.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/sony.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/speaker.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/spic.0		man-sys-catman		.cat
-./usr/share/man/cat4/i386/sony.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/vald.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i4b.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i4bctl.0			man-obsolete		obsolete
@@ -1168,8 +1168,8 @@
 ./usr/share/man/cat4/rtfps.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rtii.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rtk.0			man-sys-catman		.cat
-./usr/share/man/cat4/rtw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rtpphy.0			man-obsolete		obsolete
+./usr/share/man/cat4/rtw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/satalink.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sbp.0			man-sys-catman		.cat
@@ -1449,8 +1449,8 @@
 ./usr/share/man/cat4/x68k/pow.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/vs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbox.0			man-sys-catman		.cat
-./usr/share/man/cat4/xi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xge.0			man-sys-catman		.cat
+./usr/share/man/cat4/xi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/yds.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ym.0			man-sys-catman		.cat
 ./usr/share/man/cat4/zero.0			man-sys-catman		.cat
@@ -1523,7 +1523,6 @@
 ./usr/share/man/cat5/ippool.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat5/ipsec.conf.0		man-netutil-catman	.cat
 ./usr/share/man/cat5/ipsend.0			man-ipf-catman		ipfilter,.cat
-./usr/share/man/cat5/targets.0			man-iscsi-catman	.cat
 ./usr/share/man/cat5/isdnd.acct.0		man-isdn-catman		.cat
 ./usr/share/man/cat5/isdnd.rates.0		man-isdn-catman		.cat
 ./usr/share/man/cat5/isdnd.rc.0			man-isdn-catman		.cat
@@ -1600,6 +1599,7 @@
 ./usr/share/man/cat5/sshd_config.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/stab.0			man-sys-catman		.cat
 ./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman	.cat
+./usr/share/man/cat5/targets.0			man-iscsi-catman	.cat
 ./usr/share/man/cat5/termcap.0			man-sys-catman		.cat
 ./usr/share/man/cat5/texinfo.0			man-texinfo-catman	.cat
 ./usr/share/man/cat5/transport.0		man-postfix-catman	postfix,.cat
@@ -1832,8 +1832,8 @@
 ./usr/share/man/cat8/hp700/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hp700/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hpcarm/MAKEDEV.0		man-obsolete		obsolete
-./usr/share/man/cat8/hpcarm/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hpcarm/boot.0		man-sys-catman		.cat
+./usr/share/man/cat8/hpcarm/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hpcboot.0			man-sys-catman		.cat
 ./usr/share/man/cat8/hpcmips/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hpcmips/boot.0		man-sys-catman		.cat
@@ -1857,8 +1857,8 @@
 ./usr/share/man/cat8/i386/ispcvt.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/kbdio.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/makedev.0		man-obsolete		obsolete
-./usr/share/man/cat8/i386/multiboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/i386/mbr.0			man-sys-catman		.cat
+./usr/share/man/cat8/i386/multiboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/i386/pxeboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/i386/reboot.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/reboot_i386.0		man-obsolete		obsolete
@@ -3222,9 +3222,9 @@
 ./usr/share/man/man4/i386/pcvt.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/pms.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/pnpbios.4		man-sys-man		.man
+./usr/share/man/man4/i386/sony.4		man-sys-man		.man
 ./usr/share/man/man4/i386/speaker.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/spic.4		man-sys-man		.man
-./usr/share/man/man4/i386/sony.4		man-sys-man		.man
 ./usr/share/man/man4/i386/vald.4		man-sys-man		.man
 ./usr/share/man/man4/i4b.4			man-obsolete		obsolete
 ./usr/share/man/man4/i4bctl.4			man-obsolete		obsolete
@@ -3260,7 +3260,6 @@
 ./usr/share/man/man4/ip.4			man-sys-man		.man
 ./usr/share/man/man4/ip6.4			man-sys-man		.man
 ./usr/share/man/man4/ipf.4			man-sys-man		ipfilter,.man
-./usr/share/man/man4/ipfilter.4			man-sys-man		ipfilter,.man
 ./usr/share/man/man4/ipfilter.4			man-sys-man		ipfilter,.man
 ./usr/share/man/man4/ipip.4			man-obsolete		obsolete
 ./usr/share/man/man4/ipkdb.4			man-sys-man		.man
@@ -3404,7 +3403,6 @@
 ./usr/share/man/man4/pci.4			man-sys-man		.man
 ./usr/share/man/man4/pcic.4			man-sys-man		.man
 ./usr/share/man/man4/pciide.4			man-sys-man		.man
-./usr/share/man/man4/pciide.4			man-sys-man		.man
 ./usr/share/man/man4/pckbc.4			man-sys-man		.man
 ./usr/share/man/man4/pckbd.4			man-sys-man		.man
 ./usr/share/man/man4/pcmcia.4			man-sys-man		.man
@@ -3475,8 +3473,8 @@
 ./usr/share/man/man4/rtfps.4			man-sys-man		.man
 ./usr/share/man/man4/rtii.4			man-sys-man		.man
 ./usr/share/man/man4/rtk.4			man-sys-man		.man
-./usr/share/man/man4/rtw.4			man-sys-man		.man
 ./usr/share/man/man4/rtpphy.4			man-obsolete		obsolete
+./usr/share/man/man4/rtw.4			man-sys-man		.man
 ./usr/share/man/man4/satalink.4			man-sys-man		.man
 ./usr/share/man/man4/sb.4			man-sys-man		.man
 ./usr/share/man/man4/sbp.4			man-sys-man		.man
@@ -3826,13 +3824,10 @@
 ./usr/share/man/man5/ipf6.conf.5		man-ipf-man		ipfilter,.man
 ./usr/share/man/man5/ipmon.5			man-ipf-man		ipfilter,.man
 ./usr/share/man/man5/ipnat.5			man-ipf-man		ipfilter,.man
-./usr/share/man/man5/ipnat.5			man-ipf-man		ipfilter,.man
-./usr/share/man/man5/ipnat.conf.5		man-ipf-man		ipfilter,.man
 ./usr/share/man/man5/ipnat.conf.5		man-ipf-man		ipfilter,.man
 ./usr/share/man/man5/ippool.5			man-ipf-man		ipfilter,.man
 ./usr/share/man/man5/ipsec.conf.5		man-netutil-man		.man
 ./usr/share/man/man5/ipsend.5			man-ipf-man		ipfilter,.man
-./usr/share/man/man5/targets.5			man-iscsi-man		.man
 ./usr/share/man/man5/isdnd.acct.5		man-isdn-man		.man
 ./usr/share/man/man5/isdnd.rates.5		man-isdn-man		.man
 ./usr/share/man/man5/isdnd.rc.5			man-isdn-man		.man
@@ -3909,6 +3904,7 @@
 ./usr/share/man/man5/sshd_config.5		man-secsh-man		crypto,.man
 ./usr/share/man/man5/stab.5			man-sys-man		.man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man		.man
+./usr/share/man/man5/targets.5			man-iscsi-man		.man
 ./usr/share/man/man5/termcap.5			man-sys-man		.man
 ./usr/share/man/man5/texinfo.5			man-texinfo-man		.man
 ./usr/share/man/man5/transport.5		man-postfix-man		postfix,.man
@@ -4140,8 +4136,8 @@
 ./usr/share/man/man8/hp700/boot.8		man-sys-man		.man
 ./usr/share/man/man8/hp700/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/hpcarm/MAKEDEV.8		man-obsolete		obsolete
-./usr/share/man/man8/hpcarm/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/hpcarm/boot.8		man-sys-man		.man
+./usr/share/man/man8/hpcarm/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/hpcboot.8			man-sys-man		.man
 ./usr/share/man/man8/hpcmips/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/hpcmips/boot.8		man-sys-man		.man
@@ -4165,8 +4161,8 @@
 ./usr/share/man/man8/i386/ispcvt.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/kbdio.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/makedev.8		man-obsolete		obsolete
-./usr/share/man/man8/i386/multiboot.8		man-sys-man		.man
 ./usr/share/man/man8/i386/mbr.8			man-sys-man		.man
+./usr/share/man/man8/i386/multiboot.8		man-sys-man		.man
 ./usr/share/man/man8/i386/pxeboot.8		man-sys-man		.man
 ./usr/share/man/man8/i386/reboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/reboot_i386.8		man-obsolete		obsolete
