@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal_osdep.h,v 1.5 2005/12/11 12:20:47 christos Exp $
+ * $Id: athhal_osdep.h,v 1.6 2006/03/02 03:38:45 dyoung Exp $
  */
 #ifndef _ATH_AH_OSDEP_H_
 #define _ATH_AH_OSDEP_H_
