@@ -1,4 +1,4 @@
-.\" $NetBSD: resettodr.9,v 1.8 2003/02/14 15:20:22 grant Exp $
+.\" $NetBSD: resettodr.9,v 1.9 2006/03/02 19:47:25 uwe Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd November 13, 1995
+.Dd March 2, 2006
 .Dt RESETTODR 9
 .Os
 .Sh NAME
@@ -44,18 +44,11 @@
 .Sh DESCRIPTION
 The
 .Fn resettodr
-function sets the system's battery backed clock based on the contents
+function sets the system's battery-backed clock based on the contents
 of the system
 .Va time
 variable.
 .Sh SEE ALSO
+.Xr clock_secs_to_ymdhms 9 ,
 .Xr inittodr 9 ,
 .Xr time 9
-.Sh BUGS
-On many systems,
-.Fn resettodr
-has to convert from
-.Va time
-to a time expressed in terms of year, month, day, hours, minutes,
-and seconds.
-Many of the implementations could share code, but do not.
