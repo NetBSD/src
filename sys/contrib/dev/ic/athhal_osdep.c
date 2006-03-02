@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal_osdep.c,v 1.6 2005/12/11 12:20:47 christos Exp $
+ * $Id: athhal_osdep.c,v 1.7 2006/03/02 03:38:45 dyoung Exp $
  */
 #include "opt_athhal.h"
 
@@ -135,16 +135,18 @@ err:
 	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
 
+MALLOC_DEFINE(M_ATH_HAL, "ath_hal", "ath hal data");
+
 void*
 ath_hal_malloc(size_t size)
 {
-	return malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
+	return malloc(size, M_ATH_HAL, M_NOWAIT | M_ZERO);
 }
 
 void
 ath_hal_free(void* p)
 {
-	return free(p, M_DEVBUF);
+	return free(p, M_ATH_HAL);
 }
 
 void

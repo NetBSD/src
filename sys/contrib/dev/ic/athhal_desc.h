@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting, Atheros
+ * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting, Atheros
  * Communications, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal_desc.h,v 1.3 2005/12/11 12:20:47 christos Exp $
+ * $Id: athhal_desc.h,v 1.4 2006/03/02 03:38:45 dyoung Exp $
  */
 
 #ifndef _DEV_ATH_DESC_H
@@ -78,7 +78,7 @@ struct ath_tx_status {
  * for some errors (e.g. a decryption error), it may be meaningful.
  *
  * Note that the receive timestamp is expanded using the TSF to
- * a full 16 bits (regardless of what the h/w provides directly).
+ * 15 bits (regardless of what the h/w provides directly).
  *
  * rx_rssi is in units of dbm above the noise floor.  This value
  * is measured during the preamble and PLCP; i.e. with the initial
@@ -162,6 +162,7 @@ struct ath_desc {
 		struct ath_tx_status tx;/* xmit status */
 		struct ath_rx_status rx;/* recv status */
 	} ds_us;
+	void		*ds_vdata;	/* virtual addr of data buffer */
 } __packed;
 
 #define	ds_txstat	ds_us.tx

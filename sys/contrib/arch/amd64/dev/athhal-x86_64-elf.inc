@@ -33,7 +33,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGES.
 #
-# $Id: athhal-x86_64-elf.inc,v 1.3 2005/12/11 12:20:30 christos Exp $
+# $Id: athhal-x86_64-elf.inc,v 1.4 2006/03/02 03:38:26 dyoung Exp $
 #
 
 #
@@ -52,6 +52,11 @@ OBJCOPY=${TOOLPREFIX}objcopy
 NM=	${TOOLPREFIX}nm
 
 COPTS+=	-DAH_BYTE_ORDER=AH_LITTLE_ENDIAN
+#
+# NB: this should come from inttypes.h but can't until we cleanp
+#     the definition of va_list on linux
+#
+COPTS+=	-DAH_WORDSIZE=64
 COPTS+=	-mcmodel=kernel -mno-red-zone
 ifndef CONFIG_FRAME_POINTER
 COPTS+=	-fomit-frame-pointer
