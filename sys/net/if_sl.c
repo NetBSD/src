@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.95 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.96 2006/03/02 17:20:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.95 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.96 2006/03/02 17:20:07 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -99,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.95 2005/12/11 23:05:25 thorpej Exp $");
 #include <net/slcompress.h>
 #include <net/if_slvar.h>
 #include <net/slip.h>
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
 
 #if NBPFILTER > 0
 #include <sys/time.h>
@@ -1020,6 +1022,8 @@ slioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s = splnet(), error = 0;
 	struct sl_softc *sc = ifp->if_softc;
+	struct ppp_stats *psp;
+	struct ppp_comp_stats *pcp;
 
 	switch (cmd) {
 
@@ -1064,6 +1068,32 @@ slioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EAFNOSUPPORT;
 			break;
 		}
+		break;
+
+	case SIOCGPPPSTATS:
+		psp = &((struct ifpppstatsreq *) data)->stats;
+		(void)memset(psp, 0, sizeof(*psp));
+		psp->p.ppp_ibytes = sc->sc_if.if_ibytes;
+		psp->p.ppp_ipackets = sc->sc_if.if_ipackets;
+		psp->p.ppp_ierrors = sc->sc_if.if_ierrors;
+		psp->p.ppp_obytes = sc->sc_if.if_obytes;
+		psp->p.ppp_opackets = sc->sc_if.if_opackets;
+		psp->p.ppp_oerrors = sc->sc_if.if_oerrors;
+#ifdef INET
+		psp->vj.vjs_packets = sc->sc_comp.sls_packets;
+		psp->vj.vjs_compressed = sc->sc_comp.sls_compressed;
+		psp->vj.vjs_searches = sc->sc_comp.sls_searches;
+		psp->vj.vjs_misses = sc->sc_comp.sls_misses;
+		psp->vj.vjs_uncompressedin = sc->sc_comp.sls_uncompressedin;
+		psp->vj.vjs_compressedin = sc->sc_comp.sls_compressedin;
+		psp->vj.vjs_errorin = sc->sc_comp.sls_errorin;
+		psp->vj.vjs_tossed = sc->sc_comp.sls_tossed;
+#endif
+		break;
+
+	case SIOCGPPPCSTATS:
+		pcp = &((struct ifpppcstatsreq *) data)->stats;
+		(void)memset(pcp, 0, sizeof(*pcp));
 		break;
 
 	default:
