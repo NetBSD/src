@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: athhal_version.h,v 1.3 2005/12/11 12:20:47 christos Exp $
+ * $Id: athhal_version.h,v 1.4 2006/03/02 03:38:45 dyoung Exp $
  */
-#define	ATH_HAL_VERSION	"0.9.14.9"
+#define	ATH_HAL_VERSION	"0.9.16.13"

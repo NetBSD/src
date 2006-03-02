@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.51 2006/02/25 02:28:58 wiz Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.52 2006/03/02 03:38:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.51 2006/02/25 02:28:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.52 2006/03/02 03:38:48 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -238,10 +238,12 @@ ieee80211_node_unauthorize(struct ieee80211_node *ni)
  * Set/change the channel.  The rate set is also updated as
  * to insure a consistent view by drivers.
  */
-static __inline void
+static void
 ieee80211_set_chan(struct ieee80211com *ic,
 	struct ieee80211_node *ni, struct ieee80211_channel *chan)
 {
+	if (chan == IEEE80211_CHAN_ANYC)	/* XXX while scanning */
+		chan = ic->ic_curchan;
 	ni->ni_chan = chan;
 	ni->ni_rates = ic->ic_sup_rates[ieee80211_chan2mode(ic, chan)];
 }
@@ -811,8 +813,10 @@ ieee80211_sta_join(struct ieee80211com *ic, struct ieee80211_node *selbs)
 	 */
 	obss = ic->ic_bss;
 	ic->ic_bss = selbs;		/* NB: caller assumed to bump refcnt */
-	if (obss != NULL)
+	if (obss != NULL) {
+		copy_bss(selbs, obss);
 		ieee80211_free_node(obss);
+	}
 	/*
 	 * Set the erp state (mostly the slot time) to deal with
 	 * the auto-select case; this should be redundant if the
