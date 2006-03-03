@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.131 2006/02/05 05:02:02 cube Exp $
+# 	$NetBSD: GENERIC32,v 1.132 2006/03/03 23:54:45 nakayama Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.131 $"
+#ident 		"GENERIC-$Revision: 1.132 $"
 
 maxusers	64
 
@@ -491,6 +491,7 @@ wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 # MII/PHY support
 # XXX: only nsphy and igphy "tested"
+acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
@@ -696,12 +697,12 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # CardBus network interfaces
-#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11 UT
+#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
 #atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11) UT
-#ex*	at cardbus? function ?	# 3Com 3C575TX UT
+#ex*	at cardbus? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? function ?	# Intel i8255x UT
 #rtk*	at cardbus? function ?	# Realtek 8129/8139 UT
-#tlp*	at cardbus? function ?	# DECchip 21143 UT
+#tlp*	at cardbus? function ?	# DECchip 21143
 
 # CardBus USB controllers
 #ehci*	at cardbus? function ?	# Enhanced Host Controller
@@ -738,7 +739,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet UT
 #com*	at xirc?
 #xi*	at xirc?
-#mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards UT
+#mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?
 #sm*	at mhzc?
 
