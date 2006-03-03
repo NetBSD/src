@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.112 2006/02/26 05:36:15 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.113 2006/03/03 10:32:01 cube Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.112 2006/02/26 05:36:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.113 2006/03/03 10:32:01 cube Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1228,7 +1228,7 @@ device_register(struct device *dev, void *aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (device_is_a(dev, "wd") == 0) {
+	} else if (device_is_a(dev, "wd")) {
 		/* IDE disks. */
 		struct ata_device *adev = aux;
 
