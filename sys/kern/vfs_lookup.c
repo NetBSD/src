@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.68 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.69 2006/03/03 16:15:11 rumble Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.68 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.69 2006/03/03 16:15:11 rumble Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -185,7 +185,7 @@ symlink_magic(struct proc *p, char *cp, int *len)
 #undef SUBSTITUTE
 
 /*
- * Convert a pathname into a pointer to a locked inode.
+ * Convert a pathname into a pointer to a locked vnode.
  *
  * The FOLLOW flag is set when symbolic links are to be followed
  * when they occur at the end of the name translation process.
@@ -683,7 +683,7 @@ unionlookup:
 		/*
 		 * We return with ni_vp NULL to indicate that the entry
 		 * doesn't currently exist, leaving a pointer to the
-		 * (possibly locked) directory inode in ndp->ni_dvp.
+		 * (possibly locked) directory vnode in ndp->ni_dvp.
 		 */
 		if (cnp->cn_flags & SAVESTART) {
 			ndp->ni_startdir = ndp->ni_dvp;
@@ -883,7 +883,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		/*
 		 * We return with ni_vp NULL to indicate that the entry
 		 * doesn't currently exist, leaving a pointer to the
-		 * (possibly locked) directory inode in ndp->ni_dvp.
+		 * (possibly locked) directory vnode in ndp->ni_dvp.
 		 */
 		return (0);
 	}
