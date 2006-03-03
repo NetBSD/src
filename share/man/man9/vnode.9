@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.30 2006/01/29 03:09:19 rpaulo Exp $
+.\"     $NetBSD: vnode.9,v 1.31 2006/03/03 02:17:41 rumble Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -213,13 +213,19 @@ Valid flags are:
 This vnode is the root of its file system.
 .It VTEXT
 This vnode is a pure text prototype.
-.It VEXECMAP
-This vnode has executable mappings.
 .It VSYSTEM
 This vnode is being used by the kernel; only used to skip quota files in
 .Fn vflush .
 .It VISTTY
 This vnode represents a tty; used when reading dead vnodes.
+.It VEXECMAP
+This vnode has executable mappings.
+.It VWRITEMAP
+This vnode might have PROT_WRITE user mappings.
+.It VWRITEMAPDIRTY
+This vnode might have dirty pages due to VWRITEMAP
+.It VLOCKSWORK
+This vnode's file system supports locking.
 .It VXLOCK
 This vnode is currently locked to change underlying type.
 .It VXWANT
@@ -235,12 +241,14 @@ This flag is used exclusively by LFS.
 This vnode is on a layered file system.
 .It VONWORKLST
 This vnode is on syncer work-list.
+.It VFREEING
+This vnode is being freed.
 .El
 .Pp
 The VXLOCK flag is used to prevent multiple processes from entering
 the vnode reclamation code.
 It is also used as a flag to indicate that reclamation is in progress.
-The VXWANT flag is set by threads that wish to be awaken when
+The VXWANT flag is set by threads that wish to be awakened when
 reclamation is finished.
 Before
 .Em v_flag
@@ -440,6 +448,10 @@ SMB file system
 pseudo-terminal device file system
 .It VT_TMPFS
 efficient memory file system
+.It VT_UDF
+universal disk format file system
+.It VT_SYSVBFS
+systemV boot file system
 .El
 .Pp
 All vnode locking operations use
@@ -574,7 +586,7 @@ Unlock vnode
 .Fa vp
 and decrement its
 .Em v_usecount .
-Depending of the reference counts, move the vnode to the holdlist or
+Depending on the reference counts, move the vnode to the holdlist or
 the freelist.
 This operation is functionally equivalent to calling
 .Xr VOP_UNLOCK 9
