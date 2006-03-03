@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.15 2006/03/03 05:27:29 simonb Exp $ */
+/* $NetBSD: if_aumac.c,v 1.16 2006/03/03 05:35:26 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.15 2006/03/03 05:27:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.16 2006/03/03 05:35:26 simonb Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -347,6 +347,11 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	/* Attach the interface. */
 	if_attach(ifp); 
 	ether_ifattach(ifp, enaddr);
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 #ifdef AUMAC_EVENT_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_txstall, EVCNT_TYPE_MISC,
