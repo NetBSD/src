@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.22 2006/01/05 02:13:41 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.23 2006/03/03 13:36:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.22 2006/01/05 02:13:41 christos Exp $
+ *	$NetBSD: extern.h,v 1.23 2006/03/03 13:36:27 christos Exp $
  */
 
 struct name;
@@ -148,6 +148,7 @@ int	 help(void *);
 void	 holdsigs(void);
 int	 ifcmd(void *);
 int	 igfield(void *);
+int	 unalias(void *);
 struct ignoretab;
 int	 ignore1(char *[], struct ignoretab *, const char *);
 int	 igshow(struct ignoretab *, const char *);
