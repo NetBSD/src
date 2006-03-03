@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.10 2003/08/07 11:14:36 agc Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.11 2006/03/03 13:36:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.10 2003/08/07 11:14:36 agc Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.11 2006/03/03 13:36:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ const struct cmd cmdtab[] = {
 	{ "page",	more,		MSGLIST,	0,	MMNDEL },
 	{ "More",	More,		MSGLIST,	0,	MMNDEL },
 	{ "Page",	More,		MSGLIST,	0,	MMNDEL },
+	{ "unalias",	unalias,	M|RAWLIST,	1,	1000 },
 	{ "unread",	unread,		MSGLIST,	0,	MMNDEL },
 	{ "!",		shell,		I|STRLIST,	0,	0 },
 	{ "copy",	copycmd,	M|STRLIST,	0,	0 },
