@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.14 2006/02/18 05:04:11 thorpej Exp $ */
+/* $NetBSD: if_aumac.c,v 1.15 2006/03/03 05:27:29 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,9 +46,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.14 2006/02/18 05:04:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.15 2006/03/03 05:27:29 simonb Exp $");
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.14 2006/02/18 05:04:11 thorpej Exp $"
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+#if NRND > 0
+#include <sys/rnd.h>
 #endif
 
 #include <machine/bus.h>
@@ -144,6 +148,10 @@ struct aumac_softc {
 
 	int sc_rxptr;			/* next ready Rx descriptor */
 
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
+
 #ifdef AUMAC_EVENT_COUNTERS
 	struct evcnt sc_ev_txstall;	/* Tx stalled */
 	struct evcnt sc_ev_rxstall;	/* Rx stalled */
@@ -186,8 +194,8 @@ static void	aumac_powerup(struct aumac_softc *);
 static void	aumac_powerdown(struct aumac_softc *);
 
 static int	aumac_intr(void *);
-static void	aumac_txintr(struct aumac_softc *);
-static void	aumac_rxintr(struct aumac_softc *);
+static int	aumac_txintr(struct aumac_softc *);
+static int	aumac_rxintr(struct aumac_softc *);
 
 static int	aumac_mii_readreg(struct device *, int, int);
 static void	aumac_mii_writereg(struct device *, int, int, int);
@@ -525,6 +533,7 @@ static int
 aumac_intr(void *arg)
 {
 	struct aumac_softc *sc = arg;
+	int status;
 
 	/*
 	 * There aren't really any interrupt status bits on the
@@ -536,10 +545,15 @@ aumac_intr(void *arg)
 	if ((sc->sc_ethercom.ec_if.if_flags & IFF_RUNNING) == 0)
 		return (0);
 
-	aumac_rxintr(sc);
-	aumac_txintr(sc);
+	status = aumac_rxintr(sc);
+	status += aumac_txintr(sc);
 
-	return (1);
+#if NRND > 0
+	if (RND_ENABLED(&sc->rnd_source))
+		rnd_add_uint32(&sc->rnd_source, status);
+#endif
+
+	return status;
 }
 
 /*
@@ -547,24 +561,20 @@ aumac_intr(void *arg)
  *
  *	Helper; handle transmit interrupts.
  */
-static void
+static int
 aumac_txintr(struct aumac_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t stat;
 	int i;
-#ifdef AUMAC_EVENT_COUNTERS
-	int gotone = 0;
-#endif
+	int pkts = 0;
 
 	for (i = sc->sc_txdirty; sc->sc_txfree != AUMAC_NTXDESC;
 	     i = AUMAC_NEXTTX(i)) {
 		if ((bus_space_read_4(sc->sc_st, sc->sc_dma_sh,
 		     MACDMA_TX_ADDR(i)) & TX_ADDR_DN) == 0)
 			break;
-#ifdef AUMAC_EVENT_COUNTERS
-		gotone = 1;
-#endif
+		pkts++;
 
 		/* ACK interrupt. */
 		bus_space_write_4(sc->sc_st, sc->sc_dma_sh,
@@ -591,7 +601,7 @@ aumac_txintr(struct aumac_softc *sc)
 		aumac_start(ifp);
 	}
 
-	if (gotone)
+	if (pkts)
 		AUMAC_EVCNT_INCR(&sc->sc_ev_txintr);
 
 	/* Update the dirty descriptor pointer. */
@@ -603,6 +613,8 @@ aumac_txintr(struct aumac_softc *sc)
 	 */
 	if (sc->sc_txfree == AUMAC_NTXDESC)
 		ifp->if_timer = 0;
+
+	return pkts;
 }
 
 /*
@@ -610,24 +622,20 @@ aumac_txintr(struct aumac_softc *sc)
  *
  *	Helper; handle receive interrupts.
  */
-static void
+static int
 aumac_rxintr(struct aumac_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	uint32_t stat;
 	int i, len;
-#ifdef AUMAC_EVENT_COUNTERS
 	int pkts = 0;
-#endif
 
 	for (i = sc->sc_rxptr;; i = AUMAC_NEXTRX(i)) {
 		if ((bus_space_read_4(sc->sc_st, sc->sc_dma_sh,
 		     MACDMA_RX_ADDR(i)) & RX_ADDR_DN) == 0)
 			break;
-#ifdef AUMAC_EVENT_COUNTERS
 		pkts++;
-#endif
 
 		stat = bus_space_read_4(sc->sc_st, sc->sc_dma_sh,
 		    MACDMA_RX_STAT(i));
@@ -732,6 +740,8 @@ aumac_rxintr(struct aumac_softc *sc)
 
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;
+
+	return pkts;
 }
 
 /*
