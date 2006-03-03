@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.29 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: mld6.c,v 1.30 2006/03/03 14:07:06 rpaulo Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.29 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.30 2006/03/03 14:07:06 rpaulo Exp $");
 
 #include "opt_inet.h"
 
@@ -304,7 +304,7 @@ mld6_input(m, off)
 		 *   which the query arrived excl. those that belong
 		 *   to the "all-nodes" group (ff02::1).
 		 * - Restart any timer that is already running but has
-		 *   A value longer than the requested timeout.
+		 *   a value longer than the requested timeout.
 		 * - Use the value specified in the query message as
 		 *   the maximum timeout.
 		 */
