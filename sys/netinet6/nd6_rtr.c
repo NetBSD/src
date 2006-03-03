@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.54 2006/01/21 00:15:37 rpaulo Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.55 2006/03/03 14:07:06 rpaulo Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.54 2006/01/21 00:15:37 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.55 2006/03/03 14:07:06 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -900,7 +900,7 @@ nd6_prelist_add(pr, dr, newp)
 	if (newp != NULL)
 		*newp = new;
 
-	/* initilization */
+	/* initialization */
 	LIST_INIT(&new->ndpr_advrtrs);
 	in6_prefixlen2mask(&new->ndpr_mask, new->ndpr_plen);
 	/* make prefix in the canonical form */
@@ -1650,7 +1650,7 @@ in6_ifadd(pr)
 	 * of DAD.  we omitted DAD for this reason in the past.
 	 * (3) a user can prevent autoconfiguration of global address
 	 * by removing link-local address by hand (this is partly because we
-	 * don't have other way to control the use of IPv6 on a interface.
+	 * don't have other way to control the use of IPv6 on an interface.
 	 * this has been our design choice - cf. NRL's "ifconfig auto").
 	 * (4) it is easier to manage when an interface has addresses
 	 * with the same interface identifier, than to have multiple addresses

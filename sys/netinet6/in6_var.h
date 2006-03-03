@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.41 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.42 2006/03/03 14:07:06 rpaulo Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -528,7 +528,7 @@ struct	in6_multistep {
 /*
  * Macros for looking up the in6_multi record for a given IP6 multicast
  * address on a given interface. If no matching record is found, "in6m"
- * returns NLL.
+ * returns NULL.
  */
 
 #define IN6_LOOKUP_MULTI(addr, ifp, in6m)			\
