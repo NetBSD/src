@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.23 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.24 2006/03/03 15:07:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.23 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.24 2006/03/03 15:07:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -540,8 +540,12 @@ savemail(const char name[], FILE *fi)
 	char buf[BUFSIZ];
 	int i;
 	time_t now;
+	mode_t m;
 
-	if ((fo = Fopen(name, "a")) == NULL) {
+	m = umask(077);
+	fo = Fopen(name, "a");
+	(void)umask(m);
+	if (fo == NULL) {
 		warn("%s", name);
 		return (-1);
 	}
