@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.27 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.28 2006/03/03 13:36:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.27 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.28 2006/03/03 13:36:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: cmd3.c,v 1.27 2005/07/19 23:07:10 christos Exp $");
  *
  * Still more user commands.
  */
+static int delgroup(const char *);
 static int diction(const void *, const void *);
 
 /*
@@ -501,6 +502,51 @@ group(void *v)
 		gh->g_list = gp;
 	}
 	return(0);
+}
+
+/*
+ * The unalias command takes a list of alises
+ * and discards the remembered groups of users.
+ */
+int
+unalias(void *v)
+{
+	char **ap;
+
+	for (ap = v; *ap != NULL; ap++)
+		(void)delgroup(*ap);
+	return 0;
+}
+
+/*
+ * Delete the named group alias. Return zero if the group was
+ * successfully deleted, or -1 if there was no such group.
+ */
+static int
+delgroup(const char *name)
+{
+	struct grouphead *gh, *p;
+	struct group *g;
+	int h;
+
+	h = hash(name);
+	for (gh = groups[h], p = NULL; gh != NULL; p = gh, gh = gh->g_link)
+		if (strcmp(gh->g_name, name) == 0) {
+			if (p == NULL)
+				groups[h] = gh->g_link;
+			else
+				p->g_link = gh->g_link;
+			while (gh->g_list != NULL) {
+				g = gh->g_list;
+				gh->g_list = g->ge_link;
+				free(g->ge_name);
+				free(g);
+			}
+			free(gh->g_name);
+			free(gh);
+			return 0;
+		}
+	return -1;
 }
 
 /*
