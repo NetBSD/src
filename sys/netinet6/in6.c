@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.96 2006/02/08 13:35:48 rpaulo Exp $	*/
+/*	$NetBSD: in6.c,v 1.97 2006/03/03 14:07:06 rpaulo Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.96 2006/02/08 13:35:48 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.97 2006/03/03 14:07:06 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1054,7 +1054,7 @@ in6_update_ifa(ifp, ifra, ia)
 	 * not just go to unlink.
 	 */
 
-	/* join necessary multiast groups */
+	/* join necessary multicast groups */
 	if ((ifp->if_flags & IFF_MULTICAST) != 0) {
 		struct sockaddr_in6 mltaddr, mltmask;
 		struct in6_addr llsol;

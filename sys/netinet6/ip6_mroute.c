@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.69 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.70 2006/03/03 14:07:06 rpaulo Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.69 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.70 2006/03/03 14:07:06 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1080,7 +1080,7 @@ ip6_mforward(ip6, ifp, m)
 	 * source. It was discussed in July 2000, on ipngwg mailing list.
 	 * This is rather more serious than unicast cases, because some
 	 * MLD packets can be sent with the unspecified source address
-	 * (although such packets must normally set 1 to the hop limit field).
+	 * (although such packets must normally set the hop limit field to 1).
 	 */
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
 		ip6stat.ip6s_cantforward++;
@@ -1520,8 +1520,8 @@ ip6_mdq(m, ifp, rt)
 			/*
 			 * check if the outgoing packet is going to break
 			 * a scope boundary.
-			 * XXX For packets through PIM register tunnel
-			 * interface, we believe a routing daemon.
+			 * XXX: For packets through PIM register tunnel
+			 * interface, we believe the routing daemon.
 			 */
 			if ((mif6table[rt->mf6c_parent].m6_flags &
 			     MIFF_REGISTER) == 0 &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.97 2006/03/02 05:11:31 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.98 2006/03/03 14:07:06 rpaulo Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.97 2006/03/02 05:11:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.98 2006/03/03 14:07:06 rpaulo Exp $");
 
 #include "opt_ipsec.h"
 
@@ -960,7 +960,7 @@ nd6_free(rt, gc)
 /*
  * Upper-layer reachability hint for Neighbor Unreachability Detection.
  *
- * XXX cost-effective metods?
+ * XXX cost-effective methods?
  */
 void
 nd6_nud_hint(rt, dst6, force)
@@ -1730,7 +1730,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 		goto sendpkt;
 
 	/*
-	 * next hop determination.  This routine is derived from ether_outpout.
+	 * next hop determination.  This routine is derived from ether_output.
 	 */
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
