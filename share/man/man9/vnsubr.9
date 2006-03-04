@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.24 2006/01/29 03:09:19 rpaulo Exp $
+.\"     $NetBSD: vnsubr.9,v 1.25 2006/03/04 20:34:08 rumble Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -159,7 +159,7 @@ If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 The vnode interlock
 .Em v_interlock
-is releases on return.
+is released on return.
 .Pp
 .Fn vn_lock
 must not be called when the vnode's reference count is zero.
