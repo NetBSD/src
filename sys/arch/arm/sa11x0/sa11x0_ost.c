@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.14 2006/03/04 16:54:04 peter Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.15 2006/03/04 17:22:06 peter Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.14 2006/03/04 16:54:04 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.15 2006/03/04 17:22:06 peter Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,19 +90,13 @@ CFATTACH_DECL(saost, sizeof(struct saost_softc),
     saost_match, saost_attach, NULL, NULL);
 
 static int
-saost_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+saost_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (1);
 }
 
 void
-saost_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+saost_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct saost_softc *sc = (struct saost_softc*)self;
 	struct sa11x0_attach_args *sa = aux;
@@ -126,8 +120,7 @@ saost_attach(parent, self, aux)
 }
 
 static int
-clockintr(arg)
-	void *arg;
+clockintr(void *arg)
 {
 	struct clockframe *frame = arg;
 	u_int32_t oscr, nextmatch, oldmatch;
@@ -170,8 +163,7 @@ clockintr(arg)
 }
 
 static int
-statintr(arg)
-	void *arg;
+statintr(void *arg)
 {
 	struct clockframe *frame = arg;
 	u_int32_t oscr, nextmatch, oldmatch;
@@ -215,8 +207,7 @@ statintr(arg)
 
 
 void
-setstatclockrate(schz)
-	int schz;
+setstatclockrate(int schz)
 {
 	u_int32_t count;
 
@@ -229,7 +220,7 @@ setstatclockrate(schz)
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	stathz = STATHZ;
 	profhz = stathz;
@@ -258,7 +249,7 @@ cpu_initclocks()
 }
 
 int
-gettick()
+gettick(void)
 {
 	int counter;
 	u_int savedints;
@@ -272,8 +263,7 @@ gettick()
 }
 
 void
-microtime(tvp)
-	register struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s, tm, deltatm;
 	static struct timeval lasttime;
@@ -313,8 +303,7 @@ microtime(tvp)
 }
 
 void
-delay(usecs)
-	u_int usecs;
+delay(u_int usecs)
 {
 	u_int32_t xtick, otick, delta;
 	int j, csec, usec;
@@ -348,13 +337,12 @@ delay(usecs)
 }
 
 void
-resettodr()
+resettodr(void)
 {
 }
 
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	time.tv_sec = base;
 	time.tv_usec = 0;

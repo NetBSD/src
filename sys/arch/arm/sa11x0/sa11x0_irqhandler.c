@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.6 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.7 2006/03/04 17:22:06 peter Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.6 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.7 2006/03/04 17:22:06 peter Exp $");
 
 #include "opt_irqstats.h"
 
@@ -192,7 +192,7 @@ sa11x0_intr_evcnt(sa11x0_chipset_tag_t ic, int irq)
 
 void *
 sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
-		      int (*ih_fun)(void *), void *ih_arg)
+    int (*ih_fun)(void *), void *ih_arg)
 {
 	int saved_cpsr;
 	struct irqhandler **p, *q, *ih;
@@ -312,7 +312,7 @@ fakeintr(void *p)
 
 #ifdef DEBUG
 int
-dumpirqhandlers()
+dumpirqhandlers(void)
 {
 	int irq;
 	struct irqhandler *p;
