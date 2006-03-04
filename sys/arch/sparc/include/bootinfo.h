@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.5 2006/03/04 03:39:02 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -61,5 +61,5 @@ struct btinfo_kernelfile {
 };
 
 #ifdef _KERNEL
-void *lookup_bootinfo __P((int));
+void *lookup_bootinfo(int);
 #endif
