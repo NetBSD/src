@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.18 2006/01/03 23:14:23 peter Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.19 2006/03/04 17:22:06 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.18 2006/01/03 23:14:23 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.19 2006/03/04 17:22:06 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,7 @@ extern vaddr_t saipic_base;
  */
 
 static int
-sa11x0_print(aux, name)
-	void *aux;
-	const char *name;
+sa11x0_print(void *aux, const char *name)
 {
 	struct sa11x0_attach_args *sa = (struct sa11x0_attach_args*)aux;
 
@@ -118,19 +116,13 @@ sa11x0_print(aux, name)
 }
 
 int
-sa11x0_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sa11x0_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return 1;
 }
 
 void
-sa11x0_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sa11x0_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sa11x0_softc *sc = (struct sa11x0_softc*)self;
 
@@ -199,11 +191,8 @@ sa11x0_attach(parent, self, aux)
 }
 
 int
-sa11x0_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+sa11x0_search(struct device *parent, struct cfdata *cf, const int *ldesc,
+    void *aux)
 {
 	struct sa11x0_softc *sc = (struct sa11x0_softc *)parent;
 	struct sa11x0_attach_args sa;
