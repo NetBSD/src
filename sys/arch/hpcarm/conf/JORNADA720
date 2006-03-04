@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.54 2006/03/04 14:38:55 peter Exp $
+#	$NetBSD: JORNADA720,v 1.55 2006/03/04 14:40:09 peter Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.54 $"
+#ident 		"GENERIC-$Revision: 1.55 $"
 
 # estimated number of users
 maxusers	32
@@ -123,7 +123,7 @@ options 	NFS_BOOT_DHCP
 # Development and Debugging options
 
 #options 	BOOT_DUMP	# Enable memorydump at boot
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
