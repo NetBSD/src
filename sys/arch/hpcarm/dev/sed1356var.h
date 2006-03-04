@@ -1,4 +1,4 @@
-/*	$NetBSD: sed1356var.h,v 1.1 2001/06/23 09:13:06 toshii Exp $	*/
+/*	$NetBSD: sed1356var.h,v 1.2 2006/03/04 14:09:36 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -66,3 +66,4 @@ struct sed1356_softc {
 
 void	sed1356_init_brightness(struct sed1356_softc *, int);
 void	sed1356_init_contrast(struct sed1356_softc *, int);
+void	sed1356_toggle_lcdlight(void);
