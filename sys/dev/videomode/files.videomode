@@ -1,5 +1,5 @@
-#	$NetBSD: files.videomode,v 1.1 2006/03/04 02:34:27 gdamore Exp $
+#	$NetBSD: files.videomode,v 1.2 2006/03/04 03:01:29 gdamore Exp $
 
-defpseudo videomode
+define videomode
 
-file	dev/videomode/videmode.c	videomode
+file	dev/videomode/videomode.c	videomode
