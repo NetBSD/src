@@ -91,8 +91,12 @@ main(int argc, char **argv)
 	auth_type = AuthNone;
 	mutual_auth = 0;
 
-	while ((i = getopt(argc, argv, "a:d:h:l:n:t:u:")) != -1) {
+	while ((i = getopt(argc, argv, "Va:d:h:l:n:t:u:")) != -1) {
 		switch(i) {
+		case 'V':
+			(void) printf("\"%s\" %s\nPlease send all bug reports to %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
+			exit(EXIT_SUCCESS);
+			/* NOTREACHED */
 		case 'a':
 			if (strcasecmp(optarg, "chap") == 0) {
 				auth_type = AuthCHAP;

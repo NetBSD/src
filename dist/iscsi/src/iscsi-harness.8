@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsi-harness.8,v 1.1.1.1 2006/02/08 18:56:20 agc Exp $
+.\" $NetBSD: iscsi-harness.8,v 1.2 2006/03/04 21:56:11 agc Exp $
 .\"
 .\" Copyright © 2006 Alistair Crooks.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 22, 2006
+.Dd March 4, 2006
 .Dt ISCSI-HARNESS 8
 .Os
 .Sh NAME
@@ -55,6 +55,14 @@ service, and performs a discovery session,
 then sends data of various sizes to the target, and reads
 data of various sizes from the target.
 .Pp
+Options and operands available for
+.Nm iscsi-harness :
+.Bl -tag -width Ds
+.It Fl V
+.Nm
+will print the utility name and version number, 
+and the address for bug reports, and then exit.
+.It Fl a Ar authentication type
 The authentication type can be one of
 .Ar chap ,
 .Ar Kerberos ,
@@ -63,7 +71,7 @@ or
 .Ar none .
 The default value is
 .Ar none .
-.Pp
+.It Fl d Ar digest type
 The digest type can be one of
 .Ar header ,
 .Ar data ,
@@ -74,6 +82,7 @@ or
 .Ar none .
 The default value is
 .Ar none .
+.El
 .Sh FILES
 .Bl -tag -width /var/run/iscsi-target.pid -compact
 .It Pa /etc/iscsi/targets

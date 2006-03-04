@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi-target.c,v 1.4 2006/02/14 20:08:37 agc Exp $ */
+/* $NetBSD: iscsi-target.c,v 1.5 2006/03/04 21:56:11 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -84,11 +84,15 @@ main(int argc, char **argv)
 
 	cf = _PATH_ISCSI_TARGETS;
 
-	while ((i = getopt(argc, argv, "Db:f:p:t:v:")) != -1) {
+	while ((i = getopt(argc, argv, "DVb:f:p:t:v:")) != -1) {
 		switch (i) {
 		case 'D':
 			detach_me_harder = 0;
 			break;
+		case 'V':
+			(void) printf("\"%s\" %s\nPlease send all bug reports to %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
+			exit(EXIT_SUCCESS);
+			/* NOTREACHED */
 		case 'b':
 			device_set_var("blocklen", optarg);
 			break;
