@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 2006/02/09 10:08:32 uwe Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 2006/03/04 01:13:35 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2006/02/09 10:08:32 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2006/03/04 01:13:35 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ STATIC struct pool_allocator pmap_pv_page_allocator = {
 STATIC int __pmap_asid_alloc(void);
 STATIC void __pmap_asid_free(int);
 STATIC struct {
-	u_int32_t map[8];
+	uint32_t map[8];
 	int hint;	/* hint for next allocation */
 } __pmap_asid;
 
