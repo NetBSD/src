@@ -1,4 +1,4 @@
-/*      $NetBSD: j720pcic.c,v 1.2 2005/12/11 12:17:32 christos Exp $        */
+/*      $NetBSD: j720pcic.c,v 1.3 2006/03/04 13:56:17 peter Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.2 2005/12/11 12:17:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.3 2006/03/04 13:56:17 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,8 +83,7 @@ static int j720_power_capability[] = {
 };
 
 static struct platid_data sacpcic_platid_table[] = {
-	{ &platid_mask_MACH_HP_JORNADA_720, j720_power_capability },
-	{ &platid_mask_MACH_HP_JORNADA_720JP, j720_power_capability },
+	{ &platid_mask_MACH_HP_JORNADA_7XX, j720_power_capability },
 	{ NULL, NULL }
 };
 
