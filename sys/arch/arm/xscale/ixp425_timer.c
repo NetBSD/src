@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.9 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.10 2006/03/04 11:26:12 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,8 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.9 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.10 2006/03/04 11:26:12 scw Exp $");
 
+#include "opt_ixp425.h"
 #include "opt_perfctrs.h"
 
 #include <sys/types.h>
@@ -73,7 +74,11 @@ struct ixpclk_softc {
         bus_space_handle_t      sc_ioh;
 };
 
+#ifndef IXP425_CLOCK_FREQ
 #define	COUNTS_PER_SEC		66666600	/* 66MHz */
+#else
+#define	COUNTS_PER_SEC		IXP425_CLOCK_FREQ
+#endif
 #define	COUNTS_PER_USEC		((COUNTS_PER_SEC / 1000000) + 1)
 
 static struct ixpclk_softc *ixpclk_sc;
