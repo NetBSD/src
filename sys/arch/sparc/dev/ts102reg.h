@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102reg.h,v 1.3 2003/06/18 17:50:23 miod Exp $	*/
-/*	$NetBSD: ts102reg.h,v 1.9 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: ts102reg.h,v 1.10 2006/03/04 02:59:29 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,12 +67,12 @@
 #define	TS102_REG_UCTRL_STS	0x0028	/* Microcontroller Status Register */
 
 struct uctrl_regs {
-	volatile u_int8_t	intr;	/* Microcontroller Interrupt Reg */
-	volatile u_int8_t	filler0[3];
-	volatile u_int8_t	data;	/* Microcontroller Data Reg */
-	volatile u_int8_t	filler1[3];
-	volatile u_int8_t	stat;	/* Microcontroller Status Reg */
-	volatile u_int8_t	filler2[3];
+	volatile uint8_t	intr;	/* Microcontroller Interrupt Reg */
+	volatile uint8_t	filler0[3];
+	volatile uint8_t	data;	/* Microcontroller Data Reg */
+	volatile uint8_t	filler1[3];
+	volatile uint8_t	stat;	/* Microcontroller Status Reg */
+	volatile uint8_t	filler2[3];
 };
 
 /* TS102 Card Interrupt Register definitions.
