@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.15 2005/12/11 12:17:32 christos Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.16 2006/03/04 14:09:36 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.15 2005/12/11 12:17:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.16 2006/03/04 14:09:36 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +73,8 @@ void	sed1356attach(struct device *, struct device *, void *);
 int	sed1356_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 paddr_t	sed1356_mmap(void *, off_t, int);
 
-
 extern	struct bus_space sa11x0_bs_tag;
-extern	int j720lcdpower(void *, int, long, void *);	/* XXX */
+extern	int j720lcd_power(void *, int, long, void *);	/* XXX */
 
 static int sed1356_init(struct hpcfb_fbconf *);
 static void sed1356_power(int, void *);
@@ -180,7 +179,7 @@ sed1356attach(struct device *parent, struct device *self, void *aux)
 	if (platid_match(&platid, &platid_mask_MACH_HP_JORNADA_7XX)) {
 		config_hook(CONFIG_HOOK_POWERCONTROL,
 			    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
-			    CONFIG_HOOK_SHARE, j720lcdpower, sc);
+			    CONFIG_HOOK_SHARE, j720lcd_power, sc);
 	}
 
 	config_found(self, &ha, hpcfbprint);
@@ -692,4 +691,18 @@ sed1356_set_contrast(struct sed1356_softc *sc, int val)
 	     CONFIG_HOOK_CONTRAST, &val) != -1) {
 		sc->sc_contrast = val;
 	}
+}
+
+void
+sed1356_toggle_lcdlight(void)
+{
+	extern struct cfdriver sed_cd;
+	struct sed1356_softc *sc = sed_cd.cd_devs[0];
+
+	if (sc->sc_powerstate & PWRSTAT_VIDEOOFF)
+		sc->sc_powerstate &= ~PWRSTAT_VIDEOOFF;
+	else
+		sc->sc_powerstate |= PWRSTAT_VIDEOOFF;
+
+	sed1356_update_powerstate(sc, PWRSTAT_ALL);
 }

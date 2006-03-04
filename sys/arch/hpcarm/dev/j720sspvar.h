@@ -1,11 +1,11 @@
-/*	$NetBSD: apmvar.h,v 1.5 2006/03/04 14:09:36 peter Exp $	*/
+/*	$NetBSD: j720sspvar.h,v 1.1 2006/03/04 14:09:36 peter Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus.
+ * by IWAMOTO Toshihiro.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,10 +36,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_APMVAR_H_
-#define _MACHINE_APMVAR_H_
+/* Jornada 720 SSP port. */
 
-#include <dev/apm/apmbios.h>
-#include <dev/apm/apmio.h>
+#define J720SSP_INVERT(x)						\
+	do {								\
+		(x) = ((((x) & 0xf0) >> 4) | (((x) & 0x0f) << 4));	\
+		(x) = ((((x) & 0xcc) >> 2) | (((x) & 0x33) << 2));	\
+		(x) = ((((x) & 0xaa) >> 1) | (((x) & 0x55) << 1));	\
+	} while (0)
 
-#endif /* _MACHINE_APMVAR_H_ */
+struct j720ssp_softc {
+	struct device		sc_dev;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_gpioh;
+	bus_space_handle_t	sc_ssph;
+
+	void			*sc_parent;
+};
+
+int	j720ssp_readwrite(struct j720ssp_softc *, int, int, int *, int);
