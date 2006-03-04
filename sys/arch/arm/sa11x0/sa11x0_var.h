@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_var.h,v 1.4 2003/04/14 14:18:41 rjs Exp $        */
+/*      $NetBSD: sa11x0_var.h,v 1.5 2006/03/04 17:24:13 peter Exp $        */
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -52,7 +52,7 @@ struct sa11x0_softc {
 	bus_space_handle_t sc_ppch;
 	bus_space_handle_t sc_dmach;
 	bus_space_handle_t sc_reseth;
-	u_int32_t sc_intrmask;
+	uint32_t sc_intrmask;
 };
 
 /* Attach args all devices */
