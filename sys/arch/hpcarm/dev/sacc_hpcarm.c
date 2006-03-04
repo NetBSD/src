@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.5 2006/03/04 13:57:38 peter Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.6 2006/03/04 14:36:19 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.5 2006/03/04 13:57:38 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.6 2006/03/04 14:36:19 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ static void
 sacc_attach(struct device *parent, struct device *self, void *aux)
 {
 	int i, gpiopin;
-	u_int32_t skid;
+	uint32_t skid;
 	struct sacc_softc *sc = (struct sacc_softc *)self;
 	struct sa11x0_softc *psc = (struct sa11x0_softc *)parent;
 	struct sa11x0_attach_args *sa = aux;
@@ -138,7 +138,7 @@ static int
 sacc_intr(void *arg)
 {
 	int i;
-	u_int32_t mask;
+	uint32_t mask;
 	struct sacc_intrvec intstat;
 	struct sacc_softc *sc = arg;
 	struct sacc_intrhand *ih;

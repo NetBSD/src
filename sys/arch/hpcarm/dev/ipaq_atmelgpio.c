@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.9 2005/12/11 12:17:31 christos Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.10 2006/03/04 14:36:19 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.9 2005/12/11 12:17:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.10 2006/03/04 14:36:19 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ static	int	atmelgpio_search(struct device *, struct cfdata *,
 static	void	atmelgpio_init(struct atmelgpio_softc *);
 
 static	void	rxtx_data(struct atmelgpio_softc *, int, int,
-			 u_int8_t *, struct atmel_rx *);
+			 uint8_t *, struct atmel_rx *);
 
 CFATTACH_DECL(atmelgpio, sizeof(struct atmelgpio_softc),
     atmelgpio_match, atmelgpio_attach, NULL, NULL);
@@ -176,24 +176,24 @@ static void
 rxtx_data(sc, id, size, buf, rxbuf)
 	struct atmelgpio_softc  *sc; 
 	int			id, size;
-	u_int8_t		*buf;
+	uint8_t			*buf;
 	struct atmel_rx		*rxbuf;
 {
 	int 		i, checksum, length, rx_data;
-	u_int8_t	data[MAX_SENDSIZE];
+	uint8_t		data[MAX_SENDSIZE];
 
 	length = size + FRAME_OVERHEAD_SIZE;
 
 	while (! (bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACOM_SR0) & SR0_TFS))
 		;
 
-		data[0] = (u_int8_t)FRAME_SOF; 
-		data[1] = (u_int8_t)((id << 4) | size);
+		data[0] = (uint8_t)FRAME_SOF; 
+		data[1] = (uint8_t)((id << 4) | size);
 		checksum = data[1];
 		i = 2;
 		while (size--)	{
 			data[i++] = *buf;
-			checksum += (u_int8_t)(*buf++);
+			checksum += (uint8_t)(*buf++);
 		}
 		data[length-1] = checksum;
 
