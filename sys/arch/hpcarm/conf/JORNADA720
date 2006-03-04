@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.55 2006/03/04 14:40:09 peter Exp $
+#	$NetBSD: JORNADA720,v 1.56 2006/03/04 15:19:47 peter Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55 $"
+#ident 		"GENERIC-$Revision: 1.56 $"
 
 # estimated number of users
 maxusers	32
@@ -203,20 +203,6 @@ tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
-
-# Peripheral IO Controller
-#pioc0	at mainbus? base 0x00210000
-
-# Serial ports
-#com*	at pioc? offset 0x03f8 irq 10
-#com*	at pioc? offset 0x02f8 irq -1
-#com*	at pioc? offset 0x0338 irq -1
-#com*	at pioc? offset 0x0238 irq -1
-
-# Parallel ports
-#lpt*	at pioc? offset 0x0278 irq 0
-#lpt*	at pioc? offset 0x0378 irq -1
-#lpt*	at pioc? offset 0x03bc irq -1
 
 # wscons options
 options 	WSEMUL_VT100
