@@ -1,5 +1,6 @@
 To do
 =====
+IPv6 awareness
 cmdline fs or fsmmap
 add ability to add a target in, take one out (if !busy)
 
