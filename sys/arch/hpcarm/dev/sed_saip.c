@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.16 2006/03/04 14:09:36 peter Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.17 2006/03/04 15:23:14 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.16 2006/03/04 14:09:36 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.17 2006/03/04 15:23:14 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,11 @@ __KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.16 2006/03/04 14:09:36 peter Exp $");
 
 #include <arch/hpcarm/dev/sed1356var.h>
 
-#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while(0);
+#ifdef SED_DEBUG
+#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while (0);
+#else
+#define VPRINTF(arg)	/* nothing */
+#endif
 
 /*
  *  function prototypes
@@ -460,7 +464,9 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			    sc->sc_max_contrast < dispparam->curval)
 				return (EINVAL);
 			if (sc->sc_max_contrast > 0) {
+#ifdef SED_DEBUG
 				int org = sc->sc_contrast;
+#endif
 				sed1356_set_contrast(sc, dispparam->curval);	
 				VPRINTF(("sed1356_ioctl: SET:CONTRAST org=%d, current=%d\n", org, sc->sc_contrast));
 				return 0;
@@ -476,7 +482,9 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			    sc->sc_max_brightness < dispparam->curval)
 				return (EINVAL);
 			if (sc->sc_max_brightness > 0) {
+#ifdef SED_DEBUG
 				int org = sc->sc_brightness;
+#endif
 				sed1356_set_brightness(sc, dispparam->curval);	
 				VPRINTF(("sed1356_ioctl: SET:BRIGHTNESS org=%d, current=%d\n", org, sc->sc_brightness));
 				return 0;
