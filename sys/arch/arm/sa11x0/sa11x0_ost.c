@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.15 2006/03/04 17:22:06 peter Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.16 2006/03/04 17:24:13 peter Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.15 2006/03/04 17:22:06 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.16 2006/03/04 17:24:13 peter Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,9 +72,9 @@ struct saost_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
-	u_int32_t	sc_clock_count;
-	u_int32_t	sc_statclock_count;
-	u_int32_t	sc_statclock_step;
+	uint32_t	sc_clock_count;
+	uint32_t	sc_statclock_count;
+	uint32_t	sc_statclock_step;
 };
 
 static struct saost_softc *saost_sc = NULL;
@@ -123,7 +123,7 @@ static int
 clockintr(void *arg)
 {
 	struct clockframe *frame = arg;
-	u_int32_t oscr, nextmatch, oldmatch;
+	uint32_t oscr, nextmatch, oldmatch;
 	int s;
 
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
@@ -166,7 +166,7 @@ static int
 statintr(void *arg)
 {
 	struct clockframe *frame = arg;
-	u_int32_t oscr, nextmatch, oldmatch;
+	uint32_t oscr, nextmatch, oldmatch;
 	int s;
 
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
@@ -209,7 +209,7 @@ statintr(void *arg)
 void
 setstatclockrate(int schz)
 {
-	u_int32_t count;
+	uint32_t count;
 
 	saost_sc->sc_statclock_step = TIMER_FREQUENCY / schz;
 	count = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR);
@@ -305,7 +305,7 @@ microtime(struct timeval *tvp)
 void
 delay(u_int usecs)
 {
-	u_int32_t xtick, otick, delta;
+	uint32_t xtick, otick, delta;
 	int j, csec, usec;
 
 	csec = usecs / 10000;
