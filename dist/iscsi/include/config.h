@@ -7,6 +7,12 @@
 /* Define to 1 if you have the <asm/byteorder.h> header file. */
 /* #undef HAVE_ASM_BYTEORDER_H */
 
+/* Define to 1 if you have the `asnprintf' function. */
+/* #undef HAVE_ASNPRINTF */
+
+/* Define to 1 if you have the `asprintf' function. */
+#define HAVE_ASPRINTF 1
+
 /* Define to 1 if you have the `bswap64' function. */
 #define HAVE_BSWAP64 1
 
@@ -115,20 +121,29 @@
 /* Define to 1 if you have the <utime.h> header file. */
 #define HAVE_UTIME_H 1
 
+/* Define to 1 if you have the `vasnprintf' function. */
+/* #undef HAVE_VASNPRINTF */
+
+/* Define to 1 if you have the `vasprintf' function. */
+#define HAVE_VASPRINTF 1
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#define HAVE_VSNPRINTF 1
+
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT ""
+#define PACKAGE_BUGREPORT "Alistair Crooks <agc@NetBSD.org>"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME ""
+#define PACKAGE_NAME "netbsd-iscsi"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING ""
+#define PACKAGE_STRING "netbsd-iscsi 20060304"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME ""
+#define PACKAGE_TARNAME "netbsd-iscsi"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION ""
+#define PACKAGE_VERSION "20060304"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
