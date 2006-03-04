@@ -1,4 +1,4 @@
-/*      $NetBSD: j720pcic.c,v 1.3 2006/03/04 13:56:17 peter Exp $        */
+/*      $NetBSD: j720pcic.c,v 1.4 2006/03/04 13:57:11 peter Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Jornada 720 PCMCIA support. */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.3 2006/03/04 13:56:17 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.4 2006/03/04 13:57:11 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.3 2006/03/04 13:56:17 peter Exp $");
 
 #include <dev/pcmcia/pcmciachip.h>
 #include <dev/pcmcia/pcmciavar.h>
+
 #include <arm/sa11x0/sa11x0_reg.h>
 #include <arm/sa11x0/sa11x0_var.h>
 #include <arm/sa11x0/sa1111_reg.h>
@@ -65,9 +68,11 @@ __KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.3 2006/03/04 13:56:17 peter Exp $");
 
 #include "sacpcic.h"
 
-static	int	sacpcic_match(struct device *, struct cfdata *, void *);
-static	void	sacpcic_attach(struct device *, struct device *, void *);
-static	void	j720_set_power(struct sapcic_socket *so, int arg);
+static int	sacpcic_match(struct device *, struct cfdata *, void *);
+static void	sacpcic_attach(struct device *, struct device *, void *);
+
+static void	j720_socket_setup(struct sapcic_socket *);
+static void	j720_set_power(struct sapcic_socket *, int);
 
 static struct sapcic_tag j720_sacpcic_functions = {
 	sacpcic_read,
@@ -90,10 +95,20 @@ static struct platid_data sacpcic_platid_table[] = {
 CFATTACH_DECL(sacpcic, sizeof(struct sacpcic_softc),
     sacpcic_match, sacpcic_attach, NULL, NULL);
 
+
 static int
 sacpcic_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return (1);
+
+	return 1;
+}
+
+static void
+sacpcic_attach(struct device *parent, struct device *self, void *aux)
+{
+
+	sacpcic_attach_common((struct sacc_softc *)parent,
+	    (struct sacpcic_softc *)self, aux, j720_socket_setup);
 }
 
 static void
@@ -116,16 +131,7 @@ j720_socket_setup(struct sapcic_socket *sp)
 }
 
 static void
-sacpcic_attach(struct device *parent, struct device *self, void *aux)
-{
-	sacpcic_attach_common((struct sacc_softc *)parent,
-	    (struct sacpcic_softc *)self, aux, j720_socket_setup);
-}
-
-static void
-j720_set_power(so, arg)
-	struct sapcic_socket *so;
-	int arg;
+j720_set_power(struct sapcic_socket *so, int arg)
 {
 	int newval, oldval, s;
 	struct sacc_softc *sc = so->pcictag_cookie;
@@ -142,12 +148,12 @@ j720_set_power(so, arg)
 		newval = 1;
 		break;
 	default:
-		panic("sacpcic_set_power: bogus arg");
+		panic("j720_set_power: bogus arg (%d)", arg);
 	}
 
 	s = splbio();
-	oldval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				  SACCGPIOA_DVR);
+	oldval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCGPIOA_DVR);
+
 	switch (so->socket) {
 	case 0:
 		newval = newval | (oldval & 0xc);
@@ -157,9 +163,8 @@ j720_set_power(so, arg)
 		break;
 	default:
 		splx(s);
-		panic("sacpcic_set_power");
+		panic("j720_set_power: bogus socket (%d)", so->socket);
 	}
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCGPIOA_DVR, newval);
 	splx(s);
 }
-
