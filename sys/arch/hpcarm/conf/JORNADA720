@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.53 2006/03/04 14:09:36 peter Exp $
+#	$NetBSD: JORNADA720,v 1.54 2006/03/04 14:38:55 peter Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.53 $"
+#ident 		"GENERIC-$Revision: 1.54 $"
 
 # estimated number of users
 maxusers	32
@@ -47,6 +47,8 @@ file-system	NULLFS		# loopback file system
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
