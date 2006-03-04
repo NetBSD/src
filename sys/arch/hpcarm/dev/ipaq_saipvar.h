@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saipvar.h,v 1.3 2001/07/15 17:12:11 ichiro Exp $	*/
+/*	$NetBSD: ipaq_saipvar.h,v 1.4 2006/03/04 14:36:19 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -33,7 +33,7 @@ struct ipaq_softc {
 	bus_space_handle_t sc_ppch;
 	bus_space_handle_t sc_dmach;
 	bus_space_handle_t sc_ssph;
-	u_int32_t sc_intrmask;
+	uint32_t sc_intrmask;
 
-	u_int16_t ipaq_egpio;
+	uint16_t ipaq_egpio;
 };
