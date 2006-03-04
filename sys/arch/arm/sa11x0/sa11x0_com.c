@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.26 2006/02/20 16:50:36 thorpej Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.27 2006/03/04 13:54:08 peter Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.26 2006/02/20 16:50:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.27 2006/03/04 13:54:08 peter Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -213,8 +213,7 @@ extern struct cfdriver sacom_cd;
 
 #ifdef hpcarm
 struct platid_data sacom_platid_table[] = {
-	{ &platid_mask_MACH_HP_JORNADA_720, sacom_j720_init },
-	{ &platid_mask_MACH_HP_JORNADA_720JP, sacom_j720_init },
+	{ &platid_mask_MACH_HP_JORNADA_7XX, sacom_j720_init },
 	{ NULL, NULL }
 };
 #endif
