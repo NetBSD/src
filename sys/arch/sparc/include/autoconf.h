@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.43 2006/03/04 02:56:21 uwe Exp $ */
+/*	$NetBSD: autoconf.h,v 1.44 2006/03/04 03:39:02 uwe Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ union obio_attach_args {
 #define OBIO_BUS_MAP_USE_ROM	BUS_SPACE_MAP_BUS1
 
 /* obio bus helper that finds ROM mappings; exported for autoconf.c */
-int	obio_find_rom_map __P((bus_addr_t, int, bus_space_handle_t *));
+int	obio_find_rom_map(bus_addr_t, int, bus_space_handle_t *);
 
 
 /*
@@ -159,13 +159,13 @@ int	obio_find_rom_map __P((bus_addr_t, int, bus_space_handle_t *));
  */
 struct device;
 struct cfdata;
-int	matchbyname __P((struct device *, struct cfdata *cf, void *aux));
+int	matchbyname(struct device *, struct cfdata *cf, void *aux);
 
 /*
  * `clockfreq' produces a printable representation of a clock frequency
  * (this is just a frill).
  */
-char	*clockfreq __P((int freq));
+char	*clockfreq(int freq);
 
 /* Openprom V2 style boot path */
 struct bootpath {
@@ -175,12 +175,12 @@ struct bootpath {
 };
 
 /* Parse a disk string into a dev_t, return device struct pointer */
-struct	device *parsedisk __P((char *, int, int, dev_t *));
+struct	device *parsedisk(char *, int, int, dev_t *);
 
 /* Establish a mountroot_hook, for benefit of floppy drive, mostly. */
-void	mountroot_hook_establish __P((void (*) __P((struct device *)),
-				      struct device *));
+void	mountroot_hook_establish(void (*)(struct device *),
+				 struct device *);
 
-void	bootstrap __P((void));
-struct device *getdevunit __P((const char *, int));
-int	romgetcursoraddr __P((int **, int **));
+void	bootstrap(void);
+struct device *getdevunit(const char *, int);
+int	romgetcursoraddr(int **, int **);
