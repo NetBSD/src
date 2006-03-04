@@ -1,10 +1,10 @@
-/*	$NetBSD: videomode.c,v 1.1 2006/03/04 02:34:27 gdamore Exp $	*/
+/*	$NetBSD: videomode.c,v 1.2 2006/03/04 02:37:24 gdamore Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: modelines,v 1.1 2006/03/04 02:34:27 gdamore Exp 
  */
 #include <dev/videomode/videomode.h>
 
