@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.4 2005/12/11 12:17:32 christos Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.5 2006/03/04 13:57:38 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.4 2005/12/11 12:17:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.5 2006/03/04 13:57:38 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,7 @@ static void	sacc_attach(struct device *, struct device *, void *);
 static int	sacc_intr(void *);
 
 struct platid_data sacc_platid_table[] = {
-	{ &platid_mask_MACH_HP_JORNADA_720, (void *)1 },
-	{ &platid_mask_MACH_HP_JORNADA_720JP, (void *)1 },
+	{ &platid_mask_MACH_HP_JORNADA_7XX, (void *)1 },
 	{ NULL, NULL }
 };
 
