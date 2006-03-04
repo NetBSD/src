@@ -1,5 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(iscsi.c)
+AC_PREREQ(2.57)
+AC_INIT([netbsd-iscsi],[20060304],[Alistair Crooks <agc@NetBSD.org>])
+AC_CONFIG_SRCDIR([iscsi.c])
 AC_CONFIG_HEADER(../include/config.h)
 
 dnl Checks for programs.
