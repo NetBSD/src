@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.42 2005/12/20 19:53:15 rpaulo Exp $
+.\"     $NetBSD: vnodeops.9,v 1.43 2006/03/04 20:36:15 rumble Exp $
 .\"
 .\" Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,6 +52,7 @@
 .Nm VOP_IOCTL ,
 .Nm VOP_FCNTL ,
 .Nm VOP_POLL ,
+.Nm VOP_KQFILTER ,
 .Nm VOP_REVOKE ,
 .Nm VOP_MMAP ,
 .Nm VOP_FSYNC ,
@@ -134,6 +135,8 @@
 "int fflag" "struct ucred *cred" "struct lwp *l"
 .Ft int
 .Fn VOP_POLL "struct vnode *vp" "int events" "struct lwp *l"
+.Ft int
+.Fn VOP_KQFILTER "struct vnode *vp" "struct knote *kn"
 .Ft int
 .Fn VOP_REVOKE "struct vnode *vp" "int flags"
 .Ft int
@@ -253,6 +256,7 @@ int (*vop_write)() 	VOP_WRITE	Write to a file
 int (*vop_ioctl)() 	VOP_IOCTL	Perform device-specific I/O
 int (*vop_fcntl)() 	VOP_FCNTL	Perform file control
 int (*vop_poll)() 	VOP_POLL	Test if poll event has occurred
+int (*vop_kqfilter)()	VOP_KQFILTER	Register a knote
 int (*vop_revoke)() 	VOP_REVOKE	Eliminate vode activity
 int (*vop_mmap)() 	VOP_MMAP	Map file into user address space
 int (*vop_fsync)() 	VOP_FSYNC	Flush pending data to disk
@@ -754,6 +758,13 @@ is a set of flags as specified by
 .Xr poll 2 .
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
+.It Fn VOP_KQFILTER "vp" "kn"
+Register a knote
+.Fa kn
+with the vnode
+.Fa vn .
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
 .It Fn VOP_REVOKE "vp" "flags"
 Eliminate all activity associated with the vnode
 .Fa vp .
@@ -986,7 +997,7 @@ The argument
 .Fa eofflag
 is the pointer to a flag which is set by
 .Fn VOP_READDIR
-to indicate and end-of-file condition.
+to indicate an end-of-file condition.
 If
 .Fa eofflag
 is
