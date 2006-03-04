@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.591 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.592 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -213,3 +213,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[shige 20060227]
 	evbarm: Add support for the Linksys NSLU2 (a.k.a. "Slug") NAS device.
 		[scw 20060228]
+	hpcarm: Jornada 720 keyboard driver changed to use hpckbd(4)
+		[peter 20060304]
+	hpcarm: Jornada 720 power management driver changed to use hpcapm(4)
+		[peter 20060304]
