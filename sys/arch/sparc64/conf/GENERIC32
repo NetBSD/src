@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.132 2006/03/03 23:54:45 nakayama Exp $
+# 	$NetBSD: GENERIC32,v 1.133 2006/03/04 01:21:08 nakayama Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.132 $"
+#ident 		"GENERIC-$Revision: 1.133 $"
 
 maxusers	64
 
@@ -462,6 +462,7 @@ qe*		at qec?
 # PCI network interfaces
 # 	UT marks untested.
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
+#ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11 UT
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -479,6 +480,7 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
 # XXX cause uncorrectable DMA error
 #pcn*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+ral*	at pci? dev ? function ?	# ralink wifi UT
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
@@ -579,8 +581,9 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-# USB 802.11b adapters
+# USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
+ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
@@ -701,6 +704,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11) UT
 #ex*	at cardbus? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? function ?	# Intel i8255x UT
+#ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g UT
 #rtk*	at cardbus? function ?	# Realtek 8129/8139 UT
 #tlp*	at cardbus? function ?	# DECchip 21143
 
