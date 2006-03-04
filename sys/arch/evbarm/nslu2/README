@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 2006/02/28 20:40:33 scw Exp $
+$NetBSD: README,v 1.2 2006/03/04 11:28:36 scw Exp $
 
 NetBSD for the Linksys NSLU2 (a.k.a. "Slug")
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,10 +68,6 @@ Non-hardware items on the TODO list include:
 
  - Move the kernel link address closer to the start of SDRAM. We waste a
    little under 2MB with the current setup.
-
- - The clock runs slow. In ixp425_timer.c, COUNTS_PER_SEC is defined as
-   66666600 instead of 66666667. This, together with rounding errors, is
-   almost certainly the cause.
 
 
 
