@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.14 2005/11/24 13:08:32 yamt Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.15 2006/03/04 17:22:06 peter Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.14 2005/11/24 13:08:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.15 2006/03/04 17:22:06 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,12 +139,8 @@ struct bus_space sa11x0_bs_tag = {
 /* bus space functions */
 
 int
-sa11x0_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+sa11x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable,
+    bus_space_handle_t *bshp)
 {
 	u_long startpa, endpa, pa;
 	vaddr_t va;
@@ -184,24 +180,15 @@ sa11x0_bs_map(t, bpa, size, cacheable, bshp)
 }
 
 int
-sa11x0_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+sa11x0_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
+    bus_size_t alignment, bus_size_t boundary, int cacheable,
+    bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	panic("sa11x0_alloc(): Help!");
 }
 
-
 void
-sa11x0_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+sa11x0_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	/*
 	 * Temporary implementation
@@ -209,10 +196,7 @@ sa11x0_bs_unmap(t, bsh, size)
 }
 
 void    
-sa11x0_bs_free(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+sa11x0_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	panic("sa11x0_free(): Help!");
@@ -221,11 +205,8 @@ sa11x0_bs_free(t, bsh, size)
 }
 
 int
-sa11x0_bs_subregion(t, bsh, offset, size, nbshp)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+sa11x0_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
@@ -233,12 +214,7 @@ sa11x0_bs_subregion(t, bsh, offset, size, nbshp)
 }
 
 paddr_t
-sa11x0_bs_mmap(t, paddr, offset, prot, flags)
-	void *t;
-	bus_addr_t paddr;
-	off_t offset;
-	int prot;
-	int flags;
+sa11x0_bs_mmap(void *t, bus_addr_t paddr, off_t offset, int prot, int flags)
 {
 	/*
 	 * mmap from address `paddr+offset' for one page
@@ -247,19 +223,14 @@ sa11x0_bs_mmap(t, paddr, offset, prot, flags)
 }
 
 void *
-sa11x0_bs_vaddr(t, bsh)
-	void *t;
-	bus_space_handle_t bsh;
+sa11x0_bs_vaddr(void *t, bus_space_handle_t bsh)
 {
 	return ((void *)bsh);
 }
 
 void
-sa11x0_bs_barrier(t, bsh, offset, len, flags)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, len;
-	int flags;
+sa11x0_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t len, int flags)
 {
 /* NULL */
 }	
