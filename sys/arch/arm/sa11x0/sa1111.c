@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.15 2006/01/03 23:14:23 peter Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.16 2006/03/04 17:22:06 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.15 2006/01/03 23:14:23 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.16 2006/03/04 17:22:06 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,7 @@ void softintr_schedule(void *);
 #endif
 
 int
-sacc_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sacc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct sa11x0_attach_args *sa = aux;
 	bus_space_handle_t ioh;
@@ -104,11 +101,8 @@ sacc_probe(parent, match, aux)
 
 
 int
-sa1111_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+sa1111_search(struct device *parent, struct cfdata *cf, const int *ldesc,
+    void *aux)
 {
 	struct sa1111_attach_args aa;
 
@@ -127,20 +121,15 @@ sa1111_search(parent, cf, ldesc, aux)
 }
 
 static int
-sa1111_print(aux, name)
-	void *aux;
-	const char *name;
+sa1111_print(void *aux, const char *name)
 {
 	return (UNCONF);
 }
 
 
 void *
-sacc_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
-	sacc_chipset_tag_t *ic;
-	int irq, type, level;
-	int (*ih_fun)(void *);
-	void *ih_arg;
+sacc_intr_establish(sacc_chipset_tag_t *ic, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg)
 {
 	int s;
 	struct sacc_softc *sc = (struct sacc_softc *)ic;
@@ -194,9 +183,7 @@ sacc_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 }
 
 void
-sacc_intr_disestablish(ic, arg)
-	sacc_chipset_tag_t *ic;
-	void *arg;
+sacc_intr_disestablish(sacc_chipset_tag_t *ic, void *arg)
 {
 	int irq, s;
 	struct sacc_softc *sc = (struct sacc_softc *)ic;
@@ -227,10 +214,7 @@ sacc_intr_disestablish(ic, arg)
 }
 
 void
-sacc_intr_setpolarity(ic, irq, type)
-	sacc_chipset_tag_t *ic;
-	int irq;
-	int type;
+sacc_intr_setpolarity(sacc_chipset_tag_t *ic, int irq, int type)
 {
 	struct sacc_softc *sc = (struct sacc_softc *)ic;
 	int s;
@@ -256,8 +240,7 @@ sacc_intr_setpolarity(ic, irq, type)
 }
 
 void
-sacc_intr_calculatemasks(sc)
-	struct sacc_softc *sc;
+sacc_intr_calculatemasks(struct sacc_softc *sc)
 {
 	int irq;
 
