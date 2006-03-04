@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.10 2006/02/26 03:25:44 uwe Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.11 2006/03/04 17:35:31 peter Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.10 2006/02/26 03:25:44 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.11 2006/03/04 17:35:31 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,7 +83,7 @@ j6x0pwr_is_not_charging(void)
 }
 
 
-/* A/D covnerter channels to get power stats from */
+/* A/D converter channels to get power stats from */
 #define ADC_CHANNEL_BATTERY	3 /* main battery */
 #define ADC_CHANNEL_BACKUP	4 /* backup battery - we don't report it */
 #define ADC_CHANNEL_CHARGE	5 /* we use PLDR_BATTERY_CHARGED instead */
@@ -171,7 +171,7 @@ j6x0pwr_attach(struct device *parent, struct device *self, void *aux)
 		    CONFIG_HOOK_EXCLUSIVE,
 		    j6x0pwr_apm_getpower_hook, sc);
 
-	/* regsiter sleep function to APM */
+	/* register sleep function to APM */
 	__sleep_func = j6x0pwr_sleep;
 	__sleep_ctx = self;
 
