@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.19 2006/02/20 10:47:27 rjs Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.20 2006/03/04 13:48:52 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -441,9 +441,19 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_HP_JORNADA_7XX,
 	 TEXT("HP Jornada 7XX") },
 	{ &platid_mask_MACH_HP_JORNADA_720,
-	 TEXT("HP Jornada 720") },
+	 TEXT("HP Jornada 720 (US/UK)") },
 	{ &platid_mask_MACH_HP_JORNADA_720JP,
 	 TEXT("HP Jornada 720 (Japanese)") },
+	{ &platid_mask_MACH_HP_JORNADA_720EU,
+	 TEXT("HP Jornada 720 (European)") },
+	{ &platid_mask_MACH_HP_JORNADA_720DE,
+	 TEXT("HP Jornada 720 (German)") },
+	{ &platid_mask_MACH_HP_JORNADA_720FR,
+	 TEXT("HP Jornada 720 (French)") },
+	{ &platid_mask_MACH_HP_JORNADA_720SV,
+	 TEXT("HP Jornada 720 (Scandinavian)") },
+	{ &platid_mask_MACH_HP_JORNADA_720ES,
+	 TEXT("HP Jornada 720 (Spanish)") },
 	{ &platid_mask_MACH_HP_JORNADA_8XX,
 	 TEXT("HP Jornada 8XX") },
 	{ &platid_mask_MACH_HP_JORNADA_820,
