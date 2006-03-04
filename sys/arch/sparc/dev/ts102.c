@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.5 2005/11/16 04:25:28 macallan Exp $ */
+/*	$NetBSD: ts102.c,v 1.6 2006/03/04 02:59:29 uwe Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -286,9 +286,9 @@ ts102_write_8(bus_space_tag_t space, bus_space_handle_t handle,
 
 
 #define	TSLOT_READ(slot, offset) \
-	*(volatile u_int16_t *)((slot)->td_regs + (offset))
+	*(volatile uint16_t *)((slot)->td_regs + (offset))
 #define	TSLOT_WRITE(slot, offset, value) \
-	*(volatile u_int16_t *)((slot)->td_regs + (offset)) = (value)
+	*(volatile uint16_t *)((slot)->td_regs + (offset)) = (value)
 
 /*
  * Attachment and initialization
@@ -308,7 +308,7 @@ tslot_attach(struct device *parent, struct device *self, void *args)
 	struct sbus_attach_args *sa = args;
 	struct tslot_softc *sc = (struct tslot_softc *)self;
 	struct tslot_data *td;
-	volatile u_int8_t *regs;
+	volatile uint8_t *regs;
 	int node, slot, rnum, base, size;
 	uint32_t ranges[30];
 	void *rptr = ranges;
