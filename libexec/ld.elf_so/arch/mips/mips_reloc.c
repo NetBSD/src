@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.49 2005/12/24 20:59:30 perry Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.50 2006/03/04 08:58:46 skrll Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.49 2005/12/24 20:59:30 perry Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.50 2006/03/04 08:58:46 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -338,22 +338,58 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 	return 0;
 }
 
+static inline int
+_rtld_relocate_plt_object(const Obj_Entry *obj, Elf_Word sym, Elf_Addr *tp)
+{
+	Elf_Addr *got = obj->pltgot;
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+	Elf_Addr new_value;
+
+	def = _rtld_find_symdef(sym, obj, &defobj, true);
+	if (def == NULL)
+		return -1;
+
+	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	rdbg(("bind now/fixup in %s --> new=%p",
+	    defobj->strtab + def->st_name, (void *)new_value));
+	got[obj->local_gotno + sym - obj->gotsym] = new_value;
+
+	if (tp)
+		*tp = new_value;
+	return 0;
+}
+
+
+
+
+
 caddr_t
 _rtld_bind(Elf_Word a0, Elf_Addr a1, Elf_Addr a2, Elf_Addr a3)
 {
 	Elf_Addr *got = (Elf_Addr *)(a2 - 0x7ff0);
 	const Obj_Entry *obj = (Obj_Entry *)(got[1] & 0x7fffffff);
-	const Elf_Sym *def;
-	const Obj_Entry *defobj;
 	Elf_Addr new_value;
+	int err;
 
-	def = _rtld_find_symdef(a0, obj, &defobj, true);
-	if (def == NULL)
+	err = _rtld_relocate_plt_object(obj, a0, &new_value);
+	if (err)
 		_rtld_die();
 
-	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	rdbg(("bind now/fixup in %s --> new=%p",
-	    defobj->strtab + def->st_name, (void *)new_value));
-	got[obj->local_gotno + a0 - obj->gotsym] = new_value;
-	return ((caddr_t)new_value);
+	return (caddr_t)new_value;
+}
+
+int
+_rtld_relocate_plt_objects(const Obj_Entry *obj)
+{
+	const Elf_Sym *sym = obj->symtab + obj->gotsym;
+	int i;
+
+	for (i = obj->gotsym; i < obj->symtabno; i++, sym++) {
+		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC)
+			if (_rtld_relocate_plt_object(obj, i, NULL) < 0)
+				return -1;
+	}
+
+	return 0;
 }
