@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.44 2006/01/19 15:09:57 he Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.45 2006/03/04 02:59:29 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -522,8 +522,8 @@ cgfourteenpoll(dev_t dev, int events, struct lwp *l)
 static void
 cg14_init(struct cgfourteen_softc *sc)
 {
-	volatile u_int32_t *clut;
-	volatile u_int8_t  *xlut;
+	volatile uint32_t *clut;
+	volatile uint8_t  *xlut;
 	int i;
 
 	/*
@@ -537,8 +537,8 @@ cg14_init(struct cgfourteen_softc *sc)
 	sc->sc_savectl = sc->sc_ctl->ctl_mctl;
 	sc->sc_savehwc = sc->sc_hwc->curs_ctl;
 
-	clut = (volatile u_int32_t *) sc->sc_clut1->clut_lut;
-	xlut = (volatile u_int8_t *) sc->sc_xlut->xlut_lut;
+	clut = (volatile uint32_t *) sc->sc_clut1->clut_lut;
+	xlut = (volatile uint8_t *) sc->sc_xlut->xlut_lut;
 	for (i = 0; i < CG14_CLUT_SIZE; i++) {
 		sc->sc_saveclut.cm_chip[i] = clut[i];
 		sc->sc_savexlut[i] = xlut[i];

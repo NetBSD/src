@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.42 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: autoconf.h,v 1.43 2006/03/04 02:56:21 uwe Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -96,24 +96,24 @@
 
 /* Device register space description */
 struct rom_reg {
-	u_int32_t	rr_iospace;	/* register space (obio, etc) */
-	u_int32_t	rr_paddr;	/* register physical address */
-	u_int32_t	rr_len;		/* register length */
+	uint32_t	rr_iospace;	/* register space (obio, etc) */
+	uint32_t	rr_paddr;	/* register physical address */
+	uint32_t	rr_len;		/* register length */
 };
 
 /* Interrupt information */
 struct rom_intr {
-	u_int32_t	int_pri;	/* priority (IPL) */
-	u_int32_t	int_vec;	/* vector (always 0?) */
+	uint32_t	int_pri;	/* priority (IPL) */
+	uint32_t	int_vec;	/* vector (always 0?) */
 };
 
 /* Address translation accross busses */
 struct rom_range {		/* Only used on v3 PROMs */
-	u_int32_t	cspace;		/* Client space */
-	u_int32_t	coffset;	/* Client offset */
-	u_int32_t	pspace;		/* Parent space */
-	u_int32_t	poffset;	/* Parent offset */
-	u_int32_t	size;		/* Size in bytes of this range */
+	uint32_t	cspace;		/* Client space */
+	uint32_t	coffset;	/* Client offset */
+	uint32_t	pspace;		/* Parent space */
+	uint32_t	poffset;	/* Parent offset */
+	uint32_t	size;		/* Size in bytes of this range */
 };
 
 /* Attach arguments presented by mainbus_attach() */
