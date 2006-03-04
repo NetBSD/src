@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.19 2006/02/20 10:47:27 rjs Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.20 2006/03/04 13:48:52 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -808,6 +808,26 @@ extern platid_t platid_mask_MACH_HP_JORNADA_720;
 extern platid_t platid_mask_MACH_HP_JORNADA_720JP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HP_JORNADA_720JP ((int)&platid_mask_MACH_HP_JORNADA_720JP)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_720EU;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_720EU ((int)&platid_mask_MACH_HP_JORNADA_720EU)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_720DE;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_720DE ((int)&platid_mask_MACH_HP_JORNADA_720DE)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_720FR;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_720FR ((int)&platid_mask_MACH_HP_JORNADA_720FR)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_720SV;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_720SV ((int)&platid_mask_MACH_HP_JORNADA_720SV)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_720ES;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_720ES ((int)&platid_mask_MACH_HP_JORNADA_720ES)
 #endif
 extern platid_t platid_mask_MACH_HP_JORNADA_8XX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
