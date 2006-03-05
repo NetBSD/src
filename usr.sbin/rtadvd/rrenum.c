@@ -1,5 +1,5 @@
-/*	$NetBSD: rrenum.c,v 1.11 2003/10/21 03:01:44 fvdl Exp $	*/
-/*	$KAME: rrenum.c,v 1.10 2001/01/21 15:32:16 itojun Exp $	*/
+/*	$NetBSD: rrenum.c,v 1.12 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$KAME: rrenum.c,v 1.14 2004/06/14 05:36:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

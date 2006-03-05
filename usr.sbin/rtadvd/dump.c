@@ -1,5 +1,5 @@
-/*	$NetBSD: dump.c,v 1.6 2002/07/10 21:11:43 itojun Exp $	*/
-/*	$KAME: dump.c,v 1.28 2002/05/29 14:25:01 itojun Exp $	*/
+/*	$NetBSD: dump.c,v 1.7 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$KAME: dump.c,v 1.34 2004/06/14 05:35:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -92,6 +92,9 @@ if_dump()
 {
 	struct rainfo *rai;
 	struct prefix *pfx;
+#ifdef ROUTEINFO
+	struct rtinfo *rti;
+#endif
 	char prefixbuf[INET6_ADDRSTRLEN];
 	int first;
 	struct timeval now;
@@ -196,8 +199,37 @@ if_dump()
 				pfx->onlinkflg ? "L" : "",
 				pfx->autoconfflg ? "A" : "",
 				"");
+			if (pfx->timer) {
+				struct timeval *rest;
+
+				rest = rtadvd_timer_rest(pfx->timer);
+				if (rest) { /* XXX: what if not? */
+					fprintf(fp, ", expire in: %ld",
+					    (long)rest->tv_sec);
+				}
+			}
 			fprintf(fp, ")\n");
 		}
+#ifdef ROUTEINFO
+		for (first = 1, rti = rai->route.next; rti != &rai->route;
+		     rti = rti->next) {
+			if (first) {
+				fprintf(fp, "  Route Information:\n");
+				first = 0;
+			}
+			fprintf(fp, "    %s/%d (",
+				inet_ntop(AF_INET6, &rti->prefix,
+					  prefixbuf, sizeof(prefixbuf)),
+				rti->prefixlen);
+			fprintf(fp, "preference: %s, ",
+				rtpref_str[0xff & (rti->rtpref >> 3)]);
+			if (rti->ltime == ND6_INFINITE_LIFETIME)
+				fprintf(fp, "lifetime: infinity");
+			else
+				fprintf(fp, "lifetime: %ld", (long)rti->ltime);
+			fprintf(fp, ")\n");
+		}
+#endif
 	}
 }
 
@@ -205,6 +237,9 @@ void
 rtadvd_dump_file(dumpfile)
 	char *dumpfile;
 {
+	syslog(LOG_DEBUG, "<%s> dump current status to %s", __func__,
+	    dumpfile);
+
 	if ((fp = fopen(dumpfile, "w")) == NULL) {
 		syslog(LOG_WARNING, "<%s> open a dump file(%s)",
 		       __func__, dumpfile);
