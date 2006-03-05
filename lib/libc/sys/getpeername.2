@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpeername.2,v 1.18 2003/08/07 16:43:58 agc Exp $
+.\"	$NetBSD: getpeername.2,v 1.19 2006/03/05 22:06:08 agc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getpeername.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd August 11, 2002
+.Dd March 5, 2006
 .Dt GETPEERNAME 2
 .Os
 .Sh NAME
@@ -57,10 +57,10 @@ is used to determine the connecting client's IP address.
 takes three parameters:
 .Pp
 .Fa s
-Contains the file descriptor of the socket whose peer should be looked up.
+contains the file descriptor of the socket whose peer should be looked up.
 .Pp
 .Fa name
-Points to a
+points to a
 .Li sockaddr
 structure that will hold the address information for the connected peer.
 Normal use requires one to use a structure
@@ -76,7 +76,7 @@ should be used.
 .Li sockaddr_storage
 is large enough to hold any of the other sockaddr_* variants.
 On return, it can be cast to the correct sockaddr type,
-based the protocol family contained in its ss_family field.
+based on the protocol family contained in its ss_family field.
 .Pp
 .Fa namelen
 indicates the amount of space pointed to by
