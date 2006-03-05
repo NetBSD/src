@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.26 2006/03/05 07:21:38 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.27 2006/03/05 19:08:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -69,7 +69,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.26 2006/03/05 07:21:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.27 2006/03/05 19:08:39 christos Exp $");
 
 void
 child_return(void *arg)
@@ -327,19 +327,7 @@ void EMULNAME(syscall_intern)(struct proc *);
 void
 EMULNAME(syscall_intern)(struct proc *p)
 {
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = EMULNAME(syscall_fancy);
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = EMULNAME(syscall_fancy);
-		return;
-	} 
-#endif
-	if (ISSET(p->p_flag, P_SYSCALL))
+	if (proc_is_traced_p(p))
 		p->p_md.md_syscall = EMULNAME(syscall_fancy);
 	else
 		p->p_md.md_syscall = EMULNAME(syscall_plain);
