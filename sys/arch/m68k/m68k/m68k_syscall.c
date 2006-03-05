@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.19 2006/03/05 19:08:38 christos Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.20 2006/03/05 22:34:34 rjs Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.19 2006/03/05 19:08:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.20 2006/03/05 22:34:34 rjs Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
@@ -153,9 +153,7 @@ void syscall(register_t, struct frame);
 void	aoutm68k_syscall_intern(struct proc *);
 #endif
 static void syscall_plain(register_t, struct lwp *, struct frame *);
-#if defined(KTRACE) || defined(SYSTRACE)
 static void syscall_fancy(register_t, struct lwp *, struct frame *);
-#endif
 
 
 /*
@@ -337,7 +335,6 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 #endif
 }
 
-#if defined(KTRACE) || defined(SYSTRACE)
 static void
 syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 {
@@ -458,7 +455,6 @@ out:
 
 	trace_exit(l, code, args, rval, error);
 }
-#endif /* KTRACE || SYSTRACE */
 
 void
 child_return(void *arg)
