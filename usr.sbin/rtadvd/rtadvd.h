@@ -1,5 +1,5 @@
-/*	$NetBSD: rtadvd.h,v 1.9 2002/05/29 14:40:32 itojun Exp $	*/
-/*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.10 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -45,16 +45,11 @@
 #define DEF_ADVVALIDLIFETIME 2592000
 #define DEF_ADVPREFERREDLIFETIME 604800
 
-/*XXX int-to-double comparison for INTERVAL items */
-#define mobileip6 0
-
 #define MAXROUTERLIFETIME 9000
-#define MIN_MAXINTERVAL (mobileip6 ? 1.5 : 4.0)
+#define MIN_MAXINTERVAL 4
 #define MAX_MAXINTERVAL 1800
-#define MIN_MININTERVAL	(mobileip6 ? 0.05 : 3.0)
+#define MIN_MININTERVAL 3
 #define MAXREACHABLETIME 3600000
-
-#undef miobileip6
 
 #define MAX_INITIAL_RTR_ADVERT_INTERVAL  16
 #define MAX_INITIAL_RTR_ADVERTISEMENTS    3
@@ -70,6 +65,12 @@ struct prefix {
 	struct prefix *next;	/* forward link */
 	struct prefix *prev;	/* previous link */
 
+	struct rainfo *rainfo;	/* back pointer to the interface */
+
+	struct rtadvd_timer *timer; /* expiration timer.  used when a prefix
+				     * derived from the kernel is deleted.
+				     */
+
 	u_int32_t validlifetime; /* AdvValidLifetime */
 	long	vltimeexpire;	/* expiration of vltime; decrement case only */
 	u_int32_t preflifetime;	/* AdvPreferredLifetime */
@@ -77,10 +78,21 @@ struct prefix {
 	u_int onlinkflg;	/* bool: AdvOnLinkFlag */
 	u_int autoconfflg;	/* bool: AdvAutonomousFlag */
 	int prefixlen;
-	int origin;		/* from kernel or cofig */
+	int origin;		/* from kernel or config */
 	struct in6_addr prefix;
 };
 
+#ifdef ROUTEINFO
+struct rtinfo {
+	struct rtinfo *prev;	/* previous link */
+	struct rtinfo *next;	/* forward link */
+
+	u_int32_t ltime;	/* route lifetime */
+	u_int rtpref;		/* route preference */
+	int prefixlen;
+	struct in6_addr prefix;
+};
+#endif
 
 struct soliciter {
 	struct soliciter *next;
@@ -110,6 +122,7 @@ struct	rainfo {
 	u_int	mininterval;	/* MinRtrAdvInterval */
 	int 	managedflg;	/* AdvManagedFlag */
 	int	otherflg;	/* AdvOtherConfigFlag */
+
 	int	rtpref;		/* router preference */
 	u_int32_t linkmtu;	/* AdvLinkMTU */
 	u_int32_t reachabletime; /* AdvReachableTime */
@@ -119,6 +132,10 @@ struct	rainfo {
 	int	pfxs;		/* number of prefixes */
 	long	clockskew;	/* used for consisitency check of lifetimes */
 
+#ifdef ROUTEINFO
+	struct rtinfo route;	/* route information option (link head) */
+	int	routes;		/* number of route information options */
+#endif
 
 	/* actual RA packet data and its length */
 	size_t ra_datalen;
@@ -134,7 +151,7 @@ struct	rainfo {
 	struct soliciter *soliciter;	/* recent solication source */
 };
 
-void ra_timeout __P((void *));
+struct rtadvd_timer *ra_timeout __P((void *));
 void ra_timer_update __P((void *, struct timeval *));
 
 int prefix_match __P((struct in6_addr *, int, struct in6_addr *, int));

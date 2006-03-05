@@ -1,5 +1,5 @@
-.\"	$NetBSD: ndp.8,v 1.21 2004/10/26 06:42:14 itojun Exp $
-.\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
+.\"	$NetBSD: ndp.8,v 1.22 2006/03/05 23:47:08 rpaulo Exp $
+.\"	$KAME: ndp.8,v 1.33 2005/10/19 14:57:42 suz Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 26, 2004
+.Dd March 5, 2006
 .Dt NDP 8
 .Os
 .\"
@@ -62,7 +62,7 @@
 .Op Fl nt
 .Fl i
 .Ar interface
-.Op Ar flags ...
+.Op Ar expressions ...
 .Nm ndp
 .Op Fl nt
 .Fl I Op Ar interface | Li delete
@@ -150,19 +150,20 @@ Specifies the default
 to be used when there is no interface specified even though required.
 .It Fl I Li delete
 The current default interface will be deleted from the kernel.
-.It Fl i Ar interface Op Ar flags ...
+.It Fl i Ar interface Op Ar expressions ...
 View ND information for the specified interface.
 If additional arguments
-.Ar flags
+.Ar expressions
 are given,
 .Nm
-sets or clears the specified flags for the interface.
-Each flag should be separated by white spaces or tab characters.
-Possible flags are as follows.
-All of the flags can begin with the
+sets or clears the flags or variables for the interface as specified in
+the expression.
+Each expression should be separated by white spaces or tab characters.
+Possible expressions are as follows.
+Some of the expressions can begin with the
 special character
 .Ql - ,
-which means the flag should be cleared.
+which means the flag specified in the expression should be cleared.
 Note that you need
 .Fl -
 before
@@ -188,17 +189,42 @@ unless the
 .Li net.inet6.ip6.accept_rtadv
 variable is non-0, even if the flag is on.
 This flag is set to 1 by default.
-.\".It Xo
-.\".Ic prefer_source
-.\".Xc
-.\"Prefer addresses on the
-.\".Ar interface
-.\"as candidates of the source address for outgoing packets.
-.\"The default value of this flag is off.
-.\"For more details about the entire algorithm of source address
-.\"selection, see the
-.\".Pa IMPLEMENTATION
-.\"file supplied with the KAME kit.
+.It Xo
+.Ic prefer_source
+.Xc
+Prefer addresses on the
+.Ar interface
+as candidates of the source address for outgoing packets.
+The default value of this flag is off.
+For more details about the entire algorithm of source address
+selection, see the
+.Pa IMPLEMENTATION
+file supplied with the KAME kit.
+.It Xo
+.Ic disabled
+.Xc
+Disable IPv6 operation on the interface.
+When disabled, the interface discards any IPv6 packets
+received on or being sent to the interface.
+In the sending case, an error of ENETDOWN will be returned to the
+application.
+This flag is typically set automatically in the kernel as a result of
+a certain failure of Duplicate Address Detection.
+While the flag can be set or cleared by hand with the
+.Nm
+command, it is not generally advisable to modify this flag manually.
+.It Xo
+.Ic basereachable=(number)
+.Xc
+Specify the BaseReachbleTimer on the interface in millisecond.
+.It Xo
+.Ic retrans=(number)
+.Xc
+Specify the RetransTimer on the interface in millisecond.
+.It Xo
+.Ic curhlim=(number)
+.Xc
+Specify the Cur Hop Limit on the interface.
 .El
 .It Fl n
 Do not try to resolve numeric addresses to hostnames.
@@ -211,13 +237,13 @@ Show default router list.
 .It Fl R
 Flush all the entries in the default router list.
 .It Fl s
-Register a NDP entry for a node.
+Register an NDP entry for a node.
 The entry will be permanent unless the word
 .Li temp
 is given in the command.
 If the word
 .Li proxy
-is given, this system will act as an proxy NDP server,
+is given, this system will act as a proxy NDP server,
 responding to requests for
 .Ar hostname
 even though the host address is not its own.
@@ -229,10 +255,10 @@ Most useful when used with
 .Fl A .
 .El
 .\"
-.Sh EXIT STATUS
+.Sh RETURN VALUES
 The
 .Nm
-command exits 0 on success, and \*[Gt]0 on errors.
+command will exit with 0 on success, and non-zero on errors.
 .\"
 .Sh SEE ALSO
 .Xr arp 8

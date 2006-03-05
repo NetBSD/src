@@ -1,5 +1,5 @@
-/*	$NetBSD: if.c,v 1.17 2003/09/23 18:15:50 itojun Exp $	*/
-/*	$KAME: if.c,v 1.31 2003/09/23 10:58:20 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.18 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -211,19 +211,6 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 	}
 
 	return;
-}
-
-int
-rtbuf_len()
-{
-	size_t len;
-
-	int mib[6] = {CTL_NET, AF_ROUTE, 0, AF_INET6, NET_RT_DUMP, 0};
-
-	if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0)
-		return(-1);
-
-	return(len);
 }
 
 #define FILTER_MATCH(type, filter) ((0x1 << type) & filter)
@@ -495,7 +482,7 @@ parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
 	 */
 	iflentry_size = sizeof(struct if_msghdr);
 	/* roughly estimate max list size of pointers to each if_msghdr */
-	malloc_size = (bufsize/iflentry_size) * sizeof(size_t);
+	malloc_size = (bufsize/iflentry_size) * sizeof(void *);
 	if ((*ifmlist_p = (struct if_msghdr **)malloc(malloc_size)) == NULL) {
 		syslog(LOG_ERR, "<%s> malloc failed", __func__);
 		exit(1);

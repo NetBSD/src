@@ -1,5 +1,5 @@
-/*	$NetBSD: timer.h,v 1.5 2002/05/21 14:22:06 itojun Exp $	*/
-/*	$KAME: timer.h,v 1.4 2002/05/15 08:43:54 jinmei Exp $	*/
+/*	$NetBSD: timer.h,v 1.6 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$KAME: timer.h,v 1.5 2002/05/31 13:30:38 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -46,14 +46,14 @@ struct rtadvd_timer {
 	struct rainfo *rai;
 	struct timeval tm;
 
-	void (*expire) __P((void *));	/* expiration function */
+	struct rtadvd_timer *(*expire) __P((void *));	/* expiration function */
 	void *expire_data;
 	void (*update) __P((void *, struct timeval *));	/* update function */
 	void *update_data;
 };
 
 void rtadvd_timer_init __P((void));
-struct rtadvd_timer *rtadvd_add_timer __P((void (*) __P((void *)),
+struct rtadvd_timer *rtadvd_add_timer __P((struct rtadvd_timer *(*) __P((void *)),
 		void (*) __P((void *, struct timeval *)), void *, void *));
 void rtadvd_set_timer __P((struct timeval *, struct rtadvd_timer *));
 void rtadvd_remove_timer __P((struct rtadvd_timer **));

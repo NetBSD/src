@@ -1,5 +1,5 @@
-/*	$NetBSD: advcap.h,v 1.5 2002/05/29 14:40:31 itojun Exp $	*/
-/*	$KAME: advcap.h,v 1.4 2001/06/08 04:46:19 jinmei Exp $	*/
+/*	$NetBSD: advcap.h,v 1.6 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$KAME: advcap.h,v 1.5 2003/06/09 05:40:54 t-momose Exp $	*/
 
 /*
  * Copyright (C) 1994,1995 by Andrey A. Chernov, Moscow, Russia.

@@ -1,5 +1,5 @@
-/*	$NetBSD: config.h,v 1.5 2003/06/17 08:08:48 itojun Exp $	*/
-/*	$KAME: config.h,v 1.3 2000/05/16 13:34:13 itojun Exp $	*/
+/*	$NetBSD: config.h,v 1.6 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$KAME: config.h,v 1.9 2003/08/06 04:19:40 ono Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -31,7 +31,9 @@
  */
 
 extern void getconfig __P((char *));
-extern void delete_prefix __P((struct rainfo *, struct prefix *));
+extern void delete_prefix __P((struct prefix *));
+extern void invalidate_prefix __P((struct prefix *));
+extern void update_prefix __P((struct prefix *));
 extern void make_prefix __P((struct rainfo *, int, struct in6_addr *, int));
 extern void make_packet __P((struct rainfo *));
 extern void get_prefix __P((struct rainfo *));
@@ -42,3 +44,4 @@ extern void get_prefix __P((struct rainfo *));
  * so it should be okay to limit it
  */
 #define MAXPREFIX	100
+#define MAXROUTE	100

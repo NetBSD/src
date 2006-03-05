@@ -1,5 +1,5 @@
-/*	$NetBSD: timer.c,v 1.8 2002/07/10 21:11:44 itojun Exp $	*/
-/*	$KAME: timer.c,v 1.6 2002/05/15 08:53:07 jinmei Exp $	*/
+/*	$NetBSD: timer.c,v 1.9 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -57,9 +57,9 @@ rtadvd_timer_init()
 }
 
 struct rtadvd_timer *
-rtadvd_add_timer(void (*timeout) __P((void *)),
-		void (*update) __P((void *, struct timeval *)),
-		 void *timeodata, void *updatedata)
+rtadvd_add_timer(struct rtadvd_timer *(*timeout) __P((void *)),
+    void (*update) __P((void *, struct timeval *)),
+    void *timeodata, void *updatedata)
 {
 	struct rtadvd_timer *newtimer;
 
@@ -74,11 +74,6 @@ rtadvd_add_timer(void (*timeout) __P((void *)),
 	if (timeout == NULL) {
 		syslog(LOG_ERR,
 		       "<%s> timeout function unspecified", __func__);
-		exit(1);
-	}
-	if (update == NULL) {
-		syslog(LOG_ERR,
-		       "<%s> update function unspecified", __func__);
 		exit(1);
 	}
 	newtimer->expire = timeout;
@@ -119,7 +114,7 @@ rtadvd_set_timer(struct timeval *tm, struct rtadvd_timer *timer)
 }
 
 /*
- * Check expiration for each timer. If a timer is expired,
+ * Check expiration for each timer. If a timer expires,
  * call the expire function for the timer and update the timer.
  * Return the next interval for select() call.
  */
@@ -128,23 +123,25 @@ rtadvd_check_timer()
 {
 	static struct timeval returnval;
 	struct timeval now;
-	struct rtadvd_timer *tm = timer_head.next;
+	struct rtadvd_timer *tm = timer_head.next, *tm_next;
 
 	gettimeofday(&now, NULL);
 
 	timer_head.tm = tm_max;
 
-	while (tm != &timer_head) {
+	for (tm = timer_head.next; tm != &timer_head; tm = tm_next) {
+		tm_next = tm->next;
+
 		if (TIMEVAL_LEQ(tm->tm, now)) {
-			(*tm->expire)(tm->expire_data);
-			(*tm->update)(tm->update_data, &tm->tm);
+			if ((*tm->expire)(tm->expire_data) == NULL)
+				continue; /* the timer was removed */
+			if (tm->update)
+				(*tm->update)(tm->update_data, &tm->tm);
 			TIMEVAL_ADD(&tm->tm, &now, &tm->tm);
 		}
 
 		if (TIMEVAL_LT(tm->tm, timer_head.tm))
 			timer_head.tm = tm->tm;
-
-		tm = tm->next;
 	}
 
 	if (TIMEVAL_EQUAL(&tm_max, &timer_head.tm)) {
