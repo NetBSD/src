@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.27 2006/03/05 19:08:39 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.28 2006/03/05 22:34:34 rjs Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -69,7 +69,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.27 2006/03/05 19:08:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28 2006/03/05 22:34:34 rjs Exp $");
 
 void
 child_return(void *arg)
@@ -210,7 +210,6 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	userret(l, frame);
 }
 
-#if defined(KTRACE) || defined(SYSTRACE)
 static void EMULNAME(syscall_fancy)(struct trapframe *);
 
 void
@@ -320,7 +319,6 @@ out:
 	trace_exit(l, realcode, params, rval, error);
 	userret(l, frame);
 }
-#endif /* KTRACE || SYSTRACE */
 
 void EMULNAME(syscall_intern)(struct proc *);
 
