@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.38 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.38.8.1 2006/03/05 12:51:09 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.38 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.38.8.1 2006/03/05 12:51:09 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -206,6 +206,12 @@ uvm_anfree(struct vm_anon *anon)
 	 */
 
 	uvm_anon_dropswap(anon);
+
+	/*
+	 * give a page replacement hint.
+	 */
+
+	uvmpdpol_anfree(anon);
 
 	/*
 	 * now that we've stripped the data areas from the anon,
