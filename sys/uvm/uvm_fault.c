@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.109 2006/02/22 22:28:18 drochner Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.109.2.1 2006/03/05 12:51:09 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.109 2006/02/22 22:28:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.109.2.1 2006/03/05 12:51:09 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -967,7 +967,7 @@ ReFault:
 		if (anon->an_page && anon->an_page->loan_count == 0 &&
 		    (anon->an_page->flags & PG_BUSY) == 0) {
 			uvm_lock_pageq();
-			uvm_pageactivate(anon->an_page);
+			uvm_pageenqueue(anon->an_page);
 			uvm_unlock_pageq();
 			UVMHIST_LOG(maphist,
 			    "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
@@ -1096,7 +1096,7 @@ ReFault:
 				 */
 
 				uvm_lock_pageq();
-				uvm_pageactivate(curpg);
+				uvm_pageenqueue(curpg);
 				uvm_unlock_pageq();
 				UVMHIST_LOG(maphist,
 				  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
@@ -1284,8 +1284,6 @@ ReFault:
 					uvm_pagedequeue(anon->an_page);
 				}
 
-				uvm_pageactivate(pg);
-				uvm_unlock_pageq();
 				if (uobj) {
 					simple_unlock(&uobj->vmobjlock);
 					uobj = NULL;
@@ -1295,6 +1293,10 @@ ReFault:
 				anon->an_page = pg;
 				pg->uanon = anon;
 				pg->pqflags |= PQ_ANON;
+
+				uvm_pageactivate(pg);
+				uvm_unlock_pageq();
+
 				pg->flags &= ~(PG_BUSY|PG_FAKE);
 				UVM_PAGE_OWN(pg, NULL);
 
