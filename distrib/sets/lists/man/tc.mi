@@ -1,3 +1,0 @@
-# $NetBSD: tc.mi,v 1.4 2004/01/11 15:09:51 lukem Exp $
-./usr/share/man/cat8/dbsym.0			man-sysutil-catman	bfd,.cat
-./usr/share/man/man8/dbsym.8			man-sysutil-man		bfd,.man

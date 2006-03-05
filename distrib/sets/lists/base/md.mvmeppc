@@ -1,3 +1,0 @@
-# $NetBSD: md.mvmeppc,v 1.6 2005/05/22 03:45:30 lukem Exp $
-./usr/mdec/boot					base-sysutil-bin
-./usr/mdec/boot.elf				base-sysutil-bin
