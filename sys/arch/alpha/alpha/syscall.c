@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.19 2006/03/05 07:21:37 christos Exp $ */
+/* $NetBSD: syscall.c,v 1.20 2006/03/05 19:08:38 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2006/03/05 07:21:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.20 2006/03/05 19:08:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,19 +130,7 @@ void	syscall_fancy(struct lwp *, u_int64_t, struct trapframe *);
 void
 syscall_intern(struct proc *p)
 {
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = syscall_fancy;
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = syscall_fancy;
-		return;
-	} 
-#endif
-	if (ISSET(p->p_flag, P_SYSCALL))
+	if (proc_is_traced_p(p))
 		p->p_md.md_syscall = syscall_fancy;
 	else
 		p->p_md.md_syscall = syscall_plain;

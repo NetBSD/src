@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.34 2006/03/05 12:31:23 yamt Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.35 2006/03/05 19:08:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.34 2006/03/05 12:31:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.35 2006/03/05 19:08:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -77,22 +77,9 @@ void linux_syscall_fancy(struct trapframe *);
 extern struct sysent linux_sysent[];
 
 void
-linux_syscall_intern(p)
-	struct proc *p;
+linux_syscall_intern(struct proc *p)
 {
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = linux_syscall_fancy;
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = linux_syscall_fancy;
-		return;
-	} 
-#endif
-	if ((p->p_flag & P_SYSCALL) != 0)
+	if (proc_is_traced_p(p))
 		p->p_md.md_syscall = linux_syscall_fancy;
 	else
 		p->p_md.md_syscall = linux_syscall_plain;
