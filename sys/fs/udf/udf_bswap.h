@@ -1,4 +1,4 @@
-/*	$NetBSD: udf_bswap.h,v 1.3 2006/02/02 15:57:35 reinoud Exp $	*/
+/*	$NetBSD: udf_bswap.h,v 1.4 2006/03/05 16:55:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -94,4 +94,3 @@ udf_rw64(a)
 
 
 #endif /* !_FS_UDF_UDF_BSWAP_H_ */
-
