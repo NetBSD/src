@@ -1,6 +1,6 @@
 To do
 =====
-IPv6 awareness
+add socklen_t awareness
 cmdline fs or fsmmap
 add ability to add a target in, take one out (if !busy)
 
@@ -30,3 +30,4 @@ mmap & munmap
 get port from cmd line
 raid0
 add discovery masking
+clean up IPv6
